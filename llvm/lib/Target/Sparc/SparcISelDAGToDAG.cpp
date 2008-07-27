@@ -40,12 +40,12 @@ public:
       Subtarget(TM.getSubtarget<SparcSubtarget>()) {
   }
 
-  SDNode *Select(SDOperand Op);
+  SDNode *Select(SDValue Op);
 
   // Complex Pattern Selectors.
-  bool SelectADDRrr(SDOperand Op, SDOperand N, SDOperand &R1, SDOperand &R2);
-  bool SelectADDRri(SDOperand Op, SDOperand N, SDOperand &Base,
-                    SDOperand &Offset);
+  bool SelectADDRrr(SDValue Op, SDValue N, SDValue &R1, SDValue &R2);
+  bool SelectADDRri(SDValue Op, SDValue N, SDValue &Base,
+                    SDValue &Offset);
   
   /// InstructionSelect - This callback is invoked by
   /// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
@@ -70,8 +70,8 @@ void SparcDAGToDAGISel::InstructionSelect(SelectionDAG &DAG) {
   DAG.RemoveDeadNodes();
 }
 
-bool SparcDAGToDAGISel::SelectADDRri(SDOperand Op, SDOperand Addr,
-                                     SDOperand &Base, SDOperand &Offset) {
+bool SparcDAGToDAGISel::SelectADDRri(SDValue Op, SDValue Addr,
+                                     SDValue &Base, SDValue &Offset) {
   if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(Addr)) {
     Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), MVT::i32);
     Offset = CurDAG->getTargetConstant(0, MVT::i32);
@@ -111,8 +111,8 @@ bool SparcDAGToDAGISel::SelectADDRri(SDOperand Op, SDOperand Addr,
   return true;
 }
 
-bool SparcDAGToDAGISel::SelectADDRrr(SDOperand Op, SDOperand Addr,
-                                     SDOperand &R1,  SDOperand &R2) {
+bool SparcDAGToDAGISel::SelectADDRrr(SDValue Op, SDValue Addr,
+                                     SDValue &R1,  SDValue &R2) {
   if (Addr.getOpcode() == ISD::FrameIndex) return false;
   if (Addr.getOpcode() == ISD::TargetExternalSymbol ||
       Addr.getOpcode() == ISD::TargetGlobalAddress)
@@ -135,7 +135,7 @@ bool SparcDAGToDAGISel::SelectADDRrr(SDOperand Op, SDOperand Addr,
   return true;
 }
 
-SDNode *SparcDAGToDAGISel::Select(SDOperand Op) {
+SDNode *SparcDAGToDAGISel::Select(SDValue Op) {
   SDNode *N = Op.Val;
   if (N->isMachineOpcode())
     return NULL;   // Already selected.
@@ -145,20 +145,20 @@ SDNode *SparcDAGToDAGISel::Select(SDOperand Op) {
   case ISD::SDIV:
   case ISD::UDIV: {
     // FIXME: should use a custom expander to expose the SRA to the dag.
-    SDOperand DivLHS = N->getOperand(0);
-    SDOperand DivRHS = N->getOperand(1);
+    SDValue DivLHS = N->getOperand(0);
+    SDValue DivRHS = N->getOperand(1);
     AddToISelQueue(DivLHS);
     AddToISelQueue(DivRHS);
     
     // Set the Y register to the high-part.
-    SDOperand TopPart;
+    SDValue TopPart;
     if (N->getOpcode() == ISD::SDIV) {
-      TopPart = SDOperand(CurDAG->getTargetNode(SP::SRAri, MVT::i32, DivLHS,
+      TopPart = SDValue(CurDAG->getTargetNode(SP::SRAri, MVT::i32, DivLHS,
                                    CurDAG->getTargetConstant(31, MVT::i32)), 0);
     } else {
       TopPart = CurDAG->getRegister(SP::G0, MVT::i32);
     }
-    TopPart = SDOperand(CurDAG->getTargetNode(SP::WRYrr, MVT::Flag, TopPart,
+    TopPart = SDValue(CurDAG->getTargetNode(SP::WRYrr, MVT::Flag, TopPart,
                                      CurDAG->getRegister(SP::G0, MVT::i32)), 0);
 
     // FIXME: Handle div by immediate.
@@ -169,15 +169,15 @@ SDNode *SparcDAGToDAGISel::Select(SDOperand Op) {
   case ISD::MULHU:
   case ISD::MULHS: {
     // FIXME: Handle mul by immediate.
-    SDOperand MulLHS = N->getOperand(0);
-    SDOperand MulRHS = N->getOperand(1);
+    SDValue MulLHS = N->getOperand(0);
+    SDValue MulRHS = N->getOperand(1);
     AddToISelQueue(MulLHS);
     AddToISelQueue(MulRHS);
     unsigned Opcode = N->getOpcode() == ISD::MULHU ? SP::UMULrr : SP::SMULrr;
     SDNode *Mul = CurDAG->getTargetNode(Opcode, MVT::i32, MVT::Flag,
                                         MulLHS, MulRHS);
     // The high part is in the Y register.
-    return CurDAG->SelectNodeTo(N, SP::RDY, MVT::i32, SDOperand(Mul, 1));
+    return CurDAG->SelectNodeTo(N, SP::RDY, MVT::i32, SDValue(Mul, 1));
     return NULL;
   }
   }

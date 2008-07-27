@@ -66,36 +66,36 @@ namespace llvm {
     explicit MipsTargetLowering(MipsTargetMachine &TM);
 
     /// LowerOperation - Provide custom lowering hooks for some operations.
-    virtual SDOperand LowerOperation(SDOperand Op, SelectionDAG &DAG);
+    virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG);
 
     /// getTargetNodeName - This method returns the name of a target specific 
     //  DAG node.
     virtual const char *getTargetNodeName(unsigned Opcode) const;
 
     /// getSetCCResultType - get the ISD::SETCC result ValueType
-    MVT getSetCCResultType(const SDOperand &) const;
+    MVT getSetCCResultType(const SDValue &) const;
 
   private:
     // Subtarget Info
     const MipsSubtarget *Subtarget;
 
     // Lower Operand helpers
-    SDOperand LowerCCCArguments(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG, unsigned CC);
-    SDNode *LowerCallResult(SDOperand Chain, SDOperand InFlag, SDNode*TheCall,
+    SDValue LowerCCCArguments(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerCCCCallTo(SDValue Op, SelectionDAG &DAG, unsigned CC);
+    SDNode *LowerCallResult(SDValue Chain, SDValue InFlag, SDNode*TheCall,
                             unsigned CallingConv, SelectionDAG &DAG);
     bool IsGlobalInSmallSection(GlobalValue *GV); 
     bool IsInSmallSection(unsigned Size); 
 
     // Lower Operand specifics
-    SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerGlobalAddress(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerGlobalTLSAddress(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerJumpTable(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerConstantPool(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerSELECT_CC(SDOperand Op, SelectionDAG &DAG);
+    SDValue LowerRET(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerCALL(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerGlobalAddress(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerJumpTable(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerConstantPool(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG);
 
     virtual MachineBasicBlock *EmitInstrWithCustomInserter(MachineInstr *MI,
                                                         MachineBasicBlock *MBB);

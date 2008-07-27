@@ -110,7 +110,7 @@ bool ISD::isBuildVectorAllOnes(const SDNode *N) {
   
   // Do not accept build_vectors that aren't all constants or which have non-~0
   // elements.
-  SDOperand NotZero = N->getOperand(i);
+  SDValue NotZero = N->getOperand(i);
   if (isa<ConstantSDNode>(NotZero)) {
     if (!cast<ConstantSDNode>(NotZero)->isAllOnesValue())
       return false;
@@ -151,7 +151,7 @@ bool ISD::isBuildVectorAllZeros(const SDNode *N) {
   
   // Do not accept build_vectors that aren't all constants or which have non-~0
   // elements.
-  SDOperand Zero = N->getOperand(i);
+  SDValue Zero = N->getOperand(i);
   if (isa<ConstantSDNode>(Zero)) {
     if (!cast<ConstantSDNode>(Zero)->isNullValue())
       return false;
@@ -183,7 +183,7 @@ bool ISD::isScalarToVector(const SDNode *N) {
     return false;
   unsigned NumElems = N->getNumOperands();
   for (unsigned i = 1; i < NumElems; ++i) {
-    SDOperand V = N->getOperand(i);
+    SDValue V = N->getOperand(i);
     if (V.getOpcode() != ISD::UNDEF)
       return false;
   }
@@ -194,7 +194,7 @@ bool ISD::isScalarToVector(const SDNode *N) {
 /// isDebugLabel - Return true if the specified node represents a debug
 /// label (i.e. ISD::DBG_LABEL or TargetInstrInfo::DBG_LABEL node).
 bool ISD::isDebugLabel(const SDNode *N) {
-  SDOperand Zero;
+  SDValue Zero;
   if (N->getOpcode() == ISD::DBG_LABEL)
     return true;
   if (N->isMachineOpcode() &&
@@ -323,7 +323,7 @@ static void AddNodeIDValueTypes(FoldingSetNodeID &ID, SDVTList VTList) {
 /// AddNodeIDOperands - Various routines for adding operands to the NodeID data.
 ///
 static void AddNodeIDOperands(FoldingSetNodeID &ID,
-                              const SDOperand *Ops, unsigned NumOps) {
+                              const SDValue *Ops, unsigned NumOps) {
   for (; NumOps; --NumOps, ++Ops) {
     ID.AddPointer(Ops->Val);
     ID.AddInteger(Ops->ResNo);
@@ -335,14 +335,14 @@ static void AddNodeIDOperands(FoldingSetNodeID &ID,
 static void AddNodeIDOperands(FoldingSetNodeID &ID,
                               const SDUse *Ops, unsigned NumOps) {
   for (; NumOps; --NumOps, ++Ops) {
-    ID.AddPointer(Ops->getSDOperand().Val);
-    ID.AddInteger(Ops->getSDOperand().ResNo);
+    ID.AddPointer(Ops->getVal());
+    ID.AddInteger(Ops->getSDValue().ResNo);
   }
 }
 
 static void AddNodeIDNode(FoldingSetNodeID &ID,
                           unsigned short OpC, SDVTList VTList, 
-                          const SDOperand *OpList, unsigned N) {
+                          const SDValue *OpList, unsigned N) {
   AddNodeIDOpcode(ID, OpC);
   AddNodeIDValueTypes(ID, VTList);
   AddNodeIDOperands(ID, OpList, N);
@@ -649,7 +649,7 @@ SDNode *SelectionDAG::AddNonLeafNodeToCSEMaps(SDNode *N) {
 /// were replaced with those specified.  If this node is never memoized, 
 /// return null, otherwise return a pointer to the slot it would take.  If a
 /// node already exists with these operands, the slot will be non-null.
-SDNode *SelectionDAG::FindModifiedNodeSlot(SDNode *N, SDOperand Op,
+SDNode *SelectionDAG::FindModifiedNodeSlot(SDNode *N, SDValue Op,
                                            void *&InsertPos) {
   if (N->getValueType(0) == MVT::Flag)
     return 0;   // Never CSE anything that produces a flag.
@@ -668,7 +668,7 @@ SDNode *SelectionDAG::FindModifiedNodeSlot(SDNode *N, SDOperand Op,
     if (N->getValueType(i) == MVT::Flag)
       return 0;   // Never CSE anything that produces a flag.
   
-  SDOperand Ops[] = { Op };
+  SDValue Ops[] = { Op };
   FoldingSetNodeID ID;
   AddNodeIDNode(ID, N->getOpcode(), N->getVTList(), Ops, 1);
   return CSEMap.FindNodeOrInsertPos(ID, InsertPos);
@@ -679,7 +679,7 @@ SDNode *SelectionDAG::FindModifiedNodeSlot(SDNode *N, SDOperand Op,
 /// return null, otherwise return a pointer to the slot it would take.  If a
 /// node already exists with these operands, the slot will be non-null.
 SDNode *SelectionDAG::FindModifiedNodeSlot(SDNode *N, 
-                                           SDOperand Op1, SDOperand Op2,
+                                           SDValue Op1, SDValue Op2,
                                            void *&InsertPos) {
   if (N->getOpcode() == ISD::HANDLENODE || N->getValueType(0) == MVT::Flag)
   
@@ -688,7 +688,7 @@ SDNode *SelectionDAG::FindModifiedNodeSlot(SDNode *N,
     if (N->getValueType(i) == MVT::Flag)
       return 0;   // Never CSE anything that produces a flag.
                                               
-  SDOperand Ops[] = { Op1, Op2 };
+  SDValue Ops[] = { Op1, Op2 };
   FoldingSetNodeID ID;
   AddNodeIDNode(ID, N->getOpcode(), N->getVTList(), Ops, 2);
   return CSEMap.FindNodeOrInsertPos(ID, InsertPos);
@@ -700,7 +700,7 @@ SDNode *SelectionDAG::FindModifiedNodeSlot(SDNode *N,
 /// return null, otherwise return a pointer to the slot it would take.  If a
 /// node already exists with these operands, the slot will be non-null.
 SDNode *SelectionDAG::FindModifiedNodeSlot(SDNode *N, 
-                                           const SDOperand *Ops,unsigned NumOps,
+                                           const SDValue *Ops,unsigned NumOps,
                                            void *&InsertPos) {
   if (N->getValueType(0) == MVT::Flag)
     return 0;   // Never CSE anything that produces a flag.
@@ -752,7 +752,7 @@ void SelectionDAG::VerifyNode(SDNode *N) {
            "Wrong number of BUILD_VECTOR operands!");
     MVT EltVT = N->getValueType(0).getVectorElementType();
     for (SDNode::op_iterator I = N->op_begin(), E = N->op_end(); I != E; ++I)
-      assert(I->getSDOperand().getValueType() == EltVT &&
+      assert(I->getSDValue().getValueType() == EltVT &&
              "Wrong BUILD_VECTOR operand type!");
     break;
   }
@@ -783,7 +783,7 @@ SelectionDAG::~SelectionDAG() {
   }
 }
 
-SDOperand SelectionDAG::getZeroExtendInReg(SDOperand Op, MVT VT) {
+SDValue SelectionDAG::getZeroExtendInReg(SDValue Op, MVT VT) {
   if (Op.getValueType() == VT) return Op;
   APInt Imm = APInt::getLowBitsSet(Op.getValueSizeInBits(),
                                    VT.getSizeInBits());
@@ -791,12 +791,12 @@ SDOperand SelectionDAG::getZeroExtendInReg(SDOperand Op, MVT VT) {
                  getConstant(Imm, Op.getValueType()));
 }
 
-SDOperand SelectionDAG::getConstant(uint64_t Val, MVT VT, bool isT) {
+SDValue SelectionDAG::getConstant(uint64_t Val, MVT VT, bool isT) {
   MVT EltVT = VT.isVector() ? VT.getVectorElementType() : VT;
   return getConstant(APInt(EltVT.getSizeInBits(), Val), VT, isT);
 }
 
-SDOperand SelectionDAG::getConstant(const APInt &Val, MVT VT, bool isT) {
+SDValue SelectionDAG::getConstant(const APInt &Val, MVT VT, bool isT) {
   assert(VT.isInteger() && "Cannot create FP integer constant!");
 
   MVT EltVT = VT.isVector() ? VT.getVectorElementType() : VT;
@@ -811,7 +811,7 @@ SDOperand SelectionDAG::getConstant(const APInt &Val, MVT VT, bool isT) {
   SDNode *N = NULL;
   if ((N = CSEMap.FindNodeOrInsertPos(ID, IP)))
     if (!VT.isVector())
-      return SDOperand(N, 0);
+      return SDValue(N, 0);
   if (!N) {
     N = getAllocator().Allocate<ConstantSDNode>();
     new (N) ConstantSDNode(isT, Val, EltVT);
@@ -819,21 +819,21 @@ SDOperand SelectionDAG::getConstant(const APInt &Val, MVT VT, bool isT) {
     AllNodes.push_back(N);
   }
 
-  SDOperand Result(N, 0);
+  SDValue Result(N, 0);
   if (VT.isVector()) {
-    SmallVector<SDOperand, 8> Ops;
+    SmallVector<SDValue, 8> Ops;
     Ops.assign(VT.getVectorNumElements(), Result);
     Result = getNode(ISD::BUILD_VECTOR, VT, &Ops[0], Ops.size());
   }
   return Result;
 }
 
-SDOperand SelectionDAG::getIntPtrConstant(uint64_t Val, bool isTarget) {
+SDValue SelectionDAG::getIntPtrConstant(uint64_t Val, bool isTarget) {
   return getConstant(Val, TLI.getPointerTy(), isTarget);
 }
 
 
-SDOperand SelectionDAG::getConstantFP(const APFloat& V, MVT VT, bool isTarget) {
+SDValue SelectionDAG::getConstantFP(const APFloat& V, MVT VT, bool isTarget) {
   assert(VT.isFloatingPoint() && "Cannot create integer FP constant!");
                                 
   MVT EltVT =
@@ -850,7 +850,7 @@ SDOperand SelectionDAG::getConstantFP(const APFloat& V, MVT VT, bool isTarget) {
   SDNode *N = NULL;
   if ((N = CSEMap.FindNodeOrInsertPos(ID, IP)))
     if (!VT.isVector())
-      return SDOperand(N, 0);
+      return SDValue(N, 0);
   if (!N) {
     N = getAllocator().Allocate<ConstantFPSDNode>();
     new (N) ConstantFPSDNode(isTarget, V, EltVT);
@@ -858,16 +858,16 @@ SDOperand SelectionDAG::getConstantFP(const APFloat& V, MVT VT, bool isTarget) {
     AllNodes.push_back(N);
   }
 
-  SDOperand Result(N, 0);
+  SDValue Result(N, 0);
   if (VT.isVector()) {
-    SmallVector<SDOperand, 8> Ops;
+    SmallVector<SDValue, 8> Ops;
     Ops.assign(VT.getVectorNumElements(), Result);
     Result = getNode(ISD::BUILD_VECTOR, VT, &Ops[0], Ops.size());
   }
   return Result;
 }
 
-SDOperand SelectionDAG::getConstantFP(double Val, MVT VT, bool isTarget) {
+SDValue SelectionDAG::getConstantFP(double Val, MVT VT, bool isTarget) {
   MVT EltVT =
     VT.isVector() ? VT.getVectorElementType() : VT;
   if (EltVT==MVT::f32)
@@ -876,9 +876,9 @@ SDOperand SelectionDAG::getConstantFP(double Val, MVT VT, bool isTarget) {
     return getConstantFP(APFloat(Val), VT, isTarget);
 }
 
-SDOperand SelectionDAG::getGlobalAddress(const GlobalValue *GV,
-                                         MVT VT, int Offset,
-                                         bool isTargetGA) {
+SDValue SelectionDAG::getGlobalAddress(const GlobalValue *GV,
+                                       MVT VT, int Offset,
+                                       bool isTargetGA) {
   unsigned Opc;
 
   const GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV);
@@ -899,47 +899,47 @@ SDOperand SelectionDAG::getGlobalAddress(const GlobalValue *GV,
   ID.AddInteger(Offset);
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
-   return SDOperand(E, 0);
+   return SDValue(E, 0);
   SDNode *N = getAllocator().Allocate<GlobalAddressSDNode>();
   new (N) GlobalAddressSDNode(isTargetGA, GV, VT, Offset);
   CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
-  return SDOperand(N, 0);
+  return SDValue(N, 0);
 }
 
-SDOperand SelectionDAG::getFrameIndex(int FI, MVT VT, bool isTarget) {
+SDValue SelectionDAG::getFrameIndex(int FI, MVT VT, bool isTarget) {
   unsigned Opc = isTarget ? ISD::TargetFrameIndex : ISD::FrameIndex;
   FoldingSetNodeID ID;
   AddNodeIDNode(ID, Opc, getVTList(VT), 0, 0);
   ID.AddInteger(FI);
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
-    return SDOperand(E, 0);
+    return SDValue(E, 0);
   SDNode *N = getAllocator().Allocate<FrameIndexSDNode>();
   new (N) FrameIndexSDNode(FI, VT, isTarget);
   CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
-  return SDOperand(N, 0);
+  return SDValue(N, 0);
 }
 
-SDOperand SelectionDAG::getJumpTable(int JTI, MVT VT, bool isTarget){
+SDValue SelectionDAG::getJumpTable(int JTI, MVT VT, bool isTarget){
   unsigned Opc = isTarget ? ISD::TargetJumpTable : ISD::JumpTable;
   FoldingSetNodeID ID;
   AddNodeIDNode(ID, Opc, getVTList(VT), 0, 0);
   ID.AddInteger(JTI);
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
-    return SDOperand(E, 0);
+    return SDValue(E, 0);
   SDNode *N = getAllocator().Allocate<JumpTableSDNode>();
   new (N) JumpTableSDNode(JTI, VT, isTarget);
   CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
-  return SDOperand(N, 0);
+  return SDValue(N, 0);
 }
 
-SDOperand SelectionDAG::getConstantPool(Constant *C, MVT VT,
-                                        unsigned Alignment, int Offset,
-                                        bool isTarget) {
+SDValue SelectionDAG::getConstantPool(Constant *C, MVT VT,
+                                      unsigned Alignment, int Offset,
+                                      bool isTarget) {
   unsigned Opc = isTarget ? ISD::TargetConstantPool : ISD::ConstantPool;
   FoldingSetNodeID ID;
   AddNodeIDNode(ID, Opc, getVTList(VT), 0, 0);
@@ -948,18 +948,18 @@ SDOperand SelectionDAG::getConstantPool(Constant *C, MVT VT,
   ID.AddPointer(C);
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
-    return SDOperand(E, 0);
+    return SDValue(E, 0);
   SDNode *N = getAllocator().Allocate<ConstantPoolSDNode>();
   new (N) ConstantPoolSDNode(isTarget, C, VT, Offset, Alignment);
   CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
-  return SDOperand(N, 0);
+  return SDValue(N, 0);
 }
 
 
-SDOperand SelectionDAG::getConstantPool(MachineConstantPoolValue *C, MVT VT,
-                                        unsigned Alignment, int Offset,
-                                        bool isTarget) {
+SDValue SelectionDAG::getConstantPool(MachineConstantPoolValue *C, MVT VT,
+                                      unsigned Alignment, int Offset,
+                                      bool isTarget) {
   unsigned Opc = isTarget ? ISD::TargetConstantPool : ISD::ConstantPool;
   FoldingSetNodeID ID;
   AddNodeIDNode(ID, Opc, getVTList(VT), 0, 0);
@@ -968,76 +968,76 @@ SDOperand SelectionDAG::getConstantPool(MachineConstantPoolValue *C, MVT VT,
   C->AddSelectionDAGCSEId(ID);
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
-    return SDOperand(E, 0);
+    return SDValue(E, 0);
   SDNode *N = getAllocator().Allocate<ConstantPoolSDNode>();
   new (N) ConstantPoolSDNode(isTarget, C, VT, Offset, Alignment);
   CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
-  return SDOperand(N, 0);
+  return SDValue(N, 0);
 }
 
 
-SDOperand SelectionDAG::getBasicBlock(MachineBasicBlock *MBB) {
+SDValue SelectionDAG::getBasicBlock(MachineBasicBlock *MBB) {
   FoldingSetNodeID ID;
   AddNodeIDNode(ID, ISD::BasicBlock, getVTList(MVT::Other), 0, 0);
   ID.AddPointer(MBB);
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
-    return SDOperand(E, 0);
+    return SDValue(E, 0);
   SDNode *N = getAllocator().Allocate<BasicBlockSDNode>();
   new (N) BasicBlockSDNode(MBB);
   CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
-  return SDOperand(N, 0);
+  return SDValue(N, 0);
 }
 
-SDOperand SelectionDAG::getArgFlags(ISD::ArgFlagsTy Flags) {
+SDValue SelectionDAG::getArgFlags(ISD::ArgFlagsTy Flags) {
   FoldingSetNodeID ID;
   AddNodeIDNode(ID, ISD::ARG_FLAGS, getVTList(MVT::Other), 0, 0);
   ID.AddInteger(Flags.getRawBits());
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
-    return SDOperand(E, 0);
+    return SDValue(E, 0);
   SDNode *N = getAllocator().Allocate<ARG_FLAGSSDNode>();
   new (N) ARG_FLAGSSDNode(Flags);
   CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
-  return SDOperand(N, 0);
+  return SDValue(N, 0);
 }
 
-SDOperand SelectionDAG::getValueType(MVT VT) {
+SDValue SelectionDAG::getValueType(MVT VT) {
   if (VT.isSimple() && (unsigned)VT.getSimpleVT() >= ValueTypeNodes.size())
     ValueTypeNodes.resize(VT.getSimpleVT()+1);
 
   SDNode *&N = VT.isExtended() ?
     ExtendedValueTypeNodes[VT] : ValueTypeNodes[VT.getSimpleVT()];
 
-  if (N) return SDOperand(N, 0);
+  if (N) return SDValue(N, 0);
   N = getAllocator().Allocate<VTSDNode>();
   new (N) VTSDNode(VT);
   AllNodes.push_back(N);
-  return SDOperand(N, 0);
+  return SDValue(N, 0);
 }
 
-SDOperand SelectionDAG::getExternalSymbol(const char *Sym, MVT VT) {
+SDValue SelectionDAG::getExternalSymbol(const char *Sym, MVT VT) {
   SDNode *&N = ExternalSymbols[Sym];
-  if (N) return SDOperand(N, 0);
+  if (N) return SDValue(N, 0);
   N = getAllocator().Allocate<ExternalSymbolSDNode>();
   new (N) ExternalSymbolSDNode(false, Sym, VT);
   AllNodes.push_back(N);
-  return SDOperand(N, 0);
+  return SDValue(N, 0);
 }
 
-SDOperand SelectionDAG::getTargetExternalSymbol(const char *Sym, MVT VT) {
+SDValue SelectionDAG::getTargetExternalSymbol(const char *Sym, MVT VT) {
   SDNode *&N = TargetExternalSymbols[Sym];
-  if (N) return SDOperand(N, 0);
+  if (N) return SDValue(N, 0);
   N = getAllocator().Allocate<ExternalSymbolSDNode>();
   new (N) ExternalSymbolSDNode(true, Sym, VT);
   AllNodes.push_back(N);
-  return SDOperand(N, 0);
+  return SDValue(N, 0);
 }
 
-SDOperand SelectionDAG::getCondCode(ISD::CondCode Cond) {
+SDValue SelectionDAG::getCondCode(ISD::CondCode Cond) {
   if ((unsigned)Cond >= CondCodeNodes.size())
     CondCodeNodes.resize(Cond+1);
 
@@ -1047,50 +1047,50 @@ SDOperand SelectionDAG::getCondCode(ISD::CondCode Cond) {
     CondCodeNodes[Cond] = N;
     AllNodes.push_back(N);
   }
-  return SDOperand(CondCodeNodes[Cond], 0);
+  return SDValue(CondCodeNodes[Cond], 0);
 }
 
-SDOperand SelectionDAG::getRegister(unsigned RegNo, MVT VT) {
+SDValue SelectionDAG::getRegister(unsigned RegNo, MVT VT) {
   FoldingSetNodeID ID;
   AddNodeIDNode(ID, ISD::Register, getVTList(VT), 0, 0);
   ID.AddInteger(RegNo);
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
-    return SDOperand(E, 0);
+    return SDValue(E, 0);
   SDNode *N = getAllocator().Allocate<RegisterSDNode>();
   new (N) RegisterSDNode(RegNo, VT);
   CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
-  return SDOperand(N, 0);
+  return SDValue(N, 0);
 }
 
-SDOperand SelectionDAG::getDbgStopPoint(SDOperand Root,
-                                        unsigned Line, unsigned Col,
-                                        const CompileUnitDesc *CU) {
+SDValue SelectionDAG::getDbgStopPoint(SDValue Root,
+                                      unsigned Line, unsigned Col,
+                                      const CompileUnitDesc *CU) {
   SDNode *N = getAllocator().Allocate<DbgStopPointSDNode>();
   new (N) DbgStopPointSDNode(Root, Line, Col, CU);
   AllNodes.push_back(N);
-  return SDOperand(N, 0);
+  return SDValue(N, 0);
 }
 
-SDOperand SelectionDAG::getLabel(unsigned Opcode,
-                                 SDOperand Root,
-                                 unsigned LabelID) {
+SDValue SelectionDAG::getLabel(unsigned Opcode,
+                               SDValue Root,
+                               unsigned LabelID) {
   FoldingSetNodeID ID;
-  SDOperand Ops[] = { Root };
+  SDValue Ops[] = { Root };
   AddNodeIDNode(ID, Opcode, getVTList(MVT::Other), &Ops[0], 1);
   ID.AddInteger(LabelID);
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
-    return SDOperand(E, 0);
+    return SDValue(E, 0);
   SDNode *N = getAllocator().Allocate<LabelSDNode>();
   new (N) LabelSDNode(Opcode, Root, LabelID);
   CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
-  return SDOperand(N, 0);
+  return SDValue(N, 0);
 }
 
-SDOperand SelectionDAG::getSrcValue(const Value *V) {
+SDValue SelectionDAG::getSrcValue(const Value *V) {
   assert((!V || isa<PointerType>(V->getType())) &&
          "SrcValue is not a pointer?");
 
@@ -1100,16 +1100,16 @@ SDOperand SelectionDAG::getSrcValue(const Value *V) {
 
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
-    return SDOperand(E, 0);
+    return SDValue(E, 0);
 
   SDNode *N = getAllocator().Allocate<SrcValueSDNode>();
   new (N) SrcValueSDNode(V);
   CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
-  return SDOperand(N, 0);
+  return SDValue(N, 0);
 }
 
-SDOperand SelectionDAG::getMemOperand(const MachineMemOperand &MO) {
+SDValue SelectionDAG::getMemOperand(const MachineMemOperand &MO) {
   const Value *v = MO.getValue();
   assert((!v || isa<PointerType>(v->getType())) &&
          "SrcValue is not a pointer?");
@@ -1124,18 +1124,18 @@ SDOperand SelectionDAG::getMemOperand(const MachineMemOperand &MO) {
 
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
-    return SDOperand(E, 0);
+    return SDValue(E, 0);
 
   SDNode *N = getAllocator().Allocate<MemOperandSDNode>();
   new (N) MemOperandSDNode(MO);
   CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
-  return SDOperand(N, 0);
+  return SDValue(N, 0);
 }
 
 /// CreateStackTemporary - Create a stack temporary, suitable for holding the
 /// specified value type.
-SDOperand SelectionDAG::CreateStackTemporary(MVT VT, unsigned minAlign) {
+SDValue SelectionDAG::CreateStackTemporary(MVT VT, unsigned minAlign) {
   MachineFrameInfo *FrameInfo = getMachineFunction().getFrameInfo();
   unsigned ByteSize = VT.getSizeInBits()/8;
   const Type *Ty = VT.getTypeForMVT();
@@ -1146,8 +1146,8 @@ SDOperand SelectionDAG::CreateStackTemporary(MVT VT, unsigned minAlign) {
   return getFrameIndex(FrameIdx, TLI.getPointerTy());
 }
 
-SDOperand SelectionDAG::FoldSetCC(MVT VT, SDOperand N1,
-                                  SDOperand N2, ISD::CondCode Cond) {
+SDValue SelectionDAG::FoldSetCC(MVT VT, SDValue N1,
+                                SDValue N2, ISD::CondCode Cond) {
   // These setcc operations always fold.
   switch (Cond) {
   default: break;
@@ -1194,7 +1194,7 @@ SDOperand SelectionDAG::FoldSetCC(MVT VT, SDOperand N1,
     if (ConstantFPSDNode *N2C = dyn_cast<ConstantFPSDNode>(N2.Val)) {
       // No compile time operations on this type yet.
       if (N1C->getValueType(0) == MVT::ppcf128)
-        return SDOperand();
+        return SDValue();
 
       APFloat::cmpResult R = N1C->getValueAPF().compare(N2C->getValueAPF());
       switch (Cond) {
@@ -1245,12 +1245,12 @@ SDOperand SelectionDAG::FoldSetCC(MVT VT, SDOperand N1,
   }
 
   // Could not fold it.
-  return SDOperand();
+  return SDValue();
 }
 
 /// SignBitIsZero - Return true if the sign bit of Op is known to be zero.  We
 /// use this predicate to simplify operations downstream.
-bool SelectionDAG::SignBitIsZero(SDOperand Op, unsigned Depth) const {
+bool SelectionDAG::SignBitIsZero(SDValue Op, unsigned Depth) const {
   unsigned BitWidth = Op.getValueSizeInBits();
   return MaskedValueIsZero(Op, APInt::getSignBit(BitWidth), Depth);
 }
@@ -1258,7 +1258,7 @@ bool SelectionDAG::SignBitIsZero(SDOperand Op, unsigned Depth) const {
 /// MaskedValueIsZero - Return true if 'V & Mask' is known to be zero.  We use
 /// this predicate to simplify operations downstream.  Mask is known to be zero
 /// for bits that V cannot have.
-bool SelectionDAG::MaskedValueIsZero(SDOperand Op, const APInt &Mask, 
+bool SelectionDAG::MaskedValueIsZero(SDValue Op, const APInt &Mask, 
                                      unsigned Depth) const {
   APInt KnownZero, KnownOne;
   ComputeMaskedBits(Op, Mask, KnownZero, KnownOne, Depth);
@@ -1270,7 +1270,7 @@ bool SelectionDAG::MaskedValueIsZero(SDOperand Op, const APInt &Mask,
 /// known to be either zero or one and return them in the KnownZero/KnownOne
 /// bitsets.  This code only analyzes bits in Mask, in order to short-circuit
 /// processing.
-void SelectionDAG::ComputeMaskedBits(SDOperand Op, const APInt &Mask, 
+void SelectionDAG::ComputeMaskedBits(SDValue Op, const APInt &Mask, 
                                      APInt &KnownZero, APInt &KnownOne,
                                      unsigned Depth) const {
   unsigned BitWidth = Mask.getBitWidth();
@@ -1720,7 +1720,7 @@ void SelectionDAG::ComputeMaskedBits(SDOperand Op, const APInt &Mask,
 /// is always equal to the sign bit (itself), but other cases can give us
 /// information.  For example, immediately after an "SRA X, 2", we know that
 /// the top 3 bits are all equal to each other, so we return 3.
-unsigned SelectionDAG::ComputeNumSignBits(SDOperand Op, unsigned Depth) const{
+unsigned SelectionDAG::ComputeNumSignBits(SDValue Op, unsigned Depth) const{
   MVT VT = Op.getValueType();
   assert(VT.isInteger() && "Invalid VT!");
   unsigned VTBits = VT.getSizeInBits();
@@ -1932,7 +1932,7 @@ unsigned SelectionDAG::ComputeNumSignBits(SDOperand Op, unsigned Depth) const{
 }
 
 
-bool SelectionDAG::isVerifiedDebugInfoDesc(SDOperand Op) const {
+bool SelectionDAG::isVerifiedDebugInfoDesc(SDValue Op) const {
   GlobalAddressSDNode *GA = dyn_cast<GlobalAddressSDNode>(Op);
   if (!GA) return false;
   GlobalVariable *GV = dyn_cast<GlobalVariable>(GA->getGlobal());
@@ -1944,21 +1944,21 @@ bool SelectionDAG::isVerifiedDebugInfoDesc(SDOperand Op) const {
 
 /// getShuffleScalarElt - Returns the scalar element that will make up the ith
 /// element of the result of the vector shuffle.
-SDOperand SelectionDAG::getShuffleScalarElt(const SDNode *N, unsigned i) {
+SDValue SelectionDAG::getShuffleScalarElt(const SDNode *N, unsigned i) {
   MVT VT = N->getValueType(0);
-  SDOperand PermMask = N->getOperand(2);
-  SDOperand Idx = PermMask.getOperand(i);
+  SDValue PermMask = N->getOperand(2);
+  SDValue Idx = PermMask.getOperand(i);
   if (Idx.getOpcode() == ISD::UNDEF)
     return getNode(ISD::UNDEF, VT.getVectorElementType());
   unsigned Index = cast<ConstantSDNode>(Idx)->getValue();
   unsigned NumElems = PermMask.getNumOperands();
-  SDOperand V = (Index < NumElems) ? N->getOperand(0) : N->getOperand(1);
+  SDValue V = (Index < NumElems) ? N->getOperand(0) : N->getOperand(1);
   Index %= NumElems;
 
   if (V.getOpcode() == ISD::BIT_CONVERT) {
     V = V.getOperand(0);
     if (V.getValueType().getVectorNumElements() != NumElems)
-      return SDOperand();
+      return SDValue();
   }
   if (V.getOpcode() == ISD::SCALAR_TO_VECTOR)
     return (Index == 0) ? V.getOperand(0)
@@ -1967,18 +1967,18 @@ SDOperand SelectionDAG::getShuffleScalarElt(const SDNode *N, unsigned i) {
     return V.getOperand(Index);
   if (V.getOpcode() == ISD::VECTOR_SHUFFLE)
     return getShuffleScalarElt(V.Val, Index);
-  return SDOperand();
+  return SDValue();
 }
 
 
 /// getNode - Gets or creates the specified node.
 ///
-SDOperand SelectionDAG::getNode(unsigned Opcode, MVT VT) {
+SDValue SelectionDAG::getNode(unsigned Opcode, MVT VT) {
   FoldingSetNodeID ID;
   AddNodeIDNode(ID, Opcode, getVTList(VT), 0, 0);
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
-    return SDOperand(E, 0);
+    return SDValue(E, 0);
   SDNode *N = getAllocator().Allocate<SDNode>();
   new (N) SDNode(Opcode, SDNode::getSDVTList(VT));
   CSEMap.InsertNode(N, IP);
@@ -1987,10 +1987,10 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT VT) {
 #ifndef NDEBUG
   VerifyNode(N);
 #endif
-  return SDOperand(N, 0);
+  return SDValue(N, 0);
 }
 
-SDOperand SelectionDAG::getNode(unsigned Opcode, MVT VT, SDOperand Operand) {
+SDValue SelectionDAG::getNode(unsigned Opcode, MVT VT, SDValue Operand) {
   // Constant fold unary operations with an integer constant operand.
   if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Operand.Val)) {
     const APInt &Val = C->getAPIntValue();
@@ -2171,11 +2171,11 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT VT, SDOperand Operand) {
   SDVTList VTs = getVTList(VT);
   if (VT != MVT::Flag) { // Don't CSE flag producing nodes
     FoldingSetNodeID ID;
-    SDOperand Ops[1] = { Operand };
+    SDValue Ops[1] = { Operand };
     AddNodeIDNode(ID, Opcode, VTs, Ops, 1);
     void *IP = 0;
     if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
-      return SDOperand(E, 0);
+      return SDValue(E, 0);
     N = getAllocator().Allocate<UnarySDNode>();
     new (N) UnarySDNode(Opcode, VTs, Operand);
     CSEMap.InsertNode(N, IP);
@@ -2188,11 +2188,11 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT VT, SDOperand Operand) {
 #ifndef NDEBUG
   VerifyNode(N);
 #endif
-  return SDOperand(N, 0);
+  return SDValue(N, 0);
 }
 
-SDOperand SelectionDAG::getNode(unsigned Opcode, MVT VT,
-                                SDOperand N1, SDOperand N2) {
+SDValue SelectionDAG::getNode(unsigned Opcode, MVT VT,
+                              SDValue N1, SDValue N2) {
   ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1.Val);
   ConstantSDNode *N2C = dyn_cast<ConstantSDNode>(N2.Val);
   switch (Opcode) {
@@ -2524,12 +2524,12 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT VT,
   SDNode *N;
   SDVTList VTs = getVTList(VT);
   if (VT != MVT::Flag) {
-    SDOperand Ops[] = { N1, N2 };
+    SDValue Ops[] = { N1, N2 };
     FoldingSetNodeID ID;
     AddNodeIDNode(ID, Opcode, VTs, Ops, 2);
     void *IP = 0;
     if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
-      return SDOperand(E, 0);
+      return SDValue(E, 0);
     N = getAllocator().Allocate<BinarySDNode>();
     new (N) BinarySDNode(Opcode, VTs, N1, N2);
     CSEMap.InsertNode(N, IP);
@@ -2542,18 +2542,18 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT VT,
 #ifndef NDEBUG
   VerifyNode(N);
 #endif
-  return SDOperand(N, 0);
+  return SDValue(N, 0);
 }
 
-SDOperand SelectionDAG::getNode(unsigned Opcode, MVT VT,
-                                SDOperand N1, SDOperand N2, SDOperand N3) {
+SDValue SelectionDAG::getNode(unsigned Opcode, MVT VT,
+                              SDValue N1, SDValue N2, SDValue N3) {
   // Perform various simplifications.
   ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1.Val);
   ConstantSDNode *N2C = dyn_cast<ConstantSDNode>(N2.Val);
   switch (Opcode) {
   case ISD::SETCC: {
     // Use FoldSetCC to simplify SETCC's.
-    SDOperand Simp = FoldSetCC(VT, N1, N2, cast<CondCodeSDNode>(N3)->get());
+    SDValue Simp = FoldSetCC(VT, N1, N2, cast<CondCodeSDNode>(N3)->get());
     if (Simp.Val) return Simp;
     break;
   }
@@ -2593,12 +2593,12 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT VT,
   SDNode *N;
   SDVTList VTs = getVTList(VT);
   if (VT != MVT::Flag) {
-    SDOperand Ops[] = { N1, N2, N3 };
+    SDValue Ops[] = { N1, N2, N3 };
     FoldingSetNodeID ID;
     AddNodeIDNode(ID, Opcode, VTs, Ops, 3);
     void *IP = 0;
     if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
-      return SDOperand(E, 0);
+      return SDValue(E, 0);
     N = getAllocator().Allocate<TernarySDNode>();
     new (N) TernarySDNode(Opcode, VTs, N1, N2, N3);
     CSEMap.InsertNode(N, IP);
@@ -2610,26 +2610,26 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT VT,
 #ifndef NDEBUG
   VerifyNode(N);
 #endif
-  return SDOperand(N, 0);
+  return SDValue(N, 0);
 }
 
-SDOperand SelectionDAG::getNode(unsigned Opcode, MVT VT,
-                                SDOperand N1, SDOperand N2, SDOperand N3,
-                                SDOperand N4) {
-  SDOperand Ops[] = { N1, N2, N3, N4 };
+SDValue SelectionDAG::getNode(unsigned Opcode, MVT VT,
+                              SDValue N1, SDValue N2, SDValue N3,
+                              SDValue N4) {
+  SDValue Ops[] = { N1, N2, N3, N4 };
   return getNode(Opcode, VT, Ops, 4);
 }
 
-SDOperand SelectionDAG::getNode(unsigned Opcode, MVT VT,
-                                SDOperand N1, SDOperand N2, SDOperand N3,
-                                SDOperand N4, SDOperand N5) {
-  SDOperand Ops[] = { N1, N2, N3, N4, N5 };
+SDValue SelectionDAG::getNode(unsigned Opcode, MVT VT,
+                              SDValue N1, SDValue N2, SDValue N3,
+                              SDValue N4, SDValue N5) {
+  SDValue Ops[] = { N1, N2, N3, N4, N5 };
   return getNode(Opcode, VT, Ops, 5);
 }
 
 /// getMemsetValue - Vectorized representation of the memset value
 /// operand.
-static SDOperand getMemsetValue(SDOperand Value, MVT VT, SelectionDAG &DAG) {
+static SDValue getMemsetValue(SDValue Value, MVT VT, SelectionDAG &DAG) {
   unsigned NumBits = VT.isVector() ?
     VT.getVectorElementType().getSizeInBits() : VT.getSizeInBits();
   if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Value)) {
@@ -2659,7 +2659,7 @@ static SDOperand getMemsetValue(SDOperand Value, MVT VT, SelectionDAG &DAG) {
 /// getMemsetStringVal - Similar to getMemsetValue. Except this is only
 /// used when a memcpy is turned into a memset when the source is a constant
 /// string ptr.
-static SDOperand getMemsetStringVal(MVT VT, SelectionDAG &DAG,
+static SDValue getMemsetStringVal(MVT VT, SelectionDAG &DAG,
                                     const TargetLowering &TLI,
                                     std::string &Str, unsigned Offset) {
   // Handle vector with all elements zero.
@@ -2687,7 +2687,7 @@ static SDOperand getMemsetStringVal(MVT VT, SelectionDAG &DAG,
 
 /// getMemBasePlusOffset - Returns base and offset node for the 
 ///
-static SDOperand getMemBasePlusOffset(SDOperand Base, unsigned Offset,
+static SDValue getMemBasePlusOffset(SDValue Base, unsigned Offset,
                                       SelectionDAG &DAG) {
   MVT VT = Base.getValueType();
   return DAG.getNode(ISD::ADD, VT, Base, DAG.getConstant(Offset, VT));
@@ -2695,7 +2695,7 @@ static SDOperand getMemBasePlusOffset(SDOperand Base, unsigned Offset,
 
 /// isMemSrcFromString - Returns true if memcpy source is a string constant.
 ///
-static bool isMemSrcFromString(SDOperand Src, std::string &Str) {
+static bool isMemSrcFromString(SDValue Src, std::string &Str) {
   unsigned SrcDelta = 0;
   GlobalAddressSDNode *G = NULL;
   if (Src.getOpcode() == ISD::GlobalAddress)
@@ -2721,7 +2721,7 @@ static bool isMemSrcFromString(SDOperand Src, std::string &Str) {
 /// types of the sequence of memory ops to perform memset / memcpy.
 static
 bool MeetsMaxMemopRequirement(std::vector<MVT> &MemOps,
-                              SDOperand Dst, SDOperand Src,
+                              SDValue Dst, SDValue Src,
                               unsigned Limit, uint64_t Size, unsigned &Align,
                               std::string &Str, bool &isSrcStr,
                               SelectionDAG &DAG,
@@ -2802,9 +2802,9 @@ bool MeetsMaxMemopRequirement(std::vector<MVT> &MemOps,
   return true;
 }
 
-static SDOperand getMemcpyLoadsAndStores(SelectionDAG &DAG,
-                                         SDOperand Chain, SDOperand Dst,
-                                         SDOperand Src, uint64_t Size,
+static SDValue getMemcpyLoadsAndStores(SelectionDAG &DAG,
+                                         SDValue Chain, SDValue Dst,
+                                         SDValue Src, uint64_t Size,
                                          unsigned Align, bool AlwaysInline,
                                          const Value *DstSV, uint64_t DstSVOff,
                                          const Value *SrcSV, uint64_t SrcSVOff){
@@ -2821,17 +2821,17 @@ static SDOperand getMemcpyLoadsAndStores(SelectionDAG &DAG,
   bool CopyFromStr;
   if (!MeetsMaxMemopRequirement(MemOps, Dst, Src, Limit, Size, DstAlign,
                                 Str, CopyFromStr, DAG, TLI))
-    return SDOperand();
+    return SDValue();
 
 
   bool isZeroStr = CopyFromStr && Str.empty();
-  SmallVector<SDOperand, 8> OutChains;
+  SmallVector<SDValue, 8> OutChains;
   unsigned NumMemOps = MemOps.size();
   uint64_t SrcOff = 0, DstOff = 0;
   for (unsigned i = 0; i < NumMemOps; i++) {
     MVT VT = MemOps[i];
     unsigned VTSize = VT.getSizeInBits() / 8;
-    SDOperand Value, Store;
+    SDValue Value, Store;
 
     if (CopyFromStr && (isZeroStr || !VT.isVector())) {
       // It's unlikely a store of a vector immediate can be done in a single
@@ -2860,9 +2860,9 @@ static SDOperand getMemcpyLoadsAndStores(SelectionDAG &DAG,
                      &OutChains[0], OutChains.size());
 }
 
-static SDOperand getMemmoveLoadsAndStores(SelectionDAG &DAG,
-                                          SDOperand Chain, SDOperand Dst,
-                                          SDOperand Src, uint64_t Size,
+static SDValue getMemmoveLoadsAndStores(SelectionDAG &DAG,
+                                          SDValue Chain, SDValue Dst,
+                                          SDValue Src, uint64_t Size,
                                           unsigned Align, bool AlwaysInline,
                                           const Value *DstSV, uint64_t DstSVOff,
                                           const Value *SrcSV, uint64_t SrcSVOff){
@@ -2879,18 +2879,18 @@ static SDOperand getMemmoveLoadsAndStores(SelectionDAG &DAG,
   bool CopyFromStr;
   if (!MeetsMaxMemopRequirement(MemOps, Dst, Src, Limit, Size, DstAlign,
                                 Str, CopyFromStr, DAG, TLI))
-    return SDOperand();
+    return SDValue();
 
   uint64_t SrcOff = 0, DstOff = 0;
 
-  SmallVector<SDOperand, 8> LoadValues;
-  SmallVector<SDOperand, 8> LoadChains;
-  SmallVector<SDOperand, 8> OutChains;
+  SmallVector<SDValue, 8> LoadValues;
+  SmallVector<SDValue, 8> LoadChains;
+  SmallVector<SDValue, 8> OutChains;
   unsigned NumMemOps = MemOps.size();
   for (unsigned i = 0; i < NumMemOps; i++) {
     MVT VT = MemOps[i];
     unsigned VTSize = VT.getSizeInBits() / 8;
-    SDOperand Value, Store;
+    SDValue Value, Store;
 
     Value = DAG.getLoad(VT, Chain,
                         getMemBasePlusOffset(Src, SrcOff, DAG),
@@ -2905,7 +2905,7 @@ static SDOperand getMemmoveLoadsAndStores(SelectionDAG &DAG,
   for (unsigned i = 0; i < NumMemOps; i++) {
     MVT VT = MemOps[i];
     unsigned VTSize = VT.getSizeInBits() / 8;
-    SDOperand Value, Store;
+    SDValue Value, Store;
 
     Store = DAG.getStore(Chain, LoadValues[i],
                          getMemBasePlusOffset(Dst, DstOff, DAG),
@@ -2918,9 +2918,9 @@ static SDOperand getMemmoveLoadsAndStores(SelectionDAG &DAG,
                      &OutChains[0], OutChains.size());
 }
 
-static SDOperand getMemsetStores(SelectionDAG &DAG,
-                                 SDOperand Chain, SDOperand Dst,
-                                 SDOperand Src, uint64_t Size,
+static SDValue getMemsetStores(SelectionDAG &DAG,
+                                 SDValue Chain, SDValue Dst,
+                                 SDValue Src, uint64_t Size,
                                  unsigned Align,
                                  const Value *DstSV, uint64_t DstSVOff) {
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
@@ -2932,17 +2932,17 @@ static SDOperand getMemsetStores(SelectionDAG &DAG,
   bool CopyFromStr;
   if (!MeetsMaxMemopRequirement(MemOps, Dst, Src, TLI.getMaxStoresPerMemset(),
                                 Size, Align, Str, CopyFromStr, DAG, TLI))
-    return SDOperand();
+    return SDValue();
 
-  SmallVector<SDOperand, 8> OutChains;
+  SmallVector<SDValue, 8> OutChains;
   uint64_t DstOff = 0;
 
   unsigned NumMemOps = MemOps.size();
   for (unsigned i = 0; i < NumMemOps; i++) {
     MVT VT = MemOps[i];
     unsigned VTSize = VT.getSizeInBits() / 8;
-    SDOperand Value = getMemsetValue(Src, VT, DAG);
-    SDOperand Store = DAG.getStore(Chain, Value,
+    SDValue Value = getMemsetValue(Src, VT, DAG);
+    SDValue Store = DAG.getStore(Chain, Value,
                                    getMemBasePlusOffset(Dst, DstOff, DAG),
                                    DstSV, DstSVOff + DstOff);
     OutChains.push_back(Store);
@@ -2953,11 +2953,11 @@ static SDOperand getMemsetStores(SelectionDAG &DAG,
                      &OutChains[0], OutChains.size());
 }
 
-SDOperand SelectionDAG::getMemcpy(SDOperand Chain, SDOperand Dst,
-                                  SDOperand Src, SDOperand Size,
-                                  unsigned Align, bool AlwaysInline,
-                                  const Value *DstSV, uint64_t DstSVOff,
-                                  const Value *SrcSV, uint64_t SrcSVOff) {
+SDValue SelectionDAG::getMemcpy(SDValue Chain, SDValue Dst,
+                                SDValue Src, SDValue Size,
+                                unsigned Align, bool AlwaysInline,
+                                const Value *DstSV, uint64_t DstSVOff,
+                                const Value *SrcSV, uint64_t SrcSVOff) {
 
   // Check to see if we should lower the memcpy to loads and stores first.
   // For cases within the target-specified limits, this is the best choice.
@@ -2967,7 +2967,7 @@ SDOperand SelectionDAG::getMemcpy(SDOperand Chain, SDOperand Dst,
     if (ConstantSize->isNullValue())
       return Chain;
 
-    SDOperand Result =
+    SDValue Result =
       getMemcpyLoadsAndStores(*this, Chain, Dst, Src, ConstantSize->getValue(),
                               Align, false, DstSV, DstSVOff, SrcSV, SrcSVOff);
     if (Result.Val)
@@ -2976,7 +2976,7 @@ SDOperand SelectionDAG::getMemcpy(SDOperand Chain, SDOperand Dst,
 
   // Then check to see if we should lower the memcpy with target-specific
   // code. If the target chooses to do this, this is the next best.
-  SDOperand Result =
+  SDValue Result =
     TLI.EmitTargetCodeForMemcpy(*this, Chain, Dst, Src, Size, Align,
                                 AlwaysInline,
                                 DstSV, DstSVOff, SrcSV, SrcSVOff);
@@ -2999,7 +2999,7 @@ SDOperand SelectionDAG::getMemcpy(SDOperand Chain, SDOperand Dst,
   Entry.Node = Dst; Args.push_back(Entry);
   Entry.Node = Src; Args.push_back(Entry);
   Entry.Node = Size; Args.push_back(Entry);
-  std::pair<SDOperand,SDOperand> CallResult =
+  std::pair<SDValue,SDValue> CallResult =
     TLI.LowerCallTo(Chain, Type::VoidTy,
                     false, false, false, CallingConv::C, false,
                     getExternalSymbol("memcpy", TLI.getPointerTy()),
@@ -3007,11 +3007,11 @@ SDOperand SelectionDAG::getMemcpy(SDOperand Chain, SDOperand Dst,
   return CallResult.second;
 }
 
-SDOperand SelectionDAG::getMemmove(SDOperand Chain, SDOperand Dst,
-                                   SDOperand Src, SDOperand Size,
-                                   unsigned Align,
-                                   const Value *DstSV, uint64_t DstSVOff,
-                                   const Value *SrcSV, uint64_t SrcSVOff) {
+SDValue SelectionDAG::getMemmove(SDValue Chain, SDValue Dst,
+                                 SDValue Src, SDValue Size,
+                                 unsigned Align,
+                                 const Value *DstSV, uint64_t DstSVOff,
+                                 const Value *SrcSV, uint64_t SrcSVOff) {
 
   // Check to see if we should lower the memmove to loads and stores first.
   // For cases within the target-specified limits, this is the best choice.
@@ -3021,7 +3021,7 @@ SDOperand SelectionDAG::getMemmove(SDOperand Chain, SDOperand Dst,
     if (ConstantSize->isNullValue())
       return Chain;
 
-    SDOperand Result =
+    SDValue Result =
       getMemmoveLoadsAndStores(*this, Chain, Dst, Src, ConstantSize->getValue(),
                                Align, false, DstSV, DstSVOff, SrcSV, SrcSVOff);
     if (Result.Val)
@@ -3030,7 +3030,7 @@ SDOperand SelectionDAG::getMemmove(SDOperand Chain, SDOperand Dst,
 
   // Then check to see if we should lower the memmove with target-specific
   // code. If the target chooses to do this, this is the next best.
-  SDOperand Result =
+  SDValue Result =
     TLI.EmitTargetCodeForMemmove(*this, Chain, Dst, Src, Size, Align,
                                  DstSV, DstSVOff, SrcSV, SrcSVOff);
   if (Result.Val)
@@ -3043,7 +3043,7 @@ SDOperand SelectionDAG::getMemmove(SDOperand Chain, SDOperand Dst,
   Entry.Node = Dst; Args.push_back(Entry);
   Entry.Node = Src; Args.push_back(Entry);
   Entry.Node = Size; Args.push_back(Entry);
-  std::pair<SDOperand,SDOperand> CallResult =
+  std::pair<SDValue,SDValue> CallResult =
     TLI.LowerCallTo(Chain, Type::VoidTy,
                     false, false, false, CallingConv::C, false,
                     getExternalSymbol("memmove", TLI.getPointerTy()),
@@ -3051,10 +3051,10 @@ SDOperand SelectionDAG::getMemmove(SDOperand Chain, SDOperand Dst,
   return CallResult.second;
 }
 
-SDOperand SelectionDAG::getMemset(SDOperand Chain, SDOperand Dst,
-                                  SDOperand Src, SDOperand Size,
-                                  unsigned Align,
-                                  const Value *DstSV, uint64_t DstSVOff) {
+SDValue SelectionDAG::getMemset(SDValue Chain, SDValue Dst,
+                                SDValue Src, SDValue Size,
+                                unsigned Align,
+                                const Value *DstSV, uint64_t DstSVOff) {
 
   // Check to see if we should lower the memset to stores first.
   // For cases within the target-specified limits, this is the best choice.
@@ -3064,7 +3064,7 @@ SDOperand SelectionDAG::getMemset(SDOperand Chain, SDOperand Dst,
     if (ConstantSize->isNullValue())
       return Chain;
 
-    SDOperand Result =
+    SDValue Result =
       getMemsetStores(*this, Chain, Dst, Src, ConstantSize->getValue(), Align,
                       DstSV, DstSVOff);
     if (Result.Val)
@@ -3073,7 +3073,7 @@ SDOperand SelectionDAG::getMemset(SDOperand Chain, SDOperand Dst,
 
   // Then check to see if we should lower the memset with target-specific
   // code. If the target chooses to do this, this is the next best.
-  SDOperand Result =
+  SDValue Result =
     TLI.EmitTargetCodeForMemset(*this, Chain, Dst, Src, Size, Align,
                                 DstSV, DstSVOff);
   if (Result.Val)
@@ -3094,7 +3094,7 @@ SDOperand SelectionDAG::getMemset(SDOperand Chain, SDOperand Dst,
   Args.push_back(Entry);
   Entry.Node = Size; Entry.Ty = IntPtrTy; Entry.isSExt = false;
   Args.push_back(Entry);
-  std::pair<SDOperand,SDOperand> CallResult =
+  std::pair<SDValue,SDValue> CallResult =
     TLI.LowerCallTo(Chain, Type::VoidTy,
                     false, false, false, CallingConv::C, false,
                     getExternalSymbol("memset", TLI.getPointerTy()),
@@ -3102,10 +3102,10 @@ SDOperand SelectionDAG::getMemset(SDOperand Chain, SDOperand Dst,
   return CallResult.second;
 }
 
-SDOperand SelectionDAG::getAtomic(unsigned Opcode, SDOperand Chain, 
-                                  SDOperand Ptr, SDOperand Cmp, 
-                                  SDOperand Swp, const Value* PtrVal,
-                                  unsigned Alignment) {
+SDValue SelectionDAG::getAtomic(unsigned Opcode, SDValue Chain, 
+                                SDValue Ptr, SDValue Cmp, 
+                                SDValue Swp, const Value* PtrVal,
+                                unsigned Alignment) {
   assert(Opcode == ISD::ATOMIC_CMP_SWAP && "Invalid Atomic Op");
   assert(Cmp.getValueType() == Swp.getValueType() && "Invalid Atomic Op Types");
 
@@ -3116,22 +3116,22 @@ SDOperand SelectionDAG::getAtomic(unsigned Opcode, SDOperand Chain,
 
   SDVTList VTs = getVTList(VT, MVT::Other);
   FoldingSetNodeID ID;
-  SDOperand Ops[] = {Chain, Ptr, Cmp, Swp};
+  SDValue Ops[] = {Chain, Ptr, Cmp, Swp};
   AddNodeIDNode(ID, Opcode, VTs, Ops, 4);
   void* IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
-    return SDOperand(E, 0);
+    return SDValue(E, 0);
   SDNode* N = getAllocator().Allocate<AtomicSDNode>();
   new (N) AtomicSDNode(Opcode, VTs, Chain, Ptr, Cmp, Swp, PtrVal, Alignment);
   CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
-  return SDOperand(N, 0);
+  return SDValue(N, 0);
 }
 
-SDOperand SelectionDAG::getAtomic(unsigned Opcode, SDOperand Chain, 
-                                  SDOperand Ptr, SDOperand Val, 
-                                  const Value* PtrVal,
-                                  unsigned Alignment) {
+SDValue SelectionDAG::getAtomic(unsigned Opcode, SDValue Chain, 
+                                SDValue Ptr, SDValue Val, 
+                                const Value* PtrVal,
+                                unsigned Alignment) {
   assert((   Opcode == ISD::ATOMIC_LOAD_ADD || Opcode == ISD::ATOMIC_LOAD_SUB
           || Opcode == ISD::ATOMIC_SWAP || Opcode == ISD::ATOMIC_LOAD_AND
           || Opcode == ISD::ATOMIC_LOAD_OR || Opcode == ISD::ATOMIC_LOAD_XOR
@@ -3147,22 +3147,22 @@ SDOperand SelectionDAG::getAtomic(unsigned Opcode, SDOperand Chain,
 
   SDVTList VTs = getVTList(VT, MVT::Other);
   FoldingSetNodeID ID;
-  SDOperand Ops[] = {Chain, Ptr, Val};
+  SDValue Ops[] = {Chain, Ptr, Val};
   AddNodeIDNode(ID, Opcode, VTs, Ops, 3);
   void* IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
-    return SDOperand(E, 0);
+    return SDValue(E, 0);
   SDNode* N = getAllocator().Allocate<AtomicSDNode>();
   new (N) AtomicSDNode(Opcode, VTs, Chain, Ptr, Val, PtrVal, Alignment);
   CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
-  return SDOperand(N, 0);
+  return SDValue(N, 0);
 }
 
 /// getMergeValues - Create a MERGE_VALUES node from the given operands.
 /// Allowed to return something different (and simpler) if Simplify is true.
-SDOperand SelectionDAG::getMergeValues(const SDOperand *Ops, unsigned NumOps,
-                                       bool Simplify) {
+SDValue SelectionDAG::getMergeValues(const SDValue *Ops, unsigned NumOps,
+                                     bool Simplify) {
   if (Simplify && NumOps == 1)
     return Ops[0];
 
@@ -3173,10 +3173,10 @@ SDOperand SelectionDAG::getMergeValues(const SDOperand *Ops, unsigned NumOps,
   return getNode(ISD::MERGE_VALUES, getVTList(&VTs[0], NumOps), Ops, NumOps);
 }
 
-SDOperand
+SDValue
 SelectionDAG::getLoad(ISD::MemIndexedMode AM, ISD::LoadExtType ExtType,
-                      MVT VT, SDOperand Chain,
-                      SDOperand Ptr, SDOperand Offset,
+                      MVT VT, SDValue Chain,
+                      SDValue Ptr, SDValue Offset,
                       const Value *SV, int SVOffset, MVT EVT,
                       bool isVolatile, unsigned Alignment) {
   if (Alignment == 0)  // Ensure that codegen never sees alignment 0
@@ -3205,7 +3205,7 @@ SelectionDAG::getLoad(ISD::MemIndexedMode AM, ISD::LoadExtType ExtType,
 
   SDVTList VTs = Indexed ?
     getVTList(VT, Ptr.getValueType(), MVT::Other) : getVTList(VT, MVT::Other);
-  SDOperand Ops[] = { Chain, Ptr, Offset };
+  SDValue Ops[] = { Chain, Ptr, Offset };
   FoldingSetNodeID ID;
   AddNodeIDNode(ID, ISD::LOAD, VTs, Ops, 3);
   ID.AddInteger(AM);
@@ -3215,37 +3215,37 @@ SelectionDAG::getLoad(ISD::MemIndexedMode AM, ISD::LoadExtType ExtType,
   ID.AddInteger(isVolatile);
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
-    return SDOperand(E, 0);
+    return SDValue(E, 0);
   SDNode *N = getAllocator().Allocate<LoadSDNode>();
   new (N) LoadSDNode(Ops, VTs, AM, ExtType, EVT, SV, SVOffset,
                      Alignment, isVolatile);
   CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
-  return SDOperand(N, 0);
+  return SDValue(N, 0);
 }
 
-SDOperand SelectionDAG::getLoad(MVT VT,
-                                SDOperand Chain, SDOperand Ptr,
-                                const Value *SV, int SVOffset,
-                                bool isVolatile, unsigned Alignment) {
-  SDOperand Undef = getNode(ISD::UNDEF, Ptr.getValueType());
+SDValue SelectionDAG::getLoad(MVT VT,
+                              SDValue Chain, SDValue Ptr,
+                              const Value *SV, int SVOffset,
+                              bool isVolatile, unsigned Alignment) {
+  SDValue Undef = getNode(ISD::UNDEF, Ptr.getValueType());
   return getLoad(ISD::UNINDEXED, ISD::NON_EXTLOAD, VT, Chain, Ptr, Undef,
                  SV, SVOffset, VT, isVolatile, Alignment);
 }
 
-SDOperand SelectionDAG::getExtLoad(ISD::LoadExtType ExtType, MVT VT,
-                                   SDOperand Chain, SDOperand Ptr,
-                                   const Value *SV,
-                                   int SVOffset, MVT EVT,
-                                   bool isVolatile, unsigned Alignment) {
-  SDOperand Undef = getNode(ISD::UNDEF, Ptr.getValueType());
+SDValue SelectionDAG::getExtLoad(ISD::LoadExtType ExtType, MVT VT,
+                                 SDValue Chain, SDValue Ptr,
+                                 const Value *SV,
+                                 int SVOffset, MVT EVT,
+                                 bool isVolatile, unsigned Alignment) {
+  SDValue Undef = getNode(ISD::UNDEF, Ptr.getValueType());
   return getLoad(ISD::UNINDEXED, ExtType, VT, Chain, Ptr, Undef,
                  SV, SVOffset, EVT, isVolatile, Alignment);
 }
 
-SDOperand
-SelectionDAG::getIndexedLoad(SDOperand OrigLoad, SDOperand Base,
-                             SDOperand Offset, ISD::MemIndexedMode AM) {
+SDValue
+SelectionDAG::getIndexedLoad(SDValue OrigLoad, SDValue Base,
+                             SDValue Offset, ISD::MemIndexedMode AM) {
   LoadSDNode *LD = cast<LoadSDNode>(OrigLoad);
   assert(LD->getOffset().getOpcode() == ISD::UNDEF &&
          "Load is already a indexed load!");
@@ -3255,17 +3255,17 @@ SelectionDAG::getIndexedLoad(SDOperand OrigLoad, SDOperand Base,
                  LD->isVolatile(), LD->getAlignment());
 }
 
-SDOperand SelectionDAG::getStore(SDOperand Chain, SDOperand Val,
-                                 SDOperand Ptr, const Value *SV, int SVOffset,
-                                 bool isVolatile, unsigned Alignment) {
+SDValue SelectionDAG::getStore(SDValue Chain, SDValue Val,
+                               SDValue Ptr, const Value *SV, int SVOffset,
+                               bool isVolatile, unsigned Alignment) {
   MVT VT = Val.getValueType();
 
   if (Alignment == 0)  // Ensure that codegen never sees alignment 0
     Alignment = getMVTAlignment(VT);
 
   SDVTList VTs = getVTList(MVT::Other);
-  SDOperand Undef = getNode(ISD::UNDEF, Ptr.getValueType());
-  SDOperand Ops[] = { Chain, Val, Ptr, Undef };
+  SDValue Undef = getNode(ISD::UNDEF, Ptr.getValueType());
+  SDValue Ops[] = { Chain, Val, Ptr, Undef };
   FoldingSetNodeID ID;
   AddNodeIDNode(ID, ISD::STORE, VTs, Ops, 4);
   ID.AddInteger(ISD::UNINDEXED);
@@ -3275,19 +3275,19 @@ SDOperand SelectionDAG::getStore(SDOperand Chain, SDOperand Val,
   ID.AddInteger(isVolatile);
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
-    return SDOperand(E, 0);
+    return SDValue(E, 0);
   SDNode *N = getAllocator().Allocate<StoreSDNode>();
   new (N) StoreSDNode(Ops, VTs, ISD::UNINDEXED, false,
                       VT, SV, SVOffset, Alignment, isVolatile);
   CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
-  return SDOperand(N, 0);
+  return SDValue(N, 0);
 }
 
-SDOperand SelectionDAG::getTruncStore(SDOperand Chain, SDOperand Val,
-                                      SDOperand Ptr, const Value *SV,
-                                      int SVOffset, MVT SVT,
-                                      bool isVolatile, unsigned Alignment) {
+SDValue SelectionDAG::getTruncStore(SDValue Chain, SDValue Val,
+                                    SDValue Ptr, const Value *SV,
+                                    int SVOffset, MVT SVT,
+                                    bool isVolatile, unsigned Alignment) {
   MVT VT = Val.getValueType();
 
   if (VT == SVT)
@@ -3301,8 +3301,8 @@ SDOperand SelectionDAG::getTruncStore(SDOperand Chain, SDOperand Val,
     Alignment = getMVTAlignment(VT);
 
   SDVTList VTs = getVTList(MVT::Other);
-  SDOperand Undef = getNode(ISD::UNDEF, Ptr.getValueType());
-  SDOperand Ops[] = { Chain, Val, Ptr, Undef };
+  SDValue Undef = getNode(ISD::UNDEF, Ptr.getValueType());
+  SDValue Ops[] = { Chain, Val, Ptr, Undef };
   FoldingSetNodeID ID;
   AddNodeIDNode(ID, ISD::STORE, VTs, Ops, 4);
   ID.AddInteger(ISD::UNINDEXED);
@@ -3312,23 +3312,23 @@ SDOperand SelectionDAG::getTruncStore(SDOperand Chain, SDOperand Val,
   ID.AddInteger(isVolatile);
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
-    return SDOperand(E, 0);
+    return SDValue(E, 0);
   SDNode *N = getAllocator().Allocate<StoreSDNode>();
   new (N) StoreSDNode(Ops, VTs, ISD::UNINDEXED, true,
                       SVT, SV, SVOffset, Alignment, isVolatile);
   CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
-  return SDOperand(N, 0);
+  return SDValue(N, 0);
 }
 
-SDOperand
-SelectionDAG::getIndexedStore(SDOperand OrigStore, SDOperand Base,
-                              SDOperand Offset, ISD::MemIndexedMode AM) {
+SDValue
+SelectionDAG::getIndexedStore(SDValue OrigStore, SDValue Base,
+                              SDValue Offset, ISD::MemIndexedMode AM) {
   StoreSDNode *ST = cast<StoreSDNode>(OrigStore);
   assert(ST->getOffset().getOpcode() == ISD::UNDEF &&
          "Store is already a indexed store!");
   SDVTList VTs = getVTList(Base.getValueType(), MVT::Other);
-  SDOperand Ops[] = { ST->getChain(), ST->getValue(), Base, Offset };
+  SDValue Ops[] = { ST->getChain(), ST->getValue(), Base, Offset };
   FoldingSetNodeID ID;
   AddNodeIDNode(ID, ISD::STORE, VTs, Ops, 4);
   ID.AddInteger(AM);
@@ -3338,7 +3338,7 @@ SelectionDAG::getIndexedStore(SDOperand OrigStore, SDOperand Base,
   ID.AddInteger(ST->isVolatile());
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
-    return SDOperand(E, 0);
+    return SDValue(E, 0);
   SDNode *N = getAllocator().Allocate<StoreSDNode>();
   new (N) StoreSDNode(Ops, VTs, AM,
                       ST->isTruncatingStore(), ST->getMemoryVT(),
@@ -3346,39 +3346,34 @@ SelectionDAG::getIndexedStore(SDOperand OrigStore, SDOperand Base,
                       ST->getAlignment(), ST->isVolatile());
   CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
-  return SDOperand(N, 0);
+  return SDValue(N, 0);
 }
 
-SDOperand SelectionDAG::getVAArg(MVT VT,
-                                 SDOperand Chain, SDOperand Ptr,
-                                 SDOperand SV) {
-  SDOperand Ops[] = { Chain, Ptr, SV };
+SDValue SelectionDAG::getVAArg(MVT VT,
+                               SDValue Chain, SDValue Ptr,
+                               SDValue SV) {
+  SDValue Ops[] = { Chain, Ptr, SV };
   return getNode(ISD::VAARG, getVTList(VT, MVT::Other), Ops, 3);
 }
 
-SDOperand SelectionDAG::getNode(unsigned Opcode, MVT VT,
-                                const SDUse *Ops, unsigned NumOps) {
+SDValue SelectionDAG::getNode(unsigned Opcode, MVT VT,
+                              const SDUse *Ops, unsigned NumOps) {
   switch (NumOps) {
   case 0: return getNode(Opcode, VT);
-  case 1: return getNode(Opcode, VT, Ops[0].getSDOperand());
-  case 2: return getNode(Opcode, VT, Ops[0].getSDOperand(),
-                         Ops[1].getSDOperand());
-  case 3: return getNode(Opcode, VT, Ops[0].getSDOperand(),
-                         Ops[1].getSDOperand(), Ops[2].getSDOperand());
+  case 1: return getNode(Opcode, VT, Ops[0]);
+  case 2: return getNode(Opcode, VT, Ops[0], Ops[1]);
+  case 3: return getNode(Opcode, VT, Ops[0], Ops[1], Ops[2]);
   default: break;
   }
 
-  // Copy from an SDUse array into an SDOperand array for use with
+  // Copy from an SDUse array into an SDValue array for use with
   // the regular getNode logic.
-  SmallVector<SDOperand, 8> NewOps;
-  NewOps.reserve(NumOps);
-  for (unsigned i = 0; i != NumOps; ++i)
-    NewOps.push_back(Ops[i].getSDOperand());
-  return getNode(Opcode, VT, Ops, NumOps);
+  SmallVector<SDValue, 8> NewOps(Ops, Ops + NumOps);
+  return getNode(Opcode, VT, &NewOps[0], NumOps);
 }
 
-SDOperand SelectionDAG::getNode(unsigned Opcode, MVT VT,
-                                const SDOperand *Ops, unsigned NumOps) {
+SDValue SelectionDAG::getNode(unsigned Opcode, MVT VT,
+                              const SDValue *Ops, unsigned NumOps) {
   switch (NumOps) {
   case 0: return getNode(Opcode, VT);
   case 1: return getNode(Opcode, VT, Ops[0]);
@@ -3415,7 +3410,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT VT,
     AddNodeIDNode(ID, Opcode, VTs, Ops, NumOps);
     void *IP = 0;
     if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
-      return SDOperand(E, 0);
+      return SDValue(E, 0);
     N = getAllocator().Allocate<SDNode>();
     new (N) SDNode(Opcode, VTs, Ops, NumOps);
     CSEMap.InsertNode(N, IP);
@@ -3427,26 +3422,26 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT VT,
 #ifndef NDEBUG
   VerifyNode(N);
 #endif
-  return SDOperand(N, 0);
+  return SDValue(N, 0);
 }
 
-SDOperand SelectionDAG::getNode(unsigned Opcode,
-                                const std::vector<MVT> &ResultTys,
-                                const SDOperand *Ops, unsigned NumOps) {
+SDValue SelectionDAG::getNode(unsigned Opcode,
+                              const std::vector<MVT> &ResultTys,
+                              const SDValue *Ops, unsigned NumOps) {
   return getNode(Opcode, getNodeValueTypes(ResultTys), ResultTys.size(),
                  Ops, NumOps);
 }
 
-SDOperand SelectionDAG::getNode(unsigned Opcode,
-                                const MVT *VTs, unsigned NumVTs,
-                                const SDOperand *Ops, unsigned NumOps) {
+SDValue SelectionDAG::getNode(unsigned Opcode,
+                              const MVT *VTs, unsigned NumVTs,
+                              const SDValue *Ops, unsigned NumOps) {
   if (NumVTs == 1)
     return getNode(Opcode, VTs[0], Ops, NumOps);
   return getNode(Opcode, makeVTList(VTs, NumVTs), Ops, NumOps);
 }  
   
-SDOperand SelectionDAG::getNode(unsigned Opcode, SDVTList VTList,
-                                const SDOperand *Ops, unsigned NumOps) {
+SDValue SelectionDAG::getNode(unsigned Opcode, SDVTList VTList,
+                              const SDValue *Ops, unsigned NumOps) {
   if (VTList.NumVTs == 1)
     return getNode(Opcode, VTList.VTs[0], Ops, NumOps);
 
@@ -3480,7 +3475,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, SDVTList VTList,
     AddNodeIDNode(ID, Opcode, VTList, Ops, NumOps);
     void *IP = 0;
     if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
-      return SDOperand(E, 0);
+      return SDValue(E, 0);
     if (NumOps == 1) {
       N = getAllocator().Allocate<UnarySDNode>();
       new (N) UnarySDNode(Opcode, VTList, Ops[0]);
@@ -3514,42 +3509,42 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, SDVTList VTList,
 #ifndef NDEBUG
   VerifyNode(N);
 #endif
-  return SDOperand(N, 0);
+  return SDValue(N, 0);
 }
 
-SDOperand SelectionDAG::getNode(unsigned Opcode, SDVTList VTList) {
+SDValue SelectionDAG::getNode(unsigned Opcode, SDVTList VTList) {
   return getNode(Opcode, VTList, 0, 0);
 }
 
-SDOperand SelectionDAG::getNode(unsigned Opcode, SDVTList VTList,
-                                SDOperand N1) {
-  SDOperand Ops[] = { N1 };
+SDValue SelectionDAG::getNode(unsigned Opcode, SDVTList VTList,
+                                SDValue N1) {
+  SDValue Ops[] = { N1 };
   return getNode(Opcode, VTList, Ops, 1);
 }
 
-SDOperand SelectionDAG::getNode(unsigned Opcode, SDVTList VTList,
-                                SDOperand N1, SDOperand N2) {
-  SDOperand Ops[] = { N1, N2 };
+SDValue SelectionDAG::getNode(unsigned Opcode, SDVTList VTList,
+                              SDValue N1, SDValue N2) {
+  SDValue Ops[] = { N1, N2 };
   return getNode(Opcode, VTList, Ops, 2);
 }
 
-SDOperand SelectionDAG::getNode(unsigned Opcode, SDVTList VTList,
-                                SDOperand N1, SDOperand N2, SDOperand N3) {
-  SDOperand Ops[] = { N1, N2, N3 };
+SDValue SelectionDAG::getNode(unsigned Opcode, SDVTList VTList,
+                              SDValue N1, SDValue N2, SDValue N3) {
+  SDValue Ops[] = { N1, N2, N3 };
   return getNode(Opcode, VTList, Ops, 3);
 }
 
-SDOperand SelectionDAG::getNode(unsigned Opcode, SDVTList VTList,
-                                SDOperand N1, SDOperand N2, SDOperand N3,
-                                SDOperand N4) {
-  SDOperand Ops[] = { N1, N2, N3, N4 };
+SDValue SelectionDAG::getNode(unsigned Opcode, SDVTList VTList,
+                              SDValue N1, SDValue N2, SDValue N3,
+                              SDValue N4) {
+  SDValue Ops[] = { N1, N2, N3, N4 };
   return getNode(Opcode, VTList, Ops, 4);
 }
 
-SDOperand SelectionDAG::getNode(unsigned Opcode, SDVTList VTList,
-                                SDOperand N1, SDOperand N2, SDOperand N3,
-                                SDOperand N4, SDOperand N5) {
-  SDOperand Ops[] = { N1, N2, N3, N4, N5 };
+SDValue SelectionDAG::getNode(unsigned Opcode, SDVTList VTList,
+                              SDValue N1, SDValue N2, SDValue N3,
+                              SDValue N4, SDValue N5) {
+  SDValue Ops[] = { N1, N2, N3, N4, N5 };
   return getNode(Opcode, VTList, Ops, 5);
 }
 
@@ -3625,8 +3620,7 @@ SDVTList SelectionDAG::getVTList(const MVT *VTs, unsigned NumVTs) {
 /// already exists.  If the resultant node does not exist in the DAG, the
 /// input node is returned.  As a degenerate case, if you specify the same
 /// input operands as the node already has, the input node is returned.
-SDOperand SelectionDAG::
-UpdateNodeOperands(SDOperand InN, SDOperand Op) {
+SDValue SelectionDAG::UpdateNodeOperands(SDValue InN, SDValue Op) {
   SDNode *N = InN.Val;
   assert(N->getNumOperands() == 1 && "Update with wrong number of operands");
   
@@ -3636,7 +3630,7 @@ UpdateNodeOperands(SDOperand InN, SDOperand Op) {
   // See if the modified node already exists.
   void *InsertPos = 0;
   if (SDNode *Existing = FindModifiedNodeSlot(N, Op, InsertPos))
-    return SDOperand(Existing, InN.ResNo);
+    return SDValue(Existing, InN.ResNo);
   
   // Nope it doesn't.  Remove the node from its current place in the maps.
   if (InsertPos)
@@ -3653,8 +3647,8 @@ UpdateNodeOperands(SDOperand InN, SDOperand Op) {
   return InN;
 }
 
-SDOperand SelectionDAG::
-UpdateNodeOperands(SDOperand InN, SDOperand Op1, SDOperand Op2) {
+SDValue SelectionDAG::
+UpdateNodeOperands(SDValue InN, SDValue Op1, SDValue Op2) {
   SDNode *N = InN.Val;
   assert(N->getNumOperands() == 2 && "Update with wrong number of operands");
   
@@ -3665,7 +3659,7 @@ UpdateNodeOperands(SDOperand InN, SDOperand Op1, SDOperand Op2) {
   // See if the modified node already exists.
   void *InsertPos = 0;
   if (SDNode *Existing = FindModifiedNodeSlot(N, Op1, Op2, InsertPos))
-    return SDOperand(Existing, InN.ResNo);
+    return SDValue(Existing, InN.ResNo);
   
   // Nope it doesn't.  Remove the node from its current place in the maps.
   if (InsertPos)
@@ -3690,28 +3684,28 @@ UpdateNodeOperands(SDOperand InN, SDOperand Op1, SDOperand Op2) {
   return InN;
 }
 
-SDOperand SelectionDAG::
-UpdateNodeOperands(SDOperand N, SDOperand Op1, SDOperand Op2, SDOperand Op3) {
-  SDOperand Ops[] = { Op1, Op2, Op3 };
+SDValue SelectionDAG::
+UpdateNodeOperands(SDValue N, SDValue Op1, SDValue Op2, SDValue Op3) {
+  SDValue Ops[] = { Op1, Op2, Op3 };
   return UpdateNodeOperands(N, Ops, 3);
 }
 
-SDOperand SelectionDAG::
-UpdateNodeOperands(SDOperand N, SDOperand Op1, SDOperand Op2, 
-                   SDOperand Op3, SDOperand Op4) {
-  SDOperand Ops[] = { Op1, Op2, Op3, Op4 };
+SDValue SelectionDAG::
+UpdateNodeOperands(SDValue N, SDValue Op1, SDValue Op2, 
+                   SDValue Op3, SDValue Op4) {
+  SDValue Ops[] = { Op1, Op2, Op3, Op4 };
   return UpdateNodeOperands(N, Ops, 4);
 }
 
-SDOperand SelectionDAG::
-UpdateNodeOperands(SDOperand N, SDOperand Op1, SDOperand Op2,
-                   SDOperand Op3, SDOperand Op4, SDOperand Op5) {
-  SDOperand Ops[] = { Op1, Op2, Op3, Op4, Op5 };
+SDValue SelectionDAG::
+UpdateNodeOperands(SDValue N, SDValue Op1, SDValue Op2,
+                   SDValue Op3, SDValue Op4, SDValue Op5) {
+  SDValue Ops[] = { Op1, Op2, Op3, Op4, Op5 };
   return UpdateNodeOperands(N, Ops, 5);
 }
 
-SDOperand SelectionDAG::
-UpdateNodeOperands(SDOperand InN, const SDOperand *Ops, unsigned NumOps) {
+SDValue SelectionDAG::
+UpdateNodeOperands(SDValue InN, const SDValue *Ops, unsigned NumOps) {
   SDNode *N = InN.Val;
   assert(N->getNumOperands() == NumOps &&
          "Update with wrong number of operands");
@@ -3731,7 +3725,7 @@ UpdateNodeOperands(SDOperand InN, const SDOperand *Ops, unsigned NumOps) {
   // See if the modified node already exists.
   void *InsertPos = 0;
   if (SDNode *Existing = FindModifiedNodeSlot(N, Ops, NumOps, InsertPos))
-    return SDOperand(Existing, InN.ResNo);
+    return SDValue(Existing, InN.ResNo);
   
   // Nope it doesn't.  Remove the node from its current place in the maps.
   if (InsertPos)
@@ -3773,37 +3767,37 @@ SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned MachineOpc,
 }
 
 SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned MachineOpc,
-                                   MVT VT, SDOperand Op1) {
+                                   MVT VT, SDValue Op1) {
   SDVTList VTs = getVTList(VT);
-  SDOperand Ops[] = { Op1 };
+  SDValue Ops[] = { Op1 };
   return SelectNodeTo(N, MachineOpc, VTs, Ops, 1);
 }
 
 SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned MachineOpc,
-                                   MVT VT, SDOperand Op1,
-                                   SDOperand Op2) {
+                                   MVT VT, SDValue Op1,
+                                   SDValue Op2) {
   SDVTList VTs = getVTList(VT);
-  SDOperand Ops[] = { Op1, Op2 };
+  SDValue Ops[] = { Op1, Op2 };
   return SelectNodeTo(N, MachineOpc, VTs, Ops, 2);
 }
 
 SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned MachineOpc,
-                                   MVT VT, SDOperand Op1,
-                                   SDOperand Op2, SDOperand Op3) {
+                                   MVT VT, SDValue Op1,
+                                   SDValue Op2, SDValue Op3) {
   SDVTList VTs = getVTList(VT);
-  SDOperand Ops[] = { Op1, Op2, Op3 };
+  SDValue Ops[] = { Op1, Op2, Op3 };
   return SelectNodeTo(N, MachineOpc, VTs, Ops, 3);
 }
 
 SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned MachineOpc,
-                                   MVT VT, const SDOperand *Ops,
+                                   MVT VT, const SDValue *Ops,
                                    unsigned NumOps) {
   SDVTList VTs = getVTList(VT);
   return SelectNodeTo(N, MachineOpc, VTs, Ops, NumOps);
 }
 
 SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned MachineOpc,
-                                   MVT VT1, MVT VT2, const SDOperand *Ops,
+                                   MVT VT1, MVT VT2, const SDValue *Ops,
                                    unsigned NumOps) {
   SDVTList VTs = getVTList(VT1, VT2);
   return SelectNodeTo(N, MachineOpc, VTs, Ops, NumOps);
@@ -3812,43 +3806,43 @@ SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned MachineOpc,
 SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned MachineOpc,
                                    MVT VT1, MVT VT2) {
   SDVTList VTs = getVTList(VT1, VT2);
-  return SelectNodeTo(N, MachineOpc, VTs, (SDOperand *)0, 0);
+  return SelectNodeTo(N, MachineOpc, VTs, (SDValue *)0, 0);
 }
 
 SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned MachineOpc,
                                    MVT VT1, MVT VT2, MVT VT3,
-                                   const SDOperand *Ops, unsigned NumOps) {
+                                   const SDValue *Ops, unsigned NumOps) {
   SDVTList VTs = getVTList(VT1, VT2, VT3);
   return SelectNodeTo(N, MachineOpc, VTs, Ops, NumOps);
 }
 
 SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned MachineOpc, 
                                    MVT VT1, MVT VT2,
-                                   SDOperand Op1) {
+                                   SDValue Op1) {
   SDVTList VTs = getVTList(VT1, VT2);
-  SDOperand Ops[] = { Op1 };
+  SDValue Ops[] = { Op1 };
   return SelectNodeTo(N, MachineOpc, VTs, Ops, 1);
 }
 
 SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned MachineOpc, 
                                    MVT VT1, MVT VT2,
-                                   SDOperand Op1, SDOperand Op2) {
+                                   SDValue Op1, SDValue Op2) {
   SDVTList VTs = getVTList(VT1, VT2);
-  SDOperand Ops[] = { Op1, Op2 };
+  SDValue Ops[] = { Op1, Op2 };
   return SelectNodeTo(N, MachineOpc, VTs, Ops, 2);
 }
 
 SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned MachineOpc,
                                    MVT VT1, MVT VT2,
-                                   SDOperand Op1, SDOperand Op2, 
-                                   SDOperand Op3) {
+                                   SDValue Op1, SDValue Op2, 
+                                   SDValue Op3) {
   SDVTList VTs = getVTList(VT1, VT2);
-  SDOperand Ops[] = { Op1, Op2, Op3 };
+  SDValue Ops[] = { Op1, Op2, Op3 };
   return SelectNodeTo(N, MachineOpc, VTs, Ops, 3);
 }
 
 SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned MachineOpc,
-                                   SDVTList VTs, const SDOperand *Ops,
+                                   SDVTList VTs, const SDValue *Ops,
                                    unsigned NumOps) {
   return MorphNodeTo(N, ~MachineOpc, VTs, Ops, NumOps);
 }
@@ -3860,37 +3854,37 @@ SDNode *SelectionDAG::MorphNodeTo(SDNode *N, unsigned Opc,
 }
 
 SDNode *SelectionDAG::MorphNodeTo(SDNode *N, unsigned Opc,
-                                  MVT VT, SDOperand Op1) {
+                                  MVT VT, SDValue Op1) {
   SDVTList VTs = getVTList(VT);
-  SDOperand Ops[] = { Op1 };
+  SDValue Ops[] = { Op1 };
   return MorphNodeTo(N, Opc, VTs, Ops, 1);
 }
 
 SDNode *SelectionDAG::MorphNodeTo(SDNode *N, unsigned Opc,
-                                  MVT VT, SDOperand Op1,
-                                  SDOperand Op2) {
+                                  MVT VT, SDValue Op1,
+                                  SDValue Op2) {
   SDVTList VTs = getVTList(VT);
-  SDOperand Ops[] = { Op1, Op2 };
+  SDValue Ops[] = { Op1, Op2 };
   return MorphNodeTo(N, Opc, VTs, Ops, 2);
 }
 
 SDNode *SelectionDAG::MorphNodeTo(SDNode *N, unsigned Opc,
-                                  MVT VT, SDOperand Op1,
-                                  SDOperand Op2, SDOperand Op3) {
+                                  MVT VT, SDValue Op1,
+                                  SDValue Op2, SDValue Op3) {
   SDVTList VTs = getVTList(VT);
-  SDOperand Ops[] = { Op1, Op2, Op3 };
+  SDValue Ops[] = { Op1, Op2, Op3 };
   return MorphNodeTo(N, Opc, VTs, Ops, 3);
 }
 
 SDNode *SelectionDAG::MorphNodeTo(SDNode *N, unsigned Opc,
-                                  MVT VT, const SDOperand *Ops,
+                                  MVT VT, const SDValue *Ops,
                                   unsigned NumOps) {
   SDVTList VTs = getVTList(VT);
   return MorphNodeTo(N, Opc, VTs, Ops, NumOps);
 }
 
 SDNode *SelectionDAG::MorphNodeTo(SDNode *N, unsigned Opc,
-                                  MVT VT1, MVT VT2, const SDOperand *Ops,
+                                  MVT VT1, MVT VT2, const SDValue *Ops,
                                   unsigned NumOps) {
   SDVTList VTs = getVTList(VT1, VT2);
   return MorphNodeTo(N, Opc, VTs, Ops, NumOps);
@@ -3899,38 +3893,38 @@ SDNode *SelectionDAG::MorphNodeTo(SDNode *N, unsigned Opc,
 SDNode *SelectionDAG::MorphNodeTo(SDNode *N, unsigned Opc,
                                   MVT VT1, MVT VT2) {
   SDVTList VTs = getVTList(VT1, VT2);
-  return MorphNodeTo(N, Opc, VTs, (SDOperand *)0, 0);
+  return MorphNodeTo(N, Opc, VTs, (SDValue *)0, 0);
 }
 
 SDNode *SelectionDAG::MorphNodeTo(SDNode *N, unsigned Opc,
                                   MVT VT1, MVT VT2, MVT VT3,
-                                  const SDOperand *Ops, unsigned NumOps) {
+                                  const SDValue *Ops, unsigned NumOps) {
   SDVTList VTs = getVTList(VT1, VT2, VT3);
   return MorphNodeTo(N, Opc, VTs, Ops, NumOps);
 }
 
 SDNode *SelectionDAG::MorphNodeTo(SDNode *N, unsigned Opc, 
                                   MVT VT1, MVT VT2,
-                                  SDOperand Op1) {
+                                  SDValue Op1) {
   SDVTList VTs = getVTList(VT1, VT2);
-  SDOperand Ops[] = { Op1 };
+  SDValue Ops[] = { Op1 };
   return MorphNodeTo(N, Opc, VTs, Ops, 1);
 }
 
 SDNode *SelectionDAG::MorphNodeTo(SDNode *N, unsigned Opc, 
                                   MVT VT1, MVT VT2,
-                                  SDOperand Op1, SDOperand Op2) {
+                                  SDValue Op1, SDValue Op2) {
   SDVTList VTs = getVTList(VT1, VT2);
-  SDOperand Ops[] = { Op1, Op2 };
+  SDValue Ops[] = { Op1, Op2 };
   return MorphNodeTo(N, Opc, VTs, Ops, 2);
 }
 
 SDNode *SelectionDAG::MorphNodeTo(SDNode *N, unsigned Opc,
                                   MVT VT1, MVT VT2,
-                                  SDOperand Op1, SDOperand Op2, 
-                                  SDOperand Op3) {
+                                  SDValue Op1, SDValue Op2, 
+                                  SDValue Op3) {
   SDVTList VTs = getVTList(VT1, VT2);
-  SDOperand Ops[] = { Op1, Op2, Op3 };
+  SDValue Ops[] = { Op1, Op2, Op3 };
   return MorphNodeTo(N, Opc, VTs, Ops, 3);
 }
 
@@ -3947,7 +3941,7 @@ SDNode *SelectionDAG::MorphNodeTo(SDNode *N, unsigned Opc,
 /// the node's users.
 ///
 SDNode *SelectionDAG::MorphNodeTo(SDNode *N, unsigned Opc,
-                                  SDVTList VTs, const SDOperand *Ops,
+                                  SDVTList VTs, const SDValue *Ops,
                                   unsigned NumOps) {
   // If an identical node already exists, use it.
   void *IP = 0;
@@ -4027,72 +4021,72 @@ SDNode *SelectionDAG::MorphNodeTo(SDNode *N, unsigned Opc,
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT) {
   return getNode(~Opcode, VT).Val;
 }
-SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT, SDOperand Op1) {
+SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT, SDValue Op1) {
   return getNode(~Opcode, VT, Op1).Val;
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT,
-                                    SDOperand Op1, SDOperand Op2) {
+                                    SDValue Op1, SDValue Op2) {
   return getNode(~Opcode, VT, Op1, Op2).Val;
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT,
-                                    SDOperand Op1, SDOperand Op2,
-                                    SDOperand Op3) {
+                                    SDValue Op1, SDValue Op2,
+                                    SDValue Op3) {
   return getNode(~Opcode, VT, Op1, Op2, Op3).Val;
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT,
-                                    const SDOperand *Ops, unsigned NumOps) {
+                                    const SDValue *Ops, unsigned NumOps) {
   return getNode(~Opcode, VT, Ops, NumOps).Val;
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT1, MVT VT2) {
   const MVT *VTs = getNodeValueTypes(VT1, VT2);
-  SDOperand Op;
+  SDValue Op;
   return getNode(~Opcode, VTs, 2, &Op, 0).Val;
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT1,
-                                    MVT VT2, SDOperand Op1) {
+                                    MVT VT2, SDValue Op1) {
   const MVT *VTs = getNodeValueTypes(VT1, VT2);
   return getNode(~Opcode, VTs, 2, &Op1, 1).Val;
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT1,
-                                    MVT VT2, SDOperand Op1,
-                                    SDOperand Op2) {
+                                    MVT VT2, SDValue Op1,
+                                    SDValue Op2) {
   const MVT *VTs = getNodeValueTypes(VT1, VT2);
-  SDOperand Ops[] = { Op1, Op2 };
+  SDValue Ops[] = { Op1, Op2 };
   return getNode(~Opcode, VTs, 2, Ops, 2).Val;
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT1,
-                                    MVT VT2, SDOperand Op1,
-                                    SDOperand Op2, SDOperand Op3) {
+                                    MVT VT2, SDValue Op1,
+                                    SDValue Op2, SDValue Op3) {
   const MVT *VTs = getNodeValueTypes(VT1, VT2);
-  SDOperand Ops[] = { Op1, Op2, Op3 };
+  SDValue Ops[] = { Op1, Op2, Op3 };
   return getNode(~Opcode, VTs, 2, Ops, 3).Val;
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT1, MVT VT2,
-                                    const SDOperand *Ops, unsigned NumOps) {
+                                    const SDValue *Ops, unsigned NumOps) {
   const MVT *VTs = getNodeValueTypes(VT1, VT2);
   return getNode(~Opcode, VTs, 2, Ops, NumOps).Val;
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT1, MVT VT2, MVT VT3,
-                                    SDOperand Op1, SDOperand Op2) {
+                                    SDValue Op1, SDValue Op2) {
   const MVT *VTs = getNodeValueTypes(VT1, VT2, VT3);
-  SDOperand Ops[] = { Op1, Op2 };
+  SDValue Ops[] = { Op1, Op2 };
   return getNode(~Opcode, VTs, 3, Ops, 2).Val;
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT1, MVT VT2, MVT VT3,
-                                    SDOperand Op1, SDOperand Op2,
-                                    SDOperand Op3) {
+                                    SDValue Op1, SDValue Op2,
+                                    SDValue Op3) {
   const MVT *VTs = getNodeValueTypes(VT1, VT2, VT3);
-  SDOperand Ops[] = { Op1, Op2, Op3 };
+  SDValue Ops[] = { Op1, Op2, Op3 };
   return getNode(~Opcode, VTs, 3, Ops, 3).Val;
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT1, MVT VT2, MVT VT3,
-                                    const SDOperand *Ops, unsigned NumOps) {
+                                    const SDValue *Ops, unsigned NumOps) {
   const MVT *VTs = getNodeValueTypes(VT1, VT2, VT3);
   return getNode(~Opcode, VTs, 3, Ops, NumOps).Val;
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT1,
                                     MVT VT2, MVT VT3, MVT VT4,
-                                    const SDOperand *Ops, unsigned NumOps) {
+                                    const SDValue *Ops, unsigned NumOps) {
   std::vector<MVT> VTList;
   VTList.push_back(VT1);
   VTList.push_back(VT2);
@@ -4103,7 +4097,7 @@ SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT1,
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode,
                                     const std::vector<MVT> &ResultTys,
-                                    const SDOperand *Ops, unsigned NumOps) {
+                                    const SDValue *Ops, unsigned NumOps) {
   const MVT *VTs = getNodeValueTypes(ResultTys);
   return getNode(~Opcode, VTs, ResultTys.size(),
                  Ops, NumOps).Val;
@@ -4112,7 +4106,7 @@ SDNode *SelectionDAG::getTargetNode(unsigned Opcode,
 /// getNodeIfExists - Get the specified node if it's already available, or
 /// else return NULL.
 SDNode *SelectionDAG::getNodeIfExists(unsigned Opcode, SDVTList VTList,
-                                      const SDOperand *Ops, unsigned NumOps) {
+                                      const SDValue *Ops, unsigned NumOps) {
   if (VTList.VTs[VTList.NumVTs-1] != MVT::Flag) {
     FoldingSetNodeID ID;
     AddNodeIDNode(ID, Opcode, VTList, Ops, NumOps);
@@ -4129,7 +4123,7 @@ SDNode *SelectionDAG::getNodeIfExists(unsigned Opcode, SDVTList VTList,
 ///
 /// This version assumes From has a single result value.
 ///
-void SelectionDAG::ReplaceAllUsesWith(SDOperand FromN, SDOperand To,
+void SelectionDAG::ReplaceAllUsesWith(SDValue FromN, SDValue To,
                                       DAGUpdateListener *UpdateListener) {
   SDNode *From = FromN.Val;
   assert(From->getNumValues() == 1 && FromN.ResNo == 0 && 
@@ -4223,10 +4217,10 @@ void SelectionDAG::ReplaceAllUsesWith(SDNode *From, SDNode *To,
 /// This version can replace From with any result values.  To must match the
 /// number and types of values returned by From.
 void SelectionDAG::ReplaceAllUsesWith(SDNode *From,
-                                      const SDOperand *To,
+                                      const SDValue *To,
                                       DAGUpdateListener *UpdateListener) {
   if (From->getNumValues() == 1)  // Handle the simple case efficiently.
-    return ReplaceAllUsesWith(SDOperand(From, 0), To[0], UpdateListener);
+    return ReplaceAllUsesWith(SDValue(From, 0), To[0], UpdateListener);
 
   while (!From->use_empty()) {
     SDNode::use_iterator UI = From->use_begin();
@@ -4238,7 +4232,7 @@ void SelectionDAG::ReplaceAllUsesWith(SDNode *From,
     for (SDNode::op_iterator I = U->op_begin(), E = U->op_end();
          I != E; ++I, ++operandNum)
       if (I->getVal() == From) {
-        const SDOperand &ToOp = To[I->getSDOperand().ResNo];
+        const SDValue &ToOp = To[I->getSDValue().ResNo];
         From->removeUser(operandNum, U);
         *I = ToOp;
         I->setUser(U);
@@ -4265,7 +4259,7 @@ void SelectionDAG::ReplaceAllUsesWith(SDNode *From,
 /// ReplaceAllUsesOfValueWith - Replace any uses of From with To, leaving
 /// uses of other values produced by From.Val alone.  The Deleted vector is
 /// handled the same way as for ReplaceAllUsesWith.
-void SelectionDAG::ReplaceAllUsesOfValueWith(SDOperand From, SDOperand To,
+void SelectionDAG::ReplaceAllUsesOfValueWith(SDValue From, SDValue To,
                                              DAGUpdateListener *UpdateListener){
   // Handle the really simple, really trivial case efficiently.
   if (From == To) return;
@@ -4331,8 +4325,8 @@ void SelectionDAG::ReplaceAllUsesOfValueWith(SDOperand From, SDOperand To,
 /// uses of other values produced by From.Val alone.  The same value may
 /// appear in both the From and To list.  The Deleted vector is
 /// handled the same way as for ReplaceAllUsesWith.
-void SelectionDAG::ReplaceAllUsesOfValuesWith(const SDOperand *From,
-                                              const SDOperand *To,
+void SelectionDAG::ReplaceAllUsesOfValuesWith(const SDValue *From,
+                                              const SDValue *To,
                                               unsigned Num,
                                               DAGUpdateListener *UpdateListener){
   // Handle the simple, trivial case efficiently.
@@ -4549,7 +4543,7 @@ bool SDNode::hasNUsesOfValue(unsigned NUses, unsigned Value) const {
 
   // TODO: Only iterate over uses of a given value of the node
   for (SDNode::use_iterator UI = use_begin(), E = use_end(); UI != E; ++UI) {
-    if (UI.getUse().getSDOperand().ResNo == Value) {
+    if (UI.getUse().getSDValue().ResNo == Value) {
       if (NUses == 0)
         return false;
       --NUses;
@@ -4567,7 +4561,7 @@ bool SDNode::hasAnyUseOfValue(unsigned Value) const {
   assert(Value < getNumValues() && "Bad value!");
 
   for (SDNode::use_iterator UI = use_begin(), E = use_end(); UI != E; ++UI)
-    if (UI.getUse().getSDOperand().ResNo == Value)
+    if (UI.getUse().getSDValue().ResNo == Value)
       return true;
 
   return false;
@@ -4591,7 +4585,7 @@ bool SDNode::isOnlyUserOf(SDNode *N) const {
 
 /// isOperand - Return true if this node is an operand of N.
 ///
-bool SDOperand::isOperandOf(SDNode *N) const {
+bool SDValue::isOperandOf(SDNode *N) const {
   for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
     if (*this == N->getOperand(i))
       return true;
@@ -4610,7 +4604,7 @@ bool SDNode::isOperandOf(SDNode *N) const {
 /// side-effecting instructions.  In practice, this looks through token
 /// factors and non-volatile loads.  In order to remain efficient, this only
 /// looks a couple of nodes in, it does not do an exhaustive search.
-bool SDOperand::reachesChainWithoutSideEffects(SDOperand Dest, 
+bool SDValue::reachesChainWithoutSideEffects(SDValue Dest, 
                                                unsigned Depth) const {
   if (*this == Dest) return true;
   

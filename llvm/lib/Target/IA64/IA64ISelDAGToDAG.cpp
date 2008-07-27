@@ -51,19 +51,19 @@ namespace {
  
     /// getI64Imm - Return a target constant with the specified value, of type
     /// i64.
-    inline SDOperand getI64Imm(uint64_t Imm) {
+    inline SDValue getI64Imm(uint64_t Imm) {
       return CurDAG->getTargetConstant(Imm, MVT::i64);
     }
 
     /// getGlobalBaseReg - insert code into the entry mbb to materialize the PIC
     /// base register.  Return the virtual register that holds this value.
-    // SDOperand getGlobalBaseReg(); TODO: hmm
+    // SDValue getGlobalBaseReg(); TODO: hmm
     
     // Select - Convert the specified operand from a target-independent to a
     // target-specific node if it hasn't already been changed.
-    SDNode *Select(SDOperand N);
+    SDNode *Select(SDValue N);
     
-    SDNode *SelectIntImmediateExpr(SDOperand LHS, SDOperand RHS,
+    SDNode *SelectIntImmediateExpr(SDValue LHS, SDValue RHS,
                                    unsigned OCHi, unsigned OCLo,
                                    bool IsArithmetic = false,
                                    bool Negate = false);
@@ -71,12 +71,12 @@ namespace {
 
     /// SelectCC - Select a comparison of the specified values with the
     /// specified condition code, returning the CR# of the expression.
-    SDOperand SelectCC(SDOperand LHS, SDOperand RHS, ISD::CondCode CC);
+    SDValue SelectCC(SDValue LHS, SDValue RHS, ISD::CondCode CC);
 
     /// SelectAddr - Given the specified address, return the two operands for a
     /// load/store instruction, and return true if it should be an indexed [r+r]
     /// operation.
-    bool SelectAddr(SDOperand Addr, SDOperand &Op1, SDOperand &Op2);
+    bool SelectAddr(SDValue Addr, SDValue &Op1, SDValue &Op2);
 
     /// InstructionSelect - This callback is invoked by
     /// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
@@ -90,7 +90,7 @@ namespace {
 #include "IA64GenDAGISel.inc"
     
 private:
-    SDNode *SelectDIV(SDOperand Op);
+    SDNode *SelectDIV(SDValue Op);
   };
 }
 
@@ -104,11 +104,11 @@ void IA64DAGToDAGISel::InstructionSelect(SelectionDAG &DAG) {
   DAG.RemoveDeadNodes();
 }
 
-SDNode *IA64DAGToDAGISel::SelectDIV(SDOperand Op) {
+SDNode *IA64DAGToDAGISel::SelectDIV(SDValue Op) {
   SDNode *N = Op.Val;
-  SDOperand Chain = N->getOperand(0);
-  SDOperand Tmp1 = N->getOperand(0);
-  SDOperand Tmp2 = N->getOperand(1);
+  SDValue Chain = N->getOperand(0);
+  SDValue Tmp1 = N->getOperand(0);
+  SDValue Tmp2 = N->getOperand(1);
   AddToISelQueue(Chain);
 
   AddToISelQueue(Tmp1);
@@ -133,40 +133,40 @@ SDNode *IA64DAGToDAGISel::SelectDIV(SDOperand Op) {
 
   // TODO: check for integer divides by powers of 2 (or other simple patterns?)
 
-    SDOperand TmpPR, TmpPR2;
-    SDOperand TmpF1, TmpF2, TmpF3, TmpF4, TmpF5, TmpF6, TmpF7, TmpF8;
-    SDOperand TmpF9, TmpF10,TmpF11,TmpF12,TmpF13,TmpF14,TmpF15;
+    SDValue TmpPR, TmpPR2;
+    SDValue TmpF1, TmpF2, TmpF3, TmpF4, TmpF5, TmpF6, TmpF7, TmpF8;
+    SDValue TmpF9, TmpF10,TmpF11,TmpF12,TmpF13,TmpF14,TmpF15;
     SDNode *Result;
 
     // we'll need copies of F0 and F1
-    SDOperand F0 = CurDAG->getRegister(IA64::F0, MVT::f64);
-    SDOperand F1 = CurDAG->getRegister(IA64::F1, MVT::f64);
+    SDValue F0 = CurDAG->getRegister(IA64::F0, MVT::f64);
+    SDValue F1 = CurDAG->getRegister(IA64::F1, MVT::f64);
     
     // OK, emit some code:
 
     if(!isFP) {
       // first, load the inputs into FP regs.
       TmpF1 =
-        SDOperand(CurDAG->getTargetNode(IA64::SETFSIG, MVT::f64, Tmp1), 0);
+        SDValue(CurDAG->getTargetNode(IA64::SETFSIG, MVT::f64, Tmp1), 0);
       Chain = TmpF1.getValue(1);
       TmpF2 =
-        SDOperand(CurDAG->getTargetNode(IA64::SETFSIG, MVT::f64, Tmp2), 0);
+        SDValue(CurDAG->getTargetNode(IA64::SETFSIG, MVT::f64, Tmp2), 0);
       Chain = TmpF2.getValue(1);
       
       // next, convert the inputs to FP
       if(isSigned) {
         TmpF3 =
-          SDOperand(CurDAG->getTargetNode(IA64::FCVTXF, MVT::f64, TmpF1), 0);
+          SDValue(CurDAG->getTargetNode(IA64::FCVTXF, MVT::f64, TmpF1), 0);
         Chain = TmpF3.getValue(1);
         TmpF4 =
-          SDOperand(CurDAG->getTargetNode(IA64::FCVTXF, MVT::f64, TmpF2), 0);
+          SDValue(CurDAG->getTargetNode(IA64::FCVTXF, MVT::f64, TmpF2), 0);
         Chain = TmpF4.getValue(1);
       } else { // is unsigned
         TmpF3 =
-          SDOperand(CurDAG->getTargetNode(IA64::FCVTXUFS1, MVT::f64, TmpF1), 0);
+          SDValue(CurDAG->getTargetNode(IA64::FCVTXUFS1, MVT::f64, TmpF1), 0);
         Chain = TmpF3.getValue(1);
         TmpF4 =
-          SDOperand(CurDAG->getTargetNode(IA64::FCVTXUFS1, MVT::f64, TmpF2), 0);
+          SDValue(CurDAG->getTargetNode(IA64::FCVTXUFS1, MVT::f64, TmpF2), 0);
         Chain = TmpF4.getValue(1);
       }
 
@@ -179,39 +179,39 @@ SDNode *IA64DAGToDAGISel::SelectDIV(SDOperand Op) {
     // we start by computing an approximate reciprocal (good to 9 bits?)
     // note, this instruction writes _both_ TmpF5 (answer) and TmpPR (predicate)
     if(isFP)
-      TmpF5 = SDOperand(CurDAG->getTargetNode(IA64::FRCPAS0, MVT::f64, MVT::i1,
+      TmpF5 = SDValue(CurDAG->getTargetNode(IA64::FRCPAS0, MVT::f64, MVT::i1,
                                               TmpF3, TmpF4), 0);
     else
-      TmpF5 = SDOperand(CurDAG->getTargetNode(IA64::FRCPAS1, MVT::f64, MVT::i1,
+      TmpF5 = SDValue(CurDAG->getTargetNode(IA64::FRCPAS1, MVT::f64, MVT::i1,
                                               TmpF3, TmpF4), 0);
                                   
     TmpPR = TmpF5.getValue(1);
     Chain = TmpF5.getValue(2);
 
-    SDOperand minusB;
+    SDValue minusB;
     if(isModulus) { // for remainders, it'll be handy to have
                              // copies of -input_b
-      minusB = SDOperand(CurDAG->getTargetNode(IA64::SUB, MVT::i64,
+      minusB = SDValue(CurDAG->getTargetNode(IA64::SUB, MVT::i64,
                   CurDAG->getRegister(IA64::r0, MVT::i64), Tmp2), 0);
       Chain = minusB.getValue(1);
     }
     
-    SDOperand TmpE0, TmpY1, TmpE1, TmpY2;
+    SDValue TmpE0, TmpY1, TmpE1, TmpY2;
 
-    SDOperand OpsE0[] = { TmpF4, TmpF5, F1, TmpPR };
-    TmpE0 = SDOperand(CurDAG->getTargetNode(IA64::CFNMAS1, MVT::f64,
+    SDValue OpsE0[] = { TmpF4, TmpF5, F1, TmpPR };
+    TmpE0 = SDValue(CurDAG->getTargetNode(IA64::CFNMAS1, MVT::f64,
                                             OpsE0, 4), 0);
     Chain = TmpE0.getValue(1);
-    SDOperand OpsY1[] = { TmpF5, TmpE0, TmpF5, TmpPR };
-    TmpY1 = SDOperand(CurDAG->getTargetNode(IA64::CFMAS1, MVT::f64,
+    SDValue OpsY1[] = { TmpF5, TmpE0, TmpF5, TmpPR };
+    TmpY1 = SDValue(CurDAG->getTargetNode(IA64::CFMAS1, MVT::f64,
                                             OpsY1, 4), 0);
     Chain = TmpY1.getValue(1);
-    SDOperand OpsE1[] = { TmpE0, TmpE0, F0, TmpPR };
-    TmpE1 = SDOperand(CurDAG->getTargetNode(IA64::CFMAS1, MVT::f64,
+    SDValue OpsE1[] = { TmpE0, TmpE0, F0, TmpPR };
+    TmpE1 = SDValue(CurDAG->getTargetNode(IA64::CFMAS1, MVT::f64,
                                             OpsE1, 4), 0);
     Chain = TmpE1.getValue(1);
-    SDOperand OpsY2[] = { TmpY1, TmpE1, TmpY1, TmpPR };
-    TmpY2 = SDOperand(CurDAG->getTargetNode(IA64::CFMAS1, MVT::f64,
+    SDValue OpsY2[] = { TmpY1, TmpE1, TmpY1, TmpPR };
+    TmpY2 = SDValue(CurDAG->getTargetNode(IA64::CFMAS1, MVT::f64,
                                             OpsY2, 4), 0);
     Chain = TmpY2.getValue(1);
     
@@ -219,53 +219,53 @@ SDNode *IA64DAGToDAGISel::SelectDIV(SDOperand Op) {
       if(isModulus)
         assert(0 && "Sorry, try another FORTRAN compiler.");
  
-      SDOperand TmpE2, TmpY3, TmpQ0, TmpR0;
+      SDValue TmpE2, TmpY3, TmpQ0, TmpR0;
 
-      SDOperand OpsE2[] = { TmpE1, TmpE1, F0, TmpPR };
-      TmpE2 = SDOperand(CurDAG->getTargetNode(IA64::CFMAS1, MVT::f64,
+      SDValue OpsE2[] = { TmpE1, TmpE1, F0, TmpPR };
+      TmpE2 = SDValue(CurDAG->getTargetNode(IA64::CFMAS1, MVT::f64,
                                               OpsE2, 4), 0);
       Chain = TmpE2.getValue(1);
-      SDOperand OpsY3[] = { TmpY2, TmpE2, TmpY2, TmpPR };
-      TmpY3 = SDOperand(CurDAG->getTargetNode(IA64::CFMAS1, MVT::f64,
+      SDValue OpsY3[] = { TmpY2, TmpE2, TmpY2, TmpPR };
+      TmpY3 = SDValue(CurDAG->getTargetNode(IA64::CFMAS1, MVT::f64,
                                               OpsY3, 4), 0);
       Chain = TmpY3.getValue(1);
-      SDOperand OpsQ0[] = { Tmp1, TmpY3, F0, TmpPR };
+      SDValue OpsQ0[] = { Tmp1, TmpY3, F0, TmpPR };
       TmpQ0 =
-        SDOperand(CurDAG->getTargetNode(IA64::CFMADS1, MVT::f64, // double prec!
+        SDValue(CurDAG->getTargetNode(IA64::CFMADS1, MVT::f64, // double prec!
                                         OpsQ0, 4), 0);
       Chain = TmpQ0.getValue(1);
-      SDOperand OpsR0[] = { Tmp2, TmpQ0, Tmp1, TmpPR };
+      SDValue OpsR0[] = { Tmp2, TmpQ0, Tmp1, TmpPR };
       TmpR0 =
-        SDOperand(CurDAG->getTargetNode(IA64::CFNMADS1, MVT::f64, // double prec!
+        SDValue(CurDAG->getTargetNode(IA64::CFNMADS1, MVT::f64, // double prec!
                                         OpsR0, 4), 0);
       Chain = TmpR0.getValue(1);
 
 // we want Result to have the same target register as the frcpa, so
 // we two-address hack it. See the comment "for this to work..." on
 // page 48 of Intel application note #245415
-      SDOperand Ops[] = { TmpF5, TmpY3, TmpR0, TmpQ0, TmpPR };
+      SDValue Ops[] = { TmpF5, TmpY3, TmpR0, TmpQ0, TmpPR };
       Result = CurDAG->getTargetNode(IA64::TCFMADS0, MVT::f64, // d.p. s0 rndg!
                                      Ops, 5);
-      Chain = SDOperand(Result, 1);
+      Chain = SDValue(Result, 1);
       return Result; // XXX: early exit!
     } else { // this is *not* an FP divide, so there's a bit left to do:
     
-      SDOperand TmpQ2, TmpR2, TmpQ3, TmpQ;
+      SDValue TmpQ2, TmpR2, TmpQ3, TmpQ;
 
-      SDOperand OpsQ2[] = { TmpF3, TmpY2, F0, TmpPR };
-      TmpQ2 = SDOperand(CurDAG->getTargetNode(IA64::CFMAS1, MVT::f64,
+      SDValue OpsQ2[] = { TmpF3, TmpY2, F0, TmpPR };
+      TmpQ2 = SDValue(CurDAG->getTargetNode(IA64::CFMAS1, MVT::f64,
                                               OpsQ2, 4), 0);
       Chain = TmpQ2.getValue(1);
-      SDOperand OpsR2[] = { TmpF4, TmpQ2, TmpF3, TmpPR };
-      TmpR2 = SDOperand(CurDAG->getTargetNode(IA64::CFNMAS1, MVT::f64,
+      SDValue OpsR2[] = { TmpF4, TmpQ2, TmpF3, TmpPR };
+      TmpR2 = SDValue(CurDAG->getTargetNode(IA64::CFNMAS1, MVT::f64,
                                               OpsR2, 4), 0);
       Chain = TmpR2.getValue(1);
       
 // we want TmpQ3 to have the same target register as the frcpa? maybe we
 // should two-address hack it. See the comment "for this to work..." on page
 // 48 of Intel application note #245415
-      SDOperand OpsQ3[] = { TmpF5, TmpR2, TmpY2, TmpQ2, TmpPR };
-      TmpQ3 = SDOperand(CurDAG->getTargetNode(IA64::TCFMAS1, MVT::f64,
+      SDValue OpsQ3[] = { TmpF5, TmpR2, TmpY2, TmpQ2, TmpPR };
+      TmpQ3 = SDValue(CurDAG->getTargetNode(IA64::TCFMAS1, MVT::f64,
                                          OpsQ3, 5), 0);
       Chain = TmpQ3.getValue(1);
 
@@ -274,27 +274,27 @@ SDNode *IA64DAGToDAGISel::SelectDIV(SDOperand Op) {
       // arguments. Other fun bugs may also appear, e.g. 0/x = x, not 0.
       
       if(isSigned)
-        TmpQ = SDOperand(CurDAG->getTargetNode(IA64::FCVTFXTRUNCS1,
+        TmpQ = SDValue(CurDAG->getTargetNode(IA64::FCVTFXTRUNCS1,
                                                MVT::f64, TmpQ3), 0);
       else
-        TmpQ = SDOperand(CurDAG->getTargetNode(IA64::FCVTFXUTRUNCS1,
+        TmpQ = SDValue(CurDAG->getTargetNode(IA64::FCVTFXUTRUNCS1,
                                                MVT::f64, TmpQ3), 0);
       
       Chain = TmpQ.getValue(1);
 
       if(isModulus) {
-        SDOperand FPminusB =
-          SDOperand(CurDAG->getTargetNode(IA64::SETFSIG, MVT::f64, minusB), 0);
+        SDValue FPminusB =
+          SDValue(CurDAG->getTargetNode(IA64::SETFSIG, MVT::f64, minusB), 0);
         Chain = FPminusB.getValue(1);
-        SDOperand Remainder =
-          SDOperand(CurDAG->getTargetNode(IA64::XMAL, MVT::f64,
+        SDValue Remainder =
+          SDValue(CurDAG->getTargetNode(IA64::XMAL, MVT::f64,
                                           TmpQ, FPminusB, TmpF1), 0);
         Chain = Remainder.getValue(1);
         Result = CurDAG->getTargetNode(IA64::GETFSIG, MVT::i64, Remainder);
-        Chain = SDOperand(Result, 1);
+        Chain = SDValue(Result, 1);
       } else { // just an integer divide
         Result = CurDAG->getTargetNode(IA64::GETFSIG, MVT::i64, TmpQ);
-        Chain = SDOperand(Result, 1);
+        Chain = SDValue(Result, 1);
       }
 
       return Result;
@@ -303,7 +303,7 @@ SDNode *IA64DAGToDAGISel::SelectDIV(SDOperand Op) {
 
 // Select - Convert the specified operand from a target-independent to a
 // target-specific node if it hasn't already been changed.
-SDNode *IA64DAGToDAGISel::Select(SDOperand Op) {
+SDNode *IA64DAGToDAGISel::Select(SDValue Op) {
   SDNode *N = Op.Val;
   if (N->isMachineOpcode())
     return NULL;   // Already selected.
@@ -312,8 +312,8 @@ SDNode *IA64DAGToDAGISel::Select(SDOperand Op) {
   default: break;
 
   case IA64ISD::BRCALL: { // XXX: this is also a hack!
-    SDOperand Chain = N->getOperand(0);
-    SDOperand InFlag;  // Null incoming flag value.
+    SDValue Chain = N->getOperand(0);
+    SDValue InFlag;  // Null incoming flag value.
 
     AddToISelQueue(Chain);
     if(N->getNumOperands()==3) { // we have an incoming chain, callee and flag
@@ -322,7 +322,7 @@ SDNode *IA64DAGToDAGISel::Select(SDOperand Op) {
     }
 
     unsigned CallOpcode;
-    SDOperand CallOperand;
+    SDValue CallOperand;
     
     // if we can call directly, do so
     if (GlobalAddressSDNode *GASD =
@@ -338,22 +338,22 @@ SDNode *IA64DAGToDAGISel::Select(SDOperand Op) {
     // otherwise we need to load the function descriptor,
     // load the branch target (function)'s entry point and GP,
     // branch (call) then restore the GP
-    SDOperand FnDescriptor = N->getOperand(1);
+    SDValue FnDescriptor = N->getOperand(1);
     AddToISelQueue(FnDescriptor);
    
     // load the branch target's entry point [mem] and 
     // GP value [mem+8]
-    SDOperand targetEntryPoint=
-      SDOperand(CurDAG->getTargetNode(IA64::LD8, MVT::i64, MVT::Other,
+    SDValue targetEntryPoint=
+      SDValue(CurDAG->getTargetNode(IA64::LD8, MVT::i64, MVT::Other,
                                       FnDescriptor, CurDAG->getEntryNode()), 0);
     Chain = targetEntryPoint.getValue(1);
-    SDOperand targetGPAddr=
-      SDOperand(CurDAG->getTargetNode(IA64::ADDS, MVT::i64, 
+    SDValue targetGPAddr=
+      SDValue(CurDAG->getTargetNode(IA64::ADDS, MVT::i64, 
                                       FnDescriptor,
                                       CurDAG->getConstant(8, MVT::i64)), 0);
     Chain = targetGPAddr.getValue(1);
-    SDOperand targetGP =
-      SDOperand(CurDAG->getTargetNode(IA64::LD8, MVT::i64,MVT::Other,
+    SDValue targetGP =
+      SDValue(CurDAG->getTargetNode(IA64::LD8, MVT::i64,MVT::Other,
                                       targetGPAddr, CurDAG->getEntryNode()), 0);
     Chain = targetGP.getValue(1);
 
@@ -368,14 +368,14 @@ SDNode *IA64DAGToDAGISel::Select(SDOperand Op) {
  
    // Finally, once everything is setup, emit the call itself
    if(InFlag.Val)
-     Chain = SDOperand(CurDAG->getTargetNode(CallOpcode, MVT::Other, MVT::Flag,
+     Chain = SDValue(CurDAG->getTargetNode(CallOpcode, MVT::Other, MVT::Flag,
                                              CallOperand, InFlag), 0);
    else // there might be no arguments
-     Chain = SDOperand(CurDAG->getTargetNode(CallOpcode, MVT::Other, MVT::Flag,
+     Chain = SDValue(CurDAG->getTargetNode(CallOpcode, MVT::Other, MVT::Flag,
                                              CallOperand, Chain), 0);
    InFlag = Chain.getValue(1);
 
-   std::vector<SDOperand> CallResults;
+   std::vector<SDValue> CallResults;
 
    CallResults.push_back(Chain);
    CallResults.push_back(InFlag);
@@ -386,7 +386,7 @@ SDNode *IA64DAGToDAGISel::Select(SDOperand Op) {
   }
   
   case IA64ISD::GETFD: {
-    SDOperand Input = N->getOperand(0);
+    SDValue Input = N->getOperand(0);
     AddToISelQueue(Input);
     return CurDAG->getTargetNode(IA64::GETFD, MVT::i64, Input);
   } 
@@ -399,9 +399,9 @@ SDNode *IA64DAGToDAGISel::Select(SDOperand Op) {
     return SelectDIV(Op);
  
   case ISD::TargetConstantFP: {
-    SDOperand Chain = CurDAG->getEntryNode(); // this is a constant, so..
+    SDValue Chain = CurDAG->getEntryNode(); // this is a constant, so..
 
-    SDOperand V;
+    SDValue V;
     ConstantFPSDNode* N2 = cast<ConstantFPSDNode>(N);
     if (N2->getValueAPF().isPosZero()) {
       V = CurDAG->getCopyFromReg(Chain, IA64::F0, MVT::f64);
@@ -411,7 +411,7 @@ SDNode *IA64DAGToDAGISel::Select(SDOperand Op) {
     } else
       assert(0 && "Unexpected FP constant!");
     
-    ReplaceUses(SDOperand(N, 0), V);
+    ReplaceUses(SDValue(N, 0), V);
     return 0;
   }
 
@@ -429,7 +429,7 @@ SDNode *IA64DAGToDAGISel::Select(SDOperand Op) {
     // (ia64 doesn't need one)
     ConstantPoolSDNode *CP = cast<ConstantPoolSDNode>(N);
     Constant *C = CP->getConstVal();
-    SDOperand CPI = CurDAG->getTargetConstantPool(C, MVT::i64,
+    SDValue CPI = CurDAG->getTargetConstantPool(C, MVT::i64,
                                                   CP->getAlignment());
     return CurDAG->getTargetNode(IA64::ADDL_GA, MVT::i64, // ?
                                  CurDAG->getRegister(IA64::r1, MVT::i64), CPI);
@@ -437,9 +437,9 @@ SDNode *IA64DAGToDAGISel::Select(SDOperand Op) {
 
   case ISD::GlobalAddress: {
     GlobalValue *GV = cast<GlobalAddressSDNode>(N)->getGlobal();
-    SDOperand GA = CurDAG->getTargetGlobalAddress(GV, MVT::i64);
-    SDOperand Tmp =
-      SDOperand(CurDAG->getTargetNode(IA64::ADDL_GA, MVT::i64, 
+    SDValue GA = CurDAG->getTargetGlobalAddress(GV, MVT::i64);
+    SDValue Tmp =
+      SDValue(CurDAG->getTargetNode(IA64::ADDL_GA, MVT::i64, 
                                       CurDAG->getRegister(IA64::r1,
                                                           MVT::i64), GA), 0);
     return CurDAG->getTargetNode(IA64::LD8, MVT::i64, MVT::Other, Tmp,
@@ -448,10 +448,10 @@ SDNode *IA64DAGToDAGISel::Select(SDOperand Op) {
   
 /* XXX
    case ISD::ExternalSymbol: {
-     SDOperand EA = CurDAG->getTargetExternalSymbol(
+     SDValue EA = CurDAG->getTargetExternalSymbol(
        cast<ExternalSymbolSDNode>(N)->getSymbol(),
        MVT::i64);
-     SDOperand Tmp = CurDAG->getTargetNode(IA64::ADDL_EA, MVT::i64, 
+     SDValue Tmp = CurDAG->getTargetNode(IA64::ADDL_EA, MVT::i64, 
                                            CurDAG->getRegister(IA64::r1,
                                                                MVT::i64),
                                            EA);
@@ -461,8 +461,8 @@ SDNode *IA64DAGToDAGISel::Select(SDOperand Op) {
 
   case ISD::LOAD: { // FIXME: load -1, not 1, for bools?
     LoadSDNode *LD = cast<LoadSDNode>(N);
-    SDOperand Chain = LD->getChain();
-    SDOperand Address = LD->getBasePtr();
+    SDValue Chain = LD->getChain();
+    SDValue Address = LD->getBasePtr();
     AddToISelQueue(Chain);
     AddToISelQueue(Address);
 
@@ -478,7 +478,7 @@ SDNode *IA64DAGToDAGISel::Select(SDOperand Op) {
       Opc = IA64::LD1; // first we load a byte, then compare for != 0
       if(N->getValueType(0) == MVT::i1) { // XXX: early exit!
         return CurDAG->SelectNodeTo(N, IA64::CMPNE, MVT::i1, MVT::Other, 
-                    SDOperand(CurDAG->getTargetNode(Opc, MVT::i64, Address), 0),
+                    SDValue(CurDAG->getTargetNode(Opc, MVT::i64, Address), 0),
                                     CurDAG->getRegister(IA64::r0, MVT::i64), 
                                     Chain);
       }
@@ -501,8 +501,8 @@ SDNode *IA64DAGToDAGISel::Select(SDOperand Op) {
   
   case ISD::STORE: {
     StoreSDNode *ST = cast<StoreSDNode>(N);
-    SDOperand Address = ST->getBasePtr();
-    SDOperand Chain = ST->getChain();
+    SDValue Address = ST->getBasePtr();
+    SDValue Chain = ST->getChain();
     AddToISelQueue(Address);
     AddToISelQueue(Chain);
    
@@ -513,13 +513,13 @@ SDNode *IA64DAGToDAGISel::Select(SDOperand Op) {
       case MVT::i1: { // this is a bool
         Opc = IA64::ST1; // we store either 0 or 1 as a byte 
         // first load zero!
-        SDOperand Initial = CurDAG->getCopyFromReg(Chain, IA64::r0, MVT::i64);
+        SDValue Initial = CurDAG->getCopyFromReg(Chain, IA64::r0, MVT::i64);
         Chain = Initial.getValue(1);
         // then load 1 into the same reg iff the predicate to store is 1
-        SDOperand Tmp = ST->getValue();
+        SDValue Tmp = ST->getValue();
         AddToISelQueue(Tmp);
         Tmp =
-          SDOperand(CurDAG->getTargetNode(IA64::TPCADDS, MVT::i64, Initial,
+          SDValue(CurDAG->getTargetNode(IA64::TPCADDS, MVT::i64, Initial,
                                           CurDAG->getTargetConstant(1, MVT::i64),
                                           Tmp), 0);
         return CurDAG->SelectNodeTo(N, Opc, MVT::Other, Address, Tmp, Chain);
@@ -537,16 +537,16 @@ SDNode *IA64DAGToDAGISel::Select(SDOperand Op) {
       }
     }
     
-    SDOperand N1 = N->getOperand(1);
-    SDOperand N2 = N->getOperand(2);
+    SDValue N1 = N->getOperand(1);
+    SDValue N2 = N->getOperand(2);
     AddToISelQueue(N1);
     AddToISelQueue(N2);
     return CurDAG->SelectNodeTo(N, Opc, MVT::Other, N2, N1, Chain);
   }
 
   case ISD::BRCOND: {
-    SDOperand Chain = N->getOperand(0);
-    SDOperand CC = N->getOperand(1);
+    SDValue Chain = N->getOperand(0);
+    SDValue CC = N->getOperand(1);
     AddToISelQueue(Chain);
     AddToISelQueue(CC);
     MachineBasicBlock *Dest =
@@ -561,14 +561,14 @@ SDNode *IA64DAGToDAGISel::Select(SDOperand Op) {
     int64_t Amt = cast<ConstantSDNode>(N->getOperand(1))->getValue();
     unsigned Opc = N->getOpcode() == ISD::CALLSEQ_START ?
       IA64::ADJUSTCALLSTACKDOWN : IA64::ADJUSTCALLSTACKUP;
-    SDOperand N0 = N->getOperand(0);
+    SDValue N0 = N->getOperand(0);
     AddToISelQueue(N0);
     return CurDAG->SelectNodeTo(N, Opc, MVT::Other, getI64Imm(Amt), N0);
   }
 
   case ISD::BR:
     // FIXME: we don't need long branches all the time!
-    SDOperand N0 = N->getOperand(0);
+    SDValue N0 = N->getOperand(0);
     AddToISelQueue(N0);
     return CurDAG->SelectNodeTo(N, IA64::BRL_NOTCALL, MVT::Other, 
                                 N->getOperand(1), N0);

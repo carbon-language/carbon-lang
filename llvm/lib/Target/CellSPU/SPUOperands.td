@@ -16,7 +16,7 @@ def LO16 : SDNodeXForm<imm, [{
 }]>;
 
 def LO16_vec : SDNodeXForm<scalar_to_vector, [{
-  SDOperand OpVal(0, 0);
+  SDValue OpVal(0, 0);
 
   // Transformation function: get the low 16 bit immediate from a build_vector
   // node.
@@ -43,7 +43,7 @@ def HI16 : SDNodeXForm<imm, [{
 // Transformation function: shift the high 16 bit immediate from a build_vector
 // node into the low 16 bits, and return a 16-bit constant.
 def HI16_vec : SDNodeXForm<scalar_to_vector, [{
-  SDOperand OpVal(0, 0);
+  SDValue OpVal(0, 0);
 
   assert(N->getOpcode() == ISD::BUILD_VECTOR
          && "HI16_vec got something other than a BUILD_VECTOR");

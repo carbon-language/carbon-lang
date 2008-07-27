@@ -516,7 +516,7 @@ const char *TargetLowering::getTargetNodeName(unsigned Opcode) const {
 }
 
 
-MVT TargetLowering::getSetCCResultType(const SDOperand &) const {
+MVT TargetLowering::getSetCCResultType(const SDValue &) const {
   return getValueType(TD->getIntPtrType());
 }
 
@@ -582,8 +582,8 @@ unsigned TargetLowering::getByValTypeAlignment(const Type *Ty) const {
   return TD->getCallFrameTypeAlignment(Ty);
 }
 
-SDOperand TargetLowering::getPICJumpTableRelocBase(SDOperand Table,
-                                                   SelectionDAG &DAG) const {
+SDValue TargetLowering::getPICJumpTableRelocBase(SDValue Table,
+                                                 SelectionDAG &DAG) const {
   if (usesGlobalOffsetTable())
     return DAG.getNode(ISD::GLOBAL_OFFSET_TABLE, getPointerTy());
   return Table;
@@ -597,7 +597,7 @@ SDOperand TargetLowering::getPICJumpTableRelocBase(SDOperand Table,
 /// specified instruction is a constant integer.  If so, check to see if there
 /// are any bits set in the constant that are not demanded.  If so, shrink the
 /// constant and return true.
-bool TargetLowering::TargetLoweringOpt::ShrinkDemandedConstant(SDOperand Op, 
+bool TargetLowering::TargetLoweringOpt::ShrinkDemandedConstant(SDValue Op, 
                                                         const APInt &Demanded) {
   // FIXME: ISD::SELECT, ISD::SELECT_CC
   switch(Op.getOpcode()) {
@@ -608,7 +608,7 @@ bool TargetLowering::TargetLoweringOpt::ShrinkDemandedConstant(SDOperand Op,
     if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op.getOperand(1)))
       if (C->getAPIntValue().intersects(~Demanded)) {
         MVT VT = Op.getValueType();
-        SDOperand New = DAG.getNode(Op.getOpcode(), VT, Op.getOperand(0),
+        SDValue New = DAG.getNode(Op.getOpcode(), VT, Op.getOperand(0),
                                     DAG.getConstant(Demanded &
                                                       C->getAPIntValue(), 
                                                     VT));
@@ -626,7 +626,7 @@ bool TargetLowering::TargetLoweringOpt::ShrinkDemandedConstant(SDOperand Op,
 /// analyze the expression and return a mask of KnownOne and KnownZero bits for
 /// the expression (used to simplify the caller).  The KnownZero/One bits may
 /// only be accurate for those bits in the DemandedMask.
-bool TargetLowering::SimplifyDemandedBits(SDOperand Op,
+bool TargetLowering::SimplifyDemandedBits(SDValue Op,
                                           const APInt &DemandedMask,
                                           APInt &KnownZero,
                                           APInt &KnownOne,
@@ -780,7 +780,7 @@ bool TargetLowering::SimplifyDemandedBits(SDOperand Op,
     if ((NewMask & (KnownZero|KnownOne)) == NewMask) { // all known
       if ((KnownOne & KnownOne2) == KnownOne) {
         MVT VT = Op.getValueType();
-        SDOperand ANDC = TLO.DAG.getConstant(~KnownOne & NewMask, VT);
+        SDValue ANDC = TLO.DAG.getConstant(~KnownOne & NewMask, VT);
         return TLO.CombineTo(Op, TLO.DAG.getNode(ISD::AND, VT, Op.getOperand(0),
                                                  ANDC));
       }
@@ -795,7 +795,7 @@ bool TargetLowering::SimplifyDemandedBits(SDOperand Op,
       if (Expanded.isAllOnesValue()) {
         if (Expanded != C->getAPIntValue()) {
           MVT VT = Op.getValueType();
-          SDOperand New = TLO.DAG.getNode(Op.getOpcode(), VT, Op.getOperand(0),
+          SDValue New = TLO.DAG.getNode(Op.getOpcode(), VT, Op.getOperand(0),
                                           TLO.DAG.getConstant(Expanded, VT));
           return TLO.CombineTo(Op, New);
         }
@@ -848,7 +848,7 @@ bool TargetLowering::SimplifyDemandedBits(SDOperand Op,
   case ISD::SHL:
     if (ConstantSDNode *SA = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
       unsigned ShAmt = SA->getValue();
-      SDOperand InOp = Op.getOperand(0);
+      SDValue InOp = Op.getOperand(0);
 
       // If the shift count is an invalid immediate, don't do anything.
       if (ShAmt >= BitWidth)
@@ -868,7 +868,7 @@ bool TargetLowering::SimplifyDemandedBits(SDOperand Op,
             Opc = ISD::SRL;
           }          
           
-          SDOperand NewSA = 
+          SDValue NewSA = 
             TLO.DAG.getConstant(Diff, Op.getOperand(1).getValueType());
           MVT VT = Op.getValueType();
           return TLO.CombineTo(Op, TLO.DAG.getNode(Opc, VT,
@@ -890,7 +890,7 @@ bool TargetLowering::SimplifyDemandedBits(SDOperand Op,
       MVT VT = Op.getValueType();
       unsigned ShAmt = SA->getValue();
       unsigned VTSize = VT.getSizeInBits();
-      SDOperand InOp = Op.getOperand(0);
+      SDValue InOp = Op.getOperand(0);
       
       // If the shift count is an invalid immediate, don't do anything.
       if (ShAmt >= BitWidth)
@@ -910,7 +910,7 @@ bool TargetLowering::SimplifyDemandedBits(SDOperand Op,
             Opc = ISD::SHL;
           }          
           
-          SDOperand NewSA =
+          SDValue NewSA =
             TLO.DAG.getConstant(Diff, Op.getOperand(1).getValueType());
           return TLO.CombineTo(Op, TLO.DAG.getNode(Opc, VT,
                                                    InOp.getOperand(0), NewSA));
@@ -1099,7 +1099,7 @@ bool TargetLowering::SimplifyDemandedBits(SDOperand Op,
     // If the input is only used by this truncate, see if we can shrink it based
     // on the known demanded bits.
     if (Op.getOperand(0).Val->hasOneUse()) {
-      SDOperand In = Op.getOperand(0);
+      SDValue In = Op.getOperand(0);
       unsigned InBitWidth = In.getValueSizeInBits();
       switch (In.getOpcode()) {
       default: break;
@@ -1115,7 +1115,7 @@ bool TargetLowering::SimplifyDemandedBits(SDOperand Op,
           if (ShAmt->getValue() < BitWidth && !(HighBits & NewMask)) {
             // None of the shifted in bits are needed.  Add a truncate of the
             // shift input, then shift it.
-            SDOperand NewTrunc = TLO.DAG.getNode(ISD::TRUNCATE, 
+            SDValue NewTrunc = TLO.DAG.getNode(ISD::TRUNCATE, 
                                                  Op.getValueType(), 
                                                  In.getOperand(0));
             return TLO.CombineTo(Op, TLO.DAG.getNode(ISD::SRL,Op.getValueType(),
@@ -1152,10 +1152,10 @@ bool TargetLowering::SimplifyDemandedBits(SDOperand Op,
           isOperationLegal(ISD::FGETSIGN, Op.getValueType())) {
         // Make a FGETSIGN + SHL to move the sign bit into the appropriate
         // place.  We expect the SHL to be eliminated by other optimizations.
-        SDOperand Sign = TLO.DAG.getNode(ISD::FGETSIGN, Op.getValueType(), 
+        SDValue Sign = TLO.DAG.getNode(ISD::FGETSIGN, Op.getValueType(), 
                                          Op.getOperand(0));
         unsigned ShVal = Op.getValueType().getSizeInBits()-1;
-        SDOperand ShAmt = TLO.DAG.getConstant(ShVal, getShiftAmountTy());
+        SDValue ShAmt = TLO.DAG.getConstant(ShVal, getShiftAmountTy());
         return TLO.CombineTo(Op, TLO.DAG.getNode(ISD::SHL, Op.getValueType(),
                                                  Sign, ShAmt));
       }
@@ -1179,7 +1179,7 @@ bool TargetLowering::SimplifyDemandedBits(SDOperand Op,
 /// computeMaskedBitsForTargetNode - Determine which of the bits specified 
 /// in Mask are known to be either zero or one and return them in the 
 /// KnownZero/KnownOne bitsets.
-void TargetLowering::computeMaskedBitsForTargetNode(const SDOperand Op, 
+void TargetLowering::computeMaskedBitsForTargetNode(const SDValue Op, 
                                                     const APInt &Mask,
                                                     APInt &KnownZero, 
                                                     APInt &KnownOne,
@@ -1197,7 +1197,7 @@ void TargetLowering::computeMaskedBitsForTargetNode(const SDOperand Op,
 /// ComputeNumSignBitsForTargetNode - This method can be implemented by
 /// targets that want to expose additional information about sign bits to the
 /// DAG Combiner.
-unsigned TargetLowering::ComputeNumSignBitsForTargetNode(SDOperand Op,
+unsigned TargetLowering::ComputeNumSignBitsForTargetNode(SDValue Op,
                                                          unsigned Depth) const {
   assert((Op.getOpcode() >= ISD::BUILTIN_OP_END ||
           Op.getOpcode() == ISD::INTRINSIC_WO_CHAIN ||
@@ -1210,9 +1210,9 @@ unsigned TargetLowering::ComputeNumSignBitsForTargetNode(SDOperand Op,
 
 
 /// SimplifySetCC - Try to simplify a setcc built with the specified operands 
-/// and cc. If it is unable to simplify it, return a null SDOperand.
-SDOperand
-TargetLowering::SimplifySetCC(MVT VT, SDOperand N0, SDOperand N1,
+/// and cc. If it is unable to simplify it, return a null SDValue.
+SDValue
+TargetLowering::SimplifySetCC(MVT VT, SDValue N0, SDValue N1,
                               ISD::CondCode Cond, bool foldBooleans,
                               DAGCombinerInfo &DCI) const {
   SelectionDAG &DAG = DCI.DAG;
@@ -1249,7 +1249,7 @@ TargetLowering::SimplifySetCC(MVT VT, SDOperand N0, SDOperand N1,
             // (srl (ctlz x), 5) == 1  -> X == 0
             Cond = ISD::SETEQ;
           }
-          SDOperand Zero = DAG.getConstant(0, N0.getValueType());
+          SDValue Zero = DAG.getConstant(0, N0.getValueType());
           return DAG.getSetCC(VT, N0.getOperand(0).getOperand(0),
                               Zero, Cond);
         }
@@ -1313,7 +1313,7 @@ TargetLowering::SimplifySetCC(MVT VT, SDOperand N0, SDOperand N1,
         if ((C1 & ExtBits) != 0 && (C1 & ExtBits) != ExtBits)
           return DAG.getConstant(Cond == ISD::SETNE, VT);
         
-        SDOperand ZextOp;
+        SDValue ZextOp;
         MVT Op0Ty = N0.getOperand(0).getValueType();
         if (Op0Ty == ExtSrcTy) {
           ZextOp = N0.getOperand(0);
@@ -1360,7 +1360,7 @@ TargetLowering::SimplifySetCC(MVT VT, SDOperand N0, SDOperand N1,
                                     APInt::getHighBitsSet(BitWidth,
                                                           BitWidth-1))) {
             // Okay, get the un-inverted input value.
-            SDOperand Val;
+            SDValue Val;
             if (N0.getOpcode() == ISD::XOR)
               Val = N0.getOperand(0);
             else {
@@ -1467,7 +1467,7 @@ TargetLowering::SimplifySetCC(MVT VT, SDOperand N0, SDOperand N1,
 
   if (isa<ConstantFPSDNode>(N0.Val)) {
     // Constant fold or commute setcc.
-    SDOperand O = DAG.FoldSetCC(VT, N0, N1, Cond);    
+    SDValue O = DAG.FoldSetCC(VT, N0, N1, Cond);    
     if (O.Val) return O;
   } else if (ConstantFPSDNode *CFP = dyn_cast<ConstantFPSDNode>(N1.Val)) {
     // If the RHS of an FP comparison is a constant, simplify it away in
@@ -1574,7 +1574,7 @@ TargetLowering::SimplifySetCC(MVT VT, SDOperand N0, SDOperand N1,
         else if (N0.Val->hasOneUse()) {
           assert(N0.getOpcode() == ISD::SUB && "Unexpected operation!");
           // (Z-X) == X  --> Z == X<<1
-          SDOperand SH = DAG.getNode(ISD::SHL, N1.getValueType(),
+          SDValue SH = DAG.getNode(ISD::SHL, N1.getValueType(),
                                      N1, 
                                      DAG.getConstant(1, getShiftAmountTy()));
           if (!DCI.isCalledByLegalizer())
@@ -1597,7 +1597,7 @@ TargetLowering::SimplifySetCC(MVT VT, SDOperand N0, SDOperand N1,
         } else if (N1.Val->hasOneUse()) {
           assert(N1.getOpcode() == ISD::SUB && "Unexpected operation!");
           // X == (Z-X)  --> X<<1 == Z
-          SDOperand SH = DAG.getNode(ISD::SHL, N1.getValueType(), N0, 
+          SDValue SH = DAG.getNode(ISD::SHL, N1.getValueType(), N0, 
                                      DAG.getConstant(1, getShiftAmountTy()));
           if (!DCI.isCalledByLegalizer())
             DCI.AddToWorklist(SH.Val);
@@ -1608,7 +1608,7 @@ TargetLowering::SimplifySetCC(MVT VT, SDOperand N0, SDOperand N1,
   }
 
   // Fold away ALL boolean setcc's.
-  SDOperand Temp;
+  SDValue Temp;
   if (N0.getValueType() == MVT::i1 && foldBooleans) {
     switch (Cond) {
     default: assert(0 && "Unknown integer setcc!");
@@ -1658,7 +1658,7 @@ TargetLowering::SimplifySetCC(MVT VT, SDOperand N0, SDOperand N1,
   }
 
   // Could not fold it.
-  return SDOperand();
+  return SDValue();
 }
 
 /// isGAPlusOffset - Returns true (and the GlobalValue and the offset) if the
@@ -1673,8 +1673,8 @@ bool TargetLowering::isGAPlusOffset(SDNode *N, GlobalValue* &GA,
   }
 
   if (N->getOpcode() == ISD::ADD) {
-    SDOperand N1 = N->getOperand(0);
-    SDOperand N2 = N->getOperand(1);
+    SDValue N1 = N->getOperand(0);
+    SDValue N2 = N->getOperand(1);
     if (isGAPlusOffset(N1.Val, GA, Offset)) {
       ConstantSDNode *V = dyn_cast<ConstantSDNode>(N2);
       if (V) {
@@ -1705,8 +1705,8 @@ bool TargetLowering::isConsecutiveLoad(SDNode *LD, SDNode *Base,
   if (VT.getSizeInBits() / 8 != Bytes)
     return false;
 
-  SDOperand Loc = LD->getOperand(1);
-  SDOperand BaseLoc = Base->getOperand(1);
+  SDValue Loc = LD->getOperand(1);
+  SDValue BaseLoc = Base->getOperand(1);
   if (Loc.getOpcode() == ISD::FrameIndex) {
     if (BaseLoc.getOpcode() != ISD::FrameIndex)
       return false;
@@ -1730,10 +1730,10 @@ bool TargetLowering::isConsecutiveLoad(SDNode *LD, SDNode *Base,
 }
 
 
-SDOperand TargetLowering::
+SDValue TargetLowering::
 PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const {
   // Default implementation: no optimization.
-  return SDOperand();
+  return SDValue();
 }
 
 //===----------------------------------------------------------------------===//
@@ -1787,9 +1787,9 @@ const char *TargetLowering::LowerXConstraint(MVT ConstraintVT) const{
 
 /// LowerAsmOperandForConstraint - Lower the specified operand into the Ops
 /// vector.  If it is invalid, don't add anything to Ops.
-void TargetLowering::LowerAsmOperandForConstraint(SDOperand Op,
+void TargetLowering::LowerAsmOperandForConstraint(SDValue Op,
                                                   char ConstraintLetter,
-                                                  std::vector<SDOperand> &Ops,
+                                                  std::vector<SDValue> &Ops,
                                                   SelectionDAG &DAG) const {
   switch (ConstraintLetter) {
   default: break;
@@ -1931,7 +1931,7 @@ static unsigned getConstraintGenerality(TargetLowering::ConstraintType CT) {
 ///
 static void ChooseConstraint(TargetLowering::AsmOperandInfo &OpInfo,
                              const TargetLowering &TLI,
-                             SDOperand Op, SelectionDAG *DAG) {
+                             SDValue Op, SelectionDAG *DAG) {
   assert(OpInfo.Codes.size() > 1 && "Doesn't have multiple constraint options");
   unsigned BestIdx = 0;
   TargetLowering::ConstraintType BestType = TargetLowering::C_Unknown;
@@ -1949,7 +1949,7 @@ static void ChooseConstraint(TargetLowering::AsmOperandInfo &OpInfo,
     if (CType == TargetLowering::C_Other && Op.Val) {
       assert(OpInfo.Codes[i].size() == 1 &&
              "Unhandled multi-letter 'other' constraint");
-      std::vector<SDOperand> ResultOps;
+      std::vector<SDValue> ResultOps;
       TLI.LowerAsmOperandForConstraint(Op, OpInfo.Codes[i][0],
                                        ResultOps, *DAG);
       if (!ResultOps.empty()) {
@@ -1976,7 +1976,7 @@ static void ChooseConstraint(TargetLowering::AsmOperandInfo &OpInfo,
 /// type to use for the specific AsmOperandInfo, setting
 /// OpInfo.ConstraintCode and OpInfo.ConstraintType.
 void TargetLowering::ComputeConstraintToUse(AsmOperandInfo &OpInfo,
-                                            SDOperand Op, 
+                                            SDValue Op, 
                                             SelectionDAG *DAG) const {
   assert(!OpInfo.Codes.empty() && "Must have at least one constraint");
   
@@ -2221,28 +2221,28 @@ static mu magicu64(uint64_t d)
 /// return a DAG expression to select that will generate the same value by
 /// multiplying by a magic number.  See:
 /// <http://the.wall.riscom.net/books/proc/ppc/cwg/code2.html>
-SDOperand TargetLowering::BuildSDIV(SDNode *N, SelectionDAG &DAG, 
-                                    std::vector<SDNode*>* Created) const {
+SDValue TargetLowering::BuildSDIV(SDNode *N, SelectionDAG &DAG, 
+                                  std::vector<SDNode*>* Created) const {
   MVT VT = N->getValueType(0);
   
   // Check to see if we can do this.
   if (!isTypeLegal(VT) || (VT != MVT::i32 && VT != MVT::i64))
-    return SDOperand();       // BuildSDIV only operates on i32 or i64
+    return SDValue();       // BuildSDIV only operates on i32 or i64
   
   int64_t d = cast<ConstantSDNode>(N->getOperand(1))->getSignExtended();
   ms magics = (VT == MVT::i32) ? magic32(d) : magic64(d);
   
   // Multiply the numerator (operand 0) by the magic value
-  SDOperand Q;
+  SDValue Q;
   if (isOperationLegal(ISD::MULHS, VT))
     Q = DAG.getNode(ISD::MULHS, VT, N->getOperand(0),
                     DAG.getConstant(magics.m, VT));
   else if (isOperationLegal(ISD::SMUL_LOHI, VT))
-    Q = SDOperand(DAG.getNode(ISD::SMUL_LOHI, DAG.getVTList(VT, VT),
+    Q = SDValue(DAG.getNode(ISD::SMUL_LOHI, DAG.getVTList(VT, VT),
                               N->getOperand(0),
                               DAG.getConstant(magics.m, VT)).Val, 1);
   else
-    return SDOperand();       // No mulhs or equvialent
+    return SDValue();       // No mulhs or equvialent
   // If d > 0 and m < 0, add the numerator
   if (d > 0 && magics.m < 0) { 
     Q = DAG.getNode(ISD::ADD, VT, Q, N->getOperand(0));
@@ -2263,7 +2263,7 @@ SDOperand TargetLowering::BuildSDIV(SDNode *N, SelectionDAG &DAG,
       Created->push_back(Q.Val);
   }
   // Extract the sign bit and add it to the quotient
-  SDOperand T =
+  SDValue T =
     DAG.getNode(ISD::SRL, VT, Q, DAG.getConstant(VT.getSizeInBits()-1,
                                                  getShiftAmountTy()));
   if (Created)
@@ -2275,28 +2275,28 @@ SDOperand TargetLowering::BuildSDIV(SDNode *N, SelectionDAG &DAG,
 /// return a DAG expression to select that will generate the same value by
 /// multiplying by a magic number.  See:
 /// <http://the.wall.riscom.net/books/proc/ppc/cwg/code2.html>
-SDOperand TargetLowering::BuildUDIV(SDNode *N, SelectionDAG &DAG,
-                                    std::vector<SDNode*>* Created) const {
+SDValue TargetLowering::BuildUDIV(SDNode *N, SelectionDAG &DAG,
+                                  std::vector<SDNode*>* Created) const {
   MVT VT = N->getValueType(0);
   
   // Check to see if we can do this.
   if (!isTypeLegal(VT) || (VT != MVT::i32 && VT != MVT::i64))
-    return SDOperand();       // BuildUDIV only operates on i32 or i64
+    return SDValue();       // BuildUDIV only operates on i32 or i64
   
   uint64_t d = cast<ConstantSDNode>(N->getOperand(1))->getValue();
   mu magics = (VT == MVT::i32) ? magicu32(d) : magicu64(d);
   
   // Multiply the numerator (operand 0) by the magic value
-  SDOperand Q;
+  SDValue Q;
   if (isOperationLegal(ISD::MULHU, VT))
     Q = DAG.getNode(ISD::MULHU, VT, N->getOperand(0),
                     DAG.getConstant(magics.m, VT));
   else if (isOperationLegal(ISD::UMUL_LOHI, VT))
-    Q = SDOperand(DAG.getNode(ISD::UMUL_LOHI, DAG.getVTList(VT, VT),
+    Q = SDValue(DAG.getNode(ISD::UMUL_LOHI, DAG.getVTList(VT, VT),
                               N->getOperand(0),
                               DAG.getConstant(magics.m, VT)).Val, 1);
   else
-    return SDOperand();       // No mulhu or equvialent
+    return SDValue();       // No mulhu or equvialent
   if (Created)
     Created->push_back(Q.Val);
 
@@ -2304,7 +2304,7 @@ SDOperand TargetLowering::BuildUDIV(SDNode *N, SelectionDAG &DAG,
     return DAG.getNode(ISD::SRL, VT, Q, 
                        DAG.getConstant(magics.s, getShiftAmountTy()));
   } else {
-    SDOperand NPQ = DAG.getNode(ISD::SUB, VT, N->getOperand(0), Q);
+    SDValue NPQ = DAG.getNode(ISD::SUB, VT, N->getOperand(0), Q);
     if (Created)
       Created->push_back(NPQ.Val);
     NPQ = DAG.getNode(ISD::SRL, VT, NPQ, 

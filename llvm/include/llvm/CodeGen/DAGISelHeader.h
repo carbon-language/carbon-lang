@@ -35,7 +35,7 @@ static bool IsChainCompatible(SDNode *Chain, SDNode *Op) {
   else if (Chain->getOpcode() == ISD::TokenFactor)
     return false;
   else if (Chain->getNumOperands() > 0) {
-    SDOperand C0 = Chain->getOperand(0);
+    SDValue C0 = Chain->getOperand(0);
     if (C0.getValueType() == MVT::Other)
       return C0.Val != Op && IsChainCompatible(C0.Val, Op);
   }
@@ -75,7 +75,7 @@ inline bool isSelected(int Id) {
 
 /// AddToISelQueue - adds a node to the instruction 
 /// selection queue.
-void AddToISelQueue(SDOperand N) DISABLE_INLINE {
+void AddToISelQueue(SDValue N) DISABLE_INLINE {
   int Id = N.Val->getNodeId();
   if (Id != -1 && !isQueued(Id)) {
     ISelQueue.push_back(N.Val);
@@ -117,7 +117,7 @@ inline void UpdateQueue(const ISelQueueUpdater &ISQU) {
 
 /// ReplaceUses - replace all uses of the old node F with the use
 /// of the new node T.
-void ReplaceUses(SDOperand F, SDOperand T) DISABLE_INLINE {
+void ReplaceUses(SDValue F, SDValue T) DISABLE_INLINE {
   ISelQueueUpdater ISQU(ISelQueue);
   CurDAG->ReplaceAllUsesOfValueWith(F, T, &ISQU);
   setSelected(F.Val->getNodeId());
@@ -126,7 +126,7 @@ void ReplaceUses(SDOperand F, SDOperand T) DISABLE_INLINE {
 
 /// ReplaceUses - replace all uses of the old nodes F with the use
 /// of the new nodes T.
-void ReplaceUses(const SDOperand *F, const SDOperand *T,
+void ReplaceUses(const SDValue *F, const SDValue *T,
                  unsigned Num) DISABLE_INLINE {
   ISelQueueUpdater ISQU(ISelQueue);
   CurDAG->ReplaceAllUsesOfValuesWith(F, T, Num, &ISQU);
@@ -143,7 +143,7 @@ void ReplaceUses(SDNode *F, SDNode *T) DISABLE_INLINE {
   ISelQueueUpdater ISQU(ISelQueue);
   if (FNumVals != TNumVals) {
     for (unsigned i = 0, e = std::min(FNumVals, TNumVals); i < e; ++i)
-     CurDAG->ReplaceAllUsesOfValueWith(SDOperand(F, i), SDOperand(T, i), &ISQU);
+     CurDAG->ReplaceAllUsesOfValueWith(SDValue(F, i), SDValue(T, i), &ISQU);
   } else {
     CurDAG->ReplaceAllUsesWith(F, T, &ISQU);
   }
@@ -153,7 +153,7 @@ void ReplaceUses(SDNode *F, SDNode *T) DISABLE_INLINE {
 
 /// SelectRoot - Top level entry to DAG instruction selector.
 /// Selects instructions starting at the root of the current DAG.
-SDOperand SelectRoot(SDOperand Root) {
+SDValue SelectRoot(SDValue Root) {
   SelectRootInit();
   unsigned NumBytes = (DAGSize + 7) / 8;
   ISelQueued   = new unsigned char[NumBytes];
@@ -176,7 +176,7 @@ SDOperand SelectRoot(SDOperand Root) {
     // Skip already selected nodes.
     if (isSelected(Node->getNodeId()))
       continue;
-    SDNode *ResNode = Select(SDOperand(Node, 0));
+    SDNode *ResNode = Select(SDValue(Node, 0));
     // If node should not be replaced, 
     // continue with the next one.
     if (ResNode == Node)

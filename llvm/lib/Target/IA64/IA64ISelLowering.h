@@ -49,24 +49,24 @@ namespace llvm {
     const char *getTargetNodeName(unsigned Opcode) const;
 
     /// getSetCCResultType: return ISD::SETCC's result type.
-    virtual MVT getSetCCResultType(const SDOperand &) const;
+    virtual MVT getSetCCResultType(const SDValue &) const;
       
     /// LowerArguments - This hook must be implemented to indicate how we should
     /// lower the arguments for the specified function, into the specified DAG.
     virtual void LowerArguments(Function &F, SelectionDAG &DAG,
-                                SmallVectorImpl<SDOperand> &ArgValues);
+                                SmallVectorImpl<SDValue> &ArgValues);
     
     /// LowerCallTo - This hook lowers an abstract call to a function into an
     /// actual call.
-    virtual std::pair<SDOperand, SDOperand>
-      LowerCallTo(SDOperand Chain, const Type *RetTy,
+    virtual std::pair<SDValue, SDValue>
+      LowerCallTo(SDValue Chain, const Type *RetTy,
                   bool RetSExt, bool RetZExt, bool isVarArg,
                   unsigned CC, bool isTailCall, 
-                  SDOperand Callee, ArgListTy &Args, SelectionDAG &DAG);
+                  SDValue Callee, ArgListTy &Args, SelectionDAG &DAG);
 
     /// LowerOperation - for custom lowering specific ops
     /// (currently, only "ret void")
-    virtual SDOperand LowerOperation(SDOperand Op, SelectionDAG &DAG);
+    virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG);
     
   };
 }

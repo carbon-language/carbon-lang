@@ -787,7 +787,7 @@ define multiple values.  For example, a combined div/rem operation will define
 both the dividend and the remainder. Many other situations require multiple
 values as well.  Each node also has some number of operands, which are edges 
 to the node defining the used value.  Because nodes may define multiple values,
-edges are represented by instances of the <tt>SDOperand</tt> class, which is 
+edges are represented by instances of the <tt>SDValue</tt> class, which is 
 a <tt>&lt;SDNode, unsigned&gt;</tt> pair, indicating the node and result
 value being used, respectively.  Each value produced by an <tt>SDNode</tt> has
 an associated <tt>MVT</tt> (Machine Value Type) indicating what the type of the

@@ -152,7 +152,7 @@ def so_imm_not :
 
 // sext_16_node predicate - True if the SDNode is sign-extended 16 or more bits.
 def sext_16_node : PatLeaf<(i32 GPR:$a), [{
-  return CurDAG->ComputeNumSignBits(SDOperand(N,0)) >= 17;
+  return CurDAG->ComputeNumSignBits(SDValue(N,0)) >= 17;
 }]>;
 
 

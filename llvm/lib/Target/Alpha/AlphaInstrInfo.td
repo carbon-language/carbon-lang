@@ -62,7 +62,7 @@ def LH16 : SDNodeXForm<imm, [{ //ldah part of constant (or more if too big)
 }]>;
 def iZAPX : SDNodeXForm<and, [{ // get imm to ZAPi
   ConstantSDNode *RHS = cast<ConstantSDNode>(N->getOperand(1));
-  return getI64Imm(get_zapImm(SDOperand(), RHS->getValue()));
+  return getI64Imm(get_zapImm(SDValue(), RHS->getValue()));
 }]>;
 def nearP2X : SDNodeXForm<imm, [{
   return getI64Imm(Log2_64(getNearPower2((uint64_t)N->getValue())));

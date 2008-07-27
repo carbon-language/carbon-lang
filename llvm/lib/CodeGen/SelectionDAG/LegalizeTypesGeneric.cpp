@@ -28,10 +28,10 @@ using namespace llvm;
 // little/big-endian machines, followed by the Hi/Lo part.  This means that
 // they cannot be used as is on vectors, for which Lo is always stored first.
 
-void DAGTypeLegalizer::ExpandRes_BIT_CONVERT(SDNode *N, SDOperand &Lo,
-                                             SDOperand &Hi) {
+void DAGTypeLegalizer::ExpandRes_BIT_CONVERT(SDNode *N, SDValue &Lo,
+                                             SDValue &Hi) {
   MVT NVT = TLI.getTypeToTransformTo(N->getValueType(0));
-  SDOperand InOp = N->getOperand(0);
+  SDValue InOp = N->getOperand(0);
   MVT InVT = InOp.getValueType();
 
   // Handle some special cases efficiently.
@@ -74,21 +74,21 @@ void DAGTypeLegalizer::ExpandRes_BIT_CONVERT(SDNode *N, SDOperand &Lo,
   }
 
   // Lower the bit-convert to a store/load from the stack, then expand the load.
-  SDOperand Op = CreateStackStoreLoad(InOp, N->getValueType(0));
+  SDValue Op = CreateStackStoreLoad(InOp, N->getValueType(0));
   ExpandRes_NormalLoad(Op.Val, Lo, Hi);
 }
 
-void DAGTypeLegalizer::ExpandRes_BUILD_PAIR(SDNode *N, SDOperand &Lo,
-                                            SDOperand &Hi) {
+void DAGTypeLegalizer::ExpandRes_BUILD_PAIR(SDNode *N, SDValue &Lo,
+                                            SDValue &Hi) {
   // Return the operands.
   Lo = N->getOperand(0);
   Hi = N->getOperand(1);
 }
 
-void DAGTypeLegalizer::ExpandRes_EXTRACT_ELEMENT(SDNode *N, SDOperand &Lo,
-                                                 SDOperand &Hi) {
+void DAGTypeLegalizer::ExpandRes_EXTRACT_ELEMENT(SDNode *N, SDValue &Lo,
+                                                 SDValue &Hi) {
   GetExpandedOp(N->getOperand(0), Lo, Hi);
-  SDOperand Part = cast<ConstantSDNode>(N->getOperand(1))->getValue() ? Hi : Lo;
+  SDValue Part = cast<ConstantSDNode>(N->getOperand(1))->getValue() ? Hi : Lo;
 
   assert(Part.getValueType() == N->getValueType(0) &&
          "Type twice as big as expanded type not itself expanded!");
@@ -100,9 +100,9 @@ void DAGTypeLegalizer::ExpandRes_EXTRACT_ELEMENT(SDNode *N, SDOperand &Lo,
                    DAG.getConstant(1, TLI.getPointerTy()));
 }
 
-void DAGTypeLegalizer::ExpandRes_EXTRACT_VECTOR_ELT(SDNode *N, SDOperand &Lo,
-                                                    SDOperand &Hi) {
-  SDOperand OldVec = N->getOperand(0);
+void DAGTypeLegalizer::ExpandRes_EXTRACT_VECTOR_ELT(SDNode *N, SDValue &Lo,
+                                                    SDValue &Hi) {
+  SDValue OldVec = N->getOperand(0);
   unsigned OldElts = OldVec.getValueType().getVectorNumElements();
 
   // Convert to a vector of the expanded element type, for example
@@ -110,12 +110,12 @@ void DAGTypeLegalizer::ExpandRes_EXTRACT_VECTOR_ELT(SDNode *N, SDOperand &Lo,
   MVT OldVT = N->getValueType(0);
   MVT NewVT = TLI.getTypeToTransformTo(OldVT);
 
-  SDOperand NewVec = DAG.getNode(ISD::BIT_CONVERT,
+  SDValue NewVec = DAG.getNode(ISD::BIT_CONVERT,
                                  MVT::getVectorVT(NewVT, 2*OldElts),
                                  OldVec);
 
   // Extract the elements at 2 * Idx and 2 * Idx + 1 from the new vector.
-  SDOperand Idx = N->getOperand(1);
+  SDValue Idx = N->getOperand(1);
 
   // Make sure the type of Idx is big enough to hold the new values.
   if (Idx.getValueType().bitsLT(TLI.getPointerTy()))
@@ -132,14 +132,14 @@ void DAGTypeLegalizer::ExpandRes_EXTRACT_VECTOR_ELT(SDNode *N, SDOperand &Lo,
     std::swap(Lo, Hi);
 }
 
-void DAGTypeLegalizer::ExpandRes_NormalLoad(SDNode *N, SDOperand &Lo,
-                                            SDOperand &Hi) {
+void DAGTypeLegalizer::ExpandRes_NormalLoad(SDNode *N, SDValue &Lo,
+                                            SDValue &Hi) {
   assert(ISD::isNormalLoad(N) && "This routine only for normal loads!");
 
   LoadSDNode *LD = cast<LoadSDNode>(N);
   MVT NVT = TLI.getTypeToTransformTo(LD->getValueType(0));
-  SDOperand Chain = LD->getChain();
-  SDOperand Ptr = LD->getBasePtr();
+  SDValue Chain = LD->getChain();
+  SDValue Ptr = LD->getBasePtr();
   int SVOffset = LD->getSrcValueOffset();
   unsigned Alignment = LD->getAlignment();
   bool isVolatile = LD->isVolatile();
@@ -167,7 +167,7 @@ void DAGTypeLegalizer::ExpandRes_NormalLoad(SDNode *N, SDOperand &Lo,
 
   // Modified the chain - switch anything that used the old chain to use
   // the new one.
-  ReplaceValueWith(SDOperand(N, 1), Chain);
+  ReplaceValueWith(SDValue(N, 1), Chain);
 }
 
 
@@ -175,7 +175,7 @@ void DAGTypeLegalizer::ExpandRes_NormalLoad(SDNode *N, SDOperand &Lo,
 // Generic Operand Expansion.
 //===--------------------------------------------------------------------===//
 
-SDOperand DAGTypeLegalizer::ExpandOp_BIT_CONVERT(SDNode *N) {
+SDValue DAGTypeLegalizer::ExpandOp_BIT_CONVERT(SDNode *N) {
   if (N->getValueType(0).isVector()) {
     // An illegal expanding type is being converted to a legal vector type.
     // Make a two element vector out of the expanded parts and convert that
@@ -186,13 +186,13 @@ SDOperand DAGTypeLegalizer::ExpandOp_BIT_CONVERT(SDNode *N) {
     MVT NVT = MVT::getVectorVT(TLI.getTypeToTransformTo(OVT), 2);
 
     if (isTypeLegal(NVT)) {
-      SDOperand Parts[2];
+      SDValue Parts[2];
       GetExpandedOp(N->getOperand(0), Parts[0], Parts[1]);
 
       if (TLI.isBigEndian())
         std::swap(Parts[0], Parts[1]);
 
-      SDOperand Vec = DAG.getNode(ISD::BUILD_VECTOR, NVT, Parts, 2);
+      SDValue Vec = DAG.getNode(ISD::BUILD_VECTOR, NVT, Parts, 2);
       return DAG.getNode(ISD::BIT_CONVERT, N->getValueType(0), Vec);
     }
   }
@@ -201,7 +201,7 @@ SDOperand DAGTypeLegalizer::ExpandOp_BIT_CONVERT(SDNode *N) {
   return CreateStackStoreLoad(N->getOperand(0), N->getValueType(0));
 }
 
-SDOperand DAGTypeLegalizer::ExpandOp_BUILD_VECTOR(SDNode *N) {
+SDValue DAGTypeLegalizer::ExpandOp_BUILD_VECTOR(SDNode *N) {
   // The vector type is legal but the element type needs expansion.
   MVT VecVT = N->getValueType(0);
   unsigned NumElts = VecVT.getVectorNumElements();
@@ -210,11 +210,11 @@ SDOperand DAGTypeLegalizer::ExpandOp_BUILD_VECTOR(SDNode *N) {
 
   // Build a vector of twice the length out of the expanded elements.
   // For example <3 x i64> -> <6 x i32>.
-  std::vector<SDOperand> NewElts;
+  std::vector<SDValue> NewElts;
   NewElts.reserve(NumElts*2);
 
   for (unsigned i = 0; i < NumElts; ++i) {
-    SDOperand Lo, Hi;
+    SDValue Lo, Hi;
     GetExpandedOp(N->getOperand(i), Lo, Hi);
     if (TLI.isBigEndian())
       std::swap(Lo, Hi);
@@ -222,7 +222,7 @@ SDOperand DAGTypeLegalizer::ExpandOp_BUILD_VECTOR(SDNode *N) {
     NewElts.push_back(Hi);
   }
 
-  SDOperand NewVec = DAG.getNode(ISD::BUILD_VECTOR,
+  SDValue NewVec = DAG.getNode(ISD::BUILD_VECTOR,
                                  MVT::getVectorVT(NewVT, NewElts.size()),
                                  &NewElts[0], NewElts.size());
 
@@ -230,20 +230,20 @@ SDOperand DAGTypeLegalizer::ExpandOp_BUILD_VECTOR(SDNode *N) {
   return DAG.getNode(ISD::BIT_CONVERT, VecVT, NewVec);
 }
 
-SDOperand DAGTypeLegalizer::ExpandOp_EXTRACT_ELEMENT(SDNode *N) {
-  SDOperand Lo, Hi;
+SDValue DAGTypeLegalizer::ExpandOp_EXTRACT_ELEMENT(SDNode *N) {
+  SDValue Lo, Hi;
   GetExpandedOp(N->getOperand(0), Lo, Hi);
   return cast<ConstantSDNode>(N->getOperand(1))->getValue() ? Hi : Lo;
 }
 
-SDOperand DAGTypeLegalizer::ExpandOp_NormalStore(SDNode *N, unsigned OpNo) {
+SDValue DAGTypeLegalizer::ExpandOp_NormalStore(SDNode *N, unsigned OpNo) {
   assert(ISD::isNormalStore(N) && "This routine only for normal stores!");
   assert(OpNo == 1 && "Can only expand the stored value so far");
 
   StoreSDNode *St = cast<StoreSDNode>(N);
   MVT NVT = TLI.getTypeToTransformTo(St->getValue().getValueType());
-  SDOperand Chain = St->getChain();
-  SDOperand Ptr = St->getBasePtr();
+  SDValue Chain = St->getChain();
+  SDValue Ptr = St->getBasePtr();
   int SVOffset = St->getSrcValueOffset();
   unsigned Alignment = St->getAlignment();
   bool isVolatile = St->isVolatile();
@@ -251,7 +251,7 @@ SDOperand DAGTypeLegalizer::ExpandOp_NormalStore(SDNode *N, unsigned OpNo) {
   assert(NVT.isByteSized() && "Expanded type not byte sized!");
   unsigned IncrementSize = NVT.getSizeInBits() / 8;
 
-  SDOperand Lo, Hi;
+  SDValue Lo, Hi;
   GetExpandedOp(St->getValue(), Lo, Hi);
 
   if (TLI.isBigEndian())
@@ -280,7 +280,7 @@ SDOperand DAGTypeLegalizer::ExpandOp_NormalStore(SDNode *N, unsigned OpNo) {
 // little-endian).
 
 void DAGTypeLegalizer::SplitRes_MERGE_VALUES(SDNode *N,
-                                             SDOperand &Lo, SDOperand &Hi) {
+                                             SDValue &Lo, SDValue &Hi) {
   // A MERGE_VALUES node can produce any number of values.  We know that the
   // first illegal one needs to be expanded into Lo/Hi.
   unsigned i;
@@ -288,7 +288,7 @@ void DAGTypeLegalizer::SplitRes_MERGE_VALUES(SDNode *N,
   // The string of legal results gets turns into the input operands, which have
   // the same type.
   for (i = 0; isTypeLegal(N->getValueType(i)); ++i)
-    ReplaceValueWith(SDOperand(N, i), SDOperand(N->getOperand(i)));
+    ReplaceValueWith(SDValue(N, i), SDValue(N->getOperand(i)));
 
   // The first illegal result must be the one that needs to be expanded.
   GetSplitOp(N->getOperand(i), Lo, Hi);
@@ -297,23 +297,23 @@ void DAGTypeLegalizer::SplitRes_MERGE_VALUES(SDNode *N,
   // legal or not.
   unsigned e = N->getNumValues();
   for (++i; i != e; ++i)
-    ReplaceValueWith(SDOperand(N, i), SDOperand(N->getOperand(i)));
+    ReplaceValueWith(SDValue(N, i), SDValue(N->getOperand(i)));
 }
 
-void DAGTypeLegalizer::SplitRes_SELECT(SDNode *N, SDOperand &Lo,
-                                       SDOperand &Hi) {
-  SDOperand LL, LH, RL, RH;
+void DAGTypeLegalizer::SplitRes_SELECT(SDNode *N, SDValue &Lo,
+                                       SDValue &Hi) {
+  SDValue LL, LH, RL, RH;
   GetSplitOp(N->getOperand(1), LL, LH);
   GetSplitOp(N->getOperand(2), RL, RH);
 
-  SDOperand Cond = N->getOperand(0);
+  SDValue Cond = N->getOperand(0);
   Lo = DAG.getNode(ISD::SELECT, LL.getValueType(), Cond, LL, RL);
   Hi = DAG.getNode(ISD::SELECT, LH.getValueType(), Cond, LH, RH);
 }
 
-void DAGTypeLegalizer::SplitRes_SELECT_CC(SDNode *N, SDOperand &Lo,
-                                          SDOperand &Hi) {
-  SDOperand LL, LH, RL, RH;
+void DAGTypeLegalizer::SplitRes_SELECT_CC(SDNode *N, SDValue &Lo,
+                                          SDValue &Hi) {
+  SDValue LL, LH, RL, RH;
   GetSplitOp(N->getOperand(2), LL, LH);
   GetSplitOp(N->getOperand(3), RL, RH);
 
@@ -323,7 +323,7 @@ void DAGTypeLegalizer::SplitRes_SELECT_CC(SDNode *N, SDOperand &Lo,
                    N->getOperand(1), LH, RH, N->getOperand(4));
 }
 
-void DAGTypeLegalizer::SplitRes_UNDEF(SDNode *N, SDOperand &Lo, SDOperand &Hi) {
+void DAGTypeLegalizer::SplitRes_UNDEF(SDNode *N, SDValue &Lo, SDValue &Hi) {
   MVT LoVT, HiVT;
   GetSplitDestVTs(N->getValueType(0), LoVT, HiVT);
   Lo = DAG.getNode(ISD::UNDEF, LoVT);

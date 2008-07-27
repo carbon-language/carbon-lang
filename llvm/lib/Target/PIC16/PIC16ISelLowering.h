@@ -64,28 +64,28 @@ namespace llvm {
     explicit PIC16TargetLowering(PIC16TargetMachine &TM);
 
     /// LowerOperation - Provide custom lowering hooks for some operations.
-    virtual SDOperand LowerOperation(SDOperand Op, SelectionDAG &DAG);
+    virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG);
 
-    SDOperand LowerGlobalAddress(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerFrameIndex(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerBR_CC(SDOperand Op, SelectionDAG &DAG);
+    SDValue LowerGlobalAddress(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerRET(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerFrameIndex(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerBR_CC(SDValue Op, SelectionDAG &DAG);
 
-    SDOperand RemoveHiLo(SDNode *, SelectionDAG &DAG, 
+    SDValue RemoveHiLo(SDNode *, SelectionDAG &DAG, 
                          DAGCombinerInfo &DCI) const;
-    SDOperand LowerADDSUB(SDNode *, SelectionDAG &DAG, 
+    SDValue LowerADDSUB(SDNode *, SelectionDAG &DAG, 
                           DAGCombinerInfo &DCI) const;
-    SDOperand LowerLOAD(SDNode *, SelectionDAG &DAG, 
+    SDValue LowerLOAD(SDNode *, SelectionDAG &DAG, 
                         DAGCombinerInfo &DCI) const;
 
     /// getTargetNodeName - This method returns the name of a target specific 
     //  DAG node.
     virtual const char *getTargetNodeName(unsigned Opcode) const;
-    virtual SDOperand PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;
+    virtual SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;
 
     // utility function.
-    const SDOperand *findLoadi8(const SDOperand &Src, SelectionDAG &DAG) const;
+    const SDValue *findLoadi8(const SDValue &Src, SelectionDAG &DAG) const;
   };
 } // namespace llvm
 

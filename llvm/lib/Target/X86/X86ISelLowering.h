@@ -325,7 +325,7 @@ namespace llvm {
 
     /// getPICJumpTableRelocaBase - Returns relocation base for the given PIC
     /// jumptable.
-    SDOperand getPICJumpTableRelocBase(SDOperand Table,
+    SDValue getPICJumpTableRelocBase(SDValue Table,
                                        SelectionDAG &DAG) const;
 
     // Return the number of bytes that a function should pop when it returns (in
@@ -357,7 +357,7 @@ namespace llvm {
     
     /// LowerOperation - Provide custom lowering hooks for some operations.
     ///
-    virtual SDOperand LowerOperation(SDOperand Op, SelectionDAG &DAG);
+    virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG);
 
     /// ReplaceNodeResults - Replace a node with an illegal result type
     /// with a new node built out of custom code.
@@ -365,7 +365,7 @@ namespace llvm {
     virtual SDNode *ReplaceNodeResults(SDNode *N, SelectionDAG &DAG);
 
     
-    virtual SDOperand PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;
+    virtual SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;
 
     virtual MachineBasicBlock *EmitInstrWithCustomInserter(MachineInstr *MI,
                                                         MachineBasicBlock *MBB);
@@ -376,12 +376,12 @@ namespace llvm {
     virtual const char *getTargetNodeName(unsigned Opcode) const;
 
     /// getSetCCResultType - Return the ISD::SETCC ValueType
-    virtual MVT getSetCCResultType(const SDOperand &) const;
+    virtual MVT getSetCCResultType(const SDValue &) const;
 
     /// computeMaskedBitsForTargetNode - Determine which of the bits specified 
     /// in Mask are known to be either zero or one and return them in the 
     /// KnownZero/KnownOne bitsets.
-    virtual void computeMaskedBitsForTargetNode(const SDOperand Op,
+    virtual void computeMaskedBitsForTargetNode(const SDValue Op,
                                                 const APInt &Mask,
                                                 APInt &KnownZero, 
                                                 APInt &KnownOne,
@@ -391,7 +391,7 @@ namespace llvm {
     virtual bool
     isGAPlusOffset(SDNode *N, GlobalValue* &GA, int64_t &Offset) const;
     
-    SDOperand getReturnAddressFrameIndex(SelectionDAG &DAG);
+    SDValue getReturnAddressFrameIndex(SelectionDAG &DAG);
 
     ConstraintType getConstraintType(const std::string &Constraint) const;
      
@@ -403,9 +403,9 @@ namespace llvm {
 
     /// LowerAsmOperandForConstraint - Lower the specified operand into the Ops
     /// vector.  If it is invalid, don't add anything to Ops.
-    virtual void LowerAsmOperandForConstraint(SDOperand Op,
+    virtual void LowerAsmOperandForConstraint(SDValue Op,
                                               char ConstraintLetter,
-                                              std::vector<SDOperand> &Ops,
+                                              std::vector<SDValue> &Ops,
                                               SelectionDAG &DAG) const;
     
     /// getRegForInlineAsmConstraint - Given a physical register constraint
@@ -430,13 +430,13 @@ namespace llvm {
     /// support *some* VECTOR_SHUFFLE operations, those with specific masks.
     /// By default, if a target supports the VECTOR_SHUFFLE node, all mask
     /// values are assumed to be legal.
-    virtual bool isShuffleMaskLegal(SDOperand Mask, MVT VT) const;
+    virtual bool isShuffleMaskLegal(SDValue Mask, MVT VT) const;
 
     /// isVectorClearMaskLegal - Similar to isShuffleMaskLegal. This is
     /// used by Targets can use this to indicate if there is a suitable
     /// VECTOR_SHUFFLE that can be used to replace a VAND with a constant
     /// pool entry.
-    virtual bool isVectorClearMaskLegal(const std::vector<SDOperand> &BVOps,
+    virtual bool isVectorClearMaskLegal(const std::vector<SDValue> &BVOps,
                                         MVT EVT, SelectionDAG &DAG) const;
 
     /// ShouldShrinkFPConstant - If true, then instruction selection should
@@ -452,8 +452,8 @@ namespace llvm {
     /// IsEligibleForTailCallOptimization - Check whether the call is eligible
     /// for tail call optimization. Target which want to do tail call
     /// optimization should implement this function.
-    virtual bool IsEligibleForTailCallOptimization(SDOperand Call, 
-                                                   SDOperand Ret, 
+    virtual bool IsEligibleForTailCallOptimization(SDValue Call, 
+                                                   SDValue Ret, 
                                                    SelectionDAG &DAG) const;
 
     virtual const X86Subtarget* getSubtarget() {
@@ -483,87 +483,87 @@ namespace llvm {
     bool X86ScalarSSEf32;
     bool X86ScalarSSEf64;
 
-    SDNode *LowerCallResult(SDOperand Chain, SDOperand InFlag, SDNode*TheCall,
+    SDNode *LowerCallResult(SDValue Chain, SDValue InFlag, SDNode*TheCall,
                             unsigned CallingConv, SelectionDAG &DAG);
 
-    SDOperand LowerMemArgument(SDOperand Op, SelectionDAG &DAG,
+    SDValue LowerMemArgument(SDValue Op, SelectionDAG &DAG,
                                const CCValAssign &VA,  MachineFrameInfo *MFI,
-                               unsigned CC, SDOperand Root, unsigned i);
+                               unsigned CC, SDValue Root, unsigned i);
 
-    SDOperand LowerMemOpCallTo(SDOperand Op, SelectionDAG &DAG,
-                               const SDOperand &StackPtr,
-                               const CCValAssign &VA, SDOperand Chain,
-                               SDOperand Arg);
+    SDValue LowerMemOpCallTo(SDValue Op, SelectionDAG &DAG,
+                               const SDValue &StackPtr,
+                               const CCValAssign &VA, SDValue Chain,
+                               SDValue Arg);
 
     // Call lowering helpers.
-    bool IsCalleePop(SDOperand Op);
+    bool IsCalleePop(SDValue Op);
     bool CallRequiresGOTPtrInReg(bool Is64Bit, bool IsTailCall);
     bool CallRequiresFnAddressInReg(bool Is64Bit, bool IsTailCall);
-    SDOperand EmitTailCallLoadRetAddr(SelectionDAG &DAG, SDOperand &OutRetAddr,
-                                SDOperand Chain, bool IsTailCall, bool Is64Bit,
+    SDValue EmitTailCallLoadRetAddr(SelectionDAG &DAG, SDValue &OutRetAddr,
+                                SDValue Chain, bool IsTailCall, bool Is64Bit,
                                 int FPDiff);
 
-    CCAssignFn *CCAssignFnForNode(SDOperand Op) const;
-    NameDecorationStyle NameDecorationForFORMAL_ARGUMENTS(SDOperand Op);
+    CCAssignFn *CCAssignFnForNode(SDValue Op) const;
+    NameDecorationStyle NameDecorationForFORMAL_ARGUMENTS(SDValue Op);
     unsigned GetAlignedArgumentStackSize(unsigned StackSize, SelectionDAG &DAG);
 
-    std::pair<SDOperand,SDOperand> FP_TO_SINTHelper(SDOperand Op, 
+    std::pair<SDValue,SDValue> FP_TO_SINTHelper(SDValue Op, 
                                                     SelectionDAG &DAG);
     
-    SDOperand LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerEXTRACT_VECTOR_ELT(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerEXTRACT_VECTOR_ELT_SSE4(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerINSERT_VECTOR_ELT(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerINSERT_VECTOR_ELT_SSE4(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerSCALAR_TO_VECTOR(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerConstantPool(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerGlobalAddress(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerGlobalTLSAddress(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerExternalSymbol(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerShift(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerSINT_TO_FP(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerFP_TO_SINT(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerFABS(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerFNEG(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerFCOPYSIGN(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerSETCC(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerVSETCC(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerSELECT(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerBRCOND(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerMEMSET(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerJumpTable(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerDYNAMIC_STACKALLOC(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerVASTART(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerVAARG(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerVACOPY(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerINTRINSIC_WO_CHAIN(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerRETURNADDR(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerFRAMEADDR(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerFRAME_TO_ARGS_OFFSET(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerEH_RETURN(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerTRAMPOLINE(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerFLT_ROUNDS_(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerCTLZ(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerCTTZ(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerCMP_SWAP(SDOperand Op, SelectionDAG &DAG);
+    SDValue LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerEXTRACT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerEXTRACT_VECTOR_ELT_SSE4(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerINSERT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerINSERT_VECTOR_ELT_SSE4(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerSCALAR_TO_VECTOR(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerConstantPool(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerGlobalAddress(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerExternalSymbol(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerShift(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerSINT_TO_FP(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerFP_TO_SINT(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerFABS(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerFNEG(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerFCOPYSIGN(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerSETCC(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerVSETCC(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerSELECT(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerBRCOND(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerMEMSET(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerJumpTable(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerCALL(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerRET(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerDYNAMIC_STACKALLOC(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerVASTART(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerVAARG(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerVACOPY(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerRETURNADDR(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerFRAME_TO_ARGS_OFFSET(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerEH_RETURN(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerTRAMPOLINE(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerFLT_ROUNDS_(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerCTLZ(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerCTTZ(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerCMP_SWAP(SDValue Op, SelectionDAG &DAG);
     SDNode *ExpandFP_TO_SINT(SDNode *N, SelectionDAG &DAG);
     SDNode *ExpandREADCYCLECOUNTER(SDNode *N, SelectionDAG &DAG);
     SDNode *ExpandATOMIC_CMP_SWAP(SDNode *N, SelectionDAG &DAG);
     SDNode *ExpandATOMIC_LOAD_SUB(SDNode *N, SelectionDAG &DAG);
     
-    SDOperand EmitTargetCodeForMemset(SelectionDAG &DAG,
-                                      SDOperand Chain,
-                                      SDOperand Dst, SDOperand Src,
-                                      SDOperand Size, unsigned Align,
+    SDValue EmitTargetCodeForMemset(SelectionDAG &DAG,
+                                      SDValue Chain,
+                                      SDValue Dst, SDValue Src,
+                                      SDValue Size, unsigned Align,
                                       const Value *DstSV, uint64_t DstSVOff);
-    SDOperand EmitTargetCodeForMemcpy(SelectionDAG &DAG,
-                                      SDOperand Chain,
-                                      SDOperand Dst, SDOperand Src,
-                                      SDOperand Size, unsigned Align,
+    SDValue EmitTargetCodeForMemcpy(SelectionDAG &DAG,
+                                      SDValue Chain,
+                                      SDValue Dst, SDValue Src,
+                                      SDValue Size, unsigned Align,
                                       bool AlwaysInline,
                                       const Value *DstSV, uint64_t DstSVOff,
                                       const Value *SrcSV, uint64_t SrcSVOff);

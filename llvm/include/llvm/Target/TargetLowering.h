@@ -37,7 +37,7 @@ namespace llvm {
   class MachineFrameInfo;
   class MachineInstr;
   class SDNode;
-  class SDOperand;
+  class SDValue;
   class SelectionDAG;
   class TargetData;
   class TargetMachine;
@@ -112,7 +112,7 @@ public:
 
   /// getSetCCResultType - Return the ValueType of the result of setcc
   /// operations.
-  virtual MVT getSetCCResultType(const SDOperand &) const;
+  virtual MVT getSetCCResultType(const SDValue &) const;
 
   /// getSetCCResultContents - For targets without boolean registers, this flag
   /// returns information about the contents of the high-bits in the setcc
@@ -266,7 +266,7 @@ public:
   /// support *some* VECTOR_SHUFFLE operations, those with specific masks.
   /// By default, if a target supports the VECTOR_SHUFFLE node, all mask values
   /// are assumed to be legal.
-  virtual bool isShuffleMaskLegal(SDOperand Mask, MVT VT) const {
+  virtual bool isShuffleMaskLegal(SDValue Mask, MVT VT) const {
     return true;
   }
 
@@ -274,7 +274,7 @@ public:
   /// used by Targets can use this to indicate if there is a suitable
   /// VECTOR_SHUFFLE that can be used to replace a VAND with a constant
   /// pool entry.
-  virtual bool isVectorClearMaskLegal(const std::vector<SDOperand> &BVOps,
+  virtual bool isVectorClearMaskLegal(const std::vector<SDValue> &BVOps,
                                       MVT EVT,
                                       SelectionDAG &DAG) const {
     return false;
@@ -603,8 +603,8 @@ public:
   /// getPreIndexedAddressParts - returns true by value, base pointer and
   /// offset pointer and addressing mode by reference if the node's address
   /// can be legally represented as pre-indexed load / store address.
-  virtual bool getPreIndexedAddressParts(SDNode *N, SDOperand &Base,
-                                         SDOperand &Offset,
+  virtual bool getPreIndexedAddressParts(SDNode *N, SDValue &Base,
+                                         SDValue &Offset,
                                          ISD::MemIndexedMode &AM,
                                          SelectionDAG &DAG) {
     return false;
@@ -614,7 +614,7 @@ public:
   /// offset pointer and addressing mode by reference if this node can be
   /// combined with a load / store to form a post-indexed load / store.
   virtual bool getPostIndexedAddressParts(SDNode *N, SDNode *Op,
-                                          SDOperand &Base, SDOperand &Offset,
+                                          SDValue &Base, SDValue &Offset,
                                           ISD::MemIndexedMode &AM,
                                           SelectionDAG &DAG) {
     return false;
@@ -622,7 +622,7 @@ public:
   
   /// getPICJumpTableRelocaBase - Returns relocation base for the given PIC
   /// jumptable.
-  virtual SDOperand getPICJumpTableRelocBase(SDOperand Table,
+  virtual SDValue getPICJumpTableRelocBase(SDValue Table,
                                              SelectionDAG &DAG) const;
 
   //===--------------------------------------------------------------------===//
@@ -630,18 +630,18 @@ public:
   //
   
   /// TargetLoweringOpt - A convenience struct that encapsulates a DAG, and two
-  /// SDOperands for returning information from TargetLowering to its clients
+  /// SDValues for returning information from TargetLowering to its clients
   /// that want to combine 
   struct TargetLoweringOpt {
     SelectionDAG &DAG;
     bool AfterLegalize;
-    SDOperand Old;
-    SDOperand New;
+    SDValue Old;
+    SDValue New;
 
     explicit TargetLoweringOpt(SelectionDAG &InDAG, bool afterLegalize)
       : DAG(InDAG), AfterLegalize(afterLegalize) {}
     
-    bool CombineTo(SDOperand O, SDOperand N) { 
+    bool CombineTo(SDValue O, SDValue N) { 
       Old = O; 
       New = N; 
       return true;
@@ -651,7 +651,7 @@ public:
     /// specified instruction is a constant integer.  If so, check to see if
     /// there are any bits set in the constant that are not demanded.  If so,
     /// shrink the constant and return true.
-    bool ShrinkDemandedConstant(SDOperand Op, const APInt &Demanded);
+    bool ShrinkDemandedConstant(SDValue Op, const APInt &Demanded);
   };
                                                 
   /// SimplifyDemandedBits - Look at Op.  At this point, we know that only the
@@ -662,14 +662,14 @@ public:
   /// KnownZero bits for the expression (used to simplify the caller).  
   /// The KnownZero/One bits may only be accurate for those bits in the 
   /// DemandedMask.
-  bool SimplifyDemandedBits(SDOperand Op, const APInt &DemandedMask, 
+  bool SimplifyDemandedBits(SDValue Op, const APInt &DemandedMask, 
                             APInt &KnownZero, APInt &KnownOne,
                             TargetLoweringOpt &TLO, unsigned Depth = 0) const;
   
   /// computeMaskedBitsForTargetNode - Determine which of the bits specified in
   /// Mask are known to be either zero or one and return them in the 
   /// KnownZero/KnownOne bitsets.
-  virtual void computeMaskedBitsForTargetNode(const SDOperand Op,
+  virtual void computeMaskedBitsForTargetNode(const SDValue Op,
                                               const APInt &Mask,
                                               APInt &KnownZero, 
                                               APInt &KnownOne,
@@ -679,7 +679,7 @@ public:
   /// ComputeNumSignBitsForTargetNode - This method can be implemented by
   /// targets that want to expose additional information about sign bits to the
   /// DAG Combiner.
-  virtual unsigned ComputeNumSignBitsForTargetNode(SDOperand Op,
+  virtual unsigned ComputeNumSignBitsForTargetNode(SDValue Op,
                                                    unsigned Depth = 0) const;
   
   struct DAGCombinerInfo {
@@ -696,14 +696,14 @@ public:
     bool isCalledByLegalizer() const { return CalledByLegalizer; }
     
     void AddToWorklist(SDNode *N);
-    SDOperand CombineTo(SDNode *N, const std::vector<SDOperand> &To);
-    SDOperand CombineTo(SDNode *N, SDOperand Res);
-    SDOperand CombineTo(SDNode *N, SDOperand Res0, SDOperand Res1);
+    SDValue CombineTo(SDNode *N, const std::vector<SDValue> &To);
+    SDValue CombineTo(SDNode *N, SDValue Res);
+    SDValue CombineTo(SDNode *N, SDValue Res0, SDValue Res1);
   };
 
   /// SimplifySetCC - Try to simplify a setcc built with the specified operands 
-  /// and cc. If it is unable to simplify it, return a null SDOperand.
-  SDOperand SimplifySetCC(MVT VT, SDOperand N0, SDOperand N1,
+  /// and cc. If it is unable to simplify it, return a null SDValue.
+  SDValue SimplifySetCC(MVT VT, SDValue N0, SDValue N1,
                           ISD::CondCode Cond, bool foldBooleans,
                           DAGCombinerInfo &DCI) const;
 
@@ -724,14 +724,14 @@ public:
   ///
   /// The semantics are as follows:
   /// Return Value:
-  ///   SDOperand.Val == 0   - No change was made
-  ///   SDOperand.Val == N   - N was replaced, is dead, and is already handled.
+  ///   SDValue.Val == 0   - No change was made
+  ///   SDValue.Val == N   - N was replaced, is dead, and is already handled.
   ///   otherwise            - N should be replaced by the returned Operand.
   ///
   /// In addition, methods provided by DAGCombinerInfo may be used to perform
   /// more complex transformations.
   ///
-  virtual SDOperand PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;
+  virtual SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;
   
   //===--------------------------------------------------------------------===//
   // TargetLowering Configuration Methods - These methods should be invoked by
@@ -966,14 +966,14 @@ public:
   /// lower the arguments for the specified function, into the specified DAG.
   virtual void
   LowerArguments(Function &F, SelectionDAG &DAG,
-                 SmallVectorImpl<SDOperand>& ArgValues);
+                 SmallVectorImpl<SDValue>& ArgValues);
 
   /// LowerCallTo - This hook lowers an abstract call to a function into an
   /// actual call.  This returns a pair of operands.  The first element is the
   /// return value for the function (if RetTy is not VoidTy).  The second
   /// element is the outgoing token chain.
   struct ArgListEntry {
-    SDOperand Node;
+    SDValue Node;
     const Type* Ty;
     bool isSExt  : 1;
     bool isZExt  : 1;
@@ -987,17 +987,17 @@ public:
       isSRet(false), isNest(false), isByVal(false), Alignment(0) { }
   };
   typedef std::vector<ArgListEntry> ArgListTy;
-  virtual std::pair<SDOperand, SDOperand>
-  LowerCallTo(SDOperand Chain, const Type *RetTy, bool RetSExt, bool RetZExt,
+  virtual std::pair<SDValue, SDValue>
+  LowerCallTo(SDValue Chain, const Type *RetTy, bool RetSExt, bool RetZExt,
               bool isVarArg, unsigned CallingConv, bool isTailCall,
-              SDOperand Callee, ArgListTy &Args, SelectionDAG &DAG);
+              SDValue Callee, ArgListTy &Args, SelectionDAG &DAG);
 
 
   /// EmitTargetCodeForMemcpy - Emit target-specific code that performs a
   /// memcpy. This can be used by targets to provide code sequences for cases
   /// that don't fit the target's parameters for simple loads/stores and can be
   /// more efficient than using a library call. This function can return a null
-  /// SDOperand if the target declines to use custom code and a different
+  /// SDValue if the target declines to use custom code and a different
   /// lowering strategy should be used.
   /// 
   /// If AlwaysInline is true, the size is constant and the target should not
@@ -1006,46 +1006,46 @@ public:
   /// expanded in a place where calls are not feasible (e.g. within the prologue
   /// for another call). If the target chooses to decline an AlwaysInline
   /// request here, legalize will resort to using simple loads and stores.
-  virtual SDOperand
+  virtual SDValue
   EmitTargetCodeForMemcpy(SelectionDAG &DAG,
-                          SDOperand Chain,
-                          SDOperand Op1, SDOperand Op2,
-                          SDOperand Op3, unsigned Align,
+                          SDValue Chain,
+                          SDValue Op1, SDValue Op2,
+                          SDValue Op3, unsigned Align,
                           bool AlwaysInline,
                           const Value *DstSV, uint64_t DstOff,
                           const Value *SrcSV, uint64_t SrcOff) {
-    return SDOperand();
+    return SDValue();
   }
 
   /// EmitTargetCodeForMemmove - Emit target-specific code that performs a
   /// memmove. This can be used by targets to provide code sequences for cases
   /// that don't fit the target's parameters for simple loads/stores and can be
   /// more efficient than using a library call. This function can return a null
-  /// SDOperand if the target declines to use custom code and a different
+  /// SDValue if the target declines to use custom code and a different
   /// lowering strategy should be used.
-  virtual SDOperand
+  virtual SDValue
   EmitTargetCodeForMemmove(SelectionDAG &DAG,
-                           SDOperand Chain,
-                           SDOperand Op1, SDOperand Op2,
-                           SDOperand Op3, unsigned Align,
+                           SDValue Chain,
+                           SDValue Op1, SDValue Op2,
+                           SDValue Op3, unsigned Align,
                            const Value *DstSV, uint64_t DstOff,
                            const Value *SrcSV, uint64_t SrcOff) {
-    return SDOperand();
+    return SDValue();
   }
 
   /// EmitTargetCodeForMemset - Emit target-specific code that performs a
   /// memset. This can be used by targets to provide code sequences for cases
   /// that don't fit the target's parameters for simple stores and can be more
   /// efficient than using a library call. This function can return a null
-  /// SDOperand if the target declines to use custom code and a different
+  /// SDValue if the target declines to use custom code and a different
   /// lowering strategy should be used.
-  virtual SDOperand
+  virtual SDValue
   EmitTargetCodeForMemset(SelectionDAG &DAG,
-                          SDOperand Chain,
-                          SDOperand Op1, SDOperand Op2,
-                          SDOperand Op3, unsigned Align,
+                          SDValue Chain,
+                          SDValue Op1, SDValue Op2,
+                          SDValue Op3, unsigned Align,
                           const Value *DstSV, uint64_t DstOff) {
-    return SDOperand();
+    return SDValue();
   }
 
   /// LowerOperation - This callback is invoked for operations that are 
@@ -1053,7 +1053,7 @@ public:
   /// and whose defined values are all legal.
   /// If the target has no operations that require custom lowering, it need not
   /// implement this.  The default implementation of this aborts.
-  virtual SDOperand LowerOperation(SDOperand Op, SelectionDAG &DAG);
+  virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG);
 
   /// ReplaceNodeResults - This callback is invoked for operations that are
   /// unsupported by the target, which are registered to use 'custom' lowering,
@@ -1071,8 +1071,8 @@ public:
   /// IsEligibleForTailCallOptimization - Check whether the call is eligible for
   /// tail call optimization. Targets which want to do tail call optimization
   /// should override this function. 
-  virtual bool IsEligibleForTailCallOptimization(SDOperand Call, 
-                                                 SDOperand Ret, 
+  virtual bool IsEligibleForTailCallOptimization(SDValue Call, 
+                                                 SDValue Ret, 
                                                  SelectionDAG &DAG) const {
     return false;
   }
@@ -1081,21 +1081,21 @@ public:
   /// preceeds the RET node and whether the return uses the result of the node
   /// or is a void return. This function can be used by the target to determine
   /// eligiblity of tail call optimization.
-  static bool CheckTailCallReturnConstraints(SDOperand Call, SDOperand Ret) {
+  static bool CheckTailCallReturnConstraints(SDValue Call, SDValue Ret) {
     unsigned NumOps = Ret.getNumOperands();
     if ((NumOps == 1 &&
-       (Ret.getOperand(0) == SDOperand(Call.Val,1) ||
-        Ret.getOperand(0) == SDOperand(Call.Val,0))) ||
+       (Ret.getOperand(0) == SDValue(Call.Val,1) ||
+        Ret.getOperand(0) == SDValue(Call.Val,0))) ||
       (NumOps > 1 &&
-       Ret.getOperand(0) == SDOperand(Call.Val,Call.Val->getNumValues()-1) &&
-       Ret.getOperand(1) == SDOperand(Call.Val,0)))
+       Ret.getOperand(0) == SDValue(Call.Val,Call.Val->getNumValues()-1) &&
+       Ret.getOperand(1) == SDValue(Call.Val,0)))
       return true;
     return false;
   }
 
   /// GetPossiblePreceedingTailCall - Get preceeding TailCallNodeOpCode node if
   /// it exists skip possible ISD:TokenFactor.
-  static SDOperand GetPossiblePreceedingTailCall(SDOperand Chain,
+  static SDValue GetPossiblePreceedingTailCall(SDValue Chain,
                                                  unsigned TailCallNodeOpCode) {
     if (Chain.getOpcode() == TailCallNodeOpCode) {
       return Chain;
@@ -1152,9 +1152,9 @@ public:
   /// type to use for the specific AsmOperandInfo, setting
   /// OpInfo.ConstraintCode and OpInfo.ConstraintType.  If the actual operand
   /// being passed in is available, it can be passed in as Op, otherwise an
-  /// empty SDOperand can be passed.
+  /// empty SDValue can be passed.
   virtual void ComputeConstraintToUse(AsmOperandInfo &OpInfo,
-                                      SDOperand Op,
+                                      SDValue Op,
                                       SelectionDAG *DAG = 0) const;
   
   /// getConstraintType - Given a constraint, return the type of constraint it
@@ -1190,8 +1190,8 @@ public:
   
   /// LowerAsmOperandForConstraint - Lower the specified operand into the Ops
   /// vector.  If it is invalid, don't add anything to Ops.
-  virtual void LowerAsmOperandForConstraint(SDOperand Op, char ConstraintLetter,
-                                            std::vector<SDOperand> &Ops,
+  virtual void LowerAsmOperandForConstraint(SDValue Op, char ConstraintLetter,
+                                            std::vector<SDValue> &Ops,
                                             SelectionDAG &DAG) const;
   
   //===--------------------------------------------------------------------===//
@@ -1245,9 +1245,9 @@ public:
   //===--------------------------------------------------------------------===//
   // Div utility functions
   //
-  SDOperand BuildSDIV(SDNode *N, SelectionDAG &DAG, 
+  SDValue BuildSDIV(SDNode *N, SelectionDAG &DAG, 
                       std::vector<SDNode*>* Created) const;
-  SDOperand BuildUDIV(SDNode *N, SelectionDAG &DAG, 
+  SDValue BuildUDIV(SDNode *N, SelectionDAG &DAG, 
                       std::vector<SDNode*>* Created) const;
 
 

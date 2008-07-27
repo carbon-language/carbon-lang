@@ -136,7 +136,7 @@ void ScheduleDAG::BuildSchedUnits() {
     // have a user of the flag operand.
     N = NI;
     while (N->getValueType(N->getNumValues()-1) == MVT::Flag) {
-      SDOperand FlagVal(N, N->getNumValues()-1);
+      SDValue FlagVal(N, N->getNumValues()-1);
       
       // There are either zero or one users of the Flag result.
       bool HasFlagUse = false;
@@ -408,11 +408,11 @@ getInstrOperandRegClass(const TargetRegisterInfo *TRI,
 /// implicit physical register output.
 void ScheduleDAG::EmitCopyFromReg(SDNode *Node, unsigned ResNo,
                                   bool IsClone, unsigned SrcReg,
-                                  DenseMap<SDOperand, unsigned> &VRBaseMap) {
+                                  DenseMap<SDValue, unsigned> &VRBaseMap) {
   unsigned VRBase = 0;
   if (TargetRegisterInfo::isVirtualRegister(SrcReg)) {
     // Just use the input register directly!
-    SDOperand Op(Node, ResNo);
+    SDValue Op(Node, ResNo);
     if (IsClone)
       VRBaseMap.erase(Op);
     bool isNew = VRBaseMap.insert(std::make_pair(Op, SrcReg)).second;
@@ -439,7 +439,7 @@ void ScheduleDAG::EmitCopyFromReg(SDNode *Node, unsigned ResNo,
         Match = false;
     } else {
       for (unsigned i = 0, e = User->getNumOperands(); i != e; ++i) {
-        SDOperand Op = User->getOperand(i);
+        SDValue Op = User->getOperand(i);
         if (Op.Val != Node || Op.ResNo != ResNo)
           continue;
         MVT VT = Node->getValueType(Op.ResNo);
@@ -472,7 +472,7 @@ void ScheduleDAG::EmitCopyFromReg(SDNode *Node, unsigned ResNo,
     TII->copyRegToReg(*BB, BB->end(), VRBase, SrcReg, DstRC, SrcRC);
   }
 
-  SDOperand Op(Node, ResNo);
+  SDValue Op(Node, ResNo);
   if (IsClone)
     VRBaseMap.erase(Op);
   bool isNew = VRBaseMap.insert(std::make_pair(Op, VRBase)).second;
@@ -500,7 +500,7 @@ unsigned ScheduleDAG::getDstOfOnlyCopyToRegUse(SDNode *Node,
 
 void ScheduleDAG::CreateVirtualRegisters(SDNode *Node, MachineInstr *MI,
                                  const TargetInstrDesc &II,
-                                 DenseMap<SDOperand, unsigned> &VRBaseMap) {
+                                 DenseMap<SDValue, unsigned> &VRBaseMap) {
   assert(Node->getMachineOpcode() != TargetInstrInfo::IMPLICIT_DEF &&
          "IMPLICIT_DEF should have been handled as a special case elsewhere!");
 
@@ -533,7 +533,7 @@ void ScheduleDAG::CreateVirtualRegisters(SDNode *Node, MachineInstr *MI,
       MI->addOperand(MachineOperand::CreateReg(VRBase, true));
     }
 
-    SDOperand Op(Node, i);
+    SDValue Op(Node, i);
     bool isNew = VRBaseMap.insert(std::make_pair(Op, VRBase)).second;
     isNew = isNew; // Silence compiler warning.
     assert(isNew && "Node emitted out of order - early");
@@ -542,8 +542,8 @@ void ScheduleDAG::CreateVirtualRegisters(SDNode *Node, MachineInstr *MI,
 
 /// getVR - Return the virtual register corresponding to the specified result
 /// of the specified node.
-unsigned ScheduleDAG::getVR(SDOperand Op,
-                            DenseMap<SDOperand, unsigned> &VRBaseMap) {
+unsigned ScheduleDAG::getVR(SDValue Op,
+                            DenseMap<SDValue, unsigned> &VRBaseMap) {
   if (Op.isMachineOpcode() &&
       Op.getMachineOpcode() == TargetInstrInfo::IMPLICIT_DEF) {
     // Add an IMPLICIT_DEF instruction before every use.
@@ -558,7 +558,7 @@ unsigned ScheduleDAG::getVR(SDOperand Op,
     return VReg;
   }
 
-  DenseMap<SDOperand, unsigned>::iterator I = VRBaseMap.find(Op);
+  DenseMap<SDValue, unsigned>::iterator I = VRBaseMap.find(Op);
   assert(I != VRBaseMap.end() && "Node emitted out of order - late");
   return I->second;
 }
@@ -568,10 +568,10 @@ unsigned ScheduleDAG::getVR(SDOperand Op,
 /// specifies the instruction information for the node, and IIOpNum is the
 /// operand number (in the II) that we are adding. IIOpNum and II are used for 
 /// assertions only.
-void ScheduleDAG::AddOperand(MachineInstr *MI, SDOperand Op,
+void ScheduleDAG::AddOperand(MachineInstr *MI, SDValue Op,
                              unsigned IIOpNum,
                              const TargetInstrDesc *II,
-                             DenseMap<SDOperand, unsigned> &VRBaseMap) {
+                             DenseMap<SDValue, unsigned> &VRBaseMap) {
   if (Op.isMachineOpcode()) {
     // Note that this case is redundant with the final else block, but we
     // include it because it is the most common and it makes the logic
@@ -702,7 +702,7 @@ getSuperRegisterRegClass(const TargetRegisterClass *TRC,
 /// EmitSubregNode - Generate machine code for subreg nodes.
 ///
 void ScheduleDAG::EmitSubregNode(SDNode *Node, 
-                           DenseMap<SDOperand, unsigned> &VRBaseMap) {
+                           DenseMap<SDValue, unsigned> &VRBaseMap) {
   unsigned VRBase = 0;
   unsigned Opc = Node->getMachineOpcode();
   
@@ -752,9 +752,9 @@ void ScheduleDAG::EmitSubregNode(SDNode *Node,
     BB->push_back(MI);    
   } else if (Opc == TargetInstrInfo::INSERT_SUBREG ||
              Opc == TargetInstrInfo::SUBREG_TO_REG) {
-    SDOperand N0 = Node->getOperand(0);
-    SDOperand N1 = Node->getOperand(1);
-    SDOperand N2 = Node->getOperand(2);
+    SDValue N0 = Node->getOperand(0);
+    SDValue N1 = Node->getOperand(1);
+    SDValue N2 = Node->getOperand(2);
     unsigned SubReg = getVR(N1, VRBaseMap);
     unsigned SubIdx = cast<ConstantSDNode>(N2)->getValue();
     
@@ -788,7 +788,7 @@ void ScheduleDAG::EmitSubregNode(SDNode *Node,
   } else
     assert(0 && "Node is not insert_subreg, extract_subreg, or subreg_to_reg");
      
-  SDOperand Op(Node, 0);
+  SDValue Op(Node, 0);
   bool isNew = VRBaseMap.insert(std::make_pair(Op, VRBase)).second;
   isNew = isNew; // Silence compiler warning.
   assert(isNew && "Node emitted out of order - early");
@@ -797,7 +797,7 @@ void ScheduleDAG::EmitSubregNode(SDNode *Node,
 /// EmitNode - Generate machine code for an node and needed dependencies.
 ///
 void ScheduleDAG::EmitNode(SDNode *Node, bool IsClone,
-                           DenseMap<SDOperand, unsigned> &VRBaseMap) {
+                           DenseMap<SDValue, unsigned> &VRBaseMap) {
   // If machine instruction
   if (Node->isMachineOpcode()) {
     unsigned Opc = Node->getMachineOpcode();
@@ -891,7 +891,7 @@ void ScheduleDAG::EmitNode(SDNode *Node, bool IsClone,
     break;
   case ISD::CopyToReg: {
     unsigned SrcReg;
-    SDOperand SrcVal = Node->getOperand(2);
+    SDValue SrcVal = Node->getOperand(2);
     if (RegisterSDNode *R = dyn_cast<RegisterSDNode>(SrcVal))
       SrcReg = R->getReg();
     else
@@ -1099,7 +1099,7 @@ MachineBasicBlock *ScheduleDAG::EmitSchedule() {
   }
 
   // Finally, emit the code for all of the scheduled instructions.
-  DenseMap<SDOperand, unsigned> VRBaseMap;
+  DenseMap<SDValue, unsigned> VRBaseMap;
   DenseMap<SUnit*, unsigned> CopyVRBaseMap;
   for (unsigned i = 0, e = Sequence.size(); i != e; i++) {
     SUnit *SU = Sequence[i];

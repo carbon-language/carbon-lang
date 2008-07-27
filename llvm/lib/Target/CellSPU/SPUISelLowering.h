@@ -78,18 +78,18 @@ namespace llvm {
 
   /// Predicates that are used for node matching:
   namespace SPU {
-    SDOperand get_vec_u18imm(SDNode *N, SelectionDAG &DAG,
+    SDValue get_vec_u18imm(SDNode *N, SelectionDAG &DAG,
                              MVT ValueType);
-    SDOperand get_vec_i16imm(SDNode *N, SelectionDAG &DAG,
+    SDValue get_vec_i16imm(SDNode *N, SelectionDAG &DAG,
                              MVT ValueType);
-    SDOperand get_vec_i10imm(SDNode *N, SelectionDAG &DAG,
+    SDValue get_vec_i10imm(SDNode *N, SelectionDAG &DAG,
                              MVT ValueType);
-    SDOperand get_vec_i8imm(SDNode *N, SelectionDAG &DAG,
+    SDValue get_vec_i8imm(SDNode *N, SelectionDAG &DAG,
                             MVT ValueType);
-    SDOperand get_ILHUvec_imm(SDNode *N, SelectionDAG &DAG,
+    SDValue get_ILHUvec_imm(SDNode *N, SelectionDAG &DAG,
                               MVT ValueType);
-    SDOperand get_v4i32_imm(SDNode *N, SelectionDAG &DAG);
-    SDOperand get_v2i64_imm(SDNode *N, SelectionDAG &DAG);
+    SDValue get_v4i32_imm(SDNode *N, SelectionDAG &DAG);
+    SDValue get_v2i64_imm(SDNode *N, SelectionDAG &DAG);
   }
 
   class SPUTargetMachine;            // forward dec'l.
@@ -109,15 +109,15 @@ namespace llvm {
     virtual const char *getTargetNodeName(unsigned Opcode) const;
 
     /// getSetCCResultType - Return the ValueType for ISD::SETCC
-    virtual MVT getSetCCResultType(const SDOperand &) const;
+    virtual MVT getSetCCResultType(const SDValue &) const;
     
     /// LowerOperation - Provide custom lowering hooks for some operations.
     ///
-    virtual SDOperand LowerOperation(SDOperand Op, SelectionDAG &DAG);
+    virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG);
     
-    virtual SDOperand PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;
+    virtual SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;
 
-    virtual void computeMaskedBitsForTargetNode(const SDOperand Op,
+    virtual void computeMaskedBitsForTargetNode(const SDValue Op,
                                                 const APInt &Mask,
                                                 APInt &KnownZero, 
                                                 APInt &KnownOne,
@@ -130,8 +130,8 @@ namespace llvm {
       getRegForInlineAsmConstraint(const std::string &Constraint,
                                    MVT VT) const;
 
-    void LowerAsmOperandForConstraint(SDOperand Op, char ConstraintLetter,
-                                      std::vector<SDOperand> &Ops,
+    void LowerAsmOperandForConstraint(SDValue Op, char ConstraintLetter,
+                                      std::vector<SDValue> &Ops,
                                       SelectionDAG &DAG) const;
 
     /// isLegalAddressImmediate - Return true if the integer value can be used

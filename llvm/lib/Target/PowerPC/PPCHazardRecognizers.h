@@ -41,7 +41,7 @@ class PPCHazardRecognizer970 : public HazardRecognizer {
   //
   // This is null if we haven't seen a store yet.  We keep track of both
   // operands of the store here, since we support [r+r] and [r+i] addressing.
-  SDOperand StorePtr1[4], StorePtr2[4];
+  SDValue StorePtr1[4], StorePtr2[4];
   unsigned  StoreSize[4];
   unsigned NumStores;
   
@@ -64,7 +64,7 @@ private:
                                   bool &isLoad, bool &isStore);
   
   bool isLoadOfStoredAddress(unsigned LoadSize,
-                             SDOperand Ptr1, SDOperand Ptr2) const;
+                             SDValue Ptr1, SDValue Ptr2) const;
 };
 
 } // end namespace llvm

@@ -46,7 +46,7 @@ namespace ARM_AM {
     }
   }
   
-  static inline ShiftOpc getShiftOpcForNode(SDOperand N) {
+  static inline ShiftOpc getShiftOpcForNode(SDValue N) {
     switch (N.getOpcode()) {
     default:          return ARM_AM::no_shift;
     case ISD::SHL:    return ARM_AM::lsl;

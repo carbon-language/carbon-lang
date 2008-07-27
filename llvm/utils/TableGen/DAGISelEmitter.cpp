@@ -254,7 +254,7 @@ void DAGISelEmitter::EmitNodeTransforms(std::ostream &OS) {
     std::string ClassName = CGP.getSDNodeInfo(SDNode).getSDClassName();
     const char *C2 = ClassName == "SDNode" ? "N" : "inN";
     
-    OS << "inline SDOperand Transform_" << I->first << "(SDNode *" << C2
+    OS << "inline SDValue Transform_" << I->first << "(SDNode *" << C2
        << ") {\n";
     if (ClassName != "SDNode")
       OS << "  " << ClassName << " *N = cast<" << ClassName << ">(inN);\n";
@@ -347,7 +347,7 @@ private:
   /// tested, and if true, the match fails) [when 1], or normal code to emit
   /// [when 0], or initialization code to emit [when 2].
   std::vector<std::pair<unsigned, std::string> > &GeneratedCode;
-  /// GeneratedDecl - This is the set of all SDOperand declarations needed for
+  /// GeneratedDecl - This is the set of all SDValue declarations needed for
   /// the set of patterns for each top-level opcode.
   std::set<std::string> &GeneratedDecl;
   /// TargetOpcodes - The target specific opcodes used by the resulting
@@ -536,7 +536,7 @@ public:
         } else
           FoundChain = true;
         ChainName = "Chain" + ChainSuffix;
-        emitInit("SDOperand " + ChainName + " = " + RootName +
+        emitInit("SDValue " + ChainName + " = " + RootName +
                  ".getOperand(0);");
       }
     }
@@ -578,9 +578,9 @@ public:
         N->getChild(1)->getPredicateFn().empty()) {
       if (IntInit *II = dynamic_cast<IntInit*>(N->getChild(1)->getLeafValue())) {
         if (!isPowerOf2_32(II->getValue())) {  // Don't bother with single bits.
-          emitInit("SDOperand " + RootName + "0" + " = " +
+          emitInit("SDValue " + RootName + "0" + " = " +
                    RootName + ".getOperand(" + utostr(0) + ");");
-          emitInit("SDOperand " + RootName + "1" + " = " +
+          emitInit("SDValue " + RootName + "1" + " = " +
                    RootName + ".getOperand(" + utostr(1) + ");");
 
           emitCheck("isa<ConstantSDNode>(" + RootName + "1)");
@@ -597,7 +597,7 @@ public:
     }
     
     for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i, ++OpNo) {
-      emitInit("SDOperand " + RootName + utostr(OpNo) + " = " +
+      emitInit("SDValue " + RootName + utostr(OpNo) + " = " +
                RootName + ".getOperand(" +utostr(OpNo) + ");");
 
       EmitChildMatchCode(N->getChild(i), N, RootName + utostr(OpNo), RootName,
@@ -611,13 +611,13 @@ public:
       unsigned NumOps = CP->getNumOperands();
       for (unsigned i = 0; i < NumOps; ++i) {
         emitDecl("CPTmp" + utostr(i));
-        emitCode("SDOperand CPTmp" + utostr(i) + ";");
+        emitCode("SDValue CPTmp" + utostr(i) + ";");
       }
       if (CP->hasProperty(SDNPHasChain)) {
         emitDecl("CPInChain");
         emitDecl("Chain" + ChainSuffix);
-        emitCode("SDOperand CPInChain;");
-        emitCode("SDOperand Chain" + ChainSuffix + ";");
+        emitCode("SDValue CPInChain;");
+        emitCode("SDValue Chain" + ChainSuffix + ";");
       }
 
       std::string Code = Fn + "(" + RootName + ", " + RootName;
@@ -685,7 +685,7 @@ public:
           unsigned NumOps = CP->getNumOperands();
           for (unsigned i = 0; i < NumOps; ++i) {
             emitDecl("CPTmp" + utostr(i));
-            emitCode("SDOperand CPTmp" + utostr(i) + ";");
+            emitCode("SDValue CPTmp" + utostr(i) + ";");
           }
           if (CP->hasProperty(SDNPHasChain)) {
             const SDNodeInfo &PInfo = CGP.getSDNodeInfo(Parent->getOperator());
@@ -694,8 +694,8 @@ public:
             ChainName = "Chain" + ChainSuffix;
             emitDecl("CPInChain");
             emitDecl(ChainName);
-            emitCode("SDOperand CPInChain;");
-            emitCode("SDOperand " + ChainName + ";");
+            emitCode("SDValue CPInChain;");
+            emitCode("SDValue " + ChainName + ";");
           }
           
           std::string Code = Fn + "(";
@@ -794,7 +794,7 @@ public:
         case MVT::i32: CastType = "unsigned"; break;
         case MVT::i64: CastType = "uint64_t"; break;
         }
-        emitCode("SDOperand " + TmpVar + 
+        emitCode("SDValue " + TmpVar + 
                  " = CurDAG->getTargetConstant(((" + CastType +
                  ") cast<ConstantSDNode>(" + Val + ")->getValue()), " +
                  getEnumName(N->getTypeNum(0)) + ");");
@@ -806,7 +806,7 @@ public:
       } else if (!N->isLeaf() && N->getOperator()->getName() == "fpimm") {
         assert(N->getExtTypes().size() == 1 && "Multiple types not handled!");
         std::string TmpVar =  "Tmp" + utostr(ResNo);
-        emitCode("SDOperand " + TmpVar + 
+        emitCode("SDValue " + TmpVar + 
                  " = CurDAG->getTargetConstantFP(cast<ConstantFPSDNode>(" + 
                  Val + ")->getValueAPF(), cast<ConstantFPSDNode>(" + Val +
                  ")->getValueType(0));");
@@ -820,7 +820,7 @@ public:
         // Transform ExternalSymbol to TargetExternalSymbol
         if (Op && Op->getName() == "externalsym") {
           std::string TmpVar = "Tmp"+utostr(ResNo);
-          emitCode("SDOperand " + TmpVar + " = CurDAG->getTarget"
+          emitCode("SDValue " + TmpVar + " = CurDAG->getTarget"
                    "ExternalSymbol(cast<ExternalSymbolSDNode>(" +
                    Val + ")->getSymbol(), " +
                    getEnumName(N->getTypeNum(0)) + ");");
@@ -837,7 +837,7 @@ public:
         if (Op && (Op->getName() == "globaladdr" ||
                    Op->getName() == "globaltlsaddr")) {
           std::string TmpVar = "Tmp" + utostr(ResNo);
-          emitCode("SDOperand " + TmpVar + " = CurDAG->getTarget"
+          emitCode("SDValue " + TmpVar + " = CurDAG->getTarget"
                    "GlobalAddress(cast<GlobalAddressSDNode>(" + Val +
                    ")->getGlobal(), " + getEnumName(N->getTypeNum(0)) +
                    ");");
@@ -881,13 +881,13 @@ public:
       if (DefInit *DI = dynamic_cast<DefInit*>(N->getLeafValue())) {
         unsigned ResNo = TmpNo++;
         if (DI->getDef()->isSubClassOf("Register")) {
-          emitCode("SDOperand Tmp" + utostr(ResNo) + " = CurDAG->getRegister(" +
+          emitCode("SDValue Tmp" + utostr(ResNo) + " = CurDAG->getRegister(" +
                    getQualifiedName(DI->getDef()) + ", " +
                    getEnumName(N->getTypeNum(0)) + ");");
           NodeOps.push_back("Tmp" + utostr(ResNo));
           return NodeOps;
         } else if (DI->getDef()->getName() == "zero_reg") {
-          emitCode("SDOperand Tmp" + utostr(ResNo) +
+          emitCode("SDValue Tmp" + utostr(ResNo) +
                    " = CurDAG->getRegister(0, " +
                    getEnumName(N->getTypeNum(0)) + ");");
           NodeOps.push_back("Tmp" + utostr(ResNo));
@@ -896,7 +896,7 @@ public:
       } else if (IntInit *II = dynamic_cast<IntInit*>(N->getLeafValue())) {
         unsigned ResNo = TmpNo++;
         assert(N->getExtTypes().size() == 1 && "Multiple types not handled!");
-        emitCode("SDOperand Tmp" + utostr(ResNo) + 
+        emitCode("SDValue Tmp" + utostr(ResNo) + 
                  " = CurDAG->getTargetConstant(0x" + itohexstr(II->getValue()) +
                  "ULL, " + getEnumName(N->getTypeNum(0)) + ");");
         NodeOps.push_back("Tmp" + utostr(ResNo));
@@ -948,7 +948,7 @@ public:
            "(N.getOperand(N.getNumOperands()-1).getValueType() == MVT::Flag);");
       }
       if (IsVariadic)
-        emitCode("SmallVector<SDOperand, 8> Ops" + utostr(OpcNo) + ";");
+        emitCode("SmallVector<SDValue, 8> Ops" + utostr(OpcNo) + ";");
 
       // How many results is this pattern expected to produce?
       unsigned NumPatResults = 0;
@@ -964,7 +964,7 @@ public:
         // TokenFactor with it and the chain of the folded op as the new chain.
         // We could potentially be doing multiple levels of folding, in that
         // case, the TokenFactor can have more operands.
-        emitCode("SmallVector<SDOperand, 8> InChains;");
+        emitCode("SmallVector<SDValue, 8> InChains;");
         for (unsigned i = 0, e = OrigChains.size(); i < e; ++i) {
           emitCode("if (" + OrigChains[i].first + ".Val != " +
                    OrigChains[i].second + ".Val) {");
@@ -1022,7 +1022,7 @@ public:
                              InFlagDecled, ResNodeDecled, true);
       if (NodeHasOptInFlag || NodeHasInFlag || HasImpInputs) {
         if (!InFlagDecled) {
-          emitCode("SDOperand InFlag(0, 0);");
+          emitCode("SDValue InFlag(0, 0);");
           InFlagDecled = true;
         }
         if (NodeHasOptInFlag) {
@@ -1042,7 +1042,7 @@ public:
       std::string NodeName;
       if (!isRoot) {
         NodeName = "Tmp" + utostr(ResNo);
-        CodePrefix = "SDOperand " + NodeName + "(";
+        CodePrefix = "SDValue " + NodeName + "(";
       } else {
         NodeName = "ResNode";
         if (!ResNodeDecled) {
@@ -1103,7 +1103,7 @@ public:
       if (II.isSimpleLoad | II.mayLoad | II.mayStore) {
         std::vector<std::string>::const_iterator mi, mie;
         for (mi = LSI.begin(), mie = LSI.end(); mi != mie; ++mi) {
-          emitCode("SDOperand LSI_" + *mi + " = "
+          emitCode("SDValue LSI_" + *mi + " = "
                    "CurDAG->getMemOperand(cast<MemSDNode>(" +
                    *mi + ")->getMemOperand());");
           if (IsVariadic)
@@ -1138,7 +1138,7 @@ public:
           for (unsigned i = 0; i != NumOps; ++i)
             Code += ", " + AllOps[i];
         } else {
-          std::string OpsCode = "SDOperand Ops" + utostr(OpsNo) + "[] = { ";
+          std::string OpsCode = "SDValue Ops" + utostr(OpsNo) + "[] = { ";
           for (unsigned i = 0; i != NumOps; ++i) {
             OpsCode += AllOps[i];
             if (i != NumOps-1)
@@ -1165,12 +1165,12 @@ public:
 
       if (NodeHasOutFlag) {
         if (!InFlagDecled) {
-          After.push_back("SDOperand InFlag(ResNode, " + 
+          After.push_back("SDValue InFlag(ResNode, " + 
                           utostr(NumResults+NumDstRegs+(unsigned)NodeHasChain) +
                           ");");
           InFlagDecled = true;
         } else
-          After.push_back("InFlag = SDOperand(ResNode, " + 
+          After.push_back("InFlag = SDValue(ResNode, " + 
                           utostr(NumResults+NumDstRegs+(unsigned)NodeHasChain) +
                           ");");
       }
@@ -1178,23 +1178,23 @@ public:
       if (FoldedChains.size() > 0) {
         std::string Code;
         for (unsigned j = 0, e = FoldedChains.size(); j < e; j++) {
-          ReplaceFroms.push_back("SDOperand(" +
+          ReplaceFroms.push_back("SDValue(" +
                                  FoldedChains[j].first + ".Val, " +
                                  utostr(FoldedChains[j].second) +
                                  ")");
-          ReplaceTos.push_back("SDOperand(ResNode, " +
+          ReplaceTos.push_back("SDValue(ResNode, " +
                                utostr(NumResults+NumDstRegs) + ")");
         }
       }
 
       if (NodeHasOutFlag) {
         if (FoldedFlag.first != "") {
-          ReplaceFroms.push_back("SDOperand(" + FoldedFlag.first + ".Val, " +
+          ReplaceFroms.push_back("SDValue(" + FoldedFlag.first + ".Val, " +
                                  utostr(FoldedFlag.second) + ")");
           ReplaceTos.push_back("InFlag");
         } else {
           assert(NodeHasProperty(Pattern, SDNPOutFlag, CGP));
-          ReplaceFroms.push_back("SDOperand(N.Val, " +
+          ReplaceFroms.push_back("SDValue(N.Val, " +
                                  utostr(NumPatResults + (unsigned)InputHasChain)
                                  + ")");
           ReplaceTos.push_back("InFlag");
@@ -1202,9 +1202,9 @@ public:
       }
 
       if (!ReplaceFroms.empty() && InputHasChain) {
-        ReplaceFroms.push_back("SDOperand(N.Val, " +
+        ReplaceFroms.push_back("SDValue(N.Val, " +
                                utostr(NumPatResults) + ")");
-        ReplaceTos.push_back("SDOperand(" + ChainName + ".Val, " +
+        ReplaceTos.push_back("SDValue(" + ChainName + ".Val, " +
                              ChainName + ".ResNo" + ")");
         ChainAssignmentNeeded |= NodeHasChain;
       }
@@ -1215,12 +1215,12 @@ public:
       } else if (InputHasChain && !NodeHasChain) {
         // One of the inner node produces a chain.
         if (NodeHasOutFlag) {
-          ReplaceFroms.push_back("SDOperand(N.Val, " +
+          ReplaceFroms.push_back("SDValue(N.Val, " +
                                  utostr(NumPatResults+1) +
                                  ")");
-          ReplaceTos.push_back("SDOperand(ResNode, N.ResNo-1)");
+          ReplaceTos.push_back("SDValue(ResNode, N.ResNo-1)");
         }
-        ReplaceFroms.push_back("SDOperand(N.Val, " +
+        ReplaceFroms.push_back("SDValue(N.Val, " +
                                utostr(NumPatResults) + ")");
         ReplaceTos.push_back(ChainName);
       }
@@ -1230,10 +1230,10 @@ public:
         // Remember which op produces the chain.
         std::string ChainAssign;
         if (!isRoot)
-          ChainAssign = ChainName + " = SDOperand(" + NodeName +
+          ChainAssign = ChainName + " = SDValue(" + NodeName +
                         ".Val, " + utostr(NumResults+NumDstRegs) + ");";
         else
-          ChainAssign = ChainName + " = SDOperand(" + NodeName +
+          ChainAssign = ChainName + " = SDValue(" + NodeName +
                         ", " + utostr(NumResults+NumDstRegs) + ");";
 
         After.push_front(ChainAssign);
@@ -1243,11 +1243,11 @@ public:
         After.push_back("ReplaceUses(" + ReplaceFroms[0] + ", " +
                         ReplaceTos[0] + ");");
       } else if (!ReplaceFroms.empty()) {
-        After.push_back("const SDOperand Froms[] = {");
+        After.push_back("const SDValue Froms[] = {");
         for (unsigned i = 0, e = ReplaceFroms.size(); i != e; ++i)
           After.push_back("  " + ReplaceFroms[i] + (i + 1 != e ? "," : ""));
         After.push_back("};");
-        After.push_back("const SDOperand Tos[] = {");
+        After.push_back("const SDValue Tos[] = {");
         for (unsigned i = 0, e = ReplaceFroms.size(); i != e; ++i)
           After.push_back("  " + ReplaceTos[i] + (i + 1 != e ? "," : ""));
         After.push_back("};");
@@ -1288,7 +1288,7 @@ public:
         EmitResultCode(N->getChild(0), DstRegs, InFlagDecled,
                        ResNodeDecled, true);
       unsigned ResNo = TmpNo++;
-      emitCode("SDOperand Tmp" + utostr(ResNo) + " = Transform_" + Op->getName()
+      emitCode("SDValue Tmp" + utostr(ResNo) + " = Transform_" + Op->getName()
                + "(" + Ops.back() + ".Val);");
       NodeOps.push_back("Tmp" + utostr(ResNo));
       if (isRoot)
@@ -1356,20 +1356,20 @@ private:
             MVT::SimpleValueType RVT = getRegisterValueType(RR, T);
             if (RVT == MVT::Flag) {
               if (!InFlagDecled) {
-                emitCode("SDOperand InFlag = " + RootName + utostr(OpNo) + ";");
+                emitCode("SDValue InFlag = " + RootName + utostr(OpNo) + ";");
                 InFlagDecled = true;
               } else
                 emitCode("InFlag = " + RootName + utostr(OpNo) + ";");
               emitCode("AddToISelQueue(InFlag);");
             } else {
               if (!ChainEmitted) {
-                emitCode("SDOperand Chain = CurDAG->getEntryNode();");
+                emitCode("SDValue Chain = CurDAG->getEntryNode();");
                 ChainName = "Chain";
                 ChainEmitted = true;
               }
               emitCode("AddToISelQueue(" + RootName + utostr(OpNo) + ");");
               if (!InFlagDecled) {
-                emitCode("SDOperand InFlag(0, 0);");
+                emitCode("SDValue InFlag(0, 0);");
                 InFlagDecled = true;
               }
               std::string Decl = (!ResNodeDecled) ? "SDNode *" : "";
@@ -1377,8 +1377,8 @@ private:
                        ", " + getQualifiedName(RR) +
                        ", " +  RootName + utostr(OpNo) + ", InFlag).Val;");
               ResNodeDecled = true;
-              emitCode(ChainName + " = SDOperand(ResNode, 0);");
-              emitCode("InFlag = SDOperand(ResNode, 1);");
+              emitCode(ChainName + " = SDValue(ResNode, 0);");
+              emitCode("InFlag = SDValue(ResNode, 1);");
             }
           }
         }
@@ -1387,7 +1387,7 @@ private:
 
     if (HasInFlag) {
       if (!InFlagDecled) {
-        emitCode("SDOperand InFlag = " + RootName +
+        emitCode("SDValue InFlag = " + RootName +
                ".getOperand(" + utostr(OpNo) + ");");
         InFlagDecled = true;
       } else
@@ -1767,7 +1767,7 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
             AddedInits.push_back(GeneratedCode[j].second);
         }
 
-        std::string CalleeCode = "(const SDOperand &N";
+        std::string CalleeCode = "(const SDValue &N";
         std::string CallerCode = "(N";
         for (unsigned j = 0, e = TargetOpcodes.size(); j != e; ++j) {
           CalleeCode += ", unsigned Opc" + utostr(j);
@@ -1780,7 +1780,7 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
         for (std::set<std::string>::iterator
                I = Decls.begin(), E = Decls.end(); I != E; ++I) {
           std::string Name = *I;
-          CalleeCode += ", SDOperand &" + Name;
+          CalleeCode += ", SDValue &" + Name;
           CallerCode += ", " + Name;
         }
 
@@ -1845,7 +1845,7 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
         OpVTI->second.push_back(OpVTStr);
 
       OS << "SDNode *Select_" << getLegalCName(OpName)
-         << OpVTStr << "(const SDOperand &N) {\n";    
+         << OpVTStr << "(const SDValue &N) {\n";    
 
       // Loop through and reverse all of the CodeList vectors, as we will be
       // accessing them from their logical front, but accessing the end of a
@@ -1884,8 +1884,8 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
   }
   
   // Emit boilerplate.
-  OS << "SDNode *Select_INLINEASM(SDOperand N) {\n"
-     << "  std::vector<SDOperand> Ops(N.Val->op_begin(), N.Val->op_end());\n"
+  OS << "SDNode *Select_INLINEASM(SDValue N) {\n"
+     << "  std::vector<SDValue> Ops(N.Val->op_begin(), N.Val->op_end());\n"
      << "  SelectInlineAsmMemoryOperands(Ops, *CurDAG);\n\n"
     
      << "  // Ensure that the asm operands are themselves selected.\n"
@@ -1895,38 +1895,38 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "  std::vector<MVT> VTs;\n"
      << "  VTs.push_back(MVT::Other);\n"
      << "  VTs.push_back(MVT::Flag);\n"
-     << "  SDOperand New = CurDAG->getNode(ISD::INLINEASM, VTs, &Ops[0], "
+     << "  SDValue New = CurDAG->getNode(ISD::INLINEASM, VTs, &Ops[0], "
                  "Ops.size());\n"
      << "  return New.Val;\n"
      << "}\n\n";
 
-  OS << "SDNode *Select_UNDEF(const SDOperand &N) {\n"
+  OS << "SDNode *Select_UNDEF(const SDValue &N) {\n"
      << "  return CurDAG->SelectNodeTo(N.Val, TargetInstrInfo::IMPLICIT_DEF,\n"
      << "                              N.getValueType());\n"
      << "}\n\n";
 
-  OS << "SDNode *Select_DBG_LABEL(const SDOperand &N) {\n"
-     << "  SDOperand Chain = N.getOperand(0);\n"
+  OS << "SDNode *Select_DBG_LABEL(const SDValue &N) {\n"
+     << "  SDValue Chain = N.getOperand(0);\n"
      << "  unsigned C = cast<LabelSDNode>(N)->getLabelID();\n"
-     << "  SDOperand Tmp = CurDAG->getTargetConstant(C, MVT::i32);\n"
+     << "  SDValue Tmp = CurDAG->getTargetConstant(C, MVT::i32);\n"
      << "  AddToISelQueue(Chain);\n"
      << "  return CurDAG->SelectNodeTo(N.Val, TargetInstrInfo::DBG_LABEL,\n"
      << "                              MVT::Other, Tmp, Chain);\n"
      << "}\n\n";
 
-  OS << "SDNode *Select_EH_LABEL(const SDOperand &N) {\n"
-     << "  SDOperand Chain = N.getOperand(0);\n"
+  OS << "SDNode *Select_EH_LABEL(const SDValue &N) {\n"
+     << "  SDValue Chain = N.getOperand(0);\n"
      << "  unsigned C = cast<LabelSDNode>(N)->getLabelID();\n"
-     << "  SDOperand Tmp = CurDAG->getTargetConstant(C, MVT::i32);\n"
+     << "  SDValue Tmp = CurDAG->getTargetConstant(C, MVT::i32);\n"
      << "  AddToISelQueue(Chain);\n"
      << "  return CurDAG->SelectNodeTo(N.Val, TargetInstrInfo::EH_LABEL,\n"
      << "                              MVT::Other, Tmp, Chain);\n"
      << "}\n\n";
 
-  OS << "SDNode *Select_DECLARE(const SDOperand &N) {\n"
-     << "  SDOperand Chain = N.getOperand(0);\n"
-     << "  SDOperand N1 = N.getOperand(1);\n"
-     << "  SDOperand N2 = N.getOperand(2);\n"
+  OS << "SDNode *Select_DECLARE(const SDValue &N) {\n"
+     << "  SDValue Chain = N.getOperand(0);\n"
+     << "  SDValue N1 = N.getOperand(1);\n"
+     << "  SDValue N2 = N.getOperand(2);\n"
      << "  if (!isa<FrameIndexSDNode>(N1) || !isa<GlobalAddressSDNode>(N2)) {\n"
      << "    cerr << \"Cannot yet select llvm.dbg.declare: \";\n"
      << "    N.Val->dump(CurDAG);\n"
@@ -1934,31 +1934,31 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "  }\n"
      << "  int FI = cast<FrameIndexSDNode>(N1)->getIndex();\n"
      << "  GlobalValue *GV = cast<GlobalAddressSDNode>(N2)->getGlobal();\n"
-     << "  SDOperand Tmp1 = "
+     << "  SDValue Tmp1 = "
      << "CurDAG->getTargetFrameIndex(FI, TLI.getPointerTy());\n"
-     << "  SDOperand Tmp2 = "
+     << "  SDValue Tmp2 = "
      << "CurDAG->getTargetGlobalAddress(GV, TLI.getPointerTy());\n"
      << "  AddToISelQueue(Chain);\n"
      << "  return CurDAG->SelectNodeTo(N.Val, TargetInstrInfo::DECLARE,\n"
      << "                              MVT::Other, Tmp1, Tmp2, Chain);\n"
      << "}\n\n";
 
-  OS << "SDNode *Select_EXTRACT_SUBREG(const SDOperand &N) {\n"
-     << "  SDOperand N0 = N.getOperand(0);\n"
-     << "  SDOperand N1 = N.getOperand(1);\n"
+  OS << "SDNode *Select_EXTRACT_SUBREG(const SDValue &N) {\n"
+     << "  SDValue N0 = N.getOperand(0);\n"
+     << "  SDValue N1 = N.getOperand(1);\n"
      << "  unsigned C = cast<ConstantSDNode>(N1)->getValue();\n"
-     << "  SDOperand Tmp = CurDAG->getTargetConstant(C, MVT::i32);\n"
+     << "  SDValue Tmp = CurDAG->getTargetConstant(C, MVT::i32);\n"
      << "  AddToISelQueue(N0);\n"
      << "  return CurDAG->SelectNodeTo(N.Val, TargetInstrInfo::EXTRACT_SUBREG,\n"
      << "                              N.getValueType(), N0, Tmp);\n"
      << "}\n\n";
 
-  OS << "SDNode *Select_INSERT_SUBREG(const SDOperand &N) {\n"
-     << "  SDOperand N0 = N.getOperand(0);\n"
-     << "  SDOperand N1 = N.getOperand(1);\n"
-     << "  SDOperand N2 = N.getOperand(2);\n"
+  OS << "SDNode *Select_INSERT_SUBREG(const SDValue &N) {\n"
+     << "  SDValue N0 = N.getOperand(0);\n"
+     << "  SDValue N1 = N.getOperand(1);\n"
+     << "  SDValue N2 = N.getOperand(2);\n"
      << "  unsigned C = cast<ConstantSDNode>(N2)->getValue();\n"
-     << "  SDOperand Tmp = CurDAG->getTargetConstant(C, MVT::i32);\n"
+     << "  SDValue Tmp = CurDAG->getTargetConstant(C, MVT::i32);\n"
      << "  AddToISelQueue(N1);\n"
      << "  AddToISelQueue(N0);\n"
      << "  return CurDAG->SelectNodeTo(N.Val, TargetInstrInfo::INSERT_SUBREG,\n"
@@ -1966,7 +1966,7 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "}\n\n";
 
   OS << "// The main instruction selector code.\n"
-     << "SDNode *SelectCode(SDOperand N) {\n"
+     << "SDNode *SelectCode(SDValue N) {\n"
      << "  if (N.isMachineOpcode()) {\n"
      << "    return NULL;   // Already selected.\n"
      << "  }\n\n"

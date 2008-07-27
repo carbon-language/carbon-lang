@@ -151,7 +151,7 @@ namespace {
   }
 
   bool
-  isHighLow(const SDOperand &Op) 
+  isHighLow(const SDValue &Op) 
   {
     return (Op.getOpcode() == SPUISD::IndirectAddr
             && ((Op.getOperand(0).getOpcode() == SPUISD::Hi
@@ -242,52 +242,52 @@ public:
    
   /// getI32Imm - Return a target constant with the specified value, of type
   /// i32.
-  inline SDOperand getI32Imm(uint32_t Imm) {
+  inline SDValue getI32Imm(uint32_t Imm) {
     return CurDAG->getTargetConstant(Imm, MVT::i32);
   }
 
   /// getI64Imm - Return a target constant with the specified value, of type
   /// i64.
-  inline SDOperand getI64Imm(uint64_t Imm) {
+  inline SDValue getI64Imm(uint64_t Imm) {
     return CurDAG->getTargetConstant(Imm, MVT::i64);
   }
     
   /// getSmallIPtrImm - Return a target constant of pointer type.
-  inline SDOperand getSmallIPtrImm(unsigned Imm) {
+  inline SDValue getSmallIPtrImm(unsigned Imm) {
     return CurDAG->getTargetConstant(Imm, SPUtli.getPointerTy());
   }
 
   /// Select - Convert the specified operand from a target-independent to a
   /// target-specific node if it hasn't already been changed.
-  SDNode *Select(SDOperand Op);
+  SDNode *Select(SDValue Op);
 
   //! Returns true if the address N is an A-form (local store) address
-  bool SelectAFormAddr(SDOperand Op, SDOperand N, SDOperand &Base,
-                       SDOperand &Index);
+  bool SelectAFormAddr(SDValue Op, SDValue N, SDValue &Base,
+                       SDValue &Index);
 
   //! D-form address predicate
-  bool SelectDFormAddr(SDOperand Op, SDOperand N, SDOperand &Base,
-                       SDOperand &Index);
+  bool SelectDFormAddr(SDValue Op, SDValue N, SDValue &Base,
+                       SDValue &Index);
 
   /// Alternate D-form address using i7 offset predicate
-  bool SelectDForm2Addr(SDOperand Op, SDOperand N, SDOperand &Disp,
-                        SDOperand &Base);
+  bool SelectDForm2Addr(SDValue Op, SDValue N, SDValue &Disp,
+                        SDValue &Base);
 
   /// D-form address selection workhorse
-  bool DFormAddressPredicate(SDOperand Op, SDOperand N, SDOperand &Disp,
-                             SDOperand &Base, int minOffset, int maxOffset);
+  bool DFormAddressPredicate(SDValue Op, SDValue N, SDValue &Disp,
+                             SDValue &Base, int minOffset, int maxOffset);
 
   //! Address predicate if N can be expressed as an indexed [r+r] operation.
-  bool SelectXFormAddr(SDOperand Op, SDOperand N, SDOperand &Base,
-                       SDOperand &Index);
+  bool SelectXFormAddr(SDValue Op, SDValue N, SDValue &Base,
+                       SDValue &Index);
 
   /// SelectInlineAsmMemoryOperand - Implement addressing mode selection for
   /// inline asm expressions.
-  virtual bool SelectInlineAsmMemoryOperand(const SDOperand &Op,
+  virtual bool SelectInlineAsmMemoryOperand(const SDValue &Op,
                                             char ConstraintCode,
-                                            std::vector<SDOperand> &OutOps,
+                                            std::vector<SDValue> &OutOps,
                                             SelectionDAG &DAG) {
-    SDOperand Op0, Op1;
+    SDValue Op0, Op1;
     switch (ConstraintCode) {
     default: return true;
     case 'm':   // memory
@@ -358,11 +358,11 @@ SPUDAGToDAGISel::InstructionSelect(SelectionDAG &DAG)
  \arg Index The base address index
  */
 bool
-SPUDAGToDAGISel::SelectAFormAddr(SDOperand Op, SDOperand N, SDOperand &Base,
-                    SDOperand &Index) {
+SPUDAGToDAGISel::SelectAFormAddr(SDValue Op, SDValue N, SDValue &Base,
+                    SDValue &Index) {
   // These match the addr256k operand type:
   MVT OffsVT = MVT::i16;
-  SDOperand Zero = CurDAG->getTargetConstant(0, OffsVT);
+  SDValue Zero = CurDAG->getTargetConstant(0, OffsVT);
 
   switch (N.getOpcode()) {
   case ISD::Constant:
@@ -384,7 +384,7 @@ SPUDAGToDAGISel::SelectAFormAddr(SDOperand Op, SDOperand N, SDOperand &Base,
     // Just load from memory if there's only a single use of the location,
     // otherwise, this will get handled below with D-form offset addresses
     if (N.hasOneUse()) {
-      SDOperand Op0 = N.getOperand(0);
+      SDValue Op0 = N.getOperand(0);
       switch (Op0.getOpcode()) {
       case ISD::TargetConstantPool:
       case ISD::TargetJumpTable:
@@ -410,8 +410,8 @@ SPUDAGToDAGISel::SelectAFormAddr(SDOperand Op, SDOperand N, SDOperand &Base,
 }
 
 bool 
-SPUDAGToDAGISel::SelectDForm2Addr(SDOperand Op, SDOperand N, SDOperand &Disp,
-                                  SDOperand &Base) {
+SPUDAGToDAGISel::SelectDForm2Addr(SDValue Op, SDValue N, SDValue &Disp,
+                                  SDValue &Base) {
   const int minDForm2Offset = -(1 << 7);
   const int maxDForm2Offset = (1 << 7) - 1;
   return DFormAddressPredicate(Op, N, Disp, Base, minDForm2Offset,
@@ -428,19 +428,19 @@ SPUDAGToDAGISel::SelectDForm2Addr(SDOperand Op, SDOperand N, SDOperand &Disp,
   displacement, [r+I10] (D-form address).
 
   \return true if \a N is a D-form address with \a Base and \a Index set
-  to non-empty SDOperand instances.
+  to non-empty SDValue instances.
 */
 bool
-SPUDAGToDAGISel::SelectDFormAddr(SDOperand Op, SDOperand N, SDOperand &Base,
-                                 SDOperand &Index) {
+SPUDAGToDAGISel::SelectDFormAddr(SDValue Op, SDValue N, SDValue &Base,
+                                 SDValue &Index) {
   return DFormAddressPredicate(Op, N, Base, Index,
                               SPUFrameInfo::minFrameOffset(),
                               SPUFrameInfo::maxFrameOffset());
 }
 
 bool
-SPUDAGToDAGISel::DFormAddressPredicate(SDOperand Op, SDOperand N, SDOperand &Base,
-                                      SDOperand &Index, int minOffset,
+SPUDAGToDAGISel::DFormAddressPredicate(SDValue Op, SDValue N, SDValue &Base,
+                                      SDValue &Index, int minOffset,
                                       int maxOffset) {
   unsigned Opc = N.getOpcode();
   MVT PtrTy = SPUtli.getPointerTy();
@@ -458,8 +458,8 @@ SPUDAGToDAGISel::DFormAddressPredicate(SDOperand Op, SDOperand N, SDOperand &Bas
     }
   } else if (Opc == ISD::ADD) {
     // Generated by getelementptr
-    const SDOperand Op0 = N.getOperand(0);
-    const SDOperand Op1 = N.getOperand(1);
+    const SDValue Op0 = N.getOperand(0);
+    const SDValue Op1 = N.getOperand(1);
 
     if ((Op0.getOpcode() == SPUISD::Hi && Op1.getOpcode() == SPUISD::Lo)
         || (Op1.getOpcode() == SPUISD::Hi && Op0.getOpcode() == SPUISD::Lo)) {
@@ -511,8 +511,8 @@ SPUDAGToDAGISel::DFormAddressPredicate(SDOperand Op, SDOperand N, SDOperand &Bas
     }
   } else if (Opc == SPUISD::IndirectAddr) {
     // Indirect with constant offset -> D-Form address
-    const SDOperand Op0 = N.getOperand(0);
-    const SDOperand Op1 = N.getOperand(1);
+    const SDValue Op0 = N.getOperand(0);
+    const SDValue Op1 = N.getOperand(1);
 
     if (Op0.getOpcode() == SPUISD::Hi
         && Op1.getOpcode() == SPUISD::Lo) {
@@ -522,7 +522,7 @@ SPUDAGToDAGISel::DFormAddressPredicate(SDOperand Op, SDOperand N, SDOperand &Bas
       return true;
     } else if (isa<ConstantSDNode>(Op0) || isa<ConstantSDNode>(Op1)) {
       int32_t offset = 0;
-      SDOperand idxOp;
+      SDValue idxOp;
 
       if (isa<ConstantSDNode>(Op1)) {
         ConstantSDNode *CN = cast<ConstantSDNode>(Op1);
@@ -563,8 +563,8 @@ SPUDAGToDAGISel::DFormAddressPredicate(SDOperand Op, SDOperand N, SDOperand &Bas
   address.
 */
 bool
-SPUDAGToDAGISel::SelectXFormAddr(SDOperand Op, SDOperand N, SDOperand &Base,
-                                 SDOperand &Index) {
+SPUDAGToDAGISel::SelectXFormAddr(SDValue Op, SDValue N, SDValue &Base,
+                                 SDValue &Index) {
   if (SelectAFormAddr(Op, N, Base, Index)
       || SelectDFormAddr(Op, N, Base, Index))
     return false;
@@ -579,13 +579,13 @@ SPUDAGToDAGISel::SelectXFormAddr(SDOperand Op, SDOperand N, SDOperand &Base,
 /*!
  */
 SDNode *
-SPUDAGToDAGISel::Select(SDOperand Op) {
+SPUDAGToDAGISel::Select(SDValue Op) {
   SDNode *N = Op.Val;
   unsigned Opc = N->getOpcode();
   int n_ops = -1;
   unsigned NewOpc;
   MVT OpVT = Op.getValueType();
-  SDOperand Ops[8];
+  SDValue Ops[8];
 
   if (N->isMachineOpcode()) {
     return NULL;   // Already selected.
@@ -617,7 +617,7 @@ SPUDAGToDAGISel::Select(SDOperand Op) {
     }
   } else if (Opc == ISD::ZERO_EXTEND) {
     // (zero_extend:i16 (and:i8 <arg>, <const>))
-    const SDOperand &Op1 = N->getOperand(0);
+    const SDValue &Op1 = N->getOperand(0);
 
     if (Op.getValueType() == MVT::i16 && Op1.getValueType() == MVT::i8) {
       if (Op1.getOpcode() == ISD::AND) {
@@ -634,8 +634,8 @@ SPUDAGToDAGISel::Select(SDOperand Op) {
   } else if (Opc == SPUISD::LDRESULT) {
     // Custom select instructions for LDRESULT
     MVT VT = N->getValueType(0);
-    SDOperand Arg = N->getOperand(0);
-    SDOperand Chain = N->getOperand(1);
+    SDValue Arg = N->getOperand(0);
+    SDValue Chain = N->getOperand(1);
     SDNode *Result;
     const valtype_map_s *vtm = getValueTypeMapEntry(VT);
 
@@ -649,7 +649,7 @@ SPUDAGToDAGISel::Select(SDOperand Op) {
     AddToISelQueue(Arg);
     Opc = vtm->ldresult_ins;
     if (vtm->ldresult_imm) {
-      SDOperand Zero = CurDAG->getTargetConstant(0, VT);
+      SDValue Zero = CurDAG->getTargetConstant(0, VT);
 
       AddToISelQueue(Zero);
       Result = CurDAG->getTargetNode(Opc, VT, MVT::Other, Arg, Zero, Chain);
@@ -657,16 +657,16 @@ SPUDAGToDAGISel::Select(SDOperand Op) {
       Result = CurDAG->getTargetNode(Opc, MVT::Other, Arg, Arg, Chain);
     }
 
-    Chain = SDOperand(Result, 1);
+    Chain = SDValue(Result, 1);
     AddToISelQueue(Chain);
 
     return Result;
   } else if (Opc == SPUISD::IndirectAddr) {
-    SDOperand Op0 = Op.getOperand(0);
+    SDValue Op0 = Op.getOperand(0);
     if (Op0.getOpcode() == SPUISD::LDRESULT) {
         /* || Op0.getOpcode() == SPUISD::AFormAddr) */
       // (IndirectAddr (LDRESULT, imm))
-      SDOperand Op1 = Op.getOperand(1);
+      SDValue Op1 = Op.getOperand(1);
       MVT VT = Op.getValueType();
 
       DEBUG(cerr << "CellSPU: IndirectAddr(LDRESULT, imm):\nOp0 = ");

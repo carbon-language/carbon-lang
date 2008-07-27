@@ -651,7 +651,7 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
       TryUnfold = true;
   }
   for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
-    const SDOperand &Op = N->getOperand(i);
+    const SDValue &Op = N->getOperand(i);
     MVT VT = Op.Val->getValueType(Op.ResNo);
     if (VT == MVT::Flag)
       return NULL;
@@ -670,9 +670,9 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
     unsigned NumVals = N->getNumValues();
     unsigned OldNumVals = SU->Node->getNumValues();
     for (unsigned i = 0; i != NumVals; ++i)
-      DAG.ReplaceAllUsesOfValueWith(SDOperand(SU->Node, i), SDOperand(N, i));
-    DAG.ReplaceAllUsesOfValueWith(SDOperand(SU->Node, OldNumVals-1),
-                                  SDOperand(LoadNode, 1));
+      DAG.ReplaceAllUsesOfValueWith(SDValue(SU->Node, i), SDValue(N, i));
+    DAG.ReplaceAllUsesOfValueWith(SDValue(SU->Node, OldNumVals-1),
+                                  SDValue(LoadNode, 1));
 
     SUnit *NewSU = CreateNewSUnit(N);
     assert(N->getNodeId() == -1 && "Node already inserted!");

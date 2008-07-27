@@ -86,7 +86,7 @@ PPCHazardRecognizer970::GetInstrType(unsigned Opcode,
 /// isLoadOfStoredAddress - If we have a load from the previously stored pointer
 /// as indicated by StorePtr1/StorePtr2/StoreSize, return true.
 bool PPCHazardRecognizer970::
-isLoadOfStoredAddress(unsigned LoadSize, SDOperand Ptr1, SDOperand Ptr2) const {
+isLoadOfStoredAddress(unsigned LoadSize, SDValue Ptr1, SDValue Ptr2) const {
   for (unsigned i = 0, e = NumStores; i != e; ++i) {
     // Handle exact and commuted addresses.
     if (Ptr1 == StorePtr1[i] && Ptr2 == StorePtr2[i])

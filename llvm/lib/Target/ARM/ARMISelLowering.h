@@ -75,10 +75,10 @@ namespace llvm {
   public:
     explicit ARMTargetLowering(TargetMachine &TM);
 
-    virtual SDOperand LowerOperation(SDOperand Op, SelectionDAG &DAG);
+    virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG);
     virtual SDNode *ReplaceNodeResults(SDNode *N, SelectionDAG &DAG);
         
-    virtual SDOperand PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;
+    virtual SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;
     
     virtual const char *getTargetNodeName(unsigned Opcode) const;
 
@@ -92,8 +92,8 @@ namespace llvm {
     /// getPreIndexedAddressParts - returns true by value, base pointer and
     /// offset pointer and addressing mode by reference if the node's address
     /// can be legally represented as pre-indexed load / store address.
-    virtual bool getPreIndexedAddressParts(SDNode *N, SDOperand &Base,
-                                           SDOperand &Offset,
+    virtual bool getPreIndexedAddressParts(SDNode *N, SDValue &Base,
+                                           SDValue &Offset,
                                            ISD::MemIndexedMode &AM,
                                            SelectionDAG &DAG);
 
@@ -101,11 +101,11 @@ namespace llvm {
     /// offset pointer and addressing mode by reference if this node can be
     /// combined with a load / store to form a post-indexed load / store.
     virtual bool getPostIndexedAddressParts(SDNode *N, SDNode *Op,
-                                            SDOperand &Base, SDOperand &Offset,
+                                            SDValue &Base, SDValue &Offset,
                                             ISD::MemIndexedMode &AM,
                                             SelectionDAG &DAG);
 
-    virtual void computeMaskedBitsForTargetNode(const SDOperand Op,
+    virtual void computeMaskedBitsForTargetNode(const SDValue Op,
                                                 const APInt &Mask,
                                                 APInt &KnownZero, 
                                                 APInt &KnownOne,
@@ -132,22 +132,22 @@ namespace llvm {
     ///
     unsigned ARMPCLabelIndex;
 
-    SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerGlobalAddressDarwin(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerGlobalAddressELF(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerGlobalTLSAddress(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerToTLSGeneralDynamicModel(GlobalAddressSDNode *GA,
+    SDValue LowerCALL(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerGlobalAddressDarwin(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerGlobalAddressELF(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerToTLSGeneralDynamicModel(GlobalAddressSDNode *GA,
                                             SelectionDAG &DAG);
-    SDOperand LowerToTLSExecModels(GlobalAddressSDNode *GA,
+    SDValue LowerToTLSExecModels(GlobalAddressSDNode *GA,
                                    SelectionDAG &DAG);
-    SDOperand LowerGLOBAL_OFFSET_TABLE(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerBR_JT(SDOperand Op, SelectionDAG &DAG);
+    SDValue LowerGLOBAL_OFFSET_TABLE(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerBR_JT(SDValue Op, SelectionDAG &DAG);
 
-    SDOperand EmitTargetCodeForMemcpy(SelectionDAG &DAG,
-                                      SDOperand Chain,
-                                      SDOperand Dst, SDOperand Src,
-                                      SDOperand Size, unsigned Align,
+    SDValue EmitTargetCodeForMemcpy(SelectionDAG &DAG,
+                                      SDValue Chain,
+                                      SDValue Dst, SDValue Src,
+                                      SDValue Size, unsigned Align,
                                       bool AlwaysInline,
                                       const Value *DstSV, uint64_t DstSVOff,
                                       const Value *SrcSV, uint64_t SrcSVOff);

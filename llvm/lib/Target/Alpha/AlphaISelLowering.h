@@ -67,11 +67,11 @@ namespace llvm {
     explicit AlphaTargetLowering(TargetMachine &TM);
     
     /// getSetCCResultType - Get the SETCC result ValueType
-    virtual MVT getSetCCResultType(const SDOperand &) const;
+    virtual MVT getSetCCResultType(const SDValue &) const;
 
     /// LowerOperation - Provide custom lowering hooks for some operations.
     ///
-    virtual SDOperand LowerOperation(SDOperand Op, SelectionDAG &DAG);
+    virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG);
     virtual SDNode *ReplaceNodeResults(SDNode *N, SelectionDAG &DAG);
 
     // Friendly names for dumps
@@ -79,9 +79,9 @@ namespace llvm {
 
     /// LowerCallTo - This hook lowers an abstract call to a function into an
     /// actual call.
-    virtual std::pair<SDOperand, SDOperand>
-    LowerCallTo(SDOperand Chain, const Type *RetTy, bool RetSExt, bool RetZExt,
-                bool isVarArg, unsigned CC, bool isTailCall, SDOperand Callee, 
+    virtual std::pair<SDValue, SDValue>
+    LowerCallTo(SDValue Chain, const Type *RetTy, bool RetSExt, bool RetZExt,
+                bool isVarArg, unsigned CC, bool isTailCall, SDValue Callee, 
                 ArgListTy &Args, SelectionDAG &DAG);
 
     ConstraintType getConstraintType(const std::string &Constraint) const;
@@ -97,7 +97,7 @@ namespace llvm {
 
   private:
     // Helpers for custom lowering.
-    void LowerVAARG(SDNode *N, SDOperand &Chain, SDOperand &DataPtr,
+    void LowerVAARG(SDNode *N, SDValue &Chain, SDValue &DataPtr,
                     SelectionDAG &DAG);
 
   };

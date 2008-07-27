@@ -80,7 +80,7 @@ namespace llvm {
     /// edge, override this method.
     template<typename EdgeIter>
     static std::string getEdgeAttributes(const void *Node, EdgeIter EI) {
-      SDOperand Op = EI.getNode()->getOperand(EI.getOperand());
+      SDValue Op = EI.getNode()->getOperand(EI.getOperand());
       MVT VT = Op.getValueType();
       if (VT == MVT::Flag)
         return "color=red,style=bold";

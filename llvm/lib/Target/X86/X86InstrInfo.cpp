@@ -2262,12 +2262,12 @@ X86InstrInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
   const TargetOperandInfo &TOI = TID.OpInfo[Index];
   const TargetRegisterClass *RC = TOI.isLookupPtrRegClass()
     ? getPointerRegClass() : RI.getRegClass(TOI.RegClass);
-  std::vector<SDOperand> AddrOps;
-  std::vector<SDOperand> BeforeOps;
-  std::vector<SDOperand> AfterOps;
+  std::vector<SDValue> AddrOps;
+  std::vector<SDValue> BeforeOps;
+  std::vector<SDValue> AfterOps;
   unsigned NumOps = N->getNumOperands();
   for (unsigned i = 0; i != NumOps-1; ++i) {
-    SDOperand Op = N->getOperand(i);
+    SDValue Op = N->getOperand(i);
     if (i >= Index && i < Index+4)
       AddrOps.push_back(Op);
     else if (i < Index)
@@ -2275,7 +2275,7 @@ X86InstrInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
     else if (i > Index)
       AfterOps.push_back(Op);
   }
-  SDOperand Chain = N->getOperand(NumOps-1);
+  SDValue Chain = N->getOperand(NumOps-1);
   AddrOps.push_back(Chain);
 
   // Emit the load instruction.
@@ -2306,7 +2306,7 @@ X86InstrInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
       VTs.push_back(VT);
   }
   if (Load)
-    BeforeOps.push_back(SDOperand(Load, 0));
+    BeforeOps.push_back(SDValue(Load, 0));
   std::copy(AfterOps.begin(), AfterOps.end(), std::back_inserter(BeforeOps));
   SDNode *NewNode= DAG.getTargetNode(Opc, VTs, &BeforeOps[0], BeforeOps.size());
   NewNodes.push_back(NewNode);
@@ -2314,7 +2314,7 @@ X86InstrInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
   // Emit the store instruction.
   if (FoldedStore) {
     AddrOps.pop_back();
-    AddrOps.push_back(SDOperand(NewNode, 0));
+    AddrOps.push_back(SDValue(NewNode, 0));
     AddrOps.push_back(Chain);
     bool isAligned = (RI.getStackAlignment() >= 16) ||
       RI.needsStackRealignment(MF);

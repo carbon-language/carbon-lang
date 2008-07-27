@@ -30,7 +30,7 @@ using namespace llvm;
 void DAGTypeLegalizer::ScalarizeVectorResult(SDNode *N, unsigned ResNo) {
   DEBUG(cerr << "Scalarize node result " << ResNo << ": "; N->dump(&DAG);
         cerr << "\n");
-  SDOperand R = SDOperand();
+  SDValue R = SDValue();
 
   switch (N->getOpcode()) {
   default:
@@ -84,29 +84,29 @@ void DAGTypeLegalizer::ScalarizeVectorResult(SDNode *N, unsigned ResNo) {
 
   // If R is null, the sub-method took care of registering the result.
   if (R.Val)
-    SetScalarizedVector(SDOperand(N, ResNo), R);
+    SetScalarizedVector(SDValue(N, ResNo), R);
 }
 
-SDOperand DAGTypeLegalizer::ScalarizeVecRes_BinOp(SDNode *N) {
-  SDOperand LHS = GetScalarizedVector(N->getOperand(0));
-  SDOperand RHS = GetScalarizedVector(N->getOperand(1));
+SDValue DAGTypeLegalizer::ScalarizeVecRes_BinOp(SDNode *N) {
+  SDValue LHS = GetScalarizedVector(N->getOperand(0));
+  SDValue RHS = GetScalarizedVector(N->getOperand(1));
   return DAG.getNode(N->getOpcode(), LHS.getValueType(), LHS, RHS);
 }
 
-SDOperand DAGTypeLegalizer::ScalarizeVecRes_BIT_CONVERT(SDNode *N) {
+SDValue DAGTypeLegalizer::ScalarizeVecRes_BIT_CONVERT(SDNode *N) {
   MVT NewVT = N->getValueType(0).getVectorElementType();
   return DAG.getNode(ISD::BIT_CONVERT, NewVT, N->getOperand(0));
 }
 
-SDOperand DAGTypeLegalizer::ScalarizeVecRes_FPOWI(SDNode *N) {
-  SDOperand Op = GetScalarizedVector(N->getOperand(0));
+SDValue DAGTypeLegalizer::ScalarizeVecRes_FPOWI(SDNode *N) {
+  SDValue Op = GetScalarizedVector(N->getOperand(0));
   return DAG.getNode(ISD::FPOWI, Op.getValueType(), Op, N->getOperand(1));
 }
 
-SDOperand DAGTypeLegalizer::ScalarizeVecRes_INSERT_VECTOR_ELT(SDNode *N) {
+SDValue DAGTypeLegalizer::ScalarizeVecRes_INSERT_VECTOR_ELT(SDNode *N) {
   // The value to insert may have a wider type than the vector element type,
   // so be sure to truncate it to the element type if necessary.
-  SDOperand Op = N->getOperand(1);
+  SDValue Op = N->getOperand(1);
   MVT EltVT = N->getValueType(0).getVectorElementType();
   if (Op.getValueType() != EltVT)
     // FIXME: Can this happen for floating point types?
@@ -114,47 +114,47 @@ SDOperand DAGTypeLegalizer::ScalarizeVecRes_INSERT_VECTOR_ELT(SDNode *N) {
   return Op;
 }
 
-SDOperand DAGTypeLegalizer::ScalarizeVecRes_LOAD(LoadSDNode *N) {
+SDValue DAGTypeLegalizer::ScalarizeVecRes_LOAD(LoadSDNode *N) {
   assert(ISD::isNormalLoad(N) && "Extending load of one-element vector?");
-  SDOperand Result = DAG.getLoad(N->getValueType(0).getVectorElementType(),
+  SDValue Result = DAG.getLoad(N->getValueType(0).getVectorElementType(),
                                  N->getChain(), N->getBasePtr(),
                                  N->getSrcValue(), N->getSrcValueOffset(),
                                  N->isVolatile(), N->getAlignment());
 
   // Legalized the chain result - switch anything that used the old chain to
   // use the new one.
-  ReplaceValueWith(SDOperand(N, 1), Result.getValue(1));
+  ReplaceValueWith(SDValue(N, 1), Result.getValue(1));
   return Result;
 }
 
-SDOperand DAGTypeLegalizer::ScalarizeVecRes_UnaryOp(SDNode *N) {
+SDValue DAGTypeLegalizer::ScalarizeVecRes_UnaryOp(SDNode *N) {
   // Get the dest type - it doesn't always match the input type, e.g. int_to_fp.
   MVT DestVT = TLI.getTypeToTransformTo(N->getValueType(0));
-  SDOperand Op = GetScalarizedVector(N->getOperand(0));
+  SDValue Op = GetScalarizedVector(N->getOperand(0));
   return DAG.getNode(N->getOpcode(), DestVT, Op);
 }
 
-SDOperand DAGTypeLegalizer::ScalarizeVecRes_UNDEF(SDNode *N) {
+SDValue DAGTypeLegalizer::ScalarizeVecRes_UNDEF(SDNode *N) {
   return DAG.getNode(ISD::UNDEF, N->getValueType(0).getVectorElementType());
 }
 
-SDOperand DAGTypeLegalizer::ScalarizeVecRes_SELECT(SDNode *N) {
-  SDOperand LHS = GetScalarizedVector(N->getOperand(1));
+SDValue DAGTypeLegalizer::ScalarizeVecRes_SELECT(SDNode *N) {
+  SDValue LHS = GetScalarizedVector(N->getOperand(1));
   return DAG.getNode(ISD::SELECT, LHS.getValueType(), N->getOperand(0), LHS,
                      GetScalarizedVector(N->getOperand(2)));
 }
 
-SDOperand DAGTypeLegalizer::ScalarizeVecRes_VECTOR_SHUFFLE(SDNode *N) {
+SDValue DAGTypeLegalizer::ScalarizeVecRes_VECTOR_SHUFFLE(SDNode *N) {
   // Figure out if the scalar is the LHS or RHS and return it.
-  SDOperand EltNum = N->getOperand(2).getOperand(0);
+  SDValue EltNum = N->getOperand(2).getOperand(0);
   unsigned Op = cast<ConstantSDNode>(EltNum)->getValue() != 0;
   return GetScalarizedVector(N->getOperand(Op));
 }
 
-SDOperand DAGTypeLegalizer::ScalarizeVecRes_VSETCC(SDNode *N) {
+SDValue DAGTypeLegalizer::ScalarizeVecRes_VSETCC(SDNode *N) {
   MVT NewVT = N->getValueType(0).getVectorElementType();
-  SDOperand LHS = GetScalarizedVector(N->getOperand(0));
-  SDOperand RHS = GetScalarizedVector(N->getOperand(1));
+  SDValue LHS = GetScalarizedVector(N->getOperand(0));
+  SDValue RHS = GetScalarizedVector(N->getOperand(1));
   LHS = DAG.getNode(ISD::SETCC, TLI.getSetCCResultType(LHS), LHS, RHS,
                     N->getOperand(2));
   return
@@ -172,7 +172,7 @@ SDOperand DAGTypeLegalizer::ScalarizeVecRes_VSETCC(SDNode *N) {
 bool DAGTypeLegalizer::ScalarizeVectorOperand(SDNode *N, unsigned OpNo) {
   DEBUG(cerr << "Scalarize node operand " << OpNo << ": "; N->dump(&DAG);
         cerr << "\n");
-  SDOperand Res = SDOperand();
+  SDValue Res = SDValue();
 
   if (Res.Val == 0) {
     switch (N->getOpcode()) {
@@ -211,27 +211,27 @@ bool DAGTypeLegalizer::ScalarizeVectorOperand(SDNode *N, unsigned OpNo) {
   assert(Res.getValueType() == N->getValueType(0) && N->getNumValues() == 1 &&
          "Invalid operand expansion");
 
-  ReplaceValueWith(SDOperand(N, 0), Res);
+  ReplaceValueWith(SDValue(N, 0), Res);
   return false;
 }
 
 /// ScalarizeVecOp_BIT_CONVERT - If the value to convert is a vector that needs
 /// to be scalarized, it must be <1 x ty>.  Convert the element instead.
-SDOperand DAGTypeLegalizer::ScalarizeVecOp_BIT_CONVERT(SDNode *N) {
-  SDOperand Elt = GetScalarizedVector(N->getOperand(0));
+SDValue DAGTypeLegalizer::ScalarizeVecOp_BIT_CONVERT(SDNode *N) {
+  SDValue Elt = GetScalarizedVector(N->getOperand(0));
   return DAG.getNode(ISD::BIT_CONVERT, N->getValueType(0), Elt);
 }
 
 /// ScalarizeVecOp_EXTRACT_VECTOR_ELT - If the input is a vector that needs to
 /// be scalarized, it must be <1 x ty>, so just return the element, ignoring the
 /// index.
-SDOperand DAGTypeLegalizer::ScalarizeVecOp_EXTRACT_VECTOR_ELT(SDNode *N) {
+SDValue DAGTypeLegalizer::ScalarizeVecOp_EXTRACT_VECTOR_ELT(SDNode *N) {
   return GetScalarizedVector(N->getOperand(0));
 }
 
 /// ScalarizeVecOp_STORE - If the value to store is a vector that needs to be
 /// scalarized, it must be <1 x ty>.  Just store the element.
-SDOperand DAGTypeLegalizer::ScalarizeVecOp_STORE(StoreSDNode *N, unsigned OpNo){
+SDValue DAGTypeLegalizer::ScalarizeVecOp_STORE(StoreSDNode *N, unsigned OpNo){
   assert(ISD::isNormalStore(N) && "Truncating store of one-element vector?");
   assert(OpNo == 1 && "Do not know how to scalarize this operand!");
   return DAG.getStore(N->getChain(), GetScalarizedVector(N->getOperand(1)),
@@ -251,7 +251,7 @@ SDOperand DAGTypeLegalizer::ScalarizeVecOp_STORE(StoreSDNode *N, unsigned OpNo){
 /// splitting.
 void DAGTypeLegalizer::SplitVectorResult(SDNode *N, unsigned ResNo) {
   DEBUG(cerr << "Split node result: "; N->dump(&DAG); cerr << "\n");
-  SDOperand Lo, Hi;
+  SDValue Lo, Hi;
 
   switch (N->getOpcode()) {
   default:
@@ -309,28 +309,28 @@ void DAGTypeLegalizer::SplitVectorResult(SDNode *N, unsigned ResNo) {
 
   // If Lo/Hi is null, the sub-method took care of registering results etc.
   if (Lo.Val)
-    SetSplitVector(SDOperand(N, ResNo), Lo, Hi);
+    SetSplitVector(SDValue(N, ResNo), Lo, Hi);
 }
 
-void DAGTypeLegalizer::SplitVecRes_BinOp(SDNode *N, SDOperand &Lo,
-                                         SDOperand &Hi) {
-  SDOperand LHSLo, LHSHi;
+void DAGTypeLegalizer::SplitVecRes_BinOp(SDNode *N, SDValue &Lo,
+                                         SDValue &Hi) {
+  SDValue LHSLo, LHSHi;
   GetSplitVector(N->getOperand(0), LHSLo, LHSHi);
-  SDOperand RHSLo, RHSHi;
+  SDValue RHSLo, RHSHi;
   GetSplitVector(N->getOperand(1), RHSLo, RHSHi);
 
   Lo = DAG.getNode(N->getOpcode(), LHSLo.getValueType(), LHSLo, RHSLo);
   Hi = DAG.getNode(N->getOpcode(), LHSHi.getValueType(), LHSHi, RHSHi);
 }
 
-void DAGTypeLegalizer::SplitVecRes_BIT_CONVERT(SDNode *N, SDOperand &Lo,
-                                               SDOperand &Hi) {
+void DAGTypeLegalizer::SplitVecRes_BIT_CONVERT(SDNode *N, SDValue &Lo,
+                                               SDValue &Hi) {
   // We know the result is a vector.  The input may be either a vector or a
   // scalar value.
   MVT LoVT, HiVT;
   GetSplitDestVTs(N->getValueType(0), LoVT, HiVT);
 
-  SDOperand InOp = N->getOperand(0);
+  SDValue InOp = N->getOperand(0);
   MVT InVT = InOp.getValueType();
 
   // Handle some special cases efficiently.
@@ -379,20 +379,20 @@ void DAGTypeLegalizer::SplitVecRes_BIT_CONVERT(SDNode *N, SDOperand &Lo,
   Hi = DAG.getNode(ISD::BIT_CONVERT, HiVT, Hi);
 }
 
-void DAGTypeLegalizer::SplitVecRes_BUILD_VECTOR(SDNode *N, SDOperand &Lo,
-                                                SDOperand &Hi) {
+void DAGTypeLegalizer::SplitVecRes_BUILD_VECTOR(SDNode *N, SDValue &Lo,
+                                                SDValue &Hi) {
   MVT LoVT, HiVT;
   GetSplitDestVTs(N->getValueType(0), LoVT, HiVT);
   unsigned LoNumElts = LoVT.getVectorNumElements();
-  SmallVector<SDOperand, 8> LoOps(N->op_begin(), N->op_begin()+LoNumElts);
+  SmallVector<SDValue, 8> LoOps(N->op_begin(), N->op_begin()+LoNumElts);
   Lo = DAG.getNode(ISD::BUILD_VECTOR, LoVT, &LoOps[0], LoOps.size());
 
-  SmallVector<SDOperand, 8> HiOps(N->op_begin()+LoNumElts, N->op_end());
+  SmallVector<SDValue, 8> HiOps(N->op_begin()+LoNumElts, N->op_end());
   Hi = DAG.getNode(ISD::BUILD_VECTOR, HiVT, &HiOps[0], HiOps.size());
 }
 
-void DAGTypeLegalizer::SplitVecRes_CONCAT_VECTORS(SDNode *N, SDOperand &Lo,
-                                                  SDOperand &Hi) {
+void DAGTypeLegalizer::SplitVecRes_CONCAT_VECTORS(SDNode *N, SDValue &Lo,
+                                                  SDValue &Hi) {
   assert(!(N->getNumOperands() & 1) && "Unsupported CONCAT_VECTORS");
   unsigned NumSubvectors = N->getNumOperands() / 2;
   if (NumSubvectors == 1) {
@@ -404,25 +404,25 @@ void DAGTypeLegalizer::SplitVecRes_CONCAT_VECTORS(SDNode *N, SDOperand &Lo,
   MVT LoVT, HiVT;
   GetSplitDestVTs(N->getValueType(0), LoVT, HiVT);
 
-  SmallVector<SDOperand, 8> LoOps(N->op_begin(), N->op_begin()+NumSubvectors);
+  SmallVector<SDValue, 8> LoOps(N->op_begin(), N->op_begin()+NumSubvectors);
   Lo = DAG.getNode(ISD::CONCAT_VECTORS, LoVT, &LoOps[0], LoOps.size());
 
-  SmallVector<SDOperand, 8> HiOps(N->op_begin()+NumSubvectors, N->op_end());
+  SmallVector<SDValue, 8> HiOps(N->op_begin()+NumSubvectors, N->op_end());
   Hi = DAG.getNode(ISD::CONCAT_VECTORS, HiVT, &HiOps[0], HiOps.size());
 }
 
-void DAGTypeLegalizer::SplitVecRes_FPOWI(SDNode *N, SDOperand &Lo,
-                                         SDOperand &Hi) {
+void DAGTypeLegalizer::SplitVecRes_FPOWI(SDNode *N, SDValue &Lo,
+                                         SDValue &Hi) {
   GetSplitVector(N->getOperand(0), Lo, Hi);
   Lo = DAG.getNode(ISD::FPOWI, Lo.getValueType(), Lo, N->getOperand(1));
   Hi = DAG.getNode(ISD::FPOWI, Hi.getValueType(), Hi, N->getOperand(1));
 }
 
-void DAGTypeLegalizer::SplitVecRes_INSERT_VECTOR_ELT(SDNode *N, SDOperand &Lo,
-                                                     SDOperand &Hi) {
-  SDOperand Vec = N->getOperand(0);
-  SDOperand Elt = N->getOperand(1);
-  SDOperand Idx = N->getOperand(2);
+void DAGTypeLegalizer::SplitVecRes_INSERT_VECTOR_ELT(SDNode *N, SDValue &Lo,
+                                                     SDValue &Hi) {
+  SDValue Vec = N->getOperand(0);
+  SDValue Elt = N->getOperand(1);
+  SDValue Idx = N->getOperand(2);
   GetSplitVector(Vec, Lo, Hi);
 
   if (ConstantSDNode *CIdx = dyn_cast<ConstantSDNode>(Idx)) {
@@ -439,29 +439,29 @@ void DAGTypeLegalizer::SplitVecRes_INSERT_VECTOR_ELT(SDNode *N, SDOperand &Lo,
   // Spill the vector to the stack.
   MVT VecVT = Vec.getValueType();
   MVT EltVT = VecVT.getVectorElementType();
-  SDOperand StackPtr = DAG.CreateStackTemporary(VecVT);
-  SDOperand Store = DAG.getStore(DAG.getEntryNode(), Vec, StackPtr, NULL, 0);
+  SDValue StackPtr = DAG.CreateStackTemporary(VecVT);
+  SDValue Store = DAG.getStore(DAG.getEntryNode(), Vec, StackPtr, NULL, 0);
 
   // Store the new element.  This may be larger than the vector element type,
   // so use a truncating store.
-  SDOperand EltPtr = GetVectorElementPointer(StackPtr, EltVT, Idx);
+  SDValue EltPtr = GetVectorElementPointer(StackPtr, EltVT, Idx);
   Store = DAG.getTruncStore(Store, Elt, EltPtr, NULL, 0, EltVT);
 
   // Reload the vector from the stack.
-  SDOperand Load = DAG.getLoad(VecVT, Store, StackPtr, NULL, 0);
+  SDValue Load = DAG.getLoad(VecVT, Store, StackPtr, NULL, 0);
 
   // Split it.
   SplitVecRes_LOAD(cast<LoadSDNode>(Load.Val), Lo, Hi);
 }
 
-void DAGTypeLegalizer::SplitVecRes_LOAD(LoadSDNode *LD, SDOperand &Lo,
-                                        SDOperand &Hi) {
+void DAGTypeLegalizer::SplitVecRes_LOAD(LoadSDNode *LD, SDValue &Lo,
+                                        SDValue &Hi) {
   assert(ISD::isUNINDEXEDLoad(LD) && "Indexed load during type legalization!");
   MVT LoVT, HiVT;
   GetSplitDestVTs(LD->getValueType(0), LoVT, HiVT);
 
-  SDOperand Ch = LD->getChain();
-  SDOperand Ptr = LD->getBasePtr();
+  SDValue Ch = LD->getChain();
+  SDValue Ptr = LD->getBasePtr();
   const Value *SV = LD->getSrcValue();
   int SVOffset = LD->getSrcValueOffset();
   unsigned Alignment = LD->getAlignment();
@@ -490,11 +490,11 @@ void DAGTypeLegalizer::SplitVecRes_LOAD(LoadSDNode *LD, SDOperand &Lo,
 
   // Legalized the chain result - switch anything that used the old chain to
   // use the new one.
-  ReplaceValueWith(SDOperand(LD, 1), Ch);
+  ReplaceValueWith(SDValue(LD, 1), Ch);
 }
 
-void DAGTypeLegalizer::SplitVecRes_UnaryOp(SDNode *N, SDOperand &Lo,
-                                           SDOperand &Hi) {
+void DAGTypeLegalizer::SplitVecRes_UnaryOp(SDNode *N, SDValue &Lo,
+                                           SDValue &Hi) {
   // Get the dest types - they may not match the input types, e.g. int_to_fp.
   MVT LoVT, HiVT;
   GetSplitDestVTs(N->getValueType(0), LoVT, HiVT);
@@ -504,11 +504,11 @@ void DAGTypeLegalizer::SplitVecRes_UnaryOp(SDNode *N, SDOperand &Lo,
   Hi = DAG.getNode(N->getOpcode(), HiVT, Hi);
 }
 
-void DAGTypeLegalizer::SplitVecRes_VECTOR_SHUFFLE(SDNode *N, SDOperand &Lo,
-                                                  SDOperand &Hi) {
+void DAGTypeLegalizer::SplitVecRes_VECTOR_SHUFFLE(SDNode *N, SDValue &Lo,
+                                                  SDValue &Hi) {
   // Build the low part.
-  SDOperand Mask = N->getOperand(2);
-  SmallVector<SDOperand, 16> Ops;
+  SDValue Mask = N->getOperand(2);
+  SmallVector<SDValue, 16> Ops;
   MVT LoVT, HiVT;
   GetSplitDestVTs(N->getValueType(0), LoVT, HiVT);
   MVT EltVT = LoVT.getVectorElementType();
@@ -520,7 +520,7 @@ void DAGTypeLegalizer::SplitVecRes_VECTOR_SHUFFLE(SDNode *N, SDOperand &Lo,
   // to be legalized, so this makes the code simpler.
   for (unsigned i = 0; i != LoNumElts; ++i) {
     unsigned Idx = cast<ConstantSDNode>(Mask.getOperand(i))->getValue();
-    SDOperand InVec = N->getOperand(0);
+    SDValue InVec = N->getOperand(0);
     if (Idx >= NumElements) {
       InVec = N->getOperand(1);
       Idx -= NumElements;
@@ -533,7 +533,7 @@ void DAGTypeLegalizer::SplitVecRes_VECTOR_SHUFFLE(SDNode *N, SDOperand &Lo,
 
   for (unsigned i = LoNumElts; i != NumElements; ++i) {
     unsigned Idx = cast<ConstantSDNode>(Mask.getOperand(i))->getValue();
-    SDOperand InVec = N->getOperand(0);
+    SDValue InVec = N->getOperand(0);
     if (Idx >= NumElements) {
       InVec = N->getOperand(1);
       Idx -= NumElements;
@@ -544,12 +544,12 @@ void DAGTypeLegalizer::SplitVecRes_VECTOR_SHUFFLE(SDNode *N, SDOperand &Lo,
   Hi = DAG.getNode(ISD::BUILD_VECTOR, HiVT, &Ops[0], Ops.size());
 }
 
-void DAGTypeLegalizer::SplitVecRes_VSETCC(SDNode *N, SDOperand &Lo,
-                                          SDOperand &Hi) {
+void DAGTypeLegalizer::SplitVecRes_VSETCC(SDNode *N, SDValue &Lo,
+                                          SDValue &Hi) {
   MVT LoVT, HiVT;
   GetSplitDestVTs(N->getValueType(0), LoVT, HiVT);
 
-  SDOperand LL, LH, RL, RH;
+  SDValue LL, LH, RL, RH;
   GetSplitVector(N->getOperand(0), LL, LH);
   GetSplitVector(N->getOperand(1), RL, RH);
 
@@ -568,7 +568,7 @@ void DAGTypeLegalizer::SplitVecRes_VSETCC(SDNode *N, SDOperand &Lo,
 /// node may need legalization as well as the specified one.
 bool DAGTypeLegalizer::SplitVectorOperand(SDNode *N, unsigned OpNo) {
   DEBUG(cerr << "Split node operand: "; N->dump(&DAG); cerr << "\n");
-  SDOperand Res = SDOperand();
+  SDValue Res = SDValue();
 
   if (Res.Val == 0) {
     switch (N->getOpcode()) {
@@ -605,15 +605,15 @@ bool DAGTypeLegalizer::SplitVectorOperand(SDNode *N, unsigned OpNo) {
   assert(Res.getValueType() == N->getValueType(0) && N->getNumValues() == 1 &&
          "Invalid operand expansion");
 
-  ReplaceValueWith(SDOperand(N, 0), Res);
+  ReplaceValueWith(SDValue(N, 0), Res);
   return false;
 }
 
-SDOperand DAGTypeLegalizer::SplitVecOp_BIT_CONVERT(SDNode *N) {
+SDValue DAGTypeLegalizer::SplitVecOp_BIT_CONVERT(SDNode *N) {
   // For example, i64 = BIT_CONVERT v4i16 on alpha.  Typically the vector will
   // end up being split all the way down to individual components.  Convert the
   // split pieces into integers and reassemble.
-  SDOperand Lo, Hi;
+  SDValue Lo, Hi;
   GetSplitVector(N->getOperand(0), Lo, Hi);
   Lo = BitConvertToInteger(Lo);
   Hi = BitConvertToInteger(Hi);
@@ -625,12 +625,12 @@ SDOperand DAGTypeLegalizer::SplitVecOp_BIT_CONVERT(SDNode *N) {
                      JoinIntegers(Lo, Hi));
 }
 
-SDOperand DAGTypeLegalizer::SplitVecOp_EXTRACT_SUBVECTOR(SDNode *N) {
+SDValue DAGTypeLegalizer::SplitVecOp_EXTRACT_SUBVECTOR(SDNode *N) {
   // We know that the extracted result type is legal.  For now, assume the index
   // is a constant.
   MVT SubVT = N->getValueType(0);
-  SDOperand Idx = N->getOperand(1);
-  SDOperand Lo, Hi;
+  SDValue Idx = N->getOperand(1);
+  SDValue Lo, Hi;
   GetSplitVector(N->getOperand(0), Lo, Hi);
 
   uint64_t LoElts = Lo.getValueType().getVectorNumElements();
@@ -646,48 +646,48 @@ SDOperand DAGTypeLegalizer::SplitVecOp_EXTRACT_SUBVECTOR(SDNode *N) {
   }
 }
 
-SDOperand DAGTypeLegalizer::SplitVecOp_EXTRACT_VECTOR_ELT(SDNode *N) {
-  SDOperand Vec = N->getOperand(0);
-  SDOperand Idx = N->getOperand(1);
+SDValue DAGTypeLegalizer::SplitVecOp_EXTRACT_VECTOR_ELT(SDNode *N) {
+  SDValue Vec = N->getOperand(0);
+  SDValue Idx = N->getOperand(1);
   MVT VecVT = Vec.getValueType();
 
   if (isa<ConstantSDNode>(Idx)) {
     uint64_t IdxVal = cast<ConstantSDNode>(Idx)->getValue();
     assert(IdxVal < VecVT.getVectorNumElements() && "Invalid vector index!");
 
-    SDOperand Lo, Hi;
+    SDValue Lo, Hi;
     GetSplitVector(Vec, Lo, Hi);
 
     uint64_t LoElts = Lo.getValueType().getVectorNumElements();
 
     if (IdxVal < LoElts)
-      return DAG.UpdateNodeOperands(SDOperand(N, 0), Lo, Idx);
+      return DAG.UpdateNodeOperands(SDValue(N, 0), Lo, Idx);
     else
-      return DAG.UpdateNodeOperands(SDOperand(N, 0), Hi,
+      return DAG.UpdateNodeOperands(SDValue(N, 0), Hi,
                                     DAG.getConstant(IdxVal - LoElts,
                                                     Idx.getValueType()));
   }
 
   // Store the vector to the stack.
   MVT EltVT = VecVT.getVectorElementType();
-  SDOperand StackPtr = DAG.CreateStackTemporary(VecVT);
-  SDOperand Store = DAG.getStore(DAG.getEntryNode(), Vec, StackPtr, NULL, 0);
+  SDValue StackPtr = DAG.CreateStackTemporary(VecVT);
+  SDValue Store = DAG.getStore(DAG.getEntryNode(), Vec, StackPtr, NULL, 0);
 
   // Load back the required element.
   StackPtr = GetVectorElementPointer(StackPtr, EltVT, Idx);
   return DAG.getLoad(EltVT, Store, StackPtr, NULL, 0);
 }
 
-SDOperand DAGTypeLegalizer::SplitVecOp_STORE(StoreSDNode *N, unsigned OpNo) {
+SDValue DAGTypeLegalizer::SplitVecOp_STORE(StoreSDNode *N, unsigned OpNo) {
   assert(ISD::isNormalStore(N) && "Truncating store of vector?");
   assert(OpNo == 1 && "Can only split the stored value");
 
-  SDOperand Ch  = N->getChain();
-  SDOperand Ptr = N->getBasePtr();
+  SDValue Ch  = N->getChain();
+  SDValue Ptr = N->getBasePtr();
   int SVOffset = N->getSrcValueOffset();
   unsigned Alignment = N->getAlignment();
   bool isVol = N->isVolatile();
-  SDOperand Lo, Hi;
+  SDValue Lo, Hi;
   GetSplitVector(N->getOperand(1), Lo, Hi);
 
   unsigned IncrementSize = Lo.getValueType().getSizeInBits()/8;
@@ -703,9 +703,9 @@ SDOperand DAGTypeLegalizer::SplitVecOp_STORE(StoreSDNode *N, unsigned OpNo) {
   return DAG.getNode(ISD::TokenFactor, MVT::Other, Lo, Hi);
 }
 
-SDOperand DAGTypeLegalizer::SplitVecOp_VECTOR_SHUFFLE(SDNode *N, unsigned OpNo){
+SDValue DAGTypeLegalizer::SplitVecOp_VECTOR_SHUFFLE(SDNode *N, unsigned OpNo){
   assert(OpNo == 2 && "Shuffle source type differs from result type?");
-  SDOperand Mask = N->getOperand(2);
+  SDValue Mask = N->getOperand(2);
   unsigned MaskLength = Mask.getValueType().getVectorNumElements();
   unsigned LargestMaskEntryPlusOne = 2 * MaskLength;
   unsigned MinimumBitWidth = Log2_32_Ceil(LargestMaskEntryPlusOne);
@@ -740,13 +740,13 @@ SDOperand DAGTypeLegalizer::SplitVecOp_VECTOR_SHUFFLE(SDNode *N, unsigned OpNo){
         continue;
 
       // Success!  Rebuild the vector using the legal types.
-      SmallVector<SDOperand, 16> Ops(MaskLength);
+      SmallVector<SDValue, 16> Ops(MaskLength);
       for (unsigned i = 0; i < MaskLength; ++i) {
         uint64_t Idx =
           cast<ConstantSDNode>(Mask.getOperand(i))->getValue();
         Ops[i] = DAG.getConstant(Idx, OpVT);
       }
-      return DAG.UpdateNodeOperands(SDOperand(N,0),
+      return DAG.UpdateNodeOperands(SDValue(N,0),
                                     N->getOperand(0), N->getOperand(1),
                                     DAG.getNode(ISD::BUILD_VECTOR,
                                                 VecVT, &Ops[0], Ops.size()));
@@ -756,5 +756,5 @@ SDOperand DAGTypeLegalizer::SplitVecOp_VECTOR_SHUFFLE(SDNode *N, unsigned OpNo){
     break;
   }
   assert(false && "Failed to find an appropriate mask type!");
-  return SDOperand(N, 0);
+  return SDValue(N, 0);
 }

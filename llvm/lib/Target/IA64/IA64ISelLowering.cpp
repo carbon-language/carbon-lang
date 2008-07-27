@@ -140,12 +140,12 @@ const char *IA64TargetLowering::getTargetNodeName(unsigned Opcode) const {
   }
 }
   
-MVT IA64TargetLowering::getSetCCResultType(const SDOperand &) const {
+MVT IA64TargetLowering::getSetCCResultType(const SDValue &) const {
   return MVT::i1;
 }
 
 void IA64TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG,
-                                        SmallVectorImpl<SDOperand> &ArgValues) {
+                                        SmallVectorImpl<SDValue> &ArgValues) {
   //
   // add beautiful description of IA64 stack frame format
   // here (from intel 24535803.pdf most likely)
@@ -177,7 +177,7 @@ void IA64TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG,
 
   for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E; ++I)
     {
-      SDOperand newroot, argt;
+      SDValue newroot, argt;
       if(count < 8) { // need to fix this logic? maybe.
 
         switch (getValueType(I->getType()).getSimpleVT()) {
@@ -229,7 +229,7 @@ void IA64TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG,
 
         // Create the SelectionDAG nodes corresponding to a load
         //from this parameter
-        SDOperand FIN = DAG.getFrameIndex(FI, MVT::i64);
+        SDValue FIN = DAG.getFrameIndex(FI, MVT::i64);
         argt = newroot = DAG.getLoad(getValueType(I->getType()),
                                      DAG.getEntryNode(), FIN, NULL, 0);
       }
@@ -302,11 +302,11 @@ void IA64TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG,
   }
 }
 
-std::pair<SDOperand, SDOperand>
-IA64TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
+std::pair<SDValue, SDValue>
+IA64TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
                                 bool RetSExt, bool RetZExt,
                                 bool isVarArg, unsigned CallingConv, 
-                                bool isTailCall, SDOperand Callee, 
+                                bool isTailCall, SDValue Callee, 
                                 ArgListTy &Args, SelectionDAG &DAG) {
 
   MachineFunction &MF = DAG.getMachineFunction();
@@ -335,17 +335,17 @@ IA64TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
   
   Chain = DAG.getCALLSEQ_START(Chain,DAG.getConstant(NumBytes, getPointerTy()));
 
-  SDOperand StackPtr;
-  std::vector<SDOperand> Stores;
-  std::vector<SDOperand> Converts;
-  std::vector<SDOperand> RegValuesToPass;
+  SDValue StackPtr;
+  std::vector<SDValue> Stores;
+  std::vector<SDValue> Converts;
+  std::vector<SDValue> RegValuesToPass;
   unsigned ArgOffset = 16;
   
   for (unsigned i = 0, e = Args.size(); i != e; ++i)
     {
-      SDOperand Val = Args[i].Node;
+      SDValue Val = Args[i].Node;
       MVT ObjectVT = Val.getValueType();
-      SDOperand ValToStore(0, 0), ValToConvert(0, 0);
+      SDValue ValToStore(0, 0), ValToConvert(0, 0);
       unsigned ObjSize=8;
       switch (ObjectVT.getSimpleVT()) {
       default: assert(0 && "unexpected argument type!");
@@ -391,7 +391,7 @@ IA64TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
         if(!StackPtr.Val) {
           StackPtr = DAG.getRegister(IA64::r12, MVT::i64);
         }
-        SDOperand PtrOff = DAG.getConstant(ArgOffset, getPointerTy());
+        SDValue PtrOff = DAG.getConstant(ArgOffset, getPointerTy());
         PtrOff = DAG.getNode(ISD::ADD, MVT::i64, StackPtr, PtrOff);
         Stores.push_back(DAG.getStore(Chain, ValToStore, PtrOff, NULL, 0));
         ArgOffset += ObjSize;
@@ -416,16 +416,16 @@ IA64TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
     IA64::F12, IA64::F13, IA64::F14, IA64::F15
   };
 
-  SDOperand InFlag;
+  SDValue InFlag;
   
   // save the current GP, SP and RP : FIXME: do we need to do all 3 always?
-  SDOperand GPBeforeCall = DAG.getCopyFromReg(Chain, IA64::r1, MVT::i64, InFlag);
+  SDValue GPBeforeCall = DAG.getCopyFromReg(Chain, IA64::r1, MVT::i64, InFlag);
   Chain = GPBeforeCall.getValue(1);
   InFlag = Chain.getValue(2);
-  SDOperand SPBeforeCall = DAG.getCopyFromReg(Chain, IA64::r12, MVT::i64, InFlag);
+  SDValue SPBeforeCall = DAG.getCopyFromReg(Chain, IA64::r12, MVT::i64, InFlag);
   Chain = SPBeforeCall.getValue(1);
   InFlag = Chain.getValue(2);
-  SDOperand RPBeforeCall = DAG.getCopyFromReg(Chain, IA64::rp, MVT::i64, InFlag);
+  SDValue RPBeforeCall = DAG.getCopyFromReg(Chain, IA64::rp, MVT::i64, InFlag);
   Chain = RPBeforeCall.getValue(1);
   InFlag = Chain.getValue(2);
 
@@ -464,7 +464,7 @@ IA64TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
 */
 
   std::vector<MVT> NodeTys;
-  std::vector<SDOperand> CallOperands;
+  std::vector<SDValue> CallOperands;
   NodeTys.push_back(MVT::Other);   // Returns a chain
   NodeTys.push_back(MVT::Flag);    // Returns a flag for retval copy to use.
   CallOperands.push_back(Chain);
@@ -494,17 +494,17 @@ IA64TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
   RetVals.push_back(MVT::Flag);
  
   MVT RetTyVT = getValueType(RetTy);
-  SDOperand RetVal;
+  SDValue RetVal;
   if (RetTyVT != MVT::isVoid) {
     switch (RetTyVT.getSimpleVT()) {
     default: assert(0 && "Unknown value type to return!");
     case MVT::i1: { // bools are just like other integers (returned in r8)
       // we *could* fall through to the truncate below, but this saves a
       // few redundant predicate ops
-      SDOperand boolInR8 = DAG.getCopyFromReg(Chain, IA64::r8, MVT::i64,InFlag);
+      SDValue boolInR8 = DAG.getCopyFromReg(Chain, IA64::r8, MVT::i64,InFlag);
       InFlag = boolInR8.getValue(2);
       Chain = boolInR8.getValue(1);
-      SDOperand zeroReg = DAG.getCopyFromReg(Chain, IA64::r0, MVT::i64, InFlag);
+      SDValue zeroReg = DAG.getCopyFromReg(Chain, IA64::r0, MVT::i64, InFlag);
       InFlag = zeroReg.getValue(2);
       Chain = zeroReg.getValue(1);
       
@@ -546,18 +546,18 @@ IA64TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
   Chain = DAG.getCALLSEQ_END(Chain,
                              DAG.getConstant(NumBytes, getPointerTy()),
                              DAG.getConstant(0, getPointerTy()),
-                             SDOperand());
+                             SDValue());
   return std::make_pair(RetVal, Chain);
 }
 
-SDOperand IA64TargetLowering::
-LowerOperation(SDOperand Op, SelectionDAG &DAG) {
+SDValue IA64TargetLowering::
+LowerOperation(SDValue Op, SelectionDAG &DAG) {
   switch (Op.getOpcode()) {
   default: assert(0 && "Should not custom lower this!");
   case ISD::GlobalTLSAddress:
     assert(0 && "TLS not implemented for IA64.");
   case ISD::RET: {
-    SDOperand AR_PFSVal, Copy;
+    SDValue AR_PFSVal, Copy;
     
     switch(Op.getNumOperands()) {
      default:
@@ -575,22 +575,22 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG) {
 
       AR_PFSVal = DAG.getCopyFromReg(Op.getOperand(0), VirtGPR, MVT::i64);
       Copy = DAG.getCopyToReg(AR_PFSVal.getValue(1), ArgReg, Op.getOperand(1),
-                              SDOperand());
+                              SDValue());
       AR_PFSVal = DAG.getCopyToReg(Copy.getValue(0), IA64::AR_PFS, AR_PFSVal,
                                    Copy.getValue(1));
       return DAG.getNode(IA64ISD::RET_FLAG, MVT::Other,
                          AR_PFSVal, AR_PFSVal.getValue(1));
     }
     }
-    return SDOperand();
+    return SDValue();
   }
   case ISD::VAARG: {
     MVT VT = getPointerTy();
     const Value *SV = cast<SrcValueSDNode>(Op.getOperand(2))->getValue();
-    SDOperand VAList = DAG.getLoad(VT, Op.getOperand(0), Op.getOperand(1), 
+    SDValue VAList = DAG.getLoad(VT, Op.getOperand(0), Op.getOperand(1), 
                                    SV, 0);
     // Increment the pointer, VAList, to the next vaarg
-    SDOperand VAIncr = DAG.getNode(ISD::ADD, VT, VAList, 
+    SDValue VAIncr = DAG.getNode(ISD::ADD, VT, VAList, 
                                    DAG.getConstant(VT.getSizeInBits()/8,
                                                    VT));
     // Store the incremented VAList to the legalized pointer
@@ -602,7 +602,7 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   case ISD::VASTART: {
     // vastart just stores the address of the VarArgsFrameIndex slot into the
     // memory location argument.
-    SDOperand FR = DAG.getFrameIndex(VarArgsFrameIndex, MVT::i64);
+    SDValue FR = DAG.getFrameIndex(VarArgsFrameIndex, MVT::i64);
     const Value *SV = cast<SrcValueSDNode>(Op.getOperand(2))->getValue();
     return DAG.getStore(Op.getOperand(0), FR, Op.getOperand(1), SV, 0);
   }
@@ -610,5 +610,5 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   case ISD::RETURNADDR:         break;
   case ISD::FRAMEADDR:          break;
   }
-  return SDOperand();
+  return SDValue();
 }

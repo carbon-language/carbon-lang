@@ -215,7 +215,7 @@ namespace llvm {
     /// formed by using a vspltis[bhw] instruction of the specified element
     /// size, return the constant being splatted.  The ByteSize field indicates
     /// the number of bytes of each element [124] -> [bhw].
-    SDOperand get_VSPLTI_elt(SDNode *N, unsigned ByteSize, SelectionDAG &DAG);
+    SDValue get_VSPLTI_elt(SDNode *N, unsigned ByteSize, SelectionDAG &DAG);
   }
   
   class PPCTargetLowering : public TargetLowering {
@@ -236,49 +236,49 @@ namespace llvm {
     virtual const char *getTargetNodeName(unsigned Opcode) const;
 
     /// getSetCCResultType - Return the ISD::SETCC ValueType
-    virtual MVT getSetCCResultType(const SDOperand &) const;
+    virtual MVT getSetCCResultType(const SDValue &) const;
 
     /// getPreIndexedAddressParts - returns true by value, base pointer and
     /// offset pointer and addressing mode by reference if the node's address
     /// can be legally represented as pre-indexed load / store address.
-    virtual bool getPreIndexedAddressParts(SDNode *N, SDOperand &Base,
-                                           SDOperand &Offset,
+    virtual bool getPreIndexedAddressParts(SDNode *N, SDValue &Base,
+                                           SDValue &Offset,
                                            ISD::MemIndexedMode &AM,
                                            SelectionDAG &DAG);
     
     /// SelectAddressRegReg - Given the specified addressed, check to see if it
     /// can be represented as an indexed [r+r] operation.  Returns false if it
     /// can be more efficiently represented with [r+imm].
-    bool SelectAddressRegReg(SDOperand N, SDOperand &Base, SDOperand &Index,
+    bool SelectAddressRegReg(SDValue N, SDValue &Base, SDValue &Index,
                              SelectionDAG &DAG);
     
     /// SelectAddressRegImm - Returns true if the address N can be represented
     /// by a base register plus a signed 16-bit displacement [r+imm], and if it
     /// is not better represented as reg+reg.
-    bool SelectAddressRegImm(SDOperand N, SDOperand &Disp, SDOperand &Base,
+    bool SelectAddressRegImm(SDValue N, SDValue &Disp, SDValue &Base,
                              SelectionDAG &DAG);
     
     /// SelectAddressRegRegOnly - Given the specified addressed, force it to be
     /// represented as an indexed [r+r] operation.
-    bool SelectAddressRegRegOnly(SDOperand N, SDOperand &Base, SDOperand &Index,
+    bool SelectAddressRegRegOnly(SDValue N, SDValue &Base, SDValue &Index,
                                  SelectionDAG &DAG);
 
     /// SelectAddressRegImmShift - Returns true if the address N can be
     /// represented by a base register plus a signed 14-bit displacement
     /// [r+imm*4].  Suitable for use by STD and friends.
-    bool SelectAddressRegImmShift(SDOperand N, SDOperand &Disp, SDOperand &Base,
+    bool SelectAddressRegImmShift(SDValue N, SDValue &Disp, SDValue &Base,
                                   SelectionDAG &DAG);
 
     
     /// LowerOperation - Provide custom lowering hooks for some operations.
     ///
-    virtual SDOperand LowerOperation(SDOperand Op, SelectionDAG &DAG);
+    virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG);
 
     virtual SDNode *ReplaceNodeResults(SDNode *N, SelectionDAG &DAG);
     
-    virtual SDOperand PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;
+    virtual SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;
     
-    virtual void computeMaskedBitsForTargetNode(const SDOperand Op,
+    virtual void computeMaskedBitsForTargetNode(const SDValue Op,
                                                 const APInt &Mask,
                                                 APInt &KnownZero, 
                                                 APInt &KnownOne,
@@ -300,9 +300,9 @@ namespace llvm {
 
     /// LowerAsmOperandForConstraint - Lower the specified operand into the Ops
     /// vector.  If it is invalid, don't add anything to Ops.
-    virtual void LowerAsmOperandForConstraint(SDOperand Op,
+    virtual void LowerAsmOperandForConstraint(SDValue Op,
                                               char ConstraintLetter,
-                                              std::vector<SDOperand> &Ops,
+                                              std::vector<SDValue> &Ops,
                                               SelectionDAG &DAG) const;
     
     /// isLegalAddressingMode - Return true if the addressing mode represented
@@ -321,63 +321,63 @@ namespace llvm {
      /// IsEligibleForTailCallOptimization - Check whether the call is eligible
     /// for tail call optimization. Target which want to do tail call
     /// optimization should implement this function.
-    virtual bool IsEligibleForTailCallOptimization(SDOperand Call,
-                                                   SDOperand Ret,
+    virtual bool IsEligibleForTailCallOptimization(SDValue Call,
+                                                   SDValue Ret,
                                                    SelectionDAG &DAG) const;
 
   private:
-    SDOperand getFramePointerFrameIndex(SelectionDAG & DAG) const;
-    SDOperand getReturnAddrFrameIndex(SelectionDAG & DAG) const;
+    SDValue getFramePointerFrameIndex(SelectionDAG & DAG) const;
+    SDValue getReturnAddrFrameIndex(SelectionDAG & DAG) const;
 
-    SDOperand EmitTailCallLoadFPAndRetAddr(SelectionDAG & DAG,
+    SDValue EmitTailCallLoadFPAndRetAddr(SelectionDAG & DAG,
                                            int SPDiff,
-                                           SDOperand Chain,
-                                           SDOperand &LROpOut,
-                                           SDOperand &FPOpOut);
+                                           SDValue Chain,
+                                           SDValue &LROpOut,
+                                           SDValue &FPOpOut);
 
-    SDOperand LowerRETURNADDR(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerFRAMEADDR(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerConstantPool(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerGlobalAddress(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerGlobalTLSAddress(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerJumpTable(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerSETCC(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerVASTART(SDOperand Op, SelectionDAG &DAG,
+    SDValue LowerRETURNADDR(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerConstantPool(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerGlobalAddress(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerJumpTable(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerSETCC(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerVASTART(SDValue Op, SelectionDAG &DAG,
                            int VarArgsFrameIndex, int VarArgsStackOffset,
                            unsigned VarArgsNumGPR, unsigned VarArgsNumFPR,
                            const PPCSubtarget &Subtarget);
-    SDOperand LowerVAARG(SDOperand Op, SelectionDAG &DAG, int VarArgsFrameIndex,
+    SDValue LowerVAARG(SDValue Op, SelectionDAG &DAG, int VarArgsFrameIndex,
                          int VarArgsStackOffset, unsigned VarArgsNumGPR,
                          unsigned VarArgsNumFPR, const PPCSubtarget &Subtarget);
-    SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
+    SDValue LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG,
                                     int &VarArgsFrameIndex, 
                                     int &VarArgsStackOffset,
                                     unsigned &VarArgsNumGPR,
                                     unsigned &VarArgsNumFPR,
                                     const PPCSubtarget &Subtarget);
-    SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG,
+    SDValue LowerCALL(SDValue Op, SelectionDAG &DAG,
                         const PPCSubtarget &Subtarget, TargetMachine &TM);
-    SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG, TargetMachine &TM);
-    SDOperand LowerSTACKRESTORE(SDOperand Op, SelectionDAG &DAG,
+    SDValue LowerRET(SDValue Op, SelectionDAG &DAG, TargetMachine &TM);
+    SDValue LowerSTACKRESTORE(SDValue Op, SelectionDAG &DAG,
                                 const PPCSubtarget &Subtarget);
-    SDOperand LowerDYNAMIC_STACKALLOC(SDOperand Op, SelectionDAG &DAG,
+    SDValue LowerDYNAMIC_STACKALLOC(SDValue Op, SelectionDAG &DAG,
                                       const PPCSubtarget &Subtarget);
-    SDOperand LowerSELECT_CC(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerAtomicLOAD_ADD(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerAtomicCMP_SWAP(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerAtomicSWAP(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerFP_TO_SINT(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerSINT_TO_FP(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerFP_ROUND_INREG(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerFLT_ROUNDS_(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerSHL_PARTS(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerSRL_PARTS(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerSRA_PARTS(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerINTRINSIC_WO_CHAIN(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerSCALAR_TO_VECTOR(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerMUL(SDOperand Op, SelectionDAG &DAG);
+    SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerAtomicLOAD_ADD(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerAtomicCMP_SWAP(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerAtomicSWAP(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerFP_TO_SINT(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerSINT_TO_FP(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerFP_ROUND_INREG(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerFLT_ROUNDS_(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerSHL_PARTS(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerSRL_PARTS(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerSRA_PARTS(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerSCALAR_TO_VECTOR(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerMUL(SDValue Op, SelectionDAG &DAG);
   };
 }
 
