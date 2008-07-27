@@ -42,7 +42,7 @@ grep -q 'RUN:' $FILENAME || (
 
 # Run under valgrind if the VG environment variable has been set.
 CLANG=$CLANG
-if [ "$CLANG" == "" ]; then
+if [ ! -n "$CLANG" ]; then
     CLANG="clang"
 fi
 if [ -n "$VG" ]; then
