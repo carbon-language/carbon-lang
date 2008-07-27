@@ -543,7 +543,8 @@ void Sema::CheckImplementationIvars(ObjCImplementationDecl *ImpDecl,
     ObjCIvarDecl* ClsIvar = *IVI;
     assert (ImplIvar && "missing implementation ivar");
     assert (ClsIvar && "missing class ivar");
-    if (ImplIvar->getCanonicalType() != ClsIvar->getCanonicalType()) {
+    if (Context.getCanonicalType(ImplIvar->getType()) !=
+        Context.getCanonicalType(ClsIvar->getType())) {
       Diag(ImplIvar->getLocation(), diag::err_conflicting_ivar_type,
            ImplIvar->getIdentifier()->getName());
       Diag(ClsIvar->getLocation(), diag::err_previous_definition,
