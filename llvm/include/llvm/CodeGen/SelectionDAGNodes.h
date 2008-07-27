@@ -932,7 +932,7 @@ public:
       return *this;
   }
 
-  SDUse * getNext() { return Next; }
+  SDUse *getNext() { return Next; }
 
   SDNode *getUser() { return User; }
 
@@ -942,7 +942,7 @@ public:
 
   const SDOperand& getSDOperand() const { return Operand; }
 
-  SDNode* &getVal () { return Operand.Val; }
+  SDNode *&getVal() { return Operand.Val; }
 
   bool operator==(const SDOperand &O) const {
     return Operand == O;
@@ -1156,32 +1156,26 @@ public:
       use_iterator tmp = *this; ++*this; return tmp;
     }
 
+    /// Retrieve a pointer to the current user node.
+    SDNode *operator*() const {
+      assert(Op && "Cannot dereference end iterator!");
+      return Op->getUser();
+    }
 
-    /// getOperandNum - Retrive a number of a current operand.
-    unsigned getOperandNum() const {
+    SDNode *operator->() const { return operator*(); }
+
+    SDUse &getUse() const { return *Op; }
+
+    /// getOperandNo - Retrive the operand # of this use in its user.
+    ///
+    unsigned getOperandNo() const {
       assert(Op && "Cannot dereference end iterator!");
       return (unsigned)(Op - Op->getUser()->OperandList);
-    }
-
-    /// Retrieve a reference to the current operand.
-    SDUse &operator*() const {
-      assert(Op && "Cannot dereference end iterator!");
-      return *Op;
-    }
-
-    /// Retrieve a pointer to the current operand.
-    SDUse *operator->() const {
-      assert(Op && "Cannot dereference end iterator!");
-      return Op;
     }
   };
 
   /// use_begin/use_end - Provide iteration support to walk over all uses
   /// of an SDNode.
-
-  use_iterator use_begin(SDNode *node) const {
-    return use_iterator(node->Uses);
-  }
 
   use_iterator use_begin() const {
     return use_iterator(Uses);

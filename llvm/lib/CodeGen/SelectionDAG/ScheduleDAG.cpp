@@ -51,18 +51,18 @@ ScheduleDAG::ScheduleDAG(SelectionDAG &dag, MachineBasicBlock *bb,
 /// CheckForPhysRegDependency - Check if the dependency between def and use of
 /// a specified operand is a physical register dependency. If so, returns the
 /// register and the cost of copying the register.
-static void CheckForPhysRegDependency(SDNode *Def, SDNode *Use, unsigned Op,
+static void CheckForPhysRegDependency(SDNode *Def, SDNode *User, unsigned Op,
                                       const TargetRegisterInfo *TRI, 
                                       const TargetInstrInfo *TII,
                                       unsigned &PhysReg, int &Cost) {
-  if (Op != 2 || Use->getOpcode() != ISD::CopyToReg)
+  if (Op != 2 || User->getOpcode() != ISD::CopyToReg)
     return;
 
-  unsigned Reg = cast<RegisterSDNode>(Use->getOperand(1))->getReg();
+  unsigned Reg = cast<RegisterSDNode>(User->getOperand(1))->getReg();
   if (TargetRegisterInfo::isVirtualRegister(Reg))
     return;
 
-  unsigned ResNo = Use->getOperand(2).ResNo;
+  unsigned ResNo = User->getOperand(2).ResNo;
   if (Def->isMachineOpcode()) {
     const TargetInstrDesc &II = TII->get(Def->getMachineOpcode());
     if (ResNo >= II.getNumDefs() &&
@@ -142,12 +142,12 @@ void ScheduleDAG::BuildSchedUnits() {
       bool HasFlagUse = false;
       for (SDNode::use_iterator UI = N->use_begin(), E = N->use_end(); 
            UI != E; ++UI)
-        if (FlagVal.isOperandOf(UI->getUser())) {
+        if (FlagVal.isOperandOf(*UI)) {
           HasFlagUse = true;
           NodeSUnit->FlaggedNodes.push_back(N);
           assert(N->getNodeId() == -1 && "Node already inserted!");
           N->setNodeId(NodeSUnit->NodeNum);
-          N = UI->getUser();
+          N = *UI;
           break;
         }
       if (!HasFlagUse) break;
@@ -426,20 +426,20 @@ void ScheduleDAG::EmitCopyFromReg(SDNode *Node, unsigned ResNo,
   bool MatchReg = true;
   for (SDNode::use_iterator UI = Node->use_begin(), E = Node->use_end();
        UI != E; ++UI) {
-    SDNode *Use = UI->getUser();
+    SDNode *User = *UI;
     bool Match = true;
-    if (Use->getOpcode() == ISD::CopyToReg && 
-        Use->getOperand(2).Val == Node &&
-        Use->getOperand(2).ResNo == ResNo) {
-      unsigned DestReg = cast<RegisterSDNode>(Use->getOperand(1))->getReg();
+    if (User->getOpcode() == ISD::CopyToReg && 
+        User->getOperand(2).Val == Node &&
+        User->getOperand(2).ResNo == ResNo) {
+      unsigned DestReg = cast<RegisterSDNode>(User->getOperand(1))->getReg();
       if (TargetRegisterInfo::isVirtualRegister(DestReg)) {
         VRBase = DestReg;
         Match = false;
       } else if (DestReg != SrcReg)
         Match = false;
     } else {
-      for (unsigned i = 0, e = Use->getNumOperands(); i != e; ++i) {
-        SDOperand Op = Use->getOperand(i);
+      for (unsigned i = 0, e = User->getNumOperands(); i != e; ++i) {
+        SDOperand Op = User->getOperand(i);
         if (Op.Val != Node || Op.ResNo != ResNo)
           continue;
         MVT VT = Node->getValueType(Op.ResNo);
@@ -487,11 +487,11 @@ unsigned ScheduleDAG::getDstOfOnlyCopyToRegUse(SDNode *Node,
   if (!Node->hasOneUse())
     return 0;
 
-  SDNode *Use = Node->use_begin()->getUser();
-  if (Use->getOpcode() == ISD::CopyToReg && 
-      Use->getOperand(2).Val == Node &&
-      Use->getOperand(2).ResNo == ResNo) {
-    unsigned Reg = cast<RegisterSDNode>(Use->getOperand(1))->getReg();
+  SDNode *User = *Node->use_begin();
+  if (User->getOpcode() == ISD::CopyToReg && 
+      User->getOperand(2).Val == Node &&
+      User->getOperand(2).ResNo == ResNo) {
+    unsigned Reg = cast<RegisterSDNode>(User->getOperand(1))->getReg();
     if (TargetRegisterInfo::isVirtualRegister(Reg))
       return Reg;
   }
@@ -511,11 +511,11 @@ void ScheduleDAG::CreateVirtualRegisters(SDNode *Node, MachineInstr *MI,
     unsigned VRBase = 0;
     for (SDNode::use_iterator UI = Node->use_begin(), E = Node->use_end();
          UI != E; ++UI) {
-      SDNode *Use = UI->getUser();
-      if (Use->getOpcode() == ISD::CopyToReg && 
-          Use->getOperand(2).Val == Node &&
-          Use->getOperand(2).ResNo == i) {
-        unsigned Reg = cast<RegisterSDNode>(Use->getOperand(1))->getReg();
+      SDNode *User = *UI;
+      if (User->getOpcode() == ISD::CopyToReg && 
+          User->getOperand(2).Val == Node &&
+          User->getOperand(2).ResNo == i) {
+        unsigned Reg = cast<RegisterSDNode>(User->getOperand(1))->getReg();
         if (TargetRegisterInfo::isVirtualRegister(Reg)) {
           VRBase = Reg;
           MI->addOperand(MachineOperand::CreateReg(Reg, true));
@@ -710,10 +710,10 @@ void ScheduleDAG::EmitSubregNode(SDNode *Node,
   // the CopyToReg'd destination register instead of creating a new vreg.
   for (SDNode::use_iterator UI = Node->use_begin(), E = Node->use_end();
        UI != E; ++UI) {
-    SDNode *Use = UI->getUser();
-    if (Use->getOpcode() == ISD::CopyToReg && 
-        Use->getOperand(2).Val == Node) {
-      unsigned DestReg = cast<RegisterSDNode>(Use->getOperand(1))->getReg();
+    SDNode *User = *UI;
+    if (User->getOpcode() == ISD::CopyToReg && 
+        User->getOperand(2).Val == Node) {
+      unsigned DestReg = cast<RegisterSDNode>(User->getOperand(1))->getReg();
       if (TargetRegisterInfo::isVirtualRegister(DestReg)) {
         VRBase = DestReg;
         break;

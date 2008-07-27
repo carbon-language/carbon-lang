@@ -299,9 +299,7 @@ static void ComputeTopDownOrdering(SelectionDAG &DAG,
 
     // Now that we have N in, add anything that uses it if all of their operands
     // are now done.
-    for (SDNode::use_iterator UI = N->use_begin(), E = N->use_end();
-         UI != E; ++UI)
-      Worklist.push_back(UI->getUser());
+    Worklist.insert(Worklist.end(), N->use_begin(), N->use_end());
   }
 
   assert(Order.size() == Visited.size() &&
@@ -373,7 +371,7 @@ static SDNode *FindCallEndFromCallStart(SDNode *Node) {
        E = Node->use_end(); UI != E; ++UI) {
     
     // Make sure to only follow users of our token chain.
-    SDNode *User = UI->getUser();
+    SDNode *User = *UI;
     for (unsigned i = 0, e = User->getNumOperands(); i != e; ++i)
       if (User->getOperand(i) == TheChain)
         if (SDNode *Result = FindCallEndFromCallStart(User))

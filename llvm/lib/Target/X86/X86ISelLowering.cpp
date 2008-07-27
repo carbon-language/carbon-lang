@@ -4039,7 +4039,7 @@ X86TargetLowering::LowerEXTRACT_VECTOR_ELT_SSE4(SDOperand Op,
     // result has a single use which is a store or a bitcast to i32.
     if (!Op.hasOneUse())
       return SDOperand();
-    SDNode *User = Op.Val->use_begin()->getUser();
+    SDNode *User = *Op.Val->use_begin();
     if (User->getOpcode() != ISD::STORE &&
         (User->getOpcode() != ISD::BIT_CONVERT ||
          User->getValueType(0) != MVT::i32))

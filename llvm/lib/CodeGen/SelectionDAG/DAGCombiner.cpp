@@ -65,7 +65,7 @@ namespace {
     void AddUsersToWorkList(SDNode *N) {
       for (SDNode::use_iterator UI = N->use_begin(), UE = N->use_end();
            UI != UE; ++UI)
-        AddToWorkList(UI->getUser());
+        AddToWorkList(*UI);
     }
 
     /// visit - call the node-specific routine that knows how to fold each
@@ -2686,7 +2686,7 @@ static bool ExtendUsesToFormExtLoad(SDNode *N, SDOperand N0,
   bool isTruncFree = TLI.isTruncateFree(N->getValueType(0), N0.getValueType());
   for (SDNode::use_iterator UI = N0.Val->use_begin(), UE = N0.Val->use_end();
        UI != UE; ++UI) {
-    SDNode *User = UI->getUser();
+    SDNode *User = *UI;
     if (User == N)
       continue;
     // FIXME: Only extend SETCC N, N and SETCC N, c for now.
@@ -2725,7 +2725,7 @@ static bool ExtendUsesToFormExtLoad(SDNode *N, SDOperand N0,
     bool BothLiveOut = false;
     for (SDNode::use_iterator UI = N->use_begin(), UE = N->use_end();
          UI != UE; ++UI) {
-      SDNode *User = UI->getUser();
+      SDNode *User = *UI;
       for (unsigned i = 0, e = User->getNumOperands(); i != e; ++i) {
         SDOperand UseOp = User->getOperand(i);
         if (UseOp.Val == N && UseOp.ResNo == 0) {
@@ -3948,7 +3948,7 @@ SDOperand DAGCombiner::visitFP_EXTEND(SDNode *N) {
   
   // If this is fp_round(fpextend), don't fold it, allow ourselves to be folded.
   if (N->hasOneUse() && 
-      N->use_begin()->getSDOperand().getOpcode() == ISD::FP_ROUND)
+      N->use_begin().getUse().getSDOperand().getOpcode() == ISD::FP_ROUND)
     return SDOperand();
 
   // fold (fp_extend c1fp) -> c1fp
@@ -4169,7 +4169,7 @@ bool DAGCombiner::CombineToPreIndexedLoadStore(SDNode *N) {
   bool RealUse = false;
   for (SDNode::use_iterator I = Ptr.Val->use_begin(),
          E = Ptr.Val->use_end(); I != E; ++I) {
-    SDNode *Use = I->getUser();
+    SDNode *Use = *I;
     if (Use == N)
       continue;
     if (Use->isPredecessorOf(N))
@@ -4254,7 +4254,7 @@ bool DAGCombiner::CombineToPostIndexedLoadStore(SDNode *N) {
   
   for (SDNode::use_iterator I = Ptr.Val->use_begin(),
          E = Ptr.Val->use_end(); I != E; ++I) {
-    SDNode *Op = I->getUser();
+    SDNode *Op = *I;
     if (Op == N ||
         (Op->getOpcode() != ISD::ADD && Op->getOpcode() != ISD::SUB))
       continue;
@@ -4282,7 +4282,7 @@ bool DAGCombiner::CombineToPostIndexedLoadStore(SDNode *N) {
       bool TryNext = false;
       for (SDNode::use_iterator II = BasePtr.Val->use_begin(),
              EE = BasePtr.Val->use_end(); II != EE; ++II) {
-        SDNode *Use = II->getUser();
+        SDNode *Use = *II;
         if (Use == Ptr.Val)
           continue;
 
@@ -4292,7 +4292,7 @@ bool DAGCombiner::CombineToPostIndexedLoadStore(SDNode *N) {
           bool RealUse = false;
           for (SDNode::use_iterator III = Use->use_begin(),
                  EEE = Use->use_end(); III != EEE; ++III) {
-            SDNode *UseUse = III->getUser();
+            SDNode *UseUse = *III;
             if (!((UseUse->getOpcode() == ISD::LOAD &&
                    cast<LoadSDNode>(UseUse)->getBasePtr().Val == Use) ||
                   (UseUse->getOpcode() == ISD::STORE &&

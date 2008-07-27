@@ -138,7 +138,7 @@ NodeDone:
 
     for (SDNode::use_iterator UI = N->use_begin(), E = N->use_end();
          UI != E; ++UI) {
-      SDNode *User = UI->getUser();
+      SDNode *User = *UI;
       int NodeID = User->getNodeId();
       assert(NodeID != ReadyToProcess && NodeID != Processed &&
              "Invalid node id for user of unprocessed node!");

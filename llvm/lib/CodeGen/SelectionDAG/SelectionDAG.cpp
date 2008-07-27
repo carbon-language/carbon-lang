@@ -4138,7 +4138,7 @@ void SelectionDAG::ReplaceAllUsesWith(SDOperand FromN, SDOperand To,
 
   while (!From->use_empty()) {
     SDNode::use_iterator UI = From->use_begin();
-    SDNode *U = UI->getUser();
+    SDNode *U = *UI;
 
     // This node is about to morph, remove its old self from the CSE maps.
     RemoveNodeFromCSEMaps(U);
@@ -4187,7 +4187,7 @@ void SelectionDAG::ReplaceAllUsesWith(SDNode *From, SDNode *To,
 
   while (!From->use_empty()) {
     SDNode::use_iterator UI = From->use_begin();
-    SDNode *U = UI->getUser();
+    SDNode *U = *UI;
 
     // This node is about to morph, remove its old self from the CSE maps.
     RemoveNodeFromCSEMaps(U);
@@ -4230,7 +4230,7 @@ void SelectionDAG::ReplaceAllUsesWith(SDNode *From,
 
   while (!From->use_empty()) {
     SDNode::use_iterator UI = From->use_begin();
-    SDNode *U = UI->getUser();
+    SDNode *U = *UI;
 
     // This node is about to morph, remove its old self from the CSE maps.
     RemoveNodeFromCSEMaps(U);
@@ -4276,16 +4276,9 @@ void SelectionDAG::ReplaceAllUsesOfValueWith(SDOperand From, SDOperand To,
     return;
   }
 
-  if (From.use_empty()) return;
-
   // Get all of the users of From.Val.  We want these in a nice,
   // deterministically ordered and uniqued set, so we use a SmallSetVector.
-  SmallSetVector<SDNode*, 16> Users;
-  for (SDNode::use_iterator UI = From.Val->use_begin(), 
-      E = From.Val->use_end(); UI != E; ++UI) {
-    SDNode *User = UI->getUser();
-    Users.insert(User);
-  }
+  SmallSetVector<SDNode*, 16> Users(From.Val->use_begin(), From.Val->use_end());
 
   while (!Users.empty()) {
     // We know that this user uses some value of From.  If it is the right
@@ -4350,7 +4343,7 @@ void SelectionDAG::ReplaceAllUsesOfValuesWith(const SDOperand *From,
   for (unsigned i = 0; i != Num; ++i)
     for (SDNode::use_iterator UI = From[i].Val->use_begin(), 
          E = From[i].Val->use_end(); UI != E; ++UI)
-      Users.push_back(std::make_pair(UI->getUser(), i));
+      Users.push_back(std::make_pair(*UI, i));
 
   while (!Users.empty()) {
     // We know that this user uses some value of From.  If it is the right
@@ -4556,7 +4549,7 @@ bool SDNode::hasNUsesOfValue(unsigned NUses, unsigned Value) const {
 
   // TODO: Only iterate over uses of a given value of the node
   for (SDNode::use_iterator UI = use_begin(), E = use_end(); UI != E; ++UI) {
-    if (UI->getSDOperand().ResNo == Value) {
+    if (UI.getUse().getSDOperand().ResNo == Value) {
       if (NUses == 0)
         return false;
       --NUses;
@@ -4574,7 +4567,7 @@ bool SDNode::hasAnyUseOfValue(unsigned Value) const {
   assert(Value < getNumValues() && "Bad value!");
 
   for (SDNode::use_iterator UI = use_begin(), E = use_end(); UI != E; ++UI)
-    if (UI->getSDOperand().ResNo == Value)
+    if (UI.getUse().getSDOperand().ResNo == Value)
       return true;
 
   return false;
@@ -4586,7 +4579,7 @@ bool SDNode::hasAnyUseOfValue(unsigned Value) const {
 bool SDNode::isOnlyUserOf(SDNode *N) const {
   bool Seen = false;
   for (SDNode::use_iterator I = N->use_begin(), E = N->use_end(); I != E; ++I) {
-    SDNode *User = I->getUser();
+    SDNode *User = *I;
     if (User == this)
       Seen = true;
     else

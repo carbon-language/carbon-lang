@@ -190,7 +190,7 @@ public:
     _Self tmp = *this; ++*this; return tmp;
   }
 
-  // Retrieve a reference to the current User
+  // Retrieve a pointer to the current User.
   UserTy *operator*() const {
     assert(U && "Cannot dereference end iterator!");
     return U->getUser();
