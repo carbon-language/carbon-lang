@@ -816,7 +816,7 @@ bool LiveIntervals::isReMaterializable(const LiveInterval &li,
     if (!EnableAggressiveRemat)
       return false;
 
-    // If the instruction access memory but the memoperands have been lost,
+    // If the instruction accesses memory but the memoperands have been lost,
     // we can't analyze it.
     const TargetInstrDesc &TID = MI->getDesc();
     if ((TID.mayLoad() || TID.mayStore()) && MI->memoperands_empty())
