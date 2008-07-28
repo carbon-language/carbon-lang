@@ -138,8 +138,7 @@ fi
 make $JOBS_FLAG $OPTIMIZE_OPTS UNIVERSAL=1 UNIVERSAL_ARCH="$TARGETS" \
     LLVM_SUBMIT_VERSION=$LLVM_SUBMIT_VERSION \
     LLVM_SUBMIT_SUBVERSION=$LLVM_SUBMIT_SUBVERSION \
-    CXXFLAGS="-DLLVM_VERSION_INFO='\" Apple Build #$LLVM_VERSION\"'" \
-    CC=/usr/bin/gcc-4.0 CXX=/usr/bin/g++-4.0
+    CXXFLAGS="-DLLVM_VERSION_INFO='\" Apple Build #$LLVM_VERSION\"'"
 
 if ! test $? == 0 ; then
     echo "error: LLVM 'make' failed!"
