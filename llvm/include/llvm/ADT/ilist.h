@@ -47,10 +47,11 @@ namespace llvm {
 template<typename NodeTy, typename Traits> class iplist;
 template<typename NodeTy> class ilist_iterator;
 
-// Template traits for intrusive list.  By specializing this template class, you
-// can change what next/prev fields are used to store the links...
+/// ilist_nextprev_traits - A fragment for template traits for intrusive list
+/// that provides default next/prev implementations for common operations.
+///
 template<typename NodeTy>
-struct ilist_traits {
+struct ilist_nextprev_traits {
   static NodeTy *getPrev(NodeTy *N) { return N->getPrev(); }
   static NodeTy *getNext(NodeTy *N) { return N->getNext(); }
   static const NodeTy *getPrev(const NodeTy *N) { return N->getPrev(); }
@@ -58,24 +59,42 @@ struct ilist_traits {
 
   static void setPrev(NodeTy *N, NodeTy *Prev) { N->setPrev(Prev); }
   static void setNext(NodeTy *N, NodeTy *Next) { N->setNext(Next); }
+};
 
+/// ilist_sentinel_traits - A fragment for template traits for intrusive list
+/// that provides default sentinel implementations for common operations.
+///
+template<typename NodeTy>
+struct ilist_sentinel_traits {
+  static NodeTy *createSentinel() { return new NodeTy(); }
+  static void destroySentinel(NodeTy *N) { delete N; }
+};
+
+/// ilist_default_traits - Default template traits for intrusive list.
+/// By inheriting from this, you can easily use default implementations
+/// for all common operations.
+///
+template<typename NodeTy>
+struct ilist_default_traits : ilist_nextprev_traits<NodeTy>,
+                              ilist_sentinel_traits<NodeTy> {
   static NodeTy *createNode(const NodeTy &V) { return new NodeTy(V); }
   static void deleteNode(NodeTy *V) { delete V; }
 
-  static NodeTy *createSentinel() { return new NodeTy(); }
-  static void destroySentinel(NodeTy *N) { delete N; }
-
   void addNodeToList(NodeTy *NTy) {}
   void removeNodeFromList(NodeTy *NTy) {}
-  void transferNodesFromList(iplist<NodeTy, ilist_traits> &L2,
+  void transferNodesFromList(ilist_default_traits &SrcTraits,
                              ilist_iterator<NodeTy> first,
                              ilist_iterator<NodeTy> last) {}
 };
 
+// Template traits for intrusive list.  By specializing this template class, you
+// can change what next/prev fields are used to store the links...
+template<typename NodeTy>
+struct ilist_traits : ilist_default_traits<NodeTy> {};
+
 // Const traits are the same as nonconst traits...
 template<typename Ty>
 struct ilist_traits<const Ty> : public ilist_traits<Ty> {};
-
 
 //===----------------------------------------------------------------------===//
 // ilist_iterator<Node> - Iterator for intrusive list.

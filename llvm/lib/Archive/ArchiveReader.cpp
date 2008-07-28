@@ -218,8 +218,6 @@ Archive::parseMemberHeader(const char*& At, const char* End, std::string* error)
   ArchiveMember* member = new ArchiveMember(this);
 
   // Fill in fields of the ArchiveMember
-  member->next = 0;
-  member->prev = 0;
   member->parent = this;
   member->path.set(pathname);
   member->info.fileSize = MemberSize;

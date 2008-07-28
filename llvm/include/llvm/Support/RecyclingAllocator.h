@@ -22,12 +22,13 @@ namespace llvm {
 /// RecyclingAllocator - This class wraps an Allocator, adding the
 /// functionality of recycling deleted objects.
 ///
-template<class AllocatorType, class T, class LargestT = T>
+template<class AllocatorType, class T,
+         size_t Size = sizeof(T), size_t Align = AlignOf<T>::Alignment>
 class RecyclingAllocator {
 private:
   /// Base - Implementation details.
   ///
-  Recycler<T, LargestT> Base;
+  Recycler<T, Size, Align> Base;
 
   /// Allocator - The wrapped allocator.
   ///

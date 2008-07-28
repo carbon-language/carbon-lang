@@ -22,6 +22,7 @@
 
 #include "llvm/GlobalValue.h"
 #include "llvm/OperandTraits.h"
+#include "llvm/ADT/ilist_node.h"
 
 namespace llvm {
 
@@ -31,17 +32,13 @@ class PointerType;
 template<typename ValueSubClass, typename ItemParentClass>
   class SymbolTableListTraits;
 
-class GlobalVariable : public GlobalValue {
+class GlobalVariable : public GlobalValue, public ilist_node<GlobalVariable> {
   friend class SymbolTableListTraits<GlobalVariable, Module>;
   void *operator new(size_t, unsigned);       // Do not implement
   void operator=(const GlobalVariable &);     // Do not implement
   GlobalVariable(const GlobalVariable &);     // Do not implement
 
   void setParent(Module *parent);
-
-  GlobalVariable *Prev, *Next;
-  void setNext(GlobalVariable *N) { Next = N; }
-  void setPrev(GlobalVariable *N) { Prev = N; }
 
   bool isConstantGlobal : 1;           // Is this a global constant?
   bool isThreadLocalSymbol : 1;        // Is this symbol "Thread Local"?
@@ -144,12 +141,6 @@ public:
   static inline bool classof(const Value *V) {
     return V->getValueID() == Value::GlobalVariableVal;
   }
-private:
-  // getNext/Prev - Return the next or previous global variable in the list.
-        GlobalVariable *getNext()       { return Next; }
-  const GlobalVariable *getNext() const { return Next; }
-        GlobalVariable *getPrev()       { return Prev; }
-  const GlobalVariable *getPrev() const { return Prev; }
 };
 
 template <>

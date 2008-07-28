@@ -51,7 +51,8 @@ template<> struct ilist_traits<Argument>
   static int getListOffset();
 };
 
-class Function : public GlobalValue, public Annotable {
+class Function : public GlobalValue, public Annotable,
+                 public ilist_node<Function> {
 public:
   typedef iplist<Argument> ArgumentListType;
   typedef iplist<BasicBlock> BasicBlockListType;
@@ -76,18 +77,6 @@ private:
   friend class SymbolTableListTraits<Function, Module>;
 
   void setParent(Module *parent);
-  Function *Prev, *Next;
-  void setNext(Function *N) { Next = N; }
-  void setPrev(Function *N) { Prev = N; }
-
-  // getNext/Prev - Return the next or previous function in the list.  These
-  // methods should never be used directly, and are only used to implement the
-  // function list as part of the module.
-  //
-  Function *getNext()             { return Next; }
-  const Function *getNext() const { return Next; }
-  Function *getPrev()             { return Prev; }
-  const Function *getPrev() const { return Prev; }
 
   /// hasLazyArguments/CheckLazyArguments - The argument list of a function is
   /// built on demand, so that the list isn't allocated until the first client

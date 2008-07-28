@@ -25,6 +25,8 @@
 #ifndef LLVM_SYMBOLTABLELISTTRAITS_H
 #define LLVM_SYMBOLTABLELISTTRAITS_H
 
+#include "llvm/ADT/ilist.h"
+
 namespace llvm {
 
 template<typename NodeTy> class ilist_iterator;
@@ -37,7 +39,7 @@ template<typename Ty> struct ilist_traits;
 //                  inherit from ilist_traits<ValueSubClass>
 //
 template<typename ValueSubClass, typename ItemParentClass>
-class SymbolTableListTraits {
+class SymbolTableListTraits : public ilist_default_traits<ValueSubClass> {
   typedef ilist_traits<ValueSubClass> TraitsClass;
 public:
   SymbolTableListTraits() {}
@@ -48,26 +50,14 @@ public:
     return reinterpret_cast<ItemParentClass*>(reinterpret_cast<char*>(this)-
                                               TraitsClass::getListOffset());
   }
-  static ValueSubClass *getPrev(ValueSubClass *V) { return V->getPrev(); }
-  static ValueSubClass *getNext(ValueSubClass *V) { return V->getNext(); }
-  static const ValueSubClass *getPrev(const ValueSubClass *V) {
-    return V->getPrev();
-  }
-  static const ValueSubClass *getNext(const ValueSubClass *V) {
-    return V->getNext();
-  }
 
   void deleteNode(ValueSubClass *V) {
     delete V;
   }
 
-  static void setPrev(ValueSubClass *V, ValueSubClass *P) { V->setPrev(P); }
-  static void setNext(ValueSubClass *V, ValueSubClass *N) { V->setNext(N); }
-
   void addNodeToList(ValueSubClass *V);
   void removeNodeFromList(ValueSubClass *V);
-  void transferNodesFromList(iplist<ValueSubClass,
-                             ilist_traits<ValueSubClass> > &L2,
+  void transferNodesFromList(ilist_traits<ValueSubClass> &L2,
                              ilist_iterator<ValueSubClass> first,
                              ilist_iterator<ValueSubClass> last);
 //private:

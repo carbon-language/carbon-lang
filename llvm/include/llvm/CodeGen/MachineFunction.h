@@ -18,7 +18,7 @@
 #ifndef LLVM_CODEGEN_MACHINEFUNCTION_H
 #define LLVM_CODEGEN_MACHINEFUNCTION_H
 
-#include "llvm/ADT/alist.h"
+#include "llvm/ADT/ilist.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/Support/Annotation.h"
 #include "llvm/Support/Allocator.h"
@@ -34,15 +34,18 @@ class MachineConstantPool;
 class MachineJumpTableInfo;
 
 template <>
-class alist_traits<MachineBasicBlock, MachineBasicBlock> {
-  typedef alist_iterator<MachineBasicBlock> iterator;
+class ilist_traits<MachineBasicBlock>
+    : public ilist_default_traits<MachineBasicBlock> {
+  mutable MachineBasicBlock Sentinel;
 public:
+  MachineBasicBlock *createSentinel() const { return &Sentinel; }
+  void destroySentinel(MachineBasicBlock *) const {}
+
   void addNodeToList(MachineBasicBlock* MBB);
   void removeNodeFromList(MachineBasicBlock* MBB);
-  void transferNodesFromList(alist_traits<MachineBasicBlock> &,
-                             iterator,
-                             iterator) {}
   void deleteNode(MachineBasicBlock *MBB);
+private:
+  void createNode(const MachineBasicBlock &);
 };
 
 /// MachineFunctionInfo - This class can be derived from and used by targets to
@@ -87,11 +90,8 @@ class MachineFunction : private Annotation {
   // Allocation management for basic blocks in function.
   Recycler<MachineBasicBlock> BasicBlockRecycler;
 
-  // Allocation management for memoperands in function.
-  Recycler<MachineMemOperand> MemOperandRecycler;
-
   // List of machine basic blocks in function
-  typedef alist<MachineBasicBlock> BasicBlockListType;
+  typedef ilist<MachineBasicBlock> BasicBlockListType;
   BasicBlockListType BasicBlocks;
 
 public:
@@ -302,15 +302,6 @@ public:
   /// DeleteMachineBasicBlock - Delete the given MachineBasicBlock.
   ///
   void DeleteMachineBasicBlock(MachineBasicBlock *MBB);
-
-  /// CreateMachineMemOperand - Allocate a new MachineMemOperand. Use this
-  /// instead of `new MachineMemOperand'.
-  ///
-  MachineMemOperand *CreateMachineMemOperand(const MachineMemOperand &MMO);
-
-  /// DeleteMachineMemOperand - Delete the given MachineMemOperand.
-  ///
-  void DeleteMachineMemOperand(MachineMemOperand *MMO);
 };
 
 //===--------------------------------------------------------------------===//

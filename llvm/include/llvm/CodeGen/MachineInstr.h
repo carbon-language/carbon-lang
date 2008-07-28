@@ -16,9 +16,12 @@
 #ifndef LLVM_CODEGEN_MACHINEINSTR_H
 #define LLVM_CODEGEN_MACHINEINSTR_H
 
-#include "llvm/ADT/alist.h"
+#include "llvm/ADT/ilist.h"
+#include "llvm/ADT/ilist_node.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/CodeGen/MachineMemOperand.h"
+#include <list>
 #include <vector>
 
 namespace llvm {
@@ -31,13 +34,13 @@ class MachineFunction;
 //===----------------------------------------------------------------------===//
 /// MachineInstr - Representation of each machine instruction.
 ///
-class MachineInstr {
+class MachineInstr : public ilist_node<MachineInstr> {
   const TargetInstrDesc *TID;           // Instruction descriptor.
   unsigned short NumImplicitOps;        // Number of implicit operands (which
                                         // are determined at construction time).
 
   std::vector<MachineOperand> Operands; // the operands
-  alist<MachineMemOperand> MemOperands; // information on memory references
+  std::list<MachineMemOperand> MemOperands; // information on memory references
   MachineBasicBlock *Parent;            // Pointer to the owning basic block.
 
   // OperandComplete - Return true if it's illegal to add a new operand
@@ -47,8 +50,9 @@ class MachineInstr {
   void operator=(const MachineInstr&); // DO NOT IMPLEMENT
 
   // Intrusive list support
-  friend struct alist_traits<MachineInstr>;
-  friend struct alist_traits<MachineBasicBlock>;
+  friend struct ilist_traits<MachineInstr>;
+  friend struct ilist_traits<MachineBasicBlock>;
+  friend struct ilist_sentinel_traits<MachineInstr>;
   void setParent(MachineBasicBlock *P) { Parent = P; }
 
   /// MachineInstr ctor - This constructor creates a copy of the given
@@ -105,13 +109,13 @@ public:
   unsigned getNumExplicitOperands() const;
   
   /// Access to memory operands of the instruction
-  alist<MachineMemOperand>::iterator memoperands_begin()
+  std::list<MachineMemOperand>::iterator memoperands_begin()
   { return MemOperands.begin(); }
-  alist<MachineMemOperand>::iterator memoperands_end()
+  std::list<MachineMemOperand>::iterator memoperands_end()
   { return MemOperands.end(); }
-  alist<MachineMemOperand>::const_iterator memoperands_begin() const
+  std::list<MachineMemOperand>::const_iterator memoperands_begin() const
   { return MemOperands.begin(); }
-  alist<MachineMemOperand>::const_iterator memoperands_end() const
+  std::list<MachineMemOperand>::const_iterator memoperands_end() const
   { return MemOperands.end(); }
   bool memoperands_empty() const { return MemOperands.empty(); }
 

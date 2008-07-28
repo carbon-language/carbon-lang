@@ -102,7 +102,7 @@ FunctionPass *llvm::createMachineCodeDeleter() {
 // MachineFunction implementation
 //===---------------------------------------------------------------------===//
 
-void alist_traits<MachineBasicBlock>::deleteNode(MachineBasicBlock *MBB) {
+void ilist_traits<MachineBasicBlock>::deleteNode(MachineBasicBlock *MBB) {
   MBB->getParent()->DeleteMachineBasicBlock(MBB);
 }
 
@@ -131,7 +131,6 @@ MachineFunction::~MachineFunction() {
   BasicBlocks.clear();
   InstructionRecycler.clear(Allocator);
   BasicBlockRecycler.clear(Allocator);
-  MemOperandRecycler.clear(Allocator);
   RegInfo->~MachineRegisterInfo();        Allocator.Deallocate(RegInfo);
   if (MFInfo) {
     MFInfo->~MachineFunctionInfo();       Allocator.Deallocate(MFInfo);
@@ -232,23 +231,6 @@ MachineFunction::DeleteMachineBasicBlock(MachineBasicBlock *MBB) {
   assert(MBB->getParent() == this && "MBB parent mismatch!");
   MBB->~MachineBasicBlock();
   BasicBlockRecycler.Deallocate(Allocator, MBB);
-}
-
-/// CreateMachineMemOperand - Allocate a new MachineMemOperand. Use this
-/// instead of `new MachineMemOperand'.
-///
-MachineMemOperand *
-MachineFunction::CreateMachineMemOperand(const MachineMemOperand &MMO) {
-  return new (MemOperandRecycler.Allocate<MachineMemOperand>(Allocator))
-             MachineMemOperand(MMO);
-}
-
-/// DeleteMachineMemOperand - Delete the given MachineMemOperand.
-///
-void
-MachineFunction::DeleteMachineMemOperand(MachineMemOperand *MO) {
-  MO->~MachineMemOperand();
-  MemOperandRecycler.Deallocate(Allocator, MO);
 }
 
 void MachineFunction::dump() const {

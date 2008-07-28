@@ -27,12 +27,9 @@ template<typename ValueSubClass, typename ItemParentClass>
 /// in the body of a function, it represents the value of the actual argument
 /// the function was called with.
 /// @brief LLVM Argument representation  
-class Argument : public Value {  // Defined in the Function.cpp file
+class Argument : public Value, public ilist_node<Argument> {
   Function *Parent;
 
-  Argument *Prev, *Next; // Next and Prev links for our intrusive linked list
-  void setNext(Argument *N) { Next = N; }
-  void setPrev(Argument *N) { Prev = N; }
   friend class SymbolTableListTraits<Argument, Function>;
   void setParent(Function *parent);
 
@@ -80,13 +77,6 @@ public:
   static inline bool classof(const Value *V) {
     return V->getValueID() == ArgumentVal;
   }
-  
-private:
-  // getNext/Prev - Return the next or previous argument in the list.
-  Argument *getNext()       { return Next; }
-  const Argument *getNext() const { return Next; }
-  Argument *getPrev()       { return Prev; }
-  const Argument *getPrev() const { return Prev; }
 };
 
 } // End llvm namespace

@@ -22,6 +22,7 @@
 #include "llvm/ADT/iterator.h"
 #include "llvm/ADT/hash_map.h"
 #include "llvm/ADT/ilist.h"
+#include "llvm/ADT/ilist_node.h"
 
 namespace llvm {
 
@@ -33,7 +34,7 @@ class VAArgInst;
 class AliasSetTracker;
 class AliasSet;
 
-class AliasSet {
+class AliasSet : public ilist_node<AliasSet> {
   friend class AliasSetTracker;
 
   class PointerRec;
@@ -118,12 +119,6 @@ class AliasSet {
   // Volatile - True if this alias set contains volatile loads or stores.
   bool Volatile : 1;
 
-  friend struct ilist_traits<AliasSet>;
-  AliasSet *getPrev() const { return Prev; }
-  AliasSet *getNext() const { return Next; }
-  void setPrev(AliasSet *P) { Prev = P; }
-  void setNext(AliasSet *N) { Next = N; }
-
   void addRef() { ++RefCount; }
   void dropRef(AliasSetTracker &AST) {
     assert(RefCount >= 1 && "Invalid reference count detected!");
@@ -197,15 +192,15 @@ public:
   };
 
 private:
-  // Can only be created by AliasSetTracker
+  // Can only be created by AliasSetTracker. Also, ilist creates one
+  // to serve as a sentinel.
+  friend struct ilist_sentinel_traits<AliasSet>;
   AliasSet() : PtrList(0), PtrListEnd(&PtrList), Forward(0), RefCount(0),
                AccessTy(NoModRef), AliasTy(MustAlias), Volatile(false) {
   }
 
-  AliasSet(const AliasSet &AS) {
-    assert(0 && "Copy ctor called!?!?!");
-    abort();
-  }
+  AliasSet(const AliasSet &AS);        // do not implement
+  void operator=(const AliasSet &AS);  // do not implement
 
   HashNodePair *getSomePointer() const {
     return PtrList;

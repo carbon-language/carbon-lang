@@ -182,7 +182,7 @@ private:
                             FunctionLoweringInfo &FuncInfo);
   void SelectBasicBlock(BasicBlock *BB, MachineFunction &MF,
                         FunctionLoweringInfo &FuncInfo,
-                        alist<SDNode, LargestSDNode> &AllNodes);
+                        NodeAllocatorType &NodeAllocator);
 
   void BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
            std::vector<std::pair<MachineInstr*, unsigned> > &PHINodesToUpdate,

@@ -49,17 +49,15 @@ template<> struct ilist_traits<Instruction>
 /// modifying a program. However, the verifier will ensure that basic blocks
 /// are "well formed".
 /// @brief LLVM Basic Block Representation
-class BasicBlock : public Value {       // Basic blocks are data objects also
+class BasicBlock : public Value, // Basic blocks are data objects also
+                   public ilist_node<BasicBlock> {
 public:
   typedef iplist<Instruction> InstListType;
 private :
   InstListType InstList;
-  BasicBlock *Prev, *Next; // Next and Prev links for our intrusive linked list
   Function *Parent;
 
   void setParent(Function *parent);
-  void setNext(BasicBlock *N) { Next = N; }
-  void setPrev(BasicBlock *N) { Prev = N; }
   friend class SymbolTableListTraits<BasicBlock, Function>;
 
   BasicBlock(const BasicBlock &);     // Do not implement
@@ -204,14 +202,6 @@ public:
     BasicBlock *Obj = 0;
     return unsigned(reinterpret_cast<uintptr_t>(&Obj->InstList));
   }
-
-private:
-  // getNext/Prev - Return the next or previous basic block in the list.  Access
-  // these with Function::iterator.
-  BasicBlock *getNext()       { return Next; }
-  const BasicBlock *getNext() const { return Next; }
-  BasicBlock *getPrev()       { return Prev; }
-  const BasicBlock *getPrev() const { return Prev; }
 };
 
 inline int 

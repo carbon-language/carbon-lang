@@ -828,7 +828,7 @@ bool LiveIntervals::isReMaterializable(const LiveInterval &li,
 
     // If the instruction accesses memory and the memory could be non-constant,
     // assume the instruction is not rematerializable.
-    for (alist<MachineMemOperand>::const_iterator I = MI->memoperands_begin(),
+    for (std::list<MachineMemOperand>::const_iterator I = MI->memoperands_begin(),
          E = MI->memoperands_end(); I != E; ++I) {
       const MachineMemOperand &MMO = *I;
       if (MMO.isVolatile() || MMO.isStore())

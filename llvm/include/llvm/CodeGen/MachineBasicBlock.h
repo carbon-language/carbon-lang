@@ -19,30 +19,34 @@
 #include "llvm/Support/Streams.h"
 
 namespace llvm {
-  class MachineFunction;
+
+class BasicBlock;
+class MachineFunction;
 
 template <>
-struct alist_traits<MachineInstr, MachineInstr> {
-protected:
+class ilist_traits<MachineInstr> : public ilist_default_traits<MachineInstr> {
+  mutable MachineInstr Sentinel;
+
   // this is only set by the MachineBasicBlock owning the LiveList
   friend class MachineBasicBlock;
   MachineBasicBlock* Parent;
 
-  typedef alist_iterator<MachineInstr> iterator;
-
 public:
-  alist_traits<MachineInstr, MachineInstr>() : Parent(0) { }
+  MachineInstr *createSentinel() const { return &Sentinel; }
+  void destroySentinel(MachineInstr *) const {}
 
   void addNodeToList(MachineInstr* N);
   void removeNodeFromList(MachineInstr* N);
-  void transferNodesFromList(alist_traits &, iterator, iterator);
+  void transferNodesFromList(ilist_traits &SrcTraits,
+                             ilist_iterator<MachineInstr> first,
+                             ilist_iterator<MachineInstr> last);
   void deleteNode(MachineInstr *N);
+private:
+  void createNode(const MachineInstr &);
 };
 
-class BasicBlock;
-
-class MachineBasicBlock {
-  typedef alist<MachineInstr> Instructions;
+class MachineBasicBlock : public ilist_node<MachineBasicBlock> {
+  typedef ilist<MachineInstr> Instructions;
   Instructions Insts;
   const BasicBlock *BB;
   int Number;
@@ -64,6 +68,10 @@ class MachineBasicBlock {
   /// IsLandingPad - Indicate that this basic block is entered via an
   /// exception handler.
   bool IsLandingPad;
+
+  // Intrusive list support
+  friend class ilist_sentinel_traits<MachineBasicBlock>;
+  MachineBasicBlock() {}
 
   explicit MachineBasicBlock(MachineFunction &mf, const BasicBlock *bb);
 
@@ -287,7 +295,7 @@ public:
   void setNumber(int N) { Number = N; }
 
 private:   // Methods used to maintain doubly linked list of blocks...
-  friend struct alist_traits<MachineBasicBlock>;
+  friend struct ilist_traits<MachineBasicBlock>;
 
   // Machine-CFG mutators
 

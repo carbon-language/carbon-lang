@@ -24,7 +24,7 @@ using namespace llvm;
 
 MachineBasicBlock::MachineBasicBlock(MachineFunction &mf, const BasicBlock *bb)
   : BB(bb), Number(-1), xParent(&mf), Alignment(0), IsLandingPad(false) {
-  Insts.getTraits().Parent = this;
+  Insts.Parent = this;
 }
 
 MachineBasicBlock::~MachineBasicBlock() {
@@ -43,7 +43,7 @@ std::ostream& llvm::operator<<(std::ostream &OS, const MachineBasicBlock &MBB) {
 /// MBBs start out as #-1. When a MBB is added to a MachineFunction, it
 /// gets the next available unique MBB number. If it is removed from a
 /// MachineFunction, it goes back to being #-1.
-void alist_traits<MachineBasicBlock>::addNodeToList(MachineBasicBlock* N) {
+void ilist_traits<MachineBasicBlock>::addNodeToList(MachineBasicBlock* N) {
   MachineFunction &MF = *N->getParent();
   N->Number = MF.addToMBBNumbering(N);
 
@@ -55,7 +55,7 @@ void alist_traits<MachineBasicBlock>::addNodeToList(MachineBasicBlock* N) {
   LeakDetector::removeGarbageObject(N);
 }
 
-void alist_traits<MachineBasicBlock>::removeNodeFromList(MachineBasicBlock* N) {
+void ilist_traits<MachineBasicBlock>::removeNodeFromList(MachineBasicBlock* N) {
   N->getParent()->removeFromMBBNumbering(N->Number);
   N->Number = -1;
   LeakDetector::addGarbageObject(N);
@@ -65,7 +65,7 @@ void alist_traits<MachineBasicBlock>::removeNodeFromList(MachineBasicBlock* N) {
 /// addNodeToList (MI) - When we add an instruction to a basic block
 /// list, we update its parent pointer and add its operands from reg use/def
 /// lists if appropriate.
-void alist_traits<MachineInstr>::addNodeToList(MachineInstr* N) {
+void ilist_traits<MachineInstr>::addNodeToList(MachineInstr* N) {
   assert(N->getParent() == 0 && "machine instruction already in a basic block");
   N->setParent(Parent);
   
@@ -80,7 +80,7 @@ void alist_traits<MachineInstr>::addNodeToList(MachineInstr* N) {
 /// removeNodeFromList (MI) - When we remove an instruction from a basic block
 /// list, we update its parent pointer and remove its operands from reg use/def
 /// lists if appropriate.
-void alist_traits<MachineInstr>::removeNodeFromList(MachineInstr* N) {
+void ilist_traits<MachineInstr>::removeNodeFromList(MachineInstr* N) {
   assert(N->getParent() != 0 && "machine instruction not in a basic block");
 
   // Remove from the use/def lists.
@@ -94,35 +94,23 @@ void alist_traits<MachineInstr>::removeNodeFromList(MachineInstr* N) {
 /// transferNodesFromList (MI) - When moving a range of instructions from one
 /// MBB list to another, we need to update the parent pointers and the use/def
 /// lists.
-void alist_traits<MachineInstr>::transferNodesFromList(
-      alist_traits<MachineInstr>& fromList,
+void ilist_traits<MachineInstr>::transferNodesFromList(
+      ilist_traits<MachineInstr>& fromList,
       MachineBasicBlock::iterator first,
       MachineBasicBlock::iterator last) {
+  assert(Parent->getParent() == fromList.Parent->getParent() &&
+        "MachineInstr parent mismatch!");
+
   // Splice within the same MBB -> no change.
   if (Parent == fromList.Parent) return;
 
   // If splicing between two blocks within the same function, just update the
   // parent pointers.
-  if (Parent->getParent() == fromList.Parent->getParent()) {
-    for (; first != last; ++first)
-      first->setParent(Parent);
-    return;
-  }
-  
-  // Otherwise, we have to update the parent and the use/def lists.  The common
-  // case when this occurs is if we're splicing from a block in a MF to a block
-  // that is not in an MF.
-  bool HasOldMF = fromList.Parent->getParent() != 0;
-  MachineFunction *NewMF = Parent->getParent();
-  
-  for (; first != last; ++first) {
-    if (HasOldMF) first->RemoveRegOperandsFromUseLists();
+  for (; first != last; ++first)
     first->setParent(Parent);
-    if (NewMF) first->AddRegOperandsToUseLists(NewMF->getRegInfo());
-  }
 }
 
-void alist_traits<MachineInstr>::deleteNode(MachineInstr* MI) {
+void ilist_traits<MachineInstr>::deleteNode(MachineInstr* MI) {
   assert(!MI->getParent() && "MI is still in a block!");
   Parent->getParent()->DeleteMachineInstr(MI);
 }

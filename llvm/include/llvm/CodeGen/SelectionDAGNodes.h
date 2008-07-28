@@ -25,7 +25,8 @@
 #include "llvm/ADT/iterator.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/APInt.h"
-#include "llvm/ADT/alist.h"
+#include "llvm/ADT/ilist_node.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/Support/Allocator.h"
@@ -43,6 +44,7 @@ class SDNode;
 class CompileUnitDesc;
 template <typename T> struct DenseMapInfo;
 template <typename T> struct simplify_type;
+template <typename T> class ilist_traits;
 
 /// SDVTList - This represents a list of ValueType's that has been intern'd by
 /// a SelectionDAG.  Instances of this simple value class are returned by
@@ -1028,7 +1030,7 @@ public:
 
 /// SDNode - Represents one node in the SelectionDAG.
 ///
-class SDNode : public FoldingSetNode {
+class SDNode : public FoldingSetNode, public ilist_node<SDNode> {
 private:
   /// NodeType - The operation that this node performs.
   ///
@@ -1268,6 +1270,7 @@ public:
 
 protected:
   friend class SelectionDAG;
+  friend class ilist_traits<SDNode>;
   
   /// getValueTypeList - Return a pointer to the specified value type.
   ///
@@ -2236,27 +2239,10 @@ template <> struct GraphTraits<SDNode*> {
 ///
 typedef LoadSDNode LargestSDNode;
 
-// alist_traits specialization for pool-allocating SDNodes.
-template <>
-class alist_traits<SDNode, LargestSDNode> {
-  typedef alist_iterator<SDNode, LargestSDNode> iterator;
-
-public:
-  // Pool-allocate and recycle SDNodes.
-  typedef RecyclingAllocator<BumpPtrAllocator, SDNode, LargestSDNode>
-    AllocatorType;
-
-  // Allocate the allocator immediately inside the traits class.
-  AllocatorType Allocator;
-
-  void addNodeToList(SDNode*) {}
-  void removeNodeFromList(SDNode*) {}
-  void transferNodesFromList(alist_traits &, iterator, iterator) {}
-  void deleteNode(SDNode *N) {
-    N->~SDNode();
-    Allocator.Deallocate(N);
-  }
-};
+/// MostAlignedSDNode - The SDNode class with the greatest alignment
+/// requirement.
+///
+typedef ConstantSDNode MostAlignedSDNode;
 
 namespace ISD {
   /// isNormalLoad - Returns true if the specified node is a non-extending

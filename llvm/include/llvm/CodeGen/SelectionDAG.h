@@ -15,6 +15,7 @@
 #ifndef LLVM_CODEGEN_SELECTIONDAG_H
 #define LLVM_CODEGEN_SELECTIONDAG_H
 
+#include "llvm/ADT/ilist.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
@@ -26,13 +27,38 @@
 #include <string>
 
 namespace llvm {
-  class AliasAnalysis;
-  class TargetLowering;
-  class TargetMachine;
-  class MachineModuleInfo;
-  class MachineFunction;
-  class MachineConstantPoolValue;
-  class FunctionLoweringInfo;
+
+class AliasAnalysis;
+class TargetLowering;
+class TargetMachine;
+class MachineModuleInfo;
+class MachineFunction;
+class MachineConstantPoolValue;
+class FunctionLoweringInfo;
+
+/// NodeAllocatorType - The AllocatorType for allocating SDNodes. We use
+/// pool allocation with recycling.
+///
+typedef RecyclingAllocator<BumpPtrAllocator, SDNode, sizeof(LargestSDNode),
+                           AlignOf<MostAlignedSDNode>::Alignment>
+  NodeAllocatorType;
+
+template<> class ilist_traits<SDNode> : public ilist_default_traits<SDNode> {
+  mutable SDNode Sentinel;
+public:
+  ilist_traits() : Sentinel(ISD::DELETED_NODE, SDVTList()) {}
+
+  SDNode *createSentinel() const {
+    return &Sentinel;
+  }
+  static void destroySentinel(SDNode *) {}
+
+  static void deleteNode(SDNode *) {
+    assert(0 && "ilist_traits<SDNode> shouldn't see a deleteNode call!");
+  }
+private:
+  static void createNode(const SDNode &);
+};
 
 /// SelectionDAG class - This is used to represent a portion of an LLVM function
 /// in a low-level Data Dependence DAG representation suitable for instruction
@@ -55,7 +81,12 @@ class SelectionDAG {
   SDValue Root, EntryNode;
 
   /// AllNodes - A linked list of nodes in the current DAG.
-  alist<SDNode, LargestSDNode> &AllNodes;
+  ilist<SDNode> AllNodes;
+
+  /// NodeAllocator - Pool allocation for nodes. The allocator isn't
+  /// allocated inside this class because we want to reuse a single
+  /// recycler across multiple SelectionDAG runs.
+  NodeAllocatorType &NodeAllocator;
 
   /// CSEMap - This structure is used to memoize nodes, automatically performing
   /// CSE with existing nodes with a duplicate is requested.
@@ -71,8 +102,8 @@ class SelectionDAG {
 public:
   SelectionDAG(TargetLowering &tli, MachineFunction &mf, 
                FunctionLoweringInfo &fli, MachineModuleInfo *mmi,
-               alist<SDNode, LargestSDNode> &NodePool)
-  : TLI(tli), MF(mf), FLI(fli), MMI(mmi), AllNodes(NodePool) {
+               NodeAllocatorType &nodeallocator)
+  : TLI(tli), MF(mf), FLI(fli), MMI(mmi), NodeAllocator(nodeallocator) {
     EntryNode = Root = getNode(ISD::EntryToken, MVT::Other);
   }
   ~SelectionDAG();
@@ -108,13 +139,13 @@ public:
   ///
   void setGraphColor(const SDNode *N, const char *Color);
 
-  typedef alist<SDNode, LargestSDNode>::const_iterator allnodes_const_iterator;
+  typedef ilist<SDNode>::const_iterator allnodes_const_iterator;
   allnodes_const_iterator allnodes_begin() const { return AllNodes.begin(); }
   allnodes_const_iterator allnodes_end() const { return AllNodes.end(); }
-  typedef alist<SDNode, LargestSDNode>::iterator allnodes_iterator;
+  typedef ilist<SDNode>::iterator allnodes_iterator;
   allnodes_iterator allnodes_begin() { return AllNodes.begin(); }
   allnodes_iterator allnodes_end() { return AllNodes.end(); }
-  alist<SDNode, LargestSDNode>::size_type allnodes_size() const {
+  ilist<SDNode>::size_type allnodes_size() const {
     return AllNodes.size();
   }
   
@@ -682,7 +713,6 @@ public:
   SDValue getShuffleScalarElt(const SDNode *N, unsigned Idx);
   
 private:
-  inline alist_traits<SDNode, LargestSDNode>::AllocatorType &getAllocator();
   void RemoveNodeFromCSEMaps(SDNode *N);
   SDNode *AddNonLeafNodeToCSEMaps(SDNode *N);
   SDNode *FindModifiedNodeSlot(SDNode *N, SDValue Op, void *&InsertPos);

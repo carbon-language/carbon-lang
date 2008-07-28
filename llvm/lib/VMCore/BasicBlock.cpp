@@ -15,6 +15,7 @@
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
 #include "llvm/Type.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/LeakDetector.h"
 #include "llvm/Support/Compiler.h"
@@ -260,7 +261,9 @@ BasicBlock *BasicBlock::splitBasicBlock(iterator I, const std::string &BBName) {
   assert(I != InstList.end() &&
          "Trying to get me to create degenerate basic block!");
 
-  BasicBlock *New = BasicBlock::Create(BBName, getParent(), getNext());
+  BasicBlock *InsertBefore = next(Function::iterator(this))
+                               .getNodePtrUnchecked();
+  BasicBlock *New = BasicBlock::Create(BBName, getParent(), InsertBefore);
 
   // Move all of the specified instructions from the original basic block into
   // the new basic block.

@@ -39,7 +39,8 @@ namespace llvm {
 
 
 template <unsigned ElementSize = 128>
-struct SparseBitVectorElement {
+struct SparseBitVectorElement
+  : ilist_node<SparseBitVectorElement<ElementSize> > {
 public:
   typedef unsigned long BitWord;
   enum {
@@ -48,54 +49,21 @@ public:
     BITS_PER_ELEMENT = ElementSize
   };
 
-  SparseBitVectorElement<ElementSize> *getNext() const {
-    return Next;
-  }
-  SparseBitVectorElement<ElementSize> *getPrev() const {
-    return Prev;
-  }
-
-  void setNext(SparseBitVectorElement<ElementSize> *RHS) {
-    Next = RHS;
-  }
-  void setPrev(SparseBitVectorElement<ElementSize> *RHS) {
-    Prev = RHS;
-  }
-
 private:
-  SparseBitVectorElement<ElementSize> *Next;
-  SparseBitVectorElement<ElementSize> *Prev;
   // Index of Element in terms of where first bit starts.
   unsigned ElementIndex;
   BitWord Bits[BITWORDS_PER_ELEMENT];
   // Needed for sentinels
+  friend class ilist_sentinel_traits<SparseBitVectorElement>;
   SparseBitVectorElement() {
     ElementIndex = ~0U;
     memset(&Bits[0], 0, sizeof (BitWord) * BITWORDS_PER_ELEMENT);
   }
 
-  friend struct ilist_traits<SparseBitVectorElement<ElementSize> >;
 public:
   explicit SparseBitVectorElement(unsigned Idx) {
     ElementIndex = Idx;
     memset(&Bits[0], 0, sizeof (BitWord) * BITWORDS_PER_ELEMENT);
-  }
-
-  ~SparseBitVectorElement() {
-  }
-
-  // Copy ctor.
-  SparseBitVectorElement(const SparseBitVectorElement &RHS) {
-    ElementIndex = RHS.ElementIndex;
-    std::copy(&RHS.Bits[0], &RHS.Bits[BITWORDS_PER_ELEMENT], Bits);
-  }
-  
-  // Assignment 
-  SparseBitVectorElement& operator=(const SparseBitVectorElement& RHS) {
-    ElementIndex = RHS.ElementIndex;
-    std::copy(&RHS.Bits[0], &RHS.Bits[BITWORDS_PER_ELEMENT], Bits);
-    
-    return *this;
   }
 
   // Comparison.

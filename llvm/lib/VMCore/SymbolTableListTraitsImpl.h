@@ -84,7 +84,7 @@ void SymbolTableListTraits<ValueSubClass,ItemParentClass>
 
 template<typename ValueSubClass, typename ItemParentClass>
 void SymbolTableListTraits<ValueSubClass,ItemParentClass>
-::transferNodesFromList(iplist<ValueSubClass, ilist_traits<ValueSubClass> > &L2,
+::transferNodesFromList(ilist_traits<ValueSubClass> &L2,
                         ilist_iterator<ValueSubClass> first,
                         ilist_iterator<ValueSubClass> last) {
   // We only have to do work here if transferring instructions between BBs

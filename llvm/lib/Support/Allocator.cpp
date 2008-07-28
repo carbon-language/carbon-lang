@@ -132,8 +132,10 @@ void BumpPtrAllocator::PrintStats() const {
   cerr << "Bytes allocated: " << BytesUsed << "\n";
 }
 
-void llvm::PrintRecyclerStats(size_t LargestTypeSize,
+void llvm::PrintRecyclerStats(size_t Size,
+                              size_t Align,
                               size_t FreeListSize) {
-  cerr << "Recycler element size: " << LargestTypeSize << '\n';
+  cerr << "Recycler element size: " << Size << '\n';
+  cerr << "Recycler element alignment: " << Align << '\n';
   cerr << "Number of elements free for recycling: " << FreeListSize << '\n';
 }

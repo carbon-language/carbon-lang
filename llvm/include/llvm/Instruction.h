@@ -16,6 +16,7 @@
 #define LLVM_INSTRUCTION_H
 
 #include "llvm/User.h"
+#include "llvm/ADT/ilist_node.h"
 
 namespace llvm {
 
@@ -24,15 +25,11 @@ struct AssemblyAnnotationWriter;
 template<typename ValueSubClass, typename ItemParentClass>
   class SymbolTableListTraits;
 
-class Instruction : public User {
+class Instruction : public User, public ilist_node<Instruction> {
   void operator=(const Instruction &);     // Do not implement
   Instruction(const Instruction &);        // Do not implement
 
   BasicBlock *Parent;
-  Instruction *Prev, *Next; // Next and Prev links for our intrusive linked list
-
-  void setNext(Instruction *N) { Next = N; }
-  void setPrev(Instruction *N) { Prev = N; }
 
   friend class SymbolTableListTraits<Instruction, BasicBlock>;
   void setParent(BasicBlock *P);
@@ -230,14 +227,6 @@ public:
 #define   LAST_OTHER_INST(N)             OtherOpsEnd = N+1
 #include "llvm/Instruction.def"
   };
-  
-private:
-  // getNext/Prev - Return the next or previous instruction in the list.  The
-  // last node in the list is a terminator instruction.
-  Instruction *getNext()             { return Next; }
-  const Instruction *getNext() const { return Next; }
-  Instruction *getPrev()             { return Prev; }
-  const Instruction *getPrev() const { return Prev; }
 };
 
 } // End llvm namespace

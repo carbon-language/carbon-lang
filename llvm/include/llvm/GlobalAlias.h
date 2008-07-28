@@ -17,6 +17,7 @@
 
 #include "llvm/GlobalValue.h"
 #include "llvm/OperandTraits.h"
+#include "llvm/ADT/ilist_node.h"
 
 namespace llvm {
 
@@ -26,22 +27,12 @@ class PointerType;
 template<typename ValueSubClass, typename ItemParentClass>
   class SymbolTableListTraits;
 
-class GlobalAlias : public GlobalValue {
+class GlobalAlias : public GlobalValue, public ilist_node<GlobalAlias> {
   friend class SymbolTableListTraits<GlobalAlias, Module>;
   void operator=(const GlobalAlias &);     // Do not implement
   GlobalAlias(const GlobalAlias &);     // Do not implement
 
   void setParent(Module *parent);
-
-  GlobalAlias *Prev, *Next;
-  void setNext(GlobalAlias *N) { Next = N; }
-  void setPrev(GlobalAlias *N) { Prev = N; }
-
-  // getNext/Prev - Return the next or previous alias in the list.
-        GlobalAlias *getNext()       { return Next; }
-  const GlobalAlias *getNext() const { return Next; }
-        GlobalAlias *getPrev()       { return Prev; }
-  const GlobalAlias *getPrev() const { return Prev; }
 
 public:
   // allocate space for exactly one operand

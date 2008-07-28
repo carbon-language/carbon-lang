@@ -18,6 +18,7 @@
 #define LLVM_BITCODE_ARCHIVE_H
 
 #include "llvm/ADT/ilist.h"
+#include "llvm/ADT/ilist_node.h"
 #include "llvm/System/Path.h"
 #include <map>
 #include <set>
@@ -39,7 +40,7 @@ class ArchiveMemberHeader; // Internal implementation class
 /// construct ArchiveMember instances. You should obtain them from the methods
 /// of the Archive class instead.
 /// @brief This class represents a single archive member.
-class ArchiveMember {
+class ArchiveMember : public ilist_node<ArchiveMember> {
   /// @name Types
   /// @{
   public:
@@ -165,22 +166,9 @@ class ArchiveMember {
     bool replaceWith(const sys::Path &aFile, std::string* ErrMsg);
 
   /// @}
-  /// @name ilist methods - do not use
-  /// @{
-  public:
-    const ArchiveMember *getNext() const { return next; }
-    const ArchiveMember *getPrev() const { return prev; }
-    ArchiveMember *getNext()             { return next; }
-    ArchiveMember *getPrev()             { return prev; }
-    void setPrev(ArchiveMember* p)       { prev = p; }
-    void setNext(ArchiveMember* n)       { next = n; }
-
-  /// @}
   /// @name Data
   /// @{
   private:
-    ArchiveMember*      next;     ///< Pointer to next archive member
-    ArchiveMember*      prev;     ///< Pointer to previous archive member
     Archive*            parent;   ///< Pointer to parent archive
     sys::PathWithStatus path;     ///< Path of file containing the member
     sys::FileStatus     info;     ///< Status info (size,mode,date)

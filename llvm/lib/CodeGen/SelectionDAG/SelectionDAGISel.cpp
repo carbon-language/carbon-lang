@@ -5425,24 +5425,23 @@ void SelectionDAGISel::CodeGenAndEmitDAG(SelectionDAG &DAG) {
 
 void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn, MachineFunction &MF,
                                             FunctionLoweringInfo &FuncInfo) {
-  // Define AllNodes here so that memory allocation is reused for
+  // Define NodeAllocator here so that memory allocation is reused for
   // each basic block.
-  alist<SDNode, LargestSDNode> AllNodes;
+  NodeAllocatorType NodeAllocator;
 
-  for (Function::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I) {
-    SelectBasicBlock(I, MF, FuncInfo, AllNodes);
-    AllNodes.clear();
-  }
+  for (Function::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I)
+    SelectBasicBlock(I, MF, FuncInfo, NodeAllocator);
 }
 
-void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
-                                        FunctionLoweringInfo &FuncInfo,
-                                        alist<SDNode, LargestSDNode> &AllNodes) {
+void
+SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
+                                   FunctionLoweringInfo &FuncInfo,
+                                   NodeAllocatorType &NodeAllocator) {
   std::vector<std::pair<MachineInstr*, unsigned> > PHINodesToUpdate;
   {
     SelectionDAG DAG(TLI, MF, FuncInfo, 
                      getAnalysisToUpdate<MachineModuleInfo>(),
-                     AllNodes);
+                     NodeAllocator);
     CurDAG = &DAG;
   
     // First step, lower LLVM code to some DAG.  This DAG may use operations and
@@ -5478,7 +5477,7 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
     if (!BitTestCases[i].Emitted) {
       SelectionDAG HSDAG(TLI, MF, FuncInfo, 
                          getAnalysisToUpdate<MachineModuleInfo>(),
-                         AllNodes);
+                         NodeAllocator);
       CurDAG = &HSDAG;
       SelectionDAGLowering HSDL(HSDAG, TLI, *AA, FuncInfo, GCI);
       // Set the current basic block to the mbb we wish to insert the code into
@@ -5493,7 +5492,7 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
     for (unsigned j = 0, ej = BitTestCases[i].Cases.size(); j != ej; ++j) {
       SelectionDAG BSDAG(TLI, MF, FuncInfo, 
                          getAnalysisToUpdate<MachineModuleInfo>(),
-                         AllNodes);
+                         NodeAllocator);
       CurDAG = &BSDAG;
       SelectionDAGLowering BSDL(BSDAG, TLI, *AA, FuncInfo, GCI);
       // Set the current basic block to the mbb we wish to insert the code into
@@ -5552,7 +5551,7 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
     if (!JTCases[i].first.Emitted) {
       SelectionDAG HSDAG(TLI, MF, FuncInfo, 
                          getAnalysisToUpdate<MachineModuleInfo>(),
-                         AllNodes);
+                         NodeAllocator);
       CurDAG = &HSDAG;
       SelectionDAGLowering HSDL(HSDAG, TLI, *AA, FuncInfo, GCI);
       // Set the current basic block to the mbb we wish to insert the code into
@@ -5566,7 +5565,7 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
     
     SelectionDAG JSDAG(TLI, MF, FuncInfo, 
                        getAnalysisToUpdate<MachineModuleInfo>(),
-                       AllNodes);
+                       NodeAllocator);
     CurDAG = &JSDAG;
     SelectionDAGLowering JSDL(JSDAG, TLI, *AA, FuncInfo, GCI);
     // Set the current basic block to the mbb we wish to insert the code into
@@ -5616,7 +5615,7 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
   for (unsigned i = 0, e = SwitchCases.size(); i != e; ++i) {
     SelectionDAG SDAG(TLI, MF, FuncInfo, 
                       getAnalysisToUpdate<MachineModuleInfo>(),
-                      AllNodes);
+                      NodeAllocator);
     CurDAG = &SDAG;
     SelectionDAGLowering SDL(SDAG, TLI, *AA, FuncInfo, GCI);
     

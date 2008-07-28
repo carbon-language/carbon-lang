@@ -322,7 +322,7 @@ MachineInstr::MachineInstr(MachineFunction &MF, const MachineInstr &MI)
   NumImplicitOps = MI.NumImplicitOps;
 
   // Add memory operands.
-  for (alist<MachineMemOperand>::const_iterator i = MI.memoperands_begin(),
+  for (std::list<MachineMemOperand>::const_iterator i = MI.memoperands_begin(),
        j = MI.memoperands_end(); i != j; ++i)
     addMemOperand(MF, *i);
 
@@ -506,13 +506,12 @@ void MachineInstr::RemoveOperand(unsigned OpNo) {
 /// referencing arbitrary storage.
 void MachineInstr::addMemOperand(MachineFunction &MF,
                                  const MachineMemOperand &MO) {
-  MemOperands.push_back(MF.CreateMachineMemOperand(MO));
+  MemOperands.push_back(MO);
 }
 
 /// clearMemOperands - Erase all of this MachineInstr's MachineMemOperands.
 void MachineInstr::clearMemOperands(MachineFunction &MF) {
-  while (!MemOperands.empty())
-    MF.DeleteMachineMemOperand(MemOperands.remove(MemOperands.begin()));
+  MemOperands.clear();
 }
 
 
@@ -731,7 +730,7 @@ void MachineInstr::print(std::ostream &OS, const TargetMachine *TM) const {
 
   if (!memoperands_empty()) {
     OS << ", Mem:";
-    for (alist<MachineMemOperand>::const_iterator i = memoperands_begin(),
+    for (std::list<MachineMemOperand>::const_iterator i = memoperands_begin(),
          e = memoperands_end(); i != e; ++i) {
       const MachineMemOperand &MRO = *i;
       const Value *V = MRO.getValue();

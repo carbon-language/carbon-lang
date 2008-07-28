@@ -43,7 +43,7 @@ ArchiveMember::getMemberSize() const {
 // This default constructor is only use by the ilist when it creates its
 // sentry node. We give it specific static values to make it stand out a bit.
 ArchiveMember::ArchiveMember()
-  : next(0), prev(0), parent(0), path("--invalid--"), flags(0), data(0)
+  : parent(0), path("--invalid--"), flags(0), data(0)
 {
   info.user = sys::Process::GetCurrentUserId();
   info.group = sys::Process::GetCurrentGroupId();
@@ -58,7 +58,7 @@ ArchiveMember::ArchiveMember()
 // This is required because correctly setting the data may depend on other
 // things in the Archive.
 ArchiveMember::ArchiveMember(Archive* PAR)
-  : next(0), prev(0), parent(PAR), path(), flags(0), data(0)
+  : parent(PAR), path(), flags(0), data(0)
 {
 }
 
