@@ -13,7 +13,7 @@
 #
 TESTPATH=`pwd`
 SUBDIR=""
-if test `dirname $1` == "." ; then
+if test `dirname $1` = "." ; then
   while test `basename $TESTPATH` != "test" -a ! -z "$TESTPATH" ; do
     tmp=`basename $TESTPATH`
     SUBDIR="$tmp/$SUBDIR"
@@ -22,7 +22,7 @@ if test `dirname $1` == "." ; then
 fi
 
 for TESTFILE in "$@" ; do 
-  if test `dirname $TESTFILE` == . ; then
+  if test `dirname $TESTFILE` = . ; then
     if test -d "$TESTPATH" ; then
       cd $TESTPATH
       make check-one TESTONE="$SUBDIR$TESTFILE"
