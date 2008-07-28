@@ -32,9 +32,8 @@ MipsTargetAsmInfo::MipsTargetAsmInfo(const MipsTargetMachine &TM):
   ReadOnlySection             = "\t.rdata";
   ZeroDirective               = "\t.space\t";
   BSSSection                  = "\t.section\t.bss";
-  LCOMMDirective              = "\t.lcomm\t";
   CStringSection              = ".rodata.str";
-  FourByteConstantSection = "\t.section\t.rodata.cst4,\"aM\",@progbits,4";
+  FourByteConstantSection     = "\t.section\t.rodata.cst4,\"aM\",@progbits,4";
 
   if (!Subtarget->hasABICall()) {
     JumpTableDirective = "\t.word\t";

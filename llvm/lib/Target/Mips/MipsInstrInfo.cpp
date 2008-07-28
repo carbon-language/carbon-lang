@@ -137,7 +137,13 @@ copyRegToReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     else if ((DestRC == Mips::AFGR32RegisterClass) &&
              (SrcRC == Mips::CPURegsRegisterClass))
       BuildMI(MBB, I, get(Mips::MTC1A), DestReg).addReg(SrcReg);
-    else 
+    else if ((SrcRC == Mips::CCRRegisterClass) && 
+             (SrcReg == Mips::FCR31))
+      return; // This register is used implicitly, no copy needed.
+    else if ((DestRC == Mips::CCRRegisterClass) && 
+             (DestReg == Mips::FCR31))
+      return; // This register is used implicitly, no copy needed.
+    else
       assert (0 && "DestRC != SrcRC, Can't copy this register");
   }
 
@@ -332,12 +338,16 @@ static Mips::CondCode GetCondFromBranchOpc(unsigned BrOpc)
 {
   switch (BrOpc) {
   default: return Mips::COND_INVALID;
-  case Mips::BEQ   : return Mips::COND_E;
-  case Mips::BNE   : return Mips::COND_NE;
-  case Mips::BGTZ  : return Mips::COND_GZ;
-  case Mips::BGEZ  : return Mips::COND_GEZ;
-  case Mips::BLTZ  : return Mips::COND_LZ;
-  case Mips::BLEZ  : return Mips::COND_LEZ;
+  case Mips::BEQ  : return Mips::COND_E;
+  case Mips::BNE  : return Mips::COND_NE;
+  case Mips::BGTZ : return Mips::COND_GZ;
+  case Mips::BGEZ : return Mips::COND_GEZ;
+  case Mips::BLTZ : return Mips::COND_LZ;
+  case Mips::BLEZ : return Mips::COND_LEZ;
+
+  // We dont do fp branch analysis yet!  
+  case Mips::BC1T : 
+  case Mips::BC1F : return Mips::COND_INVALID;
   }
 }
 
@@ -353,6 +363,40 @@ unsigned Mips::GetCondBranchFromCond(Mips::CondCode CC)
   case Mips::COND_GEZ : return Mips::BGEZ;
   case Mips::COND_LZ  : return Mips::BLTZ;
   case Mips::COND_LEZ : return Mips::BLEZ;
+
+  case Mips::FCOND_F:
+  case Mips::FCOND_UN:
+  case Mips::FCOND_EQ:
+  case Mips::FCOND_UEQ:
+  case Mips::FCOND_OLT:
+  case Mips::FCOND_ULT:
+  case Mips::FCOND_OLE:
+  case Mips::FCOND_ULE:
+  case Mips::FCOND_SF:
+  case Mips::FCOND_NGLE:
+  case Mips::FCOND_SEQ:
+  case Mips::FCOND_NGL:
+  case Mips::FCOND_LT:
+  case Mips::FCOND_NGE:
+  case Mips::FCOND_LE:
+  case Mips::FCOND_NGT: return Mips::BC1T;
+
+  case Mips::FCOND_T:
+  case Mips::FCOND_OR:
+  case Mips::FCOND_NEQ:
+  case Mips::FCOND_OGL:
+  case Mips::FCOND_UGE:
+  case Mips::FCOND_OGE:
+  case Mips::FCOND_UGT:
+  case Mips::FCOND_OGT:
+  case Mips::FCOND_ST:
+  case Mips::FCOND_GLE:
+  case Mips::FCOND_SNE:
+  case Mips::FCOND_GL:
+  case Mips::FCOND_NLT:
+  case Mips::FCOND_GE:
+  case Mips::FCOND_NLE:
+  case Mips::FCOND_GT: return Mips::BC1F;
   }
 }
 

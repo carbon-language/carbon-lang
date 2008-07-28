@@ -518,17 +518,13 @@ printModuleLevelGV(const GlobalVariable* GVar) {
         (GVar->hasInternalLinkage() || GVar->isWeakForLinker())) {
       if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
 
-      if (GVar->hasInternalLinkage()) {
-        if (TAI->getLCOMMDirective())
-          O << TAI->getLCOMMDirective() << name << ',' << Size;
-        else
-          O << "\t.local\t" << name << '\n';
-      } else {
-        O << TAI->getCOMMDirective() << name << ',' << Size;
-        // The .comm alignment in bytes.
-        if (TAI->getCOMMDirectiveTakesAlignment())
-          O << ',' << (TAI->getAlignmentIsInBytes() ? (1 << Align) : Align);
-      }
+      if (GVar->hasInternalLinkage())
+        O << "\t.local\t" << name << '\n';
+      
+      O << TAI->getCOMMDirective() << name << ',' << Size;
+      if (TAI->getCOMMDirectiveTakesAlignment())
+        O << ',' << (1 << Align);
+
       O << '\n';
       return;
     }

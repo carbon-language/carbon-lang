@@ -89,6 +89,8 @@ MipsTargetLowering(MipsTargetMachine &TM): TargetLowering(TM)
   setOperationAction(ISD::ConstantPool,     MVT::i32,   Custom);
   setOperationAction(ISD::SELECT_CC,        MVT::i32,   Custom);
   setOperationAction(ISD::SELECT_CC,        MVT::f32,   Custom);
+  setOperationAction(ISD::SETCC,            MVT::f32,   Custom);
+  setOperationAction(ISD::BRCOND,           MVT::Other, Custom);
 
   // Operations not directly supported by Mips.
   setOperationAction(ISD::BR_JT,             MVT::Other, Expand);
@@ -150,6 +152,8 @@ LowerOperation(SDValue Op, SelectionDAG &DAG)
     case ISD::JumpTable:        return LowerJumpTable(Op, DAG);
     case ISD::ConstantPool:     return LowerConstantPool(Op, DAG);
     case ISD::SELECT_CC:        return LowerSELECT_CC(Op, DAG);
+    case ISD::SETCC:            return LowerSETCC(Op, DAG);
+    case ISD::BRCOND:           return LowerBRCOND(Op, DAG);
   }
   return SDValue();
 }
@@ -265,9 +269,86 @@ bool MipsTargetLowering::IsGlobalInSmallSection(GlobalValue *GV)
   return IsInSmallSection(Size);
 }
 
+// Get fp branch code (not opcode) from condition code.
+static Mips::FPBranchCode GetFPBranchCodeFromCond(Mips::CondCode CC) {
+  if (CC >= Mips::FCOND_F && CC <= Mips::FCOND_NGT)
+    return Mips::BRANCH_T;
+
+  if (CC >= Mips::FCOND_T && CC <= Mips::FCOND_GT)
+    return Mips::BRANCH_F;
+
+  return Mips::BRANCH_INVALID;
+}
+  
+
+static Mips::CondCode FPCondCCodeToFCC(ISD::CondCode CC) {
+  switch (CC) {
+  default: assert(0 && "Unknown fp condition code!");
+  case ISD::SETEQ:  
+  case ISD::SETOEQ: return Mips::FCOND_EQ;
+  case ISD::SETUNE: return Mips::FCOND_OGL;
+  case ISD::SETLT:  
+  case ISD::SETOLT: return Mips::FCOND_OLT;
+  case ISD::SETGT:  
+  case ISD::SETOGT: return Mips::FCOND_OGT;
+  case ISD::SETLE:  
+  case ISD::SETOLE: return Mips::FCOND_OLE; 
+  case ISD::SETGE:
+  case ISD::SETOGE: return Mips::FCOND_OGE;
+  case ISD::SETULT: return Mips::FCOND_ULT;
+  case ISD::SETULE: return Mips::FCOND_ULE; 
+  case ISD::SETUGT: return Mips::FCOND_UGT;
+  case ISD::SETUGE: return Mips::FCOND_UGE;
+  case ISD::SETUO:  return Mips::FCOND_UN; 
+  case ISD::SETO:   return Mips::FCOND_OR;
+  case ISD::SETNE:  
+  case ISD::SETONE: return Mips::FCOND_NEQ;
+  case ISD::SETUEQ: return Mips::FCOND_UEQ;
+  }
+}
+
 //===----------------------------------------------------------------------===//
 //  Misc Lower Operation implementation
 //===----------------------------------------------------------------------===//
+SDValue MipsTargetLowering::
+LowerBRCOND(SDValue Op, SelectionDAG &DAG)
+{
+  // The first operand is the chain, the second is the condition, the third is 
+  // the block to branch to if the condition is true.
+  SDValue Chain = Op.getOperand(0);
+  SDValue Dest = Op.getOperand(2);
+  SDValue CondRes; 
+
+  if (Op.getOperand(1).getOpcode() == ISD::AND)
+    CondRes = Op.getOperand(1).getOperand(0);
+  else if (Op.getOperand(1).getOpcode() == MipsISD::FPCmp)
+    CondRes = Op.getOperand(1);
+  else
+    assert(0 && "Incoming condition flag unknown");
+  
+  SDValue CCNode = CondRes.getOperand(2);
+  Mips::CondCode CC = (Mips::CondCode)cast<ConstantSDNode>(CCNode)->getValue();
+  SDValue BrCode = DAG.getConstant(GetFPBranchCodeFromCond(CC), MVT::i32); 
+
+  return DAG.getNode(MipsISD::FPBrcond, Op.getValueType(), Chain, BrCode, 
+             Dest, CondRes);
+}
+
+SDValue MipsTargetLowering::
+LowerSETCC(SDValue Op, SelectionDAG &DAG)
+{
+  // The operands to this are the left and right operands to compare (ops #0, 
+  // and #1) and the condition code to compare them with (op #2) as a 
+  // CondCodeSDNode.
+  SDValue LHS = Op.getOperand(0); 
+  SDValue RHS = Op.getOperand(1); 
+
+  ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(2))->get();
+  
+  return DAG.getNode(MipsISD::FPCmp, Op.getValueType(), LHS, RHS, 
+                 DAG.getConstant(FPCondCCodeToFCC(CC), MVT::i32));
+}
+
 SDValue MipsTargetLowering::
 LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) 
 {

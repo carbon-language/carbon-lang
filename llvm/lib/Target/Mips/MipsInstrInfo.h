@@ -22,6 +22,15 @@ namespace llvm {
 
 namespace Mips {
 
+  // Mips Branch Codes
+  enum FPBranchCode {
+    BRANCH_F,
+    BRANCH_T,
+    BRANCH_FL,
+    BRANCH_TL,
+    BRANCH_INVALID
+  };
+
   // Mips Condition Codes
   enum CondCode {
     // To be used with float branch True
@@ -74,7 +83,7 @@ namespace Mips {
   
   // Turn condition code into conditional branch opcode.
   unsigned GetCondBranchFromCond(CondCode CC);
-  
+
   /// GetOppositeBranchCondition - Return the inverse of the specified cond,
   /// e.g. turning COND_E to COND_NE.
   CondCode GetOppositeBranchCondition(Mips::CondCode CC);

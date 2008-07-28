@@ -238,12 +238,12 @@ def MIPS_BRANCH_TL : PatLeaf<(i32 3)>;
 
 /// Floating Point Branch of False/True (Likely)
 let isBranch=1, isTerminator=1, hasDelaySlot=1, base=0x8, Uses=[FCR31] in {
-  class FBRANCH<PatLeaf op, string asmstr> : FFI<0x11, (ops), 
+  class FBRANCH<PatLeaf op, string asmstr> : FFI<0x11, (outs), 
         (ins brtarget:$dst), !strconcat(asmstr, " $dst"),
         [(MipsFPBrcond op, bb:$dst, FCR31)]>;
 }
-def BC1F  : FBRANCH<MIPS_BRANCH_F, "bc1f">;
-def BC1T  : FBRANCH<MIPS_BRANCH_T, "bc1t">;
+def BC1F  : FBRANCH<MIPS_BRANCH_F,  "bc1f">;
+def BC1T  : FBRANCH<MIPS_BRANCH_T,  "bc1t">;
 def BC1FL : FBRANCH<MIPS_BRANCH_FL, "bc1fl">;
 def BC1TL : FBRANCH<MIPS_BRANCH_TL, "bc1tl">;
 
@@ -271,19 +271,16 @@ def MIPS_FCOND_NGT  : PatLeaf<(i32 15)>;
 
 /// Floating Point Compare
 let hasDelaySlot = 1, Defs=[FCR31] in {
-
-//multiclass FCC1_1<RegisterClass RC>
-
   def FCMP_SO32 : FCC<0x0, (outs), (ins FGR32:$fs, FGR32:$ft, condcode:$cc),
-      "c.$cc.s $fs $ft", [(MipsFPCmp FGR32:$fs, FGR32:$ft, imm:$cc), 
+      "c.$cc.s $fs, $ft", [(MipsFPCmp FGR32:$fs, FGR32:$ft, imm:$cc), 
       (implicit FCR31)]>, Requires<[IsSingleFloat]>;
   
   def FCMP_AS32 : FCC<0x0, (outs), (ins AFGR32:$fs, AFGR32:$ft, condcode:$cc),
-      "c.$cc.s $fs $ft", [(MipsFPCmp AFGR32:$fs, AFGR32:$ft, imm:$cc), 
+      "c.$cc.s $fs, $ft", [(MipsFPCmp AFGR32:$fs, AFGR32:$ft, imm:$cc), 
       (implicit FCR31)]>, Requires<[In32BitMode]>;
 
   def FCMP_D32 : FCC<0x1, (outs), (ins AFGR64:$fs, AFGR64:$ft, condcode:$cc),
-      "c.$cc.d $fs $ft", [(MipsFPCmp AFGR64:$fs, AFGR64:$ft, imm:$cc),
+      "c.$cc.d $fs, $ft", [(MipsFPCmp AFGR64:$fs, AFGR64:$ft, imm:$cc),
       (implicit FCR31)]>, Requires<[In32BitMode]>;
 }
 
