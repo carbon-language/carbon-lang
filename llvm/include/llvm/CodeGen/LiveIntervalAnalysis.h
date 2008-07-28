@@ -227,7 +227,7 @@ namespace llvm {
 
     /// findLiveInMBBs - Given a live range, if the value of the range
     /// is live in any MBB returns true as well as the list of basic blocks
-    /// where the value is live in.
+    /// in which the value is live.
     bool findLiveInMBBs(const LiveRange &LR,
                         SmallVectorImpl<MachineBasicBlock*> &MBBs) const;
 
