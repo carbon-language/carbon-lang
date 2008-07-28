@@ -1,3 +1,3 @@
-; RUN: llvm-as < /dev/null | not opt --foo >& /dev/null
+; RUN: not opt --foo |& grep {Unknown command line argument}
 
 ; there is no --foo
