@@ -26,6 +26,7 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/MemoryDependenceAnalysis.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/Utils/Local.h"
@@ -85,9 +86,11 @@ namespace {
     // Dependence Graph)
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesCFG();
+      AU.addRequired<DominatorTree>();
       AU.addRequired<TargetData>();
       AU.addRequired<AliasAnalysis>();
       AU.addRequired<MemoryDependenceAnalysis>();
+      AU.addPreserved<DominatorTree>();
       AU.addPreserved<AliasAnalysis>();
       AU.addPreserved<MemoryDependenceAnalysis>();
     }
@@ -172,8 +175,37 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
       // No known stores after the free
       last = 0;
     } else {
-      // Update our most-recent-store map.
-      last = cast<StoreInst>(BBI);
+      StoreInst* S = cast<StoreInst>(BBI);
+      
+      // If we're storing the same value back to a pointer that we just
+      // loaded from, then the store can be removed;
+      if (LoadInst* L = dyn_cast<LoadInst>(S->getOperand(0))) {
+        Instruction* dep = MD.getDependency(S);
+        DominatorTree& DT = getAnalysis<DominatorTree>();
+        
+        if (S->getParent() == L->getParent() &&
+            S->getPointerOperand() == L->getPointerOperand() &&
+            ( dep == MemoryDependenceAnalysis::None ||
+              dep == MemoryDependenceAnalysis::NonLocal ||
+              DT.dominates(dep, L))) {
+          if (Instruction* D = dyn_cast<Instruction>(S->getOperand(0)))
+            possiblyDead.insert(D);
+          if (Instruction* D = dyn_cast<Instruction>(S->getOperand(1)))
+            possiblyDead.insert(D);
+          
+          // Avoid iterator invalidation.
+          BBI--;
+          
+          MD.removeInstruction(S);
+          S->eraseFromParent();
+          NumFastStores++;
+          MadeChange = true;
+        } else
+          // Update our most-recent-store map.
+          last = S;
+      } else
+        // Update our most-recent-store map.
+        last = S;
     }
   }
   
@@ -287,6 +319,7 @@ bool DSE::handleEndBlock(BasicBlock& BB,
             possiblyDead.insert(D);
         
           BBI++;
+          MD.removeInstruction(S);
           S->eraseFromParent();
           NumFastStores++;
           MadeChange = true;
