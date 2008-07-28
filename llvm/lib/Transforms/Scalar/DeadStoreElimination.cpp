@@ -183,7 +183,7 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
         Instruction* dep = MD.getDependency(S);
         DominatorTree& DT = getAnalysis<DominatorTree>();
         
-        if (S->getParent() == L->getParent() &&
+        if (!S->isVolatile() && S->getParent() == L->getParent() &&
             S->getPointerOperand() == L->getPointerOperand() &&
             ( dep == MemoryDependenceAnalysis::None ||
               dep == MemoryDependenceAnalysis::NonLocal ||
