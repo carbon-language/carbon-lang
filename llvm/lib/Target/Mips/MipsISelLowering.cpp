@@ -440,16 +440,20 @@ LowerConstantPool(SDValue Op, SelectionDAG &DAG)
   SDValue CP = DAG.getTargetConstantPool(C, MVT::i32, N->getAlignment());
 
   // gp_rel relocation
-  if (!Subtarget->hasABICall() &&  
-      IsInSmallSection(getTargetData()->getABITypeSize(C->getType()))) {
-    SDValue GPRelNode = DAG.getNode(MipsISD::GPRel, MVT::i32, CP);
-    SDValue GOT = DAG.getNode(ISD::GLOBAL_OFFSET_TABLE, MVT::i32);
-    ResNode = DAG.getNode(ISD::ADD, MVT::i32, GOT, GPRelNode); 
-  } else { // %hi/%lo relocation
+  // FIXME: we should reference the constant pool using small data sections, 
+  // but the asm printer currently doens't support this feature without
+  // hacking it. This feature should come soon so we can uncomment the 
+  // stuff below.
+  //if (!Subtarget->hasABICall() &&  
+  //    IsInSmallSection(getTargetData()->getABITypeSize(C->getType()))) {
+  //  SDValue GPRelNode = DAG.getNode(MipsISD::GPRel, MVT::i32, CP);
+  //  SDValue GOT = DAG.getNode(ISD::GLOBAL_OFFSET_TABLE, MVT::i32);
+  //  ResNode = DAG.getNode(ISD::ADD, MVT::i32, GOT, GPRelNode); 
+  //} else { // %hi/%lo relocation
     SDValue HiPart = DAG.getNode(MipsISD::Hi, MVT::i32, CP);
     SDValue Lo = DAG.getNode(MipsISD::Lo, MVT::i32, CP);
     ResNode = DAG.getNode(ISD::ADD, MVT::i32, HiPart, Lo);
-  }
+  //}
 
   return ResNode;
 }
