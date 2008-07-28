@@ -528,6 +528,10 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction* rem) {
       // If we have dep info for rem, set them to it
       BasicBlock::iterator RI = depGraphEntry->second.first;
       RI++;
+      
+      // If RI is rem, then we use rem's immediate successor.
+      if (RI == (BasicBlock::iterator)rem) RI++;
+      
       newDep = RI;
     } else if ( (depGraphEntry->second.first == NonLocal ||
                  depGraphEntry->second.first == None ) &&
