@@ -64,7 +64,7 @@ namespace {
       // semantic analysis (to ensure all warnings and errors are emitted).
       if (Diags.hasErrorOccurred())
         return;
-      
+
       if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
         Builder->EmitFunction(FD);
       } else if (isa<ObjCClassDecl>(D)){
@@ -86,8 +86,7 @@ namespace {
       } else if (ObjCMethodDecl *OMD = dyn_cast<ObjCMethodDecl>(D)){
         Builder->EmitObjCMethod(OMD);
       } else if (VarDecl *VD = dyn_cast<VarDecl>(D)) {
-        if (VD->isFileVarDecl())
-          Builder->EmitGlobalVarDeclarator(VD);
+        Builder->EmitGlobalVar(VD);
       } else if (isa<ObjCClassDecl>(D) || isa<ObjCCategoryDecl>(D)) {
         // Forward declaration.  Only used for type checking.
       } else if (ObjCMethodDecl *OMD = dyn_cast<ObjCMethodDecl>(D)){
@@ -109,6 +108,12 @@ namespace {
       } else {
         assert(isa<TypeDecl>(D) && "Unknown top level decl");
         // TODO: handle debug info?
+      }
+
+      if (ScopedDecl *SD = dyn_cast<ScopedDecl>(D)) {
+        SD = SD->getNextDeclarator();
+        if (SD)
+          HandleTopLevelDecl(SD);
       }
     }
     

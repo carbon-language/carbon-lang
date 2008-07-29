@@ -772,14 +772,6 @@ void CodeGenModule::EmitGlobalVarInit(const VarDecl *D) {
   }
 }
 
-/// EmitGlobalVarDeclarator - Emit all the global vars attached to the specified
-/// declarator chain.
-void CodeGenModule::EmitGlobalVarDeclarator(const VarDecl *D) {
-  for (; D; D = cast_or_null<VarDecl>(D->getNextDeclarator()))
-    if (D->isFileVarDecl())
-      EmitGlobalVar(D);
-}
-
 void CodeGenModule::UpdateCompletedType(const TagDecl *TD) {
   // Make sure that this type is translated.
   Types.UpdateCompletedType(TD);

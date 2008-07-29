@@ -124,7 +124,6 @@ public:
   void EmitFunction(const FunctionDecl *FD);
   void EmitGlobalVar(const VarDecl *D);
   void EmitGlobalVarInit(const VarDecl *D);
-  void EmitGlobalVarDeclarator(const VarDecl *D);
   void UpdateCompletedType(const TagDecl *D);
   llvm::Constant *EmitGlobalInit(const Expr *E);
   llvm::Constant *EmitConstantExpr(const Expr *E, CodeGenFunction *CGF = 0);
