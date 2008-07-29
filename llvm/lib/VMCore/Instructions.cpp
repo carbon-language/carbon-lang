@@ -1026,12 +1026,16 @@ GetElementPtrInst::GetElementPtrInst(Value *Ptr, Value *Idx,
 // getIndexedType - Returns the type of the element that would be loaded with
 // a load instruction with the specified parameters.
 //
+// The Idxs pointer should point to a continuous piece of memory containing the
+// indices, either as Value* or uint64_t.
+//
 // A null type is returned if the indices are invalid for the specified
 // pointer type.
 //
-const Type* GetElementPtrInst::getIndexedType(const Type *Ptr,
-                                              Value* const *Idxs,
-                                              unsigned NumIdx) {
+template <typename IndexTy>
+static const Type* getIndexedTypeInternal(const Type *Ptr,
+                                  IndexTy const *Idxs,
+                                  unsigned NumIdx) {
   const PointerType *PTy = dyn_cast<PointerType>(Ptr);
   if (!PTy) return 0;   // Type isn't a pointer type!
   const Type *Agg = PTy->getElementType();
@@ -1044,7 +1048,7 @@ const Type* GetElementPtrInst::getIndexedType(const Type *Ptr,
   for (; CurIdx != NumIdx; ++CurIdx) {
     const CompositeType *CT = dyn_cast<CompositeType>(Agg);
     if (!CT || isa<PointerType>(CT)) return 0;
-    Value *Index = Idxs[CurIdx];
+    IndexTy Index = Idxs[CurIdx];
     if (!CT->indexValid(Index)) return 0;
     Agg = CT->getTypeAtIndex(Index);
 
@@ -1056,6 +1060,18 @@ const Type* GetElementPtrInst::getIndexedType(const Type *Ptr,
       Agg = Ty;
   }
   return CurIdx == NumIdx ? Agg : 0;
+}
+
+const Type* GetElementPtrInst::getIndexedType(const Type *Ptr,
+                                              Value* const *Idxs,
+                                              unsigned NumIdx) {
+  return getIndexedTypeInternal(Ptr, Idxs, NumIdx);
+}
+
+const Type* GetElementPtrInst::getIndexedType(const Type *Ptr,
+                                              uint64_t const *Idxs,
+                                              unsigned NumIdx) {
+  return getIndexedTypeInternal(Ptr, Idxs, NumIdx);
 }
 
 const Type* GetElementPtrInst::getIndexedType(const Type *Ptr, Value *Idx) {

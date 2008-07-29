@@ -408,9 +408,6 @@ class GetElementPtrInst : public Instruction {
   /// Null is returned if the indices are invalid for the specified
   /// pointer type.
   ///
-  static const Type *getIndexedType(const Type *Ptr,
-                                    Value* const *Idx, unsigned NumIdx);
-
   template<typename InputIterator>
   static const Type *getIndexedType(const Type *Ptr,
                                     InputIterator IdxBegin, 
@@ -509,6 +506,13 @@ public:
                           typename std::iterator_traits<InputIterator>::
                           iterator_category());
   }  
+
+  static const Type *getIndexedType(const Type *Ptr,
+                                    Value* const *Idx, unsigned NumIdx);
+
+  static const Type *getIndexedType(const Type *Ptr,
+                                    uint64_t const *Idx, unsigned NumIdx);
+
   static const Type *getIndexedType(const Type *Ptr, Value *Idx);
 
   inline op_iterator       idx_begin()       { return op_begin()+1; }
