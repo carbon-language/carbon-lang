@@ -202,6 +202,9 @@ TrimAllocationToSize(FreeRangeHeader *FreeList, uint64_t NewSize) {
   assert(ThisAllocated && getBlockAfter().PrevAllocated &&
          "Cannot deallocate part of an allocated block!");
 
+  // Don't allow blocks to be trimmed below minimum required size
+  NewSize = std::max<uint64_t>(FreeRangeHeader::getMinBlockSize(), NewSize);
+
   // Round up size for alignment of header.
   unsigned HeaderAlign = __alignof(FreeRangeHeader);
   NewSize = (NewSize+ (HeaderAlign-1)) & ~(HeaderAlign-1);
