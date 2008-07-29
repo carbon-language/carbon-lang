@@ -469,7 +469,7 @@ static bool DebugACrash(BugDriver &BD,  bool (*TestFn)(BugDriver &, Module *)) {
             } else {
               if (BugpointIsInterrupted) goto ExitLoops;
 
-              std::cout << "Checking instruction '" << I->getName() << "': ";
+              std::cout << "Checking instruction: " << *I;
               Module *M = BD.deleteInstructionFromProgram(I, Simplification);
 
               // Find out if the pass still crashes on this pass...
@@ -539,7 +539,6 @@ bool BugDriver::debugOptimizerCrash(const std::string &ID) {
 
 static bool TestForCodeGenCrash(BugDriver &BD, Module *M) {
   try {
-    std::cerr << '\n';
     BD.compileProgram(M);
     std::cerr << '\n';
     return false;
