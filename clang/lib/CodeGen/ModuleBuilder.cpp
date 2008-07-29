@@ -66,7 +66,9 @@ namespace {
         return;
 
       if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
-        Builder->EmitFunction(FD);
+        Builder->EmitGlobal(FD);
+      } else if (VarDecl *VD = dyn_cast<VarDecl>(D)) {
+        Builder->EmitGlobal(VD);
       } else if (isa<ObjCClassDecl>(D)){
         //Forward declaration.  Only used for type checking.
       } else if (ObjCProtocolDecl *PD = dyn_cast<ObjCProtocolDecl>(D)){
@@ -85,8 +87,6 @@ namespace {
         // Ignore - generated when the implementation decl is CodeGen'd
       } else if (ObjCMethodDecl *OMD = dyn_cast<ObjCMethodDecl>(D)){
         Builder->EmitObjCMethod(OMD);
-      } else if (VarDecl *VD = dyn_cast<VarDecl>(D)) {
-        Builder->EmitGlobalVar(VD);
       } else if (isa<ObjCClassDecl>(D) || isa<ObjCCategoryDecl>(D)) {
         // Forward declaration.  Only used for type checking.
       } else if (ObjCMethodDecl *OMD = dyn_cast<ObjCMethodDecl>(D)){

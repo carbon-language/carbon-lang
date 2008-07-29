@@ -735,10 +735,10 @@ public:
     case Expr::DeclRefExprClass: {
       ValueDecl *Decl = cast<DeclRefExpr>(E)->getDecl();
       if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(Decl))
-        return CGM.GetAddrOfFunctionDecl(FD, false);
+        return CGM.GetAddrOfFunction(FD);
       if (const VarDecl* VD = dyn_cast<VarDecl>(Decl)) {
         if (VD->isFileVarDecl())
-          return CGM.GetAddrOfGlobalVar(VD, false);
+          return CGM.GetAddrOfGlobalVar(VD);
         else if (VD->isBlockVarDecl()) {
           assert(CGF && "Can't access static local vars without CGF");
           return CGF->GetAddrOfStaticLocalVar(VD);

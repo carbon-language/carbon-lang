@@ -1,4 +1,4 @@
-//===--- CodeGenFunction.h - Per-Function state for LLVM CodeGen ----------===//
+//===-- CodeGenFunction.h - Per-Function state for LLVM CodeGen -*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -277,7 +277,8 @@ public:
   ASTContext &getContext() const;
 
   void GenerateObjCMethod(const ObjCMethodDecl *OMD);
-  void GenerateCode(const FunctionDecl *FD);
+  void GenerateCode(const FunctionDecl *FD,
+                    llvm::Function *Fn);
   void GenerateFunction(const Stmt *Body);
   
   const llvm::Type *ConvertType(QualType T);

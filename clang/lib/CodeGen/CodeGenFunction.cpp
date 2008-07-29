@@ -102,10 +102,11 @@ void CodeGenFunction::GenerateFunction(const Stmt *Body) {
   assert(!verifyFunction(*CurFn) && "Generated function is not well formed.");
 }
 
-void CodeGenFunction::GenerateCode(const FunctionDecl *FD) {
+void CodeGenFunction::GenerateCode(const FunctionDecl *FD,
+                                   llvm::Function *Fn) {
   CurFuncDecl = FD;
   FnRetTy = FD->getResultType();
-  CurFn = cast<llvm::Function>(CGM.GetAddrOfFunctionDecl(FD, true));
+  CurFn = Fn;
   assert(CurFn->isDeclaration() && "Function already has body?");
 
   llvm::BasicBlock *EntryBB = llvm::BasicBlock::Create("entry", CurFn);

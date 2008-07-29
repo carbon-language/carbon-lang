@@ -373,7 +373,7 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
   if (VD && (VD->isBlockVarDecl() || isa<ParmVarDecl>(VD) ||
         isa<ImplicitParamDecl>(VD))) {
     if (VD->getStorageClass() == VarDecl::Extern)
-      return LValue::MakeAddr(CGM.GetAddrOfGlobalVar(VD, false),
+      return LValue::MakeAddr(CGM.GetAddrOfGlobalVar(VD),
                               E->getType().getCVRQualifiers());
     else {
       llvm::Value *V = LocalDeclMap[VD];
@@ -381,10 +381,10 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
       return LValue::MakeAddr(V, E->getType().getCVRQualifiers());
     }
   } else if (VD && VD->isFileVarDecl()) {
-    return LValue::MakeAddr(CGM.GetAddrOfGlobalVar(VD, false),
+    return LValue::MakeAddr(CGM.GetAddrOfGlobalVar(VD),
                             E->getType().getCVRQualifiers());
   } else if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(E->getDecl())) {
-    return LValue::MakeAddr(CGM.GetAddrOfFunctionDecl(FD, false),
+    return LValue::MakeAddr(CGM.GetAddrOfFunction(FD),
                             E->getType().getCVRQualifiers());
   }
   else if (const ImplicitParamDecl *IPD =

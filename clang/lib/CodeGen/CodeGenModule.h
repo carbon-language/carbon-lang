@@ -1,4 +1,4 @@
-//===--- CodeGenModule.h - Per-Module state for LLVM CodeGen --------------===//
+//===--- CodeGenModule.h - Per-Module state for LLVM CodeGen ----*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -40,6 +40,7 @@ namespace clang {
   class Expr;
   class Stmt;
   class NamedDecl;
+  class ValueDecl;
   class VarDecl;
   struct LangOptions;
   class Diagnostic;
@@ -66,7 +67,13 @@ class CodeGenModule {
   llvm::Function *MemMoveFn;
   llvm::Function *MemSetFn;
   llvm::DenseMap<const Decl*, llvm::Constant*> GlobalDeclMap;
-  std::vector<const NamedDecl*> StaticDecls;
+
+  /// List of static global for which code generation is delayed. When
+  /// the translation unit has been fully processed we will lazily
+  /// emit definitions for only the decls that were actually used.
+  /// This should contain only Function and Var decls, and only those
+  /// which actually define something.
+  std::vector<const ValueDecl*> StaticDecls;
   
   std::vector<llvm::Constant*> GlobalCtors;
   std::vector<llvm::Constant*> Annotations;
@@ -90,11 +97,14 @@ public:
   CodeGenTypes &getTypes() { return Types; }
   Diagnostic &getDiags() const { return Diags; }
   const llvm::TargetData &getTargetData() const { return TheTargetData; }
-  
-  llvm::Constant *GetAddrOfFunctionDecl(const FunctionDecl *D,
-                                        bool isDefinition);
-  llvm::Constant *GetAddrOfGlobalVar(const VarDecl *D, bool isDefinition);
-  
+
+  /// GetAddrOfGlobalVar - Return the llvm::Constant for the address
+  /// of the given global variable.
+  llvm::Constant *GetAddrOfGlobalVar(const VarDecl *D);
+
+  /// GetAddrOfFunction - Return the llvm::Constant for the address
+  /// of the given function.
+  llvm::Constant *GetAddrOfFunction(const FunctionDecl *D);  
   
   /// getBuiltinLibFunction - Given a builtin id for a function like
   /// "__builtin_fabsf", return a Function* for "fabsf".
@@ -111,21 +121,18 @@ public:
   llvm::Function *getIntrinsic(unsigned IID, const llvm::Type **Tys = 0, 
                                unsigned NumTys = 0);
   
-  void AddGlobalCtor(llvm::Function * Ctor);
-  void EmitGlobalCtors(void);
-  void AddAnnotation(llvm::Constant *C) { Annotations.push_back(C); }
-  void EmitAnnotations(void);
-  void EmitStatics(void);
-
   void EmitObjCMethod(const ObjCMethodDecl *OMD);
   void EmitObjCCategoryImpl(const ObjCCategoryImplDecl *OCD);
   void EmitObjCClassImplementation(const ObjCImplementationDecl *OID);
   void EmitObjCProtocolImplementation(const ObjCProtocolDecl *PD);
-  void EmitFunction(const FunctionDecl *FD);
-  void EmitGlobalVar(const VarDecl *D);
-  void EmitGlobalVarInit(const VarDecl *D);
+
+  /// EmitGlobal - Emit code for a singal global function or var
+  /// decl. Forward declarations are emitted lazily.
+  void EmitGlobal(const ValueDecl *D);
+
+  void AddAnnotation(llvm::Constant *C) { Annotations.push_back(C); }
+
   void UpdateCompletedType(const TagDecl *D);
-  llvm::Constant *EmitGlobalInit(const Expr *E);
   llvm::Constant *EmitConstantExpr(const Expr *E, CodeGenFunction *CGF = 0);
   llvm::Constant *EmitAnnotateAttr(llvm::GlobalValue *GV,
                                    const AnnotateAttr *AA, unsigned LineNo);
@@ -157,6 +164,16 @@ private:
   void SetGlobalValueAttributes(const FunctionDecl *FD,
                                 llvm::GlobalValue *GV);
   
+  void EmitGlobalDefinition(const ValueDecl *D);
+  llvm::GlobalValue *EmitForwardFunctionDefinition(const FunctionDecl *D);
+  void EmitGlobalFunctionDefinition(const FunctionDecl *D);
+  void EmitGlobalVarDefinition(const VarDecl *D);
+
+  void AddGlobalCtor(llvm::Function * Ctor);
+  void EmitGlobalCtors(void);
+  void EmitAnnotations(void);
+  void EmitStatics(void);
+
 };
 }  // end namespace CodeGen
 }  // end namespace clang

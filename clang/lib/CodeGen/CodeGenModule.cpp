@@ -153,8 +153,6 @@ void CodeGenModule::EmitGlobalCtors() {
                                                           CtorValues));
 }
 
-
-
 void CodeGenModule::EmitAnnotations() {
   if (Annotations.empty())
     return;
@@ -169,16 +167,6 @@ void CodeGenModule::EmitAnnotations() {
                            llvm::GlobalValue::AppendingLinkage, Array, 
                            "llvm.global.annotations", &TheModule);
   gv->setSection("llvm.metadata");
-}
-
-/// ReplaceMapValuesWith - This is a really slow and bad function that
-/// searches for any entries in GlobalDeclMap that point to OldVal, changing
-/// them to point to NewVal.  This is badbadbad, FIXME!
-void CodeGenModule::ReplaceMapValuesWith(llvm::Constant *OldVal,
-                                         llvm::Constant *NewVal) {
-  for (llvm::DenseMap<const Decl*, llvm::Constant*>::iterator 
-       I = GlobalDeclMap.begin(), E = GlobalDeclMap.end(); I != E; ++I)
-    if (I->second == OldVal) I->second = NewVal;
 }
 
 bool hasAggregateLLVMType(QualType T) {
@@ -249,110 +237,6 @@ void CodeGenModule::SetFunctionAttributes(const FunctionDecl *FD,
     F->setCallingConv(llvm::CallingConv::Fast);
 
   SetGlobalValueAttributes(FD, F);
-}
-
-
-
-llvm::Constant *CodeGenModule::GetAddrOfFunctionDecl(const FunctionDecl *D,
-                                                     bool isDefinition) {
-  // See if it is already in the map.  If so, just return it.
-  llvm::Constant *&Entry = GlobalDeclMap[D];
-  if (!isDefinition && Entry) return Entry;
-
-  const llvm::Type *Ty = getTypes().ConvertType(D->getType());
-  
-  // Check to see if the function already exists.
-  llvm::Function *F = getModule().getFunction(D->getName());
-  const llvm::FunctionType *FTy = cast<llvm::FunctionType>(Ty);
-
-  // If it doesn't already exist, just create and return an entry.
-  if (F == 0) {
-    // FIXME: param attributes for sext/zext etc.
-    if (D->getBody() || !D->getAttr<AliasAttr>())
-      F = llvm::Function::Create(FTy, llvm::Function::ExternalLinkage,
-                                 D->getName(), &getModule());
-    else {
-      const std::string& aliaseeName = D->getAttr<AliasAttr>()->getAliasee();
-      llvm::Function *aliasee = getModule().getFunction(aliaseeName);
-      llvm::GlobalValue *alias = new llvm::GlobalAlias(aliasee->getType(),
-                                               llvm::Function::ExternalLinkage,
-                                                       D->getName(),
-                                                       aliasee,
-                                                       &getModule());
-      SetGlobalValueAttributes(D, alias);
-      return Entry = alias;
-    }
-
-    SetFunctionAttributes(D, F, FTy);
-    return Entry = F;
-  }
-  
-  // If the pointer type matches, just return it.
-  llvm::Type *PFTy = llvm::PointerType::getUnqual(Ty);
-  if (PFTy == F->getType()) return Entry = F;
-    
-  // If this isn't a definition, just return it casted to the right type.
-  if (!isDefinition)
-    return Entry = llvm::ConstantExpr::getBitCast(F, PFTy);
-  
-  // Otherwise, we have a definition after a prototype with the wrong type.
-  // F is the Function* for the one with the wrong type, we must make a new
-  // Function* and update everything that used F (a declaration) with the new
-  // Function* (which will be a definition).
-  //
-  // This happens if there is a prototype for a function (e.g. "int f()") and
-  // then a definition of a different type (e.g. "int f(int x)").  Start by
-  // making a new function of the correct type, RAUW, then steal the name.
-  llvm::Function *NewFn = llvm::Function::Create(FTy, 
-                                             llvm::Function::ExternalLinkage,
-                                             "", &getModule());
-  NewFn->takeName(F);
-  
-  // Replace uses of F with the Function we will endow with a body.
-  llvm::Constant *NewPtrForOldDecl = 
-    llvm::ConstantExpr::getBitCast(NewFn, F->getType());
-  F->replaceAllUsesWith(NewPtrForOldDecl);
-  
-  // FIXME: Update the globaldeclmap for the previous decl of this name.  We
-  // really want a way to walk all of these, but we don't have it yet.  This
-  // is incredibly slow!
-  ReplaceMapValuesWith(F, NewPtrForOldDecl);
-  
-  // Ok, delete the old function now, which is dead.
-  assert(F->isDeclaration() && "Shouldn't replace non-declaration");
-  F->eraseFromParent();
-
-  SetFunctionAttributes(D, NewFn, FTy);
-  // Return the new function which has the right type.
-  return Entry = NewFn;
-}
-
-llvm::Constant *CodeGenModule::GetAddrOfGlobalVar(const VarDecl *D,
-                                                  bool isDefinition) {
-  assert(D->hasGlobalStorage() && "Not a global variable");
-  assert(!isDefinition && "This shouldn't be called for definitions!");
-
-  // See if it is already in the map.
-  llvm::Constant *&Entry = GlobalDeclMap[D];
-  if (Entry) return Entry;
-
-  QualType ASTTy = D->getType();
-  const llvm::Type *Ty = getTypes().ConvertTypeForMem(ASTTy);
-
-  // Check to see if the global already exists.
-  llvm::GlobalVariable *GV = getModule().getGlobalVariable(D->getName(), true);
-
-  // If it doesn't already exist, just create and return an entry.
-  if (GV == 0) {
-    return Entry = new llvm::GlobalVariable(Ty, false, 
-                                            llvm::GlobalValue::ExternalLinkage,
-                                            0, D->getName(), &getModule(), 0,
-                                            ASTTy.getAddressSpace());
-  }
-
-  // Otherwise, it already exists; return the existing version
-  llvm::PointerType *PTy = llvm::PointerType::get(Ty, ASTTy.getAddressSpace());
-  return Entry = llvm::ConstantExpr::getBitCast(GV, PTy);
 }
 
 void CodeGenModule::EmitObjCMethod(const ObjCMethodDecl *OMD) {
@@ -509,25 +393,6 @@ void CodeGenModule::EmitObjCClassImplementation(
                          ClassMethodSels, ClassMethodTypes, Protocols);
 }
 
-
-void CodeGenModule::EmitFunction(const FunctionDecl *FD) {
-  // If this is not a prototype, emit the body.
-  if (!FD->isThisDeclarationADefinition()) {
-    if (FD->getAttr<AliasAttr>())
-      GetAddrOfFunctionDecl(FD, true);
-    return;
-  }
-  
-  // If the function is a static, defer code generation until later so we can
-  // easily omit unused statics.
-  if (FD->getStorageClass() != FunctionDecl::Static) {
-    CodeGenFunction(*this).GenerateCode(FD);
-    return;
-  }
-
-  StaticDecls.push_back(FD);
-}
-
 void CodeGenModule::EmitStatics() {
   // Emit code for each used static decl encountered.  Since a previously unused
   // static decl may become used during the generation of code for a static
@@ -536,7 +401,7 @@ void CodeGenModule::EmitStatics() {
   do {
     Changed = false;
     for (unsigned i = 0, e = StaticDecls.size(); i != e; ++i) {
-      const Decl *D = StaticDecls[i];
+      const ValueDecl *D = StaticDecls[i];
 
       // Check if we have used a decl with the same name
       // FIXME: The AST should have some sort of aggregate decls or
@@ -549,17 +414,9 @@ void CodeGenModule::EmitStatics() {
           continue;
       }
 
-      // If this is a function decl, generate code for the static function if it
-      // has a body.  Otherwise, we must have a var decl for a static global
-      // variable.
-      if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
-        if (FD->getBody())
-          CodeGenFunction(*this).GenerateCode(FD);
-        else if (FD->getAttr<AliasAttr>())
-          GetAddrOfFunctionDecl(FD, true);
-      } else {
-        EmitGlobalVarInit(cast<VarDecl>(D));
-      }
+      // Emit the definition.
+      EmitGlobalDefinition(D);
+
       // Erase the used decl from the list.
       StaticDecls[i] = StaticDecls.back();
       StaticDecls.pop_back();
@@ -570,10 +427,6 @@ void CodeGenModule::EmitStatics() {
       Changed = true;
     }
   } while (Changed);
-}
-
-llvm::Constant *CodeGenModule::EmitGlobalInit(const Expr *Expr) {
-  return EmitConstantExpr(Expr);
 }
 
 /// EmitAnnotateAttr - Generate the llvm::ConstantStruct which contains the 
@@ -620,25 +473,85 @@ llvm::Constant *CodeGenModule::EmitAnnotateAttr(llvm::GlobalValue *GV,
   return llvm::ConstantStruct::get(Fields, 4, false);
 }
 
-void CodeGenModule::EmitGlobalVar(const VarDecl *D) {
-  // If the VarDecl is a static, defer code generation until later so we can
-  // easily omit unused statics.
-  if (D->getStorageClass() == VarDecl::Static) {
-    StaticDecls.push_back(D);
+/// ReplaceMapValuesWith - This is a really slow and bad function that
+/// searches for any entries in GlobalDeclMap that point to OldVal, changing
+/// them to point to NewVal.  This is badbadbad, FIXME!
+void CodeGenModule::ReplaceMapValuesWith(llvm::Constant *OldVal,
+                                         llvm::Constant *NewVal) {
+  for (llvm::DenseMap<const Decl*, llvm::Constant*>::iterator 
+       I = GlobalDeclMap.begin(), E = GlobalDeclMap.end(); I != E; ++I)
+    if (I->second == OldVal) I->second = NewVal;
+}
+
+void CodeGenModule::EmitGlobal(const ValueDecl *Global) {
+  bool isDef, isStatic;
+
+  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(Global)) {
+    isDef = (FD->isThisDeclarationADefinition() ||
+             FD->getAttr<AliasAttr>());
+    isStatic = FD->getStorageClass() == FunctionDecl::Static;
+  } else if (const VarDecl *VD = cast<VarDecl>(Global)) {
+    assert(VD->isFileVarDecl() && "Cannot emit local var decl as global.");
+
+    isDef = !(VD->getStorageClass() == VarDecl::Extern && VD->getInit() == 0);
+    isStatic = VD->getStorageClass() == VarDecl::Static;
+  } else {
+    assert(0 && "Invalid argument to EmitGlobal");
     return;
   }
 
-  // If this is just a forward declaration of the variable, don't emit it now,
-  // allow it to be emitted lazily on its first use.
-  if (D->getStorageClass() == VarDecl::Extern && D->getInit() == 0)
+  // Forward declarations are emitted lazily on first use.
+  if (!isDef)
     return;
-  
-  EmitGlobalVarInit(D);
+
+  // If the global is a static, defer code generation until later so
+  // we can easily omit unused statics.
+  if (isStatic) {
+    StaticDecls.push_back(Global);
+    return;
+  }
+
+  // Otherwise emit the definition.
+  EmitGlobalDefinition(Global);
 }
 
-void CodeGenModule::EmitGlobalVarInit(const VarDecl *D) {
+void CodeGenModule::EmitGlobalDefinition(const ValueDecl *D) {
+  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+    EmitGlobalFunctionDefinition(FD);
+  } else if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
+    EmitGlobalVarDefinition(VD);
+  } else {
+    assert(0 && "Invalid argument to EmitGlobalDefinition()");
+  }
+}
+
+llvm::Constant *CodeGenModule::GetAddrOfGlobalVar(const VarDecl *D) {
   assert(D->hasGlobalStorage() && "Not a global variable");
 
+  // See if it is already in the map.
+  llvm::Constant *&Entry = GlobalDeclMap[D];
+  if (Entry) return Entry;
+
+  QualType ASTTy = D->getType();
+  const llvm::Type *Ty = getTypes().ConvertTypeForMem(ASTTy);
+
+  // Check to see if the global already exists.
+  llvm::GlobalVariable *GV = getModule().getGlobalVariable(D->getName(), true);
+
+  // If it doesn't already exist, just create and return an entry.
+  if (GV == 0) {
+    return Entry = new llvm::GlobalVariable(Ty, false, 
+                                            llvm::GlobalValue::ExternalLinkage,
+                                            0, D->getName(), &getModule(), 0,
+                                            ASTTy.getAddressSpace());
+  }
+
+  // Otherwise, it already exists; return the existing version
+  llvm::PointerType *PTy = llvm::PointerType::get(Ty, ASTTy.getAddressSpace());
+  return Entry = llvm::ConstantExpr::getBitCast(GV, PTy);
+}
+
+void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
   llvm::Constant *Init = 0;
   QualType ASTTy = D->getType();
   const llvm::Type *VarTy = getTypes().ConvertTypeForMem(ASTTy);
@@ -659,7 +572,7 @@ void CodeGenModule::EmitGlobalVarInit(const VarDecl *D) {
     }
     Init = llvm::Constant::getNullValue(InitTy);
   } else {
-    Init = EmitGlobalInit(D->getInit());
+    Init = EmitConstantExpr(D->getInit());
   }
   const llvm::Type* InitType = Init->getType();
 
@@ -769,6 +682,111 @@ void CodeGenModule::EmitGlobalVarInit(const VarDecl *D) {
     if(D->getLocation().isValid())
       DI->setLocation(D->getLocation());
     DI->EmitGlobalVariable(GV, D);
+  }
+}
+
+llvm::GlobalValue *
+CodeGenModule::EmitForwardFunctionDefinition(const FunctionDecl *D) {
+  // FIXME: param attributes for sext/zext etc.
+  if (const AliasAttr *AA = D->getAttr<AliasAttr>()) {
+    assert(!D->getBody() && "Unexpected alias attr on function with body.");
+    
+    const std::string& aliaseeName = AA->getAliasee();
+    llvm::Function *aliasee = getModule().getFunction(aliaseeName);
+    llvm::GlobalValue *alias = new llvm::GlobalAlias(aliasee->getType(),
+                                              llvm::Function::ExternalLinkage,
+                                                     D->getName(),
+                                                     aliasee,
+                                                     &getModule());
+    SetGlobalValueAttributes(D, alias);
+    return alias;
+  } else {
+    const llvm::Type *Ty = getTypes().ConvertType(D->getType());
+    const llvm::FunctionType *FTy = cast<llvm::FunctionType>(Ty);
+    llvm::Function *F = llvm::Function::Create(FTy, 
+                                               llvm::Function::ExternalLinkage,
+                                               D->getName(), &getModule());
+    
+    SetFunctionAttributes(D, F, FTy);
+    return F;
+  }
+}
+
+llvm::Constant *CodeGenModule::GetAddrOfFunction(const FunctionDecl *D) {
+  // See if it is already in the map.  If so, just return it.
+  llvm::Constant *&Entry = GlobalDeclMap[D];
+  if (Entry) return Entry;
+  
+  // Check to see if the function already exists; this occurs when
+  // this decl shadows a previous one. If it exists we bitcast it to
+  // the proper type for this decl and return.
+  llvm::Function *F = getModule().getFunction(D->getName());
+  if (F) {
+    const llvm::Type *Ty = getTypes().ConvertType(D->getType());
+    llvm::Type *PFTy = llvm::PointerType::getUnqual(Ty);
+    return Entry = llvm::ConstantExpr::getBitCast(F, PFTy);
+  }
+
+  // It doesn't exist; create and return an entry.
+  return Entry = EmitForwardFunctionDefinition(D);
+}
+
+void CodeGenModule::EmitGlobalFunctionDefinition(const FunctionDecl *D) {
+  llvm::Constant *&Entry = GlobalDeclMap[D];
+
+  const llvm::Type *Ty = getTypes().ConvertType(D->getType());
+  const llvm::FunctionType *FTy = cast<llvm::FunctionType>(Ty);
+  
+  // Check to see if the function already exists.
+  llvm::Function *F = getModule().getFunction(D->getName());
+
+  // If it doesn't already exist, just create and return an entry.
+  if (F == 0) {
+    Entry = EmitForwardFunctionDefinition(D);
+  } else {
+    // If the pointer type matches, just return it.
+    llvm::Type *PFTy = llvm::PointerType::getUnqual(Ty);
+    if (PFTy == F->getType()) {
+      Entry = F;
+    } else {    
+      // Otherwise, we have a definition after a prototype with the wrong type.
+      // F is the Function* for the one with the wrong type, we must make a new
+      // Function* and update everything that used F (a declaration) with the new
+      // Function* (which will be a definition).
+      //
+      // This happens if there is a prototype for a function (e.g. "int f()") and
+      // then a definition of a different type (e.g. "int f(int x)").  Start by
+      // making a new function of the correct type, RAUW, then steal the name.
+      llvm::Function *NewFn = llvm::Function::Create(FTy, 
+                                                     llvm::Function::ExternalLinkage,
+                                                     "", &getModule());
+      NewFn->takeName(F);
+      
+      // Replace uses of F with the Function we will endow with a body.
+      llvm::Constant *NewPtrForOldDecl = 
+        llvm::ConstantExpr::getBitCast(NewFn, F->getType());
+      F->replaceAllUsesWith(NewPtrForOldDecl);
+      
+      // FIXME: Update the globaldeclmap for the previous decl of this name.  We
+      // really want a way to walk all of these, but we don't have it yet.  This
+      // is incredibly slow!
+      ReplaceMapValuesWith(F, NewPtrForOldDecl);
+      
+      // Ok, delete the old function now, which is dead.
+      assert(F->isDeclaration() && "Shouldn't replace non-declaration");
+      F->eraseFromParent();
+      
+      SetFunctionAttributes(D, NewFn, FTy);
+      // Return the new function which has the right type.
+      Entry = NewFn;
+    }
+  }
+
+  if (D->getAttr<AliasAttr>()) {
+    ;
+  } else {
+    llvm::Function *Fn = cast<llvm::Function>(Entry);    
+    CodeGenFunction(*this).GenerateCode(D, Fn);
   }
 }
 
