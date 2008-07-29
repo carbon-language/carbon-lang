@@ -33,6 +33,11 @@ static cl::opt<unsigned>
 UnrollCount("unroll-count", cl::init(0), cl::Hidden,
   cl::desc("Use this unroll count for all loops, for testing purposes"));
 
+static cl::opt<bool>
+UnrollAllowPartial("unroll-allow-partial", cl::init(false), cl::Hidden,
+  cl::desc("Allows loops to be partially unrolled until "
+           "-unroll-threshold loop size is reached."));
+
 namespace {
   class VISIBILITY_HIDDEN LoopUnroll : public LoopPass {
   public:
@@ -122,7 +127,8 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
   if (Count == 0) {
     // Conservative heuristic: if we know the trip count, see if we can
     // completely unroll (subject to the threshold, checked below); otherwise
-    // don't unroll.
+    // try to find greatest modulo of the trip count which is still under 
+    // threshold value.
     if (TripCount != 0) {
       Count = TripCount;
     } else {
@@ -136,9 +142,25 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
     DOUT << "  Loop Size = " << LoopSize << "\n";
     uint64_t Size = (uint64_t)LoopSize*Count;
     if (TripCount != 1 && Size > UnrollThreshold) {
-      DOUT << "  TOO LARGE TO UNROLL: "
-           << Size << ">" << UnrollThreshold << "\n";
-      return false;
+      DOUT << "  Too large to fully unroll with count: " << Count
+           << " because size: " << Size << ">" << UnrollThreshold << "\n";
+      if (UnrollAllowPartial) {
+        // Reduce unroll count to be modulo of TripCount for partial unrolling
+        Count = UnrollThreshold / LoopSize;        
+        while (Count != 0 && TripCount%Count != 0) {
+          Count--;
+        }        
+        if (Count < 2) {
+          DOUT << "  could not unroll partially\n";
+          return false;
+        } else {
+          DOUT << "  partially unrolling with count: " << Count << "\n";
+        }
+      } else {
+        DOUT << "  will not try to unroll partially because "
+             << "-unroll-allow-partial not given\n";
+        return false;
+      }
     }
   }
 
