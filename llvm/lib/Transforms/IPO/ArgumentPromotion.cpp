@@ -17,10 +17,10 @@
 //
 // This pass also handles aggregate arguments that are passed into a function,
 // scalarizing them if the elements of the aggregate are only loaded.  Note that
-// by default it refuses to scalarize aggregates which would require passing in more than
-// three operands to the function, because passing thousands of operands for a
-// large array or structure is unprofitable! This limit is can be configured or
-// disabled, however.
+// by default it refuses to scalarize aggregates which would require passing in
+// more than three operands to the function, because passing thousands of
+// operands for a large array or structure is unprofitable! This limit is can be
+// configured or disabled, however.
 //
 // Note that this transformation could also be done for arguments that are only
 // stored to (returning the value instead), but does not currently.  This case
@@ -68,6 +68,9 @@ namespace {
     static char ID; // Pass identification, replacement for typeid
     ArgPromotion(unsigned maxElements = 3) : CallGraphSCCPass((intptr_t)&ID),
                                              maxElements(maxElements) {}
+    
+    /// A vector used to hold the indices of a single GEP instruction
+    typedef std::vector<uint64_t> IndicesVector;
 
   private:
     bool PromoteArguments(CallGraphNode *CGN);
@@ -222,6 +225,72 @@ static bool AllCalleesPassInValidPointerForArgument(Argument *Arg) {
   return true;
 }
 
+/// Returns true if Prefix is a prefix of longer. That means, Longer has a size
+/// that is greater than or equal to the size of prefix, and each of the
+/// elements in Prefix is the same as the corresponding elements in Longer.
+///
+/// This means it also returns true when Prefix and Longer are equal!
+static bool IsPrefix(const ArgPromotion::IndicesVector &Prefix,
+                     const ArgPromotion::IndicesVector &Longer) {
+  if (Prefix.size() > Longer.size())
+    return false;
+  for (unsigned i = 0, e = Prefix.size(); i != e; ++i)
+    if (Prefix[i] != Longer[i])
+      return false;
+  return true;
+}
+
+
+/// Checks if Indices, or a prefix of Indices, is in Set.
+static bool PrefixIn(const ArgPromotion::IndicesVector &Indices,
+                     std::set<ArgPromotion::IndicesVector> &Set) {
+    std::set<ArgPromotion::IndicesVector>::iterator Low;
+    Low = Set.upper_bound(Indices);
+    if (Low != Set.begin())
+      Low--;
+    // Low is now the last element smaller than or equal to Indices. This means
+    // it points to a prefix of Indices (possibly Indices itself), if such
+    // prefix exists.
+    //
+    // This load is safe if any prefix of its operands is safe to load.
+    return Low != Set.end() && IsPrefix(*Low, Indices);
+}
+
+/// Mark the given indices (ToMark) as safe in the the given set of indices
+/// (Safe). Marking safe usually means adding ToMark to Safe. However, if there
+/// is already a prefix of Indices in Safe, Indices are implicitely marked safe
+/// already. Furthermore, any indices that Indices is itself a prefix of, are
+/// removed from Safe (since they are implicitely safe because of Indices now).
+static void MarkIndicesSafe(const ArgPromotion::IndicesVector &ToMark,
+                            std::set<ArgPromotion::IndicesVector> &Safe) {
+  std::set<ArgPromotion::IndicesVector>::iterator Low;
+  Low = Safe.upper_bound(ToMark);
+  // Guard against the case where Safe is empty
+  if (Low != Safe.begin())
+    Low--;
+  // Low is now the last element smaller than or equal to Indices. This
+  // means it points to a prefix of Indices (possibly Indices itself), if
+  // such prefix exists.
+  if (Low != Safe.end()) {
+    if (IsPrefix(*Low, ToMark))
+      // If there is already a prefix of these indices (or exactly these
+      // indices) marked a safe, don't bother adding these indices
+      return;
+
+    // Increment Low, so we can use it as a "insert before" hint
+    ++Low; 
+  }
+  // Insert 
+  Low = Safe.insert(Low, ToMark);
+  ++Low;
+  // If there we're a prefix of longer index list(s), remove those
+  std::set<ArgPromotion::IndicesVector>::iterator End = Safe.end();
+  while (Low != End && IsPrefix(ToMark, *Low)) {
+    std::set<ArgPromotion::IndicesVector>::iterator Remove = Low;
+    ++Low;
+    Safe.erase(Remove);
+  }
+}
 
 /// isSafeToPromoteArgument - As you might guess from the name of this method,
 /// it checks to see if it is both safe and useful to promote the argument.
@@ -229,43 +298,99 @@ static bool AllCalleesPassInValidPointerForArgument(Argument *Arg) {
 /// elements of the aggregate in order to avoid exploding the number of
 /// arguments passed in.
 bool ArgPromotion::isSafeToPromoteArgument(Argument *Arg, bool isByVal) const {
+  typedef std::set<IndicesVector> GEPIndicesSet;
+
+  // Quick exit for unused arguments
+  if (Arg->use_empty())
+    return true;
+
   // We can only promote this argument if all of the uses are loads, or are GEP
   // instructions (with constant indices) that are subsequently loaded.
+  //
+  // Promoting the argument causes it to be loaded in the caller
+  // unconditionally. This is only safe if we can prove that either the load
+  // would have happened in the callee anyway (ie, there is a load in the entry
+  // block) or the pointer passed in at every call site is guaranteed to be
+  // valid.
+  // In the former case, invalid loads can happen, but would have happened
+  // anyway, in the latter case, invalid loads won't happen. This prevents us
+  // from introducing an invalid load that wouldn't have happened in the
+  // original code.
+  //
+  // This set will contain all sets of indices that are loaded in the entry
+  // block, and thus are safe to unconditionally load in the caller.
+  GEPIndicesSet SafeToUnconditionallyLoad;
 
-  // We can also only promote the load if we can guarantee that it will happen.
-  // Promoting a load causes the load to be unconditionally executed in the
-  // caller, so we can't turn a conditional load into an unconditional load in
-  // general.
-  bool SafeToUnconditionallyLoad = false;
-  if (isByVal)   // ByVal arguments are always safe to load from.
-    SafeToUnconditionallyLoad = true;
+  // This set contains all the sets of indices that we are planning to promote.
+  // This makes it possible to limit the number of arguments added.
+  GEPIndicesSet ToPromote;
   
+  // If the pointer is always valid, any load with first index 0 is valid.
+  if(isByVal || AllCalleesPassInValidPointerForArgument(Arg))
+    SafeToUnconditionallyLoad.insert(IndicesVector(1, 0));
+
+  // First, iterate the entry block and mark loads of (geps of) arguments as
+  // safe.
   BasicBlock *EntryBlock = Arg->getParent()->begin();
+  // Declare this here so we can reuse it
+  IndicesVector Indices;
+  for (BasicBlock::iterator I = EntryBlock->begin(), E = EntryBlock->end();
+       I != E; ++I)
+    if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
+      Value *V = LI->getPointerOperand();
+      if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(V)) {
+        V = GEP->getPointerOperand();
+        if (V == Arg) {
+          // This load actually loads (part of) Arg? Check the indices then.
+          Indices.reserve(GEP->getNumIndices());
+          for (User::op_iterator II = GEP->idx_begin(), IE = GEP->idx_end();
+               II != IE; ++II)
+            if (ConstantInt *CI = dyn_cast<ConstantInt>(*II))
+              Indices.push_back(CI->getSExtValue());
+            else
+              // We found a non-constant GEP index for this argument? Bail out
+              // right away, can't promote this argument at all.
+              return false;
+
+          // Indices checked out, mark them as safe
+          MarkIndicesSafe(Indices, SafeToUnconditionallyLoad);
+          Indices.clear();
+        }
+      } else if (V == Arg) {
+        // Direct loads are equivalent to a GEP with a single 0 index.
+        MarkIndicesSafe(IndicesVector(1, 0), SafeToUnconditionallyLoad);
+      }
+    }
+
+  // Now, iterate all uses of the argument to see if there are any uses that are
+  // not (GEP+)loads, or any (GEP+)loads that are not safe to promote.
   SmallVector<LoadInst*, 16> Loads;
-  std::vector<SmallVector<ConstantInt*, 8> > GEPIndices;
+  IndicesVector Operands;
   for (Value::use_iterator UI = Arg->use_begin(), E = Arg->use_end();
-       UI != E; ++UI)
+       UI != E; ++UI) {
+    Operands.clear();
     if (LoadInst *LI = dyn_cast<LoadInst>(*UI)) {
       if (LI->isVolatile()) return false;  // Don't hack volatile loads
       Loads.push_back(LI);
-      
-      // If this load occurs in the entry block, then the pointer is 
-      // unconditionally loaded.
-      SafeToUnconditionallyLoad |= LI->getParent() == EntryBlock;
+      // Direct loads are equivalent to a GEP with a zero index and then a load.
+      Operands.push_back(0);
     } else if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(*UI)) {
       if (GEP->use_empty()) {
         // Dead GEP's cause trouble later.  Just remove them if we run into
         // them.
         getAnalysis<AliasAnalysis>().deleteValue(GEP);
         GEP->eraseFromParent();
+        // TODO: This runs the above loop over and over again for dead GEPS
+        // Couldn't we just do increment the UI iterator earlier and erase the
+        // use?
         return isSafeToPromoteArgument(Arg, isByVal);
       }
+
       // Ensure that all of the indices are constants.
-      SmallVector<ConstantInt*, 8> Operands;
-      for (User::op_iterator i = GEP->op_begin() + 1, e = GEP->op_end();
-	   i != e; ++i)
+      for (User::op_iterator i = GEP->idx_begin(), e = GEP->idx_end();
+        i != e; ++i)
         if (ConstantInt *C = dyn_cast<ConstantInt>(*i))
-          Operands.push_back(C);
+          Operands.push_back(C->getSExtValue());
         else
           return false;  // Not a constant operand GEP!
 
@@ -275,47 +400,39 @@ bool ArgPromotion::isSafeToPromoteArgument(Argument *Arg, bool isByVal) const {
         if (LoadInst *LI = dyn_cast<LoadInst>(*UI)) {
           if (LI->isVolatile()) return false;  // Don't hack volatile loads
           Loads.push_back(LI);
-          
-          // If this load occurs in the entry block, then the pointer is 
-          // unconditionally loaded.
-          SafeToUnconditionallyLoad |= LI->getParent() == EntryBlock;
         } else {
+          // Other uses than load?
           return false;
         }
-
-      // See if there is already a GEP with these indices.  If not, check to
-      // make sure that we aren't promoting too many elements.  If so, nothing
-      // to do.
-      if (std::find(GEPIndices.begin(), GEPIndices.end(), Operands) ==
-          GEPIndices.end()) {
-        if (maxElements > 0 && GEPIndices.size() == maxElements) {
-          DOUT << "argpromotion disable promoting argument '"
-               << Arg->getName() << "' because it would require adding more "
-               << "than " << maxElements << " arguments to the function.\n";
-          // We limit aggregate promotion to only promoting up to a fixed number
-          // of elements of the aggregate.
-          return false;
-        }
-        GEPIndices.push_back(Operands);
-      }
     } else {
       return false;  // Not a load or a GEP.
     }
+     
+    // Now, see if it is safe to promote this load / loads of this GEP. Loading
+    // is safe if Operands, or a prefix of Operands, is marked as safe.
+    if (!PrefixIn(Operands, SafeToUnconditionallyLoad))
+      return false;
+
+    // See if we are already promoting a load with these indices. If not, check
+    // to make sure that we aren't promoting too many elements.  If so, nothing
+    // to do.
+    if (ToPromote.find(Operands) == ToPromote.end()) {
+      if (maxElements > 0 && ToPromote.size() == maxElements) {
+        DOUT << "argpromotion not promoting argument '"
+             << Arg->getName() << "' because it would require adding more "
+             << "than " << maxElements << " arguments to the function.\n";
+        // We limit aggregate promotion to only promoting up to a fixed number
+        // of elements of the aggregate.
+        return false;
+      }
+      ToPromote.insert(Operands);
+    }
+  }
 
   if (Loads.empty()) return true;  // No users, this is a dead argument.
 
-  // If we decide that we want to promote this argument, the value is going to
-  // be unconditionally loaded in all callees.  This is only safe to do if the
-  // pointer was going to be unconditionally loaded anyway (i.e. there is a load
-  // of the pointer in the entry block of the function) or if we can prove that
-  // all pointers passed in are always to legal locations (for example, no null
-  // pointers are passed in, no pointers to free'd memory, etc).
-  if (!SafeToUnconditionallyLoad &&
-      !AllCalleesPassInValidPointerForArgument(Arg))
-    return false;   // Cannot prove that this is safe!!
-
   // Okay, now we know that the argument is only used by load instructions and
-  // it is safe to unconditionally load the pointer.  Use alias analysis to
+  // it is safe to unconditionally perform all of them. Use alias analysis to
   // check to see if the pointer is guaranteed to not be modified from entry of
   // the function to each of the load instructions.
 
@@ -333,7 +450,7 @@ bool ArgPromotion::isSafeToPromoteArgument(Argument *Arg, bool isByVal) const {
     BasicBlock *BB = Load->getParent();
 
     const PointerType *LoadTy =
-      cast<PointerType>(Load->getOperand(0)->getType());
+      cast<PointerType>(Load->getPointerOperand()->getType());
     unsigned LoadSize = (unsigned)TD.getTypeStoreSize(LoadTy->getElementType());
 
     if (AA.canInstructionRangeModify(BB->front(), *Load, Arg, LoadSize))
@@ -356,29 +473,6 @@ bool ArgPromotion::isSafeToPromoteArgument(Argument *Arg, bool isByVal) const {
   return true;
 }
 
-namespace {
-  /// GEPIdxComparator - Provide a strong ordering for GEP indices.  All Value*
-  /// elements are instances of ConstantInt.
-  ///
-  struct GEPIdxComparator {
-    bool operator()(const std::vector<Value*> &LHS,
-                    const std::vector<Value*> &RHS) const {
-      unsigned idx = 0;
-      for (; idx < LHS.size() && idx < RHS.size(); ++idx) {
-        if (LHS[idx] != RHS[idx]) {
-          return cast<ConstantInt>(LHS[idx])->getZExtValue() <
-                 cast<ConstantInt>(RHS[idx])->getZExtValue();
-        }
-      }
-
-      // Return less than if we ran out of stuff in LHS and we didn't run out of
-      // stuff in RHS.
-      return idx == LHS.size() && idx != RHS.size();
-    }
-  };
-}
-
-
 /// DoPromotion - This method actually performs the promotion of the specified
 /// arguments, and returns the new function.  At this point, we know that it's
 /// safe to do so.
@@ -391,7 +485,7 @@ Function *ArgPromotion::DoPromotion(Function *F,
   const FunctionType *FTy = F->getFunctionType();
   std::vector<const Type*> Params;
 
-  typedef std::set<std::vector<Value*>, GEPIdxComparator> ScalarizeTable;
+  typedef std::set<IndicesVector> ScalarizeTable;
 
   // ScalarizedElements - If we are promoting a pointer that has elements
   // accessed out of it, keep track of which elements are accessed so that we
@@ -405,7 +499,7 @@ Function *ArgPromotion::DoPromotion(Function *F,
   // OriginalLoads - Keep track of a representative load instruction from the
   // original function so that we can tell the alias analysis implementation
   // what the new GEP/Load instructions we are inserting look like.
-  std::map<std::vector<Value*>, LoadInst*> OriginalLoads;
+  std::map<IndicesVector, LoadInst*> OriginalLoads;
 
   // ParamAttrs - Keep track of the parameter attributes for the arguments
   // that we are *not* promoting. For the ones that we do promote, the parameter
@@ -416,47 +510,66 @@ Function *ArgPromotion::DoPromotion(Function *F,
   // Add any return attributes.
   if (ParameterAttributes attrs = PAL.getParamAttrs(0))
     ParamAttrsVec.push_back(ParamAttrsWithIndex::get(0, attrs));
-
+  
+  // First, determine the new argument list
   unsigned ArgIndex = 1;
   for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E;
        ++I, ++ArgIndex) {
     if (ByValArgsToTransform.count(I)) {
-      // Just add all the struct element types.
+      // Simple byval argument? Just add all the struct element types.
       const Type *AgTy = cast<PointerType>(I->getType())->getElementType();
       const StructType *STy = cast<StructType>(AgTy);
       for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i)
         Params.push_back(STy->getElementType(i));
       ++NumByValArgsPromoted;
     } else if (!ArgsToPromote.count(I)) {
+      // Unchanged argument
       Params.push_back(I->getType());
       if (ParameterAttributes attrs = PAL.getParamAttrs(ArgIndex))
         ParamAttrsVec.push_back(ParamAttrsWithIndex::get(Params.size(), attrs));
     } else if (I->use_empty()) {
+      // Dead argument (which are always marked as promotable)
       ++NumArgumentsDead;
     } else {
-      // Okay, this is being promoted.  Check to see if there are any GEP uses
-      // of the argument.
+      // Okay, this is being promoted. This means that the only uses are loads
+      // or GEPs which are only used by loads
+
+      // In this table, we will track which indices are loaded from the argument
+      // (where direct loads are tracked as no indices).
       ScalarizeTable &ArgIndices = ScalarizedElements[I];
       for (Value::use_iterator UI = I->use_begin(), E = I->use_end(); UI != E;
            ++UI) {
         Instruction *User = cast<Instruction>(*UI);
         assert(isa<LoadInst>(User) || isa<GetElementPtrInst>(User));
-        std::vector<Value*> Indices(User->op_begin()+1, User->op_end());
+        IndicesVector Indices;
+        Indices.reserve(User->getNumOperands() - 1);
+        // Since loads will only have a single operand, and GEPs only a single
+        // non-index operand, this will record direct loads without any indices,
+        // and gep+loads with the GEP indices.
+        for (User::op_iterator II = User->op_begin() + 1, IE = User->op_end();
+             II != IE; ++II)
+          Indices.push_back(cast<ConstantInt>(*II)->getSExtValue());
+        // GEPs with a single 0 index can be merged with direct loads
+        if (Indices.size() == 1 && Indices.front() == 0)
+          Indices.clear();
         ArgIndices.insert(Indices);
         LoadInst *OrigLoad;
         if (LoadInst *L = dyn_cast<LoadInst>(User))
           OrigLoad = L;
         else
+          // Take any load, we will use it only to update Alias Analysis
           OrigLoad = cast<LoadInst>(User->use_back());
         OriginalLoads[Indices] = OrigLoad;
       }
 
       // Add a parameter to the function for each element passed in.
       for (ScalarizeTable::iterator SI = ArgIndices.begin(),
-             E = ArgIndices.end(); SI != E; ++SI)
+             E = ArgIndices.end(); SI != E; ++SI) {
         Params.push_back(GetElementPtrInst::getIndexedType(I->getType(),
-                                                           SI->begin(),
-                                                           SI->end()));
+                                                           &*SI->begin(),
+                                                           SI->size()));
+        assert(Params.back());
+      }
 
       if (ArgIndices.size() == 1 && ArgIndices.begin()->empty())
         ++NumArgumentsPromoted;
@@ -535,13 +648,29 @@ Function *ArgPromotion::DoPromotion(Function *F,
       } else if (!I->use_empty()) {
         // Non-dead argument: insert GEPs and loads as appropriate.
         ScalarizeTable &ArgIndices = ScalarizedElements[I];
+        // Store the Value* version of the indices in here, but declare it now
+        // for reuse
+        std::vector<Value*> Ops;
         for (ScalarizeTable::iterator SI = ArgIndices.begin(),
                E = ArgIndices.end(); SI != E; ++SI) {
           Value *V = *AI;
           LoadInst *OrigLoad = OriginalLoads[*SI];
           if (!SI->empty()) {
-            V = GetElementPtrInst::Create(V, SI->begin(), SI->end(),
+            Ops.reserve(SI->size());
+            const Type *ElTy = V->getType();
+            for (IndicesVector::const_iterator II = SI->begin(), 
+                 IE = SI->end(); II != IE; ++II) {
+              // Use i32 to index structs, and i64 for others (pointers/arrays).
+              // This satisfies GEP constraints.
+              const Type *IdxTy = (isa<StructType>(ElTy) ? Type::Int32Ty : Type::Int64Ty);
+              Ops.push_back(ConstantInt::get(IdxTy, *II));
+              // Keep track of the type we're currently indexing
+              ElTy = cast<CompositeType>(ElTy)->getTypeAtIndex(*II);
+            }
+            // And create a GEP to extract those indices
+            V = GetElementPtrInst::Create(V, Ops.begin(), Ops.end(),
                                           V->getName()+".idx", Call);
+            Ops.clear();
             AA.copyValue(OrigLoad->getOperand(0), V);
           }
           Args.push_back(new LoadInst(V, V->getName()+".val", Call));
@@ -624,9 +753,9 @@ Function *ArgPromotion::DoPromotion(Function *F,
       
       for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
         Idxs[1] = ConstantInt::get(Type::Int32Ty, i);
+        std::string Name = TheAlloca->getName()+"."+utostr(i);
         Value *Idx = GetElementPtrInst::Create(TheAlloca, Idxs, Idxs+2,
-                                               TheAlloca->getName()+"."+utostr(i),
-                                               InsertPt);
+                                               Name, InsertPt);
         I2->setName(I->getName()+"."+utostr(i));
         new StoreInst(I2++, Idx, InsertPt);
       }
@@ -644,8 +773,8 @@ Function *ArgPromotion::DoPromotion(Function *F,
     }
     
     // Otherwise, if we promoted this argument, then all users are load
-    // instructions, and all loads should be using the new argument that we
-    // added.
+    // instructions (or GEPs with only load users), and all loads should be
+    // using the new argument that we added.
     ScalarizeTable &ArgIndices = ScalarizedElements[I];
 
     while (!I->use_empty()) {
@@ -660,7 +789,15 @@ Function *ArgPromotion::DoPromotion(Function *F,
              << "' in function '" << F->getName() << "'\n";
       } else {
         GetElementPtrInst *GEP = cast<GetElementPtrInst>(I->use_back());
-        std::vector<Value*> Operands(GEP->op_begin()+1, GEP->op_end());
+        IndicesVector Operands;
+        Operands.reserve(GEP->getNumIndices());
+        for (User::op_iterator II = GEP->idx_begin(), IE = GEP->idx_end();
+             II != IE; ++II)
+          Operands.push_back(cast<ConstantInt>(*II)->getSExtValue());
+
+        // GEPs with a single 0 index can be merged with direct loads
+        if (Operands.size() == 1 && Operands.front() == 0)
+          Operands.clear();
 
         Function::arg_iterator TheArg = I2;
         for (ScalarizeTable::iterator It = ArgIndices.begin();
@@ -669,15 +806,14 @@ Function *ArgPromotion::DoPromotion(Function *F,
         }
 
         std::string NewName = I->getName();
-        for (unsigned i = 0, e = Operands.size(); i != e; ++i)
-          if (ConstantInt *CI = dyn_cast<ConstantInt>(Operands[i]))
-            NewName += "." + CI->getValue().toStringUnsigned(10);
-          else
-            NewName += ".x";
-        TheArg->setName(NewName+".val");
+        for (unsigned i = 0, e = Operands.size(); i != e; ++i) {
+            NewName += "." + utostr(Operands[i]);
+        }
+        NewName += ".val";
+        TheArg->setName(NewName);
 
         DOUT << "*** Promoted agg argument '" << TheArg->getName()
-             << "' of function '" << F->getName() << "'\n";
+             << "' of function '" << NF->getName() << "'\n";
 
         // All of the uses must be load instructions.  Replace them all with
         // the argument specified by ArgNo.
