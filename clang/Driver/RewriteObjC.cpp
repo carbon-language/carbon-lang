@@ -163,6 +163,7 @@ namespace {
     void RewriteProperties(unsigned nProperties, ObjCPropertyDecl **Properties);
     void RewriteFunctionDecl(FunctionDecl *FD);
     void RewriteObjCQualifiedInterfaceTypes(Decl *Dcl);
+    void RewriteObjCQualifiedInterfaceTypes(Expr *E);
     bool needToScanForQualifiers(QualType T);
     ObjCInterfaceDecl *isSuperReceiver(Expr *recExpr);
     QualType getSuperStructType();
@@ -1011,6 +1012,12 @@ Stmt *RewriteObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
   if (ContinueStmt *StmtContinueStmt =
       dyn_cast<ContinueStmt>(S))
     return RewriteContinueStmt(StmtContinueStmt);
+	
+  // Need to check for protocol refs (id <P>, Foo <P> *) in variable decls and cast exprs.
+  if (DeclStmt *DS = dyn_cast<DeclStmt>(S))
+    RewriteObjCQualifiedInterfaceTypes(DS->getDecl());
+  if (CastExpr *CE = dyn_cast<CastExpr>(S))
+    RewriteObjCQualifiedInterfaceTypes(CE);
   
   if (isa<SwitchStmt>(S) || isa<WhileStmt>(S) || 
       isa<DoStmt>(S) || isa<ForStmt>(S)) {
@@ -1596,6 +1603,24 @@ bool RewriteObjC::needToScanForQualifiers(QualType T) {
       return true; // we have "Class <Protocol> *".
   }
   return false;
+}
+
+void RewriteObjC::RewriteObjCQualifiedInterfaceTypes(Expr *E) {
+  QualType Type = E->getType();
+  if (needToScanForQualifiers(Type)) {
+    SourceLocation Loc = E->getLocStart();
+    const char *startBuf = SM->getCharacterData(Loc);
+    const char *endBuf = SM->getCharacterData(E->getLocEnd());
+    const char *startRef = 0, *endRef = 0;
+    if (scanForProtocolRefs(startBuf, endBuf, startRef, endRef)) {
+      // Get the locations of the startRef, endRef.
+      SourceLocation LessLoc = Loc.getFileLocWithOffset(startRef-startBuf);
+      SourceLocation GreaterLoc = Loc.getFileLocWithOffset(endRef-startBuf+1);
+      // Comment out the protocol references.
+      InsertText(LessLoc, "/*", 2);
+      InsertText(GreaterLoc, "*/", 2);
+    }
+  }
 }
 
 void RewriteObjC::RewriteObjCQualifiedInterfaceTypes(Decl *Dcl) {
