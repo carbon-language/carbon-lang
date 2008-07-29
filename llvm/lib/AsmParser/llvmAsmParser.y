@@ -1945,7 +1945,7 @@ ConstExpr: CastOps '(' ConstVal TO Types ')' {
     if ($3->getType() != $5->getType())
       GEN_ERROR("Logical operator types must match");
     if (!$3->getType()->isInteger()) {
-      if (Instruction::isShift($1) || !isa<VectorType>($3->getType()) || 
+      if (!isa<VectorType>($3->getType()) || 
           !cast<VectorType>($3->getType())->getElementType()->isInteger())
         GEN_ERROR("Logical operator requires integral operands");
     }
@@ -3013,7 +3013,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*$2)->getDescription());
     if (!(*$2)->isInteger()) {
-      if (Instruction::isShift($1) || !isa<VectorType>($2->get()) ||
+      if (!isa<VectorType>($2->get()) ||
           !cast<VectorType>($2->get())->getElementType()->isInteger())
         GEN_ERROR("Logical operator requires integral operands");
     }

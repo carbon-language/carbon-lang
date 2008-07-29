@@ -2407,11 +2407,12 @@ void SelectionDAGLowering::visitBinary(User &I, unsigned OpCode) {
 void SelectionDAGLowering::visitShift(User &I, unsigned Opcode) {
   SDValue Op1 = getValue(I.getOperand(0));
   SDValue Op2 = getValue(I.getOperand(1));
-  
-  if (TLI.getShiftAmountTy().bitsLT(Op2.getValueType()))
-    Op2 = DAG.getNode(ISD::TRUNCATE, TLI.getShiftAmountTy(), Op2);
-  else if (TLI.getShiftAmountTy().bitsGT(Op2.getValueType()))
-    Op2 = DAG.getNode(ISD::ANY_EXTEND, TLI.getShiftAmountTy(), Op2);
+  if (!isa<VectorType>(I.getType())) {
+    if (TLI.getShiftAmountTy().bitsLT(Op2.getValueType()))
+      Op2 = DAG.getNode(ISD::TRUNCATE, TLI.getShiftAmountTy(), Op2);
+    else if (TLI.getShiftAmountTy().bitsGT(Op2.getValueType()))
+      Op2 = DAG.getNode(ISD::ANY_EXTEND, TLI.getShiftAmountTy(), Op2);
+  }
   
   setValue(&I, DAG.getNode(Opcode, Op1.getValueType(), Op1, Op2));
 }

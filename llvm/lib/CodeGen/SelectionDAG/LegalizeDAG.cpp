@@ -2958,7 +2958,17 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       Tmp2 = PromoteOp(Node->getOperand(1));  // Promote the RHS.
       break;
     }
-    
+
+    if ((Node->getOpcode() == ISD::SHL ||
+         Node->getOpcode() == ISD::SRL ||
+         Node->getOpcode() == ISD::SRA) &&
+        !Node->getValueType(0).isVector()) {
+      if (TLI.getShiftAmountTy().bitsLT(Tmp2.getValueType()))
+        Tmp2 = DAG.getNode(ISD::TRUNCATE, TLI.getShiftAmountTy(), Tmp2);
+      else if (TLI.getShiftAmountTy().bitsGT(Tmp2.getValueType()))
+        Tmp2 = DAG.getNode(ISD::ANY_EXTEND, TLI.getShiftAmountTy(), Tmp2);
+    }
+
     Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2);
       
     switch (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0))) {
@@ -2966,8 +2976,11 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     case TargetLowering::Legal: break;
     case TargetLowering::Custom:
       Tmp1 = TLI.LowerOperation(Result, DAG);
-      if (Tmp1.Val) Result = Tmp1;
-      break;
+      if (Tmp1.Val) {
+        Result = Tmp1;
+        break;
+      }
+      // Fall through if the custom lower can't deal with the operation
     case TargetLowering::Expand: {
       MVT VT = Op.getValueType();
  

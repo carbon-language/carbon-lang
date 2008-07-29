@@ -973,8 +973,10 @@ void Verifier::visitBinaryOperator(BinaryOperator &B) {
   case Instruction::Shl:
   case Instruction::LShr:
   case Instruction::AShr:
-    Assert1(B.getType()->isInteger(),
-            "Shift must return an integer result!", &B);
+    Assert1(B.getType()->isInteger() ||
+            (isa<VectorType>(B.getType()) && 
+             cast<VectorType>(B.getType())->getElementType()->isInteger()),
+            "Shifts only work with integral types!", &B);
     Assert1(B.getType() == B.getOperand(0)->getType(),
             "Shift return type must be same as operands!", &B);
     /* FALL THROUGH */
@@ -1041,9 +1043,13 @@ void Verifier::visitShuffleVectorInst(ShuffleVectorInst &SV) {
   // Check to see if Mask is valid.
   if (const ConstantVector *MV = dyn_cast<ConstantVector>(SV.getOperand(2))) {
     for (unsigned i = 0, e = MV->getNumOperands(); i != e; ++i) {
-      Assert1(isa<ConstantInt>(MV->getOperand(i)) ||
-              isa<UndefValue>(MV->getOperand(i)),
-              "Invalid shufflevector shuffle mask!", &SV);
+      if (ConstantInt* CI = dyn_cast<ConstantInt>(MV->getOperand(i))) {
+        Assert1(!CI->uge(MV->getNumOperands()*2),
+                "Invalid shufflevector shuffle mask!", &SV);
+      } else {
+        Assert1(isa<UndefValue>(MV->getOperand(i)),
+                "Invalid shufflevector shuffle mask!", &SV);
+      }
     }
   } else {
     Assert1(isa<UndefValue>(SV.getOperand(2)) || 

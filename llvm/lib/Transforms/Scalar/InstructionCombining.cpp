@@ -6368,7 +6368,8 @@ Instruction *InstCombiner::visitAShr(BinaryOperator &I) {
       return ReplaceInstUsesWith(I, CSI);
   
   // See if we can turn a signed shr into an unsigned shr.
-  if (MaskedValueIsZero(Op0, 
+  if (!isa<VectorType>(I.getType()) &&
+      MaskedValueIsZero(Op0,
                       APInt::getSignBit(I.getType()->getPrimitiveSizeInBits())))
     return BinaryOperator::CreateLShr(Op0, I.getOperand(1));
   

@@ -874,6 +874,7 @@ void LoadInst::setAlignment(unsigned Align) {
 //===----------------------------------------------------------------------===//
 
 void StoreInst::AssertOK() {
+  assert(getOperand(0) && getOperand(1) && "Both operands must be non-null!");
   assert(isa<PointerType>(getOperand(1)->getType()) &&
          "Ptr must have pointer type!");
   assert(getOperand(0)->getType() ==
@@ -1535,8 +1536,10 @@ void BinaryOperator::init(BinaryOps iType) {
   case AShr:
     assert(getType() == LHS->getType() &&
            "Shift operation should return same type as operands!");
-    assert(getType()->isInteger() && 
-           "Shift operation requires integer operands");
+    assert((getType()->isInteger() ||
+            (isa<VectorType>(getType()) && 
+             cast<VectorType>(getType())->getElementType()->isInteger())) &&
+           "Tried to create a shift operation on a non-integral type!");
     break;
   case And: case Or:
   case Xor:
