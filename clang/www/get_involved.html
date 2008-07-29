@@ -133,6 +133,12 @@ The former can be improved to scale better and be more efficient.  The later
 could also be faster and more efficient at reducing C-family programs if built
 on the clang preprocessor.</li>
 
+<li><b>Use clang libraries to extend Ragel with a JIT</b>: <a 
+href="http://research.cs.queensu.ca/~thurston/ragel/">Ragel</a> is a state
+machine compiler that lets you embed C code into state machines and generate
+C code.  It would be relatively easy to turn this into a JIT compiler using
+LLVM.</li>
+
 </ul>
 
 <p>If you hit a bug with clang, it is very useful for us if you reduce the code
