@@ -1240,12 +1240,6 @@ def : Pat<(and GR64:$src, i64immFFFFFFFF),
           (SUBREG_TO_REG (i64 0), 
             (i32 (EXTRACT_SUBREG GR64:$src, x86_subreg_32bit)),
             x86_subreg_32bit)>;
-// r & (2^16-1) ==> movz
-def : Pat<(and GR64:$src, 0xffff),
-          (MOVZX64rr16 (i16 (EXTRACT_SUBREG GR64:$src, x86_subreg_16bit)))>;
-// r & (2^8-1) ==> movz
-def : Pat<(and GR64:$src, 0xff),
-          (MOVZX64rr8 (i8 (EXTRACT_SUBREG GR64:$src, x86_subreg_8bit)))>;
 
 // (shl x, 1) ==> (add x, x)
 def : Pat<(shl GR64:$src1, (i8 1)), (ADD64rr GR64:$src1, GR64:$src1)>;

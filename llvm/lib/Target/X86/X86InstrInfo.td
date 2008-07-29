@@ -2763,16 +2763,6 @@ def : Pat<(i32 (and (loadi32 addr:$src), (i32 65535))),(MOVZX32rm16 addr:$src)>;
 // Some peepholes
 //===----------------------------------------------------------------------===//
 
-// r & (2^16-1) ==> movz
-def : Pat<(and GR32:$src1, 0xffff),
-           (MOVZX32rr16 (i16 (EXTRACT_SUBREG GR32:$src1, x86_subreg_16bit)))>;
-// r & (2^8-1) ==> movz
-def : Pat<(and GR32:$src1, 0xff),
-           (MOVZX32rr8 (i8 (EXTRACT_SUBREG GR32:$src1, x86_subreg_8bit)))>;
-// r & (2^8-1) ==> movz
-def : Pat<(and GR16:$src1, 0xff),
-           (MOVZX16rr8 (i8 (EXTRACT_SUBREG GR16:$src1, x86_subreg_8bit)))>;
-
 // (shl x, 1) ==> (add x, x)
 def : Pat<(shl GR8 :$src1, (i8 1)), (ADD8rr  GR8 :$src1, GR8 :$src1)>;
 def : Pat<(shl GR16:$src1, (i8 1)), (ADD16rr GR16:$src1, GR16:$src1)>;

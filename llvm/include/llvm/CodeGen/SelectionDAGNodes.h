@@ -377,8 +377,6 @@ namespace ISD {
     // extending the low 8 bits of a 32-bit register to fill the top 24 bits
     // with the 7th bit).  The size of the smaller type is indicated by the 1th
     // operand, a ValueType node.
-    // Note that there is intentionally no corresponding ZERO_EXTEND_INREG; an
-    // AND with an appropriate constant is used instead.
     SIGN_EXTEND_INREG,
 
     /// FP_TO_[US]INT - Convert a floating point value to a signed or unsigned
