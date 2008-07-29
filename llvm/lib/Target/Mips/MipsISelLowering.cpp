@@ -145,17 +145,17 @@ LowerOperation(SDValue Op, SelectionDAG &DAG)
 {
   switch (Op.getOpcode()) 
   {
+    case ISD::BRCOND:           return LowerBRCOND(Op, DAG);
     case ISD::CALL:             return LowerCALL(Op, DAG);
+    case ISD::ConstantPool:     return LowerConstantPool(Op, DAG);
     case ISD::FORMAL_ARGUMENTS: return LowerFORMAL_ARGUMENTS(Op, DAG);
-    case ISD::RET:              return LowerRET(Op, DAG);
     case ISD::GlobalAddress:    return LowerGlobalAddress(Op, DAG);
     case ISD::GlobalTLSAddress: return LowerGlobalTLSAddress(Op, DAG);
     case ISD::JumpTable:        return LowerJumpTable(Op, DAG);
-    case ISD::ConstantPool:     return LowerConstantPool(Op, DAG);
+    case ISD::RET:              return LowerRET(Op, DAG);
     case ISD::SELECT:           return LowerSELECT(Op, DAG);
     case ISD::SELECT_CC:        return LowerSELECT_CC(Op, DAG);
     case ISD::SETCC:            return LowerSETCC(Op, DAG);
-    case ISD::BRCOND:           return LowerBRCOND(Op, DAG);
   }
   return SDValue();
 }
@@ -342,6 +342,7 @@ MipsTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
 //===----------------------------------------------------------------------===//
 //  Misc Lower Operation implementation
 //===----------------------------------------------------------------------===//
+
 SDValue MipsTargetLowering::
 LowerBRCOND(SDValue Op, SelectionDAG &DAG)
 {
@@ -379,48 +380,6 @@ LowerSETCC(SDValue Op, SelectionDAG &DAG)
   
   return DAG.getNode(MipsISD::FPCmp, Op.getValueType(), LHS, RHS, 
                  DAG.getConstant(FPCondCCodeToFCC(CC), MVT::i32));
-}
-
-SDValue MipsTargetLowering::
-LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) 
-{
-  GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
-  SDValue GA = DAG.getTargetGlobalAddress(GV, MVT::i32);
-
-  if (!Subtarget->hasABICall()) {
-    if (isa<Function>(GV)) return GA;
-    const MVT *VTs = DAG.getNodeValueTypes(MVT::i32);
-    SDValue Ops[] = { GA };
-
-    if (IsGlobalInSmallSection(GV)) { // %gp_rel relocation
-      SDValue GPRelNode = DAG.getNode(MipsISD::GPRel, VTs, 1, Ops, 1);
-      SDValue GOT = DAG.getNode(ISD::GLOBAL_OFFSET_TABLE, MVT::i32);
-      return DAG.getNode(ISD::ADD, MVT::i32, GOT, GPRelNode); 
-    }
-    // %hi/%lo relocation
-    SDValue HiPart = DAG.getNode(MipsISD::Hi, VTs, 1, Ops, 1);
-    SDValue Lo = DAG.getNode(MipsISD::Lo, MVT::i32, GA);
-    return DAG.getNode(ISD::ADD, MVT::i32, HiPart, Lo);
-
-  } else { // Abicall relocations, TODO: make this cleaner.
-    SDValue ResNode = DAG.getLoad(MVT::i32, DAG.getEntryNode(), GA, NULL, 0);
-    // On functions and global targets not internal linked only
-    // a load from got/GP is necessary for PIC to work.
-    if (!GV->hasInternalLinkage() || isa<Function>(GV))
-      return ResNode;
-    SDValue Lo = DAG.getNode(MipsISD::Lo, MVT::i32, GA);
-    return DAG.getNode(ISD::ADD, MVT::i32, ResNode, Lo);
-  }
-
-  assert(0 && "Dont know how to handle GlobalAddress");
-  return SDValue(0,0);
-}
-
-SDValue MipsTargetLowering::
-LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG)
-{
-  assert(0 && "TLS not implemented for MIPS.");
-  return SDValue(); // Not reached
 }
 
 SDValue MipsTargetLowering::
@@ -463,6 +422,48 @@ LowerSELECT_CC(SDValue Op, SelectionDAG &DAG)
   SDValue SetCCRes = DAG.getNode(ISD::SETCC, LHS.getValueType(), LHS, RHS, CC);
   return DAG.getNode(MipsISD::SelectCC, True.getValueType(), 
                      SetCCRes, True, False);
+}
+
+SDValue MipsTargetLowering::
+LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) 
+{
+  GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
+  SDValue GA = DAG.getTargetGlobalAddress(GV, MVT::i32);
+
+  if (!Subtarget->hasABICall()) {
+    if (isa<Function>(GV)) return GA;
+    const MVT *VTs = DAG.getNodeValueTypes(MVT::i32);
+    SDValue Ops[] = { GA };
+
+    if (IsGlobalInSmallSection(GV)) { // %gp_rel relocation
+      SDValue GPRelNode = DAG.getNode(MipsISD::GPRel, VTs, 1, Ops, 1);
+      SDValue GOT = DAG.getNode(ISD::GLOBAL_OFFSET_TABLE, MVT::i32);
+      return DAG.getNode(ISD::ADD, MVT::i32, GOT, GPRelNode); 
+    }
+    // %hi/%lo relocation
+    SDValue HiPart = DAG.getNode(MipsISD::Hi, VTs, 1, Ops, 1);
+    SDValue Lo = DAG.getNode(MipsISD::Lo, MVT::i32, GA);
+    return DAG.getNode(ISD::ADD, MVT::i32, HiPart, Lo);
+
+  } else { // Abicall relocations, TODO: make this cleaner.
+    SDValue ResNode = DAG.getLoad(MVT::i32, DAG.getEntryNode(), GA, NULL, 0);
+    // On functions and global targets not internal linked only
+    // a load from got/GP is necessary for PIC to work.
+    if (!GV->hasInternalLinkage() || isa<Function>(GV))
+      return ResNode;
+    SDValue Lo = DAG.getNode(MipsISD::Lo, MVT::i32, GA);
+    return DAG.getNode(ISD::ADD, MVT::i32, ResNode, Lo);
+  }
+
+  assert(0 && "Dont know how to handle GlobalAddress");
+  return SDValue(0,0);
+}
+
+SDValue MipsTargetLowering::
+LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG)
+{
+  assert(0 && "TLS not implemented for MIPS.");
+  return SDValue(); // Not reached
 }
 
 SDValue MipsTargetLowering::
