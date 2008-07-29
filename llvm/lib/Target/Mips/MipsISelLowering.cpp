@@ -41,15 +41,16 @@ getTargetNodeName(unsigned Opcode) const
 {
   switch (Opcode) 
   {
-    case MipsISD::JmpLink   : return "MipsISD::JmpLink";
-    case MipsISD::Hi        : return "MipsISD::Hi";
-    case MipsISD::Lo        : return "MipsISD::Lo";
-    case MipsISD::GPRel     : return "MipsISD::GPRel";
-    case MipsISD::Ret       : return "MipsISD::Ret";
-    case MipsISD::SelectCC  : return "MipsISD::SelectCC";
-    case MipsISD::FPBrcond  : return "MipsISD::FPBrcond";
-    case MipsISD::FPCmp     : return "MipsISD::FPCmp";
-    default                 : return NULL;
+    case MipsISD::JmpLink    : return "MipsISD::JmpLink";
+    case MipsISD::Hi         : return "MipsISD::Hi";
+    case MipsISD::Lo         : return "MipsISD::Lo";
+    case MipsISD::GPRel      : return "MipsISD::GPRel";
+    case MipsISD::Ret        : return "MipsISD::Ret";
+    case MipsISD::SelectCC   : return "MipsISD::SelectCC";
+    case MipsISD::FPSelectCC : return "MipsISD::FPSelectCC";
+    case MipsISD::FPBrcond   : return "MipsISD::FPBrcond";
+    case MipsISD::FPCmp      : return "MipsISD::FPCmp";
+    default                  : return NULL;
   }
 }
 
@@ -87,8 +88,9 @@ MipsTargetLowering(MipsTargetMachine &TM): TargetLowering(TM)
   setOperationAction(ISD::RET,              MVT::Other, Custom);
   setOperationAction(ISD::JumpTable,        MVT::i32,   Custom);
   setOperationAction(ISD::ConstantPool,     MVT::i32,   Custom);
+  setOperationAction(ISD::SELECT,           MVT::f32,   Custom);
+  setOperationAction(ISD::SELECT,           MVT::i32,   Custom);
   setOperationAction(ISD::SELECT_CC,        MVT::i32,   Custom);
-  setOperationAction(ISD::SELECT_CC,        MVT::f32,   Custom);
   setOperationAction(ISD::SETCC,            MVT::f32,   Custom);
   setOperationAction(ISD::BRCOND,           MVT::Other, Custom);
 
@@ -96,7 +98,6 @@ MipsTargetLowering(MipsTargetMachine &TM): TargetLowering(TM)
   setOperationAction(ISD::BR_JT,             MVT::Other, Expand);
   setOperationAction(ISD::BR_CC,             MVT::Other, Expand);
   setOperationAction(ISD::SELECT_CC,         MVT::Other, Expand);
-  setOperationAction(ISD::SELECT,            MVT::i32,   Expand);
   setOperationAction(ISD::UINT_TO_FP,        MVT::i32,   Expand);
   setOperationAction(ISD::FP_TO_UINT,        MVT::i32,   Expand);
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1,    Expand);
@@ -151,75 +152,12 @@ LowerOperation(SDValue Op, SelectionDAG &DAG)
     case ISD::GlobalTLSAddress: return LowerGlobalTLSAddress(Op, DAG);
     case ISD::JumpTable:        return LowerJumpTable(Op, DAG);
     case ISD::ConstantPool:     return LowerConstantPool(Op, DAG);
+    case ISD::SELECT:           return LowerSELECT(Op, DAG);
     case ISD::SELECT_CC:        return LowerSELECT_CC(Op, DAG);
     case ISD::SETCC:            return LowerSETCC(Op, DAG);
     case ISD::BRCOND:           return LowerBRCOND(Op, DAG);
   }
   return SDValue();
-}
-
-MachineBasicBlock *
-MipsTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
-                                                MachineBasicBlock *BB) 
-{
-  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
-  switch (MI->getOpcode()) {
-  default: assert(false && "Unexpected instr type to insert");
-  case Mips::Select_CC: {
-    // To "insert" a SELECT_CC instruction, we actually have to insert the
-    // diamond control-flow pattern.  The incoming instruction knows the
-    // destination vreg to set, the condition code register to branch on, the
-    // true/false values to select between, and a branch opcode to use.
-    const BasicBlock *LLVM_BB = BB->getBasicBlock();
-    MachineFunction::iterator It = BB;
-    ++It;
-
-    //  thisMBB:
-    //  ...
-    //   TrueVal = ...
-    //   setcc r1, r2, r3
-    //   bNE   r1, r0, copy1MBB
-    //   fallthrough --> copy0MBB
-    MachineBasicBlock *thisMBB  = BB;
-    MachineFunction *F = BB->getParent();
-    MachineBasicBlock *copy0MBB = F->CreateMachineBasicBlock(LLVM_BB);
-    MachineBasicBlock *sinkMBB  = F->CreateMachineBasicBlock(LLVM_BB);
-    BuildMI(BB, TII->get(Mips::BNE)).addReg(MI->getOperand(1).getReg())
-      .addReg(Mips::ZERO).addMBB(sinkMBB);
-    F->insert(It, copy0MBB);
-    F->insert(It, sinkMBB);
-    // Update machine-CFG edges by first adding all successors of the current
-    // block to the new block which will contain the Phi node for the select.
-    for(MachineBasicBlock::succ_iterator i = BB->succ_begin(),
-        e = BB->succ_end(); i != e; ++i)
-      sinkMBB->addSuccessor(*i);
-    // Next, remove all successors of the current block, and add the true
-    // and fallthrough blocks as its successors.
-    while(!BB->succ_empty())
-      BB->removeSuccessor(BB->succ_begin());
-    BB->addSuccessor(copy0MBB);
-    BB->addSuccessor(sinkMBB);
-
-    //  copy0MBB:
-    //   %FalseValue = ...
-    //   # fallthrough to sinkMBB
-    BB = copy0MBB;
-
-    // Update machine-CFG edges
-    BB->addSuccessor(sinkMBB);
-
-    //  sinkMBB:
-    //   %Result = phi [ %FalseValue, copy0MBB ], [ %TrueValue, thisMBB ]
-    //  ...
-    BB = sinkMBB;
-    BuildMI(BB, TII->get(Mips::PHI), MI->getOperand(0).getReg())
-      .addReg(MI->getOperand(2).getReg()).addMBB(copy0MBB)
-      .addReg(MI->getOperand(3).getReg()).addMBB(thisMBB);
-
-    F->DeleteMachineInstr(MI);   // The pseudo instruction is gone now.
-    return BB;
-  }
-  }
 }
 
 //===----------------------------------------------------------------------===//
@@ -280,6 +218,16 @@ static Mips::FPBranchCode GetFPBranchCodeFromCond(Mips::CondCode CC) {
   return Mips::BRANCH_INVALID;
 }
   
+static unsigned FPBranchCodeToOpc(Mips::FPBranchCode BC) {
+  switch(BC) {
+    default:
+      assert(0 && "Unknown branch code");
+    case Mips::BRANCH_T  : return Mips::BC1T;
+    case Mips::BRANCH_F  : return Mips::BC1F;
+    case Mips::BRANCH_TL : return Mips::BC1TL;
+    case Mips::BRANCH_FL : return Mips::BC1FL;
+  }
+}
 
 static Mips::CondCode FPCondCCodeToFCC(ISD::CondCode CC) {
   switch (CC) {
@@ -304,6 +252,90 @@ static Mips::CondCode FPCondCCodeToFCC(ISD::CondCode CC) {
   case ISD::SETNE:  
   case ISD::SETONE: return Mips::FCOND_NEQ;
   case ISD::SETUEQ: return Mips::FCOND_UEQ;
+  }
+}
+
+MachineBasicBlock *
+MipsTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
+                                                MachineBasicBlock *BB) 
+{
+  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
+  bool isFPCmp = false;
+
+  switch (MI->getOpcode()) {
+  default: assert(false && "Unexpected instr type to insert");
+  case Mips::Select_FCC:
+  case Mips::Select_FCC_SO32:
+  case Mips::Select_FCC_AS32:
+  case Mips::Select_FCC_D32:
+    isFPCmp = true; // FALL THROUGH
+  case Mips::Select_CC:
+  case Mips::Select_CC_SO32:
+  case Mips::Select_CC_AS32:
+  case Mips::Select_CC_D32: {
+    // To "insert" a SELECT_CC instruction, we actually have to insert the
+    // diamond control-flow pattern.  The incoming instruction knows the
+    // destination vreg to set, the condition code register to branch on, the
+    // true/false values to select between, and a branch opcode to use.
+    const BasicBlock *LLVM_BB = BB->getBasicBlock();
+    MachineFunction::iterator It = BB;
+    ++It;
+
+    //  thisMBB:
+    //  ...
+    //   TrueVal = ...
+    //   setcc r1, r2, r3
+    //   bNE   r1, r0, copy1MBB
+    //   fallthrough --> copy0MBB
+    MachineBasicBlock *thisMBB  = BB;
+    MachineFunction *F = BB->getParent();
+    MachineBasicBlock *copy0MBB = F->CreateMachineBasicBlock(LLVM_BB);
+    MachineBasicBlock *sinkMBB  = F->CreateMachineBasicBlock(LLVM_BB);
+
+    // Emit the right instruction according to the type of the operands compared
+    if (isFPCmp) {
+      // Find the condiction code present in the setcc operation.
+      Mips::CondCode CC = (Mips::CondCode)MI->getOperand(4).getImm();
+      // Get the branch opcode from the branch code.
+      unsigned Opc = FPBranchCodeToOpc(GetFPBranchCodeFromCond(CC));
+      BuildMI(BB, TII->get(Opc)).addMBB(sinkMBB);
+    } else
+      BuildMI(BB, TII->get(Mips::BNE)).addReg(MI->getOperand(1).getReg())
+        .addReg(Mips::ZERO).addMBB(sinkMBB);
+
+    F->insert(It, copy0MBB);
+    F->insert(It, sinkMBB);
+    // Update machine-CFG edges by first adding all successors of the current
+    // block to the new block which will contain the Phi node for the select.
+    for(MachineBasicBlock::succ_iterator i = BB->succ_begin(),
+        e = BB->succ_end(); i != e; ++i)
+      sinkMBB->addSuccessor(*i);
+    // Next, remove all successors of the current block, and add the true
+    // and fallthrough blocks as its successors.
+    while(!BB->succ_empty())
+      BB->removeSuccessor(BB->succ_begin());
+    BB->addSuccessor(copy0MBB);
+    BB->addSuccessor(sinkMBB);
+
+    //  copy0MBB:
+    //   %FalseValue = ...
+    //   # fallthrough to sinkMBB
+    BB = copy0MBB;
+
+    // Update machine-CFG edges
+    BB->addSuccessor(sinkMBB);
+
+    //  sinkMBB:
+    //   %Result = phi [ %FalseValue, copy0MBB ], [ %TrueValue, thisMBB ]
+    //  ...
+    BB = sinkMBB;
+    BuildMI(BB, TII->get(Mips::PHI), MI->getOperand(0).getReg())
+      .addReg(MI->getOperand(2).getReg()).addMBB(copy0MBB)
+      .addReg(MI->getOperand(3).getReg()).addMBB(thisMBB);
+
+    F->DeleteMachineInstr(MI);   // The pseudo instruction is gone now.
+    return BB;
+  }
   }
 }
 
@@ -392,6 +424,34 @@ LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG)
 }
 
 SDValue MipsTargetLowering::
+LowerSELECT(SDValue Op, SelectionDAG &DAG) 
+{
+  SDValue Cond  = Op.getOperand(0); 
+  SDValue True  = Op.getOperand(1);
+  SDValue False = Op.getOperand(2);
+
+  // this can be a fp select but with a setcc comming from a 
+  // integer compare.
+  if (Cond.getOpcode() == ISD::SETCC)
+    if (Cond.getOperand(0).getValueType().isInteger())
+      return DAG.getNode(MipsISD::SelectCC, True.getValueType(), 
+                         Cond, True, False);
+
+  // Otherwise we're dealing with floating point compare.
+  SDValue CondRes;
+  if (Cond.getOpcode() == ISD::AND)
+    CondRes = Cond.getOperand(0);
+  else if (Cond.getOpcode() == MipsISD::FPCmp)
+    CondRes = Cond;
+  else
+    assert(0 && "Incoming condition flag unknown");
+  
+  SDValue CCNode = CondRes.getOperand(2);
+  return DAG.getNode(MipsISD::FPSelectCC, True.getValueType(), 
+                     CondRes, True, False, CCNode);
+}
+
+SDValue MipsTargetLowering::
 LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) 
 {
   SDValue LHS   = Op.getOperand(0); 
@@ -400,10 +460,7 @@ LowerSELECT_CC(SDValue Op, SelectionDAG &DAG)
   SDValue False = Op.getOperand(3);
   SDValue CC    = Op.getOperand(4);
 
-  const MVT *VTs = DAG.getNodeValueTypes(MVT::i32);
-  SDValue Ops[] = { LHS, RHS, CC };
-  SDValue SetCCRes = DAG.getNode(ISD::SETCC, VTs, 1, Ops, 3); 
-
+  SDValue SetCCRes = DAG.getNode(ISD::SETCC, LHS.getValueType(), LHS, RHS, CC);
   return DAG.getNode(MipsISD::SelectCC, True.getValueType(), 
                      SetCCRes, True, False);
 }

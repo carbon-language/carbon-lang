@@ -43,6 +43,9 @@ namespace llvm {
       // Select CC Pseudo Instruction
       SelectCC,
 
+      // Floating Point Select CC Pseudo Instruction
+      FPSelectCC,
+
       // Floating Point Branch Conditional
       FPBrcond,
 
@@ -95,6 +98,7 @@ namespace llvm {
     SDValue LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG);
     SDValue LowerJumpTable(SDValue Op, SelectionDAG &DAG);
     SDValue LowerConstantPool(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerSELECT(SDValue Op, SelectionDAG &DAG);
     SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG);
     SDValue LowerSETCC(SDValue Op, SelectionDAG &DAG);
     SDValue LowerBRCOND(SDValue Op, SelectionDAG &DAG);

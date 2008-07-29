@@ -19,8 +19,8 @@ include "MipsInstrFormats.td"
 
 def SDT_MipsRet          : SDTypeProfile<0, 1, [SDTCisInt<0>]>;
 def SDT_MipsJmpLink      : SDTypeProfile<0, 1, [SDTCisVT<0, iPTR>]>;
-def SDT_MipsSelectCC     : SDTypeProfile<1, 3, [SDTCisSameAs<0, 1>, 
-                                         SDTCisSameAs<1, 2>, SDTCisInt<3>]>;
+def SDT_MipsSelectCC     : SDTypeProfile<1, 3, [SDTCisSameAs<0, 2>, 
+                                         SDTCisSameAs<2, 3>, SDTCisInt<1>]>;
 def SDT_MipsCallSeqStart : SDCallSeqStart<[SDTCisVT<0, i32>]>;
 def SDT_MipsCallSeqEnd   : SDCallSeqEnd<[SDTCisVT<0, i32>, SDTCisVT<1, i32>]>;
 
@@ -383,11 +383,12 @@ def CPRESTORE : MipsPseudo<(outs), (ins uimm16:$loc), ".cprestore\t$loc\n", []>;
 // (MipsSelectCC), use LowerSELECT_CC to generate this instruction and finally 
 // replace it for real supported nodes into EmitInstrWithCustomInserter
 let usesCustomDAGSchedInserter = 1 in {
-  def Select_CC : MipsPseudo<(outs CPURegs:$dst), 
-    (ins CPURegs:$CmpRes, CPURegs:$T, CPURegs:$F), "# MipsSelect_CC", 
-    [(set CPURegs:$dst, (MipsSelectCC CPURegs:$CmpRes, 
-                                      CPURegs:$T, CPURegs:$F))]>;
+  class PseudoSelCC<RegisterClass RC, string asmstr>: 
+    MipsPseudo<(outs RC:$dst), (ins CPURegs:$CmpRes, RC:$T, RC:$F), asmstr, 
+    [(set RC:$dst, (MipsSelectCC CPURegs:$CmpRes, RC:$T, RC:$F))]>;
 }
+
+def Select_CC : PseudoSelCC<CPURegs, "# MipsSelect_CC_i32">;
 
 //===----------------------------------------------------------------------===//
 // Instruction definition

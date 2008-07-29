@@ -28,9 +28,12 @@ def SDT_MipsFPBrcond : SDTypeProfile<0, 3, [SDTCisSameAs<0, 2>, SDTCisInt<0>,
                                      SDTCisVT<1, OtherVT>]>;
 def SDT_MipsFPCmp : SDTypeProfile<0, 3, [SDTCisSameAs<0, 1>, SDTCisFP<0>, 
                                   SDTCisInt<2>]>;
+def SDT_MipsFPSelectCC : SDTypeProfile<1, 4, [SDTCisInt<1>, SDTCisInt<4>,
+                                  SDTCisSameAs<0, 2>, SDTCisSameAs<2, 3>]>;
 def MipsFPBrcond : SDNode<"MipsISD::FPBrcond", SDT_MipsFPBrcond, 
                           [SDNPHasChain]>; 
-def MipsFPCmp    : SDNode<"MipsISD::FPCmp", SDT_MipsFPCmp>;
+def MipsFPCmp : SDNode<"MipsISD::FPCmp", SDT_MipsFPCmp>;
+def MipsFPSelectCC : SDNode<"MipsISD::FPSelectCC", SDT_MipsFPSelectCC>;
 
 // Operand for printing out a condition code.
 let PrintMethod = "printFCCOperand" in
@@ -283,6 +286,40 @@ let hasDelaySlot = 1, Defs=[FCR31] in {
       "c.$cc.d $fs, $ft", [(MipsFPCmp AFGR64:$fs, AFGR64:$ft, imm:$cc),
       (implicit FCR31)]>, Requires<[In32BitMode]>;
 }
+
+//===----------------------------------------------------------------------===//
+// Floating Point Pseudo-Instructions
+//===----------------------------------------------------------------------===//
+
+// For some explanation, see Select_CC at MipsInstrInfo.td. We also embedd a 
+// condiciton code to enable easy handling by the Custom Inserter.
+let usesCustomDAGSchedInserter = 1, Uses=[FCR31] in {
+  class PseudoFPSelCC<RegisterClass RC, string asmstr> : 
+    MipsPseudo<(outs RC:$dst), 
+               (ins CPURegs:$CmpRes, RC:$T, RC:$F, condcode:$cc), asmstr, 
+               [(set RC:$dst, (MipsFPSelectCC CPURegs:$CmpRes, RC:$T, RC:$F,
+                 imm:$cc))]>;
+}
+
+// The values to be selected are fp but the condition test is with integers.
+def Select_CC_SO32  : PseudoSelCC<FGR32, "# MipsSelect_CC_SO32_f32">,
+                      Requires<[IsSingleFloat]>;
+def Select_CC_AS32  : PseudoSelCC<AFGR32, "# MipsSelect_CC_AS32_f32">,
+                      Requires<[In32BitMode]>;
+def Select_CC_D32   : PseudoSelCC<AFGR64, "# MipsSelect_CC_D32_f32">,
+                      Requires<[In32BitMode]>;
+
+// The values to be selected are int but the condition test is done with fp.
+def Select_FCC      : PseudoFPSelCC<CPURegs, "# MipsSelect_FCC">;
+
+// The values to be selected and the condition test is done with fp.
+def Select_FCC_SO32 : PseudoFPSelCC<FGR32, "# MipsSelect_FCC_SO32_f32">, 
+                      Requires<[IsSingleFloat]>;
+def Select_FCC_AS32 : PseudoFPSelCC<AFGR32, "# MipsSelect_FCC_AS32_f32">, 
+                      Requires<[In32BitMode]>;
+def Select_FCC_D32  : PseudoFPSelCC<AFGR64, "# MipsSelect_FCC_D32_f32">, 
+                      Requires<[In32BitMode]>;
+
 
 //===----------------------------------------------------------------------===//
 // Floating Point Patterns
