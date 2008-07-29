@@ -786,21 +786,29 @@ void StrongPHIElimination::mergeLiveIntervals(unsigned primary,
   LiveInterval& RHS = LI.getOrCreateInterval(secondary);
   
   LI.computeNumbering();
-  
   const LiveRange* RangeMergingIn =
                    RHS.getLiveRangeContaining(LI.getMBBEndIdx(pred));
+  VNInfo* RHSVN = RangeMergingIn->valno;
   VNInfo* NewVN = LHS.getNextValue(RangeMergingIn->valno->def,
                                    RangeMergingIn->valno->copy,
                                    LI.getVNInfoAllocator());
-  NewVN->hasPHIKill = true;
-  LiveRange NewRange(RangeMergingIn->start, RangeMergingIn->end, NewVN);
+                                   
+  for (LiveInterval::iterator RI = RHS.begin(), RE = RHS.end();
+       RI != RE; )
+    if (RI->valno == RHSVN) {
+      NewVN->hasPHIKill = true;
+      LiveRange NewRange(RI->start, RI->end, NewVN);
+      LHS.addRange(NewRange);
+      
+      unsigned start = RI->start;
+      unsigned end = RI->end;
+      ++RI;
+      RHS.removeRange(start, end, true);
+    } else
+      ++RI;
   
-  if (RHS.containsOneValue())
+  if (RHS.begin() == RHS.end())
     LI.removeInterval(RHS.reg);
-  else
-    RHS.removeRange(RangeMergingIn->start, RangeMergingIn->end, true);
-  
-  LHS.addRange(NewRange);
 }
 
 bool StrongPHIElimination::runOnMachineFunction(MachineFunction &Fn) {
