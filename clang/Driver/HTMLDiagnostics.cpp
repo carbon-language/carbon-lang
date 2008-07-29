@@ -420,8 +420,8 @@ void HTMLDiagnostics::HighlightRange(Rewriter& R, unsigned BugFileID,
   if (EndLineNo < StartLineNo)
     return;
   
-  if (!SM.getCanonicalFileID(LogicalStart) != BugFileID ||
-      !SM.getCanonicalFileID(LogicalEnd) != BugFileID)
+  if (SM.getCanonicalFileID(LogicalStart) != BugFileID ||
+      SM.getCanonicalFileID(LogicalEnd) != BugFileID)
     return;
     
   // Compute the column number of the end.
