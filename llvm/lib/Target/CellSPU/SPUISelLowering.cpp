@@ -2481,8 +2481,9 @@ LowerByteImmed(SDValue Op, SelectionDAG &DAG) {
                          DAG.getNode(ISD::BUILD_VECTOR, VT, tcVec, tcVecSize));
     }
   }
-
-  return SDValue();
+  // These operations (AND, OR, XOR) are legal, they just couldn't be custom
+  // lowered.  Return the operation, rather than a null SDValue.
+  return Op;
 }
 
 //! Lower i32 multiplication
