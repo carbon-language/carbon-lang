@@ -144,8 +144,7 @@ void LiveIntervals::computeNumbering() {
                   std::lower_bound(OldI2MBB.begin(), OldI2MBB.end(), LI->start);
           // Take the pair containing the index
           std::vector<IdxMBBPair>::const_iterator J =
-                    ((I != OldI2MBB.end() && I->first > index) ||
-                    (I == OldI2MBB.end() && OldI2MBB.size()>0)) ? (I-1): I;
+                    (I == OldI2MBB.end() && OldI2MBB.size()>0) ? (I-1): I;
           
           LI->start = getMBBStartIdx(J->second);
         } else {
@@ -162,8 +161,7 @@ void LiveIntervals::computeNumbering() {
                   std::lower_bound(OldI2MBB.begin(), OldI2MBB.end(), LI->end);
           // Take the pair containing the index
           std::vector<IdxMBBPair>::const_iterator J =
-                    ((I != OldI2MBB.end() && I->first > index) ||
-                    (I == OldI2MBB.end() && OldI2MBB.size()>0)) ? (I-1): I;
+                    (I == OldI2MBB.end() && OldI2MBB.size()>0) ? (I-1): I;
           
           LI->end = getMBBEndIdx(J->second) + 1;
         } else {
@@ -186,8 +184,7 @@ void LiveIntervals::computeNumbering() {
                   std::lower_bound(OldI2MBB.begin(), OldI2MBB.end(), vni->def);
           // Take the pair containing the index
           std::vector<IdxMBBPair>::const_iterator J =
-                    ((I != OldI2MBB.end() && I->first > index) ||
-                    (I == OldI2MBB.end() && OldI2MBB.size()>0)) ? (I-1): I;
+                    (I == OldI2MBB.end() && OldI2MBB.size()>0) ? (I-1): I;
           
           vni->def = getMBBStartIdx(J->second);
           
@@ -205,8 +202,7 @@ void LiveIntervals::computeNumbering() {
              std::lower_bound(OldI2MBB.begin(), OldI2MBB.end(), vni->kills[i]);
             // Take the pair containing the index
             std::vector<IdxMBBPair>::const_iterator J =
-                      ((I != OldI2MBB.end() && I->first > index) ||
-                      (I == OldI2MBB.end() && OldI2MBB.size()>0)) ? (I-1): I;
+                      (I == OldI2MBB.end() && OldI2MBB.size()>0) ? (I-1): I;
 
             vni->kills[i] = getMBBEndIdx(J->second) + 1;
           } else {
