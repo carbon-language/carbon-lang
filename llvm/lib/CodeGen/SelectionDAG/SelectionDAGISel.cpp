@@ -2928,9 +2928,7 @@ void SelectionDAGLowering::visitLoad(LoadInst &I) {
 
 void SelectionDAGLowering::visitStore(StoreInst &I) {
   Value *SrcV = I.getOperand(0);
-  SDValue Src = getValue(SrcV);
   Value *PtrV = I.getOperand(1);
-  SDValue Ptr = getValue(PtrV);
 
   SmallVector<MVT, 4> ValueVTs;
   SmallVector<uint64_t, 4> Offsets;
@@ -2938,6 +2936,12 @@ void SelectionDAGLowering::visitStore(StoreInst &I) {
   unsigned NumValues = ValueVTs.size();
   if (NumValues == 0)
     return;
+
+  // Get the lowered operands. Note that we do this after
+  // checking if NumResults is zero, because with zero results
+  // the operands won't have values in the map.
+  SDValue Src = getValue(SrcV);
+  SDValue Ptr = getValue(PtrV);
 
   SDValue Root = getRoot();
   SmallVector<SDValue, 4> Chains(NumValues);
