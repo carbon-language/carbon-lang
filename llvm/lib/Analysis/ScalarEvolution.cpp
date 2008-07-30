@@ -1976,8 +1976,8 @@ SCEVHandle ScalarEvolutionsImpl::ComputeIterationCount(const Loop *L) {
     break;
   }
   case ICmpInst::ICMP_SGT: {
-    SCEVHandle TC = HowManyLessThans(SE.getNegativeSCEV(LHS),
-                                     SE.getNegativeSCEV(RHS), L, true);
+    SCEVHandle TC = HowManyLessThans(SE.getNotSCEV(LHS),
+                                     SE.getNotSCEV(RHS), L, true);
     if (!isa<SCEVCouldNotCompute>(TC)) return TC;
     break;
   }
@@ -2724,7 +2724,11 @@ bool ScalarEvolutionsImpl::executesAtLeastOnce(const Loop *L, bool isSigned,
 
   if (!PreCondLHS->getType()->isInteger()) return false;
 
-  return LHS == getSCEV(PreCondLHS) && RHS == getSCEV(PreCondRHS);
+  SCEVHandle PreCondLHSSCEV = getSCEV(PreCondLHS);
+  SCEVHandle PreCondRHSSCEV = getSCEV(PreCondRHS);
+  return (LHS == PreCondLHSSCEV && RHS == PreCondRHSSCEV) ||
+         (LHS == SE.getNotSCEV(PreCondRHSSCEV) &&
+          RHS == SE.getNotSCEV(PreCondLHSSCEV));
 }
 
 /// HowManyLessThans - Return the number of times a backedge containing the
