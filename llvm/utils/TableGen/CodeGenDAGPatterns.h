@@ -182,13 +182,14 @@ public:
   
   bool isLeaf() const { return Val != 0; }
   bool hasTypeSet() const {
-    return (Types[0] < MVT::LAST_VALUETYPE) || (Types[0] == MVT::iPTR);
+    return (Types[0] < MVT::LAST_VALUETYPE) || (Types[0] == MVT::iPTR) || 
+          (Types[0] == MVT::iPTRAny);
   }
   bool isTypeCompletelyUnknown() const {
     return Types[0] == EMVT::isUnknown;
   }
   bool isTypeDynamicallyResolved() const {
-    return Types[0] == MVT::iPTR;
+    return (Types[0] == MVT::iPTR) || (Types[0] == MVT::iPTRAny);
   }
   MVT::SimpleValueType getTypeNum(unsigned Num) const {
     assert(hasTypeSet() && "Doesn't have a type yet!");

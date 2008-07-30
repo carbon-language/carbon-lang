@@ -56,7 +56,8 @@ static unsigned getPatternSize(TreePatternNode *P, CodeGenDAGPatterns &CGP) {
           EMVT::isExtFloatingPointInVTs(P->getExtTypes()) ||
           P->getExtTypeNum(0) == MVT::isVoid ||
           P->getExtTypeNum(0) == MVT::Flag ||
-          P->getExtTypeNum(0) == MVT::iPTR) && 
+          P->getExtTypeNum(0) == MVT::iPTR ||
+          P->getExtTypeNum(0) == MVT::iPTRAny) && 
          "Not a valid pattern node to size!");
   unsigned Size = 3;  // The node itself.
   // If the root node is a ConstantSDNode, increases its size.
@@ -1828,6 +1829,8 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
       std::string OpVTStr;
       if (OpVT == MVT::iPTR) {
         OpVTStr = "_iPTR";
+      } else if (OpVT == MVT::iPTRAny) {
+        OpVTStr = "_iPTRAny";
       } else if (OpVT == MVT::isVoid) {
         // Nodes with a void result actually have a first result type of either
         // Other (a chain) or Flag.  Since there is no one-to-one mapping from

@@ -162,6 +162,14 @@ static void EmitTypeGenerate(std::ostream &OS, Record *ArgType,
     OS << "PointerType::getUnqual(";
     EmitTypeGenerate(OS, ArgType->getValueAsDef("ElTy"), ArgNo);
     OS << ")";
+  } else if (VT == MVT::iPTRAny) {
+    // Make sure the user has passed us an argument type to overload. If not,
+    // treat it as an ordinary (not overloaded) intrinsic.
+    OS << "(" << ArgNo << " < numTys) ? Tys[" << ArgNo 
+    << "] : PointerType::getUnqual(";
+    EmitTypeGenerate(OS, ArgType->getValueAsDef("ElTy"), ArgNo);
+    OS << ")";
+    ++ArgNo;
   } else if (VT == MVT::isVoid) {
     if (ArgNo == 0)
       OS << "Type::VoidTy";

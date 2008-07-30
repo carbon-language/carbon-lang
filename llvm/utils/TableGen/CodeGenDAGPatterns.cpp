@@ -443,8 +443,8 @@ bool TreePatternNode::UpdateNodeType(const std::vector<unsigned char> &ExtVTs,
     return true;
   }
 
-  if (getExtTypeNum(0) == MVT::iPTR) {
-    if (ExtVTs[0] == MVT::iPTR || ExtVTs[0] == EMVT::isInt)
+  if (getExtTypeNum(0) == MVT::iPTR || getExtTypeNum(0) == MVT::iPTRAny) {
+    if (ExtVTs[0] == MVT::iPTR || ExtVTs[0] == MVT::iPTRAny || ExtVTs[0] == EMVT::isInt)
       return false;
     if (EMVT::isExtIntegerInVTs(ExtVTs)) {
       std::vector<unsigned char> FVTs = FilterEVTs(ExtVTs, isInteger);
@@ -463,7 +463,8 @@ bool TreePatternNode::UpdateNodeType(const std::vector<unsigned char> &ExtVTs,
     setTypes(FVTs);
     return true;
   }
-  if (ExtVTs[0] == MVT::iPTR && EMVT::isExtIntegerInVTs(getExtTypes())) {
+  if ((ExtVTs[0] == MVT::iPTR || ExtVTs[0] == MVT::iPTRAny) &&
+      EMVT::isExtIntegerInVTs(getExtTypes())) {
     //assert(hasTypeSet() && "should be handled above!");
     std::vector<unsigned char> FVTs = FilterEVTs(getExtTypes(), isInteger);
     if (getExtTypes() == FVTs)
@@ -495,7 +496,8 @@ bool TreePatternNode::UpdateNodeType(const std::vector<unsigned char> &ExtVTs,
     setTypes(ExtVTs);
     return true;
   }
-  if (getExtTypeNum(0) == EMVT::isInt && ExtVTs[0] == MVT::iPTR) {
+  if (getExtTypeNum(0) == EMVT::isInt &&
+      (ExtVTs[0] == MVT::iPTR || ExtVTs[0] == MVT::iPTRAny)) {
     setTypes(ExtVTs);
     return true;
   }
@@ -527,6 +529,7 @@ void TreePatternNode::print(std::ostream &OS) const {
   case EMVT::isFP : OS << ":isFP"; break;
   case EMVT::isUnknown: ; /*OS << ":?";*/ break;
   case MVT::iPTR:  OS << ":iPTR"; break;
+  case MVT::iPTRAny:  OS << ":iPTRAny"; break;
   default: {
     std::string VTName = llvm::getName(getTypeNum(0));
     // Strip off MVT:: prefix if present.
@@ -781,7 +784,7 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
           assert(getTypeNum(i) == VT && "TreePattern has too many types!");
         
         VT = getTypeNum(0);
-        if (VT != MVT::iPTR) {
+        if (VT != MVT::iPTR && VT != MVT::iPTRAny) {
           unsigned Size = MVT(VT).getSizeInBits();
           // Make sure that the value is representable for this type.
           if (Size < 32) {

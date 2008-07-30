@@ -1327,7 +1327,6 @@ void Verifier::VerifyIntrinsicPrototype(Intrinsic::ID ID,
                                         unsigned Count, ...) {
   va_list VA;
   va_start(VA, Count);
-  
   const FunctionType *FTy = F->getFunctionType();
   
   // For overloaded intrinsics, the Suffix of the function name must match the
@@ -1423,6 +1422,21 @@ void Verifier::VerifyIntrinsicPrototype(Intrinsic::ID ID,
         else
           CheckFailed("Intrinsic parameter #" + utostr(ArgNo-1) + " is not a "
                       "pointer and a pointer is required.", F);
+      }        
+    } else if (VT == MVT::iPTRAny) {
+      // Outside of TableGen, we don't distinguish iPTRAny (to any address
+      // space) and iPTR. In the verifier, we can not distinguish which case
+      // we have so allow either case to be legal.
+      if (const PointerType* PTyp = dyn_cast<PointerType>(Ty)) {
+        Suffix += ".p" + utostr(PTyp->getAddressSpace()) + 
+        MVT::getMVT(PTyp->getElementType()).getMVTString();
+      } else {
+        if (ArgNo == 0)
+          CheckFailed("Intrinsic result type is not a "
+                      "pointer and a pointer is required.", F);
+        else
+          CheckFailed("Intrinsic parameter #" + utostr(ArgNo-1) + " is not a "
+                      "pointer and a pointer is required.", F);
         break;
       }
     } else if (MVT((MVT::SimpleValueType)VT).isVector()) {
@@ -1456,17 +1470,21 @@ void Verifier::VerifyIntrinsicPrototype(Intrinsic::ID ID,
 
   va_end(VA);
 
-  // If we computed a Suffix then the intrinsic is overloaded and we need to 
-  // make sure that the name of the function is correct. We add the suffix to
-  // the name of the intrinsic and compare against the given function name. If
-  // they are not the same, the function name is invalid. This ensures that
-  // overloading of intrinsics uses a sane and consistent naming convention.
+  // For intrinsics without pointer arguments, if we computed a Suffix then the
+  // intrinsic is overloaded and we need to make sure that the name of the
+  // function is correct. We add the suffix to the name of the intrinsic and
+  // compare against the given function name. If they are not the same, the
+  // function name is invalid. This ensures that overloading of intrinsics
+  // uses a sane and consistent naming convention.  Note that intrinsics with
+  // pointer argument may or may not be overloaded so we will check assuming it
+  // has a suffix and not.
   if (!Suffix.empty()) {
     std::string Name(Intrinsic::getName(ID));
-    if (Name + Suffix != F->getName())
+    if (Name + Suffix != F->getName()) {
       CheckFailed("Overloaded intrinsic has incorrect suffix: '" +
                   F->getName().substr(Name.length()) + "'. It should be '" +
                   Suffix + "'", F);
+    }
   }
 
   // Check parameter attributes.

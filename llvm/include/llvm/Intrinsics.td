@@ -64,6 +64,11 @@ class LLVMPointerType<LLVMType elty>
   LLVMType ElTy = elty;
 } 
 
+class LLVMAnyPointerType<LLVMType elty>
+  : LLVMType<iPTRAny>{
+  LLVMType ElTy = elty;
+} 
+
 class LLVMMatchType<int num>
   : LLVMType<OtherVT>{
   int Number = num;
@@ -84,6 +89,7 @@ def llvm_f128_ty       : LLVMType<f128>;
 def llvm_ppcf128_ty    : LLVMType<ppcf128>;
 def llvm_ptr_ty        : LLVMPointerType<llvm_i8_ty>;             // i8*
 def llvm_ptrptr_ty     : LLVMPointerType<llvm_ptr_ty>;            // i8**
+def llvm_anyptr_ty     : LLVMPointerType<llvm_i8_ty>;             // (space)i8*
 def llvm_empty_ty      : LLVMType<OtherVT>;                       // { }
 def llvm_descriptor_ty : LLVMPointerType<llvm_empty_ty>;          // { }*
 
@@ -271,62 +277,62 @@ def int_memory_barrier : Intrinsic<[llvm_void_ty, llvm_i1_ty, llvm_i1_ty,
                                     llvm_i1_ty, llvm_i1_ty, llvm_i1_ty], []>;
 
 def int_atomic_cmp_swap : Intrinsic<[llvm_anyint_ty,
-                                  LLVMPointerType<LLVMMatchType<0>>,
+                                  LLVMAnyPointerType<LLVMMatchType<0>>,
                                   LLVMMatchType<0>, LLVMMatchType<0>],
                                  [IntrWriteArgMem]>,
                            GCCBuiltin<"__sync_val_compare_and_swap">;
 def int_atomic_load_add : Intrinsic<[llvm_anyint_ty,
-                                  LLVMPointerType<LLVMMatchType<0>>,
+                                  LLVMAnyPointerType<LLVMMatchType<0>>,
                                   LLVMMatchType<0>],
                                  [IntrWriteArgMem]>,
                            GCCBuiltin<"__sync_fetch_and_add">;
 def int_atomic_swap     : Intrinsic<[llvm_anyint_ty,
-                                  LLVMPointerType<LLVMMatchType<0>>,
+                                  LLVMAnyPointerType<LLVMMatchType<0>>,
                                   LLVMMatchType<0>],
                                 [IntrWriteArgMem]>,
                            GCCBuiltin<"__sync_lock_test_and_set">;
 def int_atomic_load_sub : Intrinsic<[llvm_anyint_ty,
-                                  LLVMPointerType<LLVMMatchType<0>>,
+                                  LLVMAnyPointerType<LLVMMatchType<0>>,
                                   LLVMMatchType<0>],
                                  [IntrWriteArgMem]>,
                            GCCBuiltin<"__sync_fetch_and_sub">;
 def int_atomic_load_and : Intrinsic<[llvm_anyint_ty,
-                                  LLVMPointerType<LLVMMatchType<0>>,
+                                  LLVMAnyPointerType<LLVMMatchType<0>>,
                                   LLVMMatchType<0>],
                                  [IntrWriteArgMem]>,
                            GCCBuiltin<"__sync_fetch_and_and">;
 def int_atomic_load_or   : Intrinsic<[llvm_anyint_ty,
-                                  LLVMPointerType<LLVMMatchType<0>>,
+                                  LLVMAnyPointerType<LLVMMatchType<0>>,
                                   LLVMMatchType<0>],
                                  [IntrWriteArgMem]>,
                            GCCBuiltin<"__sync_fetch_and_or">;
 def int_atomic_load_xor : Intrinsic<[llvm_anyint_ty,
-                                  LLVMPointerType<LLVMMatchType<0>>,
+                                  LLVMAnyPointerType<LLVMMatchType<0>>,
                                   LLVMMatchType<0>],
                                  [IntrWriteArgMem]>,
                            GCCBuiltin<"__sync_fetch_and_xor">;
 def int_atomic_load_nand : Intrinsic<[llvm_anyint_ty,
-                                  LLVMPointerType<LLVMMatchType<0>>,
+                                  LLVMAnyPointerType<LLVMMatchType<0>>,
                                   LLVMMatchType<0>],
                                  [IntrWriteArgMem]>,
                            GCCBuiltin<"__sync_fetch_and_nand">;
 def int_atomic_load_min  : Intrinsic<[llvm_anyint_ty,
-                                   LLVMPointerType<LLVMMatchType<0>>,
+                                   LLVMAnyPointerType<LLVMMatchType<0>>,
                                    LLVMMatchType<0>],
                                   [IntrWriteArgMem]>,
                            GCCBuiltin<"__sync_fetch_and_min">;
 def int_atomic_load_max  : Intrinsic<[llvm_anyint_ty,
-                                   LLVMPointerType<LLVMMatchType<0>>,
+                                   LLVMAnyPointerType<LLVMMatchType<0>>,
                                    LLVMMatchType<0>],
                                   [IntrWriteArgMem]>,
                            GCCBuiltin<"__sync_fetch_and_max">;
 def int_atomic_load_umin : Intrinsic<[llvm_anyint_ty,
-                                   LLVMPointerType<LLVMMatchType<0>>,
+                                   LLVMAnyPointerType<LLVMMatchType<0>>,
                                    LLVMMatchType<0>],
                                   [IntrWriteArgMem]>,
                            GCCBuiltin<"__sync_fetch_and_umin">;
 def int_atomic_load_umax : Intrinsic<[llvm_anyint_ty,
-                                   LLVMPointerType<LLVMMatchType<0>>,
+                                   LLVMAnyPointerType<LLVMMatchType<0>>,
                                    LLVMMatchType<0>],
                                   [IntrWriteArgMem]>,
                            GCCBuiltin<"__sync_fetch_and_umax">;

@@ -65,6 +65,7 @@ std::string llvm::getName(MVT::SimpleValueType T) {
   case MVT::v3i32: return "MVT::v3i32";
   case MVT::v3f32: return "MVT::v3f32";
   case MVT::iPTR:  return "TLI.getPointerTy()";
+  case MVT::iPTRAny:  return "TLI.getPointerTy()";
   default: assert(0 && "ILLEGAL VALUE TYPE!"); return "";
   }
 }
@@ -101,6 +102,7 @@ std::string llvm::getEnumName(MVT::SimpleValueType T) {
   case MVT::v3i32: return "MVT::v3i32";
   case MVT::v3f32: return "MVT::v3f32";
   case MVT::iPTR:  return "MVT::iPTR";
+  case MVT::iPTRAny:  return "MVT::iPTRAny";
   default: assert(0 && "ILLEGAL VALUE TYPE!"); return "";
   }
 }
@@ -459,7 +461,7 @@ CodeGenIntrinsic::CodeGenIntrinsic(Record *R) {
     Record *TyEl = TypeList->getElementAsRecord(i);
     assert(TyEl->isSubClassOf("LLVMType") && "Expected a type!");
     MVT::SimpleValueType VT = getValueType(TyEl->getValueAsDef("VT"));
-    isOverloaded |= VT == MVT::iAny || VT == MVT::fAny;
+    isOverloaded |= VT == MVT::iAny || VT == MVT::fAny || VT == MVT::iPTRAny;
     ArgVTs.push_back(VT);
     ArgTypeDefs.push_back(TyEl);
   }

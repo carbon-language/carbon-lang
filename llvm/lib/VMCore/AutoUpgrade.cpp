@@ -40,24 +40,38 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
   switch (Name[5]) {
   default: break;
   case 'a':
-    // This upgrades the llvm.atomic.lcs, llvm.atomic.las, and llvm.atomic.lss
-    // to their new function name
-    if (Name.compare(5,8,"atomic.l",8) == 0) {
+    // This upgrades the llvm.atomic.lcs, llvm.atomic.las, llvm.atomic.lss,
+    // and atomics with default address spaces to their new names to their new
+    // function name (e.g. llvm.atomic.add.i32 => llvm.atomic.add.i32.p0i32)
+    if (Name.compare(5,7,"atomic.",7) == 0) {
       if (Name.compare(12,3,"lcs",3) == 0) {
         std::string::size_type delim = Name.find('.',12);
-        F->setName("llvm.atomic.cmp.swap"+Name.substr(delim));
+        F->setName("llvm.atomic.cmp.swap" + Name.substr(delim) +
+                   ".p0" + Name.substr(delim+1));
         NewFn = F;
         return true;
       }
       else if (Name.compare(12,3,"las",3) == 0) {
         std::string::size_type delim = Name.find('.',12);
-        F->setName("llvm.atomic.load.add"+Name.substr(delim));
+        F->setName("llvm.atomic.load.add"+Name.substr(delim)
+                   + ".p0" + Name.substr(delim+1));
         NewFn = F;
         return true;
       }
       else if (Name.compare(12,3,"lss",3) == 0) {
         std::string::size_type delim = Name.find('.',12);
-        F->setName("llvm.atomic.load.sub"+Name.substr(delim));
+        F->setName("llvm.atomic.load.sub"+Name.substr(delim)
+                   + ".p0" + Name.substr(delim+1));
+        NewFn = F;
+        return true;
+      }
+      else if (Name.rfind(".p") == std::string::npos) {
+        // We don't have an address space qualifier so this has be upgraded
+        // to the new name.  Copy the type name at the end of the intrinsic
+        // and add to it
+        std::string::size_type delim = Name.find_last_of('.');
+        assert(delim != std::string::npos && "can not find type");
+        F->setName(Name + ".p0" + Name.substr(delim+1));
         NewFn = F;
         return true;
       }

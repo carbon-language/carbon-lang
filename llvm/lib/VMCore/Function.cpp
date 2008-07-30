@@ -328,9 +328,14 @@ std::string Intrinsic::getName(ID id, const Type **Tys, unsigned numTys) {
   if (numTys == 0)
     return Table[id];
   std::string Result(Table[id]);
-  for (unsigned i = 0; i < numTys; ++i) 
-    if (Tys[i])
+  for (unsigned i = 0; i < numTys; ++i) {
+    if (const PointerType* PTyp = dyn_cast<PointerType>(Tys[i])) {
+      Result += ".p" + llvm::utostr(PTyp->getAddressSpace()) + 
+                MVT::getMVT(PTyp->getElementType()).getMVTString();
+    }
+    else if (Tys[i])
       Result += "." + MVT::getMVT(Tys[i]).getMVTString();
+  }
   return Result;
 }
 

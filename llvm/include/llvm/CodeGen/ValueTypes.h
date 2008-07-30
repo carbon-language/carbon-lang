@@ -70,6 +70,11 @@ namespace llvm {
 
       LAST_VALUETYPE =  27,   // This always remains at the end of the list.
 
+      // iPTRAny - An int value the size of the pointer of the current
+      // target to any address space. This must only be used internal to
+      // tblgen. Other than for overloading, we treat iPTRAny the same as iPTR.
+      iPTRAny        =  252,
+
       // fAny - Any floating-point or vector floating-point value. This is used
       // for intrinsics that have overloadings based on floating-point types.
       // This is only for tblgen's consumption!
