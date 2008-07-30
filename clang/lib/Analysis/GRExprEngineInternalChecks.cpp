@@ -181,7 +181,21 @@ public:
                           "Address of stack-allocated variable returned.") {}
   
   virtual void EmitBuiltinWarnings(BugReporter& BR, GRExprEngine& Eng) {
-    Emit(BR, Eng.ret_stackaddr_begin(), Eng.ret_stackaddr_end());
+    for (GRExprEngine::ret_stackaddr_iterator I=Eng.ret_stackaddr_begin(),
+         End = Eng.ret_stackaddr_end(); I!=End; ++I) {
+      
+      // Generate a report for this bug.
+      RangedBugReport report(*this, *I);
+      
+      ExplodedNode<ValueState>* N = *I;
+      Stmt *S = cast<PostStmt>(N->getLocation()).getStmt();
+      Expr* E = cast<ReturnStmt>(S)->getRetValue();
+      assert (E && "Return expression cannot be NULL");
+      report.addRange(E->getSourceRange());
+      
+      // Emit the warning.
+      BR.EmitWarning(report);
+    }
   }
 };
 
@@ -193,12 +207,11 @@ class VISIBILITY_HIDDEN UndefBranch : public BuiltinBug {
     
     FindUndefExpr(ValueStateManager& V, const ValueState* S) : VM(V), St(S) {}
     
-    Expr* FindExpr(Expr* Ex) {
-      
+    Expr* FindExpr(Expr* Ex) {      
       if (!MatchesCriteria(Ex))
-        return 0;    
+        return 0;
       
-      for (Stmt::child_iterator I=Ex->child_begin(), E=Ex->child_end(); I!=E; ++I)
+      for (Stmt::child_iterator I=Ex->child_begin(), E=Ex->child_end();I!=E;++I)
         if (Expr* ExI = dyn_cast_or_null<Expr>(*I)) {
           Expr* E2 = FindExpr(ExI);
           if (E2) return E2;
