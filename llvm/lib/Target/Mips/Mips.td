@@ -49,6 +49,16 @@ def FeatureVFPU        : SubtargetFeature<"vfpu", "HasVFPU",
                                 "true", "Enable vector FPU instructions.">;
 def FeatureSEInReg     : SubtargetFeature<"seinreg", "HasSEInReg", "true", 
                                 "Enable 'signext in register' instructions.">;
+def FeatureCondMov     : SubtargetFeature<"condmov", "HasCondMov", "true", 
+                                "Enable 'conditional move' instructions.">;
+def FeatureMulDivAdd   : SubtargetFeature<"muldivadd", "HasMulDivAdd", "true",
+                                "Enable 'multiply add/sub' instructions.">;
+def FeatureMinMax      : SubtargetFeature<"minmax", "HasMinMax", "true",
+                                "Enable 'min/max' instructions.">;
+def FeatureSwap        : SubtargetFeature<"swap", "HasSwap", "true",
+                                "Enable 'byte/half swap' instructions.">;
+def FeatureBitCount    : SubtargetFeature<"bitcount", "HasBitCount", "true",
+                                "Enable 'count leading bits' instructions.">;
 
 //===----------------------------------------------------------------------===//
 // Mips processors supported.
@@ -65,9 +75,11 @@ def : Proc<"mips2", [FeatureMips2]>;
 def : Proc<"r6000", [FeatureMips2]>;
 
 // Allegrex is a 32bit subset of r4000, both for interger and fp registers, 
-// but much more similar to Mips2 than Mips3. 
+// but much more similar to Mips2 than Mips3. It also contains some of 
+// Mips32/Mips32r2 instructions and a custom vector fpu processor. 
 def : Proc<"allegrex", [FeatureMips2, FeatureSingleFloat, FeatureEABI, 
-                        FeatureSEInReg, FeatureVFPU]>;
+      FeatureVFPU, FeatureSEInReg, FeatureCondMov, FeatureMulDivAdd,
+      FeatureMinMax, FeatureSwap, FeatureBitCount]>;
 
 def Mips : Target {
   let InstructionSet = MipsInstrInfo;

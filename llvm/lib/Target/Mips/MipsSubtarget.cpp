@@ -29,8 +29,9 @@ cl::opt<unsigned> SSThreshold("mips-ssection-threshold", cl::Hidden,
 MipsSubtarget::MipsSubtarget(const TargetMachine &TM, const Module &M, 
                              const std::string &FS, bool little) : 
   MipsArchVersion(Mips1), MipsABI(O32), IsLittle(little), IsSingleFloat(false),
-  IsFP64bit(false), IsGP64bit(false), HasVFPU(false), HasSEInReg(false),
-  HasABICall(true), HasAbsoluteCall(false), IsLinux(true)
+  IsFP64bit(false), IsGP64bit(false), HasVFPU(false), HasABICall(true), 
+  HasAbsoluteCall(false), IsLinux(true), HasSEInReg(false), HasCondMov(false),
+  HasMulDivAdd(false), HasMinMax(false), HasSwap(false), HasBitCount(false)
 {
   std::string CPU = "mips1";
 

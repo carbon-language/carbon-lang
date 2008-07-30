@@ -58,9 +58,6 @@ protected:
   // HasVFPU - Processor has a vector floating point unit.
   bool HasVFPU;
 
-  // HasSEInReg - Target has SEB and SEH (signext in register) instructions.
-  bool HasSEInReg;
-
   // IsABICall - Enable SRV4 code for SVR4-style dynamic objects 
   bool HasABICall;
 
@@ -74,6 +71,27 @@ protected:
   // Put global and static items less than or equal to SSectionThreshold 
   // bytes into the small data or bss section. The default is 8.
   unsigned SSectionThreshold;
+
+  /// Features related to the presence of specific instructions.
+  
+  // HasSEInReg - SEB and SEH (signext in register) instructions.
+  bool HasSEInReg;
+
+  // HasCondMov - Conditional mov (MOVZ, MOVN) instructions.
+  bool HasCondMov;
+
+  // HasMulDivAdd - Multiply add and sub (MADD, MADDu, MSUB, MSUBu) 
+  // instructions.
+  bool HasMulDivAdd;
+
+  // HasMinMax - MIN and MAX instructions.
+  bool HasMinMax;
+
+  // HasSwap - Byte and half swap instructions.
+  bool HasSwap;
+
+  // HasBitCount - Count leading '1' and '0' bits.
+  bool HasBitCount;
 
   InstrItineraryData InstrItins;
 
@@ -102,12 +120,18 @@ public:
   bool isSingleFloat() const { return IsSingleFloat; };
   bool isNotSingleFloat() const { return !IsSingleFloat; };
   bool hasVFPU() const { return HasVFPU; };
-  bool hasSEInReg() const { return HasSEInReg; };
   bool hasABICall() const { return HasABICall; };
   bool hasAbsoluteCall() const { return HasAbsoluteCall; };
   bool isLinux() const { return IsLinux; };
   unsigned getSSectionThreshold() const { return SSectionThreshold; }
 
+  /// Features related to the presence of specific instructions.
+  bool hasSEInReg()   const { return HasSEInReg; };
+  bool hasCondMov()   const { return HasCondMov; };
+  bool hasMulDivAdd() const { return HasMulDivAdd; };
+  bool hasMinMax()    const { return HasMinMax; };
+  bool hasSwap()      const { return HasSwap; };
+  bool hasBitCount()  const { return HasBitCount; };
 };
 } // End llvm namespace
 
