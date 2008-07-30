@@ -1,6 +1,6 @@
 ; RUN: llvm-as < %s | llc -march=x86-64 > %t
 ; RUN: grep movb %t | count 2
-; RUN: grep movzbw %t
+; RUN: grep {movzb\[wl\]} %t
 
 
 define void @handle_vector_size_attribute() {
