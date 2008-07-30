@@ -252,6 +252,11 @@ void SelectionDAG::viewGraph(const std::string &Title) {
 #endif  // NDEBUG
 }
 
+// This overload is defined out-of-line here instead of just using a
+// default parameter because this is easiest for gdb to call.
+void SelectionDAG::viewGraph() {
+  viewGraph("");
+}
 
 /// clearGraphAttrs - Clear all previously defined node graph attributes.
 /// Intended to be used from a debugging tool (eg. gdb).
