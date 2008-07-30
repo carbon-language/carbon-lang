@@ -426,11 +426,6 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
   // Here we iterate over the fields; this makes it simpler to both
   // default-initialize fields and skip over unnamed fields.
   for (unsigned CurFieldNo = 0; CurFieldNo != NumMembers; ++CurFieldNo) {
-    if (CurInitVal >= NumInitElements) {
-      // No more initializers; we're done.
-      break;
-    }
-    
     FieldDecl *CurField = SD->getMember(CurFieldNo);
     if (CurField->getIdentifier() == 0) {
       // Initializers can't initialize unnamed fields, e.g. "int : 20;"
