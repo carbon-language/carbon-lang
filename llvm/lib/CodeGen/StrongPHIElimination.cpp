@@ -792,20 +792,49 @@ void StrongPHIElimination::mergeLiveIntervals(unsigned primary,
   VNInfo* NewVN = LHS.getNextValue(RangeMergingIn->valno->def,
                                    RangeMergingIn->valno->copy,
                                    LI.getVNInfoAllocator());
-                                   
-  for (LiveInterval::iterator RI = RHS.begin(), RE = RHS.end();
-       RI != RE; )
-    if (RI->valno == RHSVN) {
-      NewVN->hasPHIKill = true;
-      LiveRange NewRange(RI->start, RI->end, NewVN);
-      LHS.addRange(NewRange);
+
+  // If we discover that a live range was defined by a two-addr
+  // instruction, we need to merge over the input as well, even if
+  // it has a different VNInfo.
+  SmallPtrSet<VNInfo*, 4> MergedVNs;
+  MergedVNs.insert(RHSVN);
+  
+  DenseMap<VNInfo*, VNInfo*> VNMap;
+  VNMap.insert(std::make_pair(RangeMergingIn->valno, NewVN));
+  
+  bool changed = true;
+  while (changed) {
+    changed = false;
+    for (LiveInterval::iterator RI = RHS.begin(), RE = RHS.end();
+        RI != RE; )
+      if (MergedVNs.count(RI->valno)) {
+        NewVN->hasPHIKill = true;
+        LiveRange NewRange(RI->start, RI->end, VNMap[RI->valno]);
+        LHS.addRange(NewRange);
       
-      unsigned start = RI->start;
-      unsigned end = RI->end;
-      ++RI;
-      RHS.removeRange(start, end, true);
-    } else
-      ++RI;
+        MachineInstr* instr = LI.getInstructionFromIndex(RI->start);
+        for (unsigned i = 0; i < instr->getNumOperands(); ++i) {
+          if (instr->getOperand(i).isReg() &&
+              instr->getOperand(i).getReg() == secondary)
+            if (instr->isRegReDefinedByTwoAddr(secondary, i)) {
+              VNInfo* twoaddr = RHS.getLiveRangeContaining(RI->start-1)->valno;
+              MergedVNs.insert(twoaddr);
+              
+              VNInfo* NextVN = LHS.getNextValue(twoaddr->def,
+                                                twoaddr->copy,
+                                                LI.getVNInfoAllocator());
+              VNMap.insert(std::make_pair(twoaddr, NextVN));
+            }
+        }
+      
+        unsigned start = RI->start;
+        unsigned end = RI->end;
+        ++RI;
+        RHS.removeRange(start, end, true);
+        changed = true;
+      } else
+        ++RI;
+  }
   
   if (RHS.begin() == RHS.end())
     LI.removeInterval(RHS.reg);
