@@ -1789,10 +1789,10 @@ SCEVHandle ScalarEvolutionsImpl::createSCEV(Value *V) {
         if (LHS == U->getOperand(1) && RHS == U->getOperand(2))
           return SE.getSMaxExpr(getSCEV(LHS), getSCEV(RHS));
         else if (LHS == U->getOperand(2) && RHS == U->getOperand(1))
-          // -smax(-x, -y) == smin(x, y).
-          return SE.getNegativeSCEV(SE.getSMaxExpr(
-                                        SE.getNegativeSCEV(getSCEV(LHS)),
-                                        SE.getNegativeSCEV(getSCEV(RHS))));
+          // ~smax(~x, ~y) == smin(x, y).
+          return SE.getNotSCEV(SE.getSMaxExpr(
+                                   SE.getNotSCEV(getSCEV(LHS)),
+                                   SE.getNotSCEV(getSCEV(RHS))));
         break;
       case ICmpInst::ICMP_ULT:
       case ICmpInst::ICMP_ULE:
