@@ -802,38 +802,39 @@ void StrongPHIElimination::mergeLiveIntervals(unsigned primary,
   DenseMap<VNInfo*, VNInfo*> VNMap;
   VNMap.insert(std::make_pair(RangeMergingIn->valno, NewVN));
   
-  bool changed = true;
-  while (changed) {
-    changed = false;
-    for (LiveInterval::iterator RI = RHS.begin(), RE = RHS.end();
-        RI != RE; )
-      if (MergedVNs.count(RI->valno)) {
-        NewVN->hasPHIKill = true;
-        LiveRange NewRange(RI->start, RI->end, VNMap[RI->valno]);
-        LHS.addRange(NewRange);
+  // Find all VNs that are the inputs to two-address instructiosn
+  // chaining upwards from the VN we're trying to merge.
+  bool addedVN = true;
+  while (addedVN) {
+    addedVN = false;
+    unsigned defIndex = RHSVN->def;
+    
+    if (defIndex != ~0U) {
+      MachineInstr* instr = LI.getInstructionFromIndex(defIndex);
       
-        MachineInstr* instr = LI.getInstructionFromIndex(RI->start);
-        for (unsigned i = 0; i < instr->getNumOperands(); ++i) {
-          if (instr->getOperand(i).isReg() &&
-              instr->getOperand(i).getReg() == secondary)
-            if (instr->isRegReDefinedByTwoAddr(secondary, i)) {
-              VNInfo* twoaddr = RHS.getLiveRangeContaining(RI->start-1)->valno;
-              MergedVNs.insert(twoaddr);
-              
-              VNInfo* NextVN = LHS.getNextValue(twoaddr->def,
-                                                twoaddr->copy,
-                                                LI.getVNInfoAllocator());
-              VNMap.insert(std::make_pair(twoaddr, NextVN));
-            }
-        }
-      
-        unsigned start = RI->start;
-        unsigned end = RI->end;
-        ++RI;
-        RHS.removeRange(start, end, true);
-        changed = true;
-      } else
-        ++RI;
+      for (unsigned i = 0; i < instr->getNumOperands(); ++i) {
+        if (instr->getOperand(i).isReg() &&
+            instr->getOperand(i).getReg() == secondary)
+          if (instr->isRegReDefinedByTwoAddr(secondary, i)) {
+            RHSVN = RHS.getLiveRangeContaining(defIndex-1)->valno;
+            addedVN = true;
+            
+            VNInfo* NextVN = LHS.getNextValue(RHSVN->def,
+                                              RHSVN->copy,
+                                              LI.getVNInfoAllocator());
+            VNMap.insert(std::make_pair(RHSVN, NextVN));
+            
+            break;
+          }
+      }
+    }
+  }
+  
+  // Merge VNs from RHS into LHS using the mapping we computed above.
+  for (DenseMap<VNInfo*, VNInfo*>::iterator VI = VNMap.begin(),
+       VE = VNMap.end(); VI != VE; ++VI) {
+    LHS.MergeValueInAsValue(RHS, VI->first, VI->second);
+    RHS.removeValNo(VI->first);
   }
   
   if (RHS.begin() == RHS.end())
