@@ -194,13 +194,13 @@ let fd = 0 in {
                   "mfc1 $rt, $fs", []>;
 
   def MTC1  : FFR<0x11, 0x00, 0x04, (outs FGR32:$fs), (ins CPURegs:$rt),
-                  "mtc1 $fs, $rt", []>;
+                  "mtc1 $rt, $fs", []>;
 
   def MFC1A : FFR<0x11, 0x00, 0x00, (outs CPURegs:$rt), (ins AFGR32:$fs),
                   "mfc1 $rt, $fs", []>;
 
   def MTC1A : FFR<0x11, 0x00, 0x04, (outs AFGR32:$fs), (ins CPURegs:$rt),
-                  "mtc1 $fs, $rt", []>;
+                  "mtc1 $rt, $fs", []>;
 }
 
 /// Floating Point Memory Instructions
@@ -324,8 +324,18 @@ def Select_FCC_D32  : PseudoFPSelCC<AFGR64, "# MipsSelect_FCC_D32_f32">,
 //===----------------------------------------------------------------------===//
 // Floating Point Patterns
 //===----------------------------------------------------------------------===//
+def fpimm0 : PatLeaf<(fpimm), [{
+  return N->isExactlyValue(+0.0);
+}]>;
+
+def : Pat<(f32 fpimm0), (MTC1 ZERO)>, Requires<[IsSingleFloat]>;
+def : Pat<(f32 fpimm0), (MTC1A ZERO)>, Requires<[In32BitMode]>;
+
 def : Pat<(f32 (sint_to_fp CPURegs:$src)), (CVTS_W32 (MTC1 CPURegs:$src))>;
 def : Pat<(f64 (sint_to_fp CPURegs:$src)), (CVTD_W32 (MTC1 CPURegs:$src))>;
-def : Pat<(i32 (fp_to_sint FGR32:$src)), (MFC1 (TRUNC_W_SO32 FGR32:$src))>;
-def : Pat<(i32 (fp_to_sint AFGR32:$src)), (MFC1 (TRUNC_W_AS32 AFGR32:$src))>;
 
+def : Pat<(i32 (fp_to_sint FGR32:$src)), (MFC1 (TRUNC_W_SO32 FGR32:$src))>;
+def : Pat<(i32 (fp_to_sint AFGR32:$src)), (MFC1A (TRUNC_W_AS32 AFGR32:$src))>;
+
+def : Pat<(i32 (bitconvert FGR32:$src)),  (MFC1 FGR32:$src)>;
+def : Pat<(i32 (bitconvert AFGR32:$src)), (MFC1A AFGR32:$src)>;

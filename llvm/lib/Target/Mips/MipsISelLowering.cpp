@@ -77,6 +77,9 @@ MipsTargetLowering(MipsTargetMachine &TM): TargetLowering(TM)
   } else 
     addRegisterClass(MVT::f32, Mips::FGR32RegisterClass);
 
+  // Legal fp constants
+  addLegalFPImmediate(APFloat(+0.0f));
+
   // Load extented operations for i1 types must be promoted 
   setLoadXAction(ISD::EXTLOAD,  MVT::i1,  Promote);
   setLoadXAction(ISD::ZEXTLOAD, MVT::i1,  Promote);
