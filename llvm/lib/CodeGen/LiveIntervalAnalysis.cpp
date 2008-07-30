@@ -176,19 +176,22 @@ void LiveIntervals::computeNumbering() {
         // Remap the VNInfo def index, which works the same as the
         // start indices above.
         VNInfo* vni = LI->valno;
-        index = vni->def / InstrSlots::NUM;
-        offset = vni->def % InstrSlots::NUM;
-        if (offset == InstrSlots::LOAD) {
-          std::vector<IdxMBBPair>::const_iterator I =
+        
+        // VN's with special sentinel defs don't need to be remapped.
+        if (vni->def != ~0U && vni->def != ~1U) {
+          index = vni->def / InstrSlots::NUM;
+          offset = vni->def % InstrSlots::NUM;
+          if (offset == InstrSlots::LOAD) {
+            std::vector<IdxMBBPair>::const_iterator I =
                   std::lower_bound(OldI2MBB.begin(), OldI2MBB.end(), vni->def);
-          // Take the pair containing the index
-          std::vector<IdxMBBPair>::const_iterator J =
+            // Take the pair containing the index
+            std::vector<IdxMBBPair>::const_iterator J =
                     (I == OldI2MBB.end() && OldI2MBB.size()>0) ? (I-1): I;
           
-          vni->def = getMBBStartIdx(J->second);
-          
-        } else {
-          vni->def = mi2iMap_[OldI2MI[index]] + offset;
+            vni->def = getMBBStartIdx(J->second);
+          } else {
+            vni->def = mi2iMap_[OldI2MI[index]] + offset;
+          }
         }
         
         // Remap the VNInfo kill indices, which works the same as
@@ -207,7 +210,6 @@ void LiveIntervals::computeNumbering() {
             vni->kills[i] = getMBBEndIdx(I->second) + 1;
           } else {
             unsigned idx = index;
-            while (!OldI2MI[index]) ++index;
             while (index < OldI2MI.size() && !OldI2MI[index]) ++index;
             
             if (index != OldI2MI.size())
