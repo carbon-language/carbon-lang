@@ -241,18 +241,22 @@ def MOVSX64rm32: RI<0x63, MRMSrcMem, (outs GR64:$dst), (ins i32mem:$src),
                     "movs{lq|xd}\t{$src, $dst|$dst, $src}",
                     [(set GR64:$dst, (sextloadi64i32 addr:$src))]>;
 
-def MOVZX64rr8 : RI<0xB6, MRMSrcReg, (outs GR64:$dst), (ins GR8 :$src),
-                    "movz{bq|x}\t{$src, $dst|$dst, $src}",
-                    [(set GR64:$dst, (zext GR8:$src))]>, TB;
-def MOVZX64rm8 : RI<0xB6, MRMSrcMem, (outs GR64:$dst), (ins i8mem :$src),
-                    "movz{bq|x}\t{$src, $dst|$dst, $src}",
-                    [(set GR64:$dst, (zextloadi64i8 addr:$src))]>, TB;
-def MOVZX64rr16: RI<0xB7, MRMSrcReg, (outs GR64:$dst), (ins GR16:$src),
-                    "movz{wq|x}\t{$src, $dst|$dst, $src}",
-                    [(set GR64:$dst, (zext GR16:$src))]>, TB;
-def MOVZX64rm16: RI<0xB7, MRMSrcMem, (outs GR64:$dst), (ins i16mem:$src),
-                    "movz{wq|x}\t{$src, $dst|$dst, $src}",
-                    [(set GR64:$dst, (zextloadi64i16 addr:$src))]>, TB;
+// Use movzbl instead of movzbq when the destination is a register; it's
+// equivalent due to implicit zero-extending, and it has a smaller encoding.
+def MOVZX64rr8 : I<0xB6, MRMSrcReg, (outs GR64:$dst), (ins GR8 :$src),
+                   "movz{bl|x}\t{$src, ${dst:subreg32}|${dst:subreg32}, $src}",
+                   [(set GR64:$dst, (zext GR8:$src))]>, TB;
+def MOVZX64rm8 : I<0xB6, MRMSrcMem, (outs GR64:$dst), (ins i8mem :$src),
+                   "movz{bl|x}\t{$src, ${dst:subreg32}|${dst:subreg32}, $src}",
+                   [(set GR64:$dst, (zextloadi64i8 addr:$src))]>, TB;
+// Use movzwl instead of movzwq when the destination is a register; it's
+// equivalent due to implicit zero-extending, and it has a smaller encoding.
+def MOVZX64rr16: I<0xB7, MRMSrcReg, (outs GR64:$dst), (ins GR16:$src),
+                   "movz{wl|x}\t{$src, ${dst:subreg32}|${dst:subreg32}, $src}",
+                   [(set GR64:$dst, (zext GR16:$src))]>, TB;
+def MOVZX64rm16: I<0xB7, MRMSrcMem, (outs GR64:$dst), (ins i16mem:$src),
+                   "movz{wl|x}\t{$src, ${dst:subreg32}|${dst:subreg32}, $src}",
+                   [(set GR64:$dst, (zextloadi64i16 addr:$src))]>, TB;
 
 let neverHasSideEffects = 1 in {
   let Defs = [RAX], Uses = [EAX] in
@@ -1093,9 +1097,9 @@ def Int_CVTTSS2SI64rm: RSSI<0x2C, MRMSrcMem, (outs GR64:$dst), (ins f32mem:$src)
 // when we have a better way to specify isel priority.
 let Defs = [EFLAGS], AddedComplexity = 1,
     isReMaterializable = 1, isAsCheapAsAMove = 1 in
-def MOV64r0  : RI<0x31, MRMInitReg,  (outs GR64:$dst), (ins),
-                 "xor{l}\t${dst:subreg32}, ${dst:subreg32}",
-                 [(set GR64:$dst, 0)]>;
+def MOV64r0  : I<0x31, MRMInitReg,  (outs GR64:$dst), (ins),
+                "xor{l}\t${dst:subreg32}, ${dst:subreg32}",
+                [(set GR64:$dst, 0)]>;
 
 // Materialize i64 constant where top 32-bits are zero.
 let AddedComplexity = 1, isReMaterializable = 1 in
@@ -1240,6 +1244,26 @@ def : Pat<(and GR64:$src, i64immFFFFFFFF),
           (SUBREG_TO_REG (i64 0), 
             (i32 (EXTRACT_SUBREG GR64:$src, x86_subreg_32bit)),
             x86_subreg_32bit)>;
+// r & (2^16-1) ==> movz
+def : Pat<(and GR64:$src, 0xffff),
+          (MOVZX64rr16 (i16 (EXTRACT_SUBREG GR64:$src, x86_subreg_16bit)))>;
+// r & (2^8-1) ==> movz
+def : Pat<(and GR64:$src, 0xff),
+          (MOVZX64rr8 (i8 (EXTRACT_SUBREG GR64:$src, x86_subreg_8bit)))>;
+
+// TODO: The following two patterns could be adapted to apply to x86-32, except
+// that they'll need some way to deal with the fact that in x86-32 not all GPRs
+// have 8-bit subregs. The GR32_ and GR16_ classes are a step in this direction,
+// but they aren't ready for this purpose yet.
+
+// r & (2^8-1) ==> movz
+def : Pat<(and GR32:$src1, 0xff),
+           (MOVZX32rr8 (i8 (EXTRACT_SUBREG GR32:$src1, x86_subreg_8bit)))>,
+      Requires<[In64BitMode]>;
+// r & (2^8-1) ==> movz
+def : Pat<(and GR16:$src1, 0xff),
+           (MOVZX16rr8 (i8 (EXTRACT_SUBREG GR16:$src1, x86_subreg_8bit)))>,
+      Requires<[In64BitMode]>;
 
 // (shl x, 1) ==> (add x, x)
 def : Pat<(shl GR64:$src1, (i8 1)), (ADD64rr GR64:$src1, GR64:$src1)>;

@@ -2424,12 +2424,15 @@ def CMP32ri8 : Ii8<0x83, MRM7r,
 } // Defs = [EFLAGS]
 
 // Sign/Zero extenders
+// Use movsbl intead of movsbw; we don't care about the high 16 bits
+// of the register here. This has a smaller encoding and avoids a
+// partial-register update.
 def MOVSX16rr8 : I<0xBE, MRMSrcReg, (outs GR16:$dst), (ins GR8 :$src),
-                   "movs{bw|x}\t{$src, $dst|$dst, $src}",
-                   [(set GR16:$dst, (sext GR8:$src))]>, TB, OpSize;
+                   "movs{bl|x}\t{$src, ${dst:subreg32}|${dst:subreg32}, $src}",
+                   [(set GR16:$dst, (sext GR8:$src))]>, TB;
 def MOVSX16rm8 : I<0xBE, MRMSrcMem, (outs GR16:$dst), (ins i8mem :$src),
-                   "movs{bw|x}\t{$src, $dst|$dst, $src}",
-                   [(set GR16:$dst, (sextloadi16i8 addr:$src))]>, TB, OpSize;
+                   "movs{bl|x}\t{$src, ${dst:subreg32}|${dst:subreg32}, $src}",
+                   [(set GR16:$dst, (sextloadi16i8 addr:$src))]>, TB;
 def MOVSX32rr8 : I<0xBE, MRMSrcReg, (outs GR32:$dst), (ins GR8 :$src),
                    "movs{bl|x}\t{$src, $dst|$dst, $src}",
                    [(set GR32:$dst, (sext GR8:$src))]>, TB;
@@ -2443,12 +2446,15 @@ def MOVSX32rm16: I<0xBF, MRMSrcMem, (outs GR32:$dst), (ins i16mem:$src),
                    "movs{wl|x}\t{$src, $dst|$dst, $src}",
                    [(set GR32:$dst, (sextloadi32i16 addr:$src))]>, TB;
 
+// Use movzbl intead of movzbw; we don't care about the high 16 bits
+// of the register here. This has a smaller encoding and avoids a
+// partial-register update.
 def MOVZX16rr8 : I<0xB6, MRMSrcReg, (outs GR16:$dst), (ins GR8 :$src),
-                   "movz{bw|x}\t{$src, $dst|$dst, $src}",
-                   [(set GR16:$dst, (zext GR8:$src))]>, TB, OpSize;
+                   "movz{bl|x}\t{$src, ${dst:subreg32}|${dst:subreg32}, $src}",
+                   [(set GR16:$dst, (zext GR8:$src))]>, TB;
 def MOVZX16rm8 : I<0xB6, MRMSrcMem, (outs GR16:$dst), (ins i8mem :$src),
-                   "movz{bw|x}\t{$src, $dst|$dst, $src}",
-                   [(set GR16:$dst, (zextloadi16i8 addr:$src))]>, TB, OpSize;
+                   "movz{bl|x}\t{$src, ${dst:subreg32}|${dst:subreg32}, $src}",
+                   [(set GR16:$dst, (zextloadi16i8 addr:$src))]>, TB;
 def MOVZX32rr8 : I<0xB6, MRMSrcReg, (outs GR32:$dst), (ins GR8 :$src),
                    "movz{bl|x}\t{$src, $dst|$dst, $src}",
                    [(set GR32:$dst, (zext GR8:$src))]>, TB;
@@ -2488,9 +2494,11 @@ let Defs = [EFLAGS], isReMaterializable = 1, isAsCheapAsAMove = 1 in {
 def MOV8r0   : I<0x30, MRMInitReg, (outs GR8 :$dst), (ins),
                  "xor{b}\t$dst, $dst",
                  [(set GR8:$dst, 0)]>;
+// Use xorl instead of xorw since we don't care about the high 16 bits,
+// it's smaller, and it avoids a partial-register update.
 def MOV16r0  : I<0x31, MRMInitReg,  (outs GR16:$dst), (ins),
-                 "xor{w}\t$dst, $dst",
-                 [(set GR16:$dst, 0)]>, OpSize;
+                 "xor{l}\t${dst:subreg32}, ${dst:subreg32}",
+                 [(set GR16:$dst, 0)]>;
 def MOV32r0  : I<0x31, MRMInitReg,  (outs GR32:$dst), (ins),
                  "xor{l}\t$dst, $dst",
                  [(set GR32:$dst, 0)]>;
@@ -2762,6 +2770,10 @@ def : Pat<(i32 (and (loadi32 addr:$src), (i32 65535))),(MOVZX32rm16 addr:$src)>;
 //===----------------------------------------------------------------------===//
 // Some peepholes
 //===----------------------------------------------------------------------===//
+
+// r & (2^16-1) ==> movz
+def : Pat<(and GR32:$src1, 0xffff),
+           (MOVZX32rr16 (i16 (EXTRACT_SUBREG GR32:$src1, x86_subreg_16bit)))>;
 
 // (shl x, 1) ==> (add x, x)
 def : Pat<(shl GR8 :$src1, (i8 1)), (ADD8rr  GR8 :$src1, GR8 :$src1)>;
