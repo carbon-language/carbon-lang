@@ -479,7 +479,7 @@ ENDTEXT
   
   for my $key ( sort { $a cmp $b } keys %Totals ) {
     my $x = lc($key);
-    $x =~ s/\s[,]/_/g;
+    $x =~ s/[ ,'"]+/_/g;
     print OUT "<tr><td>$key</td><td>$Totals{$key}</td><td><input type=\"checkbox\" onClick=\"ToggleDisplay(this,'bt_$x');\" checked/></td></tr>\n";
   }
 
@@ -511,7 +511,7 @@ ENDTEXT
   for my $row ( sort { $a->[1] cmp $b->[1] } @Index ) {
     
     my $x = lc($row->[1]);
-    $x =~ s/\s[,]/_/g;
+    $x =~ s/[ ,'"]+/_/g;
     
     print OUT "<tr class=\"bt_$x\">\n";
 
@@ -533,15 +533,13 @@ ENDTEXT
     print OUT "<td>$fname</td>\n";
 
     # Print the rest of the columns.
-    
     for my $j ( 3 .. $#{$row} ) {
       print OUT "<td>$row->[$j]</td>\n"
     }
 
     # Emit the "View" link.
-    
     print OUT " <td class=\"View\"><a href=\"$ReportFile#EndPath\">View</a></td>\n";
-    
+        
     # End the row.
     print OUT "</tr>\n";
   }
