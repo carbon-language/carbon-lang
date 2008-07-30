@@ -66,7 +66,12 @@ class CodeGenModule {
   llvm::Function *MemCpyFn;
   llvm::Function *MemMoveFn;
   llvm::Function *MemSetFn;
-  llvm::DenseMap<const Decl*, llvm::Constant*> GlobalDeclMap;
+
+  /// GlobalDeclMap - Mapping of decls to global variables we have
+  /// already emitted. Note that the entries in this map are the
+  /// actual global and therefore may not be of the same type as the
+  /// decl, they should be bitcasted on retrieval.
+  llvm::DenseMap<const Decl*, llvm::GlobalValue*> GlobalDeclMap;
 
   /// List of static global for which code generation is delayed. When
   /// the translation unit has been fully processed we will lazily
@@ -155,7 +160,7 @@ private:
   /// ReplaceMapValuesWith - This is a really slow and bad function that
   /// searches for any entries in GlobalDeclMap that point to OldVal, changing
   /// them to point to NewVal.  This is badbadbad, FIXME!
-  void ReplaceMapValuesWith(llvm::Constant *OldVal, llvm::Constant *NewVal);
+  void ReplaceMapValuesWith(llvm::GlobalValue *OldVal, llvm::GlobalValue *NewVal);
 
   void SetFunctionAttributes(const FunctionDecl *FD,
                              llvm::Function *F,
