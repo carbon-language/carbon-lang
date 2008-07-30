@@ -74,7 +74,9 @@ public:
   typedef InstListType::iterator                              iterator;
   typedef InstListType::const_iterator                  const_iterator;
 
-  // allocate space for exactly zero operands
+  /// Create - Creates a new BasicBlock. If the Parent parameter is specified,
+  /// the basic block is automatically inserted at either the end of the
+  /// function (if InsertBefore is 0), or before the specified basic block.
   static BasicBlock *Create(const std::string &Name = "", Function *Parent = 0,
                             BasicBlock *InsertBefore = 0) {
     return new BasicBlock(Name, Parent, InsertBefore);
