@@ -156,14 +156,13 @@ void LiveIntervals::computeNumbering() {
         // following instruction.
         index = (LI->end - 1) / InstrSlots::NUM;
         offset  = LI->end % InstrSlots::NUM;
-        if (offset == InstrSlots::USE) {
+        if (offset == InstrSlots::LOAD) {
+          // VReg dies at end of block.
           std::vector<IdxMBBPair>::const_iterator I =
                   std::lower_bound(OldI2MBB.begin(), OldI2MBB.end(), LI->end);
-          // Take the pair containing the index
-          std::vector<IdxMBBPair>::const_iterator J =
-                    (I == OldI2MBB.end() && OldI2MBB.size()>0) ? (I-1): I;
+          --I;
           
-          LI->end = getMBBEndIdx(J->second) + 1;
+          LI->end = getMBBEndIdx(I->second) + 1;
         } else {
           unsigned idx = index;
           while (index < OldI2MI.size() && !OldI2MI[index]) ++index;
@@ -195,16 +194,17 @@ void LiveIntervals::computeNumbering() {
         // Remap the VNInfo kill indices, which works the same as
         // the end indices above.
         for (size_t i = 0; i < vni->kills.size(); ++i) {
+          // PHI kills don't need to be remapped.
+          if (!vni->kills[i]) continue;
+          
           index = (vni->kills[i]-1) / InstrSlots::NUM;
           offset = vni->kills[i] % InstrSlots::NUM;
-          if (offset == InstrSlots::USE) {
+          if (offset == InstrSlots::LOAD) {
             std::vector<IdxMBBPair>::const_iterator I =
              std::lower_bound(OldI2MBB.begin(), OldI2MBB.end(), vni->kills[i]);
-            // Take the pair containing the index
-            std::vector<IdxMBBPair>::const_iterator J =
-                      (I == OldI2MBB.end() && OldI2MBB.size()>0) ? (I-1): I;
+            --I;
 
-            vni->kills[i] = getMBBEndIdx(J->second) + 1;
+            vni->kills[i] = getMBBEndIdx(I->second) + 1;
           } else {
             unsigned idx = index;
             while (!OldI2MI[index]) ++index;
