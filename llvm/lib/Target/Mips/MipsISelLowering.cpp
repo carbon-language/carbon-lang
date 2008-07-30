@@ -352,12 +352,14 @@ LowerBRCOND(SDValue Op, SelectionDAG &DAG)
   SDValue Dest = Op.getOperand(2);
   SDValue CondRes; 
 
-  if (Op.getOperand(1).getOpcode() == ISD::AND)
+  if (Op.getOperand(1).getOpcode() == ISD::AND) {
     CondRes = Op.getOperand(1).getOperand(0);
-  else if (Op.getOperand(1).getOpcode() == MipsISD::FPCmp)
+    if (CondRes.getOpcode() != MipsISD::FPCmp)
+      return Op;
+  } else if (Op.getOperand(1).getOpcode() == MipsISD::FPCmp)
     CondRes = Op.getOperand(1);
   else
-    assert(0 && "Incoming condition flag unknown");
+    return Op;
   
   SDValue CCNode = CondRes.getOperand(2);
   Mips::CondCode CC = (Mips::CondCode)cast<ConstantSDNode>(CCNode)->getValue();
@@ -431,11 +433,10 @@ LowerGlobalAddress(SDValue Op, SelectionDAG &DAG)
   SDValue GA = DAG.getTargetGlobalAddress(GV, MVT::i32);
 
   if (!Subtarget->hasABICall()) {
-    if (isa<Function>(GV)) return GA;
     const MVT *VTs = DAG.getNodeValueTypes(MVT::i32);
     SDValue Ops[] = { GA };
-
-    if (IsGlobalInSmallSection(GV)) { // %gp_rel relocation
+    // %gp_rel relocation
+    if (!isa<Function>(GV) && IsGlobalInSmallSection(GV)) { 
       SDValue GPRelNode = DAG.getNode(MipsISD::GPRel, VTs, 1, Ops, 1);
       SDValue GOT = DAG.getNode(ISD::GLOBAL_OFFSET_TABLE, MVT::i32);
       return DAG.getNode(ISD::ADD, MVT::i32, GOT, GPRelNode); 
