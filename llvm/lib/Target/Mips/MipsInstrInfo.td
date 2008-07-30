@@ -100,11 +100,6 @@ def immZExt16  : PatLeaf<(imm), [{
     return (uint64_t)N->getValue() == (unsigned short)N->getValue();
 }], LO16>;
 
-// Node immediate fits as 32-bit zero extended on target immediate.
-//def immZExt32  : PatLeaf<(imm), [{
-//  return (uint64_t)N->getValue() == (uint32_t)N->getValue();
-//}], LO16>;
-
 // shamt field must fit in 5 bits.
 def immZExt5 : PatLeaf<(imm), [{
   return N->getValue() == ((N->getValue()) & 0x1f) ;
@@ -398,29 +393,29 @@ def Select_CC : PseudoSelCC<CPURegs, "# MipsSelect_CC_i32">;
 // MipsI Instructions
 //===----------------------------------------------------------------------===//
 
-// Arithmetic
-
-// ADDiu just accept 16-bit immediates but we handle this on Pat's.
-// immZExt32 is used here so it can match GlobalAddress immediates.
-// MUL is a assembly macro in the current used ISAs.
+/// Arithmetic Instructions (ALU Immediate)
 def ADDiu   : ArithI<0x09, "addiu", add, uimm16, immZExt16>;
 def ADDi    : ArithI<0x08, "addi",  add, simm16, immSExt16>;
-//def MUL     : ArithR<0x1c, 0x02, "mul", mul, IIImul>;
+def SLTi    : SetCC_I<0x0a, "slti", setlt, simm16, immSExt16>;
+def SLTiu   : SetCC_I<0x0b, "sltiu", setult, uimm16, immZExt16>;
+def ANDi    : LogicI<0x0c, "andi", and>;
+def ORi     : LogicI<0x0d, "ori",  or>;
+def XORi    : LogicI<0x0e, "xori",  xor>;
+def LUi     : LoadUpper<0x0f, "lui">;
+
+/// Arithmetic Instructions (3-Operand, R-Type)
 def ADDu    : ArithR<0x00, 0x21, "addu", add, IIAlu>;
 def SUBu    : ArithR<0x00, 0x23, "subu", sub, IIAlu>;
 def ADD     : ArithOverflowR<0x00, 0x20, "add">;
 def SUB     : ArithOverflowR<0x00, 0x22, "sub">;
-
-// Logical
+def SLT     : SetCC_R<0x00, 0x2a, "slt", setlt>;
+def SLTu    : SetCC_R<0x00, 0x2b, "sltu", setult>;
 def AND     : LogicR<0x24, "and", and>;
 def OR      : LogicR<0x25, "or",  or>;
 def XOR     : LogicR<0x26, "xor", xor>;
-def ANDi    : LogicI<0x0c, "andi", and>;
-def ORi     : LogicI<0x0d, "ori",  or>;
-def XORi    : LogicI<0x0e, "xori",  xor>;
 def NOR     : LogicNOR<0x00, 0x27, "nor">;
 
-// Shifts
+/// Shift Instructions
 def SLL     : LogicR_shift_imm<0x00, "sll", shl>;
 def SRL     : LogicR_shift_imm<0x02, "srl", srl>;
 def SRA     : LogicR_shift_imm<0x03, "sra", sra>;
@@ -428,10 +423,7 @@ def SLLV    : LogicR_shift_reg<0x04, "sllv", shl>;
 def SRLV    : LogicR_shift_reg<0x06, "srlv", srl>;
 def SRAV    : LogicR_shift_reg<0x07, "srav", sra>;
 
-// Load Upper Immediate
-def LUi     : LoadUpper<0x0f, "lui">;
-
-// Load/Store
+/// Load and Store Instructions
 def LB      : LoadM<0x20, "lb",  sextloadi8>;
 def LBu     : LoadM<0x24, "lbu", zextloadi8>;
 def LH      : LoadM<0x21, "lh",  sextloadi16>;
@@ -441,61 +433,53 @@ def SB      : StoreM<0x28, "sb", truncstorei8>;
 def SH      : StoreM<0x29, "sh", truncstorei16>;
 def SW      : StoreM<0x2b, "sw", store>;
 
-// Conditional Branch
+/// Jump and Branch Instructions
+def J       : JumpFJ<0x02, "j">;
+def JR      : JumpFR<0x00, 0x08, "jr">;
+def JAL     : JumpLink<0x03, "jal">;
+def JALR    : JumpLinkReg<0x00, 0x09, "jalr">;
 def BEQ     : CBranch<0x04, "beq", seteq>;
 def BNE     : CBranch<0x05, "bne", setne>;
 
 let rt=1 in
-def BGEZ    : CBranchZero<0x01, "bgez", setge>;
+  def BGEZ  : CBranchZero<0x01, "bgez", setge>;
 
 let rt=0 in {
-def BGTZ    : CBranchZero<0x07, "bgtz", setgt>;
-def BLEZ    : CBranchZero<0x07, "blez", setle>;
-def BLTZ    : CBranchZero<0x01, "bltz", setlt>;
+  def BGTZ  : CBranchZero<0x07, "bgtz", setgt>;
+  def BLEZ  : CBranchZero<0x07, "blez", setle>;
+  def BLTZ  : CBranchZero<0x01, "bltz", setlt>;
 }
 
-// Set Condition Code
-def SLT     : SetCC_R<0x00, 0x2a, "slt", setlt>;
-def SLTu    : SetCC_R<0x00, 0x2b, "sltu", setult>;
-def SLTi    : SetCC_I<0x0a, "slti", setlt, simm16, immSExt16>;
-def SLTiu   : SetCC_I<0x0b, "sltiu", setult, uimm16, immZExt16>;
-
-// Unconditional jump
-def J       : JumpFJ<0x02, "j">;
-def JR      : JumpFR<0x00, 0x08, "jr">;
-
-// Jump and Link (Call)
-def JAL     : JumpLink<0x03, "jal">;
-def JALR    : JumpLinkReg<0x00, 0x09, "jalr">;
 def BGEZAL  : BranchLink<"bgezal">;
 def BLTZAL  : BranchLink<"bltzal">;
 
-// MulDiv and Move From Hi/Lo operations, have
-// their correpondent SDNodes created on ISelDAG.
-// Special Mul, Div operations
+let isReturn=1, isTerminator=1, hasDelaySlot=1,
+    isBarrier=1, hasCtrlDep=1, rs=0, rt=0, shamt=0 in
+  def RET : FR <0x00, 0x02, (outs), (ins CPURegs:$target),
+                "jr\t$target", [(MipsRet CPURegs:$target)], IIBranch>;
+
+/// Multiply and Divide Instructions. 
 def MULT    : MulDiv<0x18, "mult", IIImul>;
 def MULTu   : MulDiv<0x19, "multu", IIImul>;
 def DIV     : MulDiv<0x1a, "div", IIIdiv>;
 def DIVu    : MulDiv<0x1b, "divu", IIIdiv>;
-
-// Move From Hi/Lo
 def MFHI    : MoveFromTo<0x10, "mfhi">;
 def MFLO    : MoveFromTo<0x12, "mflo">;
 def MTHI    : MoveFromTo<0x11, "mthi">;
 def MTLO    : MoveFromTo<0x13, "mtlo">;
 
-// No operation
-let addr=0 in
-def NOP     : FJ<0, (outs), (ins), "nop", [], IIAlu>;
+/// Sign Ext In Register Instructions.
+let Predicates = [HasSEInReg] in {
+  let shamt = 0x10, rs = 0 in 
+    def SEB : SignExtInReg<0x21, "seb", i8>;
 
-// Ret instruction - as mips does not have "ret" a
-// jr $ra must be generated.
-let isReturn=1, isTerminator=1, hasDelaySlot=1,
-    isBarrier=1, hasCtrlDep=1, rs=0, rt=0, shamt=0 in
-{
-  def RET : FR <0x00, 0x02, (outs), (ins CPURegs:$target),
-                "jr\t$target", [(MipsRet CPURegs:$target)], IIBranch>;
+  let shamt = 0x18, rs = 0 in 
+    def SEH : SignExtInReg<0x20, "seh", i16>;
 }
+
+/// No operation
+let addr=0 in
+  def NOP   : FJ<0, (outs), (ins), "nop", [], IIAlu>;
 
 // FrameIndexes are legalized when they are operands from load/store
 // instructions. The same not happens for stack address copies, so an
@@ -516,13 +500,9 @@ def LEA_ADDiu : EffectiveAddress<"addiu\t$dst, ${addr:stackloc}">;
 //def MSUB    : MArithR<0x04, "msub">;
 //def MSUBU   : MArithR<0x05, "msubu">;
 
-let Predicates = [HasSEInReg] in {
-  let shamt = 0x10, rs = 0 in 
-    def SEB : SignExtInReg<0x21, "seb", i8>;
-
-  let shamt = 0x18, rs = 0 in 
-    def SEH : SignExtInReg<0x20, "seh", i16>;
-}
+// MUL is a assembly macro in the current used ISAs. In recent ISA's
+// it is a real instruction.
+//def MUL   : ArithR<0x1c, 0x02, "mul", mul, IIImul>;
 
 //===----------------------------------------------------------------------===//
 //  Arbitrary patterns that map to one or more instructions
@@ -625,8 +605,8 @@ def : Pat<(brcond (setult CPURegs:$lhs, CPURegs:$rhs), bb:$dst),
 def : Pat<(brcond CPURegs:$cond, bb:$dst),
           (BNE CPURegs:$cond, ZERO, bb:$dst)>;
 
-/// setcc patterns, only matched when there
-/// is no brcond following a setcc operation
+// setcc patterns, only matched when there
+// is no brcond following a setcc operation
 def : Pat<(setle CPURegs:$lhs, CPURegs:$rhs),
           (XORi (SLT CPURegs:$rhs, CPURegs:$lhs), 1)>;
 def : Pat<(setule CPURegs:$lhs, CPURegs:$rhs),
