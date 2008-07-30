@@ -34,6 +34,12 @@ namespace llvm {
     virtual SectionKind::Kind
     SectionKindForGlobal(const GlobalValue *GV) const;
 
+    /// SectionFlagsForGlobal - This hook allows the target to select proper
+    /// section flags either for given global or for section.
+    virtual unsigned
+    SectionFlagsForGlobal(const GlobalValue *GV = NULL,
+                          const char* name = NULL) const;
+
     virtual const Section* SelectSectionForGlobal(const GlobalValue *GV) const;
 
     private:

@@ -45,8 +45,16 @@ MipsTargetAsmInfo::MipsTargetAsmInfo(const MipsTargetMachine &TM):
 
 }
 
-SectionKind::Kind
-MipsTargetAsmInfo::SectionKindForGlobal(const GlobalValue *GV) const {
+unsigned MipsTargetAsmInfo::
+SectionFlagsForGlobal(const GlobalValue *GV, const char* Name) const {
+  unsigned Flags = ELFTargetAsmInfo::SectionFlagsForGlobal(GV, Name);
+  // Mask out Small Section flag bit, Mips doesnt support 's' section symbol
+  // for its small sections.
+  return (Flags & (~SectionFlags::Small));
+}
+
+SectionKind::Kind MipsTargetAsmInfo::
+SectionKindForGlobal(const GlobalValue *GV) const {
   SectionKind::Kind K = ELFTargetAsmInfo::SectionKindForGlobal(GV);
 
   if (Subtarget->hasABICall())
@@ -72,8 +80,8 @@ MipsTargetAsmInfo::SectionKindForGlobal(const GlobalValue *GV) const {
   return K;
 }
 
-const Section*
-MipsTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
+const Section* MipsTargetAsmInfo::
+SelectSectionForGlobal(const GlobalValue *GV) const {
   SectionKind::Kind K = SectionKindForGlobal(GV);
   const GlobalVariable *GVA = dyn_cast<GlobalVariable>(GV);
 
