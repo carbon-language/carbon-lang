@@ -3060,8 +3060,12 @@ SDValue DAGCombiner::visitANY_EXTEND(SDNode *N) {
                                        LN0->isVolatile(), 
                                        LN0->getAlignment());
     CombineTo(N, ExtLoad);
-    CombineTo(N0.Val, DAG.getNode(ISD::TRUNCATE, N0.getValueType(), ExtLoad),
-              ExtLoad.getValue(1));
+    // Redirect any chain users to the new load.
+    DAG.ReplaceAllUsesOfValueWith(SDValue(LN0, 1), SDValue(ExtLoad.Val, 1));
+    // If any node needs the original loaded value, recompute it.
+    if (!LN0->use_empty())
+      CombineTo(LN0, DAG.getNode(ISD::TRUNCATE, N0.getValueType(), ExtLoad),
+                ExtLoad.getValue(1));
     return SDValue(N, 0);   // Return N so it doesn't get rechecked!
   }
   
@@ -3169,17 +3173,16 @@ SDValue DAGCombiner::ReduceLoadWidth(SDNode *N) {
 
   // Do not generate loads of non-round integer types since these can
   // be expensive (and would be wrong if the type is not byte sized).
-  if (ISD::isNON_EXTLoad(N0.Val) && N0.hasOneUse() && VT.isRound() &&
+  if (isa<LoadSDNode>(N0) && N0.hasOneUse() && VT.isRound() &&
+      cast<LoadSDNode>(N0)->getMemoryVT().getSizeInBits() > EVTBits &&
       // Do not change the width of a volatile load.
       !cast<LoadSDNode>(N0)->isVolatile()) {
-    assert(N0.getValueType().getSizeInBits() > EVTBits &&
-           "Cannot truncate to larger type!");
     LoadSDNode *LN0 = cast<LoadSDNode>(N0);
     MVT PtrType = N0.getOperand(1).getValueType();
     // For big endian targets, we need to adjust the offset to the pointer to
     // load the correct bytes.
     if (TLI.isBigEndian()) {
-      unsigned LVTStoreBits = N0.getValueType().getStoreSizeInBits();
+      unsigned LVTStoreBits = LN0->getMemoryVT().getStoreSizeInBits();
       unsigned EVTStoreBits = EVT.getStoreSizeInBits();
       ShAmt = LVTStoreBits - EVTStoreBits - ShAmt;
     }
@@ -3190,11 +3193,11 @@ SDValue DAGCombiner::ReduceLoadWidth(SDNode *N) {
     AddToWorkList(NewPtr.Val);
     SDValue Load = (ExtType == ISD::NON_EXTLOAD)
       ? DAG.getLoad(VT, LN0->getChain(), NewPtr,
-                    LN0->getSrcValue(), LN0->getSrcValueOffset(),
+                    LN0->getSrcValue(), LN0->getSrcValueOffset() + PtrOff,
                     LN0->isVolatile(), NewAlign)
       : DAG.getExtLoad(ExtType, VT, LN0->getChain(), NewPtr,
-                       LN0->getSrcValue(), LN0->getSrcValueOffset(), EVT,
-                       LN0->isVolatile(), NewAlign);
+                       LN0->getSrcValue(), LN0->getSrcValueOffset() + PtrOff,
+                       EVT, LN0->isVolatile(), NewAlign);
     AddToWorkList(N);
     if (CombineSRL) {
       WorkListRemover DeadNodes(*this);
@@ -3236,6 +3239,15 @@ SDValue DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
   if (N0.getOpcode() == ISD::SIGN_EXTEND_INREG &&
       EVT.bitsLT(cast<VTSDNode>(N0.getOperand(1))->getVT())) {
     return DAG.getNode(ISD::SIGN_EXTEND_INREG, VT, N0.getOperand(0), N1);
+  }
+
+  // fold (sext_in_reg (sext x)) -> (sext x)
+  // fold (sext_in_reg (aext x)) -> (sext x)
+  // if x is small enough.
+  if (N0.getOpcode() == ISD::SIGN_EXTEND || N0.getOpcode() == ISD::ANY_EXTEND) {
+    SDValue N00 = N0.getOperand(0);
+    if (N00.getValueType().getSizeInBits() < EVTBits)
+      return DAG.getNode(ISD::SIGN_EXTEND, VT, N00, N1);
   }
 
   // fold (sext_in_reg x) -> (zext_in_reg x) if the sign bit is known zero.
