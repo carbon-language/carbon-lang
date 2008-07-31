@@ -39,6 +39,7 @@ namespace llvm {
   unsigned StackAlignment;
   bool RealignStack;
   bool VerboseAsm;
+  bool DisableJumpTables;
 }
 
 static cl::opt<bool, true> PrintCode("print-machineinstrs",
@@ -156,6 +157,11 @@ AsmVerbose("asm-verbose", cl::desc("Add comments to directives."),
            cl::location(VerboseAsm),
            cl::init(false));
 
+static cl::opt<bool, true>
+DisableSwitchTables(cl::Hidden, "disable-jump-tables", 
+           cl::desc("Do not generate jump tables."),
+           cl::location(DisableJumpTables),
+           cl::init(false));
 
 //---------------------------------------------------------------------------
 // TargetMachine Class

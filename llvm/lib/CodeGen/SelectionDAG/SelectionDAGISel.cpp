@@ -1916,8 +1916,9 @@ bool SelectionDAGLowering::handleSmallSwitchRange(CaseRec& CR,
 }
 
 static inline bool areJTsAllowed(const TargetLowering &TLI) {
-  return (TLI.isOperationLegal(ISD::BR_JT, MVT::Other) ||
-          TLI.isOperationLegal(ISD::BRIND, MVT::Other));
+  return !DisableJumpTables &&
+          (TLI.isOperationLegal(ISD::BR_JT, MVT::Other) ||
+           TLI.isOperationLegal(ISD::BRIND, MVT::Other));
 }
   
 /// handleJTSwitchCase - Emit jumptable for current switch case range

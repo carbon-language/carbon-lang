@@ -43,7 +43,7 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   : TargetLowering(TM), PPCSubTarget(*TM.getSubtargetImpl()) {
     
   setPow2DivIsCheap();
-  
+
   // Use _setjmp/_longjmp instead of setjmp/longjmp.
   setUseUnderscoreSetJmp(true);
   setUseUnderscoreLongJmp(true);

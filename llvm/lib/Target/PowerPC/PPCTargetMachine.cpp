@@ -17,6 +17,7 @@
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
 #include "llvm/Target/TargetMachineRegistry.h"
+#include "llvm/Target/TargetOptions.h"
 using namespace llvm;
 
 // Register the targets
@@ -144,6 +145,9 @@ bool PPCTargetMachine::addCodeEmitter(PassManagerBase &PM, bool Fast,
     // instructions to materialize arbitrary global variable + function +
     // constant pool addresses.
     setRelocationModel(Reloc::PIC_);
+    // Temporary workaround for the inability of PPC64 JIT to handle jump
+    // tables.
+    DisableJumpTables = true;      
   } else {
     setRelocationModel(Reloc::Static);
   }
