@@ -85,6 +85,12 @@ MipsTargetLowering(MipsTargetMachine &TM): TargetLowering(TM)
   setLoadXAction(ISD::ZEXTLOAD, MVT::i1,  Promote);
   setLoadXAction(ISD::SEXTLOAD, MVT::i1,  Promote);
 
+  // Used by legalize types to correctly generate the setcc result. 
+  // Without this, every float setcc comes with a AND with the result, 
+  // we don't want this, since the fpcmp result goes to a flag register, 
+  // which is used implicitly by brcond and select operations.
+  AddPromotedToType(ISD::SETCC, MVT::i1, MVT::i32);
+
   // Mips Custom Operations
   setOperationAction(ISD::GlobalAddress,    MVT::i32,   Custom);
   setOperationAction(ISD::GlobalTLSAddress, MVT::i32,   Custom);
@@ -96,6 +102,11 @@ MipsTargetLowering(MipsTargetMachine &TM): TargetLowering(TM)
   setOperationAction(ISD::SELECT_CC,        MVT::i32,   Custom);
   setOperationAction(ISD::SETCC,            MVT::f32,   Custom);
   setOperationAction(ISD::BRCOND,           MVT::Other, Custom);
+
+  // We custom lower AND to handle the case where the DAG contain 'ands' 
+  // setcc results with fp operands. This is necessary since the result 
+  // from these are in a flag register (FCR31).
+  setOperationAction(ISD::AND,              MVT::i32,   Custom);
 
   // Operations not directly supported by Mips.
   setOperationAction(ISD::BR_JT,             MVT::Other, Expand);
@@ -148,6 +159,7 @@ LowerOperation(SDValue Op, SelectionDAG &DAG)
 {
   switch (Op.getOpcode()) 
   {
+    case ISD::AND:              return LowerAND(Op, DAG);
     case ISD::BRCOND:           return LowerBRCOND(Op, DAG);
     case ISD::CALL:             return LowerCALL(Op, DAG);
     case ISD::ConstantPool:     return LowerConstantPool(Op, DAG);
@@ -347,24 +359,38 @@ MipsTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
 //===----------------------------------------------------------------------===//
 
 SDValue MipsTargetLowering::
+LowerAND(SDValue Op, SelectionDAG &DAG)
+{
+  SDValue LHS   = Op.getOperand(0);
+  SDValue RHS   = Op.getOperand(1);
+  
+  if (LHS.getOpcode() != MipsISD::FPCmp || RHS.getOpcode() != MipsISD::FPCmp)
+    return Op;
+
+  SDValue True  = DAG.getConstant(1, MVT::i32);
+  SDValue False = DAG.getConstant(0, MVT::i32);
+
+  SDValue LSEL = DAG.getNode(MipsISD::FPSelectCC, True.getValueType(), 
+                             LHS, True, False, LHS.getOperand(2));
+  SDValue RSEL = DAG.getNode(MipsISD::FPSelectCC, True.getValueType(), 
+                             RHS, True, False, RHS.getOperand(2));
+
+  return DAG.getNode(ISD::AND, MVT::i32, LSEL, RSEL);
+}
+
+SDValue MipsTargetLowering::
 LowerBRCOND(SDValue Op, SelectionDAG &DAG)
 {
   // The first operand is the chain, the second is the condition, the third is 
   // the block to branch to if the condition is true.
   SDValue Chain = Op.getOperand(0);
   SDValue Dest = Op.getOperand(2);
-  SDValue CondRes; 
 
-  if (Op.getOperand(1).getOpcode() == ISD::AND) {
-    CondRes = Op.getOperand(1).getOperand(0);
-    if (CondRes.getOpcode() != MipsISD::FPCmp)
-      return Op;
-  } else if (Op.getOperand(1).getOpcode() == MipsISD::FPCmp)
-    CondRes = Op.getOperand(1);
-  else
+  if (Op.getOperand(1).getOpcode() != MipsISD::FPCmp)
     return Op;
   
-  SDValue CCNode = CondRes.getOperand(2);
+  SDValue CondRes = Op.getOperand(1);
+  SDValue CCNode  = CondRes.getOperand(2);
   Mips::CondCode CC = (Mips::CondCode)cast<ConstantSDNode>(CCNode)->getValue();
   SDValue BrCode = DAG.getConstant(GetFPBranchCodeFromCond(CC), MVT::i32); 
 
@@ -394,25 +420,15 @@ LowerSELECT(SDValue Op, SelectionDAG &DAG)
   SDValue True  = Op.getOperand(1);
   SDValue False = Op.getOperand(2);
 
-  // this can be a fp select but with a setcc comming from a 
-  // integer compare.
-  if (Cond.getOpcode() == ISD::SETCC)
-    if (Cond.getOperand(0).getValueType().isInteger())
-      return DAG.getNode(MipsISD::SelectCC, True.getValueType(), 
-                         Cond, True, False);
-
-  // Otherwise we're dealing with floating point compare.
-  SDValue CondRes;
-  if (Cond.getOpcode() == ISD::AND)
-    CondRes = Cond.getOperand(0);
-  else if (Cond.getOpcode() == MipsISD::FPCmp)
-    CondRes = Cond;
-  else
-    assert(0 && "Incoming condition flag unknown");
+  // if the incomming condition comes from fpcmp, the select
+  // operation must use FPSelectCC, otherwise SelectCC.
+  if (Cond.getOpcode() != MipsISD::FPCmp)
+    return DAG.getNode(MipsISD::SelectCC, True.getValueType(), 
+                       Cond, True, False);
   
-  SDValue CCNode = CondRes.getOperand(2);
+  SDValue CCNode = Cond.getOperand(2);
   return DAG.getNode(MipsISD::FPSelectCC, True.getValueType(), 
-                     CondRes, True, False, CCNode);
+                     Cond, True, False, CCNode);
 }
 
 SDValue MipsTargetLowering::
