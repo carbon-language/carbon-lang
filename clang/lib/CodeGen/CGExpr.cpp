@@ -721,7 +721,7 @@ RValue CodeGenFunction::EmitCallExpr(llvm::Value *Callee, QualType FnType,
   // The callee type will always be a pointer to function type, get the function
   // type.
   FnType = FnType->getAsPointerType()->getPointeeType();
-  QualType ResultType = cast<FunctionType>(FnType)->getResultType();
+  QualType ResultType = FnType->getAsFunctionType()->getResultType();
 
   llvm::SmallVector<llvm::Value*, 16> Args;
   
