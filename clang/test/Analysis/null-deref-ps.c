@@ -62,4 +62,19 @@ int f6(int *p) {
   return !p ? bar(p) : *p; // expected-warning {{Null pointer passed as an argument to a 'nonnull' parameter}}
 } 
 
+int* qux();
+
+int f7(int x) {
+  
+  int* p = 0;
+  
+  if (0 == x)
+    p = qux();
+  
+  if (0 == x)
+    *p = 1; // no-warning
+    
+  return x;
+}
+
 

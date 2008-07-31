@@ -107,13 +107,20 @@ public:
   
 class RangedBugReport : public BugReport {
   std::vector<SourceRange> Ranges;
+  const char* desc;
 public:
-  RangedBugReport(BugType& D, ExplodedNode<ValueState> *n)
-    : BugReport(D, n) {}
+  RangedBugReport(BugType& D, ExplodedNode<ValueState> *n,
+                  const char* description = 0)
+    : BugReport(D, n), desc(description) {}
   
   virtual ~RangedBugReport();
+
+  virtual const char* getDescription() const {
+    return desc ? desc : BugReport::getDescription();
+  }
   
   void addRange(SourceRange R) { Ranges.push_back(R); }
+  
   
   virtual void getRanges(BugReporter& BR,const SourceRange*& beg,           
                          const SourceRange*& end) {

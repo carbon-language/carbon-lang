@@ -15,7 +15,7 @@
 #include "clang/Analysis/PathSensitive/BugReporter.h"
 #include "clang/Analysis/PathSensitive/GRExprEngine.h"
 #include "llvm/Support/Compiler.h"
-
+#include <sstream>
 
 using namespace clang;
 
@@ -42,9 +42,12 @@ class VISIBILITY_HIDDEN BuiltinBug : public BugTypeCacheLocation {
   const char* name;
   const char* desc;
 public:
-  BuiltinBug(const char* n, const char* d) : name(n), desc(d) {}  
+  BuiltinBug(const char* n, const char* d = 0) : name(n), desc(d) {}  
   virtual const char* getName() const { return name; }
-  virtual const char* getDescription() const { return desc; }
+  virtual const char* getDescription() const {
+    return desc ? desc : name;
+  }
+  
   virtual void EmitBuiltinWarnings(BugReporter& BR, GRExprEngine& Eng) = 0;
   virtual void EmitWarnings(BugReporter& BR) {
     EmitBuiltinWarnings(BR, cast<GRBugReporter>(BR).getEngine());
@@ -177,20 +180,29 @@ public:
   
 class VISIBILITY_HIDDEN RetStack : public BuiltinBug {
 public:
-  RetStack() : BuiltinBug("return of stack address",
-                          "Address of stack-allocated variable returned.") {}
+  RetStack() : BuiltinBug("return of stack address") {}
   
   virtual void EmitBuiltinWarnings(BugReporter& BR, GRExprEngine& Eng) {
     for (GRExprEngine::ret_stackaddr_iterator I=Eng.ret_stackaddr_begin(),
          End = Eng.ret_stackaddr_end(); I!=End; ++I) {
-      
-      // Generate a report for this bug.
-      RangedBugReport report(*this, *I);
-      
+
       ExplodedNode<ValueState>* N = *I;
       Stmt *S = cast<PostStmt>(N->getLocation()).getStmt();
       Expr* E = cast<ReturnStmt>(S)->getRetValue();
       assert (E && "Return expression cannot be NULL");
+      
+      // Get the value associated with E.
+      lval::DeclVal V =
+        cast<lval::DeclVal>(Eng.getStateManager().GetRVal(N->getState(), E));
+      
+      // Generate a report for this bug.
+      std::ostringstream os;
+      os << "Address of stack memory associated with local variable '"
+         << V.getDecl()->getName() << "' returned.";
+      
+      std::string s = os.str();
+      
+      RangedBugReport report(*this, N, s.c_str());
       report.addRange(E->getSourceRange());
       
       // Emit the warning.
