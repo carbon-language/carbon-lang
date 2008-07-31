@@ -29,8 +29,10 @@ using namespace llvm;
 // the expression node
 static RValue EmitBinaryAtomic(CodeGenFunction& CFG, 
                                Intrinsic::ID Id, const CallExpr *E) {
-  const llvm::Type *ResType = CFG.ConvertType(E->getType());
-  Value *AtomF = CFG.CGM.getIntrinsic(Id, &ResType, 1);
+  const llvm::Type *ResType[2];
+  ResType[0] = CFG.ConvertType(E->getType());
+  ResType[1] = CFG.ConvertType(E->getArg(0)->getType());
+  Value *AtomF = CFG.CGM.getIntrinsic(Id, ResType, 2);
   return RValue::get(CFG.Builder.CreateCall2(AtomF,
                                              CFG.EmitScalarExpr(E->getArg(0)),
                                              CFG.EmitScalarExpr(E->getArg(1))));
@@ -356,8 +358,10 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
     Args[0]= EmitScalarExpr(E->getArg(0));
     Args[1] = EmitScalarExpr(E->getArg(1));
     Args[2] = EmitScalarExpr(E->getArg(2));
-    const llvm::Type *ResType = ConvertType(E->getType());
-    Value *AtomF = CGM.getIntrinsic(Intrinsic::atomic_cmp_swap, &ResType, 1);
+    const llvm::Type *ResType[2];
+    ResType[0]= ConvertType(E->getType());
+    ResType[1] = ConvertType(E->getArg(0)->getType());
+    Value *AtomF = CGM.getIntrinsic(Intrinsic::atomic_cmp_swap, ResType, 2);
     return RValue::get(Builder.CreateCall(AtomF, &Args[0], &Args[1]+2));
   }
   case Builtin::BI__sync_lock_test_and_set:
