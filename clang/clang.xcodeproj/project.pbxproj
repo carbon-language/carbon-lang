@@ -745,7 +745,6 @@
 		DE67E7070C020EAB00F66BC5 /* Sema */ = {
 			isa = PBXGroup;
 			children = (
-				3599299A0DE2425300A8A33E /* SemaInit.cpp */,
 				3527124F0DAFE54700C76352 /* IdentifierResolver.h */,
 				352712500DAFE54700C76352 /* IdentifierResolver.cpp */,
 				DE67E7190C020F4F00F66BC5 /* ParseAST.cpp */,
@@ -760,6 +759,7 @@
 				DE67E7100C020ED400F66BC5 /* SemaExpr.cpp */,
 				DE67E70E0C020ECF00F66BC5 /* SemaExprCXX.cpp */,
 				DE47999B0D2EBE1A00706D2D /* SemaExprObjC.cpp */,
+				3599299A0DE2425300A8A33E /* SemaInit.cpp */,
 				DE67E70C0C020ECA00F66BC5 /* SemaStmt.cpp */,
 				DE67E70A0C020EC500F66BC5 /* SemaType.cpp */,
 			);
