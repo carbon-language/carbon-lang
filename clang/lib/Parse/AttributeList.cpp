@@ -50,6 +50,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
     Len -= 4;
   }
   
+  // FIXME: Hand generating this is neither smart nor efficient.
   switch (Len) {
   case 4:
     if (!memcmp(Str, "weak", 4)) return AT_weak;
@@ -85,9 +86,11 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
   case 10:
     if (!memcmp(Str, "deprecated", 10)) return AT_deprecated;
     if (!memcmp(Str, "visibility", 10)) return AT_visibility;
+    if (!memcmp(Str, "destructor", 10)) return AT_destructor;
     break;
   case 11:
     if (!memcmp(Str, "vector_size", 11)) return AT_vector_size;
+    if (!memcmp(Str, "constructor", 11)) return AT_constructor;
     break;
   case 13:
     if (!memcmp(Str, "address_space", 13)) return AT_address_space;

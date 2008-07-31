@@ -61,6 +61,10 @@ static inline bool isNSStringType(QualType T, ASTContext &Ctx) {
 // Attribute Implementations
 //===----------------------------------------------------------------------===//
 
+// FIXME: All this manual attribute parsing code is gross. At the
+// least add some helper functions to check most argument patterns (#
+// and types of args).
+
 static void HandleExtVectorTypeAttr(Decl *d, const AttributeList &Attr,
                                     Sema &S) {
   TypedefDecl *tDecl = dyn_cast<TypedefDecl>(d);
@@ -351,6 +355,64 @@ static void HandleUnusedAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   }
   
   d->addAttr(new UnusedAttr());
+}
+
+static void HandleConstructorAttr(Decl *d, const AttributeList &Attr, Sema &S) {
+  // check the attribute arguments.
+  if (Attr.getNumArgs() != 0 && Attr.getNumArgs() != 1) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments, "0 or 1");
+    return;
+  } 
+
+  int priority = 65535; // FIXME: Do not hardcode such constants.
+  if (Attr.getNumArgs() > 0) {
+    Expr *E = static_cast<Expr *>(Attr.getArg(0));
+    llvm::APSInt Idx(32);
+    if (!E->isIntegerConstantExpr(Idx, S.Context)) {
+      S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_int,
+             "constructor", "1", E->getSourceRange());
+      return;
+    }
+    priority = Idx.getZExtValue();
+  }
+  
+  FunctionDecl *Fn = dyn_cast<FunctionDecl>(d);
+  if (!Fn) {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type,
+           "constructor", "function");
+    return;
+  }
+
+  d->addAttr(new ConstructorAttr(priority));
+}
+
+static void HandleDestructorAttr(Decl *d, const AttributeList &Attr, Sema &S) {
+  // check the attribute arguments.
+  if (Attr.getNumArgs() != 0 && Attr.getNumArgs() != 1) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments, "0 or 1");
+    return;
+  } 
+
+  int priority = 65535; // FIXME: Do not hardcode such constants.
+  if (Attr.getNumArgs() > 0) {
+    Expr *E = static_cast<Expr *>(Attr.getArg(0));
+    llvm::APSInt Idx(32);
+    if (!E->isIntegerConstantExpr(Idx, S.Context)) {
+      S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_int,
+             "destructor", "1", E->getSourceRange());
+      return;
+    }
+    priority = Idx.getZExtValue();
+  }
+  
+  FunctionDecl *Fn = dyn_cast<FunctionDecl>(d);
+  if (!Fn) {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type,
+           "destructor", "function");
+    return;
+  }
+
+  d->addAttr(new DestructorAttr(priority));
 }
 
 static void HandleDeprecatedAttr(Decl *d, const AttributeList &Attr, Sema &S) {
@@ -816,31 +878,33 @@ static void HandleModeAttr(Decl *D, const AttributeList &Attr, Sema &S) {
 /// silently ignore it.
 static void ProcessDeclAttribute(Decl *D, const AttributeList &Attr, Sema &S) {
   switch (Attr.getKind()) {
+  case AttributeList::AT_IBOutlet:    HandleIBOutletAttr  (D, Attr, S); break;
   case AttributeList::AT_address_space:
     // Ignore this, this is a type attribute, handled by ProcessTypeAttributes.
     break;
+  case AttributeList::AT_alias:       HandleAliasAttr     (D, Attr, S); break;
+  case AttributeList::AT_aligned:     HandleAlignedAttr   (D, Attr, S); break;
+  case AttributeList::AT_annotate:    HandleAnnotateAttr  (D, Attr, S); break;
+  case AttributeList::AT_constructor: HandleConstructorAttr(D, Attr, S); break;
+  case AttributeList::AT_deprecated:  HandleDeprecatedAttr(D, Attr, S); break;
+  case AttributeList::AT_destructor:  HandleDestructorAttr(D, Attr, S); break;
+  case AttributeList::AT_dllexport:   HandleDLLExportAttr (D, Attr, S); break;
+  case AttributeList::AT_dllimport:   HandleDLLImportAttr (D, Attr, S); break;
   case AttributeList::AT_ext_vector_type:
     HandleExtVectorTypeAttr(D, Attr, S);
     break;
-  case AttributeList::AT_vector_size: HandleVectorSizeAttr(D, Attr, S); break;
+  case AttributeList::AT_fastcall:    HandleFastCallAttr  (D, Attr, S); break;
+  case AttributeList::AT_format:      HandleFormatAttr    (D, Attr, S); break;
   case AttributeList::AT_mode:        HandleModeAttr      (D, Attr, S); break;
-  case AttributeList::AT_alias:       HandleAliasAttr     (D, Attr, S); break;
-  case AttributeList::AT_deprecated:  HandleDeprecatedAttr(D, Attr, S); break;
+  case AttributeList::AT_nonnull:     HandleNonNullAttr   (D, Attr, S); break;
+  case AttributeList::AT_noreturn:    HandleNoReturnAttr  (D, Attr, S); break;
+  case AttributeList::AT_nothrow:     HandleNothrowAttr   (D, Attr, S); break;
+  case AttributeList::AT_packed:      HandlePackedAttr    (D, Attr, S); break;
+  case AttributeList::AT_stdcall:     HandleStdCallAttr   (D, Attr, S); break;
+  case AttributeList::AT_unused:      HandleUnusedAttr    (D, Attr, S); break;
+  case AttributeList::AT_vector_size: HandleVectorSizeAttr(D, Attr, S); break;
   case AttributeList::AT_visibility:  HandleVisibilityAttr(D, Attr, S); break;
   case AttributeList::AT_weak:        HandleWeakAttr      (D, Attr, S); break;
-  case AttributeList::AT_dllimport:   HandleDLLImportAttr (D, Attr, S); break;
-  case AttributeList::AT_dllexport:   HandleDLLExportAttr (D, Attr, S); break;
-  case AttributeList::AT_nothrow:     HandleNothrowAttr   (D, Attr, S); break;
-  case AttributeList::AT_stdcall:     HandleStdCallAttr   (D, Attr, S); break;
-  case AttributeList::AT_fastcall:    HandleFastCallAttr  (D, Attr, S); break;
-  case AttributeList::AT_aligned:     HandleAlignedAttr   (D, Attr, S); break;
-  case AttributeList::AT_packed:      HandlePackedAttr    (D, Attr, S); break;
-  case AttributeList::AT_annotate:    HandleAnnotateAttr  (D, Attr, S); break;
-  case AttributeList::AT_noreturn:    HandleNoReturnAttr  (D, Attr, S); break;
-  case AttributeList::AT_format:      HandleFormatAttr    (D, Attr, S); break;
-  case AttributeList::AT_IBOutlet:    HandleIBOutletAttr  (D, Attr, S); break;
-  case AttributeList::AT_nonnull:     HandleNonNullAttr   (D, Attr, S); break;
-  case AttributeList::AT_unused:      HandleUnusedAttr    (D, Attr, S); break;
   case AttributeList::AT_transparent_union:
     HandleTransparentUnionAttr(D, Attr, S);
     break;

@@ -28,7 +28,9 @@ public:
     Alias,
     Aligned,
     Annotate,
+    Constructor,
     Deprecated,
+    Destructor,
     DLLImport,
     DLLExport,
     FastCall,    
@@ -125,7 +127,27 @@ public:
   static bool classof(const Attr *A) { return A->getKind() == Alias; }
   static bool classof(const AliasAttr *A) { return true; }
 };
+
+class ConstructorAttr : public Attr {
+  int priority;
+public:
+  ConstructorAttr(int p) : Attr(Constructor), priority(p) {}
   
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Attr *A) { return A->getKind() == Constructor; }  
+  static bool classof(const ConstructorAttr *A) { return true; }
+};  
+  
+class DestructorAttr : public Attr {
+  int priority;
+public:
+  DestructorAttr(int p) : Attr(Destructor), priority(p) {}
+  
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Attr *A) { return A->getKind() == Destructor; }  
+  static bool classof(const DestructorAttr *A) { return true; }
+};  
+    
 class IBOutletAttr : public Attr {
 public:
   IBOutletAttr() : Attr(IBOutletKind) {}
