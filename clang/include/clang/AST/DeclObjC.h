@@ -228,10 +228,8 @@ public:
     return ImplementationControl(DeclImplementation); 
   }
 
-  Stmt *getBody() const { return Body; }
+  virtual Stmt *getBody() const { return Body; }
   void setBody(Stmt *B) { Body = B; }
-  
-  virtual Stmt* getCodeBody() const { return getBody(); }
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == ObjCMethod; }

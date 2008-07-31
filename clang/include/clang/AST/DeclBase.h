@@ -198,10 +198,10 @@ public:
     }
   }
   
-  // getCodeBody - If this Decl represents a declaration for a body of code,
+  // getBody - If this Decl represents a declaration for a body of code,
   //  such as a function or method definition, this method returns the top-level
-  //  Stmt* of that body.  Otherwise this method returns null.
-  virtual Stmt* getCodeBody() const { return 0; }
+  //  Stmt* of that body.  Otherwise this method returns null.  
+  virtual Stmt* getBody() const { return 0; }
   
   // global temp stats (until we have a per-module visitor)
   static void addDeclKind(Kind k);

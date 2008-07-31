@@ -433,13 +433,10 @@ public:
   /// set that function declaration to the actual declaration
   /// containing the body (if there is one).
   Stmt *getBody(const FunctionDecl *&Definition) const;
-  Stmt *getBody() const { 
+
+  virtual Stmt *getBody() const { 
     const FunctionDecl* Definition;
     return getBody(Definition);
-  }
-
-  virtual Stmt* getCodeBody() const {
-    return getBody();
   }
   
   /// isThisDeclarationADefinition - Returns whether this specific
