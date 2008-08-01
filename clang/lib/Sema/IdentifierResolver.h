@@ -188,7 +188,6 @@ public:
     uintptr_t Ptr;
     typedef IdDeclInfo::DeclsTy::iterator BaseIter;
 
-    iterator() : Ptr(0) {}
     /// A single NamedDecl. (Ptr & 0x1 == 0)
     iterator(NamedDecl *D) {
       Ptr = reinterpret_cast<uintptr_t>(D);
@@ -216,6 +215,8 @@ public:
     
     friend class IdentifierResolver;
   public:
+    iterator() : Ptr(0) {}
+
     NamedDecl *operator*() const {
       if (isIterator())
         return *getIterator();
