@@ -80,11 +80,11 @@ struct ilist_default_traits : ilist_nextprev_traits<NodeTy>,
   static NodeTy *createNode(const NodeTy &V) { return new NodeTy(V); }
   static void deleteNode(NodeTy *V) { delete V; }
 
-  void addNodeToList(NodeTy *NTy) {}
-  void removeNodeFromList(NodeTy *NTy) {}
-  void transferNodesFromList(ilist_default_traits &SrcTraits,
-                             ilist_iterator<NodeTy> first,
-                             ilist_iterator<NodeTy> last) {}
+  void addNodeToList(NodeTy *) {}
+  void removeNodeFromList(NodeTy *) {}
+  void transferNodesFromList(ilist_default_traits & /*SrcTraits*/,
+                             ilist_iterator<NodeTy> /*first*/,
+                             ilist_iterator<NodeTy> /*last*/) {}
 };
 
 // Template traits for intrusive list.  By specializing this template class, you
