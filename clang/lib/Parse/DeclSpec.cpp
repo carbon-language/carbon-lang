@@ -173,7 +173,7 @@ bool DeclSpec::SetTypeSpecSign(TSS S, SourceLocation Loc,
 }
 
 bool DeclSpec::SetTypeSpecType(TST T, SourceLocation Loc,
-                               const char *&PrevSpec, void *Rep) {
+                               const char *&PrevSpec, Action::TypeTy *Rep) {
   if (TypeSpecType != TST_unspecified)
     return BadSpecifier( (TST)TypeSpecType, PrevSpec);
   TypeSpecType = T;

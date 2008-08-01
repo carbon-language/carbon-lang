@@ -51,7 +51,7 @@ void MinimalAction:: ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
 /// isTypeName - This looks at the IdentifierInfo::FETokenInfo field to
 /// determine whether the name is a type name (objc class name or typedef) or
 /// not in this scope.
-Action::DeclTy *
+Action::TypeTy *
 MinimalAction::isTypeName(const IdentifierInfo &II, Scope *S) {
   if (TypeNameInfo *TI = II.getFETokenInfo<TypeNameInfo>())
     if (TI->isTypeName)

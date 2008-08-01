@@ -322,7 +322,7 @@ bool Parser::ParseBaseSpecifier(DeclTy *ClassDecl)
   }
 
   // We have an identifier; check whether it is actually a type.
-  DeclTy *BaseType = Actions.isTypeName(*Tok.getIdentifierInfo(), CurScope);
+  TypeTy *BaseType = Actions.isTypeName(*Tok.getIdentifierInfo(), CurScope);
   if (!BaseType) {
     Diag(Tok.getLocation(), diag::err_expected_class_name);
     return true;

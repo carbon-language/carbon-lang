@@ -96,7 +96,7 @@ public:
   
   /// isTypeName - Return non-null if the specified identifier is a typedef name
   /// in the current scope.
-  virtual DeclTy *isTypeName(const IdentifierInfo &II, Scope *S) = 0;
+  virtual TypeTy *isTypeName(const IdentifierInfo &II, Scope *S) = 0;
   
   /// ActOnDeclarator - This callback is invoked when a declarator is parsed and
   /// 'Init' specifies the initializer if any.  This is for things like:
@@ -583,7 +583,7 @@ public:
   /// ActOnBaseSpecifier - Parsed a base specifier
   virtual void ActOnBaseSpecifier(DeclTy *classdecl, SourceRange SpecifierRange,
                                   bool Virtual, AccessSpecifier Access,
-                                  DeclTy *basetype, SourceLocation BaseLoc) {
+                                  TypeTy *basetype, SourceLocation BaseLoc) {
   }
 
   /// ActOnStartCXXClassDef - This is called at the start of a class/struct/union
@@ -829,7 +829,7 @@ public:
   
   /// isTypeName - This looks at the IdentifierInfo::FETokenInfo field to
   /// determine whether the name is a typedef or not in this scope.
-  virtual DeclTy *isTypeName(const IdentifierInfo &II, Scope *S);
+  virtual TypeTy *isTypeName(const IdentifierInfo &II, Scope *S);
   
   /// ActOnDeclarator - If this is a typedef declarator, we modify the
   /// IdentifierInfo::FETokenInfo field to keep track of this fact, until S is

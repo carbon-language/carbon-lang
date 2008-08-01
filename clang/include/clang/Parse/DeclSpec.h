@@ -118,7 +118,7 @@ private:
   /// TypeRep - This contains action-specific information about a specific TST.
   /// For example, for a typedef or struct, it might contain the declaration for
   /// these.
-  void *TypeRep;  
+  Action::TypeTy *TypeRep;  
   
   // attributes.
   AttributeList *AttrList;
@@ -242,7 +242,7 @@ public:
   bool SetTypeSpecComplex(TSC C, SourceLocation Loc, const char *&PrevSpec);
   bool SetTypeSpecSign(TSS S, SourceLocation Loc, const char *&PrevSpec);
   bool SetTypeSpecType(TST T, SourceLocation Loc, const char *&PrevSpec,
-                       void *TypeRep = 0);
+                       Action::TypeTy *TypeRep = 0);
   
   bool SetTypeQual(TQ T, SourceLocation Loc, const char *&PrevSpec,
                    const LangOptions &Lang);

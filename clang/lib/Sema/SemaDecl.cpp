@@ -35,7 +35,7 @@
 #include "llvm/ADT/DenseSet.h"
 using namespace clang;
 
-Sema::DeclTy *Sema::isTypeName(const IdentifierInfo &II, Scope *S) {
+Sema::TypeTy *Sema::isTypeName(const IdentifierInfo &II, Scope *S) {
   Decl *IIDecl = LookupDecl(&II, Decl::IDNS_Ordinary, S, false);
 
   if (IIDecl && (isa<TypedefDecl>(IIDecl) || 

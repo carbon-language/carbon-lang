@@ -210,7 +210,7 @@ private:
   //===--------------------------------------------------------------------===//
   // Symbol table / Decl tracking callbacks: SemaDecl.cpp.
   //
-  virtual DeclTy *isTypeName(const IdentifierInfo &II, Scope *S);
+  virtual TypeTy *isTypeName(const IdentifierInfo &II, Scope *S);
   virtual DeclTy *ActOnDeclarator(Scope *S, Declarator &D, DeclTy *LastInGroup);
   virtual DeclTy *ActOnParamDeclarator(Scope *S, Declarator &D);
   virtual void ActOnParamDefaultArgument(DeclTy *param, 
@@ -587,7 +587,7 @@ public:
   /// ActOnBaseSpecifier - Parsed a base specifier
   virtual void ActOnBaseSpecifier(DeclTy *classdecl, SourceRange SpecifierRange,
                                   bool Virtual, AccessSpecifier Access,
-                                  DeclTy *basetype, SourceLocation BaseLoc);
+                                  TypeTy *basetype, SourceLocation BaseLoc);
   
   virtual void ActOnStartCXXClassDef(Scope *S, DeclTy *TagDecl,
                                      SourceLocation LBrace);

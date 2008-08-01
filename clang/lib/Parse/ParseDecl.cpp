@@ -411,7 +411,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
         goto DoneWithDeclSpec;
       
       // It has to be available as a typedef too!
-      void *TypeRep = Actions.isTypeName(*Tok.getIdentifierInfo(), CurScope);
+      TypeTy *TypeRep = Actions.isTypeName(*Tok.getIdentifierInfo(), CurScope);
       if (TypeRep == 0)
         goto DoneWithDeclSpec;
       

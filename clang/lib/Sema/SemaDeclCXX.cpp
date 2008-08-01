@@ -264,7 +264,7 @@ void Sema::CheckCXXDefaultArguments(FunctionDecl *FD) {
 /// 'public bar' and 'virtual private baz' are each base-specifiers.
 void Sema::ActOnBaseSpecifier(DeclTy *classdecl, SourceRange SpecifierRange,
                               bool Virtual, AccessSpecifier Access,
-                              DeclTy *basetype, SourceLocation BaseLoc) {
+                              TypeTy *basetype, SourceLocation BaseLoc) {
   RecordDecl *Decl = (RecordDecl*)classdecl;
   QualType BaseType = Context.getTypeDeclType((TypeDecl*)basetype);
 
