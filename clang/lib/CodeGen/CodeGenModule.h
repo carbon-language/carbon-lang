@@ -54,6 +54,8 @@ namespace CodeGen {
 /// CodeGenModule - This class organizes the cross-module state that is used
 /// while generating LLVM code.
 class CodeGenModule {
+  typedef std::vector< std::pair<llvm::Constant*, int> > CtorList;
+
   ASTContext &Context;
   const LangOptions &Features;
   llvm::Module &TheModule;
@@ -80,7 +82,16 @@ class CodeGenModule {
   /// which actually define something.
   std::vector<const ValueDecl*> StaticDecls;
   
-  std::vector<llvm::Constant*> GlobalCtors;
+  /// GlobalCtors - Store the list of global constructors and their
+  /// respective priorities to be emitted when the translation unit is
+  /// complete.
+  CtorList GlobalCtors;
+
+  /// GlobalDtors - Store the list of global destructors and their
+  /// respective priorities to be emitted when the translation unit is
+  /// complete.
+  CtorList GlobalDtors;
+
   std::vector<llvm::Constant*> Annotations;
     
   llvm::StringMap<llvm::Constant*> CFConstantStringMap;
@@ -173,9 +184,17 @@ private:
   llvm::GlobalValue *EmitForwardFunctionDefinition(const FunctionDecl *D);
   void EmitGlobalFunctionDefinition(const FunctionDecl *D);
   void EmitGlobalVarDefinition(const VarDecl *D);
+  
+  // FIXME: Hardcoding priority here is gross.
+  void AddGlobalCtor(llvm::Function * Ctor, int Priority=65535);
+  void AddGlobalDtor(llvm::Function * Dtor, int Priority=65535);
 
-  void AddGlobalCtor(llvm::Function * Ctor);
-  void EmitGlobalCtors(void);
+  /// EmitCtorList - Generates a global array of functions and
+  /// priorities using the given list and name. This array will have
+  /// appending linkage and is suitable for use as a LLVM constructor
+  /// or destructor array.
+  void EmitCtorList(const CtorList &Fns, const char *GlobalName);
+
   void EmitAnnotations(void);
   void EmitStatics(void);
 

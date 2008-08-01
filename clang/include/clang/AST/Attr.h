@@ -132,6 +132,8 @@ class ConstructorAttr : public Attr {
   int priority;
 public:
   ConstructorAttr(int p) : Attr(Constructor), priority(p) {}
+
+  int getPriority() const { return priority; }
   
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Attr *A) { return A->getKind() == Constructor; }  
@@ -142,6 +144,8 @@ class DestructorAttr : public Attr {
   int priority;
 public:
   DestructorAttr(int p) : Attr(Destructor), priority(p) {}
+
+  int getPriority() const { return priority; }
   
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Attr *A) { return A->getKind() == Destructor; }  

@@ -53,7 +53,8 @@ CodeGenModule::~CodeGenModule() {
   llvm::Function *ObjCInitFunction = Runtime->ModuleInitFunction();
   if (ObjCInitFunction)
     AddGlobalCtor(ObjCInitFunction);
-  EmitGlobalCtors();
+  EmitCtorList(GlobalCtors, "llvm.global_ctors");
+  EmitCtorList(GlobalDtors, "llvm.global_dtors");
   EmitAnnotations();
   delete Runtime;
   delete DebugInfo;
@@ -102,55 +103,48 @@ void CodeGenModule::setVisibility(llvm::GlobalValue *GV,
 
 /// AddGlobalCtor - Add a function to the list that will be called before
 /// main() runs.
-void CodeGenModule::AddGlobalCtor(llvm::Function * Ctor) {
+void CodeGenModule::AddGlobalCtor(llvm::Function * Ctor, int Priority) {
   // TODO: Type coercion of void()* types.
-  GlobalCtors.push_back(Ctor);
+  GlobalCtors.push_back(std::make_pair(Ctor, Priority));
 }
 
-/// EmitGlobalCtors - Generates the array of contsturctor functions to be
-/// called on module load, if any have been registered with AddGlobalCtor.
-void CodeGenModule::EmitGlobalCtors() {
-  if (GlobalCtors.empty()) return;
-  
-  // Get the type of @llvm.global_ctors
-  std::vector<const llvm::Type*> CtorFields;
-  CtorFields.push_back(llvm::IntegerType::get(32));
-  // Constructor function type
-  std::vector<const llvm::Type*> VoidArgs;
-  llvm::FunctionType* CtorFuncTy =
-    llvm::FunctionType::get(llvm::Type::VoidTy, VoidArgs, false);
-  
-  // i32, function type pair
-  const llvm::Type *FPType = llvm::PointerType::getUnqual(CtorFuncTy);
+/// AddGlobalDtor - Add a function to the list that will be called
+/// when the module is unloaded.
+void CodeGenModule::AddGlobalDtor(llvm::Function * Dtor, int Priority) {
+  // TODO: Type coercion of void()* types.
+  GlobalDtors.push_back(std::make_pair(Dtor, Priority));
+}
+
+void CodeGenModule::EmitCtorList(const CtorList &Fns, const char *GlobalName) {
+  // Ctor function type is void()*.
+  llvm::FunctionType* CtorFTy =
+    llvm::FunctionType::get(llvm::Type::VoidTy, 
+                            std::vector<const llvm::Type*>(),
+                            false);
+  llvm::Type *CtorPFTy = llvm::PointerType::getUnqual(CtorFTy);
+
+  // Get the type of a ctor entry, { i32, void ()* }.
   llvm::StructType* CtorStructTy = 
-  llvm::StructType::get(llvm::Type::Int32Ty, FPType, NULL);
-  // Array of fields
-  llvm::ArrayType* GlobalCtorsTy = 
-    llvm::ArrayType::get(CtorStructTy, GlobalCtors.size());
-  
-  // Define the global variable
-  llvm::GlobalVariable *GlobalCtorsVal =
-    new llvm::GlobalVariable(GlobalCtorsTy, false,
-                             llvm::GlobalValue::AppendingLinkage,
-                             (llvm::Constant*)0, "llvm.global_ctors",
-                             &TheModule);
+    llvm::StructType::get(llvm::Type::Int32Ty, 
+                          llvm::PointerType::getUnqual(CtorFTy), NULL);
 
-  // Populate the array
-  std::vector<llvm::Constant*> CtorValues;
-  llvm::Constant *MagicNumber = 
-    llvm::ConstantInt::get(llvm::Type::Int32Ty, 65535, false);
-  std::vector<llvm::Constant*> StructValues;
-  for (std::vector<llvm::Constant*>::iterator I = GlobalCtors.begin(), 
-       E = GlobalCtors.end(); I != E; ++I) {
-    StructValues.clear();
-    StructValues.push_back(MagicNumber);
-    StructValues.push_back(*I);
-
-    CtorValues.push_back(llvm::ConstantStruct::get(CtorStructTy, StructValues));
+  // Construct the constructor and destructor arrays.
+  std::vector<llvm::Constant*> Ctors;
+  for (CtorList::const_iterator I = Fns.begin(), E = Fns.end(); I != E; ++I) {
+    std::vector<llvm::Constant*> S;
+    S.push_back(llvm::ConstantInt::get(llvm::Type::Int32Ty, I->second, false));
+    S.push_back(llvm::ConstantExpr::getBitCast(I->first, CtorPFTy));
+    Ctors.push_back(llvm::ConstantStruct::get(CtorStructTy, S));
   }
-  
-  GlobalCtorsVal->setInitializer(llvm::ConstantArray::get(GlobalCtorsTy,
-                                                          CtorValues));
+
+  if (!Ctors.empty()) {
+    llvm::ArrayType *AT = llvm::ArrayType::get(CtorStructTy, Ctors.size());
+    new llvm::GlobalVariable(AT, false,
+                             llvm::GlobalValue::AppendingLinkage,
+                             llvm::ConstantArray::get(AT, Ctors),
+                             GlobalName, 
+                             &TheModule);
+  }
 }
 
 void CodeGenModule::EmitAnnotations() {
@@ -796,6 +790,12 @@ void CodeGenModule::EmitGlobalFunctionDefinition(const FunctionDecl *D) {
   } else {
     llvm::Function *Fn = cast<llvm::Function>(Entry);    
     CodeGenFunction(*this).GenerateCode(D, Fn);
+
+    if (const ConstructorAttr *CA = D->getAttr<ConstructorAttr>()) {
+      AddGlobalCtor(Fn, CA->getPriority());
+    } else if (const DestructorAttr *DA = D->getAttr<DestructorAttr>()) {
+      AddGlobalDtor(Fn, DA->getPriority());
+    }
   }
 }
 
