@@ -11,8 +11,8 @@
 // interfaces are used by the ConstantExpr::get* methods to automatically fold
 // constants when possible.
 //
-// These operators may return a null object if I don't know how to perform the
-// specified operation on the specified constant types.
+// These operators may return a null object if they don't know how to perform
+// the specified operation on the specified constant types.
 //
 //===----------------------------------------------------------------------===//
 

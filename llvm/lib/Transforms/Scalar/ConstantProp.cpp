@@ -14,7 +14,7 @@
 //
 // Notice that:
 //   * This pass has a habit of making definitions be dead.  It is a good idea
-//     to to run a DIE pass sometime after running this pass.
+//     to run a DIE pass sometime after running this pass.
 //
 //===----------------------------------------------------------------------===//
 
