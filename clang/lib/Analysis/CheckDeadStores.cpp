@@ -57,7 +57,7 @@ public:
         break;
         
       case DeadIncrement:
-        BugType = "dead store (++/--)";
+        BugType = "dead increment";
       case Standard:
         if (!BugType) BugType = "dead store";
         msg = "Value stored to '" + name + "' is never read";
