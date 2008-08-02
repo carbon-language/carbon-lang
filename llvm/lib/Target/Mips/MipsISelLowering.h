@@ -91,7 +91,7 @@ namespace llvm {
     bool IsInSmallSection(unsigned Size); 
 
     // Lower Operand specifics
-    SDValue LowerAND(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerANDOR(SDValue Op, SelectionDAG &DAG);
     SDValue LowerBRCOND(SDValue Op, SelectionDAG &DAG);
     SDValue LowerCALL(SDValue Op, SelectionDAG &DAG);
     SDValue LowerConstantPool(SDValue Op, SelectionDAG &DAG);

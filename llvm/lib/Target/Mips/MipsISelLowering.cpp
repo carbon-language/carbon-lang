@@ -86,7 +86,7 @@ MipsTargetLowering(MipsTargetMachine &TM): TargetLowering(TM)
   setLoadXAction(ISD::SEXTLOAD, MVT::i1,  Promote);
 
   // Used by legalize types to correctly generate the setcc result. 
-  // Without this, every float setcc comes with a AND with the result, 
+  // Without this, every float setcc comes with a AND/OR with the result, 
   // we don't want this, since the fpcmp result goes to a flag register, 
   // which is used implicitly by brcond and select operations.
   AddPromotedToType(ISD::SETCC, MVT::i1, MVT::i32);
@@ -103,10 +103,11 @@ MipsTargetLowering(MipsTargetMachine &TM): TargetLowering(TM)
   setOperationAction(ISD::SETCC,            MVT::f32,   Custom);
   setOperationAction(ISD::BRCOND,           MVT::Other, Custom);
 
-  // We custom lower AND to handle the case where the DAG contain 'ands' 
-  // setcc results with fp operands. This is necessary since the result 
-  // from these are in a flag register (FCR31).
+  // We custom lower AND/OR to handle the case where the DAG contain 'ands/ors' 
+  // with operands comming from setcc fp comparions. This is necessary since 
+  // the result from these setcc are in a flag registers (FCR31).
   setOperationAction(ISD::AND,              MVT::i32,   Custom);
+  setOperationAction(ISD::OR,               MVT::i32,   Custom);
 
   // Operations not directly supported by Mips.
   setOperationAction(ISD::BR_JT,             MVT::Other, Expand);
@@ -160,7 +161,7 @@ LowerOperation(SDValue Op, SelectionDAG &DAG)
 {
   switch (Op.getOpcode()) 
   {
-    case ISD::AND:              return LowerAND(Op, DAG);
+    case ISD::AND:              return LowerANDOR(Op, DAG);
     case ISD::BRCOND:           return LowerBRCOND(Op, DAG);
     case ISD::CALL:             return LowerCALL(Op, DAG);
     case ISD::ConstantPool:     return LowerConstantPool(Op, DAG);
@@ -168,6 +169,7 @@ LowerOperation(SDValue Op, SelectionDAG &DAG)
     case ISD::GlobalAddress:    return LowerGlobalAddress(Op, DAG);
     case ISD::GlobalTLSAddress: return LowerGlobalTLSAddress(Op, DAG);
     case ISD::JumpTable:        return LowerJumpTable(Op, DAG);
+    case ISD::OR:               return LowerANDOR(Op, DAG);
     case ISD::RET:              return LowerRET(Op, DAG);
     case ISD::SELECT:           return LowerSELECT(Op, DAG);
     case ISD::SELECT_CC:        return LowerSELECT_CC(Op, DAG);
@@ -360,7 +362,7 @@ MipsTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
 //===----------------------------------------------------------------------===//
 
 SDValue MipsTargetLowering::
-LowerAND(SDValue Op, SelectionDAG &DAG)
+LowerANDOR(SDValue Op, SelectionDAG &DAG)
 {
   SDValue LHS   = Op.getOperand(0);
   SDValue RHS   = Op.getOperand(1);
@@ -376,7 +378,7 @@ LowerAND(SDValue Op, SelectionDAG &DAG)
   SDValue RSEL = DAG.getNode(MipsISD::FPSelectCC, True.getValueType(), 
                              RHS, True, False, RHS.getOperand(2));
 
-  return DAG.getNode(ISD::AND, MVT::i32, LSEL, RSEL);
+  return DAG.getNode(Op.getOpcode(), MVT::i32, LSEL, RSEL);
 }
 
 SDValue MipsTargetLowering::
