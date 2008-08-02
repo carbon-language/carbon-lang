@@ -59,6 +59,8 @@ namespace {
     }
 
     virtual std::string getSectionForFunction(const Function &F) const;
+    bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo, 
+                         unsigned AsmVariant, const char *ExtraCode);
     void printOperand(const MachineInstr *MI, int opNum);
     void printMemOperand(const MachineInstr *MI, int opNum, 
                          const char *Modifier = 0);
@@ -334,6 +336,19 @@ runOnMachineFunction(MachineFunction &MF)
   emitFunctionEnd(MF);
 
   // We didn't modify anything.
+  return false;
+}
+
+// Print out an operand for an inline asm expression.
+bool MipsAsmPrinter::
+PrintAsmOperand(const MachineInstr *MI, unsigned OpNo, 
+                unsigned AsmVariant, const char *ExtraCode) 
+{
+  // Does this asm operand have a single letter operand modifier?
+  if (ExtraCode && ExtraCode[0]) 
+    return true; // Unknown modifier.
+
+  printOperand(MI, OpNo);
   return false;
 }
 

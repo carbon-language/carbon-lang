@@ -217,14 +217,17 @@ eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
            "Instr doesn't have FrameIndex operand!");
   }
 
+  #ifndef NDEBUG
+  DOUT << "\nFunction : " << MF.getFunction()->getName() << "\n";
+  DOUT << "<--------->\n";
+  MI.print(DOUT);
+  #endif
+
   int FrameIndex = MI.getOperand(i).getIndex();
   int stackSize  = MF.getFrameInfo()->getStackSize();
   int spOffset   = MF.getFrameInfo()->getObjectOffset(FrameIndex);
 
   #ifndef NDEBUG
-  DOUT << "\nFunction : " << MF.getFunction()->getName() << "\n";
-  DOUT << "<--------->\n";
-  MI.print(DOUT);
   DOUT << "FrameIndex : " << FrameIndex << "\n";
   DOUT << "spOffset   : " << spOffset << "\n";
   DOUT << "stackSize  : " << stackSize << "\n";

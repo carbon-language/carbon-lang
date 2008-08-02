@@ -126,6 +126,10 @@ let Namespace = "Mips" in {
   def D14 : AFPR<28, "F28", [F28, F29]>, DwarfRegNum<[60]>;
   def D15 : AFPR<30, "F30", [F30, F31]>, DwarfRegNum<[62]>;
 
+  // Hi/Lo registers
+  def HI  : Register<"hi">, DwarfRegNum<[64]>;
+  def LO  : Register<"lo">, DwarfRegNum<[65]>;
+
   // Status flags register
   def FCR31 : Register<"FCR31">;
 }
@@ -231,5 +235,9 @@ def AFGR64 : RegisterClass<"Mips", [f64], 64,
 
 def CCR : RegisterClass<"Mips", [i32], 32, [FCR31]> {
   let CopyCost = -1;  // Don't allow copying of status registers.
+}
+
+def HILO : RegisterClass<"Mips", [i32], 32, [HI, LO]> {
+  //let CopyCost = -1;  // Don't allow copying of hi/lo registers.
 }
 

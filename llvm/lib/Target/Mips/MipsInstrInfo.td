@@ -315,12 +315,20 @@ class MulDiv<bits<6> func, string instr_asm, InstrItinClass itin>:
       [], itin>;
 
 // Move from Hi/Lo
-class MoveFromTo<bits<6> func, string instr_asm>:
+class MoveFromLOHI<bits<6> func, string instr_asm>:
   FR< 0x00,
       func,
       (outs CPURegs:$dst),
       (ins),
       !strconcat(instr_asm, "\t$dst"),
+      [], IIHiLo>;
+
+class MoveToLOHI<bits<6> func, string instr_asm>:
+  FR< 0x00,
+      func,
+      (outs),
+      (ins CPURegs:$src),
+      !strconcat(instr_asm, "\t$src"),
       [], IIHiLo>;
 
 // Count Leading Ones/Zeros in Word
@@ -459,14 +467,22 @@ let isReturn=1, isTerminator=1, hasDelaySlot=1,
                 "jr\t$target", [(MipsRet CPURegs:$target)], IIBranch>;
 
 /// Multiply and Divide Instructions. 
-def MULT    : MulDiv<0x18, "mult", IIImul>;
-def MULTu   : MulDiv<0x19, "multu", IIImul>;
-def DIV     : MulDiv<0x1a, "div", IIIdiv>;
-def DIVu    : MulDiv<0x1b, "divu", IIIdiv>;
-def MFHI    : MoveFromTo<0x10, "mfhi">;
-def MFLO    : MoveFromTo<0x12, "mflo">;
-def MTHI    : MoveFromTo<0x11, "mthi">;
-def MTLO    : MoveFromTo<0x13, "mtlo">;
+let Defs = [HI, LO] in {
+  def MULT    : MulDiv<0x18, "mult", IIImul>;
+  def MULTu   : MulDiv<0x19, "multu", IIImul>;
+  def DIV     : MulDiv<0x1a, "div", IIIdiv>;
+  def DIVu    : MulDiv<0x1b, "divu", IIIdiv>;
+}
+
+let Defs = [HI] in
+  def MTHI  : MoveToLOHI<0x11, "mthi">;
+let Defs = [LO] in
+  def MTLO  : MoveToLOHI<0x13, "mtlo">;
+
+let Uses = [HI] in
+  def MFHI  : MoveFromLOHI<0x10, "mfhi">;
+let Uses = [LO] in
+  def MFLO  : MoveFromLOHI<0x12, "mflo">;
 
 /// Sign Ext In Register Instructions.
 let Predicates = [HasSEInReg] in {

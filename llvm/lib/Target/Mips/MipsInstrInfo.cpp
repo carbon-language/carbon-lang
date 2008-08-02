@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-//#include "Mips.h"
 #include "MipsInstrInfo.h"
 #include "MipsTargetMachine.h"
 #include "llvm/ADT/STLExtras.h"
@@ -101,11 +100,11 @@ isStoreToStackSlot(MachineInstr *MI, int &FrameIndex) const
 {
   if ((MI->getOpcode() == Mips::SW) || (MI->getOpcode() == Mips::SWC1) ||
       (MI->getOpcode() == Mips::SWC1A) || (MI->getOpcode() == Mips::SDC1)) {
-    if ((MI->getOperand(0).isFrameIndex()) && // is a stack slot
+    if ((MI->getOperand(2).isFrameIndex()) && // is a stack slot
         (MI->getOperand(1).isImmediate()) &&  // the imm is zero
         (isZeroImm(MI->getOperand(1)))) {
-      FrameIndex = MI->getOperand(0).getIndex();
-      return MI->getOperand(2).getReg();
+      FrameIndex = MI->getOperand(2).getIndex();
+      return MI->getOperand(0).getReg();
     }
   }
   return 0;
@@ -137,14 +136,27 @@ copyRegToReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     else if ((DestRC == Mips::AFGR32RegisterClass) &&
              (SrcRC == Mips::CPURegsRegisterClass))
       BuildMI(MBB, I, get(Mips::MTC1A), DestReg).addReg(SrcReg);
+    else if ((DestRC == Mips::AFGR32RegisterClass) &&
+             (SrcRC == Mips::CPURegsRegisterClass))
+      BuildMI(MBB, I, get(Mips::MTC1A), DestReg).addReg(SrcReg);
     else if ((SrcRC == Mips::CCRRegisterClass) && 
              (SrcReg == Mips::FCR31))
       return; // This register is used implicitly, no copy needed.
     else if ((DestRC == Mips::CCRRegisterClass) && 
              (DestReg == Mips::FCR31))
       return; // This register is used implicitly, no copy needed.
-    else
+    else if ((DestRC == Mips::HILORegisterClass) &&
+             (SrcRC == Mips::CPURegsRegisterClass)) {
+      unsigned Opc = (DestReg == Mips::HI) ? Mips::MTHI : Mips::MTLO;
+      BuildMI(MBB, I, get(Opc), DestReg);
+    } else if ((SrcRC == Mips::HILORegisterClass) &&
+               (DestRC == Mips::CPURegsRegisterClass)) {
+      unsigned Opc = (SrcReg == Mips::HI) ? Mips::MFHI : Mips::MFLO;
+      BuildMI(MBB, I, get(Opc), DestReg);
+    } else
       assert (0 && "DestRC != SrcRC, Can't copy this register");
+
+    return;
   }
 
   if (DestRC == Mips::CPURegsRegisterClass)
@@ -280,8 +292,8 @@ foldMemoryOperand(MachineFunction &MF,
       if (Ops[0] == 0) {    // COPY -> STORE
         unsigned SrcReg = MI->getOperand(2).getReg();
         bool isKill = MI->getOperand(2).isKill();
-        NewMI = BuildMI(MF, get(Mips::SW)).addFrameIndex(FI)
-          .addImm(0).addReg(SrcReg, false, false, isKill);
+        NewMI = BuildMI(MF, get(Mips::SW)).addReg(SrcReg, false, false, isKill)
+          .addImm(0).addFrameIndex(FI);
       } else {              // COPY -> LOAD
         unsigned DstReg = MI->getOperand(0).getReg();
         bool isDead = MI->getOperand(0).isDead();
@@ -312,8 +324,8 @@ foldMemoryOperand(MachineFunction &MF,
       if (Ops[0] == 0) {    // COPY -> STORE
         unsigned SrcReg = MI->getOperand(1).getReg();
         bool isKill = MI->getOperand(1).isKill();
-        NewMI = BuildMI(MF, get(StoreOpc)).addFrameIndex(FI)
-          .addImm(0).addReg(SrcReg, false, false, isKill);
+        NewMI = BuildMI(MF, get(StoreOpc)).addReg(SrcReg, false, false, isKill)
+          .addImm(0).addFrameIndex(FI) ;
       } else {              // COPY -> LOAD
         unsigned DstReg = MI->getOperand(0).getReg();
         bool isDead = MI->getOperand(0).isDead();
@@ -487,7 +499,7 @@ bool MipsInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
   unsigned SecondLastOpc    = SecondLastInst->getOpcode();
   Mips::CondCode BranchCode = GetCondFromBranchOpc(SecondLastOpc);
 
-  if (SecondLastOpc != Mips::COND_INVALID && LastOpc == Mips::J) {
+  if (BranchCode != Mips::COND_INVALID && LastOpc == Mips::J) {
     int SecondNumOp = SecondLastInst->getNumOperands();
 
     TBB = SecondLastInst->getOperand(SecondNumOp-1).getMBB();
@@ -584,7 +596,7 @@ RemoveBranch(MachineBasicBlock &MBB) const
   return 2;
 }
 
-/// BlockHasNoFallThrough - Analyse if MachineBasicBlock does not
+/// BlockHasNoFallThrough - Analyze if MachineBasicBlock does not
 /// fall-through into its successor block.
 bool MipsInstrInfo::
 BlockHasNoFallThrough(MachineBasicBlock &MBB) const 
