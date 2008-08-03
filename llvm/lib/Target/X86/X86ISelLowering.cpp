@@ -296,6 +296,8 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   setOperationAction(ISD::ATOMIC_CMP_SWAP , MVT::i16, Custom);
   setOperationAction(ISD::ATOMIC_CMP_SWAP , MVT::i32, Custom);
   setOperationAction(ISD::ATOMIC_CMP_SWAP , MVT::i64, Custom);
+  setOperationAction(ISD::ATOMIC_LOAD_SUB , MVT::i8, Expand);
+  setOperationAction(ISD::ATOMIC_LOAD_SUB , MVT::i16, Expand);
   setOperationAction(ISD::ATOMIC_LOAD_SUB , MVT::i32, Expand);
 
   // Use the default ISD::DBG_STOPPOINT, ISD::DECLARE expansion.
@@ -5880,7 +5882,6 @@ SDNode* X86TargetLowering::ExpandATOMIC_CMP_SWAP(SDNode* Op, SelectionDAG &DAG) 
 
 SDNode* X86TargetLowering::ExpandATOMIC_LOAD_SUB(SDNode* Op, SelectionDAG &DAG) {
   MVT T = Op->getValueType(0);
-  assert (T == MVT::i32 && "Only know how to expand i32 Atomic Load Sub");
   SDValue negOp = DAG.getNode(ISD::SUB, T,
                                 DAG.getConstant(0, T), Op->getOperand(2));
   return DAG.getAtomic(ISD::ATOMIC_LOAD_ADD, Op->getOperand(0),
