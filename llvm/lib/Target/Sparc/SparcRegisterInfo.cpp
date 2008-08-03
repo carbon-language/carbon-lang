@@ -137,7 +137,7 @@ void SparcRegisterInfo::emitPrologue(MachineFunction &MF) const {
   
   if (NumBytes >= -4096) {
     BuildMI(MBB, MBB.begin(), TII.get(SP::SAVEri),
-            SP::O6).addImm(NumBytes).addReg(SP::O6);
+            SP::O6).addReg(SP::O6).addImm(NumBytes);
   } else {
     MachineBasicBlock::iterator InsertPt = MBB.begin();
     // Emit this the hard way.  This clobbers G1 which we always know is 
