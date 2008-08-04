@@ -190,6 +190,9 @@ unsigned CodeGenFunction::GetIDForAddrOfLabel(const LabelStmt *L) {
 void CodeGenFunction::EmitIndirectSwitches() {
   llvm::BasicBlock *Default;
   
+  if (IndirectSwitches.empty())
+    return;
+  
   if (!LabelIDs.empty()) {
     Default = getBasicBlockForLabel(LabelIDs.begin()->first);
   } else {
