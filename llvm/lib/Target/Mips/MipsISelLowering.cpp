@@ -138,7 +138,7 @@ MipsTargetLowering(MipsTargetMachine &TM): TargetLowering(TM)
   setOperationAction(ISD::STACKRESTORE,      MVT::Other, Expand);
   setOperationAction(ISD::MEMBARRIER,        MVT::Other, Expand);
 
-  if (Subtarget->isSingleFloat()) 
+  if (Subtarget->isSingleFloat())
     setOperationAction(ISD::SELECT_CC, MVT::f64, Expand);
 
   if (!Subtarget->hasSEInReg()) {

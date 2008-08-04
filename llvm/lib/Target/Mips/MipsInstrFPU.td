@@ -339,3 +339,8 @@ def : Pat<(i32 (fp_to_sint AFGR32:$src)), (MFC1A (TRUNC_W_AS32 AFGR32:$src))>;
 
 def : Pat<(i32 (bitconvert FGR32:$src)),  (MFC1 FGR32:$src)>;
 def : Pat<(i32 (bitconvert AFGR32:$src)), (MFC1A AFGR32:$src)>;
+
+def : Pat<(f32 (bitconvert CPURegs:$src)), (MTC1 CPURegs:$src)>,
+      Requires<[IsSingleFloat]>;
+def : Pat<(f32 (bitconvert CPURegs:$src)), (MTC1A CPURegs:$src)>,
+      Requires<[In32BitMode]>;
