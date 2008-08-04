@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=i386-apple-darwin -relocation-model=pic -stats |& grep {spiller       - Number of instructions commuted}
+; RUN: llvm-as < %s | llc -mtriple=i386-apple-darwin -relocation-model=pic -disable-correct-folding -stats |& grep {spiller       - Number of instructions commuted}
 
 	%struct.CABAC_context_element = type { i8, i8 }
 	%struct.MB_Info_CABAC = type { i8, i8, [2 x i8], i8, i8, i8, i16, i16, [4 x i8], [8 x %struct.MotionVector] }

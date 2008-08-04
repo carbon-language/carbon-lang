@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=i386-apple-darwin -relocation-model=pic -disable-fp-elim | grep addb | grep ebp
+; RUN: llvm-as < %s | llc -mtriple=i386-apple-darwin -relocation-model=pic -disable-fp-elim -disable-correct-folding | grep addb | grep ebp
 
 	%struct.rc4_state = type { i32, i32, [256 x i32] }
 @.str1 = internal constant [65 x i8] c"m[%d] = 0x%02x, m[%d] = 0x%02x, 0x%02x, k = %d, key[k] = 0x%02x\0A\00"		; <[65 x i8]*> [#uses=1]

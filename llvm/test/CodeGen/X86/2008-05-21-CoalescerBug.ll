@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -fast | grep mov | count 4
+; RUN: llvm-as < %s | llc -march=x86 -fast -disable-correct-folding | grep mov | count 4
 ; PR2343
 
 	%llvm.dbg.anchor.type = type { i32, i32 }

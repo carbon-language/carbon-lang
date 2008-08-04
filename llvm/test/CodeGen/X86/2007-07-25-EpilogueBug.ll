@@ -1,6 +1,6 @@
 ; Verify that the addl comes before any popl.
 
-; RUN: llvm-as < %s | llc -mtriple=i686-pc-linux-gnu -mcpu=i386 | \
+; RUN: llvm-as < %s | llc -mtriple=i686-pc-linux-gnu -disable-correct-folding -mcpu=i386 | \
 ; RUN:   %prcontext ret 1 | grep popl
 ; PR1573
 

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -x86-asm-syntax=att | grep movl | count 2
+; RUN: llvm-as < %s | llc -march=x86 -x86-asm-syntax=att | grep movl | count 1
 
 	%struct.double_int = type { i64, i64 }
 	%struct.tree_common = type <{ i8, [3 x i8] }>

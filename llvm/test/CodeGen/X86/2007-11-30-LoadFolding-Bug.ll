@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 -stats |& \
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 -disable-correct-folding -stats |& \
 ; RUN:   grep {1 .*folded into instructions}
 
 declare fastcc void @rdft(i32, i32, double*, i32*, double*)
