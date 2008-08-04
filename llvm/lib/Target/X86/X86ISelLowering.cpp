@@ -3665,6 +3665,7 @@ LowerVECTOR_SHUFFLE_4wide(SDValue V1, SDValue V2,
       Locs[i] = std::make_pair(-1, -1);
     } else {
       unsigned Val = cast<ConstantSDNode>(Elt)->getValue();
+      assert(Val < 8 && "Invalid VECTOR_SHUFFLE index!");
       if (Val < 4) {
         Locs[i] = std::make_pair(0, NumLo);
         Mask1[NumLo] = Elt;
