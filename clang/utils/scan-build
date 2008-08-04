@@ -69,9 +69,9 @@ if (! -x $ClangSB) {
 my %AvailableAnalyses;
 
 # Query clang for analysis options.
-open(PIPE, "'$Clang' --help |") or
+open(PIPE, "-|", $Clang, "--help") or
   DieDiag("Cannot execute '$Clang'");
-  
+
 my $FoundAnalysis = 0;
 
 while(<PIPE>) {
@@ -210,15 +210,13 @@ sub ComputeDigest {
   # Use Digest::MD5.  We don't have to be cryptographically secure.  We're
   # just looking for duplicate files that come from a non-malicious source.
   # We use Digest::MD5 because it is a standard Perl module that should
-  # come bundled on most systems.
-  
+  # come bundled on most systems.  
   open(FILE, $FName) or DieDiag("Cannot open $FName when computing Digest.\n");
   binmode FILE;
   my $Result = Digest::MD5->new->addfile(*FILE)->hexdigest;
   close(FILE);
   
-  # Return the digest.
-  
+  # Return the digest.  
   return $Result;
 }
 
@@ -229,17 +227,14 @@ sub ComputeDigest {
 my $Prefix;
 
 sub UpdatePrefix {
-  
   my $x = shift;
   my $y = basename($x);
   $x =~ s/\Q$y\E$//;
   
   # Ignore /usr, /Library, /System, /Developer
-
   return if ( $x =~ /^\/usr/ or $x =~ /^\/Library/
               or $x =~ /^\/System/ or $x =~ /^\/Developer/);
 
-  
   if (!defined $Prefix) {
     $Prefix = $x;
     return;
@@ -260,15 +255,15 @@ sub UpdateInFilePath {
   my $fname = shift;
   my $regex = shift;
   my $newtext = shift;
-  
+
   open (RIN, $fname) or die "cannot open $fname";
-  open (ROUT, ">$fname.tmp") or die "cannot open $fname.tmp";
-  
+  open (ROUT, ">", "$fname.tmp") or die "cannot open $fname.tmp";
+
   while (<RIN>) {
     s/$regex/$newtext/;
     print ROUT $_;
   }
-  
+
   close (ROUT);
   close (RIN);
   system("mv", "$fname.tmp", $fname);
@@ -390,11 +385,9 @@ sub Postprocess {
     
   foreach my $file (@files) { ScanFile(\@Index, $Dir, $file); }
   
-  # Generate an index.html file.
-  
-  my $FName = "$Dir/index.html";
-  
-  open(OUT, ">$FName") or DieDiag("Cannot create file '$FName'\n");
+  # Generate an index.html file.  
+  my $FName = "$Dir/index.html";  
+  open(OUT, ">", $FName) or DieDiag("Cannot create file '$FName'\n");
   
   # Print out the header.
   
@@ -595,7 +588,8 @@ sub RunBuildCommand {
     $Cmd = $1;
   }
   
-  if ($Cmd eq "gcc" or $Cmd eq "cc" or $Cmd eq "llvm-gcc") {
+  if ($Cmd eq "gcc" or $Cmd eq "cc" or $Cmd eq "llvm-gcc" 
+   or $Cmd eq "ccc-analyzer") {
     shift @$Args;
     unshift @$Args, $CCAnalyzer;
   }
