@@ -444,13 +444,19 @@ FunctionLoweringInfo::FunctionLoweringInfo(TargetLowering &tli,
     for (BasicBlock::iterator I = BB->begin();(PN = dyn_cast<PHINode>(I)); ++I){
       if (PN->use_empty()) continue;
       
-      MVT VT = TLI.getValueType(PN->getType());
-      unsigned NumRegisters = TLI.getNumRegisters(VT);
       unsigned PHIReg = ValueMap[PN];
       assert(PHIReg && "PHI node does not have an assigned virtual register!");
-      const TargetInstrInfo *TII = TLI.getTargetMachine().getInstrInfo();
-      for (unsigned i = 0; i != NumRegisters; ++i)
-        BuildMI(MBB, TII->get(TargetInstrInfo::PHI), PHIReg+i);
+
+      SmallVector<MVT, 4> ValueVTs;
+      ComputeValueVTs(TLI, PN->getType(), ValueVTs);
+      for (unsigned vti = 0, vte = ValueVTs.size(); vti != vte; ++vti) {
+        MVT VT = ValueVTs[vti];
+        unsigned NumRegisters = TLI.getNumRegisters(VT);
+        const TargetInstrInfo *TII = TLI.getTargetMachine().getInstrInfo();
+        for (unsigned i = 0; i != NumRegisters; ++i)
+          BuildMI(MBB, TII->get(TargetInstrInfo::PHI), PHIReg+i);
+        PHIReg += NumRegisters;
+      }
     }
   }
 }
@@ -5199,10 +5205,15 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
 
       // Remember that this register needs to added to the machine PHI node as
       // the input for this MBB.
-      MVT VT = TLI.getValueType(PN->getType());
-      unsigned NumRegisters = TLI.getNumRegisters(VT);
-      for (unsigned i = 0, e = NumRegisters; i != e; ++i)
-        PHINodesToUpdate.push_back(std::make_pair(MBBI++, Reg+i));
+      SmallVector<MVT, 4> ValueVTs;
+      ComputeValueVTs(TLI, PN->getType(), ValueVTs);
+      for (unsigned vti = 0, vte = ValueVTs.size(); vti != vte; ++vti) {
+        MVT VT = ValueVTs[vti];
+        unsigned NumRegisters = TLI.getNumRegisters(VT);
+        for (unsigned i = 0, e = NumRegisters; i != e; ++i)
+          PHINodesToUpdate.push_back(std::make_pair(MBBI++, Reg+i));
+        Reg += NumRegisters;
+      }
     }
   }
   ConstantsOut.clear();
