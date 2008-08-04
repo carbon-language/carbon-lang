@@ -31,3 +31,58 @@ void testVectorComponentAccess() {
   float* r = &q[0]; // expected-error {{address of vector requested}}
 }
 
+
+void f0() {
+  register int *x0;
+  int *_dummy0 = &(*x0);
+
+  register int *x1;
+  int *_dummy1 = &(*(x1 + 1));
+}
+
+void f1() {
+  register int x0[10];
+  int *_dummy0 = &(*x0); // expected-error {{address of register variable requested}}
+
+  register int x1[10];
+  int *_dummy1 = &(*(x1 + 1)); // expected-error {{address of register variable requested}}
+
+  register int *x2;
+  int *_dummy2 = &(*(x2 + 1));
+
+  register int x3[10][10][10];
+  int *_dummy3 = &x3[0][0]; // expected-error {{address of register variable requested}}
+
+  register struct { int f0[10]; } x4;
+  int *_dummy4 = &x4.f0[2]; // expected-error {{address of register variable requested}}
+}
+
+void f2() {
+  register int *y;
+  
+  int *_dummy0 = &y; // expected-error {{address of register variable requested}}
+  int *_dummy1 = &y[10];
+}
+
+void f3() {
+  extern void f4();
+  void (*_dummy0)() = &****f4;
+}
+
+void f4() {
+  register _Complex int x;
+  
+  int *_dummy0 = &__real__ x; // expected-error {{address of register variable requested}}
+}
+
+void f5() {
+  register int arr[2];
+
+  /* This is just here because if we happened to support this as an
+     lvalue we would need to give a warning. Note that gcc warns about
+     this as a register before it warns about it as an invalid
+     lvalue. */
+  int *_dummy0 = &(int*) arr; // expected-error {{address expression must be an lvalue or a function designator}}
+  int *_dummy1 = &(arr + 1); // expected-error {{address expression must be an lvalue or a function designator}}
+}
+

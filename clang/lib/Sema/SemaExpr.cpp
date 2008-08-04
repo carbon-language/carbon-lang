@@ -1968,8 +1968,16 @@ QualType Sema::CheckIncrementDecrementOperand(Expr *op, SourceLocation OpLoc) {
 
 /// getPrimaryDecl - Helper function for CheckAddressOfOperand().
 /// This routine allows us to typecheck complex/recursive expressions
-/// where the declaration is needed for type checking. Here are some
-/// examples: &s.xx, &s.zz[1].yy, &(1+2), &(XX), &"123"[2].
+/// where the declaration is needed for type checking. We only need to
+/// handle cases when the expression references a function designator
+/// or is an lvalue. Here are some examples:
+///  - &(x) => x
+///  - &*****f => f for f a function designator.
+///  - &s.xx => s
+///  - &s.zz[1].yy -> s, if zz is an array
+///  - *(x + 1) -> x, if x is an array
+///  - &"123"[2] -> 0
+///  - & __real__ x -> x
 static ValueDecl *getPrimaryDecl(Expr *E) {
   switch (E->getStmtClass()) {
   case Stmt::DeclRefExprClass:
@@ -1981,7 +1989,7 @@ static ValueDecl *getPrimaryDecl(Expr *E) {
       return 0;
     return getPrimaryDecl(cast<MemberExpr>(E)->getBase());
   case Stmt::ArraySubscriptExprClass: {
-    // &X[4] and &4[X] is invalid if X is invalid and X is not a pointer.
+    // &X[4] and &4[X] refers to X if X is not a pointer.
   
     ValueDecl *VD = getPrimaryDecl(cast<ArraySubscriptExpr>(E)->getBase());
     if (!VD || VD->getType()->isPointerType())
@@ -1989,8 +1997,42 @@ static ValueDecl *getPrimaryDecl(Expr *E) {
     else
       return VD;
   }
-  case Stmt::UnaryOperatorClass:
-    return getPrimaryDecl(cast<UnaryOperator>(E)->getSubExpr());
+  case Stmt::UnaryOperatorClass: {
+    UnaryOperator *UO = cast<UnaryOperator>(E);
+    
+    switch(UO->getOpcode()) {
+    case UnaryOperator::Deref: {
+      // *(X + 1) refers to X if X is not a pointer.
+      ValueDecl *VD = getPrimaryDecl(UO->getSubExpr());
+      if (!VD || VD->getType()->isPointerType())
+        return 0;
+      return VD;
+    }
+    case UnaryOperator::Real:
+    case UnaryOperator::Imag:
+    case UnaryOperator::Extension:
+      return getPrimaryDecl(UO->getSubExpr());
+    default:
+      return 0;
+    }
+  }
+  case Stmt::BinaryOperatorClass: {
+    BinaryOperator *BO = cast<BinaryOperator>(E);
+
+    // Handle cases involving pointer arithmetic. The result of an
+    // Assign or AddAssign is not an lvalue so they can be ignored.
+
+    // (x + n) or (n + x) => x
+    if (BO->getOpcode() == BinaryOperator::Add) {
+      if (BO->getLHS()->getType()->isPointerType()) {
+        return getPrimaryDecl(BO->getLHS());
+      } else if (BO->getRHS()->getType()->isPointerType()) {
+        return getPrimaryDecl(BO->getRHS());
+      }
+    }
+
+    return 0;
+  }
   case Stmt::ParenExprClass:
     return getPrimaryDecl(cast<ParenExpr>(E)->getSubExpr());
   case Stmt::ImplicitCastExprClass:
