@@ -29,6 +29,7 @@
 #include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/Passes.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
@@ -42,6 +43,12 @@ using namespace llvm;
 
 char LiveVariables::ID = 0;
 static RegisterPass<LiveVariables> X("livevars", "Live Variable Analysis");
+
+
+void LiveVariables::getAnalysisUsage(AnalysisUsage &AU) const {
+  AU.addRequiredID(UnreachableMachineBlockElimID);
+  AU.setPreservesAll();
+}
 
 void LiveVariables::VarInfo::dump() const {
   cerr << "  Alive in blocks: ";

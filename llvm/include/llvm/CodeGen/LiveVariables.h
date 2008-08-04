@@ -247,10 +247,8 @@ public:
     assert(Removed && "Register is not defined by this instruction!");
     return true;
   }
-
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.setPreservesAll();
-  }
+  
+  void getAnalysisUsage(AnalysisUsage &AU) const;
 
   virtual void releaseMemory() {
     VirtRegInfo.clear();

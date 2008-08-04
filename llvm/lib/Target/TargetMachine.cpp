@@ -40,6 +40,7 @@ namespace llvm {
   bool RealignStack;
   bool VerboseAsm;
   bool DisableJumpTables;
+  bool DisableCorrectBranchFolding;
 }
 
 static cl::opt<bool, true> PrintCode("print-machineinstrs",
@@ -162,6 +163,11 @@ DisableSwitchTables(cl::Hidden, "disable-jump-tables",
            cl::desc("Do not generate jump tables."),
            cl::location(DisableJumpTables),
            cl::init(false));
+
+static cl::opt<bool, true>
+DisableCorrectISelFolding(cl::Hidden, "disable-correct-folding",
+cl::desc("Do not perform correct branch folding in the instruction selector."),
+cl::location(DisableCorrectBranchFolding), cl::init(false));
 
 //---------------------------------------------------------------------------
 // TargetMachine Class

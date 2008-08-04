@@ -26,8 +26,10 @@
 #include "llvm/Function.h"
 #include "llvm/Pass.h"
 #include "llvm/Type.h"
+#include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 using namespace llvm;
 
@@ -71,11 +73,93 @@ bool UnreachableBlockElim::runOnFunction(Function &F) {
       BB->dropAllReferences();
     }
 
-  if (DeadBlocks.empty()) return false;
+  // Actually remove the blocks now.
+  for (unsigned i = 0, e = DeadBlocks.size(); i != e; ++i)
+    DeadBlocks[i]->eraseFromParent();
+
+  return DeadBlocks.size();
+}
+
+
+namespace {
+  class VISIBILITY_HIDDEN UnreachableMachineBlockElim : 
+        public MachineFunctionPass {
+    virtual bool runOnMachineFunction(MachineFunction &F);
+    bool iterateOnFunction(MachineFunction& F);
+    
+  public:
+    static char ID; // Pass identification, replacement for typeid
+    UnreachableMachineBlockElim() : MachineFunctionPass((intptr_t)&ID) {}
+  };
+}
+char UnreachableMachineBlockElim::ID = 0;
+
+static RegisterPass<UnreachableMachineBlockElim>
+Y("unreachable-mbb-elimination",
+  "Remove unreachable machine basic blocks");
+
+const PassInfo *const llvm::UnreachableMachineBlockElimID = &Y;
+
+bool UnreachableMachineBlockElim::runOnMachineFunction(MachineFunction &F) {
+  bool changed = true;
+  bool result = false;
+  
+  while (changed) {
+    changed = iterateOnFunction(F);
+    result |= changed;
+  }
+  
+  if (result)
+    F.RenumberBlocks();
+  
+  return result;
+}
+
+bool UnreachableMachineBlockElim::iterateOnFunction(MachineFunction &F) {
+  std::set<MachineBasicBlock*> Reachable;
+
+  // Mark all reachable blocks.
+  for (df_ext_iterator<MachineFunction*> I = df_ext_begin(&F, Reachable),
+         E = df_ext_end(&F, Reachable); I != E; ++I)
+    /* Mark all reachable blocks */;
+
+  // Loop over all dead blocks, remembering them and deleting all instructions
+  // in them.
+  std::vector<MachineBasicBlock*> DeadBlocks;
+  for (MachineFunction::iterator I = F.begin(), E = F.end(); I != E; ++I)
+    if (!Reachable.count(I)) {
+      MachineBasicBlock *BB = I;
+      DeadBlocks.push_back(BB);
+      
+      while (BB->succ_begin() != BB->succ_end()) {
+        MachineBasicBlock* succ = *BB->succ_begin();
+        
+        MachineBasicBlock::iterator start = succ->begin();
+        while (start != succ->end() &&
+               start->getOpcode() == TargetInstrInfo::PHI) {
+          for (unsigned i = start->getNumOperands() - 1; i >= 2; i-=2)
+            if (start->getOperand(i).isMBB() &&
+                start->getOperand(i).getMBB() == BB) {
+              start->RemoveOperand(i);
+              start->RemoveOperand(i-1);
+            }
+          
+          if (start->getNumOperands() == 1) {
+            MachineInstr* phi = start;
+            start++;
+            phi->eraseFromParent();
+          } else
+            start++;
+        }
+        
+        BB->removeSuccessor(BB->succ_begin());
+      }
+    }
 
   // Actually remove the blocks now.
   for (unsigned i = 0, e = DeadBlocks.size(); i != e; ++i)
-    F.getBasicBlockList().erase(DeadBlocks[i]);
+    DeadBlocks[i]->eraseFromParent();
 
-  return true;
+  return DeadBlocks.size();
 }
+

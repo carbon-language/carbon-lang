@@ -1632,11 +1632,24 @@ void SelectionDAGLowering::visitSwitchCase(SelectionDAGISel::CaseBlock &CB) {
   }
   SDValue BrCond = DAG.getNode(ISD::BRCOND, MVT::Other, getControlRoot(), Cond,
                                  DAG.getBasicBlock(CB.TrueBB));
-  if (CB.FalseBB == NextBlock)
+  
+  // If the branch was constant folded, fix up the CFG.
+  if (BrCond.getOpcode() == ISD::BR) {
+    if (!DisableCorrectBranchFolding)
+      CurMBB->removeSuccessor(CB.FalseBB);
     DAG.setRoot(BrCond);
-  else
-    DAG.setRoot(DAG.getNode(ISD::BR, MVT::Other, BrCond, 
-                            DAG.getBasicBlock(CB.FalseBB)));
+  } else {
+    // Otherwise, go ahead and insert the false branch.
+    if (BrCond == getControlRoot()) 
+      if (!DisableCorrectBranchFolding)
+        CurMBB->removeSuccessor(CB.TrueBB);
+    
+    if (CB.FalseBB == NextBlock)
+      DAG.setRoot(BrCond);
+    else
+      DAG.setRoot(DAG.getNode(ISD::BR, MVT::Other, BrCond, 
+                              DAG.getBasicBlock(CB.FalseBB)));
+  }
 }
 
 /// visitJumpTable - Emit JumpTable node in the current MBB

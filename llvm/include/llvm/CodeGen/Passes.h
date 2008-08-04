@@ -71,6 +71,10 @@ namespace llvm {
   /// register allocators.
   extern const PassInfo *const TwoAddressInstructionPassID;
 
+  /// UnreachableMachineBlockElimination pass - This pass removes unreachable
+  /// machine basic blocks.
+  extern const PassInfo *const UnreachableMachineBlockElimID;
+
   /// Creates a register allocator as the user specified on the command line.
   ///
   FunctionPass *createRegisterAllocator();
