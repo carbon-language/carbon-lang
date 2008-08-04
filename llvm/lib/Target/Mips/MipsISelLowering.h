@@ -83,8 +83,6 @@ namespace llvm {
     const MipsSubtarget *Subtarget;
 
     // Lower Operand helpers
-    SDValue LowerCCCArguments(SDValue Op, SelectionDAG &DAG);
-    SDValue LowerCCCCallTo(SDValue Op, SelectionDAG &DAG, unsigned CC);
     SDNode *LowerCallResult(SDValue Chain, SDValue InFlag, SDNode*TheCall,
                             unsigned CallingConv, SelectionDAG &DAG);
     bool IsGlobalInSmallSection(GlobalValue *GV); 

@@ -556,34 +556,19 @@ LowerConstantPool(SDValue Op, SelectionDAG &DAG)
 //                  CALL Calling Convention Implementation
 //===----------------------------------------------------------------------===//
 
-/// Mips custom CALL implementation
-SDValue MipsTargetLowering::
-LowerCALL(SDValue Op, SelectionDAG &DAG)
-{
-  unsigned CallingConv = cast<ConstantSDNode>(Op.getOperand(1))->getValue();
-
-  // By now, only CallingConv::C implemented
-  switch (CallingConv) {
-    default:
-      assert(0 && "Unsupported calling convention");
-    case CallingConv::Fast:
-    case CallingConv::C:
-      return LowerCCCCallTo(Op, DAG, CallingConv);
-  }
-}
-
 /// LowerCCCCallTo - functions arguments are copied from virtual
 /// regs to (physical regs)/(stack frame), CALLSEQ_START and
 /// CALLSEQ_END are emitted.
 /// TODO: isVarArg, isTailCall.
 SDValue MipsTargetLowering::
-LowerCCCCallTo(SDValue Op, SelectionDAG &DAG, unsigned CC) 
+LowerCALL(SDValue Op, SelectionDAG &DAG)
 {
   MachineFunction &MF = DAG.getMachineFunction();
 
-  SDValue Chain  = Op.getOperand(0);
+  SDValue Chain = Op.getOperand(0);
   SDValue Callee = Op.getOperand(4);
-  bool isVarArg    = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
+  bool isVarArg = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
+  unsigned CC = DAG.getMachineFunction().getFunction()->getCallingConv();
 
   MachineFrameInfo *MFI = MF.getFrameInfo();
 
@@ -786,34 +771,20 @@ LowerCallResult(SDValue Chain, SDValue InFlag, SDNode *TheCall,
 //             FORMAL_ARGUMENTS Calling Convention Implementation
 //===----------------------------------------------------------------------===//
 
-/// Mips custom FORMAL_ARGUMENTS implementation
-SDValue MipsTargetLowering::
-LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG) 
-{
-  unsigned CC = cast<ConstantSDNode>(Op.getOperand(1))->getValue();
-  switch(CC) 
-  {
-    default:
-      assert(0 && "Unsupported calling convention");
-    case CallingConv::C:
-      return LowerCCCArguments(Op, DAG);
-  }
-}
-
-/// LowerCCCArguments - transform physical registers into
+/// LowerFORMAL_ARGUMENTS - transform physical registers into
 /// virtual registers and generate load operations for
 /// arguments places on the stack.
 /// TODO: isVarArg
 SDValue MipsTargetLowering::
-LowerCCCArguments(SDValue Op, SelectionDAG &DAG) 
+LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG) 
 {
-  SDValue Root        = Op.getOperand(0);
-  MachineFunction &MF   = DAG.getMachineFunction();
+  SDValue Root = Op.getOperand(0);
+  MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
 
   bool isVarArg = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
-  unsigned CC   = DAG.getMachineFunction().getFunction()->getCallingConv();
+  unsigned CC = DAG.getMachineFunction().getFunction()->getCallingConv();
 
   unsigned StackReg = MF.getTarget().getRegisterInfo()->getFrameRegister(MF);
 
