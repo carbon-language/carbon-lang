@@ -466,14 +466,17 @@ Expr::isModifiableLvalueResult Expr::isModifiableLvalue(ASTContext &Ctx) const {
   case LV_DuplicateVectorComponents: return MLV_DuplicateVectorComponents;
   case LV_InvalidExpression: return MLV_InvalidExpression;
   }
-  if (TR.isConstQualified())
+  
+  QualType CT = Ctx.getCanonicalType(getType());
+  
+  if (CT.isConstQualified())
     return MLV_ConstQualified;
-  if (TR->isArrayType())
+  if (CT->isArrayType())
     return MLV_ArrayType;
-  if (TR->isIncompleteType())
+  if (CT->isIncompleteType())
     return MLV_IncompleteType;
     
-  if (const RecordType *r = TR->getAsRecordType()) {
+  if (const RecordType *r = CT->getAsRecordType()) {
     if (r->hasConstFields()) 
       return MLV_ConstQualified;
   }

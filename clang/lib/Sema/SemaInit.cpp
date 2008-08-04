@@ -30,7 +30,8 @@ InitListChecker::InitListChecker(Sema *S, InitListExpr *IL, QualType &T) {
 int InitListChecker::numArrayElements(QualType DeclType) {
   // FIXME: use a proper constant
   int maxElements = 0x7FFFFFFF;
-  if (const ConstantArrayType *CAT = DeclType->getAsConstantArrayType()) {
+  if (const ConstantArrayType *CAT =
+        SemaRef->Context.getAsConstantArrayType(DeclType)) {
     maxElements = static_cast<int>(CAT->getSize().getZExtValue());
   }
   return maxElements;
@@ -231,7 +232,8 @@ void InitListChecker::CheckArrayType(InitListExpr *IList, QualType &DeclType,
       return;
     }
   }
-  if (const VariableArrayType *VAT = DeclType->getAsVariableArrayType()) {
+  if (const VariableArrayType *VAT =
+        SemaRef->Context.getAsVariableArrayType(DeclType)) {
     // Check for VLAs; in standard C it would be possible to check this
     // earlier, but I don't know where clang accepts VLAs (gcc accepts
     // them in all sorts of strange places).
@@ -243,7 +245,8 @@ void InitListChecker::CheckArrayType(InitListExpr *IList, QualType &DeclType,
   }
 
   int maxElements = numArrayElements(DeclType);
-  QualType elementType = DeclType->getAsArrayType()->getElementType();
+  QualType elementType = SemaRef->Context.getAsArrayType(DeclType)
+                             ->getElementType();
   int numElements = 0;
   for (int i = 0; i < maxElements; ++i, ++numElements) {
     // Don't attempt to go past the end of the init list

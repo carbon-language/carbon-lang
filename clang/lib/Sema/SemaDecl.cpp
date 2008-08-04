@@ -386,8 +386,8 @@ Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD, bool &Redeclaration) {
 /// definition that would be otherwise equivalent.
 static bool areEquivalentArrayTypes(QualType NewQType, QualType OldQType,
                                     ASTContext &Context) {
-  const ArrayType *NewAT = NewQType->getAsArrayType();
-  const ArrayType *OldAT = OldQType->getAsArrayType();
+  const ArrayType *NewAT = Context.getAsArrayType(NewQType);
+  const ArrayType *OldAT = Context.getAsArrayType(OldQType);
 
   if (!NewAT || !OldAT)
     return false;
@@ -549,7 +549,9 @@ bool Sema::CheckSingleInitializer(Expr *&Init, QualType DeclType) {
 }
 
 bool Sema::CheckStringLiteralInit(StringLiteral *strLiteral, QualType &DeclT) {
-  if (const IncompleteArrayType *IAT = DeclT->getAsIncompleteArrayType()) {
+  const ArrayType *AT = Context.getAsArrayType(DeclT);
+  
+  if (const IncompleteArrayType *IAT = dyn_cast<IncompleteArrayType>(AT)) {
     // C99 6.7.8p14. We have an array of character type with unknown size 
     // being initialized to a string literal.
     llvm::APSInt ConstVal(32);
@@ -557,14 +559,14 @@ bool Sema::CheckStringLiteralInit(StringLiteral *strLiteral, QualType &DeclT) {
     // Return a new array type (C99 6.7.8p22).
     DeclT = Context.getConstantArrayType(IAT->getElementType(), ConstVal, 
                                          ArrayType::Normal, 0);
-  } else if (const ConstantArrayType *CAT = DeclT->getAsConstantArrayType()) {
+  } else {
+    const ConstantArrayType *CAT = cast<ConstantArrayType>(AT);
     // C99 6.7.8p14. We have an array of character type with known size.
-    if (strLiteral->getByteLength() > (unsigned)CAT->getMaximumElements())
+    // FIXME: Avoid truncation for 64-bit length strings.
+    if (strLiteral->getByteLength() > (unsigned)CAT->getSize().getZExtValue())
       Diag(strLiteral->getSourceRange().getBegin(),
            diag::warn_initializer_string_for_char_array_too_long,
            strLiteral->getSourceRange());
-  } else {
-    assert(0 && "HandleStringLiteralInit(): Invalid array type");
   }
   // Set type from "char *" to "constant array of char".
   strLiteral->setType(DeclT);
@@ -573,7 +575,7 @@ bool Sema::CheckStringLiteralInit(StringLiteral *strLiteral, QualType &DeclT) {
 }
 
 StringLiteral *Sema::IsStringLiteralInit(Expr *Init, QualType DeclType) {
-  const ArrayType *AT = DeclType->getAsArrayType();
+  const ArrayType *AT = Context.getAsArrayType(DeclType);
   if (AT && AT->getElementType()->isCharType()) {
     return dyn_cast<StringLiteral>(Init);
   }
@@ -583,7 +585,7 @@ StringLiteral *Sema::IsStringLiteralInit(Expr *Init, QualType DeclType) {
 bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType) {  
   // C99 6.7.8p3: The type of the entity to be initialized shall be an array
   // of unknown size ("[]") or an object type that is not a variable array type.
-  if (const VariableArrayType *VAT = DeclType->getAsVariableArrayType())
+  if (const VariableArrayType *VAT = Context.getAsVariableArrayType(DeclType))
     return Diag(VAT->getSizeExpr()->getLocStart(), 
                 diag::err_variable_object_no_init, 
                 VAT->getSizeExpr()->getSourceRange());
@@ -1393,7 +1395,7 @@ Sema::DeclTy *Sema::FinalizeDeclaratorGroup(Scope *S, DeclTy *group) {
     // static storage duration, it shall not have a variable length array.
     if ((IDecl->isFileVarDecl() || IDecl->isBlockVarDecl()) && 
         IDecl->getStorageClass() == VarDecl::Static) {
-      if (T->getAsVariableArrayType()) {
+      if (T->isVariableArrayType()) {
         Diag(IDecl->getLocation(), diag::err_typecheck_illegal_vla);
         IDecl->setInvalidDecl();
       }

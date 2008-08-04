@@ -1055,7 +1055,7 @@ ActOnCompoundLiteral(SourceLocation LParenLoc, TypeTy *Ty,
   Expr *literalExpr = static_cast<Expr*>(InitExpr);
 
   if (literalType->isArrayType()) {
-    if (literalType->getAsVariableArrayType())
+    if (literalType->isVariableArrayType())
       return Diag(LParenLoc,
                   diag::err_variable_object_no_init,
                   SourceRange(LParenLoc,
@@ -2381,7 +2381,7 @@ Sema::ExprResult Sema::ActOnBuiltinOffsetOf(SourceLocation BuiltinLoc,
     const OffsetOfComponent &OC = CompPtr[i];
     if (OC.isBrackets) {
       // Offset of an array sub-field.  TODO: Should we allow vector elements?
-      const ArrayType *AT = Res->getType()->getAsArrayType();
+      const ArrayType *AT = Context.getAsArrayType(Res->getType());
       if (!AT) {
         delete Res;
         return Diag(OC.LocEnd, diag::err_offsetof_array_type,

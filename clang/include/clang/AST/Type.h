@@ -143,6 +143,9 @@ public:
   QualType getQualifiedType(unsigned TQs) const {
     return QualType(getTypePtr(), TQs);
   }
+  QualType getWithAdditionalQualifiers(unsigned TQs) const {
+    return QualType(getTypePtr(), TQs|getCVRQualifiers());
+  }
   
   inline QualType getUnqualifiedType() const;
   
@@ -285,10 +288,6 @@ public:
   /// types that have a non-constant expression. This does not include "[]".
   bool isVariablyModifiedType() const;
   
-  /// isIncompleteArrayType (C99 6.2.5p22) - Return true for variable array
-  /// types that don't have any expression ("[]").
-  bool isIncompleteArrayType() const;
-  
   /// Helper methods to distinguish type categories. All type predicates
   /// operate on the canonical type, ignoring typedefs and qualifiers.
   
@@ -322,6 +321,9 @@ public:
   bool isReferenceType() const;
   bool isFunctionPointerType() const;
   bool isArrayType() const;
+  bool isConstantArrayType() const;
+  bool isIncompleteArrayType() const;
+  bool isVariableArrayType() const;
   bool isRecordType() const;
   bool isClassType() const;   
   bool isStructureType() const;   
@@ -342,12 +344,9 @@ public:
   const PointerLikeType *getAsPointerLikeType() const; // Pointer or Reference.
   const PointerType *getAsPointerType() const;
   const ReferenceType *getAsReferenceType() const;
-  const ArrayType *getAsArrayType() const;
-  const ConstantArrayType *getAsConstantArrayType() const;
-  const VariableArrayType *getAsVariableArrayType() const;
-  const IncompleteArrayType *getAsIncompleteArrayType() const;
   const RecordType *getAsRecordType() const;
   const RecordType *getAsStructureType() const;
+  /// NOTE: getAsArrayType* are methods on ASTContext.
   const TypedefType *getAsTypedefType() const;
   const RecordType *getAsUnionType() const;
   const EnumType *getAsEnumType() const;
@@ -358,10 +357,16 @@ public:
   const ObjCInterfaceType *getAsObjCInterfaceType() const;
   const ObjCQualifiedInterfaceType *getAsObjCQualifiedInterfaceType() const;
   const ObjCQualifiedIdType *getAsObjCQualifiedIdType() const;
-
+  
   /// getAsPointerToObjCInterfaceType - If this is a pointer to an ObjC
   /// interface, return the interface type, otherwise return null.
   const ObjCInterfaceType *getAsPointerToObjCInterfaceType() const;
+
+  /// getArrayElementTypeNoTypeQual - If this is an array type, return the
+  /// element type of the array, potentially with type qualifiers missing.
+  /// This method should never be used when type qualifiers are meaningful.
+  const Type *getArrayElementTypeNoTypeQual() const;
+  
 
   
   /// getDesugaredType - Return the specified type with any "sugar" removed from
@@ -370,7 +375,7 @@ public:
   /// to getting the canonical type, but it doesn't remove *all* typedefs.  For
   /// example, it returns "T*" as "T*", (not as "int*"), because the pointer is
   /// concrete.
-  const Type *getDesugaredType() const;
+  QualType getDesugaredType() const;
   
   /// More type predicates useful for type checking/promotion
   bool isPromotableIntegerType() const; // C99 6.3.1.1p2
@@ -391,11 +396,8 @@ public:
   /// according to the rules of C99 6.7.5p3.  It is not legal to call this on
   /// incomplete types.
   bool isConstantSizeType() const;
-private:  
+
   QualType getCanonicalTypeInternal() const { return CanonicalType; }
-  friend class QualType;
-  friend class TypedefType;
-public:
   void dump() const;
   virtual void getAsStringInternal(std::string &InnerString) const = 0;
   static bool classof(const Type *) { return true; }
@@ -619,14 +621,6 @@ public:
   }
   unsigned getIndexTypeQualifier() const { return IndexTypeQuals; }
   
-  QualType getBaseType() const {
-    const ArrayType *AT;
-    QualType ElmtType = getElementType();
-    // If we have a multi-dimensional array, navigate to the base type.
-    while ((AT = ElmtType->getAsArrayType()))
-      ElmtType = AT->getElementType();
-    return ElmtType;
-  }
   static bool classof(const Type *T) {
     return T->getTypeClass() == ConstantArray ||
            T->getTypeClass() == VariableArray ||
@@ -646,19 +640,7 @@ class ConstantArrayType : public ArrayType {
     : ArrayType(ConstantArray, et, can, sm, tq), Size(sz) {}
   friend class ASTContext;  // ASTContext creates these.
 public:
-  llvm::APInt getSize() const { return Size; }
-  int getMaximumElements() const {
-    QualType ElmtType = getElementType();
-    int maxElements = static_cast<int>(getSize().getZExtValue());
-
-    const ConstantArrayType *CAT;
-    // If we have a multi-dimensional array, include it's elements.
-    while ((CAT = ElmtType->getAsConstantArrayType())) {
-      ElmtType = CAT->getElementType();
-      maxElements *= static_cast<int>(CAT->getSize().getZExtValue());
-    }
-    return maxElements;
-  }
+  const llvm::APInt &getSize() const { return Size; }
   virtual void getAsStringInternal(std::string &InnerString) const;
   
   void Profile(llvm::FoldingSetNodeID &ID) {
@@ -740,7 +722,7 @@ class VariableArrayType : public ArrayType {
   virtual void Destroy(ASTContext& C);
 
 public:
-  const Expr *getSizeExpr() const { 
+  Expr *getSizeExpr() const { 
     // We use C-style casts instead of cast<> here because we do not wish
     // to have a dependency of Type.h on Stmt.h/Expr.h.
     return (Expr*) SizeExpr;
@@ -1274,7 +1256,7 @@ inline QualType QualType::getUnqualifiedType() const {
 inline unsigned QualType::getAddressSpace() const {
   QualType CT = getTypePtr()->getCanonicalTypeInternal();
   if (const ArrayType *AT = dyn_cast<ArrayType>(CT))
-    return AT->getBaseType().getAddressSpace();
+    return AT->getElementType().getAddressSpace();
   if (const RecordType *RT = dyn_cast<RecordType>(CT))
     return RT->getAddressSpace();
   if (const ASQualType *ASQT = dyn_cast<ASQualType>(CT))
@@ -1291,7 +1273,8 @@ inline const ObjCInterfaceType *Type::getAsPointerToObjCInterfaceType() const {
   return 0;
 }
   
-  
+// NOTE: All of these methods use "getUnqualifiedType" to strip off address
+// space qualifiers if present.
 inline bool Type::isFunctionType() const {
   return isa<FunctionType>(CanonicalType.getUnqualifiedType());
 }
@@ -1313,11 +1296,20 @@ inline bool Type::isFunctionPointerType() const {
 inline bool Type::isArrayType() const {
   return isa<ArrayType>(CanonicalType.getUnqualifiedType());
 }
+inline bool Type::isConstantArrayType() const {
+  return isa<ConstantArrayType>(CanonicalType.getUnqualifiedType());
+}
+inline bool Type::isIncompleteArrayType() const {
+  return isa<IncompleteArrayType>(CanonicalType.getUnqualifiedType());
+}
+inline bool Type::isVariableArrayType() const {
+  return isa<VariableArrayType>(CanonicalType.getUnqualifiedType());
+}
 inline bool Type::isRecordType() const {
   return isa<RecordType>(CanonicalType.getUnqualifiedType());
 }
 inline bool Type::isAnyComplexType() const {
-  return isa<ComplexType>(CanonicalType);
+  return isa<ComplexType>(CanonicalType.getUnqualifiedType());
 }
 inline bool Type::isVectorType() const {
   return isa<VectorType>(CanonicalType.getUnqualifiedType());
@@ -1326,13 +1318,13 @@ inline bool Type::isExtVectorType() const {
   return isa<ExtVectorType>(CanonicalType.getUnqualifiedType());
 }
 inline bool Type::isObjCInterfaceType() const {
-  return isa<ObjCInterfaceType>(CanonicalType);
+  return isa<ObjCInterfaceType>(CanonicalType.getUnqualifiedType());
 }
 inline bool Type::isObjCQualifiedInterfaceType() const {
-  return isa<ObjCQualifiedInterfaceType>(CanonicalType);
+  return isa<ObjCQualifiedInterfaceType>(CanonicalType.getUnqualifiedType());
 }
 inline bool Type::isObjCQualifiedIdType() const {
-  return isa<ObjCQualifiedIdType>(CanonicalType);
+  return isa<ObjCQualifiedIdType>(CanonicalType.getUnqualifiedType());
 }
 }  // end namespace clang
 

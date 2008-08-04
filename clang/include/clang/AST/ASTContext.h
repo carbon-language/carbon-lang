@@ -253,7 +253,7 @@ public:
 
   // Return the ObjC type encoding for a given type.
   void getObjCEncodingForType(QualType t, std::string &S, 
-                              llvm::SmallVector<const RecordType *, 8> &RT) const;
+                              llvm::SmallVector<const RecordType*,8> &RT) const;
   
   // Put the string version of type qualifiers into S.
   void getObjCEncodingForTypeQualifier(Decl::ObjCDeclQualifier QT, 
@@ -338,6 +338,21 @@ public:
   /// to be free of any of these, allowing two canonical types to be compared
   /// for exact equality with a simple pointer comparison.
   QualType getCanonicalType(QualType T);
+  
+  /// Type Query functions.  If the type is an instance of the specified class,
+  /// return the Type pointer for the underlying maximally pretty type.  This
+  /// is a member of ASTContext because this may need to do some amount of
+  /// canonicalization, e.g. to move type qualifiers into the element type.
+  const ArrayType *getAsArrayType(QualType T);
+  const ConstantArrayType *getAsConstantArrayType(QualType T) {
+    return dyn_cast_or_null<ConstantArrayType>(getAsArrayType(T));
+  }
+  const VariableArrayType *getAsVariableArrayType(QualType T) {
+    return dyn_cast_or_null<VariableArrayType>(getAsArrayType(T));
+  }
+  const IncompleteArrayType *getAsIncompleteArrayType(QualType T) {
+    return dyn_cast_or_null<IncompleteArrayType>(getAsArrayType(T));
+  }
   
   /// getArrayDecayedType - Return the properly qualified result of decaying the
   /// specified array type to a pointer.  This operation is non-trivial when

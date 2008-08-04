@@ -35,6 +35,45 @@ void VariableArrayType::Destroy(ASTContext& C) {
   delete this;  
 }
 
+
+/// getArrayElementTypeNoTypeQual - If this is an array type, return the
+/// element type of the array, potentially with type qualifiers missing.
+/// This method should never be used when type qualifiers are meaningful.
+const Type *Type::getArrayElementTypeNoTypeQual() const {
+  // If this is directly an array type, return it.
+  if (const ArrayType *ATy = dyn_cast<ArrayType>(this))
+    return ATy->getElementType().getTypePtr();
+    
+  // If the canonical form of this type isn't the right kind, reject it.
+  if (!isa<ArrayType>(CanonicalType)) {
+    // Look through type qualifiers
+    if (ArrayType *AT = dyn_cast<ArrayType>(CanonicalType.getUnqualifiedType()))
+      return AT->getElementType().getTypePtr();
+    return 0;
+  }
+  
+  // If this is a typedef for an array type, strip the typedef off without
+  // losing all typedef information.
+  return getDesugaredType()->getArrayElementTypeNoTypeQual();
+}
+
+/// getDesugaredType - Return the specified type with any "sugar" removed from
+/// type type.  This takes off typedefs, typeof's etc.  If the outer level of
+/// the type is already concrete, it returns it unmodified.  This is similar
+/// to getting the canonical type, but it doesn't remove *all* typedefs.  For
+/// example, it return "T*" as "T*", (not as "int*"), because the pointer is
+/// concrete.
+QualType Type::getDesugaredType() const {
+  if (const TypedefType *TDT = dyn_cast<TypedefType>(this))
+    return TDT->LookThroughTypedefs();
+  if (const TypeOfExpr *TOE = dyn_cast<TypeOfExpr>(this))
+    return TOE->getUnderlyingExpr()->getType();
+  if (const TypeOfType *TOT = dyn_cast<TypeOfType>(this))
+    return TOT->getUnderlyingType();
+  // FIXME: remove this cast.
+  return QualType(const_cast<Type*>(this), 0);
+}
+
 /// isVoidType - Helper method to determine if this is the 'void' type.
 bool Type::isVoidType() const {
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
@@ -117,23 +156,6 @@ const ComplexType *Type::getAsComplexIntegerType() const {
   // losing all typedef information.
   return getDesugaredType()->getAsComplexIntegerType();
 }
-
-/// getDesugaredType - Return the specified type with any "sugar" removed from
-/// type type.  This takes off typedefs, typeof's etc.  If the outer level of
-/// the type is already concrete, it returns it unmodified.  This is similar
-/// to getting the canonical type, but it doesn't remove *all* typedefs.  For
-/// example, it return "T*" as "T*", (not as "int*"), because the pointer is
-/// concrete.
-const Type *Type::getDesugaredType() const {
-  if (const TypedefType *TDT = dyn_cast<TypedefType>(this))
-    return TDT->LookThroughTypedefs().getTypePtr();
-  if (const TypeOfExpr *TOE = dyn_cast<TypeOfExpr>(this))
-    return TOE->getUnderlyingExpr()->getType().getTypePtr();
-  if (const TypeOfType *TOT = dyn_cast<TypeOfType>(this))
-    return TOT->getUnderlyingType().getTypePtr();
-  return this;
-}
-
 
 const BuiltinType *Type::getAsBuiltinType() const {
   // If this is directly a builtin type, return it.
@@ -230,71 +252,17 @@ const ReferenceType *Type::getAsReferenceType() const {
   return getDesugaredType()->getAsReferenceType();
 }
 
-const ArrayType *Type::getAsArrayType() const {
-  // If this is directly an array type, return it.
-  if (const ArrayType *ATy = dyn_cast<ArrayType>(this))
-    return ATy;
-  
-  // If the canonical form of this type isn't the right kind, reject it.
-  if (!isa<ArrayType>(CanonicalType)) {
-    // Look through type qualifiers
-    if (isa<ArrayType>(CanonicalType.getUnqualifiedType()))
-      return CanonicalType.getUnqualifiedType()->getAsArrayType();
-    return 0;
-  }
-  
-  // If this is a typedef for an array type, strip the typedef off without
-  // losing all typedef information.
-  return getDesugaredType()->getAsArrayType();
-}
-
-const ConstantArrayType *Type::getAsConstantArrayType() const {
-  // If this is directly a constant array type, return it.
-  if (const ConstantArrayType *ATy = dyn_cast<ConstantArrayType>(this))
-    return ATy;
-
-  // If the canonical form of this type isn't the right kind, reject it.
-  if (!isa<ConstantArrayType>(CanonicalType)) {
-    // Look through type qualifiers
-    if (isa<ConstantArrayType>(CanonicalType.getUnqualifiedType()))
-      return CanonicalType.getUnqualifiedType()->getAsConstantArrayType();
-    return 0;
-  }
-  
-  // If this is a typedef for a constant array type, strip the typedef off
-  // without losing all typedef information.
-  return getDesugaredType()->getAsConstantArrayType();
-}
-
-const VariableArrayType *Type::getAsVariableArrayType() const {
-  // If this is directly a variable array type, return it.
-  if (const VariableArrayType *ATy = dyn_cast<VariableArrayType>(this))
-    return ATy;
-  
-  // If the canonical form of this type isn't the right kind, reject it.
-  if (!isa<VariableArrayType>(CanonicalType)) {
-    // Look through type qualifiers
-    if (isa<VariableArrayType>(CanonicalType.getUnqualifiedType()))
-      return CanonicalType.getUnqualifiedType()->getAsVariableArrayType();
-    return 0;
-  }
-
-  // If this is a typedef for a variable array type, strip the typedef off
-  // without losing all typedef information.
-  return getDesugaredType()->getAsVariableArrayType();
-}
-
 /// isVariablyModifiedType (C99 6.7.5p3) - Return true for variable length
 /// array types and types that contain variable array types in their
 /// declarator
 bool Type::isVariablyModifiedType() const {
-  // A VLA is a veriably modified type
-  if (getAsVariableArrayType())
+  // A VLA is a variably modified type.
+  if (isVariableArrayType())
     return true;
 
   // An array can contain a variably modified type
-  if (const ArrayType* AT = getAsArrayType())
-    return AT->getElementType()->isVariablyModifiedType();
+  if (const Type *T = getArrayElementTypeNoTypeQual())
+    return T->isVariablyModifiedType();
 
   // A pointer can point to a variably modified type
   if (const PointerType* PT = getAsPointerType())
@@ -308,28 +276,6 @@ bool Type::isVariablyModifiedType() const {
     return FT->getResultType()->isVariablyModifiedType();
 
   return false;
-}
-
-bool Type::isIncompleteArrayType() const {
-  return isa<IncompleteArrayType>(CanonicalType);
-}
-
-const IncompleteArrayType *Type::getAsIncompleteArrayType() const {
-  // If this is directly a variable array type, return it.
-  if (const IncompleteArrayType *ATy = dyn_cast<IncompleteArrayType>(this))
-    return ATy;
-  
-  // If the canonical form of this type isn't the right kind, reject it.
-  if (!isa<IncompleteArrayType>(CanonicalType)) {
-    // Look through type qualifiers
-    if (isa<IncompleteArrayType>(CanonicalType.getUnqualifiedType()))
-      return CanonicalType.getUnqualifiedType()->getAsIncompleteArrayType();
-    return 0;
-  }
-
-  // If this is a typedef for a variable array type, strip the typedef off
-  // without losing all typedef information.
-  return getDesugaredType()->getAsIncompleteArrayType();
 }
 
 const RecordType *Type::getAsRecordType() const {

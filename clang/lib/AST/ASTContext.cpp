@@ -375,7 +375,7 @@ void ASTRecordLayout::LayoutField(const FieldDecl *FD, unsigned FieldNo,
       // Flexible array members don't have any size, but they
       // have to be aligned appropriately for their element type.
       FieldSize = 0;
-      const ArrayType* ATy = FD->getType()->getAsArrayType();
+      const ArrayType* ATy = Context.getAsArrayType(FD->getType());
       FieldAlign = Context.getTypeAlign(ATy->getElementType());
     } else {
       std::pair<uint64_t, unsigned> FieldInfo = 
@@ -1018,8 +1018,107 @@ QualType ASTContext::getPointerDiffType() const {
 /// for exact equality with a simple pointer comparison.
 QualType ASTContext::getCanonicalType(QualType T) {
   QualType CanType = T.getTypePtr()->getCanonicalTypeInternal();
-  return QualType(CanType.getTypePtr(),
-                  T.getCVRQualifiers() | CanType.getCVRQualifiers());
+  
+  // If the result has type qualifiers, make sure to canonicalize them as well.
+  unsigned TypeQuals = T.getCVRQualifiers() | CanType.getCVRQualifiers();
+  if (TypeQuals == 0) return CanType;
+
+  // If the type qualifiers are on an array type, get the canonical type of the
+  // array with the qualifiers applied to the element type.
+  ArrayType *AT = dyn_cast<ArrayType>(CanType);
+  if (!AT)
+    return CanType.getQualifiedType(TypeQuals);
+  
+  // Get the canonical version of the element with the extra qualifiers on it.
+  // This can recursively sink qualifiers through multiple levels of arrays.
+  QualType NewEltTy=AT->getElementType().getWithAdditionalQualifiers(TypeQuals);
+  NewEltTy = getCanonicalType(NewEltTy);
+  
+  if (ConstantArrayType *CAT = dyn_cast<ConstantArrayType>(AT))
+    return getConstantArrayType(NewEltTy, CAT->getSize(),CAT->getSizeModifier(),
+                                CAT->getIndexTypeQualifier());
+  if (IncompleteArrayType *IAT = dyn_cast<IncompleteArrayType>(AT))
+    return getIncompleteArrayType(NewEltTy, IAT->getSizeModifier(),
+                                  IAT->getIndexTypeQualifier());
+  
+  // FIXME: What is the ownership of size expressions in VLAs?
+  VariableArrayType *VAT = cast<VariableArrayType>(AT);
+  return getVariableArrayType(NewEltTy, VAT->getSizeExpr(),
+                              VAT->getSizeModifier(),
+                              VAT->getIndexTypeQualifier());
+}
+
+
+const ArrayType *ASTContext::getAsArrayType(QualType T) {
+  // Handle the non-qualified case efficiently.
+  if (T.getCVRQualifiers() == 0) {
+    // Handle the common positive case fast.
+    if (const ArrayType *AT = dyn_cast<ArrayType>(T))
+      return AT;
+  }
+  
+  // Handle the common negative case fast, ignoring CVR qualifiers.
+  QualType CType = T->getCanonicalTypeInternal();
+    
+  // Make sure to look through type qualifiers (like ASQuals) for the negative
+  // test.
+  if (!isa<ArrayType>(CType) &&
+      !isa<ArrayType>(CType.getUnqualifiedType()))
+    return 0;
+  
+  // Apply any CVR qualifiers from the array type to the element type.  This
+  // implements C99 6.7.3p8: "If the specification of an array type includes
+  // any type qualifiers, the element type is so qualified, not the array type."
+  
+  // If we get here, we either have type qualifiers on the type, or we have
+  // sugar such as a typedef in the way.  If we have type qualifiers on the type
+  // we must propagate them down into the elemeng type.
+  unsigned CVRQuals = T.getCVRQualifiers();
+  unsigned AddrSpace = 0;
+  Type *Ty = T.getTypePtr();
+  
+  // Rip through ASQualType's and typedefs to get to a concrete type.
+  while (1) {
+    if (const ASQualType *ASQT = dyn_cast<ASQualType>(Ty)) {
+      AddrSpace = ASQT->getAddressSpace();
+      Ty = ASQT->getBaseType();
+    } else {
+      T = Ty->getDesugaredType();
+      if (T.getTypePtr() == Ty && T.getCVRQualifiers() == 0)
+        break;
+      CVRQuals |= T.getCVRQualifiers();
+      Ty = T.getTypePtr();
+    }
+  }
+  
+  // If we have a simple case, just return now.
+  const ArrayType *ATy = dyn_cast<ArrayType>(Ty);
+  if (ATy == 0 || (AddrSpace == 0 && CVRQuals == 0))
+    return ATy;
+  
+  // Otherwise, we have an array and we have qualifiers on it.  Push the
+  // qualifiers into the array element type and return a new array type.
+  // Get the canonical version of the element with the extra qualifiers on it.
+  // This can recursively sink qualifiers through multiple levels of arrays.
+  QualType NewEltTy = ATy->getElementType();
+  if (AddrSpace)
+    NewEltTy = getASQualType(NewEltTy, AddrSpace);
+  NewEltTy = NewEltTy.getWithAdditionalQualifiers(CVRQuals);
+  
+  if (const ConstantArrayType *CAT = dyn_cast<ConstantArrayType>(ATy))
+    return cast<ArrayType>(getConstantArrayType(NewEltTy, CAT->getSize(),
+                                                CAT->getSizeModifier(),
+                                                CAT->getIndexTypeQualifier()));
+  if (const IncompleteArrayType *IAT = dyn_cast<IncompleteArrayType>(ATy))
+    return cast<ArrayType>(getIncompleteArrayType(NewEltTy,
+                                                  IAT->getSizeModifier(),
+                                                 IAT->getIndexTypeQualifier()));
+  
+  // FIXME: What is the ownership of size expressions in VLAs?
+  const VariableArrayType *VAT = cast<VariableArrayType>(ATy);
+  return cast<ArrayType>(getVariableArrayType(NewEltTy, VAT->getSizeExpr(),
+                                              VAT->getSizeModifier(),
+                                              VAT->getIndexTypeQualifier()));
 }
 
 
@@ -1030,60 +1129,17 @@ QualType ASTContext::getCanonicalType(QualType T) {
 ///
 /// See C99 6.7.5.3p7 and C99 6.3.2.1p3.
 QualType ASTContext::getArrayDecayedType(QualType Ty) {
-  // Handle the common case where typedefs are not involved directly.
-  QualType EltTy;
-  unsigned ArrayQuals = 0;
-  unsigned PointerQuals = 0;
-  if (ArrayType *AT = dyn_cast<ArrayType>(Ty)) {
-    // Since T "isa" an array type, it could not have had an address space
-    // qualifier, just CVR qualifiers.  The properly qualified element pointer
-    // gets the union of the CVR qualifiers from the element and the array, and
-    // keeps any address space qualifier on the element type if present.
-    EltTy = AT->getElementType();
-    ArrayQuals = Ty.getCVRQualifiers();
-    PointerQuals = AT->getIndexTypeQualifier();
-  } else {
-    // Otherwise, we have an ASQualType or a typedef, etc.  Make sure we don't
-    // lose qualifiers when dealing with typedefs. Example:
-    //   typedef int arr[10];
-    //   void test2() {
-    //     const arr b;
-    //     b[4] = 1;
-    //   }
-    //
-    // The decayed type of b is "const int*" even though the element type of the
-    // array is "int".
-    QualType CanTy = getCanonicalType(Ty);
-    const ArrayType *PrettyArrayType = Ty->getAsArrayType();
-    assert(PrettyArrayType && "Not an array type!");
-    
-    // Get the element type with 'getAsArrayType' so that we don't lose any
-    // typedefs in the element type of the array.
-    EltTy = PrettyArrayType->getElementType();
-
-    // If the array was address-space qualifier, make sure to ASQual the element
-    // type.  We can just grab the address space from the canonical type.
-    if (unsigned AS = CanTy.getAddressSpace())
-      EltTy = getASQualType(EltTy, AS);
-    
-    // To properly handle [multiple levels of] typedefs, typeof's etc, we take
-    // the CVR qualifiers directly from the canonical type, which is guaranteed
-    // to have the full set unioned together.
-    ArrayQuals = CanTy.getCVRQualifiers();
-    PointerQuals = PrettyArrayType->getIndexTypeQualifier();
-  }
+  // Get the element type with 'getAsArrayType' so that we don't lose any
+  // typedefs in the element type of the array.  This also handles propagation
+  // of type qualifiers from the array type into the element type if present
+  // (C99 6.7.3p8).
+  const ArrayType *PrettyArrayType = getAsArrayType(Ty);
+  assert(PrettyArrayType && "Not an array type!");
   
-  // Apply any CVR qualifiers from the array type to the element type.  This
-  // implements C99 6.7.3p8: "If the specification of an array type includes
-  // any type qualifiers, the element type is so qualified, not the array type."
-  EltTy = EltTy.getQualifiedType(ArrayQuals | EltTy.getCVRQualifiers());
-
-  QualType PtrTy = getPointerType(EltTy);
+  QualType PtrTy = getPointerType(PrettyArrayType->getElementType());
 
   // int x[restrict 4] ->  int *restrict
-  PtrTy = PtrTy.getQualifiedType(PointerQuals);
-
-  return PtrTy;
+  return PtrTy.getQualifiedType(PrettyArrayType->getIndexTypeQualifier());
 }
 
 /// getFloatingRank - Return a relative rank for floating point types.
@@ -1308,8 +1364,7 @@ void ASTContext::getObjCEncodingForMethodDecl(ObjCMethodDecl *Decl,
 }
 
 void ASTContext::getObjCEncodingForType(QualType T, std::string& S,
-       llvm::SmallVector<const RecordType *, 8> &ERType) const
-{
+       llvm::SmallVector<const RecordType *, 8> &ERType) const {
   // FIXME: This currently doesn't encode:
   // @ An object (whether statically typed or typed id)
   // # A class object (Class)
@@ -1372,7 +1427,9 @@ void ASTContext::getObjCEncodingForType(QualType T, std::string& S,
     
     S += '^';
     getObjCEncodingForType(PT->getPointeeType(), S, ERType);
-  } else if (const ArrayType *AT = T->getAsArrayType()) {
+  } else if (const ArrayType *AT =
+               // Ignore type qualifiers etc.
+               dyn_cast<ArrayType>(T->getCanonicalTypeInternal())) {
     S += '[';
     
     if (const ConstantArrayType *CAT = dyn_cast<ConstantArrayType>(AT))

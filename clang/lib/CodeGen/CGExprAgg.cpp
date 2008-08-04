@@ -393,11 +393,10 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
     }
 
     uint64_t NumArrayElements = AType->getNumElements();
-    QualType ElementType = E->getType()->getAsArrayType()->getElementType();
+    QualType ElementType = CGF.getContext().getCanonicalType(E->getType());
+    ElementType =CGF.getContext().getAsArrayType(ElementType)->getElementType();
     
-    unsigned CVRqualifier =
-      CGF.getContext().getCanonicalType(E->getType())->getAsArrayType()
-                            ->getElementType().getCVRQualifiers();
+    unsigned CVRqualifier = ElementType.getCVRQualifiers();
 
     for (uint64_t i = 0; i != NumArrayElements; ++i) {
       llvm::Value *NextVal = Builder.CreateStructGEP(DestPtr, i, ".array");

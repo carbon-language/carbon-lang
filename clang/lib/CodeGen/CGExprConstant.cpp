@@ -85,7 +85,7 @@ public:
     unsigned NumInitElements = ILE->getNumInits();
     // FIXME: Check for wide strings
     if (NumInitElements > 0 && isa<StringLiteral>(ILE->getInit(0)) &&
-        ILE->getType()->getAsArrayType()->getElementType()->isCharType())
+        ILE->getType()->getArrayElementTypeNoTypeQual()->isCharType())
       return Visit(ILE->getInit(0));
     const llvm::Type *ElemTy = AType->getElementType();
     unsigned NumElements = AType->getNumElements();
@@ -332,9 +332,7 @@ public:
       llvm::Constant *Idx0 = llvm::ConstantInt::get(llvm::Type::Int32Ty, 0);
       llvm::Constant *Ops[] = {Idx0, Idx0};
       C = llvm::ConstantExpr::getGetElementPtr(C, Ops, 2);
-
-      QualType ElemType = SType->getAsArrayType()->getElementType();
-      T = CGM.getContext().getPointerType(ElemType);
+      T = CGM.getContext().getArrayDecayedType(SType);
     } else if (SType->isFunctionType()) {
       // Function types decay to a pointer to the function
       C = EmitLValue(SExpr);
@@ -357,7 +355,8 @@ public:
     // Otherwise this must be a string initializing an array in a static
     // initializer.  Don't emit it as the address of the string, emit the string
     // data itself as an inline array.
-    const ConstantArrayType *CAT = E->getType()->getAsConstantArrayType();
+    const ConstantArrayType *CAT =
+      CGM.getContext().getAsConstantArrayType(E->getType());
     assert(CAT && "String isn't pointer or array!");
     
     std::string Str(StrData, StrData + Len);

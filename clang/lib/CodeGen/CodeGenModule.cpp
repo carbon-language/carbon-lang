@@ -632,7 +632,8 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
 
   // FIXME: This is silly; getTypeAlign should just work for incomplete arrays
   unsigned Align;
-  if (const IncompleteArrayType* IAT = D->getType()->getAsIncompleteArrayType())
+  if (const IncompleteArrayType* IAT =
+        Context.getAsIncompleteArrayType(D->getType()))
     Align = Context.getTypeAlign(IAT->getElementType());
   else
     Align = Context.getTypeAlign(D->getType());

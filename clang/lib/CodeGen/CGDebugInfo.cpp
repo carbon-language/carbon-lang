@@ -108,10 +108,8 @@ CGDebugInfo::~CGDebugInfo()
   delete GlobalVariableAnchor;
 }
 
-void CGDebugInfo::setLocation(SourceLocation loc)
-{
-  SourceManager &SM = M->getContext().getSourceManager();
-  CurLoc = SM.getLogicalLoc(loc);
+void CGDebugInfo::setLocation(SourceLocation loc) {
+  CurLoc = M->getContext().getSourceManager().getLogicalLoc(loc);
 }
 
 /// getCastValueFor - Return a llvm representation for a given debug information
@@ -481,20 +479,20 @@ CGDebugInfo::getOrCreateArrayType(QualType type, llvm::CompileUnitDesc *Unit)
   // Add the dimensions of the array.
   std::vector<llvm::DebugInfoDesc *> &Elements = ArrayTy->getElements();
   do {
+    const ArrayType *AT = M->getContext().getAsArrayType(type);
     llvm::SubrangeDesc *Subrange = new llvm::SubrangeDesc();
 
     // push it back on the subrange desc list so that we can free it later.
     SubrangeDescList.push_back(Subrange);
 
     uint64_t Upper = 0;
-    if (type->getTypeClass() == Type::ConstantArray) {
-      const ConstantArrayType *ConstArrTy = type->getAsConstantArrayType();
+    if (const ConstantArrayType *ConstArrTy = dyn_cast<ConstantArrayType>(AT)) {
       Upper = ConstArrTy->getSize().getZExtValue() - 1;
     }
     Subrange->setLo(0);
     Subrange->setHi(Upper);
     Elements.push_back(Subrange);
-    type = type->getAsArrayType()->getElementType();
+    type = AT->getElementType();
   } while (type->isArrayType());
 
   ArrayTy->setFromType(getOrCreateType(type, Unit));

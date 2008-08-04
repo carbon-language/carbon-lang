@@ -429,7 +429,8 @@ LValue CodeGenFunction::EmitStringLiteralLValue(const StringLiteral *E) {
   std::string StringLiteral(StrData, StrData+Len);
 
   // Resize the string to the right size
-  const ConstantArrayType *CAT = E->getType()->getAsConstantArrayType();
+  const ConstantArrayType *CAT =
+    getContext().getAsConstantArrayType(E->getType());
   uint64_t RealLen = CAT->getSize().getZExtValue();
   StringLiteral.resize(RealLen, '\0');
 
