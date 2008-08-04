@@ -1184,34 +1184,18 @@ SDValue SelectionDAGLowering::getValue(const Value *V) {
       return DAG.getMergeValues(&Constants[0], Constants.size());
     }
 
-    if (const ArrayType *ATy = dyn_cast<ArrayType>(C->getType())) {
+    if (isa<StructType>(C->getType()) || isa<ArrayType>(C->getType())) {
       assert((isa<ConstantAggregateZero>(C) || isa<UndefValue>(C)) &&
-             "Unknown array constant!");
-      unsigned NumElts = ATy->getNumElements();
-      if (NumElts == 0)
-        return SDValue(); // empty array
-      MVT EltVT = TLI.getValueType(ATy->getElementType());
-      SmallVector<SDValue, 4> Constants(NumElts);
-      for (unsigned i = 0, e = NumElts; i != e; ++i) {
-        if (isa<UndefValue>(C))
-          Constants[i] = DAG.getNode(ISD::UNDEF, EltVT);
-        else if (EltVT.isFloatingPoint())
-          Constants[i] = DAG.getConstantFP(0, EltVT);
-        else
-          Constants[i] = DAG.getConstant(0, EltVT);
-      }
-      return DAG.getMergeValues(&Constants[0], Constants.size());
-    }
+             "Unknown struct or array constant!");
 
-    if (const StructType *STy = dyn_cast<StructType>(C->getType())) {
-      assert((isa<ConstantAggregateZero>(C) || isa<UndefValue>(C)) &&
-             "Unknown struct constant!");
-      unsigned NumElts = STy->getNumElements();
+      SmallVector<MVT, 4> ValueVTs;
+      ComputeValueVTs(TLI, C->getType(), ValueVTs);
+      unsigned NumElts = ValueVTs.size();
       if (NumElts == 0)
         return SDValue(); // empty struct
       SmallVector<SDValue, 4> Constants(NumElts);
-      for (unsigned i = 0, e = NumElts; i != e; ++i) {
-        MVT EltVT = TLI.getValueType(STy->getElementType(i));
+      for (unsigned i = 0; i != NumElts; ++i) {
+        MVT EltVT = ValueVTs[i];
         if (isa<UndefValue>(C))
           Constants[i] = DAG.getNode(ISD::UNDEF, EltVT);
         else if (EltVT.isFloatingPoint())
@@ -1219,7 +1203,7 @@ SDValue SelectionDAGLowering::getValue(const Value *V) {
         else
           Constants[i] = DAG.getConstant(0, EltVT);
       }
-      return DAG.getMergeValues(&Constants[0], Constants.size());
+      return DAG.getMergeValues(&Constants[0], NumElts);
     }
 
     const VectorType *VecTy = cast<VectorType>(V->getType());
