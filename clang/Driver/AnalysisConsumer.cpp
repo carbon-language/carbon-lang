@@ -387,6 +387,9 @@ static void ActionCFGView(AnalysisManager& mgr) {
 }
 
 static void ActionWarnObjCDealloc(AnalysisManager& mgr) {
+  if (mgr.getLangOptions().getGCMode() == LangOptions::GCOnly)
+    return;
+      
   BugReporter BR(mgr);
   
   CheckObjCDealloc(cast<ObjCImplementationDecl>(mgr.getCodeDecl()), 
