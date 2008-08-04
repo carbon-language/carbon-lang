@@ -105,15 +105,20 @@ my %AnalysesDefaultEnabled = (
 );
 
 ##----------------------------------------------------------------------------##
-# GetHTMLRunDir - Construct an HTML directory name for the current run.
+# GetHTMLRunDir - Construct an HTML directory name for the current sub-run.
 ##----------------------------------------------------------------------------##
 
 sub GetHTMLRunDir {  
 
-  die "Not enough arguments." if (@_ == 0);
-  
+  die "Not enough arguments." if (@_ == 0);  
   my $Dir = shift @_;
-  
+    
+  my $TmpMode = 0;
+  if (!defined $Dir) {
+    $Dir = "/tmp";
+    $TmpMode = 1;
+  }
+
   # Get current date and time.
   
   my @CurrentTime = localtime();
@@ -144,8 +149,14 @@ sub GetHTMLRunDir {
     
     foreach my $f (@FILES) {
 
+      # Strip the prefix '$Prog-' if we are dumping files to /tmp.
+      if ($TmpMode) {
+        next if (!($f =~ /^$Prog-(.+)/));
+        $f = $1;
+      }
+
       my @x = split/-/, $f;
-      
+
       next if (scalar(@x) != 4);
       next if ($x[0] != $year);
       next if ($x[1] != $month);
@@ -163,18 +174,28 @@ sub GetHTMLRunDir {
     if (-x $Dir) {
       DieDiag("'$Dir' exists but is not a directory.\n");
     }
-    
+
+    if ($TmpMode) {
+      DieDiag("The directory '/tmp' does not exist or cannot be accessed.");
+    }
+
     # $Dir does not exist.  It will be automatically created by the 
     # clang driver.  Set the run number to 1.  
-    
+
     $RunNumber = 1;
   }
   
-  die "RunNumber must be defined!" if (!defined($RunNumber));
+  die "RunNumber must be defined!" if (!defined $RunNumber);
   
   # Append the run number.
-  
-  return "$Dir/$DateString-$RunNumber";  
+  if ($TmpMode) {
+    my $NewDir = "$Dir/$Prog-$DateString-$RunNumber";
+    mkdir $NewDir;
+    return $NewDir;
+  }
+  else {
+    return "$Dir/$DateString-$RunNumber";
+  }
 }
 
 sub SetHtmlEnv {
@@ -289,7 +310,7 @@ sub ScanFile {
   
   my $digest = ComputeDigest("$Dir/$FName");
 
-  if (defined($AlreadyScanned{$digest})) {
+  if (defined $AlreadyScanned{$digest}) {
     # Redundant file.  Remove it.
     system ("rm", "-f", "$Dir/$FName");
     return;
@@ -356,8 +377,7 @@ sub Postprocess {
   my $Dir = shift;
   my $BaseDir = shift;
   
-  die "No directory specified." if (!defined($Dir));
-  die "No base directory specified." if (!defined($BaseDir));
+  die "No directory specified." if (!defined $Dir);
   
   if (! -d $Dir) {
     Diag("No bugs found.\n");
@@ -373,7 +393,7 @@ sub Postprocess {
     system ("rm", "-fR", $Dir);
     
     # Remove the base directory if it contains no files (don't use '-R').
-    system ("rm", "-f", $BaseDir);
+    if (defined $BaseDir) { system ("rm", "-f", $BaseDir); }
     
     Diag("No bugs found.\n");
     return 0;
@@ -447,7 +467,7 @@ ENDTEXT
     #my $bug_type = lc($row->[1]);
     my $bug_type = ($row->[1]);
     
-    if (!defined($Totals{$bug_type})) {
+    if (!defined $Totals{$bug_type}) {
       $Totals{$bug_type} = 1;
     }
     else {
@@ -457,7 +477,7 @@ ENDTEXT
   
   print OUT "<h3>Summary</h3>";
     
-  if (defined($BuildName)) {
+  if (defined $BuildName) {
     print OUT "\n<p>Results in this analysis run are based on analyzer build <b>$BuildName</b>.</p>\n"
   }
   
@@ -496,7 +516,7 @@ ENDTEXT
   my $InFileRegex;
   my $InFilePrefix = "File:</td><td>";
   
-  if (defined($prefix)) { 
+  if (defined $prefix) { 
     $regex = qr/^\Q$prefix\E/is;    
     $InFileRegex = qr/\Q$InFilePrefix$prefix\E/is;
   }    
@@ -518,7 +538,7 @@ ENDTEXT
     # Update the file prefix.
     
     my $fname = $row->[2];
-    if (defined($regex)) {      
+    if (defined $regex) {
       $fname =~ s/$regex//;
       UpdateInFilePath("$Dir/$ReportFile", $InFileRegex, $InFilePrefix)
     }
@@ -544,7 +564,7 @@ ENDTEXT
 
   # Make sure $Dir and $BaseDir are world readable/executable.
   system("chmod", "755", $Dir);
-  system("chmod", "755", $BaseDir);
+  if (defined $BaseDir) { system("chmod", "755", $BaseDir); }
 
   my $Num = scalar(@Index);
   Diag("$Num bugs found.\n");
@@ -632,7 +652,7 @@ USAGE: $Prog [options] <build command> [build options]
 
 ENDTEXT
 
-  if (defined($BuildName)) {
+  if (defined $BuildName) {
     print "ANALYZER BUILD: $BuildName ($BuildDate)\n\n";
   }
 
@@ -668,7 +688,7 @@ ENDTEXT
   print " Available Source Code Analyses (multiple analyses may be specified):\n\n";
 
   foreach my $Analysis (sort keys %AvailableAnalyses) {
-    if (defined($AnalysesDefaultEnabled{$Analysis})) {
+    if (defined $AnalysesDefaultEnabled{$Analysis}) {
       print " (+)";
     }
     else {
@@ -726,7 +746,7 @@ while (@ARGV) {
     exit 0;
   }
   
-  if (defined($AvailableAnalyses{$arg})) {
+  if (defined $AvailableAnalyses{$arg}) {
     shift @ARGV;
     push @AnalysesToRun, $arg;
     next;
@@ -779,25 +799,10 @@ if (!@ARGV) {
 }
 
 # Determine the output directory for the HTML reports.
-
-if (!defined($HtmlDir)) {
-  
-  $HtmlDir = mkdtemp("/tmp/$Prog-XXXXXX");
-  
-  if (!defined($HtmlDir)) {
-    DieDiag("Cannot create HTML directory in /tmp.\n");
-  }
-  
-  if (!$Verbose) {
-    Diag("Using '$HtmlDir' as base HTML report directory.\n");
-  }
-}
-
 my $BaseDir = $HtmlDir;
 $HtmlDir = GetHTMLRunDir($HtmlDir);
 
 # Set the appropriate environment variables.
-
 SetHtmlEnv(\@ARGV, $HtmlDir);
 
 my $Cmd = "$RealBin/ccc-analyzer";
@@ -830,11 +835,9 @@ if (scalar(@AnalysesToRun) == 0) {
 $ENV{'CCC_ANALYZER_ANALYSIS'} = join ' ',@AnalysesToRun;
 
 # Run the build.
-
 my $ExitStatus = RunBuildCommand(\@ARGV, $IgnoreErrors, $Cmd);
 
 # Postprocess the HTML directory.
-
 my $NumBugs = Postprocess($HtmlDir, $BaseDir);
 
 if ($ViewResults and -r "$HtmlDir/index.html") {
