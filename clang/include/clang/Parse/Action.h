@@ -118,7 +118,7 @@ public:
   }
 
   /// AddInitializerToDecl - This action is called immediately after 
-  /// ParseDeclarator (when an initializer is present). The code is factored 
+  /// ActOnDeclarator (when an initializer is present). The code is factored 
   /// this way to make sure we are able to handle the following:
   ///   void func() { int xx = xx; }
   /// This allows ActOnDeclarator to register "xx" prior to parsing the

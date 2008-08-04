@@ -37,7 +37,7 @@ public:
     // This lists the concrete classes of Decl in order of the inheritance
     // hierarchy.  This allows us to do efficient classof tests based on the
     // enums below.   The commented out names are abstract class names.
-    // [DeclContext] indicatea that the class also inherits from DeclContext.
+    // [DeclContext] indicates that the class also inherits from DeclContext.
     
     // Decl
          TranslationUnit,  // [DeclContext]

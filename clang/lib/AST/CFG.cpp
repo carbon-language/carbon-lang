@@ -42,7 +42,7 @@ struct VISIBILITY_HIDDEN SaveAndRestore {
   T old_value;
 };
   
-/// CFGBuilder - This class is implements CFG construction from an AST.
+/// CFGBuilder - This class implements CFG construction from an AST.
 ///   The builder is stateful: an instance of the builder should be used to only
 ///   construct a single CFG.
 ///

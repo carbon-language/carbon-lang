@@ -74,7 +74,7 @@ MinimalAction::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *LastInGroup) {
     D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_typedef;
 
   // this check avoids creating TypeNameInfo objects for the common case.
-  // It does need to handle the uncommon case of shadowing a typedef name with a 
+  // It does need to handle the uncommon case of shadowing a typedef name with a
   // non-typedef name. e.g. { typedef int a; a xx; { int a; } }
   if (weCurrentlyHaveTypeInfo || isTypeName) {
     TypeNameInfo *TI = new TypeNameInfo(isTypeName, weCurrentlyHaveTypeInfo);
@@ -121,8 +121,8 @@ MinimalAction::ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
   return 0;
 }
 
-/// ActOnPopScope - When a scope is popped, if any typedefs are now out-of-scope,
-/// they are removed from the IdentifierInfo::FETokenInfo field.
+/// ActOnPopScope - When a scope is popped, if any typedefs are now
+/// out-of-scope, they are removed from the IdentifierInfo::FETokenInfo field.
 void MinimalAction::ActOnPopScope(SourceLocation Loc, Scope *S) {
   for (Scope::decl_iterator I = S->decl_begin(), E = S->decl_end();
        I != E; ++I) {
