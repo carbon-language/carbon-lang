@@ -117,6 +117,12 @@ public:
   Value *VisitSizeOfAlignOfTypeExpr(const SizeOfAlignOfTypeExpr *E) {
     return EmitSizeAlignOf(E->getArgumentType(), E->getType(), E->isSizeOf());
   }
+  Value *VisitAddrLabelExpr(const AddrLabelExpr *E) {
+    Value *V = llvm::ConstantInt::get(llvm::Type::Int32Ty,
+                                      CGF.GetIDForAddrOfLabel(E->getLabel()));
+    return Builder.CreateIntToPtr(V, 
+                                  llvm::PointerType::getUnqual(llvm::Type::Int8Ty));
+  }
     
   // l-values.
   Value *VisitDeclRefExpr(DeclRefExpr *E) {

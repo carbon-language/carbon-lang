@@ -22,6 +22,7 @@
 #include "clang/AST/ExprObjC.h"
 
 #include <vector>
+#include <map>
 
 namespace llvm {
   class Module;
@@ -240,11 +241,21 @@ public:
   /// AllocaInsertPoint - This is an instruction in the entry block before which
   /// we prefer to insert allocas.
   llvm::Instruction *AllocaInsertPt;
-  
+
   const llvm::Type *LLVMIntTy;
   uint32_t LLVMPointerWidth;
   
 private:
+  /// LabelIDs - Track arbitrary ids assigned to labels for use in
+  /// implementing the GCC address-of-label extension and indirect
+  /// goto. IDs are assigned to labels inside getIDForAddrOfLabel().
+  std::map<const LabelStmt*, unsigned> LabelIDs;
+
+  /// IndirectSwitches - Record the list of switches for indirect
+  /// gotos. Emission of the actual switching code needs to be delayed
+  /// until all AddrLabelExprs have been seen.
+  std::vector<llvm::SwitchInst*> IndirectSwitches;
+
   /// LocalDeclMap - This keeps track of the LLVM allocas or globals for local C
   /// decls.
   llvm::DenseMap<const Decl*, llvm::Value*> LocalDeclMap;
@@ -342,6 +353,8 @@ public:
   /// the input field number being accessed.
   static unsigned getAccessedFieldNo(unsigned Idx, const llvm::Constant *Elts);
 
+  unsigned GetIDForAddrOfLabel(const LabelStmt *L);
+
   //===--------------------------------------------------------------------===//
   //                            Declaration Emission
   //===--------------------------------------------------------------------===//
@@ -363,6 +376,7 @@ public:
   void EmitLabel(const LabelStmt &S); // helper for EmitLabelStmt.
   void EmitLabelStmt(const LabelStmt &S);
   void EmitGotoStmt(const GotoStmt &S);
+  void EmitIndirectGotoStmt(const IndirectGotoStmt &S);
   void EmitIfStmt(const IfStmt &S);
   void EmitWhileStmt(const WhileStmt &S);
   void EmitDoStmt(const DoStmt &S);
@@ -502,6 +516,15 @@ public:
   llvm::GlobalValue *GenerateStaticBlockVarDecl(const VarDecl &D,
                                                 bool NoInit,
                                                 const char *Separator);
+
+  //===--------------------------------------------------------------------===//
+  //                             Internal Helpers
+  //===--------------------------------------------------------------------===//
+ 
+private:
+  /// EmitIndirectSwitches - Emit code for all of the switch
+  /// instructions in IndirectSwitches.
+  void EmitIndirectSwitches();
 };
 }  // end namespace CodeGen
 }  // end namespace clang

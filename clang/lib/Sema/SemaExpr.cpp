@@ -2313,7 +2313,8 @@ Sema::ExprResult Sema::ActOnAddrLabel(SourceLocation OpLoc,
   // Look up the record for this label identifier.
   LabelStmt *&LabelDecl = LabelMap[LabelII];
   
-  // If we haven't seen this label yet, create a forward reference.
+  // If we haven't seen this label yet, create a forward reference. It
+  // will be validated and/or cleaned up in ActOnFinishFunctionBody.
   if (LabelDecl == 0)
     LabelDecl = new LabelStmt(LabLoc, LabelII, 0);
   

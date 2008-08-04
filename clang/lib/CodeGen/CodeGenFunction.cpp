@@ -68,7 +68,10 @@ bool CodeGenFunction::hasAggregateLLVMType(QualType T) {
 void CodeGenFunction::GenerateFunction(const Stmt *Body) {
   // Emit the function body.
   EmitStmt(Body);
-  
+
+  // Finish emission of indirect switches.
+  EmitIndirectSwitches();
+
   // Emit debug descriptor for function end.
   CGDebugInfo *DI = CGM.getDebugInfo(); 
   if (DI) {
@@ -179,3 +182,33 @@ void CodeGenFunction::WarnUnsupported(const Stmt *S, const char *Type) {
   CGM.WarnUnsupported(S, Type);
 }
 
+unsigned CodeGenFunction::GetIDForAddrOfLabel(const LabelStmt *L) {
+  // Use LabelIDs.size() as the new ID if one hasn't been assigned.
+  return LabelIDs.insert(std::make_pair(L, LabelIDs.size())).first->second;
+}
+
+void CodeGenFunction::EmitIndirectSwitches() {
+  llvm::BasicBlock *Default;
+  
+  if (!LabelIDs.empty()) {
+    Default = getBasicBlockForLabel(LabelIDs.begin()->first);
+  } else {
+    // No possible targets for indirect goto, just emit an infinite
+    // loop.
+    Default = llvm::BasicBlock::Create("indirectgoto.loop", CurFn);
+    llvm::BranchInst::Create(Default, Default);
+  }
+
+  for (std::vector<llvm::SwitchInst*>::iterator i = IndirectSwitches.begin(),
+         e = IndirectSwitches.end(); i != e; ++i) {
+    llvm::SwitchInst *I = *i;
+    
+    I->setSuccessor(0, Default);
+    for (std::map<const LabelStmt*,unsigned>::iterator LI = LabelIDs.begin(), 
+           LE = LabelIDs.end(); LI != LE; ++LI) {
+      I->addCase(llvm::ConstantInt::get(llvm::Type::Int32Ty,
+                                        LI->second), 
+                 getBasicBlockForLabel(LI->first));
+    }
+  }         
+}

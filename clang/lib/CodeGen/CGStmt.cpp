@@ -62,6 +62,8 @@ void CodeGenFunction::EmitStmt(const Stmt *S) {
   case Stmt::CompoundStmtClass: EmitCompoundStmt(cast<CompoundStmt>(*S)); break;
   case Stmt::LabelStmtClass:    EmitLabelStmt(cast<LabelStmt>(*S));       break;
   case Stmt::GotoStmtClass:     EmitGotoStmt(cast<GotoStmt>(*S));         break;
+  case Stmt::IndirectGotoStmtClass:  
+    EmitIndirectGotoStmt(cast<IndirectGotoStmt>(*S)); break;
 
   case Stmt::IfStmtClass:       EmitIfStmt(cast<IfStmt>(*S));             break;
   case Stmt::WhileStmtClass:    EmitWhileStmt(cast<WhileStmt>(*S));       break;
@@ -157,7 +159,25 @@ void CodeGenFunction::EmitGotoStmt(const GotoStmt &S) {
   Builder.SetInsertPoint(llvm::BasicBlock::Create("", CurFn));
 }
 
+void CodeGenFunction::EmitIndirectGotoStmt(const IndirectGotoStmt &S) {
+  // Emit initial switch which will be patched up later by
+  // EmitIndirectSwitches(). We need a default dest, so we use the
+  // current BB, but this is overwritten.
+  llvm::Value *V = Builder.CreatePtrToInt(EmitScalarExpr(S.getTarget()),
+                                          llvm::Type::Int32Ty, 
+                                          "addr");
+  llvm::SwitchInst *I = Builder.CreateSwitch(V, Builder.GetInsertBlock());
+  IndirectSwitches.push_back(I);
+
+  // Emit a block after the branch so that dead code after a goto has some place
+  // to go.
+  Builder.SetInsertPoint(llvm::BasicBlock::Create("", CurFn));
+}
+
 void CodeGenFunction::EmitIfStmt(const IfStmt &S) {
+  // FIXME: It would probably be nice for us to skip emission of if
+  // (0) code here.
+
   // C99 6.8.4.1: The first substatement is executed if the expression compares
   // unequal to 0.  The condition must be a scalar type.
   llvm::Value *BoolCondVal = EvaluateExprAsBool(S.getCond());
