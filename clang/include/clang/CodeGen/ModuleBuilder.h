@@ -14,6 +14,9 @@
 #ifndef LLVM_CLANG_CODEGEN_MODULEBUILDER_H
 #define LLVM_CLANG_CODEGEN_MODULEBUILDER_H
 
+#include "clang/AST/ASTConsumer.h"
+#include <string>
+
 namespace llvm {
   class Module;
 }
@@ -21,11 +24,16 @@ namespace llvm {
 namespace clang {
   class Diagnostic;
   struct LangOptions;
-  class ASTConsumer;
   
-  ASTConsumer *CreateLLVMCodeGen(Diagnostic &Diags, const LangOptions &Features,
-                                 llvm::Module *&DestModule,
-                                 bool GenerateDebugInfo);
+  class CodeGenerator : public ASTConsumer {
+    public:
+      virtual llvm::Module* ReleaseModule() = 0;    
+  };
+  
+  CodeGenerator *CreateLLVMCodeGen(Diagnostic &Diags,
+                                   const LangOptions &Features,
+                                   const std::string& ModuleName,
+                                   bool GenerateDebugInfo);
 }
 
 #endif

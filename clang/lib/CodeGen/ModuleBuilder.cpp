@@ -13,7 +13,6 @@
 
 #include "clang/CodeGen/ModuleBuilder.h"
 #include "CodeGenModule.h"
-#include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 using namespace clang;
@@ -27,26 +26,37 @@ using namespace clang;
 #include "llvm/Module.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Support/Compiler.h"
+#include "llvm/ADT/OwningPtr.h"
+
 
 namespace {
-  class CodeGenerator : public ASTConsumer {
+  class VISIBILITY_HIDDEN CodeGeneratorImpl : public CodeGenerator {
     Diagnostic &Diags;
-    const llvm::TargetData *TD;
+    llvm::OwningPtr<const llvm::TargetData> TD;
     ASTContext *Ctx;
     const LangOptions &Features;
     bool GenerateDebugInfo;
   protected:
-    llvm::Module *&M;
-    CodeGen::CodeGenModule *Builder;
+    llvm::OwningPtr<llvm::Module> M;
+    llvm::OwningPtr<CodeGen::CodeGenModule> Builder;
   public:
-    CodeGenerator(Diagnostic &diags, const LangOptions &LO,
-                  llvm::Module *&DestModule, bool DebugInfoFlag)
+    CodeGeneratorImpl(Diagnostic &diags, const LangOptions &LO,
+                      const std::string& ModuleName,
+                      bool DebugInfoFlag)
     : Diags(diags), Features(LO), GenerateDebugInfo(DebugInfoFlag),
-    M(DestModule) {}
+      M(new llvm::Module(ModuleName)) {}
     
-    ~CodeGenerator() {
-      delete Builder;
-      delete TD;
+    virtual ~CodeGeneratorImpl() {}
+    
+    virtual llvm::Module* ReleaseModule() {      
+      if (Diags.hasErrorOccurred())
+        return 0;
+      
+      if (Builder)
+        Builder->Release();
+      
+      return M.take();
     }
     
     virtual void Initialize(ASTContext &Context) {
@@ -54,9 +64,9 @@ namespace {
       
       M->setTargetTriple(Ctx->Target.getTargetTriple());
       M->setDataLayout(Ctx->Target.getTargetDescription());
-      TD = new llvm::TargetData(Ctx->Target.getTargetDescription());
-      Builder = new CodeGen::CodeGenModule(Context, Features, *M, *TD, Diags,
-                                           GenerateDebugInfo);
+      TD.reset(new llvm::TargetData(Ctx->Target.getTargetDescription()));
+      Builder.reset(new CodeGen::CodeGenModule(Context, Features, *M, *TD,
+                                               Diags, GenerateDebugInfo));
     }
     
     virtual void HandleTopLevelDecl(Decl *D) {
@@ -128,10 +138,9 @@ namespace {
   };
 }
 
-ASTConsumer *clang::CreateLLVMCodeGen(Diagnostic &Diags, 
-                                      const LangOptions &Features,
-                                      llvm::Module *&DestModule,
-                                      bool GenerateDebugInfo) {
-  return new CodeGenerator(Diags, Features, DestModule, GenerateDebugInfo);
+CodeGenerator *clang::CreateLLVMCodeGen(Diagnostic &Diags, 
+                                        const LangOptions &Features,
+                                        const std::string& ModuleName,
+                                        bool GenerateDebugInfo) {
+  return new CodeGeneratorImpl(Diags, Features, ModuleName, GenerateDebugInfo);
 }
-

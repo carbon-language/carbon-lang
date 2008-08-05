@@ -40,6 +40,12 @@ ASTConsumer *CreateCodeRewriterTest(const std::string& InFile,
                                     const std::string& OutFile,
                                     Diagnostic &Diags,
                                     const LangOptions &LOpts);
+  
+ASTConsumer *CreateLLVMCodeGenWriter(bool EmitBC, Diagnostic &Diags,
+                                     const LangOptions &Features,
+                                     const std::string& InFile,
+                                     const std::string& OutFile,
+                                     bool GenerateDebugInfo);
 
 ASTConsumer* CreateHTMLPrinter(const std::string &OutFile, Diagnostic &D,
                                Preprocessor *PP, PreprocessorFactory* PPF);

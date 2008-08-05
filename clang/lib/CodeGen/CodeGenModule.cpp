@@ -42,13 +42,15 @@ CodeGenModule::CodeGenModule(ASTContext &C, const LangOptions &LO,
   Runtime = CreateObjCRuntime(*this);
 
   // If debug info generation is enabled, create the CGDebugInfo object.
-  if (GenerateDebugInfo)
-    DebugInfo = new CGDebugInfo(this);
-  else
-    DebugInfo = NULL;
+  DebugInfo = GenerateDebugInfo ? new CGDebugInfo(this) : 0;      
 }
 
 CodeGenModule::~CodeGenModule() {
+  delete Runtime;
+  delete DebugInfo;
+}
+
+void CodeGenModule::Release() {
   EmitStatics();
   llvm::Function *ObjCInitFunction = Runtime->ModuleInitFunction();
   if (ObjCInitFunction)
@@ -56,8 +58,6 @@ CodeGenModule::~CodeGenModule() {
   EmitCtorList(GlobalCtors, "llvm.global_ctors");
   EmitCtorList(GlobalDtors, "llvm.global_dtors");
   EmitAnnotations();
-  delete Runtime;
-  delete DebugInfo;
   // Run the verifier to check that the generated code is consistent.
   assert(!verifyModule(TheModule));
 }

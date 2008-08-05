@@ -18,9 +18,13 @@
 #include "clang/Basic/FileManager.h"
 #include "clang/AST/AST.h"
 #include "clang/AST/ASTConsumer.h"
+#include "clang/CodeGen/ModuleBuilder.h"
+#include "llvm/Module.h"
+#include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/ADT/OwningPtr.h"
+#include <fstream>
 
 using namespace clang;
 
@@ -630,4 +634,76 @@ ASTConsumer* clang::CreateASTSerializer(const std::string& InFile,
   llvm::sys::Path FName(InFile.c_str());
   FName.appendSuffix("ast");
   return new SingleFileSerializer(FName);
+}
+
+class LLVMCodeGenWriter : public ASTConsumer {
+  llvm::OwningPtr<CodeGenerator> Gen;
+  const std::string &InFile;
+  const std::string &OutputFile;
+  bool EmitBitcode;
+public:
+  
+  LLVMCodeGenWriter(bool EmitBC, Diagnostic &Diags, const LangOptions &Features,
+                    const std::string& infile, const std::string& outfile,
+                    bool GenerateDebugInfo) 
+  : Gen(CreateLLVMCodeGen(Diags, Features, infile, GenerateDebugInfo)),
+    InFile(infile), OutputFile(outfile), EmitBitcode(EmitBC) {}
+
+  virtual void Initialize(ASTContext &Context) {
+    Gen->Initialize(Context);
+  }
+  
+  virtual void HandleTopLevelDecl(Decl *D) {
+    Gen->HandleTopLevelDecl(D);
+  }
+  
+  virtual void HandleTagDeclDefinition(TagDecl *D) {
+    Gen->HandleTagDeclDefinition(D);
+  }
+  
+  virtual ~LLVMCodeGenWriter() {
+    llvm::OwningPtr<llvm::Module> CodeGenModule(Gen->ReleaseModule());
+    
+    if (!CodeGenModule)
+      return;
+    
+    std::ostream *Out;
+
+    if (OutputFile == "-") {
+      Out = llvm::cout.stream();
+    } else if (!OutputFile.empty()) {
+      Out = new std::ofstream(OutputFile.c_str(), 
+                              std::ios_base::binary|std::ios_base::out);
+    } else if (InFile == "-") {
+      Out = llvm::cout.stream();
+    } else {
+      llvm::sys::Path Path(InFile);
+      Path.eraseSuffix();
+      if (!EmitBitcode)
+        Path.appendSuffix("ll");
+      else
+        Path.appendSuffix("bc");
+
+      Out = new std::ofstream(Path.toString().c_str(), 
+                              std::ios_base::binary|std::ios_base::out);
+    }
+    
+    if (!EmitBitcode)
+      CodeGenModule->print(*Out);
+    else
+      llvm::WriteBitcodeToFile(CodeGenModule.get(), *Out);
+    
+    if (Out != llvm::cout.stream())
+      delete Out;
+  }
+};
+
+ASTConsumer *clang::CreateLLVMCodeGenWriter(bool EmitBC, Diagnostic &Diags,
+                                            const LangOptions &Features,
+                                            const std::string& InFile,
+                                            const std::string& OutFile,
+                                            bool GenerateDebugInfo) {
+
+  return new LLVMCodeGenWriter(EmitBC, Diags, Features, InFile, OutFile,
+                               GenerateDebugInfo);  
 }

@@ -19,6 +19,7 @@
 #include "clang/AST/Attr.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/OwningPtr.h"
 
 namespace llvm {
   class Module;
@@ -62,8 +63,8 @@ class CodeGenModule {
   const llvm::TargetData &TheTargetData;
   Diagnostic &Diags;
   CodeGenTypes Types;
-  CGObjCRuntime *Runtime;
-  CGDebugInfo *DebugInfo;
+  CGObjCRuntime* Runtime;
+  CGDebugInfo* DebugInfo;
 
   llvm::Function *MemCpyFn;
   llvm::Function *MemMoveFn;
@@ -103,7 +104,11 @@ public:
   CodeGenModule(ASTContext &C, const LangOptions &Features, llvm::Module &M, 
                 const llvm::TargetData &TD, Diagnostic &Diags,
                 bool GenerateDebugInfo);
+
   ~CodeGenModule();
+  
+  /// Release - Finalize LLVM code generation.
+  void Release();
   
   CGObjCRuntime *getObjCRuntime() { return Runtime; }
   CGDebugInfo *getDebugInfo() { return DebugInfo; }

@@ -37,9 +37,7 @@
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
-#include "llvm/Module.h"
 #include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/System/Signals.h"
@@ -47,7 +45,6 @@
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/System/Path.h"
 #include <memory>
-#include <fstream>
 #include <algorithm>
 using namespace clang;
 
@@ -1174,8 +1171,7 @@ static ASTConsumer* CreateASTConsumer(const std::string& InFile,
                                       Diagnostic& Diag, FileManager& FileMgr, 
                                       const LangOptions& LangOpts,
                                       Preprocessor *PP,
-                                      PreprocessorFactory *PPF,
-                                      llvm::Module *&DestModule) {
+                                      PreprocessorFactory *PPF) {
   switch (ProgAction) {
     default:
       return NULL;
@@ -1197,8 +1193,8 @@ static ASTConsumer* CreateASTConsumer(const std::string& InFile,
       
     case EmitLLVM:
     case EmitBC:
-      DestModule = new llvm::Module(InFile);
-      return CreateLLVMCodeGen(Diag, LangOpts, DestModule, GenerateDebugInfo);
+      return CreateLLVMCodeGenWriter(ProgAction == EmitBC, Diag, LangOpts,
+                                     InFile, OutputFile, GenerateDebugInfo);
 
     case SerializeAST:
       // FIXME: Allow user to tailor where the file is written.
@@ -1225,13 +1221,12 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
 
   ASTConsumer* Consumer = NULL;
   bool ClearSourceMgr = false;
-  llvm::Module *CodeGenModule = 0;
   
   switch (ProgAction) {
   default:
     Consumer = CreateASTConsumer(InFile, PP.getDiagnostics(),
                                  PP.getFileManager(), PP.getLangOptions(), &PP,
-                                 &PPF, CodeGenModule);
+                                 &PPF);
     
     if (!Consumer) {      
       fprintf(stderr, "Unexpected program action!\n");
@@ -1296,47 +1291,6 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
     ParseAST(PP, Consumer, Stats);
   }
 
-  // Don't emit code when the input had errors.
-  if (CodeGenModule && PP.getDiagnostics().hasErrorOccurred()) {
-    delete CodeGenModule;
-    CodeGenModule = 0;
-  }
-
-  // If running the code generator, finish up now.
-  if (CodeGenModule) {
-    std::ostream *Out;
-    if (OutputFile == "-") {
-      Out = llvm::cout.stream();
-    } else if (!OutputFile.empty()) {
-      Out = new std::ofstream(OutputFile.c_str(), 
-                              std::ios_base::binary|std::ios_base::out);
-    } else if (InFile == "-") {
-      Out = llvm::cout.stream();
-    } else {
-      llvm::sys::Path Path(InFile);
-      Path.eraseSuffix();
-      if (ProgAction == EmitLLVM)
-        Path.appendSuffix("ll");
-      else if (ProgAction == EmitBC)
-        Path.appendSuffix("bc");
-      else
-        assert(0 && "Unknown action");
-      Out = new std::ofstream(Path.toString().c_str(), 
-                              std::ios_base::binary|std::ios_base::out);
-    }
-    
-    if (ProgAction == EmitLLVM) {
-      CodeGenModule->print(*Out);
-    } else {
-      assert(ProgAction == EmitBC);
-      llvm::WriteBitcodeToFile(CodeGenModule, *Out);
-    }
-    
-    if (Out != llvm::cout.stream())
-      delete Out;
-    delete CodeGenModule;
-  }
-  
   if (Stats) {
     fprintf(stderr, "\nSTATISTICS FOR '%s':\n", InFile.c_str());
     PP.PrintStats();
@@ -1379,10 +1333,9 @@ static void ProcessSerializedFile(const std::string& InFile, Diagnostic& Diag,
   
   // Observe that we use the source file name stored in the deserialized
   // translation unit, rather than InFile.
-  llvm::Module *DestModule;
   llvm::OwningPtr<ASTConsumer>
     Consumer(CreateASTConsumer(InFile, Diag, FileMgr, TU->getLangOptions(),
-                               0, 0, DestModule));
+                               0, 0));
   
   if (!Consumer) {      
     fprintf(stderr, "Unsupported program action with serialized ASTs!\n");
