@@ -13,6 +13,7 @@
 
 #include "MipsTargetAsmInfo.h"
 #include "MipsTargetMachine.h"
+#include "llvm/GlobalVariable.h"
 
 using namespace llvm;
 

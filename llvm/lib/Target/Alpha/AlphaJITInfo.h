@@ -15,9 +15,6 @@
 #define ALPHA_JITINFO_H
 
 #include "llvm/Target/TargetJITInfo.h"
-#include "llvm/GlobalValue.h"
-#include <string>
-#include <map>
 
 namespace llvm {
   class TargetMachine;

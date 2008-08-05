@@ -48,7 +48,6 @@
 #include <set>
 #include <map>
 #include <queue>
-#include <list>
 using namespace llvm;
 
 namespace {
