@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | llc -mtriple=arm-apple-darwin 
-; RUN: llvm-as < %s | llc -mtriple=arm-apple-darwin -disable-correct-folding -stats -info-output-file - | grep "Number of re-materialization" | grep 3
+; RUN: llvm-as < %s | llc -mtriple=arm-apple-darwin -stats -info-output-file - | grep "Number of re-materialization" | grep 3
 
 	%struct.CONTENTBOX = type { i32, i32, i32, i32, i32 }
 	%struct.LOCBOX = type { i32, i32, i32, i32 }
@@ -20,20 +20,21 @@ entry:
 	br label %bb490
 
 bb8:		; preds = %bb490, %cond_false428
-	br i1 false, label %cond_false58.i, label %cond_false.i
+  %foo3 = phi i1 [ 0, %bb490 ], [ 1, %cond_false428 ]
+	br i1 %foo3, label %cond_false58.i, label %cond_false.i
 
 cond_false.i:		; preds = %bb8
 	ret void
 
 cond_false58.i:		; preds = %bb8
 	%highBinX.0.i = select i1 false, i32 1, i32 0		; <i32> [#uses=2]
-	br i1 false, label %cond_next85.i, label %cond_false76.i
+	br i1 %foo3, label %cond_next85.i, label %cond_false76.i
 
 cond_false76.i:		; preds = %cond_false58.i
 	ret void
 
 cond_next85.i:		; preds = %cond_false58.i
-	br i1 false, label %cond_next105.i, label %cond_false98.i
+	br i1 %foo3, label %cond_next105.i, label %cond_false98.i
 
 cond_false98.i:		; preds = %cond_next85.i
 	ret void
@@ -43,7 +44,7 @@ cond_next105.i:		; preds = %cond_next85.i
 	%tmp115.i = icmp eq i32 1, %tmp77.i		; <i1> [#uses=1]
 	%bothcond.i = and i1 %tmp115.i, %tmp108.i		; <i1> [#uses=1]
 	%storemerge.i = select i1 %bothcond.i, i32 1, i32 0		; <i32> [#uses=2]
-	br i1 false, label %whoOverlaps.exit, label %bb503.preheader.i
+	br i1 %bothcond.i, label %whoOverlaps.exit, label %bb503.preheader.i
 
 bb503.preheader.i:		; preds = %bb513.i, %cond_next105.i
 	%i.022.0.i = phi i32 [ %tmp512.i, %bb513.i ], [ 0, %cond_next105.i ]		; <i32> [#uses=2]
@@ -51,7 +52,7 @@ bb503.preheader.i:		; preds = %bb513.i, %cond_next105.i
 	br label %bb503.i
 
 bb137.i:		; preds = %bb503.i
-	br i1 false, label %bb162.i, label %bb148.i
+	br i1 %tmp506.i, label %bb162.i, label %bb148.i
 
 bb148.i:		; preds = %bb137.i
 	ret void
@@ -100,15 +101,17 @@ bb513.i:		; preds = %bb503.i
 	br i1 %tmp516.i, label %whoOverlaps.exit, label %bb503.preheader.i
 
 whoOverlaps.exit:		; preds = %bb513.i, %cond_next105.i
-	br i1 false, label %cond_false428, label %bb490
+  %foo = phi i1 [ 1, %bb513.i], [0, %cond_next105.i]
+	br i1 %foo, label %cond_false428, label %bb490
 
 cond_false428:		; preds = %whoOverlaps.exit
-	br i1 false, label %bb497, label %bb8
+	br i1 %foo, label %bb497, label %bb8
 
 bb490:		; preds = %whoOverlaps.exit, %entry
 	%binY.tmp.2 = phi i32 [ 0, %entry ], [ %storemerge.i, %whoOverlaps.exit ]		; <i32> [#uses=1]
 	%cell.1 = phi i32 [ 1, %entry ], [ 0, %whoOverlaps.exit ]		; <i32> [#uses=1]
-	br i1 false, label %bb497, label %bb8
+	%foo2 = phi i1 [ 1, %entry], [0, %whoOverlaps.exit]
+	br i1 %foo2, label %bb497, label %bb8
 
 bb497:		; preds = %bb490, %cond_false428
 	%binY.tmp.3 = phi i32 [ %binY.tmp.2, %bb490 ], [ %storemerge.i, %cond_false428 ]		; <i32> [#uses=0]
