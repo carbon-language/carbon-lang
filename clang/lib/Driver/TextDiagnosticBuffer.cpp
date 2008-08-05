@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "TextDiagnosticBuffer.h"
+#include "clang/Driver/TextDiagnosticBuffer.h"
 #include "clang/Basic/SourceManager.h"
 using namespace clang;
 

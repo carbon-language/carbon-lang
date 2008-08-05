@@ -1,4 +1,4 @@
-//===--- TextDiagnosticPrinter.h - Text Diagnostic Client -------*- C++ -*-===//
+//===--- TextDiagnosticBuffer.h - Buffer Text Diagnostics -------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,35 +7,36 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This is a concrete diagnostic client, which prints the diagnostics to
-// standard error.
+// This is a concrete diagnostic client, which buffers the diagnostic messages.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef TEXT_DIAGNOSTIC_PRINTER_H_
-#define TEXT_DIAGNOSTIC_PRINTER_H_
+#ifndef DRIVER_TEXT_DIAGNOSTIC_BUFFER_H_
+#define DRIVER_TEXT_DIAGNOSTIC_BUFFER_H_
 
-#include "TextDiagnostics.h"
-#include "clang/Basic/SourceLocation.h"
-#include "llvm/Support/Streams.h"
+#include "clang/Driver/TextDiagnostics.h"
+#include <vector>
 
 namespace clang {
+
+class Preprocessor;
 class SourceManager;
 
-class TextDiagnosticPrinter : public TextDiagnostics {
-  FullSourceLoc LastWarningLoc;
-  FullSourceLoc LastLoc;
-  llvm::OStream OS;
+class TextDiagnosticBuffer : public TextDiagnostics {
 public:
-  TextDiagnosticPrinter(llvm::OStream &os = llvm::cerr) : OS(os) {}
+  typedef std::vector<std::pair<SourceLocation, std::string> > DiagList;
+  typedef DiagList::iterator iterator;
+  typedef DiagList::const_iterator const_iterator;
+private:
+  DiagList Errors, Warnings;
+public:
+  TextDiagnosticBuffer() {}
 
-  void PrintIncludeStack(FullSourceLoc Pos);
+  const_iterator err_begin() const  { return Errors.begin(); }
+  const_iterator err_end() const    { return Errors.end(); }
 
-  void HighlightRange(const SourceRange &R,
-                      SourceManager& SrcMgr,
-                      unsigned LineNo, unsigned FileID,
-                      std::string &CaratLine,
-                      const std::string &SourceLine);
+  const_iterator warn_begin() const { return Warnings.begin(); }
+  const_iterator warn_end() const   { return Warnings.end(); }
 
   virtual void HandleDiagnostic(Diagnostic &Diags,
                                 Diagnostic::Level DiagLevel,

@@ -11,23 +11,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "TextDiagnosticPrinter.h"
+#include "clang/Driver/TextDiagnosticPrinter.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Lex/HeaderSearch.h"
 #include "clang/Lex/Lexer.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include <string>
 using namespace clang;
-
-static llvm::cl::opt<bool>
-NoShowColumn("fno-show-column",
-             llvm::cl::desc("Do not include column number on diagnostics"));
-static llvm::cl::opt<bool>
-NoCaretDiagnostics("fno-caret-diagnostics",
-                   llvm::cl::desc("Do not include source line and caret with"
-                                  " diagnostics"));
 
 void TextDiagnosticPrinter::
 PrintIncludeStack(FullSourceLoc Pos) {
@@ -144,7 +135,7 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic &Diags,
       ++LineEnd;
   
     OS << Buffer->getBufferIdentifier() << ":" << LineNo << ":";
-    if (ColNo && !NoShowColumn) 
+    if (ColNo && ShowColumn) 
       OS << ColNo << ":";
     OS << " ";
   }
@@ -160,7 +151,7 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic &Diags,
   
   OS << FormatDiagnostic(Diags, Level, ID, Strs, NumStrs) << "\n";
   
-  if (!NoCaretDiagnostics && Pos.isValid() && ((LastLoc != Pos) || Ranges)) {
+  if (CaretDiagnostics && Pos.isValid() && ((LastLoc != Pos) || Ranges)) {
     // Cache the LastLoc, it allows us to omit duplicate source/caret spewage.
     LastLoc = Pos;
     

@@ -13,7 +13,7 @@
 
 #include "clang.h"
 #include "ASTConsumers.h"
-#include "TextDiagnosticBuffer.h"
+#include "clang/Driver/TextDiagnosticBuffer.h"
 #include "clang/Sema/ParseAST.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/Basic/SourceManager.h"

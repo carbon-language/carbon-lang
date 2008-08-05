@@ -24,9 +24,9 @@
 
 #include "clang.h"
 #include "ASTConsumers.h"
-#include "TextDiagnosticBuffer.h"
-#include "TextDiagnosticPrinter.h"
 #include "HTMLDiagnostics.h"
+#include "clang/Driver/TextDiagnosticBuffer.h"
+#include "clang/Driver/TextDiagnosticPrinter.h"
 #include "clang/Analysis/PathDiagnostic.h"
 #include "clang/AST/TranslationUnit.h"
 #include "clang/CodeGen/ModuleBuilder.h"
@@ -142,6 +142,16 @@ static llvm::cl::opt<std::string>
 HTMLDiag("html-diags",
          llvm::cl::desc("Generate HTML to report diagnostics"),
          llvm::cl::value_desc("HTML directory"));
+
+static llvm::cl::opt<bool>
+NoShowColumn("fno-show-column",
+             llvm::cl::desc("Do not include column number on diagnostics"));
+
+static llvm::cl::opt<bool>
+NoCaretDiagnostics("fno-caret-diagnostics",
+                   llvm::cl::desc("Do not include source line and caret with"
+                                  " diagnostics"));
+
 
 //===----------------------------------------------------------------------===//
 // Analyzer Options
@@ -426,7 +436,7 @@ ObjCExclusiveGC("fobjc-gc-only",
 
 static llvm::cl::opt<bool>
 ObjCEnableGC("fobjc-gc",
-             llvm::cl::desc("Enable Objective-C garbage collection"));             
+             llvm::cl::desc("Enable Objective-C garbage collection"));
 
 void InitializeGCMode(LangOptions &Options) {
   if (ObjCExclusiveGC)
@@ -1392,7 +1402,8 @@ int main(int argc, char **argv) {
   else { // Use Text diagnostics.
     if (!VerifyDiagnostics) {
       // Print diagnostics to stderr by default.
-      TextDiagClient = new TextDiagnosticPrinter();
+      TextDiagClient = new TextDiagnosticPrinter(!NoShowColumn,
+          !NoCaretDiagnostics);
     } else {
       // When checking diagnostics, just buffer them up.
       TextDiagClient = new TextDiagnosticBuffer();

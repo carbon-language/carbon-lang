@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "TextDiagnostics.h"
+#include "clang/Driver/TextDiagnostics.h"
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Lex/HeaderSearch.h"
