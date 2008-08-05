@@ -1337,26 +1337,24 @@ Parser::StmtResult Parser::ParseObjCAtStatement(SourceLocation AtLoc) {
 }
 
 Parser::ExprResult Parser::ParseObjCAtExpression(SourceLocation AtLoc) {
-
   switch (Tok.getKind()) {
   case tok::string_literal:    // primary-expression: string-literal
   case tok::wide_string_literal:
     return ParsePostfixExpressionSuffix(ParseObjCStringLiteral(AtLoc));
   default:
-    break;
-  }
-  
-  switch (Tok.getIdentifierInfo()->getObjCKeywordID()) {
-  case tok::objc_encode:
-    return ParsePostfixExpressionSuffix(ParseObjCEncodeExpression(AtLoc));
-  case tok::objc_protocol:
-    return ParsePostfixExpressionSuffix(ParseObjCProtocolExpression(AtLoc));
-  case tok::objc_selector:
-    return ParsePostfixExpressionSuffix(ParseObjCSelectorExpression(AtLoc));
-  default:
-    Diag(AtLoc, diag::err_unexpected_at);
-    SkipUntil(tok::semi);
-    return true;
+    if (Tok.getIdentifierInfo() == 0)
+      return Diag(AtLoc, diag::err_unexpected_at);
+      
+    switch (Tok.getIdentifierInfo()->getObjCKeywordID()) {
+    case tok::objc_encode:
+      return ParsePostfixExpressionSuffix(ParseObjCEncodeExpression(AtLoc));
+    case tok::objc_protocol:
+      return ParsePostfixExpressionSuffix(ParseObjCProtocolExpression(AtLoc));
+    case tok::objc_selector:
+      return ParsePostfixExpressionSuffix(ParseObjCSelectorExpression(AtLoc));
+    default:
+      return Diag(AtLoc, diag::err_unexpected_at);
+    }
   }
 }
 
@@ -1380,10 +1378,10 @@ Parser::ExprResult Parser::ParseObjCMessageExpression() {
 
   ExprResult Res = ParseAssignmentExpression();
   if (Res.isInvalid) {
-    Diag(Tok, diag::err_invalid_receiver_to_message);
     SkipUntil(tok::r_square);
     return Res;
   }
+  
   return ParseObjCMessageExpressionBody(LBracLoc, 0, Res.Val);
 }
   
@@ -1426,16 +1424,24 @@ Parser::ParseObjCMessageExpressionBody(SourceLocation LBracLoc,
 
       if (Tok.isNot(tok::colon)) {
         Diag(Tok, diag::err_expected_colon);
-        SkipUntil(tok::semi);
+        // We must manually skip to a ']', otherwise the expression skipper will
+        // stop at the ']' when it skips to the ';'.  We want it to skip beyond
+        // the enclosing expression.
+        SkipUntil(tok::r_square);
         return true;
       }
+      
       ConsumeToken(); // Eat the ':'.
       ///  Parse the expression after ':' 
       ExprResult Res = ParseAssignmentExpression();
       if (Res.isInvalid) {
-        SkipUntil(tok::identifier);
+        // We must manually skip to a ']', otherwise the expression skipper will
+        // stop at the ']' when it skips to the ';'.  We want it to skip beyond
+        // the enclosing expression.
+        SkipUntil(tok::r_square);
         return Res;
       }
+      
       // We have a valid expression.
       KeyExprs.push_back(Res.Val);
       
@@ -1451,23 +1457,35 @@ Parser::ParseObjCMessageExpressionBody(SourceLocation LBracLoc,
       ///  Parse the expression after ',' 
       ExprResult Res = ParseAssignmentExpression();
       if (Res.isInvalid) {
-        SkipUntil(tok::identifier);
+        // We must manually skip to a ']', otherwise the expression skipper will
+        // stop at the ']' when it skips to the ';'.  We want it to skip beyond
+        // the enclosing expression.
+        SkipUntil(tok::r_square);
         return Res;
       }
+      
       // We have a valid expression.
       KeyExprs.push_back(Res.Val);
     }
   } else if (!selIdent) {
     Diag(Tok, diag::err_expected_ident); // missing selector name.
-    SkipUntil(tok::semi);
+    
+    // We must manually skip to a ']', otherwise the expression skipper will
+    // stop at the ']' when it skips to the ';'.  We want it to skip beyond
+    // the enclosing expression.
+    SkipUntil(tok::r_square);
     return true;
   }
   
   if (Tok.isNot(tok::r_square)) {
     Diag(Tok, diag::err_expected_rsquare);
-    SkipUntil(tok::semi);
+    // We must manually skip to a ']', otherwise the expression skipper will
+    // stop at the ']' when it skips to the ';'.  We want it to skip beyond
+    // the enclosing expression.
+    SkipUntil(tok::r_square);
     return true;
   }
+  
   SourceLocation RBracLoc = ConsumeBracket(); // consume ']'
   
   unsigned nKeys = KeyIdents.size();
@@ -1527,10 +1545,8 @@ Parser::ExprResult Parser::ParseObjCEncodeExpression(SourceLocation AtLoc) {
   
   SourceLocation EncLoc = ConsumeToken();
   
-  if (Tok.isNot(tok::l_paren)) {
-    Diag(Tok, diag::err_expected_lparen_after, "@encode");
-    return true;
-  }
+  if (Tok.isNot(tok::l_paren))
+    return Diag(Tok, diag::err_expected_lparen_after, "@encode");
    
   SourceLocation LParenLoc = ConsumeParen();
   
@@ -1549,17 +1565,14 @@ Parser::ExprResult Parser::ParseObjCProtocolExpression(SourceLocation AtLoc)
 {
   SourceLocation ProtoLoc = ConsumeToken();
   
-  if (Tok.isNot(tok::l_paren)) {
-    Diag(Tok, diag::err_expected_lparen_after, "@protocol");
-    return true;
-  }
+  if (Tok.isNot(tok::l_paren))
+    return Diag(Tok, diag::err_expected_lparen_after, "@protocol");
   
   SourceLocation LParenLoc = ConsumeParen();
   
-  if (Tok.isNot(tok::identifier)) {
-    Diag(Tok, diag::err_expected_ident);
-    return true;
-  }
+  if (Tok.isNot(tok::identifier))
+    return Diag(Tok, diag::err_expected_ident);
+  
   IdentifierInfo *protocolId = Tok.getIdentifierInfo();
   ConsumeToken();
   
@@ -1575,27 +1588,23 @@ Parser::ExprResult Parser::ParseObjCSelectorExpression(SourceLocation AtLoc)
 {
   SourceLocation SelectorLoc = ConsumeToken();
   
-  if (Tok.isNot(tok::l_paren)) {
-    Diag(Tok, diag::err_expected_lparen_after, "@selector");
-    return 0;
-  }
+  if (Tok.isNot(tok::l_paren))
+    return Diag(Tok, diag::err_expected_lparen_after, "@selector");
   
   llvm::SmallVector<IdentifierInfo *, 12> KeyIdents;
   SourceLocation LParenLoc = ConsumeParen();
   SourceLocation sLoc;
   IdentifierInfo *SelIdent = ParseObjCSelector(sLoc);
-  if (!SelIdent && Tok.isNot(tok::colon)) {
-    Diag(Tok, diag::err_expected_ident); // missing selector name.
-    return 0;
-  }
+  if (!SelIdent && Tok.isNot(tok::colon))
+    return Diag(Tok, diag::err_expected_ident); // missing selector name.
+  
   KeyIdents.push_back(SelIdent);
   unsigned nColons = 0;
   if (Tok.isNot(tok::r_paren)) {
     while (1) {
-      if (Tok.isNot(tok::colon)) {
-        Diag(Tok, diag::err_expected_colon);
-        break;
-      }
+      if (Tok.isNot(tok::colon))
+        return Diag(Tok, diag::err_expected_colon);
+      
       nColons++;
       ConsumeToken(); // Eat the ':'.
       if (Tok.is(tok::r_paren))

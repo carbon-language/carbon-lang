@@ -31,14 +31,16 @@ Parser::Parser(Preprocessor &pp, Action &actions)
 Action::~Action() {}
 
 
-void Parser::Diag(SourceLocation Loc, unsigned DiagID,
+bool Parser::Diag(SourceLocation Loc, unsigned DiagID,
                   const std::string &Msg) {
   Diags.Report(FullSourceLoc(Loc,PP.getSourceManager()), DiagID, &Msg, 1);
+  return true;
 }
 
-void Parser::Diag(SourceLocation Loc, unsigned DiagID, const SourceRange &R) {
+bool Parser::Diag(SourceLocation Loc, unsigned DiagID, const SourceRange &R) {
   Diags.Report(FullSourceLoc(Loc,PP.getSourceManager()), DiagID, 0, 0,
                &R, 1);
+  return true;
 }
 
 

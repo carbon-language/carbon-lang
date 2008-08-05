@@ -244,12 +244,12 @@ private:
   //===--------------------------------------------------------------------===//
   // Diagnostic Emission and Error recovery.
     
-  void Diag(SourceLocation Loc, unsigned DiagID,
+  bool Diag(SourceLocation Loc, unsigned DiagID,
             const std::string &Msg = std::string());
-  void Diag(SourceLocation Loc, unsigned DiagID, const SourceRange &R);
-  void Diag(const Token &Tok, unsigned DiagID,
+  bool Diag(SourceLocation Loc, unsigned DiagID, const SourceRange &R);
+  bool Diag(const Token &Tok, unsigned DiagID,
             const std::string &M = std::string()) {
-    Diag(Tok.getLocation(), DiagID, M);
+    return Diag(Tok.getLocation(), DiagID, M);
   }
   
   /// SkipUntil - Read tokens until we get to the specified token, then consume
