@@ -231,17 +231,15 @@ class NonNullAttr : public Attr {
   unsigned* ArgNums;
   unsigned Size;
 public:
-  NonNullAttr(unsigned* arg_nums = 0, unsigned size = 0) : Attr(NonNull) {
+  NonNullAttr(unsigned* arg_nums = 0, unsigned size = 0) : Attr(NonNull),
+    ArgNums(0), Size(0) {
+  
     if (size) {
       assert (arg_nums);
       ArgNums = new unsigned[size];
       Size = size;
       memcpy(ArgNums, arg_nums, sizeof(*ArgNums)*size);
     }
-    else {
-      ArgNums = 0;
-      Size = 0;
-    }    
   }
   
   virtual ~NonNullAttr() {
@@ -251,6 +249,9 @@ public:
   bool isNonNull(unsigned arg) const {
     return ArgNums ? std::binary_search(ArgNums, ArgNums+Size, arg) : true;
   }  
+  
+  static bool classof(const Attr *A) { return A->getKind() == NonNull; }
+  static bool classof(const NonNullAttr *A) { return true; }
 };
 
 class FormatAttr : public Attr {
