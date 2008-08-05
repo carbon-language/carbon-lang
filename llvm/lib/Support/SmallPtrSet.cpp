@@ -58,13 +58,13 @@ bool SmallPtrSetImpl::insert_imp(const void * Ptr) {
     Grow();
   
   // Okay, we know we have space.  Find a hash bucket.
-  void **Bucket = const_cast<void**>(FindBucketFor((void*)Ptr));
+  const void **Bucket = const_cast<const void**>(FindBucketFor(Ptr));
   if (*Bucket == Ptr) return false; // Already inserted, good.
   
   // Otherwise, insert it!
   if (*Bucket == getTombstoneMarker())
     --NumTombstones;
-  *Bucket = (void*)Ptr;
+  *Bucket = Ptr;
   ++NumElements;  // Track density.
   return true;
 }

@@ -84,9 +84,9 @@ void Type::destroy() const {
     // Now call the destructor for the subclass directly because we're going
     // to delete this as an array of char.
     if (isa<FunctionType>(this))
-      ((FunctionType*)this)->FunctionType::~FunctionType();
+      static_cast<const FunctionType*>(this)->FunctionType::~FunctionType();
     else
-      ((StructType*)this)->StructType::~StructType();
+      static_cast<const StructType*>(this)->StructType::~StructType();
 
     // Finally, remove the memory as an array deallocation of the chars it was
     // constructed from.

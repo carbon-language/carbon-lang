@@ -1070,7 +1070,8 @@ private:
       }
       
       typename MapTy::iterator I =
-        Map.find(MapKey((TypeClass*)CP->getRawType(), getValType(CP)));
+        Map.find(MapKey(static_cast<const TypeClass*>(CP->getRawType()),
+                        getValType(CP)));
       if (I == Map.end() || I->second != CP) {
         // FIXME: This should not use a linear scan.  If this gets to be a
         // performance problem, someone should look at this.

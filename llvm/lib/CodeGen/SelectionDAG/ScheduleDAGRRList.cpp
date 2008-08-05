@@ -88,7 +88,7 @@ public:
   void Schedule();
 
   /// IsReachable - Checks if SU is reachable from TargetSU.
-  bool IsReachable(SUnit *SU, SUnit *TargetSU);
+  bool IsReachable(const SUnit *SU, const SUnit *TargetSU);
 
   /// willCreateCycle - Returns true if adding an edge from SU to TargetSU will
   /// create a cycle.
@@ -155,7 +155,7 @@ private:
   /// DFS - make a DFS traversal and mark all nodes affected by the 
   /// edge insertion. These nodes will later get new topological indexes
   /// by means of the Shift method.
-  void DFS(SUnit *SU, int UpperBound, bool& HasLoop);
+  void DFS(const SUnit *SU, int UpperBound, bool& HasLoop);
 
   /// Shift - reassign topological indexes for the nodes in the DAG
   /// to preserve the topological ordering.
@@ -395,7 +395,7 @@ void ScheduleDAGRRList::UnscheduleNodeBottomUp(SUnit *SU) {
 }
 
 /// IsReachable - Checks if SU is reachable from TargetSU.
-bool ScheduleDAGRRList::IsReachable(SUnit *SU, SUnit *TargetSU) {
+bool ScheduleDAGRRList::IsReachable(const SUnit *SU, const SUnit *TargetSU) {
   // If insertion of the edge SU->TargetSU would create a cycle
   // then there is a path from TargetSU to SU.
   int UpperBound, LowerBound;
@@ -543,8 +543,8 @@ bool ScheduleDAGRRList::RemovePred(SUnit *M, SUnit *N,
 /// DFS - Make a DFS traversal to mark all nodes reachable from SU and mark
 /// all nodes affected by the edge insertion. These nodes will later get new
 /// topological indexes by means of the Shift method.
-void ScheduleDAGRRList::DFS(SUnit *SU, int UpperBound, bool& HasLoop) {
-  std::vector<SUnit*> WorkList;
+void ScheduleDAGRRList::DFS(const SUnit *SU, int UpperBound, bool& HasLoop) {
+  std::vector<const SUnit*> WorkList;
   WorkList.reserve(SUnits.size()); 
 
   WorkList.push_back(SU);
@@ -1403,7 +1403,7 @@ namespace {
   class VISIBILITY_HIDDEN BURegReductionPriorityQueue
    : public RegReductionPriorityQueue<bu_ls_rr_sort> {
     // SUnits - The SUnits for the current graph.
-    const std::vector<SUnit> *SUnits;
+    std::vector<SUnit> *SUnits;
     
     // SethiUllmanNumbers - The SethiUllman number for each node.
     std::vector<unsigned> SethiUllmanNumbers;
@@ -1692,11 +1692,11 @@ BURegReductionPriorityQueue::canClobber(const SUnit *SU, const SUnit *Op) {
 
 /// hasCopyToRegUse - Return true if SU has a value successor that is a
 /// CopyToReg node.
-static bool hasCopyToRegUse(SUnit *SU) {
+static bool hasCopyToRegUse(const SUnit *SU) {
   for (SUnit::const_succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
        I != E; ++I) {
     if (I->isCtrl) continue;
-    SUnit *SuccSU = I->Dep;
+    const SUnit *SuccSU = I->Dep;
     if (SuccSU->Node && SuccSU->Node->getOpcode() == ISD::CopyToReg)
       return true;
   }
@@ -1705,7 +1705,7 @@ static bool hasCopyToRegUse(SUnit *SU) {
 
 /// canClobberPhysRegDefs - True if SU would clobber one of SuccSU's
 /// physical register defs.
-static bool canClobberPhysRegDefs(SUnit *SuccSU, SUnit *SU,
+static bool canClobberPhysRegDefs(const SUnit *SuccSU, const SUnit *SU,
                                   const TargetInstrInfo *TII,
                                   const TargetRegisterInfo *TRI) {
   SDNode *N = SuccSU->Node;
@@ -1739,7 +1739,7 @@ static bool canClobberPhysRegDefs(SUnit *SuccSU, SUnit *SU,
 /// commutable, favor the one that's not commutable.
 void BURegReductionPriorityQueue::AddPseudoTwoAddrDeps() {
   for (unsigned i = 0, e = SUnits->size(); i != e; ++i) {
-    SUnit *SU = (SUnit *)&((*SUnits)[i]);
+    SUnit *SU = &(*SUnits)[i];
     if (!SU->isTwoAddress)
       continue;
 
@@ -1819,7 +1819,7 @@ static unsigned LimitedSumOfUnscheduledPredsOfSuccs(const SUnit *SU,
   unsigned Sum = 0;
   for (SUnit::const_succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
        I != E; ++I) {
-    SUnit *SuccSU = I->Dep;
+    const SUnit *SuccSU = I->Dep;
     for (SUnit::const_pred_iterator II = SuccSU->Preds.begin(),
          EE = SuccSU->Preds.end(); II != EE; ++II) {
       SUnit *PredSU = II->Dep;
