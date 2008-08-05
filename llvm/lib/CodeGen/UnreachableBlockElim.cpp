@@ -27,6 +27,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Type.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Target/TargetInstrInfo.h"
@@ -128,10 +129,15 @@ bool UnreachableMachineBlockElim::runOnMachineFunction(MachineFunction &F) {
               start->RemoveOperand(i-1);
             }
           
-          if (start->getNumOperands() == 1) {
+          if (start->getNumOperands() == 3) {
             MachineInstr* phi = start;
+            unsigned Input = phi->getOperand(1).getReg();
+            unsigned Output = phi->getOperand(0).getReg();
+            
             start++;
             phi->eraseFromParent();
+            
+            F.getRegInfo().replaceRegWith(Output, Input);
           } else
             start++;
         }
