@@ -13,21 +13,21 @@
 @.str33 = external constant [29 x i32]		; <[29 x i32]*> [#uses=1]
 @.str89 = external constant [5 x i32]		; <[5 x i32]*> [#uses=1]
 
-define void @_ZNK10wxDateTime6FormatEPKwRKNS_8TimeZoneE(%struct.wxString* noalias sret  %agg.result, %struct.wxDateTime* %this, i32* %format, %"struct.wxDateTime::TimeZone"* %tz) {
+define void @_ZNK10wxDateTime6FormatEPKwRKNS_8TimeZoneE(%struct.wxString* noalias sret  %agg.result, %struct.wxDateTime* %this, i32* %format, %"struct.wxDateTime::TimeZone"* %tz, i1 %foo) {
 entry:
-	br i1 false, label %bb116.i, label %bb115.critedge.i
+	br i1 %foo, label %bb116.i, label %bb115.critedge.i
 bb115.critedge.i:		; preds = %entry
 	ret void
 bb116.i:		; preds = %entry
-	br i1 false, label %bb52.i.i, label %bb3118
+	br i1 %foo, label %bb52.i.i, label %bb3118
 bb3118:		; preds = %bb116.i
 	ret void
 bb52.i.i:		; preds = %bb116.i
-	br i1 false, label %bb142.i, label %bb115.critedge.i.i
+	br i1 %foo, label %bb142.i, label %bb115.critedge.i.i
 bb115.critedge.i.i:		; preds = %bb52.i.i
 	ret void
 bb142.i:		; preds = %bb52.i.i
-	br i1 false, label %bb161.i, label %bb182.i
+	br i1 %foo, label %bb161.i, label %bb182.i
 bb161.i:		; preds = %bb142.i
 	br label %bb3261
 bb182.i:		; preds = %bb142.i
@@ -87,16 +87,16 @@ bb5809:		; preds = %bb3314
 bb115.critedge.i.i8492:		; preds = %bb5809
 	ret void
 bb91.i8504:		; preds = %bb5809
-	br i1 false, label %bb155.i8541, label %bb182.i8560
+	br i1 %foo, label %bb155.i8541, label %bb182.i8560
 bb155.i8541:		; preds = %bb91.i8504
 	%tmp156.i85398700 = invoke %struct.tm* @gmtime_r( i32* null, %struct.tm* null )
 			to label %bb182.i8560 unwind label %lpad		; <%struct.tm*> [#uses=1]
 bb182.i8560:		; preds = %bb155.i8541, %bb91.i8504
 	%tm48.0.i8558 = phi %struct.tm* [ null, %bb91.i8504 ], [ %tmp156.i85398700, %bb155.i8541 ]		; <%struct.tm*> [#uses=0]
-	br i1 false, label %bb278.i8617, label %bb187.i8591
+	br i1 %foo, label %bb278.i8617, label %bb187.i8591
 bb187.i8591:		; preds = %bb182.i8560
 	%tmp245.i8588 = srem i64 0, 86400000		; <i64> [#uses=1]
-	br i1 false, label %bb264.i8592, label %bb265.i8606
+	br i1 %foo, label %bb264.i8592, label %bb265.i8606
 bb264.i8592:		; preds = %bb187.i8591
 	ret void
 bb265.i8606:		; preds = %bb187.i8591
@@ -106,7 +106,7 @@ bb265.i8606:		; preds = %bb187.i8591
 	br label %invcont5814
 bb278.i8617:		; preds = %bb182.i8560
 	%timeOnly50.0.i8622 = add i32 0, 0		; <i32> [#uses=1]
-	br i1 false, label %bb440.i8663, label %bb448.i8694
+	br i1 %foo, label %bb440.i8663, label %bb448.i8694
 bb440.i8663:		; preds = %bb278.i8617
 	invoke void @_Z10wxOnAssertPKwiPKcS0_S0_( i32* getelementptr ([27 x i32]* @.str, i32 0, i32 0), i32 1717, i8* getelementptr ([6 x i8]* @_ZZNK10wxDateTime5GetTmERKNS_8TimeZoneEE12__FUNCTION__, i32 0, i32 0), i32* getelementptr ([29 x i32]* @.str33, i32 0, i32 0), i32* getelementptr ([14 x i32]* @.str4, i32 0, i32 0) )
 			to label %bb448.i8694 unwind label %lpad
