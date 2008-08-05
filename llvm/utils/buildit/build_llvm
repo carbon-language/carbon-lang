@@ -83,7 +83,7 @@ cd $DIR/obj-llvm || exit 1
 
 if [ \! -f Makefile.config ]; then
     $SRC_DIR/llvm/configure --prefix=$DT_HOME/local \
-        --enable-targets=x86,powerpc,cbe \
+        --enable-targets=arm,x86,powerpc,cbe \
         --enable-assertions=$LLVM_ASSERTIONS \
         --enable-optimized=$LLVM_OPTIMIZED \
         || exit 1
