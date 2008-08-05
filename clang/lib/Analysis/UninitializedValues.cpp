@@ -131,8 +131,8 @@ bool TransferFuncs::VisitBinaryOperator(BinaryOperator* B) {
 }
 
 bool TransferFuncs::VisitDeclStmt(DeclStmt* S) {
-  for (ScopedDecl* D = S->getDecl(); D != NULL; D = D->getNextDeclarator()) {
-    VarDecl *VD = dyn_cast<VarDecl>(D);
+  for (DeclStmt::decl_iterator I=S->decl_begin(), E=S->decl_end(); I!=E; ++I) {
+    VarDecl *VD = dyn_cast<VarDecl>(*I);
     if (VD && VD->isBlockVarDecl()) {
       if (Stmt* I = VD->getInit()) 
         V(VD,AD) = AD.FullUninitTaint ? V(cast<Expr>(I),AD) : Initialized;

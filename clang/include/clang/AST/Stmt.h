@@ -162,10 +162,25 @@ public:
   }
   static bool classof(const DeclStmt *) { return true; }
   
-  // Iterators
+  // Iterators over subexpressions.
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
   
+  // Iterators over the decls.
+  class decl_iterator {
+    ScopedDecl* D;
+  public:
+    decl_iterator(ScopedDecl *d) : D(d) {}    
+    bool operator==(const decl_iterator& I) const { return D == I.D; }
+    bool operator!=(const decl_iterator& I) const { return D != I.D; }
+    ScopedDecl* operator*() const { return D; }
+    decl_iterator& operator++();
+  };
+  
+  virtual decl_iterator decl_begin() { return TheDecl; }
+  virtual decl_iterator decl_end() { return 0; }
+  
+  // Serialization.  
   virtual void EmitImpl(llvm::Serializer& S) const;
   static DeclStmt* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };

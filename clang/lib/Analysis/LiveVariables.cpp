@@ -229,8 +229,9 @@ void TransferFuncs::VisitAssign(BinaryOperator* B) {
 void TransferFuncs::VisitDeclStmt(DeclStmt* DS) {
   // Declarations effectively "kill" a variable since they cannot
   // possibly be live before they are declared.
-  for (ScopedDecl* D = DS->getDecl(); D != NULL; D = D->getNextDeclarator())
-    if (VarDecl* VD = dyn_cast<VarDecl>(D)) {
+  for (DeclStmt::decl_iterator DI=DS->decl_begin(), DE = DS->decl_end();
+       DI != DE; ++DI)
+    if (VarDecl* VD = dyn_cast<VarDecl>(*DI)) {
       
       // Update liveness information.
       unsigned bit = AD.getIdx(VD);
