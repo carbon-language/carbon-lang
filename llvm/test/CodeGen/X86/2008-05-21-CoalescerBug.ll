@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -fast -disable-correct-folding | grep mov | count 4
+; RUN: llvm-as < %s | llc -march=x86 -fast | grep mov | count 5
 ; PR2343
 
 	%llvm.dbg.anchor.type = type { i32, i32 }
@@ -80,10 +80,11 @@ bb483:		; preds = %bb497
 bb497:		; preds = %bb483, %entry
 	%cases.0 = phi %struct.tree_node* [ %tmp496, %bb483 ], [ null, %entry ]		; <%struct.tree_node*> [#uses=1]
 	%last.0 = phi %struct.tree_node* [ %cases.0, %bb483 ], [ undef, %entry ]		; <%struct.tree_node*> [#uses=1]
-	br i1 false, label %bb483, label %bb502
+	%foo = phi i1 [ 0, %bb483 ], [ 1, %entry ]
+	br i1 %foo, label %bb483, label %bb502
 
 bb502:		; preds = %bb497
-	br i1 false, label %bb507, label %bb841
+	br i1 %foo, label %bb507, label %bb841
 
 bb507:		; preds = %bb502
 	%tmp517 = getelementptr %struct.tree_node* %last.0, i32 0, i32 0		; <%struct.tree_function_decl*> [#uses=1]

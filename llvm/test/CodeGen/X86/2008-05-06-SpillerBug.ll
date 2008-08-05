@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=i386-apple-darwin -relocation-model=pic -disable-fp-elim -disable-correct-folding | grep addb | grep ebp
+; RUN: llvm-as < %s | llc -mtriple=i386-apple-darwin -relocation-model=pic -disable-fp-elim | grep addb | grep ebp
 
 	%struct.rc4_state = type { i32, i32, [256 x i32] }
 @.str1 = internal constant [65 x i8] c"m[%d] = 0x%02x, m[%d] = 0x%02x, 0x%02x, k = %d, key[k] = 0x%02x\0A\00"		; <[65 x i8]*> [#uses=1]
@@ -11,10 +11,12 @@ entry:
 	br label %bb25
 
 bb25:		; preds = %bb25, %entry
-	br i1 false, label %bb.i, label %bb25
+  %foo = phi i1 [ 0, %bb25], [ 1, %entry]
+	br i1 %foo, label %bb.i, label %bb25
 
 bb.i:		; preds = %bb.i, %bb25
-	br i1 false, label %bb21.i, label %bb.i
+  %foo2 = phi i1 [ 0, %bb.i], [1, %bb25]
+	br i1 %foo2, label %bb21.i, label %bb.i
 
 bb21.i:		; preds = %bb21.i, %bb.i
 	%k.0.reg2mem.0.i = phi i32 [ %k.1.i, %bb21.i ], [ 0, %bb.i ]		; <i32> [#uses=2]
