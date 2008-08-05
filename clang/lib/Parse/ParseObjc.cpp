@@ -1222,7 +1222,7 @@ Parser::StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
           ParseDeclarator(DeclaratorInfo);
           if (DeclaratorInfo.getIdentifier()) {
             DeclTy *aBlockVarDecl = Actions.ActOnDeclarator(CurScope, 
-                                                            DeclaratorInfo, 0, 0);
+                                                          DeclaratorInfo, 0);
             StmtResult stmtResult =
               Actions.ActOnDeclStmt(aBlockVarDecl, 
                                     DS.getSourceRange().getBegin(),

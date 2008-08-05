@@ -371,7 +371,7 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
   if (isInstField)
     Member = static_cast<Decl*>(ActOnField(S, Loc, D, BitWidth));
   else
-    Member = static_cast<Decl*>(ActOnDeclarator(S, D, LastInGroup, 0));
+    Member = static_cast<Decl*>(ActOnDeclarator(S, D, LastInGroup));
 
   if (!Member) return LastInGroup;
 

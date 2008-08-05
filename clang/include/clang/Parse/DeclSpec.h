@@ -580,11 +580,16 @@ private:
   // InvalidType - Set by Sema::GetTypeForDeclarator().
   bool InvalidType;
 
-  // attributes.
+  /// AttrList - Attributes.
   AttributeList *AttrList;
+  
+  /// AsmLabel - The asm label, if specified.
+  Action::ExprTy *AsmLabel;
+  
 public:
   Declarator(DeclSpec &ds, TheContext C)
-    : DS(ds), Identifier(0), Context(C), InvalidType(false), AttrList(0) {
+    : DS(ds), Identifier(0), Context(C), InvalidType(false), AttrList(0),
+      AsmLabel(0) {
   }
   
   ~Declarator() {
@@ -694,7 +699,10 @@ public:
   }
   const AttributeList *getAttributes() const { return AttrList; }
   AttributeList *getAttributes() { return AttrList; }
-  
+
+  void setAsmLabel(Action::ExprTy *E) { AsmLabel = E; }
+  Action::ExprTy *getAsmLabel() const { return AsmLabel; }
+
   void setInvalidType(bool flag) { InvalidType = flag; }
   bool getInvalidType() const { return InvalidType; }
 };

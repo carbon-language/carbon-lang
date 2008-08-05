@@ -30,7 +30,7 @@ namespace {
     /// and 'Init' specifies the initializer if any.  This is for things like:
     /// "int X = 4" or "typedef int foo".
     virtual DeclTy *ActOnDeclarator(Scope *S, Declarator &D,
-                                    DeclTy *LastInGroup, ExprTy *AsmLabel) {
+                                    DeclTy *LastInGroup) {
       llvm::cout << __FUNCTION__ << " ";
       if (IdentifierInfo *II = D.getIdentifier()) {
         llvm::cout << "'" << II->getName() << "'";
@@ -40,7 +40,7 @@ namespace {
       llvm::cout << "\n";
       
       // Pass up to EmptyActions so that the symbol table is maintained right.
-      return MinimalAction::ActOnDeclarator(S, D, LastInGroup, AsmLabel);
+      return MinimalAction::ActOnDeclarator(S, D, LastInGroup);
     }
     /// ActOnPopScope - This callback is called immediately before the specified
     /// scope is popped and deleted.
