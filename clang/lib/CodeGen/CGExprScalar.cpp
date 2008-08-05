@@ -851,6 +851,8 @@ Value *ScalarExprEmitter::EmitSub(const BinOpInfo &Ops) {
       Idx = Builder.CreateZExt(Idx, IdxType, "idx.ext");
   }
   
+  // The GNU void* - int case is automatically handled here because
+  // our LLVM type for void* is i8*.
   return Builder.CreateGEP(Ops.LHS, Idx, "sub.ptr");
 }
 
@@ -866,19 +868,26 @@ Value *ScalarExprEmitter::VisitBinSub(const BinaryOperator *E) {
   
   const QualType LHSType = E->getLHS()->getType();
   const QualType LHSElementType = LHSType->getAsPointerType()->getPointeeType();
-  uint64_t ElementSize = CGF.getContext().getTypeSize(LHSElementType) / 8;
+  uint64_t ElementSize;
+
+  // Handle GCC extension for pointer arithmetic on void* types.
+  if (LHSElementType->isVoidType()) {
+    ElementSize = 1;
+  } else {
+    ElementSize = CGF.getContext().getTypeSize(LHSElementType) / 8;
+  }
   
   const llvm::Type *ResultType = ConvertType(E->getType());
   LHS = Builder.CreatePtrToInt(LHS, ResultType, "sub.ptr.lhs.cast");
   RHS = Builder.CreatePtrToInt(RHS, ResultType, "sub.ptr.rhs.cast");
   Value *BytesBetween = Builder.CreateSub(LHS, RHS, "sub.ptr.sub");
-  
+
   // HACK: LLVM doesn't have an divide instruction that 'knows' there is no
   // remainder.  As such, we handle common power-of-two cases here to generate
   // better code.
   if (llvm::isPowerOf2_64(ElementSize)) {
     Value *ShAmt =
-    llvm::ConstantInt::get(ResultType, llvm::Log2_64(ElementSize));
+      llvm::ConstantInt::get(ResultType, llvm::Log2_64(ElementSize));
     return Builder.CreateAShr(BytesBetween, ShAmt, "sub.ptr.shr");
   }
   
