@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | llc -march=x86 -disable-correct-folding -stats |& \
+; RUN: llvm-as < %s | llc -march=x86 -stats |& \
 ; RUN:   grep {1 .*folded into instructions}
-; RUN: llvm-as < %s | llc -march=x86 -disable-correct-folding | grep cmp | count 3
+; RUN: llvm-as < %s | llc -march=x86 | grep cmp | count 4
 
 	%struct.quad_struct = type { i32, i32, %struct.quad_struct*, %struct.quad_struct*, %struct.quad_struct*, %struct.quad_struct*, %struct.quad_struct* }
 
@@ -31,7 +31,7 @@ cond_true.i163:		; preds = %cond_true.i35
 	%tmp19.i12.i171 = load %struct.quad_struct** %tmp18.i11.i170, align 4		; <%struct.quad_struct*> [#uses=1]
 	%tmp21.i173 = tail call fastcc i32 @sum_adjacent( %struct.quad_struct* %tmp19.i12.i171, i32 3, i32 2, i32 %tmp7.i162 )		; <i32> [#uses=1]
 	%tmp22.i174 = add i32 %tmp21.i173, %tmp13.i168		; <i32> [#uses=1]
-	br i1 false, label %cond_true.i141, label %cond_false.i156
+	br i1 %tmp4.i161, label %cond_true.i141, label %cond_false.i156
 
 cond_false.i178:		; preds = %cond_true.i35
 	ret i32 0
