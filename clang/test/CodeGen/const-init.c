@@ -1,4 +1,4 @@
-// RUN: clang -emit-llvm %s 2>&1 | not grep warning
+// RUN: clang -verify -emit-llvm -o %t %s
 
 #include <stdint.h>
 
@@ -7,9 +7,9 @@ char a[] = { "asdf" };
 
 // Double-implicit-conversions of array/functions (not legal C, but
 // clang accepts it for gcc compat).
-intptr_t b = a;
+intptr_t b = a; // expected-warning {{incompatible pointer to integer conversion}}
 int c();
 void *d = c;
-intptr_t e = c;
+intptr_t e = c; // expected-warning {{incompatible pointer to integer conversion}}
 
 int f, *g = __extension__ &f, *h = (1 != 1) ? &f : &f;
