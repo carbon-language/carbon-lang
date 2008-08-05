@@ -1097,7 +1097,7 @@ public:
   /// true. It returns the MachineInstr opcode value that the node's opcode
   /// corresponds to.
   unsigned getMachineOpcode() const {
-    assert(isMachineOpcode() && "Not a target opcode!");
+    assert(isMachineOpcode() && "Not a MachineInstr opcode!");
     return ~NodeType;
   }
 
