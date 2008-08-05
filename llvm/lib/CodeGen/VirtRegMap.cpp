@@ -560,8 +560,11 @@ static void InvalidateKills(MachineInstr &MI, BitVector &RegKills,
     if (!MO.isRegister() || !MO.isUse() || !MO.isKill())
       continue;
     unsigned Reg = MO.getReg();
+    if (TargetRegisterInfo::isVirtualRegister(Reg))
+      continue;
     if (KillRegs)
       KillRegs->push_back(Reg);
+    assert(Reg < KillOps.size());
     if (KillOps[Reg] == &MO) {
       RegKills.reset(Reg);
       KillOps[Reg] = NULL;
@@ -943,9 +946,11 @@ bool LocalSpiller::PrepForUnfoldOpti(MachineBasicBlock &MBB,
         return false;
       continue;
     }
-    PhysReg = VRM.getPhys(VirtReg);
-    if (!TRI->regsOverlap(PhysReg, UnfoldPR))
-      continue;
+    if (VRM.hasPhys(VirtReg)) {
+      PhysReg = VRM.getPhys(VirtReg);
+      if (!TRI->regsOverlap(PhysReg, UnfoldPR))
+        continue;
+    }
 
     // Ok, we'll need to reload the value into a register which makes
     // it impossible to perform the store unfolding optimization later.
