@@ -137,7 +137,8 @@ bool UnreachableMachineBlockElim::runOnMachineFunction(MachineFunction &F) {
             start++;
             phi->eraseFromParent();
             
-            F.getRegInfo().replaceRegWith(Output, Input);
+            if (Input != Output)
+              F.getRegInfo().replaceRegWith(Output, Input);
           } else
             start++;
         }
