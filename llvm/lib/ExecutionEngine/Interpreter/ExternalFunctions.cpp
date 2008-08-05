@@ -343,7 +343,7 @@ GenericValue lle_X_sprintf(FunctionType *FT, const vector<GenericValue> &Args) {
 
       switch (Last) {
       case '%':
-        sprintf(Buffer, FmtBuf); break;
+        strcpy(Buffer, "%"); break;
       case 'c':
         sprintf(Buffer, FmtBuf, uint32_t(Args[ArgNo++].IntVal.getZExtValue()));
         break;
