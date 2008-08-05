@@ -884,8 +884,17 @@ bool StrongPHIElimination::runOnMachineFunction(MachineFunction &Fn) {
        I != E; ) {
     MachineInstr* PInstr = *(I++);
     
-    // Don't do live interval updating for dead PHIs.
-    if (!PInstr->registerDefIsDead(PInstr->getOperand(0).getReg())) {
+    // If this is a dead PHI node, then remove it from LiveIntervals.
+    unsigned DestReg = PInstr->getOperand(0).getReg();
+    LiveInterval& PI = LI.getInterval(DestReg);
+    if (PInstr->registerDefIsDead(DestReg)) {
+      if (PI.containsOneValue()) {
+        LI.removeInterval(DestReg);
+      } else {
+        unsigned idx = LI.getDefIndex(LI.getInstructionIndex(PInstr));
+        PI.removeRange(*PI.getLiveRangeContaining(idx), true);
+      }
+    } else {
       // Trim live intervals of input registers.  They are no longer live into
       // this block.
       for (unsigned i = 1; i < PInstr->getNumOperands(); i += 2) {
@@ -899,26 +908,14 @@ bool StrongPHIElimination::runOnMachineFunction(MachineFunction &Fn) {
                              true);
       }
       
-      // If this is a dead PHI node, then remove it from LiveIntervals.
-      unsigned DestReg = PInstr->getOperand(0).getReg();
-      LiveInterval& PI = LI.getInterval(DestReg);
-      if (PInstr->registerDefIsDead(DestReg)) {
-        if (PI.containsOneValue()) {
-          LI.removeInterval(DestReg);
-        } else {
-          unsigned idx = LI.getDefIndex(LI.getInstructionIndex(PInstr));
-          PI.removeRange(*PI.getLiveRangeContaining(idx), true);
-        }
-      } else {
-        // If the PHI is not dead, then the valno defined by the PHI
-        // now has an unknown def.
-        unsigned idx = LI.getDefIndex(LI.getInstructionIndex(PInstr));
-        const LiveRange* PLR = PI.getLiveRangeContaining(idx);
-        PLR->valno->def = ~0U;
-        LiveRange R (LI.getMBBStartIdx(PInstr->getParent()),
-                    PLR->start, PLR->valno);
-        PI.addRange(R);
-      }
+      // If the PHI is not dead, then the valno defined by the PHI
+      // now has an unknown def.
+      unsigned idx = LI.getDefIndex(LI.getInstructionIndex(PInstr));
+      const LiveRange* PLR = PI.getLiveRangeContaining(idx);
+      PLR->valno->def = ~0U;
+      LiveRange R (LI.getMBBStartIdx(PInstr->getParent()),
+                   PLR->start, PLR->valno);
+      PI.addRange(R);
     }
     
     LI.RemoveMachineInstrFromMaps(PInstr);
