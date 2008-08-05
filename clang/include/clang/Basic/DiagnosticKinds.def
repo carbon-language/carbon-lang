@@ -17,6 +17,9 @@
 //     NOTE      - Informational message.
 //     WARNING   - Warning.
 //     EXTENSION - Notification that an extension to the language is being used.
+//     EXTWARN   - Warning for behaviour that is supported as an extension. This 
+//                 differs from EXTENSION in that the warning is always emitted
+//                 by default.
 //     ERROR     - Error, compilation will stop after parsing completes.
 
 //===----------------------------------------------------------------------===//
@@ -943,15 +946,15 @@ DIAG(err_invalid_non_static_member_use, ERROR,
 // assignment related diagnostics (also for argument passing, returning, etc).
 DIAG(err_typecheck_convert_incompatible, ERROR,
      "incompatible type %2 '%1', expected '%0'")
-DIAG(ext_typecheck_convert_pointer_int, EXTENSION,
+DIAG(ext_typecheck_convert_pointer_int, EXTWARN,
      "incompatible pointer to integer conversion %2 '%1', expected '%0'")
-DIAG(ext_typecheck_convert_int_pointer, EXTENSION,
+DIAG(ext_typecheck_convert_int_pointer, EXTWARN,
      "incompatible integer to pointer conversion %2 '%1', expected '%0'")
 DIAG(ext_typecheck_convert_pointer_void_func, EXTENSION,
      "%2 '%1' converts between void* and function pointer, expected '%0'")
-DIAG(ext_typecheck_convert_incompatible_pointer, EXTENSION,
+DIAG(ext_typecheck_convert_incompatible_pointer, EXTWARN,
      "incompatible pointer types %2 '%1', expected '%0'")
-DIAG(ext_typecheck_convert_discards_qualifiers, EXTENSION,
+DIAG(ext_typecheck_convert_discards_qualifiers, EXTWARN,
      "%2 '%1' discards qualifiers, expected '%0'")
      
 DIAG(err_typecheck_array_not_modifiable_lvalue, ERROR,

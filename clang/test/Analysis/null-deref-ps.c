@@ -41,7 +41,7 @@ int f3_b(char* x) {
 
 int f4(int *p) {
   
-  uintptr_t x = p;
+  uintptr_t x = (uintptr_t) p;
   
   if (x)
     return 1;

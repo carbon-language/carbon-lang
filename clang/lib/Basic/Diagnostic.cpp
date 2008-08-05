@@ -29,7 +29,8 @@ enum {
   NOTE       = 0x01,
   WARNING    = 0x02,
   EXTENSION  = 0x03,
-  ERROR      = 0x04,
+  EXTWARN    = 0x04,
+  ERROR      = 0x05,
   class_mask = 0x07
 };
 
@@ -182,6 +183,8 @@ Diagnostic::Level Diagnostic::getDiagnosticLevel(unsigned DiagID) const {
       DiagClass = WARNING;
     else
       return Ignored;
+  } else if (DiagClass == EXTWARN) {
+    DiagClass = ErrorOnExtensions ? ERROR : WARNING;
   }
   
   // If warnings are globally mapped to ignore or error, do it.

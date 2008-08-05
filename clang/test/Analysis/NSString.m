@@ -99,15 +99,16 @@ NSComparisonResult f5(NSString* s, NSStringCompareOptions op, NSRange R) {
   return [s compare:aString options:op range:R locale:0]; // expected-warning {{Argument to 'NSString' method 'compare:options:range:locale:' cannot be nil.}}
 }
 
-NSComparisonResult f6(NSString* s) {
+NSArray *f6(NSString* s) {
   return [s componentsSeparatedByCharactersInSet:0]; // expected-warning {{Argument to 'NSString' method 'componentsSeparatedByCharactersInSet:' cannot be nil.}}
 }
 
 NSString* f7(NSString* s1, NSString* s2, NSString* s3) {
 
-  NSString* s4 = CFStringCreateWithFormat(kCFAllocatorDefault, 0,
-                                          L"%@ %@ (%@)", 
-                                          s1, s2, s3);
+  NSString* s4 = (NSString*)
+    CFStringCreateWithFormat(kCFAllocatorDefault, 0,
+                             (CFStringRef) __builtin___CFStringMakeConstantString("%@ %@ (%@)"), 
+                             s1, s2, s3);
 
   CFRetain(s4);
   return s4; // expected-warning{{leak}}
