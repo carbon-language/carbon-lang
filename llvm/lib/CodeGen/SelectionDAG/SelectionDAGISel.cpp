@@ -53,6 +53,9 @@ static cl::opt<bool>
 EnableValueProp("enable-value-prop", cl::Hidden);
 static cl::opt<bool>
 EnableLegalizeTypes("enable-legalize-types", cl::Hidden);
+static cl::opt<bool>
+DisableCorrectBranchFolding("disable-correct-folding", cl::init(false), 
+                            cl::Hidden);
 
 
 #ifndef NDEBUG

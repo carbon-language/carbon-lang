@@ -101,11 +101,6 @@ namespace llvm {
   /// DisableJumpTables - This flag indicates jump tables should not be 
   /// generated.
   extern bool DisableJumpTables;
-  
-  /// DisableCorrectBranchFolding - This flag indicates whether the instruction
-  /// selector should take care to update the CFG properly when
-  /// folding branches.
-  extern bool DisableCorrectBranchFolding;
 } // End llvm namespace
 
 #endif
