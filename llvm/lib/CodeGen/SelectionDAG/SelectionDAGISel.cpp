@@ -53,9 +53,6 @@ static cl::opt<bool>
 EnableValueProp("enable-value-prop", cl::Hidden);
 static cl::opt<bool>
 EnableLegalizeTypes("enable-legalize-types", cl::Hidden);
-static cl::opt<bool>
-DisableCorrectBranchFolding("disable-correct-folding", cl::init(false), 
-                            cl::Hidden);
 
 
 #ifndef NDEBUG
@@ -1638,14 +1635,12 @@ void SelectionDAGLowering::visitSwitchCase(SelectionDAGISel::CaseBlock &CB) {
   
   // If the branch was constant folded, fix up the CFG.
   if (BrCond.getOpcode() == ISD::BR) {
-    if (!DisableCorrectBranchFolding)
-      CurMBB->removeSuccessor(CB.FalseBB);
+    CurMBB->removeSuccessor(CB.FalseBB);
     DAG.setRoot(BrCond);
   } else {
     // Otherwise, go ahead and insert the false branch.
     if (BrCond == getControlRoot()) 
-      if (!DisableCorrectBranchFolding)
-        CurMBB->removeSuccessor(CB.TrueBB);
+      CurMBB->removeSuccessor(CB.TrueBB);
     
     if (CB.FalseBB == NextBlock)
       DAG.setRoot(BrCond);
