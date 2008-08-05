@@ -358,7 +358,11 @@ void RewriteObjC::Initialize(ASTContext &context) {
   Preamble += "  char *str;\n";
   Preamble += "  long length;\n";
   Preamble += "};\n";
+  Preamble += "#ifdef CF_EXPORT_CONSTANT_STRING\n";
+  Preamble += "extern \"C\" __declspec(dllexport) int __CFConstantStringClassReference[];\n";
+  Preamble += "#else\n";
   Preamble += "__OBJC_RW_EXTERN int __CFConstantStringClassReference[];\n";
+  Preamble += "#endif\n";
   Preamble += "#define __NSCONSTANTSTRINGIMPL\n";
   Preamble += "#endif\n";
   if (LangOpts.Microsoft) {
