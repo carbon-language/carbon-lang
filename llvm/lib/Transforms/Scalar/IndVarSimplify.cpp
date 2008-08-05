@@ -90,7 +90,7 @@ namespace {
                                     std::set<Instruction*> &DeadInsts);
     Instruction *LinearFunctionTestReplace(Loop *L, SCEV *IterationCount,
                                            SCEVExpander &RW);
-    void RewriteLoopExitValues(Loop *L);
+    void RewriteLoopExitValues(Loop *L, SCEV *IterationCount);
 
     void DeleteTriviallyDeadInstructions(std::set<Instruction*> &Insts);
   };
@@ -303,7 +303,7 @@ Instruction *IndVarSimplify::LinearFunctionTestReplace(Loop *L,
 /// final value of any expressions that are recurrent in the loop, and
 /// substitute the exit values from the loop into any instructions outside of
 /// the loop that use the final values of the current expressions.
-void IndVarSimplify::RewriteLoopExitValues(Loop *L) {
+void IndVarSimplify::RewriteLoopExitValues(Loop *L, SCEV *IterationCount) {
   BasicBlock *Preheader = L->getLoopPreheader();
 
   // Scan all of the instructions in the loop, looking at those that have
@@ -321,7 +321,7 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L) {
     BlockToInsertInto = Preheader;
   BasicBlock::iterator InsertPt = BlockToInsertInto->getFirstNonPHI();
 
-  bool HasConstantItCount = isa<SCEVConstant>(SE->getIterationCount(L));
+  bool HasConstantItCount = isa<SCEVConstant>(IterationCount);
 
   std::set<Instruction*> InstructionsToDelete;
   std::map<Instruction*, Value*> ExitValues;
@@ -458,7 +458,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   //
   SCEVHandle IterationCount = SE->getIterationCount(L);
   if (!isa<SCEVCouldNotCompute>(IterationCount))
-    RewriteLoopExitValues(L);
+    RewriteLoopExitValues(L, IterationCount);
 
   // Next, analyze all of the induction variables in the loop, canonicalizing
   // auxillary induction variables.
