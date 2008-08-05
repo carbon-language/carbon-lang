@@ -255,9 +255,9 @@
 
 <div class="doc_text">
 <p>This document is a reference manual for the LLVM assembly language. 
-LLVM is an SSA based representation that provides type safety,
-low-level operations, flexibility, and the capability of representing
-'all' high-level languages cleanly.  It is the common code
+LLVM is an Static Single Assignment (SSA) based representation that provides
+type safety, low-level operations, flexibility, and the capability of
+representing 'all' high-level languages cleanly.  It is the common code
 representation used throughout all phases of the LLVM compilation
 strategy.</p>
 </div>
@@ -522,9 +522,9 @@ All Global Variables and Functions have one of the following types of linkage:
   </dd>
 
   <dt><tt><b><a name="linkage_externweak">extern_weak</a></b></tt>: </dt>
-  <dd>The semantics of this linkage follow the ELF model: the symbol is weak
-    until linked, if not linked, the symbol becomes null instead of being an
-    undefined reference.
+  <dd>The semantics of this linkage follow the ELF object file model: the
+    symbol is weak until linked, if not linked, the symbol becomes null instead
+    of being an undefined reference.
   </dd>
 
   <dt><tt><b><a name="linkage_external">externally visible</a></b></tt>:</dt>
@@ -538,7 +538,7 @@ All Global Variables and Functions have one of the following types of linkage:
   <p>
   The next two types of linkage are targeted for Microsoft Windows platform
   only. They are designed to support importing (exporting) symbols from (to)
-  DLLs.
+  DLLs (Dynamic Link Libraries).
   </p>
 
   <dl>
@@ -602,8 +602,8 @@ the future:</p>
   <dd>This calling convention attempts to make calls as fast as possible
   (e.g. by passing things in registers).  This calling convention allows the
   target to use whatever tricks it wants to produce fast code for the target,
-  without having to conform to an externally specified ABI.  Implementations of
-  this convention should allow arbitrary
+  without having to conform to an externally specified ABI (Application Binary
+  Interface).  Implementations of this convention should allow arbitrary
   <a href="CodeGenerator.html#tailcallopt">tail call optimization</a> to be
   supported.  This calling convention does not support varargs and requires the
   prototype of all callees to exactly match the prototype of the function
@@ -648,7 +648,8 @@ All Global Variables and Functions have one of the following visibility styles:
 <dl>
   <dt><b>"<tt>default</tt>" - Default style</b>:</dt>
 
-  <dd>On ELF, default visibility means that the declaration is visible to other
+  <dd>On targets that use the ELF object file format, default visibility means
+    that the declaration is visible to other
     modules and, in shared libraries, means that the declared entity may be
     overridden. On Darwin, default visibility means that the declaration is
     visible to other modules. Default visibility corresponds to "external
@@ -760,7 +761,8 @@ optional <a href="#linkage">linkage type</a>, an optional
 name, a possibly empty list of arguments, an optional alignment, and an optional
 <a href="#gc">garbage collector name</a>.</p>
 
-<p>A function definition contains a list of basic blocks, forming the CFG for
+<p>A function definition contains a list of basic blocks, forming the CFG
+(Control Flow Graph) for
 the function.  Each basic block may optionally start with a label (giving the
 basic block a symbol table entry), contains a list of instructions, and ends
 with a <a href="#terminators">terminator</a> instruction (such as a branch or
@@ -957,7 +959,7 @@ aspect of the data layout.  The specifications accepted are as follows: </p>
   <dd>Specifies that the target lays out data in big-endian form. That is, the
   bits with the most significance have the lowest address location.</dd>
   <dt><tt>e</tt></dt>
-  <dd>Specifies that hte target lays out data in little-endian form. That is,
+  <dd>Specifies that the target lays out data in little-endian form. That is,
   the bits with the least significance have the lowest address location.</dd>
   <dt><tt>p:<i>size</i>:<i>abi</i>:<i>pref</i></tt></dt>
   <dd>This specifies the <i>size</i> of a pointer and its <i>abi</i> and 
@@ -989,7 +991,7 @@ are given in this list:</p>
   <li><tt>i8:8:8</tt> - i8 is 8-bit (byte) aligned</li>
   <li><tt>i16:16:16</tt> - i16 is 16-bit aligned</li>
   <li><tt>i32:32:32</tt> - i32 is 32-bit aligned</li>
-  <li><tt>i64:32:64</tt> - i64 has abi alignment of 32-bits but preferred
+  <li><tt>i64:32:64</tt> - i64 has ABI alignment of 32-bits but preferred
   alignment of 64-bits</li>
   <li><tt>f32:32:32</tt> - float is 32-bit aligned</li>
   <li><tt>f64:64:64</tt> - double is 64-bit aligned</li>
@@ -1023,7 +1025,8 @@ following rules:
 
 <p>The LLVM type system is one of the most important features of the
 intermediate representation.  Being typed enables a number of
-optimizations to be performed on the IR directly, without having to do
+optimizations to be performed on the intermediate representation directly,
+without having to do
 extra analyses on the side before the transformation.  A strong type
 system makes it easier to read the generated code and enables novel
 analyses and transformations that are not feasible to perform on normal
@@ -4515,7 +4518,8 @@ example, memory allocation.</p>
 
 <p>
 LLVM support for <a href="GarbageCollection.html">Accurate Garbage
-Collection</a> requires the implementation and generation of these intrinsics.
+Collection</a> (GC) requires the implementation and generation of these
+intrinsics.
 These intrinsics allow identification of <a href="#int_gcroot">GC roots on the
 stack</a>, as well as garbage collector implementations that require <a
 href="#int_gcread">read</a> and <a href="#int_gcwrite">write</a> barriers.
@@ -4867,11 +4871,12 @@ performance.
 
 <p>
 The '<tt>llvm.pcmarker</tt>' intrinsic is a method to export a Program Counter
-(PC) in a region of 
-code to simulators and other tools.  The method is target specific, but it is 
-expected that the marker will use exported symbols to transmit the PC of the marker.
-The marker makes no guarantees that it will remain with any specific instruction 
-after optimizations.  It is possible that the presence of a marker will inhibit 
+(PC) in a region of
+code to simulators and other tools.  The method is target specific, but it is
+expected that the marker will use exported symbols to transmit the PC of the
+marker.
+The marker makes no guarantees that it will remain with any specific instruction
+after optimizations.  It is possible that the presence of a marker will inhibit
 optimizations.  The intended use is to be inserted after optimizations to allow
 correlations of simulation runs.
 </p>
@@ -5691,7 +5696,8 @@ declare i8* @llvm.init.trampoline(i8* &lt;tramp&gt;, i8* &lt;func&gt;, i8* &lt;n
   These intrinsic functions expand the "universal IR" of LLVM to represent 
   hardware constructs for atomic operations and memory synchronization.  This 
   provides an interface to the hardware, not an interface to the programmer. It 
-  is aimed at a low enough level to allow any programming models or APIs which 
+  is aimed at a low enough level to allow any programming models or APIs
+  (Application Programming Interfaces) which 
   need atomic behaviors to map cleanly onto it. It is also modeled primarily on 
   hardware behavior. Just as hardware provides a "universal IR" for source 
   languages, it also provides a starting point for developing a "universal" 
