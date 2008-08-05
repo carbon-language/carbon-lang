@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 -disable-correct-folding -stats |& \
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 -stats |& \
 ; RUN:   grep {1 .*folded into instructions}
 
 declare fastcc void @rdft(i32, i32, double*, i32*, double*)
@@ -9,25 +9,26 @@ entry:
 
 bb.i5:		; preds = %bb.i5, %entry
 	%nfft_init.0.i = phi i32 [ 1, %entry ], [ %tmp7.i3, %bb.i5 ]		; <i32> [#uses=1]
+	%foo = phi i1 [1, %entry], [0, %bb.i5]
 	%tmp7.i3 = shl i32 %nfft_init.0.i, 1		; <i32> [#uses=2]
-	br i1 false, label %bb.i5, label %mp_unexp_mp2d.exit.i
+	br i1 %foo, label %bb.i5, label %mp_unexp_mp2d.exit.i
 
 mp_unexp_mp2d.exit.i:		; preds = %bb.i5
-	br i1 false, label %cond_next.i, label %cond_true.i
+	br i1 %foo, label %cond_next.i, label %cond_true.i
 
 cond_true.i:		; preds = %mp_unexp_mp2d.exit.i
 	ret void
 
 cond_next.i:		; preds = %mp_unexp_mp2d.exit.i
 	%tmp22.i = sdiv i32 0, 2		; <i32> [#uses=2]
-	br i1 false, label %cond_true29.i, label %cond_next36.i
+	br i1 %foo, label %cond_true29.i, label %cond_next36.i
 
 cond_true29.i:		; preds = %cond_next.i
 	ret void
 
 cond_next36.i:		; preds = %cond_next.i
 	store i32 %tmp22.i, i32* null, align 4
-	%tmp8.i14.i = select i1 false, i32 1, i32 0		; <i32> [#uses=1]
+	%tmp8.i14.i = select i1 %foo, i32 1, i32 0		; <i32> [#uses=1]
 	br label %bb.i28.i
 
 bb.i28.i:		; preds = %bb.i28.i, %cond_next36.i
@@ -47,7 +48,7 @@ bb.i28.i:		; preds = %bb.i28.i, %cond_next36.i
 mp_unexp_d2mp.exit29.i:		; preds = %bb.i28.i
 	%tmp46.i = sub i32 0, %tmp22.i		; <i32> [#uses=1]
 	store i32 %tmp46.i, i32* null, align 4
-	br i1 false, label %bb.i.i, label %mp_sqrt_init.exit
+	br i1 %exitcond40.i, label %bb.i.i, label %mp_sqrt_init.exit
 
 bb.i.i:		; preds = %bb.i.i, %mp_unexp_d2mp.exit29.i
 	br label %bb.i.i
@@ -56,7 +57,7 @@ mp_sqrt_init.exit:		; preds = %mp_unexp_d2mp.exit29.i
 	tail call fastcc void @mp_mul_csqu( i32 0, double* %tmp1fft )
 	tail call fastcc void @rdft( i32 0, i32 -1, double* null, i32* %ip, double* %w )
 	tail call fastcc void @mp_mul_d2i( i32 0, i32 %radix, i32 0, double* %tmp1fft, i32* %tmp2 )
-	br i1 false, label %cond_false.i, label %cond_true36.i
+	br i1 %exitcond40.i, label %cond_false.i, label %cond_true36.i
 
 cond_true36.i:		; preds = %mp_sqrt_init.exit
 	ret void
