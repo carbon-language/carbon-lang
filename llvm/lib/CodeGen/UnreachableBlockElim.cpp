@@ -85,7 +85,6 @@ namespace {
   class VISIBILITY_HIDDEN UnreachableMachineBlockElim : 
         public MachineFunctionPass {
     virtual bool runOnMachineFunction(MachineFunction &F);
-    bool iterateOnFunction(MachineFunction& F);
     
   public:
     static char ID; // Pass identification, replacement for typeid
@@ -101,21 +100,6 @@ Y("unreachable-mbb-elimination",
 const PassInfo *const llvm::UnreachableMachineBlockElimID = &Y;
 
 bool UnreachableMachineBlockElim::runOnMachineFunction(MachineFunction &F) {
-  bool changed = true;
-  bool result = false;
-  
-  while (changed) {
-    changed = iterateOnFunction(F);
-    result |= changed;
-  }
-  
-  if (result)
-    F.RenumberBlocks();
-  
-  return result;
-}
-
-bool UnreachableMachineBlockElim::iterateOnFunction(MachineFunction &F) {
   std::set<MachineBasicBlock*> Reachable;
 
   // Mark all reachable blocks.
@@ -159,6 +143,8 @@ bool UnreachableMachineBlockElim::iterateOnFunction(MachineFunction &F) {
   // Actually remove the blocks now.
   for (unsigned i = 0, e = DeadBlocks.size(); i != e; ++i)
     DeadBlocks[i]->eraseFromParent();
+
+  F.RenumberBlocks();
 
   return DeadBlocks.size();
 }
