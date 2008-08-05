@@ -849,7 +849,7 @@ declare i32 @atoi(i8*) nounwind readonly
     <dd>This indicates that the pointer parameter should really be passed by
     value to the function.  The attribute implies that a hidden copy of the
     pointee is made between the caller and the callee, so the callee is unable
-    to modify the value in the callee.  This attribute is only valid on llvm
+    to modify the value in the callee.  This attribute is only valid on LLVM
     pointer arguments.  It is generally used to pass structs and arrays by
     value, but is also valid on scalars (even though this is silly).</dd>
 
@@ -997,7 +997,7 @@ are given in this list:</p>
   <li><tt>v128:128:128</tt> - 128-bit vector is 128-bit aligned</li>
   <li><tt>a0:0:1</tt> - aggregates are 8-bit aligned</li>
 </ul>
-<p>When llvm is determining the alignment for a given type, it uses the 
+<p>When LLVM is determining the alignment for a given type, it uses the 
 following rules:
 <ol>
   <li>If the type sought is an exact match for one of the specifications, that
