@@ -105,7 +105,12 @@ public:
   /// LastInGroup is non-null for cases where one declspec has multiple
   /// declarators on it.  For example in 'int A, B', ActOnDeclarator will be
   /// called with LastInGroup=A when invoked for B.
-  virtual DeclTy *ActOnDeclarator(Scope *S, Declarator &D,DeclTy *LastInGroup) {
+  ///
+  /// AsmLabel is non-null only for top-level function declarations
+  /// which use the GCC asm-label extension (the expression must be a
+  /// constant string).
+  virtual DeclTy *ActOnDeclarator(Scope *S, Declarator &D, DeclTy *LastInGroup,
+                                  ExprTy *AsmLabel) {
     return 0;
   }
 
@@ -139,7 +144,7 @@ public:
   virtual DeclTy *ActOnStartOfFunctionDef(Scope *FnBodyScope, Declarator &D) {
     // Default to ActOnDeclarator.
     return ActOnStartOfFunctionDef(FnBodyScope,
-                                   ActOnDeclarator(FnBodyScope, D, 0));
+                                   ActOnDeclarator(FnBodyScope, D, 0, 0));
   }
 
   /// ActOnStartOfFunctionDef - This is called at the start of a function
@@ -834,7 +839,8 @@ public:
   /// ActOnDeclarator - If this is a typedef declarator, we modify the
   /// IdentifierInfo::FETokenInfo field to keep track of this fact, until S is
   /// popped.
-  virtual DeclTy *ActOnDeclarator(Scope *S, Declarator &D, DeclTy *LastInGroup);
+  virtual DeclTy *ActOnDeclarator(Scope *S, Declarator &D, DeclTy *LastInGroup,
+                                  ExprTy *AsmLabel);
   
   /// ActOnPopScope - When a scope is popped, if any typedefs are now 
   /// out-of-scope, they are removed from the IdentifierInfo::FETokenInfo field.

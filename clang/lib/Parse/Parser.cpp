@@ -670,7 +670,11 @@ Parser::ExprResult Parser::ParseSimpleAsm() {
 
   ExprResult Result = ParseAsmStringLiteral();
 
-  MatchRHSPunctuation(tok::r_paren, Loc);
+  if (Result.isInvalid) {
+    SkipUntil(tok::r_paren);
+  } else {
+    MatchRHSPunctuation(tok::r_paren, Loc);
+  }
 
   return Result;
 }

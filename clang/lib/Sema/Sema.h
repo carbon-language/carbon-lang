@@ -211,7 +211,8 @@ private:
   // Symbol table / Decl tracking callbacks: SemaDecl.cpp.
   //
   virtual TypeTy *isTypeName(const IdentifierInfo &II, Scope *S);
-  virtual DeclTy *ActOnDeclarator(Scope *S, Declarator &D, DeclTy *LastInGroup);
+  virtual DeclTy *ActOnDeclarator(Scope *S, Declarator &D, DeclTy *LastInGroup,
+                                  ExprTy *AsmLabel);
   virtual DeclTy *ActOnParamDeclarator(Scope *S, Declarator &D);
   virtual void ActOnParamDefaultArgument(DeclTy *param, 
                                          SourceLocation EqualLoc,

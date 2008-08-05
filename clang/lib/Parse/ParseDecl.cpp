@@ -256,8 +256,14 @@ ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
   // rest of the init-declarator-list.
   while (1) {
     // If a simple-asm-expr is present, parse it.
-    if (Tok.is(tok::kw_asm))
-      ParseSimpleAsm();
+    ExprResult AsmLabel;
+    if (Tok.is(tok::kw_asm)) {
+      AsmLabel = ParseSimpleAsm();
+      if (AsmLabel.isInvalid) {
+        SkipUntil(tok::semi);
+        return 0;
+      }
+    }
     
     // If attributes are present, parse them.
     if (Tok.is(tok::kw___attribute))
@@ -265,13 +271,13 @@ ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
 
     // Inform the current actions module that we just parsed this declarator.
     // FIXME: pass asm & attributes.
-    LastDeclInGroup = Actions.ActOnDeclarator(CurScope, D, LastDeclInGroup);
+    LastDeclInGroup = Actions.ActOnDeclarator(CurScope, D, LastDeclInGroup,
+                                              AsmLabel.Val);
         
     // Parse declarator '=' initializer.
-    ExprResult Init;
     if (Tok.is(tok::equal)) {
       ConsumeToken();
-      Init = ParseInitializer();
+      ExprResult Init = ParseInitializer();
       if (Init.isInvalid) {
         SkipUntil(tok::semi);
         return 0;

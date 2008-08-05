@@ -609,7 +609,7 @@ bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType) {
 }
 
 Sema::DeclTy *
-Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
+Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl, ExprTy *AsmLabel) {
   ScopedDecl *LastDeclarator = dyn_cast_or_null<ScopedDecl>((Decl *)lastDecl);
   IdentifierInfo *II = D.getIdentifier();
   
@@ -699,6 +699,14 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
     }
     // Handle attributes.
     ProcessDeclAttributes(NewFD, D);
+
+    // Handle GNU asm-label extension (encoded as an attribute).
+    if (Expr *E = (Expr*) AsmLabel) {
+      // The parser guarantees this is a string.
+      StringLiteral *SE = cast<StringLiteral>(E);  
+      NewFD->addAttr(new AsmLabelAttr(std::string(SE->getStrData(),
+                                                  SE->getByteLength())));
+    }
 
     // Copy the parameter declarations from the declarator D to
     // the function declaration NewFD, if they are available.
@@ -1569,7 +1577,7 @@ Sema::DeclTy *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Declarator &D) {
   }
 
   return ActOnStartOfFunctionDef(FnBodyScope,
-                                 ActOnDeclarator(GlobalScope, D, 0));
+                                 ActOnDeclarator(GlobalScope, D, 0, 0));
 }
 
 Sema::DeclTy *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, DeclTy *D) {
@@ -1661,7 +1669,7 @@ ScopedDecl *Sema::ImplicitlyDefineFunction(SourceLocation Loc,
   CurContext = Context.getTranslationUnitDecl();
  
   FunctionDecl *FD = 
-    dyn_cast<FunctionDecl>(static_cast<Decl*>(ActOnDeclarator(TUScope, D, 0)));
+    dyn_cast<FunctionDecl>(static_cast<Decl*>(ActOnDeclarator(TUScope, D, 0, 0)));
   FD->setImplicit();
 
   CurContext = PrevDC;

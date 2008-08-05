@@ -28,6 +28,7 @@ public:
     Alias,
     Aligned,
     Annotate,
+    AsmLabel, // Represent GCC asm label extension.
     Constructor,
     Deprecated,
     Destructor,
@@ -113,6 +114,20 @@ public:
     return A->getKind() == Annotate;
   }
   static bool classof(const AnnotateAttr *A) { return true; }
+};
+
+class AsmLabelAttr : public Attr {
+  std::string Label;
+public:
+  AsmLabelAttr(const std::string &L) : Attr(AsmLabel), Label(L) {}
+  
+  const std::string& getLabel() const { return Label; }
+  
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Attr *A) {
+    return A->getKind() == AsmLabel;
+  }
+  static bool classof(const AsmLabelAttr *A) { return true; }
 };
 
 class AliasAttr : public Attr {
