@@ -4770,8 +4770,9 @@ SDValue X86TargetLowering::LowerVSETCC(SDValue Op, SelectionDAG &DAG) {
 
   if (isFP) {
     unsigned SSECC = 8;
-    unsigned Opc = Op0.getValueType() == MVT::v4f32 ? X86ISD::CMPPS :
-                                                      X86ISD::CMPPD;
+    MVT VT0 = Op0.getValueType();
+    assert(VT0 == MVT::v4f32 || VT0 == MVT::v2f64);
+    unsigned Opc = VT0 == MVT::v4f32 ? X86ISD::CMPPS : X86ISD::CMPPD;
     bool Swap = false;
 
     switch (SetCCOpcode) {

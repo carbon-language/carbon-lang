@@ -1721,9 +1721,9 @@ let Constraints = "$src1 = $dst" in {
                   [(set VR128:$dst, (int_x86_sse2_cmp_pd VR128:$src1,
                                                  (memop addr:$src), imm:$cc))]>;
 }
-def : Pat<(v2i64 (X86cmppd VR128:$src1, VR128:$src2, imm:$cc)),
+def : Pat<(v2i64 (X86cmppd (v2f64 VR128:$src1), VR128:$src2, imm:$cc)),
           (CMPPDrri VR128:$src1, VR128:$src2, imm:$cc)>;
-def : Pat<(v2i64 (X86cmppd VR128:$src1, (memop addr:$src2), imm:$cc)),
+def : Pat<(v2i64 (X86cmppd (v2f64 VR128:$src1), (memop addr:$src2), imm:$cc)),
           (CMPPDrmi VR128:$src1, addr:$src2, imm:$cc)>;
 
 // Shuffle and unpack instructions
