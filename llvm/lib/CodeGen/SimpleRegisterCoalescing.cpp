@@ -533,11 +533,6 @@ void SimpleRegisterCoalescing::RemoveUnnecessaryKills(unsigned Reg,
     MachineOperand &UseMO = UI.getOperand();
     if (UseMO.isKill()) {
       MachineInstr *UseMI = UseMO.getParent();
-#if 0
-      unsigned SReg, DReg;
-      if (!tii_->isMoveInstr(*UseMI, SReg, DReg))
-        continue;
-#endif
       unsigned UseIdx = li_->getUseIndex(li_->getInstructionIndex(UseMI));
       if (JoinedCopies.count(UseMI))
         continue;
