@@ -49,7 +49,7 @@ void TextDiagnosticPrinter::HighlightRange(const SourceRange &R,
                                            SourceManager& SourceMgr,
                                            unsigned LineNo, unsigned FileID,
                                            std::string &CaratLine,
-                                           const std::string &SourceLine) {  
+                                           const std::string &SourceLine) {
   assert(CaratLine.size() == SourceLine.size() &&
          "Expect a correspondence between source and carat line!");
   if (!R.isValid()) return;
@@ -91,13 +91,16 @@ void TextDiagnosticPrinter::HighlightRange(const SourceRange &R,
   }
   
   // Pick the last non-whitespace column.
-  while (EndColNo-1 &&
-         (SourceLine[EndColNo-1] == ' ' || SourceLine[EndColNo-1] == '\t'))
-    --EndColNo;
+  if (EndColNo <= SourceLine.size())
+    while (EndColNo-1 &&
+           (SourceLine[EndColNo-1] == ' ' || SourceLine[EndColNo-1] == '\t'))
+      --EndColNo;
+  else
+    EndColNo = SourceLine.size();
   
   // Fill the range with ~'s.
   assert(StartColNo <= EndColNo && "Invalid range!");
-  for (unsigned i = StartColNo; i != EndColNo; ++i)
+  for (unsigned i = StartColNo; i < EndColNo; ++i)
     CaratLine[i] = '~';
 }
 
