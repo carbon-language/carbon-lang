@@ -1385,7 +1385,7 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
 
     Out << " )";
     if (PAL.getParamAttrs(0) != ParamAttr::None)
-      Out << " " << ParamAttr::getAsString(PAL.getParamAttrs(0));
+      Out << ' ' << ParamAttr::getAsString(PAL.getParamAttrs(0));
     Out << "\n\t\t\tto";
     writeOperand(II->getNormalDest(), true);
     Out << " unwind";

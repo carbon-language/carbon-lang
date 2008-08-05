@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llvm-dis | grep {tail call void.*sret  null}
+; RUN: llvm-as < %s | llvm-dis | grep {tail call void.*sret null}
 
 declare void @foo({  }* sret , ...)
 

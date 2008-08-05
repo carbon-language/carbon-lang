@@ -52,6 +52,8 @@ std::string ParamAttr::getAsString(ParameterAttributes Attrs) {
     Result += utostr((Attrs & ParamAttr::Alignment) >> 16);
     Result += " ";
   }
+  // Trim the trailing space.
+  Result.erase(Result.end()-1);
   return Result;
 }
 

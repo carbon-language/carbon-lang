@@ -404,18 +404,18 @@ void Verifier::VerifyAttrs(ParameterAttributes Attrs, const Type *Ty,
   if (isReturnValue) {
     ParameterAttributes RetI = Attrs & ParamAttr::ParameterOnly;
     Assert1(!RetI, "Attribute " + ParamAttr::getAsString(RetI) +
-            "does not apply to return values!", V);
+            " does not apply to return values!", V);
   } else {
     ParameterAttributes ParmI = Attrs & ParamAttr::ReturnOnly;
     Assert1(!ParmI, "Attribute " + ParamAttr::getAsString(ParmI) +
-            "only applies to return values!", V);
+            " only applies to return values!", V);
   }
 
   for (unsigned i = 0;
        i < array_lengthof(ParamAttr::MutuallyIncompatible); ++i) {
     ParameterAttributes MutI = Attrs & ParamAttr::MutuallyIncompatible[i];
     Assert1(!(MutI & (MutI - 1)), "Attributes " +
-            ParamAttr::getAsString(MutI) + "are incompatible!", V);
+            ParamAttr::getAsString(MutI) + " are incompatible!", V);
   }
 
   ParameterAttributes TypeI = Attrs & ParamAttr::typeIncompatible(Ty);
@@ -931,7 +931,7 @@ void Verifier::VerifyCallSite(CallSite CS) {
 
       ParameterAttributes VArgI = Attr & ParamAttr::VarArgsIncompatible;
       Assert1(!VArgI, "Attribute " + ParamAttr::getAsString(VArgI) +
-              "cannot be used for vararg call arguments!", I);
+              " cannot be used for vararg call arguments!", I);
     }
 
   visitInstruction(*I);
