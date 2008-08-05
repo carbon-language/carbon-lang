@@ -35,7 +35,7 @@ static StmtClassNameTable &getStmtInfoTableEntry(Stmt::StmtClass E) {
   StmtClassInfo[N].Name = #CLASS; \
   StmtClassInfo[N].Size = sizeof(CLASS);
 #include "clang/AST/StmtNodes.def"
-  
+
   return StmtClassInfo[E];
 }
 
@@ -64,7 +64,7 @@ void DeclStmt::Destroy(ASTContext& C) {
 void Stmt::PrintStats() {
   // Ensure the table is primed.
   getStmtInfoTableEntry(Stmt::NullStmtClass);
-  
+
   unsigned sum = 0;
   fprintf(stderr, "*** Stmt/Expr Stats:\n");
   for (int i = 0; i != Stmt::lastExprConstant+1; i++) {
@@ -75,7 +75,7 @@ void Stmt::PrintStats() {
   sum = 0;
   for (int i = 0; i != Stmt::lastExprConstant+1; i++) {
     if (StmtClassInfo[i].Name == 0) continue;
-    fprintf(stderr, "    %d %s, %d each (%d bytes)\n", 
+    fprintf(stderr, "    %d %s, %d each (%d bytes)\n",
             StmtClassInfo[i].Counter, StmtClassInfo[i].Name,
             StmtClassInfo[i].Size,
             StmtClassInfo[i].Counter*StmtClassInfo[i].Size);
@@ -101,7 +101,7 @@ const char *LabelStmt::getName() const {
 }
 
 // This is defined here to avoid polluting Stmt.h with importing Expr.h
-SourceRange ReturnStmt::getSourceRange() const { 
+SourceRange ReturnStmt::getSourceRange() const {
   if (RetExpr)
     return SourceRange(RetLoc, RetExpr->getLocEnd());
   else
@@ -112,14 +112,14 @@ bool Stmt::hasImplicitControlFlow() const {
   switch (sClass) {
     default:
       return false;
-      
+
     case CallExprClass:
     case ConditionalOperatorClass:
     case ChooseExprClass:
     case StmtExprClass:
     case DeclStmtClass:
-      return true;    
-      
+      return true;
+
     case Stmt::BinaryOperatorClass: {
       const BinaryOperator* B = cast<BinaryOperator>(this);
       if (B->isLogicalOp() || B->getOpcode() == BinaryOperator::Comma)
@@ -145,16 +145,16 @@ AsmStmt::AsmStmt(SourceLocation asmloc, bool issimple, bool isvolatile,
   for (unsigned i = 0, e = numinputs + numoutputs; i != e; i++) {
     Names.push_back(names[i]);
     Exprs.push_back(exprs[i]);
-    Constraints.push_back(constraints[i]);    
+    Constraints.push_back(constraints[i]);
   }
-  
+
   for (unsigned i = 0; i != numclobbers; i++)
     Clobbers.push_back(clobbers[i]);
 }
 
 ObjCForCollectionStmt::ObjCForCollectionStmt(Stmt *Elem, Expr *Collect,
                                              Stmt *Body,  SourceLocation FCL,
-                                             SourceLocation RPL) 
+                                             SourceLocation RPL)
 : Stmt(ObjCForCollectionStmtClass) {
   SubExprs[ELEM] = Elem;
   SubExprs[COLLECTION] = reinterpret_cast<Stmt*>(Collect);
@@ -164,9 +164,9 @@ ObjCForCollectionStmt::ObjCForCollectionStmt(Stmt *Elem, Expr *Collect,
 }
 
 
-ObjCAtCatchStmt::ObjCAtCatchStmt(SourceLocation atCatchLoc, 
-                                 SourceLocation rparenloc, 
-                                 Stmt *catchVarStmtDecl, Stmt *atCatchStmt, 
+ObjCAtCatchStmt::ObjCAtCatchStmt(SourceLocation atCatchLoc,
+                                 SourceLocation rparenloc,
+                                 Stmt *catchVarStmtDecl, Stmt *atCatchStmt,
                                  Stmt *atCatchList)
 : Stmt(ObjCAtCatchStmtClass) {
   SubExprs[SELECTOR] = catchVarStmtDecl;
@@ -175,9 +175,9 @@ ObjCAtCatchStmt::ObjCAtCatchStmt(SourceLocation atCatchLoc,
   if (atCatchList) {
     ObjCAtCatchStmt *AtCatchList = static_cast<ObjCAtCatchStmt*>(atCatchList);
 
-    while (ObjCAtCatchStmt* NextCatch = AtCatchList->getNextCatchStmt())      
+    while (ObjCAtCatchStmt* NextCatch = AtCatchList->getNextCatchStmt())
       AtCatchList = NextCatch;
-    
+
     AtCatchList->SubExprs[NEXT_CATCH] = this;
   }
   AtCatchLoc = atCatchLoc;
@@ -239,11 +239,11 @@ Stmt::child_iterator ForStmt::child_begin() { return &SubExprs[0]; }
 Stmt::child_iterator ForStmt::child_end() { return &SubExprs[0]+END_EXPR; }
 
 // ObjCForCollectionStmt
-Stmt::child_iterator ObjCForCollectionStmt::child_begin() { 
-  return &SubExprs[0]; 
+Stmt::child_iterator ObjCForCollectionStmt::child_begin() {
+  return &SubExprs[0];
 }
-Stmt::child_iterator ObjCForCollectionStmt::child_end() { 
-  return &SubExprs[0]+END_EXPR; 
+Stmt::child_iterator ObjCForCollectionStmt::child_end() {
+  return &SubExprs[0]+END_EXPR;
 }
 
 // GotoStmt
@@ -286,8 +286,8 @@ Stmt::child_iterator AsmStmt::child_end() { return child_iterator(); }
 
 // ObjCAtCatchStmt
 Stmt::child_iterator ObjCAtCatchStmt::child_begin() { return &SubExprs[0]; }
-Stmt::child_iterator ObjCAtCatchStmt::child_end() { 
-  return &SubExprs[0]+END_EXPR; 
+Stmt::child_iterator ObjCAtCatchStmt::child_end() {
+  return &SubExprs[0]+END_EXPR;
 }
 
 // ObjCAtFinallyStmt
@@ -296,8 +296,8 @@ Stmt::child_iterator ObjCAtFinallyStmt::child_end() { return &AtFinallyStmt+1; }
 
 // ObjCAtTryStmt
 Stmt::child_iterator ObjCAtTryStmt::child_begin() { return &SubStmts[0]; }
-Stmt::child_iterator ObjCAtTryStmt::child_end()   { 
-  return &SubStmts[0]+END_EXPR; 
+Stmt::child_iterator ObjCAtTryStmt::child_end()   {
+  return &SubStmts[0]+END_EXPR;
 }
 
 // ObjCAtThrowStmt
