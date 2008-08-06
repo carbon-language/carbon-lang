@@ -7750,27 +7750,41 @@ Instruction *InstCombiner::visitFPExt(CastInst &CI) {
 }
 
 Instruction *InstCombiner::visitFPToUI(FPToUIInst &FI) {
-  // fptoui(uitofp(X)) --> X  if the intermediate type has enough bits in its
-  // mantissa to accurately represent all values of X.  For example, do not
-  // do this with i64->float->i64.
-  if (UIToFPInst *SrcI = dyn_cast<UIToFPInst>(FI.getOperand(0)))
-    if (SrcI->getOperand(0)->getType() == FI.getType() &&
-        (int)FI.getType()->getPrimitiveSizeInBits() < /*extra bit for sign */
-                    SrcI->getType()->getFPMantissaWidth())
-      return ReplaceInstUsesWith(FI, SrcI->getOperand(0));
+  Instruction *OpI = dyn_cast<Instruction>(FI.getOperand(0));
+  if (OpI == 0)
+    return commonCastTransforms(FI);
+
+  // fptoui(uitofp(X)) --> X
+  // fptoui(sitofp(X)) --> X
+  // This is safe if the intermediate type has enough bits in its mantissa to
+  // accurately represent all values of X.  For example, do not do this with
+  // i64->float->i64.  This is also safe for sitofp case, because any negative
+  // 'X' value would cause an undefined result for the fptoui. 
+  if ((isa<UIToFPInst>(OpI) || isa<SIToFPInst>(OpI)) &&
+      OpI->getOperand(0)->getType() == FI.getType() &&
+      (int)FI.getType()->getPrimitiveSizeInBits() < /*extra bit for sign */
+                    OpI->getType()->getFPMantissaWidth())
+    return ReplaceInstUsesWith(FI, OpI->getOperand(0));
 
   return commonCastTransforms(FI);
 }
 
 Instruction *InstCombiner::visitFPToSI(FPToSIInst &FI) {
-  // fptosi(sitofp(X)) --> X  if the intermediate type has enough bits in its
-  // mantissa to accurately represent all values of X.  For example, do not
-  // do this with i64->float->i64.
-  if (SIToFPInst *SrcI = dyn_cast<SIToFPInst>(FI.getOperand(0)))
-    if (SrcI->getOperand(0)->getType() == FI.getType() &&
-        (int)FI.getType()->getPrimitiveSizeInBits() <= 
-                    SrcI->getType()->getFPMantissaWidth())
-      return ReplaceInstUsesWith(FI, SrcI->getOperand(0));
+  Instruction *OpI = dyn_cast<Instruction>(FI.getOperand(0));
+  if (OpI == 0)
+    return commonCastTransforms(FI);
+  
+  // fptosi(sitofp(X)) --> X
+  // fptosi(uitofp(X)) --> X
+  // This is safe if the intermediate type has enough bits in its mantissa to
+  // accurately represent all values of X.  For example, do not do this with
+  // i64->float->i64.  This is also safe for sitofp case, because any negative
+  // 'X' value would cause an undefined result for the fptoui. 
+  if ((isa<UIToFPInst>(OpI) || isa<SIToFPInst>(OpI)) &&
+      OpI->getOperand(0)->getType() == FI.getType() &&
+      (int)FI.getType()->getPrimitiveSizeInBits() <= 
+                    OpI->getType()->getFPMantissaWidth())
+    return ReplaceInstUsesWith(FI, OpI->getOperand(0));
   
   return commonCastTransforms(FI);
 }

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep sitofp
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep itofp
 
 define i1 @test1(i8 %A) {
   %B = sitofp i8 %A to double
@@ -39,5 +39,17 @@ define i32 @test6(i32 %A) {
 	%F = add double %D, %E		; <double> [#uses=1]
 	%G = fptosi double %F to i32		; <i32> [#uses=1]
 	ret i32 %G
+}
+
+define i32 @test7(i32 %a) nounwind {
+	%b = sitofp i32 %a to double		; <double> [#uses=1]
+	%c = fptoui double %b to i32		; <i32> [#uses=1]
+	ret i32 %c
+}
+
+define i32 @test8(i32 %a) nounwind {
+	%b = uitofp i32 %a to double		; <double> [#uses=1]
+	%c = fptosi double %b to i32		; <i32> [#uses=1]
+	ret i32 %c
 }
 
