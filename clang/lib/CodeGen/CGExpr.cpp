@@ -173,28 +173,65 @@ RValue CodeGenFunction::EmitLoadOfLValue(LValue LV, QualType ExprType) {
 
 RValue CodeGenFunction::EmitLoadOfBitfieldLValue(LValue LV,
                                                  QualType ExprType) {
+  unsigned StartBit = LV.getBitfieldStartBit();
+  unsigned BitfieldSize = LV.getBitfieldSize();
   llvm::Value *Ptr = LV.getBitfieldAddr();
-  const llvm::Type *EltTy =
+
+  const llvm::Type *EltTy = 
     cast<llvm::PointerType>(Ptr->getType())->getElementType();
-  unsigned EltTySize = EltTy->getPrimitiveSizeInBits();
-  unsigned short BitfieldSize = LV.getBitfieldSize();
-  unsigned short EndBit = LV.getBitfieldStartBit() + BitfieldSize;
+  unsigned EltTySize = CGM.getTargetData().getTypeSizeInBits(EltTy);
 
-  llvm::Value *V = Builder.CreateLoad(Ptr, LV.isVolatileQualified(), "tmp");
+  // In some cases the bitfield may straddle two memory locations.
+  // Currently we load the entire bitfield, then do the magic to
+  // sign-extend it if necessary. This results in somewhat more code
+  // than necessary for the common case (one load), since two shifts
+  // accomplish both the masking and sign extension.
+  unsigned LowBits = std::min(BitfieldSize, EltTySize - StartBit);
+  llvm::Value *Val = Builder.CreateLoad(Ptr, LV.isVolatileQualified(), "tmp");
+  
+  // Shift to proper location.
+  Val = Builder.CreateLShr(Val, llvm::ConstantInt::get(EltTy, StartBit), 
+                           "bf.lo");
+  
+  // Mask off unused bits.
+  llvm::Constant *LowMask = 
+    llvm::ConstantInt::get(llvm::APInt::getLowBitsSet(EltTySize, LowBits));
+  Val = Builder.CreateAnd(Val, LowMask, "bf.lo.cleared");
+  
+  // Fetch the high bits if necessary.
+  if (LowBits < BitfieldSize) {
+    unsigned HighBits = BitfieldSize - LowBits;
+    llvm::Value *HighPtr = 
+      Builder.CreateGEP(Ptr, llvm::ConstantInt::get(llvm::Type::Int32Ty, 1),
+                        "bf.ptr.hi");    
+    llvm::Value *HighVal = Builder.CreateLoad(HighPtr, 
+                                              LV.isVolatileQualified(),
+                                              "tmp");
+    
+    // Mask off unused bits.
+    llvm::Constant *HighMask = 
+      llvm::ConstantInt::get(llvm::APInt::getLowBitsSet(EltTySize, HighBits));
+    HighVal = Builder.CreateAnd(HighVal, HighMask, "bf.lo.cleared");
 
-  llvm::Value *ShAmt = llvm::ConstantInt::get(EltTy, EltTySize - EndBit);
-  V = Builder.CreateShl(V, ShAmt, "tmp");
+    // Shift to proper location and or in to bitfield value.
+    HighVal = Builder.CreateShl(HighVal, 
+                                llvm::ConstantInt::get(EltTy, LowBits));
+    Val = Builder.CreateOr(Val, HighVal, "bf.val");
+  }
 
-  ShAmt = llvm::ConstantInt::get(EltTy, EltTySize - BitfieldSize);
-  V = LV.isBitfieldSigned() ?
-    Builder.CreateAShr(V, ShAmt, "tmp") :
-    Builder.CreateLShr(V, ShAmt, "tmp");
+  // Sign extend if necessary.
+  if (LV.isBitfieldSigned()) {
+    llvm::Value *ExtraBits = llvm::ConstantInt::get(EltTy, 
+                                                    EltTySize - BitfieldSize);
+    Val = Builder.CreateAShr(Builder.CreateShl(Val, ExtraBits), 
+                             ExtraBits, "bf.val.sext");
+  }
 
   // The bitfield type and the normal type differ when the storage sizes
   // differ (currently just _Bool).
-  V = Builder.CreateIntCast(V, ConvertType(ExprType), false, "tmp");
+  Val = Builder.CreateIntCast(Val, ConvertType(ExprType), false, "tmp");
 
-  return RValue::get(V);
+  return RValue::get(Val);
 }
 
 // If this is a reference to a subset of the elements of a vector, either
@@ -297,40 +334,73 @@ void CodeGenFunction::EmitStoreThroughLValue(RValue Src, LValue Dst,
 
 void CodeGenFunction::EmitStoreThroughBitfieldLValue(RValue Src, LValue Dst,
                                                      QualType Ty) {
-  unsigned short StartBit = Dst.getBitfieldStartBit();
-  unsigned short BitfieldSize = Dst.getBitfieldSize();
+  unsigned StartBit = Dst.getBitfieldStartBit();
+  unsigned BitfieldSize = Dst.getBitfieldSize();
   llvm::Value *Ptr = Dst.getBitfieldAddr();
 
+  const llvm::Type *EltTy = 
+    cast<llvm::PointerType>(Ptr->getType())->getElementType();
+  unsigned EltTySize = CGM.getTargetData().getTypeSizeInBits(EltTy);
+
+  // Get the new value, cast to the appropriate type and masked to
+  // exactly the size of the bit-field.
   llvm::Value *NewVal = Src.getScalarVal();
-  llvm::Value *OldVal = Builder.CreateLoad(Ptr, Dst.isVolatileQualified(),
-                                           "tmp");
+  NewVal = Builder.CreateIntCast(NewVal, EltTy, false, "tmp");  
+  llvm::Constant *Mask = 
+    llvm::ConstantInt::get(llvm::APInt::getLowBitsSet(EltTySize, BitfieldSize));
+  NewVal = Builder.CreateAnd(NewVal, Mask, "bf.value");
 
-  // The bitfield type and the normal type differ when the storage sizes
-  // differ (currently just _Bool).
-  const llvm::Type *EltTy = OldVal->getType();
-  unsigned EltTySize = CGM.getTargetData().getABITypeSizeInBits(EltTy);
+  // In some cases the bitfield may straddle two memory locations.
+  // Emit the low part first and check to see if the high needs to be
+  // done.
+  unsigned LowBits = std::min(BitfieldSize, EltTySize - StartBit);
+  llvm::Value *LowVal = Builder.CreateLoad(Ptr, Dst.isVolatileQualified(),
+                                           "bf.prev.low");
 
-  NewVal = Builder.CreateIntCast(NewVal, EltTy, false, "tmp");
+  // Compute the mask for zero-ing the low part of this bitfield.
+  llvm::Constant *InvMask = 
+    llvm::ConstantInt::get(~llvm::APInt::getBitsSet(EltTySize, StartBit, 
+                                                    StartBit + LowBits));
+  
+  // Compute the new low part as
+  //   LowVal = (LowVal & InvMask) | (NewVal << StartBit),
+  // with the shift of NewVal implicitly stripping the high bits.
+  llvm::Value *NewLowVal = 
+    Builder.CreateShl(NewVal, llvm::ConstantInt::get(EltTy, StartBit), 
+                      "bf.value.lo");  
+  LowVal = Builder.CreateAnd(LowVal, InvMask, "bf.prev.lo.cleared");
+  LowVal = Builder.CreateOr(LowVal, NewLowVal, "bf.new.lo");
+    
+  // Write back.
+  Builder.CreateStore(LowVal, Ptr, Dst.isVolatileQualified());
 
-  // Move the bits into the appropriate location
-  llvm::Value *ShAmt = llvm::ConstantInt::get(EltTy, StartBit);
-  NewVal = Builder.CreateShl(NewVal, ShAmt, "tmp");
-
-  llvm::Constant *Mask = llvm::ConstantInt::get(
-           llvm::APInt::getBitsSet(EltTySize, StartBit,
-                                   StartBit + BitfieldSize));
-
-  // Mask out any bits that shouldn't be set in the result.
-  NewVal = Builder.CreateAnd(NewVal, Mask, "tmp");
-
-  // Next, mask out the bits this bit-field should include from the old value.
-  Mask = llvm::ConstantExpr::getNot(Mask);
-  OldVal = Builder.CreateAnd(OldVal, Mask, "tmp");
-
-  // Finally, merge the two together and store it.
-  NewVal = Builder.CreateOr(OldVal, NewVal, "tmp");
-
-  Builder.CreateStore(NewVal, Ptr, Dst.isVolatileQualified());
+  // If the low part doesn't cover the bitfield emit a high part.
+  if (LowBits < BitfieldSize) {
+    unsigned HighBits = BitfieldSize - LowBits;
+    llvm::Value *HighPtr = 
+      Builder.CreateGEP(Ptr, llvm::ConstantInt::get(llvm::Type::Int32Ty, 1),
+                        "bf.ptr.hi");    
+    llvm::Value *HighVal = Builder.CreateLoad(HighPtr, 
+                                              Dst.isVolatileQualified(),
+                                              "bf.prev.hi");
+    
+    // Compute the mask for zero-ing the high part of this bitfield.
+    llvm::Constant *InvMask = 
+      llvm::ConstantInt::get(~llvm::APInt::getLowBitsSet(EltTySize, HighBits));
+  
+    // Compute the new high part as
+    //   HighVal = (HighVal & InvMask) | (NewVal lshr LowBits),
+    // where the high bits of NewVal have already been cleared and the
+    // shift stripping the low bits.
+    llvm::Value *NewHighVal = 
+      Builder.CreateLShr(NewVal, llvm::ConstantInt::get(EltTy, LowBits), 
+                        "bf.value.high");  
+    HighVal = Builder.CreateAnd(HighVal, InvMask, "bf.prev.hi.cleared");
+    HighVal = Builder.CreateOr(HighVal, NewHighVal, "bf.new.hi");
+    
+    // Write back.
+    Builder.CreateStore(HighVal, HighPtr, Dst.isVolatileQualified());
+  }
 }
 
 void CodeGenFunction::EmitStoreThroughExtVectorComponentLValue(RValue Src,
