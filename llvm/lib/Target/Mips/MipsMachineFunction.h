@@ -26,12 +26,19 @@ class MipsFunctionInfo : public MachineFunctionInfo {
 
 private:
   /// Holds for each function where on the stack the Frame Pointer must be 
-  /// saved.
+  /// saved. This is used on Prologue and Epilogue to emit FP save/restore
   int FPStackOffset;
 
   /// Holds for each function where on the stack the Return Address must be 
-  /// saved.
+  /// saved. This is used on Prologue and Epilogue to emit RA save/restore
   int RAStackOffset;
+
+  /// At each function entry, two special bitmask directives must be emitted
+  /// to help debugging, for CPU and FPU callee saved registers. Both need
+  /// the negative offset from the final stack size and its higher registers
+  /// location on the stack.
+  int CPUTopSavedRegOff;
+  int FPUTopSavedRegOff;
 
   /// MipsFIHolder - Holds a FrameIndex and it's Stack Pointer Offset
   struct MipsFIHolder {
@@ -49,9 +56,9 @@ private:
   /// to be used on emitPrologue and processFunctionBeforeFrameFinalized.
   MipsFIHolder GPHolder;
 
-  // On LowerFORMAL_ARGUMENTS the stack size is unknown, so the Stack 
-  // Pointer Offset calculation of "not in register arguments" must be 
-  // postponed to emitPrologue. 
+  /// On LowerFORMAL_ARGUMENTS the stack size is unknown, so the Stack 
+  /// Pointer Offset calculation of "not in register arguments" must be 
+  /// postponed to emitPrologue. 
   SmallVector<MipsFIHolder, 16> FnLoadArgs;
   bool HasLoadArgs;
 
@@ -69,7 +76,8 @@ private:
 
 public:
   MipsFunctionInfo(MachineFunction& MF) 
-  : FPStackOffset(0), RAStackOffset(0), GPHolder(-1,-1), HasLoadArgs(false),
+  : FPStackOffset(0), RAStackOffset(0), CPUTopSavedRegOff(0), 
+    FPUTopSavedRegOff(0), GPHolder(-1,-1), HasLoadArgs(false), 
     HasStoreVarArgs(false), SRetReturnReg(0)
   {}
 
@@ -79,15 +87,16 @@ public:
   int getRAStackOffset() const { return RAStackOffset; }
   void setRAStackOffset(int Off) { RAStackOffset = Off; }
 
+  int getCPUTopSavedRegOff() const { return CPUTopSavedRegOff; }
+  void setCPUTopSavedRegOff(int Off) { CPUTopSavedRegOff = Off; }
+
+  int getFPUTopSavedRegOff() const { return FPUTopSavedRegOff; }
+  void setFPUTopSavedRegOff(int Off) { FPUTopSavedRegOff = Off; }
+
   int getGPStackOffset() const { return GPHolder.SPOffset; }
   int getGPFI() const { return GPHolder.FI; }
   void setGPStackOffset(int Off) { GPHolder.SPOffset = Off; }
   void setGPFI(int FI) { GPHolder.FI = FI; }
-
-  int getTopSavedRegOffset() const { 
-    return (RAStackOffset > FPStackOffset) ? 
-           (RAStackOffset) : (FPStackOffset);
-  }
 
   bool hasLoadArgs() const { return HasLoadArgs; }
   bool hasStoreVarArgs() const { return HasStoreVarArgs; } 

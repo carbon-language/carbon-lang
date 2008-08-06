@@ -33,7 +33,8 @@ createTargetAsmInfo() const
 // The stack is always 8 byte aligned
 // On function prologue, the stack is created by decrementing
 // its pointer. Once decremented, all references are done with positive
-// offset from the stack/frame pointer, so StackGrowsUp is used.
+// offset from the stack/frame pointer, using StackGrowsUp enables 
+// an easier handling.
 // Using CodeModel::Large enables different CALL behavior.
 MipsTargetMachine::
 MipsTargetMachine(const Module &M, const std::string &FS, bool isLittle=false):

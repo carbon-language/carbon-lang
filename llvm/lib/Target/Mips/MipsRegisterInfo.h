@@ -36,6 +36,9 @@ struct MipsRegisterInfo : public MipsGenRegisterInfo {
   /// Get PIC indirect call register
   static unsigned getPICCallReg(void); 
 
+  /// Adjust the Mips stack frame.
+  void adjustMipsStackFrame(MachineFunction &MF) const;
+
   /// Code Generation virtual methods...
   const unsigned *getCalleeSavedRegs(const MachineFunction* MF = 0) const;
 
