@@ -1692,7 +1692,9 @@ void RewriteObjC::RewriteObjCQualifiedInterfaceTypes(Decl *Dcl) {
       startBuf = ++endBuf;
     }
     else {
-      while (*startBuf != ')' && *startBuf != ',')
+      // If the function name is derived from a macro expansion, then the
+      // argument buffer will not follow the name. Need to speak with Chris.
+      while (*startBuf && *startBuf != ')' && *startBuf != ',')
         startBuf++; // scan forward (from the decl location) for argument types.
       startBuf++;
     }
