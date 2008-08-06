@@ -8,10 +8,25 @@
 ; These should use movzbl instead of 'and 255'.
 ; This related to not having a ZERO_EXTEND_REG opcode.
 
+define i32 @a(i32 %d) nounwind  {
+        %e = add i32 %d, 1
+        %retval = and i32 %e, 255
+        ret i32 %retval
+}
+define i32 @b(float %d) nounwind  {
+        %tmp12 = fptoui float %d to i8
+        %retval = zext i8 %tmp12 to i32
+        ret i32 %retval
+}
 define i32 @c(i32 %d) nounwind  {
         %e = add i32 %d, 1
         %retval = and i32 %e, 65535
         ret i32 %retval
+}
+define i64 @d(i64 %d) nounwind  {
+        %e = add i64 %d, 1
+        %retval = and i64 %e, 255
+        ret i64 %retval
 }
 define i64 @e(i64 %d) nounwind  {
         %e = add i64 %d, 1

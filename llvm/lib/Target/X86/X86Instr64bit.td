@@ -1251,12 +1251,6 @@ def : Pat<(and GR64:$src, 0xffff),
 // r & (2^8-1) ==> movz
 def : Pat<(and GR64:$src, 0xff),
           (MOVZX64rr8 (i8 (EXTRACT_SUBREG GR64:$src, x86_subreg_8bit)))>;
-
-// TODO: The following two patterns could be adapted to apply to x86-32, except
-// that they'll need some way to deal with the fact that in x86-32 not all GPRs
-// have 8-bit subregs. The GR32_ and GR16_ classes are a step in this direction,
-// but they aren't ready for this purpose yet.
-
 // r & (2^8-1) ==> movz
 def : Pat<(and GR32:$src1, 0xff),
            (MOVZX32rr8 (i8 (EXTRACT_SUBREG GR32:$src1, x86_subreg_8bit)))>,

@@ -2774,6 +2774,16 @@ def : Pat<(i32 (and (loadi32 addr:$src), (i32 65535))),(MOVZX32rm16 addr:$src)>;
 // r & (2^16-1) ==> movz
 def : Pat<(and GR32:$src1, 0xffff),
            (MOVZX32rr16 (i16 (EXTRACT_SUBREG GR32:$src1, x86_subreg_16bit)))>;
+// r & (2^8-1) ==> movz
+def : Pat<(and GR32:$src1, 0xff),
+           (MOVZX32rr8 (i8 (EXTRACT_SUBREG (MOV32to32_ GR32:$src1),
+                                           x86_subreg_8bit)))>,
+      Requires<[In32BitMode]>;
+// r & (2^8-1) ==> movz
+def : Pat<(and GR16:$src1, 0xff),
+           (MOVZX16rr8 (i8 (EXTRACT_SUBREG (MOV16to16_ GR16:$src1),
+                                           x86_subreg_8bit)))>,
+      Requires<[In32BitMode]>;
 
 // (shl x, 1) ==> (add x, x)
 def : Pat<(shl GR8 :$src1, (i8 1)), (ADD8rr  GR8 :$src1, GR8 :$src1)>;
