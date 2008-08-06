@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llc -disable-fp-elim -march=x86 | not grep orb
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep or
 ; PR2629
 
 define void @f(i8* %x) nounwind  {
