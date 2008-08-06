@@ -16,6 +16,7 @@
 #define LLVM_CLANG_CFG_H
 
 #include "llvm/ADT/GraphTraits.h"
+#include "llvm/Support/Allocator.h"
 #include <list>
 #include <vector>
 #include <iosfwd>
@@ -283,9 +284,13 @@ public:
   //===--------------------------------------------------------------------===//
 
   CFG() : Entry(NULL), Exit(NULL), IndirectGotoBlock(NULL), NumBlockIDs(0), 
-          BlkExprMap(NULL), BlkEdgeSet(NULL), Allocator(NULL) {};
+          BlkExprMap(NULL), BlkEdgeSet(NULL) {};
   
   ~CFG();
+  
+  llvm::BumpPtrAllocator& getAllocator() {
+    return Alloc;
+  }
     
 private:
   CFGBlock* Entry;
@@ -308,7 +313,7 @@ private:
   void*     BlkEdgeSet;
   
   /// Alloc - An internal allocator used for BlkEdgeSet.
-  void*     Allocator;
+  llvm::BumpPtrAllocator Alloc;
   
   friend class BlockEdge;
   

@@ -1177,12 +1177,6 @@ typedef llvm::FoldingSet<PersistPairTy> BlkEdgeSetTy;
 const std::pair<CFGBlock*,CFGBlock*>*
 CFG::getBlockEdgeImpl(const CFGBlock* B1, const CFGBlock* B2) {
   
-  if (!Allocator)
-    Allocator = new llvm::BumpPtrAllocator();
-  
-  llvm::BumpPtrAllocator* Alloc =
-    static_cast<llvm::BumpPtrAllocator*>(Allocator);
-
   if (!BlkEdgeSet)
     BlkEdgeSet = new BlkEdgeSetTy();
     
@@ -1201,13 +1195,13 @@ CFG::getBlockEdgeImpl(const CFGBlock* B1, const CFGBlock* B2) {
     assert (llvm::AlignOf<BPairTy>::Alignment_LessEqual_8Bytes);
     
     // Allocate the pair, forcing an 8-byte alignment.
-    BPairTy* pair = (BPairTy*) Alloc->Allocate(sizeof(*pair), 8);
+    BPairTy* pair = (BPairTy*) Alloc.Allocate(sizeof(*pair), 8);
 
     new (pair) BPairTy(const_cast<CFGBlock*>(B1),
                        const_cast<CFGBlock*>(B2));
     
     // Allocate the meta data to store the pair in the FoldingSet.
-    PersistPairTy* ppair = (PersistPairTy*) Alloc->Allocate<PersistPairTy>();
+    PersistPairTy* ppair = (PersistPairTy*) Alloc.Allocate<PersistPairTy>();
     new (ppair) PersistPairTy(pair);
     
     p->InsertNode(ppair, InsertPos);
@@ -1225,7 +1219,6 @@ CFG::getBlockEdgeImpl(const CFGBlock* B1, const CFGBlock* B2) {
 CFG::~CFG() {
   delete reinterpret_cast<const BlkExprMapTy*>(BlkExprMap);
   delete reinterpret_cast<BlkEdgeSetTy*>(BlkEdgeSet);
-  delete reinterpret_cast<llvm::BumpPtrAllocator*> (Allocator);
 }
   
 //===----------------------------------------------------------------------===//
