@@ -111,9 +111,11 @@ bool UnreachableMachineBlockElim::runOnMachineFunction(MachineFunction &F) {
   // Loop over all dead blocks, remembering them and deleting all instructions
   // in them.
   std::vector<MachineBasicBlock*> DeadBlocks;
-  for (MachineFunction::iterator I = F.begin(), E = F.end(); I != E; ++I)
-    if (!Reachable.count(I)) {
-      MachineBasicBlock *BB = I;
+  for (MachineFunction::iterator I = F.begin(), E = F.end(); I != E; ++I) {
+    MachineBasicBlock *BB = I;
+    
+    // Test for deadness.
+    if (!Reachable.count(BB)) {
       DeadBlocks.push_back(BB);
       
       while (BB->succ_begin() != BB->succ_end()) {
@@ -129,27 +131,50 @@ bool UnreachableMachineBlockElim::runOnMachineFunction(MachineFunction &F) {
               start->RemoveOperand(i-1);
             }
           
-          if (start->getNumOperands() == 3) {
-            MachineInstr* phi = start;
-            unsigned Input = phi->getOperand(1).getReg();
-            unsigned Output = phi->getOperand(0).getReg();
-            
-            start++;
-            phi->eraseFromParent();
-            
-            if (Input != Output)
-              F.getRegInfo().replaceRegWith(Output, Input);
-          } else
-            start++;
+          start++;
         }
         
         BB->removeSuccessor(BB->succ_begin());
       }
     }
+  }
 
   // Actually remove the blocks now.
   for (unsigned i = 0, e = DeadBlocks.size(); i != e; ++i)
     DeadBlocks[i]->eraseFromParent();
+
+  // Cleanup PHI nodes.
+  for (MachineFunction::iterator I = F.begin(), E = F.end(); I != E; ++I) {
+    MachineBasicBlock *BB = I;
+    // Prune unneeded PHI entries.
+    SmallPtrSet<MachineBasicBlock*, 8> preds(BB->pred_begin(), 
+                                             BB->pred_end());
+    MachineBasicBlock::iterator phi = BB->begin();
+    while (phi != BB->end() &&
+           phi->getOpcode() == TargetInstrInfo::PHI) {
+      if (phi->getNumOperands() == 3) {
+        unsigned Input = phi->getOperand(1).getReg();
+        unsigned Output = phi->getOperand(0).getReg();
+
+        MachineInstr* temp = phi;
+        ++phi;
+        temp->eraseFromParent();
+
+        if (Input != Output)
+          F.getRegInfo().replaceRegWith(Output, Input);
+        
+        continue;
+      }
+      
+      for (unsigned i = phi->getNumOperands() - 1; i >= 2; i-=2)
+        if (!preds.count(phi->getOperand(i).getMBB())) {
+          phi->RemoveOperand(i);
+          phi->RemoveOperand(i-1);
+        }
+  
+      ++phi;
+    }
+  }
 
   F.RenumberBlocks();
 
