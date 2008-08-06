@@ -264,18 +264,14 @@ public:
   HANDLEBINOP(Div);
   HANDLEBINOP(Rem);
   HANDLEBINOP(Add);
-  //         (Sub) - Sub is handled specially below for ptr-ptr subtract.
+  HANDLEBINOP(Sub);
   HANDLEBINOP(Shl);
   HANDLEBINOP(Shr);
   HANDLEBINOP(And);
   HANDLEBINOP(Xor);
   HANDLEBINOP(Or);
 #undef HANDLEBINOP
-  Value *VisitBinSub(const BinaryOperator *E);
-  Value *VisitBinSubAssign(const CompoundAssignOperator *E) {
-    return EmitCompoundAssign(E, &ScalarExprEmitter::EmitSub);
-  }
-  
+
   // Comparisons.
   Value *EmitCompare(const BinaryOperator *E, unsigned UICmpOpc,
                      unsigned SICmpOpc, unsigned FCmpOpc);
@@ -751,26 +747,56 @@ Value *ScalarExprEmitter::EmitCompoundAssign(const CompoundAssignOperator *E,
     OpInfo.RHS = Visit(E->getRHS());
   }
   
-  // Convert the LHS/RHS values to the computation type.
-  OpInfo.LHS = EmitScalarConversion(OpInfo.LHS, LHSTy, ComputeType);
-  
-  // Do not merge types for -= or += where the LHS is a pointer.
-  if (!(E->getOpcode() == BinaryOperator::SubAssign ||
-        E->getOpcode() == BinaryOperator::AddAssign) ||
-      !E->getLHS()->getType()->isPointerType()) {
-    OpInfo.RHS = EmitScalarConversion(OpInfo.RHS, RHSTy, ComputeType);
+  QualType LComputeTy, RComputeTy, ResultTy;
+
+  // Compound assignment does not contain enough information about all
+  // the types involved for pointer arithmetic cases. Figure it out
+  // here for now.
+  if (E->getLHS()->getType()->isPointerType()) {
+    // Pointer arithmetic cases: ptr +=,-= int and ptr -= ptr, 
+    assert((E->getOpcode() == BinaryOperator::AddAssign ||
+            E->getOpcode() == BinaryOperator::SubAssign) &&
+           "Invalid compound assignment operator on pointer type.");
+    LComputeTy = E->getLHS()->getType();
+    
+    if (E->getRHS()->getType()->isPointerType()) {    
+      // Degenerate case of (ptr -= ptr) allowed by GCC implicit cast
+      // extension, the conversion from the pointer difference back to
+      // the LHS type is handled at the end.
+      assert(E->getOpcode() == BinaryOperator::SubAssign &&
+             "Invalid compound assignment operator on pointer type.");
+      RComputeTy = E->getLHS()->getType();
+      ResultTy = CGF.getContext().getPointerDiffType();
+    } else {
+      RComputeTy = E->getRHS()->getType();
+      ResultTy = LComputeTy;
+    }
+  } else if (E->getRHS()->getType()->isPointerType()) {
+    // Degenerate case of (int += ptr) allowed by GCC implicit cast
+    // extension.
+    assert(E->getOpcode() == BinaryOperator::AddAssign &&
+           "Invalid compound assignment operator on pointer type.");
+    LComputeTy = E->getLHS()->getType();
+    RComputeTy = E->getRHS()->getType();
+    ResultTy = RComputeTy;
+  } else {
+    LComputeTy = RComputeTy = ResultTy = ComputeType;
   }
-  OpInfo.Ty = ComputeType;
+
+  // Convert the LHS/RHS values to the computation type.
+  OpInfo.LHS = EmitScalarConversion(OpInfo.LHS, LHSTy, LComputeTy);
+  OpInfo.RHS = EmitScalarConversion(OpInfo.RHS, RHSTy, RComputeTy);
+  OpInfo.Ty = ResultTy;
   OpInfo.E = E;
   
   // Expand the binary operator.
   Value *Result = (this->*Func)(OpInfo);
   
-  // Truncate the result back to the LHS type.
-  Result = EmitScalarConversion(Result, ComputeType, LHSTy);
+  // Convert the result back to the LHS type.
+  Result = EmitScalarConversion(Result, ResultTy, LHSTy);
   
   // Store the result value into the LHS lvalue.
-  CGF.EmitStoreThroughLValue(RValue::get(Result), LHSLV, E->getType());
+  CGF.EmitStoreThroughLValue(RValue::get(Result), LHSLV, LHSTy);
 
   // For bitfields, we need the value in the bitfield
   // FIXME: This adds an extra bitfield load
@@ -833,69 +859,61 @@ Value *ScalarExprEmitter::EmitAdd(const BinOpInfo &Ops) {
 Value *ScalarExprEmitter::EmitSub(const BinOpInfo &Ops) {
   if (!isa<llvm::PointerType>(Ops.LHS->getType()))
     return Builder.CreateSub(Ops.LHS, Ops.RHS, "sub");
-  
-  // pointer - int
-  assert(!isa<llvm::PointerType>(Ops.RHS->getType()) &&
-         "ptr-ptr shouldn't get here");
-  // FIXME: The pointer could point to a VLA.
-  Value *Idx = Builder.CreateNeg(Ops.RHS, "sub.ptr.neg");
-  
-  unsigned Width = cast<llvm::IntegerType>(Idx->getType())->getBitWidth();
-  if (Width < CGF.LLVMPointerWidth) {
-    // Zero or sign extend the pointer value based on whether the index is
-    // signed or not.
-    const llvm::Type *IdxType = llvm::IntegerType::get(CGF.LLVMPointerWidth);
-    if (Ops.E->getRHS()->getType()->isSignedIntegerType())
-      Idx = Builder.CreateSExt(Idx, IdxType, "idx.ext");
-    else
-      Idx = Builder.CreateZExt(Idx, IdxType, "idx.ext");
-  }
-  
-  // The GNU void* - int case is automatically handled here because
-  // our LLVM type for void* is i8*.
-  return Builder.CreateGEP(Ops.LHS, Idx, "sub.ptr");
-}
 
-Value *ScalarExprEmitter::VisitBinSub(const BinaryOperator *E) {
-  // "X - Y" is different from "X -= Y" in one case: when Y is a pointer.  In
-  // the compound assignment case it is invalid, so just handle it here.
-  if (!E->getRHS()->getType()->isPointerType())
-    return EmitSub(EmitBinOps(E));
-  
-  // pointer - pointer
-  Value *LHS = Visit(E->getLHS());
-  Value *RHS = Visit(E->getRHS());
-  
-  const QualType LHSType = E->getLHS()->getType();
-  const QualType LHSElementType = LHSType->getAsPointerType()->getPointeeType();
-  uint64_t ElementSize;
-
-  // Handle GCC extension for pointer arithmetic on void* types.
-  if (LHSElementType->isVoidType()) {
-    ElementSize = 1;
+  if (!isa<llvm::PointerType>(Ops.RHS->getType())) {
+    // pointer - int
+    Value *Idx = Ops.RHS;
+    unsigned Width = cast<llvm::IntegerType>(Idx->getType())->getBitWidth();
+    if (Width < CGF.LLVMPointerWidth) {
+      // Zero or sign extend the pointer value based on whether the index is
+      // signed or not.
+      const llvm::Type *IdxType = llvm::IntegerType::get(CGF.LLVMPointerWidth);
+      if (Ops.E->getRHS()->getType()->isSignedIntegerType())
+        Idx = Builder.CreateSExt(Idx, IdxType, "idx.ext");
+      else
+        Idx = Builder.CreateZExt(Idx, IdxType, "idx.ext");
+    }
+    Idx = Builder.CreateNeg(Idx, "sub.ptr.neg");
+    
+    // FIXME: The pointer could point to a VLA.
+    // The GNU void* - int case is automatically handled here because
+    // our LLVM type for void* is i8*.
+    return Builder.CreateGEP(Ops.LHS, Idx, "sub.ptr");
   } else {
-    ElementSize = CGF.getContext().getTypeSize(LHSElementType) / 8;
-  }
+    // pointer - pointer
+    Value *LHS = Ops.LHS;
+    Value *RHS = Ops.RHS;
   
-  const llvm::Type *ResultType = ConvertType(E->getType());
-  LHS = Builder.CreatePtrToInt(LHS, ResultType, "sub.ptr.lhs.cast");
-  RHS = Builder.CreatePtrToInt(RHS, ResultType, "sub.ptr.rhs.cast");
-  Value *BytesBetween = Builder.CreateSub(LHS, RHS, "sub.ptr.sub");
+    const QualType LHSType = Ops.E->getLHS()->getType();
+    const QualType LHSElementType = LHSType->getAsPointerType()->getPointeeType();
+    uint64_t ElementSize;
 
-  // HACK: LLVM doesn't have an divide instruction that 'knows' there is no
-  // remainder.  As such, we handle common power-of-two cases here to generate
-  // better code.
-  if (llvm::isPowerOf2_64(ElementSize)) {
-    Value *ShAmt =
-      llvm::ConstantInt::get(ResultType, llvm::Log2_64(ElementSize));
-    return Builder.CreateAShr(BytesBetween, ShAmt, "sub.ptr.shr");
+    // Handle GCC extension for pointer arithmetic on void* types.
+    if (LHSElementType->isVoidType()) {
+      ElementSize = 1;
+    } else {
+      ElementSize = CGF.getContext().getTypeSize(LHSElementType) / 8;
+    }
+    
+    const llvm::Type *ResultType = ConvertType(Ops.Ty);
+    LHS = Builder.CreatePtrToInt(LHS, ResultType, "sub.ptr.lhs.cast");
+    RHS = Builder.CreatePtrToInt(RHS, ResultType, "sub.ptr.rhs.cast");
+    Value *BytesBetween = Builder.CreateSub(LHS, RHS, "sub.ptr.sub");
+    
+    // HACK: LLVM doesn't have an divide instruction that 'knows' there is no
+    // remainder.  As such, we handle common power-of-two cases here to generate
+    // better code. See PR2247.
+    if (llvm::isPowerOf2_64(ElementSize)) {
+      Value *ShAmt =
+        llvm::ConstantInt::get(ResultType, llvm::Log2_64(ElementSize));
+      return Builder.CreateAShr(BytesBetween, ShAmt, "sub.ptr.shr");
+    }
+    
+    // Otherwise, do a full sdiv.
+    Value *BytesPerElt = llvm::ConstantInt::get(ResultType, ElementSize);
+    return Builder.CreateSDiv(BytesBetween, BytesPerElt, "sub.ptr.div");
   }
-  
-  // Otherwise, do a full sdiv.
-  Value *BytesPerElt = llvm::ConstantInt::get(ResultType, ElementSize);
-  return Builder.CreateSDiv(BytesBetween, BytesPerElt, "sub.ptr.div");
 }
-
 
 Value *ScalarExprEmitter::EmitShl(const BinOpInfo &Ops) {
   // LLVM requires the LHS and RHS to be the same type: promote or truncate the
