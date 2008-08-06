@@ -340,10 +340,8 @@ void AggExprEmitter::EmitInitializationToLValue(Expr* E, LValue LV) {
 void AggExprEmitter::EmitNullInitializationToLValue(LValue LV, QualType T) {
   if (!CGF.hasAggregateLLVMType(T)) {
     // For non-aggregates, we can store zero
-    const llvm::Type *T =
-       cast<llvm::PointerType>(LV.getAddress()->getType())->getElementType();
-    // FIXME: volatility
-    Builder.CreateStore(llvm::Constant::getNullValue(T), LV.getAddress());
+    llvm::Value *Null = llvm::Constant::getNullValue(CGF.ConvertType(T));
+    CGF.EmitStoreThroughLValue(RValue::get(Null), LV, T);
   } else {
     // Otherwise, just memset the whole thing to zero.  This is legal
     // because in LLVM, all default initializers are guaranteed to have a
