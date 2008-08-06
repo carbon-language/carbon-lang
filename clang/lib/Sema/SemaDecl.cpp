@@ -808,6 +808,14 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
     // Handle attributes prior to checking for duplicates in MergeVarDecl
     ProcessDeclAttributes(NewVD, D);
 
+    // Handle GNU asm-label extension (encoded as an attribute).
+    if (Expr *E = (Expr*) D.getAsmLabel()) {
+      // The parser guarantees this is a string.
+      StringLiteral *SE = cast<StringLiteral>(E);  
+      NewVD->addAttr(new AsmLabelAttr(std::string(SE->getStrData(),
+                                                  SE->getByteLength())));
+    }
+
     // Emit an error if an address space was applied to decl with local storage.
     // This includes arrays of objects with address space qualifiers, but not
     // automatic variables that point to other address spaces.

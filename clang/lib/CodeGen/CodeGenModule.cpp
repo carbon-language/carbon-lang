@@ -184,6 +184,12 @@ void CodeGenModule::SetGlobalValueAttributes(const FunctionDecl *FD,
   if (const VisibilityAttr *attr = FD->getAttr<VisibilityAttr>())
     CodeGenModule::setVisibility(GV, attr->getVisibility());
   // FIXME: else handle -fvisibility
+
+  if (const AsmLabelAttr *ALA = FD->getAttr<AsmLabelAttr>()) {
+    // Prefaced with special LLVM marker to indicate that the name
+    // should not be munged.
+    GV->setName("\01" + ALA->getLabel());
+  }
 }
 
 void CodeGenModule::SetFunctionAttributes(const FunctionDecl *FD,
@@ -400,13 +406,8 @@ void CodeGenModule::EmitStatics() {
       // Check if we have used a decl with the same name
       // FIXME: The AST should have some sort of aggregate decls or
       // global symbol map.
-      if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
-        if (!getModule().getFunction(FD->getName()))
-          continue;
-      } else {
-        if (!getModule().getNamedGlobal(cast<VarDecl>(D)->getName()))
-          continue;
-      }
+      if (!GlobalDeclMap.count(D->getName()))
+        continue;
 
       // Emit the definition.
       EmitGlobalDefinition(D);
@@ -620,6 +621,12 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
   if (const VisibilityAttr *attr = D->getAttr<VisibilityAttr>())
     setVisibility(GV, attr->getVisibility());
   // FIXME: else handle -fvisibility
+
+  if (const AsmLabelAttr *ALA = D->getAttr<AsmLabelAttr>()) {
+    // Prefaced with special LLVM marker to indicate that the name
+    // should not be munged.
+    GV->setName("\01" + ALA->getLabel());
+  }
   
   // Set the llvm linkage type as appropriate.
   if (D->getStorageClass() == VarDecl::Static)
