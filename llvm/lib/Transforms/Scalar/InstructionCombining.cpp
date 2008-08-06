@@ -3586,6 +3586,21 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
     }
   }
   
+  { // (icmp ult A, C) & (icmp ult B, C) --> (icmp ult (A|B), C)
+    // where C is a power of 2
+    Value *A, *B;
+    ConstantInt *C1, *C2;
+    ICmpInst::Predicate LHSCC, RHSCC;
+    if (match(&I, m_And(m_ICmp(LHSCC, m_Value(A), m_ConstantInt(C1)),
+                        m_ICmp(RHSCC, m_Value(B), m_ConstantInt(C2)))))
+      if (C1 == C2 && LHSCC == RHSCC && LHSCC == ICmpInst::ICMP_ULT &&
+          C1->getValue().isPowerOf2()) {
+        Instruction *NewOr = BinaryOperator::CreateOr(A, B);
+        InsertNewInstBefore(NewOr, I);
+        return new ICmpInst(LHSCC, NewOr, C1);
+      }
+  }
+  
   if (ICmpInst *RHS = dyn_cast<ICmpInst>(Op1)) {
     // (icmp1 A, B) & (icmp2 A, B) --> (icmp3 A, B)
     if (Instruction *R = AssociativeOpt(I, FoldICmpLogical(*this, RHS)))
