@@ -860,20 +860,52 @@ bool StrongPHIElimination::runOnMachineFunction(MachineFunction &Fn) {
         I->begin()->getOpcode() == TargetInstrInfo::PHI)
       processBlock(I);
   
+  // Break interferences where two different phis want to coalesce
+  // in the same register.
+  std::set<unsigned> seen;
+  typedef std::map<unsigned, std::map<unsigned, MachineBasicBlock*> >
+          RenameSetType;
+  for (RenameSetType::iterator I = RenameSets.begin(), E = RenameSets.end();
+       I != E; ++I) {
+    for (std::map<unsigned, MachineBasicBlock*>::iterator
+         OI = I->second.begin(), OE = I->second.end(); OI != OE; ) {
+      if (!seen.count(OI->first)) {
+        seen.insert(OI->first);
+        ++OI;
+      } else {
+        Waiting[OI->second].insert(std::make_pair(OI->first, I->first));
+        unsigned reg = OI->first;
+        ++OI;
+        I->second.erase(reg);
+      }
+    }
+  }
+  
   // Insert copies
   // FIXME: This process should probably preserve LiveIntervals
   SmallPtrSet<MachineBasicBlock*, 16> visited;
   InsertCopies(Fn.begin(), visited);
   
   // Perform renaming
-  typedef std::map<unsigned, std::map<unsigned, MachineBasicBlock*> >
-          RenameSetType;
   for (RenameSetType::iterator I = RenameSets.begin(), E = RenameSets.end();
        I != E; ++I)
-    for (std::map<unsigned, MachineBasicBlock*>::iterator SI = 
-         I->second.begin(), SE = I->second.end(); SI != SE; ++SI) {
-      mergeLiveIntervals(I->first, SI->first, SI->second);
-      Fn.getRegInfo().replaceRegWith(SI->first, I->first);
+    while (I->second.size()) {
+      std::map<unsigned, MachineBasicBlock*>::iterator SI = I->second.begin();
+      
+      if (SI->first != I->first) {
+        mergeLiveIntervals(I->first, SI->first, SI->second);
+        Fn.getRegInfo().replaceRegWith(SI->first, I->first);
+      
+        if (RenameSets.count(SI->first)) {
+          I->second.insert(RenameSets[SI->first].begin(),
+                           RenameSets[SI->first].end());
+          RenameSets.erase(SI->first);
+        }
+        
+        
+      }
+      
+      I->second.erase(SI->first);
     }
   
   // FIXME: Insert last-minute copies
@@ -907,6 +939,7 @@ bool StrongPHIElimination::runOnMachineFunction(MachineFunction &Fn) {
       // trim them because they might have other legitimate uses.
       for (unsigned i = 1; i < PInstr->getNumOperands(); i += 2) {
         unsigned reg = PInstr->getOperand(i).getReg();
+        
         MachineBasicBlock* MBB = PInstr->getOperand(i+1).getMBB();
         LiveInterval& InputI = LI.getInterval(reg);
         if (MBB != PInstr->getParent() &&
