@@ -421,6 +421,7 @@ void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
   while (P != MBB->end() && P->getOpcode() == TargetInstrInfo::PHI) {
     unsigned DestReg = P->getOperand(0).getReg();
 
+    
     // Don't both doing PHI elimination for dead PHI's.
     if (P->registerDefIsDead(DestReg)) {
       ++P;
@@ -442,6 +443,12 @@ void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
     // Iterate over the operands of the PHI node
     for (int i = P->getNumOperands() - 1; i >= 2; i-=2) {
       unsigned SrcReg = P->getOperand(i-1).getReg();
+      
+      // Don't need to try to coalesce a register with itself.
+      if (SrcReg == DestReg) {
+        ProcessedNames.insert(SrcReg);
+        continue;
+      }
     
       // Check for trivial interferences via liveness information, allowing us
       // to avoid extra work later.  Any registers that interfere cannot both
