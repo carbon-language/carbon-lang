@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | opt -loop-reduce | llvm-dis | grep ugt
-; PR2355
+; PR2535
 
 @.str = internal constant [4 x i8] c"%d\0A\00"
 
