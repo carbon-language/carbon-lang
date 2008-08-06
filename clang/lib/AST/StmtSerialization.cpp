@@ -472,31 +472,15 @@ ContinueStmt* ContinueStmt::CreateImpl(Deserializer& D, ASTContext& C) {
 void DeclStmt::EmitImpl(Serializer& S) const {
   S.Emit(StartLoc);
   S.Emit(EndLoc);
-
-  // FIXME: Clean up ownership of the Decl.
-  const ScopedDecl* d = getDecl();
-  
-  if (!S.isRegistered(d)) {
-    S.EmitBool(true);
-    S.EmitOwnedPtr(d);
-  }
-  else {
-    S.EmitBool(false);
-    S.EmitPtr(d);
-  }
+  S.EmitOwnedPtr(getDecl());
 }
     
 DeclStmt* DeclStmt::CreateImpl(Deserializer& D, ASTContext& C) {
   SourceLocation StartLoc = SourceLocation::ReadVal(D);
-  SourceLocation EndLoc = SourceLocation::ReadVal(D);
-  
-  bool OwnsDecl = D.ReadBool();  
-  ScopedDecl* decl = cast<ScopedDecl>(OwnsDecl ? D.ReadOwnedPtr<Decl>(C)
-                                               : D.ReadPtr<Decl>());
-  
+  SourceLocation EndLoc = SourceLocation::ReadVal(D);  
+  ScopedDecl* decl = cast<ScopedDecl>(D.ReadOwnedPtr<Decl>(C));  
   return new DeclStmt(decl, StartLoc, EndLoc);
 }
-    
 
 void DeclRefExpr::EmitImpl(Serializer& S) const {
   S.Emit(Loc);
