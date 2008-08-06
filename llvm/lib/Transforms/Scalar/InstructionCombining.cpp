@@ -11259,11 +11259,13 @@ Instruction *InstCombiner::visitShuffleVectorInst(ShuffleVectorInst &SVI) {
         Elts.push_back(UndefValue::get(Type::Int32Ty));
       else {
         if ((Mask[i] >= e && isa<UndefValue>(RHS)) ||
-            (Mask[i] <  e && isa<UndefValue>(LHS)))
+            (Mask[i] <  e && isa<UndefValue>(LHS))) {
           Mask[i] = 2*e;     // Turn into undef.
-        else
+          Elts.push_back(UndefValue::get(Type::Int32Ty));
+        } else {
           Mask[i] &= (e-1);  // Force to LHS.
-        Elts.push_back(ConstantInt::get(Type::Int32Ty, Mask[i]));
+          Elts.push_back(ConstantInt::get(Type::Int32Ty, Mask[i]));
+        }
       }
     }
     SVI.setOperand(0, SVI.getOperand(1));
