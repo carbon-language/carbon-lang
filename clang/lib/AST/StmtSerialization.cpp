@@ -470,11 +470,33 @@ ContinueStmt* ContinueStmt::CreateImpl(Deserializer& D, ASTContext& C) {
 }
 
 void DeclStmt::EmitImpl(Serializer& S) const {
-  // FIXME: special handling for struct decls.
-  S.EmitOwnedPtr(getDecl());  
   S.Emit(StartLoc);
   S.Emit(EndLoc);
+
+  // FIXME: Clean up ownership of the Decl.
+  const ScopedDecl* d = getDecl();
+  
+  if (!S.isRegistered(d)) {
+    S.EmitBool(true);
+    S.EmitOwnedPtr(d);
+  }
+  else {
+    S.EmitBool(false);
+    S.EmitPtr(d);
+  }
 }
+    
+DeclStmt* DeclStmt::CreateImpl(Deserializer& D, ASTContext& C) {
+  SourceLocation StartLoc = SourceLocation::ReadVal(D);
+  SourceLocation EndLoc = SourceLocation::ReadVal(D);
+  
+  bool OwnsDecl = D.ReadBool();  
+  ScopedDecl* decl = cast<ScopedDecl>(OwnsDecl ? D.ReadOwnedPtr<Decl>(C)
+                                               : D.ReadPtr<Decl>());
+  
+  return new DeclStmt(decl, StartLoc, EndLoc);
+}
+    
 
 void DeclRefExpr::EmitImpl(Serializer& S) const {
   S.Emit(Loc);
@@ -518,24 +540,6 @@ DeclRefExpr* DeclRefExpr::CreateImpl(Deserializer& D, ASTContext& C) {
     decl = cast<ValueDecl>(D.ReadOwnedPtr<Decl>(C));
   
   return new DeclRefExpr(decl,T,Loc);
-}
-
-void ObjCSuperRefExpr::EmitImpl(Serializer& S) const {
-  S.Emit(Loc);
-  S.Emit(getType());
-}
-
-ObjCSuperRefExpr* ObjCSuperRefExpr::CreateImpl(Deserializer& D, ASTContext& C) {
-  SourceLocation Loc = SourceLocation::ReadVal(D);
-  QualType T = QualType::ReadVal(D); 
-  return new ObjCSuperRefExpr(T, Loc); 
-}
-
-DeclStmt* DeclStmt::CreateImpl(Deserializer& D, ASTContext& C) {
-  ScopedDecl* decl = cast<ScopedDecl>(D.ReadOwnedPtr<Decl>(C));
-  SourceLocation StartLoc = SourceLocation::ReadVal(D);
-  SourceLocation EndLoc = SourceLocation::ReadVal(D);
-  return new DeclStmt(decl, StartLoc, EndLoc);
 }
 
 void DefaultStmt::EmitImpl(Serializer& S) const {
@@ -1099,6 +1103,17 @@ ObjCStringLiteral* ObjCStringLiteral::CreateImpl(Deserializer& D, ASTContext& C)
   QualType T = QualType::ReadVal(D);
   StringLiteral* String = cast<StringLiteral>(D.ReadOwnedPtr<Stmt>(C));
   return new ObjCStringLiteral(String,T,L);
+}
+
+void ObjCSuperRefExpr::EmitImpl(Serializer& S) const {
+  S.Emit(Loc);
+  S.Emit(getType());
+}
+
+ObjCSuperRefExpr* ObjCSuperRefExpr::CreateImpl(Deserializer& D, ASTContext& C) {
+  SourceLocation Loc = SourceLocation::ReadVal(D);
+  QualType T = QualType::ReadVal(D); 
+  return new ObjCSuperRefExpr(T, Loc); 
 }
 
 //===----------------------------------------------------------------------===//
