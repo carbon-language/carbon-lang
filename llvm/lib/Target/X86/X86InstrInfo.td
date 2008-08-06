@@ -2582,7 +2582,7 @@ def EH_RETURN   : I<0xC3, RawFrm, (outs), (ins GR32:$addr),
 
 // Atomic swap. These are just normal xchg instructions. But since a memory
 // operand is referenced, the atomicity is ensured.
-let Constraints = "$val = $dst", Defs = [EFLAGS] in {
+let Constraints = "$val = $dst" in {
 def XCHG32rm : I<0x87, MRMSrcMem, (outs GR32:$dst), (ins i32mem:$ptr, GR32:$val),
                "xchg{l}\t{$val, $ptr|$ptr, $val}", 
                [(set GR32:$dst, (atomic_swap_32 addr:$ptr, GR32:$val))]>;
