@@ -896,13 +896,16 @@ bool StrongPHIElimination::runOnMachineFunction(MachineFunction &Fn) {
       }
     } else {
       // Trim live intervals of input registers.  They are no longer live into
-      // this block.
+      // this block if they died after the PHI.  If they lived after it, don't
+      // trim them because they might have other legitimate uses.
       for (unsigned i = 1; i < PInstr->getNumOperands(); i += 2) {
         unsigned reg = PInstr->getOperand(i).getReg();
         MachineBasicBlock* MBB = PInstr->getOperand(i+1).getMBB();
         LiveInterval& InputI = LI.getInterval(reg);
         if (MBB != PInstr->getParent() &&
-            InputI.liveAt(LI.getMBBStartIdx(PInstr->getParent())))
+            InputI.liveAt(LI.getMBBStartIdx(PInstr->getParent())) &&
+            InputI.expiredAt(LI.getInstructionIndex(PInstr) + 
+                             LiveIntervals::InstrSlots::NUM))
           InputI.removeRange(LI.getMBBStartIdx(PInstr->getParent()),
                              LI.getInstructionIndex(PInstr),
                              true);
