@@ -87,3 +87,15 @@ int f12b(int y) {
   return 1;
 }
 
+// Filed with PR 2630.  This code should produce no warnings.
+int f13(void)
+{
+  int a = 1;
+  int b, c = b = a + a;
+
+  if (b > 0)
+    return (0);
+
+  return (a + b + c);
+}
+
