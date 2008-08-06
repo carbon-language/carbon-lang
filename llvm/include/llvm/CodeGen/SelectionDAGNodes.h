@@ -1101,17 +1101,17 @@ public:
     return ~NodeType;
   }
 
-  /// use_empty - Return true if there are no uses of this value.
+  /// use_empty - Return true if there are no uses of this node.
   ///
   bool use_empty() const { return Uses == NULL; }
 
-  /// hasOneUse - Return true if there is exactly one use of this value.
+  /// hasOneUse - Return true if there is exactly one use of this node.
   ///
   bool hasOneUse() const {
     return !use_empty() && next(use_begin()) == use_end();
   }
 
-  /// use_size - Return the number of uses of this value. This method takes
+  /// use_size - Return the number of uses of this node. This method takes
   /// time proportional to the number of uses.
   ///
   size_t use_size() const { return std::distance(use_begin(), use_end()); }
