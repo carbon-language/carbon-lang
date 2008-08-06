@@ -42,6 +42,41 @@ struct VISIBILITY_HIDDEN SaveAndRestore {
   T old_value;
 };
   
+static SourceLocation GetEndLoc(ScopedDecl* D) {
+  if (VarDecl* VD = dyn_cast<VarDecl>(D))
+    if (Expr* Ex = VD->getInit())
+      return Ex->getSourceRange().getEnd();
+  
+  return D->getLocation();  
+}
+  
+class VISIBILITY_HIDDEN UnaryDeclStmt : public DeclStmt {
+  Stmt* Ex;
+public:
+  UnaryDeclStmt(ScopedDecl* D)
+  : DeclStmt(D, D->getLocation(), GetEndLoc(D)), Ex(0) {
+    if (VarDecl* VD = dyn_cast<VarDecl>(D))
+      Ex = VD->getInit();
+  }
+  
+  virtual ~UnaryDeclStmt() {}
+  virtual void Destroy(ASTContext& Ctx) { assert(false && "Do not call"); }
+  
+  virtual child_iterator child_begin() {
+    return Ex ? &Ex : 0;
+  }  
+  virtual child_iterator child_end() {
+    return Ex ? &Ex + 1 : 0;
+  }  
+  virtual decl_iterator decl_begin() {
+    return getDecl();
+  }  
+  virtual decl_iterator decl_end() {
+    ScopedDecl* D = getDecl();
+    return D ? D->getNextDeclarator() : 0;
+  }
+};
+  
 /// CFGBuilder - This class implements CFG construction from an AST.
 ///   The builder is stateful: an instance of the builder should be used to only
 ///   construct a single CFG.
@@ -135,7 +170,7 @@ private:
   CFGBlock* addStmt(Stmt* Terminator);
   CFGBlock* WalkAST(Stmt* Terminator, bool AlwaysAddStmt);
   CFGBlock* WalkAST_VisitChildren(Stmt* Terminator);
-  CFGBlock* WalkAST_VisitDeclSubExprs(StmtIterator& I);
+  CFGBlock* WalkAST_VisitDeclSubExpr(ScopedDecl* D);
   CFGBlock* WalkAST_VisitStmtExpr(StmtExpr* Terminator);
   void FinishBlock(CFGBlock* B);
   
@@ -329,12 +364,32 @@ CFGBlock* CFGBuilder::WalkAST(Stmt* Terminator, bool AlwaysAddStmt = false) {
 
     case Stmt::DeclStmtClass: {
       ScopedDecl* D = cast<DeclStmt>(Terminator)->getDecl();
-      Block->appendStmt(Terminator);
       
-      StmtIterator I(D);
-      return WalkAST_VisitDeclSubExprs(I);
+      if (!D->getNextDeclarator()) {      
+        Block->appendStmt(Terminator);
+        return WalkAST_VisitDeclSubExpr(D);
+      }
+      else {
+        typedef llvm::SmallVector<ScopedDecl*,10> BufTy;
+        BufTy Buf;        
+        CFGBlock* B = 0;
+        do { Buf.push_back(D); D = D->getNextDeclarator(); } while (D);
+        for (BufTy::reverse_iterator I=Buf.rbegin(), E=Buf.rend(); I!=E; ++I) {
+          // Get the alignment of UnaryDeclStmt, padding out to >=8 bytes.
+          unsigned A = llvm::AlignOf<UnaryDeclStmt>::Alignment < 8
+                       ? 8 : llvm::AlignOf<UnaryDeclStmt>::Alignment;
+          
+          // Allocate the UnaryDeclStmt using the BumpPtrAllocator.  It will
+          // get automatically freed with the CFG.
+          void* Mem = cfg->getAllocator().Allocate(sizeof(UnaryDeclStmt), A);
+          // Append the fake DeclStmt to block.
+          Block->appendStmt(new (Mem) UnaryDeclStmt(*I));
+          B = WalkAST_VisitDeclSubExpr(*I);
+        }
+        return B;
+      }
     }
-      
+
     case Stmt::AddrLabelExprClass: {
       AddrLabelExpr* A = cast<AddrLabelExpr>(Terminator);
       AddressTakenLabels.insert(A->getLabel());
@@ -412,31 +467,27 @@ CFGBlock* CFGBuilder::WalkAST(Stmt* Terminator, bool AlwaysAddStmt = false) {
   return WalkAST_VisitChildren(Terminator);
 }
 
-/// WalkAST_VisitDeclSubExprs - Utility method to handle Decls contained in
-///  DeclStmts.  Because the initialization code (and sometimes the
-///  the type declarations) for DeclStmts can contain arbitrary expressions, 
-///  we must linearize declarations to handle arbitrary control-flow induced by
-/// those expressions.  
-CFGBlock* CFGBuilder::WalkAST_VisitDeclSubExprs(StmtIterator& I) {
-  if (I == StmtIterator())
+/// WalkAST_VisitDeclSubExpr - Utility method to add block-level expressions
+///  for initializers in Decls.
+CFGBlock* CFGBuilder::WalkAST_VisitDeclSubExpr(ScopedDecl* D) {
+  VarDecl* VD = dyn_cast<VarDecl>(D);
+
+  if (!VD)
     return Block;
   
-  Stmt* Terminator = *I;
-  ++I;
-  WalkAST_VisitDeclSubExprs(I);
-    
-  // Optimization: Don't create separate block-level statements for literals.
+  Expr* Init = VD->getInit();
   
-  switch (Terminator->getStmtClass()) {
+  if (!Init)
+    return Block;
+
+  // Optimization: Don't create separate block-level statements for literals.  
+  switch (Init->getStmtClass()) {
     case Stmt::IntegerLiteralClass:
     case Stmt::CharacterLiteralClass:
     case Stmt::StringLiteralClass:
       break;
-      
-      // All other cases.
-      
     default:
-      Block = addStmt(Terminator);
+      Block = addStmt(Init);
   }
   
   return Block;
