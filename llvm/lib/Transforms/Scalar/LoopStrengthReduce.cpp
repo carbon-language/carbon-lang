@@ -1624,10 +1624,10 @@ ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
         continue;
       }
 
-      // If scale is negative, use inverse predicate unless it's testing
+      // If scale is negative, use swapped predicate unless it's testing
       // for equality.
       if (Scale < 0 && !Cond->isEquality())
-        Predicate = ICmpInst::getInversePredicate(Predicate);
+        Predicate = ICmpInst::getSwappedPredicate(Predicate);
 
       NewStride = &StrideOrder[i];
       break;
