@@ -1,32 +1,74 @@
-// RUN: clang %s -emit-llvm -o - > %t1
-// RUN: grep "shl i32 .*, 19" %t1 &&
-// RUN: grep "ashr i32 .*, 19" %t1 &&
-// RUN: grep "shl i16 .*, 1" %t1 &&
-// RUN: grep "lshr i16 .*, 9" %t1 &&
-// RUN: grep "and i32 .*, -8192" %t1 &&
-// RUN: grep "and i16 .*, -32513" %t1 &&
-// RUN: grep "getelementptr (i32\* bitcast (.struct.STestB2\* @stb2 to i32\*), i32 1)" %t1
-// Test bitfield access
+// RUN: clang %s -emit-llvm-bc -o - | opt -std-compile-opts | llvm-dis > %t &&
+// RUN: grep "ret i32" %t | count 4 &&
+// RUN: grep "ret i32 1" %t | count 4
 
+static int f0(int n) {
+  struct s0 {
+    int a : 30;
+    int b : 2;
+    long long c : 31;
+  } x = { 0xdeadbeef, 0xdeadbeef, 0xdeadbeef };
+  
+  x.a += n;
+  x.b += n;
+  x.c += n;
 
-struct STestB1 { int a:13; char b; unsigned short c:7;} stb1;
-struct STestB2 { short a[3]; int b:15} stb2;
-
-int f() {
-  return stb1.a + stb1.b + stb1.c;
+  return x.a + x.b + x.c;
 }
 
-void g() {
-  stb1.a = -40;
-  stb1.b = 10;
-  stb1.c = 15;
+int g0(void) {
+  return f0(-1) + 44335655;
 }
 
-int h() {
-  return stb2.a[1] + stb2.b;
+static int f1(void) {
+  struct s1 { 
+    int a:13; 
+    char b; 
+    unsigned short c:7;
+  } x;
+  
+  x.a = -40;
+  x.b = 10;
+  x.c = 15;
+
+  return x.a + x.b + x.c;
 }
 
-void i(){
-  stb2.a[2] = -40;
-  stb2.b = 10;
+int g1(void) {
+  return f1() + 16;
+}
+
+static int f2(void) {
+  struct s2 {
+    short a[3];
+    int b : 15;
+  } x;
+  
+  x.a[0] = x.a[1] = x.a[2] = -40;
+  x.b = 10;
+
+  return x.b;
+}
+
+int g2(void) {
+  return f2() - 9;
+}
+
+static int f3(int n) {
+  struct s3 {
+    unsigned a:16;
+    unsigned b:28 __attribute__ ((packed));
+  } x = { 0xdeadbeef, 0xdeadbeef };
+  struct s4 {
+    signed a:16;
+    signed b:28 __attribute__ ((packed));
+  } y;
+  y.a = -0x56789abcL;
+  y.b = -0x56789abcL;
+  return ((y.a += x.a += n) + 
+          (y.b += x.b += n));
+}
+
+int g3(void) {
+  return f3(20) + 130725747;
 }
