@@ -64,8 +64,6 @@ void LiveIntervals::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<LiveVariables>();
   AU.addPreservedID(MachineLoopInfoID);
   AU.addPreservedID(MachineDominatorsID);
-  AU.addPreservedID(PHIEliminationID);
-  AU.addRequiredID(PHIEliminationID);
   AU.addRequiredID(TwoAddressInstructionPassID);
   MachineFunctionPass::getAnalysisUsage(AU);
 }
@@ -129,7 +127,7 @@ void LiveIntervals::computeNumbering() {
   std::sort(Idx2MBBMap.begin(), Idx2MBBMap.end(), Idx2MBBCompare());
   
   if (!OldI2MI.empty())
-    for (iterator OI = begin(), OE = end(); OI != OE; ++OI)
+    for (iterator OI = begin(), OE = end(); OI != OE; ++OI) {
       for (LiveInterval::iterator LI = OI->second.begin(),
            LE = OI->second.end(); LI != LE; ++LI) {
         
@@ -172,15 +170,18 @@ void LiveIntervals::computeNumbering() {
           else
             LI->end = InstrSlots::NUM * i2miMap_.size();
         }
+      }
+      
+      for (LiveInterval::vni_iterator VNI = OI->second.vni_begin(),
+           VNE = OI->second.vni_end(); VNI != VNE; ++VNI) { 
+        VNInfo* vni = *VNI;
         
         // Remap the VNInfo def index, which works the same as the
-        // start indices above.
-        VNInfo* vni = LI->valno;
-        
-        // VN's with special sentinel defs don't need to be remapped.
+        // start indices above. VN's with special sentinel defs
+        // don't need to be remapped.
         if (vni->def != ~0U && vni->def != ~1U) {
-          index = vni->def / InstrSlots::NUM;
-          offset = vni->def % InstrSlots::NUM;
+          unsigned index = vni->def / InstrSlots::NUM;
+          unsigned offset = vni->def % InstrSlots::NUM;
           if (offset == InstrSlots::LOAD) {
             std::vector<IdxMBBPair>::const_iterator I =
                   std::lower_bound(OldI2MBB.begin(), OldI2MBB.end(), vni->def);
@@ -200,14 +201,14 @@ void LiveIntervals::computeNumbering() {
           // PHI kills don't need to be remapped.
           if (!vni->kills[i]) continue;
           
-          index = (vni->kills[i]-1) / InstrSlots::NUM;
-          offset = vni->kills[i] % InstrSlots::NUM;
-          if (offset == InstrSlots::LOAD) {
+          unsigned index = (vni->kills[i]-1) / InstrSlots::NUM;
+          unsigned offset = vni->kills[i] % InstrSlots::NUM;
+          if (offset == InstrSlots::STORE) {
             std::vector<IdxMBBPair>::const_iterator I =
              std::lower_bound(OldI2MBB.begin(), OldI2MBB.end(), vni->kills[i]);
             --I;
 
-            vni->kills[i] = getMBBEndIdx(I->second) + 1;
+            vni->kills[i] = getMBBEndIdx(I->second);
           } else {
             unsigned idx = index;
             while (index < OldI2MI.size() && !OldI2MI[index]) ++index;
@@ -220,6 +221,7 @@ void LiveIntervals::computeNumbering() {
           }
         }
       }
+    }
 }
 
 /// runOnMachineFunction - Register allocate the whole function
