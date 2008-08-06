@@ -63,3 +63,13 @@ F:
 	ret i16 %W
 }
 
+; PR2638
+define i32 @test2(i32 %i) nounwind  {
+entry:
+        %tmp12 = trunc i32 %i to i8             ; <i8> [#uses=1]
+        %tmp16 = shl i8 %tmp12, 6               ; <i8> [#uses=1]
+        %a = ashr i8 %tmp16, 6            ; <i8> [#uses=1]
+        %b = sext i8 %a to i32            ; <i32> [#uses=1]
+        ret i32 %b
+}
+

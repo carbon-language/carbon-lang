@@ -7666,7 +7666,37 @@ Instruction *InstCombiner::visitSExt(SExtInst &CI) {
         return new TruncInst(Op, CI.getType(), "tmp");
     }
   }
-      
+
+  // If the input is a shl/ashr pair of a same constant, then this is a sign
+  // extension from a smaller value.  If we could trust arbitrary bitwidth
+  // integers, we could turn this into a truncate to the smaller bit and then
+  // use a sext for the whole extension.  Since we don't, look deeper and check
+  // for a truncate.  If the source and dest are the same type, eliminate the
+  // trunc and extend and just do shifts.  For example, turn:
+  //   %a = trunc i32 %i to i8
+  //   %b = shl i8 %a, 6
+  //   %c = ashr i8 %b, 6
+  //   %d = sext i8 %c to i32
+  // into:
+  //   %a = shl i32 %i, 30
+  //   %d = ashr i32 %a, 30
+  Value *A = 0;
+  ConstantInt *BA = 0, *CA = 0;
+  if (match(Src, m_AShr(m_Shl(m_Value(A), m_ConstantInt(BA)),
+                        m_ConstantInt(CA))) &&
+      BA == CA && isa<TruncInst>(A)) {
+    Value *I = cast<TruncInst>(A)->getOperand(0);
+    if (I->getType() == CI.getType()) {
+      unsigned MidSize = Src->getType()->getPrimitiveSizeInBits();
+      unsigned SrcDstSize = CI.getType()->getPrimitiveSizeInBits();
+      unsigned ShAmt = CA->getZExtValue()+SrcDstSize-MidSize;
+      Constant *ShAmtV = ConstantInt::get(CI.getType(), ShAmt);
+      I = InsertNewInstBefore(BinaryOperator::CreateShl(I, ShAmtV,
+                                                        CI.getName()), CI);
+      return BinaryOperator::CreateAShr(I, ShAmtV);
+    }
+  }
+  
   return 0;
 }
 
