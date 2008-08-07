@@ -15,16 +15,18 @@
 #define SPARCTARGETASMINFO_H
 
 #include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/Target/ELFTargetAsmInfo.h"
 
 namespace llvm {
 
   // Forward declaration.
-  class SparcTargetMachine;
+  class TargetMachine;
 
-  struct SparcTargetAsmInfo : public TargetAsmInfo {
-    explicit SparcTargetAsmInfo(const SparcTargetMachine &TM);
+  struct SparcELFTargetAsmInfo : public ELFTargetAsmInfo {
+    explicit SparcELFTargetAsmInfo(const TargetMachine &TM);
+
+    std::string PrintSectionFlags(unsigned flags) const;
   };
-
 
 } // namespace llvm
 
