@@ -144,7 +144,7 @@ sub GetHTMLRunDir {
     my $max = 0;
     
     opendir(DIR, $Dir);
-    my @FILES= readdir(DIR); 
+    my @FILES = grep { -d "$Dir/$_" } readdir(DIR);
     closedir(DIR);
     
     foreach my $f (@FILES) {
