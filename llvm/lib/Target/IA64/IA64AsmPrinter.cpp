@@ -326,7 +326,7 @@ void IA64AsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
     assert(0 && "Unknown linkage type!");
   }
 
-  EmitAlignment(Align);
+  EmitAlignment(Align, GVar);
 
   if (TAI->hasDotTypeDotSizeDirective()) {
     O << "\t.type " << name << ",@object\n";

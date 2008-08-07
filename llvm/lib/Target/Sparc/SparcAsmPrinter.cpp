@@ -299,8 +299,7 @@ void SparcAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
     assert(0 && "Unknown linkage type!");
   }
 
-  if (Align)
-    O << "\t.align " << Align << '\n';
+  EmitAlignment(Align, GVar);
 
   if (TAI->hasDotTypeDotSizeDirective()) {
     O << "\t.type " << name << ",#object\n";

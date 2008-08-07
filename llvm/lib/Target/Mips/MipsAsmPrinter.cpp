@@ -534,7 +534,7 @@ printModuleLevelGV(const GlobalVariable* GVar) {
     // Fall Through
    case GlobalValue::InternalLinkage:
     if (CVA && CVA->isCString())
-      printSizeAndType = false;  
+      printSizeAndType = false;
     break;
    case GlobalValue::GhostLinkage:
     cerr << "Should not have any unmaterialized functions!\n";
@@ -549,8 +549,7 @@ printModuleLevelGV(const GlobalVariable* GVar) {
     assert(0 && "Unknown linkage type!");
   }
 
-  if (Align)
-    O << "\t.align " << Align << '\n';
+  EmitAlignment(Align, GVar);
 
   if (TAI->hasDotTypeDotSizeDirective() && printSizeAndType) {
     O << "\t.type " << name << ",@object\n";
