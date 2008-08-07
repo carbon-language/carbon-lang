@@ -84,12 +84,12 @@ namespace {
 // XXX : nasty hack to avoid GPREL22 "relocation truncated to fit" linker
 // errors - instead of add rX = @gprel(CPI<whatever>), r1;; we now
 // emit movl rX = @gprel(CPI<whatever);;
-//      add  rX = rX, r1; 
+//      add  rX = rX, r1;
 // this gives us 64 bits instead of 22 (for the add long imm) to play
 // with, which shuts up the linker. The problem is that the constant
-// pool entries aren't immediates at this stage, so we check here. 
+// pool entries aren't immediates at this stage, so we check here.
 // If it's an immediate, print it the old fashioned way. If it's
-// not, we print it as a constant pool index. 
+// not, we print it as a constant pool index.
       if(MI->getOperand(OpNo).isImmediate()) {
         O << (int64_t)MI->getOperand(OpNo).getImm();
       } else { // this is a constant pool reference: FIXME: assert this
@@ -120,9 +120,9 @@ namespace {
 #include "IA64GenAsmWriter.inc"
 
 
+// Substitute old hook with new one temporary
 std::string IA64AsmPrinter::getSectionForFunction(const Function &F) const {
-  // This means "Allocated instruXions in mem, initialized".
-  return "\n\t.section .text, \"ax\", \"progbits\"\n";
+  return TAI->SectionForGlobal(&F);
 }
 
 /// runOnMachineFunction - This uses the printMachineInstruction()
@@ -210,7 +210,7 @@ void IA64AsmPrinter::printOp(const MachineOperand &MO,
     if (Needfptr)
       O << "@fptr(";
     O << Mang->getValueName(MO.getGlobal());
-    
+
     if (Needfptr && !isBRCALLinsn)
       O << "#))"; // close both fptr( and ltoff(
     else {
@@ -219,7 +219,7 @@ void IA64AsmPrinter::printOp(const MachineOperand &MO,
       if (!isBRCALLinsn)
         O << "#)"; // close only ltoff(
     }
-    
+
     int Offset = MO.getOffset();
     if (Offset > 0)
       O << " + " << Offset;
@@ -258,7 +258,7 @@ bool IA64AsmPrinter::doInitialization(Module &M) {
 
 bool IA64AsmPrinter::doFinalization(Module &M) {
   const TargetData *TD = TM.getTargetData();
-  
+
   // Print out module-level global variables here.
   for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
        I != E; ++I)
@@ -266,7 +266,7 @@ bool IA64AsmPrinter::doFinalization(Module &M) {
       // Check to see if this is a special global used by LLVM, if so, emit it.
       if (EmitSpecialLLVMGlobal(I))
         continue;
-      
+
       O << "\n\n";
       std::string name = Mang->getValueName(I);
       Constant *C = I->getInitializer();
@@ -318,9 +318,9 @@ bool IA64AsmPrinter::doFinalization(Module &M) {
             cerr << "DLLExport linkage is not supported by this target!\n";
             abort();
           default:
-            assert(0 && "Unknown linkage type!");            
+            assert(0 && "Unknown linkage type!");
         }
-        
+
         EmitAlignment(Align);
         O << "\t.type " << name << ",@object\n";
         O << "\t.size " << name << "," << Size << "\n";
@@ -328,15 +328,15 @@ bool IA64AsmPrinter::doFinalization(Module &M) {
         EmitGlobalConstant(C);
       }
     }
-      
-      // we print out ".global X \n .type X, @function" for each external function
-      O << "\n\n// br.call targets referenced (and not defined) above: \n";
+
+  // we print out ".global X \n .type X, @function" for each external function
+  O << "\n\n// br.call targets referenced (and not defined) above: \n";
   for (std::set<std::string>::iterator i = ExternalFunctionNames.begin(),
        e = ExternalFunctionNames.end(); i!=e; ++i) {
     O << "\t.global " << *i << "\n\t.type " << *i << ", @function\n";
   }
   O << "\n\n";
-  
+
   // we print out ".global X \n .type X, @object" for each external object
   O << "\n\n// (external) symbols referenced (and not defined) above: \n";
   for (std::set<std::string>::iterator i = ExternalObjectNames.begin(),
@@ -344,7 +344,7 @@ bool IA64AsmPrinter::doFinalization(Module &M) {
     O << "\t.global " << *i << "\n\t.type " << *i << ", @object\n";
   }
   O << "\n\n";
-  
+
   return AsmPrinter::doFinalization(M);
 }
 
@@ -356,5 +356,3 @@ FunctionPass *llvm::createIA64CodePrinterPass(std::ostream &o,
                                               IA64TargetMachine &tm) {
   return new IA64AsmPrinter(o, tm, tm.getTargetAsmInfo());
 }
-
-
