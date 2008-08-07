@@ -1422,7 +1422,8 @@ int main(int argc, char **argv) {
 
   // Get information about the target being compiled for.
   std::string Triple = CreateTargetTriple();
-  TargetInfo *Target = TargetInfo::CreateTargetInfo(Triple);
+  llvm::OwningPtr<TargetInfo> Target(TargetInfo::CreateTargetInfo(Triple));
+  
   if (Target == 0) {
     fprintf(stderr, "Sorry, I don't know what target this is: %s\n",
             Triple.c_str());
@@ -1499,13 +1500,8 @@ int main(int argc, char **argv) {
         SourceMgr->PrintStats();
     }
   }
-  
-  
-  delete Target;
 
-  unsigned NumDiagnostics = Diags.getNumDiagnostics();
-  
-  if (NumDiagnostics)
+  if (unsigned NumDiagnostics = Diags.getNumDiagnostics())
     fprintf(stderr, "%d diagnostic%s generated.\n", NumDiagnostics,
             (NumDiagnostics == 1 ? "" : "s"));
   
