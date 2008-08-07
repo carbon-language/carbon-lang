@@ -22,7 +22,6 @@ namespace llvm {
 
   // Forward declaration.
   class X86TargetMachine;
-  class GlobalVariable;
 
   struct X86TargetAsmInfo : public virtual TargetAsmInfo {
     explicit X86TargetAsmInfo(const X86TargetMachine &TM);
