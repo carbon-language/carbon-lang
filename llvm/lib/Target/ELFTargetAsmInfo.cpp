@@ -166,13 +166,19 @@ std::string ELFTargetAsmInfo::PrintSectionFlags(unsigned flags) const {
   if (flags & SectionFlags::Small)
     Flags += 's';
 
-  Flags += "\"";
+  Flags += "\",";
+
+  // If comment string is '@', e.g. as on ARM - use '%' instead
+  if (strcmp(CommentString, "@") == 0)
+    Flags += '%';
+  else
+    Flags += '@';
 
   // FIXME: There can be exceptions here
   if (flags & SectionFlags::BSS)
-    Flags += ",@nobits";
+    Flags += "nobits";
   else
-    Flags += ",@progbits";
+    Flags += "progbits";
 
   if (unsigned entitySize = SectionFlags::getEntitySize(flags))
     Flags += "," + utostr(entitySize);
