@@ -185,7 +185,7 @@ namespace llvm {
     /// of instructions in a given LiveInterval.
     unsigned getApproximateInstructionCount(LiveInterval& I) {
       double IntervalPercentage = getScaledIntervalSize(I) / 1000.0;
-      return IntervalPercentage * FunctionSize;
+      return (unsigned)(IntervalPercentage * FunctionSize);
     }
 
     /// getMBBFromIndex - given an index in any instruction of an
