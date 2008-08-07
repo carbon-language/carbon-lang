@@ -121,7 +121,7 @@ bool SRETPromotion::PromoteReturn(CallGraphNode *CGN) {
       ++BI;
       if (isa<ReturnInst>(I)) {
         Value *NV = new LoadInst(TheAlloca, "mrv.ld", I);
-        ReturnInst *NR = ReturnInst::Create(NV);
+        ReturnInst *NR = ReturnInst::Create(NV, I);
         I->replaceAllUsesWith(NR);
         I->eraseFromParent();
       }
