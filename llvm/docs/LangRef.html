@@ -2123,7 +2123,7 @@ The result value has the same type as its operands.</p>
 <h5>Syntax:</h5>
 
 <pre>
-  &lt;result&gt; = add &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {ty}:result</i>
+  &lt;result&gt; = add &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;   <i>; yields {ty}:result</i>
 </pre>
 
 <h5>Overview:</h5>
@@ -2165,7 +2165,7 @@ instruction is appropriate for both signed and unsigned integers.</p>
 <h5>Syntax:</h5>
 
 <pre>
-  &lt;result&gt; = sub &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {ty}:result</i>
+  &lt;result&gt; = sub &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;   <i>; yields {ty}:result</i>
 </pre>
 
 <h5>Overview:</h5>
@@ -2211,7 +2211,7 @@ instruction is appropriate for both signed and unsigned integers.</p>
 <div class="doc_text">
 
 <h5>Syntax:</h5>
-<pre>  &lt;result&gt; = mul &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {ty}:result</i>
+<pre>  &lt;result&gt; = mul &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;   <i>; yields {ty}:result</i>
 </pre>
 <h5>Overview:</h5>
 <p>The  '<tt>mul</tt>' instruction returns the product of its two
@@ -2248,7 +2248,7 @@ width of the full product.</p>
 </a></div>
 <div class="doc_text">
 <h5>Syntax:</h5>
-<pre>  &lt;result&gt; = udiv &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {ty}:result</i>
+<pre>  &lt;result&gt; = udiv &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;   <i>; yields {ty}:result</i>
 </pre>
 <h5>Overview:</h5>
 <p>The '<tt>udiv</tt>' instruction returns the quotient of its two
@@ -2276,7 +2276,7 @@ operations; for signed integer division, use '<tt>sdiv</tt>'.</p>
 <div class="doc_text">
 <h5>Syntax:</h5>
 <pre>
-  &lt;result&gt; = sdiv &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {ty}:result</i>
+  &lt;result&gt; = sdiv &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;   <i>; yields {ty}:result</i>
 </pre>
 
 <h5>Overview:</h5>
@@ -2307,7 +2307,7 @@ Instruction</a> </div>
 <div class="doc_text">
 <h5>Syntax:</h5>
 <pre>
-  &lt;result&gt; = fdiv &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {ty}:result</i>
+  &lt;result&gt; = fdiv &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;   <i>; yields {ty}:result</i>
 </pre>
 <h5>Overview:</h5>
 
@@ -2336,7 +2336,7 @@ of floating point values.  Both arguments must have identical types.</p>
 </div>
 <div class="doc_text">
 <h5>Syntax:</h5>
-<pre>  &lt;result&gt; = urem &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {ty}:result</i>
+<pre>  &lt;result&gt; = urem &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;   <i>; yields {ty}:result</i>
 </pre>
 <h5>Overview:</h5>
 <p>The '<tt>urem</tt>' instruction returns the remainder from the
@@ -2366,7 +2366,7 @@ distinct operations; for signed integer remainder, use '<tt>srem</tt>'.</p>
 <h5>Syntax:</h5>
 
 <pre>
-  &lt;result&gt; = srem &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {ty}:result</i>
+  &lt;result&gt; = srem &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;   <i>; yields {ty}:result</i>
 </pre>
 
 <h5>Overview:</h5>
@@ -2385,8 +2385,8 @@ values.  Both arguments must have identical types.</p>
 <h5>Semantics:</h5>
 
 <p>This instruction returns the <i>remainder</i> of a division (where the result
-has the same sign as the dividend, <tt>var1</tt>), not the <i>modulo</i> 
-operator (where the result has the same sign as the divisor, <tt>var2</tt>) of 
+has the same sign as the dividend, <tt>op1</tt>), not the <i>modulo</i> 
+operator (where the result has the same sign as the divisor, <tt>op2</tt>) of 
 a value.  For more information about the difference, see <a
  href="http://mathforum.org/dr.math/problems/anne.4.28.99.html">The
 Math Forum</a>. For a table of how this is implemented in various languages,
@@ -2412,7 +2412,7 @@ and the remainder.)</p>
 <div class="doc_text">
 
 <h5>Syntax:</h5>
-<pre>  &lt;result&gt; = frem &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {ty}:result</i>
+<pre>  &lt;result&gt; = frem &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;   <i>; yields {ty}:result</i>
 </pre>
 <h5>Overview:</h5>
 <p>The '<tt>frem</tt>' instruction returns the remainder from the
@@ -2450,7 +2450,7 @@ and produce a single value.  The resulting value is the same type as its operand
 Instruction</a> </div>
 <div class="doc_text">
 <h5>Syntax:</h5>
-<pre>  &lt;result&gt; = shl &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {ty}:result</i>
+<pre>  &lt;result&gt; = shl &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;   <i>; yields {ty}:result</i>
 </pre>
 
 <h5>Overview:</h5>
@@ -2462,13 +2462,13 @@ the left a specified number of bits.</p>
 
 <p>Both arguments to the '<tt>shl</tt>' instruction must be the same <a
  href="#t_integer">integer</a> or <a href="#t_vector">vector</a> of integer 
-type.  '<tt>var2</tt>' is treated as an unsigned value.</p>
+type.  '<tt>op2</tt>' is treated as an unsigned value.</p>
  
 <h5>Semantics:</h5>
 
-<p>The value produced is <tt>var1</tt> * 2<sup><tt>var2</tt></sup> mod 2<sup>n</sup>,
-where n is the width of the result.  If <tt>var2</tt> is (statically or dynamically) negative or
-equal to or larger than the number of bits in <tt>var1</tt>, the result is undefined.</p>
+<p>The value produced is <tt>op1</tt> * 2<sup><tt>op2</tt></sup> mod 2<sup>n</sup>,
+where n is the width of the result.  If <tt>op2</tt> is (statically or dynamically) negative or
+equal to or larger than the number of bits in <tt>op1</tt>, the result is undefined.</p>
 
 <h5>Example:</h5><pre>
   &lt;result&gt; = shl i32 4, %var   <i>; yields {i32}: 4 &lt;&lt; %var</i>
@@ -2482,7 +2482,7 @@ equal to or larger than the number of bits in <tt>var1</tt>, the result is undef
 Instruction</a> </div>
 <div class="doc_text">
 <h5>Syntax:</h5>
-<pre>  &lt;result&gt; = lshr &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {ty}:result</i>
+<pre>  &lt;result&gt; = lshr &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;   <i>; yields {ty}:result</i>
 </pre>
 
 <h5>Overview:</h5>
@@ -2492,14 +2492,14 @@ operand shifted to the right a specified number of bits with zero fill.</p>
 <h5>Arguments:</h5>
 <p>Both arguments to the '<tt>lshr</tt>' instruction must be the same 
 <a href="#t_integer">integer</a> or <a href="#t_vector">vector</a> of integer 
-type.  '<tt>var2</tt>' is treated as an unsigned value.</p>
+type.  '<tt>op2</tt>' is treated as an unsigned value.</p>
 
 <h5>Semantics:</h5>
 
 <p>This instruction always performs a logical shift right operation. The most
 significant bits of the result will be filled with zero bits after the 
-shift.  If <tt>var2</tt> is (statically or dynamically) equal to or larger than
-the number of bits in <tt>var1</tt>, the result is undefined.</p>
+shift.  If <tt>op2</tt> is (statically or dynamically) equal to or larger than
+the number of bits in <tt>op1</tt>, the result is undefined.</p>
 
 <h5>Example:</h5>
 <pre>
@@ -2517,7 +2517,7 @@ Instruction</a> </div>
 <div class="doc_text">
 
 <h5>Syntax:</h5>
-<pre>  &lt;result&gt; = ashr &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {ty}:result</i>
+<pre>  &lt;result&gt; = ashr &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;   <i>; yields {ty}:result</i>
 </pre>
 
 <h5>Overview:</h5>
@@ -2527,13 +2527,13 @@ operand shifted to the right a specified number of bits with sign extension.</p>
 <h5>Arguments:</h5>
 <p>Both arguments to the '<tt>ashr</tt>' instruction must be the same 
 <a href="#t_integer">integer</a> or <a href="#t_vector">vector</a> of integer 
-type.  '<tt>var2</tt>' is treated as an unsigned value.</p>
+type.  '<tt>op2</tt>' is treated as an unsigned value.</p>
 
 <h5>Semantics:</h5>
 <p>This instruction always performs an arithmetic shift right operation, 
 The most significant bits of the result will be filled with the sign bit 
-of <tt>var1</tt>.  If <tt>var2</tt> is (statically or dynamically) equal to or
-larger than the number of bits in <tt>var1</tt>, the result is undefined.
+of <tt>op1</tt>.  If <tt>op2</tt> is (statically or dynamically) equal to or
+larger than the number of bits in <tt>op1</tt>, the result is undefined.
 </p>
 
 <h5>Example:</h5>
@@ -2555,7 +2555,7 @@ Instruction</a> </div>
 <h5>Syntax:</h5>
 
 <pre>
-  &lt;result&gt; = and &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {ty}:result</i>
+  &lt;result&gt; = and &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;   <i>; yields {ty}:result</i>
 </pre>
 
 <h5>Overview:</h5>
@@ -2614,7 +2614,7 @@ values.  Both arguments must have identical types.</p>
 <div class="doc_subsubsection"> <a name="i_or">'<tt>or</tt>' Instruction</a> </div>
 <div class="doc_text">
 <h5>Syntax:</h5>
-<pre>  &lt;result&gt; = or &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {ty}:result</i>
+<pre>  &lt;result&gt; = or &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;   <i>; yields {ty}:result</i>
 </pre>
 <h5>Overview:</h5>
 <p>The '<tt>or</tt>' instruction returns the bitwise logical inclusive
@@ -2669,7 +2669,7 @@ values.  Both arguments must have identical types.</p>
 Instruction</a> </div>
 <div class="doc_text">
 <h5>Syntax:</h5>
-<pre>  &lt;result&gt; = xor &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {ty}:result</i>
+<pre>  &lt;result&gt; = xor &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;   <i>; yields {ty}:result</i>
 </pre>
 <h5>Overview:</h5>
 <p>The '<tt>xor</tt>' instruction returns the bitwise logical exclusive
@@ -3805,7 +3805,7 @@ instructions, which defy better classification.</p>
 </div>
 <div class="doc_text">
 <h5>Syntax:</h5>
-<pre>  &lt;result&gt; = icmp &lt;cond&gt; &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {i1}:result</i>
+<pre>  &lt;result&gt; = icmp &lt;cond&gt; &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;   <i>; yields {i1}:result</i>
 </pre>
 <h5>Overview:</h5>
 <p>The '<tt>icmp</tt>' instruction returns a boolean value based on comparison
@@ -3829,7 +3829,7 @@ a value, just a keyword. The possible condition code are:
 <p>The remaining two arguments must be <a href="#t_integer">integer</a> or
 <a href="#t_pointer">pointer</a> typed. They must also be identical types.</p>
 <h5>Semantics:</h5>
-<p>The '<tt>icmp</tt>' compares <tt>var1</tt> and <tt>var2</tt> according to 
+<p>The '<tt>icmp</tt>' compares <tt>op1</tt> and <tt>op2</tt> according to 
 the condition code given as <tt>cond</tt>. The comparison performed always
 yields a <a href="#t_primitive">i1</a> result, as follows: 
 <ol>
@@ -3839,21 +3839,21 @@ yields a <a href="#t_primitive">i1</a> result, as follows:
   <li><tt>ne</tt>: yields <tt>true</tt> if the operands are unequal, 
   <tt>false</tt> otherwise. No sign interpretation is necessary or performed.
   <li><tt>ugt</tt>: interprets the operands as unsigned values and yields
-  <tt>true</tt> if <tt>var1</tt> is greater than <tt>var2</tt>.</li>
+  <tt>true</tt> if <tt>op1</tt> is greater than <tt>op2</tt>.</li>
   <li><tt>uge</tt>: interprets the operands as unsigned values and yields
-  <tt>true</tt> if <tt>var1</tt> is greater than or equal to <tt>var2</tt>.</li>
+  <tt>true</tt> if <tt>op1</tt> is greater than or equal to <tt>op2</tt>.</li>
   <li><tt>ult</tt>: interprets the operands as unsigned values and yields
-  <tt>true</tt> if <tt>var1</tt> is less than <tt>var2</tt>.</li>
+  <tt>true</tt> if <tt>op1</tt> is less than <tt>op2</tt>.</li>
   <li><tt>ule</tt>: interprets the operands as unsigned values and yields
-  <tt>true</tt> if <tt>var1</tt> is less than or equal to <tt>var2</tt>.</li>
+  <tt>true</tt> if <tt>op1</tt> is less than or equal to <tt>op2</tt>.</li>
   <li><tt>sgt</tt>: interprets the operands as signed values and yields
-  <tt>true</tt> if <tt>var1</tt> is greater than <tt>var2</tt>.</li>
+  <tt>true</tt> if <tt>op1</tt> is greater than <tt>op2</tt>.</li>
   <li><tt>sge</tt>: interprets the operands as signed values and yields
-  <tt>true</tt> if <tt>var1</tt> is greater than or equal to <tt>var2</tt>.</li>
+  <tt>true</tt> if <tt>op1</tt> is greater than or equal to <tt>op2</tt>.</li>
   <li><tt>slt</tt>: interprets the operands as signed values and yields
-  <tt>true</tt> if <tt>var1</tt> is less than <tt>var2</tt>.</li>
+  <tt>true</tt> if <tt>op1</tt> is less than <tt>op2</tt>.</li>
   <li><tt>sle</tt>: interprets the operands as signed values and yields
-  <tt>true</tt> if <tt>var1</tt> is less than or equal to <tt>var2</tt>.</li>
+  <tt>true</tt> if <tt>op1</tt> is less than or equal to <tt>op2</tt>.</li>
 </ol>
 <p>If the operands are <a href="#t_pointer">pointer</a> typed, the pointer
 values are compared as if they were integers.</p>
@@ -3873,7 +3873,7 @@ values are compared as if they were integers.</p>
 </div>
 <div class="doc_text">
 <h5>Syntax:</h5>
-<pre>  &lt;result&gt; = fcmp &lt;cond&gt; &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;     <i>; yields {i1}:result</i>
+<pre>  &lt;result&gt; = fcmp &lt;cond&gt; &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;     <i>; yields {i1}:result</i>
 </pre>
 <h5>Overview:</h5>
 <p>The '<tt>fcmp</tt>' instruction returns a boolean value based on comparison
@@ -3906,36 +3906,36 @@ a value, just a keyword. The possible condition code are:
 <a href="#t_floating">floating point</a> typed.  They must have identical 
 types.</p>
 <h5>Semantics:</h5>
-<p>The '<tt>fcmp</tt>' instruction compares <tt>var1</tt> and <tt>var2</tt>
+<p>The '<tt>fcmp</tt>' instruction compares <tt>op1</tt> and <tt>op2</tt>
 according to the condition code given as <tt>cond</tt>. The comparison performed 
 always yields a <a href="#t_primitive">i1</a> result, as follows: 
 <ol>
   <li><tt>false</tt>: always yields <tt>false</tt>, regardless of operands.</li>
   <li><tt>oeq</tt>: yields <tt>true</tt> if both operands are not a QNAN and 
-  <tt>var1</tt> is equal to <tt>var2</tt>.</li>
+  <tt>op1</tt> is equal to <tt>op2</tt>.</li>
   <li><tt>ogt</tt>: yields <tt>true</tt> if both operands are not a QNAN and
-  <tt>var1</tt> is greather than <tt>var2</tt>.</li>
+  <tt>op1</tt> is greather than <tt>op2</tt>.</li>
   <li><tt>oge</tt>: yields <tt>true</tt> if both operands are not a QNAN and 
-  <tt>var1</tt> is greater than or equal to <tt>var2</tt>.</li>
+  <tt>op1</tt> is greater than or equal to <tt>op2</tt>.</li>
   <li><tt>olt</tt>: yields <tt>true</tt> if both operands are not a QNAN and 
-  <tt>var1</tt> is less than <tt>var2</tt>.</li>
+  <tt>op1</tt> is less than <tt>op2</tt>.</li>
   <li><tt>ole</tt>: yields <tt>true</tt> if both operands are not a QNAN and 
-  <tt>var1</tt> is less than or equal to <tt>var2</tt>.</li>
+  <tt>op1</tt> is less than or equal to <tt>op2</tt>.</li>
   <li><tt>one</tt>: yields <tt>true</tt> if both operands are not a QNAN and 
-  <tt>var1</tt> is not equal to <tt>var2</tt>.</li>
+  <tt>op1</tt> is not equal to <tt>op2</tt>.</li>
   <li><tt>ord</tt>: yields <tt>true</tt> if both operands are not a QNAN.</li>
   <li><tt>ueq</tt>: yields <tt>true</tt> if either operand is a QNAN or 
-  <tt>var1</tt> is equal to <tt>var2</tt>.</li>
+  <tt>op1</tt> is equal to <tt>op2</tt>.</li>
   <li><tt>ugt</tt>: yields <tt>true</tt> if either operand is a QNAN or 
-  <tt>var1</tt> is greater than <tt>var2</tt>.</li>
+  <tt>op1</tt> is greater than <tt>op2</tt>.</li>
   <li><tt>uge</tt>: yields <tt>true</tt> if either operand is a QNAN or 
-  <tt>var1</tt> is greater than or equal to <tt>var2</tt>.</li>
+  <tt>op1</tt> is greater than or equal to <tt>op2</tt>.</li>
   <li><tt>ult</tt>: yields <tt>true</tt> if either operand is a QNAN or 
-  <tt>var1</tt> is less than <tt>var2</tt>.</li>
+  <tt>op1</tt> is less than <tt>op2</tt>.</li>
   <li><tt>ule</tt>: yields <tt>true</tt> if either operand is a QNAN or 
-  <tt>var1</tt> is less than or equal to <tt>var2</tt>.</li>
+  <tt>op1</tt> is less than or equal to <tt>op2</tt>.</li>
   <li><tt>une</tt>: yields <tt>true</tt> if either operand is a QNAN or 
-  <tt>var1</tt> is not equal to <tt>var2</tt>.</li>
+  <tt>op1</tt> is not equal to <tt>op2</tt>.</li>
   <li><tt>uno</tt>: yields <tt>true</tt> if either operand is a QNAN.</li>
   <li><tt>true</tt>: always yields <tt>true</tt>, regardless of operands.</li>
 </ol>
@@ -3954,7 +3954,7 @@ always yields a <a href="#t_primitive">i1</a> result, as follows:
 </div>
 <div class="doc_text">
 <h5>Syntax:</h5>
-<pre>  &lt;result&gt; = vicmp &lt;cond&gt; &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {ty}:result</i>
+<pre>  &lt;result&gt; = vicmp &lt;cond&gt; &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;   <i>; yields {ty}:result</i>
 </pre>
 <h5>Overview:</h5>
 <p>The '<tt>vicmp</tt>' instruction returns an integer vector value based on
@@ -3978,7 +3978,7 @@ a value, just a keyword. The possible condition code are:
 <p>The remaining two arguments must be <a href="#t_vector">vector</a> of 
 <a href="#t_integer">integer</a> typed. They must also be identical types.</p>
 <h5>Semantics:</h5>
-<p>The '<tt>vicmp</tt>' instruction compares <tt>var1</tt> and <tt>var2</tt>
+<p>The '<tt>vicmp</tt>' instruction compares <tt>op1</tt> and <tt>op2</tt>
 according to the condition code given as <tt>cond</tt>. The comparison yields a 
 <a href="#t_vector">vector</a> of <a href="#t_integer">integer</a> result, of
 identical type as the values being compared.  The most significant bit in each
@@ -4000,7 +4000,7 @@ instruction</a>.
 </div>
 <div class="doc_text">
 <h5>Syntax:</h5>
-<pre>  &lt;result&gt; = vfcmp &lt;cond&gt; &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;</pre>
+<pre>  &lt;result&gt; = vfcmp &lt;cond&gt; &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;</pre>
 <h5>Overview:</h5>
 <p>The '<tt>vfcmp</tt>' instruction returns an integer vector value based on
 element-wise comparison of its two floating point vector operands.  The output
@@ -4031,7 +4031,7 @@ a value, just a keyword. The possible condition code are:
 <a href="#t_floating">floating point</a> typed. They must also be identical
 types.</p>
 <h5>Semantics:</h5>
-<p>The '<tt>vfcmp</tt>' instruction compares <tt>var1</tt> and <tt>var2</tt>
+<p>The '<tt>vfcmp</tt>' instruction compares <tt>op1</tt> and <tt>op2</tt>
 according to  the condition code given as <tt>cond</tt>. The comparison yields a 
 <a href="#t_vector">vector</a> of <a href="#t_integer">integer</a> result, with
 an identical number of elements as the values being compared, and each element
