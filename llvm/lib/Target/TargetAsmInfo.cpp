@@ -321,6 +321,13 @@ TargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
   return getDataSection_();
 }
 
+// Lame default implementation. Calculate the section name for machine const.
+const Section*
+TargetAsmInfo::SelectSectionForMachineConst(const Type *Ty) const {
+  // FIXME: Support data.rel stuff someday
+  return getDataSection_();
+}
+
 std::string
 TargetAsmInfo::UniqueSectionForGlobal(const GlobalValue* GV,
                                       SectionKind::Kind Kind) const {

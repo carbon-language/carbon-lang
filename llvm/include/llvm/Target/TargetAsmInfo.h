@@ -76,6 +76,7 @@ namespace llvm {
   class TargetMachine;
   class CallInst;
   class GlobalValue;
+  class Type;
 
   class Section {
     friend class TargetAsmInfo;
@@ -541,6 +542,8 @@ namespace llvm {
     virtual std::string PrintSectionFlags(unsigned flags) const { return ""; }
 
     virtual const Section* SelectSectionForGlobal(const GlobalValue *GV) const;
+
+    virtual const Section* SelectSectionForMachineConst(const Type *Ty) const;
 
     // Accessors.
     //

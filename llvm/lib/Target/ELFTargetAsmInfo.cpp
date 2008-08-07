@@ -17,6 +17,7 @@
 #include "llvm/Function.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/Target/ELFTargetAsmInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetData.h"
@@ -90,15 +91,27 @@ ELFTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
 }
 
 const Section*
+ELFTargetAsmInfo::SelectSectionForMachineConst(const Type *Ty) const {
+  // FIXME: Support data.rel stuff someday
+  return MergeableConstSection(Ty);
+}
+
+const Section*
 ELFTargetAsmInfo::MergeableConstSection(const GlobalVariable *GV) const {
-  const TargetData *TD = ETM->getTargetData();
   Constant *C = cast<GlobalVariable>(GV)->getInitializer();
-  const Type *Type = C->getType();
+  const Type *Ty = C->getType();
+
+  return MergeableConstSection(Ty);
+}
+
+inline const Section*
+ELFTargetAsmInfo::MergeableConstSection(const Type *Ty) const {
+  const TargetData *TD = ETM->getTargetData();
 
   // FIXME: string here is temporary, until stuff will fully land in.
   // We cannot use {Four,Eight,Sixteen}ByteConstantSection here, since it's
   // currently directly used by asmprinter.
-  unsigned Size = TD->getABITypeSize(Type);
+  unsigned Size = TD->getABITypeSize(Ty);
   if (Size == 4 || Size == 8 || Size == 16) {
     std::string Name =  ".rodata.cst" + utostr(Size);
 
