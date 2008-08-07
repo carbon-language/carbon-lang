@@ -5441,29 +5441,38 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn, MachineFunction &MF,
   // each basic block.
   NodeAllocatorType NodeAllocator;
 
-  for (Function::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I)
-    SelectBasicBlock(I, MF, FuncInfo, NodeAllocator);
+  std::vector<std::pair<MachineInstr*, unsigned> > PHINodesToUpdate;
+  for (Function::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I) {
+    BasicBlock *LLVMBB = &*I;
+    PHINodesToUpdate.clear();
+    SelectBasicBlock(LLVMBB, MF, FuncInfo, PHINodesToUpdate, NodeAllocator);
+    FinishBasicBlock(LLVMBB, MF, FuncInfo, PHINodesToUpdate, NodeAllocator);
+  }
 }
 
 void
 SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
                                    FunctionLoweringInfo &FuncInfo,
+             std::vector<std::pair<MachineInstr*, unsigned> > &PHINodesToUpdate,
                                    NodeAllocatorType &NodeAllocator) {
-  std::vector<std::pair<MachineInstr*, unsigned> > PHINodesToUpdate;
-  {
-    SelectionDAG DAG(TLI, MF, FuncInfo, 
-                     getAnalysisToUpdate<MachineModuleInfo>(),
-                     NodeAllocator);
-    CurDAG = &DAG;
+  SelectionDAG DAG(TLI, MF, FuncInfo, 
+                   getAnalysisToUpdate<MachineModuleInfo>(),
+                   NodeAllocator);
+  CurDAG = &DAG;
   
-    // First step, lower LLVM code to some DAG.  This DAG may use operations and
-    // types that are not supported by the target.
-    BuildSelectionDAG(DAG, LLVMBB, PHINodesToUpdate, FuncInfo);
+  // First step, lower LLVM code to some DAG.  This DAG may use operations and
+  // types that are not supported by the target.
+  BuildSelectionDAG(DAG, LLVMBB, PHINodesToUpdate, FuncInfo);
 
-    // Second step, emit the lowered DAG as machine code.
-    CodeGenAndEmitDAG(DAG);
-  }
+  // Second step, emit the lowered DAG as machine code.
+  CodeGenAndEmitDAG(DAG);
+}
 
+void
+SelectionDAGISel::FinishBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
+                                   FunctionLoweringInfo &FuncInfo,
+             std::vector<std::pair<MachineInstr*, unsigned> > &PHINodesToUpdate,
+                                   NodeAllocatorType &NodeAllocator) {
   DOUT << "Total amount of phi nodes to update: "
        << PHINodesToUpdate.size() << "\n";
   DEBUG(for (unsigned i = 0, e = PHINodesToUpdate.size(); i != e; ++i)

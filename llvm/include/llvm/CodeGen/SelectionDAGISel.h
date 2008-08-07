@@ -182,10 +182,15 @@ private:
                             FunctionLoweringInfo &FuncInfo);
   void SelectBasicBlock(BasicBlock *BB, MachineFunction &MF,
                         FunctionLoweringInfo &FuncInfo,
+             std::vector<std::pair<MachineInstr*, unsigned> > &PHINodesToUpdate,
+                        NodeAllocatorType &NodeAllocator);
+  void FinishBasicBlock(BasicBlock *BB, MachineFunction &MF,
+                        FunctionLoweringInfo &FuncInfo,
+             std::vector<std::pair<MachineInstr*, unsigned> > &PHINodesToUpdate,
                         NodeAllocatorType &NodeAllocator);
 
   void BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
-           std::vector<std::pair<MachineInstr*, unsigned> > &PHINodesToUpdate,
+             std::vector<std::pair<MachineInstr*, unsigned> > &PHINodesToUpdate,
                          FunctionLoweringInfo &FuncInfo);
   void CodeGenAndEmitDAG(SelectionDAG &DAG);
   void LowerArguments(BasicBlock *BB, SelectionDAGLowering &SDL);
