@@ -346,11 +346,9 @@ static void HandleUnusedAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }
   
-  VarDecl *VD = dyn_cast<VarDecl>(d);
-  
-  if (!VD) {
+  if (!isa<VarDecl>(d) && !getFunctionProto(d)) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type,
-           "unused", "variable");
+           "unused", "variable and function");
     return;
   }
   
