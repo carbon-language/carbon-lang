@@ -61,7 +61,7 @@ private:
   bool WarningsAsErrors;      // Treat warnings like errors: 
   bool WarnOnExtensions;      // Enables warnings for gcc extensions: -pedantic.
   bool ErrorOnExtensions;     // Error on extensions: -pedantic-errors.
-  DiagnosticClient &Client;
+  DiagnosticClient *Client;
 
   /// DiagMappings - Mapping information for diagnostics.  Mapping info is
   /// packed into two bits per diagnostic.
@@ -77,16 +77,17 @@ private:
   /// CustomDiagInfo - Information for uniquing and looking up custom diags.
   diag::CustomDiagInfo *CustomDiagInfo;
 public:
-  explicit Diagnostic(DiagnosticClient &client);
+  explicit Diagnostic(DiagnosticClient *client);
   ~Diagnostic();
   
   //===--------------------------------------------------------------------===//
   //  Diagnostic characterization methods, used by a client to customize how
   //
   
-  DiagnosticClient &getClient() { return Client; };
-  
-  const DiagnosticClient &getClient() const { return Client; };
+  DiagnosticClient &getClient() { return *Client; };
+  const DiagnosticClient &getClient() const { return *Client; };
+    
+  void setClient(DiagnosticClient* client) { Client = client; }
 
   /// setIgnoreAllWarnings - When set to true, any unmapped warnings are
   /// ignored.  If this and WarningsAsErrors are both set, then this one wins.

@@ -108,7 +108,7 @@ namespace clang {
 // Common Diagnostic implementation
 //===----------------------------------------------------------------------===//
 
-Diagnostic::Diagnostic(DiagnosticClient &client) : Client(client) {
+Diagnostic::Diagnostic(DiagnosticClient *client) : Client(client) {
   IgnoreAllWarnings = false;
   WarningsAsErrors = false;
   WarnOnExtensions = false;
@@ -219,7 +219,7 @@ void Diagnostic::Report(DiagnosticClient* C,
     return;
   
   // Set the diagnostic client if it isn't set already.
-  if (!C) C = &Client;
+  if (!C) C = Client;
 
   // If this is not an error and we are in a system header, ignore it.  We have
   // to check on the original class here, because we also want to ignore
@@ -227,13 +227,13 @@ void Diagnostic::Report(DiagnosticClient* C,
   // warnings/extensions to errors.
   if (DiagID < diag::NUM_BUILTIN_DIAGNOSTICS &&
       getBuiltinDiagClass(DiagID) != ERROR &&
-      Client.isInSystemHeader(Pos))
+      Client->isInSystemHeader(Pos))
     return;
   
   if (DiagLevel >= Diagnostic::Error) {
     ErrorOccurred = true;
     
-    if (C == &Client)
+    if (C == Client)
       ++NumErrors;
   }
 
@@ -242,7 +242,7 @@ void Diagnostic::Report(DiagnosticClient* C,
   C->HandleDiagnostic(*this, DiagLevel, Pos, (diag::kind)DiagID,
                       Strs, NumStrs, Ranges, NumRanges);
   
-  if (C == &Client)
+  if (C == Client)
     ++NumDiagnostics;
 }
 

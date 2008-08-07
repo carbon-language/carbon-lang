@@ -1389,38 +1389,26 @@ int main(int argc, char **argv) {
   
   // Create the diagnostic client for reporting errors or for
   // implementing -verify.
-  std::auto_ptr<DiagnosticClient> DiagClient;
-  TextDiagnostics* TextDiagClient = NULL;
+  TextDiagnostics* TextDiagClient = 0;
   
-  if (!HTMLDiag.empty()) {
-    
-    // FIXME: The HTMLDiagnosticClient uses the Preprocessor for
-    //  (optional) syntax highlighting, but we don't have a preprocessor yet.
-    //  Fix this dependency later.
-    DiagClient.reset(CreateHTMLDiagnosticClient(HTMLDiag, 0, 0));
-  }
-  else { // Use Text diagnostics.
-    if (!VerifyDiagnostics) {
-      // Print diagnostics to stderr by default.
-      TextDiagClient = new TextDiagnosticPrinter(!NoShowColumn,
-          !NoCaretDiagnostics);
-    } else {
-      // When checking diagnostics, just buffer them up.
-      TextDiagClient = new TextDiagnosticBuffer();
-     
-      if (InputFilenames.size() != 1) {
-        fprintf(stderr,
-                "-verify only works on single input files for now.\n");
-        return 1;
-      }
+  if (!VerifyDiagnostics) {
+    // Print diagnostics to stderr by default.
+    TextDiagClient = new TextDiagnosticPrinter(!NoShowColumn,
+                                               !NoCaretDiagnostics);
+  } else {
+    // When checking diagnostics, just buffer them up.
+    TextDiagClient = new TextDiagnosticBuffer();
+   
+    if (InputFilenames.size() != 1) {
+      fprintf(stderr,
+              "-verify only works on single input files for now.\n");
+      return 1;
     }
-    
-    assert (TextDiagClient);
-    DiagClient.reset(TextDiagClient);
   }
-  
+
   // Configure our handling of diagnostics.
-  Diagnostic Diags(*DiagClient);
+  llvm::OwningPtr<DiagnosticClient> DiagClient(TextDiagClient);
+  Diagnostic Diags(DiagClient.get());
   InitializeDiagnostics(Diags);  
 
   // -I- is a deprecated GCC feature, scan for it and reject it.
@@ -1445,15 +1433,16 @@ int main(int argc, char **argv) {
   // Are we invoking one or more source analyses?
   if (!AnalysisList.empty() && ProgAction == ParseSyntaxOnly)
     ProgAction = RunAnalysis;  
-  
-  
+    
   llvm::OwningPtr<SourceManager> SourceMgr;
   
   for (unsigned i = 0, e = InputFilenames.size(); i != e; ++i) {
     const std::string &InFile = InputFilenames[i];
     
-    if (isSerializedFile(InFile))
+    if (isSerializedFile(InFile)) {
+      Diags.setClient(TextDiagClient);
       ProcessSerializedFile(InFile,Diags,FileMgr);
+    }
     else {            
       /// Create a SourceManager object.  This tracks and owns all the file
       /// buffers allocated to a translation unit.
@@ -1489,7 +1478,20 @@ int main(int argc, char **argv) {
             
       if (!PP)
         continue;
+
+      // Create the HTMLDiagnosticsClient if we are using one.  Otherwise,
+      // always reset to using TextDiagClient.
+      llvm::OwningPtr<DiagnosticClient> TmpClient;
       
+      if (!HTMLDiag.empty()) {
+        TmpClient.reset(CreateHTMLDiagnosticClient(HTMLDiag, PP.get(),
+                                                   &PPFactory));
+        Diags.setClient(TmpClient.get());
+      }
+      else
+        Diags.setClient(TextDiagClient);
+
+      // Process the source file.
       ProcessInputFile(*PP, PPFactory, InFile);
       HeaderInfo.ClearFileInfo();      
       
