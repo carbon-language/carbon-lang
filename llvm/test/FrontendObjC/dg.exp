@@ -2,6 +2,4 @@ load_lib llvm.exp
 
 if [ llvm_gcc_supports objc ] then {
     RunLLVMTests [lsort [glob -nocomplain $srcdir/$subdir/*.{m}]]
-    RunLLVMTests [lsort [glob -nocomplain $srcdir/$subdir/*.{mm}]]
 }
-
