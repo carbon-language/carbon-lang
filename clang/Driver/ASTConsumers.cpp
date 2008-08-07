@@ -652,15 +652,23 @@ public:
   virtual void Initialize(ASTContext &Context) {
     Gen->Initialize(Context);
   }
+
+  virtual void InitializeTU(TranslationUnit& TU) {
+    Gen->InitializeTU(TU);
+  }
   
   virtual void HandleTopLevelDecl(Decl *D) {
     Gen->HandleTopLevelDecl(D);
   }
   
+  virtual void HandleTranslationUnit(TranslationUnit& TU) {
+    Gen->HandleTranslationUnit(TU);
+  }
+  
   virtual void HandleTagDeclDefinition(TagDecl *D) {
     Gen->HandleTagDeclDefinition(D);
   }
-  
+
   virtual ~LLVMCodeGenWriter() {
     llvm::OwningPtr<llvm::Module> CodeGenModule(Gen->ReleaseModule());
     
