@@ -249,6 +249,8 @@ void MipsRegisterInfo::adjustMipsStackFrame(MachineFunction &MF) const
   for (int i = 0, e = MFI->getObjectIndexEnd(); i != e; ++i) {
     if (i >= MinCSFI && i <= MaxCSFI)
       continue;
+    if (MFI->isDeadObjectIndex(i))
+      continue;
     unsigned Offset = MFI->getObjectOffset(i) - CalleeSavedAreaSize;
     if (LastOffsetFI == -1)
       LastOffsetFI = i;
@@ -266,6 +268,7 @@ void MipsRegisterInfo::adjustMipsStackFrame(MachineFunction &MF) const
   if (LastOffsetFI >= 0)
     StackOffset = MFI->getObjectOffset(LastOffsetFI)+ 
                   MFI->getObjectAlignment(LastOffsetFI);
+  StackOffset = ((StackOffset+StackAlign-1)/StackAlign*StackAlign);
 
   for (unsigned i = 0, e = CSI.size(); i != e ; ++i) {
     if (CSI[i].getRegClass() != Mips::CPURegsRegisterClass)

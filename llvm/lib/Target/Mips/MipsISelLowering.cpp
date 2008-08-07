@@ -92,16 +92,17 @@ MipsTargetLowering(MipsTargetMachine &TM): TargetLowering(TM)
   AddPromotedToType(ISD::SETCC, MVT::i1, MVT::i32);
 
   // Mips Custom Operations
-  setOperationAction(ISD::GlobalAddress,    MVT::i32,   Custom);
-  setOperationAction(ISD::GlobalTLSAddress, MVT::i32,   Custom);
-  setOperationAction(ISD::RET,              MVT::Other, Custom);
-  setOperationAction(ISD::JumpTable,        MVT::i32,   Custom);
-  setOperationAction(ISD::ConstantPool,     MVT::i32,   Custom);
-  setOperationAction(ISD::SELECT,           MVT::f32,   Custom);
-  setOperationAction(ISD::SELECT,           MVT::i32,   Custom);
-  setOperationAction(ISD::SELECT_CC,        MVT::i32,   Custom);
-  setOperationAction(ISD::SETCC,            MVT::f32,   Custom);
-  setOperationAction(ISD::BRCOND,           MVT::Other, Custom);
+  setOperationAction(ISD::GlobalAddress,      MVT::i32,   Custom);
+  setOperationAction(ISD::GlobalTLSAddress,   MVT::i32,   Custom);
+  setOperationAction(ISD::RET,                MVT::Other, Custom);
+  setOperationAction(ISD::JumpTable,          MVT::i32,   Custom);
+  setOperationAction(ISD::ConstantPool,       MVT::i32,   Custom);
+  setOperationAction(ISD::SELECT,             MVT::f32,   Custom);
+  setOperationAction(ISD::SELECT,             MVT::i32,   Custom);
+  setOperationAction(ISD::SELECT_CC,          MVT::i32,   Custom);
+  setOperationAction(ISD::SETCC,              MVT::f32,   Custom);
+  setOperationAction(ISD::BRCOND,             MVT::Other, Custom);
+  setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32,   Custom);
 
   // We custom lower AND/OR to handle the case where the DAG contain 'ands/ors' 
   // with operands comming from setcc fp comparions. This is necessary since 
@@ -161,19 +162,20 @@ LowerOperation(SDValue Op, SelectionDAG &DAG)
 {
   switch (Op.getOpcode()) 
   {
-    case ISD::AND:              return LowerANDOR(Op, DAG);
-    case ISD::BRCOND:           return LowerBRCOND(Op, DAG);
-    case ISD::CALL:             return LowerCALL(Op, DAG);
-    case ISD::ConstantPool:     return LowerConstantPool(Op, DAG);
-    case ISD::FORMAL_ARGUMENTS: return LowerFORMAL_ARGUMENTS(Op, DAG);
-    case ISD::GlobalAddress:    return LowerGlobalAddress(Op, DAG);
-    case ISD::GlobalTLSAddress: return LowerGlobalTLSAddress(Op, DAG);
-    case ISD::JumpTable:        return LowerJumpTable(Op, DAG);
-    case ISD::OR:               return LowerANDOR(Op, DAG);
-    case ISD::RET:              return LowerRET(Op, DAG);
-    case ISD::SELECT:           return LowerSELECT(Op, DAG);
-    case ISD::SELECT_CC:        return LowerSELECT_CC(Op, DAG);
-    case ISD::SETCC:            return LowerSETCC(Op, DAG);
+    case ISD::AND:                return LowerANDOR(Op, DAG);
+    case ISD::BRCOND:             return LowerBRCOND(Op, DAG);
+    case ISD::CALL:               return LowerCALL(Op, DAG);
+    case ISD::ConstantPool:       return LowerConstantPool(Op, DAG);
+    case ISD::DYNAMIC_STACKALLOC: return LowerDYNAMIC_STACKALLOC(Op, DAG);
+    case ISD::FORMAL_ARGUMENTS:   return LowerFORMAL_ARGUMENTS(Op, DAG);
+    case ISD::GlobalAddress:      return LowerGlobalAddress(Op, DAG);
+    case ISD::GlobalTLSAddress:   return LowerGlobalTLSAddress(Op, DAG);
+    case ISD::JumpTable:          return LowerJumpTable(Op, DAG);
+    case ISD::OR:                 return LowerANDOR(Op, DAG);
+    case ISD::RET:                return LowerRET(Op, DAG);
+    case ISD::SELECT:             return LowerSELECT(Op, DAG);
+    case ISD::SELECT_CC:          return LowerSELECT_CC(Op, DAG);
+    case ISD::SETCC:              return LowerSETCC(Op, DAG);
   }
   return SDValue();
 }
@@ -360,6 +362,29 @@ MipsTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
 //===----------------------------------------------------------------------===//
 //  Misc Lower Operation implementation
 //===----------------------------------------------------------------------===//
+
+SDValue MipsTargetLowering::
+LowerDYNAMIC_STACKALLOC(SDValue Op, SelectionDAG &DAG)
+{
+  SDValue Chain = Op.getOperand(0);
+  SDValue Size = Op.getOperand(1);
+
+  // Get a reference from Mips stack pointer
+  SDValue StackPointer = DAG.getCopyFromReg(Chain, Mips::SP, MVT::i32);
+
+  // Subtract the dynamic size from the actual stack size to
+  // obtain the new stack size.
+  SDValue Sub = DAG.getNode(ISD::SUB, MVT::i32, StackPointer, Size);
+
+  // The Sub result contains the new stack start address, so it 
+  // must be placed in the stack pointer register.
+  Chain = DAG.getCopyToReg(StackPointer.getValue(1), Mips::SP, Sub);
+  
+  // This node always has two return values: a new stack pointer 
+  // value and a chain
+  SDValue Ops[2] = { Sub, Chain };
+  return DAG.getMergeValues(Ops, 2);
+}
 
 SDValue MipsTargetLowering::
 LowerANDOR(SDValue Op, SelectionDAG &DAG)

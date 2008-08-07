@@ -93,6 +93,7 @@ namespace llvm {
     SDValue LowerBRCOND(SDValue Op, SelectionDAG &DAG);
     SDValue LowerCALL(SDValue Op, SelectionDAG &DAG);
     SDValue LowerConstantPool(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerDYNAMIC_STACKALLOC(SDValue Op, SelectionDAG &DAG);
     SDValue LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG);
     SDValue LowerGlobalAddress(SDValue Op, SelectionDAG &DAG);
     SDValue LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG);
