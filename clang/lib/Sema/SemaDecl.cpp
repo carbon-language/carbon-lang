@@ -2223,11 +2223,23 @@ Sema::DeclTy *Sema::ActOnEnumConstant(Scope *S, DeclTy *theEnumDecl,
   return New;
 }
 
+// FIXME: For consistency with ActOnFields(), we should have the parser
+// pass in the source location for the left/right braces.
 void Sema::ActOnEnumBody(SourceLocation EnumLoc, DeclTy *EnumDeclX,
                          DeclTy **Elements, unsigned NumElements) {
   EnumDecl *Enum = cast<EnumDecl>(static_cast<Decl*>(EnumDeclX));
-  assert(!Enum->isDefinition() && "Enum redefinitions can't reach here");
   
+  if (Enum && Enum->isDefinition()) {
+    // Diagnose code like:
+    //   enum e0 {
+    //     E0 = sizeof(enum e0 { E1 })
+    //   };
+    Diag(Enum->getLocation(), diag::err_nested_redefinition,
+         Enum->getName());
+    Diag(EnumLoc, diag::err_previous_definition);
+    Enum->setInvalidDecl();
+    return;
+  }
   // TODO: If the result value doesn't fit in an int, it must be a long or long
   // long value.  ISO C does not support this, but GCC does as an extension,
   // emit a warning.
