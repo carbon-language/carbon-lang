@@ -27,7 +27,7 @@ using namespace clang;
 /// ParseAST - Parse the entire file specified, notifying the ASTConsumer as
 /// the file is parsed.  This takes ownership of the ASTConsumer and
 /// ultimately deletes it.
-void clang::ParseAST(Preprocessor &PP, ASTConsumer *Consumer, bool PrintStats) {
+void clang::ParseAST(Preprocessor &PP, ASTConsumer *Consumer, bool PrintStats, bool DeleteConsumer) {
   // Collect global stats on Decls/Stmts (until we have a module streamer).
   if (PrintStats) {
     Decl::CollectingStats(true);
@@ -78,5 +78,6 @@ void clang::ParseAST(Preprocessor &PP, ASTConsumer *Consumer, bool PrintStats) {
     Stmt::CollectingStats(false);
   }
   
-  delete Consumer;
+  if (DeleteConsumer)
+    delete Consumer;
 }

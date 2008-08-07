@@ -49,13 +49,7 @@ namespace {
     
     virtual ~CodeGeneratorImpl() {}
     
-    virtual llvm::Module* ReleaseModule() {      
-      if (Diags.hasErrorOccurred())
-        return 0;
-      
-      if (Builder)
-        Builder->Release();
-      
+    virtual llvm::Module* ReleaseModule() {
       return M.take();
     }
     
@@ -134,7 +128,16 @@ namespace {
     virtual void HandleTagDeclDefinition(TagDecl *D) {
       Builder->UpdateCompletedType(D);
     }
-    
+
+    virtual void HandleTranslationUnit(TranslationUnit& TU) {
+      if (Diags.hasErrorOccurred()) {
+        M.reset();
+        return;
+      }
+
+      if (Builder)
+        Builder->Release();
+    };
   };
 }
 
