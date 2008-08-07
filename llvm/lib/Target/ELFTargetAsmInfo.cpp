@@ -130,6 +130,8 @@ ELFTargetAsmInfo::MergeableStringSection(const GlobalVariable *GV) const {
 
   unsigned Size = TD->getABITypeSize(Ty);
   if (Size <= 16) {
+    assert(getCStringSection() && "Should have string section prefix");
+
     // We also need alignment here
     const TargetData *TD = ETM->getTargetData();
     unsigned Align = TD->getPrefTypeAlignment(Ty);
