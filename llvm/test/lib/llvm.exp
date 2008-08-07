@@ -236,8 +236,8 @@ proc llvm_gcc_supports { lang } {
     ada     { set file gnat1 }
     c       { set file cc1 }
     c++     { set file cc1plus }
-    objc    { set file cc1 }
-    objc++  { set file cc1 }
+    objc    { set file cc1obj }
+    objc++  { set file cc1objplus }
     fortran { set file f951 }
     default { return 0 }
   }
