@@ -139,7 +139,7 @@ namespace {
                          std::vector<StrongPHIElimination::DomForestNode*>& DF,
                          std::vector<std::pair<unsigned, unsigned> >& locals);
     void ScheduleCopies(MachineBasicBlock* MBB, std::set<unsigned>& pushed);
-    void InsertCopies(MachineBasicBlock* MBB,
+    void InsertCopies(MachineDomTreeNode* MBB,
                       SmallPtrSet<MachineBasicBlock*, 16>& v);
     void mergeLiveIntervals(unsigned primary, unsigned secondary, 
                             MachineBasicBlock* pred);
@@ -303,10 +303,9 @@ static bool isLiveIn(unsigned r, MachineBasicBlock* MBB,
 static bool isLiveOut(unsigned r, MachineBasicBlock* MBB,
                       LiveIntervals& LI) {
   for (MachineBasicBlock::succ_iterator PI = MBB->succ_begin(),
-       E = MBB->succ_end(); PI != E; ++PI) {
+       E = MBB->succ_end(); PI != E; ++PI)
     if (isLiveIn(r, *PI, LI))
       return true;
-  }
   
   return false;
 }
@@ -691,6 +690,9 @@ void StrongPHIElimination::ScheduleCopies(MachineBasicBlock* MBB,
         
         // Insert curr.second in pushed
         pushed.insert(curr.second);
+        
+        // Create a live interval for this temporary
+        InsertedPHIDests.push_back(std::make_pair(t, --PI));
       }
       
       // Insert copy from map[curr.first] to curr.second
@@ -748,34 +750,63 @@ void StrongPHIElimination::ScheduleCopies(MachineBasicBlock* MBB,
   std::set<unsigned> RegHandled;
   for (SmallVector<std::pair<unsigned, MachineInstr*>, 4>::iterator I =
        InsertedPHIDests.begin(), E = InsertedPHIDests.end(); I != E; ++I)
-    if (RegHandled.insert(I->first).second)
+    if (RegHandled.insert(I->first).second &&
+        !LI.getOrCreateInterval(I->first).liveAt(
+                                      LI.getMBBEndIdx(I->second->getParent())))
       LI.addLiveRangeToEndOfBlock(I->first, I->second);
 }
 
 /// InsertCopies - insert copies into MBB and all of its successors
-void StrongPHIElimination::InsertCopies(MachineBasicBlock* MBB,
+void StrongPHIElimination::InsertCopies(MachineDomTreeNode* MDTN,
                                  SmallPtrSet<MachineBasicBlock*, 16>& visited) {
+  MachineBasicBlock* MBB = MDTN->getBlock();
   visited.insert(MBB);
   
   std::set<unsigned> pushed;
   
+  LiveIntervals& LI = getAnalysis<LiveIntervals>();
   // Rewrite register uses from Stacks
   for (MachineBasicBlock::iterator I = MBB->begin(), E = MBB->end();
-      I != E; ++I)
+      I != E; ++I) {
+    if (I->getOpcode() == TargetInstrInfo::PHI)
+      continue;
+    
     for (unsigned i = 0; i < I->getNumOperands(); ++i)
       if (I->getOperand(i).isRegister() &&
           Stacks[I->getOperand(i).getReg()].size()) {
+        // Remove the live range for the old vreg.
+        LiveInterval& OldInt = LI.getInterval(I->getOperand(i).getReg());
+        LiveInterval::iterator OldLR = OldInt.FindLiveRangeContaining(
+                  LiveIntervals::getUseIndex(LI.getInstructionIndex(I)));
+        if (OldLR != OldInt.end())
+          OldInt.removeRange(*OldLR, true);
+        
+        // Change the register
         I->getOperand(i).setReg(Stacks[I->getOperand(i).getReg()].back());
+        
+        // Add a live range for the new vreg
+        LiveInterval& Int = LI.getInterval(I->getOperand(i).getReg());
+        VNInfo* FirstVN = *Int.vni_begin();
+        FirstVN->hasPHIKill = false;
+        if (I->getOperand(i).isKill())
+          FirstVN->kills.push_back(
+                         LiveIntervals::getUseIndex(LI.getInstructionIndex(I)));
+        
+        LiveRange LR (LI.getMBBStartIdx(I->getParent()),
+                      LiveIntervals::getUseIndex(LI.getInstructionIndex(I)),
+                      FirstVN);
+        
+        Int.addRange(LR);
       }
+  }    
   
   // Schedule the copies for this block
   ScheduleCopies(MBB, pushed);
   
-  // Recur to our successors
-  for (GraphTraits<MachineBasicBlock*>::ChildIteratorType I = 
-       GraphTraits<MachineBasicBlock*>::child_begin(MBB), E =
-       GraphTraits<MachineBasicBlock*>::child_end(MBB); I != E; ++I)
-    if (!visited.count(*I))
+  // Recur down the dominator tree.
+  for (MachineDomTreeNode::iterator I = MDTN->begin(),
+       E = MDTN->end(); I != E; ++I)
+    if (!visited.count((*I)->getBlock()))
       InsertCopies(*I, visited);
   
   // As we exit this block, pop the names we pushed while processing it
@@ -884,7 +915,8 @@ bool StrongPHIElimination::runOnMachineFunction(MachineFunction &Fn) {
   // Insert copies
   // FIXME: This process should probably preserve LiveIntervals
   SmallPtrSet<MachineBasicBlock*, 16> visited;
-  InsertCopies(Fn.begin(), visited);
+  MachineDominatorTree& MDT = getAnalysis<MachineDominatorTree>();
+  InsertCopies(MDT.getRootNode(), visited);
   
   // Perform renaming
   for (RenameSetType::iterator I = RenameSets.begin(), E = RenameSets.end();
@@ -901,8 +933,6 @@ bool StrongPHIElimination::runOnMachineFunction(MachineFunction &Fn) {
                            RenameSets[SI->first].end());
           RenameSets.erase(SI->first);
         }
-        
-        
       }
       
       I->second.erase(SI->first);
