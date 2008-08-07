@@ -109,6 +109,7 @@ namespace {
 
     void printMachineInstruction(const MachineInstr *MI);
     void printOp(const MachineOperand &MO, bool isBRCALLinsn= false);
+    void printModuleLevelGV(const GlobalVariable* GVar);
     bool runOnMachineFunction(MachineFunction &F);
     bool doInitialization(Module &M);
     bool doFinalization(Module &M);
@@ -256,78 +257,92 @@ bool IA64AsmPrinter::doInitialization(Module &M) {
   return Result;
 }
 
-bool IA64AsmPrinter::doFinalization(Module &M) {
+void IA64AsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
   const TargetData *TD = TM.getTargetData();
 
+  if (!GVar->hasInitializer())
+    return; // External global require no code
+
+  // Check to see if this is a special global used by LLVM, if so, emit it.
+  if (EmitSpecialLLVMGlobal(GVar))
+    return;
+
+  O << "\n\n";
+  std::string SectionName = TAI->SectionForGlobal(GVar);
+  std::string name = Mang->getValueName(GVar);
+  Constant *C = GVar->getInitializer();
+  unsigned Size = TD->getABITypeSize(C->getType());
+  unsigned Align = TD->getPreferredAlignmentLog(GVar);
+
+  // FIXME: ELF supports visibility
+
+  SwitchToDataSection(SectionName.c_str());
+
+  if (C->isNullValue() && !GVar->hasSection()) {
+    if (!GVar->isThreadLocal() &&
+        (GVar->hasInternalLinkage() || GVar->isWeakForLinker())) {
+      if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
+
+      if (GVar->hasInternalLinkage()) {
+        O << "\t.lcomm " << name << "#," << Size
+          << "," << (1 << Align);
+        O << "\n";
+      } else {
+        O << "\t.common " << name << "#," << Size
+          << "," << (1 << Align);
+        O << "\n";
+      }
+
+      return;
+    }
+  }
+
+  switch (GVar->getLinkage()) {
+   case GlobalValue::LinkOnceLinkage:
+   case GlobalValue::CommonLinkage:
+   case GlobalValue::WeakLinkage:
+    // Nonnull linkonce -> weak
+    O << "\t.weak " << name << "\n";
+    break;
+   case GlobalValue::AppendingLinkage:
+    // FIXME: appending linkage variables should go into a section of
+    // their name or something.  For now, just emit them as external.
+   case GlobalValue::ExternalLinkage:
+    // If external or appending, declare as a global symbol
+    O << TAI->getGlobalDirective() << name << "\n";
+    // FALL THROUGH
+   case GlobalValue::InternalLinkage:
+    break;
+   case GlobalValue::GhostLinkage:
+    cerr << "GhostLinkage cannot appear in IA64AsmPrinter!\n";
+    abort();
+   case GlobalValue::DLLImportLinkage:
+    cerr << "DLLImport linkage is not supported by this target!\n";
+    abort();
+   case GlobalValue::DLLExportLinkage:
+    cerr << "DLLExport linkage is not supported by this target!\n";
+    abort();
+   default:
+    assert(0 && "Unknown linkage type!");
+  }
+
+  EmitAlignment(Align);
+
+  if (TAI->hasDotTypeDotSizeDirective()) {
+    O << "\t.type " << name << ",@object\n";
+    O << "\t.size " << name << "," << Size << "\n";
+  }
+
+  O << name << ":\t\t\t\t// " << *C << "\n";
+  EmitGlobalConstant(C);
+}
+
+
+bool IA64AsmPrinter::doFinalization(Module &M) {
   // Print out module-level global variables here.
   for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
        I != E; ++I)
-    if (I->hasInitializer()) {   // External global require no code
-      // Check to see if this is a special global used by LLVM, if so, emit it.
-      if (EmitSpecialLLVMGlobal(I))
-        continue;
-
-      O << "\n\n";
-      std::string name = Mang->getValueName(I);
-      Constant *C = I->getInitializer();
-      unsigned Size = TD->getABITypeSize(C->getType());
-      unsigned Align = TD->getPreferredAlignmentLog(I);
-
-      if (C->isNullValue() &&
-          (I->hasLinkOnceLinkage() || I->hasInternalLinkage() ||
-           I->hasCommonLinkage() ||
-           I->hasWeakLinkage() /* FIXME: Verify correct */)) {
-        SwitchToDataSection(".data", I);
-        if (I->hasInternalLinkage()) {
-          O << "\t.lcomm " << name << "#," << TD->getABITypeSize(C->getType())
-          << "," << (1 << Align);
-          O << "\n";
-        } else {
-          O << "\t.common " << name << "#," << TD->getABITypeSize(C->getType())
-          << "," << (1 << Align);
-          O << "\n";
-        }
-      } else {
-        switch (I->getLinkage()) {
-          case GlobalValue::LinkOnceLinkage:
-          case GlobalValue::CommonLinkage:
-          case GlobalValue::WeakLinkage:   // FIXME: Verify correct for weak.
-                                           // Nonnull linkonce -> weak
-            O << "\t.weak " << name << "\n";
-            O << "\t.section\t.llvm.linkonce.d." << name
-              << ", \"aw\", \"progbits\"\n";
-            SwitchToDataSection("", I);
-            break;
-          case GlobalValue::AppendingLinkage:
-            // FIXME: appending linkage variables should go into a section of
-            // their name or something.  For now, just emit them as external.
-          case GlobalValue::ExternalLinkage:
-            // If external or appending, declare as a global symbol
-            O << "\t.global " << name << "\n";
-            // FALL THROUGH
-          case GlobalValue::InternalLinkage:
-            SwitchToDataSection(C->isNullValue() ? ".bss" : ".data", I);
-            break;
-          case GlobalValue::GhostLinkage:
-            cerr << "GhostLinkage cannot appear in IA64AsmPrinter!\n";
-            abort();
-          case GlobalValue::DLLImportLinkage:
-            cerr << "DLLImport linkage is not supported by this target!\n";
-            abort();
-          case GlobalValue::DLLExportLinkage:
-            cerr << "DLLExport linkage is not supported by this target!\n";
-            abort();
-          default:
-            assert(0 && "Unknown linkage type!");
-        }
-
-        EmitAlignment(Align);
-        O << "\t.type " << name << ",@object\n";
-        O << "\t.size " << name << "," << Size << "\n";
-        O << name << ":\t\t\t\t// " << *C << "\n";
-        EmitGlobalConstant(C);
-      }
-    }
+    printModuleLevelGV(I);
 
   // we print out ".global X \n .type X, @function" for each external function
   O << "\n\n// br.call targets referenced (and not defined) above: \n";

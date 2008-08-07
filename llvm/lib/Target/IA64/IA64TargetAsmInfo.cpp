@@ -15,7 +15,8 @@
 
 using namespace llvm;
 
-IA64TargetAsmInfo::IA64TargetAsmInfo(const IA64TargetMachine &TM) {
+IA64TargetAsmInfo::IA64TargetAsmInfo(const TargetMachine &TM):
+  ELFTargetAsmInfo(TM) {
   CommentString = "//";
   Data8bitsDirective = "\tdata1\t";     // FIXME: check that we are
   Data16bitsDirective = "\tdata2.ua\t"; // disabling auto-alignment
@@ -28,7 +29,9 @@ IA64TargetAsmInfo::IA64TargetAsmInfo(const IA64TargetMachine &TM) {
   GlobalVarAddrSuffix="";
   FunctionAddrPrefix="@fptr(";
   FunctionAddrSuffix=")";
-  
+
   // FIXME: would be nice to have rodata (no 'w') when appropriate?
   ConstantPoolSection = "\n\t.section .data, \"aw\", \"progbits\"\n";
 }
+
+// FIXME: Support small data/bss/rodata sections someday.

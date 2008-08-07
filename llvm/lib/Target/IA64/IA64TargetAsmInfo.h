@@ -15,14 +15,15 @@
 #define IA64TARGETASMINFO_H
 
 #include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/Target/ELFTargetAsmInfo.h"
 
 namespace llvm {
 
   // Forward declaration.
-  class IA64TargetMachine;
+  class TargetMachine;
 
-  struct IA64TargetAsmInfo : public TargetAsmInfo {
-    explicit IA64TargetAsmInfo(const IA64TargetMachine &TM);
+  struct IA64TargetAsmInfo : public ELFTargetAsmInfo {
+    explicit IA64TargetAsmInfo(const TargetMachine &TM);
   };
 
 
