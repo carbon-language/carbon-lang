@@ -435,50 +435,7 @@ const ValueState* ValueStateManager::AssumeAux(const ValueState* St, NonLVal Con
   }
 }
 
-const ValueState* ValueStateManager::AssumeSymNE(const ValueState* St,
-                                            SymbolID sym, const llvm::APSInt& V,
-                                            bool& isFeasible) {
-  
-  // First, determine if sym == X, where X != V.
-  if (const llvm::APSInt* X = St->getSymVal(sym)) {
-    isFeasible = *X != V;
-    return St;
-  }
-  
-  // Second, determine if sym != V.
-  if (St->isNotEqual(sym, V)) {
-    isFeasible = true;
-    return St;
-  }
-  
-  // If we reach here, sym is not a constant and we don't know if it is != V.
-  // Make that assumption.
-  
-  isFeasible = true;
-  return AddNE(St, sym, V);
-}
 
-const ValueState* ValueStateManager::AssumeSymEQ(const ValueState* St, SymbolID sym,
-                                            const llvm::APSInt& V, bool& isFeasible) {
-  
-  // First, determine if sym == X, where X != V.
-  if (const llvm::APSInt* X = St->getSymVal(sym)) {
-    isFeasible = *X == V;
-    return St;
-  }
-  
-  // Second, determine if sym != V.
-  if (St->isNotEqual(sym, V)) {
-    isFeasible = false;
-    return St;
-  }
-  
-  // If we reach here, sym is not a constant and we don't know if it is == V.
-  // Make that assumption.
-  
-  isFeasible = true;
-  return AddEQ(St, sym, V);
-}
 
 const ValueState* ValueStateManager::AssumeSymInt(const ValueState* St,
                                              bool Assumption,
@@ -502,5 +459,116 @@ const ValueState* ValueStateManager::AssumeSymInt(const ValueState* St,
         return AssumeSymNE(St, C.getSymbol(), C.getInt(), isFeasible);
       else
         return AssumeSymEQ(St, C.getSymbol(), C.getInt(), isFeasible);
+      
+    case BinaryOperator::GE:
+      if (Assumption)
+        return AssumeSymGE(St, C.getSymbol(), C.getInt(), isFeasible);
+      else
+        return AssumeSymLT(St, C.getSymbol(), C.getInt(), isFeasible);
+      
+    case BinaryOperator::LE:
+      if (Assumption)
+        return AssumeSymLE(St, C.getSymbol(), C.getInt(), isFeasible);
+      else
+        return AssumeSymGT(St, C.getSymbol(), C.getInt(), isFeasible);    
   }
 }
+
+//===----------------------------------------------------------------------===//
+// FIXME: This should go into a plug-in constraint engine.
+//===----------------------------------------------------------------------===//
+
+const ValueState*
+ValueStateManager::AssumeSymNE(const ValueState* St, SymbolID sym,
+                               const llvm::APSInt& V, bool& isFeasible) {
+  
+  // First, determine if sym == X, where X != V.
+  if (const llvm::APSInt* X = St->getSymVal(sym)) {
+    isFeasible = *X != V;
+    return St;
+  }
+  
+  // Second, determine if sym != V.
+  if (St->isNotEqual(sym, V)) {
+    isFeasible = true;
+    return St;
+  }
+  
+  // If we reach here, sym is not a constant and we don't know if it is != V.
+  // Make that assumption.
+  
+  isFeasible = true;
+  return AddNE(St, sym, V);
+}
+
+const ValueState*
+ValueStateManager::AssumeSymEQ(const ValueState* St, SymbolID sym,
+                               const llvm::APSInt& V, bool& isFeasible) {
+  
+  // First, determine if sym == X, where X != V.
+  if (const llvm::APSInt* X = St->getSymVal(sym)) {
+    isFeasible = *X == V;
+    return St;
+  }
+  
+  // Second, determine if sym != V.
+  if (St->isNotEqual(sym, V)) {
+    isFeasible = false;
+    return St;
+  }
+  
+  // If we reach here, sym is not a constant and we don't know if it is == V.
+  // Make that assumption.
+  
+  isFeasible = true;
+  return AddEQ(St, sym, V);
+}
+
+const ValueState*
+ValueStateManager::AssumeSymLT(const ValueState* St, SymbolID sym,
+                               const llvm::APSInt& V, bool& isFeasible) {
+  
+  // FIXME: For now have assuming x < y be the same as assuming sym != V;
+  return AssumeSymNE(St, sym, V, isFeasible);
+}
+
+const ValueState*
+ValueStateManager::AssumeSymGT(const ValueState* St, SymbolID sym,
+                               const llvm::APSInt& V, bool& isFeasible) {
+  
+  // FIXME: For now have assuming x > y be the same as assuming sym != V;
+  return AssumeSymNE(St, sym, V, isFeasible);
+}
+
+const ValueState*
+ValueStateManager::AssumeSymGE(const ValueState* St, SymbolID sym,
+                               const llvm::APSInt& V, bool& isFeasible) {
+  
+  // FIXME: Primitive logic for now.  Only reject a path if the value of
+  //  sym is a constant X and !(X >= V).
+  
+  if (const llvm::APSInt* X = St->getSymVal(sym)) {
+    isFeasible = *X >= V;
+    return St;
+  }
+  
+  isFeasible = true;
+  return St;
+}
+
+const ValueState*
+ValueStateManager::AssumeSymLE(const ValueState* St, SymbolID sym,
+                               const llvm::APSInt& V, bool& isFeasible) {
+  
+  // FIXME: Primitive logic for now.  Only reject a path if the value of
+  //  sym is a constant X and !(X <= V).
+    
+  if (const llvm::APSInt* X = St->getSymVal(sym)) {
+    isFeasible = *X <= V;
+    return St;
+  }
+  
+  isFeasible = true;
+  return St;
+}
+

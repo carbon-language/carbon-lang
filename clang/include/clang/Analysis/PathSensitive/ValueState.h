@@ -365,7 +365,6 @@ public:
   const ValueState* AddNE(const ValueState* St, SymbolID sym,
                           const llvm::APSInt& V);
   
-  
   bool isEqual(const ValueState* state, Expr* Ex, const llvm::APSInt& V);
   bool isEqual(const ValueState* state, Expr* Ex, uint64_t);
   
@@ -397,6 +396,9 @@ private:
   
   const ValueState* AssumeAux(const ValueState* St, NonLVal Cond,
                               bool Assumption, bool& isFeasible);
+    
+  const ValueState* AssumeSymInt(const ValueState* St, bool Assumption,                                 
+                                 const SymIntConstraint& C, bool& isFeasible);
   
   const ValueState* AssumeSymNE(const ValueState* St, SymbolID sym,
                                 const llvm::APSInt& V, bool& isFeasible);
@@ -404,8 +406,17 @@ private:
   const ValueState* AssumeSymEQ(const ValueState* St, SymbolID sym,
                                 const llvm::APSInt& V, bool& isFeasible);
   
-  const ValueState* AssumeSymInt(const ValueState* St, bool Assumption,
-                                 const SymIntConstraint& C, bool& isFeasible);
+  const ValueState* AssumeSymLT(const ValueState* St, SymbolID sym,
+                                const llvm::APSInt& V, bool& isFeasible);
+  
+  const ValueState* AssumeSymLE(const ValueState* St, SymbolID sym,
+                                const llvm::APSInt& V, bool& isFeasible);
+  
+  const ValueState* AssumeSymGT(const ValueState* St, SymbolID sym,
+                                const llvm::APSInt& V, bool& isFeasible);
+  
+  const ValueState* AssumeSymGE(const ValueState* St, SymbolID sym,
+                                const llvm::APSInt& V, bool& isFeasible);
 };
   
 } // end clang namespace
