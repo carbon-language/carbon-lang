@@ -51,3 +51,7 @@ void test4() {
 // PR2416
 enum someenum {};  // expected-warning {{use of empty enum extension}}
 
+// <rdar://problem/6093889>
+enum e0 { // expected-error {{previous definition is here}}
+  E0 = sizeof(enum e0 { E1 }) // expected-error {{nested redefinition}}
+};
