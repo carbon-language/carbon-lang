@@ -97,6 +97,10 @@ static void InitLibcallNames(const char **Names) {
   Names[RTLIB::POW_PPCF128] = "powl";
   Names[RTLIB::FPEXT_F32_F64] = "__extendsfdf2";
   Names[RTLIB::FPROUND_F64_F32] = "__truncdfsf2";
+  Names[RTLIB::FPROUND_F80_F32] = "__truncxfsf2";
+  Names[RTLIB::FPROUND_PPCF128_F32] = "__trunctfsf2";
+  Names[RTLIB::FPROUND_F80_F64] = "__truncxfdf2";
+  Names[RTLIB::FPROUND_PPCF128_F64] = "__trunctfdf2";
   Names[RTLIB::FPTOSINT_F32_I32] = "__fixsfsi";
   Names[RTLIB::FPTOSINT_F32_I64] = "__fixsfdi";
   Names[RTLIB::FPTOSINT_F32_I128] = "__fixsfti";
@@ -176,9 +180,18 @@ RTLIB::Libcall RTLIB::getFPEXT(MVT OpVT, MVT RetVT) {
 /// getFPROUND - Return the FPROUND_*_* value for the given types, or
 /// UNKNOWN_LIBCALL if there is none.
 RTLIB::Libcall RTLIB::getFPROUND(MVT OpVT, MVT RetVT) {
-  if (OpVT == MVT::f64) {
-    if (RetVT == MVT::f32)
+  if (RetVT == MVT::f32) {
+    if (OpVT == MVT::f64)
       return FPROUND_F64_F32;
+    if (OpVT == MVT::f80)
+      return FPROUND_F80_F32;
+    if (OpVT == MVT::ppcf128)
+      return FPROUND_PPCF128_F32;
+  } else if (RetVT == MVT::f64) {
+    if (OpVT == MVT::f80)
+      return FPROUND_F80_F64;
+    if (OpVT == MVT::ppcf128)
+      return FPROUND_PPCF128_F64;
   }
   return UNKNOWN_LIBCALL;
 }

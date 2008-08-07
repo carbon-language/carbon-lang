@@ -59,6 +59,7 @@ void DAGTypeLegalizer::SoftenFloatResult(SDNode *N, unsigned ResNo) {
     case ISD::ConstantFP:
       R = SoftenFloatRes_ConstantFP(cast<ConstantFPSDNode>(N));
       break;
+    case ISD::FABS:        R = SoftenFloatRes_FABS(N); break;
     case ISD::FADD:        R = SoftenFloatRes_FADD(N); break;
     case ISD::FCOPYSIGN:   R = SoftenFloatRes_FCOPYSIGN(N); break;
     case ISD::FDIV:        R = SoftenFloatRes_FDIV(N); break;
@@ -94,6 +95,17 @@ SDValue DAGTypeLegalizer::SoftenFloatRes_BUILD_PAIR(SDNode *N) {
 SDValue DAGTypeLegalizer::SoftenFloatRes_ConstantFP(ConstantFPSDNode *N) {
   return DAG.getConstant(N->getValueAPF().convertToAPInt(),
                          TLI.getTypeToTransformTo(N->getValueType(0)));
+}
+
+SDValue DAGTypeLegalizer::SoftenFloatRes_FABS(SDNode *N) {
+  MVT NVT = TLI.getTypeToTransformTo(N->getValueType(0));
+  unsigned Size = NVT.getSizeInBits();
+
+  // Mask = ~(1 << (Size-1))
+  SDValue Mask = DAG.getConstant(APInt::getAllOnesValue(Size).clear(Size-1), 
+                                 NVT);
+  SDValue Op = GetSoftenedFloat(N->getOperand(0));
+  return DAG.getNode(ISD::AND, NVT, Op, Mask);
 }
 
 SDValue DAGTypeLegalizer::SoftenFloatRes_FADD(SDNode *N) {
@@ -290,6 +302,7 @@ bool DAGTypeLegalizer::SoftenFloatOperand(SDNode *N, unsigned OpNo) {
 
   case ISD::BIT_CONVERT: Res = SoftenFloatOp_BIT_CONVERT(N); break;
   case ISD::BR_CC:       Res = SoftenFloatOp_BR_CC(N); break;
+  case ISD::FP_ROUND:    Res = SoftenFloatOp_FP_ROUND(N); break;
   case ISD::FP_TO_SINT:  Res = SoftenFloatOp_FP_TO_SINT(N); break;
   case ISD::FP_TO_UINT:  Res = SoftenFloatOp_FP_TO_UINT(N); break;
   case ISD::SELECT_CC:   Res = SoftenFloatOp_SELECT_CC(N); break;
@@ -405,6 +418,17 @@ void DAGTypeLegalizer::SoftenSetCCOperands(SDValue &NewLHS, SDValue &NewRHS,
 SDValue DAGTypeLegalizer::SoftenFloatOp_BIT_CONVERT(SDNode *N) {
   return DAG.getNode(ISD::BIT_CONVERT, N->getValueType(0),
                      GetSoftenedFloat(N->getOperand(0)));
+}
+
+SDValue DAGTypeLegalizer::SoftenFloatOp_FP_ROUND(SDNode *N) {
+  MVT SVT = N->getOperand(0).getValueType();
+  MVT RVT = N->getValueType(0);
+
+  RTLIB::Libcall LC = RTLIB::getFPROUND(SVT, RVT);
+  assert(LC != RTLIB::UNKNOWN_LIBCALL && "Unsupported FP_ROUND libcall");
+
+  SDValue Op = GetSoftenedFloat(N->getOperand(0));
+  return MakeLibCall(LC, RVT, &Op, 1, false);
 }
 
 SDValue DAGTypeLegalizer::SoftenFloatOp_BR_CC(SDNode *N) {
