@@ -290,7 +290,7 @@ namespace {
       assert(FunctionEnd > FunctionStart);
       assert(FunctionStart == (unsigned char *)(CurBlock+1) &&
              "Mismatched function start/end!");
-      
+
       uintptr_t BlockSize = FunctionEnd - (unsigned char *)CurBlock;
       FunctionBlocks[F] = CurBlock;
 

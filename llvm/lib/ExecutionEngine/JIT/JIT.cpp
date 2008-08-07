@@ -415,29 +415,21 @@ void *JIT::getOrEmitGlobalVariable(const GlobalVariable *GV) {
       cerr << "Could not resolve external global address: "
            << GV->getName() << "\n";
       abort();
+    addGlobalMapping(GV, Ptr);
     }
   } else {
-    // If the global hasn't been emitted to memory yet, allocate space.  We will
-    // actually initialize the global after current function has finished
-    // compilation.
+    // If the global hasn't been emitted to memory yet, allocate space and
+    // emit it into memory.  It goes in the same array as the generated
+    // code, jump tables, etc.
     const Type *GlobalType = GV->getType()->getElementType();
     size_t S = getTargetData()->getABITypeSize(GlobalType);
     size_t A = getTargetData()->getPreferredAlignment(GV);
-    if (A <= 8) {
-      Ptr = malloc(S);
-    } else {
-      // Allocate S+A bytes of memory, then use an aligned pointer within that
-      // space.
-      Ptr = malloc(S+A);
-      unsigned MisAligned = ((intptr_t)Ptr & (A-1));
-      Ptr = (char*)Ptr + (MisAligned ? (A-MisAligned) : 0);
-    }
-    jitstate->getPendingGlobals(locked).push_back(GV);
+    Ptr = MCE->allocateSpace(S, A);
+    addGlobalMapping(GV, Ptr);
+    EmitGlobalVariable(GV);
   }
-  addGlobalMapping(GV, Ptr);
   return Ptr;
 }
-
 
 /// recompileAndRelinkFunction - This method is used to force a function
 /// which has already been compiled, to be compiled again, possibly

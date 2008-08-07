@@ -819,6 +819,8 @@ void ExecutionEngine::LoadValueFromMemory(GenericValue &Result,
 // specified memory location...
 //
 void ExecutionEngine::InitializeMemory(const Constant *Init, void *Addr) {
+  DOUT << "Initializing " << Addr;
+  DEBUG(Init->dump());
   if (isa<UndefValue>(Init)) {
     return;
   } else if (const ConstantVector *CP = dyn_cast<ConstantVector>(Init)) {

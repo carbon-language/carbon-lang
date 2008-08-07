@@ -15,9 +15,9 @@
 #define DEBUG_TYPE "jit"
 #include "JIT.h"
 #include "JITDwarfEmitter.h"
-#include "llvm/Constant.h"
+#include "llvm/Constants.h"
 #include "llvm/Module.h"
-#include "llvm/Type.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
@@ -25,6 +25,7 @@
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineRelocation.h"
 #include "llvm/ExecutionEngine/JITMemoryManager.h"
+#include "llvm/ExecutionEngine/GenericValue.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetJITInfo.h"
 #include "llvm/Target/TargetMachine.h"
@@ -36,6 +37,7 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/ADT/Statistic.h"
 #include <algorithm>
+#include <set>
 using namespace llvm;
 
 STATISTIC(NumBytes, "Number of bytes of machine code compiled");
@@ -467,6 +469,9 @@ namespace {
     /// MMI - Machine module info for exception informations
     MachineModuleInfo* MMI;
 
+    // GVSet - a set to keep track of which globals have been seen
+    std::set<const GlobalVariable*> GVSet;
+
   public:
     JITEmitter(JIT &jit, JITMemoryManager *JMM) : Resolver(jit) {
       MemMgr = JMM ? JMM : JITMemoryManager::CreateDefaultMemManager();
@@ -541,6 +546,10 @@ namespace {
     void *getPointerToGlobal(GlobalValue *GV, void *Reference, bool NoNeedStub);
     void *getPointerToGVLazyPtr(GlobalValue *V, void *Reference,
                                 bool NoNeedStub);
+    unsigned addSizeOfGlobal(const GlobalVariable *GV, unsigned Size);
+    unsigned addSizeOfGlobalsInConstantVal(const Constant *C, unsigned Size);
+    unsigned addSizeOfGlobalsInInitializer(const Constant *Init, unsigned Size);
+    unsigned GetSizeOfGlobalsInBytes(MachineFunction &MF);
   };
 }
 
@@ -618,9 +627,154 @@ static uintptr_t RoundUpToAlign(uintptr_t Size, unsigned Alignment) {
   return Size + Alignment;
 }
 
+/// addSizeOfGlobal - add the size of the global (plus any alignment padding)
+/// into the running total Size.
+
+unsigned JITEmitter::addSizeOfGlobal(const GlobalVariable *GV, unsigned Size) {
+  const Type *ElTy = GV->getType()->getElementType();
+  size_t GVSize = (size_t)TheJIT->getTargetData()->getABITypeSize(ElTy);
+  size_t GVAlign = 
+      (size_t)TheJIT->getTargetData()->getPreferredAlignment(GV);
+  DOUT << "Adding in size " << GVSize << " alignment " << GVAlign;
+  DEBUG(GV->dump());
+  // Assume code section ends with worst possible alignment, so first
+  // variable needs maximal padding.
+  if (Size==0)
+    Size = 1;
+  Size = ((Size+GVAlign-1)/GVAlign)*GVAlign;
+  Size += GVSize;
+  return Size;
+}
+
+/// addSizeOfGlobalsInConstantVal - find any globals that we haven't seen yet
+/// but are referenced from the constant; put them in GVSet and add their
+/// size into the running total Size.
+
+unsigned JITEmitter::addSizeOfGlobalsInConstantVal(const Constant *C, 
+                                              unsigned Size) {
+  // If its undefined, return the garbage.
+  if (isa<UndefValue>(C))
+    return Size;
+
+  // If the value is a ConstantExpr
+  if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
+    Constant *Op0 = CE->getOperand(0);
+    switch (CE->getOpcode()) {
+    case Instruction::GetElementPtr:
+    case Instruction::Trunc:
+    case Instruction::ZExt:
+    case Instruction::SExt:
+    case Instruction::FPTrunc:
+    case Instruction::FPExt:
+    case Instruction::UIToFP:
+    case Instruction::SIToFP:
+    case Instruction::FPToUI:
+    case Instruction::FPToSI:
+    case Instruction::PtrToInt:
+    case Instruction::IntToPtr:
+    case Instruction::BitCast: {
+      Size = addSizeOfGlobalsInConstantVal(Op0, Size);
+      break;
+    }
+    case Instruction::Add:
+    case Instruction::Sub:
+    case Instruction::Mul:
+    case Instruction::UDiv:
+    case Instruction::SDiv:
+    case Instruction::URem:
+    case Instruction::SRem:
+    case Instruction::And:
+    case Instruction::Or:
+    case Instruction::Xor: {
+      Size = addSizeOfGlobalsInConstantVal(Op0, Size);
+      Size = addSizeOfGlobalsInConstantVal(CE->getOperand(1), Size);
+      break;
+    }
+    default: {
+       cerr << "ConstantExpr not handled: " << *CE << "\n";
+      abort();
+    }
+    }
+  }
+
+  if (C->getType()->getTypeID() == Type::PointerTyID)
+    if (const GlobalVariable* GV = dyn_cast<GlobalVariable>(C))
+      if (GVSet.insert(GV).second)
+        Size = addSizeOfGlobal(GV, Size);
+
+  return Size;
+}
+
+/// addSizeOfGLobalsInInitializer - handle any globals that we haven't seen yet
+/// but are referenced from the given initializer.
+
+unsigned JITEmitter::addSizeOfGlobalsInInitializer(const Constant *Init, 
+                                              unsigned Size) {
+  if (!isa<UndefValue>(Init) &&
+      !isa<ConstantVector>(Init) &&
+      !isa<ConstantAggregateZero>(Init) &&
+      !isa<ConstantArray>(Init) &&
+      !isa<ConstantStruct>(Init) &&
+      Init->getType()->isFirstClassType())
+    Size = addSizeOfGlobalsInConstantVal(Init, Size);
+  return Size;
+}
+
+/// GetSizeOfGlobalsInBytes - walk the code for the function, looking for
+/// globals; then walk the initializers of those globals looking for more.
+/// If their size has not been considered yet, add it into the running total
+/// Size.
+
+unsigned JITEmitter::GetSizeOfGlobalsInBytes(MachineFunction &MF) {
+  unsigned Size = 0;
+  GVSet.clear();
+
+  for (MachineFunction::iterator MBB = MF.begin(), E = MF.end(); 
+       MBB != E; ++MBB) {
+    for (MachineBasicBlock::const_iterator I = MBB->begin(), E = MBB->end();
+         I != E; ++I) {
+      const TargetInstrDesc &Desc = I->getDesc();
+      const MachineInstr &MI = *I;
+      unsigned NumOps = Desc.getNumOperands();
+      for (unsigned CurOp = 0; CurOp < NumOps; CurOp++) {
+        const MachineOperand &MO = MI.getOperand(CurOp);
+        if (MO.isGlobalAddress()) {
+          GlobalValue* V = MO.getGlobal();
+          const GlobalVariable *GV = dyn_cast<const GlobalVariable>(V);
+          if (!GV)
+            continue;
+          // If seen in previous function, it will have an entry here.
+          if (TheJIT->getPointerToGlobalIfAvailable(GV))
+            continue;
+          // If seen earlier in this function, it will have an entry here.
+          // FIXME: it should be possible to combine these tables, by
+          // assuming the addresses of the new globals in this module
+          // start at 0 (or something) and adjusting them after codegen
+          // complete.  Another possibility is to grab a marker bit in GV.
+          if (GVSet.insert(GV).second)
+            // A variable as yet unseen.  Add in its size.
+            Size = addSizeOfGlobal(GV, Size);
+        }
+      }
+    }
+  }
+  DOUT << "About to look through initializers\n";
+  // Look for more globals that are referenced only from initializers.
+  // GVSet.end is computed each time because the set can grow as we go.
+  for (std::set<const GlobalVariable *>::iterator I = GVSet.begin(); 
+       I != GVSet.end(); I++) {
+    const GlobalVariable* GV = *I;
+    if (GV->hasInitializer())
+      Size = addSizeOfGlobalsInInitializer(GV->getInitializer(), Size);
+  }
+
+  return Size;
+}
+
 void JITEmitter::startFunction(MachineFunction &F) {
   uintptr_t ActualSize = 0;
   if (MemMgr->NeedsExactSize()) {
+    DOUT << "ExactSize\n";
     const TargetInstrInfo* TII = F.getTarget().getInstrInfo();
     MachineJumpTableInfo *MJTI = F.getJumpTableInfo();
     MachineConstantPool *MCP = F.getConstantPool();
@@ -647,6 +801,13 @@ void JITEmitter::startFunction(MachineFunction &F) {
 
     // Add the function size
     ActualSize += TII->GetFunctionSizeInBytes(F);
+
+    DOUT << "ActualSize before globals " << ActualSize << "\n";
+    // Add the size of the globals that will be allocated after this function.
+    // These are all the ones referenced from this function that were not
+    // previously allocated.
+    ActualSize += GetSizeOfGlobalsInBytes(F);
+    DOUT << "ActualSize after globals " << ActualSize << "\n";
   }
 
   BufferBegin = CurBufferPtr = MemMgr->startFunctionBody(F.getFunction(),
@@ -679,10 +840,6 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
   // other per-function data.
   unsigned char *FnStart =
     (unsigned char *)TheJIT->getPointerToGlobalIfAvailable(F.getFunction());
-  unsigned char *FnEnd   = CurBufferPtr;
-  
-  MemMgr->endFunctionBody(F.getFunction(), BufferBegin, FnEnd);
-  NumBytes += FnEnd-FnStart;
 
   if (!Relocations.empty()) {
     NumRelos += Relocations.size();
@@ -733,6 +890,11 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
     TheJIT->getJITInfo().relocate(BufferBegin, &Relocations[0],
                                   Relocations.size(), MemMgr->getGOTBase());
   }
+
+  unsigned char *FnEnd   = CurBufferPtr;
+  
+  MemMgr->endFunctionBody(F.getFunction(), BufferBegin, FnEnd);
+  NumBytes += FnEnd-FnStart;
 
   // Update the GOT entry for F to point to the new code.
   if (MemMgr->isManagingGOT()) {
@@ -962,7 +1124,7 @@ void *JIT::getPointerToFunctionOrStub(Function *F) {
 /// freeMachineCodeForFunction - release machine code memory for given Function.
 ///
 void JIT::freeMachineCodeForFunction(Function *F) {
-  
+
   // Delete translation for this from the ExecutionEngine, so it will get
   // retranslated next time it is used.
   void *OldPtr = updateGlobalMapping(F, 0);
