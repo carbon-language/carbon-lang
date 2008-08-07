@@ -44,8 +44,7 @@
 #include "llvm/Config/config.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/System/Path.h"
-#include <memory>
-#include <algorithm>
+
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
