@@ -89,6 +89,8 @@ bool SRETPromotion::PromoteReturn(CallGraphNode *CGN) {
   if (F->arg_size() == 0 || !F->hasStructRetAttr() || F->doesNotReturn())
     return false;
 
+  DOUT << "SretPromotion: Looking at sret function " << F->getNameStart() << "\n";
+
   assert (F->getReturnType() == Type::VoidTy && "Invalid function return type");
   Function::arg_iterator AI = F->arg_begin();
   const llvm::PointerType *FArgType = dyn_cast<PointerType>(AI->getType());
@@ -99,10 +101,12 @@ bool SRETPromotion::PromoteReturn(CallGraphNode *CGN) {
 
   // Check if it is ok to perform this promotion.
   if (isSafeToUpdateAllCallers(F) == false) {
+    DOUT << "SretPromotion: Not all callers can be updated\n";
     NumRejectedSRETUses++;
     return false;
   }
 
+  DOUT << "SretPromotion: sret argument will be promoted\n";
   NumSRET++;
   // [1] Replace use of sret parameter 
   AllocaInst *TheAlloca = new AllocaInst (STy, NULL, "mrv", 
