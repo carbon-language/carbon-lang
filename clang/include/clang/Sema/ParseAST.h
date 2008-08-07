@@ -21,7 +21,9 @@ namespace clang {
   /// ParseAST - Parse the entire file specified, notifying the ASTConsumer as
   /// the file is parsed.  This takes ownership of the ASTConsumer and
   /// ultimately deletes it.
-  void ParseAST(Preprocessor &pp, ASTConsumer *C, bool PrintStats = false, bool DeleteConsumer = true);
+  void ParseAST(Preprocessor &pp, ASTConsumer *C, bool PrintStats = false,
+                bool DeleteConsumer = true);
+
 }  // end namespace clang
 
 #endif
