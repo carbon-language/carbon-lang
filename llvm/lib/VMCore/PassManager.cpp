@@ -598,8 +598,12 @@ bool PMDataManager::preserveHigherLevelAnalysis(Pass *P) {
   return true;
 }
 
-/// verifyPreservedAnalysis -- Verify analysis presreved by pass P.
+/// verifyPreservedAnalysis -- Verify analysis preserved by pass P.
 void PMDataManager::verifyPreservedAnalysis(Pass *P) {
+  // Don't do this unless assertions are enabled.
+#ifdef NDEBUG
+  return;
+#endif
   AnalysisUsage AnUsage;
   P->getAnalysisUsage(AnUsage);
   const std::vector<AnalysisID> &PreservedSet = AnUsage.getPreservedSet();
@@ -608,8 +612,7 @@ void PMDataManager::verifyPreservedAnalysis(Pass *P) {
   for (std::vector<AnalysisID>::const_iterator I = PreservedSet.begin(),
          E = PreservedSet.end(); I != E; ++I) {
     AnalysisID AID = *I;
-    Pass *AP = findAnalysisPass(AID, true);
-    if (AP)
+    if (Pass *AP = findAnalysisPass(AID, true))
       AP->verifyAnalysis();
   }
 }
@@ -1318,7 +1321,7 @@ MPPassManager::runOnModule(Module &M) {
       dumpPassInfo(MP, MODIFICATION_MSG, ON_MODULE_MSG,
                    M.getModuleIdentifier().c_str());
     dumpAnalysisSetInfo("Preserved", MP, AnUsage.getPreservedSet());
-      
+    
     verifyPreservedAnalysis(MP);
     removeNotPreservedAnalysis(MP);
     recordAvailableAnalysis(MP);
