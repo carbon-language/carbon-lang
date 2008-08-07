@@ -306,15 +306,9 @@ TargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
   } else {
     if (Kind == SectionKind::Text)
       return getTextSection_();
-    else if ((Kind == SectionKind::BSS ||
-              Kind == SectionKind::SmallBSS) &&
-             getBSSSection_())
+    else if (isBSS(Kind) && getBSSSection_())
       return getBSSSection_();
-    else if (getReadOnlySection_() &&
-             (Kind == SectionKind::ROData ||
-              Kind == SectionKind::RODataMergeConst ||
-              Kind == SectionKind::RODataMergeStr ||
-              Kind == SectionKind::SmallROData))
+    else if (getReadOnlySection_() && SectionKind::isReadOnly(Kind))
       return getReadOnlySection_();
   }
 

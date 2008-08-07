@@ -61,7 +61,7 @@ SectionKindForGlobal(const GlobalValue *GV) const {
   if (Subtarget->hasABICall())
     return K;
 
-  if (K != SectionKind::Data && K != SectionKind::BSS && 
+  if (K != SectionKind::Data && K != SectionKind::BSS &&
       K != SectionKind::RODataMergeConst)
     return K;
 
@@ -69,7 +69,7 @@ SectionKindForGlobal(const GlobalValue *GV) const {
     const TargetData *TD = ETM->getTargetData();
     unsigned Size = TD->getABITypeSize(GV->getType()->getElementType());
     unsigned Threshold = Subtarget->getSSectionThreshold();
-     
+
     if (Size > 0 && Size <= Threshold) {
       if (K == SectionKind::BSS)
         return SectionKind::SmallBSS;

@@ -45,6 +45,18 @@ namespace llvm {
       ThreadData,       ///< Initialized TLS data objects
       ThreadBSS         ///< Uninitialized TLS data objects
     };
+
+    static inline bool isReadOnly(Kind K) {
+      return (K == SectionKind::ROData ||
+              K == SectionKind::RODataMergeConst ||
+              K == SectionKind::RODataMergeStr ||
+              K == SectionKind::SmallROData);
+    }
+
+    static inline bool isBSS(Kind K) {
+      return (K == SectionKind::BSS ||
+              K == SectionKind::SmallBSS);
+    }
   }
 
   namespace SectionFlags {
