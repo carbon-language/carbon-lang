@@ -797,30 +797,26 @@ static DeclRefExpr* EvalAddr(Expr *E) {
      return EvalAddr(C->getRHS());
   }
     
-  // For implicit casts, we need to handle conversions from arrays to
-  // pointer values, and implicit pointer-to-pointer conversions.
+  // For casts, we need to handle conversions from arrays to
+  // pointer values, and pointer-to-pointer conversions.
+  case Stmt::CastExprClass:
   case Stmt::ImplicitCastExprClass: {
-    ImplicitCastExpr *IE = cast<ImplicitCastExpr>(E);
-    Expr* SubExpr = IE->getSubExpr();
     
-    if (SubExpr->getType()->isPointerType() ||
-        SubExpr->getType()->isObjCQualifiedIdType())
-      return EvalAddr(SubExpr);
+    Expr* SubExpr;
+    
+    if (ImplicitCastExpr *IE = dyn_cast<ImplicitCastExpr>(E))
+      SubExpr = IE->getSubExpr();
     else
+      SubExpr = cast<CastExpr>(E)->getSubExpr();
+    
+    QualType T = SubExpr->getType();
+    
+    if (T->isPointerType() || T->isObjCQualifiedIdType())
+      return EvalAddr(SubExpr);
+    else if (T->isArrayType())
       return EvalVal(SubExpr);
-  }
-
-  // For casts, we handle pointer-to-pointer conversions (which
-  // is essentially a no-op from our mini-interpreter's standpoint).
-  // For other casts we abort.
-  case Stmt::CastExprClass: {
-    CastExpr *C = cast<CastExpr>(E);
-    Expr *SubExpr = C->getSubExpr();
-    
-    if (SubExpr->getType()->isPointerType())
-      return EvalAddr(SubExpr);
     else
-      return NULL;
+      return 0;
   }
     
   // C++ casts.  For dynamic casts, static casts, and const casts, we
