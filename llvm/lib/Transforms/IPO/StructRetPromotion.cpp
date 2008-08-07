@@ -228,7 +228,8 @@ Function *SRETPromotion::cloneFunctionBody(Function *F,
   }
 
   FunctionType *NFTy = FunctionType::get(STy, Params, FTy->isVarArg());
-  Function *NF = Function::Create(NFTy, F->getLinkage(), F->getName());
+  Function *NF = Function::Create(NFTy, F->getLinkage());
+  NF->takeName(F);
   NF->copyAttributesFrom(F);
   NF->setParamAttrs(PAListPtr::get(ParamAttrsVec.begin(), ParamAttrsVec.end()));
   F->getParent()->getFunctionList().insert(F, NF);
