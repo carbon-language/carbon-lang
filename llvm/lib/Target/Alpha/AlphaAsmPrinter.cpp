@@ -46,15 +46,16 @@ namespace {
     void printOp(const MachineOperand &MO, bool IsCallOp = false);
     void printOperand(const MachineInstr *MI, int opNum);
     void printBaseOffsetPair (const MachineInstr *MI, int i, bool brackets=true);
+    void printModuleLevelGV(const GlobalVariable* GVar);
     bool runOnMachineFunction(MachineFunction &F);
     bool doInitialization(Module &M);
     bool doFinalization(Module &M);
-    
+
     bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
                          unsigned AsmVariant, const char *ExtraCode);
-    bool PrintAsmMemoryOperand(const MachineInstr *MI, 
+    bool PrintAsmMemoryOperand(const MachineInstr *MI,
                                unsigned OpNo,
-                               unsigned AsmVariant, 
+                               unsigned AsmVariant,
                                const char *ExtraCode);
   };
 } // end of anonymous namespace
@@ -148,7 +149,7 @@ bool AlphaAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   // Print out labels for the function.
   const Function *F = MF.getFunction();
   SwitchToTextSection(getSectionForFunction(*F).c_str(), F);
-  
+
   EmitAlignment(4, F);
   switch (F->getLinkage()) {
   default: assert(0 && "Unknown linkage type!");
@@ -201,36 +202,38 @@ bool AlphaAsmPrinter::doInitialization(Module &M)
   return AsmPrinter::doInitialization(M);
 }
 
-bool AlphaAsmPrinter::doFinalization(Module &M) {
+void AlphaAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
   const TargetData *TD = TM.getTargetData();
 
-  for (Module::const_global_iterator I = M.global_begin(), E = M.global_end(); I != E; ++I) {
+  if (!GVar->hasInitializer()) return;  // External global require no code
 
-    if (!I->hasInitializer()) continue;  // External global require no code
-    
-    // Check to see if this is a special global used by LLVM, if so, emit it.
-    if (EmitSpecialLLVMGlobal(I))
-      continue;
-    
-    std::string name = Mang->getValueName(I);
-    Constant *C = I->getInitializer();
-    unsigned Size = TD->getABITypeSize(C->getType());
-    unsigned Align = TD->getPreferredAlignmentLog(I);
-    
-    //1: hidden?
-    if (I->hasHiddenVisibility())
-      O << TAI->getHiddenDirective() << name << "\n";
-    
-    //2: kind
-    switch (I->getLinkage()) {
-    case GlobalValue::LinkOnceLinkage:
-    case GlobalValue::WeakLinkage:
-    case GlobalValue::CommonLinkage:
-      O << TAI->getWeakRefDirective() << name << '\n';
-      break;
-    case GlobalValue::AppendingLinkage:
-    case GlobalValue::ExternalLinkage:
-      O << "\t.globl " << name << "\n";
+  // Check to see if this is a special global used by LLVM, if so, emit it.
+  if (EmitSpecialLLVMGlobal(GVar))
+    return;
+
+  std::string SectionName = TAI->SectionForGlobal(GVar);
+  std::string name = Mang->getValueName(GVar);
+  Constant *C = GVar->getInitializer();
+  unsigned Size = TD->getABITypeSize(C->getType());
+  unsigned Align = TD->getPreferredAlignmentLog(GVar);
+
+  // 0: Switch to section
+  SwitchToDataSection(SectionName.c_str());
+
+  // 1: Check visibility
+  if (GVar->hasHiddenVisibility())
+    O << TAI->getHiddenDirective() << name << "\n";
+
+  // 2: Kind
+  switch (GVar->getLinkage()) {
+   case GlobalValue::LinkOnceLinkage:
+   case GlobalValue::WeakLinkage:
+   case GlobalValue::CommonLinkage:
+    O << TAI->getWeakRefDirective() << name << '\n';
+    break;
+   case GlobalValue::AppendingLinkage:
+   case GlobalValue::ExternalLinkage:
+      O << TAI->getGlobalDirective() << name << "\n";
       break;
     case GlobalValue::InternalLinkage:
       break;
@@ -239,37 +242,31 @@ bool AlphaAsmPrinter::doFinalization(Module &M) {
       cerr << "Unknown linkage type!\n";
       abort();
     }
-    
-    //3: Section (if changed)
-    if (I->hasSection() &&
-        (I->getSection() == ".ctors" ||
-         I->getSection() == ".dtors")) {
-      std::string SectionName = ".section\t" + I->getSection()
-        + ",\"aw\",@progbits";
-      SwitchToDataSection(SectionName.c_str());
-    } else {
-      if (C->isNullValue())
-        SwitchToDataSection("\t.section\t.bss", I);
-      else
-        SwitchToDataSection("\t.section\t.data", I);
-    }
-    
-    //4: Type, Size, Align
+
+  // 3: Type, Size, Align
+  if (TAI->hasDotTypeDotSizeDirective()) {
     O << "\t.type\t" << name << ", @object\n";
     O << "\t.size\t" << name << ", " << Size << "\n";
-    EmitAlignment(Align, I);
-    
-    O << name << ":\n";
-    
-    // If the initializer is a extern weak symbol, remember to emit the weak
-    // reference!
-    if (const GlobalValue *GV = dyn_cast<GlobalValue>(C))
-      if (GV->hasExternalWeakLinkage())
-        ExtWeakSymbols.insert(GV);
-    
-    EmitGlobalConstant(C);
-    O << '\n';
   }
+
+  EmitAlignment(Align, GVar);
+
+  O << name << ":\n";
+
+  // If the initializer is a extern weak symbol, remember to emit the weak
+  // reference!
+  if (const GlobalValue *GV = dyn_cast<GlobalValue>(C))
+    if (GV->hasExternalWeakLinkage())
+      ExtWeakSymbols.insert(GV);
+
+  EmitGlobalConstant(C);
+  O << '\n';
+}
+
+bool AlphaAsmPrinter::doFinalization(Module &M) {
+  for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
+       I != E; ++I)
+    printModuleLevelGV(I);
 
   return AsmPrinter::doFinalization(M);
 }
@@ -277,15 +274,15 @@ bool AlphaAsmPrinter::doFinalization(Module &M) {
 /// PrintAsmOperand - Print out an operand for an inline asm expression.
 ///
 bool AlphaAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
-                                      unsigned AsmVariant, 
+                                      unsigned AsmVariant,
                                       const char *ExtraCode) {
   printOperand(MI, OpNo);
   return false;
 }
 
-bool AlphaAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI, 
+bool AlphaAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
                                             unsigned OpNo,
-                                            unsigned AsmVariant, 
+                                            unsigned AsmVariant,
                                             const char *ExtraCode) {
   if (ExtraCode && ExtraCode[0])
     return true; // Unknown modifier.
