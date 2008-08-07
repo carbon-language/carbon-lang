@@ -43,85 +43,8 @@ static const char *const arm_asm_table[] = {
                                       0,0};
 
 ARMTargetAsmInfo::ARMTargetAsmInfo(const ARMTargetMachine &TM) {
-  Subtarget = &TM.getSubtarget<ARMSubtarget>();
   AsmTransCBE = arm_asm_table;
-  if (Subtarget->isTargetDarwin()) {
-    GlobalPrefix = "_";
-    PrivateGlobalPrefix = "L";
-    StringConstantPrefix = "\1LC";
-    BSSSection = 0;                       // no BSS section.
-    ZeroFillDirective = "\t.zerofill\t";  // Uses .zerofill
-    SetDirective = "\t.set\t";
-    WeakRefDirective = "\t.weak_reference\t";
-    HiddenDirective = "\t.private_extern\t";
-    ProtectedDirective = NULL;
-    JumpTableDataSection = ".const";
-    CStringSection = "\t.cstring";
-    FourByteConstantSection = "\t.literal4\n";
-    EightByteConstantSection = "\t.literal8\n";
-    ReadOnlySection = "\t.const\n";
-    HasDotTypeDotSizeDirective = false;
-    NeedsIndirectEncoding = true;
-    if (TM.getRelocationModel() == Reloc::Static) {
-      StaticCtorsSection = ".constructor";
-      StaticDtorsSection = ".destructor";
-    } else {
-      StaticCtorsSection = ".mod_init_func";
-      StaticDtorsSection = ".mod_term_func";
-    }
-    
-    // In non-PIC modes, emit a special label before jump tables so that the
-    // linker can perform more accurate dead code stripping.
-    if (TM.getRelocationModel() != Reloc::PIC_) {
-      // Emit a local label that is preserved until the linker runs.
-      JumpTableSpecialLabelPrefix = "l";
-    }
-    
-    NeedsSet = true;
-    DwarfAbbrevSection = ".section __DWARF,__debug_abbrev,regular,debug";
-    DwarfInfoSection = ".section __DWARF,__debug_info,regular,debug";
-    DwarfLineSection = ".section __DWARF,__debug_line,regular,debug";
-    DwarfFrameSection = ".section __DWARF,__debug_frame,regular,debug";
-    DwarfPubNamesSection = ".section __DWARF,__debug_pubnames,regular,debug";
-    DwarfPubTypesSection = ".section __DWARF,__debug_pubtypes,regular,debug";
-    DwarfStrSection = ".section __DWARF,__debug_str,regular,debug";
-    DwarfLocSection = ".section __DWARF,__debug_loc,regular,debug";
-    DwarfARangesSection = ".section __DWARF,__debug_aranges,regular,debug";
-    DwarfRangesSection = ".section __DWARF,__debug_ranges,regular,debug";
-    DwarfMacInfoSection = ".section __DWARF,__debug_macinfo,regular,debug";
-  } else {
-    NeedsSet = false;
-    HasLEB128 = true;
-    AbsoluteDebugSectionOffsets = true;
-    ReadOnlySection = "\t.section\t.rodata\n";
-    PrivateGlobalPrefix = ".L";
-    WeakRefDirective = "\t.weak\t";
-    SetDirective = "\t.set\t";
-    DwarfRequiresFrameSection = false;
-    DwarfAbbrevSection =  "\t.section\t.debug_abbrev,\"\",%progbits";
-    DwarfInfoSection =    "\t.section\t.debug_info,\"\",%progbits";
-    DwarfLineSection =    "\t.section\t.debug_line,\"\",%progbits";
-    DwarfFrameSection =   "\t.section\t.debug_frame,\"\",%progbits";
-    DwarfPubNamesSection ="\t.section\t.debug_pubnames,\"\",%progbits";
-    DwarfPubTypesSection ="\t.section\t.debug_pubtypes,\"\",%progbits";
-    DwarfStrSection =     "\t.section\t.debug_str,\"\",%progbits";
-    DwarfLocSection =     "\t.section\t.debug_loc,\"\",%progbits";
-    DwarfARangesSection = "\t.section\t.debug_aranges,\"\",%progbits";
-    DwarfRangesSection =  "\t.section\t.debug_ranges,\"\",%progbits";
-    DwarfMacInfoSection = "\t.section\t.debug_macinfo,\"\",%progbits";
 
-    if (Subtarget->isAAPCS_ABI()) {
-      StaticCtorsSection = "\t.section .init_array,\"aw\",%init_array";
-      StaticDtorsSection = "\t.section .fini_array,\"aw\",%fini_array";
-    } else {
-      StaticCtorsSection = "\t.section .ctors,\"aw\",%progbits";
-      StaticDtorsSection = "\t.section .dtors,\"aw\",%progbits";
-    }
-    TLSDataSection = "\t.section .tdata,\"awT\",%progbits";
-    TLSBSSSection = "\t.section .tbss,\"awT\",%nobits";
-  }
-
-  ZeroDirective = "\t.space\t";
   AlignmentIsInBytes = false;
   Data64bitsDirective = 0;
   CommentString = "@";
@@ -131,6 +54,95 @@ ARMTargetAsmInfo::ARMTargetAsmInfo(const ARMTargetMachine &TM) {
   InlineAsmStart = "@ InlineAsm Start";
   InlineAsmEnd = "@ InlineAsm End";
   LCOMMDirective = "\t.lcomm\t";
+}
+
+ARMDarwinTargetAsmInfo::ARMDarwinTargetAsmInfo(const ARMTargetMachine &TM):
+  ARMTargetAsmInfo(TM), DarwinTargetAsmInfo(TM) {
+  Subtarget = &DTM->getSubtarget<ARMSubtarget>();
+
+  GlobalPrefix = "_";
+  PrivateGlobalPrefix = "L";
+  StringConstantPrefix = "\1LC";
+  BSSSection = 0;                       // no BSS section
+  ZeroDirective = "\t.space\t";
+  ZeroFillDirective = "\t.zerofill\t";  // Uses .zerofill
+  SetDirective = "\t.set\t";
+  WeakRefDirective = "\t.weak_reference\t";
+  HiddenDirective = "\t.private_extern\t";
+  ProtectedDirective = NULL;
+  JumpTableDataSection = ".const";
+  CStringSection = "\t.cstring";
+  FourByteConstantSection = "\t.literal4\n";
+  EightByteConstantSection = "\t.literal8\n";
+  ReadOnlySection = "\t.const\n";
+  HasDotTypeDotSizeDirective = false;
+  NeedsIndirectEncoding = true;
+  if (TM.getRelocationModel() == Reloc::Static) {
+    StaticCtorsSection = ".constructor";
+    StaticDtorsSection = ".destructor";
+  } else {
+    StaticCtorsSection = ".mod_init_func";
+    StaticDtorsSection = ".mod_term_func";
+  }
+
+  // In non-PIC modes, emit a special label before jump tables so that the
+  // linker can perform more accurate dead code stripping.
+  if (TM.getRelocationModel() != Reloc::PIC_) {
+    // Emit a local label that is preserved until the linker runs.
+    JumpTableSpecialLabelPrefix = "l";
+  }
+
+  NeedsSet = true;
+  DwarfAbbrevSection = ".section __DWARF,__debug_abbrev,regular,debug";
+  DwarfInfoSection = ".section __DWARF,__debug_info,regular,debug";
+  DwarfLineSection = ".section __DWARF,__debug_line,regular,debug";
+  DwarfFrameSection = ".section __DWARF,__debug_frame,regular,debug";
+  DwarfPubNamesSection = ".section __DWARF,__debug_pubnames,regular,debug";
+  DwarfPubTypesSection = ".section __DWARF,__debug_pubtypes,regular,debug";
+  DwarfStrSection = ".section __DWARF,__debug_str,regular,debug";
+  DwarfLocSection = ".section __DWARF,__debug_loc,regular,debug";
+  DwarfARangesSection = ".section __DWARF,__debug_aranges,regular,debug";
+  DwarfRangesSection = ".section __DWARF,__debug_ranges,regular,debug";
+  DwarfMacInfoSection = ".section __DWARF,__debug_macinfo,regular,debug";
+}
+
+ARMELFTargetAsmInfo::ARMELFTargetAsmInfo(const ARMTargetMachine &TM):
+  ARMTargetAsmInfo(TM), ELFTargetAsmInfo(TM) {
+  Subtarget = &ETM->getSubtarget<ARMSubtarget>();
+
+  NeedsSet = false;
+  HasLEB128 = true;
+  AbsoluteDebugSectionOffsets = true;
+  CStringSection = ".rodata.str";
+  ReadOnlySection = "\t.section\t.rodata\n";
+  FourByteConstantSection = "\t.section\t.rodata.cst4,\"aM\",@progbits,4";
+  EightByteConstantSection = "\t.section\t.rodata.cst8,\"aM\",@progbits,8";
+  SixteenByteConstantSection = "\t.section\t.rodata.cst16,\"aM\",@progbits,16";
+  PrivateGlobalPrefix = ".L";
+  WeakRefDirective = "\t.weak\t";
+  SetDirective = "\t.set\t";
+  DwarfRequiresFrameSection = false;
+  DwarfAbbrevSection =  "\t.section\t.debug_abbrev,\"\",%progbits";
+  DwarfInfoSection =    "\t.section\t.debug_info,\"\",%progbits";
+  DwarfLineSection =    "\t.section\t.debug_line,\"\",%progbits";
+  DwarfFrameSection =   "\t.section\t.debug_frame,\"\",%progbits";
+  DwarfPubNamesSection ="\t.section\t.debug_pubnames,\"\",%progbits";
+  DwarfPubTypesSection ="\t.section\t.debug_pubtypes,\"\",%progbits";
+  DwarfStrSection =     "\t.section\t.debug_str,\"\",%progbits";
+  DwarfLocSection =     "\t.section\t.debug_loc,\"\",%progbits";
+  DwarfARangesSection = "\t.section\t.debug_aranges,\"\",%progbits";
+  DwarfRangesSection =  "\t.section\t.debug_ranges,\"\",%progbits";
+  DwarfMacInfoSection = "\t.section\t.debug_macinfo,\"\",%progbits";
+
+  if (Subtarget->isAAPCS_ABI()) {
+    StaticCtorsSection = "\t.section .init_array,\"aw\",%init_array";
+    StaticDtorsSection = "\t.section .fini_array,\"aw\",%fini_array";
+  } else {
+    StaticCtorsSection = "\t.section .ctors,\"aw\",%progbits";
+    StaticDtorsSection = "\t.section .dtors,\"aw\",%progbits";
+  }
+  TLSDataSection = "\t.section .tdata,\"awT\",%progbits";
+  TLSBSSSection = "\t.section .tbss,\"awT\",%nobits";
 }
 
 /// Count the number of comma-separated arguments.

@@ -754,8 +754,6 @@ void X86ATTAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
   if (!GVar->hasInitializer())
     return;   // External global require no code
 
-  std::string SectionName = TAI->SectionForGlobal(GVar);
-
   // Check to see if this is a special global used by LLVM, if so, emit it.
   if (EmitSpecialLLVMGlobal(GVar)) {
     if (Subtarget->isTargetDarwin() &&
@@ -768,6 +766,7 @@ void X86ATTAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
     return;
   }
 
+  std::string SectionName = TAI->SectionForGlobal(GVar);
   std::string name = Mang->getValueName(GVar);
   Constant *C = GVar->getInitializer();
   const Type *Type = C->getType();

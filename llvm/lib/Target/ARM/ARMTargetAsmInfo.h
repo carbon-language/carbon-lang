@@ -15,6 +15,9 @@
 #define ARMTARGETASMINFO_H
 
 #include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/Target/ELFTargetAsmInfo.h"
+#include "llvm/Target/DarwinTargetAsmInfo.h"
+
 #include "ARMSubtarget.h"
 
 namespace llvm {
@@ -22,7 +25,7 @@ namespace llvm {
   // Forward declaration.
   class ARMTargetMachine;
 
-  struct ARMTargetAsmInfo : public TargetAsmInfo {
+  struct ARMTargetAsmInfo : public virtual TargetAsmInfo {
     explicit ARMTargetAsmInfo(const ARMTargetMachine &TM);
 
     const ARMSubtarget *Subtarget;
@@ -32,6 +35,15 @@ namespace llvm {
     unsigned countString(const char *p) const;
   };
 
+  struct ARMDarwinTargetAsmInfo : public virtual ARMTargetAsmInfo,
+                                  public virtual DarwinTargetAsmInfo {
+    explicit ARMDarwinTargetAsmInfo(const ARMTargetMachine &TM);
+  };
+
+  struct ARMELFTargetAsmInfo : public virtual ARMTargetAsmInfo,
+                               public virtual ELFTargetAsmInfo {
+    explicit ARMELFTargetAsmInfo(const ARMTargetMachine &TM);
+  };
 
 } // namespace llvm
 

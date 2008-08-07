@@ -58,7 +58,7 @@ unsigned ThumbTargetMachine::getModuleMatchQuality(const Module &M) {
   return getJITMatchQuality()/2;
 }
 
-ThumbTargetMachine::ThumbTargetMachine(const Module &M, const std::string &FS) 
+ThumbTargetMachine::ThumbTargetMachine(const Module &M, const std::string &FS)
   : ARMTargetMachine(M, FS, true) {
 }
 
@@ -110,7 +110,14 @@ unsigned ARMTargetMachine::getModuleMatchQuality(const Module &M) {
 
 
 const TargetAsmInfo *ARMTargetMachine::createTargetAsmInfo() const {
-  return new ARMTargetAsmInfo(*this);
+  switch (Subtarget.TargetType) {
+   case ARMSubtarget::isDarwin:
+    return new ARMDarwinTargetAsmInfo(*this);
+   case ARMSubtarget::isELF:
+    return new ARMELFTargetAsmInfo(*this);
+   default:
+    return new ARMTargetAsmInfo(*this);
+  }
 }
 
 
@@ -124,7 +131,7 @@ bool ARMTargetMachine::addPreEmitPass(PassManagerBase &PM, bool Fast) {
   // FIXME: temporarily disabling load / store optimization pass for Thumb mode.
   if (!Fast && !DisableLdStOpti && !Subtarget.isThumb())
     PM.add(createARMLoadStoreOptimizationPass());
-  
+
   if (!Fast && !DisableIfConversion && !Subtarget.isThumb())
     PM.add(createIfConverterPass());
 
@@ -132,7 +139,7 @@ bool ARMTargetMachine::addPreEmitPass(PassManagerBase &PM, bool Fast) {
   return true;
 }
 
-bool ARMTargetMachine::addAssemblyEmitter(PassManagerBase &PM, bool Fast, 
+bool ARMTargetMachine::addAssemblyEmitter(PassManagerBase &PM, bool Fast,
                                           std::ostream &Out) {
   // Output assembly language.
   PM.add(createARMCodePrinterPass(Out, *this));
