@@ -114,9 +114,9 @@ public:
            "Tool did not specify a TargetData to use?");
     abort();
   }
-    
+
   /// Constructs a TargetData from a specification string. See init().
-  explicit TargetData(const std::string &TargetDescription) 
+  explicit TargetData(const std::string &TargetDescription)
     : ImmutablePass(intptr_t(&ID)) {
     init(TargetDescription);
   }
@@ -124,7 +124,7 @@ public:
   /// Initialize target data from properties stored in the module.
   explicit TargetData(const Module *M);
 
-  TargetData(const TargetData &TD) : 
+  TargetData(const TargetData &TD) :
     ImmutablePass(intptr_t(&ID)),
     LittleEndian(TD.isLittleEndian()),
     PointerMemSize(TD.PointerMemSize),
@@ -137,7 +137,7 @@ public:
 
   //! Parse a target data layout string and initialize TargetData alignments.
   void init(const std::string &TargetDescription);
-  
+
   /// Target endianness...
   bool          isLittleEndian()       const { return     LittleEndian; }
   bool          isBigEndian()          const { return    !LittleEndian; }
@@ -218,12 +218,12 @@ public:
   ///
   uint64_t getIndexedOffset(const Type *Ty,
                             Value* const* Indices, unsigned NumIndices) const;
-  
+
   /// getStructLayout - Return a StructLayout object, indicating the alignment
   /// of the struct, its size, and the offsets of its fields.  Note that this
   /// information is lazily cached.
   const StructLayout *getStructLayout(const StructType *Ty) const;
-  
+
   /// InvalidateStructLayoutInfo - TargetData speculatively caches StructLayout
   /// objects.  If a TargetData object is alive when types are being refined and
   /// removed, this method must be called whenever a StructType is removed to
@@ -256,7 +256,7 @@ public:
   uint64_t getSizeInBytes() const {
     return StructSize;
   }
-  
+
   uint64_t getSizeInBits() const {
     return 8*StructSize;
   }
@@ -264,7 +264,7 @@ public:
   unsigned getAlignment() const {
     return StructAlignment;
   }
-    
+
   /// getElementContainingOffset - Given a valid offset into the structure,
   /// return the structure index that contains it.
   ///
