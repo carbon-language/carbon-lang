@@ -108,15 +108,20 @@ bool LowerSubregsInstructionPass::LowerSubregToReg(MachineInstr *MI) {
 
   DOUT << "subreg: CONVERTING: " << *MI;
 
-  // Insert sub-register copy
-  const TargetRegisterClass *TRC0= TRI.getPhysicalRegisterRegClass(DstSubReg);
-  const TargetRegisterClass *TRC1= TRI.getPhysicalRegisterRegClass(InsReg);
-  TII.copyRegToReg(*MBB, MI, DstSubReg, InsReg, TRC0, TRC1);
+  if (DstSubReg == InsReg) {
+    // No need to insert an identify copy instruction.
+    DOUT << "subreg: eliminated!";
+  } else {
+    // Insert sub-register copy
+    const TargetRegisterClass *TRC0= TRI.getPhysicalRegisterRegClass(DstSubReg);
+    const TargetRegisterClass *TRC1= TRI.getPhysicalRegisterRegClass(InsReg);
+    TII.copyRegToReg(*MBB, MI, DstSubReg, InsReg, TRC0, TRC1);
 
 #ifndef NDEBUG
   MachineBasicBlock::iterator dMI = MI;
   DOUT << "subreg: " << *(--dMI);
 #endif
+  }
 
   DOUT << "\n";
   MBB->erase(MI);

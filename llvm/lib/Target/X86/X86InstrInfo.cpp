@@ -396,6 +396,7 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     { X86::MOVZX32rr16,     X86::MOVZX32rm16 },
     { X86::MOVZX32rr8,      X86::MOVZX32rm8 },
     { X86::MOVZX64rr16,     X86::MOVZX64rm16 },
+    { X86::MOVZX64rr32,     X86::MOVZX64rm32 },
     { X86::MOVZX64rr8,      X86::MOVZX64rm8 },
     { X86::PSHUFDri,        X86::PSHUFDmi },
     { X86::PSHUFHWri,       X86::PSHUFHWmi },

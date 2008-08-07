@@ -258,6 +258,18 @@ def MOVZX64rm16: I<0xB7, MRMSrcMem, (outs GR64:$dst), (ins i16mem:$src),
                    "movz{wl|x}\t{$src, ${dst:subreg32}|${dst:subreg32}, $src}",
                    [(set GR64:$dst, (zextloadi64i16 addr:$src))]>, TB;
 
+// There's no movzlq instruction, but movl can be used for this purpose, using
+// implicit zero-extension. We need this because the seeming alternative for
+// implementing zext from 32 to 64, an EXTRACT_SUBREG/SUBREG_TO_REG pair, isn't
+// safe because both instructions could be optimized away in the
+// register-to-register case, leaving nothing behind to do the zero extension.
+def MOVZX64rr32 : I<0x89, MRMDestReg, (outs GR64:$dst), (ins GR32:$src),
+                    "mov{l}\t{$src, ${dst:subreg32}|${dst:subreg32}, $src}",
+                    [(set GR64:$dst, (zext GR32:$src))]>;
+def MOVZX64rm32 : I<0x8B, MRMSrcMem, (outs GR64:$dst), (ins i32mem:$src),
+                    "mov{l}\t{$src, ${dst:subreg32}|${dst:subreg32}, $src}",
+                    [(set GR64:$dst, (zextloadi64i32 addr:$src))]>;
+
 let neverHasSideEffects = 1 in {
   let Defs = [RAX], Uses = [EAX] in
   def CDQE : RI<0x98, RawFrm, (outs), (ins),
@@ -1213,9 +1225,6 @@ def : Pat<(i64 (zext GR32:$src)),
 // zextload bool -> zextload byte
 def : Pat<(zextloadi64i1 addr:$src), (MOVZX64rm8 addr:$src)>;
 
-def : Pat<(zextloadi64i32 addr:$src), 
-          (SUBREG_TO_REG (i64 0), (MOV32rm addr:$src), x86_subreg_32bit)>;
-
 // extload
 def : Pat<(extloadi64i1 addr:$src),  (MOVZX64rm8  addr:$src)>;
 def : Pat<(extloadi64i8 addr:$src),  (MOVZX64rm8  addr:$src)>;
@@ -1240,11 +1249,9 @@ def : Pat<(i64 (anyext (loadi32 addr:$src))),
 // Some peepholes
 //===----------------------------------------------------------------------===//
 
-// r & (2^32-1) ==> mov32 + implicit zext
-def : Pat<(and GR64:$src, i64immFFFFFFFF), 
-          (SUBREG_TO_REG (i64 0), 
-            (i32 (EXTRACT_SUBREG GR64:$src, x86_subreg_32bit)),
-            x86_subreg_32bit)>;
+// r & (2^32-1) ==> movz
+def : Pat<(and GR64:$src, i64immFFFFFFFF),
+          (MOVZX64rr32 (i32 (EXTRACT_SUBREG GR64:$src, x86_subreg_32bit)))>;
 // r & (2^16-1) ==> movz
 def : Pat<(and GR64:$src, 0xffff),
           (MOVZX64rr16 (i16 (EXTRACT_SUBREG GR64:$src, x86_subreg_16bit)))>;
