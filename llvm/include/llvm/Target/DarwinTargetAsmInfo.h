@@ -21,6 +21,7 @@
 namespace llvm {
   class GlobalValue;
   class GlobalVariable;
+  class Type;
 
   struct DarwinTargetAsmInfo: public virtual TargetAsmInfo {
     const Section* TextCoalSection;
@@ -33,7 +34,9 @@ namespace llvm {
     virtual std::string UniqueSectionForGlobal(const GlobalValue* GV,
                                                SectionKind::Kind kind) const;
     const Section* MergeableConstSection(const GlobalVariable *GV) const;
+    const Section* MergeableConstSection(const Type *Ty) const;
     const Section* MergeableStringSection(const GlobalVariable *GV) const;
+    const Section* SelectSectionForMachineConst(const Type *Ty) const;
   protected:
     const TargetMachine* DTM;
   };

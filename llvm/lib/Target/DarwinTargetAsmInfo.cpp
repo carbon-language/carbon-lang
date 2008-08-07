@@ -107,10 +107,16 @@ DarwinTargetAsmInfo::MergeableStringSection(const GlobalVariable *GV) const {
 
 const Section*
 DarwinTargetAsmInfo::MergeableConstSection(const GlobalVariable *GV) const {
-  const TargetData *TD = DTM->getTargetData();
   Constant *C = cast<GlobalVariable>(GV)->getInitializer();
 
-  unsigned Size = TD->getABITypeSize(C->getType());
+  return MergeableConstSection(C->getType());
+}
+
+inline const Section*
+DarwinTargetAsmInfo::MergeableConstSection(const Type *Ty) const {
+  const TargetData *TD = DTM->getTargetData();
+
+  unsigned Size = TD->getABITypeSize(Ty);
   if (Size == 4)
     return FourByteConstantSection_;
   else if (Size == 8)
@@ -119,6 +125,18 @@ DarwinTargetAsmInfo::MergeableConstSection(const GlobalVariable *GV) const {
     return SixteenByteConstantSection_;
 
   return getReadOnlySection_();
+}
+
+const Section*
+DarwinTargetAsmInfo::SelectSectionForMachineConst(const Type *Ty) const {
+  const Section* S = MergeableConstSection(Ty);
+
+  // Handle weird special case, when compiling PIC stuff.
+  if (S == getReadOnlySection_() &&
+      DTM->getRelocationModel() != Reloc::Static)
+    return ConstDataSection;
+
+  return S;
 }
 
 std::string
