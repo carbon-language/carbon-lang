@@ -13,6 +13,7 @@
 
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
+#include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/SmallVector.h"
@@ -851,16 +852,18 @@ QualType ASTContext::getTypeDeclType(TypeDecl *Decl) {
   else if (ObjCInterfaceDecl *ObjCInterface 
              = dyn_cast_or_null<ObjCInterfaceDecl>(Decl))
     return getObjCInterfaceType(ObjCInterface);
-  else if (RecordDecl *Record = dyn_cast_or_null<RecordDecl>(Decl)) {
+
+  if (CXXRecordDecl *CXXRecord = dyn_cast_or_null<CXXRecordDecl>(Decl))
+    Decl->TypeForDecl = new CXXRecordType(CXXRecord);
+  else if (RecordDecl *Record = dyn_cast_or_null<RecordDecl>(Decl))
     Decl->TypeForDecl = new RecordType(Record);
-    Types.push_back(Decl->TypeForDecl);
-    return QualType(Decl->TypeForDecl, 0);
-  } else if (EnumDecl *Enum = dyn_cast_or_null<EnumDecl>(Decl)) {
+  else if (EnumDecl *Enum = dyn_cast_or_null<EnumDecl>(Decl))
     Decl->TypeForDecl = new EnumType(Enum);
-    Types.push_back(Decl->TypeForDecl);
-    return QualType(Decl->TypeForDecl, 0);    
-  } else
+  else
     assert(false && "TypeDecl without a type?");
+
+  Types.push_back(Decl->TypeForDecl);
+  return QualType(Decl->TypeForDecl, 0);
 }
 
 /// getTypedefType - Return the unique reference to the type for the

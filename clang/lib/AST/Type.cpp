@@ -13,6 +13,7 @@
 
 #include "clang/AST/Type.h"
 #include "clang/AST/Decl.h"
+#include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/Expr.h"
 #include "clang/Basic/IdentifierTable.h"
@@ -737,6 +738,10 @@ QualType TypedefType::LookThroughTypedefs() const {
 
 bool RecordType::classof(const TagType *TT) {
   return isa<RecordDecl>(TT->getDecl());
+}
+
+bool CXXRecordType::classof(const TagType *TT) {
+  return isa<CXXRecordDecl>(TT->getDecl());
 }
 
 bool EnumType::classof(const TagType *TT) {

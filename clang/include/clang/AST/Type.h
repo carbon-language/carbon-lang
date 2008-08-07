@@ -31,6 +31,7 @@ namespace clang {
   class TypedefDecl;
   class TagDecl;
   class RecordDecl;
+  class CXXRecordDecl;
   class EnumDecl;
   class FieldDecl;
   class ObjCInterfaceDecl;
@@ -1042,6 +1043,7 @@ protected:
 /// RecordType - This is a helper class that allows the use of isa/cast/dyncast
 /// to detect TagType objects of structs/unions/classes.
 class RecordType : public TagType {
+protected:
   explicit RecordType(RecordDecl *D) : TagType(cast<TagDecl>(D), QualType()) { }
   friend class ASTContext;   // ASTContext creates these.
 public:
@@ -1064,6 +1066,25 @@ public:
     return isa<TagType>(T) && classof(cast<TagType>(T));
   }
   static bool classof(const RecordType *) { return true; }
+};
+
+/// CXXRecordType - This is a helper class that allows the use of
+/// isa/cast/dyncast to detect TagType objects of C++ structs/unions/classes.
+class CXXRecordType : public RecordType {
+  explicit CXXRecordType(CXXRecordDecl *D)
+    : RecordType(reinterpret_cast<RecordDecl*>(D)) { }
+  friend class ASTContext;   // ASTContext creates these.
+public:
+
+  CXXRecordDecl *getDecl() const {
+    return reinterpret_cast<CXXRecordDecl*>(RecordType::getDecl());
+  }
+
+  static bool classof(const TagType *T);
+  static bool classof(const Type *T) {
+    return isa<TagType>(T) && classof(cast<TagType>(T));
+  }
+  static bool classof(const CXXRecordType *) { return true; }
 };
 
 /// EnumType - This is a helper class that allows the use of isa/cast/dyncast
