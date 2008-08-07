@@ -141,7 +141,7 @@ bool IA64AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   // Print out labels for the function.
   EmitAlignment(5);
-  O << "\t.global\t" << CurrentFnName << "\n";
+  O << "\t.global\t" << CurrentFnName << '\n';
   O << "\t.type\t" << CurrentFnName << ", @function\n";
   O << CurrentFnName << ":\n";
 
@@ -285,12 +285,12 @@ void IA64AsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
 
       if (GVar->hasInternalLinkage()) {
         O << "\t.lcomm " << name << "#," << Size
-          << "," << (1 << Align);
-        O << "\n";
+          << ',' << (1 << Align);
+        O << '\n';
       } else {
         O << "\t.common " << name << "#," << Size
-          << "," << (1 << Align);
-        O << "\n";
+          << ',' << (1 << Align);
+        O << '\n';
       }
 
       return;
@@ -302,14 +302,14 @@ void IA64AsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
    case GlobalValue::CommonLinkage:
    case GlobalValue::WeakLinkage:
     // Nonnull linkonce -> weak
-    O << "\t.weak " << name << "\n";
+    O << "\t.weak " << name << '\n';
     break;
    case GlobalValue::AppendingLinkage:
     // FIXME: appending linkage variables should go into a section of
     // their name or something.  For now, just emit them as external.
    case GlobalValue::ExternalLinkage:
     // If external or appending, declare as a global symbol
-    O << TAI->getGlobalDirective() << name << "\n";
+    O << TAI->getGlobalDirective() << name << '\n';
     // FALL THROUGH
    case GlobalValue::InternalLinkage:
     break;
@@ -330,10 +330,10 @@ void IA64AsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
 
   if (TAI->hasDotTypeDotSizeDirective()) {
     O << "\t.type " << name << ",@object\n";
-    O << "\t.size " << name << "," << Size << "\n";
+    O << "\t.size " << name << ',' << Size << '\n';
   }
 
-  O << name << ":\t\t\t\t// " << *C << "\n";
+  O << name << ":\t\t\t\t// " << *C << '\n';
   EmitGlobalConstant(C);
 }
 
