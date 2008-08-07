@@ -632,6 +632,7 @@ public:
     DeclTypeInfo.clear();
     delete AttrList;
     AttrList = 0;
+    AsmLabel = 0;
   }
   
   /// mayOmitIdentifier - Return true if the identifier is either optional or
