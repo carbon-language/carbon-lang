@@ -106,7 +106,7 @@ bool SparcAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   const Function *F = MF.getFunction();
   SwitchToTextSection(getSectionForFunction(*F).c_str(), F);
   EmitAlignment(4, F);
-  O << "\t.globl\t" << CurrentFnName << "\n";
+  O << "\t.globl\t" << CurrentFnName << '\n';
   O << "\t.type\t" << CurrentFnName << ", #function\n";
   O << CurrentFnName << ":\n";
 
@@ -259,7 +259,7 @@ void SparcAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
       if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
 
       if (GVar->hasInternalLinkage())
-        O << "\t.local " << name << "\n";
+        O << "\t.local " << name << '\n';
 
       O << TAI->getCOMMDirective() << name << ',' << Size;
       if (TAI->getCOMMDirectiveTakesAlignment())
@@ -275,14 +275,14 @@ void SparcAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
    case GlobalValue::LinkOnceLinkage:
    case GlobalValue::WeakLinkage:   // FIXME: Verify correct for weak.
     // Nonnull linkonce -> weak
-    O << "\t.weak " << name << "\n";
+    O << "\t.weak " << name << '\n';
     break;
    case GlobalValue::AppendingLinkage:
     // FIXME: appending linkage variables should go into a section of
     // their name or something.  For now, just emit them as external.
    case GlobalValue::ExternalLinkage:
     // If external or appending, declare as a global symbol
-    O << TAI->getGlobalDirective() << name << "\n";
+    O << TAI->getGlobalDirective() << name << '\n';
     // FALL THROUGH
    case GlobalValue::InternalLinkage:
     break;
@@ -300,11 +300,11 @@ void SparcAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
   }
 
   if (Align)
-    O << "\t.align " << Align << "\n";
+    O << "\t.align " << Align << '\n';
 
   if (TAI->hasDotTypeDotSizeDirective()) {
     O << "\t.type " << name << ",#object\n";
-    O << "\t.size " << name << "," << Size << "\n";
+    O << "\t.size " << name << ',' << Size << '\n';
   }
 
   O << name << ":\n";
