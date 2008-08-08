@@ -41,6 +41,12 @@ namespace {
   cl::opt<bool> ForceInterpreter("force-interpreter",
                                  cl::desc("Force interpretation: disable JIT"),
                                  cl::init(false));
+
+  cl::opt<bool> Fast("fast", 
+                     cl::desc("Generate code quickly, "
+                              "potentially sacrificing code quality"),
+                     cl::init(false));
+
   cl::opt<std::string>
   TargetTriple("mtriple", cl::desc("Override target triple for module"));
   
@@ -106,7 +112,7 @@ int main(int argc, char **argv, char * const *envp) {
   if (!TargetTriple.empty())
     Mod->setTargetTriple(TargetTriple);
 
-  EE = ExecutionEngine::create(MP, ForceInterpreter, &ErrorMsg);
+  EE = ExecutionEngine::create(MP, ForceInterpreter, &ErrorMsg, Fast);
   if (!EE && !ErrorMsg.empty()) {
     std::cerr << argv[0] << ":error creating EE: " << ErrorMsg << "\n";
     exit(1);
