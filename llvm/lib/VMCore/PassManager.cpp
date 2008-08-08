@@ -954,17 +954,38 @@ void PMDataManager::dumpPassInfo(Pass *P, enum PassDebuggingString S1,
   }
 }
 
-void PMDataManager::dumpAnalysisSetInfo(const char *Msg, Pass *P,
+void PMDataManager::dumpRequiredSet(const Pass *P)
+  const {
+  if (PassDebugging < Details)
+    return;
+    
+  AnalysisUsage analysisUsage;
+  P->getAnalysisUsage(analysisUsage);
+  dumpAnalysisUsage("Required", P, analysisUsage.getRequiredSet());
+}
+
+void PMDataManager::dumpPreservedSet(const Pass *P)
+  const {
+  if (PassDebugging < Details)
+    return;
+    
+  AnalysisUsage analysisUsage;
+  P->getAnalysisUsage(analysisUsage);
+  dumpAnalysisUsage("Preserved", P, analysisUsage.getPreservedSet());
+}
+
+void PMDataManager::dumpAnalysisUsage(const char *Msg, const Pass *P,
                                         const AnalysisUsage::VectorType &Set)
   const {
-  if (PassDebugging >= Details && !Set.empty()) {
-    cerr << (void*)P << std::string(getDepth()*2+3, ' ') << Msg << " Analyses:";
-      for (unsigned i = 0; i != Set.size(); ++i) {
-        if (i) cerr << ",";
-        cerr << " " << Set[i]->getPassName();
-      }
-      cerr << "\n";
-  }
+  assert(PassDebugging >= Details);
+  if (Set.empty())
+    return;
+  cerr << (void*)P << std::string(getDepth()*2+3, ' ') << Msg << " Analyses:";
+    for (unsigned i = 0; i != Set.size(); ++i) {
+      if (i) cerr << ",";
+      cerr << " " << Set[i]->getPassName();
+    }
+    cerr << "\n";
 }
 
 /// Add RequiredPass into list of lower level passes required by pass P.
@@ -1031,11 +1052,9 @@ BBPassManager::runOnFunction(Function &F) {
   for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
     for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
       BasicBlockPass *BP = getContainedPass(Index);
-      AnalysisUsage AnUsage;
-      BP->getAnalysisUsage(AnUsage);
 
       dumpPassInfo(BP, EXECUTION_MSG, ON_BASICBLOCK_MSG, I->getNameStart());
-      dumpAnalysisSetInfo("Required", BP, AnUsage.getRequiredSet());
+      dumpRequiredSet(BP);
 
       initializeAnalysisImpl(BP);
 
@@ -1046,7 +1065,7 @@ BBPassManager::runOnFunction(Function &F) {
       if (Changed) 
         dumpPassInfo(BP, MODIFICATION_MSG, ON_BASICBLOCK_MSG,
                      I->getNameStart());
-      dumpAnalysisSetInfo("Preserved", BP, AnUsage.getPreservedSet());
+      dumpPreservedSet(BP);
 
       verifyPreservedAnalysis(BP);
       removeNotPreservedAnalysis(BP);
@@ -1232,11 +1251,8 @@ bool FPPassManager::runOnFunction(Function &F) {
   for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
     FunctionPass *FP = getContainedPass(Index);
 
-    AnalysisUsage AnUsage;
-    FP->getAnalysisUsage(AnUsage);
-
     dumpPassInfo(FP, EXECUTION_MSG, ON_FUNCTION_MSG, F.getNameStart());
-    dumpAnalysisSetInfo("Required", FP, AnUsage.getRequiredSet());
+    dumpRequiredSet(FP);
 
     initializeAnalysisImpl(FP);
 
@@ -1246,7 +1262,7 @@ bool FPPassManager::runOnFunction(Function &F) {
 
     if (Changed) 
       dumpPassInfo(FP, MODIFICATION_MSG, ON_FUNCTION_MSG, F.getNameStart());
-    dumpAnalysisSetInfo("Preserved", FP, AnUsage.getPreservedSet());
+    dumpPreservedSet(FP);
 
     verifyPreservedAnalysis(FP);
     removeNotPreservedAnalysis(FP);
@@ -1304,12 +1320,9 @@ MPPassManager::runOnModule(Module &M) {
   for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
     ModulePass *MP = getContainedPass(Index);
 
-    AnalysisUsage AnUsage;
-    MP->getAnalysisUsage(AnUsage);
-
     dumpPassInfo(MP, EXECUTION_MSG, ON_MODULE_MSG,
                  M.getModuleIdentifier().c_str());
-    dumpAnalysisSetInfo("Required", MP, AnUsage.getRequiredSet());
+    dumpRequiredSet(MP);
 
     initializeAnalysisImpl(MP);
 
@@ -1320,7 +1333,7 @@ MPPassManager::runOnModule(Module &M) {
     if (Changed) 
       dumpPassInfo(MP, MODIFICATION_MSG, ON_MODULE_MSG,
                    M.getModuleIdentifier().c_str());
-    dumpAnalysisSetInfo("Preserved", MP, AnUsage.getPreservedSet());
+    dumpPreservedSet(MP);
     
     verifyPreservedAnalysis(MP);
     removeNotPreservedAnalysis(MP);

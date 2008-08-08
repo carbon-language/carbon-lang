@@ -214,11 +214,9 @@ bool LPPassManager::runOnFunction(Function &F) {
     for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {  
         
       Pass *P = getContainedPass(Index);
-      AnalysisUsage AnUsage;
-      P->getAnalysisUsage(AnUsage);
 
       dumpPassInfo(P, EXECUTION_MSG, ON_LOOP_MSG, "");
-      dumpAnalysisSetInfo("Required", P, AnUsage.getRequiredSet());
+      dumpRequiredSet(P);
 
       initializeAnalysisImpl(P);
 
@@ -230,7 +228,7 @@ bool LPPassManager::runOnFunction(Function &F) {
 
       if (Changed)
         dumpPassInfo(P, MODIFICATION_MSG, ON_LOOP_MSG, "");
-      dumpAnalysisSetInfo("Preserved", P, AnUsage.getPreservedSet());
+      dumpPreservedSet(P);
 
       verifyPreservedAnalysis(LP);
       removeNotPreservedAnalysis(P);

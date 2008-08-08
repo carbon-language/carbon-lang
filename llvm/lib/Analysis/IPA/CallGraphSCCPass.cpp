@@ -91,11 +91,9 @@ bool CGPassManager::runOnModule(Module &M) {
     // Run all passes on current SCC
     for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
       Pass *P = getContainedPass(Index);
-      AnalysisUsage AnUsage;
-      P->getAnalysisUsage(AnUsage);
 
       dumpPassInfo(P, EXECUTION_MSG, ON_CG_MSG, "");
-      dumpAnalysisSetInfo("Required", P, AnUsage.getRequiredSet());
+      dumpRequiredSet(P);
 
       initializeAnalysisImpl(P);
 
@@ -120,7 +118,7 @@ bool CGPassManager::runOnModule(Module &M) {
 
       if (Changed)
         dumpPassInfo(P, MODIFICATION_MSG, ON_CG_MSG, "");
-      dumpAnalysisSetInfo("Preserved", P, AnUsage.getPreservedSet());
+      dumpPreservedSet(P);
 
       verifyPreservedAnalysis(P);      
       removeNotPreservedAnalysis(P);

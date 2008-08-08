@@ -308,8 +308,8 @@ public:
   void dumpPassArguments() const;
   void dumpPassInfo(Pass *P, enum PassDebuggingString S1,
                     enum PassDebuggingString S2, const char *Msg);
-  void dumpAnalysisSetInfo(const char *Msg, Pass *P,
-                           const AnalysisUsage::VectorType &Set) const;
+  void dumpRequiredSet(const Pass *P) const;
+  void dumpPreservedSet(const Pass *P) const;
 
   virtual unsigned getNumContainedPasses() const {
     return (unsigned)PassVector.size();
@@ -346,6 +346,9 @@ protected:
   std::map<AnalysisID, Pass *> *InheritedAnalysis[PMT_Last];
 
 private:
+  void dumpAnalysisUsage(const char *Msg, const Pass *P,
+                           const AnalysisUsage::VectorType &Set) const;
+
   // Set of available Analysis. This information is used while scheduling 
   // pass. If a pass requires an analysis which is not not available then 
   // equired analysis pass is scheduled to run before the pass itself is 
