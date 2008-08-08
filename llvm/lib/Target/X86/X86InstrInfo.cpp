@@ -238,6 +238,7 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     { X86::DIV32r,      X86::DIV32m, 1 },
     { X86::DIV64r,      X86::DIV64m, 1 },
     { X86::DIV8r,       X86::DIV8m, 1 },
+    { X86::EXTRACTPSrr, X86::EXTRACTPSmr, 0 },
     { X86::FsMOVAPDrr,  X86::MOVSDmr, 0 },
     { X86::FsMOVAPSrr,  X86::MOVSSmr, 0 },
     { X86::IDIV16r,     X86::IDIV16m, 1 },

@@ -3485,6 +3485,13 @@ multiclass SS41I_extractf32<bits<8> opc, string OpcodeStr> {
 
 defm EXTRACTPS   : SS41I_extractf32<0x17, "extractps">;
 
+// Also match an EXTRACTPS store when the store is done as f32 instead of i32.
+def : Pat<(store (f32 (bitconvert (extractelt (bc_v4i32 (v4f32 VR128:$src1)),
+                                              imm:$src2))),
+                 addr:$dst),
+          (EXTRACTPSmr addr:$dst, VR128:$src1, imm:$src2)>,
+         Requires<[HasSSE41]>;
+
 let Constraints = "$src1 = $dst" in {
   multiclass SS41I_insert8<bits<8> opc, string OpcodeStr> {
     def rr : SS4AIi8<opc, MRMSrcReg, (outs VR128:$dst),
