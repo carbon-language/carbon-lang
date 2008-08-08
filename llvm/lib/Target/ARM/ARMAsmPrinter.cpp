@@ -863,8 +863,7 @@ void ARMAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
     return;
   }
 
-  bool NoCoalesc = PCRelGVs.count(GVar);
-  std::string SectionName = TAI->SectionForGlobal(GVar, NoCoalesc);
+  std::string SectionName = TAI->SectionForGlobal(GVar);
   std::string name = Mang->getValueName(GVar);
   Constant *C = GVar->getInitializer();
   const Type *Type = C->getType();
@@ -901,7 +900,7 @@ void ARMAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
       if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
 
       if (TAI->getLCOMMDirective() != NULL) {
-        if (NoCoalesc || GVar->hasInternalLinkage()) {
+        if (PCRelGVs.count(GVar) || GVar->hasInternalLinkage()) {
           O << TAI->getLCOMMDirective() << name << "," << Size;
           if (Subtarget->isTargetDarwin())
             O << "," << Align;

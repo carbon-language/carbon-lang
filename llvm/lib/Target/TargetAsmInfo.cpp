@@ -272,7 +272,7 @@ TargetAsmInfo::SectionFlagsForGlobal(const GlobalValue *GV,
 }
 
 std::string
-TargetAsmInfo::SectionForGlobal(const GlobalValue *GV, bool NoCoalesce) const {
+TargetAsmInfo::SectionForGlobal(const GlobalValue *GV) const {
   const Section* S;
   // Select section name
   if (GV->hasSection()) {
@@ -282,7 +282,7 @@ TargetAsmInfo::SectionForGlobal(const GlobalValue *GV, bool NoCoalesce) const {
     S = getNamedSection(GV->getSection().c_str(), Flags);
   } else {
     // Use default section depending on the 'type' of global
-    S = SelectSectionForGlobal(GV, NoCoalesce);
+    S = SelectSectionForGlobal(GV);
   }
 
   if (!S->isNamed())
@@ -295,8 +295,8 @@ TargetAsmInfo::SectionForGlobal(const GlobalValue *GV, bool NoCoalesce) const {
 }
 
 // Lame default implementation. Calculate the section name for global.
-const Section* TargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV,
-                                                     bool NoCoalesce) const {
+const Section*
+TargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
   SectionKind::Kind Kind = SectionKindForGlobal(GV);
 
   if (GV->isWeakForLinker()) {

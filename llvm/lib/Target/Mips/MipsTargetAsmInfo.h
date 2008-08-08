@@ -40,8 +40,7 @@ namespace llvm {
     SectionFlagsForGlobal(const GlobalValue *GV = NULL,
                           const char* name = NULL) const;
 
-    virtual const Section* SelectSectionForGlobal(const GlobalValue *GV,
-                                                  bool NoCoalesce) const;
+    virtual const Section* SelectSectionForGlobal(const GlobalValue *GV) const;
 
     private:
       const MipsSubtarget *Subtarget;

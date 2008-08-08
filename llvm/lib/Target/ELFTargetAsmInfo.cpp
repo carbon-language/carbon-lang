@@ -40,8 +40,7 @@ ELFTargetAsmInfo::ELFTargetAsmInfo(const TargetMachine &TM) {
 }
 
 const Section*
-ELFTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV,
-                                         bool NoCoalesce) const {
+ELFTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
   SectionKind::Kind Kind = SectionKindForGlobal(GV);
 
   if (const Function *F = dyn_cast<Function>(GV)) {

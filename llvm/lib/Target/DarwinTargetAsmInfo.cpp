@@ -51,15 +51,14 @@ DarwinTargetAsmInfo::DarwinTargetAsmInfo(const TargetMachine &TM) {
 }
 
 const Section*
-DarwinTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV,
-                                            bool NoCoalesce) const {
+DarwinTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
   SectionKind::Kind Kind = SectionKindForGlobal(GV);
-  bool CanCoalesce = !NoCoalesce && GV->isWeakForLinker();
+  bool isWeak = GV->isWeakForLinker();
   bool isNonStatic = (DTM->getRelocationModel() != Reloc::Static);
 
   switch (Kind) {
    case SectionKind::Text:
-    if (CanCoalesce)
+    if (isWeak)
       return TextCoalSection;
     else
       return getTextSection_();
@@ -68,18 +67,18 @@ DarwinTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV,
    case SectionKind::BSS:
    case SectionKind::ThreadBSS:
     if (cast<GlobalVariable>(GV)->isConstant())
-      return (CanCoalesce ? ConstDataCoalSection : ConstDataSection);
+      return (isWeak ? ConstDataCoalSection : ConstDataSection);
     else
-      return (CanCoalesce ? DataCoalSection : getDataSection_());
+      return (isWeak ? DataCoalSection : getDataSection_());
    case SectionKind::ROData:
-    return (CanCoalesce ? ConstDataCoalSection :
+    return (isWeak ? ConstDataCoalSection :
             (isNonStatic ? ConstDataSection : getReadOnlySection_()));
    case SectionKind::RODataMergeStr:
-    return (CanCoalesce ?
+    return (isWeak ?
             ConstDataCoalSection :
             MergeableStringSection(cast<GlobalVariable>(GV)));
    case SectionKind::RODataMergeConst:
-    return (CanCoalesce ?
+    return (isWeak ?
             ConstDataCoalSection:
             MergeableConstSection(cast<GlobalVariable>(GV)));
    default:

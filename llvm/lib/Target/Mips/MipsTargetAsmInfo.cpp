@@ -82,7 +82,7 @@ SectionKindForGlobal(const GlobalValue *GV) const {
 }
 
 const Section* MipsTargetAsmInfo::
-SelectSectionForGlobal(const GlobalValue *GV, bool NoCoalesce) const {
+SelectSectionForGlobal(const GlobalValue *GV) const {
   SectionKind::Kind K = SectionKindForGlobal(GV);
   const GlobalVariable *GVA = dyn_cast<GlobalVariable>(GV);
 
