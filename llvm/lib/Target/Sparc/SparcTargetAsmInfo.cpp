@@ -28,19 +28,18 @@ SparcELFTargetAsmInfo::SparcELFTargetAsmInfo(const TargetMachine &TM):
 }
 
 std::string SparcELFTargetAsmInfo::PrintSectionFlags(unsigned flags) const {
-  std::string Flags = ",";
-
   if (flags & SectionFlags::Mergeable)
     return ELFTargetAsmInfo::PrintSectionFlags(flags);
 
+  std::string Flags;
   if (!(flags & SectionFlags::Debug))
-    Flags += "#alloc";
+    Flags += ",#alloc";
   if (flags & SectionFlags::Code)
-    Flags += "#execinstr";
+    Flags += ",#execinstr";
   if (flags & SectionFlags::Writeable)
-    Flags += "#write";
+    Flags += ",#write";
   if (flags & SectionFlags::TLS)
-    Flags += "#tls";
+    Flags += ",#tls";
 
   return Flags;
 }
