@@ -33,7 +33,9 @@ namespace llvm {
 /// supports nul-terminated C strings.  For fully generic names, use
 /// I->setName().  For access to extra instruction properties, use the mutators
 /// (e.g. setVolatile) on the instructions after they have been created.
-class IRBuilder {
+/// The template argument handles whether or not to preserve names in the final
+/// instruction output. This defaults to on.
+template <bool preserveNames=true> class IRBuilder {
   BasicBlock *BB;
   BasicBlock::iterator InsertPt;
 public:
@@ -81,7 +83,7 @@ public:
   /// template instantiation.
   void InsertHelper(Instruction *I, const char *Name) const {
     if (BB) BB->getInstList().insert(InsertPt, I);
-    if (Name[0])
+    if (preserveNames && Name[0])
       I->setName(Name);
   }
   

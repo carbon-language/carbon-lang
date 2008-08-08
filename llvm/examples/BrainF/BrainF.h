@@ -84,7 +84,7 @@ class BrainF {
     BasicBlock *aberrorbb;
 
     /// Variables
-    IRBuilder *builder;
+    IRBuilder<> *builder;
     Value *curhead;
 };
 

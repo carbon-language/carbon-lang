@@ -61,9 +61,9 @@ namespace {
     Constant *GetFrameMap(Function &F);
     const Type* GetConcreteStackEntryType(Function &F);
     void CollectRoots(Function &F);
-    static GetElementPtrInst *CreateGEP(IRBuilder &B, Value *BasePtr,
+    static GetElementPtrInst *CreateGEP(IRBuilder<> &B, Value *BasePtr,
                                         int Idx1, const char *Name);
-    static GetElementPtrInst *CreateGEP(IRBuilder &B, Value *BasePtr,
+    static GetElementPtrInst *CreateGEP(IRBuilder<> &B, Value *BasePtr,
                                         int Idx1, int Idx2, const char *Name);
   };
 
@@ -89,13 +89,13 @@ namespace {
     // State.
     int State;
     Function::iterator StateBB, StateE;
-    IRBuilder Builder;
+    IRBuilder<> Builder;
     
   public:
     EscapeEnumerator(Function &F, const char *N = "cleanup")
       : F(F), CleanupBBName(N), State(0) {}
     
-    IRBuilder *Next() {
+    IRBuilder<> *Next() {
       switch (State) {
       default:
         return 0;
@@ -341,7 +341,7 @@ void ShadowStackCollector::CollectRoots(Function &F) {
 }
 
 GetElementPtrInst *
-ShadowStackCollector::CreateGEP(IRBuilder &B, Value *BasePtr,
+ShadowStackCollector::CreateGEP(IRBuilder<> &B, Value *BasePtr,
                                 int Idx, int Idx2, const char *Name) {
   Value *Indices[] = { ConstantInt::get(Type::Int32Ty, 0),
                        ConstantInt::get(Type::Int32Ty, Idx),
@@ -354,7 +354,7 @@ ShadowStackCollector::CreateGEP(IRBuilder &B, Value *BasePtr,
 }
 
 GetElementPtrInst *
-ShadowStackCollector::CreateGEP(IRBuilder &B, Value *BasePtr,
+ShadowStackCollector::CreateGEP(IRBuilder<> &B, Value *BasePtr,
                                 int Idx, const char *Name) {
   Value *Indices[] = { ConstantInt::get(Type::Int32Ty, 0),
                        ConstantInt::get(Type::Int32Ty, Idx) };
@@ -381,7 +381,7 @@ bool ShadowStackCollector::performCustomLowering(Function &F) {
   
   // Build the shadow stack entry at the very start of the function.
   BasicBlock::iterator IP = F.getEntryBlock().begin();
-  IRBuilder AtEntry(IP->getParent(), IP);
+  IRBuilder<> AtEntry(IP->getParent(), IP);
   
   Instruction *StackEntry   = AtEntry.CreateAlloca(ConcreteStackEntryTy, 0,
                                                    "gc_frame");
@@ -419,7 +419,7 @@ bool ShadowStackCollector::performCustomLowering(Function &F) {
   
   // For each instruction that escapes...
   EscapeEnumerator EE(F, "gc_cleanup");
-  while (IRBuilder *AtExit = EE.Next()) {
+  while (IRBuilder<> *AtExit = EE.Next()) {
     // Pop the entry from the shadow stack. Don't reuse CurrentHead from
     // AtEntry, since that would make the value live for the entire function.
     Instruction *EntryNextPtr2 = CreateGEP(*AtExit, StackEntry, 0, 0,

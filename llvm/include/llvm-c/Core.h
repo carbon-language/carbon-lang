@@ -708,7 +708,7 @@ namespace llvm {
   DEFINE_ISA_CONVERSION_FUNCTIONS   (Value,              LLVMValueRef         )
   DEFINE_SIMPLE_CONVERSION_FUNCTIONS(Module,             LLVMModuleRef        )
   DEFINE_SIMPLE_CONVERSION_FUNCTIONS(BasicBlock,         LLVMBasicBlockRef    )
-  DEFINE_SIMPLE_CONVERSION_FUNCTIONS(IRBuilder,          LLVMBuilderRef       )
+  DEFINE_SIMPLE_CONVERSION_FUNCTIONS(IRBuilder<>,        LLVMBuilderRef       )
   DEFINE_SIMPLE_CONVERSION_FUNCTIONS(PATypeHolder,       LLVMTypeHandleRef    )
   DEFINE_SIMPLE_CONVERSION_FUNCTIONS(ModuleProvider,     LLVMModuleProviderRef)
   DEFINE_SIMPLE_CONVERSION_FUNCTIONS(MemoryBuffer,       LLVMMemoryBufferRef  )

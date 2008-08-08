@@ -55,68 +55,69 @@ public:
   /// performed.  If it returns CI, then it transformed the call and CI is to be
   /// deleted.  If it returns something else, replace CI with the new value and
   /// delete CI.
-  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder &B) =0;
+  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) 
+    =0;
   
-  Value *OptimizeCall(CallInst *CI, const TargetData &TD, IRBuilder &B) {
+  Value *OptimizeCall(CallInst *CI, const TargetData &TD, IRBuilder<> &B) {
     Caller = CI->getParent()->getParent();
     this->TD = &TD;
     return CallOptimizer(CI->getCalledFunction(), CI, B);
   }
 
   /// CastToCStr - Return V if it is an i8*, otherwise cast it to i8*.
-  Value *CastToCStr(Value *V, IRBuilder &B);
+  Value *CastToCStr(Value *V, IRBuilder<> &B);
 
   /// EmitStrLen - Emit a call to the strlen function to the builder, for the
   /// specified pointer.  Ptr is required to be some pointer type, and the
   /// return value has 'intptr_t' type.
-  Value *EmitStrLen(Value *Ptr, IRBuilder &B);
+  Value *EmitStrLen(Value *Ptr, IRBuilder<> &B);
   
   /// EmitMemCpy - Emit a call to the memcpy function to the builder.  This
   /// always expects that the size has type 'intptr_t' and Dst/Src are pointers.
   Value *EmitMemCpy(Value *Dst, Value *Src, Value *Len, 
-                    unsigned Align, IRBuilder &B);
+                    unsigned Align, IRBuilder<> &B);
   
   /// EmitMemChr - Emit a call to the memchr function.  This assumes that Ptr is
   /// a pointer, Val is an i32 value, and Len is an 'intptr_t' value.
-  Value *EmitMemChr(Value *Ptr, Value *Val, Value *Len, IRBuilder &B);
+  Value *EmitMemChr(Value *Ptr, Value *Val, Value *Len, IRBuilder<> &B);
     
   /// EmitUnaryFloatFnCall - Emit a call to the unary function named 'Name' (e.g.
   /// 'floor').  This function is known to take a single of type matching 'Op'
   /// and returns one value with the same type.  If 'Op' is a long double, 'l'
   /// is added as the suffix of name, if 'Op' is a float, we add a 'f' suffix.
-  Value *EmitUnaryFloatFnCall(Value *Op, const char *Name, IRBuilder &B);
+  Value *EmitUnaryFloatFnCall(Value *Op, const char *Name, IRBuilder<> &B);
   
   /// EmitPutChar - Emit a call to the putchar function.  This assumes that Char
   /// is an integer.
-  void EmitPutChar(Value *Char, IRBuilder &B);
+  void EmitPutChar(Value *Char, IRBuilder<> &B);
   
   /// EmitPutS - Emit a call to the puts function.  This assumes that Str is
   /// some pointer.
-  void EmitPutS(Value *Str, IRBuilder &B);
+  void EmitPutS(Value *Str, IRBuilder<> &B);
     
   /// EmitFPutC - Emit a call to the fputc function.  This assumes that Char is
   /// an i32, and File is a pointer to FILE.
-  void EmitFPutC(Value *Char, Value *File, IRBuilder &B);
+  void EmitFPutC(Value *Char, Value *File, IRBuilder<> &B);
   
   /// EmitFPutS - Emit a call to the puts function.  Str is required to be a
   /// pointer and File is a pointer to FILE.
-  void EmitFPutS(Value *Str, Value *File, IRBuilder &B);
+  void EmitFPutS(Value *Str, Value *File, IRBuilder<> &B);
   
   /// EmitFWrite - Emit a call to the fwrite function.  This assumes that Ptr is
   /// a pointer, Size is an 'intptr_t', and File is a pointer to FILE.
-  void EmitFWrite(Value *Ptr, Value *Size, Value *File, IRBuilder &B);
+  void EmitFWrite(Value *Ptr, Value *Size, Value *File, IRBuilder<> &B);
     
 };
 } // End anonymous namespace.
 
 /// CastToCStr - Return V if it is an i8*, otherwise cast it to i8*.
-Value *LibCallOptimization::CastToCStr(Value *V, IRBuilder &B) {
+Value *LibCallOptimization::CastToCStr(Value *V, IRBuilder<> &B) {
   return B.CreateBitCast(V, PointerType::getUnqual(Type::Int8Ty), "cstr");
 }
 
 /// EmitStrLen - Emit a call to the strlen function to the builder, for the
 /// specified pointer.  This always returns an integer value of size intptr_t.
-Value *LibCallOptimization::EmitStrLen(Value *Ptr, IRBuilder &B) {
+Value *LibCallOptimization::EmitStrLen(Value *Ptr, IRBuilder<> &B) {
   Module *M = Caller->getParent();
   Constant *StrLen =M->getOrInsertFunction("strlen", TD->getIntPtrType(),
                                            PointerType::getUnqual(Type::Int8Ty),
@@ -127,7 +128,7 @@ Value *LibCallOptimization::EmitStrLen(Value *Ptr, IRBuilder &B) {
 /// EmitMemCpy - Emit a call to the memcpy function to the builder.  This always
 /// expects that the size has type 'intptr_t' and Dst/Src are pointers.
 Value *LibCallOptimization::EmitMemCpy(Value *Dst, Value *Src, Value *Len,
-                                       unsigned Align, IRBuilder &B) {
+                                       unsigned Align, IRBuilder<> &B) {
   Module *M = Caller->getParent();
   Intrinsic::ID IID = Len->getType() == Type::Int32Ty ?
                            Intrinsic::memcpy_i32 : Intrinsic::memcpy_i64;
@@ -139,7 +140,7 @@ Value *LibCallOptimization::EmitMemCpy(Value *Dst, Value *Src, Value *Len,
 /// EmitMemChr - Emit a call to the memchr function.  This assumes that Ptr is
 /// a pointer, Val is an i32 value, and Len is an 'intptr_t' value.
 Value *LibCallOptimization::EmitMemChr(Value *Ptr, Value *Val,
-                                       Value *Len, IRBuilder &B) {
+                                       Value *Len, IRBuilder<> &B) {
   Module *M = Caller->getParent();
   Value *MemChr = M->getOrInsertFunction("memchr",
                                          PointerType::getUnqual(Type::Int8Ty),
@@ -154,7 +155,7 @@ Value *LibCallOptimization::EmitMemChr(Value *Ptr, Value *Val,
 /// returns one value with the same type.  If 'Op' is a long double, 'l' is
 /// added as the suffix of name, if 'Op' is a float, we add a 'f' suffix.
 Value *LibCallOptimization::EmitUnaryFloatFnCall(Value *Op, const char *Name,
-                                                 IRBuilder &B) {
+                                                 IRBuilder<> &B) {
   char NameBuffer[20];
   if (Op->getType() != Type::DoubleTy) {
     // If we need to add a suffix, copy into NameBuffer.
@@ -177,7 +178,7 @@ Value *LibCallOptimization::EmitUnaryFloatFnCall(Value *Op, const char *Name,
 
 /// EmitPutChar - Emit a call to the putchar function.  This assumes that Char
 /// is an integer.
-void LibCallOptimization::EmitPutChar(Value *Char, IRBuilder &B) {
+void LibCallOptimization::EmitPutChar(Value *Char, IRBuilder<> &B) {
   Module *M = Caller->getParent();
   Value *F = M->getOrInsertFunction("putchar", Type::Int32Ty,
                                     Type::Int32Ty, NULL);
@@ -186,7 +187,7 @@ void LibCallOptimization::EmitPutChar(Value *Char, IRBuilder &B) {
 
 /// EmitPutS - Emit a call to the puts function.  This assumes that Str is
 /// some pointer.
-void LibCallOptimization::EmitPutS(Value *Str, IRBuilder &B) {
+void LibCallOptimization::EmitPutS(Value *Str, IRBuilder<> &B) {
   Module *M = Caller->getParent();
   Value *F = M->getOrInsertFunction("puts", Type::Int32Ty,
                                     PointerType::getUnqual(Type::Int8Ty), NULL);
@@ -195,7 +196,7 @@ void LibCallOptimization::EmitPutS(Value *Str, IRBuilder &B) {
 
 /// EmitFPutC - Emit a call to the fputc function.  This assumes that Char is
 /// an integer and File is a pointer to FILE.
-void LibCallOptimization::EmitFPutC(Value *Char, Value *File, IRBuilder &B) {
+void LibCallOptimization::EmitFPutC(Value *Char, Value *File, IRBuilder<> &B) {
   Module *M = Caller->getParent();
   Constant *F = M->getOrInsertFunction("fputc", Type::Int32Ty, Type::Int32Ty,
                                        File->getType(), NULL);
@@ -205,7 +206,7 @@ void LibCallOptimization::EmitFPutC(Value *Char, Value *File, IRBuilder &B) {
 
 /// EmitFPutS - Emit a call to the puts function.  Str is required to be a
 /// pointer and File is a pointer to FILE.
-void LibCallOptimization::EmitFPutS(Value *Str, Value *File, IRBuilder &B) {
+void LibCallOptimization::EmitFPutS(Value *Str, Value *File, IRBuilder<> &B) {
   Module *M = Caller->getParent();
   Constant *F = M->getOrInsertFunction("fputs", Type::Int32Ty,
                                        PointerType::getUnqual(Type::Int8Ty),
@@ -216,7 +217,7 @@ void LibCallOptimization::EmitFPutS(Value *Str, Value *File, IRBuilder &B) {
 /// EmitFWrite - Emit a call to the fwrite function.  This assumes that Ptr is
 /// a pointer, Size is an 'intptr_t', and File is a pointer to FILE.
 void LibCallOptimization::EmitFWrite(Value *Ptr, Value *Size, Value *File,
-                                     IRBuilder &B) {
+                                     IRBuilder<> &B) {
   Module *M = Caller->getParent();
   Constant *F = M->getOrInsertFunction("fwrite", TD->getIntPtrType(),
                                        PointerType::getUnqual(Type::Int8Ty),
@@ -379,7 +380,7 @@ namespace {
 
 /// ExitOpt - int main() { exit(4); } --> int main() { return 4; }
 struct VISIBILITY_HIDDEN ExitOpt : public LibCallOptimization {
-  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder &B) {
+  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
     // Verify we have a reasonable prototype for exit.
     if (Callee->arg_size() == 0 || !CI->use_empty())
       return 0;
@@ -415,7 +416,7 @@ struct VISIBILITY_HIDDEN ExitOpt : public LibCallOptimization {
 // 'strcat' Optimizations
 
 struct VISIBILITY_HIDDEN StrCatOpt : public LibCallOptimization {
-  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder &B) {
+  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
     // Verify the "strcat" function prototype.
     const FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() != 2 ||
@@ -457,7 +458,7 @@ struct VISIBILITY_HIDDEN StrCatOpt : public LibCallOptimization {
 // 'strchr' Optimizations
 
 struct VISIBILITY_HIDDEN StrChrOpt : public LibCallOptimization {
-  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder &B) {
+  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
     // Verify the "strchr" function prototype.
     const FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() != 2 ||
@@ -510,7 +511,7 @@ struct VISIBILITY_HIDDEN StrChrOpt : public LibCallOptimization {
 // 'strcmp' Optimizations
 
 struct VISIBILITY_HIDDEN StrCmpOpt : public LibCallOptimization {
-  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder &B) {
+  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
     // Verify the "strcmp" function prototype.
     const FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() != 2 || FT->getReturnType() != Type::Int32Ty ||
@@ -543,7 +544,7 @@ struct VISIBILITY_HIDDEN StrCmpOpt : public LibCallOptimization {
 // 'strncmp' Optimizations
 
 struct VISIBILITY_HIDDEN StrNCmpOpt : public LibCallOptimization {
-  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder &B) {
+  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
     // Verify the "strncmp" function prototype.
     const FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() != 3 || FT->getReturnType() != Type::Int32Ty ||
@@ -589,7 +590,7 @@ struct VISIBILITY_HIDDEN StrNCmpOpt : public LibCallOptimization {
 // 'strcpy' Optimizations
 
 struct VISIBILITY_HIDDEN StrCpyOpt : public LibCallOptimization {
-  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder &B) {
+  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
     // Verify the "strcpy" function prototype.
     const FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() != 2 || FT->getReturnType() != FT->getParamType(0) ||
@@ -618,7 +619,7 @@ struct VISIBILITY_HIDDEN StrCpyOpt : public LibCallOptimization {
 // 'strlen' Optimizations
 
 struct VISIBILITY_HIDDEN StrLenOpt : public LibCallOptimization {
-  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder &B) {
+  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
     const FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() != 1 ||
         FT->getParamType(0) != PointerType::getUnqual(Type::Int8Ty) ||
@@ -644,7 +645,7 @@ struct VISIBILITY_HIDDEN StrLenOpt : public LibCallOptimization {
 // 'memcmp' Optimizations
 
 struct VISIBILITY_HIDDEN MemCmpOpt : public LibCallOptimization {
-  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder &B) {
+  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
     const FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() != 3 || !isa<PointerType>(FT->getParamType(0)) ||
         !isa<PointerType>(FT->getParamType(1)) ||
@@ -691,7 +692,7 @@ struct VISIBILITY_HIDDEN MemCmpOpt : public LibCallOptimization {
 // 'memcpy' Optimizations
 
 struct VISIBILITY_HIDDEN MemCpyOpt : public LibCallOptimization {
-  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder &B) {
+  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
     const FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() != 3 || FT->getReturnType() != FT->getParamType(0) ||
         !isa<PointerType>(FT->getParamType(0)) ||
@@ -713,7 +714,7 @@ struct VISIBILITY_HIDDEN MemCpyOpt : public LibCallOptimization {
 // 'pow*' Optimizations
 
 struct VISIBILITY_HIDDEN PowOpt : public LibCallOptimization {
-  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder &B) {
+  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
     const FunctionType *FT = Callee->getFunctionType();
     // Just make sure this has 2 arguments of the same FP type, which match the
     // result type.
@@ -763,7 +764,7 @@ struct VISIBILITY_HIDDEN PowOpt : public LibCallOptimization {
 // 'exp2' Optimizations
 
 struct VISIBILITY_HIDDEN Exp2Opt : public LibCallOptimization {
-  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder &B) {
+  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
     const FunctionType *FT = Callee->getFunctionType();
     // Just make sure this has 1 argument of FP type, which matches the
     // result type.
@@ -810,7 +811,7 @@ struct VISIBILITY_HIDDEN Exp2Opt : public LibCallOptimization {
 // Double -> Float Shrinking Optimizations for Unary Functions like 'floor'
 
 struct VISIBILITY_HIDDEN UnaryDoubleFPOpt : public LibCallOptimization {
-  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder &B) {
+  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
     const FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() != 1 || FT->getReturnType() != Type::DoubleTy ||
         FT->getParamType(0) != Type::DoubleTy)
@@ -836,7 +837,7 @@ struct VISIBILITY_HIDDEN UnaryDoubleFPOpt : public LibCallOptimization {
 // 'ffs*' Optimizations
 
 struct VISIBILITY_HIDDEN FFSOpt : public LibCallOptimization {
-  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder &B) {
+  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
     const FunctionType *FT = Callee->getFunctionType();
     // Just make sure this has 2 arguments of the same FP type, which match the
     // result type.
@@ -871,7 +872,7 @@ struct VISIBILITY_HIDDEN FFSOpt : public LibCallOptimization {
 // 'isdigit' Optimizations
 
 struct VISIBILITY_HIDDEN IsDigitOpt : public LibCallOptimization {
-  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder &B) {
+  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
     const FunctionType *FT = Callee->getFunctionType();
     // We require integer(i32)
     if (FT->getNumParams() != 1 || !isa<IntegerType>(FT->getReturnType()) ||
@@ -890,7 +891,7 @@ struct VISIBILITY_HIDDEN IsDigitOpt : public LibCallOptimization {
 // 'isascii' Optimizations
 
 struct VISIBILITY_HIDDEN IsAsciiOpt : public LibCallOptimization {
-  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder &B) {
+  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
     const FunctionType *FT = Callee->getFunctionType();
     // We require integer(i32)
     if (FT->getNumParams() != 1 || !isa<IntegerType>(FT->getReturnType()) ||
@@ -908,7 +909,7 @@ struct VISIBILITY_HIDDEN IsAsciiOpt : public LibCallOptimization {
 // 'abs', 'labs', 'llabs' Optimizations
 
 struct VISIBILITY_HIDDEN AbsOpt : public LibCallOptimization {
-  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder &B) {
+  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
     const FunctionType *FT = Callee->getFunctionType();
     // We require integer(integer) where the types agree.
     if (FT->getNumParams() != 1 || !isa<IntegerType>(FT->getReturnType()) ||
@@ -929,7 +930,7 @@ struct VISIBILITY_HIDDEN AbsOpt : public LibCallOptimization {
 // 'toascii' Optimizations
 
 struct VISIBILITY_HIDDEN ToAsciiOpt : public LibCallOptimization {
-  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder &B) {
+  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
     const FunctionType *FT = Callee->getFunctionType();
     // We require i32(i32)
     if (FT->getNumParams() != 1 || FT->getReturnType() != FT->getParamType(0) ||
@@ -949,7 +950,7 @@ struct VISIBILITY_HIDDEN ToAsciiOpt : public LibCallOptimization {
 // 'printf' Optimizations
 
 struct VISIBILITY_HIDDEN PrintFOpt : public LibCallOptimization {
-  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder &B) {
+  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
     // Require one fixed pointer argument and an integer/void result.
     const FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() < 1 || !isa<PointerType>(FT->getParamType(0)) ||
@@ -1009,7 +1010,7 @@ struct VISIBILITY_HIDDEN PrintFOpt : public LibCallOptimization {
 // 'sprintf' Optimizations
 
 struct VISIBILITY_HIDDEN SPrintFOpt : public LibCallOptimization {
-  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder &B) {
+  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
     // Require two fixed pointer arguments and an integer result.
     const FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() != 2 || !isa<PointerType>(FT->getParamType(0)) ||
@@ -1074,7 +1075,7 @@ struct VISIBILITY_HIDDEN SPrintFOpt : public LibCallOptimization {
 // 'fwrite' Optimizations
 
 struct VISIBILITY_HIDDEN FWriteOpt : public LibCallOptimization {
-  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder &B) {
+  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
     // Require a pointer, an integer, an integer, a pointer, returning integer.
     const FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() != 4 || !isa<PointerType>(FT->getParamType(0)) ||
@@ -1109,7 +1110,7 @@ struct VISIBILITY_HIDDEN FWriteOpt : public LibCallOptimization {
 // 'fputs' Optimizations
 
 struct VISIBILITY_HIDDEN FPutsOpt : public LibCallOptimization {
-  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder &B) {
+  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
     // Require two pointers.  Also, we can't optimize if return value is used.
     const FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() != 2 || !isa<PointerType>(FT->getParamType(0)) ||
@@ -1130,7 +1131,7 @@ struct VISIBILITY_HIDDEN FPutsOpt : public LibCallOptimization {
 // 'fprintf' Optimizations
 
 struct VISIBILITY_HIDDEN FPrintFOpt : public LibCallOptimization {
-  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder &B) {
+  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
     // Require two fixed paramters as pointers and integer result.
     const FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() != 2 || !isa<PointerType>(FT->getParamType(0)) ||
@@ -1293,7 +1294,7 @@ bool SimplifyLibCalls::runOnFunction(Function &F) {
   
   const TargetData &TD = getAnalysis<TargetData>();
   
-  IRBuilder Builder;
+  IRBuilder<> Builder;
 
   bool Changed = false;
   for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {

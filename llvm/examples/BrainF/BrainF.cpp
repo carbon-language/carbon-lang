@@ -71,7 +71,7 @@ void BrainF::header() {
   brainf_func = cast<Function>(module->
     getOrInsertFunction("brainf", Type::VoidTy, NULL));
 
-  builder = new IRBuilder(BasicBlock::Create(label, brainf_func));
+  builder = new IRBuilder<>(BasicBlock::Create(label, brainf_func));
 
   //%arr = malloc i8, i32 %d
   ConstantInt *val_mem = ConstantInt::get(APInt(32, memtotal));
