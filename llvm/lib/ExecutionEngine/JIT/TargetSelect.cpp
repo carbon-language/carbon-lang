@@ -41,7 +41,7 @@ MAttrs("mattr",
 /// available for the current target.  Otherwise, return null.
 ///
 ExecutionEngine *JIT::createJIT(ModuleProvider *MP, std::string *ErrorStr,
-                                JITMemoryManager *JMM) {
+                                JITMemoryManager *JMM, bool Fast) {
   const TargetMachineRegistry::entry *TheArch = MArch;
   if (TheArch == 0) {
     std::string Error;
@@ -73,7 +73,7 @@ ExecutionEngine *JIT::createJIT(ModuleProvider *MP, std::string *ErrorStr,
 
   // If the target supports JIT code generation, return a new JIT now.
   if (TargetJITInfo *TJ = Target->getJITInfo())
-    return new JIT(MP, *Target, *TJ, JMM);
+    return new JIT(MP, *Target, *TJ, JMM, Fast);
 
   if (ErrorStr)
     *ErrorStr = "target does not support JIT code generation";

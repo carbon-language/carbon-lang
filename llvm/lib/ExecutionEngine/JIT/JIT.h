@@ -56,7 +56,7 @@ class JIT : public ExecutionEngine {
   JITState *jitstate;
 
   JIT(ModuleProvider *MP, TargetMachine &tm, TargetJITInfo &tji, 
-      JITMemoryManager *JMM);
+      JITMemoryManager *JMM, bool Fast);
 public:
   ~JIT();
 
@@ -71,8 +71,9 @@ public:
   /// create - Create an return a new JIT compiler if there is one available
   /// for the current target.  Otherwise, return null.
   ///
-  static ExecutionEngine *create(ModuleProvider *MP, std::string *Err) {
-    return createJIT(MP, Err, 0);
+  static ExecutionEngine *create(ModuleProvider *MP, std::string *Err,
+                                 bool Fast = false) {
+    return createJIT(MP, Err, 0, Fast);
   }
 
   virtual void addModuleProvider(ModuleProvider *MP);
@@ -128,7 +129,7 @@ public:
   MachineCodeEmitter *getCodeEmitter() const { return MCE; }
   
   static ExecutionEngine *createJIT(ModuleProvider *MP, std::string *Err,
-                                    JITMemoryManager *JMM);
+                                    JITMemoryManager *JMM, bool Fast);
   
 private:
   static MachineCodeEmitter *createEmitter(JIT &J, JITMemoryManager *JMM);

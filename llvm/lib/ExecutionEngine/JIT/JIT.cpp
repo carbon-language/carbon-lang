@@ -73,8 +73,9 @@ extern "C" void __register_frame(void*);
 /// of the module provider.
 ExecutionEngine *ExecutionEngine::createJIT(ModuleProvider *MP,
                                             std::string *ErrorStr,
-                                            JITMemoryManager *JMM) {
-  ExecutionEngine *EE = JIT::createJIT(MP, ErrorStr, JMM);
+                                            JITMemoryManager *JMM,
+                                            bool Fast) {
+  ExecutionEngine *EE = JIT::createJIT(MP, ErrorStr, JMM, Fast);
   if (!EE) return 0;
   
   // Register routine for informing unwinding runtime about new EH frames
@@ -89,7 +90,7 @@ ExecutionEngine *ExecutionEngine::createJIT(ModuleProvider *MP,
 }
 
 JIT::JIT(ModuleProvider *MP, TargetMachine &tm, TargetJITInfo &tji,
-         JITMemoryManager *JMM)
+         JITMemoryManager *JMM, bool Fast)
   : ExecutionEngine(MP), TM(tm), TJI(tji) {
   setTargetData(TM.getTargetData());
 
@@ -105,7 +106,7 @@ JIT::JIT(ModuleProvider *MP, TargetMachine &tm, TargetJITInfo &tji,
 
   // Turn the machine code intermediate representation into bytes in memory that
   // may be executed.
-  if (TM.addPassesToEmitMachineCode(PM, *MCE, false /*fast*/)) {
+  if (TM.addPassesToEmitMachineCode(PM, *MCE, Fast)) {
     cerr << "Target does not support machine code emission!\n";
     abort();
   }

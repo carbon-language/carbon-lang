@@ -345,7 +345,8 @@ int ExecutionEngine::runFunctionAsMain(Function *Fn,
 ///
 ExecutionEngine *ExecutionEngine::create(ModuleProvider *MP,
                                          bool ForceInterpreter,
-                                         std::string *ErrorStr) {
+                                         std::string *ErrorStr,
+                                         bool Fast) {
   ExecutionEngine *EE = 0;
 
   // Make sure we can resolve symbols in the program as well. The zero arg
@@ -355,11 +356,11 @@ ExecutionEngine *ExecutionEngine::create(ModuleProvider *MP,
 
   // Unless the interpreter was explicitly selected, try making a JIT.
   if (!ForceInterpreter && JITCtor)
-    EE = JITCtor(MP, ErrorStr);
+    EE = JITCtor(MP, ErrorStr, Fast);
 
   // If we can't make a JIT, make an interpreter instead.
   if (EE == 0 && InterpCtor)
-    EE = InterpCtor(MP, ErrorStr);
+    EE = InterpCtor(MP, ErrorStr, Fast);
 
   return EE;
 }

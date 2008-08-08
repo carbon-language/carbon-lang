@@ -79,7 +79,8 @@ protected:
   // To avoid having libexecutionengine depend on the JIT and interpreter
   // libraries, the JIT and Interpreter set these functions to ctor pointers
   // at startup time if they are linked in.
-  typedef ExecutionEngine *(*EECtorFn)(ModuleProvider*, std::string*);
+  typedef ExecutionEngine *(*EECtorFn)(ModuleProvider*, std::string*,
+                                       bool Fast);
   static EECtorFn JITCtor, InterpCtor;
 
   /// LazyFunctionCreator - If an unknown function is needed, this function
@@ -108,7 +109,8 @@ public:
   /// module provider.
   static ExecutionEngine *create(ModuleProvider *MP,
                                  bool ForceInterpreter = false,
-                                 std::string *ErrorStr = 0);
+                                 std::string *ErrorStr = 0,
+                                 bool Fast = false);
   
   /// create - This is the factory method for creating an execution engine which
   /// is appropriate for the current machine.  This takes ownership of the
@@ -120,7 +122,8 @@ public:
   /// of the ModuleProvider and JITMemoryManager if successful.
   static ExecutionEngine *createJIT(ModuleProvider *MP,
                                     std::string *ErrorStr = 0,
-                                    JITMemoryManager *JMM = 0);
+                                    JITMemoryManager *JMM = 0,
+                                    bool Fast = false);
   
   
   
