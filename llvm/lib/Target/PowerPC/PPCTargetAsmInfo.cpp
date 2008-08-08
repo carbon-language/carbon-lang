@@ -104,9 +104,8 @@ PPCDarwinTargetAsmInfo::PreferredEHDataFormat(DwarfEncoding::Target Reason,
 }
 
 
-PPCLinuxTargetAsmInfo::PPCLinuxTargetAsmInfo(const PPCTargetMachine &TM)
-: PPCTargetAsmInfo(TM)
-{
+PPCLinuxTargetAsmInfo::PPCLinuxTargetAsmInfo(const PPCTargetMachine &TM) :
+  PPCTargetAsmInfo(TM), ELFTargetAsmInfo(TM) {
   CommentString = "#";
   GlobalPrefix = "";
   PrivateGlobalPrefix = "";

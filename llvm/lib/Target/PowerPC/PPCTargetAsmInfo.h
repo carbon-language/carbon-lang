@@ -16,6 +16,7 @@
 
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/DarwinTargetAsmInfo.h"
+#include "llvm/Target/ELFTargetAsmInfo.h"
 
 namespace llvm {
 
@@ -27,13 +28,14 @@ namespace llvm {
   };
 
   struct PPCDarwinTargetAsmInfo : public PPCTargetAsmInfo,
-                                  public DarwinTargetAsmInfo{
+                                  public DarwinTargetAsmInfo {
     explicit PPCDarwinTargetAsmInfo(const PPCTargetMachine &TM);
     virtual unsigned PreferredEHDataFormat(DwarfEncoding::Target Reason,
                                            bool Global) const;
   };
 
-  struct PPCLinuxTargetAsmInfo : public PPCTargetAsmInfo {
+  struct PPCLinuxTargetAsmInfo : public PPCTargetAsmInfo,
+                                 public ELFTargetAsmInfo {
     explicit PPCLinuxTargetAsmInfo(const PPCTargetMachine &TM);
     virtual unsigned PreferredEHDataFormat(DwarfEncoding::Target Reason,
                                            bool Global) const;

@@ -317,6 +317,7 @@ namespace {
     /// getSectionForFunction - Return the section that we should emit the
     /// specified function body into.
     virtual std::string getSectionForFunction(const Function &F) const;
+    void printModuleLevelGV(const GlobalVariable* GVar);
   };
 
   /// PPCDarwinAsmPrinter - PowerPC assembly printer, customized for Darwin/Mac
@@ -657,111 +658,95 @@ static void PrintUnmangledNameSafely(const Value *V, std::ostream &OS) {
       OS << *Name;
 }
 
-bool PPCLinuxAsmPrinter::doFinalization(Module &M) {
+void PPCLinuxAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
   const TargetData *TD = TM.getTargetData();
 
-  // Print out module-level global variables here.
-  for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
-       I != E; ++I) {
-    if (!I->hasInitializer()) continue;   // External global require no code
+  if (!GVar->hasInitializer())
+    return;   // External global require no code
 
-    // Check to see if this is a special global used by LLVM, if so, emit it.
-    if (EmitSpecialLLVMGlobal(I))
-      continue;
+  // Check to see if this is a special global used by LLVM, if so, emit it.
+  if (EmitSpecialLLVMGlobal(GVar))
+    return;
 
-    std::string name = Mang->getValueName(I);
+  std::string name = Mang->getValueName(GVar);
+  std::string SectionName = TAI->SectionForGlobal(GVar);
 
-    if (I->hasHiddenVisibility())
-      if (const char *Directive = TAI->getHiddenDirective())
-        O << Directive << name << "\n";
+  if (GVar->hasHiddenVisibility())
+    if (const char *Directive = TAI->getHiddenDirective())
+      O << Directive << name << "\n";
 
-    Constant *C = I->getInitializer();
-    unsigned Size = TD->getABITypeSize(C->getType());
-    unsigned Align = TD->getPreferredAlignmentLog(I);
+  Constant *C = GVar->getInitializer();
+  const Type *Type = C->getType();
+  unsigned Size = TD->getABITypeSize(Type);
+  unsigned Align = TD->getPreferredAlignmentLog(GVar);
 
-    if (C->isNullValue() && /* FIXME: Verify correct */
-        !I->hasSection() && (I->hasCommonLinkage() ||
-         I->hasInternalLinkage() || I->hasWeakLinkage() ||
-         I->hasLinkOnceLinkage() || I->hasExternalLinkage())) {
+  SwitchToDataSection(SectionName.c_str());
+
+  if (C->isNullValue() && /* FIXME: Verify correct */
+      !GVar->hasSection() &&
+      (GVar->hasInternalLinkage() || GVar->hasExternalLinkage() ||
+       GVar->isWeakForLinker())) {
       if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
-      if (I->hasExternalLinkage()) {
+
+      if (GVar->hasExternalLinkage()) {
         O << "\t.global " << name << '\n';
         O << "\t.type " << name << ", @object\n";
-        if (TAI->getBSSSection())
-          SwitchToDataSection(TAI->getBSSSection(), I);
         O << name << ":\n";
         O << "\t.zero " << Size << "\n";
-      } else if (I->hasInternalLinkage()) {
-        SwitchToDataSection("\t.data", I);
+      } else if (GVar->hasInternalLinkage()) {
         O << TAI->getLCOMMDirective() << name << "," << Size;
       } else {
-        SwitchToDataSection("\t.data", I);
         O << ".comm " << name << "," << Size;
       }
       O << "\t\t" << TAI->getCommentString() << " '";
-      PrintUnmangledNameSafely(I, O);
+      PrintUnmangledNameSafely(GVar, O);
       O << "'\n";
-    } else {
-      switch (I->getLinkage()) {
-      case GlobalValue::LinkOnceLinkage:
-      case GlobalValue::WeakLinkage:
-      case GlobalValue::CommonLinkage:
-        O << "\t.global " << name << '\n'
-          << "\t.type " << name << ", @object\n"
-          << "\t.weak " << name << '\n';
-        SwitchToDataSection("\t.data", I);
-        break;
-      case GlobalValue::AppendingLinkage:
-        // FIXME: appending linkage variables should go into a section of
-        // their name or something.  For now, just emit them as external.
-      case GlobalValue::ExternalLinkage:
-        // If external or appending, declare as a global symbol
-        O << "\t.global " << name << "\n"
-          << "\t.type " << name << ", @object\n";
-        // FALL THROUGH
-      case GlobalValue::InternalLinkage:
-        if (I->isConstant()) {
-          const ConstantArray *CVA = dyn_cast<ConstantArray>(C);
-          if (TAI->getCStringSection() && CVA && CVA->isCString()) {
-            SwitchToDataSection(TAI->getCStringSection(), I);
-            break;
-          }
-        }
-
-        // FIXME: special handling for ".ctors" & ".dtors" sections
-        if (I->hasSection() &&
-            (I->getSection() == ".ctors" ||
-             I->getSection() == ".dtors")) {
-          std::string SectionName = ".section " + I->getSection()
-                                                + ",\"aw\",@progbits";
-          SwitchToDataSection(SectionName.c_str());
-        } else {
-          if (I->isConstant() && TAI->getReadOnlySection())
-            SwitchToDataSection(TAI->getReadOnlySection(), I);
-          else
-            SwitchToDataSection(TAI->getDataSection(), I);
-        }
-        break;
-      default:
-        cerr << "Unknown linkage type!";
-        abort();
-      }
-
-      EmitAlignment(Align, I);
-      O << name << ":\t\t\t\t" << TAI->getCommentString() << " '";
-      PrintUnmangledNameSafely(I, O);
-      O << "'\n";
-
-      // If the initializer is a extern weak symbol, remember to emit the weak
-      // reference!
-      if (const GlobalValue *GV = dyn_cast<GlobalValue>(C))
-        if (GV->hasExternalWeakLinkage())
-          ExtWeakSymbols.insert(GV);
-
-      EmitGlobalConstant(C);
-      O << '\n';
-    }
+      return;
   }
+
+  switch (GVar->getLinkage()) {
+   case GlobalValue::LinkOnceLinkage:
+   case GlobalValue::WeakLinkage:
+   case GlobalValue::CommonLinkage:
+    O << "\t.global " << name << '\n'
+      << "\t.type " << name << ", @object\n"
+      << "\t.weak " << name << '\n';
+    break;
+   case GlobalValue::AppendingLinkage:
+    // FIXME: appending linkage variables should go into a section of
+    // their name or something.  For now, just emit them as external.
+   case GlobalValue::ExternalLinkage:
+    // If external or appending, declare as a global symbol
+    O << "\t.global " << name << "\n"
+      << "\t.type " << name << ", @object\n";
+    // FALL THROUGH
+   case GlobalValue::InternalLinkage:
+    break;
+   default:
+    cerr << "Unknown linkage type!";
+    abort();
+  }
+
+  EmitAlignment(Align, GVar);
+  O << name << ":\t\t\t\t" << TAI->getCommentString() << " '";
+  PrintUnmangledNameSafely(GVar, O);
+  O << "'\n";
+
+  // If the initializer is a extern weak symbol, remember to emit the weak
+  // reference!
+  if (const GlobalValue *GV = dyn_cast<GlobalValue>(C))
+    if (GV->hasExternalWeakLinkage())
+      ExtWeakSymbols.insert(GV);
+
+  EmitGlobalConstant(C);
+  O << '\n';
+}
+
+bool PPCLinuxAsmPrinter::doFinalization(Module &M) {
+  // Print out module-level global variables here.
+  for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
+       I != E; ++I)
+    printModuleLevelGV(I);
 
   // TODO
 
@@ -783,7 +768,6 @@ std::string PPCDarwinAsmPrinter::getSectionForFunction(const Function &F) const 
 /// method to print assembly for each instruction.
 ///
 bool PPCDarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
-
   SetupMachineFunction(MF);
   O << "\n\n";
 
