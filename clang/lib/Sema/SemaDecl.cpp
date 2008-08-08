@@ -104,7 +104,6 @@ void Sema::PushOnScopeChains(NamedDecl *D, Scope *S) {
       return;
     }
   }
-
   IdResolver.AddDecl(D);
 }
 
@@ -411,12 +410,51 @@ static bool areEquivalentArrayTypes(QualType NewQType, QualType OldQType,
   return NewQType == OldQType;
 }
 
+/// Predicate for C "tentative" external object definitions (C99 6.9.2).
+bool Sema::isTentativeDefinition(VarDecl *VD) {
+  if (VD->isFileVarDecl())
+    return (!VD->getInit() &&
+            (VD->getStorageClass() == VarDecl::None ||
+             VD->getStorageClass() == VarDecl::Static));
+  return false;
+}
+
+/// CheckForFileScopedRedefinitions - Make sure we forgo redefinition errors
+/// when dealing with C "tentative" external object definitions (C99 6.9.2).
+void Sema::CheckForFileScopedRedefinitions(Scope *S, VarDecl *VD) {
+  bool VDIsTentative = isTentativeDefinition(VD);
+  
+  for (IdentifierResolver::iterator
+       I = IdResolver.begin(VD->getIdentifier(), 
+                            VD->getDeclContext(), false/*LookInParentCtx*/), 
+       E = IdResolver.end(); I != E; ++I) {
+    if (*I != VD && IdResolver.isDeclInScope(*I, VD->getDeclContext(), S)) {
+      VarDecl *OldDecl = dyn_cast<VarDecl>(*I);
+      
+      // Check for "tentative" definitions. We can't accomplish this in 
+      // MergeVarDecl since the initializer hasn't been attached.
+      if (!OldDecl || isTentativeDefinition(OldDecl) || VDIsTentative)
+        continue;
+  
+      // Handle __private_extern__ just like extern.
+      if (OldDecl->getStorageClass() != VarDecl::Extern &&
+          OldDecl->getStorageClass() != VarDecl::PrivateExtern &&
+          VD->getStorageClass() != VarDecl::Extern &&
+          VD->getStorageClass() != VarDecl::PrivateExtern) {
+        Diag(VD->getLocation(), diag::err_redefinition, VD->getName());
+        Diag(OldDecl->getLocation(), diag::err_previous_definition);
+      }
+    }
+  }
+}
+
 /// MergeVarDecl - We just parsed a variable 'New' which has the same name
 /// and scope as a previous declaration 'Old'.  Figure out how to resolve this
 /// situation, merging decls or emitting diagnostics as appropriate.
 ///
-/// FIXME: Need to carefully consider tentative definition rules (C99 6.9.2p2).
-/// For example, we incorrectly complain about i1, i4 from C99 6.9.2p4.
+/// Tentative definition rules (C99 6.9.2p2) are checked by 
+/// FinalizeDeclaratorGroup. Unfortunately, we can't analyze tentative 
+/// definitions here, since the initializer hasn't been attached.
 /// 
 VarDecl *Sema::MergeVarDecl(VarDecl *New, Decl *OldD) {
   // Verify the old decl was also a variable.
@@ -454,34 +492,8 @@ VarDecl *Sema::MergeVarDecl(VarDecl *New, Decl *OldD) {
     Diag(Old->getLocation(), diag::err_previous_definition);
     return New;
   }
-  // We've verified the types match, now handle "tentative" definitions.
-  if (Old->isFileVarDecl() && New->isFileVarDecl()) {
-    // Handle C "tentative" external object definitions (C99 6.9.2).
-    bool OldIsTentative = false;
-    bool NewIsTentative = false;
-    
-    if (!Old->getInit() &&
-        (Old->getStorageClass() == VarDecl::None ||
-         Old->getStorageClass() == VarDecl::Static))
-      OldIsTentative = true;
-      
-    // FIXME: this check doesn't work (since the initializer hasn't been
-    // attached yet). This check should be moved to FinalizeDeclaratorGroup.
-    // Unfortunately, by the time we get to FinializeDeclaratorGroup, we've 
-    // thrown out the old decl.
-    if (!New->getInit() &&
-        (New->getStorageClass() == VarDecl::None ||
-         New->getStorageClass() == VarDecl::Static))
-      ; // change to NewIsTentative = true; once the code is moved.
-    
-    if (NewIsTentative || OldIsTentative)
-      return New;
-  }
-  // Handle __private_extern__ just like extern.
-  if (Old->getStorageClass() != VarDecl::Extern &&
-      Old->getStorageClass() != VarDecl::PrivateExtern &&
-      New->getStorageClass() != VarDecl::Extern &&
-      New->getStorageClass() != VarDecl::PrivateExtern) {
+  // File scoped variables are analyzed in FinalizeDeclaratorGroup.
+  if (!New->isFileVarDecl()) {
     Diag(New->getLocation(), diag::err_redefinition, New->getName());
     Diag(Old->getLocation(), diag::err_previous_definition);
   }
@@ -1431,9 +1443,7 @@ Sema::DeclTy *Sema::FinalizeDeclaratorGroup(Scope *S, DeclTy *group) {
     // storage-class specifier or with the storage-class specifier "static",
     // constitutes a tentative definition. Note: A tentative definition with
     // external linkage is valid (C99 6.2.2p5).
-    if (IDecl && !IDecl->getInit() && 
-        (IDecl->getStorageClass() == VarDecl::Static || 
-         IDecl->getStorageClass() == VarDecl::None)) {
+    if (isTentativeDefinition(IDecl)) {
       if (T->isIncompleteArrayType()) {
         // C99 6.9.2 (p2, p5): Implicit initialization causes an incomplete
         // array to be completed. Don't issue a diagnostic.
@@ -1446,6 +1456,8 @@ Sema::DeclTy *Sema::FinalizeDeclaratorGroup(Scope *S, DeclTy *group) {
         IDecl->setInvalidDecl();
       }
     }
+    if (IDecl->isFileVarDecl())
+      CheckForFileScopedRedefinitions(S, IDecl);
   }
   return NewGroup;
 }
