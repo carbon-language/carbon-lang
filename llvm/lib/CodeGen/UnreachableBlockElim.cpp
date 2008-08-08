@@ -152,6 +152,12 @@ bool UnreachableMachineBlockElim::runOnMachineFunction(MachineFunction &F) {
     MachineBasicBlock::iterator phi = BB->begin();
     while (phi != BB->end() &&
            phi->getOpcode() == TargetInstrInfo::PHI) {
+      for (unsigned i = phi->getNumOperands() - 1; i >= 2; i-=2)
+        if (!preds.count(phi->getOperand(i).getMBB())) {
+          phi->RemoveOperand(i);
+          phi->RemoveOperand(i-1);
+        }
+      
       if (phi->getNumOperands() == 3) {
         unsigned Input = phi->getOperand(1).getReg();
         unsigned Output = phi->getOperand(0).getReg();
@@ -162,15 +168,9 @@ bool UnreachableMachineBlockElim::runOnMachineFunction(MachineFunction &F) {
 
         if (Input != Output)
           F.getRegInfo().replaceRegWith(Output, Input);
-        
+
         continue;
       }
-      
-      for (unsigned i = phi->getNumOperands() - 1; i >= 2; i-=2)
-        if (!preds.count(phi->getOperand(i).getMBB())) {
-          phi->RemoveOperand(i);
-          phi->RemoveOperand(i-1);
-        }
   
       ++phi;
     }
