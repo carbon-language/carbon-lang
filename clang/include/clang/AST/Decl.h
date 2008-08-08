@@ -823,6 +823,28 @@ public:
   const FieldDecl *getMember(unsigned i) const { return Members[i]; }
   FieldDecl *getMember(unsigned i) { return Members[i]; }
 
+  // Iterator access to field members.
+  typedef FieldDecl **field_iterator;
+  typedef FieldDecl * const *field_const_iterator;
+
+  field_iterator field_begin() {
+    assert(isDefinition() && "Not a definition!");
+    return Members;
+  }
+  field_iterator field_end() {
+    assert(isDefinition() && "Not a definition!");
+    return Members + getNumMembers();
+  }
+
+  field_const_iterator field_begin() const {
+    assert(isDefinition() && "Not a definition!");
+    return Members;
+  }
+  field_const_iterator field_end() const {
+    assert(isDefinition() && "Not a definition!");
+    return Members + getNumMembers();
+  }
+
   /// defineBody - When created, RecordDecl's correspond to a forward declared
   /// record.  This method is used to mark the decl as being defined, with the
   /// specified contents.
