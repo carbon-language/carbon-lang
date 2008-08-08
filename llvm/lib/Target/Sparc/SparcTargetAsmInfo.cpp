@@ -24,6 +24,7 @@ SparcELFTargetAsmInfo::SparcELFTargetAsmInfo(const TargetMachine &TM):
   CommentString = "!";
   ConstantPoolSection = "\t.section \".rodata\",#alloc\n";
   COMMDirectiveTakesAlignment = true;
+  CStringSection=".rodata.str";
 }
 
 std::string SparcELFTargetAsmInfo::PrintSectionFlags(unsigned flags) const {
