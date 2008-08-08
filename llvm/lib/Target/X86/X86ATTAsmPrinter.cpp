@@ -806,10 +806,8 @@ void X86ATTAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
           return;
         } else {
           O << TAI->getCOMMDirective()  << name << ',' << Size;
-
-          // Leopard and above support aligned common symbols.
-          if (Subtarget->getDarwinVers() >= 9)
-            O << ',' << Align;
+          if (TAI->getCOMMDirectiveTakesAlignment())
+            O << ',' << (TAI->getAlignmentIsInBytes() ? (1 << Align) : Align);
         }
       } else {
         if (!Subtarget->isTargetCygMing()) {

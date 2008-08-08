@@ -126,7 +126,8 @@ bool X86TargetAsmInfo::ExpandInlineAsm(CallInst *CI) const {
 
 X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const X86TargetMachine &TM):
   X86TargetAsmInfo(TM), DarwinTargetAsmInfo(TM) {
-  bool is64Bit = DTM->getSubtarget<X86Subtarget>().is64Bit();
+  const X86Subtarget* Subtarget = &DTM->getSubtarget<X86Subtarget>();
+  bool is64Bit = Subtarget->is64Bit();
 
   AlignmentIsInBytes = false;
   TextAlignFillValue = 0x90;
@@ -156,7 +157,8 @@ X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const X86TargetMachine &TM):
   LCOMMDirective = "\t.lcomm\t";
   SwitchToSectionDirective = "\t.section ";
   StringConstantPrefix = "\1LC";
-  COMMDirectiveTakesAlignment = false;
+  // Leopard and above support aligned common symbols.
+  COMMDirectiveTakesAlignment = (Subtarget->getDarwinVers() >= 9);
   HasDotTypeDotSizeDirective = false;
   if (TM.getRelocationModel() == Reloc::Static) {
     StaticCtorsSection = ".constructor";
