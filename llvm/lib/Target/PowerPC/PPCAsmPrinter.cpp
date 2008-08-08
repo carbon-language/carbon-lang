@@ -529,7 +529,7 @@ void PPCAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
       printOperand(MI, 0);
       O << ", ";
       printOperand(MI, 1);
-      O << ", " << (unsigned int)SH << "\n";
+      O << ", " << (unsigned int)SH << '\n';
       return;
     }
   } else if (MI->getOpcode() == PPC::OR || MI->getOpcode() == PPC::OR8) {
@@ -538,7 +538,7 @@ void PPCAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
       printOperand(MI, 0);
       O << ", ";
       printOperand(MI, 1);
-      O << "\n";
+      O << '\n';
       return;
     }
   } else if (MI->getOpcode() == PPC::RLDICR) {
@@ -550,7 +550,7 @@ void PPCAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
       printOperand(MI, 0);
       O << ", ";
       printOperand(MI, 1);
-      O << ", " << (unsigned int)SH << "\n";
+      O << ", " << (unsigned int)SH << '\n';
       return;
     }
   }
@@ -595,7 +595,7 @@ bool PPCLinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   if (F->hasHiddenVisibility())
     if (const char *Directive = TAI->getHiddenDirective())
-      O << Directive << CurrentFnName << "\n";
+      O << Directive << CurrentFnName << '\n';
 
   EmitAlignment(2, F);
   O << CurrentFnName << ":\n";
@@ -618,7 +618,7 @@ bool PPCLinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     }
   }
 
-  O << "\t.size\t" << CurrentFnName << ",.-" << CurrentFnName << "\n";
+  O << "\t.size\t" << CurrentFnName << ",.-" << CurrentFnName << '\n';
 
   // Print out jump tables referenced by the function.
   EmitJumpTableInfo(MF.getJumpTableInfo(), MF);
@@ -673,7 +673,7 @@ void PPCLinuxAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
 
   if (GVar->hasHiddenVisibility())
     if (const char *Directive = TAI->getHiddenDirective())
-      O << Directive << name << "\n";
+      O << Directive << name << '\n';
 
   Constant *C = GVar->getInitializer();
   const Type *Type = C->getType();
@@ -692,11 +692,11 @@ void PPCLinuxAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
         O << "\t.global " << name << '\n';
         O << "\t.type " << name << ", @object\n";
         O << name << ":\n";
-        O << "\t.zero " << Size << "\n";
+        O << "\t.zero " << Size << '\n';
       } else if (GVar->hasInternalLinkage()) {
-        O << TAI->getLCOMMDirective() << name << "," << Size;
+        O << TAI->getLCOMMDirective() << name << ',' << Size;
       } else {
-        O << ".comm " << name << "," << Size;
+        O << ".comm " << name << ',' << Size;
       }
       O << "\t\t" << TAI->getCommentString() << " '";
       PrintUnmangledNameSafely(GVar, O);
@@ -717,7 +717,7 @@ void PPCLinuxAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
     // their name or something.  For now, just emit them as external.
    case GlobalValue::ExternalLinkage:
     // If external or appending, declare as a global symbol
-    O << "\t.global " << name << "\n"
+    O << "\t.global " << name << '\n'
       << "\t.type " << name << ", @object\n";
     // FALL THROUGH
    case GlobalValue::InternalLinkage:
@@ -783,18 +783,18 @@ bool PPCDarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   case Function::InternalLinkage:  // Symbols default to internal.
     break;
   case Function::ExternalLinkage:
-    O << "\t.globl\t" << CurrentFnName << "\n";
+    O << "\t.globl\t" << CurrentFnName << '\n';
     break;
   case Function::WeakLinkage:
   case Function::LinkOnceLinkage:
-    O << "\t.globl\t" << CurrentFnName << "\n";
-    O << "\t.weak_definition\t" << CurrentFnName << "\n";
+    O << "\t.globl\t" << CurrentFnName << '\n';
+    O << "\t.weak_definition\t" << CurrentFnName << '\n';
     break;
   }
 
   if (F->hasHiddenVisibility())
     if (const char *Directive = TAI->getHiddenDirective())
-      O << Directive << CurrentFnName << "\n";
+      O << Directive << CurrentFnName << '\n';
 
   EmitAlignment(OptimizeForSize ? 2 : 4, F);
   O << CurrentFnName << ":\n";
@@ -857,7 +857,7 @@ bool PPCDarwinAsmPrinter::doInitialization(Module &M) {
   if (Subtarget.isPPC64() && Directive < PPC::DIR_970)
     Directive = PPC::DIR_64;
   assert(Directive <= PPC::DIR_64 && "Directive out of range.");
-  O << "\t.machine " << CPUDirectives[Directive] << "\n";
+  O << "\t.machine " << CPUDirectives[Directive] << '\n';
 
   bool Result = AsmPrinter::doInitialization(M);
 
@@ -911,7 +911,7 @@ void PPCDarwinAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
 
   if (GVar->hasHiddenVisibility())
     if (const char *Directive = TAI->getHiddenDirective())
-      O << Directive << name << "\n";
+      O << Directive << name << '\n';
 
   Constant *C = GVar->getInitializer();
   const Type *Type = C->getType();
@@ -931,21 +931,21 @@ void PPCDarwinAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
       O << "\t.zerofill __DATA, __common, " << name << ", "
         << Size << ", " << Align;
     } else if (GVar->hasInternalLinkage()) {
-      O << TAI->getLCOMMDirective() << name << "," << Size << "," << Align;
+      O << TAI->getLCOMMDirective() << name << ',' << Size << ',' << Align;
     } else if (!GVar->hasCommonLinkage()) {
-      O << "\t.globl " << name << "\n"
-        << TAI->getWeakDefDirective() << name << "\n";
+      O << "\t.globl " << name << '\n'
+        << TAI->getWeakDefDirective() << name << '\n';
       EmitAlignment(Align, GVar);
       O << name << ":\t\t\t\t" << TAI->getCommentString() << " ";
       PrintUnmangledNameSafely(GVar, O);
-      O << "\n";
+      O << '\n';
       EmitGlobalConstant(C);
       return;
     } else {
-      O << ".comm " << name << "," << Size;
+      O << ".comm " << name << ',' << Size;
       // Darwin 9 and above support aligned common data.
       if (Subtarget.isDarwin9())
-        O << "," << Align;
+        O << ',' << Align;
     }
     O << "\t\t" << TAI->getCommentString() << " '";
     PrintUnmangledNameSafely(GVar, O);
@@ -965,7 +965,7 @@ void PPCDarwinAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
     // their name or something.  For now, just emit them as external.
    case GlobalValue::ExternalLinkage:
     // If external or appending, declare as a global symbol
-    O << "\t.globl " << name << "\n";
+    O << "\t.globl " << name << '\n';
     // FALL THROUGH
    case GlobalValue::InternalLinkage:
     break;
@@ -1010,9 +1010,9 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
       std::string L0p = (p[0]=='\"') ? "\"L0$" + p.substr(1) : "L0$" + p ;
       printSuffixedName(p, "$stub");
       O << ":\n";
-      O << "\t.indirect_symbol " << *i << "\n";
+      O << "\t.indirect_symbol " << *i << '\n';
       O << "\tmflr r0\n";
-      O << "\tbcl 20,31," << L0p << "\n";
+      O << "\tbcl 20,31," << L0p << '\n';
       O << L0p << ":\n";
       O << "\tmflr r11\n";
       O << "\taddis r11,r11,ha16(";
@@ -1030,7 +1030,7 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
       SwitchToDataSection(".lazy_symbol_pointer");
       printSuffixedName(p, "$lazy_ptr");
       O << ":\n";
-      O << "\t.indirect_symbol " << *i << "\n";
+      O << "\t.indirect_symbol " << *i << '\n';
       if (isPPC64)
         O << "\t.quad dyld_stub_binding_helper\n";
       else
@@ -1045,7 +1045,7 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
       std::string p = *i;
       printSuffixedName(p, "$stub");
       O << ":\n";
-      O << "\t.indirect_symbol " << *i << "\n";
+      O << "\t.indirect_symbol " << *i << '\n';
       O << "\tlis r11,ha16(";
       printSuffixedName(p, "$lazy_ptr");
       O << ")\n";
@@ -1060,7 +1060,7 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
       SwitchToDataSection(".lazy_symbol_pointer");
       printSuffixedName(p, "$lazy_ptr");
       O << ":\n";
-      O << "\t.indirect_symbol " << *i << "\n";
+      O << "\t.indirect_symbol " << *i << '\n';
       if (isPPC64)
         O << "\t.quad dyld_stub_binding_helper\n";
       else
@@ -1068,7 +1068,7 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
     }
   }
 
-  O << "\n";
+  O << '\n';
 
   if (TAI->doesSupportExceptionHandling() && MMI) {
     // Add the (possibly multiple) personalities to the set of global values.
@@ -1088,7 +1088,7 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
       std::string p = *I;
       printSuffixedName(p, "$non_lazy_ptr");
       O << ":\n";
-      O << "\t.indirect_symbol " << *I << "\n";
+      O << "\t.indirect_symbol " << *I << '\n';
       if (isPPC64)
         O << "\t.quad\t0\n";
       else
