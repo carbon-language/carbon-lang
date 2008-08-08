@@ -821,12 +821,13 @@ void AsmPrinter::EmitConstantValueOnly(const Constant *CV) {
 
       // We can emit the pointer value into this slot if the slot is an
       // integer slot greater or equal to the size of the pointer.
-      if (Ty->isInteger() &&
-          TD->getABITypeSize(Ty) >= TD->getABITypeSize(Op->getType()))
+      if (TD->getABITypeSize(Ty) >= TD->getABITypeSize(Op->getType()))
         return EmitConstantValueOnly(Op);
-      
-      assert(0 && "FIXME: Don't yet support this kind of constant cast expr");
+
+      O << "((";
       EmitConstantValueOnly(Op);
+      APInt ptrMask = APInt::getAllOnesValue(TD->getABITypeSizeInBits(Ty));
+      O << ") & " << ptrMask.toStringUnsigned() << ')';
       break;
     }
     case Instruction::Add:
