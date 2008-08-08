@@ -309,7 +309,7 @@ public:
   void dumpPassInfo(Pass *P, enum PassDebuggingString S1,
                     enum PassDebuggingString S2, const char *Msg);
   void dumpAnalysisSetInfo(const char *Msg, Pass *P,
-                           const std::vector<AnalysisID> &Set) const;
+                           const AnalysisUsage::VectorType &Set) const;
 
   virtual unsigned getNumContainedPasses() const {
     return (unsigned)PassVector.size();

@@ -294,8 +294,9 @@ void PassRegistrationListener::enumeratePasses() {
 
 namespace {
   struct GetCFGOnlyPasses : public PassRegistrationListener {
-    std::vector<AnalysisID> &CFGOnlyList;
-    GetCFGOnlyPasses(std::vector<AnalysisID> &L) : CFGOnlyList(L) {}
+    typedef AnalysisUsage::VectorType VectorType;
+    VectorType &CFGOnlyList;
+    GetCFGOnlyPasses(VectorType &L) : CFGOnlyList(L) {}
     
     void passEnumerate(const PassInfo *P) {
       if (P->isCFGOnlyPass())

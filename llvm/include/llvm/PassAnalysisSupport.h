@@ -20,6 +20,7 @@
 #define LLVM_PASS_ANALYSIS_SUPPORT_H
 
 #include <vector>
+#include "llvm/ADT/SmallVector.h"
 
 namespace llvm {
 
@@ -34,9 +35,14 @@ namespace llvm {
 // Pass infrastructure through the getAnalysisUsage virtual function.
 //
 class AnalysisUsage {
+public:
+  typedef SmallVector<AnalysisID, 32> VectorType;
+
+private:
   // Sets of analyses required and preserved by a pass
-  std::vector<AnalysisID> Required, RequiredTransitive, Preserved;
+  VectorType Required, RequiredTransitive, Preserved;
   bool PreservesAll;
+
 public:
   AnalysisUsage() : PreservesAll(false) {}
 
@@ -95,11 +101,11 @@ public:
   ///
   void setPreservesCFG();
 
-  const std::vector<AnalysisID> &getRequiredSet() const { return Required; }
-  const std::vector<AnalysisID> &getRequiredTransitiveSet() const {
+  const VectorType &getRequiredSet() const { return Required; }
+  const VectorType &getRequiredTransitiveSet() const {
     return RequiredTransitive;
   }
-  const std::vector<AnalysisID> &getPreservedSet() const { return Preserved; }
+  const VectorType &getPreservedSet() const { return Preserved; }
 };
 
 //===----------------------------------------------------------------------===//
