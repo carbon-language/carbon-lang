@@ -591,7 +591,7 @@ CGDebugInfo::getOrCreateType(QualType type, llvm::CompileUnitDesc *Unit)
 /// "llvm.dbg.func.start.".
 void CGDebugInfo::EmitFunctionStart(const FunctionDecl *FnDecl,
                                     llvm::Function *Fn,
-                                    llvm::IRBuilder &Builder)
+                                    llvm::IRBuilder<> &Builder)
 {
   // Create subprogram descriptor.
   Subprogram = new llvm::SubprogramDesc();
@@ -636,7 +636,7 @@ void CGDebugInfo::EmitFunctionStart(const FunctionDecl *FnDecl,
 
 
 void 
-CGDebugInfo::EmitStopPoint(llvm::Function *Fn, llvm::IRBuilder &Builder) 
+CGDebugInfo::EmitStopPoint(llvm::Function *Fn, llvm::IRBuilder<> &Builder) 
 {
   if (CurLoc.isInvalid() || CurLoc.isMacroID()) return;
   
@@ -670,7 +670,8 @@ CGDebugInfo::EmitStopPoint(llvm::Function *Fn, llvm::IRBuilder &Builder)
 
 /// EmitRegionStart- Constructs the debug code for entering a declarative
 /// region - "llvm.dbg.region.start.".
-void CGDebugInfo::EmitRegionStart(llvm::Function *Fn, llvm::IRBuilder &Builder) 
+void CGDebugInfo::EmitRegionStart(llvm::Function *Fn,
+                                  llvm::IRBuilder<> &Builder) 
 {
   llvm::BlockDesc *Block = new llvm::BlockDesc();
   if (RegionStack.size() > 0)
@@ -688,7 +689,7 @@ void CGDebugInfo::EmitRegionStart(llvm::Function *Fn, llvm::IRBuilder &Builder)
 
 /// EmitRegionEnd - Constructs the debug code for exiting a declarative
 /// region - "llvm.dbg.region.end."
-void CGDebugInfo::EmitRegionEnd(llvm::Function *Fn, llvm::IRBuilder &Builder) 
+void CGDebugInfo::EmitRegionEnd(llvm::Function *Fn, llvm::IRBuilder<> &Builder) 
 {
   // Lazily construct llvm.dbg.region.end function.
   if (!RegionEndFn)
@@ -707,7 +708,7 @@ void CGDebugInfo::EmitRegionEnd(llvm::Function *Fn, llvm::IRBuilder &Builder)
 /// EmitDeclare - Emit local variable declaration debug info.
 void CGDebugInfo::EmitDeclare(const VarDecl *decl, unsigned Tag,
                               llvm::Value *AI,
-                              llvm::IRBuilder &Builder)
+                              llvm::IRBuilder<> &Builder)
 {
   // FIXME: If it is a compiler generated temporary then return.
 

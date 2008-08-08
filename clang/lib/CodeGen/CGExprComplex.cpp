@@ -31,7 +31,7 @@ namespace  {
 class VISIBILITY_HIDDEN ComplexExprEmitter
   : public StmtVisitor<ComplexExprEmitter, ComplexPairTy> {
   CodeGenFunction &CGF;
-  llvm::IRBuilder &Builder;
+  llvm::IRBuilder<> &Builder;
 public:
   ComplexExprEmitter(CodeGenFunction &cgf) : CGF(cgf), Builder(CGF.Builder) {
   }

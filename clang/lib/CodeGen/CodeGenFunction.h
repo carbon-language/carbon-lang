@@ -231,7 +231,7 @@ public:
   TargetInfo &Target;
   
   typedef std::pair<llvm::Value *, llvm::Value *> ComplexPairTy;
-  llvm::IRBuilder Builder;
+  llvm::IRBuilder<> Builder;
   
   // Holds the Decl for the current function or method
   const Decl *CurFuncDecl;

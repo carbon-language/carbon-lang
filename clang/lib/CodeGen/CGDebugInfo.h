@@ -22,7 +22,7 @@
 
 namespace llvm {
   class Function;
-  class IRBuilder;
+  template<bool C> class IRBuilder;
   class DISerializer;
   class CompileUnitDesc;
   class BasicBlock;
@@ -103,24 +103,24 @@ public:
 
   /// EmitStopPoint - Emit a call to llvm.dbg.stoppoint to indicate a change of
   /// source line.
-  void EmitStopPoint(llvm::Function *Fn, llvm::IRBuilder &Builder);
+  void EmitStopPoint(llvm::Function *Fn, llvm::IRBuilder<true> &Builder);
 
   /// EmitFunctionStart - Emit a call to llvm.dbg.function.start to indicate
   /// start of a new function
   void EmitFunctionStart(const FunctionDecl *FnDecl, llvm::Function *Fn,
-                         llvm::IRBuilder &Builder);
+                         llvm::IRBuilder<true> &Builder);
   
   /// EmitRegionStart - Emit a call to llvm.dbg.region.start to indicate start
   /// of a new block.  
-  void EmitRegionStart(llvm::Function *Fn, llvm::IRBuilder &Builder);
+  void EmitRegionStart(llvm::Function *Fn, llvm::IRBuilder<true> &Builder);
   
   /// EmitRegionEnd - Emit call to llvm.dbg.region.end to indicate end of a 
   /// block.
-  void EmitRegionEnd(llvm::Function *Fn, llvm::IRBuilder &Builder);
+  void EmitRegionEnd(llvm::Function *Fn, llvm::IRBuilder<true> &Builder);
 
   /// EmitDeclare - Emit call to llvm.dbg.declare for a variable declaration.
   void EmitDeclare(const VarDecl *decl, unsigned Tag, llvm::Value *AI,
-                   llvm::IRBuilder &Builder);
+                   llvm::IRBuilder<true> &Builder);
 
   /// EmitGlobalVariable - Emit information about a global variable.
   void EmitGlobalVariable(llvm::GlobalVariable *GV, const VarDecl *decl);

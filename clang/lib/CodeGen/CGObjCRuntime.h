@@ -19,7 +19,7 @@
 #include <string>
 
 namespace llvm {
-  class IRBuilder;
+  template<bool C> class IRBuilder;
   class Constant;
   class Type;
   class Value;
@@ -42,7 +42,7 @@ public:
   virtual ~CGObjCRuntime();
   
   /// Generate an Objective-C message send operation
-  virtual llvm::Value *GenerateMessageSend(llvm::IRBuilder &Builder,
+  virtual llvm::Value *GenerateMessageSend(llvm::IRBuilder<true> &Builder,
                                            const llvm::Type *ReturnTy,
                                            llvm::Value *Sender,
                                            llvm::Value *Receiver,
@@ -53,7 +53,8 @@ public:
   /// this compilation unit with the runtime library.
   virtual llvm::Function *ModuleInitFunction() =0;
   /// Get a selector for the specified name and type values
-  virtual llvm::Value *GetSelector(llvm::IRBuilder &Builder, Selector Sel) = 0;
+  virtual llvm::Value *GetSelector(llvm::IRBuilder<true> &Builder,
+                                   Selector Sel) =0;
   /// Generate a constant string object
   virtual llvm::Constant *GenerateConstantString(const char *String,
                                                  const size_t Length) = 0;
@@ -79,9 +80,9 @@ public:
              const llvm::SmallVectorImpl<llvm::Constant *>  &ClassMethodTypes,
              const llvm::SmallVectorImpl<std::string> &Protocols) =0;
   /// Generate a reference to the named protocol.
-  virtual llvm::Value *GenerateProtocolRef(llvm::IRBuilder &Builder, const char
-      *ProtocolName) =0;
-  virtual llvm::Value *GenerateMessageSendSuper(llvm::IRBuilder &Builder,
+  virtual llvm::Value *GenerateProtocolRef(llvm::IRBuilder<true> &Builder,
+                                           const char *ProtocolName) =0;
+  virtual llvm::Value *GenerateMessageSendSuper(llvm::IRBuilder<true> &Builder,
                                                 const llvm::Type *ReturnTy,
                                                 llvm::Value *Sender,
                                                 const char *SuperClassName,
@@ -109,8 +110,8 @@ public:
                                          bool isClassMethod,
                                          bool isVarArg) = 0;
   /// Look up the class for the specified name
-  virtual llvm::Value *LookupClass(llvm::IRBuilder &Builder, llvm::Value
-      *ClassName) =0;
+  virtual llvm::Value *LookupClass(llvm::IRBuilder<true> &Builder, 
+                                   llvm::Value *ClassName) =0;
   /// If instance variable addresses are determined at runtime then this should
   /// return true, otherwise instance variables will be accessed directly from
   /// the structure.  If this returns true then @defs is invalid for this

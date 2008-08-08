@@ -29,7 +29,7 @@ using namespace CodeGen;
 namespace  {
 class VISIBILITY_HIDDEN AggExprEmitter : public StmtVisitor<AggExprEmitter> {
   CodeGenFunction &CGF;
-  llvm::IRBuilder &Builder;
+  llvm::IRBuilder<> &Builder;
   llvm::Value *DestPtr;
   bool VolatileDest;
 public:
