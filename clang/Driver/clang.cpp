@@ -1228,14 +1228,14 @@ static ASTConsumer* CreateASTConsumer(const std::string& InFile,
 static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
                              const std::string &InFile) {
 
-  ASTConsumer* Consumer = NULL;
+  llvm::OwningPtr<ASTConsumer> Consumer;
   bool ClearSourceMgr = false;
   
   switch (ProgAction) {
   default:
-    Consumer = CreateASTConsumer(InFile, PP.getDiagnostics(),
-                                 PP.getFileManager(), PP.getLangOptions(), &PP,
-                                 &PPF);
+    Consumer.reset(CreateASTConsumer(InFile, PP.getDiagnostics(),
+                                     PP.getFileManager(), PP.getLangOptions(),
+                                     &PP, &PPF));
     
     if (!Consumer) {      
       fprintf(stderr, "Unexpected program action!\n");
@@ -1283,7 +1283,7 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
     break;
       
   case ParseSyntaxOnly:              // -fsyntax-only
-    Consumer = new ASTConsumer();
+    Consumer.reset(new ASTConsumer());
     break;
       
   case RewriteMacros:
@@ -1294,10 +1294,9 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
   
   if (Consumer) {
     if (VerifyDiagnostics)
-      exit(CheckASTConsumer(PP, Consumer));
+      exit(CheckASTConsumer(PP, Consumer.get()));
     
-    // This deletes Consumer.
-    ParseAST(PP, Consumer, Stats);
+    ParseAST(PP, Consumer.get(), Stats);
   }
 
   if (Stats) {
