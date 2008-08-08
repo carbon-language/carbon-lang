@@ -15,6 +15,33 @@
 use strict;
 use warnings;
 use Cwd;
+use File::Temp qw/ tempfile /;
+use File::Path qw / mkpath /;
+ 
+##----------------------------------------------------------------------------##
+#  Process Clang Crashes.
+##----------------------------------------------------------------------------##
+
+sub GetPPExt {
+  my $Lang = shift;
+  if ($Lang =~ /objective-c/) { return ".mi"; }
+  return ".i";
+}
+
+sub ProcessClangCrash {
+  my ($Clang, $Lang, $file, $Args, $HtmlDir) = @_;
+  my $Dir = "$HtmlDir/crashes";
+  mkpath $Dir;
+  my ($PPH, $PPFile) = tempfile("clang_crash_XXXXXX",
+                                  SUFFIX => GetPPExt($Lang),
+                                  DIR => $Dir);
+
+  system $Clang, @$Args, "-E", "-o", $PPFile;  
+  close ($PPH);
+  open (OUT, ">", "$PPFile.info") or die "Cannot open $PPFile.info\n";
+  print OUT "$file";
+  close OUT;
+}
 
 ##----------------------------------------------------------------------------##
 #  Running the analyzer.
@@ -29,6 +56,7 @@ sub Analyze {
   my $RunAnalyzer = 0;
   my $Cmd;
   my @CmdArgs;
+  my @CmdArgsSansAnalyses;
   
   if ($Lang =~ /header/) {
     exit 0 if (!defined ($Output));
@@ -37,12 +65,14 @@ sub Analyze {
     # Remove the PCH extension.
     $Output =~ s/[.]gch$//;
     push @CmdArgs,$Output;
+    @CmdArgsSansAnalyses = @CmdArgs;    
   }
   else {
     $Cmd = $Clang;
-    push @CmdArgs,(split /\s/,$Analyses);
     push @CmdArgs,'-DIBOutlet=__attribute__((iboutlet))';
     push @CmdArgs,@$Args;
+    @CmdArgsSansAnalyses = @CmdArgs;
+    push @CmdArgs,(split /\s/,$Analyses);
     $RunAnalyzer = 1;
   }
   
@@ -70,8 +100,13 @@ sub Analyze {
     push @CmdArgs,'-o';
     push @CmdArgs,$HtmlDir;
   }
-  
-  system $Cmd,@CmdArgs;
+
+   system $Cmd,@CmdArgs;
+
+   # Did the command die because of a signal?
+   if ($? & 127 and $Cmd eq $Clang and defined $HtmlDir) {
+     ProcessClangCrash($Clang, $Lang, $file, \@CmdArgsSansAnalyses, $HtmlDir);
+   }
 }
 
 ##----------------------------------------------------------------------------##

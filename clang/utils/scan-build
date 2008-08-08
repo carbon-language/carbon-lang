@@ -14,7 +14,6 @@
 
 use strict;
 use warnings;
-use File::Temp qw/ :mktemp /;
 use FindBin qw($RealBin);
 use Digest::MD5;
 use File::Basename;
@@ -41,6 +40,14 @@ sub Diag {
   else {
     print "$Prog: @_";
   }  
+}
+
+sub DiagCrashes {
+  my $Dir = shift;
+  Diag ("The analyzer crashed on some source files.\n");
+  Diag ("Preprocessed versions of crashed files were depositied in '$Dir/crashes'.\n");
+  Diag ("Please consider submitting a bug report using these files:\n");
+  Diag ("  http://clang.llvm.org/StaticAnalysisUsage.html#filingbugs\n")
 }
 
 sub DieDiag {
@@ -79,7 +86,7 @@ while(<PIPE>) {
     if (/Available Source Code Analyses/) {
       $FoundAnalysis = 1;
     }
-    
+
     next;
   }
     
@@ -385,24 +392,21 @@ sub Postprocess {
   }
   
   opendir(DIR, $Dir);
-  my @files = grep(/^report-.*\.html$/,readdir(DIR));
+  my $Crashes = 0;
+  my @files = grep { if ($_ eq "crashes") { $Crashes++; }
+                     /^report-.*\.html$/; } readdir(DIR);
   closedir(DIR);
 
-  if (scalar(@files) == 0) {
+  if (scalar(@files) == 0 and $Crashes == 0) {
     Diag("Removing directory '$Dir' because it contains no reports.\n");
     system ("rm", "-fR", $Dir);
-    
     # Remove the base directory if it contains no files (don't use '-R').
-    if (defined $BaseDir) { system ("rm", "-f", $BaseDir); }
-    
-    Diag("No bugs found.\n");
+    system ("rm", "-f", $BaseDir) if (defined $BaseDir);
     return 0;
   }
   
-  # Scan each report file and build an index.
-  
-  my @Index;
-    
+  # Scan each report file and build an index.  
+  my @Index;    
   foreach my $file (@files) { ScanFile(\@Index, $Dir, $file); }
   
   # Generate an index.html file.  
@@ -418,7 +422,7 @@ print OUT <<ENDTEXT;
  body { color:#000000; background-color:#ffffff }
  body { font-family: Helvetica, sans-serif; font-size:9pt }
  h1 { font-size:12pt }
- table.sortable thead {
+ table thead {
    background-color:#eee; color:#666666;
    font-weight: bold; cursor: default;
    text-align:center;
@@ -426,8 +430,8 @@ print OUT <<ENDTEXT;
    border-bottom: 2px solid #000000;
    font-weight: bold; font-family: Verdana
  } 
- table.sortable { border: 1px #000000 solid }
- table.sortable { border-collapse: collapse; border-spacing: 0px }
+ table { border: 1px #000000 solid }
+ table { border-collapse: collapse; border-spacing: 0px }
  td { border-bottom: 1px #000000 dotted }
  td { padding:5px; padding-left:8px; padding-right:8px }
  td { text-align:left; font-size:9pt }
@@ -458,28 +462,23 @@ function ToggleDisplay(CheckButton, ClassName) {
 <body>
 ENDTEXT
 
-  # Print out the summary table.
+  if (scalar(@files)) {
+    # Print out the summary table.
+    my %Totals;
   
-  my %Totals;
-  
-  for my $row ( @Index ) {
+    for my $row ( @Index ) {
+      #my $bug_type = lc($row->[1]);
+      my $bug_type = ($row->[1]);
     
-    #my $bug_type = lc($row->[1]);
-    my $bug_type = ($row->[1]);
-    
-    if (!defined $Totals{$bug_type}) {
-      $Totals{$bug_type} = 1;
+      if (!defined $Totals{$bug_type}) { $Totals{$bug_type} = 1; }
+      else { $Totals{$bug_type}++; }
     }
-    else {
-      $Totals{$bug_type}++;
+
+    print OUT "<h3>Bug Summary</h3>";
+
+    if (defined $BuildName) {
+      print OUT "\n<p>Results in this analysis run are based on analyzer build <b>$BuildName</b>.</p>\n"
     }
-  }
-  
-  print OUT "<h3>Summary</h3>";
-    
-  if (defined $BuildName) {
-    print OUT "\n<p>Results in this analysis run are based on analyzer build <b>$BuildName</b>.</p>\n"
-  }
   
 print OUT <<ENDTEXT;
 <table class="sortable">
@@ -490,11 +489,11 @@ print OUT <<ENDTEXT;
 </tr>
 ENDTEXT
   
-  for my $key ( sort { $a cmp $b } keys %Totals ) {
-    my $x = lc($key);
-    $x =~ s/[ ,'"]+/_/g;
-    print OUT "<tr><td>$key</td><td>$Totals{$key}</td><td><input type=\"checkbox\" onClick=\"ToggleDisplay(this,'bt_$x');\" checked/></td></tr>\n";
-  }
+    for my $key ( sort { $a cmp $b } keys %Totals ) {
+      my $x = lc($key);
+      $x =~ s/[ ,'"]+/_/g;
+      print OUT "<tr><td>$key</td><td>$Totals{$key}</td><td><input type=\"checkbox\" onClick=\"ToggleDisplay(this,'bt_$x');\" checked/></td></tr>\n";
+    }
 
   # Print out the table of errors.
 
@@ -511,55 +510,93 @@ print OUT <<ENDTEXT;
 </tr>
 ENDTEXT
 
-  my $prefix = GetPrefix();
-  my $regex;
-  my $InFileRegex;
-  my $InFilePrefix = "File:</td><td>";
+    my $prefix = GetPrefix();
+    my $regex;
+    my $InFileRegex;
+    my $InFilePrefix = "File:</td><td>";
   
-  if (defined $prefix) { 
-    $regex = qr/^\Q$prefix\E/is;    
-    $InFileRegex = qr/\Q$InFilePrefix$prefix\E/is;
-  }    
+    if (defined $prefix) { 
+      $regex = qr/^\Q$prefix\E/is;    
+      $InFileRegex = qr/\Q$InFilePrefix$prefix\E/is;
+    }    
 
-  for my $row ( sort { $a->[1] cmp $b->[1] } @Index ) {
+    for my $row ( sort { $a->[1] cmp $b->[1] } @Index ) {
     
-    my $x = lc($row->[1]);
-    $x =~ s/[ ,'"]+/_/g;
+      my $x = lc($row->[1]);
+      $x =~ s/[ ,'"]+/_/g;
     
-    print OUT "<tr class=\"bt_$x\">\n";
+      print OUT "<tr class=\"bt_$x\">\n";
 
-    my $ReportFile = $row->[0];
+      my $ReportFile = $row->[0];
 
-    print OUT " <td class=\"DESC\">";
-    #print OUT lc($row->[1]);
-    print OUT $row->[1];
-    print OUT "</td>\n";
+      print OUT " <td class=\"DESC\">";
+      #print OUT lc($row->[1]);
+      print OUT $row->[1];
+      print OUT "</td>\n";
     
-    # Update the file prefix.
+      # Update the file prefix.
     
-    my $fname = $row->[2];
-    if (defined $regex) {
-      $fname =~ s/$regex//;
-      UpdateInFilePath("$Dir/$ReportFile", $InFileRegex, $InFilePrefix)
-    }
+      my $fname = $row->[2];
+      if (defined $regex) {
+        $fname =~ s/$regex//;
+        UpdateInFilePath("$Dir/$ReportFile", $InFileRegex, $InFilePrefix)
+      }
 
-    print OUT "<td>$fname</td>\n";
+      print OUT "<td>$fname</td>\n";
 
-    # Print the rest of the columns.
-    for my $j ( 3 .. $#{$row} ) {
-      print OUT "<td>$row->[$j]</td>\n"
-    }
+      # Print the rest of the columns.
+      for my $j ( 3 .. $#{$row} ) {
+        print OUT "<td>$row->[$j]</td>\n"
+      }
 
-    # Emit the "View" link.
-    print OUT " <td class=\"View\"><a href=\"$ReportFile#EndPath\">View</a></td>\n";
+      # Emit the "View" link.
+      print OUT " <td class=\"View\"><a href=\"$ReportFile#EndPath\">View</a></td>\n";
         
-    # End the row.
-    print OUT "</tr>\n";
+      # End the row.
+      print OUT "</tr>\n";
+    }
+  
+    print OUT "</table>\n";
+  }
+
+  if ($Crashes) {
+    # Read the crash directory for files.
+    opendir(DIR, "$Dir/crashes");
+    my @files = grep { /[.]info$/ } readdir(DIR);
+    closedir(DIR);
+
+    if (scalar(@files)) {
+      print OUT <<ENDTEXT;
+<h3>Analyzer Crashes</h3>
+
+<p>The analyzer crashed while processing the following files:</p>
+
+<table>
+<thead><tr><td>Source File</td><td>Preprocessed File</td></tr></thead>
+ENDTEXT
+  
+      foreach my $file (sort @files) {
+        $file =~ /(.+).info$/;
+        # Get the preprocessed file.
+        my $ppfile = $1;
+        # Open the info file and get the name of the source file.
+        open (INFO, "$Dir/crashes/$file") or
+          die "Cannot open $Dir/crashes/$file\n";
+        my $srcfile = <INFO>;
+        close (INFO);
+        # Print the information in the table.
+        print OUT "<tr><td>$srcfile</td><td class=\"View\"><a href=\"crashes/$ppfile\">View</a></td></tr>\n";
+      }
+
+      print OUT <<ENDTEXT;
+</table>
+<p>Please consider submitting preprocessed files as <a href="http://clang.llvm.org/StaticAnalysisUsage.html#filingbugs">bug reports</a>.</p>
+ENDTEXT
+    }
   }
   
-  print OUT "</table>\n</body></html>\n";  
+  print OUT "</body></html>\n";  
   close(OUT);
-
   CopyJS($Dir);
 
   # Make sure $Dir and $BaseDir are world readable/executable.
@@ -571,6 +608,8 @@ ENDTEXT
   if ($Num > 0 && -r "$Dir/index.html") {
     Diag("Open '$Dir/index.html' to examine bug reports.\n");
   }
+  
+  DiagCrashes($Dir) if ($Crashes);
   
   return $Num;
 }
