@@ -183,13 +183,8 @@ void X86ATTAsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
     }
     break;
   }
-  if (F->hasHiddenVisibility()) {
-    if (const char *Directive = TAI->getHiddenDirective())
-      O << Directive << CurrentFnName << '\n';
-  } else if (F->hasProtectedVisibility()) {
-    if (const char *Directive = TAI->getProtectedDirective())
-      O << Directive << CurrentFnName << '\n';
-  }
+
+  printVisibility(CurrentFnName, F->getVisibility());
 
   if (Subtarget->isTargetELF())
     O << "\t.type\t" << CurrentFnName << ",@function\n";
@@ -773,13 +768,7 @@ void X86ATTAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
   unsigned Size = TD->getABITypeSize(Type);
   unsigned Align = TD->getPreferredAlignmentLog(GVar);
 
-  if (GVar->hasHiddenVisibility()) {
-    if (const char *Directive = TAI->getHiddenDirective())
-      O << Directive << name << '\n';
-  } else if (GVar->hasProtectedVisibility()) {
-    if (const char *Directive = TAI->getProtectedDirective())
-      O << Directive << name << '\n';
-  }
+  printVisibility(name, GVar->getVisibility());
 
   if (Subtarget->isTargetELF())
     O << "\t.type\t" << name << ",@object\n";

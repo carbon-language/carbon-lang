@@ -164,6 +164,8 @@ bool AlphaAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     break;
   }
 
+  printVisibility(CurrentFnName, F->getVisibility());
+
   O << "\t.ent " << CurrentFnName << "\n";
 
   O << CurrentFnName << ":\n";
@@ -221,8 +223,7 @@ void AlphaAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
   SwitchToDataSection(SectionName.c_str());
 
   // 1: Check visibility
-  if (GVar->hasHiddenVisibility())
-    O << TAI->getHiddenDirective() << name << "\n";
+  printVisibility(name, GVar->getVisibility());
 
   // 2: Kind
   switch (GVar->getLinkage()) {

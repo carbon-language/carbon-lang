@@ -107,6 +107,9 @@ bool SparcAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   SwitchToTextSection(getSectionForFunction(*F).c_str(), F);
   EmitAlignment(4, F);
   O << "\t.globl\t" << CurrentFnName << '\n';
+
+  printVisibility(CurrentFnName, F->getVisibility());
+
   O << "\t.type\t" << CurrentFnName << ", #function\n";
   O << CurrentFnName << ":\n";
 
@@ -250,7 +253,8 @@ void SparcAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
   unsigned Size = TD->getABITypeSize(C->getType());
   unsigned Align = TD->getPreferredAlignment(GVar);
 
-  // FIXME: ELF supports visibility
+  printVisibility(name, GVar->getVisibility());
+
   SwitchToDataSection(SectionName.c_str());
 
   if (C->isNullValue() && !GVar->hasSection()) {

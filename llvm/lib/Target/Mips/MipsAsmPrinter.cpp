@@ -237,6 +237,8 @@ emitFunctionStart(MachineFunction &MF)
   O << "\t.globl\t"  << CurrentFnName << '\n';
   O << "\t.ent\t"    << CurrentFnName << '\n';
 
+  printVisibility(CurrentFnName, F->getVisibility());
+
   if ((TAI->hasDotTypeDotSizeDirective()) && Subtarget->isLinux())
     O << "\t.type\t"   << CurrentFnName << ", @function\n";
 
@@ -497,7 +499,7 @@ printModuleLevelGV(const GlobalVariable* GVar) {
   } else
     Align = TD->getPreferredTypeAlignmentShift(CTy);
 
-  // FIXME: ELF supports visibility
+  printVisibility(name, GVar->getVisibility());
 
   SwitchToDataSection(SectionName.c_str());
 
@@ -508,7 +510,7 @@ printModuleLevelGV(const GlobalVariable* GVar) {
 
       if (GVar->hasInternalLinkage())
         O << "\t.local\t" << name << '\n';
-      
+
       O << TAI->getCOMMDirective() << name << ',' << Size;
       if (TAI->getCOMMDirectiveTakesAlignment())
         O << ',' << (1 << Align);

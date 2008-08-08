@@ -593,9 +593,7 @@ bool PPCLinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     break;
   }
 
-  if (F->hasHiddenVisibility())
-    if (const char *Directive = TAI->getHiddenDirective())
-      O << Directive << CurrentFnName << '\n';
+  printVisibility(CurrentFnName, F->getVisibility());
 
   EmitAlignment(2, F);
   O << CurrentFnName << ":\n";
@@ -671,9 +669,7 @@ void PPCLinuxAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
   std::string name = Mang->getValueName(GVar);
   std::string SectionName = TAI->SectionForGlobal(GVar);
 
-  if (GVar->hasHiddenVisibility())
-    if (const char *Directive = TAI->getHiddenDirective())
-      O << Directive << name << '\n';
+  printVisibility(name, GVar->getVisibility());
 
   Constant *C = GVar->getInitializer();
   const Type *Type = C->getType();
@@ -792,9 +788,7 @@ bool PPCDarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     break;
   }
 
-  if (F->hasHiddenVisibility())
-    if (const char *Directive = TAI->getHiddenDirective())
-      O << Directive << CurrentFnName << '\n';
+  printVisibility(CurrentFnName, F->getVisibility());
 
   EmitAlignment(OptimizeForSize ? 2 : 4, F);
   O << CurrentFnName << ":\n";
@@ -909,9 +903,7 @@ void PPCDarwinAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
   std::string name = Mang->getValueName(GVar);
   std::string SectionName = TAI->SectionForGlobal(GVar);
 
-  if (GVar->hasHiddenVisibility())
-    if (const char *Directive = TAI->getHiddenDirective())
-      O << Directive << name << '\n';
+  printVisibility(name, GVar->getVisibility());
 
   Constant *C = GVar->getInitializer();
   const Type *Type = C->getType();

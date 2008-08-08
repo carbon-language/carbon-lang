@@ -226,14 +226,7 @@ bool ARMAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     break;
   }
 
-  const char *VisibilityDirective = NULL;
-  if (F->hasHiddenVisibility())
-    VisibilityDirective = TAI->getHiddenDirective();
-  else if (F->hasProtectedVisibility())
-    VisibilityDirective = TAI->getProtectedDirective();
-
-  if (VisibilityDirective)
-    O << VisibilityDirective << CurrentFnName << "\n";
+  printVisibility(CurrentFnName, F->getVisibility());
 
   if (AFI->isThumbFunction()) {
     EmitAlignment(1, F, AFI->getAlign());
@@ -870,14 +863,7 @@ void ARMAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
   unsigned Size = TD->getABITypeSize(Type);
   unsigned Align = TD->getPreferredAlignmentLog(GVar);
 
-  const char *VisibilityDirective = NULL;
-  if (GVar->hasHiddenVisibility())
-    VisibilityDirective = TAI->getHiddenDirective();
-  else if (GVar->hasProtectedVisibility())
-    VisibilityDirective = TAI->getProtectedDirective();
-
-  if (VisibilityDirective)
-    O << VisibilityDirective << name << "\n";
+  printVisibility(name, GVar->getVisibility());
 
   if (Subtarget->isTargetELF())
     O << "\t.type " << name << ",%object\n";

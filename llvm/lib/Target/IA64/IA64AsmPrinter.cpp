@@ -142,6 +142,9 @@ bool IA64AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   // Print out labels for the function.
   EmitAlignment(5);
   O << "\t.global\t" << CurrentFnName << '\n';
+
+  printVisibility(CurrentFnName, F->getVisibility());
+
   O << "\t.type\t" << CurrentFnName << ", @function\n";
   O << CurrentFnName << ":\n";
 
@@ -274,7 +277,7 @@ void IA64AsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
   unsigned Size = TD->getABITypeSize(C->getType());
   unsigned Align = TD->getPreferredAlignmentLog(GVar);
 
-  // FIXME: ELF supports visibility
+  printVisibility(name, GVar->getVisibility());
 
   SwitchToDataSection(SectionName.c_str());
 

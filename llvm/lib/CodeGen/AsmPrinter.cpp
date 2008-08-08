@@ -1469,3 +1469,14 @@ void AsmPrinter::printSuffixedName(const char *Name, const char *Suffix,
 void AsmPrinter::printSuffixedName(const std::string &Name, const char* Suffix) {
   printSuffixedName(Name.c_str(), Suffix);
 }
+
+void AsmPrinter::printVisibility(const std::string& Name,
+                                 unsigned Visibility) const {
+  if (Visibility == GlobalValue::HiddenVisibility) {
+    if (const char *Directive = TAI->getHiddenDirective())
+      O << Directive << Name << '\n';
+  } else if (Visibility == GlobalValue::ProtectedVisibility) {
+    if (const char *Directive = TAI->getProtectedDirective())
+      O << Directive << Name << '\n';
+  }
+}

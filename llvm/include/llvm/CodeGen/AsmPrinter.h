@@ -355,6 +355,10 @@ namespace llvm {
                            const char *Prefix = 0);
     void printSuffixedName(const std::string &Name, const char* Suffix);
 
+    /// printVisibility - This prints visibility information about symbol, if
+    /// this is suported by the target.
+    void printVisibility(const std::string& Name, unsigned Visibility) const;
+
   private:
     void EmitLLVMUsedList(Constant *List);
     void EmitXXStructorList(Constant *List);
