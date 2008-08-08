@@ -21,7 +21,7 @@ using namespace llvm::dwarf;
 
 PPCTargetAsmInfo::PPCTargetAsmInfo(const PPCTargetMachine &TM) {
   bool isPPC64 = TM.getSubtargetImpl()->isPPC64();
-  
+
   ZeroDirective = "\t.space\t";
   SetDirective = "\t.set";
   Data64bitsDirective = isPPC64 ? "\t.quad\t" : 0;  
@@ -32,9 +32,8 @@ PPCTargetAsmInfo::PPCTargetAsmInfo(const PPCTargetMachine &TM) {
   AssemblerDialect = TM.getSubtargetImpl()->getAsmFlavor();
 }
 
-PPCDarwinTargetAsmInfo::PPCDarwinTargetAsmInfo(const PPCTargetMachine &TM)
-: PPCTargetAsmInfo(TM)
-{
+PPCDarwinTargetAsmInfo::PPCDarwinTargetAsmInfo(const PPCTargetMachine &TM):
+  PPCTargetAsmInfo(TM), DarwinTargetAsmInfo(TM) {
   PCSymbol = ".";
   CommentString = ";";
   GlobalPrefix = "_";

@@ -15,17 +15,19 @@
 #define PPCTARGETASMINFO_H
 
 #include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/Target/DarwinTargetAsmInfo.h"
 
 namespace llvm {
 
   // Forward declaration.
   class PPCTargetMachine;
-  
-  struct PPCTargetAsmInfo : public TargetAsmInfo {
+
+  struct PPCTargetAsmInfo : public virtual TargetAsmInfo {
     explicit PPCTargetAsmInfo(const PPCTargetMachine &TM);
   };
 
-  struct PPCDarwinTargetAsmInfo : public PPCTargetAsmInfo {
+  struct PPCDarwinTargetAsmInfo : public PPCTargetAsmInfo,
+                                  public DarwinTargetAsmInfo{
     explicit PPCDarwinTargetAsmInfo(const PPCTargetMachine &TM);
     virtual unsigned PreferredEHDataFormat(DwarfEncoding::Target Reason,
                                            bool Global) const;
