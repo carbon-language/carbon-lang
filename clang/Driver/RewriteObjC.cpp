@@ -108,7 +108,10 @@ namespace {
     void HandleDeclInMainFile(Decl *D);
     RewriteObjC(std::string inFile, std::string outFile,
                 Diagnostic &D, const LangOptions &LOpts);
-    ~RewriteObjC();
+
+    ~RewriteObjC() {}
+    
+    virtual void HandleTranslationUnit(TranslationUnit& TU);
     
     void ReplaceStmt(Stmt *Old, Stmt *New) {
       // If replacement succeeded or warning disabled return with no warning.
@@ -439,7 +442,7 @@ void RewriteObjC::HandleDeclInMainFile(Decl *D) {
   // Nothing yet.
 }
 
-RewriteObjC::~RewriteObjC() {
+void RewriteObjC::HandleTranslationUnit(TranslationUnit& TU) {
   // Get the top-level buffer that this corresponds to.
   
   // Rewrite tabs if we care.

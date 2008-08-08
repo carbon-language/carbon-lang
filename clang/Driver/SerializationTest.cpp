@@ -33,19 +33,20 @@ using namespace clang;
 namespace {
   
 class SerializationTest : public ASTConsumer {
-  TranslationUnit* TU;
   Diagnostic &Diags;
   FileManager &FMgr;  
 public:  
   SerializationTest(Diagnostic &d, FileManager& fmgr)
-                    : TU(0), Diags(d), FMgr(fmgr) {}
+                    : Diags(d), FMgr(fmgr) {}
   
-  ~SerializationTest();
-
-  virtual void InitializeTU(TranslationUnit& tu) { TU = &tu; }  
+  ~SerializationTest() {}
+  
+  virtual void HandleTranslationUnit(TranslationUnit& TU);
   
 private:
-  bool Serialize(llvm::sys::Path& Filename, llvm::sys::Path& FNameDeclPrint);
+  bool Serialize(llvm::sys::Path& Filename, llvm::sys::Path& FNameDeclPrint,
+                 TranslationUnit& TU);
+  
   bool Deserialize(llvm::sys::Path& Filename, llvm::sys::Path& FNameDeclPrint);
 };
   
@@ -58,19 +59,20 @@ clang::CreateSerializationTest(Diagnostic &Diags, FileManager& FMgr) {
 
 
 bool SerializationTest::Serialize(llvm::sys::Path& Filename,
-                                  llvm::sys::Path& FNameDeclPrint) {
+                                  llvm::sys::Path& FNameDeclPrint,
+                                  TranslationUnit& TU) {
   { 
     // Pretty-print the decls to a temp file.
     std::ofstream DeclPP(FNameDeclPrint.c_str());
     assert (DeclPP && "Could not open file for printing out decls.");
     llvm::OwningPtr<ASTConsumer> FilePrinter(CreateASTPrinter(&DeclPP));
     
-    for (TranslationUnit::iterator I=TU->begin(), E=TU->end(); I!=E; ++I)
+    for (TranslationUnit::iterator I=TU.begin(), E=TU.end(); I!=E; ++I)
       FilePrinter->HandleTopLevelDecl(*I);
   }
   
   // Serialize the translation unit.
-  return EmitASTBitcodeFile(*TU,Filename);
+  return EmitASTBitcodeFile(TU,Filename);
 }
 
 bool SerializationTest::Deserialize(llvm::sys::Path& Filename,
@@ -82,7 +84,7 @@ bool SerializationTest::Deserialize(llvm::sys::Path& Filename,
   if (!NewTU)
     return false;
   
-  { 
+  {
     // Pretty-print the deserialized decls to a temp file.
     std::ofstream DeclPP(FNameDeclPrint.c_str());
     assert (DeclPP && "Could not open file for printing out decls.");
@@ -110,7 +112,7 @@ namespace {
   };
 }
 
-SerializationTest::~SerializationTest() {
+void SerializationTest::HandleTranslationUnit(TranslationUnit& TU) {
 
   std::string ErrMsg;
   llvm::sys::Path Dir = llvm::sys::Path::GetTemporaryDirectory(&ErrMsg);
@@ -147,7 +149,7 @@ SerializationTest::~SerializationTest() {
   }
   
   // Serialize and then deserialize the ASTs.
-  bool status = Serialize(ASTFilename, FNameDeclBefore);
+  bool status = Serialize(ASTFilename, FNameDeclBefore, TU);
   assert (status && "Serialization failed.");  
   status = Deserialize(ASTFilename, FNameDeclAfter);
   assert (status && "Deserialization failed.");
