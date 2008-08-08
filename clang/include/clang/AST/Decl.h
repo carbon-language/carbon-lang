@@ -810,13 +810,13 @@ protected:
   }
 
   virtual ~RecordDecl();
-  virtual void Destroy(ASTContext& C);
 
 public:
-  
   static RecordDecl *Create(ASTContext &C, TagKind TK, DeclContext *DC,
                             SourceLocation L, IdentifierInfo *Id,
                             ScopedDecl *PrevDecl);
+
+  virtual void Destroy(ASTContext& C);
   
   bool hasFlexibleArrayMember() const { return HasFlexibleArrayMember; }
   void setHasFlexibleArrayMember(bool V) { HasFlexibleArrayMember = V; }
