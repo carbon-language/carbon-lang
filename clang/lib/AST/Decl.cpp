@@ -217,6 +217,19 @@ unsigned FunctionDecl::getMinRequiredArguments() const {
 // RecordDecl Implementation
 //===----------------------------------------------------------------------===//
 
+RecordDecl::~RecordDecl() {
+  delete[] Members;
+}
+
+void RecordDecl::Destroy(ASTContext& C) {
+  if (isDefinition())
+    for (field_iterator I=field_begin(), E=field_end(); I!=E; ++I)
+      (*I)->Destroy(C);
+
+  TagDecl::Destroy(C);
+}
+
+
 /// defineBody - When created, RecordDecl's correspond to a forward declared
 /// record.  This method is used to mark the decl as being defined, with the
 /// specified contents.

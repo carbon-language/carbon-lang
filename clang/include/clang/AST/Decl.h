@@ -808,6 +808,10 @@ protected:
     Members = 0;
     NumMembers = -1;
   }
+
+  virtual ~RecordDecl();
+  virtual void Destroy(ASTContext& C);
+
 public:
   
   static RecordDecl *Create(ASTContext &C, TagKind TK, DeclContext *DC,
