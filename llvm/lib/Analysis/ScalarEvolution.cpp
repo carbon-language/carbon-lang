@@ -1158,6 +1158,19 @@ SCEVHandle ScalarEvolution::getAddRecExpr(std::vector<SCEVHandle> &Operands,
     return getAddRecExpr(Operands, L);             // { X,+,0 }  -->  X
   }
 
+  // Canonicalize nested AddRecs in by nesting them in order of loop depth.
+  if (SCEVAddRecExpr *NestedAR = dyn_cast<SCEVAddRecExpr>(Operands[0])) {
+    const Loop* NestedLoop = NestedAR->getLoop();
+    if (L->getLoopDepth() < NestedLoop->getLoopDepth()) {
+      std::vector<SCEVHandle> NestedOperands(NestedAR->op_begin(),
+                                             NestedAR->op_end());
+      SCEVHandle NestedARHandle(NestedAR);
+      Operands[0] = NestedAR->getStart();
+      NestedOperands[0] = getAddRecExpr(Operands, L);
+      return getAddRecExpr(NestedOperands, NestedLoop);
+    }
+  }
+
   SCEVAddRecExpr *&Result =
     (*SCEVAddRecExprs)[std::make_pair(L, std::vector<SCEV*>(Operands.begin(),
                                                             Operands.end()))];
