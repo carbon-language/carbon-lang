@@ -50,7 +50,8 @@ MipsSubtarget::MipsSubtarget(const TargetMachine &TM, const Module &M,
   // a allegrex target, set the features. We also match
   // big and little endian allegrex cores (dont really
   // know if a big one exists)
-  if (TT.find("mipsallegrex") != std::string::npos) {
+  if (TT.find("mipsallegrex") != std::string::npos ||
+      TT.find("psp") != std::string::npos) {
     MipsABI = EABI;
     IsSingleFloat = true;
     MipsArchVersion = Mips2;
