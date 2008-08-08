@@ -30,7 +30,8 @@ namespace llvm {
     const Section* DataCoalSection;
 
     explicit DarwinTargetAsmInfo(const TargetMachine &TM);
-    virtual const Section* SelectSectionForGlobal(const GlobalValue *GV) const;
+    virtual const Section* SelectSectionForGlobal(const GlobalValue *GV,
+                                                 bool NoCoalesce = false) const;
     virtual std::string UniqueSectionForGlobal(const GlobalValue* GV,
                                                SectionKind::Kind kind) const;
     const Section* MergeableConstSection(const GlobalVariable *GV) const;

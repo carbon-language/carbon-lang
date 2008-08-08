@@ -29,6 +29,7 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Compiler.h"
@@ -65,13 +66,17 @@ namespace {
     typedef std::map<const Value *, unsigned> ValueMapTy;
     ValueMapTy NumberForBB;
 
-    /// Keeps the set of GlobalValues that require non-lazy-pointers for
-    /// indirect access.
+    /// GVNonLazyPtrs - Keeps the set of GlobalValues that require
+    /// non-lazy-pointers for indirect access.
     std::set<std::string> GVNonLazyPtrs;
 
-    /// Keeps the set of external function GlobalAddresses that the asm
-    /// printer should generate stubs for.
+    /// FnStubs - Keeps the set of external function GlobalAddresses that the
+    /// asm printer should generate stubs for.
     std::set<std::string> FnStubs;
+
+    /// PCRelGVs - Keeps the set of GlobalValues used in pc relative
+    /// constantpool.
+    SmallPtrSet<const GlobalValue*, 8> PCRelGVs;
 
     /// True if asm printer is printing a series of CONSTPOOL_ENTRY.
     bool InCPMode;
@@ -124,10 +129,12 @@ namespace {
     /// specified function body into.
     virtual std::string getSectionForFunction(const Function &F) const;
 
+    /// EmitMachineConstantPoolValue - Print a machine constantpool value to
+    /// the .s file.
     virtual void EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV) {
       printDataDirective(MCPV->getType());
 
-      ARMConstantPoolValue *ACPV = (ARMConstantPoolValue*)MCPV;
+      ARMConstantPoolValue *ACPV = static_cast<ARMConstantPoolValue*>(MCPV);
       GlobalValue *GV = ACPV->getGV();
       std::string Name = GV ? Mang->getValueName(GV) : TAI->getGlobalPrefix();
       if (!GV)
@@ -680,9 +687,15 @@ void ARMAsmPrinter::printCPInstOperand(const MachineInstr *MI, int OpNo,
     const MachineConstantPoolEntry &MCPE =  // Chasing pointers is fun?
       MI->getParent()->getParent()->getConstantPool()->getConstants()[CPI];
     
-    if (MCPE.isMachineConstantPoolEntry())
+    if (MCPE.isMachineConstantPoolEntry()) {
       EmitMachineConstantPoolValue(MCPE.Val.MachineCPVal);
-    else {
+      ARMConstantPoolValue *ACPV =
+        static_cast<ARMConstantPoolValue*>(MCPE.Val.MachineCPVal);
+      if (ACPV->getPCAdjustment() != 0) {
+        const GlobalValue *GV = ACPV->getGV();
+        PCRelGVs.insert(GV);
+      }
+    } else {
       EmitGlobalConstant(MCPE.Val.ConstVal);
       // remember to emit the weak reference
       if (const GlobalValue *GV = dyn_cast<GlobalValue>(MCPE.Val.ConstVal))
@@ -850,7 +863,8 @@ void ARMAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
     return;
   }
 
-  std::string SectionName = TAI->SectionForGlobal(GVar);
+  bool NoCoalesc = PCRelGVs.count(GVar);
+  std::string SectionName = TAI->SectionForGlobal(GVar, NoCoalesc);
   std::string name = Mang->getValueName(GVar);
   Constant *C = GVar->getInitializer();
   const Type *Type = C->getType();
@@ -887,7 +901,7 @@ void ARMAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
       if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
 
       if (TAI->getLCOMMDirective() != NULL) {
-        if (GVar->hasInternalLinkage()) {
+        if (NoCoalesc || GVar->hasInternalLinkage()) {
           O << TAI->getLCOMMDirective() << name << "," << Size;
           if (Subtarget->isTargetDarwin())
             O << "," << Align;
