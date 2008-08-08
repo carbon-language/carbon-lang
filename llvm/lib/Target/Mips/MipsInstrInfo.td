@@ -51,7 +51,8 @@ def MipsSelectCC  : SDNode<"MipsISD::SelectCC", SDT_MipsSelectCC>;
 //===----------------------------------------------------------------------===//
 // Mips Instruction Predicate Definitions.
 //===----------------------------------------------------------------------===//
-def HasSEInReg : Predicate<"Subtarget.hasSEInReg()">;
+def HasSEInReg  : Predicate<"Subtarget.hasSEInReg()">;
+def HasBitCount : Predicate<"Subtarget.hasBitCount()">;
 
 //===----------------------------------------------------------------------===//
 // Mips Operand, Complex Patterns and Transformations Definitions.
@@ -332,15 +333,6 @@ class MoveToLOHI<bits<6> func, string instr_asm>:
       !strconcat(instr_asm, "\t$src"),
       [], IIHiLo>;
 
-// Count Leading Ones/Zeros in Word
-class CountLeading<bits<6> func, string instr_asm>:
-  FR< 0x1c,
-      func,
-      (outs CPURegs:$dst),
-      (ins CPURegs:$src),
-      !strconcat(instr_asm, "\t$dst, $src"),
-      [], IIAlu>;
-
 class EffectiveAddress<string instr_asm> :
   FI<0x09,
      (outs CPURegs:$dst),
@@ -348,6 +340,13 @@ class EffectiveAddress<string instr_asm> :
      instr_asm,
      [(set CPURegs:$dst, addr:$addr)], IIAlu>;
 
+// Count Leading Ones/Zeros in Word
+class CountLeading<bits<6> func, string instr_asm, SDNode CountOp>:
+  FR< 0x1c, func, (outs CPURegs:$dst), (ins CPURegs:$src),
+      !strconcat(instr_asm, "\t$dst, $src"), 
+      [(set CPURegs:$dst, (CountOp CPURegs:$src))], IIAlu>;
+
+// Sign Extend in Register.
 class SignExtInReg<bits<6> func, string instr_asm, ValueType vt>:
   FR< 0x3f, func, (outs CPURegs:$dst), (ins CPURegs:$src),
       !strconcat(instr_asm, "\t$dst, $src"),
@@ -494,6 +493,12 @@ let Predicates = [HasSEInReg] in {
     def SEH : SignExtInReg<0x20, "seh", i16>;
 }
 
+/// Count Leading
+let Predicates = [HasBitCount] in {
+  def CLZ : CountLeading<0b010110, "clz", ctlz>;
+//def CLO : CountLeading<0b010110, "clo">;
+}
+
 /// No operation
 let addr=0 in
   def NOP   : FJ<0, (outs), (ins), "nop", [], IIAlu>;
@@ -503,13 +508,6 @@ let addr=0 in
 // add op with mem ComplexPattern is used and the stack address copy
 // can be matched. It's similar to Sparc LEA_ADDRi
 def LEA_ADDiu : EffectiveAddress<"addiu\t$dst, ${addr:stackloc}">;
-
-// Count Leading
-// CLO/CLZ are part of the newer MIPS32(tm) instruction
-// set and not older Mips I keep this for future use
-// though. 
-//def CLO     : CountLeading<0x21, "clo">;
-//def CLZ     : CountLeading<0x20, "clz">;
 
 // MADD*/MSUB* are not part of MipsI either.
 //def MADD    : MArithR<0x00, "madd">;

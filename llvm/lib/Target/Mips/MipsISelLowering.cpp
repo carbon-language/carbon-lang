@@ -119,7 +119,6 @@ MipsTargetLowering(MipsTargetMachine &TM): TargetLowering(TM)
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1,    Expand);
   setOperationAction(ISD::CTPOP,             MVT::i32,   Expand);
   setOperationAction(ISD::CTTZ,              MVT::i32,   Expand);
-  setOperationAction(ISD::CTLZ,              MVT::i32,   Expand);
   setOperationAction(ISD::ROTL,              MVT::i32,   Expand);
   setOperationAction(ISD::ROTR,              MVT::i32,   Expand);
   setOperationAction(ISD::BSWAP,             MVT::i32,   Expand);
@@ -146,6 +145,9 @@ MipsTargetLowering(MipsTargetMachine &TM): TargetLowering(TM)
     setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i8,  Expand);
     setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i16, Expand);
   }
+
+  if (!Subtarget->hasBitCount())
+    setOperationAction(ISD::CTLZ, MVT::i32, Expand);
 
   setStackPointerRegisterToSaveRestore(Mips::SP);
   computeRegisterProperties();
