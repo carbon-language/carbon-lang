@@ -839,9 +839,9 @@ void X86ATTAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
   }
 
   switch (GVar->getLinkage()) {
-   case GlobalValue::CommonLinkage:
-   case GlobalValue::LinkOnceLinkage:
-   case GlobalValue::WeakLinkage:
+  case GlobalValue::CommonLinkage:
+  case GlobalValue::LinkOnceLinkage:
+  case GlobalValue::WeakLinkage:
     if (Subtarget->isTargetDarwin()) {
       O << "\t.globl " << name << '\n'
         << TAI->getWeakDefDirective() << name << '\n';
@@ -852,17 +852,17 @@ void X86ATTAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
       O << "\t.weak\t" << name << '\n';
     }
     break;
-   case GlobalValue::DLLExportLinkage:
-   case GlobalValue::AppendingLinkage:
+  case GlobalValue::DLLExportLinkage:
+  case GlobalValue::AppendingLinkage:
     // FIXME: appending linkage variables should go into a section of
     // their name or something.  For now, just emit them as external.
-   case GlobalValue::ExternalLinkage:
+  case GlobalValue::ExternalLinkage:
     // If external or appending, declare as a global symbol
     O << "\t.globl " << name << '\n';
     // FALL THROUGH
-   case GlobalValue::InternalLinkage:
+  case GlobalValue::InternalLinkage:
      break;
-   default:
+  default:
     assert(0 && "Unknown linkage type!");
   }
 
