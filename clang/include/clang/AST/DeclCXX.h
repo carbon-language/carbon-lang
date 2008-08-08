@@ -54,12 +54,10 @@ public:
                             ScopedDecl *PrevDecl);
   
   const CXXFieldDecl *getMember(unsigned i) const {
-    assert(isa<CXXFieldDecl>(RecordDecl::getMember(i)));
-    return static_cast<const CXXFieldDecl*>(RecordDecl::getMember(i));
+    return cast<const CXXFieldDecl>(RecordDecl::getMember(i));
   }
   CXXFieldDecl *getMember(unsigned i) {
-    assert(isa<CXXFieldDecl>(RecordDecl::getMember(i)));
-    return static_cast<CXXFieldDecl*>(RecordDecl::getMember(i));
+    return cast<CXXFieldDecl>(RecordDecl::getMember(i));
   }
 
   /// getMember - If the member doesn't exist, or there are no members, this 
