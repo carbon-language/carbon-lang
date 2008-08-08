@@ -87,7 +87,7 @@ namespace {
 
     void printMachineInstruction(const MachineInstr *MI);
     void printOp(const MachineOperand &MO);
-    
+
     /// stripRegisterPrefix - This method strips the character prefix from a
     /// register name so that only the number is left.  Used by for linux asm.
     const char *stripRegisterPrefix(const char *RegName) {
@@ -97,22 +97,22 @@ namespace {
       case 'v': return RegName + 1;
       case 'c': if (RegName[1] == 'r') return RegName + 2;
       }
-       
+
       return RegName;
     }
-    
+
     /// printRegister - Print register according to target requirements.
     ///
     void printRegister(const MachineOperand &MO, bool R0AsZero) {
       unsigned RegNo = MO.getReg();
       assert(TargetRegisterInfo::isPhysicalRegister(RegNo) && "Not physreg??");
-      
+
       // If we should use 0 for R0.
       if (R0AsZero && RegNo == PPC::R0) {
         O << "0";
         return;
       }
-      
+
       const char *RegName = TM.getRegisterInfo()->get(RegNo).AsmName;
       // Linux assembler (Others?) does not take register mnemonics.
       // FIXME - What about special registers used in mfspr/mtspr?
@@ -130,13 +130,13 @@ namespace {
         printOp(MO);
       }
     }
-    
+
     bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
                          unsigned AsmVariant, const char *ExtraCode);
     bool PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
                                unsigned AsmVariant, const char *ExtraCode);
-    
-    
+
+
     void printS5ImmOperand(const MachineInstr *MI, unsigned OpNo) {
       char value = MI->getOperand(OpNo).getImm();
       value = (value << (32-5)) >> (32-5);
@@ -202,7 +202,7 @@ namespace {
           return;
         }
       }
-      
+
       printOp(MI->getOperand(OpNo));
     }
     void printAbsAddrOperand(const MachineInstr *MI, unsigned OpNo) {
@@ -249,7 +249,7 @@ namespace {
     void printMemRegImm(const MachineInstr *MI, unsigned OpNo) {
       printSymbolLo(MI, OpNo);
       O << '(';
-      if (MI->getOperand(OpNo+1).isRegister() && 
+      if (MI->getOperand(OpNo+1).isRegister() &&
           MI->getOperand(OpNo+1).getReg() == PPC::R0)
         O << "0";
       else
@@ -259,17 +259,17 @@ namespace {
     void printMemRegImmShifted(const MachineInstr *MI, unsigned OpNo) {
       if (MI->getOperand(OpNo).isImmediate())
         printS16X4ImmOperand(MI, OpNo);
-      else 
+      else
         printSymbolLo(MI, OpNo);
       O << '(';
-      if (MI->getOperand(OpNo+1).isRegister() && 
+      if (MI->getOperand(OpNo+1).isRegister() &&
           MI->getOperand(OpNo+1).getReg() == PPC::R0)
         O << "0";
       else
         printOperand(MI, OpNo+1);
       O << ')';
     }
-    
+
     void printMemRegReg(const MachineInstr *MI, unsigned OpNo) {
       // When used as the base register, r0 reads constant zero rather than
       // the value contained in the register.  For this reason, the darwin
@@ -279,23 +279,23 @@ namespace {
       O << ", ";
       printOperand(MI, OpNo+1);
     }
-    
-    void printPredicateOperand(const MachineInstr *MI, unsigned OpNo, 
+
+    void printPredicateOperand(const MachineInstr *MI, unsigned OpNo,
                                const char *Modifier);
-    
+
     virtual bool runOnMachineFunction(MachineFunction &F) = 0;
     virtual bool doFinalization(Module &M) = 0;
 
     virtual void EmitExternalGlobal(const GlobalVariable *GV);
   };
 
-  /// LinuxAsmPrinter - PowerPC assembly printer, customized for Linux
-  struct VISIBILITY_HIDDEN LinuxAsmPrinter : public PPCAsmPrinter {
+  /// PPCLinuxAsmPrinter - PowerPC assembly printer, customized for Linux
+  struct VISIBILITY_HIDDEN PPCLinuxAsmPrinter : public PPCAsmPrinter {
 
     DwarfWriter DW;
     MachineModuleInfo *MMI;
 
-    LinuxAsmPrinter(std::ostream &O, PPCTargetMachine &TM,
+    PPCLinuxAsmPrinter(std::ostream &O, PPCTargetMachine &TM,
                     const TargetAsmInfo *T)
       : PPCAsmPrinter(O, TM, T), DW(O, this, T), MMI(0) {
     }
@@ -307,7 +307,7 @@ namespace {
     bool runOnMachineFunction(MachineFunction &F);
     bool doInitialization(Module &M);
     bool doFinalization(Module &M);
-    
+
     void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();
       AU.addRequired<MachineModuleInfo>();
@@ -319,26 +319,26 @@ namespace {
     virtual std::string getSectionForFunction(const Function &F) const;
   };
 
-  /// DarwinAsmPrinter - PowerPC assembly printer, customized for Darwin/Mac OS
-  /// X
-  struct VISIBILITY_HIDDEN DarwinAsmPrinter : public PPCAsmPrinter {
-  
+  /// PPCDarwinAsmPrinter - PowerPC assembly printer, customized for Darwin/Mac
+  /// OS X
+  struct VISIBILITY_HIDDEN PPCDarwinAsmPrinter : public PPCAsmPrinter {
+
     DwarfWriter DW;
     MachineModuleInfo *MMI;
 
-    DarwinAsmPrinter(std::ostream &O, PPCTargetMachine &TM,
-                     const TargetAsmInfo *T)
+    PPCDarwinAsmPrinter(std::ostream &O, PPCTargetMachine &TM,
+                        const TargetAsmInfo *T)
       : PPCAsmPrinter(O, TM, T), DW(O, this, T), MMI(0) {
     }
 
     virtual const char *getPassName() const {
       return "Darwin PPC Assembly Printer";
     }
-    
+
     bool runOnMachineFunction(MachineFunction &F);
     bool doInitialization(Module &M);
     bool doFinalization(Module &M);
-    
+
     void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();
       AU.addRequired<MachineModuleInfo>();
@@ -400,12 +400,12 @@ void PPCAsmPrinter::printOp(const MachineOperand &MO) {
       }
     }
     O << Name;
-    
+
     if (MO.getOffset() > 0)
       O << "+" << MO.getOffset();
     else if (MO.getOffset() < 0)
       O << MO.getOffset();
-    
+
     if (GV->hasExternalWeakLinkage())
       ExtWeakSymbols.insert(GV);
     return;
@@ -432,19 +432,19 @@ void PPCAsmPrinter::EmitExternalGlobal(const GlobalVariable *GV) {
 /// PrintAsmOperand - Print out an operand for an inline asm expression.
 ///
 bool PPCAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
-                                    unsigned AsmVariant, 
+                                    unsigned AsmVariant,
                                     const char *ExtraCode) {
   // Does this asm operand have a single letter operand modifier?
   if (ExtraCode && ExtraCode[0]) {
     if (ExtraCode[1] != 0) return true; // Unknown modifier.
-    
+
     switch (ExtraCode[0]) {
     default: return true;  // Unknown modifier.
     case 'c': // Don't print "$" before a global var name or constant.
       // PPC never has a prefix.
       printOperand(MI, OpNo);
       return false;
-    case 'L': // Write second word of DImode reference.  
+    case 'L': // Write second word of DImode reference.
       // Verify that this operand has two consecutive registers.
       if (!MI->getOperand(OpNo).isRegister() ||
           OpNo+1 == MI->getNumOperands() ||
@@ -460,13 +460,13 @@ bool PPCAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
       return false;
     }
   }
-  
+
   printOperand(MI, OpNo);
   return false;
 }
 
 bool PPCAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
-                                          unsigned AsmVariant, 
+                                          unsigned AsmVariant,
                                           const char *ExtraCode) {
   if (ExtraCode && ExtraCode[0])
     return true; // Unknown modifier.
@@ -477,7 +477,7 @@ bool PPCAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
   return false;
 }
 
-void PPCAsmPrinter::printPredicateOperand(const MachineInstr *MI, unsigned OpNo, 
+void PPCAsmPrinter::printPredicateOperand(const MachineInstr *MI, unsigned OpNo,
                                           const char *Modifier) {
   assert(Modifier && "Must specify 'cc' or 'reg' as predicate op modifier!");
   unsigned Code = MI->getOperand(OpNo).getImm();
@@ -493,7 +493,7 @@ void PPCAsmPrinter::printPredicateOperand(const MachineInstr *MI, unsigned OpNo,
     case PPC::PRED_UN: O << "un"; return;
     case PPC::PRED_NU: O << "nu"; return;
     }
-      
+
   } else {
     assert(!strcmp(Modifier, "reg") &&
            "Need to specify 'cc' or 'reg' as predicate op modifier!");
@@ -564,18 +564,18 @@ void PPCAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
 /// runOnMachineFunction - This uses the printMachineInstruction()
 /// method to print assembly for each instruction.
 ///
-bool LinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
+bool PPCLinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   SetupMachineFunction(MF);
   O << "\n\n";
-  
+
   // Print out constants referenced by the function
   EmitConstantPool(MF.getConstantPool());
 
   // Print out labels for the function.
   const Function *F = MF.getFunction();
   SwitchToTextSection(getSectionForFunction(*F).c_str(), F);
-  
+
   switch (F->getLinkage()) {
   default: assert(0 && "Unknown linkage type!");
   case Function::InternalLinkage:  // Symbols default to internal.
@@ -590,11 +590,11 @@ bool LinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     O << "\t.weak\t" << CurrentFnName << '\n';
     break;
   }
-  
+
   if (F->hasHiddenVisibility())
     if (const char *Directive = TAI->getHiddenDirective())
       O << Directive << CurrentFnName << "\n";
-  
+
   EmitAlignment(2, F);
   O << CurrentFnName << ":\n";
 
@@ -620,17 +620,17 @@ bool LinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   // Print out jump tables referenced by the function.
   EmitJumpTableInfo(MF.getJumpTableInfo(), MF);
-  
+
   // Emit post-function debug information.
   DW.EndFunction();
-  
+
   // We didn't modify anything.
   return false;
 }
 
-bool LinuxAsmPrinter::doInitialization(Module &M) {
+bool PPCLinuxAsmPrinter::doInitialization(Module &M) {
   bool Result = AsmPrinter::doInitialization(M);
-  
+
   // Emit initial debug information.
   DW.BeginModule(&M);
 
@@ -643,7 +643,7 @@ bool LinuxAsmPrinter::doInitialization(Module &M) {
   Mang->setUseQuotes(true);
 
   SwitchToTextSection(TAI->getTextSection());
-  
+
   return Result;
 }
 
@@ -656,14 +656,14 @@ static void PrintUnmangledNameSafely(const Value *V, std::ostream &OS) {
       OS << *Name;
 }
 
-bool LinuxAsmPrinter::doFinalization(Module &M) {
+bool PPCLinuxAsmPrinter::doFinalization(Module &M) {
   const TargetData *TD = TM.getTargetData();
 
   // Print out module-level global variables here.
   for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
        I != E; ++I) {
     if (!I->hasInitializer()) continue;   // External global require no code
-    
+
     // Check to see if this is a special global used by LLVM, if so, emit it.
     if (EmitSpecialLLVMGlobal(I))
       continue;
@@ -673,7 +673,7 @@ bool LinuxAsmPrinter::doFinalization(Module &M) {
     if (I->hasHiddenVisibility())
       if (const char *Directive = TAI->getHiddenDirective())
         O << Directive << name << "\n";
-    
+
     Constant *C = I->getInitializer();
     unsigned Size = TD->getABITypeSize(C->getType());
     unsigned Align = TD->getPreferredAlignmentLog(I);
@@ -770,7 +770,7 @@ bool LinuxAsmPrinter::doFinalization(Module &M) {
   return AsmPrinter::doFinalization(M);
 }
 
-std::string LinuxAsmPrinter::getSectionForFunction(const Function &F) const {
+std::string PPCLinuxAsmPrinter::getSectionForFunction(const Function &F) const {
   switch (F.getLinkage()) {
   default: assert(0 && "Unknown linkage type!");
   case Function::ExternalLinkage:
@@ -781,7 +781,7 @@ std::string LinuxAsmPrinter::getSectionForFunction(const Function &F) const {
   }
 }
 
-std::string DarwinAsmPrinter::getSectionForFunction(const Function &F) const {
+std::string PPCDarwinAsmPrinter::getSectionForFunction(const Function &F) const {
   switch (F.getLinkage()) {
   default: assert(0 && "Unknown linkage type!");
   case Function::ExternalLinkage:
@@ -795,7 +795,7 @@ std::string DarwinAsmPrinter::getSectionForFunction(const Function &F) const {
 /// runOnMachineFunction - This uses the printMachineInstruction()
 /// method to print assembly for each instruction.
 ///
-bool DarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
+bool PPCDarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   SetupMachineFunction(MF);
   O << "\n\n";
@@ -806,7 +806,7 @@ bool DarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   // Print out labels for the function.
   const Function *F = MF.getFunction();
   SwitchToTextSection(getSectionForFunction(*F).c_str(), F);
-  
+
   switch (F->getLinkage()) {
   default: assert(0 && "Unknown linkage type!");
   case Function::InternalLinkage:  // Symbols default to internal.
@@ -820,11 +820,11 @@ bool DarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     O << "\t.weak_definition\t" << CurrentFnName << "\n";
     break;
   }
-  
+
   if (F->hasHiddenVisibility())
     if (const char *Directive = TAI->getHiddenDirective())
       O << Directive << CurrentFnName << "\n";
-  
+
   EmitAlignment(OptimizeForSize ? 2 : 4, F);
   O << CurrentFnName << ":\n";
 
@@ -856,16 +856,16 @@ bool DarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   // Print out jump tables referenced by the function.
   EmitJumpTableInfo(MF.getJumpTableInfo(), MF);
-  
+
   // Emit post-function debug information.
   DW.EndFunction();
-  
+
   // We didn't modify anything.
   return false;
 }
 
 
-bool DarwinAsmPrinter::doInitialization(Module &M) {
+bool PPCDarwinAsmPrinter::doInitialization(Module &M) {
   static const char *const CPUDirectives[] = {
     "",
     "ppc",
@@ -887,9 +887,9 @@ bool DarwinAsmPrinter::doInitialization(Module &M) {
     Directive = PPC::DIR_64;
   assert(Directive <= PPC::DIR_64 && "Directive out of range.");
   O << "\t.machine " << CPUDirectives[Directive] << "\n";
-     
+
   bool Result = AsmPrinter::doInitialization(M);
-  
+
   // Emit initial debug information.
   DW.BeginModule(&M);
 
@@ -901,7 +901,7 @@ bool DarwinAsmPrinter::doInitialization(Module &M) {
 
   // Darwin wants symbols to be quoted if they have complex names.
   Mang->setUseQuotes(true);
-  
+
   // Prime text sections so they are adjacent.  This reduces the likelihood a
   // large data or debug section causes a branch to exceed 16M limit.
   SwitchToTextSection("\t.section __TEXT,__textcoal_nt,coalesced,"
@@ -914,18 +914,18 @@ bool DarwinAsmPrinter::doInitialization(Module &M) {
                         "pure_instructions,16");
   }
   SwitchToTextSection(TAI->getTextSection());
-  
+
   return Result;
 }
 
-bool DarwinAsmPrinter::doFinalization(Module &M) {
+bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
   const TargetData *TD = TM.getTargetData();
 
   // Print out module-level global variables here.
   for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
        I != E; ++I) {
     if (!I->hasInitializer()) continue;   // External global require no code
-    
+
     // Check to see if this is a special global used by LLVM, if so, emit it.
     if (EmitSpecialLLVMGlobal(I)) {
       if (TM.getRelocationModel() == Reloc::Static) {
@@ -936,13 +936,13 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
       }
       continue;
     }
-    
+
     std::string name = Mang->getValueName(I);
-    
+
     if (I->hasHiddenVisibility())
       if (const char *Directive = TAI->getHiddenDirective())
         O << Directive << name << "\n";
-    
+
     Constant *C = I->getInitializer();
     const Type *Type = C->getType();
     unsigned Size = TD->getABITypeSize(Type);
@@ -1156,7 +1156,6 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
         O << "\t.quad\t0\n";
       else
         O << "\t.long\t0\n";
-        
     }
   }
 
@@ -1184,9 +1183,8 @@ FunctionPass *llvm::createPPCAsmPrinterPass(std::ostream &o,
   const PPCSubtarget *Subtarget = &tm.getSubtarget<PPCSubtarget>();
 
   if (Subtarget->isDarwin()) {
-    return new DarwinAsmPrinter(o, tm, tm.getTargetAsmInfo());
+    return new PPCDarwinAsmPrinter(o, tm, tm.getTargetAsmInfo());
   } else {
-    return new LinuxAsmPrinter(o, tm, tm.getTargetAsmInfo());
+    return new PPCLinuxAsmPrinter(o, tm, tm.getTargetAsmInfo());
   }
 }
-
