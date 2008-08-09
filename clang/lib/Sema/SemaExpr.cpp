@@ -2604,9 +2604,16 @@ Sema::ExprResult Sema::ActOnVAArg(SourceLocation BuiltinLoc,
   QualType T = QualType::getFromOpaquePtr(type);
 
   InitBuiltinVaListType();
-  
-  if (CheckAssignmentConstraints(Context.getBuiltinVaListType(), E->getType())
-      != Compatible)
+
+  // Get the va_list type
+  QualType VaListType = Context.getBuiltinVaListType();
+  // Deal with implicit array decay; for example, on x86-64,
+  // va_list is an array, but it's supposed to decay to
+  // a pointer for va_arg.
+  if (VaListType->isArrayType())
+    VaListType = Context.getArrayDecayedType(VaListType);
+
+  if (CheckAssignmentConstraints(VaListType, E->getType()) != Compatible)
     return Diag(E->getLocStart(),
                 diag::err_first_argument_to_va_arg_not_of_type_va_list,
                 E->getType().getAsString(),
