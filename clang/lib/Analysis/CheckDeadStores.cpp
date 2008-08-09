@@ -133,6 +133,7 @@ public:
           if (VD->getType()->isPointerType()) {
             if (IntegerLiteral* L =
                   dyn_cast<IntegerLiteral>(B->getRHS()->IgnoreParenCasts()))
+              // FIXME: Probably should have an Expr::isNullPointerConstant.              
               if (L->getValue() == 0)
                 return;
           }
