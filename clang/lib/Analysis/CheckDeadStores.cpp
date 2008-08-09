@@ -128,25 +128,21 @@ public:
       
       if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(B->getLHS()))
         if (VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl())) {
-     
-          // Special case: check for assigning null to a pointer.  This
-          //  is a common form of defensive programming.
-          // FIXME: Make this optional?
-          
-          Expr* Val = B->getRHS();
-          llvm::APSInt Result(Ctx.getTypeSize(Val->getType()));
-          
-          if (VD->getType()->isPointerType() &&
-              Val->IgnoreParenCasts()->isIntegerConstantExpr(Result, Ctx, 0))
-            if (Result == 0)
-              return;
+          // Special case: check for assigning null to a pointer.
+          //  This is a common form of defensive programming.          
+          if (VD->getType()->isPointerType()) {
+            if (IntegerLiteral* L =
+                  dyn_cast<IntegerLiteral>(B->getRHS()->IgnoreParenCasts()))
+              if (L->getValue() == 0)
+                return;
+          }
 
           DeadStoreKind dsk = 
             Parents.isSubExpr(B)
             ? Enclosing 
             : (isIncrement(VD,B) ? DeadIncrement : Standard);
           
-          CheckVarDecl(VD, DR, Val, dsk, AD, Live);
+          CheckVarDecl(VD, DR, B->getRHS(), dsk, AD, Live);
         }              
     }
     else if (UnaryOperator* U = dyn_cast<UnaryOperator>(S)) {
