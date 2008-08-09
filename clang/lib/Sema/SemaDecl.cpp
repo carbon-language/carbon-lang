@@ -2142,7 +2142,10 @@ void Sema::ActOnFields(Scope* S,
   // Okay, we successfully defined 'Record'.
   if (Record) {
     Record->defineBody(&RecFields[0], RecFields.size());
-    Consumer.HandleTagDeclDefinition(Record);
+    // If this is a C++ record, HandleTagDeclDefinition will be invoked in
+    // Sema::ActOnFinishCXXClassDef.
+    if (!isa<CXXRecordDecl>(Record))
+      Consumer.HandleTagDeclDefinition(Record);
   } else {
     ObjCIvarDecl **ClsFields = reinterpret_cast<ObjCIvarDecl**>(&RecFields[0]);
     if (ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(EnclosingDecl))

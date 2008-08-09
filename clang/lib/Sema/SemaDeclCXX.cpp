@@ -13,6 +13,7 @@
 
 #include "Sema.h"
 #include "clang/Basic/LangOptions.h"
+#include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/Expr.h"
@@ -469,11 +470,13 @@ void Sema::ActOnFinishCXXMemberSpecification(Scope* S, SourceLocation RLoc,
 }
 
 void Sema::ActOnFinishCXXClassDef(DeclTy *D) {
-  Decl *Dcl = static_cast<Decl *>(D);
-  assert(isa<CXXRecordDecl>(Dcl) &&
-         "Invalid parameter, expected CXXRecordDecl");
+  CXXRecordDecl *Rec = cast<CXXRecordDecl>(static_cast<Decl *>(D));
   FieldCollector->FinishClass();
   PopDeclContext();
+
+  // Everything, including inline method definitions, have been parsed.
+  // Let the consumer know of the new TagDecl definition.
+  Consumer.HandleTagDeclDefinition(Rec);
 }
 
 //===----------------------------------------------------------------------===//
