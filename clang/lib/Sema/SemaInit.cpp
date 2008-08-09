@@ -286,7 +286,8 @@ void InitListChecker::CheckStructUnionTypes(InitListExpr *IList,
   // If structDecl is a forward declaration, this loop won't do anything;
   // That's okay, because an error should get printed out elsewhere. It
   // might be worthwhile to skip over the rest of the initializer, though.
-  int numMembers = numStructUnionElements(DeclType);
+  int numMembers = DeclType->getAsRecordType()->getDecl()->getNumMembers() -
+                   structDecl->hasFlexibleArrayMember();
   for (int i = 0; i < numMembers; i++) {
     // Don't attempt to go past the end of the init list
     if (Index >= IList->getNumInits())
