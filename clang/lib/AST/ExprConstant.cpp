@@ -21,7 +21,7 @@
 using namespace clang;
 using llvm::APSInt;
 
-#define USE_NEW_EVALUATOR 0
+#define USE_NEW_EVALUATOR 1
 
 static bool CalcFakeICEVal(const Expr *Expr,
                            llvm::APSInt &Result,
