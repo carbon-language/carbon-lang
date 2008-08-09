@@ -14,6 +14,7 @@
 #include "ASTConsumers.h"
 #include "HTMLDiagnostics.h"
 #include "clang/AST/TranslationUnit.h"
+#include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/AST/AST.h"
@@ -526,9 +527,10 @@ namespace {
 class ASTSerializer : public ASTConsumer {
 protected:
   TranslationUnit* TU;
+  Diagnostic& Diags;
 
 public:
-  ASTSerializer() : TU(0) {}
+  ASTSerializer(Diagnostic& diags) : TU(0), Diags(diags) {}
 
   virtual void InitializeTU(TranslationUnit &tu) {
     TU = &tu;
@@ -539,9 +541,12 @@ public:
 class SingleFileSerializer : public ASTSerializer {
   const llvm::sys::Path FName;
 public:
-  SingleFileSerializer(const llvm::sys::Path& F) : FName(F) {}    
+  SingleFileSerializer(const llvm::sys::Path& F, Diagnostic& diags)
+    : ASTSerializer(diags), FName(F) {}    
   
   ~SingleFileSerializer() {
+    if (Diags.hasErrorOccurred())
+      return;
     EmitASTBitcodeFile(TU, FName);
   }
 };
@@ -549,11 +554,12 @@ public:
 class BuildSerializer : public ASTSerializer {
   llvm::sys::Path EmitDir;  
 public:
-  BuildSerializer(const llvm::sys::Path& dir) : EmitDir(dir) {}
+  BuildSerializer(const llvm::sys::Path& dir, Diagnostic& diags)
+    : ASTSerializer(diags), EmitDir(dir) {}
   
   ~BuildSerializer() {
 
-    if (!TU)
+    if (!TU || Diags.hasErrorOccurred())
       return;
     
     SourceManager& SourceMgr = TU->getContext().getSourceManager();
@@ -624,7 +630,7 @@ ASTConsumer* clang::CreateASTSerializer(const std::string& InFile,
     
     // FIXME: We should probably only allow using BuildSerializer when
     // the ASTs come from parsed source files, and not from .ast files.
-    return new BuildSerializer(EmitDir);
+    return new BuildSerializer(EmitDir, Diags);
   }
 
   // The user did not specify an output directory for serialized ASTs.
@@ -633,7 +639,7 @@ ASTConsumer* clang::CreateASTSerializer(const std::string& InFile,
   
   llvm::sys::Path FName(InFile.c_str());
   FName.appendSuffix("ast");
-  return new SingleFileSerializer(FName);
+  return new SingleFileSerializer(FName, Diags);
 }
 
 class LLVMCodeGenWriter : public ASTConsumer {
