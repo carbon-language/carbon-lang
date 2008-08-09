@@ -665,6 +665,7 @@ const char *BuiltinType::getName() const {
   case Float:             return "float";
   case Double:            return "double";
   case LongDouble:        return "long double";
+  case WChar:             return "wchar_t";
   }
 }
 
