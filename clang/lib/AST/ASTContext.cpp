@@ -325,6 +325,12 @@ ASTContext::getTypeInfo(QualType T) {
     break;
   }
   case Type::Tagged: {
+    if (cast<TagType>(T)->getDecl()->isInvalidDecl()) {
+      Width = 1;
+      Align = 1;
+      break;
+    }
+    
     if (EnumType *ET = dyn_cast<EnumType>(cast<TagType>(T)))
       return getTypeInfo(ET->getDecl()->getIntegerType());
 
@@ -377,8 +383,8 @@ void ASTRecordLayout::LayoutField(const FieldDecl *FD, unsigned FieldNo,
     if (!FD->getIdentifier())
       FieldAlign = 1;
   } else {
-    if (FD->getType()->isIncompleteType()) {
-      // This must be a flexible array member; we can't directly
+    if (FD->getType()->isIncompleteArrayType()) {
+      // This is a flexible array member; we can't directly
       // query getTypeInfo about these, so we figure it out here.
       // Flexible array members don't have any size, but they
       // have to be aligned appropriately for their element type.
