@@ -83,7 +83,8 @@ public:
   
   /// getVectorElements - This method, which is only valid on constant of vector
   /// type, returns the elements of the vector in the specified smallvector.
-  /// This handles breaking down a vector undef into undef elements, etc.
+  /// This handles breaking down a vector undef into undef elements, etc.  For
+  /// constant exprs and other cases we can't handle, we return an empty vector.
   void getVectorElements(SmallVectorImpl<Constant*> &Elts) const;
 
   /// destroyConstant - Called if some element of this constant is no longer
