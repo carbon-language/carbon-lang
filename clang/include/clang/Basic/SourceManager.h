@@ -396,8 +396,10 @@ public:
     unsigned ChunkNo = FIDInfo->getChunkNo();
     unsigned Offset = Loc.getRawFilePos();
     Offset += (ChunkNo << SourceLocation::FilePosBits);
+
+    assert(Loc.getFileID() >= ChunkNo && "Unexpected offset");
     
-    return std::pair<unsigned,unsigned>(Loc.getFileID()-ChunkNo, Offset);
+    return std::make_pair(Loc.getFileID()-ChunkNo, Offset);
   }
     
   /// getFullFilePos - This (efficient) method returns the offset from the start
