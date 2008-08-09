@@ -282,10 +282,10 @@ public:
   FreeInst *CreateFree(Value *Ptr) {
     return Insert(new FreeInst(Ptr));
   }
-  LoadInst *CreateLoad(Value *Ptr, const char *Name = 0) {
+  LoadInst *CreateLoad(Value *Ptr, const char *Name = "") {
     return Insert(new LoadInst(Ptr), Name);
   }
-  LoadInst *CreateLoad(Value *Ptr, bool isVolatile, const char *Name = 0) {
+  LoadInst *CreateLoad(Value *Ptr, bool isVolatile, const char *Name = "") {
     return Insert(new LoadInst(Ptr, 0, isVolatile), Name);
   }
   StoreInst *CreateStore(Value *Val, Value *Ptr, bool isVolatile = false) {
