@@ -848,6 +848,13 @@ CAMLprim LLVMValueRef llvm_build_switch(LLVMValueRef Of,
   return LLVMBuildSwitch(Builder_val(B), Of, Else, Int_val(EstimatedCount));
 }
 
+CAMLprim value llvm_add_case(LLVMValueRef Switch,
+                             LLVMValueRef OnVal,
+                             LLVMBasicBlockRef Dest) {
+  LLVMAddCase(Switch, OnVal, Dest);
+  return Val_unit;
+}
+
 /* llvalue -> llvalue array -> llbasicblock -> llbasicblock -> string ->
    llbuilder -> llvalue */
 CAMLprim LLVMValueRef llvm_build_invoke_nat(LLVMValueRef Fn, value Args,

@@ -825,7 +825,18 @@ let test_builder () =
     ignore (build_cond_br cond bb03 bb00 b)
   end;
   
-  (* TODO: Switch *)
+  group "switch"; begin
+    (* RUN: grep {switch.*P1.*SwiBlock3} < %t.ll
+     * RUN: grep {2,.*SwiBlock2} < %t.ll
+     *)
+    let bb1 = append_block "SwiBlock1" fn in
+    let bb2 = append_block "SwiBlock2" fn in
+    ignore (build_unreachable (builder_at_end bb2));
+    let bb3 = append_block "SwiBlock3" fn in
+    ignore (build_unreachable (builder_at_end bb3));
+    let si = build_switch p1 bb3 1 (builder_at_end bb1) in
+    ignore (add_case si (const_int i32_type 2) bb2)
+  end;
   
   group "invoke"; begin
     (* RUN: grep {Inst02.*invoke.*P1.*P2} < %t.ll

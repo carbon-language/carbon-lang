@@ -619,6 +619,8 @@ external build_cond_br : llvalue -> llbasicblock -> llbasicblock -> llbuilder ->
                          llvalue = "llvm_build_cond_br"
 external build_switch : llvalue -> llbasicblock -> int -> llbuilder -> llvalue
                       = "llvm_build_switch"
+external add_case : llvalue -> llvalue -> llbasicblock -> unit
+                  = "llvm_add_case"
 external build_invoke : llvalue -> llvalue array -> llbasicblock ->
                         llbasicblock -> string -> llbuilder -> llvalue
                       = "llvm_build_invoke_bc" "llvm_build_invoke_nat"

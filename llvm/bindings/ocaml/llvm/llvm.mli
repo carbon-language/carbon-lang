@@ -1212,12 +1212,19 @@ external build_br : llbasicblock -> llbuilder -> llvalue = "llvm_build_br"
 external build_cond_br : llvalue -> llbasicblock -> llbasicblock -> llbuilder ->
                          llvalue = "llvm_build_cond_br"
 
-(** [build_switch case elsebb b] creates an empty
+(** [build_switch case elsebb count b] creates an empty
     [switch %case, %elsebb]
-    instruction at the position specified by the instruction builder [b].
+    instruction at the position specified by the instruction builder [b] with
+    space reserved for [count] cases.
     See the method [llvm::LLVMBuilder::CreateSwitch]. *)
 external build_switch : llvalue -> llbasicblock -> int -> llbuilder -> llvalue
                       = "llvm_build_switch"
+
+(** [add_case sw onval bb] causes switch instruction [sw] to branch to [bb]
+    when its input matches the constant [onval].
+    See the method [llvm::SwitchInst::addCase]. **)
+external add_case : llvalue -> llvalue -> llbasicblock -> unit
+                  = "llvm_add_case"
 
 (** [build_invoke fn args tobb unwindbb name b] creates an
     [%name = invoke %fn(args) to %tobb unwind %unwindbb]
