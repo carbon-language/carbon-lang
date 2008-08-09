@@ -285,7 +285,7 @@ Sema::ActOnStringLiteral(const Token *StringToks, unsigned NumStringToks) {
                             StringToks[NumStringToks-1].getLocation()));
   
   QualType StrTy = Context.CharTy;
-  if (Literal.AnyWide) StrTy = Context.getWcharType();
+  if (Literal.AnyWide) StrTy = Context.getWCharType();
   if (Literal.Pascal) StrTy = Context.UnsignedCharTy;
   
   // Get an array type for the string, according to C99 6.4.5.  This includes

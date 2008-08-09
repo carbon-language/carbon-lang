@@ -234,9 +234,9 @@ public:
   /// in <stddef.h>. The sizeof operator requires this (C99 6.5.3.4p4).
   QualType getSizeType() const;
 
-  /// getWcharType - Return the unique type for "wchar_t" (C99 7.17), defined
+  /// getWCharType - Return the unique type for "wchar_t" (C99 7.17), defined
   /// in <stddef.h>. Wide strings require this (C99 6.4.5p5).
-  QualType getWcharType() const;
+  QualType getWCharType() const;
 
   /// getSignedWCharType - Return the type of "signed wchar_t".
   /// Used when in C++, as a GCC extension.

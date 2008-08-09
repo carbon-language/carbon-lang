@@ -999,10 +999,10 @@ QualType ASTContext::getSizeType() const {
   return UnsignedLongTy; 
 }
 
-/// getWcharType - Return the unique type for "wchar_t" (C99 7.17), the
+/// getWCharType - Return the unique type for "wchar_t" (C99 7.17), the
 /// width of characters in wide strings, The value is target dependent and 
 /// needs to agree with the definition in <stddef.h>.
-QualType ASTContext::getWcharType() const {
+QualType ASTContext::getWCharType() const {
   if (LangOpts.CPlusPlus)
     return WCharTy;
 
