@@ -129,7 +129,7 @@ void OcamlCollector::finishAssembly(std::ostream &OS, AsmPrinter &AP,
                                      PE = MD.end(); PI != PE; ++PI) {
       
       uint64_t FrameSize = MD.getFrameSize();
-      if (FrameSize >= 2<<16) {
+      if (FrameSize >= 1<<16) {
         cerr << "Function '" << MD.getFunction().getNameStart()
              << "' is too large for the ocaml collector! "
              << "Frame size " << FrameSize << " >= 65536.\n";
@@ -137,7 +137,7 @@ void OcamlCollector::finishAssembly(std::ostream &OS, AsmPrinter &AP,
       }
       
       size_t LiveCount = MD.live_size(PI);
-      if (LiveCount >= 2<<16) {
+      if (LiveCount >= 1<<16) {
         cerr << "Function '" << MD.getFunction().getNameStart()
              << "' is too large for the ocaml collector! "
              << "Live root count " << LiveCount << " >= 65536.\n";
@@ -157,7 +157,7 @@ void OcamlCollector::finishAssembly(std::ostream &OS, AsmPrinter &AP,
       for (CollectorMetadata::live_iterator LI = MD.live_begin(PI),
                                             LE = MD.live_end(PI);
                                             LI != LE; ++LI) {
-        assert(LI->StackOffset < 2<<16 &&
+        assert(LI->StackOffset < 1<<16 &&
                "GC root stack offset is outside of fixed stack frame and out "
                "of range for Ocaml collector!");
         
