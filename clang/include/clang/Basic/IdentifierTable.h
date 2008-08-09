@@ -203,7 +203,7 @@ private:
 /// Selector - This smart pointer class efficiently represents Objective-C
 /// method names. This class will either point to an IdentifierInfo or a
 /// MultiKeywordSelector (which is private). This enables us to optimize
-/// selectors that no arguments and selectors that take 1 argument, which 
+/// selectors that take no arguments and selectors that take 1 argument, which 
 /// accounts for 78% of all selectors in Cocoa.h.
 class Selector {
   enum IdentifierInfoFlag {
