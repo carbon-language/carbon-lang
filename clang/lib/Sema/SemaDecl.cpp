@@ -378,38 +378,6 @@ Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD, bool &Redeclaration) {
   return New;
 }
 
-/// equivalentArrayTypes - Used to determine whether two array types are 
-/// equivalent.
-/// We need to check this explicitly as an incomplete array definition is
-/// considered a VariableArrayType, so will not match a complete array 
-/// definition that would be otherwise equivalent.
-static bool areEquivalentArrayTypes(QualType NewQType, QualType OldQType,
-                                    ASTContext &Context) {
-  const ArrayType *NewAT = Context.getAsArrayType(NewQType);
-  const ArrayType *OldAT = Context.getAsArrayType(OldQType);
-
-  if (!NewAT || !OldAT)
-    return false;
-  
-  // If either (or both) array types in incomplete we need to strip off the
-  // outer VariableArrayType.  Once the outer VAT is removed the remaining
-  // types must be identical if the array types are to be considered 
-  // equivalent.
-  // eg. int[][1] and int[1][1] become
-  //     VAT(null, CAT(1, int)) and CAT(1, CAT(1, int))
-  // removing the outermost VAT gives
-  //     CAT(1, int) and CAT(1, int)
-  // which are equal, therefore the array types are equivalent.
-  if (NewAT->isIncompleteArrayType() || OldAT->isIncompleteArrayType()) {
-    if (NewAT->getIndexTypeQualifier() != OldAT->getIndexTypeQualifier())
-      return false;
-    NewQType = Context.getCanonicalType(NewAT->getElementType());
-    OldQType = Context.getCanonicalType(OldAT->getElementType());
-  }
-  
-  return NewQType == OldQType;
-}
-
 /// Predicate for C "tentative" external object definitions (C99 6.9.2).
 bool Sema::isTentativeDefinition(VarDecl *VD) {
   if (VD->isFileVarDecl())
@@ -471,8 +439,7 @@ VarDecl *Sema::MergeVarDecl(VarDecl *New, Decl *OldD) {
   // Verify the types match.
   QualType OldCType = Context.getCanonicalType(Old->getType());
   QualType NewCType = Context.getCanonicalType(New->getType());
-  if (OldCType != NewCType &&
-      !areEquivalentArrayTypes(NewCType, OldCType, Context)) {
+  if (OldCType != NewCType && !Context.typesAreCompatible(OldCType, NewCType)) {
     Diag(New->getLocation(), diag::err_redefinition, New->getName());
     Diag(Old->getLocation(), diag::err_previous_definition);
     return New;
