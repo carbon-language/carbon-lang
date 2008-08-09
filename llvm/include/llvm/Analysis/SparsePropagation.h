@@ -24,6 +24,7 @@
 namespace llvm {
   class Value;
   class Constant;
+  class Argument;
   class Instruction;
   class PHINode;
   class TerminatorInst;
@@ -74,6 +75,12 @@ public:
   /// must be in the same LLVM type as Val.
   virtual Constant *GetConstant(LatticeVal LV, Value *Val, SparseSolver &SS) {
     return 0;
+  }
+
+  /// ComputeArgument - Given a formal argument value, compute and return a
+  /// lattice value corresponding to the specified argument.
+  virtual LatticeVal ComputeArgument(Argument *I) {
+    return getOverdefinedVal(); // always safe
   }
   
   /// MergeValues - Compute and return the merge of the two specified lattice

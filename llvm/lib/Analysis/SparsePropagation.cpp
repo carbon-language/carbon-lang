@@ -57,8 +57,10 @@ SparseSolver::LatticeVal SparseSolver::getOrInitValueState(Value *V) {
     return LatticeFunc->getUntrackedVal();
   else if (Constant *C = dyn_cast<Constant>(V))
     LV = LatticeFunc->ComputeConstant(C);
+  else if (Argument *A = dyn_cast<Argument>(V))
+    LV = LatticeFunc->ComputeArgument(A);
   else if (!isa<Instruction>(V))
-    // Non-instructions (e.g. formal arguments) are overdefined.
+    // All other non-instructions are overdefined.
     LV = LatticeFunc->getOverdefinedVal();
   else
     // All instructions are underdefined by default.
