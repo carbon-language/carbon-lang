@@ -626,5 +626,5 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
   // Leave the class scope.
   ExitScope();
 
-  Actions.ActOnFinishCXXClassDef(TagDecl, RBraceLoc);
+  Actions.ActOnFinishCXXClassDef(TagDecl);
 }

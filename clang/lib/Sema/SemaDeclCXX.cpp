@@ -468,7 +468,7 @@ void Sema::ActOnFinishCXXMemberSpecification(Scope* S, SourceLocation RLoc,
               FieldCollector->getCurNumFields(), LBrac, RBrac);
 }
 
-void Sema::ActOnFinishCXXClassDef(DeclTy *D,SourceLocation RBrace) {
+void Sema::ActOnFinishCXXClassDef(DeclTy *D) {
   Decl *Dcl = static_cast<Decl *>(D);
   assert(isa<CXXRecordDecl>(Dcl) &&
          "Invalid parameter, expected CXXRecordDecl");

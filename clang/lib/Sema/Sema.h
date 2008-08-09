@@ -603,7 +603,7 @@ public:
                                                  SourceLocation LBrac,
                                                  SourceLocation RBrac);
 
-  virtual void ActOnFinishCXXClassDef(DeclTy *TagDecl,SourceLocation RBrace);
+  virtual void ActOnFinishCXXClassDef(DeclTy *TagDecl);
   
 
   // Objective-C declarations.

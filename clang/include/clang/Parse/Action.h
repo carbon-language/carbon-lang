@@ -613,7 +613,7 @@ public:
 
   /// ActOnFinishCXXClassDef - This is called when a class/struct/union has
   /// completed parsing, when on C++.
-  virtual void ActOnFinishCXXClassDef(DeclTy *TagDecl,SourceLocation RBrace) {
+  virtual void ActOnFinishCXXClassDef(DeclTy *TagDecl) {
   }
 
   //===----------------------- Obj-C Declarations -------------------------===//
