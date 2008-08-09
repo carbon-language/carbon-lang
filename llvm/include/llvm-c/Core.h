@@ -392,7 +392,6 @@ LLVMValueRef LLVMGetLastGlobal(LLVMModuleRef M);
 LLVMValueRef LLVMGetNextGlobal(LLVMValueRef GlobalVar);
 LLVMValueRef LLVMGetPreviousGlobal(LLVMValueRef GlobalVar);
 void LLVMDeleteGlobal(LLVMValueRef GlobalVar);
-int LLVMHasInitializer(LLVMValueRef GlobalVar);
 LLVMValueRef LLVMGetInitializer(LLVMValueRef GlobalVar);
 void LLVMSetInitializer(LLVMValueRef GlobalVar, LLVMValueRef ConstantVal);
 int LLVMIsThreadLocal(LLVMValueRef GlobalVar);

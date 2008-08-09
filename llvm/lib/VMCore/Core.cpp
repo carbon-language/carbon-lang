@@ -632,10 +632,6 @@ void LLVMDeleteGlobal(LLVMValueRef GlobalVar) {
   unwrap<GlobalVariable>(GlobalVar)->eraseFromParent();
 }
 
-int LLVMHasInitializer(LLVMValueRef GlobalVar) {
-  return unwrap<GlobalVariable>(GlobalVar)->hasInitializer();
-}
-
 LLVMValueRef LLVMGetInitializer(LLVMValueRef GlobalVar) {
   return wrap(unwrap<GlobalVariable>(GlobalVar)->getInitializer());
 }

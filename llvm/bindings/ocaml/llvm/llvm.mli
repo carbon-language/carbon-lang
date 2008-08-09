@@ -815,11 +815,6 @@ external is_global_constant : llvalue -> bool = "llvm_is_global_constant"
 external set_global_constant : bool -> llvalue -> unit
                              = "llvm_set_global_constant"
 
-(** [has_initializer gv] returns [true] if the global variable [gv] has an
-    initializer and [false] otherwise.
-    See the method [llvm::GlobalVariable::hasInitializer]. *)
-external has_initializer : llvalue -> bool = "llvm_has_initializer"
-
 (** [global_initializer gv] returns the initializer for the global variable
     [gv]. See the method [llvm::GlobalVariable::getInitializer]. *)
 external global_initializer : llvalue -> llvalue = "LLVMGetInitializer"

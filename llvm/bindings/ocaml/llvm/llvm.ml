@@ -300,7 +300,6 @@ external define_global : string -> llvalue -> llmodule -> llvalue
 external lookup_global : string -> llmodule -> llvalue option
                        = "llvm_lookup_global"
 external delete_global : llvalue -> unit = "llvm_delete_global"
-external has_initializer : llvalue -> bool = "llvm_has_initializer"
 external global_initializer : llvalue -> llvalue = "LLVMGetInitializer"
 external set_initializer : llvalue -> llvalue -> unit = "llvm_set_initializer"
 external remove_initializer : llvalue -> unit = "llvm_remove_initializer"
