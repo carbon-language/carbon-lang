@@ -283,10 +283,10 @@ public:
     return Insert(new FreeInst(Ptr));
   }
   LoadInst *CreateLoad(Value *Ptr, const char *Name = 0) {
-    return Insert(new LoadInst(Ptr, Name));
+    return Insert(new LoadInst(Ptr), Name);
   }
   LoadInst *CreateLoad(Value *Ptr, bool isVolatile, const char *Name = 0) {
-    return Insert(new LoadInst(Ptr, Name, isVolatile));
+    return Insert(new LoadInst(Ptr, 0, isVolatile), Name);
   }
   StoreInst *CreateStore(Value *Val, Value *Ptr, bool isVolatile = false) {
     return Insert(new StoreInst(Val, Ptr, isVolatile));
@@ -306,7 +306,7 @@ public:
         return ConstantExpr::getGetElementPtr(PC, &IdxBegin[0], 
                                               IdxEnd - IdxBegin);
     }      
-    return(Insert(GetElementPtrInst::Create(Ptr, IdxBegin, IdxEnd), Name));
+    return Insert(GetElementPtrInst::Create(Ptr, IdxBegin, IdxEnd), Name);
   }
   Value *CreateGEP(Value *Ptr, Value *Idx, const char *Name = "") {
     if (Constant *PC = dyn_cast<Constant>(Ptr))
