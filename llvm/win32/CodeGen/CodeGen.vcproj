@@ -560,6 +560,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\lib\CodeGen\SelectionDAG\SimpleBBISel.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\..\lib\CodeGen\SelectionDAG\TargetLowering.cpp"
 					>
 				</File>
@@ -748,6 +752,10 @@
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\CodeGen\SelectionDAGNodes.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\lib\CodeGen\SelectionDAG\SimpleBBISel.h"
 				>
 			</File>
 			<File
