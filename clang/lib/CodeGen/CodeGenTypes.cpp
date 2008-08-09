@@ -195,6 +195,7 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     assert(0 && "Non-canonical type, shouldn't happen");
   case Type::Builtin: {
     switch (cast<BuiltinType>(Ty).getKind()) {
+    default: assert(0 && "Unknown builtin type!");
     case BuiltinType::Void:
       // LLVM void type can only be used as the result of a function call.  Just
       // map to the same as char.
@@ -216,6 +217,7 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     case BuiltinType::ULong:
     case BuiltinType::LongLong:
     case BuiltinType::ULongLong:
+    case BuiltinType::WChar:
       return llvm::IntegerType::get(
         static_cast<unsigned>(Context.getTypeSize(T)));
       
