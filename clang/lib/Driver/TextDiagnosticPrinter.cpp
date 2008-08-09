@@ -39,10 +39,10 @@ PrintIncludeStack(FullSourceLoc Pos) {
 void TextDiagnosticPrinter::HighlightRange(const SourceRange &R,
                                            SourceManager& SourceMgr,
                                            unsigned LineNo, unsigned FileID,
-                                           std::string &CaratLine,
+                                           std::string &CaretLine,
                                            const std::string &SourceLine) {
-  assert(CaratLine.size() == SourceLine.size() &&
-         "Expect a correspondence between source and carat line!");
+  assert(CaretLine.size() == SourceLine.size() &&
+         "Expect a correspondence between source and caret line!");
   if (!R.isValid()) return;
 
   SourceLocation LogicalStart = SourceMgr.getLogicalLoc(R.getBegin());
@@ -68,7 +68,7 @@ void TextDiagnosticPrinter::HighlightRange(const SourceRange &R,
     ++StartColNo;
   
   // Compute the column number of the end.
-  unsigned EndColNo = CaratLine.size();
+  unsigned EndColNo = CaretLine.size();
   if (EndLineNo == LineNo) {
     EndColNo = SourceMgr.getLogicalColumnNumber(R.getEnd());
     if (EndColNo) {
@@ -77,7 +77,7 @@ void TextDiagnosticPrinter::HighlightRange(const SourceRange &R,
       // Add in the length of the token, so that we cover multi-char tokens.
       EndColNo += Lexer::MeasureTokenLength(R.getEnd(), SourceMgr);
     } else {
-      EndColNo = CaratLine.size();
+      EndColNo = CaretLine.size();
     }
   }
   
@@ -92,7 +92,7 @@ void TextDiagnosticPrinter::HighlightRange(const SourceRange &R,
   // Fill the range with ~'s.
   assert(StartColNo <= EndColNo && "Invalid range!");
   for (unsigned i = StartColNo; i < EndColNo; ++i)
-    CaratLine[i] = '~';
+    CaretLine[i] = '~';
 }
 
 void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic &Diags,
@@ -158,23 +158,23 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic &Diags,
     // Get the line of the source file.
     std::string SourceLine(LineStart, LineEnd);
     
-    // Create a line for the carat that is filled with spaces that is the same
+    // Create a line for the caret that is filled with spaces that is the same
     // length as the line of source code.
-    std::string CaratLine(LineEnd-LineStart, ' ');
+    std::string CaretLine(LineEnd-LineStart, ' ');
     
     // Highlight all of the characters covered by Ranges with ~ characters.
     for (unsigned i = 0; i != NumRanges; ++i)
       HighlightRange(Ranges[i], Pos.getManager(), LineNo, FileID,
-                     CaratLine, SourceLine);
+                     CaretLine, SourceLine);
     
-    // Next, insert the carat itself.
-    if (ColNo-1 < CaratLine.size())
-      CaratLine[ColNo-1] = '^';
+    // Next, insert the caret itself.
+    if (ColNo-1 < CaretLine.size())
+      CaretLine[ColNo-1] = '^';
     else
-      CaratLine.push_back('^');
+      CaretLine.push_back('^');
     
     // Scan the source line, looking for tabs.  If we find any, manually expand
-    // them to 8 characters and update the CaratLine to match.
+    // them to 8 characters and update the CaretLine to match.
     for (unsigned i = 0; i != SourceLine.size(); ++i) {
       if (SourceLine[i] != '\t') continue;
       
@@ -188,16 +188,16 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic &Diags,
       // Insert spaces into the SourceLine.
       SourceLine.insert(i+1, NumSpaces, ' ');
       
-      // Insert spaces or ~'s into CaratLine.
-      CaratLine.insert(i+1, NumSpaces, CaratLine[i] == '~' ? '~' : ' ');
+      // Insert spaces or ~'s into CaretLine.
+      CaretLine.insert(i+1, NumSpaces, CaretLine[i] == '~' ? '~' : ' ');
     }
     
-    // Finally, remove any blank spaces from the end of CaratLine.
-    while (CaratLine[CaratLine.size()-1] == ' ')
-      CaratLine.erase(CaratLine.end()-1);
+    // Finally, remove any blank spaces from the end of CaretLine.
+    while (CaretLine[CaretLine.size()-1] == ' ')
+      CaretLine.erase(CaretLine.end()-1);
     
     // Emit what we have computed.
     OS << SourceLine << "\n";
-    OS << CaratLine << "\n";
+    OS << CaretLine << "\n";
   }
 }

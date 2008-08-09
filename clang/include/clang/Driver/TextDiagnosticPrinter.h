@@ -38,7 +38,7 @@ public:
   void HighlightRange(const SourceRange &R,
                       SourceManager& SrcMgr,
                       unsigned LineNo, unsigned FileID,
-                      std::string &CaratLine,
+                      std::string &CaretLine,
                       const std::string &SourceLine);
 
   virtual void HandleDiagnostic(Diagnostic &Diags,
