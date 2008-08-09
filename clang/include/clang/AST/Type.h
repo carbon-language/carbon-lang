@@ -476,7 +476,9 @@ public:
     Long,
     LongLong,
     
-    Float, Double, LongDouble
+    Float, Double, LongDouble,
+
+    WChar     // This is 'wchar_t' for C++.
   };
 private:
   Kind TypeKind;

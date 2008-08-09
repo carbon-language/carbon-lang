@@ -118,6 +118,7 @@ public:
   QualType VoidTy;
   QualType BoolTy;
   QualType CharTy;
+  QualType WCharTy; // [C++ 3.9.1p5]
   QualType SignedCharTy, ShortTy, IntTy, LongTy, LongLongTy;
   QualType UnsignedCharTy, UnsignedShortTy, UnsignedIntTy, UnsignedLongTy;
   QualType UnsignedLongLongTy;
@@ -236,6 +237,14 @@ public:
   /// getWcharType - Return the unique type for "wchar_t" (C99 7.17), defined
   /// in <stddef.h>. Wide strings require this (C99 6.4.5p5).
   QualType getWcharType() const;
+
+  /// getSignedWCharType - Return the type of "signed wchar_t".
+  /// Used when in C++, as a GCC extension.
+  QualType getSignedWCharType() const;
+
+  /// getUnsignedWCharType - Return the type of "unsigned wchar_t".
+  /// Used when in C++, as a GCC extension.
+  QualType getUnsignedWCharType() const;
   
   /// getPointerDiffType - Return the unique type for "ptrdiff_t" (ref?)
   /// defined in <stddef.h>. Pointer - pointer requires this (C99 6.5.6p9).

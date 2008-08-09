@@ -161,7 +161,10 @@ void ASTContext::InitBuiltinTypes() {
   InitBuiltinType(FloatTy,             BuiltinType::Float);
   InitBuiltinType(DoubleTy,            BuiltinType::Double);
   InitBuiltinType(LongDoubleTy,        BuiltinType::LongDouble);
-  
+
+  // C++ 3.9.1p5
+  InitBuiltinType(WCharTy,             BuiltinType::WChar);
+
   // C99 6.2.5p11.
   FloatComplexTy      = getComplexType(FloatTy);
   DoubleComplexTy     = getComplexType(DoubleTy);
@@ -245,6 +248,10 @@ ASTContext::getTypeInfo(QualType T) {
     case BuiltinType::SChar:
       Width = Target.getCharWidth();
       Align = Target.getCharAlign();
+      break;
+    case BuiltinType::WChar:
+      Width = Target.getWCharWidth();
+      Align = Target.getWCharAlign();
       break;
     case BuiltinType::UShort:
     case BuiltinType::Short:
@@ -996,9 +1003,26 @@ QualType ASTContext::getSizeType() const {
 /// width of characters in wide strings, The value is target dependent and 
 /// needs to agree with the definition in <stddef.h>.
 QualType ASTContext::getWcharType() const {
+  if (LangOpts.CPlusPlus)
+    return WCharTy;
+
   // On Darwin, wchar_t is defined as a "int". 
   // FIXME: should derive from "Target".
   return IntTy; 
+}
+
+/// getSignedWCharType - Return the type of "signed wchar_t".
+/// Used when in C++, as a GCC extension.
+QualType ASTContext::getSignedWCharType() const {
+  // FIXME: derive from "Target" ?
+  return WCharTy;
+}
+
+/// getUnsignedWCharType - Return the type of "unsigned wchar_t".
+/// Used when in C++, as a GCC extension.
+QualType ASTContext::getUnsignedWCharType() const {
+  // FIXME: derive from "Target" ?
+  return UnsignedIntTy;
 }
 
 /// getPointerDiffType - Return the unique type for "ptrdiff_t" (ref?)

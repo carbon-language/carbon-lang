@@ -63,6 +63,7 @@ public:
     TST_unspecified,
     TST_void,
     TST_char,
+    TST_wchar,        // C++ wchar_t
     TST_int,
     TST_float,
     TST_double,

@@ -42,6 +42,21 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS) {
       Result = Context.UnsignedCharTy;
     }
     break;
+  case DeclSpec::TST_wchar:
+    if (DS.getTypeSpecSign() == DeclSpec::TSS_unspecified)
+      Result = Context.WCharTy;
+    else if (DS.getTypeSpecSign() == DeclSpec::TSS_signed) {
+      Diag(DS.getTypeSpecSignLoc(), diag::ext_invalid_sign_spec,
+           DS.getSpecifierName(DS.getTypeSpecType()));
+      Result = Context.getSignedWCharType();
+    } else {
+      assert(DS.getTypeSpecSign() == DeclSpec::TSS_unsigned &&
+        "Unknown TSS value");
+      Diag(DS.getTypeSpecSignLoc(), diag::ext_invalid_sign_spec,
+           DS.getSpecifierName(DS.getTypeSpecType()));
+      Result = Context.getUnsignedWCharType();
+    }
+    break;
   case DeclSpec::TST_unspecified:
     // "<proto1,proto2>" is an objc qualified ID with a missing id.
       if (DeclSpec::ProtocolQualifierListTy PQ = DS.getProtocolQualifiers()) {

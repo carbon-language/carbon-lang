@@ -376,6 +376,7 @@ void Parser::ParseSpecifierQualifierList(DeclSpec &DS) {
 ///         struct-or-union-specifier
 ///         enum-specifier
 ///         typedef-name
+/// [C++]   'wchar_t'
 /// [C++]   'bool'
 /// [C99]   '_Bool'
 /// [C99]   '_Complex'
@@ -516,6 +517,9 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
       break;
     case tok::kw_double:
       isInvalid = DS.SetTypeSpecType(DeclSpec::TST_double, Loc, PrevSpec);
+      break;
+    case tok::kw_wchar_t:       // [C++ 2.11p1]
+      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_wchar, Loc, PrevSpec);
       break;
     case tok::kw_bool:          // [C++ 2.11p1]
     case tok::kw__Bool:
@@ -941,6 +945,7 @@ bool Parser::isTypeSpecifierQualifier() const {
   case tok::kw__Imaginary:
   case tok::kw_void:
   case tok::kw_char:
+  case tok::kw_wchar_t:
   case tok::kw_int:
   case tok::kw_float:
   case tok::kw_double:
@@ -992,6 +997,7 @@ bool Parser::isDeclarationSpecifier() const {
   case tok::kw__Imaginary:
   case tok::kw_void:
   case tok::kw_char:
+  case tok::kw_wchar_t:
   case tok::kw_int:
   case tok::kw_float:
   case tok::kw_double:

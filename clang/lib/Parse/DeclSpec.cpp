@@ -87,6 +87,7 @@ const char *DeclSpec::getSpecifierName(DeclSpec::TST T) {
   case DeclSpec::TST_unspecified: return "unspecified";
   case DeclSpec::TST_void:        return "void";
   case DeclSpec::TST_char:        return "char";
+  case DeclSpec::TST_wchar:       return "wchar_t";
   case DeclSpec::TST_int:         return "int";
   case DeclSpec::TST_float:       return "float";
   case DeclSpec::TST_double:      return "double";
@@ -214,11 +215,12 @@ void DeclSpec::Finish(Diagnostic &D, SourceManager& SrcMgr,
                       const LangOptions &Lang) {
   // Check the type specifier components first.
 
-  // signed/unsigned are only valid with int/char.
+  // signed/unsigned are only valid with int/char/wchar_t.
   if (TypeSpecSign != TSS_unspecified) {
     if (TypeSpecType == TST_unspecified)
       TypeSpecType = TST_int; // unsigned -> unsigned int, signed -> signed int.
-    else if (TypeSpecType != TST_int && TypeSpecType != TST_char) {
+    else if (TypeSpecType != TST_int  &&
+             TypeSpecType != TST_char && TypeSpecType != TST_wchar) {
       Diag(D, TSSLoc, SrcMgr, diag::err_invalid_sign_spec,
            getSpecifierName( (TST)TypeSpecType));
       // signed double -> double.

@@ -571,6 +571,8 @@ DIAG(err_invalid_decl_spec_combination, ERROR,
      "cannot combine with previous '%0' declaration specifier")
 DIAG(err_invalid_sign_spec, ERROR,
      "'%0' cannot be signed or unsigned")
+DIAG(ext_invalid_sign_spec, EXTENSION,
+     "'%0' cannot be signed or unsigned")
 DIAG(err_invalid_short_spec, ERROR,
      "'short %0' is invalid")
 DIAG(err_invalid_long_spec, ERROR,
