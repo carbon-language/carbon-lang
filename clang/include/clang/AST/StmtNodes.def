@@ -106,7 +106,7 @@ STMT(76, ObjCPropertyRefExpr  , Expr)
 STMT(77, OverloadExpr         , Expr)
 STMT(78, ShuffleVectorExpr    , Expr)
 
-LAST_EXPR(79)
+LAST_EXPR(78)
 
 #undef STMT
 #undef FIRST_STMT
