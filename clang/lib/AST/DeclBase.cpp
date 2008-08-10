@@ -26,11 +26,13 @@ static unsigned nFuncs = 0;
 static unsigned nVars = 0;
 static unsigned nParmVars = 0;
 static unsigned nSUC = 0;
+static unsigned nCXXSUC = 0;
 static unsigned nEnumConst = 0;
 static unsigned nEnumDecls = 0;
 static unsigned nNamespaces = 0;
 static unsigned nTypedef = 0;
 static unsigned nFieldDecls = 0;
+static unsigned nCXXFieldDecls = 0;
 static unsigned nInterfaceDecls = 0;
 static unsigned nClassDecls = 0;
 static unsigned nMethodDecls = 0;
@@ -85,7 +87,7 @@ bool Decl::CollectingStats(bool Enable) {
 void Decl::PrintStats() {
   fprintf(stderr, "*** Decl Stats:\n");
   fprintf(stderr, "  %d decls total.\n", 
-          int(nFuncs+nVars+nParmVars+nFieldDecls+nSUC+
+          int(nFuncs+nVars+nParmVars+nFieldDecls+nSUC+nCXXFieldDecls+nCXXSUC+
               nEnumDecls+nEnumConst+nTypedef+nInterfaceDecls+nClassDecls+
               nMethodDecls+nProtocolDecls+nCategoryDecls+nIvarDecls+
               nNamespaces));
@@ -106,6 +108,12 @@ void Decl::PrintStats() {
   fprintf(stderr, "    %d struct/union/class decls, %d each (%d bytes)\n", 
           nSUC, (int)sizeof(RecordDecl),
           int(nSUC*sizeof(RecordDecl)));
+  fprintf(stderr, "    %d C++ field decls, %d each (%d bytes)\n", 
+          nCXXFieldDecls, (int)sizeof(CXXFieldDecl),
+          int(nCXXFieldDecls*sizeof(CXXFieldDecl)));
+  fprintf(stderr, "    %d C++ struct/union/class decls, %d each (%d bytes)\n", 
+          nCXXSUC, (int)sizeof(CXXRecordDecl),
+          int(nCXXSUC*sizeof(CXXRecordDecl)));
   fprintf(stderr, "    %d enum decls, %d each (%d bytes)\n", 
           nEnumDecls, (int)sizeof(EnumDecl), 
           int(nEnumDecls*sizeof(EnumDecl)));
@@ -161,6 +169,7 @@ void Decl::PrintStats() {
           int(nFuncs*sizeof(FunctionDecl)+
               nVars*sizeof(VarDecl)+nParmVars*sizeof(ParmVarDecl)+
               nFieldDecls*sizeof(FieldDecl)+nSUC*sizeof(RecordDecl)+
+              nCXXFieldDecls*sizeof(CXXFieldDecl)+nCXXSUC*sizeof(CXXRecordDecl)+
               nEnumDecls*sizeof(EnumDecl)+nEnumConst*sizeof(EnumConstantDecl)+
               nTypedef*sizeof(TypedefDecl)+
               nInterfaceDecls*sizeof(ObjCInterfaceDecl)+
@@ -209,9 +218,9 @@ void Decl::addDeclKind(Kind k) {
   case ImplicitParam:
   case TranslationUnit:     break;
 
+  case CXXField:            nCXXFieldDecls++; break;
+  case CXXStruct: case CXXUnion: case CXXClass: nCXXSUC++; break;
   // FIXME: Statistics for C++ decls.
-  case CXXField:
-  case CXXStruct:  case CXXUnion:  case CXXClass:
   case CXXMethod:
   case CXXClassVar:
     break;
