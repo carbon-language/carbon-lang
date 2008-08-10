@@ -217,7 +217,7 @@ def main(args):
     if action == 'link':
         for i, file in enumerate(files):
             ext = extension(file)
-            if ext != "o" and ext != "a":
+            if ext != "o" and ext != "a" and ext != "so":
                 out = changeextension(file, "o")
                 args = ['-o', out, file] + compile_opts
                 compile(args)
