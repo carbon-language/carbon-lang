@@ -132,7 +132,8 @@ public:
 
     // Calculate information about the relevant field
     const llvm::Type* Ty = CI->getType();
-    unsigned size = CGM.getTypes().getTargetData().getTypeStoreSizeInBits(Ty);
+    const llvm::TargetData &TD = CGM.getTypes().getTargetData();
+    unsigned size = TD.getTypeStoreSizeInBits(Ty);
     unsigned fieldOffset = CGM.getTypes().getLLVMFieldNo(Field) * size;
     CodeGenTypes::BitFieldInfo bitFieldInfo =
         CGM.getTypes().getBitFieldInfo(Field);
@@ -143,7 +144,12 @@ public:
     // FIXME: This won't work if the struct isn't completely packed!
     unsigned offset = 0, i = 0;
     while (offset < (fieldOffset & -8))
-      offset += CGM.getTypes().getTargetData().getTypeStoreSizeInBits(Elts[i++]->getType());
+      offset += TD.getTypeStoreSizeInBits(Elts[i++]->getType());
+
+    // Advance over 0 sized elements (must terminate in bounds since
+    // the bitfield must have a size).
+    while (TD.getTypeStoreSizeInBits(Elts[i]->getType()) == 0)
+      ++i;
 
     // Promote the size of V if necessary
     // FIXME: This should never occur, but currently it can because
