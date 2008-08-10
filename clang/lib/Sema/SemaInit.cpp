@@ -139,10 +139,11 @@ void InitListChecker::CheckListElementTypes(InitListExpr *IList,
       CheckArrayType(IList, DeclType, Index);
     else
       assert(0 && "Aggregate that isn't a function or array?!");
-  } else if (DeclType->isVoidType()) {
-    // This is clearly invalid, so not much we can do here. Don't bother
-    // with a diagnostic; we'll give an error elsewhere.
+  } else if (DeclType->isVoidType() || DeclType->isFunctionType()) {
+    // This type is invalid, issue a diagnostic.
     Index++;
+    SemaRef->Diag(IList->getLocStart(), diag::err_illegal_initializer_type,
+                  DeclType.getAsString());
     hadError = true;
   } else {
     // In C, all types are either scalars or aggregates, but

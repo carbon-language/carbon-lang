@@ -29,4 +29,5 @@ struct Incomplete* I1 = &(struct Incomplete){1, 2, 3}; // -expected-error {{vari
 void IncompleteFunc(unsigned x) {
   struct Incomplete* I2 = (struct foo[x]){1, 2, 3}; // -expected-error {{variable-sized object may not be initialized}}
   (void){1,2,3}; // -expected-error {{variable has incomplete type}}
+  (void(void)) { 0 }; // -expected-error{{illegal initializer type ('void (void)')}}
 }
