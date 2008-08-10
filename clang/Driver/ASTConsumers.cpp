@@ -526,16 +526,10 @@ namespace {
 
 class ASTSerializer : public ASTConsumer {
 protected:
-  TranslationUnit* TU;
   Diagnostic& Diags;
 
 public:
-  ASTSerializer(Diagnostic& diags) : TU(0), Diags(diags) {}
-
-  virtual void InitializeTU(TranslationUnit &tu) {
-    TU = &tu;
-  }
-
+  ASTSerializer(Diagnostic& diags) : Diags(diags) {}
 };
 
 class SingleFileSerializer : public ASTSerializer {
@@ -544,10 +538,10 @@ public:
   SingleFileSerializer(const llvm::sys::Path& F, Diagnostic& diags)
     : ASTSerializer(diags), FName(F) {}    
   
-  ~SingleFileSerializer() {
+  virtual void HandleTranslationUnit(TranslationUnit& TU) {
     if (Diags.hasErrorOccurred())
       return;
-    EmitASTBitcodeFile(TU, FName);
+    EmitASTBitcodeFile(&TU, FName);
   }
 };
 
@@ -557,12 +551,11 @@ public:
   BuildSerializer(const llvm::sys::Path& dir, Diagnostic& diags)
     : ASTSerializer(diags), EmitDir(dir) {}
   
-  ~BuildSerializer() {
-
-    if (!TU || Diags.hasErrorOccurred())
+  virtual void HandleTranslationUnit(TranslationUnit& TU) {
+    if (Diags.hasErrorOccurred())
       return;
     
-    SourceManager& SourceMgr = TU->getContext().getSourceManager();
+    SourceManager& SourceMgr = TU.getContext().getSourceManager();
     unsigned ID = SourceMgr.getMainFileID();
     assert (ID && "MainFileID not set!");
     const FileEntry* FE = SourceMgr.getFileEntryForID(ID);
@@ -586,7 +579,7 @@ public:
             
     sprintf(&buf[0], "%s-%llX.ast", FE->getName(), (uint64_t) FE->getInode());
     FName.appendComponent(&buf[0]);    
-    EmitASTBitcodeFile(TU, FName);
+    EmitASTBitcodeFile(&TU, FName);
     
     // Now emit the sources.
     
