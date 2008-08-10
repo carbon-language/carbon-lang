@@ -809,3 +809,76 @@ multiplication trees.
 
 //===---------------------------------------------------------------------===//
 
+We generate a horrible  libcall for llvm.powi.  For example, we compile:
+
+#include <cmath>
+double f(double a) { return std::pow(a, 4); }
+
+into:
+
+__Z1fd:
+	subl	$12, %esp
+	movsd	16(%esp), %xmm0
+	movsd	%xmm0, (%esp)
+	movl	$4, 8(%esp)
+	call	L___powidf2$stub
+	addl	$12, %esp
+	ret
+
+GCC produces:
+
+__Z1fd:
+	subl	$12, %esp
+	movsd	16(%esp), %xmm0
+	mulsd	%xmm0, %xmm0
+	mulsd	%xmm0, %xmm0
+	movsd	%xmm0, (%esp)
+	fldl	(%esp)
+	addl	$12, %esp
+	ret
+
+//===---------------------------------------------------------------------===//
+
+We compile this program: (from GCC PR11680)
+http://gcc.gnu.org/bugzilla/attachment.cgi?id=4487
+
+Into code that runs the same speed in fast/slow modes, but both modes run 2x
+slower than when compile with GCC (either 4.0 or 4.2):
+
+$ llvm-g++ perf.cpp -O3 -fno-exceptions
+$ time ./a.out fast
+1.821u 0.003s 0:01.82 100.0%	0+0k 0+0io 0pf+0w
+
+$ g++ perf.cpp -O3 -fno-exceptions
+$ time ./a.out fast
+0.821u 0.001s 0:00.82 100.0%	0+0k 0+0io 0pf+0w
+
+It looks like we are making the same inlining decisions, so this may be raw
+codegen badness or something else (haven't investigated).
+
+//===---------------------------------------------------------------------===//
+
+We miss some instcombines for stuff like this:
+void bar (void);
+void foo (unsigned int a) {
+  /* This one is equivalent to a >= (3 << 2).  */
+  if ((a >> 2) >= 3)
+    bar ();
+}
+
+A few other related ones are in GCC PR14753.
+
+//===---------------------------------------------------------------------===//
+
+Divisibility by constant can be simplified (according to GCC PR12849) from
+being a mulhi to being a mul lo (cheaper).  Testcase:
+
+void bar(unsigned n) {
+  if (n % 3 == 0)
+    true();
+}
+
+I think this basically amounts to a dag combine to simplify comparisons against
+multiply hi's into a comparison against the mullo.
+
+//===---------------------------------------------------------------------===//
