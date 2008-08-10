@@ -138,7 +138,7 @@ def main(args):
             i += 1
 
         # Prefix matches for the link mode
-        if arg[:2] in ['-l', '-L', '-F']:
+        if arg[:2] in ['-l', '-L', '-F', '-R']:
             link_opts.append(arg)
 
         # Enable threads
