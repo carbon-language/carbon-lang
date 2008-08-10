@@ -379,7 +379,7 @@ Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD, bool &Redeclaration) {
 }
 
 /// Predicate for C "tentative" external object definitions (C99 6.9.2).
-bool Sema::isTentativeDefinition(VarDecl *VD) {
+static bool isTentativeDefinition(VarDecl *VD) {
   if (VD->isFileVarDecl())
     return (!VD->getInit() &&
             (VD->getStorageClass() == VarDecl::None ||

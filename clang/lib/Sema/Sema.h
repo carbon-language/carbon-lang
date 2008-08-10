@@ -290,7 +290,6 @@ private:
                                   bool &Redeclaration);
   VarDecl *MergeVarDecl(VarDecl *New, Decl *Old);
   FunctionDecl *MergeCXXFunctionDecl(FunctionDecl *New, FunctionDecl *Old);
-  bool isTentativeDefinition(VarDecl *VD);
   void CheckForFileScopedRedefinitions(Scope *S, VarDecl *VD);
   
   /// Helpers for dealing with function parameters
