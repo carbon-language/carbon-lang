@@ -21,37 +21,6 @@
 using namespace clang;
 using llvm::APSInt;
 
-#define USE_NEW_EVALUATOR 1
-
-static bool CalcFakeICEVal(const Expr *Expr,
-                           llvm::APSInt &Result,
-                           ASTContext &Context) {
-  // Calculate the value of an expression that has a calculatable
-  // value, but isn't an ICE. Currently, this only supports
-  // a very narrow set of extensions, but it can be expanded if needed.
-  if (const ParenExpr *PE = dyn_cast<ParenExpr>(Expr))
-    return CalcFakeICEVal(PE->getSubExpr(), Result, Context);
-  
-  if (const CastExpr *CE = dyn_cast<CastExpr>(Expr)) {
-    QualType CETy = CE->getType();
-    if ((CETy->isIntegralType() && !CETy->isBooleanType()) ||
-        CETy->isPointerType()) {
-      if (CalcFakeICEVal(CE->getSubExpr(), Result, Context)) {
-        Result.extOrTrunc(Context.getTypeSize(CETy));
-        // FIXME: This assumes pointers are signed.
-        Result.setIsSigned(CETy->isSignedIntegerType() ||
-                           CETy->isPointerType());
-        return true;
-      }
-    }
-  }
-  
-  if (Expr->getType()->isIntegralType())
-    return Expr->isIntegerConstantExpr(Result, Context);
-  
-  return false;
-}
-
 /// EvalInfo - This is a private struct used by the evaluator to capture
 /// information about a subexpression as it is folded.  It retains information
 /// about the AST context, but also maintains information about the folded
@@ -552,7 +521,7 @@ bool IntExprEvaluator::HandleCast(SourceLocation CastLoc,
 
 bool Expr::tryEvaluate(APValue &Result, ASTContext &Ctx) const {
   llvm::APSInt sInt(32);
-#if USE_NEW_EVALUATOR
+  
   EvalInfo Info(Ctx);
   if (getType()->isIntegerType()) {
     if (EvaluateInteger(this, sInt, Info)) {
@@ -561,13 +530,6 @@ bool Expr::tryEvaluate(APValue &Result, ASTContext &Ctx) const {
     }
   } else
     return false;
-    
-#else
-  if (CalcFakeICEVal(this, sInt, Ctx)) {
-    Result = APValue(sInt);
-    return true;
-  }
-#endif
-  
+      
   return false;
 }
