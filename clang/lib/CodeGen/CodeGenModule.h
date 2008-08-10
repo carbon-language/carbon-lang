@@ -39,6 +39,7 @@ namespace clang {
   class Decl;
   class Expr;
   class Stmt;
+  class StringLiteral;
   class NamedDecl;
   class ValueDecl;
   class VarDecl;
@@ -133,6 +134,10 @@ public:
   ///
   llvm::Function *getBuiltinLibFunction(unsigned BuiltinID);
   llvm::Constant *GetAddrOfConstantCFString(const std::string& str);
+
+  /// getStringForStringLiteral - Return the appropriate bytes for a
+  /// string literal, properly padded to match the literal type.
+  std::string getStringForStringLiteral(const StringLiteral *E);
 
   /// GetAddrOfConstantString -- returns a pointer to the character
   /// array containing the literal.  The result is pointer to array type.

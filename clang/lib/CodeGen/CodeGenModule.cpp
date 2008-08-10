@@ -902,12 +902,32 @@ GetAddrOfConstantCFString(const std::string &str) {
   return GV;
 }
 
+/// getStringForStringLiteral - Return the appropriate bytes for a
+/// string literal, properly padded to match the literal type.
+std::string CodeGenModule::getStringForStringLiteral(const StringLiteral *E) {
+  assert(!E->isWide() && "FIXME: Wide strings not supported yet!");
+  const char *StrData = E->getStrData();
+  unsigned Len = E->getByteLength();
+
+  const ConstantArrayType *CAT =
+    getContext().getAsConstantArrayType(E->getType());
+  assert(CAT && "String isn't pointer or array!");
+  
+  // Resize the string to the right size
+  // FIXME: What about wchar_t strings?
+  std::string Str(StrData, StrData+Len);
+  uint64_t RealLen = CAT->getSize().getZExtValue();
+  Str.resize(RealLen, '\0');
+  
+  return Str;
+}
+
 /// GenerateWritableString -- Creates storage for a string literal.
 static llvm::Constant *GenerateStringLiteral(const std::string &str, 
                                              bool constant,
                                              CodeGenModule &CGM) {
   // Create Constant for this string literal
-  llvm::Constant *C = llvm::ConstantArray::get(str, false);
+  llvm::Constant *C = llvm::ConstantArray::get(str);
   
   // Create a global variable for this string
   C = new llvm::GlobalVariable(C->getType(), constant, 

@@ -354,28 +354,12 @@ public:
   }
 
   llvm::Constant *VisitStringLiteral(StringLiteral *E) {
-    const char *StrData = E->getStrData();
-    unsigned Len = E->getByteLength();
     assert(!E->getType()->isPointerType() && "Strings are always arrays");
     
     // Otherwise this must be a string initializing an array in a static
     // initializer.  Don't emit it as the address of the string, emit the string
     // data itself as an inline array.
-    const ConstantArrayType *CAT =
-      CGM.getContext().getAsConstantArrayType(E->getType());
-    assert(CAT && "String isn't pointer or array!");
-    
-    std::string Str(StrData, StrData + Len);
-    // Null terminate the string before potentially truncating it.
-    // FIXME: What about wchar_t strings?
-    Str.push_back(0);
-    
-    uint64_t RealLen = CAT->getSize().getZExtValue();
-    // String or grow the initializer to the required size.
-    if (RealLen != Str.size())
-      Str.resize(RealLen);
-    
-    return llvm::ConstantArray::get(Str, false);
+    return llvm::ConstantArray::get(CGM.getStringForStringLiteral(E), false);
   }
 
   llvm::Constant *VisitDeclRefExpr(DeclRefExpr *E) {
@@ -775,12 +759,8 @@ public:
       return llvm::ConstantExpr::getGetElementPtr(Base, &Index, 1);
     }
     case Expr::StringLiteralClass: {
-      StringLiteral *String = cast<StringLiteral>(E);
-      assert(!String->isWide() && "Cannot codegen wide strings yet");
-      const char *StrData = String->getStrData();
-      unsigned Len = String->getByteLength();
-
-      return CGM.GetAddrOfConstantString(std::string(StrData, StrData + Len));
+      StringLiteral *S = cast<StringLiteral>(E);
+      return CGM.GetAddrOfConstantString(CGM.getStringForStringLiteral(S));
     }
     case Expr::UnaryOperatorClass: {
       UnaryOperator *Exp = cast<UnaryOperator>(E);
