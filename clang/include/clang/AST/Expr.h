@@ -101,6 +101,7 @@ public:
   llvm::APSInt getIntegerConstantExprValue(ASTContext &Ctx) const {
     llvm::APSInt X(32);
     bool success = isIntegerConstantExpr(X, Ctx);
+    success = success;
     assert(success && "Illegal argument to getIntegerConstantExpr");
     return X;
   }
@@ -1214,10 +1215,7 @@ public:
 
   unsigned getShuffleMaskIdx(ASTContext &Ctx, unsigned N) {
     assert((N < NumExprs - 2) && "Shuffle idx out of range!");
-    llvm::APSInt Result(32);
-    bool result = getExpr(N+2)->isIntegerConstantExpr(Result, Ctx);
-    assert(result && "Must be integer constant");
-    return Result.getZExtValue();
+    return getExpr(N+2)->getIntegerConstantExprValue(Ctx).getZExtValue();
   }
   
   // Iterators
