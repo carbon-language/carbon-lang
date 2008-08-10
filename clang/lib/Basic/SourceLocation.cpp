@@ -79,6 +79,12 @@ const FileEntry* FullSourceLoc::getFileEntryForLoc() const {
   return SrcMgr->getFileEntryForLoc(Loc);
 }
 
+bool FullSourceLoc::isInSystemHeader() const {
+  assert (isValid());
+  return SrcMgr->isInSystemHeader(Loc);
+}
+
+
 const char * FullSourceLoc::getCharacterData() const {
   assert (isValid());
   return SrcMgr->getCharacterData(Loc);

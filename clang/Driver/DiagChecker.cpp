@@ -183,8 +183,11 @@ static bool CompareDiagLists(SourceManager &SourceMgr,
 static bool CheckResults(Preprocessor &PP,
                          const DiagList &ExpectedErrors,
                          const DiagList &ExpectedWarnings) {
+  const DiagnosticClient *DiagClient = PP.getDiagnostics().getClient();
+  assert(DiagClient != 0 &&
+      "DiagChecker requires a valid TextDiagnosticBuffer");
   const TextDiagnosticBuffer &Diags =
-    static_cast<const TextDiagnosticBuffer&>(PP.getDiagnostics().getClient());
+    static_cast<const TextDiagnosticBuffer&>(*DiagClient);
   SourceManager &SourceMgr = PP.getSourceManager();
 
   // We want to capture the delta between what was expected and what was

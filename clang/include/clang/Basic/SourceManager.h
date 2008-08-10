@@ -112,25 +112,30 @@ namespace SrcMgr {
     /// ChunkNo - Really large buffers are broken up into chunks that are
     /// each (1 << SourceLocation::FilePosBits) in size.  This specifies the
     /// chunk number of this FileID.
-    unsigned ChunkNo;
+    unsigned ChunkNo:30;
+    
+    /// isSystemHeader - Set for system header files.
+    bool isSysHeader:1;
     
     /// Content - Information about the source buffer itself.
     const ContentCache* Content;
-    
+
   public:
     /// get - Return a FileIDInfo object.
     static FileIDInfo get(SourceLocation IL, unsigned CN, 
-                          const ContentCache *Con) {
+                          const ContentCache *Con, bool SysHeader) {
       FileIDInfo X;
       X.IncludeLoc = IL;
       X.ChunkNo = CN;
       X.Content = Con;
+      X.isSysHeader = SysHeader;
       return X;
     }
     
     SourceLocation getIncludeLoc() const { return IncludeLoc; }
     unsigned getChunkNo() const { return ChunkNo; }
     const ContentCache* getContentCache() const { return Content; }
+    bool isSystemHeader() const { return isSysHeader; }
     
     /// Emit - Emit this FileIDInfo to Bitcode.
     void Emit(llvm::Serializer& S) const;
@@ -244,10 +249,11 @@ public:
   /// createFileID - Create a new FileID that represents the specified file
   /// being #included from the specified IncludePosition.  This returns 0 on
   /// error and translates NULL into standard input.
-  unsigned createFileID(const FileEntry *SourceFile, SourceLocation IncludePos){
+  unsigned createFileID(const FileEntry *SourceFile, SourceLocation IncludePos,
+                        bool isSysHeader = false) {
     const SrcMgr::ContentCache *IR = getContentCache(SourceFile);
     if (IR == 0) return 0;    // Error opening file?
-    return createFileID(IR, IncludePos);
+    return createFileID(IR, IncludePos, isSysHeader);
   }
   
   /// createMainFileID - Create the FileID for the main source file.
@@ -262,8 +268,10 @@ public:
   /// createFileIDForMemBuffer - Create a new FileID that represents the
   /// specified memory buffer.  This does no caching of the buffer and takes
   /// ownership of the MemoryBuffer, so only pass a MemoryBuffer to this once.
-  unsigned createFileIDForMemBuffer(const llvm::MemoryBuffer *Buffer) {
-    return createFileID(createMemBufferContentCache(Buffer), SourceLocation());
+  unsigned createFileIDForMemBuffer(const llvm::MemoryBuffer *Buffer,
+                                    bool isSysHeader = false) {
+    return createFileID(createMemBufferContentCache(Buffer), SourceLocation(),
+                        isSysHeader);
   }
   
   /// createMainFileIDForMembuffer - Create the FileID for a memory buffer
@@ -421,6 +429,12 @@ public:
   bool isFromMainFile(SourceLocation Loc) const {
     return getCanonicalFileID(Loc) == getMainFileID();
   } 
+
+  /// isInSystemHeader - Returns if a SourceLocation is in a system header.
+  bool isInSystemHeader(SourceLocation Loc) const {
+    assert (Loc.isFileID() && "method only valid for file ids");
+    return getFIDInfo(Loc.getFileID())->isSystemHeader();
+  }
   
   /// PrintStats - Print statistics to stderr.
   ///
@@ -440,7 +454,7 @@ private:
   ///  include position.  This works regardless of whether the ContentCache
   ///  corresponds to a file or some other input source.
   unsigned createFileID(const SrcMgr::ContentCache* File,
-                        SourceLocation IncludePos);
+                        SourceLocation IncludePos, bool isSysHeader = false);
     
   /// getContentCache - Create or return a cached ContentCache for the specified
   ///  file.  This returns null on failure.

@@ -1344,14 +1344,14 @@ static void ProcessSerializedFile(const std::string& InFile, Diagnostic& Diag,
   llvm::OwningPtr<ASTConsumer>
     Consumer(CreateASTConsumer(InFile, Diag, FileMgr, TU->getLangOptions(),
                                0, 0));
-  
+
   if (!Consumer) {      
     fprintf(stderr, "Unsupported program action with serialized ASTs!\n");
     exit (1);
   }
-  
+
   Consumer->Initialize(TU->getContext());
-  
+
   // FIXME: We need to inform Consumer about completed TagDecls as well.
   for (TranslationUnit::iterator I=TU->begin(), E=TU->end(); I!=E; ++I)
     Consumer->HandleTopLevelDecl(*I);
@@ -1387,7 +1387,7 @@ int main(int argc, char **argv) {
   
   // Create the diagnostic client for reporting errors or for
   // implementing -verify.
-  TextDiagnostics* TextDiagClient = 0;
+  DiagnosticClient* TextDiagClient = 0;
   
   if (!VerifyDiagnostics) {
     // Print diagnostics to stderr by default.
@@ -1460,7 +1460,6 @@ int main(int argc, char **argv) {
       
       // Process the -I options and set them in the HeaderInfo.
       HeaderSearch HeaderInfo(FileMgr);
-      if (TextDiagClient) TextDiagClient->setHeaderSearch(HeaderInfo);
       
       // FIXME: Sink IncludeGroup into this loop.
       IncludeGroup[0].clear();

@@ -674,7 +674,8 @@ void Preprocessor::HandleIncludeDirective(Token &IncludeTok,
   }
 
   // Look up the file, create a File ID for it.
-  unsigned FileID = SourceMgr.createFileID(File, FilenameTok.getLocation());
+  unsigned FileID = SourceMgr.createFileID(File, FilenameTok.getLocation(),
+                                           isSystemHeader(File));
   if (FileID == 0)
     return Diag(FilenameTok, diag::err_pp_file_not_found,
                 std::string(FilenameStart, FilenameEnd));

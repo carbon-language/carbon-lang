@@ -203,11 +203,10 @@ Diagnostic::Level Diagnostic::getDiagnosticLevel(unsigned DiagID) const {
   }
 }
 
-/// Report - Issue the message to the client. If the client wants us to stop
-/// compilation, return true, otherwise return false.  DiagID is a member of
-/// the diag::kind enum.  
+/// Report - Issue the message to the client.
+///  DiagID is a member of the diag::kind enum.  
 void Diagnostic::Report(DiagnosticClient* C,
-                        FullSourceLoc Pos, unsigned DiagID,
+                        FullSourceLoc Loc, unsigned DiagID,
                         const std::string *Strs, unsigned NumStrs,
                         const SourceRange *Ranges, unsigned NumRanges) {
   
@@ -217,33 +216,55 @@ void Diagnostic::Report(DiagnosticClient* C,
   // If the client doesn't care about this message, don't issue it.
   if (DiagLevel == Diagnostic::Ignored)
     return;
-  
+
   // Set the diagnostic client if it isn't set already.
   if (!C) C = Client;
 
-  // If this is not an error and we are in a system header, ignore it.  We have
-  // to check on the original class here, because we also want to ignore
-  // extensions and warnings in -Werror and -pedantic-errors modes, which *map*
-  // warnings/extensions to errors.
+  // If this is not an error and we are in a system header, ignore it.  We
+  // have to check on the original DiagID here, because we also want to
+  // ignore extensions and warnings in -Werror and -pedantic-errors modes,
+  // which *map* warnings/extensions to errors.
   if (DiagID < diag::NUM_BUILTIN_DIAGNOSTICS &&
       getBuiltinDiagClass(DiagID) != ERROR &&
-      Client->isInSystemHeader(Pos))
+      Loc.isValid() && Loc.isFileID() && Loc.isInSystemHeader())
     return;
   
   if (DiagLevel >= Diagnostic::Error) {
     ErrorOccurred = true;
-    
-    if (C == Client)
+
+    if (C != 0 && C == Client)
       ++NumErrors;
   }
 
   // Finally, report it.
-  
-  C->HandleDiagnostic(*this, DiagLevel, Pos, (diag::kind)DiagID,
-                      Strs, NumStrs, Ranges, NumRanges);
-  
-  if (C == Client)
+ 
+  if (C != 0)
+    C->HandleDiagnostic(*this, DiagLevel, Loc, (diag::kind)DiagID,
+                        Strs, NumStrs, Ranges, NumRanges);
+
+  if (C != 0 && C == Client)
     ++NumDiagnostics;
 }
 
+
 DiagnosticClient::~DiagnosticClient() {}
+
+std::string DiagnosticClient::FormatDiagnostic(Diagnostic &Diags,
+                                               Diagnostic::Level Level,
+                                               diag::kind ID,
+                                               const std::string *Strs,
+                                               unsigned NumStrs) {
+  std::string Msg = Diags.getDescription(ID);
+  
+  // Replace all instances of %0 in Msg with 'Extra'.
+  for (unsigned i = 0; i < Msg.size() - 1; ++i) {
+    if (Msg[i] == '%' && isdigit(Msg[i + 1])) {
+      unsigned StrNo = Msg[i + 1] - '0';
+      Msg = std::string(Msg.begin(), Msg.begin() + i) +
+            (StrNo < NumStrs ? Strs[StrNo] : "<<<INTERNAL ERROR>>>") +
+            std::string(Msg.begin() + i + 2, Msg.end());
+    }
+  }
+
+  return Msg;
+}

@@ -76,16 +76,17 @@ private:
 
   /// CustomDiagInfo - Information for uniquing and looking up custom diags.
   diag::CustomDiagInfo *CustomDiagInfo;
+
 public:
-  explicit Diagnostic(DiagnosticClient *client);
+  explicit Diagnostic(DiagnosticClient *client = 0);
   ~Diagnostic();
   
   //===--------------------------------------------------------------------===//
   //  Diagnostic characterization methods, used by a client to customize how
   //
   
-  DiagnosticClient &getClient() { return *Client; };
-  const DiagnosticClient &getClient() const { return *Client; };
+  DiagnosticClient *getClient() { return Client; };
+  const DiagnosticClient *getClient() const { return Client; };
     
   void setClient(DiagnosticClient* client) { Client = client; }
 
@@ -181,12 +182,13 @@ public:
 /// DiagnosticClient - This is an abstract interface implemented by clients of
 /// the front-end, which formats and prints fully processed diagnostics.
 class DiagnosticClient {
+protected:
+  std::string FormatDiagnostic(Diagnostic &Diags, Diagnostic::Level Level,
+                               diag::kind ID,
+                               const std::string *Strs,
+                               unsigned NumStrs);
 public:
   virtual ~DiagnosticClient();
-
-  /// isInSystemHeader - If the client can tell that this is a system header,
-  /// return true.
-  virtual bool isInSystemHeader(FullSourceLoc Pos) const { return false; }
 
   /// HandleDiagnostic - Handle this diagnostic, reporting it to the user or
   /// capturing it to a log as needed.

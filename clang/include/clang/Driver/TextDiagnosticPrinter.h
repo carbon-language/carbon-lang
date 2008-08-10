@@ -15,14 +15,14 @@
 #ifndef TEXT_DIAGNOSTIC_PRINTER_H_
 #define TEXT_DIAGNOSTIC_PRINTER_H_
 
-#include "clang/Driver/TextDiagnostics.h"
+#include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceLocation.h"
 #include "llvm/Support/Streams.h"
 
 namespace clang {
 class SourceManager;
 
-class TextDiagnosticPrinter : public TextDiagnostics {
+class TextDiagnosticPrinter : public DiagnosticClient {
   FullSourceLoc LastWarningLoc;
   FullSourceLoc LastLoc;
   llvm::OStream OS;

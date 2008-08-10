@@ -14,7 +14,7 @@
 #ifndef DRIVER_TEXT_DIAGNOSTIC_BUFFER_H_
 #define DRIVER_TEXT_DIAGNOSTIC_BUFFER_H_
 
-#include "clang/Driver/TextDiagnostics.h"
+#include "clang/Basic/Diagnostic.h"
 #include <vector>
 
 namespace clang {
@@ -22,7 +22,7 @@ namespace clang {
 class Preprocessor;
 class SourceManager;
 
-class TextDiagnosticBuffer : public TextDiagnostics {
+class TextDiagnosticBuffer : public DiagnosticClient {
 public:
   typedef std::vector<std::pair<SourceLocation, std::string> > DiagList;
   typedef DiagList::iterator iterator;
@@ -30,8 +30,6 @@ public:
 private:
   DiagList Errors, Warnings;
 public:
-  TextDiagnosticBuffer() {}
-
   const_iterator err_begin() const  { return Errors.begin(); }
   const_iterator err_end() const    { return Errors.end(); }
 

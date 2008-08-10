@@ -33,9 +33,6 @@ void PathDiagnosticClient::HandleDiagnostic(Diagnostic &Diags,
   
   PathDiagnostic* D = new PathDiagnostic();
   
-  // Ripped from TextDiagnostics::FormatDiagnostic.  Perhaps we should
-  // centralize it somewhere?
-  
   std::ostringstream os;
   
   switch (DiagLevel) {
@@ -46,17 +43,8 @@ void PathDiagnosticClient::HandleDiagnostic(Diagnostic &Diags,
     case Diagnostic::Fatal:   os << "fatal error: "; break;
       break;
   }
-  
-  std::string Msg = Diags.getDescription(ID);
 
-  for (unsigned i = 0; i < Msg.size() - 1; ++i) {
-    if (Msg[i] == '%' && isdigit(Msg[i + 1])) {
-      unsigned StrNo = Msg[i + 1] - '0';
-      Msg = std::string(Msg.begin(), Msg.begin() + i) +
-      (StrNo < NumStrs ? Strs[StrNo] : "<<<INTERNAL ERROR>>>") +
-      std::string(Msg.begin() + i + 2, Msg.end());
-    }
-  }
+  std::string Msg = FormatDiagnostic(Diags, DiagLevel, ID, Strs, NumStrs);
   
   os << Msg;
   

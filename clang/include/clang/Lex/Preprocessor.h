@@ -469,6 +469,9 @@ private:
   /// isInPrimaryFile - Return true if we're in the top-level file, not in a
   /// #include.
   bool isInPrimaryFile() const;
+
+  /// isSystemHeader - Return true if F is a system header.
+  bool isSystemHeader(const FileEntry* F) const;
   
   /// DiscardUntilEndOfDirective - Read and discard all tokens remaining on the
   /// current line until the tok::eom token is found.

@@ -246,6 +246,8 @@ public:
   
   const char* getSourceName() const;
   const FileEntry* getFileEntryForLoc() const;
+
+  bool isInSystemHeader() const;
   
   bool isFileID() const { return Loc.isFileID(); }
   
