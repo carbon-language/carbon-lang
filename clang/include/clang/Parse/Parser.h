@@ -198,10 +198,7 @@ private:
   /// Note that this differs from the Preprocessor's LookAhead method, because
   /// the Parser always has one token lexed that the preprocessor doesn't.
   ///
-  /// NOTE: is a relatively expensive method, so it should not be used in common
-  /// code paths if possible!
-  ///
-  Token GetLookAheadToken(unsigned N) {
+  const Token &GetLookAheadToken(unsigned N) {
     if (N == 0 || Tok.is(tok::eof)) return Tok;
     return PP.LookAhead(N-1);
   }
@@ -209,7 +206,7 @@ private:
   /// NextToken - This peeks ahead one token and returns it without
   /// consuming it.
   const Token &NextToken() {
-    return PP.LookNext();
+    return PP.LookAhead(0);
   }
   
   

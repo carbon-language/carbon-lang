@@ -68,6 +68,9 @@ Preprocessor::Preprocessor(Diagnostic &diags, const LangOptions &opts,
   InMacroArgs = false;
   NumCachedTokenLexers = 0;
 
+  CacheTokens = false;
+  CachedLexPos = 0;
+
   // "Poison" __VA_ARGS__, which can only appear in the expansion of a macro.
   // This gets unpoisoned where it is allowed.
   (Ident__VA_ARGS__ = getIdentifierInfo("__VA_ARGS__"))->setIsPoisoned();
@@ -579,4 +582,3 @@ void Preprocessor::HandleIdentifier(Token &Identifier) {
   if (II.isExtensionToken() && Features.C99) 
     Diag(Identifier, diag::ext_token_used);
 }
-

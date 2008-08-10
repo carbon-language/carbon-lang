@@ -71,6 +71,9 @@ class Preprocessor {
   bool DisableMacroExpansion : 1;  // True if macro expansion is disabled.
   bool InMacroArgs : 1;            // True if parsing fn macro invocation args.
 
+  /// CacheTokens - True when the lexed tokens are cached for backtracking.
+  bool CacheTokens : 1;
+
   /// Identifiers - This is mapping/lookup information for all identifiers in
   /// the program, including program keywords.
   IdentifierTable Identifiers;
@@ -139,10 +142,24 @@ class Preprocessor {
   unsigned NumCachedTokenLexers;
   TokenLexer *TokenLexerCache[TokenLexerCacheSize];
 
-  /// PeekedToken - Cache the token that was retrieved through LookNext().
-  /// This is a valid token (its Location is valid) when LookNext() is
-  /// called and gets invalid again when it is "consumed" by Lex().
-  Token PeekedToken;
+  // Cached tokens state.
+
+  typedef std::vector<Token> CachedTokensTy;
+
+  /// CachedTokens - Cached tokens are stored here when we do backtracking or
+  /// lookahead. They are "lexed" by the CachingLex() method.
+  CachedTokensTy CachedTokens;
+
+  /// CachedLexPos - The position of the cached token that CachingLex() should
+  /// "lex" next. If it points beyond the CachedTokens vector, it means that
+  /// a normal Lex() should be invoked.
+  CachedTokensTy::size_type CachedLexPos;
+
+  /// CachedBacktrackPos - Gets set by the EnableBacktrackAtThisPos() method,
+  /// to indicate the position where CachedLexPos should be set when the
+  /// BackTrack() method is invoked.
+  CachedTokensTy::size_type CachedBacktrackPos;
+
 public:
   Preprocessor(Diagnostic &diags, const LangOptions &opts, TargetInfo &target,
                SourceManager &SM, HeaderSearch &Headers);
@@ -258,7 +275,45 @@ public:
   /// lexer stack.  This should only be used in situations where the current
   /// state of the top-of-stack lexer is known.
   void RemoveTopOfLexerStack();
-  
+
+  /// EnableBacktrackAtThisPos - From the point that this method is called, and
+  /// until DisableBacktrack() or Backtrack() is called, the Preprocessor keeps
+  /// track of the lexed tokens so that a subsequent Backtrack() call will make
+  /// the Preprocessor re-lex the same tokens.
+  ///
+  /// EnableBacktrackAtThisPos should not be called again until DisableBacktrack
+  /// or Backtrack is called.
+  ///
+  /// NOTE: *DO NOT* forget to call either DisableBacktrack() or Backtrack() at
+  /// some point after EnableBacktrackAtThisPos. If you don't, caching of tokens
+  /// will continue indefinitely.
+  ///
+  void EnableBacktrackAtThisPos() {
+    assert(!CacheTokens && "Backtrack is already enabled!");
+    CacheTokens = true;
+    CachedBacktrackPos = CachedLexPos;
+    EnterCachingLexMode();
+  }
+
+  /// DisableBacktrack - Stop the caching of tokens that was enabled by
+  /// EnableBacktrackAtThisPos().
+  void DisableBacktrack() {
+    assert(CacheTokens && "Backtrack is not enabled!");
+    CacheTokens = false;
+  }
+
+  /// Backtrack - Make Preprocessor re-lex the tokens that were lexed since
+  /// EnableBacktrackAtThisPos() was previously called. 
+  void Backtrack() {
+    assert(CacheTokens && "Backtrack is not enabled!");
+    CacheTokens = false;
+    CachedLexPos = CachedBacktrackPos;
+  }
+
+  /// isBacktrackEnabled - True if EnableBacktrackAtThisPos() was called and
+  /// caching of tokens is on.
+  bool isBacktrackEnabled() const { return CacheTokens; }
+
   /// Lex - To lex a token from the preprocessor, just pull a token from the
   /// current lexer or macro object.
   void Lex(Token &Result) {
@@ -266,11 +321,8 @@ public:
       CurLexer->Lex(Result);
     else if (CurTokenLexer)
       CurTokenLexer->Lex(Result);
-    else {
-      // We have a peeked token that hasn't been consumed yet.
-      Result = PeekedToken;
-      ConsumedPeekedToken();
-    }
+    else
+      CachingLex(Result);
   }
   
   /// LexNonComment - Lex a token.  If it's a comment, keep lexing until we get
@@ -300,32 +352,12 @@ public:
   /// returned by Lex(), LookAhead(1) returns the token after it, etc.  This
   /// returns normal tokens after phase 5.  As such, it is equivalent to using
   /// 'Lex', not 'LexUnexpandedToken'.
-  ///
-  /// NOTE: is a relatively expensive method, so it should not be used in common
-  /// code paths if possible!
-  ///
-  Token LookAhead(unsigned N);
-
-  /// LookNext - Returns the next token that would be returned by Lex() without
-  /// consuming it.
-  const Token &LookNext() {
-    if (PeekedToken.getLocation().isInvalid()) {
-      // We don't have a peeked token that hasn't been consumed yet.
-      // Peek it now.
-      PeekToken();
-    }
-    return PeekedToken;
+  const Token &LookAhead(unsigned N) {
+    if (CachedLexPos + N < CachedTokens.size())
+      return CachedTokens[CachedLexPos+N];
+    else
+      return PeekAhead(N+1);
   }
-
-private:
-  /// PeekToken - Lexes one token into PeekedToken and pushes CurLexer,
-  /// CurLexerToken into the IncludeMacroStack before setting them to null.
-  void PeekToken();
-
-  /// ConsumedPeekedToken - Called when Lex() is about to return the PeekedToken
-  /// and have it "consumed".
-  void ConsumedPeekedToken();
-public:
   
   /// Diag - Forwarding function for diagnostics.  This emits a diagnostic at
   /// the specified Token's location, translating the token's start
@@ -523,6 +555,17 @@ private:
                               bool isAngled, const DirectoryLookup *FromDir,
                               const DirectoryLookup *&CurDir);
     
+  //===--------------------------------------------------------------------===//
+  // Caching stuff.
+  void CachingLex(Token &Result);
+  bool InCachingLexMode() const { return CurLexer == 0 && CurTokenLexer == 0; }
+  void EnterCachingLexMode();
+  void ExitCachingLexMode() {
+    if (InCachingLexMode())
+      RemoveTopOfLexerStack();
+  }
+  const Token &PeekAhead(unsigned N);
+
   //===--------------------------------------------------------------------===//
   /// Handle*Directive - implement the various preprocessor directives.  These
   /// should side-effect the current preprocessor object so that the next call
