@@ -104,8 +104,8 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
   case Expr::CallExprClass: return EmitCallExprLValue(cast<CallExpr>(E));
   case Expr::DeclRefExprClass: return EmitDeclRefLValue(cast<DeclRefExpr>(E));
   case Expr::ParenExprClass:return EmitLValue(cast<ParenExpr>(E)->getSubExpr());
-  case Expr::PreDefinedExprClass:
-    return EmitPreDefinedLValue(cast<PreDefinedExpr>(E));
+  case Expr::PredefinedExprClass:
+    return EmitPredefinedLValue(cast<PredefinedExpr>(E));
   case Expr::StringLiteralClass:
     return EmitStringLiteralLValue(cast<StringLiteral>(E));
 
@@ -507,7 +507,7 @@ LValue CodeGenFunction::EmitStringLiteralLValue(const StringLiteral *E) {
   return LValue::MakeAddr(CGM.GetAddrOfConstantString(StringLiteral),0);
 }
 
-LValue CodeGenFunction::EmitPreDefinedLValue(const PreDefinedExpr *E) {
+LValue CodeGenFunction::EmitPredefinedLValue(const PredefinedExpr *E) {
   std::string FunctionName;
   if(const FunctionDecl *FD = dyn_cast<FunctionDecl>(CurFuncDecl)) {
     FunctionName = FD->getName();
@@ -520,13 +520,13 @@ LValue CodeGenFunction::EmitPreDefinedLValue(const PreDefinedExpr *E) {
   switch (E->getIdentType()) {
     default:
       assert(0 && "unknown pre-defined ident type");
-    case PreDefinedExpr::Func:
+    case PredefinedExpr::Func:
       GlobalVarName = "__func__.";
       break;
-    case PreDefinedExpr::Function:
+    case PredefinedExpr::Function:
       GlobalVarName = "__FUNCTION__.";
       break;
-    case PreDefinedExpr::PrettyFunction:
+    case PredefinedExpr::PrettyFunction:
       // FIXME:: Demangle C++ method names
       GlobalVarName = "__PRETTY_FUNCTION__.";
       break;

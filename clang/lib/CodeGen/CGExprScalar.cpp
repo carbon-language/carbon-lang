@@ -138,7 +138,7 @@ public:
   Value *VisitExtVectorElementExpr(Expr *E) { return EmitLoadOfLValue(E); }
   Value *VisitCompoundLiteralExpr(CompoundLiteralExpr *E) { return EmitLoadOfLValue(E); }
   Value *VisitStringLiteral(Expr *E)  { return EmitLValue(E).getAddress(); }
-  Value *VisitPreDefinedExpr(Expr *E) { return EmitLValue(E).getAddress(); }
+  Value *VisitPredefinedExpr(Expr *E) { return EmitLValue(E).getAddress(); }
 
   Value *VisitInitListExpr(InitListExpr *E) {
     unsigned NumInitElements = E->getNumInits();

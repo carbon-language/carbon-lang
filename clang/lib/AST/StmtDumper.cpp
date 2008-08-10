@@ -116,7 +116,7 @@ namespace  {
     // Exprs
     void VisitExpr(Expr *Node);
     void VisitDeclRefExpr(DeclRefExpr *Node);
-    void VisitPreDefinedExpr(PreDefinedExpr *Node);
+    void VisitPredefinedExpr(PredefinedExpr *Node);
     void VisitCharacterLiteral(CharacterLiteral *Node);
     void VisitIntegerLiteral(IntegerLiteral *Node);
     void VisitFloatingLiteral(FloatingLiteral *Node);
@@ -308,14 +308,14 @@ void StmtDumper::VisitObjCIvarRefExpr(ObjCIvarRefExpr *Node) {
     fprintf(F, " isFreeIvar");
 }
 
-void StmtDumper::VisitPreDefinedExpr(PreDefinedExpr *Node) {
+void StmtDumper::VisitPredefinedExpr(PredefinedExpr *Node) {
   DumpExpr(Node);
   switch (Node->getIdentType()) {
   default: assert(0 && "unknown case");
-  case PreDefinedExpr::Func:           fprintf(F, " __func__"); break;
-  case PreDefinedExpr::Function:       fprintf(F, " __FUNCTION__"); break;
-  case PreDefinedExpr::PrettyFunction: fprintf(F, " __PRETTY_FUNCTION__");break;
-  case PreDefinedExpr::ObjCSuper:      fprintf(F, "super"); break;
+  case PredefinedExpr::Func:           fprintf(F, " __func__"); break;
+  case PredefinedExpr::Function:       fprintf(F, " __FUNCTION__"); break;
+  case PredefinedExpr::PrettyFunction: fprintf(F, " __PRETTY_FUNCTION__");break;
+  case PredefinedExpr::ObjCSuper:      fprintf(F, "super"); break;
   }
 }
 

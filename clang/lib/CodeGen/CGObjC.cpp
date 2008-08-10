@@ -56,9 +56,9 @@ llvm::Value *CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E) {
     llvm::Value *ClassName = CGM.GetAddrOfConstantString(classname);
     ClassName = Builder.CreateStructGEP(ClassName, 0);
     Receiver = Runtime->LookupClass(Builder, ClassName);
-  } else if (isa<PreDefinedExpr>(E->getReceiver())) {
-    assert(cast<PreDefinedExpr>(E->getReceiver())->getIdentType() == 
-           PreDefinedExpr::ObjCSuper);
+  } else if (const PredefinedExpr *PDE =
+               dyn_cast<PredefinedExpr>(E->getReceiver())) {
+    assert(PDE->getIdentType() == PredefinedExpr::ObjCSuper);
     isSuperMessage = true;
     Receiver = LoadObjCSelf();
   } else {

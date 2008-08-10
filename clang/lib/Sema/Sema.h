@@ -444,8 +444,8 @@ public:
   virtual ExprResult ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
                                          IdentifierInfo &II,
                                          bool HasTrailingLParen);
-  virtual ExprResult ActOnPreDefinedExpr(SourceLocation Loc,
-                                            tok::TokenKind Kind);
+  virtual ExprResult ActOnPredefinedExpr(SourceLocation Loc,
+                                         tok::TokenKind Kind);
   virtual ExprResult ActOnNumericConstant(const Token &);
   virtual ExprResult ActOnCharacterConstant(const Token &);
   virtual ExprResult ActOnParenExpr(SourceLocation L, SourceLocation R,

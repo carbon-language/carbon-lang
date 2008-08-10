@@ -397,15 +397,15 @@ Sema::ExprResult Sema::ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
   abort();
 }
 
-Sema::ExprResult Sema::ActOnPreDefinedExpr(SourceLocation Loc,
+Sema::ExprResult Sema::ActOnPredefinedExpr(SourceLocation Loc,
                                            tok::TokenKind Kind) {
-  PreDefinedExpr::IdentType IT;
+  PredefinedExpr::IdentType IT;
   
   switch (Kind) {
   default: assert(0 && "Unknown simple primary expr!");
-  case tok::kw___func__: IT = PreDefinedExpr::Func; break; // [C99 6.4.2.2]
-  case tok::kw___FUNCTION__: IT = PreDefinedExpr::Function; break;
-  case tok::kw___PRETTY_FUNCTION__: IT = PreDefinedExpr::PrettyFunction; break;
+  case tok::kw___func__: IT = PredefinedExpr::Func; break; // [C99 6.4.2.2]
+  case tok::kw___FUNCTION__: IT = PredefinedExpr::Function; break;
+  case tok::kw___PRETTY_FUNCTION__: IT = PredefinedExpr::PrettyFunction; break;
   }
 
   // Verify that this is in a function context.
@@ -423,7 +423,7 @@ Sema::ExprResult Sema::ActOnPreDefinedExpr(SourceLocation Loc,
   llvm::APInt LengthI(32, Length + 1);
   QualType ResTy = Context.CharTy.getQualifiedType(QualType::Const);
   ResTy = Context.getConstantArrayType(ResTy, LengthI, ArrayType::Normal, 0);
-  return new PreDefinedExpr(Loc, ResTy, IT);
+  return new PredefinedExpr(Loc, ResTy, IT);
 }
 
 Sema::ExprResult Sema::ActOnCharacterConstant(const Token &Tok) {

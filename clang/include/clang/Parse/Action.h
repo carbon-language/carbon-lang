@@ -387,7 +387,7 @@ public:
     return 0;
   }
   
-  virtual ExprResult ActOnPreDefinedExpr(SourceLocation Loc,
+  virtual ExprResult ActOnPredefinedExpr(SourceLocation Loc,
                                          tok::TokenKind Kind) {
     return 0;
   }

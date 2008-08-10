@@ -862,7 +862,7 @@ bool Sema::CheckAddressConstantExpressionLValue(const Expr* Init) {
            CheckArithmeticConstantExpression(ASE->getIdx());
   }
   case Expr::StringLiteralClass:
-  case Expr::PreDefinedExprClass:
+  case Expr::PredefinedExprClass:
     return false;
   case Expr::UnaryOperatorClass: {
     const UnaryOperator *Exp = cast<UnaryOperator>(Init);

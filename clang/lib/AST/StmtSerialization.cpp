@@ -130,8 +130,8 @@ Stmt* Stmt::Create(Deserializer& D, ASTContext& C) {
     case ParenExprClass:
       return ParenExpr::CreateImpl(D, C);
       
-    case PreDefinedExprClass:
-      return PreDefinedExpr::CreateImpl(D, C);
+    case PredefinedExprClass:
+      return PredefinedExpr::CreateImpl(D, C);
       
     case ReturnStmtClass:
       return ReturnStmt::CreateImpl(D, C);
@@ -741,17 +741,17 @@ ParenExpr* ParenExpr::CreateImpl(Deserializer& D, ASTContext& C) {
   return new ParenExpr(L,R,val);
 }
 
-void PreDefinedExpr::EmitImpl(Serializer& S) const {
+void PredefinedExpr::EmitImpl(Serializer& S) const {
   S.Emit(Loc);
   S.EmitInt(getIdentType());
   S.Emit(getType());  
 }
 
-PreDefinedExpr* PreDefinedExpr::CreateImpl(Deserializer& D, ASTContext& C) {
+PredefinedExpr* PredefinedExpr::CreateImpl(Deserializer& D, ASTContext& C) {
   SourceLocation Loc = SourceLocation::ReadVal(D);
   IdentType it = static_cast<IdentType>(D.ReadInt());
   QualType Q = QualType::ReadVal(D);
-  return new PreDefinedExpr(Loc,Q,it);
+  return new PredefinedExpr(Loc,Q,it);
 }
 
 void ReturnStmt::EmitImpl(Serializer& S) const {

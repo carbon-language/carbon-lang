@@ -229,8 +229,8 @@ public:
   static DeclRefExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
-/// PreDefinedExpr - [C99 6.4.2.2] - A pre-defined identifier such as __func__.
-class PreDefinedExpr : public Expr {
+/// PredefinedExpr - [C99 6.4.2.2] - A predefined identifier such as __func__.
+class PredefinedExpr : public Expr {
 public:
   enum IdentType {
     Func,
@@ -244,24 +244,24 @@ private:
   SourceLocation Loc;
   IdentType Type;
 public:
-  PreDefinedExpr(SourceLocation l, QualType type, IdentType IT) 
-    : Expr(PreDefinedExprClass, type), Loc(l), Type(IT) {}
+  PredefinedExpr(SourceLocation l, QualType type, IdentType IT) 
+    : Expr(PredefinedExprClass, type), Loc(l), Type(IT) {}
   
   IdentType getIdentType() const { return Type; }
   
   virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
 
   static bool classof(const Stmt *T) { 
-    return T->getStmtClass() == PreDefinedExprClass; 
+    return T->getStmtClass() == PredefinedExprClass; 
   }
-  static bool classof(const PreDefinedExpr *) { return true; }
+  static bool classof(const PredefinedExpr *) { return true; }
   
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
   
   virtual void EmitImpl(llvm::Serializer& S) const;
-  static PreDefinedExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
+  static PredefinedExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 class IntegerLiteral : public Expr {

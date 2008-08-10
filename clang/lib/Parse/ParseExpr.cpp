@@ -466,7 +466,7 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
   case tok::kw___func__:       // primary-expression: __func__ [C99 6.4.2.2]
   case tok::kw___FUNCTION__:   // primary-expression: __FUNCTION__ [GNU]
   case tok::kw___PRETTY_FUNCTION__:  // primary-expression: __P..Y_F..N__ [GNU]
-    Res = Actions.ActOnPreDefinedExpr(Tok.getLocation(), SavedKind);
+    Res = Actions.ActOnPredefinedExpr(Tok.getLocation(), SavedKind);
     ConsumeToken();
     // These can be followed by postfix-expr pieces.
     return ParsePostfixExpressionSuffix(Res);

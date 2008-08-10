@@ -439,9 +439,9 @@ Expr::isLvalueResult Expr::isLvalue(ASTContext &Ctx) const {
     return LV_Valid;
   case ObjCPropertyRefExprClass: // FIXME: check if read-only property.
     return LV_Valid;
-  case PreDefinedExprClass:
-    return (cast<PreDefinedExpr>(this)->getIdentType()
-               == PreDefinedExpr::CXXThis
+  case PredefinedExprClass:
+    return (cast<PredefinedExpr>(this)->getIdentType()
+               == PredefinedExpr::CXXThis
             ? LV_InvalidExpression : LV_Valid);
   case CXXDefaultArgExprClass:
     return cast<CXXDefaultArgExpr>(this)->getExpr()->isLvalue(Ctx);
@@ -510,7 +510,7 @@ bool Expr::hasGlobalStorage() const {
   }
   case ArraySubscriptExprClass:
     return cast<ArraySubscriptExpr>(this)->getBase()->hasGlobalStorage();
-  case PreDefinedExprClass:
+  case PredefinedExprClass:
     return true;
   case CXXDefaultArgExprClass:
     return cast<CXXDefaultArgExpr>(this)->getExpr()->hasGlobalStorage();
@@ -1263,9 +1263,9 @@ Stmt::child_iterator ObjCPropertyRefExpr::child_end() { return &Base+1; }
 Stmt::child_iterator ObjCSuperRefExpr::child_begin() { return child_iterator();}
 Stmt::child_iterator ObjCSuperRefExpr::child_end() { return child_iterator(); }
 
-// PreDefinedExpr
-Stmt::child_iterator PreDefinedExpr::child_begin() { return child_iterator(); }
-Stmt::child_iterator PreDefinedExpr::child_end() { return child_iterator(); }
+// PredefinedExpr
+Stmt::child_iterator PredefinedExpr::child_begin() { return child_iterator(); }
+Stmt::child_iterator PredefinedExpr::child_end() { return child_iterator(); }
 
 // IntegerLiteral
 Stmt::child_iterator IntegerLiteral::child_begin() { return child_iterator(); }

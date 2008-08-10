@@ -403,7 +403,7 @@ namespace {
       return 0;
     }
   
-    virtual ExprResult ActOnPreDefinedExpr(SourceLocation Loc,
+    virtual ExprResult ActOnPredefinedExpr(SourceLocation Loc,
                                            tok::TokenKind Kind) {
       llvm::cout << __FUNCTION__ << "\n";
       return 0;

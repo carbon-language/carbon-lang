@@ -496,20 +496,20 @@ void StmtPrinter::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *Node) {
   // FIXME: OS << Node->getDecl()->getName();
 }
 
-void StmtPrinter::VisitPreDefinedExpr(PreDefinedExpr *Node) {
+void StmtPrinter::VisitPredefinedExpr(PredefinedExpr *Node) {
   switch (Node->getIdentType()) {
     default:
       assert(0 && "unknown case");
-    case PreDefinedExpr::Func:
+    case PredefinedExpr::Func:
       OS << "__func__";
       break;
-    case PreDefinedExpr::Function:
+    case PredefinedExpr::Function:
       OS << "__FUNCTION__";
       break;
-    case PreDefinedExpr::PrettyFunction:
+    case PredefinedExpr::PrettyFunction:
       OS << "__PRETTY_FUNCTION__";
       break;
-    case PreDefinedExpr::ObjCSuper:
+    case PredefinedExpr::ObjCSuper:
       OS << "super";
       break;
   }
