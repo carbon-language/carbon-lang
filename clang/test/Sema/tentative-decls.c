@@ -27,6 +27,10 @@ extern int i4;
 int (*pToArray)[];
 int (*pToArray)[8];
 
+int redef[10];
+int redef[];  // expected-error{{previous definition is here}}
+int redef[11]; // expected-error{{redefinition of 'redef'}}
+
 void func() {
   extern int i1; // expected-error{{previous definition is here}}
   static int i1; // expected-error{{static declaration of 'i1' follows non-static declaration}}

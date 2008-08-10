@@ -391,6 +391,7 @@ bool Sema::isTentativeDefinition(VarDecl *VD) {
 /// when dealing with C "tentative" external object definitions (C99 6.9.2).
 void Sema::CheckForFileScopedRedefinitions(Scope *S, VarDecl *VD) {
   bool VDIsTentative = isTentativeDefinition(VD);
+  bool VDIsIncompleteArray = VD->getType()->isIncompleteArrayType();
   
   for (IdentifierResolver::iterator
        I = IdResolver.begin(VD->getIdentifier(), 
@@ -398,6 +399,14 @@ void Sema::CheckForFileScopedRedefinitions(Scope *S, VarDecl *VD) {
        E = IdResolver.end(); I != E; ++I) {
     if (*I != VD && IdResolver.isDeclInScope(*I, VD->getDeclContext(), S)) {
       VarDecl *OldDecl = dyn_cast<VarDecl>(*I);
+      
+      // Handle the following case:
+      //   int a[10];
+      //   int a[];   - the code below makes sure we set the correct type. 
+      //   int a[11]; - this is an error, size isn't 10.
+      if (OldDecl && VDIsTentative && VDIsIncompleteArray && 
+          OldDecl->getType()->isConstantArrayType())
+        VD->setType(OldDecl->getType());
       
       // Check for "tentative" definitions. We can't accomplish this in 
       // MergeVarDecl since the initializer hasn't been attached.
