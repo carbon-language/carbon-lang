@@ -224,9 +224,9 @@ bool Sema::SemaBuiltinStackAddress(CallExpr *TheCall) {
   // The signature for these builtins is exact; the only thing we need
   // to check is that the argument is a constant.
   SourceLocation Loc;
-  if (!TheCall->getArg(0)->isIntegerConstantExpr(Context, &Loc)) {
+  if (!TheCall->getArg(0)->isIntegerConstantExpr(Context, &Loc))
     return Diag(Loc, diag::err_stack_const_level, TheCall->getSourceRange());
-  }
+  
   return false;
 }
 
@@ -258,43 +258,35 @@ Action::ExprResult Sema::SemaBuiltinShuffleVector(CallExpr *TheCall) {
   unsigned numElements = FAType->getAsVectorType()->getNumElements();
   if (TheCall->getNumArgs() != numElements+2) {
     if (TheCall->getNumArgs() < numElements+2)
-      Diag(TheCall->getLocEnd(), diag::err_typecheck_call_too_few_args,
-           TheCall->getSourceRange());
-    else
-      Diag(TheCall->getLocEnd(), diag::err_typecheck_call_too_many_args,
-           TheCall->getSourceRange());
-    return true;
+      return Diag(TheCall->getLocEnd(), diag::err_typecheck_call_too_few_args,
+                  TheCall->getSourceRange());
+    return Diag(TheCall->getLocEnd(), diag::err_typecheck_call_too_many_args,
+                TheCall->getSourceRange());
   }
 
   for (unsigned i = 2; i < TheCall->getNumArgs(); i++) {
     llvm::APSInt Result(32);
-    if (!TheCall->getArg(i)->isIntegerConstantExpr(Result, Context)) {
-      Diag(TheCall->getLocStart(),
-           diag::err_shufflevector_nonconstant_argument,
-           TheCall->getArg(i)->getSourceRange());
-      return true;
-    }
-    if (Result.getActiveBits() > 64 || Result.getZExtValue() >= numElements*2) {
-      Diag(TheCall->getLocStart(),
-           diag::err_shufflevector_argument_too_large,
-           TheCall->getArg(i)->getSourceRange());
-      return true;
-    }
+    if (!TheCall->getArg(i)->isIntegerConstantExpr(Result, Context))
+      return Diag(TheCall->getLocStart(),
+                  diag::err_shufflevector_nonconstant_argument,
+                  TheCall->getArg(i)->getSourceRange());
+    
+    if (Result.getActiveBits() > 64 || Result.getZExtValue() >= numElements*2)
+      return Diag(TheCall->getLocStart(),
+                  diag::err_shufflevector_argument_too_large,
+                  TheCall->getArg(i)->getSourceRange());
   }
 
   llvm::SmallVector<Expr*, 32> exprs;
 
-  for (unsigned i = 0; i < TheCall->getNumArgs(); i++) {
+  for (unsigned i = 0, e = TheCall->getNumArgs(); i != e; i++) {
     exprs.push_back(TheCall->getArg(i));
     TheCall->setArg(i, 0);
   }
 
-  ShuffleVectorExpr* E = new ShuffleVectorExpr(
-      exprs.begin(), numElements+2, FAType,
-      TheCall->getCallee()->getLocStart(),
-      TheCall->getRParenLoc());
-  
-  return E;
+  return new ShuffleVectorExpr(exprs.begin(), numElements+2, FAType,
+                               TheCall->getCallee()->getLocStart(),
+                               TheCall->getRParenLoc());
 }
 
 /// SemaBuiltinPrefetch - Handle __builtin_prefetch.

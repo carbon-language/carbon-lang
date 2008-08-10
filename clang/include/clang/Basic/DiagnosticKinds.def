@@ -1139,13 +1139,13 @@ DIAG(err_shufflevector_non_vector, ERROR,
 DIAG(err_shufflevector_incompatible_vector, ERROR,
      "first two arguments to __builtin_shufflevector must have the same type")
 DIAG(err_shufflevector_nonconstant_argument, ERROR,
-     "indexes for __builtin_shufflevector must be constant integers")
+     "index for __builtin_shufflevector must be a constant integer")
 DIAG(err_shufflevector_argument_too_large, ERROR,
-     "indexes for __builtin_shufflevector must be less than the total number"
+     "index for __builtin_shufflevector must be less than the total number"
      " of vector elements")
 
 DIAG(err_stack_const_level, ERROR,
-     "the level argument for a stack address builtin must be constant")
+     "level argument for a stack address builtin must be constant")
 
 DIAG(err_prefetch_invalid_argument, ERROR,
      "argument to __builtin_prefetch must be a constant integer")
