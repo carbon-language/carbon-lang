@@ -4,11 +4,11 @@ struct foo { int a, b; };
 
 static struct foo t = (struct foo){0,0};
 static struct foo t2 = {0,0}; 
-static struct foo t3 = t2; // -expected-error {{initializer element is not constant}}
+static struct foo t3 = t2; // -expected-error {{initializer element is not a compile-time constant}}
 static int *p = (int []){2,4}; 
 static int x = (int){1}; // -expected-warning{{braces around scalar initializer}}
 
-static int *p2 = (int []){2,x}; // -expected-error {{initializer element is not constant}}
+static int *p2 = (int []){2,x}; // -expected-error {{initializer element is not a compile-time constant}}
 static int *p3 = (int []){2,"x"}; // -expected-warning {{incompatible pointer to integer conversion initializing 'char [2]', expected 'int'}}
 
 typedef struct { } cache_t; // -expected-warning{{use of empty struct extension}}

@@ -2,7 +2,7 @@
 
 int test1() {
   typedef int x[test1()];  // vla
-  static int y = sizeof(x);  // expected-error {{not constant}}
+  static int y = sizeof(x);  // expected-error {{not a compile-time constant}}
 }
 
 // PR2347

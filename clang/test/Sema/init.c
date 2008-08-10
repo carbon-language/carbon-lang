@@ -38,7 +38,7 @@ int *t = &(*s).z;
 short *a2(void)
 {
   short int b;
-  static short *bp = &b; // expected-error {{initializer element is not constant}}
+  static short *bp = &b; // expected-error {{initializer element is not a compile-time constant}}
 
   return bp;
 }

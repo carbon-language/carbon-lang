@@ -4,8 +4,8 @@ extern int foof() = 1; // expected-error{{illegal initializer (only variables ca
 
 static int x, y, z;
 
-static int ary[] = { x, y, z }; // expected-error{{initializer element is not constant}}
-int ary2[] = { x, y, z }; // expected-error{{initializer element is not constant}}
+static int ary[] = { x, y, z }; // expected-error{{initializer element is not a compile-time constant}}
+int ary2[] = { x, y, z }; // expected-error{{initializer element is not a compile-time constant}}
 
 extern int fileScopeExtern[3] = { 1, 3, 5 }; // expected-warning{{'extern' variable has an initializer}}
 

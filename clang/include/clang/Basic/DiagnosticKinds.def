@@ -719,7 +719,8 @@ DIAG(err_param_default_argument_references_param, ERROR,
 DIAG(err_param_default_argument_references_local, ERROR,
      "default argument references local variable '%0' of enclosing function")
 DIAG(err_param_default_argument_nonfunc, ERROR,
-     "default arguments can only be specified for parameters in a function declaration")
+     "default arguments can only be specified for parameters in a function"
+     " declaration")
 DIAG(err_previous_definition, ERROR,
      "previous definition is here")
 DIAG(err_previous_use, ERROR,
@@ -786,7 +787,7 @@ DIAG(err_at_least_one_initializer_needed_to_size_array, ERROR,
 DIAG(err_array_size_non_int, ERROR,
      "size of array has non-integer type '%0'")
 DIAG(err_init_element_not_constant, ERROR,
-     "initializer element is not constant")
+     "initializer element is not a compile-time constant")
 DIAG(err_block_extern_cant_init, ERROR,
      "'extern' variable cannot have an initializer")
 DIAG(warn_extern_init, WARNING,
@@ -1140,7 +1141,8 @@ DIAG(err_shufflevector_incompatible_vector, ERROR,
 DIAG(err_shufflevector_nonconstant_argument, ERROR,
      "indexes for __builtin_shufflevector must be constant integers")
 DIAG(err_shufflevector_argument_too_large, ERROR,
-     "indexes for __builtin_shufflevector must be less than the total number of vector elements")
+     "indexes for __builtin_shufflevector must be less than the total number"
+     " of vector elements")
 
 DIAG(err_stack_const_level, ERROR,
      "the level argument for a stack address builtin must be constant")
