@@ -332,10 +332,11 @@ Sema::ExprResult Sema::ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
                                  static_cast<Expr*>(SelfExpr.Val), true, true);
       }
     }
+    // Needed to implement property "super.method" notation.
     if (SD == 0 && !strcmp(II.getName(), "super")) {
       QualType T = Context.getPointerType(Context.getObjCInterfaceType(
                      getCurMethodDecl()->getClassInterface()));
-      return new ObjCSuperRefExpr(T, Loc);
+      return new PredefinedExpr(Loc, T, PredefinedExpr::ObjCSuper);
     }
   }
   

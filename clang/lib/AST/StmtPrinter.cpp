@@ -476,10 +476,6 @@ void StmtPrinter::VisitDeclRefExpr(DeclRefExpr *Node) {
   OS << Node->getDecl()->getName();
 }
 
-void StmtPrinter::VisitObjCSuperRefExpr(ObjCSuperRefExpr *Node) {
-  OS << "super";
-}
-
 void StmtPrinter::VisitObjCIvarRefExpr(ObjCIvarRefExpr *Node) {
   if (Node->getBase()) {
     PrintExpr(Node->getBase());

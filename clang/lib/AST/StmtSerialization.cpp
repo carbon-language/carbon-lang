@@ -1089,17 +1089,6 @@ ObjCStringLiteral* ObjCStringLiteral::CreateImpl(Deserializer& D, ASTContext& C)
   return new ObjCStringLiteral(String,T,L);
 }
 
-void ObjCSuperRefExpr::EmitImpl(Serializer& S) const {
-  S.Emit(Loc);
-  S.Emit(getType());
-}
-
-ObjCSuperRefExpr* ObjCSuperRefExpr::CreateImpl(Deserializer& D, ASTContext& C) {
-  SourceLocation Loc = SourceLocation::ReadVal(D);
-  QualType T = QualType::ReadVal(D); 
-  return new ObjCSuperRefExpr(T, Loc); 
-}
-
 //===----------------------------------------------------------------------===//
 //   C++ Serialization
 //===----------------------------------------------------------------------===//
