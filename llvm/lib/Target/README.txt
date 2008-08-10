@@ -438,6 +438,19 @@ long long fib(const long long n) {
 
 //===---------------------------------------------------------------------===//
 
+Tail recursion elimination should handle:
+
+int pow2m1(int n) {
+ if (n == 0)
+   return 0;
+ return 2 * pow2m1 (n - 1) + 1;
+}
+
+Also, multiplies can be turned into SHL's, so they should be handled as if
+they were associative.  "return foo() << 1" can be tail recursion eliminated.
+
+//===---------------------------------------------------------------------===//
+
 Argument promotion should promote arguments for recursive functions, like 
 this:
 
