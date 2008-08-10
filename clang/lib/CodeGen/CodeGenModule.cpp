@@ -907,7 +907,7 @@ static llvm::Constant *GenerateStringLiteral(const std::string &str,
                                              bool constant,
                                              CodeGenModule &CGM) {
   // Create Constant for this string literal
-  llvm::Constant *C=llvm::ConstantArray::get(str);
+  llvm::Constant *C = llvm::ConstantArray::get(str, false);
   
   // Create a global variable for this string
   C = new llvm::GlobalVariable(C->getType(), constant, 
