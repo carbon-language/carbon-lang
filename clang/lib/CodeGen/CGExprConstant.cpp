@@ -61,7 +61,7 @@ public:
     return llvm::ConstantInt::get(ConvertType(E->getType()), E->getValue());
   }
   llvm::Constant *VisitObjCStringLiteral(const ObjCStringLiteral *E) {
-    return CGM.getObjCRuntime()->GenerateConstantString(
+    return CGM.getObjCRuntime().GenerateConstantString(
         E->getString()->getStrData(), E->getString()->getByteLength());
   }
   

@@ -21,7 +21,7 @@ using namespace CodeGen;
 
 /// Emits an instance of NSConstantString representing the object.
 llvm::Value *CodeGenFunction::EmitObjCStringLiteral(const ObjCStringLiteral *E){
-  return CGM.getObjCRuntime()->GenerateConstantString(
+  return CGM.getObjCRuntime().GenerateConstantString(
       E->getString()->getStrData(), E->getString()->getByteLength());
 }
 
@@ -31,7 +31,7 @@ llvm::Value *CodeGenFunction::EmitObjCSelectorExpr(const ObjCSelectorExpr *E) {
   // Note that this implementation allows for non-constant strings to be passed
   // as arguments to @selector().  Currently, the only thing preventing this
   // behaviour is the type checking in the front end.
-  return CGM.getObjCRuntime()->GetSelector(Builder, E->getSelector());
+  return CGM.getObjCRuntime().GetSelector(Builder, E->getSelector());
 }
 
 
@@ -41,7 +41,7 @@ llvm::Value *CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E) {
   // implementation vary between runtimes.  We can get the receiver and
   // arguments in generic code.
   
-  CGObjCRuntime *Runtime = CGM.getObjCRuntime();
+  CGObjCRuntime &Runtime = CGM.getObjCRuntime();
   const Expr *ReceiverExpr = E->getReceiver();
   bool isSuperMessage = false;
   // Find the receiver
@@ -53,7 +53,7 @@ llvm::Value *CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E) {
     }
     llvm::Value *ClassName = CGM.GetAddrOfConstantString(classname);
     ClassName = Builder.CreateStructGEP(ClassName, 0);
-    Receiver = Runtime->LookupClass(Builder, ClassName);
+    Receiver = Runtime.LookupClass(Builder, ClassName);
   } else if (const PredefinedExpr *PDE =
                dyn_cast<PredefinedExpr>(E->getReceiver())) {
     assert(PDE->getIdentType() == PredefinedExpr::ObjCSuper);
@@ -89,12 +89,12 @@ llvm::Value *CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E) {
     const ObjCMethodDecl *OMD = cast<ObjCMethodDecl>(CurFuncDecl);
     const char *SuperClass =
       OMD->getClassInterface()->getSuperClass()->getName();
-    return Runtime->GenerateMessageSendSuper(Builder, ConvertType(E->getType()),
+    return Runtime.GenerateMessageSendSuper(Builder, ConvertType(E->getType()),
                                              Receiver, SuperClass,
                                              Receiver, E->getSelector(),
                                              &Args[0], Args.size());
   }
-  return Runtime->GenerateMessageSend(Builder, ConvertType(E->getType()),
+  return Runtime.GenerateMessageSend(Builder, ConvertType(E->getType()),
                                       LoadObjCSelf(),
                                       Receiver, E->getSelector(),
                                       &Args[0], Args.size());
@@ -119,7 +119,7 @@ void CodeGenFunction::GenerateObjCMethod(const ObjCMethodDecl *OMD) {
   }
   const llvm::Type *ReturnTy = 
     CGM.getTypes().ConvertReturnType(OMD->getResultType());
-  CurFn = CGM.getObjCRuntime()->MethodPreamble(
+  CurFn = CGM.getObjCRuntime().MethodPreamble(
                                           OMD->getClassInterface()->getName(),
                                               CategoryName,
                                               OMD->getSelector().getName(),

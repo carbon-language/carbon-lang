@@ -111,8 +111,18 @@ public:
   
   /// Release - Finalize LLVM code generation.
   void Release();
+
+  /// getObjCRuntime() - Return a reference to the configured
+  /// Objective-C runtime.
+  CGObjCRuntime &getObjCRuntime() { 
+    assert(Runtime && "No Objective-C runtime has been configured.");
+    return *Runtime; 
+  }
   
-  CGObjCRuntime *getObjCRuntime() { return Runtime; }
+  /// hasObjCRuntime() - Return true iff an Objective-C runtime has
+  /// been configured.
+  bool hasObjCRuntime() { return !!Runtime; }
+
   CGDebugInfo *getDebugInfo() { return DebugInfo; }
   ASTContext &getContext() const { return Context; }
   const LangOptions &getLangOptions() const { return Features; }

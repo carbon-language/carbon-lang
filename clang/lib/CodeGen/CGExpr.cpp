@@ -744,7 +744,7 @@ LValue CodeGenFunction::EmitObjCIvarRefLValue(const ObjCIvarRefExpr *E) {
   // a class without recompiling all of the subclasses.  If this is the case
   // then the CGObjCRuntime subclass must return true to LateBoundIvars and
   // implement the lookup itself.
-  if (CGM.getObjCRuntime()->LateBoundIVars()) {
+  if (CGM.getObjCRuntime().LateBoundIVars()) {
     assert(0 && "FIXME: Implement support for late-bound instance variables");
     return LValue(); // Not reached.
   }

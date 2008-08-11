@@ -33,13 +33,16 @@ CodeGenModule::CodeGenModule(ASTContext &C, const LangOptions &LO,
                              Diagnostic &diags, bool GenerateDebugInfo,
                              bool UseMacObjCRuntime)
   : Context(C), Features(LO), TheModule(M), TheTargetData(TD), Diags(diags),
-    Types(C, M, TD), MemCpyFn(0), MemMoveFn(0), MemSetFn(0),
+    Types(C, M, TD), Runtime(0), MemCpyFn(0), MemMoveFn(0), MemSetFn(0),
     CFConstantStringClassRef(0) {
-  //TODO: Make this selectable at runtime
-  if (UseMacObjCRuntime) {
-    Runtime = CreateMacObjCRuntime(*this);
-  } else {
-    Runtime = CreateGNUObjCRuntime(*this);
+
+  if (Features.ObjC1) {
+    // TODO: Make this selectable at runtime
+    if (UseMacObjCRuntime) {
+      Runtime = CreateMacObjCRuntime(*this);
+    } else {
+      Runtime = CreateGNUObjCRuntime(*this);
+    }
   }
 
   // If debug info generation is enabled, create the CGDebugInfo object.
@@ -53,9 +56,9 @@ CodeGenModule::~CodeGenModule() {
 
 void CodeGenModule::Release() {
   EmitStatics();
-  llvm::Function *ObjCInitFunction = Runtime->ModuleInitFunction();
-  if (ObjCInitFunction)
-    AddGlobalCtor(ObjCInitFunction);
+  if (Runtime)
+    if (llvm::Function *ObjCInitFunction = Runtime->ModuleInitFunction())
+      AddGlobalCtor(ObjCInitFunction);
   EmitCtorList(GlobalCtors, "llvm.global_ctors");
   EmitCtorList(GlobalDtors, "llvm.global_dtors");
   EmitAnnotations();

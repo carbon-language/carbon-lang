@@ -49,7 +49,9 @@ public:
 
   ScalarExprEmitter(CodeGenFunction &cgf) : CGF(cgf), 
     Builder(CGF.Builder), 
-    Runtime(CGF.CGM.getObjCRuntime()) {
+    Runtime(0) {
+    if (CGF.CGM.hasObjCRuntime())
+      Runtime = &CGF.CGM.getObjCRuntime();
   }
   
   //===--------------------------------------------------------------------===//
