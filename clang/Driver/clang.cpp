@@ -28,6 +28,7 @@
 #include "clang/Driver/TextDiagnosticBuffer.h"
 #include "clang/Driver/TextDiagnosticPrinter.h"
 #include "clang/Analysis/PathDiagnostic.h"
+#include "clang/AST/Decl.h"
 #include "clang/AST/TranslationUnit.h"
 #include "clang/CodeGen/ModuleBuilder.h"
 #include "clang/Sema/ParseAST.h"

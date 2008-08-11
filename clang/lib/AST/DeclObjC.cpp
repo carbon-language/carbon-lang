@@ -13,6 +13,7 @@
 
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/Stmt.h"
 using namespace clang;
 
 //===----------------------------------------------------------------------===//

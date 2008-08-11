@@ -14,6 +14,7 @@
 #include "CGObjCRuntime.h"
 #include "CodeGenModule.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/Decl.h"
 #include "llvm/Module.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/IRBuilder.h"

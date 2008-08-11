@@ -15,6 +15,8 @@
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
+#include "clang/AST/Expr.h"
+#include "clang/AST/RecordLayout.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
@@ -26,6 +28,18 @@ using namespace clang;
 enum FloatingRank {
   FloatRank, DoubleRank, LongDoubleRank
 };
+
+ASTContext::ASTContext(const LangOptions& LOpts, SourceManager &SM, TargetInfo &t,
+                       IdentifierTable &idents, SelectorTable &sels,
+                       unsigned size_reserve) : 
+  CFConstantStringTypeDecl(0), SourceMgr(SM), LangOpts(LOpts), Target(t), 
+  Idents(idents), Selectors(sels) 
+{  
+  if (size_reserve > 0) Types.reserve(size_reserve);    
+  InitBuiltinTypes();
+  BuiltinInfo.InitializeBuiltins(idents, Target);
+  TUDecl = TranslationUnitDecl::Create(*this);
+}
 
 ASTContext::~ASTContext() {
   // Deallocate all the types.

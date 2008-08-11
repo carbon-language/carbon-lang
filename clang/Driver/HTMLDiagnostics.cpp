@@ -12,10 +12,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "HTMLDiagnostics.h"
+#include "clang/Analysis/PathDiagnostic.h"
+#include "clang/AST/ASTContext.h"
+#include "clang/AST/Decl.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/FileManager.h"
-#include "clang/AST/ASTContext.h"
-#include "clang/Analysis/PathDiagnostic.h"
 #include "clang/Rewrite/Rewriter.h"
 #include "clang/Rewrite/HTMLRewrite.h"
 #include "clang/Lex/Lexer.h"

@@ -14,6 +14,8 @@
 #include "clang/Sema/ParseAST.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/ASTConsumer.h"
+#include "clang/AST/DeclObjC.h"
+#include "clang/AST/Stmt.h"
 #include "clang/AST/TranslationUnit.h"
 #include "Sema.h"
 #include "clang/Parse/Action.h"

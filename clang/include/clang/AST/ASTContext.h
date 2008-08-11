@@ -16,11 +16,10 @@
 
 #include "clang/Basic/LangOptions.h"
 #include "clang/AST/Builtins.h"
-#include "clang/AST/Expr.h"
-#include "clang/AST/RecordLayout.h"
+#include "clang/AST/DeclBase.h"
 #include "clang/AST/Type.h"
+#include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/Bitcode/SerializationFwd.h"
 #include "llvm/Support/Allocator.h"
@@ -31,9 +30,20 @@ namespace llvm {
 }
 
 namespace clang {
-  class TargetInfo;
+  class ASTRecordLayout;
+  class Expr;
   class IdentifierTable;
-  
+  class TargetInfo;
+  class SelectorTable;
+  class SourceManager;
+  // Decls
+  class Decl;
+  class RecordDecl;
+  class TagDecl;
+  class TranslationUnitDecl;
+  class TypeDecl;
+  class TypedefDecl;
+
 /// ASTContext - This class holds long-lived AST nodes (such as types and
 /// decls) that can be referred to throughout the semantic analysis of a file.
 class ASTContext {  
@@ -128,15 +138,7 @@ public:
   
   ASTContext(const LangOptions& LOpts, SourceManager &SM, TargetInfo &t,
              IdentifierTable &idents, SelectorTable &sels,
-             unsigned size_reserve=0 ) : 
-    CFConstantStringTypeDecl(0), SourceMgr(SM), LangOpts(LOpts), Target(t), 
-    Idents(idents), Selectors(sels) {
-
-    if (size_reserve > 0) Types.reserve(size_reserve);    
-    InitBuiltinTypes();
-    BuiltinInfo.InitializeBuiltins(idents, Target);
-    TUDecl = TranslationUnitDecl::Create(*this);
-  }
+             unsigned size_reserve=0);
 
   ~ASTContext();
   

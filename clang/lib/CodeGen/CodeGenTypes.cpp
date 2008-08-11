@@ -14,6 +14,7 @@
 #include "CodeGenTypes.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/AST/AST.h"
+#include "clang/AST/RecordLayout.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/Target/TargetData.h"

@@ -13,6 +13,8 @@
 
 #include "clang/AST/Decl.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/Stmt.h"
+#include "clang/Basic/IdentifierTable.h"
 
 using namespace clang;
 
