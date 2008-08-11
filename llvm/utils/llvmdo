@@ -168,13 +168,6 @@ files_to_ignore="\
   -o -name *AST-Remove.ll \
   -o -name llvmAsmParser.cpp \
   -o -name llvmAsmParser.h \
-  -o -name Lexer.cpp \
-  -o -name FileLexer.cpp \
-  -o -name FileParser.cpp \
-  -o -name FileParser.h \
-  -o -name StackerParser.h \
-  -o -name StackerParser.cpp \
-  -o -name ConfigLexer.cpp \
   -o -name PPCPerfectShuffle.h \
 "
 
