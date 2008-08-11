@@ -14,7 +14,6 @@
 #include "Sema.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Expr.h"
-#include "clang/AST/Type.h"
 #include "clang/Basic/Diagnostic.h"
 
 namespace clang {

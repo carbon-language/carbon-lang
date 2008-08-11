@@ -18,7 +18,6 @@
 #include "clang/AST/Expr.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/Diagnostic.h"
-#include "clang/Parse/Scope.h"
 
 using namespace clang;
 

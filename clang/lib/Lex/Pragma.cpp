@@ -13,13 +13,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Lex/Pragma.h"
-#include "clang/Lex/PPCallbacks.h"
 #include "clang/Lex/HeaderSearch.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
-#include "llvm/ADT/SmallVector.h"
 using namespace clang;
 
 // Out-of-line destructor to provide a home for the class.

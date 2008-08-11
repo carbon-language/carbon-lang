@@ -15,7 +15,6 @@
 #include "clang/Lex/LiteralSupport.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/Diagnostic.h"
-#include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/StringExtras.h"
 using namespace clang;

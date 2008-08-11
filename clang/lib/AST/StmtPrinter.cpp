@@ -13,15 +13,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/AST/StmtVisitor.h"
-#include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"
-#include "clang/AST/ExprCXX.h"
-#include "clang/AST/ExprObjC.h"
 #include "clang/AST/PrettyPrinter.h"
-#include "clang/Basic/IdentifierTable.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Streams.h"
-#include <iomanip>
 using namespace clang;
 
 //===----------------------------------------------------------------------===//

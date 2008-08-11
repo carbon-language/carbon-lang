@@ -15,12 +15,8 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/Expr.h"
-#include "clang/AST/Stmt.h"
-#include "clang/Parse/Scope.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/Diagnostic.h"
-#include "clang/Basic/LangOptions.h"
-#include "llvm/ADT/SmallString.h"
 using namespace clang;
 
 Sema::StmtResult Sema::ActOnExprStmt(ExprTy *expr) {

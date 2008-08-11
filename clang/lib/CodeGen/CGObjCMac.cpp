@@ -12,15 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "CGObjCRuntime.h"
-#include "CodeGenModule.h"
-#include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
-#include "llvm/Module.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/IRBuilder.h"
-#include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/StringMap.h"
-#include <map>
 
 using namespace clang;
 

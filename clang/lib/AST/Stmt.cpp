@@ -14,8 +14,6 @@
 #include "clang/AST/Stmt.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExprObjC.h"
-#include "clang/AST/StmtVisitor.h"
-#include "clang/Basic/IdentifierTable.h"
 using namespace clang;
 
 static struct StmtClassNameTable {

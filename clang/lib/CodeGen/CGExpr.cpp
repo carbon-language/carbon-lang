@@ -14,14 +14,7 @@
 #include "CodeGenFunction.h"
 #include "CodeGenModule.h"
 #include "clang/AST/ASTContext.h"
-#include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"
-#include "clang/Basic/TargetInfo.h"
-#include "llvm/Constants.h"
-#include "llvm/DerivedTypes.h"
-#include "llvm/Function.h"
-#include "llvm/GlobalVariable.h"
-#include "llvm/Support/MathExtras.h"
 #include "llvm/Target/TargetData.h"
 using namespace clang;
 using namespace CodeGen;

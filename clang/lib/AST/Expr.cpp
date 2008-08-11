@@ -13,12 +13,9 @@
 
 #include "clang/AST/Expr.h"
 #include "clang/AST/DeclObjC.h"
-#include "clang/AST/ExprObjC.h"
 #include "clang/AST/ASTContext.h"
-#include "clang/AST/APValue.h"
 #include "clang/AST/RecordLayout.h"
 #include "clang/AST/StmtVisitor.h"
-#include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/TargetInfo.h"
 using namespace clang;
 

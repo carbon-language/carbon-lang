@@ -12,13 +12,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/AST/Type.h"
-#include "clang/AST/Decl.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/Expr.h"
-#include "clang/Basic/IdentifierTable.h"
-#include "clang/Basic/TargetInfo.h"
-#include "llvm/Support/Streams.h"
 #include "llvm/ADT/StringExtras.h"
 #include <sstream>
 using namespace clang;

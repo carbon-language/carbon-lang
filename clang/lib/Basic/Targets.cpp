@@ -14,7 +14,6 @@
 
 #include "clang/AST/Builtins.h"
 #include "clang/AST/TargetBuiltins.h"
-#include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/APFloat.h"

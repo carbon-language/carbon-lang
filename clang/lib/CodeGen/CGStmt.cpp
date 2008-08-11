@@ -14,12 +14,8 @@
 #include "CGDebugInfo.h"
 #include "CodeGenModule.h"
 #include "CodeGenFunction.h"
-#include "clang/AST/ASTContext.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/Basic/TargetInfo.h"
-#include "llvm/Constants.h"
-#include "llvm/DerivedTypes.h"
-#include "llvm/Function.h"
 #include "llvm/InlineAsm.h"
 #include "llvm/ADT/StringExtras.h"
 using namespace clang;

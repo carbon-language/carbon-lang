@@ -15,7 +15,6 @@
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Lex/HeaderSearch.h"
 #include "clang/Lex/MacroInfo.h"
-#include "clang/Lex/PPCallbacks.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceManager.h"
 using namespace clang;

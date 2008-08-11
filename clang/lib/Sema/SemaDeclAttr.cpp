@@ -13,6 +13,8 @@
 
 #include "Sema.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/DeclObjC.h"
+#include "clang/AST/Expr.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Parse/DeclSpec.h"

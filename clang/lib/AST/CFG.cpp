@@ -13,7 +13,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/AST/CFG.h"
-#include "clang/AST/ExprObjC.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/AST/PrettyPrinter.h"
 #include "llvm/ADT/DenseMap.h"

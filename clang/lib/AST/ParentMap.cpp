@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/AST/ParentMap.h"
+#include "clang/AST/Decl.h"
 #include "clang/AST/Expr.h"
 #include "llvm/ADT/DenseMap.h"
 

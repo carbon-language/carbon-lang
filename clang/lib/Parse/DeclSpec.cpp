@@ -14,7 +14,6 @@
 #include "clang/Parse/DeclSpec.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/LangOptions.h"
-#include "clang/Basic/SourceLocation.h"
 using namespace clang;
 
 /// getParsedSpecifiers - Return a bitmask of which flavors of specifiers this

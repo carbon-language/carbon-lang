@@ -14,7 +14,6 @@
 #include "clang/CodeGen/ModuleBuilder.h"
 #include "CodeGenModule.h"
 #include "clang/AST/ASTContext.h"
-#include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/Expr.h"
 using namespace clang;
@@ -24,10 +23,8 @@ using namespace clang;
 
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/TargetInfo.h"
-#include "clang/CodeGen/ModuleBuilder.h"
 #include "llvm/Module.h"
 #include "llvm/Target/TargetData.h"
-#include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/ADT/OwningPtr.h"
 

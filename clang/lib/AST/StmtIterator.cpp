@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/AST/StmtIterator.h"
-#include "clang/AST/Expr.h"
 #include "clang/AST/Decl.h"
 
 using namespace clang;

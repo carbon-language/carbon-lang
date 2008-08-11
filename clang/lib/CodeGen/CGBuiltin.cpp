@@ -15,12 +15,8 @@
 #include "CodeGenModule.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/AST/ASTContext.h"
-#include "clang/AST/Builtins.h"
 #include "clang/AST/Decl.h"
-#include "clang/AST/Expr.h"
 #include "clang/AST/TargetBuiltins.h"
-#include "llvm/Constants.h"
-#include "llvm/Function.h"
 #include "llvm/Intrinsics.h"
 using namespace clang;
 using namespace CodeGen;

@@ -15,26 +15,16 @@
 #include "clang/AST/APValue.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
-#include "clang/AST/Attr.h"
-#include "clang/AST/Builtins.h"
-#include "clang/AST/Decl.h"
-#include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
-#include "clang/AST/Expr.h"
 #include "clang/AST/ExprCXX.h"
-#include "clang/AST/Type.h"
 #include "clang/Parse/DeclSpec.h"
-#include "clang/Parse/Scope.h"
 #include "clang/Basic/Diagnostic.h"
-#include "clang/Basic/LangOptions.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/SourceManager.h"
 // FIXME: layering (ideally, Sema shouldn't be dependent on Lex API's)
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Lex/HeaderSearch.h" 
-#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallSet.h"
-#include "llvm/ADT/DenseSet.h"
 using namespace clang;
 
 Sema::TypeTy *Sema::isTypeName(const IdentifierInfo &II, Scope *S) {

@@ -12,11 +12,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Driver/TextDiagnosticPrinter.h"
-#include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Lex/Lexer.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include <string>
 using namespace clang;
 
 void TextDiagnosticPrinter::

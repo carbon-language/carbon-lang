@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Driver/TextDiagnosticBuffer.h"
-#include "clang/Basic/SourceManager.h"
 using namespace clang;
 
 /// HandleDiagnostic - Store the errors & warnings that are reported.
