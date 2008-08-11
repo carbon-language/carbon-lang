@@ -81,6 +81,12 @@ Path::Path(const std::string& p)
 Path::Path(const char *StrStart, unsigned StrLen)
   : path(StrStart, StrLen) {}
 
+Path&
+Path::operator=(const std::string &that) {
+  path = that;
+  return *this;
+}
+
 bool 
 Path::isValid() const {
   // Check some obvious things

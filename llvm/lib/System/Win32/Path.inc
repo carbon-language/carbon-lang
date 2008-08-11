@@ -56,6 +56,13 @@ Path::Path(const char *StrStart, unsigned StrLen)
   FlipBackSlashes(path);
 }
 
+Path&
+Path::operator=(const std::string &that) {
+  path = that;
+  FlipBackSlashes(path);
+  return *this;
+}
+
 bool
 Path::isValid() const {
   if (path.empty())

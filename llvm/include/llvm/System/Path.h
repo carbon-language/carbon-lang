@@ -202,6 +202,12 @@ namespace sys {
         return *this;
       }
 
+      /// Makes a copy of \p that to \p this.
+      /// @param \p that A std::string denoting the path
+      /// @returns \p this
+      /// @brief Assignment Operator
+      Path &operator=(const std::string &that);
+
       /// Compares \p this Path with \p that Path for equality.
       /// @returns true if \p this and \p that refer to the same thing.
       /// @brief Equality Operator
