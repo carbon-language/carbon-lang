@@ -373,6 +373,14 @@ static llvm::cl::opt<bool>
 Exceptions("fexceptions",
            llvm::cl::desc("Enable support for exception handling."));
 
+static llvm::cl::opt<bool>
+GNURuntime("fgnu-runtime",
+            llvm::cl::desc("Generate output compatible with the standard GNU Objective-C runtime."));
+
+static llvm::cl::opt<bool>
+NeXTRuntime("fnext-runtime",
+            llvm::cl::desc("Generate output compatible with the NeXT runtime."));
+
 // FIXME: add:
 //   -ansi
 //   -trigraphs
@@ -439,6 +447,15 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK) {
   Options.WritableStrings = WritableStrings;
   Options.LaxVectorConversions = LaxVectorConversions;
   Options.Exceptions = Exceptions;
+
+  if (NeXTRuntime) {
+    Options.NeXTRuntime = 1;
+  } else if (GNURuntime) {
+    Options.NeXTRuntime = 0;
+  } else {
+    // FIXME: Should autoselect based on platform.
+    Options.NeXTRuntime = 0;
+  }
 }
 
 static llvm::cl::opt<bool>

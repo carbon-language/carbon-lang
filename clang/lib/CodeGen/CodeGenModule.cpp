@@ -30,15 +30,13 @@ using namespace CodeGen;
 
 CodeGenModule::CodeGenModule(ASTContext &C, const LangOptions &LO,
                              llvm::Module &M, const llvm::TargetData &TD,
-                             Diagnostic &diags, bool GenerateDebugInfo,
-                             bool UseMacObjCRuntime)
+                             Diagnostic &diags, bool GenerateDebugInfo)
   : Context(C), Features(LO), TheModule(M), TheTargetData(TD), Diags(diags),
     Types(C, M, TD), Runtime(0), MemCpyFn(0), MemMoveFn(0), MemSetFn(0),
     CFConstantStringClassRef(0) {
 
   if (Features.ObjC1) {
-    // TODO: Make this selectable at runtime
-    if (UseMacObjCRuntime) {
+    if (Features.NeXTRuntime) {
       Runtime = CreateMacObjCRuntime(*this);
     } else {
       Runtime = CreateGNUObjCRuntime(*this);

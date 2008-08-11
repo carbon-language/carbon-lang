@@ -43,7 +43,9 @@ struct LangOptions {
   unsigned WritableStrings   : 1;  // Allow writable strings
   unsigned LaxVectorConversions : 1;
   unsigned Exceptions        : 1;  // Support exception handling.
-  
+
+  unsigned NeXTRuntime       : 1; // Use NeXT runtime.
+
 private:
   unsigned GC : 2; // Objective-C Garbage Collection modes.  We declare
                    // this enum as unsigned because MSVC insists on making enums
@@ -58,7 +60,7 @@ public:
     GC = ObjC1 = ObjC2 = 0;
     C99 = Microsoft = CPlusPlus = CPlusPlus0x = NoExtensions = 0;
     CXXOperatorNames = PascalStrings = Boolean = WritableStrings = 0;
-    LaxVectorConversions = Exceptions = 0;
+    LaxVectorConversions = Exceptions = NeXTRuntime = 0;    
   }
   
   GCMode getGCMode() const { return (GCMode) GC; }

@@ -12,7 +12,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "CGObjCRuntime.h"
+
+#include "CodeGenModule.h"
 #include "clang/AST/Decl.h"
+#include "clang/Basic/LangOptions.h"
+
 #include "llvm/Support/IRBuilder.h"
 
 using namespace clang;
@@ -21,6 +25,18 @@ namespace {
 class CGObjCMac : public CodeGen::CGObjCRuntime {
 private:
   CodeGen::CodeGenModule &CGM;
+
+  /// UsedGlobals - list of globals to pack into the llvm.used metadata
+  /// to prevent them from being clobbered.
+  std::vector<llvm::GlobalValue*> UsedGlobals;
+
+  /// EmitImageInfo - Emit the image info marker used to encode some module
+  /// level information.
+  void EmitImageInfo();
+
+  /// FinishModule - Write out global data structures at the end of
+  /// processing a translation unit.
+  void FinishModule();
 
 public:
   CGObjCMac(CodeGen::CodeGenModule &cgm);
@@ -94,6 +110,7 @@ public:
 } // end anonymous namespace
  
 CGObjCMac::CGObjCMac(CodeGen::CodeGenModule &cgm) : CGM(cgm) {
+  EmitImageInfo();
 }
 
 // This has to perform the lookup every time, since posing and related
@@ -186,6 +203,9 @@ void CGObjCMac::GenerateClass(
 }
 
 llvm::Function *CGObjCMac::ModuleInitFunction() { 
+  // Abuse this interface function as a place to finalize.
+  FinishModule();
+
   return NULL;
 }
 
@@ -202,6 +222,74 @@ llvm::Function *CGObjCMac::MethodPreamble(
   assert(0 && "Cannot generate method preamble for Mac runtime.");
   return 0;
 }
+
+/* *** Private Interface *** */
+
+/// EmitImageInfo - Emit the image info marker used to encode some module
+/// level information.
+///
+/// See: <rdr://4810609&4810587&4810587>
+/// struct IMAGE_INFO {
+///   unsigned version;
+///   unsigned flags;
+/// };
+enum ImageInfoFlags {
+  eImageInfo_FixAndContinue   = (1 << 0), // FIXME: Not sure what this implies
+  eImageInfo_GarbageCollected = (1 << 1), 
+  eImageInfo_GCOnly           = (1 << 2)  
+};
+
+void CGObjCMac::EmitImageInfo() {
+  unsigned version = 0; // Version is unused?
+  unsigned flags = 0;
+
+  // FIXME: Fix and continue?
+  if (CGM.getLangOptions().getGCMode() != LangOptions::NonGC)
+    flags |= eImageInfo_GarbageCollected;
+  if (CGM.getLangOptions().getGCMode() == LangOptions::GCOnly)
+    flags |= eImageInfo_GCOnly;
+
+  fprintf(stderr, "flags: %d (%d)\n", flags, CGM.getLangOptions().getGCMode());
+
+  // Emitted as int[2];
+  llvm::Constant *values[2] = {
+    llvm::ConstantInt::get(llvm::Type::Int32Ty, version),
+    llvm::ConstantInt::get(llvm::Type::Int32Ty, flags)
+  };
+  llvm::ArrayType *AT = llvm::ArrayType::get(llvm::Type::Int32Ty, 2);  
+  llvm::GlobalValue *GV = 
+    new llvm::GlobalVariable(AT, true,
+                             llvm::GlobalValue::InternalLinkage,
+                             llvm::ConstantArray::get(AT, values, 2),
+                             "\01L_OBJC_IMAGE_INFO", 
+                             &CGM.getModule());
+
+  GV->setSection("__OBJC, __image_info,regular");
+
+  UsedGlobals.push_back(GV);
+}
+
+void CGObjCMac::FinishModule() {
+  std::vector<llvm::Constant*> Used;
+  
+  llvm::Type *I8Ptr = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+  for (std::vector<llvm::GlobalValue*>::iterator i = UsedGlobals.begin(), 
+         e = UsedGlobals.end(); i != e; ++i) {
+    Used.push_back(llvm::ConstantExpr::getBitCast(*i, I8Ptr));
+  }
+  
+  llvm::ArrayType *AT = llvm::ArrayType::get(I8Ptr, Used.size());
+  llvm::GlobalValue *GV = 
+    new llvm::GlobalVariable(AT, false,
+                             llvm::GlobalValue::AppendingLinkage,
+                             llvm::ConstantArray::get(AT, Used),
+                             "llvm.used", 
+                             &CGM.getModule());
+
+  GV->setSection("llvm.metadata");
+}
+
+/* *** */
 
 CodeGen::CGObjCRuntime *CodeGen::CreateMacObjCRuntime(CodeGen::CodeGenModule &CGM){
   return new CGObjCMac(CGM);

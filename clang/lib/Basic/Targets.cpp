@@ -53,7 +53,7 @@ public:
     Define(Defs, "linux");
 #endif
     
-    if (1) {// -fobjc-gc controls this.
+    if (1) { // FIXME: -fobjc-gc controls this.
       Define(Defs, "__weak", "");
       Define(Defs, "__strong", "");
     } else {
@@ -67,6 +67,9 @@ public:
     
     if (0)  // darwin_pascal_strings
       Define(Defs, "__PASCAL_STRINGS__");
+
+    if (0) // FIXME: -fnext-runtime controls this
+      Define(Defs, "__NEXT_RUNTIME__");
   }
 
 };
