@@ -421,6 +421,19 @@ void PMTopLevelManager::collectLastUses(SmallVector<Pass *, 12> &LastUses,
         LastUses.push_back(LUI->first);
 }
 
+AnalysisUsage *PMTopLevelManager::findAnalysisUsage(Pass *P) {
+  AnalysisUsage *AnUsage = NULL;
+  DenseMap<Pass *, AnalysisUsage *>::iterator DMI = AnUsageMap.find(P);
+  if (DMI != AnUsageMap.end()) 
+    AnUsage = DMI->second;
+  else {
+    AnUsage = new AnalysisUsage();
+    P->getAnalysisUsage(*AnUsage);
+    AnUsageMap[P] = AnUsage;
+  }
+  return AnUsage;
+}
+
 /// Schedule pass P for execution. Make sure that passes required by
 /// P are run before P is run. Update analysis info maintained by
 /// the manager. Remove dead passes. This is a recursive function.
@@ -439,9 +452,9 @@ void PMTopLevelManager::schedulePass(Pass *P) {
       P->getPassInfo()->isAnalysis() && findAnalysisPass(P->getPassInfo()))
     return;
 
-  AnalysisUsage AnUsage;
-  P->getAnalysisUsage(AnUsage);
-  const AnalysisUsage::VectorType &RequiredSet = AnUsage.getRequiredSet();
+  AnalysisUsage *AnUsage = findAnalysisUsage(P);
+
+  const AnalysisUsage::VectorType &RequiredSet = AnUsage->getRequiredSet();
   for (AnalysisUsage::VectorType::const_iterator I = RequiredSet.begin(),
          E = RequiredSet.end(); I != E; ++I) {
 
@@ -555,6 +568,13 @@ PMTopLevelManager::~PMTopLevelManager() {
   for (std::vector<ImmutablePass *>::iterator
          I = ImmutablePasses.begin(), E = ImmutablePasses.end(); I != E; ++I)
     delete *I;
+
+  for (DenseMap<Pass *, AnalysisUsage *>::iterator DMI = AnUsageMap.begin(),
+         DME = AnUsageMap.end(); DMI != DME; ++DMI) {
+    AnalysisUsage *AU = DMI->second;
+    delete AU;
+  }
+    
 }
 
 //===----------------------------------------------------------------------===//
@@ -578,13 +598,12 @@ void PMDataManager::recordAvailableAnalysis(Pass *P) {
 // passes managed by this manager
 bool PMDataManager::preserveHigherLevelAnalysis(Pass *P) {
 
-  AnalysisUsage AnUsage;
-  P->getAnalysisUsage(AnUsage);
+  AnalysisUsage *AnUsage = TPM->findAnalysisUsage(P);
   
-  if (AnUsage.getPreservesAll())
+  if (AnUsage->getPreservesAll())
     return true;
   
-  const AnalysisUsage::VectorType &PreservedSet = AnUsage.getPreservedSet();
+  const AnalysisUsage::VectorType &PreservedSet = AnUsage->getPreservedSet();
   for (std::vector<Pass *>::iterator I = HigherLevelAnalysis.begin(),
          E = HigherLevelAnalysis.end(); I  != E; ++I) {
     Pass *P1 = *I;
@@ -604,9 +623,8 @@ void PMDataManager::verifyPreservedAnalysis(Pass *P) {
 #ifdef NDEBUG
   return;
 #endif
-  AnalysisUsage AnUsage;
-  P->getAnalysisUsage(AnUsage);
-  const AnalysisUsage::VectorType &PreservedSet = AnUsage.getPreservedSet();
+  AnalysisUsage *AnUsage = TPM->findAnalysisUsage(P);
+  const AnalysisUsage::VectorType &PreservedSet = AnUsage->getPreservedSet();
 
   // Verify preserved analysis
   for (AnalysisUsage::VectorType::const_iterator I = PreservedSet.begin(),
@@ -659,12 +677,11 @@ void PMDataManager::verifyDomInfo(Pass &P, Function &F) {
 
 /// Remove Analysis not preserved by Pass P
 void PMDataManager::removeNotPreservedAnalysis(Pass *P) {
-  AnalysisUsage AnUsage;
-  P->getAnalysisUsage(AnUsage);
-  if (AnUsage.getPreservesAll())
+  AnalysisUsage *AnUsage = TPM->findAnalysisUsage(P);
+  if (AnUsage->getPreservesAll())
     return;
 
-  const AnalysisUsage::VectorType &PreservedSet = AnUsage.getPreservedSet();
+  const AnalysisUsage::VectorType &PreservedSet = AnUsage->getPreservedSet();
   for (std::map<AnalysisID, Pass*>::iterator I = AvailableAnalysis.begin(),
          E = AvailableAnalysis.end(); I != E; ) {
     std::map<AnalysisID, Pass*>::iterator Info = I++;
@@ -820,9 +837,8 @@ void PMDataManager::add(Pass *P,
 void PMDataManager::collectRequiredAnalysis(SmallVector<Pass *, 8>&RP,
                                        SmallVector<AnalysisID, 8> &RP_NotAvail,
                                             Pass *P) {
-  AnalysisUsage AnUsage;
-  P->getAnalysisUsage(AnUsage);
-  const AnalysisUsage::VectorType &RequiredSet = AnUsage.getRequiredSet();
+  AnalysisUsage *AnUsage = TPM->findAnalysisUsage(P);
+  const AnalysisUsage::VectorType &RequiredSet = AnUsage->getRequiredSet();
   for (AnalysisUsage::VectorType::const_iterator 
          I = RequiredSet.begin(), E = RequiredSet.end();
        I != E; ++I) {
@@ -833,7 +849,7 @@ void PMDataManager::collectRequiredAnalysis(SmallVector<Pass *, 8>&RP,
       RP_NotAvail.push_back(AID);
   }
 
-  const AnalysisUsage::VectorType &IDs = AnUsage.getRequiredTransitiveSet();
+  const AnalysisUsage::VectorType &IDs = AnUsage->getRequiredTransitiveSet();
   for (AnalysisUsage::VectorType::const_iterator I = IDs.begin(),
          E = IDs.end(); I != E; ++I) {
     AnalysisID AID = *I;
@@ -850,12 +866,11 @@ void PMDataManager::collectRequiredAnalysis(SmallVector<Pass *, 8>&RP,
 // implementations it needs.
 //
 void PMDataManager::initializeAnalysisImpl(Pass *P) {
-  AnalysisUsage AnUsage;
-  P->getAnalysisUsage(AnUsage);
- 
+  AnalysisUsage *AnUsage = TPM->findAnalysisUsage(P);
+
   for (AnalysisUsage::VectorType::const_iterator
-         I = AnUsage.getRequiredSet().begin(),
-         E = AnUsage.getRequiredSet().end(); I != E; ++I) {
+         I = AnUsage->getRequiredSet().begin(),
+         E = AnUsage->getRequiredSet().end(); I != E; ++I) {
     Pass *Impl = findAnalysisPass(*I, true);
     if (Impl == 0)
       // This may be analysis pass that is initialized on the fly.

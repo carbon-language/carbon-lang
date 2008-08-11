@@ -13,6 +13,7 @@
 
 #include "llvm/PassManager.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/DenseMap.h"
 #include <deque>
 #include <map>
 
@@ -172,6 +173,9 @@ public:
   /// then return NULL.
   Pass *findAnalysisPass(AnalysisID AID);
 
+  /// Find analysis usage information for the pass P.
+  AnalysisUsage *findAnalysisUsage(Pass *P);
+
   explicit PMTopLevelManager(enum TopLevelManagerType t);
   virtual ~PMTopLevelManager(); 
 
@@ -221,6 +225,8 @@ private:
 
   /// Immutable passes are managed by top level manager.
   std::vector<ImmutablePass *> ImmutablePasses;
+
+  DenseMap<Pass *, AnalysisUsage *> AnUsageMap;
 };
 
 
