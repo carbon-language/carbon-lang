@@ -1,4 +1,7 @@
-; RUN: llvm-as < %s | llc -mcpu=penryn | grep mov | count 1
+; RUN: llvm-as < %s | llc -mcpu=penryn > %t
+; not grep movd %t
+; not grep movss %t
+; grep {extractps	\\$0, %xmm0, } %t
 ; PR2647
 
 external global float, align 16         ; <float*>:0 [#uses=2]
