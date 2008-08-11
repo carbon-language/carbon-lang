@@ -16,15 +16,16 @@
 #define LLVM_SUPPORT_IRBUILDER_H
 
 #include "llvm/BasicBlock.h"
-#include "llvm/Instructions.h"
 #include "llvm/Constants.h"
+#include "llvm/Instructions.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/Function.h"
+#include "llvm/Support/ConstantFolder.h"
 
 namespace llvm {
 
 /// IRBuilder - This provides a uniform API for creating instructions and
-/// inserting them into a basic block: either at the end of a BasicBlock, or 
+/// inserting them into a basic block: either at the end of a BasicBlock, or
 /// at a specific iterator location in a block.
 ///
 /// Note that the builder does not expose the full generality of LLVM
@@ -33,17 +34,23 @@ namespace llvm {
 /// supports nul-terminated C strings.  For fully generic names, use
 /// I->setName().  For access to extra instruction properties, use the mutators
 /// (e.g. setVolatile) on the instructions after they have been created.
-/// The template argument handles whether or not to preserve names in the final
-/// instruction output. This defaults to on.
-template <bool preserveNames=true> class IRBuilder {
+/// The first template argument handles whether or not to preserve names in the
+/// final instruction output. This defaults to on.  The second template argument
+/// specifies a class to use for creating constants.  This defaults to creating
+/// minimally folded constants.
+template <bool preserveNames=true, typename T = ConstantFolder> class IRBuilder{
   BasicBlock *BB;
   BasicBlock::iterator InsertPt;
+  T Folder;
 public:
-  IRBuilder() { ClearInsertionPoint(); }
-  explicit IRBuilder(BasicBlock *TheBB) { SetInsertPoint(TheBB); }
-  IRBuilder(BasicBlock *TheBB, BasicBlock::iterator IP) {
-    SetInsertPoint(TheBB, IP);
-  }
+  IRBuilder(const T& F = T()) : Folder(F) { ClearInsertionPoint(); }
+  explicit IRBuilder(BasicBlock *TheBB, const T& F = T())
+    : Folder(F) { SetInsertPoint(TheBB); }
+  IRBuilder(BasicBlock *TheBB, BasicBlock::iterator IP, const T& F = T())
+    : Folder(F) { SetInsertPoint(TheBB, IP); }
+
+  /// getFolder - Get the constant folder being used.
+  const T& getFolder() { return Folder; }
 
   //===--------------------------------------------------------------------===//
   // Builder configuration methods
@@ -54,30 +61,30 @@ public:
   void ClearInsertionPoint() {
     BB = 0;
   }
-  
+
   BasicBlock *GetInsertBlock() const { return BB; }
-  
+
   /// SetInsertPoint - This specifies that created instructions should be
   /// appended to the end of the specified block.
   void SetInsertPoint(BasicBlock *TheBB) {
     BB = TheBB;
     InsertPt = BB->end();
   }
-  
+
   /// SetInsertPoint - This specifies that created instructions should be
   /// inserted at the specified point.
   void SetInsertPoint(BasicBlock *TheBB, BasicBlock::iterator IP) {
     BB = TheBB;
     InsertPt = IP;
   }
-  
+
   /// Insert - Insert and return the specified instruction.
   template<typename InstTy>
   InstTy *Insert(InstTy *I, const char *Name = "") const {
     InsertHelper(I, Name);
     return I;
   }
-  
+
   /// InsertHelper - Insert the specified instruction at the specified insertion
   /// point.  This is split out of Insert so that it isn't duplicated for every
   /// template instantiation.
@@ -86,7 +93,7 @@ public:
     if (preserveNames && Name[0])
       I->setName(Name);
   }
-  
+
   //===--------------------------------------------------------------------===//
   // Instruction creation methods: Terminators
   //===--------------------------------------------------------------------===//
@@ -96,8 +103,8 @@ public:
     return Insert(ReturnInst::Create());
   }
 
-  /// @verbatim 
-  /// CreateRet - Create a 'ret <val>' instruction. 
+  /// @verbatim
+  /// CreateRet - Create a 'ret <val>' instruction.
   /// @endverbatim
   ReturnInst *CreateRet(Value *V) {
     return Insert(ReturnInst::Create(V));
@@ -117,7 +124,7 @@ public:
       V = CreateInsertValue(V, retVals[i], i, "mrv");
     return Insert(ReturnInst::Create(V));
   }
-  
+
   /// CreateBr - Create an unconditional 'br label X' instruction.
   BranchInst *CreateBr(BasicBlock *Dest) {
     return Insert(BranchInst::Create(Dest));
@@ -128,23 +135,23 @@ public:
   BranchInst *CreateCondBr(Value *Cond, BasicBlock *True, BasicBlock *False) {
     return Insert(BranchInst::Create(True, False, Cond));
   }
-  
+
   /// CreateSwitch - Create a switch instruction with the specified value,
   /// default dest, and with a hint for the number of cases that will be added
   /// (for efficient allocation).
   SwitchInst *CreateSwitch(Value *V, BasicBlock *Dest, unsigned NumCases = 10) {
     return Insert(SwitchInst::Create(V, Dest, NumCases));
   }
-  
+
   /// CreateInvoke - Create an invoke instruction.
   template<typename InputIterator>
-  InvokeInst *CreateInvoke(Value *Callee, BasicBlock *NormalDest, 
-                           BasicBlock *UnwindDest, InputIterator ArgBegin, 
+  InvokeInst *CreateInvoke(Value *Callee, BasicBlock *NormalDest,
+                           BasicBlock *UnwindDest, InputIterator ArgBegin,
                            InputIterator ArgEnd, const char *Name = "") {
     return Insert(InvokeInst::Create(Callee, NormalDest, UnwindDest,
                                      ArgBegin, ArgEnd), Name);
   }
-  
+
   UnwindInst *CreateUnwind() {
     return Insert(new UnwindInst());
   }
@@ -152,7 +159,7 @@ public:
   UnreachableInst *CreateUnreachable() {
     return Insert(new UnreachableInst());
   }
-  
+
   //===--------------------------------------------------------------------===//
   // Instruction creation methods: Binary Operators
   //===--------------------------------------------------------------------===//
@@ -160,91 +167,91 @@ public:
   Value *CreateAdd(Value *LHS, Value *RHS, const char *Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
-        return ConstantExpr::getAdd(LC, RC);      
+        return Folder.CreateAdd(LC, RC);
     return Insert(BinaryOperator::CreateAdd(LHS, RHS), Name);
   }
   Value *CreateSub(Value *LHS, Value *RHS, const char *Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
-        return ConstantExpr::getSub(LC, RC);
+        return Folder.CreateSub(LC, RC);
     return Insert(BinaryOperator::CreateSub(LHS, RHS), Name);
   }
   Value *CreateMul(Value *LHS, Value *RHS, const char *Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
-        return ConstantExpr::getMul(LC, RC);
+        return Folder.CreateMul(LC, RC);
     return Insert(BinaryOperator::CreateMul(LHS, RHS), Name);
   }
   Value *CreateUDiv(Value *LHS, Value *RHS, const char *Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
-        return ConstantExpr::getUDiv(LC, RC);
+        return Folder.CreateUDiv(LC, RC);
     return Insert(BinaryOperator::CreateUDiv(LHS, RHS), Name);
   }
   Value *CreateSDiv(Value *LHS, Value *RHS, const char *Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
-        return ConstantExpr::getSDiv(LC, RC);      
+        return Folder.CreateSDiv(LC, RC);
     return Insert(BinaryOperator::CreateSDiv(LHS, RHS), Name);
   }
   Value *CreateFDiv(Value *LHS, Value *RHS, const char *Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
-        return ConstantExpr::getFDiv(LC, RC);      
+        return Folder.CreateFDiv(LC, RC);
     return Insert(BinaryOperator::CreateFDiv(LHS, RHS), Name);
   }
   Value *CreateURem(Value *LHS, Value *RHS, const char *Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
-        return ConstantExpr::getURem(LC, RC);
+        return Folder.CreateURem(LC, RC);
     return Insert(BinaryOperator::CreateURem(LHS, RHS), Name);
   }
   Value *CreateSRem(Value *LHS, Value *RHS, const char *Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
-        return ConstantExpr::getSRem(LC, RC);
+        return Folder.CreateSRem(LC, RC);
     return Insert(BinaryOperator::CreateSRem(LHS, RHS), Name);
   }
   Value *CreateFRem(Value *LHS, Value *RHS, const char *Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
-        return ConstantExpr::getFRem(LC, RC);
+        return Folder.CreateFRem(LC, RC);
     return Insert(BinaryOperator::CreateFRem(LHS, RHS), Name);
   }
   Value *CreateShl(Value *LHS, Value *RHS, const char *Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
-        return ConstantExpr::getShl(LC, RC);
+        return Folder.CreateShl(LC, RC);
     return Insert(BinaryOperator::CreateShl(LHS, RHS), Name);
   }
   Value *CreateLShr(Value *LHS, Value *RHS, const char *Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
-        return ConstantExpr::getLShr(LC, RC);
+        return Folder.CreateLShr(LC, RC);
     return Insert(BinaryOperator::CreateLShr(LHS, RHS), Name);
   }
   Value *CreateAShr(Value *LHS, Value *RHS, const char *Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
-        return ConstantExpr::getAShr(LC, RC);
+        return Folder.CreateAShr(LC, RC);
     return Insert(BinaryOperator::CreateAShr(LHS, RHS), Name);
   }
   Value *CreateAnd(Value *LHS, Value *RHS, const char *Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
-        return ConstantExpr::getAnd(LC, RC);
+        return Folder.CreateAnd(LC, RC);
     return Insert(BinaryOperator::CreateAnd(LHS, RHS), Name);
   }
   Value *CreateOr(Value *LHS, Value *RHS, const char *Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
-        return ConstantExpr::getOr(LC, RC);
+        return Folder.CreateOr(LC, RC);
     return Insert(BinaryOperator::CreateOr(LHS, RHS), Name);
   }
   Value *CreateXor(Value *LHS, Value *RHS, const char *Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
-        return ConstantExpr::getXor(LC, RC);
+        return Folder.CreateXor(LC, RC);
     return Insert(BinaryOperator::CreateXor(LHS, RHS), Name);
   }
 
@@ -252,25 +259,25 @@ public:
                      Value *LHS, Value *RHS, const char *Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
-        return ConstantExpr::get(Opc, LC, RC);
+        return Folder.CreateBinOp(Opc, LC, RC);
     return Insert(BinaryOperator::Create(Opc, LHS, RHS), Name);
   }
-  
+
   Value *CreateNeg(Value *V, const char *Name = "") {
     if (Constant *VC = dyn_cast<Constant>(V))
-      return ConstantExpr::getNeg(VC);
+      return Folder.CreateNeg(VC);
     return Insert(BinaryOperator::CreateNeg(V), Name);
   }
   Value *CreateNot(Value *V, const char *Name = "") {
     if (Constant *VC = dyn_cast<Constant>(V))
-      return ConstantExpr::getNot(VC);
+      return Folder.CreateNot(VC);
     return Insert(BinaryOperator::CreateNot(V), Name);
   }
-  
+
   //===--------------------------------------------------------------------===//
   // Instruction creation methods: Memory Instructions
   //===--------------------------------------------------------------------===//
-  
+
   MallocInst *CreateMalloc(const Type *Ty, Value *ArraySize = 0,
                            const char *Name = "") {
     return Insert(new MallocInst(Ty, ArraySize), Name);
@@ -292,9 +299,9 @@ public:
     return Insert(new StoreInst(Val, Ptr, isVolatile));
   }
   template<typename InputIterator>
-  Value *CreateGEP(Value *Ptr, InputIterator IdxBegin, 
+  Value *CreateGEP(Value *Ptr, InputIterator IdxBegin,
                                InputIterator IdxEnd, const char *Name = "") {
-      
+
     if (Constant *PC = dyn_cast<Constant>(Ptr)) {
       // Every index must be constant.
       InputIterator i;
@@ -303,15 +310,14 @@ public:
           break;
       }
       if (i == IdxEnd)
-        return ConstantExpr::getGetElementPtr(PC, &IdxBegin[0], 
-                                              IdxEnd - IdxBegin);
-    }      
+        return Folder.CreateGetElementPtr(PC, &IdxBegin[0], IdxEnd - IdxBegin);
+    }
     return Insert(GetElementPtrInst::Create(Ptr, IdxBegin, IdxEnd), Name);
   }
   Value *CreateGEP(Value *Ptr, Value *Idx, const char *Name = "") {
     if (Constant *PC = dyn_cast<Constant>(Ptr))
       if (Constant *IC = dyn_cast<Constant>(Idx))
-        return ConstantExpr::getGetElementPtr(PC, &IC, 1);
+        return Folder.CreateGetElementPtr(PC, &IC, 1);
     return Insert(GetElementPtrInst::Create(Ptr, Idx), Name);
   }
   Value *CreateStructGEP(Value *Ptr, unsigned Idx, const char *Name = "") {
@@ -319,16 +325,16 @@ public:
       ConstantInt::get(llvm::Type::Int32Ty, 0),
       ConstantInt::get(llvm::Type::Int32Ty, Idx)
     };
-    
+
     if (Constant *PC = dyn_cast<Constant>(Ptr))
-      return ConstantExpr::getGetElementPtr(PC, Idxs, 2);
-    
+      return Folder.CreateGetElementPtr(PC, Idxs, 2);
+
     return Insert(GetElementPtrInst::Create(Ptr, Idxs, Idxs+2), Name);
   }
   Value *CreateGlobalString(const char *Str = "", const char *Name = "") {
     Constant *StrConstant = ConstantArray::get(Str, true);
     GlobalVariable *gv = new llvm::GlobalVariable(StrConstant->getType(),
-                                                  true, 
+                                                  true,
                                                   GlobalValue::InternalLinkage,
                                                   StrConstant,
                                                   "",
@@ -341,12 +347,12 @@ public:
     Value *gv = CreateGlobalString(Str, Name);
     Value *zero = llvm::ConstantInt::get(llvm::Type::Int32Ty, 0);
     Value *Args[] = { zero, zero };
-    return CreateGEP(gv, Args, Args+2, Name);    
+    return CreateGEP(gv, Args, Args+2, Name);
   }
   //===--------------------------------------------------------------------===//
   // Instruction creation methods: Cast/Conversion Operators
   //===--------------------------------------------------------------------===//
-    
+
   Value *CreateTrunc(Value *V, const Type *DestTy, const char *Name = "") {
     return CreateCast(Instruction::Trunc, V, DestTy, Name);
   }
@@ -393,7 +399,7 @@ public:
     if (V->getType() == DestTy)
       return V;
     if (Constant *VC = dyn_cast<Constant>(V))
-      return ConstantExpr::getCast(Op, VC, DestTy);      
+      return Folder.CreateCast(Op, VC, DestTy);
     return Insert(CastInst::Create(Op, V, DestTy), Name);
   }
   Value *CreateIntCast(Value *V, const Type *DestTy, bool isSigned,
@@ -401,14 +407,14 @@ public:
     if (V->getType() == DestTy)
       return V;
     if (Constant *VC = dyn_cast<Constant>(V))
-      return ConstantExpr::getIntegerCast(VC, DestTy, isSigned);
+      return Folder.CreateIntCast(VC, DestTy, isSigned);
     return Insert(CastInst::CreateIntegerCast(V, DestTy, isSigned), Name);
   }
 
   //===--------------------------------------------------------------------===//
   // Instruction creation methods: Compare Instructions
   //===--------------------------------------------------------------------===//
-  
+
   Value *CreateICmpEQ(Value *LHS, Value *RHS, const char *Name = "") {
     return CreateICmp(ICmpInst::ICMP_EQ, LHS, RHS, Name);
   }
@@ -439,7 +445,7 @@ public:
   Value *CreateICmpSLE(Value *LHS, Value *RHS, const char *Name = "") {
     return CreateICmp(ICmpInst::ICMP_SLE, LHS, RHS, Name);
   }
-  
+
   Value *CreateFCmpOEQ(Value *LHS, Value *RHS, const char *Name = "") {
     return CreateFCmp(FCmpInst::FCMP_OEQ, LHS, RHS, Name);
   }
@@ -483,33 +489,33 @@ public:
     return CreateFCmp(FCmpInst::FCMP_UNE, LHS, RHS, Name);
   }
 
-  Value *CreateICmp(CmpInst::Predicate P, Value *LHS, Value *RHS, 
+  Value *CreateICmp(CmpInst::Predicate P, Value *LHS, Value *RHS,
                     const char *Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
-        return ConstantExpr::getCompare(P, LC, RC);      
+        return Folder.CreateCompare(P, LC, RC);
     return Insert(new ICmpInst(P, LHS, RHS), Name);
   }
-  Value *CreateFCmp(CmpInst::Predicate P, Value *LHS, Value *RHS, 
+  Value *CreateFCmp(CmpInst::Predicate P, Value *LHS, Value *RHS,
                     const char *Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
-        return ConstantExpr::getCompare(P, LC, RC);
+        return Folder.CreateCompare(P, LC, RC);
     return Insert(new FCmpInst(P, LHS, RHS), Name);
   }
 
-  Value *CreateVICmp(CmpInst::Predicate P, Value *LHS, Value *RHS, 
+  Value *CreateVICmp(CmpInst::Predicate P, Value *LHS, Value *RHS,
                      const char *Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
-        return ConstantExpr::getCompare(P, LC, RC);      
+        return Folder.CreateCompare(P, LC, RC);
     return Insert(new VICmpInst(P, LHS, RHS), Name);
   }
-  Value *CreateVFCmp(CmpInst::Predicate P, Value *LHS, Value *RHS, 
+  Value *CreateVFCmp(CmpInst::Predicate P, Value *LHS, Value *RHS,
                      const char *Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
-        return ConstantExpr::getCompare(P, LC, RC);
+        return Folder.CreateCompare(P, LC, RC);
     return Insert(new VFCmpInst(P, LHS, RHS), Name);
   }
 
@@ -542,9 +548,9 @@ public:
     Value *Args[] = { Arg1, Arg2, Arg3, Arg4 };
     return Insert(CallInst::Create(Callee, Args, Args+4), Name);
   }
-  
+
   template<typename InputIterator>
-  CallInst *CreateCall(Value *Callee, InputIterator ArgBegin, 
+  CallInst *CreateCall(Value *Callee, InputIterator ArgBegin,
                        InputIterator ArgEnd, const char *Name = "") {
     return Insert(CallInst::Create(Callee, ArgBegin, ArgEnd), Name);
   }
@@ -554,7 +560,7 @@ public:
     if (Constant *CC = dyn_cast<Constant>(C))
       if (Constant *TC = dyn_cast<Constant>(True))
         if (Constant *FC = dyn_cast<Constant>(False))
-          return ConstantExpr::getSelect(CC, TC, FC);      
+          return Folder.CreateSelect(CC, TC, FC);
     return Insert(SelectInst::Create(C, True, False), Name);
   }
 
@@ -566,7 +572,7 @@ public:
                                          const char *Name = "") {
     if (Constant *VC = dyn_cast<Constant>(Vec))
       if (Constant *IC = dyn_cast<Constant>(Idx))
-        return ConstantExpr::getExtractElement(VC, IC);
+        return Folder.CreateExtractElement(VC, IC);
     return Insert(new ExtractElementInst(Vec, Idx), Name);
   }
 
@@ -575,7 +581,7 @@ public:
     if (Constant *VC = dyn_cast<Constant>(Vec))
       if (Constant *NC = dyn_cast<Constant>(NewElt))
         if (Constant *IC = dyn_cast<Constant>(Idx))
-          return ConstantExpr::getInsertElement(VC, NC, IC);
+          return Folder.CreateInsertElement(VC, NC, IC);
     return Insert(InsertElementInst::Create(Vec, NewElt, Idx), Name);
   }
 
@@ -584,14 +590,14 @@ public:
     if (Constant *V1C = dyn_cast<Constant>(V1))
       if (Constant *V2C = dyn_cast<Constant>(V2))
         if (Constant *MC = dyn_cast<Constant>(Mask))
-          return ConstantExpr::getShuffleVector(V1C, V2C, MC);      
+          return Folder.CreateShuffleVector(V1C, V2C, MC);
     return Insert(new ShuffleVectorInst(V1, V2, Mask), Name);
   }
 
   Value *CreateExtractValue(Value *Agg, unsigned Idx,
                             const char *Name = "") {
     if (Constant *AggC = dyn_cast<Constant>(Agg))
-      return ConstantExpr::getExtractValue(AggC, &Idx, 1);
+      return Folder.CreateExtractValue(AggC, &Idx, 1);
     return Insert(ExtractValueInst::Create(Agg, Idx), Name);
   }
 
@@ -601,7 +607,7 @@ public:
                             InputIterator IdxEnd,
                             const char *Name = "") {
     if (Constant *AggC = dyn_cast<Constant>(Agg))
-      return ConstantExpr::getExtractValue(AggC, IdxBegin, IdxEnd - IdxBegin);
+      return Folder.CreateExtractValue(AggC, IdxBegin, IdxEnd - IdxBegin);
     return Insert(ExtractValueInst::Create(Agg, IdxBegin, IdxEnd), Name);
   }
 
@@ -609,7 +615,7 @@ public:
                            const char *Name = "") {
     if (Constant *AggC = dyn_cast<Constant>(Agg))
       if (Constant *ValC = dyn_cast<Constant>(Val))
-        return ConstantExpr::getInsertValue(AggC, ValC, &Idx, 1);
+        return Folder.CreateInsertValue(AggC, ValC, &Idx, 1);
     return Insert(InsertValueInst::Create(Agg, Val, Idx), Name);
   }
 
@@ -620,12 +626,12 @@ public:
                            const char *Name = "") {
     if (Constant *AggC = dyn_cast<Constant>(Agg))
       if (Constant *ValC = dyn_cast<Constant>(Val))
-        return ConstantExpr::getInsertValue(AggC, ValC,
+        return Folder.CreateInsertValue(AggC, ValC,
                                             IdxBegin, IdxEnd - IdxBegin);
     return Insert(InsertValueInst::Create(Agg, Val, IdxBegin, IdxEnd), Name);
   }
 };
-  
+
 }
 
 #endif
