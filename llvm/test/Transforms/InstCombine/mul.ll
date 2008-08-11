@@ -1,7 +1,5 @@
 ; This test makes sure that mul instructions are properly eliminated.
-;
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep mul
-; END.
 
 define i32 @test1(i32 %A) {
         %B = mul i32 %A, 1              ; <i32> [#uses=1]
@@ -76,5 +74,20 @@ define i32 @test12(i8 %a, i32 %b) {
         ; e = b & (a >> 31)
         %e = mul i32 %d, %b             ; <i32> [#uses=1]
         ret i32 %e
+}
+
+; PR2642
+define internal void @test13(<4 x float>*) {
+	load <4 x float>* %0, align 1
+	mul <4 x float> %2, < float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00 >
+	store <4 x float> %3, <4 x float>* %0, align 1
+	ret void
+}
+
+define internal void @test14(<4 x float>*) {
+	load <4 x float>* %0, align 1
+	mul <4 x float> %2, zeroinitializer
+	store <4 x float> %3, <4 x float>* %0, align 1
+	ret void
 }
 

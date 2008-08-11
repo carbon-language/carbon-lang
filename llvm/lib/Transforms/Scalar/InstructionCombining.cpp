@@ -2480,10 +2480,17 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
 
       // "In IEEE floating point, x*1 is not equivalent to x for nans.  However,
       // ANSI says we can drop signals, so we can do this anyway." (from GCC)
-      // We need a better interface for long double here.
-      if (Op1->getType() == Type::FloatTy || Op1->getType() == Type::DoubleTy)
-        if (Op1F->isExactlyValue(1.0))
-          return ReplaceInstUsesWith(I, Op0);  // Eliminate 'mul double %X, 1.0'
+      if (Op1F->isExactlyValue(1.0))
+        return ReplaceInstUsesWith(I, Op0);  // Eliminate 'mul double %X, 1.0'
+    } else if (isa<VectorType>(Op1->getType())) {
+      if (isa<ConstantAggregateZero>(Op1))
+        return ReplaceInstUsesWith(I, Op1);
+      
+      // As above, vector X*splat(1.0) -> X in all defined cases.
+      if (ConstantVector *Op1V = dyn_cast<ConstantVector>(Op1))
+        if (ConstantFP *F = dyn_cast_or_null<ConstantFP>(Op1V->getSplatValue()))
+          if (F->isExactlyValue(1.0))
+            return ReplaceInstUsesWith(I, Op0);
     }
     
     if (BinaryOperator *Op0I = dyn_cast<BinaryOperator>(Op0))
@@ -11635,4 +11642,5 @@ bool InstCombiner::runOnFunction(Function &F) {
 FunctionPass *llvm::createInstructionCombiningPass() {
   return new InstCombiner();
 }
+
 
