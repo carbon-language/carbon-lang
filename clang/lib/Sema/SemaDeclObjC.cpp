@@ -14,6 +14,8 @@
 #include "Sema.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
+#include "clang/Basic/Diagnostic.h"
+#include "clang/Parse/DeclSpec.h"
 #include "clang/Parse/Scope.h"
 
 using namespace clang;

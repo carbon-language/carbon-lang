@@ -18,7 +18,6 @@
 #include "IdentifierResolver.h"
 #include "CXXFieldCollector.h"
 #include "clang/Parse/Action.h"
-#include "clang/Parse/DeclSpec.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -36,6 +35,7 @@ namespace clang {
   class Preprocessor;
   class Decl;
   class DeclContext;
+  class DeclSpec;
   class NamedDecl;
   class ScopedDecl;
   class Expr;

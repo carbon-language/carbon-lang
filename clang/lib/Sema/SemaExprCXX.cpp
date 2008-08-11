@@ -14,6 +14,7 @@
 #include "Sema.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/Basic/Diagnostic.h"
 using namespace clang;
 
 /// ActOnCXXCasts - Parse {dynamic,static,reinterpret,const}_cast's.

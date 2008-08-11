@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "Sema.h"
-#include "clang/Basic/LangOptions.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclCXX.h"
@@ -20,6 +19,9 @@
 #include "clang/AST/ExprObjC.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/AST/Type.h"
+#include "clang/Basic/Diagnostic.h"
+#include "clang/Basic/LangOptions.h"
+#include "clang/Parse/DeclSpec.h"
 #include "clang/Parse/Scope.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/Compiler.h"

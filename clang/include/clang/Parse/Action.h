@@ -16,7 +16,6 @@
 
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/SourceLocation.h"
-#include "clang/Basic/TokenKinds.h"
 #include "clang/Parse/AccessSpecifier.h"
 
 namespace clang {

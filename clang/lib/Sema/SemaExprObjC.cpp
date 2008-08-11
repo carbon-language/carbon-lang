@@ -15,6 +15,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/ExprObjC.h"
+#include "clang/Basic/Diagnostic.h"
 using namespace clang;
 
 Sema::ExprResult Sema::ParseObjCStringLiteral(SourceLocation *AtLocs, 
