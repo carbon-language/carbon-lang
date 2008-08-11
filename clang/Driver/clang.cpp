@@ -362,6 +362,17 @@ LaxVectorConversions("flax-vector-conversions",
                                     " with a different number of elements or "
                                     "different element types"));
 
+// FIXME: This (and all GCC -f options) really come in -f... and
+// -fno-... forms, and additionally support automagic behavior when
+// they are not defined. For example, -fexceptions defaults to on or
+// off depending on the language. We should support this behavior in
+// some form (perhaps just add a facility for distinguishing when an
+// has its default value from when it has been set to its default
+// value).
+static llvm::cl::opt<bool>
+Exceptions("fexceptions",
+           llvm::cl::desc("Enable support for exception handling."));
+
 // FIXME: add:
 //   -ansi
 //   -trigraphs
@@ -427,6 +438,7 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK) {
   Options.Microsoft = MSExtensions;
   Options.WritableStrings = WritableStrings;
   Options.LaxVectorConversions = LaxVectorConversions;
+  Options.Exceptions = Exceptions;
 }
 
 static llvm::cl::opt<bool>

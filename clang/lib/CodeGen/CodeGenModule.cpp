@@ -751,6 +751,12 @@ void CodeGenModule::EmitGlobalFunctionDefinition(const FunctionDecl *D) {
     llvm::Function *Fn = cast<llvm::Function>(Entry);    
     CodeGenFunction(*this).GenerateCode(D, Fn);
 
+    // Set attributes specific to definition. 
+    // FIXME: This needs to be cleaned up by clearly emitting the
+    // declaration / definition at separate times.
+    if (!Features.Exceptions)
+      Fn->addParamAttr(0, llvm::ParamAttr::NoUnwind);  
+
     if (const ConstructorAttr *CA = D->getAttr<ConstructorAttr>()) {
       AddGlobalCtor(Fn, CA->getPriority());
     } else if (const DestructorAttr *DA = D->getAttr<DestructorAttr>()) {
