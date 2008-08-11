@@ -24,6 +24,7 @@
 #include "clang/AST/Type.h"
 #include "clang/Parse/DeclSpec.h"
 #include "clang/Parse/Scope.h"
+#include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/LangOptions.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/SourceManager.h"

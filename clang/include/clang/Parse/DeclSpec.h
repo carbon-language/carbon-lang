@@ -14,13 +14,13 @@
 #ifndef LLVM_CLANG_PARSE_SEMADECLSPEC_H
 #define LLVM_CLANG_PARSE_SEMADECLSPEC_H
 
-#include "clang/Basic/Diagnostic.h"
 #include "clang/Parse/Action.h"
 #include "clang/Parse/AttributeList.h"
 #include "llvm/ADT/SmallVector.h"
 
 namespace clang {
   struct LangOptions;
+  class Diagnostic;
   class IdentifierInfo;
   
 /// DeclSpec - This class captures information about "declaration specifiers",
@@ -303,14 +303,10 @@ public:
   
 private:
   void Diag(Diagnostic &D, SourceLocation Loc, SourceManager& SrcMgr, 
-            unsigned DiagID) {
-    D.Report(FullSourceLoc(Loc,SrcMgr), DiagID);
-  }
+            unsigned DiagID);
   
   void Diag(Diagnostic &D, SourceLocation Loc, SourceManager& SrcMgr,
-            unsigned DiagID, const std::string &info) {
-    D.Report(FullSourceLoc(Loc,SrcMgr), DiagID, &info, 1);
-  }
+            unsigned DiagID, const std::string &info);
 };
 
 /// ObjCDeclSpec - This class captures information about 

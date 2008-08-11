@@ -15,8 +15,9 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"
-#include "clang/Parse/DeclSpec.h"
+#include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/LangOptions.h"
+#include "clang/Parse/DeclSpec.h"
 using namespace clang;
 
 /// ConvertDeclSpecToType - Convert the specified declspec to the appropriate

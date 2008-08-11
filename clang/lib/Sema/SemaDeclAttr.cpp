@@ -13,6 +13,7 @@
 
 #include "Sema.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Parse/DeclSpec.h"
 #include <llvm/ADT/StringExtras.h>

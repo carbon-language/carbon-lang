@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Parse/DeclSpec.h"
+#include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/LangOptions.h"
 #include "clang/Basic/SourceLocation.h"
 using namespace clang;
@@ -287,4 +288,14 @@ void DeclSpec::Finish(Diagnostic &D, SourceManager& SrcMgr,
   // TODO: return "auto function" and other bad things based on the real type.
   
   // 'data definition has no type or storage class'?
+}
+
+void DeclSpec::Diag(Diagnostic &D, SourceLocation Loc, SourceManager& SrcMgr, 
+                    unsigned DiagID) {
+  D.Report(FullSourceLoc(Loc,SrcMgr), DiagID);
+}
+  
+void DeclSpec::Diag(Diagnostic &D, SourceLocation Loc, SourceManager& SrcMgr,
+          unsigned DiagID, const std::string &info) {
+  D.Report(FullSourceLoc(Loc,SrcMgr), DiagID, &info, 1);
 }
