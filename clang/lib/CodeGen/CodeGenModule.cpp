@@ -331,10 +331,13 @@ void CodeGenModule::EmitObjCClassImplementation(
   // this should probably be something different (size just of instance
   // varaibles in this class, not superclasses?).
   int instanceSize = 0;
-  const llvm::Type *ObjTy;
+  const llvm::Type *ObjTy = 0;
   if (!Runtime->LateBoundIVars()) {
     ObjTy = getTypes().ConvertType(Context.getObjCInterfaceType(ClassDecl));
     instanceSize = TheTargetData.getABITypeSize(ObjTy);
+  } else {
+    // This is required by newer ObjC runtimes.
+    assert(0 && "Late-bound instance variables not yet supported");
   }
 
   // Collect information about instance variables.
