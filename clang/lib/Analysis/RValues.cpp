@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Analysis/PathSensitive/RValues.h"
+#include "clang/Basic/IdentifierTable.h"
 #include "llvm/Support/Streams.h"
 
 using namespace clang;

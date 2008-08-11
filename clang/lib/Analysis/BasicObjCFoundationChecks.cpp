@@ -23,6 +23,7 @@
 #include "clang/Analysis/PathDiagnostic.h"
 #include "clang/Analysis/LocalCheckers.h"
 
+#include "clang/AST/DeclObjC.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprObjC.h"
 #include "clang/AST/ASTContext.h"

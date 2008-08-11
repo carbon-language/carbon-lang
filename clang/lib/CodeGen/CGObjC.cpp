@@ -15,6 +15,8 @@
 #include "CodeGenFunction.h"
 #include "CodeGenModule.h"
 #include "clang/AST/ExprObjC.h"
+#include "clang/AST/Decl.h"
+#include "clang/AST/DeclObjC.h"
 #include "llvm/Constant.h"
 #include "llvm/Function.h"
 

@@ -25,16 +25,20 @@
 #include <map>
 
 namespace llvm {
+  class BasicBlock;
   class Module;
 }
 
 namespace clang {
   class ASTContext;
   class Decl;
+  class EnumConstantDecl;
   class FunctionDecl;
+  class FunctionTypeProto;
+  class LabelStmt;
   class ObjCMethodDecl;
   class TargetInfo;
-  class FunctionTypeProto;
+  class VarDecl;
 
 namespace CodeGen {
   class CodeGenModule;

@@ -16,20 +16,18 @@
 
 #include "clang/AST/Stmt.h"
 #include "clang/AST/Type.h"
-#include "clang/AST/Decl.h"
-#include "clang/AST/DeclObjC.h"
-#include "clang/Basic/IdentifierTable.h"
 #include "llvm/ADT/APSInt.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/SmallVector.h"
 #include <vector>
 
 namespace clang {
-  class IdentifierInfo;
-  class Selector;
-  class Decl;
   class ASTContext;
   class APValue;
+  class Decl;
+  class IdentifierInfo;
+  class ParmVarDecl;
+  class ValueDecl;
     
 /// Expr - This represents one expression.  Note that Expr's are subclasses of
 /// Stmt.  This allows an expression to be transparently used any place a Stmt

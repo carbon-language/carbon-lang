@@ -20,6 +20,7 @@
 #include "clang/Analysis/LocalCheckers.h"
 #include "clang/Analysis/PathDiagnostic.h"
 #include "clang/Analysis/PathSensitive/BugReporter.h"
+#include "clang/AST/DeclObjC.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/ImmutableMap.h"

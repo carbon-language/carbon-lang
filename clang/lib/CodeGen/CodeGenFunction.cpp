@@ -16,6 +16,8 @@
 #include "CGDebugInfo.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/Decl.h"
+#include "clang/AST/DeclObjC.h"
 #include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"

@@ -15,6 +15,7 @@
 #define LLVM_CLANG_AST_EXPRCXX_H
 
 #include "clang/AST/Expr.h"
+#include "clang/AST/Decl.h"
 
 namespace clang {
 

@@ -275,9 +275,7 @@ private:
 
   /// CurMethodDecl - If inside of a method body, this returns a pointer to
   /// the method decl for the method being parsed.
-  ObjCMethodDecl *getCurMethodDecl() {
-    return dyn_cast<ObjCMethodDecl>(CurContext);
-  }
+  ObjCMethodDecl *getCurMethodDecl();
 
   /// Add this decl to the scope shadowed decl chains.
   void PushOnScopeChains(NamedDecl *D, Scope *S);

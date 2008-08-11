@@ -14,6 +14,7 @@
 
 #include "Sema.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/DeclObjC.h"
 #include "clang/AST/Expr.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/Diagnostic.h"
@@ -200,4 +201,8 @@ bool Sema::Diag(SourceLocation Range, unsigned DiagID, const std::string &Msg1,
 
 const LangOptions &Sema::getLangOptions() const {
   return PP.getLangOptions();
+}
+
+ObjCMethodDecl *Sema::getCurMethodDecl() {
+  return dyn_cast<ObjCMethodDecl>(CurContext);
 }

@@ -15,10 +15,10 @@
 #define LLVM_CLANG_AST_EXPROBJC_H
 
 #include "clang/AST/Expr.h"
+#include "clang/Basic/IdentifierTable.h"
 
 namespace clang {
   class IdentifierInfo;
-  class Selector;
   class ASTContext;
   
 /// ObjCStringLiteral, used for Objective-C string literals
