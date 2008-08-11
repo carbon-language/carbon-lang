@@ -17,10 +17,10 @@
 #define CLANG_CODEGEN_OBCJRUNTIME_H
 #include "clang/Basic/IdentifierTable.h" // Selector
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Support/IRBuilder.h"
 #include <string>
 
 namespace llvm {
-  template<bool C> class IRBuilder;
   class Constant;
   class Type;
   class Value;
@@ -39,11 +39,13 @@ namespace CodeGen {
 
 /// Implements runtime-specific code generation functions.
 class CGObjCRuntime {
+  typedef llvm::IRBuilder<> BuilderType;
+
 public:
   virtual ~CGObjCRuntime();
   
   /// Generate an Objective-C message send operation
-  virtual llvm::Value *GenerateMessageSend(llvm::IRBuilder<true> &Builder,
+  virtual llvm::Value *GenerateMessageSend(BuilderType &Builder,
                                            const llvm::Type *ReturnTy,
                                            llvm::Value *Sender,
                                            llvm::Value *Receiver,
@@ -54,7 +56,7 @@ public:
   /// this compilation unit with the runtime library.
   virtual llvm::Function *ModuleInitFunction() =0;
   /// Get a selector for the specified name and type values
-  virtual llvm::Value *GetSelector(llvm::IRBuilder<true> &Builder,
+  virtual llvm::Value *GetSelector(BuilderType &Builder,
                                    Selector Sel) =0;
   /// Generate a constant string object
   virtual llvm::Constant *GenerateConstantString(const char *String,
@@ -111,7 +113,7 @@ public:
                                          bool isClassMethod,
                                          bool isVarArg) = 0;
   /// Look up the class for the specified name
-  virtual llvm::Value *LookupClass(llvm::IRBuilder<true> &Builder, 
+  virtual llvm::Value *LookupClass(BuilderType &Builder, 
                                    llvm::Value *ClassName) =0;
   /// If instance variable addresses are determined at runtime then this should
   /// return true, otherwise instance variables will be accessed directly from

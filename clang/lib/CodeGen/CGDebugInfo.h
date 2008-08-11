@@ -16,13 +16,13 @@
 
 #include "clang/AST/Type.h"
 #include "clang/Basic/SourceLocation.h"
+#include "llvm/Support/IRBuilder.h"
 #include <map>
 #include <vector>
 
 
 namespace llvm {
   class Function;
-  template<bool C> class IRBuilder;
   class DISerializer;
   class CompileUnitDesc;
   class BasicBlock;
@@ -53,6 +53,8 @@ private:
   llvm::DISerializer *SR;
   SourceLocation CurLoc;
   SourceLocation PrevLoc;
+
+  typedef llvm::IRBuilder<> BuilderType;
 
   /// CompileUnitCache - Cache of previously constructed CompileUnits.
   std::map<unsigned, llvm::CompileUnitDesc *> CompileUnitCache;
@@ -103,24 +105,24 @@ public:
 
   /// EmitStopPoint - Emit a call to llvm.dbg.stoppoint to indicate a change of
   /// source line.
-  void EmitStopPoint(llvm::Function *Fn, llvm::IRBuilder<true> &Builder);
+  void EmitStopPoint(llvm::Function *Fn, BuilderType &Builder);
 
   /// EmitFunctionStart - Emit a call to llvm.dbg.function.start to indicate
   /// start of a new function
   void EmitFunctionStart(const FunctionDecl *FnDecl, llvm::Function *Fn,
-                         llvm::IRBuilder<true> &Builder);
+                         BuilderType &Builder);
   
   /// EmitRegionStart - Emit a call to llvm.dbg.region.start to indicate start
   /// of a new block.  
-  void EmitRegionStart(llvm::Function *Fn, llvm::IRBuilder<true> &Builder);
+  void EmitRegionStart(llvm::Function *Fn, BuilderType &Builder);
   
   /// EmitRegionEnd - Emit call to llvm.dbg.region.end to indicate end of a 
   /// block.
-  void EmitRegionEnd(llvm::Function *Fn, llvm::IRBuilder<true> &Builder);
+  void EmitRegionEnd(llvm::Function *Fn, BuilderType &Builder);
 
   /// EmitDeclare - Emit call to llvm.dbg.declare for a variable declaration.
   void EmitDeclare(const VarDecl *decl, unsigned Tag, llvm::Value *AI,
-                   llvm::IRBuilder<true> &Builder);
+                   BuilderType &Builder);
 
   /// EmitGlobalVariable - Emit information about a global variable.
   void EmitGlobalVariable(llvm::GlobalVariable *GV, const VarDecl *decl);
