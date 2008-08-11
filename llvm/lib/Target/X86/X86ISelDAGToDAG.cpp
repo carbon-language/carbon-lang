@@ -35,6 +35,7 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Support/Streams.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
 #include <queue>
@@ -76,6 +77,23 @@ namespace {
     X86ISelAddressMode()
       : BaseType(RegBase), isRIPRel(false), Scale(1), IndexReg(), Disp(0),
         GV(0), CP(0), ES(0), JT(-1), Align(0) {
+    }
+    void dump() {
+      cerr << "X86ISelAddressMode " << this << "\n";
+      cerr << "Base.Reg "; if (Base.Reg.Val!=0) Base.Reg.Val->dump(); 
+                           else cerr << "nul";
+      cerr << " Base.FrameIndex " << Base.FrameIndex << "\n";
+      cerr << "isRIPRel " << isRIPRel << " Scale" << Scale << "\n";
+      cerr << "IndexReg "; if (IndexReg.Val!=0) IndexReg.Val->dump();
+                          else cerr << "nul"; 
+      cerr << " Disp " << Disp << "\n";
+      cerr << "GV "; if (GV) GV->dump(); 
+                     else cerr << "nul";
+      cerr << " CP "; if (CP) CP->dump(); 
+                     else cerr << "nul";
+      cerr << "\n";
+      cerr << "ES "; if (ES) cerr << ES; else cerr << "nul";
+      cerr  << " JT" << JT << " Align" << Align << "\n";
     }
   };
 }
@@ -676,6 +694,7 @@ void X86DAGToDAGISel::EmitFunctionEntryCode(Function &Fn, MachineFunction &MF) {
 /// addressing mode.
 bool X86DAGToDAGISel::MatchAddress(SDValue N, X86ISelAddressMode &AM,
                                    bool isRoot, unsigned Depth) {
+DOUT << "MatchAddress: "; DEBUG(AM.dump());
   // Limit recursion.
   if (Depth > 5)
     return MatchAddressBase(N, AM, isRoot, Depth);
@@ -707,6 +726,9 @@ bool X86DAGToDAGISel::MatchAddress(SDValue N, X86ISelAddressMode &AM,
   }
 
   case X86ISD::Wrapper: {
+DOUT << "Wrapper: 64bit " << Subtarget->is64Bit();
+DOUT << " AM "; DEBUG(AM.dump()); DOUT << "\n";
+DOUT << "AlreadySelected " << AlreadySelected << "\n";
     bool is64Bit = Subtarget->is64Bit();
     // Under X86-64 non-small code model, GV (and friends) are 64-bits.
     // Also, base and index reg must be 0 in order to use rip as base.

@@ -106,10 +106,7 @@ FunctionPass *llvm::createX86CodeEmitterPass(X86TargetMachine &TM,
 }
 
 bool Emitter::runOnMachineFunction(MachineFunction &MF) {
-  assert((MF.getTarget().getRelocationModel() != Reloc::Default ||
-          MF.getTarget().getRelocationModel() != Reloc::Static) &&
-         "JIT relocation model must be set to static or default!");
-  
+ 
   MCE.setModuleInfo(&getAnalysis<MachineModuleInfo>());
   
   II = TM.getInstrInfo();
@@ -517,11 +514,16 @@ void Emitter::emitInstruction(const MachineInstr &MI,
 
     if (CurOp != NumOps) {
       const MachineOperand &MO = MI.getOperand(CurOp++);
+DOUT << "RawFrm CurOp " << CurOp << "\n";
+DOUT << "isMachineBasicBlock " << MO.isMachineBasicBlock() << "\n";
+DOUT << "isGlobalAddress " << MO.isGlobalAddress() << "\n";
+DOUT << "isExternalSymbol " << MO.isExternalSymbol() << "\n";
+DOUT << "isImmediate " << MO.isImmediate() << "\n";
       if (MO.isMachineBasicBlock()) {
         emitPCRelativeBlockAddress(MO.getMBB());
       } else if (MO.isGlobalAddress()) {
-        bool NeedStub = (Is64BitMode && TM.getCodeModel() == CodeModel::Large)
-          || Opcode == X86::TAILJMPd;
+        // Assume undefined functions may be outside the Small codespace.
+        bool NeedStub = Is64BitMode || Opcode == X86::TAILJMPd;
         emitGlobalAddress(MO.getGlobal(), X86::reloc_pcrel_word,
                           0, 0, NeedStub);
       } else if (MO.isExternalSymbol()) {
@@ -545,8 +547,6 @@ void Emitter::emitInstruction(const MachineInstr &MI,
       else {
         unsigned rt = Is64BitMode ? X86::reloc_pcrel_word
           : (IsPIC ? X86::reloc_picrel_word : X86::reloc_absolute_word);
-        if (Opcode == X86::MOV64ri)
-          rt = X86::reloc_absolute_dword;  // FIXME: add X86II flag?
         if (MO1.isGlobalAddress()) {
           bool NeedStub = isa<Function>(MO1.getGlobal());
           bool isLazy = gvNeedsLazyPtr(MO1.getGlobal());
@@ -617,8 +617,6 @@ void Emitter::emitInstruction(const MachineInstr &MI,
       else {
         unsigned rt = Is64BitMode ? X86::reloc_pcrel_word
           : (IsPIC ? X86::reloc_picrel_word : X86::reloc_absolute_word);
-        if (Opcode == X86::MOV64ri32)
-          rt = X86::reloc_absolute_word;  // FIXME: add X86II flag?
         if (MO1.isGlobalAddress()) {
           bool NeedStub = isa<Function>(MO1.getGlobal());
           bool isLazy = gvNeedsLazyPtr(MO1.getGlobal());
@@ -654,8 +652,6 @@ void Emitter::emitInstruction(const MachineInstr &MI,
       else {
         unsigned rt = Is64BitMode ? X86::reloc_pcrel_word
           : (IsPIC ? X86::reloc_picrel_word : X86::reloc_absolute_word);
-        if (Opcode == X86::MOV64mi32)
-          rt = X86::reloc_absolute_word;  // FIXME: add X86II flag?
         if (MO.isGlobalAddress()) {
           bool NeedStub = isa<Function>(MO.getGlobal());
           bool isLazy = gvNeedsLazyPtr(MO.getGlobal());
