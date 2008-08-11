@@ -34,12 +34,17 @@ using namespace CodeGen;
 
 CodeGenModule::CodeGenModule(ASTContext &C, const LangOptions &LO,
                              llvm::Module &M, const llvm::TargetData &TD,
-                             Diagnostic &diags, bool GenerateDebugInfo)
+                             Diagnostic &diags, bool GenerateDebugInfo,
+                             bool UseMacObjCRuntime)
   : Context(C), Features(LO), TheModule(M), TheTargetData(TD), Diags(diags),
     Types(C, M, TD), MemCpyFn(0), MemMoveFn(0), MemSetFn(0),
     CFConstantStringClassRef(0) {
   //TODO: Make this selectable at runtime
-  Runtime = CreateObjCRuntime(*this);
+  if (UseMacObjCRuntime) {
+    Runtime = CreateMacObjCRuntime(*this);
+  } else {
+    Runtime = CreateGNUObjCRuntime(*this);
+  }
 
   // If debug info generation is enabled, create the CGDebugInfo object.
   DebugInfo = GenerateDebugInfo ? new CGDebugInfo(this) : 0;      

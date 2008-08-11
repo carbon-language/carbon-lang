@@ -105,7 +105,7 @@ class CodeGenModule {
 public:
   CodeGenModule(ASTContext &C, const LangOptions &Features, llvm::Module &M, 
                 const llvm::TargetData &TD, Diagnostic &Diags,
-                bool GenerateDebugInfo);
+                bool GenerateDebugInfo, bool UseMacObjCRuntime);
 
   ~CodeGenModule();
   

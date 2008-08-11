@@ -1,4 +1,4 @@
-//===----- CGObjCRuntime.h - Emit LLVM Code from ASTs for a Module --------===//
+//===----- CGObjCRuntime.h - Interface to ObjC Runtimes ---------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -81,7 +81,7 @@ public:
              const llvm::SmallVectorImpl<std::string> &Protocols) =0;
   /// Generate a reference to the named protocol.
   virtual llvm::Value *GenerateProtocolRef(llvm::IRBuilder<true> &Builder,
-                                           const char *ProtocolName) =0;
+                                           const char *ProtocolName) = 0;
   virtual llvm::Value *GenerateMessageSendSuper(llvm::IRBuilder<true> &Builder,
                                                 const llvm::Type *ReturnTy,
                                                 llvm::Value *Sender,
@@ -121,7 +121,8 @@ public:
 
 /// Creates an instance of an Objective-C runtime class.  
 //TODO: This should include some way of selecting which runtime to target.
-CGObjCRuntime *CreateObjCRuntime(CodeGenModule &CGM);
+CGObjCRuntime *CreateGNUObjCRuntime(CodeGenModule &CGM);
+CGObjCRuntime *CreateMacObjCRuntime(CodeGenModule &CGM);
 }
 }
 #endif

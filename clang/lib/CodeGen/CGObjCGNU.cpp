@@ -864,6 +864,6 @@ llvm::Function *CGObjCGNU::MethodPreamble(
   return Method;
 }
 
-CodeGen::CGObjCRuntime *CodeGen::CreateObjCRuntime(CodeGen::CodeGenModule &CGM){
+CodeGen::CGObjCRuntime *CodeGen::CreateGNUObjCRuntime(CodeGen::CodeGenModule &CGM){
   return new CGObjCGNU(CGM);
 }

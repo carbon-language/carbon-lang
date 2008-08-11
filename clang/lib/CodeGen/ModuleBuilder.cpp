@@ -60,7 +60,8 @@ namespace {
       M->setDataLayout(Ctx->Target.getTargetDescription());
       TD.reset(new llvm::TargetData(Ctx->Target.getTargetDescription()));
       Builder.reset(new CodeGen::CodeGenModule(Context, Features, *M, *TD,
-                                               Diags, GenerateDebugInfo));
+                                               Diags, GenerateDebugInfo,
+                                               false));
     }
     
     virtual void HandleTopLevelDecl(Decl *D) {
