@@ -183,9 +183,12 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   setOperationAction(ISD::ConstantPool,  MVT::i64, Custom);
   setOperationAction(ISD::JumpTable,     MVT::i64, Custom);
   
-  // RET must be custom lowered, to meet ABI requirements
+  // RET must be custom lowered, to meet ABI requirements.
   setOperationAction(ISD::RET               , MVT::Other, Custom);
 
+  // TRAP is legal.
+  setOperationAction(ISD::TRAP, MVT::Other, Legal);
+    
   // VASTART needs to be custom lowered to use the VarArgsFrameIndex
   setOperationAction(ISD::VASTART           , MVT::Other, Custom);
   

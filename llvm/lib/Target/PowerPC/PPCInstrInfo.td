@@ -575,6 +575,9 @@ def STWCX : XForm_1<31, 150, (outs), (ins GPRC:$rS, memrr:$dst),
                    [(PPCstcx GPRC:$rS, xoaddr:$dst)]>,
                    isDOT;
 
+let isBarrier = 1, hasCtrlDep = 1 in
+def TRAP  : XForm_24<31, 4, (outs), (ins), "trap", LdStGeneral, [(trap)]>;
+
 //===----------------------------------------------------------------------===//
 // PPC32 Load Instructions.
 //

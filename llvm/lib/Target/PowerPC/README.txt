@@ -3,7 +3,6 @@
 TODO:
 * gpr0 allocation
 * implement do-loop -> bdnz transform
-* Implement __builtin_trap (ISD::TRAP) as 'tw 31, 0, 0' aka 'trap'.
 * lmw/stmw pass a la arm load store optimizer for prolog/epilog
 
 ===-------------------------------------------------------------------------===
