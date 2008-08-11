@@ -13,7 +13,8 @@
 
 #include "CodeGenFunction.h"
 #include "CodeGenModule.h"
-#include "clang/AST/AST.h"
+#include "clang/AST/ASTContext.h"
+#include "clang/AST/StmtVisitor.h"
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
 #include "llvm/GlobalVariable.h"

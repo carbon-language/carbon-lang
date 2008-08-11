@@ -15,7 +15,7 @@
 #include "CodeGenModule.h"
 #include "CGDebugInfo.h"
 #include "clang/Basic/TargetInfo.h"
-#include "clang/AST/AST.h"
+#include "clang/AST/ASTContext.h"
 #include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
