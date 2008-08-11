@@ -4378,7 +4378,7 @@ static unsigned InferAlignment(SDValue Ptr, SelectionDAG &DAG) {
     // FIXME: Handle FI+CST.
     const MachineFrameInfo &MFI = *DAG.getMachineFunction().getFrameInfo();
     if (MFI.isFixedObjectIndex(FrameIdx)) {
-      int64_t ObjectOffset = MFI.getObjectOffset(FrameIdx);
+      int64_t ObjectOffset = MFI.getObjectOffset(FrameIdx) + FrameOffset;
 
       // The alignment of the frame index can be determined from its offset from
       // the incoming frame position.  If the frame object is at offset 32 and
