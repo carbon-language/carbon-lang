@@ -391,19 +391,6 @@ static void InitializePredefinedMacros(Preprocessor &PP,
                                        std::vector<char> &Buf) {
   // FIXME: Implement magic like cpp_init_builtins for things like __STDC__
   // and __DATE__ etc.
-#if 0
-  /* __STDC__ has the value 1 under normal circumstances.
-  However, if (a) we are in a system header, (b) the option
-  stdc_0_in_system_headers is true (set by target config), and
-  (c) we are not in strictly conforming mode, then it has the
-  value 0.  (b) and (c) are already checked in cpp_init_builtins.  */
-  //case BT_STDC:
-  if (cpp_in_system_header (pfile))
-    number = 0;
-  else
-    number = 1;
-  break;
-#endif    
   // These should all be defined in the preprocessor according to the
   // current language configuration.
   DefineBuiltinMacro(Buf, "__STDC__=1");
