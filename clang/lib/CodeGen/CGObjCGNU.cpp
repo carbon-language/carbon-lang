@@ -93,14 +93,12 @@ public:
   virtual llvm::Constant *GenerateConstantString(const std::string &String);
   virtual llvm::Value *GenerateMessageSend(llvm::IRBuilder<> &Builder,
                                            const llvm::Type *ReturnTy,
-                                           llvm::Value *Sender,
                                            llvm::Value *Receiver,
                                            Selector Sel,
                                            llvm::Value** ArgV,
                                            unsigned ArgC);
   virtual llvm::Value *GenerateMessageSendSuper(llvm::IRBuilder<> &Builder,
                                                 const llvm::Type *ReturnTy,
-                                                llvm::Value *Sender,
                                                 const char *SuperClassName,
                                                 llvm::Value *Receiver,
                                                 Selector Sel,
@@ -265,7 +263,6 @@ llvm::Constant *CGObjCGNU::GenerateConstantString(const std::string &Str) {
 ///should be called.
 llvm::Value *CGObjCGNU::GenerateMessageSendSuper(llvm::IRBuilder<> &Builder,
                                                  const llvm::Type *ReturnTy,
-                                                 llvm::Value *Sender,
                                                  const char *SuperClassName,
                                                  llvm::Value *Receiver,
                                                  Selector Sel,
@@ -312,7 +309,6 @@ llvm::Value *CGObjCGNU::GenerateMessageSendSuper(llvm::IRBuilder<> &Builder,
 /// Generate code for a message send expression.  
 llvm::Value *CGObjCGNU::GenerateMessageSend(llvm::IRBuilder<> &Builder,
                                             const llvm::Type *ReturnTy,
-                                            llvm::Value *Sender,
                                             llvm::Value *Receiver,
                                             Selector Sel,
                                             llvm::Value** ArgV,

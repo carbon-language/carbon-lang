@@ -61,7 +61,7 @@ llvm::Value *CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E) {
     isSuperMessage = true;
     Receiver = LoadObjCSelf();
   } else {
-   Receiver = EmitScalarExpr(E->getReceiver());
+    Receiver = EmitScalarExpr(E->getReceiver());
   }
 
   // Process the arguments
@@ -91,12 +91,11 @@ llvm::Value *CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E) {
     const char *SuperClass =
       OMD->getClassInterface()->getSuperClass()->getName();
     return Runtime.GenerateMessageSendSuper(Builder, ConvertType(E->getType()),
-                                             Receiver, SuperClass,
+                                             SuperClass,
                                              Receiver, E->getSelector(),
                                              &Args[0], Args.size());
   }
   return Runtime.GenerateMessageSend(Builder, ConvertType(E->getType()),
-                                      LoadObjCSelf(),
                                       Receiver, E->getSelector(),
                                       &Args[0], Args.size());
 }

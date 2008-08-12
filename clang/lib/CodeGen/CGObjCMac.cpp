@@ -38,10 +38,10 @@ private:
 public:
   const llvm::Type *LongTy;
 
-  /// ObjectTy - Opaque type for Objective-C objects
-  const llvm::Type *ObjectTy, *ObjectPtrTy;
-  /// SelectorTy - Opaque type for Objective-C selectors
-  const llvm::Type *SelectorTy, *SelectorPtrTy;
+  /// ObjectPtrTy - LLVM type for object handles (typeof(id))
+  const llvm::Type *ObjectPtrTy;
+  /// SelectorTy - LLVM type for selector handles (typeof(SEL))
+  const llvm::Type *SelectorPtrTy;
 
 public:
   ObjCTypesHelper(CodeGen::CodeGenModule &cgm);
@@ -91,7 +91,6 @@ public:
 
   virtual llvm::Value *GenerateMessageSend(llvm::IRBuilder<> &Builder,
                                            const llvm::Type *ReturnTy,
-                                           llvm::Value *Sender,
                                            llvm::Value *Receiver,
                                            Selector Sel,
                                            llvm::Value** ArgV,
@@ -99,7 +98,6 @@ public:
 
   virtual llvm::Value *GenerateMessageSendSuper(llvm::IRBuilder<> &Builder,
                                                 const llvm::Type *ReturnTy,
-                                                llvm::Value *Sender,
                                                 const char *SuperClassName,
                                                 llvm::Value *Receiver,
                                                 Selector Sel,
@@ -247,7 +245,6 @@ llvm::Constant *CGObjCMac::GenerateConstantString(const std::string &String) {
 /// which class's method should be called.
 llvm::Value *CGObjCMac::GenerateMessageSendSuper(llvm::IRBuilder<> &Builder,
                                                  const llvm::Type *ReturnTy,
-                                                 llvm::Value *Sender,
                                                  const char *SuperClassName,
                                                  llvm::Value *Receiver,
                                                  Selector Sel,
@@ -260,24 +257,18 @@ llvm::Value *CGObjCMac::GenerateMessageSendSuper(llvm::IRBuilder<> &Builder,
 /// Generate code for a message send expression.  
 llvm::Value *CGObjCMac::GenerateMessageSend(llvm::IRBuilder<> &Builder,
                                             const llvm::Type *ReturnTy,
-                                            llvm::Value *Sender,
                                             llvm::Value *Receiver,
                                             Selector Sel,
                                             llvm::Value** ArgV,
-                                            unsigned ArgC) {  
-  if (!Sender) {
-    llvm::Function *F = ObjCTypes.getMessageSendFn();
-    llvm::Value **Args = new llvm::Value*[ArgC+2];
-    Args[0] = Builder.CreateBitCast(Receiver, ObjCTypes.ObjectPtrTy, "tmp");
-    Args[1] = EmitSelector(Builder, Sel);
-    std::copy(ArgV, ArgV+ArgC, Args+2);
-    llvm::CallInst *CI = Builder.CreateCall(F, Args, Args+ArgC+2, "tmp");
-    delete[] Args;
-    return Builder.CreateBitCast(CI, ReturnTy, "tmp");
-  } else {
-    assert(0 && "cannot generate message sends with sender");
-    return 0;
-  }
+                                            unsigned ArgC) {
+  llvm::Function *F = ObjCTypes.getMessageSendFn();
+  llvm::Value **Args = new llvm::Value*[ArgC+2];
+  Args[0] = Builder.CreateBitCast(Receiver, ObjCTypes.ObjectPtrTy, "tmp");
+  Args[1] = EmitSelector(Builder, Sel);
+  std::copy(ArgV, ArgV+ArgC, Args+2);
+  llvm::CallInst *CI = Builder.CreateCall(F, Args, Args+ArgC+2, "tmp");
+  delete[] Args;
+  return Builder.CreateBitCast(CI, ReturnTy, "tmp");
 }
 
 llvm::Value *CGObjCMac::GenerateProtocolRef(llvm::IRBuilder<> &Builder, 
@@ -453,14 +444,9 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
     CFConstantStringClassReference(0),
     MessageSendFn(0),
     LongTy(CGM.getTypes().ConvertType(CGM.getContext().LongTy)),
-    // FIXME: We want the types from the front-end.
-    ObjectTy(llvm::OpaqueType::get()),
-    ObjectPtrTy(llvm::PointerType::getUnqual(ObjectTy)),
-    SelectorTy(llvm::OpaqueType::get()),
-    SelectorPtrTy(llvm::PointerType::getUnqual(SelectorTy))
+    ObjectPtrTy(CGM.getTypes().ConvertType(CGM.getContext().getObjCIdType())),
+    SelectorPtrTy(CGM.getTypes().ConvertType(CGM.getContext().getObjCSelType()))
 {
-  CGM.getModule().addTypeName("struct.__objc_object", ObjectTy);
-  CGM.getModule().addTypeName("struct.__objc_selector", SelectorTy);
 }
 
 ObjCTypesHelper::~ObjCTypesHelper() {

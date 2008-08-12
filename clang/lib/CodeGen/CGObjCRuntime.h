@@ -47,11 +47,6 @@ public:
   /// Generate an Objective-C message send operation
   virtual llvm::Value *GenerateMessageSend(BuilderType &Builder,
                                            const llvm::Type *ReturnTy,
-                                           // FIXME: This should be
-                                           // dropped, it is unused
-                                           // and generates a spurious
-                                           // load.
-                                           llvm::Value *Sender,
                                            llvm::Value *Receiver,
                                            Selector Sel,
                                            llvm::Value** ArgV,
@@ -87,12 +82,6 @@ public:
              const llvm::SmallVectorImpl<std::string> &Protocols) =0;
   virtual llvm::Value *GenerateMessageSendSuper(llvm::IRBuilder<true> &Builder,
                                                 const llvm::Type *ReturnTy,
-                                                // FIXME: This should
-                                                // be dropped, it is
-                                                // unused and
-                                                // generates a
-                                                // spurious load.
-                                                llvm::Value *Sender,
                                                 const char *SuperClassName,
                                                 llvm::Value *Receiver,
                                                 Selector Sel,
