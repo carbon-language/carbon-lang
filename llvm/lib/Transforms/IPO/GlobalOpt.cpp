@@ -988,7 +988,7 @@ static bool GlobalLoadUsesSimpleEnoughForHeapSRA(GlobalVariable *GV,
       // We permit two users of the load: setcc comparing against the null
       // pointer, and a getelementptr of a specific form.
       for (Value::use_iterator UI = LI->use_begin(), E = LI->use_end();
-	   UI != E; ++UI) {
+           UI != E; ++UI) {
         // Comparison against null is ok.
         if (ICmpInst *ICI = dyn_cast<ICmpInst>(*UI)) {
           if (!isa<ConstantPointerNull>(ICI->getOperand(1)))
@@ -1611,7 +1611,7 @@ static bool OnlyCalledDirectly(Function *F) {
 
     // See if the function address is passed as an argument.
     for (User::op_iterator i = User->op_begin() + 1, e = User->op_end();
-	 i != e; ++i)
+         i != e; ++i)
       if (*i == F) return false;
   }
   return true;
