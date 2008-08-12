@@ -251,7 +251,9 @@ static bool isDisp8(int Value) {
 }
 
 bool Emitter::gvNeedsLazyPtr(const GlobalValue *GV) {
-  return !Is64BitMode && 
+  // For Darwin, simulate the linktime GOT by using the same lazy-pointer
+  // mechanism as 32-bit mode.
+  return (!Is64BitMode || TM.getSubtarget<X86Subtarget>().isTargetDarwin()) &&
     TM.getSubtarget<X86Subtarget>().GVRequiresExtraLoad(GV, TM, false);
 }
 
