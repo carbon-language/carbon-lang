@@ -266,7 +266,6 @@ D: Thread Local Storage implementation
 
 N: Bill Wendling
 E: isanbard@gmail.com
-W: http://web.mac.com/bwendling/
 D: Darwin exception handling
 D: MMX & SSSE3 instructions
 D: SPEC2006 support
