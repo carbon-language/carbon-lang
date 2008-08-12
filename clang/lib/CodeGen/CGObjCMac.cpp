@@ -20,6 +20,7 @@
 
 #include "llvm/Module.h"
 #include "llvm/Support/IRBuilder.h"
+#include "llvm/Target/TargetData.h"
 
 using namespace clang;
 
@@ -40,8 +41,15 @@ public:
 
   /// ObjectPtrTy - LLVM type for object handles (typeof(id))
   const llvm::Type *ObjectPtrTy;
-  /// SelectorTy - LLVM type for selector handles (typeof(SEL))
+  /// SelectorPtrTy - LLVM type for selector handles (typeof(SEL))
   const llvm::Type *SelectorPtrTy;
+  /// ProtocolPtrTy - LLVM type for protocol handles (typeof(Protocol))
+  const llvm::Type *ProtocolPtrTy;
+
+  /// SymtabTy - LLVM type for struct objc_symtab.
+  const llvm::StructType *SymtabTy;
+  /// ModuleTy - LLVM type for struct objc_module.
+  const llvm::StructType *ModuleTy;
 
 public:
   ObjCTypesHelper(CodeGen::CodeGenModule &cgm);
@@ -59,6 +67,9 @@ private:
   /// ObjCABI - FIXME: Not sure yet.
   unsigned ObjCABI;
 
+  /// ClassNames - uniqued class names.
+  llvm::DenseMap<Selector, llvm::GlobalVariable*> ClassNames;
+
   /// MethodVarNames - uniqued method variable names.
   llvm::DenseMap<Selector, llvm::GlobalVariable*> MethodVarNames;
 
@@ -67,11 +78,24 @@ private:
 
   /// UsedGlobals - list of globals to pack into the llvm.used metadata
   /// to prevent them from being clobbered.
-  std::vector<llvm::GlobalValue*> UsedGlobals;
+  std::vector<llvm::GlobalVariable*> UsedGlobals;
 
   /// EmitImageInfo - Emit the image info marker used to encode some module
   /// level information.
   void EmitImageInfo();
+
+  /// EmitModuleInfo - Another marker encoding module level
+  /// information. 
+
+  // FIXME: Not sure yet of the difference between this and
+  // IMAGE_INFO. otool looks at this before printing out Obj-C info
+  // though...
+  void EmitModuleInfo();
+
+  /// EmitModuleSymols - Emit module symbols, the result is a constant
+  /// of type pointer-to SymtabTy. // FIXME: Describe more completely
+  /// once known.
+  llvm::Constant *EmitModuleSymbols();
 
   /// FinishModule - Write out global data structures at the end of
   /// processing a translation unit.
@@ -80,6 +104,10 @@ private:
   /// EmitSelector - Return a Value*, of type ObjCTypes.SelectorPtrTy,
   /// for the given selector.
   llvm::Value *EmitSelector(llvm::IRBuilder<> &Builder, Selector Sel);
+
+  /// GetClassName - Return a unique constant for the given selector's
+  /// name.
+  llvm::Constant *GetClassName(Selector Sel);
 
   /// GetMethodVarName - Return a unique constant for the given
   /// selector's name.
@@ -273,7 +301,8 @@ llvm::Value *CGObjCMac::GenerateMessageSend(llvm::IRBuilder<> &Builder,
 
 llvm::Value *CGObjCMac::GenerateProtocolRef(llvm::IRBuilder<> &Builder, 
                                             const char *ProtocolName) {
-  assert(0 && "Cannot get protocol reference on Mac runtime.");
+  //  assert(0 && "Cannot get protocol reference on Mac runtime.");
+  return llvm::Constant::getNullValue(ObjCTypes.ProtocolPtrTy);
   return 0;
 }
 
@@ -283,7 +312,7 @@ void CGObjCMac::GenerateProtocol(const char *ProtocolName,
     const llvm::SmallVectorImpl<llvm::Constant *>  &InstanceMethodTypes,
     const llvm::SmallVectorImpl<llvm::Constant *>  &ClassMethodNames,
     const llvm::SmallVectorImpl<llvm::Constant *>  &ClassMethodTypes) {
-  assert(0 && "Cannot generate protocol for Mac runtime.");
+  //  assert(0 && "Cannot generate protocol for Mac runtime.");
 }
 
 void CGObjCMac::GenerateCategory(
@@ -364,7 +393,7 @@ void CGObjCMac::EmitImageInfo() {
     llvm::ConstantInt::get(llvm::Type::Int32Ty, flags)
   };
   llvm::ArrayType *AT = llvm::ArrayType::get(llvm::Type::Int32Ty, 2);  
-  llvm::GlobalValue *GV = 
+  llvm::GlobalVariable *GV = 
     new llvm::GlobalVariable(AT, true,
                              llvm::GlobalValue::InternalLinkage,
                              llvm::ConstantArray::get(AT, values, 2),
@@ -378,6 +407,53 @@ void CGObjCMac::EmitImageInfo() {
   }
 
   UsedGlobals.push_back(GV);
+}
+
+
+// struct objc_module {
+//   unsigned long version;
+//   unsigned long size;
+//   const char *name;
+//   Symtab symtab;
+// };
+
+// FIXME: Get from somewhere
+static const int ModuleVersion = 7;
+
+void CGObjCMac::EmitModuleInfo() {
+  IdentifierInfo *EmptyIdent = &CGM.getContext().Idents.get("");
+  Selector EmptySel = CGM.getContext().Selectors.getNullarySelector(EmptyIdent);
+  uint64_t Size = CGM.getTargetData().getABITypeSize(ObjCTypes.ModuleTy);
+  
+  std::vector<llvm::Constant*> Values(4);
+  Values[0] = llvm::ConstantInt::get(ObjCTypes.LongTy, ModuleVersion);
+  Values[1] = llvm::ConstantInt::get(ObjCTypes.LongTy, Size);
+    // FIXME: GCC just appears to make up an empty name for this? Why?
+  Values[2] = getConstantGEP(GetClassName(EmptySel), 0, 0);
+  Values[3] = EmitModuleSymbols();
+
+  llvm::GlobalVariable *GV =
+    new llvm::GlobalVariable(ObjCTypes.ModuleTy, false,
+                             llvm::GlobalValue::InternalLinkage,
+                             llvm::ConstantStruct::get(ObjCTypes.ModuleTy, 
+                                                       Values),
+                             "\01L_OBJC_MODULE_INFO", 
+                             &CGM.getModule());
+  GV->setSection("__OBJC,__module_info,regular,no_dead_strip");
+  UsedGlobals.push_back(GV);
+}
+
+llvm::Constant *CGObjCMac::EmitModuleSymbols() {
+  // FIXME: Is this ever used?
+  llvm::GlobalVariable *GV =
+    new llvm::GlobalVariable(ObjCTypes.SymtabTy, false,
+                             llvm::GlobalValue::InternalLinkage,
+                             llvm::Constant::getNullValue(ObjCTypes.SymtabTy),
+                             "\01L_OBJC_SYMBOLS", 
+                             &CGM.getModule());
+  GV->setSection("__OBJC,__symbols,regular,no_dead_strip");
+  UsedGlobals.push_back(GV);
+  return GV;
 }
 
 llvm::Value *CGObjCMac::EmitSelector(llvm::IRBuilder<> &Builder, Selector Sel) {
@@ -399,6 +475,23 @@ llvm::Value *CGObjCMac::EmitSelector(llvm::IRBuilder<> &Builder, Selector Sel) {
   return Builder.CreateLoad(Entry, false, "tmp");
 }
 
+llvm::Constant *CGObjCMac::GetClassName(Selector Sel) {
+  llvm::GlobalVariable *&Entry = ClassNames[Sel];
+
+  if (!Entry) {
+    llvm::Constant *C = llvm::ConstantArray::get(Sel.getName());
+    Entry = 
+      new llvm::GlobalVariable(C->getType(), true, 
+                               llvm::GlobalValue::InternalLinkage,
+                               C, "\01L_OBJC_CLASS_NAME_", 
+                               &CGM.getModule());
+    Entry->setSection("__TEXT,__cstring,cstring_literals");
+    UsedGlobals.push_back(Entry);
+  }
+
+  return Entry;
+}
+
 llvm::Constant *CGObjCMac::GetMethodVarName(Selector Sel) {
   llvm::GlobalVariable *&Entry = MethodVarNames[Sel];
 
@@ -417,10 +510,12 @@ llvm::Constant *CGObjCMac::GetMethodVarName(Selector Sel) {
 }
 
 void CGObjCMac::FinishModule() {
+  EmitModuleInfo();
+
   std::vector<llvm::Constant*> Used;
-  
+
   llvm::Type *I8Ptr = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
-  for (std::vector<llvm::GlobalValue*>::iterator i = UsedGlobals.begin(), 
+  for (std::vector<llvm::GlobalVariable*>::iterator i = UsedGlobals.begin(), 
          e = UsedGlobals.end(); i != e; ++i) {
     Used.push_back(llvm::ConstantExpr::getBitCast(*i, I8Ptr));
   }
@@ -442,11 +537,30 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
   : CGM(cgm),
     CFStringType(0),
     CFConstantStringClassReference(0),
-    MessageSendFn(0),
-    LongTy(CGM.getTypes().ConvertType(CGM.getContext().LongTy)),
-    ObjectPtrTy(CGM.getTypes().ConvertType(CGM.getContext().getObjCIdType())),
-    SelectorPtrTy(CGM.getTypes().ConvertType(CGM.getContext().getObjCSelType()))
+    MessageSendFn(0)
 {
+  CodeGen::CodeGenTypes &Types = CGM.getTypes();
+  ASTContext &Ctx = CGM.getContext();
+  
+  LongTy = Types.ConvertType(Ctx.LongTy);
+  ObjectPtrTy = Types.ConvertType(Ctx.getObjCIdType());
+  SelectorPtrTy = Types.ConvertType(Ctx.getObjCSelType());
+  ProtocolPtrTy = Types.ConvertType(Ctx.getObjCProtoType());
+
+  SymtabTy = llvm::StructType::get(LongTy,
+                                   SelectorPtrTy,
+                                   Types.ConvertType(Ctx.ShortTy),
+                                   Types.ConvertType(Ctx.ShortTy),
+                                   NULL);
+  CGM.getModule().addTypeName("struct._objc_symtab", SymtabTy);
+
+  ModuleTy = 
+    llvm::StructType::get(LongTy,
+                          LongTy,
+                          llvm::PointerType::getUnqual(llvm::Type::Int8Ty),
+                          llvm::PointerType::getUnqual(SymtabTy),
+                          NULL);
+  CGM.getModule().addTypeName("struct._objc_module", ModuleTy);
 }
 
 ObjCTypesHelper::~ObjCTypesHelper() {
