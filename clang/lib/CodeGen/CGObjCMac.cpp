@@ -33,16 +33,23 @@ private:
   
   const llvm::StructType *CFStringType;
   llvm::Constant *CFConstantStringClassReference;
-  
+  llvm::Function *MessageSendFn;
+
 public:
   const llvm::Type *LongTy;
-  
+
+  /// ObjectTy - Opaque type for Objective-C objects
+  const llvm::Type *ObjectTy, *ObjectPtrTy;
+  /// SelectorTy - Opaque type for Objective-C selectors
+  const llvm::Type *SelectorTy, *SelectorPtrTy;
+
 public:
   ObjCTypesHelper(CodeGen::CodeGenModule &cgm);
   ~ObjCTypesHelper();
   
   llvm::Constant *getCFConstantStringClassReference();
   const llvm::StructType *getCFStringType();
+  llvm::Function *getMessageSendFn();
 };
 
 class CGObjCMac : public CodeGen::CGObjCRuntime {
@@ -51,6 +58,12 @@ private:
   ObjCTypesHelper ObjCTypes;
   /// ObjCABI - FIXME: Not sure yet.
   unsigned ObjCABI;
+
+  /// MethodVarNames - uniqued method variable names.
+  llvm::DenseMap<Selector, llvm::GlobalVariable*> MethodVarNames;
+
+  /// SelectorReferences - uniqued selector references.
+  llvm::DenseMap<Selector, llvm::GlobalVariable*> SelectorReferences;
 
   /// UsedGlobals - list of globals to pack into the llvm.used metadata
   /// to prevent them from being clobbered.
@@ -63,6 +76,14 @@ private:
   /// FinishModule - Write out global data structures at the end of
   /// processing a translation unit.
   void FinishModule();
+  
+  /// EmitSelector - Return a Value*, of type ObjCTypes.SelectorPtrTy,
+  /// for the given selector.
+  llvm::Value *EmitSelector(llvm::IRBuilder<> &Builder, Selector Sel);
+
+  /// GetMethodVarName - Return a unique constant for the given
+  /// selector's name.
+  llvm::Constant *GetMethodVarName(Selector Sel);
 
 public:
   CGObjCMac(CodeGen::CodeGenModule &cgm);
@@ -171,8 +192,7 @@ llvm::Value *CGObjCMac::LookupClass(llvm::IRBuilder<> &Builder,
 
 /// GetSelector - Return the pointer to the unique'd string for this selector.
 llvm::Value *CGObjCMac::GetSelector(llvm::IRBuilder<> &Builder, Selector Sel) {
-  assert(0 && "Cannot get selector on Mac runtime.");
-  return 0;
+  return EmitSelector(Builder, Sel);
 }
 
 /// Generate a constant CFString object.
@@ -244,9 +264,20 @@ llvm::Value *CGObjCMac::GenerateMessageSend(llvm::IRBuilder<> &Builder,
                                             llvm::Value *Receiver,
                                             Selector Sel,
                                             llvm::Value** ArgV,
-                                            unsigned ArgC) {
-  assert(0 && "Cannot generate message send for Mac runtime.");
-  return 0;
+                                            unsigned ArgC) {  
+  if (!Sender) {
+    llvm::Function *F = ObjCTypes.getMessageSendFn();
+    llvm::Value **Args = new llvm::Value*[ArgC+2];
+    Args[0] = Builder.CreateBitCast(Receiver, ObjCTypes.ObjectPtrTy, "tmp");
+    Args[1] = EmitSelector(Builder, Sel);
+    std::copy(ArgV, ArgV+ArgC, Args+2);
+    llvm::CallInst *CI = Builder.CreateCall(F, Args, Args+ArgC+2, "tmp");
+    delete[] Args;
+    return Builder.CreateBitCast(CI, ReturnTy, "tmp");
+  } else {
+    assert(0 && "cannot generate message sends with sender");
+    return 0;
+  }
 }
 
 llvm::Value *CGObjCMac::GenerateProtocolRef(llvm::IRBuilder<> &Builder, 
@@ -297,16 +328,15 @@ llvm::Function *CGObjCMac::ModuleInitFunction() {
   return NULL;
 }
 
-llvm::Function *CGObjCMac::MethodPreamble(
-                                         const std::string &ClassName,
-                                         const std::string &CategoryName,
-                                         const std::string &MethodName,
-                                         const llvm::Type *ReturnTy,
-                                         const llvm::Type *SelfTy,
-                                         const llvm::Type **ArgTy,
-                                         unsigned ArgC,
-                                         bool isClassMethod,
-                                         bool isVarArg) {
+llvm::Function *CGObjCMac::MethodPreamble(const std::string &ClassName,
+                                          const std::string &CategoryName,
+                                          const std::string &MethodName,
+                                          const llvm::Type *ReturnTy,
+                                          const llvm::Type *SelfTy,
+                                          const llvm::Type **ArgTy,
+                                          unsigned ArgC,
+                                          bool isClassMethod,
+                                          bool isVarArg) {
   assert(0 && "Cannot generate method preamble for Mac runtime.");
   return 0;
 }
@@ -359,6 +389,42 @@ void CGObjCMac::EmitImageInfo() {
   UsedGlobals.push_back(GV);
 }
 
+llvm::Value *CGObjCMac::EmitSelector(llvm::IRBuilder<> &Builder, Selector Sel) {
+  llvm::GlobalVariable *&Entry = SelectorReferences[Sel];
+  
+  if (!Entry) {
+    llvm::Constant *Casted = 
+      llvm::ConstantExpr::getBitCast(GetMethodVarName(Sel),
+                                     ObjCTypes.SelectorPtrTy);
+    Entry = 
+      new llvm::GlobalVariable(ObjCTypes.SelectorPtrTy, false,
+                               llvm::GlobalValue::InternalLinkage,
+                               Casted, "\01L_OBJC_SELECTOR_REFERENCES_",
+                               &CGM.getModule());
+    Entry->setSection("__OBJC,__message_refs,literal_pointers,no_dead_strip");
+    UsedGlobals.push_back(Entry);
+  }
+
+  return Builder.CreateLoad(Entry, false, "tmp");
+}
+
+llvm::Constant *CGObjCMac::GetMethodVarName(Selector Sel) {
+  llvm::GlobalVariable *&Entry = MethodVarNames[Sel];
+
+  if (!Entry) {
+    llvm::Constant *C = llvm::ConstantArray::get(Sel.getName());
+    Entry = 
+      new llvm::GlobalVariable(C->getType(), true, 
+                               llvm::GlobalValue::InternalLinkage,
+                               C, "\01L_OBJC_METH_VAR_NAME_", 
+                               &CGM.getModule());
+    Entry->setSection("__TEXT,__cstring,cstring_literals");
+    UsedGlobals.push_back(Entry);
+  }
+
+  return Entry;
+}
+
 void CGObjCMac::FinishModule() {
   std::vector<llvm::Constant*> Used;
   
@@ -385,8 +451,16 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
   : CGM(cgm),
     CFStringType(0),
     CFConstantStringClassReference(0),
-    LongTy(CGM.getTypes().ConvertType(CGM.getContext().LongTy))
+    MessageSendFn(0),
+    LongTy(CGM.getTypes().ConvertType(CGM.getContext().LongTy)),
+    // FIXME: We want the types from the front-end.
+    ObjectTy(llvm::OpaqueType::get()),
+    ObjectPtrTy(llvm::PointerType::getUnqual(ObjectTy)),
+    SelectorTy(llvm::OpaqueType::get()),
+    SelectorPtrTy(llvm::PointerType::getUnqual(SelectorTy))
 {
+  CGM.getModule().addTypeName("struct.__objc_object", ObjectTy);
+  CGM.getModule().addTypeName("struct.__objc_selector", SelectorTy);
 }
 
 ObjCTypesHelper::~ObjCTypesHelper() {
@@ -421,6 +495,22 @@ llvm::Constant *ObjCTypesHelper::getCFConstantStringClassReference() {
   }
 
   return CFConstantStringClassReference;
+}
+
+llvm::Function *ObjCTypesHelper::getMessageSendFn() {
+  if (!MessageSendFn) {
+    std::vector<const llvm::Type*> Params;
+    Params.push_back(ObjectPtrTy);
+    Params.push_back(SelectorPtrTy);
+    MessageSendFn = llvm::Function::Create(llvm::FunctionType::get(ObjectPtrTy,
+                                                                   Params,
+                                                                   true),
+                                           llvm::Function::ExternalLinkage,
+                                           "objc_msgSend",
+                                           &CGM.getModule());
+  }
+
+  return MessageSendFn;
 }
 
 /* *** */
