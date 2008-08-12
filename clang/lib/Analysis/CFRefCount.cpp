@@ -557,7 +557,7 @@ class VISIBILITY_HIDDEN RetainSummaryManager {
     ObjCMethodSummaries[ObjCSummaryKey(NSPanelII, S)] = Summ;
   }
   
-  void addInstMethSummary(RetainSummary* Summ, const char* Cls, va_list argp) {
+  void addInstMethSummary(const char* Cls, RetainSummary* Summ, va_list argp) {
     
     IdentifierInfo* ClsII = &Ctx.Idents.get(Cls);
     llvm::SmallVector<IdentifierInfo*, 10> II;
@@ -568,13 +568,20 @@ class VISIBILITY_HIDDEN RetainSummaryManager {
     Selector S = Ctx.Selectors.getSelector(II.size(), &II[0]);
     ObjCMethodSummaries[ObjCSummaryKey(ClsII, S)] = Summ;
   }
+  
+  void addInstMethSummary(const char* Cls, RetainSummary* Summ, ...) {
+    va_list argp;
+    va_start(argp, Summ);
+    addInstMethSummary(Cls, Summ, argp);
+    va_end(argp);    
+  }
           
   void addPanicSummary(const char* Cls, ...) {
     RetainSummary* Summ = getPersistentSummary(0, RetEffect::MakeNoRet(),
                                                DoNothing,  DoNothing, true);
     va_list argp;
     va_start (argp, Cls);
-    addInstMethSummary(Summ, Cls, argp);
+    addInstMethSummary(Cls, Summ, argp);
     va_end(argp);
   }  
   
@@ -1014,29 +1021,24 @@ void RetainSummaryManager::InitializeMethodSummaries() {
   Summ = getPersistentSummary(E, isGCEnabled() ? DoNothing : Autorelease);
   addNSObjectMethSummary(GetNullarySelector("autorelease", Ctx), Summ);
 
-  // For NSWindow, allocated objects are (initially) self-owned.
-  // For NSPanel (which subclasses NSWindow), allocated objects are not
-  //  self-owned.
-  
+  // For NSWindow, allocated objects are (initially) self-owned.  
   RetainSummary *NSWindowSumm =
     getPersistentSummary(RetEffect::MakeReceiverAlias(), SelfOwn);
+  
+  addInstMethSummary("NSWindow", NSWindowSumm, "initWithContentRect",
+                     "styleMask", "backing", "defer", NULL);
+  
+  addInstMethSummary("NSWindow", NSWindowSumm, "initWithContentRect",
+                     "styleMask", "backing", "defer", "screen", NULL);
+    
+  // For NSPanel (which subclasses NSWindow), allocated objects are not
+  //  self-owned.
+  addInstMethSummary("NSPanel", InitSumm, "initWithContentRect",
+                     "styleMask", "backing", "defer", NULL);
+  
+  addInstMethSummary("NSPanel", InitSumm, "initWithContentRect",
+                     "styleMask", "backing", "defer", "screen", NULL);
 
-  // Create the "initWithContentRect:styleMask:backing:defer:" selector.
-  llvm::SmallVector<IdentifierInfo*, 10> II;
-  II.push_back(&Ctx.Idents.get("initWithContentRect"));
-  II.push_back(&Ctx.Idents.get("styleMask"));
-  II.push_back(&Ctx.Idents.get("backing"));
-  II.push_back(&Ctx.Idents.get("defer"));  
-  Selector S = Ctx.Selectors.getSelector(II.size(), &II[0]);      
-  addNSWindowMethSummary(S, NSWindowSumm);
-  addNSPanelMethSummary(S, InitSumm);
-  
-  // Create the "initWithContentRect:styleMask:backing:defer:screen:" selector.
-  II.push_back(&Ctx.Idents.get("screen"));
-  S = Ctx.Selectors.getSelector(II.size(), &II[0]);
-  addNSWindowMethSummary(S, NSWindowSumm);
-  addNSPanelMethSummary(S, InitSumm);
-  
   // Create NSAssertionHandler summaries.
   addPanicSummary("NSAssertionHandler", "handleFailureInFunction", "file",
                   "lineNumber", "description", NULL); 
