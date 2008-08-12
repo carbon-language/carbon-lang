@@ -53,23 +53,8 @@ public:
     Define(Defs, "linux");
 #endif
     
-    if (1) { // FIXME: -fobjc-gc controls this.
-      Define(Defs, "__weak", "");
-      Define(Defs, "__strong", "");
-    } else {
-      Define(Defs, "__weak", "__attribute__((objc_gc(weak)))");
-      Define(Defs, "__strong", "__attribute__((objc_gc(strong)))");
-      Define(Defs, "__OBJC_GC__");
-    }
-
-    // darwin_constant_cfstrings controls this.
-    Define(Defs, "__CONSTANT_CFSTRINGS__");
-    
     if (0)  // darwin_pascal_strings
       Define(Defs, "__PASCAL_STRINGS__");
-
-    if (0) // FIXME: -fnext-runtime controls this
-      Define(Defs, "__NEXT_RUNTIME__");
   }
 
 };
@@ -86,15 +71,6 @@ public:
     Define(Defs, "__SUN__");
     Define(Defs, "__SOLARIS__");
 #endif
-    
-    if (1) {// -fobjc-gc controls this.
-      Define(Defs, "__weak", "");
-      Define(Defs, "__strong", "");
-    } else {
-      Define(Defs, "__weak", "__attribute__((objc_gc(weak)))");
-      Define(Defs, "__strong", "__attribute__((objc_gc(strong)))");
-      Define(Defs, "__OBJC_GC__");
-    }
   }
 
 };

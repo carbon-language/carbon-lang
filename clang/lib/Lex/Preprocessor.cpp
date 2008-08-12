@@ -401,8 +401,25 @@ static void InitializePredefinedMacros(Preprocessor &PP,
     DefineBuiltinMacro(Buf, "__STDC_VERSION__=199409L");
   
   DefineBuiltinMacro(Buf, "__STDC_HOSTED__=1");
-  if (PP.getLangOptions().ObjC1)
+  if (PP.getLangOptions().ObjC1) {
     DefineBuiltinMacro(Buf, "__OBJC__=1");
+
+    if (PP.getLangOptions().getGCMode() == LangOptions::NonGC) {
+      DefineBuiltinMacro(Buf, "__weak=");
+      DefineBuiltinMacro(Buf, "__strong=");
+    } else {
+      DefineBuiltinMacro(Buf, "__weak=__attribute__((objc_gc(weak)))");
+      DefineBuiltinMacro(Buf, "__strong=__attribute__((objc_gc(strong)))");
+      DefineBuiltinMacro(Buf, "__OBJC_GC__=1");
+    }
+
+    if (PP.getLangOptions().NeXTRuntime)
+      DefineBuiltinMacro(Buf, "__NEXT_RUNTIME__=1");
+
+    // darwin_constant_cfstrings controls this. This is also dependent
+    // on other things like the runtime I believe.
+    DefineBuiltinMacro(Buf, "__CONSTANT_CFSTRINGS__=1");
+  }
   if (PP.getLangOptions().ObjC2)
     DefineBuiltinMacro(Buf, "OBJC_NEW_PROPERTIES");
 
