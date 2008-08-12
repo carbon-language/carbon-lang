@@ -55,6 +55,7 @@ class ValueState : public llvm::FoldingSetNode {
 public:  
   // Typedefs.  
   typedef llvm::ImmutableSet<llvm::APSInt*>                IntSetTy;
+  typedef llvm::ImmutableMap<void*, void*>                 GenericDataMap;  
   typedef llvm::ImmutableMap<SymbolID,IntSetTy>            ConstNotEqTy;
   typedef llvm::ImmutableMap<SymbolID,const llvm::APSInt*> ConstEqTy;
   
@@ -70,6 +71,7 @@ private:
 
   // FIXME: Make these private.
 public:
+  GenericDataMap   GDM;
   ConstNotEqTy     ConstNotEq;
   ConstEqTy        ConstEq;
   void*            CheckerState;
@@ -77,10 +79,11 @@ public:
 public:
   
   /// This ctor is used when creating the first ValueState object.
-  ValueState(const Environment& env,  Store st,
+  ValueState(const Environment& env,  Store st, GenericDataMap gdm,
              ConstNotEqTy CNE, ConstEqTy  CE)
     : Env(env),
       St(st),
+      GDM(gdm),
       ConstNotEq(CNE),
       ConstEq(CE),
       CheckerState(NULL) {}
@@ -91,6 +94,7 @@ public:
     : llvm::FoldingSetNode(),
       Env(RHS.Env),
       St(RHS.St),
+      GDM(RHS.GDM),
       ConstNotEq(RHS.ConstNotEq),
       ConstEq(RHS.ConstEq),
       CheckerState(RHS.CheckerState) {} 
@@ -103,11 +107,15 @@ public:
   ///  is a mapping from locations to values.
   Store getStore() const { return St; }
   
+  /// getGDM - Return the generic data map associated with this state.
+  GenericDataMap getGDM() const { return GDM; }
+  
   /// Profile - Profile the contents of a ValueState object for use
   ///  in a FoldingSet.
   static void Profile(llvm::FoldingSetNodeID& ID, const ValueState* V) {
     V->Env.Profile(ID);
     ID.AddPointer(V->St);
+    V->GDM.Profile(ID);
     V->ConstNotEq.Profile(ID);
     V->ConstEq.Profile(ID);
     ID.AddPointer(V->CheckerState);
@@ -228,6 +236,7 @@ private:
   EnvironmentManager                   EnvMgr;
   llvm::OwningPtr<StoreManager>        StMgr;
   ValueState::IntSetTy::Factory        ISetFactory;
+  ValueState::GenericDataMap::Factory  GDMFactory;
   ValueState::ConstNotEqTy::Factory    CNEFactory;
   ValueState::ConstEqTy::Factory       CEFactory;
   
@@ -276,6 +285,7 @@ public:
   : EnvMgr(alloc),
     StMgr(stmgr),
     ISetFactory(alloc), 
+    GDMFactory(alloc),
     CNEFactory(alloc),
     CEFactory(alloc),
     BasicVals(Ctx, alloc),
@@ -338,9 +348,21 @@ public:
     
     return SetRVal(St, Ex, V, isBlkExpr, true);
   }
+  
+  // Methods that manipulate the GDM.
+  const ValueState* addGDM(const ValueState* St, void* Key, void* Data) {
+    ValueState::GenericDataMap M1 = St->getGDM();
+    ValueState::GenericDataMap M2 = GDMFactory.Add(M2, Key, Data);    
+    
+    if (M1 == M2)
+      return St;
+    
+    ValueState NewSt = *St;
+    NewSt.GDM = M2;
+    return getPersistentState(NewSt);
+  }
 
   // Methods that query & manipulate the Store.
-
   RVal GetRVal(const ValueState* St, LVal LV, QualType T = QualType()) {
     return StMgr->GetRVal(St->getStore(), LV, T);
   }

@@ -180,6 +180,7 @@ const ValueState* ValueStateManager::getInitialState() {
 
   ValueState StateImpl(EnvMgr.getInitialEnvironment(),
                        StMgr->getInitialStore(),
+                       GDMFactory.GetEmptyMap(),
                        CNEFactory.GetEmptyMap(),
                        CEFactory.GetEmptyMap());
   
