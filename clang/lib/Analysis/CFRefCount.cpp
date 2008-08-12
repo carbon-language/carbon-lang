@@ -457,10 +457,6 @@ class VISIBILITY_HIDDEN RetainSummaryManager {
   /// NSPanelII - An IdentifierInfo* representing the identifier "NSPanel."
   IdentifierInfo* NSPanelII;
   
-  /// NSAssertionHandlerII - An IdentifierInfo* representing the identifier
-  //  "NSAssertionHandler".
-  IdentifierInfo* NSAssertionHandlerII;
-  
   /// CFDictionaryCreateII - An IdentifierInfo* representing the indentifier
   ///  "CFDictionaryCreate".
   IdentifierInfo* CFDictionaryCreateII;
@@ -561,12 +557,26 @@ class VISIBILITY_HIDDEN RetainSummaryManager {
     ObjCMethodSummaries[ObjCSummaryKey(NSPanelII, S)] = Summ;
   }
   
-  void addPanicSummary(IdentifierInfo* ClsII, Selector S) {
-    RetainSummary* Summ = getPersistentSummary(0, RetEffect::MakeNoRet(),
-                                               DoNothing,  DoNothing, true);
+  void addInstMethSummary(RetainSummary* Summ, const char* Cls, va_list argp) {
     
+    IdentifierInfo* ClsII = &Ctx.Idents.get(Cls);
+    llvm::SmallVector<IdentifierInfo*, 10> II;
+    
+    while (const char* s = va_arg(argp, const char*))
+      II.push_back(&Ctx.Idents.get(s));
+    
+    Selector S = Ctx.Selectors.getSelector(II.size(), &II[0]);
     ObjCMethodSummaries[ObjCSummaryKey(ClsII, S)] = Summ;
   }
+          
+  void addPanicSummary(const char* Cls, ...) {
+    RetainSummary* Summ = getPersistentSummary(0, RetEffect::MakeNoRet(),
+                                               DoNothing,  DoNothing, true);
+    va_list argp;
+    va_start (argp, Cls);
+    addInstMethSummary(Summ, Cls, argp);
+    va_end(argp);
+  }  
   
 public:
   
@@ -574,7 +584,6 @@ public:
    : Ctx(ctx),
      NSWindowII(&ctx.Idents.get("NSWindow")),
      NSPanelII(&ctx.Idents.get("NSPanel")),
-     NSAssertionHandlerII(&ctx.Idents.get("NSAssertionHandler")),
      CFDictionaryCreateII(&ctx.Idents.get("CFDictionaryCreate")),
      GCEnabled(gcenabled), StopSummary(0) {
 
@@ -962,7 +971,7 @@ void RetainSummaryManager::InitializeClassMethodSummaries() {
   addNSObjectClsMethSummary(GetUnarySelector("allocWithZone", Ctx), Summ);
   
   // Create the [NSAssertionHandler currentHander] summary.  
-  addClsMethSummary(NSAssertionHandlerII,
+  addClsMethSummary(&Ctx.Idents.get("NSAssertionHandler"),
                     GetNullarySelector("currentHandler", Ctx),
                     getPersistentSummary(RetEffect::MakeNotOwned()));  
 }
@@ -1029,22 +1038,11 @@ void RetainSummaryManager::InitializeMethodSummaries() {
   addNSPanelMethSummary(S, InitSumm);
   
   // Create NSAssertionHandler summaries.
-  II.clear();
-  II.push_back(&Ctx.Idents.get("handleFailureInFunction"));
-  II.push_back(&Ctx.Idents.get("file"));
-  II.push_back(&Ctx.Idents.get("lineNumber"));
-  II.push_back(&Ctx.Idents.get("description"));
-  S = Ctx.Selectors.getSelector(II.size(), &II[0]);
-  addPanicSummary(NSAssertionHandlerII, S);
+  addPanicSummary("NSAssertionHandler", "handleFailureInFunction", "file",
+                  "lineNumber", "description", NULL); 
   
-  II.clear();
-  II.push_back(&Ctx.Idents.get("handleFailureInMethod"));
-  II.push_back(&Ctx.Idents.get("object"));
-  II.push_back(&Ctx.Idents.get("file"));
-  II.push_back(&Ctx.Idents.get("lineNumber"));
-  II.push_back(&Ctx.Idents.get("description"));
-  S = Ctx.Selectors.getSelector(II.size(), &II[0]);
-  addPanicSummary(NSAssertionHandlerII, S);
+  addPanicSummary("NSAssertionHandler", "handleFailureInMethod", "object",
+                  "file", "lineNumber", "description", NULL);
 }
 
 //===----------------------------------------------------------------------===//
@@ -1243,21 +1241,13 @@ public:
   };
 
 private:
-  // Instance variables.
-  
   RetainSummaryManager Summaries;  
   const LangOptions&   LOpts;
-  RefBFactoryTy        RefBFactory;
-     
-  UseAfterReleasesTy UseAfterReleases;
-  ReleasesNotOwnedTy ReleasesNotOwned;
-  LeaksTy            Leaks;
-  
-  BindingsPrinter Printer;
-  
-  Selector RetainSelector;
-  Selector ReleaseSelector;
-  Selector AutoreleaseSelector;
+  RefBFactoryTy        RefBFactory;     
+  UseAfterReleasesTy   UseAfterReleases;
+  ReleasesNotOwnedTy   ReleasesNotOwned;
+  LeaksTy              Leaks;
+  BindingsPrinter      Printer;  
 
 public:
   
@@ -1296,10 +1286,7 @@ public:
   
   CFRefCount(ASTContext& Ctx, bool gcenabled, const LangOptions& lopts)
     : Summaries(Ctx, gcenabled),
-      LOpts(lopts),
-      RetainSelector(GetNullarySelector("retain", Ctx)),
-      ReleaseSelector(GetNullarySelector("release", Ctx)),
-      AutoreleaseSelector(GetNullarySelector("autorelease", Ctx)) {}
+      LOpts(lopts) {}
   
   virtual ~CFRefCount() {
     for (LeaksTy::iterator I = Leaks.begin(), E = Leaks.end(); I!=E; ++I)
@@ -1697,29 +1684,19 @@ void CFRefCount::EvalCall(ExplodedNodeSet<ValueState>& Dst,
                           GRStmtNodeBuilder<ValueState>& Builder,
                           CallExpr* CE, RVal L,
                           ExplodedNode<ValueState>* Pred) {
-  
-  
-  RetainSummary* Summ = NULL;
-  
-  // Get the summary.
 
-  if (isa<lval::FuncVal>(L)) {  
-    lval::FuncVal FV = cast<lval::FuncVal>(L);
-    FunctionDecl* FD = FV.getDecl();
-    Summ = Summaries.getSummary(FD);
-  }
+  RetainSummary* Summ = !isa<lval::FuncVal>(L) ? 0
+                      : Summaries.getSummary(cast<lval::FuncVal>(L).getDecl());
   
   EvalSummary(Dst, Eng, Builder, CE, 0, Summ,
               CE->arg_begin(), CE->arg_end(), Pred);
 }
 
-
 void CFRefCount::EvalObjCMessageExpr(ExplodedNodeSet<ValueState>& Dst,
                                      GRExprEngine& Eng,
                                      GRStmtNodeBuilder<ValueState>& Builder,
                                      ObjCMessageExpr* ME,
-                                     ExplodedNode<ValueState>* Pred) {
-  
+                                     ExplodedNode<ValueState>* Pred) {  
   RetainSummary* Summ;
   
   if (Expr* Receiver = ME->getReceiver()) {
@@ -1976,7 +1953,6 @@ const ValueState* CFRefCount::EvalAssume(ValueStateManager& VMgr,
   //  too bad since the number of symbols we will track in practice are 
   //  probably small and EvalAssume is only called at branches and a few
   //  other places.
-    
   RefBindings B = GetRefBindings(*St);
   
   if (B.isEmpty())
@@ -1985,10 +1961,8 @@ const ValueState* CFRefCount::EvalAssume(ValueStateManager& VMgr,
   bool changed = false;
 
   for (RefBindings::iterator I=B.begin(), E=B.end(); I!=E; ++I) {    
-
     // Check if the symbol is null (or equal to any constant).
     // If this is the case, stop tracking the symbol.
-  
     if (St->getSymVal(I.getKey())) {
       changed = true;
       B = RefBFactory.Remove(B, I.getKey());
@@ -2019,23 +1993,20 @@ CFRefCount::RefBindings CFRefCount::Update(RefBindings B, SymbolID sym,
         V = V ^ RefVal::NotOwned;
         break;
       }
-
       // Fall-through.
-      
     case DoNothingByRef:
     case DoNothing:
       if (!isGCEnabled() && V.getKind() == RefVal::Released) {
         V = V ^ RefVal::ErrorUseAfterRelease;
         hasErr = V.getKind();
         break;
-      }
-      
+      }      
       return B;
 
     case Autorelease:          
     case StopTracking:
       return RefBFactory.Remove(B, sym);
-      
+
     case IncRef:      
       switch (V.getKind()) {
         default:
@@ -2044,8 +2015,7 @@ CFRefCount::RefBindings CFRefCount::Update(RefBindings B, SymbolID sym,
         case RefVal::Owned:
         case RefVal::NotOwned:
           V = V + 1;
-          break;
-          
+          break;          
         case RefVal::Released:
           if (isGCEnabled())
             V = V ^ RefVal::Owned;
@@ -2053,20 +2023,18 @@ CFRefCount::RefBindings CFRefCount::Update(RefBindings B, SymbolID sym,
             V = V ^ RefVal::ErrorUseAfterRelease;
             hasErr = V.getKind();
           }
-          
           break;
-      }
-      
+      }      
       break;
       
     case SelfOwn:
       V = V ^ RefVal::NotOwned;
-      
+      // Fall-through.      
     case DecRef:
       switch (V.getKind()) {
         default:
           assert (false);
-          
+
         case RefVal::Owned:
           V = V.getCount() > 1 ? V - 1 : V ^ RefVal::Released;
           break;
@@ -2077,22 +2045,18 @@ CFRefCount::RefBindings CFRefCount::Update(RefBindings B, SymbolID sym,
           else {
             V = V ^ RefVal::ErrorReleaseNotOwned;
             hasErr = V.getKind();
-          }
-          
+          }          
           break;
 
         case RefVal::Released:
           V = V ^ RefVal::ErrorUseAfterRelease;
           hasErr = V.getKind();
           break;          
-      }
-      
+      }      
       break;
   }
-
   return RefBFactory.Add(B, sym, V);
 }
-
 
 //===----------------------------------------------------------------------===//
 // Error reporting.
@@ -2125,8 +2089,7 @@ namespace {
       return "Use-After-Release";
     }
     virtual const char* getDescription() const {
-      return "Reference-counted object is used"
-             " after it is released.";
+      return "Reference-counted object is used after it is released.";
     }
     
     virtual void EmitWarnings(BugReporter& BR);
@@ -2165,7 +2128,7 @@ namespace {
     }
     
     virtual const char* getDescription() const {
-      return "Object leaked.";
+      return "Object leaked";
     }
     
     virtual void EmitWarnings(BugReporter& BR);
@@ -2198,10 +2161,8 @@ namespace {
       
       if (!getBugType().isLeak())
         RangedBugReport::getRanges(BR, beg, end);
-      else {
-        beg = 0;
-        end = 0;
-      }
+      else
+        beg = end = 0;
     }
     
     SymbolID getSymbol() const { return Sym; }
@@ -2249,8 +2210,8 @@ std::pair<const char**,const char**> CFRefReport::getExtraDescriptiveText() {
           
     case LangOptions::GCOnly:
       assert (TF.isGCEnabled());
-      return std::make_pair(&Msgs[0], &Msgs[0]+1);
-      
+      return std::make_pair(&Msgs[0], &Msgs[0]+1);      
+
     case LangOptions::NonGC:
       assert (!TF.isGCEnabled());
       return std::make_pair(&Msgs[1], &Msgs[1]+1);
