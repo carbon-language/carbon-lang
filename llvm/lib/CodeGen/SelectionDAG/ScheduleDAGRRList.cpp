@@ -1,4 +1,4 @@
-//===----- ScheduleDAGList.cpp - Reg pressure reduction list scheduler ----===//
+//===----- ScheduleDAGRRList.cpp - Reg pressure reduction list scheduler --===//
 //
 //                     The LLVM Compiler Infrastructure
 //
