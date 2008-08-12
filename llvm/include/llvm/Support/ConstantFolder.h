@@ -7,8 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file defines the ConstantFolder class, which provides a set of methods
-// for creating constants, with minimal folding.
+// This file defines the ConstantFolder class, a helper for IRBuilder.
+// It provides IRBuilder with a set of methods for creating constants
+// with minimal folding.  For general constant creation and folding,
+// use ConstantExpr and the routines in llvm/Analysis/ConstantFolding.h.
 //
 //===----------------------------------------------------------------------===//
 

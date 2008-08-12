@@ -7,9 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file defines the TargetFolder class, which provides a set of methods
-// for creating constants, with target dependent folding.
-//
+// This file defines the TargetFolder class, a helper for IRBuilder.
+// It provides IRBuilder with a set of methods for creating constants with
+// target dependent folding.  For general constant creation and folding,
+// use ConstantExpr and the routines in llvm/Analysis/ConstantFolding.h.
 //
 //===----------------------------------------------------------------------===//
 
@@ -153,7 +154,8 @@ public:
   // Compare Instructions
   //===--------------------------------------------------------------------===//
 
-  Constant *CreateCompare(CmpInst::Predicate P, Constant *LHS, Constant *RHS) const {
+  Constant *CreateCompare(CmpInst::Predicate P, Constant *LHS,
+                          Constant *RHS) const {
     return Fold(ConstantExpr::getCompare(P, LHS, RHS));
   }
 
@@ -169,11 +171,13 @@ public:
     return Fold(ConstantExpr::getExtractElement(Vec, Idx));
   }
 
-  Constant *CreateInsertElement(Constant *Vec, Constant *NewElt, Constant *Idx)const {
+  Constant *CreateInsertElement(Constant *Vec, Constant *NewElt,
+                                Constant *Idx) const {
     return Fold(ConstantExpr::getInsertElement(Vec, NewElt, Idx));
   }
 
-  Constant *CreateShuffleVector(Constant *V1, Constant *V2, Constant *Mask) const {
+  Constant *CreateShuffleVector(Constant *V1, Constant *V2,
+                                Constant *Mask) const {
     return Fold(ConstantExpr::getShuffleVector(V1, V2, Mask));
   }
 
