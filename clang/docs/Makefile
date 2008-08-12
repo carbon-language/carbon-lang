@@ -26,7 +26,7 @@ include $(LEVEL)/Makefile.common
 
 HTML       := $(wildcard $(PROJ_SRC_DIR)/*.html) \
               $(wildcard $(PROJ_SRC_DIR)/*.css)
-IMAGES     := $(wildcard $(PROJ_SRC_DIR)/img/*.*)
+#IMAGES     := $(wildcard $(PROJ_SRC_DIR)/img/*.*)
 DOXYFILES  := doxygen.cfg.in doxygen.css doxygen.footer doxygen.header \
               doxygen.intro
 EXTRA_DIST := $(HTML) $(DOXYFILES) llvm.css CommandGuide img
@@ -48,7 +48,7 @@ install-html: $(PROJ_OBJ_DIR)/html.tar.gz
 	$(Verb) $(MKDIR) $(PROJ_docsdir)/html
 	$(Verb) $(MKDIR) $(PROJ_docsdir)/html/img
 	$(Verb) $(DataInstall) $(HTML) $(PROJ_docsdir)/html
-	$(Verb) $(DataInstall) $(IMAGES) $(PROJ_docsdir)/html/img
+#	$(Verb) $(DataInstall) $(IMAGES) $(PROJ_docsdir)/html/img
 	$(Verb) $(DataInstall) $(PROJ_OBJ_DIR)/html.tar.gz $(PROJ_docsdir)
 
 $(PROJ_OBJ_DIR)/html.tar.gz: $(HTML)
