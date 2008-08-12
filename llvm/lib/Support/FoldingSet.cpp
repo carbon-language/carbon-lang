@@ -232,6 +232,7 @@ void FoldingSetImpl::GrowHashTable() {
   Buckets[NumBuckets] = reinterpret_cast<void*>(-1);
 
   // Walk the old buckets, rehashing nodes into their new place.
+  FoldingSetNodeID ID;
   for (unsigned i = 0; i != OldNumBuckets; ++i) {
     void *Probe = OldBuckets[i];
     if (!Probe) continue;
@@ -241,9 +242,9 @@ void FoldingSetImpl::GrowHashTable() {
       NodeInBucket->SetNextInBucket(0);
 
       // Insert the node into the new bucket, after recomputing the hash.
-      FoldingSetNodeID ID;
       GetNodeProfile(ID, NodeInBucket);
       InsertNode(NodeInBucket, GetBucketFor(ID, Buckets, NumBuckets));
+      ID.clear();
     }
   }
   
@@ -262,13 +263,14 @@ FoldingSetImpl::Node
   
   InsertPos = 0;
   
+  FoldingSetNodeID OtherID;
   while (Node *NodeInBucket = GetNextPtr(Probe)) {
-    FoldingSetNodeID OtherID;
     GetNodeProfile(OtherID, NodeInBucket);
     if (OtherID == ID)
       return NodeInBucket;
 
     Probe = NodeInBucket->getNextInBucket();
+    OtherID.clear();
   }
   
   // Didn't find the node, return null with the bucket as the InsertPos.
