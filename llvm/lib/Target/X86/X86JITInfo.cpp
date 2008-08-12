@@ -352,7 +352,8 @@ X86CompilationCallback2(intptr_t *StackPtr, intptr_t RetAddr) {
   // Rewrite the call target... so that we don't end up here every time we
   // execute the call.
 #if defined (X86_64_JIT)
-  *(intptr_t *)(RetAddr - 0xa) = NewVal;
+  if (!isStub)
+    *(intptr_t *)(RetAddr - 0xa) = NewVal;
 #else
   *(intptr_t *)RetAddr = (intptr_t)(NewVal-RetAddr-4);
 #endif
@@ -363,7 +364,18 @@ X86CompilationCallback2(intptr_t *StackPtr, intptr_t RetAddr) {
     // when the requested function finally gets called.  This also makes the
     // 0xCD byte (interrupt) dead, so the marker doesn't effect anything.
 #if defined (X86_64_JIT)
-    ((unsigned char*)RetAddr)[0] = (2 | (4 << 3) | (3 << 6));
+    // If the target address is within 32-bit range of the stub, use a
+    // PC-relative branch instead of loading the actual address.  (This is
+    // considerably shorter than the 64-bit immediate load already there.)
+    // We assume here intptr_t is 64 bits.
+    intptr_t diff = NewVal-RetAddr+7;
+    if (diff >= -2147483648LL && diff <= 2147483647LL) {
+      *(unsigned char*)(RetAddr-0xc) = 0xE9;
+      *(intptr_t *)(RetAddr-0xb) = diff & 0xffffffff;
+    } else {
+      *(intptr_t *)(RetAddr - 0xa) = NewVal;
+      ((unsigned char*)RetAddr)[0] = (2 | (4 << 3) | (3 << 6));
+    }
 #else
     ((unsigned char*)RetAddr)[-1] = 0xE9;
 #endif
