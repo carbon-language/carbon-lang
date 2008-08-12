@@ -13,6 +13,7 @@
 
 #include "llvm/PassManager.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/DenseMap.h"
 #include <deque>
 #include <map>
@@ -221,7 +222,12 @@ private:
 
   // Map to keep track of last user of the analysis pass.
   // LastUser->second is the last user of Lastuser->first.
-  std::map<Pass *, Pass *> LastUser;
+  DenseMap<Pass *, Pass *> LastUser;
+
+  // Map to keep track of passes that are last used by a pass.
+  // This inverse map is initialized at PM->run() based on
+  // LastUser map.
+  DenseMap<Pass *, SmallPtrSet<Pass *, 8> > InversedLastUser;
 
   /// Immutable passes are managed by top level manager.
   std::vector<ImmutablePass *> ImmutablePasses;

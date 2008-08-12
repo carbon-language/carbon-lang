@@ -404,9 +404,11 @@ void PMTopLevelManager::setLastUser(SmallVector<Pass *, 12> &AnalysisPasses,
 
     // If AP is the last user of other passes then make P last user of
     // such passes.
-    for (std::map<Pass *, Pass *>::iterator LUI = LastUser.begin(),
+    for (DenseMap<Pass *, Pass *>::iterator LUI = LastUser.begin(),
            LUE = LastUser.end(); LUI != LUE; ++LUI) {
       if (LUI->second == AP)
+        // DenseMap iterator is not invalidated here because
+        // this is just updating exisitng entry.
         LastUser[LUI->first] = P;
     }
   }
@@ -414,11 +416,18 @@ void PMTopLevelManager::setLastUser(SmallVector<Pass *, 12> &AnalysisPasses,
 
 /// Collect passes whose last user is P
 void PMTopLevelManager::collectLastUses(SmallVector<Pass *, 12> &LastUses,
-                                            Pass *P) {
-   for (std::map<Pass *, Pass *>::iterator LUI = LastUser.begin(),
-          LUE = LastUser.end(); LUI != LUE; ++LUI)
-      if (LUI->second == P)
-        LastUses.push_back(LUI->first);
+                                        Pass *P) {
+  DenseMap<Pass *, SmallPtrSet<Pass *, 8> >::iterator DMI = 
+    InversedLastUser.find(P);
+  if (DMI == InversedLastUser.end())
+    return;
+
+  SmallPtrSet<Pass *, 8> &LU = DMI->second;
+  for (SmallPtrSet<Pass *, 8>::iterator I = LU.begin(),
+         E = LU.end(); I != E; ++I) {
+    LastUses.push_back(*I);
+  }
+
 }
 
 AnalysisUsage *PMTopLevelManager::findAnalysisUsage(Pass *P) {
@@ -557,6 +566,19 @@ void PMTopLevelManager::initializeAllAnalysisInfo() {
   for (std::vector<PMDataManager *>::iterator I = IndirectPassManagers.begin(),
          E = IndirectPassManagers.end(); I != E; ++I)
     (*I)->initializeAnalysisInfo();
+
+  for(DenseMap<Pass *, Pass *>::iterator DMI = LastUser.begin(),
+        DME = LastUser.end(); DMI != DME; ++DMI) {
+    DenseMap<Pass *, SmallPtrSet<Pass *, 8> >::iterator InvDMI = 
+      InversedLastUser.find(DMI->second);
+    if (InvDMI != InversedLastUser.end()) {
+      SmallPtrSet<Pass *, 8> &L = InvDMI->second;
+      L.insert(DMI->first);
+    } else {
+      SmallPtrSet<Pass *, 8> L; L.insert(DMI->first);
+      InversedLastUser[DMI->second] = L;
+    }
+  }
 }
 
 /// Destructor
