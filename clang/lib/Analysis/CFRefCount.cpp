@@ -29,6 +29,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include <ostream>
 #include <sstream>
+#include <stdarg.h>
 
 using namespace clang;
 using llvm::CStrInCStrNoCase;
@@ -375,7 +376,7 @@ public:
     return I;
   }
   
-  
+
   iterator find(Expr* Receiver, Selector S) {
     return find(getReceiverDecl(Receiver), S);
   }
@@ -450,13 +451,7 @@ class VISIBILITY_HIDDEN RetainSummaryManager {
   
   /// Ctx - The ASTContext object for the analyzed ASTs.
   ASTContext& Ctx;
-  
-  /// NSWindowII - An IdentifierInfo* representing the identifier "NSWindow."
-  IdentifierInfo* NSWindowII;
 
-  /// NSPanelII - An IdentifierInfo* representing the identifier "NSPanel."
-  IdentifierInfo* NSPanelII;
-  
   /// CFDictionaryCreateII - An IdentifierInfo* representing the indentifier
   ///  "CFDictionaryCreate".
   IdentifierInfo* CFDictionaryCreateII;
@@ -513,13 +508,11 @@ class VISIBILITY_HIDDEN RetainSummaryManager {
                                       ArgEffect DefaultEff = MayEscape,
                                       bool isEndPath = false);
                  
-
   RetainSummary* getPersistentSummary(RetEffect RE,
                                       ArgEffect ReceiverEff = DoNothing,
                                       ArgEffect DefaultEff = MayEscape) {
     return getPersistentSummary(getArgEffects(), RE, ReceiverEff, DefaultEff);
   }
-  
   
   RetainSummary* getPersistentStopSummary() {
     if (StopSummary)
@@ -547,14 +540,6 @@ class VISIBILITY_HIDDEN RetainSummaryManager {
     
   void addNSObjectMethSummary(Selector S, RetainSummary *Summ) {
     ObjCMethodSummaries[S] = Summ;
-  }
-  
-  void addNSWindowMethSummary(Selector S, RetainSummary *Summ) {
-    ObjCMethodSummaries[ObjCSummaryKey(NSWindowII, S)] = Summ;
-  }
-  
-  void addNSPanelMethSummary(Selector S, RetainSummary *Summ) {
-    ObjCMethodSummaries[ObjCSummaryKey(NSPanelII, S)] = Summ;
   }
   
   void addInstMethSummary(const char* Cls, RetainSummary* Summ, va_list argp) {
@@ -589,8 +574,6 @@ public:
   
   RetainSummaryManager(ASTContext& ctx, bool gcenabled)
    : Ctx(ctx),
-     NSWindowII(&ctx.Idents.get("NSWindow")),
-     NSPanelII(&ctx.Idents.get("NSPanel")),
      CFDictionaryCreateII(&ctx.Idents.get("CFDictionaryCreate")),
      GCEnabled(gcenabled), StopSummary(0) {
 
@@ -841,6 +824,7 @@ RetainSummaryManager::getUnarySummary(FunctionDecl* FD, UnaryFuncKind func) {
       
     default:
       assert (false && "Not a supported unary function.");
+      return 0;
   }
 }
 
@@ -999,11 +983,11 @@ void RetainSummaryManager::InitializeMethodSummaries() {
   RetainSummary* Summ = getPersistentSummary(E);  
   
   // Create the "copy" selector.  
-  addNSObjectMethSummary(GetNullarySelector("copy", Ctx), Summ);
-  
+  addNSObjectMethSummary(GetNullarySelector("copy", Ctx), Summ);  
+
   // Create the "mutableCopy" selector.
   addNSObjectMethSummary(GetNullarySelector("mutableCopy", Ctx), Summ);
-
+  
   // Create the "retain" selector.
   E = RetEffect::MakeReceiverAlias();
   Summ = getPersistentSummary(E, isGCEnabled() ? DoNothing : IncRef);
@@ -1020,7 +1004,7 @@ void RetainSummaryManager::InitializeMethodSummaries() {
   // Create the "autorelease" selector.
   Summ = getPersistentSummary(E, isGCEnabled() ? DoNothing : Autorelease);
   addNSObjectMethSummary(GetNullarySelector("autorelease", Ctx), Summ);
-
+  
   // For NSWindow, allocated objects are (initially) self-owned.  
   RetainSummary *NSWindowSumm =
     getPersistentSummary(RetEffect::MakeReceiverAlias(), SelfOwn);
@@ -1127,15 +1111,6 @@ public:
   static RefVal makeReturnedNotOwned() {
     return RefVal(ReturnedNotOwned);
   }
-  
-  // State creation: errors.
-
-#if 0
-  static RefVal makeLeak(unsigned Count) { return RefVal(ErrorLeak, Count); }  
-  static RefVal makeReleased() { return RefVal(Released); }
-  static RefVal makeUseAfterRelease() { return RefVal(ErrorUseAfterRelease); }
-  static RefVal makeReleaseNotOwned() { return RefVal(ErrorReleaseNotOwned); }
-#endif
   
   // Comparison, profiling, and pretty-printing.
   
