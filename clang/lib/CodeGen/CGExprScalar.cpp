@@ -134,6 +134,7 @@ public:
     return EmitLoadOfLValue(E);
   }
   Value *VisitObjCMessageExpr(ObjCMessageExpr *E);
+  Value *VisitObjCSelectorExpr(ObjCSelectorExpr *E);
   Value *VisitObjCIvarRefExpr(ObjCIvarRefExpr *E) { return EmitLoadOfLValue(E);}
   Value *VisitArraySubscriptExpr(ArraySubscriptExpr *E);
   Value *VisitShuffleVectorExpr(ShuffleVectorExpr *E);
@@ -499,6 +500,10 @@ Value *ScalarExprEmitter::VisitObjCMessageExpr(ObjCMessageExpr *E) {
                                       CGF.LoadObjCSelf(),
                                       Receiver, E->getSelector(),
                                       &Args[0], Args.size());
+}
+
+Value *ScalarExprEmitter::VisitObjCSelectorExpr(ObjCSelectorExpr *E) {
+  return Runtime->GetSelector(Builder, E->getSelector());
 }
 
 Value *ScalarExprEmitter::VisitArraySubscriptExpr(ArraySubscriptExpr *E) {
