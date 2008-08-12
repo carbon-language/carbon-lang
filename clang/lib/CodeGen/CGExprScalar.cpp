@@ -499,7 +499,6 @@ Value *ScalarExprEmitter::VisitObjCMessageExpr(ObjCMessageExpr *E) {
   }
 
   return Runtime->GenerateMessageSend(Builder, ConvertType(E->getType()),
-                                      CGF.LoadObjCSelf(),
                                       Receiver, E->getSelector(),
                                       &Args[0], Args.size());
 }
