@@ -525,7 +525,11 @@ DOUT << "isImmediate " << MO.isImmediate() << "\n";
         emitPCRelativeBlockAddress(MO.getMBB());
       } else if (MO.isGlobalAddress()) {
         // Assume undefined functions may be outside the Small codespace.
-        bool NeedStub = Is64BitMode || Opcode == X86::TAILJMPd;
+        bool NeedStub = 
+          (Is64BitMode && 
+              (TM.getCodeModel() == CodeModel::Large ||
+               TM.getSubtarget<X86Subtarget>().isTargetDarwin())) ||
+          Opcode == X86::TAILJMPd;
         emitGlobalAddress(MO.getGlobal(), X86::reloc_pcrel_word,
                           0, 0, NeedStub);
       } else if (MO.isExternalSymbol()) {
@@ -549,6 +553,9 @@ DOUT << "isImmediate " << MO.isImmediate() << "\n";
       else {
         unsigned rt = Is64BitMode ? X86::reloc_pcrel_word
           : (IsPIC ? X86::reloc_picrel_word : X86::reloc_absolute_word);
+        // This should not occur on Darwin for relocatable objects.
+        if (Opcode == X86::MOV64ri)
+          rt = X86::reloc_absolute_dword;  // FIXME: add X86II flag?
         if (MO1.isGlobalAddress()) {
           bool NeedStub = isa<Function>(MO1.getGlobal());
           bool isLazy = gvNeedsLazyPtr(MO1.getGlobal());
@@ -619,6 +626,8 @@ DOUT << "isImmediate " << MO.isImmediate() << "\n";
       else {
         unsigned rt = Is64BitMode ? X86::reloc_pcrel_word
           : (IsPIC ? X86::reloc_picrel_word : X86::reloc_absolute_word);
+        if (Opcode == X86::MOV64ri32)
+          rt = X86::reloc_absolute_word;  // FIXME: add X86II flag?
         if (MO1.isGlobalAddress()) {
           bool NeedStub = isa<Function>(MO1.getGlobal());
           bool isLazy = gvNeedsLazyPtr(MO1.getGlobal());
@@ -654,6 +663,8 @@ DOUT << "isImmediate " << MO.isImmediate() << "\n";
       else {
         unsigned rt = Is64BitMode ? X86::reloc_pcrel_word
           : (IsPIC ? X86::reloc_picrel_word : X86::reloc_absolute_word);
+        if (Opcode == X86::MOV64mi32)
+          rt = X86::reloc_absolute_word;  // FIXME: add X86II flag?
         if (MO.isGlobalAddress()) {
           bool NeedStub = isa<Function>(MO.getGlobal());
           bool isLazy = gvNeedsLazyPtr(MO.getGlobal());

@@ -194,14 +194,20 @@ bool X86TargetMachine::addAssemblyEmitter(PassManagerBase &PM, bool Fast,
 bool X86TargetMachine::addCodeEmitter(PassManagerBase &PM, bool Fast,
                                       bool DumpAsm, MachineCodeEmitter &MCE) {
   // FIXME: Move this to TargetJITInfo!
-  // Do not override 64-bit setting made in X86TargetMachine().
-  if (DefRelocModel == Reloc::Default && !Subtarget.is64Bit())
+  // On Darwin, do not override 64-bit setting made in X86TargetMachine().
+  if (DefRelocModel == Reloc::Default && 
+        (!Subtarget.isTargetDarwin() || !Subtarget.is64Bit()))
     setRelocationModel(Reloc::Static);
   
   // 64-bit JIT places everything in the same buffer except external functions.
-  // Use small code model but hack the call instruction for externals.
-  if (Subtarget.is64Bit())
-    setCodeModel(CodeModel::Small);
+  // On Darwin, use small code model but hack the call instruction for 
+  // externals.  Elsewhere, do not assume globals are in the lower 4G.
+  if (Subtarget.is64Bit()) {
+    if (Subtarget.isTargetDarwin())
+      setCodeModel(CodeModel::Small);
+    else
+      setCodeModel(CodeModel::Large);
+  }
 
   PM.add(createX86CodeEmitterPass(*this, MCE));
   if (DumpAsm)
