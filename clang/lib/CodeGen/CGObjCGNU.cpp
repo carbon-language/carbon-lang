@@ -90,8 +90,7 @@ private:
       std::vector<llvm::Constant*> &V, const std::string &Name="");
 public:
   CGObjCGNU(CodeGen::CodeGenModule &cgm);
-  virtual llvm::Constant *GenerateConstantString(const char *String, 
-      const size_t length);
+  virtual llvm::Constant *GenerateConstantString(const std::string &String);
   virtual llvm::Value *GenerateMessageSend(llvm::IRBuilder<> &Builder,
                                            const llvm::Type *ReturnTy,
                                            llvm::Value *Sender,
@@ -248,13 +247,11 @@ llvm::Constant *CGObjCGNU::MakeGlobal(const llvm::ArrayType *Ty,
 //TODO: In case there are any crazy people still using the GNU runtime without
 //an OpenStep implementation, this should let them select their own class for
 //constant strings.
-llvm::Constant *CGObjCGNU::GenerateConstantString(const char *String, const
-    size_t length) {
-  std::string Str(String, String +length);
+llvm::Constant *CGObjCGNU::GenerateConstantString(const std::string &Str) {
   std::vector<llvm::Constant*> Ivars;
   Ivars.push_back(NULLPtr);
   Ivars.push_back(MakeConstantString(Str));
-  Ivars.push_back(llvm::ConstantInt::get(IntTy, length));
+  Ivars.push_back(llvm::ConstantInt::get(IntTy, Str.size()));
   llvm::Constant *ObjCStr = MakeGlobal(
     llvm::StructType::get(PtrToInt8Ty, PtrToInt8Ty, IntTy, NULL),
     Ivars, ".objc_str");

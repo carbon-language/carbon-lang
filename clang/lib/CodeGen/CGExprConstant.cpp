@@ -61,8 +61,10 @@ public:
     return llvm::ConstantInt::get(ConvertType(E->getType()), E->getValue());
   }
   llvm::Constant *VisitObjCStringLiteral(const ObjCStringLiteral *E) {
-    return CGM.getObjCRuntime().GenerateConstantString(
-        E->getString()->getStrData(), E->getString()->getByteLength());
+    std::string S(E->getString()->getStrData(), 
+                  E->getString()->getByteLength());
+    llvm::Constant *C = CGM.getObjCRuntime().GenerateConstantString(S);
+    return llvm::ConstantExpr::getBitCast(C, ConvertType(E->getType()));
   }
   
   llvm::Constant *VisitCompoundLiteralExpr(CompoundLiteralExpr *E) {

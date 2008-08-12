@@ -59,8 +59,7 @@ public:
   virtual llvm::Value *GetSelector(BuilderType &Builder,
                                    Selector Sel) =0;
   /// Generate a constant string object
-  virtual llvm::Constant *GenerateConstantString(const char *String,
-                                                 const size_t Length) = 0;
+  virtual llvm::Constant *GenerateConstantString(const std::string &String) = 0;
   /// Generate a category.  A category contains a list of methods (and
   /// accompanying metadata) and a list of protocols.
   virtual void GenerateCategory(const char *ClassName, const char *CategoryName,
