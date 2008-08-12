@@ -306,6 +306,10 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
       ConvertTypeRecursive(QualType(cast<ASQualType>(Ty).getBaseType(), 0));
 
   case Type::ObjCInterface: {
+    // FIXME: This comment is broken. Either the code should check for
+    // the flag it is referring to or it should do the right thing in
+    // the presence of it.
+    
     // Warning: Use of this is strongly discouraged.  Late binding of instance
     // variables is supported on some runtimes and so using static binding can
     // break code when libraries are updated.  Only use this if you have
@@ -322,8 +326,8 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     break;
 
   case Type::ObjCQualifiedId:
-    assert(0 && "FIXME: add missing functionality here");
-    break;
+    // Protocols don't influence the LLVM type.
+    return ConvertTypeRecursive(Context.getObjCIdType());
 
   case Type::Tagged: {
     const TagDecl *TD = cast<TagType>(Ty).getDecl();

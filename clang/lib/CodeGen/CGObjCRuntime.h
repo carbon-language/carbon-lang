@@ -47,6 +47,10 @@ public:
   /// Generate an Objective-C message send operation
   virtual llvm::Value *GenerateMessageSend(BuilderType &Builder,
                                            const llvm::Type *ReturnTy,
+                                           // FIXME: This should be
+                                           // dropped, it is unused
+                                           // and generates a spurious
+                                           // load.
                                            llvm::Value *Sender,
                                            llvm::Value *Receiver,
                                            Selector Sel,
@@ -81,17 +85,25 @@ public:
              const llvm::SmallVectorImpl<Selector>  &ClassMethodSels,
              const llvm::SmallVectorImpl<llvm::Constant *>  &ClassMethodTypes,
              const llvm::SmallVectorImpl<std::string> &Protocols) =0;
-  /// Generate a reference to the named protocol.
-  virtual llvm::Value *GenerateProtocolRef(llvm::IRBuilder<true> &Builder,
-                                           const char *ProtocolName) = 0;
   virtual llvm::Value *GenerateMessageSendSuper(llvm::IRBuilder<true> &Builder,
                                                 const llvm::Type *ReturnTy,
+                                                // FIXME: This should
+                                                // be dropped, it is
+                                                // unused and
+                                                // generates a
+                                                // spurious load.
                                                 llvm::Value *Sender,
                                                 const char *SuperClassName,
                                                 llvm::Value *Receiver,
                                                 Selector Sel,
                                                 llvm::Value** ArgV,
                                                 unsigned ArgC) = 0;
+
+  /// Emit the code to return the named protocol as an object, as in a
+  /// @protocol expression.
+  virtual llvm::Value *GenerateProtocolRef(llvm::IRBuilder<true> &Builder,
+                                           const char *ProtocolName) = 0;
+
   /// Generate the named protocol.  Protocols contain method metadata but no 
   /// implementations. 
   virtual void GenerateProtocol(const char *ProtocolName,

@@ -14,6 +14,7 @@
 #include "CodeGenFunction.h"
 #include "CodeGenModule.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/DeclObjC.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/Constants.h"
@@ -135,6 +136,7 @@ public:
   }
   Value *VisitObjCMessageExpr(ObjCMessageExpr *E);
   Value *VisitObjCSelectorExpr(ObjCSelectorExpr *E);
+  Value *VisitObjCProtocolExpr(ObjCProtocolExpr *E);
   Value *VisitObjCIvarRefExpr(ObjCIvarRefExpr *E) { return EmitLoadOfLValue(E);}
   Value *VisitArraySubscriptExpr(ArraySubscriptExpr *E);
   Value *VisitShuffleVectorExpr(ShuffleVectorExpr *E);
@@ -504,6 +506,11 @@ Value *ScalarExprEmitter::VisitObjCMessageExpr(ObjCMessageExpr *E) {
 
 Value *ScalarExprEmitter::VisitObjCSelectorExpr(ObjCSelectorExpr *E) {
   return Runtime->GetSelector(Builder, E->getSelector());
+}
+
+Value *ScalarExprEmitter::VisitObjCProtocolExpr(ObjCProtocolExpr *E) {
+  // FIXME: This should pass the Decl not the name.
+  return Runtime->GenerateProtocolRef(Builder, E->getProtocol()->getName());
 }
 
 Value *ScalarExprEmitter::VisitArraySubscriptExpr(ArraySubscriptExpr *E) {
