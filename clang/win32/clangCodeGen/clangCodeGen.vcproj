@@ -195,6 +195,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\lib\CodeGen\CGObjCMac.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\CodeGen\CGStmt.cpp"
 				>
 			</File>

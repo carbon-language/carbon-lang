@@ -156,10 +156,6 @@
 				RelativePath="..\..\lib\Driver\TextDiagnosticPrinter.cpp"
 				>
 			</File>
-			<File
-				RelativePath="..\..\lib\Driver\TextDiagnostics.cpp"
-				>
-			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -172,10 +168,6 @@
 			</File>
 			<File
 				RelativePath="..\..\include\clang\Driver\TextDiagnosticPrinter.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\include\clang\Driver\TextDiagnostics.h"
 				>
 			</File>
 		</Filter>
