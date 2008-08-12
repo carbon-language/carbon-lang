@@ -493,14 +493,14 @@ public:
                     const char *Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
-        return Folder.CreateCompare(P, LC, RC);
+        return Folder.CreateICmp(P, LC, RC);
     return Insert(new ICmpInst(P, LHS, RHS), Name);
   }
   Value *CreateFCmp(CmpInst::Predicate P, Value *LHS, Value *RHS,
                     const char *Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
-        return Folder.CreateCompare(P, LC, RC);
+        return Folder.CreateFCmp(P, LC, RC);
     return Insert(new FCmpInst(P, LHS, RHS), Name);
   }
 
@@ -508,14 +508,14 @@ public:
                      const char *Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
-        return Folder.CreateCompare(P, LC, RC);
+        return Folder.CreateVICmp(P, LC, RC);
     return Insert(new VICmpInst(P, LHS, RHS), Name);
   }
   Value *CreateVFCmp(CmpInst::Predicate P, Value *LHS, Value *RHS,
                      const char *Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
-        return Folder.CreateCompare(P, LC, RC);
+        return Folder.CreateVFCmp(P, LC, RC);
     return Insert(new VFCmpInst(P, LHS, RHS), Name);
   }
 

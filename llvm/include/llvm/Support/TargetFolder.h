@@ -154,8 +154,20 @@ public:
   // Compare Instructions
   //===--------------------------------------------------------------------===//
 
-  Constant *CreateCompare(CmpInst::Predicate P, Constant *LHS,
-                          Constant *RHS) const {
+  Constant *CreateICmp(CmpInst::Predicate P, Constant *LHS,
+                       Constant *RHS) const {
+    return Fold(ConstantExpr::getCompare(P, LHS, RHS));
+  }
+  Constant *CreateFCmp(CmpInst::Predicate P, Constant *LHS,
+                       Constant *RHS) const {
+    return Fold(ConstantExpr::getCompare(P, LHS, RHS));
+  }
+  Constant *CreateVICmp(CmpInst::Predicate P, Constant *LHS,
+                        Constant *RHS) const {
+    return Fold(ConstantExpr::getCompare(P, LHS, RHS));
+  }
+  Constant *CreateVFCmp(CmpInst::Predicate P, Constant *LHS,
+                        Constant *RHS) const {
     return Fold(ConstantExpr::getCompare(P, LHS, RHS));
   }
 
