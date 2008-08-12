@@ -4,6 +4,7 @@
 
 * Add support for compiling functions in both ARM and Thumb mode, then taking
   the smallest.
+
 * Add support for compiling individual basic blocks in thumb mode, when in a 
   larger ARM function.  This can be used for presumed cold code, like paths
   to abort (failure path of asserts), EH handling code, etc.
