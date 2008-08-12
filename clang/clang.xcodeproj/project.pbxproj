@@ -23,6 +23,8 @@
 		352981090CC58344008B5E84 /* SerializationTest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 352981080CC58344008B5E84 /* SerializationTest.cpp */; };
 		3534A01D0E129849002709B2 /* ParseCXXInlineMethods.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3534A01C0E129849002709B2 /* ParseCXXInlineMethods.cpp */; };
 		3536456B0E23EBF7009C6509 /* Environment.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3536456A0E23EBF7009C6509 /* Environment.cpp */; };
+		3552E7550E520D80003A8CA5 /* PPCaching.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3552E7540E520D80003A8CA5 /* PPCaching.cpp */; };
+		3552E7590E520DD7003A8CA5 /* CGObjCMac.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3552E7580E520DD7003A8CA5 /* CGObjCMac.cpp */; };
 		3558F76D0E267C8300A5B0DF /* BasicStore.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3558F76C0E267C8300A5B0DF /* BasicStore.cpp */; };
 		356EF9B50C8F7DDF006650F5 /* LiveVariables.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 356EF9B40C8F7DDF006650F5 /* LiveVariables.cpp */; };
 		35707EFE0CD0F5CC000B2204 /* SourceLocation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35707EFD0CD0F5CC000B2204 /* SourceLocation.cpp */; };
@@ -37,7 +39,6 @@
 		3595AFB80E1C8D62004CDF09 /* CheckObjCDealloc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3595AFB70E1C8D62004CDF09 /* CheckObjCDealloc.cpp */; };
 		359603460E49496E00C6282B /* TextDiagnosticBuffer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 359603430E49496E00C6282B /* TextDiagnosticBuffer.cpp */; };
 		359603470E49496E00C6282B /* TextDiagnosticPrinter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 359603440E49496E00C6282B /* TextDiagnosticPrinter.cpp */; };
-		359603480E49496E00C6282B /* TextDiagnostics.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 359603450E49496E00C6282B /* TextDiagnostics.cpp */; };
 		3599299B0DE2425300A8A33E /* SemaInit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3599299A0DE2425300A8A33E /* SemaInit.cpp */; };
 		359DBBD40E1AC9CC00F43FA0 /* AnalysisConsumer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 359DBBD30E1AC9CC00F43FA0 /* AnalysisConsumer.cpp */; };
 		35A3E7020DD3874400757F74 /* CGDebugInfo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35A3E7000DD3874400757F74 /* CGDebugInfo.cpp */; };
@@ -285,6 +286,8 @@
 		3536456A0E23EBF7009C6509 /* Environment.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Environment.cpp; path = lib/Analysis/Environment.cpp; sourceTree = "<group>"; };
 		3536457C0E2406B0009C6509 /* Environment.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Environment.h; path = clang/Analysis/PathSensitive/Environment.h; sourceTree = "<group>"; };
 		3547129D0C88881300B3E1D5 /* PrettyPrinter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PrettyPrinter.h; path = clang/AST/PrettyPrinter.h; sourceTree = "<group>"; };
+		3552E7540E520D80003A8CA5 /* PPCaching.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PPCaching.cpp; sourceTree = "<group>"; };
+		3552E7580E520DD7003A8CA5 /* CGObjCMac.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CGObjCMac.cpp; path = lib/CodeGen/CGObjCMac.cpp; sourceTree = "<group>"; };
 		3558F76C0E267C8300A5B0DF /* BasicStore.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = BasicStore.cpp; path = lib/Analysis/BasicStore.cpp; sourceTree = "<group>"; };
 		3558F76E0E267C9A00A5B0DF /* BasicStore.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BasicStore.h; path = clang/Analysis/PathSensitive/BasicStore.h; sourceTree = "<group>"; };
 		3558F76F0E267C9A00A5B0DF /* Store.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Store.h; path = clang/Analysis/PathSensitive/Store.h; sourceTree = "<group>"; };
@@ -306,10 +309,8 @@
 		3595AFB70E1C8D62004CDF09 /* CheckObjCDealloc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CheckObjCDealloc.cpp; path = lib/Analysis/CheckObjCDealloc.cpp; sourceTree = "<group>"; };
 		3596033F0E49494D00C6282B /* TextDiagnosticBuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TextDiagnosticBuffer.h; path = clang/Driver/TextDiagnosticBuffer.h; sourceTree = "<group>"; };
 		359603400E49494D00C6282B /* TextDiagnosticPrinter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TextDiagnosticPrinter.h; path = clang/Driver/TextDiagnosticPrinter.h; sourceTree = "<group>"; };
-		359603410E49494D00C6282B /* TextDiagnostics.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TextDiagnostics.h; path = clang/Driver/TextDiagnostics.h; sourceTree = "<group>"; };
 		359603430E49496E00C6282B /* TextDiagnosticBuffer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TextDiagnosticBuffer.cpp; path = lib/Driver/TextDiagnosticBuffer.cpp; sourceTree = "<group>"; };
 		359603440E49496E00C6282B /* TextDiagnosticPrinter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TextDiagnosticPrinter.cpp; path = lib/Driver/TextDiagnosticPrinter.cpp; sourceTree = "<group>"; };
-		359603450E49496E00C6282B /* TextDiagnostics.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TextDiagnostics.cpp; path = lib/Driver/TextDiagnostics.cpp; sourceTree = "<group>"; };
 		3599299A0DE2425300A8A33E /* SemaInit.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SemaInit.cpp; path = lib/Sema/SemaInit.cpp; sourceTree = "<group>"; };
 		359DBBD30E1AC9CC00F43FA0 /* AnalysisConsumer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = AnalysisConsumer.cpp; path = Driver/AnalysisConsumer.cpp; sourceTree = "<group>"; };
 		359DBBE20E1ACD4700F43FA0 /* AnalysisConsumer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AnalysisConsumer.h; path = Driver/AnalysisConsumer.h; sourceTree = "<group>"; };
@@ -651,7 +652,6 @@
 			children = (
 				3596033F0E49494D00C6282B /* TextDiagnosticBuffer.h */,
 				359603400E49494D00C6282B /* TextDiagnosticPrinter.h */,
-				359603410E49494D00C6282B /* TextDiagnostics.h */,
 			);
 			name = Driver;
 			sourceTree = "<group>";
@@ -661,7 +661,6 @@
 			children = (
 				359603430E49496E00C6282B /* TextDiagnosticBuffer.cpp */,
 				359603440E49496E00C6282B /* TextDiagnosticPrinter.cpp */,
-				359603450E49496E00C6282B /* TextDiagnostics.cpp */,
 			);
 			name = Driver;
 			sourceTree = "<group>";
@@ -792,6 +791,7 @@
 		DE927FCC0C0557CD00231DA4 /* CodeGen */ = {
 			isa = PBXGroup;
 			children = (
+				3552E7580E520DD7003A8CA5 /* CGObjCMac.cpp */,
 				DE928B800C0A615B00231DA4 /* CodeGenFunction.h */,
 				DE928B820C0A616000231DA4 /* CodeGenFunction.cpp */,
 				DE928B7C0C0A615100231DA4 /* CodeGenModule.h */,
@@ -986,6 +986,7 @@
 		DED7D78C0A5242E6003AD0FB /* Lex */ = {
 			isa = PBXGroup;
 			children = (
+				3552E7540E520D80003A8CA5 /* PPCaching.cpp */,
 				DE704DD10D1668A4009C7762 /* HeaderMap.cpp */,
 				DE344B530AE5E46C00DBC861 /* HeaderSearch.cpp */,
 				DED7D79E0A5242E6003AD0FB /* Lexer.cpp */,
@@ -1198,7 +1199,8 @@
 				35F2A01E0E36AFF100D17527 /* CheckObjCUnusedIVars.cpp in Sources */,
 				359603460E49496E00C6282B /* TextDiagnosticBuffer.cpp in Sources */,
 				359603470E49496E00C6282B /* TextDiagnosticPrinter.cpp in Sources */,
-				359603480E49496E00C6282B /* TextDiagnostics.cpp in Sources */,
+				3552E7550E520D80003A8CA5 /* PPCaching.cpp in Sources */,
+				3552E7590E520DD7003A8CA5 /* CGObjCMac.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
