@@ -491,18 +491,18 @@ Pass *PMTopLevelManager::findAnalysisPass(AnalysisID AID) {
 
   Pass *P = NULL;
   // Check pass managers
-  for (std::vector<PMDataManager *>::iterator I = PassManagers.begin(),
+  for (SmallVector<PMDataManager *, 8>::iterator I = PassManagers.begin(),
          E = PassManagers.end(); P == NULL && I != E; ++I) {
     PMDataManager *PMD = *I;
     P = PMD->findAnalysisPass(AID, false);
   }
 
   // Check other pass managers
-  for (std::vector<PMDataManager *>::iterator I = IndirectPassManagers.begin(),
+  for (SmallVector<PMDataManager *, 8>::iterator I = IndirectPassManagers.begin(),
          E = IndirectPassManagers.end(); P == NULL && I != E; ++I)
     P = (*I)->findAnalysisPass(AID, false);
 
-  for (std::vector<ImmutablePass *>::iterator I = ImmutablePasses.begin(),
+  for (SmallVector<ImmutablePass *, 8>::iterator I = ImmutablePasses.begin(),
          E = ImmutablePasses.end(); P == NULL && I != E; ++I) {
     const PassInfo *PI = (*I)->getPassInfo();
     if (PI == AID)
@@ -535,7 +535,7 @@ void PMTopLevelManager::dumpPasses() const {
   // (sometimes indirectly), but there's no inheritance relationship
   // between PMDataManager and Pass, so we have to dynamic_cast to get
   // from a PMDataManager* to a Pass*.
-  for (std::vector<PMDataManager *>::const_iterator I = PassManagers.begin(),
+  for (SmallVector<PMDataManager *, 8>::const_iterator I = PassManagers.begin(),
          E = PassManagers.end(); I != E; ++I)
     dynamic_cast<Pass *>(*I)->dumpPassStructure(1);
 }
@@ -546,7 +546,7 @@ void PMTopLevelManager::dumpArguments() const {
     return;
 
   cerr << "Pass Arguments: ";
-  for (std::vector<PMDataManager *>::const_iterator I = PassManagers.begin(),
+  for (SmallVector<PMDataManager *, 8>::const_iterator I = PassManagers.begin(),
          E = PassManagers.end(); I != E; ++I) {
     PMDataManager *PMD = *I;
     PMD->dumpPassArguments();
@@ -556,14 +556,14 @@ void PMTopLevelManager::dumpArguments() const {
 
 void PMTopLevelManager::initializeAllAnalysisInfo() {
   
-  for (std::vector<PMDataManager *>::iterator I = PassManagers.begin(),
+  for (SmallVector<PMDataManager *, 8>::iterator I = PassManagers.begin(),
          E = PassManagers.end(); I != E; ++I) {
     PMDataManager *PMD = *I;
     PMD->initializeAnalysisInfo();
   }
   
   // Initailize other pass managers
-  for (std::vector<PMDataManager *>::iterator I = IndirectPassManagers.begin(),
+  for (SmallVector<PMDataManager *, 8>::iterator I = IndirectPassManagers.begin(),
          E = IndirectPassManagers.end(); I != E; ++I)
     (*I)->initializeAnalysisInfo();
 
@@ -583,11 +583,11 @@ void PMTopLevelManager::initializeAllAnalysisInfo() {
 
 /// Destructor
 PMTopLevelManager::~PMTopLevelManager() {
-  for (std::vector<PMDataManager *>::iterator I = PassManagers.begin(),
+  for (SmallVector<PMDataManager *, 8>::iterator I = PassManagers.begin(),
          E = PassManagers.end(); I != E; ++I)
     delete *I;
   
-  for (std::vector<ImmutablePass *>::iterator
+  for (SmallVector<ImmutablePass *, 8>::iterator
          I = ImmutablePasses.begin(), E = ImmutablePasses.end(); I != E; ++I)
     delete *I;
 
@@ -626,7 +626,7 @@ bool PMDataManager::preserveHigherLevelAnalysis(Pass *P) {
     return true;
   
   const AnalysisUsage::VectorType &PreservedSet = AnUsage->getPreservedSet();
-  for (std::vector<Pass *>::iterator I = HigherLevelAnalysis.begin(),
+  for (SmallVector<Pass *, 8>::iterator I = HigherLevelAnalysis.begin(),
          E = HigherLevelAnalysis.end(); I  != E; ++I) {
     Pass *P1 = *I;
     if (!dynamic_cast<ImmutablePass*>(P1) &&
@@ -940,7 +940,7 @@ void PMDataManager::dumpLastUses(Pass *P, unsigned Offset) const{
 }
 
 void PMDataManager::dumpPassArguments() const {
-  for(std::vector<Pass *>::const_iterator I = PassVector.begin(),
+  for(SmallVector<Pass *, 8>::const_iterator I = PassVector.begin(),
         E = PassVector.end(); I != E; ++I) {
     if (PMDataManager *PMD = dynamic_cast<PMDataManager *>(*I))
       PMD->dumpPassArguments();
@@ -1054,7 +1054,7 @@ void PMDataManager::addLowerLevelRequiredPass(Pass *P, Pass *RequiredPass) {
 // Destructor
 PMDataManager::~PMDataManager() {
   
-  for (std::vector<Pass *>::iterator I = PassVector.begin(),
+  for (SmallVector<Pass *, 8>::iterator I = PassVector.begin(),
          E = PassVector.end(); I != E; ++I)
     delete *I;
   

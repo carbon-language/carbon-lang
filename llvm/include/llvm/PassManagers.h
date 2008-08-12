@@ -186,7 +186,7 @@ public:
     ImmutablePasses.push_back(P);
   }
 
-  inline std::vector<ImmutablePass *>& getImmutablePasses() {
+  inline SmallVector<ImmutablePass *, 8>& getImmutablePasses() {
     return ImmutablePasses;
   }
 
@@ -212,13 +212,13 @@ public:
 protected:
   
   /// Collection of pass managers
-  std::vector<PMDataManager *> PassManagers;
+  SmallVector<PMDataManager *, 8> PassManagers;
 
 private:
 
   /// Collection of pass managers that are not directly maintained
   /// by this pass manager
-  std::vector<PMDataManager *> IndirectPassManagers;
+  SmallVector<PMDataManager *, 8> IndirectPassManagers;
 
   // Map to keep track of last user of the analysis pass.
   // LastUser->second is the last user of Lastuser->first.
@@ -230,7 +230,7 @@ private:
   DenseMap<Pass *, SmallPtrSet<Pass *, 8> > InversedLastUser;
 
   /// Immutable passes are managed by top level manager.
-  std::vector<ImmutablePass *> ImmutablePasses;
+  SmallVector<ImmutablePass *, 8> ImmutablePasses;
 
   DenseMap<Pass *, AnalysisUsage *> AnUsageMap;
 };
@@ -350,7 +350,7 @@ protected:
   PMTopLevelManager *TPM;
 
   // Collection of pass that are managed by this manager
-  std::vector<Pass *> PassVector;
+  SmallVector<Pass *, 16> PassVector;
 
   // Collection of Analysis provided by Parent pass manager and
   // used by current pass manager. At at time there can not be more
@@ -369,7 +369,7 @@ private:
 
   // Collection of higher level analysis used by the pass managed by
   // this manager.
-  std::vector<Pass *> HigherLevelAnalysis;
+  SmallVector<Pass *, 8> HigherLevelAnalysis;
 
   unsigned Depth;
 };
