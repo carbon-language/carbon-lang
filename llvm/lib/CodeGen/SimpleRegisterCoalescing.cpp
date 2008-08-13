@@ -2091,7 +2091,7 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
     joinIntervals();
     DOUT << "********** INTERVALS POST JOINING **********\n";
     for (LiveIntervals::iterator I = li_->begin(), E = li_->end(); I != E; ++I){
-      I->second.print(DOUT, tri_);
+      I->second->print(DOUT, tri_);
       DOUT << "\n";
     }
   }
@@ -2164,7 +2164,7 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
   }
 
   for (LiveIntervals::iterator I = li_->begin(), E = li_->end(); I != E; ++I) {
-    LiveInterval &LI = I->second;
+    LiveInterval &LI = *I->second;
     if (TargetRegisterInfo::isVirtualRegister(LI.reg)) {
       // If the live interval length is essentially zero, i.e. in every live
       // range the use follows def immediately, it doesn't make sense to spill

@@ -86,7 +86,7 @@ namespace llvm {
     typedef std::vector<MachineInstr*> Index2MiMap;
     Index2MiMap i2miMap_;
 
-    typedef std::map<unsigned, LiveInterval> Reg2IntervalMap;
+    typedef std::map<unsigned, LiveInterval*> Reg2IntervalMap;
     Reg2IntervalMap r2iMap_;
 
     BitVector allocatableRegs_;
@@ -141,13 +141,13 @@ namespace llvm {
     LiveInterval &getInterval(unsigned reg) {
       Reg2IntervalMap::iterator I = r2iMap_.find(reg);
       assert(I != r2iMap_.end() && "Interval does not exist for register");
-      return I->second;
+      return *I->second;
     }
 
     const LiveInterval &getInterval(unsigned reg) const {
       Reg2IntervalMap::const_iterator I = r2iMap_.find(reg);
       assert(I != r2iMap_.end() && "Interval does not exist for register");
-      return I->second;
+      return *I->second;
     }
 
     bool hasInterval(unsigned reg) const {
@@ -237,7 +237,7 @@ namespace llvm {
       Reg2IntervalMap::iterator I = r2iMap_.find(reg);
       if (I == r2iMap_.end())
         I = r2iMap_.insert(I, std::make_pair(reg, createInterval(reg)));
-      return I->second;
+      return *I->second;
     }
     
     /// addLiveRangeToEndOfBlock - Given a register and an instruction,
@@ -248,7 +248,9 @@ namespace llvm {
     // Interval removal
 
     void removeInterval(unsigned Reg) {
-      r2iMap_.erase(Reg);
+      std::map<unsigned, LiveInterval*>::iterator I = r2iMap_.find(Reg);
+      delete I->second;
+      r2iMap_.erase(I);
     }
 
     /// isRemoved - returns true if the specified machine instr has been
@@ -459,7 +461,7 @@ namespace llvm {
         std::map<unsigned,unsigned> &MBBVRegsMap,
         std::vector<LiveInterval*> &NewLIs, float &SSWeight);
 
-    static LiveInterval createInterval(unsigned Reg);
+    static LiveInterval* createInterval(unsigned Reg);
 
     void printRegName(unsigned reg) const;
   };

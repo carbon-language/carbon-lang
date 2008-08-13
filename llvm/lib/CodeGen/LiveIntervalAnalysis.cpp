@@ -71,6 +71,11 @@ void LiveIntervals::getAnalysisUsage(AnalysisUsage &AU) const {
 }
 
 void LiveIntervals::releaseMemory() {
+  // Free the live intervals themselves.
+  for (std::map<unsigned, LiveInterval*>::iterator I = r2iMap_.begin(),
+       E = r2iMap_.end(); I != E; ++I)
+    delete I->second;
+  
   MBB2IdxMap.clear();
   Idx2MBBMap.clear();
   mi2iMap_.clear();
@@ -130,8 +135,8 @@ void LiveIntervals::computeNumbering() {
   
   if (!OldI2MI.empty())
     for (iterator OI = begin(), OE = end(); OI != OE; ++OI) {
-      for (LiveInterval::iterator LI = OI->second.begin(),
-           LE = OI->second.end(); LI != LE; ++LI) {
+      for (LiveInterval::iterator LI = OI->second->begin(),
+           LE = OI->second->end(); LI != LE; ++LI) {
         
         // Remap the start index of the live range to the corresponding new
         // number, or our best guess at what it _should_ correspond to if the
@@ -174,8 +179,8 @@ void LiveIntervals::computeNumbering() {
         }
       }
       
-      for (LiveInterval::vni_iterator VNI = OI->second.vni_begin(),
-           VNE = OI->second.vni_end(); VNI != VNE; ++VNI) { 
+      for (LiveInterval::vni_iterator VNI = OI->second->vni_begin(),
+           VNE = OI->second->vni_end(); VNI != VNE; ++VNI) { 
         VNInfo* vni = *VNI;
         
         // Remap the VNInfo def index, which works the same as the
@@ -245,7 +250,7 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
 
   DOUT << "********** INTERVALS **********\n";
   for (iterator I = begin(), E = end(); I != E; ++I) {
-    I->second.print(DOUT, tri_);
+    I->second->print(DOUT, tri_);
     DOUT << "\n";
   }
 
@@ -258,7 +263,7 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
 void LiveIntervals::print(std::ostream &O, const Module* ) const {
   O << "********** INTERVALS **********\n";
   for (const_iterator I = begin(), E = end(); I != E; ++I) {
-    I->second.print(O, tri_);
+    I->second->print(O, tri_);
     O << "\n";
   }
 
@@ -729,10 +734,10 @@ bool LiveIntervals::findLiveInMBBs(const LiveRange &LR,
 }
 
 
-LiveInterval LiveIntervals::createInterval(unsigned reg) {
+LiveInterval* LiveIntervals::createInterval(unsigned reg) {
   float Weight = TargetRegisterInfo::isPhysicalRegister(reg) ?
                        HUGE_VALF : 0.0F;
-  return LiveInterval(reg, Weight);
+  return new LiveInterval(reg, Weight);
 }
 
 /// getVNInfoSourceReg - Helper function that parses the specified VNInfo

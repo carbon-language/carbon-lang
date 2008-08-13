@@ -323,11 +323,11 @@ void RALinScan::initIntervalSets()
          "interval sets should be empty on initialization");
 
   for (LiveIntervals::iterator i = li_->begin(), e = li_->end(); i != e; ++i) {
-    if (TargetRegisterInfo::isPhysicalRegister(i->second.reg)) {
-      reginfo_->setPhysRegUsed(i->second.reg);
-      fixed_.push_back(std::make_pair(&i->second, i->second.begin()));
+    if (TargetRegisterInfo::isPhysicalRegister(i->second->reg)) {
+      reginfo_->setPhysRegUsed(i->second->reg);
+      fixed_.push_back(std::make_pair(i->second, i->second->begin()));
     } else
-      unhandled_.push(&i->second);
+      unhandled_.push(i->second);
   }
 }
 
@@ -385,11 +385,11 @@ void RALinScan::linearScan()
   MachineFunction::iterator EntryMBB = mf_->begin();
   SmallVector<MachineBasicBlock*, 8> LiveInMBBs;
   for (LiveIntervals::iterator i = li_->begin(), e = li_->end(); i != e; ++i) {
-    LiveInterval &cur = i->second;
+    LiveInterval &cur = *i->second;
     unsigned Reg = 0;
     bool isPhys = TargetRegisterInfo::isPhysicalRegister(cur.reg);
     if (isPhys)
-      Reg = i->second.reg;
+      Reg = cur.reg;
     else if (vrm_->isAssignedReg(cur.reg))
       Reg = attemptTrivialCoalescing(cur, vrm_->getPhys(cur.reg));
     if (!Reg)
