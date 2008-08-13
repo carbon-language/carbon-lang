@@ -62,6 +62,7 @@ namespace {
     bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo, 
                          unsigned AsmVariant, const char *ExtraCode);
     void printOperand(const MachineInstr *MI, int opNum);
+    void printUnsignedImm(const MachineInstr *MI, int opNum);
     void printMemOperand(const MachineInstr *MI, int opNum, 
                          const char *Modifier = 0);
     void printFCCOperand(const MachineInstr *MI, int opNum, 
@@ -383,11 +384,7 @@ printOperand(const MachineInstr *MI, int opNum)
       break;
 
     case MachineOperand::MO_Immediate:
-      if ((MI->getOpcode() == Mips::SLTiu) || (MI->getOpcode() == Mips::ORi) || 
-          (MI->getOpcode() == Mips::LUi)   || (MI->getOpcode() == Mips::ANDi))
-        O << (unsigned short int)MO.getImm();
-      else
-        O << (short int)MO.getImm();
+      O << (short int)MO.getImm();
       break;
 
     case MachineOperand::MO_MachineBasicBlock:
@@ -407,7 +404,6 @@ printOperand(const MachineInstr *MI, int opNum)
       << '_' << MO.getIndex();
       break;
 
-    // FIXME: Verify correct
     case MachineOperand::MO_ConstantPoolIndex:
       O << TAI->getPrivateGlobalPrefix() << "CPI"
         << getFunctionNumber() << "_" << MO.getIndex();
@@ -418,6 +414,16 @@ printOperand(const MachineInstr *MI, int opNum)
   }
 
   if (closeP) O << ")";
+}
+
+void MipsAsmPrinter::
+printUnsignedImm(const MachineInstr *MI, int opNum) 
+{
+  const MachineOperand &MO = MI->getOperand(opNum);
+  if (MO.getType() == MachineOperand::MO_Immediate)
+    O << (unsigned short int)MO.getImm();
+  else 
+    printOperand(MI, opNum);
 }
 
 void MipsAsmPrinter::

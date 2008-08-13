@@ -40,6 +40,9 @@ namespace llvm {
       // Handle gp_rel (small data/bss sections) relocation.
       GPRel,
 
+      // Conditional Move
+      CMov,
+
       // Select CC Pseudo Instruction
       SelectCC,
 
@@ -99,7 +102,6 @@ namespace llvm {
     SDValue LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG);
     SDValue LowerJumpTable(SDValue Op, SelectionDAG &DAG);
     SDValue LowerRET(SDValue Op, SelectionDAG &DAG);
-    SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG);
     SDValue LowerSELECT(SDValue Op, SelectionDAG &DAG);
     SDValue LowerSETCC(SDValue Op, SelectionDAG &DAG);
 

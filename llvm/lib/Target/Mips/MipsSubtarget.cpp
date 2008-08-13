@@ -58,6 +58,8 @@ MipsSubtarget::MipsSubtarget(const TargetMachine &TM, const Module &M,
     HasVFPU = true; // Enables Allegrex Vector FPU (not supported yet)
     HasSEInReg = true;
     HasBitCount = true;
+    HasSwap = true;
+    HasCondMov = true;
   }
 
   // Abicall is the default for O32 ABI and is ignored 

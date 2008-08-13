@@ -21,6 +21,9 @@ def SDT_MipsRet          : SDTypeProfile<0, 1, [SDTCisInt<0>]>;
 def SDT_MipsJmpLink      : SDTypeProfile<0, 1, [SDTCisVT<0, iPTR>]>;
 def SDT_MipsSelectCC     : SDTypeProfile<1, 3, [SDTCisSameAs<0, 2>, 
                                          SDTCisSameAs<2, 3>, SDTCisInt<1>]>;
+def SDT_MipsCMov         : SDTypeProfile<1, 4, [SDTCisSameAs<0, 1>, 
+                                         SDTCisSameAs<1, 2>, SDTCisSameAs<3, 4>,
+                                         SDTCisInt<4>]>;
 def SDT_MipsCallSeqStart : SDCallSeqStart<[SDTCisVT<0, i32>]>;
 def SDT_MipsCallSeqEnd   : SDCallSeqEnd<[SDTCisVT<0, i32>, SDTCisVT<1, i32>]>;
 
@@ -48,11 +51,16 @@ def callseq_end   : SDNode<"ISD::CALLSEQ_END", SDT_MipsCallSeqEnd,
 // Select Condition Code
 def MipsSelectCC  : SDNode<"MipsISD::SelectCC", SDT_MipsSelectCC>;
 
+// Conditional Move
+def MipsCMov      : SDNode<"MipsISD::CMov", SDT_MipsCMov>;
+
 //===----------------------------------------------------------------------===//
 // Mips Instruction Predicate Definitions.
 //===----------------------------------------------------------------------===//
 def HasSEInReg  : Predicate<"Subtarget.hasSEInReg()">;
 def HasBitCount : Predicate<"Subtarget.hasBitCount()">;
+def HasSwap     : Predicate<"Subtarget.hasSwap()">;
+def HasCondMov  : Predicate<"Subtarget.hasCondMov()">;
 
 //===----------------------------------------------------------------------===//
 // Mips Operand, Complex Patterns and Transformations Definitions.
@@ -61,9 +69,13 @@ def HasBitCount : Predicate<"Subtarget.hasBitCount()">;
 // Instruction operand types
 def brtarget    : Operand<OtherVT>;
 def calltarget  : Operand<i32>;
-def uimm16      : Operand<i32>;
 def simm16      : Operand<i32>;
 def shamt       : Operand<i32>;
+
+// Unsigned Operand
+def uimm16      : Operand<i32> {
+  let PrintMethod = "printUnsignedImm";
+}
 
 // Address operand
 def mem : Operand<i32> {
@@ -142,6 +154,14 @@ class ArithI<bits<6> op, string instr_asm, SDNode OpNode,
       (ins CPURegs:$b, Od:$c),
       !strconcat(instr_asm, "\t$dst, $b, $c"),
       [(set CPURegs:$dst, (OpNode CPURegs:$b, imm_type:$c))], IIAlu>;
+
+class ArithOverflowI<bits<6> op, string instr_asm, SDNode OpNode,
+             Operand Od, PatLeaf imm_type> :
+  FI< op,
+      (outs CPURegs:$dst),
+      (ins CPURegs:$b, Od:$c),
+      !strconcat(instr_asm, "\t$dst, $b, $c"),
+      [], IIAlu>;
 
 // Arithmetic Multiply ADD/SUB
 let rd=0 in
@@ -352,6 +372,18 @@ class SignExtInReg<bits<6> func, string instr_asm, ValueType vt>:
       !strconcat(instr_asm, "\t$dst, $src"),
       [(set CPURegs:$dst, (sext_inreg CPURegs:$src, vt))], NoItinerary>;
 
+// Byte Swap
+class ByteSwap<bits<6> func, string instr_asm>:
+  FR< 0x1f, func, (outs CPURegs:$dst), (ins CPURegs:$src),
+      !strconcat(instr_asm, "\t$dst, $src"),
+      [(set CPURegs:$dst, (bswap CPURegs:$src))], NoItinerary>;
+
+// Conditional Move
+class CondMov<bits<6> func, string instr_asm, PatLeaf MovCode>:
+  FR< 0x00, func, (outs CPURegs:$dst), (ins CPURegs:$F, CPURegs:$T, 
+      CPURegs:$cond), !strconcat(instr_asm, "\t$dst, $T, $cond"), 
+      [(set CPURegs:$dst, (MipsCMov CPURegs:$F, CPURegs:$T, 
+                           CPURegs:$cond, MovCode))], NoItinerary>;
 
 //===----------------------------------------------------------------------===//
 // Pseudo instructions
@@ -402,10 +434,10 @@ def Select_CC : PseudoSelCC<CPURegs, "# MipsSelect_CC_i32">;
 //===----------------------------------------------------------------------===//
 
 /// Arithmetic Instructions (ALU Immediate)
-def ADDiu   : ArithI<0x09, "addiu", add, uimm16, immZExt16>;
-def ADDi    : ArithI<0x08, "addi",  add, simm16, immSExt16>;
+def ADDiu   : ArithI<0x09, "addiu", add, simm16, immSExt16>;
+def ADDi    : ArithOverflowI<0x08, "addi",  add, simm16, immSExt16>;
 def SLTi    : SetCC_I<0x0a, "slti", setlt, simm16, immSExt16>;
-def SLTiu   : SetCC_I<0x0b, "sltiu", setult, uimm16, immZExt16>;
+def SLTiu   : SetCC_I<0x0b, "sltiu", setult, simm16, immSExt16>;
 def ANDi    : LogicI<0x0c, "andi", and>;
 def ORi     : LogicI<0x0d, "ori",  or>;
 def XORi    : LogicI<0x0e, "xori",  xor>;
@@ -495,8 +527,23 @@ let Predicates = [HasSEInReg] in {
 
 /// Count Leading
 let Predicates = [HasBitCount] in {
-  def CLZ : CountLeading<0b010110, "clz", ctlz>;
-//def CLO : CountLeading<0b010110, "clo">;
+  let rt = 0 in
+    def CLZ : CountLeading<0b010110, "clz", ctlz>;
+}
+
+/// Byte Swap
+let Predicates = [HasSwap] in {
+  let shamt = 0x3, rs = 0 in
+    def WSBW : ByteSwap<0x20, "wsbw">;
+}
+
+/// Conditional Move
+def MIPS_CMOV_ZERO  : PatLeaf<(i32 0)>;
+def MIPS_CMOV_NZERO : PatLeaf<(i32 1)>;
+
+let Predicates = [HasCondMov], isTwoAddress = 1 in {
+  def MOVN : CondMov<0x0a, "movn", MIPS_CMOV_NZERO>;
+  def MOVZ : CondMov<0x0b, "movz", MIPS_CMOV_ZERO>;
 }
 
 /// No operation
@@ -573,55 +620,65 @@ def : Pat<(not CPURegs:$in),
           (NOR CPURegs:$in, ZERO)>;
 
 // extended load and stores
-def : Pat<(i32 (extloadi1  addr:$src)), (LBu addr:$src)>;
-def : Pat<(i32 (extloadi8  addr:$src)), (LBu addr:$src)>;
-def : Pat<(i32 (extloadi16 addr:$src)), (LHu addr:$src)>;
+def : Pat<(extloadi1  addr:$src), (LBu addr:$src)>;
+def : Pat<(extloadi8  addr:$src), (LBu addr:$src)>;
+def : Pat<(extloadi16 addr:$src), (LHu addr:$src)>;
 
 // peepholes
 def : Pat<(store (i32 0), addr:$dst), (SW ZERO, addr:$dst)>;
 
 // brcond patterns
-// direct match equal/notequal zero branches
 def : Pat<(brcond (setne CPURegs:$lhs, 0), bb:$dst),
           (BNE CPURegs:$lhs, ZERO, bb:$dst)>;
 def : Pat<(brcond (seteq CPURegs:$lhs, 0), bb:$dst),
           (BEQ CPURegs:$lhs, ZERO, bb:$dst)>;
 
 def : Pat<(brcond (setge CPURegs:$lhs, CPURegs:$rhs), bb:$dst),
-          (BGEZ (SUB CPURegs:$lhs, CPURegs:$rhs), bb:$dst)>;
+          (BEQ (SLT CPURegs:$lhs, CPURegs:$rhs), ZERO, bb:$dst)>;
 def : Pat<(brcond (setuge CPURegs:$lhs, CPURegs:$rhs), bb:$dst),
-          (BGEZ (SUBu CPURegs:$lhs, CPURegs:$rhs), bb:$dst)>;
-
-def : Pat<(brcond (setgt CPURegs:$lhs, CPURegs:$rhs), bb:$dst),
-          (BGTZ (SUB CPURegs:$lhs, CPURegs:$rhs), bb:$dst)>;
-def : Pat<(brcond (setugt CPURegs:$lhs, CPURegs:$rhs), bb:$dst),
-          (BGTZ (SUBu CPURegs:$lhs, CPURegs:$rhs), bb:$dst)>;
+          (BEQ (SLTu CPURegs:$lhs, CPURegs:$rhs), ZERO, bb:$dst)>;
+def : Pat<(brcond (setge CPURegs:$lhs, immSExt16:$rhs), bb:$dst),
+          (BEQ (SLTi CPURegs:$lhs, immSExt16:$rhs), ZERO, bb:$dst)>;
+def : Pat<(brcond (setuge CPURegs:$lhs, immSExt16:$rhs), bb:$dst),
+          (BEQ (SLTiu CPURegs:$lhs, immSExt16:$rhs), ZERO, bb:$dst)>;
 
 def : Pat<(brcond (setle CPURegs:$lhs, CPURegs:$rhs), bb:$dst),
-          (BLEZ (SUB CPURegs:$lhs, CPURegs:$rhs), bb:$dst)>;
+          (BEQ (SLT CPURegs:$rhs, CPURegs:$lhs), ZERO, bb:$dst)>;
 def : Pat<(brcond (setule CPURegs:$lhs, CPURegs:$rhs), bb:$dst),
-          (BLEZ (SUBu CPURegs:$lhs, CPURegs:$rhs), bb:$dst)>;
+          (BEQ (SLTu CPURegs:$rhs, CPURegs:$lhs), ZERO, bb:$dst)>;
 
-def : Pat<(brcond (setlt CPURegs:$lhs, immSExt16:$rhs), bb:$dst),
-          (BNE (SLTi CPURegs:$lhs, immSExt16:$rhs), ZERO, bb:$dst)>;
-def : Pat<(brcond (setult CPURegs:$lhs, immZExt16:$rhs), bb:$dst),
-          (BNE (SLTiu CPURegs:$lhs, immZExt16:$rhs), ZERO, bb:$dst)>;
-def : Pat<(brcond (setlt CPURegs:$lhs, CPURegs:$rhs), bb:$dst),
-          (BNE (SLT CPURegs:$lhs, CPURegs:$rhs), ZERO, bb:$dst)>;
-def : Pat<(brcond (setult CPURegs:$lhs, CPURegs:$rhs), bb:$dst),
-          (BNE (SLTu CPURegs:$lhs, CPURegs:$rhs), ZERO, bb:$dst)>;
-
-def : Pat<(brcond (setlt CPURegs:$lhs, CPURegs:$rhs), bb:$dst),
-          (BLTZ (SUB CPURegs:$lhs, CPURegs:$rhs), bb:$dst)>;
-def : Pat<(brcond (setult CPURegs:$lhs, CPURegs:$rhs), bb:$dst),
-          (BLTZ (SUBu CPURegs:$lhs, CPURegs:$rhs), bb:$dst)>;
-
-// generic brcond pattern
 def : Pat<(brcond CPURegs:$cond, bb:$dst),
           (BNE CPURegs:$cond, ZERO, bb:$dst)>;
 
-// setcc patterns, only matched when there
-// is no brcond following a setcc operation
+// select patterns
+def : Pat<(select (setge CPURegs:$lhs, CPURegs:$rhs), CPURegs:$T, CPURegs:$F),
+          (MOVZ CPURegs:$F, CPURegs:$T, (SLT CPURegs:$lhs, CPURegs:$rhs))>;
+def : Pat<(select (setuge CPURegs:$lhs, CPURegs:$rhs), CPURegs:$T, CPURegs:$F),
+          (MOVZ CPURegs:$F, CPURegs:$T, (SLTu CPURegs:$lhs, CPURegs:$rhs))>;
+def : Pat<(select (setge CPURegs:$lhs, immSExt16:$rhs), CPURegs:$T, CPURegs:$F),
+          (MOVZ CPURegs:$F, CPURegs:$T, (SLTi CPURegs:$lhs, immSExt16:$rhs))>;
+def : Pat<(select (setuge CPURegs:$lh, immSExt16:$rh), CPURegs:$T, CPURegs:$F),
+          (MOVZ CPURegs:$F, CPURegs:$T, (SLTiu CPURegs:$lh, immSExt16:$rh))>;
+
+def : Pat<(select (setle CPURegs:$lhs, CPURegs:$rhs), CPURegs:$T, CPURegs:$F),
+          (MOVZ CPURegs:$F, CPURegs:$T, (SLT CPURegs:$rhs, CPURegs:$lhs))>;
+def : Pat<(select (setule CPURegs:$lhs, CPURegs:$rhs), CPURegs:$T, CPURegs:$F),
+          (MOVZ CPURegs:$F, CPURegs:$T, (SLTu CPURegs:$rhs, CPURegs:$lhs))>;
+
+def : Pat<(select (seteq CPURegs:$lhs, CPURegs:$rhs), CPURegs:$T, CPURegs:$F),
+          (MOVZ CPURegs:$F, CPURegs:$T, (XOR CPURegs:$lhs, CPURegs:$rhs))>;
+def : Pat<(select (setne CPURegs:$lhs, CPURegs:$rhs), CPURegs:$T, CPURegs:$F),
+          (MOVN CPURegs:$F, CPURegs:$T, (XOR CPURegs:$lhs, CPURegs:$rhs))>;
+
+def : Pat<(select CPURegs:$cond, CPURegs:$T, CPURegs:$F), 
+          (MOVN CPURegs:$F, CPURegs:$T, CPURegs:$cond)>;
+
+// setcc patterns
+def : Pat<(seteq CPURegs:$lhs, CPURegs:$rhs),
+          (SLTu (XOR CPURegs:$lhs, CPURegs:$rhs), 1)>;
+def : Pat<(setne CPURegs:$lhs, CPURegs:$rhs),
+          (SLTu ZERO, (XOR CPURegs:$lhs, CPURegs:$rhs))>;
+
 def : Pat<(setle CPURegs:$lhs, CPURegs:$rhs),
           (XORi (SLT CPURegs:$rhs, CPURegs:$lhs), 1)>;
 def : Pat<(setule CPURegs:$lhs, CPURegs:$rhs),
@@ -637,18 +694,10 @@ def : Pat<(setge CPURegs:$lhs, CPURegs:$rhs),
 def : Pat<(setuge CPURegs:$lhs, CPURegs:$rhs),
           (XORi (SLTu CPURegs:$lhs, CPURegs:$rhs), 1)>;
 
-def : Pat<(setne CPURegs:$lhs, CPURegs:$rhs),
-          (OR (SLT CPURegs:$lhs, CPURegs:$rhs),
-              (SLT CPURegs:$rhs, CPURegs:$lhs))>;
-
-def : Pat<(seteq CPURegs:$lhs, CPURegs:$rhs),
-          (XORi (OR (SLT CPURegs:$lhs, CPURegs:$rhs),
-                    (SLT CPURegs:$rhs, CPURegs:$lhs)), 1)>;
-
 def : Pat<(setge CPURegs:$lhs, immSExt16:$rhs),
           (XORi (SLTi CPURegs:$lhs, immSExt16:$rhs), 1)>;
-def : Pat<(setuge CPURegs:$lhs, immZExt16:$rhs),
-          (XORi (SLTiu CPURegs:$lhs, immZExt16:$rhs), 1)>;
+def : Pat<(setuge CPURegs:$lhs, immSExt16:$rhs),
+          (XORi (SLTiu CPURegs:$lhs, immSExt16:$rhs), 1)>;
 
 //===----------------------------------------------------------------------===//
 // Floating Point Support

@@ -46,6 +46,7 @@ getTargetNodeName(unsigned Opcode) const
     case MipsISD::Lo         : return "MipsISD::Lo";
     case MipsISD::GPRel      : return "MipsISD::GPRel";
     case MipsISD::Ret        : return "MipsISD::Ret";
+    case MipsISD::CMov       : return "MipsISD::CMov";
     case MipsISD::SelectCC   : return "MipsISD::SelectCC";
     case MipsISD::FPSelectCC : return "MipsISD::FPSelectCC";
     case MipsISD::FPBrcond   : return "MipsISD::FPBrcond";
@@ -99,7 +100,6 @@ MipsTargetLowering(MipsTargetMachine &TM): TargetLowering(TM)
   setOperationAction(ISD::ConstantPool,       MVT::i32,   Custom);
   setOperationAction(ISD::SELECT,             MVT::f32,   Custom);
   setOperationAction(ISD::SELECT,             MVT::i32,   Custom);
-  setOperationAction(ISD::SELECT_CC,          MVT::i32,   Custom);
   setOperationAction(ISD::SETCC,              MVT::f32,   Custom);
   setOperationAction(ISD::BRCOND,             MVT::Other, Custom);
   setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32,   Custom);
@@ -120,8 +120,6 @@ MipsTargetLowering(MipsTargetMachine &TM): TargetLowering(TM)
   setOperationAction(ISD::CTPOP,             MVT::i32,   Expand);
   setOperationAction(ISD::CTTZ,              MVT::i32,   Expand);
   setOperationAction(ISD::ROTL,              MVT::i32,   Expand);
-  setOperationAction(ISD::ROTR,              MVT::i32,   Expand);
-  setOperationAction(ISD::BSWAP,             MVT::i32,   Expand);
   setOperationAction(ISD::SHL_PARTS,         MVT::i32,   Expand);
   setOperationAction(ISD::SRA_PARTS,         MVT::i32,   Expand);
   setOperationAction(ISD::SRL_PARTS,         MVT::i32,   Expand);
@@ -148,6 +146,9 @@ MipsTargetLowering(MipsTargetMachine &TM): TargetLowering(TM)
 
   if (!Subtarget->hasBitCount())
     setOperationAction(ISD::CTLZ, MVT::i32, Expand);
+
+  if (!Subtarget->hasSwap())
+    setOperationAction(ISD::BSWAP, MVT::i32, Expand);
 
   setStackPointerRegisterToSaveRestore(Mips::SP);
   computeRegisterProperties();
@@ -176,7 +177,6 @@ LowerOperation(SDValue Op, SelectionDAG &DAG)
     case ISD::OR:                 return LowerANDOR(Op, DAG);
     case ISD::RET:                return LowerRET(Op, DAG);
     case ISD::SELECT:             return LowerSELECT(Op, DAG);
-    case ISD::SELECT_CC:          return LowerSELECT_CC(Op, DAG);
     case ISD::SETCC:              return LowerSETCC(Op, DAG);
   }
   return SDValue();
@@ -450,29 +450,21 @@ LowerSELECT(SDValue Op, SelectionDAG &DAG)
   SDValue True  = Op.getOperand(1);
   SDValue False = Op.getOperand(2);
 
-  // if the incomming condition comes from fpcmp, the select
-  // operation must use FPSelectCC, otherwise SelectCC.
-  if (Cond.getOpcode() != MipsISD::FPCmp)
+  // if the incomming condition comes from a integer compare, the select 
+  // operation must be SelectCC or a conditional move if the subtarget 
+  // supports it.
+  if (Cond.getOpcode() != MipsISD::FPCmp) {
+    if (Subtarget->hasCondMov() && !True.getValueType().isFloatingPoint())
+      return Op;
     return DAG.getNode(MipsISD::SelectCC, True.getValueType(), 
                        Cond, True, False);
-  
+  }
+
+  // if the incomming condition comes from fpcmp, the select
+  // operation must use FPSelectCC.
   SDValue CCNode = Cond.getOperand(2);
   return DAG.getNode(MipsISD::FPSelectCC, True.getValueType(), 
                      Cond, True, False, CCNode);
-}
-
-SDValue MipsTargetLowering::
-LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) 
-{
-  SDValue LHS   = Op.getOperand(0); 
-  SDValue RHS   = Op.getOperand(1); 
-  SDValue True  = Op.getOperand(2);
-  SDValue False = Op.getOperand(3);
-  SDValue CC    = Op.getOperand(4);
-
-  SDValue SetCCRes = DAG.getNode(ISD::SETCC, LHS.getValueType(), LHS, RHS, CC);
-  return DAG.getNode(MipsISD::SelectCC, True.getValueType(), 
-                     SetCCRes, True, False);
 }
 
 SDValue MipsTargetLowering::
