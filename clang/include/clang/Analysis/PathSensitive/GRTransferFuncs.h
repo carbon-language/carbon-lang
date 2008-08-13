@@ -17,7 +17,7 @@
 
 #include "clang/Analysis/PathSensitive/RValues.h"
 #include "clang/Analysis/PathSensitive/GRCoreEngine.h"
-#include "clang/Analysis/PathSensitive/ValueState.h"
+#include "clang/Analysis/PathSensitive/GRState.h"
 
 namespace clang {
   
@@ -31,7 +31,7 @@ class GRTransferFuncs {
 protected:
   
   
-  virtual RVal DetermEvalBinOpNN(ValueStateManager& StateMgr,
+  virtual RVal DetermEvalBinOpNN(GRStateManager& StateMgr,
                                  BinaryOperator::Opcode Op,
                                  NonLVal L, NonLVal R) {
     return UnknownVal();
@@ -42,7 +42,7 @@ public:
   GRTransferFuncs() {}
   virtual ~GRTransferFuncs() {}
   
-  virtual ValueState::CheckerStatePrinter* getCheckerStatePrinter() {
+  virtual GRState::CheckerStatePrinter* getCheckerStatePrinter() {
     return NULL;
   }
   
@@ -60,8 +60,8 @@ public:
   virtual RVal EvalComplement(GRExprEngine& Engine, NonLVal X) = 0;
 
   // Binary Operators.
-  virtual void EvalBinOpNN(ValueStateSet& OStates, ValueStateManager& StateMgr,
-                           const ValueState* St, Expr* Ex,
+  virtual void EvalBinOpNN(GRStateSet& OStates, GRStateManager& StateMgr,
+                           const GRState* St, Expr* Ex,
                            BinaryOperator::Opcode Op, NonLVal L, NonLVal R);
   
   virtual RVal EvalBinOp(GRExprEngine& Engine, BinaryOperator::Opcode Op,
@@ -74,55 +74,55 @@ public:
   
   // Calls.
   
-  virtual void EvalCall(ExplodedNodeSet<ValueState>& Dst,
+  virtual void EvalCall(ExplodedNodeSet<GRState>& Dst,
                         GRExprEngine& Engine,
-                        GRStmtNodeBuilder<ValueState>& Builder,
+                        GRStmtNodeBuilder<GRState>& Builder,
                         CallExpr* CE, RVal L,
-                        ExplodedNode<ValueState>* Pred) {}
+                        ExplodedNode<GRState>* Pred) {}
   
-  virtual void EvalObjCMessageExpr(ExplodedNodeSet<ValueState>& Dst,
+  virtual void EvalObjCMessageExpr(ExplodedNodeSet<GRState>& Dst,
                                    GRExprEngine& Engine,
-                                   GRStmtNodeBuilder<ValueState>& Builder,
+                                   GRStmtNodeBuilder<GRState>& Builder,
                                    ObjCMessageExpr* ME,
-                                   ExplodedNode<ValueState>* Pred) {}
+                                   ExplodedNode<GRState>* Pred) {}
   
   // Stores.
   
   /// EvalStore - Evaluate the effects of a store, creating a new node
   ///  the represents the effect of binding 'Val' to the location 'TargetLV'.
   //   TargetLV is guaranteed to either be an UnknownVal or an LVal.
-  virtual void EvalStore(ExplodedNodeSet<ValueState>& Dst,
+  virtual void EvalStore(ExplodedNodeSet<GRState>& Dst,
                          GRExprEngine& Engine,
-                         GRStmtNodeBuilder<ValueState>& Builder,
-                         Expr* E, ExplodedNode<ValueState>* Pred,
-                         const ValueState* St, RVal TargetLV, RVal Val);
+                         GRStmtNodeBuilder<GRState>& Builder,
+                         Expr* E, ExplodedNode<GRState>* Pred,
+                         const GRState* St, RVal TargetLV, RVal Val);
                          
   
   // End-of-path and dead symbol notification.
   
   virtual void EvalEndPath(GRExprEngine& Engine,
-                           GREndPathNodeBuilder<ValueState>& Builder) {}
+                           GREndPathNodeBuilder<GRState>& Builder) {}
   
   
-  virtual void EvalDeadSymbols(ExplodedNodeSet<ValueState>& Dst,
+  virtual void EvalDeadSymbols(ExplodedNodeSet<GRState>& Dst,
                                GRExprEngine& Engine,
-                               GRStmtNodeBuilder<ValueState>& Builder,
-                               ExplodedNode<ValueState>* Pred,
+                               GRStmtNodeBuilder<GRState>& Builder,
+                               ExplodedNode<GRState>* Pred,
                                Stmt* S,
-                               const ValueState* St,
-                               const ValueStateManager::DeadSymbolsTy& Dead) {}
+                               const GRState* St,
+                               const GRStateManager::DeadSymbolsTy& Dead) {}
   
   // Return statements.  
-  virtual void EvalReturn(ExplodedNodeSet<ValueState>& Dst,
+  virtual void EvalReturn(ExplodedNodeSet<GRState>& Dst,
                           GRExprEngine& Engine,
-                          GRStmtNodeBuilder<ValueState>& Builder,
+                          GRStmtNodeBuilder<GRState>& Builder,
                           ReturnStmt* S,
-                          ExplodedNode<ValueState>* Pred) {}
+                          ExplodedNode<GRState>* Pred) {}
 
   // Assumptions.
   
-  virtual const ValueState* EvalAssume(ValueStateManager& VMgr,
-                                       const ValueState* St,
+  virtual const GRState* EvalAssume(GRStateManager& VMgr,
+                                       const GRState* St,
                                        RVal Cond, bool Assumption,
                                        bool& isFeasible) {
     return St;

@@ -27,7 +27,7 @@ class ASTContext;
 class GRSimpleVals : public GRTransferFuncs {
 protected:
   
-  virtual RVal DetermEvalBinOpNN(ValueStateManager& StateMgr,
+  virtual RVal DetermEvalBinOpNN(GRStateManager& StateMgr,
                                  BinaryOperator::Opcode Op,
                                  NonLVal L, NonLVal R);
   
@@ -58,22 +58,22 @@ public:
   
   // Calls.
   
-  virtual void EvalCall(ExplodedNodeSet<ValueState>& Dst,
+  virtual void EvalCall(ExplodedNodeSet<GRState>& Dst,
                         GRExprEngine& Engine,
-                        GRStmtNodeBuilder<ValueState>& Builder,
+                        GRStmtNodeBuilder<GRState>& Builder,
                         CallExpr* CE, RVal L,
-                        ExplodedNode<ValueState>* Pred);
+                        ExplodedNode<GRState>* Pred);
   
-  virtual void EvalObjCMessageExpr(ExplodedNodeSet<ValueState>& Dst,
+  virtual void EvalObjCMessageExpr(ExplodedNodeSet<GRState>& Dst,
                                    GRExprEngine& Engine,
-                                   GRStmtNodeBuilder<ValueState>& Builder,
+                                   GRStmtNodeBuilder<GRState>& Builder,
                                    ObjCMessageExpr* ME,
-                                   ExplodedNode<ValueState>* Pred);
+                                   ExplodedNode<GRState>* Pred);
   
   
   
   static void GeneratePathDiagnostic(PathDiagnostic& PD, ASTContext& Ctx,
-                                     ExplodedNode<ValueState>* N);
+                                     ExplodedNode<GRState>* N);
   
 protected:
   

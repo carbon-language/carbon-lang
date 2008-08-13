@@ -1,4 +1,4 @@
-//== ValueState*h - Path-Sens. "State" for tracking valuues -----*- C++ -*--==//
+//== GRState*h - Path-Sens. "State" for tracking valuues -----*- C++ -*--==//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file defines SymbolID, ExprBindKey, and ValueState*
+//  This file defines SymbolID, ExprBindKey, and GRState*
 //
 //===----------------------------------------------------------------------===//
 
@@ -40,18 +40,18 @@
 
 namespace clang {
 
-class ValueStateManager;
+class GRStateManager;
 class GRTransferFuncs;
   
 //===----------------------------------------------------------------------===//
-// ValueState- An ImmutableMap type Stmt*/Decl*/Symbols to RVals.
+// GRState- An ImmutableMap type Stmt*/Decl*/Symbols to RVals.
 //===----------------------------------------------------------------------===//
 
-/// ValueState - This class encapsulates the actual data values for
+/// GRState - This class encapsulates the actual data values for
 ///  for a "state" in our symbolic value tracking.  It is intended to be
 ///  used as a functional object; that is once it is created and made
 ///  "persistent" in a FoldingSet its values will never change.
-class ValueState : public llvm::FoldingSetNode {
+class GRState : public llvm::FoldingSetNode {
 public:  
   // Typedefs.  
   typedef llvm::ImmutableSet<llvm::APSInt*>                IntSetTy;
@@ -59,12 +59,12 @@ public:
   typedef llvm::ImmutableMap<SymbolID,IntSetTy>            ConstNotEqTy;
   typedef llvm::ImmutableMap<SymbolID,const llvm::APSInt*> ConstEqTy;
   
-  typedef ValueStateManager ManagerTy;
+  typedef GRStateManager ManagerTy;
   
 private:
-  void operator=(const ValueState& R) const;
+  void operator=(const GRState& R) const;
   
-  friend class ValueStateManager;
+  friend class GRStateManager;
   
   Environment Env;
   Store St;
@@ -78,8 +78,8 @@ public:
   
 public:
   
-  /// This ctor is used when creating the first ValueState object.
-  ValueState(const Environment& env,  Store st, GenericDataMap gdm,
+  /// This ctor is used when creating the first GRState object.
+  GRState(const Environment& env,  Store st, GenericDataMap gdm,
              ConstNotEqTy CNE, ConstEqTy  CE)
     : Env(env),
       St(st),
@@ -90,7 +90,7 @@ public:
   
   /// Copy ctor - We must explicitly define this or else the "Next" ptr
   ///  in FoldingSetNode will also get copied.
-  ValueState(const ValueState& RHS)
+  GRState(const GRState& RHS)
     : llvm::FoldingSetNode(),
       Env(RHS.Env),
       St(RHS.St),
@@ -110,9 +110,9 @@ public:
   /// getGDM - Return the generic data map associated with this state.
   GenericDataMap getGDM() const { return GDM; }
   
-  /// Profile - Profile the contents of a ValueState object for use
+  /// Profile - Profile the contents of a GRState object for use
   ///  in a FoldingSet.
-  static void Profile(llvm::FoldingSetNodeID& ID, const ValueState* V) {
+  static void Profile(llvm::FoldingSetNodeID& ID, const GRState* V) {
     V->Env.Profile(ID);
     ID.AddPointer(V->St);
     V->GDM.Profile(ID);
@@ -186,23 +186,23 @@ public:
   void printDOT(std::ostream& Out, CheckerStatePrinter*P = NULL) const;
 };  
   
-template<> struct GRTrait<ValueState*> {
-  static inline void* toPtr(ValueState* St)  { return (void*) St; }
-  static inline ValueState* toState(void* P) { return (ValueState*) P; }
-  static inline void Profile(llvm::FoldingSetNodeID& profile, ValueState* St) {    
+template<> struct GRTrait<GRState*> {
+  static inline void* toPtr(GRState* St)  { return (void*) St; }
+  static inline GRState* toState(void* P) { return (GRState*) P; }
+  static inline void Profile(llvm::FoldingSetNodeID& profile, GRState* St) {    
     // At this point states have already been uniqued.  Just
     // add the pointer.
     profile.AddPointer(St);
   }
 };
   
-class ValueStateSet {
-  typedef llvm::SmallPtrSet<const ValueState*,5> ImplTy;
+class GRStateSet {
+  typedef llvm::SmallPtrSet<const GRState*,5> ImplTy;
   ImplTy Impl;  
 public:
-  ValueStateSet() {}
+  GRStateSet() {}
 
-  inline void Add(const ValueState* St) {
+  inline void Add(const GRState* St) {
     Impl.insert(St);
   }
   
@@ -215,11 +215,11 @@ public:
   inline iterator end() const { return Impl.end();   }
   
   class AutoPopulate {
-    ValueStateSet& S;
+    GRStateSet& S;
     unsigned StartSize;
-    const ValueState* St;
+    const GRState* St;
   public:
-    AutoPopulate(ValueStateSet& s, const ValueState* st) 
+    AutoPopulate(GRStateSet& s, const GRState* st) 
       : S(s), StartSize(S.size()), St(st) {}
     
     ~AutoPopulate() {
@@ -229,20 +229,20 @@ public:
   };
 };
   
-class ValueStateManager {
+class GRStateManager {
   friend class GRExprEngine;
   
 private:
   EnvironmentManager                   EnvMgr;
   llvm::OwningPtr<StoreManager>        StMgr;
-  ValueState::IntSetTy::Factory        ISetFactory;
-  ValueState::GenericDataMap::Factory  GDMFactory;
-  ValueState::ConstNotEqTy::Factory    CNEFactory;
-  ValueState::ConstEqTy::Factory       CEFactory;
+  GRState::IntSetTy::Factory        ISetFactory;
+  GRState::GenericDataMap::Factory  GDMFactory;
+  GRState::ConstNotEqTy::Factory    CNEFactory;
+  GRState::ConstEqTy::Factory       CEFactory;
   
   /// StateSet - FoldingSet containing all the states created for analyzing
   ///  a particular function.  This is used to unique states.
-  llvm::FoldingSet<ValueState> StateSet;
+  llvm::FoldingSet<GRState> StateSet;
 
   /// ValueMgr - Object that manages the data for all created RVals.
   BasicValueFactory BasicVals;
@@ -275,12 +275,12 @@ private:
   }
    
   // FIXME: Remove when we do lazy initializaton of variable bindings.
-  const ValueState* BindVar(const ValueState* St, VarDecl* D, RVal V) {
+  const GRState* BindVar(const GRState* St, VarDecl* D, RVal V) {
     return SetRVal(St, lval::DeclVal(D), V);
   }
     
 public:  
-  ValueStateManager(ASTContext& Ctx, StoreManager* stmgr,
+  GRStateManager(ASTContext& Ctx, StoreManager* stmgr,
                     llvm::BumpPtrAllocator& alloc, CFG& c) 
   : EnvMgr(alloc),
     StMgr(stmgr),
@@ -293,7 +293,7 @@ public:
     Alloc(alloc),
     cfg(c) {}
 
-  const ValueState* getInitialState();
+  const GRState* getInitialState();
         
   BasicValueFactory& getBasicVals() { return BasicVals; }
   const BasicValueFactory& getBasicVals() const { return BasicVals; }
@@ -301,27 +301,27 @@ public:
   
   typedef StoreManager::DeadSymbolsTy DeadSymbolsTy;
   
-  const ValueState* RemoveDeadBindings(const ValueState* St, Stmt* Loc, 
+  const GRState* RemoveDeadBindings(const GRState* St, Stmt* Loc, 
                                        const LiveVariables& Liveness,
                                        DeadSymbolsTy& DeadSyms);
 
-  const ValueState* RemoveSubExprBindings(const ValueState* St) {
-    ValueState NewSt = *St;
+  const GRState* RemoveSubExprBindings(const GRState* St) {
+    GRState NewSt = *St;
     NewSt.Env = EnvMgr.RemoveSubExprBindings(NewSt.Env);
     return getPersistentState(NewSt);
   }
 
   // Methods that query & manipulate the Environment.
   
-  RVal GetRVal(const ValueState* St, Expr* Ex) {
+  RVal GetRVal(const GRState* St, Expr* Ex) {
     return St->getEnvironment().GetRVal(Ex, BasicVals);
   }
   
-  RVal GetBlkExprRVal(const ValueState* St, Expr* Ex) {
+  RVal GetBlkExprRVal(const GRState* St, Expr* Ex) {
     return St->getEnvironment().GetBlkExprRVal(Ex, BasicVals);
   }
   
-  const ValueState* SetRVal(const ValueState* St, Expr* Ex, RVal V,
+  const GRState* SetRVal(const GRState* St, Expr* Ex, RVal V,
                             bool isBlkExpr, bool Invalidate) {
     
     const Environment& OldEnv = St->getEnvironment();
@@ -330,12 +330,12 @@ public:
     if (NewEnv == OldEnv)
       return St;
     
-    ValueState NewSt = *St;
+    GRState NewSt = *St;
     NewSt.Env = NewEnv;
     return getPersistentState(NewSt);
   }
   
-  const ValueState* SetRVal(const ValueState* St, Expr* Ex, RVal V) {
+  const GRState* SetRVal(const GRState* St, Expr* Ex, RVal V) {
     
     bool isBlkExpr = false;
     
@@ -350,48 +350,48 @@ public:
   }
   
   // Methods that manipulate the GDM.
-  const ValueState* addGDM(const ValueState* St, void* Key, void* Data) {
-    ValueState::GenericDataMap M1 = St->getGDM();
-    ValueState::GenericDataMap M2 = GDMFactory.Add(M2, Key, Data);    
+  const GRState* addGDM(const GRState* St, void* Key, void* Data) {
+    GRState::GenericDataMap M1 = St->getGDM();
+    GRState::GenericDataMap M2 = GDMFactory.Add(M2, Key, Data);    
     
     if (M1 == M2)
       return St;
     
-    ValueState NewSt = *St;
+    GRState NewSt = *St;
     NewSt.GDM = M2;
     return getPersistentState(NewSt);
   }
 
   // Methods that query & manipulate the Store.
-  RVal GetRVal(const ValueState* St, LVal LV, QualType T = QualType()) {
+  RVal GetRVal(const GRState* St, LVal LV, QualType T = QualType()) {
     return StMgr->GetRVal(St->getStore(), LV, T);
   }
   
-  void SetRVal(ValueState& St, LVal LV, RVal V) {
+  void SetRVal(GRState& St, LVal LV, RVal V) {
     St.St = StMgr->SetRVal(St.St, LV, V);
   }
   
-  const ValueState* SetRVal(const ValueState* St, LVal LV, RVal V);  
+  const GRState* SetRVal(const GRState* St, LVal LV, RVal V);  
 
-  void Unbind(ValueState& St, LVal LV) {
+  void Unbind(GRState& St, LVal LV) {
     St.St = StMgr->Remove(St.St, LV);
   }
   
-  const ValueState* Unbind(const ValueState* St, LVal LV);
+  const GRState* Unbind(const GRState* St, LVal LV);
   
-  const ValueState* getPersistentState(ValueState& Impl);
+  const GRState* getPersistentState(GRState& Impl);
   
-  const ValueState* AddEQ(const ValueState* St, SymbolID sym,
+  const GRState* AddEQ(const GRState* St, SymbolID sym,
                           const llvm::APSInt& V);
 
-  const ValueState* AddNE(const ValueState* St, SymbolID sym,
+  const GRState* AddNE(const GRState* St, SymbolID sym,
                           const llvm::APSInt& V);
   
-  bool isEqual(const ValueState* state, Expr* Ex, const llvm::APSInt& V);
-  bool isEqual(const ValueState* state, Expr* Ex, uint64_t);
+  bool isEqual(const GRState* state, Expr* Ex, const llvm::APSInt& V);
+  bool isEqual(const GRState* state, Expr* Ex, uint64_t);
   
   // Assumption logic.
-  const ValueState* Assume(const ValueState* St, RVal Cond, bool Assumption,
+  const GRState* Assume(const GRState* St, RVal Cond, bool Assumption,
                            bool& isFeasible) {
     
     if (Cond.isUnknown()) {
@@ -405,39 +405,39 @@ public:
       return Assume(St, cast<NonLVal>(Cond), Assumption, isFeasible);
   }
   
-  const ValueState* Assume(const ValueState* St, LVal Cond, bool Assumption,
+  const GRState* Assume(const GRState* St, LVal Cond, bool Assumption,
                            bool& isFeasible);
 
-  const ValueState* Assume(const ValueState* St, NonLVal Cond, bool Assumption,
+  const GRState* Assume(const GRState* St, NonLVal Cond, bool Assumption,
                            bool& isFeasible);
 
 private:  
-  const ValueState* AssumeAux(const ValueState* St, LVal Cond, bool Assumption,
+  const GRState* AssumeAux(const GRState* St, LVal Cond, bool Assumption,
                               bool& isFeasible);
   
   
-  const ValueState* AssumeAux(const ValueState* St, NonLVal Cond,
+  const GRState* AssumeAux(const GRState* St, NonLVal Cond,
                               bool Assumption, bool& isFeasible);
     
-  const ValueState* AssumeSymInt(const ValueState* St, bool Assumption,                                 
+  const GRState* AssumeSymInt(const GRState* St, bool Assumption,                                 
                                  const SymIntConstraint& C, bool& isFeasible);
   
-  const ValueState* AssumeSymNE(const ValueState* St, SymbolID sym,
+  const GRState* AssumeSymNE(const GRState* St, SymbolID sym,
                                 const llvm::APSInt& V, bool& isFeasible);
   
-  const ValueState* AssumeSymEQ(const ValueState* St, SymbolID sym,
+  const GRState* AssumeSymEQ(const GRState* St, SymbolID sym,
                                 const llvm::APSInt& V, bool& isFeasible);
   
-  const ValueState* AssumeSymLT(const ValueState* St, SymbolID sym,
+  const GRState* AssumeSymLT(const GRState* St, SymbolID sym,
                                 const llvm::APSInt& V, bool& isFeasible);
   
-  const ValueState* AssumeSymLE(const ValueState* St, SymbolID sym,
+  const GRState* AssumeSymLE(const GRState* St, SymbolID sym,
                                 const llvm::APSInt& V, bool& isFeasible);
   
-  const ValueState* AssumeSymGT(const ValueState* St, SymbolID sym,
+  const GRState* AssumeSymGT(const GRState* St, SymbolID sym,
                                 const llvm::APSInt& V, bool& isFeasible);
   
-  const ValueState* AssumeSymGE(const ValueState* St, SymbolID sym,
+  const GRState* AssumeSymGE(const GRState* St, SymbolID sym,
                                 const llvm::APSInt& V, bool& isFeasible);
 };
   

@@ -19,11 +19,11 @@ using namespace clang;
 
 void GRTransferFuncs::RegisterChecks(GRExprEngine& Eng) {}
 
-void GRTransferFuncs::EvalStore(ExplodedNodeSet<ValueState>& Dst,
+void GRTransferFuncs::EvalStore(ExplodedNodeSet<GRState>& Dst,
                                 GRExprEngine& Eng,
-                                GRStmtNodeBuilder<ValueState>& Builder,
-                                Expr* E, ExplodedNode<ValueState>* Pred,
-                                const ValueState* St, RVal TargetLV, RVal Val) {
+                                GRStmtNodeBuilder<GRState>& Builder,
+                                Expr* E, ExplodedNode<GRState>* Pred,
+                                const GRState* St, RVal TargetLV, RVal Val) {
   
   // This code basically matches the "safety-net" logic of GRExprEngine:
   //  bind Val to TargetLV, and create a new node.  We replicate it here
@@ -38,9 +38,9 @@ void GRTransferFuncs::EvalStore(ExplodedNodeSet<ValueState>& Dst,
                 Eng.getStateManager().SetRVal(St, cast<LVal>(TargetLV), Val));    
 }
 
-void GRTransferFuncs::EvalBinOpNN(ValueStateSet& OStates,
-                                  ValueStateManager& StateMgr,
-                                  const ValueState *St, Expr* Ex,
+void GRTransferFuncs::EvalBinOpNN(GRStateSet& OStates,
+                                  GRStateManager& StateMgr,
+                                  const GRState *St, Expr* Ex,
                                   BinaryOperator::Opcode Op,
                                   NonLVal L, NonLVal R) {
   

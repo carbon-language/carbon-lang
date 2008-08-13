@@ -24,12 +24,12 @@ using namespace clang;
 //===----------------------------------------------------------------------===//
 
 template <typename ITERATOR> inline
-ExplodedNode<ValueState>* GetNode(ITERATOR I) {
+ExplodedNode<GRState>* GetNode(ITERATOR I) {
   return *I;
 }
 
 template <> inline
-ExplodedNode<ValueState>* GetNode(GRExprEngine::undef_arg_iterator I) {
+ExplodedNode<GRState>* GetNode(GRExprEngine::undef_arg_iterator I) {
   return I->first;
 }
 
@@ -166,7 +166,7 @@ public:
       // Generate a report for this bug.
       RangedBugReport report(*this, *I);
       
-      ExplodedNode<ValueState>* N = *I;
+      ExplodedNode<GRState>* N = *I;
       Stmt *S = cast<PostStmt>(N->getLocation()).getStmt();
       Expr* E = cast<ObjCMessageExpr>(S)->getReceiver();
       assert (E && "Receiver cannot be NULL");
@@ -186,7 +186,7 @@ public:
     for (GRExprEngine::ret_stackaddr_iterator I=Eng.ret_stackaddr_begin(),
          End = Eng.ret_stackaddr_end(); I!=End; ++I) {
 
-      ExplodedNode<ValueState>* N = *I;
+      ExplodedNode<GRState>* N = *I;
       Stmt *S = cast<PostStmt>(N->getLocation()).getStmt();
       Expr* E = cast<ReturnStmt>(S)->getRetValue();
       assert (E && "Return expression cannot be NULL");
@@ -214,10 +214,10 @@ public:
 
 class VISIBILITY_HIDDEN UndefBranch : public BuiltinBug {
   struct VISIBILITY_HIDDEN FindUndefExpr {
-    ValueStateManager& VM;
-    const ValueState* St;
+    GRStateManager& VM;
+    const GRState* St;
     
-    FindUndefExpr(ValueStateManager& V, const ValueState* S) : VM(V), St(S) {}
+    FindUndefExpr(GRStateManager& V, const GRState* S) : VM(V), St(S) {}
     
     Expr* FindExpr(Expr* Ex) {      
       if (!MatchesCriteria(Ex))
@@ -264,10 +264,10 @@ public:
       // Note: any predecessor will do.  They should have identical state,
       // since all the BlockEdge did was act as an error sink since the value
       // had to already be undefined.
-      ExplodedNode<ValueState> *N = *(*I)->pred_begin();
+      ExplodedNode<GRState> *N = *(*I)->pred_begin();
       ProgramPoint P = N->getLocation();
 
-      const ValueState* St = (*I)->getState();
+      const GRState* St = (*I)->getState();
 
       if (PostStmt* PS = dyn_cast<PostStmt>(&P))
         if (PS->getStmt() == Ex)
@@ -296,9 +296,9 @@ public:
   BT("'nonnull' argument passed null",
      "Null pointer passed as an argument to a 'nonnull' parameter") {}
 
-  virtual bool Audit(ExplodedNode<ValueState>* N, ValueStateManager& VMgr) {
+  virtual bool Audit(ExplodedNode<GRState>* N, GRStateManager& VMgr) {
     CallExpr* CE = cast<CallExpr>(cast<PostStmt>(N->getLocation()).getStmt());
-    const ValueState* state = N->getState();
+    const GRState* state = N->getState();
     
     RVal X = VMgr.GetRVal(state, CE->getCallee());
     

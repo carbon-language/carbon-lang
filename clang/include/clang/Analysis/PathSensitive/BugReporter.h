@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 //  This file defines BugReporter, a utility class for generating
-//  PathDiagnostics for analyses based on ValueState.
+//  PathDiagnostics for analyses based on GRState.
 //
 //===----------------------------------------------------------------------===//
 
@@ -17,7 +17,7 @@
 
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceLocation.h"
-#include "clang/Analysis/PathSensitive/ValueState.h"
+#include "clang/Analysis/PathSensitive/GRState.h"
 #include "clang/Analysis/PathSensitive/ExplodedGraph.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallSet.h"
@@ -33,7 +33,7 @@ class ASTContext;
 class Diagnostic;
 class BugReporter;
 class GRExprEngine;
-class ValueState;
+class GRState;
 class Stmt;
 class BugReport;
 class ParentMap;
@@ -51,7 +51,7 @@ public:
   }
       
   virtual void EmitWarnings(BugReporter& BR) {}
-  virtual void GetErrorNodes(std::vector<ExplodedNode<ValueState>*>& Nodes) {}
+  virtual void GetErrorNodes(std::vector<ExplodedNode<GRState>*>& Nodes) {}
   
   virtual bool isCached(BugReport& R) = 0;
 };
@@ -68,16 +68,16 @@ public:
   
 class BugReport {
   BugType& Desc;
-  ExplodedNode<ValueState> *EndNode;
+  ExplodedNode<GRState> *EndNode;
   SourceRange R;  
 public:
-  BugReport(BugType& D, ExplodedNode<ValueState> *n) : Desc(D), EndNode(n) {}
+  BugReport(BugType& D, ExplodedNode<GRState> *n) : Desc(D), EndNode(n) {}
   virtual ~BugReport();
   
   const BugType& getBugType() const { return Desc; }
   BugType& getBugType() { return Desc; }
   
-  ExplodedNode<ValueState>* getEndNode() const { return EndNode; }
+  ExplodedNode<GRState>* getEndNode() const { return EndNode; }
   
   Stmt* getStmt(BugReporter& BR) const;
     
@@ -92,16 +92,16 @@ public:
   }
   
   virtual PathDiagnosticPiece* getEndPath(BugReporter& BR,
-                                          ExplodedNode<ValueState>* N);
+                                          ExplodedNode<GRState>* N);
   
   virtual FullSourceLoc getLocation(SourceManager& Mgr);
   
   virtual void getRanges(BugReporter& BR,const SourceRange*& beg,
                          const SourceRange*& end);
   
-  virtual PathDiagnosticPiece* VisitNode(ExplodedNode<ValueState>* N,
-                                         ExplodedNode<ValueState>* PrevN,
-                                         ExplodedGraph<ValueState>& G,
+  virtual PathDiagnosticPiece* VisitNode(ExplodedNode<GRState>* N,
+                                         ExplodedNode<GRState>* PrevN,
+                                         ExplodedGraph<GRState>& G,
                                          BugReporter& BR);
 };
   
@@ -109,7 +109,7 @@ class RangedBugReport : public BugReport {
   std::vector<SourceRange> Ranges;
   const char* desc;
 public:
-  RangedBugReport(BugType& D, ExplodedNode<ValueState> *n,
+  RangedBugReport(BugType& D, ExplodedNode<GRState> *n,
                   const char* description = 0)
     : BugReport(D, n), desc(description) {}
   
@@ -227,9 +227,9 @@ public:
     return Eng;
   }
 
-  ExplodedGraph<ValueState>& getGraph();
+  ExplodedGraph<GRState>& getGraph();
   
-  ValueStateManager& getStateManager();
+  GRStateManager& getStateManager();
   
   virtual void GeneratePathDiagnostic(PathDiagnostic& PD, BugReport& R);
 

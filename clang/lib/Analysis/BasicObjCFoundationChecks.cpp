@@ -18,7 +18,7 @@
 #include "clang/Analysis/PathSensitive/ExplodedGraph.h"
 #include "clang/Analysis/PathSensitive/GRSimpleAPICheck.h"
 #include "clang/Analysis/PathSensitive/GRExprEngine.h"
-#include "clang/Analysis/PathSensitive/ValueState.h"
+#include "clang/Analysis/PathSensitive/GRState.h"
 #include "clang/Analysis/PathSensitive/BugReporter.h"
 #include "clang/Analysis/PathDiagnostic.h"
 #include "clang/Analysis/LocalCheckers.h"
@@ -73,7 +73,7 @@ public:
     SourceRange R;
   public:
     
-    Report(NilArg& Desc, ExplodedNode<ValueState>* N, 
+    Report(NilArg& Desc, ExplodedNode<GRState>* N, 
            ObjCMessageExpr* ME, unsigned Arg)
       : BugReport(Desc, N) {
       
@@ -105,12 +105,12 @@ public:
 class VISIBILITY_HIDDEN BasicObjCFoundationChecks : public GRSimpleAPICheck {
   NilArg Desc;
   ASTContext &Ctx;
-  ValueStateManager* VMgr;
+  GRStateManager* VMgr;
   
   typedef std::vector<BugReport*> ErrorsTy;
   ErrorsTy Errors;
       
-  RVal GetRVal(const ValueState* St, Expr* E) { return VMgr->GetRVal(St, E); }
+  RVal GetRVal(const GRState* St, Expr* E) { return VMgr->GetRVal(St, E); }
       
   bool isNSString(ObjCInterfaceType* T, const char* suffix);
   bool AuditNSString(NodeTy* N, ObjCMessageExpr* ME);
@@ -121,7 +121,7 @@ class VISIBILITY_HIDDEN BasicObjCFoundationChecks : public GRSimpleAPICheck {
   bool CheckNilArg(NodeTy* N, unsigned Arg);
 
 public:
-  BasicObjCFoundationChecks(ASTContext& ctx, ValueStateManager* vmgr) 
+  BasicObjCFoundationChecks(ASTContext& ctx, GRStateManager* vmgr) 
     : Ctx(ctx), VMgr(vmgr) {}
       
   virtual ~BasicObjCFoundationChecks() {
@@ -129,7 +129,7 @@ public:
       delete *I;    
   }
   
-  virtual bool Audit(ExplodedNode<ValueState>* N, ValueStateManager&);
+  virtual bool Audit(ExplodedNode<GRState>* N, GRStateManager&);
   
   virtual void EmitWarnings(BugReporter& BR);
   
@@ -149,15 +149,15 @@ private:
 
 GRSimpleAPICheck*
 clang::CreateBasicObjCFoundationChecks(ASTContext& Ctx,
-                                       ValueStateManager* VMgr) {
+                                       GRStateManager* VMgr) {
   
   return new BasicObjCFoundationChecks(Ctx, VMgr);  
 }
 
 
 
-bool BasicObjCFoundationChecks::Audit(ExplodedNode<ValueState>* N,
-                                      ValueStateManager&) {
+bool BasicObjCFoundationChecks::Audit(ExplodedNode<GRState>* N,
+                                      GRStateManager&) {
   
   ObjCMessageExpr* ME =
     cast<ObjCMessageExpr>(cast<PostStmt>(N->getLocation()).getStmt());
@@ -322,7 +322,7 @@ class VISIBILITY_HIDDEN StrBugReport : public RangedBugReport {
   std::string str;
   const char* cstr;
 public:
-  StrBugReport(BugType& D, ExplodedNode<ValueState>* N, std::string s)
+  StrBugReport(BugType& D, ExplodedNode<GRState>* N, std::string s)
     : RangedBugReport(D, N), str(s) {
       cstr = str.c_str();
     }
@@ -340,19 +340,19 @@ class VISIBILITY_HIDDEN AuditCFNumberCreate : public GRSimpleAPICheck {
   //   approach makes this class more stateless.
   ASTContext& Ctx;
   IdentifierInfo* II;
-  ValueStateManager* VMgr;
+  GRStateManager* VMgr;
     
-  RVal GetRVal(const ValueState* St, Expr* E) { return VMgr->GetRVal(St, E); }
-  RVal GetRVal(const ValueState* St, LVal LV) { return VMgr->GetRVal(St, LV); }
+  RVal GetRVal(const GRState* St, Expr* E) { return VMgr->GetRVal(St, E); }
+  RVal GetRVal(const GRState* St, LVal LV) { return VMgr->GetRVal(St, LV); }
   
 public:
 
-  AuditCFNumberCreate(ASTContext& ctx, ValueStateManager* vmgr) 
+  AuditCFNumberCreate(ASTContext& ctx, GRStateManager* vmgr) 
   : Ctx(ctx), II(&Ctx.Idents.get("CFNumberCreate")), VMgr(vmgr) {}
   
   virtual ~AuditCFNumberCreate() {}
   
-  virtual bool Audit(ExplodedNode<ValueState>* N, ValueStateManager&);
+  virtual bool Audit(ExplodedNode<GRState>* N, GRStateManager&);
   
   virtual void EmitWarnings(BugReporter& BR) {
     Desc.EmitWarnings(BR);
@@ -360,7 +360,7 @@ public:
   
 private:
   
-  void AddError(VarDecl* V, Expr* Ex, ExplodedNode<ValueState> *N,
+  void AddError(VarDecl* V, Expr* Ex, ExplodedNode<GRState> *N,
                 uint64_t SourceSize, uint64_t TargetSize, uint64_t NumberKind);  
 };
 } // end anonymous namespace
@@ -458,7 +458,7 @@ static const char* GetCFNumberTypeStr(uint64_t i) {
 }
 #endif
 
-bool AuditCFNumberCreate::Audit(ExplodedNode<ValueState>* N,ValueStateManager&){  
+bool AuditCFNumberCreate::Audit(ExplodedNode<GRState>* N,GRStateManager&){  
   CallExpr* CE = cast<CallExpr>(cast<PostStmt>(N->getLocation()).getStmt());
   Expr* Callee = CE->getCallee();  
   RVal CallV = GetRVal(N->getState(), Callee);  
@@ -519,7 +519,7 @@ bool AuditCFNumberCreate::Audit(ExplodedNode<ValueState>* N,ValueStateManager&){
 }
 
 void AuditCFNumberCreate::AddError(VarDecl* V, Expr* Ex,
-                                   ExplodedNode<ValueState> *N,
+                                   ExplodedNode<GRState> *N,
                                    uint64_t SourceSize, uint64_t TargetSize,
                                    uint64_t NumberKind) {
 
@@ -545,7 +545,7 @@ void AuditCFNumberCreate::AddError(VarDecl* V, Expr* Ex,
 
 GRSimpleAPICheck*
 clang::CreateAuditCFNumberCreate(ASTContext& Ctx,
-                                 ValueStateManager* VMgr) {
+                                 GRStateManager* VMgr) {
   
   return new AuditCFNumberCreate(Ctx, VMgr);  
 }
@@ -555,7 +555,7 @@ clang::CreateAuditCFNumberCreate(ASTContext& Ctx,
 
 void clang::RegisterAppleChecks(GRExprEngine& Eng) {
   ASTContext& Ctx = Eng.getContext();
-  ValueStateManager* VMgr = &Eng.getStateManager();
+  GRStateManager* VMgr = &Eng.getStateManager();
 
   Eng.AddCheck(CreateBasicObjCFoundationChecks(Ctx, VMgr),
                Stmt::ObjCMessageExprClass);

@@ -15,7 +15,7 @@
 
 #include "clang/Analysis/PathSensitive/ExplodedGraph.h"
 #include "clang/Analysis/PathSensitive/GRSimpleAPICheck.h"
-#include "clang/Analysis/PathSensitive/ValueState.h"
+#include "clang/Analysis/PathSensitive/GRState.h"
 #include "clang/Analysis/PathDiagnostic.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/ASTContext.h"
@@ -28,13 +28,13 @@ namespace clang {
   
 class GRSimpleAPICheck;
 class ASTContext;
-class ValueStateManager;  
+class GRStateManager;  
   
 GRSimpleAPICheck* CreateBasicObjCFoundationChecks(ASTContext& Ctx,
-                                                  ValueStateManager* VMgr);
+                                                  GRStateManager* VMgr);
   
 GRSimpleAPICheck* CreateAuditCFNumberCreate(ASTContext& Ctx,
-                                            ValueStateManager* VMgr);
+                                            GRStateManager* VMgr);
 
 
 } // end clang namespace

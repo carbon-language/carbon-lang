@@ -17,7 +17,7 @@
 #define LLVM_CLANG_ANALYSIS_GRAPICHECKS
 
 #include "clang/Analysis/PathSensitive/GRAuditor.h"
-#include "clang/Analysis/PathSensitive/ValueState.h"
+#include "clang/Analysis/PathSensitive/GRState.h"
 
 namespace clang {
   
@@ -29,7 +29,7 @@ class PathDiagnosticClient;
 template <typename T> class ExplodedGraph;
   
   
-class GRSimpleAPICheck : public GRAuditor<ValueState> {
+class GRSimpleAPICheck : public GRAuditor<GRState> {
 public:
   GRSimpleAPICheck() {}
   virtual ~GRSimpleAPICheck() {}

@@ -17,7 +17,7 @@
 #define LLVM_CLANG_ANALYSIS_GREXPRENGINE
 
 #include "clang/Analysis/PathSensitive/GRCoreEngine.h"
-#include "clang/Analysis/PathSensitive/ValueState.h"
+#include "clang/Analysis/PathSensitive/GRState.h"
 #include "clang/Analysis/PathSensitive/GRSimpleAPICheck.h"
 #include "clang/Analysis/PathSensitive/GRTransferFuncs.h"
 #include "clang/AST/Type.h"
@@ -33,7 +33,7 @@ namespace clang {
 class GRExprEngine {
   
 public:
-  typedef ValueState                  StateTy;
+  typedef GRState                  StateTy;
   typedef ExplodedGraph<StateTy>      GraphTy;
   typedef GraphTy::NodeTy             NodeTy;
   
@@ -57,15 +57,15 @@ protected:
   LiveVariables& Liveness;
   
   /// DeadSymbols - A scratch set used to record the set of symbols that
-  ///  were just marked dead by a call to ValueStateManager::RemoveDeadBindings.
-  ValueStateManager::DeadSymbolsTy DeadSymbols;
+  ///  were just marked dead by a call to GRStateManager::RemoveDeadBindings.
+  GRStateManager::DeadSymbolsTy DeadSymbols;
   
   /// Builder - The current GRStmtNodeBuilder which is used when building the
   ///  nodes for a given statement.
   StmtNodeBuilder* Builder;
   
   /// StateMgr - Object that manages the data for all created states.
-  ValueStateManager StateMgr;
+  GRStateManager StateMgr;
   
   /// BugTypes - Objects used for reporting bugs.
   typedef std::vector<BugType*> BugTypeSet;
@@ -79,7 +79,7 @@ protected:
 
   /// CleanedState - The state for EntryNode "cleaned" of all dead
   ///  variables and symbols (as determined by a liveness analysis).
-  const ValueState* CleanedState;  
+  const GRState* CleanedState;  
   
   /// CurrentStmt - The current block-level statement.
   Stmt* CurrentStmt;
@@ -202,7 +202,7 @@ public:
   
   /// getInitialState - Return the initial state used for the root vertex
   ///  in the ExplodedGraph.
-  const ValueState* getInitialState();
+  const GRState* getInitialState();
   
   GraphTy& getGraph() { return G; }
   const GraphTy& getGraph() const { return G; }
@@ -350,7 +350,7 @@ public:
   /// ProcessBlockEntrance - Called by GRCoreEngine when start processing
   ///  a CFGBlock.  This method returns true if the analysis should continue
   ///  exploring the given path, and false otherwise.
-  bool ProcessBlockEntrance(CFGBlock* B, const ValueState* St,
+  bool ProcessBlockEntrance(CFGBlock* B, const GRState* St,
                             GRBlockCounter BC);
   
   /// ProcessBranch - Called by GRCoreEngine.  Used to generate successor
@@ -371,8 +371,8 @@ public:
     getTF().EvalEndPath(*this, builder);
   }
   
-  ValueStateManager& getStateManager() { return StateMgr; }
-  const ValueStateManager& getStateManger() const { return StateMgr; }
+  GRStateManager& getStateManager() { return StateMgr; }
+  const GRStateManager& getStateManger() const { return StateMgr; }
   
   BasicValueFactory& getBasicVals() {
     return StateMgr.getBasicVals();
@@ -386,43 +386,43 @@ public:
   
 protected:
   
-  const ValueState* GetState(NodeTy* N) {
+  const GRState* GetState(NodeTy* N) {
     return N == EntryNode ? CleanedState : N->getState();
   }
   
 public:
   
-  const ValueState* SetRVal(const ValueState* St, Expr* Ex, RVal V) {
+  const GRState* SetRVal(const GRState* St, Expr* Ex, RVal V) {
     return StateMgr.SetRVal(St, Ex, V);
   }
   
-  const ValueState* SetRVal(const ValueState* St, const Expr* Ex, RVal V) {
+  const GRState* SetRVal(const GRState* St, const Expr* Ex, RVal V) {
     return SetRVal(St, const_cast<Expr*>(Ex), V);
   }
   
 protected:
  
-  const ValueState* SetBlkExprRVal(const ValueState* St, Expr* Ex, RVal V) {
+  const GRState* SetBlkExprRVal(const GRState* St, Expr* Ex, RVal V) {
     return StateMgr.SetRVal(St, Ex, V, true, false);
   }
   
-  const ValueState* SetRVal(const ValueState* St, LVal LV, RVal V) {
+  const GRState* SetRVal(const GRState* St, LVal LV, RVal V) {
     return StateMgr.SetRVal(St, LV, V);
   }
   
-  RVal GetRVal(const ValueState* St, Expr* Ex) {
+  RVal GetRVal(const GRState* St, Expr* Ex) {
     return StateMgr.GetRVal(St, Ex);
   }
     
-  RVal GetRVal(const ValueState* St, const Expr* Ex) {
+  RVal GetRVal(const GRState* St, const Expr* Ex) {
     return GetRVal(St, const_cast<Expr*>(Ex));
   }
   
-  RVal GetBlkExprRVal(const ValueState* St, Expr* Ex) {
+  RVal GetBlkExprRVal(const GRState* St, Expr* Ex) {
     return StateMgr.GetBlkExprRVal(St, Ex);
   }  
     
-  RVal GetRVal(const ValueState* St, LVal LV, QualType T = QualType()) {    
+  RVal GetRVal(const GRState* St, LVal LV, QualType T = QualType()) {    
     return StateMgr.GetRVal(St, LV, T);
   }
   
@@ -432,17 +432,17 @@ protected:
   
   /// Assume - Create new state by assuming that a given expression
   ///  is true or false.
-  const ValueState* Assume(const ValueState* St, RVal Cond, bool Assumption,
+  const GRState* Assume(const GRState* St, RVal Cond, bool Assumption,
                            bool& isFeasible) {
     return StateMgr.Assume(St, Cond, Assumption, isFeasible);
   }
   
-  const ValueState* Assume(const ValueState* St, LVal Cond, bool Assumption,
+  const GRState* Assume(const GRState* St, LVal Cond, bool Assumption,
                            bool& isFeasible) {
     return StateMgr.Assume(St, Cond, Assumption, isFeasible);
   }
 
-  NodeTy* MakeNode(NodeSet& Dst, Stmt* S, NodeTy* Pred, const ValueState* St) {
+  NodeTy* MakeNode(NodeSet& Dst, Stmt* S, NodeTy* Pred, const GRState* St) {
     assert (Builder && "GRStmtNodeBuilder not present.");
     return Builder->MakeNode(Dst, S, Pred, St);
   }
@@ -528,7 +528,7 @@ protected:
   void VisitUnaryOperator(UnaryOperator* B, NodeTy* Pred, NodeSet& Dst,
                           bool asLVal);
  
-  bool CheckDivideZero(Expr* Ex, const ValueState* St, NodeTy* Pred,
+  bool CheckDivideZero(Expr* Ex, const GRState* St, NodeTy* Pred,
                        RVal Denom);  
   
   RVal EvalCast(RVal X, QualType CastT) {
@@ -559,11 +559,11 @@ protected:
                                                    cast<NonLVal>(R)) : R;
   }
   
-  void EvalBinOp(ExplodedNodeSet<ValueState>& Dst, Expr* Ex,
+  void EvalBinOp(ExplodedNodeSet<GRState>& Dst, Expr* Ex,
                  BinaryOperator::Opcode Op, NonLVal L, NonLVal R,
-                 ExplodedNode<ValueState>* Pred);
+                 ExplodedNode<GRState>* Pred);
   
-  void EvalBinOp(ValueStateSet& OStates, const ValueState* St, Expr* Ex,
+  void EvalBinOp(GRStateSet& OStates, const GRState* St, Expr* Ex,
                  BinaryOperator::Opcode Op, NonLVal L, NonLVal R);  
   
   RVal EvalBinOp(BinaryOperator::Opcode Op, RVal L, RVal R) {
@@ -607,22 +607,22 @@ protected:
     getTF().EvalObjCMessageExpr(Dst, *this, *Builder, ME, Pred);
   }
   
-  void EvalStore(NodeSet& Dst, Expr* E, NodeTy* Pred, const ValueState* St,
+  void EvalStore(NodeSet& Dst, Expr* E, NodeTy* Pred, const GRState* St,
                  RVal TargetLV, RVal Val);
   
   // FIXME: The "CheckOnly" option exists only because Array and Field
   //  loads aren't fully implemented.  Eventually this option will go away.
   
   void EvalLoad(NodeSet& Dst, Expr* Ex, NodeTy* Pred,
-                const ValueState* St, RVal location, bool CheckOnly = false);
+                const GRState* St, RVal location, bool CheckOnly = false);
   
-  const ValueState* EvalLocation(Expr* Ex, NodeTy* Pred,
-                                 const ValueState* St, RVal location,
+  const GRState* EvalLocation(Expr* Ex, NodeTy* Pred,
+                                 const GRState* St, RVal location,
                                  bool isLoad = false);
   
   void EvalReturn(NodeSet& Dst, ReturnStmt* s, NodeTy* Pred);
   
-  const ValueState* MarkBranch(const ValueState* St, Stmt* Terminator, bool branchTaken);
+  const GRState* MarkBranch(const GRState* St, Stmt* Terminator, bool branchTaken);
 };
   
 } // end clang namespace

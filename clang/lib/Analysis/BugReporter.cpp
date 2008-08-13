@@ -33,11 +33,11 @@ BugType::~BugType() {}
 BugReport::~BugReport() {}
 RangedBugReport::~RangedBugReport() {}
 
-ExplodedGraph<ValueState>& GRBugReporter::getGraph() {
+ExplodedGraph<GRState>& GRBugReporter::getGraph() {
   return Eng.getGraph();
 }
 
-ValueStateManager& GRBugReporter::getStateManager() { 
+GRStateManager& GRBugReporter::getStateManager() { 
   return Eng.getStateManager();
 }
 
@@ -63,12 +63,12 @@ static inline Stmt* GetStmt(const CFGBlock* B) {
     return (*B)[0];
 }
 
-static inline ExplodedNode<ValueState>*
-GetNextNode(ExplodedNode<ValueState>* N) {
+static inline ExplodedNode<GRState>*
+GetNextNode(ExplodedNode<GRState>* N) {
   return N->pred_empty() ? NULL : *(N->pred_begin());
 }
 
-static Stmt* GetLastStmt(ExplodedNode<ValueState>* N) {
+static Stmt* GetLastStmt(ExplodedNode<GRState>* N) {
   assert (isa<BlockEntrance>(N->getLocation()));
   
   for (N = GetNextNode(N); N; N = GetNextNode(N)) {
@@ -99,7 +99,7 @@ static void ExecutionContinues(std::ostringstream& os, SourceManager& SMgr,
 
 static inline void ExecutionContinues(std::ostringstream& os,
                                       SourceManager& SMgr,
-                                      ExplodedNode<ValueState>* N) {
+                                      ExplodedNode<GRState>* N) {
 
   ExecutionContinues(os, SMgr, GetStmt(N->getLocation()));
 }
@@ -128,7 +128,7 @@ Stmt* BugReport::getStmt(BugReporter& BR) const {
 
 PathDiagnosticPiece*
 BugReport::getEndPath(BugReporter& BR,
-                      ExplodedNode<ValueState>* EndPathNode) {
+                      ExplodedNode<GRState>* EndPathNode) {
   
   Stmt* S = getStmt(BR);
   
@@ -172,24 +172,24 @@ FullSourceLoc BugReport::getLocation(SourceManager& Mgr) {
   return FullSourceLoc(S->getLocStart(), Mgr);
 }
 
-PathDiagnosticPiece* BugReport::VisitNode(ExplodedNode<ValueState>* N,
-                                          ExplodedNode<ValueState>* PrevN,
-                                          ExplodedGraph<ValueState>& G,
+PathDiagnosticPiece* BugReport::VisitNode(ExplodedNode<GRState>* N,
+                                          ExplodedNode<GRState>* PrevN,
+                                          ExplodedGraph<GRState>& G,
                                           BugReporter& BR) {
   return NULL;
 }
 
-static std::pair<ExplodedGraph<ValueState>*, ExplodedNode<ValueState>*>
-MakeReportGraph(ExplodedGraph<ValueState>* G, ExplodedNode<ValueState>* N) {
+static std::pair<ExplodedGraph<GRState>*, ExplodedNode<GRState>*>
+MakeReportGraph(ExplodedGraph<GRState>* G, ExplodedNode<GRState>* N) {
   
-  llvm::OwningPtr<ExplodedGraph<ValueState> > GTrim(G->Trim(&N, &N+1));    
+  llvm::OwningPtr<ExplodedGraph<GRState> > GTrim(G->Trim(&N, &N+1));    
     
   // Find the error node in the trimmed graph.  
   
-  ExplodedNode<ValueState>* NOld = N;
+  ExplodedNode<GRState>* NOld = N;
   N = 0;
   
-  for (ExplodedGraph<ValueState>::node_iterator
+  for (ExplodedGraph<GRState>::node_iterator
        I = GTrim->nodes_begin(), E = GTrim->nodes_end(); I != E; ++I) {
     
     if (I->getState() == NOld->getState() &&
@@ -203,20 +203,20 @@ MakeReportGraph(ExplodedGraph<ValueState>* G, ExplodedNode<ValueState>* N) {
     
   // Create a new graph with a single path.
 
-  G = new ExplodedGraph<ValueState>(GTrim->getCFG(), GTrim->getCodeDecl(),
+  G = new ExplodedGraph<GRState>(GTrim->getCFG(), GTrim->getCodeDecl(),
                                      GTrim->getContext());
                                      
   // Sometimes TrimGraph can contain a cycle.  Perform a reverse DFS
   // to the root node, and then construct a new graph that contains only
   // a single path.
   llvm::DenseMap<void*,unsigned> Visited;
-  llvm::SmallVector<ExplodedNode<ValueState>*, 10> WS;
+  llvm::SmallVector<ExplodedNode<GRState>*, 10> WS;
   WS.push_back(N);
   unsigned cnt = 0;
-  ExplodedNode<ValueState>* Root = 0;
+  ExplodedNode<GRState>* Root = 0;
   
   while (!WS.empty()) {
-    ExplodedNode<ValueState>* Node = WS.back();
+    ExplodedNode<GRState>* Node = WS.back();
     WS.pop_back();
     
     if (Visited.find(Node) != Visited.end())
@@ -229,7 +229,7 @@ MakeReportGraph(ExplodedGraph<ValueState>* G, ExplodedNode<ValueState>* N) {
       break;
     }
     
-    for (ExplodedNode<ValueState>::pred_iterator I=Node->pred_begin(),
+    for (ExplodedNode<GRState>::pred_iterator I=Node->pred_begin(),
          E=Node->pred_end(); I!=E; ++I)
       WS.push_back(*I);
   }
@@ -238,7 +238,7 @@ MakeReportGraph(ExplodedGraph<ValueState>* G, ExplodedNode<ValueState>* N) {
   
   // Now walk from the root down the DFS path, always taking the successor
   // with the lowest number.
-  ExplodedNode<ValueState> *Last = 0, *First = 0;  
+  ExplodedNode<GRState> *Last = 0, *First = 0;  
     
   for ( N = Root ;;) {
     
@@ -248,7 +248,7 @@ MakeReportGraph(ExplodedGraph<ValueState>* G, ExplodedNode<ValueState>* N) {
     
     // Create the equivalent node in the new graph with the same state
     // and location.
-    ExplodedNode<ValueState>* NewN =
+    ExplodedNode<GRState>* NewN =
       G->getNode(N->getLocation(), N->getState());    
 
     // Link up the new node with the previous node.
@@ -265,8 +265,8 @@ MakeReportGraph(ExplodedGraph<ValueState>* G, ExplodedNode<ValueState>* N) {
 
     // Find the next successor node.  We choose the node that is marked
     // with the lowest DFS number.
-    ExplodedNode<ValueState>::succ_iterator SI = N->succ_begin();
-    ExplodedNode<ValueState>::succ_iterator SE = N->succ_end();
+    ExplodedNode<GRState>::succ_iterator SI = N->succ_begin();
+    ExplodedNode<GRState>::succ_iterator SE = N->succ_end();
     N = 0;
     
     for (unsigned MinVal = 0; SI != SE; ++SI) {
@@ -289,8 +289,8 @@ MakeReportGraph(ExplodedGraph<ValueState>* G, ExplodedNode<ValueState>* N) {
   return std::make_pair(G, First);
 }
 
-static VarDecl* GetMostRecentVarDeclBinding(ExplodedNode<ValueState>* N,
-                                            ValueStateManager& VMgr,
+static VarDecl* GetMostRecentVarDeclBinding(ExplodedNode<GRState>* N,
+                                            GRStateManager& VMgr,
                                             RVal X) {
   
   for ( ; N ; N = N->pred_empty() ? 0 : *N->pred_begin()) {
@@ -322,12 +322,12 @@ static VarDecl* GetMostRecentVarDeclBinding(ExplodedNode<ValueState>* N,
 }
 
 
-static void HandleNotableSymbol(ExplodedNode<ValueState>* N, Stmt* S,
+static void HandleNotableSymbol(ExplodedNode<GRState>* N, Stmt* S,
                                 SymbolID Sym, BugReporter& BR,
                                 PathDiagnostic& PD) {
   
-  ExplodedNode<ValueState>* Pred = N->pred_empty() ? 0 : *N->pred_begin();
-  const ValueState* PrevSt = Pred ? Pred->getState() : 0;
+  ExplodedNode<GRState>* Pred = N->pred_empty() ? 0 : *N->pred_begin();
+  const GRState* PrevSt = Pred ? Pred->getState() : 0;
   
   if (!PrevSt)
     return;
@@ -335,8 +335,8 @@ static void HandleNotableSymbol(ExplodedNode<ValueState>* N, Stmt* S,
   // Look at the variable bindings of the current state that map to the
   // specified symbol.  Are any of them not in the previous state.
   
-  const ValueState* St = N->getState();
-  ValueStateManager& VMgr = cast<GRBugReporter>(BR).getStateManager();
+  const GRState* St = N->getState();
+  GRStateManager& VMgr = cast<GRBugReporter>(BR).getStateManager();
   
   // FIXME: Later generalize for a broader memory model.
 
@@ -344,7 +344,7 @@ static void HandleNotableSymbol(ExplodedNode<ValueState>* N, Stmt* S,
   //   doesn't matter, but keep an eye out for performance issues.  It's
   //   also a bunch of copy-paste.  Bad.  Cleanup later.
   
-  for (ValueState::vb_iterator I=St->vb_begin(), E=St->vb_end(); I!=E; ++I){
+  for (GRState::vb_iterator I=St->vb_begin(), E=St->vb_end(); I!=E; ++I){
     
     RVal V = I.getData();
     SymbolID ScanSym;
@@ -412,17 +412,17 @@ static void HandleNotableSymbol(ExplodedNode<ValueState>* N, Stmt* S,
 void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
                                            BugReport& R) {
 
-  ExplodedNode<ValueState>* N = R.getEndNode();
+  ExplodedNode<GRState>* N = R.getEndNode();
 
   if (!N) return;
   
   // Construct a new graph that contains only a single path from the error
   // node to a root.
   
-  const std::pair<ExplodedGraph<ValueState>*,ExplodedNode<ValueState>*>
+  const std::pair<ExplodedGraph<GRState>*,ExplodedNode<GRState>*>
     GPair = MakeReportGraph(&getGraph(), N);
   
-  llvm::OwningPtr<ExplodedGraph<ValueState> > ReportGraph(GPair.first);
+  llvm::OwningPtr<ExplodedGraph<GRState> > ReportGraph(GPair.first);
   assert(GPair.second->getLocation() == N->getLocation());
   N = GPair.second;
 
@@ -433,7 +433,7 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
   else
     return;
   
-  ExplodedNode<ValueState>* NextNode = N->pred_empty() 
+  ExplodedNode<GRState>* NextNode = N->pred_empty() 
                                        ? NULL : *(N->pred_begin());
   
   ASTContext& Ctx = getContext();
@@ -441,7 +441,7 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
   
   while (NextNode) {
     
-    ExplodedNode<ValueState>* LastNode = N;
+    ExplodedNode<GRState>* LastNode = N;
     N = NextNode;    
     NextNode = GetNextNode(N);
     
@@ -633,7 +633,7 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
     
     if (const PostStmt* PS = dyn_cast<PostStmt>(&P)) {
       
-      const ValueState* St = N->getState();
+      const GRState* St = N->getState();
       
       // Scan the lval bindings, and see if a "notable" symbol has a new
       // lval binding.
@@ -643,7 +643,7 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
       
       llvm::SmallSet<SymbolID, 10> AlreadyProcessed;
       
-      for (ValueState::vb_iterator I=St->vb_begin(), E=St->vb_end(); I!=E; ++I){
+      for (GRState::vb_iterator I=St->vb_begin(), E=St->vb_end(); I!=E; ++I){
         
         RVal V = I.getData();
         SymbolID ScanSym;
@@ -674,7 +674,7 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
 
 bool BugTypeCacheLocation::isCached(BugReport& R) {
   
-  ExplodedNode<ValueState>* N = R.getEndNode();
+  ExplodedNode<GRState>* N = R.getEndNode();
   
   if (!N)
     return false;

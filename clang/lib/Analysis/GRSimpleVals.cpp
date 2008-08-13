@@ -17,7 +17,7 @@
 #include "BasicObjCFoundationChecks.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Analysis/PathDiagnostic.h"
-#include "clang/Analysis/PathSensitive/ValueState.h"
+#include "clang/Analysis/PathSensitive/GRState.h"
 #include "clang/Analysis/PathSensitive/BugReporter.h"
 #include "clang/Analysis/LocalCheckers.h"
 #include "clang/Analysis/PathSensitive/GRExprEngine.h"
@@ -123,7 +123,7 @@ static unsigned char LNotOpMap[] = {
   (unsigned char) BinaryOperator::EQ   /* NE => EQ */
 };
 
-RVal GRSimpleVals::DetermEvalBinOpNN(ValueStateManager& StateMgr,
+RVal GRSimpleVals::DetermEvalBinOpNN(GRStateManager& StateMgr,
                                      BinaryOperator::Opcode Op,
                                      NonLVal L, NonLVal R)  {
   
@@ -355,14 +355,14 @@ RVal GRSimpleVals::EvalNE(GRExprEngine& Eng, LVal L, LVal R) {
 // Transfer function for function calls.
 //===----------------------------------------------------------------------===//
 
-void GRSimpleVals::EvalCall(ExplodedNodeSet<ValueState>& Dst,
+void GRSimpleVals::EvalCall(ExplodedNodeSet<GRState>& Dst,
                             GRExprEngine& Eng,
-                            GRStmtNodeBuilder<ValueState>& Builder,
+                            GRStmtNodeBuilder<GRState>& Builder,
                             CallExpr* CE, RVal L,
-                            ExplodedNode<ValueState>* Pred) {
+                            ExplodedNode<GRState>* Pred) {
   
-  ValueStateManager& StateMgr = Eng.getStateManager();
-  const ValueState* St = Builder.GetState(Pred);
+  GRStateManager& StateMgr = Eng.getStateManager();
+  const GRState* St = Builder.GetState(Pred);
   
   // Invalidate all arguments passed in by reference (LVals).
 
@@ -399,18 +399,18 @@ void GRSimpleVals::EvalCall(ExplodedNodeSet<ValueState>& Dst,
 // Transfer function for Objective-C message expressions.
 //===----------------------------------------------------------------------===//
 
-void GRSimpleVals::EvalObjCMessageExpr(ExplodedNodeSet<ValueState>& Dst,
+void GRSimpleVals::EvalObjCMessageExpr(ExplodedNodeSet<GRState>& Dst,
                                        GRExprEngine& Eng,
-                                       GRStmtNodeBuilder<ValueState>& Builder,
+                                       GRStmtNodeBuilder<GRState>& Builder,
                                        ObjCMessageExpr* ME,
-                                       ExplodedNode<ValueState>* Pred) {
+                                       ExplodedNode<GRState>* Pred) {
   
   
   // The basic transfer function logic for message expressions does nothing.
   // We just invalidate all arguments passed in by references.
   
-  ValueStateManager& StateMgr = Eng.getStateManager();
-  const ValueState* St = Builder.GetState(Pred);
+  GRStateManager& StateMgr = Eng.getStateManager();
+  const GRState* St = Builder.GetState(Pred);
   
   for (ObjCMessageExpr::arg_iterator I = ME->arg_begin(), E = ME->arg_end();
        I != E; ++I) {

@@ -1,4 +1,4 @@
-//= ValueState*cpp - Path-Sens. "State" for tracking valuues -----*- C++ -*--=//
+//= GRState*cpp - Path-Sens. "State" for tracking valuues -----*- C++ -*--=//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,17 +7,17 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file defines SymbolID, ExprBindKey, and ValueState*
+//  This file defines SymbolID, ExprBindKey, and GRState*
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Analysis/PathSensitive/ValueState.h"
+#include "clang/Analysis/PathSensitive/GRState.h"
 #include "llvm/ADT/SmallSet.h"
 #include "clang/Analysis/PathSensitive/GRTransferFuncs.h"
 
 using namespace clang;
 
-bool ValueState::isNotEqual(SymbolID sym, const llvm::APSInt& V) const {
+bool GRState::isNotEqual(SymbolID sym, const llvm::APSInt& V) const {
 
   // Retrieve the NE-set associated with the given symbol.
   const ConstNotEqTy::data_type* T = ConstNotEq.lookup(sym);
@@ -26,7 +26,7 @@ bool ValueState::isNotEqual(SymbolID sym, const llvm::APSInt& V) const {
   return T ? T->contains(&V) : false;
 }
 
-bool ValueState::isEqual(SymbolID sym, const llvm::APSInt& V) const {
+bool GRState::isEqual(SymbolID sym, const llvm::APSInt& V) const {
   
   // Retrieve the EQ-set associated with the given symbol.
   const ConstEqTy::data_type* T = ConstEq.lookup(sym);
@@ -35,13 +35,13 @@ bool ValueState::isEqual(SymbolID sym, const llvm::APSInt& V) const {
   return T ? **T == V : false;
 }
 
-const llvm::APSInt* ValueState::getSymVal(SymbolID sym) const {
+const llvm::APSInt* GRState::getSymVal(SymbolID sym) const {
   ConstEqTy::data_type* T = ConstEq.lookup(sym);
   return T ? *T : NULL;  
 }
 
-const ValueState*
-ValueStateManager::RemoveDeadBindings(const ValueState* St, Stmt* Loc,
+const GRState*
+GRStateManager::RemoveDeadBindings(const GRState* St, Stmt* Loc,
                                       const LiveVariables& Liveness,
                                       DeadSymbolsTy& DSymbols) {  
   
@@ -54,7 +54,7 @@ ValueStateManager::RemoveDeadBindings(const ValueState* St, Stmt* Loc,
   DRoots.clear();
   StoreManager::LiveSymbolsTy LSymbols;
   
-  ValueState NewSt = *St;
+  GRState NewSt = *St;
 
   // FIXME: Put this in environment.
   // Clean up the environment.
@@ -64,7 +64,7 @@ ValueStateManager::RemoveDeadBindings(const ValueState* St, Stmt* Loc,
   
   // Iterate over the block-expr bindings.
 
-  for (ValueState::beb_iterator I = St->beb_begin(), E = St->beb_end();
+  for (GRState::beb_iterator I = St->beb_begin(), E = St->beb_end();
                                                     I!=E ; ++I) {    
     Expr* BlkExpr = I.getKey();
     
@@ -97,7 +97,7 @@ ValueStateManager::RemoveDeadBindings(const ValueState* St, Stmt* Loc,
                                        LSymbols, DSymbols);
   
   // Remove the dead symbols from the symbol tracker.
-  for (ValueState::ce_iterator I = St->ce_begin(), E=St->ce_end(); I!=E; ++I) {
+  for (GRState::ce_iterator I = St->ce_begin(), E=St->ce_end(); I!=E; ++I) {
 
     SymbolID sym = I.getKey();    
     
@@ -107,7 +107,7 @@ ValueStateManager::RemoveDeadBindings(const ValueState* St, Stmt* Loc,
     }
   }
   
-  for (ValueState::cne_iterator I = St->cne_begin(), E=St->cne_end(); I!=E;++I){
+  for (GRState::cne_iterator I = St->cne_begin(), E=St->cne_end(); I!=E;++I){
     
     SymbolID sym = I.getKey();
     
@@ -120,7 +120,7 @@ ValueStateManager::RemoveDeadBindings(const ValueState* St, Stmt* Loc,
   return getPersistentState(NewSt);
 }
 
-const ValueState* ValueStateManager::SetRVal(const ValueState* St, LVal LV,
+const GRState* GRStateManager::SetRVal(const GRState* St, LVal LV,
                                              RVal V) {
   
   Store OldStore = St->getStore();
@@ -129,56 +129,56 @@ const ValueState* ValueStateManager::SetRVal(const ValueState* St, LVal LV,
   if (NewStore == OldStore)
     return St;
   
-  ValueState NewSt = *St;
+  GRState NewSt = *St;
   NewSt.St = NewStore;
   return getPersistentState(NewSt);    
 }
 
-const ValueState* ValueStateManager::Unbind(const ValueState* St, LVal LV) {
+const GRState* GRStateManager::Unbind(const GRState* St, LVal LV) {
   Store OldStore = St->getStore();
   Store NewStore = StMgr->Remove(OldStore, LV);
   
   if (NewStore == OldStore)
     return St;
   
-  ValueState NewSt = *St;
+  GRState NewSt = *St;
   NewSt.St = NewStore;
   return getPersistentState(NewSt);    
 }
 
 
-const ValueState* ValueStateManager::AddNE(const ValueState* St, SymbolID sym,
+const GRState* GRStateManager::AddNE(const GRState* St, SymbolID sym,
                                            const llvm::APSInt& V) {
 
   // First, retrieve the NE-set associated with the given symbol.
-  ValueState::ConstNotEqTy::data_type* T = St->ConstNotEq.lookup(sym);  
-  ValueState::IntSetTy S = T ? *T : ISetFactory.GetEmptySet();
+  GRState::ConstNotEqTy::data_type* T = St->ConstNotEq.lookup(sym);  
+  GRState::IntSetTy S = T ? *T : ISetFactory.GetEmptySet();
   
   // Now add V to the NE set.
   S = ISetFactory.Add(S, &V);
   
   // Create a new state with the old binding replaced.
-  ValueState NewSt = *St;
+  GRState NewSt = *St;
   NewSt.ConstNotEq = CNEFactory.Add(NewSt.ConstNotEq, sym, S);
     
   // Get the persistent copy.
   return getPersistentState(NewSt);
 }
 
-const ValueState* ValueStateManager::AddEQ(const ValueState* St, SymbolID sym,
+const GRState* GRStateManager::AddEQ(const GRState* St, SymbolID sym,
                                            const llvm::APSInt& V) {
 
   // Create a new state with the old binding replaced.
-  ValueState NewSt = *St;
+  GRState NewSt = *St;
   NewSt.ConstEq = CEFactory.Add(NewSt.ConstEq, sym, &V);
   
   // Get the persistent copy.
   return getPersistentState(NewSt);
 }
 
-const ValueState* ValueStateManager::getInitialState() {
+const GRState* GRStateManager::getInitialState() {
 
-  ValueState StateImpl(EnvMgr.getInitialEnvironment(),
+  GRState StateImpl(EnvMgr.getInitialEnvironment(),
                        StMgr->getInitialStore(),
                        GDMFactory.GetEmptyMap(),
                        CNEFactory.GetEmptyMap(),
@@ -187,30 +187,30 @@ const ValueState* ValueStateManager::getInitialState() {
   return getPersistentState(StateImpl);
 }
 
-const ValueState* ValueStateManager::getPersistentState(ValueState& State) {
+const GRState* GRStateManager::getPersistentState(GRState& State) {
   
   llvm::FoldingSetNodeID ID;
   State.Profile(ID);  
   void* InsertPos;
   
-  if (ValueState* I = StateSet.FindNodeOrInsertPos(ID, InsertPos))
+  if (GRState* I = StateSet.FindNodeOrInsertPos(ID, InsertPos))
     return I;
   
-  ValueState* I = (ValueState*) Alloc.Allocate<ValueState>();
-  new (I) ValueState(State);  
+  GRState* I = (GRState*) Alloc.Allocate<GRState>();
+  new (I) GRState(State);  
   StateSet.InsertNode(I, InsertPos);
   return I;
 }
 
-void ValueState::printDOT(std::ostream& Out, CheckerStatePrinter* P) const {
+void GRState::printDOT(std::ostream& Out, CheckerStatePrinter* P) const {
   print(Out, P, "\\l", "\\|");
 }
 
-void ValueState::printStdErr(CheckerStatePrinter* P) const {
+void GRState::printStdErr(CheckerStatePrinter* P) const {
   print(*llvm::cerr, P);
 }  
 
-void ValueState::print(std::ostream& Out, CheckerStatePrinter* P,
+void GRState::print(std::ostream& Out, CheckerStatePrinter* P,
                        const char* nl, const char* sep) const {
 
   // Print Variable Bindings
@@ -311,7 +311,7 @@ void ValueState::print(std::ostream& Out, CheckerStatePrinter* P,
 // Queries.
 //===----------------------------------------------------------------------===//
 
-bool ValueStateManager::isEqual(const ValueState* state, Expr* Ex,
+bool GRStateManager::isEqual(const GRState* state, Expr* Ex,
                                 const llvm::APSInt& Y) {
   RVal V = GetRVal(state, Ex);
   
@@ -330,7 +330,7 @@ bool ValueStateManager::isEqual(const ValueState* state, Expr* Ex,
   return false;
 }
   
-bool ValueStateManager::isEqual(const ValueState* state, Expr* Ex,
+bool GRStateManager::isEqual(const GRState* state, Expr* Ex,
                                 uint64_t x) {
   return isEqual(state, Ex, BasicVals.getValue(x, Ex->getType()));
 }
@@ -339,7 +339,7 @@ bool ValueStateManager::isEqual(const ValueState* state, Expr* Ex,
 // "Assume" logic.
 //===----------------------------------------------------------------------===//
 
-const ValueState* ValueStateManager::Assume(const ValueState* St, LVal Cond,
+const GRState* GRStateManager::Assume(const GRState* St, LVal Cond,
                                             bool Assumption, bool& isFeasible) {
   
   St = AssumeAux(St, Cond, Assumption, isFeasible);
@@ -348,7 +348,7 @@ const ValueState* ValueStateManager::Assume(const ValueState* St, LVal Cond,
                     : St;
 }
 
-const ValueState* ValueStateManager::AssumeAux(const ValueState* St, LVal Cond,
+const GRState* GRStateManager::AssumeAux(const GRState* St, LVal Cond,
                                           bool Assumption, bool& isFeasible) {
   
   switch (Cond.getSubKind()) {
@@ -388,7 +388,7 @@ const ValueState* ValueStateManager::AssumeAux(const ValueState* St, LVal Cond,
   }
 }
 
-const ValueState* ValueStateManager::Assume(const ValueState* St, NonLVal Cond,
+const GRState* GRStateManager::Assume(const GRState* St, NonLVal Cond,
                                        bool Assumption, bool& isFeasible) {
   
   St = AssumeAux(St, Cond, Assumption, isFeasible);
@@ -397,7 +397,7 @@ const ValueState* ValueStateManager::Assume(const ValueState* St, NonLVal Cond,
   : St;
 }
 
-const ValueState* ValueStateManager::AssumeAux(const ValueState* St, NonLVal Cond,
+const GRState* GRStateManager::AssumeAux(const GRState* St, NonLVal Cond,
                                           bool Assumption, bool& isFeasible) {  
   switch (Cond.getSubKind()) {
     default:
@@ -438,7 +438,7 @@ const ValueState* ValueStateManager::AssumeAux(const ValueState* St, NonLVal Con
 
 
 
-const ValueState* ValueStateManager::AssumeSymInt(const ValueState* St,
+const GRState* GRStateManager::AssumeSymInt(const GRState* St,
                                              bool Assumption,
                                              const SymIntConstraint& C,
                                              bool& isFeasible) {
@@ -479,8 +479,8 @@ const ValueState* ValueStateManager::AssumeSymInt(const ValueState* St,
 // FIXME: This should go into a plug-in constraint engine.
 //===----------------------------------------------------------------------===//
 
-const ValueState*
-ValueStateManager::AssumeSymNE(const ValueState* St, SymbolID sym,
+const GRState*
+GRStateManager::AssumeSymNE(const GRState* St, SymbolID sym,
                                const llvm::APSInt& V, bool& isFeasible) {
   
   // First, determine if sym == X, where X != V.
@@ -502,8 +502,8 @@ ValueStateManager::AssumeSymNE(const ValueState* St, SymbolID sym,
   return AddNE(St, sym, V);
 }
 
-const ValueState*
-ValueStateManager::AssumeSymEQ(const ValueState* St, SymbolID sym,
+const GRState*
+GRStateManager::AssumeSymEQ(const GRState* St, SymbolID sym,
                                const llvm::APSInt& V, bool& isFeasible) {
   
   // First, determine if sym == X, where X != V.
@@ -525,24 +525,24 @@ ValueStateManager::AssumeSymEQ(const ValueState* St, SymbolID sym,
   return AddEQ(St, sym, V);
 }
 
-const ValueState*
-ValueStateManager::AssumeSymLT(const ValueState* St, SymbolID sym,
+const GRState*
+GRStateManager::AssumeSymLT(const GRState* St, SymbolID sym,
                                const llvm::APSInt& V, bool& isFeasible) {
   
   // FIXME: For now have assuming x < y be the same as assuming sym != V;
   return AssumeSymNE(St, sym, V, isFeasible);
 }
 
-const ValueState*
-ValueStateManager::AssumeSymGT(const ValueState* St, SymbolID sym,
+const GRState*
+GRStateManager::AssumeSymGT(const GRState* St, SymbolID sym,
                                const llvm::APSInt& V, bool& isFeasible) {
   
   // FIXME: For now have assuming x > y be the same as assuming sym != V;
   return AssumeSymNE(St, sym, V, isFeasible);
 }
 
-const ValueState*
-ValueStateManager::AssumeSymGE(const ValueState* St, SymbolID sym,
+const GRState*
+GRStateManager::AssumeSymGE(const GRState* St, SymbolID sym,
                                const llvm::APSInt& V, bool& isFeasible) {
   
   // FIXME: Primitive logic for now.  Only reject a path if the value of
@@ -557,8 +557,8 @@ ValueStateManager::AssumeSymGE(const ValueState* St, SymbolID sym,
   return St;
 }
 
-const ValueState*
-ValueStateManager::AssumeSymLE(const ValueState* St, SymbolID sym,
+const GRState*
+GRStateManager::AssumeSymLE(const GRState* St, SymbolID sym,
                                const llvm::APSInt& V, bool& isFeasible) {
   
   // FIXME: Primitive logic for now.  Only reject a path if the value of
