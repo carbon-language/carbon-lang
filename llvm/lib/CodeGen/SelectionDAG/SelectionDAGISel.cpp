@@ -5379,7 +5379,7 @@ void SelectionDAGISel::CodeGenAndEmitDAG(SelectionDAG &DAG) {
 
   if (ViewISelDAGs) DAG.viewGraph("isel input for " + BlockName);
   
-  if (!FastISel && EnableValueProp)
+  if (!Fast && EnableValueProp)
     ComputeLiveOutVRegInfo(DAG);
 
   // Third, instruction select all of the operations to machine code, adding the
@@ -5448,7 +5448,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn, MachineFunction &MF,
     BasicBlock *LLVMBB = &*I;
     PHINodesToUpdate.clear();
 
-    if (!FastISel || !SISel.SelectBasicBlock(LLVMBB,  FuncInfo.MBBMap[LLVMBB]))
+    if (!Fast || !SISel.SelectBasicBlock(LLVMBB,  FuncInfo.MBBMap[LLVMBB]))
       SelectBasicBlock(LLVMBB, MF, FuncInfo, PHINodesToUpdate, NodeAllocator);
     FinishBasicBlock(LLVMBB, MF, FuncInfo, PHINodesToUpdate, NodeAllocator);
   }
@@ -5696,7 +5696,7 @@ ScheduleDAG *SelectionDAGISel::Schedule(SelectionDAG &DAG) {
     RegisterScheduler::setDefault(Ctor);
   }
   
-  ScheduleDAG *Scheduler = Ctor(this, &DAG, BB, FastISel);
+  ScheduleDAG *Scheduler = Ctor(this, &DAG, BB, Fast);
   Scheduler->Run();
 
   return Scheduler;

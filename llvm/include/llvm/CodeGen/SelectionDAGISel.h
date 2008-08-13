@@ -42,12 +42,12 @@ public:
   MachineBasicBlock *BB;
   AliasAnalysis *AA;
   CollectorMetadata *GCI;
-  bool FastISel;
+  bool Fast;
   std::vector<SDNode*> TopOrder;
   static char ID;
 
   explicit SelectionDAGISel(TargetLowering &tli, bool fast = false) : 
-    FunctionPass((intptr_t)&ID), TLI(tli), GCI(0), FastISel(fast), DAGSize(0) {}
+    FunctionPass((intptr_t)&ID), TLI(tli), GCI(0), Fast(fast), DAGSize(0) {}
   
   TargetLowering &getTargetLowering() { return TLI; }
 
