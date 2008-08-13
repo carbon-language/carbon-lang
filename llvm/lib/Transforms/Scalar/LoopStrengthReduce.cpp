@@ -1542,6 +1542,12 @@ ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
   Value *NewIncV = NULL;
   int64_t Scale = 1;
 
+  // Check stride constant and the comparision constant signs to detect
+  // overflow.
+  if (ICmpInst::isSignedPredicate(Predicate) &&
+      (CmpVal & SignBit) != (CmpSSInt & SignBit))
+    return Cond;
+
   // Look for a suitable stride / iv as replacement.
   std::stable_sort(StrideOrder.begin(), StrideOrder.end(), StrideCompare());
   for (unsigned i = 0, e = StrideOrder.size(); i != e; ++i) {
@@ -1640,11 +1646,12 @@ ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
   // before the branch. See
   // test/Transforms/LoopStrengthReduce/change-compare-stride-trickiness-*.ll
   // for an example of this situation.
-  if (!Cond->hasOneUse())
+  if (!Cond->hasOneUse()) {
     for (BasicBlock::iterator I = Cond, E = Cond->getParent()->end();
          I != E; ++I)
       if (I == NewIncV)
         return Cond;
+  }
 
   if (NewCmpVal != CmpVal) {
     // Create a new compare instruction using new stride / iv.
