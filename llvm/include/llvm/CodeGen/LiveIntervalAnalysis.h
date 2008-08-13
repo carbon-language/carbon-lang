@@ -80,7 +80,7 @@ namespace llvm {
     /// FunctionSize - The number of instructions present in the function
     uint64_t FunctionSize;
 
-    typedef std::map<MachineInstr*, unsigned> Mi2IndexMap;
+    typedef DenseMap<MachineInstr*, unsigned> Mi2IndexMap;
     Mi2IndexMap mi2iMap_;
 
     typedef std::vector<MachineInstr*> Index2MiMap;
