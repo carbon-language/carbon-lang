@@ -55,6 +55,20 @@ namespace llvm {
       return LHS.first < RHS.first;
     }
   };
+  
+  // Provide DenseMapInfo for unsigned.
+  template<>
+  struct DenseMapInfo<unsigned> {
+    static inline unsigned getEmptyKey() { return (unsigned)-1; }
+    static inline unsigned getTombstoneKey() { return (unsigned)-2; }
+    static unsigned getHashValue(const unsigned Val) {
+      return Val * 37;
+    }
+    static bool isEqual(const unsigned LHS, const unsigned RHS) {
+      return LHS == RHS;
+    }
+    static bool isPod() { return true; }
+  };
 
   class LiveIntervals : public MachineFunctionPass {
     MachineFunction* mf_;
@@ -86,7 +100,7 @@ namespace llvm {
     typedef std::vector<MachineInstr*> Index2MiMap;
     Index2MiMap i2miMap_;
 
-    typedef std::map<unsigned, LiveInterval*> Reg2IntervalMap;
+    typedef DenseMap<unsigned, LiveInterval*> Reg2IntervalMap;
     Reg2IntervalMap r2iMap_;
 
     BitVector allocatableRegs_;
@@ -236,7 +250,7 @@ namespace llvm {
     LiveInterval &getOrCreateInterval(unsigned reg) {
       Reg2IntervalMap::iterator I = r2iMap_.find(reg);
       if (I == r2iMap_.end())
-        I = r2iMap_.insert(I, std::make_pair(reg, createInterval(reg)));
+        I = r2iMap_.insert(std::make_pair(reg, createInterval(reg))).first;
       return *I->second;
     }
     
@@ -248,7 +262,7 @@ namespace llvm {
     // Interval removal
 
     void removeInterval(unsigned Reg) {
-      std::map<unsigned, LiveInterval*>::iterator I = r2iMap_.find(Reg);
+      DenseMap<unsigned, LiveInterval*>::iterator I = r2iMap_.find(Reg);
       delete I->second;
       r2iMap_.erase(I);
     }
