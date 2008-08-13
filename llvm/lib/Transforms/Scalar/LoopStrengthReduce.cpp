@@ -177,7 +177,7 @@ private:
                                   IVStrideUse* &CondUse,
                                   const SCEVHandle* &CondStride);
     void OptimizeIndvars(Loop *L);
-    bool FindIVForUser(ICmpInst *Cond, IVStrideUse *&CondUse,
+    bool FindIVUserForCond(ICmpInst *Cond, IVStrideUse *&CondUse,
                        const SCEVHandle *&CondStride);
     bool RequiresTypeConversion(const Type *Ty, const Type *NewTy);
     unsigned CheckForIVReuse(bool, bool, const SCEVHandle&,
@@ -1453,10 +1453,10 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
   // different starting values, into different PHIs.
 }
 
-/// FindIVForUser - If Cond has an operand that is an expression of an IV,
+/// FindIVUserForCond - If Cond has an operand that is an expression of an IV,
 /// set the IV user and stride information and return true, otherwise return
 /// false.
-bool LoopStrengthReduce::FindIVForUser(ICmpInst *Cond, IVStrideUse *&CondUse,
+bool LoopStrengthReduce::FindIVUserForCond(ICmpInst *Cond, IVStrideUse *&CondUse,
                                        const SCEVHandle *&CondStride) {
   for (unsigned Stride = 0, e = StrideOrder.size(); Stride != e && !CondUse;
        ++Stride) {
@@ -1713,7 +1713,7 @@ void LoopStrengthReduce::OptimizeIndvars(Loop *L) {
   IVStrideUse *CondUse = 0;
   const SCEVHandle *CondStride = 0;
 
-  if (!FindIVForUser(Cond, CondUse, CondStride))
+  if (!FindIVUserForCond(Cond, CondUse, CondStride))
     return; // setcc doesn't use the IV.
 
   // If possible, change stride and operands of the compare instruction to
