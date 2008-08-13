@@ -378,6 +378,19 @@ Constant *llvm::ConstantFoldInstOperands(unsigned Opcode, const Type *DestTy,
     }
     return ConstantExpr::getCast(Opcode, Ops[0], DestTy);
   case Instruction::IntToPtr:
+    // If the input is a ptrtoint, turn the pair into a ptr to ptr bitcast if
+    // the int size is >= the ptr size.  This requires knowing the width of a
+    // pointer, so it can't be done in ConstantExpr::getCast.
+    if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Ops[0])) {
+      if (TD && CE->getOpcode() == Instruction::PtrToInt &&
+          TD->getPointerSizeInBits() <=
+          CE->getType()->getPrimitiveSizeInBits()) {
+        Constant *Input = CE->getOperand(0);
+        Constant *C = FoldBitCast(Input, DestTy, *TD);
+        return C ? C : ConstantExpr::getBitCast(Input, DestTy);
+      }
+    }
+    return ConstantExpr::getCast(Opcode, Ops[0], DestTy);
   case Instruction::Trunc:
   case Instruction::ZExt:
   case Instruction::SExt:
