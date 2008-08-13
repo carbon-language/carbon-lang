@@ -488,10 +488,7 @@ LValue CodeGenFunction::EmitUnaryOpLValue(const UnaryOperator *E) {
 }
 
 LValue CodeGenFunction::EmitStringLiteralLValue(const StringLiteral *E) {
-  llvm::Constant *C = 
-    CGM.GetAddrOfConstantString(CGM.getStringForStringLiteral(E));
-
-  return LValue::MakeAddr(C,0);
+  return LValue::MakeAddr(CGM.GetAddrOfConstantStringFromLiteral(E), 0);
 }
 
 LValue CodeGenFunction::EmitPredefinedLValue(const PredefinedExpr *E) {

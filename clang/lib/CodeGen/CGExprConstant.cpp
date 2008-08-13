@@ -363,7 +363,7 @@ public:
     // Otherwise this must be a string initializing an array in a static
     // initializer.  Don't emit it as the address of the string, emit the string
     // data itself as an inline array.
-    return llvm::ConstantArray::get(CGM.getStringForStringLiteral(E), false);
+    return llvm::ConstantArray::get(CGM.GetStringForStringLiteral(E), false);
   }
 
   llvm::Constant *VisitDeclRefExpr(DeclRefExpr *E) {
@@ -762,10 +762,8 @@ public:
              "Taking the address of a vector component is illegal!");
       return llvm::ConstantExpr::getGetElementPtr(Base, &Index, 1);
     }
-    case Expr::StringLiteralClass: {
-      StringLiteral *S = cast<StringLiteral>(E);
-      return CGM.GetAddrOfConstantString(CGM.getStringForStringLiteral(S));
-    }
+    case Expr::StringLiteralClass:
+      return CGM.GetAddrOfConstantStringFromLiteral(cast<StringLiteral>(E));
     case Expr::UnaryOperatorClass: {
       UnaryOperator *Exp = cast<UnaryOperator>(E);
       switch (Exp->getOpcode()) {

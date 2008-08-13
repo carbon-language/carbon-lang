@@ -261,7 +261,7 @@ void CodeGenModule::EmitObjCCategoryImpl(const ObjCCategoryImplDecl *OCD) {
     InstanceMethodSels.push_back((*iter)->getSelector());
     std::string TypeStr;
     Context.getObjCEncodingForMethodDecl(*iter,TypeStr);
-    InstanceMethodTypes.push_back(GetAddrOfConstantString(TypeStr));
+    InstanceMethodTypes.push_back(GetAddrOfConstantCString(TypeStr));
   }
 
   // Collect information about class methods
@@ -272,7 +272,7 @@ void CodeGenModule::EmitObjCCategoryImpl(const ObjCCategoryImplDecl *OCD) {
     ClassMethodSels.push_back((*iter)->getSelector());
     std::string TypeStr;
     Context.getObjCEncodingForMethodDecl(*iter,TypeStr);
-    ClassMethodTypes.push_back(GetAddrOfConstantString(TypeStr));
+    ClassMethodTypes.push_back(GetAddrOfConstantCString(TypeStr));
   }
 
   // Collect the names of referenced protocols
@@ -325,13 +325,13 @@ void CodeGenModule::EmitObjCClassImplementation(
   for (ObjCInterfaceDecl::ivar_iterator iter = ClassDecl->ivar_begin(),
       endIter = ClassDecl->ivar_end() ; iter != endIter ; iter++) {
       // Store the name
-      IvarNames.push_back(GetAddrOfConstantString((*iter)->getName()));
+      IvarNames.push_back(GetAddrOfConstantCString((*iter)->getName()));
       // Get the type encoding for this ivar
       std::string TypeStr;
       llvm::SmallVector<const RecordType *, 8> EncodingRecordTypes;
       Context.getObjCEncodingForType((*iter)->getType(), TypeStr,
                                      EncodingRecordTypes);
-      IvarTypes.push_back(GetAddrOfConstantString(TypeStr));
+      IvarTypes.push_back(GetAddrOfConstantCString(TypeStr));
       // Get the offset
       int offset =
         (int)Layout->getElementOffset(getTypes().getLLVMFieldNo(*iter));
@@ -347,7 +347,7 @@ void CodeGenModule::EmitObjCClassImplementation(
     InstanceMethodSels.push_back((*iter)->getSelector());
     std::string TypeStr;
     Context.getObjCEncodingForMethodDecl((*iter),TypeStr);
-    InstanceMethodTypes.push_back(GetAddrOfConstantString(TypeStr));
+    InstanceMethodTypes.push_back(GetAddrOfConstantCString(TypeStr));
   }
 
   // Collect information about class methods
@@ -358,7 +358,7 @@ void CodeGenModule::EmitObjCClassImplementation(
     ClassMethodSels.push_back((*iter)->getSelector());
     std::string TypeStr;
     Context.getObjCEncodingForMethodDecl((*iter),TypeStr);
-    ClassMethodTypes.push_back(GetAddrOfConstantString(TypeStr));
+    ClassMethodTypes.push_back(GetAddrOfConstantCString(TypeStr));
   }
   // Collect the names of referenced protocols
   llvm::SmallVector<std::string, 16> Protocols;
@@ -888,9 +888,9 @@ GetAddrOfConstantCFString(const std::string &str) {
   return GV;
 }
 
-/// getStringForStringLiteral - Return the appropriate bytes for a
+/// GetStringForStringLiteral - Return the appropriate bytes for a
 /// string literal, properly padded to match the literal type.
-std::string CodeGenModule::getStringForStringLiteral(const StringLiteral *E) {
+std::string CodeGenModule::GetStringForStringLiteral(const StringLiteral *E) {
   assert(!E->isWide() && "FIXME: Wide strings not supported yet!");
   const char *StrData = E->getStrData();
   unsigned Len = E->getByteLength();
@@ -908,22 +908,37 @@ std::string CodeGenModule::getStringForStringLiteral(const StringLiteral *E) {
   return Str;
 }
 
+/// GetAddrOfConstantStringFromLiteral - Return a pointer to a
+/// constant array for the given string literal.
+llvm::Constant *
+CodeGenModule::GetAddrOfConstantStringFromLiteral(const StringLiteral *S) {
+  // FIXME: This can be more efficient.
+  return GetAddrOfConstantString(GetStringForStringLiteral(S));
+}
+
 /// GenerateWritableString -- Creates storage for a string literal.
 static llvm::Constant *GenerateStringLiteral(const std::string &str, 
                                              bool constant,
                                              CodeGenModule &CGM) {
-  // Create Constant for this string literal
-  llvm::Constant *C = llvm::ConstantArray::get(str);
+  // Create Constant for this string literal. Don't add a '\0'.
+  llvm::Constant *C = llvm::ConstantArray::get(str, false);
   
   // Create a global variable for this string
   C = new llvm::GlobalVariable(C->getType(), constant, 
                                llvm::GlobalValue::InternalLinkage,
                                C, ".str", &CGM.getModule());
+
   return C;
 }
 
-/// CodeGenModule::GetAddrOfConstantString -- returns a pointer to the character
-/// array containing the literal.  The result is pointer to array type.
+/// GetAddrOfConstantString - Returns a pointer to a character array
+/// containing the literal. This contents are exactly that of the
+/// given string, i.e. it will not be null terminated automatically;
+/// see GetAddrOfConstantCString. Note that whether the result is
+/// actually a pointer to an LLVM constant depends on
+/// Feature.WriteableStrings.
+///
+/// The result has pointer to array type.
 llvm::Constant *CodeGenModule::GetAddrOfConstantString(const std::string &str) {
   // Don't share any string literals if writable-strings is turned on.
   if (Features.WritableStrings)
@@ -939,4 +954,11 @@ llvm::Constant *CodeGenModule::GetAddrOfConstantString(const std::string &str) {
   llvm::Constant *C = GenerateStringLiteral(str, true, *this);
   Entry.setValue(C);
   return C;
+}
+
+/// GetAddrOfConstantCString - Returns a pointer to a character
+/// array containing the literal and a terminating '\-'
+/// character. The result has pointer to array type.
+llvm::Constant *CodeGenModule::GetAddrOfConstantCString(const std::string &str) {
+  return GetAddrOfConstantCString(str + "\0");
 }

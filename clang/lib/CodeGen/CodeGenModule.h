@@ -143,15 +143,34 @@ public:
   /// "__builtin_fabsf", return a Function* for "fabsf".
   ///
   llvm::Function *getBuiltinLibFunction(unsigned BuiltinID);
+
+  /// GetStringForStringLiteral - Return the appropriate bytes for a
+  /// string literal, properly padded to match the literal type. If
+  /// only the address of a constant is needed consider using
+  /// GetAddrOfConstantStringLiteral.
+  std::string GetStringForStringLiteral(const StringLiteral *E);
+
   llvm::Constant *GetAddrOfConstantCFString(const std::string& str);
 
-  /// getStringForStringLiteral - Return the appropriate bytes for a
-  /// string literal, properly padded to match the literal type.
-  std::string getStringForStringLiteral(const StringLiteral *E);
+  /// GetAddrOfConstantStringFromLiteral - Return a pointer to a
+  /// constant array for the given string literal.
+  llvm::Constant *GetAddrOfConstantStringFromLiteral(const StringLiteral *S);
 
-  /// GetAddrOfConstantString -- returns a pointer to the character
-  /// array containing the literal.  The result is pointer to array type.
+  /// GetAddrOfConstantString - Returns a pointer to a character array
+  /// containing the literal. This contents are exactly that of the
+  /// given string, i.e. it will not be null terminated automatically;
+  /// see GetAddrOfConstantCString. Note that whether the result is
+  /// actually a pointer to an LLVM constant depends on
+  /// Feature.WriteableStrings.
+  ///
+  /// The result has pointer to array type.
   llvm::Constant *GetAddrOfConstantString(const std::string& str);
+
+  /// GetAddrOfConstantCString - Returns a pointer to a character
+  /// array containing the literal and a terminating '\-'
+  /// character. The result has pointer to array type.
+  llvm::Constant *GetAddrOfConstantCString(const std::string &str);
+
   llvm::Function *getMemCpyFn();
   llvm::Function *getMemMoveFn();
   llvm::Function *getMemSetFn();

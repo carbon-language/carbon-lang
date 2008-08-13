@@ -370,7 +370,7 @@ llvm::Constant *CGObjCGNU::GenerateMethodList(const std::string &ClassName,
   std::vector<llvm::Constant*> Elements;
   for (unsigned int i = 0, e = MethodTypes.size(); i < e; ++i) {
     Elements.clear();
-    llvm::Constant *C = CGM.GetAddrOfConstantString(MethodSels[i].getName());
+    llvm::Constant *C = CGM.GetAddrOfConstantCString(MethodSels[i].getName());
     Elements.push_back(llvm::ConstantExpr::getGetElementPtr(C, Zeros, 2));
     Elements.push_back(
           llvm::ConstantExpr::getGetElementPtr(MethodTypes[i], Zeros, 2));
@@ -581,8 +581,8 @@ void CGObjCGNU::GenerateProtocol(const ObjCProtocolDecl *PD) {
     std::string TypeStr;
     Context.getObjCEncodingForMethodDecl(*iter, TypeStr);
     InstanceMethodNames.push_back(
-        CGM.GetAddrOfConstantString((*iter)->getSelector().getName()));
-    InstanceMethodTypes.push_back(CGM.GetAddrOfConstantString(TypeStr));
+        CGM.GetAddrOfConstantCString((*iter)->getSelector().getName()));
+    InstanceMethodTypes.push_back(CGM.GetAddrOfConstantCString(TypeStr));
   }
   // Collect information about class methods:
   llvm::SmallVector<llvm::Constant*, 16> ClassMethodNames;
@@ -592,8 +592,8 @@ void CGObjCGNU::GenerateProtocol(const ObjCProtocolDecl *PD) {
     std::string TypeStr;
     Context.getObjCEncodingForMethodDecl((*iter),TypeStr);
     ClassMethodNames.push_back(
-        CGM.GetAddrOfConstantString((*iter)->getSelector().getName()));
-    ClassMethodTypes.push_back(CGM.GetAddrOfConstantString(TypeStr));
+        CGM.GetAddrOfConstantCString((*iter)->getSelector().getName()));
+    ClassMethodTypes.push_back(CGM.GetAddrOfConstantCString(TypeStr));
   }
 
   llvm::Constant *ProtocolList = GenerateProtocolList(Protocols);

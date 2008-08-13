@@ -52,7 +52,7 @@ llvm::Value *CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E) {
     if (!strcmp(classname, "super")) {
       classname = E->getMethodDecl()->getClassInterface()->getName();
     }
-    llvm::Value *ClassName = CGM.GetAddrOfConstantString(classname);
+    llvm::Value *ClassName = CGM.GetAddrOfConstantCString(classname);
     ClassName = Builder.CreateStructGEP(ClassName, 0);
     Receiver = Runtime.LookupClass(Builder, ClassName);
   } else if (const PredefinedExpr *PDE =
