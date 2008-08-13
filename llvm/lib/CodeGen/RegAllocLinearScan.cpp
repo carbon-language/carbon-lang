@@ -64,7 +64,7 @@ namespace {
     /// compiled, and keeps track of which register classes have registers that
     /// belong to multiple classes or have aliases that are in other classes.
     EquivalenceClasses<const TargetRegisterClass*> RelatedRegClasses;
-    std::map<unsigned, const TargetRegisterClass*> OneClassForEachPhysReg;
+    DenseMap<unsigned, const TargetRegisterClass*> OneClassForEachPhysReg;
 
     MachineFunction* mf_;
     MachineRegisterInfo* mri_;
@@ -221,7 +221,7 @@ void RALinScan::ComputeRelatedRegClasses() {
   // belongs to, add info about aliases.  We don't need to do this for targets
   // without register aliases.
   if (HasAliases)
-    for (std::map<unsigned, const TargetRegisterClass*>::iterator
+    for (DenseMap<unsigned, const TargetRegisterClass*>::iterator
          I = OneClassForEachPhysReg.begin(), E = OneClassForEachPhysReg.end();
          I != E; ++I)
       for (const unsigned *AS = TRI.getAliasSet(I->first); *AS; ++AS)
