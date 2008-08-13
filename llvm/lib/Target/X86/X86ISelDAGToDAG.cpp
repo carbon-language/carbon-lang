@@ -314,7 +314,7 @@ static inline bool isNonImmUse(SDNode *Root, SDNode *Def, SDNode *ImmedUse,
 
 
 bool X86DAGToDAGISel::CanBeFoldedBy(SDNode *N, SDNode *U, SDNode *Root) const {
-  if (FastISel) return false;
+  if (Fast) return false;
 
   // If U use can somehow reach N through another path then U can't fold N or
   // it will create a cycle. e.g. In the following diagram, U can reach N
@@ -579,7 +579,7 @@ void X86DAGToDAGISel::InstructionSelect(SelectionDAG &DAG) {
   CurBB = BB;  // BB can change as result of isel.
 
   DEBUG(BB->dump());
-  if (!FastISel)
+  if (!Fast)
     PreprocessForRMW(DAG);
 
   // FIXME: This should only happen when not -fast.

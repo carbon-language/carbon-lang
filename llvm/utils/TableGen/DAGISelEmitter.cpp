@@ -429,7 +429,7 @@ public:
       NumInputRootOps = N->getNumChildren();
 
       if (DisablePatternForFastISel(N, CGP))
-        emitCheck("!FastISel");
+        emitCheck("!Fast");
 
       std::string PredicateCheck;
       for (unsigned i = 0, e = Predicates->getSize(); i != e; ++i) {
