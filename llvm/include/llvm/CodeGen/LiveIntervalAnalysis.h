@@ -28,7 +28,6 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Allocator.h"
 #include <cmath>
-#include <map>
 
 namespace llvm {
 
@@ -434,10 +433,10 @@ namespace llvm {
 
     bool alsoFoldARestore(int Id, int index, unsigned vr,
                           BitVector &RestoreMBBs,
-                          std::map<unsigned,std::vector<SRInfo> >&RestoreIdxes);
+                          DenseMap<unsigned,std::vector<SRInfo> >&RestoreIdxes);
     void eraseRestoreInfo(int Id, int index, unsigned vr,
                           BitVector &RestoreMBBs,
-                          std::map<unsigned,std::vector<SRInfo> >&RestoreIdxes);
+                          DenseMap<unsigned,std::vector<SRInfo> >&RestoreIdxes);
 
     /// handleSpilledImpDefs - Remove IMPLICIT_DEF instructions which are being
     /// spilled and create empty intervals for their uses.
@@ -460,7 +459,7 @@ namespace llvm {
         VirtRegMap &vrm, const TargetRegisterClass* rc,
         SmallVector<int, 4> &ReMatIds, const MachineLoopInfo *loopInfo,
         unsigned &NewVReg, unsigned ImpUse, bool &HasDef, bool &HasUse,
-        std::map<unsigned,unsigned> &MBBVRegsMap,
+        DenseMap<unsigned,unsigned> &MBBVRegsMap,
         std::vector<LiveInterval*> &NewLIs, float &SSWeight);
     void rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
         LiveInterval::Ranges::const_iterator &I,
@@ -469,10 +468,10 @@ namespace llvm {
         VirtRegMap &vrm, const TargetRegisterClass* rc,
         SmallVector<int, 4> &ReMatIds, const MachineLoopInfo *loopInfo,
         BitVector &SpillMBBs,
-        std::map<unsigned,std::vector<SRInfo> > &SpillIdxes,
+        DenseMap<unsigned,std::vector<SRInfo> > &SpillIdxes,
         BitVector &RestoreMBBs,
-        std::map<unsigned,std::vector<SRInfo> > &RestoreIdxes,
-        std::map<unsigned,unsigned> &MBBVRegsMap,
+        DenseMap<unsigned,std::vector<SRInfo> > &RestoreIdxes,
+        DenseMap<unsigned,unsigned> &MBBVRegsMap,
         std::vector<LiveInterval*> &NewLIs, float &SSWeight);
 
     static LiveInterval* createInterval(unsigned Reg);

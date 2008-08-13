@@ -1091,7 +1091,7 @@ rewriteInstructionForSpills(const LiveInterval &li, const VNInfo *VNI,
                  SmallVector<int, 4> &ReMatIds,
                  const MachineLoopInfo *loopInfo,
                  unsigned &NewVReg, unsigned ImpUse, bool &HasDef, bool &HasUse,
-                 std::map<unsigned,unsigned> &MBBVRegsMap,
+                 DenseMap<unsigned,unsigned> &MBBVRegsMap,
                  std::vector<LiveInterval*> &NewLIs, float &SSWeight) {
   MachineBasicBlock *MBB = MI->getParent();
   unsigned loopDepth = loopInfo->getLoopDepth(MBB);
@@ -1334,10 +1334,10 @@ rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
                     SmallVector<int, 4> &ReMatIds,
                     const MachineLoopInfo *loopInfo,
                     BitVector &SpillMBBs,
-                    std::map<unsigned, std::vector<SRInfo> > &SpillIdxes,
+                    DenseMap<unsigned, std::vector<SRInfo> > &SpillIdxes,
                     BitVector &RestoreMBBs,
-                    std::map<unsigned, std::vector<SRInfo> > &RestoreIdxes,
-                    std::map<unsigned,unsigned> &MBBVRegsMap,
+                    DenseMap<unsigned, std::vector<SRInfo> > &RestoreIdxes,
+                    DenseMap<unsigned,unsigned> &MBBVRegsMap,
                     std::vector<LiveInterval*> &NewLIs, float &SSWeight) {
   bool AllCanFold = true;
   unsigned NewVReg = 0;
@@ -1404,7 +1404,7 @@ rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
     unsigned MBBId = MBB->getNumber();
     unsigned ThisVReg = 0;
     if (TrySplit) {
-      std::map<unsigned,unsigned>::const_iterator NVI = MBBVRegsMap.find(MBBId);
+      DenseMap<unsigned,unsigned>::iterator NVI = MBBVRegsMap.find(MBBId);
       if (NVI != MBBVRegsMap.end()) {
         ThisVReg = NVI->second;
         // One common case:
@@ -1466,7 +1466,7 @@ rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
           if (VNI)
             HasKill = anyKillInMBBAfterIdx(li, VNI, MBB, getDefIndex(index));
         }
-        std::map<unsigned, std::vector<SRInfo> >::iterator SII =
+        DenseMap<unsigned, std::vector<SRInfo> >::iterator SII =
           SpillIdxes.find(MBBId);
         if (!HasKill) {
           if (SII == SpillIdxes.end()) {
@@ -1499,14 +1499,14 @@ rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
     }
 
     if (HasUse) {
-      std::map<unsigned, std::vector<SRInfo> >::iterator SII =
+      DenseMap<unsigned, std::vector<SRInfo> >::iterator SII =
         SpillIdxes.find(MBBId);
       if (SII != SpillIdxes.end() &&
           SII->second.back().vreg == NewVReg &&
           (int)index > SII->second.back().index)
         // Use(s) following the last def, it's not safe to fold the spill.
         SII->second.back().canFold = false;
-      std::map<unsigned, std::vector<SRInfo> >::iterator RII =
+      DenseMap<unsigned, std::vector<SRInfo> >::iterator RII =
         RestoreIdxes.find(MBBId);
       if (RII != RestoreIdxes.end() && RII->second.back().vreg == NewVReg)
         // If we are splitting live intervals, only fold if it's the first
@@ -1539,7 +1539,7 @@ rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
 
 bool LiveIntervals::alsoFoldARestore(int Id, int index, unsigned vr,
                         BitVector &RestoreMBBs,
-                        std::map<unsigned,std::vector<SRInfo> > &RestoreIdxes) {
+                        DenseMap<unsigned,std::vector<SRInfo> > &RestoreIdxes) {
   if (!RestoreMBBs[Id])
     return false;
   std::vector<SRInfo> &Restores = RestoreIdxes[Id];
@@ -1553,7 +1553,7 @@ bool LiveIntervals::alsoFoldARestore(int Id, int index, unsigned vr,
 
 void LiveIntervals::eraseRestoreInfo(int Id, int index, unsigned vr,
                         BitVector &RestoreMBBs,
-                        std::map<unsigned,std::vector<SRInfo> > &RestoreIdxes) {
+                        DenseMap<unsigned,std::vector<SRInfo> > &RestoreIdxes) {
   if (!RestoreMBBs[Id])
     return;
   std::vector<SRInfo> &Restores = RestoreIdxes[Id];
@@ -1613,10 +1613,10 @@ addIntervalsForSpills(const LiveInterval &li,
 
   // Each bit specify whether it a spill is required in the MBB.
   BitVector SpillMBBs(mf_->getNumBlockIDs());
-  std::map<unsigned, std::vector<SRInfo> > SpillIdxes;
+  DenseMap<unsigned, std::vector<SRInfo> > SpillIdxes;
   BitVector RestoreMBBs(mf_->getNumBlockIDs());
-  std::map<unsigned, std::vector<SRInfo> > RestoreIdxes;
-  std::map<unsigned,unsigned> MBBVRegsMap;
+  DenseMap<unsigned, std::vector<SRInfo> > RestoreIdxes;
+  DenseMap<unsigned,unsigned> MBBVRegsMap;
   std::vector<LiveInterval*> NewLIs;
   const TargetRegisterClass* rc = mri_->getRegClass(li.reg);
 
