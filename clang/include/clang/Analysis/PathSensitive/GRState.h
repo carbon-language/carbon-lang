@@ -171,19 +171,18 @@ public:
   ce_iterator ce_begin() const { return ConstEq.begin(); }
   ce_iterator ce_end() const { return ConstEq.end(); }
   
-  class CheckerStatePrinter {
+  class Printer {
   public:
-    virtual ~CheckerStatePrinter() {}
-    virtual void PrintCheckerState(std::ostream& Out, void* State,
-                                   const char* nl, const char* sep) = 0;
+    virtual ~Printer() {}
+    virtual void Print(std::ostream& Out, const GRState* state,
+                       const char* nl, const char* sep) = 0;
   };
 
-  void print(std::ostream& Out, CheckerStatePrinter* P = NULL,
-             const char* nl = "\n", const char* sep = "") const;
+  void print(std::ostream& Out, Printer **Beg = 0, Printer **End = 0,
+             const char* nl = "\n", const char *sep = "") const;
   
-  void printStdErr(CheckerStatePrinter* P = NULL) const;
-  
-  void printDOT(std::ostream& Out, CheckerStatePrinter*P = NULL) const;
+  void printStdErr(Printer **Beg = 0, Printer **End = 0) const;  
+  void printDOT(std::ostream& Out, Printer **Beg = 0, Printer **End = 0) const;
 };  
   
 template<> struct GRTrait<GRState*> {

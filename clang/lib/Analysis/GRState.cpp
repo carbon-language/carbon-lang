@@ -202,16 +202,17 @@ const GRState* GRStateManager::getPersistentState(GRState& State) {
   return I;
 }
 
-void GRState::printDOT(std::ostream& Out, CheckerStatePrinter* P) const {
-  print(Out, P, "\\l", "\\|");
+void GRState::printDOT(std::ostream& Out,
+                       Printer** Beg, Printer** End) const {
+  print(Out, Beg, End, "\\l", "\\|");
 }
 
-void GRState::printStdErr(CheckerStatePrinter* P) const {
-  print(*llvm::cerr, P);
+void GRState::printStdErr(Printer** Beg, Printer** End) const {
+  print(*llvm::cerr, Beg, End);
 }  
 
-void GRState::print(std::ostream& Out, CheckerStatePrinter* P,
-                       const char* nl, const char* sep) const {
+void GRState::print(std::ostream& Out, Printer** Beg, Printer** End,
+                    const char* nl, const char* sep) const {
 
   // Print Variable Bindings
   Out << "Variables:" << nl;
@@ -264,6 +265,7 @@ void GRState::print(std::ostream& Out, CheckerStatePrinter* P,
   }
   
   // Print equality constraints.
+  // FIXME: Make just another printer do this.
   
   if (!ConstEq.isEmpty()) {
   
@@ -278,6 +280,7 @@ void GRState::print(std::ostream& Out, CheckerStatePrinter* P,
   }
 
   // Print != constraints.
+  // FIXME: Make just another printer do this.
     
   if (!ConstNotEq.isEmpty()) {
   
@@ -300,10 +303,8 @@ void GRState::print(std::ostream& Out, CheckerStatePrinter* P,
     }
   }
   
-  // Print checker-specific data.
-  
-  if (P && CheckerState)
-    P->PrintCheckerState(Out, CheckerState, nl, sep);
+  // Print checker-specific data. 
+  for ( ; Beg != End ; ++Beg) (*Beg)->Print(Out, this, nl, sep);
 }
 
 

@@ -18,6 +18,7 @@
 #include "clang/Analysis/PathSensitive/RValues.h"
 #include "clang/Analysis/PathSensitive/GRCoreEngine.h"
 #include "clang/Analysis/PathSensitive/GRState.h"
+#include <vector>
 
 namespace clang {
   
@@ -42,10 +43,7 @@ public:
   GRTransferFuncs() {}
   virtual ~GRTransferFuncs() {}
   
-  virtual GRState::CheckerStatePrinter* getCheckerStatePrinter() {
-    return NULL;
-  }
-  
+  virtual void getStatePrinters(std::vector<GRState::Printer*>& Printers) {}
   virtual void RegisterChecks(GRExprEngine& Eng);
   
   // Casts.

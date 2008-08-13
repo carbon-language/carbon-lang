@@ -1211,10 +1211,10 @@ public:
   typedef llvm::DenseMap<GRExprEngine::NodeTy*, std::vector<SymbolID>*>
           LeaksTy;
 
-  class BindingsPrinter : public GRState::CheckerStatePrinter {
+  class BindingsPrinter : public GRState::Printer {
   public:
-    virtual void PrintCheckerState(std::ostream& Out, void* State,
-                                   const char* nl, const char* sep);
+    virtual void Print(std::ostream& Out, const GRState* state,
+                       const char* nl, const char* sep);
   };
 
 private:
@@ -1230,6 +1230,10 @@ public:
   
   static RefBindings GetRefBindings(const GRState& StImpl) {
     return RefBindings((const RefBindings::TreeTy*) StImpl.CheckerState);
+  }
+  
+  static RefBindings GetRefBindings(const GRState* state) {
+    return RefBindings((const RefBindings::TreeTy*) state->CheckerState);
   }
 
 private:
@@ -1272,8 +1276,8 @@ public:
   
   virtual void RegisterChecks(GRExprEngine& Eng);
  
-  virtual GRState::CheckerStatePrinter* getCheckerStatePrinter() {
-    return &Printer;
+  virtual void getStatePrinters(std::vector<GRState::Printer*>& Printers) {
+    Printers.push_back(&Printer);
   }
   
   bool isGCEnabled() const { return Summaries.isGCEnabled(); }
@@ -1363,12 +1367,12 @@ public:
 
 
 
-void CFRefCount::BindingsPrinter::PrintCheckerState(std::ostream& Out,
-                                                    void* State, const char* nl,
-                                                    const char* sep) {
-  RefBindings B((RefBindings::TreeTy*) State);
+void CFRefCount::BindingsPrinter::Print(std::ostream& Out, const GRState* state,
+                                        const char* nl, const char* sep) {
+    
+  RefBindings B = GetRefBindings(state);
   
-  if (State)
+  if (!B.isEmpty())
     Out << sep << nl;
   
   for (RefBindings::iterator I=B.begin(), E=B.end(); I!=E; ++I) {

@@ -2257,7 +2257,7 @@ void GRExprEngine::EvalBinOp(GRStateSet& OStates, const GRState* St,
 #ifndef NDEBUG
 static GRExprEngine* GraphPrintCheckerState;
 static SourceManager* GraphPrintSourceManager;
-static GRState::CheckerStatePrinter* GraphCheckerStatePrinter;
+static GRState::Printer **GraphStatePrinterBeg, **GraphStatePrinterEnd;
 
 namespace llvm {
 template<>
@@ -2500,7 +2500,7 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRExprEngine::NodeTy*> :
     
     Out << "\\|StateID: " << (void*) N->getState() << "\\|";
 
-    N->getState()->printDOT(Out, GraphCheckerStatePrinter);
+    N->getState()->printDOT(Out, GraphStatePrinterBeg, GraphStatePrinterEnd);
       
     Out << "\\l";
     return Out.str();
@@ -2565,13 +2565,20 @@ void GRExprEngine::ViewGraph(bool trim) {
   else {
     GraphPrintCheckerState = this;
     GraphPrintSourceManager = &getContext().getSourceManager();
-    GraphCheckerStatePrinter = getTF().getCheckerStatePrinter();
+
+    // Get the state printers.
+    std::vector<GRState::Printer*> Printers;
+    getTF().getStatePrinters(Printers);   
+    GraphStatePrinterBeg = Printers.empty() ? 0 : &Printers[0];
+    GraphStatePrinterEnd = Printers.empty() ? 0 : &Printers[0]+Printers.size();
+    
 
     llvm::ViewGraph(*G.roots_begin(), "GRExprEngine");
     
     GraphPrintCheckerState = NULL;
     GraphPrintSourceManager = NULL;
-    GraphCheckerStatePrinter = NULL;
+    GraphStatePrinterBeg = NULL;
+    GraphStatePrinterEnd = NULL;
   }
 #endif
 }
@@ -2580,7 +2587,12 @@ void GRExprEngine::ViewGraph(NodeTy** Beg, NodeTy** End) {
 #ifndef NDEBUG
   GraphPrintCheckerState = this;
   GraphPrintSourceManager = &getContext().getSourceManager();
-  GraphCheckerStatePrinter = getTF().getCheckerStatePrinter();
+  
+  // Get the state printers.
+  std::vector<GRState::Printer*> Printers;
+  getTF().getStatePrinters(Printers);
+  GraphStatePrinterBeg = Printers.empty() ? 0 : &Printers[0];
+  GraphStatePrinterEnd = Printers.empty() ? 0 : &Printers[0]+Printers.size();
   
   GRExprEngine::GraphTy* TrimmedG = G.Trim(Beg, End);
 
@@ -2593,6 +2605,7 @@ void GRExprEngine::ViewGraph(NodeTy** Beg, NodeTy** End) {
   
   GraphPrintCheckerState = NULL;
   GraphPrintSourceManager = NULL;
-  GraphCheckerStatePrinter = NULL;
+  GraphStatePrinterBeg = NULL;
+  GraphStatePrinterEnd = NULL;
 #endif
 }
