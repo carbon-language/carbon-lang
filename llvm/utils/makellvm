@@ -131,6 +131,7 @@ set CMD = "make $GMAKE_OPTS && (cd $LLVMDIR/tools/$EXEC && make $GMAKE_OPTS)"
 
 if ($doit == 1) then
     csh -f -c "$CMD"
+    set pstatus = $?
 else
     echo '(NOT EXECUTING) COMMAND:'
     echo "  $CMD"
