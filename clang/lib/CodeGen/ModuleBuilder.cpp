@@ -72,7 +72,7 @@ namespace {
         Builder->EmitGlobal(FD);
       } else if (VarDecl *VD = dyn_cast<VarDecl>(D)) {
         Builder->EmitGlobal(VD);
-      } else if (isa<ObjCClassDecl>(D)){
+      } else if (isa<ObjCClassDecl>(D) || isa<ObjCForwardProtocolDecl>(D)) {
         //Forward declaration.  Only used for type checking.
       } else if (ObjCProtocolDecl *PD = dyn_cast<ObjCProtocolDecl>(D)){
         // Generate Protocol object.

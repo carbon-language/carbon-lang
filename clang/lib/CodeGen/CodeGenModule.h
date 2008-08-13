@@ -15,7 +15,6 @@
 #define CLANG_CODEGEN_CODEGENMODULE_H
 
 #include "CodeGenTypes.h"
-#include "CGObjCRuntime.h"
 #include "clang/AST/Attr.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringMap.h"
@@ -51,6 +50,7 @@ namespace CodeGen {
 
   class CodeGenFunction;
   class CGDebugInfo;
+  class CGObjCRuntime;
   
 /// CodeGenModule - This class organizes the cross-module state that is used
 /// while generating LLVM code.

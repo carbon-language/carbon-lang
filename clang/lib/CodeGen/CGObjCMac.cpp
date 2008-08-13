@@ -168,14 +168,9 @@ public:
            const llvm::SmallVectorImpl<std::string> &Protocols);
 
   virtual llvm::Value *GenerateProtocolRef(llvm::IRBuilder<> &Builder,
-                                           const char *ProtocolName);
+                                           const ObjCProtocolDecl *PD);
 
-  virtual void GenerateProtocol(const char *ProtocolName,
-      const llvm::SmallVectorImpl<std::string> &Protocols,
-      const llvm::SmallVectorImpl<llvm::Constant *>  &InstanceMethodNames,
-      const llvm::SmallVectorImpl<llvm::Constant *>  &InstanceMethodTypes,
-      const llvm::SmallVectorImpl<llvm::Constant *>  &ClassMethodNames,
-      const llvm::SmallVectorImpl<llvm::Constant *>  &ClassMethodTypes);
+  virtual void GenerateProtocol(const ObjCProtocolDecl *PD);
 
   virtual llvm::Function *ModuleInitFunction();
 };
@@ -300,18 +295,13 @@ llvm::Value *CGObjCMac::GenerateMessageSend(llvm::IRBuilder<> &Builder,
 }
 
 llvm::Value *CGObjCMac::GenerateProtocolRef(llvm::IRBuilder<> &Builder, 
-                                            const char *ProtocolName) {
+                                            const ObjCProtocolDecl *PD) {
   //  assert(0 && "Cannot get protocol reference on Mac runtime.");
   return llvm::Constant::getNullValue(ObjCTypes.ProtocolPtrTy);
   return 0;
 }
 
-void CGObjCMac::GenerateProtocol(const char *ProtocolName,
-    const llvm::SmallVectorImpl<std::string> &Protocols,
-    const llvm::SmallVectorImpl<llvm::Constant *>  &InstanceMethodNames,
-    const llvm::SmallVectorImpl<llvm::Constant *>  &InstanceMethodTypes,
-    const llvm::SmallVectorImpl<llvm::Constant *>  &ClassMethodNames,
-    const llvm::SmallVectorImpl<llvm::Constant *>  &ClassMethodTypes) {
+void CGObjCMac::GenerateProtocol(const ObjCProtocolDecl *PD) {
   //  assert(0 && "Cannot generate protocol for Mac runtime.");
 }
 

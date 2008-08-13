@@ -14,6 +14,7 @@
 #include "CGDebugInfo.h"
 #include "CodeGenModule.h"
 #include "CodeGenFunction.h"
+#include "CGObjCRuntime.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/Basic/Diagnostic.h"
@@ -247,33 +248,7 @@ void CodeGenModule::EmitObjCMethod(const ObjCMethodDecl *OMD) {
     CodeGenFunction(*this).GenerateObjCMethod(OMD);
 }
 void CodeGenModule::EmitObjCProtocolImplementation(const ObjCProtocolDecl *PD){
-  llvm::SmallVector<std::string, 16> Protocols;
-  for (ObjCProtocolDecl::protocol_iterator PI = PD->protocol_begin(),
-       E = PD->protocol_end(); PI != E; ++PI)
-    Protocols.push_back((*PI)->getName());
-  llvm::SmallVector<llvm::Constant*, 16> InstanceMethodNames;
-  llvm::SmallVector<llvm::Constant*, 16> InstanceMethodTypes;
-  for (ObjCProtocolDecl::instmeth_iterator iter = PD->instmeth_begin(),
-       E = PD->instmeth_end(); iter != E; iter++) {
-    std::string TypeStr;
-    Context.getObjCEncodingForMethodDecl(*iter, TypeStr);
-    InstanceMethodNames.push_back(
-        GetAddrOfConstantString((*iter)->getSelector().getName()));
-    InstanceMethodTypes.push_back(GetAddrOfConstantString(TypeStr));
-  }
-  // Collect information about class methods:
-  llvm::SmallVector<llvm::Constant*, 16> ClassMethodNames;
-  llvm::SmallVector<llvm::Constant*, 16> ClassMethodTypes;
-  for (ObjCProtocolDecl::classmeth_iterator iter = PD->classmeth_begin(),
-      endIter = PD->classmeth_end() ; iter != endIter ; iter++) {
-    std::string TypeStr;
-    Context.getObjCEncodingForMethodDecl((*iter),TypeStr);
-    ClassMethodNames.push_back(
-        GetAddrOfConstantString((*iter)->getSelector().getName()));
-    ClassMethodTypes.push_back(GetAddrOfConstantString(TypeStr));
-  }
-  Runtime->GenerateProtocol(PD->getName(), Protocols, InstanceMethodNames,
-      InstanceMethodTypes, ClassMethodNames, ClassMethodTypes);
+  Runtime->GenerateProtocol(PD);
 }
 
 void CodeGenModule::EmitObjCCategoryImpl(const ObjCCategoryImplDecl *OCD) {

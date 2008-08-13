@@ -13,6 +13,7 @@
 
 #include "CodeGenFunction.h"
 #include "CodeGenModule.h"
+#include "CGObjCRuntime.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/StmtVisitor.h"
@@ -509,7 +510,7 @@ Value *ScalarExprEmitter::VisitObjCSelectorExpr(ObjCSelectorExpr *E) {
 
 Value *ScalarExprEmitter::VisitObjCProtocolExpr(ObjCProtocolExpr *E) {
   // FIXME: This should pass the Decl not the name.
-  return Runtime->GenerateProtocolRef(Builder, E->getProtocol()->getName());
+  return Runtime->GenerateProtocolRef(Builder, E->getProtocol());
 }
 
 Value *ScalarExprEmitter::VisitArraySubscriptExpr(ArraySubscriptExpr *E) {

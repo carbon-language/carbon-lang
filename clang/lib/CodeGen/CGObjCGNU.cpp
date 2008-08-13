@@ -18,6 +18,7 @@
 #include "CodeGenModule.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
+#include "clang/AST/DeclObjC.h"
 #include "llvm/Module.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/IRBuilder.h"
@@ -137,13 +138,8 @@ public:
            const llvm::SmallVectorImpl<llvm::Constant *>  &ClassMethodTypes,
            const llvm::SmallVectorImpl<std::string> &Protocols);
   virtual llvm::Value *GenerateProtocolRef(llvm::IRBuilder<> &Builder,
-                                           const char *ProtocolName);
-  virtual void GenerateProtocol(const char *ProtocolName,
-      const llvm::SmallVectorImpl<std::string> &Protocols,
-      const llvm::SmallVectorImpl<llvm::Constant *>  &InstanceMethodNames,
-      const llvm::SmallVectorImpl<llvm::Constant *>  &InstanceMethodTypes,
-      const llvm::SmallVectorImpl<llvm::Constant *>  &ClassMethodNames,
-      const llvm::SmallVectorImpl<llvm::Constant *>  &ClassMethodTypes);
+                                           const ObjCProtocolDecl *PD);
+  virtual void GenerateProtocol(const ObjCProtocolDecl *PD);
   virtual llvm::Function *ModuleInitFunction();
 };
 } // end anonymous namespace
@@ -566,17 +562,39 @@ llvm::Constant *CGObjCGNU::GenerateProtocolList(
   return MakeGlobal(ProtocolListTy, Elements, ".objc_protocol_list");
 }
 
-llvm::Value *CGObjCGNU::GenerateProtocolRef(llvm::IRBuilder<> &Builder, const
-    char *ProtocolName) {
-  return ExistingProtocols[ProtocolName];
+llvm::Value *CGObjCGNU::GenerateProtocolRef(llvm::IRBuilder<> &Builder, 
+                                            const ObjCProtocolDecl *PD) {
+  return ExistingProtocols[PD->getName()];
 }
 
-void CGObjCGNU::GenerateProtocol(const char *ProtocolName,
-    const llvm::SmallVectorImpl<std::string> &Protocols,
-    const llvm::SmallVectorImpl<llvm::Constant *>  &InstanceMethodNames,
-    const llvm::SmallVectorImpl<llvm::Constant *>  &InstanceMethodTypes,
-    const llvm::SmallVectorImpl<llvm::Constant *>  &ClassMethodNames,
-    const llvm::SmallVectorImpl<llvm::Constant *>  &ClassMethodTypes) {
+void CGObjCGNU::GenerateProtocol(const ObjCProtocolDecl *PD) {
+  ASTContext &Context = CGM.getContext();
+  const char *ProtocolName = PD->getName();
+  llvm::SmallVector<std::string, 16> Protocols;
+  for (ObjCProtocolDecl::protocol_iterator PI = PD->protocol_begin(),
+       E = PD->protocol_end(); PI != E; ++PI)
+    Protocols.push_back((*PI)->getName());
+  llvm::SmallVector<llvm::Constant*, 16> InstanceMethodNames;
+  llvm::SmallVector<llvm::Constant*, 16> InstanceMethodTypes;
+  for (ObjCProtocolDecl::instmeth_iterator iter = PD->instmeth_begin(),
+       E = PD->instmeth_end(); iter != E; iter++) {
+    std::string TypeStr;
+    Context.getObjCEncodingForMethodDecl(*iter, TypeStr);
+    InstanceMethodNames.push_back(
+        CGM.GetAddrOfConstantString((*iter)->getSelector().getName()));
+    InstanceMethodTypes.push_back(CGM.GetAddrOfConstantString(TypeStr));
+  }
+  // Collect information about class methods:
+  llvm::SmallVector<llvm::Constant*, 16> ClassMethodNames;
+  llvm::SmallVector<llvm::Constant*, 16> ClassMethodTypes;
+  for (ObjCProtocolDecl::classmeth_iterator iter = PD->classmeth_begin(),
+      endIter = PD->classmeth_end() ; iter != endIter ; iter++) {
+    std::string TypeStr;
+    Context.getObjCEncodingForMethodDecl((*iter),TypeStr);
+    ClassMethodNames.push_back(
+        CGM.GetAddrOfConstantString((*iter)->getSelector().getName()));
+    ClassMethodTypes.push_back(CGM.GetAddrOfConstantString(TypeStr));
+  }
 
   llvm::Constant *ProtocolList = GenerateProtocolList(Protocols);
   llvm::Constant *InstanceMethodList =

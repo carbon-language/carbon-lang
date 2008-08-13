@@ -29,8 +29,9 @@ namespace llvm {
 }
 
 namespace clang {
+  class ObjCProtocolDecl;
   class Selector;
-  
+
 namespace CodeGen {
   class CodeGenModule;
 
@@ -51,14 +52,18 @@ public:
                                            Selector Sel,
                                            llvm::Value** ArgV,
                                            unsigned ArgC) =0;
+
   /// Generate the function required to register all Objective-C components in
   /// this compilation unit with the runtime library.
   virtual llvm::Function *ModuleInitFunction() =0;
+
   /// Get a selector for the specified name and type values
   virtual llvm::Value *GetSelector(BuilderType &Builder,
                                    Selector Sel) =0;
+
   /// Generate a constant string object
   virtual llvm::Constant *GenerateConstantString(const std::string &String) = 0;
+
   /// Generate a category.  A category contains a list of methods (and
   /// accompanying metadata) and a list of protocols.
   virtual void GenerateCategory(const char *ClassName, const char *CategoryName,
@@ -67,6 +72,7 @@ public:
              const llvm::SmallVectorImpl<Selector>  &ClassMethodSels,
              const llvm::SmallVectorImpl<llvm::Constant *>  &ClassMethodTypes,
              const llvm::SmallVectorImpl<std::string> &Protocols) =0;
+
   /// Generate a class stucture for this class.
   virtual void GenerateClass(
              const char *ClassName,
@@ -80,6 +86,7 @@ public:
              const llvm::SmallVectorImpl<Selector>  &ClassMethodSels,
              const llvm::SmallVectorImpl<llvm::Constant *>  &ClassMethodTypes,
              const llvm::SmallVectorImpl<std::string> &Protocols) =0;
+
   virtual llvm::Value *GenerateMessageSendSuper(llvm::IRBuilder<true> &Builder,
                                                 const llvm::Type *ReturnTy,
                                                 const char *SuperClassName,
@@ -91,16 +98,12 @@ public:
   /// Emit the code to return the named protocol as an object, as in a
   /// @protocol expression.
   virtual llvm::Value *GenerateProtocolRef(llvm::IRBuilder<true> &Builder,
-                                           const char *ProtocolName) = 0;
+                                           const ObjCProtocolDecl *PD) = 0;
 
   /// Generate the named protocol.  Protocols contain method metadata but no 
   /// implementations. 
-  virtual void GenerateProtocol(const char *ProtocolName,
-    const llvm::SmallVectorImpl<std::string> &Protocols,
-    const llvm::SmallVectorImpl<llvm::Constant *>  &InstanceMethodNames,
-    const llvm::SmallVectorImpl<llvm::Constant *>  &InstanceMethodTypes,
-    const llvm::SmallVectorImpl<llvm::Constant *>  &ClassMethodNames,
-    const llvm::SmallVectorImpl<llvm::Constant *>  &ClassMethodTypes) =0;
+  virtual void GenerateProtocol(const ObjCProtocolDecl *PD) = 0;
+
   /// Generate a function preamble for a method with the specified types
   virtual llvm::Function *MethodPreamble(
                                          const std::string &ClassName,
@@ -112,9 +115,11 @@ public:
                                          unsigned ArgC,
                                          bool isClassMethod,
                                          bool isVarArg) = 0;
+
   /// Look up the class for the specified name
   virtual llvm::Value *LookupClass(BuilderType &Builder, 
                                    llvm::Value *ClassName) =0;
+
   /// If instance variable addresses are determined at runtime then this should
   /// return true, otherwise instance variables will be accessed directly from
   /// the structure.  If this returns true then @defs is invalid for this
