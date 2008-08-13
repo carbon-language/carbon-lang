@@ -199,7 +199,8 @@ Sema::ActOnStartProtocolInterface(SourceLocation AtProtoInterfaceLoc,
       // FIXME: don't leak the objects passed in!
       return PDecl;
     }
-    
+    // Make sure the cached decl gets a valid start location.
+    PDecl->setLocation(AtProtoInterfaceLoc);
     PDecl->setForwardDecl(false);
   } else {
     PDecl = ObjCProtocolDecl::Create(Context, AtProtoInterfaceLoc,ProtocolName);
