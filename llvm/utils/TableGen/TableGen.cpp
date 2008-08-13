@@ -29,6 +29,7 @@
 #include "InstrEnumEmitter.h"
 #include "AsmWriterEmitter.h"
 #include "DAGISelEmitter.h"
+#include "FastISelEmitter.h"
 #include "SubtargetEmitter.h"
 #include "IntrinsicEmitter.h"
 #include "LLVMCConfigurationEmitter.h"
@@ -45,6 +46,7 @@ enum ActionType {
   GenInstrEnums, GenInstrs, GenAsmWriter,
   GenCallingConv,
   GenDAGISel,
+  GenFastISel,
   GenSubtarget,
   GenIntrinsic,
   GenLLVMCConf,
@@ -74,6 +76,8 @@ namespace {
                                "Generate assembly writer"),
                     clEnumValN(GenDAGISel, "gen-dag-isel",
                                "Generate a DAG instruction selector"),
+                    clEnumValN(GenFastISel, "gen-fast-isel",
+                               "Generate a \"fast\" instruction selector"),
                     clEnumValN(GenSubtarget, "gen-subtarget",
                                "Generate subtarget enumerations"),
                     clEnumValN(GenIntrinsic, "gen-intrinsic",
@@ -176,6 +180,9 @@ int main(int argc, char **argv) {
 
     case GenDAGISel:
       DAGISelEmitter(Records).run(*Out);
+      break;
+    case GenFastISel:
+      FastISelEmitter(Records).run(*Out);
       break;
     case GenSubtarget:
       SubtargetEmitter(Records).run(*Out);

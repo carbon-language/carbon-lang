@@ -1296,8 +1296,13 @@ $(ObjDir)/%GenCodeEmitter.inc.tmp: %.td $(ObjDir)/.dir
 
 $(TARGET:%=$(ObjDir)/%GenDAGISel.inc.tmp): \
 $(ObjDir)/%GenDAGISel.inc.tmp : %.td $(ObjDir)/.dir
-	$(Echo) "Building $(<F) instruction selector implementation with tblgen"
+	$(Echo) "Building $(<F) DAG instruction selector implementation with tblgen"
 	$(Verb) $(TableGen) -gen-dag-isel -o $(call SYSPATH, $@) $<
+
+$(TARGET:%=$(ObjDir)/%GenFastISel.inc.tmp): \
+$(ObjDir)/%GenFastISel.inc.tmp : %.td $(ObjDir)/.dir
+	$(Echo) "Building $(<F) \"fast\" instruction selector implementation with tblgen"
+	$(Verb) $(TableGen) -gen-fast-isel -o $(call SYSPATH, $@) $<
 
 $(TARGET:%=$(ObjDir)/%GenSubtarget.inc.tmp): \
 $(ObjDir)/%GenSubtarget.inc.tmp : %.td $(ObjDir)/.dir
