@@ -247,7 +247,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\lib\Analysis\ValueState.cpp"
+				RelativePath="..\..\lib\Analysis\GRState.cpp"
 				>
 			</File>
 		</Filter>
