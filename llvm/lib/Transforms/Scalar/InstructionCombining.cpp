@@ -1266,11 +1266,8 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, APInt DemandedMask,
 
         if (LHSKnownZero[BitWidth-1] || ((LHSKnownZero & LowBits) == LowBits))
           LHSKnownZero |= ~LowBits;
-        else if (LHSKnownOne[BitWidth-1])
-          LHSKnownOne |= ~LowBits;
 
         KnownZero |= LHSKnownZero & DemandedMask;
-        KnownOne |= LHSKnownOne & DemandedMask;
 
         assert((KnownZero & KnownOne) == 0&&"Bits known to be one AND zero?"); 
       }

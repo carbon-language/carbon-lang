@@ -369,15 +369,13 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
         ComputeMaskedBits(I->getOperand(0), Mask2, KnownZero2, KnownOne2, TD, 
                           Depth+1);
 
-        // The sign of a remainder is equal to the sign of the first
-        // operand (zero being positive).
+        // If the sign bit of the first operand is zero, the sign bit of
+        // the result is zero. If the first operand has no one bits below
+        // the second operand's single 1 bit, its sign will be zero.
         if (KnownZero2[BitWidth-1] || ((KnownZero2 & LowBits) == LowBits))
           KnownZero2 |= ~LowBits;
-        else if (KnownOne2[BitWidth-1])
-          KnownOne2 |= ~LowBits;
 
         KnownZero |= KnownZero2 & Mask;
-        KnownOne |= KnownOne2 & Mask;
 
         assert((KnownZero & KnownOne) == 0&&"Bits known to be one AND zero?"); 
       }
