@@ -483,6 +483,7 @@ int LLLexer::LexIdentifier() {
   KEYWORD("coldcc", COLDCC_TOK);
   KEYWORD("x86_stdcallcc", X86_STDCALLCC_TOK);
   KEYWORD("x86_fastcallcc", X86_FASTCALLCC_TOK);
+  KEYWORD("x86_ssecallcc", X86_SSECALLCC_TOK);
 
   KEYWORD("signext", SIGNEXT);
   KEYWORD("zeroext", ZEROEXT);

@@ -1082,6 +1082,7 @@ Module *llvm::RunVMAsmParser(llvm::MemoryBuffer *MB) {
 %token OPAQUE EXTERNAL TARGET TRIPLE ALIGN ADDRSPACE
 %token DEPLIBS CALL TAIL ASM_TOK MODULE SIDEEFFECT
 %token CC_TOK CCC_TOK FASTCC_TOK COLDCC_TOK X86_STDCALLCC_TOK X86_FASTCALLCC_TOK
+%token X86_SSECALLCC_TOK
 %token DATALAYOUT
 %type <UIntVal> OptCallingConv
 %type <ParamAttrs> OptParamAttrs ParamAttr 
@@ -1237,6 +1238,7 @@ OptCallingConv : /*empty*/          { $$ = CallingConv::C; } |
                  COLDCC_TOK         { $$ = CallingConv::Cold; } |
                  X86_STDCALLCC_TOK  { $$ = CallingConv::X86_StdCall; } |
                  X86_FASTCALLCC_TOK { $$ = CallingConv::X86_FastCall; } |
+                 X86_SSECALLCC_TOK  { $$ = CallingConv::X86_SSECall; } |
                  CC_TOK EUINT64VAL  {
                    if ((unsigned)$2 != $2)
                      GEN_ERROR("Calling conv too large");
