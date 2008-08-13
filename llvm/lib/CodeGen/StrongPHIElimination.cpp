@@ -762,7 +762,6 @@ void StrongPHIElimination::ScheduleCopies(MachineBasicBlock* MBB,
   std::set<unsigned> RegHandled;
   for (SmallVector<std::pair<unsigned, MachineInstr*>, 4>::iterator I =
        InsertedPHIDests.begin(), E = InsertedPHIDests.end(); I != E; ++I) {
-    unsigned bar = 0;
     if (RegHandled.insert(I->first).second &&
         !LI.getOrCreateInterval(I->first).liveAt(
                                       LI.getMBBEndIdx(I->second->getParent())))
