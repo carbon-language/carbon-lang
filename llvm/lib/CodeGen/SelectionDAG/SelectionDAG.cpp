@@ -2302,15 +2302,14 @@ SDValue SelectionDAG::getNode(unsigned Opcode, MVT VT,
     break;
   }
   case ISD::EXTRACT_VECTOR_ELT:
-    assert(N2C && "Bad EXTRACT_VECTOR_ELT!");
-
     // EXTRACT_VECTOR_ELT of an UNDEF is an UNDEF.
     if (N1.getOpcode() == ISD::UNDEF)
       return getNode(ISD::UNDEF, VT);
       
     // EXTRACT_VECTOR_ELT of CONCAT_VECTORS is often formed while lowering is
     // expanding copies of large vectors from registers.
-    if (N1.getOpcode() == ISD::CONCAT_VECTORS &&
+    if (N2C &&
+        N1.getOpcode() == ISD::CONCAT_VECTORS &&
         N1.getNumOperands() > 0) {
       unsigned Factor =
         N1.getOperand(0).getValueType().getVectorNumElements();
@@ -2321,18 +2320,17 @@ SDValue SelectionDAG::getNode(unsigned Opcode, MVT VT,
 
     // EXTRACT_VECTOR_ELT of BUILD_VECTOR is often formed while lowering is
     // expanding large vector constants.
-    if (N1.getOpcode() == ISD::BUILD_VECTOR)
+    if (N2C && N1.getOpcode() == ISD::BUILD_VECTOR)
       return N1.getOperand(N2C->getValue());
       
     // EXTRACT_VECTOR_ELT of INSERT_VECTOR_ELT is often formed when vector
     // operations are lowered to scalars.
-    if (N1.getOpcode() == ISD::INSERT_VECTOR_ELT)
-      if (ConstantSDNode *IEC = dyn_cast<ConstantSDNode>(N1.getOperand(2))) {
-        if (IEC == N2C)
-          return N1.getOperand(1);
-        else
-          return getNode(ISD::EXTRACT_VECTOR_ELT, VT, N1.getOperand(0), N2);
-      }
+    if (N1.getOpcode() == ISD::INSERT_VECTOR_ELT) {
+      if (N1.getOperand(2) == N2)
+        return N1.getOperand(1);
+      else
+        return getNode(ISD::EXTRACT_VECTOR_ELT, VT, N1.getOperand(0), N2);
+    }
     break;
   case ISD::EXTRACT_ELEMENT:
     assert(N2C && (unsigned)N2C->getValue() < 2 && "Bad EXTRACT_ELEMENT!");
