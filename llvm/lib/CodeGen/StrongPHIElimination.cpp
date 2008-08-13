@@ -141,8 +141,7 @@ namespace {
     void ScheduleCopies(MachineBasicBlock* MBB, std::set<unsigned>& pushed);
     void InsertCopies(MachineDomTreeNode* MBB,
                       SmallPtrSet<MachineBasicBlock*, 16>& v);
-    void mergeLiveIntervals(unsigned primary, unsigned secondary, 
-                            MachineBasicBlock* pred);
+    void mergeLiveIntervals(unsigned primary, unsigned secondary);
   };
 }
 
@@ -725,16 +724,29 @@ void StrongPHIElimination::ScheduleCopies(MachineBasicBlock* MBB,
     if (!copy_set.empty()) {
       std::pair<unsigned, unsigned> curr = *copy_set.begin();
       copy_set.erase(curr.first);
-      
-      const TargetRegisterClass *RC = MF->getRegInfo().getRegClass(curr.first);
-      
-      // Insert a copy from dest to a new temporary t at the end of b
-      unsigned t = MF->getRegInfo().createVirtualRegister(RC);
-      TII->copyRegToReg(*MBB, MBB->getFirstTerminator(), t,
-                        curr.second, RC, RC);
-      map[curr.second] = t;
-      
       worklist.insert(curr);
+      
+      LiveInterval& I = LI.getInterval(curr.second);
+      MachineBasicBlock::iterator term = MBB->getFirstTerminator();
+      unsigned endIdx = 0;
+      if (term != MBB->end())
+        endIdx = LI.getInstructionIndex(term);
+      else
+        endIdx = LI.getMBBEndIdx(MBB);
+      
+      if (I.liveAt(endIdx)) {
+        const TargetRegisterClass *RC =
+                                       MF->getRegInfo().getRegClass(curr.first);
+        
+        // Insert a copy from dest to a new temporary t at the end of b
+        unsigned t = MF->getRegInfo().createVirtualRegister(RC);
+        TII->copyRegToReg(*MBB, MBB->getFirstTerminator(), t,
+                          curr.second, RC, RC);
+        map[curr.second] = t;
+        
+        MachineBasicBlock::iterator TI = MBB->getFirstTerminator();
+        InsertedPHIDests.push_back(std::make_pair(t, --TI));
+      }
     }
   }
   
@@ -749,11 +761,13 @@ void StrongPHIElimination::ScheduleCopies(MachineBasicBlock* MBB,
   // PHI, we don't create multiple overlapping live intervals.
   std::set<unsigned> RegHandled;
   for (SmallVector<std::pair<unsigned, MachineInstr*>, 4>::iterator I =
-       InsertedPHIDests.begin(), E = InsertedPHIDests.end(); I != E; ++I)
+       InsertedPHIDests.begin(), E = InsertedPHIDests.end(); I != E; ++I) {
+    unsigned bar = 0;
     if (RegHandled.insert(I->first).second &&
         !LI.getOrCreateInterval(I->first).liveAt(
                                       LI.getMBBEndIdx(I->second->getParent())))
       LI.addLiveRangeToEndOfBlock(I->first, I->second);
+  }
 }
 
 /// InsertCopies - insert copies into MBB and all of its successors
@@ -816,63 +830,23 @@ void StrongPHIElimination::InsertCopies(MachineDomTreeNode* MDTN,
 }
 
 void StrongPHIElimination::mergeLiveIntervals(unsigned primary,
-                                              unsigned secondary,
-                                              MachineBasicBlock* pred) {
+                                              unsigned secondary) {
   
   LiveIntervals& LI = getAnalysis<LiveIntervals>();
   LiveInterval& LHS = LI.getOrCreateInterval(primary);
   LiveInterval& RHS = LI.getOrCreateInterval(secondary);
   
   LI.computeNumbering();
-  const LiveRange* RangeMergingIn =
-                   RHS.getLiveRangeContaining(LI.getMBBEndIdx(pred));
-  VNInfo* RHSVN = RangeMergingIn->valno;
-  VNInfo* NewVN = LHS.getNextValue(RangeMergingIn->valno->def,
-                                   RangeMergingIn->valno->copy,
-                                   LI.getVNInfoAllocator());
-
-  // If we discover that a live range was defined by a two-addr
-  // instruction, we need to merge over the input as well, even if
-  // it has a different VNInfo.
-  SmallPtrSet<VNInfo*, 4> MergedVNs;
-  MergedVNs.insert(RHSVN);
-  
+                     
+  SmallVector<VNInfo*, 4> VNSet (RHS.vni_begin(), RHS.vni_end());
   DenseMap<VNInfo*, VNInfo*> VNMap;
-  VNMap.insert(std::make_pair(RangeMergingIn->valno, NewVN));
-  
-  // Find all VNs that are the inputs to two-address instructiosn
-  // chaining upwards from the VN we're trying to merge.
-  bool addedVN = true;
-  while (addedVN) {
-    addedVN = false;
-    unsigned defIndex = RHSVN->def;
-    
-    if (defIndex != ~0U) {
-      MachineInstr* instr = LI.getInstructionFromIndex(defIndex);
-      
-      for (unsigned i = 0; i < instr->getNumOperands(); ++i) {
-        if (instr->getOperand(i).isReg() &&
-            instr->getOperand(i).getReg() == secondary)
-          if (instr->isRegReDefinedByTwoAddr(secondary, i)) {
-            RHSVN = RHS.getLiveRangeContaining(defIndex-1)->valno;
-            addedVN = true;
-            
-            VNInfo* NextVN = LHS.getNextValue(RHSVN->def,
-                                              RHSVN->copy,
-                                              LI.getVNInfoAllocator());
-            VNMap.insert(std::make_pair(RHSVN, NextVN));
-            
-            break;
-          }
-      }
-    }
-  }
-  
-  // Merge VNs from RHS into LHS using the mapping we computed above.
-  for (DenseMap<VNInfo*, VNInfo*>::iterator VI = VNMap.begin(),
-       VE = VNMap.end(); VI != VE; ++VI) {
-    LHS.MergeValueInAsValue(RHS, VI->first, VI->second);
-    RHS.removeValNo(VI->first);
+  for (SmallVector<VNInfo*, 4>::iterator VI = VNSet.begin(),
+       VE = VNSet.end(); VI != VE; ++VI) {
+    VNInfo* NewVN = LHS.getNextValue((*VI)->def,
+                                     (*VI)->copy,
+                                     LI.getVNInfoAllocator());
+    LHS.MergeValueInAsValue(RHS, *VI, NewVN);
+    RHS.removeValNo(*VI);
   }
   
   if (RHS.begin() == RHS.end())
@@ -925,7 +899,7 @@ bool StrongPHIElimination::runOnMachineFunction(MachineFunction &Fn) {
       std::map<unsigned, MachineBasicBlock*>::iterator SI = I->second.begin();
       
       if (SI->first != I->first) {
-        mergeLiveIntervals(I->first, SI->first, SI->second);
+        mergeLiveIntervals(I->first, SI->first);
         Fn.getRegInfo().replaceRegWith(SI->first, I->first);
       
         if (RenameSets.count(SI->first)) {
