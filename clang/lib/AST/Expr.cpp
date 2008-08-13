@@ -1195,10 +1195,7 @@ ObjCMessageExpr::ClassInfo ObjCMessageExpr::getClassInfo() const {
 }
 
 bool ChooseExpr::isConditionTrue(ASTContext &C) const {
-  llvm::APSInt CondVal(32);
-  bool IsConst = getCond()->isIntegerConstantExpr(CondVal, C);
-  assert(IsConst && "Condition of choose expr must be i-c-e"); IsConst=IsConst;
-  return CondVal != 0;
+  return getCond()->getIntegerConstantExprValue(C) != 0;
 }
 
 static int64_t evaluateOffsetOf(ASTContext& C, const Expr *E)
@@ -1220,12 +1217,9 @@ static int64_t evaluateOffsetOf(ASTContext& C, const Expr *E)
     return RL.getFieldOffset(i) + evaluateOffsetOf(C, ME->getBase());
   } else if (const ArraySubscriptExpr *ASE = dyn_cast<ArraySubscriptExpr>(E)) {
     const Expr *Base = ASE->getBase();
-    llvm::APSInt Idx(32);
-    bool ICE = ASE->getIdx()->isIntegerConstantExpr(Idx, C);
-    assert(ICE && "Array index is not a constant integer!");
     
     int64_t size = C.getTypeSize(ASE->getType());
-    size *= Idx.getSExtValue();
+    size *= ASE->getIdx()->getIntegerConstantExprValue(C).getSExtValue();
     
     return size + evaluateOffsetOf(C, Base);
   } else if (isa<CompoundLiteralExpr>(E))

@@ -370,11 +370,8 @@ void ASTRecordLayout::LayoutField(const FieldDecl *FD, unsigned FieldNo,
   if (const Expr *BitWidthExpr = FD->getBitWidth()) {
     // TODO: Need to check this algorithm on other targets!
     //       (tested on Linux-X86)
-    llvm::APSInt I(32);
-    bool BitWidthIsICE = 
-      BitWidthExpr->isIntegerConstantExpr(I, Context);
-    assert (BitWidthIsICE  && "Invalid BitField size expression");
-    FieldSize = I.getZExtValue();
+    FieldSize = 
+      BitWidthExpr->getIntegerConstantExprValue(Context).getZExtValue();
     
     std::pair<uint64_t, unsigned> FieldInfo = 
       Context.getTypeInfo(FD->getType());

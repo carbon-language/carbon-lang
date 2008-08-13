@@ -347,9 +347,8 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtTy *Switch,
       
       // We already verified that the expression has a i-c-e value (C99
       // 6.8.4.2p3) - get that value now.
-      llvm::APSInt LoVal(32);
       Expr *Lo = CS->getLHS();
-      Lo->isIntegerConstantExpr(LoVal, Context);
+      llvm::APSInt LoVal = Lo->getIntegerConstantExprValue(Context);
       
       // Convert the value to the same width/sign as the condition.
       ConvertIntegerToTypeWarnOnOverflow(LoVal, CondWidth, CondIsSigned,
@@ -398,9 +397,8 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtTy *Switch,
     std::vector<llvm::APSInt> HiVals;
     for (unsigned i = 0, e = CaseRanges.size(); i != e; ++i) {
       CaseStmt *CR = CaseRanges[i].second;
-      llvm::APSInt HiVal(32);
       Expr *Hi = CR->getRHS();
-      Hi->isIntegerConstantExpr(HiVal, Context);
+      llvm::APSInt HiVal = Hi->getIntegerConstantExprValue(Context);
 
       // Convert the value to the same width/sign as the condition.
       ConvertIntegerToTypeWarnOnOverflow(HiVal, CondWidth, CondIsSigned,
