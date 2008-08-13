@@ -202,10 +202,15 @@ const ValueState* GRExprEngine::getInitialState() {
     
     ScopedDecl *SD = const_cast<ScopedDecl*>(I->first);
     if (VarDecl* VD = dyn_cast<VarDecl>(SD)) {
-      if (VD->hasGlobalStorage() || isa<ParmVarDecl>(VD)) {
-        RVal X = RVal::GetSymbolValue(SymMgr, VD);
-        StateMgr.SetRVal(StateImpl, lval::DeclVal(VD), X);
-      }
+      // Initialize globals and parameters to symbolic values.
+      // Initialize local variables to undefined.
+      RVal X = (VD->hasGlobalStorage() || isa<ParmVarDecl>(VD) ||
+                isa<ImplicitParamDecl>(VD))
+             ? RVal::GetSymbolValue(SymMgr, VD)
+             : UndefinedVal();
+      
+      StateMgr.SetRVal(StateImpl, lval::DeclVal(VD), X);
+      
     } else if (ImplicitParamDecl *IPD = dyn_cast<ImplicitParamDecl>(SD)) {
         RVal X = RVal::GetSymbolValue(SymMgr, IPD);
       StateMgr.SetRVal(StateImpl, lval::DeclVal(IPD), X);

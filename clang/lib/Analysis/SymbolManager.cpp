@@ -18,7 +18,8 @@ using namespace clang;
 
 SymbolID SymbolManager::getSymbol(VarDecl* D) {
 
-  assert (isa<ParmVarDecl>(D) || D->hasGlobalStorage());
+  assert (isa<ParmVarDecl>(D) || isa<ImplicitParamDecl>(D) || 
+          D->hasGlobalStorage());
   
   llvm::FoldingSetNodeID profile;
   
