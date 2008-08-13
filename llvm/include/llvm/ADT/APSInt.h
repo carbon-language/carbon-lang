@@ -23,6 +23,9 @@ namespace llvm {
 class APSInt : public APInt {
   bool IsUnsigned;
 public:
+  /// Default constructor that creates an uninitialized APInt.
+  explicit APSInt() {}
+
   /// APSInt ctor - Create an APSInt with the specified width, default to
   /// unsigned.
   explicit APSInt(uint32_t BitWidth, bool isUnsigned = true) 
