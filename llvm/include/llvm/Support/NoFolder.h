@@ -1,4 +1,4 @@
-//=====-- llvm/Support/NullFolder.h - Constant folding helper -*- C++ -*-=====//
+//======-- llvm/Support/NoFolder.h - Constant folding helper -*- C++ -*-======//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file defines the NullFolder class, a helper for IRBuilder.  It provides
+// This file defines the NoFolder class, a helper for IRBuilder.  It provides
 // IRBuilder with a set of methods for creating unfolded constants.  This is
 // useful for learners trying to understand how LLVM IR works, and who don't
 // want details to be hidden by the constant folder.  For general constant
@@ -28,8 +28,8 @@
 
 namespace llvm {
 
-/// NullFolder - Create "constants" (actually, values) with no folding.
-class NullFolder {
+/// NoFolder - Create "constants" (actually, values) with no folding.
+class NoFolder {
 public:
 
   //===--------------------------------------------------------------------===//
