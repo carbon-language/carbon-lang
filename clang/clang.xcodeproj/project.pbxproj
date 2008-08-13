@@ -565,7 +565,6 @@
 		3507E4C60E27FE5500FB7B57 /* Path-Sensitive Core */ = {
 			isa = PBXGroup;
 			children = (
-				358F51510E529AA4007F2102 /* GRState.cpp */,
 				3558F76C0E267C8300A5B0DF /* BasicStore.cpp */,
 				35D55B240D81D8C60092E734 /* BasicValueFactory.cpp */,
 				3536456A0E23EBF7009C6509 /* Environment.cpp */,
@@ -574,6 +573,7 @@
 				DE41212A0D7F1C1C0080F80A /* GRCoreEngine.cpp */,
 				DE4121310D7F1C1C0080F80A /* GRExprEngine.cpp */,
 				35862B110E3629850009F542 /* GRExprEngineInternalChecks.cpp */,
+				358F51510E529AA4007F2102 /* GRState.cpp */,
 				35EFEFB50DB67ED60020783D /* GRTransferFuncs.cpp */,
 				DE4121320D7F1C1C0080F80A /* ProgramPoint.cpp */,
 				DE41212E0D7F1C1C0080F80A /* RValues.cpp */,
