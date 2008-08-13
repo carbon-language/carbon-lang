@@ -106,7 +106,7 @@ public:
   ///  steps.  Returns true if there is still simulation state on the worklist.
   bool ExecuteWorkList(unsigned Steps);
   
-  virtual ~GRCoreEngineImpl() {}
+  virtual ~GRCoreEngineImpl();
   
   CFG& getCFG() { return G->getCFG(); }
 };

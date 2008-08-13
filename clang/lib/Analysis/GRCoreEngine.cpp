@@ -156,6 +156,9 @@ void GRCoreEngineImpl::HandleBlockEntrance(const BlockEntrance& L,
     HandleBlockExit(L.getBlock(), Pred);
 }
 
+GRCoreEngineImpl::~GRCoreEngineImpl() {
+  delete WList;
+}
 
 void GRCoreEngineImpl::HandleBlockExit(CFGBlock * B, ExplodedNodeImpl* Pred) {
   
