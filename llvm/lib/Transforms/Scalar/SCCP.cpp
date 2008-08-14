@@ -138,7 +138,7 @@ public:
 ///
 class SCCPSolver : public InstVisitor<SCCPSolver> {
   SmallSet<BasicBlock*, 16> BBExecutable;// The basic blocks that are executable
-  std::map<Value*, LatticeVal> ValueState;  // The state each value is in.
+  DenseMap<Value*, LatticeVal> ValueState;  // The state each value is in.
 
   /// GlobalValue - If we are tracking any values for the contents of a global
   /// variable, we keep a mapping from the constant accessor to the element of
@@ -231,7 +231,7 @@ public:
 
   /// getValueMapping - Once we have solved for constants, return the mapping of
   /// LLVM values to LatticeVals.
-  std::map<Value*, LatticeVal> &getValueMapping() {
+  DenseMap<Value*, LatticeVal> &getValueMapping() {
     return ValueState;
   }
 
@@ -311,7 +311,7 @@ private:
   // Instruction object, then use this accessor to get its value from the map.
   //
   inline LatticeVal &getValueState(Value *V) {
-    std::map<Value*, LatticeVal>::iterator I = ValueState.find(V);
+    DenseMap<Value*, LatticeVal>::iterator I = ValueState.find(V);
     if (I != ValueState.end()) return I->second;  // Common case, in the map
 
     if (Constant *C = dyn_cast<Constant>(V)) {
@@ -1555,7 +1555,7 @@ bool SCCP::runOnFunction(Function &F) {
   //
   SmallSet<BasicBlock*, 16> &ExecutableBBs = Solver.getExecutableBlocks();
   SmallVector<Instruction*, 32> Insts;
-  std::map<Value*, LatticeVal> &Values = Solver.getValueMapping();
+  DenseMap<Value*, LatticeVal> &Values = Solver.getValueMapping();
 
   for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
     if (!ExecutableBBs.count(BB)) {
@@ -1701,7 +1701,7 @@ bool IPSCCP::runOnModule(Module &M) {
   SmallSet<BasicBlock*, 16> &ExecutableBBs = Solver.getExecutableBlocks();
   SmallVector<Instruction*, 32> Insts;
   SmallVector<BasicBlock*, 32> BlocksToErase;
-  std::map<Value*, LatticeVal> &Values = Solver.getValueMapping();
+  DenseMap<Value*, LatticeVal> &Values = Solver.getValueMapping();
 
   for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F) {
     for (Function::arg_iterator AI = F->arg_begin(), E = F->arg_end();
