@@ -446,7 +446,7 @@ Mips::CondCode Mips::GetOppositeBranchCondition(Mips::CondCode CC)
 bool MipsInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB, 
                                   MachineBasicBlock *&TBB,
                                   MachineBasicBlock *&FBB,
-                                  std::vector<MachineOperand> &Cond) const 
+                                  SmallVectorImpl<MachineOperand> &Cond) const 
 {
   // If the block has no terminators, it just falls into the block after it.
   MachineBasicBlock::iterator I = MBB.end();
@@ -528,9 +528,8 @@ bool MipsInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
 
 unsigned MipsInstrInfo::
 InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB, 
-             MachineBasicBlock *FBB, const std::vector<MachineOperand> &Cond)
-             const
-{
+             MachineBasicBlock *FBB,
+             const SmallVectorImpl<MachineOperand> &Cond) const {
   // Shouldn't be a fall through.
   assert(TBB && "InsertBranch must not be told to insert a fallthrough");
   assert((Cond.size() == 3 || Cond.size() == 2 || Cond.size() == 0) &&
@@ -615,7 +614,7 @@ BlockHasNoFallThrough(MachineBasicBlock &MBB) const
 /// ReverseBranchCondition - Return the inverse opcode of the 
 /// specified Branch instruction.
 bool MipsInstrInfo::
-ReverseBranchCondition(std::vector<MachineOperand> &Cond) const 
+ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const 
 {
   assert( (Cond.size() == 3 || Cond.size() == 2) && 
           "Invalid Mips branch condition!");

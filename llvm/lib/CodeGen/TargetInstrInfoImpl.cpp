@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 using namespace llvm;
@@ -77,7 +78,7 @@ bool TargetInstrInfoImpl::CommuteChangesDestination(MachineInstr *MI,
 
 
 bool TargetInstrInfoImpl::PredicateInstruction(MachineInstr *MI,
-                                const std::vector<MachineOperand> &Pred) const {
+                            const SmallVectorImpl<MachineOperand> &Pred) const {
   bool MadeChange = false;
   const TargetInstrDesc &TID = MI->getDesc();
   if (!TID.isPredicable())

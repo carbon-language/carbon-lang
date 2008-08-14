@@ -1456,7 +1456,7 @@ static bool isBrAnalysisUnpredicatedTerminator(const MachineInstr *MI,
 bool X86InstrInfo::AnalyzeBranch(MachineBasicBlock &MBB, 
                                  MachineBasicBlock *&TBB,
                                  MachineBasicBlock *&FBB,
-                                 std::vector<MachineOperand> &Cond) const {
+                                 SmallVectorImpl<MachineOperand> &Cond) const {
   // If the block has no terminators, it just falls into the block after it.
   MachineBasicBlock::iterator I = MBB.end();
   if (I == MBB.begin() || !isBrAnalysisUnpredicatedTerminator(--I, *this))
@@ -1567,7 +1567,7 @@ static const MachineInstrBuilder &X86InstrAddOperand(MachineInstrBuilder &MIB,
 unsigned
 X86InstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
                            MachineBasicBlock *FBB,
-                           const std::vector<MachineOperand> &Cond) const {
+                           const SmallVectorImpl<MachineOperand> &Cond) const {
   // Shouldn't be a fall through.
   assert(TBB && "InsertBranch must not be told to insert a fallthrough");
   assert((Cond.size() == 1 || Cond.size() == 0) &&
@@ -2365,7 +2365,7 @@ bool X86InstrInfo::BlockHasNoFallThrough(MachineBasicBlock &MBB) const {
 }
 
 bool X86InstrInfo::
-ReverseBranchCondition(std::vector<MachineOperand> &Cond) const {
+ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const {
   assert(Cond.size() == 1 && "Invalid X86 branch condition!");
   Cond[0].setImm(GetOppositeBranchCondition((X86::CondCode)Cond[0].getImm()));
   return false;

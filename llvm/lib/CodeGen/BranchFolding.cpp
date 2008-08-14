@@ -95,7 +95,7 @@ namespace {
     bool CanFallThrough(MachineBasicBlock *CurBB);
     bool CanFallThrough(MachineBasicBlock *CurBB, bool BranchUnAnalyzable,
                         MachineBasicBlock *TBB, MachineBasicBlock *FBB,
-                        const std::vector<MachineOperand> &Cond);
+                        const SmallVectorImpl<MachineOperand> &Cond);
   };
   char BranchFolder::ID = 0;
 }
@@ -190,7 +190,7 @@ bool BranchFolder::runOnMachineFunction(MachineFunction &MF) {
   bool EverMadeChange = false;
   for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; I++) {
     MachineBasicBlock *MBB = I, *TBB = 0, *FBB = 0;
-    std::vector<MachineOperand> Cond;
+    SmallVector<MachineOperand, 4> Cond;
     if (!TII->AnalyzeBranch(*MBB, TBB, FBB, Cond))
       EverMadeChange |= MBB->CorrectExtraCFGEdges(TBB, FBB, !Cond.empty());
     EverMadeChange |= OptimizeImpDefsBlock(MBB);
@@ -364,7 +364,7 @@ void BranchFolder::ReplaceTailWithBranchTo(MachineBasicBlock::iterator OldInst,
 
   // If OldBB isn't immediately before OldBB, insert a branch to it.
   if (++MachineFunction::iterator(OldBB) != MachineFunction::iterator(NewDest))
-    TII->InsertBranch(*OldBB, NewDest, 0, std::vector<MachineOperand>());
+    TII->InsertBranch(*OldBB, NewDest, 0, SmallVector<MachineOperand, 1>());
   OldBB->addSuccessor(NewDest);
   ++NumTailMerge;
 }
@@ -432,7 +432,7 @@ static void FixTail(MachineBasicBlock* CurMBB, MachineBasicBlock *SuccBB,
   MachineFunction *MF = CurMBB->getParent();
   MachineFunction::iterator I = next(MachineFunction::iterator(CurMBB));
   MachineBasicBlock *TBB = 0, *FBB = 0;
-  std::vector<MachineOperand> Cond;
+  SmallVector<MachineOperand, 4> Cond;
   if (I != MF->end() &&
       !TII->AnalyzeBranch(*CurMBB, TBB, FBB, Cond)) {
     MachineBasicBlock *NextBB = I;
@@ -444,7 +444,7 @@ static void FixTail(MachineBasicBlock* CurMBB, MachineBasicBlock *SuccBB,
       }
     }
   }
-  TII->InsertBranch(*CurMBB, SuccBB, NULL, std::vector<MachineOperand>());
+  TII->InsertBranch(*CurMBB, SuccBB, NULL, SmallVector<MachineOperand, 1>());
 }
 
 static bool MergeCompare(const std::pair<unsigned,MachineBasicBlock*> &p,
@@ -710,11 +710,11 @@ bool BranchFolder::TailMergeBlocks(MachineFunction &MF) {
         if (PBB==IBB)
           continue;
         MachineBasicBlock *TBB = 0, *FBB = 0;
-        std::vector<MachineOperand> Cond;
+        SmallVector<MachineOperand, 4> Cond;
         if (!TII->AnalyzeBranch(*PBB, TBB, FBB, Cond)) {
           // Failing case:  IBB is the target of a cbr, and
           // we cannot reverse the branch.
-          std::vector<MachineOperand> NewCond(Cond);
+          SmallVector<MachineOperand, 4> NewCond(Cond);
           if (!Cond.empty() && TBB==IBB) {
             if (TII->ReverseBranchCondition(NewCond))
               continue;
@@ -803,7 +803,7 @@ bool BranchFolder::CanFallThrough(MachineBasicBlock *CurBB,
                                   bool BranchUnAnalyzable,
                                   MachineBasicBlock *TBB, 
                                   MachineBasicBlock *FBB,
-                                  const std::vector<MachineOperand> &Cond) {
+                                  const SmallVectorImpl<MachineOperand> &Cond) {
   MachineFunction::iterator Fallthrough = CurBB;
   ++Fallthrough;
   // If FallthroughBlock is off the end of the function, it can't fall through.
@@ -844,7 +844,7 @@ bool BranchFolder::CanFallThrough(MachineBasicBlock *CurBB,
 ///
 bool BranchFolder::CanFallThrough(MachineBasicBlock *CurBB) {
   MachineBasicBlock *TBB = 0, *FBB = 0;
-  std::vector<MachineOperand> Cond;
+  SmallVector<MachineOperand, 4> Cond;
   bool CurUnAnalyzable = TII->AnalyzeBranch(*CurBB, TBB, FBB, Cond);
   return CanFallThrough(CurBB, CurUnAnalyzable, TBB, FBB, Cond);
 }
@@ -908,7 +908,7 @@ void BranchFolder::OptimizeBlock(MachineBasicBlock *MBB) {
   MachineBasicBlock &PrevBB = *prior(MachineFunction::iterator(MBB));
 
   MachineBasicBlock *PriorTBB = 0, *PriorFBB = 0;
-  std::vector<MachineOperand> PriorCond;
+  SmallVector<MachineOperand, 4> PriorCond;
   bool PriorUnAnalyzable =
     TII->AnalyzeBranch(PrevBB, PriorTBB, PriorFBB, PriorCond);
   if (!PriorUnAnalyzable) {
@@ -952,7 +952,7 @@ void BranchFolder::OptimizeBlock(MachineBasicBlock *MBB) {
     // if the branch condition is reversible, reverse the branch to create a
     // fall-through.
     if (PriorTBB == MBB) {
-      std::vector<MachineOperand> NewPriorCond(PriorCond);
+      SmallVector<MachineOperand, 4> NewPriorCond(PriorCond);
       if (!TII->ReverseBranchCondition(NewPriorCond)) {
         TII->RemoveBranch(PrevBB);
         TII->InsertBranch(PrevBB, PriorFBB, 0, NewPriorCond);
@@ -1002,7 +1002,7 @@ void BranchFolder::OptimizeBlock(MachineBasicBlock *MBB) {
       
       if (DoTransform) {
         // Reverse the branch so we will fall through on the previous true cond.
-        std::vector<MachineOperand> NewPriorCond(PriorCond);
+        SmallVector<MachineOperand, 4> NewPriorCond(PriorCond);
         if (!TII->ReverseBranchCondition(NewPriorCond)) {
           DOUT << "\nMoving MBB: " << *MBB;
           DOUT << "To make fallthrough to: " << *PriorTBB << "\n";
@@ -1022,7 +1022,7 @@ void BranchFolder::OptimizeBlock(MachineBasicBlock *MBB) {
   
   // Analyze the branch in the current block.
   MachineBasicBlock *CurTBB = 0, *CurFBB = 0;
-  std::vector<MachineOperand> CurCond;
+  SmallVector<MachineOperand, 4> CurCond;
   bool CurUnAnalyzable = TII->AnalyzeBranch(*MBB, CurTBB, CurFBB, CurCond);
   if (!CurUnAnalyzable) {
     // If the CFG for the prior block has extra edges, remove them.
@@ -1034,7 +1034,7 @@ void BranchFolder::OptimizeBlock(MachineBasicBlock *MBB) {
     // we want:
     //    Loop: xxx; jncc Loop; jmp Out
     if (CurTBB && CurFBB && CurFBB == MBB && CurTBB != MBB) {
-      std::vector<MachineOperand> NewCond(CurCond);
+      SmallVector<MachineOperand, 4> NewCond(CurCond);
       if (!TII->ReverseBranchCondition(NewCond)) {
         TII->RemoveBranch(*MBB);
         TII->InsertBranch(*MBB, CurFBB, CurTBB, NewCond);

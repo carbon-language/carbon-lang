@@ -39,7 +39,7 @@ public:
                            unsigned& destReg) const;
   virtual unsigned InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
                                 MachineBasicBlock *FBB,
-                                const std::vector<MachineOperand> &Cond) const;
+                            const SmallVectorImpl<MachineOperand> &Cond) const;
   virtual void copyRegToReg(MachineBasicBlock &MBB,
                             MachineBasicBlock::iterator MI,
                             unsigned DestReg, unsigned SrcReg,

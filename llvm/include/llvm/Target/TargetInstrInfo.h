@@ -195,7 +195,7 @@ public:
   ///
   virtual bool AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
                              MachineBasicBlock *&FBB,
-                             std::vector<MachineOperand> &Cond) const {
+                             SmallVectorImpl<MachineOperand> &Cond) const {
     return true;
   }
   
@@ -215,7 +215,7 @@ public:
   /// instructions inserted.
   virtual unsigned InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
                             MachineBasicBlock *FBB,
-                            const std::vector<MachineOperand> &Cond) const {
+                            const SmallVectorImpl<MachineOperand> &Cond) const {
     assert(0 && "Target didn't implement TargetInstrInfo::InsertBranch!"); 
     return 0;
   }
@@ -342,7 +342,8 @@ public:
   /// ReverseBranchCondition - Reverses the branch condition of the specified
   /// condition list, returning false on success and true if it cannot be
   /// reversed.
-  virtual bool ReverseBranchCondition(std::vector<MachineOperand> &Cond) const {
+  virtual
+  bool ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const {
     return true;
   }
   
@@ -368,13 +369,13 @@ public:
   /// instruction. It returns true if the operation was successful.
   virtual
   bool PredicateInstruction(MachineInstr *MI,
-                            const std::vector<MachineOperand> &Pred) const = 0;
+                        const SmallVectorImpl<MachineOperand> &Pred) const = 0;
 
   /// SubsumesPredicate - Returns true if the first specified predicate
   /// subsumes the second, e.g. GE subsumes GT.
   virtual
-  bool SubsumesPredicate(const std::vector<MachineOperand> &Pred1,
-                         const std::vector<MachineOperand> &Pred2) const {
+  bool SubsumesPredicate(const SmallVectorImpl<MachineOperand> &Pred1,
+                         const SmallVectorImpl<MachineOperand> &Pred2) const {
     return false;
   }
 
@@ -421,7 +422,7 @@ public:
   virtual bool CommuteChangesDestination(MachineInstr *MI,
                                          unsigned &OpIdx) const;
   virtual bool PredicateInstruction(MachineInstr *MI,
-                              const std::vector<MachineOperand> &Pred) const;
+                            const SmallVectorImpl<MachineOperand> &Pred) const;
   virtual void reMaterialize(MachineBasicBlock &MBB,
                              MachineBasicBlock::iterator MI,
                              unsigned DestReg,

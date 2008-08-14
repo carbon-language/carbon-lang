@@ -103,8 +103,8 @@ namespace {
       MachineBasicBlock *BB;
       MachineBasicBlock *TrueBB;
       MachineBasicBlock *FalseBB;
-      std::vector<MachineOperand> BrCond;
-      std::vector<MachineOperand> Predicate;
+      SmallVector<MachineOperand, 4> BrCond;
+      SmallVector<MachineOperand, 4> Predicate;
       BBInfo() : IsDone(false), IsBeingAnalyzed(false),
                  IsAnalyzed(false), IsEnqueued(false), IsBrAnalyzable(false),
                  HasFallThrough(false), IsUnpredicable(false),
@@ -161,7 +161,7 @@ namespace {
     void ScanInstructions(BBInfo &BBI);
     BBInfo &AnalyzeBlock(MachineBasicBlock *BB,
                          std::vector<IfcvtToken*> &Tokens);
-    bool FeasibilityAnalysis(BBInfo &BBI, std::vector<MachineOperand> &Cond,
+    bool FeasibilityAnalysis(BBInfo &BBI, SmallVectorImpl<MachineOperand> &Cond,
                              bool isTriangle = false, bool RevBranch = false);
     bool AnalyzeBlocks(MachineFunction &MF,
                        std::vector<IfcvtToken*> &Tokens);
@@ -173,9 +173,9 @@ namespace {
                           unsigned NumDups1, unsigned NumDups2);
     void PredicateBlock(BBInfo &BBI,
                         MachineBasicBlock::iterator E,
-                        std::vector<MachineOperand> &Cond);
+                        SmallVectorImpl<MachineOperand> &Cond);
     void CopyAndPredicateBlock(BBInfo &ToBBI, BBInfo &FromBBI,
-                               std::vector<MachineOperand> &Cond,
+                               SmallVectorImpl<MachineOperand> &Cond,
                                bool IgnoreBr = false);
     void MergeBlocks(BBInfo &ToBBI, BBInfo &FromBBI);
 
@@ -604,7 +604,7 @@ void IfConverter::ScanInstructions(BBInfo &BBI) {
 /// FeasibilityAnalysis - Determine if the block is a suitable candidate to be
 /// predicated by the specified predicate.
 bool IfConverter::FeasibilityAnalysis(BBInfo &BBI,
-                                      std::vector<MachineOperand> &Pred,
+                                      SmallVectorImpl<MachineOperand> &Pred,
                                       bool isTriangle, bool RevBranch) {
   // If the block is dead or unpredicable, then it cannot be predicated.
   if (BBI.IsDone || BBI.IsUnpredicable)
@@ -620,8 +620,8 @@ bool IfConverter::FeasibilityAnalysis(BBInfo &BBI,
       return false;
 
     // Test predicate subsumsion.
-    std::vector<MachineOperand> RevPred(Pred);
-    std::vector<MachineOperand> Cond(BBI.BrCond);
+    SmallVector<MachineOperand, 4> RevPred(Pred.begin(), Pred.end());
+    SmallVector<MachineOperand, 4> Cond(BBI.BrCond.begin(), BBI.BrCond.end());
     if (RevBranch) {
       if (TII->ReverseBranchCondition(Cond))
         return false;
@@ -672,7 +672,7 @@ IfConverter::BBInfo &IfConverter::AnalyzeBlock(MachineBasicBlock *BB,
     return BBI;
   }
 
-  std::vector<MachineOperand> RevCond(BBI.BrCond);
+  SmallVector<MachineOperand, 4> RevCond(BBI.BrCond.begin(), BBI.BrCond.end());
   bool CanRevCond = !TII->ReverseBranchCondition(RevCond);
 
   unsigned Dups = 0;
@@ -815,7 +815,7 @@ void IfConverter::InvalidatePreds(MachineBasicBlock *BB) {
 ///
 static void InsertUncondBranch(MachineBasicBlock *BB, MachineBasicBlock *ToBB,
                                const TargetInstrInfo *TII) {
-  std::vector<MachineOperand> NoCond;
+  SmallVector<MachineOperand, 1> NoCond;
   TII->InsertBranch(*BB, ToBB, NULL, NoCond);
 }
 
@@ -823,7 +823,7 @@ static void InsertUncondBranch(MachineBasicBlock *BB, MachineBasicBlock *ToBB,
 /// successors.
 void IfConverter::RemoveExtraEdges(BBInfo &BBI) {
   MachineBasicBlock *TBB = NULL, *FBB = NULL;
-  std::vector<MachineOperand> Cond;
+  SmallVector<MachineOperand, 4> Cond;
   if (!TII->AnalyzeBranch(*BBI.BB, TBB, FBB, Cond))
     BBI.BB->CorrectExtraCFGEdges(TBB, FBB, !Cond.empty());
 }
@@ -836,7 +836,7 @@ bool IfConverter::IfConvertSimple(BBInfo &BBI, IfcvtKind Kind) {
   BBInfo *CvtBBI = &TrueBBI;
   BBInfo *NextBBI = &FalseBBI;
 
-  std::vector<MachineOperand> Cond(BBI.BrCond);
+  SmallVector<MachineOperand, 4> Cond(BBI.BrCond.begin(), BBI.BrCond.end());
   if (Kind == ICSimpleFalse)
     std::swap(CvtBBI, NextBBI);
 
@@ -901,7 +901,7 @@ bool IfConverter::IfConvertTriangle(BBInfo &BBI, IfcvtKind Kind) {
   BBInfo *CvtBBI = &TrueBBI;
   BBInfo *NextBBI = &FalseBBI;
 
-  std::vector<MachineOperand> Cond(BBI.BrCond);
+  SmallVector<MachineOperand, 4> Cond(BBI.BrCond.begin(), BBI.BrCond.end());
   if (Kind == ICTriangleFalse || Kind == ICTriangleFRev)
     std::swap(CvtBBI, NextBBI);
 
@@ -954,7 +954,8 @@ bool IfConverter::IfConvertTriangle(BBInfo &BBI, IfcvtKind Kind) {
 
   // If 'true' block has a 'false' successor, add an exit branch to it.
   if (HasEarlyExit) {
-    std::vector<MachineOperand> RevCond(CvtBBI->BrCond);
+    SmallVector<MachineOperand, 4> RevCond(CvtBBI->BrCond.begin(),
+                                           CvtBBI->BrCond.end());
     if (TII->ReverseBranchCondition(RevCond))
       assert(false && "Unable to reverse branch condition!");
     TII->InsertBranch(*BBI.BB, CvtBBI->FalseBB, NULL, RevCond);
@@ -1026,10 +1027,10 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI, IfcvtKind Kind,
   // block would clobber the predicate, in that case, do the opposite.
   BBInfo *BBI1 = &TrueBBI;
   BBInfo *BBI2 = &FalseBBI;
-  std::vector<MachineOperand> RevCond(BBI.BrCond);
+  SmallVector<MachineOperand, 4> RevCond(BBI.BrCond.begin(), BBI.BrCond.end());
   TII->ReverseBranchCondition(RevCond);
-  std::vector<MachineOperand> *Cond1 = &BBI.BrCond;
-  std::vector<MachineOperand> *Cond2 = &RevCond;
+  SmallVector<MachineOperand, 4> *Cond1 = &BBI.BrCond;
+  SmallVector<MachineOperand, 4> *Cond2 = &RevCond;
 
   // Figure out the more profitable ordering.
   bool DoSwap = false;
@@ -1111,7 +1112,7 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI, IfcvtKind Kind,
 /// specified end with the specified condition.
 void IfConverter::PredicateBlock(BBInfo &BBI,
                                  MachineBasicBlock::iterator E,
-                                 std::vector<MachineOperand> &Cond) {
+                                 SmallVectorImpl<MachineOperand> &Cond) {
   for (MachineBasicBlock::iterator I = BBI.BB->begin(); I != E; ++I) {
     if (TII->isPredicated(I))
       continue;
@@ -1132,7 +1133,7 @@ void IfConverter::PredicateBlock(BBInfo &BBI,
 /// CopyAndPredicateBlock - Copy and predicate instructions from source BB to
 /// the destination block. Skip end of block branches if IgnoreBr is true.
 void IfConverter::CopyAndPredicateBlock(BBInfo &ToBBI, BBInfo &FromBBI,
-                                        std::vector<MachineOperand> &Cond,
+                                        SmallVectorImpl<MachineOperand> &Cond,
                                         bool IgnoreBr) {
   MachineFunction &MF = *ToBBI.BB->getParent();
 

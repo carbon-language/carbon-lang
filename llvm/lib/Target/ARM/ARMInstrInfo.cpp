@@ -333,7 +333,7 @@ ARMInstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
 // Branch analysis.
 bool ARMInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
                                  MachineBasicBlock *&FBB,
-                                 std::vector<MachineOperand> &Cond) const {
+                                 SmallVectorImpl<MachineOperand> &Cond) const {
   // If the block has no terminators, it just falls into the block after it.
   MachineBasicBlock::iterator I = MBB.end();
   if (I == MBB.begin() || !isUnpredicatedTerminator(--I))
@@ -432,7 +432,7 @@ unsigned ARMInstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
 
 unsigned ARMInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
                                 MachineBasicBlock *FBB,
-                                const std::vector<MachineOperand> &Cond) const {
+                            const SmallVectorImpl<MachineOperand> &Cond) const {
   MachineFunction &MF = *MBB.getParent();
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
   int BOpc   = AFI->isThumbFunction() ? ARM::tB : ARM::B;
@@ -799,7 +799,7 @@ bool ARMInstrInfo::BlockHasNoFallThrough(MachineBasicBlock &MBB) const {
 }
 
 bool ARMInstrInfo::
-ReverseBranchCondition(std::vector<MachineOperand> &Cond) const {
+ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const {
   ARMCC::CondCodes CC = (ARMCC::CondCodes)(int)Cond[0].getImm();
   Cond[0].setImm(ARMCC::getOppositeCondition(CC));
   return false;
@@ -811,7 +811,7 @@ bool ARMInstrInfo::isPredicated(const MachineInstr *MI) const {
 }
 
 bool ARMInstrInfo::PredicateInstruction(MachineInstr *MI,
-                                const std::vector<MachineOperand> &Pred) const {
+                            const SmallVectorImpl<MachineOperand> &Pred) const {
   unsigned Opc = MI->getOpcode();
   if (Opc == ARM::B || Opc == ARM::tB) {
     MI->setDesc(get(Opc == ARM::B ? ARM::Bcc : ARM::tBcc));
@@ -831,8 +831,8 @@ bool ARMInstrInfo::PredicateInstruction(MachineInstr *MI,
 }
 
 bool
-ARMInstrInfo::SubsumesPredicate(const std::vector<MachineOperand> &Pred1,
-                                const std::vector<MachineOperand> &Pred2) const{
+ARMInstrInfo::SubsumesPredicate(const SmallVectorImpl<MachineOperand> &Pred1,
+                            const SmallVectorImpl<MachineOperand> &Pred2) const{
   if (Pred1.size() > 2 || Pred2.size() > 2)
     return false;
 

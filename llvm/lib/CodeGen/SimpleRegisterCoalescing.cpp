@@ -631,7 +631,7 @@ static bool isSameOrFallThroughBB(MachineBasicBlock *MBB,
   if (MBB == SuccMBB)
     return true;
   MachineBasicBlock *TBB = 0, *FBB = 0;
-  std::vector<MachineOperand> Cond;
+  SmallVector<MachineOperand, 4> Cond;
   return !tii_->AnalyzeBranch(*MBB, TBB, FBB, Cond) && !TBB && !FBB &&
     MBB->isSuccessor(SuccMBB);
 }

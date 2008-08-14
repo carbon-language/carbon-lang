@@ -210,7 +210,7 @@ void PPCInstrInfo::insertNoop(MachineBasicBlock &MBB,
 // Branch analysis.
 bool PPCInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
                                  MachineBasicBlock *&FBB,
-                                 std::vector<MachineOperand> &Cond) const {
+                                 SmallVectorImpl<MachineOperand> &Cond) const {
   // If the block has no terminators, it just falls into the block after it.
   MachineBasicBlock::iterator I = MBB.end();
   if (I == MBB.begin() || !isUnpredicatedTerminator(--I))
@@ -292,7 +292,7 @@ unsigned PPCInstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
 unsigned
 PPCInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
                            MachineBasicBlock *FBB,
-                           const std::vector<MachineOperand> &Cond) const {
+                           const SmallVectorImpl<MachineOperand> &Cond) const {
   // Shouldn't be a fall through.
   assert(TBB && "InsertBranch must not be told to insert a fallthrough");
   assert((Cond.size() == 2 || Cond.size() == 0) && 
@@ -762,7 +762,7 @@ bool PPCInstrInfo::BlockHasNoFallThrough(MachineBasicBlock &MBB) const {
 }
 
 bool PPCInstrInfo::
-ReverseBranchCondition(std::vector<MachineOperand> &Cond) const {
+ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const {
   assert(Cond.size() == 2 && "Invalid PPC branch opcode!");
   // Leave the CR# the same, but invert the condition.
   Cond[0].setImm(PPC::InvertPredicate((PPC::Predicate)Cond[0].getImm()));

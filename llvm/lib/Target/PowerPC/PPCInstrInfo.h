@@ -107,11 +107,11 @@ public:
   // Branch analysis.
   virtual bool AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
                              MachineBasicBlock *&FBB,
-                             std::vector<MachineOperand> &Cond) const;
+                             SmallVectorImpl<MachineOperand> &Cond) const;
   virtual unsigned RemoveBranch(MachineBasicBlock &MBB) const;
   virtual unsigned InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
                                 MachineBasicBlock *FBB,
-                                const std::vector<MachineOperand> &Cond) const;
+                            const SmallVectorImpl<MachineOperand> &Cond) const;
   virtual void copyRegToReg(MachineBasicBlock &MBB,
                             MachineBasicBlock::iterator MI,
                             unsigned DestReg, unsigned SrcReg,
@@ -156,7 +156,8 @@ public:
                                     SmallVectorImpl<unsigned> &Ops) const;
   
   virtual bool BlockHasNoFallThrough(MachineBasicBlock &MBB) const;
-  virtual bool ReverseBranchCondition(std::vector<MachineOperand> &Cond) const;
+  virtual
+  bool ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const;
   
   /// GetInstSize - Return the number of bytes of code the specified
   /// instruction may be.  This returns the maximum number of bytes.

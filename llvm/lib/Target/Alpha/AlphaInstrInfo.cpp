@@ -100,9 +100,10 @@ static bool isAlphaIntCondCode(unsigned Opcode) {
   }
 }
 
-unsigned AlphaInstrInfo::InsertBranch(MachineBasicBlock &MBB,MachineBasicBlock *TBB,
-                                  MachineBasicBlock *FBB,
-                                  const std::vector<MachineOperand> &Cond)const{
+unsigned AlphaInstrInfo::InsertBranch(MachineBasicBlock &MBB,
+                            MachineBasicBlock *TBB,
+                            MachineBasicBlock *FBB,
+                            const SmallVectorImpl<MachineOperand> &Cond) const {
   assert(TBB && "InsertBranch must not be told to insert a fallthrough");
   assert((Cond.size() == 2 || Cond.size() == 0) && 
          "Alpha branch conditions have two components!");
@@ -315,7 +316,7 @@ static unsigned AlphaRevCondCode(unsigned Opcode) {
 // Branch analysis.
 bool AlphaInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
                                  MachineBasicBlock *&FBB,
-                                 std::vector<MachineOperand> &Cond) const {
+                                 SmallVectorImpl<MachineOperand> &Cond) const {
   // If the block has no terminators, it just falls into the block after it.
   MachineBasicBlock::iterator I = MBB.end();
   if (I == MBB.begin() || !isUnpredicatedTerminator(--I))
@@ -418,7 +419,7 @@ bool AlphaInstrInfo::BlockHasNoFallThrough(MachineBasicBlock &MBB) const {
   }
 }
 bool AlphaInstrInfo::
-ReverseBranchCondition(std::vector<MachineOperand> &Cond) const {
+ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const {
   assert(Cond.size() == 2 && "Invalid Alpha branch opcode!");
   Cond[0].setImm(AlphaRevCondCode(Cond[0].getImm()));
   return false;
