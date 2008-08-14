@@ -15,6 +15,7 @@ BUILT_SOURCES = X86GenRegisterInfo.h.inc X86GenRegisterNames.inc \
                 X86GenRegisterInfo.inc X86GenInstrNames.inc \
                 X86GenInstrInfo.inc X86GenAsmWriter.inc \
                 X86GenAsmWriter1.inc X86GenDAGISel.inc  \
+                X86GenFastISel.inc \
                 X86GenCallingConv.inc X86GenSubtarget.inc
 
 include $(LEVEL)/Makefile.common
