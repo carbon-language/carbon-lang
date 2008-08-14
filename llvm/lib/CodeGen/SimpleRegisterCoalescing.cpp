@@ -1852,7 +1852,7 @@ void SimpleRegisterCoalescing::joinIntervals() {
     JoinQueue = new JoinPriorityQueue<CopyRecSort>(this);
 
   std::vector<CopyRec> TryAgainList;
-  if (loopInfo->begin() == loopInfo->end()) {
+  if (loopInfo->empty()) {
     // If there are no loops in the function, join intervals in function order.
     for (MachineFunction::iterator I = mf_->begin(), E = mf_->end();
          I != E; ++I)
@@ -2049,7 +2049,7 @@ SimpleRegisterCoalescing::TurnCopyIntoImpDef(MachineBasicBlock::iterator &I,
   CopyMI->setDesc(tii_->get(TargetInstrInfo::IMPLICIT_DEF));
   for (int i = CopyMI->getNumOperands() - 1, e = 0; i > e; --i)
     CopyMI->RemoveOperand(i);
-  bool NoUse = mri_->use_begin(SrcReg) == mri_->use_end();
+  bool NoUse = mri_->use_empty(SrcReg);
   if (NoUse) {
     for (MachineRegisterInfo::reg_iterator I = mri_->reg_begin(SrcReg),
            E = mri_->reg_end(); I != E; ) {

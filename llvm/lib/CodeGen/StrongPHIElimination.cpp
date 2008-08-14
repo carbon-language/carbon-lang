@@ -848,7 +848,7 @@ void StrongPHIElimination::mergeLiveIntervals(unsigned primary,
     RHS.removeValNo(*VI);
   }
   
-  if (RHS.begin() == RHS.end())
+  if (RHS.empty())
     LI.removeInterval(RHS.reg);
 }
 

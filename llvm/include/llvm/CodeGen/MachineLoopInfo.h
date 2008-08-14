@@ -92,6 +92,7 @@ public:
   typedef std::vector<MachineLoop*>::const_iterator iterator;
   inline iterator begin() const { return LI->begin(); }
   inline iterator end() const { return LI->end(); }
+  bool empty() const { return LI->empty(); }
 
   /// getLoopFor - Return the inner most loop that BB lives in.  If a basic
   /// block is in no loop (for example the entry node), null is returned.

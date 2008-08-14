@@ -46,7 +46,7 @@ FunctionPass *llvm::createLoopAlignerPass() { return new LoopAligner(); }
 bool LoopAligner::runOnMachineFunction(MachineFunction &MF) {
   const MachineLoopInfo *MLI = &getAnalysis<MachineLoopInfo>();
 
-  if (MLI->begin() == MLI->end())
+  if (MLI->empty())
     return false;  // No loops.
 
   const TargetLowering *TLI = MF.getTarget().getTargetLowering();

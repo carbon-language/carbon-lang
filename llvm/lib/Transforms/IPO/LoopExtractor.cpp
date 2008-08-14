@@ -79,7 +79,7 @@ bool LoopExtractor::runOnFunction(Function &F) {
   LoopInfo &LI = getAnalysis<LoopInfo>();
 
   // If this function has no loops, there is nothing to do.
-  if (LI.begin() == LI.end())
+  if (LI.empty())
     return false;
 
   DominatorTree &DT = getAnalysis<DominatorTree>();

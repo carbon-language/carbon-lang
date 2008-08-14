@@ -547,7 +547,7 @@ void LiveInterval::MergeValueInAsValue(const LiveInterval &RHS,
 /// used with an unknown definition value.
 void LiveInterval::MergeInClobberRanges(const LiveInterval &Clobbers,
                                         BumpPtrAllocator &VNInfoAllocator) {
-  if (Clobbers.begin() == Clobbers.end()) return;
+  if (Clobbers.empty()) return;
   
   // Find a value # to use for the clobber ranges.  If there is already a value#
   // for unknown values, use it.

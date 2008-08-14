@@ -648,6 +648,7 @@ public:
   typedef typename std::vector<LoopBase<BlockT>*>::const_iterator iterator;
   iterator begin() const { return TopLevelLoops.begin(); }
   iterator end() const { return TopLevelLoops.end(); }
+  bool empty() const { return TopLevelLoops.empty(); }
   
   /// getLoopFor - Return the inner most loop that BB lives in.  If a basic
   /// block is in no loop (for example the entry node), null is returned.
@@ -947,6 +948,7 @@ public:
   typedef std::vector<Loop*>::const_iterator iterator;
   inline iterator begin() const { return LI->begin(); }
   inline iterator end() const { return LI->end(); }
+  bool empty() const { return LI->empty(); }
 
   /// getLoopFor - Return the inner most loop that BB lives in.  If a basic
   /// block is in no loop (for example the entry node), null is returned.

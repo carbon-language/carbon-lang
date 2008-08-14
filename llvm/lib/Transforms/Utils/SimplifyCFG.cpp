@@ -107,7 +107,7 @@ static bool CanPropagatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
       CommonPreds.insert(*PI);
 
   // Shortcut, if there are no common predecessors, merging is always safe
-  if (CommonPreds.begin() == CommonPreds.end())
+  if (CommonPreds.empty())
     return true;
   
   // Look at all the phi nodes in Succ, to see if they present a conflict when

@@ -1006,9 +1006,9 @@ bool LoopIndexSplit::updateLoopIterationSpace(SplitInfo &SD) {
 
   // Remove split condition.
   SD.SplitCondition->eraseFromParent();
-  if (Op0->use_begin() == Op0->use_end())
+  if (Op0->use_empty())
     Op0->eraseFromParent();
-  if (Op1->use_begin() == Op1->use_end())
+  if (Op1->use_empty())
     Op1->eraseFromParent();
       
   BranchInst *ExitInsn =
