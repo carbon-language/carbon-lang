@@ -85,10 +85,6 @@ public:
     IdentInfo = II;
   }
   
-  /// isNamedIdentifier - Return true if this token is a ppidentifier with the
-  /// specified name.  For example, tok.isNamedIdentifier("this").
-  bool isNamedIdentifier(const char *Name) const;
-  
   /// setFlag - Set the specified flag.
   void setFlag(TokenFlags Flag) {
     Flags |= Flag;

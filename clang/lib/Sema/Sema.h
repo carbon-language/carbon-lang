@@ -137,7 +137,10 @@ public:
   /// kinds of checking (e.g. checking format string errors in printf calls).
   /// This list is populated upon the creation of a Sema object.    
   IdentifierInfo* KnownFunctionIDs[ id_num_known_functions ];
-  
+
+  /// SuperID - Identifier for "super" used for Objective-C checking.
+  IdentifierInfo* SuperID;
+
   /// Translation Unit Scope - useful to Objective-C actions that need
   /// to lookup file scope declarations in the "ordinary" C decl namespace.
   /// For example, user-defined classes, built-in "id" type, etc.

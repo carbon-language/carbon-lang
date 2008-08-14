@@ -51,6 +51,11 @@ class Parser {
   enum { ScopeCacheSize = 16 };
   unsigned NumCachedScopes;
   Scope *ScopeCache[ScopeCacheSize];
+
+  /// Ident_super - IdentifierInfo for "super", to support fast
+  /// comparison.
+  IdentifierInfo *Ident_super;
+
 public:
   Parser(Preprocessor &PP, Action &Actions);
   ~Parser();
@@ -434,7 +439,7 @@ private:
     if (Actions.isTypeName(*Tok.getIdentifierInfo(), CurScope))
       return true;
     
-    return Tok.isNamedIdentifier("super");
+    return Tok.getIdentifierInfo() == Ident_super;
   }
   
   ExprResult ParseObjCAtExpression(SourceLocation AtLocation);

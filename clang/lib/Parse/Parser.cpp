@@ -267,6 +267,8 @@ void Parser::Initialize() {
                                   &PP.getIdentifierTable().get("nonatomic");
     ObjCForCollectionInKW = &PP.getIdentifierTable().get("in");
   }
+
+  Ident_super = &PP.getIdentifierTable().get("super");
 }
 
 /// ParseTopLevelDecl - Parse one top-level declaration, return whatever the

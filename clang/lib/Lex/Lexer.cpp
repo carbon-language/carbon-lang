@@ -51,12 +51,6 @@ tok::ObjCKeywordKind Token::getObjCKeywordID() const {
   return specId ? specId->getObjCKeywordID() : tok::objc_not_keyword;
 }
 
-/// isNamedIdentifier - Return true if this token is a ppidentifier with the
-/// specified name.  For example, tok.isNamedIdentifier("this").
-bool Token::isNamedIdentifier(const char *Name) const {
-  return IdentInfo && !strcmp(IdentInfo->getName(), Name);
-}
-
 
 //===----------------------------------------------------------------------===//
 // Lexer Class Implementation

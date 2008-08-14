@@ -103,6 +103,8 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer)
   KnownFunctionIDs[id_vsprintf]  = &IT.get("vsprintf");
   KnownFunctionIDs[id_vprintf]   = &IT.get("vprintf");
 
+  SuperID = &IT.get("super");
+
   TUScope = 0;
   if (getLangOptions().CPlusPlus)
     FieldCollector.reset(new CXXFieldCollector());
