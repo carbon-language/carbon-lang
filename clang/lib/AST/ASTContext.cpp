@@ -1485,6 +1485,11 @@ void ASTContext::getObjCEncodingForType(QualType T, std::string& S,
     S += '?';
   } else if (const RecordType *RTy = T->getAsRecordType()) {
     RecordDecl *RDecl= RTy->getDecl();
+    // This mimics the behavior in gcc's encode_aggregate_within().
+    // The idea is to only inline structure definitions for top level pointers
+    // to structures and embedded structures.
+    bool inlining = (S.size() == 1 && S[0] == '^' ||
+                     S.size() > 1 && S[S.size()-1] != '^');
     S += '{';
     S += RDecl->getName();
     bool found = false;
@@ -1493,7 +1498,7 @@ void ASTContext::getObjCEncodingForType(QualType T, std::string& S,
         found = true;
         break;
       }
-    if (!found) {
+    if (!found && inlining) {
       ERType.push_back(RTy);
       S += '=';
       for (int i = 0; i < RDecl->getNumMembers(); i++) {
