@@ -473,9 +473,11 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
     NumSubRegs += RegisterSubRegs[Regs[i].TheDef].size();
   }
   
-  unsigned SubregHashTableSize = NextPowerOf2(2 * NumSubRegs);
+  unsigned SubregHashTableSize = 2 * NextPowerOf2(2 * NumSubRegs);
   unsigned* SubregHashTable = new unsigned[2 * SubregHashTableSize];
   std::fill(SubregHashTable, SubregHashTable + 2 * SubregHashTableSize, ~0U);
+  
+  unsigned hashMisses = 0;
   
   for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
     Record* R = Regs[i].TheDef;
@@ -491,6 +493,8 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
              SubregHashTable[index*2+1] != ~0U) {
         index = (index + ProbeAmt) & (SubregHashTableSize-1);
         ProbeAmt += 2;
+        
+        hashMisses++;
       }
       
       SubregHashTable[index*2] = i;
@@ -498,10 +502,12 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
     }
   }
   
+  OS << "\n\n  // Number of hash collisions: " << hashMisses << "\n";
+  
   if (SubregHashTableSize) {
     std::string Namespace = Regs[0].TheDef->getValueAsString("Namespace");
     
-    OS << "\n\n  const unsigned SubregHashTable[] = { ";
+    OS << "  const unsigned SubregHashTable[] = { ";
     for (unsigned i = 0; i < SubregHashTableSize - 1; ++i) {
       if (i != 0)
         // Insert spaces for nice formatting.
@@ -527,7 +533,7 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
     OS << "  const unsigned SubregHashTableSize = "
        << SubregHashTableSize << ";\n";
   } else {
-    OS << "\n\n  const unsigned SubregHashTable[] = { ~0U, ~0U };\n"
+    OS << "  const unsigned SubregHashTable[] = { ~0U, ~0U };\n"
        << "  const unsigned SubregHashTableSize = 1;\n";
   }
   
