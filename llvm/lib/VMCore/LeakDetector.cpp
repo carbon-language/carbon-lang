@@ -12,10 +12,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/LeakDetector.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/Value.h"
-#include <set>
 using namespace llvm;
 
 namespace {
@@ -60,7 +60,7 @@ namespace {
 
       if (!Ts.empty()) {
         cerr << "Leaked " << Name << " objects found: " << Message << ":\n";
-        for (typename std::set<const T*>::iterator I = Ts.begin(),
+        for (typename SmallPtrSet<const T*, 8>::iterator I = Ts.begin(),
                E = Ts.end(); I != E; ++I) {
           cerr << "\t";
           PrinterTrait<T>::print(*I);
@@ -74,7 +74,7 @@ namespace {
     }
 
   private:
-    std::set<const T*> Ts;
+    SmallPtrSet<const T*, 8> Ts;
     const T* Cache;
     const char* const Name;
   };
