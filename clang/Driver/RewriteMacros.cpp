@@ -107,7 +107,7 @@ void clang::RewriteMacrosInInput(Preprocessor &PP,const std::string &InFileName,
   
   // Preprocess the input file in parallel with raw lexing the main file. Ignore
   // all tokens that are preprocessed from a file other than the main file (e.g.
-  // a header).  If we see tokens that are in the preprocessed file bug not the
+  // a header).  If we see tokens that are in the preprocessed file but not the
   // lexed file, we have a macro expansion.  If we see tokens in the lexed file
   // that aren't in the preprocessed view, we have macros that expand to no
   // tokens, or macro arguments etc.
