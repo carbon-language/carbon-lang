@@ -34,10 +34,6 @@ class FastISel {
   const TargetInstrInfo *TII;
 
 public:
-  FastISel(MachineBasicBlock *mbb, MachineFunction *mf,
-           const TargetInstrInfo *tii)
-    : MBB(mbb), MF(mf), TII(tii) {}
-
   /// SelectInstructions - Do "fast" instruction selection over the
   /// LLVM IR instructions in the range [Begin, N) where N is either
   /// End or the first unsupported instruction. Return N.
@@ -48,6 +44,12 @@ public:
                      DenseMap<const Value*, unsigned> &ValueMap);
 
 protected:
+  FastISel(MachineBasicBlock *mbb, MachineFunction *mf,
+           const TargetInstrInfo *tii)
+    : MBB(mbb), MF(mf), TII(tii) {}
+
+  virtual ~FastISel();
+
   virtual unsigned FastEmit_(MVT::SimpleValueType VT,
                              ISD::NodeType Opcode);
   virtual unsigned FastEmit_r(MVT::SimpleValueType VT,

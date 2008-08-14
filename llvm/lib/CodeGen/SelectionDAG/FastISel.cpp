@@ -45,6 +45,8 @@ FastISel::SelectInstructions(BasicBlock::iterator Begin, BasicBlock::iterator En
   return I;
 }
 
+FastISel::~FastISel() {}
+
 unsigned FastISel::FastEmit_(MVT::SimpleValueType, ISD::NodeType) {
   return 0;
 }
