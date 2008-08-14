@@ -258,10 +258,8 @@ void SRETPromotion::updateCallSites(Function *F, Function *NF) {
   // ParamAttrs - Keep track of the parameter attributes for the arguments.
   SmallVector<ParamAttrsWithIndex, 8> ArgAttrsVec;
 
-  for (Value::use_iterator FUI = F->use_begin(), FUE = F->use_end();
-       FUI != FUE;) {
-    CallSite CS = CallSite::get(*FUI);
-    ++FUI;
+  while (!F->use_empty()) {
+    CallSite CS = CallSite::get(*F->use_begin());
     Instruction *Call = CS.getInstruction();
 
     const PAListPtr &PAL = F->getParamAttrs();
@@ -317,12 +315,12 @@ void SRETPromotion::updateCallSites(Function *F, Function *NF) {
         assert (Idx && "Unexpected getelementptr index!");
         Value *GR = ExtractValueInst::Create(New, Idx->getZExtValue(),
                                              "evi", UGEP);
-        for (Value::use_iterator GI = UGEP->use_begin(),
-               GE = UGEP->use_end(); GI != GE; ++GI) {
-          if (LoadInst *L = dyn_cast<LoadInst>(*GI)) {
-            L->replaceAllUsesWith(GR);
-            L->eraseFromParent();
-          }
+        while(!UGEP->use_empty()) {
+          // isSafeToUpdateAllCallers has checked that all GEP uses are
+          // LoadInsts
+          LoadInst *L = cast<LoadInst>(*UGEP->use_begin());
+          L->replaceAllUsesWith(GR);
+          L->eraseFromParent();
         }
         UGEP->eraseFromParent();
       }
