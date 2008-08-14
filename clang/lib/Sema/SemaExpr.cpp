@@ -951,12 +951,12 @@ ActOnCallExpr(ExprTy *fn, SourceLocation LParenLoc,
   // type pointer to function".
   const PointerType *PT = Fn->getType()->getAsPointerType();
   if (PT == 0)
-    return Diag(Fn->getLocStart(), diag::err_typecheck_call_not_function,
-                SourceRange(Fn->getLocStart(), RParenLoc));
+    return Diag(LParenLoc, diag::err_typecheck_call_not_function,
+                Fn->getSourceRange());
   const FunctionType *FuncT = PT->getPointeeType()->getAsFunctionType();
   if (FuncT == 0)
-    return Diag(Fn->getLocStart(), diag::err_typecheck_call_not_function,
-                SourceRange(Fn->getLocStart(), RParenLoc));
+    return Diag(LParenLoc, diag::err_typecheck_call_not_function,
+                Fn->getSourceRange());
   
   // We know the result type of the call, set it.
   TheCall->setType(FuncT->getResultType());
