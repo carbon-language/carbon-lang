@@ -76,7 +76,6 @@ public:
   /// should use a Factory object to create maps instead of directly
   /// invoking the constructor, but there are cases where make this
   /// constructor public is useful.
-  explicit ImmutableMap(TreeTy* R) : Root(R) {}  
   explicit ImmutableMap(const TreeTy* R) : Root(const_cast<TreeTy*>(R)) {}
   
   class Factory {
