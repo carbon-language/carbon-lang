@@ -221,7 +221,7 @@ void LiveVariables::HandlePhysRegUse(unsigned Reg, MachineInstr *MI) {
       LastPartialDef->addOperand(MachineOperand::CreateReg(Reg, true/*IsDef*/,
                                                            true/*IsImp*/));
       PhysRegDef[Reg] = LastPartialDef;
-      std::set<unsigned> Processed;
+      SmallSet<unsigned, 8> Processed;
       for (const unsigned *SubRegs = TRI->getSubRegisters(Reg);
            unsigned SubReg = *SubRegs; ++SubRegs) {
         if (Processed.count(SubReg))
@@ -351,7 +351,7 @@ bool LiveVariables::HandlePhysRegKill(unsigned Reg) {
   // AX<dead> = AL<imp-def>
   //    = AL<kill>
   // AX = 
-  std::set<unsigned> PartUses;
+  SmallSet<unsigned, 8> PartUses;
   for (const unsigned *SubRegs = TRI->getSubRegisters(Reg);
        unsigned SubReg = *SubRegs; ++SubRegs) {
     if (MachineInstr *Use = PhysRegUse[SubReg]) {
@@ -437,7 +437,7 @@ void LiveVariables::HandlePhysRegDef(unsigned Reg, MachineInstr *MI) {
 
   if (MI) {
     // Does this extend the live range of a super-register?
-    std::set<unsigned> Processed;
+    SmallSet<unsigned, 8> Processed;
     for (const unsigned *SuperRegs = TRI->getSuperRegisters(Reg);
          unsigned SuperReg = *SuperRegs; ++SuperRegs) {
       if (Processed.count(SuperReg))
