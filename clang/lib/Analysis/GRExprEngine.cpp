@@ -202,6 +202,15 @@ const GRState* GRExprEngine::getInitialState() {
     
     ScopedDecl *SD = const_cast<ScopedDecl*>(I->first);
     if (VarDecl* VD = dyn_cast<VarDecl>(SD)) {
+      // Punt on static variables for now.
+      if (VD->getStorageClass() ==  VarDecl::Static)
+        continue;
+      
+      // Only handle pointers and integers for now.
+      QualType T = VD->getType();      
+      if (!(LVal::IsLValType(T) || T->isIntegerType()))
+        continue;
+      
       // Initialize globals and parameters to symbolic values.
       // Initialize local variables to undefined.
       RVal X = (VD->hasGlobalStorage() || isa<ParmVarDecl>(VD) ||
