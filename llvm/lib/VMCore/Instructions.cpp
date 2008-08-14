@@ -2251,37 +2251,42 @@ CastInst::castIsValid(Instruction::CastOps op, Value *S, const Type *DstTy) {
   switch (op) {
   default: return false; // This is an input error
   case Instruction::Trunc:
-    return SrcTy->isInteger() && DstTy->isInteger()&& SrcBitSize > DstBitSize;
+    return SrcTy->isIntOrIntVector() &&
+           DstTy->isIntOrIntVector()&& SrcBitSize > DstBitSize;
   case Instruction::ZExt:
-    return SrcTy->isInteger() && DstTy->isInteger()&& SrcBitSize < DstBitSize;
+    return SrcTy->isIntOrIntVector() &&
+           DstTy->isIntOrIntVector()&& SrcBitSize < DstBitSize;
   case Instruction::SExt: 
-    return SrcTy->isInteger() && DstTy->isInteger()&& SrcBitSize < DstBitSize;
+    return SrcTy->isIntOrIntVector() &&
+           DstTy->isIntOrIntVector()&& SrcBitSize < DstBitSize;
   case Instruction::FPTrunc:
-    return SrcTy->isFloatingPoint() && DstTy->isFloatingPoint() && 
-      SrcBitSize > DstBitSize;
+    return SrcTy->isFPOrFPVector() &&
+           DstTy->isFPOrFPVector() && 
+           SrcBitSize > DstBitSize;
   case Instruction::FPExt:
-    return SrcTy->isFloatingPoint() && DstTy->isFloatingPoint() && 
-      SrcBitSize < DstBitSize;
+    return SrcTy->isFPOrFPVector() &&
+           DstTy->isFPOrFPVector() && 
+           SrcBitSize < DstBitSize;
   case Instruction::UIToFP:
   case Instruction::SIToFP:
     if (const VectorType *SVTy = dyn_cast<VectorType>(SrcTy)) {
       if (const VectorType *DVTy = dyn_cast<VectorType>(DstTy)) {
-        return SVTy->getElementType()->isInteger() &&
-               DVTy->getElementType()->isFloatingPoint() &&
+        return SVTy->getElementType()->isIntOrIntVector() &&
+               DVTy->getElementType()->isFPOrFPVector() &&
                SVTy->getNumElements() == DVTy->getNumElements();
       }
     }
-    return SrcTy->isInteger() && DstTy->isFloatingPoint();
+    return SrcTy->isIntOrIntVector() && DstTy->isFPOrFPVector();
   case Instruction::FPToUI:
   case Instruction::FPToSI:
     if (const VectorType *SVTy = dyn_cast<VectorType>(SrcTy)) {
       if (const VectorType *DVTy = dyn_cast<VectorType>(DstTy)) {
-        return SVTy->getElementType()->isFloatingPoint() &&
-               DVTy->getElementType()->isInteger() &&
+        return SVTy->getElementType()->isFPOrFPVector() &&
+               DVTy->getElementType()->isIntOrIntVector() &&
                SVTy->getNumElements() == DVTy->getNumElements();
       }
     }
-    return SrcTy->isFloatingPoint() && DstTy->isInteger();
+    return SrcTy->isFPOrFPVector() && DstTy->isIntOrIntVector();
   case Instruction::PtrToInt:
     return isa<PointerType>(SrcTy) && DstTy->isInteger();
   case Instruction::IntToPtr:

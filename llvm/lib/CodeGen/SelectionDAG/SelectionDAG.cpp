@@ -2067,7 +2067,8 @@ SDValue SelectionDAG::getNode(unsigned Opcode, MVT VT, SDValue Operand) {
   unsigned OpOpcode = Operand.Val->getOpcode();
   switch (Opcode) {
   case ISD::TokenFactor:
-    return Operand;         // Factor of one node?  No need.
+  case ISD::CONCAT_VECTORS:
+    return Operand;         // Factor or concat of one node?  No need.
   case ISD::FP_ROUND: assert(0 && "Invalid method to make FP_ROUND node");
   case ISD::FP_EXTEND:
     assert(VT.isFloatingPoint() &&
@@ -2195,6 +2196,16 @@ SDValue SelectionDAG::getNode(unsigned Opcode, MVT VT,
     // Fold trivial token factors.
     if (N1.getOpcode() == ISD::EntryToken) return N2;
     if (N2.getOpcode() == ISD::EntryToken) return N1;
+    break;
+  case ISD::CONCAT_VECTORS:
+    // A CONCAT_VECTOR with all operands BUILD_VECTOR can be simplified to
+    // one big BUILD_VECTOR.
+    if (N1.getOpcode() == ISD::BUILD_VECTOR &&
+        N2.getOpcode() == ISD::BUILD_VECTOR) {
+      SmallVector<SDValue, 16> Elts(N1.Val->op_begin(), N1.Val->op_end());
+      Elts.insert(Elts.end(), N2.Val->op_begin(), N2.Val->op_end());
+      return getNode(ISD::BUILD_VECTOR, VT, &Elts[0], Elts.size());
+    }
     break;
   case ISD::AND:
     assert(VT.isInteger() && N1.getValueType() == N2.getValueType() &&
@@ -2541,6 +2552,18 @@ SDValue SelectionDAG::getNode(unsigned Opcode, MVT VT,
   ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1.Val);
   ConstantSDNode *N2C = dyn_cast<ConstantSDNode>(N2.Val);
   switch (Opcode) {
+  case ISD::CONCAT_VECTORS:
+    // A CONCAT_VECTOR with all operands BUILD_VECTOR can be simplified to
+    // one big BUILD_VECTOR.
+    if (N1.getOpcode() == ISD::BUILD_VECTOR &&
+        N2.getOpcode() == ISD::BUILD_VECTOR &&
+        N3.getOpcode() == ISD::BUILD_VECTOR) {
+      SmallVector<SDValue, 16> Elts(N1.Val->op_begin(), N1.Val->op_end());
+      Elts.insert(Elts.end(), N2.Val->op_begin(), N2.Val->op_end());
+      Elts.insert(Elts.end(), N3.Val->op_begin(), N3.Val->op_end());
+      return getNode(ISD::BUILD_VECTOR, VT, &Elts[0], Elts.size());
+    }
+    break;
   case ISD::SETCC: {
     // Use FoldSetCC to simplify SETCC's.
     SDValue Simp = FoldSetCC(VT, N1, N2, cast<CondCodeSDNode>(N3)->get());
@@ -3179,7 +3202,8 @@ SelectionDAG::getLoad(ISD::MemIndexedMode AM, ISD::LoadExtType ExtType,
   } else {
     // Extending load.
     if (VT.isVector())
-      assert(EVT == VT.getVectorElementType() && "Invalid vector extload!");
+      assert(EVT.getVectorNumElements() == VT.getVectorNumElements() &&
+             "Invalid vector extload!");
     else
       assert(EVT.bitsLT(VT) &&
              "Should only be an extending load, not truncating!");

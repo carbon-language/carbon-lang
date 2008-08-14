@@ -3146,6 +3146,10 @@ SDValue DAGCombiner::ReduceLoadWidth(SDNode *N) {
   MVT VT = N->getValueType(0);
   MVT EVT = N->getValueType(0);
 
+  // This transformation isn't valid for vector loads.
+  if (VT.isVector())
+    return SDValue();
+
   // Special case: SIGN_EXTEND_INREG is basically truncating to EVT then
   // extended to VT.
   if (Opc == ISD::SIGN_EXTEND_INREG) {

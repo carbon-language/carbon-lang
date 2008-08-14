@@ -665,8 +665,8 @@ void Verifier::visitTruncInst(TruncInst &I) {
   unsigned SrcBitSize = SrcTy->getPrimitiveSizeInBits();
   unsigned DestBitSize = DestTy->getPrimitiveSizeInBits();
 
-  Assert1(SrcTy->isInteger(), "Trunc only operates on integer", &I);
-  Assert1(DestTy->isInteger(), "Trunc only produces integer", &I);
+  Assert1(SrcTy->isIntOrIntVector(), "Trunc only operates on integer", &I);
+  Assert1(DestTy->isIntOrIntVector(), "Trunc only produces integer", &I);
   Assert1(SrcBitSize > DestBitSize,"DestTy too big for Trunc", &I);
 
   visitInstruction(I);
@@ -678,8 +678,8 @@ void Verifier::visitZExtInst(ZExtInst &I) {
   const Type *DestTy = I.getType();
 
   // Get the size of the types in bits, we'll need this later
-  Assert1(SrcTy->isInteger(), "ZExt only operates on integer", &I);
-  Assert1(DestTy->isInteger(), "ZExt only produces an integer", &I);
+  Assert1(SrcTy->isIntOrIntVector(), "ZExt only operates on integer", &I);
+  Assert1(DestTy->isIntOrIntVector(), "ZExt only produces an integer", &I);
   unsigned SrcBitSize = SrcTy->getPrimitiveSizeInBits();
   unsigned DestBitSize = DestTy->getPrimitiveSizeInBits();
 
@@ -697,8 +697,8 @@ void Verifier::visitSExtInst(SExtInst &I) {
   unsigned SrcBitSize = SrcTy->getPrimitiveSizeInBits();
   unsigned DestBitSize = DestTy->getPrimitiveSizeInBits();
 
-  Assert1(SrcTy->isInteger(), "SExt only operates on integer", &I);
-  Assert1(DestTy->isInteger(), "SExt only produces an integer", &I);
+  Assert1(SrcTy->isIntOrIntVector(), "SExt only operates on integer", &I);
+  Assert1(DestTy->isIntOrIntVector(), "SExt only produces an integer", &I);
   Assert1(SrcBitSize < DestBitSize,"Type too small for SExt", &I);
 
   visitInstruction(I);
@@ -712,8 +712,8 @@ void Verifier::visitFPTruncInst(FPTruncInst &I) {
   unsigned SrcBitSize = SrcTy->getPrimitiveSizeInBits();
   unsigned DestBitSize = DestTy->getPrimitiveSizeInBits();
 
-  Assert1(SrcTy->isFloatingPoint(),"FPTrunc only operates on FP", &I);
-  Assert1(DestTy->isFloatingPoint(),"FPTrunc only produces an FP", &I);
+  Assert1(SrcTy->isFPOrFPVector(),"FPTrunc only operates on FP", &I);
+  Assert1(DestTy->isFPOrFPVector(),"FPTrunc only produces an FP", &I);
   Assert1(SrcBitSize > DestBitSize,"DestTy too big for FPTrunc", &I);
 
   visitInstruction(I);
@@ -728,8 +728,8 @@ void Verifier::visitFPExtInst(FPExtInst &I) {
   unsigned SrcBitSize = SrcTy->getPrimitiveSizeInBits();
   unsigned DestBitSize = DestTy->getPrimitiveSizeInBits();
 
-  Assert1(SrcTy->isFloatingPoint(),"FPExt only operates on FP", &I);
-  Assert1(DestTy->isFloatingPoint(),"FPExt only produces an FP", &I);
+  Assert1(SrcTy->isFPOrFPVector(),"FPExt only operates on FP", &I);
+  Assert1(DestTy->isFPOrFPVector(),"FPExt only produces an FP", &I);
   Assert1(SrcBitSize < DestBitSize,"DestTy too small for FPExt", &I);
 
   visitInstruction(I);
