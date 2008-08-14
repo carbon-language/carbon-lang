@@ -463,20 +463,34 @@ void PMTopLevelManager::schedulePass(Pass *P) {
 
   AnalysisUsage *AnUsage = findAnalysisUsage(P);
 
-  const AnalysisUsage::VectorType &RequiredSet = AnUsage->getRequiredSet();
-  for (AnalysisUsage::VectorType::const_iterator I = RequiredSet.begin(),
-         E = RequiredSet.end(); I != E; ++I) {
-
-    Pass *AnalysisPass = findAnalysisPass(*I);
-    if (!AnalysisPass) {
-      AnalysisPass = (*I)->createPass();
-      // Schedule this analysis run first only if it is not a lower level
-      // analysis pass. Lower level analsyis passes are run on the fly.
-      if (P->getPotentialPassManagerType () >=
-          AnalysisPass->getPotentialPassManagerType())
-        schedulePass(AnalysisPass);
-      else
-        delete AnalysisPass;
+  bool checkAnalysis = true;
+  while (checkAnalysis) {
+    checkAnalysis = false;
+  
+    const AnalysisUsage::VectorType &RequiredSet = AnUsage->getRequiredSet();
+    for (AnalysisUsage::VectorType::const_iterator I = RequiredSet.begin(),
+           E = RequiredSet.end(); I != E; ++I) {
+      
+      Pass *AnalysisPass = findAnalysisPass(*I);
+      if (!AnalysisPass) {
+        AnalysisPass = (*I)->createPass();
+        if (P->getPotentialPassManagerType () ==
+            AnalysisPass->getPotentialPassManagerType())
+          // Schedule analysis pass that is managed by the same pass manager.
+          schedulePass(AnalysisPass);
+        else if (P->getPotentialPassManagerType () >
+                 AnalysisPass->getPotentialPassManagerType()) {
+          // Schedule analysis pass that is managed by a new manager.
+          schedulePass(AnalysisPass);
+          // Recheck analysis passes to ensure that required analysises that
+          // are already checked are still available.
+          checkAnalysis = true;
+        }
+        else
+          // Do not schedule this analysis. Lower level analsyis 
+          // passes are run on the fly.
+          delete AnalysisPass;
+      }
     }
   }
 
