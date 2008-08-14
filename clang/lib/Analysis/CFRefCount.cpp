@@ -1192,20 +1192,60 @@ void RefVal::print(std::ostream& Out) const {
   }
 }
   
+} // end anonymous namespace
+
+//===----------------------------------------------------------------------===//
+// RefBindings - State used to track object reference counts.
+//===----------------------------------------------------------------------===//
+  
+typedef llvm::ImmutableMap<SymbolID, RefVal> RefBindings;
+typedef RefBindings::Factory RefBFactoryTy;
+  
+static int RefBIndex = 0;
+
+namespace clang {
+template<> struct GRStateTrait<RefBindings> {
+  typedef RefBindings             data_type;
+  typedef RefBFactoryTy&          context_type;  
+  typedef SymbolID                key_type;
+  typedef RefVal                  value_type;
+  typedef const RefVal*           lookup_type;
+  
+  static RefBindings MakeData(void* const* p) {
+    return p ? RefBindings((RefBindings::TreeTy*) *p) : RefBindings(0);
+  }  
+  static void* MakeVoidPtr(RefBindings B) {
+    return B.getRoot();
+  }  
+  static void* GDMIndex() {
+    return &RefBIndex;
+  }  
+  static lookup_type Lookup(RefBindings B, SymbolID K) {
+    return B.lookup(K);
+  }  
+  static data_type Set(RefBindings B, key_type K, value_type E,
+                       RefBFactoryTy& F) {
+    return F.Add(B, K, E);
+  }
+  
+  static data_type Remove(RefBindings B, SymbolID K, RefBFactoryTy& F) {
+    return F.Remove(B, K);
+  }
+};
+}  
+  
 //===----------------------------------------------------------------------===//
 // Transfer functions.
 //===----------------------------------------------------------------------===//
 
+namespace {
+  
 class VISIBILITY_HIDDEN CFRefCount : public GRSimpleVals {
 public:
   // Type definitions.  
-  typedef llvm::ImmutableMap<SymbolID, RefVal> RefBindings;
-  
-  typedef RefBindings::Factory RefBFactoryTy;
-  
   typedef llvm::DenseMap<GRExprEngine::NodeTy*,std::pair<Expr*, SymbolID> >
           ReleasesNotOwnedTy;
-  
+
   typedef ReleasesNotOwnedTy UseAfterReleasesTy;
     
   typedef llvm::DenseMap<GRExprEngine::NodeTy*, std::vector<SymbolID>*>
@@ -1225,29 +1265,17 @@ private:
   ReleasesNotOwnedTy   ReleasesNotOwned;
   LeaksTy              Leaks;
   BindingsPrinter      Printer;  
-
-public:
-  
-  static RefBindings GetRefBindings(const GRState& StImpl) {
-    return RefBindings((const RefBindings::TreeTy*) StImpl.CheckerState);
-  }
-  
-  static RefBindings GetRefBindings(const GRState* state) {
-    return RefBindings((const RefBindings::TreeTy*) state->CheckerState);
-  }
-
-private:
-  
-  static void SetRefBindings(GRState& StImpl, RefBindings B) {
-    StImpl.CheckerState = B.getRoot();
-  }
-
-  RefBindings Remove(RefBindings B, SymbolID sym) {
-    return RefBFactory.Remove(B, sym);
-  }
   
   RefBindings Update(RefBindings B, SymbolID sym, RefVal V, ArgEffect E,
                      RefVal::Kind& hasErr);
+  
+  RefVal::Kind& Update(GRStateRef& state, SymbolID sym, RefVal V,
+                       ArgEffect E, RefVal::Kind& hasErr) {
+    
+    state = state.set<RefBindings>(Update(state.get<RefBindings>(), sym, V, 
+                                          E, hasErr));
+    return hasErr;
+  }
   
   void ProcessNonLeakError(ExplodedNodeSet<GRState>& Dst,
                            GRStmtNodeBuilder<GRState>& Builder,
@@ -1259,9 +1287,6 @@ private:
   const GRState* HandleSymbolDeath(GRStateManager& VMgr,
                                       const GRState* St,
                                       SymbolID sid, RefVal V, bool& hasLeak);
-  
-  const GRState* NukeBinding(GRStateManager& VMgr, const GRState* St,
-                                SymbolID sid);
   
 public:
   
@@ -1370,7 +1395,7 @@ public:
 void CFRefCount::BindingsPrinter::Print(std::ostream& Out, const GRState* state,
                                         const char* nl, const char* sep) {
     
-  RefBindings B = GetRefBindings(state);
+  RefBindings B = state->get<RefBindings>();
   
   if (!B.isEmpty())
     Out << sep << nl;
@@ -1464,34 +1489,25 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
                              ExplodedNode<GRState>* Pred) {
   
   // Get the state.
-  GRStateManager& StateMgr = Eng.getStateManager();  
-  const GRState* St = Builder.GetState(Pred);
+  GRStateRef state(Builder.GetState(Pred), Eng.getStateManager());
 
   // Evaluate the effect of the arguments.
-  GRState StVals = *St;
   RefVal::Kind hasErr = (RefVal::Kind) 0;
   unsigned idx = 0;
   Expr* ErrorExpr = NULL;
   SymbolID ErrorSym = 0;                                        
   
-  for (ExprIterator I = arg_beg; I != arg_end; ++I, ++idx) {
-    
-    RVal V = StateMgr.GetRVal(St, *I);
+  for (ExprIterator I = arg_beg; I != arg_end; ++I, ++idx) {    
+    RVal V = state.GetRVal(*I);
     
     if (isa<lval::SymbolVal>(V)) {
       SymbolID Sym = cast<lval::SymbolVal>(V).getSymbol();
-      RefBindings B = GetRefBindings(StVals);      
-      
-      if (RefBindings::data_type* T = B.lookup(Sym)) {
-        B = Update(B, Sym, *T, GetArgE(Summ, idx), hasErr);
-        SetRefBindings(StVals, B);
-        
-        if (hasErr) {
+      if (RefBindings::data_type* T = state.get<RefBindings>(Sym))
+        if (Update(state, Sym, *T, GetArgE(Summ, idx), hasErr)) {
           ErrorExpr = *I;
           ErrorSym = Sym;
           break;
         }
-      }
     }  
     else if (isa<LVal>(V)) {
 #if 0
@@ -1515,58 +1531,48 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
         //  disambiguate conjured symbols. 
 
         // Is the invalidated variable something that we were tracking?
-        RVal X = StateMgr.GetRVal(&StVals, *DV);
+        RVal X = state.GetRVal(*DV);
         
         if (isa<lval::SymbolVal>(X)) {
           SymbolID Sym = cast<lval::SymbolVal>(X).getSymbol();
-          SetRefBindings(StVals,RefBFactory.Remove(GetRefBindings(StVals),Sym));
+          state = state.remove<RefBindings>(Sym, RefBFactory);
         }
 
         // Set the value of the variable to be a conjured symbol.
         unsigned Count = Builder.getCurrentBlockCount();
         SymbolID NewSym = Eng.getSymbolManager().getConjuredSymbol(*I, Count);
-      
-        StateMgr.SetRVal(StVals, *DV,
-                         LVal::IsLValType(DV->getDecl()->getType())
-                         ? cast<RVal>(lval::SymbolVal(NewSym))
-                         : cast<RVal>(nonlval::SymbolVal(NewSym)));
+
+        state = state.SetRVal(*DV,
+                              LVal::IsLValType(DV->getDecl()->getType())
+                              ? cast<RVal>(lval::SymbolVal(NewSym))
+                              : cast<RVal>(nonlval::SymbolVal(NewSym)));
       }
       else {
         // Nuke all other arguments passed by reference.
-        StateMgr.Unbind(StVals, cast<LVal>(V));
+        state = state.Unbind(cast<LVal>(V));
       }
 #endif
     }
     else if (isa<nonlval::LValAsInteger>(V))
-      StateMgr.Unbind(StVals, cast<nonlval::LValAsInteger>(V).getLVal());
+      state = state.Unbind(cast<nonlval::LValAsInteger>(V).getLVal());
   } 
   
   // Evaluate the effect on the message receiver.  
   if (!ErrorExpr && Receiver) {
-    RVal V = StateMgr.GetRVal(St, Receiver);
-
+    RVal V = state.GetRVal(Receiver);
     if (isa<lval::SymbolVal>(V)) {
       SymbolID Sym = cast<lval::SymbolVal>(V).getSymbol();
-      RefBindings B = GetRefBindings(StVals);      
-      
-      if (const RefVal* T = B.lookup(Sym)) {
-        B = Update(B, Sym, *T, GetReceiverE(Summ), hasErr);
-        SetRefBindings(StVals, B);
-        
-        if (hasErr) {
+      if (const RefVal* T = state.get<RefBindings>(Sym))
+        if (Update(state, Sym, *T, GetReceiverE(Summ), hasErr)) {
           ErrorExpr = Receiver;
           ErrorSym = Sym;
         }
-      }
     }
   }
-
-  // Get the persistent state.  
-  St = StateMgr.getPersistentState(StVals);
   
   // Process any errors.  
   if (hasErr) {
-    ProcessNonLeakError(Dst, Builder, Ex, ErrorExpr, Pred, St,
+    ProcessNonLeakError(Dst, Builder, Ex, ErrorExpr, Pred, state,
                         hasErr, ErrorSym);
     return;
   }
@@ -1592,7 +1598,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
                ? cast<RVal>(lval::SymbolVal(Sym)) 
                : cast<RVal>(nonlval::SymbolVal(Sym));
         
-        St = StateMgr.SetRVal(St, Ex, X, Eng.getCFG().isBlkExpr(Ex), false);
+        state = state.SetRVal(Ex, X, Eng.getCFG().isBlkExpr(Ex), false);
       }      
       
       break;
@@ -1601,15 +1607,15 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
       unsigned idx = RE.getIndex();
       assert (arg_end >= arg_beg);
       assert (idx < (unsigned) (arg_end - arg_beg));
-      RVal V = StateMgr.GetRVal(St, *(arg_beg+idx));
-      St = StateMgr.SetRVal(St, Ex, V, Eng.getCFG().isBlkExpr(Ex), false);
+      RVal V = state.GetRVal(*(arg_beg+idx));
+      state = state.SetRVal(Ex, V, Eng.getCFG().isBlkExpr(Ex), false);
       break;
     }
       
     case RetEffect::ReceiverAlias: {
       assert (Receiver);
-      RVal V = StateMgr.GetRVal(St, Receiver);
-      St = StateMgr.SetRVal(St, Ex, V, Eng.getCFG().isBlkExpr(Ex), false);
+      RVal V = state.GetRVal(Receiver);
+      state = state.SetRVal(Ex, V, Eng.getCFG().isBlkExpr(Ex), false);
       break;
     }
       
@@ -1619,17 +1625,19 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
       SymbolID Sym = Eng.getSymbolManager().getConjuredSymbol(Ex, Count);
       QualType RetT = GetReturnType(Ex, Eng.getContext());
       
-      GRState StImpl = *St;
+      state = state.set<RefBindings>(Sym, RefVal::makeOwned(RetT), RefBFactory);
+      state = state.SetRVal(Ex, lval::SymbolVal(Sym),
+                            Eng.getCFG().isBlkExpr(Ex), false);
+
+#if 0
       RefBindings B = GetRefBindings(StImpl);
       SetRefBindings(StImpl, RefBFactory.Add(B, Sym, RefVal::makeOwned(RetT)));
-      
-      St = StateMgr.SetRVal(StateMgr.getPersistentState(StImpl),
-                            Ex, lval::SymbolVal(Sym),
-                            Eng.getCFG().isBlkExpr(Ex), false);
+#endif 
+
       
       // FIXME: Add a flag to the checker where allocations are allowed to fail.      
       if (RE.getKind() == RetEffect::OwnedAllocatedSymbol)
-        St = StateMgr.AddNE(St, Sym, Eng.getBasicVals().getZeroWithPtrWidth());
+        state = state.AddNE(Sym, Eng.getBasicVals().getZeroWithPtrWidth());
       
       break;
     }
@@ -1639,24 +1647,18 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
       SymbolID Sym = Eng.getSymbolManager().getConjuredSymbol(Ex, Count);
       QualType RetT = GetReturnType(Ex, Eng.getContext());
       
-      GRState StImpl = *St;
-      RefBindings B = GetRefBindings(StImpl);
-      SetRefBindings(StImpl, RefBFactory.Add(B, Sym,
-                                             RefVal::makeNotOwned(RetT)));
-      
-      St = StateMgr.SetRVal(StateMgr.getPersistentState(StImpl),
-                            Ex, lval::SymbolVal(Sym),
+      state = state.set<RefBindings>(Sym, RefVal::makeNotOwned(RetT), RefBFactory);
+      state = state.SetRVal(Ex, lval::SymbolVal(Sym),
                             Eng.getCFG().isBlkExpr(Ex), false);
-      
       break;
     }
   }
   
   // Is this a sink?
   if (IsEndPath(Summ))
-    Builder.MakeSinkNode(Dst, Ex, Pred, St);
+    Builder.MakeSinkNode(Dst, Ex, Pred, state);
   else
-    Builder.MakeNode(Dst, Ex, Pred, St);
+    Builder.MakeNode(Dst, Ex, Pred, state);
 }
 
 
@@ -1693,7 +1695,7 @@ void CFRefCount::EvalObjCMessageExpr(ExplodedNodeSet<GRState>& Dst,
     if (isa<lval::SymbolVal>(V)) {
       SymbolID Sym = cast<lval::SymbolVal>(V).getSymbol();
       
-      if (const RefVal* T  = GetRefBindings(*St).lookup(Sym)) {
+      if (const RefVal* T  = St->get<RefBindings>(Sym)) {
         QualType Ty = T->getType();
         
         if (const PointerType* PT = Ty->getAsPointerType()) {
@@ -1743,24 +1745,16 @@ void CFRefCount::EvalStore(ExplodedNodeSet<GRState>& Dst,
   
   SymbolID Sym = cast<lval::SymbolVal>(Val).getSymbol();
   
-  if (!GetRefBindings(*St).lookup(Sym))
+  GRStateRef state(St, Eng.getStateManager());
+  
+  if (!state.get<RefBindings>(Sym))
     return;
   
-  // Nuke the binding.  
-  St = NukeBinding(Eng.getStateManager(), St, Sym);
-  
+  // Nuke the binding.
+  state = state.remove<RefBindings>(Sym, RefBFactory);
+
   // Hand of the remaining logic to the parent implementation.
-  GRSimpleVals::EvalStore(Dst, Eng, Builder, E, Pred, St, TargetLV, Val);
-}
-
-
-const GRState* CFRefCount::NukeBinding(GRStateManager& VMgr,
-                                          const GRState* St,
-                                          SymbolID sid) {
-  GRState StImpl = *St;
-  RefBindings B = GetRefBindings(StImpl);
-  StImpl.CheckerState = RefBFactory.Remove(B, sid).getRoot();
-  return VMgr.getPersistentState(StImpl);
+  GRSimpleVals::EvalStore(Dst, Eng, Builder, E, Pred, state, TargetLV, Val);
 }
 
 // End-of-path.
@@ -1772,21 +1766,19 @@ const GRState* CFRefCount::HandleSymbolDeath(GRStateManager& VMgr,
   hasLeak = V.isOwned() || 
             ((V.isNotOwned() || V.isReturnedOwned()) && V.getCount() > 0);
 
+  GRStateRef state(St, VMgr);
+
   if (!hasLeak)
-    return NukeBinding(VMgr, St, sid);
+    return state.remove<RefBindings>(sid, RefBFactory);
   
-  RefBindings B = GetRefBindings(*St);
-  GRState StImpl = *St;
-  StImpl.CheckerState = RefBFactory.Add(B, sid, V^RefVal::ErrorLeak).getRoot();
-  
-  return VMgr.getPersistentState(StImpl);
+  return state.set<RefBindings>(sid, V ^ RefVal::ErrorLeak, RefBFactory);
 }
 
 void CFRefCount::EvalEndPath(GRExprEngine& Eng,
                              GREndPathNodeBuilder<GRState>& Builder) {
   
   const GRState* St = Builder.getState();
-  RefBindings B = GetRefBindings(*St);
+  RefBindings B = St->get<RefBindings>();
   
   llvm::SmallVector<SymbolID, 10> Leaked;
   
@@ -1828,7 +1820,7 @@ void CFRefCount::EvalDeadSymbols(ExplodedNodeSet<GRState>& Dst,
     
   // FIXME: a lot of copy-and-paste from EvalEndPath.  Refactor.
   
-  RefBindings B = GetRefBindings(*St);
+  RefBindings B = St->get<RefBindings>();
   llvm::SmallVector<SymbolID, 10> Leaked;
   
   for (GRStateManager::DeadSymbolsTy::const_iterator
@@ -1875,27 +1867,23 @@ void CFRefCount::EvalReturn(ExplodedNodeSet<GRState>& Dst,
   Expr* RetE = S->getRetValue();
   if (!RetE) return;
   
-  GRStateManager& StateMgr = Eng.getStateManager();
-  const GRState* St = Builder.GetState(Pred);
-  RVal V = StateMgr.GetRVal(St, RetE);
+  GRStateRef state(Builder.GetState(Pred), Eng.getStateManager());
+  RVal V = state.GetRVal(RetE);
   
   if (!isa<lval::SymbolVal>(V))
     return;
   
   // Get the reference count binding (if any).
   SymbolID Sym = cast<lval::SymbolVal>(V).getSymbol();
-  RefBindings B = GetRefBindings(*St);
-  const RefVal* T = B.lookup(Sym);
+  const RefVal* T = state.get<RefBindings>(Sym);
   
   if (!T)
     return;
   
-  // Change the reference count.
-  
+  // Change the reference count.  
   RefVal X = *T;  
   
-  switch (X.getKind()) {
-      
+  switch (X.getKind()) {      
     case RefVal::Owned: { 
       unsigned cnt = X.getCount();
       assert (cnt > 0);
@@ -1915,10 +1903,8 @@ void CFRefCount::EvalReturn(ExplodedNodeSet<GRState>& Dst,
   }
   
   // Update the binding.
-
-  GRState StImpl = *St;
-  StImpl.CheckerState = RefBFactory.Add(B, Sym, X).getRoot();        
-  Builder.MakeNode(Dst, S, Pred, StateMgr.getPersistentState(StImpl));
+  state = state.set<RefBindings>(Sym, X, RefBFactory);
+  Builder.MakeNode(Dst, S, Pred, state);
 }
 
 // Assumptions.
@@ -1934,7 +1920,7 @@ const GRState* CFRefCount::EvalAssume(GRStateManager& VMgr,
   //  too bad since the number of symbols we will track in practice are 
   //  probably small and EvalAssume is only called at branches and a few
   //  other places.
-  RefBindings B = GetRefBindings(*St);
+  RefBindings B = St->get<RefBindings>();
   
   if (B.isEmpty())
     return St;
@@ -1953,14 +1939,14 @@ const GRState* CFRefCount::EvalAssume(GRStateManager& VMgr,
   if (!changed)
     return St;
   
-  GRState StImpl = *St;
-  StImpl.CheckerState = B.getRoot();
-  return VMgr.getPersistentState(StImpl);
+  GRStateRef state(St, VMgr);
+  state = state.set<RefBindings>(B);
+  return state;
 }
 
-CFRefCount::RefBindings CFRefCount::Update(RefBindings B, SymbolID sym,
-                                           RefVal V, ArgEffect E,
-                                           RefVal::Kind& hasErr) {
+RefBindings CFRefCount::Update(RefBindings B, SymbolID sym,
+                               RefVal V, ArgEffect E,
+                               RefVal::Kind& hasErr) {
   
   // FIXME: This dispatch can potentially be sped up by unifiying it into
   //  a single switch statement.  Opt for simplicity for now.
@@ -2215,8 +2201,8 @@ PathDiagnosticPiece* CFRefReport::VisitNode(ExplodedNode<GRState>* N,
   const GRState* PrevSt = PrevN->getState();
   const GRState* CurrSt = N->getState();
   
-  CFRefCount::RefBindings PrevB = CFRefCount::GetRefBindings(*PrevSt);
-  CFRefCount::RefBindings CurrB = CFRefCount::GetRefBindings(*CurrSt);
+  RefBindings PrevB = PrevSt->get<RefBindings>();
+  RefBindings CurrB = CurrSt->get<RefBindings>();
   
   const RefVal* PrevT = PrevB.lookup(Sym);
   const RefVal* CurrT = CurrB.lookup(Sym);
@@ -2273,6 +2259,7 @@ PathDiagnosticPiece* CFRefReport::VisitNode(ExplodedNode<GRState>* N,
   // The typestate has changed.
   
   std::ostringstream os;
+  std::string s;
   
   switch (CurrV.getKind()) {
     case RefVal::Owned:
@@ -2296,7 +2283,8 @@ PathDiagnosticPiece* CFRefReport::VisitNode(ExplodedNode<GRState>* N,
           os << " retain count.";
       }
       
-      Msg = os.str().c_str();
+      s = os.str();
+      Msg = s.c_str();
       
       break;
       
@@ -2342,7 +2330,6 @@ PathDiagnosticPiece* CFRefReport::VisitNode(ExplodedNode<GRState>* N,
 static std::pair<ExplodedNode<GRState>*,VarDecl*>
 GetAllocationSite(ExplodedNode<GRState>* N, SymbolID Sym) {
 
-  typedef CFRefCount::RefBindings RefBindings;
   ExplodedNode<GRState>* Last = N;
   
   // Find the first node that referred to the tracked symbol.  We also
@@ -2352,7 +2339,7 @@ GetAllocationSite(ExplodedNode<GRState>* N, SymbolID Sym) {
   
   while (N) {
     const GRState* St = N->getState();
-    RefBindings B = RefBindings((RefBindings::TreeTy*) St->CheckerState);
+    RefBindings B = St->get<RefBindings>();
     
     if (!B.lookup(Sym))
       break;
@@ -2392,17 +2379,12 @@ PathDiagnosticPiece* CFRefReport::getEndPath(BugReporter& BR,
   if (!getBugType().isLeak())
     return RangedBugReport::getEndPath(BR, EndN);
 
-  typedef CFRefCount::RefBindings RefBindings;
-
   // Get the retain count.
-
-  unsigned long RetCount = 
-    CFRefCount::GetRefBindings(*EndN->getState()).lookup(Sym)->getCount();
+  unsigned long RetCount = EndN->getState()->get<RefBindings>(Sym)->getCount();
   
   // We are a leak.  Walk up the graph to get to the first node where the
   // symbol appeared, and also get the first VarDecl that tracked object
   // is stored to.
-
   ExplodedNode<GRState>* AllocNode = 0;
   VarDecl* FirstDecl = 0;
   llvm::tie(AllocNode, FirstDecl) = GetAllocationSite(EndN, Sym);
@@ -2434,7 +2416,6 @@ PathDiagnosticPiece* CFRefReport::getEndPath(BugReporter& BR,
 
   // Look in the *trimmed* graph at the immediate predecessor of EndN.  Does
   // it occur on the same line?
-
   PathDiagnosticPiece::DisplayHint Hint = PathDiagnosticPiece::Above;
   
   assert (!EndN->pred_empty()); // Not possible to have 0 predecessors.

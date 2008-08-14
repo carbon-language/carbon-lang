@@ -178,11 +178,9 @@ const GRState* GRStateManager::AddEQ(const GRState* St, SymbolID sym,
 
 const GRState* GRStateManager::getInitialState() {
 
-  GRState StateImpl(EnvMgr.getInitialEnvironment(),
-                       StMgr->getInitialStore(),
-                       GDMFactory.GetEmptyMap(),
-                       CNEFactory.GetEmptyMap(),
-                       CEFactory.GetEmptyMap());
+  GRState StateImpl(EnvMgr.getInitialEnvironment(), StMgr->getInitialStore(),
+                    GDMFactory.GetEmptyMap(), CNEFactory.GetEmptyMap(),
+                    CEFactory.GetEmptyMap());
   
   return getPersistentState(StateImpl);
 }
@@ -307,6 +305,25 @@ void GRState::print(std::ostream& Out, Printer** Beg, Printer** End,
   for ( ; Beg != End ; ++Beg) (*Beg)->Print(Out, this, nl, sep);
 }
 
+//===----------------------------------------------------------------------===//
+// Generic Data Map.
+//===----------------------------------------------------------------------===//
+
+void* const* GRState::FindGDM(void* K) const {
+  return GDM.lookup(K);
+}
+
+const GRState* GRStateManager::addGDM(const GRState* St, void* Key, void* Data){  
+  GRState::GenericDataMap M1 = St->getGDM();
+  GRState::GenericDataMap M2 = GDMFactory.Add(M1, Key, Data);
+  
+  if (M1 == M2)
+    return St;
+  
+  GRState NewSt = *St;
+  NewSt.GDM = M2;
+  return getPersistentState(NewSt);
+}
 
 //===----------------------------------------------------------------------===//
 // Queries.

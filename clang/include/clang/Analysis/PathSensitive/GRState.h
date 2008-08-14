@@ -47,6 +47,8 @@ class GRTransferFuncs;
 // GRState- An ImmutableMap type Stmt*/Decl*/Symbols to RVals.
 //===----------------------------------------------------------------------===//
 
+template<typename T> struct GRStateTrait;
+  
 /// GRState - This class encapsulates the actual data values for
 ///  for a "state" in our symbolic value tracking.  It is intended to be
 ///  used as a functional object; that is once it is created and made
@@ -74,7 +76,6 @@ public:
   GenericDataMap   GDM;
   ConstNotEqTy     ConstNotEq;
   ConstEqTy        ConstEq;
-  void*            CheckerState;
   
 public:
   
@@ -85,8 +86,7 @@ public:
       St(st),
       GDM(gdm),
       ConstNotEq(CNE),
-      ConstEq(CE),
-      CheckerState(NULL) {}
+      ConstEq(CE) {}
   
   /// Copy ctor - We must explicitly define this or else the "Next" ptr
   ///  in FoldingSetNode will also get copied.
@@ -96,8 +96,7 @@ public:
       St(RHS.St),
       GDM(RHS.GDM),
       ConstNotEq(RHS.ConstNotEq),
-      ConstEq(RHS.ConstEq),
-      CheckerState(RHS.CheckerState) {} 
+      ConstEq(RHS.ConstEq) {}
   
   /// getEnvironment - Return the environment associated with this state.
   ///  The environment is the mapping from expressions to values.
@@ -118,7 +117,6 @@ public:
     V->GDM.Profile(ID);
     V->ConstNotEq.Profile(ID);
     V->ConstEq.Profile(ID);
-    ID.AddPointer(V->CheckerState);
   }
 
   /// Profile - Used to profile the contents of this object for inclusion
@@ -171,6 +169,22 @@ public:
   ce_iterator ce_begin() const { return ConstEq.begin(); }
   ce_iterator ce_end() const { return ConstEq.end(); }
   
+  // Trait based GDM dispatch.  
+  void* const* FindGDM(void* K) const;
+  
+  template <typename T>
+  typename GRStateTrait<T>::data_type get() const {
+    return GRStateTrait<T>::MakeData(FindGDM(GRStateTrait<T>::GDMIndex()));
+  }
+  
+  template<typename T>
+  typename GRStateTrait<T>::lookup_type
+  get(typename GRStateTrait<T>::key_type key) const {
+    void* const* d = FindGDM(GRStateTrait<T>::GDMIndex());
+    return GRStateTrait<T>::Lookup(GRStateTrait<T>::MakeData(d), key);
+  }
+  
+  // State pretty-printing.
   class Printer {
   public:
     virtual ~Printer() {}
@@ -183,7 +197,7 @@ public:
   
   void printStdErr(Printer **Beg = 0, Printer **End = 0) const;  
   void printDOT(std::ostream& Out, Printer **Beg = 0, Printer **End = 0) const;
-};  
+};
   
 template<> struct GRTrait<GRState*> {
   static inline void* toPtr(GRState* St)  { return (void*) St; }
@@ -194,6 +208,7 @@ template<> struct GRTrait<GRState*> {
     profile.AddPointer(St);
   }
 };
+  
   
 class GRStateSet {
   typedef llvm::SmallPtrSet<const GRState*,5> ImplTy;
@@ -226,7 +241,11 @@ public:
         S.Add(St);
     }
   };
-};
+};  
+  
+//===----------------------------------------------------------------------===//
+// GRStateManager - Factory object for GRStates.
+//===----------------------------------------------------------------------===//
   
 class GRStateManager {
   friend class GRExprEngine;
@@ -349,18 +368,8 @@ public:
   }
   
   // Methods that manipulate the GDM.
-  const GRState* addGDM(const GRState* St, void* Key, void* Data) {
-    GRState::GenericDataMap M1 = St->getGDM();
-    GRState::GenericDataMap M2 = GDMFactory.Add(M2, Key, Data);    
-    
-    if (M1 == M2)
-      return St;
-    
-    GRState NewSt = *St;
-    NewSt.GDM = M2;
-    return getPersistentState(NewSt);
-  }
-
+  const GRState* addGDM(const GRState* St, void* Key, void* Data);
+  
   // Methods that query & manipulate the Store.
   RVal GetRVal(const GRState* St, LVal LV, QualType T = QualType()) {
     return StMgr->GetRVal(St->getStore(), LV, T);
@@ -388,6 +397,32 @@ public:
   
   bool isEqual(const GRState* state, Expr* Ex, const llvm::APSInt& V);
   bool isEqual(const GRState* state, Expr* Ex, uint64_t);
+  
+  // Trait based GDM dispatch.  
+  template <typename T>
+  const GRState* set(const GRState* st, typename GRStateTrait<T>::data_type D) {
+    return addGDM(st, GRStateTrait<T>::GDMIndex(),
+                  GRStateTrait<T>::MakeVoidPtr(D));
+  }
+  
+  template<typename T>
+  const GRState* set(const GRState* st,
+                     typename GRStateTrait<T>::key_type K,
+                     typename GRStateTrait<T>::value_type V,
+                     typename GRStateTrait<T>::context_type C) {
+    
+    return addGDM(st, GRStateTrait<T>::GDMIndex(), 
+     GRStateTrait<T>::MakeVoidPtr(GRStateTrait<T>::Set(st->get<T>(), K, V, C)));
+  }
+  
+  template <typename T>
+  const GRState* remove(const GRState* st,
+                        typename GRStateTrait<T>::key_type K,
+                        typename GRStateTrait<T>::context_type C) {
+    
+    return addGDM(st, GRStateTrait<T>::GDMIndex(), 
+     GRStateTrait<T>::MakeVoidPtr(GRStateTrait<T>::Remove(st->get<T>(), K, C)));
+  }
   
   // Assumption logic.
   const GRState* Assume(const GRState* St, RVal Cond, bool Assumption,
@@ -439,6 +474,86 @@ private:
   const GRState* AssumeSymGE(const GRState* St, SymbolID sym,
                                 const llvm::APSInt& V, bool& isFeasible);
 };
+  
+//===----------------------------------------------------------------------===//
+// GRStateRef - A "fat" reference to GRState that also bundles GRStateManager.
+//===----------------------------------------------------------------------===//
+  
+class GRStateRef {
+  const GRState* St;
+  GRStateManager* Mgr;
+public:
+  GRStateRef(const GRState* st, GRStateManager& mgr) : St(st), Mgr(&mgr) {}
+
+  const GRState* getState() const { return St; } 
+  operator const GRState*() const { return St; }
+  GRStateManager& getManager() const { return *Mgr; }
+    
+  RVal GetRVal(Expr* Ex) {
+    return Mgr->GetRVal(St, Ex);
+  }
+  
+  RVal GetBlkExprRVal(Expr* Ex) {  
+    return Mgr->GetBlkExprRVal(St, Ex);
+  }
+  
+  RVal GetRVal(LVal LV, QualType T = QualType()) {
+    return Mgr->GetRVal(St, LV, T);
+  }
+  
+  GRStateRef SetRVal(Expr* Ex, RVal V, bool isBlkExpr, bool Invalidate) {
+    return GRStateRef(Mgr->SetRVal(St, Ex, V, isBlkExpr, Invalidate), *Mgr);
+  }
+  
+  GRStateRef SetRVal(Expr* Ex, RVal V) {
+    return GRStateRef(Mgr->SetRVal(St, Ex, V), *Mgr);
+  }
+  
+  GRStateRef SetRVal(LVal LV, RVal V) {
+    GRState StImpl = *St;
+    Mgr->SetRVal(StImpl, LV, V);    
+    return GRStateRef(Mgr->getPersistentState(StImpl), *Mgr);
+  }
+  
+  GRStateRef Unbind(LVal LV) {
+    return GRStateRef(Mgr->Unbind(St, LV), *Mgr);
+  }
+  
+  GRStateRef AddNE(SymbolID sym, const llvm::APSInt& V) {
+    return GRStateRef(Mgr->AddNE(St, sym, V), *Mgr);
+  }
+  
+  // Trait based GDM dispatch.
+  template<typename T>
+  typename GRStateTrait<T>::data_type get() const {
+    return St->get<T>();
+  }
+  
+  template<typename T>
+  typename GRStateTrait<T>::lookup_type
+  get(typename GRStateTrait<T>::key_type key) const {
+    return St->get<T>(key);
+  }
+  
+  template<typename T>
+  GRStateRef set(typename GRStateTrait<T>::data_type D) {
+    return GRStateRef(Mgr->set<T>(St, D), *Mgr);
+  }
+  
+  template<typename T>
+  GRStateRef set(typename GRStateTrait<T>::key_type K,
+                 typename GRStateTrait<T>::value_type E,
+                 typename GRStateTrait<T>::context_type C) {
+    return GRStateRef(Mgr->set<T>(St, K, E, C), *Mgr);
+  }
+  
+  template<typename T>
+  GRStateRef remove(typename GRStateTrait<T>::key_type K,
+                    typename GRStateTrait<T>::context_type C) {
+    return GRStateRef(Mgr->remove<T>(St, K, C), *Mgr);
+  }
+};
+  
   
 } // end clang namespace
 
