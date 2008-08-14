@@ -345,12 +345,6 @@ MachineInstr::~MachineInstr() {
 #endif
 }
 
-/// getOpcode - Returns the opcode of this MachineInstr.
-///
-int MachineInstr::getOpcode() const {
-  return TID->Opcode;
-}
-
 /// getRegInfo - If this instruction is embedded into a MachineFunction,
 /// return the MachineRegisterInfo object for the current function, otherwise
 /// return null.

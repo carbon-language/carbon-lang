@@ -21,6 +21,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/CodeGen/MachineMemOperand.h"
+#include "llvm/Target/TargetInstrDesc.h"
 #include <list>
 #include <vector>
 
@@ -89,7 +90,7 @@ public:
 
   /// getOpcode - Returns the opcode of this MachineInstr.
   ///
-  int getOpcode() const;
+  int getOpcode() const { return TID->Opcode; }
 
   /// Access to explicit operands of the instruction.
   ///
