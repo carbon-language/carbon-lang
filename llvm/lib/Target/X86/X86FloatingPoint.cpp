@@ -40,11 +40,11 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/ADT/DepthFirstIterator.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 #include <algorithm>
-#include <set>
 using namespace llvm;
 
 STATISTIC(NumFXCH, "Number of fxch instructions inserted");
@@ -192,11 +192,11 @@ bool FPS::runOnMachineFunction(MachineFunction &MF) {
 
   // Process the function in depth first order so that we process at least one
   // of the predecessors for every reachable block in the function.
-  std::set<MachineBasicBlock*> Processed;
+  SmallPtrSet<MachineBasicBlock*, 8> Processed;
   MachineBasicBlock *Entry = MF.begin();
 
   bool Changed = false;
-  for (df_ext_iterator<MachineBasicBlock*, std::set<MachineBasicBlock*> >
+  for (df_ext_iterator<MachineBasicBlock*, SmallPtrSet<MachineBasicBlock*, 8> >
          I = df_ext_begin(Entry, Processed), E = df_ext_end(Entry, Processed);
        I != E; ++I)
     Changed |= processBasicBlock(MF, **I);

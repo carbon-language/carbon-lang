@@ -32,6 +32,7 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/ADT/DepthFirstIterator.h"
+#include "llvm/ADT/SmallPtrSet.h"
 using namespace llvm;
 
 namespace {
@@ -51,11 +52,11 @@ FunctionPass *llvm::createUnreachableBlockEliminationPass() {
 }
 
 bool UnreachableBlockElim::runOnFunction(Function &F) {
-  std::set<BasicBlock*> Reachable;
+  SmallPtrSet<BasicBlock*, 8> Reachable;
 
   // Mark all reachable blocks.
-  for (df_ext_iterator<Function*> I = df_ext_begin(&F, Reachable),
-         E = df_ext_end(&F, Reachable); I != E; ++I)
+  for (df_ext_iterator<Function*, SmallPtrSet<BasicBlock*, 8> > I =
+       df_ext_begin(&F, Reachable), E = df_ext_end(&F, Reachable); I != E; ++I)
     /* Mark all reachable blocks */;
 
   // Loop over all dead blocks, remembering them and deleting all instructions
@@ -101,11 +102,12 @@ Y("unreachable-mbb-elimination",
 const PassInfo *const llvm::UnreachableMachineBlockElimID = &Y;
 
 bool UnreachableMachineBlockElim::runOnMachineFunction(MachineFunction &F) {
-  std::set<MachineBasicBlock*> Reachable;
+  SmallPtrSet<MachineBasicBlock*, 8> Reachable;
 
   // Mark all reachable blocks.
-  for (df_ext_iterator<MachineFunction*> I = df_ext_begin(&F, Reachable),
-         E = df_ext_end(&F, Reachable); I != E; ++I)
+  for (df_ext_iterator<MachineFunction*, SmallPtrSet<MachineBasicBlock*, 8> >
+       I = df_ext_begin(&F, Reachable), E = df_ext_end(&F, Reachable);
+       I != E; ++I)
     /* Mark all reachable blocks */;
 
   // Loop over all dead blocks, remembering them and deleting all instructions
