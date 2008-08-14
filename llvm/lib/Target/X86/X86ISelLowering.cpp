@@ -4143,7 +4143,8 @@ X86TargetLowering::LowerINSERT_VECTOR_ELT_SSE4(SDValue Op, SelectionDAG &DAG){
   SDValue N1 = Op.getOperand(1);
   SDValue N2 = Op.getOperand(2);
 
-  if ((EVT.getSizeInBits() == 8) || (EVT.getSizeInBits() == 16)) {
+  if ((EVT.getSizeInBits() == 8 || EVT.getSizeInBits() == 16) &&
+      isa<ConstantSDNode>(N2)) {
     unsigned Opc = (EVT.getSizeInBits() == 8) ? X86ISD::PINSRB
                                                   : X86ISD::PINSRW;
     // Transform it so it match pinsr{b,w} which expects a GR32 as its second
