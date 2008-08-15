@@ -86,10 +86,10 @@ void CodeGenModule::WarnUnsupported(const Decl *D, const char *Type) {
                     &Msg, 1);
 }
 
-/// setVisibility - Set the visibility for the given LLVM GlobalValue
-/// according to the given clang AST visibility value.
-void CodeGenModule::setVisibility(llvm::GlobalValue *GV,
-                                  VisibilityAttr::VisibilityTypes Vis) {
+/// setGlobalVisibility - Set the visibility for the given LLVM
+/// GlobalValue according to the given clang AST visibility value.
+static void setGlobalVisibility(llvm::GlobalValue *GV,
+                                VisibilityAttr::VisibilityTypes Vis) {
   switch (Vis) {
   default: assert(0 && "Unknown visibility!");
   case VisibilityAttr::DefaultVisibility:
@@ -185,7 +185,7 @@ void CodeGenModule::SetGlobalValueAttributes(const FunctionDecl *FD,
     GV->setLinkage(llvm::Function::WeakLinkage);
 
   if (const VisibilityAttr *attr = FD->getAttr<VisibilityAttr>())
-    CodeGenModule::setVisibility(GV, attr->getVisibility());
+    setGlobalVisibility(GV, attr->getVisibility());
   // FIXME: else handle -fvisibility
 
   if (const AsmLabelAttr *ALA = FD->getAttr<AsmLabelAttr>()) {
@@ -240,24 +240,6 @@ void CodeGenModule::SetFunctionAttributes(const FunctionDecl *FD,
     F->setCallingConv(llvm::CallingConv::Fast);
 
   SetGlobalValueAttributes(FD, F);
-}
-
-void CodeGenModule::EmitObjCMethod(const ObjCMethodDecl *OMD) {
-  // If this is not a prototype, emit the body.
-  if (OMD->getBody())
-    CodeGenFunction(*this).GenerateObjCMethod(OMD);
-}
-void CodeGenModule::EmitObjCProtocolImplementation(const ObjCProtocolDecl *PD){
-  Runtime->GenerateProtocol(PD);
-}
-
-void CodeGenModule::EmitObjCCategoryImpl(const ObjCCategoryImplDecl *OCD) {
-  Runtime->GenerateCategory(OCD);
-}
-
-void 
-CodeGenModule::EmitObjCClassImplementation(const ObjCImplementationDecl *OID) {
-  Runtime->GenerateClass(OID);
 }
 
 void CodeGenModule::EmitStatics() {
@@ -486,7 +468,7 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
   GV->setAlignment(Align / 8);
 
   if (const VisibilityAttr *attr = D->getAttr<VisibilityAttr>())
-    setVisibility(GV, attr->getVisibility());
+    setGlobalVisibility(GV, attr->getVisibility());
   // FIXME: else handle -fvisibility
 
   if (const AsmLabelAttr *ALA = D->getAttr<AsmLabelAttr>()) {
@@ -849,3 +831,88 @@ llvm::Constant *CodeGenModule::GetAddrOfConstantString(const std::string &str) {
 llvm::Constant *CodeGenModule::GetAddrOfConstantCString(const std::string &str) {
   return GetAddrOfConstantString(str + "\0");
 }
+
+/// EmitTopLevelDecl - Emit code for a single top level declaration.
+void CodeGenModule::EmitTopLevelDecl(Decl *D) {
+  // If an error has occurred, stop code generation, but continue
+  // parsing and semantic analysis (to ensure all warnings and errors
+  // are emitted).
+  if (Diags.hasErrorOccurred())
+    return;
+
+  switch (D->getKind()) {
+  case Decl::Function:
+  case Decl::Var:
+    EmitGlobal(cast<ValueDecl>(D));
+    break;
+
+  case Decl::Namespace:
+    assert(0 && "FIXME: Namespace unsupported");
+    break;
+
+    // Objective-C Decls
+    
+    // Forward declarations, no (immediate) code generation.
+  case Decl::ObjCClass:
+  case Decl::ObjCCategory:
+  case Decl::ObjCForwardProtocol:
+  case Decl::ObjCInterface:
+    break;
+
+  case Decl::ObjCProtocol:
+    Runtime->GenerateProtocol(cast<ObjCProtocolDecl>(D));
+    break;
+
+  case Decl::ObjCCategoryImpl:
+    Runtime->GenerateCategory(cast<ObjCCategoryImplDecl>(D));
+    break;
+
+  case Decl::ObjCImplementation:
+    Runtime->GenerateClass(cast<ObjCImplementationDecl>(D));
+    break;
+    
+  case Decl::ObjCMethod: {
+    ObjCMethodDecl *OMD = cast<ObjCMethodDecl>(D);
+    // If this is not a prototype, emit the body.
+    if (OMD->getBody())
+      CodeGenFunction(*this).GenerateObjCMethod(OMD);
+    break;
+  }
+  case Decl::ObjCPropertyImpl:
+    assert(0 && "FIXME: ObjCPropertyImpl unsupported");
+    break;
+  case Decl::ObjCCompatibleAlias: 
+    assert(0 && "FIXME: ObjCCompatibleAlias unsupported");
+    break;
+
+  case Decl::LinkageSpec: {
+    LinkageSpecDecl *LSD = cast<LinkageSpecDecl>(D);
+    if (LSD->getLanguage() == LinkageSpecDecl::lang_cxx)
+      WarnUnsupported(LSD, "linkage spec");
+    // FIXME: implement C++ linkage, C linkage works mostly by C
+    // language reuse already.
+    break;
+  }
+
+  case Decl::FileScopeAsm: {
+    FileScopeAsmDecl *AD = cast<FileScopeAsmDecl>(D);
+    std::string AsmString(AD->getAsmString()->getStrData(),
+                          AD->getAsmString()->getByteLength());
+    
+    const std::string &S = getModule().getModuleInlineAsm();
+    if (S.empty())
+      getModule().setModuleInlineAsm(AsmString);
+    else
+      getModule().setModuleInlineAsm(S + '\n' + AsmString);
+    break;
+  }
+   
+  default: 
+    // Make sure we handled everything we should, every other kind is
+    // a non-top-level decl.  FIXME: Would be nice to have an
+    // isTopLevelDeclKind function. Need to recode Decl::Kind to do
+    // that easily.
+    assert(isa<TypeDecl>(D) && "Unsupported decl kind");
+  }
+}
+  

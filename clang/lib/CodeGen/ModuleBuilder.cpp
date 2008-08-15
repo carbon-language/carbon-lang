@@ -63,63 +63,15 @@ namespace {
     }
     
     virtual void HandleTopLevelDecl(Decl *D) {
-      // If an error occurred, stop code generation, but continue parsing and
-      // semantic analysis (to ensure all warnings and errors are emitted).
-      if (Diags.hasErrorOccurred())
-        return;
-
-      if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
-        Builder->EmitGlobal(FD);
-      } else if (VarDecl *VD = dyn_cast<VarDecl>(D)) {
-        Builder->EmitGlobal(VD);
-      } else if (isa<ObjCClassDecl>(D) || isa<ObjCForwardProtocolDecl>(D)) {
-        //Forward declaration.  Only used for type checking.
-      } else if (ObjCProtocolDecl *PD = dyn_cast<ObjCProtocolDecl>(D)){
-        // Generate Protocol object.
-        Builder->EmitObjCProtocolImplementation(PD);
-      } else if (isa<ObjCCategoryDecl>(D)){
-        //Only used for typechecking.
-      } else if (ObjCCategoryImplDecl *OCD = dyn_cast<ObjCCategoryImplDecl>(D)){
-        // Generate methods, attach to category structure
-        Builder->EmitObjCCategoryImpl(OCD);
-      } else if (ObjCImplementationDecl * OID = 
-          dyn_cast<ObjCImplementationDecl>(D)){
-        // Generate methods, attach to class structure
-        Builder->EmitObjCClassImplementation(OID);
-      } else if (isa<ObjCInterfaceDecl>(D)){
-        // Ignore - generated when the implementation decl is CodeGen'd
-      } else if (ObjCMethodDecl *OMD = dyn_cast<ObjCMethodDecl>(D)){
-        Builder->EmitObjCMethod(OMD);
-      } else if (isa<ObjCClassDecl>(D) || isa<ObjCCategoryDecl>(D)) {
-        // Forward declaration.  Only used for type checking.
-      } else if (ObjCMethodDecl *OMD = dyn_cast<ObjCMethodDecl>(D)){
-        Builder->EmitObjCMethod(OMD);
-      } else if (LinkageSpecDecl *LSD = dyn_cast<LinkageSpecDecl>(D)) {
-        if (LSD->getLanguage() == LinkageSpecDecl::lang_cxx)
-          Builder->WarnUnsupported(LSD, "linkage spec");
-        // FIXME: implement C++ linkage, C linkage works mostly by C
-        // language reuse already.
-      } else if (FileScopeAsmDecl *AD = dyn_cast<FileScopeAsmDecl>(D)) {
-        std::string AsmString(AD->getAsmString()->getStrData(),
-                              AD->getAsmString()->getByteLength());
-        
-        const std::string &S = Builder->getModule().getModuleInlineAsm();
-        if (S.empty())
-          Builder->getModule().setModuleInlineAsm(AsmString);
-        else
-          Builder->getModule().setModuleInlineAsm(S + '\n' + AsmString);
-      } else {
-        assert(isa<TypeDecl>(D) && "Unknown top level decl");
-        // TODO: handle debug info?
-      }
-
+      // Make sure to emit all elements of a ScopedDecl.
       if (ScopedDecl *SD = dyn_cast<ScopedDecl>(D)) {
-        SD = SD->getNextDeclarator();
-        if (SD)
-          HandleTopLevelDecl(SD);
+        for (; SD; SD = SD->getNextDeclarator())
+          Builder->EmitTopLevelDecl(SD);
+      } else {
+        Builder->EmitTopLevelDecl(D);
       }
     }
-    
+
     /// HandleTagDeclDefinition - This callback is invoked each time a TagDecl
     /// (e.g. struct, union, enum, class) is completed. This allows the client to
     /// hack on the type, which can occur at any point in the file (because these

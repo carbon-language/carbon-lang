@@ -52,8 +52,8 @@ namespace CodeGen {
   class CGDebugInfo;
   class CGObjCRuntime;
   
-/// CodeGenModule - This class organizes the cross-module state that is used
-/// while generating LLVM code.
+/// CodeGenModule - This class organizes the cross-function state that
+/// is used while generating LLVM code.
 class CodeGenModule {
   typedef std::vector< std::pair<llvm::Constant*, int> > CtorList;
 
@@ -138,11 +138,6 @@ public:
   /// GetAddrOfFunction - Return the llvm::Constant for the address
   /// of the given function.
   llvm::Constant *GetAddrOfFunction(const FunctionDecl *D);  
-  
-  /// getBuiltinLibFunction - Given a builtin id for a function like
-  /// "__builtin_fabsf", return a Function* for "fabsf".
-  ///
-  llvm::Function *getBuiltinLibFunction(unsigned BuiltinID);
 
   /// GetStringForStringLiteral - Return the appropriate bytes for a
   /// string literal, properly padded to match the literal type. If
@@ -150,6 +145,8 @@ public:
   /// GetAddrOfConstantStringLiteral.
   std::string GetStringForStringLiteral(const StringLiteral *E);
 
+  /// GetAddrOfConstantCFString - Return a pointer to a
+  /// constant CFString object for the given string.
   llvm::Constant *GetAddrOfConstantCFString(const std::string& str);
 
   /// GetAddrOfConstantStringFromLiteral - Return a pointer to a
@@ -170,21 +167,19 @@ public:
   /// array containing the literal and a terminating '\-'
   /// character. The result has pointer to array type.
   llvm::Constant *GetAddrOfConstantCString(const std::string &str);
+  
+  /// getBuiltinLibFunction - Given a builtin id for a function like
+  /// "__builtin_fabsf", return a Function* for "fabsf".
+  llvm::Function *getBuiltinLibFunction(unsigned BuiltinID);
 
   llvm::Function *getMemCpyFn();
   llvm::Function *getMemMoveFn();
   llvm::Function *getMemSetFn();
   llvm::Function *getIntrinsic(unsigned IID, const llvm::Type **Tys = 0, 
                                unsigned NumTys = 0);
-  
-  void EmitObjCMethod(const ObjCMethodDecl *OMD);
-  void EmitObjCCategoryImpl(const ObjCCategoryImplDecl *OCD);
-  void EmitObjCClassImplementation(const ObjCImplementationDecl *OID);
-  void EmitObjCProtocolImplementation(const ObjCProtocolDecl *PD);
 
-  /// EmitGlobal - Emit code for a singal global function or var
-  /// decl. Forward declarations are emitted lazily.
-  void EmitGlobal(const ValueDecl *D);
+  /// EmitTopLevelDecl - Emit code for a single top level declaration.
+  void EmitTopLevelDecl(Decl *D);
 
   void AddAnnotation(llvm::Constant *C) { Annotations.push_back(C); }
 
@@ -194,18 +189,12 @@ public:
                                    const AnnotateAttr *AA, unsigned LineNo);
     
   /// WarnUnsupported - Print out a warning that codegen doesn't support the
-  /// specified stmt yet.
-    
+  /// specified stmt yet.    
   void WarnUnsupported(const Stmt *S, const char *Type);
   
   /// WarnUnsupported - Print out a warning that codegen doesn't support the
   /// specified decl yet.
   void WarnUnsupported(const Decl *D, const char *Type);
-  
-  /// setVisibility - Set the visibility for the given LLVM GlobalValue
-  /// according to the given clang AST visibility value.
-  static void setVisibility(llvm::GlobalValue *GV,
-                            VisibilityAttr::VisibilityTypes);
 
 private:
   void SetFunctionAttributes(const FunctionDecl *FD,
@@ -215,6 +204,10 @@ private:
   void SetGlobalValueAttributes(const FunctionDecl *FD,
                                 llvm::GlobalValue *GV);
   
+  /// EmitGlobal - Emit code for a singal global function or var
+  /// decl. Forward declarations are emitted lazily.
+  void EmitGlobal(const ValueDecl *D);
+
   void EmitGlobalDefinition(const ValueDecl *D);
   llvm::GlobalValue *EmitForwardFunctionDefinition(const FunctionDecl *D);
   void EmitGlobalFunctionDefinition(const FunctionDecl *D);
