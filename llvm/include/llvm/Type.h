@@ -392,6 +392,17 @@ inline void PATypeHandle::removeUser() {
 
 // Define inline methods for PATypeHolder.
 
+/// get - This implements the forwarding part of the union-find algorithm for
+/// abstract types.  Before every access to the Type*, we check to see if the
+/// type we are pointing to is forwarding to a new type.  If so, we drop our
+/// reference to the type.
+///
+inline Type* PATypeHolder::get() const {
+  const Type *NewTy = Ty->getForwardedType();
+  if (!NewTy) return const_cast<Type*>(Ty);
+  return *const_cast<PATypeHolder*>(this) = NewTy;
+}
+
 inline void PATypeHolder::addRef() {
   assert(Ty && "Type Holder has a null type!");
   if (Ty->isAbstract())
