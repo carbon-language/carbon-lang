@@ -74,7 +74,7 @@ namespace {
     : public FunctionPass,
       public InstVisitor<InstCombiner, Instruction*> {
     // Worklist of all of the instructions that need to be simplified.
-    std::vector<Instruction*> Worklist;
+    SmallVector<Instruction*, 256> Worklist;
     DenseMap<Instruction*, unsigned> WorklistMap;
     TargetData *TD;
     bool MustPreserveLCSSA;
@@ -11386,7 +11386,7 @@ static void AddReachableCodeToWorklist(BasicBlock *BB,
                                        SmallPtrSet<BasicBlock*, 64> &Visited,
                                        InstCombiner &IC,
                                        const TargetData *TD) {
-  std::vector<BasicBlock*> Worklist;
+  SmallVector<BasicBlock*, 256> Worklist;
   Worklist.push_back(BB);
 
   while (!Worklist.empty()) {
