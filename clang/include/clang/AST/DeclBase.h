@@ -72,14 +72,14 @@ public:
                  ImplicitParam,
                  CXXClassVar,
                  ParmVar,
-         ObjCInterface,  // [DeclContext]
-         ObjCCompatibleAlias,
-         ObjCMethod,  // [DeclContext]
-         ObjCClass,
-         ObjCForwardProtocol,
-         ObjCPropertyImpl,
+           ObjCInterface,  // [DeclContext]
+           ObjCCompatibleAlias,
+           ObjCMethod,  // [DeclContext]
+           ObjCClass,
+           ObjCForwardProtocol,
+           ObjCPropertyImpl,
          LinkageSpec,
-   FileScopeAsm,
+         FileScopeAsm,
   
     // For each non-leaf class, we now define a mapping to the first/last member
     // of the class, to allow efficient classof.
