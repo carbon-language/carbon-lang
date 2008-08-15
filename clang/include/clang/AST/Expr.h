@@ -97,7 +97,7 @@ public:
   /// constant expression. The expression must be a valid integer
   /// constant expression as determined by isIntegerConstantExpr.
   llvm::APSInt getIntegerConstantExprValue(ASTContext &Ctx) const {
-    llvm::APSInt X(32);
+    llvm::APSInt X;
     bool success = isIntegerConstantExpr(X, Ctx);
     success = success;
     assert(success && "Illegal argument to getIntegerConstantExpr");
@@ -112,7 +112,7 @@ public:
                              SourceLocation *Loc = 0,
                              bool isEvaluated = true) const;
   bool isIntegerConstantExpr(ASTContext &Ctx, SourceLocation *Loc = 0) const {
-    llvm::APSInt X(32);
+    llvm::APSInt X;
     return isIntegerConstantExpr(X, Ctx, Loc);
   }
   /// isConstantExpr - Return true if this expression is a valid constant expr.
@@ -1320,9 +1320,7 @@ public:
   /// getNumArgs - Return the number of arguments to pass to the candidate
   /// functions.
   unsigned getNumArgs(ASTContext &Ctx) const {
-    llvm::APSInt constEval(32);
-    (void) cast<Expr>(SubExprs[0])->isIntegerConstantExpr(constEval, Ctx);
-    return constEval.getZExtValue();
+    return getExpr(0)->getIntegerConstantExprValue(Ctx).getZExtValue();
   }
 
   /// getNumSubExprs - Return the size of the SubExprs array.  This includes the
@@ -1331,7 +1329,7 @@ public:
   unsigned getNumSubExprs() const { return NumExprs; }
   
   /// getExpr - Return the Expr at the specified index.
-  Expr *getExpr(unsigned Index) {
+  Expr *getExpr(unsigned Index) const {
     assert((Index < NumExprs) && "Arg access out of range!");
     return cast<Expr>(SubExprs[Index]);
   }
