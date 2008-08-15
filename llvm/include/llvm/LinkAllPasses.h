@@ -18,7 +18,6 @@
 #include "llvm/Analysis/AliasSetTracker.h"
 #include "llvm/Analysis/FindUsedTypes.h"
 #include "llvm/Analysis/IntervalPartition.h"
-#include "llvm/Analysis/LoadValueNumbering.h"
 #include "llvm/Analysis/LoopVR.h"
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Analysis/PostDominators.h"
@@ -50,7 +49,6 @@ namespace {
       (void) llvm::createStructRetPromotionPass();
       (void) llvm::createBasicAliasAnalysisPass();
       (void) llvm::createLibCallAliasAnalysisPass(0);
-      (void) llvm::createBasicVNPass();
       (void) llvm::createBlockPlacementPass();
       (void) llvm::createBlockProfilerPass();
       (void) llvm::createBreakCriticalEdgesPass();
@@ -65,7 +63,6 @@ namespace {
       (void) llvm::createEdgeProfilerPass();
       (void) llvm::createFunctionInliningPass();
       (void) llvm::createFunctionProfilerPass();
-      (void) llvm::createGCSEPass();
       (void) llvm::createGlobalDCEPass();
       (void) llvm::createGlobalOptimizerPass();
       (void) llvm::createGlobalsModRefPass();
@@ -77,7 +74,6 @@ namespace {
       (void) llvm::createInternalizePass(false);
       (void) llvm::createLCSSAPass();
       (void) llvm::createLICMPass();
-      (void) llvm::createLoadValueNumberingPass();
       (void) llvm::createLoopExtractorPass();
       (void) llvm::createLoopSimplifyPass();
       (void) llvm::createLoopStrengthReducePass();

@@ -78,15 +78,6 @@ FunctionPass *createScalarReplAggregatesPass(signed Threshold = -1);
 
 //===----------------------------------------------------------------------===//
 //
-// GCSE - This pass is designed to be a very quick global transformation that
-// eliminates global common subexpressions from a function.  It does this by
-// examining the SSA value graph of the function, instead of doing slow
-// bit-vector computations.
-//
-FunctionPass *createGCSEPass();
-
-//===----------------------------------------------------------------------===//
-//
 // InductionVariableSimplify - Transform induction variables in a program to all
 // use a single canonical induction variable per loop.
 //

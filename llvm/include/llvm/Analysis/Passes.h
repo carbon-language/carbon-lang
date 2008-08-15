@@ -79,13 +79,6 @@ namespace llvm {
 
   //===--------------------------------------------------------------------===//
   //
-  // createBasicVNPass - This pass walks SSA def-use chains to trivially
-  // identify lexically identical expressions.
-  //
-  ImmutablePass *createBasicVNPass();
-
-  //===--------------------------------------------------------------------===//
-  //
   // createProfileLoaderPass - This pass loads information from a profile dump
   // file.
   //

@@ -31,7 +31,6 @@
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/Verifier.h"
-#include "llvm/Analysis/LoadValueNumbering.h"
 #include "llvm/CodeGen/FileWriters.h"
 #include "llvm/Target/SubtargetFeature.h"
 #include "llvm/Target/TargetOptions.h"
