@@ -103,33 +103,7 @@ llvm::Value *CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E) {
 /// Generate an Objective-C method.  An Objective-C method is a C function with
 /// its pointer, name, and types registered in the class struture.  
 void CodeGenFunction::GenerateObjCMethod(const ObjCMethodDecl *OMD) {
-
-  llvm::SmallVector<const llvm::Type *, 16> ParamTypes;
-  for (unsigned i=0 ; i<OMD->param_size() ; i++) {
-    const llvm::Type *Ty = ConvertType(OMD->getParamDecl(i)->getType());
-    if (Ty->isFirstClassType())
-      ParamTypes.push_back(Ty);
-    else
-      ParamTypes.push_back(llvm::PointerType::getUnqual(Ty));
-  }
-  std::string CategoryName = "";
-  if (ObjCCategoryImplDecl *OCD =
-      dyn_cast<ObjCCategoryImplDecl>(OMD->getMethodContext())) {
-    CategoryName = OCD->getName();
-  }
-  const llvm::Type *ReturnTy = 
-    CGM.getTypes().ConvertReturnType(OMD->getResultType());
-  CurFn = CGM.getObjCRuntime().MethodPreamble(
-                                          OMD->getClassInterface()->getName(),
-                                              CategoryName,
-                                              OMD->getSelector().getName(),
-                                              ReturnTy,
-                                              llvm::PointerType::getUnqual(
-                                              llvm::Type::Int32Ty),
-                                              ParamTypes.begin(),
-                                              OMD->param_size(),
-                                              !OMD->isInstance(),
-                                              OMD->isVariadic());
+  CurFn = CGM.getObjCRuntime().GenerateMethod(OMD);
   llvm::BasicBlock *EntryBB = llvm::BasicBlock::Create("entry", CurFn);
   
   // Create a marker to make it easy to insert allocas into the entryblock

@@ -252,125 +252,12 @@ void CodeGenModule::EmitObjCProtocolImplementation(const ObjCProtocolDecl *PD){
 }
 
 void CodeGenModule::EmitObjCCategoryImpl(const ObjCCategoryImplDecl *OCD) {
-
-  // Collect information about instance methods
-  llvm::SmallVector<Selector, 16> InstanceMethodSels;
-  llvm::SmallVector<llvm::Constant*, 16> InstanceMethodTypes;
-  for (ObjCCategoryDecl::instmeth_iterator iter = OCD->instmeth_begin(),
-      endIter = OCD->instmeth_end() ; iter != endIter ; iter++) {
-    InstanceMethodSels.push_back((*iter)->getSelector());
-    std::string TypeStr;
-    Context.getObjCEncodingForMethodDecl(*iter,TypeStr);
-    InstanceMethodTypes.push_back(GetAddrOfConstantCString(TypeStr));
-  }
-
-  // Collect information about class methods
-  llvm::SmallVector<Selector, 16> ClassMethodSels;
-  llvm::SmallVector<llvm::Constant*, 16> ClassMethodTypes;
-  for (ObjCCategoryDecl::classmeth_iterator iter = OCD->classmeth_begin(),
-      endIter = OCD->classmeth_end() ; iter != endIter ; iter++) {
-    ClassMethodSels.push_back((*iter)->getSelector());
-    std::string TypeStr;
-    Context.getObjCEncodingForMethodDecl(*iter,TypeStr);
-    ClassMethodTypes.push_back(GetAddrOfConstantCString(TypeStr));
-  }
-
-  // Collect the names of referenced protocols
-  llvm::SmallVector<std::string, 16> Protocols;
-  const ObjCInterfaceDecl *ClassDecl = OCD->getClassInterface();
-  const ObjCList<ObjCProtocolDecl> &Protos =ClassDecl->getReferencedProtocols();
-  for (ObjCList<ObjCProtocolDecl>::iterator I = Protos.begin(),
-       E = Protos.end(); I != E; ++I)
-    Protocols.push_back((*I)->getName());
-
-  // Generate the category
-  Runtime->GenerateCategory(OCD->getClassInterface()->getName(),
-      OCD->getName(), InstanceMethodSels, InstanceMethodTypes,
-      ClassMethodSels, ClassMethodTypes, Protocols);
+  Runtime->GenerateCategory(OCD);
 }
 
-void CodeGenModule::EmitObjCClassImplementation(
-    const ObjCImplementationDecl *OID) {
-  // Get the superclass name.
-  const ObjCInterfaceDecl * SCDecl = OID->getClassInterface()->getSuperClass();
-  const char * SCName = NULL;
-  if (SCDecl) {
-    SCName = SCDecl->getName();
-  }
-
-  // Get the class name
-  ObjCInterfaceDecl * ClassDecl = (ObjCInterfaceDecl*)OID->getClassInterface();
-  const char * ClassName = ClassDecl->getName();
-
-  // Get the size of instances.  For runtimes that support late-bound instances
-  // this should probably be something different (size just of instance
-  // varaibles in this class, not superclasses?).
-  int instanceSize = 0;
-  const llvm::Type *ObjTy = 0;
-  if (!Runtime->LateBoundIVars()) {
-    ObjTy = getTypes().ConvertType(Context.getObjCInterfaceType(ClassDecl));
-    instanceSize = TheTargetData.getABITypeSize(ObjTy);
-  } else {
-    // This is required by newer ObjC runtimes.
-    assert(0 && "Late-bound instance variables not yet supported");
-  }
-
-  // Collect information about instance variables.
-  llvm::SmallVector<llvm::Constant*, 16> IvarNames;
-  llvm::SmallVector<llvm::Constant*, 16> IvarTypes;
-  llvm::SmallVector<llvm::Constant*, 16> IvarOffsets;
-  const llvm::StructLayout *Layout =
-    TheTargetData.getStructLayout(cast<llvm::StructType>(ObjTy));
-  ObjTy = llvm::PointerType::getUnqual(ObjTy);
-  for (ObjCInterfaceDecl::ivar_iterator iter = ClassDecl->ivar_begin(),
-      endIter = ClassDecl->ivar_end() ; iter != endIter ; iter++) {
-      // Store the name
-      IvarNames.push_back(GetAddrOfConstantCString((*iter)->getName()));
-      // Get the type encoding for this ivar
-      std::string TypeStr;
-      llvm::SmallVector<const RecordType *, 8> EncodingRecordTypes;
-      Context.getObjCEncodingForType((*iter)->getType(), TypeStr,
-                                     EncodingRecordTypes);
-      IvarTypes.push_back(GetAddrOfConstantCString(TypeStr));
-      // Get the offset
-      int offset =
-        (int)Layout->getElementOffset(getTypes().getLLVMFieldNo(*iter));
-      IvarOffsets.push_back(
-          llvm::ConstantInt::get(llvm::Type::Int32Ty, offset));
-  }
-
-  // Collect information about instance methods
-  llvm::SmallVector<Selector, 16> InstanceMethodSels;
-  llvm::SmallVector<llvm::Constant*, 16> InstanceMethodTypes;
-  for (ObjCImplementationDecl::instmeth_iterator iter = OID->instmeth_begin(),
-      endIter = OID->instmeth_end() ; iter != endIter ; iter++) {
-    InstanceMethodSels.push_back((*iter)->getSelector());
-    std::string TypeStr;
-    Context.getObjCEncodingForMethodDecl((*iter),TypeStr);
-    InstanceMethodTypes.push_back(GetAddrOfConstantCString(TypeStr));
-  }
-
-  // Collect information about class methods
-  llvm::SmallVector<Selector, 16> ClassMethodSels;
-  llvm::SmallVector<llvm::Constant*, 16> ClassMethodTypes;
-  for (ObjCImplementationDecl::classmeth_iterator iter = OID->classmeth_begin(),
-      endIter = OID->classmeth_end() ; iter != endIter ; iter++) {
-    ClassMethodSels.push_back((*iter)->getSelector());
-    std::string TypeStr;
-    Context.getObjCEncodingForMethodDecl((*iter),TypeStr);
-    ClassMethodTypes.push_back(GetAddrOfConstantCString(TypeStr));
-  }
-  // Collect the names of referenced protocols
-  llvm::SmallVector<std::string, 16> Protocols;
-  const ObjCList<ObjCProtocolDecl> &Protos =ClassDecl->getReferencedProtocols();
-  for (ObjCList<ObjCProtocolDecl>::iterator I = Protos.begin(),
-       E = Protos.end(); I != E; ++I)
-    Protocols.push_back((*I)->getName());
-
-  // Generate the category
-  Runtime->GenerateClass(ClassName, SCName, instanceSize, IvarNames, IvarTypes,
-                         IvarOffsets, InstanceMethodSels, InstanceMethodTypes,
-                         ClassMethodSels, ClassMethodTypes, Protocols);
+void 
+CodeGenModule::EmitObjCClassImplementation(const ObjCImplementationDecl *OID) {
+  Runtime->GenerateClass(OID);
 }
 
 void CodeGenModule::EmitStatics() {

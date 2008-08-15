@@ -218,35 +218,11 @@ public:
 
   virtual llvm::Value *GetSelector(llvm::IRBuilder<> &Builder, Selector Sel);
   
-  virtual llvm::Function *MethodPreamble(const std::string &ClassName,
-                                         const std::string &CategoryName,
-                                         const std::string &MethodName,
-                                         const llvm::Type *ReturnTy,
-                                         const llvm::Type *SelfTy,
-                                         const llvm::Type **ArgTy,
-                                         unsigned ArgC,
-                                         bool isClassMethod,
-                                         bool isVarArg);
+  virtual llvm::Function *GenerateMethod(const ObjCMethodDecl *OMD);
 
-  virtual void GenerateCategory(const char *ClassName, const char *CategoryName,
-           const llvm::SmallVectorImpl<Selector>  &InstanceMethodSels,
-           const llvm::SmallVectorImpl<llvm::Constant *>  &InstanceMethodTypes,
-           const llvm::SmallVectorImpl<Selector>  &ClassMethodSels,
-           const llvm::SmallVectorImpl<llvm::Constant *>  &ClassMethodTypes,
-           const llvm::SmallVectorImpl<std::string> &Protocols);
+  virtual void GenerateCategory(const ObjCCategoryImplDecl *CMD);
 
-  virtual void GenerateClass(
-           const char *ClassName,
-           const char *SuperClassName,
-           const int instanceSize,
-           const llvm::SmallVectorImpl<llvm::Constant *>  &IvarNames,
-           const llvm::SmallVectorImpl<llvm::Constant *>  &IvarTypes,
-           const llvm::SmallVectorImpl<llvm::Constant *>  &IvarOffsets,
-           const llvm::SmallVectorImpl<Selector>  &InstanceMethodSels,
-           const llvm::SmallVectorImpl<llvm::Constant *>  &InstanceMethodTypes,
-           const llvm::SmallVectorImpl<Selector>  &ClassMethodSels,
-           const llvm::SmallVectorImpl<llvm::Constant *>  &ClassMethodTypes,
-           const llvm::SmallVectorImpl<std::string> &Protocols);
+  virtual void GenerateClass(const ObjCImplementationDecl *ClassDecl);
 
   virtual llvm::Value *GenerateProtocolRef(llvm::IRBuilder<> &Builder,
                                            const ObjCProtocolDecl *PD);
@@ -370,7 +346,17 @@ llvm::Value *CGObjCMac::GenerateMessageSend(llvm::IRBuilder<> &Builder,
   Args[0] = Builder.CreateBitCast(Receiver, ObjCTypes.ObjectPtrTy, "tmp");
   Args[1] = EmitSelector(Builder, Sel);
   std::copy(ArgV, ArgV+ArgC, Args+2);
-  llvm::CallInst *CI = Builder.CreateCall(F, Args, Args+ArgC+2, "tmp");
+
+  std::vector<const llvm::Type*> Params;
+  Params.push_back(ObjCTypes.ObjectPtrTy);
+  Params.push_back(ObjCTypes.SelectorPtrTy);
+  llvm::FunctionType *CallFTy = llvm::FunctionType::get(ReturnTy,
+                                                        Params,
+                                                        true);
+  llvm::Type *PCallFTy = llvm::PointerType::getUnqual(CallFTy);
+  llvm::Constant *C = llvm::ConstantExpr::getBitCast(F, PCallFTy);
+  llvm::CallInst *CI = Builder.CreateCall(C, 
+                                          Args, Args+ArgC+2, "tmp");
   delete[] Args;
   return Builder.CreateBitCast(CI, ReturnTy, "tmp");
 }
@@ -613,29 +599,11 @@ llvm::Constant *CGObjCMac::EmitMethodList(const std::string &TypeName,
                                         ObjCTypes.MethodDescriptionListPtrTy);
 }
 
-void CGObjCMac::GenerateCategory(
-           const char *ClassName,
-           const char *CategoryName,
-           const llvm::SmallVectorImpl<Selector>  &InstanceMethodSels,
-           const llvm::SmallVectorImpl<llvm::Constant *>  &InstanceMethodTypes,
-           const llvm::SmallVectorImpl<Selector>  &ClassMethodSels,
-           const llvm::SmallVectorImpl<llvm::Constant *>  &ClassMethodTypes,
-           const llvm::SmallVectorImpl<std::string> &Protocols) {
+void CGObjCMac::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
   assert(0 && "Cannot generate category for Mac runtime.");
 }
 
-void CGObjCMac::GenerateClass(
-           const char *ClassName,
-           const char *SuperClassName,
-           const int instanceSize,
-           const llvm::SmallVectorImpl<llvm::Constant *>  &IvarNames,
-           const llvm::SmallVectorImpl<llvm::Constant *>  &IvarTypes,
-           const llvm::SmallVectorImpl<llvm::Constant *>  &IvarOffsets,
-           const llvm::SmallVectorImpl<Selector>  &InstanceMethodSels,
-           const llvm::SmallVectorImpl<llvm::Constant *>  &InstanceMethodTypes,
-           const llvm::SmallVectorImpl<Selector>  &ClassMethodSels,
-           const llvm::SmallVectorImpl<llvm::Constant *>  &ClassMethodTypes,
-           const llvm::SmallVectorImpl<std::string> &Protocols) {
+void CGObjCMac::GenerateClass(const ObjCImplementationDecl *ClassDecl) {
   assert(0 && "Cannot generate class for Mac runtime.");
 }
 
@@ -646,15 +614,7 @@ llvm::Function *CGObjCMac::ModuleInitFunction() {
   return NULL;
 }
 
-llvm::Function *CGObjCMac::MethodPreamble(const std::string &ClassName,
-                                          const std::string &CategoryName,
-                                          const std::string &MethodName,
-                                          const llvm::Type *ReturnTy,
-                                          const llvm::Type *SelfTy,
-                                          const llvm::Type **ArgTy,
-                                          unsigned ArgC,
-                                          bool isClassMethod,
-                                          bool isVarArg) {
+llvm::Function *CGObjCMac::GenerateMethod(const ObjCMethodDecl *OMD) {
   assert(0 && "Cannot generate method preamble for Mac runtime.");
   return 0;
 }
@@ -724,7 +684,7 @@ void CGObjCMac::EmitModuleInfo() {
   std::vector<llvm::Constant*> Values(4);
   Values[0] = llvm::ConstantInt::get(ObjCTypes.LongTy, ModuleVersion);
   Values[1] = llvm::ConstantInt::get(ObjCTypes.LongTy, Size);
-    // FIXME: GCC just appears to make up an empty name for this? Why?
+  // This used to be the filename, now it is unused. <rdr://4327263>
   Values[2] = GetClassName(&CGM.getContext().Idents.get(""));
   Values[3] = EmitModuleSymbols();
 
