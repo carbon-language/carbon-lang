@@ -58,7 +58,7 @@ namespace {
     RALinScan() : MachineFunctionPass((intptr_t)&ID) {}
 
     typedef std::pair<LiveInterval*, LiveInterval::iterator> IntervalPtr;
-    typedef std::vector<IntervalPtr> IntervalPtrs;
+    typedef SmallVector<IntervalPtr, 32> IntervalPtrs;
   private:
     /// RelatedRegClasses - This structure is built the first time a function is
     /// compiled, and keeps track of which register classes have registers that
@@ -94,7 +94,7 @@ namespace {
     IntervalPtrs inactive_;
 
     typedef std::priority_queue<LiveInterval*,
-                                std::vector<LiveInterval*>,
+                                SmallVector<LiveInterval*, 64>,
                                 greater_ptr<LiveInterval> > IntervalHeap;
     IntervalHeap unhandled_;
     std::auto_ptr<PhysRegTracker> prt_;
@@ -321,6 +321,8 @@ void RALinScan::initIntervalSets()
   assert(unhandled_.empty() && fixed_.empty() &&
          active_.empty() && inactive_.empty() &&
          "interval sets should be empty on initialization");
+
+  handled_.reserve(li_->getNumIntervals());
 
   for (LiveIntervals::iterator i = li_->begin(), e = li_->end(); i != e; ++i) {
     if (TargetRegisterInfo::isPhysicalRegister(i->second->reg)) {
