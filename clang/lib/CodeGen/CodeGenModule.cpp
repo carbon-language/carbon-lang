@@ -960,5 +960,5 @@ llvm::Constant *CodeGenModule::GetAddrOfConstantString(const std::string &str) {
 /// array containing the literal and a terminating '\-'
 /// character. The result has pointer to array type.
 llvm::Constant *CodeGenModule::GetAddrOfConstantCString(const std::string &str) {
-  return GetAddrOfConstantCString(str + "\0");
+  return GetAddrOfConstantString(str + "\0");
 }
