@@ -540,7 +540,9 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
   case tok::kw_static_cast:
     return ParseCXXCasts();
   case tok::kw_this:
-    return ParseCXXThis();
+    Res = ParseCXXThis();
+    // This can be followed by postfix-expr pieces.
+    return ParsePostfixExpressionSuffix(Res);
   case tok::at: {
     SourceLocation AtLoc = ConsumeToken();
     return ParseObjCAtExpression(AtLoc);

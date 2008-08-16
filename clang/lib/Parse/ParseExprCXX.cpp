@@ -112,10 +112,5 @@ Parser::ExprResult Parser::ParseThrowExpression() {
 Parser::ExprResult Parser::ParseCXXThis() {
   assert(Tok.is(tok::kw_this) && "Not 'this'!");
   SourceLocation ThisLoc = ConsumeToken();
-
-  ExprResult Res = Actions.ActOnCXXThis(ThisLoc);
-  if (Res.isInvalid)
-    return Res;
-
-  return ParsePostfixExpressionSuffix(Res);
+  return Actions.ActOnCXXThis(ThisLoc);
 }
