@@ -176,9 +176,14 @@ std::string html::EscapeText(const std::string& s, bool EscapeSpaces,
       break;
       
       case '\t':
-        if (ReplaceTabs)
-          for (unsigned i = 0; i < 4; ++i)
-            os << "&nbsp;";
+        if (ReplaceTabs) {
+          if (EscapeSpaces)
+            for (unsigned i = 0; i < 4; ++i)
+              os << "&nbsp;";
+          else
+            for (unsigned i = 0; i < 4; ++i)
+              os << " ";
+        }
         else 
           os << c;
       
