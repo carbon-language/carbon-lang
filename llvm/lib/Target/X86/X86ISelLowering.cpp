@@ -4320,14 +4320,14 @@ LowerToTLSGeneralDynamicModel64(GlobalAddressSDNode *GA, SelectionDAG &DAG,
   Chain  = Result.getValue(1);
   InFlag = Result.getValue(2);
 
-  // call ___tls_get_addr. This function receives its argument in
+  // call __tls_get_addr. This function receives its argument in
   // the register RDI.
   Chain = DAG.getCopyToReg(Chain, X86::RDI, Result, InFlag);
   InFlag = Chain.getValue(1);
 
   NodeTys = DAG.getVTList(MVT::Other, MVT::Flag);
   SDValue Ops1[] = { Chain,
-                      DAG.getTargetExternalSymbol("___tls_get_addr",
+                      DAG.getTargetExternalSymbol("__tls_get_addr",
                                                   PtrVT),
                       DAG.getRegister(X86::RDI, PtrVT),
                       InFlag };
