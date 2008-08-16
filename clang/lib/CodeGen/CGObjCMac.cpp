@@ -14,6 +14,7 @@
 #include "CGObjCRuntime.h"
 
 #include "CodeGenModule.h"
+#include "CodeGenFunction.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"
@@ -22,6 +23,7 @@
 #include "llvm/Module.h"
 #include "llvm/Support/IRBuilder.h"
 #include "llvm/Target/TargetData.h"
+#include <sstream>
 
 using namespace clang;
 
@@ -193,6 +195,11 @@ private:
   /// selector's name. This returns a constant i8* to the start of
   /// the name.
   llvm::Constant *GetMethodVarType(ObjCMethodDecl *D);
+
+  /// GetNameForMethod - Return a name for the given method.
+  /// \param[out] NameOut - The return value.
+  void GetNameForMethod(const ObjCMethodDecl *OMD,
+                        std::string &NameOut);
 
 public:
   CGObjCMac(CodeGen::CodeGenModule &cgm);
@@ -606,7 +613,57 @@ void CGObjCMac::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
 }
 
 void CGObjCMac::GenerateClass(const ObjCImplementationDecl *ClassDecl) {
-  assert(0 && "Cannot generate class for Mac runtime.");
+  //assert(0 && "Cannot generate class for Mac runtime.");
+}
+
+llvm::Function *CGObjCMac::GenerateMethod(const ObjCMethodDecl *OMD) { 
+  const llvm::Type *ReturnTy = 
+    CGM.getTypes().ConvertReturnType(OMD->getResultType());
+  const llvm::Type *SelfTy = 
+    CGM.getTypes().ConvertType(OMD->getSelfDecl()->getType());
+
+  std::vector<const llvm::Type*> ArgTys;
+  ArgTys.reserve(1 + 2 + OMD->param_size());
+
+  // FIXME: This is not something we should have to be dealing with
+  // here.
+  bool useStructRet = 
+    CodeGen::CodeGenFunction::hasAggregateLLVMType(OMD->getResultType());
+  if (useStructRet) {
+    ArgTys.push_back(llvm::PointerType::getUnqual(ReturnTy));
+    ReturnTy = llvm::Type::VoidTy;
+  }
+
+  // Implicit arguments
+  ArgTys.push_back(SelfTy);
+  ArgTys.push_back(ObjCTypes.SelectorPtrTy);
+
+  for (ObjCMethodDecl::param_const_iterator 
+         i = OMD->param_begin(), e = OMD->param_end();
+       i != e; ++i) {
+    const llvm::Type *Ty = CGM.getTypes().ConvertType((*i)->getType());
+    if (Ty->isFirstClassType()) {
+      ArgTys.push_back(Ty);
+    } else {
+      ArgTys.push_back(llvm::PointerType::getUnqual(Ty));
+    }
+  }
+
+  std::string Name;
+  GetNameForMethod(OMD, Name);
+
+  llvm::Function *Method = 
+    llvm::Function::Create(llvm::FunctionType::get(ReturnTy,
+                                                   ArgTys,
+                                                   OMD->isVariadic()),
+                           llvm::GlobalValue::InternalLinkage,
+                           Name,
+                           &CGM.getModule());
+
+  if (useStructRet)
+    Method->addParamAttr(1, llvm::ParamAttr::StructRet);
+
+  return Method;
 }
 
 llvm::Function *CGObjCMac::ModuleInitFunction() { 
@@ -614,11 +671,6 @@ llvm::Function *CGObjCMac::ModuleInitFunction() {
   FinishModule();
 
   return NULL;
-}
-
-llvm::Function *CGObjCMac::GenerateMethod(const ObjCMethodDecl *OMD) {
-  assert(0 && "Cannot generate method preamble for Mac runtime.");
-  return 0;
 }
 
 /* *** Private Interface *** */
@@ -784,6 +836,19 @@ llvm::Constant *CGObjCMac::GetMethodVarType(ObjCMethodDecl *D) {
   }
 
   return getConstantGEP(Entry, 0, 0);
+}
+
+void CGObjCMac::GetNameForMethod(const ObjCMethodDecl *D, 
+                                 std::string &NameOut) {
+  // FIXME: Find the mangling GCC uses.
+  std::stringstream s;
+  s << (D->isInstance() ? "-" : "+");
+  s << "[";
+  s << D->getClassInterface()->getName();
+  s << " ";
+  s << D->getSelector().getName();
+  s << "]";
+  NameOut = s.str();
 }
 
 void CGObjCMac::FinishModule() {

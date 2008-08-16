@@ -298,6 +298,8 @@ public:
   
   const llvm::Type *ConvertType(QualType T);
 
+  /// LoadObjCSelf - Load the value of self. This function is only
+  /// valid while generating code for an Objective-C method.
   llvm::Value *LoadObjCSelf();
 
   /// isObjCPointerType - Return true if the specificed AST type will map onto
@@ -368,7 +370,9 @@ public:
   void EmitBlockVarDecl(const VarDecl &D);
   void EmitLocalBlockVarDecl(const VarDecl &D);
   void EmitStaticBlockVarDecl(const VarDecl &D);
-  void EmitParmDecl(const ParmVarDecl &D, llvm::Value *Arg);
+
+  /// EmitParmDecl - Emit a ParmVarDecl or an ImplicitParamDecl.
+  void EmitParmDecl(const VarDecl &D, llvm::Value *Arg);
   
   //===--------------------------------------------------------------------===//
   //                             Statement Emission

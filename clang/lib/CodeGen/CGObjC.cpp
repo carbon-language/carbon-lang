@@ -124,45 +124,31 @@ void CodeGenFunction::GenerateObjCMethod(const ObjCMethodDecl *OMD) {
   // Emit allocs for param decls.  Give the LLVM Argument nodes names.
   llvm::Function::arg_iterator AI = CurFn->arg_begin();
   
+  // Name the struct return argument.
   if (hasAggregateLLVMType(OMD->getResultType())) {
+    AI->setName("agg.result");
     ++AI;
   }
-  // Add implicit parameters to the decl map.
-  // TODO: Add something to AST to let the runtime specify the names and types
-  // of these.
 
-  llvm::Value *&SelfEntry = LocalDeclMap[OMD->getSelfDecl()];
-  const llvm::Type *IPTy = AI->getType();
-  llvm::Value *DeclPtr = new llvm::AllocaInst(IPTy, 0, AI->getName() +
-      ".addr", AllocaInsertPt);
-  // Store the initial value into the alloca.
-  Builder.CreateStore(AI, DeclPtr);
-  SelfEntry = DeclPtr;
+  // Add implicit parameters to the decl map.
+  EmitParmDecl(*OMD->getSelfDecl(), AI); 
   ++AI;
-  llvm::Value *&CmdEntry = LocalDeclMap[OMD->getCmdDecl()];
-  IPTy = AI->getType();
-  DeclPtr = new llvm::AllocaInst(IPTy, 0, AI->getName() +
-      ".addr", AllocaInsertPt);
-  // Store the initial value into the alloca.
-  Builder.CreateStore(AI, DeclPtr);
-  CmdEntry = DeclPtr;
+
+  EmitParmDecl(*OMD->getCmdDecl(), AI); 
+  ++AI;
 
   for (unsigned i = 0, e = OMD->getNumParams(); i != e; ++i, ++AI) {
     assert(AI != CurFn->arg_end() && "Argument mismatch!");
     EmitParmDecl(*OMD->getParamDecl(i), AI);
   }
-  
+  assert(AI == CurFn->arg_end() && "Argument mismatch");
+
   GenerateFunction(OMD->getBody());
 }
 
-llvm::Value *CodeGenFunction::LoadObjCSelf(void)
-{
-  if (const ObjCMethodDecl *OMD = dyn_cast<ObjCMethodDecl>(CurFuncDecl)) {
-    ValueDecl *Decl = OMD->getSelfDecl();
-    llvm::Value *SelfPtr = LocalDeclMap[&(*(Decl))];
-    return Builder.CreateLoad(SelfPtr, "self");
-  }
-  return NULL;
+llvm::Value *CodeGenFunction::LoadObjCSelf(void) {
+  const ObjCMethodDecl *OMD = cast<ObjCMethodDecl>(CurFuncDecl);
+  return Builder.CreateLoad(LocalDeclMap[OMD->getSelfDecl()], "self");
 }
 
 CGObjCRuntime::~CGObjCRuntime() {}

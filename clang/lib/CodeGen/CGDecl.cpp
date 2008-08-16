@@ -191,7 +191,10 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
 
 /// Emit an alloca (or GlobalValue depending on target) 
 /// for the specified parameter and set up LocalDeclMap.
-void CodeGenFunction::EmitParmDecl(const ParmVarDecl &D, llvm::Value *Arg) {
+void CodeGenFunction::EmitParmDecl(const VarDecl &D, llvm::Value *Arg) {
+  // FIXME: Why isn't ImplicitParamDecl a ParmVarDecl?
+  assert(isa<ParmVarDecl>(D) || isa<ImplicitParamDecl>(D) &&
+         "Invalid argument to EmitParmDecl");
   QualType Ty = D.getType();
   
   llvm::Value *DeclPtr;

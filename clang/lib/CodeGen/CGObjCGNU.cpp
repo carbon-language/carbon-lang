@@ -951,16 +951,6 @@ llvm::Function *CGObjCGNU::GenerateMethod(const ObjCMethodDecl *OMD) {
       llvm::GlobalValue::InternalLinkage,
       FunctionName,
       &TheModule);
-  llvm::Function::arg_iterator AI = Method->arg_begin();
-  // Name the struct return argument.
-  // FIXME: This is probably the wrong test.
-  if (!ReturnTy->isFirstClassType() && ReturnTy != llvm::Type::VoidTy) {
-    AI->setName("agg.result");
-    ++AI;
-  }
-  AI->setName("self");
-  ++AI;
-  AI->setName("_cmd");
   return Method;
 }
 

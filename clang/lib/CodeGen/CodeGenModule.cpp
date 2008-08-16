@@ -166,11 +166,6 @@ void CodeGenModule::EmitAnnotations() {
   gv->setSection("llvm.metadata");
 }
 
-bool hasAggregateLLVMType(QualType T) {
-  return !T->isRealType() && !T->isPointerLikeType() &&
-         !T->isVoidType() && !T->isVectorType() && !T->isFunctionType();
-}
-
 void CodeGenModule::SetGlobalValueAttributes(const FunctionDecl *FD,
                                              llvm::GlobalValue *GV) {
   // TODO: Set up linkage and many other things.  Note, this is a simple 
@@ -208,7 +203,7 @@ void CodeGenModule::SetFunctionAttributes(const FunctionDecl *FD,
   if (FuncAttrs)
     ParamAttrList.push_back(llvm::ParamAttrsWithIndex::get(0, FuncAttrs));
   // Note that there is parallel code in CodeGenFunction::EmitCallExpr
-  bool AggregateReturn = hasAggregateLLVMType(FD->getResultType());
+  bool AggregateReturn = CodeGenFunction::hasAggregateLLVMType(FD->getResultType());
   if (AggregateReturn)
     ParamAttrList.push_back(
         llvm::ParamAttrsWithIndex::get(1, llvm::ParamAttr::StructRet));
