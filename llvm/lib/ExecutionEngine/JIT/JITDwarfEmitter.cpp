@@ -16,7 +16,6 @@
 #include "JITDwarfEmitter.h"
 #include "llvm/Function.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineLocation.h"
@@ -244,7 +243,7 @@ unsigned char* JITDwarfEmitter::EmitExceptionTable(MachineFunction* MF,
   for(std::vector<unsigned>::const_iterator I = FilterIds.begin(),
     E = FilterIds.end(); I != E; ++I) {
     FilterOffsets.push_back(Offset);
-    Offset -= AsmPrinter::SizeULEB128(*I);
+    Offset -= TargetAsmInfo::getULEB128Size(*I);
   }
 
   // Compute the actions table and gather the first action index for each
@@ -269,10 +268,10 @@ unsigned char* JITDwarfEmitter::EmitExceptionTable(MachineFunction* MF,
         const unsigned SizePrevIds = LandingPads[i-1]->TypeIds.size();
         assert(Actions.size());
         PrevAction = &Actions.back();
-        SizeAction = AsmPrinter::SizeSLEB128(PrevAction->NextAction) +
-          AsmPrinter::SizeSLEB128(PrevAction->ValueForTypeID);
+        SizeAction = TargetAsmInfo::getSLEB128Size(PrevAction->NextAction) +
+          TargetAsmInfo::getSLEB128Size(PrevAction->ValueForTypeID);
         for (unsigned j = NumShared; j != SizePrevIds; ++j) {
-          SizeAction -= AsmPrinter::SizeSLEB128(PrevAction->ValueForTypeID);
+          SizeAction -= TargetAsmInfo::getSLEB128Size(PrevAction->ValueForTypeID);
           SizeAction += -PrevAction->NextAction;
           PrevAction = PrevAction->Previous;
         }
@@ -283,10 +282,10 @@ unsigned char* JITDwarfEmitter::EmitExceptionTable(MachineFunction* MF,
         int TypeID = TypeIds[I];
         assert(-1-TypeID < (int)FilterOffsets.size() && "Unknown filter id!");
         int ValueForTypeID = TypeID < 0 ? FilterOffsets[-1 - TypeID] : TypeID;
-        unsigned SizeTypeID = AsmPrinter::SizeSLEB128(ValueForTypeID);
+        unsigned SizeTypeID = TargetAsmInfo::getSLEB128Size(ValueForTypeID);
 
         int NextAction = SizeAction ? -(SizeAction + SizeTypeID) : 0;
-        SizeAction = SizeTypeID + AsmPrinter::SizeSLEB128(NextAction);
+        SizeAction = SizeTypeID + TargetAsmInfo::getSLEB128Size(NextAction);
         SizeSiteActions += SizeAction;
 
         ActionEntry Action = {ValueForTypeID, NextAction, PrevAction};
@@ -389,18 +388,18 @@ unsigned char* JITDwarfEmitter::EmitExceptionTable(MachineFunction* MF,
                                             sizeof(int32_t) + // Site length.
                                             sizeof(int32_t)); // Landing pad.
   for (unsigned i = 0, e = CallSites.size(); i < e; ++i)
-    SizeSites += AsmPrinter::SizeULEB128(CallSites[i].Action);
+    SizeSites += TargetAsmInfo::getULEB128Size(CallSites[i].Action);
 
   unsigned SizeTypes = TypeInfos.size() * TD->getPointerSize();
 
   unsigned TypeOffset = sizeof(int8_t) + // Call site format
                         // Call-site table length
-                        AsmPrinter::SizeULEB128(SizeSites) + 
+                        TargetAsmInfo::getULEB128Size(SizeSites) + 
                         SizeSites + SizeActions + SizeTypes;
 
   unsigned TotalSize = sizeof(int8_t) + // LPStart format
                        sizeof(int8_t) + // TType format
-                       AsmPrinter::SizeULEB128(TypeOffset) + // TType base offset
+                       TargetAsmInfo::getULEB128Size(TypeOffset) + // TType base offset
                        TypeOffset;
 
   unsigned SizeAlign = (4 - TotalSize) & 3;
@@ -684,10 +683,10 @@ JITDwarfEmitter::GetEHFrameSizeInBytes(const Function* Personality,
   // If there is a personality and landing pads then point to the language
   // specific data area in the exception table.
   if (MMI->getPersonalityIndex()) {
-    FinalSize += AsmPrinter::SizeULEB128(4); 
+    FinalSize += TargetAsmInfo::getULEB128Size(4); 
     FinalSize += PointerSize;
   } else {
-    FinalSize += AsmPrinter::SizeULEB128(0);
+    FinalSize += TargetAsmInfo::getULEB128Size(0);
   }
       
   // Indicate locations of function specific  callee saved registers in
@@ -715,24 +714,24 @@ unsigned JITDwarfEmitter::GetCommonEHFrameSizeInBytes(const Function* Personalit
   FinalSize += 4;
   FinalSize += 1;
   FinalSize += Personality ? 5 : 3; // "zPLR" or "zR"
-  FinalSize += AsmPrinter::SizeULEB128(1);
-  FinalSize += AsmPrinter::SizeSLEB128(stackGrowth);
+  FinalSize += TargetAsmInfo::getULEB128Size(1);
+  FinalSize += TargetAsmInfo::getSLEB128Size(stackGrowth);
   FinalSize += 1;
   
   if (Personality) {
-    FinalSize += AsmPrinter::SizeULEB128(7);
+    FinalSize += TargetAsmInfo::getULEB128Size(7);
     
     // Encoding
     FinalSize+= 1;
     //Personality
     FinalSize += PointerSize;
     
-    FinalSize += AsmPrinter::SizeULEB128(dwarf::DW_EH_PE_pcrel);
-    FinalSize += AsmPrinter::SizeULEB128(dwarf::DW_EH_PE_pcrel);
+    FinalSize += TargetAsmInfo::getULEB128Size(dwarf::DW_EH_PE_pcrel);
+    FinalSize += TargetAsmInfo::getULEB128Size(dwarf::DW_EH_PE_pcrel);
       
   } else {
-    FinalSize += AsmPrinter::SizeULEB128(1);
-    FinalSize += AsmPrinter::SizeULEB128(dwarf::DW_EH_PE_pcrel);
+    FinalSize += TargetAsmInfo::getULEB128Size(1);
+    FinalSize += TargetAsmInfo::getULEB128Size(dwarf::DW_EH_PE_pcrel);
   }
 
   std::vector<MachineMove> Moves;
@@ -784,12 +783,12 @@ JITDwarfEmitter::GetFrameMovesSizeInBytes(intptr_t BaseLabelPtr,
         } else {
           ++FinalSize;
           unsigned RegNum = RI->getDwarfRegNum(Src.getRegister(), true);
-          FinalSize += AsmPrinter::SizeULEB128(RegNum);
+          FinalSize += TargetAsmInfo::getULEB128Size(RegNum);
         }
         
         int Offset = -Src.getOffset();
         
-        FinalSize += AsmPrinter::SizeULEB128(Offset);
+        FinalSize += TargetAsmInfo::getULEB128Size(Offset);
       } else {
         assert(0 && "Machine move no supported yet.");
       }
@@ -798,7 +797,7 @@ JITDwarfEmitter::GetFrameMovesSizeInBytes(intptr_t BaseLabelPtr,
       if (Dst.isRegister()) {
         ++FinalSize;
         unsigned RegNum = RI->getDwarfRegNum(Dst.getRegister(), true);
-        FinalSize += AsmPrinter::SizeULEB128(RegNum);
+        FinalSize += TargetAsmInfo::getULEB128Size(RegNum);
       } else {
         assert(0 && "Machine move no supported yet.");
       }
@@ -808,15 +807,15 @@ JITDwarfEmitter::GetFrameMovesSizeInBytes(intptr_t BaseLabelPtr,
       
       if (Offset < 0) {
         ++FinalSize;
-        FinalSize += AsmPrinter::SizeULEB128(Reg);
-        FinalSize += AsmPrinter::SizeSLEB128(Offset);
+        FinalSize += TargetAsmInfo::getULEB128Size(Reg);
+        FinalSize += TargetAsmInfo::getSLEB128Size(Offset);
       } else if (Reg < 64) {
         ++FinalSize;
-        FinalSize += AsmPrinter::SizeULEB128(Offset);
+        FinalSize += TargetAsmInfo::getULEB128Size(Offset);
       } else {
         ++FinalSize;
-        FinalSize += AsmPrinter::SizeULEB128(Reg);
-        FinalSize += AsmPrinter::SizeULEB128(Offset);
+        FinalSize += TargetAsmInfo::getULEB128Size(Reg);
+        FinalSize += TargetAsmInfo::getULEB128Size(Offset);
       }
     }
   }
@@ -859,7 +858,7 @@ JITDwarfEmitter::GetExceptionTableSizeInBytes(MachineFunction* MF) const {
   for(std::vector<unsigned>::const_iterator I = FilterIds.begin(),
     E = FilterIds.end(); I != E; ++I) {
     FilterOffsets.push_back(Offset);
-    Offset -= AsmPrinter::SizeULEB128(*I);
+    Offset -= TargetAsmInfo::getULEB128Size(*I);
   }
 
   // Compute the actions table and gather the first action index for each
@@ -884,10 +883,10 @@ JITDwarfEmitter::GetExceptionTableSizeInBytes(MachineFunction* MF) const {
         const unsigned SizePrevIds = LandingPads[i-1]->TypeIds.size();
         assert(Actions.size());
         PrevAction = &Actions.back();
-        SizeAction = AsmPrinter::SizeSLEB128(PrevAction->NextAction) +
-          AsmPrinter::SizeSLEB128(PrevAction->ValueForTypeID);
+        SizeAction = TargetAsmInfo::getSLEB128Size(PrevAction->NextAction) +
+          TargetAsmInfo::getSLEB128Size(PrevAction->ValueForTypeID);
         for (unsigned j = NumShared; j != SizePrevIds; ++j) {
-          SizeAction -= AsmPrinter::SizeSLEB128(PrevAction->ValueForTypeID);
+          SizeAction -= TargetAsmInfo::getSLEB128Size(PrevAction->ValueForTypeID);
           SizeAction += -PrevAction->NextAction;
           PrevAction = PrevAction->Previous;
         }
@@ -898,10 +897,10 @@ JITDwarfEmitter::GetExceptionTableSizeInBytes(MachineFunction* MF) const {
         int TypeID = TypeIds[I];
         assert(-1-TypeID < (int)FilterOffsets.size() && "Unknown filter id!");
         int ValueForTypeID = TypeID < 0 ? FilterOffsets[-1 - TypeID] : TypeID;
-        unsigned SizeTypeID = AsmPrinter::SizeSLEB128(ValueForTypeID);
+        unsigned SizeTypeID = TargetAsmInfo::getSLEB128Size(ValueForTypeID);
 
         int NextAction = SizeAction ? -(SizeAction + SizeTypeID) : 0;
-        SizeAction = SizeTypeID + AsmPrinter::SizeSLEB128(NextAction);
+        SizeAction = SizeTypeID + TargetAsmInfo::getSLEB128Size(NextAction);
         SizeSiteActions += SizeAction;
 
         ActionEntry Action = {ValueForTypeID, NextAction, PrevAction};
@@ -1004,18 +1003,18 @@ JITDwarfEmitter::GetExceptionTableSizeInBytes(MachineFunction* MF) const {
                                             sizeof(int32_t) + // Site length.
                                             sizeof(int32_t)); // Landing pad.
   for (unsigned i = 0, e = CallSites.size(); i < e; ++i)
-    SizeSites += AsmPrinter::SizeULEB128(CallSites[i].Action);
+    SizeSites += TargetAsmInfo::getULEB128Size(CallSites[i].Action);
 
   unsigned SizeTypes = TypeInfos.size() * TD->getPointerSize();
 
   unsigned TypeOffset = sizeof(int8_t) + // Call site format
                         // Call-site table length
-                        AsmPrinter::SizeULEB128(SizeSites) + 
+                        TargetAsmInfo::getULEB128Size(SizeSites) + 
                         SizeSites + SizeActions + SizeTypes;
 
   unsigned TotalSize = sizeof(int8_t) + // LPStart format
                        sizeof(int8_t) + // TType format
-                       AsmPrinter::SizeULEB128(TypeOffset) + // TType base offset
+                       TargetAsmInfo::getULEB128Size(TypeOffset) + // TType base offset
                        TypeOffset;
 
   unsigned SizeAlign = (4 - TotalSize) & 3;
@@ -1053,7 +1052,7 @@ JITDwarfEmitter::GetExceptionTableSizeInBytes(MachineFunction* MF) const {
     // Asm->EOL("Landing pad");
     FinalSize += PointerSize;
 
-    FinalSize += AsmPrinter::SizeULEB128(S.Action);
+    FinalSize += TargetAsmInfo::getULEB128Size(S.Action);
     // Asm->EOL("Action");
   }
 
@@ -1062,9 +1061,9 @@ JITDwarfEmitter::GetExceptionTableSizeInBytes(MachineFunction* MF) const {
     ActionEntry &Action = Actions[I];
 
     //Asm->EOL("TypeInfo index");
-    FinalSize += AsmPrinter::SizeSLEB128(Action.ValueForTypeID);
+    FinalSize += TargetAsmInfo::getSLEB128Size(Action.ValueForTypeID);
     //Asm->EOL("Next action");
-    FinalSize += AsmPrinter::SizeSLEB128(Action.NextAction);
+    FinalSize += TargetAsmInfo::getSLEB128Size(Action.NextAction);
   }
 
   // Emit the type ids.
@@ -1076,7 +1075,7 @@ JITDwarfEmitter::GetExceptionTableSizeInBytes(MachineFunction* MF) const {
   // Emit the filter typeids.
   for (unsigned j = 0, M = FilterIds.size(); j < M; ++j) {
     unsigned TypeID = FilterIds[j];
-    FinalSize += AsmPrinter::SizeULEB128(TypeID);
+    FinalSize += TargetAsmInfo::getULEB128Size(TypeID);
     //Asm->EOL("Filter TypeInfo index");
   }
   

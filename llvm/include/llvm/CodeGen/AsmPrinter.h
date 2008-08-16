@@ -212,18 +212,10 @@ namespace llvm {
     /// representing an unsigned leb128 value.
     void PrintULEB128(unsigned Value) const;
 
-    /// SizeULEB128 - Compute the number of bytes required for an unsigned
-    /// leb128 value.
-    static unsigned SizeULEB128(unsigned Value);
-
     /// PrintSLEB128 - Print a series of hexidecimal values(separated by commas)
     /// representing a signed leb128 value.
     void PrintSLEB128(int Value) const;
 
-    /// SizeSLEB128 - Compute the number of bytes required for a signed leb128
-    /// value.
-    static unsigned SizeSLEB128(int Value);
-    
     //===------------------------------------------------------------------===//
     // Emission and print routines
     //

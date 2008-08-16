@@ -493,23 +493,12 @@ void AsmPrinter::PrintULEB128(unsigned Value) const {
   } while (Value);
 }
 
-/// SizeULEB128 - Compute the number of bytes required for an unsigned leb128
-/// value.
-unsigned AsmPrinter::SizeULEB128(unsigned Value) {
-  unsigned Size = 0;
-  do {
-    Value >>= 7;
-    Size += sizeof(int8_t);
-  } while (Value);
-  return Size;
-}
-
 /// PrintSLEB128 - Print a series of hexidecimal values (separated by commas)
 /// representing a signed leb128 value.
 void AsmPrinter::PrintSLEB128(int Value) const {
   int Sign = Value >> (8 * sizeof(Value) - 1);
   bool IsMore;
-  
+
   do {
     unsigned Byte = Value & 0x7f;
     Value >>= 7;
@@ -518,22 +507,6 @@ void AsmPrinter::PrintSLEB128(int Value) const {
     O << "0x" << std::hex << Byte << std::dec;
     if (IsMore) O << ", ";
   } while (IsMore);
-}
-
-/// SizeSLEB128 - Compute the number of bytes required for a signed leb128
-/// value.
-unsigned AsmPrinter::SizeSLEB128(int Value) {
-  unsigned Size = 0;
-  int Sign = Value >> (8 * sizeof(Value) - 1);
-  bool IsMore;
-  
-  do {
-    unsigned Byte = Value & 0x7f;
-    Value >>= 7;
-    IsMore = Value != Sign || ((Byte ^ Sign) & 0x40) != 0;
-    Size += sizeof(int8_t);
-  } while (IsMore);
-  return Size;
 }
 
 //===--------------------------------------------------------------------===//

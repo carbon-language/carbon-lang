@@ -389,3 +389,26 @@ TargetAsmInfo::getSectionFlags(unsigned Flags) const {
 
   return I->second;
 }
+
+unsigned TargetAsmInfo::getULEB128Size(unsigned Value) {
+  unsigned Size = 0;
+  do {
+    Value >>= 7;
+    Size += sizeof(int8_t);
+  } while (Value);
+  return Size;
+}
+
+unsigned TargetAsmInfo::getSLEB128Size(int Value) {
+  unsigned Size = 0;
+  int Sign = Value >> (8 * sizeof(Value) - 1);
+  bool IsMore;
+
+  do {
+    unsigned Byte = Value & 0x7f;
+    Value >>= 7;
+    IsMore = Value != Sign || ((Byte ^ Sign) & 0x40) != 0;
+    Size += sizeof(int8_t);
+  } while (IsMore);
+  return Size;
+}

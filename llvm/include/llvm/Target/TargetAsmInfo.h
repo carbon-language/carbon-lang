@@ -570,6 +570,16 @@ namespace llvm {
 
     virtual const Section* SelectSectionForMachineConst(const Type *Ty) const;
 
+    /// getSLEB128Size - Compute the number of bytes required for a signed
+    /// leb128 value.
+
+    static unsigned getSLEB128Size(int Value);
+
+    /// getULEB128Size - Compute the number of bytes required for an unsigned
+    /// leb128 value.
+
+    static unsigned getULEB128Size(unsigned Value);
+
     // Accessors.
     //
     const char *getTextSection() const {
