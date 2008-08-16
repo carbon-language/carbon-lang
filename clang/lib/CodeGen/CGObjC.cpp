@@ -48,13 +48,18 @@ llvm::Value *CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E) {
   // Find the receiver
   llvm::Value *Receiver;
   if (!ReceiverExpr) {
-    const char * classname = E->getClassName()->getName();
-    if (!strcmp(classname, "super")) {
-      classname = E->getMethodDecl()->getClassInterface()->getName();
+    const ObjCInterfaceDecl *OID = E->getClassInfo().first;
+
+    // Very special case, super send in class method. The receiver is
+    // self (the class object) and the send uses super semantics.
+    if (!OID) {
+      assert(!strcmp(E->getClassName()->getName(), "super") &&
+             "Unexpected missing class interface in message send.");
+      OID = E->getMethodDecl()->getClassInterface();
+      isSuperMessage = true;
     }
-    llvm::Value *ClassName = CGM.GetAddrOfConstantCString(classname);
-    ClassName = Builder.CreateStructGEP(ClassName, 0);
-    Receiver = Runtime.LookupClass(Builder, ClassName);
+
+    Receiver = Runtime.GetClass(Builder, OID);   
   } else if (const PredefinedExpr *PDE =
                dyn_cast<PredefinedExpr>(E->getReceiver())) {
     assert(PDE->getIdentType() == PredefinedExpr::ObjCSuper);
@@ -88,10 +93,8 @@ llvm::Value *CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E) {
   if (isSuperMessage) {
     // super is only valid in an Objective-C method
     const ObjCMethodDecl *OMD = cast<ObjCMethodDecl>(CurFuncDecl);
-    const char *SuperClass =
-      OMD->getClassInterface()->getSuperClass()->getName();
     return Runtime.GenerateMessageSendSuper(Builder, ConvertType(E->getType()),
-                                             SuperClass,
+                                             OMD->getClassInterface()->getSuperClass(),
                                              Receiver, E->getSelector(),
                                              &Args[0], Args.size());
   }

@@ -101,13 +101,13 @@ public:
                                            unsigned ArgC);
   virtual llvm::Value *GenerateMessageSendSuper(llvm::IRBuilder<> &Builder,
                                                 const llvm::Type *ReturnTy,
-                                                const char *SuperClassName,
+                                            const ObjCInterfaceDecl *SuperClass,
                                                 llvm::Value *Receiver,
                                                 Selector Sel,
                                                 llvm::Value** ArgV,
                                                 unsigned ArgC);
-  virtual llvm::Value *LookupClass(llvm::IRBuilder<> &Builder,
-                                   llvm::Value *ClassName);
+  virtual llvm::Value *GetClass(llvm::IRBuilder<> &Builder,
+                                const ObjCInterfaceDecl *OID);
   virtual llvm::Value *GetSelector(llvm::IRBuilder<> &Builder, Selector Sel);
   
   virtual llvm::Function *GenerateMethod(const ObjCMethodDecl *OMD);
@@ -170,8 +170,11 @@ CGObjCGNU::CGObjCGNU(CodeGen::CodeGenModule &cgm)
 }
 // This has to perform the lookup every time, since posing and related
 // techniques can modify the name -> class mapping.
-llvm::Value *CGObjCGNU::LookupClass(llvm::IRBuilder<> &Builder,
-    llvm::Value *ClassName) {
+llvm::Value *CGObjCGNU::GetClass(llvm::IRBuilder<> &Builder,
+                                 const ObjCInterfaceDecl *OID) {
+  llvm::Value *ClassName = CGM.GetAddrOfConstantCString(OID->getName());
+  ClassName = Builder.CreateStructGEP(ClassName, 0);
+
   llvm::Constant *ClassLookupFn =
     TheModule.getOrInsertFunction("objc_lookup_class", IdTy, PtrToInt8Ty,
         NULL);
@@ -235,14 +238,13 @@ llvm::Constant *CGObjCGNU::GenerateConstantString(const std::string &Str) {
 ///should be called.
 llvm::Value *CGObjCGNU::GenerateMessageSendSuper(llvm::IRBuilder<> &Builder,
                                                  const llvm::Type *ReturnTy,
-                                                 const char *SuperClassName,
+                                            const ObjCInterfaceDecl *SuperClass,
                                                  llvm::Value *Receiver,
                                                  Selector Sel,
                                                  llvm::Value** ArgV,
                                                  unsigned ArgC) {
   // TODO: This should be cached, not looked up every time.
-  llvm::Value *ReceiverClass = LookupClass(Builder,
-      MakeConstantString(SuperClassName));
+  llvm::Value *ReceiverClass = GetClass(Builder, SuperClass);
   llvm::Value *cmd = GetSelector(Builder, Sel);
   std::vector<const llvm::Type*> impArgTypes;
   impArgTypes.push_back(Receiver->getType());

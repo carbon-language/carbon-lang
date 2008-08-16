@@ -31,6 +31,7 @@ namespace llvm {
 namespace clang {
   class ObjCCategoryImplDecl;
   class ObjCImplementationDecl;
+  class ObjCInterfaceDecl;
   class ObjCMethodDecl;
   class ObjCProtocolDecl;
   class Selector;
@@ -78,13 +79,14 @@ public:
 
   /// Generate an Objective-C message send operation to the super
   /// class.
-  virtual llvm::Value *GenerateMessageSendSuper(llvm::IRBuilder<true> &Builder,
-                                                const llvm::Type *ReturnTy,
-                                                const char *SuperClassName,
-                                                llvm::Value *Receiver,
-                                                Selector Sel,
-                                                llvm::Value** ArgV,
-                                                unsigned ArgC) = 0;
+  virtual llvm::Value *
+  GenerateMessageSendSuper(llvm::IRBuilder<true> &Builder,
+                           const llvm::Type *ReturnTy,
+                           const ObjCInterfaceDecl *SuperClassName,
+                           llvm::Value *Receiver,
+                           Selector Sel,
+                           llvm::Value** ArgV,
+                           unsigned ArgC) = 0;
 
   /// Emit the code to return the named protocol as an object, as in a
   /// @protocol expression.
@@ -104,9 +106,10 @@ public:
   // parameters are passed.
   virtual llvm::Function *GenerateMethod(const ObjCMethodDecl *OMD) = 0;
 
-  /// Look up the class for the specified name
-  virtual llvm::Value *LookupClass(BuilderType &Builder, 
-                                   llvm::Value *ClassName) = 0;
+  /// GetClass - Return a reference to the class for the given
+  /// interface decl.
+  virtual llvm::Value *GetClass(BuilderType &Builder, 
+                                const ObjCInterfaceDecl *OID) = 0;
 
   /// If instance variable addresses are determined at runtime then this should
   /// return true, otherwise instance variables will be accessed directly from

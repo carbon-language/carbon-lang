@@ -205,16 +205,17 @@ public:
                                            llvm::Value** ArgV,
                                            unsigned ArgC);
 
-  virtual llvm::Value *GenerateMessageSendSuper(llvm::IRBuilder<> &Builder,
-                                                const llvm::Type *ReturnTy,
-                                                const char *SuperClassName,
-                                                llvm::Value *Receiver,
-                                                Selector Sel,
-                                                llvm::Value** ArgV,
-                                                unsigned ArgC);
-
-  virtual llvm::Value *LookupClass(llvm::IRBuilder<> &Builder,
-                                   llvm::Value *ClassName);
+  virtual llvm::Value *
+  GenerateMessageSendSuper(llvm::IRBuilder<> &Builder,
+                           const llvm::Type *ReturnTy,
+                           const ObjCInterfaceDecl *SuperClass,
+                           llvm::Value *Receiver,
+                           Selector Sel,
+                           llvm::Value** ArgV,
+                           unsigned ArgC);
+  
+  virtual llvm::Value *GetClass(llvm::IRBuilder<> &Builder,
+                                const ObjCInterfaceDecl *SuperClass);
 
   virtual llvm::Value *GetSelector(llvm::IRBuilder<> &Builder, Selector Sel);
   
@@ -260,10 +261,10 @@ CGObjCMac::CGObjCMac(CodeGen::CodeGenModule &cgm)
   EmitImageInfo();  
 }
 
-// This has to perform the lookup every time, since posing and related
-// techniques can modify the name -> class mapping.
-llvm::Value *CGObjCMac::LookupClass(llvm::IRBuilder<> &Builder,
-                                    llvm::Value *ClassName) {
+/// GetClass - Return a reference to the class for the given interface
+/// decl.
+llvm::Value *CGObjCMac::GetClass(llvm::IRBuilder<> &Builder,
+                                    const ObjCInterfaceDecl *OID) {
   assert(0 && "Cannot lookup classes on Mac runtime.");
   return 0;
 }
@@ -323,13 +324,14 @@ llvm::Constant *CGObjCMac::GenerateConstantString(const std::string &String) {
 /// Generates a message send where the super is the receiver.  This is
 /// a message send to self with special delivery semantics indicating
 /// which class's method should be called.
-llvm::Value *CGObjCMac::GenerateMessageSendSuper(llvm::IRBuilder<> &Builder,
-                                                 const llvm::Type *ReturnTy,
-                                                 const char *SuperClassName,
-                                                 llvm::Value *Receiver,
-                                                 Selector Sel,
-                                                 llvm::Value** ArgV,
-                                                 unsigned ArgC) {
+llvm::Value *
+CGObjCMac::GenerateMessageSendSuper(llvm::IRBuilder<> &Builder,
+                                    const llvm::Type *ReturnTy,
+                                    const ObjCInterfaceDecl *SuperClass,
+                                    llvm::Value *Receiver,
+                                    Selector Sel,
+                                    llvm::Value** ArgV,
+                                    unsigned ArgC) {
   assert(0 && "Cannot generate message send to super for Mac runtime.");
   return 0;
 }
