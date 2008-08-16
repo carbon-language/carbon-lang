@@ -352,11 +352,12 @@ TargetAsmInfo::UniqueSectionForGlobal(const GlobalValue* GV,
 }
 
 const Section*
-TargetAsmInfo::getNamedSection(const char *Name, unsigned Flags) const {
+TargetAsmInfo::getNamedSection(const char *Name, unsigned Flags,
+                               bool Override) const {
   Section& S = Sections[Name];
 
   // This is newly-created section, set it up properly.
-  if (S.Flags == SectionFlags::Invalid) {
+  if (S.Flags == SectionFlags::Invalid || Override) {
     S.Flags = Flags | SectionFlags::Named;
     S.Name = Name;
   }
@@ -365,11 +366,12 @@ TargetAsmInfo::getNamedSection(const char *Name, unsigned Flags) const {
 }
 
 const Section*
-TargetAsmInfo::getUnnamedSection(const char *Directive, unsigned Flags) const {
+TargetAsmInfo::getUnnamedSection(const char *Directive, unsigned Flags,
+                                 bool Override) const {
   Section& S = Sections[Directive];
 
   // This is newly-created section, set it up properly.
-  if (S.Flags == SectionFlags::Invalid) {
+  if (S.Flags == SectionFlags::Invalid || Override) {
     S.Flags = Flags & ~SectionFlags::Named;
     S.Name = Directive;
   }

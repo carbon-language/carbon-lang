@@ -520,9 +520,11 @@ namespace llvm {
     virtual ~TargetAsmInfo();
 
     const Section* getNamedSection(const char *Name,
-                                   unsigned Flags = SectionFlags::None) const;
+                                   unsigned Flags = SectionFlags::None,
+                                   bool Override = false) const;
     const Section* getUnnamedSection(const char *Directive,
-                                     unsigned Flags = SectionFlags::None) const;
+                                     unsigned Flags = SectionFlags::None,
+                                     bool Override = false) const;
 
     /// Measure the specified inline asm to determine an approximation of its
     /// length.

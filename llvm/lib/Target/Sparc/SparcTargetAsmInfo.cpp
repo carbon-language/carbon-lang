@@ -25,6 +25,11 @@ SparcELFTargetAsmInfo::SparcELFTargetAsmInfo(const TargetMachine &TM):
   ConstantPoolSection = "\t.section \".rodata\",#alloc\n";
   COMMDirectiveTakesAlignment = true;
   CStringSection=".rodata.str";
+
+  // Sparc normally uses named section for BSS.
+  BSSSection_  = getNamedSection("\t.bss",
+                                 SectionFlags::Writeable | SectionFlags::BSS,
+                                 /* Override */ true);
 }
 
 std::string SparcELFTargetAsmInfo::printSectionFlags(unsigned flags) const {
