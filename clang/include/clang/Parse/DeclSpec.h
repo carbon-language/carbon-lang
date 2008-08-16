@@ -549,7 +549,7 @@ struct DeclaratorChunk {
 /// Instances of this class should be a transient object that lives on the
 /// stack, not objects that are allocated in large quantities on the heap.
 class Declarator {
-  DeclSpec &DS;
+  const DeclSpec &DS;
   IdentifierInfo *Identifier;
   SourceLocation IdentifierLoc;
   
@@ -584,7 +584,7 @@ private:
   Action::ExprTy *AsmLabel;
   
 public:
-  Declarator(DeclSpec &ds, TheContext C)
+  Declarator(const DeclSpec &ds, TheContext C)
     : DS(ds), Identifier(0), Context(C), InvalidType(false), AttrList(0),
       AsmLabel(0) {
   }
@@ -602,7 +602,7 @@ public:
   /// multiple declarators, so mutating the DeclSpec affects all of the
   /// Declarators.  This should only be done when the declspec is known to not
   /// be shared or when in error recovery etc.
-  DeclSpec &getMutableDeclSpec() { return DS; }
+  DeclSpec &getMutableDeclSpec() { return const_cast<DeclSpec &>(DS); }
 
   TheContext getContext() const { return Context; }
   
