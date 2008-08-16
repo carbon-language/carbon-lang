@@ -43,7 +43,7 @@ public:
   GRTransferFuncs() {}
   virtual ~GRTransferFuncs() {}
   
-  virtual void getStatePrinters(std::vector<GRState::Printer*>& Printers) {}
+  virtual void RegisterPrinters(std::vector<GRState::Printer*>& Printers) {}
   virtual void RegisterChecks(GRExprEngine& Eng);
   
   // Casts.

@@ -177,7 +177,8 @@ void GRExprEngine::EmitWarnings(BugReporterData& BRData) {
 
 void GRExprEngine::setTransferFunctions(GRTransferFuncs* tf) {
   StateMgr.TF = tf;
-  getTF().RegisterChecks(*this);
+  tf->RegisterChecks(*this);
+  tf->RegisterPrinters(getStateManager().Printers);
 }
 
 void GRExprEngine::AddCheck(GRSimpleAPICheck* A, Stmt::StmtClass C) {
@@ -2266,108 +2267,11 @@ void GRExprEngine::EvalBinOp(GRStateSet& OStates, const GRState* St,
 #ifndef NDEBUG
 static GRExprEngine* GraphPrintCheckerState;
 static SourceManager* GraphPrintSourceManager;
-static GRState::Printer **GraphStatePrinterBeg, **GraphStatePrinterEnd;
 
 namespace llvm {
 template<>
 struct VISIBILITY_HIDDEN DOTGraphTraits<GRExprEngine::NodeTy*> :
   public DefaultDOTGraphTraits {
-    
-  static void PrintVarBindings(std::ostream& Out, GRState* St) {
-
-    Out << "Variables:\\l";
-    
-    bool isFirst = true;
-    
-    for (GRState::vb_iterator I=St->vb_begin(), E=St->vb_end(); I!=E;++I) {        
-
-      if (isFirst)
-        isFirst = false;
-      else
-        Out << "\\l";
-      
-      Out << ' ' << I.getKey()->getName() << " : ";
-      I.getData().print(Out);
-    }
-    
-  }
-    
-    
-  static void PrintSubExprBindings(std::ostream& Out, GRState* St){
-    
-    bool isFirst = true;
-    
-    for (GRState::seb_iterator I=St->seb_begin(), E=St->seb_end();I!=E;++I) {        
-      
-      if (isFirst) {
-        Out << "\\l\\lSub-Expressions:\\l";
-        isFirst = false;
-      }
-      else
-        Out << "\\l";
-      
-      Out << " (" << (void*) I.getKey() << ") ";
-      I.getKey()->printPretty(Out);
-      Out << " : ";
-      I.getData().print(Out);
-    }
-  }
-    
-  static void PrintBlkExprBindings(std::ostream& Out, GRState* St){
-        
-    bool isFirst = true;
-
-    for (GRState::beb_iterator I=St->beb_begin(), E=St->beb_end(); I!=E;++I){      
-      if (isFirst) {
-        Out << "\\l\\lBlock-level Expressions:\\l";
-        isFirst = false;
-      }
-      else
-        Out << "\\l";
-
-      Out << " (" << (void*) I.getKey() << ") ";
-      I.getKey()->printPretty(Out);
-      Out << " : ";
-      I.getData().print(Out);
-    }
-  }
-    
-  static void PrintEQ(std::ostream& Out, GRState* St) {
-    GRState::ConstEqTy CE = St->ConstEq;
-    
-    if (CE.isEmpty())
-      return;
-    
-    Out << "\\l\\|'==' constraints:";
-
-    for (GRState::ConstEqTy::iterator I=CE.begin(), E=CE.end(); I!=E;++I)
-      Out << "\\l $" << I.getKey() << " : " << I.getData()->toString();
-  }
-    
-  static void PrintNE(std::ostream& Out, GRState* St) {
-    GRState::ConstNotEqTy NE = St->ConstNotEq;
-    
-    if (NE.isEmpty())
-      return;
-    
-    Out << "\\l\\|'!=' constraints:";
-    
-    for (GRState::ConstNotEqTy::iterator I=NE.begin(), EI=NE.end();
-         I != EI; ++I){
-      
-      Out << "\\l $" << I.getKey() << " : ";
-      bool isFirst = true;
-      
-      GRState::IntSetTy::iterator J=I.getData().begin(),
-                                    EJ=I.getData().end();      
-      for ( ; J != EJ; ++J) {        
-        if (isFirst) isFirst = false;
-        else Out << ", ";
-        
-        Out << (*J)->toString();
-      }    
-    }
-  }
     
   static std::string getNodeAttributes(const GRExprEngine::NodeTy* N, void*) {
     
@@ -2509,7 +2413,8 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRExprEngine::NodeTy*> :
     
     Out << "\\|StateID: " << (void*) N->getState() << "\\|";
 
-    N->getState()->printDOT(Out, GraphStatePrinterBeg, GraphStatePrinterEnd);
+    GRStateRef state(N->getState(), GraphPrintCheckerState->getStateManager());
+    state.printDOT(Out);
       
     Out << "\\l";
     return Out.str();
@@ -2575,19 +2480,10 @@ void GRExprEngine::ViewGraph(bool trim) {
     GraphPrintCheckerState = this;
     GraphPrintSourceManager = &getContext().getSourceManager();
 
-    // Get the state printers.
-    std::vector<GRState::Printer*> Printers;
-    getTF().getStatePrinters(Printers);   
-    GraphStatePrinterBeg = Printers.empty() ? 0 : &Printers[0];
-    GraphStatePrinterEnd = Printers.empty() ? 0 : &Printers[0]+Printers.size();
-    
-
     llvm::ViewGraph(*G.roots_begin(), "GRExprEngine");
     
     GraphPrintCheckerState = NULL;
     GraphPrintSourceManager = NULL;
-    GraphStatePrinterBeg = NULL;
-    GraphStatePrinterEnd = NULL;
   }
 #endif
 }
@@ -2596,13 +2492,7 @@ void GRExprEngine::ViewGraph(NodeTy** Beg, NodeTy** End) {
 #ifndef NDEBUG
   GraphPrintCheckerState = this;
   GraphPrintSourceManager = &getContext().getSourceManager();
-  
-  // Get the state printers.
-  std::vector<GRState::Printer*> Printers;
-  getTF().getStatePrinters(Printers);
-  GraphStatePrinterBeg = Printers.empty() ? 0 : &Printers[0];
-  GraphStatePrinterEnd = Printers.empty() ? 0 : &Printers[0]+Printers.size();
-  
+    
   GRExprEngine::GraphTy* TrimmedG = G.Trim(Beg, End);
 
   if (!TrimmedG)
@@ -2614,7 +2504,5 @@ void GRExprEngine::ViewGraph(NodeTy** Beg, NodeTy** End) {
   
   GraphPrintCheckerState = NULL;
   GraphPrintSourceManager = NULL;
-  GraphStatePrinterBeg = NULL;
-  GraphStatePrinterEnd = NULL;
 #endif
 }

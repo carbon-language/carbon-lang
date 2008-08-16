@@ -1264,7 +1264,6 @@ private:
   UseAfterReleasesTy   UseAfterReleases;
   ReleasesNotOwnedTy   ReleasesNotOwned;
   LeaksTy              Leaks;
-  BindingsPrinter      Printer;  
   
   RefBindings Update(RefBindings B, SymbolID sym, RefVal V, ArgEffect E,
                      RefVal::Kind& hasErr);
@@ -1301,8 +1300,8 @@ public:
   
   virtual void RegisterChecks(GRExprEngine& Eng);
  
-  virtual void getStatePrinters(std::vector<GRState::Printer*>& Printers) {
-    Printers.push_back(&Printer);
+  virtual void RegisterPrinters(std::vector<GRState::Printer*>& Printers) {
+    Printers.push_back(new BindingsPrinter());
   }
   
   bool isGCEnabled() const { return Summaries.isGCEnabled(); }
@@ -1598,7 +1597,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
                ? cast<RVal>(lval::SymbolVal(Sym)) 
                : cast<RVal>(nonlval::SymbolVal(Sym));
         
-        state = state.SetRVal(Ex, X, Eng.getCFG().isBlkExpr(Ex), false);
+        state = state.SetRVal(Ex, X, false);
       }      
       
       break;
@@ -1608,14 +1607,14 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
       assert (arg_end >= arg_beg);
       assert (idx < (unsigned) (arg_end - arg_beg));
       RVal V = state.GetRVal(*(arg_beg+idx));
-      state = state.SetRVal(Ex, V, Eng.getCFG().isBlkExpr(Ex), false);
+      state = state.SetRVal(Ex, V, false);
       break;
     }
       
     case RetEffect::ReceiverAlias: {
       assert (Receiver);
       RVal V = state.GetRVal(Receiver);
-      state = state.SetRVal(Ex, V, Eng.getCFG().isBlkExpr(Ex), false);
+      state = state.SetRVal(Ex, V, false);
       break;
     }
       
@@ -1626,15 +1625,13 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
       QualType RetT = GetReturnType(Ex, Eng.getContext());
       
       state = state.set<RefBindings>(Sym, RefVal::makeOwned(RetT), RefBFactory);
-      state = state.SetRVal(Ex, lval::SymbolVal(Sym),
-                            Eng.getCFG().isBlkExpr(Ex), false);
+      state = state.SetRVal(Ex, lval::SymbolVal(Sym), false);
 
 #if 0
       RefBindings B = GetRefBindings(StImpl);
       SetRefBindings(StImpl, RefBFactory.Add(B, Sym, RefVal::makeOwned(RetT)));
 #endif 
 
-      
       // FIXME: Add a flag to the checker where allocations are allowed to fail.      
       if (RE.getKind() == RetEffect::OwnedAllocatedSymbol)
         state = state.AddNE(Sym, Eng.getBasicVals().getZeroWithPtrWidth());
@@ -1648,8 +1645,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
       QualType RetT = GetReturnType(Ex, Eng.getContext());
       
       state = state.set<RefBindings>(Sym, RefVal::makeNotOwned(RetT), RefBFactory);
-      state = state.SetRVal(Ex, lval::SymbolVal(Sym),
-                            Eng.getCFG().isBlkExpr(Ex), false);
+      state = state.SetRVal(Ex, lval::SymbolVal(Sym), false);
       break;
     }
   }

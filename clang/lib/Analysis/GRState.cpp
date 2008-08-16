@@ -17,10 +17,71 @@
 
 using namespace clang;
 
+GRStateManager::~GRStateManager() {
+  for (std::vector<GRState::Printer*>::iterator I=Printers.begin(),
+        E=Printers.end(); I!=E; ++I)
+    delete *I;
+  
+  for (GDMContextsTy::iterator I=GDMContexts.begin(), E=GDMContexts.end();
+       I!=E; ++I)
+    I->second.second(I->second.first);
+}
+
+//===----------------------------------------------------------------------===//
+//  Basic symbolic analysis.  This will eventually be refactored into a
+//  separate component.
+//===----------------------------------------------------------------------===//
+
+typedef llvm::ImmutableMap<SymbolID,GRState::IntSetTy> ConstNotEqTy;
+
+static int ConstNotEqTyIndex = 0;
+
+namespace clang {
+  template<> struct GRStateTrait<ConstNotEqTy> {
+    typedef ConstNotEqTy             data_type;
+    typedef ConstNotEqTy::Factory&   context_type;  
+    typedef SymbolID                 key_type;
+    typedef GRState::IntSetTy        value_type;
+    typedef const GRState::IntSetTy* lookup_type;
+    
+    static data_type MakeData(void* const* p) {
+      return p ? ConstNotEqTy((ConstNotEqTy::TreeTy*) *p) : ConstNotEqTy(0);
+    }  
+    static void* MakeVoidPtr(ConstNotEqTy B) {
+      return B.getRoot();
+    }  
+    static void* GDMIndex() {
+      return &ConstNotEqTyIndex;
+    }  
+    static lookup_type Lookup(ConstNotEqTy B, SymbolID K) {
+      return B.lookup(K);
+    }  
+    static data_type Set(data_type B, key_type K, value_type E,context_type F){
+      return F.Add(B, K, E);
+    }
+    
+    static data_type Remove(ConstNotEqTy B, SymbolID K, context_type F) {
+      return F.Remove(B, K);
+    }
+    
+    static context_type MakeContext(void* p) {
+      return *((ConstNotEqTy::Factory*) p);
+    }
+    
+    static void* CreateContext(llvm::BumpPtrAllocator& Alloc) {
+      return new ConstNotEqTy::Factory(Alloc);      
+    }
+    
+    static void DeleteContext(void* Ctx) {
+      delete (ConstNotEqTy::Factory*) Ctx;
+    }      
+  };
+}
+
 bool GRState::isNotEqual(SymbolID sym, const llvm::APSInt& V) const {
 
   // Retrieve the NE-set associated with the given symbol.
-  const ConstNotEqTy::data_type* T = ConstNotEq.lookup(sym);
+  const ConstNotEqTy::data_type* T = get<ConstNotEqTy>(sym);
 
   // See if V is present in the NE-set.
   return T ? T->contains(&V) : false;
@@ -42,8 +103,8 @@ const llvm::APSInt* GRState::getSymVal(SymbolID sym) const {
 
 const GRState*
 GRStateManager::RemoveDeadBindings(const GRState* St, Stmt* Loc,
-                                      const LiveVariables& Liveness,
-                                      DeadSymbolsTy& DSymbols) {  
+                                   const LiveVariables& Liveness,
+                                   DeadSymbolsTy& DSymbols) {  
   
   // This code essentially performs a "mark-and-sweep" of the VariableBindings.
   // The roots are any Block-level exprs and Decls that our liveness algorithm
@@ -97,7 +158,9 @@ GRStateManager::RemoveDeadBindings(const GRState* St, Stmt* Loc,
                                        LSymbols, DSymbols);
   
   // Remove the dead symbols from the symbol tracker.
-  for (GRState::ce_iterator I = St->ce_begin(), E=St->ce_end(); I!=E; ++I) {
+  // FIXME: Refactor into something else that manages symbol values.
+  for (GRState::ConstEqTy::iterator I = St->ConstEq.begin(),
+       E=St->ConstEq.end(); I!=E; ++I) {
 
     SymbolID sym = I.getKey();    
     
@@ -107,17 +170,19 @@ GRStateManager::RemoveDeadBindings(const GRState* St, Stmt* Loc,
     }
   }
   
-  for (GRState::cne_iterator I = St->cne_begin(), E=St->cne_end(); I!=E;++I){
-    
-    SymbolID sym = I.getKey();
-    
+  GRStateRef state(getPersistentState(NewSt), *this);
+  ConstNotEqTy CNE = state.get<ConstNotEqTy>();
+  ConstNotEqTy::Factory& CNEFactory = state.get_context<ConstNotEqTy>();
+
+  for (ConstNotEqTy::iterator I = CNE.begin(), E = CNE.end(); I != E; ++I) {
+    SymbolID sym = I.getKey();    
     if (!LSymbols.count(sym)) {
       DSymbols.insert(sym);
-      NewSt.ConstNotEq = CNEFactory.Remove(NewSt.ConstNotEq, sym);
+      CNE = CNEFactory.Remove(CNE, sym);
     }
   }
   
-  return getPersistentState(NewSt);
+  return state.set<ConstNotEqTy>(CNE);
 }
 
 const GRState* GRStateManager::SetRVal(const GRState* St, LVal LV,
@@ -148,21 +213,19 @@ const GRState* GRStateManager::Unbind(const GRState* St, LVal LV) {
 
 
 const GRState* GRStateManager::AddNE(const GRState* St, SymbolID sym,
-                                           const llvm::APSInt& V) {
+                                     const llvm::APSInt& V) {
+  
+  GRStateRef state(St, *this);
 
   // First, retrieve the NE-set associated with the given symbol.
-  GRState::ConstNotEqTy::data_type* T = St->ConstNotEq.lookup(sym);  
+  ConstNotEqTy::data_type* T = state.get<ConstNotEqTy>(sym);  
   GRState::IntSetTy S = T ? *T : ISetFactory.GetEmptySet();
   
   // Now add V to the NE set.
   S = ISetFactory.Add(S, &V);
   
   // Create a new state with the old binding replaced.
-  GRState NewSt = *St;
-  NewSt.ConstNotEq = CNEFactory.Add(NewSt.ConstNotEq, sym, S);
-    
-  // Get the persistent copy.
-  return getPersistentState(NewSt);
+  return state.set<ConstNotEqTy>(sym, S);
 }
 
 const GRState* GRStateManager::AddEQ(const GRState* St, SymbolID sym,
@@ -179,7 +242,7 @@ const GRState* GRStateManager::AddEQ(const GRState* St, SymbolID sym,
 const GRState* GRStateManager::getInitialState() {
 
   GRState StateImpl(EnvMgr.getInitialEnvironment(), StMgr->getInitialStore(),
-                    GDMFactory.GetEmptyMap(), CNEFactory.GetEmptyMap(),
+                    GDMFactory.GetEmptyMap(),
                     CEFactory.GetEmptyMap());
   
   return getPersistentState(StateImpl);
@@ -200,14 +263,10 @@ const GRState* GRStateManager::getPersistentState(GRState& State) {
   return I;
 }
 
-void GRState::printDOT(std::ostream& Out,
-                       Printer** Beg, Printer** End) const {
-  print(Out, Beg, End, "\\l", "\\|");
-}
 
-void GRState::printStdErr(Printer** Beg, Printer** End) const {
-  print(*llvm::cerr, Beg, End);
-}  
+//===----------------------------------------------------------------------===//
+//  State pretty-printing.
+//===----------------------------------------------------------------------===//
 
 void GRState::print(std::ostream& Out, Printer** Beg, Printer** End,
                     const char* nl, const char* sep) const {
@@ -279,14 +338,14 @@ void GRState::print(std::ostream& Out, Printer** Beg, Printer** End,
 
   // Print != constraints.
   // FIXME: Make just another printer do this.
-    
-  if (!ConstNotEq.isEmpty()) {
+  
+  ConstNotEqTy CNE = get<ConstNotEqTy>();
+  
+  if (!CNE.isEmpty()) {
   
     Out << nl << sep << "'!=' constraints:";
   
-    for (ConstNotEqTy::iterator I  = ConstNotEq.begin(),
-                                EI = ConstNotEq.end();   I != EI; ++I) {
-    
+    for (ConstNotEqTy::iterator I = CNE.begin(), EI = CNE.end(); I!=EI; ++I) {
       Out << nl << " $" << I.getKey() << " : ";
       isFirst = true;
     
@@ -305,12 +364,40 @@ void GRState::print(std::ostream& Out, Printer** Beg, Printer** End,
   for ( ; Beg != End ; ++Beg) (*Beg)->Print(Out, this, nl, sep);
 }
 
+void GRStateRef::printDOT(std::ostream& Out) const {
+  print(Out, "\\l", "\\|");
+}
+
+void GRStateRef::printStdErr() const {
+  print(*llvm::cerr);
+}  
+
+void GRStateRef::print(std::ostream& Out, const char* nl, const char* sep)const{
+  GRState::Printer **beg = Mgr->Printers.empty() ? 0 : &Mgr->Printers[0];
+  GRState::Printer **end = !beg ? 0 : beg + Mgr->Printers.size();  
+  St->print(Out, beg, end, nl, sep);
+}
+
 //===----------------------------------------------------------------------===//
 // Generic Data Map.
 //===----------------------------------------------------------------------===//
 
 void* const* GRState::FindGDM(void* K) const {
   return GDM.lookup(K);
+}
+
+void*
+GRStateManager::FindGDMContext(void* K,
+                               void* (*CreateContext)(llvm::BumpPtrAllocator&),
+                               void (*DeleteContext)(void*)) {
+  
+  std::pair<void*, void (*)(void*)>& p = GDMContexts[K];
+  if (!p.first) {
+    p.first = CreateContext(Alloc);
+    p.second = DeleteContext;
+  }
+  
+  return p.first;
 }
 
 const GRState* GRStateManager::addGDM(const GRState* St, void* Key, void* Data){  
@@ -330,7 +417,8 @@ const GRState* GRStateManager::addGDM(const GRState* St, void* Key, void* Data){
 //===----------------------------------------------------------------------===//
 
 bool GRStateManager::isEqual(const GRState* state, Expr* Ex,
-                                const llvm::APSInt& Y) {
+                             const llvm::APSInt& Y) {
+  
   RVal V = GetRVal(state, Ex);
   
   if (lval::ConcreteInt* X = dyn_cast<lval::ConcreteInt>(&V))
@@ -348,8 +436,7 @@ bool GRStateManager::isEqual(const GRState* state, Expr* Ex,
   return false;
 }
   
-bool GRStateManager::isEqual(const GRState* state, Expr* Ex,
-                                uint64_t x) {
+bool GRStateManager::isEqual(const GRState* state, Expr* Ex, uint64_t x) {
   return isEqual(state, Ex, BasicVals.getValue(x, Ex->getType()));
 }
 
@@ -381,7 +468,6 @@ const GRState* GRStateManager::AssumeAux(const GRState* St, LVal Cond,
       else
         return AssumeSymEQ(St, cast<lval::SymbolVal>(Cond).getSymbol(),
                            BasicVals.getZeroWithPtrWidth(), isFeasible);
-      
       
     case lval::DeclValKind:
     case lval::FuncValKind:

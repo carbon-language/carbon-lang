@@ -58,7 +58,6 @@ public:
   // Typedefs.  
   typedef llvm::ImmutableSet<llvm::APSInt*>                IntSetTy;
   typedef llvm::ImmutableMap<void*, void*>                 GenericDataMap;  
-  typedef llvm::ImmutableMap<SymbolID,IntSetTy>            ConstNotEqTy;
   typedef llvm::ImmutableMap<SymbolID,const llvm::APSInt*> ConstEqTy;
   
   typedef GRStateManager ManagerTy;
@@ -74,18 +73,15 @@ private:
   // FIXME: Make these private.
 public:
   GenericDataMap   GDM;
-  ConstNotEqTy     ConstNotEq;
   ConstEqTy        ConstEq;
   
 public:
   
   /// This ctor is used when creating the first GRState object.
-  GRState(const Environment& env,  Store st, GenericDataMap gdm,
-             ConstNotEqTy CNE, ConstEqTy  CE)
+  GRState(const Environment& env,  Store st, GenericDataMap gdm, ConstEqTy  CE)
     : Env(env),
       St(st),
       GDM(gdm),
-      ConstNotEq(CNE),
       ConstEq(CE) {}
   
   /// Copy ctor - We must explicitly define this or else the "Next" ptr
@@ -95,7 +91,6 @@ public:
       Env(RHS.Env),
       St(RHS.St),
       GDM(RHS.GDM),
-      ConstNotEq(RHS.ConstNotEq),
       ConstEq(RHS.ConstEq) {}
   
   /// getEnvironment - Return the environment associated with this state.
@@ -115,7 +110,6 @@ public:
     V->Env.Profile(ID);
     ID.AddPointer(V->St);
     V->GDM.Profile(ID);
-    V->ConstNotEq.Profile(ID);
     V->ConstEq.Profile(ID);
   }
 
@@ -138,7 +132,6 @@ public:
   
   // Iterators.
 
-
   // FIXME: We'll be removing the VarBindings iterator very soon.  Right now
   //  it assumes that Store is a VarBindingsTy.
   typedef llvm::ImmutableMap<VarDecl*,RVal> VarBindingsTy;
@@ -151,7 +144,6 @@ public:
     VarBindingsTy B(static_cast<const VarBindingsTy::TreeTy*>(St));
     return B.end();
   }
-
     
   typedef Environment::seb_iterator seb_iterator;
   seb_iterator seb_begin() const { return Env.seb_begin(); }
@@ -160,15 +152,7 @@ public:
   typedef Environment::beb_iterator beb_iterator;
   beb_iterator beb_begin() const { return Env.beb_begin(); }
   beb_iterator beb_end() const { return Env.beb_end(); }
-  
-  typedef ConstNotEqTy::iterator cne_iterator;
-  cne_iterator cne_begin() const { return ConstNotEq.begin(); }
-  cne_iterator cne_end() const { return ConstNotEq.end(); }
-  
-  typedef ConstEqTy::iterator ce_iterator;
-  ce_iterator ce_begin() const { return ConstEq.begin(); }
-  ce_iterator ce_end() const { return ConstEq.end(); }
-  
+
   // Trait based GDM dispatch.  
   void* const* FindGDM(void* K) const;
   
@@ -193,10 +177,7 @@ public:
   };
 
   void print(std::ostream& Out, Printer **Beg = 0, Printer **End = 0,
-             const char* nl = "\n", const char *sep = "") const;
-  
-  void printStdErr(Printer **Beg = 0, Printer **End = 0) const;  
-  void printDOT(std::ostream& Out, Printer **Beg = 0, Printer **End = 0) const;
+             const char* nl = "\n", const char *sep = "") const;  
 };
   
 template<> struct GRTrait<GRState*> {
@@ -246,17 +227,29 @@ public:
 //===----------------------------------------------------------------------===//
 // GRStateManager - Factory object for GRStates.
 //===----------------------------------------------------------------------===//
+
+class GRStateRef;
   
 class GRStateManager {
   friend class GRExprEngine;
+  friend class GRStateRef;
   
 private:
   EnvironmentManager                   EnvMgr;
   llvm::OwningPtr<StoreManager>        StMgr;
-  GRState::IntSetTy::Factory        ISetFactory;
-  GRState::GenericDataMap::Factory  GDMFactory;
-  GRState::ConstNotEqTy::Factory    CNEFactory;
-  GRState::ConstEqTy::Factory       CEFactory;
+  GRState::IntSetTy::Factory           ISetFactory;
+  
+  GRState::GenericDataMap::Factory     GDMFactory;
+  
+  typedef llvm::DenseMap<void*,std::pair<void*,void (*)(void*)> > GDMContextsTy;
+  GDMContextsTy GDMContexts;
+  
+  // FIXME: Refactor these elsewhere.
+  GRState::ConstEqTy::Factory          CEFactory;
+  
+  /// Printers - A set of printer objects used for pretty-printing a GRState.
+  ///  GRStateManager owns these objects.
+  std::vector<GRState::Printer*> Printers;
   
   /// StateSet - FoldingSet containing all the states created for analyzing
   ///  a particular function.  This is used to unique states.
@@ -304,12 +297,13 @@ public:
     StMgr(stmgr),
     ISetFactory(alloc), 
     GDMFactory(alloc),
-    CNEFactory(alloc),
     CEFactory(alloc),
     BasicVals(Ctx, alloc),
     SymMgr(alloc),
     Alloc(alloc),
     cfg(c) {}
+  
+  ~GRStateManager();
 
   const GRState* getInitialState();
         
@@ -353,18 +347,21 @@ public:
     return getPersistentState(NewSt);
   }
   
-  const GRState* SetRVal(const GRState* St, Expr* Ex, RVal V) {
+  const GRState* SetRVal(const GRState* St, Expr* Ex, RVal V,
+                         bool Invalidate = true) {
     
     bool isBlkExpr = false;
     
     if (Ex == CurrentStmt) {
+      // FIXME: Should this just be an assertion?  When would we want to set
+      // the value of a block-level expression if it wasn't CurrentStmt?
       isBlkExpr = cfg.isBlkExpr(Ex);
       
       if (!isBlkExpr)
         return St;
     }
     
-    return SetRVal(St, Ex, V, isBlkExpr, true);
+    return SetRVal(St, Ex, V, isBlkExpr, Invalidate);
   }
   
   // Methods that manipulate the GDM.
@@ -422,6 +419,20 @@ public:
     
     return addGDM(st, GRStateTrait<T>::GDMIndex(), 
      GRStateTrait<T>::MakeVoidPtr(GRStateTrait<T>::Remove(st->get<T>(), K, C)));
+  }
+  
+
+  void* FindGDMContext(void* index,
+                       void* (*CreateContext)(llvm::BumpPtrAllocator&),
+                       void  (*DeleteContext)(void*));
+  
+  template <typename T>
+  typename GRStateTrait<T>::context_type get_context() {
+    void* p = FindGDMContext(GRStateTrait<T>::GDMIndex(),
+                             GRStateTrait<T>::CreateContext,
+                             GRStateTrait<T>::DeleteContext);
+    
+    return GRStateTrait<T>::MakeContext(p);
   }
   
   // Assumption logic.
@@ -505,8 +516,8 @@ public:
     return GRStateRef(Mgr->SetRVal(St, Ex, V, isBlkExpr, Invalidate), *Mgr);
   }
   
-  GRStateRef SetRVal(Expr* Ex, RVal V) {
-    return GRStateRef(Mgr->SetRVal(St, Ex, V), *Mgr);
+  GRStateRef SetRVal(Expr* Ex, RVal V, bool Invalidate = true) {
+    return GRStateRef(Mgr->SetRVal(St, Ex, V, Invalidate), *Mgr);
   }
   
   GRStateRef SetRVal(LVal LV, RVal V) {
@@ -539,7 +550,12 @@ public:
   GRStateRef set(typename GRStateTrait<T>::data_type D) {
     return GRStateRef(Mgr->set<T>(St, D), *Mgr);
   }
-  
+
+  template <typename T>
+  typename GRStateTrait<T>::context_type get_context() {
+    return Mgr->get_context<T>();
+  }    
+
   template<typename T>
   GRStateRef set(typename GRStateTrait<T>::key_type K,
                  typename GRStateTrait<T>::value_type E,
@@ -548,10 +564,24 @@ public:
   }
   
   template<typename T>
+  GRStateRef set(typename GRStateTrait<T>::key_type K,
+                 typename GRStateTrait<T>::value_type E) {
+    return GRStateRef(Mgr->set<T>(St, K, E, get_context<T>()), *Mgr);
+  }  
+  
+  template<typename T>
   GRStateRef remove(typename GRStateTrait<T>::key_type K,
                     typename GRStateTrait<T>::context_type C) {
     return GRStateRef(Mgr->remove<T>(St, K, C), *Mgr);
   }
+  
+  // Pretty-printing.
+  void print(std::ostream& Out, const char* nl = "\n",
+             const char *sep = "") const;
+  
+  void printStdErr() const; 
+  
+  void printDOT(std::ostream& Out) const;
 };
   
   
