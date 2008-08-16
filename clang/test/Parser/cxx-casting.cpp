@@ -29,3 +29,8 @@ double static_cast_test(int i)
 {
   return static_cast<double>(i);
 }
+
+char postfix_expr_test()
+{
+  return reinterpret_cast<char*>(0xdeadbeef)[0];
+}
