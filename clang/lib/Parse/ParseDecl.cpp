@@ -1594,6 +1594,7 @@ void Parser::ParseTypeofSpecifier(DeclSpec &DS) {
                            Result.Val))
       Diag(StartLoc, diag::err_invalid_decl_spec_combination, PrevSpec);
   }
+  DS.SetRangeEnd(RParenLoc);
 }
 
 
