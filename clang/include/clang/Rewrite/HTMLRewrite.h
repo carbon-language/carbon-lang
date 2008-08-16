@@ -21,6 +21,7 @@
 namespace clang {
   
 class Rewriter;
+class RewriteBuffer;
 class Preprocessor;
 class PreprocessorFactory;
   
