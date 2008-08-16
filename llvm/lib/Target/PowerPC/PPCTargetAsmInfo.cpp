@@ -111,7 +111,7 @@ PPCLinuxTargetAsmInfo::PPCLinuxTargetAsmInfo(const PPCTargetMachine &TM) :
   PrivateGlobalPrefix = "";
   ConstantPoolSection = "\t.section .rodata.cst4\t";
   JumpTableDataSection = ".section .rodata.cst4";
-  CStringSection = "\t.section\t.rodata";
+  CStringSection = ".rodata.str";
   StaticCtorsSection = ".section\t.ctors,\"aw\",@progbits";
   StaticDtorsSection = ".section\t.dtors,\"aw\",@progbits";
   UsedDirective = "\t# .no_dead_strip\t";
