@@ -386,6 +386,12 @@ private:
   ExprResult ParsePostfixExpressionSuffix(ExprResult LHS);
   ExprResult ParseSizeofAlignofExpression();
   ExprResult ParseBuiltinPrimaryExpression();
+
+  typedef llvm::SmallVector<ExprTy*, 8> ExprListTy;
+  typedef llvm::SmallVector<SourceLocation, 8> CommaLocsTy;
+
+  /// ParseExpressionList - Used for C/C++ (argument-)expression-list.
+  bool ParseExpressionList(ExprListTy &Exprs, CommaLocsTy &CommaLocs);
   
   /// ParenParseOption - Control what ParseParenExpression will parse.
   enum ParenParseOption {

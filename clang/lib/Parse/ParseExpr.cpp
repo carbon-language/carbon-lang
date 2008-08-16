@@ -607,24 +607,15 @@ Parser::ExprResult Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
     }
       
     case tok::l_paren: {   // p-e: p-e '(' argument-expression-list[opt] ')'
-      llvm::SmallVector<ExprTy*, 8> ArgExprs;
-      llvm::SmallVector<SourceLocation, 8> CommaLocs;
+      ExprListTy ArgExprs;
+      CommaLocsTy CommaLocs;
       
       Loc = ConsumeParen();
       
       if (Tok.isNot(tok::r_paren)) {
-        while (1) {
-          ExprResult ArgExpr = ParseAssignmentExpression();
-          if (ArgExpr.isInvalid) {
-            SkipUntil(tok::r_paren);
-            return ExprResult(true);
-          } else
-            ArgExprs.push_back(ArgExpr.Val);
-          
-          if (Tok.isNot(tok::comma))
-            break;
-          // Move to the next argument, remember where the comma was.
-          CommaLocs.push_back(ConsumeToken());
+        if (ParseExpressionList(ArgExprs, CommaLocs)) {
+          SkipUntil(tok::r_paren);
+          return ExprResult(true);
         }
       }
         
@@ -1009,4 +1000,29 @@ Parser::ExprResult Parser::ParseStringLiteralExpression() {
 
   // Pass the set of string tokens, ready for concatenation, to the actions.
   return Actions.ActOnStringLiteral(&StringToks[0], StringToks.size());
+}
+
+/// ParseExpressionList - Used for C/C++ (argument-)expression-list.
+///
+///       argument-expression-list:
+///         assignment-expression
+///         argument-expression-list , assignment-expression
+///
+/// [C++] expression-list:
+/// [C++]   assignment-expression
+/// [C++]   expression-list , assignment-expression
+///
+bool Parser::ParseExpressionList(ExprListTy &Exprs, CommaLocsTy &CommaLocs) {
+  while (1) {
+    ExprResult Expr = ParseAssignmentExpression();
+    if (Expr.isInvalid)
+      return true;
+    else
+      Exprs.push_back(Expr.Val);
+
+    if (Tok.isNot(tok::comma))
+      return false;
+    // Move to the next argument, remember where the comma was.
+    CommaLocs.push_back(ConsumeToken());
+  }
 }
