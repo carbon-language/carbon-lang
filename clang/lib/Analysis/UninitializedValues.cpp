@@ -1,4 +1,4 @@
-//==- UninitializedValues.cpp - Find Unintialized Values --------*- C++ --*-==//
+//==- UninitializedValues.cpp - Find Uninitialized Values -------*- C++ --*-==//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -221,7 +221,8 @@ bool TransferFuncs::BlockStmt_VisitExpr(Expr* E) {
 // Merge operator.
 //
 //  In our transfer functions we take the approach that any
-//  combination of unintialized values, e.g. Unitialized + ___ = Unitialized.
+//  combination of uninitialized values, e.g.
+//      Uninitialized + ___ = Uninitialized.
 //
 //  Merges take the same approach, preferring soundness.  At a confluence point,
 //  if any predecessor has a variable marked uninitialized, the value is
@@ -234,7 +235,7 @@ namespace {
 }
 
 //===----------------------------------------------------------------------===//
-// Unitialized values checker.   Scan an AST and flag variable uses
+// Uninitialized values checker.   Scan an AST and flag variable uses
 //===----------------------------------------------------------------------===//      
 
 UninitializedValues_ValueTypes::ObserverTy::~ObserverTy() {}
@@ -269,7 +270,7 @@ namespace clang {
 void CheckUninitializedValues(CFG& cfg, ASTContext &Ctx, Diagnostic &Diags,
                               bool FullUninitTaint) {
   
-  // Compute the unitialized values information.
+  // Compute the uninitialized values information.
   UninitializedValues U(cfg);
   U.getAnalysisData().FullUninitTaint = FullUninitTaint;
   Solver S(U);
