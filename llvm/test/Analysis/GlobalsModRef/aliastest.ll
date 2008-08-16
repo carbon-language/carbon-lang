@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -globalsmodref-aa -load-vn -gcse | llvm-dis | not grep load
+; RUN: llvm-as < %s | opt -globalsmodref-aa -gvn | llvm-dis | not grep load
 @X = internal global i32 4		; <i32*> [#uses=1]
 
 define i32 @test(i32* %P) {

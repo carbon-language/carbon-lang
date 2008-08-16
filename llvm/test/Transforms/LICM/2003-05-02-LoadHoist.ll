@@ -3,7 +3,7 @@
 ; loaded from.  Basically if the load gets hoisted, the subtract gets turned
 ; into a constant zero.
 ;
-; RUN: llvm-as < %s | opt -licm -load-vn -gcse -instcombine | llvm-dis | grep load
+; RUN: llvm-as < %s | opt -licm -gvn -instcombine | llvm-dis | grep load
 
 @X = global i32 7		; <i32*> [#uses=2]
 

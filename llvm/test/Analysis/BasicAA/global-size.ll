@@ -1,7 +1,7 @@
 ; A store or load cannot alias a global if the accessed amount is larger then
 ; the global.
 
-; RUN: llvm-as < %s | opt -basicaa -load-vn -gcse -instcombine | llvm-dis | not grep load
+; RUN: llvm-as < %s | opt -basicaa -gvn -instcombine | llvm-dis | not grep load
 
 @B = global i16 8               ; <i16*> [#uses=2]
 

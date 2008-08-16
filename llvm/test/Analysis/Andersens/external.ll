@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -anders-aa -load-vn -gcse -deadargelim | llvm-dis | grep store | not grep null
+; RUN: llvm-as < %s | opt -anders-aa -gvn -deadargelim | llvm-dis | grep store | not grep null
 
 ; Because the 'internal' function is passed to an external function, we don't
 ; know what the incoming values will alias.  As such, we cannot do the 

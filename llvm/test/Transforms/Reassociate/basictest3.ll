@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -reassociate -gcse | llvm-dis | grep add | count 6
+; RUN: llvm-as < %s | opt -reassociate -gvn | llvm-dis | grep add | count 6
 ; Each of these functions should turn into two adds each.
 
 @e = external global i32		; <i32*> [#uses=3]

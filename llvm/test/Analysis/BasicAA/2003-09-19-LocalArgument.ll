@@ -1,6 +1,6 @@
 ; In this test, a local alloca cannot alias an incoming argument.
 
-; RUN: llvm-as < %s | opt -load-vn -gcse -instcombine | llvm-dis | not grep sub
+; RUN: llvm-as < %s | opt -gvn -instcombine | llvm-dis | not grep sub
 
 define i32 @test(i32* %P) {
 	%X = alloca i32

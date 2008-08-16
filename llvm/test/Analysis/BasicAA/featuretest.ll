@@ -1,7 +1,7 @@
 ; This testcase tests for various features the basicaa test should be able to 
 ; determine, as noted in the comments.
 
-; RUN: llvm-as < %s | opt -basicaa -load-vn -gcse -instcombine -dce | llvm-dis | not grep REMOVE
+; RUN: llvm-as < %s | opt -basicaa -gvn -instcombine -dce | llvm-dis | not grep REMOVE
 
 @Global = external global { i32 }
 

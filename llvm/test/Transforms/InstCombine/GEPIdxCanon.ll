@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine -gcse -instcombine | \
+; RUN: llvm-as < %s | opt -instcombine -gvn -instcombine | \
 ; RUN:    llvm-dis | not grep getelementptr
 
 define i1 @test(i32* %A) {

@@ -2,7 +2,7 @@
 ; disambiguating some obvious cases.  All loads should be removable in 
 ; this testcase.
 
-; RUN: llvm-as < %s | opt -basicaa -load-vn -gcse -instcombine -dce \
+; RUN: llvm-as < %s | opt -basicaa -gvn -instcombine -dce \
 ; RUN: | llvm-dis | not grep load
 
 @A = global i32 7

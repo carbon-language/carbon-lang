@@ -1,5 +1,5 @@
 ; Test folding of constantexpr geps into normal geps.
-; RUN: llvm-as < %s | opt -instcombine -gcse -instcombine | \
+; RUN: llvm-as < %s | opt -instcombine -gvn -instcombine | \
 ; RUN:    llvm-dis | not grep getelementptr
 
 @Array = external global [40 x i32]             ; <[40 x i32]*> [#uses=2]
