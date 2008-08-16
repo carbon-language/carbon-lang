@@ -378,6 +378,14 @@ public:
     return EmitSizeAlignOf(E->getArgumentType(), E->getType(), E->isSizeOf());
   }
 
+  llvm::Constant *VisitAddrLabelExpr(const AddrLabelExpr *E) {
+    assert(CGF && "Invalid address of label expression outside function.");
+    llvm::Constant *C = 
+      llvm::ConstantInt::get(llvm::Type::Int32Ty,
+                             CGF->GetIDForAddrOfLabel(E->getLabel()));
+    return llvm::ConstantExpr::getIntToPtr(C, ConvertType(E->getType()));
+  }
+
   // Unary operators
   llvm::Constant *VisitUnaryPlus(const UnaryOperator *E) {
     return Visit(E->getSubExpr());
