@@ -118,6 +118,11 @@ PPCLinuxTargetAsmInfo::PPCLinuxTargetAsmInfo(const PPCTargetMachine &TM) :
   WeakRefDirective = "\t.weak\t";
   BSSSection = "\t.section\t\".sbss\",\"aw\",@nobits";
 
+  // PPC/Linux normally uses named section for BSS.
+  BSSSection_  = getNamedSection("\t.bss",
+                                 SectionFlags::Writeable | SectionFlags::BSS,
+                                 /* Override */ true);
+
   // Debug Information
   AbsoluteDebugSectionOffsets = true;
   SupportsDebugInformation = true;
