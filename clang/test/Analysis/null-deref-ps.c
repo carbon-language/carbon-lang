@@ -77,4 +77,12 @@ int f7(int x) {
   return x;
 }
 
-
+int f8(int *p, int *q) {
+  if (!p)
+    if (p)
+      *p = 1; // no-warning
+  
+  if (q)
+    if (!q)
+      *q = 1; // no-warning
+}
