@@ -291,7 +291,7 @@ TargetAsmInfo::SectionForGlobal(const GlobalValue *GV) const {
   // If section is named we need to switch into it via special '.section'
   // directive and also append funky flags. Otherwise - section name is just
   // some magic assembler directive.
-  return getSwitchToSectionDirective() + S->Name + PrintSectionFlags(S->Flags);
+  return getSwitchToSectionDirective() + S->Name + getSectionFlags(S->Flags);
 }
 
 // Lame default implementation. Calculate the section name for global.
@@ -375,4 +375,17 @@ TargetAsmInfo::getUnnamedSection(const char *Directive, unsigned Flags) const {
   }
 
   return &S;
+}
+
+const std::string&
+TargetAsmInfo::getSectionFlags(unsigned Flags) const {
+  SectionFlags::FlagsStringsMapType::iterator I = FlagsStrings.find(Flags);
+
+  // We didn't print these flags yet, print and save them to map. This reduces
+  // amount of heap trashing due to std::string construction / concatenation.
+  if (I == FlagsStrings.end())
+    I = FlagsStrings.insert(std::make_pair(Flags,
+                                           printSectionFlags(Flags))).first;
+
+  return I->second;
 }

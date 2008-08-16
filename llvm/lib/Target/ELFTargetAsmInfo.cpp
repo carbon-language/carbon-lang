@@ -148,7 +148,7 @@ ELFTargetAsmInfo::MergeableStringSection(const GlobalVariable *GV) const {
   return getReadOnlySection_();
 }
 
-std::string ELFTargetAsmInfo::PrintSectionFlags(unsigned flags) const {
+std::string ELFTargetAsmInfo::printSectionFlags(unsigned flags) const {
   std::string Flags = ",\"";
 
   if (!(flags & SectionFlags::Debug))

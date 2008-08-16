@@ -52,7 +52,7 @@ namespace llvm {
                                            bool Global) const;
     virtual std::string UniqueSectionForGlobal(const GlobalValue* GV,
                                                SectionKind::Kind kind) const;
-    virtual std::string PrintSectionFlags(unsigned flags) const;
+    virtual std::string printSectionFlags(unsigned flags) const;
   protected:
     const X86TargetMachine *X86TM;
   };

@@ -27,7 +27,7 @@ namespace llvm {
     explicit ELFTargetAsmInfo(const TargetMachine &TM);
 
     virtual const Section* SelectSectionForGlobal(const GlobalValue *GV) const;
-    virtual std::string PrintSectionFlags(unsigned flags) const;
+    virtual std::string printSectionFlags(unsigned flags) const;
     const Section* MergeableConstSection(const GlobalVariable *GV) const;
     inline const Section* MergeableConstSection(const Type *Ty) const;
     const Section* MergeableStringSection(const GlobalVariable *GV) const;

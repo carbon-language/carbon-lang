@@ -27,9 +27,9 @@ SparcELFTargetAsmInfo::SparcELFTargetAsmInfo(const TargetMachine &TM):
   CStringSection=".rodata.str";
 }
 
-std::string SparcELFTargetAsmInfo::PrintSectionFlags(unsigned flags) const {
+std::string SparcELFTargetAsmInfo::printSectionFlags(unsigned flags) const {
   if (flags & SectionFlags::Mergeable)
-    return ELFTargetAsmInfo::PrintSectionFlags(flags);
+    return ELFTargetAsmInfo::printSectionFlags(flags);
 
   std::string Flags;
   if (!(flags & SectionFlags::Debug))

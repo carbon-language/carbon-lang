@@ -16,6 +16,7 @@
 #ifndef LLVM_TARGET_ASM_INFO_H
 #define LLVM_TARGET_ASM_INFO_H
 
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/DataTypes.h"
 #include <string>
@@ -83,6 +84,16 @@ namespace llvm {
     static inline unsigned setEntitySize(unsigned Flags, unsigned Size) {
       return ((Flags & ~EntitySize) | ((Size & 0xFF) << 24));
     }
+
+    struct KeyInfo {
+      static inline unsigned getEmptyKey() { return Invalid; }
+      static inline unsigned getTombstoneKey() { return Invalid - 1; }
+      static unsigned getHashValue(const unsigned &Key) { return Key; }
+      static bool isEqual(unsigned LHS, unsigned RHS) { return LHS == RHS; }
+      static bool isPod() { return true; }
+    };
+
+    typedef DenseMap<unsigned, std::string, KeyInfo> FlagsStringsMapType;
   }
 
   class TargetMachine;
@@ -109,6 +120,7 @@ namespace llvm {
   class TargetAsmInfo {
   private:
     mutable StringMap<Section> Sections;
+    mutable SectionFlags::FlagsStringsMapType FlagsStrings;
   protected:
     //===------------------------------------------------------------------===//
     // Properties to be set by the target writer, used to configure asm printer.
@@ -551,7 +563,8 @@ namespace llvm {
     virtual std::string UniqueSectionForGlobal(const GlobalValue* GV,
                                                SectionKind::Kind kind) const;
 
-    virtual std::string PrintSectionFlags(unsigned flags) const { return ""; }
+    const std::string& getSectionFlags(unsigned Flags) const;
+    virtual std::string printSectionFlags(unsigned flags) const { return ""; }
 
     virtual const Section* SelectSectionForGlobal(const GlobalValue *GV) const;
 

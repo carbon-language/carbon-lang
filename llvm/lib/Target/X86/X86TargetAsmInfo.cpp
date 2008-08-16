@@ -404,7 +404,7 @@ X86COFFTargetAsmInfo::UniqueSectionForGlobal(const GlobalValue* GV,
   }
 }
 
-std::string X86COFFTargetAsmInfo::PrintSectionFlags(unsigned flags) const {
+std::string X86COFFTargetAsmInfo::printSectionFlags(unsigned flags) const {
   std::string Flags = ",\"";
 
   if (flags & SectionFlags::Code)

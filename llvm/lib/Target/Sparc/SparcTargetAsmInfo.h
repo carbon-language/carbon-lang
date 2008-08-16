@@ -25,7 +25,7 @@ namespace llvm {
   struct SparcELFTargetAsmInfo : public ELFTargetAsmInfo {
     explicit SparcELFTargetAsmInfo(const TargetMachine &TM);
 
-    std::string PrintSectionFlags(unsigned flags) const;
+    std::string printSectionFlags(unsigned flags) const;
   };
 
 } // namespace llvm
