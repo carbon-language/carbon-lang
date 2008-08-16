@@ -188,13 +188,13 @@ public:
   llvm::Constant *EmitAnnotateAttr(llvm::GlobalValue *GV,
                                    const AnnotateAttr *AA, unsigned LineNo);
     
-  /// WarnUnsupported - Print out a warning that codegen doesn't support the
+  /// ErrorUnsupported - Print out an error that codegen doesn't support the
   /// specified stmt yet.    
-  void WarnUnsupported(const Stmt *S, const char *Type);
+  void ErrorUnsupported(const Stmt *S, const char *Type);
   
-  /// WarnUnsupported - Print out a warning that codegen doesn't support the
+  /// ErrorUnsupported - Print out an error that codegen doesn't support the
   /// specified decl yet.
-  void WarnUnsupported(const Decl *D, const char *Type);
+  void ErrorUnsupported(const Decl *D, const char *Type);
 
 private:
   void SetFunctionAttributes(const FunctionDecl *FD,

@@ -427,7 +427,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
   if (V)
     return RValue::get(V);
   
-  WarnUnsupported(E, "builtin function");
+  ErrorUnsupported(E, "builtin function");
   
   // Unknown builtin, for now just dump it out and return undef.
   if (hasAggregateLLVMType(E->getType()))

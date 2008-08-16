@@ -65,10 +65,10 @@ void CodeGenModule::Release() {
   assert(!verifyModule(TheModule));
 }
 
-/// WarnUnsupported - Print out a warning that codegen doesn't support the
+/// ErrorUnsupported - Print out an error that codegen doesn't support the
 /// specified stmt yet.
-void CodeGenModule::WarnUnsupported(const Stmt *S, const char *Type) {
-  unsigned DiagID = getDiags().getCustomDiagID(Diagnostic::Warning, 
+void CodeGenModule::ErrorUnsupported(const Stmt *S, const char *Type) {
+  unsigned DiagID = getDiags().getCustomDiagID(Diagnostic::Error, 
                                                "cannot codegen this %0 yet");
   SourceRange Range = S->getSourceRange();
   std::string Msg = Type;
@@ -76,10 +76,10 @@ void CodeGenModule::WarnUnsupported(const Stmt *S, const char *Type) {
                     &Msg, 1, &Range, 1);
 }
 
-/// WarnUnsupported - Print out a warning that codegen doesn't support the
+/// ErrorUnsupported - Print out an error that codegen doesn't support the
 /// specified decl yet.
-void CodeGenModule::WarnUnsupported(const Decl *D, const char *Type) {
-  unsigned DiagID = getDiags().getCustomDiagID(Diagnostic::Warning, 
+void CodeGenModule::ErrorUnsupported(const Decl *D, const char *Type) {
+  unsigned DiagID = getDiags().getCustomDiagID(Diagnostic::Error, 
                                                "cannot codegen this %0 yet");
   std::string Msg = Type;
   getDiags().Report(Context.getFullLoc(D->getLocation()), DiagID,
@@ -888,7 +888,7 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
   case Decl::LinkageSpec: {
     LinkageSpecDecl *LSD = cast<LinkageSpecDecl>(D);
     if (LSD->getLanguage() == LinkageSpecDecl::lang_cxx)
-      WarnUnsupported(LSD, "linkage spec");
+      ErrorUnsupported(LSD, "linkage spec");
     // FIXME: implement C++ linkage, C linkage works mostly by C
     // language reuse already.
     break;

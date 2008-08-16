@@ -90,8 +90,7 @@ unsigned CodeGenFunction::getAccessedFieldNo(unsigned Idx,
 LValue CodeGenFunction::EmitLValue(const Expr *E) {
   switch (E->getStmtClass()) {
   default: {
-    printf("Statement class: %d\n", E->getStmtClass());
-    WarnUnsupported(E, "l-value expression");
+    ErrorUnsupported(E, "l-value expression");
     llvm::Type *Ty = llvm::PointerType::getUnqual(ConvertType(E->getType()));
     return LValue::MakeAddr(llvm::UndefValue::get(Ty),
                             E->getType().getCVRQualifiers());

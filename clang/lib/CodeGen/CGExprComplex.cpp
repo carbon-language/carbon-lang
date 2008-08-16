@@ -228,7 +228,7 @@ void ComplexExprEmitter::EmitStoreOfComplex(ComplexPairTy Val, llvm::Value *Ptr,
 //===----------------------------------------------------------------------===//
 
 ComplexPairTy ComplexExprEmitter::VisitExpr(Expr *E) {
-  CGF.WarnUnsupported(E, "complex expression");
+  CGF.ErrorUnsupported(E, "complex expression");
   const llvm::Type *EltTy = 
     CGF.ConvertType(E->getType()->getAsComplexType()->getElementType());
   llvm::Value *U = llvm::UndefValue::get(EltTy);

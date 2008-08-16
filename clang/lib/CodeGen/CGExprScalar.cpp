@@ -453,7 +453,7 @@ EmitComplexToScalarConversion(CodeGenFunction::ComplexPairTy Src,
 //===----------------------------------------------------------------------===//
 
 Value *ScalarExprEmitter::VisitExpr(Expr *E) {
-  CGF.WarnUnsupported(E, "scalar expression");
+  CGF.ErrorUnsupported(E, "scalar expression");
   if (E->getType()->isVoidType())
     return 0;
   return llvm::UndefValue::get(CGF.ConvertType(E->getType()));

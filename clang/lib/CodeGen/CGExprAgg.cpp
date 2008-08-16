@@ -60,7 +60,7 @@ public:
   //===--------------------------------------------------------------------===//
   
   void VisitStmt(Stmt *S) {
-    CGF.WarnUnsupported(S, "aggregate expression");
+    CGF.ErrorUnsupported(S, "aggregate expression");
   }
   void VisitParenExpr(ParenExpr *PE) { Visit(PE->getSubExpr()); }
 
@@ -235,7 +235,7 @@ void AggExprEmitter::VisitStmtExpr(const StmtExpr *E) {
 }
 
 void AggExprEmitter::VisitBinaryOperator(const BinaryOperator *E) {
-  CGF.WarnUnsupported(E, "aggregate binary expression");
+  CGF.ErrorUnsupported(E, "aggregate binary expression");
 }
 
 void AggExprEmitter::VisitBinAssign(const BinaryOperator *E) {

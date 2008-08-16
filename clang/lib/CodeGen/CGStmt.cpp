@@ -52,7 +52,7 @@ void CodeGenFunction::EmitStmt(const Stmt *S) {
       else
         EmitAggExpr(E, 0, false);
     } else {
-      WarnUnsupported(S, "statement");
+      ErrorUnsupported(S, "statement");
     }
     break;
   case Stmt::NullStmtClass: break;

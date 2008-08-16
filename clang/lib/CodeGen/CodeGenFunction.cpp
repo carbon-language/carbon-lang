@@ -173,10 +173,10 @@ const CGRecordLayout *CodeGenFunction::getCGRecordLayout(CodeGenTypes &CGT,
   return CGT.getCGRecordLayout(RTy->getDecl());
 }
 
-/// WarnUnsupported - Print out a warning that codegen doesn't support the
+/// ErrorUnsupported - Print out an error that codegen doesn't support the
 /// specified stmt yet.
-void CodeGenFunction::WarnUnsupported(const Stmt *S, const char *Type) {
-  CGM.WarnUnsupported(S, Type);
+void CodeGenFunction::ErrorUnsupported(const Stmt *S, const char *Type) {
+  CGM.ErrorUnsupported(S, Type);
 }
 
 unsigned CodeGenFunction::GetIDForAddrOfLabel(const LabelStmt *L) {

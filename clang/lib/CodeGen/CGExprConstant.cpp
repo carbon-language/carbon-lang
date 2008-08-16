@@ -39,7 +39,7 @@ public:
   //===--------------------------------------------------------------------===//
     
   llvm::Constant *VisitStmt(Stmt *S) {
-    CGM.WarnUnsupported(S, "constant expression");
+    CGM.ErrorUnsupported(S, "constant expression");
     QualType T = cast<Expr>(S)->getType();
     return llvm::UndefValue::get(CGM.getTypes().ConvertType(T));
   }
@@ -129,7 +129,7 @@ public:
     llvm::Constant *C = Visit(E);
     llvm::ConstantInt *CI = dyn_cast<llvm::ConstantInt>(C);
     if (!CI) {
-      CGM.WarnUnsupported(E, "bitfield initialization");
+      CGM.ErrorUnsupported(E, "bitfield initialization");
       return;
     }
     llvm::APInt V = CI->getValue();
@@ -541,7 +541,7 @@ public:
     } else if (LHS->getType()->isFloatingPoint()) {
       Result = llvm::ConstantExpr::getFCmp(FloatPred, LHS, RHS);
     } else {
-      CGM.WarnUnsupported(E, "constant expression");
+      CGM.ErrorUnsupported(E, "constant expression");
       Result = llvm::ConstantInt::getFalse();
     }
 
@@ -584,7 +584,7 @@ public:
     llvm::Constant *CondVal = EmitConversionToBool(Cond, E->getType());
     llvm::ConstantInt *CondValInt = dyn_cast<llvm::ConstantInt>(CondVal);
     if (!CondValInt) {
-      CGM.WarnUnsupported(E, "constant expression");
+      CGM.ErrorUnsupported(E, "constant expression");
       return llvm::Constant::getNullValue(ConvertType(E->getType()));
     }
     if (CondValInt->isOne()) {
@@ -789,7 +789,7 @@ public:
       break;
     }
     }
-    CGM.WarnUnsupported(E, "constant l-value expression");
+    CGM.ErrorUnsupported(E, "constant l-value expression");
     llvm::Type *Ty = llvm::PointerType::getUnqual(ConvertType(E->getType()));
     return llvm::UndefValue::get(Ty);
   }
