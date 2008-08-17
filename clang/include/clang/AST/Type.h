@@ -471,14 +471,13 @@ public:
     
     Char_S,   // This is 'char' for targets where char is signed.
     SChar,    // This is explicitly qualified signed char.
+    WChar,    // This is 'wchar_t' for C++.
     Short,
     Int,
     Long,
     LongLong,
     
-    Float, Double, LongDouble,
-
-    WChar     // This is 'wchar_t' for C++.
+    Float, Double, LongDouble
   };
 private:
   Kind TypeKind;
