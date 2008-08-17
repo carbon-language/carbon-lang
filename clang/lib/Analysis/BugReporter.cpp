@@ -537,7 +537,7 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
                   continue;
                 }
                 
-                os << V.toString();
+                os << V;
               }              
               
               os << ":'  at line " 

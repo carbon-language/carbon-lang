@@ -2252,7 +2252,7 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, DeclTy *EnumDeclX,
       V.extend(InitVal.getBitWidth());
       if (V != InitVal)
         Diag(ECD->getLocation(), diag::ext_enum_value_not_int,
-             InitVal.toString());
+             InitVal.toString(10));
     }
     
     // Keep track of the size of positive and negative values.

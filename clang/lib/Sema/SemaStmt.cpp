@@ -229,7 +229,7 @@ void Sema::ConvertIntegerToTypeWarnOnOverflow(llvm::APSInt &Val,
     // If the input was signed and negative and the output is unsigned,
     // warn.
     if (!NewSign && OldVal.isSigned() && OldVal.isNegative())
-      Diag(Loc, DiagID, OldVal.toString(), Val.toString());
+      Diag(Loc, DiagID, OldVal.toString(10), Val.toString(10));
     
     Val.setIsSigned(NewSign);
   } else if (NewWidth < Val.getBitWidth()) {
@@ -240,7 +240,7 @@ void Sema::ConvertIntegerToTypeWarnOnOverflow(llvm::APSInt &Val,
     ConvVal.extend(Val.getBitWidth());
     ConvVal.setIsSigned(Val.isSigned());
     if (ConvVal != Val)
-      Diag(Loc, DiagID, Val.toString(), ConvVal.toString());
+      Diag(Loc, DiagID, Val.toString(10), ConvVal.toString(10));
     
     // Regardless of whether a diagnostic was emitted, really do the
     // truncation.
@@ -253,7 +253,7 @@ void Sema::ConvertIntegerToTypeWarnOnOverflow(llvm::APSInt &Val,
     Val.setIsSigned(NewSign);
     
     if (Val.isNegative())  // Sign bit changes meaning.
-      Diag(Loc, DiagID, OldVal.toString(), Val.toString());
+      Diag(Loc, DiagID, OldVal.toString(10), Val.toString(10));
   }
 }
 
@@ -376,7 +376,7 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtTy *Switch,
       if (CaseVals[i].first == CaseVals[i+1].first) {
         // If we have a duplicate, report it.
         Diag(CaseVals[i+1].second->getLHS()->getLocStart(),
-             diag::err_duplicate_case, CaseVals[i].first.toString());
+             diag::err_duplicate_case, CaseVals[i].first.toString(10));
         Diag(CaseVals[i].second->getLHS()->getLocStart(), 
              diag::err_duplicate_case_prev);
         // FIXME: We really want to remove the bogus case stmt from the substmt,
@@ -460,7 +460,7 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtTy *Switch,
       if (OverlapStmt) {
         // If we have a duplicate, report it.
         Diag(CR->getLHS()->getLocStart(),
-             diag::err_duplicate_case, OverlapVal.toString());
+             diag::err_duplicate_case, OverlapVal.toString(10));
         Diag(OverlapStmt->getLHS()->getLocStart(), 
              diag::err_duplicate_case_prev);
         // FIXME: We really want to remove the bogus case stmt from the substmt,

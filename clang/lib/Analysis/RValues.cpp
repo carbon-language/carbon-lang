@@ -352,7 +352,7 @@ void NonLVal::print(std::ostream& Out) const {
   switch (getSubKind()) {  
 
     case nonlval::ConcreteIntKind:
-      Out << cast<nonlval::ConcreteInt>(this)->getValue().toString();
+      Out << cast<nonlval::ConcreteInt>(this)->getValue();
 
       if (cast<nonlval::ConcreteInt>(this)->getValue().isUnsigned())
         Out << 'U';
@@ -369,7 +369,7 @@ void NonLVal::print(std::ostream& Out) const {
       
       Out << '$' << C.getConstraint().getSymbol() << ' ';
       printOpcode(Out, C.getConstraint().getOpcode());
-      Out << ' ' << C.getConstraint().getInt().toString();
+      Out << ' ' << C.getConstraint().getInt();
       
       if (C.getConstraint().getInt().isUnsigned())
         Out << 'U';
@@ -395,8 +395,7 @@ void LVal::print(std::ostream& Out) const {
   switch (getSubKind()) {        
 
     case lval::ConcreteIntKind:
-      Out << cast<lval::ConcreteInt>(this)->getValue().toString() 
-          << " (LVal)";
+      Out << cast<lval::ConcreteInt>(this)->getValue() << " (LVal)";
       break;
       
     case lval::SymbolValKind:

@@ -299,7 +299,7 @@ void GRState::print(std::ostream& Out, Printer** Beg, Printer** End,
 
     for (ConstEqTy::iterator I = CE.begin(), E = CE.end(); I!=E; ++I)
       Out << nl << " $" << I.getKey()
-          << " : "   << I.getData()->toString();
+          << " : "   << *I.getData();
   }
 
   // Print != constraints.
@@ -320,7 +320,7 @@ void GRState::print(std::ostream& Out, Printer** Beg, Printer** End,
         if (isFirst) isFirst = false;
         else Out << ", ";
       
-        Out << (*J)->toString();
+        Out << *J;
       }
     }
   }
