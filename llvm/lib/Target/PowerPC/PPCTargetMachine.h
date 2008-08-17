@@ -41,7 +41,13 @@ class PPCTargetMachine : public LLVMTargetMachine {
 
 protected:
   virtual const TargetAsmInfo *createTargetAsmInfo() const;
-  
+
+  // To avoid having target depend on the asmprinter stuff libraries, asmprinter
+  // set this functions to ctor pointer at startup time if they are linked in.
+  typedef FunctionPass *(*AsmPrinterCtorFn)(std::ostream &o,
+                                            PPCTargetMachine &tm);
+  static AsmPrinterCtorFn AsmPrinterCtor;
+
 public:
   PPCTargetMachine(const Module &M, const std::string &FS, bool is64Bit);
 
@@ -63,7 +69,11 @@ public:
   virtual const PPCMachOWriterInfo *getMachOWriterInfo() const {
     return &MachOWriterInfo;
   }
-  
+
+  static void registerAsmPrinter(AsmPrinterCtorFn F) {
+    AsmPrinterCtor = F;
+  }
+
   // Pass Pipeline Configuration
   virtual bool addInstSelector(PassManagerBase &PM, bool Fast);
   virtual bool addPreEmitPass(PassManagerBase &PM, bool Fast);

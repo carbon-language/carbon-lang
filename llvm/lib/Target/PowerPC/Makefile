@@ -7,7 +7,7 @@
 # 
 ##===----------------------------------------------------------------------===##
 LEVEL = ../../..
-LIBRARYNAME = LLVMPowerPC
+LIBRARYNAME = LLVMPowerPCCodegen
 TARGET = PPC
 
 # Make sure that tblgen is run, first thing.
@@ -16,5 +16,7 @@ BUILT_SOURCES = PPCGenInstrNames.inc PPCGenRegisterNames.inc \
                 PPCGenRegisterInfo.h.inc PPCGenRegisterInfo.inc \
                 PPCGenInstrInfo.inc PPCGenDAGISel.inc \
                 PPCGenSubtarget.inc PPCGenCallingConv.inc
+
+DIRS = AsmPrinter
 
 include $(LEVEL)/Makefile.common

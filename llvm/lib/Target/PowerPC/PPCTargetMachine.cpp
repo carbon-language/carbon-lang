@@ -26,6 +26,9 @@ X("ppc32", "  PowerPC 32");
 static RegisterTarget<PPC64TargetMachine>
 Y("ppc64", "  PowerPC 64");
 
+// No assembler printer by default
+PPCTargetMachine::AsmPrinterCtorFn PPCTargetMachine::AsmPrinterCtor = 0;
+
 const TargetAsmInfo *PPCTargetMachine::createTargetAsmInfo() const {
   if (Subtarget.isDarwin())
     return new PPCDarwinTargetAsmInfo(*this);
@@ -132,7 +135,10 @@ bool PPCTargetMachine::addPreEmitPass(PassManagerBase &PM, bool Fast) {
 
 bool PPCTargetMachine::addAssemblyEmitter(PassManagerBase &PM, bool Fast, 
                                           std::ostream &Out) {
-  PM.add(createPPCAsmPrinterPass(Out, *this));
+  assert(AsmPrinterCtor && "AsmPrinter was not linked in");
+  if (AsmPrinterCtor)
+    PM.add(AsmPrinterCtor(Out, *this));
+
   return false;
 }
 
@@ -158,8 +164,12 @@ bool PPCTargetMachine::addCodeEmitter(PassManagerBase &PM, bool Fast,
   
   // Machine code emitter pass for PowerPC.
   PM.add(createPPCCodeEmitterPass(*this, MCE));
-  if (DumpAsm) 
-    PM.add(createPPCAsmPrinterPass(*cerr.stream(), *this));
+  if (DumpAsm) {
+    assert(AsmPrinterCtor && "AsmPrinter was not linked in");
+    if (AsmPrinterCtor)
+      PM.add(AsmPrinterCtor(*cerr.stream(), *this));
+  }
+
   return false;
 }
 
@@ -167,7 +177,11 @@ bool PPCTargetMachine::addSimpleCodeEmitter(PassManagerBase &PM, bool Fast,
                                             bool DumpAsm, MachineCodeEmitter &MCE) {
   // Machine code emitter pass for PowerPC.
   PM.add(createPPCCodeEmitterPass(*this, MCE));
-  if (DumpAsm) 
-    PM.add(createPPCAsmPrinterPass(*cerr.stream(), *this));
+  if (DumpAsm) {
+    assert(AsmPrinterCtor && "AsmPrinter was not linked in");
+    if (AsmPrinterCtor)
+      PM.add(AsmPrinterCtor(*cerr.stream(), *this));
+  }
+
   return false;
 }

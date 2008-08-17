@@ -1117,3 +1117,11 @@ FunctionPass *llvm::createPPCAsmPrinterPass(std::ostream &o,
     return new PPCLinuxAsmPrinter(o, tm, tm.getTargetAsmInfo());
   }
 }
+
+namespace {
+  static struct Register {
+    Register() {
+      PPCTargetMachine::registerAsmPrinter(createPPCAsmPrinterPass);
+    }
+  } Registrator;
+}
