@@ -122,10 +122,6 @@ bool AsmPrinter::doInitialization(Module &M) {
                                          E = CMM->end(); I != E; ++I)
     if (GCMetadataPrinter *GCP = GetOrCreateGCPrinter(*I))
       GCP->beginAssembly(O, *this, *TAI);
-<<<<<<< HEAD:lib/CodeGen/AsmPrinter.cpp
-=======
-
->>>>>>> Factor out asmprinters from collector interface.:lib/CodeGen/AsmPrinter.cpp
   
   if (!M.getModuleInlineAsm().empty())
     O << TAI->getCommentString() << " Start of file scope inline assembly\n"
@@ -1473,7 +1469,6 @@ void AsmPrinter::printVisibility(const std::string& Name,
 GCMetadataPrinter *AsmPrinter::GetOrCreateGCPrinter(Collector *C) {
   if (!C->usesMetadata())
     return 0;
-<<<<<<< HEAD:lib/CodeGen/AsmPrinter.cpp
   
   gcp_iterator GCPI = GCMetadataPrinters.find(C);
   if (GCPI != GCMetadataPrinters.end())
@@ -1481,15 +1476,6 @@ GCMetadataPrinter *AsmPrinter::GetOrCreateGCPrinter(Collector *C) {
   
   const char *Name = C->getName().c_str();
   
-=======
-
-  gcp_iterator GCPI = GCMetadataPrinters.find(C);
-  if (GCPI != GCMetadataPrinters.end())
-    return GCPI->second;
-
-  const char *Name = C->getName().c_str();
-
->>>>>>> Factor out asmprinters from collector interface.:lib/CodeGen/AsmPrinter.cpp
   for (GCMetadataPrinterRegistry::iterator
          I = GCMetadataPrinterRegistry::begin(),
          E = GCMetadataPrinterRegistry::end(); I != E; ++I)
@@ -1499,11 +1485,7 @@ GCMetadataPrinter *AsmPrinter::GetOrCreateGCPrinter(Collector *C) {
       GCMetadataPrinters.insert(std::make_pair(C, GCP));
       return GCP;
     }
-<<<<<<< HEAD:lib/CodeGen/AsmPrinter.cpp
   
-=======
-
->>>>>>> Factor out asmprinters from collector interface.:lib/CodeGen/AsmPrinter.cpp
   cerr << "no GCMetadataPrinter registered for collector: " << Name << "\n";
   abort();
 }
