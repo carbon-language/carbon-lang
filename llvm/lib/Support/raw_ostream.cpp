@@ -34,6 +34,13 @@ void raw_ostream::handle() {}
 /// information about the error is put into ErrorInfo, and the stream should
 /// be immediately destroyed.
 raw_fd_ostream::raw_fd_ostream(const char *Filename, std::string &ErrorInfo) {
+  // Handle "-" as stdout.
+  if (Filename[0] == '-' && Filename[1] == 0) {
+    FD = STDOUT_FILENO;
+    ShouldClose = false;
+    return;
+  }
+  
   FD = open(Filename, O_WRONLY|O_CREAT|O_TRUNC, 0644);
   if (FD < 0) {
     ErrorInfo = "Error opening output file '" + std::string(Filename) + "'";
