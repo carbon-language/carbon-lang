@@ -15,13 +15,19 @@
 #include <ostream>
 using namespace llvm;
 
-#if !defined(_MSC_VER)
 #include <fcntl.h>
-#else
+
+#if defined(_MSC_VER)
 #include <io.h>
-#define open(x,y,z) _open(x,y)
-#define write(fd, start, size) _write(fd, start, size)
-#define close(fd) _close(fd)
+#ifndef STDIN_FILENO
+# define STDIN_FILENO 0
+#endif
+#ifndef STDOUT_FILENO
+# define STDOUT_FILENO 1
+#endif
+#ifndef STDERR_FILENO
+# define STDERR_FILENO 2
+#endif
 #endif
 
 // An out of line virtual method to provide a home for the class vtable.
