@@ -23,133 +23,49 @@
 #include "llvm/System/Path.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Config/config.h"
+#include "llvm/Support/raw_ostream.h"
 #include <cstdio>
 using namespace clang;
 
-//===----------------------------------------------------------------------===//
-// Simple buffered I/O
-//===----------------------------------------------------------------------===//
-//
-// Empirically, iostream is over 30% slower than stdio for this workload, and
-// stdio itself isn't very well suited.  The problem with stdio is use of
-// putchar_unlocked.  We have many newline characters that need to be emitted,
-// but stdio needs to do extra checks to handle line buffering mode.  These
-// extra checks make putchar_unlocked fall off its inlined code path, hitting
-// slow system code.  In practice, using 'write' directly makes 'clang -E -P'
-// about 10% faster than using the stdio path on darwin.
-
-#if defined(HAVE_UNISTD_H) && defined(HAVE_FCNTL_H)
-#include <unistd.h>
-#include <fcntl.h>
-#else
-#define USE_STDIO 1
-#endif
-
 static std::string OutputFilename;
-#ifdef USE_STDIO
-static FILE *OutputFILE;
-#else
-static int OutputFD;
-static char *OutBufStart = 0, *OutBufEnd, *OutBufCur;
-#endif
+static llvm::raw_ostream *OutStream;
 
 /// InitOutputBuffer - Initialize our output buffer.
 ///
 static void InitOutputBuffer(const std::string& Output) {
-#ifdef USE_STDIO
-  if (!Output.size() || Output == "-")
-    OutputFILE = stdout;
-  else {
+  if (!Output.size() || Output == "-") {
+    OutputFilename = "<stdout>";
+    OutStream = new llvm::raw_stdout_ostream();
+  } else {
     OutputFilename = Output;
-    OutputFILE = fopen(Output.c_str(), "w+");
+    std::string Err;
+    OutStream = new llvm::raw_fd_ostream(Output.c_str(), Err);
     
-    if (OutputFILE == 0) {
-      fprintf(stderr, "Error opening output file '%s'.\n", Output.c_str());
-      exit(1);
-    }
-    
-  }
-
-  assert(OutputFILE && "failed to open output file");
-#else
-  OutBufStart = new char[64*1024];
-  OutBufEnd = OutBufStart+64*1024;
-  OutBufCur = OutBufStart;
-
-  if (!Output.size() || Output == "-")
-    OutputFD = STDOUT_FILENO;
-  else {
-    OutputFilename = Output;
-    OutputFD = open(Output.c_str(), O_WRONLY|O_CREAT|O_TRUNC, 0644);
-    if (OutputFD < 0) {
-      fprintf(stderr, "Error opening output file '%s'.\n", Output.c_str());
+    if (!Err.empty()) {
+      delete OutStream;
+      fprintf(stderr, "%s\n", Err.c_str());
       exit(1);
     }
   }
-#endif
+  OutStream->SetBufferSize(64*1024);
 }
-
-#ifndef USE_STDIO
-/// FlushBuffer - Write the accumulated bytes to the output stream.
-///
-static void FlushBuffer() {
-  write(OutputFD, OutBufStart, OutBufCur-OutBufStart);
-  OutBufCur = OutBufStart;
-}
-#endif
 
 /// CleanupOutputBuffer - Finish up output.
 ///
 static void CleanupOutputBuffer(bool ErrorOccurred) {
-#ifdef USE_STDIO
-  if (OutputFILE != stdout)
-    fclose(OutputFILE);
-#else
-  FlushBuffer();
-  delete [] OutBufStart;
-  if (OutputFD != STDOUT_FILENO)
-    close(OutputFD);
-#endif
+  delete OutStream;
 
   // If an error occurred, remove the output file.
   if (ErrorOccurred && !OutputFilename.empty())
     llvm::sys::Path(OutputFilename).eraseFromDisk();
 }
 
-static void OutputChar(char c) {
-#if defined(_MSC_VER)
-  putc(c, OutputFILE);
-#elif defined(USE_STDIO)
-  putc_unlocked(c, OutputFILE);
-#else
-  if (OutBufCur >= OutBufEnd)
-    FlushBuffer();
-  *OutBufCur++ = c;
-#endif
+static inline void OutputChar(char c) {
+  *OutStream << c;
 }
 
-static void OutputString(const char *Ptr, unsigned Size) {
-#ifdef USE_STDIO
-  fwrite(Ptr, Size, 1, OutputFILE);
-#else
-  if (OutBufCur+Size >= OutBufEnd)
-    FlushBuffer();
-  
-  switch (Size) {
-  default: 
-    memcpy(OutBufCur, Ptr, Size);
-    break;
-  case 3:
-    OutBufCur[2] = Ptr[2];
-  case 2:
-    OutBufCur[1] = Ptr[1];
-  case 1:
-    OutBufCur[0] = Ptr[0];
-  case 0:
-    break;
-  }
-  OutBufCur += Size;
-#endif
+static inline void OutputString(const char *Ptr, unsigned Size) {
+  OutStream->write(Ptr, Size);
 }
 
 
