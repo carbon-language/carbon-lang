@@ -144,7 +144,7 @@ bool LowerIntrinsics::doInitialization(Module &M) {
   CollectorModuleMetadata *CMM = getAnalysisToUpdate<CollectorModuleMetadata>();
   assert(CMM && "LowerIntrinsics didn't require CollectorModuleMetadata!?");
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
-    if (I->hasCollector())
+    if (!I->isDeclaration() && I->hasCollector())
       CMM->get(*I); // Instantiate the Collector.
   
   bool MadeChange = false;

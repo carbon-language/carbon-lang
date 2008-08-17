@@ -99,7 +99,9 @@ getOrCreateCollector(const Module *M, const std::string &Name) {
 }
 
 CollectorMetadata &CollectorModuleMetadata::get(const Function &F) {
+  assert(!F.isDeclaration() && "Can only get GCFunctionInfo for a definition!");
   assert(F.hasCollector());
+  
   function_map_type::iterator I = Map.find(&F);
   if (I != Map.end())
     return *I->second;
