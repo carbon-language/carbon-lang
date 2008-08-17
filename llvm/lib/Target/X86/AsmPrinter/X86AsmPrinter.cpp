@@ -33,3 +33,11 @@ FunctionPass *llvm::createX86CodePrinterPass(std::ostream &o,
     return new X86ATTAsmPrinter(o, tm, tm.getTargetAsmInfo());
   }
 }
+
+namespace {
+  static struct Register {
+    Register() {
+      X86TargetMachine::registerAsmPrinter(createX86CodePrinterPass);
+    }
+  } Registrator;
+}

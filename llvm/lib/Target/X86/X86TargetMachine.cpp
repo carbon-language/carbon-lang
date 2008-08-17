@@ -35,6 +35,9 @@ X("x86",    "  32-bit X86: Pentium-Pro and above");
 static RegisterTarget<X86_64TargetMachine>
 Y("x86-64", "  64-bit X86: EM64T and AMD64");
 
+// No assembler printer by default
+X86TargetMachine::AsmPrinterCtorFn X86TargetMachine::AsmPrinterCtor = 0;
+
 const TargetAsmInfo *X86TargetMachine::createTargetAsmInfo() const {
   if (Subtarget.isFlavorIntel())
     return new X86WinTargetAsmInfo(*this);
@@ -187,7 +190,9 @@ bool X86TargetMachine::addPostRegAlloc(PassManagerBase &PM, bool Fast) {
 
 bool X86TargetMachine::addAssemblyEmitter(PassManagerBase &PM, bool Fast, 
                                           std::ostream &Out) {
-  PM.add(createX86CodePrinterPass(Out, *this));
+  assert(AsmPrinterCtor && "AsmPrinter was not linked in");
+  if (AsmPrinterCtor)
+    PM.add(AsmPrinterCtor(Out, *this));
   return false;
 }
 
@@ -210,8 +215,11 @@ bool X86TargetMachine::addCodeEmitter(PassManagerBase &PM, bool Fast,
   }
 
   PM.add(createX86CodeEmitterPass(*this, MCE));
-  if (DumpAsm)
-    PM.add(createX86CodePrinterPass(*cerr.stream(), *this));
+  if (DumpAsm) {
+    assert(AsmPrinterCtor && "AsmPrinter was not linked in");
+    if (AsmPrinterCtor)
+      PM.add(AsmPrinterCtor(*cerr.stream(), *this));
+  }
 
   return false;
 }
@@ -219,7 +227,11 @@ bool X86TargetMachine::addCodeEmitter(PassManagerBase &PM, bool Fast,
 bool X86TargetMachine::addSimpleCodeEmitter(PassManagerBase &PM, bool Fast,
                                         bool DumpAsm, MachineCodeEmitter &MCE) {
   PM.add(createX86CodeEmitterPass(*this, MCE));
-  if (DumpAsm)
-    PM.add(createX86CodePrinterPass(*cerr.stream(), *this));
+  if (DumpAsm) {
+    assert(AsmPrinterCtor && "AsmPrinter was not linked in");
+    if (AsmPrinterCtor)
+      PM.add(AsmPrinterCtor(*cerr.stream(), *this));
+  }
+
   return false;
 }

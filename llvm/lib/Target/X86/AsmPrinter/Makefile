@@ -1,4 +1,4 @@
-##===- tools/lli/Makefile ------------------------------*- Makefile -*-===##
+##===- lib/Target/X86/Makefile -----------------------------*- Makefile -*-===##
 # 
 #                     The LLVM Compiler Infrastructure
 #
@@ -6,10 +6,10 @@
 # License. See LICENSE.TXT for details.
 # 
 ##===----------------------------------------------------------------------===##
+LEVEL = ../../../..
+LIBRARYNAME = LLVMX86AsmPrinter
 
-LEVEL    := ../..
-TOOLNAME := lli
-LINK_COMPONENTS := jit interpreter nativecodegen bitreader selectiondag
+# Hack: we need to include 'main' x86 target directory to grab private headers 
+CPPFLAGS = -I$(PROJ_OBJ_DIR)/.. -I$(PROJ_SRC_DIR)/..
 
-# Enable JIT support
 include $(LEVEL)/Makefile.common

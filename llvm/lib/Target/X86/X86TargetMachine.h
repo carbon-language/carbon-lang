@@ -38,7 +38,13 @@ class X86TargetMachine : public LLVMTargetMachine {
 
 protected:
   virtual const TargetAsmInfo *createTargetAsmInfo() const;
-  
+
+  // To avoid having target depend on the asmprinter stuff libraries, asmprinter
+  // set this functions to ctor pointer at startup time if they are linked in.
+  typedef FunctionPass *(*AsmPrinterCtorFn)(std::ostream &o,
+                                            X86TargetMachine &tm);
+  static AsmPrinterCtorFn AsmPrinterCtor;
+
 public:
   X86TargetMachine(const Module &M, const std::string &FS, bool is64Bit);
 
@@ -59,7 +65,11 @@ public:
 
   static unsigned getModuleMatchQuality(const Module &M);
   static unsigned getJITMatchQuality();
-  
+
+  static void registerAsmPrinter(AsmPrinterCtorFn F) {
+    AsmPrinterCtor = F;
+  }
+
   // Set up the pass pipeline.
   virtual bool addInstSelector(PassManagerBase &PM, bool Fast);
   virtual bool addPreRegAlloc(PassManagerBase &PM, bool Fast);
