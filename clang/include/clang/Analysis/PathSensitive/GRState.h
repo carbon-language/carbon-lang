@@ -566,6 +566,11 @@ public:
     return GRStateRef(Mgr->remove<T>(St, K, C), *Mgr);
   }
   
+  template<typename T>
+  GRStateRef remove(typename GRStateTrait<T>::key_type K) {
+    return GRStateRef(Mgr->remove<T>(St, K, get_context<T>()), *Mgr);
+  }
+  
   // Pretty-printing.
   void print(std::ostream& Out, const char* nl = "\n",
              const char *sep = "") const;

@@ -54,11 +54,11 @@ namespace clang {
       return *((typename data_type::Factory*) p);
     }
     
-    static inline void* CreateContext(llvm::BumpPtrAllocator& Alloc) {
+    static void* CreateContext(llvm::BumpPtrAllocator& Alloc) {
       return new typename data_type::Factory(Alloc);      
     }
     
-    static inline void DeleteContext(void* Ctx) {
+    static void DeleteContext(void* Ctx) {
       delete (typename data_type::Factory*) Ctx;
     }      
   };

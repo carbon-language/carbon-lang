@@ -16,6 +16,7 @@
 #include "clang/Basic/LangOptions.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Analysis/PathSensitive/GRState.h"
+#include "clang/Analysis/PathSensitive/GRStateTrait.h"
 #include "clang/Analysis/PathDiagnostic.h"
 #include "clang/Analysis/LocalCheckers.h"
 #include "clang/Analysis/PathDiagnostic.h"
@@ -1199,40 +1200,14 @@ void RefVal::print(std::ostream& Out) const {
 //===----------------------------------------------------------------------===//
   
 typedef llvm::ImmutableMap<SymbolID, RefVal> RefBindings;
-typedef RefBindings::Factory RefBFactoryTy;
-  
 static int RefBIndex = 0;
 
 namespace clang {
-template<> struct GRStateTrait<RefBindings> {
-  typedef RefBindings             data_type;
-  typedef RefBFactoryTy&          context_type;  
-  typedef SymbolID                key_type;
-  typedef RefVal                  value_type;
-  typedef const RefVal*           lookup_type;
-  
-  static RefBindings MakeData(void* const* p) {
-    return p ? RefBindings((RefBindings::TreeTy*) *p) : RefBindings(0);
-  }  
-  static void* MakeVoidPtr(RefBindings B) {
-    return B.getRoot();
-  }  
-  static void* GDMIndex() {
-    return &RefBIndex;
-  }  
-  static lookup_type Lookup(RefBindings B, SymbolID K) {
-    return B.lookup(K);
-  }  
-  static data_type Set(RefBindings B, key_type K, value_type E,
-                       RefBFactoryTy& F) {
-    return F.Add(B, K, E);
-  }
-  
-  static data_type Remove(RefBindings B, SymbolID K, RefBFactoryTy& F) {
-    return F.Remove(B, K);
-  }
-};
-}  
+  template<>
+  struct GRStateTrait<RefBindings> : public GRStatePartialTrait<RefBindings> {
+    static inline void* GDMIndex() { return &RefBIndex; }  
+  };
+}
   
 //===----------------------------------------------------------------------===//
 // Transfer functions.
@@ -1260,19 +1235,20 @@ public:
 private:
   RetainSummaryManager Summaries;  
   const LangOptions&   LOpts;
-  RefBFactoryTy        RefBFactory;     
+
   UseAfterReleasesTy   UseAfterReleases;
   ReleasesNotOwnedTy   ReleasesNotOwned;
   LeaksTy              Leaks;
   
   RefBindings Update(RefBindings B, SymbolID sym, RefVal V, ArgEffect E,
-                     RefVal::Kind& hasErr);
+                     RefVal::Kind& hasErr, RefBindings::Factory& RefBFactory);
   
   RefVal::Kind& Update(GRStateRef& state, SymbolID sym, RefVal V,
                        ArgEffect E, RefVal::Kind& hasErr) {
     
     state = state.set<RefBindings>(Update(state.get<RefBindings>(), sym, V, 
-                                          E, hasErr));
+                                          E, hasErr,
+                                          state.get_context<RefBindings>()));
     return hasErr;
   }
   
@@ -1534,7 +1510,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
         
         if (isa<lval::SymbolVal>(X)) {
           SymbolID Sym = cast<lval::SymbolVal>(X).getSymbol();
-          state = state.remove<RefBindings>(Sym, RefBFactory);
+          state = state.remove<RefBindings>(Sym);
         }
 
         // Set the value of the variable to be a conjured symbol.
@@ -1624,7 +1600,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
       SymbolID Sym = Eng.getSymbolManager().getConjuredSymbol(Ex, Count);
       QualType RetT = GetReturnType(Ex, Eng.getContext());
       
-      state = state.set<RefBindings>(Sym, RefVal::makeOwned(RetT), RefBFactory);
+      state = state.set<RefBindings>(Sym, RefVal::makeOwned(RetT));
       state = state.SetRVal(Ex, lval::SymbolVal(Sym), false);
 
 #if 0
@@ -1644,7 +1620,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
       SymbolID Sym = Eng.getSymbolManager().getConjuredSymbol(Ex, Count);
       QualType RetT = GetReturnType(Ex, Eng.getContext());
       
-      state = state.set<RefBindings>(Sym, RefVal::makeNotOwned(RetT), RefBFactory);
+      state = state.set<RefBindings>(Sym, RefVal::makeNotOwned(RetT));
       state = state.SetRVal(Ex, lval::SymbolVal(Sym), false);
       break;
     }
@@ -1747,7 +1723,7 @@ void CFRefCount::EvalStore(ExplodedNodeSet<GRState>& Dst,
     return;
   
   // Nuke the binding.
-  state = state.remove<RefBindings>(Sym, RefBFactory);
+  state = state.remove<RefBindings>(Sym);
 
   // Hand of the remaining logic to the parent implementation.
   GRSimpleVals::EvalStore(Dst, Eng, Builder, E, Pred, state, TargetLV, Val);
@@ -1765,9 +1741,9 @@ const GRState* CFRefCount::HandleSymbolDeath(GRStateManager& VMgr,
   GRStateRef state(St, VMgr);
 
   if (!hasLeak)
-    return state.remove<RefBindings>(sid, RefBFactory);
+    return state.remove<RefBindings>(sid);
   
-  return state.set<RefBindings>(sid, V ^ RefVal::ErrorLeak, RefBFactory);
+  return state.set<RefBindings>(sid, V ^ RefVal::ErrorLeak);
 }
 
 void CFRefCount::EvalEndPath(GRExprEngine& Eng,
@@ -1899,7 +1875,7 @@ void CFRefCount::EvalReturn(ExplodedNodeSet<GRState>& Dst,
   }
   
   // Update the binding.
-  state = state.set<RefBindings>(Sym, X, RefBFactory);
+  state = state.set<RefBindings>(Sym, X);
   Builder.MakeNode(Dst, S, Pred, state);
 }
 
@@ -1922,6 +1898,9 @@ const GRState* CFRefCount::EvalAssume(GRStateManager& VMgr,
     return St;
   
   bool changed = false;
+  
+  GRStateRef state(St, VMgr);
+  RefBindings::Factory& RefBFactory = state.get_context<RefBindings>();
 
   for (RefBindings::iterator I=B.begin(), E=B.end(); I!=E; ++I) {    
     // Check if the symbol is null (or equal to any constant).
@@ -1932,17 +1911,16 @@ const GRState* CFRefCount::EvalAssume(GRStateManager& VMgr,
     }
   }
   
-  if (!changed)
-    return St;
+  if (changed)
+    state = state.set<RefBindings>(B);
   
-  GRStateRef state(St, VMgr);
-  state = state.set<RefBindings>(B);
   return state;
 }
 
 RefBindings CFRefCount::Update(RefBindings B, SymbolID sym,
                                RefVal V, ArgEffect E,
-                               RefVal::Kind& hasErr) {
+                               RefVal::Kind& hasErr,
+                               RefBindings::Factory& RefBFactory) {
   
   // FIXME: This dispatch can potentially be sped up by unifiying it into
   //  a single switch statement.  Opt for simplicity for now.
