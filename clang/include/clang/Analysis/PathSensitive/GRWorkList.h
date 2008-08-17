@@ -1,4 +1,4 @@
-//==- GRWorkList.h - Worklist class used by GRCoreEngine ---------------*- C++ -*-//
+//==- GRWorkList.h - Worklist class used by GRCoreEngine -----------*- C++ -*-//
 //             
 //                     The LLVM Compiler Infrastructure
 //

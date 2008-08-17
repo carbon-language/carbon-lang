@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/Analysis/PathSensitive/GRStateTrait.h"
 #include "clang/Analysis/PathSensitive/GRState.h"
 #include "llvm/ADT/SmallSet.h"
 #include "clang/Analysis/PathSensitive/GRTransferFuncs.h"
@@ -37,44 +38,9 @@ typedef llvm::ImmutableMap<SymbolID,GRState::IntSetTy> ConstNotEqTy;
 static int ConstNotEqTyIndex = 0;
 
 namespace clang {
-  template<> struct GRStateTrait<ConstNotEqTy> {
-    typedef ConstNotEqTy             data_type;
-    typedef ConstNotEqTy::Factory&   context_type;  
-    typedef SymbolID                 key_type;
-    typedef GRState::IntSetTy        value_type;
-    typedef const GRState::IntSetTy* lookup_type;
-    
-    static data_type MakeData(void* const* p) {
-      return p ? ConstNotEqTy((ConstNotEqTy::TreeTy*) *p) : ConstNotEqTy(0);
-    }  
-    static void* MakeVoidPtr(ConstNotEqTy B) {
-      return B.getRoot();
-    }  
-    static void* GDMIndex() {
-      return &ConstNotEqTyIndex;
-    }  
-    static lookup_type Lookup(ConstNotEqTy B, SymbolID K) {
-      return B.lookup(K);
-    }  
-    static data_type Set(data_type B, key_type K, value_type E,context_type F){
-      return F.Add(B, K, E);
-    }
-    
-    static data_type Remove(ConstNotEqTy B, SymbolID K, context_type F) {
-      return F.Remove(B, K);
-    }
-    
-    static context_type MakeContext(void* p) {
-      return *((ConstNotEqTy::Factory*) p);
-    }
-    
-    static void* CreateContext(llvm::BumpPtrAllocator& Alloc) {
-      return new ConstNotEqTy::Factory(Alloc);      
-    }
-    
-    static void DeleteContext(void* Ctx) {
-      delete (ConstNotEqTy::Factory*) Ctx;
-    }      
+  template<>
+  struct GRStateTrait<ConstNotEqTy> : public GRStatePartialTrait<ConstNotEqTy> {
+    static inline void* GDMIndex() { return &ConstNotEqTyIndex; }  
   };
 }
 
