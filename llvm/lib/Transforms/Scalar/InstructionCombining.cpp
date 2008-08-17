@@ -5830,7 +5830,7 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
                             ConstantInt::get(RHSV ^ SignBit));
       }
 
-      // (icmp u/s (xor A ~SignBit), C) -> (icmp ~s/u A, (xor C ~SignBit))
+      // (icmp u/s (xor A ~SignBit), C) -> (icmp s/u (xor C ~SignBit), A)
       if (!ICI.isEquality() && (~XorCST->getValue()).isSignBit()) {
         const APInt &NotSignBit = XorCST->getValue();
         ICmpInst::Predicate Pred = ICI.isSignedPredicate()
