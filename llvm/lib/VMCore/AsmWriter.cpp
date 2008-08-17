@@ -26,6 +26,7 @@
 #include "llvm/Module.h"
 #include "llvm/ValueSymbolTable.h"
 #include "llvm/TypeSymbolTable.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/CFG.h"
@@ -46,7 +47,7 @@ AssemblyAnnotationWriter::~AssemblyAnnotationWriter() {}
 class SlotMachine {
 public:
   /// ValueMap - A mapping of Values to slot numbers
-  typedef std::map<const Value*, unsigned> ValueMap;
+  typedef DenseMap<const Value*, unsigned> ValueMap;
   
 private:  
   /// TheModule - The module for which we are holding slot numbers
@@ -1605,7 +1606,7 @@ SlotMachine::SlotMachine(const Module *M)
   : TheModule(M)    ///< Saved for lazy initialization.
   , TheFunction(0)
   , FunctionProcessed(false)
-  , mNext(0), fMap(), fNext(0)
+  , mNext(0), fNext(0)
 {
 }
 
@@ -1615,7 +1616,7 @@ SlotMachine::SlotMachine(const Function *F)
   : TheModule(F ? F->getParent() : 0) ///< Saved for lazy initialization
   , TheFunction(F) ///< Saved for lazy initialization
   , FunctionProcessed(false)
-  , mNext(0), fMap(), fNext(0)
+  , mNext(0), fNext(0)
 {
 }
 
@@ -1694,10 +1695,8 @@ int SlotMachine::getGlobalSlot(const GlobalValue *V) {
   initialize();
   
   // Find the type plane in the module map
-  ValueMap::const_iterator MI = mMap.find(V);
-  if (MI == mMap.end()) return -1;
-
-  return MI->second;
+  ValueMap::iterator MI = mMap.find(V);
+  return MI == mMap.end() ? -1 : MI->second;
 }
 
 
@@ -1708,10 +1707,8 @@ int SlotMachine::getLocalSlot(const Value *V) {
   // Check for uninitialized state and do lazy initialization.
   initialize();
 
-  ValueMap::const_iterator FI = fMap.find(V);
-  if (FI == fMap.end()) return -1;
-  
-  return FI->second;
+  ValueMap::iterator FI = fMap.find(V);
+  return FI == fMap.end() ? -1 : FI->second;
 }
 
 
