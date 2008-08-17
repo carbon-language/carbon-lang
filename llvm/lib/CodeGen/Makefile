@@ -9,7 +9,7 @@
 
 LEVEL = ../..
 LIBRARYNAME = LLVMCodeGen
-PARALLEL_DIRS = SelectionDAG
+PARALLEL_DIRS = SelectionDAG AsmPrinter
 BUILD_ARCHIVE = 1
 
 include $(LEVEL)/Makefile.common
