@@ -16,7 +16,7 @@
 
 #include "X86ATTAsmPrinter.h"
 #include "X86IntelAsmPrinter.h"
-#include "X86Subtarget.h"
+#include "../X86Subtarget.h"
 using namespace llvm;
 
 /// createX86CodePrinterPass - Returns a pass that prints the X86 assembly code

@@ -37,6 +37,11 @@ namespace llvm {
 
     StreamTy *stream() const { return Stream; }
 
+    inline BaseStream &operator << (std::ios_base &(*Func)(std::ios_base&)) {
+      if (Stream) *Stream << Func;
+      return *this;
+    }
+
     inline BaseStream &operator << (StreamTy &(*Func)(StreamTy&)) {
       if (Stream) *Stream << Func;
       return *this;

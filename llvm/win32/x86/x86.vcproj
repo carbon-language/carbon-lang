@@ -90,6 +90,73 @@
 			/>
 		</Configuration>
 		<Configuration
+			Name="Release|Win32"
+			OutputDirectory="$(ProjectDir)..\bin\$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			ConfigurationType="4"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
+			CharacterSet="2"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				AdditionalIncludeDirectories=".;..\..\include;.."
+				PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;WIN32;NDEBUG;_LIB;__STDC_LIMIT_MACROS"
+				StringPooling="true"
+				RuntimeLibrary="2"
+				ForceConformanceInForLoopScope="true"
+				RuntimeTypeInfo="true"
+				UsePrecompiledHeader="0"
+				ProgramDataBaseFileName="$(OutDir)\$(ProjectName).pdb"
+				WarningLevel="3"
+				Detect64BitPortabilityProblems="false"
+				DebugInformationFormat="3"
+				DisableSpecificWarnings="4355,4146,4800"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLibrarianTool"
+				OutputFile="$(OutDir)/x86.lib"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+			/>
+		</Configuration>
+		<Configuration
 			Name="Debug|x64"
 			OutputDirectory="$(ProjectDir)..\bin\$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
@@ -127,73 +194,6 @@
 				UsePrecompiledHeader="0"
 				ProgramDataBaseFileName="$(OutDir)\$(ProjectName).pdb"
 				BrowseInformation="1"
-				WarningLevel="3"
-				Detect64BitPortabilityProblems="false"
-				DebugInformationFormat="3"
-				DisableSpecificWarnings="4355,4146,4800"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLibrarianTool"
-				OutputFile="$(OutDir)/x86.lib"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-			/>
-		</Configuration>
-		<Configuration
-			Name="Release|Win32"
-			OutputDirectory="$(ProjectDir)..\bin\$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
-			ConfigurationType="4"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
-			CharacterSet="2"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories=".;..\..\include;.."
-				PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;WIN32;NDEBUG;_LIB;__STDC_LIMIT_MACROS"
-				StringPooling="true"
-				RuntimeLibrary="2"
-				ForceConformanceInForLoopScope="true"
-				RuntimeTypeInfo="true"
-				UsePrecompiledHeader="0"
-				ProgramDataBaseFileName="$(OutDir)\$(ProjectName).pdb"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="3"
@@ -320,7 +320,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Debug|x64"
+					Name="Release|Win32"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -331,7 +331,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|Win32"
+					Name="Debug|x64"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -352,14 +352,6 @@
 						Outputs="X86GenRegisterNames.inc;X86GenRegisterInfo.h.inc;X86GenRegisterInfo.inc;X86GenInstrNames.inc;X86GenInstrInfo.inc;X86GenAsmWriter.inc;X86GenAsmWriter1.inc;X86GenDAGISel.inc;X86GenSubtarget.inc;X86GenCallingConv.inc"
 					/>
 				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\..\lib\Target\X86\X86AsmPrinter.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\lib\Target\X86\X86ATTAsmPrinter.cpp"
-				>
 			</File>
 			<File
 				RelativePath="..\..\lib\Target\X86\X86CodeEmitter.cpp"
@@ -416,10 +408,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\lib\Target\X86\X86IntelAsmPrinter.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\lib\Target\X86\X86ISelDAGToDAG.cpp"
 				>
 			</File>
@@ -447,6 +435,34 @@
 				RelativePath="..\..\lib\Target\X86\X86TargetMachine.cpp"
 				>
 			</File>
+			<Filter
+				Name="AsmPrinter"
+				>
+				<File
+					RelativePath="..\..\lib\Target\X86\AsmPrinter\X86AsmPrinter.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\Target\X86\AsmPrinter\X86AsmPrinter.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\Target\X86\AsmPrinter\X86ATTAsmPrinter.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\Target\X86\AsmPrinter\X86ATTAsmPrinter.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\Target\X86\AsmPrinter\X86IntelAsmPrinter.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\Target\X86\AsmPrinter\X86IntelAsmPrinter.h"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Header Files"

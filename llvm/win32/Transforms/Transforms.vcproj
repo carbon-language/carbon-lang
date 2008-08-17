@@ -444,10 +444,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Scalar\GCSE.cpp"
-					>
-				</File>
-				<File
 					RelativePath="..\..\lib\Transforms\Scalar\GVN.cpp"
 					>
 				</File>

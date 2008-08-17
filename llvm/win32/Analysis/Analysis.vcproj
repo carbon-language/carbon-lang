@@ -361,10 +361,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\lib\Analysis\LoadValueNumbering.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\lib\Analysis\LoopInfo.cpp"
 				>
 			</File>
@@ -410,10 +406,6 @@
 			</File>
 			<File
 				RelativePath="..\..\lib\Analysis\Trace.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\lib\Analysis\ValueNumbering.cpp"
 				>
 			</File>
 			<File

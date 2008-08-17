@@ -305,27 +305,7 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath="..\..\lib\CodeGen\AsmPrinter.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\lib\CodeGen\BranchFolding.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\lib\CodeGen\Collector.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\lib\CodeGen\CollectorMetadata.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\lib\CodeGen\Collectors.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\lib\CodeGen\DwarfWriter.cpp"
 				>
 			</File>
 			<File
@@ -334,6 +314,22 @@
 			</File>
 			<File
 				RelativePath="..\..\lib\CodeGen\ELFWriter.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\lib\CodeGen\GCMetadata.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\lib\CodeGen\GCMetadataPrinter.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\lib\CodeGen\GCs.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\lib\CodeGen\GCStrategy.cpp"
 				>
 			</File>
 			<File
@@ -421,7 +417,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\lib\CodeGen\OcamlCollector.cpp"
+				RelativePath="..\..\lib\CodeGen\OcamlGC.cpp"
 				>
 			</File>
 			<File
@@ -469,7 +465,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\lib\CodeGen\ShadowStackCollector.cpp"
+				RelativePath="..\..\lib\CodeGen\ShadowStackGC.cpp"
 				>
 			</File>
 			<File
@@ -565,6 +561,22 @@
 				</File>
 				<File
 					RelativePath="..\..\lib\CodeGen\SelectionDAG\TargetLowering.cpp"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="AsmPrinter"
+				>
+				<File
+					RelativePath="..\..\lib\CodeGen\AsmPrinter\AsmPrinter.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\CodeGen\AsmPrinter\DwarfWriter.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\CodeGen\AsmPrinter\OcamlGCPrinter.cpp"
 					>
 				</File>
 			</Filter>
