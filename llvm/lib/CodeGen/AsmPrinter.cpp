@@ -18,6 +18,7 @@
 #include "llvm/Module.h"
 #include "llvm/CodeGen/Collector.h"
 #include "llvm/CodeGen/CollectorMetadata.h"
+#include "llvm/CodeGen/Collectors.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
@@ -43,6 +44,12 @@ AsmPrinter::AsmPrinter(std::ostream &o, TargetMachine &tm,
     IsInTextSection(false)
 {}
 
+AsmPrinter::~AsmPrinter() {
+  for (gcp_iterator I = GCMetadataPrinters.begin(),
+                    E = GCMetadataPrinters.end(); I != E; ++I)
+    delete I->second;
+}
+    
 std::string AsmPrinter::getSectionForFunction(const Function &F) const {
   return TAI->getTextSection();
 }
@@ -113,7 +120,8 @@ bool AsmPrinter::doInitialization(Module &M) {
   assert(CMM && "AsmPrinter didn't require CollectorModuleMetadata?");
   for (CollectorModuleMetadata::iterator I = CMM->begin(),
                                          E = CMM->end(); I != E; ++I)
-    (*I)->beginAssembly(O, *this, *TAI);
+    if (GCMetadataPrinter *GCP = GetOrCreateGCPrinter(*I))
+      GCP->beginAssembly(O, *this, *TAI);
   
   if (!M.getModuleInlineAsm().empty())
     O << TAI->getCommentString() << " Start of file scope inline assembly\n"
@@ -188,7 +196,8 @@ bool AsmPrinter::doFinalization(Module &M) {
   assert(CMM && "AsmPrinter didn't require CollectorModuleMetadata?");
   for (CollectorModuleMetadata::iterator I = CMM->end(),
                                          E = CMM->begin(); I != E; )
-    (*--I)->finishAssembly(O, *this, *TAI);
+    if (GCMetadataPrinter *GCP = GetOrCreateGCPrinter(*--I))
+      GCP->finishAssembly(O, *this, *TAI);
 
   // If we don't have any trampolines, then we don't require stack memory
   // to be executable. Some targets have a directive to declare this.
@@ -1455,4 +1464,28 @@ void AsmPrinter::printVisibility(const std::string& Name,
     if (const char *Directive = TAI->getProtectedDirective())
       O << Directive << Name << '\n';
   }
+}
+
+GCMetadataPrinter *AsmPrinter::GetOrCreateGCPrinter(Collector *C) {
+  if (!C->usesMetadata())
+    return 0;
+  
+  gcp_iterator GCPI = GCMetadataPrinters.find(C);
+  if (GCPI != GCMetadataPrinters.end())
+    return GCPI->second;
+  
+  const char *Name = C->getName().c_str();
+  
+  for (GCMetadataPrinterRegistry::iterator
+         I = GCMetadataPrinterRegistry::begin(),
+         E = GCMetadataPrinterRegistry::end(); I != E; ++I)
+    if (strcmp(Name, I->getName()) == 0) {
+      GCMetadataPrinter *GCP = I->instantiate();
+      GCP->Coll = C;
+      GCMetadataPrinters.insert(std::make_pair(C, GCP));
+      return GCP;
+    }
+  
+  cerr << "no GCMetadataPrinter registered for collector: " << Name << "\n";
+  abort();
 }

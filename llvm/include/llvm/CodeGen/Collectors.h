@@ -20,10 +20,15 @@
 namespace llvm {
 
   class Collector;
+  class GCMetadataPrinter;
   
   /// The collector registry uses all the defaults from Registry.
   /// 
   typedef Registry<Collector> CollectorRegistry;
+  
+  /// The GC assembly printer registry uses all the defaults from Registry.
+  /// 
+  typedef Registry<GCMetadataPrinter> GCMetadataPrinterRegistry;
   
   /// FIXME: Collector instances are not useful on their own. These no longer
   ///        serve any purpose except to link in the plugins.

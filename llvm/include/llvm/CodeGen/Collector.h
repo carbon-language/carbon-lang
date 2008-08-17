@@ -60,6 +60,7 @@ namespace llvm {
     bool CustomWriteBarriers;  //< Default is to insert stores.
     bool CustomRoots;          //< Default is to pass through to backend.
     bool InitRoots;            //< If set, roots are nulled during lowering.
+    bool UsesMetadata;         //< If set, backend must emit metadata tables.
     
   public:
     Collector();
@@ -103,12 +104,9 @@ namespace llvm {
     /// is necessary for most collectors.
     bool initializeRoots() const { return InitRoots; }
     
-    
-    /// beginAssembly/finishAssembly - Emit module metadata as assembly code.
-    virtual void beginAssembly(std::ostream &OS, AsmPrinter &AP,
-                               const TargetAsmInfo &TAI);
-    virtual void finishAssembly(std::ostream &OS, AsmPrinter &AP,
-                                const TargetAsmInfo &TAI);
+    /// If set, appropriate metadata tables must be emitted by the back-end
+    /// (assembler, JIT, or otherwise).
+    bool usesMetadata() const { return UsesMetadata; }
     
     /// begin/end - Iterators for function metadata.
     /// 
@@ -126,6 +124,42 @@ namespace llvm {
     /// which the LLVM IR can be modified.
     virtual bool initializeCustomLowering(Module &F);
     virtual bool performCustomLowering(Function &F);
+  };
+  
+  // GCMetadataPrinter - Emits GC metadata as assembly code.
+  class GCMetadataPrinter {
+  public:
+    typedef Collector::list_type list_type;
+    typedef Collector::iterator iterator;
+    
+  private:
+    Collector *Coll;
+    
+    friend class AsmPrinter;
+    
+  protected:
+    // May only be subclassed.
+    GCMetadataPrinter();
+    
+    // Do not implement.
+    GCMetadataPrinter(const GCMetadataPrinter &);
+    GCMetadataPrinter &operator=(const GCMetadataPrinter &);
+    
+  public:
+    Collector &getCollector() { return *Coll; }
+    const Module &getModule() const { return Coll->getModule(); }
+    
+    iterator begin() { return Coll->begin(); }
+    iterator end()   { return Coll->end();   }
+    
+    /// beginAssembly/finishAssembly - Emit module metadata as assembly code.
+    virtual void beginAssembly(std::ostream &OS, AsmPrinter &AP,
+                               const TargetAsmInfo &TAI);
+    
+    virtual void finishAssembly(std::ostream &OS, AsmPrinter &AP,
+                                const TargetAsmInfo &TAI);
+    
+    virtual ~GCMetadataPrinter();
   };
   
 }

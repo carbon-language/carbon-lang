@@ -18,11 +18,14 @@
 
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/Support/DataTypes.h"
+#include "llvm/ADT/DenseMap.h"
 #include <set>
 
 namespace llvm {
+  class Collector;
   class Constant;
   class ConstantArray;
+  class GCMetadataPrinter;
   class GlobalVariable;
   class GlobalAlias;
   class MachineConstantPoolEntry;
@@ -48,7 +51,12 @@ namespace llvm {
     /// DebugVariable entries into the dwarf table. This is a short term hack
     /// that ought be fixed soon.
     MachineModuleInfo *MMI;
-
+    
+    // GCMetadataPrinters - The garbage collection metadata printer table.
+    typedef DenseMap<Collector*,GCMetadataPrinter*> gcp_map_type;
+    typedef gcp_map_type::iterator gcp_iterator;
+    gcp_map_type GCMetadataPrinters;
+    
   protected:
     // Necessary for external weak linkage support
     std::set<const GlobalValue*> ExtWeakSymbols;
@@ -91,6 +99,8 @@ namespace llvm {
     AsmPrinter(std::ostream &o, TargetMachine &TM, const TargetAsmInfo *T);
     
   public:
+    virtual ~AsmPrinter();
+    
     /// SwitchToTextSection - Switch to the specified section of the executable
     /// if we are not already in it!  If GV is non-null and if the global has an
     /// explicitly requested section, we switch to the section indicated for the
@@ -356,7 +366,7 @@ namespace llvm {
     void EmitXXStructorList(Constant *List);
     void EmitConstantPool(unsigned Alignment, const char *Section,
                 std::vector<std::pair<MachineConstantPoolEntry,unsigned> > &CP);
-
+    GCMetadataPrinter *GetOrCreateGCPrinter(Collector *C);
   };
 }
 

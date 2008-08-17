@@ -92,7 +92,8 @@ Collector::Collector() :
   CustomReadBarriers(false),
   CustomWriteBarriers(false),
   CustomRoots(false),
-  InitRoots(true)
+  InitRoots(true),
+  UsesMetadata(false)
 {}
 
 Collector::~Collector() {
@@ -110,21 +111,27 @@ bool Collector::performCustomLowering(Function &F) {
   return 0;
 }
     
-void Collector::beginAssembly(std::ostream &OS, AsmPrinter &AP,
-                              const TargetAsmInfo &TAI) {
-  // Default is no action.
-}
-    
-void Collector::finishAssembly(std::ostream &OS, AsmPrinter &AP,
-                               const TargetAsmInfo &TAI) {
-  // Default is no action.
-}
- 
 CollectorMetadata *Collector::insertFunctionMetadata(const Function &F) {
   CollectorMetadata *CM = new CollectorMetadata(F, *this);
   Functions.push_back(CM);
   return CM;
 } 
+
+// -----------------------------------------------------------------------------
+
+GCMetadataPrinter::GCMetadataPrinter() { }
+
+GCMetadataPrinter::~GCMetadataPrinter() { }
+
+void GCMetadataPrinter::beginAssembly(std::ostream &OS, AsmPrinter &AP,
+                                      const TargetAsmInfo &TAI) {
+  // Default is no action.
+}
+
+void GCMetadataPrinter::finishAssembly(std::ostream &OS, AsmPrinter &AP,
+                                       const TargetAsmInfo &TAI) {
+  // Default is no action.
+}
 
 // -----------------------------------------------------------------------------
 

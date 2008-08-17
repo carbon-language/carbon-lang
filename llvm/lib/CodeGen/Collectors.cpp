@@ -19,3 +19,10 @@ template<> CollectorRegistry::node *CollectorRegistry::Head = 0;
 template<> CollectorRegistry::node *CollectorRegistry::Tail = 0;
 template<> CollectorRegistry::listener *CollectorRegistry::ListenerHead = 0;
 template<> CollectorRegistry::listener *CollectorRegistry::ListenerTail = 0;
+
+template<> GCMetadataPrinterRegistry::node *GCMetadataPrinterRegistry::Head = 0;
+template<> GCMetadataPrinterRegistry::node *GCMetadataPrinterRegistry::Tail = 0;
+template<> GCMetadataPrinterRegistry::listener *
+GCMetadataPrinterRegistry::ListenerHead = 0;
+template<> GCMetadataPrinterRegistry::listener *
+GCMetadataPrinterRegistry::ListenerTail = 0;

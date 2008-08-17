@@ -27,7 +27,10 @@ namespace {
   class VISIBILITY_HIDDEN OcamlCollector : public Collector {
   public:
     OcamlCollector();
-    
+  };
+
+  class VISIBILITY_HIDDEN OcamlGCMetadataPrinter : public GCMetadataPrinter {
+  public:
     void beginAssembly(std::ostream &OS, AsmPrinter &AP,
                        const TargetAsmInfo &TAI);
     
@@ -39,6 +42,9 @@ namespace {
 
 static CollectorRegistry::Add<OcamlCollector>
 X("ocaml", "ocaml 3.10-compatible collector");
+
+static GCMetadataPrinterRegistry::Add<OcamlGCMetadataPrinter>
+Y("ocaml", "ocaml 3.10-compatible collector");
 
 // -----------------------------------------------------------------------------
 
@@ -68,10 +74,11 @@ Collector *llvm::createOcamlCollector() {
 
 OcamlCollector::OcamlCollector() {
   NeededSafePoints = 1 << GC::PostCall;
+  UsesMetadata = true;
 }
 
-void OcamlCollector::beginAssembly(std::ostream &OS, AsmPrinter &AP,
-                                   const TargetAsmInfo &TAI) {
+void OcamlGCMetadataPrinter::beginAssembly(std::ostream &OS, AsmPrinter &AP,
+                                           const TargetAsmInfo &TAI) {
   AP.SwitchToTextSection(TAI.getTextSection());
   EmitCamlGlobal(getModule(), OS, AP, TAI, "code_begin");
   
@@ -95,8 +102,8 @@ void OcamlCollector::beginAssembly(std::ostream &OS, AsmPrinter &AP,
 /// (FrameSize and LiveOffsets would overflow). FrameTablePrinter will abort if
 /// either condition is detected in a function which uses the collector.
 /// 
-void OcamlCollector::finishAssembly(std::ostream &OS, AsmPrinter &AP,
-                                    const TargetAsmInfo &TAI) {
+void OcamlGCMetadataPrinter::finishAssembly(std::ostream &OS, AsmPrinter &AP,
+                                            const TargetAsmInfo &TAI) {
   const char *AddressDirective;
   int AddressAlignLog;
   if (AP.TM.getTargetData()->getPointerSize() == sizeof(int32_t)) {
