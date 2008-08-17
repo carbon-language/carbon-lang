@@ -58,7 +58,6 @@ public:
   // Typedefs.  
   typedef llvm::ImmutableSet<llvm::APSInt*>                IntSetTy;
   typedef llvm::ImmutableMap<void*, void*>                 GenericDataMap;  
-  typedef llvm::ImmutableMap<SymbolID,const llvm::APSInt*> ConstEqTy;
   
   typedef GRStateManager ManagerTy;
   
@@ -73,16 +72,14 @@ private:
   // FIXME: Make these private.
 public:
   GenericDataMap   GDM;
-  ConstEqTy        ConstEq;
   
 public:
   
   /// This ctor is used when creating the first GRState object.
-  GRState(const Environment& env,  Store st, GenericDataMap gdm, ConstEqTy  CE)
+  GRState(const Environment& env,  Store st, GenericDataMap gdm)
     : Env(env),
       St(st),
-      GDM(gdm),
-      ConstEq(CE) {}
+      GDM(gdm) {}
   
   /// Copy ctor - We must explicitly define this or else the "Next" ptr
   ///  in FoldingSetNode will also get copied.
@@ -90,8 +87,7 @@ public:
     : llvm::FoldingSetNode(),
       Env(RHS.Env),
       St(RHS.St),
-      GDM(RHS.GDM),
-      ConstEq(RHS.ConstEq) {}
+      GDM(RHS.GDM) {}
   
   /// getEnvironment - Return the environment associated with this state.
   ///  The environment is the mapping from expressions to values.
@@ -110,7 +106,6 @@ public:
     V->Env.Profile(ID);
     ID.AddPointer(V->St);
     V->GDM.Profile(ID);
-    V->ConstEq.Profile(ID);
   }
 
   /// Profile - Used to profile the contents of this object for inclusion
@@ -243,10 +238,7 @@ private:
   
   typedef llvm::DenseMap<void*,std::pair<void*,void (*)(void*)> > GDMContextsTy;
   GDMContextsTy GDMContexts;
-  
-  // FIXME: Refactor these elsewhere.
-  GRState::ConstEqTy::Factory          CEFactory;
-  
+    
   /// Printers - A set of printer objects used for pretty-printing a GRState.
   ///  GRStateManager owns these objects.
   std::vector<GRState::Printer*> Printers;
@@ -297,7 +289,6 @@ public:
     StMgr(stmgr),
     ISetFactory(alloc), 
     GDMFactory(alloc),
-    CEFactory(alloc),
     BasicVals(Ctx, alloc),
     SymMgr(alloc),
     Alloc(alloc),

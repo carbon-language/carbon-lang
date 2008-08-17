@@ -34,13 +34,20 @@ GRStateManager::~GRStateManager() {
 //===----------------------------------------------------------------------===//
 
 typedef llvm::ImmutableMap<SymbolID,GRState::IntSetTy> ConstNotEqTy;
+typedef llvm::ImmutableMap<SymbolID,const llvm::APSInt*> ConstEqTy;
 
+static int ConstEqTyIndex = 0;
 static int ConstNotEqTyIndex = 0;
 
 namespace clang {
   template<>
   struct GRStateTrait<ConstNotEqTy> : public GRStatePartialTrait<ConstNotEqTy> {
     static inline void* GDMIndex() { return &ConstNotEqTyIndex; }  
+  };
+  
+  template<>
+  struct GRStateTrait<ConstEqTy> : public GRStatePartialTrait<ConstEqTy> {
+    static inline void* GDMIndex() { return &ConstEqTyIndex; }  
   };
 }
 
@@ -54,16 +61,14 @@ bool GRState::isNotEqual(SymbolID sym, const llvm::APSInt& V) const {
 }
 
 bool GRState::isEqual(SymbolID sym, const llvm::APSInt& V) const {
-  
   // Retrieve the EQ-set associated with the given symbol.
-  const ConstEqTy::data_type* T = ConstEq.lookup(sym);
-  
+  const ConstEqTy::data_type* T = get<ConstEqTy>(sym);
   // See if V is present in the EQ-set.
   return T ? **T == V : false;
 }
 
 const llvm::APSInt* GRState::getSymVal(SymbolID sym) const {
-  ConstEqTy::data_type* T = ConstEq.lookup(sym);
+  const ConstEqTy::data_type* T = get<ConstEqTy>(sym);
   return T ? *T : NULL;  
 }
 
@@ -123,20 +128,23 @@ GRStateManager::RemoveDeadBindings(const GRState* St, Stmt* Loc,
   NewSt.St = StMgr->RemoveDeadBindings(St->getStore(), Loc, Liveness, DRoots,
                                        LSymbols, DSymbols);
   
+  
+  GRStateRef state(getPersistentState(NewSt), *this);
+
   // Remove the dead symbols from the symbol tracker.
   // FIXME: Refactor into something else that manages symbol values.
-  for (GRState::ConstEqTy::iterator I = St->ConstEq.begin(),
-       E=St->ConstEq.end(); I!=E; ++I) {
 
-    SymbolID sym = I.getKey();    
-    
+  ConstEqTy CE = state.get<ConstEqTy>();
+  ConstEqTy::Factory& CEFactory = state.get_context<ConstEqTy>();
+
+  for (ConstEqTy::iterator I = CE.begin(), E = CE.end(); I!=E; ++I) {
+    SymbolID sym = I.getKey();        
     if (!LSymbols.count(sym)) {
       DSymbols.insert(sym);
-      NewSt.ConstEq = CEFactory.Remove(NewSt.ConstEq, sym);
+      CE = CEFactory.Remove(CE, sym);
     }
   }
   
-  GRStateRef state(getPersistentState(NewSt), *this);
   ConstNotEqTy CNE = state.get<ConstNotEqTy>();
   ConstNotEqTy::Factory& CNEFactory = state.get_context<ConstNotEqTy>();
 
@@ -196,20 +204,15 @@ const GRState* GRStateManager::AddNE(const GRState* St, SymbolID sym,
 
 const GRState* GRStateManager::AddEQ(const GRState* St, SymbolID sym,
                                            const llvm::APSInt& V) {
-
   // Create a new state with the old binding replaced.
-  GRState NewSt = *St;
-  NewSt.ConstEq = CEFactory.Add(NewSt.ConstEq, sym, &V);
-  
-  // Get the persistent copy.
-  return getPersistentState(NewSt);
+  GRStateRef state(St, *this);
+  return state.set<ConstEqTy>(sym, &V);
 }
 
 const GRState* GRStateManager::getInitialState() {
 
   GRState StateImpl(EnvMgr.getInitialEnvironment(), StMgr->getInitialStore(),
-                    GDMFactory.GetEmptyMap(),
-                    CEFactory.GetEmptyMap());
+                    GDMFactory.GetEmptyMap());
   
   return getPersistentState(StateImpl);
 }
@@ -289,17 +292,14 @@ void GRState::print(std::ostream& Out, Printer** Beg, Printer** End,
   
   // Print equality constraints.
   // FIXME: Make just another printer do this.
-  
-  if (!ConstEq.isEmpty()) {
-  
+  ConstEqTy CE = get<ConstEqTy>();
+
+  if (!CE.isEmpty()) {
     Out << nl << sep << "'==' constraints:";
-  
-    for (ConstEqTy::iterator I = ConstEq.begin(),
-                             E = ConstEq.end();   I!=E; ++I) {
-      
+
+    for (ConstEqTy::iterator I = CE.begin(), E = CE.end(); I!=E; ++I)
       Out << nl << " $" << I.getKey()
           << " : "   << I.getData()->toString();
-    }
   }
 
   // Print != constraints.
@@ -308,7 +308,6 @@ void GRState::print(std::ostream& Out, Printer** Beg, Printer** End,
   ConstNotEqTy CNE = get<ConstNotEqTy>();
   
   if (!CNE.isEmpty()) {
-  
     Out << nl << sep << "'!=' constraints:";
   
     for (ConstNotEqTy::iterator I = CNE.begin(), EI = CNE.end(); I!=EI; ++I) {
