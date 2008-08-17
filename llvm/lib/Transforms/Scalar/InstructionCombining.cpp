@@ -5241,6 +5241,20 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
       return new ICmpInst(I.getPredicate(), A, B);
     }
     
+    ConstantInt *CI2;
+    // (icmp u/s (xor A SignBit), C) -> (icmp s/u A, (xor C SignBit))
+    if (!I.isEquality() &&
+        match(Op0, m_Xor(m_Value(A), m_ConstantInt(CI2)))) {
+      if (CI2->getValue().isSignBit()) {
+        const APInt &SignBit = CI2->getValue();
+        ICmpInst::Predicate Pred = I.isSignedPredicate()
+                                       ? I.getUnsignedPredicate()
+                                       : I.getSignedPredicate();
+        return new ICmpInst(Pred, A,
+                            ConstantInt::get(CI->getValue() ^ SignBit));
+      }
+    }
+
     // If we have a icmp le or icmp ge instruction, turn it into the appropriate
     // icmp lt or icmp gt instruction.  This allows us to rely on them being
     // folded in the code below.
@@ -5491,35 +5505,49 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
   // See if it's the same type of instruction on the left and right.
   if (BinaryOperator *Op0I = dyn_cast<BinaryOperator>(Op0)) {
     if (BinaryOperator *Op1I = dyn_cast<BinaryOperator>(Op1)) {
-      if (Op0I->getOpcode() == Op1I->getOpcode() && Op0I->hasOneUse() &&
-          Op1I->hasOneUse() && Op0I->getOperand(1) == Op1I->getOperand(1) &&
-          I.isEquality()) {
-	switch (Op0I->getOpcode()) {
+      if (Op0I->getOpcode() == Op1I->getOpcode() &&
+          Op0I->getOperand(1) == Op1I->getOperand(1)) {
+        switch (Op0I->getOpcode()) {
         default: break;
         case Instruction::Add:
         case Instruction::Sub:
         case Instruction::Xor:
-          // a+x icmp eq/ne b+x --> a icmp b
-          return new ICmpInst(I.getPredicate(), Op0I->getOperand(0),
-                              Op1I->getOperand(0));
+          if (I.isEquality()) {
+            // icmp eq/ne a+x, b+x --> icmp eq/ne a, b
+            return new ICmpInst(I.getPredicate(), Op0I->getOperand(0),
+                                Op1I->getOperand(0));
+          } else {
+            // icmp u/s (a ^ signbit), (b ^ signbit) --> icmp s/u a, b
+            if (ConstantInt *CI = dyn_cast<ConstantInt>(Op0I->getOperand(1))) {
+              if (CI->getValue().isSignBit()) {
+                ICmpInst::Predicate Pred = I.isSignedPredicate()
+                                               ? I.getUnsignedPredicate()
+                                               : I.getSignedPredicate();
+                return new ICmpInst(Pred, Op0I->getOperand(0),
+                                    Op1I->getOperand(0));
+              }
+            }
+          }
           break;
         case Instruction::Mul:
-          if (ConstantInt *CI = dyn_cast<ConstantInt>(Op0I->getOperand(1))) {
-            // a * Cst icmp eq/ne b * Cst --> a & Mask icmp b & Mask
-            // Mask = -1 >> count-trailing-zeros(Cst).
-            if (!CI->isZero() && !CI->isOne()) {
-              const APInt &AP = CI->getValue();
-              ConstantInt *Mask = ConstantInt::get(
-                                      APInt::getLowBitsSet(AP.getBitWidth(),
-                                                           AP.getBitWidth() -
+          // a * Cst icmp eq/ne b * Cst --> a & Mask icmp b & Mask
+          // Mask = -1 >> count-trailing-zeros(Cst).
+          if (Op0I->hasOneUse() && Op1I->hasOneUse() && I.isEquality()) {
+            if (ConstantInt *CI = dyn_cast<ConstantInt>(Op0I->getOperand(1))) {
+              if (!CI->isZero() && !CI->isOne()) {
+                const APInt &AP = CI->getValue();
+                ConstantInt *Mask =
+                    ConstantInt::get(APInt::getLowBitsSet(AP.getBitWidth(),
+                                                          AP.getBitWidth() -
                                                       AP.countTrailingZeros()));
-              Instruction *And1 = BinaryOperator::CreateAnd(Op0I->getOperand(0),
-                                                            Mask);
-              Instruction *And2 = BinaryOperator::CreateAnd(Op1I->getOperand(0),
-                                                            Mask);
-              InsertNewInstBefore(And1, I);
-              InsertNewInstBefore(And2, I);
-              return new ICmpInst(I.getPredicate(), And1, And2);
+                Instruction *And1 =
+                    BinaryOperator::CreateAnd(Op0I->getOperand(0), Mask);
+                Instruction *And2 =
+                    BinaryOperator::CreateAnd(Op1I->getOperand(0), Mask);
+                InsertNewInstBefore(And1, I);
+                InsertNewInstBefore(And2, I);
+                return new ICmpInst(I.getPredicate(), And1, And2);
+              }
             }
           }
           break;
