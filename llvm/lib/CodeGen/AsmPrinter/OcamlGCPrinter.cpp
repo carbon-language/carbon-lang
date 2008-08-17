@@ -14,7 +14,6 @@
 #include "llvm/CodeGen/GCs.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/GCMetadataPrinter.h"
-#include "llvm/CodeGen/GCStrategy.h"
 #include "llvm/Module.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
