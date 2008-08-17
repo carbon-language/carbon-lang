@@ -1141,7 +1141,7 @@ void AssemblyWriter::printFunction(const Function *F) {
   const FunctionType *FT = F->getFunctionType();
   const PAListPtr &Attrs = F->getParamAttrs();
   printType(F->getReturnType()) << ' ';
-  if (!F->getName().empty())
+  if (F->hasName())
     PrintLLVMName(Out, F);
   else
     Out << "@\"\"";
