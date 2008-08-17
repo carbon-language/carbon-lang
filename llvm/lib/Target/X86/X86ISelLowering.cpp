@@ -5419,8 +5419,8 @@ X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) {
 
     SDValue Cond = DAG.getNode(Opc, MVT::i32, LHS, RHS);
     SDValue SetCC = DAG.getNode(X86ISD::SETCC, MVT::i8,
-                                  DAG.getConstant(X86CC, MVT::i8), Cond);
-    return DAG.getNode(ISD::ANY_EXTEND, MVT::i32, SetCC);
+                                DAG.getConstant(X86CC, MVT::i8), Cond);
+    return DAG.getNode(ISD::ZERO_EXTEND, MVT::i32, SetCC);
   }
 
   // Fix vector shift instructions where the last operand is a non-immediate

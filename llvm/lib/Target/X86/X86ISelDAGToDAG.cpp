@@ -1515,6 +1515,8 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
       SDValue N0 = Node->getOperand(0);
       // Get the subregsiter index for the type to extend.
       MVT N0VT = N0.getValueType();
+      // FIXME: In x86-32, 8-bit value may be in AH, etc. which don't have
+      // super-registers.
       unsigned Idx = (N0VT == MVT::i32) ? X86::SUBREG_32BIT :
                       (N0VT == MVT::i16) ? X86::SUBREG_16BIT :
                         (Subtarget->is64Bit()) ? X86::SUBREG_8BIT : 0;
