@@ -1,4 +1,4 @@
-//===-- OcamlCollector.cpp - Ocaml frametable emitter ---------------------===//
+//===-- OcamlGCPrinter.cpp - Ocaml frametable emitter ---------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,13 +7,13 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements lowering for the llvm.gc* intrinsics compatible with
-// Objective Caml 3.10.0, which uses a liveness-accurate static stack map.
+// This file implements printing the assembly code for an Ocaml frametable.
 //
 //===----------------------------------------------------------------------===//
                         
 #include "llvm/CodeGen/GCs.h"
 #include "llvm/CodeGen/AsmPrinter.h"
+#include "llvm/CodeGen/GCMetadataPrinter.h"
 #include "llvm/CodeGen/GCStrategy.h"
 #include "llvm/Module.h"
 #include "llvm/Target/TargetAsmInfo.h"
@@ -38,9 +38,7 @@ namespace {
 static GCMetadataPrinterRegistry::Add<OcamlGCMetadataPrinter>
 Y("ocaml", "ocaml 3.10-compatible collector");
 
-GCMetadataPrinter *llvm::createOcamlMetadataPrinter() {
-  return new OcamlGCMetadataPrinter();
-}
+void llvm::linkOcamlGCPrinter() { }
 
 static void EmitCamlGlobal(const Module &M, std::ostream &OS, AsmPrinter &AP,
                            const TargetAsmInfo &TAI, const char *Id) {
@@ -85,7 +83,7 @@ void OcamlGCMetadataPrinter::beginAssembly(std::ostream &OS, AsmPrinter &AP,
 /// 
 /// Note that this precludes programs from stack frames larger than 64K
 /// (FrameSize and LiveOffsets would overflow). FrameTablePrinter will abort if
-/// either condition is detected in a function which uses the collector.
+/// either condition is detected in a function which uses the GC.
 /// 
 void OcamlGCMetadataPrinter::finishAssembly(std::ostream &OS, AsmPrinter &AP,
                                             const TargetAsmInfo &TAI) {
@@ -111,33 +109,32 @@ void OcamlGCMetadataPrinter::finishAssembly(std::ostream &OS, AsmPrinter &AP,
   AP.SwitchToDataSection(TAI.getDataSection());
   EmitCamlGlobal(getModule(), OS, AP, TAI, "frametable");
   
-  for (iterator FI = begin(), FE = end(); FI != FE; ++FI) {
-    CollectorMetadata &MD = **FI;
+  for (iterator I = begin(), IE = end(); I != IE; ++I) {
+    GCFunctionInfo &FI = **I;
+    
+    uint64_t FrameSize = FI.getFrameSize();
+    if (FrameSize >= 1<<16) {
+      cerr << "Function '" << FI.getFunction().getNameStart()
+           << "' is too large for the ocaml GC! "
+           << "Frame size " << FrameSize << " >= 65536.\n";
+      cerr << "(" << uintptr_t(&FI) << ")\n";
+      abort(); // Very rude!
+    }
     
     OS << "\t" << TAI.getCommentString() << " live roots for "
-       << MD.getFunction().getNameStart() << "\n";
+       << FI.getFunction().getNameStart() << "\n";
     
-    for (CollectorMetadata::iterator PI = MD.begin(),
-                                     PE = MD.end(); PI != PE; ++PI) {
-      
-      uint64_t FrameSize = MD.getFrameSize();
-      if (FrameSize >= 1<<16) {
-        cerr << "Function '" << MD.getFunction().getNameStart()
-             << "' is too large for the ocaml collector! "
-             << "Frame size " << FrameSize << " >= 65536.\n";
-        abort(); // Very rude!
-      }
-      
-      size_t LiveCount = MD.live_size(PI);
+    for (GCFunctionInfo::iterator J = FI.begin(), JE = FI.end(); J != JE; ++J) {
+      size_t LiveCount = FI.live_size(J);
       if (LiveCount >= 1<<16) {
-        cerr << "Function '" << MD.getFunction().getNameStart()
-             << "' is too large for the ocaml collector! "
+        cerr << "Function '" << FI.getFunction().getNameStart()
+             << "' is too large for the ocaml GC! "
              << "Live root count " << LiveCount << " >= 65536.\n";
         abort(); // Very rude!
       }
       
       OS << AddressDirective
-         << TAI.getPrivateGlobalPrefix() << "label" << PI->Num;
+         << TAI.getPrivateGlobalPrefix() << "label" << J->Num;
       AP.EOL("call return address");
       
       AP.EmitInt16(FrameSize);
@@ -146,14 +143,13 @@ void OcamlGCMetadataPrinter::finishAssembly(std::ostream &OS, AsmPrinter &AP,
       AP.EmitInt16(LiveCount);
       AP.EOL("live root count");
       
-      for (CollectorMetadata::live_iterator LI = MD.live_begin(PI),
-                                            LE = MD.live_end(PI);
-                                            LI != LE; ++LI) {
-        assert(LI->StackOffset < 1<<16 &&
+      for (GCFunctionInfo::live_iterator K = FI.live_begin(J),
+                                         KE = FI.live_end(J); K != KE; ++K) {
+        assert(K->StackOffset < 1<<16 &&
                "GC root stack offset is outside of fixed stack frame and out "
-               "of range for Ocaml collector!");
+               "of range for ocaml GC!");
         
-        OS << "\t.word\t" << LI->StackOffset;
+        OS << "\t.word\t" << K->StackOffset;
         AP.EOL("stack offset");
       }
       

@@ -16,9 +16,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Constants.h"
 #include "llvm/Module.h"
-#include "llvm/CodeGen/GCStrategy.h"
-#include "llvm/CodeGen/GCMetadata.h"
-#include "llvm/CodeGen/GCs.h"
+#include "llvm/CodeGen/GCMetadataPrinter.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
@@ -110,18 +108,17 @@ void AsmPrinter::SwitchToDataSection(const char *NewSection,
 
 void AsmPrinter::getAnalysisUsage(AnalysisUsage &AU) const {
   MachineFunctionPass::getAnalysisUsage(AU);
-  AU.addRequired<CollectorModuleMetadata>();
+  AU.addRequired<GCModuleInfo>();
 }
 
 bool AsmPrinter::doInitialization(Module &M) {
   Mang = new Mangler(M, TAI->getGlobalPrefix());
   
-  CollectorModuleMetadata *CMM = getAnalysisToUpdate<CollectorModuleMetadata>();
-  assert(CMM && "AsmPrinter didn't require CollectorModuleMetadata?");
-  for (CollectorModuleMetadata::iterator I = CMM->begin(),
-                                         E = CMM->end(); I != E; ++I)
-    if (GCMetadataPrinter *GCP = GetOrCreateGCPrinter(*I))
-      GCP->beginAssembly(O, *this, *TAI);
+  GCModuleInfo *MI = getAnalysisToUpdate<GCModuleInfo>();
+  assert(MI && "AsmPrinter didn't require GCModuleInfo?");
+  for (GCModuleInfo::iterator I = MI->begin(), E = MI->end(); I != E; ++I)
+    if (GCMetadataPrinter *MP = GetOrCreateGCPrinter(*I))
+      MP->beginAssembly(O, *this, *TAI);
   
   if (!M.getModuleInlineAsm().empty())
     O << TAI->getCommentString() << " Start of file scope inline assembly\n"
@@ -192,12 +189,11 @@ bool AsmPrinter::doFinalization(Module &M) {
     }
   }
 
-  CollectorModuleMetadata *CMM = getAnalysisToUpdate<CollectorModuleMetadata>();
-  assert(CMM && "AsmPrinter didn't require CollectorModuleMetadata?");
-  for (CollectorModuleMetadata::iterator I = CMM->end(),
-                                         E = CMM->begin(); I != E; )
-    if (GCMetadataPrinter *GCP = GetOrCreateGCPrinter(*--I))
-      GCP->finishAssembly(O, *this, *TAI);
+  GCModuleInfo *MI = getAnalysisToUpdate<GCModuleInfo>();
+  assert(MI && "AsmPrinter didn't require GCModuleInfo?");
+  for (GCModuleInfo::iterator I = MI->end(), E = MI->begin(); I != E; )
+    if (GCMetadataPrinter *MP = GetOrCreateGCPrinter(*--I))
+      MP->finishAssembly(O, *this, *TAI);
 
   // If we don't have any trampolines, then we don't require stack memory
   // to be executable. Some targets have a directive to declare this.
@@ -1466,26 +1462,26 @@ void AsmPrinter::printVisibility(const std::string& Name,
   }
 }
 
-GCMetadataPrinter *AsmPrinter::GetOrCreateGCPrinter(Collector *C) {
-  if (!C->usesMetadata())
+GCMetadataPrinter *AsmPrinter::GetOrCreateGCPrinter(GCStrategy *S) {
+  if (!S->usesMetadata())
     return 0;
   
-  gcp_iterator GCPI = GCMetadataPrinters.find(C);
+  gcp_iterator GCPI = GCMetadataPrinters.find(S);
   if (GCPI != GCMetadataPrinters.end())
     return GCPI->second;
   
-  const char *Name = C->getName().c_str();
+  const char *Name = S->getName().c_str();
   
   for (GCMetadataPrinterRegistry::iterator
          I = GCMetadataPrinterRegistry::begin(),
          E = GCMetadataPrinterRegistry::end(); I != E; ++I)
     if (strcmp(Name, I->getName()) == 0) {
-      GCMetadataPrinter *GCP = I->instantiate();
-      GCP->Coll = C;
-      GCMetadataPrinters.insert(std::make_pair(C, GCP));
-      return GCP;
+      GCMetadataPrinter *GMP = I->instantiate();
+      GMP->S = S;
+      GCMetadataPrinters.insert(std::make_pair(S, GMP));
+      return GMP;
     }
   
-  cerr << "no GCMetadataPrinter registered for collector: " << Name << "\n";
+  cerr << "no GCMetadataPrinter registered for GC: " << Name << "\n";
   abort();
 }

@@ -208,10 +208,10 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
   //  1. If the caller has no GC, then the callee's GC must be propagated to the
   //     caller.
   //  2. If the caller has a differing GC, it is invalid to inline.
-  if (CalledFunc->hasCollector()) {
-    if (!Caller->hasCollector())
-      Caller->setCollector(CalledFunc->getCollector());
-    else if (CalledFunc->getCollector() != Caller->getCollector())
+  if (CalledFunc->hasGC()) {
+    if (!Caller->hasGC())
+      Caller->setGC(CalledFunc->getGC());
+    else if (CalledFunc->getGC() != Caller->getGC())
       return false;
   }
   

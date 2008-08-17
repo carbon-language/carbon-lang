@@ -921,14 +921,14 @@ external function_call_conv : llvalue -> int = "llvm_function_call_conv"
 external set_function_call_conv : int -> llvalue -> unit
                                 = "llvm_set_function_call_conv"
 
-(** [collector f] returns [Some name] if the function [f] has a garbage
+(** [gc f] returns [Some name] if the function [f] has a garbage
     collection algorithm specified and [None] otherwise.
-    See the method [llvm::Function::getCollector]. *)
-external collector : llvalue -> string option = "llvm_collector"
+    See the method [llvm::Function::getGC]. *)
+external gc : llvalue -> string option = "llvm_gc"
 
-(** [set_collector gc f] sets the collection algorithm for the function [f] to
-    [gc]. See the method [llvm::Function::setCollector]. *)
-external set_collector : string option -> llvalue -> unit = "llvm_set_collector"
+(** [set_gc gc f] sets the collection algorithm for the function [f] to
+    [gc]. See the method [llvm::Function::setGC]. *)
+external set_gc : string option -> llvalue -> unit = "llvm_set_gc"
 
 
 (** {7 Operations on params} *)

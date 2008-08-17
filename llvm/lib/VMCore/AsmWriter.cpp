@@ -1184,8 +1184,8 @@ void AssemblyWriter::printFunction(const Function *F) {
     Out << " section \"" << F->getSection() << '"';
   if (F->getAlignment())
     Out << " align " << F->getAlignment();
-  if (F->hasCollector())
-    Out << " gc \"" << F->getCollector() << '"';
+  if (F->hasGC())
+    Out << " gc \"" << F->getGC() << '"';
 
   if (F->isDeclaration()) {
     Out << "\n";

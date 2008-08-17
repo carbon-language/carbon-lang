@@ -719,17 +719,17 @@ void LLVMSetFunctionCallConv(LLVMValueRef Fn, unsigned CC) {
   return unwrap<Function>(Fn)->setCallingConv(CC);
 }
 
-const char *LLVMGetCollector(LLVMValueRef Fn) {
+const char *LLVMGetGC(LLVMValueRef Fn) {
   Function *F = unwrap<Function>(Fn);
-  return F->hasCollector()? F->getCollector() : 0;
+  return F->hasGC()? F->getGC() : 0;
 }
 
-void LLVMSetCollector(LLVMValueRef Fn, const char *Coll) {
+void LLVMSetGC(LLVMValueRef Fn, const char *GC) {
   Function *F = unwrap<Function>(Fn);
-  if (Coll)
-    F->setCollector(Coll);
+  if (GC)
+    F->setGC(GC);
   else
-    F->clearCollector();
+    F->clearGC();
 }
 
 /*--.. Operations on parameters ............................................--*/

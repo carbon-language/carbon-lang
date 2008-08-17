@@ -411,8 +411,8 @@ void LLVMDeleteFunction(LLVMValueRef Fn);
 unsigned LLVMGetIntrinsicID(LLVMValueRef Fn);
 unsigned LLVMGetFunctionCallConv(LLVMValueRef Fn);
 void LLVMSetFunctionCallConv(LLVMValueRef Fn, unsigned CC);
-const char *LLVMGetCollector(LLVMValueRef Fn);
-void LLVMSetCollector(LLVMValueRef Fn, const char *Coll);
+const char *LLVMGetGC(LLVMValueRef Fn);
+void LLVMSetGC(LLVMValueRef Fn, const char *Name);
 
 /* Operations on parameters */
 unsigned LLVMCountParams(LLVMValueRef Fn);

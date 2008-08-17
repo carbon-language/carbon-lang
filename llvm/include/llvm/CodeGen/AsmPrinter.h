@@ -22,7 +22,7 @@
 #include <set>
 
 namespace llvm {
-  class Collector;
+  class GCStrategy;
   class Constant;
   class ConstantArray;
   class GCMetadataPrinter;
@@ -53,7 +53,7 @@ namespace llvm {
     MachineModuleInfo *MMI;
     
     // GCMetadataPrinters - The garbage collection metadata printer table.
-    typedef DenseMap<Collector*,GCMetadataPrinter*> gcp_map_type;
+    typedef DenseMap<GCStrategy*,GCMetadataPrinter*> gcp_map_type;
     typedef gcp_map_type::iterator gcp_iterator;
     gcp_map_type GCMetadataPrinters;
     
@@ -366,7 +366,7 @@ namespace llvm {
     void EmitXXStructorList(Constant *List);
     void EmitConstantPool(unsigned Alignment, const char *Section,
                 std::vector<std::pair<MachineConstantPoolEntry,unsigned> > &CP);
-    GCMetadataPrinter *GetOrCreateGCPrinter(Collector *C);
+    GCMetadataPrinter *GetOrCreateGCPrinter(GCStrategy *C);
   };
 }
 

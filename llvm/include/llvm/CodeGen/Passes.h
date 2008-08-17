@@ -152,7 +152,7 @@ namespace llvm {
   FunctionPass *getRegisterAllocator(TargetMachine &T);
 
   /// IntrinsicLowering Pass - Performs target-independent LLVM IR
-  /// transformations for highly portable collectors.
+  /// transformations for highly portable strategies.
   FunctionPass *createGCLoweringPass();
   
   /// MachineCodeAnalysis Pass - Target-independent pass to mark safe points in
@@ -161,13 +161,13 @@ namespace llvm {
   /// folding).
   FunctionPass *createGCMachineCodeAnalysisPass();
   
-  /// Deleter Pass - Releases collector metadata.
+  /// Deleter Pass - Releases GC metadata.
   /// 
-  FunctionPass *createCollectorMetadataDeleter();
+  FunctionPass *createGCInfoDeleter();
   
-  /// Creates a pass to print collector metadata.
+  /// Creates a pass to print GC metadata.
   /// 
-  FunctionPass *createCollectorMetadataPrinter(std::ostream &OS);
+  FunctionPass *createGCInfoPrinter(std::ostream &OS);
   
   /// createMachineLICMPass - This pass performs LICM on machine instructions.
   /// 

@@ -892,7 +892,7 @@ bool BitcodeReader::ParseModule(const std::string &ModuleID) {
   
   SmallVector<uint64_t, 64> Record;
   std::vector<std::string> SectionTable;
-  std::vector<std::string> CollectorTable;
+  std::vector<std::string> GCTable;
 
   // Read all the records for this module.
   while (!Stream.AtEndOfStream()) {
@@ -1019,11 +1019,11 @@ bool BitcodeReader::ParseModule(const std::string &ModuleID) {
       SectionTable.push_back(S);
       break;
     }
-    case bitc::MODULE_CODE_COLLECTORNAME: {  // SECTIONNAME: [strchr x N]
+    case bitc::MODULE_CODE_GCNAME: {  // SECTIONNAME: [strchr x N]
       std::string S;
       if (ConvertToString(Record, 0, S))
-        return Error("Invalid MODULE_CODE_COLLECTORNAME record");
-      CollectorTable.push_back(S);
+        return Error("Invalid MODULE_CODE_GCNAME record");
+      GCTable.push_back(S);
       break;
     }
     // GLOBALVAR: [pointer type, isconst, initid,
@@ -1070,7 +1070,7 @@ bool BitcodeReader::ParseModule(const std::string &ModuleID) {
       break;
     }
     // FUNCTION:  [type, callingconv, isproto, linkage, paramattr,
-    //             alignment, section, visibility, collector]
+    //             alignment, section, visibility, gc]
     case bitc::MODULE_CODE_FUNCTION: {
       if (Record.size() < 8)
         return Error("Invalid MODULE_CODE_FUNCTION record");
@@ -1098,9 +1098,9 @@ bool BitcodeReader::ParseModule(const std::string &ModuleID) {
       }
       Func->setVisibility(GetDecodedVisibility(Record[7]));
       if (Record.size() > 8 && Record[8]) {
-        if (Record[8]-1 > CollectorTable.size())
-          return Error("Invalid collector ID");
-        Func->setCollector(CollectorTable[Record[8]-1].c_str());
+        if (Record[8]-1 > GCTable.size())
+          return Error("Invalid GC ID");
+        Func->setGC(GCTable[Record[8]-1].c_str());
       }
       
       ValueList.push_back(Func);

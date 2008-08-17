@@ -1,4 +1,4 @@
-//===-- CollectorMetadata.cpp - Garbage collector metadata ----------------===//
+//===-- GCMetadata.cpp - Garbage collector metadata -----------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,14 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the CollectorMetadata and CollectorModuleMetadata
-// classes.
+// This file implements the GCFunctionInfo class and GCModuleInfo pass.
 //
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/GCMetadata.h"
 #include "llvm/CodeGen/GCStrategy.h"
-#include "llvm/CodeGen/GCs.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/Pass.h"
 #include "llvm/CodeGen/Passes.h"
@@ -53,79 +51,80 @@ namespace {
   
 }
 
-static RegisterPass<CollectorModuleMetadata>
+static RegisterPass<GCModuleInfo>
 X("collector-metadata", "Create Garbage Collector Module Metadata");
 
 // -----------------------------------------------------------------------------
 
-CollectorMetadata::CollectorMetadata(const Function &F, Collector &C)
-  : F(F), C(C), FrameSize(~0LL) {}
+GCFunctionInfo::GCFunctionInfo(const Function &F, GCStrategy &S)
+  : F(F), S(S), FrameSize(~0LL) {}
 
-CollectorMetadata::~CollectorMetadata() {}
+GCFunctionInfo::~GCFunctionInfo() {}
 
 // -----------------------------------------------------------------------------
 
-char CollectorModuleMetadata::ID = 0;
+char GCModuleInfo::ID = 0;
 
-CollectorModuleMetadata::CollectorModuleMetadata()
+GCModuleInfo::GCModuleInfo()
   : ImmutablePass((intptr_t)&ID) {}
 
-CollectorModuleMetadata::~CollectorModuleMetadata() {
+GCModuleInfo::~GCModuleInfo() {
   clear();
 }
 
-Collector *CollectorModuleMetadata::
-getOrCreateCollector(const Module *M, const std::string &Name) {
+GCStrategy *GCModuleInfo::getOrCreateStrategy(const Module *M,
+                                              const std::string &Name) {
   const char *Start = Name.c_str();
   
-  collector_map_type::iterator NMI = NameMap.find(Start, Start + Name.size());
-  if (NMI != NameMap.end())
+  strategy_map_type::iterator NMI =
+    StrategyMap.find(Start, Start + Name.size());
+  if (NMI != StrategyMap.end())
     return NMI->getValue();
   
-  for (CollectorRegistry::iterator I = CollectorRegistry::begin(),
-                                   E = CollectorRegistry::end(); I != E; ++I) {
+  for (GCRegistry::iterator I = GCRegistry::begin(),
+                            E = GCRegistry::end(); I != E; ++I) {
     if (strcmp(Start, I->getName()) == 0) {
-      Collector *C = I->instantiate();
-      C->M = M;
-      C->Name = Name;
-      NameMap.GetOrCreateValue(Start, Start + Name.size()).setValue(C);
-      Collectors.push_back(C);
-      return C;
+      GCStrategy *S = I->instantiate();
+      S->M = M;
+      S->Name = Name;
+      StrategyMap.GetOrCreateValue(Start, Start + Name.size()).setValue(S);
+      StrategyList.push_back(S);
+      return S;
     }
   }
   
-  cerr << "unsupported collector: " << Name << "\n";
+  cerr << "unsupported GC: " << Name << "\n";
   abort();
 }
 
-CollectorMetadata &CollectorModuleMetadata::get(const Function &F) {
+GCFunctionInfo &GCModuleInfo::getFunctionInfo(const Function &F) {
   assert(!F.isDeclaration() && "Can only get GCFunctionInfo for a definition!");
-  assert(F.hasCollector());
+  assert(F.hasGC());
   
-  function_map_type::iterator I = Map.find(&F);
-  if (I != Map.end())
+  finfo_map_type::iterator I = FInfoMap.find(&F);
+  if (I != FInfoMap.end())
     return *I->second;
-    
-  Collector *C = getOrCreateCollector(F.getParent(), F.getCollector());
-  CollectorMetadata *MD = C->insertFunctionMetadata(F);
-  Map[&F] = MD;
-  return *MD;
+  
+  GCStrategy *S = getOrCreateStrategy(F.getParent(), F.getGC());
+  GCFunctionInfo *GFI = S->insertFunctionInfo(F);
+  FInfoMap[&F] = GFI;
+  return *GFI;
 }
 
-void CollectorModuleMetadata::clear() {
-  Map.clear();
-  NameMap.clear();
+void GCModuleInfo::clear() {
+  FInfoMap.clear();
+  StrategyMap.clear();
   
   for (iterator I = begin(), E = end(); I != E; ++I)
     delete *I;
-  Collectors.clear();
+  StrategyList.clear();
 }
 
 // -----------------------------------------------------------------------------
 
 char Printer::ID = 0;
 
-FunctionPass *llvm::createCollectorMetadataPrinter(std::ostream &OS) {
+FunctionPass *llvm::createGCInfoPrinter(std::ostream &OS) {
   return new Printer(OS);
 }
 
@@ -139,7 +138,7 @@ const char *Printer::getPassName() const {
 void Printer::getAnalysisUsage(AnalysisUsage &AU) const {
   FunctionPass::getAnalysisUsage(AU);
   AU.setPreservesAll();
-  AU.addRequired<CollectorModuleMetadata>();
+  AU.addRequired<GCModuleInfo>();
 }
 
 static const char *DescKind(GC::PointKind Kind) {
@@ -153,23 +152,22 @@ static const char *DescKind(GC::PointKind Kind) {
 }
 
 bool Printer::runOnFunction(Function &F) {
-  if (F.hasCollector()) {
-    CollectorMetadata *FD = &getAnalysis<CollectorModuleMetadata>().get(F);
+  if (!F.hasGC()) {
+    GCFunctionInfo *FD = &getAnalysis<GCModuleInfo>().getFunctionInfo(F);
     
     OS << "GC roots for " << FD->getFunction().getNameStart() << ":\n";
-    for (CollectorMetadata::roots_iterator RI = FD->roots_begin(),
-                                           RE = FD->roots_end();
-                                           RI != RE; ++RI)
+    for (GCFunctionInfo::roots_iterator RI = FD->roots_begin(),
+                                        RE = FD->roots_end(); RI != RE; ++RI)
       OS << "\t" << RI->Num << "\t" << RI->StackOffset << "[sp]\n";
     
     OS << "GC safe points for " << FD->getFunction().getNameStart() << ":\n";
-    for (CollectorMetadata::iterator PI = FD->begin(),
-                                     PE = FD->end(); PI != PE; ++PI) {
+    for (GCFunctionInfo::iterator PI = FD->begin(),
+                                  PE = FD->end(); PI != PE; ++PI) {
       
       OS << "\tlabel " << PI->Num << ": " << DescKind(PI->Kind) << ", live = {";
       
-      for (CollectorMetadata::live_iterator RI = FD->live_begin(PI),
-                                            RE = FD->live_end(PI);;) {
+      for (GCFunctionInfo::live_iterator RI = FD->live_begin(PI),
+                                         RE = FD->live_end(PI);;) {
         OS << " " << RI->Num;
         if (++RI == RE)
           break;
@@ -187,7 +185,7 @@ bool Printer::runOnFunction(Function &F) {
 
 char Deleter::ID = 0;
 
-FunctionPass *llvm::createCollectorMetadataDeleter() {
+FunctionPass *llvm::createGCInfoDeleter() {
   return new Deleter();
 }
 
@@ -199,7 +197,7 @@ const char *Deleter::getPassName() const {
 
 void Deleter::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesAll();
-  AU.addRequired<CollectorModuleMetadata>();
+  AU.addRequired<GCModuleInfo>();
 }
 
 bool Deleter::runOnFunction(Function &MF) {
@@ -207,8 +205,8 @@ bool Deleter::runOnFunction(Function &MF) {
 }
 
 bool Deleter::doFinalization(Module &M) {
-  CollectorModuleMetadata *CMM = getAnalysisToUpdate<CollectorModuleMetadata>();
-  assert(CMM && "Deleter didn't require CollectorModuleMetadata?!");
-  CMM->clear();
+  GCModuleInfo *GMI = getAnalysisToUpdate<GCModuleInfo>();
+  assert(GMI && "Deleter didn't require GCModuleInfo?!");
+  GMI->clear();
   return false;
 }

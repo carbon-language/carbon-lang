@@ -148,12 +148,12 @@ public:
   ///
   void setParamAttrs(const PAListPtr &attrs) { ParamAttrs = attrs; }
 
-  /// hasCollector/getCollector/setCollector/clearCollector - The name of the
-  /// garbage collection algorithm to use during code generation.
-  bool hasCollector() const;
-  const char *getCollector() const;
-  void setCollector(const char *Str);
-  void clearCollector();
+  /// hasGC/getGC/setGC/clearGC - The name of the garbage collection algorithm
+  ///                             to use during code generation.
+  bool hasGC() const;
+  const char *getGC() const;
+  void setGC(const char *Str);
+  void clearGC();
 
   /// @brief Determine whether the function has the given attribute.
   bool paramHasAttr(unsigned i, ParameterAttributes attr) const {

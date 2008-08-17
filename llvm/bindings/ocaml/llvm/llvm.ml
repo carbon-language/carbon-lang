@@ -366,8 +366,8 @@ external is_intrinsic : llvalue -> bool = "llvm_is_intrinsic"
 external function_call_conv : llvalue -> int = "llvm_function_call_conv"
 external set_function_call_conv : int -> llvalue -> unit
                                 = "llvm_set_function_call_conv"
-external collector : llvalue -> string option = "llvm_collector"
-external set_collector : string option -> llvalue -> unit = "llvm_set_collector"
+external gc : llvalue -> string option = "llvm_gc"
+external set_gc : string option -> llvalue -> unit = "llvm_set_gc"
 external function_begin : llmodule -> (llmodule, llvalue) llpos
                         = "llvm_function_begin"
 external function_succ : llvalue -> (llmodule, llvalue) llpos

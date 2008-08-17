@@ -1603,9 +1603,9 @@ namespace {
       Out << ");";
       nl(Out);
     }
-    if (F->hasCollector()) {
+    if (F->hasGC()) {
       printCppName(F);
-      Out << "->setCollector(\"" << F->getCollector() << "\");";
+      Out << "->setGC(\"" << F->getGC() << "\");";
       nl(Out);
     }
     if (is_inline) {

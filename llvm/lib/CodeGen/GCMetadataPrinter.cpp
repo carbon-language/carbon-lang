@@ -1,4 +1,4 @@
-//===-- Collector.cpp - Garbage collection infrastructure -----------------===//
+//===-- GCMetadataPrinter.cpp - Garbage collection infrastructure ---------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,14 +7,24 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements target- and collector-independent garbage collection
-// infrastructure.
+// This file implements the abstract base class GCMetadataPrinter.
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/CodeGen/GCStrategy.h"
+#include "llvm/CodeGen/GCMetadataPrinter.h"
 
 using namespace llvm;
+
+// -----------------------------------------------------------------------------
+
+template<> GCMetadataPrinterRegistry::node *GCMetadataPrinterRegistry::Head = 0;
+template<> GCMetadataPrinterRegistry::node *GCMetadataPrinterRegistry::Tail = 0;
+template<> GCMetadataPrinterRegistry::listener *
+GCMetadataPrinterRegistry::ListenerHead = 0;
+template<> GCMetadataPrinterRegistry::listener *
+GCMetadataPrinterRegistry::ListenerTail = 0;
+
+// -----------------------------------------------------------------------------
 
 GCMetadataPrinter::GCMetadataPrinter() { }
 

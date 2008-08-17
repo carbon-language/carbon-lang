@@ -182,8 +182,8 @@ Function::~Function() {
   ArgumentList.clear();
   delete SymTab;
 
-  // Remove the function from the on-the-side collector table.
-  clearCollector();
+  // Remove the function from the on-the-side GC table.
+  clearGC();
 }
 
 void Function::BuildLazyArguments() const {
@@ -240,39 +240,39 @@ void Function::removeParamAttr(unsigned i, ParameterAttributes attr) {
   setParamAttrs(PAL);
 }
 
-// Maintain the collector name for each function in an on-the-side table. This
-// saves allocating an additional word in Function for programs which do not use
-// GC (i.e., most programs) at the cost of increased overhead for clients which
-// do use GC.
-static DenseMap<const Function*,PooledStringPtr> *CollectorNames;
-static StringPool *CollectorNamePool;
+// Maintain the GC name for each function in an on-the-side table. This saves
+// allocating an additional word in Function for programs which do not use GC
+// (i.e., most programs) at the cost of increased overhead for clients which do
+// use GC.
+static DenseMap<const Function*,PooledStringPtr> *GCNames;
+static StringPool *GCNamePool;
 
-bool Function::hasCollector() const {
-  return CollectorNames && CollectorNames->count(this);
+bool Function::hasGC() const {
+  return GCNames && GCNames->count(this);
 }
 
-const char *Function::getCollector() const {
-  assert(hasCollector() && "Function has no collector");
-  return *(*CollectorNames)[this];
+const char *Function::getGC() const {
+  assert(hasGC() && "Function has no collector");
+  return *(*GCNames)[this];
 }
 
-void Function::setCollector(const char *Str) {
-  if (!CollectorNamePool)
-    CollectorNamePool = new StringPool();
-  if (!CollectorNames)
-    CollectorNames = new DenseMap<const Function*,PooledStringPtr>();
-  (*CollectorNames)[this] = CollectorNamePool->intern(Str);
+void Function::setGC(const char *Str) {
+  if (!GCNamePool)
+    GCNamePool = new StringPool();
+  if (!GCNames)
+    GCNames = new DenseMap<const Function*,PooledStringPtr>();
+  (*GCNames)[this] = GCNamePool->intern(Str);
 }
 
-void Function::clearCollector() {
-  if (CollectorNames) {
-    CollectorNames->erase(this);
-    if (CollectorNames->empty()) {
-      delete CollectorNames;
-      CollectorNames = 0;
-      if (CollectorNamePool->empty()) {
-        delete CollectorNamePool;
-        CollectorNamePool = 0;
+void Function::clearGC() {
+  if (GCNames) {
+    GCNames->erase(this);
+    if (GCNames->empty()) {
+      delete GCNames;
+      GCNames = 0;
+      if (GCNamePool->empty()) {
+        delete GCNamePool;
+        GCNamePool = 0;
       }
     }
   }
@@ -286,8 +286,10 @@ void Function::copyAttributesFrom(const GlobalValue *Src) {
   const Function *SrcF = cast<Function>(Src);
   setCallingConv(SrcF->getCallingConv());
   setParamAttrs(SrcF->getParamAttrs());
-  if (SrcF->hasCollector())
-    setCollector(SrcF->getCollector());
+  if (SrcF->hasGC())
+    setGC(SrcF->getGC());
+  else
+    clearGC();
 }
 
 /// getIntrinsicID - This method returns the ID number of the specified

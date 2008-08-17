@@ -1,4 +1,4 @@
-//===-- OcamlCollector.cpp - Ocaml frametable emitter ---------------------===//
+//===-- OcamlGC.cpp - Ocaml frametable GC strategy ------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -9,38 +9,29 @@
 //
 // This file implements lowering for the llvm.gc* intrinsics compatible with
 // Objective Caml 3.10.0, which uses a liveness-accurate static stack map.
+// 
+// The frametable emitter is in OcamlGCPrinter.cpp.
 //
 //===----------------------------------------------------------------------===//
                         
 #include "llvm/CodeGen/GCs.h"
-#include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/GCStrategy.h"
-#include "llvm/Module.h"
-#include "llvm/Target/TargetAsmInfo.h"
-#include "llvm/Target/TargetData.h"
-#include "llvm/Target/TargetMachine.h"
 
 using namespace llvm;
 
 namespace {
-
-  class VISIBILITY_HIDDEN OcamlCollector : public Collector {
+  class VISIBILITY_HIDDEN OcamlGC : public GCStrategy {
   public:
-    OcamlCollector();
+    OcamlGC();
   };
-  
 }
 
-static CollectorRegistry::Add<OcamlCollector>
-X("ocaml", "ocaml 3.10-compatible collector");
+static GCRegistry::Add<OcamlGC>
+X("ocaml", "ocaml 3.10-compatible GC");
 
-// -----------------------------------------------------------------------------
+void llvm::linkOcamlGC() { }
 
-Collector *llvm::createOcamlCollector() {
-  return new OcamlCollector();
-}
-
-OcamlCollector::OcamlCollector() {
+OcamlGC::OcamlGC() {
   NeededSafePoints = 1 << GC::PostCall;
   UsesMetadata = true;
 }

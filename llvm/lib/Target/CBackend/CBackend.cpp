@@ -3386,6 +3386,6 @@ bool CTargetMachine::addPassesToEmitWholeFile(PassManager &PM,
   PM.add(createCFGSimplificationPass());   // clean up after lower invoke.
   PM.add(new CBackendNameAllUsedStructsAndMergeFunctions());
   PM.add(new CWriter(o));
-  PM.add(createCollectorMetadataDeleter());
+  PM.add(createGCInfoDeleter());
   return false;
 }

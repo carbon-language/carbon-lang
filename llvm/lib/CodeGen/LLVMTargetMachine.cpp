@@ -133,7 +133,7 @@ LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
     PM.add(createMachineFunctionPrinterPass(cerr));
   
   if (PrintGCInfo)
-    PM.add(createCollectorMetadataPrinter(*cerr));
+    PM.add(createGCInfoPrinter(*cerr));
   
   // Fold redundant debug labels.
   PM.add(createDebugLabelFoldingPass());
@@ -173,7 +173,7 @@ bool LLVMTargetMachine::addPassesToEmitFileFinish(PassManagerBase &PM,
   if (MCE)
     addSimpleCodeEmitter(PM, Fast, PrintEmittedAsm, *MCE);
     
-  PM.add(createCollectorMetadataDeleter());
+  PM.add(createGCInfoDeleter());
 
   // Delete machine code for this function
   PM.add(createMachineCodeDeleter());
@@ -274,14 +274,14 @@ bool LLVMTargetMachine::addPassesToEmitMachineCode(PassManagerBase &PM,
     PM.add(createMachineFunctionPrinterPass(cerr));
   
   if (PrintGCInfo)
-    PM.add(createCollectorMetadataPrinter(*cerr));
+    PM.add(createGCInfoPrinter(*cerr));
   
   if (addPreEmitPass(PM, Fast) && PrintMachineCode)
     PM.add(createMachineFunctionPrinterPass(cerr));
 
   addCodeEmitter(PM, Fast, PrintEmittedAsm, MCE);
   
-  PM.add(createCollectorMetadataDeleter());
+  PM.add(createGCInfoDeleter());
   
   // Delete machine code for this function
   PM.add(createMachineCodeDeleter());

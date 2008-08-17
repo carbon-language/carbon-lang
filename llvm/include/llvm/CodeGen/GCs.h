@@ -1,4 +1,4 @@
-//===-- Collectors.h - Garbage collector registry -------------------------===//
+//===-- GCs.h - Garbage collector linkage hacks ---------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,41 +7,29 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file declares the CollectorRegistry class, which is used to discover
-// pluggable garbage collectors.
+// This file contains hack functions to force linking in the GC components.
 //
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_CODEGEN_GCS_H
 #define LLVM_CODEGEN_GCS_H
 
-#include "llvm/Support/Registry.h"
-
 namespace llvm {
-
-  class Collector;
+  class GCStrategy;
   class GCMetadataPrinter;
-  
-  /// The collector registry uses all the defaults from Registry.
-  /// 
-  typedef Registry<Collector> CollectorRegistry;
-  
-  /// The GC assembly printer registry uses all the defaults from Registry.
-  /// 
-  typedef Registry<GCMetadataPrinter> GCMetadataPrinterRegistry;
   
   /// FIXME: Collector instances are not useful on their own. These no longer
   ///        serve any purpose except to link in the plugins.
   
   /// Creates an ocaml-compatible garbage collector.
-  Collector *createOcamlCollector();
+  void linkOcamlGC();
   
   /// Creates an ocaml-compatible metadata printer.
-  GCMetadataPrinter *createOcamlMetadataPrinter();
+  void linkOcamlGCPrinter();
   
   /// Creates a shadow stack garbage collector. This collector requires no code
   /// generator support.
-  Collector *createShadowStackCollector();
+  void linkShadowStackGC();
 }
 
 #endif

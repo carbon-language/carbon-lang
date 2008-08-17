@@ -303,10 +303,10 @@ static void WriteModuleInfo(const Module *M, const ValueEnumerator &VE,
     WriteStringRecord(bitc::MODULE_CODE_ASM, M->getModuleInlineAsm(),
                       0/*TODO*/, Stream);
 
-  // Emit information about sections and collectors, computing how many there
-  // are.  Also compute the maximum alignment value.
+  // Emit information about sections and GC, computing how many there are. Also
+  // compute the maximum alignment value.
   std::map<std::string, unsigned> SectionMap;
-  std::map<std::string, unsigned> CollectorMap;
+  std::map<std::string, unsigned> GCMap;
   unsigned MaxAlignment = 0;
   unsigned MaxGlobalType = 0;
   for (Module::const_global_iterator GV = M->global_begin(),E = M->global_end();
@@ -333,13 +333,13 @@ static void WriteModuleInfo(const Module *M, const ValueEnumerator &VE,
         Entry = SectionMap.size();
       }
     }
-    if (F->hasCollector()) {
-      // Same for collector names.
-      unsigned &Entry = CollectorMap[F->getCollector()];
+    if (F->hasGC()) {
+      // Same for GC names.
+      unsigned &Entry = GCMap[F->getGC()];
       if (!Entry) {
-        WriteStringRecord(bitc::MODULE_CODE_COLLECTORNAME, F->getCollector(),
+        WriteStringRecord(bitc::MODULE_CODE_GCNAME, F->getGC(),
                           0/*TODO*/, Stream);
-        Entry = CollectorMap.size();
+        Entry = GCMap.size();
       }
     }
   }
@@ -401,7 +401,7 @@ static void WriteModuleInfo(const Module *M, const ValueEnumerator &VE,
   // Emit the function proto information.
   for (Module::const_iterator F = M->begin(), E = M->end(); F != E; ++F) {
     // FUNCTION:  [type, callingconv, isproto, paramattr,
-    //             linkage, alignment, section, visibility, collector]
+    //             linkage, alignment, section, visibility, gc]
     Vals.push_back(VE.getTypeID(F->getType()));
     Vals.push_back(F->getCallingConv());
     Vals.push_back(F->isDeclaration());
@@ -410,7 +410,7 @@ static void WriteModuleInfo(const Module *M, const ValueEnumerator &VE,
     Vals.push_back(Log2_32(F->getAlignment())+1);
     Vals.push_back(F->hasSection() ? SectionMap[F->getSection()] : 0);
     Vals.push_back(getEncodedVisibility(F));
-    Vals.push_back(F->hasCollector() ? CollectorMap[F->getCollector()] : 0);
+    Vals.push_back(F->hasGC() ? GCMap[F->getGC()] : 0);
     
     unsigned AbbrevToUse = 0;
     Stream.EmitRecord(bitc::MODULE_CODE_FUNCTION, Vals, AbbrevToUse);

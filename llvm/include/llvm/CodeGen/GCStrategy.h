@@ -1,4 +1,4 @@
-//===-- llvm/CodeGen/Collector.h - Garbage collection -----------*- C++ -*-===//
+//===-- llvm/CodeGen/GCStrategy.h - Garbage collection ----------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,12 +7,18 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// Collector records sufficient information about a machine function to enable
-// accurate garbage collectors. Specifically:
+// GCStrategy coordinates code generation algorithms and implements some itself
+// in order to generate code compatible with a target code generator as
+// specified in a function's 'gc' attribute. Algorithms are enabled by setting
+// flags in a subclass's constructor, and some virtual methods can be
+// overridden.
+// 
+// When requested, the GCStrategy will be populated with data about each
+// function which uses it. Specifically:
 // 
 // - Safe points
-//   Garbage collection is only possible at certain points in code. Code
-//   generators should record points:
+//   Garbage collection is generally only possible at certain points in code.
+//   GCStrategy can request that the collector insert such points:
 //
 //     - At and after any call to a subroutine
 //     - Before returning from the current function
@@ -22,33 +28,37 @@
 //   When a reference to a GC-allocated object exists on the stack, it must be
 //   stored in an alloca registered with llvm.gcoot.
 //
-// This generic information should used by ABI-specific passes to emit support
-// tables for the runtime garbage collector.
-//
-// MachineCodeAnalysis identifies the GC safe points in the machine code. (Roots
-// are identified in SelectionDAGISel.)
+// This information can used to emit the metadata tables which are required by
+// the target garbage collector runtime.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CODEGEN_COLLECTOR_H
-#define LLVM_CODEGEN_COLLECTOR_H
+#ifndef LLVM_CODEGEN_GCSTRATEGY_H
+#define LLVM_CODEGEN_GCSTRATEGY_H
 
 #include "llvm/CodeGen/GCMetadata.h"
+#include "llvm/Support/Registry.h"
 #include <iosfwd>
 #include <string>
 
 namespace llvm {
   
-  /// Collector describes a garbage collector's code generation requirements,
-  /// and provides overridable hooks for those needs which cannot be abstractly
-  /// described.
-  class Collector {
+  class GCStrategy;
+  
+  /// The GC strategy registry uses all the defaults from Registry.
+  /// 
+  typedef Registry<GCStrategy> GCRegistry;
+  
+  /// GCStrategy describes a garbage collector algorithm's code generation
+  /// requirements, and provides overridable hooks for those needs which cannot
+  /// be abstractly described.
+  class GCStrategy {
   public:
-    typedef std::vector<CollectorMetadata*> list_type;
+    typedef std::vector<GCFunctionInfo*> list_type;
     typedef list_type::iterator iterator;
     
   private:
-    friend class CollectorModuleMetadata;
+    friend class GCModuleInfo;
     const Module *M;
     std::string Name;
     
@@ -63,49 +73,51 @@ namespace llvm {
     bool UsesMetadata;         //< If set, backend must emit metadata tables.
     
   public:
-    Collector();
+    GCStrategy();
     
-    virtual ~Collector();
+    virtual ~GCStrategy();
     
     
-    /// getName - The name of the collector, for debugging.
+    /// getName - The name of the GC strategy, for debugging.
     /// 
     const std::string &getName() const { return Name; }
 
-    /// getModule - The module upon which the collector is operating.
+    /// getModule - The module within which the GC strategy is operating.
     /// 
     const Module &getModule() const { return *M; }
 
-    /// True if this collector requires safe points of any kind. By default,
-    /// none are recorded.
+    /// needsSafePoitns - True if safe points of any kind are required. By
+    //                    default, none are recorded.
     bool needsSafePoints() const { return NeededSafePoints != 0; }
     
-    /// True if the collector requires the given kind of safe point. By default,
-    /// none are recorded.
+    /// needsSafePoint(Kind) - True if the given kind of safe point is
+    //                          required. By default, none are recorded.
     bool needsSafePoint(GC::PointKind Kind) const {
       return (NeededSafePoints & 1 << Kind) != 0;
     }
     
-    /// By default, write barriers are replaced with simple store instructions.
-    /// If true, then addPassesToCustomLowerIntrinsics must instead process
-    /// them.
+    /// customWriteBarrier - By default, write barriers are replaced with simple
+    ///                      store instructions. If true, then
+    ///                      performCustomLowering must instead lower them.
     bool customWriteBarrier() const { return CustomWriteBarriers; }
     
-    /// By default, read barriers are replaced with simple load instructions.
-    /// If true, then addPassesToCustomLowerIntrinsics must instead process
-    /// them.
+    /// customReadBarrier - By default, read barriers are replaced with simple
+    ///                     load instructions. If true, then
+    ///                     performCustomLowering must instead lower them.
     bool customReadBarrier() const { return CustomReadBarriers; }
     
-    /// By default, roots are left for the code generator. If Custom, then 
-    /// addPassesToCustomLowerIntrinsics must add passes to delete them.
+    /// customRoots - By default, roots are left for the code generator so it
+    ///               can generate a stack map. If true, then
+    //                performCustomLowering must delete them.
     bool customRoots() const { return CustomRoots; }
     
-    /// If set, gcroot intrinsics should initialize their allocas to null. This
-    /// is necessary for most collectors.
+    /// initializeRoots - If set, gcroot intrinsics should initialize their
+    //                    allocas to null before the first use. This is
+    //                    necessary for most GCs and is enabled by default.
     bool initializeRoots() const { return InitRoots; }
     
-    /// If set, appropriate metadata tables must be emitted by the back-end
-    /// (assembler, JIT, or otherwise).
+    /// usesMetadata - If set, appropriate metadata tables must be emitted by
+    ///                the back-end (assembler, JIT, or otherwise).
     bool usesMetadata() const { return UsesMetadata; }
     
     /// begin/end - Iterators for function metadata.
@@ -115,51 +127,15 @@ namespace llvm {
 
     /// insertFunctionMetadata - Creates metadata for a function.
     /// 
-    CollectorMetadata *insertFunctionMetadata(const Function &F);
+    GCFunctionInfo *insertFunctionInfo(const Function &F);
 
     /// initializeCustomLowering/performCustomLowering - If any of the actions
-    /// are set to custom, performCustomLowering must be overriden to create a
-    /// transform to lower those actions to LLVM IR. initializeCustomLowering
-    /// is optional to override. These are the only Collector methods through
+    /// are set to custom, performCustomLowering must be overriden to transform
+    /// the corresponding actions to LLVM IR. initializeCustomLowering is
+    /// optional to override. These are the only GCStrategy methods through
     /// which the LLVM IR can be modified.
     virtual bool initializeCustomLowering(Module &F);
     virtual bool performCustomLowering(Function &F);
-  };
-  
-  // GCMetadataPrinter - Emits GC metadata as assembly code.
-  class GCMetadataPrinter {
-  public:
-    typedef Collector::list_type list_type;
-    typedef Collector::iterator iterator;
-    
-  private:
-    Collector *Coll;
-    
-    friend class AsmPrinter;
-    
-  protected:
-    // May only be subclassed.
-    GCMetadataPrinter();
-    
-    // Do not implement.
-    GCMetadataPrinter(const GCMetadataPrinter &);
-    GCMetadataPrinter &operator=(const GCMetadataPrinter &);
-    
-  public:
-    Collector &getCollector() { return *Coll; }
-    const Module &getModule() const { return Coll->getModule(); }
-    
-    iterator begin() { return Coll->begin(); }
-    iterator end()   { return Coll->end();   }
-    
-    /// beginAssembly/finishAssembly - Emit module metadata as assembly code.
-    virtual void beginAssembly(std::ostream &OS, AsmPrinter &AP,
-                               const TargetAsmInfo &TAI);
-    
-    virtual void finishAssembly(std::ostream &OS, AsmPrinter &AP,
-                                const TargetAsmInfo &TAI);
-    
-    virtual ~GCMetadataPrinter();
   };
   
 }

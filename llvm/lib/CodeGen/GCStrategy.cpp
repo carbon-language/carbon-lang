@@ -1,4 +1,4 @@
-//===-- Collector.cpp - Garbage collection infrastructure -----------------===//
+//===-- GCStrategy.cpp - Garbage collection infrastructure -----------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -9,6 +9,9 @@
 //
 // This file implements target- and collector-independent garbage collection
 // infrastructure.
+//
+// MachineCodeAnalysis identifies the GC safe points in the machine code. Roots
+// are identified in SelectionDAGISel.
 //
 //===----------------------------------------------------------------------===//
 
@@ -31,13 +34,13 @@ namespace {
   
   /// LowerIntrinsics - This pass rewrites calls to the llvm.gcread or
   /// llvm.gcwrite intrinsics, replacing them with simple loads and stores as 
-  /// directed by the Collector. It also performs automatic root initialization
+  /// directed by the GCStrategy. It also performs automatic root initialization
   /// and custom intrinsic lowering.
   class VISIBILITY_HIDDEN LowerIntrinsics : public FunctionPass {
-    static bool NeedsDefaultLoweringPass(const Collector &C);
-    static bool NeedsCustomLoweringPass(const Collector &C);
+    static bool NeedsDefaultLoweringPass(const GCStrategy &C);
+    static bool NeedsCustomLoweringPass(const GCStrategy &C);
     static bool CouldBecomeSafePoint(Instruction *I);
-    bool PerformDefaultLowering(Function &F, Collector &Coll);
+    bool PerformDefaultLowering(Function &F, GCStrategy &Coll);
     static bool InsertRootInitializers(Function &F,
                                        AllocaInst **Roots, unsigned Count);
     
@@ -56,10 +59,10 @@ namespace {
   /// MachineCodeAnalysis - This is a target-independent pass over the machine 
   /// function representation to identify safe points for the garbage collector
   /// in the machine code. It inserts labels at safe points and populates a
-  /// CollectorMetadata record for each function.
+  /// GCMetadata record for each function.
   class VISIBILITY_HIDDEN MachineCodeAnalysis : public MachineFunctionPass {
     const TargetMachine *TM;
-    CollectorMetadata *MD;
+    GCFunctionInfo *FI;
     MachineModuleInfo *MMI;
     const TargetInstrInfo *TII;
     MachineFrameInfo *MFI;
@@ -85,7 +88,14 @@ namespace {
 
 // -----------------------------------------------------------------------------
 
-Collector::Collector() :
+template<> GCRegistry::node *GCRegistry::Head = 0;
+template<> GCRegistry::node *GCRegistry::Tail = 0;
+template<> GCRegistry::listener *GCRegistry::ListenerHead = 0;
+template<> GCRegistry::listener *GCRegistry::ListenerTail = 0;
+
+// -----------------------------------------------------------------------------
+
+GCStrategy::GCStrategy() :
   NeededSafePoints(0),
   CustomReadBarriers(false),
   CustomWriteBarriers(false),
@@ -94,26 +104,26 @@ Collector::Collector() :
   UsesMetadata(false)
 {}
 
-Collector::~Collector() {
+GCStrategy::~GCStrategy() {
   for (iterator I = begin(), E = end(); I != E; ++I)
     delete *I;
   
   Functions.clear();
 }
  
-bool Collector::initializeCustomLowering(Module &M) { return false; }
+bool GCStrategy::initializeCustomLowering(Module &M) { return false; }
  
-bool Collector::performCustomLowering(Function &F) {
+bool GCStrategy::performCustomLowering(Function &F) {
   cerr << "gc " << getName() << " must override performCustomLowering.\n";
   abort();
   return 0;
 }
-    
-CollectorMetadata *Collector::insertFunctionMetadata(const Function &F) {
-  CollectorMetadata *CM = new CollectorMetadata(F, *this);
-  Functions.push_back(CM);
-  return CM;
-} 
+
+GCFunctionInfo *GCStrategy::insertFunctionInfo(const Function &F) {
+  GCFunctionInfo *FI = new GCFunctionInfo(F, *this);
+  Functions.push_back(FI);
+  return FI;
+}
 
 // -----------------------------------------------------------------------------
 
@@ -132,7 +142,7 @@ const char *LowerIntrinsics::getPassName() const {
     
 void LowerIntrinsics::getAnalysisUsage(AnalysisUsage &AU) const {
   FunctionPass::getAnalysisUsage(AU);
-  AU.addRequired<CollectorModuleMetadata>();
+  AU.addRequired<GCModuleInfo>();
 }
 
 /// doInitialization - If this module uses the GC intrinsics, find them now.
@@ -141,15 +151,14 @@ bool LowerIntrinsics::doInitialization(Module &M) {
   //        work against the entire module. But this cannot be done at
   //        runFunction time (initializeCustomLowering likely needs to change
   //        the module).
-  CollectorModuleMetadata *CMM = getAnalysisToUpdate<CollectorModuleMetadata>();
-  assert(CMM && "LowerIntrinsics didn't require CollectorModuleMetadata!?");
+  GCModuleInfo *MI = getAnalysisToUpdate<GCModuleInfo>();
+  assert(MI && "LowerIntrinsics didn't require GCModuleInfo!?");
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
-    if (!I->isDeclaration() && I->hasCollector())
-      CMM->get(*I); // Instantiate the Collector.
+    if (!I->isDeclaration() && I->hasGC())
+      MI->getFunctionInfo(*I); // Instantiate the GC strategy.
   
   bool MadeChange = false;
-  for (CollectorModuleMetadata::iterator I = CMM->begin(),
-                                         E = CMM->end(); I != E; ++I)
+  for (GCModuleInfo::iterator I = MI->begin(), E = MI->end(); I != E; ++I)
     if (NeedsCustomLoweringPass(**I))
       if ((*I)->initializeCustomLowering(M))
         MadeChange = true;
@@ -185,7 +194,7 @@ bool LowerIntrinsics::InsertRootInitializers(Function &F, AllocaInst **Roots,
   return MadeChange;
 }
 
-bool LowerIntrinsics::NeedsDefaultLoweringPass(const Collector &C) {
+bool LowerIntrinsics::NeedsDefaultLoweringPass(const GCStrategy &C) {
   // Default lowering is necessary only if read or write barriers have a default
   // action. The default for roots is no action.
   return !C.customWriteBarrier()
@@ -193,7 +202,7 @@ bool LowerIntrinsics::NeedsDefaultLoweringPass(const Collector &C) {
       || C.initializeRoots();
 }
 
-bool LowerIntrinsics::NeedsCustomLoweringPass(const Collector &C) {
+bool LowerIntrinsics::NeedsCustomLoweringPass(const GCStrategy &C) {
   // Custom lowering is only necessary if enabled for some action.
   return C.customWriteBarrier()
       || C.customReadBarrier()
@@ -232,26 +241,27 @@ bool LowerIntrinsics::CouldBecomeSafePoint(Instruction *I) {
 /// Leave gcroot intrinsics; the code generator needs to see those.
 bool LowerIntrinsics::runOnFunction(Function &F) {
   // Quick exit for functions that do not use GC.
-  if (!F.hasCollector()) return false;
+  if (!F.hasGC())
+    return false;
   
-  CollectorMetadata &MD = getAnalysis<CollectorModuleMetadata>().get(F);
-  Collector &Coll = MD.getCollector();
+  GCFunctionInfo &FI = getAnalysis<GCModuleInfo>().getFunctionInfo(F);
+  GCStrategy &S = FI.getStrategy();
   
   bool MadeChange = false;
   
-  if (NeedsDefaultLoweringPass(Coll))
-    MadeChange |= PerformDefaultLowering(F, Coll);
+  if (NeedsDefaultLoweringPass(S))
+    MadeChange |= PerformDefaultLowering(F, S);
   
-  if (NeedsCustomLoweringPass(Coll))
-    MadeChange |= Coll.performCustomLowering(F);
+  if (NeedsCustomLoweringPass(S))
+    MadeChange |= S.performCustomLowering(F);
   
   return MadeChange;
 }
 
-bool LowerIntrinsics::PerformDefaultLowering(Function &F, Collector &Coll) {
-  bool LowerWr = !Coll.customWriteBarrier();
-  bool LowerRd = !Coll.customReadBarrier();
-  bool InitRoots = Coll.initializeRoots();
+bool LowerIntrinsics::PerformDefaultLowering(Function &F, GCStrategy &S) {
+  bool LowerWr = !S.customWriteBarrier();
+  bool LowerRd = !S.customReadBarrier();
+  bool InitRoots = S.initializeRoots();
   
   SmallVector<AllocaInst*,32> Roots;
   
@@ -320,7 +330,7 @@ void MachineCodeAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
   MachineFunctionPass::getAnalysisUsage(AU);
   AU.setPreservesAll();
   AU.addRequired<MachineModuleInfo>();
-  AU.addRequired<CollectorModuleMetadata>();
+  AU.addRequired<GCModuleInfo>();
 }
 
 unsigned MachineCodeAnalysis::InsertLabel(MachineBasicBlock &MBB, 
@@ -336,11 +346,11 @@ void MachineCodeAnalysis::VisitCallPoint(MachineBasicBlock::iterator CI) {
   MachineBasicBlock::iterator RAI = CI; 
   ++RAI;                                
   
-  if (MD->getCollector().needsSafePoint(GC::PreCall))
-    MD->addSafePoint(GC::PreCall, InsertLabel(*CI->getParent(), CI));
+  if (FI->getStrategy().needsSafePoint(GC::PreCall))
+    FI->addSafePoint(GC::PreCall, InsertLabel(*CI->getParent(), CI));
   
-  if (MD->getCollector().needsSafePoint(GC::PostCall))
-    MD->addSafePoint(GC::PostCall, InsertLabel(*CI->getParent(), RAI));
+  if (FI->getStrategy().needsSafePoint(GC::PostCall))
+    FI->addSafePoint(GC::PostCall, InsertLabel(*CI->getParent(), RAI));
 }
 
 void MachineCodeAnalysis::FindSafePoints(MachineFunction &MF) {
@@ -357,18 +367,19 @@ void MachineCodeAnalysis::FindStackOffsets(MachineFunction &MF) {
   uint64_t OffsetAdjustment = MFI->getOffsetAdjustment();
   uint64_t OffsetOfLocalArea = TM->getFrameInfo()->getOffsetOfLocalArea();
   
-  for (CollectorMetadata::roots_iterator RI = MD->roots_begin(),
-                                         RE = MD->roots_end(); RI != RE; ++RI)
+  for (GCFunctionInfo::roots_iterator RI = FI->roots_begin(),
+                                      RE = FI->roots_end(); RI != RE; ++RI)
     RI->StackOffset = MFI->getObjectOffset(RI->Num) + StackSize
                       - OffsetOfLocalArea + OffsetAdjustment;
 }
 
 bool MachineCodeAnalysis::runOnMachineFunction(MachineFunction &MF) {
   // Quick exit for functions that do not use GC.
-  if (!MF.getFunction()->hasCollector()) return false;
+  if (!MF.getFunction()->hasGC())
+    return false;
   
-  MD = &getAnalysis<CollectorModuleMetadata>().get(*MF.getFunction());
-  if (!MD->getCollector().needsSafePoints())
+  FI = &getAnalysis<GCModuleInfo>().getFunctionInfo(*MF.getFunction());
+  if (!FI->getStrategy().needsSafePoints())
     return false;
   
   TM = &MF.getTarget();
@@ -377,7 +388,7 @@ bool MachineCodeAnalysis::runOnMachineFunction(MachineFunction &MF) {
   MFI = MF.getFrameInfo();
   
   // Find the size of the stack frame.
-  MD->setFrameSize(MFI->getStackSize());
+  FI->setFrameSize(MFI->getStackSize());
   
   // Find all safe points.
   FindSafePoints(MF);

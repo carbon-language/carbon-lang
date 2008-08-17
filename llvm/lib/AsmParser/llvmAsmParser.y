@@ -2393,7 +2393,7 @@ FunctionHeaderH : OptCallingConv ResultTypes GlobalName '(' ArgList ')'
     delete $8;
   }
   if ($10) {
-    Fn->setCollector($10->c_str());
+    Fn->setGC($10->c_str());
     delete $10;
   }
 

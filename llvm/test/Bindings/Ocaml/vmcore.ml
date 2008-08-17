@@ -569,16 +569,16 @@ let test_functions () =
   insist (CallConv.fast = function_call_conv fn);
   ignore (build_unreachable (builder_at_end (entry_block fn)));
   
-  begin group "collector";
+  begin group "gc";
     (* RUN: grep {Fn6.*gc.*shadowstack} < %t.ll
      *)
     let fn = define_function "Fn6" ty m in
-    insist (None = collector fn);
-    set_collector (Some "ocaml") fn;
-    insist (Some "ocaml" = collector fn);
-    set_collector None fn;
-    insist (None = collector fn);
-    set_collector (Some "shadowstack") fn;
+    insist (None = gc fn);
+    set_gc (Some "ocaml") fn;
+    insist (Some "ocaml" = gc fn);
+    set_gc None fn;
+    insist (None = gc fn);
+    set_gc (Some "shadowstack") fn;
     ignore (build_unreachable (builder_at_end (entry_block fn)));
   end;
   

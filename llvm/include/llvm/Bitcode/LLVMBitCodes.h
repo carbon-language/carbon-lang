@@ -60,7 +60,7 @@ namespace bitc {
     /// MODULE_CODE_PURGEVALS: [numvals]
     MODULE_CODE_PURGEVALS   = 10,
     
-    MODULE_CODE_COLLECTORNAME = 11   // COLLECTORNAME: [strchr x N]
+    MODULE_CODE_GCNAME      = 11   // GCNAME: [strchr x N]
   };
   
   /// PARAMATTR blocks have code for defining a parameter attribute set.

@@ -643,13 +643,13 @@ CAMLprim value llvm_set_function_call_conv(value Id, LLVMValueRef Fn) {
 }
 
 /* llvalue -> string option */
-CAMLprim value llvm_collector(LLVMValueRef Fn) {
-  const char *Collector;
+CAMLprim value llvm_gc(LLVMValueRef Fn) {
+  const char *GC;
   CAMLparam0();
   CAMLlocal2(Name, Option);
   
-  if ((Collector = LLVMGetCollector(Fn))) {
-    Name = copy_string(Collector);
+  if ((GC = LLVMGetGC(Fn))) {
+    Name = copy_string(GC);
     
     Option = alloc(1, 0);
     Field(Option, 0) = Name;
@@ -660,8 +660,8 @@ CAMLprim value llvm_collector(LLVMValueRef Fn) {
 }
 
 /* string option -> llvalue -> unit */
-CAMLprim value llvm_set_collector(value GC, LLVMValueRef Fn) {
-  LLVMSetCollector(Fn, GC == Val_int(0)? 0 : String_val(Field(GC, 0)));
+CAMLprim value llvm_set_gc(value GC, LLVMValueRef Fn) {
+  LLVMSetGC(Fn, GC == Val_int(0)? 0 : String_val(Field(GC, 0)));
   return Val_unit;
 }
 

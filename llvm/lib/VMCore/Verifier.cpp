@@ -1308,8 +1308,8 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
         break;
       }
       
-      Assert1(CI.getParent()->getParent()->hasCollector(),
-              "Enclosing function does not specify a collector algorithm.",
+      Assert1(CI.getParent()->getParent()->hasGC(),
+              "Enclosing function does not use GC.",
               &CI);
     } break;
   case Intrinsic::init_trampoline:

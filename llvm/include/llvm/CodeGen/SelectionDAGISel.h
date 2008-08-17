@@ -29,7 +29,7 @@ namespace llvm {
   class TargetLowering;
   class FunctionLoweringInfo;
   class HazardRecognizer;
-  class CollectorMetadata;
+  class GCFunctionInfo;
   class ScheduleDAG;
  
 /// SelectionDAGISel - This is the common base class used for SelectionDAG-based
@@ -41,13 +41,13 @@ public:
   SelectionDAG *CurDAG;
   MachineBasicBlock *BB;
   AliasAnalysis *AA;
-  CollectorMetadata *GCI;
+  GCFunctionInfo *GFI;
   bool Fast;
   std::vector<SDNode*> TopOrder;
   static char ID;
 
   explicit SelectionDAGISel(TargetLowering &tli, bool fast = false) : 
-    FunctionPass((intptr_t)&ID), TLI(tli), GCI(0), Fast(fast), DAGSize(0) {}
+    FunctionPass((intptr_t)&ID), TLI(tli), GFI(), Fast(fast), DAGSize(0) {}
   
   TargetLowering &getTargetLowering() { return TLI; }
 

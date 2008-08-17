@@ -1,4 +1,4 @@
-//===-- ShadowStackCollector.cpp - GC support for uncooperative targets ---===//
+//===-- ShadowStackGC.cpp - GC support for uncooperative targets ----------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -9,7 +9,7 @@
 //
 // This file implements lowering for the llvm.gc* intrinsics for targets that do
 // not natively support them (which includes the C backend). Note that the code
-// generated is not quite as efficient as collectors which generate stack maps
+// generated is not quite as efficient as algorithms which generate stack maps
 // to identify roots.
 //
 // This pass implements the code transformation described in this paper:
@@ -17,7 +17,7 @@
 //   Fergus Henderson, ISMM, 2002
 //
 // In runtime/GC/SemiSpace.cpp is a prototype runtime which is compatible with
-// this collector.
+// ShadowStackGC.
 //
 // In order to support this particular transformation, all stack roots are
 // coallocated in the stack. This allows a fully target-independent stack map
@@ -37,7 +37,7 @@ using namespace llvm;
 
 namespace {
   
-  class VISIBILITY_HIDDEN ShadowStackCollector : public Collector {
+  class VISIBILITY_HIDDEN ShadowStackGC : public GCStrategy {
     /// RootChain - This is the global linked-list that contains the chain of GC
     /// roots.
     GlobalVariable *Head;
@@ -51,7 +51,7 @@ namespace {
     std::vector<std::pair<CallInst*,AllocaInst*> > Roots;
     
   public:
-    ShadowStackCollector();
+    ShadowStackGC();
     
     bool initializeCustomLowering(Module &M);
     bool performCustomLowering(Function &F);
@@ -69,9 +69,8 @@ namespace {
 
 }
   
-static CollectorRegistry::Add<ShadowStackCollector>
-Y("shadow-stack",
-  "Very portable collector for uncooperative code generators");
+static GCRegistry::Add<ShadowStackGC>
+X("shadow-stack", "Very portable GC for uncooperative code generators");
   
 namespace {
   /// EscapeEnumerator - This is a little algorithm to find all escape points
@@ -173,21 +172,18 @@ namespace {
       }
     }
   };
-
 }
 
 // -----------------------------------------------------------------------------
 
-Collector *llvm::createShadowStackCollector() {
-  return new ShadowStackCollector();
-}
+void llvm::linkShadowStackGC() { }
 
-ShadowStackCollector::ShadowStackCollector() : Head(0), StackEntryTy(0) {
+ShadowStackGC::ShadowStackGC() : Head(0), StackEntryTy(0) {
   InitRoots = true;
   CustomRoots = true;
 }
 
-Constant *ShadowStackCollector::GetFrameMap(Function &F) {
+Constant *ShadowStackGC::GetFrameMap(Function &F) {
   // doInitialization creates the abstract type of this value.
   
   Type *VoidPtr = PointerType::getUnqual(Type::Int8Ty);
@@ -242,7 +238,7 @@ Constant *ShadowStackCollector::GetFrameMap(Function &F) {
   return ConstantExpr::getGetElementPtr(GV, GEPIndices, 2);
 }
 
-const Type* ShadowStackCollector::GetConcreteStackEntryType(Function &F) {
+const Type* ShadowStackGC::GetConcreteStackEntryType(Function &F) {
   // doInitialization creates the generic version of this type.
   std::vector<const Type*> EltTys;
   EltTys.push_back(StackEntryTy);
@@ -259,7 +255,7 @@ const Type* ShadowStackCollector::GetConcreteStackEntryType(Function &F) {
 
 /// doInitialization - If this module uses the GC intrinsics, find them now. If
 /// not, exit fast.
-bool ShadowStackCollector::initializeCustomLowering(Module &M) {
+bool ShadowStackGC::initializeCustomLowering(Module &M) {
   // struct FrameMap {
   //   int32_t NumRoots; // Number of roots in stack frame.
   //   int32_t NumMeta;  // Number of metadata descriptors. May be < NumRoots.
@@ -307,13 +303,13 @@ bool ShadowStackCollector::initializeCustomLowering(Module &M) {
   return true;
 }
 
-bool ShadowStackCollector::IsNullValue(Value *V) {
+bool ShadowStackGC::IsNullValue(Value *V) {
   if (Constant *C = dyn_cast<Constant>(V))
     return C->isNullValue();
   return false;
 }
 
-void ShadowStackCollector::CollectRoots(Function &F) {
+void ShadowStackGC::CollectRoots(Function &F) {
   // FIXME: Account for original alignment. Could fragment the root array.
   //   Approach 1: Null initialize empty slots at runtime. Yuck.
   //   Approach 2: Emit a map of the array instead of just a count.
@@ -341,8 +337,8 @@ void ShadowStackCollector::CollectRoots(Function &F) {
 }
 
 GetElementPtrInst *
-ShadowStackCollector::CreateGEP(IRBuilder<> &B, Value *BasePtr,
-                                int Idx, int Idx2, const char *Name) {
+ShadowStackGC::CreateGEP(IRBuilder<> &B, Value *BasePtr,
+                         int Idx, int Idx2, const char *Name) {
   Value *Indices[] = { ConstantInt::get(Type::Int32Ty, 0),
                        ConstantInt::get(Type::Int32Ty, Idx),
                        ConstantInt::get(Type::Int32Ty, Idx2) };
@@ -354,8 +350,8 @@ ShadowStackCollector::CreateGEP(IRBuilder<> &B, Value *BasePtr,
 }
 
 GetElementPtrInst *
-ShadowStackCollector::CreateGEP(IRBuilder<> &B, Value *BasePtr,
-                                int Idx, const char *Name) {
+ShadowStackGC::CreateGEP(IRBuilder<> &B, Value *BasePtr,
+                         int Idx, const char *Name) {
   Value *Indices[] = { ConstantInt::get(Type::Int32Ty, 0),
                        ConstantInt::get(Type::Int32Ty, Idx) };
   Value *Val = B.CreateGEP(BasePtr, Indices, Indices + 2, Name);
@@ -366,7 +362,7 @@ ShadowStackCollector::CreateGEP(IRBuilder<> &B, Value *BasePtr,
 }
 
 /// runOnFunction - Insert code to maintain the shadow stack.
-bool ShadowStackCollector::performCustomLowering(Function &F) {
+bool ShadowStackGC::performCustomLowering(Function &F) {
   // Find calls to llvm.gcroot.
   CollectRoots(F);
   
@@ -405,9 +401,10 @@ bool ShadowStackCollector::performCustomLowering(Function &F) {
     OriginalAlloca->replaceAllUsesWith(SlotPtr);
   }
   
-  // Move past the original stores inserted by Collector::InitRoots. This isn't
-  // really necessary (the collector would never see the intermediate state),
-  // but it's nicer not to push the half-initialized entry onto the stack.
+  // Move past the original stores inserted by GCStrategy::InitRoots. This isn't
+  // really necessary (the collector would never see the intermediate state at
+  // runtime), but it's nicer not to push the half-initialized entry onto the
+  // shadow stack.
   while (isa<StoreInst>(IP)) ++IP;
   AtEntry.SetInsertPoint(IP->getParent(), IP);
   

@@ -1660,6 +1660,6 @@ bool MSILTarget::addPassesToEmitWholeFile(PassManager &PM, std::ostream &o,
   PM.add(createCFGSimplificationPass());
   PM.add(new MSILModule(Writer->UsedTypes,Writer->TD));
   PM.add(Writer);
-  PM.add(createCollectorMetadataDeleter());
+  PM.add(createGCInfoDeleter());
   return false;
 }
