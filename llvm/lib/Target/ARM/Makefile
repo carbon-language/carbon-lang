@@ -8,7 +8,7 @@
 ##===----------------------------------------------------------------------===##
 
 LEVEL = ../../..
-LIBRARYNAME = LLVMARM
+LIBRARYNAME = LLVMARMCodeGen
 TARGET = ARM
 
 # Make sure that tblgen is run, first thing.
@@ -16,5 +16,7 @@ BUILT_SOURCES = ARMGenRegisterInfo.h.inc ARMGenRegisterNames.inc \
                 ARMGenRegisterInfo.inc ARMGenInstrNames.inc \
                 ARMGenInstrInfo.inc ARMGenAsmWriter.inc \
                 ARMGenDAGISel.inc ARMGenSubtarget.inc
+
+DIRS = AsmPrinter
 
 include $(LEVEL)/Makefile.common

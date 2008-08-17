@@ -174,16 +174,6 @@ namespace {
 
 #include "ARMGenAsmWriter.inc"
 
-/// createARMCodePrinterPass - Returns a pass that prints the ARM
-/// assembly code for a MachineFunction to the given output stream,
-/// using the given target machine description.  This should work
-/// regardless of whether the function is in SSA form.
-///
-FunctionPass *llvm::createARMCodePrinterPass(std::ostream &o,
-                                             ARMTargetMachine &tm) {
-  return new ARMAsmPrinter(o, tm, tm.getTargetAsmInfo());
-}
-
 // Substitute old hook with new one temporary
 std::string ARMAsmPrinter::getSectionForFunction(const Function &F) const {
   return TAI->SectionForGlobal(&F);
@@ -1027,4 +1017,22 @@ bool ARMAsmPrinter::doFinalization(Module &M) {
   }
 
   return AsmPrinter::doFinalization(M);
+}
+
+/// createARMCodePrinterPass - Returns a pass that prints the ARM
+/// assembly code for a MachineFunction to the given output stream,
+/// using the given target machine description.  This should work
+/// regardless of whether the function is in SSA form.
+///
+FunctionPass *llvm::createARMCodePrinterPass(std::ostream &o,
+                                             ARMTargetMachine &tm) {
+  return new ARMAsmPrinter(o, tm, tm.getTargetAsmInfo());
+}
+
+namespace {
+  static struct Register {
+    Register() {
+      ARMTargetMachine::registerAsmPrinter(createARMCodePrinterPass);
+    }
+  } Registrator;
 }

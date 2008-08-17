@@ -31,6 +31,9 @@ static cl::opt<bool> DisableIfConversion("disable-arm-if-conversion",cl::Hidden,
 static RegisterTarget<ARMTargetMachine>   X("arm",   "  ARM");
 static RegisterTarget<ThumbTargetMachine> Y("thumb", "  Thumb");
 
+// No assembler printer by default
+ARMTargetMachine::AsmPrinterCtorFn ARMTargetMachine::AsmPrinterCtor = 0;
+
 /// ThumbTargetMachine - Create an Thumb architecture model.
 ///
 unsigned ThumbTargetMachine::getJITMatchQuality() {
@@ -142,7 +145,10 @@ bool ARMTargetMachine::addPreEmitPass(PassManagerBase &PM, bool Fast) {
 bool ARMTargetMachine::addAssemblyEmitter(PassManagerBase &PM, bool Fast,
                                           std::ostream &Out) {
   // Output assembly language.
-  PM.add(createARMCodePrinterPass(Out, *this));
+  assert(AsmPrinterCtor && "AsmPrinter was not linked in");
+  if (AsmPrinterCtor)
+    PM.add(AsmPrinterCtor(Out, *this));
+
   return false;
 }
 
@@ -154,8 +160,12 @@ bool ARMTargetMachine::addCodeEmitter(PassManagerBase &PM, bool Fast,
 
   // Machine code emitter pass for ARM.
   PM.add(createARMCodeEmitterPass(*this, MCE));
-  if (DumpAsm)
-    PM.add(createARMCodePrinterPass(*cerr.stream(), *this));
+  if (DumpAsm) {
+    assert(AsmPrinterCtor && "AsmPrinter was not linked in");
+    if (AsmPrinterCtor)
+      PM.add(AsmPrinterCtor(*cerr.stream(), *this));
+  }
+
   return false;
 }
 
@@ -163,7 +173,11 @@ bool ARMTargetMachine::addSimpleCodeEmitter(PassManagerBase &PM, bool Fast,
                                         bool DumpAsm, MachineCodeEmitter &MCE) {
   // Machine code emitter pass for ARM.
   PM.add(createARMCodeEmitterPass(*this, MCE));
-  if (DumpAsm)
-    PM.add(createARMCodePrinterPass(*cerr.stream(), *this));
+  if (DumpAsm) {
+    assert(AsmPrinterCtor && "AsmPrinter was not linked in");
+    if (AsmPrinterCtor)
+      PM.add(AsmPrinterCtor(*cerr.stream(), *this));
+  }
+
   return false;
 }

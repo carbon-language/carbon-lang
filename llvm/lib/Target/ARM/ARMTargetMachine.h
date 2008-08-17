@@ -35,6 +35,13 @@ class ARMTargetMachine : public LLVMTargetMachine {
   ARMJITInfo        JITInfo;
   ARMTargetLowering TLInfo;
 
+protected:
+  // To avoid having target depend on the asmprinter stuff libraries, asmprinter
+  // set this functions to ctor pointer at startup time if they are linked in.
+  typedef FunctionPass *(*AsmPrinterCtorFn)(std::ostream &o,
+                                            ARMTargetMachine &tm);
+  static AsmPrinterCtorFn AsmPrinterCtor;
+
 public:
   ARMTargetMachine(const Module &M, const std::string &FS, bool isThumb = false);
 
@@ -46,18 +53,23 @@ public:
   }
   virtual const TargetData       *getTargetData() const { return &DataLayout; }
   virtual const ARMSubtarget  *getSubtargetImpl() const { return &Subtarget; }
-  virtual       ARMTargetLowering *getTargetLowering() const { 
-    return const_cast<ARMTargetLowering*>(&TLInfo); 
+  virtual       ARMTargetLowering *getTargetLowering() const {
+    return const_cast<ARMTargetLowering*>(&TLInfo);
   }
+
+  static void registerAsmPrinter(AsmPrinterCtorFn F) {
+    AsmPrinterCtor = F;
+  }
+
   static unsigned getModuleMatchQuality(const Module &M);
   static unsigned getJITMatchQuality();
 
   virtual const TargetAsmInfo *createTargetAsmInfo() const;
-  
+
   // Pass Pipeline Configuration
   virtual bool addInstSelector(PassManagerBase &PM, bool Fast);
   virtual bool addPreEmitPass(PassManagerBase &PM, bool Fast);
-  virtual bool addAssemblyEmitter(PassManagerBase &PM, bool Fast, 
+  virtual bool addAssemblyEmitter(PassManagerBase &PM, bool Fast,
                                   std::ostream &Out);
   virtual bool addCodeEmitter(PassManagerBase &PM, bool Fast,
                               bool DumpAsm, MachineCodeEmitter &MCE);
