@@ -24,6 +24,7 @@ using namespace llvm;
 
 /* Assumed in hexadecimal significand parsing, and conversion to
    hexadecimal strings.  */
+#define COMPILE_TIME_ASSERT(cond) extern int CTAssert[(cond) ? 1 : -1]
 COMPILE_TIME_ASSERT(integerPartWidth % 4 == 0);
 
 namespace llvm {

@@ -94,14 +94,6 @@ APInt::APInt(uint32_t numbits, const char StrStart[], uint32_t slen,
   fromString(numbits, StrStart, slen, radix);
 }
 
-APInt::APInt(uint32_t numbits, const std::string& Val, uint8_t radix)
-  : BitWidth(numbits), VAL(0) {
-  assert(BitWidth >= MIN_INT_BITS && "bitwidth too small");
-  assert(BitWidth <= MAX_INT_BITS && "bitwidth too large");
-  assert(!Val.empty() && "String empty?");
-  fromString(numbits, Val.c_str(), (uint32_t)Val.size(), radix);
-}
-
 APInt::APInt(const APInt& that)
   : BitWidth(that.BitWidth), VAL(0) {
   assert(BitWidth >= MIN_INT_BITS && "bitwidth too small");
@@ -2122,6 +2114,7 @@ void APInt::dump() const
 
 /* Assumed by lowHalf, highHalf, partMSB and partLSB.  A fairly safe
    and unrestricting assumption.  */
+#define COMPILE_TIME_ASSERT(cond) extern int CTAssert[(cond) ? 1 : -1]
 COMPILE_TIME_ASSERT(integerPartWidth % 2 == 0);
 
 /* Some handy functions local to this file.  */

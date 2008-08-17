@@ -19,8 +19,6 @@
 #include <cassert>
 #include <string>
 
-#define COMPILE_TIME_ASSERT(cond) extern int CTAssert[(cond) ? 1 : -1]
-
 namespace llvm {
   class Serializer;
   class Deserializer;
@@ -179,17 +177,6 @@ public:
   /// @param bigVal a sequence of words to form the initial value of the APInt
   /// @brief Construct an APInt of numBits width, initialized as bigVal[].
   APInt(uint32_t numBits, uint32_t numWords, const uint64_t bigVal[]);
-
-  /// This constructor interprets Val as a string in the given radix. The 
-  /// interpretation stops when the first charater that is not suitable for the
-  /// radix is encountered. Acceptable radix values are 2, 8, 10 and 16. It is
-  /// an error for the value implied by the string to require more bits than 
-  /// numBits.
-  /// @param numBits the bit width of the constructed APInt
-  /// @param val the string to be interpreted
-  /// @param radix the radix of Val to use for the intepretation
-  /// @brief Construct an APInt from a string representation.
-  APInt(uint32_t numBits, const std::string& val, uint8_t radix);
 
   /// This constructor interprets the slen characters starting at StrStart as
   /// a string in the given radix. The interpretation stops when the first 
