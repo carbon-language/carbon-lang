@@ -5503,14 +5503,25 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
             return new ICmpInst(I.getPredicate(), Op0I->getOperand(0),
                                 Op1I->getOperand(0));
           } else {
-            // icmp u/s (a ^ signbit), (b ^ signbit) --> icmp s/u a, b
             if (ConstantInt *CI = dyn_cast<ConstantInt>(Op0I->getOperand(1))) {
+              // icmp u/s (a ^ signbit), (b ^ signbit) --> icmp s/u a, b
               if (CI->getValue().isSignBit()) {
                 ICmpInst::Predicate Pred = I.isSignedPredicate()
                                                ? I.getUnsignedPredicate()
                                                : I.getSignedPredicate();
                 return new ICmpInst(Pred, Op0I->getOperand(0),
                                     Op1I->getOperand(0));
+              }
+
+              // icmp u/s (a ^ ~signbit), (b ^ ~signbit) --> icmp s/u b, a
+              if ((~CI->getValue()).isSignBit()) {
+                ICmpInst::Predicate Pred = I.isSignedPredicate()
+                                               ? I.getUnsignedPredicate()
+                                               : I.getSignedPredicate();
+                Pred = I.getSwappedPredicate(Pred);
+                return new ICmpInst(Pred, Op0I->getOperand(0),
+                                    Op1I->getOperand(0));
+
               }
             }
           }
@@ -5817,6 +5828,17 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
                                        : ICI.getSignedPredicate();
         return new ICmpInst(Pred, LHSI->getOperand(0),
                             ConstantInt::get(RHSV ^ SignBit));
+      }
+
+      // (icmp u/s (xor A ~SignBit), C) -> (icmp ~s/u A, (xor C ~SignBit))
+      if (!ICI.isEquality() && (~XorCST->getValue()).isSignBit()) {
+        const APInt &NotSignBit = XorCST->getValue();
+        ICmpInst::Predicate Pred = ICI.isSignedPredicate()
+                                       ? ICI.getUnsignedPredicate()
+                                       : ICI.getSignedPredicate();
+        Pred = ICI.getSwappedPredicate(Pred);
+        return new ICmpInst(Pred, LHSI->getOperand(0),
+                            ConstantInt::get(RHSV ^ NotSignBit));
       }
     }
     break;
