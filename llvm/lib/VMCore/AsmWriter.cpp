@@ -193,24 +193,19 @@ static std::string QuoteNameIfNeeded(const std::string &Name) {
   return result;
 }
 
+/// getLLVMName - Turn the specified string into an 'LLVM name', which is either
+/// prefixed with % (if the string only contains simple characters) or is
+/// surrounded with ""'s (if it has special chars in it).
+static std::string getLLVMName(const std::string &Name) {
+  assert(!Name.empty() && "Cannot get empty name!");
+  return '%' + QuoteNameIfNeeded(Name);
+}
+
 enum PrefixType {
   GlobalPrefix,
   LabelPrefix,
   LocalPrefix
 };
-
-/// getLLVMName - Turn the specified string into an 'LLVM name', which is either
-/// prefixed with % (if the string only contains simple characters) or is
-/// surrounded with ""'s (if it has special chars in it).
-static std::string getLLVMName(const std::string &Name, PrefixType Prefix) {
-  assert(!Name.empty() && "Cannot get empty name!");
-  switch (Prefix) {
-  default: assert(0 && "Bad prefix!");
-  case GlobalPrefix: return '@' + QuoteNameIfNeeded(Name);
-  case LabelPrefix:  return QuoteNameIfNeeded(Name);
-  case LocalPrefix:  return '%' + QuoteNameIfNeeded(Name);
-  }      
-}
 
 /// PrintLLVMName - Turn the specified name into an 'LLVM name', which is either
 /// prefixed with % (if the string only contains simple characters) or is
@@ -296,7 +291,7 @@ static void fillTypeNameTable(const Module *M,
         !cast<PointerType>(Ty)->getElementType()->isPrimitiveType() ||
         !cast<PointerType>(Ty)->getElementType()->isInteger() ||
         isa<OpaqueType>(cast<PointerType>(Ty)->getElementType()))
-      TypeNames.insert(std::make_pair(Ty, getLLVMName(TI->first, LocalPrefix)));
+      TypeNames.insert(std::make_pair(Ty, getLLVMName(TI->first)));
   }
 }
 
@@ -1085,7 +1080,7 @@ void AssemblyWriter::printTypeSymbolTable(const TypeSymbolTable &ST) {
   // Print the types.
   for (TypeSymbolTable::const_iterator TI = ST.begin(), TE = ST.end();
        TI != TE; ++TI) {
-    Out << "\t" << getLLVMName(TI->first, LocalPrefix) << " = type ";
+    Out << "\t" << getLLVMName(TI->first) << " = type ";
 
     // Make sure we print out at least one level of the type structure, so
     // that we do not get %FILE = type %FILE
