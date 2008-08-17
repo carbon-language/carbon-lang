@@ -66,10 +66,10 @@ public:
   }
   
   raw_ostream &operator<<(const char *Str) {
-    return OutputData(Str, strlen(Str));
+    return write(Str, strlen(Str));
   }
   
-  raw_ostream &OutputData(const char *Ptr, unsigned Size) {
+  raw_ostream &write(const char *Ptr, unsigned Size) {
     if (OutBufCur+Size > OutBufEnd)
       flush_impl();
     

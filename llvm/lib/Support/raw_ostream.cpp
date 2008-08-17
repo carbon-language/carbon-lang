@@ -51,7 +51,7 @@ raw_fd_ostream::~raw_fd_ostream() {
 
 void raw_fd_ostream::flush_impl() {
   if (OutBufCur-OutBufStart)
-    write(FD, OutBufStart, OutBufCur-OutBufStart);
+    ::write(FD, OutBufStart, OutBufCur-OutBufStart);
   HandleFlush();
 }
 
