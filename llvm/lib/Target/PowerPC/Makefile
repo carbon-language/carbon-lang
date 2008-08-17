@@ -7,7 +7,7 @@
 # 
 ##===----------------------------------------------------------------------===##
 LEVEL = ../../..
-LIBRARYNAME = LLVMPowerPCCodegen
+LIBRARYNAME = LLVMPowerPCCodeGen
 TARGET = PPC
 
 # Make sure that tblgen is run, first thing.
