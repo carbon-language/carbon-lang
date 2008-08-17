@@ -5241,20 +5241,6 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
       return new ICmpInst(I.getPredicate(), A, B);
     }
     
-    ConstantInt *CI2;
-    // (icmp u/s (xor A SignBit), C) -> (icmp s/u A, (xor C SignBit))
-    if (!I.isEquality() &&
-        match(Op0, m_Xor(m_Value(A), m_ConstantInt(CI2)))) {
-      if (CI2->getValue().isSignBit()) {
-        const APInt &SignBit = CI2->getValue();
-        ICmpInst::Predicate Pred = I.isSignedPredicate()
-                                       ? I.getUnsignedPredicate()
-                                       : I.getSignedPredicate();
-        return new ICmpInst(Pred, A,
-                            ConstantInt::get(CI->getValue() ^ SignBit));
-      }
-    }
-
     // If we have a icmp le or icmp ge instruction, turn it into the appropriate
     // icmp lt or icmp gt instruction.  This allows us to rely on them being
     // folded in the code below.
@@ -5821,6 +5807,16 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
           return new ICmpInst(ICmpInst::ICMP_SGT, CompareVal, SubOne(RHS));
         else
           return new ICmpInst(ICmpInst::ICMP_SLT, CompareVal, AddOne(RHS));
+      }
+
+      // (icmp u/s (xor A SignBit), C) -> (icmp s/u A, (xor C SignBit))
+      if (!ICI.isEquality() && XorCST->getValue().isSignBit()) {
+        const APInt &SignBit = XorCST->getValue();
+        ICmpInst::Predicate Pred = ICI.isSignedPredicate()
+                                       ? ICI.getUnsignedPredicate()
+                                       : ICI.getSignedPredicate();
+        return new ICmpInst(Pred, LHSI->getOperand(0),
+                            ConstantInt::get(RHSV ^ SignBit));
       }
     }
     break;
