@@ -211,6 +211,72 @@ static std::string getLLVMName(const std::string &Name, PrefixType Prefix) {
   }      
 }
 
+/// PrintLLVMName - Turn the specified name into an 'LLVM name', which is either
+/// prefixed with % (if the string only contains simple characters) or is
+/// surrounded with ""'s (if it has special chars in it).  Print it out.
+static void PrintLLVMName(std::ostream &OS, const ValueName *Name,
+                          PrefixType Prefix) {
+  assert(Name && "Cannot get empty name!");
+  switch (Prefix) {
+  default: assert(0 && "Bad prefix!");
+  case GlobalPrefix: OS << '@'; break;
+  case LabelPrefix:  break;
+  case LocalPrefix:  OS << '%'; break;
+  }      
+  
+  // Scan the name to see if it needs quotes first.
+  const char *NameStr = Name->getKeyData();
+  unsigned NameLen = Name->getKeyLength();
+  
+  bool NeedsQuotes = NameStr[0] >= '0' && NameStr[0] <= '9';
+  if (!NeedsQuotes) {
+    for (unsigned i = 0; i != NameLen; ++i) {
+      char C = NameStr[i];
+      if (!isalnum(C) && C != '-' && C != '.' && C != '_') {
+        NeedsQuotes = true;
+        break;
+      }
+    }
+  }
+
+  // If we didn't need any quotes, just write out the name in one blast.
+  if (!NeedsQuotes) {
+    OS.write(NameStr, NameLen);
+    return;
+  }
+  
+  // Okay, we need quotes.  Output the quotes and escape any scary characters as
+  // needed.
+  OS << '"';
+  for (unsigned i = 0; i != NameLen; ++i) {
+    char C = NameStr[i];
+    assert(C != '"' && "Illegal character in LLVM value name!");
+    if (C == '\\') {
+      OS << "\\\\";
+    } else if (isprint(C)) {
+      OS << C;
+    } else {
+      OS << "\\";
+      char hex1 = (C >> 4) & 0x0F;
+      if (hex1 < 10)
+        OS << (hex1 + '0');
+      else 
+        OS << (hex1 - 10 + 'A');
+      char hex2 = C & 0x0F;
+      if (hex2 < 10)
+        OS << (hex2 + '0');
+      else 
+        OS << (hex2 - 10 + 'A');
+    }
+  }
+  OS << '"';
+}
+
+static void PrintLLVMName(std::ostream &OS, const Value *V) {
+  PrintLLVMName(OS, V->getValueName(),
+                isa<GlobalValue>(V) ? GlobalPrefix : LocalPrefix);
+}
+
 
 /// fillTypeNameTable - If the module has a symbol table, take all global types
 /// and stuff their names into the TypeNames map.
@@ -626,25 +692,35 @@ static void WriteAsOperandInternal(std::ostream &Out, const Value *V,
                                   std::map<const Type*, std::string> &TypeTable,
                                    SlotMachine *Machine) {
   Out << ' ';
-  if (V->hasName())
-    Out << getLLVMName(V->getName(),
-                       isa<GlobalValue>(V) ? GlobalPrefix : LocalPrefix);
-  else {
-    const Constant *CV = dyn_cast<Constant>(V);
-    if (CV && !isa<GlobalValue>(CV)) {
-      WriteConstantInt(Out, CV, TypeTable, Machine);
-    } else if (const InlineAsm *IA = dyn_cast<InlineAsm>(V)) {
-      Out << "asm ";
-      if (IA->hasSideEffects())
-        Out << "sideeffect ";
-      Out << '"';
-      PrintEscapedString(IA->getAsmString(), Out);
-      Out << "\", \"";
-      PrintEscapedString(IA->getConstraintString(), Out);
-      Out << '"';
+  if (V->hasName()) {
+    PrintLLVMName(Out, V);
+    return;
+  }
+  
+  const Constant *CV = dyn_cast<Constant>(V);
+  if (CV && !isa<GlobalValue>(CV)) {
+    WriteConstantInt(Out, CV, TypeTable, Machine);
+  } else if (const InlineAsm *IA = dyn_cast<InlineAsm>(V)) {
+    Out << "asm ";
+    if (IA->hasSideEffects())
+      Out << "sideeffect ";
+    Out << '"';
+    PrintEscapedString(IA->getAsmString(), Out);
+    Out << "\", \"";
+    PrintEscapedString(IA->getConstraintString(), Out);
+    Out << '"';
+  } else {
+    char Prefix = '%';
+    int Slot;
+    if (Machine) {
+      if (const GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
+        Slot = Machine->getGlobalSlot(GV);
+        Prefix = '@';
+      } else {
+        Slot = Machine->getLocalSlot(V);
+      }
     } else {
-      char Prefix = '%';
-      int Slot;
+      Machine = createSlotMachine(V);
       if (Machine) {
         if (const GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
           Slot = Machine->getGlobalSlot(GV);
@@ -653,24 +729,14 @@ static void WriteAsOperandInternal(std::ostream &Out, const Value *V,
           Slot = Machine->getLocalSlot(V);
         }
       } else {
-        Machine = createSlotMachine(V);
-        if (Machine) {
-          if (const GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
-            Slot = Machine->getGlobalSlot(GV);
-            Prefix = '@';
-          } else {
-            Slot = Machine->getLocalSlot(V);
-          }
-        } else {
-          Slot = -1;
-        }
-        delete Machine;
+        Slot = -1;
       }
-      if (Slot != -1)
-        Out << Prefix << Slot;
-      else
-        Out << "<badref>";
+      delete Machine;
     }
+    if (Slot != -1)
+      Out << Prefix << Slot;
+    else
+      Out << "<badref>";
   }
 }
 
@@ -900,7 +966,10 @@ void AssemblyWriter::printModule(const Module *M) {
 }
 
 void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
-  if (GV->hasName()) Out << getLLVMName(GV->getName(), GlobalPrefix) << " = ";
+  if (GV->hasName()) {
+    PrintLLVMName(Out, GV);
+    Out << " = ";
+  }
 
   if (!GV->hasInitializer()) {
     switch (GV->getLinkage()) {
@@ -935,11 +1004,8 @@ void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
   Out << (GV->isConstant() ? "constant " : "global ");
   printType(GV->getType()->getElementType());
 
-  if (GV->hasInitializer()) {
-    Constant* C = cast<Constant>(GV->getInitializer());
-    assert(C &&  "GlobalVar initializer isn't constant?");
+  if (GV->hasInitializer())
     writeOperand(GV->getInitializer(), false);
-  }
 
   if (unsigned AddressSpace = GV->getType()->getAddressSpace())
     Out << " addrspace(" << AddressSpace << ") ";
@@ -957,8 +1023,10 @@ void AssemblyWriter::printAlias(const GlobalAlias *GA) {
   // Don't crash when dumping partially built GA
   if (!GA->hasName())
     Out << "<<nameless>> = ";
-  else
-    Out << getLLVMName(GA->getName(), GlobalPrefix) << " = ";
+  else {
+    PrintLLVMName(Out, GA);
+    Out << " = ";
+  }
   switch (GA->getVisibility()) {
   default: assert(0 && "Invalid visibility style!");
   case GlobalValue::DefaultVisibility: break;
@@ -980,18 +1048,20 @@ void AssemblyWriter::printAlias(const GlobalAlias *GA) {
     
   if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(Aliasee)) {
     printType(GV->getType());
-    Out << " " << getLLVMName(GV->getName(), GlobalPrefix);
+    Out << ' ';
+    PrintLLVMName(Out, GV);
   } else if (const Function *F = dyn_cast<Function>(Aliasee)) {
     printType(F->getFunctionType());
     Out << "* ";
 
-    if (!F->getName().empty())
-      Out << getLLVMName(F->getName(), GlobalPrefix);
+    if (!F->hasName())
+      PrintLLVMName(Out, F);
     else
       Out << "@\"\"";
   } else if (const GlobalAlias *GA = dyn_cast<GlobalAlias>(Aliasee)) {
     printType(GA->getType());
-    Out << " " << getLLVMName(GA->getName(), GlobalPrefix);
+    Out << " ";
+    PrintLLVMName(Out, GA);
   } else {
     const ConstantExpr *CE = 0;
     if ((CE = dyn_cast<ConstantExpr>(Aliasee)) &&
@@ -1067,7 +1137,7 @@ void AssemblyWriter::printFunction(const Function *F) {
   const PAListPtr &Attrs = F->getParamAttrs();
   printType(F->getReturnType()) << ' ';
   if (!F->getName().empty())
-    Out << getLLVMName(F->getName(), GlobalPrefix);
+    PrintLLVMName(Out, F);
   else
     Out << "@\"\"";
   Out << '(';
@@ -1144,15 +1214,19 @@ void AssemblyWriter::printArgument(const Argument *Arg,
     Out << ' ' << ParamAttr::getAsString(Attrs);
 
   // Output name, if available...
-  if (Arg->hasName())
-    Out << ' ' << getLLVMName(Arg->getName(), LocalPrefix);
+  if (Arg->hasName()) {
+    Out << ' ';
+    PrintLLVMName(Out, Arg);
+  }
 }
 
 /// printBasicBlock - This member is called for each basic block in a method.
 ///
 void AssemblyWriter::printBasicBlock(const BasicBlock *BB) {
   if (BB->hasName()) {              // Print out the label if it exists...
-    Out << "\n" << getLLVMName(BB->getName(), LabelPrefix) << ':';
+    Out << "\n";
+    PrintLLVMName(Out, BB->getValueName(), LabelPrefix);
+    Out << ':';
   } else if (!BB->use_empty()) {      // Don't print block # of no uses...
     Out << "\n; <label>:";
     int Slot = Machine.getLocalSlot(BB);
@@ -1223,8 +1297,10 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
   Out << "\t";
 
   // Print out name if it exists...
-  if (I.hasName())
-    Out << getLLVMName(I.getName(), LocalPrefix) << " = ";
+  if (I.hasName()) {
+    PrintLLVMName(Out, &I);
+    Out << " = ";
+  }
 
   // If this is a volatile load or store, print out the volatile marker.
   if ((isa<LoadInst>(I)  && cast<LoadInst>(I).isVolatile()) ||
@@ -1654,13 +1730,13 @@ void SlotMachine::CreateModuleSlot(const GlobalValue *V) {
 
 /// CreateSlot - Create a new slot for the specified value if it has no name.
 void SlotMachine::CreateFunctionSlot(const Value *V) {
-  const Type *VTy = V->getType();
-  assert(VTy != Type::VoidTy && !V->hasName() && "Doesn't need a slot!");
+  assert(V->getType() != Type::VoidTy && !V->hasName() &&
+         "Doesn't need a slot!");
   
   unsigned DestSlot = fNext++;
   fMap[V] = DestSlot;
   
   // G = Global, F = Function, o = other
-  SC_DEBUG("  Inserting value [" << VTy << "] = " << V << " slot=" <<
+  SC_DEBUG("  Inserting value [" << V->getType() << "] = " << V << " slot=" <<
            DestSlot << " [o]\n");
 }  
