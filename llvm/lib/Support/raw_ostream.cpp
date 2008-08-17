@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/raw_ostream.h"
+#include <ostream>
 using namespace llvm;
 
 #if !defined(_MSC_VER)
@@ -62,6 +63,9 @@ void raw_fd_ostream::flush_impl() {
   HandleFlush();
 }
 
+//===----------------------------------------------------------------------===//
+//  raw_stdout/err_ostream
+//===----------------------------------------------------------------------===//
 
 raw_stdout_ostream::raw_stdout_ostream():raw_fd_ostream(STDOUT_FILENO, false) {}
 raw_stderr_ostream::raw_stderr_ostream():raw_fd_ostream(STDERR_FILENO, false) {}
@@ -69,3 +73,30 @@ raw_stderr_ostream::raw_stderr_ostream():raw_fd_ostream(STDERR_FILENO, false) {}
 // An out of line virtual method to provide a home for the class vtable.
 void raw_stdout_ostream::handle() {}
 void raw_stderr_ostream::handle() {}
+
+/// outs() - This returns a reference to a raw_ostream for standard output.
+/// Use it like: outs() << "foo" << "bar";
+raw_ostream &outs() {
+  static raw_stdout_ostream S;
+  return S;
+}
+
+/// errs() - This returns a reference to a raw_ostream for standard error.
+/// Use it like: errs() << "foo" << "bar";
+raw_ostream &errs() {
+  static raw_stderr_ostream S;
+  return S;
+}
+
+//===----------------------------------------------------------------------===//
+//  raw_os_ostream
+//===----------------------------------------------------------------------===//
+
+/// flush_impl - The is the piece of the class that is implemented by
+/// subclasses.  This outputs the currently buffered data and resets the
+/// buffer to empty.
+void raw_os_ostream::flush_impl() {
+  if (OutBufCur-OutBufStart)
+    OS.write(OutBufStart, OutBufCur-OutBufStart);
+  HandleFlush();
+}

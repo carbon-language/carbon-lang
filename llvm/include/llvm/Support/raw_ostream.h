@@ -1,4 +1,4 @@
-//===--- raw_ostream.h - Raw output stream ---------------------------------===//
+//===--- raw_ostream.h - Raw output stream --------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -15,6 +15,7 @@
 #define LLVM_SUPPORT_RAW_OSTREAM_H
 
 #include <string>
+#include <iosfwd>
 
 namespace llvm {
 
@@ -151,6 +152,8 @@ public:
   virtual void flush_impl();
 };
   
+/// raw_stdout_ostream - This is a stream that always prints to stdout.
+///
 class raw_stdout_ostream : public raw_fd_ostream {
   // An out of line virtual method to provide a home for the class vtable.
   virtual void handle();
@@ -158,11 +161,35 @@ public:
   raw_stdout_ostream();
 };
 
+/// raw_stderr_ostream - This is a stream that always prints to stderr.
+///
 class raw_stderr_ostream : public raw_fd_ostream {
   // An out of line virtual method to provide a home for the class vtable.
   virtual void handle();
 public:
   raw_stderr_ostream();
+};
+  
+/// outs() - This returns a reference to a raw_ostream for standard output.
+/// Use it like: outs() << "foo" << "bar";
+raw_ostream &outs();
+
+/// errs() - This returns a reference to a raw_ostream for standard error.
+/// Use it like: errs() << "foo" << "bar";
+raw_ostream &errs();
+  
+  
+/// raw_os_ostream - A raw_ostream that writes to an std::ostream.  This is a
+/// simple adaptor class.
+class raw_os_ostream : public raw_ostream {
+  std::ostream &OS;
+public:
+  raw_os_ostream(std::ostream &O) : OS(O) {}
+  
+  /// flush_impl - The is the piece of the class that is implemented by
+  /// subclasses.  This outputs the currently buffered data and resets the
+  /// buffer to empty.
+  virtual void flush_impl();
 };
   
 } // end llvm namespace
