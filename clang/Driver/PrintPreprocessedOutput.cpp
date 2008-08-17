@@ -27,48 +27,6 @@
 #include <cstdio>
 using namespace clang;
 
-static std::string OutputFilename;
-static llvm::raw_ostream *OutStream;
-
-/// InitOutputBuffer - Initialize our output buffer.
-///
-static void InitOutputBuffer(const std::string& Output) {
-  if (!Output.size() || Output == "-") {
-    OutputFilename = "<stdout>";
-    OutStream = new llvm::raw_stdout_ostream();
-  } else {
-    OutputFilename = Output;
-    std::string Err;
-    OutStream = new llvm::raw_fd_ostream(Output.c_str(), Err);
-    
-    if (!Err.empty()) {
-      delete OutStream;
-      fprintf(stderr, "%s\n", Err.c_str());
-      exit(1);
-    }
-  }
-  OutStream->SetBufferSize(64*1024);
-}
-
-/// CleanupOutputBuffer - Finish up output.
-///
-static void CleanupOutputBuffer(bool ErrorOccurred) {
-  delete OutStream;
-
-  // If an error occurred, remove the output file.
-  if (ErrorOccurred && !OutputFilename.empty())
-    llvm::sys::Path(OutputFilename).eraseFromDisk();
-}
-
-static inline void OutputChar(char c) {
-  *OutStream << c;
-}
-
-static inline void OutputString(const char *Ptr, unsigned Size) {
-  OutStream->write(Ptr, Size);
-}
-
-
 //===----------------------------------------------------------------------===//
 // Preprocessed token printer
 //===----------------------------------------------------------------------===//
@@ -85,12 +43,16 @@ EnableMacroCommentOutput("CC",
 namespace {
 class PrintPPOutputPPCallbacks : public PPCallbacks {
   Preprocessor &PP;
+public:
+  llvm::raw_ostream &OS;
+private:
   unsigned CurLine;
   bool EmittedTokensOnThisLine;
   DirectoryLookup::DirType FileType;
   llvm::SmallString<512> CurFilename;
 public:
-  PrintPPOutputPPCallbacks(Preprocessor &pp) : PP(pp) {
+  PrintPPOutputPPCallbacks(Preprocessor &pp, llvm::raw_ostream &os)
+     : PP(pp), OS(os) {
     CurLine = 0;
     CurFilename += "<uninit>";
     EmittedTokensOnThisLine = false;
@@ -140,7 +102,7 @@ bool PrintPPOutputPPCallbacks::MoveToLine(SourceLocation Loc) {
     if (!EmittedTokensOnThisLine)
       return true;
     
-    OutputChar('\n');
+    OS << '\n';
     EmittedTokensOnThisLine = false;
     return true;
   }
@@ -151,37 +113,36 @@ bool PrintPPOutputPPCallbacks::MoveToLine(SourceLocation Loc) {
   // otherwise print a #line directive.
   if (LineNo-CurLine < 8) {
     if (LineNo-CurLine == 1)
-      OutputChar('\n');
+      OS << '\n';
     else if (LineNo == CurLine)
       return false;    // Phys line moved, but logical line didn't.
     else {
       const char *NewLines = "\n\n\n\n\n\n\n\n";
-      OutputString(NewLines, LineNo-CurLine);
+      OS.write(NewLines, LineNo-CurLine);
     }
     CurLine = LineNo;
   } else {
     if (EmittedTokensOnThisLine) {
-      OutputChar('\n');
+      OS << '\n';
       EmittedTokensOnThisLine = false;
     }
     
     CurLine = LineNo;
     
-    OutputChar('#');
-    OutputChar(' ');
+    OS << '#' << ' ';
     char NumberBuffer[20];
     const char *NumStr = UToStr(LineNo, NumberBuffer+20);
-    OutputString(NumStr, (NumberBuffer+20)-NumStr-1);
-    OutputChar(' ');
-    OutputChar('"');
-    OutputString(&CurFilename[0], CurFilename.size());
-    OutputChar('"');
+    OS.write(NumStr, (NumberBuffer+20)-NumStr-1);
+    OS << ' ';
+    OS << '"';
+    OS.write(&CurFilename[0], CurFilename.size());
+    OS << '"';
     
     if (FileType == DirectoryLookup::SystemHeaderDir)
-      OutputString(" 3", 2);
+      OS.write(" 3", 2);
     else if (FileType == DirectoryLookup::ExternCSystemHeaderDir)
-      OutputString(" 3 4", 4);
-    OutputChar('\n');
+      OS.write(" 3 4", 4);
+    OS << '\n';
   } 
   return true;
 }
@@ -217,38 +178,36 @@ void PrintPPOutputPPCallbacks::FileChanged(SourceLocation Loc,
   FileType = FileType;
   
   if (EmittedTokensOnThisLine) {
-    OutputChar('\n');
+    OS << '\n';
     EmittedTokensOnThisLine = false;
   }
   
-  OutputChar('#');
-  OutputChar(' ');
+  OS << '#' << ' ';
   
   char NumberBuffer[20];
   const char *NumStr = UToStr(CurLine, NumberBuffer+20);
-  OutputString(NumStr, (NumberBuffer+20)-NumStr-1);
-  OutputChar(' ');
-  OutputChar('"');
-  OutputString(&CurFilename[0], CurFilename.size());
-  OutputChar('"');
+  OS.write(NumStr, (NumberBuffer+20)-NumStr-1);
+  OS << ' ' << '"';
+  OS.write(&CurFilename[0], CurFilename.size());
+  OS << '"';
   
   switch (Reason) {
   case PPCallbacks::EnterFile:
-    OutputString(" 1", 2);
+    OS.write(" 1", 2);
     break;
   case PPCallbacks::ExitFile:
-    OutputString(" 2", 2);
+    OS.write(" 2", 2);
     break;
   case PPCallbacks::SystemHeaderPragma: break;
   case PPCallbacks::RenameFile: break;
   }
   
   if (FileType == DirectoryLookup::SystemHeaderDir)
-    OutputString(" 3", 2);
+    OS.write(" 3", 2);
   else if (FileType == DirectoryLookup::ExternCSystemHeaderDir)
-    OutputString(" 3 4", 4);
+    OS.write(" 3 4", 4);
   
-  OutputChar('\n');
+  OS << '\n';
 }
 
 /// HandleIdent - Handle #ident directives when read by the preprocessor.
@@ -256,8 +215,8 @@ void PrintPPOutputPPCallbacks::FileChanged(SourceLocation Loc,
 void PrintPPOutputPPCallbacks::Ident(SourceLocation Loc, const std::string &S) {
   MoveToLine(Loc);
   
-  OutputString("#ident ", strlen("#ident "));
-  OutputString(&S[0], S.size());
+  OS.write("#ident ", strlen("#ident "));
+  OS.write(&S[0], S.size());
   EmittedTokensOnThisLine = true;
 }
 
@@ -284,11 +243,11 @@ bool PrintPPOutputPPCallbacks::HandleFirstTokOnLine(Token &Tok) {
   // is not handled as a #define next time through the preprocessor if in
   // -fpreprocessed mode.
   if (ColNo <= 1 && Tok.is(tok::hash))
-    OutputChar(' ');
+    OS << ' ';
   
   // Otherwise, indent the appropriate number of spaces.
   for (; ColNo > 1; --ColNo)
-    OutputChar(' ');
+    OS << ' ';
   
   return true;
 }
@@ -304,17 +263,17 @@ struct UnknownPragmaHandler : public PragmaHandler {
     // Figure out what line we went to and insert the appropriate number of
     // newline characters.
     Callbacks->MoveToLine(PragmaTok.getLocation());
-    OutputString(Prefix, strlen(Prefix));
+    Callbacks->OS.write(Prefix, strlen(Prefix));
     
     // Read and print all of the pragma tokens.
     while (PragmaTok.isNot(tok::eom)) {
       if (PragmaTok.hasLeadingSpace())
-        OutputChar(' ');
+        Callbacks->OS << ' ';
       std::string TokSpell = PP.getSpelling(PragmaTok);
-      OutputString(&TokSpell[0], TokSpell.size());
+      Callbacks->OS.write(&TokSpell[0], TokSpell.size());
       PP.LexUnexpandedToken(PragmaTok);
     }
-    OutputChar('\n');
+    Callbacks->OS << '\n';
   }
 };
 } // end anonymous namespace
@@ -536,13 +495,31 @@ void clang::DoPrintPreprocessedInput(Preprocessor &PP,
   // Inform the preprocessor whether we want it to retain comments or not, due
   // to -C or -CC.
   PP.SetCommentRetentionState(EnableCommentOutput, EnableMacroCommentOutput);
-  
-  InitOutputBuffer(OutFile);
   InitAvoidConcatTokenInfo();
+
+  
+  // Open the output buffer.
+  static llvm::raw_ostream *OutStream;
+  
+  if (!OutFile.size() || OutFile == "-") {
+    OutStream = new llvm::raw_stdout_ostream();
+  } else {
+    std::string Err;
+    OutStream = new llvm::raw_fd_ostream(OutFile.c_str(), Err);
+    
+    if (!Err.empty()) {
+      delete OutStream;
+      fprintf(stderr, "%s\n", Err.c_str());
+      exit(1);
+    }
+  }
+  OutStream->SetBufferSize(64*1024);
+  
+  llvm::raw_ostream &OS = *OutStream;
   
   Token Tok, PrevTok;
   char Buffer[256];
-  PrintPPOutputPPCallbacks *Callbacks = new PrintPPOutputPPCallbacks(PP);
+  PrintPPOutputPPCallbacks *Callbacks = new PrintPPOutputPPCallbacks(PP, OS);
   PP.setPPCallbacks(Callbacks);
   
   PP.AddPragmaHandler(0, new UnknownPragmaHandler("#pragma", Callbacks));
@@ -572,20 +549,20 @@ void clang::DoPrintPreprocessedInput(Preprocessor &PP,
                (Callbacks->hasEmittedTokensOnThisLine() &&
                 // Don't print "-" next to "-", it would form "--".
                 Callbacks->AvoidConcat(PrevTok, Tok))) {
-      OutputChar(' ');
+      OS << ' ';
     }
     
     if (IdentifierInfo *II = Tok.getIdentifierInfo()) {
       const char *Str = II->getName();
       unsigned Len = Tok.needsCleaning() ? strlen(Str) : Tok.getLength();
-      OutputString(Str, Len);
+      OS.write(Str, Len);
     } else if (Tok.getLength() < 256) {
       const char *TokPtr = Buffer;
       unsigned Len = PP.getSpelling(Tok, TokPtr);
-      OutputString(TokPtr, Len);
+      OS.write(TokPtr, Len);
     } else {
       std::string S = PP.getSpelling(Tok);
-      OutputString(&S[0], S.size());
+      OS.write(&S[0], S.size());
     }
     Callbacks->SetEmittedTokensOnThisLine();
     
@@ -594,8 +571,13 @@ void clang::DoPrintPreprocessedInput(Preprocessor &PP,
     PrevTok = Tok;
     PP.Lex(Tok);
   }
-  OutputChar('\n');
+  OS << '\n';
   
-  CleanupOutputBuffer(PP.getDiagnostics().hasErrorOccurred());
+  // Flush and free the ostream.
+  delete &OS;
+  
+  // If an error occurred, remove the output file.
+  if (PP.getDiagnostics().hasErrorOccurred() && !OutFile.empty())
+    llvm::sys::Path(OutFile).eraseFromDisk();
 }
 
