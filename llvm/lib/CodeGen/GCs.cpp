@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/CodeGen/Collectors.h"
+#include "llvm/CodeGen/GCs.h"
 
 using namespace llvm;
 

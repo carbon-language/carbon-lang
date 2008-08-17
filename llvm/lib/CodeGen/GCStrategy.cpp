@@ -12,12 +12,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/CodeGen/Collector.h"
+#include "llvm/CodeGen/GCStrategy.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Module.h"
-#include "llvm/PassManager.h"
-#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -116,22 +114,6 @@ CollectorMetadata *Collector::insertFunctionMetadata(const Function &F) {
   Functions.push_back(CM);
   return CM;
 } 
-
-// -----------------------------------------------------------------------------
-
-GCMetadataPrinter::GCMetadataPrinter() { }
-
-GCMetadataPrinter::~GCMetadataPrinter() { }
-
-void GCMetadataPrinter::beginAssembly(std::ostream &OS, AsmPrinter &AP,
-                                      const TargetAsmInfo &TAI) {
-  // Default is no action.
-}
-
-void GCMetadataPrinter::finishAssembly(std::ostream &OS, AsmPrinter &AP,
-                                       const TargetAsmInfo &TAI) {
-  // Default is no action.
-}
 
 // -----------------------------------------------------------------------------
 

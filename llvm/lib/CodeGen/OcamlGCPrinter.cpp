@@ -12,9 +12,9 @@
 //
 //===----------------------------------------------------------------------===//
                         
-#include "llvm/CodeGen/Collectors.h"
+#include "llvm/CodeGen/GCs.h"
 #include "llvm/CodeGen/AsmPrinter.h"
-#include "llvm/CodeGen/Collector.h"
+#include "llvm/CodeGen/GCStrategy.h"
 #include "llvm/Module.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
@@ -23,11 +23,6 @@
 using namespace llvm;
 
 namespace {
-
-  class VISIBILITY_HIDDEN OcamlCollector : public Collector {
-  public:
-    OcamlCollector();
-  };
 
   class VISIBILITY_HIDDEN OcamlGCMetadataPrinter : public GCMetadataPrinter {
   public:
@@ -40,13 +35,12 @@ namespace {
   
 }
 
-static CollectorRegistry::Add<OcamlCollector>
-X("ocaml", "ocaml 3.10-compatible collector");
-
 static GCMetadataPrinterRegistry::Add<OcamlGCMetadataPrinter>
 Y("ocaml", "ocaml 3.10-compatible collector");
 
-// -----------------------------------------------------------------------------
+GCMetadataPrinter *llvm::createOcamlMetadataPrinter() {
+  return new OcamlGCMetadataPrinter();
+}
 
 static void EmitCamlGlobal(const Module &M, std::ostream &OS, AsmPrinter &AP,
                            const TargetAsmInfo &TAI, const char *Id) {
@@ -66,15 +60,6 @@ static void EmitCamlGlobal(const Module &M, std::ostream &OS, AsmPrinter &AP,
   if (const char *GlobalDirective = TAI.getGlobalDirective())
     OS << GlobalDirective << Mangled << "\n";
   OS << Mangled << ":\n";
-}
-
-Collector *llvm::createOcamlCollector() {
-  return new OcamlCollector();
-}
-
-OcamlCollector::OcamlCollector() {
-  NeededSafePoints = 1 << GC::PostCall;
-  UsesMetadata = true;
 }
 
 void OcamlGCMetadataPrinter::beginAssembly(std::ostream &OS, AsmPrinter &AP,

@@ -26,9 +26,9 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "shadowstackgc"
-#include "llvm/CodeGen/Collectors.h"
+#include "llvm/CodeGen/GCs.h"
 #include "llvm/ADT/StringExtras.h"
-#include "llvm/CodeGen/Collector.h"
+#include "llvm/CodeGen/GCStrategy.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Module.h"
 #include "llvm/Support/IRBuilder.h"

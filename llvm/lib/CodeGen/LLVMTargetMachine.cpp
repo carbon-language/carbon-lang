@@ -17,7 +17,7 @@
 #include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/CodeGen/Passes.h"
-#include "llvm/CodeGen/Collector.h"
+#include "llvm/CodeGen/GCStrategy.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Transforms/Scalar.h"

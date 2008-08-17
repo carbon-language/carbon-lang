@@ -12,9 +12,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/CodeGen/CollectorMetadata.h"
-#include "llvm/CodeGen/Collector.h"
-#include "llvm/CodeGen/Collectors.h"
+#include "llvm/CodeGen/GCMetadata.h"
+#include "llvm/CodeGen/GCStrategy.h"
+#include "llvm/CodeGen/GCs.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/Pass.h"
 #include "llvm/CodeGen/Passes.h"

@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CODEGEN_COLLECTORS_H
-#define LLVM_CODEGEN_COLLECTORS_H
+#ifndef LLVM_CODEGEN_GCS_H
+#define LLVM_CODEGEN_GCS_H
 
 #include "llvm/Support/Registry.h"
 
@@ -35,6 +35,9 @@ namespace llvm {
   
   /// Creates an ocaml-compatible garbage collector.
   Collector *createOcamlCollector();
+  
+  /// Creates an ocaml-compatible metadata printer.
+  GCMetadataPrinter *createOcamlMetadataPrinter();
   
   /// Creates a shadow stack garbage collector. This collector requires no code
   /// generator support.
