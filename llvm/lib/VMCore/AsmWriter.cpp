@@ -31,6 +31,7 @@
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Streams.h"
+#include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 #include <cctype>
 using namespace llvm;
@@ -41,39 +42,39 @@ namespace llvm {
 AssemblyAnnotationWriter::~AssemblyAnnotationWriter() {}
 
 /// This class provides computation of slot numbers for LLVM Assembly writing.
-/// @brief LLVM Assembly Writing Slot Computation.
+///
 class SlotMachine {
-
-/// @name Types
-/// @{
 public:
-
-  /// @brief A mapping of Values to slot numbers
-  typedef std::map<const Value*,unsigned> ValueMap;
-
-/// @}
-/// @name Constructors
-/// @{
+  /// ValueMap - A mapping of Values to slot numbers
+  typedef std::map<const Value*, unsigned> ValueMap;
+  
+private:  
+  /// TheModule - The module for which we are holding slot numbers
+  const Module* TheModule;
+  
+  /// TheFunction - The function for which we are holding slot numbers
+  const Function* TheFunction;
+  bool FunctionProcessed;
+  
+  /// mMap - The TypePlanes map for the module level data
+  ValueMap mMap;
+  unsigned mNext;
+  
+  /// fMap - The TypePlanes map for the function level data
+  ValueMap fMap;
+  unsigned fNext;
+  
 public:
-  /// @brief Construct from a module
+  /// Construct from a module
   explicit SlotMachine(const Module *M);
-
-  /// @brief Construct from a function, starting out in incorp state.
+  /// Construct from a function, starting out in incorp state.
   explicit SlotMachine(const Function *F);
 
-/// @}
-/// @name Accessors
-/// @{
-public:
   /// Return the slot number of the specified value in it's type
   /// plane.  If something is not in the SlotMachine, return -1.
   int getLocalSlot(const Value *V);
   int getGlobalSlot(const GlobalValue *V);
 
-/// @}
-/// @name Mutators
-/// @{
-public:
   /// If you'd like to deal with a function instead of just a module, use
   /// this method to get its data into the SlotMachine.
   void incorporateFunction(const Function *F) {
@@ -86,9 +87,7 @@ public:
   /// will reset the state of the machine back to just the module contents.
   void purgeFunction();
 
-/// @}
-/// @name Implementation Details
-/// @{
+  // Implementation Details
 private:
   /// This function does the actual initialization.
   inline void initialize();
@@ -108,29 +107,6 @@ private:
 
   SlotMachine(const SlotMachine &);  // DO NOT IMPLEMENT
   void operator=(const SlotMachine &);  // DO NOT IMPLEMENT
-
-/// @}
-/// @name Data
-/// @{
-public:
-
-  /// @brief The module for which we are holding slot numbers
-  const Module* TheModule;
-
-  /// @brief The function for which we are holding slot numbers
-  const Function* TheFunction;
-  bool FunctionProcessed;
-
-  /// @brief The TypePlanes map for the module level data
-  ValueMap mMap;
-  unsigned mNext;
-
-  /// @brief The TypePlanes map for the function level data
-  ValueMap fMap;
-  unsigned fNext;
-
-/// @}
-
 };
 
 }  // end namespace llvm
@@ -461,7 +437,6 @@ static const char *getPredicateText(unsigned predicate) {
   return pred;
 }
 
-/// @brief Internal constant writer.
 static void WriteConstantInt(std::ostream &Out, const Constant *CV,
                              std::map<const Type *, std::string> &TypeTable,
                              SlotMachine *Machine) {
@@ -1549,7 +1524,7 @@ SlotMachine::SlotMachine(const Module *M)
   : TheModule(M)    ///< Saved for lazy initialization.
   , TheFunction(0)
   , FunctionProcessed(false)
-  , mMap(), mNext(0), fMap(), fNext(0)
+  , mNext(0), fMap(), fNext(0)
 {
 }
 
@@ -1559,7 +1534,7 @@ SlotMachine::SlotMachine(const Function *F)
   : TheModule(F ? F->getParent() : 0) ///< Saved for lazy initialization
   , TheFunction(F) ///< Saved for lazy initialization
   , FunctionProcessed(false)
-  , mMap(), mNext(0), fMap(), fNext(0)
+  , mNext(0), fMap(), fNext(0)
 {
 }
 
@@ -1672,8 +1647,8 @@ void SlotMachine::CreateModuleSlot(const GlobalValue *V) {
            DestSlot << " [");
   // G = Global, F = Function, A = Alias, o = other
   SC_DEBUG((isa<GlobalVariable>(V) ? 'G' :
-            (isa<Function> ? 'F' :
-             (isa<GlobalAlias> ? 'A' : 'o'))) << "]\n");
+            (isa<Function>(V) ? 'F' :
+             (isa<GlobalAlias>(V) ? 'A' : 'o'))) << "]\n");
 }
 
 
