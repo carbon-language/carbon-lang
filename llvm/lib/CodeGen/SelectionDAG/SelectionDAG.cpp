@@ -4992,7 +4992,7 @@ void SDNode::dump(const SelectionDAG *G) const {
   }
 
   if (const ConstantSDNode *CSDN = dyn_cast<ConstantSDNode>(this)) {
-    cerr << "<" << CSDN->getAPIntValue().toStringUnsigned() << ">";
+    cerr << "<" << CSDN->getAPIntValue() << ">";
   } else if (const ConstantFPSDNode *CSDN = dyn_cast<ConstantFPSDNode>(this)) {
     if (&CSDN->getValueAPF().getSemantics()==&APFloat::IEEEsingle)
       cerr << "<" << CSDN->getValueAPF().convertToFloat() << ">";

@@ -15,14 +15,13 @@
 #define DEBUG_TYPE "apint"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/FoldingSet.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
-#include <math.h>
+#include <cmath>
 #include <limits>
 #include <cstring>
 #include <cstdlib>
-#include <iomanip>
-
 using namespace llvm;
 
 /// This enumeration just provides for internal constants used in this
@@ -1478,12 +1477,14 @@ static void KnuthDiv(uint32_t *u, uint32_t *v, uint32_t *q, uint32_t* r,
   // is 2^31 so we just set it to -1u.
   uint64_t b = uint64_t(1) << 32;
 
+#if 0
   DEBUG(cerr << "KnuthDiv: m=" << m << " n=" << n << '\n');
   DEBUG(cerr << "KnuthDiv: original:");
   DEBUG(for (int i = m+n; i >=0; i--) cerr << " " << std::setbase(16) << u[i]);
   DEBUG(cerr << " by");
   DEBUG(for (int i = n; i >0; i--) cerr << " " << std::setbase(16) << v[i-1]);
   DEBUG(cerr << '\n');
+#endif
   // D1. [Normalize.] Set d = b / (v[n-1] + 1) and multiply all the digits of 
   // u and v by d. Note that we have taken Knuth's advice here to use a power 
   // of 2 value for d such that d * v[n-1] >= b/2 (b is the base). A power of 
@@ -1508,11 +1509,13 @@ static void KnuthDiv(uint32_t *u, uint32_t *v, uint32_t *q, uint32_t* r,
     }
   }
   u[m+n] = u_carry;
+#if 0
   DEBUG(cerr << "KnuthDiv:   normal:");
   DEBUG(for (int i = m+n; i >=0; i--) cerr << " " << std::setbase(16) << u[i]);
   DEBUG(cerr << " by");
   DEBUG(for (int i = n; i >0; i--) cerr << " " << std::setbase(16) << v[i-1]);
   DEBUG(cerr << '\n');
+#endif
 
   // D2. [Initialize j.]  Set j to m. This is the loop counter over the places.
   int j = m;
@@ -1636,7 +1639,9 @@ static void KnuthDiv(uint32_t *u, uint32_t *v, uint32_t *q, uint32_t* r,
     }
     DEBUG(cerr << '\n');
   }
+#if 0
   DEBUG(cerr << std::setbase(10) << '\n');
+#endif
 }
 
 void APInt::divide(const APInt LHS, uint32_t lhsWords, 
@@ -2001,113 +2006,111 @@ void APInt::fromString(uint32_t numbits, const char *str, uint32_t slen,
   }
 }
 
-std::string APInt::toString(uint8_t radix, bool wantSigned) const {
-  assert((radix == 10 || radix == 8 || radix == 16 || radix == 2) &&
+void APInt::toString(SmallVectorImpl<char> &Str, unsigned Radix,
+                     bool Signed) const {
+  assert((Radix == 10 || Radix == 8 || Radix == 16 || Radix == 2) &&
          "Radix should be 2, 8, 10, or 16!");
-  static const char *const digits[] = { 
-    "0","1","2","3","4","5","6","7","8","9","A","B","C","D","E","F" 
-  };
-  std::string result;
-  uint32_t bits_used = getActiveBits();
+  
+  // First, check for a zero value and just short circuit the logic below.
+  if (*this == 0) {
+    Str.push_back('0');
+    return;
+  }
+  
+  static const char Digits[] = "0123456789ABCDEF";
+  
   if (isSingleWord()) {
-    char buf[65];
-    const char *format = (radix == 10 ? (wantSigned ? "%lld" : "%llu") :
-       (radix == 16 ? "%llX" : (radix == 8 ? "%llo" : 0)));
-    if (format) {
-      if (wantSigned) {
-        int64_t sextVal = (int64_t(VAL) << (APINT_BITS_PER_WORD-BitWidth)) >> 
-                           (APINT_BITS_PER_WORD-BitWidth);
-        sprintf(buf, format, sextVal);
-      } else 
-        sprintf(buf, format, VAL);
+    char Buffer[65];
+    char *BufPtr = Buffer+65;
+    
+    uint64_t N;
+    if (Signed) {
+      int64_t I = getSExtValue();
+      if (I < 0) {
+        Str.push_back('-');
+        I = -I;
+      }
+      N = I;
     } else {
-      memset(buf, 0, 65);
-      uint64_t v = VAL;
-      while (bits_used) {
-        uint32_t bit = (uint32_t)v & 1;
-        bits_used--;
-        buf[bits_used] = digits[bit][0];
-        v >>=1;
-      }
+      N = getZExtValue();
     }
-    result = buf;
-    return result;
+    
+    while (N) {
+      *--BufPtr = Digits[N % Radix];
+      N /= Radix;
+    }
+    Str.append(BufPtr, Buffer+65);
+    return;
   }
 
-  if (radix != 10) {
-    // For the 2, 8 and 16 bit cases, we can just shift instead of divide 
-    // because the number of bits per digit (1,3 and 4 respectively) divides 
-    // equaly. We just shift until there value is zero.
-
-    // First, check for a zero value and just short circuit the logic below.
-    if (*this == 0)
-      result = "0";
-    else {
-      APInt tmp(*this);
-      size_t insert_at = 0;
-      if (wantSigned && this->isNegative()) {
-        // They want to print the signed version and it is a negative value
-        // Flip the bits and add one to turn it into the equivalent positive
-        // value and put a '-' in the result.
-        tmp.flip();
-        tmp++;
-        result = "-";
-        insert_at = 1;
-      }
-      // Just shift tmp right for each digit width until it becomes zero
-      uint32_t shift = (radix == 16 ? 4 : (radix == 8 ? 3 : 1));
-      uint64_t mask = radix - 1;
-      APInt zero(tmp.getBitWidth(), 0);
-      while (tmp.ne(zero)) {
-        unsigned digit =
-          (unsigned)((tmp.isSingleWord() ? tmp.VAL : tmp.pVal[0]) & mask);
-        result.insert(insert_at, digits[digit]);
-        tmp = tmp.lshr(shift);
-      }
-    }
-    return result;
-  }
-
-  APInt tmp(*this);
-  APInt divisor(4, radix);
-  APInt zero(tmp.getBitWidth(), 0);
-  size_t insert_at = 0;
-  if (wantSigned && tmp[BitWidth-1]) {
+  APInt Tmp(*this);
+  
+  if (Signed && isNegative()) {
     // They want to print the signed version and it is a negative value
     // Flip the bits and add one to turn it into the equivalent positive
     // value and put a '-' in the result.
-    tmp.flip();
-    tmp++;
-    result = "-";
-    insert_at = 1;
+    Tmp.flip();
+    Tmp++;
+    Str.push_back('-');
   }
-  if (tmp == zero)
-    result = "0";
-  else while (tmp.ne(zero)) {
-    APInt APdigit(1,0);
-    APInt tmp2(tmp.getBitWidth(), 0);
-    divide(tmp, tmp.getNumWords(), divisor, divisor.getNumWords(), &tmp2, 
-           &APdigit);
-    uint32_t digit = (uint32_t)APdigit.getZExtValue();
-    assert(digit < radix && "divide failed");
-    result.insert(insert_at,digits[digit]);
-    tmp = tmp2;
+  
+  // We insert the digits backward, then reverse them to get the right order.
+  unsigned StartDig = Str.size();
+  
+  // For the 2, 8 and 16 bit cases, we can just shift instead of divide 
+  // because the number of bits per digit (1, 3 and 4 respectively) divides 
+  // equaly.  We just shift until the value is zero.
+  if (Radix != 10) {
+    // Just shift tmp right for each digit width until it becomes zero
+    unsigned ShiftAmt = (Radix == 16 ? 4 : (Radix == 8 ? 3 : 1));
+    unsigned MaskAmt = Radix - 1;
+    
+    while (Tmp != 0) {
+      unsigned Digit = unsigned(Tmp.getRawData()[0]) & MaskAmt;
+      Str.push_back(Digits[Digit]);
+      Tmp = Tmp.lshr(ShiftAmt);
+    }
+  } else {
+    APInt divisor(4, 10);
+    while (Tmp != 0) {
+      APInt APdigit(1, 0);
+      APInt tmp2(Tmp.getBitWidth(), 0);
+      divide(Tmp, Tmp.getNumWords(), divisor, divisor.getNumWords(), &tmp2, 
+             &APdigit);
+      uint32_t Digit = (uint32_t)APdigit.getZExtValue();
+      assert(Digit < Radix && "divide failed");
+      Str.push_back(Digits[Digit]);
+      Tmp = tmp2;
+    }
   }
-
-  return result;
+  
+  // Reverse the digits before returning.
+  std::reverse(Str.begin()+StartDig, Str.end());
 }
 
-void APInt::dump() const
-{
-  cerr << "APInt(" << BitWidth << ")=" << std::setbase(16);
-  if (isSingleWord())
-    cerr << VAL;
-  else for (unsigned i = getNumWords(); i > 0; i--) {
-    cerr << pVal[i-1] << " ";
-  }
-  cerr << " U(" << this->toStringUnsigned(10) << ") S("
-       << this->toStringSigned(10) << ")" << std::setbase(10);
+/// toString - This returns the APInt as a std::string.  Note that this is an
+/// inefficient method.  It is better to pass in a SmallVector/SmallString
+/// to the methods above.
+std::string APInt::toString(unsigned Radix = 10, bool Signed = true) const {
+  SmallString<40> S;
+  toString(S, Radix, Signed);
+  return S.c_str();
 }
+
+
+void APInt::dump() const {
+  SmallString<40> S, U;
+  this->toStringUnsigned(U);
+  this->toStringSigned(S);
+  fprintf(stderr, "APInt(%db, %su %ss)", BitWidth, U.c_str(), S.c_str());
+}
+
+void APInt::print(std::ostream &OS, bool isSigned) const {
+  SmallString<40> S;
+  this->toString(S, 10, isSigned);
+  OS << S.c_str();
+}
+
 
 // This implements a variety of operations on a representation of
 // arbitrary precision, two's-complement, bignum integer values.

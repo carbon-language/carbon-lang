@@ -31,6 +31,7 @@
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/SmallString.h"
 #include <cerrno>
 using namespace llvm;
 
@@ -800,7 +801,10 @@ void AsmPrinter::EmitConstantValueOnly(const Constant *CV) {
       O << "((";
       EmitConstantValueOnly(Op);
       APInt ptrMask = APInt::getAllOnesValue(TD->getABITypeSizeInBits(Ty));
-      O << ") & " << ptrMask.toStringUnsigned() << ')';
+      
+      SmallString<40> S;
+      ptrMask.toStringUnsigned(S);
+      O << ") & " << S.c_str() << ')';
       break;
     }
     case Instruction::Add:
@@ -1058,15 +1062,14 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV) {
   printDataDirective(type);
   EmitConstantValueOnly(CV);
   if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
-    O << "\t\t\t"
-      << TAI->getCommentString()
-      << " 0x" << CI->getValue().toStringUnsigned(16);
+    SmallString<40> S;
+    CI->getValue().toStringUnsigned(S, 16);
+    O << "\t\t\t" << TAI->getCommentString() << " 0x" << S.c_str();
   }
   O << '\n';
 }
 
-void
-AsmPrinter::EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV) {
+void AsmPrinter::EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV) {
   // Target doesn't support this yet!
   abort();
 }

@@ -170,7 +170,7 @@ struct ValID {
     case GlobalID      : return '@' + utostr(Num);
     case LocalName     : return *Name;
     case GlobalName    : return *Name;
-    case ConstAPInt    : return ConstPoolInt->toString();
+    case ConstAPInt    : return ConstPoolInt->toString(10);
     case ConstFPVal    : return ftostr(*ConstPoolFP);
     case ConstNullVal  : return "null";
     case ConstUndefVal : return "undef";

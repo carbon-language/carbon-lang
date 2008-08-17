@@ -507,13 +507,18 @@ static void WriteConstantInt(std::ostream &Out, const Constant *CV,
                              std::map<const Type *, std::string> &TypeTable,
                              SlotMachine *Machine) {
   const int IndentSize = 4;
+  // FIXME: WHY IS INDENT STATIC??
   static std::string Indent = "\n";
   if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
-    if (CI->getType() == Type::Int1Ty) 
+    if (CI->getType() == Type::Int1Ty) {
       Out << (CI->getZExtValue() ? "true" : "false");
-    else 
-      Out << CI->getValue().toStringSigned(10);
-  } else if (const ConstantFP *CFP = dyn_cast<ConstantFP>(CV)) {
+      return;
+    }
+    Out << CI->getValue();
+    return;
+  }
+  
+  if (const ConstantFP *CFP = dyn_cast<ConstantFP>(CV)) {
     if (&CFP->getValueAPF().getSemantics() == &APFloat::IEEEdouble ||
         &CFP->getValueAPF().getSemantics() == &APFloat::IEEEsingle) {
       // We would like to output the FP constant value in exponential notation,
@@ -522,8 +527,8 @@ static void WriteConstantInt(std::ostream &Out, const Constant *CV,
       // the value back and get the same value.
       //
       bool isDouble = &CFP->getValueAPF().getSemantics()==&APFloat::IEEEdouble;
-      double Val = (isDouble) ? CFP->getValueAPF().convertToDouble() :
-                                CFP->getValueAPF().convertToFloat();
+      double Val = isDouble ? CFP->getValueAPF().convertToDouble() :
+                              CFP->getValueAPF().convertToFloat();
       std::string StrVal = ftostr(CFP->getValueAPF());
 
       // Check to make sure that the stringized number is not some string like
@@ -1054,7 +1059,7 @@ void AssemblyWriter::printAlias(const GlobalAlias *GA) {
     printType(F->getFunctionType());
     Out << "* ";
 
-    if (!F->hasName())
+    if (F->hasName())
       PrintLLVMName(Out, F);
     else
       Out << "@\"\"";

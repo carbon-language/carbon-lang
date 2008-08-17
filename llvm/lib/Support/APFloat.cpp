@@ -14,9 +14,8 @@
 
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/FoldingSet.h"
-#include <cassert>
-#include <cstring>
 #include "llvm/Support/MathExtras.h"
+#include <cstring>
 
 using namespace llvm;
 

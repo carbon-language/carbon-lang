@@ -17,12 +17,16 @@
 
 #include "llvm/Support/DataTypes.h"
 #include <cassert>
+#include <iosfwd>
 #include <string>
 
 namespace llvm {
   class Serializer;
   class Deserializer;
   class FoldingSetNodeID;
+  
+  template<typename T>
+  class SmallVectorImpl;
   
   /* An unsigned host type used as a single part of a multi-part
      bignum.  */
@@ -468,7 +472,7 @@ public:
   /// Performs logical negation operation on this APInt.
   /// @returns true if *this is zero, false otherwise.
   /// @brief Logical negation operator. 
-  bool operator !() const;
+  bool operator!() const;
 
   /// @}
   /// @name Assignment Operators
@@ -972,25 +976,29 @@ public:
   /// @name Conversion Functions
   /// @{
 
-  /// This is used internally to convert an APInt to a string.
-  /// @brief Converts an APInt to a std::string
-  std::string toString(uint8_t radix, bool wantSigned) const;
+  void print(std::ostream &OS, bool isSigned) const;
+  
+  /// toString - Converts an APInt to a string and append it to Str.  Str is
+  /// commonly a SmallString.
+  void toString(SmallVectorImpl<char> &Str, unsigned Radix, bool Signed) const;
 
   /// Considers the APInt to be unsigned and converts it into a string in the
   /// radix given. The radix can be 2, 8, 10 or 16.
-  /// @returns a character interpretation of the APInt
-  /// @brief Convert unsigned APInt to string representation.
-  std::string toStringUnsigned(uint8_t radix = 10) const {
-    return toString(radix, false);
+  void toStringUnsigned(SmallVectorImpl<char> &Str, unsigned Radix = 10) const {
+    return toString(Str, Radix, false);
   }
 
   /// Considers the APInt to be signed and converts it into a string in the
   /// radix given. The radix can be 2, 8, 10 or 16.
-  /// @returns a character interpretation of the APInt
-  /// @brief Convert signed APInt to string representation.
-  std::string toStringSigned(uint8_t radix = 10) const {
-    return toString(radix, true);
+  void toStringSigned(SmallVectorImpl<char> &Str, unsigned Radix = 10) const {
+    return toString(Str, Radix, true);
   }
+  
+  /// toString - This returns the APInt as a std::string.  Note that this is an
+  /// inefficient method.  It is better to pass in a SmallVector/SmallString
+  /// to the methods above to avoid thrashing the heap for the string.
+  std::string toString(unsigned Radix, bool Signed) const;
+  
 
   /// @returns a byte-swapped representation of this APInt Value.
   APInt byteSwap() const;
@@ -1237,6 +1245,11 @@ inline bool operator!=(uint64_t V1, const APInt& V2) {
   return V2 != V1;
 }
 
+inline std::ostream &operator<<(std::ostream &OS, const APInt &I) {
+  I.print(OS, true);
+  return OS;
+}
+  
 namespace APIntOps {
 
 /// @brief Determine the smaller of two APInts considered to be signed.

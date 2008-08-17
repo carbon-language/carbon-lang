@@ -733,8 +733,8 @@ namespace {
     }
     if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
       Out << "ConstantInt* " << constName << " = ConstantInt::get(APInt("
-          << cast<IntegerType>(CI->getType())->getBitWidth() << ", "
-          << " \"" << CI->getValue().toStringSigned(10)  << "\", 10));";
+          << cast<IntegerType>(CI->getType())->getBitWidth() << ",  \""
+          << CI->getValue() << "\", 10));";
     } else if (isa<ConstantAggregateZero>(CV)) {
       Out << "ConstantAggregateZero* " << constName
           << " = ConstantAggregateZero::get(" << typeName << ");";

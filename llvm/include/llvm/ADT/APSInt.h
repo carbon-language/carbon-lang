@@ -19,7 +19,6 @@
 
 namespace llvm {
   
-  
 class APSInt : public APInt {
   bool IsUnsigned;
 public:
@@ -58,11 +57,16 @@ public:
   void setIsUnsigned(bool Val) { IsUnsigned = Val; }
   void setIsSigned(bool Val) { IsUnsigned = !Val; }
   
-  /// This is used internally to convert an APInt to a string.
-  /// @brief Converts an APInt to a std::string
-  std::string toString(uint8_t Radix = 10) const {
+  /// toString - Append this APSInt to the specified SmallString.
+  void toString(SmallVectorImpl<char> &Str, unsigned Radix = 10) const {
+    return APInt::toString(Str, Radix, isSigned());
+  }
+  /// toString - Converts an APInt to a std::string.  This is an inefficient
+  /// method, your should prefer passing in a SmallString instead.
+  std::string toString(unsigned Radix) const {
     return APInt::toString(Radix, isSigned());
   }
+  using APInt::toString;
   
   APSInt& extend(uint32_t width) {
     if (IsUnsigned)
@@ -234,6 +238,12 @@ public:
   ///  objects, into FoldingSets.
   void Profile(FoldingSetNodeID& ID) const;
 };
+  
+inline std::ostream &operator<<(std::ostream &OS, const APSInt &I) {
+  I.print(OS, I.isSigned());
+  return OS;
+}
+  
   
 } // end namespace llvm
 

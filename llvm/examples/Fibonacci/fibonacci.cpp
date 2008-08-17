@@ -116,6 +116,6 @@ int main(int argc, char **argv) {
   GenericValue GV = EE->runFunction(FibF, Args);
 
   // import result of execution
-  std::cout << "Result: " << GV.IntVal.toStringUnsigned(10) << "\n";
+  std::cout << "Result: " << GV.IntVal << "\n";
   return 0;
 }

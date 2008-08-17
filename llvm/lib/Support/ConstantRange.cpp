@@ -463,8 +463,7 @@ ConstantRange ConstantRange::truncate(uint32_t DstTySize) const {
 /// print - Print out the bounds to a stream...
 ///
 void ConstantRange::print(std::ostream &OS) const {
-  OS << "[" << Lower.toStringSigned(10) << "," 
-            << Upper.toStringSigned(10) << ")";
+  OS << "[" << Lower << "," << Upper << ")";
 }
 
 /// dump - Allow printing from a debugger easily...
