@@ -499,23 +499,15 @@ void clang::DoPrintPreprocessedInput(Preprocessor &PP,
 
   
   // Open the output buffer.
-  static llvm::raw_ostream *OutStream;
-  
-  if (!OutFile.size() || OutFile == "-") {
-    OutStream = new llvm::raw_stdout_ostream();
-  } else {
-    std::string Err;
-    OutStream = new llvm::raw_fd_ostream(OutFile.c_str(), Err);
-    
-    if (!Err.empty()) {
-      delete OutStream;
-      fprintf(stderr, "%s\n", Err.c_str());
-      exit(1);
-    }
+  std::string Err;
+  llvm::raw_fd_ostream OS(OutFile.c_str(), Err);
+  if (!Err.empty()) {
+    fprintf(stderr, "%s\n", Err.c_str());
+    exit(1);
   }
-  OutStream->SetBufferSize(64*1024);
   
-  llvm::raw_ostream &OS = *OutStream;
+  OS.SetBufferSize(64*1024);
+  
   
   Token Tok, PrevTok;
   char Buffer[256];
