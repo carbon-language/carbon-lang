@@ -44,8 +44,8 @@ namespace llvm {
   public:
     typedef SimpleRegistryEntry<T> entry;
     
-    /// Accessors for .
-    /// 
+    /// nameof/descof - Accessors for name and description of entries. These are
+    //                  used to generate help for command-line options.
     static const char *nameof(const entry &Entry) { return Entry.getName(); }
     static const char *descof(const entry &Entry) { return Entry.getDesc(); }
   };
@@ -233,6 +233,19 @@ namespace llvm {
     };
     
   };
+  
+  
+  template <typename T, typename U>
+  typename Registry<T,U>::node *Registry<T,U>::Head;
+  
+  template <typename T, typename U>
+  typename Registry<T,U>::node *Registry<T,U>::Tail;
+  
+  template <typename T, typename U>
+  typename Registry<T,U>::listener *Registry<T,U>::ListenerHead;
+  
+  template <typename T, typename U>
+  typename Registry<T,U>::listener *Registry<T,U>::ListenerTail;
   
 }
 

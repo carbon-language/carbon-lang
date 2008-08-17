@@ -18,13 +18,6 @@
 #include <algorithm>
 using namespace llvm;
 
-template<> Registry<TargetMachine>::node *Registry<TargetMachine>::Head = 0;
-template<> Registry<TargetMachine>::node *Registry<TargetMachine>::Tail = 0;
-template<> Registry<TargetMachine>::listener *Registry<TargetMachine>::
-ListenerHead = 0;
-template<> Registry<TargetMachine>::listener *Registry<TargetMachine>::
-ListenerTail = 0;
-
 /// getClosestStaticTargetForModule - Given an LLVM module, pick the best target
 /// that is compatible with the module.  If no close target can be found, this
 /// returns null and sets the Error string to a reason.

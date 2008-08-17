@@ -88,13 +88,6 @@ namespace {
 
 // -----------------------------------------------------------------------------
 
-template<> GCRegistry::node *GCRegistry::Head = 0;
-template<> GCRegistry::node *GCRegistry::Tail = 0;
-template<> GCRegistry::listener *GCRegistry::ListenerHead = 0;
-template<> GCRegistry::listener *GCRegistry::ListenerTail = 0;
-
-// -----------------------------------------------------------------------------
-
 GCStrategy::GCStrategy() :
   NeededSafePoints(0),
   CustomReadBarriers(false),
