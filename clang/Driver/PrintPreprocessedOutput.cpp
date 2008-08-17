@@ -565,8 +565,8 @@ void clang::DoPrintPreprocessedInput(Preprocessor &PP,
   }
   OS << '\n';
   
-  // Flush and free the ostream.
-  delete &OS;
+  // Flush the ostream.
+  OS.flush();
   
   // If an error occurred, remove the output file.
   if (PP.getDiagnostics().hasErrorOccurred() && !OutFile.empty())
