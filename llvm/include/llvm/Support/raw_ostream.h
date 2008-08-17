@@ -14,6 +14,8 @@
 #ifndef LLVM_SUPPORT_RAW_OSTREAM_H
 #define LLVM_SUPPORT_RAW_OSTREAM_H
 
+#include <cassert>
+#include <cstring>
 #include <string>
 #include <iosfwd>
 
