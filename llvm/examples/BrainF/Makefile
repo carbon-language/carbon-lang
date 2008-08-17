@@ -10,6 +10,6 @@ LEVEL = ../..
 TOOLNAME = BrainF
 EXAMPLE_TOOL = 1
 
-LINK_COMPONENTS := jit bitwriter native interpreter
+LINK_COMPONENTS := jit bitwriter nativecodegen interpreter
 
 include $(LEVEL)/Makefile.common

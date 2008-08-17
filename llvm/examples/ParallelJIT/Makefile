@@ -10,7 +10,7 @@ LEVEL = ../..
 TOOLNAME = ParallelJIT
 EXAMPLE_TOOL = 1
 
-LINK_COMPONENTS := jit interpreter native
+LINK_COMPONENTS := jit interpreter nativecodegen
 
 include $(LEVEL)/Makefile.common
 
