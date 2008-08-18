@@ -1608,11 +1608,7 @@ std::vector<LiveInterval*> LiveIntervals::
 addIntervalsForSpillsFast(const LiveInterval &li,
                           const MachineLoopInfo *loopInfo,
                           VirtRegMap &vrm, float& SSWeight) {
-  unsigned slot = vrm.assignVirt2StackSlot(li.reg);
-  
-  // since this is called after the analysis is done we don't know if
-  // LiveVariables is available
-  lv_ = getAnalysisToUpdate<LiveVariables>();
+  vrm.assignVirt2StackSlot(li.reg);
 
   std::vector<LiveInterval*> added;
 
@@ -1628,14 +1624,17 @@ addIntervalsForSpillsFast(const LiveInterval &li,
   DenseMap<MachineInstr*, unsigned> VRegMap;
   DenseMap<MachineInstr*, VNInfo*> VNMap;
 
+  SSWeight = 0.0f;
+
   for (MachineRegisterInfo::reg_iterator RI = mri_->reg_begin(li.reg),
        RE = mri_->reg_end(); RI != RE; ) {
     // Create a new virtual register for the spill interval.
     MachineOperand& MO = RI.getOperand();
     unsigned NewVReg = 0;
-    if (!VRegMap.count(MO.getParent()))
+    if (!VRegMap.count(MO.getParent())) {
       VRegMap[MO.getParent()] = NewVReg = mri_->createVirtualRegister(rc);
-    else
+      vrm.grow();
+    } else
       NewVReg = VRegMap[MO.getParent()];
     
     // Increment iterator to avoid invalidation.
@@ -1644,10 +1643,7 @@ addIntervalsForSpillsFast(const LiveInterval &li,
     MO.setReg(NewVReg);
 
     // create a new register for this spill
-    vrm.grow();
-    vrm.assignVirt2StackSlot(NewVReg, slot);
     LiveInterval &nI = getOrCreateInterval(NewVReg);
-    assert(nI.empty());
 
     // the spill weight is now infinity as it
     // cannot be spilled again
@@ -1672,17 +1668,21 @@ addIntervalsForSpillsFast(const LiveInterval &li,
     }
         
     added.push_back(&nI);
-
-    // update live variables if it is available
-    if (lv_)
-      lv_->addVirtualRegisterKilled(NewVReg, MO.getParent());
         
     DOUT << "\t\t\t\tadded new interval: ";
     DEBUG(nI.dump());
     DOUT << '\n';
+    
+    unsigned loopDepth = loopInfo->getLoopDepth(MO.getParent()->getParent());
+    if (HasUse) {
+      if (HasDef)
+        SSWeight += getSpillWeight(true, true, loopDepth);
+      else
+        SSWeight += getSpillWeight(false, true, loopDepth);
+    } else
+      SSWeight += getSpillWeight(true, false, loopDepth);
+    
   }
-  
-  SSWeight = HUGE_VALF;
 
   std::sort(added.begin(), added.end(), LISorter());
 
