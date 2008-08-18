@@ -1618,83 +1618,61 @@ addIntervalsForSpillsFast(const LiveInterval &li,
 
   const TargetRegisterClass* rc = mri_->getRegClass(li.reg);
 
-  for (LiveInterval::Ranges::const_iterator
-         i = li.ranges.begin(), e = li.ranges.end(); i != e; ++i) {
-    unsigned index = getBaseIndex(i->start);
-    unsigned end = getBaseIndex(i->end-1) + InstrSlots::NUM;
-    for (; index != end; index += InstrSlots::NUM) {
-      // skip deleted instructions
-      while (index != end && !getInstructionFromIndex(index))
-        index += InstrSlots::NUM;
-      if (index == end) break;
+  DenseMap<MachineInstr*, unsigned> VRegMap;
+  DenseMap<MachineInstr*, VNInfo*> VNMap;
 
-      MachineInstr *MI = getInstructionFromIndex(index);
+  for (MachineRegisterInfo::reg_iterator RI = mri_->reg_begin(li.reg),
+       RE = mri_->reg_end(); RI != RE; ) {
+    // Create a new virtual register for the spill interval.
+    MachineOperand& MO = RI.getOperand();
+    unsigned NewVReg = 0;
+    if (!VRegMap.count(MO.getParent()))
+      VRegMap[MO.getParent()] = NewVReg = mri_->createVirtualRegister(rc);
+    else
+      NewVReg = VRegMap[MO.getParent()];
+    
+    // Increment iterator to avoid invalidation.
+    ++RI;
+    
+    MO.setReg(NewVReg);
 
-      for (unsigned i = 0; i != MI->getNumOperands(); ++i) {
-        MachineOperand& mop = MI->getOperand(i);
-        if (mop.isRegister() && mop.getReg() == li.reg) {
-          // Create a new virtual register for the spill interval.
-          unsigned NewVReg = mri_->createVirtualRegister(rc);
-            
-          // Scan all of the operands of this instruction rewriting operands
-          // to use NewVReg instead of li.reg as appropriate.  We do this for
-          // two reasons:
-          //
-          //   1. If the instr reads the same spilled vreg multiple times, we
-          //      want to reuse the NewVReg.
-          //   2. If the instr is a two-addr instruction, we are required to
-          //      keep the src/dst regs pinned.
-          //
-          // Keep track of whether we replace a use and/or def so that we can
-          // create the spill interval with the appropriate range. 
-          mop.setReg(NewVReg);
-          
-          bool HasUse = mop.isUse();
-          bool HasDef = mop.isDef();
-          for (unsigned j = i+1, e = MI->getNumOperands(); j != e; ++j) {
-            if (MI->getOperand(j).isReg() &&
-                MI->getOperand(j).getReg() == li.reg) {
-              MI->getOperand(j).setReg(NewVReg);
-              HasUse |= MI->getOperand(j).isUse();
-              HasDef |= MI->getOperand(j).isDef();
-            }
-          }
+    // create a new register for this spill
+    vrm.grow();
+    vrm.assignVirt2StackSlot(NewVReg, slot);
+    LiveInterval &nI = getOrCreateInterval(NewVReg);
+    assert(nI.empty());
 
-          // create a new register for this spill
-          vrm.grow();
-          vrm.assignVirt2StackSlot(NewVReg, slot);
-          LiveInterval &nI = getOrCreateInterval(NewVReg);
-          assert(nI.empty());
+    // the spill weight is now infinity as it
+    // cannot be spilled again
+    nI.weight = HUGE_VALF;
 
-          // the spill weight is now infinity as it
-          // cannot be spilled again
-          nI.weight = HUGE_VALF;
-
-          if (HasUse) {
-            LiveRange LR(getLoadIndex(index), getUseIndex(index),
-                         nI.getNextValue(~0U, 0, getVNInfoAllocator()));
-            DOUT << " +" << LR;
-            nI.addRange(LR);
-          }
-          if (HasDef) {
-            LiveRange LR(getDefIndex(index), getStoreIndex(index),
-                         nI.getNextValue(~0U, 0, getVNInfoAllocator()));
-            DOUT << " +" << LR;
-            nI.addRange(LR);
-          }
-          
-          added.push_back(&nI);
-
-          // update live variables if it is available
-          if (lv_)
-            lv_->addVirtualRegisterKilled(NewVReg, MI);
-          
-          DOUT << "\t\t\t\tadded new interval: ";
-          DEBUG(nI.dump());
-          DOUT << '\n';
-        }
-      }
+    unsigned index = getInstructionIndex(MO.getParent());
+    bool HasUse = MO.isUse();
+    bool HasDef = MO.isDef();
+    if (!VNMap.count(MO.getParent()))
+      VNMap[MO.getParent()] = nI.getNextValue(~0U, 0, getVNInfoAllocator());
+    if (HasUse) {
+      LiveRange LR(getLoadIndex(index), getUseIndex(index),
+                   VNMap[MO.getParent()]);
+      DOUT << " +" << LR;
+      nI.addRange(LR);
     }
+    if (HasDef) {
+      LiveRange LR(getDefIndex(index), getStoreIndex(index),
+                   VNMap[MO.getParent()]);
+      DOUT << " +" << LR;
+      nI.addRange(LR);
+    }
+        
+    added.push_back(&nI);
+
+    // update live variables if it is available
+    if (lv_)
+      lv_->addVirtualRegisterKilled(NewVReg, MO.getParent());
+        
+    DOUT << "\t\t\t\tadded new interval: ";
+    DEBUG(nI.dump());
+    DOUT << '\n';
   }
   
   SSWeight = HUGE_VALF;
