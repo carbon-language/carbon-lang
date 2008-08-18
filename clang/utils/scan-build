@@ -567,12 +567,12 @@ ENDTEXT
 
     if (scalar(@files)) {
       print OUT <<ENDTEXT;
-<h3>Analyzer Crashes</h3>
+<h3>Analyzer Failures</h3>
 
-<p>The analyzer crashed while processing the following files:</p>
+<p>The analyzer had problems processing the following files:</p>
 
 <table>
-<thead><tr><td>Source File</td><td>Preprocessed File</td></tr></thead>
+<thead><tr><td>Problem</td><td>Source File</td><td>Preprocessed File</td></tr></thead>
 ENDTEXT
   
       foreach my $file (sort @files) {
@@ -583,9 +583,12 @@ ENDTEXT
         open (INFO, "$Dir/crashes/$file") or
           die "Cannot open $Dir/crashes/$file\n";
         my $srcfile = <INFO>;
+        chomp $srcfile;
+        my $problem = <INFO>;
+        chomp $problem;
         close (INFO);
         # Print the information in the table.
-        print OUT "<tr><td>$srcfile</td><td class=\"View\"><a href=\"crashes/$ppfile\">View</a></td></tr>\n";
+        print OUT "<tr><td>$problem</td><td>$srcfile</td><td class=\"View\"><a href=\"crashes/$ppfile\">View</a></td></tr>\n";
       }
 
       print OUT <<ENDTEXT;

@@ -28,18 +28,19 @@ sub GetPPExt {
   return ".i";
 }
 
-sub ProcessClangCrash {
-  my ($Clang, $Lang, $file, $Args, $HtmlDir) = @_;
+sub ProcessClangFailure {
+  my ($Lang, $file, $Args, $HtmlDir, $ErrorType) = @_;
   my $Dir = "$HtmlDir/crashes";
   mkpath $Dir;
   my ($PPH, $PPFile) = tempfile("clang_crash_XXXXXX",
                                   SUFFIX => GetPPExt($Lang),
                                   DIR => $Dir);
 
-  system $Clang, @$Args, "-E", "-o", $PPFile;  
+  system "gcc", @$Args, "-E", "-o", $PPFile;  
   close ($PPH);
   open (OUT, ">", "$PPFile.info") or die "Cannot open $PPFile.info\n";
-  print OUT "$file";
+  print OUT "$file\n";
+  print OUT "$ErrorType\n";
   close OUT;
 }
 
@@ -52,7 +53,7 @@ sub Analyze {
 
   # Skip anything related to C++.
   return if ($Lang =~ /c[+][+]/);
-  
+
   my $RunAnalyzer = 0;
   my $Cmd;
   my @CmdArgs;
@@ -105,7 +106,12 @@ sub Analyze {
 
    # Did the command die because of a signal?
    if ($? & 127 and $Cmd eq $Clang and defined $HtmlDir) {
-     ProcessClangCrash($Clang, $Lang, $file, \@CmdArgsSansAnalyses, $HtmlDir);
+     ProcessClangFailure($Lang, $file, \@CmdArgsSansAnalyses, $HtmlDir,
+                          "Crash");
+   }
+   elsif ($?) {
+     ProcessClangFailure($Lang, $file, \@CmdArgsSansAnalyses, $HtmlDir,
+                          "Parser Rejects");
    }
 }
 
