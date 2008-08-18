@@ -1598,6 +1598,111 @@ LiveIntervals::handleSpilledImpDefs(const LiveInterval &li, VirtRegMap &vrm,
 
 
 std::vector<LiveInterval*> LiveIntervals::
+addIntervalsForSpillsFast(const LiveInterval &li,
+                          const MachineLoopInfo *loopInfo,
+                          VirtRegMap &vrm, float& SSWeight) {
+  unsigned slot = vrm.assignVirt2StackSlot(li.reg);
+  
+  // since this is called after the analysis is done we don't know if
+  // LiveVariables is available
+  lv_ = getAnalysisToUpdate<LiveVariables>();
+
+  std::vector<LiveInterval*> added;
+
+  assert(li.weight != HUGE_VALF &&
+         "attempt to spill already spilled interval!");
+
+  DOUT << "\t\t\t\tadding intervals for spills for interval: ";
+  DEBUG(li.dump());
+  DOUT << '\n';
+
+  const TargetRegisterClass* rc = mri_->getRegClass(li.reg);
+
+  for (LiveInterval::Ranges::const_iterator
+         i = li.ranges.begin(), e = li.ranges.end(); i != e; ++i) {
+    unsigned index = getBaseIndex(i->start);
+    unsigned end = getBaseIndex(i->end-1) + InstrSlots::NUM;
+    for (; index != end; index += InstrSlots::NUM) {
+      // skip deleted instructions
+      while (index != end && !getInstructionFromIndex(index))
+        index += InstrSlots::NUM;
+      if (index == end) break;
+
+      MachineInstr *MI = getInstructionFromIndex(index);
+
+      for (unsigned i = 0; i != MI->getNumOperands(); ++i) {
+        MachineOperand& mop = MI->getOperand(i);
+        if (mop.isRegister() && mop.getReg() == li.reg) {
+          // Create a new virtual register for the spill interval.
+          unsigned NewVReg = mri_->createVirtualRegister(rc);
+            
+          // Scan all of the operands of this instruction rewriting operands
+          // to use NewVReg instead of li.reg as appropriate.  We do this for
+          // two reasons:
+          //
+          //   1. If the instr reads the same spilled vreg multiple times, we
+          //      want to reuse the NewVReg.
+          //   2. If the instr is a two-addr instruction, we are required to
+          //      keep the src/dst regs pinned.
+          //
+          // Keep track of whether we replace a use and/or def so that we can
+          // create the spill interval with the appropriate range. 
+          mop.setReg(NewVReg);
+          
+          bool HasUse = mop.isUse();
+          bool HasDef = mop.isDef();
+          for (unsigned j = i+1, e = MI->getNumOperands(); j != e; ++j) {
+            if (MI->getOperand(j).isReg() &&
+                MI->getOperand(j).getReg() == li.reg) {
+              MI->getOperand(j).setReg(NewVReg);
+              HasUse |= MI->getOperand(j).isUse();
+              HasDef |= MI->getOperand(j).isDef();
+            }
+          }
+
+          // create a new register for this spill
+          vrm.grow();
+          vrm.assignVirt2StackSlot(NewVReg, slot);
+          LiveInterval &nI = getOrCreateInterval(NewVReg);
+          assert(nI.empty());
+
+          // the spill weight is now infinity as it
+          // cannot be spilled again
+          nI.weight = HUGE_VALF;
+
+          if (HasUse) {
+            LiveRange LR(getLoadIndex(index), getUseIndex(index),
+                         nI.getNextValue(~0U, 0, getVNInfoAllocator()));
+            DOUT << " +" << LR;
+            nI.addRange(LR);
+          }
+          if (HasDef) {
+            LiveRange LR(getDefIndex(index), getStoreIndex(index),
+                         nI.getNextValue(~0U, 0, getVNInfoAllocator()));
+            DOUT << " +" << LR;
+            nI.addRange(LR);
+          }
+          
+          added.push_back(&nI);
+
+          // update live variables if it is available
+          if (lv_)
+            lv_->addVirtualRegisterKilled(NewVReg, MI);
+          
+          DOUT << "\t\t\t\tadded new interval: ";
+          DEBUG(nI.dump());
+          DOUT << '\n';
+        }
+      }
+    }
+  }
+  
+  SSWeight = HUGE_VALF;
+
+  return added;
+}
+
+std::vector<LiveInterval*> LiveIntervals::
 addIntervalsForSpills(const LiveInterval &li,
                       const MachineLoopInfo *loopInfo, VirtRegMap &vrm,
                       float &SSWeight) {
