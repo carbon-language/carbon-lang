@@ -231,7 +231,8 @@ bool ARMAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   O << CurrentFnName << ":\n";
   // Emit pre-function debug information.
-  DW.BeginFunction(&MF);
+  // FIXME: Dwarf support.
+  //DW.BeginFunction(&MF);
 
   if (Subtarget->isTargetDarwin()) {
     // If the function is empty, then we need to emit *something*. Otherwise,
@@ -262,7 +263,8 @@ bool ARMAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     O << "\t.size " << CurrentFnName << ", .-" << CurrentFnName << "\n";
 
   // Emit post-function debug information.
-  DW.EndFunction();
+  // FIXME: Dwarf support.
+  //DW.EndFunction();
 
   return false;
 }
@@ -802,14 +804,16 @@ void ARMAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
 
 bool ARMAsmPrinter::doInitialization(Module &M) {
   // Emit initial debug information.
-  DW.BeginModule(&M);
+  // FIXME: Dwarf support.
+  //DW.BeginModule(&M);
   
   bool Result = AsmPrinter::doInitialization(M);
 
   // AsmPrinter::doInitialization should have done this analysis.
   MMI = getAnalysisToUpdate<MachineModuleInfo>();
   assert(MMI);
-  DW.SetModuleInfo(MMI);
+  // FIXME: Dwarf support.
+  //DW.SetModuleInfo(MMI);
 
   // Darwin wants symbols to be quoted if they have complex names.
   if (Subtarget->isTargetDarwin())
@@ -1003,7 +1007,8 @@ bool ARMAsmPrinter::doFinalization(Module &M) {
     }
 
     // Emit initial debug information.
-    DW.EndModule();
+    // FIXME: Dwarf support.
+    //DW.EndModule();
 
     // Funny Darwin hack: This flag tells the linker that no global symbols
     // contain code that falls through to other global symbols (e.g. the obvious
@@ -1013,7 +1018,8 @@ bool ARMAsmPrinter::doFinalization(Module &M) {
     O << "\t.subsections_via_symbols\n";
   } else {
     // Emit final debug information for ELF.
-    DW.EndModule();
+    // FIXME: Dwarf support.
+    //DW.EndModule();
   }
 
   return AsmPrinter::doFinalization(M);
