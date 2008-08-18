@@ -158,7 +158,7 @@ void charArrays()
   char c3[5] = { "Hello" };
   char c4[4] = { "Hello" }; //expected-warning{{initializer-string for char array is too long}}
 
-  int i3[] = {}; //expected-error{{at least one initializer value required to size array}} expected-warning{{use of GNU empty initializer extension}}
+  int i3[] = {}; //expected-warning{{zero size arrays are an extension}} expected-warning{{use of GNU empty initializer extension}}
 }
 
 void variableArrayInit() {

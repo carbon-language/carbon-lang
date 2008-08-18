@@ -257,19 +257,18 @@ void InitListChecker::CheckArrayType(InitListExpr *IList, QualType &DeclType,
   }
   if (DeclType->isIncompleteArrayType()) {
     // If this is an incomplete array type, the actual type needs to
-    // be calculated here
+    // be calculated here.
     if (numElements == 0) {
-      // Sizing an array implicitly to zero is not allowed
-      // (It could in theory be allowed, but it doesn't really matter.)
+      // Sizing an array implicitly to zero is not allowed by ISO C,
+      // but is supported by GNU.
       SemaRef->Diag(IList->getLocStart(),
-                    diag::err_at_least_one_initializer_needed_to_size_array);
-      hadError = true;
-    } else {
-      llvm::APSInt ConstVal(32);
-      ConstVal = numElements;
-      DeclType = SemaRef->Context.getConstantArrayType(elementType, ConstVal, 
-                                                       ArrayType::Normal, 0);
+                    diag::ext_typecheck_zero_array_size);
     }
+
+    llvm::APSInt ConstVal(32);
+    ConstVal = numElements;
+    DeclType = SemaRef->Context.getConstantArrayType(elementType, ConstVal, 
+                                                     ArrayType::Normal, 0);
   }
 }
 
