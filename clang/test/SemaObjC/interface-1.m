@@ -20,7 +20,7 @@ NSObject     // expected-error {{cannot find interface declaration for 'NSObject
 @end
 
 void test2() {
-    INT1 b[3];          // expected-warning {{array of interface 'INT1' should probably be array of pointers}}
+    INT1 b[3];          // expected-warning {{array of interface 'INT1' should probably be an array of pointers}}
     INT1 *c = &b[0];
     ++c;
 }

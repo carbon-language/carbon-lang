@@ -407,7 +407,7 @@ DIAG(err_objc_missing_end, ERROR,
 DIAG(warn_objc_protocol_qualifier_missing_id, WARNING,
      "protocol qualifiers without 'id' is archaic")
 DIAG(warn_objc_array_of_interfaces, WARNING,
-     "array of interface '%0' should probably be array of pointers")
+     "array of interface '%0' should probably be an array of pointers")
 
 DIAG(err_objc_illegal_visibility_spec, ERROR,
      "illegal visibility specification")
