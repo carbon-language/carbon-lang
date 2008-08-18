@@ -1017,8 +1017,8 @@ bool Parser::ParseExpressionList(ExprListTy &Exprs, CommaLocsTy &CommaLocs) {
     ExprResult Expr = ParseAssignmentExpression();
     if (Expr.isInvalid)
       return true;
-    else
-      Exprs.push_back(Expr.Val);
+
+    Exprs.push_back(Expr.Val);
 
     if (Tok.isNot(tok::comma))
       return false;
