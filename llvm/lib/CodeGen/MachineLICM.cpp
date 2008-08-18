@@ -264,6 +264,11 @@ bool MachineLICM::IsLoopInvariantInst(MachineInstr &I) {
       }
     });
 
+  if (I.getDesc().getImplicitDefs() || I.getDesc().getImplicitUses()) {
+    DOUT << "Cannot hoist with implicit defines or uses\n";
+    return false;
+  }
+
   // The instruction is loop invariant if all of its operands are.
   for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = I.getOperand(i);
