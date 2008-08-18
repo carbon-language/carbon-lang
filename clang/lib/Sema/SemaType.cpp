@@ -338,7 +338,11 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
           T = Context.IntTy;
           D.setInvalidType(true);
         }
+      } else if (T->isObjCInterfaceType()) {
+        Diag(DeclType.Loc, diag::warn_objc_array_of_interfaces,
+             T.getAsString());
       }
+      
       // C99 6.7.5.2p1: The size expression shall have integer type.
       if (ArraySize && !ArraySize->getType()->isIntegerType()) {
         Diag(ArraySize->getLocStart(), diag::err_array_size_non_int, 

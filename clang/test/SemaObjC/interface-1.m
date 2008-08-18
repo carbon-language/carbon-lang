@@ -15,3 +15,13 @@ NSObject     // expected-error {{cannot find interface declaration for 'NSObject
 @end
 
 
+// rdar://4304469
+@interface INT1
+@end
+
+void test2() {
+    INT1 b[3];          // expected-warning {{array of interface 'INT1' should probably be array of pointers}}
+    INT1 *c = &b[0];
+    ++c;
+}
+
