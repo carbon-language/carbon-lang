@@ -873,6 +873,7 @@ namespace {
       // little point on a platform with 8-bit loads.
       IntWidth = IntAlign = LongAlign = LongLongAlign = PointerWidth = 16;
       PointerAlign = 8;
+      DescriptionString = "e-p:16:8:8-i8:8:8-i16:8:8-i32:8:8";
     }
     virtual uint64_t getPointerWidthV(unsigned AddrSpace) const { return 16; }
     virtual uint64_t getPointerAlignV(unsigned AddrSpace) const { return 8; }
