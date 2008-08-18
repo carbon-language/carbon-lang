@@ -1,7 +1,8 @@
 LEVEL = ../../..
 include $(LEVEL)/Makefile.common
 
-TESTDIRS = CodeGen Lexer Preprocessor Parser Sema SemaCXX SemaObjC Analysis Serialization Rewriter
+# Test in all non .svn or Output directories below this one.
+TESTDIRS = $(shell find . -name .svn -prune -or -name Output -prune -or -type d -depth +0 -print)
 
 # Only run rewriter tests on darwin.
 ifeq ($(OS),Darwin)
