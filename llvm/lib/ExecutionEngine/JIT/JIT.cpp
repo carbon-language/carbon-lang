@@ -78,11 +78,6 @@ ExecutionEngine *ExecutionEngine::createJIT(ModuleProvider *MP,
   ExecutionEngine *EE = JIT::createJIT(MP, ErrorStr, JMM, Fast);
   if (!EE) return 0;
   
-  // Register routine for informing unwinding runtime about new EH frames
-#if defined(__GNUC__)
-  EE->InstallExceptionTableRegister(__register_frame);
-#endif
-
   // Make sure we can resolve symbols in the program as well. The zero arg
   // to the function tells DynamicLibrary to load the program, not a library.
   sys::DynamicLibrary::LoadLibraryPermanently(0, ErrorStr);
@@ -110,6 +105,11 @@ JIT::JIT(ModuleProvider *MP, TargetMachine &tm, TargetJITInfo &tji,
     cerr << "Target does not support machine code emission!\n";
     abort();
   }
+  
+  // Register routine for informing unwinding runtime about new EH frames
+#if defined(__GNUC__)
+  InstallExceptionTableRegister(__register_frame);
+#endif
   
   // Initialize passes.
   PM.doInitialization();
