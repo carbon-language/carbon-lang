@@ -25,9 +25,9 @@ class MachineFunction;
 class TargetInstrInfo;
 class TargetRegisterClass;
 
-/// This file defines the FastISel class. This is a fast-path instruction
-/// selection class that generates poor code and doesn't support illegal
-/// types or non-trivial lowering, but runs quickly.
+/// FastISel - This is a fast-path instruction selection class that
+/// generates poor code and doesn't support illegal types or non-trivial
+/// lowering, but runs quickly.
 class FastISel {
   MachineBasicBlock *MBB;
   MachineFunction *MF;
