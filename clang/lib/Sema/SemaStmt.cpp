@@ -675,22 +675,26 @@ Sema::StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
                                     unsigned NumOutputs,
                                     unsigned NumInputs,
                                     std::string *Names,
-                                    ExprTy **Constraints,
-                                    ExprTy **Exprs,
+                                    ExprTy **constraints,
+                                    ExprTy **exprs,
                                     ExprTy *asmString,
                                     unsigned NumClobbers,
-                                    ExprTy **Clobbers,
+                                    ExprTy **clobbers,
                                     SourceLocation RParenLoc) {
-  // The parser verifies that there is a string literal here.
+  StringLiteral **Constraints = reinterpret_cast<StringLiteral**>(constraints);
+  Expr **Exprs = reinterpret_cast<Expr **>(exprs);
   StringLiteral *AsmString = cast<StringLiteral>((Expr *)asmString);
+  StringLiteral **Clobbers = reinterpret_cast<StringLiteral**>(clobbers);
+  
+  // The parser verifies that there is a string literal here.
   if (AsmString->isWide())
     // FIXME: We currently leak memory here.
     return Diag(AsmString->getLocStart(), diag::err_asm_wide_character,
                 AsmString->getSourceRange());
   
   
-  for (unsigned i = 0; i < NumOutputs; i++) {
-    StringLiteral *Literal = cast<StringLiteral>((Expr *)Constraints[i]);
+  for (unsigned i = 0; i != NumOutputs; i++) {
+    StringLiteral *Literal = Constraints[i];
     if (Literal->isWide())
       // FIXME: We currently leak memory here.
       return Diag(Literal->getLocStart(), diag::err_asm_wide_character,
@@ -703,23 +707,21 @@ Sema::StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
     if (!Context.Target.validateOutputConstraint(OutputConstraint.c_str(),info))
       // FIXME: We currently leak memory here.
       return Diag(Literal->getLocStart(),
-                  diag::err_invalid_output_constraint_in_asm);
+                  diag::err_asm_invalid_output_constraint, OutputConstraint);
     
     // Check that the output exprs are valid lvalues.
-    Expr *OutputExpr = (Expr *)Exprs[i];
+    ParenExpr *OutputExpr = cast<ParenExpr>(Exprs[i]);
     Expr::isLvalueResult Result = OutputExpr->isLvalue(Context);
     if (Result != Expr::LV_Valid) {
-      ParenExpr *PE = cast<ParenExpr>(OutputExpr);
-      
       // FIXME: We currently leak memory here.
-      return Diag(PE->getSubExpr()->getLocStart(), 
-                  diag::err_invalid_lvalue_in_asm_output,
-                  PE->getSubExpr()->getSourceRange());
+      return Diag(OutputExpr->getSubExpr()->getLocStart(), 
+                  diag::err_asm_invalid_lvalue_in_output,
+                  OutputExpr->getSubExpr()->getSourceRange());
     }
   }
   
   for (unsigned i = NumOutputs, e = NumOutputs + NumInputs; i != e; i++) {
-    StringLiteral *Literal = cast<StringLiteral>((Expr *)Constraints[i]);
+    StringLiteral *Literal = Constraints[i];
     if (Literal->isWide())
       // FIXME: We currently leak memory here.
       return Diag(Literal->getLocStart(), diag::err_asm_wide_character,
@@ -730,29 +732,27 @@ Sema::StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
     
     TargetInfo::ConstraintInfo info;
     if (!Context.Target.validateInputConstraint(InputConstraint.c_str(),
-                                                NumOutputs,                                                
-                                                info)) {
+                                                NumOutputs, info)) {
       // FIXME: We currently leak memory here.
       return Diag(Literal->getLocStart(),
-                  diag::err_invalid_input_constraint_in_asm);
+                  diag::err_asm_invalid_input_constraint, InputConstraint);
     }
     
     // Check that the input exprs aren't of type void.
-    Expr *InputExpr = (Expr *)Exprs[i];    
+    ParenExpr *InputExpr = cast<ParenExpr>(Exprs[i]);
     if (InputExpr->getType()->isVoidType()) {
-      ParenExpr *PE = cast<ParenExpr>(InputExpr);
       
       // FIXME: We currently leak memory here.
-      return Diag(PE->getSubExpr()->getLocStart(),
-                  diag::err_invalid_type_in_asm_input,
-                  PE->getType().getAsString(), 
-                  PE->getSubExpr()->getSourceRange());
+      return Diag(InputExpr->getSubExpr()->getLocStart(),
+                  diag::err_asm_invalid_type_in_input,
+                  InputExpr->getType().getAsString(), InputConstraint,
+                  InputExpr->getSubExpr()->getSourceRange());
     }
   }
   
   // Check that the clobbers are valid.
-  for (unsigned i = 0; i < NumClobbers; i++) {
-    StringLiteral *Literal = cast<StringLiteral>((Expr *)Clobbers[i]);
+  for (unsigned i = 0; i != NumClobbers; i++) {
+    StringLiteral *Literal = Clobbers[i];
     if (Literal->isWide())
       // FIXME: We currently leak memory here.
       return Diag(Literal->getLocStart(), diag::err_asm_wide_character,
@@ -765,20 +765,12 @@ Sema::StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
     if (!Context.Target.isValidGCCRegisterName(Clobber.c_str()))
       // FIXME: We currently leak memory here.
       return Diag(Literal->getLocStart(),
-                  diag::err_unknown_register_name_in_asm, Clobber.c_str());
+                  diag::err_asm_unknown_register_name, Clobber.c_str());
   }
   
-  return new AsmStmt(AsmLoc,
-                     IsSimple,
-                     IsVolatile,
-                     NumOutputs,
-                     NumInputs, 
-                     Names,
-                     reinterpret_cast<StringLiteral**>(Constraints),
-                     reinterpret_cast<Expr**>(Exprs),
-                     AsmString, NumClobbers,
-                     reinterpret_cast<StringLiteral**>(Clobbers),
-                     RParenLoc);
+  return new AsmStmt(AsmLoc, IsSimple, IsVolatile, NumOutputs, NumInputs, 
+                     Names, Constraints, Exprs, AsmString, NumClobbers,
+                     Clobbers, RParenLoc);
 }
 
 Action::StmtResult

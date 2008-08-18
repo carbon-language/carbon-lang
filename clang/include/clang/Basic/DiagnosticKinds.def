@@ -1001,15 +1001,15 @@ DIAG(err_pascal_string_too_long, ERROR,
     "Pascal string is too long")
 DIAG(err_asm_wide_character, ERROR,
     "wide string is invalid in 'asm'")
-DIAG(err_invalid_lvalue_in_asm_output, ERROR,
+DIAG(err_asm_invalid_lvalue_in_output, ERROR,
     "invalid lvalue in asm output")
-DIAG(err_invalid_output_constraint_in_asm, ERROR,
-    "invalid output constraint in asm")
-DIAG(err_invalid_input_constraint_in_asm, ERROR,
-    "invalid input constraint in asm")
-DIAG(err_invalid_type_in_asm_input, ERROR,
-    "invalid type '%0' in asm input")
-DIAG(err_unknown_register_name_in_asm, ERROR,
+DIAG(err_asm_invalid_output_constraint, ERROR,
+    "invalid output constraint '%0' in asm")
+DIAG(err_asm_invalid_input_constraint, ERROR,
+    "invalid input constraint '%0' in asm")
+DIAG(err_asm_invalid_type_in_input, ERROR,
+    "invalid type '%0' in asm input for constraint '%1'")
+DIAG(err_asm_unknown_register_name, ERROR,
     "unknown register name '%0' in asm")
 DIAG(err_invalid_conversion_between_vectors, ERROR,
     "invalid conversion between vector type '%0' and '%1' of different size")
