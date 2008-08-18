@@ -1608,7 +1608,7 @@ std::vector<LiveInterval*> LiveIntervals::
 addIntervalsForSpillsFast(const LiveInterval &li,
                           const MachineLoopInfo *loopInfo,
                           VirtRegMap &vrm, float& SSWeight) {
-  vrm.assignVirt2StackSlot(li.reg);
+  unsigned slot = vrm.assignVirt2StackSlot(li.reg);
 
   std::vector<LiveInterval*> added;
 
@@ -1631,9 +1631,13 @@ addIntervalsForSpillsFast(const LiveInterval &li,
     // Create a new virtual register for the spill interval.
     MachineOperand& MO = RI.getOperand();
     unsigned NewVReg = 0;
+    bool newInt = false;
     if (!VRegMap.count(MO.getParent())) {
       VRegMap[MO.getParent()] = NewVReg = mri_->createVirtualRegister(rc);
       vrm.grow();
+      vrm.assignVirt2StackSlot(NewVReg, slot);
+      
+      newInt = true;
     } else
       NewVReg = VRegMap[MO.getParent()];
     
@@ -1666,8 +1670,9 @@ addIntervalsForSpillsFast(const LiveInterval &li,
       DOUT << " +" << LR;
       nI.addRange(LR);
     }
-        
-    added.push_back(&nI);
+    
+    if (newInt)
+      added.push_back(&nI);
         
     DOUT << "\t\t\t\tadded new interval: ";
     DEBUG(nI.dump());
