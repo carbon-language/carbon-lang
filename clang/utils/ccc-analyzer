@@ -41,6 +41,7 @@ sub ProcessClangFailure {
   open (OUT, ">", "$PPFile.info") or die "Cannot open $PPFile.info\n";
   print OUT "$file\n";
   print OUT "$ErrorType\n";
+  print OUT "@$Args\n";
   close OUT;
 }
 
