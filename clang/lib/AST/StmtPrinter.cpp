@@ -689,7 +689,10 @@ void StmtPrinter::VisitExtVectorElementExpr(ExtVectorElementExpr *Node) {
   OS << ".";
   OS << Node->getAccessor().getName();
 }
-void StmtPrinter::VisitCastExpr(CastExpr *Node) {
+void StmtPrinter::VisitCastExpr(CastExpr *) {
+  assert(0 && "CastExpr is an abstract class");
+}
+void StmtPrinter::VisitExplicitCastExpr(ExplicitCastExpr *Node) {
   OS << "(" << Node->getType().getAsString() << ")";
   PrintExpr(Node->getSubExpr());
 }

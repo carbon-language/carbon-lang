@@ -946,7 +946,7 @@ bool Sema::CheckAddressConstantExpression(const Expr* Init) {
          diag::err_init_element_not_constant, Init->getSourceRange());
     return true;
   }
-  case Expr::CastExprClass: {
+  case Expr::ExplicitCastExprClass: {
     const Expr* SubExpr = cast<CastExpr>(Init)->getSubExpr();
 
     // Check for pointer->pointer cast
@@ -1058,7 +1058,7 @@ static const Expr* FindExpressionBaseAddress(const Expr* E) {
     // if we don't, we'll figure it out later
     return 0;
   }
-  case Expr::CastExprClass: {
+  case Expr::ExplicitCastExprClass: {
     const Expr* SubExpr = cast<CastExpr>(E)->getSubExpr();
 
     // Check for pointer->pointer cast
@@ -1183,14 +1183,8 @@ bool Sema::CheckArithmeticConstantExpression(const Expr* Init) {
     return true;
   }
   case Expr::ImplicitCastExprClass:
-  case Expr::CastExprClass: {
-    const Expr *SubExpr;
-    if (const CastExpr *C = dyn_cast<CastExpr>(Init)) {
-      SubExpr = C->getSubExpr();
-    } else {
-      SubExpr = cast<ImplicitCastExpr>(Init)->getSubExpr();
-    }
-
+  case Expr::ExplicitCastExprClass: {
+    const Expr *SubExpr = cast<CastExpr>(Init)->getSubExpr();
     if (SubExpr->getType()->isArithmeticType())
       return CheckArithmeticConstantExpression(SubExpr);
 
@@ -1267,9 +1261,7 @@ bool Sema::CheckForConstantInitializer(Expr *Init, QualType DclT) {
       }
     } else if (InitTy->isIntegralType()) {
       Expr* SubE = 0;
-      if (ImplicitCastExpr* ICE = dyn_cast<ImplicitCastExpr>(Init))
-        SubE = ICE->getSubExpr();
-      else if (CastExpr* CE = dyn_cast<CastExpr>(Init))
+      if (CastExpr* CE = dyn_cast<CastExpr>(Init))
         SubE = CE->getSubExpr();
       // Special check for pointer cast to int; we allow as an extension
       // an address constant cast to an integer if the integer

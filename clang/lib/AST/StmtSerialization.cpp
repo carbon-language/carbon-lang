@@ -57,9 +57,6 @@ Stmt* Stmt::Create(Deserializer& D, ASTContext& C) {
       
     case CaseStmtClass:
       return CaseStmt::CreateImpl(D, C);
-    
-    case CastExprClass:
-      return CastExpr::CreateImpl(D, C);
       
     case CharacterLiteralClass:
       return CharacterLiteral::CreateImpl(D, C);
@@ -108,6 +105,9 @@ Stmt* Stmt::Create(Deserializer& D, ASTContext& C) {
       
     case ImplicitCastExprClass:
       return ImplicitCastExpr::CreateImpl(D, C);
+
+    case ExplicitCastExprClass:
+      return ExplicitCastExpr::CreateImpl(D, C);
       
     case IndirectGotoStmtClass:
       return IndirectGotoStmt::CreateImpl(D, C);
@@ -358,17 +358,17 @@ CaseStmt* CaseStmt::CreateImpl(Deserializer& D, ASTContext& C) {
   return stmt;
 }
 
-void CastExpr::EmitImpl(Serializer& S) const {
+void ExplicitCastExpr::EmitImpl(Serializer& S) const {
   S.Emit(getType());
   S.Emit(Loc);
-  S.EmitOwnedPtr(Op);
+  S.EmitOwnedPtr(getSubExpr());
 }
 
-CastExpr* CastExpr::CreateImpl(Deserializer& D, ASTContext& C) {
+ExplicitCastExpr* ExplicitCastExpr::CreateImpl(Deserializer& D, ASTContext& C) {
   QualType t = QualType::ReadVal(D);
   SourceLocation Loc = SourceLocation::ReadVal(D);
   Expr* Op = D.ReadOwnedPtr<Expr>(C);
-  return new CastExpr(t,Op,Loc);
+  return new ExplicitCastExpr(t,Op,Loc);
 }
   
 
@@ -631,7 +631,7 @@ ImaginaryLiteral* ImaginaryLiteral::CreateImpl(Deserializer& D, ASTContext& C) {
 
 void ImplicitCastExpr::EmitImpl(Serializer& S) const {
   S.Emit(getType());
-  S.EmitOwnedPtr(Op);
+  S.EmitOwnedPtr(getSubExpr());
 }
 
 ImplicitCastExpr* ImplicitCastExpr::CreateImpl(Deserializer& D, ASTContext& C) {

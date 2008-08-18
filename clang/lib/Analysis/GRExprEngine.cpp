@@ -356,12 +356,6 @@ void GRExprEngine::Visit(Stmt* S, NodeTy* Pred, NodeSet& Dst) {
       break;      
     }
       
-    case Stmt::CastExprClass: {
-      CastExpr* C = cast<CastExpr>(S);
-      VisitCast(C, C->getSubExpr(), Pred, Dst);
-      break;
-    }
-      
       // FIXME: ChooseExpr is really a constant.  We need to fix
       //        the CFG do not model them as explicit control-flow.
       
@@ -389,8 +383,9 @@ void GRExprEngine::Visit(Stmt* S, NodeTy* Pred, NodeSet& Dst) {
       VisitDeclStmt(cast<DeclStmt>(S), Pred, Dst);
       break;
       
-    case Stmt::ImplicitCastExprClass: {
-      ImplicitCastExpr* C = cast<ImplicitCastExpr>(S);
+    case Stmt::ImplicitCastExprClass:
+    case Stmt::ExplicitCastExprClass: {
+      CastExpr* C = cast<CastExpr>(S);
       VisitCast(C, C->getSubExpr(), Pred, Dst);
       break;
     }

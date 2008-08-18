@@ -72,7 +72,7 @@ public:
     return Visit(E->getInitializer());
   }
   
-  llvm::Constant *VisitCastExpr(const CastExpr* E) {
+  llvm::Constant *VisitCastExpr(CastExpr* E) {
     llvm::Constant *C = Visit(E->getSubExpr());
     
     return EmitConversion(C, E->getSubExpr()->getType(), E->getType());    

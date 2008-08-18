@@ -837,61 +837,80 @@ public:
   static CompoundLiteralExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
-/// ImplicitCastExpr - Allows us to explicitly represent implicit type 
-/// conversions. For example: converting T[]->T*, void f()->void (*f)(), 
-/// float->double, short->int, etc.
+/// CastExpr - Base class for Cast Operators (explicit, implicit, etc.).
+/// Classes that derive from CastExpr are:
 ///
-class ImplicitCastExpr : public Expr {
-  Stmt *Op;
-public:
-  ImplicitCastExpr(QualType ty, Expr *op) : 
-    Expr(ImplicitCastExprClass, ty), Op(op) {}
-    
-  Expr *getSubExpr() { return cast<Expr>(Op); }
-  const Expr *getSubExpr() const { return cast<Expr>(Op); }
-
-  virtual SourceRange getSourceRange() const { return Op->getSourceRange(); }
-
-  static bool classof(const Stmt *T) { 
-    return T->getStmtClass() == ImplicitCastExprClass; 
-  }
-  static bool classof(const ImplicitCastExpr *) { return true; }
-  
-  // Iterators
-  virtual child_iterator child_begin();
-  virtual child_iterator child_end();
-  
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static ImplicitCastExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
-};
-
-/// CastExpr - [C99 6.5.4] Cast Operators.
+///   ImplicitCastExpr
+///   ExplicitCastExpr
 ///
 class CastExpr : public Expr {
   Stmt *Op;
-  SourceLocation Loc; // the location of the left paren
+protected:
+  CastExpr(StmtClass SC, QualType ty, Expr *op) : 
+    Expr(SC, ty), Op(op) {}
+  
 public:
-  CastExpr(QualType ty, Expr *op, SourceLocation l) : 
-    Expr(CastExprClass, ty), Op(op), Loc(l) {}
-
-  SourceLocation getLParenLoc() const { return Loc; }
+  Expr *getSubExpr() { return cast<Expr>(Op); }
+  const Expr *getSubExpr() const { return cast<Expr>(Op); }
   
-  Expr *getSubExpr() const { return cast<Expr>(Op); }
-  
-  virtual SourceRange getSourceRange() const {
-    return SourceRange(Loc, getSubExpr()->getSourceRange().getEnd());
-  }
   static bool classof(const Stmt *T) { 
-    return T->getStmtClass() == CastExprClass; 
+    switch (T->getStmtClass()) {
+    case ImplicitCastExprClass:
+    case ExplicitCastExprClass:
+      return true;
+    default:
+      return false;
+    }
   }
   static bool classof(const CastExpr *) { return true; }
   
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
+};
+
+/// ImplicitCastExpr - Allows us to explicitly represent implicit type 
+/// conversions. For example: converting T[]->T*, void f()->void (*f)(), 
+/// float->double, short->int, etc.
+///
+class ImplicitCastExpr : public CastExpr {
+public:
+  ImplicitCastExpr(QualType ty, Expr *op) : 
+    CastExpr(ImplicitCastExprClass, ty, op) {}
+
+  virtual SourceRange getSourceRange() const {
+    return getSubExpr()->getSourceRange();
+  }
+
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == ImplicitCastExprClass; 
+  }
+  static bool classof(const ImplicitCastExpr *) { return true; }
   
   virtual void EmitImpl(llvm::Serializer& S) const;
-  static CastExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
+  static ImplicitCastExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
+};
+
+/// ExplicitCastExpr - [C99 6.5.4] Cast Operators.
+///
+class ExplicitCastExpr : public CastExpr {
+  SourceLocation Loc; // the location of the left paren
+public:
+  ExplicitCastExpr(QualType ty, Expr *op, SourceLocation l) : 
+    CastExpr(ExplicitCastExprClass, ty, op), Loc(l) {}
+
+  SourceLocation getLParenLoc() const { return Loc; }
+  
+  virtual SourceRange getSourceRange() const {
+    return SourceRange(Loc, getSubExpr()->getSourceRange().getEnd());
+  }
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == ExplicitCastExprClass; 
+  }
+  static bool classof(const ExplicitCastExpr *) { return true; }
+  
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static ExplicitCastExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 class BinaryOperator : public Expr {

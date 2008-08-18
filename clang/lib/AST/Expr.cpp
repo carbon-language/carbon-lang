@@ -359,7 +359,7 @@ bool Expr::hasLocalSideEffect() const {
         return E->hasLocalSideEffect();
     return false;
   }
-  case CastExprClass:
+  case ExplicitCastExprClass:
     // If this is a cast to void, check the operand.  Otherwise, the result of
     // the cast is unused.
     if (getType()->isVoidType())
@@ -534,8 +534,6 @@ Expr *Expr::IgnoreParenCasts() {
       E = P->getSubExpr();
     else if (CastExpr *P = dyn_cast<CastExpr>(E))
       E = P->getSubExpr();
-    else if (ImplicitCastExpr *P = dyn_cast<ImplicitCastExpr>(E))
-      E = P->getSubExpr();
     else
       return E;
   }
@@ -645,16 +643,9 @@ bool Expr::isConstantExpr(ASTContext &Ctx, SourceLocation *Loc) const {
     return true;
   }
   case ImplicitCastExprClass:
-  case CastExprClass: {
-    const Expr *SubExpr;
-    SourceLocation CastLoc;
-    if (const CastExpr *C = dyn_cast<CastExpr>(this)) {
-      SubExpr = C->getSubExpr();
-      CastLoc = C->getLParenLoc();
-    } else {
-      SubExpr = cast<ImplicitCastExpr>(this)->getSubExpr();
-      CastLoc = getLocStart();
-    }
+  case ExplicitCastExprClass: {
+    const Expr *SubExpr = cast<CastExpr>(this)->getSubExpr();
+    SourceLocation CastLoc = getLocStart();
     if (!SubExpr->isConstantExpr(Ctx, Loc)) {
       if (Loc) *Loc = SubExpr->getLocStart();
       return false;
@@ -940,16 +931,9 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
     break;
   }
   case ImplicitCastExprClass:
-  case CastExprClass: {
-    const Expr *SubExpr;
-    SourceLocation CastLoc;
-    if (const CastExpr *C = dyn_cast<CastExpr>(this)) {
-      SubExpr = C->getSubExpr();
-      CastLoc = C->getLParenLoc();
-    } else {
-      SubExpr = cast<ImplicitCastExpr>(this)->getSubExpr();
-      CastLoc = getLocStart();
-    }
+  case ExplicitCastExprClass: {
+    const Expr *SubExpr = cast<CastExpr>(this)->getSubExpr();
+    SourceLocation CastLoc = getLocStart();
     
     // C99 6.6p6: shall only convert arithmetic types to integer types.
     if (!SubExpr->getType()->isArithmeticType() ||
@@ -1043,7 +1027,7 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
 /// cast to void*.
 bool Expr::isNullPointerConstant(ASTContext &Ctx) const {
   // Strip off a cast to void*, if it exists.
-  if (const CastExpr *CE = dyn_cast<CastExpr>(this)) {
+  if (const ExplicitCastExpr *CE = dyn_cast<ExplicitCastExpr>(this)) {
     // Check that it is a cast to void*.
     if (const PointerType *PT = CE->getType()->getAsPointerType()) {
       QualType Pointee = PT->getPointeeType();
@@ -1325,10 +1309,6 @@ Stmt::child_iterator ExtVectorElementExpr::child_end() { return &Base+1; }
 // CompoundLiteralExpr
 Stmt::child_iterator CompoundLiteralExpr::child_begin() { return &Init; }
 Stmt::child_iterator CompoundLiteralExpr::child_end() { return &Init+1; }
-
-// ImplicitCastExpr
-Stmt::child_iterator ImplicitCastExpr::child_begin() { return &Op; }
-Stmt::child_iterator ImplicitCastExpr::child_end() { return &Op+1; }
 
 // CastExpr
 Stmt::child_iterator CastExpr::child_begin() { return &Op; }

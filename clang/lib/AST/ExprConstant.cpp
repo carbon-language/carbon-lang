@@ -216,9 +216,6 @@ public:
   bool VisitUnaryOperator(const UnaryOperator *E);
 
   bool VisitCastExpr(CastExpr* E) {
-    return HandleCast(E->getLParenLoc(), E->getSubExpr(), E->getType());
-  }
-  bool VisitImplicitCastExpr(ImplicitCastExpr* E) {
     return HandleCast(E->getLocStart(), E->getSubExpr(), E->getType());
   }
   bool VisitSizeOfAlignOfTypeExpr(const SizeOfAlignOfTypeExpr *E) {

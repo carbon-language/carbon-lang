@@ -1154,7 +1154,7 @@ ActOnCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
 
   if (CheckCastTypes(SourceRange(LParenLoc, RParenLoc), castType, castExpr))
     return true;
-  return new CastExpr(castType, castExpr, LParenLoc);
+  return new ExplicitCastExpr(castType, castExpr, LParenLoc);
 }
 
 /// Note that lex is not null here, even if this is the gnu "x ?: y" extension.

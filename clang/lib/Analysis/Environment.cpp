@@ -47,19 +47,8 @@ RVal Environment::GetRVal(Expr* E, BasicValueFactory& BasicVals) const {
         // are no-ops.  We blast through these to get the descendant
         // subexpression that has a value.
         
-      case Stmt::ImplicitCastExprClass: {
-        ImplicitCastExpr* C = cast<ImplicitCastExpr>(E);
-        QualType CT = C->getType();
-        
-        if (CT->isVoidType())
-          return UnknownVal();
-        
-        QualType ST = C->getSubExpr()->getType();
-        
-        break;
-      }
-        
-      case Stmt::CastExprClass: {
+      case Stmt::ImplicitCastExprClass:
+      case Stmt::ExplicitCastExprClass: {
         CastExpr* C = cast<CastExpr>(E);
         QualType CT = C->getType();
         QualType ST = C->getSubExpr()->getType();
