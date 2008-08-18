@@ -43,7 +43,7 @@ protected:
   unsigned char LongDoubleWidth, LongDoubleAlign;
   unsigned char LongWidth, LongAlign;
   unsigned char LongLongWidth, LongLongAlign;
-  char *DescriptionString;
+  const char *DescriptionString;
   
   const llvm::fltSemantics *FloatFormat, *DoubleFormat, *LongDoubleFormat;
 
