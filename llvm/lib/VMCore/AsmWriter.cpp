@@ -252,17 +252,17 @@ static void PrintLLVMName(std::ostream &OS, const ValueName *Name,
     } else if (isprint(C)) {
       OS << C;
     } else {
-      OS << "\\";
+      OS << '\\';
       char hex1 = (C >> 4) & 0x0F;
       if (hex1 < 10)
-        OS << (hex1 + '0');
+        OS << (char)(hex1 + '0');
       else 
-        OS << (hex1 - 10 + 'A');
+        OS << (char)(hex1 - 10 + 'A');
       char hex2 = C & 0x0F;
       if (hex2 < 10)
-        OS << (hex2 + '0');
+        OS << (char)(hex2 + '0');
       else 
-        OS << (hex2 - 10 + 'A');
+        OS << (char)(hex2 - 10 + 'A');
     }
   }
   OS << '"';
