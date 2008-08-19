@@ -127,20 +127,17 @@ enum PrefixType {
 /// PrintLLVMName - Turn the specified name into an 'LLVM name', which is either
 /// prefixed with % (if the string only contains simple characters) or is
 /// surrounded with ""'s (if it has special chars in it).  Print it out.
-static void PrintLLVMName(std::ostream &OS, const ValueName *Name,
-                          PrefixType Prefix) {
-  assert(Name && "Cannot get empty name!");
+static void PrintLLVMName(std::ostream &OS, const char *NameStr,
+                          unsigned NameLen, PrefixType Prefix) {
+  assert(NameStr && "Cannot get empty name!");
   switch (Prefix) {
-    default: assert(0 && "Bad prefix!");
-    case GlobalPrefix: OS << '@'; break;
-    case LabelPrefix:  break;
-    case LocalPrefix:  OS << '%'; break;
+  default: assert(0 && "Bad prefix!");
+  case GlobalPrefix: OS << '@'; break;
+  case LabelPrefix:  break;
+  case LocalPrefix:  OS << '%'; break;
   }      
   
   // Scan the name to see if it needs quotes first.
-  const char *NameStr = Name->getKeyData();
-  unsigned NameLen = Name->getKeyLength();
-  
   bool NeedsQuotes = NameStr[0] >= '0' && NameStr[0] <= '9';
   if (!NeedsQuotes) {
     for (unsigned i = 0; i != NameLen; ++i) {
@@ -189,7 +186,7 @@ static void PrintLLVMName(std::ostream &OS, const ValueName *Name,
 /// prefixed with % (if the string only contains simple characters) or is
 /// surrounded with ""'s (if it has special chars in it).  Print it out.
 static void PrintLLVMName(std::ostream &OS, const Value *V) {
-  PrintLLVMName(OS, V->getValueName(),
+  PrintLLVMName(OS, V->getNameStart(), V->getNameLen(),
                 isa<GlobalValue>(V) ? GlobalPrefix : LocalPrefix);
 }
 
@@ -1208,16 +1205,11 @@ void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
     Out << " = ";
   }
 
-  if (!GV->hasInitializer()) {
-    switch (GV->getLinkage()) {
-     case GlobalValue::DLLImportLinkage:    Out << "dllimport "; break;
-     case GlobalValue::ExternalWeakLinkage: Out << "extern_weak "; break;
-     default: Out << "external "; break;
-    }
-  } else {
-    PrintLinkage(GV->getLinkage(), Out);
-    PrintVisibility(GV->getVisibility(), Out);
-  }
+  if (!GV->hasInitializer() && GV->hasExternalLinkage())
+    Out << "external ";
+  
+  PrintLinkage(GV->getLinkage(), Out);
+  PrintVisibility(GV->getVisibility(), Out);
 
   if (GV->isThreadLocal()) Out << "thread_local ";
   Out << (GV->isConstant() ? "constant " : "global ");
@@ -1280,14 +1272,16 @@ void AssemblyWriter::printAlias(const GlobalAlias *GA) {
   }
   
   printInfoComment(*GA);
-  Out << "\n";
+  Out << '\n';
 }
 
 void AssemblyWriter::printTypeSymbolTable(const TypeSymbolTable &ST) {
   // Print the types.
   for (TypeSymbolTable::const_iterator TI = ST.begin(), TE = ST.end();
        TI != TE; ++TI) {
-    Out << '\t' << getLLVMName(TI->first) << " = type ";
+    Out << '\t';
+    PrintLLVMName(Out, &TI->first[0], TI->first.size(), LocalPrefix);
+    Out << " = type ";
 
     // Make sure we print out at least one level of the type structure, so
     // that we do not get %FILE = type %FILE
@@ -1416,7 +1410,7 @@ void AssemblyWriter::printArgument(const Argument *Arg,
 void AssemblyWriter::printBasicBlock(const BasicBlock *BB) {
   if (BB->hasName()) {              // Print out the label if it exists...
     Out << "\n";
-    PrintLLVMName(Out, BB->getValueName(), LabelPrefix);
+    PrintLLVMName(Out, BB->getNameStart(), BB->getNameLen(), LabelPrefix);
     Out << ':';
   } else if (!BB->use_empty()) {      // Don't print block # of no uses...
     Out << "\n; <label>:";
