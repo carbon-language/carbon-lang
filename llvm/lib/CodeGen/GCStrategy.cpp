@@ -26,6 +26,7 @@
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Support/Compiler.h"
 
 using namespace llvm;
@@ -356,14 +357,12 @@ void MachineCodeAnalysis::FindSafePoints(MachineFunction &MF) {
 }
 
 void MachineCodeAnalysis::FindStackOffsets(MachineFunction &MF) {
-  uint64_t StackSize = MFI->getStackSize();
-  uint64_t OffsetAdjustment = MFI->getOffsetAdjustment();
-  uint64_t OffsetOfLocalArea = TM->getFrameInfo()->getOffsetOfLocalArea();
+  const TargetRegisterInfo *TRI = TM->getRegisterInfo();
+  assert(TRI && "TargetRegisterInfo not available!");
   
   for (GCFunctionInfo::roots_iterator RI = FI->roots_begin(),
                                       RE = FI->roots_end(); RI != RE; ++RI)
-    RI->StackOffset = MFI->getObjectOffset(RI->Num) + StackSize
-                      - OffsetOfLocalArea + OffsetAdjustment;
+    RI->StackOffset = TRI->getFrameIndexOffset(MF, RI->Num);
 }
 
 bool MachineCodeAnalysis::runOnMachineFunction(MachineFunction &MF) {
@@ -378,10 +377,9 @@ bool MachineCodeAnalysis::runOnMachineFunction(MachineFunction &MF) {
   TM = &MF.getTarget();
   MMI = &getAnalysis<MachineModuleInfo>();
   TII = TM->getInstrInfo();
-  MFI = MF.getFrameInfo();
   
   // Find the size of the stack frame.
-  FI->setFrameSize(MFI->getStackSize());
+  FI->setFrameSize(MF.getFrameInfo()->getStackSize());
   
   // Find all safe points.
   FindSafePoints(MF);
