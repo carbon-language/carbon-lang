@@ -19,6 +19,7 @@
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/DenseSet.h"
 #include <vector>
+#include <iosfwd>
 
 namespace clang {
   
@@ -41,8 +42,11 @@ public:
   
   virtual Store RemoveDeadBindings(Store store, Stmt* Loc,
                                    const LiveVariables& Live,
-                                   DeclRootsTy& DRoots, LiveSymbolsTy& LSymbols,
+                                   DeclRootsTy& DRoots, LiveSymbolsTy& LSymbols,                                  
                                    DeadSymbolsTy& DSymbols) = 0;
+  
+  virtual void print(Store store, std::ostream& Out,
+                     const char* nl, const char *sep) = 0;
 };
   
 } // end clang namespace

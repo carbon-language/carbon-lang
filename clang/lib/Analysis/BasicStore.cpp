@@ -16,6 +16,7 @@
 #include "clang/Analysis/PathSensitive/GRState.h"
 #include "llvm/ADT/ImmutableMap.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/Streams.h"
 
 using namespace clang;
 
@@ -42,7 +43,10 @@ public:
   
   static inline VarBindingsTy GetVarBindings(Store store) {
     return VarBindingsTy(static_cast<const VarBindingsTy::TreeTy*>(store));
-  }  
+  }
+
+  virtual void print(Store store, std::ostream& Out,
+                     const char* nl, const char *sep);
 };  
   
 } // end anonymous namespace
@@ -233,4 +237,21 @@ Store BasicStoreManager::getInitialStore(GRStateManager& StateMgr) {
     }
   }
   return St;
+}
+
+void BasicStoreManager::print(Store store, std::ostream& Out,
+                              const char* nl, const char *sep) {
+      
+  VarBindingsTy B = GetVarBindings(store);
+  Out << "Variables:" << nl;
+  
+  bool isFirst = true;
+  
+  for (VarBindingsTy::iterator I=B.begin(), E=B.end(); I != E; ++I) {
+    if (isFirst) isFirst = false;
+    else Out << nl;
+    
+    Out << ' ' << I.getKey()->getName() << " : ";
+    I.getData().print(Out);
+  }
 }

@@ -171,7 +171,8 @@ public:
                        const char* nl, const char* sep) = 0;
   };
 
-  void print(std::ostream& Out, Printer **Beg = 0, Printer **End = 0,
+  void print(std::ostream& Out, StoreManager& StoreMgr,
+             Printer **Beg = 0, Printer **End = 0,
              const char* nl = "\n", const char *sep = "") const;  
 };
   

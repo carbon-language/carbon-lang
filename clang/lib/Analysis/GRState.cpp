@@ -238,26 +238,15 @@ const GRState* GRStateManager::getPersistentState(GRState& State) {
 //  State pretty-printing.
 //===----------------------------------------------------------------------===//
 
-void GRState::print(std::ostream& Out, Printer** Beg, Printer** End,
+void GRState::print(std::ostream& Out, StoreManager& StoreMgr,
+                    Printer** Beg, Printer** End,
                     const char* nl, const char* sep) const {
-
-  // Print Variable Bindings
-  Out << "Variables:" << nl;
   
-  bool isFirst = true;
-  
-  for (vb_iterator I = vb_begin(), E = vb_end(); I != E; ++I) {        
-    
-    if (isFirst) isFirst = false;
-    else Out << nl;
-    
-    Out << ' ' << I.getKey()->getName() << " : ";
-    I.getData().print(Out);
-  }
+  // Print the store.
+  StoreMgr.print(getStore(), Out, nl, sep);
   
   // Print Subexpression bindings.
-  
-  isFirst = true;
+  bool isFirst = true;
   
   for (seb_iterator I = seb_begin(), E = seb_end(); I != E; ++I) {        
     
@@ -274,7 +263,6 @@ void GRState::print(std::ostream& Out, Printer** Beg, Printer** End,
   }
   
   // Print block-expression bindings.
-  
   isFirst = true;
   
   for (beb_iterator I = beb_begin(), E = beb_end(); I != E; ++I) {      
@@ -341,7 +329,7 @@ void GRStateRef::printStdErr() const {
 void GRStateRef::print(std::ostream& Out, const char* nl, const char* sep)const{
   GRState::Printer **beg = Mgr->Printers.empty() ? 0 : &Mgr->Printers[0];
   GRState::Printer **end = !beg ? 0 : beg + Mgr->Printers.size();  
-  St->print(Out, beg, end, nl, sep);
+  St->print(Out, *Mgr->StMgr, beg, end, nl, sep);
 }
 
 //===----------------------------------------------------------------------===//
