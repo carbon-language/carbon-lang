@@ -56,6 +56,40 @@ struct OperandsSignature {
 
   bool empty() const { return Operands.empty(); }
 
+  /// initialize - Examine the given pattern and initialize the contents
+  /// of the Operands array accordingly. Return true if all the operands
+  /// are supported, false otherwise.
+  ///
+  bool initialize(TreePatternNode *InstPatNode,
+                  const CodeGenTarget &Target,
+                  MVT::SimpleValueType VT) {
+    for (unsigned i = 0, e = InstPatNode->getNumChildren(); i != e; ++i) {
+      TreePatternNode *Op = InstPatNode->getChild(i);
+      if (!Op->isLeaf())
+        return false;
+      // For now, filter out any operand with a predicate.
+      if (!Op->getPredicateFn().empty())
+        return false;
+      DefInit *OpDI = dynamic_cast<DefInit*>(Op->getLeafValue());
+      if (!OpDI)
+        return false;
+      Record *OpLeafRec = OpDI->getDef();
+      // For now, only accept register operands.
+      if (!OpLeafRec->isSubClassOf("RegisterClass"))
+        return false;
+      // For now, require the register operands' register classes to all
+      // be the same.
+      const CodeGenRegisterClass *RC = &Target.getRegisterClass(OpLeafRec);
+      if (!RC)
+        return false;
+      // For now, all the operands must have the same type.
+      if (Op->getTypeNum(0) != VT)
+        return false;
+      Operands.push_back("r");
+    }
+    return true;
+  }
+
   void PrintParameters(std::ostream &OS) const {
     for (unsigned i = 0, e = Operands.size(); i != e; ++i) {
       if (Operands[i] == "r") {
@@ -196,30 +230,8 @@ void FastISelEmitter::run(std::ostream &OS) {
 
     // Check all the operands.
     OperandsSignature Operands;
-    for (unsigned i = 0, e = InstPatNode->getNumChildren(); i != e; ++i) {
-      TreePatternNode *Op = InstPatNode->getChild(i);
-      if (!Op->isLeaf())
-        goto continue_label;
-      // For now, filter out any operand with a predicate.
-      if (!Op->getPredicateFn().empty())
-        goto continue_label;
-      DefInit *OpDI = dynamic_cast<DefInit*>(Op->getLeafValue());
-      if (!OpDI)
-        goto continue_label;
-      Record *OpLeafRec = OpDI->getDef();
-      // For now, only accept register operands.
-      if (!OpLeafRec->isSubClassOf("RegisterClass"))
-        goto continue_label;
-      // For now, require the register operands' register classes to all
-      // be the same.
-      const CodeGenRegisterClass *RC = &Target.getRegisterClass(OpLeafRec);
-      if (!RC)
-        goto continue_label;
-      // For now, all the operands must have the same type.
-      if (Op->getTypeNum(0) != VT)
-        goto continue_label;
-      Operands.Operands.push_back("r");
-    }
+    if (!Operands.initialize(InstPatNode, Target, VT))
+      continue;
 
     // If it's not a known signature, ignore it.
     if (!SimplePatterns.count(Operands))
@@ -233,8 +245,6 @@ void FastISelEmitter::run(std::ostream &OS) {
       };
       SimplePatterns[Operands][OpcodeName][VT] = Memo;
     }
-
-  continue_label:;
   }
 
   OS << "#include \"llvm/CodeGen/FastISel.h\"\n";
