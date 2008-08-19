@@ -163,6 +163,9 @@ void FastISelEmitter::run(std::ostream &OS) {
     CodeGenInstruction &II = CGP.getTargetInfo().getInstruction(Op->getName());
     if (II.OperandList.empty())
       continue;
+
+    // For now, ignore instructions where the first operand is not an
+    // output register.
     Record *Op0Rec = II.OperandList[0].Rec;
     if (!Op0Rec->isSubClassOf("RegisterClass"))
       continue;
@@ -191,7 +194,7 @@ void FastISelEmitter::run(std::ostream &OS) {
     if (!InstPatNode->getPredicateFn().empty())
       continue;
 
-    // Check all the operands. For now only accept register operands.
+    // Check all the operands.
     OperandsSignature Operands;
     for (unsigned i = 0, e = InstPatNode->getNumChildren(); i != e; ++i) {
       TreePatternNode *Op = InstPatNode->getChild(i);
@@ -204,11 +207,15 @@ void FastISelEmitter::run(std::ostream &OS) {
       if (!OpDI)
         goto continue_label;
       Record *OpLeafRec = OpDI->getDef();
+      // For now, only accept register operands.
       if (!OpLeafRec->isSubClassOf("RegisterClass"))
         goto continue_label;
+      // For now, require the register operands' register classes to all
+      // be the same.
       const CodeGenRegisterClass *RC = &Target.getRegisterClass(OpLeafRec);
       if (!RC)
         goto continue_label;
+      // For now, all the operands must have the same type.
       if (Op->getTypeNum(0) != VT)
         goto continue_label;
       Operands.Operands.push_back("r");
