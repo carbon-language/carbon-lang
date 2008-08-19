@@ -576,6 +576,12 @@ namespace llvm {
                                                     MachineBasicBlock *BB,
                                                     unsigned regOpc,
                                                     unsigned immOpc,
+                                                    unsigned loadOpc,
+                                                    unsigned cxchgOpc,
+                                                    unsigned copyOpc,
+                                                    unsigned notOpc,
+                                                    unsigned EAXreg,
+                                                    TargetRegisterClass *RC,
                                                     bool invSrc = false);
     
     /// Utility function to emit atomic min and max.  It takes the min/max
