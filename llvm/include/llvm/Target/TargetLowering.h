@@ -33,13 +33,16 @@
 
 namespace llvm {
   class Function;
+  class FastISel;
   class MachineBasicBlock;
+  class MachineFunction;
   class MachineFrameInfo;
   class MachineInstr;
   class SDNode;
   class SDValue;
   class SelectionDAG;
   class TargetData;
+  class TargetInstrInfo;
   class TargetMachine;
   class TargetRegisterClass;
   class TargetSubtarget;
@@ -1110,6 +1113,12 @@ public:
   /// getTargetNodeName() - This method returns the name of a target specific
   /// DAG node.
   virtual const char *getTargetNodeName(unsigned Opcode) const;
+
+  /// createFastISel - This method returns a target specific FastISel object,
+  /// or null if the target does not support "fast" ISel.
+  virtual FastISel *createFastISel(MachineBasicBlock *,
+                                   MachineFunction *,
+                                   const TargetInstrInfo *) { return 0; }
 
   //===--------------------------------------------------------------------===//
   // Inline Asm Support hooks
