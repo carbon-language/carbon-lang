@@ -194,6 +194,10 @@ mkdir -p $DT_HOME/lib
 mv lib/libLTO.dylib $DT_HOME/lib/libLTO.dylib
 rm -f lib/libLTO.a lib/libLTO.la
 
+# Compress manpages
+MDIR=$DEST_DIR$DEST_ROOT/share/man/man1
+gzip -f $MDIR/*
+
 ################################################################################
 # Create SYM_DIR with information required for debugging.
 
