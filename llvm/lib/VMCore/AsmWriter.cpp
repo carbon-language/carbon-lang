@@ -44,7 +44,7 @@ AssemblyAnnotationWriter::~AssemblyAnnotationWriter() {}
 
 /// This class provides computation of slot numbers for LLVM Assembly writing.
 ///
-class SlotMachine {
+class SlotTracker {
 public:
   /// ValueMap - A mapping of Values to slot numbers
   typedef DenseMap<const Value*, unsigned> ValueMap;
@@ -67,24 +67,24 @@ private:
   
 public:
   /// Construct from a module
-  explicit SlotMachine(const Module *M);
+  explicit SlotTracker(const Module *M);
   /// Construct from a function, starting out in incorp state.
-  explicit SlotMachine(const Function *F);
+  explicit SlotTracker(const Function *F);
 
   /// Return the slot number of the specified value in it's type
-  /// plane.  If something is not in the SlotMachine, return -1.
+  /// plane.  If something is not in the SlotTracker, return -1.
   int getLocalSlot(const Value *V);
   int getGlobalSlot(const GlobalValue *V);
 
   /// If you'd like to deal with a function instead of just a module, use
-  /// this method to get its data into the SlotMachine.
+  /// this method to get its data into the SlotTracker.
   void incorporateFunction(const Function *F) {
     TheFunction = F;
     FunctionProcessed = false;
   }
 
   /// After calling incorporateFunction, use this method to remove the
-  /// most recently incorporated function from the SlotMachine. This
+  /// most recently incorporated function from the SlotTracker. This
   /// will reset the state of the machine back to just the module contents.
   void purgeFunction();
 
@@ -106,8 +106,8 @@ private:
   /// Add all of the functions arguments, basic blocks, and instructions
   void processFunction();
 
-  SlotMachine(const SlotMachine &);  // DO NOT IMPLEMENT
-  void operator=(const SlotMachine &);  // DO NOT IMPLEMENT
+  SlotTracker(const SlotTracker &);  // DO NOT IMPLEMENT
+  void operator=(const SlotTracker &);  // DO NOT IMPLEMENT
 };
 
 }  // end namespace llvm
@@ -121,7 +121,7 @@ Y("print","Print function to stderr");
 
 static void WriteAsOperandInternal(std::ostream &Out, const Value *V,
                                std::map<const Type *, std::string> &TypeTable,
-                                   SlotMachine *Machine);
+                                   SlotTracker *Machine);
 
 static const Module *getModuleFromVal(const Value *V) {
   if (const Argument *MA = dyn_cast<Argument>(V))
@@ -136,19 +136,19 @@ static const Module *getModuleFromVal(const Value *V) {
   return 0;
 }
 
-static SlotMachine *createSlotMachine(const Value *V) {
+static SlotTracker *createSlotTracker(const Value *V) {
   if (const Argument *FA = dyn_cast<Argument>(V)) {
-    return new SlotMachine(FA->getParent());
+    return new SlotTracker(FA->getParent());
   } else if (const Instruction *I = dyn_cast<Instruction>(V)) {
-    return new SlotMachine(I->getParent()->getParent());
+    return new SlotTracker(I->getParent()->getParent());
   } else if (const BasicBlock *BB = dyn_cast<BasicBlock>(V)) {
-    return new SlotMachine(BB->getParent());
+    return new SlotTracker(BB->getParent());
   } else if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(V)){
-    return new SlotMachine(GV->getParent());
+    return new SlotTracker(GV->getParent());
   } else if (const GlobalAlias *GA = dyn_cast<GlobalAlias>(V)){
-    return new SlotMachine(GA->getParent());    
+    return new SlotTracker(GA->getParent());    
   } else if (const Function *Func = dyn_cast<Function>(V)) {
-    return new SlotMachine(Func);
+    return new SlotTracker(Func);
   }
   return 0;
 }
@@ -501,7 +501,7 @@ static const char *getPredicateText(unsigned predicate) {
 
 static void WriteConstantInt(std::ostream &Out, const Constant *CV,
                              std::map<const Type *, std::string> &TypeTable,
-                             SlotMachine *Machine) {
+                             SlotTracker *Machine) {
   const int IndentSize = 4;
   // FIXME: WHY IS INDENT STATIC??
   static std::string Indent = "\n";
@@ -691,7 +691,7 @@ static void WriteConstantInt(std::ostream &Out, const Constant *CV,
 ///
 static void WriteAsOperandInternal(std::ostream &Out, const Value *V,
                                   std::map<const Type*, std::string> &TypeTable,
-                                   SlotMachine *Machine) {
+                                   SlotTracker *Machine) {
   Out << ' ';
   if (V->hasName()) {
     PrintLLVMName(Out, V);
@@ -721,7 +721,7 @@ static void WriteAsOperandInternal(std::ostream &Out, const Value *V,
         Slot = Machine->getLocalSlot(V);
       }
     } else {
-      Machine = createSlotMachine(V);
+      Machine = createSlotTracker(V);
       if (Machine) {
         if (const GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
           Slot = Machine->getGlobalSlot(GV);
@@ -765,12 +765,12 @@ namespace llvm {
 
 class AssemblyWriter {
   std::ostream &Out;
-  SlotMachine &Machine;
+  SlotTracker &Machine;
   const Module *TheModule;
   std::map<const Type *, std::string> TypeNames;
   AssemblyAnnotationWriter *AnnotationWriter;
 public:
-  inline AssemblyWriter(std::ostream &o, SlotMachine &Mac, const Module *M,
+  inline AssemblyWriter(std::ostream &o, SlotTracker &Mac, const Module *M,
                         AssemblyAnnotationWriter *AAW)
     : Out(o), Machine(Mac), TheModule(M), AnnotationWriter(AAW) {
 
@@ -1514,25 +1514,25 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
 //===----------------------------------------------------------------------===//
 
 void Module::print(std::ostream &o, AssemblyAnnotationWriter *AAW) const {
-  SlotMachine SlotTable(this);
+  SlotTracker SlotTable(this);
   AssemblyWriter W(o, SlotTable, this, AAW);
   W.write(this);
 }
 
 void GlobalVariable::print(std::ostream &o) const {
-  SlotMachine SlotTable(getParent());
+  SlotTracker SlotTable(getParent());
   AssemblyWriter W(o, SlotTable, getParent(), 0);
   W.write(this);
 }
 
 void GlobalAlias::print(std::ostream &o) const {
-  SlotMachine SlotTable(getParent());
+  SlotTracker SlotTable(getParent());
   AssemblyWriter W(o, SlotTable, getParent(), 0);
   W.write(this);
 }
 
 void Function::print(std::ostream &o, AssemblyAnnotationWriter *AAW) const {
-  SlotMachine SlotTable(getParent());
+  SlotTracker SlotTable(getParent());
   AssemblyWriter W(o, SlotTable, getParent(), AAW);
 
   W.write(this);
@@ -1543,7 +1543,7 @@ void InlineAsm::print(std::ostream &o, AssemblyAnnotationWriter *AAW) const {
 }
 
 void BasicBlock::print(std::ostream &o, AssemblyAnnotationWriter *AAW) const {
-  SlotMachine SlotTable(getParent());
+  SlotTracker SlotTable(getParent());
   AssemblyWriter W(o, SlotTable,
                    getParent() ? getParent()->getParent() : 0, AAW);
   W.write(this);
@@ -1551,7 +1551,7 @@ void BasicBlock::print(std::ostream &o, AssemblyAnnotationWriter *AAW) const {
 
 void Instruction::print(std::ostream &o, AssemblyAnnotationWriter *AAW) const {
   const Function *F = getParent() ? getParent()->getParent() : 0;
-  SlotMachine SlotTable(F);
+  SlotTracker SlotTable(F);
   AssemblyWriter W(o, SlotTable, F ? F->getParent() : 0, AAW);
 
   W.write(this);
@@ -1586,7 +1586,7 @@ void Value::dump() const { print(*cerr.stream()); cerr << '\n'; }
 void Type::dump() const { print(*cerr.stream()); cerr << '\n'; }
 
 //===----------------------------------------------------------------------===//
-//                         SlotMachine Implementation
+//                         SlotTracker Implementation
 //===----------------------------------------------------------------------===//
 
 #if 0
@@ -1597,7 +1597,7 @@ void Type::dump() const { print(*cerr.stream()); cerr << '\n'; }
 
 // Module level constructor. Causes the contents of the Module (sans functions)
 // to be added to the slot table.
-SlotMachine::SlotMachine(const Module *M)
+SlotTracker::SlotTracker(const Module *M)
   : TheModule(M)    ///< Saved for lazy initialization.
   , TheFunction(0)
   , FunctionProcessed(false)
@@ -1607,7 +1607,7 @@ SlotMachine::SlotMachine(const Module *M)
 
 // Function level constructor. Causes the contents of the Module and the one
 // function provided to be added to the slot table.
-SlotMachine::SlotMachine(const Function *F)
+SlotTracker::SlotTracker(const Function *F)
   : TheModule(F ? F->getParent() : 0) ///< Saved for lazy initialization
   , TheFunction(F) ///< Saved for lazy initialization
   , FunctionProcessed(false)
@@ -1615,7 +1615,7 @@ SlotMachine::SlotMachine(const Function *F)
 {
 }
 
-inline void SlotMachine::initialize() {
+inline void SlotTracker::initialize() {
   if (TheModule) {
     processModule();
     TheModule = 0; ///< Prevent re-processing next time we're called.
@@ -1626,7 +1626,7 @@ inline void SlotMachine::initialize() {
 
 // Iterate through all the global variables, functions, and global
 // variable initializers and create slots for them.
-void SlotMachine::processModule() {
+void SlotTracker::processModule() {
   SC_DEBUG("begin processModule!\n");
 
   // Add all of the unnamed global variables to the value table.
@@ -1646,7 +1646,7 @@ void SlotMachine::processModule() {
 
 
 // Process the arguments, basic blocks, and instructions  of a function.
-void SlotMachine::processFunction() {
+void SlotTracker::processFunction() {
   SC_DEBUG("begin processFunction!\n");
   fNext = 0;
 
@@ -1676,7 +1676,7 @@ void SlotMachine::processFunction() {
 /// Clean up after incorporating a function. This is the only way to get out of
 /// the function incorporation state that affects get*Slot/Create*Slot. Function
 /// incorporation state is indicated by TheFunction != 0.
-void SlotMachine::purgeFunction() {
+void SlotTracker::purgeFunction() {
   SC_DEBUG("begin purgeFunction!\n");
   fMap.clear(); // Simply discard the function level map
   TheFunction = 0;
@@ -1685,7 +1685,7 @@ void SlotMachine::purgeFunction() {
 }
 
 /// getGlobalSlot - Get the slot number of a global value.
-int SlotMachine::getGlobalSlot(const GlobalValue *V) {
+int SlotTracker::getGlobalSlot(const GlobalValue *V) {
   // Check for uninitialized state and do lazy initialization.
   initialize();
   
@@ -1696,7 +1696,7 @@ int SlotMachine::getGlobalSlot(const GlobalValue *V) {
 
 
 /// getLocalSlot - Get the slot number for a value that is local to a function.
-int SlotMachine::getLocalSlot(const Value *V) {
+int SlotTracker::getLocalSlot(const Value *V) {
   assert(!isa<Constant>(V) && "Can't get a constant or global slot with this!");
 
   // Check for uninitialized state and do lazy initialization.
@@ -1708,8 +1708,8 @@ int SlotMachine::getLocalSlot(const Value *V) {
 
 
 /// CreateModuleSlot - Insert the specified GlobalValue* into the slot table.
-void SlotMachine::CreateModuleSlot(const GlobalValue *V) {
-  assert(V && "Can't insert a null Value into SlotMachine!");
+void SlotTracker::CreateModuleSlot(const GlobalValue *V) {
+  assert(V && "Can't insert a null Value into SlotTracker!");
   assert(V->getType() != Type::VoidTy && "Doesn't need a slot!");
   assert(!V->hasName() && "Doesn't need a slot!");
   
@@ -1726,7 +1726,7 @@ void SlotMachine::CreateModuleSlot(const GlobalValue *V) {
 
 
 /// CreateSlot - Create a new slot for the specified value if it has no name.
-void SlotMachine::CreateFunctionSlot(const Value *V) {
+void SlotTracker::CreateFunctionSlot(const Value *V) {
   assert(V->getType() != Type::VoidTy && !V->hasName() &&
          "Doesn't need a slot!");
   
