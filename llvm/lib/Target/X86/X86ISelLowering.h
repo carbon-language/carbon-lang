@@ -466,6 +466,12 @@ namespace llvm {
       return (VT == MVT::f64 && X86ScalarSSEf64) || // f64 is when SSE2
       (VT == MVT::f32 && X86ScalarSSEf32);   // f32 is when SSE1
     }
+
+    /// createFastISel - This method returns a target specific FastISel object,
+    /// or null if the target does not support "fast" ISel.
+    virtual FastISel *createFastISel(MachineBasicBlock *mbb,
+                                     MachineFunction *mf,
+                                     const TargetInstrInfo *tii);
     
   private:
     /// Subtarget - Keep a pointer to the X86Subtarget around so that we can

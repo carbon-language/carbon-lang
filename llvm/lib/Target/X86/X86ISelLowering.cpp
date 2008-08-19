@@ -1869,6 +1869,14 @@ bool X86TargetLowering::IsEligibleForTailCallOptimization(SDValue Call,
   return false;
 }
 
+FastISel *X86TargetLowering::createFastISel(MachineBasicBlock *mbb,
+                                            MachineFunction *mf,
+                                            const TargetInstrInfo *tii) {
+  // FastISel isn't yet supported.
+  return 0;
+}
+
+
 //===----------------------------------------------------------------------===//
 //                           Other Lowering Hooks
 //===----------------------------------------------------------------------===//
