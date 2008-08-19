@@ -110,12 +110,11 @@ static std::string QuoteNameIfNeeded(const std::string &Name) {
   return result;
 }
 
-/// getLLVMName - Turn the specified string into an 'LLVM name', which is either
-/// prefixed with % (if the string only contains simple characters) or is
-/// surrounded with ""'s (if it has special chars in it).
+/// getLLVMName - Turn the specified string into an 'LLVM name', which is
+/// surrounded with ""'s and escaped if it has special chars in it.
 static std::string getLLVMName(const std::string &Name) {
   assert(!Name.empty() && "Cannot get empty name!");
-  return '%' + QuoteNameIfNeeded(Name);
+  return QuoteNameIfNeeded(Name);
 }
 
 enum PrefixType {
@@ -463,7 +462,7 @@ static void fillTypeNameTable(const Module *M,
         !cast<PointerType>(Ty)->getElementType()->isPrimitiveType() ||
         !cast<PointerType>(Ty)->getElementType()->isInteger() ||
         isa<OpaqueType>(cast<PointerType>(Ty)->getElementType()))
-      TypeNames.insert(std::make_pair(Ty, getLLVMName(TI->first)));
+      TypeNames.insert(std::make_pair(Ty, '%' + getLLVMName(TI->first)));
   }
 }
 
@@ -472,7 +471,7 @@ static void fillTypeNameTable(const Module *M,
 static void calcTypeName(const Type *Ty,
                          std::vector<const Type *> &TypeStack,
                          std::map<const Type *, std::string> &TypeNames,
-                         std::string & Result){
+                         std::string &Result) {
   if (Ty->isInteger() || (Ty->isPrimitiveType() && !isa<OpaqueType>(Ty))) {
     Result += Ty->getDescription();  // Base case
     return;
@@ -545,8 +544,7 @@ static void calcTypeName(const Type *Ty,
   }
   case Type::PointerTyID: {
     const PointerType *PTy = cast<PointerType>(Ty);
-    calcTypeName(PTy->getElementType(),
-                          TypeStack, TypeNames, Result);
+    calcTypeName(PTy->getElementType(), TypeStack, TypeNames, Result);
     if (unsigned AddressSpace = PTy->getAddressSpace())
       Result += " addrspace(" + utostr(AddressSpace) + ")";
     Result += "*";
@@ -581,17 +579,22 @@ static void calcTypeName(const Type *Ty,
 /// printTypeInt - The internal guts of printing out a type that has a
 /// potentially named portion.
 ///
-static std::ostream &printTypeInt(std::ostream &Out, const Type *Ty,
-                              std::map<const Type *, std::string> &TypeNames) {
+static void printTypeInt(std::ostream &Out, const Type *Ty,
+                         std::map<const Type *, std::string> &TypeNames) {
   // Primitive types always print out their description, regardless of whether
   // they have been named or not.
   //
-  if (Ty->isInteger() || (Ty->isPrimitiveType() && !isa<OpaqueType>(Ty)))
-    return Out << Ty->getDescription();
+  if (Ty->isInteger() || (Ty->isPrimitiveType() && !isa<OpaqueType>(Ty))) {
+    Out << Ty->getDescription();
+    return;
+  }
 
   // Check to see if the type is named.
   std::map<const Type *, std::string>::iterator I = TypeNames.find(Ty);
-  if (I != TypeNames.end()) return Out << I->second;
+  if (I != TypeNames.end()) {
+    Out << I->second;
+    return;
+  }
 
   // Otherwise we have a type that has not been named but is a derived type.
   // Carefully recurse the type hierarchy to print out any contained symbolic
@@ -601,7 +604,7 @@ static std::ostream &printTypeInt(std::ostream &Out, const Type *Ty,
   std::string TypeName;
   calcTypeName(Ty, TypeStack, TypeNames, TypeName);
   TypeNames.insert(std::make_pair(Ty, TypeName));//Cache type name for later use
-  return (Out << TypeName);
+  Out << TypeName;
 }
 
 
@@ -816,9 +819,9 @@ static void WriteConstantInt(std::ostream &Out, const Constant *CV,
     printTypeInt(Out, ETy, TypeTable);
     WriteAsOperandInternal(Out, CP->getOperand(0), TypeTable, Machine);
     for (unsigned i = 1, e = CP->getNumOperands(); i != e; ++i) {
-        Out << ", ";
-        printTypeInt(Out, ETy, TypeTable);
-        WriteAsOperandInternal(Out, CP->getOperand(i), TypeTable, Machine);
+      Out << ", ";
+      printTypeInt(Out, ETy, TypeTable);
+      WriteAsOperandInternal(Out, CP->getOperand(i), TypeTable, Machine);
     }
     Out << " >";
     return;
@@ -991,8 +994,8 @@ private:
   // printType - Go to extreme measures to attempt to print out a short,
   // symbolic version of a type name.
   //
-  std::ostream &printType(const Type *Ty) {
-    return printTypeInt(Out, Ty, TypeNames);
+  void printType(const Type *Ty) {
+    printTypeInt(Out, Ty, TypeNames);
   }
 
   // printTypeAtLeastOneLevel - Print out one level of the possibly complex type
@@ -1058,13 +1061,15 @@ void AssemblyWriter::printTypeAtLeastOneLevel(const Type *Ty) {
   
   if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
     Out << '[' << ATy->getNumElements() << " x ";
-    printType(ATy->getElementType()) << ']';
+    printType(ATy->getElementType());
+    Out << ']';
     return;
   }
   
   if (const VectorType *PTy = dyn_cast<VectorType>(Ty)) {
     Out << '<' << PTy->getNumElements() << " x ";
-    printType(PTy->getElementType()) << '>';
+    printType(PTy->getElementType());
+    Out << '>';
     return;
   }
   
@@ -1320,7 +1325,8 @@ void AssemblyWriter::printFunction(const Function *F) {
 
   const FunctionType *FT = F->getFunctionType();
   const PAListPtr &Attrs = F->getParamAttrs();
-  printType(F->getReturnType()) << ' ';
+  printType(F->getReturnType());
+  Out << ' ';
   if (F->hasName())
     PrintLLVMName(Out, F);
   else
@@ -1458,7 +1464,8 @@ void AssemblyWriter::printBasicBlock(const BasicBlock *BB) {
 void AssemblyWriter::printInfoComment(const Value &V) {
   if (V.getType() != Type::VoidTy) {
     Out << "\t\t; <";
-    printType(V.getType()) << '>';
+    printType(V.getType());
+    Out << '>';
 
     if (!V.hasName()) {
       int SlotNum;
