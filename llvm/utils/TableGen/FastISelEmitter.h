@@ -16,7 +16,6 @@
 
 #include "TableGenBackend.h"
 #include "CodeGenDAGPatterns.h"
-#include <set>
 
 namespace llvm {
 
