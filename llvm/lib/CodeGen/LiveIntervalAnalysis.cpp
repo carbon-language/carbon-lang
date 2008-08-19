@@ -49,6 +49,9 @@ static cl::opt<int> SplitLimit("split-limit",
 
 static cl::opt<bool> EnableAggressiveRemat("aggressive-remat", cl::Hidden);
 
+static cl::opt<bool> EnableFastSpilling("fast-spill",
+                                        cl::init(false), cl::Hidden);
+
 STATISTIC(numIntervals, "Number of original intervals");
 STATISTIC(numIntervalsAfter, "Number of intervals after coalescing");
 STATISTIC(numFolds    , "Number of loads/stores folded into instructions");
@@ -1698,6 +1701,10 @@ std::vector<LiveInterval*> LiveIntervals::
 addIntervalsForSpills(const LiveInterval &li,
                       const MachineLoopInfo *loopInfo, VirtRegMap &vrm,
                       float &SSWeight) {
+  
+  if (EnableFastSpilling)
+    return addIntervalsForSpillsFast(li, loopInfo, vrm, SSWeight);
+  
   assert(li.weight != HUGE_VALF &&
          "attempt to spill already spilled interval!");
 
