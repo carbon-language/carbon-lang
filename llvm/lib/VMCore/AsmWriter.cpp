@@ -303,21 +303,14 @@ static SlotTracker *createSlotTracker(const Value *V) {
 // Module level constructor. Causes the contents of the Module (sans functions)
 // to be added to the slot table.
 SlotTracker::SlotTracker(const Module *M)
-: TheModule(M)    ///< Saved for lazy initialization.
-, TheFunction(0)
-, FunctionProcessed(false)
-, mNext(0), fNext(0)
-{
+  : TheModule(M), TheFunction(0), FunctionProcessed(false), mNext(0), fNext(0) {
 }
 
 // Function level constructor. Causes the contents of the Module and the one
 // function provided to be added to the slot table.
 SlotTracker::SlotTracker(const Function *F)
-: TheModule(F ? F->getParent() : 0) ///< Saved for lazy initialization
-, TheFunction(F) ///< Saved for lazy initialization
-, FunctionProcessed(false)
-, mNext(0), fNext(0)
-{
+  : TheModule(F ? F->getParent() : 0), TheFunction(F), FunctionProcessed(false),
+    mNext(0), fNext(0) {
 }
 
 inline void SlotTracker::initialize() {
@@ -325,6 +318,7 @@ inline void SlotTracker::initialize() {
     processModule();
     TheModule = 0; ///< Prevent re-processing next time we're called.
   }
+  
   if (TheFunction && !FunctionProcessed)
     processFunction();
 }
@@ -724,41 +718,48 @@ static void WriteConstantInt(std::ostream &Out, const Constant *CV,
       assert(sizeof(double) == sizeof(uint64_t) &&
              "assuming that double is 64 bits!");
       Out << "0x" << utohexstr(DoubleToBits(Val));
-    } else {
-      // Some form of long double.  These appear as a magic letter identifying
-      // the type, then a fixed number of hex digits.
-      Out << "0x";
-      if (&CFP->getValueAPF().getSemantics() == &APFloat::x87DoubleExtended)
-        Out << 'K';
-      else if (&CFP->getValueAPF().getSemantics() == &APFloat::IEEEquad)
-        Out << 'L';
-      else if (&CFP->getValueAPF().getSemantics() == &APFloat::PPCDoubleDouble)
-        Out << 'M';
+      return;
+    }
+    
+    // Some form of long double.  These appear as a magic letter identifying
+    // the type, then a fixed number of hex digits.
+    Out << "0x";
+    if (&CFP->getValueAPF().getSemantics() == &APFloat::x87DoubleExtended)
+      Out << 'K';
+    else if (&CFP->getValueAPF().getSemantics() == &APFloat::IEEEquad)
+      Out << 'L';
+    else if (&CFP->getValueAPF().getSemantics() == &APFloat::PPCDoubleDouble)
+      Out << 'M';
+    else
+      assert(0 && "Unsupported floating point type");
+    // api needed to prevent premature destruction
+    APInt api = CFP->getValueAPF().convertToAPInt();
+    const uint64_t* p = api.getRawData();
+    uint64_t word = *p;
+    int shiftcount=60;
+    int width = api.getBitWidth();
+    for (int j=0; j<width; j+=4, shiftcount-=4) {
+      unsigned int nibble = (word>>shiftcount) & 15;
+      if (nibble < 10)
+        Out << (unsigned char)(nibble + '0');
       else
-        assert(0 && "Unsupported floating point type");
-      // api needed to prevent premature destruction
-      APInt api = CFP->getValueAPF().convertToAPInt();
-      const uint64_t* p = api.getRawData();
-      uint64_t word = *p;
-      int shiftcount=60;
-      int width = api.getBitWidth();
-      for (int j=0; j<width; j+=4, shiftcount-=4) {
-        unsigned int nibble = (word>>shiftcount) & 15;
-        if (nibble < 10)
-          Out << (unsigned char)(nibble + '0');
-        else
-          Out << (unsigned char)(nibble - 10 + 'A');
-        if (shiftcount == 0 && j+4 < width) {
-          word = *(++p);
-          shiftcount = 64;
-          if (width-j-4 < 64)
-            shiftcount = width-j-4;
-        }
+        Out << (unsigned char)(nibble - 10 + 'A');
+      if (shiftcount == 0 && j+4 < width) {
+        word = *(++p);
+        shiftcount = 64;
+        if (width-j-4 < 64)
+          shiftcount = width-j-4;
       }
     }
-  } else if (isa<ConstantAggregateZero>(CV)) {
+    return;
+  }
+  
+  if (isa<ConstantAggregateZero>(CV)) {
     Out << "zeroinitializer";
-  } else if (const ConstantArray *CA = dyn_cast<ConstantArray>(CV)) {
+    return;
+  }
+  
+  if (const ConstantArray *CA = dyn_cast<ConstantArray>(CV)) {
     // As a special case, print the array as a string if it is an array of
     // i8 with ConstantInt values.
     //
@@ -766,8 +767,7 @@ static void WriteConstantInt(std::ostream &Out, const Constant *CV,
     if (CA->isString()) {
       Out << "c\"";
       PrintEscapedString(CA->getAsString(), Out);
-      Out << "\"";
-
+      Out << '"';
     } else {                // Cannot output in string format...
       Out << '[';
       if (CA->getNumOperands()) {
@@ -783,7 +783,10 @@ static void WriteConstantInt(std::ostream &Out, const Constant *CV,
       }
       Out << " ]";
     }
-  } else if (const ConstantStruct *CS = dyn_cast<ConstantStruct>(CV)) {
+    return;
+  }
+  
+  if (const ConstantStruct *CS = dyn_cast<ConstantStruct>(CV)) {
     if (CS->getType()->isPacked())
       Out << '<';
     Out << '{';
@@ -805,29 +808,39 @@ static void WriteConstantInt(std::ostream &Out, const Constant *CV,
     Out << " }";
     if (CS->getType()->isPacked())
       Out << '>';
-  } else if (const ConstantVector *CP = dyn_cast<ConstantVector>(CV)) {
-      const Type *ETy = CP->getType()->getElementType();
-      assert(CP->getNumOperands() > 0 &&
-             "Number of operands for a PackedConst must be > 0");
-      Out << "< ";
-      printTypeInt(Out, ETy, TypeTable);
-      WriteAsOperandInternal(Out, CP->getOperand(0), TypeTable, Machine);
-      for (unsigned i = 1, e = CP->getNumOperands(); i != e; ++i) {
-          Out << ", ";
-          printTypeInt(Out, ETy, TypeTable);
-          WriteAsOperandInternal(Out, CP->getOperand(i), TypeTable, Machine);
-      }
-      Out << " >";
-  } else if (isa<ConstantPointerNull>(CV)) {
+    return;
+  }
+  
+  if (const ConstantVector *CP = dyn_cast<ConstantVector>(CV)) {
+    const Type *ETy = CP->getType()->getElementType();
+    assert(CP->getNumOperands() > 0 &&
+           "Number of operands for a PackedConst must be > 0");
+    Out << "< ";
+    printTypeInt(Out, ETy, TypeTable);
+    WriteAsOperandInternal(Out, CP->getOperand(0), TypeTable, Machine);
+    for (unsigned i = 1, e = CP->getNumOperands(); i != e; ++i) {
+        Out << ", ";
+        printTypeInt(Out, ETy, TypeTable);
+        WriteAsOperandInternal(Out, CP->getOperand(i), TypeTable, Machine);
+    }
+    Out << " >";
+    return;
+  }
+  
+  if (isa<ConstantPointerNull>(CV)) {
     Out << "null";
-
-  } else if (isa<UndefValue>(CV)) {
+    return;
+  }
+  
+  if (isa<UndefValue>(CV)) {
     Out << "undef";
+    return;
+  }
 
-  } else if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(CV)) {
+  if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(CV)) {
     Out << CE->getOpcodeName();
     if (CE->isCompare())
-      Out << " " << getPredicateText(CE->getPredicate());
+      Out << ' ' << getPredicateText(CE->getPredicate());
     Out << " (";
 
     for (User::const_op_iterator OI=CE->op_begin(); OI != CE->op_end(); ++OI) {
@@ -849,10 +862,10 @@ static void WriteConstantInt(std::ostream &Out, const Constant *CV,
     }
 
     Out << ')';
-
-  } else {
-    Out << "<placeholder or erroneous Constant>";
+    return;
   }
+  
+  Out << "<placeholder or erroneous Constant>";
 }
 
 
@@ -872,7 +885,10 @@ static void WriteAsOperandInternal(std::ostream &Out, const Value *V,
   const Constant *CV = dyn_cast<Constant>(V);
   if (CV && !isa<GlobalValue>(CV)) {
     WriteConstantInt(Out, CV, TypeTable, Machine);
-  } else if (const InlineAsm *IA = dyn_cast<InlineAsm>(V)) {
+    return;
+  }
+  
+  if (const InlineAsm *IA = dyn_cast<InlineAsm>(V)) {
     Out << "asm ";
     if (IA->hasSideEffects())
       Out << "sideeffect ";
@@ -881,9 +897,20 @@ static void WriteAsOperandInternal(std::ostream &Out, const Value *V,
     Out << "\", \"";
     PrintEscapedString(IA->getConstraintString(), Out);
     Out << '"';
+    return;
+  }
+  
+  char Prefix = '%';
+  int Slot;
+  if (Machine) {
+    if (const GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
+      Slot = Machine->getGlobalSlot(GV);
+      Prefix = '@';
+    } else {
+      Slot = Machine->getLocalSlot(V);
+    }
   } else {
-    char Prefix = '%';
-    int Slot;
+    Machine = createSlotTracker(V);
     if (Machine) {
       if (const GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
         Slot = Machine->getGlobalSlot(GV);
@@ -892,24 +919,15 @@ static void WriteAsOperandInternal(std::ostream &Out, const Value *V,
         Slot = Machine->getLocalSlot(V);
       }
     } else {
-      Machine = createSlotTracker(V);
-      if (Machine) {
-        if (const GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
-          Slot = Machine->getGlobalSlot(GV);
-          Prefix = '@';
-        } else {
-          Slot = Machine->getLocalSlot(V);
-        }
-      } else {
-        Slot = -1;
-      }
-      delete Machine;
+      Slot = -1;
     }
-    if (Slot != -1)
-      Out << Prefix << Slot;
-    else
-      Out << "<badref>";
+    delete Machine;
   }
+  
+  if (Slot != -1)
+    Out << Prefix << Slot;
+  else
+    Out << "<badref>";
 }
 
 /// WriteAsOperand - Write the name of the specified value out to the specified
@@ -931,7 +949,7 @@ void llvm::WriteAsOperand(std::ostream &Out, const Value *V, bool PrintType,
 }
 
 
-namespace llvm {
+namespace {
 
 class AssemblyWriter {
   std::ostream &Out;
@@ -950,13 +968,13 @@ public:
     fillTypeNameTable(M, TypeNames);
   }
 
-  inline void write(const Module *M)         { printModule(M);       }
-  inline void write(const GlobalVariable *G) { printGlobal(G);       }
-  inline void write(const GlobalAlias *G)    { printAlias(G);        }
-  inline void write(const Function *F)       { printFunction(F);     }
-  inline void write(const BasicBlock *BB)    { printBasicBlock(BB);  }
-  inline void write(const Instruction *I)    { printInstruction(*I); }
-  inline void write(const Type *Ty)          { printType(Ty);        }
+  void write(const Module *M)         { printModule(M);       }
+  void write(const GlobalVariable *G) { printGlobal(G);       }
+  void write(const GlobalAlias *G)    { printAlias(G);        }
+  void write(const Function *F)       { printFunction(F);     }
+  void write(const BasicBlock *BB)    { printBasicBlock(BB);  }
+  void write(const Instruction *I)    { printInstruction(*I); }
+  void write(const Type *Ty)          { printType(Ty);        }
 
   void writeOperand(const Value *Op, bool PrintType);
   void writeParamOperand(const Value *Operand, ParameterAttributes Attrs);
@@ -983,7 +1001,7 @@ private:
   // printTypeAtLeastOneLevel - Print out one level of the possibly complex type
   // without considering any symbolic types that we may have equal to it.
   //
-  std::ostream &printTypeAtLeastOneLevel(const Type *Ty);
+  void printTypeAtLeastOneLevel(const Type *Ty);
 
   // printInfoComment - Print a little comment after the instruction indicating
   // which slot it occupies.
@@ -994,10 +1012,13 @@ private:
 /// printTypeAtLeastOneLevel - Print out one level of the possibly complex type
 /// without considering any symbolic types that we may have equal to it.
 ///
-std::ostream &AssemblyWriter::printTypeAtLeastOneLevel(const Type *Ty) {
-  if (const IntegerType *ITy = dyn_cast<IntegerType>(Ty))
+void AssemblyWriter::printTypeAtLeastOneLevel(const Type *Ty) {
+  if (const IntegerType *ITy = dyn_cast<IntegerType>(Ty)) {
     Out << "i" << utostr(ITy->getBitWidth());
-  else if (const FunctionType *FTy = dyn_cast<FunctionType>(Ty)) {
+    return;
+  }
+  
+  if (const FunctionType *FTy = dyn_cast<FunctionType>(Ty)) {
     printType(FTy->getReturnType());
     Out << " (";
     for (FunctionType::param_iterator I = FTy->param_begin(),
@@ -1011,7 +1032,10 @@ std::ostream &AssemblyWriter::printTypeAtLeastOneLevel(const Type *Ty) {
       Out << "...";
     }
     Out << ')';
-  } else if (const StructType *STy = dyn_cast<StructType>(Ty)) {
+    return;
+  }
+  
+  if (const StructType *STy = dyn_cast<StructType>(Ty)) {
     if (STy->isPacked())
       Out << '<';
     Out << "{ ";
@@ -1024,26 +1048,37 @@ std::ostream &AssemblyWriter::printTypeAtLeastOneLevel(const Type *Ty) {
     Out << " }";
     if (STy->isPacked())
       Out << '>';
-  } else if (const PointerType *PTy = dyn_cast<PointerType>(Ty)) {
+    return;
+  }
+  
+  if (const PointerType *PTy = dyn_cast<PointerType>(Ty)) {
     printType(PTy->getElementType());
     if (unsigned AddressSpace = PTy->getAddressSpace())
       Out << " addrspace(" << AddressSpace << ")";
     Out << '*';
-  } else if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
+    return;
+  } 
+  
+  if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
     Out << '[' << ATy->getNumElements() << " x ";
     printType(ATy->getElementType()) << ']';
-  } else if (const VectorType *PTy = dyn_cast<VectorType>(Ty)) {
+    return;
+  }
+  
+  if (const VectorType *PTy = dyn_cast<VectorType>(Ty)) {
     Out << '<' << PTy->getNumElements() << " x ";
     printType(PTy->getElementType()) << '>';
+    return;
   }
-  else if (isa<OpaqueType>(Ty)) {
+  
+  if (isa<OpaqueType>(Ty)) {
     Out << "opaque";
-  } else {
-    if (!Ty->isPrimitiveType())
-      Out << "<unknown derived type>";
-    printType(Ty);
+    return;
   }
-  return Out;
+  
+  if (!Ty->isPrimitiveType())
+    Out << "<unknown derived type>";
+  printType(Ty);
 }
 
 
@@ -1051,7 +1086,10 @@ void AssemblyWriter::writeOperand(const Value *Operand, bool PrintType) {
   if (Operand == 0) {
     Out << "<null operand!>";
   } else {
-    if (PrintType) { Out << ' '; printType(Operand->getType()); }
+    if (PrintType) {
+      Out << ' ';
+      printType(Operand->getType());
+    }
     WriteAsOperandInternal(Out, Operand, TypeNames, &Machine);
   }
 }
@@ -1136,6 +1174,34 @@ void AssemblyWriter::printModule(const Module *M) {
     printFunction(I);
 }
 
+static void PrintLinkage(GlobalValue::LinkageTypes LT, std::ostream &Out) {
+  switch (LT) {
+  case GlobalValue::InternalLinkage:     Out << "internal "; break;
+  case GlobalValue::LinkOnceLinkage:     Out << "linkonce "; break;
+  case GlobalValue::WeakLinkage:         Out << "weak "; break;
+  case GlobalValue::CommonLinkage:       Out << "common "; break;
+  case GlobalValue::AppendingLinkage:    Out << "appending "; break;
+  case GlobalValue::DLLImportLinkage:    Out << "dllimport "; break;
+  case GlobalValue::DLLExportLinkage:    Out << "dllexport "; break;
+  case GlobalValue::ExternalWeakLinkage: Out << "extern_weak "; break;      
+  case GlobalValue::ExternalLinkage: break;
+  case GlobalValue::GhostLinkage:
+    Out << "GhostLinkage not allowed in AsmWriter!\n";
+    abort();
+  }
+}
+      
+
+static void PrintVisibility(GlobalValue::VisibilityTypes Vis,
+                            std::ostream &Out) {
+  switch (Vis) {
+  default: assert(0 && "Invalid visibility style!");
+  case GlobalValue::DefaultVisibility: break;
+  case GlobalValue::HiddenVisibility:    Out << "hidden "; break;
+  case GlobalValue::ProtectedVisibility: Out << "protected "; break;
+  }
+}
+
 void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
   if (GV->hasName()) {
     PrintLLVMName(Out, GV);
@@ -1144,31 +1210,13 @@ void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
 
   if (!GV->hasInitializer()) {
     switch (GV->getLinkage()) {
-     case GlobalValue::DLLImportLinkage:   Out << "dllimport "; break;
+     case GlobalValue::DLLImportLinkage:    Out << "dllimport "; break;
      case GlobalValue::ExternalWeakLinkage: Out << "extern_weak "; break;
      default: Out << "external "; break;
     }
   } else {
-    switch (GV->getLinkage()) {
-    case GlobalValue::InternalLinkage:     Out << "internal "; break;
-    case GlobalValue::CommonLinkage:       Out << "common "; break;
-    case GlobalValue::LinkOnceLinkage:     Out << "linkonce "; break;
-    case GlobalValue::WeakLinkage:         Out << "weak "; break;
-    case GlobalValue::AppendingLinkage:    Out << "appending "; break;
-    case GlobalValue::DLLImportLinkage:    Out << "dllimport "; break;
-    case GlobalValue::DLLExportLinkage:    Out << "dllexport "; break;     
-    case GlobalValue::ExternalWeakLinkage: Out << "extern_weak "; break;
-    case GlobalValue::ExternalLinkage:     break;
-    case GlobalValue::GhostLinkage:
-      cerr << "GhostLinkage not allowed in AsmWriter!\n";
-      abort();
-    }
-    switch (GV->getVisibility()) {
-    default: assert(0 && "Invalid visibility style!");
-    case GlobalValue::DefaultVisibility: break;
-    case GlobalValue::HiddenVisibility: Out << "hidden "; break;
-    case GlobalValue::ProtectedVisibility: Out << "protected "; break;
-    }
+    PrintLinkage(GV->getLinkage(), Out);
+    PrintVisibility(GV->getVisibility(), Out);
   }
 
   if (GV->isThreadLocal()) Out << "thread_local ";
@@ -1187,7 +1235,7 @@ void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
     Out << ", align " << GV->getAlignment();
 
   printInfoComment(*GV);
-  Out << "\n";
+  Out << '\n';
 }
 
 void AssemblyWriter::printAlias(const GlobalAlias *GA) {
@@ -1198,22 +1246,11 @@ void AssemblyWriter::printAlias(const GlobalAlias *GA) {
     PrintLLVMName(Out, GA);
     Out << " = ";
   }
-  switch (GA->getVisibility()) {
-  default: assert(0 && "Invalid visibility style!");
-  case GlobalValue::DefaultVisibility: break;
-  case GlobalValue::HiddenVisibility: Out << "hidden "; break;
-  case GlobalValue::ProtectedVisibility: Out << "protected "; break;
-  }
+  PrintVisibility(GA->getVisibility(), Out);
 
   Out << "alias ";
 
-  switch (GA->getLinkage()) {
-  case GlobalValue::WeakLinkage: Out << "weak "; break;
-  case GlobalValue::InternalLinkage: Out << "internal "; break;
-  case GlobalValue::ExternalLinkage: break;
-  default:
-   assert(0 && "Invalid alias linkage");
-  }
+  PrintLinkage(GA->getLinkage(), Out);
   
   const Constant *Aliasee = GA->getAliasee();
     
@@ -1250,20 +1287,21 @@ void AssemblyWriter::printTypeSymbolTable(const TypeSymbolTable &ST) {
   // Print the types.
   for (TypeSymbolTable::const_iterator TI = ST.begin(), TE = ST.end();
        TI != TE; ++TI) {
-    Out << "\t" << getLLVMName(TI->first) << " = type ";
+    Out << '\t' << getLLVMName(TI->first) << " = type ";
 
     // Make sure we print out at least one level of the type structure, so
     // that we do not get %FILE = type %FILE
     //
-    printTypeAtLeastOneLevel(TI->second) << "\n";
+    printTypeAtLeastOneLevel(TI->second);
+    Out << '\n';
   }
 }
 
 /// printFunction - Print all aspects of a function.
 ///
 void AssemblyWriter::printFunction(const Function *F) {
-  // Print out the return type and name...
-  Out << "\n";
+  // Print out the return type and name.
+  Out << '\n';
 
   if (AnnotationWriter) AnnotationWriter->emitFunctionAnnot(F, Out);
 
@@ -1271,27 +1309,9 @@ void AssemblyWriter::printFunction(const Function *F) {
     Out << "declare ";
   else
     Out << "define ";
-    
-  switch (F->getLinkage()) {
-  case GlobalValue::InternalLinkage:     Out << "internal "; break;
-  case GlobalValue::LinkOnceLinkage:     Out << "linkonce "; break;
-  case GlobalValue::WeakLinkage:         Out << "weak "; break;
-  case GlobalValue::CommonLinkage:       Out << "common "; break;
-  case GlobalValue::AppendingLinkage:    Out << "appending "; break;
-  case GlobalValue::DLLImportLinkage:    Out << "dllimport "; break;
-  case GlobalValue::DLLExportLinkage:    Out << "dllexport "; break;
-  case GlobalValue::ExternalWeakLinkage: Out << "extern_weak "; break;      
-  case GlobalValue::ExternalLinkage: break;
-  case GlobalValue::GhostLinkage:
-    cerr << "GhostLinkage not allowed in AsmWriter!\n";
-    abort();
-  }
-  switch (F->getVisibility()) {
-  default: assert(0 && "Invalid visibility style!");
-  case GlobalValue::DefaultVisibility: break;
-  case GlobalValue::HiddenVisibility: Out << "hidden "; break;
-  case GlobalValue::ProtectedVisibility: Out << "protected "; break;
-  }
+  
+  PrintLinkage(F->getLinkage(), Out);
+  PrintVisibility(F->getVisibility(), Out);
 
   // Print the calling convention.
   switch (F->getCallingConv()) {
