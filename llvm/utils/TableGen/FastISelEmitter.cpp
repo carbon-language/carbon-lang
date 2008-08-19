@@ -265,7 +265,7 @@ void FastISelEmitter::run(std::ostream &OS) {
       OS << ");\n";
     }
 
-    OS << "unsigned FastEmit_";
+    OS << "  unsigned FastEmit_";
     Operands.PrintManglingSuffix(OS);
     OS << "(MVT::SimpleValueType VT, ISD::NodeType Opcode";
     if (!Operands.empty())
