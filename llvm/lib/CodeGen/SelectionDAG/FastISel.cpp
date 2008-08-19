@@ -33,6 +33,11 @@ FastISel::SelectInstructions(BasicBlock::iterator Begin, BasicBlock::iterator En
         return I;
       }
       unsigned ResultReg = FastEmit_rr(VT.getSimpleVT(), ISD::ADD, Op0, Op1);
+      if (ResultReg == 0) {
+        // Target-specific code wasn't able to find a machine opcode for
+        // the given ISD opcode and type. Halt "fast" selection and bail.
+        return I;
+      }
       ValueMap[I] = ResultReg;
       break;
     }
