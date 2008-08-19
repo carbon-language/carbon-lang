@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Instructions.h"
 #include "llvm/CodeGen/FastISel.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
@@ -40,6 +41,21 @@ FastISel::SelectInstructions(BasicBlock::iterator Begin, BasicBlock::iterator En
       }
       ValueMap[I] = ResultReg;
       break;
+    }
+    case Instruction::Br: {
+      BranchInst *BI = cast<BranchInst>(I);
+
+      // For now, check for and handle just the most trivial case: an
+      // unconditional fall-through branch.
+      if (BI->isUnconditional() &&
+          next(MachineFunction::iterator(MBB))->getBasicBlock() ==
+            BI->getSuccessor(0)) {
+        MBB->addSuccessor(next(MachineFunction::iterator(MBB)));
+        break;
+      }
+
+      // Something more complicated. Halt "fast" selection and bail.
+      return I;
     }
     default:
       // Unhandled instruction. Halt "fast" selection and bail.
