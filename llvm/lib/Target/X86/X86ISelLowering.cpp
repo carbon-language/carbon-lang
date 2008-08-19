@@ -17,6 +17,7 @@
 #include "X86ISelLowering.h"
 #include "X86MachineFunctionInfo.h"
 #include "X86TargetMachine.h"
+#include "X86FastISel.h"
 #include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
@@ -1872,8 +1873,7 @@ bool X86TargetLowering::IsEligibleForTailCallOptimization(SDValue Call,
 FastISel *X86TargetLowering::createFastISel(MachineBasicBlock *mbb,
                                             MachineFunction *mf,
                                             const TargetInstrInfo *tii) {
-  // FastISel isn't yet supported.
-  return 0;
+  return X86::createFastISel(mbb, mf, tii);
 }
 
 
