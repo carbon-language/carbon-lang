@@ -280,7 +280,7 @@ namespace {
       }
     }
 
-    void WriteType(const Type* T ) {
+    void WriteType(const Type *T) {
       if ( !T ) return;
       WriteTypeSymbolic(msgs, T, Mod );
     }
