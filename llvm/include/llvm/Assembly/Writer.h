@@ -29,7 +29,7 @@ class Value;
 // type, iff there is an entry in the Module's symbol table for the specified
 // type or one of its component types.  This is slower than a simple x << Type;
 //
-std::ostream &WriteTypeSymbolic(std::ostream &, const Type *, const Module *M);
+void WriteTypeSymbolic(std::ostream &, const Type *, const Module *M);
 
 // WriteAsOperand - Write the name of the specified value out to the specified
 // ostream.  This can be useful when you just want to print int %reg126, not the
@@ -37,8 +37,8 @@ std::ostream &WriteTypeSymbolic(std::ostream &, const Type *, const Module *M);
 // then even constants get pretty-printed; for example, the type of a null
 // pointer is printed symbolically.
 //
-std::ostream &WriteAsOperand(std::ostream &, const Value *, bool PrintTy = true,
-                             const Module *Context = 0);
+void WriteAsOperand(std::ostream &, const Value *, bool PrintTy = true,
+                    const Module *Context = 0);
 
 } // End llvm namespace
 

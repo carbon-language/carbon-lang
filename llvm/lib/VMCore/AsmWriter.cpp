@@ -295,9 +295,9 @@ static SlotTracker *createSlotTracker(const Value *V) {
 }
 
 #if 0
-#define SC_DEBUG(X) cerr << X
+#define ST_DEBUG(X) cerr << X
 #else
-#define SC_DEBUG(X)
+#define ST_DEBUG(X)
 #endif
 
 // Module level constructor. Causes the contents of the Module (sans functions)
@@ -332,7 +332,7 @@ inline void SlotTracker::initialize() {
 // Iterate through all the global variables, functions, and global
 // variable initializers and create slots for them.
 void SlotTracker::processModule() {
-  SC_DEBUG("begin processModule!\n");
+  ST_DEBUG("begin processModule!\n");
   
   // Add all of the unnamed global variables to the value table.
   for (Module::const_global_iterator I = TheModule->global_begin(),
@@ -346,13 +346,13 @@ void SlotTracker::processModule() {
     if (!I->hasName())
       CreateModuleSlot(I);
   
-  SC_DEBUG("end processModule!\n");
+  ST_DEBUG("end processModule!\n");
 }
 
 
 // Process the arguments, basic blocks, and instructions  of a function.
 void SlotTracker::processFunction() {
-  SC_DEBUG("begin processFunction!\n");
+  ST_DEBUG("begin processFunction!\n");
   fNext = 0;
   
   // Add all the function arguments with no names.
@@ -361,7 +361,7 @@ void SlotTracker::processFunction() {
     if (!AI->hasName())
       CreateFunctionSlot(AI);
   
-  SC_DEBUG("Inserting Instructions:\n");
+  ST_DEBUG("Inserting Instructions:\n");
   
   // Add all of the basic blocks and instructions with no names.
   for (Function::const_iterator BB = TheFunction->begin(),
@@ -375,18 +375,18 @@ void SlotTracker::processFunction() {
   
   FunctionProcessed = true;
   
-  SC_DEBUG("end processFunction!\n");
+  ST_DEBUG("end processFunction!\n");
 }
 
 /// Clean up after incorporating a function. This is the only way to get out of
 /// the function incorporation state that affects get*Slot/Create*Slot. Function
 /// incorporation state is indicated by TheFunction != 0.
 void SlotTracker::purgeFunction() {
-  SC_DEBUG("begin purgeFunction!\n");
+  ST_DEBUG("begin purgeFunction!\n");
   fMap.clear(); // Simply discard the function level map
   TheFunction = 0;
   FunctionProcessed = false;
-  SC_DEBUG("end purgeFunction!\n");
+  ST_DEBUG("end purgeFunction!\n");
 }
 
 /// getGlobalSlot - Get the slot number of a global value.
@@ -421,10 +421,10 @@ void SlotTracker::CreateModuleSlot(const GlobalValue *V) {
   unsigned DestSlot = mNext++;
   mMap[V] = DestSlot;
   
-  SC_DEBUG("  Inserting value [" << V->getType() << "] = " << V << " slot=" <<
+  ST_DEBUG("  Inserting value [" << V->getType() << "] = " << V << " slot=" <<
            DestSlot << " [");
   // G = Global, F = Function, A = Alias, o = other
-  SC_DEBUG((isa<GlobalVariable>(V) ? 'G' :
+  ST_DEBUG((isa<GlobalVariable>(V) ? 'G' :
             (isa<Function>(V) ? 'F' :
              (isa<GlobalAlias>(V) ? 'A' : 'o'))) << "]\n");
 }
@@ -439,7 +439,7 @@ void SlotTracker::CreateFunctionSlot(const Value *V) {
   fMap[V] = DestSlot;
   
   // G = Global, F = Function, o = other
-  SC_DEBUG("  Inserting value [" << V->getType() << "] = " << V << " slot=" <<
+  ST_DEBUG("  Inserting value [" << V->getType() << "] = " << V << " slot=" <<
            DestSlot << " [o]\n");
 }  
 
@@ -618,18 +618,19 @@ static std::ostream &printTypeInt(std::ostream &Out, const Type *Ty,
 /// type, iff there is an entry in the modules symbol table for the specified
 /// type or one of it's component types. This is slower than a simple x << Type
 ///
-std::ostream &llvm::WriteTypeSymbolic(std::ostream &Out, const Type *Ty,
-                                      const Module *M) {
+void llvm::WriteTypeSymbolic(std::ostream &Out, const Type *Ty,
+                             const Module *M) {
   Out << ' ';
 
   // If they want us to print out a type, but there is no context, we can't
   // print it symbolically.
-  if (!M)
-    return Out << Ty->getDescription();
-    
-  std::map<const Type *, std::string> TypeNames;
-  fillTypeNameTable(M, TypeNames);
-  return printTypeInt(Out, Ty, TypeNames);
+  if (!M) {
+    Out << Ty->getDescription();
+  } else {
+    std::map<const Type *, std::string> TypeNames;
+    fillTypeNameTable(M, TypeNames);
+    printTypeInt(Out, Ty, TypeNames);
+  }
 }
 
 // PrintEscapedString - Print each character of the specified string, escaping
@@ -683,9 +684,6 @@ static const char *getPredicateText(unsigned predicate) {
 static void WriteConstantInt(std::ostream &Out, const Constant *CV,
                              std::map<const Type *, std::string> &TypeTable,
                              SlotTracker *Machine) {
-  const int IndentSize = 4;
-  // FIXME: WHY IS INDENT STATIC??
-  static std::string Indent = "\n";
   if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
     if (CI->getType() == Type::Int1Ty) {
       Out << (CI->getZExtValue() ? "true" : "false");
@@ -791,24 +789,17 @@ static void WriteConstantInt(std::ostream &Out, const Constant *CV,
     Out << '{';
     unsigned N = CS->getNumOperands();
     if (N) {
-      if (N > 2) {
-        Indent += std::string(IndentSize, ' ');
-        Out << Indent;
-      } else {
-        Out << ' ';
-      }
+      Out << ' ';
       printTypeInt(Out, CS->getOperand(0)->getType(), TypeTable);
 
       WriteAsOperandInternal(Out, CS->getOperand(0), TypeTable, Machine);
 
       for (unsigned i = 1; i < N; i++) {
         Out << ", ";
-        if (N > 2) Out << Indent;
         printTypeInt(Out, CS->getOperand(i)->getType(), TypeTable);
 
         WriteAsOperandInternal(Out, CS->getOperand(i), TypeTable, Machine);
       }
-      if (N > 2) Indent.resize(Indent.size() - IndentSize);
     }
  
     Out << " }";
@@ -818,8 +809,7 @@ static void WriteConstantInt(std::ostream &Out, const Constant *CV,
       const Type *ETy = CP->getType()->getElementType();
       assert(CP->getNumOperands() > 0 &&
              "Number of operands for a PackedConst must be > 0");
-      Out << '<';
-      Out << ' ';
+      Out << "< ";
       printTypeInt(Out, ETy, TypeTable);
       WriteAsOperandInternal(Out, CP->getOperand(0), TypeTable, Machine);
       for (unsigned i = 1, e = CP->getNumOperands(); i != e; ++i) {
@@ -926,8 +916,8 @@ static void WriteAsOperandInternal(std::ostream &Out, const Value *V,
 /// ostream.  This can be useful when you just want to print int %reg126, not
 /// the whole instruction that generated it.
 ///
-std::ostream &llvm::WriteAsOperand(std::ostream &Out, const Value *V,
-                                   bool PrintType, const Module *Context) {
+void llvm::WriteAsOperand(std::ostream &Out, const Value *V, bool PrintType,
+                          const Module *Context) {
   std::map<const Type *, std::string> TypeNames;
   if (Context == 0) Context = getModuleFromVal(V);
 
@@ -938,7 +928,6 @@ std::ostream &llvm::WriteAsOperand(std::ostream &Out, const Value *V,
     printTypeInt(Out, V->getType(), TypeNames);
 
   WriteAsOperandInternal(Out, V, TypeNames, 0);
-  return Out;
 }
 
 
