@@ -180,8 +180,15 @@ void FastISelEmitter::run(std::ostream &OS) {
     MVT::SimpleValueType VT = InstPatNode->getTypeNum(0);
 
     // For now, filter out instructions which just set a register to
-    // an Operand, like MOV32ri.
+    // an Operand or an immediate, like MOV32ri.
     if (InstPatOp->isSubClassOf("Operand"))
+      continue;
+    if (InstPatOp->getName() == "imm" ||
+        InstPatOp->getName() == "fpimm")
+      continue;
+
+    // For now, filter out any instructions with predicates.
+    if (!InstPatNode->getPredicateFn().empty())
       continue;
 
     // Check all the operands. For now only accept register operands.
@@ -189,6 +196,9 @@ void FastISelEmitter::run(std::ostream &OS) {
     for (unsigned i = 0, e = InstPatNode->getNumChildren(); i != e; ++i) {
       TreePatternNode *Op = InstPatNode->getChild(i);
       if (!Op->isLeaf())
+        goto continue_label;
+      // For now, filter out any operand with a predicate.
+      if (!Op->getPredicateFn().empty())
         goto continue_label;
       DefInit *OpDI = dynamic_cast<DefInit*>(Op->getLeafValue());
       if (!OpDI)
