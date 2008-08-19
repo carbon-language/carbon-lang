@@ -44,6 +44,9 @@ using namespace llvm;
 
 namespace {
 
+/// OperandsSignature - This class holds a description of a list of operand
+/// types. It has utility methods for emitting text based on the operands.
+///
 struct OperandsSignature {
   std::vector<std::string> Operands;
 
@@ -86,6 +89,9 @@ struct OperandsSignature {
   }
 };
 
+/// InstructionMemo - This class holds additional information about an
+/// instruction needed to emit code for it.
+///
 struct InstructionMemo {
   std::string Name;
   const CodeGenRegisterClass *RC;
