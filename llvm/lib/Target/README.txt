@@ -882,3 +882,20 @@ I think this basically amounts to a dag combine to simplify comparisons against
 multiply hi's into a comparison against the mullo.
 
 //===---------------------------------------------------------------------===//
+
+SROA is not promoting the union on the stack in this example, we should end
+up with no allocas.
+
+union vec2d {
+    double e[2];
+    double v __attribute__((vector_size(16)));
+};
+typedef union vec2d vec2d;
+
+static vec2d a={{1,2}}, b={{3,4}};
+    
+vec2d foo () {
+    return (vec2d){ .v = a.v + b.v * (vec2d){{5,5}}.v };
+}
+
+//===---------------------------------------------------------------------===//
