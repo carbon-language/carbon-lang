@@ -269,7 +269,8 @@ void AsmPrinter::EmitConstantPool(unsigned Alignment, const char *Section,
   for (unsigned i = 0, e = CP.size(); i != e; ++i) {
     O << TAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber() << '_'
       << CP[i].second << ":\t\t\t\t\t" << TAI->getCommentString() << ' ';
-    WriteTypeSymbolic(O, CP[i].first.getType(), 0) << '\n';
+    WriteTypeSymbolic(O, CP[i].first.getType(), 0);
+    O << '\n';
     if (CP[i].first.isMachineConstantPoolEntry())
       EmitMachineConstantPoolValue(CP[i].first.Val.MachineCPVal);
      else

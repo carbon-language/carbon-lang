@@ -4992,12 +4992,12 @@ void SDNode::dump(const SelectionDAG *G) const {
   }
 
   if (const ConstantSDNode *CSDN = dyn_cast<ConstantSDNode>(this)) {
-    cerr << "<" << CSDN->getAPIntValue() << ">";
+    cerr << '<' << CSDN->getAPIntValue() << '>';
   } else if (const ConstantFPSDNode *CSDN = dyn_cast<ConstantFPSDNode>(this)) {
     if (&CSDN->getValueAPF().getSemantics()==&APFloat::IEEEsingle)
-      cerr << "<" << CSDN->getValueAPF().convertToFloat() << ">";
+      cerr << '<' << CSDN->getValueAPF().convertToFloat() << '>';
     else if (&CSDN->getValueAPF().getSemantics()==&APFloat::IEEEdouble)
-      cerr << "<" << CSDN->getValueAPF().convertToDouble() << ">";
+      cerr << '<' << CSDN->getValueAPF().convertToDouble() << '>';
     else {
       cerr << "<APFloat(";
       CSDN->getValueAPF().convertToAPInt().dump();
@@ -5006,8 +5006,9 @@ void SDNode::dump(const SelectionDAG *G) const {
   } else if (const GlobalAddressSDNode *GADN =
              dyn_cast<GlobalAddressSDNode>(this)) {
     int offset = GADN->getOffset();
-    cerr << "<";
-    WriteAsOperand(*cerr.stream(), GADN->getGlobal()) << ">";
+    cerr << '<';
+    WriteAsOperand(*cerr.stream(), GADN->getGlobal());
+    cerr << '>';
     if (offset > 0)
       cerr << " + " << offset;
     else
