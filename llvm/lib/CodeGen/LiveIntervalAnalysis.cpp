@@ -1666,12 +1666,15 @@ addIntervalsForSpillsFast(const LiveInterval &li,
                    VNMap[MO.getParent()]);
       DOUT << " +" << LR;
       nI.addRange(LR);
+      vrm.addRestorePoint(NewVReg, MO.getParent());
+      MO.setIsKill(true);
     }
     if (HasDef) {
       LiveRange LR(getDefIndex(index), getStoreIndex(index),
                    VNMap[MO.getParent()]);
       DOUT << " +" << LR;
       nI.addRange(LR);
+      vrm.addSpillPoint(NewVReg, true, MO.getParent());
     }
     
     if (newInt)
