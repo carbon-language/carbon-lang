@@ -26,6 +26,7 @@
 #include "llvm/Intrinsics.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/ParameterAttributes.h"
+#include "llvm/CodeGen/FastISel.h"
 #include "llvm/CodeGen/GCStrategy.h"
 #include "llvm/CodeGen/GCMetadata.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -55,6 +56,9 @@ static cl::opt<bool>
 EnableValueProp("enable-value-prop", cl::Hidden);
 static cl::opt<bool>
 EnableLegalizeTypes("enable-legalize-types", cl::Hidden);
+static cl::opt<bool>
+EnableFastISel("fast-isel", cl::Hidden,
+          cl::desc("Enable the experimental \"fast\" instruction selector"));
 
 
 #ifndef NDEBUG
@@ -5091,12 +5095,39 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
        std::vector<std::pair<MachineInstr*, unsigned> > &PHINodesToUpdate,
                                          FunctionLoweringInfo &FuncInfo) {
   SelectionDAGLowering SDL(DAG, TLI, *AA, FuncInfo, GFI);
+  BB = FuncInfo.MBBMap[LLVMBB];
+
+  // Before doing SelectionDAG ISel, see if FastISel has been requested.
+  // FastISel doesn't currently support entry blocks, because that
+  // requires special handling for arguments. And it doesn't support EH
+  // landing pads, which also require special handling.
+  // For now, also exclude blocks with terminators that aren't
+  // unconditional branches.
+  if (EnableFastISel &&
+      LLVMBB != &LLVMBB->getParent()->getEntryBlock() &&
+      !BB->isLandingPad() &&
+      isa<BranchInst>(LLVMBB->getTerminator()) &&
+      cast<BranchInst>(LLVMBB->getTerminator())->isUnconditional()) {
+    if (FastISel *F = TLI.createFastISel(BB, &FuncInfo.MF,
+                                       TLI.getTargetMachine().getInstrInfo())) {
+      BasicBlock::iterator I =
+        F->SelectInstructions(LLVMBB->begin(), LLVMBB->end(), FuncInfo.ValueMap);
+      if (I == LLVMBB->end())
+        // The "fast" selector selected the entire block, so we're done.
+        return;
+
+      // The "fast" selector couldn't handle something and bailed.
+      // For the temporary purpose of debugging, just abort.
+      I->dump();
+      assert(0 && "FastISel didn't select the entire block");
+      abort();
+    }
+  }
 
   // Lower any arguments needed in this block if this is the entry block.
   if (LLVMBB == &LLVMBB->getParent()->getEntryBlock())
     LowerArguments(LLVMBB, SDL);
 
-  BB = FuncInfo.MBBMap[LLVMBB];
   SDL.setCurrentBasicBlock(BB);
 
   MachineModuleInfo *MMI = DAG.getMachineModuleInfo();
