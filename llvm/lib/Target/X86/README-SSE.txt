@@ -839,3 +839,40 @@ _t:
 	shufps	$2, %xmm1, %xmm2
 	shufps	$132, %xmm2, %xmm0
 	movaps	%xmm0, 0
+
+//===---------------------------------------------------------------------===//
+rdar://6037315
+
+llvm-gcc-4.2 does the following for uint32_t -> float conversions on i386:
+
+	uint32_t x;
+	float y = (float)x;
+
+becomes:
+
+movl	%eax,		-8(%ebp)	// write x to the stack
+movl	$0x3ff00000,	-4(%ebp)	// 2^52 + x as a double at -4(%ebp)
+movsd	-8(%ebp),		%xmm0
+subsd	[2^52 double], 	%xmm0	// subtract 2^52 -- this is exact
+cvtsd2ss %xmm0,		%xmm0	// convert to single -- rounding happens here
+
+On merom/yonah, this takes a substantial stall.  The following is a much 
+better option:
+
+movd	%eax,		%xmm0	// load x into low word of xmm0
+movsd	[2^52 double],	%xmm1 	// load 2^52 into xmm1
+orpd	%xmm1,		%xmm0	// 2^52 + x in double precision
+subsd	%xmm1,		%xmm0	// x in double precision
+cvtsd2ss %xmm0,		%xmm0	// x rounded to single precision
+
+IF we don't already need PIC, then the following is even faster still, at a 
+small cost to code size:
+
+movl		$0x3ff00000,	%ecx		// conjure high word of 2^52
+movd		%ecx,		%xmm1
+movss	%eax,		%xmm0	// load x into low word of xmm0
+psllq		$32,			%xmm1	// 2^52
+orpd		%xmm1,		%xmm0	// 2^52 + x in double precision
+subsd		%xmm1,		%xmm0	// x in double precision
+cvtsd2ss	%xmm0,		%xmm0	// x in single precision
+
