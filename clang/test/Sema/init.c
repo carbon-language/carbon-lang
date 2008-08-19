@@ -50,3 +50,7 @@ int pbool(void) {
   return pbool2;
 }
 
+
+// rdar://5870981
+union { float f; unsigned u; } u = { 1.0f };
+
