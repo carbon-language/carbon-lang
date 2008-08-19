@@ -1624,77 +1624,86 @@ addIntervalsForSpillsFast(const LiveInterval &li,
 
   const TargetRegisterClass* rc = mri_->getRegClass(li.reg);
 
-  DenseMap<MachineInstr*, unsigned> VRegMap;
-  DenseMap<MachineInstr*, VNInfo*> VNMap;
-
   SSWeight = 0.0f;
 
-  for (MachineRegisterInfo::reg_iterator RI = mri_->reg_begin(li.reg),
-       RE = mri_->reg_end(); RI != RE; ) {
-    // Create a new virtual register for the spill interval.
-    MachineOperand& MO = RI.getOperand();
-    unsigned NewVReg = 0;
-    bool newInt = false;
-    if (!VRegMap.count(MO.getParent())) {
-      VRegMap[MO.getParent()] = NewVReg = mri_->createVirtualRegister(rc);
+  MachineRegisterInfo::reg_iterator RI = mri_->reg_begin(li.reg);
+  while (RI != mri_->reg_end()) {
+    MachineInstr* MI = &*RI;
+    
+    SmallVector<unsigned, 2> Indices;
+    bool HasUse = false;
+    bool HasDef = false;
+    
+    for (unsigned i = 0; i != MI->getNumOperands(); ++i) {
+      MachineOperand& mop = MI->getOperand(i);
+      if (!mop.isReg() || mop.getReg() != li.reg) continue;
+      
+      HasUse |= MI->getOperand(i).isUse();
+      HasDef |= MI->getOperand(i).isDef();
+      
+      Indices.push_back(i);
+    }
+    
+    if (!tryFoldMemoryOperand(MI, vrm, NULL, getInstructionIndex(MI),
+                              Indices, true, slot, li.reg)) {
+      unsigned NewVReg = mri_->createVirtualRegister(rc);
       vrm.grow();
       vrm.assignVirt2StackSlot(NewVReg, slot);
       
-      newInt = true;
-    } else
-      NewVReg = VRegMap[MO.getParent()];
-    
-    // Increment iterator to avoid invalidation.
-    ++RI;
-    
-    MO.setReg(NewVReg);
+      // create a new register for this spill
+      LiveInterval &nI = getOrCreateInterval(NewVReg);
 
-    // create a new register for this spill
-    LiveInterval &nI = getOrCreateInterval(NewVReg);
-
-    // the spill weight is now infinity as it
-    // cannot be spilled again
-    nI.weight = HUGE_VALF;
-
-    unsigned index = getInstructionIndex(MO.getParent());
-    bool HasUse = MO.isUse();
-    bool HasDef = MO.isDef();
-    if (!VNMap.count(MO.getParent()))
-      VNMap[MO.getParent()] = nI.getNextValue(~0U, 0, getVNInfoAllocator());
-    if (HasUse) {
-      LiveRange LR(getLoadIndex(index), getUseIndex(index),
-                   VNMap[MO.getParent()]);
-      DOUT << " +" << LR;
-      nI.addRange(LR);
-      vrm.addRestorePoint(NewVReg, MO.getParent());
-      MO.setIsKill(true);
-    }
-    if (HasDef) {
-      LiveRange LR(getDefIndex(index), getStoreIndex(index),
-                   VNMap[MO.getParent()]);
-      DOUT << " +" << LR;
-      nI.addRange(LR);
-      vrm.addSpillPoint(NewVReg, true, MO.getParent());
-    }
-    
-    if (newInt)
+      // the spill weight is now infinity as it
+      // cannot be spilled again
+      nI.weight = HUGE_VALF;
+      
+      // Rewrite register operands to use the new vreg.
+      for (SmallVectorImpl<unsigned>::iterator I = Indices.begin(),
+           E = Indices.end(); I != E; ++I) {
+        MI->getOperand(*I).setReg(NewVReg);
+        
+        if (MI->getOperand(*I).isUse())
+          MI->getOperand(*I).setIsKill(true);
+      }
+      
+      // Fill in  the new live interval.
+      unsigned index = getInstructionIndex(MI);
+      if (HasUse) {
+        LiveRange LR(getLoadIndex(index), getUseIndex(index),
+                     nI.getNextValue(~0U, 0, getVNInfoAllocator()));
+        DOUT << " +" << LR;
+        nI.addRange(LR);
+        vrm.addRestorePoint(NewVReg, MI);
+      }
+      if (HasDef) {
+        LiveRange LR(getDefIndex(index), getStoreIndex(index),
+                     nI.getNextValue(~0U, 0, getVNInfoAllocator()));
+        DOUT << " +" << LR;
+        nI.addRange(LR);
+        vrm.addSpillPoint(NewVReg, true, MI);
+      }
+      
       added.push_back(&nI);
         
-    DOUT << "\t\t\t\tadded new interval: ";
-    DEBUG(nI.dump());
-    DOUT << '\n';
+      DOUT << "\t\t\t\tadded new interval: ";
+      DEBUG(nI.dump());
+      DOUT << '\n';
+      
+      unsigned loopDepth = loopInfo->getLoopDepth(MI->getParent());
+      if (HasUse) {
+        if (HasDef)
+          SSWeight += getSpillWeight(true, true, loopDepth);
+        else
+          SSWeight += getSpillWeight(false, true, loopDepth);
+      } else
+        SSWeight += getSpillWeight(true, false, loopDepth);
+    }
     
-    unsigned loopDepth = loopInfo->getLoopDepth(MO.getParent()->getParent());
-    if (HasUse) {
-      if (HasDef)
-        SSWeight += getSpillWeight(true, true, loopDepth);
-      else
-        SSWeight += getSpillWeight(false, true, loopDepth);
-    } else
-      SSWeight += getSpillWeight(true, false, loopDepth);
     
+    RI = mri_->reg_begin(li.reg);
   }
 
+  // Clients expect the new intervals to be returned in sorted order.
   std::sort(added.begin(), added.end(), LISorter());
 
   return added;
