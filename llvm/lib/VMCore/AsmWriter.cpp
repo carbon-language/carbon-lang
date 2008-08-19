@@ -37,10 +37,10 @@
 #include <cctype>
 using namespace llvm;
 
-namespace llvm {
-
 // Make virtual table appear in this compilation unit.
 AssemblyAnnotationWriter::~AssemblyAnnotationWriter() {}
+
+namespace {
 
 /// This class provides computation of slot numbers for LLVM Assembly writing.
 ///
@@ -110,7 +110,7 @@ private:
   void operator=(const SlotTracker &);  // DO NOT IMPLEMENT
 };
 
-}  // end namespace llvm
+}  // end anonymous namespace
 
 char PrintModulePass::ID = 0;
 static RegisterPass<PrintModulePass>
