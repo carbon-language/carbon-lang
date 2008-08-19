@@ -13,4 +13,8 @@ void foo(id sem)
     return;
   }
  SYNC_AFTER();
+ @synchronized ([sem self]) {
+    SYNCH_BODY();
+    return;
+ }
 }

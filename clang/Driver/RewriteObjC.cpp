@@ -1304,11 +1304,13 @@ Stmt *RewriteObjC::RewriteObjCSynchronizedStmt(ObjCAtSynchronizedStmt *S) {
   std::string buf; 
   buf = "objc_sync_enter";
   ReplaceText(startLoc, 13, buf.c_str(), buf.size());
-  SourceLocation endLoc = S->getSynchExpr()->getLocEnd();
+  // We can't use S->getSynchExpr()->getLocEnd() to find the end location, since 
+  // the sync expression is typically a message expression that's already 
+  // been rewritten! (which implies the SourceLocation's are invalid).
+  SourceLocation endLoc = S->getSynchBody()->getLocStart();
   const char *endBuf = SM->getCharacterData(endLoc);
-  endBuf++;
-  const char *rparenBuf = strchr(endBuf, ')');
-  SourceLocation rparenLoc = startLoc.getFileLocWithOffset(rparenBuf-startBuf);
+  while (*endBuf != ')') endBuf--;
+  SourceLocation rparenLoc = startLoc.getFileLocWithOffset(endBuf-startBuf);
   buf = ");\n";
   // declare a new scope with two variables, _stack and _rethrow.
   buf += "/* @try scope begin */ \n{ struct _objc_exception_data {\n";
@@ -1321,7 +1323,7 @@ Stmt *RewriteObjC::RewriteObjCSynchronizedStmt(ObjCAtSynchronizedStmt *S) {
   startLoc = S->getSynchBody()->getLocEnd();
   startBuf = SM->getCharacterData(startLoc);
   
-  assert((*startBuf == '}') && "bogus @try block");
+  assert((*startBuf == '}') && "bogus @synchronized block");
   SourceLocation lastCurlyLoc = startLoc;
   buf = "}\nelse {\n";
   buf += "  _rethrow = objc_exception_extract(&_stack);\n";
