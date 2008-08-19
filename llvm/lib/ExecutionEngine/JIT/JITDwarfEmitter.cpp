@@ -66,7 +66,8 @@ JITDwarfEmitter::EmitFrameMoves(intptr_t BaseLabelPtr,
   unsigned PointerSize = TD->getPointerSize();
   int stackGrowth = stackGrowthDirection == TargetFrameInfo::StackGrowsUp ?
           PointerSize : -PointerSize;
-  bool IsLocal = BaseLabelPtr;
+  bool IsLocal = false;
+  unsigned BaseLabelID = 0;
 
   for (unsigned i = 0, N = Moves.size(); i < N; ++i) {
     const MachineMove &Move = Moves[i];
@@ -86,7 +87,7 @@ JITDwarfEmitter::EmitFrameMoves(intptr_t BaseLabelPtr,
     const MachineLocation &Src = Move.getSource();
     
     // Advance row if new location.
-    if (BaseLabelPtr && LabelID && (BaseLabelPtr != LabelPtr || !IsLocal)) {
+    if (BaseLabelPtr && LabelID && (BaseLabelID != LabelID || !IsLocal)) {
       MCE->emitByte(dwarf::DW_CFA_advance_loc4);
       if (PointerSize == 8) {
         MCE->emitInt64(LabelPtr - BaseLabelPtr);
@@ -94,6 +95,7 @@ JITDwarfEmitter::EmitFrameMoves(intptr_t BaseLabelPtr,
         MCE->emitInt32(LabelPtr - BaseLabelPtr);
       }
       
+      BaseLabelID = LabelID; 
       BaseLabelPtr = LabelPtr;
       IsLocal = true;
     }
@@ -541,12 +543,9 @@ JITDwarfEmitter::EmitCommonEHFrame(const Function* Personality) const {
   if (Personality) {
     MCE->emitULEB128Bytes(7);
     
-    if (needsIndirectEncoding)
-      MCE->emitByte(dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4 | 
-               dwarf::DW_EH_PE_indirect);
-    else
-      MCE->emitByte(dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4);
-
+    // Direct encoding, because we use the function pointer.
+    MCE->emitByte(dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4);
+    
     if (PointerSize == 8)
       MCE->emitInt64((intptr_t)Jit.getPointerToGlobal(Personality) - 
                 MCE->getCurrentPCValue());
@@ -554,12 +553,12 @@ JITDwarfEmitter::EmitCommonEHFrame(const Function* Personality) const {
       MCE->emitInt32((intptr_t)Jit.getPointerToGlobal(Personality) - 
                 MCE->getCurrentPCValue());
     
-    MCE->emitULEB128Bytes(dwarf::DW_EH_PE_pcrel);
-    MCE->emitULEB128Bytes(dwarf::DW_EH_PE_pcrel);
+    MCE->emitULEB128Bytes(dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4);
+    MCE->emitULEB128Bytes(dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4);
       
   } else {
     MCE->emitULEB128Bytes(1);
-    MCE->emitULEB128Bytes(dwarf::DW_EH_PE_pcrel);
+    MCE->emitULEB128Bytes(dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4);
   }
 
   std::vector<MachineMove> Moves;
