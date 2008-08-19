@@ -62,7 +62,8 @@ struct OperandsSignature {
   ///
   bool initialize(TreePatternNode *InstPatNode,
                   const CodeGenTarget &Target,
-                  MVT::SimpleValueType VT) {
+                  MVT::SimpleValueType VT,
+                  const CodeGenRegisterClass *DstRC) {
     for (unsigned i = 0, e = InstPatNode->getNumChildren(); i != e; ++i) {
       TreePatternNode *Op = InstPatNode->getChild(i);
       if (!Op->isLeaf())
@@ -81,6 +82,9 @@ struct OperandsSignature {
       // be the same.
       const CodeGenRegisterClass *RC = &Target.getRegisterClass(OpLeafRec);
       if (!RC)
+        return false;
+      // For now, all the operands must have the same register class.
+      if (DstRC != RC)
         return false;
       // For now, all the operands must have the same type.
       if (Op->getTypeNum(0) != VT)
@@ -230,7 +234,7 @@ void FastISelEmitter::run(std::ostream &OS) {
 
     // Check all the operands.
     OperandsSignature Operands;
-    if (!Operands.initialize(InstPatNode, Target, VT))
+    if (!Operands.initialize(InstPatNode, Target, VT, DstRC))
       continue;
 
     // If it's not a known signature, ignore it.
