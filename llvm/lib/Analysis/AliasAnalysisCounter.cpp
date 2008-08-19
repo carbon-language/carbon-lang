@@ -140,9 +140,11 @@ AliasAnalysisCounter::alias(const Value *V1, unsigned V1Size,
   if (PrintAll || (PrintAllFailures && R == MayAlias)) {
     cerr << AliasString << ":\t";
     cerr << "[" << V1Size << "B] ";
-    WriteAsOperand(*cerr.stream(), V1, true, M) << ", ";
+    WriteAsOperand(*cerr.stream(), V1, true, M);
+    cerr << ", ";
     cerr << "[" << V2Size << "B] ";
-    WriteAsOperand(*cerr.stream(), V2, true, M) << "\n";
+    WriteAsOperand(*cerr.stream(), V2, true, M);
+    cerr << "\n";
   }
 
   return R;

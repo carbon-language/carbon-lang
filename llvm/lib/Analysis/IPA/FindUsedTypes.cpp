@@ -59,7 +59,8 @@ bool FindUsedTypes::runOnModule(Module &m) {
   UsedTypes.clear();  // reset if run multiple times...
 
   // Loop over global variables, incorporating their types
-  for (Module::const_global_iterator I = m.global_begin(), E = m.global_end(); I != E; ++I) {
+  for (Module::const_global_iterator I = m.global_begin(), E = m.global_end();
+       I != E; ++I) {
     IncorporateType(I->getType());
     if (I->hasInitializer())
       IncorporateValue(I->getInitializer());
@@ -93,6 +94,8 @@ bool FindUsedTypes::runOnModule(Module &m) {
 void FindUsedTypes::print(std::ostream &o, const Module *M) const {
   o << "Types in use by this module:\n";
   for (std::set<const Type *>::const_iterator I = UsedTypes.begin(),
-       E = UsedTypes.end(); I != E; ++I)
-    WriteTypeSymbolic(o << "  ", *I, M) << "\n";
+       E = UsedTypes.end(); I != E; ++I) {
+    WriteTypeSymbolic(o << "  ", *I, M);
+    o << "\n";
+  }
 }
