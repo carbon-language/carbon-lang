@@ -210,8 +210,10 @@ void FastISelEmitter::run(std::ostream &OS) {
 
     // Ok, we found a pattern that we can handle. Remember it.
     {
-      InstructionMemo Memo = { Pattern.getDstPattern()->getOperator()->getName(),
-                               DstRC };
+      InstructionMemo Memo = {
+        Pattern.getDstPattern()->getOperator()->getName(),
+        DstRC
+      };
       SimplePatterns[Operands][OpcodeName][VT] = Memo;
     }
 
