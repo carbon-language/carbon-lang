@@ -211,9 +211,10 @@ const GRState* GRStateManager::AddEQ(const GRState* St, SymbolID sym,
 
 const GRState* GRStateManager::getInitialState() {
 
-  GRState StateImpl(EnvMgr.getInitialEnvironment(), StMgr->getInitialStore(),
+  GRState StateImpl(EnvMgr.getInitialEnvironment(), 
+                    StMgr->getInitialStore(*this),
                     GDMFactory.GetEmptyMap());
-  
+
   return getPersistentState(StateImpl);
 }
 

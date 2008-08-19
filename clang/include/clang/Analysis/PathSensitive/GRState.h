@@ -270,7 +270,11 @@ private:
   /// TF - Object that represents a bundle of transfer functions
   ///  for manipulating and creating RVals.
   GRTransferFuncs* TF;
-  
+
+  /// Liveness - live-variables information of the ValueDecl* and block-level
+  /// Expr* in the CFG. Used to get initial store and prune out dead state.
+  LiveVariables& Liveness;
+
 private:
 
   Environment RemoveBlkExpr(const Environment& Env, Expr* E) {
@@ -284,7 +288,7 @@ private:
     
 public:  
   GRStateManager(ASTContext& Ctx, StoreManager* stmgr,
-                    llvm::BumpPtrAllocator& alloc, CFG& c) 
+                 llvm::BumpPtrAllocator& alloc, CFG& c, LiveVariables& L) 
   : EnvMgr(alloc),
     StMgr(stmgr),
     ISetFactory(alloc), 
@@ -292,7 +296,8 @@ public:
     BasicVals(Ctx, alloc),
     SymMgr(alloc),
     Alloc(alloc),
-    cfg(c) {}
+    cfg(c),
+    Liveness(L) {}
   
   ~GRStateManager();
 
@@ -301,7 +306,8 @@ public:
   BasicValueFactory& getBasicVals() { return BasicVals; }
   const BasicValueFactory& getBasicVals() const { return BasicVals; }
   SymbolManager& getSymbolManager() { return SymMgr; }
-  
+  LiveVariables& getLiveVariables() { return Liveness; }
+
   typedef StoreManager::DeadSymbolsTy DeadSymbolsTy;
   
   const GRState* RemoveDeadBindings(const GRState* St, Stmt* Loc, 

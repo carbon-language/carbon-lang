@@ -13,6 +13,7 @@
 
 #include "clang/Analysis/Analyses/LiveVariables.h"
 #include "clang/Analysis/PathSensitive/BasicStore.h"
+#include "clang/Analysis/PathSensitive/GRState.h"
 #include "llvm/ADT/ImmutableMap.h"
 #include "llvm/Support/Compiler.h"
 
@@ -32,9 +33,7 @@ public:
   virtual Store SetRVal(Store St, LVal LV, RVal V);  
   virtual Store Remove(Store St, LVal LV);
 
-  virtual Store getInitialStore() {
-    return VBFactory.GetEmptyMap().getRoot();
-  }
+  virtual Store getInitialStore(GRStateManager& StateMgr);
   
   virtual Store RemoveDeadBindings(Store store, Stmt* Loc,
                                    const LiveVariables& Live,
@@ -199,4 +198,39 @@ Store BasicStoreManager::RemoveDeadBindings(Store store,
     }
 
   return store;
+}
+
+Store BasicStoreManager::getInitialStore(GRStateManager& StateMgr) {
+  // The LiveVariables information already has a compilation of all VarDecls
+  // used in the function.  Iterate through this set, and "symbolicate"
+  // any VarDecl whose value originally comes from outside the function.
+
+  typedef LiveVariables::AnalysisDataTy LVDataTy;
+  LVDataTy& D = StateMgr.getLiveVariables().getAnalysisData();
+
+  Store St = VBFactory.GetEmptyMap().getRoot();
+
+  for (LVDataTy::decl_iterator I=D.begin_decl(), E=D.end_decl(); I != E; ++I) {
+    ScopedDecl* SD = const_cast<ScopedDecl*>(I->first);
+
+    if (VarDecl* VD = dyn_cast<VarDecl>(SD)) {
+      // Punt on static variables for now.
+      if (VD->getStorageClass() == VarDecl::Static)
+        continue;
+
+      // Only handle pointers and integers for now.
+      QualType T = VD->getType();
+      if (LVal::IsLValType(T) || T->isIntegerType()) {
+        // Initialize globals and parameters to symbolic values.
+        // Initialize local variables to undefined.
+        RVal X = (VD->hasGlobalStorage() || isa<ParmVarDecl>(VD) ||
+                  isa<ImplicitParamDecl>(VD))
+                 ? RVal::GetSymbolValue(StateMgr.getSymbolManager(), VD)
+                 : UndefinedVal();
+
+        St = SetRVal(St, lval::DeclVal(VD), X);
+      }
+    }
+  }
+  return St;
 }

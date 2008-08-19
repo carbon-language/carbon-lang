@@ -121,7 +121,7 @@ GRExprEngine::GRExprEngine(CFG& cfg, Decl& CD, ASTContext& Ctx,
     Liveness(L),
     Builder(NULL),
     StateMgr(G.getContext(), CreateBasicStoreManager(G.getAllocator()),
-             G.getAllocator(), G.getCFG()),
+             G.getAllocator(), G.getCFG(), L),
     SymMgr(StateMgr.getSymbolManager()),
     CurrentStmt(NULL),
   NSExceptionII(NULL), NSExceptionInstanceRaiseSelectors(NULL),
@@ -189,47 +189,7 @@ void GRExprEngine::AddCheck(GRSimpleAPICheck* A, Stmt::StmtClass C) {
 }
 
 const GRState* GRExprEngine::getInitialState() {
-
-  // The LiveVariables information already has a compilation of all VarDecls
-  // used in the function.  Iterate through this set, and "symbolicate"
-  // any VarDecl whose value originally comes from outside the function.
-  
-  typedef LiveVariables::AnalysisDataTy LVDataTy;
-  LVDataTy& D = Liveness.getAnalysisData();
-  
-  GRState StateImpl = *StateMgr.getInitialState();
-  
-  for (LVDataTy::decl_iterator I=D.begin_decl(), E=D.end_decl(); I != E; ++I) {
-    
-    ScopedDecl *SD = const_cast<ScopedDecl*>(I->first);
-    if (VarDecl* VD = dyn_cast<VarDecl>(SD)) {
-      // Punt on static variables for now.
-      if (VD->getStorageClass() ==  VarDecl::Static)
-        continue;
-      
-      // Only handle pointers and integers for now.
-      QualType T = VD->getType();      
-      if (!(LVal::IsLValType(T) || T->isIntegerType()))
-        continue;
-      
-      // Initialize globals and parameters to symbolic values.
-      // Initialize local variables to undefined.
-      RVal X = (VD->hasGlobalStorage() || isa<ParmVarDecl>(VD) ||
-                isa<ImplicitParamDecl>(VD))
-             ? RVal::GetSymbolValue(SymMgr, VD)
-             : UndefinedVal();
-      
-      StateMgr.SetRVal(StateImpl, lval::DeclVal(VD), X);
-      
-    } else if (ImplicitParamDecl *IPD = dyn_cast<ImplicitParamDecl>(SD)) {
-        RVal X = RVal::GetSymbolValue(SymMgr, IPD);
-      StateMgr.SetRVal(StateImpl, lval::DeclVal(IPD), X);
-    }
-      
-
-  }
-  
-  return StateMgr.getPersistentState(StateImpl);
+  return StateMgr.getInitialState();
 }
 
 //===----------------------------------------------------------------------===//
