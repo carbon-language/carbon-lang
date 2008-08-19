@@ -358,9 +358,9 @@ def atomic_cmp_swap : SDNode<"ISD::ATOMIC_CMP_SWAP" , STDAtomic3,
                     [SDNPHasChain, SDNPMayStore, SDNPMayLoad, SDNPMemOperand]>;
 def atomic_load_add : SDNode<"ISD::ATOMIC_LOAD_ADD" , STDAtomic2,
                     [SDNPHasChain, SDNPMayStore, SDNPMayLoad, SDNPMemOperand]>;
-def atomic_swap     : SDNode<"ISD::ATOMIC_SWAP", STDAtomic2,
-                    [SDNPHasChain, SDNPMayStore, SDNPMayLoad, SDNPMemOperand]>;
 def atomic_load_sub : SDNode<"ISD::ATOMIC_LOAD_SUB" , STDAtomic2,
+                    [SDNPHasChain, SDNPMayStore, SDNPMayLoad, SDNPMemOperand]>;
+def atomic_swap     : SDNode<"ISD::ATOMIC_SWAP", STDAtomic2,
                     [SDNPHasChain, SDNPMayStore, SDNPMayLoad, SDNPMemOperand]>;
 def atomic_load_and : SDNode<"ISD::ATOMIC_LOAD_AND" , STDAtomic2,
                     [SDNPHasChain, SDNPMayStore, SDNPMayLoad, SDNPMemOperand]>;
@@ -815,6 +815,32 @@ def atomic_load_add_64 : PatFrag<(ops node:$ptr, node:$inc),
   return false;
 }]>;
 
+def atomic_load_sub_8 : PatFrag<(ops node:$ptr, node:$dec),
+                    (atomic_load_sub node:$ptr, node:$dec), [{
+  if (AtomicSDNode* V = dyn_cast<AtomicSDNode>(N))
+        return V->getValueType(0) == MVT::i8;
+  return false;
+}]>;
+def atomic_load_sub_16 : PatFrag<(ops node:$ptr, node:$dec), 
+                    (atomic_load_sub node:$ptr, node:$dec), [{
+  if (AtomicSDNode* V = dyn_cast<AtomicSDNode>(N))
+        return V->getValueType(0) == MVT::i16;
+  return false;
+}]>;
+def atomic_load_sub_32 : PatFrag<(ops node:$ptr, node:$dec), 
+                    (atomic_load_sub node:$ptr, node:$dec), [{
+  if (AtomicSDNode* V = dyn_cast<AtomicSDNode>(N))
+        return V->getValueType(0) == MVT::i32;
+  return false;
+}]>;
+def atomic_load_sub_64 : PatFrag<(ops node:$ptr, node:$dec), 
+                    (atomic_load_sub node:$ptr, node:$dec), [{
+  if (AtomicSDNode* V = dyn_cast<AtomicSDNode>(N))
+        return V->getValueType(0) == MVT::i64;
+  return false;
+}]>;
+
+
 def atomic_swap_8 : PatFrag<(ops node:$ptr, node:$inc),
                     (atomic_swap node:$ptr, node:$inc), [{
   if (AtomicSDNode* V = dyn_cast<AtomicSDNode>(N))
@@ -839,7 +865,6 @@ def atomic_swap_64 : PatFrag<(ops node:$ptr, node:$inc),
         return V->getValueType(0) == MVT::i64;
   return false;
 }]>;
-
 
 
 // setcc convenience fragments.

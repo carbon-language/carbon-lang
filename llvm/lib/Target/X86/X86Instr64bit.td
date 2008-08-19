@@ -1133,18 +1133,25 @@ def TLS_addr64 : I<0, Pseudo, (outs GR64:$dst), (ins i64imm:$sym),
 
 let Defs = [RAX, EFLAGS], Uses = [RAX] in {
 def LCMPXCHG64 : RI<0xB1, MRMDestMem, (outs), (ins i64mem:$ptr, GR64:$swap),
-               "lock\n\tcmpxchgq $swap,$ptr",
+               "lock\n\tcmpxchgq\t$swap,$ptr",
                [(X86cas addr:$ptr, GR64:$swap, 8)]>, TB, LOCK;
 }
 
 let Constraints = "$val = $dst" in {
 let Defs = [EFLAGS] in
 def LXADD64 : RI<0xC1, MRMSrcMem, (outs GR64:$dst), (ins i64mem:$ptr,GR64:$val),
-               "lock\n\txadd $val, $ptr", 
+               "lock\n\txadd\t$val, $ptr", 
                [(set GR64:$dst, (atomic_load_add_64 addr:$ptr, GR64:$val))]>,
                 TB, LOCK;
+
+let Defs = [EFLAGS] in
+def LXSUB64 : RI<0xC1, MRMSrcMem, (outs GR64:$dst), (ins i64mem:$ptr,GR64:$val),
+               "lock\n\txadd\t$val, $ptr", 
+               [(set GR64:$dst, (atomic_load_sub_64 addr:$ptr, GR64:$val))]>,
+                TB, LOCK;
+
 def XCHG64rm : RI<0x87, MRMSrcMem, (outs GR64:$dst), (ins i64mem:$ptr,GR64:$val),
-                  "xchg $val, $ptr", 
+                  "xchg\t$val, $ptr", 
                   [(set GR64:$dst, (atomic_swap_64 addr:$ptr, GR64:$val))]>;
 }
 
