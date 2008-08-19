@@ -66,7 +66,6 @@ namespace {
     GCFunctionInfo *FI;
     MachineModuleInfo *MMI;
     const TargetInstrInfo *TII;
-    MachineFrameInfo *MFI;
     
     void FindSafePoints(MachineFunction &MF);
     void VisitCallPoint(MachineBasicBlock::iterator MI);
