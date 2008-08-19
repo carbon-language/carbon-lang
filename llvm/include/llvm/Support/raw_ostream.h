@@ -72,6 +72,23 @@ public:
     return write(Str, strlen(Str));
   }
   
+  raw_ostream &operator<<(unsigned N) {
+    // Zero is a special case.
+    if (N == 0)
+      return *this << '0';
+    
+    char NumberBuffer[20];
+    char *EndPtr = NumberBuffer+sizeof(NumberBuffer);
+    char *CurPtr = EndPtr;
+    
+    while (N) {
+      *--CurPtr = '0' + char(N % 10);
+      N /= 10;
+    }
+    return write(CurPtr, EndPtr-CurPtr);
+  }
+  
+  
   raw_ostream &write(const char *Ptr, unsigned Size) {
     if (OutBufCur+Size > OutBufEnd)
       flush_impl();
