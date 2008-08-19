@@ -241,6 +241,7 @@ bool SimpleSpiller::runOnMachineFunction(MachineFunction &MF, VirtRegMap &VRM) {
   DOUT << "********** Function: " << MF.getFunction()->getName() << '\n';
   const TargetMachine &TM = MF.getTarget();
   const TargetInstrInfo &TII = *TM.getInstrInfo();
+  const TargetRegisterInfo &TRI = *TM.getRegisterInfo();
   
 
   // LoadedRegs - Keep track of which vregs are loaded, so that we only load
@@ -261,7 +262,9 @@ bool SimpleSpiller::runOnMachineFunction(MachineFunction &MF, VirtRegMap &VRM) {
         if (MO.isRegister() && MO.getReg()) {
           if (TargetRegisterInfo::isVirtualRegister(MO.getReg())) {
             unsigned VirtReg = MO.getReg();
+            unsigned SubIdx = MO.getSubReg();
             unsigned PhysReg = VRM.getPhys(VirtReg);
+            unsigned RReg = SubIdx ? TRI.getSubReg(PhysReg, SubIdx) : PhysReg;
             if (!VRM.isAssignedReg(VirtReg)) {
               int StackSlot = VRM.getStackSlot(VirtReg);
               const TargetRegisterClass* RC =
@@ -286,8 +289,8 @@ bool SimpleSpiller::runOnMachineFunction(MachineFunction &MF, VirtRegMap &VRM) {
                 ++NumStores;
               }
             }
-            MF.getRegInfo().setPhysRegUsed(PhysReg);
-            MI.getOperand(i).setReg(PhysReg);
+            MF.getRegInfo().setPhysRegUsed(RReg);
+            MI.getOperand(i).setReg(RReg);
           } else {
             MF.getRegInfo().setPhysRegUsed(MO.getReg());
           }
