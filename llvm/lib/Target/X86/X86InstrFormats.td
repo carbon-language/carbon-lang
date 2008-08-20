@@ -103,7 +103,7 @@ class X86Inst<bits<8> opcod, Format f, ImmType i, dag outs, dag ins,
   bit hasREX_WPrefix  = 0;  // Does this inst requires the REX.W prefix?
   FPFormat FPForm;          // What flavor of FP instruction is this?
   bits<3> FPFormBits = 0;
-  bit hasLockPrefix = 0;  // Does this inst have a 0xF0 prefix?
+  bit hasLockPrefix = 0;    // Does this inst have a 0xF0 prefix?
 }
 
 class I<bits<8> o, Format f, dag outs, dag ins, string asm, list<dag> pattern>
