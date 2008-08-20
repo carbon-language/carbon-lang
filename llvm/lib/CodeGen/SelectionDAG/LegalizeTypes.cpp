@@ -127,8 +127,9 @@ ScanOperands:
     if (NeedsRevisit)
       continue;
 
-    if (i == NumOperands)
+    if (i == NumOperands) {
       DEBUG(cerr << "Legally typed node: "; N->dump(&DAG); cerr << "\n");
+    }
     }
 NodeDone:
 
