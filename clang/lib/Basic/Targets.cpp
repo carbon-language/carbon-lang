@@ -363,10 +363,6 @@ static const char* getPPCVAListDeclaration() {
     "} __builtin_va_list[1];";
 }
 
-static const char* getARMVAListDeclaration() {
-  return "typedef char* __builtin_va_list;";
-}
-
 /// PPC builtin info.
 namespace clang {
 namespace PPC {
@@ -473,14 +469,6 @@ namespace PPC {
   }
   
 } // End namespace PPC
-  
-  
-/// ARM builtin info.
-namespace ARM {
-  const char *getTargetPrefix() {
-    return "arm";
-  }
-} // End namespace ARM
 
 } // end namespace clang.
 
@@ -743,41 +731,44 @@ public:
 };
 } // end anonymous namespace.
 
-
 namespace {
-class DarwinARMTargetInfo : public DarwinTargetInfo {
+class ARMTargetInfo : public TargetInfo {
 public:
-  DarwinARMTargetInfo(const std::string& triple) :DarwinTargetInfo(triple) {
-    // FIXME: Are the defaults corrent for ARM?
+  ARMTargetInfo(const std::string& triple) : TargetInfo(triple) {
+    // FIXME: Are the defaults correct for ARM?
   }
-  
   virtual void getTargetDefines(std::vector<char> &Defines) const {
-    DarwinTargetInfo::getTargetDefines(Defines);
     getARMDefines(Defines);
   }
   virtual void getTargetBuiltins(const Builtin::Info *&Records,
                                  unsigned &NumRecords) const {
+    // FIXME: Implement.
+    Records = 0;
     NumRecords = 0;
   }
   virtual const char *getVAListDeclaration() const {
-    return getARMVAListDeclaration();
+    return "typedef char* __builtin_va_list;";
   }
   virtual const char *getTargetPrefix() const {
-    return ARM::getTargetPrefix();
+    return "arm";
   }
-  
   virtual void getGCCRegNames(const char * const *&Names, 
                               unsigned &NumNames) const {
+    // FIXME: Implement.
+    Names = 0;
     NumNames = 0;
   }
   virtual void getGCCRegAliases(const GCCRegAlias *&Aliases, 
                                 unsigned &NumAliases) const {
+    // FIXME: Implement.
+    Aliases = 0;
     NumAliases = 0;
   }
   virtual bool validateAsmConstraint(char c,
                                      TargetInfo::ConstraintInfo &info) const {
+    // FIXME: Check if this is complete
     switch (c) {
-    default: 
+    default:
     case 'l': // r0-r7
     case 'h': // r8-r15
     case 'w': // VFP Floating point register single precision
@@ -788,7 +779,21 @@ public:
     return false;
   }
   virtual const char *getClobbers() const {
+    // FIXME: Is this really right?
     return "";
+  }
+};
+} // end anonymous namespace.
+
+
+namespace {
+class DarwinARMTargetInfo : public ARMTargetInfo {
+public:
+  DarwinARMTargetInfo(const std::string& triple) : ARMTargetInfo(triple) {}
+
+  virtual void getTargetDefines(std::vector<char> &Defines) const {
+    ARMTargetInfo::getTargetDefines(Defines);
+    getDarwinDefines(Defines);
   }
 };
 } // end anonymous namespace.
