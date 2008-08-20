@@ -1254,24 +1254,40 @@ def : Pat<(i64 (zext GR32:$src)),
 def : Pat<(zextloadi64i1 addr:$src), (MOVZX64rm8 addr:$src)>;
 
 // extload
-def : Pat<(extloadi64i1 addr:$src),  (MOVZX64rm8  addr:$src)>;
-def : Pat<(extloadi64i8 addr:$src),  (MOVZX64rm8  addr:$src)>;
-def : Pat<(extloadi64i16 addr:$src), (MOVZX64rm16 addr:$src)>;
-def : Pat<(extloadi64i32 addr:$src), 
-          (INSERT_SUBREG (i64 (IMPLICIT_DEF)), (MOV32rm addr:$src), 
-                                                  x86_subreg_32bit)>;
+def : Pat<(extloadi64i1 addr:$src),
+          (INSERT_SUBREG (i64 (IMPLICIT_DEF)), (MOV8rm addr:$src),
+                         x86_subreg_8bit)>;
+def : Pat<(extloadi64i8 addr:$src),
+          (INSERT_SUBREG (i64 (IMPLICIT_DEF)), (MOV8rm addr:$src),
+                         x86_subreg_8bit)>;
+def : Pat<(extloadi64i16 addr:$src),
+          (INSERT_SUBREG (i64 (IMPLICIT_DEF)), (MOV16rm addr:$src),
+                         x86_subreg_16bit)>;
+def : Pat<(extloadi64i32 addr:$src),
+          (INSERT_SUBREG (i64 (IMPLICIT_DEF)), (MOV32rm addr:$src),
+                         x86_subreg_32bit)>;
+def : Pat<(extloadi16i1 addr:$src), 
+          (INSERT_SUBREG (i16 (IMPLICIT_DEF)), (MOV8rm addr:$src), 
+                         x86_subreg_8bit)>,
+         Requires<[In64BitMode]>;
+def : Pat<(extloadi16i8 addr:$src), 
+          (INSERT_SUBREG (i16 (IMPLICIT_DEF)), (MOV8rm addr:$src), 
+                         x86_subreg_8bit)>,
+         Requires<[In64BitMode]>;
 
-// anyext -> zext
-def : Pat<(i64 (anyext GR8 :$src)), (MOVZX64rr8  GR8 :$src)>;
-def : Pat<(i64 (anyext GR16:$src)), (MOVZX64rr16 GR16:$src)>;
+// anyext
+def : Pat<(i64 (anyext GR8:$src)),
+          (INSERT_SUBREG (i64 (IMPLICIT_DEF)), GR8:$src, x86_subreg_8bit)>;
+def : Pat<(i64 (anyext GR16:$src)),
+          (INSERT_SUBREG (i64 (IMPLICIT_DEF)), GR16:$src, x86_subreg_16bit)>;
 def : Pat<(i64 (anyext GR32:$src)), 
           (INSERT_SUBREG (i64 (IMPLICIT_DEF)), GR32:$src, x86_subreg_32bit)>;
-
-def : Pat<(i64 (anyext (loadi8  addr:$src))), (MOVZX64rm8  addr:$src)>;
-def : Pat<(i64 (anyext (loadi16 addr:$src))), (MOVZX64rm16 addr:$src)>;
-def : Pat<(i64 (anyext (loadi32 addr:$src))), 
-          (INSERT_SUBREG (i64 (IMPLICIT_DEF)), (MOV32rm addr:$src), 
-                                                    x86_subreg_32bit)>;
+def : Pat<(i16 (anyext GR8:$src)),
+          (INSERT_SUBREG (i16 (IMPLICIT_DEF)), GR8:$src, x86_subreg_8bit)>,
+         Requires<[In64BitMode]>;
+def : Pat<(i32 (anyext GR8:$src)),
+          (INSERT_SUBREG (i32 (IMPLICIT_DEF)), GR8:$src, x86_subreg_8bit)>,
+         Requires<[In64BitMode]>;
 
 //===----------------------------------------------------------------------===//
 // Some peepholes
@@ -1293,6 +1309,34 @@ def : Pat<(and GR32:$src1, 0xff),
 // r & (2^8-1) ==> movz
 def : Pat<(and GR16:$src1, 0xff),
            (MOVZX16rr8 (i8 (EXTRACT_SUBREG GR16:$src1, x86_subreg_8bit)))>,
+      Requires<[In64BitMode]>;
+
+// sext_inreg patterns
+def : Pat<(sext_inreg GR64:$src, i32),
+          (MOVSX64rr32 (i32 (EXTRACT_SUBREG GR64:$src, x86_subreg_32bit)))>;
+def : Pat<(sext_inreg GR64:$src, i16),
+          (MOVSX64rr16 (i16 (EXTRACT_SUBREG GR64:$src, x86_subreg_16bit)))>;
+def : Pat<(sext_inreg GR64:$src, i8),
+          (MOVSX64rr8 (i8 (EXTRACT_SUBREG GR64:$src, x86_subreg_8bit)))>;
+def : Pat<(sext_inreg GR32:$src, i8),
+          (MOVSX32rr8 (i8 (EXTRACT_SUBREG GR32:$src, x86_subreg_8bit)))>,
+      Requires<[In64BitMode]>;
+def : Pat<(sext_inreg GR16:$src, i8),
+          (MOVSX16rr8 (i8 (EXTRACT_SUBREG GR16:$src, x86_subreg_8bit)))>,
+      Requires<[In64BitMode]>;
+
+// trunc patterns
+def : Pat<(i32 (trunc GR64:$src)),
+          (i32 (EXTRACT_SUBREG GR64:$src, x86_subreg_32bit))>;
+def : Pat<(i16 (trunc GR64:$src)),
+          (i16 (EXTRACT_SUBREG GR64:$src, x86_subreg_16bit))>;
+def : Pat<(i8 (trunc GR64:$src)),
+          (i8 (EXTRACT_SUBREG GR64:$src, x86_subreg_8bit))>;
+def : Pat<(i8 (trunc GR32:$src)),
+          (i8 (EXTRACT_SUBREG GR32:$src, x86_subreg_8bit))>,
+      Requires<[In64BitMode]>;
+def : Pat<(i8 (trunc GR16:$src)),
+          (i8 (EXTRACT_SUBREG GR16:$src, x86_subreg_8bit))>,
       Requires<[In64BitMode]>;
 
 // (shl x, 1) ==> (add x, x)

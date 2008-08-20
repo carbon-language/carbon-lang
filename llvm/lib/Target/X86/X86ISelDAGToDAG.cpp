@@ -234,9 +234,11 @@ namespace {
     /// base register.  Return the virtual register that holds this value.
     SDNode *getGlobalBaseReg();
 
-    /// getTruncate - return an SDNode that implements a subreg based truncate
-    /// of the specified operand to the the specified value type.
-    SDNode *getTruncate(SDValue N0, MVT VT);
+    /// getTruncateTo8Bit - return an SDNode that implements a subreg based
+    /// truncate of the specified operand to i8. This can be done with tablegen,
+    /// except that this code uses MVT::Flag in a tricky way that happens to
+    /// improve scheduling in some cases.
+    SDNode *getTruncateTo8Bit(SDValue N0);
 
 #ifndef NDEBUG
     unsigned Indent;
@@ -1133,38 +1135,33 @@ static SDNode *FindCallStartFromCall(SDNode *Node) {
   return FindCallStartFromCall(Node->getOperand(0).Val);
 }
 
-SDNode *X86DAGToDAGISel::getTruncate(SDValue N0, MVT VT) {
-    SDValue SRIdx;
-    switch (VT.getSimpleVT()) {
-    default: assert(0 && "Unknown truncate!");
-    case MVT::i8:
-      SRIdx = CurDAG->getTargetConstant(1, MVT::i32); // SubRegSet 1
-      // Ensure that the source register has an 8-bit subreg on 32-bit targets
-      if (!Subtarget->is64Bit()) { 
-        unsigned Opc;
-        MVT N0VT = N0.getValueType();
-        switch (N0VT.getSimpleVT()) {
-        default: assert(0 && "Unknown truncate!");
-        case MVT::i16:
-          Opc = X86::MOV16to16_;
-          break;
-        case MVT::i32:
-          Opc = X86::MOV32to32_;
-          break;
-        }
-        N0 = SDValue(CurDAG->getTargetNode(Opc, N0VT, MVT::Flag, N0), 0);
-        return CurDAG->getTargetNode(X86::EXTRACT_SUBREG,
-                                     VT, N0, SRIdx, N0.getValue(1));
-      }
-      break;
-    case MVT::i16:
-      SRIdx = CurDAG->getTargetConstant(2, MVT::i32); // SubRegSet 2
-      break;
-    case MVT::i32:
-      SRIdx = CurDAG->getTargetConstant(3, MVT::i32); // SubRegSet 3
-      break;
-    }
-    return CurDAG->getTargetNode(X86::EXTRACT_SUBREG, VT, N0, SRIdx);
+/// getTruncateTo8Bit - return an SDNode that implements a subreg based
+/// truncate of the specified operand to i8. This can be done with tablegen,
+/// except that this code uses MVT::Flag in a tricky way that happens to
+/// improve scheduling in some cases.
+SDNode *X86DAGToDAGISel::getTruncateTo8Bit(SDValue N0) {
+  assert(!Subtarget->is64Bit() &&
+         "getTruncateTo8Bit is only needed on x86-32!");
+  SDValue SRIdx = CurDAG->getTargetConstant(1, MVT::i32); // SubRegSet 1
+
+  // Ensure that the source register has an 8-bit subreg on 32-bit targets
+  unsigned Opc;
+  MVT N0VT = N0.getValueType();
+  switch (N0VT.getSimpleVT()) {
+  default: assert(0 && "Unknown truncate!");
+  case MVT::i16:
+    Opc = X86::MOV16to16_;
+    break;
+  case MVT::i32:
+    Opc = X86::MOV32to32_;
+    break;
+  }
+
+  // The use of MVT::Flag here is not strictly accurate, but it helps
+  // scheduling in some cases.
+  N0 = SDValue(CurDAG->getTargetNode(Opc, N0VT, MVT::Flag, N0), 0);
+  return CurDAG->getTargetNode(X86::EXTRACT_SUBREG,
+                               MVT::i8, N0, SRIdx, N0.getValue(1));
 }
 
 
@@ -1507,90 +1504,45 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
       return NULL;
     }
 
-    case ISD::ANY_EXTEND: {
-      // Check if the type  extended to supports subregs.
-      if (NVT == MVT::i8)
-        break;
-      
-      SDValue N0 = Node->getOperand(0);
-      // Get the subregsiter index for the type to extend.
-      MVT N0VT = N0.getValueType();
-      // FIXME: In x86-32, 8-bit value may be in AH, etc. which don't have
-      // super-registers.
-      unsigned Idx = (N0VT == MVT::i32) ? X86::SUBREG_32BIT :
-                      (N0VT == MVT::i16) ? X86::SUBREG_16BIT :
-                        (Subtarget->is64Bit()) ? X86::SUBREG_8BIT : 0;
-      
-      // If we don't have a subreg Idx, let generated ISel have a try.
-      if (Idx == 0)
-        break;
-        
-      // If we have an index, generate an insert_subreg into undef.
-      AddToISelQueue(N0);
-      SDValue Undef = 
-        SDValue(CurDAG->getTargetNode(X86::IMPLICIT_DEF, NVT), 0);
-      SDValue SRIdx = CurDAG->getTargetConstant(Idx, MVT::i32);
-      SDNode *ResNode = CurDAG->getTargetNode(X86::INSERT_SUBREG,
-                                              NVT, Undef, N0, SRIdx);
-
-#ifndef NDEBUG
-      DOUT << std::string(Indent-2, ' ') << "=> ";
-      DEBUG(ResNode->dump(CurDAG));
-      DOUT << "\n";
-      Indent -= 2;
-#endif
-      return ResNode;
-    }
-    
     case ISD::SIGN_EXTEND_INREG: {
-      SDValue N0 = Node->getOperand(0);
-      AddToISelQueue(N0);
-      
       MVT SVT = cast<VTSDNode>(Node->getOperand(1))->getVT();
-      SDValue TruncOp = SDValue(getTruncate(N0, SVT), 0);
-      unsigned Opc = 0;
-      switch (NVT.getSimpleVT()) {
-      default: assert(0 && "Unknown sign_extend_inreg!");
-      case MVT::i16:
-        if (SVT == MVT::i8) Opc = X86::MOVSX16rr8;
-        else assert(0 && "Unknown sign_extend_inreg!");
-        break;
-      case MVT::i32:
-        switch (SVT.getSimpleVT()) {
-        default: assert(0 && "Unknown sign_extend_inreg!");
-        case MVT::i8:  Opc = X86::MOVSX32rr8;  break;
-        case MVT::i16: Opc = X86::MOVSX32rr16; break;
-        }
-        break;
-      case MVT::i64:
-        switch (SVT.getSimpleVT()) {
-        default: assert(0 && "Unknown sign_extend_inreg!");
-        case MVT::i8:  Opc = X86::MOVSX64rr8;  break;
-        case MVT::i16: Opc = X86::MOVSX64rr16; break;
-        case MVT::i32: Opc = X86::MOVSX64rr32; break;
-        }
-        break;
-      }
+      if (SVT == MVT::i8 && !Subtarget->is64Bit()) {
+        SDValue N0 = Node->getOperand(0);
+        AddToISelQueue(N0);
       
-      SDNode *ResNode = CurDAG->getTargetNode(Opc, NVT, TruncOp);
+        SDValue TruncOp = SDValue(getTruncateTo8Bit(N0), 0);
+        unsigned Opc = 0;
+        switch (NVT.getSimpleVT()) {
+        default: assert(0 && "Unknown sign_extend_inreg!");
+        case MVT::i16:
+          Opc = X86::MOVSX16rr8;
+          break;
+        case MVT::i32:
+          Opc = X86::MOVSX32rr8; 
+          break;
+        }
+      
+        SDNode *ResNode = CurDAG->getTargetNode(Opc, NVT, TruncOp);
       
 #ifndef NDEBUG
-      DOUT << std::string(Indent-2, ' ') << "=> ";
-      DEBUG(TruncOp.Val->dump(CurDAG));
-      DOUT << "\n";
-      DOUT << std::string(Indent-2, ' ') << "=> ";
-      DEBUG(ResNode->dump(CurDAG));
-      DOUT << "\n";
-      Indent -= 2;
+        DOUT << std::string(Indent-2, ' ') << "=> ";
+        DEBUG(TruncOp.Val->dump(CurDAG));
+        DOUT << "\n";
+        DOUT << std::string(Indent-2, ' ') << "=> ";
+        DEBUG(ResNode->dump(CurDAG));
+        DOUT << "\n";
+        Indent -= 2;
 #endif
-      return ResNode;
+        return ResNode;
+      }
       break;
     }
     
     case ISD::TRUNCATE: {
-      SDValue Input = Node->getOperand(0);
-      AddToISelQueue(Node->getOperand(0));
-      SDNode *ResNode = getTruncate(Input, NVT);
+      if (NVT == MVT::i8 && !Subtarget->is64Bit()) {
+        SDValue Input = Node->getOperand(0);
+        AddToISelQueue(Node->getOperand(0));
+        SDNode *ResNode = getTruncateTo8Bit(Input);
       
 #ifndef NDEBUG
         DOUT << std::string(Indent-2, ' ') << "=> ";
@@ -1598,7 +1550,8 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
         DOUT << "\n";
         Indent -= 2;
 #endif
-      return ResNode;
+        return ResNode;
+      }
       break;
     }
 
