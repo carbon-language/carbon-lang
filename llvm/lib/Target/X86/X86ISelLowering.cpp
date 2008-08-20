@@ -297,9 +297,11 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   setOperationAction(ISD::ATOMIC_CMP_SWAP , MVT::i16, Custom);
   setOperationAction(ISD::ATOMIC_CMP_SWAP , MVT::i32, Custom);
   setOperationAction(ISD::ATOMIC_CMP_SWAP , MVT::i64, Custom);
+
   setOperationAction(ISD::ATOMIC_LOAD_SUB , MVT::i8, Expand);
   setOperationAction(ISD::ATOMIC_LOAD_SUB , MVT::i16, Expand);
   setOperationAction(ISD::ATOMIC_LOAD_SUB , MVT::i32, Expand);
+  setOperationAction(ISD::ATOMIC_LOAD_SUB , MVT::i64, Expand);
 
   // Use the default ISD::DBG_STOPPOINT, ISD::DECLARE expansion.
   setOperationAction(ISD::DBG_STOPPOINT, MVT::Other, Expand);

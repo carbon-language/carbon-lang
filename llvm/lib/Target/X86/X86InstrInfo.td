@@ -2634,22 +2634,6 @@ def LXADD8  : I<0xC0, MRMSrcMem, (outs GR8:$dst), (ins i8mem:$ptr, GR8:$val),
                 TB, LOCK;
 }
 
-// Atomic exchange and subtract
-let Constraints = "$val = $dst", Defs = [EFLAGS] in {
-def LXSUB32 : I<0xC1, MRMSrcMem, (outs GR32:$dst), (ins i32mem:$ptr, GR32:$val),
-               "lock\n\txadd{l}\t{$val, $ptr|$ptr, $val}", 
-               [(set GR32:$dst, (atomic_load_sub_32 addr:$ptr, GR32:$val))]>,
-                TB, LOCK;
-def LXSUB16 : I<0xC1, MRMSrcMem, (outs GR16:$dst), (ins i16mem:$ptr, GR16:$val),
-               "lock\n\txadd{w}\t{$val, $ptr|$ptr, $val}", 
-               [(set GR16:$dst, (atomic_load_sub_16 addr:$ptr, GR16:$val))]>,
-                TB, OpSize, LOCK;
-def LXSUB8  : I<0xC0, MRMSrcMem, (outs GR8:$dst), (ins i8mem:$ptr, GR8:$val),
-               "lock\n\txadd{b}\t{$val, $ptr|$ptr, $val}", 
-               [(set GR8:$dst, (atomic_load_sub_8 addr:$ptr, GR8:$val))]>,
-                TB, LOCK;
-}
-
 // Atomic exchange, and, or, xor
 let Constraints = "$val = $dst", Defs = [EFLAGS],
                   usesCustomDAGSchedInserter = 1 in {
