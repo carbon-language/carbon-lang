@@ -24,15 +24,6 @@
 #include <cstdlib>
 using namespace llvm;
 
-/// This enumeration just provides for internal constants used in this
-/// translation unit. 
-enum {
-  MIN_INT_BITS = 1,        ///< Minimum number of bits that can be specified
-  ///< Note that this must remain synchronized with IntegerType::MIN_INT_BITS
-  MAX_INT_BITS = (1<<23)-1 ///< Maximum number of bits that can be specified
-  ///< Note that this must remain synchronized with IntegerType::MAX_INT_BITS
-};
-
 /// A utility function for allocating memory, checking for allocation failures,
 /// and ensuring the contents are zeroed.
 inline static uint64_t* getClearedMemory(uint32_t numWords) {
@@ -50,26 +41,18 @@ inline static uint64_t* getMemory(uint32_t numWords) {
   return result;
 }
 
-APInt::APInt(uint32_t numBits, uint64_t val, bool isSigned) 
-  : BitWidth(numBits), VAL(0) {
-  assert(BitWidth >= MIN_INT_BITS && "bitwidth too small");
-  assert(BitWidth <= MAX_INT_BITS && "bitwidth too large");
-  if (isSingleWord())
-    VAL = val;
-  else {
-    pVal = getClearedMemory(getNumWords());
-    pVal[0] = val;
-    if (isSigned && int64_t(val) < 0) 
-      for (unsigned i = 1; i < getNumWords(); ++i)
-        pVal[i] = -1ULL;
-  }
-  clearUnusedBits();
+void APInt::initSlowCase(uint32_t numBits, uint64_t val, bool isSigned) 
+{
+  pVal = getClearedMemory(getNumWords());
+  pVal[0] = val;
+  if (isSigned && int64_t(val) < 0) 
+    for (unsigned i = 1; i < getNumWords(); ++i)
+      pVal[i] = -1ULL;
 }
 
 APInt::APInt(uint32_t numBits, uint32_t numWords, const uint64_t bigVal[])
   : BitWidth(numBits), VAL(0)  {
-  assert(BitWidth >= MIN_INT_BITS && "bitwidth too small");
-  assert(BitWidth <= MAX_INT_BITS && "bitwidth too large");
+  assert(BitWidth && "bitwidth too small");
   assert(bigVal && "Null pointer detected!");
   if (isSingleWord())
     VAL = bigVal[0];
@@ -88,51 +71,35 @@ APInt::APInt(uint32_t numBits, uint32_t numWords, const uint64_t bigVal[])
 APInt::APInt(uint32_t numbits, const char StrStart[], uint32_t slen, 
              uint8_t radix) 
   : BitWidth(numbits), VAL(0) {
-  assert(BitWidth >= MIN_INT_BITS && "bitwidth too small");
-  assert(BitWidth <= MAX_INT_BITS && "bitwidth too large");
+  assert(BitWidth && "bitwidth too small");
   fromString(numbits, StrStart, slen, radix);
 }
 
-APInt::APInt(const APInt& that)
-  : BitWidth(that.BitWidth), VAL(0) {
-  assert(BitWidth >= MIN_INT_BITS && "bitwidth too small");
-  assert(BitWidth <= MAX_INT_BITS && "bitwidth too large");
-  if (isSingleWord()) 
-    VAL = that.VAL;
-  else {
-    pVal = getMemory(getNumWords());
-    memcpy(pVal, that.pVal, getNumWords() * APINT_WORD_SIZE);
-  }
+void APInt::initSlowCase(const APInt& that)
+{
+  pVal = getMemory(getNumWords());
+  memcpy(pVal, that.pVal, getNumWords() * APINT_WORD_SIZE);
 }
 
-APInt::~APInt() {
-  if (!isSingleWord()) 
-    delete [] pVal;
-}
-
-APInt& APInt::operator=(const APInt& RHS) {
+APInt& APInt::AssignSlowCase(const APInt& RHS) {
   // Don't do anything for X = X
   if (this == &RHS)
     return *this;
 
-  // If the bitwidths are the same, we can avoid mucking with memory
   if (BitWidth == RHS.getBitWidth()) {
-    if (isSingleWord()) 
-      VAL = RHS.VAL;
-    else
-      memcpy(pVal, RHS.pVal, getNumWords() * APINT_WORD_SIZE);
+    // assume same bit-width single-word case is already handled
+    assert(!isSingleWord());
+    memcpy(pVal, RHS.pVal, getNumWords() * APINT_WORD_SIZE);
     return *this;
   }
 
-  if (isSingleWord())
-    if (RHS.isSingleWord())
-      VAL = RHS.VAL;
-    else {
-      VAL = 0;
-      pVal = getMemory(RHS.getNumWords());
-      memcpy(pVal, RHS.pVal, RHS.getNumWords() * APINT_WORD_SIZE);
-    }
-  else if (getNumWords() == RHS.getNumWords()) 
+  if (isSingleWord()) {
+    // assume case where both are single words is already handled
+    assert(!RHS.isSingleWord());
+    VAL = 0;
+    pVal = getMemory(RHS.getNumWords());
+    memcpy(pVal, RHS.pVal, RHS.getNumWords() * APINT_WORD_SIZE);
+  } else if (getNumWords() == RHS.getNumWords()) 
     memcpy(pVal, RHS.pVal, RHS.getNumWords() * APINT_WORD_SIZE);
   else if (RHS.isSingleWord()) {
     delete [] pVal;
@@ -425,11 +392,7 @@ APInt& APInt::operator^=(const APInt& RHS) {
   return clearUnusedBits();
 }
 
-APInt APInt::operator&(const APInt& RHS) const {
-  assert(BitWidth == RHS.BitWidth && "Bit widths must be the same");
-  if (isSingleWord())
-    return APInt(getBitWidth(), VAL & RHS.VAL);
-
+APInt APInt::AndSlowCase(const APInt& RHS) const {
   uint32_t numWords = getNumWords();
   uint64_t* val = getMemory(numWords);
   for (uint32_t i = 0; i < numWords; ++i)
@@ -437,11 +400,7 @@ APInt APInt::operator&(const APInt& RHS) const {
   return APInt(val, getBitWidth());
 }
 
-APInt APInt::operator|(const APInt& RHS) const {
-  assert(BitWidth == RHS.BitWidth && "Bit widths must be the same");
-  if (isSingleWord())
-    return APInt(getBitWidth(), VAL | RHS.VAL);
-
+APInt APInt::OrSlowCase(const APInt& RHS) const {
   uint32_t numWords = getNumWords();
   uint64_t *val = getMemory(numWords);
   for (uint32_t i = 0; i < numWords; ++i)
@@ -449,11 +408,7 @@ APInt APInt::operator|(const APInt& RHS) const {
   return APInt(val, getBitWidth());
 }
 
-APInt APInt::operator^(const APInt& RHS) const {
-  assert(BitWidth == RHS.BitWidth && "Bit widths must be the same");
-  if (isSingleWord())
-    return APInt(BitWidth, VAL ^ RHS.VAL);
-
+APInt APInt::XorSlowCase(const APInt& RHS) const {
   uint32_t numWords = getNumWords();
   uint64_t *val = getMemory(numWords);
   for (uint32_t i = 0; i < numWords; ++i)
@@ -505,11 +460,7 @@ bool APInt::operator[](uint32_t bitPosition) const {
           (isSingleWord() ?  VAL : pVal[whichWord(bitPosition)])) != 0;
 }
 
-bool APInt::operator==(const APInt& RHS) const {
-  assert(BitWidth == RHS.BitWidth && "Comparison requires equal bit widths");
-  if (isSingleWord())
-    return VAL == RHS.VAL;
-
+bool APInt::EqualSlowCase(const APInt& RHS) const {
   // Get some facts about the number of bits used in the two operands.
   uint32_t n1 = getActiveBits();
   uint32_t n2 = RHS.getActiveBits();
@@ -529,10 +480,7 @@ bool APInt::operator==(const APInt& RHS) const {
   return true;
 }
 
-bool APInt::operator==(uint64_t Val) const {
-  if (isSingleWord())
-    return VAL == Val;
-
+bool APInt::EqualSlowCase(uint64_t Val) const {
   uint32_t n = getActiveBits(); 
   if (n <= APINT_BITS_PER_WORD)
     return pVal[0] == Val;
@@ -616,19 +564,6 @@ APInt& APInt::set(uint32_t bitPosition) {
   return *this;
 }
 
-APInt& APInt::set() {
-  if (isSingleWord()) {
-    VAL = -1ULL;
-    return clearUnusedBits();
-  }
-
-  // Set all the bits in all the words.
-  for (uint32_t i = 0; i < getNumWords(); ++i)
-    pVal[i] = -1ULL;
-  // Clear the unused ones
-  return clearUnusedBits();
-}
-
 /// Set the given bit to 0 whose position is given as "bitPosition".
 /// @brief Set a given bit to 0.
 APInt& APInt::clear(uint32_t bitPosition) {
@@ -639,33 +574,7 @@ APInt& APInt::clear(uint32_t bitPosition) {
   return *this;
 }
 
-/// @brief Set every bit to 0.
-APInt& APInt::clear() {
-  if (isSingleWord()) 
-    VAL = 0;
-  else 
-    memset(pVal, 0, getNumWords() * APINT_WORD_SIZE);
-  return *this;
-}
-
-/// @brief Bitwise NOT operator. Performs a bitwise logical NOT operation on
-/// this APInt.
-APInt APInt::operator~() const {
-  APInt Result(*this);
-  Result.flip();
-  return Result;
-}
-
 /// @brief Toggle every bit to its opposite value.
-APInt& APInt::flip() {
-  if (isSingleWord()) {
-    VAL ^= -1ULL;
-    return clearUnusedBits();
-  }
-  for (uint32_t i = 0; i < getNumWords(); ++i)
-    pVal[i] ^= -1ULL;
-  return clearUnusedBits();
-}
 
 /// Toggle a given bit to its opposite value whose position is given 
 /// as "bitPosition".
@@ -742,18 +651,14 @@ bool APInt::isPowerOf2() const {
   return (!!*this) && !(*this & (*this - APInt(BitWidth,1)));
 }
 
-uint32_t APInt::countLeadingZeros() const {
+uint32_t APInt::countLeadingZerosSlowCase() const {
   uint32_t Count = 0;
-  if (isSingleWord())
-    Count = CountLeadingZeros_64(VAL);
-  else {
-    for (uint32_t i = getNumWords(); i > 0u; --i) {
-      if (pVal[i-1] == 0)
-        Count += APINT_BITS_PER_WORD;
-      else {
-        Count += CountLeadingZeros_64(pVal[i-1]);
-        break;
-      }
+  for (uint32_t i = getNumWords(); i > 0u; --i) {
+    if (pVal[i-1] == 0)
+      Count += APINT_BITS_PER_WORD;
+    else {
+      Count += CountLeadingZeros_64(pVal[i-1]);
+      break;
     }
   }
   uint32_t remainder = BitWidth % APINT_BITS_PER_WORD;
@@ -806,9 +711,7 @@ uint32_t APInt::countTrailingZeros() const {
   return std::min(Count, BitWidth);
 }
 
-uint32_t APInt::countTrailingOnes() const {
-  if (isSingleWord())
-    return std::min(uint32_t(CountTrailingOnes_64(VAL)), BitWidth);
+uint32_t APInt::countTrailingOnesSlowCase() const {
   uint32_t Count = 0;
   uint32_t i = 0;
   for (; i < getNumWords() && pVal[i] == -1ULL; ++i)
@@ -818,9 +721,7 @@ uint32_t APInt::countTrailingOnes() const {
   return std::min(Count, BitWidth);
 }
 
-uint32_t APInt::countPopulation() const {
-  if (isSingleWord())
-    return CountPopulation_64(VAL);
+uint32_t APInt::countPopulationSlowCase() const {
   uint32_t Count = 0;
   for (uint32_t i = 0; i < getNumWords(); ++i)
     Count += CountPopulation_64(pVal[i]);
@@ -969,7 +870,7 @@ double APInt::roundToDouble(bool isSigned) const {
 // Truncate to new width.
 APInt &APInt::trunc(uint32_t width) {
   assert(width < BitWidth && "Invalid APInt Truncate request");
-  assert(width >= MIN_INT_BITS && "Can't truncate to 0 bits");
+  assert(width && "Can't truncate to 0 bits");
   uint32_t wordsBefore = getNumWords();
   BitWidth = width;
   uint32_t wordsAfter = getNumWords();
@@ -992,7 +893,6 @@ APInt &APInt::trunc(uint32_t width) {
 // Sign extend to a new width.
 APInt &APInt::sext(uint32_t width) {
   assert(width > BitWidth && "Invalid APInt SignExtend request");
-  assert(width <= MAX_INT_BITS && "Too many bits");
   // If the sign bit isn't set, this is the same as zext.
   if (!isNegative()) {
     zext(width);
@@ -1040,7 +940,6 @@ APInt &APInt::sext(uint32_t width) {
 //  Zero extend to a new width.
 APInt &APInt::zext(uint32_t width) {
   assert(width > BitWidth && "Invalid APInt ZeroExtend request");
-  assert(width <= MAX_INT_BITS && "Too many bits");
   uint32_t wordsBefore = getNumWords();
   BitWidth = width;
   uint32_t wordsAfter = getNumWords();
@@ -1238,16 +1137,7 @@ APInt APInt::shl(const APInt &shiftAmt) const {
   return shl((uint32_t)shiftAmt.getLimitedValue(BitWidth));
 }
 
-/// Left-shift this APInt by shiftAmt.
-/// @brief Left-shift function.
-APInt APInt::shl(uint32_t shiftAmt) const {
-  assert(shiftAmt <= BitWidth && "Invalid shift amount");
-  if (isSingleWord()) {
-    if (shiftAmt == BitWidth)
-      return APInt(BitWidth, 0); // avoid undefined shift results
-    return APInt(BitWidth, VAL << shiftAmt);
-  }
-
+APInt APInt::shlSlowCase(uint32_t shiftAmt) const {
   // If all the bits were shifted out, the result is 0. This avoids issues
   // with shifting by the size of the integer type, which produces undefined
   // results. We define these "undefined results" to always be 0.

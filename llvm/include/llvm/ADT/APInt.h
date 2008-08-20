@@ -16,6 +16,7 @@
 #define LLVM_APINT_H
 
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/MathExtras.h"
 #include <cassert>
 #include <iosfwd>
 #include <string>
@@ -67,7 +68,6 @@ namespace llvm {
 ///
 /// @brief Class for arbitrary precision integers.
 class APInt {
-
   uint32_t BitWidth;      ///< The number of bits in this APInt.
 
   /// This union is used to store the integer value. When the
@@ -161,6 +161,42 @@ class APInt {
                      const APInt &RHS, uint32_t rhsWords,
                      APInt *Quotient, APInt *Remainder);
 
+  /// out-of-line slow case for inline constructor
+  void initSlowCase(uint32_t numBits, uint64_t val, bool isSigned);
+
+  /// out-of-line slow case for inline copy constructor
+  void initSlowCase(const APInt& that);
+
+  /// out-of-line slow case for shl
+  APInt shlSlowCase(uint32_t shiftAmt) const;
+
+  /// out-of-line slow case for operator&
+  APInt AndSlowCase(const APInt& RHS) const;
+
+  /// out-of-line slow case for operator|
+  APInt OrSlowCase(const APInt& RHS) const;
+
+  /// out-of-line slow case for operator^
+  APInt XorSlowCase(const APInt& RHS) const;
+
+  /// out-of-line slow case for operator=
+  APInt& AssignSlowCase(const APInt& RHS);
+
+  /// out-of-line slow case for operator==
+  bool EqualSlowCase(const APInt& RHS) const;
+
+  /// out-of-line slow case for operator==
+  bool EqualSlowCase(uint64_t Val) const;
+
+  /// out-of-line slow case for countLeadingZeros
+  uint32_t countLeadingZerosSlowCase() const;
+
+  /// out-of-line slow case for countTrailingOnes
+  uint32_t countTrailingOnesSlowCase() const;
+
+  /// out-of-line slow case for countPopulation
+  uint32_t countPopulationSlowCase() const;
+
 public:
   /// @name Constructors
   /// @{
@@ -172,7 +208,15 @@ public:
   /// @param val the initial value of the APInt
   /// @param isSigned how to treat signedness of val
   /// @brief Create a new APInt of numBits width, initialized as val.
-  APInt(uint32_t numBits, uint64_t val, bool isSigned = false);
+  APInt(uint32_t numBits, uint64_t val, bool isSigned = false)
+    : BitWidth(numBits), VAL(0) {
+    assert(BitWidth && "bitwidth too small");
+    if (isSingleWord())
+      VAL = val;
+    else
+      initSlowCase(numBits, val, isSigned);
+    clearUnusedBits();
+  }
 
   /// Note that numWords can be smaller or larger than the corresponding bit
   /// width but any extraneous bits will be dropped.
@@ -196,11 +240,21 @@ public:
 
   /// Simply makes *this a copy of that.
   /// @brief Copy Constructor.
-  APInt(const APInt& that);
+  APInt(const APInt& that)
+    : BitWidth(that.BitWidth), VAL(0) {
+    assert(BitWidth && "bitwidth too small");
+    if (isSingleWord()) 
+      VAL = that.VAL;
+    else
+      initSlowCase(that);
+  }
 
   /// @brief Destructor.
-  ~APInt();
-  
+  ~APInt() {
+    if (!isSingleWord()) 
+      delete [] pVal;
+  }
+
   /// Default constructor that creates an uninitialized APInt.  This is useful
   ///  for object deserialization (pair this with the static method Read).
   explicit APInt() : BitWidth(1) {}
@@ -403,6 +457,7 @@ public:
   /// @param numBits the bitwidth of the result
   /// @param loBitsSet the number of low-order bits set in the result.
   /// @brief Get a value with low bits set
+  // XXX why isn't this inlining?
   static APInt getLowBitsSet(uint32_t numBits, uint32_t loBitsSet) {
     assert(loBitsSet <= numBits && "Too many bits to set!");
     // Handle a degenerate case, to avoid shifting by word size
@@ -460,7 +515,11 @@ public:
   /// Performs a bitwise complement operation on this APInt. 
   /// @returns an APInt that is the bitwise complement of *this
   /// @brief Unary bitwise complement operator. 
-  APInt operator~() const;
+  APInt operator~() const {
+    APInt Result(*this);
+    Result.flip();
+    return Result;
+  }
 
   /// Negates *this using two's complement logic.
   /// @returns An APInt value representing the negation of *this.
@@ -479,7 +538,16 @@ public:
   /// @{
   /// @returns *this after assignment of RHS.
   /// @brief Copy assignment operator. 
-  APInt& operator=(const APInt& RHS);
+  APInt& operator=(const APInt& RHS) {
+    // If the bitwidths are the same, we can avoid mucking with memory
+    if (isSingleWord() && RHS.isSingleWord()) {
+      VAL = RHS.VAL;
+      BitWidth = RHS.BitWidth;
+      return clearUnusedBits();
+    }
+
+    return AssignSlowCase(RHS);
+  }
 
   /// The RHS value is assigned to *this. If the significant bits in RHS exceed
   /// the bit width, the excess bits are truncated. If the bit width is larger
@@ -535,7 +603,12 @@ public:
   /// Performs a bitwise AND operation on *this and RHS.
   /// @returns An APInt value representing the bitwise AND of *this and RHS.
   /// @brief Bitwise AND operator. 
-  APInt operator&(const APInt& RHS) const;
+  APInt operator&(const APInt& RHS) const {
+    assert(BitWidth == RHS.BitWidth && "Bit widths must be the same");
+    if (isSingleWord())
+      return APInt(getBitWidth(), VAL & RHS.VAL);
+    return AndSlowCase(RHS);
+  }
   APInt And(const APInt& RHS) const {
     return this->operator&(RHS);
   }
@@ -543,7 +616,12 @@ public:
   /// Performs a bitwise OR operation on *this and RHS.
   /// @returns An APInt value representing the bitwise OR of *this and RHS.
   /// @brief Bitwise OR operator. 
-  APInt operator|(const APInt& RHS) const;
+  APInt operator|(const APInt& RHS) const {
+    assert(BitWidth == RHS.BitWidth && "Bit widths must be the same");
+    if (isSingleWord())
+      return APInt(getBitWidth(), VAL | RHS.VAL);
+    return OrSlowCase(RHS);
+  }
   APInt Or(const APInt& RHS) const {
     return this->operator|(RHS);
   }
@@ -551,7 +629,12 @@ public:
   /// Performs a bitwise XOR operation on *this and RHS.
   /// @returns An APInt value representing the bitwise XOR of *this and RHS.
   /// @brief Bitwise XOR operator. 
-  APInt operator^(const APInt& RHS) const;
+  APInt operator^(const APInt& RHS) const {
+    assert(BitWidth == RHS.BitWidth && "Bit widths must be the same");
+    if (isSingleWord())
+      return APInt(BitWidth, VAL ^ RHS.VAL);
+    return XorSlowCase(RHS);
+  }
   APInt Xor(const APInt& RHS) const {
     return this->operator^(RHS);
   }
@@ -592,7 +675,15 @@ public:
 
   /// Left-shift this APInt by shiftAmt.
   /// @brief Left-shift function.
-  APInt shl(uint32_t shiftAmt) const;
+  APInt shl(uint32_t shiftAmt) const {
+    assert(shiftAmt <= BitWidth && "Invalid shift amount");
+    if (isSingleWord()) {
+      if (shiftAmt == BitWidth)
+        return APInt(BitWidth, 0); // avoid undefined shift results
+      return APInt(BitWidth, VAL << shiftAmt);
+    }
+    return shlSlowCase(shiftAmt);
+  }
 
   /// @brief Rotate left by rotateAmt.
   APInt rotl(uint32_t rotateAmt) const;
@@ -696,13 +787,22 @@ public:
   /// Compares this APInt with RHS for the validity of the equality
   /// relationship.
   /// @brief Equality operator. 
-  bool operator==(const APInt& RHS) const;
+  bool operator==(const APInt& RHS) const {
+    assert(BitWidth == RHS.BitWidth && "Comparison requires equal bit widths");
+    if (isSingleWord())
+      return VAL == RHS.VAL;
+    return EqualSlowCase(RHS);
+  }
 
   /// Compares this APInt with a uint64_t for the validity of the equality 
   /// relationship.
   /// @returns true if *this == Val
   /// @brief Equality operator.
-  bool operator==(uint64_t Val) const;
+  bool operator==(uint64_t Val) const {
+    if (isSingleWord())
+      return VAL == Val;
+    return EqualSlowCase(Val);
+  }
 
   /// Compares this APInt with RHS for the validity of the equality
   /// relationship.
@@ -837,21 +937,46 @@ public:
   /// @name Bit Manipulation Operators
   /// @{
   /// @brief Set every bit to 1.
-  APInt& set();
+  APInt& set() {
+    if (isSingleWord()) {
+      VAL = -1ULL;
+      return clearUnusedBits();
+    }
+
+    // Set all the bits in all the words.
+    for (uint32_t i = 0; i < getNumWords(); ++i)
+      pVal[i] = -1ULL;
+    // Clear the unused ones
+    return clearUnusedBits();
+  }
 
   /// Set the given bit to 1 whose position is given as "bitPosition".
   /// @brief Set a given bit to 1.
   APInt& set(uint32_t bitPosition);
 
   /// @brief Set every bit to 0.
-  APInt& clear();
+  APInt& clear() {
+    if (isSingleWord()) 
+      VAL = 0;
+    else 
+      memset(pVal, 0, getNumWords() * APINT_WORD_SIZE);
+    return *this;
+  }
 
   /// Set the given bit to 0 whose position is given as "bitPosition".
   /// @brief Set a given bit to 0.
   APInt& clear(uint32_t bitPosition);
 
   /// @brief Toggle every bit to its opposite value.
-  APInt& flip();
+  APInt& flip() {
+    if (isSingleWord()) {
+      VAL ^= -1ULL;
+      return clearUnusedBits();
+    }
+    for (uint32_t i = 0; i < getNumWords(); ++i)
+      pVal[i] ^= -1ULL;
+    return clearUnusedBits();
+  }
 
   /// Toggle a given bit to its opposite value whose position is given 
   /// as "bitPosition".
@@ -936,7 +1061,13 @@ public:
   /// @returns BitWidth if the value is zero.
   /// @returns the number of zeros from the most significant bit to the first
   /// one bits.
-  uint32_t countLeadingZeros() const;
+  uint32_t countLeadingZeros() const {
+    if (isSingleWord()) {
+      uint32_t unusedBits = APINT_BITS_PER_WORD - BitWidth;
+      return CountLeadingZeros_64(VAL) - unusedBits;
+    }
+    return countLeadingZerosSlowCase();
+  }
 
   /// countLeadingOnes - This function is an APInt version of the
   /// countLeadingOnes_{32,64} functions in MathExtras.h. It counts the number
@@ -962,7 +1093,11 @@ public:
   /// @returns the number of ones from the least significant bit to the first
   /// zero bit.
   /// @brief Count the number of trailing one bits.
-  uint32_t countTrailingOnes() const;
+  uint32_t countTrailingOnes() const {
+    if (isSingleWord())
+      return CountTrailingOnes_64(VAL);
+    return countTrailingOnesSlowCase();
+  }
 
   /// countPopulation - This function is an APInt version of the
   /// countPopulation_{32,64} functions in MathExtras.h. It counts the number
@@ -970,7 +1105,11 @@ public:
   /// @returns 0 if the value is zero.
   /// @returns the number of set bits.
   /// @brief Count the number of bits set.
-  uint32_t countPopulation() const; 
+  uint32_t countPopulation() const {
+    if (isSingleWord())
+      return CountPopulation_64(VAL);
+    return countPopulationSlowCase();
+  }
 
   /// @}
   /// @name Conversion Functions
@@ -1145,7 +1284,7 @@ public:
   /// of a number.  If the input number has no bits set -1U is
   /// returned.
   static unsigned int tcLSB(const integerPart *, unsigned int);
-  static unsigned int tcMSB(const integerPart *, unsigned int);
+  static unsigned int tcMSB(const integerPart *parts, unsigned int n);
 
   /// Negate a bignum in-place.
   static void tcNegate(integerPart *, unsigned int);
