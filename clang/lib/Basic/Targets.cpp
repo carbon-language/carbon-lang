@@ -58,23 +58,12 @@ public:
   }
 
 };
+}
 
-
-class SolarisTargetInfo : public TargetInfo {
-public:
-  SolarisTargetInfo(const std::string& triple) : TargetInfo(triple) {}
-  
-  virtual void getTargetDefines(std::vector<char> &Defs) const {
-// FIXME: we need a real target configuration system.  For now, only define
-// __SUN__ if the host has it.
-#ifdef __SUN__
-    Define(Defs, "__SUN__");
-    Define(Defs, "__SOLARIS__");
-#endif
-  }
-
-};
-} // end anonymous namespace.
+static void getSolarisDefines(std::vector<char> &Defs) {
+  Define(Defs, "__SUN__");
+  Define(Defs, "__SOLARIS__");
+}
 
 static void getDarwinDefines(std::vector<char> &Defs) {
   Define(Defs, "__APPLE__");
@@ -361,20 +350,6 @@ static void getARMDefines(std::vector<char> &Defs) {
   Define(Defs, "__LDBL_MIN_10_EXP__", "(-307)");
   Define(Defs, "__LDBL_MIN_EXP__", "(-1021)");
   Define(Defs, "__LDBL_MIN__", "2.2250738585072014e-308");
-}
-
-static const char* getI386VAListDeclaration() {
-  return "typedef char* __builtin_va_list;";
-}
-
-static const char* getX86_64VAListDeclaration() {
-  return 
-    "typedef struct __va_list_tag {"
-    "  unsigned gp_offset;"
-    "  unsigned fp_offset;"
-    "  void* overflow_arg_area;"
-    "  void* reg_save_area;"
-    "} __builtin_va_list[1];";
 }
 
 static const char* getPPCVAListDeclaration() {
@@ -696,7 +671,6 @@ X86TargetInfo::convertConstraint(const char Constraint) const {
     return std::string(1, Constraint);
   }
 }
-
 } // end anonymous namespace
 
 namespace {
@@ -709,7 +683,7 @@ public:
     LongDoubleAlign = 32;
   }
   virtual const char *getVAListDeclaration() const {
-    return getI386VAListDeclaration();
+    return "typedef char* __builtin_va_list;";
   }
   virtual void getTargetDefines(std::vector<char> &Defines) const {
     getX86Defines(Defines, false);
@@ -742,7 +716,12 @@ public:
     LongDoubleAlign = 128;
   }
   virtual const char *getVAListDeclaration() const {
-    return getX86_64VAListDeclaration();
+    return "typedef struct __va_list_tag {"
+           "  unsigned gp_offset;"
+           "  unsigned fp_offset;"
+           "  void* overflow_arg_area;"
+           "  void* reg_save_area;"
+           "} __builtin_va_list[1];";
   }
   virtual void getTargetDefines(std::vector<char> &Defines) const {
     getX86Defines(Defines, true);
@@ -815,46 +794,65 @@ public:
 } // end anonymous namespace.
 
 namespace {
-class SolarisSparcV8TargetInfo : public SolarisTargetInfo {
+class SparcV8TargetInfo : public TargetInfo {
 public:
-  SolarisSparcV8TargetInfo(const std::string& triple) : SolarisTargetInfo(triple) {}
-  
+  SparcV8TargetInfo(const std::string& triple) : TargetInfo(triple) {
+    // FIXME: Support Sparc quad-precision long double?
+  }
   virtual void getTargetDefines(std::vector<char> &Defines) const {
-    SolarisTargetInfo::getTargetDefines(Defines);
-//    getSparcDefines(Defines, false);
+    // FIXME: This is missing a lot of important defines; some of the
+    // missing stuff is likely to break system headers.
     Define(Defines, "__sparc");
     Define(Defines, "__sparc__");
     Define(Defines, "__sparcv8");
   }
   virtual void getTargetBuiltins(const Builtin::Info *&Records,
                                  unsigned &NumRecords) const {
-    PPC::getBuiltins(Records, NumRecords);
+    // FIXME: Implement!
   }
   virtual const char *getVAListDeclaration() const {
-    return getPPCVAListDeclaration();
+    return "typedef void* __builtin_va_list;";
   }
   virtual const char *getTargetPrefix() const {
-    return PPC::getTargetPrefix();
+    return "sparc";
   }
   virtual void getGCCRegNames(const char * const *&Names, 
                               unsigned &NumNames) const {
-    PPC::getGCCRegNames(Names, NumNames);
+    // FIXME: Implement!
+    Names = 0;
+    NumNames = 0;
   }
   virtual void getGCCRegAliases(const GCCRegAlias *&Aliases, 
                                 unsigned &NumAliases) const {
-    PPC::getGCCRegAliases(Aliases, NumAliases);
+    // FIXME: Implement!
+    Aliases = 0;
+    NumAliases = 0;
   }
   virtual bool validateAsmConstraint(char c,
                                      TargetInfo::ConstraintInfo &info) const {
-    return PPC::validateAsmConstraint(c, info);
+    // FIXME: Implement!
+    return false;
   }
   virtual const char *getClobbers() const {
-    return PPC::getClobbers();
+    // FIXME: Implement!
+    return "";
   }
 };
 
 } // end anonymous namespace.
 
+namespace {
+class SolarisSparcV8TargetInfo : public SparcV8TargetInfo {
+public:
+  SolarisSparcV8TargetInfo(const std::string& triple) :
+    SparcV8TargetInfo(triple) {}
+
+  virtual void getTargetDefines(std::vector<char> &Defines) const {
+    SparcV8TargetInfo::getTargetDefines(Defines);
+    getSolarisDefines(Defines);
+  }
+};
+} // end anonymous namespace.
 
 namespace {
   class PIC16TargetInfo : public TargetInfo{
