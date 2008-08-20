@@ -144,7 +144,7 @@ unsigned FastISel::FastEmit_rr(MVT::SimpleValueType, ISD::NodeType,
 }
 
 unsigned FastISel::FastEmitInst_(unsigned MachineInstOpcode,
-                                    const TargetRegisterClass* RC) {
+                                 const TargetRegisterClass* RC) {
   MachineRegisterInfo &MRI = MF->getRegInfo();
   const TargetInstrDesc &II = TII->get(MachineInstOpcode);
   unsigned ResultReg = MRI.createVirtualRegister(RC);
