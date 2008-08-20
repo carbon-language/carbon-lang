@@ -25,6 +25,10 @@ bool FastISel::SelectBinaryOp(Instruction *I, ISD::NodeType ISDOpcode,
                               DenseMap<const Value*, unsigned> &ValueMap) {
   unsigned Op0 = ValueMap[I->getOperand(0)];
   unsigned Op1 = ValueMap[I->getOperand(1)];
+  if (Op0 == 0 || Op1 == 0)
+    // Unhandled operand. Halt "fast" selection and bail.
+    return false;
+
   MVT VT = MVT::getMVT(I->getType(), /*HandleUnknown=*/true);
   if (VT == MVT::Other || !VT.isSimple())
     // Unhandled type. Halt "fast" selection and bail.
