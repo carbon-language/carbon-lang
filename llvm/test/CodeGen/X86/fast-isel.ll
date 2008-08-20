@@ -1,4 +1,5 @@
-; RUN: llvm-as < %s | llc -fast-isel
+; RUN: llvm-as < %s | llc -fast-isel -march=x86
+; RUN: llvm-as < %s | llc -fast-isel -march=x86-64
 
 ; This tests very minimal fast-isel functionality.
 
