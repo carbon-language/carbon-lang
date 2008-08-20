@@ -11106,11 +11106,11 @@ static bool CollectSingleShuffleElements(Value *V, Value *LHS, Value *RHS,
           if (CollectSingleShuffleElements(VecOp, LHS, RHS, Mask)) {
             // If so, update the mask to reflect the inserted value.
             if (EI->getOperand(0) == LHS) {
-              Mask[InsertedIdx & (NumElts-1)] = 
+              Mask[InsertedIdx % NumElts] = 
                  ConstantInt::get(Type::Int32Ty, ExtractedIdx);
             } else {
               assert(EI->getOperand(0) == RHS);
-              Mask[InsertedIdx & (NumElts-1)] = 
+              Mask[InsertedIdx % NumElts] = 
                 ConstantInt::get(Type::Int32Ty, ExtractedIdx+NumElts);
               
             }
@@ -11159,7 +11159,7 @@ static Value *CollectShuffleElements(Value *V, std::vector<Constant*> &Mask,
         if (EI->getOperand(0) == RHS || RHS == 0) {
           RHS = EI->getOperand(0);
           Value *V = CollectShuffleElements(VecOp, Mask, RHS);
-          Mask[InsertedIdx & (NumElts-1)] = 
+          Mask[InsertedIdx % NumElts] = 
             ConstantInt::get(Type::Int32Ty, NumElts+ExtractedIdx);
           return V;
         }
@@ -11313,7 +11313,7 @@ Instruction *InstCombiner::visitShuffleVectorInst(ShuffleVectorInst &SVI) {
           Mask[i] = 2*e;     // Turn into undef.
           Elts.push_back(UndefValue::get(Type::Int32Ty));
         } else {
-          Mask[i] &= (e-1);  // Force to LHS.
+          Mask[i] = Mask[i] % e;  // Force to LHS.
           Elts.push_back(ConstantInt::get(Type::Int32Ty, Mask[i]));
         }
       }
