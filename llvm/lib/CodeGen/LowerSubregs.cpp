@@ -118,8 +118,8 @@ bool LowerSubregsInstructionPass::LowerSubregToReg(MachineInstr *MI) {
     TII.copyRegToReg(*MBB, MI, DstSubReg, InsReg, TRC0, TRC1);
 
 #ifndef NDEBUG
-  MachineBasicBlock::iterator dMI = MI;
-  DOUT << "subreg: " << *(--dMI);
+    MachineBasicBlock::iterator dMI = MI;
+    DOUT << "subreg: " << *(--dMI);
 #endif
   }
 
