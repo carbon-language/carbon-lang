@@ -752,7 +752,10 @@ public:
   /// getWithOperands - This returns the current constant expression with the
   /// operands replaced with the specified values.  The specified operands must
   /// match count and type with the existing ones.
-  Constant *getWithOperands(const std::vector<Constant*> &Ops) const;
+  Constant *getWithOperands(const std::vector<Constant*> &Ops) const {
+    return getWithOperands(&Ops[0], Ops.size());
+  }
+  Constant *getWithOperands(Constant* const *Ops, unsigned NumOps) const;
   
   virtual void destroyConstant();
   virtual void replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U);

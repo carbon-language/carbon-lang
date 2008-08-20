@@ -879,10 +879,10 @@ ConstantExpr::getWithOperandReplaced(unsigned OpNo, Constant *Op) const {
 /// operands replaced with the specified values.  The specified operands must
 /// match count and type with the existing ones.
 Constant *ConstantExpr::
-getWithOperands(const std::vector<Constant*> &Ops) const {
-  assert(Ops.size() == getNumOperands() && "Operand count mismatch!");
+getWithOperands(Constant* const *Ops, unsigned NumOps) const {
+  assert(NumOps == getNumOperands() && "Operand count mismatch!");
   bool AnyChange = false;
-  for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
+  for (unsigned i = 0; i != NumOps; ++i) {
     assert(Ops[i]->getType() == getOperand(i)->getType() &&
            "Operand type mismatch!");
     AnyChange |= Ops[i] != getOperand(i);
@@ -913,7 +913,7 @@ getWithOperands(const std::vector<Constant*> &Ops) const {
   case Instruction::ShuffleVector:
     return ConstantExpr::getShuffleVector(Ops[0], Ops[1], Ops[2]);
   case Instruction::GetElementPtr:
-    return ConstantExpr::getGetElementPtr(Ops[0], &Ops[1], Ops.size()-1);
+    return ConstantExpr::getGetElementPtr(Ops[0], &Ops[1], NumOps-1);
   case Instruction::ICmp:
   case Instruction::FCmp:
   case Instruction::VICmp:
