@@ -742,7 +742,7 @@ Parser::ExprResult Parser::ParseBuiltinPrimaryExpression() {
     ExprResult Expr = ParseAssignmentExpression();
     if (Expr.isInvalid) {
       SkipUntil(tok::r_paren);
-      return Res;
+      return ExprResult(true);
     }
 
     if (ExpectAndConsume(tok::comma, diag::err_expected_comma, "",tok::r_paren))
