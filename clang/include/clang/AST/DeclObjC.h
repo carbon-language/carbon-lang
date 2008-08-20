@@ -126,8 +126,6 @@ private:
   unsigned NumMethodParams;
   
   /// List of attributes for this method declaration.
-  AttributeList *MethodAttrs;
-  
   SourceLocation EndLoc; // the location of the ';' or '{'.
   
   // The following are only used for method definitions, null otherwise.
@@ -140,7 +138,7 @@ private:
   ObjCMethodDecl(SourceLocation beginLoc, SourceLocation endLoc,
                  Selector SelInfo, QualType T,
                  Decl *contextDecl,
-                 AttributeList *M = 0, bool isInstance = true,
+                 bool isInstance = true,
                  bool isVariadic = false,
                  bool isSynthesized = false,
                  ImplementationControl impControl = None)
@@ -151,7 +149,7 @@ private:
     DeclImplementation(impControl), objcDeclQualifier(OBJC_TQ_None),
     MethodContext(static_cast<NamedDecl*>(contextDecl)),
     SelName(SelInfo), MethodDeclType(T), 
-    ParamInfo(0), NumMethodParams(0), MethodAttrs(M), 
+    ParamInfo(0), NumMethodParams(0), 
     EndLoc(endLoc), Body(0), SelfDecl(0), CmdDecl(0) {}
 
   virtual ~ObjCMethodDecl();
@@ -165,7 +163,7 @@ public:
                                 SourceLocation beginLoc, 
                                 SourceLocation endLoc, Selector SelInfo,
                                 QualType T, Decl *contextDecl,
-                                AttributeList *M = 0, bool isInstance = true,
+                                bool isInstance = true,
                                 bool isVariadic = false,
                                 bool isSynthesized = false,
                                 ImplementationControl impControl = None);
@@ -214,7 +212,6 @@ public:
   ImplicitParamDecl * getCmdDecl() const { return CmdDecl; }
   void setCmdDecl(ImplicitParamDecl *decl) { CmdDecl = decl; }
   
-  AttributeList *getMethodAttrs() const {return MethodAttrs;}
   bool isInstance() const { return IsInstance; }
   bool isVariadic() const { return IsVariadic; }
   

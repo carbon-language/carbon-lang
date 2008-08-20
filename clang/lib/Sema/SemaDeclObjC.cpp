@@ -98,8 +98,10 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
       IDecl->setForwardDecl(false);
     }
   } else {
-    IDecl = ObjCInterfaceDecl::Create(Context, AtInterfaceLoc,
+    IDecl = ObjCInterfaceDecl::Create(Context, AtInterfaceLoc, 
                                       ClassName, ClassLoc);
+    if (AttrList)
+      ProcessDeclAttributeList(IDecl, AttrList);
   
     ObjCInterfaceDecls[ClassName] = IDecl;
     // Remember that this needs to be removed when the scope is popped.
@@ -491,6 +493,9 @@ Sema::DeclTy *Sema::ActOnStartClassImplementation(
   if (!IDecl) {
     // Legacy case of @implementation with no corresponding @interface.
     // Build, chain & install the interface decl into the identifier.
+
+    // FIXME: Do we support attributes on the @implementation? If so
+    // we should copy them over.
     IDecl = ObjCInterfaceDecl::Create(Context, AtClassImplLoc, ClassName, 
                                       ClassLoc, false, true);
     ObjCInterfaceDecls[ClassName] = IDecl;
@@ -960,12 +965,14 @@ Sema::DeclTy *Sema::ActOnMethodDeclaration(
   
   ObjCMethodDecl* ObjCMethod = 
     ObjCMethodDecl::Create(Context, MethodLoc, EndLoc, Sel, resultDeclType,
-                           ClassDecl, AttrList, 
+                           ClassDecl, 
                            MethodType == tok::minus, isVariadic,
                            false,
                            MethodDeclKind == tok::objc_optional ? 
                            ObjCMethodDecl::Optional : 
                            ObjCMethodDecl::Required);
+  if (AttrList)
+    ProcessDeclAttributeList(ObjCMethod, AttrList);
   
   llvm::SmallVector<ParmVarDecl*, 16> Params;
   

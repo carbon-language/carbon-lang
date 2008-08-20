@@ -25,20 +25,19 @@ ObjCMethodDecl *ObjCMethodDecl::Create(ASTContext &C,
                                        SourceLocation endLoc,
                                        Selector SelInfo, QualType T,
                                        Decl *contextDecl,
-                                       AttributeList *M, bool isInstance,
+                                       bool isInstance,
                                        bool isVariadic,
                                        bool isSynthesized,
                                        ImplementationControl impControl) {
   void *Mem = C.getAllocator().Allocate<ObjCMethodDecl>();
   return new (Mem) ObjCMethodDecl(beginLoc, endLoc,
                                   SelInfo, T, contextDecl,
-                                  M, isInstance, 
+                                  isInstance, 
                                   isVariadic, isSynthesized, impControl);
 }
 
 ObjCMethodDecl::~ObjCMethodDecl() {  
   delete [] ParamInfo;
-  //delete [] MethodAttrs;  // FIXME: Also destroy the stored Expr*.
 }
 
 void ObjCMethodDecl::Destroy(ASTContext& C) {
@@ -401,7 +400,7 @@ void ObjCInterfaceDecl::addPropertyMethods(
     ObjCMethodDecl::Create(Context, property->getLocation(), 
                            property->getLocation(), 
                            property->getGetterName(), resultDeclType,
-                           this, 0,
+                           this,
                            true, false, true, ObjCMethodDecl::Required);
     property->setGetterMethodDecl(ObjCMethod);
     insMethods.push_back(ObjCMethod);
