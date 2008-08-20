@@ -5210,8 +5210,7 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
   // Emit constants only once even if used by multiple PHI nodes.
   std::map<Constant*, unsigned> ConstantsOut;
   
-  // Vector bool would be better, but vector<bool> is really slow.
-  std::vector<unsigned char> SuccsHandled;
+  BitVector SuccsHandled;
   if (TI->getNumSuccessors())
     SuccsHandled.resize(BB->getParent()->getNumBlockIDs());
     
