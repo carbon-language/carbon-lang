@@ -3594,7 +3594,8 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
     // where C is a power of 2
     Value *A, *B;
     ConstantInt *C1, *C2;
-    ICmpInst::Predicate LHSCC, RHSCC;
+    ICmpInst::Predicate LHSCC = ICmpInst::BAD_ICMP_PREDICATE;
+    ICmpInst::Predicate RHSCC = ICmpInst::BAD_ICMP_PREDICATE;
     if (match(&I, m_And(m_ICmp(LHSCC, m_Value(A), m_ConstantInt(C1)),
                         m_ICmp(RHSCC, m_Value(B), m_ConstantInt(C2)))))
       if (C1 == C2 && LHSCC == RHSCC && LHSCC == ICmpInst::ICMP_ULT &&
