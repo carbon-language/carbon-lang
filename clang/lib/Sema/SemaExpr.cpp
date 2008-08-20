@@ -1089,7 +1089,7 @@ ActOnInitList(SourceLocation LBraceLoc, ExprTy **initlist, unsigned NumInit,
 }
 
 /// CheckCastTypes - Check type constraints for casting between types.
-bool Sema::CheckCastTypes(SourceRange TyR, QualType castType, Expr *castExpr) {
+bool Sema::CheckCastTypes(SourceRange TyR, QualType castType, Expr *&castExpr) {
   UsualUnaryConversions(castExpr);
 
   // C99 6.5.4p2: the cast type needs to be void or scalar and the expression

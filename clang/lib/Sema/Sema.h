@@ -871,7 +871,7 @@ private:
   bool CheckStringLiteralInit(StringLiteral *strLiteral, QualType &DeclT);
 
   /// CheckCastTypes - Check type constraints for casting between types.
-  bool CheckCastTypes(SourceRange TyRange, QualType CastTy, Expr *CastExpr);
+  bool CheckCastTypes(SourceRange TyRange, QualType CastTy, Expr *&CastExpr);
   
   // CheckVectorCast - check type constraints for vectors. 
   // Since vectors are an extension, there are no C standard reference for this.
