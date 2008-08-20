@@ -31,7 +31,7 @@ def LO16_vec : SDNodeXForm<scalar_to_vector, [{
   }
   
   assert(OpVal.Val != 0 && "LO16_vec did not locate a <defined> node");
-  ConstantSDNode *CN = dyn_cast<ConstantSDNode>(OpVal);
+  ConstantSDNode *CN = cast<ConstantSDNode>(OpVal);
   return getI32Imm((unsigned)CN->getValue() & 0xffff);
 }]>;
 
@@ -56,7 +56,7 @@ def HI16_vec : SDNodeXForm<scalar_to_vector, [{
   }
   
   assert(OpVal.Val != 0 && "HI16_vec did not locate a <defined> node");
-  ConstantSDNode *CN = dyn_cast<ConstantSDNode>(OpVal);
+  ConstantSDNode *CN = cast<ConstantSDNode>(OpVal);
   return getI32Imm((unsigned)CN->getValue() >> 16);
 }]>;
 
