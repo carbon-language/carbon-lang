@@ -104,11 +104,14 @@ FastISel::SelectInstructions(BasicBlock::iterator Begin, BasicBlock::iterator En
 
       // For now, check for and handle just the most trivial case: an
       // unconditional fall-through branch.
-      if (BI->isUnconditional() &&
-          next(MachineFunction::iterator(MBB))->getBasicBlock() ==
-            BI->getSuccessor(0)) {
-        MBB->addSuccessor(next(MachineFunction::iterator(MBB)));
-        break;
+      if (BI->isUnconditional()) {
+         MachineFunction::iterator NextMBB =
+           next(MachineFunction::iterator(MBB));
+         if (NextMBB != MF->end() &&
+             NextMBB->getBasicBlock() == BI->getSuccessor(0)) {
+          MBB->addSuccessor(NextMBB);
+          break;
+        }
       }
 
       // Something more complicated. Halt "fast" selection and bail.
