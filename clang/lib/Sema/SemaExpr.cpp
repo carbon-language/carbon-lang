@@ -2613,6 +2613,8 @@ Sema::ExprResult Sema::ActOnVAArg(SourceLocation BuiltinLoc,
   // a pointer for va_arg.
   if (VaListType->isArrayType())
     VaListType = Context.getArrayDecayedType(VaListType);
+  // Make sure the input expression also decays appropriately.
+  UsualUnaryConversions(E);
 
   if (CheckAssignmentConstraints(VaListType, E->getType()) != Compatible)
     return Diag(E->getLocStart(),
