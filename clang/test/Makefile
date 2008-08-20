@@ -2,7 +2,7 @@ LEVEL = ../../..
 include $(LEVEL)/Makefile.common
 
 # Test in all non .svn or Output directories below this one.
-TESTDIRS = $(shell find . -name .svn -prune -o -name Output -prune -o -type d -print)
+TESTDIRS = $(shell find . -name . -o -name .svn -prune -o -name Output -prune -o -type d -print)
 
 # Only run rewriter tests on darwin.
 ifeq ($(OS),Darwin)
