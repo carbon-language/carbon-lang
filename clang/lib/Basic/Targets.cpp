@@ -34,32 +34,6 @@ static void Define(std::vector<char> &Buf, const char *Macro,
   Buf.push_back('\n');
 }
 
-
-namespace {
-class DarwinTargetInfo : public TargetInfo {
-public:
-  DarwinTargetInfo(const std::string& triple) : TargetInfo(triple) {}
-  
-  virtual void getTargetDefines(std::vector<char> &Defs) const {
-// FIXME: we need a real target configuration system.  For now, only define
-// __APPLE__ if the host has it.
-#ifdef __APPLE__
-    Define(Defs, "__APPLE__");
-    Define(Defs, "__MACH__");
-#endif
-
-/* FIXME. we may also need to distinguish between darwin and linux targets */
-#ifdef linux
-    Define(Defs, "linux");
-#endif
-    
-    if (0)  // darwin_pascal_strings
-      Define(Defs, "__PASCAL_STRINGS__");
-  }
-
-};
-}
-
 static void getSolarisDefines(std::vector<char> &Defs) {
   Define(Defs, "__SUN__");
   Define(Defs, "__SOLARIS__");
@@ -352,103 +326,44 @@ static void getARMDefines(std::vector<char> &Defs) {
   Define(Defs, "__LDBL_MIN__", "2.2250738585072014e-308");
 }
 
-static const char* getPPCVAListDeclaration() {
-  return 
-    "typedef struct __va_list_tag {"
-    "  unsigned char gpr;"
-    "  unsigned char fpr;"
-    "  unsigned short reserved;"
-    "  void* overflow_arg_area;"
-    "  void* reg_save_area;"
-    "} __builtin_va_list[1];";
-}
+//===----------------------------------------------------------------------===//
+// Specific target implementations.
+//===----------------------------------------------------------------------===//
 
-/// PPC builtin info.
-namespace clang {
-namespace PPC {
-  
-  static const Builtin::Info BuiltinInfo[] = {
-#define BUILTIN(ID, TYPE, ATTRS) { #ID, TYPE, ATTRS },
-#include "clang/AST/PPCBuiltins.def"
-  };
-  
-  static void getBuiltins(const Builtin::Info *&Records, unsigned &NumRecords) {
+namespace {
+// PPC abstract base class
+class PPCTargetInfo : public TargetInfo {
+  static const Builtin::Info BuiltinInfo[];
+  static const char * const GCCRegNames[];
+  static const TargetInfo::GCCRegAlias GCCRegAliases[];
+
+public:
+  PPCTargetInfo(const std::string& triple) : TargetInfo(triple) {
+    CharIsSigned = false;
+  }
+  virtual void getTargetBuiltins(const Builtin::Info *&Records,
+                                 unsigned &NumRecords) const {
     Records = BuiltinInfo;
-    NumRecords = LastTSBuiltin-Builtin::FirstTSBuiltin;
+    NumRecords = clang::PPC::LastTSBuiltin-Builtin::FirstTSBuiltin;
   }
-
-  static const char * const GCCRegNames[] = {
-    "0", "1", "2", "3", "4", "5", "6", "7",
-    "8", "9", "10", "11", "12", "13", "14", "15",
-    "16", "17", "18", "19", "20", "21", "22", "23",
-    "24", "25", "26", "27", "28", "29", "30", "31",
-    "0", "1", "2", "3", "4", "5", "6", "7",
-    "8", "9", "10", "11", "12", "13", "14", "15",
-    "16", "17", "18", "19", "20", "21", "22", "23",
-    "24", "25", "26", "27", "28", "29", "30", "31",
-    "mq", "lr", "ctr", "ap",
-    "0", "1", "2", "3", "4", "5", "6", "7",
-    "xer",
-    "0", "1", "2", "3", "4", "5", "6", "7",
-    "8", "9", "10", "11", "12", "13", "14", "15",
-    "16", "17", "18", "19", "20", "21", "22", "23",
-    "24", "25", "26", "27", "28", "29", "30", "31",
-    "vrsave", "vscr",
-    "spe_acc", "spefscr",
-    "sfp"
-  };
-
-  static void getGCCRegNames(const char * const *&Names, 
-                                  unsigned &NumNames) {
-    Names = GCCRegNames;
-    NumNames = llvm::array_lengthof(GCCRegNames);
+  virtual const char *getVAListDeclaration() const {
+    return "typedef struct __va_list_tag {"
+           "  unsigned char gpr;"
+           "  unsigned char fpr;"
+           "  unsigned short reserved;"
+           "  void* overflow_arg_area;"
+           "  void* reg_save_area;"
+           "} __builtin_va_list[1];";
   }
-
-  static const TargetInfo::GCCRegAlias GCCRegAliases[] = {
-    // While some of these aliases do map to different registers
-    // they still share the same register name.
-    { { "cc", "cr0", "fr0", "r0", "v0"}, "0" }, 
-    { { "cr1", "fr1", "r1", "sp", "v1"}, "1" }, 
-    { { "cr2", "fr2", "r2", "toc", "v2"}, "2" }, 
-    { { "cr3", "fr3", "r3", "v3"}, "3" }, 
-    { { "cr4", "fr4", "r4", "v4"}, "4" }, 
-    { { "cr5", "fr5", "r5", "v5"}, "5" }, 
-    { { "cr6", "fr6", "r6", "v6"}, "6" }, 
-    { { "cr7", "fr7", "r7", "v7"}, "7" }, 
-    { { "fr8", "r8", "v8"}, "8" }, 
-    { { "fr9", "r9", "v9"}, "9" }, 
-    { { "fr10", "r10", "v10"}, "10" }, 
-    { { "fr11", "r11", "v11"}, "11" }, 
-    { { "fr12", "r12", "v12"}, "12" }, 
-    { { "fr13", "r13", "v13"}, "13" }, 
-    { { "fr14", "r14", "v14"}, "14" }, 
-    { { "fr15", "r15", "v15"}, "15" }, 
-    { { "fr16", "r16", "v16"}, "16" }, 
-    { { "fr17", "r17", "v17"}, "17" }, 
-    { { "fr18", "r18", "v18"}, "18" }, 
-    { { "fr19", "r19", "v19"}, "19" }, 
-    { { "fr20", "r20", "v20"}, "20" }, 
-    { { "fr21", "r21", "v21"}, "21" }, 
-    { { "fr22", "r22", "v22"}, "22" }, 
-    { { "fr23", "r23", "v23"}, "23" }, 
-    { { "fr24", "r24", "v24"}, "24" }, 
-    { { "fr25", "r25", "v25"}, "25" }, 
-    { { "fr26", "r26", "v26"}, "26" }, 
-    { { "fr27", "r27", "v27"}, "27" }, 
-    { { "fr28", "r28", "v28"}, "28" }, 
-    { { "fr29", "r29", "v29"}, "29" }, 
-    { { "fr30", "r30", "v30"}, "30" }, 
-    { { "fr31", "r31", "v31"}, "31" }, 
-  };
-  
-  static void getGCCRegAliases(const TargetInfo::GCCRegAlias *&Aliases, 
-                               unsigned &NumAliases) {
-    Aliases = GCCRegAliases;
-    NumAliases = llvm::array_lengthof(GCCRegAliases);
+  virtual const char *getTargetPrefix() const {
+    return "ppc";
   }
-  
-  static bool validateAsmConstraint(char c, 
-                                    TargetInfo::ConstraintInfo &info) {
+  virtual void getGCCRegNames(const char * const *&Names, 
+                              unsigned &NumNames) const;
+  virtual void getGCCRegAliases(const GCCRegAlias *&Aliases, 
+                                unsigned &NumAliases) const;
+  virtual bool validateAsmConstraint(char c,
+                                     TargetInfo::ConstraintInfo &info) const {
     switch (c) {
     default: return false;
     case 'O': // Zero
@@ -459,100 +374,128 @@ namespace PPC {
       return true;
     }
   }
-  
-  const char *getClobbers() {
-    return 0;
+  virtual const char *getClobbers() const {
+    return "";
   }
+};
 
-  const char *getTargetPrefix() {
-    return "ppc";
-  }
-  
-} // End namespace PPC
+const Builtin::Info PPCTargetInfo::BuiltinInfo[] = {
+#define BUILTIN(ID, TYPE, ATTRS) { #ID, TYPE, ATTRS },
+#include "clang/AST/PPCBuiltins.def"
+};
 
-} // end namespace clang.
+const char * const PPCTargetInfo::GCCRegNames[] = {
+  "0", "1", "2", "3", "4", "5", "6", "7",
+  "8", "9", "10", "11", "12", "13", "14", "15",
+  "16", "17", "18", "19", "20", "21", "22", "23",
+  "24", "25", "26", "27", "28", "29", "30", "31",
+  "0", "1", "2", "3", "4", "5", "6", "7",
+  "8", "9", "10", "11", "12", "13", "14", "15",
+  "16", "17", "18", "19", "20", "21", "22", "23",
+  "24", "25", "26", "27", "28", "29", "30", "31",
+  "mq", "lr", "ctr", "ap",
+  "0", "1", "2", "3", "4", "5", "6", "7",
+  "xer",
+  "0", "1", "2", "3", "4", "5", "6", "7",
+  "8", "9", "10", "11", "12", "13", "14", "15",
+  "16", "17", "18", "19", "20", "21", "22", "23",
+  "24", "25", "26", "27", "28", "29", "30", "31",
+  "vrsave", "vscr",
+  "spe_acc", "spefscr",
+  "sfp"
+};
 
-//===----------------------------------------------------------------------===//
-// Specific target implementations.
-//===----------------------------------------------------------------------===//
+void PPCTargetInfo::getGCCRegNames(const char * const *&Names, 
+                                   unsigned &NumNames) const {
+  Names = GCCRegNames;
+  NumNames = llvm::array_lengthof(GCCRegNames);
+}
 
+const TargetInfo::GCCRegAlias PPCTargetInfo::GCCRegAliases[] = {
+  // While some of these aliases do map to different registers
+  // they still share the same register name.
+  { { "cc", "cr0", "fr0", "r0", "v0"}, "0" }, 
+  { { "cr1", "fr1", "r1", "sp", "v1"}, "1" }, 
+  { { "cr2", "fr2", "r2", "toc", "v2"}, "2" }, 
+  { { "cr3", "fr3", "r3", "v3"}, "3" }, 
+  { { "cr4", "fr4", "r4", "v4"}, "4" }, 
+  { { "cr5", "fr5", "r5", "v5"}, "5" }, 
+  { { "cr6", "fr6", "r6", "v6"}, "6" }, 
+  { { "cr7", "fr7", "r7", "v7"}, "7" }, 
+  { { "fr8", "r8", "v8"}, "8" }, 
+  { { "fr9", "r9", "v9"}, "9" }, 
+  { { "fr10", "r10", "v10"}, "10" }, 
+  { { "fr11", "r11", "v11"}, "11" }, 
+  { { "fr12", "r12", "v12"}, "12" }, 
+  { { "fr13", "r13", "v13"}, "13" }, 
+  { { "fr14", "r14", "v14"}, "14" }, 
+  { { "fr15", "r15", "v15"}, "15" }, 
+  { { "fr16", "r16", "v16"}, "16" }, 
+  { { "fr17", "r17", "v17"}, "17" }, 
+  { { "fr18", "r18", "v18"}, "18" }, 
+  { { "fr19", "r19", "v19"}, "19" }, 
+  { { "fr20", "r20", "v20"}, "20" }, 
+  { { "fr21", "r21", "v21"}, "21" }, 
+  { { "fr22", "r22", "v22"}, "22" }, 
+  { { "fr23", "r23", "v23"}, "23" }, 
+  { { "fr24", "r24", "v24"}, "24" }, 
+  { { "fr25", "r25", "v25"}, "25" }, 
+  { { "fr26", "r26", "v26"}, "26" }, 
+  { { "fr27", "r27", "v27"}, "27" }, 
+  { { "fr28", "r28", "v28"}, "28" }, 
+  { { "fr29", "r29", "v29"}, "29" }, 
+  { { "fr30", "r30", "v30"}, "30" }, 
+  { { "fr31", "r31", "v31"}, "31" }, 
+};
+
+void PPCTargetInfo::getGCCRegAliases(const GCCRegAlias *&Aliases, 
+                                     unsigned &NumAliases) const {
+  Aliases = GCCRegAliases;
+  NumAliases = llvm::array_lengthof(GCCRegAliases);
+}
+} // end anonymous namespace.
 
 namespace {
-class DarwinPPCTargetInfo : public DarwinTargetInfo {
+class PPC32TargetInfo : public PPCTargetInfo {
 public:
-  DarwinPPCTargetInfo(const std::string& triple) : DarwinTargetInfo(triple) {
-    CharIsSigned = false;
-  }
-  
+  PPC32TargetInfo(const std::string& triple) : PPCTargetInfo(triple) {}
   virtual void getTargetDefines(std::vector<char> &Defines) const {
-    DarwinTargetInfo::getTargetDefines(Defines);
     getPowerPCDefines(Defines, false);
-  }
-  virtual void getTargetBuiltins(const Builtin::Info *&Records,
-                                 unsigned &NumRecords) const {
-    PPC::getBuiltins(Records, NumRecords);
-  }
-  virtual const char *getVAListDeclaration() const {
-    return getPPCVAListDeclaration();
-  }
-  virtual const char *getTargetPrefix() const {
-    return PPC::getTargetPrefix();
-  }
-  virtual void getGCCRegNames(const char * const *&Names, 
-                              unsigned &NumNames) const {
-    PPC::getGCCRegNames(Names, NumNames);
-  }
-  virtual void getGCCRegAliases(const GCCRegAlias *&Aliases, 
-                                unsigned &NumAliases) const {
-    PPC::getGCCRegAliases(Aliases, NumAliases);
-  }
-  virtual bool validateAsmConstraint(char c,
-                                     TargetInfo::ConstraintInfo &info) const {
-    return PPC::validateAsmConstraint(c, info);
-  }
-  virtual const char *getClobbers() const {
-    return PPC::getClobbers();
   }
 };
 } // end anonymous namespace.
 
 namespace {
-class DarwinPPC64TargetInfo : public DarwinTargetInfo {
+class PPC64TargetInfo : public PPCTargetInfo {
 public:
-  DarwinPPC64TargetInfo(const std::string& triple) : DarwinTargetInfo(triple) {
-    CharIsSigned = false;
+  PPC64TargetInfo(const std::string& triple) : PPCTargetInfo(triple) {
     LongWidth = LongAlign = PointerWidth = PointerAlign = 64;
   }
-  
   virtual void getTargetDefines(std::vector<char> &Defines) const {
-    DarwinTargetInfo::getTargetDefines(Defines);
     getPowerPCDefines(Defines, true);
   }
-  virtual void getTargetBuiltins(const Builtin::Info *&Records,
-                                 unsigned &NumRecords) const {
-    PPC::getBuiltins(Records, NumRecords);
+};
+} // end anonymous namespace.
+
+namespace {
+class DarwinPPCTargetInfo : public PPC32TargetInfo {
+public:
+  DarwinPPCTargetInfo(const std::string& triple) : PPC32TargetInfo(triple) {}
+  virtual void getTargetDefines(std::vector<char> &Defines) const {
+    PPC32TargetInfo::getTargetDefines(Defines);
+    getDarwinDefines(Defines);
   }
-  virtual const char *getVAListDeclaration() const {
-    return getPPCVAListDeclaration();
-  }  
-  virtual const char *getTargetPrefix() const {
-    return PPC::getTargetPrefix();
-  }  
-  virtual void getGCCRegNames(const char * const *&Names, 
-                                   unsigned &NumNames) const {
-    PPC::getGCCRegNames(Names, NumNames);
-  }    
-  virtual void getGCCRegAliases(const GCCRegAlias *&Aliases, 
-                                unsigned &NumAliases) const {
-    PPC::getGCCRegAliases(Aliases, NumAliases);
+};
+} // end anonymous namespace.
+
+namespace {
+class DarwinPPC64TargetInfo : public PPC64TargetInfo {
+public:
+  DarwinPPC64TargetInfo(const std::string& triple) : PPC64TargetInfo(triple) {}
+  virtual void getTargetDefines(std::vector<char> &Defines) const {
+    PPC64TargetInfo::getTargetDefines(Defines);
+    getDarwinDefines(Defines);
   }
-  virtual bool validateAsmConstraint(char c,
-                                     TargetInfo::ConstraintInfo &info) const {
-    return PPC::validateAsmConstraint(c, info);
-  }
-  virtual const char *getClobbers() const {
-    return PPC::getClobbers();
-  }  
 };
 } // end anonymous namespace.
 
