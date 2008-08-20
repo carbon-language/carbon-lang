@@ -5129,7 +5129,9 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
       if (!DisableFastISelAbort) {
         // The "fast" selector couldn't handle something and bailed.
         // For the purpose of debugging, just abort.
-        DEBUG(Begin->dump());
+#ifndef NDEBUG
+        Begin->dump();
+#endif
         assert(0 && "FastISel didn't select the entire block");
         abort();
       }
