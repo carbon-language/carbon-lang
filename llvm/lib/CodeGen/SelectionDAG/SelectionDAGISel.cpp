@@ -5369,9 +5369,9 @@ void SelectionDAGISel::CodeGenAndEmitDAG(SelectionDAG &DAG) {
   // Run the DAG combiner in pre-legalize mode.
   if (TimePassesIsEnabled) {
     NamedRegionTimer T("DAG Combining 1", GroupName);
-    DAG.Combine(false, *AA);
+    DAG.Combine(false, *AA, Fast);
   } else {
-    DAG.Combine(false, *AA);
+    DAG.Combine(false, *AA, Fast);
   }
   
   DOUT << "Optimized lowered selection DAG:\n";
@@ -5413,9 +5413,9 @@ void SelectionDAGISel::CodeGenAndEmitDAG(SelectionDAG &DAG) {
   // Run the DAG combiner in post-legalize mode.
   if (TimePassesIsEnabled) {
     NamedRegionTimer T("DAG Combining 2", GroupName);
-    DAG.Combine(true, *AA);
+    DAG.Combine(true, *AA, Fast);
   } else {
-    DAG.Combine(true, *AA);
+    DAG.Combine(true, *AA, Fast);
   }
   
   DOUT << "Optimized legalized selection DAG:\n";

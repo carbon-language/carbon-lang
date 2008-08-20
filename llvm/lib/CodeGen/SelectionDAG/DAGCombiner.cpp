@@ -51,6 +51,7 @@ namespace {
     SelectionDAG &DAG;
     TargetLowering &TLI;
     bool AfterLegalize;
+    bool Fast;
 
     // Worklist of all of the nodes that need to be simplified.
     std::vector<SDNode*> WorkList;
@@ -237,10 +238,11 @@ namespace {
     SDValue FindBetterChain(SDNode *N, SDValue Chain);
     
 public:
-    DAGCombiner(SelectionDAG &D, AliasAnalysis &A)
+    DAGCombiner(SelectionDAG &D, AliasAnalysis &A, bool fast)
       : DAG(D),
         TLI(D.getTargetLoweringInfo()),
         AfterLegalize(false),
+        Fast(fast),
         AA(A) {}
     
     /// Run - runs the dag combiner on all nodes in the work list
@@ -4411,7 +4413,7 @@ SDValue DAGCombiner::visitLOAD(SDNode *N) {
   SDValue Ptr   = LD->getBasePtr();
   
   // Try to infer better alignment information than the load already has.
-  if (LD->isUnindexed()) {
+  if (!Fast && LD->isUnindexed()) {
     if (unsigned Align = InferAlignment(Ptr, DAG)) {
       if (Align > LD->getAlignment())
         return DAG.getExtLoad(LD->getExtensionType(), LD->getValueType(0),
@@ -4529,7 +4531,7 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
   SDValue Ptr   = ST->getBasePtr();
   
   // Try to infer better alignment information than the store already has.
-  if (ST->isUnindexed()) {
+  if (!Fast && ST->isUnindexed()) {
     if (unsigned Align = InferAlignment(Ptr, DAG)) {
       if (Align > ST->getAlignment())
         return DAG.getTruncStore(Chain, Value, Ptr, ST->getSrcValue(),
@@ -5664,8 +5666,9 @@ SDValue DAGCombiner::FindBetterChain(SDNode *N, SDValue OldChain) {
 
 // SelectionDAG::Combine - This is the entry point for the file.
 //
-void SelectionDAG::Combine(bool RunningAfterLegalize, AliasAnalysis &AA) {
+void SelectionDAG::Combine(bool RunningAfterLegalize, AliasAnalysis &AA,
+                           bool Fast) {
   /// run - This is the main entry point to this class.
   ///
-  DAGCombiner(*this, AA).Run(RunningAfterLegalize);
+  DAGCombiner(*this, AA, Fast).Run(RunningAfterLegalize);
 }

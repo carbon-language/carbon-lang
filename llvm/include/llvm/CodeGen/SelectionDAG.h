@@ -169,7 +169,7 @@ public:
   /// certain types of nodes together, or eliminating superfluous nodes.  When
   /// the AfterLegalize argument is set to 'true', Combine takes care not to
   /// generate any nodes that will be illegal on the target.
-  void Combine(bool AfterLegalize, AliasAnalysis &AA);
+  void Combine(bool AfterLegalize, AliasAnalysis &AA, bool Fast);
   
   /// LegalizeTypes - This transforms the SelectionDAG into a SelectionDAG that
   /// only uses types natively supported by the target.
