@@ -614,9 +614,8 @@ def truncstorei16 : PatFrag<(ops node:$val, node:$ptr),
 def truncstorei32 : PatFrag<(ops node:$val, node:$ptr),
                             (st node:$val, node:$ptr), [{
   StoreSDNode *ST = cast<StoreSDNode>(N);
-    return ST->isTruncatingStore() && ST->getMemoryVT() == MVT::i32 &&
-           ST->getAddressingMode() == ISD::UNINDEXED;
-  return false;
+  return ST->isTruncatingStore() && ST->getMemoryVT() == MVT::i32 &&
+         ST->getAddressingMode() == ISD::UNINDEXED;
 }]>;
 def truncstoref32 : PatFrag<(ops node:$val, node:$ptr),
                             (st node:$val, node:$ptr), [{
