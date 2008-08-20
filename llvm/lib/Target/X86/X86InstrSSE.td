@@ -99,20 +99,18 @@ def loadv2i64    : PatFrag<(ops node:$ptr), (v2i64 (load node:$ptr))>;
 // Like 'store', but always requires vector alignment.
 def alignedstore : PatFrag<(ops node:$val, node:$ptr),
                            (st node:$val, node:$ptr), [{
-  if (StoreSDNode *ST = dyn_cast<StoreSDNode>(N))
-    return !ST->isTruncatingStore() &&
-           ST->getAddressingMode() == ISD::UNINDEXED &&
-           ST->getAlignment() >= 16;
-  return false;
+  StoreSDNode *ST = cast<StoreSDNode>(N);
+  return !ST->isTruncatingStore() &&
+         ST->getAddressingMode() == ISD::UNINDEXED &&
+         ST->getAlignment() >= 16;
 }]>;
 
 // Like 'load', but always requires vector alignment.
 def alignedload : PatFrag<(ops node:$ptr), (ld node:$ptr), [{
-  if (LoadSDNode *LD = dyn_cast<LoadSDNode>(N))
-    return LD->getExtensionType() == ISD::NON_EXTLOAD &&
-           LD->getAddressingMode() == ISD::UNINDEXED &&
-           LD->getAlignment() >= 16;
-  return false;
+  LoadSDNode *LD = cast<LoadSDNode>(N);
+  return LD->getExtensionType() == ISD::NON_EXTLOAD &&
+         LD->getAddressingMode() == ISD::UNINDEXED &&
+         LD->getAlignment() >= 16;
 }]>;
 
 def alignedloadfsf32 : PatFrag<(ops node:$ptr), (f32   (alignedload node:$ptr))>;
@@ -128,11 +126,10 @@ def alignedloadv2i64 : PatFrag<(ops node:$ptr), (v2i64 (alignedload node:$ptr))>
 // FIXME: Actually implement support for targets that don't require the
 //        alignment. This probably wants a subtarget predicate.
 def memop : PatFrag<(ops node:$ptr), (ld node:$ptr), [{
-  if (LoadSDNode *LD = dyn_cast<LoadSDNode>(N))
-    return LD->getExtensionType() == ISD::NON_EXTLOAD &&
-           LD->getAddressingMode() == ISD::UNINDEXED &&
-           LD->getAlignment() >= 16;
-  return false;
+  LoadSDNode *LD = cast<LoadSDNode>(N);
+  return LD->getExtensionType() == ISD::NON_EXTLOAD &&
+         LD->getAddressingMode() == ISD::UNINDEXED &&
+         LD->getAlignment() >= 16;
 }]>;
 
 def memopfsf32 : PatFrag<(ops node:$ptr), (f32   (memop node:$ptr))>;
@@ -147,11 +144,10 @@ def memopv16i8 : PatFrag<(ops node:$ptr), (v16i8 (memop node:$ptr))>;
 // 16-byte boundary.
 // FIXME: 8 byte alignment for mmx reads is not required
 def memop64 : PatFrag<(ops node:$ptr), (ld node:$ptr), [{
-  if (LoadSDNode *LD = dyn_cast<LoadSDNode>(N))
-    return LD->getExtensionType() == ISD::NON_EXTLOAD &&
-           LD->getAddressingMode() == ISD::UNINDEXED &&
-           LD->getAlignment() >= 8;
-  return false;
+  LoadSDNode *LD = cast<LoadSDNode>(N);
+  return LD->getExtensionType() == ISD::NON_EXTLOAD &&
+         LD->getAddressingMode() == ISD::UNINDEXED &&
+         LD->getAlignment() >= 8;
 }]>;
 
 def memopv8i8  : PatFrag<(ops node:$ptr), (v8i8  (memop64 node:$ptr))>;

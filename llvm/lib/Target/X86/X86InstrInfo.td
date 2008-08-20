@@ -232,28 +232,26 @@ def i32immSExt8  : PatLeaf<(i32 imm), [{
 // It's always safe to treat a anyext i16 load as a i32 load if the i16 is
 // known to be 32-bit aligned or better. Ditto for i8 to i16.
 def loadi16 : PatFrag<(ops node:$ptr), (i16 (ld node:$ptr)), [{
-  if (LoadSDNode *LD = dyn_cast<LoadSDNode>(N)) {
-    if (LD->getAddressingMode() != ISD::UNINDEXED)
-      return false;
-    ISD::LoadExtType ExtType = LD->getExtensionType();
-    if (ExtType == ISD::NON_EXTLOAD)
-      return true;
-    if (ExtType == ISD::EXTLOAD)
-      return LD->getAlignment() >= 2 && !LD->isVolatile();
-  }
+  LoadSDNode *LD = cast<LoadSDNode>(N);
+  if (LD->getAddressingMode() != ISD::UNINDEXED)
+    return false;
+  ISD::LoadExtType ExtType = LD->getExtensionType();
+  if (ExtType == ISD::NON_EXTLOAD)
+    return true;
+  if (ExtType == ISD::EXTLOAD)
+    return LD->getAlignment() >= 2 && !LD->isVolatile();
   return false;
 }]>;
 
 def loadi32 : PatFrag<(ops node:$ptr), (i32 (ld node:$ptr)), [{
-  if (LoadSDNode *LD = dyn_cast<LoadSDNode>(N)) {
-    if (LD->getAddressingMode() != ISD::UNINDEXED)
-      return false;
-    ISD::LoadExtType ExtType = LD->getExtensionType();
-    if (ExtType == ISD::NON_EXTLOAD)
-      return true;
-    if (ExtType == ISD::EXTLOAD)
-      return LD->getAlignment() >= 4 && !LD->isVolatile();
-  }
+  LoadSDNode *LD = cast<LoadSDNode>(N);
+  if (LD->getAddressingMode() != ISD::UNINDEXED)
+    return false;
+  ISD::LoadExtType ExtType = LD->getExtensionType();
+  if (ExtType == ISD::NON_EXTLOAD)
+    return true;
+  if (ExtType == ISD::EXTLOAD)
+    return LD->getAlignment() >= 4 && !LD->isVolatile();
   return false;
 }]>;
 
