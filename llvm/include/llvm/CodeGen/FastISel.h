@@ -22,6 +22,7 @@ namespace llvm {
 
 class MachineBasicBlock;
 class MachineFunction;
+class MachineRegisterInfo;
 class TargetInstrInfo;
 class TargetRegisterClass;
 
@@ -30,8 +31,9 @@ class TargetRegisterClass;
 /// lowering, but runs quickly.
 class FastISel {
   MachineBasicBlock *MBB;
-  MachineFunction *MF;
-  const TargetInstrInfo *TII;
+  MachineFunction &MF;
+  MachineRegisterInfo &MRI;
+  const TargetInstrInfo &TII;
 
 public:
   /// SelectInstructions - Do "fast" instruction selection over the
@@ -41,14 +43,13 @@ public:
   /// register numbers.
   BasicBlock::iterator
   SelectInstructions(BasicBlock::iterator Begin, BasicBlock::iterator End,
-                     DenseMap<const Value*, unsigned> &ValueMap);
+                     DenseMap<const Value*, unsigned> &ValueMap,
+                     MachineBasicBlock *mbb);
 
   virtual ~FastISel();
 
 protected:
-  FastISel(MachineBasicBlock *mbb, MachineFunction *mf,
-           const TargetInstrInfo *tii)
-    : MBB(mbb), MF(mf), TII(tii) {}
+  explicit FastISel(MachineFunction &mf);
 
   /// FastEmit_r - This method is called by target-independent code
   /// to request that an instruction with the given type and opcode

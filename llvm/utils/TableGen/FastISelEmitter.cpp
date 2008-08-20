@@ -295,16 +295,14 @@ void FastISelEmitter::run(std::ostream &OS) {
     OS << ");\n";
   }
   OS << "public:\n";
-  OS << "  FastISel(MachineBasicBlock *mbb, MachineFunction *mf, ";
-  OS << "const TargetInstrInfo *tii) : llvm::FastISel(mbb, mf, tii) {}\n";
+  OS << "  explicit FastISel(MachineFunction &mf) : llvm::FastISel(mf) {}\n";
   OS << "};\n";
   OS << "\n";
 
   // Define the target FastISel creation function.
   OS << "llvm::FastISel *" << InstNS
-     << "createFastISel(MachineBasicBlock *mbb, MachineFunction *mf, ";
-  OS << "const TargetInstrInfo *tii) {\n";
-  OS << "  return new " << InstNS << "FastISel(mbb, mf, tii);\n";
+     << "createFastISel(MachineFunction &mf) {\n";
+  OS << "  return new " << InstNS << "FastISel(mf);\n";
   OS << "}\n";
   OS << "\n";
 

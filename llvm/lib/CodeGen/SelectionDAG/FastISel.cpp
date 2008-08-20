@@ -16,6 +16,7 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/Target/TargetMachine.h"
 using namespace llvm;
 
 /// SelectBinaryOp - Select and emit code for a binary operator instruction,
@@ -54,7 +55,9 @@ bool FastISel::SelectGetElementPtr(Instruction *I,
 BasicBlock::iterator
 FastISel::SelectInstructions(BasicBlock::iterator Begin,
                              BasicBlock::iterator End,
-                             DenseMap<const Value*, unsigned> &ValueMap) {
+                             DenseMap<const Value*, unsigned> &ValueMap,
+                             MachineBasicBlock *mbb) {
+  MBB = mbb;
   BasicBlock::iterator I = Begin;
 
   for (; I != End; ++I) {
@@ -108,7 +111,7 @@ FastISel::SelectInstructions(BasicBlock::iterator Begin,
       if (BI->isUnconditional()) {
          MachineFunction::iterator NextMBB =
            next(MachineFunction::iterator(MBB));
-         if (NextMBB != MF->end() &&
+         if (NextMBB != MF.end() &&
              NextMBB->getBasicBlock() == BI->getSuccessor(0)) {
           MBB->addSuccessor(NextMBB);
           break;
@@ -125,6 +128,10 @@ FastISel::SelectInstructions(BasicBlock::iterator Begin,
   }
 
   return I;
+}
+
+FastISel::FastISel(MachineFunction &mf)
+  : MF(mf), MRI(mf.getRegInfo()), TII(*mf.getTarget().getInstrInfo()) {
 }
 
 FastISel::~FastISel() {}
@@ -145,11 +152,10 @@ unsigned FastISel::FastEmit_rr(MVT::SimpleValueType, ISD::NodeType,
 
 unsigned FastISel::FastEmitInst_(unsigned MachineInstOpcode,
                                  const TargetRegisterClass* RC) {
-  MachineRegisterInfo &MRI = MF->getRegInfo();
   unsigned ResultReg = MRI.createVirtualRegister(RC);
-  const TargetInstrDesc &II = TII->get(MachineInstOpcode);
+  const TargetInstrDesc &II = TII.get(MachineInstOpcode);
 
-  MachineInstr *MI = BuildMI(*MF, II, ResultReg);
+  MachineInstr *MI = BuildMI(MF, II, ResultReg);
   MBB->push_back(MI);
   return ResultReg;
 }
@@ -157,11 +163,10 @@ unsigned FastISel::FastEmitInst_(unsigned MachineInstOpcode,
 unsigned FastISel::FastEmitInst_r(unsigned MachineInstOpcode,
                                   const TargetRegisterClass *RC,
                                   unsigned Op0) {
-  MachineRegisterInfo &MRI = MF->getRegInfo();
   unsigned ResultReg = MRI.createVirtualRegister(RC);
-  const TargetInstrDesc &II = TII->get(MachineInstOpcode);
+  const TargetInstrDesc &II = TII.get(MachineInstOpcode);
 
-  MachineInstr *MI = BuildMI(*MF, II, ResultReg).addReg(Op0);
+  MachineInstr *MI = BuildMI(MF, II, ResultReg).addReg(Op0);
   MBB->push_back(MI);
   return ResultReg;
 }
@@ -169,11 +174,10 @@ unsigned FastISel::FastEmitInst_r(unsigned MachineInstOpcode,
 unsigned FastISel::FastEmitInst_rr(unsigned MachineInstOpcode,
                                    const TargetRegisterClass *RC,
                                    unsigned Op0, unsigned Op1) {
-  MachineRegisterInfo &MRI = MF->getRegInfo();
   unsigned ResultReg = MRI.createVirtualRegister(RC);
-  const TargetInstrDesc &II = TII->get(MachineInstOpcode);
+  const TargetInstrDesc &II = TII.get(MachineInstOpcode);
 
-  MachineInstr *MI = BuildMI(*MF, II, ResultReg).addReg(Op0).addReg(Op1);
+  MachineInstr *MI = BuildMI(MF, II, ResultReg).addReg(Op0).addReg(Op1);
   MBB->push_back(MI);
   return ResultReg;
 }

@@ -469,9 +469,7 @@ namespace llvm {
 
     /// createFastISel - This method returns a target specific FastISel object,
     /// or null if the target does not support "fast" ISel.
-    virtual FastISel *createFastISel(MachineBasicBlock *mbb,
-                                     MachineFunction *mf,
-                                     const TargetInstrInfo *tii);
+    virtual FastISel *createFastISel(MachineFunction &mf);
     
   private:
     /// Subtarget - Keep a pointer to the X86Subtarget around so that we can

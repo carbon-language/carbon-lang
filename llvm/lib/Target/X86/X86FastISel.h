@@ -18,14 +18,11 @@
 namespace llvm {
 
 class FastISel;
-class MachineBasicBlock;
 class MachineFunction;
-class TargetInstrInfo;
 
 namespace X86 {
 
-FastISel *createFastISel(MachineBasicBlock *mbb, MachineFunction *mf,
-                         const TargetInstrInfo *tii);
+FastISel *createFastISel(MachineFunction &mf);
 
 } // namespace X86
 
