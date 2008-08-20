@@ -106,7 +106,7 @@ APInt::APInt(const APInt& that)
 }
 
 APInt::~APInt() {
-  if (!isSingleWord() && pVal) 
+  if (!isSingleWord()) 
     delete [] pVal;
 }
 
