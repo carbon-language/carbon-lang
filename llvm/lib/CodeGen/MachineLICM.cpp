@@ -273,7 +273,14 @@ bool MachineLICM::IsLoopInvariantInst(MachineInstr &I) {
   for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = I.getOperand(i);
 
-    if (!MO.isRegister() || !MO.isUse())
+    if (!MO.isRegister())
+      continue;
+
+    if (MO.isDef() && TargetRegisterInfo::isPhysicalRegister(MO.getReg()))
+      // Don't hoist an instruction that defines a physical register.
+      return false;
+
+    if (!MO.isUse())
       continue;
 
     unsigned Reg = MO.getReg();
