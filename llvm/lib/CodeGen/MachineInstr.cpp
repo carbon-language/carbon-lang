@@ -24,6 +24,7 @@
 #include "llvm/Support/LeakDetector.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Streams.h"
+#include "llvm/ADT/FoldingSet.h"
 #include <ostream>
 using namespace llvm;
 
@@ -248,6 +249,15 @@ MachineMemOperand::MachineMemOperand(const Value *v, unsigned int f,
     Flags((f & 7) | ((Log2_32(a) + 1) << 3)) {
   assert(isPowerOf2_32(a) && "Alignment is not a power of 2!");
   assert((isLoad() || isStore()) && "Not a load/store!");
+}
+
+/// Profile - Gather unique data for the object.
+///
+void MachineMemOperand::Profile(FoldingSetNodeID &ID) const {
+  ID.AddInteger(Offset);
+  ID.AddInteger(Size);
+  ID.AddPointer(V);
+  ID.AddInteger(Flags);
 }
 
 //===----------------------------------------------------------------------===//

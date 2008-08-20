@@ -351,7 +351,7 @@ static void AddNodeIDNode(FoldingSetNodeID &ID,
 
 /// AddNodeIDNode - Generic routine for adding a nodes info to the NodeID
 /// data.
-static void AddNodeIDNode(FoldingSetNodeID &ID, SDNode *N) {
+static void AddNodeIDNode(FoldingSetNodeID &ID, const SDNode *N) {
   AddNodeIDOpcode(ID, N->getOpcode());
   // Add the return value info.
   AddNodeIDValueTypes(ID, N->getVTList());
@@ -377,7 +377,7 @@ static void AddNodeIDNode(FoldingSetNodeID &ID, SDNode *N) {
   case ISD::GlobalAddress:
   case ISD::TargetGlobalTLSAddress:
   case ISD::GlobalTLSAddress: {
-    GlobalAddressSDNode *GA = cast<GlobalAddressSDNode>(N);
+    const GlobalAddressSDNode *GA = cast<GlobalAddressSDNode>(N);
     ID.AddPointer(GA->getGlobal());
     ID.AddInteger(GA->getOffset());
     break;
@@ -400,11 +400,7 @@ static void AddNodeIDNode(FoldingSetNodeID &ID, SDNode *N) {
     break;
   case ISD::MEMOPERAND: {
     const MachineMemOperand &MO = cast<MemOperandSDNode>(N)->MO;
-    ID.AddPointer(MO.getValue());
-    ID.AddInteger(MO.getFlags());
-    ID.AddInteger(MO.getOffset());
-    ID.AddInteger(MO.getSize());
-    ID.AddInteger(MO.getAlignment());
+    MO.Profile(ID);
     break;
   }
   case ISD::FrameIndex:
@@ -417,7 +413,7 @@ static void AddNodeIDNode(FoldingSetNodeID &ID, SDNode *N) {
     break;
   case ISD::ConstantPool:
   case ISD::TargetConstantPool: {
-    ConstantPoolSDNode *CP = cast<ConstantPoolSDNode>(N);
+    const ConstantPoolSDNode *CP = cast<ConstantPoolSDNode>(N);
     ID.AddInteger(CP->getAlignment());
     ID.AddInteger(CP->getOffset());
     if (CP->isMachineConstantPoolEntry())
@@ -427,21 +423,19 @@ static void AddNodeIDNode(FoldingSetNodeID &ID, SDNode *N) {
     break;
   }
   case ISD::LOAD: {
-    LoadSDNode *LD = cast<LoadSDNode>(N);
+    const LoadSDNode *LD = cast<LoadSDNode>(N);
     ID.AddInteger(LD->getAddressingMode());
     ID.AddInteger(LD->getExtensionType());
     ID.AddInteger(LD->getMemoryVT().getRawBits());
-    ID.AddInteger(LD->getAlignment());
-    ID.AddInteger(LD->isVolatile());
+    ID.AddInteger(LD->getRawFlags());
     break;
   }
   case ISD::STORE: {
-    StoreSDNode *ST = cast<StoreSDNode>(N);
+    const StoreSDNode *ST = cast<StoreSDNode>(N);
     ID.AddInteger(ST->getAddressingMode());
     ID.AddInteger(ST->isTruncatingStore());
     ID.AddInteger(ST->getMemoryVT().getRawBits());
-    ID.AddInteger(ST->getAlignment());
-    ID.AddInteger(ST->isVolatile());
+    ID.AddInteger(ST->getRawFlags());
     break;
   }
   case ISD::ATOMIC_CMP_SWAP:
@@ -456,12 +450,18 @@ static void AddNodeIDNode(FoldingSetNodeID &ID, SDNode *N) {
   case ISD::ATOMIC_LOAD_MAX:
   case ISD::ATOMIC_LOAD_UMIN:
   case ISD::ATOMIC_LOAD_UMAX: {
-    AtomicSDNode *AT = cast<AtomicSDNode>(N);
-    ID.AddInteger(AT->getAlignment());
-    ID.AddInteger(AT->isVolatile());
+    const AtomicSDNode *AT = cast<AtomicSDNode>(N);
+    ID.AddInteger(AT->getRawFlags());
     break;
   }
   } // end switch (N->getOpcode())
+}
+
+/// encodeMemSDNodeFlags - Generic routine for computing a value for use in
+/// the CSE map that carries both alignment and volatility information.
+///
+static unsigned encodeMemSDNodeFlags(bool isVolatile, unsigned Alignment) {
+  return isVolatile | ((Log2_32(Alignment) + 1) << 1);
 }
 
 //===----------------------------------------------------------------------===//
@@ -722,14 +722,12 @@ SDNode *SelectionDAG::FindModifiedNodeSlot(SDNode *N,
     ID.AddInteger(LD->getAddressingMode());
     ID.AddInteger(LD->getExtensionType());
     ID.AddInteger(LD->getMemoryVT().getRawBits());
-    ID.AddInteger(LD->getAlignment());
-    ID.AddInteger(LD->isVolatile());
+    ID.AddInteger(LD->getRawFlags());
   } else if (const StoreSDNode *ST = dyn_cast<StoreSDNode>(N)) {
     ID.AddInteger(ST->getAddressingMode());
     ID.AddInteger(ST->isTruncatingStore());
     ID.AddInteger(ST->getMemoryVT().getRawBits());
-    ID.AddInteger(ST->getAlignment());
-    ID.AddInteger(ST->isVolatile());
+    ID.AddInteger(ST->getRawFlags());
   }
   
   return CSEMap.FindNodeOrInsertPos(ID, InsertPos);
@@ -1110,11 +1108,7 @@ SDValue SelectionDAG::getMemOperand(const MachineMemOperand &MO) {
 
   FoldingSetNodeID ID;
   AddNodeIDNode(ID, ISD::MEMOPERAND, getVTList(MVT::Other), 0, 0);
-  ID.AddPointer(v);
-  ID.AddInteger(MO.getFlags());
-  ID.AddInteger(MO.getOffset());
-  ID.AddInteger(MO.getSize());
-  ID.AddInteger(MO.getAlignment());
+  MO.Profile(ID);
 
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
@@ -3225,8 +3219,7 @@ SelectionDAG::getLoad(ISD::MemIndexedMode AM, ISD::LoadExtType ExtType,
   ID.AddInteger(AM);
   ID.AddInteger(ExtType);
   ID.AddInteger(EVT.getRawBits());
-  ID.AddInteger(Alignment);
-  ID.AddInteger(isVolatile);
+  ID.AddInteger(encodeMemSDNodeFlags(isVolatile, Alignment));
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDValue(E, 0);
@@ -3285,8 +3278,7 @@ SDValue SelectionDAG::getStore(SDValue Chain, SDValue Val,
   ID.AddInteger(ISD::UNINDEXED);
   ID.AddInteger(false);
   ID.AddInteger(VT.getRawBits());
-  ID.AddInteger(Alignment);
-  ID.AddInteger(isVolatile);
+  ID.AddInteger(encodeMemSDNodeFlags(isVolatile, Alignment));
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDValue(E, 0);
@@ -3322,8 +3314,7 @@ SDValue SelectionDAG::getTruncStore(SDValue Chain, SDValue Val,
   ID.AddInteger(ISD::UNINDEXED);
   ID.AddInteger(1);
   ID.AddInteger(SVT.getRawBits());
-  ID.AddInteger(Alignment);
-  ID.AddInteger(isVolatile);
+  ID.AddInteger(encodeMemSDNodeFlags(isVolatile, Alignment));
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDValue(E, 0);
@@ -3348,8 +3339,7 @@ SelectionDAG::getIndexedStore(SDValue OrigStore, SDValue Base,
   ID.AddInteger(AM);
   ID.AddInteger(ST->isTruncatingStore());
   ID.AddInteger(ST->getMemoryVT().getRawBits());
-  ID.AddInteger(ST->getAlignment());
-  ID.AddInteger(ST->isVolatile());
+  ID.AddInteger(ST->getRawFlags());
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDValue(E, 0);
@@ -4496,7 +4486,7 @@ MemSDNode::MemSDNode(unsigned Opc, SDVTList VTs, MVT memvt,
                      const Value *srcValue, int SVO,
                      unsigned alignment, bool vol)
  : SDNode(Opc, VTs), MemoryVT(memvt), SrcValue(srcValue), SVOffset(SVO),
-   Flags(vol | ((Log2_32(alignment) + 1) << 1)) {
+   Flags(encodeMemSDNodeFlags(vol, alignment)) {
 
   assert(isPowerOf2_32(alignment) && "Alignment is not a power of 2!");
   assert(getAlignment() == alignment && "Alignment representation error!");
@@ -4532,7 +4522,7 @@ MachineMemOperand MemSDNode::getMemOperand() const {
 
 /// Profile - Gather unique data for the node.
 ///
-void SDNode::Profile(FoldingSetNodeID &ID) {
+void SDNode::Profile(FoldingSetNodeID &ID) const {
   AddNodeIDNode(ID, this);
 }
 

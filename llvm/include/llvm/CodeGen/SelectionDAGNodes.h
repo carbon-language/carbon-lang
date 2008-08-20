@@ -1266,7 +1266,7 @@ public:
 
   /// Profile - Gather unique data for the node.
   ///
-  void Profile(FoldingSetNodeID &ID);
+  void Profile(FoldingSetNodeID &ID) const;
 
 protected:
   friend class SelectionDAG;
@@ -1498,6 +1498,10 @@ public:
   const SDValue &getBasePtr() const {
     return getOperand(getOpcode() == ISD::STORE ? 2 : 1);
   }
+
+  /// getRawFlags - Represent the flags as a bunch of bits.
+  ///
+  unsigned getRawFlags() const { return Flags; }
 
   // Methods to support isa and dyn_cast
   static bool classof(const MemSDNode *) { return true; }

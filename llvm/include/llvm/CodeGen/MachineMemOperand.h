@@ -19,6 +19,7 @@
 namespace llvm {
 
 class Value;
+class FoldingSetNodeID;
 
 //===----------------------------------------------------------------------===//
 /// MachineMemOperand - A description of a memory reference used in the backend.
@@ -74,6 +75,10 @@ public:
   bool isLoad() const { return Flags & MOLoad; }
   bool isStore() const { return Flags & MOStore; }
   bool isVolatile() const { return Flags & MOVolatile; }
+
+  /// Profile - Gather unique data for the object.
+  ///
+  void Profile(FoldingSetNodeID &ID) const;
 };
 
 } // End llvm namespace
