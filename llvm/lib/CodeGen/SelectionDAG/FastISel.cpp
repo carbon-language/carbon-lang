@@ -259,7 +259,7 @@ unsigned FastISel::FastEmitInst_(unsigned MachineInstOpcode,
   unsigned ResultReg = MRI.createVirtualRegister(RC);
   const TargetInstrDesc &II = TII.get(MachineInstOpcode);
 
-  MachineInstr *MI = BuildMI(MBB, II, ResultReg);
+  BuildMI(MBB, II, ResultReg);
   return ResultReg;
 }
 
@@ -269,7 +269,7 @@ unsigned FastISel::FastEmitInst_r(unsigned MachineInstOpcode,
   unsigned ResultReg = MRI.createVirtualRegister(RC);
   const TargetInstrDesc &II = TII.get(MachineInstOpcode);
 
-  MachineInstr *MI = BuildMI(MBB, II, ResultReg).addReg(Op0);
+  BuildMI(MBB, II, ResultReg).addReg(Op0);
   return ResultReg;
 }
 
@@ -279,6 +279,6 @@ unsigned FastISel::FastEmitInst_rr(unsigned MachineInstOpcode,
   unsigned ResultReg = MRI.createVirtualRegister(RC);
   const TargetInstrDesc &II = TII.get(MachineInstOpcode);
 
-  MachineInstr *MI = BuildMI(MBB, II, ResultReg).addReg(Op0).addReg(Op1);
+  BuildMI(MBB, II, ResultReg).addReg(Op0).addReg(Op1);
   return ResultReg;
 }
