@@ -14,6 +14,10 @@
 #ifndef LLVM_CLANG_ANALYSIS_ENVIRONMENT_H
 #define LLVM_CLANG_ANALYSIS_ENVIRONMENT_H
 
+// For using typedefs in StoreManager. Should find a better place for these
+// typedefs.
+#include "clang/Analysis/PathSensitive/Store.h"
+
 #include "llvm/ADT/ImmutableMap.h"
 #include "clang/Analysis/PathSensitive/RValues.h"
 #include "llvm/Support/Allocator.h"
@@ -23,7 +27,8 @@ namespace clang {
 
 class EnvironmentManager;
 class BasicValueFactory;
-  
+class LiveVariables;
+
 class Environment : public llvm::FoldingSetNode {
 private:
     
@@ -132,6 +137,12 @@ public:
   
   Environment SetRVal(const Environment& Env, Expr* E, RVal V,
                       bool isBlkExpr, bool Invalidate);
+
+  Environment RemoveDeadBindings(Environment Env, 
+                                 Stmt* Loc,
+                                 const LiveVariables& Liveness,
+                                 StoreManager::DeclRootsTy& DRoots,
+                                 StoreManager::LiveSymbolsTy& LSymbols);
 };
   
 } // end clang namespace

@@ -12,7 +12,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Analysis/PathSensitive/Environment.h"
+#include "clang/Analysis/Analyses/LiveVariables.h"
 #include "llvm/ADT/ImmutableMap.h"
+#include "llvm/Support/Streams.h"
 
 using namespace clang;
 
@@ -102,4 +104,50 @@ Environment EnvironmentManager::SetRVal(const Environment& Env, Expr* E, RVal V,
   }
 
   return isBlkExpr ? AddBlkExpr(Env, E, V) : AddSubExpr(Env, E, V);
+}
+
+Environment 
+EnvironmentManager::RemoveDeadBindings(Environment Env, 
+                                       Stmt* Loc,
+                                       const LiveVariables& Liveness,
+                                       StoreManager::DeclRootsTy& DRoots,
+                                       StoreManager::LiveSymbolsTy& LSymbols) {
+  // Drop bindings for subexpressions.
+  Env = RemoveSubExprBindings(Env);
+
+  // Iterate over the block-expr bindings.
+  for (Environment::beb_iterator I = Env.beb_begin(), E = Env.beb_end(); 
+       I != E; ++I) {
+    Expr* BlkExpr = I.getKey();
+
+    if (Liveness.isLive(Loc, BlkExpr)) {
+      RVal X = I.getData();
+
+      // If the block expr's value is the address of some Decl, then mark that
+      // Decl.
+      if (isa<lval::DeclVal>(X)) {
+        lval::DeclVal LV = cast<lval::DeclVal>(X);
+        DRoots.push_back(LV.getDecl());
+      }
+
+      // Mark all symbols in the block expr's value.
+      for (RVal::symbol_iterator SI = X.symbol_begin(), SE = X.symbol_end();
+           SI != SE; ++SI) {
+        LSymbols.insert(*SI);
+      }
+    } else {
+      // The block expr is dead.
+      RVal X = I.getData();
+
+      // Do not misclean LogicalExpr or ConditionalOperator.
+      // Why is it dead? Should look at LiveVariables.
+
+      if (X.isUndef() && cast<UndefinedVal>(X).getData())
+        continue;
+
+      Env = RemoveBlkExpr(Env, BlkExpr);
+    }
+  }
+
+  return Env;
 }

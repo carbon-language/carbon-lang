@@ -88,40 +88,8 @@ GRStateManager::RemoveDeadBindings(const GRState* St, Stmt* Loc,
   
   GRState NewSt = *St;
 
-  // FIXME: Put this in environment.
-  // Clean up the environment.
-  
-  // Drop bindings for subexpressions.
-  NewSt.Env = EnvMgr.RemoveSubExprBindings(NewSt.Env);
-  
-  // Iterate over the block-expr bindings.
-
-  for (GRState::beb_iterator I = St->beb_begin(), E = St->beb_end();
-                                                    I!=E ; ++I) {    
-    Expr* BlkExpr = I.getKey();
-    
-    if (Liveness.isLive(Loc, BlkExpr)) {
-      RVal X = I.getData();
-      
-      if (isa<lval::DeclVal>(X)) {
-        lval::DeclVal LV = cast<lval::DeclVal>(X);
-        DRoots.push_back(LV.getDecl());
-      }
-      
-      for (RVal::symbol_iterator SI = X.symbol_begin(), SE = X.symbol_end(); 
-                                                        SI != SE; ++SI) {        
-        LSymbols.insert(*SI);
-      }
-    }
-    else {
-      RVal X = I.getData();
-      
-      if (X.isUndef() && cast<UndefinedVal>(X).getData())
-        continue;
-      
-      NewSt.Env = EnvMgr.RemoveBlkExpr(NewSt.Env, BlkExpr);
-    }
-  }
+  NewSt.Env = EnvMgr.RemoveDeadBindings(NewSt.Env, Loc, Liveness, 
+                                        DRoots, LSymbols);
 
   // Clean up the store.
   DSymbols.clear();
