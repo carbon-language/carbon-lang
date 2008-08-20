@@ -59,7 +59,10 @@ EnableLegalizeTypes("enable-legalize-types", cl::Hidden);
 static cl::opt<bool>
 EnableFastISel("fast-isel", cl::Hidden,
           cl::desc("Enable the experimental \"fast\" instruction selector"));
-
+static cl::opt<bool>
+DisableFastISelAbort("fast-isel-no-abort", cl::Hidden,
+          cl::desc("Use the SelectionDAGISel when \"fast\" instruction "
+                   "selection fails"));
 
 #ifndef NDEBUG
 static cl::opt<bool>
@@ -5103,6 +5106,7 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
   // landing pads, which also require special handling.
   // For now, also exclude blocks with terminators that aren't
   // unconditional branches.
+  BasicBlock::iterator Begin = LLVMBB->begin();
   if (EnableFastISel &&
       LLVMBB != &LLVMBB->getParent()->getEntryBlock() &&
       !BB->isLandingPad() &&
@@ -5110,17 +5114,18 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
       cast<BranchInst>(LLVMBB->getTerminator())->isUnconditional()) {
     if (FastISel *F = TLI.createFastISel(BB, &FuncInfo.MF,
                                        TLI.getTargetMachine().getInstrInfo())) {
-      BasicBlock::iterator I =
-        F->SelectInstructions(LLVMBB->begin(), LLVMBB->end(), FuncInfo.ValueMap);
-      if (I == LLVMBB->end())
+      Begin = F->SelectInstructions(Begin, LLVMBB->end(), FuncInfo.ValueMap);
+      if (Begin == LLVMBB->end())
         // The "fast" selector selected the entire block, so we're done.
         return;
 
-      // The "fast" selector couldn't handle something and bailed.
-      // For the temporary purpose of debugging, just abort.
-      I->dump();
-      assert(0 && "FastISel didn't select the entire block");
-      abort();
+      if (!DisableFastISelAbort) {
+        // The "fast" selector couldn't handle something and bailed.
+        // For the purpose of debugging, just abort.
+        DEBUG(Begin->dump());
+        assert(0 && "FastISel didn't select the entire block");
+        abort();
+      }
     }
   }
 
@@ -5172,13 +5177,13 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
   }
 
   // Lower all of the non-terminator instructions.
-  for (BasicBlock::iterator I = LLVMBB->begin(), E = --LLVMBB->end();
+  for (BasicBlock::iterator I = Begin, E = --LLVMBB->end();
        I != E; ++I)
     SDL.visit(*I);
 
   // Ensure that all instructions which are used outside of their defining
   // blocks are available as virtual registers.  Invoke is handled elsewhere.
-  for (BasicBlock::iterator I = LLVMBB->begin(), E = LLVMBB->end(); I != E;++I)
+  for (BasicBlock::iterator I = Begin, E = LLVMBB->end(); I != E;++I)
     if (!I->use_empty() && !isa<PHINode>(I) && !isa<InvokeInst>(I)) {
       DenseMap<const Value*, unsigned>::iterator VMI =FuncInfo.ValueMap.find(I);
       if (VMI != FuncInfo.ValueMap.end())
