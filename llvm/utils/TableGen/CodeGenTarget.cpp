@@ -135,6 +135,21 @@ const std::string &CodeGenTarget::getName() const {
   return TargetRec->getName();
 }
 
+std::string CodeGenTarget::getInstNamespace() const {
+  std::string InstNS;
+
+  for (inst_iterator i = inst_begin(), e = inst_end(); i != e; ++i) {
+    InstNS = i->second.Namespace;
+
+    // Make sure not to pick up "TargetInstrInfo" by accidentally getting
+    // the namespace off the PHI instruction or something.
+    if (InstNS != "TargetInstrInfo")
+      break;
+  }
+
+  return InstNS;
+}
+
 Record *CodeGenTarget::getInstructionSet() const {
   return TargetRec->getValueAsDef("InstructionSet");
 }

@@ -157,13 +157,7 @@ void FastISelEmitter::run(std::ostream &OS) {
   // Get the namespace to insert instructions into.  Make sure not to pick up
   // "TargetInstrInfo" by accidentally getting the namespace off the PHI
   // instruction or something.
-  std::string InstNS;
-  for (CodeGenTarget::inst_iterator i = Target.inst_begin(),
-       e = Target.inst_end(); i != e; ++i) {
-    InstNS = i->second.Namespace;
-    if (InstNS != "TargetInstrInfo")
-      break;
-  }
+  std::string InstNS = Target.getInstNamespace();
 
   OS << "namespace llvm {\n";
   OS << "namespace " << InstNS << " {\n";
