@@ -144,7 +144,8 @@ GRStateManager::RemoveDeadBindings(const GRState* St, Stmt* Loc,
       CE = CEFactory.Remove(CE, sym);
     }
   }
-  
+  state = state.set<ConstEqTy>(CE);
+
   ConstNotEqTy CNE = state.get<ConstNotEqTy>();
   ConstNotEqTy::Factory& CNEFactory = state.get_context<ConstNotEqTy>();
 
