@@ -76,6 +76,13 @@ public:
 };
 } // end anonymous namespace.
 
+static void getDarwinDefines(std::vector<char> &Defs) {
+  Define(Defs, "__APPLE__");
+  Define(Defs, "__MACH__");
+
+  if (0)  // darwin_pascal_strings
+    Define(Defs, "__PASCAL_STRINGS__");
+}
 
 /// getPowerPCDefines - Return a set of the PowerPC-specific #defines that are
 /// not tied to a specific subtarget.
@@ -491,102 +498,6 @@ namespace PPC {
   }
   
 } // End namespace PPC
-
-/// X86 builtin info.
-namespace X86 {
-  static const Builtin::Info BuiltinInfo[] = {
-#define BUILTIN(ID, TYPE, ATTRS) { #ID, TYPE, ATTRS },
-#include "clang/AST/X86Builtins.def"
-  };
-
-  static void getBuiltins(const Builtin::Info *&Records, unsigned &NumRecords) {
-    Records = BuiltinInfo;
-    NumRecords = LastTSBuiltin-Builtin::FirstTSBuiltin;
-  }
-    
-  static const char *GCCRegNames[] = {
-    "ax", "dx", "cx", "bx", "si", "di", "bp", "sp",
-    "st", "st(1)", "st(2)", "st(3)", "st(4)", "st(5)", "st(6)", "st(7)",
-    "argp", "flags", "fspr", "dirflag", "frame",
-    "xmm0", "xmm1", "xmm2", "xmm3", "xmm4", "xmm5", "xmm6", "xmm7",
-    "mm0", "mm1", "mm2", "mm3", "mm4", "mm5", "mm6", "mm7",
-    "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15",
-    "xmm8", "xmm9", "xmm10", "xmm11", "xmm12", "xmm13", "xmm14", "xmm15"
-  };
-  
-  static void getGCCRegNames(const char * const *&Names, 
-                                  unsigned &NumNames) {
-    Names = GCCRegNames;
-    NumNames = llvm::array_lengthof(GCCRegNames);
-  }
-  
-  static const TargetInfo::GCCRegAlias GCCRegAliases[] = {
-    { { "al", "ah", "eax", "rax" }, "ax" },
-    { { "bl", "bh", "ebx", "rbx" }, "bx" },
-    { { "cl", "ch", "ecx", "rcx" }, "cx" },
-    { { "dl", "dh", "edx", "rdx" }, "dx" },
-    { { "esi", "rsi" }, "si" },
-    { { "edi", "rdi" }, "di" },
-    { { "esp", "rsp" }, "sp" },
-    { { "ebp", "rbp" }, "bp" },
-  };
-
-  static void getGCCRegAliases(const TargetInfo::GCCRegAlias *&Aliases, 
-                               unsigned &NumAliases) {
-    Aliases = GCCRegAliases;
-    NumAliases = llvm::array_lengthof(GCCRegAliases);
-  }  
-  
-  static bool validateAsmConstraint(char c, 
-                                    TargetInfo::ConstraintInfo &info) {
-    switch (c) {
-    default: return false;
-    case 'a': // eax.
-    case 'b': // ebx.
-    case 'c': // ecx.
-    case 'd': // edx.
-    case 'S': // esi.
-    case 'D': // edi.
-    case 'A': // edx:eax.
-    case 't': // top of floating point stack.
-    case 'u': // second from top of floating point stack.
-    case 'q': // Any register accessible as [r]l: a, b, c, and d.
-    case 'Q': // Any register accessible as [r]h: a, b, c, and d.
-    case 'Z': // 32-bit integer constant for use with zero-extending x86_64
-              // instructions.
-    case 'N': // unsigned 8-bit integer constant for use with in and out
-              // instructions.
-      info = (TargetInfo::ConstraintInfo)(info|TargetInfo::CI_AllowsRegister);
-      return true;
-    }
-  }
-
-  static std::string convertConstraint(const char Constraint) {
-    switch (Constraint) {
-    case 'a': return std::string("{ax}");
-    case 'b': return std::string("{bx}");
-    case 'c': return std::string("{cx}");
-    case 'd': return std::string("{dx}");
-    case 'S': return std::string("{si}");
-    case 'D': return std::string("{di}");
-    case 't': // top of floating point stack.
-      return std::string("{st}");
-    case 'u': // second from top of floating point stack.
-      return std::string("{st(1)}"); // second from top of floating point stack.
-    default:
-      return std::string(1, Constraint);
-    }
-  }
-
-  const char *getClobbers() {
-    return "~{dirflag},~{fpsr},~{flags}";
-  }
-  
-  const char *getTargetPrefix() {
-    return "x86";
-  }
-  
-} // End namespace X86
   
   
 /// ARM builtin info.
@@ -683,94 +594,173 @@ public:
 } // end anonymous namespace.
 
 namespace {
-class DarwinI386TargetInfo : public DarwinTargetInfo {
-public:
-  DarwinI386TargetInfo(const std::string& triple) : DarwinTargetInfo(triple) {
-    DoubleAlign = LongLongAlign = 32;
-    LongDoubleWidth = 128;
-    LongDoubleAlign = 128;
-    LongDoubleFormat = &llvm::APFloat::x87DoubleExtended;
-  }
+// Namespace for x86 abstract base class
+const Builtin::Info BuiltinInfo[] = {
+#define BUILTIN(ID, TYPE, ATTRS) { #ID, TYPE, ATTRS },
+#include "clang/AST/X86Builtins.def"
+};
 
-  virtual void getTargetDefines(std::vector<char> &Defines) const {
-    DarwinTargetInfo::getTargetDefines(Defines);
-    getX86Defines(Defines, false);
+const char *GCCRegNames[] = {
+  "ax", "dx", "cx", "bx", "si", "di", "bp", "sp",
+  "st", "st(1)", "st(2)", "st(3)", "st(4)", "st(5)", "st(6)", "st(7)",
+  "argp", "flags", "fspr", "dirflag", "frame",
+  "xmm0", "xmm1", "xmm2", "xmm3", "xmm4", "xmm5", "xmm6", "xmm7",
+  "mm0", "mm1", "mm2", "mm3", "mm4", "mm5", "mm6", "mm7",
+  "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15",
+  "xmm8", "xmm9", "xmm10", "xmm11", "xmm12", "xmm13", "xmm14", "xmm15"
+};
+
+const TargetInfo::GCCRegAlias GCCRegAliases[] = {
+  { { "al", "ah", "eax", "rax" }, "ax" },
+  { { "bl", "bh", "ebx", "rbx" }, "bx" },
+  { { "cl", "ch", "ecx", "rcx" }, "cx" },
+  { { "dl", "dh", "edx", "rdx" }, "dx" },
+  { { "esi", "rsi" }, "si" },
+  { { "edi", "rdi" }, "di" },
+  { { "esp", "rsp" }, "sp" },
+  { { "ebp", "rbp" }, "bp" },
+};
+
+// X86 target abstract base class; x86-32 and x86-64 are very close, so
+// most of the implementation can be shared.
+class X86TargetInfo : public TargetInfo {
+public:
+  X86TargetInfo(const std::string& triple) : TargetInfo(triple) {
+    LongDoubleFormat = &llvm::APFloat::x87DoubleExtended;
   }
   virtual void getTargetBuiltins(const Builtin::Info *&Records,
                                  unsigned &NumRecords) const {
-    X86::getBuiltins(Records, NumRecords);
+    Records = BuiltinInfo;
+    NumRecords = clang::X86::LastTSBuiltin-Builtin::FirstTSBuiltin;
   }
-  virtual const char *getVAListDeclaration() const {
-    return getI386VAListDeclaration();
-  }  
   virtual const char *getTargetPrefix() const {
-    return X86::getTargetPrefix();
+    return "x86";
   }  
   virtual void getGCCRegNames(const char * const *&Names, 
-                                   unsigned &NumNames) const {
-    X86::getGCCRegNames(Names, NumNames);
+                              unsigned &NumNames) const {
+    Names = GCCRegNames;
+    NumNames = llvm::array_lengthof(GCCRegNames);
   }
   virtual void getGCCRegAliases(const GCCRegAlias *&Aliases, 
                                 unsigned &NumAliases) const {
-    X86::getGCCRegAliases(Aliases, NumAliases);
+    Aliases = GCCRegAliases;
+    NumAliases = llvm::array_lengthof(GCCRegAliases);
   }
   virtual bool validateAsmConstraint(char c,
-                                     TargetInfo::ConstraintInfo &info) const {
-    return X86::validateAsmConstraint(c, info);
-  }
-
-  virtual std::string convertConstraint(const char Constraint) const {
-    return X86::convertConstraint(Constraint);
-  }
-
+                                     TargetInfo::ConstraintInfo &info) const;
+  virtual std::string convertConstraint(const char Constraint) const;
   virtual const char *getClobbers() const {
-    return X86::getClobbers();
-  }  
+    return "~{dirflag},~{fpsr},~{flags}";
+  }
 };
-} // end anonymous namespace.
+  
+bool
+X86TargetInfo::validateAsmConstraint(char c,
+                                     TargetInfo::ConstraintInfo &info) const {
+  switch (c) {
+  default: return false;
+  case 'a': // eax.
+  case 'b': // ebx.
+  case 'c': // ecx.
+  case 'd': // edx.
+  case 'S': // esi.
+  case 'D': // edi.
+  case 'A': // edx:eax.
+  case 't': // top of floating point stack.
+  case 'u': // second from top of floating point stack.
+  case 'q': // Any register accessible as [r]l: a, b, c, and d.
+  case 'Q': // Any register accessible as [r]h: a, b, c, and d.
+  case 'Z': // 32-bit integer constant for use with zero-extending x86_64
+            // instructions.
+  case 'N': // unsigned 8-bit integer constant for use with in and out
+            // instructions.
+    info = (TargetInfo::ConstraintInfo)(info|TargetInfo::CI_AllowsRegister);
+    return true;
+  }
+}
+
+std::string
+X86TargetInfo::convertConstraint(const char Constraint) const {
+  switch (Constraint) {
+  case 'a': return std::string("{ax}");
+  case 'b': return std::string("{bx}");
+  case 'c': return std::string("{cx}");
+  case 'd': return std::string("{dx}");
+  case 'S': return std::string("{si}");
+  case 'D': return std::string("{di}");
+  case 't': // top of floating point stack.
+    return std::string("{st}");
+  case 'u': // second from top of floating point stack.
+    return std::string("{st(1)}"); // second from top of floating point stack.
+  default:
+    return std::string(1, Constraint);
+  }
+}
+
+} // end anonymous namespace
 
 namespace {
-class DarwinX86_64TargetInfo : public DarwinTargetInfo {
+// X86-32 generic target
+class X86_32TargetInfo : public X86TargetInfo {
 public:
-  DarwinX86_64TargetInfo(const std::string& triple) : DarwinTargetInfo(triple) {
+  X86_32TargetInfo(const std::string& triple) : X86TargetInfo(triple) {
+    DoubleAlign = LongLongAlign = 32;
+    LongDoubleWidth = 96;
+    LongDoubleAlign = 32;
+  }
+  virtual const char *getVAListDeclaration() const {
+    return getI386VAListDeclaration();
+  }
+  virtual void getTargetDefines(std::vector<char> &Defines) const {
+    getX86Defines(Defines, false);
+  }
+};
+} // end anonymous namespace
+
+namespace {
+// x86-32 Darwin (OS X) target
+class DarwinI386TargetInfo : public X86_32TargetInfo {
+public:
+  DarwinI386TargetInfo(const std::string& triple) : X86_32TargetInfo(triple) {
+    LongDoubleWidth = 128;
+    LongDoubleAlign = 128;
+  }
+  virtual void getTargetDefines(std::vector<char> &Defines) const {
+    X86_32TargetInfo::getTargetDefines(Defines);
+    getDarwinDefines(Defines);
+  }
+};
+} // end anonymous namespace
+
+namespace {
+// x86-64 generic target
+class X86_64TargetInfo : public X86TargetInfo {
+public:
+  X86_64TargetInfo(const std::string& triple) : X86TargetInfo(triple) {
     LongWidth = LongAlign = PointerWidth = PointerAlign = 64;
     LongDoubleWidth = 128;
     LongDoubleAlign = 128;
-    LongDoubleFormat = &llvm::APFloat::x87DoubleExtended;
-  }
-  
-  virtual void getTargetDefines(std::vector<char> &Defines) const {
-    DarwinTargetInfo::getTargetDefines(Defines);
-    getX86Defines(Defines, true);
-  }
-  virtual void getTargetBuiltins(const Builtin::Info *&Records,
-                                 unsigned &NumRecords) const {
-    X86::getBuiltins(Records, NumRecords);
   }
   virtual const char *getVAListDeclaration() const {
     return getX86_64VAListDeclaration();
   }
-  virtual const char *getTargetPrefix() const {
-    return X86::getTargetPrefix();
+  virtual void getTargetDefines(std::vector<char> &Defines) const {
+    getX86Defines(Defines, true);
   }
-  virtual void getGCCRegNames(const char * const *&Names, 
-                                   unsigned &NumNames) const {
-    X86::getGCCRegNames(Names, NumNames);
-  }  
-  virtual void getGCCRegAliases(const GCCRegAlias *&Aliases, 
-                                unsigned &NumAliases) const {
-    X86::getGCCRegAliases(Aliases, NumAliases);
+};
+} // end anonymous namespace
+
+namespace {
+// x86-64 Darwin (OS X) target
+class DarwinX86_64TargetInfo : public X86_64TargetInfo {
+public:
+  DarwinX86_64TargetInfo(const std::string& triple) :
+    X86_64TargetInfo(triple) {}
+
+  virtual void getTargetDefines(std::vector<char> &Defines) const {
+    X86_64TargetInfo::getTargetDefines(Defines);
+    getDarwinDefines(Defines);
   }
-  virtual bool validateAsmConstraint(char c,
-                                     TargetInfo::ConstraintInfo &info) const {
-    return X86::validateAsmConstraint(c, info);
-  }
-  virtual std::string convertConstraint(const char Constraint) const {
-    return X86::convertConstraint(Constraint);
-  }
-  virtual const char *getClobbers() const {
-    return X86::getClobbers();
-  }    
 };
 } // end anonymous namespace.
 
