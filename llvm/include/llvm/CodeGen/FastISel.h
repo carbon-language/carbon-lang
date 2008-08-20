@@ -23,7 +23,9 @@ namespace llvm {
 class MachineBasicBlock;
 class MachineFunction;
 class MachineRegisterInfo;
+class TargetData;
 class TargetInstrInfo;
+class TargetLowering;
 class TargetRegisterClass;
 
 /// FastISel - This is a fast-path instruction selection class that
@@ -33,7 +35,9 @@ class FastISel {
   MachineBasicBlock *MBB;
   MachineFunction &MF;
   MachineRegisterInfo &MRI;
+  const TargetData &TD;
   const TargetInstrInfo &TII;
+  TargetLowering &TLI;
 
 public:
   /// SelectInstructions - Do "fast" instruction selection over the
@@ -71,6 +75,29 @@ protected:
   virtual unsigned FastEmit_rr(MVT::SimpleValueType VT,
                                ISD::NodeType Opcode,
                                unsigned Op0, unsigned Op1);
+
+  /// FastEmit_i - This method is called by target-independent code
+  /// to request that an instruction with the given type which materialize
+  /// the specified immediate value.
+  virtual unsigned FastEmit_i(MVT::SimpleValueType VT, uint64_t Imm);
+
+  /// FastEmit_ri - This method is called by target-independent code
+  /// to request that an instruction with the given type, opcode, and
+  /// register and immediate operands be emitted.
+  ///
+  virtual unsigned FastEmit_ri(MVT::SimpleValueType VT,
+                               ISD::NodeType Opcode,
+                               unsigned Op0, uint64_t Imm,
+                               MVT::SimpleValueType ImmType);
+
+  /// FastEmit_ri_ - This method is a wrapper of FastEmit_ri. It first tries
+  /// to emit an instruction with an immediate operand using FastEmit_ri.
+  /// If that fails, it materializes the immediate into a register and try
+  /// FastEmit_rr instead.
+  unsigned FastEmit_ri_(MVT::SimpleValueType VT,
+                        ISD::NodeType Opcode,
+                        unsigned Op0, uint64_t Imm,
+                        MVT::SimpleValueType ImmType);
 
   /// FastEmitInst_ - Emit a MachineInstr with no operands and a
   /// result register in the given register class.

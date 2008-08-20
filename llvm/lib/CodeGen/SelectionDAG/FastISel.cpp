@@ -15,7 +15,9 @@
 #include "llvm/CodeGen/FastISel.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetMachine.h"
 using namespace llvm;
 
@@ -48,8 +50,81 @@ bool FastISel::SelectBinaryOp(Instruction *I, ISD::NodeType ISDOpcode,
 
 bool FastISel::SelectGetElementPtr(Instruction *I,
                                    DenseMap<const Value*, unsigned> &ValueMap) {
-  // TODO: implement me
-  return false;
+  unsigned N = ValueMap[I->getOperand(0)];
+  if (N == 0)
+    // Unhandled operand. Halt "fast" selection and bail.
+    return false;
+
+  const Type *Ty = I->getOperand(0)->getType();
+  MVT VT = MVT::getMVT(Ty, /*HandleUnknown=*/true);
+  MVT::SimpleValueType PtrVT = TLI.getPointerTy().getSimpleVT();
+
+  for (GetElementPtrInst::op_iterator OI = I->op_begin()+1, E = I->op_end();
+       OI != E; ++OI) {
+    Value *Idx = *OI;
+    if (const StructType *StTy = dyn_cast<StructType>(Ty)) {
+      unsigned Field = cast<ConstantInt>(Idx)->getZExtValue();
+      if (Field) {
+        // N = N + Offset
+        uint64_t Offs = TD.getStructLayout(StTy)->getElementOffset(Field);
+        // FIXME: This can be optimized by combining the add with a
+        // subsequent one.
+        N = FastEmit_ri(VT.getSimpleVT(), ISD::ADD, N, Offs, PtrVT);
+        if (N == 0)
+          // Unhandled operand. Halt "fast" selection and bail.
+          return false;
+      }
+      Ty = StTy->getElementType(Field);
+    } else {
+      Ty = cast<SequentialType>(Ty)->getElementType();
+
+      // If this is a constant subscript, handle it quickly.
+      if (ConstantInt *CI = dyn_cast<ConstantInt>(Idx)) {
+        if (CI->getZExtValue() == 0) continue;
+        uint64_t Offs = 
+          TD.getABITypeSize(Ty)*cast<ConstantInt>(CI)->getSExtValue();
+        N = FastEmit_ri(VT.getSimpleVT(), ISD::ADD, N, Offs, PtrVT);
+        if (N == 0)
+          // Unhandled operand. Halt "fast" selection and bail.
+          return false;
+        continue;
+      }
+      
+      // N = N + Idx * ElementSize;
+      uint64_t ElementSize = TD.getABITypeSize(Ty);
+      unsigned IdxN = ValueMap[Idx];
+      if (IdxN == 0)
+        // Unhandled operand. Halt "fast" selection and bail.
+        return false;
+
+      // If the index is smaller or larger than intptr_t, truncate or extend
+      // it.
+      MVT IdxVT = MVT::getMVT(Idx->getType(), /*HandleUnknown=*/true);
+      if (IdxVT.bitsLT(VT))
+        IdxN = FastEmit_r(VT.getSimpleVT(), ISD::SIGN_EXTEND, IdxN);
+      else if (IdxVT.bitsGT(VT))
+        IdxN = FastEmit_r(VT.getSimpleVT(), ISD::TRUNCATE, IdxN);
+      if (IdxN == 0)
+        // Unhandled operand. Halt "fast" selection and bail.
+        return false;
+
+      // FIXME: If multiple is power of two, turn it into a shift. The
+      // optimization should be in FastEmit_ri?
+      IdxN = FastEmit_ri(VT.getSimpleVT(), ISD::MUL, IdxN,
+                         ElementSize, PtrVT);
+      if (IdxN == 0)
+        // Unhandled operand. Halt "fast" selection and bail.
+        return false;
+      N = FastEmit_rr(VT.getSimpleVT(), ISD::ADD, N, IdxN);
+      if (N == 0)
+        // Unhandled operand. Halt "fast" selection and bail.
+        return false;
+    }
+  }
+
+  // We successfully emitted code for the given LLVM Instruction.
+  ValueMap[I] = N;
+  return true;
 }
 
 BasicBlock::iterator
@@ -131,7 +206,10 @@ FastISel::SelectInstructions(BasicBlock::iterator Begin,
 }
 
 FastISel::FastISel(MachineFunction &mf)
-  : MF(mf), MRI(mf.getRegInfo()), TII(*mf.getTarget().getInstrInfo()) {
+  : MF(mf), MRI(mf.getRegInfo()),
+    TD(*mf.getTarget().getTargetData()),
+    TII(*mf.getTarget().getInstrInfo()),
+    TLI(*mf.getTarget().getTargetLowering()) {
 }
 
 FastISel::~FastISel() {}
@@ -148,6 +226,32 @@ unsigned FastISel::FastEmit_r(MVT::SimpleValueType, ISD::NodeType,
 unsigned FastISel::FastEmit_rr(MVT::SimpleValueType, ISD::NodeType,
                                unsigned /*Op0*/, unsigned /*Op0*/) {
   return 0;
+}
+
+unsigned FastISel::FastEmit_i(MVT::SimpleValueType, uint64_t) {
+  return 0;
+}
+
+unsigned FastISel::FastEmit_ri(MVT::SimpleValueType, ISD::NodeType,
+                               unsigned /*Op0*/, uint64_t Imm,
+                               MVT::SimpleValueType ImmType) {
+  return 0;
+}
+
+/// FastEmit_ri_ - This method is a wrapper of FastEmit_ri. It first tries
+/// to emit an instruction with an immediate operand using FastEmit_ri.
+/// If that fails, it materializes the immediate into a register and try
+/// FastEmit_rr instead.
+unsigned FastISel::FastEmit_ri_(MVT::SimpleValueType VT, ISD::NodeType Opcode,
+                               unsigned Op0, uint64_t Imm,
+                               MVT::SimpleValueType ImmType) {
+  unsigned ResultReg = 0;
+  // First check if immediate type is legal. If not, we can't use the ri form.
+  if (TLI.getOperationAction(ISD::Constant, ImmType) == TargetLowering::Legal)
+    ResultReg = FastEmit_ri(VT, Opcode, Op0, Imm, ImmType);
+  if (ResultReg != 0)
+    return ResultReg;
+  return FastEmit_rr(VT, Opcode, Op0, FastEmit_i(ImmType, Imm));
 }
 
 unsigned FastISel::FastEmitInst_(unsigned MachineInstOpcode,

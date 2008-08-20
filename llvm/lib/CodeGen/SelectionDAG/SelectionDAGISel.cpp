@@ -2807,9 +2807,9 @@ void SelectionDAGLowering::visitGetElementPtr(User &I) {
 
       // If the index is smaller or larger than intptr_t, truncate or extend
       // it.
-      if (IdxN.getValueType().bitsLT(N.getValueType())) {
+      if (IdxN.getValueType().bitsLT(N.getValueType()))
         IdxN = DAG.getNode(ISD::SIGN_EXTEND, N.getValueType(), IdxN);
-      } else if (IdxN.getValueType().bitsGT(N.getValueType()))
+      else if (IdxN.getValueType().bitsGT(N.getValueType()))
         IdxN = DAG.getNode(ISD::TRUNCATE, N.getValueType(), IdxN);
 
       // If this is a multiply by a power of two, turn it into a shl
