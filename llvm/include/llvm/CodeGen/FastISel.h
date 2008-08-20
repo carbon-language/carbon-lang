@@ -50,22 +50,53 @@ protected:
 
   virtual ~FastISel();
 
+  /// FastEmit_r - This method is called by target-independent code
+  /// to request that an instruction with the given type and opcode
+  /// be emitted.
   virtual unsigned FastEmit_(MVT::SimpleValueType VT,
                              ISD::NodeType Opcode);
+
+  /// FastEmit_r - This method is called by target-independent code
+  /// to request that an instruction with the given type, opcode, and
+  /// register operand be emitted.
+  ///
   virtual unsigned FastEmit_r(MVT::SimpleValueType VT,
                               ISD::NodeType Opcode, unsigned Op0);
+
+  /// FastEmit_rr - This method is called by target-independent code
+  /// to request that an instruction with the given type, opcode, and
+  /// register operands be emitted.
+  ///
   virtual unsigned FastEmit_rr(MVT::SimpleValueType VT,
                                ISD::NodeType Opcode,
                                unsigned Op0, unsigned Op1);
 
+  /// FastEmitInst_ - Emit a MachineInstr with no operands and a
+  /// result register in the given register class.
+  ///
   unsigned FastEmitInst_(unsigned MachineInstOpcode,
                          const TargetRegisterClass *RC);
+
+  /// FastEmitInst_ - Emit a MachineInstr with one register operand
+  /// and a result register in the given register class.
+  ///
   unsigned FastEmitInst_r(unsigned MachineInstOpcode,
                           const TargetRegisterClass *RC,
                           unsigned Op0);
+
+  /// FastEmitInst_ - Emit a MachineInstr with two register operands
+  /// and a result register in the given register class.
+  ///
   unsigned FastEmitInst_rr(unsigned MachineInstOpcode,
                            const TargetRegisterClass *RC,
                            unsigned Op0, unsigned Op1);
+
+private:
+  bool SelectBinaryOp(Instruction *I, ISD::NodeType ISDOpcode,
+                      DenseMap<const Value*, unsigned> &ValueMap);
+
+  bool SelectGetElementPtr(Instruction *I,
+                           DenseMap<const Value*, unsigned> &ValueMap);
 };
 
 }

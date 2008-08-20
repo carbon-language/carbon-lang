@@ -18,6 +18,34 @@
 #include "llvm/Target/TargetInstrInfo.h"
 using namespace llvm;
 
+/// SelectBinaryOp - Select and emit code for a binary operator instruction,
+/// which has an opcode which directly corresponds to the given ISD opcode.
+///
+bool FastISel::SelectBinaryOp(Instruction *I, ISD::NodeType ISDOpcode,
+                              DenseMap<const Value*, unsigned> &ValueMap) {
+  unsigned Op0 = ValueMap[I->getOperand(0)];
+  unsigned Op1 = ValueMap[I->getOperand(1)];
+  MVT VT = MVT::getMVT(I->getType(), /*HandleUnknown=*/true);
+  if (VT == MVT::Other || !VT.isSimple())
+    // Unhandled type. Halt "fast" selection and bail.
+    return false;
+
+  unsigned ResultReg = FastEmit_rr(VT.getSimpleVT(), ISDOpcode, Op0, Op1);
+  if (ResultReg == 0)
+    // Target-specific code wasn't able to find a machine opcode for
+    // the given ISD opcode and type. Halt "fast" selection and bail.
+    return false;
+
+  ValueMap[I] = ResultReg;
+  return true;
+}
+
+bool FastISel::SelectGetElementPtr(Instruction *I,
+                                   DenseMap<const Value*, unsigned> &ValueMap) {
+  // TODO: implement me
+  return false;
+}
+
 BasicBlock::iterator
 FastISel::SelectInstructions(BasicBlock::iterator Begin, BasicBlock::iterator End,
                              DenseMap<const Value*, unsigned> &ValueMap) {
@@ -25,23 +53,41 @@ FastISel::SelectInstructions(BasicBlock::iterator Begin, BasicBlock::iterator En
 
   for (; I != End; ++I) {
     switch (I->getOpcode()) {
-    case Instruction::Add: {
-      unsigned Op0 = ValueMap[I->getOperand(0)];
-      unsigned Op1 = ValueMap[I->getOperand(1)];
-      MVT VT = MVT::getMVT(I->getType(), /*HandleUnknown=*/true);
-      if (VT == MVT::Other || !VT.isSimple()) {
-        // Unhandled type. Halt "fast" selection and bail.
-        return I;
-      }
-      unsigned ResultReg = FastEmit_rr(VT.getSimpleVT(), ISD::ADD, Op0, Op1);
-      if (ResultReg == 0) {
-        // Target-specific code wasn't able to find a machine opcode for
-        // the given ISD opcode and type. Halt "fast" selection and bail.
-        return I;
-      }
-      ValueMap[I] = ResultReg;
+    case Instruction::Add:
+      if (!SelectBinaryOp(I, ISD::ADD, ValueMap))  return I; break;
+    case Instruction::Sub:
+      if (!SelectBinaryOp(I, ISD::SUB, ValueMap))  return I; break;
+    case Instruction::Mul:
+      if (!SelectBinaryOp(I, ISD::MUL, ValueMap))  return I; break;
+    case Instruction::SDiv:
+      if (!SelectBinaryOp(I, ISD::SDIV, ValueMap)) return I; break;
+    case Instruction::UDiv:
+      if (!SelectBinaryOp(I, ISD::UDIV, ValueMap)) return I; break;
+    case Instruction::FDiv:
+      if (!SelectBinaryOp(I, ISD::FDIV, ValueMap)) return I; break;
+    case Instruction::SRem:
+      if (!SelectBinaryOp(I, ISD::SREM, ValueMap)) return I; break;
+    case Instruction::URem:
+      if (!SelectBinaryOp(I, ISD::UREM, ValueMap)) return I; break;
+    case Instruction::FRem:
+      if (!SelectBinaryOp(I, ISD::FREM, ValueMap)) return I; break;
+    case Instruction::Shl:
+      if (!SelectBinaryOp(I, ISD::SHL, ValueMap)) return I; break;
+    case Instruction::LShr:
+      if (!SelectBinaryOp(I, ISD::SRL, ValueMap)) return I; break;
+    case Instruction::AShr:
+      if (!SelectBinaryOp(I, ISD::SRA, ValueMap)) return I; break;
+    case Instruction::And:
+      if (!SelectBinaryOp(I, ISD::AND, ValueMap)) return I; break;
+    case Instruction::Or:
+      if (!SelectBinaryOp(I, ISD::OR, ValueMap)) return I; break;
+    case Instruction::Xor:
+      if (!SelectBinaryOp(I, ISD::XOR, ValueMap)) return I; break;
+
+    case Instruction::GetElementPtr:
+      if (!SelectGetElementPtr(I, ValueMap)) return I;
       break;
-    }
+
     case Instruction::Br: {
       BranchInst *BI = cast<BranchInst>(I);
 

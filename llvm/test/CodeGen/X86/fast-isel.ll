@@ -9,9 +9,15 @@ entry:
   br label %fast
 
 fast:
-  %t = add i32 %r, %s
+  %t0 = add i32 %r, %s
+  %t1 = mul i32 %t0, %s
+  %t2 = sub i32 %t1, %s
+  %t3 = and i32 %t2, %s
+  %t4 = or i32 %t3, %s
+  %t5 = xor i32 %t4, %s
   br label %exit
 
 exit:
-  ret i32 %t
+  ret i32 %t5
 }
+
