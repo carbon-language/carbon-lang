@@ -389,5 +389,3 @@ void FastISelEmitter::run(std::ostream &OS) {
 
   OS << "}\n";
 }
-
-// todo: really filter out Constants
