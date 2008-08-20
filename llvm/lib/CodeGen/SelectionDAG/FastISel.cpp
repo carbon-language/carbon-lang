@@ -146,8 +146,8 @@ unsigned FastISel::FastEmit_rr(MVT::SimpleValueType, ISD::NodeType,
 unsigned FastISel::FastEmitInst_(unsigned MachineInstOpcode,
                                  const TargetRegisterClass* RC) {
   MachineRegisterInfo &MRI = MF->getRegInfo();
-  const TargetInstrDesc &II = TII->get(MachineInstOpcode);
   unsigned ResultReg = MRI.createVirtualRegister(RC);
+  const TargetInstrDesc &II = TII->get(MachineInstOpcode);
 
   MachineInstr *MI = BuildMI(*MF, II, ResultReg);
 
@@ -159,8 +159,8 @@ unsigned FastISel::FastEmitInst_r(unsigned MachineInstOpcode,
                                   const TargetRegisterClass *RC,
                                   unsigned Op0) {
   MachineRegisterInfo &MRI = MF->getRegInfo();
-  const TargetInstrDesc &II = TII->get(MachineInstOpcode);
   unsigned ResultReg = MRI.createVirtualRegister(RC);
+  const TargetInstrDesc &II = TII->get(MachineInstOpcode);
 
   MachineInstr *MI = BuildMI(*MF, II, ResultReg);
   MI->addOperand(MachineOperand::CreateReg(Op0, false));
@@ -173,8 +173,8 @@ unsigned FastISel::FastEmitInst_rr(unsigned MachineInstOpcode,
                                    const TargetRegisterClass *RC,
                                    unsigned Op0, unsigned Op1) {
   MachineRegisterInfo &MRI = MF->getRegInfo();
-  const TargetInstrDesc &II = TII->get(MachineInstOpcode);
   unsigned ResultReg = MRI.createVirtualRegister(RC);
+  const TargetInstrDesc &II = TII->get(MachineInstOpcode);
 
   MachineInstr *MI = BuildMI(*MF, II, ResultReg);
   MI->addOperand(MachineOperand::CreateReg(Op0, false));
