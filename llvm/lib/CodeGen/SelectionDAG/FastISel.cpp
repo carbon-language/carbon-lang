@@ -36,6 +36,7 @@ bool FastISel::SelectBinaryOp(Instruction *I, ISD::NodeType ISDOpcode,
     // the given ISD opcode and type. Halt "fast" selection and bail.
     return false;
 
+  // We successfully emitted code for the given LLVM Instruction.
   ValueMap[I] = ResultReg;
   return true;
 }
@@ -53,12 +54,18 @@ FastISel::SelectInstructions(BasicBlock::iterator Begin, BasicBlock::iterator En
 
   for (; I != End; ++I) {
     switch (I->getOpcode()) {
-    case Instruction::Add:
-      if (!SelectBinaryOp(I, ISD::ADD, ValueMap))  return I; break;
-    case Instruction::Sub:
-      if (!SelectBinaryOp(I, ISD::SUB, ValueMap))  return I; break;
-    case Instruction::Mul:
-      if (!SelectBinaryOp(I, ISD::MUL, ValueMap))  return I; break;
+    case Instruction::Add: {
+      ISD::NodeType Opc = I->getType()->isFPOrFPVector() ? ISD::FADD : ISD::ADD;
+      if (!SelectBinaryOp(I, Opc, ValueMap))  return I; break;
+    }
+    case Instruction::Sub: {
+      ISD::NodeType Opc = I->getType()->isFPOrFPVector() ? ISD::FSUB : ISD::SUB;
+      if (!SelectBinaryOp(I, Opc, ValueMap))  return I; break;
+    }
+    case Instruction::Mul: {
+      ISD::NodeType Opc = I->getType()->isFPOrFPVector() ? ISD::FMUL : ISD::MUL;
+      if (!SelectBinaryOp(I, Opc, ValueMap))  return I; break;
+    }
     case Instruction::SDiv:
       if (!SelectBinaryOp(I, ISD::SDIV, ValueMap)) return I; break;
     case Instruction::UDiv:

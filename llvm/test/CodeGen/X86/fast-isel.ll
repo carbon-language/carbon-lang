@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -fast-isel | grep add | count 1
+; RUN: llvm-as < %s | llc -fast-isel
 
 ; This tests very minimal fast-isel functionality.
 
@@ -19,5 +19,21 @@ fast:
 
 exit:
   ret i32 %t5
+}
+
+define double @bar(double* %p, double* %q) {
+entry:
+  %r = load double* %p
+  %s = load double* %q
+  br label %fast
+
+fast:
+  %t0 = add double %r, %s
+  %t1 = mul double %t0, %s
+  %t2 = sub double %t1, %s
+  br label %exit
+
+exit:
+  ret double %t2
 }
 
