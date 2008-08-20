@@ -486,6 +486,12 @@ namespace {
       delete MemMgr;
       if (ExceptionHandling) delete DE;
     }
+
+    /// classof - Methods for support type inquiry through isa, cast, and
+    /// dyn_cast:
+    ///
+    static inline bool classof(const JITEmitter*) { return true; }
+    static inline bool classof(const MachineCodeEmitter*) { return true; }
     
     JITResolver &getJITResolver() { return Resolver; }
 
@@ -1129,8 +1135,8 @@ void *JIT::getPointerToFunctionOrStub(Function *F) {
     return Addr;
   
   // Get a stub if the target supports it.
-  assert(dynamic_cast<JITEmitter*>(MCE) && "Unexpected MCE?");
-  JITEmitter *JE = static_cast<JITEmitter*>(getCodeEmitter());
+  assert(isa<JITEmitter>(MCE) && "Unexpected MCE?");
+  JITEmitter *JE = cast<JITEmitter>(getCodeEmitter());
   return JE->getJITResolver().getFunctionStub(F);
 }
 
@@ -1146,7 +1152,7 @@ void JIT::freeMachineCodeForFunction(Function *F) {
     RemoveFunctionFromSymbolTable(OldPtr);
 
   // Free the actual memory for the function body and related stuff.
-  assert(dynamic_cast<JITEmitter*>(MCE) && "Unexpected MCE?");
-  static_cast<JITEmitter*>(MCE)->deallocateMemForFunction(F);
+  assert(isa<JITEmitter>(MCE) && "Unexpected MCE?");
+  cast<JITEmitter>(MCE)->deallocateMemForFunction(F);
 }
 
