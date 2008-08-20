@@ -13,7 +13,6 @@
 
 #include "CodeGenFunction.h"
 #include "CodeGenModule.h"
-#include "CGObjCRuntime.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/StmtVisitor.h"
@@ -45,15 +44,11 @@ class VISIBILITY_HIDDEN ScalarExprEmitter
   : public StmtVisitor<ScalarExprEmitter, Value*> {
   CodeGenFunction &CGF;
   llvm::IRBuilder<> &Builder;
-  CGObjCRuntime *Runtime;
 
 public:
 
   ScalarExprEmitter(CodeGenFunction &cgf) : CGF(cgf), 
-    Builder(CGF.Builder), 
-    Runtime(0) {
-    if (CGF.CGM.hasObjCRuntime())
-      Runtime = &CGF.CGM.getObjCRuntime();
+    Builder(CGF.Builder) {
   }
   
   //===--------------------------------------------------------------------===//
@@ -472,46 +467,15 @@ Value *ScalarExprEmitter::VisitShuffleVectorExpr(ShuffleVectorExpr *E) {
 }
 
 Value *ScalarExprEmitter::VisitObjCMessageExpr(ObjCMessageExpr *E) {
-  // Only the lookup mechanism and first two arguments of the method
-  // implementation vary between runtimes.  We can get the receiver and
-  // arguments in generic code.
-  
-  // Find the receiver
-  llvm::Value *Receiver = CGF.EmitScalarExpr(E->getReceiver());
-
-  // Process the arguments
-  unsigned ArgC = E->getNumArgs();
-  llvm::SmallVector<llvm::Value*, 16> Args;
-  for (unsigned i = 0; i != ArgC; ++i) {
-    Expr *ArgExpr = E->getArg(i);
-    QualType ArgTy = ArgExpr->getType();
-    if (!CGF.hasAggregateLLVMType(ArgTy)) {
-      // Scalar argument is passed by-value.
-      Args.push_back(CGF.EmitScalarExpr(ArgExpr));
-    } else if (ArgTy->isAnyComplexType()) {
-      // Make a temporary alloca to pass the argument.
-      llvm::Value *DestMem = CGF.CreateTempAlloca(ConvertType(ArgTy));
-      CGF.EmitComplexExprIntoAddr(ArgExpr, DestMem, false);
-      Args.push_back(DestMem);
-    } else {
-      llvm::Value *DestMem = CGF.CreateTempAlloca(ConvertType(ArgTy));
-      CGF.EmitAggExpr(ArgExpr, DestMem, false);
-      Args.push_back(DestMem);
-    }
-  }
-
-  return Runtime->GenerateMessageSend(Builder, ConvertType(E->getType()),
-                                      Receiver, E->getSelector(),
-                                      &Args[0], Args.size());
+  return CGF.EmitObjCMessageExpr(E);
 }
 
 Value *ScalarExprEmitter::VisitObjCSelectorExpr(ObjCSelectorExpr *E) {
-  return Runtime->GetSelector(Builder, E->getSelector());
+  return CGF.EmitObjCSelectorExpr(E);
 }
 
 Value *ScalarExprEmitter::VisitObjCProtocolExpr(ObjCProtocolExpr *E) {
-  // FIXME: This should pass the Decl not the name.
-  return Runtime->GenerateProtocolRef(Builder, E->getProtocol());
+  return CGF.EmitObjCProtocolExpr(E);
 }
 
 Value *ScalarExprEmitter::VisitArraySubscriptExpr(ArraySubscriptExpr *E) {

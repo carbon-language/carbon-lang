@@ -23,6 +23,7 @@ using namespace CodeGen;
 llvm::Value *CodeGenFunction::EmitObjCStringLiteral(const ObjCStringLiteral *E) {
   std::string String(E->getString()->getStrData(), E->getString()->getByteLength());
   llvm::Constant *C = CGM.getObjCRuntime().GenerateConstantString(String);
+  // FIXME: This bitcast should just be made an invariant on the Runtime.
   return llvm::ConstantExpr::getBitCast(C, ConvertType(E->getType()));
 }
 
@@ -35,6 +36,10 @@ llvm::Value *CodeGenFunction::EmitObjCSelectorExpr(const ObjCSelectorExpr *E) {
   return CGM.getObjCRuntime().GetSelector(Builder, E->getSelector());
 }
 
+llvm::Value *CodeGenFunction::EmitObjCProtocolExpr(const ObjCProtocolExpr *E) {
+  // FIXME: This should pass the Decl not the name.
+  return CGM.getObjCRuntime().GenerateProtocolRef(Builder, E->getProtocol());
+}
 
 
 llvm::Value *CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E) {

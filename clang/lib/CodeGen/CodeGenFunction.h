@@ -475,10 +475,10 @@ public:
   llvm::Value *EmitVector(llvm::Value * const *Vals, unsigned NumVals,
                           bool isSplat = false);
   
+  llvm::Value *EmitObjCProtocolExpr(const ObjCProtocolExpr *E);
   llvm::Value *EmitObjCStringLiteral(const ObjCStringLiteral *E);
   llvm::Value *EmitObjCSelectorExpr(const ObjCSelectorExpr *E);
   llvm::Value *EmitObjCMessageExpr(const ObjCMessageExpr *E);
-
 
 
   //===--------------------------------------------------------------------===//
