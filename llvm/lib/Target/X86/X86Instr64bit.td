@@ -1148,6 +1148,34 @@ def XCHG64rm : RI<0x87, MRMSrcMem, (outs GR64:$dst), (ins i64mem:$ptr,GR64:$val)
                   [(set GR64:$dst, (atomic_swap_64 addr:$ptr, GR64:$val))]>;
 }
 
+// Atomic exchange, and, or, xor
+let Constraints = "$val = $dst", Defs = [EFLAGS],
+                  usesCustomDAGSchedInserter = 1 in {
+def ATOMAND64 : I<0, Pseudo, (outs GR64:$dst),(ins i64mem:$ptr, GR64:$val),
+               "#ATOMAND64 PSUEDO!", 
+               [(set GR64:$dst, (atomic_load_and addr:$ptr, GR64:$val))]>;
+def ATOMOR64 : I<0, Pseudo, (outs GR64:$dst),(ins i64mem:$ptr, GR64:$val),
+               "#ATOMOR64 PSUEDO!", 
+               [(set GR64:$dst, (atomic_load_or addr:$ptr, GR64:$val))]>;
+def ATOMXOR64 : I<0, Pseudo,(outs GR64:$dst),(ins i64mem:$ptr, GR64:$val),
+               "#ATOMXOR64 PSUEDO!", 
+               [(set GR64:$dst, (atomic_load_xor addr:$ptr, GR64:$val))]>;
+def ATOMNAND64 : I<0, Pseudo,(outs GR64:$dst),(ins i64mem:$ptr, GR64:$val),
+               "#ATOMNAND64 PSUEDO!", 
+               [(set GR64:$dst, (atomic_load_nand addr:$ptr, GR64:$val))]>;
+def ATOMMIN64: I<0, Pseudo, (outs GR64:$dst), (ins i64mem:$ptr, GR64:$val),
+               "#ATOMMIN64 PSUEDO!", 
+               [(set GR64:$dst, (atomic_load_min addr:$ptr, GR64:$val))]>;
+def ATOMMAX64: I<0, Pseudo, (outs GR64:$dst),(ins i64mem:$ptr, GR64:$val),
+               "#ATOMMAX64 PSUEDO!", 
+               [(set GR64:$dst, (atomic_load_max addr:$ptr, GR64:$val))]>;
+def ATOMUMIN64: I<0, Pseudo, (outs GR64:$dst),(ins i64mem:$ptr, GR64:$val),
+               "#ATOMUMIN64 PSUEDO!", 
+               [(set GR64:$dst, (atomic_load_umin addr:$ptr, GR64:$val))]>;
+def ATOMUMAX64: I<0, Pseudo, (outs GR64:$dst),(ins i64mem:$ptr, GR64:$val),
+               "#ATOMUMAX64 PSUEDO!", 
+               [(set GR64:$dst, (atomic_load_umax addr:$ptr, GR64:$val))]>;
+}
 
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns

@@ -6568,6 +6568,38 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
                                                X86::NOT8r, X86::AL,
                                                X86::GR8RegisterClass, true);
   // FIXME: There are no CMOV8 instructions; MIN/MAX need some other way.
+  case X86::ATOMAND64:
+    return EmitAtomicBitwiseWithCustomInserter(MI, BB, X86::AND64rr,
+                                               X86::AND64ri32, X86::MOV64rm, 
+                                               X86::LCMPXCHG64, X86::MOV64rr,
+                                               X86::NOT64r, X86::RAX,
+                                               X86::GR64RegisterClass);
+  case X86::ATOMOR64:
+    return EmitAtomicBitwiseWithCustomInserter(MI, BB, X86::OR64rr, 
+                                               X86::OR64ri32, X86::MOV64rm, 
+                                               X86::LCMPXCHG64, X86::MOV64rr,
+                                               X86::NOT64r, X86::RAX,
+                                               X86::GR64RegisterClass);
+  case X86::ATOMXOR64:
+    return EmitAtomicBitwiseWithCustomInserter(MI, BB, X86::XOR64rr,
+                                               X86::XOR64ri32, X86::MOV64rm, 
+                                               X86::LCMPXCHG64, X86::MOV64rr,
+                                               X86::NOT64r, X86::RAX,
+                                               X86::GR64RegisterClass);
+  case X86::ATOMNAND64:
+    return EmitAtomicBitwiseWithCustomInserter(MI, BB, X86::AND64rr,
+                                               X86::AND64ri32, X86::MOV64rm,
+                                               X86::LCMPXCHG64, X86::MOV64rr,
+                                               X86::NOT64r, X86::RAX,
+                                               X86::GR64RegisterClass, true);
+  case X86::ATOMMIN64:
+    return EmitAtomicMinMaxWithCustomInserter(MI, BB, X86::CMOVL64rr);
+  case X86::ATOMMAX64:
+    return EmitAtomicMinMaxWithCustomInserter(MI, BB, X86::CMOVG64rr);
+  case X86::ATOMUMIN64:
+    return EmitAtomicMinMaxWithCustomInserter(MI, BB, X86::CMOVB64rr);
+  case X86::ATOMUMAX64:
+    return EmitAtomicMinMaxWithCustomInserter(MI, BB, X86::CMOVA64rr);
   }
 }
 
