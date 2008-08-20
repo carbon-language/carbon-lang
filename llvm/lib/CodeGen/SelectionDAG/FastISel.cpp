@@ -52,7 +52,8 @@ bool FastISel::SelectGetElementPtr(Instruction *I,
 }
 
 BasicBlock::iterator
-FastISel::SelectInstructions(BasicBlock::iterator Begin, BasicBlock::iterator End,
+FastISel::SelectInstructions(BasicBlock::iterator Begin,
+                             BasicBlock::iterator End,
                              DenseMap<const Value*, unsigned> &ValueMap) {
   BasicBlock::iterator I = Begin;
 
