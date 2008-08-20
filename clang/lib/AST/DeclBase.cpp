@@ -41,6 +41,7 @@ static unsigned nProtocolDecls = 0;
 static unsigned nForwardProtocolDecls = 0;
 static unsigned nCategoryDecls = 0;
 static unsigned nIvarDecls = 0;
+static unsigned nAtDefsFieldDecls = 0;
 static unsigned nObjCImplementationDecls = 0;
 static unsigned nObjCCategoryImpl = 0;
 static unsigned nObjCCompatibleAlias = 0;
@@ -91,7 +92,7 @@ void Decl::PrintStats() {
           int(nFuncs+nVars+nParmVars+nFieldDecls+nSUC+nCXXFieldDecls+nCXXSUC+
               nEnumDecls+nEnumConst+nTypedef+nInterfaceDecls+nClassDecls+
               nMethodDecls+nProtocolDecls+nCategoryDecls+nIvarDecls+
-              nNamespaces));
+              nAtDefsFieldDecls+nNamespaces));
   fprintf(stderr, "    %d namespace decls, %d each (%d bytes)\n", 
           nNamespaces, (int)sizeof(NamespaceDecl), 
           int(nNamespaces*sizeof(NamespaceDecl)));
@@ -106,6 +107,9 @@ void Decl::PrintStats() {
   fprintf(stderr, "    %d field decls, %d each (%d bytes)\n", 
           nFieldDecls, (int)sizeof(FieldDecl),
           int(nFieldDecls*sizeof(FieldDecl)));
+  fprintf(stderr, "    %d @defs generated field decls, %d each (%d bytes)\n",
+          nAtDefsFieldDecls, (int)sizeof(ObjCAtDefsFieldDecl),
+          int(nAtDefsFieldDecls*sizeof(ObjCAtDefsFieldDecl)));
   fprintf(stderr, "    %d struct/union/class decls, %d each (%d bytes)\n", 
           nSUC, (int)sizeof(RecordDecl),
           int(nSUC*sizeof(RecordDecl)));
@@ -209,6 +213,7 @@ void Decl::addDeclKind(Kind k) {
   case ObjCForwardProtocol: nForwardProtocolDecls++; break;
   case ObjCCategory:        nCategoryDecls++; break;
   case ObjCIvar:            nIvarDecls++; break;
+  case ObjCAtDefsField:     nAtDefsFieldDecls++; break;
   case ObjCImplementation:  nObjCImplementationDecls++; break;
   case ObjCCategoryImpl:    nObjCCategoryImpl++; break;
   case ObjCCompatibleAlias: nObjCCompatibleAlias++; break;

@@ -94,6 +94,19 @@ ObjCIvarDecl *ObjCIvarDecl::Create(ASTContext &C, SourceLocation L,
   return new (Mem) ObjCIvarDecl(L, Id, T, ac, BW);
 }
 
+
+ObjCAtDefsFieldDecl
+*ObjCAtDefsFieldDecl::Create(ASTContext &C, SourceLocation L,
+                             IdentifierInfo *Id, QualType T, Expr *BW) {
+  void *Mem = C.getAllocator().Allocate<ObjCAtDefsFieldDecl>();
+  return new (Mem) ObjCAtDefsFieldDecl(L, Id, T, BW);
+}
+
+void ObjCAtDefsFieldDecl::Destroy(ASTContext& C) {
+  this->~ObjCAtDefsFieldDecl();
+  C.getAllocator().Deallocate((void *)this); 
+}
+
 ObjCProtocolDecl *ObjCProtocolDecl::Create(ASTContext &C,
                                            SourceLocation L, 
                                            IdentifierInfo *Id) {

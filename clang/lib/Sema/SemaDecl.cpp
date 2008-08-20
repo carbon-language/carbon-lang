@@ -1794,11 +1794,21 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
 
 /// Collect the instance variables declared in an Objective-C object.  Used in
 /// the creation of structures from objects using the @defs directive.
-static void CollectIvars(ObjCInterfaceDecl *Class,
+static void CollectIvars(ObjCInterfaceDecl *Class, ASTContext& Ctx,
                          llvm::SmallVectorImpl<Sema::DeclTy*> &ivars) {
   if (Class->getSuperClass())
-    CollectIvars(Class->getSuperClass(), ivars);
-  ivars.append(Class->ivar_begin(), Class->ivar_end());
+    CollectIvars(Class->getSuperClass(), Ctx, ivars);
+  
+  // For each ivar, create a fresh ObjCAtDefsFieldDecl.
+  for (ObjCInterfaceDecl::ivar_iterator I=Class->ivar_begin(), E=Class->ivar_end(); 
+       I!=E; ++I) {
+
+    ObjCIvarDecl* ID = *I;
+    ivars.push_back(ObjCAtDefsFieldDecl::Create(Ctx, ID->getLocation(),
+                                                ID->getIdentifier(),
+                                                ID->getType(),
+                                                ID->getBitWidth()));
+  }
 }
 
 /// Called whenever @defs(ClassName) is encountered in the source.  Inserts the
@@ -1813,7 +1823,7 @@ void Sema::ActOnDefs(Scope *S, SourceLocation DeclStart,
     return;
   }
   // Collect the instance variables
-  CollectIvars(Class, Decls);
+  CollectIvars(Class, Context, Decls);
 }
 
 QualType Sema::TryFixInvalidVariablyModifiedType(QualType T) {

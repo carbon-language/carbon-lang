@@ -508,6 +508,26 @@ private:
   unsigned DeclAccess : 3;
 };
 
+  
+/// ObjCAtDefsFieldDecl - Represents a field declaration created by an
+///  @defs(...).
+class ObjCAtDefsFieldDecl : public FieldDecl {
+private:
+  ObjCAtDefsFieldDecl(SourceLocation L, IdentifierInfo *Id,
+                      QualType T, Expr *BW)
+  : FieldDecl(ObjCAtDefsField, L, Id, T, BW) {}
+  
+public:
+  static ObjCAtDefsFieldDecl *Create(ASTContext &C, SourceLocation L,
+                                     IdentifierInfo *Id, QualType T,
+                                     Expr *BW);
+    
+  virtual void Destroy(ASTContext& C);
+
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Decl *D) { return D->getKind() == ObjCAtDefsField; }
+  static bool classof(const ObjCAtDefsFieldDecl *D) { return true; }
+};
 
 /// ObjCProtocolDecl - Represents a protocol declaration. ObjC protocols
 /// declare a pure abstract type (i.e no instance variables are permitted). 

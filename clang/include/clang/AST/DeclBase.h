@@ -45,6 +45,7 @@ public:
            Field,
              CXXField,
              ObjCIvar,
+             ObjCAtDefsField,
            ObjCCategory,
            ObjCCategoryImpl,
            ObjCImplementation,
@@ -84,7 +85,7 @@ public:
     // For each non-leaf class, we now define a mapping to the first/last member
     // of the class, to allow efficient classof.
     NamedFirst     = Field        , NamedLast     = ParmVar,
-    FieldFirst     = Field        , FieldLast     = ObjCIvar,
+    FieldFirst     = Field        , FieldLast     = ObjCAtDefsField,
     ScopedFirst    = Namespace    , ScopedLast    = ParmVar,
     TypeFirst      = Typedef      , TypeLast      = CXXClass,
     TagFirst       = Enum         , TagLast       = CXXClass,
