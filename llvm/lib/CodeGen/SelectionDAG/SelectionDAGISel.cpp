@@ -5115,6 +5115,14 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
     if (FastISel *F = TLI.createFastISel(BB, &FuncInfo.MF,
                                        TLI.getTargetMachine().getInstrInfo())) {
       Begin = F->SelectInstructions(Begin, LLVMBB->end(), FuncInfo.ValueMap);
+
+      // Clean up the FastISel object. TODO: Reorganize what data is
+      // stored in the FastISel class itself and what is merely passed
+      // to the SelectInstructions method, and then move the creation
+      // and deletion of the FastISel object up so that it is only
+      // done once per MachineFunction.
+      delete F;
+
       if (Begin == LLVMBB->end())
         // The "fast" selector selected the entire block, so we're done.
         return;
