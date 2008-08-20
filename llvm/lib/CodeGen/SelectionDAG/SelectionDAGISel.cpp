@@ -13,7 +13,6 @@
 
 #define DEBUG_TYPE "isel"
 #include "llvm/CodeGen/SelectionDAGISel.h"
-#include "SimpleBBISel.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Constants.h"
@@ -5486,14 +5485,12 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn, MachineFunction &MF,
   // each basic block.
   NodeAllocatorType NodeAllocator;
 
-  SimpleBBISel SISel(MF, TLI);
   std::vector<std::pair<MachineInstr*, unsigned> > PHINodesToUpdate;
   for (Function::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I) {
     BasicBlock *LLVMBB = &*I;
     PHINodesToUpdate.clear();
 
-    if (!Fast || !SISel.SelectBasicBlock(LLVMBB,  FuncInfo.MBBMap[LLVMBB]))
-      SelectBasicBlock(LLVMBB, MF, FuncInfo, PHINodesToUpdate, NodeAllocator);
+    SelectBasicBlock(LLVMBB, MF, FuncInfo, PHINodesToUpdate, NodeAllocator);
     FinishBasicBlock(LLVMBB, MF, FuncInfo, PHINodesToUpdate, NodeAllocator);
   }
 }
