@@ -50,7 +50,7 @@ std::string llvm::getName(MVT::SimpleValueType T) {
   case MVT::f128:  return "MVT::f128";
   case MVT::ppcf128:  return "MVT::ppcf128";
   case MVT::Flag:  return "MVT::Flag";
-  case MVT::isVoid:return "MVT::void";
+  case MVT::isVoid:return "MVT::isVoid";
   case MVT::v8i8:  return "MVT::v8i8";
   case MVT::v4i16: return "MVT::v4i16";
   case MVT::v2i32: return "MVT::v2i32";
