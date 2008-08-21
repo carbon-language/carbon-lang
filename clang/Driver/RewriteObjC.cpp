@@ -1302,8 +1302,10 @@ Stmt *RewriteObjC::RewriteObjCSynchronizedStmt(ObjCAtSynchronizedStmt *S) {
   assert((*startBuf == '@') && "bogus @synchronized location");
   
   std::string buf; 
-  buf = "objc_sync_enter";
-  ReplaceText(startLoc, 13, buf.c_str(), buf.size());
+  buf = "objc_sync_enter((id)";
+  const char *lparenBuf = startBuf;
+  while (*lparenBuf != '(') lparenBuf++;
+  ReplaceText(startLoc, lparenBuf-startBuf+1, buf.c_str(), buf.size());
   // We can't use S->getSynchExpr()->getLocEnd() to find the end location, since 
   // the sync expression is typically a message expression that's already 
   // been rewritten! (which implies the SourceLocation's are invalid).
@@ -1329,8 +1331,10 @@ Stmt *RewriteObjC::RewriteObjCSynchronizedStmt(ObjCAtSynchronizedStmt *S) {
   buf += "  _rethrow = objc_exception_extract(&_stack);\n";
   buf += "  if (!_rethrow) objc_exception_try_exit(&_stack);\n";
   buf += "  objc_sync_exit(";
+  Expr *syncExpr = new ExplicitCastExpr(Context->getObjCIdType(), 
+                                        S->getSynchExpr(), SourceLocation());
   std::ostringstream syncExprBuf;
-  S->getSynchExpr()->printPretty(syncExprBuf);
+  syncExpr->printPretty(syncExprBuf);
   buf += syncExprBuf.str();
   buf += ");\n";
   buf += "  if (_rethrow) objc_exception_throw(_rethrow);\n";
