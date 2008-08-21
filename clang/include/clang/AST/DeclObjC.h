@@ -596,7 +596,7 @@ public:
   const ObjCList<ObjCProtocolDecl> &getReferencedProtocols() const { 
     return ReferencedProtocols;
   }
-  typedef ObjCProtocolDecl * const * protocol_iterator;
+  typedef ObjCList<ObjCProtocolDecl>::iterator protocol_iterator;
   protocol_iterator protocol_begin() const {return ReferencedProtocols.begin();}
   protocol_iterator protocol_end() const { return ReferencedProtocols.end(); }
   

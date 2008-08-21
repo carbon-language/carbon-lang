@@ -234,7 +234,9 @@ private:
 
   /// EmitProtocolList - Generate the list of referenced
   /// protocols. The return value has type ProtocolListPtrTy.
-  llvm::Constant *EmitProtocolList(const ObjCProtocolDecl *PD);
+  llvm::Constant *EmitProtocolList(const std::string &Name,
+                                   ObjCProtocolDecl::protocol_iterator begin,
+                                   ObjCProtocolDecl::protocol_iterator end);
 
   /// EmitSelector - Return a Value*, of type ObjCTypes.SelectorPtrTy,
   /// for the given selector.
@@ -459,7 +461,10 @@ void CGObjCMac::GenerateProtocol(const ObjCProtocolDecl *PD) {
   std::vector<llvm::Constant*> Values(5);
   Values[0] = EmitProtocolExtension(PD);
   Values[1] = GetClassName(PD->getIdentifier());
-  Values[2] = EmitProtocolList(PD);
+  Values[2] = 
+    EmitProtocolList(std::string("\01L_OBJC_PROTOCOL_REFS_")+PD->getName(),
+                     PD->protocol_begin(),
+                     PD->protocol_end());
   Values[3] = EmitMethodDescList(ProtocolName,
                                  true, // IsProtocol
                                  false, // ClassMethods
@@ -577,12 +582,14 @@ llvm::Constant *CGObjCMac::EmitProtocolExtension(const ObjCProtocolDecl *PD) {
     Protocol *list[];
   };
 */
-llvm::Constant *CGObjCMac::EmitProtocolList(const ObjCProtocolDecl *PD) {
+llvm::Constant *
+CGObjCMac::EmitProtocolList(const std::string &Name,
+                            ObjCProtocolDecl::protocol_iterator begin,
+                            ObjCProtocolDecl::protocol_iterator end) {
   std::vector<llvm::Constant*> ProtocolRefs;
 
-  for (ObjCProtocolDecl::protocol_iterator i = PD->protocol_begin(), 
-         e = PD->protocol_end(); i != e; ++i)
-    ProtocolRefs.push_back(GetProtocolRef(*i));
+  for (; begin != end; ++begin)
+    ProtocolRefs.push_back(GetProtocolRef(*begin));
 
   // Just return null for empty protocol lists
   if (ProtocolRefs.empty()) 
@@ -605,8 +612,7 @@ llvm::Constant *CGObjCMac::EmitProtocolList(const ObjCProtocolDecl *PD) {
     new llvm::GlobalVariable(Init->getType(), false,
                              llvm::GlobalValue::InternalLinkage,
                              Init,
-                             (std::string("\01L_OBJC_PROTOCOL_REFS_") + 
-                              PD->getName()), 
+                             Name,
                              &CGM.getModule());
   GV->setSection("__OBJC,__cat_cls_meth,regular,no_dead_strip");
   return llvm::ConstantExpr::getBitCast(GV, ObjCTypes.ProtocolListPtrTy);
@@ -728,12 +734,13 @@ static bool IsClassHidden(const ObjCInterfaceDecl *ID) {
  */
 void CGObjCMac::GenerateClass(const ObjCImplementationDecl *ID) {
   const char *ClassName = ID->getName();
-  // FIXME: Support protocols.
-  llvm::Constant *Protocols = 
-    llvm::Constant::getNullValue(ObjCTypes.ProtocolListPtrTy);
   // FIXME: Gross
   ObjCInterfaceDecl *Interface = 
     const_cast<ObjCInterfaceDecl*>(ID->getClassInterface());
+  llvm::Constant *Protocols = 
+    EmitProtocolList(std::string("\01L_OBJC_CLASS_PROTOCOLS_") + ID->getName(),
+                     Interface->protocol_begin(),
+                     Interface->protocol_end());
   const llvm::Type *InterfaceTy = 
    CGM.getTypes().ConvertType(CGM.getContext().getObjCInterfaceType(Interface));
   unsigned Flags = eClassFlags_Factory;
