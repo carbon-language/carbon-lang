@@ -56,9 +56,7 @@ bool FastISel::SelectGetElementPtr(Instruction *I,
     return false;
 
   const Type *Ty = I->getOperand(0)->getType();
-  MVT VT = MVT::getMVT(Ty, /*HandleUnknown=*/true);
-  MVT::SimpleValueType PtrVT = TLI.getPointerTy().getSimpleVT();
-
+  MVT VT = MVT::getMVT(Ty, /*HandleUnknown=*/false);
   for (GetElementPtrInst::op_iterator OI = I->op_begin()+1, E = I->op_end();
        OI != E; ++OI) {
     Value *Idx = *OI;
@@ -69,7 +67,7 @@ bool FastISel::SelectGetElementPtr(Instruction *I,
         uint64_t Offs = TD.getStructLayout(StTy)->getElementOffset(Field);
         // FIXME: This can be optimized by combining the add with a
         // subsequent one.
-        N = FastEmit_ri(VT.getSimpleVT(), ISD::ADD, N, Offs, PtrVT);
+        N = FastEmit_ri(VT.getSimpleVT(), ISD::ADD, N, Offs, VT.getSimpleVT());
         if (N == 0)
           // Unhandled operand. Halt "fast" selection and bail.
           return false;
@@ -83,7 +81,7 @@ bool FastISel::SelectGetElementPtr(Instruction *I,
         if (CI->getZExtValue() == 0) continue;
         uint64_t Offs = 
           TD.getABITypeSize(Ty)*cast<ConstantInt>(CI)->getSExtValue();
-        N = FastEmit_ri(VT.getSimpleVT(), ISD::ADD, N, Offs, PtrVT);
+        N = FastEmit_ri(VT.getSimpleVT(), ISD::ADD, N, Offs, VT.getSimpleVT());
         if (N == 0)
           // Unhandled operand. Halt "fast" selection and bail.
           return false;
@@ -99,7 +97,7 @@ bool FastISel::SelectGetElementPtr(Instruction *I,
 
       // If the index is smaller or larger than intptr_t, truncate or extend
       // it.
-      MVT IdxVT = MVT::getMVT(Idx->getType(), /*HandleUnknown=*/true);
+      MVT IdxVT = MVT::getMVT(Idx->getType(), /*HandleUnknown=*/false);
       if (IdxVT.bitsLT(VT))
         IdxN = FastEmit_r(VT.getSimpleVT(), ISD::SIGN_EXTEND, IdxN);
       else if (IdxVT.bitsGT(VT))
@@ -111,7 +109,7 @@ bool FastISel::SelectGetElementPtr(Instruction *I,
       // FIXME: If multiple is power of two, turn it into a shift. The
       // optimization should be in FastEmit_ri?
       IdxN = FastEmit_ri(VT.getSimpleVT(), ISD::MUL, IdxN,
-                         ElementSize, PtrVT);
+                         ElementSize, VT.getSimpleVT());
       if (IdxN == 0)
         // Unhandled operand. Halt "fast" selection and bail.
         return false;
