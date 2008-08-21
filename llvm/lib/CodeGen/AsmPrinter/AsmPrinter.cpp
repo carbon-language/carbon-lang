@@ -22,7 +22,6 @@
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/Streams.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLowering.h"
