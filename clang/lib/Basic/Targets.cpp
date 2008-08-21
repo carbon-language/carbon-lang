@@ -47,6 +47,17 @@ static void getDarwinDefines(std::vector<char> &Defs) {
     Define(Defs, "__PASCAL_STRINGS__");
 }
 
+static void getLinuxDefines(std::vector<char> &Defs) {
+  // Linux defines; list based off of gcc output
+  Define(Defs, "__unix__");
+  Define(Defs, "__unix");
+  Define(Defs, "unix");
+  Define(Defs, "__linux__");
+  Define(Defs, "__linux");
+  Define(Defs, "linux");
+  Define(Defs, "__gnu_linux__");
+}
+
 /// getPowerPCDefines - Return a set of the PowerPC-specific #defines that are
 /// not tied to a specific subtarget.
 static void getPowerPCDefines(std::vector<char> &Defs, bool is64Bit) {
@@ -649,6 +660,19 @@ public:
 } // end anonymous namespace
 
 namespace {
+// x86-32 Linux target
+class LinuxX86_32TargetInfo : public X86_32TargetInfo {
+public:
+  LinuxX86_32TargetInfo(const std::string& triple) : X86_32TargetInfo(triple) {
+  }
+  virtual void getTargetDefines(std::vector<char> &Defines) const {
+    X86_32TargetInfo::getTargetDefines(Defines);
+    getLinuxDefines(Defines);
+  }
+};
+} // end anonymous namespace
+
+namespace {
 // x86-64 generic target
 class X86_64TargetInfo : public X86TargetInfo {
 public:
@@ -909,6 +933,8 @@ TargetInfo* TargetInfo::CreateTargetInfo(const std::string &T) {
   if (IsX86(T)) {
     if (isDarwin)
       return new DarwinI386TargetInfo(T);
+    if (isLinux)
+      return new LinuxX86_32TargetInfo(T);
     return new X86_32TargetInfo(T);
   }
 
