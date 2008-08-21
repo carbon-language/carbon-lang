@@ -237,17 +237,18 @@ void BitcodeReaderValueList::ResolveConstantForwardRefs() {
     // new value.  If they reference more than one placeholder, update them all
     // at once.
     while (!Placeholder->use_empty()) {
-      User *U = Placeholder->use_back();
+      Value::use_iterator UI = Placeholder->use_begin();
+      
       // If the using object isn't uniqued, just update the operands.  This
       // handles instructions and initializers for global variables.
-      if (!isa<Constant>(U) || isa<GlobalValue>(U)) {
-        U->replaceUsesOfWith(Placeholder, RealVal);
+      if (!isa<Constant>(*UI) || isa<GlobalValue>(*UI)) {
+        UI.getUse().set(RealVal);
         continue;
       }
       
       // Otherwise, we have a constant that uses the placeholder.  Replace that
       // constant with a new constant that has *all* placeholder uses updated.
-      Constant *UserC = cast<Constant>(U);
+      Constant *UserC = cast<Constant>(*UI);
       for (User::op_iterator I = UserC->op_begin(), E = UserC->op_end();
            I != E; ++I) {
         Value *NewOp;
