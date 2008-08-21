@@ -125,7 +125,14 @@ static raw_ostream *GetOutputStream(const char *ProgName) {
     sys::RemoveFileOnSignal(sys::Path(OutputFilename));
 
     std::string error;
-    return new raw_fd_ostream(OutputFilename.c_str(), error);
+    raw_ostream *Out = new raw_fd_ostream(OutputFilename.c_str(), error);
+    if (!error.empty()) {
+      std::cerr << error << '\n';
+      delete Out;
+      return 0;
+    }
+
+    return Out;
   }
   
   if (InputFilename == "-") {
@@ -170,7 +177,7 @@ static raw_ostream *GetOutputStream(const char *ProgName) {
   std::string error;
   raw_ostream *Out = new raw_fd_ostream(OutputFilename.c_str(), error);
   if (!error.empty()) {
-    std::cerr << error;
+    std::cerr << error << '\n';
     delete Out;
     return 0;
   }

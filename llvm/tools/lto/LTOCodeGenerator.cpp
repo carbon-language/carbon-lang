@@ -163,10 +163,11 @@ const void* LTOCodeGenerator::compile(size_t* length, std::string& errMsg)
     sys::RemoveFileOnSignal(uniqueAsmPath);
        
     // generate assembly code
-    std::string error;
     bool genResult = false;
     {
-      raw_fd_ostream asmFile(uniqueAsmPath.c_str(), error);
+      raw_fd_ostream asmFile(uniqueAsmPath.c_str(), errMsg);
+      if (!errMsg.empty())
+        return NULL;
       genResult = this->generateAssemblyCode(asmFile, errMsg);
     }
     if ( genResult ) {
