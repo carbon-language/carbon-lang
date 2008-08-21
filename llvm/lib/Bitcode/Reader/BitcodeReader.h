@@ -32,22 +32,9 @@ namespace llvm {
 
 class BitcodeReaderValueList : public User {
   unsigned Capacity;
-  
-  /// ResolveConstants - As we resolve forward-referenced constants, we add
-  /// information about them to this vector.  This allows us to resolve them in
-  /// bulk instead of resolving each reference at a time.  See the code in
-  /// ResolveConstantForwardRefs for more information about this.
-  ///
-  /// The key of this vector is the placeholder constant, the value is the slot
-  /// number that holds the resolved value.
-  typedef std::vector<std::pair<Constant*, unsigned> > ResolveConstantsTy;
-  ResolveConstantsTy ResolveConstants;
 public:
   BitcodeReaderValueList() : User(Type::VoidTy, Value::ArgumentVal, 0, 0)
                            , Capacity(0) {}
-  ~BitcodeReaderValueList() {
-    assert(ResolveConstants.empty() && "Constants not resolved?");
-  }
 
   /// Provide fast operand accessors
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
@@ -63,7 +50,6 @@ public:
   }
   
   void clear() {
-    assert(ResolveConstants.empty() && "Constants not resolved?");
     if (OperandList) dropHungoffUses(OperandList);
     Capacity = 0;
   }
@@ -87,25 +73,14 @@ public:
     if (Idx == size()) {
       push_back(V);
     } else if (Value *OldV = getOperand(Idx)) {
-      // Handle constants and non-constants (e.g. instrs) differently for
-      // efficiency.
-      if (Constant *PHC = dyn_cast<Constant>(OldV)) {
-        ResolveConstants.push_back(std::make_pair(PHC, Idx));
-        setOperand(Idx, V);
-      } else {
-        // If there was a forward reference to this value, replace it.
-        setOperand(Idx, V);
-        OldV->replaceAllUsesWith(V);
-        delete OldV;
-      }
+      // If there was a forward reference to this value, replace it.
+      setOperand(Idx, V);
+      OldV->replaceAllUsesWith(V);
+      delete OldV;
     } else {
       initVal(Idx, V);
     }
   }
-  
-  /// ResolveConstantForwardRefs - Once all constants are read, this method bulk
-  /// resolves any forward references.
-  void ResolveConstantForwardRefs();
   
 private:
   void initVal(unsigned Idx, Value *V) {
@@ -119,8 +94,7 @@ private:
 };
 
 template <>
-struct OperandTraits<BitcodeReaderValueList>
-  : HungoffOperandTraits</*16 FIXME*/> {
+struct OperandTraits<BitcodeReaderValueList> : HungoffOperandTraits</*16 FIXME*/> {
 };
 
 DEFINE_TRANSPARENT_OPERAND_ACCESSORS(BitcodeReaderValueList, Value)  

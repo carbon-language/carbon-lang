@@ -133,15 +133,6 @@ namespace {
       : ConstantExpr(Ty, Instruction::UserOp1, &Op<0>(), 1) {
       Op<0>() = UndefValue::get(Type::Int32Ty);
     }
-    
-    /// @brief Methods to support type inquiry through isa, cast, and dyn_cast.
-    static inline bool classof(const ConstantPlaceHolder *) { return true; }
-    static bool classof(const Value *V) {
-      return isa<ConstantExpr>(V) && 
-             cast<ConstantExpr>(V)->getOpcode() == Instruction::UserOp1;
-    }
-    
-    
     /// Provide fast operand accessors
     DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
   };
@@ -212,85 +203,6 @@ Value *BitcodeReaderValueList::getValueFwdRef(unsigned Idx, const Type *Ty) {
   Value *V = new Argument(Ty);
   OperandList[Idx] = V;
   return V;
-}
-
-/// ResolveConstantForwardRefs - Once all constants are read, this method bulk
-/// resolves any forward references.  The idea behind this is that we sometimes
-/// get constants (such as large arrays) which reference *many* forward ref
-/// constants.  Replacing each of these causes a lot of thrashing when
-/// building/reuniquing the constant.  Instead of doing this, we look at all the
-/// uses and rewrite all the place holders at once for any constant that uses
-/// a placeholder.
-void BitcodeReaderValueList::ResolveConstantForwardRefs() {
-  // Sort the values by-pointer so that they are efficient to look up with a 
-  // binary search.
-  std::sort(ResolveConstants.begin(), ResolveConstants.end());
-  
-  SmallVector<Constant*, 64> NewOps;
-  
-  while (!ResolveConstants.empty()) {
-    Value *RealVal = getOperand(ResolveConstants.back().second);
-    Constant *Placeholder = ResolveConstants.back().first;
-    ResolveConstants.pop_back();
-    
-    // Loop over all users of the placeholder, updating them to reference the
-    // new value.  If they reference more than one placeholder, update them all
-    // at once.
-    while (!Placeholder->use_empty()) {
-      User *U = Placeholder->use_back();
-      // If the using object isn't uniqued, just update the operands.  This
-      // handles instructions and initializers for global variables.
-      if (!isa<Constant>(U) || isa<GlobalValue>(U)) {
-        U->replaceUsesOfWith(Placeholder, RealVal);
-        continue;
-      }
-      
-      // Otherwise, we have a constant that uses the placeholder.  Replace that
-      // constant with a new constant that has *all* placeholder uses updated.
-      Constant *UserC = cast<Constant>(U);
-      for (User::op_iterator I = UserC->op_begin(), E = UserC->op_end();
-           I != E; ++I) {
-        Value *NewOp;
-        if (!isa<ConstantPlaceHolder>(*I)) {
-          // Not a placeholder reference.
-          NewOp = *I;
-        } else if (*I == Placeholder) {
-          // Common case is that it just references this one placeholder.
-          NewOp = RealVal;
-        } else {
-          // Otherwise, look up the placeholder in ResolveConstants.
-          ResolveConstantsTy::iterator It = 
-            std::lower_bound(ResolveConstants.begin(), ResolveConstants.end(), 
-                             std::pair<Constant*, unsigned>(cast<Constant>(*I),
-                                                            0));
-          assert(It != ResolveConstants.end() && It->first == *I);
-          NewOp = this->getOperand(It->second);
-        }
-
-        NewOps.push_back(cast<Constant>(NewOp));
-      }
-
-      // Make the new constant.
-      Constant *NewC;
-      if (ConstantArray *UserCA = dyn_cast<ConstantArray>(UserC)) {
-        NewC = ConstantArray::get(UserCA->getType(), &NewOps[0], NewOps.size());
-      } else if (isa<ConstantStruct>(UserC)) {
-        NewC = ConstantStruct::get(&NewOps[0], NewOps.size());
-      } else if (isa<ConstantVector>(UserC)) {
-        NewC = ConstantVector::get(&NewOps[0], NewOps.size());
-      } else {
-        // Must be a constant expression.
-        NewC = cast<ConstantExpr>(UserC)->getWithOperands(&NewOps[0],
-                                                          NewOps.size());
-      }
-      
-      UserC->replaceAllUsesWith(NewC);
-      UserC->destroyConstant();
-      NewOps.clear();
-    }
-    
-    delete Placeholder;
-  }
 }
 
 
@@ -690,8 +602,14 @@ bool BitcodeReader::ParseConstants() {
   unsigned NextCstNo = ValueList.size();
   while (1) {
     unsigned Code = Stream.ReadCode();
-    if (Code == bitc::END_BLOCK)
-      break;
+    if (Code == bitc::END_BLOCK) {
+      if (NextCstNo != ValueList.size())
+        return Error("Invalid constant reference!");
+      
+      if (Stream.ReadBlockEnd())
+        return Error("Error at end of constants block");
+      return false;
+    }
     
     if (Code == bitc::ENTER_SUBBLOCK) {
       // No known subblocks, always skip them.
@@ -934,17 +852,6 @@ bool BitcodeReader::ParseConstants() {
     ValueList.AssignValue(V, NextCstNo);
     ++NextCstNo;
   }
-  
-  if (NextCstNo != ValueList.size())
-    return Error("Invalid constant reference!");
-  
-  if (Stream.ReadBlockEnd())
-    return Error("Error at end of constants block");
-  
-  // Once all the constants have been read, go through and resolve forward
-  // references.
-  ValueList.ResolveConstantForwardRefs();
-  return false;
 }
 
 /// RememberAndSkipFunctionBody - When we see the block for a function body,
