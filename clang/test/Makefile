@@ -1,8 +1,8 @@
 LEVEL = ../../..
 include $(LEVEL)/Makefile.common
 
-# Test in all non .svn or Output directories below this one.
-TESTDIRS = $(shell find . -name . -o -name .svn -prune -o -name Output -prune -o -type d -print)
+# Test in all immediate subdirectories.
+TESTDIRS = $(shell echo $(PROJ_SRC_DIR)/*/)
 
 # Only run rewriter tests on darwin.
 ifeq ($(OS),Darwin)
@@ -23,7 +23,7 @@ TESTS := $(addprefix Output/, $(addsuffix .testresults, $(shell find $(TESTDIRS)
 
 Output/%.testresults: %
 	@ $(PROGRESS)
-	@ PATH=$$PATH:$(ToolDir):$(LLVM_SRC_ROOT)/test/Scripts VG=$(VG) ./TestRunner.sh $< > $@ || $(REPORTFAIL)
+	@ PATH=$$PATH:$(ToolDir):$(LLVM_SRC_ROOT)/test/Scripts VG=$(VG) $(PROJ_SRC_DIR)/TestRunner.sh $< > $@ || $(REPORTFAIL)
 
 all::
 	@ mkdir -p $(addprefix Output/, $(TESTDIRS))
@@ -31,6 +31,7 @@ all::
 	@ echo '--- Running clang tests ---'
 	@ $(MAKE) $(TESTS)
 	@ $(DONE)
+	@ cat $(TESTS) | count 0
 
 report: $(TESTS)
 	@ cat $^
