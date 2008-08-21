@@ -61,7 +61,7 @@ public:
   virtual void InstructionSelect(SelectionDAG &SD) = 0;
   virtual void InstructionSelectPostProcessing() {}
   
-  virtual void SelectRootInit() {
+  void SelectRootInit() {
     DAGSize = CurDAG->AssignTopologicalOrder(TopOrder);
   }
 
