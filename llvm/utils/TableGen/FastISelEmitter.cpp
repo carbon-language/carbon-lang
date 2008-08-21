@@ -164,14 +164,6 @@ void FastISelEmitter::run(std::ostream &OS) {
   typedef std::map<OperandsSignature, OpcodeTypeMap> OperandsOpcodeTypeMap;
   OperandsOpcodeTypeMap SimplePatterns;
 
-  // Create the supported type signatures.
-  OperandsSignature KnownOperands;
-  SimplePatterns[KnownOperands] = OpcodeTypeMap();
-  KnownOperands.Operands.push_back("r");
-  SimplePatterns[KnownOperands] = OpcodeTypeMap();
-  KnownOperands.Operands.push_back("r");
-  SimplePatterns[KnownOperands] = OpcodeTypeMap();
-
   for (CodeGenDAGPatterns::ptm_iterator I = CGP.ptm_begin(),
        E = CGP.ptm_end(); I != E; ++I) {
     const PatternToMatch &Pattern = *I;
@@ -222,18 +214,12 @@ void FastISelEmitter::run(std::ostream &OS) {
     if (!Operands.initialize(InstPatNode, Target, VT, DstRC))
       continue;
 
-    // If it's not a known signature, ignore it.
-    if (!SimplePatterns.count(Operands))
-      continue;
-
     // Ok, we found a pattern that we can handle. Remember it.
-    {
-      InstructionMemo Memo = {
-        Pattern.getDstPattern()->getOperator()->getName(),
-        DstRC
-      };
-      SimplePatterns[Operands][OpcodeName][VT] = Memo;
-    }
+    InstructionMemo Memo = {
+      Pattern.getDstPattern()->getOperator()->getName(),
+      DstRC
+    };
+    SimplePatterns[Operands][OpcodeName][VT] = Memo;
   }
 
   // Declare the target FastISel class.
