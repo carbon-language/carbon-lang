@@ -77,7 +77,7 @@ public:
     return write(Str.data(), Str.length());
   }
   
-  raw_ostream &operator<<(uint64_t N) {
+  raw_ostream &operator<<(unsigned long N) {
     // Zero is a special case.
     if (N == 0)
       return *this << '0';
@@ -93,7 +93,7 @@ public:
     return write(CurPtr, EndPtr-CurPtr);
   }
   
-  raw_ostream &operator<<(int64_t N) {
+  raw_ostream &operator<<(long N) {
     if (N <  0) {
       if (OutBufCur >= OutBufEnd)
         flush_impl();
@@ -102,15 +102,43 @@ public:
       N = -N;
     }
     
-    return this->operator<<(static_cast<uint64_t>(N));
+    return this->operator<<(static_cast<unsigned long>(N));
   }
   
-  raw_ostream &operator<<(uint32_t N) {
-    return this->operator<<(static_cast<uint64_t>(N));
+  raw_ostream &operator<<(unsigned long long N) {
+    // Zero is a special case.
+    if (N == 0)
+      return *this << '0';
+    
+    char NumberBuffer[20];
+    char *EndPtr = NumberBuffer+sizeof(NumberBuffer);
+    char *CurPtr = EndPtr;
+    
+    while (N) {
+      *--CurPtr = '0' + char(N % 10);
+      N /= 10;
+    }
+    return write(CurPtr, EndPtr-CurPtr);
   }
   
-  raw_ostream &operator<<(int32_t N) {
-    return this->operator<<(static_cast<int64_t>(N));
+  raw_ostream &operator<<(long long N) {
+    if (N <  0) {
+      if (OutBufCur >= OutBufEnd)
+        flush_impl();
+      *OutBufCur++ = '-';
+      
+      N = -N;
+    }
+    
+    return this->operator<<(static_cast<unsigned long long>(N));
+  }
+  
+  raw_ostream &operator<<(unsigned int N) {
+    return this->operator<<(static_cast<unsigned long>(N));
+  }
+  
+  raw_ostream &operator<<(int N) {
+    return this->operator<<(static_cast<long>(N));
   }
 
   raw_ostream &operator<<(double N) {
