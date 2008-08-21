@@ -756,9 +756,11 @@ Constant *ConstantExpr::getNeg(Constant *C) {
              C);
 }
 Constant *ConstantExpr::getNot(Constant *C) {
-  assert(isa<IntegerType>(C->getType()) && "Cannot NOT a nonintegral value!");
+  assert((isa<IntegerType>(C->getType()) ||
+            cast<VectorType>(C->getType())->getElementType()->isInteger()) &&
+          "Cannot NOT a nonintegral value!");
   return get(Instruction::Xor, C,
-             ConstantInt::getAllOnesValue(C->getType()));
+             Constant::getAllOnesValue(C->getType()));
 }
 Constant *ConstantExpr::getAdd(Constant *C1, Constant *C2) {
   return get(Instruction::Add, C1, C2);
