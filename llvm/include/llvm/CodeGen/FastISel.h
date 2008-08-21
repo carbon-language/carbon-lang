@@ -44,11 +44,12 @@ public:
   /// LLVM IR instructions in the range [Begin, N) where N is either
   /// End or the first unsupported instruction. Return N.
   /// ValueMap is filled in with a mapping of LLVM IR Values to
-  /// register numbers.
+  /// virtual register numbers. MBB is a block to which to append
+  /// the enerated MachineInstrs.
   BasicBlock::iterator
   SelectInstructions(BasicBlock::iterator Begin, BasicBlock::iterator End,
                      DenseMap<const Value*, unsigned> &ValueMap,
-                     MachineBasicBlock *mbb);
+                     MachineBasicBlock *MBB);
 
   virtual ~FastISel();
 
