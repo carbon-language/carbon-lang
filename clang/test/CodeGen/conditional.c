@@ -1,4 +1,4 @@
-// RUN: clang -emit-llvm %s
+// RUN: clang -emit-llvm %s -o %t
 
 float test1(int cond, float a, float b)
 {

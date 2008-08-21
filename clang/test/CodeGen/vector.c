@@ -1,4 +1,4 @@
-// RUN: clang -emit-llvm %s
+// RUN: clang -emit-llvm %s -o %t
 typedef short __v4hi __attribute__ ((__vector_size__ (8)));
 
 void f()

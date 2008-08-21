@@ -1,4 +1,4 @@
-// RUN: clang %s -emit-llvm
+// RUN: clang %s -emit-llvm -o %t
 
 struct  {
   int x;

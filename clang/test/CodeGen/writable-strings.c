@@ -1,4 +1,4 @@
-// RUN: clang -emit-llvm -fwritable-strings %s
+// RUN: clang -emit-llvm -o %t -fwritable-strings %s
 
 int main() {
     char *str = "abc";

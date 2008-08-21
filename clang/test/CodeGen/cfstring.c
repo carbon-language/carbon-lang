@@ -1,4 +1,4 @@
-// RUN: clang -emit-llvm %s
+// RUN: clang -emit-llvm %s -o %t
 #define CFSTR __builtin___CFStringMakeConstantString
 
 void f() {

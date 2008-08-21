@@ -1,4 +1,4 @@
-// RUN: clang -emit-llvm %s
+// RUN: clang -emit-llvm %s -o %t
 
 const int globalInt = 1;
 int globalIntWithFloat = 1.5f;
