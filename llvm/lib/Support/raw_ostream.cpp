@@ -116,6 +116,7 @@ raw_ostream &raw_ostream::write(const char *Ptr, unsigned Size) {
       assert(OutBufCur == OutBufStart);
       memcpy(OutBufStart, Ptr, NumToEmit);
       Ptr += NumToEmit;
+      Size -= NumToEmit;
       OutBufCur = OutBufStart + NumToEmit;
       flush_impl();
     }
