@@ -3529,6 +3529,11 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
         Result = DAG.getNode(ISD::SELECT, VT, Tmp2, Tmp1, Tmp3);
         break;
       }
+      case ISD::FTRUNC:
+      case ISD::FFLOOR:
+      case ISD::FCEIL:
+      case ISD::FRINT:
+      case ISD::FNEARBYINT:
       case ISD::FSQRT:
       case ISD::FSIN:
       case ISD::FCOS: {
@@ -3553,6 +3558,26 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
         case ISD::FCOS:
           LC = GetFPLibCall(VT, RTLIB::COS_F32, RTLIB::COS_F64,
                             RTLIB::COS_F80, RTLIB::COS_PPCF128);
+          break;
+        case ISD::FTRUNC:
+          LC = GetFPLibCall(VT, RTLIB::TRUNC_F32, RTLIB::TRUNC_F64,
+                            RTLIB::TRUNC_F80, RTLIB::TRUNC_PPCF128);
+          break;
+        case ISD::FFLOOR:
+          LC = GetFPLibCall(VT, RTLIB::FLOOR_F32, RTLIB::FLOOR_F64,
+                            RTLIB::FLOOR_F80, RTLIB::FLOOR_PPCF128);
+          break;
+        case ISD::FCEIL:
+          LC = GetFPLibCall(VT, RTLIB::CEIL_F32, RTLIB::CEIL_F64,
+                            RTLIB::CEIL_F80, RTLIB::CEIL_PPCF128);
+          break;
+        case ISD::FRINT:
+          LC = GetFPLibCall(VT, RTLIB::RINT_F32, RTLIB::RINT_F64,
+                            RTLIB::RINT_F80, RTLIB::RINT_PPCF128);
+          break;
+        case ISD::FNEARBYINT:
+          LC = GetFPLibCall(VT, RTLIB::NEARBYINT_F32, RTLIB::NEARBYINT_F64,
+                            RTLIB::NEARBYINT_F80, RTLIB::NEARBYINT_PPCF128);
           break;
         default: assert(0 && "Unreachable!");
         }
@@ -4144,6 +4169,11 @@ SDValue SelectionDAGLegalize::PromoteOp(SDValue Op) {
   case ISD::FSQRT:
   case ISD::FSIN:
   case ISD::FCOS:
+  case ISD::FTRUNC:
+  case ISD::FFLOOR:
+  case ISD::FCEIL:
+  case ISD::FRINT:
+  case ISD::FNEARBYINT:
     Tmp1 = PromoteOp(Node->getOperand(0));
     assert(Tmp1.getValueType() == NVT);
     Result = DAG.getNode(Node->getOpcode(), NVT, Tmp1);
@@ -6507,6 +6537,11 @@ void SelectionDAGLegalize::ExpandOp(SDValue Op, SDValue &Lo, SDValue &Hi){
                                         RTLIB::POWI_PPCF128),
                        Node, false, Hi);
     break;
+  case ISD::FTRUNC:
+  case ISD::FFLOOR:
+  case ISD::FCEIL:
+  case ISD::FRINT:
+  case ISD::FNEARBYINT:
   case ISD::FSQRT:
   case ISD::FSIN:
   case ISD::FCOS: {
@@ -6523,6 +6558,26 @@ void SelectionDAGLegalize::ExpandOp(SDValue Op, SDValue &Lo, SDValue &Hi){
     case ISD::FCOS:
       LC = GetFPLibCall(VT, RTLIB::COS_F32, RTLIB::COS_F64,
                         RTLIB::COS_F80, RTLIB::COS_PPCF128);
+      break;
+    case ISD::FTRUNC:
+      LC = GetFPLibCall(VT, RTLIB::TRUNC_F32, RTLIB::TRUNC_F64,
+                        RTLIB::TRUNC_F80, RTLIB::TRUNC_PPCF128);
+      break;
+    case ISD::FFLOOR:
+      LC = GetFPLibCall(VT, RTLIB::FLOOR_F32, RTLIB::FLOOR_F64,
+                        RTLIB::FLOOR_F80, RTLIB::FLOOR_PPCF128);
+      break;
+    case ISD::FCEIL:
+      LC = GetFPLibCall(VT, RTLIB::CEIL_F32, RTLIB::CEIL_F64,
+                        RTLIB::CEIL_F80, RTLIB::CEIL_PPCF128);
+      break;
+    case ISD::FRINT:
+      LC = GetFPLibCall(VT, RTLIB::RINT_F32, RTLIB::RINT_F64,
+                        RTLIB::RINT_F80, RTLIB::RINT_PPCF128);
+      break;
+    case ISD::FNEARBYINT:
+      LC = GetFPLibCall(VT, RTLIB::NEARBYINT_F32, RTLIB::NEARBYINT_F64,
+                        RTLIB::NEARBYINT_F80, RTLIB::NEARBYINT_PPCF128);
       break;
     default: assert(0 && "Unreachable!");
     }
