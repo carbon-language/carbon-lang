@@ -1,12 +1,10 @@
-; RUN: llvm-as < %s | llc -march=x86 | grep stosb
+; RUN: llvm-as < %s | llc -mtriple=i386-apple-darwin | grep stosl
+; RUN: llvm-as < %s | llc -mtriple=x86_64-apple-darwin | grep movq | count 10
 
-target triple = "i386-apple-darwin9"
-        %struct.S = type { [80 x i8] }
-
-define %struct.S* @bork() {
+define void @bork() nounwind {
 entry:
-        call void @llvm.memset.i64( i8* null, i8 0, i64 80, i32 1 )
-        ret %struct.S* null
+        call void @llvm.memset.i64( i8* null, i8 0, i64 80, i32 4 )
+        ret void
 }
 
 declare void @llvm.memset.i64(i8*, i8, i64, i32) nounwind

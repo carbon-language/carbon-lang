@@ -796,8 +796,14 @@ static void getMaxByValAlign(const Type *Ty, unsigned &MaxAlign) {
 /// that contain SSE vectors are placed at 16-byte boundaries while the rest
 /// are at 4-byte boundaries.
 unsigned X86TargetLowering::getByValTypeAlignment(const Type *Ty) const {
-  if (Subtarget->is64Bit())
-    return getTargetData()->getABITypeAlignment(Ty);
+  if (Subtarget->is64Bit()) {
+    // Max of 8 and alignment of type.
+    unsigned TyAlign = getTargetData()->getABITypeAlignment(Ty);
+    if (TyAlign > 8)
+      return TyAlign;
+    return 8;
+  }
+
   unsigned Align = 4;
   if (Subtarget->hasSSE1())
     getMaxByValAlign(Ty, Align);
@@ -5014,16 +5020,16 @@ X86TargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op,
 
 SDValue
 X86TargetLowering::EmitTargetCodeForMemset(SelectionDAG &DAG,
-                                           SDValue Chain,
-                                           SDValue Dst, SDValue Src,
-                                           SDValue Size, unsigned Align,
+                                        SDValue Chain,
+                                        SDValue Dst, SDValue Src,
+                                        SDValue Size, unsigned Align,
                                         const Value *DstSV, uint64_t DstSVOff) {
   ConstantSDNode *ConstantSize = dyn_cast<ConstantSDNode>(Size);
 
   /// If not DWORD aligned or size is more than the threshold, call the library.
   /// The libc version is likely to be faster for these cases. It can use the
   /// address value and run time information about the CPU.
-  if ((Align & 3) == 0 ||
+  if ((Align & 3) != 0 ||
       !ConstantSize ||
       ConstantSize->getValue() > getSubtarget()->getMaxInlineSizeThreshold()) {
     SDValue InFlag(0, 0);
@@ -5065,27 +5071,27 @@ X86TargetLowering::EmitTargetCodeForMemset(SelectionDAG &DAG,
 
     // If the value is a constant, then we can potentially use larger sets.
     switch (Align & 3) {
-      case 2:   // WORD aligned
-        AVT = MVT::i16;
-        ValReg = X86::AX;
-        Val = (Val << 8) | Val;
-        break;
-      case 0:  // DWORD aligned
-        AVT = MVT::i32;
-        ValReg = X86::EAX;
-        Val = (Val << 8)  | Val;
-        Val = (Val << 16) | Val;
-        if (Subtarget->is64Bit() && ((Align & 0x7) == 0)) {  // QWORD aligned
-          AVT = MVT::i64;
-          ValReg = X86::RAX;
-          Val = (Val << 32) | Val;
-        }
-        break;
-      default:  // Byte aligned
-        AVT = MVT::i8;
-        ValReg = X86::AL;
-        Count = DAG.getIntPtrConstant(SizeVal);
-        break;
+    case 2:   // WORD aligned
+      AVT = MVT::i16;
+      ValReg = X86::AX;
+      Val = (Val << 8) | Val;
+      break;
+    case 0:  // DWORD aligned
+      AVT = MVT::i32;
+      ValReg = X86::EAX;
+      Val = (Val << 8)  | Val;
+      Val = (Val << 16) | Val;
+      if (Subtarget->is64Bit() && ((Align & 0x7) == 0)) {  // QWORD aligned
+        AVT = MVT::i64;
+        ValReg = X86::RAX;
+        Val = (Val << 32) | Val;
+      }
+      break;
+    default:  // Byte aligned
+      AVT = MVT::i8;
+      ValReg = X86::AL;
+      Count = DAG.getIntPtrConstant(SizeVal);
+      break;
     }
 
     if (AVT.bitsGT(MVT::i8)) {
@@ -5153,13 +5159,11 @@ X86TargetLowering::EmitTargetCodeForMemset(SelectionDAG &DAG,
 
 SDValue
 X86TargetLowering::EmitTargetCodeForMemcpy(SelectionDAG &DAG,
-                                           SDValue Chain,
-                                           SDValue Dst, SDValue Src,
-                                           SDValue Size, unsigned Align,
-                                           bool AlwaysInline,
-                                           const Value *DstSV, uint64_t DstSVOff,
-                                           const Value *SrcSV, uint64_t SrcSVOff){
-  
+                                      SDValue Chain, SDValue Dst, SDValue Src,
+                                      SDValue Size, unsigned Align,
+                                      bool AlwaysInline,
+                                      const Value *DstSV, uint64_t DstSVOff,
+                                      const Value *SrcSV, uint64_t SrcSVOff) {  
   // This requires the copy size to be a constant, preferrably
   // within a subtarget-specific limit.
   ConstantSDNode *ConstantSize = dyn_cast<ConstantSDNode>(Size);
@@ -5169,21 +5173,19 @@ X86TargetLowering::EmitTargetCodeForMemcpy(SelectionDAG &DAG,
   if (!AlwaysInline && SizeVal > getSubtarget()->getMaxInlineSizeThreshold())
     return SDValue();
 
-  MVT AVT;
-  unsigned BytesLeft = 0;
-  if (Align >= 8 && Subtarget->is64Bit())
+  /// If not DWORD aligned, call the library.
+  if ((Align & 3) != 0)
+    return SDValue();
+
+  // DWORD aligned
+  MVT AVT = MVT::i32;
+  if (Subtarget->is64Bit() && ((Align & 0x7) == 0))  // QWORD aligned
     AVT = MVT::i64;
-  else if (Align >= 4)
-    AVT = MVT::i32;
-  else if (Align >= 2)
-    AVT = MVT::i16;
-  else
-    AVT = MVT::i8;
 
   unsigned UBytes = AVT.getSizeInBits() / 8;
   unsigned CountVal = SizeVal / UBytes;
   SDValue Count = DAG.getIntPtrConstant(CountVal);
-  BytesLeft = SizeVal % UBytes;
+  unsigned BytesLeft = SizeVal % UBytes;
 
   SDValue InFlag(0, 0);
   Chain  = DAG.getCopyToReg(Chain, Subtarget->is64Bit() ? X86::RCX : X86::ECX,

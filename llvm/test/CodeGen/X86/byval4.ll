@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86-64 | grep rep.movsw | count 2
+; RUN: llvm-as < %s | llc -march=x86-64 | grep rep.movsq | count 2
 ; RUN: llvm-as < %s | llc -march=x86 | grep rep.movsl	 | count 2
 
 %struct.s = type { i16, i16, i16, i16, i16, i16, i16, i16,
@@ -13,7 +13,7 @@
 
 
 define void @g(i16 signext  %a1, i16 signext  %a2, i16 signext  %a3,
-	 i16 signext  %a4, i16 signext  %a5, i16 signext  %a6) {
+	 i16 signext  %a4, i16 signext  %a5, i16 signext  %a6) nounwind {
 entry:
         %a = alloca %struct.s, align 16
         %tmp = getelementptr %struct.s* %a, i32 0, i32 0

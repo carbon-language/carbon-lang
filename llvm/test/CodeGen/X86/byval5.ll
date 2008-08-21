@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86-64 | grep rep.movsb | count 2
+; RUN: llvm-as < %s | llc -march=x86-64 | grep rep.movsq | count 2
 ; RUN: llvm-as < %s | llc -march=x86 | grep rep.movsl	 | count 2
 
 %struct.s = type { i8, i8, i8, i8, i8, i8, i8, i8,
