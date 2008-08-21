@@ -15,3 +15,12 @@ void test3() {
   (__extension__ x) = 10;
 }
 
+// rdar://6162726
+void test4() {
+      static int var;
+      var =+ 5;  // expected-warning {{use of unary operator that may be intended as compound assignment (+=)}}
+      var =- 5;  // expected-warning {{use of unary operator that may be intended as compound assignment (-=)}}
+      var = +5;
+      var = -5;
+}
+

@@ -1045,6 +1045,9 @@ DIAG(err_union_as_base_class, ERROR,
 DIAG(err_incomplete_base_class, ERROR,
      "base class has incomplete type")
 
+DIAG(warn_not_compound_assign, WARNING,
+     "use of unary operator that may be intended as compound assignment (%0=)")
+
 // CHECK: printf format string errors
 DIAG(warn_printf_not_string_constant, WARNING,
      "format string is not a string literal (potentially insecure)")

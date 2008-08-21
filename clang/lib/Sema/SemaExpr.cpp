@@ -1901,10 +1901,30 @@ inline QualType Sema::CheckAssignmentOperands( // C99 6.5.16.1
   }
 
   AssignConvertType ConvTy;
-  if (compoundType.isNull())
+  if (compoundType.isNull()) {
+    // Simple assignment "x = y".
     ConvTy = CheckSingleAssignmentConstraints(lhsType, rex);
-  else
+    
+    // If the RHS is a unary plus or minus, check to see if they = and + are
+    // right next to each other.  If so, the user may have typo'd "x =+ 4"
+    // instead of "x += 4".
+    Expr *RHSCheck = rex;
+    if (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(RHSCheck))
+      RHSCheck = ICE->getSubExpr();
+    if (UnaryOperator *UO = dyn_cast<UnaryOperator>(RHSCheck)) {
+      if ((UO->getOpcode() == UnaryOperator::Plus ||
+           UO->getOpcode() == UnaryOperator::Minus) &&
+          loc.isFileID() && UO->getOperatorLoc().isFileID() &&
+          // Only if the two operators are exactly adjacent.
+          loc.getFileLocWithOffset(1) == UO->getOperatorLoc())
+        Diag(loc, diag::warn_not_compound_assign,
+             UO->getOpcode() == UnaryOperator::Plus ? "+" : "-",
+             SourceRange(UO->getOperatorLoc(), UO->getOperatorLoc()));
+    }
+  } else {
+    // Compound assignment "x += y"
     ConvTy = CheckCompoundAssignmentConstraints(lhsType, rhsType);
+  }
 
   if (DiagnoseAssignmentResult(ConvTy, loc, lhsType, rhsType,
                                rex, "assigning"))
