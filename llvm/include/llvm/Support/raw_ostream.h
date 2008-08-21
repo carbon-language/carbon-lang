@@ -77,61 +77,13 @@ public:
     return write(Str.data(), Str.length());
   }
   
-  raw_ostream &operator<<(unsigned long N) {
-    // Zero is a special case.
-    if (N == 0)
-      return *this << '0';
-    
-    char NumberBuffer[20];
-    char *EndPtr = NumberBuffer+sizeof(NumberBuffer);
-    char *CurPtr = EndPtr;
-    
-    while (N) {
-      *--CurPtr = '0' + char(N % 10);
-      N /= 10;
-    }
-    return write(CurPtr, EndPtr-CurPtr);
-  }
+  raw_ostream &operator<<(unsigned long N);
   
-  raw_ostream &operator<<(long N) {
-    if (N <  0) {
-      if (OutBufCur >= OutBufEnd)
-        flush_impl();
-      *OutBufCur++ = '-';
-      
-      N = -N;
-    }
-    
-    return this->operator<<(static_cast<unsigned long>(N));
-  }
+  raw_ostream &operator<<(long N);
   
-  raw_ostream &operator<<(unsigned long long N) {
-    // Zero is a special case.
-    if (N == 0)
-      return *this << '0';
-    
-    char NumberBuffer[20];
-    char *EndPtr = NumberBuffer+sizeof(NumberBuffer);
-    char *CurPtr = EndPtr;
-    
-    while (N) {
-      *--CurPtr = '0' + char(N % 10);
-      N /= 10;
-    }
-    return write(CurPtr, EndPtr-CurPtr);
-  }
+  raw_ostream &operator<<(unsigned long long N);
   
-  raw_ostream &operator<<(long long N) {
-    if (N <  0) {
-      if (OutBufCur >= OutBufEnd)
-        flush_impl();
-      *OutBufCur++ = '-';
-      
-      N = -N;
-    }
-    
-    return this->operator<<(static_cast<unsigned long long>(N));
-  }
+  raw_ostream &operator<<(long long N);
   
   raw_ostream &operator<<(unsigned int N) {
     return this->operator<<(static_cast<unsigned long>(N));
@@ -146,41 +98,7 @@ public:
   }
   
   
-  raw_ostream &write(const char *Ptr, unsigned Size) {
-    if (OutBufCur+Size > OutBufEnd)
-      flush_impl();
-    
-    // Handle short strings specially, memcpy isn't very good at very short
-    // strings.
-    switch (Size) {
-    case 4: OutBufCur[3] = Ptr[3]; // FALL THROUGH
-    case 3: OutBufCur[2] = Ptr[2]; // FALL THROUGH
-    case 2: OutBufCur[1] = Ptr[1]; // FALL THROUGH
-    case 1: OutBufCur[0] = Ptr[0]; // FALL THROUGH
-    case 0: break;
-    default:
-      // Normally the string to emit is shorter than the buffer.
-      if (Size <= unsigned(OutBufEnd-OutBufStart)) {
-        memcpy(OutBufCur, Ptr, Size);
-        break;
-      }
-
-      // If emitting a string larger than our buffer, emit in chunks.  In this
-      // case we know that we just flushed the buffer.
-      while (Size) {
-        unsigned NumToEmit = OutBufEnd-OutBufStart;
-        if (Size < NumToEmit) NumToEmit = Size;
-        assert(OutBufCur == OutBufStart);
-        memcpy(OutBufStart, Ptr, NumToEmit);
-        Ptr += NumToEmit;
-        OutBufCur = OutBufStart + NumToEmit;
-        flush_impl();
-      }
-      break;
-    }
-    OutBufCur += Size;
-    return *this;
-  }
+  raw_ostream &write(const char *Ptr, unsigned Size);
   
   //===--------------------------------------------------------------------===//
   // Subclass Interface
