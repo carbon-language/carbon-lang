@@ -21,6 +21,7 @@
 #include <cstring>
 #include <iosfwd>
 #include <string>
+#include <cstring>
 
 namespace llvm {
   class Serializer;
