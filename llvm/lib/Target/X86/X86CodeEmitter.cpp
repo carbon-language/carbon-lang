@@ -516,11 +516,13 @@ void Emitter::emitInstruction(const MachineInstr &MI,
 
     if (CurOp != NumOps) {
       const MachineOperand &MO = MI.getOperand(CurOp++);
-DOUT << "RawFrm CurOp " << CurOp << "\n";
-DOUT << "isMachineBasicBlock " << MO.isMachineBasicBlock() << "\n";
-DOUT << "isGlobalAddress " << MO.isGlobalAddress() << "\n";
-DOUT << "isExternalSymbol " << MO.isExternalSymbol() << "\n";
-DOUT << "isImmediate " << MO.isImmediate() << "\n";
+
+      DOUT << "RawFrm CurOp " << CurOp << "\n";
+      DOUT << "isMachineBasicBlock " << MO.isMachineBasicBlock() << "\n";
+      DOUT << "isGlobalAddress " << MO.isGlobalAddress() << "\n";
+      DOUT << "isExternalSymbol " << MO.isExternalSymbol() << "\n";
+      DOUT << "isImmediate " << MO.isImmediate() << "\n";
+
       if (MO.isMachineBasicBlock()) {
         emitPCRelativeBlockAddress(MO.getMBB());
       } else if (MO.isGlobalAddress()) {
