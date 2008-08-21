@@ -18,6 +18,7 @@
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/MathExtras.h"
 #include <cassert>
+#include <cstring>
 #include <iosfwd>
 #include <string>
 
