@@ -3998,7 +3998,6 @@ SDNode *SelectionDAG::MorphNodeTo(SDNode *N, unsigned Opc,
     N->OperandList[i].setUser(N);
     SDNode *ToUse = N->OperandList[i].getVal();
     ToUse->addUser(i, N);
-    DeadNodeSet.erase(ToUse);
   }
 
   // Delete any nodes that are still dead after adding the uses for the
