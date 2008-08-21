@@ -673,6 +673,33 @@ public:
 } // end anonymous namespace
 
 namespace {
+// x86-32 Windows target
+class WindowsX86_32TargetInfo : public X86_32TargetInfo {
+public:
+  WindowsX86_32TargetInfo(const std::string& triple)
+    : X86_32TargetInfo(triple) {
+    // FIXME: Fix wchar_t.
+    // FIXME: We should probably enable -fms-extensions by default for
+    // this target.
+  }
+  virtual void getTargetDefines(std::vector<char> &Defines) const {
+    X86_32TargetInfo::getTargetDefines(Defines);
+    // This list is based off of the the list of things MingW defines
+    Define(Defines, "__WIN32__");
+    Define(Defines, "__WIN32");
+    Define(Defines, "_WIN32");
+    Define(Defines, "WIN32");
+    Define(Defines, "__WINNT__");
+    Define(Defines, "__WINNT");
+    Define(Defines, "WINNT");
+    Define(Defines, "_WIN32");
+    Define(Defines, "_X86_");
+    Define(Defines, "__MSVCRT__");
+  }
+};
+} // end anonymous namespace
+
+namespace {
 // x86-64 generic target
 class X86_64TargetInfo : public X86TargetInfo {
 public:
@@ -935,6 +962,8 @@ TargetInfo* TargetInfo::CreateTargetInfo(const std::string &T) {
       return new DarwinI386TargetInfo(T);
     if (isLinux)
       return new LinuxX86_32TargetInfo(T);
+    if (isWindows)
+      return new WindowsX86_32TargetInfo(T);
     return new X86_32TargetInfo(T);
   }
 
