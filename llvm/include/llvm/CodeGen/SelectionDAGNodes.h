@@ -1453,7 +1453,7 @@ public:
     InitOperands(&Op, 1);
   }
   ~HandleSDNode();  
-  SDUse getValue() const { return Op; }
+  const SDValue &getValue() const { return Op.getSDValue(); }
 };
 
 /// Abstact virtual class for operations for memory operations
