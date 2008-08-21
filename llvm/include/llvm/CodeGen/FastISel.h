@@ -88,8 +88,15 @@ protected:
   ///
   virtual unsigned FastEmit_ri(MVT::SimpleValueType VT,
                                ISD::NodeType Opcode,
-                               unsigned Op0, uint64_t Imm,
-                               MVT::SimpleValueType ImmType);
+                               unsigned Op0, uint64_t Imm);
+
+  /// FastEmit_rri - This method is called by target-independent code
+  /// to request that an instruction with the given type, opcode, and
+  /// register and immediate operands be emitted.
+  ///
+  virtual unsigned FastEmit_rri(MVT::SimpleValueType VT,
+                                ISD::NodeType Opcode,
+                                unsigned Op0, unsigned Op1, uint64_t Imm);
 
   /// FastEmit_ri_ - This method is a wrapper of FastEmit_ri. It first tries
   /// to emit an instruction with an immediate operand using FastEmit_ri.
@@ -106,19 +113,33 @@ protected:
   unsigned FastEmitInst_(unsigned MachineInstOpcode,
                          const TargetRegisterClass *RC);
 
-  /// FastEmitInst_ - Emit a MachineInstr with one register operand
+  /// FastEmitInst_r - Emit a MachineInstr with one register operand
   /// and a result register in the given register class.
   ///
   unsigned FastEmitInst_r(unsigned MachineInstOpcode,
                           const TargetRegisterClass *RC,
                           unsigned Op0);
 
-  /// FastEmitInst_ - Emit a MachineInstr with two register operands
+  /// FastEmitInst_rr - Emit a MachineInstr with two register operands
   /// and a result register in the given register class.
   ///
   unsigned FastEmitInst_rr(unsigned MachineInstOpcode,
                            const TargetRegisterClass *RC,
                            unsigned Op0, unsigned Op1);
+
+  /// FastEmitInst_ri - Emit a MachineInstr with two register operands
+  /// and a result register in the given register class.
+  ///
+  unsigned FastEmitInst_ri(unsigned MachineInstOpcode,
+                           const TargetRegisterClass *RC,
+                           unsigned Op0, uint64_t Imm);
+
+  /// FastEmitInst_rri - Emit a MachineInstr with two register operands,
+  /// an immediate, and a result register in the given register class.
+  ///
+  unsigned FastEmitInst_rri(unsigned MachineInstOpcode,
+                            const TargetRegisterClass *RC,
+                            unsigned Op0, unsigned Op1, uint64_t Imm);
 
 private:
   unsigned createResultReg(const TargetRegisterClass *RC);

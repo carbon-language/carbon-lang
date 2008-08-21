@@ -66,16 +66,31 @@ struct OperandsSignature {
                   const CodeGenRegisterClass *DstRC) {
     for (unsigned i = 0, e = InstPatNode->getNumChildren(); i != e; ++i) {
       TreePatternNode *Op = InstPatNode->getChild(i);
-      if (!Op->isLeaf())
-        return false;
       // For now, filter out any operand with a predicate.
       if (!Op->getPredicateFn().empty())
         return false;
+      // For now, filter out any operand with multiple values.
+      if (Op->getExtTypes().size() != 1)
+        return false;
+      // For now, all the operands must have the same type.
+      if (Op->getTypeNum(0) != VT)
+        return false;
+      if (!Op->isLeaf()) {
+        if (Op->getOperator()->getName() == "imm") {
+          Operands.push_back("i");
+          return true;
+        }
+        // For now, ignore fpimm and other non-leaf nodes.
+        return false;
+      }
       DefInit *OpDI = dynamic_cast<DefInit*>(Op->getLeafValue());
       if (!OpDI)
         return false;
       Record *OpLeafRec = OpDI->getDef();
-      // For now, only accept register operands.
+      // TODO: handle instructions which have physreg operands.
+      if (OpLeafRec->isSubClassOf("Register"))
+        return false;
+      // For now, the only other thing we accept is register operands.
       if (!OpLeafRec->isSubClassOf("RegisterClass"))
         return false;
       // For now, require the register operands' register classes to all
@@ -86,9 +101,6 @@ struct OperandsSignature {
       // For now, all the operands must have the same register class.
       if (DstRC != RC)
         return false;
-      // For now, all the operands must have the same type.
-      if (Op->getTypeNum(0) != VT)
-        return false;
       Operands.push_back("r");
     }
     return true;
@@ -98,6 +110,8 @@ struct OperandsSignature {
     for (unsigned i = 0, e = Operands.size(); i != e; ++i) {
       if (Operands[i] == "r") {
         OS << "unsigned Op" << i;
+      } else if (Operands[i] == "i") {
+        OS << "uint64_t imm" << i;
       } else {
         assert("Unknown operand kind!");
         abort();
@@ -111,6 +125,8 @@ struct OperandsSignature {
     for (unsigned i = 0, e = Operands.size(); i != e; ++i) {
       if (Operands[i] == "r") {
         OS << "Op" << i;
+      } else if (Operands[i] == "i") {
+        OS << "imm" << i;
       } else {
         assert("Unknown operand kind!");
         abort();
@@ -239,13 +255,16 @@ void FastISelEmitter::run(std::ostream &OS) {
         MVT::SimpleValueType VT = TI->first;
 
         OS << "  unsigned FastEmit_" << getLegalCName(Opcode)
-           << "_" << getLegalCName(getName(VT)) << "(";
+           << "_" << getLegalCName(getName(VT)) << "_";
+        Operands.PrintManglingSuffix(OS);
+        OS << "(";
         Operands.PrintParameters(OS);
         OS << ");\n";
       }
 
-      OS << "  unsigned FastEmit_" << getLegalCName(Opcode)
-         << "(MVT::SimpleValueType VT";
+      OS << "  unsigned FastEmit_" << getLegalCName(Opcode) << "_";
+      Operands.PrintManglingSuffix(OS);
+      OS << "(MVT::SimpleValueType VT";
       if (!Operands.empty())
         OS << ", ";
       Operands.PrintParameters(OS);
@@ -293,7 +312,9 @@ void FastISelEmitter::run(std::ostream &OS) {
   
         OS << "unsigned FastISel::FastEmit_"
            << getLegalCName(Opcode)
-           << "_" << getLegalCName(getName(VT)) << "(";
+           << "_" << getLegalCName(getName(VT)) << "_";
+        Operands.PrintManglingSuffix(OS);
+        OS << "(";
         Operands.PrintParameters(OS);
         OS << ") {\n";
         OS << "  return FastEmitInst_";
@@ -310,7 +331,9 @@ void FastISelEmitter::run(std::ostream &OS) {
 
       // Emit one function for the opcode that demultiplexes based on the type.
       OS << "unsigned FastISel::FastEmit_"
-         << getLegalCName(Opcode) << "(MVT::SimpleValueType VT";
+         << getLegalCName(Opcode) << "_";
+      Operands.PrintManglingSuffix(OS);
+      OS << "(MVT::SimpleValueType VT";
       if (!Operands.empty())
         OS << ", ";
       Operands.PrintParameters(OS);
@@ -321,7 +344,9 @@ void FastISelEmitter::run(std::ostream &OS) {
         MVT::SimpleValueType VT = TI->first;
         std::string TypeName = getName(VT);
         OS << "  case " << TypeName << ": return FastEmit_"
-           << getLegalCName(Opcode) << "_" << getLegalCName(TypeName) << "(";
+           << getLegalCName(Opcode) << "_" << getLegalCName(TypeName) << "_";
+        Operands.PrintManglingSuffix(OS);
+        OS << "(";
         Operands.PrintArguments(OS);
         OS << ");\n";
       }
@@ -346,7 +371,9 @@ void FastISelEmitter::run(std::ostream &OS) {
       const std::string &Opcode = I->first;
 
       OS << "  case " << Opcode << ": return FastEmit_"
-         << getLegalCName(Opcode) << "(VT";
+         << getLegalCName(Opcode) << "_";
+      Operands.PrintManglingSuffix(OS);
+      OS << "(VT";
       if (!Operands.empty())
         OS << ", ";
       Operands.PrintArguments(OS);

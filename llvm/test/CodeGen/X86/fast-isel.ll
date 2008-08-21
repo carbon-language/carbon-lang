@@ -16,10 +16,11 @@ fast:
   %t3 = and i32 %t2, %s
   %t4 = or i32 %t3, %s
   %t5 = xor i32 %t4, %s
+  %t6 = add i32 %t5, 2
   br label %exit
 
 exit:
-  ret i32 %t5
+  ret i32 %t6
 }
 
 define double @bar(double* %p, double* %q) {

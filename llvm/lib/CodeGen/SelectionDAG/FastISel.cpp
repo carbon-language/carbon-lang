@@ -26,15 +26,33 @@ using namespace llvm;
 ///
 bool FastISel::SelectBinaryOp(Instruction *I, ISD::NodeType ISDOpcode,
                               DenseMap<const Value*, unsigned> &ValueMap) {
-  unsigned Op0 = ValueMap[I->getOperand(0)];
-  unsigned Op1 = ValueMap[I->getOperand(1)];
-  if (Op0 == 0 || Op1 == 0)
-    // Unhandled operand. Halt "fast" selection and bail.
-    return false;
-
   MVT VT = MVT::getMVT(I->getType(), /*HandleUnknown=*/true);
   if (VT == MVT::Other || !VT.isSimple())
     // Unhandled type. Halt "fast" selection and bail.
+    return false;
+
+  unsigned Op0 = ValueMap[I->getOperand(0)];
+  if (Op0 == 0)
+    // Unhandled operand. Halt "fast" selection and bail.
+    return false;
+
+  // Check if the second operand is a constant and handle it appropriately.
+  if (ConstantInt *CI = dyn_cast<ConstantInt>(I->getOperand(1))) {
+    unsigned ResultReg = FastEmit_ri_(VT.getSimpleVT(), ISDOpcode, Op0,
+                                      CI->getZExtValue(), VT.getSimpleVT());
+    if (ResultReg == 0)
+      // Target-specific code wasn't able to find a machine opcode for
+      // the given ISD opcode and type. Halt "fast" selection and bail.
+      return false;
+
+    // We successfully emitted code for the given LLVM Instruction.
+    ValueMap[I] = ResultReg;
+    return true;
+  }
+
+  unsigned Op1 = ValueMap[I->getOperand(1)];
+  if (Op1 == 0)
+    // Unhandled operand. Halt "fast" selection and bail.
     return false;
 
   unsigned ResultReg = FastEmit_rr(VT.getSimpleVT(), ISDOpcode, Op0, Op1);
@@ -67,7 +85,7 @@ bool FastISel::SelectGetElementPtr(Instruction *I,
         uint64_t Offs = TD.getStructLayout(StTy)->getElementOffset(Field);
         // FIXME: This can be optimized by combining the add with a
         // subsequent one.
-        N = FastEmit_ri(VT.getSimpleVT(), ISD::ADD, N, Offs, VT.getSimpleVT());
+        N = FastEmit_ri_(VT.getSimpleVT(), ISD::ADD, N, Offs, VT.getSimpleVT());
         if (N == 0)
           // Unhandled operand. Halt "fast" selection and bail.
           return false;
@@ -81,7 +99,7 @@ bool FastISel::SelectGetElementPtr(Instruction *I,
         if (CI->getZExtValue() == 0) continue;
         uint64_t Offs = 
           TD.getABITypeSize(Ty)*cast<ConstantInt>(CI)->getSExtValue();
-        N = FastEmit_ri(VT.getSimpleVT(), ISD::ADD, N, Offs, VT.getSimpleVT());
+        N = FastEmit_ri_(VT.getSimpleVT(), ISD::ADD, N, Offs, VT.getSimpleVT());
         if (N == 0)
           // Unhandled operand. Halt "fast" selection and bail.
           return false;
@@ -108,8 +126,8 @@ bool FastISel::SelectGetElementPtr(Instruction *I,
 
       // FIXME: If multiple is power of two, turn it into a shift. The
       // optimization should be in FastEmit_ri?
-      IdxN = FastEmit_ri(VT.getSimpleVT(), ISD::MUL, IdxN,
-                         ElementSize, VT.getSimpleVT());
+      IdxN = FastEmit_ri_(VT.getSimpleVT(), ISD::MUL, IdxN,
+                          ElementSize, VT.getSimpleVT());
       if (IdxN == 0)
         // Unhandled operand. Halt "fast" selection and bail.
         return false;
@@ -226,13 +244,18 @@ unsigned FastISel::FastEmit_rr(MVT::SimpleValueType, ISD::NodeType,
   return 0;
 }
 
-unsigned FastISel::FastEmit_i(MVT::SimpleValueType, uint64_t) {
+unsigned FastISel::FastEmit_i(MVT::SimpleValueType, uint64_t /*Imm*/) {
   return 0;
 }
 
 unsigned FastISel::FastEmit_ri(MVT::SimpleValueType, ISD::NodeType,
-                               unsigned /*Op0*/, uint64_t Imm,
-                               MVT::SimpleValueType ImmType) {
+                               unsigned /*Op0*/, uint64_t /*Imm*/) {
+  return 0;
+}
+
+unsigned FastISel::FastEmit_rri(MVT::SimpleValueType, ISD::NodeType,
+                                unsigned /*Op0*/, unsigned /*Op1*/,
+                                uint64_t /*Imm*/) {
   return 0;
 }
 
@@ -241,20 +264,27 @@ unsigned FastISel::FastEmit_ri(MVT::SimpleValueType, ISD::NodeType,
 /// If that fails, it materializes the immediate into a register and try
 /// FastEmit_rr instead.
 unsigned FastISel::FastEmit_ri_(MVT::SimpleValueType VT, ISD::NodeType Opcode,
-                               unsigned Op0, uint64_t Imm,
-                               MVT::SimpleValueType ImmType) {
+                                unsigned Op0, uint64_t Imm,
+                                MVT::SimpleValueType ImmType) {
   unsigned ResultReg = 0;
   // First check if immediate type is legal. If not, we can't use the ri form.
   if (TLI.getOperationAction(ISD::Constant, ImmType) == TargetLowering::Legal)
-    ResultReg = FastEmit_ri(VT, Opcode, Op0, Imm, ImmType);
+    ResultReg = FastEmit_ri(VT, Opcode, Op0, Imm);
   if (ResultReg != 0)
     return ResultReg;
-  return FastEmit_rr(VT, Opcode, Op0, FastEmit_i(ImmType, Imm));
+  unsigned MaterialReg = FastEmit_i(ImmType, Imm);
+  if (MaterialReg == 0)
+    return 0;
+  return FastEmit_rr(VT, Opcode, Op0, MaterialReg);
+}
+
+unsigned FastISel::createResultReg(const TargetRegisterClass* RC) {
+  return MRI.createVirtualRegister(RC);
 }
 
 unsigned FastISel::FastEmitInst_(unsigned MachineInstOpcode,
                                  const TargetRegisterClass* RC) {
-  unsigned ResultReg = MRI.createVirtualRegister(RC);
+  unsigned ResultReg = createResultReg(RC);
   const TargetInstrDesc &II = TII.get(MachineInstOpcode);
 
   BuildMI(MBB, II, ResultReg);
@@ -264,7 +294,7 @@ unsigned FastISel::FastEmitInst_(unsigned MachineInstOpcode,
 unsigned FastISel::FastEmitInst_r(unsigned MachineInstOpcode,
                                   const TargetRegisterClass *RC,
                                   unsigned Op0) {
-  unsigned ResultReg = MRI.createVirtualRegister(RC);
+  unsigned ResultReg = createResultReg(RC);
   const TargetInstrDesc &II = TII.get(MachineInstOpcode);
 
   BuildMI(MBB, II, ResultReg).addReg(Op0);
@@ -274,9 +304,29 @@ unsigned FastISel::FastEmitInst_r(unsigned MachineInstOpcode,
 unsigned FastISel::FastEmitInst_rr(unsigned MachineInstOpcode,
                                    const TargetRegisterClass *RC,
                                    unsigned Op0, unsigned Op1) {
-  unsigned ResultReg = MRI.createVirtualRegister(RC);
+  unsigned ResultReg = createResultReg(RC);
   const TargetInstrDesc &II = TII.get(MachineInstOpcode);
 
   BuildMI(MBB, II, ResultReg).addReg(Op0).addReg(Op1);
+  return ResultReg;
+}
+
+unsigned FastISel::FastEmitInst_ri(unsigned MachineInstOpcode,
+                                   const TargetRegisterClass *RC,
+                                   unsigned Op0, uint64_t Imm) {
+  unsigned ResultReg = createResultReg(RC);
+  const TargetInstrDesc &II = TII.get(MachineInstOpcode);
+
+  BuildMI(MBB, II, ResultReg).addReg(Op0).addImm(Imm);
+  return ResultReg;
+}
+
+unsigned FastISel::FastEmitInst_rri(unsigned MachineInstOpcode,
+                                    const TargetRegisterClass *RC,
+                                    unsigned Op0, unsigned Op1, uint64_t Imm) {
+  unsigned ResultReg = createResultReg(RC);
+  const TargetInstrDesc &II = TII.get(MachineInstOpcode);
+
+  BuildMI(MBB, II, ResultReg).addReg(Op0).addReg(Op1).addImm(Imm);
   return ResultReg;
 }
