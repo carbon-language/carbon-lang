@@ -20,9 +20,10 @@
 namespace llvm {
   class SPUTargetMachine;
   class FunctionPass;
+  class raw_ostream;
 
   FunctionPass *createSPUISelDag(SPUTargetMachine &TM);
-  FunctionPass *createSPUAsmPrinterPass(std::ostream &o, SPUTargetMachine &tm);
+  FunctionPass *createSPUAsmPrinterPass(raw_ostream &o, SPUTargetMachine &tm);
 
   /*--== Utility functions/predicates/etc used all over the place: --==*/
   //! Predicate test for a signed 10-bit value

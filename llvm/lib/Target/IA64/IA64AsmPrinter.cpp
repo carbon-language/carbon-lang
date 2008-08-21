@@ -26,6 +26,7 @@
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/Mangler.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
 
@@ -35,7 +36,7 @@ namespace {
   struct IA64AsmPrinter : public AsmPrinter {
     std::set<std::string> ExternalFunctionNames, ExternalObjectNames;
 
-    IA64AsmPrinter(std::ostream &O, TargetMachine &TM, const TargetAsmInfo *T)
+    IA64AsmPrinter(raw_ostream &O, TargetMachine &TM, const TargetAsmInfo *T)
       : AsmPrinter(O, TM, T) {
     }
 
@@ -336,7 +337,7 @@ void IA64AsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
     O << "\t.size " << name << ',' << Size << '\n';
   }
 
-  O << name << ":\t\t\t\t// " << *C << '\n';
+  O << name << ":\n";
   EmitGlobalConstant(C);
 }
 
@@ -370,7 +371,7 @@ bool IA64AsmPrinter::doFinalization(Module &M) {
 /// assembly code for a MachineFunction to the given output stream, using
 /// the given target machine description.
 ///
-FunctionPass *llvm::createIA64CodePrinterPass(std::ostream &o,
+FunctionPass *llvm::createIA64CodePrinterPass(raw_ostream &o,
                                               IA64TargetMachine &tm) {
   return new IA64AsmPrinter(o, tm, tm.getTargetAsmInfo());
 }

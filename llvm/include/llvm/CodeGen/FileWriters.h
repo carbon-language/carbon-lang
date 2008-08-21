@@ -21,10 +21,11 @@ namespace llvm {
   class PassManagerBase;
   class MachineCodeEmitter;
   class TargetMachine;
+  class raw_ostream;
 
-  MachineCodeEmitter *AddELFWriter(PassManagerBase &FPM, std::ostream &O,
+  MachineCodeEmitter *AddELFWriter(PassManagerBase &FPM, raw_ostream &O,
                                    TargetMachine &TM);
-  MachineCodeEmitter *AddMachOWriter(PassManagerBase &FPM, std::ostream &O,
+  MachineCodeEmitter *AddMachOWriter(PassManagerBase &FPM, raw_ostream &O,
                                      TargetMachine &TM);
 
 } // end llvm namespace

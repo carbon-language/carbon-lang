@@ -20,11 +20,12 @@
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/ADT/StringSet.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/raw_ostream.h"
 
 namespace llvm {
 
 struct VISIBILITY_HIDDEN X86IntelAsmPrinter : public AsmPrinter {
-  X86IntelAsmPrinter(std::ostream &O, X86TargetMachine &TM,
+  X86IntelAsmPrinter(raw_ostream &O, X86TargetMachine &TM,
                      const TargetAsmInfo *T)
       : AsmPrinter(O, TM, T) {
   }

@@ -18,6 +18,7 @@
 #include "llvm/PassManager.h"
 #include "llvm/Target/TargetMachineRegistry.h"
 #include "llvm/Target/TargetOptions.h"
+#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
 // Register the targets
@@ -134,7 +135,7 @@ bool PPCTargetMachine::addPreEmitPass(PassManagerBase &PM, bool Fast) {
 }
 
 bool PPCTargetMachine::addAssemblyEmitter(PassManagerBase &PM, bool Fast, 
-                                          std::ostream &Out) {
+                                          raw_ostream &Out) {
   assert(AsmPrinterCtor && "AsmPrinter was not linked in");
   if (AsmPrinterCtor)
     PM.add(AsmPrinterCtor(Out, *this));
@@ -167,7 +168,7 @@ bool PPCTargetMachine::addCodeEmitter(PassManagerBase &PM, bool Fast,
   if (DumpAsm) {
     assert(AsmPrinterCtor && "AsmPrinter was not linked in");
     if (AsmPrinterCtor)
-      PM.add(AsmPrinterCtor(*cerr.stream(), *this));
+      PM.add(AsmPrinterCtor(errs(), *this));
   }
 
   return false;
@@ -180,7 +181,7 @@ bool PPCTargetMachine::addSimpleCodeEmitter(PassManagerBase &PM, bool Fast,
   if (DumpAsm) {
     assert(AsmPrinterCtor && "AsmPrinter was not linked in");
     if (AsmPrinterCtor)
-      PM.add(AsmPrinterCtor(*cerr.stream(), *this));
+      PM.add(AsmPrinterCtor(errs(), *this));
   }
 
   return false;

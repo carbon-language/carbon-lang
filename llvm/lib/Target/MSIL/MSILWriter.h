@@ -22,6 +22,7 @@
 #include "llvm/Analysis/FindUsedTypes.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetMachineRegistry.h"
@@ -75,7 +76,7 @@ namespace {
     }
 
   public:
-    std::ostream &Out;
+    raw_ostream &Out;
     Module* ModulePtr;
     const TargetData* TD;
     Mangler* Mang;
@@ -85,7 +86,7 @@ namespace {
       StaticInitList;
     const std::set<const Type *>* UsedTypes;
     static char ID;
-    MSILWriter(std::ostream &o) : FunctionPass((intptr_t)&ID), Out(o) {
+    MSILWriter(raw_ostream &o) : FunctionPass((intptr_t)&ID), Out(o) {
       UniqID = 0;
     }
 

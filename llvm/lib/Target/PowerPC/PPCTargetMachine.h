@@ -44,7 +44,7 @@ protected:
 
   // To avoid having target depend on the asmprinter stuff libraries, asmprinter
   // set this functions to ctor pointer at startup time if they are linked in.
-  typedef FunctionPass *(*AsmPrinterCtorFn)(std::ostream &o,
+  typedef FunctionPass *(*AsmPrinterCtorFn)(raw_ostream &o,
                                             PPCTargetMachine &tm);
   static AsmPrinterCtorFn AsmPrinterCtor;
 
@@ -78,7 +78,7 @@ public:
   virtual bool addInstSelector(PassManagerBase &PM, bool Fast);
   virtual bool addPreEmitPass(PassManagerBase &PM, bool Fast);
   virtual bool addAssemblyEmitter(PassManagerBase &PM, bool Fast, 
-                                  std::ostream &Out);
+                                  raw_ostream &Out);
   virtual bool addCodeEmitter(PassManagerBase &PM, bool Fast,
                               bool DumpAsm, MachineCodeEmitter &MCE);
   virtual bool addSimpleCodeEmitter(PassManagerBase &PM, bool Fast,

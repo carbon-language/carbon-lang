@@ -30,6 +30,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
@@ -47,7 +48,7 @@ namespace {
   struct VISIBILITY_HIDDEN SPUAsmPrinter : public AsmPrinter {
     std::set<std::string> FnStubs, GVStubs;
 
-    SPUAsmPrinter(std::ostream &O, TargetMachine &TM, const TargetAsmInfo *T) :
+    SPUAsmPrinter(raw_ostream &O, TargetMachine &TM, const TargetAsmInfo *T) :
       AsmPrinter(O, TM, T)
     {
     }
@@ -275,7 +276,7 @@ namespace {
     DwarfWriter DW;
     MachineModuleInfo *MMI;
 
-    LinuxAsmPrinter(std::ostream &O, SPUTargetMachine &TM,
+    LinuxAsmPrinter(raw_ostream &O, SPUTargetMachine &TM,
                     const TargetAsmInfo *T) :
       SPUAsmPrinter(O, TM, T),
       DW(O, this, T),
@@ -651,7 +652,7 @@ bool LinuxAsmPrinter::doFinalization(Module &M) {
 /// assembly code for a MachineFunction to the given output stream, in a format
 /// that the Linux SPU assembler can deal with.
 ///
-FunctionPass *llvm::createSPUAsmPrinterPass(std::ostream &o,
+FunctionPass *llvm::createSPUAsmPrinterPass(raw_ostream &o,
                                             SPUTargetMachine &tm) {
   return new LinuxAsmPrinter(o, tm, tm.getTargetAsmInfo());
 }

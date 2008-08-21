@@ -36,6 +36,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
@@ -52,7 +53,7 @@ namespace {
     std::set<std::string> FnStubs, GVStubs;
     const PPCSubtarget &Subtarget;
 
-    PPCAsmPrinter(std::ostream &O, TargetMachine &TM, const TargetAsmInfo *T)
+    PPCAsmPrinter(raw_ostream &O, TargetMachine &TM, const TargetAsmInfo *T)
       : AsmPrinter(O, TM, T), Subtarget(TM.getSubtarget<PPCSubtarget>()) {
     }
 
@@ -295,7 +296,7 @@ namespace {
     DwarfWriter DW;
     MachineModuleInfo *MMI;
 
-    PPCLinuxAsmPrinter(std::ostream &O, PPCTargetMachine &TM,
+    PPCLinuxAsmPrinter(raw_ostream &O, PPCTargetMachine &TM,
                     const TargetAsmInfo *T)
       : PPCAsmPrinter(O, TM, T), DW(O, this, T), MMI(0) {
     }
@@ -327,7 +328,7 @@ namespace {
     DwarfWriter DW;
     MachineModuleInfo *MMI;
 
-    PPCDarwinAsmPrinter(std::ostream &O, PPCTargetMachine &TM,
+    PPCDarwinAsmPrinter(raw_ostream &O, PPCTargetMachine &TM,
                         const TargetAsmInfo *T)
       : PPCAsmPrinter(O, TM, T), DW(O, this, T), MMI(0) {
     }
@@ -649,7 +650,7 @@ bool PPCLinuxAsmPrinter::doInitialization(Module &M) {
 
 /// PrintUnmangledNameSafely - Print out the printable characters in the name.
 /// Don't print things like \n or \0.
-static void PrintUnmangledNameSafely(const Value *V, std::ostream &OS) {
+static void PrintUnmangledNameSafely(const Value *V, raw_ostream &OS) {
   for (const char *Name = V->getNameStart(), *E = Name+V->getNameLen();
        Name != E; ++Name)
     if (isprint(*Name))
@@ -1107,7 +1108,7 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
 /// for a MachineFunction to the given output stream, in a format that the
 /// Darwin assembler can deal with.
 ///
-FunctionPass *llvm::createPPCAsmPrinterPass(std::ostream &o,
+FunctionPass *llvm::createPPCAsmPrinterPass(raw_ostream &o,
                                             PPCTargetMachine &tm) {
   const PPCSubtarget *Subtarget = &tm.getSubtarget<PPCSubtarget>();
 

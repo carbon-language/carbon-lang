@@ -25,10 +25,11 @@ namespace llvm {
   class PPCTargetMachine;
   class FunctionPass;
   class MachineCodeEmitter;
+  class raw_ostream;
   
 FunctionPass *createPPCBranchSelectionPass();
 FunctionPass *createPPCISelDag(PPCTargetMachine &TM);
-FunctionPass *createPPCAsmPrinterPass(std::ostream &OS,
+FunctionPass *createPPCAsmPrinterPass(raw_ostream &OS,
                                       PPCTargetMachine &TM);
 FunctionPass *createPPCCodeEmitterPass(PPCTargetMachine &TM,
                                        MachineCodeEmitter &MCE);

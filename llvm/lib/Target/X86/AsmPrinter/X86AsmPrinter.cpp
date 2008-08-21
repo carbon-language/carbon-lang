@@ -23,7 +23,7 @@ using namespace llvm;
 /// for a MachineFunction to the given output stream, using the given target
 /// machine description.
 ///
-FunctionPass *llvm::createX86CodePrinterPass(std::ostream &o,
+FunctionPass *llvm::createX86CodePrinterPass(raw_ostream &o,
                                              X86TargetMachine &tm) {
   const X86Subtarget *Subtarget = &tm.getSubtarget<X86Subtarget>();
 

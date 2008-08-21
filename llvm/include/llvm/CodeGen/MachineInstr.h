@@ -258,6 +258,11 @@ public:
   }
   void print(std::ostream &OS, const TargetMachine *TM = 0) const;
   void print(std::ostream *OS) const { if (OS) print(*OS); }
+  void print(raw_ostream *OS, const TargetMachine *TM) const {
+    if (OS) print(*OS, TM);
+  }
+  void print(raw_ostream &OS, const TargetMachine *TM = 0) const;
+  void print(raw_ostream *OS) const { if (OS) print(*OS); }
   void dump() const;
 
   //===--------------------------------------------------------------------===//
@@ -312,6 +317,11 @@ private:
 // Debugging Support
 
 inline std::ostream& operator<<(std::ostream &OS, const MachineInstr &MI) {
+  MI.print(OS);
+  return OS;
+}
+
+inline raw_ostream& operator<<(raw_ostream &OS, const MachineInstr &MI) {
   MI.print(OS);
   return OS;
 }

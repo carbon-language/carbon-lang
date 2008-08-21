@@ -21,9 +21,10 @@
 namespace llvm {
   class FunctionPass;
   class TargetMachine;
+  class raw_ostream;
 
   FunctionPass *createSparcISelDag(TargetMachine &TM);
-  FunctionPass *createSparcCodePrinterPass(std::ostream &OS, TargetMachine &TM);
+  FunctionPass *createSparcCodePrinterPass(raw_ostream &OS, TargetMachine &TM);
   FunctionPass *createSparcDelaySlotFillerPass(TargetMachine &TM);
   FunctionPass *createSparcFPMoverPass(TargetMachine &TM);
 } // end namespace llvm;

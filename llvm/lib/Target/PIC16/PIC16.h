@@ -22,9 +22,10 @@ namespace llvm {
   class FunctionPassManager;
   class FunctionPass;
   class MachineCodeEmitter;
+  class raw_ostream;
 
   FunctionPass *createPIC16ISelDag(PIC16TargetMachine &TM);
-  FunctionPass *createPIC16CodePrinterPass(std::ostream &OS, 
+  FunctionPass *createPIC16CodePrinterPass(raw_ostream &OS, 
                                            PIC16TargetMachine &TM);
 } // end namespace llvm;
 

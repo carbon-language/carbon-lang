@@ -44,6 +44,7 @@
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/OutputBuffer.h"
 #include "llvm/Support/Streams.h"
+#include "llvm/Support/raw_ostream.h"
 #include <list>
 using namespace llvm;
 
@@ -51,7 +52,7 @@ char ELFWriter::ID = 0;
 /// AddELFWriter - Concrete function to add the ELF writer to the function pass
 /// manager.
 MachineCodeEmitter *llvm::AddELFWriter(PassManagerBase &PM,
-                                       std::ostream &O,
+                                       raw_ostream &O,
                                        TargetMachine &TM) {
   ELFWriter *EW = new ELFWriter(O, TM);
   PM.add(EW);
@@ -193,7 +194,7 @@ bool ELFCodeEmitter::finishFunction(MachineFunction &F) {
 //                          ELFWriter Implementation
 //===----------------------------------------------------------------------===//
 
-ELFWriter::ELFWriter(std::ostream &o, TargetMachine &tm) 
+ELFWriter::ELFWriter(raw_ostream &o, TargetMachine &tm) 
   : MachineFunctionPass((intptr_t)&ID), O(o), TM(tm) {
   e_flags = 0;    // e_flags defaults to 0, no flags.
 
@@ -536,7 +537,7 @@ void ELFWriter::OutputSectionsAndSectionTable() {
     if (S.Align)
       for (size_t NewFileOff = (FileOff+S.Align-1) & ~(S.Align-1);
            FileOff != NewFileOff; ++FileOff)
-        O.put((char)0xAB);
+        O << (char)0xAB;
     O.write((char*)&S.SectionData[0], S.SectionData.size());
     FileOff += S.SectionData.size();
 
@@ -557,7 +558,7 @@ void ELFWriter::OutputSectionsAndSectionTable() {
   // Align output for the section table.
   for (size_t NewFileOff = (FileOff+TableAlign-1) & ~(TableAlign-1);
        FileOff != NewFileOff; ++FileOff)
-    O.put((char)0xAB);
+    O << (char)0xAB;
 
   // Emit the section table itself.
   O.write((char*)&Table[0], Table.size());

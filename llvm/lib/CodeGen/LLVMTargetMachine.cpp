@@ -22,6 +22,7 @@
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
 static cl::opt<bool> PrintLSR("print-lsr-output", cl::Hidden,
@@ -50,7 +51,7 @@ DisablePostRAScheduler("disable-post-RA-scheduler",
 
 FileModel::Model
 LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
-                                       std::ostream &Out,
+                                       raw_ostream &Out,
                                        CodeGenFileType FileType,
                                        bool Fast) {
   // Standard LLVM-Level Passes.

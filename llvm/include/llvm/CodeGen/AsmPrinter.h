@@ -34,6 +34,7 @@ namespace llvm {
   class Mangler;
   class TargetAsmInfo;
   class Type;
+  class raw_ostream;
 
   /// AsmPrinter - This class is intended to be used as a driving class for all
   /// asm writers.
@@ -64,7 +65,7 @@ namespace llvm {
   public:
     /// Output stream on which we're printing assembly code.
     ///
-    std::ostream &O;
+    raw_ostream &O;
 
     /// Target machine description.
     ///
@@ -96,7 +97,7 @@ namespace llvm {
     bool IsInTextSection;
   
   protected:
-    AsmPrinter(std::ostream &o, TargetMachine &TM, const TargetAsmInfo *T);
+    AsmPrinter(raw_ostream &o, TargetMachine &TM, const TargetAsmInfo *T);
     
   public:
     virtual ~AsmPrinter();

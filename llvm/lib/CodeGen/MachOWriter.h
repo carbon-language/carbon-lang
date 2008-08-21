@@ -29,6 +29,7 @@ namespace llvm {
   class MachineCodeEmitter;
   class MachOCodeEmitter;
   class OutputBuffer;
+  class raw_ostream;
 
   /// MachOSym - This struct contains information about each symbol that is
   /// added to logical symbol table for the module.  This is eventually
@@ -90,7 +91,7 @@ namespace llvm {
       return *(MachineCodeEmitter*)MCE;
     }
 
-    MachOWriter(std::ostream &O, TargetMachine &TM);
+    MachOWriter(raw_ostream &O, TargetMachine &TM);
     virtual ~MachOWriter();
 
     virtual const char *getPassName() const {
@@ -101,7 +102,7 @@ namespace llvm {
   protected:
     /// Output stream to send the resultant object file to.
     ///
-    std::ostream &O;
+    raw_ostream &O;
 
     /// Target machine description.
     ///

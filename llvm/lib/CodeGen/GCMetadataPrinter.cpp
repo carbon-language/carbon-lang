@@ -19,12 +19,12 @@ GCMetadataPrinter::GCMetadataPrinter() { }
 
 GCMetadataPrinter::~GCMetadataPrinter() { }
 
-void GCMetadataPrinter::beginAssembly(std::ostream &OS, AsmPrinter &AP,
+void GCMetadataPrinter::beginAssembly(raw_ostream &OS, AsmPrinter &AP,
                                       const TargetAsmInfo &TAI) {
   // Default is no action.
 }
 
-void GCMetadataPrinter::finishAssembly(std::ostream &OS, AsmPrinter &AP,
+void GCMetadataPrinter::finishAssembly(raw_ostream &OS, AsmPrinter &AP,
                                        const TargetAsmInfo &TAI) {
   // Default is no action.
 }

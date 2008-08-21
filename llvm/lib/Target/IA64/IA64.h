@@ -20,6 +20,7 @@ namespace llvm {
 
 class IA64TargetMachine;
 class FunctionPass;
+class raw_ostream;
 
 /// createIA64DAGToDAGInstructionSelector - This pass converts an LLVM
 /// function into IA64 machine code in a sane, DAG->DAG transform.
@@ -36,7 +37,7 @@ FunctionPass *createIA64BundlingPass(IA64TargetMachine &TM);
 /// using the given target machine description.  This should work
 /// regardless of whether the function is in SSA form.
 ///
-FunctionPass *createIA64CodePrinterPass(std::ostream &o, IA64TargetMachine &tm);
+FunctionPass *createIA64CodePrinterPass(raw_ostream &o, IA64TargetMachine &tm);
 
 } // End llvm namespace
 

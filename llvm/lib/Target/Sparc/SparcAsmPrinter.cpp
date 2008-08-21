@@ -26,6 +26,7 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/Mangler.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/CommandLine.h"
@@ -39,7 +40,7 @@ STATISTIC(EmittedInsts, "Number of machine instrs printed");
 
 namespace {
   struct VISIBILITY_HIDDEN SparcAsmPrinter : public AsmPrinter {
-    SparcAsmPrinter(std::ostream &O, TargetMachine &TM, const TargetAsmInfo *T)
+    SparcAsmPrinter(raw_ostream &O, TargetMachine &TM, const TargetAsmInfo *T)
       : AsmPrinter(O, TM, T) {
     }
 
@@ -75,7 +76,7 @@ namespace {
 /// using the given target machine description.  This should work
 /// regardless of whether the function is in SSA form.
 ///
-FunctionPass *llvm::createSparcCodePrinterPass(std::ostream &o,
+FunctionPass *llvm::createSparcCodePrinterPass(raw_ostream &o,
                                                TargetMachine &tm) {
   return new SparcAsmPrinter(o, tm, tm.getTargetAsmInfo());
 }

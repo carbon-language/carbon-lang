@@ -37,6 +37,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Support/raw_ostream.h"
 #include <cctype>
 
 using namespace llvm;
@@ -48,7 +49,7 @@ namespace {
 
     const MipsSubtarget *Subtarget;
 
-    MipsAsmPrinter(std::ostream &O, MipsTargetMachine &TM, 
+    MipsAsmPrinter(raw_ostream &O, MipsTargetMachine &TM, 
                    const TargetAsmInfo *T): 
                    AsmPrinter(O, TM, T) {
       Subtarget = &TM.getSubtarget<MipsSubtarget>();
@@ -89,7 +90,7 @@ namespace {
 /// assembly code for a MachineFunction to the given output stream,
 /// using the given target machine description.  This should work
 /// regardless of whether the function is in SSA form.
-FunctionPass *llvm::createMipsCodePrinterPass(std::ostream &o,
+FunctionPass *llvm::createMipsCodePrinterPass(raw_ostream &o,
                                               MipsTargetMachine &tm) 
 {
   return new MipsAsmPrinter(o, tm, tm.getTargetAsmInfo());
@@ -175,10 +176,9 @@ printSavedRegsBitmask(MachineFunction &MF)
 void MipsAsmPrinter::
 printHex32(unsigned int Value) 
 {
-  O << "0x" << std::hex;
+  O << "0x";
   for (int i = 7; i >= 0; i--) 
-    O << std::hex << ( (Value & (0xF << (i*4))) >> (i*4) );
-  O << std::dec;
+    O << utohexstr( (Value & (0xF << (i*4))) >> (i*4) );
 }
 
 //===----------------------------------------------------------------------===//

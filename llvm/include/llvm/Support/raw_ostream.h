@@ -14,6 +14,7 @@
 #ifndef LLVM_SUPPORT_RAW_OSTREAM_H
 #define LLVM_SUPPORT_RAW_OSTREAM_H
 
+#include "llvm/ADT/StringExtras.h"
 #include <cassert>
 #include <cstring>
 #include <string>
@@ -72,7 +73,11 @@ public:
     return write(Str, strlen(Str));
   }
   
-  raw_ostream &operator<<(unsigned N) {
+  raw_ostream &operator<<(const std::string& Str) {
+    return write(Str.data(), Str.length());
+  }
+  
+  raw_ostream &operator<<(uint64_t N) {
     // Zero is a special case.
     if (N == 0)
       return *this << '0';
@@ -86,6 +91,34 @@ public:
       N /= 10;
     }
     return write(CurPtr, EndPtr-CurPtr);
+  }
+  
+  raw_ostream &operator<<(int64_t N) {
+    if (N <  0) {
+      if (OutBufCur >= OutBufEnd)
+        flush_impl();
+      *OutBufCur++ = '-';
+      
+      N = -N;
+    }
+    
+    return this->operator<<(static_cast<uint64_t>(N));
+  }
+  
+  raw_ostream &operator<<(uint32_t N) {
+    return this->operator<<(static_cast<uint64_t>(N));
+  }
+  
+  raw_ostream &operator<<(int32_t N) {
+    return this->operator<<(static_cast<int64_t>(N));
+  }
+  
+  raw_ostream &operator<<(size_t N) {
+    return this->operator<<(static_cast<uint64_t>(N));
+  }
+  
+  raw_ostream &operator<<(double N) {
+    return this->operator<<(ftostr(N));
   }
   
   

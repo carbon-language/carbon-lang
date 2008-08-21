@@ -21,7 +21,7 @@
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/Support/Mangler.h"
-#include "llvm/Support/MathExtras.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
@@ -31,11 +31,12 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/StringExtras.h"
 #include <cerrno>
 using namespace llvm;
 
 char AsmPrinter::ID = 0;
-AsmPrinter::AsmPrinter(std::ostream &o, TargetMachine &tm,
+AsmPrinter::AsmPrinter(raw_ostream &o, TargetMachine &tm,
                        const TargetAsmInfo *T)
   : MachineFunctionPass((intptr_t)&ID), FunctionNumber(0), O(o),
     TM(tm), TAI(T), TRI(tm.getRegisterInfo()),
@@ -268,8 +269,9 @@ void AsmPrinter::EmitConstantPool(unsigned Alignment, const char *Section,
   EmitAlignment(Alignment);
   for (unsigned i = 0, e = CP.size(); i != e; ++i) {
     O << TAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber() << '_'
-      << CP[i].second << ":\t\t\t\t\t" << TAI->getCommentString() << ' ';
-    WriteTypeSymbolic(O, CP[i].first.getType(), 0);
+      << CP[i].second << ":\t\t\t\t\t";
+    // O << TAI->getCommentString() << ' ' << 
+    //      WriteTypeSymbolic(O, CP[i].first.getType(), 0);
     O << '\n';
     if (CP[i].first.isMachineConstantPoolEntry())
       EmitMachineConstantPoolValue(CP[i].first.Val.MachineCPVal);
@@ -495,7 +497,7 @@ void AsmPrinter::PrintULEB128(unsigned Value) const {
     unsigned Byte = Value & 0x7f;
     Value >>= 7;
     if (Value) Byte |= 0x80;
-    O << "0x" << std::hex << Byte << std::dec;
+    O << "0x" <<  utohexstr(Byte);
     if (Value) O << ", ";
   } while (Value);
 }
@@ -511,7 +513,7 @@ void AsmPrinter::PrintSLEB128(int Value) const {
     Value >>= 7;
     IsMore = Value != Sign || ((Byte ^ Sign) & 0x40) != 0;
     if (IsMore) Byte |= 0x80;
-    O << "0x" << std::hex << Byte << std::dec;
+    O << "0x" << utohexstr(Byte);
     if (IsMore) O << ", ";
   } while (IsMore);
 }
@@ -523,7 +525,7 @@ void AsmPrinter::PrintSLEB128(int Value) const {
 /// PrintHex - Print a value as a hexidecimal value.
 ///
 void AsmPrinter::PrintHex(int Value) const { 
-  O << "0x" << std::hex << Value << std::dec;
+  O << "0x" << utohexstr(static_cast<unsigned>(Value));
 }
 
 /// EOL - Print a newline character to asm stream.  If a comment is present
@@ -622,7 +624,7 @@ static inline char toOctal(int X) {
 
 /// printStringChar - Print a char, escaped if necessary.
 ///
-static void printStringChar(std::ostream &O, unsigned char C) {
+static void printStringChar(raw_ostream &O, char C) {
   if (C == '"') {
     O << "\\\"";
   } else if (C == '\\') {
@@ -706,7 +708,7 @@ void AsmPrinter::EmitAlignment(unsigned NumBits, const GlobalValue *GV,
 
   unsigned FillValue = TAI->getTextAlignFillValue();
   UseFillExpr &= IsInTextSection && FillValue;
-  if (UseFillExpr) O << ",0x" << std::hex << FillValue << std::dec;
+  if (UseFillExpr) O << ",0x" << utohexstr(FillValue);
   O << '\n';
 }
 
@@ -855,7 +857,7 @@ void AsmPrinter::EmitConstantValueOnly(const Constant *CV) {
 /// printAsCString - Print the specified array as a C compatible string, only if
 /// the predicate isString is true.
 ///
-static void printAsCString(std::ostream &O, const ConstantArray *CVA,
+static void printAsCString(raw_ostream &O, const ConstantArray *CVA,
                            unsigned LastElt) {
   assert(CVA->isString() && "Array is not string compatible!");
 

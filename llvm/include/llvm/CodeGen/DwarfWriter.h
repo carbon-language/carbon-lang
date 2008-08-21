@@ -31,6 +31,7 @@ class MachineModuleInfo;
 class MachineFunction;
 class Module;
 class TargetAsmInfo;
+class raw_ostream;
 
 //===----------------------------------------------------------------------===//
 // DwarfWriter - Emits Dwarf debug and exception handling directives.
@@ -48,7 +49,7 @@ private:
   
 public:
   
-  DwarfWriter(std::ostream &OS, AsmPrinter *A, const TargetAsmInfo *T);
+  DwarfWriter(raw_ostream &OS, AsmPrinter *A, const TargetAsmInfo *T);
   virtual ~DwarfWriter();
   
   /// SetModuleInfo - Set machine module info when it's known that pass manager

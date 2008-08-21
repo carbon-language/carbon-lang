@@ -31,6 +31,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
@@ -43,7 +44,7 @@ STATISTIC(EmittedInsts, "Number of machine instrs printed");
 
 namespace {
   struct VISIBILITY_HIDDEN PIC16AsmPrinter : public AsmPrinter {
-    PIC16AsmPrinter(std::ostream &O, TargetMachine &TM, const TargetAsmInfo *T)
+    PIC16AsmPrinter(raw_ostream &O, TargetMachine &TM, const TargetAsmInfo *T)
       : AsmPrinter(O, TM, T) {
     }
 
@@ -109,7 +110,7 @@ namespace {
 /// using the given target machine description.  This should work
 /// regardless of whether the function is in SSA form.
 ///
-FunctionPass *llvm::createPIC16CodePrinterPass(std::ostream &o,
+FunctionPass *llvm::createPIC16CodePrinterPass(raw_ostream &o,
                                                PIC16TargetMachine &tm) {
   return new PIC16AsmPrinter(o, tm, tm.getTargetAsmInfo());
 }
@@ -275,7 +276,7 @@ printOperand(const MachineInstr *MI, int opNum, const char *Modifier)
 }
 
 static void 
-printSOImm(std::ostream &O, int64_t V, const TargetAsmInfo *TAI) 
+printSOImm(raw_ostream &O, int64_t V, const TargetAsmInfo *TAI) 
 {
   assert(V < (1 << 12) && "Not a valid so_imm value!");
   

@@ -23,6 +23,7 @@ namespace llvm {
 class ARMTargetMachine;
 class FunctionPass;
 class MachineCodeEmitter;
+class raw_ostream;
 
 // Enums corresponding to ARM condition codes
 namespace ARMCC {
@@ -87,7 +88,7 @@ inline static const char *ARMCondCodeToString(ARMCC::CondCodes CC) {
 }
 
 FunctionPass *createARMISelDag(ARMTargetMachine &TM);
-FunctionPass *createARMCodePrinterPass(std::ostream &O, ARMTargetMachine &TM);
+FunctionPass *createARMCodePrinterPass(raw_ostream &O, ARMTargetMachine &TM);
 FunctionPass *createARMCodeEmitterPass(ARMTargetMachine &TM,
                                        MachineCodeEmitter &MCE);
 FunctionPass *createARMLoadStoreOptimizationPass();

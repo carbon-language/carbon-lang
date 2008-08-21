@@ -35,7 +35,7 @@ namespace {
       : DataLayout(&M) {}
 
     virtual bool WantsWholeFile() const { return true; }
-    virtual bool addPassesToEmitWholeFile(PassManager &PM, std::ostream &Out,
+    virtual bool addPassesToEmitWholeFile(PassManager &PM, raw_ostream &Out,
                                          CodeGenFileType FileType, bool Fast);
 
     // This class always works, but shouldn't be the default in most cases.
@@ -1191,7 +1191,7 @@ void MSILWriter::printBasicBlock(const BasicBlock* BB) {
   for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I!=E; ++I) {
     const Instruction* Inst = I;
     // Comment llvm original instruction
-    Out << "\n//" << *Inst << "\n";
+    // Out << "\n//" << *Inst << "\n";
     // Do not handle PHI instruction in current block
     if (Inst->getOpcode()==Instruction::PHI) continue;
     // Print instruction
@@ -1367,8 +1367,8 @@ void MSILWriter::printStaticInitializerList() {
     for (std::vector<StaticInitializer>::const_iterator I = InitList.begin(),
          E = InitList.end(); I!=E; ++I) {
       if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(I->constant)) {
-        Out << "\n// Init " << getValueName(VarI->first) << ", offset " <<
-          utostr(I->offset) << ", type "<< *I->constant->getType() << "\n\n";
+        // Out << "\n// Init " << getValueName(VarI->first) << ", offset " <<
+        //  utostr(I->offset) << ", type "<< *I->constant->getType() << "\n\n";
         // Load variable address
         printValueLoad(VarI->first);
         // Add offset
@@ -1648,7 +1648,7 @@ void MSILWriter::printExternals() {
 //                      External Interface declaration
 //===----------------------------------------------------------------------===//
 
-bool MSILTarget::addPassesToEmitWholeFile(PassManager &PM, std::ostream &o,
+bool MSILTarget::addPassesToEmitWholeFile(PassManager &PM, raw_ostream &o,
                                           CodeGenFileType FileType, bool Fast)
 {
   if (FileType != TargetMachine::AssemblyFile) return true;

@@ -29,6 +29,7 @@
 namespace llvm {
   
   class GCMetadataPrinter;
+  class raw_ostream;
   
   /// GCMetadataPrinterRegistry - The GC assembly printer registry uses all the
   /// defaults from Registry.
@@ -63,10 +64,10 @@ namespace llvm {
     iterator end()   { return S->end();   }
     
     /// beginAssembly/finishAssembly - Emit module metadata as assembly code.
-    virtual void beginAssembly(std::ostream &OS, AsmPrinter &AP,
+    virtual void beginAssembly(raw_ostream &OS, AsmPrinter &AP,
                                const TargetAsmInfo &TAI);
     
-    virtual void finishAssembly(std::ostream &OS, AsmPrinter &AP,
+    virtual void finishAssembly(raw_ostream &OS, AsmPrinter &AP,
                                 const TargetAsmInfo &TAI);
     
     virtual ~GCMetadataPrinter();

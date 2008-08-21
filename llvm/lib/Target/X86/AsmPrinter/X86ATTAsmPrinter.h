@@ -34,7 +34,7 @@ struct VISIBILITY_HIDDEN X86ATTAsmPrinter : public AsmPrinter {
 
   const X86Subtarget *Subtarget;
 
-  X86ATTAsmPrinter(std::ostream &O, X86TargetMachine &TM,
+  X86ATTAsmPrinter(raw_ostream &O, X86TargetMachine &TM,
                    const TargetAsmInfo *T)
     : AsmPrinter(O, TM, T), DW(O, this, T), MMI(0) {
     Subtarget = &TM.getSubtarget<X86Subtarget>();

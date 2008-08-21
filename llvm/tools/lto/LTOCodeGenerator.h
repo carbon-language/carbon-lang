@@ -25,6 +25,8 @@
 //
 // C++ class which implements the opaque lto_code_gen_t
 //
+
+class llvm::raw_ostream;
 class LTOCodeGenerator {
 public:
     static const char*        getVersionString();
@@ -41,8 +43,8 @@ public:
     const void*         compile(size_t* length, std::string& errMsg);
     void                setCodeGenDebugOptions(const char *opts); 
 private:
-    bool                generateAssemblyCode(std::ostream& out, 
-                                                        std::string& errMsg);
+    bool                generateAssemblyCode(llvm::raw_ostream& out, 
+                                             std::string& errMsg);
     bool                assemble(const std::string& asmPath, 
                             const std::string& objPath, std::string& errMsg);
     void                applyScopeRestrictions();

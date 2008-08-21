@@ -23,9 +23,10 @@ namespace llvm {
   class FunctionPass;
   class TargetMachine;
   class MachineCodeEmitter;
+  class raw_ostream;
 
   FunctionPass *createAlphaISelDag(AlphaTargetMachine &TM);
-  FunctionPass *createAlphaCodePrinterPass(std::ostream &OS,
+  FunctionPass *createAlphaCodePrinterPass(raw_ostream &OS,
                                              TargetMachine &TM);
   FunctionPass *createAlphaPatternInstructionSelector(TargetMachine &TM);
   FunctionPass *createAlphaCodeEmitterPass(AlphaTargetMachine &TM,

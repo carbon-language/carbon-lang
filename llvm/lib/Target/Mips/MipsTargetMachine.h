@@ -22,6 +22,8 @@
 #include "llvm/Target/TargetFrameInfo.h"
 
 namespace llvm {
+  class raw_ostream;
+  
   class MipsTargetMachine : public LLVMTargetMachine {
     MipsSubtarget       Subtarget;
     const TargetData    DataLayout; // Calculates type size & alignment
@@ -58,7 +60,7 @@ namespace llvm {
     virtual bool addInstSelector(PassManagerBase &PM, bool Fast);
     virtual bool addPreEmitPass(PassManagerBase &PM, bool Fast);
     virtual bool addAssemblyEmitter(PassManagerBase &PM, bool Fast, 
-                                    std::ostream &Out);
+                                    raw_ostream &Out);
   };
 
 /// MipselTargetMachine - Mipsel target machine.

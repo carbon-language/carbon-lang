@@ -82,14 +82,14 @@ void raw_stderr_ostream::handle() {}
 
 /// outs() - This returns a reference to a raw_ostream for standard output.
 /// Use it like: outs() << "foo" << "bar";
-raw_ostream &outs() {
+raw_ostream &llvm::outs() {
   static raw_stdout_ostream S;
   return S;
 }
 
 /// errs() - This returns a reference to a raw_ostream for standard error.
 /// Use it like: errs() << "foo" << "bar";
-raw_ostream &errs() {
+raw_ostream &llvm::errs() {
   static raw_stderr_ostream S;
   return S;
 }

@@ -27,6 +27,7 @@
 #include "llvm/Support/SystemUtils.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Signals.h"
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Analysis/LoopPass.h"
@@ -162,9 +163,12 @@ const void* LTOCodeGenerator::compile(size_t* length, std::string& errMsg)
     sys::RemoveFileOnSignal(uniqueAsmPath);
        
     // generate assembly code
-    std::ofstream asmFile(uniqueAsmPath.c_str());
-    bool genResult = this->generateAssemblyCode(asmFile, errMsg);
-    asmFile.close();
+    std::string error;
+    bool genResult = false;
+    {
+      raw_fd_ostream asmFile(uniqueAsmPath.c_str(), error);
+      genResult = this->generateAssemblyCode(asmFile, errMsg);
+    }
     if ( genResult ) {
         if ( uniqueAsmPath.exists() )
             uniqueAsmPath.eraseFromDisk();
@@ -309,7 +313,8 @@ void LTOCodeGenerator::applyScopeRestrictions()
 }
 
 /// Optimize merged modules using various IPO passes
-bool LTOCodeGenerator::generateAssemblyCode(std::ostream& out, std::string& errMsg)
+bool LTOCodeGenerator::generateAssemblyCode(raw_ostream& out,
+                                            std::string& errMsg)
 {
     if (  this->determineTarget(errMsg) ) 
         return true;

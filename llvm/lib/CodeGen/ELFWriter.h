@@ -23,6 +23,7 @@ namespace llvm {
   class Mangler;
   class MachineCodeEmitter;
   class ELFCodeEmitter;
+  class raw_ostream;
 
   /// ELFWriter - This class implements the common target-independent code for
   /// writing ELF files.  Targets should derive a class from this to
@@ -37,7 +38,7 @@ namespace llvm {
       return *(MachineCodeEmitter*)MCE;
     }
 
-    ELFWriter(std::ostream &O, TargetMachine &TM);
+    ELFWriter(raw_ostream &O, TargetMachine &TM);
     ~ELFWriter();
 
     typedef std::vector<unsigned char> DataBuffer;
@@ -45,7 +46,7 @@ namespace llvm {
   protected:
     /// Output stream to send the resultant object file to.
     ///
-    std::ostream &O;
+    raw_ostream &O;
 
     /// Target machine description.
     ///

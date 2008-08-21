@@ -18,6 +18,7 @@
 #include "llvm/PassManager.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/Passes.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetMachineRegistry.h"
 using namespace llvm;
@@ -189,7 +190,7 @@ bool X86TargetMachine::addPostRegAlloc(PassManagerBase &PM, bool Fast) {
 }
 
 bool X86TargetMachine::addAssemblyEmitter(PassManagerBase &PM, bool Fast, 
-                                          std::ostream &Out) {
+                                          raw_ostream &Out) {
   assert(AsmPrinterCtor && "AsmPrinter was not linked in");
   if (AsmPrinterCtor)
     PM.add(AsmPrinterCtor(Out, *this));
@@ -218,7 +219,7 @@ bool X86TargetMachine::addCodeEmitter(PassManagerBase &PM, bool Fast,
   if (DumpAsm) {
     assert(AsmPrinterCtor && "AsmPrinter was not linked in");
     if (AsmPrinterCtor)
-      PM.add(AsmPrinterCtor(*cerr.stream(), *this));
+      PM.add(AsmPrinterCtor(errs(), *this));
   }
 
   return false;
@@ -230,7 +231,7 @@ bool X86TargetMachine::addSimpleCodeEmitter(PassManagerBase &PM, bool Fast,
   if (DumpAsm) {
     assert(AsmPrinterCtor && "AsmPrinter was not linked in");
     if (AsmPrinterCtor)
-      PM.add(AsmPrinterCtor(*cerr.stream(), *this));
+      PM.add(AsmPrinterCtor(errs(), *this));
   }
 
   return false;

@@ -31,6 +31,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PluginLoader.h"
 #include "llvm/Support/FileUtilities.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/System/Signals.h"
 #include "llvm/Config/config.h"
@@ -106,10 +107,10 @@ GetFileNameRoot(const std::string &InputFilename) {
   return outputFilename;
 }
 
-static std::ostream *GetOutputStream(const char *ProgName) {
+static raw_ostream *GetOutputStream(const char *ProgName) {
   if (OutputFilename != "") {
     if (OutputFilename == "-")
-      return &std::cout;
+      return &outs();
 
     // Specified an output filename?
     if (!Force && std::ifstream(OutputFilename.c_str())) {
@@ -123,12 +124,13 @@ static std::ostream *GetOutputStream(const char *ProgName) {
     // SIGINT
     sys::RemoveFileOnSignal(sys::Path(OutputFilename));
 
-    return new std::ofstream(OutputFilename.c_str());
+    std::string error;
+    return new raw_fd_ostream(OutputFilename.c_str(), error);
   }
   
   if (InputFilename == "-") {
     OutputFilename = "-";
-    return &std::cout;
+    return &outs();
   }
 
   OutputFilename = GetFileNameRoot(InputFilename);
@@ -165,9 +167,10 @@ static std::ostream *GetOutputStream(const char *ProgName) {
   // SIGINT
   sys::RemoveFileOnSignal(sys::Path(OutputFilename));
   
-  std::ostream *Out = new std::ofstream(OutputFilename.c_str());
-  if (!Out->good()) {
-    std::cerr << ProgName << ": error opening " << OutputFilename << "!\n";
+  std::string error;
+  raw_ostream *Out = new raw_fd_ostream(OutputFilename.c_str(), error);
+  if (!error.empty()) {
+    std::cerr << error;
     delete Out;
     return 0;
   }
@@ -229,7 +232,7 @@ int main(int argc, char **argv) {
   TargetMachine &Target = *target.get();
 
   // Figure out where we are going to send the output...
-  std::ostream *Out = GetOutputStream(argv[0]);
+  raw_ostream *Out = GetOutputStream(argv[0]);
   if (Out == 0) return 1;
   
   // If this target requires addPassesToEmitWholeFile, do it now.  This is
@@ -244,7 +247,7 @@ int main(int argc, char **argv) {
     if (Target.addPassesToEmitWholeFile(PM, *Out, FileType, Fast)) {
       std::cerr << argv[0] << ": target does not support generation of this"
                 << " file type!\n";
-      if (Out != &std::cout) delete Out;
+      if (Out != &outs()) delete Out;
       // And the Out file is empty and useless, so remove it now.
       sys::Path(OutputFilename).eraseFromDisk();
       return 1;
@@ -271,7 +274,7 @@ int main(int argc, char **argv) {
     case FileModel::Error:
       std::cerr << argv[0] << ": target does not support generation of this"
                 << " file type!\n";
-      if (Out != &std::cout) delete Out;
+      if (Out != &outs()) delete Out;
       // And the Out file is empty and useless, so remove it now.
       sys::Path(OutputFilename).eraseFromDisk();
       return 1;
@@ -288,7 +291,7 @@ int main(int argc, char **argv) {
     if (Target.addPassesToEmitFileFinish(Passes, MCE, Fast)) {
       std::cerr << argv[0] << ": target does not support generation of this"
                 << " file type!\n";
-      if (Out != &std::cout) delete Out;
+      if (Out != &outs()) delete Out;
       // And the Out file is empty and useless, so remove it now.
       sys::Path(OutputFilename).eraseFromDisk();
       return 1;
@@ -306,7 +309,7 @@ int main(int argc, char **argv) {
   }
     
   // Delete the ostream if it's not a stdout stream
-  if (Out != &std::cout) delete Out;
+  if (Out != &outs()) delete Out;
 
   return 0;
 }

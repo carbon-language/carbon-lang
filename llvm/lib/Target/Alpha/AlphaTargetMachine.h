@@ -61,7 +61,7 @@ public:
   virtual bool addInstSelector(PassManagerBase &PM, bool Fast);
   virtual bool addPreEmitPass(PassManagerBase &PM, bool Fast);
   virtual bool addAssemblyEmitter(PassManagerBase &PM, bool Fast, 
-                                  std::ostream &Out);
+                                  raw_ostream &Out);
   virtual bool addCodeEmitter(PassManagerBase &PM, bool Fast,
                               bool DumpAsm, MachineCodeEmitter &MCE);
   virtual bool addSimpleCodeEmitter(PassManagerBase &PM, bool Fast,

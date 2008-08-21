@@ -39,6 +39,7 @@
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/MathExtras.h"
@@ -76,7 +77,7 @@ namespace {
   /// CWriter - This class is the main chunk of code that converts an LLVM
   /// module to a C translation unit.
   class CWriter : public FunctionPass, public InstVisitor<CWriter> {
-    std::ostream &Out;
+    raw_ostream &Out;
     IntrinsicLowering *IL;
     Mangler *Mang;
     LoopInfo *LI;
@@ -90,7 +91,7 @@ namespace {
 
   public:
     static char ID;
-    explicit CWriter(std::ostream &o)
+    explicit CWriter(raw_ostream &o)
       : FunctionPass((intptr_t)&ID), Out(o), IL(0), Mang(0), LI(0), 
         TheModule(0), TAsm(0), TD(0) {}
 
@@ -126,16 +127,24 @@ namespace {
       return false;
     }
 
-    std::ostream &printType(std::ostream &Out, const Type *Ty, 
+    raw_ostream &printType(raw_ostream &Out, const Type *Ty, 
                             bool isSigned = false,
                             const std::string &VariableName = "",
                             bool IgnoreName = false,
                             const PAListPtr &PAL = PAListPtr());
-    std::ostream &printSimpleType(std::ostream &Out, const Type *Ty, 
+    std::ostream &printType(std::ostream &Out, const Type *Ty, 
+                           bool isSigned = false,
+                           const std::string &VariableName = "",
+                           bool IgnoreName = false,
+                           const PAListPtr &PAL = PAListPtr());
+    raw_ostream &printSimpleType(raw_ostream &Out, const Type *Ty, 
                                   bool isSigned, 
                                   const std::string &NameSoFar = "");
+    std::ostream &printSimpleType(std::ostream &Out, const Type *Ty, 
+                                 bool isSigned, 
+                                 const std::string &NameSoFar = "");
 
-    void printStructReturnPointerFunctionType(std::ostream &Out,
+    void printStructReturnPointerFunctionType(raw_ostream &Out,
                                               const PAListPtr &PAL,
                                               const PointerType *Ty);
 
@@ -398,7 +407,7 @@ bool CBackendNameAllUsedStructsAndMergeFunctions::runOnModule(Module &M) {
 /// printStructReturnPointerFunctionType - This is like printType for a struct
 /// return type, except, instead of printing the type as void (*)(Struct*, ...)
 /// print it as "Struct (*)(...)", for struct return functions.
-void CWriter::printStructReturnPointerFunctionType(std::ostream &Out,
+void CWriter::printStructReturnPointerFunctionType(raw_ostream &Out,
                                                    const PAListPtr &PAL,
                                                    const PointerType *TheTy) {
   const FunctionType *FTy = cast<FunctionType>(TheTy->getElementType());
@@ -431,6 +440,51 @@ void CWriter::printStructReturnPointerFunctionType(std::ostream &Out,
   std::string tstr = FunctionInnards.str();
   printType(Out, RetTy, 
       /*isSigned=*/PAL.paramHasAttr(0, ParamAttr::SExt), tstr);
+}
+
+raw_ostream &
+CWriter::printSimpleType(raw_ostream &Out, const Type *Ty, bool isSigned,
+                         const std::string &NameSoFar) {
+  assert((Ty->isPrimitiveType() || Ty->isInteger() || isa<VectorType>(Ty)) && 
+         "Invalid type for printSimpleType");
+  switch (Ty->getTypeID()) {
+  case Type::VoidTyID:   return Out << "void " << NameSoFar;
+  case Type::IntegerTyID: {
+    unsigned NumBits = cast<IntegerType>(Ty)->getBitWidth();
+    if (NumBits == 1) 
+      return Out << "bool " << NameSoFar;
+    else if (NumBits <= 8)
+      return Out << (isSigned?"signed":"unsigned") << " char " << NameSoFar;
+    else if (NumBits <= 16)
+      return Out << (isSigned?"signed":"unsigned") << " short " << NameSoFar;
+    else if (NumBits <= 32)
+      return Out << (isSigned?"signed":"unsigned") << " int " << NameSoFar;
+    else if (NumBits <= 64)
+      return Out << (isSigned?"signed":"unsigned") << " long long "<< NameSoFar;
+    else { 
+      assert(NumBits <= 128 && "Bit widths > 128 not implemented yet");
+      return Out << (isSigned?"llvmInt128":"llvmUInt128") << " " << NameSoFar;
+    }
+  }
+  case Type::FloatTyID:  return Out << "float "   << NameSoFar;
+  case Type::DoubleTyID: return Out << "double "  << NameSoFar;
+  // Lacking emulation of FP80 on PPC, etc., we assume whichever of these is
+  // present matches host 'long double'.
+  case Type::X86_FP80TyID:
+  case Type::PPC_FP128TyID:
+  case Type::FP128TyID:  return Out << "long double " << NameSoFar;
+      
+  case Type::VectorTyID: {
+    const VectorType *VTy = cast<VectorType>(Ty);
+    return printSimpleType(Out, VTy->getElementType(), isSigned,
+                     " __attribute__((vector_size(" +
+                     utostr(TD->getABITypeSize(VTy)) + " ))) " + NameSoFar);
+  }
+    
+  default:
+    cerr << "Unknown primitive type: " << *Ty << "\n";
+    abort();
+  }
 }
 
 std::ostream &
@@ -476,6 +530,111 @@ CWriter::printSimpleType(std::ostream &Out, const Type *Ty, bool isSigned,
     cerr << "Unknown primitive type: " << *Ty << "\n";
     abort();
   }
+}
+
+// Pass the Type* and the variable name and this prints out the variable
+// declaration.
+//
+raw_ostream &CWriter::printType(raw_ostream &Out, const Type *Ty,
+                                 bool isSigned, const std::string &NameSoFar,
+                                 bool IgnoreName, const PAListPtr &PAL) {
+  if (Ty->isPrimitiveType() || Ty->isInteger() || isa<VectorType>(Ty)) {
+    printSimpleType(Out, Ty, isSigned, NameSoFar);
+    return Out;
+  }
+
+  // Check to see if the type is named.
+  if (!IgnoreName || isa<OpaqueType>(Ty)) {
+    std::map<const Type *, std::string>::iterator I = TypeNames.find(Ty);
+    if (I != TypeNames.end()) return Out << I->second << ' ' << NameSoFar;
+  }
+
+  switch (Ty->getTypeID()) {
+  case Type::FunctionTyID: {
+    const FunctionType *FTy = cast<FunctionType>(Ty);
+    std::stringstream FunctionInnards;
+    FunctionInnards << " (" << NameSoFar << ") (";
+    unsigned Idx = 1;
+    for (FunctionType::param_iterator I = FTy->param_begin(),
+           E = FTy->param_end(); I != E; ++I) {
+      const Type *ArgTy = *I;
+      if (PAL.paramHasAttr(Idx, ParamAttr::ByVal)) {
+        assert(isa<PointerType>(ArgTy));
+        ArgTy = cast<PointerType>(ArgTy)->getElementType();
+      }
+      if (I != FTy->param_begin())
+        FunctionInnards << ", ";
+      printType(FunctionInnards, ArgTy,
+        /*isSigned=*/PAL.paramHasAttr(Idx, ParamAttr::SExt), "");
+      ++Idx;
+    }
+    if (FTy->isVarArg()) {
+      if (FTy->getNumParams())
+        FunctionInnards << ", ...";
+    } else if (!FTy->getNumParams()) {
+      FunctionInnards << "void";
+    }
+    FunctionInnards << ')';
+    std::string tstr = FunctionInnards.str();
+    printType(Out, FTy->getReturnType(), 
+      /*isSigned=*/PAL.paramHasAttr(0, ParamAttr::SExt), tstr);
+    return Out;
+  }
+  case Type::StructTyID: {
+    const StructType *STy = cast<StructType>(Ty);
+    Out << NameSoFar + " {\n";
+    unsigned Idx = 0;
+    for (StructType::element_iterator I = STy->element_begin(),
+           E = STy->element_end(); I != E; ++I) {
+      Out << "  ";
+      printType(Out, *I, false, "field" + utostr(Idx++));
+      Out << ";\n";
+    }
+    Out << '}';
+    if (STy->isPacked())
+      Out << " __attribute__ ((packed))";
+    return Out;
+  }
+
+  case Type::PointerTyID: {
+    const PointerType *PTy = cast<PointerType>(Ty);
+    std::string ptrName = "*" + NameSoFar;
+
+    if (isa<ArrayType>(PTy->getElementType()) ||
+        isa<VectorType>(PTy->getElementType()))
+      ptrName = "(" + ptrName + ")";
+
+    if (!PAL.isEmpty())
+      // Must be a function ptr cast!
+      return printType(Out, PTy->getElementType(), false, ptrName, true, PAL);
+    return printType(Out, PTy->getElementType(), false, ptrName);
+  }
+
+  case Type::ArrayTyID: {
+    const ArrayType *ATy = cast<ArrayType>(Ty);
+    unsigned NumElements = ATy->getNumElements();
+    if (NumElements == 0) NumElements = 1;
+    // Arrays are wrapped in structs to allow them to have normal
+    // value semantics (avoiding the array "decay").
+    Out << NameSoFar << " { ";
+    printType(Out, ATy->getElementType(), false,
+              "array[" + utostr(NumElements) + "]");
+    return Out << "; }";
+  }
+
+  case Type::OpaqueTyID: {
+    static int Count = 0;
+    std::string TyName = "struct opaque_" + itostr(Count++);
+    assert(TypeNames.find(Ty) == TypeNames.end());
+    TypeNames[Ty] = TyName;
+    return Out << TyName << ' ' << NameSoFar;
+  }
+  default:
+    assert(0 && "Unhandled case in getTypeProps!");
+    abort();
+  }
+
+  return Out;
 }
 
 // Pass the Type* and the variable name and this prints out the variable
@@ -1427,7 +1586,7 @@ void CWriter::writeOperandWithCast(Value* Operand, const ICmpInst &Cmp) {
 // generateCompilerSpecificCode - This is where we add conditional compilation
 // directives to cater to specific compilers as need be.
 //
-static void generateCompilerSpecificCode(std::ostream& Out,
+static void generateCompilerSpecificCode(raw_ostream& Out,
                                          const TargetData *TD) {
   // Alloca is hard to get, and we don't want to include stdlib.h here.
   Out << "/* get a declaration for alloca */\n"
@@ -1871,31 +2030,31 @@ void CWriter::printFloatingPointConstants(Function &F) {
           double Val = FPC->getValueAPF().convertToDouble();
           uint64_t i = FPC->getValueAPF().convertToAPInt().getZExtValue();
           Out << "static const ConstantDoubleTy FPConstant" << FPCounter++
-              << " = 0x" << std::hex << i << std::dec
+              << " = 0x" << utohexstr(i)
               << "ULL;    /* " << Val << " */\n";
         } else if (FPC->getType() == Type::FloatTy) {
           float Val = FPC->getValueAPF().convertToFloat();
           uint32_t i = (uint32_t)FPC->getValueAPF().convertToAPInt().
                                     getZExtValue();
           Out << "static const ConstantFloatTy FPConstant" << FPCounter++
-              << " = 0x" << std::hex << i << std::dec
+              << " = 0x" << utohexstr(i)
               << "U;    /* " << Val << " */\n";
         } else if (FPC->getType() == Type::X86_FP80Ty) {
           // api needed to prevent premature destruction
           APInt api = FPC->getValueAPF().convertToAPInt();
           const uint64_t *p = api.getRawData();
           Out << "static const ConstantFP80Ty FPConstant" << FPCounter++
-              << " = { 0x" << std::hex
-              << ((uint16_t)p[1] | (p[0] & 0xffffffffffffLL)<<16)
-              << "ULL, 0x" << (uint16_t)(p[0] >> 48) << ",{0,0,0}"
-              << "}; /* Long double constant */\n" << std::dec;
+              << " = { 0x"
+              << utohexstr((uint16_t)p[1] | (p[0] & 0xffffffffffffLL)<<16)
+              << "ULL, 0x" << utohexstr((uint16_t)(p[0] >> 48)) << ",{0,0,0}"
+              << "}; /* Long double constant */\n";
         } else if (FPC->getType() == Type::PPC_FP128Ty) {
           APInt api = FPC->getValueAPF().convertToAPInt();
           const uint64_t *p = api.getRawData();
           Out << "static const ConstantFP128Ty FPConstant" << FPCounter++
-              << " = { 0x" << std::hex
-              << p[0] << ", 0x" << p[1]
-              << "}; /* Long double constant */\n" << std::dec;
+              << " = { 0x"
+              << utohexstr(p[0]) << ", 0x" << utohexstr(p[1])
+              << "}; /* Long double constant */\n";
 
         } else
           assert(0 && "Unknown float type!");
@@ -2869,11 +3028,16 @@ bool CWriter::visitBuiltinCall(CallInst &I, Intrinsic::ID ID,
   case Intrinsic::dbg_stoppoint: {
     // If we use writeOperand directly we get a "u" suffix which is rejected
     // by gcc.
+    std::stringstream SPIStr;
     DbgStopPointInst &SPI = cast<DbgStopPointInst>(I);
+    SPI.getDirectory()->print(SPIStr);
     Out << "\n#line "
         << SPI.getLine()
-        << " \"" << SPI.getDirectory()
-        << SPI.getFileName() << "\"\n";
+        << " \"";
+    Out << SPIStr.str();
+    SPIStr.clear();
+    SPI.getFileName()->print(SPIStr);
+    Out << SPIStr.str() << "\"\n";
     return true;
   }
   case Intrinsic::x86_sse_cmp_ss:
@@ -3375,7 +3539,7 @@ void CWriter::visitExtractValueInst(ExtractValueInst &EVI) {
 //===----------------------------------------------------------------------===//
 
 bool CTargetMachine::addPassesToEmitWholeFile(PassManager &PM,
-                                              std::ostream &o,
+                                              raw_ostream &o,
                                               CodeGenFileType FileType,
                                               bool Fast) {
   if (FileType != TargetMachine::AssemblyFile) return true;

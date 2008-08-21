@@ -37,6 +37,7 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/OutputBuffer.h"
 #include "llvm/Support/Streams.h"
+#include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 #include <cstring>
 using namespace llvm;
@@ -44,7 +45,7 @@ using namespace llvm;
 /// AddMachOWriter - Concrete function to add the Mach-O writer to the function
 /// pass manager.
 MachineCodeEmitter *llvm::AddMachOWriter(PassManagerBase &PM,
-                                         std::ostream &O,
+                                         raw_ostream &O,
                                          TargetMachine &TM) {
   MachOWriter *MOW = new MachOWriter(O, TM);
   PM.add(MOW);
@@ -334,7 +335,7 @@ void MachOCodeEmitter::emitJumpTables(MachineJumpTableInfo *MJTI) {
 //===----------------------------------------------------------------------===//
 
 char MachOWriter::ID = 0;
-MachOWriter::MachOWriter(std::ostream &o, TargetMachine &tm) 
+MachOWriter::MachOWriter(raw_ostream &o, TargetMachine &tm) 
   : MachineFunctionPass((intptr_t)&ID), O(o), TM(tm) {
   is64Bit = TM.getTargetData()->getPointerSizeInBits() == 64;
   isLittleEndian = TM.getTargetData()->isLittleEndian();

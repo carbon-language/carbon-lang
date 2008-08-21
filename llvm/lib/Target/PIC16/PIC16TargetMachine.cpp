@@ -61,7 +61,7 @@ bool PIC16TargetMachine::addPreEmitPass(PassManagerBase &PM, bool Fast)
 }
 
 bool PIC16TargetMachine::
-addAssemblyEmitter(PassManagerBase &PM, bool Fast, std::ostream &Out) 
+addAssemblyEmitter(PassManagerBase &PM, bool Fast, raw_ostream &Out) 
 {
   // Output assembly language.
   PM.add(createPIC16CodePrinterPass(Out, *this));

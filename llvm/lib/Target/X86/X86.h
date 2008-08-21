@@ -22,6 +22,7 @@ namespace llvm {
 class X86TargetMachine;
 class FunctionPass;
 class MachineCodeEmitter;
+class raw_ostream;
 
 /// createX86ISelDag - This pass converts a legalized DAG into a 
 /// X86-specific DAG, ready for instruction scheduling.
@@ -38,7 +39,7 @@ FunctionPass *createX86FloatingPointStackifierPass();
 /// assembly code for a MachineFunction to the given output stream,
 /// using the given target machine description.
 ///
-FunctionPass *createX86CodePrinterPass(std::ostream &o, X86TargetMachine &tm);
+FunctionPass *createX86CodePrinterPass(raw_ostream &o, X86TargetMachine &tm);
 
 /// createX86CodeEmitterPass - Return a pass that emits the collected X86 code
 /// to the specified MCE object.

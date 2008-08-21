@@ -26,6 +26,7 @@ class GlobalValue;
 class MachineInstr;
 class TargetMachine;
 class MachineRegisterInfo;
+class raw_ostream;
   
 /// MachineOperand class - Representation of each machine instruction operand.
 ///
@@ -117,6 +118,7 @@ public:
   const MachineInstr *getParent() const { return ParentMI; }
   
   void print(std::ostream &os, const TargetMachine *TM = 0) const;
+  void print(raw_ostream &os, const TargetMachine *TM = 0) const;
 
   /// Accessors that tell you what kind of MachineOperand you're looking at.
   ///
@@ -421,6 +423,11 @@ private:
 };
 
 inline std::ostream &operator<<(std::ostream &OS, const MachineOperand &MO) {
+  MO.print(OS, 0);
+  return OS;
+}
+
+inline raw_ostream &operator<<(raw_ostream &OS, const MachineOperand& MO) {
   MO.print(OS, 0);
   return OS;
 }

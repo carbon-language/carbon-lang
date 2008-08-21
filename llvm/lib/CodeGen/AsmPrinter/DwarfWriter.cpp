@@ -28,6 +28,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/Mangler.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Path.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
@@ -820,7 +821,7 @@ protected:
   //
   /// O - Stream to .s file.
   ///
-  std::ostream &O;
+  raw_ostream &O;
 
   /// Asm - Target of Dwarf emission.
   ///
@@ -856,7 +857,7 @@ protected:
   const char * const Flavor;
 
   unsigned SetCounter;
-  Dwarf(std::ostream &OS, AsmPrinter *A, const TargetAsmInfo *T,
+  Dwarf(raw_ostream &OS, AsmPrinter *A, const TargetAsmInfo *T,
         const char *flavor)
   : O(OS)
   , Asm(A)
@@ -2673,7 +2674,7 @@ public:
   //===--------------------------------------------------------------------===//
   // Main entry points.
   //
-  DwarfDebug(std::ostream &OS, AsmPrinter *A, const TargetAsmInfo *T)
+  DwarfDebug(raw_ostream &OS, AsmPrinter *A, const TargetAsmInfo *T)
   : Dwarf(OS, A, T, "dbg")
   , CompileUnits()
   , AbbreviationsSet(InitAbbreviationsSetSize)
@@ -3479,7 +3480,7 @@ public:
   //===--------------------------------------------------------------------===//
   // Main entry points.
   //
-  DwarfException(std::ostream &OS, AsmPrinter *A, const TargetAsmInfo *T)
+  DwarfException(raw_ostream &OS, AsmPrinter *A, const TargetAsmInfo *T)
   : Dwarf(OS, A, T, "eh")
   , shouldEmitTable(false)
   , shouldEmitMoves(false)
@@ -3879,7 +3880,7 @@ void DIE::dump() {
 /// DwarfWriter Implementation
 ///
 
-DwarfWriter::DwarfWriter(std::ostream &OS, AsmPrinter *A,
+DwarfWriter::DwarfWriter(raw_ostream &OS, AsmPrinter *A,
                          const TargetAsmInfo *T) {
   DE = new DwarfException(OS, A, T);
   DD = new DwarfDebug(OS, A, T);

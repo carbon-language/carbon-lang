@@ -15,6 +15,7 @@
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/GCMetadataPrinter.h"
 #include "llvm/Module.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
@@ -25,10 +26,10 @@ namespace {
 
   class VISIBILITY_HIDDEN OcamlGCMetadataPrinter : public GCMetadataPrinter {
   public:
-    void beginAssembly(std::ostream &OS, AsmPrinter &AP,
+    void beginAssembly(raw_ostream &OS, AsmPrinter &AP,
                        const TargetAsmInfo &TAI);
     
-    void finishAssembly(std::ostream &OS, AsmPrinter &AP,
+    void finishAssembly(raw_ostream &OS, AsmPrinter &AP,
                         const TargetAsmInfo &TAI);
   };
   
@@ -39,7 +40,7 @@ Y("ocaml", "ocaml 3.10-compatible collector");
 
 void llvm::linkOcamlGCPrinter() { }
 
-static void EmitCamlGlobal(const Module &M, std::ostream &OS, AsmPrinter &AP,
+static void EmitCamlGlobal(const Module &M, raw_ostream &OS, AsmPrinter &AP,
                            const TargetAsmInfo &TAI, const char *Id) {
   const std::string &MId = M.getModuleIdentifier();
   
@@ -59,7 +60,7 @@ static void EmitCamlGlobal(const Module &M, std::ostream &OS, AsmPrinter &AP,
   OS << Mangled << ":\n";
 }
 
-void OcamlGCMetadataPrinter::beginAssembly(std::ostream &OS, AsmPrinter &AP,
+void OcamlGCMetadataPrinter::beginAssembly(raw_ostream &OS, AsmPrinter &AP,
                                            const TargetAsmInfo &TAI) {
   AP.SwitchToTextSection(TAI.getTextSection());
   EmitCamlGlobal(getModule(), OS, AP, TAI, "code_begin");
@@ -84,7 +85,7 @@ void OcamlGCMetadataPrinter::beginAssembly(std::ostream &OS, AsmPrinter &AP,
 /// (FrameSize and LiveOffsets would overflow). FrameTablePrinter will abort if
 /// either condition is detected in a function which uses the GC.
 /// 
-void OcamlGCMetadataPrinter::finishAssembly(std::ostream &OS, AsmPrinter &AP,
+void OcamlGCMetadataPrinter::finishAssembly(raw_ostream &OS, AsmPrinter &AP,
                                             const TargetAsmInfo &TAI) {
   const char *AddressDirective;
   int AddressAlignLog;

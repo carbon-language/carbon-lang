@@ -24,6 +24,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Mangler.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
 
@@ -35,7 +36,7 @@ namespace {
     /// Unique incrementer for label values for referencing Global values.
     ///
 
-    AlphaAsmPrinter(std::ostream &o, TargetMachine &tm, const TargetAsmInfo *T)
+    AlphaAsmPrinter(raw_ostream &o, TargetMachine &tm, const TargetAsmInfo *T)
       : AsmPrinter(o, tm, T) {
     }
 
@@ -65,7 +66,7 @@ namespace {
 /// using the given target machine description.  This should work
 /// regardless of whether the function is in SSA form.
 ///
-FunctionPass *llvm::createAlphaCodePrinterPass(std::ostream &o,
+FunctionPass *llvm::createAlphaCodePrinterPass(raw_ostream &o,
                                                TargetMachine &tm) {
   return new AlphaAsmPrinter(o, tm, tm.getTargetAsmInfo());
 }

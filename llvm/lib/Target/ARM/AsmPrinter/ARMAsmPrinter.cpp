@@ -35,6 +35,7 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Support/raw_ostream.h"
 #include <cctype>
 using namespace llvm;
 
@@ -42,7 +43,7 @@ STATISTIC(EmittedInsts, "Number of machine instrs printed");
 
 namespace {
   struct VISIBILITY_HIDDEN ARMAsmPrinter : public AsmPrinter {
-    ARMAsmPrinter(std::ostream &O, TargetMachine &TM, const TargetAsmInfo *T)
+    ARMAsmPrinter(raw_ostream &O, TargetMachine &TM, const TargetAsmInfo *T)
       : AsmPrinter(O, TM, T), DW(O, this, T), MMI(NULL), AFI(NULL), 
         InCPMode(false) {
       Subtarget = &TM.getSubtarget<ARMSubtarget>();
@@ -342,7 +343,7 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
   }
 }
 
-static void printSOImm(std::ostream &O, int64_t V, const TargetAsmInfo *TAI) {
+static void printSOImm(raw_ostream &O, int64_t V, const TargetAsmInfo *TAI) {
   assert(V < (1 << 12) && "Not a valid so_imm value!");
   unsigned Imm = ARM_AM::getSOImmValImm(V);
   unsigned Rot = ARM_AM::getSOImmValRot(V);
@@ -824,7 +825,7 @@ bool ARMAsmPrinter::doInitialization(Module &M) {
 
 /// PrintUnmangledNameSafely - Print out the printable characters in the name.
 /// Don't print things like \n or \0.
-static void PrintUnmangledNameSafely(const Value *V, std::ostream &OS) {
+static void PrintUnmangledNameSafely(const Value *V, raw_ostream &OS) {
   for (const char *Name = V->getNameStart(), *E = Name+V->getNameLen();
        Name != E; ++Name)
     if (isprint(*Name))
@@ -1030,7 +1031,7 @@ bool ARMAsmPrinter::doFinalization(Module &M) {
 /// using the given target machine description.  This should work
 /// regardless of whether the function is in SSA form.
 ///
-FunctionPass *llvm::createARMCodePrinterPass(std::ostream &o,
+FunctionPass *llvm::createARMCodePrinterPass(raw_ostream &o,
                                              ARMTargetMachine &tm) {
   return new ARMAsmPrinter(o, tm, tm.getTargetAsmInfo());
 }

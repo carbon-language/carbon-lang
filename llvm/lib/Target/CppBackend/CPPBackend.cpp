@@ -29,6 +29,7 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Streams.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Config/config.h"
 #include <algorithm>
 #include <set>
@@ -86,7 +87,7 @@ namespace {
   /// module to a C++ translation unit.
   class CppWriter : public ModulePass {
     const char* progname;
-    std::ostream &Out;
+    raw_ostream &Out;
     const Module *TheModule;
     uint64_t uniqueNum;
     TypeMap TypeNames;
@@ -101,7 +102,7 @@ namespace {
 
   public:
     static char ID;
-    explicit CppWriter(std::ostream &o) :
+    explicit CppWriter(raw_ostream &o) :
       ModulePass((intptr_t)&ID), Out(o), uniqueNum(0), is_inline(false) {}
 
     virtual const char *getPassName() const { return "C++ backend"; }
@@ -154,7 +155,7 @@ namespace {
   };
 
   static unsigned indent_level = 0;
-  inline std::ostream& nl(std::ostream& Out, int delta = 0) {
+  inline raw_ostream& nl(raw_ostream& Out, int delta = 0) {
     Out << "\n";
     if (delta >= 0 || indent_level >= unsigned(-delta))
       indent_level += delta;
@@ -252,13 +253,13 @@ namespace {
         else
           Out << StrVal << "f";
       } else if (CFP->getType() == Type::DoubleTy)
-        Out << "BitsToDouble(0x" << std::hex
-            << CFP->getValueAPF().convertToAPInt().getZExtValue()
-            << std::dec << "ULL) /* " << StrVal << " */";
+        Out << "BitsToDouble(0x"
+            << utohexstr(CFP->getValueAPF().convertToAPInt().getZExtValue())
+            << "ULL) /* " << StrVal << " */";
       else
-        Out << "BitsToFloat(0x" << std::hex
-            << (uint32_t)CFP->getValueAPF().convertToAPInt().getZExtValue()
-            << std::dec << "U) /* " << StrVal << " */";
+        Out << "BitsToFloat(0x"
+      << utohexstr((uint32_t)CFP->getValueAPF().convertToAPInt().getZExtValue())
+            << "U) /* " << StrVal << " */";
       Out << ")";
 #if HAVE_PRINTF_A
     }
@@ -1982,7 +1983,7 @@ char CppWriter::ID = 0;
 //===----------------------------------------------------------------------===//
 
 bool CPPTargetMachine::addPassesToEmitWholeFile(PassManager &PM,
-                                                std::ostream &o,
+                                                raw_ostream &o,
                                                 CodeGenFileType FileType,
                                                 bool Fast) {
   if (FileType != TargetMachine::AssemblyFile) return true;
