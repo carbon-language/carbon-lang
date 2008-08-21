@@ -719,6 +719,10 @@ OPTIONS:
                   exit status of $Prog to be 1 if it found potential bugs
                   and 0 otherwise.
 
+ --use-cc [compiler path]  - By default, $Prog uses 'gcc' to compile
+ --use-cc=[compiler path]    your code. This option specifies what compiler
+                             to use for regular code compilation.
+
  -v             - Verbose output from $Prog and the analyzer.
                   A second and third "-v" increases verbosity.
 
@@ -808,6 +812,24 @@ while (@ARGV) {
   if ($arg eq "-k" or $arg eq "--keep-going") {
     shift @ARGV;
     $IgnoreErrors = 1;
+    next;
+  }
+  
+  if ($arg =~ /^--use-cc(=(.+))?$/) {
+    shift @ARGV;
+    my $cc;
+    
+    if ($2 eq "") {
+      if (!@ARGV) {
+        DieDiag("'--use-cc' option requires a compiler executable name.\n");
+      }
+      $cc = shift @ARGV;
+    }
+    else {
+      $cc = $2;
+    }
+    
+    $ENV{"CCC_CC"} = $cc;
     next;
   }
   

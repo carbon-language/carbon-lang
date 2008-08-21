@@ -184,7 +184,9 @@ my $Lang;
 my $Output;
 
 # Forward arguments to gcc.
-my $Status = system("gcc",@ARGV);
+my $CC = $ENV{'CCC_CC'};
+if (!defined $CC) { $CC = "gcc"; }
+my $Status = system($CC,@ARGV);
 if ($Status) { exit($Status); }
 
 # Get the analysis options.
