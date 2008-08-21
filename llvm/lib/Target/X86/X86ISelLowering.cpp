@@ -969,7 +969,8 @@ LowerCallResult(SDValue Chain, SDValue InFlag, SDNode *TheCall,
     // If this is a call to a function that returns an fp value on the floating
     // point stack, but where we prefer to use the value in xmm registers, copy
     // it out as F80 and use a truncate to move it from fp stack reg to xmm reg.
-    if (RVLocs[i].getLocReg() == X86::ST0 &&
+    if ((RVLocs[i].getLocReg() == X86::ST0 ||
+         RVLocs[i].getLocReg() == X86::ST1) &&
         isScalarFPTypeInSSEReg(RVLocs[i].getValVT())) {
       CopyVT = MVT::f80;
     }
