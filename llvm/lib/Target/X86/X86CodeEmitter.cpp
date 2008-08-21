@@ -486,9 +486,13 @@ void Emitter::emitInstruction(const MachineInstr &MI,
     default: 
       assert(0 && "psuedo instructions should be removed before code emission");
       break;
-    case TargetInstrInfo::INLINEASM:
-      assert(0 && "JIT does not support inline asm!\n");
+    case TargetInstrInfo::INLINEASM: {
+      const char* Value = MI.getOperand(0).getSymbolName();
+      /* We allow inline assembler nodes with empty bodies - they can
+         implicitly define registers, which is ok for JIT. */
+      assert((Value[0] == 0) && "JIT does not support inline asm!\n");
       break;
+    }
     case TargetInstrInfo::DBG_LABEL:
     case TargetInstrInfo::EH_LABEL:
       MCE.emitLabel(MI.getOperand(0).getImm());
