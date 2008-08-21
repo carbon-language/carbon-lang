@@ -773,9 +773,9 @@ void CWriter::printConstantArray(ConstantArray *CPA, bool Static) {
       if (isprint(C) && (!LastWasHex || !isxdigit(C))) {
         LastWasHex = false;
         if (C == '"' || C == '\\')
-          Out << "\\" << C;
+          Out << "\\" << (char)C;
         else
-          Out << C;
+          Out << (char)C;
       } else {
         LastWasHex = false;
         switch (C) {
