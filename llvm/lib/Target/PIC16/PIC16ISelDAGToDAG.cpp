@@ -109,7 +109,7 @@ void PIC16DAGToDAGISel::InstructionSelect(SelectionDAG &SD)
 #endif
 
   // Select target instructions for the DAG.
-  SD.setRoot(SelectRoot(SD.getRoot()));
+  SelectRoot();
 
   DOUT << "===== Instruction selection ends:\n";
 

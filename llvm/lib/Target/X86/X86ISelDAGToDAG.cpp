@@ -592,7 +592,7 @@ void X86DAGToDAGISel::InstructionSelect(SelectionDAG &DAG) {
   DOUT << "===== Instruction selection begins:\n";
   Indent = 0;
 #endif
-  DAG.setRoot(SelectRoot(DAG.getRoot()));
+  SelectRoot();
 #ifndef NDEBUG
   DOUT << "===== Instruction selection ends:\n";
 #endif

@@ -153,7 +153,7 @@ void ReplaceUses(SDNode *F, SDNode *T) DISABLE_INLINE {
 
 /// SelectRoot - Top level entry to DAG instruction selector.
 /// Selects instructions starting at the root of the current DAG.
-SDValue SelectRoot(SDValue Root) {
+void SelectRoot() {
   SelectRootInit();
   unsigned NumBytes = (DAGSize + 7) / 8;
   ISelQueued   = new unsigned char[NumBytes];
@@ -197,7 +197,7 @@ SDValue SelectRoot(SDValue Root) {
   ISelQueued = NULL;
   delete[] ISelSelected;
   ISelSelected = NULL;
-  return Dummy.getValue();
+  CurDAG->setRoot(Dummy.getValue());
 }
 
 #endif /* LLVM_CODEGEN_DAGISEL_HEADER_H */

@@ -113,7 +113,7 @@ InstructionSelect(SelectionDAG &SD)
   #endif
 
   // Select target instructions for the DAG.
-  SD.setRoot(SelectRoot(SD.getRoot()));
+  SelectRoot();
 
   #ifndef NDEBUG
   DOUT << "===== Instruction selection ends:\n";

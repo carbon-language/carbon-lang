@@ -94,7 +94,7 @@ public:
 void ARMDAGToDAGISel::InstructionSelect(SelectionDAG &DAG) {
   DEBUG(BB->dump());
 
-  DAG.setRoot(SelectRoot(DAG.getRoot()));
+  SelectRoot();
   DAG.RemoveDeadNodes();
 }
 

@@ -207,7 +207,7 @@ void PPCDAGToDAGISel::InstructionSelect(SelectionDAG &DAG) {
   DEBUG(BB->dump());
 
   // Select target instructions for the DAG.
-  DAG.setRoot(SelectRoot(DAG.getRoot()));
+  SelectRoot();
   DAG.RemoveDeadNodes();
 }
 
