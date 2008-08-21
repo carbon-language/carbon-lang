@@ -3479,6 +3479,8 @@ SDValue LowerVECTOR_SHUFFLEv8i16(SDValue V1, SDValue V2,
       if (InOrder[i])
         continue;
       SDValue Elt = MaskElts[i];
+      if (Elt.getOpcode() == ISD::UNDEF)
+        continue;
       unsigned EltIdx = cast<ConstantSDNode>(Elt)->getValue();
       SDValue ExtOp = (EltIdx < 8)
         ? DAG.getNode(ISD::EXTRACT_VECTOR_ELT, MVT::i16, V1,
