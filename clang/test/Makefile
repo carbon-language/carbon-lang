@@ -23,7 +23,7 @@ TESTS := $(addprefix Output/, $(addsuffix .testresults, $(shell find $(TESTDIRS)
 
 Output/%.testresults: %
 	@ $(PROGRESS)
-	@ PATH=$$PATH:$(ToolDir):$(LLVM_SRC_ROOT)/test/Scripts VG=$(VG) $(PROJ_SRC_DIR)/TestRunner.sh $< > $@ || $(REPORTFAIL)
+	@ PATH=$(ToolDir):$(LLVM_SRC_ROOT)/test/Scripts:$$PATH VG=$(VG) $(PROJ_SRC_DIR)/TestRunner.sh $< > $@ || $(REPORTFAIL)
 
 all::
 	@ mkdir -p $(addprefix Output/, $(TESTDIRS))
