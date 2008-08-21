@@ -139,8 +139,9 @@ EnvironmentManager::RemoveDeadBindings(Environment Env,
       // The block expr is dead.
       RVal X = I.getData();
 
-      // Do not misclean LogicalExpr or ConditionalOperator.
-      // Why is it dead? Should look at LiveVariables.
+      // Do not misclean LogicalExpr or ConditionalOperator.  It is dead at the
+      // beginning of itself, but we need its UndefinedVal to determine its
+      // RVal.
 
       if (X.isUndef() && cast<UndefinedVal>(X).getData())
         continue;
