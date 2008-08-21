@@ -3338,14 +3338,14 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
 
 static
 SDValue LowerVECTOR_SHUFFLEv8i16(SDValue V1, SDValue V2,
-                                   SDValue PermMask, SelectionDAG &DAG,
-                                   TargetLowering &TLI) {
+                                 SDValue PermMask, SelectionDAG &DAG,
+                                 TargetLowering &TLI) {
   SDValue NewV;
   MVT MaskVT = MVT::getIntVectorWithNumElements(8);
   MVT MaskEVT = MaskVT.getVectorElementType();
   MVT PtrVT = TLI.getPointerTy();
   SmallVector<SDValue, 8> MaskElts(PermMask.Val->op_begin(),
-                                     PermMask.Val->op_end());
+                                   PermMask.Val->op_end());
 
   // First record which half of which vector the low elements come from.
   SmallVector<unsigned, 4> LowQuad(4);
@@ -3357,6 +3357,7 @@ SDValue LowerVECTOR_SHUFFLEv8i16(SDValue V1, SDValue V2,
     int QuadIdx = EltIdx / 4;
     ++LowQuad[QuadIdx];
   }
+
   int BestLowQuad = -1;
   unsigned MaxQuad = 1;
   for (unsigned i = 0; i < 4; ++i) {
@@ -3376,6 +3377,7 @@ SDValue LowerVECTOR_SHUFFLEv8i16(SDValue V1, SDValue V2,
     int QuadIdx = EltIdx / 4;
     ++HighQuad[QuadIdx];
   }
+
   int BestHighQuad = -1;
   MaxQuad = 1;
   for (unsigned i = 0; i < 4; ++i) {
@@ -3389,14 +3391,17 @@ SDValue LowerVECTOR_SHUFFLEv8i16(SDValue V1, SDValue V2,
   if (BestLowQuad != -1 || BestHighQuad != -1) {
     // First sort the 4 chunks in order using shufpd.
     SmallVector<SDValue, 8> MaskVec;
+
     if (BestLowQuad != -1)
       MaskVec.push_back(DAG.getConstant(BestLowQuad, MVT::i32));
     else
       MaskVec.push_back(DAG.getConstant(0, MVT::i32));
+
     if (BestHighQuad != -1)
       MaskVec.push_back(DAG.getConstant(BestHighQuad, MVT::i32));
     else
       MaskVec.push_back(DAG.getConstant(1, MVT::i32));
+
     SDValue Mask= DAG.getNode(ISD::BUILD_VECTOR, MVT::v2i32, &MaskVec[0],2);
     NewV = DAG.getNode(ISD::VECTOR_SHUFFLE, MVT::v2i64,
                        DAG.getNode(ISD::BIT_CONVERT, MVT::v2i64, V1),
@@ -3409,6 +3414,7 @@ SDValue LowerVECTOR_SHUFFLEv8i16(SDValue V1, SDValue V2,
       // Sort lower half in order using PSHUFLW.
       MaskVec.clear();
       bool AnyOutOrder = false;
+
       for (unsigned i = 0; i != 4; ++i) {
         SDValue Elt = MaskElts[i];
         if (Elt.getOpcode() == ISD::UNDEF) {
@@ -3418,7 +3424,9 @@ SDValue LowerVECTOR_SHUFFLEv8i16(SDValue V1, SDValue V2,
           unsigned EltIdx = cast<ConstantSDNode>(Elt)->getValue();
           if (EltIdx != i)
             AnyOutOrder = true;
+
           MaskVec.push_back(DAG.getConstant(EltIdx % 4, MaskEVT));
+
           // If this element is in the right place after this shuffle, then
           // remember it.
           if ((int)(EltIdx / 4) == BestLowQuad)
@@ -3436,8 +3444,10 @@ SDValue LowerVECTOR_SHUFFLEv8i16(SDValue V1, SDValue V2,
     if (BestHighQuad != -1) {
       // Sort high half in order using PSHUFHW if possible.
       MaskVec.clear();
+
       for (unsigned i = 0; i != 4; ++i)
         MaskVec.push_back(DAG.getConstant(i, MaskEVT));
+
       bool AnyOutOrder = false;
       for (unsigned i = 4; i != 8; ++i) {
         SDValue Elt = MaskElts[i];
@@ -3448,13 +3458,16 @@ SDValue LowerVECTOR_SHUFFLEv8i16(SDValue V1, SDValue V2,
           unsigned EltIdx = cast<ConstantSDNode>(Elt)->getValue();
           if (EltIdx != i)
             AnyOutOrder = true;
+
           MaskVec.push_back(DAG.getConstant((EltIdx % 4) + 4, MaskEVT));
+
           // If this element is in the right place after this shuffle, then
           // remember it.
           if ((int)(EltIdx / 4) == BestHighQuad)
             InOrder.set(i);
         }
       }
+
       if (AnyOutOrder) {
         SDValue Mask = DAG.getNode(ISD::BUILD_VECTOR, MaskVT, &MaskVec[0], 8);
         NewV = DAG.getNode(ISD::VECTOR_SHUFFLE, MVT::v8i16, NewV, NewV, Mask);
@@ -3475,12 +3488,13 @@ SDValue LowerVECTOR_SHUFFLEv8i16(SDValue V1, SDValue V2,
       NewV = DAG.getNode(ISD::INSERT_VECTOR_ELT, MVT::v8i16, NewV, ExtOp,
                          DAG.getConstant(i, PtrVT));
     }
+
     return NewV;
   }
 
-  // PSHUF{H|L}W are not used. Lower into extracts and inserts but try to use
-  ///as few as possible.
-  // First, let's find out how many elements are already in the right order.
+  // PSHUF{H|L}W are not used. Lower into extracts and inserts but try to use as
+  // few as possible. First, let's find out how many elements are already in the
+  // right order.
   unsigned V1InOrder = 0;
   unsigned V1FromV1 = 0;
   unsigned V2InOrder = 0;
