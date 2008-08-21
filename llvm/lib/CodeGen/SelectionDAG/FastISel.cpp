@@ -124,10 +124,8 @@ bool FastISel::SelectGetElementPtr(Instruction *I,
         // Unhandled operand. Halt "fast" selection and bail.
         return false;
 
-      // FIXME: If multiple is power of two, turn it into a shift. The
-      // optimization should be in FastEmit_ri?
-      IdxN = FastEmit_ri_(VT, ISD::MUL, IdxN,
-                          ElementSize, VT);
+      if (ElementSize != 1)
+        IdxN = FastEmit_ri_(VT, ISD::MUL, IdxN, ElementSize, VT);
       if (IdxN == 0)
         // Unhandled operand. Halt "fast" selection and bail.
         return false;
