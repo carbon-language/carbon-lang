@@ -112,11 +112,7 @@ public:
   raw_ostream &operator<<(int32_t N) {
     return this->operator<<(static_cast<int64_t>(N));
   }
-  
-  raw_ostream &operator<<(size_t N) {
-    return this->operator<<(static_cast<uint64_t>(N));
-  }
-  
+
   raw_ostream &operator<<(double N) {
     return this->operator<<(ftostr(N));
   }
