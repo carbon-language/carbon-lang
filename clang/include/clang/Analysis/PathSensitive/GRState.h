@@ -310,7 +310,10 @@ public:
   LiveVariables& getLiveVariables() { return Liveness; }
 
   typedef StoreManager::DeadSymbolsTy DeadSymbolsTy;
-  
+
+  const GRState* AddDecl(const GRState* St, const VarDecl* VD, Expr* Ex, 
+                         unsigned Count);
+
   const GRState* RemoveDeadBindings(const GRState* St, Stmt* Loc, 
                                        const LiveVariables& Liveness,
                                        DeadSymbolsTy& DeadSyms);

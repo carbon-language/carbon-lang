@@ -1484,76 +1484,9 @@ void GRExprEngine::VisitDeclStmtAux(DeclStmt* DS, ScopedDecl* D,
   if (Tmp.empty()) Tmp.Add(Pred);
   
   for (NodeSet::iterator I=Tmp.begin(), E=Tmp.end(); I!=E; ++I) {
-      
     const GRState* St = GetState(*I);
-
-    if (!Ex && VD->hasGlobalStorage()) {
-      
-      // Handle variables with global storage and no initializers.
-      
-      // FIXME: static variables may have an initializer, but the second
-      //  time a function is called those values may not be current.
-      
-      
-      // In this context, Static => Local variable.
-      
-      assert (!VD->getStorageClass() == VarDecl::Static ||
-              !VD->isFileVarDecl());
-      
-      // If there is no initializer, set the value of the
-      // variable to "Undefined".
-      
-      if (VD->getStorageClass() == VarDecl::Static) {
-          
-        // C99: 6.7.8 Initialization
-        //  If an object that has static storage duration is not initialized
-        //  explicitly, then: 
-        //   —if it has pointer type, it is initialized to a null pointer; 
-        //   —if it has arithmetic type, it is initialized to (positive or 
-        //     unsigned) zero; 
-        
-        // FIXME: Handle structs.  Now we treat their values as unknown.
-
-        QualType T = VD->getType();
-        
-        if (LVal::IsLValType(T))
-          St = SetRVal(St, lval::DeclVal(VD),
-                       lval::ConcreteInt(getBasicVals().getValue(0, T)));
-        else if (T->isIntegerType())
-          St = SetRVal(St, lval::DeclVal(VD),
-                       nonlval::ConcreteInt(getBasicVals().getValue(0, T)));          
-          
-        // FIXME: Handle structs.  Now we treat them as unknown.  What
-        //  we need to do is treat their members as unknown.
-      }
-    }
-    else {
-      
-      // FIXME: Handle structs.  Now we treat them as unknown.  What
-      //  we need to do is treat their members as unknown.
-
-      QualType T = VD->getType();
-
-      if (LVal::IsLValType(T) || T->isIntegerType()) {
-        
-        RVal V = Ex ? GetRVal(St, Ex) : UndefinedVal();
-        
-        if (Ex && V.isUnknown()) {
-          
-          // EXPERIMENTAL: "Conjured" symbols.
-
-          unsigned Count = Builder->getCurrentBlockCount();
-          SymbolID Sym = SymMgr.getConjuredSymbol(Ex, Count);
-          
-          V = LVal::IsLValType(Ex->getType())
-            ? cast<RVal>(lval::SymbolVal(Sym)) 
-            : cast<RVal>(nonlval::SymbolVal(Sym));            
-        }
-        
-        St = SetRVal(St, lval::DeclVal(VD), V);        
-      }
-    }
-
+    St = StateMgr.AddDecl(St, VD, Ex, Builder->getCurrentBlockCount());
+    
     // Create a new node.  We don't really need to create a new NodeSet
     // here, but it simplifies things and doesn't cost much.
     NodeSet Tmp2;    

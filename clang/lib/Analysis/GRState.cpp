@@ -142,6 +142,24 @@ const GRState* GRStateManager::SetRVal(const GRState* St, LVal LV,
   return getPersistentState(NewSt);    
 }
 
+const GRState* GRStateManager::AddDecl(const GRState* St, const VarDecl* VD, 
+                                       Expr* Ex, unsigned Count) {
+  Store OldStore = St->getStore();
+  Store NewStore;
+
+  if (Ex)
+    NewStore = StMgr->AddDecl(OldStore, BasicVals, SymMgr, VD, Ex, 
+                              GetRVal(St, Ex), Count);
+  else
+    NewStore = StMgr->AddDecl(OldStore, BasicVals, SymMgr, VD, Ex);
+                              
+  if (NewStore == OldStore)
+    return St;
+  GRState NewSt = *St;
+  NewSt.St = NewStore;
+  return getPersistentState(NewSt);
+}
+
 const GRState* GRStateManager::Unbind(const GRState* St, LVal LV) {
   Store OldStore = St->getStore();
   Store NewStore = StMgr->Remove(OldStore, LV);

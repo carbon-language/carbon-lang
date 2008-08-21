@@ -40,7 +40,11 @@ public:
                                    const LiveVariables& Live,
                                    DeclRootsTy& DRoots, LiveSymbolsTy& LSymbols,
                                    DeadSymbolsTy& DSymbols);
-  
+
+  virtual Store AddDecl(Store store, BasicValueFactory& BasicVals,
+                        SymbolManager& SymMgr, const VarDecl* VD, Expr* Ex, 
+                        RVal InitVal = UndefinedVal(), unsigned Count = 0);
+
   static inline VarBindingsTy GetVarBindings(Store store) {
     return VarBindingsTy(static_cast<const VarBindingsTy::TreeTy*>(store));
   }
@@ -237,6 +241,69 @@ Store BasicStoreManager::getInitialStore(GRStateManager& StateMgr) {
     }
   }
   return St;
+}
+
+Store BasicStoreManager::AddDecl(Store store, BasicValueFactory& BasicVals,
+                                 SymbolManager& SymMgr, const VarDecl* VD, 
+                                 Expr* Ex, RVal InitVal, unsigned Count) {
+  // BasicStore does not model arrays and structs.
+  if (VD->getType()->isArrayType() || VD->getType()->isStructureType())
+    return store;
+
+  if (VD->hasGlobalStorage()) {
+    // Handle variables with global storage: extern, static, PrivateExtern.
+
+    // FIXME:: static variables may have an initializer, but the second time a
+    // function is called those values may not be current. Currently, a function
+    // will not be called more than once.
+
+    // Static global variables should not be visited here.
+    assert(!(VD->getStorageClass() == VarDecl::Static &&
+             VD->isFileVarDecl()));
+    
+    // Process static variables.
+    if (VD->getStorageClass() == VarDecl::Static) {
+      // C99: 6.7.8 Initialization
+      //  If an object that has static storage duration is not initialized
+      //  explicitly, then: 
+      //   —if it has pointer type, it is initialized to a null pointer; 
+      //   —if it has arithmetic type, it is initialized to (positive or 
+      //     unsigned) zero;
+      if (!Ex) {
+        QualType T = VD->getType();
+        if (LVal::IsLValType(T))
+          store = SetRVal(store, lval::DeclVal(VD),
+                          lval::ConcreteInt(BasicVals.getValue(0, T)));
+        else if (T->isIntegerType())
+          store = SetRVal(store, lval::DeclVal(VD),
+                          nonlval::ConcreteInt(BasicVals.getValue(0, T)));
+        else {
+          // assert(0 && "ignore other types of variables");
+        }
+      } else {
+        store = SetRVal(store, lval::DeclVal(VD), InitVal);
+      }
+    }
+  } else {
+    // Process local scalar variables.
+    QualType T = VD->getType();
+    if (LVal::IsLValType(T) || T->isIntegerType()) {
+      RVal V = Ex ? InitVal : UndefinedVal();
+
+      if (Ex && InitVal.isUnknown()) {
+        // EXPERIMENTAL: "Conjured" symbols.
+        SymbolID Sym = SymMgr.getConjuredSymbol(Ex, Count);
+
+        V = LVal::IsLValType(Ex->getType())
+          ? cast<RVal>(lval::SymbolVal(Sym))
+          : cast<RVal>(nonlval::SymbolVal(Sym));
+      }
+
+      store = SetRVal(store, lval::DeclVal(VD), V);
+    }
+  }
+
+  return store;
 }
 
 void BasicStoreManager::print(Store store, std::ostream& Out,
