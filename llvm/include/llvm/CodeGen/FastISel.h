@@ -120,6 +120,8 @@ protected:
                            unsigned Op0, unsigned Op1);
 
 private:
+  unsigned createResultReg(const TargetRegisterClass *RC);
+
   bool SelectBinaryOp(Instruction *I, ISD::NodeType ISDOpcode,
                       DenseMap<const Value*, unsigned> &ValueMap);
 

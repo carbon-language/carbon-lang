@@ -150,24 +150,15 @@ static std::string getLegalCName(std::string OpName) {
 
 void FastISelEmitter::run(std::ostream &OS) {
   EmitSourceFileHeader("\"Fast\" Instruction Selector for the " +
-                       CGP.getTargetInfo().getName() + " target", OS);
-  
-  const CodeGenTarget &Target = CGP.getTargetInfo();
-  
-  // Get the namespace to insert instructions into.  Make sure not to pick up
-  // "TargetInstrInfo" by accidentally getting the namespace off the PHI
-  // instruction or something.
-  std::string InstNS = Target.getInstNamespace();
+                       Target.getName() + " target", OS);
 
+  OS << "#include \"llvm/CodeGen/FastISel.h\"\n";
+  OS << "\n";
   OS << "namespace llvm {\n";
-  OS << "namespace " << InstNS << " {\n";
-  OS << "class FastISel;\n";
-  OS << "}\n";
-  OS << "}\n";
+  OS << "\n";
+  OS << "namespace " << InstNS.substr(0, InstNS.size() - 2) << " {\n";
   OS << "\n";
   
-  if (!InstNS.empty()) InstNS += "::";
-
   typedef std::map<MVT::SimpleValueType, InstructionMemo> TypeMap;
   typedef std::map<std::string, TypeMap> OpcodeTypeMap;
   typedef std::map<OperandsSignature, OpcodeTypeMap> OperandsOpcodeTypeMap;
@@ -245,13 +236,8 @@ void FastISelEmitter::run(std::ostream &OS) {
     }
   }
 
-  OS << "#include \"llvm/CodeGen/FastISel.h\"\n";
-  OS << "\n";
-  OS << "namespace llvm {\n";
-  OS << "\n";
-
   // Declare the target FastISel class.
-  OS << "class " << InstNS << "FastISel : public llvm::FastISel {\n";
+  OS << "class FastISel : public llvm::FastISel {\n";
   for (OperandsOpcodeTypeMap::const_iterator OI = SimplePatterns.begin(),
        OE = SimplePatterns.end(); OI != OE; ++OI) {
     const OperandsSignature &Operands = OI->first;
@@ -294,9 +280,8 @@ void FastISelEmitter::run(std::ostream &OS) {
   OS << "\n";
 
   // Define the target FastISel creation function.
-  OS << "llvm::FastISel *" << InstNS
-     << "createFastISel(MachineFunction &mf) {\n";
-  OS << "  return new " << InstNS << "FastISel(mf);\n";
+  OS << "llvm::FastISel *createFastISel(MachineFunction &mf) {\n";
+  OS << "  return new FastISel(mf);\n";
   OS << "}\n";
   OS << "\n";
 
@@ -320,7 +305,7 @@ void FastISelEmitter::run(std::ostream &OS) {
         MVT::SimpleValueType VT = TI->first;
         const InstructionMemo &Memo = TI->second;
   
-        OS << "unsigned " << InstNS << "FastISel::FastEmit_"
+        OS << "unsigned FastISel::FastEmit_"
            << getLegalCName(Opcode)
            << "_" << getLegalCName(getName(VT)) << "(";
         Operands.PrintParameters(OS);
@@ -338,7 +323,7 @@ void FastISelEmitter::run(std::ostream &OS) {
       }
 
       // Emit one function for the opcode that demultiplexes based on the type.
-      OS << "unsigned " << InstNS << "FastISel::FastEmit_"
+      OS << "unsigned FastISel::FastEmit_"
          << getLegalCName(Opcode) << "(MVT::SimpleValueType VT";
       if (!Operands.empty())
         OS << ", ";
@@ -362,7 +347,7 @@ void FastISelEmitter::run(std::ostream &OS) {
 
     // Emit one function for the operand signature that demultiplexes based
     // on opcode and type.
-    OS << "unsigned " << InstNS << "FastISel::FastEmit_";
+    OS << "unsigned FastISel::FastEmit_";
     Operands.PrintManglingSuffix(OS);
     OS << "(MVT::SimpleValueType VT, ISD::NodeType Opcode";
     if (!Operands.empty())
@@ -387,5 +372,16 @@ void FastISelEmitter::run(std::ostream &OS) {
     OS << "\n";
   }
 
-  OS << "}\n";
+  OS << "} // namespace X86\n";
+  OS << "\n";
+  OS << "} // namespace llvm\n";
+}
+
+FastISelEmitter::FastISelEmitter(RecordKeeper &R)
+  : Records(R),
+    CGP(R),
+    Target(CGP.getTargetInfo()),
+    InstNS(Target.getInstNamespace() + "::") {
+
+  assert(InstNS.size() > 2 && "Can't determine target-specific namespace!");
 }

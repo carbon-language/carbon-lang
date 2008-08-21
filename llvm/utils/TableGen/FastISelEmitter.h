@@ -19,14 +19,18 @@
 
 namespace llvm {
 
+class CodeGenTarget;
+
 /// FastISelEmitter - The top-level class which coordinates construction
 /// and emission of the instruction selector.
 ///
 class FastISelEmitter : public TableGenBackend {
   RecordKeeper &Records;
   CodeGenDAGPatterns CGP;
+  const CodeGenTarget &Target;
+  const std::string InstNS;
 public:
-  explicit FastISelEmitter(RecordKeeper &R) : Records(R), CGP(R) {}
+  explicit FastISelEmitter(RecordKeeper &R);
 
   // run - Output the isel, returning true on failure.
   void run(std::ostream &OS);
