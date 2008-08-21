@@ -458,7 +458,10 @@ void PPCTargetInfo::getGCCRegAliases(const GCCRegAlias *&Aliases,
 namespace {
 class PPC32TargetInfo : public PPCTargetInfo {
 public:
-  PPC32TargetInfo(const std::string& triple) : PPCTargetInfo(triple) {}
+  PPC32TargetInfo(const std::string& triple) : PPCTargetInfo(triple) {
+    DescriptionString = "E-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-"
+                        "i64:64:64-f32:32:32-f64:64:64-v128:128:128";
+  }
   virtual void getTargetDefines(std::vector<char> &Defines) const {
     getPowerPCDefines(Defines, false);
   }
@@ -470,6 +473,8 @@ class PPC64TargetInfo : public PPCTargetInfo {
 public:
   PPC64TargetInfo(const std::string& triple) : PPCTargetInfo(triple) {
     LongWidth = LongAlign = PointerWidth = PointerAlign = 64;
+    DescriptionString = "E-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-"
+                        "i64:64:64-f32:32:32-f64:64:64-v128:128:128";
   }
   virtual void getTargetDefines(std::vector<char> &Defines) const {
     getPowerPCDefines(Defines, true);
@@ -612,6 +617,9 @@ public:
     DoubleAlign = LongLongAlign = 32;
     LongDoubleWidth = 96;
     LongDoubleAlign = 32;
+    DescriptionString = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-"
+                        "i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-"
+                        "a0:0:64-f80:32:32";
   }
   virtual const char *getVAListDeclaration() const {
     return "typedef char* __builtin_va_list;";
@@ -629,6 +637,9 @@ public:
   DarwinI386TargetInfo(const std::string& triple) : X86_32TargetInfo(triple) {
     LongDoubleWidth = 128;
     LongDoubleAlign = 128;
+    DescriptionString = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-"
+                        "i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-"
+                        "a0:0:64-f80:128:128";
   }
   virtual void getTargetDefines(std::vector<char> &Defines) const {
     X86_32TargetInfo::getTargetDefines(Defines);
@@ -645,6 +656,9 @@ public:
     LongWidth = LongAlign = PointerWidth = PointerAlign = 64;
     LongDoubleWidth = 128;
     LongDoubleAlign = 128;
+    DescriptionString = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-"
+                        "i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-"
+                        "a0:0:64-f80:128:128";
   }
   virtual const char *getVAListDeclaration() const {
     return "typedef struct __va_list_tag {"
@@ -679,6 +693,8 @@ class ARMTargetInfo : public TargetInfo {
 public:
   ARMTargetInfo(const std::string& triple) : TargetInfo(triple) {
     // FIXME: Are the defaults correct for ARM?
+    DescriptionString = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-"
+                        "i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:64:64";
   }
   virtual void getTargetDefines(std::vector<char> &Defines) const {
     getARMDefines(Defines);
@@ -746,6 +762,8 @@ class SparcV8TargetInfo : public TargetInfo {
 public:
   SparcV8TargetInfo(const std::string& triple) : TargetInfo(triple) {
     // FIXME: Support Sparc quad-precision long double?
+    DescriptionString = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-"
+                        "i64:64:64-f32:32:32-f64:64:64-v64:64:64";
   }
   virtual void getTargetDefines(std::vector<char> &Defines) const {
     // FIXME: This is missing a lot of important defines; some of the
@@ -846,26 +864,53 @@ static inline bool IsX86(const std::string& TT) {
 /// CreateTargetInfo - Return the target info object for the specified target
 /// triple.
 TargetInfo* TargetInfo::CreateTargetInfo(const std::string &T) {
-  if (T.find("ppc-") == 0 || T.find("powerpc-") == 0)
-    return new DarwinPPCTargetInfo(T);
+  // OS detection; this isn't really anywhere near complete.
+  // Additions and corrections are welcome.
+  bool isDarwin = T.find("-darwin") != std::string::npos;
+  bool isSolaris = T.find("-solaris") != std::string::npos;
+  bool isLinux = T.find("-linux") != std::string::npos;
+  bool isWindows = T.find("-windows") != std::string::npos ||
+                   T.find("-win32") != std::string::npos ||
+                   T.find("-mingw") != std::string::npos;
 
-  if (T.find("ppc64-") == 0 || T.find("powerpc64-") == 0)
-    return new DarwinPPC64TargetInfo(T);
+  if (T.find("ppc-") == 0 || T.find("powerpc-") == 0) {
+    if (isDarwin)
+      return new DarwinPPCTargetInfo(T);
+    return new PPC32TargetInfo(T);
+  }
 
-  if (T.find("armv6-") == 0 || T.find("arm-") == 0)
-    return new DarwinARMTargetInfo(T);
+  if (T.find("ppc64-") == 0 || T.find("powerpc64-") == 0) {
+    if (isDarwin)
+      return new DarwinPPC64TargetInfo(T);
+    return new PPC64TargetInfo(T);
+  }
 
-  if (T.find("sparc-") == 0)
-    return new SolarisSparcV8TargetInfo(T); // ugly hack
+  if (T.find("armv6-") == 0 || T.find("arm-") == 0) {
+    if (isDarwin)
+      return new DarwinARMTargetInfo(T);
+    return new ARMTargetInfo(T);
+  }
 
-  if (T.find("x86_64-") == 0)
-    return new DarwinX86_64TargetInfo(T);
+  if (T.find("sparc-") == 0) {
+    if (isSolaris)
+      return new SolarisSparcV8TargetInfo(T);
+    return new SparcV8TargetInfo(T);
+  }
+
+  if (T.find("x86_64-") == 0) {
+    if (isDarwin)
+      return new DarwinX86_64TargetInfo(T);
+    return new X86_64TargetInfo(T);
+  }
 
   if (T.find("pic16-") == 0)
     return new PIC16TargetInfo(T);
 
-  if (IsX86(T))
-    return new DarwinI386TargetInfo(T);
+  if (IsX86(T)) {
+    if (isDarwin)
+      return new DarwinI386TargetInfo(T);
+    return new X86_32TargetInfo(T);
+  }
 
   return NULL;
 }
