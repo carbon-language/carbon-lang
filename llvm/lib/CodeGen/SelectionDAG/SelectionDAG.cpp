@@ -4771,6 +4771,11 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::FCOS:   return "fcos";
   case ISD::FPOWI:  return "fpowi";
   case ISD::FPOW:   return "fpow";
+  case ISD::FTRUNC: return "ftrunc";
+  case ISD::FFLOOR: return "ffloor";
+  case ISD::FCEIL:  return "fceil";
+  case ISD::FRINT:  return "frint";
+  case ISD::FNEARBYINT: return "fnearbyint";
 
   // Binary operators
   case ISD::ADD:    return "add";

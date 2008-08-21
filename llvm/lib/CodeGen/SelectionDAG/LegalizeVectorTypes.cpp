@@ -61,6 +61,11 @@ void DAGTypeLegalizer::ScalarizeVectorResult(SDNode *N, unsigned ResNo) {
   case ISD::FP_TO_UINT:
   case ISD::FSIN:
   case ISD::FSQRT:
+  case ISD::FTRUNC:
+  case ISD::FFLOOR:
+  case ISD::FCEIL:
+  case ISD::FRINT:
+  case ISD::FNEARBYINT:
   case ISD::SINT_TO_FP:
   case ISD::UINT_TO_FP: R = ScalarizeVecRes_UnaryOp(N); break;
 
@@ -298,6 +303,11 @@ void DAGTypeLegalizer::SplitVectorResult(SDNode *N, unsigned ResNo) {
   case ISD::FSQRT:
   case ISD::FSIN:
   case ISD::FCOS:
+  case ISD::FTRUNC:
+  case ISD::FFLOOR:
+  case ISD::FCEIL:
+  case ISD::FRINT:
+  case ISD::FNEARBYINT:
   case ISD::FP_TO_SINT:
   case ISD::FP_TO_UINT:
   case ISD::SINT_TO_FP:

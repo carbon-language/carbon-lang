@@ -325,6 +325,11 @@ def fneg       : SDNode<"ISD::FNEG"       , SDTFPUnaryOp>;
 def fsqrt      : SDNode<"ISD::FSQRT"      , SDTFPUnaryOp>;
 def fsin       : SDNode<"ISD::FSIN"       , SDTFPUnaryOp>;
 def fcos       : SDNode<"ISD::FCOS"       , SDTFPUnaryOp>;
+def frint      : SDNode<"ISD::FRINT"      , SDTFPUnaryOp>;
+def ftrunc     : SDNode<"ISD::FTRUNC"     , SDTFPUnaryOp>;
+def fceil      : SDNode<"ISD::FCEIL"      , SDTFPUnaryOp>;
+def ffloor     : SDNode<"ISD::FFLOOR"     , SDTFPUnaryOp>;
+def fnearbyint : SDNode<"ISD::FNEARBYINT" , SDTFPUnaryOp>;
 
 def fround     : SDNode<"ISD::FP_ROUND"   , SDTFPRoundOp>;
 def fextend    : SDNode<"ISD::FP_EXTEND"  , SDTFPExtendOp>;

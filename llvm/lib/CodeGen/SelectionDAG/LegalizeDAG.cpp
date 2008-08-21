@@ -3493,6 +3493,11 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
   case ISD::FSQRT:
   case ISD::FSIN:
   case ISD::FCOS:
+  case ISD::FTRUNC:
+  case ISD::FFLOOR:
+  case ISD::FCEIL:
+  case ISD::FRINT:
+  case ISD::FNEARBYINT:
     Tmp1 = LegalizeOp(Node->getOperand(0));
     switch (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0))) {
     case TargetLowering::Promote:
