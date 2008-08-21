@@ -3,10 +3,11 @@
 
 ; This tests very minimal fast-isel functionality.
 
-define i32 @foo(i32* %p, i32* %q) {
+define i32* @foo(i32* %p, i32* %q, i32** %z) {
 entry:
   %r = load i32* %p
   %s = load i32* %q
+  %y = load i32** %z
   br label %fast
 
 fast:
@@ -17,10 +18,12 @@ fast:
   %t4 = or i32 %t3, %s
   %t5 = xor i32 %t4, %s
   %t6 = add i32 %t5, 2
+  %t7 = getelementptr i32* %y, i32 1
+  %t8 = getelementptr i32* %t7, i32 %t6
   br label %exit
 
 exit:
-  ret i32 %t6
+  ret i32* %t8
 }
 
 define double @bar(double* %p, double* %q) {
