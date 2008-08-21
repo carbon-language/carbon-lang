@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mcpu=penryn > %t
+; RUN: llvm-as < %s | llc -march=x86 -mcpu=penryn > %t
 ; not grep movd %t
 ; not grep movss %t
 ; grep {extractps	\\$0, %xmm0, } %t
