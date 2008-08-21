@@ -424,7 +424,7 @@ namespace ISD {
     BIT_CONVERT,
     
     // FNEG, FABS, FSQRT, FSIN, FCOS, FPOWI, FPOW,
-    // FCEIL, FTRUNC, FRINT, FNEARYINT, FFLOOR - Perform various unary floating
+    // FCEIL, FTRUNC, FRINT, FNEARBYINT, FFLOOR - Perform various unary floating
     // point operations. These are inspired by libm.
     FNEG, FABS, FSQRT, FSIN, FCOS, FPOWI, FPOW,
     FCEIL, FTRUNC, FRINT, FNEARBYINT, FFLOOR,
