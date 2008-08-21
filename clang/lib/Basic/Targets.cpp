@@ -692,7 +692,6 @@ public:
     Define(Defines, "__WINNT__");
     Define(Defines, "__WINNT");
     Define(Defines, "WINNT");
-    Define(Defines, "_WIN32");
     Define(Defines, "_X86_");
     Define(Defines, "__MSVCRT__");
   }
