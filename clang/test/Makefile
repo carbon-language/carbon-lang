@@ -31,7 +31,7 @@ all::
 	@ echo '--- Running clang tests ---'
 	@ $(MAKE) $(TESTS)
 	@ $(DONE)
-	@ cat $(TESTS) | count 0
+	@ cat $(TESTS) | count 0 > /dev/null
 
 report: $(TESTS)
 	@ cat $^

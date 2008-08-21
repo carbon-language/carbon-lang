@@ -1,4 +1,4 @@
-// RUN: clang -emit-llvm %s
+// RUN: clang -emit-llvm %s -o %t
 
 // Note: define CLANG_GENERATE_KNOWN_GOOD and compile to generate code
 // that makes all of the defaulted arguments explicit. The resulting
