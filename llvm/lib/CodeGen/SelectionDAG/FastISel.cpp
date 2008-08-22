@@ -210,6 +210,11 @@ FastISel::SelectInstructions(BasicBlock::iterator Begin,
       // Something more complicated. Halt "fast" selection and bail.
       return I;
     }
+
+    case Instruction::PHI:
+      // PHI nodes are already emitted.
+      break;
+
     default:
       // Unhandled instruction. Halt "fast" selection and bail.
       return I;
