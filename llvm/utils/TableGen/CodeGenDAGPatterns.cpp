@@ -141,6 +141,33 @@ void DumpDepVars(MultipleUseVarSet &DepVars) {
 }
 
 //===----------------------------------------------------------------------===//
+// PatternToMatch implementation
+//
+
+/// getPredicateCheck - Return a single string containing all of this
+/// pattern's predicates concatenated with "&&" operators.
+///
+std::string PatternToMatch::getPredicateCheck() const {
+  std::string PredicateCheck;
+  for (unsigned i = 0, e = Predicates->getSize(); i != e; ++i) {
+    if (DefInit *Pred = dynamic_cast<DefInit*>(Predicates->getElement(i))) {
+      Record *Def = Pred->getDef();
+      if (!Def->isSubClassOf("Predicate")) {
+#ifndef NDEBUG
+        Def->dump();
+#endif
+        assert(0 && "Unknown predicate type!");
+      }
+      if (!PredicateCheck.empty())
+        PredicateCheck += " && ";
+      PredicateCheck += "(" + Def->getValueAsString("CondString") + ")";
+    }
+  }
+
+  return PredicateCheck;
+}
+
+//===----------------------------------------------------------------------===//
 // SDTypeConstraint implementation
 //
 

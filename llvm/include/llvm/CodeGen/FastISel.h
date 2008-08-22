@@ -26,18 +26,21 @@ class MachineRegisterInfo;
 class TargetData;
 class TargetInstrInfo;
 class TargetLowering;
+class TargetMachine;
 class TargetRegisterClass;
 
 /// FastISel - This is a fast-path instruction selection class that
 /// generates poor code and doesn't support illegal types or non-trivial
 /// lowering, but runs quickly.
 class FastISel {
+protected:
   MachineBasicBlock *MBB;
   MachineFunction &MF;
   MachineRegisterInfo &MRI;
+  const TargetMachine &TM;
   const TargetData &TD;
   const TargetInstrInfo &TII;
-  TargetLowering &TLI;
+  const TargetLowering &TLI;
 
 public:
   /// SelectInstructions - Do "fast" instruction selection over the

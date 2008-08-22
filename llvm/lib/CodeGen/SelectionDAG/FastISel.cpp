@@ -220,10 +220,12 @@ FastISel::SelectInstructions(BasicBlock::iterator Begin,
 }
 
 FastISel::FastISel(MachineFunction &mf)
-  : MF(mf), MRI(mf.getRegInfo()),
-    TD(*mf.getTarget().getTargetData()),
-    TII(*mf.getTarget().getInstrInfo()),
-    TLI(*mf.getTarget().getTargetLowering()) {
+  : MF(mf),
+    MRI(mf.getRegInfo()),
+    TM(mf.getTarget()),
+    TD(*TM.getTargetData()),
+    TII(*TM.getInstrInfo()),
+    TLI(*TM.getTargetLowering()) {
 }
 
 FastISel::~FastISel() {}

@@ -317,7 +317,7 @@ private:
   CodeGenDAGPatterns &CGP;
 
   // Predicates.
-  ListInit *Predicates;
+  std::string PredicateCheck;
   // Pattern cost.
   unsigned Cost;
   // Instruction selector pattern.
@@ -395,7 +395,7 @@ private:
     VTNo++;
   }
 public:
-  PatternCodeEmitter(CodeGenDAGPatterns &cgp, ListInit *preds,
+  PatternCodeEmitter(CodeGenDAGPatterns &cgp, std::string predcheck,
                      TreePatternNode *pattern, TreePatternNode *instr,
                      std::vector<std::pair<unsigned, std::string> > &gc,
                      std::set<std::string> &gd,
@@ -403,7 +403,7 @@ public:
                      std::vector<std::string> &tv,
                      bool &oiv,
                      unsigned &niro)
-  : CGP(cgp), Predicates(preds), Pattern(pattern), Instruction(instr),
+  : CGP(cgp), PredicateCheck(predcheck), Pattern(pattern), Instruction(instr),
     GeneratedCode(gc), GeneratedDecl(gd),
     TargetOpcodes(to), TargetVTs(tv),
     OutputIsVariadic(oiv), NumInputRootOps(niro),
@@ -431,22 +431,6 @@ public:
       if (DisablePatternForFastISel(N, CGP))
         emitCheck("!Fast");
 
-      std::string PredicateCheck;
-      for (unsigned i = 0, e = Predicates->getSize(); i != e; ++i) {
-        if (DefInit *Pred = dynamic_cast<DefInit*>(Predicates->getElement(i))) {
-          Record *Def = Pred->getDef();
-          if (!Def->isSubClassOf("Predicate")) {
-#ifndef NDEBUG
-            Def->dump();
-#endif
-            assert(0 && "Unknown predicate type!");
-          }
-          if (!PredicateCheck.empty())
-            PredicateCheck += " && ";
-          PredicateCheck += "(" + Def->getValueAsString("CondString") + ")";
-        }
-      }
-      
       emitCheck(PredicateCheck);
     }
 
@@ -1412,7 +1396,7 @@ void DAGISelEmitter::GenerateCodeForPattern(const PatternToMatch &Pattern,
   OutputIsVariadic = false;
   NumInputRootOps = 0;
 
-  PatternCodeEmitter Emitter(CGP, Pattern.getPredicates(),
+  PatternCodeEmitter Emitter(CGP, Pattern.getPredicateCheck(),
                              Pattern.getSrcPattern(), Pattern.getDstPattern(),
                              GeneratedCode, GeneratedDecl,
                              TargetOpcodes, TargetVTs,

@@ -17,4 +17,5 @@
 #include "X86RegisterInfo.h"
 #include "X86ISelLowering.h"
 #include "X86FastISel.h"
+#include "X86TargetMachine.h"
 #include "X86GenFastISel.inc"

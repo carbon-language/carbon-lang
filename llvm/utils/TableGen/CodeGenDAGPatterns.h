@@ -444,6 +444,8 @@ struct PatternToMatch {
   TreePatternNode *getDstPattern() const { return DstPattern; }
   const std::vector<Record*> &getDstRegs() const { return Dstregs; }
   unsigned         getAddedComplexity() const { return AddedComplexity; }
+
+  std::string getPredicateCheck() const;
 };
 
   
