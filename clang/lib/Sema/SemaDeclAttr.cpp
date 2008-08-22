@@ -407,8 +407,7 @@ static void HandleDestructorAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     priority = Idx.getZExtValue();
   }
   
-  FunctionDecl *Fn = dyn_cast<FunctionDecl>(d);
-  if (!Fn) {
+  if (!isa<FunctionDecl>(d)) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type,
            "destructor", "function");
     return;
