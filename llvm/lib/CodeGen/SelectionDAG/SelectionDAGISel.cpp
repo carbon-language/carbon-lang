@@ -5113,7 +5113,7 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
       cast<BranchInst>(LLVMBB->getTerminator())->isUnconditional()) {
     if (FastISel *F = TLI.createFastISel(FuncInfo.MF)) {
       Begin = F->SelectInstructions(Begin, LLVMBB->end(),
-                                    FuncInfo.ValueMap, FuncInfo.MBBMap, BB);
+                                    FuncInfo.ValueMap, BB);
 
       // Clean up the FastISel object. TODO: Reorganize what data is
       // stored in the FastISel class itself and what is merely passed

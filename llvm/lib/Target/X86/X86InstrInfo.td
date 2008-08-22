@@ -2784,24 +2784,19 @@ def : Pat<(zextloadi32i1 addr:$src), (MOVZX32rm8 addr:$src)>;
 
 // extload bool -> extload byte
 def : Pat<(extloadi8i1 addr:$src),   (MOV8rm      addr:$src)>;
-def : Pat<(extloadi16i1 addr:$src),
-          (INSERT_SUBREG (i16 (IMPLICIT_DEF)), (MOV8rm addr:$src),
-                         x86_subreg_8bit)>;
-def : Pat<(extloadi16i8 addr:$src),
-          (INSERT_SUBREG (i16 (IMPLICIT_DEF)), (MOV8rm addr:$src),
-                         x86_subreg_8bit)>;
-// For extloads with 32-bit results, chose instructions that
-// define the whole 32 bits of the result, to avoid partial-register
-// updates.
+def : Pat<(extloadi16i1 addr:$src),  (MOVZX16rm8  addr:$src)>,
+         Requires<[In32BitMode]>;
 def : Pat<(extloadi32i1 addr:$src),  (MOVZX32rm8  addr:$src)>;
+def : Pat<(extloadi16i8 addr:$src),  (MOVZX16rm8  addr:$src)>,
+         Requires<[In32BitMode]>;
 def : Pat<(extloadi32i8 addr:$src),  (MOVZX32rm8  addr:$src)>;
 def : Pat<(extloadi32i16 addr:$src), (MOVZX32rm16 addr:$src)>;
 
 // anyext
-def : Pat<(i16 (anyext GR8:$src)),
-          (INSERT_SUBREG (i16 (IMPLICIT_DEF)), GR8:$src, x86_subreg_8bit)>;
-def : Pat<(i32 (anyext GR8:$src)),
-          (INSERT_SUBREG (i32 (IMPLICIT_DEF)), GR8:$src, x86_subreg_8bit)>;
+def : Pat<(i16 (anyext GR8 :$src)), (MOVZX16rr8  GR8 :$src)>,
+         Requires<[In32BitMode]>;
+def : Pat<(i32 (anyext GR8 :$src)), (MOVZX32rr8  GR8 :$src)>,
+         Requires<[In32BitMode]>;
 def : Pat<(i32 (anyext GR16:$src)),
           (INSERT_SUBREG (i32 (IMPLICIT_DEF)), GR16:$src, x86_subreg_16bit)>;
 
