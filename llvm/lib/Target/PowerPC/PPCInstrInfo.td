@@ -776,6 +776,10 @@ def STFDX : XForm_28<31, 727, (outs), (ins F8RC:$frS, memrr:$dst),
                      [(store F8RC:$frS, xaddr:$dst)]>;
 }
 
+let isBarrier = 1 in
+def SYNC : XForm_24_sync<31, 598, (outs), (ins),
+                        "sync", LdStSync,
+                        [(int_ppc_sync)]>;
 
 //===----------------------------------------------------------------------===//
 // PPC32 Arithmetic Instructions.
@@ -1359,6 +1363,14 @@ def : Pat<(extloadf32 iaddr:$src),
           (FMRSD (LFS iaddr:$src))>;
 def : Pat<(extloadf32 xaddr:$src),
           (FMRSD (LFSX xaddr:$src))>;
+
+// Memory barriers
+def : Pat<(membarrier (i32 imm:$ll),
+                      (i32 imm:$ls),
+                      (i32 imm:$sl),
+                      (i32 imm:$ss),
+                      (i32 imm:$device)),
+           (SYNC)>;
 
 include "PPCInstrAltivec.td"
 include "PPCInstr64Bit.td"
