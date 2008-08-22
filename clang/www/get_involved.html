@@ -139,6 +139,21 @@ machine compiler that lets you embed C code into state machines and generate
 C code.  It would be relatively easy to turn this into a JIT compiler using
 LLVM.</li>
 
+<li><b>Self-testing using clang</b>: There are several neat ways to
+improve the quality of clang by self-testing. Some examples:
+<ul>
+  <li>Improve the reliability of AST printing and serialization by
+  ensuring that the AST produced by clang on an input doesn't change
+  when it is reparsed or unserialized.
+
+  <li>Improve parser reliability and error generation by automatically
+  or randomly changing the input checking that clang doesn't crash and
+  that it doesn't generate excessive errors for small input
+  changes. Manipulating the input at both the text and token levels is
+  likely to produce interesting test cases.
+</ul>
+</li>
+
 </ul>
 
 <p>If you hit a bug with clang, it is very useful for us if you reduce the code
