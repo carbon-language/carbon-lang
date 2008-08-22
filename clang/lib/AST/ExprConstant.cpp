@@ -19,6 +19,7 @@
 #include "llvm/Support/Compiler.h"
 using namespace clang;
 using llvm::APSInt;
+using llvm::APFloat;
 
 /// EvalInfo - This is a private struct used by the evaluator to capture
 /// information about a subexpression as it is folded.  It retains information
@@ -63,7 +64,7 @@ struct EvalInfo {
 
 static bool EvaluatePointer(const Expr *E, APValue &Result, EvalInfo &Info);
 static bool EvaluateInteger(const Expr *E, APSInt  &Result, EvalInfo &Info);
-
+static bool EvaluateFloat(const Expr *E, APFloat &Result, EvalInfo &Info);
 
 //===----------------------------------------------------------------------===//
 // Pointer Evaluation
@@ -477,23 +478,13 @@ bool IntExprEvaluator::HandleCast(SourceLocation CastLoc,
   if (!SubExpr->getType()->isRealFloatingType())
     return Error(CastLoc, diag::err_expr_not_constant);
 
-  // FIXME: Generalize floating point constant folding!  For now we just permit
-  // which is allowed by integer constant expressions.
-  
-  // Allow floating constants that are the immediate operands of casts or that
-  // are parenthesized.
-  const Expr *Operand = SubExpr;
-  while (const ParenExpr *PE = dyn_cast<ParenExpr>(Operand))
-    Operand = PE->getSubExpr();
-  
-  // If this isn't a floating literal, we can't handle it.
-  const FloatingLiteral *FL = dyn_cast<FloatingLiteral>(Operand);
-  if (!FL)
+  APFloat F(0.0);
+  if (!EvaluateFloat(SubExpr, F, Info))
     return Error(CastLoc, diag::err_expr_not_constant);
-  
+
   // If the destination is boolean, compare against zero.
   if (DestType->isBooleanType()) {
-    Result = !FL->getValue().isZero();
+    Result = !F.isZero();
     Result.zextOrTrunc(DestWidth);
     Result.setIsUnsigned(DestType->isUnsignedIntegerType());
     return true;
@@ -504,10 +495,72 @@ bool IntExprEvaluator::HandleCast(SourceLocation CastLoc,
   
   // FIXME: Warning for overflow.
   uint64_t Space[4]; 
-  (void)FL->getValue().convertToInteger(Space, DestWidth, DestSigned,
-                                        llvm::APFloat::rmTowardZero);
+  (void)F.convertToInteger(Space, DestWidth, DestSigned,
+                           llvm::APFloat::rmTowardZero);
   Result = llvm::APInt(DestWidth, 4, Space);
   Result.setIsUnsigned(!DestSigned);
+  return true;
+}
+
+//===----------------------------------------------------------------------===//
+// Float Evaluation
+//===----------------------------------------------------------------------===//
+
+namespace {
+class VISIBILITY_HIDDEN FloatExprEvaluator
+  : public StmtVisitor<FloatExprEvaluator, bool> {
+  EvalInfo &Info;
+  APFloat &Result;
+public:
+  FloatExprEvaluator(EvalInfo &info, APFloat &result)
+    : Info(info), Result(result) {}
+
+  bool VisitStmt(Stmt *S) {
+    return false;
+  }
+
+  bool VisitParenExpr(ParenExpr *E) { return Visit(E->getSubExpr()); }
+
+  bool VisitBinaryOperator(const BinaryOperator *E);
+  bool VisitFloatingLiteral(const FloatingLiteral *E);
+};
+} // end anonymous namespace
+
+static bool EvaluateFloat(const Expr* E, APFloat& Result, EvalInfo &Info) {
+  return FloatExprEvaluator(Info, Result).Visit(const_cast<Expr*>(E));
+}
+
+bool FloatExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
+  // FIXME: Diagnostics?  I really don't understand how the warnings
+  // and errors are supposed to work.
+  APFloat LHS(0.0), RHS(0.0);
+  if (!EvaluateFloat(E->getLHS(), Result, Info))
+    return false;
+  if (!EvaluateFloat(E->getRHS(), RHS, Info))
+    return false;
+
+  switch (E->getOpcode()) {
+  default: return false;
+  case BinaryOperator::Mul:
+    Result.multiply(RHS, APFloat::rmNearestTiesToEven);
+    return true;
+  case BinaryOperator::Add:
+    Result.add(RHS, APFloat::rmNearestTiesToEven);
+    return true;
+  case BinaryOperator::Sub:
+    Result.subtract(RHS, APFloat::rmNearestTiesToEven);
+    return true;
+  case BinaryOperator::Div:
+    Result.divide(RHS, APFloat::rmNearestTiesToEven);
+    return true;
+  case BinaryOperator::Rem:
+    Result.mod(RHS, APFloat::rmNearestTiesToEven);
+    return true;
+  }
+}
+
+bool FloatExprEvaluator::VisitFloatingLiteral(const FloatingLiteral *E) {
+  Result = E->getValue();
   return true;
 }
 
@@ -516,16 +569,24 @@ bool IntExprEvaluator::HandleCast(SourceLocation CastLoc,
 //===----------------------------------------------------------------------===//
 
 bool Expr::tryEvaluate(APValue &Result, ASTContext &Ctx) const {
-  llvm::APSInt sInt(32);
-  
   EvalInfo Info(Ctx);
   if (getType()->isIntegerType()) {
+    llvm::APSInt sInt(32);
     if (EvaluateInteger(this, sInt, Info)) {
       Result = APValue(sInt);
       return true;
     }
-  } else
-    return false;
+  } else if (getType()->isPointerType()) {
+    if (EvaluatePointer(this, Result, Info)) {
+      return true;
+    }
+  } else if (getType()->isRealFloatingType()) {
+    llvm::APFloat f(0.0);
+    if (EvaluateFloat(this, f, Info)) {
+      Result = APValue(f);
+      return true;
+    }
+  }
       
   return false;
 }
