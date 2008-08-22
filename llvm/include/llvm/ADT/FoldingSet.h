@@ -164,6 +164,9 @@ public:
   
   /// size - Returns the number of nodes in the folding set.
   unsigned size() const { return NumNodes; }
+
+  /// empty - Returns true if there are no nodes in the folding set.
+  bool empty() const { return NumNodes == 0; }
   
 private:
 
