@@ -145,6 +145,8 @@ BasicBlock::iterator
 FastISel::SelectInstructions(BasicBlock::iterator Begin,
                              BasicBlock::iterator End,
                              DenseMap<const Value*, unsigned> &ValueMap,
+                             std::map<const BasicBlock*,
+                                      MachineBasicBlock *> &MBBMap,
                              MachineBasicBlock *mbb) {
   MBB = mbb;
   BasicBlock::iterator I = Begin;
@@ -195,19 +197,25 @@ FastISel::SelectInstructions(BasicBlock::iterator Begin,
     case Instruction::Br: {
       BranchInst *BI = cast<BranchInst>(I);
 
-      // For now, check for and handle just the most trivial case: an
-      // unconditional fall-through branch.
       if (BI->isUnconditional()) {
-         MachineFunction::iterator NextMBB =
+        MachineFunction::iterator NextMBB =
            next(MachineFunction::iterator(MBB));
-         if (NextMBB != MF.end() &&
-             NextMBB->getBasicBlock() == BI->getSuccessor(0)) {
-          MBB->addSuccessor(NextMBB);
-          break;
+        BasicBlock *LLVMSucc = BI->getSuccessor(0);
+        MachineBasicBlock *MSucc = MBBMap[LLVMSucc];
+
+        if (NextMBB != MF.end() && MSucc == NextMBB) {
+          // The unconditional fall-through case, which needs no instructions.
+        } else {
+          // The unconditional branch case.
+          const SmallVector<MachineOperand, 0> NoCond(0);
+          TII.InsertBranch(*MBB, MSucc, NULL, NoCond);
         }
+        MBB->addSuccessor(MSucc);
+        break;
       }
 
-      // Something more complicated. Halt "fast" selection and bail.
+      // Conditional branches are not handed yet.
+      // Halt "fast" selection and bail.
       return I;
     }
 

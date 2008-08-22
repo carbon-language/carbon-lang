@@ -17,6 +17,7 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
+#include <map>
 
 namespace llvm {
 
@@ -52,6 +53,7 @@ public:
   BasicBlock::iterator
   SelectInstructions(BasicBlock::iterator Begin, BasicBlock::iterator End,
                      DenseMap<const Value*, unsigned> &ValueMap,
+                     std::map<const BasicBlock*, MachineBasicBlock *> &MBBMap,
                      MachineBasicBlock *MBB);
 
   virtual ~FastISel();
