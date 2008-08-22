@@ -181,6 +181,7 @@ void FastISelEmitter::run(std::ostream &OS) {
   typedef std::map<OperandsSignature, OpcodeTypePredMap> OperandsOpcodeTypePredMap;
   OperandsOpcodeTypePredMap SimplePatterns;
 
+  // Scan through all the patterns and record the simple ones.
   for (CodeGenDAGPatterns::ptm_iterator I = CGP.ptm_begin(),
        E = CGP.ptm_end(); I != E; ++I) {
     const PatternToMatch &Pattern = *I;
@@ -393,6 +394,9 @@ void FastISelEmitter::run(std::ostream &OS) {
       OS << "}\n";
       OS << "\n";
     }
+
+    OS << "// Top-level FastEmit function.\n";
+    OS << "\n";
 
     // Emit one function for the operand signature that demultiplexes based
     // on opcode and type.
