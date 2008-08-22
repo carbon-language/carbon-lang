@@ -87,14 +87,14 @@ scheduled after any node that reads %reg1039.
 
 Use local info (i.e. register scavenger) to assign it a free register to allow
 reuse:
-	ldr r3, [sp, #+4]
-	add r3, r3, #3
-	ldr r2, [sp, #+8]
-	add r2, r2, #2
-	ldr r1, [sp, #+4]  <==
-	add r1, r1, #1
-	ldr r0, [sp, #+4]
-	add r0, r0, #2
+        ldr r3, [sp, #+4]
+        add r3, r3, #3
+        ldr r2, [sp, #+8]
+        add r2, r2, #2
+        ldr r1, [sp, #+4]  <==
+        add r1, r1, #1
+        ldr r0, [sp, #+4]
+        add r0, r0, #2
 
 //===---------------------------------------------------------------------===//
 
