@@ -815,7 +815,7 @@ void IfConverter::InvalidatePreds(MachineBasicBlock *BB) {
 ///
 static void InsertUncondBranch(MachineBasicBlock *BB, MachineBasicBlock *ToBB,
                                const TargetInstrInfo *TII) {
-  SmallVector<MachineOperand, 1> NoCond;
+  SmallVector<MachineOperand, 0> NoCond;
   TII->InsertBranch(*BB, ToBB, NULL, NoCond);
 }
 

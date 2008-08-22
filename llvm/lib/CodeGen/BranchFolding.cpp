@@ -364,7 +364,7 @@ void BranchFolder::ReplaceTailWithBranchTo(MachineBasicBlock::iterator OldInst,
 
   // If OldBB isn't immediately before OldBB, insert a branch to it.
   if (++MachineFunction::iterator(OldBB) != MachineFunction::iterator(NewDest))
-    TII->InsertBranch(*OldBB, NewDest, 0, SmallVector<MachineOperand, 1>());
+    TII->InsertBranch(*OldBB, NewDest, 0, SmallVector<MachineOperand, 0>());
   OldBB->addSuccessor(NewDest);
   ++NumTailMerge;
 }
@@ -444,7 +444,7 @@ static void FixTail(MachineBasicBlock* CurMBB, MachineBasicBlock *SuccBB,
       }
     }
   }
-  TII->InsertBranch(*CurMBB, SuccBB, NULL, SmallVector<MachineOperand, 1>());
+  TII->InsertBranch(*CurMBB, SuccBB, NULL, SmallVector<MachineOperand, 0>());
 }
 
 static bool MergeCompare(const std::pair<unsigned,MachineBasicBlock*> &p,
