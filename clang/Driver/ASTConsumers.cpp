@@ -193,15 +193,26 @@ void DeclPrinter::PrintObjCMethodDecl(ObjCMethodDecl *OMD) {
   else 
     Out << "\n+ ";
   if (!OMD->getResultType().isNull())
-    Out << '(' << OMD->getResultType().getAsString() << ") ";
-  // FIXME: just print original selector name!
-  Out << OMD->getSelector().getName();
+    Out << '(' << OMD->getResultType().getAsString() << ")";
   
+  std::string name = OMD->getSelector().getName();
+  std::string::size_type pos, lastPos = 0;
   for (unsigned i = 0, e = OMD->getNumParams(); i != e; ++i) {
     ParmVarDecl *PDecl = OMD->getParamDecl(i);
     // FIXME: selector is missing here!    
-    Out << " :(" << PDecl->getType().getAsString() << ") " << PDecl->getName(); 
+    pos = name.find_first_of(":", lastPos);
+    Out << " " << name.substr(lastPos, pos - lastPos);
+    Out << ":(" << PDecl->getType().getAsString() << ")" << PDecl->getName(); 
+    lastPos = pos + 1;
   }
+    
+  if (OMD->getNumParams() == 0)
+    Out << " " << name;
+    
+  if (OMD->isVariadic())
+      Out << ", ...";
+  
+  Out << ";";
 }
 
 void DeclPrinter::PrintObjCImplementationDecl(ObjCImplementationDecl *OID) {
