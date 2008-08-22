@@ -20,6 +20,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Parse/Parser.h"
+#include "clang/Parse/DeclSpec.h"
 #include "clang/Basic/Diagnostic.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/SmallString.h"
@@ -372,6 +373,8 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec) {
 /// [OBJC]  '@protocol' '(' identifier ')'             
 /// [OBJC]  '@encode' '(' type-name ')'                
 /// [OBJC]  objc-string-literal
+/// [C++]   simple-type-specifier '(' expression-list[opt] ')'      [C++ 5.2.3]
+/// [C++]   typename-specifier '(' expression-list[opt] ')'         [TODO]
 /// [C++]   'const_cast' '<' type-name '>' '(' expression ')'       [C++ 5.2p1]
 /// [C++]   'dynamic_cast' '<' type-name '>' '(' expression ')'     [C++ 5.2p1]
 /// [C++]   'reinterpret_cast' '<' type-name '>' '(' expression ')' [C++ 5.2p1]
@@ -446,8 +449,17 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
   case tok::kw_false:
     return ParseCXXBoolLiteral();
 
-  case tok::identifier: {      // primary-expression: identifier
-                               // constant: enumeration-constant
+  case tok::identifier: {
+    if (getLang().CPlusPlus &&
+        Actions.isTypeName(*Tok.getIdentifierInfo(), CurScope)) {
+      // Handle C++ function-style cast, e.g. "T(4.5)" where T is a typedef for
+      // double.
+      goto HandleType;
+    }
+    
+    // primary-expression: identifier
+    // constant: enumeration-constant
+
     // Consume the identifier so that we can see if it is followed by a '('.
     // Function designators are allowed to be undeclared (C99 6.5.1p2), so we
     // need to know whether or not this identifier is a function designator or
@@ -545,6 +557,35 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
     Res = ParseCXXThis();
     // This can be followed by postfix-expr pieces.
     return ParsePostfixExpressionSuffix(Res);
+
+  case tok::kw_char:
+  case tok::kw_wchar_t:
+  case tok::kw_bool:
+  case tok::kw_short:
+  case tok::kw_int:
+  case tok::kw_long:
+  case tok::kw_signed:
+  case tok::kw_unsigned:
+  case tok::kw_float:
+  case tok::kw_double:
+  case tok::kw_void:
+  case tok::kw_typeof: {
+    if (!getLang().CPlusPlus)
+      goto UnhandledToken;
+  HandleType:
+    // postfix-expression: simple-type-specifier '(' expression-list[opt] ')'
+    //
+    DeclSpec DS;
+    ParseCXXSimpleTypeSpecifier(DS);
+    if (Tok.isNot(tok::l_paren))
+      return Diag(Tok.getLocation(), diag::err_expected_lparen_after_type,
+                  DS.getSourceRange());
+
+    Res = ParseCXXTypeConstructExpression(DS);
+    // This can be followed by postfix-expr pieces.
+    return ParsePostfixExpressionSuffix(Res);
+  }
+
   case tok::at: {
     SourceLocation AtLoc = ConsumeToken();
     return ParseObjCAtExpression(AtLoc);
@@ -555,6 +596,7 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
       return ParsePostfixExpressionSuffix(ParseObjCMessageExpression());
     // FALL THROUGH.
   default:
+  UnhandledToken:
     Diag(Tok, diag::err_expected_expression);
     return ExprResult(true);
   }

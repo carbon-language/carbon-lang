@@ -197,6 +197,12 @@ Stmt* Stmt::Create(Deserializer& D, ASTContext& C) {
       
     case CXXDefaultArgExprClass:
       return CXXDefaultArgExpr::CreateImpl(D, C);      
+
+    case CXXFunctionalCastExprClass:
+      return CXXFunctionalCastExpr::CreateImpl(D, C);
+
+    case CXXZeroInitValueExprClass:
+      return CXXZeroInitValueExpr::CreateImpl(D, C);
   }
 }
 
@@ -1100,4 +1106,34 @@ CXXDefaultArgExpr *CXXDefaultArgExpr::CreateImpl(Deserializer& D, ASTContext& C)
   ParmVarDecl* Param = 0;
   D.ReadPtr(Param, false);
   return new CXXDefaultArgExpr(Param);
+}
+
+void CXXFunctionalCastExpr::EmitImpl(Serializer& S) const {
+  S.Emit(getType());
+  S.Emit(TyBeginLoc);
+  S.Emit(RParenLoc);
+  S.EmitOwnedPtr(getSubExpr());
+}
+
+CXXFunctionalCastExpr *
+CXXFunctionalCastExpr::CreateImpl(Deserializer& D, ASTContext& C) {
+  QualType Ty = QualType::ReadVal(D);
+  SourceLocation TyBeginLoc = SourceLocation::ReadVal(D);
+  SourceLocation RParenLoc = SourceLocation::ReadVal(D);
+  Expr* SubExpr = D.ReadOwnedPtr<Expr>(C);
+  return new CXXFunctionalCastExpr(Ty, TyBeginLoc, SubExpr, RParenLoc);
+}
+
+void CXXZeroInitValueExpr::EmitImpl(Serializer& S) const {
+  S.Emit(getType());
+  S.Emit(TyBeginLoc);
+  S.Emit(RParenLoc);
+}
+
+CXXZeroInitValueExpr *
+CXXZeroInitValueExpr::CreateImpl(Deserializer& D, ASTContext& C) {
+  QualType Ty = QualType::ReadVal(D);
+  SourceLocation TyBeginLoc = SourceLocation::ReadVal(D);
+  SourceLocation RParenLoc = SourceLocation::ReadVal(D);
+  return new CXXZeroInitValueExpr(Ty, TyBeginLoc, RParenLoc);
 }

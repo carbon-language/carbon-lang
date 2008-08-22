@@ -169,6 +169,71 @@ public:
   static CXXDefaultArgExpr* CreateImpl(llvm::Deserializer& D,
                                        ASTContext& C);
 };
+
+/// CXXFunctionalCastExpr - [C++ 5.2.3p1] Explicit type conversion
+///                                       (functional notation).
+/// Example: "x = int(0.5);"
+///
+class CXXFunctionalCastExpr : public CastExpr {
+  SourceLocation TyBeginLoc;
+  SourceLocation RParenLoc;
+public:
+  CXXFunctionalCastExpr(QualType ty, SourceLocation tyBeginLoc, Expr *castExpr,
+                        SourceLocation rParenLoc) : 
+    CastExpr(CXXFunctionalCastExprClass, ty, castExpr),
+    TyBeginLoc(tyBeginLoc), RParenLoc(rParenLoc) {}
+
+  SourceLocation getTypeBeginLoc() const { return TyBeginLoc; }
+  SourceLocation getRParenLoc() const { return RParenLoc; }
+  
+  virtual SourceRange getSourceRange() const {
+    return SourceRange(TyBeginLoc, RParenLoc);
+  }
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == CXXFunctionalCastExprClass; 
+  }
+  static bool classof(const CXXFunctionalCastExpr *) { return true; }
+  
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static CXXFunctionalCastExpr *
+      CreateImpl(llvm::Deserializer& D, ASTContext& C);
+};
+
+/// CXXZeroInitValueExpr - [C++ 5.2.3p2]
+/// Expression "T()" which creates a value-initialized Rvalue of non-class
+/// type T.
+///
+class CXXZeroInitValueExpr : public Expr {
+  SourceLocation TyBeginLoc;
+  SourceLocation RParenLoc;
+
+public:
+  CXXZeroInitValueExpr(QualType ty, SourceLocation tyBeginLoc,
+                       SourceLocation rParenLoc ) : 
+    Expr(CXXZeroInitValueExprClass, ty),
+    TyBeginLoc(tyBeginLoc), RParenLoc(rParenLoc) {}
+  
+  SourceLocation getTypeBeginLoc() const { return TyBeginLoc; }
+  SourceLocation getRParenLoc() const { return RParenLoc; }
+
+  virtual SourceRange getSourceRange() const {
+    return SourceRange(TyBeginLoc, RParenLoc);
+  }
+    
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == CXXZeroInitValueExprClass;
+  }
+  static bool classof(const CXXZeroInitValueExpr *) { return true; }
+      
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
+
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static CXXZeroInitValueExpr *
+      CreateImpl(llvm::Deserializer& D, ASTContext& C);
+};
+
 }  // end namespace clang
 
 #endif

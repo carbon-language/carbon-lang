@@ -578,6 +578,20 @@ public:
     return 0;
   }
 
+  /// ActOnCXXTypeConstructExpr - Parse construction of a specified type.
+  /// Can be interpreted either as function-style casting ("int(x)")
+  /// or class type construction ("ClassType(x,y,z)")
+  /// or creation of a value-initialized type ("int()").
+  virtual ExprResult ActOnCXXTypeConstructExpr(SourceRange TypeRange,
+                                               TypeTy *TypeRep,
+                                               SourceLocation LParenLoc,
+                                               ExprTy **Exprs,
+                                               unsigned NumExprs,
+                                               SourceLocation *CommaLocs,
+                                               SourceLocation RParenLoc) {
+    return 0;
+  }
+
   //===---------------------------- C++ Classes ---------------------------===//
   /// ActOnBaseSpecifier - Parsed a base specifier
   virtual void ActOnBaseSpecifier(DeclTy *classdecl, SourceRange SpecifierRange,

@@ -431,6 +431,15 @@ private:
   ExprResult ParseCXXBoolLiteral();
 
   //===--------------------------------------------------------------------===//
+  // C++ 5.2.3: Explicit type conversion (functional notation)
+  ExprResult ParseCXXTypeConstructExpression(const DeclSpec &DS);
+
+  /// ParseCXXSimpleTypeSpecifier - [C++ 7.1.5.2] Simple type specifiers.
+  /// This should only be called when the current token is known to be part of
+  /// simple-type-specifier.
+  void ParseCXXSimpleTypeSpecifier(DeclSpec &DS);
+
+  //===--------------------------------------------------------------------===//
   // C99 6.7.8: Initialization.
   ExprResult ParseInitializer();
   ExprResult ParseInitializerWithPotentialDesignator();

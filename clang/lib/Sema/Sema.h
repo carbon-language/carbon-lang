@@ -559,6 +559,18 @@ public:
   virtual ExprResult ActOnCXXThrow(SourceLocation OpLoc,
                                    ExprTy *expr);
 
+  /// ActOnCXXTypeConstructExpr - Parse construction of a specified type.
+  /// Can be interpreted either as function-style casting ("int(x)")
+  /// or class type construction ("ClassType(x,y,z)")
+  /// or creation of a value-initialized type ("int()").
+  virtual ExprResult ActOnCXXTypeConstructExpr(SourceRange TypeRange,
+                                               TypeTy *TypeRep,
+                                               SourceLocation LParenLoc,
+                                               ExprTy **Exprs,
+                                               unsigned NumExprs,
+                                               SourceLocation *CommaLocs,
+                                               SourceLocation RParenLoc);
+
   // ParseObjCStringLiteral - Parse Objective-C string literals.
   virtual ExprResult ParseObjCStringLiteral(SourceLocation *AtLocs, 
                                             ExprTy **Strings,

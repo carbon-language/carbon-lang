@@ -13,6 +13,7 @@
 
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Parse/Parser.h"
+#include "clang/Parse/DeclSpec.h"
 using namespace clang;
 
 /// ParseCXXCasts - This handles the various ways to cast expressions to another
@@ -113,4 +114,131 @@ Parser::ExprResult Parser::ParseCXXThis() {
   assert(Tok.is(tok::kw_this) && "Not 'this'!");
   SourceLocation ThisLoc = ConsumeToken();
   return Actions.ActOnCXXThis(ThisLoc);
+}
+
+/// ParseCXXTypeConstructExpression - Parse construction of a specified type.
+/// Can be interpreted either as function-style casting ("int(x)")
+/// or class type construction ("ClassType(x,y,z)")
+/// or creation of a value-initialized type ("int()").
+///
+///       postfix-expression: [C++ 5.2p1]
+///         simple-type-specifier '(' expression-list[opt] ')'      [C++ 5.2.3]
+///         typename-specifier '(' expression-list[opt] ')'         [TODO]
+///
+Parser::ExprResult Parser::ParseCXXTypeConstructExpression(const DeclSpec &DS) {
+  Declarator DeclaratorInfo(DS, Declarator::TypeNameContext);
+  TypeTy *TypeRep = Actions.ActOnTypeName(CurScope, DeclaratorInfo).Val;
+
+  assert(Tok.is(tok::l_paren) && "Expected '('!");
+  SourceLocation LParenLoc = ConsumeParen();
+
+  ExprListTy Exprs;
+  CommaLocsTy CommaLocs;
+
+  if (Tok.isNot(tok::r_paren)) {
+    if (ParseExpressionList(Exprs, CommaLocs)) {
+      SkipUntil(tok::r_paren);
+      return ExprResult(true);
+    }
+  }
+
+  // Match the ')'.
+  SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
+
+  assert((Exprs.size() == 0 || Exprs.size()-1 == CommaLocs.size())&&
+         "Unexpected number of commas!");
+  return Actions.ActOnCXXTypeConstructExpr(DS.getSourceRange(), TypeRep,
+                                           LParenLoc,
+                                           &Exprs[0], Exprs.size(),
+                                           &CommaLocs[0], RParenLoc);
+}
+
+/// ParseCXXSimpleTypeSpecifier - [C++ 7.1.5.2] Simple type specifiers.
+/// This should only be called when the current token is known to be part of
+/// simple-type-specifier.
+///
+///       simple-type-specifier:
+///         '::'[opt] nested-name-specifier[opt] type-name                [TODO]
+///         '::'[opt] nested-name-specifier 'template' simple-template-id [TODO]
+///         char
+///         wchar_t
+///         bool
+///         short
+///         int
+///         long
+///         signed
+///         unsigned
+///         float
+///         double
+///         void
+/// [GNU]   typeof-specifier
+/// [C++0x] auto               [TODO]
+///
+///       type-name:
+///         class-name
+///         enum-name
+///         typedef-name
+///
+void Parser::ParseCXXSimpleTypeSpecifier(DeclSpec &DS) {
+  DS.SetRangeStart(Tok.getLocation());
+  const char *PrevSpec;
+  SourceLocation Loc = Tok.getLocation();
+  
+  switch (Tok.getKind()) {
+  default: 
+    assert(0 && "Not a simple-type-specifier token!");
+    abort();
+      
+  // type-name
+  case tok::identifier: {
+    TypeTy *TypeRep = Actions.isTypeName(*Tok.getIdentifierInfo(), CurScope);
+    assert(TypeRep && "Identifier wasn't a type-name!");
+    DS.SetTypeSpecType(DeclSpec::TST_typedef, Loc, PrevSpec, TypeRep);
+    break;
+  }
+    
+  // builtin types
+  case tok::kw_short:
+    DS.SetTypeSpecWidth(DeclSpec::TSW_short, Loc, PrevSpec);
+    break;
+  case tok::kw_long:
+    DS.SetTypeSpecWidth(DeclSpec::TSW_long, Loc, PrevSpec);
+    break;
+  case tok::kw_signed:
+    DS.SetTypeSpecSign(DeclSpec::TSS_signed, Loc, PrevSpec);
+    break;
+  case tok::kw_unsigned:
+    DS.SetTypeSpecSign(DeclSpec::TSS_unsigned, Loc, PrevSpec);
+    break;
+  case tok::kw_void:
+    DS.SetTypeSpecType(DeclSpec::TST_void, Loc, PrevSpec);
+    break;
+  case tok::kw_char:
+    DS.SetTypeSpecType(DeclSpec::TST_char, Loc, PrevSpec);
+    break;
+  case tok::kw_int:
+    DS.SetTypeSpecType(DeclSpec::TST_int, Loc, PrevSpec);
+    break;
+  case tok::kw_float:
+    DS.SetTypeSpecType(DeclSpec::TST_float, Loc, PrevSpec);
+    break;
+  case tok::kw_double:
+    DS.SetTypeSpecType(DeclSpec::TST_double, Loc, PrevSpec);
+    break;
+  case tok::kw_wchar_t:
+    DS.SetTypeSpecType(DeclSpec::TST_wchar, Loc, PrevSpec);
+    break;
+  case tok::kw_bool:
+    DS.SetTypeSpecType(DeclSpec::TST_bool, Loc, PrevSpec);
+    break;
+  
+  // GNU typeof support.
+  case tok::kw_typeof:
+    ParseTypeofSpecifier(DS);
+    DS.Finish(Diags, PP.getSourceManager(), getLang());
+    return;
+  }
+  DS.SetRangeEnd(Tok.getLocation());
+  ConsumeToken();
+  DS.Finish(Diags, PP.getSourceManager(), getLang());
 }

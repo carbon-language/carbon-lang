@@ -818,6 +818,17 @@ void StmtPrinter::VisitCXXDefaultArgExpr(CXXDefaultArgExpr *Node) {
   // Nothing to print: we picked up the default argument
 }
 
+void StmtPrinter::VisitCXXFunctionalCastExpr(CXXFunctionalCastExpr *Node) {
+  OS << Node->getType().getAsString();
+  OS << "(";
+  PrintExpr(Node->getSubExpr());
+  OS << ")";
+}
+
+void StmtPrinter::VisitCXXZeroInitValueExpr(CXXZeroInitValueExpr *Node) {
+  OS << Node->getType().getAsString() << "()";
+}
+
 // Obj-C 
 
 void StmtPrinter::VisitObjCStringLiteral(ObjCStringLiteral *Node) {

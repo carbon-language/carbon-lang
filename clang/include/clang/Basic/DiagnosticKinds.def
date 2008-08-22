@@ -529,6 +529,8 @@ DIAG(err_no_declarators, ERROR,
      "declaration does not declare anything")
 DIAG(err_func_def_no_params, ERROR,
      "function definition does not declare parameters")
+DIAG(err_expected_lparen_after_type, ERROR,
+     "expected '(' for function-style cast or type construction")
 
 //===----------------------------------------------------------------------===//
 // Semantic Analysis
@@ -949,6 +951,16 @@ DIAG(err_invalid_member_use_in_static_method, ERROR,
      "invalid use of member '%0' in static member function")
 DIAG(err_invalid_non_static_member_use, ERROR,
      "invalid use of nonstatic data member '%0'")
+DIAG(err_invalid_incomplete_type_use, ERROR,
+     "invalid use of incomplete type '%0'")
+DIAG(err_builtin_func_cast_more_than_one_arg, ERROR,
+     "function-style cast to a builtin type can only take one argument")
+DIAG(err_value_init_for_array_type, ERROR,
+     "array types cannot be value-initialized")
+// Temporary
+DIAG(err_unsupported_class_constructor, ERROR,
+     "class constructors are not supported yet")
+
 
 // assignment related diagnostics (also for argument passing, returning, etc).
 DIAG(err_typecheck_convert_incompatible, ERROR,

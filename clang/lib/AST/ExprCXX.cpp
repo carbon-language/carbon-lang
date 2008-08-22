@@ -45,3 +45,11 @@ Stmt::child_iterator CXXDefaultArgExpr::child_begin() {
 Stmt::child_iterator CXXDefaultArgExpr::child_end() {
   return child_iterator();
 }
+
+// CXXZeroInitValueExpr
+Stmt::child_iterator CXXZeroInitValueExpr::child_begin() { 
+  return child_iterator();
+}
+Stmt::child_iterator CXXZeroInitValueExpr::child_end() {
+  return child_iterator();
+}
