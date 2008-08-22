@@ -525,6 +525,10 @@ public:
                                                 bool NoInit,
                                                 const char *Separator);
 
+  // GenerateStaticBlockVarDecl - return the static declaration of
+  // a local variable. Performs initialization of the variable if necessary.
+  llvm::GlobalValue *GenerateStaticCXXBlockVarDecl(const VarDecl &D);
+
   //===--------------------------------------------------------------------===//
   //                             Internal Helpers
   //===--------------------------------------------------------------------===//

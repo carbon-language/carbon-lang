@@ -86,7 +86,13 @@ CodeGenFunction::GenerateStaticBlockVarDecl(const VarDecl &D,
   if ((D.getInit() == 0) || NoInit) {
     Init = llvm::Constant::getNullValue(LTy);
   } else {
-    Init = CGM.EmitConstantExpr(D.getInit(), this);
+    if (D.getInit()->isConstantExpr(getContext(), 0))
+      Init = CGM.EmitConstantExpr(D.getInit(), this);
+    else {
+      assert(getContext().getLangOptions().CPlusPlus && 
+             "only C++ supports non-constant static initializers!");
+      return GenerateStaticCXXBlockVarDecl(D);
+    }
   }
 
   assert(Init && "Unable to create initialiser for static decl");

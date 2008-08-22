@@ -46,6 +46,8 @@ struct LangOptions {
 
   unsigned NeXTRuntime       : 1; // Use NeXT runtime.
 
+  unsigned ThreadsafeStatics : 1; // Whether static initializers are protected
+                                  // by lockis.
 private:
   unsigned GC : 2; // Objective-C Garbage Collection modes.  We declare
                    // this enum as unsigned because MSVC insists on making enums
@@ -60,7 +62,10 @@ public:
     GC = ObjC1 = ObjC2 = 0;
     C99 = Microsoft = CPlusPlus = CPlusPlus0x = NoExtensions = 0;
     CXXOperatorNames = PascalStrings = Boolean = WritableStrings = 0;
-    LaxVectorConversions = Exceptions = NeXTRuntime = 0;    
+    LaxVectorConversions = Exceptions = NeXTRuntime = 0;
+    
+    // FIXME: The default should be 1.
+    ThreadsafeStatics = 0;
   }
   
   GCMode getGCMode() const { return (GCMode) GC; }
