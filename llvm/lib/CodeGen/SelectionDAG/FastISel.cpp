@@ -207,8 +207,7 @@ FastISel::SelectInstructions(BasicBlock::iterator Begin,
           // The unconditional fall-through case, which needs no instructions.
         } else {
           // The unconditional branch case.
-          const SmallVector<MachineOperand, 0> NoCond(0);
-          TII.InsertBranch(*MBB, MSucc, NULL, NoCond);
+          TII.InsertBranch(*MBB, MSucc, NULL, SmallVector<MachineOperand, 0>());
         }
         MBB->addSuccessor(MSucc);
         break;
