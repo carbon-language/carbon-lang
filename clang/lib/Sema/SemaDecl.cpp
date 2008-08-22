@@ -1325,8 +1325,12 @@ void Sema::AddInitializerToDecl(DeclTy *dcl, ExprTy *init) {
     } else if (!VDecl->isInvalidDecl()) {
       if (CheckInitializerTypes(Init, DclT))
         VDecl->setInvalidDecl();
-      if (SC == VarDecl::Static) // C99 6.7.8p4.
-        CheckForConstantInitializer(Init, DclT);
+      
+      // C++ 3.6.2p2, allow dynamic initialization of static initializers.
+      if (!getLangOptions().CPlusPlus) {
+        if (SC == VarDecl::Static) // C99 6.7.8p4.
+          CheckForConstantInitializer(Init, DclT);
+      }
     }
   } else if (VDecl->isFileVarDecl()) {
     if (VDecl->getStorageClass() == VarDecl::Extern)
@@ -1335,8 +1339,11 @@ void Sema::AddInitializerToDecl(DeclTy *dcl, ExprTy *init) {
       if (CheckInitializerTypes(Init, DclT))
         VDecl->setInvalidDecl();
     
-    // C99 6.7.8p4. All file scoped initializers need to be constant.
-    CheckForConstantInitializer(Init, DclT);
+    // C++ 3.6.2p2, allow dynamic initialization of static initializers.
+    if (!getLangOptions().CPlusPlus) {
+      // C99 6.7.8p4. All file scoped initializers need to be constant.
+      CheckForConstantInitializer(Init, DclT);
+    }
   }
   // If the type changed, it means we had an incomplete type that was
   // completed by the initializer. For example: 
