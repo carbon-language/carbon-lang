@@ -1849,8 +1849,8 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
     QualType RHSPointee = RHS->getAsPointerType()->getPointeeType();
     QualType ResultType = mergeTypes(LHSPointee, RHSPointee);
     if (ResultType.isNull()) return QualType();
-    if (getCanonicalType(LHSPointee) != getCanonicalType(ResultType)) return LHS;
-    if (getCanonicalType(RHSPointee) != getCanonicalType(ResultType)) return RHS;
+    if (getCanonicalType(LHSPointee) == getCanonicalType(ResultType)) return LHS;
+    if (getCanonicalType(RHSPointee) == getCanonicalType(ResultType)) return RHS;
     return getPointerType(ResultType);
   }
   case Type::ConstantArray:
@@ -1864,12 +1864,16 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
     QualType RHSElem = getAsArrayType(RHS)->getElementType();
     QualType ResultType = mergeTypes(LHSElem, RHSElem);
     if (ResultType.isNull()) return QualType();
-    if (LCAT && getCanonicalType(LHSElem) != getCanonicalType(ResultType)) return LHS;
-    if (RCAT && getCanonicalType(RHSElem) != getCanonicalType(ResultType)) return RHS;
+    if (LCAT && getCanonicalType(LHSElem) == getCanonicalType(ResultType)) return LHS;
+    if (RCAT && getCanonicalType(RHSElem) == getCanonicalType(ResultType)) return RHS;
+    if (LCAT) return getConstantArrayType(ResultType, LCAT->getSize(),
+                                          ArrayType::ArraySizeModifier(), 0);
+    if (RCAT) return getConstantArrayType(ResultType, RCAT->getSize(),
+                                          ArrayType::ArraySizeModifier(), 0);
     const VariableArrayType* LVAT = getAsVariableArrayType(LHS);
     const VariableArrayType* RVAT = getAsVariableArrayType(RHS);
-    if (LVAT && getCanonicalType(LHSElem) != getCanonicalType(ResultType)) return LHS;
-    if (RVAT && getCanonicalType(RHSElem) != getCanonicalType(ResultType)) return RHS;
+    if (LVAT && getCanonicalType(LHSElem) == getCanonicalType(ResultType)) return LHS;
+    if (RVAT && getCanonicalType(RHSElem) == getCanonicalType(ResultType)) return RHS;
     if (LVAT) {
       // FIXME: This isn't correct! But tricky to implement because
       // the array's size has to be the size of LHS, but the type
@@ -1882,8 +1886,8 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
       // has to be different.
       return RHS;
     }
-    if (getCanonicalType(LHSElem) != getCanonicalType(ResultType)) return LHS;
-    if (getCanonicalType(RHSElem) != getCanonicalType(ResultType)) return RHS;
+    if (getCanonicalType(LHSElem) == getCanonicalType(ResultType)) return LHS;
+    if (getCanonicalType(RHSElem) == getCanonicalType(ResultType)) return RHS;
     return getIncompleteArrayType(ResultType, ArrayType::ArraySizeModifier(), 0);
   }
   case Type::FunctionNoProto:
