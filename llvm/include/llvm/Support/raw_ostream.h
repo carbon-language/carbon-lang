@@ -62,7 +62,14 @@ public:
       flush_impl();
   }
   
-  raw_ostream &operator<<(char C) {
+  raw_ostream &operator<<(unsigned char C) {
+    if (OutBufCur >= OutBufEnd)
+      flush_impl();
+    *OutBufCur++ = C;
+    return *this;
+  }
+  
+  raw_ostream &operator<<(signed char C) {
     if (OutBufCur >= OutBufEnd)
       flush_impl();
     *OutBufCur++ = C;
