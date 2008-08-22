@@ -561,18 +561,6 @@ static bool precedes(MachineBasicBlock::iterator A,
   return false;
 }
 
-namespace llvm {
-  template<> struct DenseMapInfo<uint32_t> {
-    static inline uint32_t getEmptyKey() { return ~0; }
-    static inline uint32_t getTombstoneKey() { return ~0 - 1; }
-    static unsigned getHashValue(const uint32_t& Val) { return Val * 37; }
-    static bool isPod() { return true; }
-    static bool isEqual(const uint32_t& LHS, const uint32_t& RHS) {
-      return LHS == RHS;
-    }
-  };
-}
-
 /// ComputeLocalLiveness - Computes liveness of registers within a basic
 /// block, setting the killed/dead flags as appropriate.
 void RALocal::ComputeLocalLiveness(MachineBasicBlock& MBB) {

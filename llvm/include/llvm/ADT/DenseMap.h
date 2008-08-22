@@ -43,6 +43,48 @@ struct DenseMapInfo<T*> {
   static bool isPod() { return true; }
 };
 
+// Provide DenseMapInfo for unsigned ints.
+template<> struct DenseMapInfo<uint32_t> {
+  static inline uint32_t getEmptyKey() { return ~0; }
+  static inline uint32_t getTombstoneKey() { return ~0 - 1; }
+  static unsigned getHashValue(const uint32_t& Val) { return Val * 37; }
+  static bool isPod() { return true; }
+  static bool isEqual(const uint32_t& LHS, const uint32_t& RHS) {
+  return LHS == RHS;
+  }
+};
+
+// Provide DenseMapInfo for all pairs whose members have info.
+template<typename T, typename U>
+struct DenseMapInfo<std::pair<T, U> > {
+  typedef std::pair<T, U> Pair;
+  typedef DenseMapInfo<T> FirstInfo;
+  typedef DenseMapInfo<U> SecondInfo;
+
+  static inline Pair getEmptyKey() { 
+    return std::make_pair(FirstInfo::getEmptyKey(), 
+                          SecondInfo::getEmptyKey()); 
+  }
+  static inline Pair getTombstoneKey() { 
+    return std::make_pair(FirstInfo::getTombstoneKey(), 
+                            SecondInfo::getEmptyKey()); }
+    static unsigned getHashValue(const Pair& PairVal) {
+      uint64_t key = (uint64_t)FirstInfo::getHashValue(PairVal.first) << 32
+            | (uint64_t)SecondInfo::getHashValue(PairVal.second);
+      key += ~(key << 32);
+      key ^= (key >> 22);
+      key += ~(key << 13);
+      key ^= (key >> 8);
+      key += (key << 3);
+      key ^= (key >> 15);
+      key += ~(key << 27);
+      key ^= (key >> 31);
+      return (unsigned)key;
+    }
+    static bool isEqual(const Pair& LHS, const Pair& RHS) { return LHS == RHS; }
+    static bool isPod() { return false; }
+};
+
 template<typename KeyT, typename ValueT, 
          typename KeyInfoT = DenseMapInfo<KeyT>,
          typename ValueInfoT = DenseMapInfo<ValueT> >

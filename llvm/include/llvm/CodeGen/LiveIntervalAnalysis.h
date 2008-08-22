@@ -55,20 +55,6 @@ namespace llvm {
     }
   };
   
-  // Provide DenseMapInfo for unsigned.
-  template<>
-  struct DenseMapInfo<unsigned> {
-    static inline unsigned getEmptyKey() { return (unsigned)-1; }
-    static inline unsigned getTombstoneKey() { return (unsigned)-2; }
-    static unsigned getHashValue(const unsigned Val) {
-      return Val * 37;
-    }
-    static bool isEqual(const unsigned LHS, const unsigned RHS) {
-      return LHS == RHS;
-    }
-    static bool isPod() { return true; }
-  };
-
   class LiveIntervals : public MachineFunctionPass {
     MachineFunction* mf_;
     MachineRegisterInfo* mri_;
