@@ -123,14 +123,17 @@ let usesCustomDAGSchedInserter = 1 in {
       (outs G8RC:$dst), (ins memrr:$ptr, G8RC:$incr),
       "${:comment} ATOMIC_LOAD_ADD_I64 PSEUDO!",
       [(set G8RC:$dst, (PPCatomic_load_add xoaddr:$ptr, G8RC:$incr))]>;
-    def ATOMIC_CMP_SWAP_I64 : Pseudo<
-      (outs G8RC:$dst), (ins memrr:$ptr, G8RC:$old, G8RC:$new),
-      "${:comment} ATOMIC_CMP_SWAP_I64 PSEUDO!",
-      [(set G8RC:$dst, (PPCatomic_cmp_swap xoaddr:$ptr, G8RC:$old, G8RC:$new))]>;
     def ATOMIC_SWAP_I64 : Pseudo<
       (outs G8RC:$dst), (ins memrr:$ptr, G8RC:$new),
       "${:comment} ATOMIC_SWAP_I64 PSEUDO!",
       [(set G8RC:$dst, (PPCatomic_swap xoaddr:$ptr, G8RC:$new))]>;
+  }
+  let Uses = [CR0, CR1] in {
+    def ATOMIC_CMP_SWAP_I64 : Pseudo<
+      (outs G8RC:$dst), (ins memrr:$ptr, G8RC:$old, G8RC:$new),
+      "${:comment} ATOMIC_CMP_SWAP_I64 PSEUDO!",
+      [(set G8RC:$dst, 
+                    (PPCatomic_cmp_swap xoaddr:$ptr, G8RC:$old, G8RC:$new))]>;
   }
 }
 

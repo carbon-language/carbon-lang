@@ -4056,20 +4056,20 @@ PPCTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
 
     //  loopMBB:
     //   l[wd]arx dest, ptr
-    //   cmp[wd] dest, oldval
-    //   bne- exitMBB
+    //   cmp[wd] CR1, dest, oldval
     //   st[wd]cx. newval, ptr
+    //   bne- CR1, exitMBB
     //   bne- loopMBB
     //   fallthrough --> exitMBB
     BB = loopMBB;
     BuildMI(BB, TII->get(is64bit ? PPC::LDARX : PPC::LWARX), dest)
       .addReg(ptrA).addReg(ptrB);
-    BuildMI(BB, TII->get(is64bit ? PPC::CMPD : PPC::CMPW), PPC::CR0)
+    BuildMI(BB, TII->get(is64bit ? PPC::CMPD : PPC::CMPW), PPC::CR1)
       .addReg(oldval).addReg(dest);
-    BuildMI(BB, TII->get(PPC::BCC))
-      .addImm(PPC::PRED_NE).addReg(PPC::CR0).addMBB(exitMBB);
     BuildMI(BB, TII->get(is64bit ? PPC::STDCX : PPC::STWCX))
       .addReg(newval).addReg(ptrA).addReg(ptrB);
+    BuildMI(BB, TII->get(PPC::BCC))
+      .addImm(PPC::PRED_NE).addReg(PPC::CR1).addMBB(exitMBB);
     BuildMI(BB, TII->get(PPC::BCC))
       .addImm(PPC::PRED_NE).addReg(PPC::CR0).addMBB(loopMBB);    
     BB->addSuccessor(loopMBB);
