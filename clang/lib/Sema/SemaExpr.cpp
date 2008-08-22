@@ -1354,7 +1354,20 @@ Sema::CheckPointerTypesForAssignment(QualType lhsType, QualType rhsType) {
     assert(lhptee->isFunctionType());
     return FunctionVoidPointer;
   }
-  
+
+  // Check for ObjC interfaces
+  const ObjCInterfaceType* LHSIface = lhptee->getAsObjCInterfaceType();
+  const ObjCInterfaceType* RHSIface = rhptee->getAsObjCInterfaceType();
+  if (LHSIface && RHSIface &&
+      Context.canAssignObjCInterfaces(LHSIface, RHSIface))
+    return ConvTy;
+
+  // ID acts sort of like void* for ObjC interfaces
+  if (LHSIface && Context.isObjCIdType(rhptee))
+    return ConvTy;
+  if (RHSIface && Context.isObjCIdType(lhptee))
+    return ConvTy;
+
   // C99 6.5.16.1p1 (constraint 3): both operands are pointers to qualified or 
   // unqualified versions of compatible types, ...
   if (!Context.typesAreCompatible(lhptee.getUnqualifiedType(), 
@@ -1701,6 +1714,21 @@ QualType Sema::CheckShiftOperands(Expr *&lex, Expr *&rex, SourceLocation loc,
   return lex->getType();
 }
 
+static bool areComparableObjCInterfaces(QualType LHS, QualType RHS,
+                                        ASTContext& Context) {
+  const ObjCInterfaceType* LHSIface = LHS->getAsObjCInterfaceType();
+  const ObjCInterfaceType* RHSIface = RHS->getAsObjCInterfaceType();
+  // ID acts sort of like void* for ObjC interfaces
+  if (LHSIface && Context.isObjCIdType(RHS))
+    return true;
+  if (RHSIface && Context.isObjCIdType(LHS))
+    return true;
+  if (!LHSIface || !RHSIface)
+    return false;
+  return Context.canAssignObjCInterfaces(LHSIface, RHSIface) ||
+         Context.canAssignObjCInterfaces(RHSIface, LHSIface);
+}
+
 // C99 6.5.8
 QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation loc,
                                     bool isRelational) {
@@ -1756,7 +1784,8 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation loc,
     if (!LHSIsNull && !RHSIsNull &&                       // C99 6.5.9p2
         !LCanPointeeTy->isVoidType() && !RCanPointeeTy->isVoidType() &&
         !Context.typesAreCompatible(LCanPointeeTy.getUnqualifiedType(),
-                                    RCanPointeeTy.getUnqualifiedType())) {
+                                    RCanPointeeTy.getUnqualifiedType()) &&
+        !areComparableObjCInterfaces(LCanPointeeTy, RCanPointeeTy, Context)) {
       Diag(loc, diag::ext_typecheck_comparison_of_distinct_pointers,
            lType.getAsString(), rType.getAsString(),
            lex->getSourceRange(), rex->getSourceRange());

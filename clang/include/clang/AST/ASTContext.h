@@ -397,9 +397,6 @@ public:
                                              
   /// Compatibility predicates used to check assignment expressions.
   bool typesAreCompatible(QualType, QualType); // C99 6.2.7p1
-  bool pointerTypesAreCompatible(QualType, QualType);  // C99 6.7.5.1p2
-  bool referenceTypesAreCompatible(QualType, QualType); // C++ 5.17p6
-  bool functionTypesAreCompatible(QualType, QualType); // C99 6.7.5.3p15
   
   bool isObjCIdType(QualType T) const {
     if (!IdStructType) // ObjC isn't enabled
@@ -415,6 +412,14 @@ public:
     assert(SelStructType && "isObjCSelType used before 'SEL' type is built");
     return T->getAsStructureType() == SelStructType;
   }
+
+  // Check the safety of assignment from LHS to RHS
+  bool canAssignObjCInterfaces(const ObjCInterfaceType *LHS, 
+                               const ObjCInterfaceType *RHS);
+
+  // Functions for calculating composite types
+  QualType mergeTypes(QualType, QualType);
+  QualType mergeFunctionTypes(QualType, QualType);
 
   //===--------------------------------------------------------------------===//
   //                    Integer Predicates

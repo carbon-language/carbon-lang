@@ -1623,92 +1623,6 @@ bool ASTContext::isObjCObjectPointerType(QualType Ty) const {
 //                        Type Compatibility Testing
 //===----------------------------------------------------------------------===//
 
-/// C99 6.2.7p1: If both are complete types, then the following additional
-/// requirements apply.
-/// FIXME (handle compatibility across source files).
-static bool areCompatTagTypes(TagType *LHS, TagType *RHS,
-                              const ASTContext &C) {
-  // "Class" and "id" are compatible built-in structure types.
-  if (C.isObjCIdType(QualType(LHS, 0)) && C.isObjCClassType(QualType(RHS, 0)) ||
-      C.isObjCClassType(QualType(LHS, 0)) && C.isObjCIdType(QualType(RHS, 0)))
-    return true;
-
-  // Within a translation unit a tag type is only compatible with itself.  Self
-  // equality is already handled by the time we get here.
-  assert(LHS != RHS && "Self equality not handled!");
-  return false;
-}
-
-bool ASTContext::pointerTypesAreCompatible(QualType lhs, QualType rhs) {
-  // C99 6.7.5.1p2: For two pointer types to be compatible, both shall be 
-  // identically qualified and both shall be pointers to compatible types.
-  if (lhs.getCVRQualifiers() != rhs.getCVRQualifiers() ||
-      lhs.getAddressSpace() != rhs.getAddressSpace())
-    return false;
-    
-  QualType ltype = lhs->getAsPointerType()->getPointeeType();
-  QualType rtype = rhs->getAsPointerType()->getPointeeType();
-  
-  return typesAreCompatible(ltype, rtype);
-}
-
-bool ASTContext::functionTypesAreCompatible(QualType lhs, QualType rhs) {
-  const FunctionType *lbase = lhs->getAsFunctionType();
-  const FunctionType *rbase = rhs->getAsFunctionType();
-  const FunctionTypeProto *lproto = dyn_cast<FunctionTypeProto>(lbase);
-  const FunctionTypeProto *rproto = dyn_cast<FunctionTypeProto>(rbase);
-
-  // first check the return types (common between C99 and K&R).
-  if (!typesAreCompatible(lbase->getResultType(), rbase->getResultType()))
-    return false;
-
-  if (lproto && rproto) { // two C99 style function prototypes
-    unsigned lproto_nargs = lproto->getNumArgs();
-    unsigned rproto_nargs = rproto->getNumArgs();
-    
-    if (lproto_nargs != rproto_nargs)
-      return false;
-      
-    // both prototypes have the same number of arguments.
-    if ((lproto->isVariadic() && !rproto->isVariadic()) ||
-        (rproto->isVariadic() && !lproto->isVariadic()))
-      return false;
-      
-    // The use of ellipsis agree...now check the argument types.
-    for (unsigned i = 0; i < lproto_nargs; i++)
-      // C99 6.7.5.3p15: ...and each parameter declared with qualified type
-      // is taken as having the unqualified version of it's declared type.
-      if (!typesAreCompatible(lproto->getArgType(i).getUnqualifiedType(), 
-                              rproto->getArgType(i).getUnqualifiedType()))
-        return false;
-    return true;
-  }
-  
-  if (!lproto && !rproto) // two K&R style function decls, nothing to do.
-    return true;
-
-  // we have a mixture of K&R style with C99 prototypes
-  const FunctionTypeProto *proto = lproto ? lproto : rproto;
-  if (proto->isVariadic())
-    return false;
-    
-  // FIXME: Each parameter type T in the prototype must be compatible with the
-  // type resulting from applying the usual argument conversions to T.
-  return true;
-}
-
-// C99 6.7.5.2p6
-static bool areCompatArrayTypes(ArrayType *LHS, ArrayType *RHS, ASTContext &C) {
-  // Constant arrays must be the same size to be compatible.
-  if (const ConstantArrayType* LCAT = dyn_cast<ConstantArrayType>(LHS))
-    if (const ConstantArrayType* RCAT = dyn_cast<ConstantArrayType>(RHS))
-      if (RCAT->getSize() != LCAT->getSize())
-        return false;
-
-  // Compatible arrays must have compatible element types
-  return C.typesAreCompatible(LHS->getElementType(), RHS->getElementType());
-}
-
 /// areCompatVectorTypes - Return true if the two specified vector types are 
 /// compatible.
 static bool areCompatVectorTypes(const VectorType *LHS,
@@ -1718,12 +1632,12 @@ static bool areCompatVectorTypes(const VectorType *LHS,
   LHS->getNumElements() == RHS->getNumElements();
 }
 
-/// areCompatObjCInterfaces - Return true if the two interface types are
+/// canAssignObjCInterfaces - Return true if the two interface types are
 /// compatible for assignment from RHS to LHS.  This handles validation of any
 /// protocol qualifiers on the LHS or RHS.
 ///
-static bool areCompatObjCInterfaces(const ObjCInterfaceType *LHS, 
-                                    const ObjCInterfaceType *RHS) {
+bool ASTContext::canAssignObjCInterfaces(const ObjCInterfaceType *LHS,
+                                         const ObjCInterfaceType *RHS) {
   // Verify that the base decls are compatible: the RHS must be a subclass of
   // the LHS.
   if (!LHS->getDecl()->isSuperClassOf(RHS->getDecl()))
@@ -1771,42 +1685,114 @@ static bool areCompatObjCInterfaces(const ObjCInterfaceType *LHS,
   return false;
 }
 
-
 /// typesAreCompatible - C99 6.7.3p9: For two qualified types to be compatible, 
 /// both shall have the identically qualified version of a compatible type.
 /// C99 6.2.7p1: Two types have compatible types if their types are the 
 /// same. See 6.7.[2,3,5] for additional rules.
-bool ASTContext::typesAreCompatible(QualType LHS_NC, QualType RHS_NC) {
-  QualType LHS = getCanonicalType(LHS_NC);
-  QualType RHS = getCanonicalType(RHS_NC);
-  
+bool ASTContext::typesAreCompatible(QualType LHS, QualType RHS) {
+  return !mergeTypes(LHS, RHS).isNull();
+}
+
+QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs) {
+  const FunctionType *lbase = lhs->getAsFunctionType();
+  const FunctionType *rbase = rhs->getAsFunctionType();
+  const FunctionTypeProto *lproto = dyn_cast<FunctionTypeProto>(lbase);
+  const FunctionTypeProto *rproto = dyn_cast<FunctionTypeProto>(rbase);
+  bool allLTypes = true;
+  bool allRTypes = true;
+
+  // Check return type
+  QualType retType = mergeTypes(lbase->getResultType(), rbase->getResultType());
+  if (retType.isNull()) return QualType();
+  if (getCanonicalType(retType) != getCanonicalType(lbase->getResultType())) allLTypes = false;
+  if (getCanonicalType(retType) != getCanonicalType(rbase->getResultType())) allRTypes = false;
+
+  if (lproto && rproto) { // two C99 style function prototypes
+    unsigned lproto_nargs = lproto->getNumArgs();
+    unsigned rproto_nargs = rproto->getNumArgs();
+
+    // Compatible functions must have the same number of arguments
+    if (lproto_nargs != rproto_nargs)
+      return QualType();
+
+    // Variadic and non-variadic functions aren't compatible
+    if (lproto->isVariadic() != rproto->isVariadic())
+      return QualType();
+
+    // Check argument compatibility
+    llvm::SmallVector<QualType, 10> types;
+    for (unsigned i = 0; i < lproto_nargs; i++) {
+      QualType largtype = lproto->getArgType(i).getUnqualifiedType();
+      QualType rargtype = rproto->getArgType(i).getUnqualifiedType();
+      QualType argtype = mergeTypes(largtype, rargtype);
+      if (argtype.isNull()) return QualType();
+      types.push_back(argtype);
+      if (getCanonicalType(argtype) != getCanonicalType(largtype)) allLTypes = false;
+      if (getCanonicalType(argtype) != getCanonicalType(rargtype)) allRTypes = false;
+    }
+    if (allLTypes) return lhs;
+    if (allRTypes) return rhs;
+    return getFunctionType(retType, types.begin(), types.size(),
+                           lproto->isVariadic());
+  }
+
+  if (lproto) allRTypes = false;
+  if (rproto) allLTypes = false;
+
+  const FunctionTypeProto *proto = lproto ? lproto : rproto;
+  if (proto) {
+    if (proto->isVariadic()) return QualType();
+    // Check that the types are compatible with the types that
+    // would result from default argument promotions (C99 6.7.5.3p15).
+    // The only types actually affected are promotable integer
+    // types and floats, which would be passed as a different
+    // type depending on whether the prototype is visible.
+    unsigned proto_nargs = proto->getNumArgs();
+    for (unsigned i = 0; i < proto_nargs; ++i) {
+      QualType argTy = proto->getArgType(i);
+      if (argTy->isPromotableIntegerType() ||
+          getCanonicalType(argTy).getUnqualifiedType() == FloatTy)
+        return QualType();
+    }
+
+    if (allLTypes) return lhs;
+    if (allRTypes) return rhs;
+    return getFunctionType(retType, proto->arg_type_begin(),
+                           proto->getNumArgs(), lproto->isVariadic());
+  }
+
+  if (allLTypes) return lhs;
+  if (allRTypes) return rhs;
+  return getFunctionTypeNoProto(retType);
+}
+
+QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
   // C++ [expr]: If an expression initially has the type "reference to T", the
   // type is adjusted to "T" prior to any further analysis, the expression
   // designates the object or function denoted by the reference, and the
   // expression is an lvalue.
-  if (ReferenceType *RT = dyn_cast<ReferenceType>(LHS))
+  // FIXME: C++ shouldn't be going through here!  The rules are different
+  // enough that they should be handled separately.
+  if (const ReferenceType *RT = LHS->getAsReferenceType())
     LHS = RT->getPointeeType();
-  if (ReferenceType *RT = dyn_cast<ReferenceType>(RHS))
+  if (const ReferenceType *RT = RHS->getAsReferenceType())
     RHS = RT->getPointeeType();
-  
-  // If two types are identical, they are compatible.
-  if (LHS == RHS)
-    return true;
-  
-  // If qualifiers differ, the types are different.
-  unsigned LHSAS = LHS.getAddressSpace(), RHSAS = RHS.getAddressSpace();
-  if (LHS.getCVRQualifiers() != RHS.getCVRQualifiers() || LHSAS != RHSAS)
-    return false;
-  
-  // Strip off ASQual's if present.
-  if (LHSAS) {
-    LHS = LHS.getUnqualifiedType();
-    RHS = RHS.getUnqualifiedType();
-  }
 
-  Type::TypeClass LHSClass = LHS->getTypeClass();
-  Type::TypeClass RHSClass = RHS->getTypeClass();
-  
+  QualType LHSCan = getCanonicalType(LHS),
+           RHSCan = getCanonicalType(RHS);
+
+  // If two types are identical, they are compatible.
+  if (LHSCan == RHSCan)
+    return LHS;
+
+  // If the qualifiers are different, the types aren't compatible
+  if (LHSCan.getCVRQualifiers() != RHSCan.getCVRQualifiers() ||
+      LHSCan.getAddressSpace() != RHSCan.getAddressSpace())
+    return QualType();
+
+  Type::TypeClass LHSClass = LHSCan->getTypeClass();
+  Type::TypeClass RHSClass = RHSCan->getTypeClass();
+
   // We want to consider the two function types to be the same for these
   // comparisons, just force one to the other.
   if (LHSClass == Type::FunctionProto) LHSClass = Type::FunctionNoProto;
@@ -1825,68 +1811,106 @@ bool ASTContext::typesAreCompatible(QualType LHS_NC, QualType RHS_NC) {
   // Consider qualified interfaces and interfaces the same.
   if (LHSClass == Type::ObjCQualifiedInterface) LHSClass = Type::ObjCInterface;
   if (RHSClass == Type::ObjCQualifiedInterface) RHSClass = Type::ObjCInterface;
-  
+
   // If the canonical type classes don't match.
   if (LHSClass != RHSClass) {
-    // ID is compatible with all interface types.
-    if (isa<ObjCInterfaceType>(LHS))
-      return isObjCIdType(RHS);
-    if (isa<ObjCInterfaceType>(RHS))
-      return isObjCIdType(LHS);
-
     // ID is compatible with all qualified id types.
-    if (isa<ObjCQualifiedIdType>(LHS)) {
+    if (LHS->isObjCQualifiedIdType()) {
       if (const PointerType *PT = RHS->getAsPointerType())
-        return isObjCIdType(PT->getPointeeType());
+        if (isObjCIdType(PT->getPointeeType()))
+          return LHS;
     }
-    if (isa<ObjCQualifiedIdType>(RHS)) {
+    if (RHS->isObjCQualifiedIdType()) {
       if (const PointerType *PT = LHS->getAsPointerType())
-        return isObjCIdType(PT->getPointeeType());
-    }    
+        if (isObjCIdType(PT->getPointeeType()))
+          return RHS;
+    }
+
     // C99 6.7.2.2p4: Each enumerated type shall be compatible with char,
     // a signed integer type, or an unsigned integer type. 
-    if (LHS->isEnumeralType() && RHS->isIntegralType()) {
-      EnumDecl* EDecl = cast<EnumType>(LHS)->getDecl();
-      return EDecl->getIntegerType() == RHS;
+    if (const EnumType* ETy = LHS->getAsEnumType()) {
+      if (ETy->getDecl()->getIntegerType() == RHSCan.getUnqualifiedType())
+        return RHS;
     }
-    if (RHS->isEnumeralType() && LHS->isIntegralType()) {
-      EnumDecl* EDecl = cast<EnumType>(RHS)->getDecl();
-      return EDecl->getIntegerType() == LHS;
+    if (const EnumType* ETy = RHS->getAsEnumType()) {
+      if (ETy->getDecl()->getIntegerType() == LHSCan.getUnqualifiedType())
+        return LHS;
     }
 
-    return false;
+    return QualType();
   }
-  
+
   // The canonical type classes match.
   switch (LHSClass) {
-  case Type::ASQual:
-  case Type::FunctionProto:
-  case Type::VariableArray:
-  case Type::IncompleteArray:
-  case Type::Reference:
-  case Type::ObjCQualifiedInterface:
-    assert(0 && "Canonicalized away above");
   case Type::Pointer:
-    return pointerTypesAreCompatible(LHS, RHS);
+  {
+    // Merge two pointer types, while trying to preserve typedef info
+    QualType LHSPointee = LHS->getAsPointerType()->getPointeeType();
+    QualType RHSPointee = RHS->getAsPointerType()->getPointeeType();
+    QualType ResultType = mergeTypes(LHSPointee, RHSPointee);
+    if (ResultType.isNull()) return QualType();
+    if (getCanonicalType(LHSPointee) != getCanonicalType(ResultType)) return LHS;
+    if (getCanonicalType(RHSPointee) != getCanonicalType(ResultType)) return RHS;
+    return getPointerType(ResultType);
+  }
   case Type::ConstantArray:
-    return areCompatArrayTypes(cast<ArrayType>(LHS), cast<ArrayType>(RHS),
-                               *this);
+  {
+    const ConstantArrayType* LCAT = getAsConstantArrayType(LHS);
+    const ConstantArrayType* RCAT = getAsConstantArrayType(RHS);
+    if (LCAT && RCAT && RCAT->getSize() != LCAT->getSize())
+      return QualType();
+
+    QualType LHSElem = getAsArrayType(LHS)->getElementType();
+    QualType RHSElem = getAsArrayType(RHS)->getElementType();
+    QualType ResultType = mergeTypes(LHSElem, RHSElem);
+    if (ResultType.isNull()) return QualType();
+    if (LCAT && getCanonicalType(LHSElem) != getCanonicalType(ResultType)) return LHS;
+    if (RCAT && getCanonicalType(RHSElem) != getCanonicalType(ResultType)) return RHS;
+    const VariableArrayType* LVAT = getAsVariableArrayType(LHS);
+    const VariableArrayType* RVAT = getAsVariableArrayType(RHS);
+    if (LVAT && getCanonicalType(LHSElem) != getCanonicalType(ResultType)) return LHS;
+    if (RVAT && getCanonicalType(RHSElem) != getCanonicalType(ResultType)) return RHS;
+    if (LVAT) {
+      // FIXME: This isn't correct! But tricky to implement because
+      // the array's size has to be the size of LHS, but the type
+      // has to be different.
+      return LHS;
+    }
+    if (RVAT) {
+      // FIXME: This isn't correct! But tricky to implement because
+      // the array's size has to be the size of RHS, but the type
+      // has to be different.
+      return RHS;
+    }
+    if (getCanonicalType(LHSElem) != getCanonicalType(ResultType)) return LHS;
+    if (getCanonicalType(RHSElem) != getCanonicalType(ResultType)) return RHS;
+    return getIncompleteArrayType(ResultType, ArrayType::ArraySizeModifier(), 0);
+  }
   case Type::FunctionNoProto:
-    return functionTypesAreCompatible(LHS, RHS);
-  case Type::Tagged: // handle structures, unions
-    return areCompatTagTypes(cast<TagType>(LHS), cast<TagType>(RHS), *this);
+    return mergeFunctionTypes(LHS, RHS);
+  case Type::Tagged:
+  {
+    // FIXME: Why are these compatible?
+    if (isObjCIdType(LHS) && isObjCClassType(RHS)) return LHS;
+    if (isObjCClassType(LHS) && isObjCIdType(RHS)) return LHS;
+    return QualType();
+  }
   case Type::Builtin:
     // Only exactly equal builtin types are compatible, which is tested above.
-    return false;
+    return QualType();
   case Type::Vector:
-    return areCompatVectorTypes(cast<VectorType>(LHS), cast<VectorType>(RHS));
+    if (areCompatVectorTypes(LHS->getAsVectorType(), RHS->getAsVectorType()))
+      return LHS;
   case Type::ObjCInterface:
-    return areCompatObjCInterfaces(cast<ObjCInterfaceType>(LHS),
-                                   cast<ObjCInterfaceType>(RHS));
+  {
+    // Distinct ObjC interfaces are not compatible; see canAssignObjCInterfaces
+    // for checking assignment/comparison safety
+    return QualType();
+  }
   default:
     assert(0 && "unexpected type");
+    return QualType();
   }
-  return true; // should never get here...
 }
 
 //===----------------------------------------------------------------------===//

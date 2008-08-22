@@ -346,7 +346,7 @@ Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD, bool &Redeclaration) {
   // C: Function types need to be compatible, not identical. This handles
   // duplicate function decls like "void f(int); void f(enum X);" properly.
   if (!getLangOptions().CPlusPlus &&
-      Context.functionTypesAreCompatible(OldQType, NewQType)) {
+      Context.typesAreCompatible(OldQType, NewQType)) {
     MergeAttributes(New, Old);
     Redeclaration = true;
     return New;
