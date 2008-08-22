@@ -155,10 +155,11 @@ class Preprocessor {
   /// a normal Lex() should be invoked.
   CachedTokensTy::size_type CachedLexPos;
 
-  /// CachedBacktrackPos - Gets set by the EnableBacktrackAtThisPos() method,
-  /// to indicate the position where CachedLexPos should be set when the
-  /// BackTrack() method is invoked.
-  CachedTokensTy::size_type CachedBacktrackPos;
+  /// BacktrackPositions - Stack of backtrack positions, allowing nested
+  /// backtracks. The EnableBacktrackAtThisPos() method pushes a position to
+  /// indicate where CachedLexPos should be set when the BackTrack() method is
+  /// invoked (at which point the last position is popped).
+  std::vector<CachedTokensTy::size_type> BacktrackPositions;
 
 public:
   Preprocessor(Diagnostic &diags, const LangOptions &opts, TargetInfo &target,
@@ -281,34 +282,22 @@ public:
   /// track of the lexed tokens so that a subsequent Backtrack() call will make
   /// the Preprocessor re-lex the same tokens.
   ///
-  /// EnableBacktrackAtThisPos should not be called again until DisableBacktrack
-  /// or Backtrack is called.
+  /// Nested backtracks are allowed, meaning that EnableBacktrackAtThisPos can
+  /// be called multiple times and DisableBacktrack/Backtrack calls will be
+  /// combined with the EnableBacktrackAtThisPos calls in reverse order.
   ///
   /// NOTE: *DO NOT* forget to call either DisableBacktrack() or Backtrack() at
   /// some point after EnableBacktrackAtThisPos. If you don't, caching of tokens
   /// will continue indefinitely.
   ///
-  void EnableBacktrackAtThisPos() {
-    assert(!CacheTokens && "Backtrack is already enabled!");
-    CacheTokens = true;
-    CachedBacktrackPos = CachedLexPos;
-    EnterCachingLexMode();
-  }
+  void EnableBacktrackAtThisPos();
 
-  /// DisableBacktrack - Stop the caching of tokens that was enabled by
-  /// EnableBacktrackAtThisPos().
-  void DisableBacktrack() {
-    assert(CacheTokens && "Backtrack is not enabled!");
-    CacheTokens = false;
-  }
+  /// DisableBacktrack - Disable the last EnableBacktrackAtThisPos() call.
+  void DisableBacktrack();
 
   /// Backtrack - Make Preprocessor re-lex the tokens that were lexed since
   /// EnableBacktrackAtThisPos() was previously called. 
-  void Backtrack() {
-    assert(CacheTokens && "Backtrack is not enabled!");
-    CacheTokens = false;
-    CachedLexPos = CachedBacktrackPos;
-  }
+  void Backtrack();
 
   /// isBacktrackEnabled - True if EnableBacktrackAtThisPos() was called and
   /// caching of tokens is on.
