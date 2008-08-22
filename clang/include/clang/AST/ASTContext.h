@@ -200,7 +200,7 @@ public:
   
   /// getFunctionType - Return a normal function type with a typed argument
   /// list.  isVariadic indicates whether the argument list includes '...'.
-  QualType getFunctionType(QualType ResultTy, QualType *ArgArray,
+  QualType getFunctionType(QualType ResultTy, const QualType *ArgArray,
                            unsigned NumArgs, bool isVariadic);
 
   /// getTypeDeclType - Return the unique reference to the type for

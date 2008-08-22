@@ -905,7 +905,7 @@ protected:
 /// 'int foo(int)' or 'int foo(void)'.  'void' is represented as having no
 /// arguments, not as having a single void argument.
 class FunctionTypeProto : public FunctionType, public llvm::FoldingSetNode {
-  FunctionTypeProto(QualType Result, QualType *ArgArray, unsigned numArgs,
+  FunctionTypeProto(QualType Result, const QualType *ArgArray, unsigned numArgs,
                     bool isVariadic, QualType Canonical)
     : FunctionType(FunctionProto, Result, isVariadic, Canonical),
       NumArgs(numArgs) {

@@ -816,7 +816,7 @@ QualType ASTContext::getFunctionTypeNoProto(QualType ResultTy) {
 
 /// getFunctionType - Return a normal function type with a typed argument
 /// list.  isVariadic indicates whether the argument list includes '...'.
-QualType ASTContext::getFunctionType(QualType ResultTy, QualType *ArgArray,
+QualType ASTContext::getFunctionType(QualType ResultTy, const QualType *ArgArray,
                                      unsigned NumArgs, bool isVariadic) {
   // Unique functions, to guarantee there is only one function of a particular
   // structure.
