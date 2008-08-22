@@ -12,10 +12,15 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Config/config.h"
 #include <ostream>
-using namespace llvm;
 
-#include <fcntl.h>
+#if defined(HAVE_UNISTD_H)
+# include <unistd.h>
+#endif
+#if defined(HAVE_FCNTL_H)
+# include <fcntl.h>
+#endif
 
 #if defined(_MSC_VER)
 #include <io.h>
@@ -29,6 +34,9 @@ using namespace llvm;
 # define STDERR_FILENO 2
 #endif
 #endif
+
+using namespace llvm;
+
 
 // An out of line virtual method to provide a home for the class vtable.
 void raw_ostream::handle() {}
