@@ -25,6 +25,7 @@
 #include "clang.h"
 #include "ASTConsumers.h"
 #include "HTMLDiagnostics.h"
+#include "clang/Driver/InitHeaderSearch.h"
 #include "clang/Driver/TextDiagnosticBuffer.h"
 #include "clang/Driver/TextDiagnosticPrinter.h"
 #include "clang/Analysis/PathDiagnostic.h"
@@ -757,170 +758,43 @@ isysroot("isysroot", llvm::cl::value_desc("dir"), llvm::cl::init("/"),
          llvm::cl::desc("Set the system root directory (usually /)"));
 
 // Finally, implement the code that groks the options above.
-enum IncludeDirGroup {
-  Quoted = 0,
-  Angled,
-  System,
-  After
-};
-
-static std::vector<DirectoryLookup> IncludeGroup[4];
-
-/// AddPath - Add the specified path to the specified group list.
-///
-static void AddPath(const std::string &Path, IncludeDirGroup Group,
-                    bool isCXXAware, bool isUserSupplied,
-                    bool isFramework, HeaderSearch &HS) {
-  assert(!Path.empty() && "can't handle empty path here");
-  FileManager &FM = HS.getFileMgr();
-  
-  // Compute the actual path, taking into consideration -isysroot.
-  llvm::SmallString<256> MappedPath;
-  
-  // Handle isysroot.
-  if (Group == System) {
-    // FIXME: Portability.  This should be a sys::Path interface, this doesn't
-    // handle things like C:\ right, nor win32 \\network\device\blah.
-    if (isysroot.size() != 1 || isysroot[0] != '/') // Add isysroot if present.
-      MappedPath.append(isysroot.begin(), isysroot.end());
-  }
-  
-  MappedPath.append(Path.begin(), Path.end());
-
-  // Compute the DirectoryLookup type.
-  DirectoryLookup::DirType Type;
-  if (Group == Quoted || Group == Angled)
-    Type = DirectoryLookup::NormalHeaderDir;
-  else if (isCXXAware)
-    Type = DirectoryLookup::SystemHeaderDir;
-  else
-    Type = DirectoryLookup::ExternCSystemHeaderDir;
-  
-  
-  // If the directory exists, add it.
-  if (const DirectoryEntry *DE = FM.getDirectory(&MappedPath[0], 
-                                                 &MappedPath[0]+
-                                                 MappedPath.size())) {
-    IncludeGroup[Group].push_back(DirectoryLookup(DE, Type, isUserSupplied,
-                                                  isFramework));
-    return;
-  }
-  
-  // Check to see if this is an apple-style headermap (which are not allowed to
-  // be frameworks).
-  if (!isFramework) {
-    if (const FileEntry *FE = FM.getFile(&MappedPath[0], 
-                                         &MappedPath[0]+MappedPath.size())) {
-      if (const HeaderMap *HM = HS.CreateHeaderMap(FE)) {
-        // It is a headermap, add it to the search path.
-        IncludeGroup[Group].push_back(DirectoryLookup(HM, Type,isUserSupplied));
-        return;
-      }
-    }
-  }
-  
-  if (Verbose)
-    fprintf(stderr, "ignoring nonexistent directory \"%s\"\n", Path.c_str());
-}
-
-/// RemoveDuplicates - If there are duplicate directory entries in the specified
-/// search list, remove the later (dead) ones.
-static void RemoveDuplicates(std::vector<DirectoryLookup> &SearchList) {
-  llvm::SmallPtrSet<const DirectoryEntry *, 8> SeenDirs;
-  llvm::SmallPtrSet<const DirectoryEntry *, 8> SeenFrameworkDirs;
-  llvm::SmallPtrSet<const HeaderMap *, 8> SeenHeaderMaps;
-  for (unsigned i = 0; i != SearchList.size(); ++i) {
-    if (SearchList[i].isNormalDir()) {
-      // If this isn't the first time we've seen this dir, remove it.
-      if (SeenDirs.insert(SearchList[i].getDir()))
-        continue;
-      
-      if (Verbose)
-        fprintf(stderr, "ignoring duplicate directory \"%s\"\n",
-                SearchList[i].getDir()->getName());
-    } else if (SearchList[i].isFramework()) {
-      // If this isn't the first time we've seen this framework dir, remove it.
-      if (SeenFrameworkDirs.insert(SearchList[i].getFrameworkDir()))
-        continue;
-      
-      if (Verbose)
-        fprintf(stderr, "ignoring duplicate framework \"%s\"\n",
-                SearchList[i].getFrameworkDir()->getName());
-      
-    } else {
-      assert(SearchList[i].isHeaderMap() && "Not a headermap or normal dir?");
-      // If this isn't the first time we've seen this headermap, remove it.
-      if (SeenHeaderMaps.insert(SearchList[i].getHeaderMap()))
-        continue;
-      
-      if (Verbose)
-        fprintf(stderr, "ignoring duplicate directory \"%s\"\n",
-                SearchList[i].getDir()->getName());
-    }
-    
-    // This is reached if the current entry is a duplicate.
-    SearchList.erase(SearchList.begin()+i);
-    --i;
-  }
-}
-
-// AddEnvVarPaths - Add a list of paths from an environment variable to a
-// header search list.
-//
-static void AddEnvVarPaths(const char *Name, HeaderSearch &Headers) {
-  const char* at = getenv(Name);
-  if (!at)
-    return;
-
-  const char* delim = strchr(at, llvm::sys::PathSeparator);
-  while (delim != 0) {
-    if (delim-at == 0)
-      AddPath(".", Angled, false, true, false, Headers);
-    else
-      AddPath(std::string(at, std::string::size_type(delim-at)), Angled, false,
-            true, false, Headers);
-    at = delim + 1;
-    delim = strchr(at, llvm::sys::PathSeparator);
-  }
-  if (*at == 0)
-    AddPath(".", Angled, false, true, false, Headers);
-  else
-    AddPath(at, Angled, false, true, false, Headers);
-}
 
 /// InitializeIncludePaths - Process the -I options and set them in the
 /// HeaderSearch object.
-static void InitializeIncludePaths(const char *Argv0, HeaderSearch &Headers,
-                                   FileManager &FM, const LangOptions &Lang) {
+void InitializeIncludePaths(const char *Argv0, HeaderSearch &Headers,
+                            FileManager &FM, const LangOptions &Lang) {
+  InitHeaderSearch Init(Headers, Verbose, isysroot);
+
   // Handle -I... and -F... options, walking the lists in parallel.
   unsigned Iidx = 0, Fidx = 0;
   while (Iidx < I_dirs.size() && Fidx < F_dirs.size()) {
     if (I_dirs.getPosition(Iidx) < F_dirs.getPosition(Fidx)) {
-      AddPath(I_dirs[Iidx], Angled, false, true, false, Headers);
+      Init.AddPath(I_dirs[Iidx], InitHeaderSearch::Angled, false, true, false);
       ++Iidx;
     } else {
-      AddPath(F_dirs[Fidx], Angled, false, true, true, Headers);
+      Init.AddPath(F_dirs[Fidx], InitHeaderSearch::Angled, false, true, true);
       ++Fidx;
     }
   }
   
   // Consume what's left from whatever list was longer.
   for (; Iidx != I_dirs.size(); ++Iidx)
-    AddPath(I_dirs[Iidx], Angled, false, true, false, Headers);
+    Init.AddPath(I_dirs[Iidx], InitHeaderSearch::Angled, false, true, false);
   for (; Fidx != F_dirs.size(); ++Fidx)
-    AddPath(F_dirs[Fidx], Angled, false, true, true, Headers);
+    Init.AddPath(F_dirs[Fidx], InitHeaderSearch::Angled, false, true, true);
   
   // Handle -idirafter... options.
   for (unsigned i = 0, e = idirafter_dirs.size(); i != e; ++i)
-    AddPath(idirafter_dirs[i], After, false, true, false, Headers);
+    Init.AddPath(idirafter_dirs[i], InitHeaderSearch::After,
+        false, true, false);
   
   // Handle -iquote... options.
   for (unsigned i = 0, e = iquote_dirs.size(); i != e; ++i)
-    AddPath(iquote_dirs[i], Quoted, false, true, false, Headers);
+    Init.AddPath(iquote_dirs[i], InitHeaderSearch::Quoted, false, true, false);
   
   // Handle -isystem... options.
   for (unsigned i = 0, e = isystem_dirs.size(); i != e; ++i)
-    AddPath(isystem_dirs[i], System, false, true, false, Headers);
+    Init.AddPath(isystem_dirs[i], InitHeaderSearch::System, false, true, false);
 
   // Walk the -iprefix/-iwithprefix/-iwithprefixbefore argument lists in
   // parallel, processing the values in order of occurance to get the right
@@ -948,13 +822,13 @@ static void InitializeIncludePaths(const char *Argv0, HeaderSearch &Headers,
                  (iwithprefixbefore_done || 
                   iwithprefix_vals.getPosition(iwithprefix_idx) < 
                   iwithprefixbefore_vals.getPosition(iwithprefixbefore_idx))) {
-        AddPath(Prefix+iwithprefix_vals[iwithprefix_idx], 
-                System, false, false, false, Headers);
+        Init.AddPath(Prefix+iwithprefix_vals[iwithprefix_idx], 
+                InitHeaderSearch::System, false, false, false);
         ++iwithprefix_idx;
         iwithprefix_done = iwithprefix_idx == iwithprefix_vals.size();
       } else {
-        AddPath(Prefix+iwithprefixbefore_vals[iwithprefixbefore_idx], 
-                Angled, false, false, false, Headers);
+        Init.AddPath(Prefix+iwithprefixbefore_vals[iwithprefixbefore_idx], 
+                InitHeaderSearch::Angled, false, false, false);
         ++iwithprefixbefore_idx;
         iwithprefixbefore_done = 
           iwithprefixbefore_idx == iwithprefixbefore_vals.size();
@@ -962,15 +836,7 @@ static void InitializeIncludePaths(const char *Argv0, HeaderSearch &Headers,
     }
   }
 
-  AddEnvVarPaths("CPATH", Headers);
-  if (Lang.CPlusPlus && Lang.ObjC1)
-    AddEnvVarPaths("OBJCPLUS_INCLUDE_PATH", Headers);
-  else if (Lang.CPlusPlus)
-    AddEnvVarPaths("CPLUS_INCLUDE_PATH", Headers);
-  else if (Lang.ObjC1)
-    AddEnvVarPaths("OBJC_INCLUDE_PATH", Headers);
-  else
-    AddEnvVarPaths("C_INCLUDE_PATH", Headers);
+  Init.AddDefaultEnvVarPaths(Lang);
 
   // Add the clang headers, which are relative to the clang driver.
   llvm::sys::Path MainExecutablePath = 
@@ -980,167 +846,17 @@ static void InitializeIncludePaths(const char *Argv0, HeaderSearch &Headers,
     MainExecutablePath.eraseComponent();  // Remove /clang from foo/bin/clang
     MainExecutablePath.eraseComponent();  // Remove /bin   from foo/bin
     MainExecutablePath.appendComponent("Headers"); // Get foo/Headers
-    AddPath(MainExecutablePath.c_str(), System, false, false, false, Headers);
+    Init.AddPath(MainExecutablePath.c_str(), InitHeaderSearch::System,
+        false, false, false);
   }
   
-  // FIXME: temporary hack: hard-coded paths.
-  // FIXME: get these from the target?
-  if (!nostdinc) {
-    if (Lang.CPlusPlus) {
-      AddPath("/usr/include/c++/4.2.1", System, true, false, false, Headers);
-      AddPath("/usr/include/c++/4.2.1/i686-apple-darwin10", System, true, false,
-              false, Headers);
-      AddPath("/usr/include/c++/4.2.1/backward", System, true, false, false,
-              Headers);
-
-      AddPath("/usr/include/c++/4.0.0", System, true, false, false, Headers);
-      AddPath("/usr/include/c++/4.0.0/i686-apple-darwin8", System, true, false,
-              false, Headers);
-      AddPath("/usr/include/c++/4.0.0/backward", System, true, false, false,
-              Headers);
-
-      // Ubuntu 7.10 - Gutsy Gibbon
-      AddPath("/usr/include/c++/4.1.3", System, true, false, false, Headers);
-      AddPath("/usr/include/c++/4.1.3/i486-linux-gnu", System, true, false,
-              false, Headers);
-      AddPath("/usr/include/c++/4.1.3/backward", System, true, false, false,
-              Headers);
-
-      // Fedora 8
-      AddPath("/usr/include/c++/4.1.2", System, true, false, false, Headers);
-      AddPath("/usr/include/c++/4.1.2/i386-redhat-linux", System, true, false,
-              false, Headers);
-      AddPath("/usr/include/c++/4.1.2/backward", System, true, false, false, 
-              Headers);
-
-      // Fedora 9
-      AddPath("/usr/include/c++/4.3.0", System, true, false, false, Headers);
-      AddPath("/usr/include/c++/4.3.0/i386-redhat-linux", System, true, false,
-              false, Headers);
-      AddPath("/usr/include/c++/4.3.0/backward", System, true, false, false, 
-              Headers);
-
-      // Arch Linux 2008-06-24
-      AddPath("/usr/include/c++/4.3.1", System, true, false, false, Headers);
-      AddPath("/usr/include/c++/4.3.1/i686-pc-linux-gnu", System, true, false,
-              false, Headers);
-      AddPath("/usr/include/c++/4.3.1/backward", System, true, false, false,
-              Headers);
-      AddPath("/usr/include/c++/4.3.1/x86_64-unknown-linux-gnu", System, true,
-              false, false, Headers);
-    }
-    
-    AddPath("/usr/local/include", System, false, false, false, Headers);
-
-    AddPath("/usr/lib/gcc/i686-apple-darwin10/4.2.1/include", System, 
-            false, false, false, Headers);
-    AddPath("/usr/lib/gcc/powerpc-apple-darwin10/4.2.1/include", 
-            System, false, false, false, Headers);
-
-    // leopard
-    AddPath("/usr/lib/gcc/i686-apple-darwin9/4.0.1/include", System, 
-            false, false, false, Headers);
-    AddPath("/usr/lib/gcc/powerpc-apple-darwin9/4.0.1/include", 
-            System, false, false, false, Headers);
-    AddPath("/usr/lib/gcc/powerpc-apple-darwin9/"
-            "4.0.1/../../../../powerpc-apple-darwin0/include", 
-            System, false, false, false, Headers);
-
-    // tiger
-    AddPath("/usr/lib/gcc/i686-apple-darwin8/4.0.1/include", System, 
-            false, false, false, Headers);
-    AddPath("/usr/lib/gcc/powerpc-apple-darwin8/4.0.1/include", 
-            System, false, false, false, Headers);
-    AddPath("/usr/lib/gcc/powerpc-apple-darwin8/"
-            "4.0.1/../../../../powerpc-apple-darwin8/include", 
-            System, false, false, false, Headers);
-
-    // Ubuntu 7.10 - Gutsy Gibbon
-    AddPath("/usr/lib/gcc/i486-linux-gnu/4.1.3/include", System,
-            false, false, false, Headers);
-
-    // Fedora 8
-    AddPath("/usr/lib/gcc/i386-redhat-linux/4.1.2/include", System,
-            false, false, false, Headers);
-
-    // Fedora 9
-    AddPath("/usr/lib/gcc/i386-redhat-linux/4.3.0/include", System,
-            false, false, false, Headers);
-
-    //Debian testing/lenny x86
-    AddPath("/usr/lib/gcc/i486-linux-gnu/4.2.3/include", System,
-            false, false, false, Headers);
-
-    //Debian testing/lenny amd64
-    AddPath("/usr/lib/gcc/x86_64-linux-gnu/4.2.3/include", System,
-            false, false, false, Headers);
-
-    // Arch Linux 2008-06-24
-    AddPath("/usr/lib/gcc/i686-pc-linux-gnu/4.3.1/include", System,
-            false, false, false, Headers);
-    AddPath("/usr/lib/gcc/i686-pc-linux-gnu/4.3.1/include-fixed", System,
-            false, false, false, Headers);
-    AddPath("/usr/lib/gcc/x86_64-unknown-linux-gnu/4.3.1/include", System,
-            false, false, false, Headers);
-    AddPath("/usr/lib/gcc/x86_64-unknown-linux-gnu/4.3.1/include-fixed",
-            System, false, false, false, Headers);
-
-    // Debian testing/lenny ppc32
-    AddPath("/usr/lib/gcc/powerpc-linux-gnu/4.2.3/include", System,
-            false, false, false, Headers);
-
-    // Gentoo x86 stable
-    AddPath("/usr/lib/gcc/i686-pc-linux-gnu/4.1.2/include", System,
-            false, false, false, Headers);
-
-    AddPath("/usr/include", System, false, false, false, Headers);
-    AddPath("/System/Library/Frameworks", System, true, false, true, Headers);
-    AddPath("/Library/Frameworks", System, true, false, true, Headers);
-  }
+  if (!nostdinc) 
+    Init.AddDefaultSystemIncludePaths(Lang);
 
   // Now that we have collected all of the include paths, merge them all
   // together and tell the preprocessor about them.
   
-  // Concatenate ANGLE+SYSTEM+AFTER chains together into SearchList.
-  std::vector<DirectoryLookup> SearchList;
-  SearchList = IncludeGroup[Angled];
-  SearchList.insert(SearchList.end(), IncludeGroup[System].begin(),
-                    IncludeGroup[System].end());
-  SearchList.insert(SearchList.end(), IncludeGroup[After].begin(),
-                    IncludeGroup[After].end());
-  RemoveDuplicates(SearchList);
-  RemoveDuplicates(IncludeGroup[Quoted]);
-  
-  // Prepend QUOTED list on the search list.
-  SearchList.insert(SearchList.begin(), IncludeGroup[Quoted].begin(), 
-                    IncludeGroup[Quoted].end());
-  
-
-  bool DontSearchCurDir = false;  // TODO: set to true if -I- is set?
-  Headers.SetSearchPaths(SearchList, IncludeGroup[Quoted].size(),
-                         DontSearchCurDir);
-
-  // If verbose, print the list of directories that will be searched.
-  if (Verbose) {
-    fprintf(stderr, "#include \"...\" search starts here:\n");
-    unsigned QuotedIdx = IncludeGroup[Quoted].size();
-    for (unsigned i = 0, e = SearchList.size(); i != e; ++i) {
-      if (i == QuotedIdx)
-        fprintf(stderr, "#include <...> search starts here:\n");
-      const char *Name = SearchList[i].getName();
-      const char *Suffix;
-      if (SearchList[i].isNormalDir())
-        Suffix = "";
-      else if (SearchList[i].isFramework())
-        Suffix = " (framework directory)";
-      else {
-        assert(SearchList[i].isHeaderMap() && "Unknown DirectoryLookup");
-        Suffix = " (headermap)";
-      }
-      fprintf(stderr, " %s%s\n", Name, Suffix);
-    }
-    fprintf(stderr, "End of search list.\n");
-  }
+  Init.Realize();
 }
 
 //===----------------------------------------------------------------------===//
@@ -1491,11 +1207,6 @@ int main(int argc, char **argv) {
       // Process the -I options and set them in the HeaderInfo.
       HeaderSearch HeaderInfo(FileMgr);
       
-      // FIXME: Sink IncludeGroup into this loop.
-      IncludeGroup[0].clear();
-      IncludeGroup[1].clear();
-      IncludeGroup[2].clear();
-      IncludeGroup[3].clear();
       InitializeIncludePaths(argv[0], HeaderInfo, FileMgr, LangInfo);
       
       // Set up the preprocessor with these options.
