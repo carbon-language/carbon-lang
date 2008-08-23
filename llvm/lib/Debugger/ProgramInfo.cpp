@@ -23,6 +23,7 @@
 #include "llvm/Debugger/SourceFile.h"
 #include "llvm/Debugger/SourceLanguage.h"
 #include "llvm/Support/SlowOperationInformer.h"
+#include "llvm/Support/Streams.h"
 #include "llvm/ADT/STLExtras.h"
 using namespace llvm;
 
