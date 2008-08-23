@@ -375,7 +375,7 @@
 		DE224FF70C7AA98800D370A5 /* CGExprComplex.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = CGExprComplex.cpp; path = lib/CodeGen/CGExprComplex.cpp; sourceTree = "<group>"; };
 		DE22526F0C7E82D000D370A5 /* CGExprScalar.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = CGExprScalar.cpp; path = lib/CodeGen/CGExprScalar.cpp; sourceTree = "<group>"; };
 		DE2255FB0C8004E600D370A5 /* ParseDeclCXX.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = ParseDeclCXX.cpp; path = lib/Parse/ParseDeclCXX.cpp; sourceTree = "<group>"; };
-		DE22BCF10E14197E0094DC60 /* SemaDeclAttr.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SemaDeclAttr.cpp; path = lib/Sema/SemaDeclAttr.cpp; sourceTree = "<group>"; };
+		DE22BCF10E14197E0094DC60 /* SemaDeclAttr.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = SemaDeclAttr.cpp; path = lib/Sema/SemaDeclAttr.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		DE344AB70AE5DF6D00DBC861 /* HeaderSearch.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = HeaderSearch.h; sourceTree = "<group>"; };
 		DE344B530AE5E46C00DBC861 /* HeaderSearch.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = HeaderSearch.cpp; sourceTree = "<group>"; };
 		DE3450D60AEB543100DBC861 /* DirectoryLookup.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = DirectoryLookup.h; sourceTree = "<group>"; };
@@ -434,7 +434,7 @@
 		DE67E7100C020ED400F66BC5 /* SemaExpr.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = SemaExpr.cpp; path = lib/Sema/SemaExpr.cpp; sourceTree = "<group>"; };
 		DE67E7120C020ED900F66BC5 /* SemaDecl.cpp */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = SemaDecl.cpp; path = lib/Sema/SemaDecl.cpp; sourceTree = "<group>"; tabWidth = 8; usesTabs = 0; };
 		DE67E7140C020EDF00F66BC5 /* Sema.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = Sema.h; path = lib/Sema/Sema.h; sourceTree = "<group>"; };
-		DE67E7160C020EE400F66BC5 /* Sema.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = Sema.cpp; path = lib/Sema/Sema.cpp; sourceTree = "<group>"; };
+		DE67E7160C020EE400F66BC5 /* Sema.cpp */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = Sema.cpp; path = lib/Sema/Sema.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		DE67E7190C020F4F00F66BC5 /* ParseAST.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = ParseAST.cpp; path = lib/Sema/ParseAST.cpp; sourceTree = "<group>"; };
 		DE67E7270C02109800F66BC5 /* ParseAST.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = ParseAST.h; path = clang/Sema/ParseAST.h; sourceTree = "<group>"; };
 		DE6951C60C4D1F5D00A5826B /* RecordLayout.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = RecordLayout.h; path = clang/AST/RecordLayout.h; sourceTree = "<group>"; };

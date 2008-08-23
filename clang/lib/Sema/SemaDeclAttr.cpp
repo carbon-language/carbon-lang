@@ -466,6 +466,37 @@ static void HandleVisibilityAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   d->addAttr(new VisibilityAttr(type));
 }
 
+static void HandleObjCGCAttr(Decl *d, const AttributeList &Attr, Sema &S) {
+  if (!Attr.getParameterName()) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_string,
+           "objc_gc", std::string("1"));
+    return;
+  }
+  
+  if (Attr.getNumArgs() != 0) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
+           std::string("1"));
+    return;
+  }
+  
+  const char *TypeStr = Attr.getParameterName()->getName();
+  unsigned TypeLen = Attr.getParameterName()->getLength();
+  
+  ObjCGCAttr::GCAttrTypes type;
+  
+  if (TypeLen == 4 && !memcmp(TypeStr, "weak", 4))
+    type = ObjCGCAttr::Weak;
+  else if (TypeLen == 5 && !memcmp(TypeStr, "strong", 5))
+    type = ObjCGCAttr::Strong;
+  else {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_type_not_supported,
+           "objc_gc", TypeStr);
+    return;
+  }
+  
+  d->addAttr(new ObjCGCAttr(type));
+}
+
 static void HandleWeakAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() != 0) {
@@ -909,6 +940,7 @@ static void ProcessDeclAttribute(Decl *D, const AttributeList &Attr, Sema &S) {
   case AttributeList::AT_transparent_union:
     HandleTransparentUnionAttr(D, Attr, S);
     break;
+  case AttributeList::AT_objc_gc:     HandleObjCGCAttr    (D, Attr, S); break;
   default:
 #if 0
     // TODO: when we have the full set of attributes, warn about unknown ones.
