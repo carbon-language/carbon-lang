@@ -268,3 +268,38 @@ void raw_os_ostream::flush_impl() {
     OS.write(OutBufStart, OutBufCur-OutBufStart);
   HandleFlush();
 }
+
+//===----------------------------------------------------------------------===//
+//  raw_string_ostream
+//===----------------------------------------------------------------------===//
+
+raw_string_ostream::~raw_string_ostream() {
+  flush();
+}
+
+/// flush_impl - The is the piece of the class that is implemented by
+/// subclasses.  This outputs the currently buffered data and resets the
+/// buffer to empty.
+void raw_string_ostream::flush_impl() {
+  if (OutBufCur-OutBufStart)
+    OS.append(OutBufStart, OutBufCur-OutBufStart);
+  HandleFlush();
+}
+
+//===----------------------------------------------------------------------===//
+//  raw_svector_ostream
+//===----------------------------------------------------------------------===//
+
+raw_svector_ostream::~raw_svector_ostream() {
+  flush();
+}
+
+/// flush_impl - The is the piece of the class that is implemented by
+/// subclasses.  This outputs the currently buffered data and resets the
+/// buffer to empty.
+void raw_svector_ostream::flush_impl() {
+  if (OutBufCur-OutBufStart)
+    OS.append(OutBufStart, OutBufCur);
+  HandleFlush();
+}
+

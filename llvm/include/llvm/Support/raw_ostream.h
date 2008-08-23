@@ -22,6 +22,8 @@
 
 namespace llvm {
   class format_object_base;
+  template <typename T>
+  class SmallVectorImpl;
   
 /// raw_ostream - This class implements an extremely fast bulk output stream
 /// that can *only* output to a stream.  It does not support seeking, reopening,
@@ -192,7 +194,7 @@ raw_ostream &errs();
   
   
 //===----------------------------------------------------------------------===//
-// Bridge Output Streams
+// Output Stream Adaptors
 //===----------------------------------------------------------------------===//
   
 /// raw_os_ostream - A raw_ostream that writes to an std::ostream.  This is a
@@ -203,6 +205,34 @@ public:
   raw_os_ostream(std::ostream &O) : OS(O) {}
   ~raw_os_ostream();
 
+  /// flush_impl - The is the piece of the class that is implemented by
+  /// subclasses.  This outputs the currently buffered data and resets the
+  /// buffer to empty.
+  virtual void flush_impl();
+};
+
+/// raw_string_ostream - A raw_ostream that writes to an std::string.  This is a
+/// simple adaptor class.
+class raw_string_ostream : public raw_ostream {
+  std::string &OS;
+public:
+  raw_string_ostream(std::string &O) : OS(O) {}
+  ~raw_string_ostream();
+  
+  /// flush_impl - The is the piece of the class that is implemented by
+  /// subclasses.  This outputs the currently buffered data and resets the
+  /// buffer to empty.
+  virtual void flush_impl();
+};
+  
+/// raw_svector_ostream - A raw_ostream that writes to an SmallVector or
+/// SmallString.  This is a simple adaptor class.
+class raw_svector_ostream : public raw_ostream {
+  SmallVectorImpl<char> &OS;
+public:
+  raw_svector_ostream(SmallVectorImpl<char> &O) : OS(O) {}
+  ~raw_svector_ostream();
+  
   /// flush_impl - The is the piece of the class that is implemented by
   /// subclasses.  This outputs the currently buffered data and resets the
   /// buffer to empty.
