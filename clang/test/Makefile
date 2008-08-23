@@ -19,7 +19,7 @@ REPORTFAIL = (echo; echo '----' $< 'failed ----')
 DONE = echo
 endif
 
-TESTS := $(addprefix Output/, $(addsuffix .testresults, $(shell find $(TESTDIRS) \( -name '*.c' -or -name '*.cpp' -or -name '*.m' \))))
+TESTS := $(addprefix Output/, $(addsuffix .testresults, $(shell find $(TESTDIRS) \( -name '*.c' -or -name '*.cpp' -or -name '*.m' -or -name '*.mm' \))))
 
 Output/%.testresults: %
 	@ $(PROGRESS)
