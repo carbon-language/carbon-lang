@@ -694,7 +694,8 @@ llvm::Function *CodeGenModule::getMemSetFn() {
   return MemSetFn = getIntrinsic(IID);
 }
 
-// FIXME: This needs moving into an Apple Objective-C runtime class
+// We still need to work out the details of handling UTF-16. 
+// See: <rdr://2996215>
 llvm::Constant *CodeGenModule::
 GetAddrOfConstantCFString(const std::string &str) {
   llvm::StringMapEntry<llvm::Constant *> &Entry = 
@@ -703,42 +704,48 @@ GetAddrOfConstantCFString(const std::string &str) {
   if (Entry.getValue())
     return Entry.getValue();
   
-  std::vector<llvm::Constant*> Fields;
+  llvm::Constant *Zero = llvm::Constant::getNullValue(llvm::Type::Int32Ty);
+  llvm::Constant *Zeros[] = { Zero, Zero };
   
   if (!CFConstantStringClassRef) {
     const llvm::Type *Ty = getTypes().ConvertType(getContext().IntTy);
     Ty = llvm::ArrayType::get(Ty, 0);
-  
-    CFConstantStringClassRef = 
+
+    // FIXME: This is fairly broken if
+    // __CFConstantStringClassReference is already defined, in that it
+    // will get renamed and the user will most likely see an opaque
+    // error message. This is a general issue with relying on
+    // particular names.
+    llvm::GlobalVariable *GV = 
       new llvm::GlobalVariable(Ty, false,
                                llvm::GlobalVariable::ExternalLinkage, 0, 
                                "__CFConstantStringClassReference", 
                                &getModule());
+    
+    // Decay array -> ptr
+    CFConstantStringClassRef =
+      llvm::ConstantExpr::getGetElementPtr(GV, Zeros, 2);
   }
   
+  std::vector<llvm::Constant*> Fields(4);
+
   // Class pointer.
-  llvm::Constant *Zero = llvm::Constant::getNullValue(llvm::Type::Int32Ty);
-  llvm::Constant *Zeros[] = { Zero, Zero };
-  llvm::Constant *C = 
-    llvm::ConstantExpr::getGetElementPtr(CFConstantStringClassRef, Zeros, 2);
-  Fields.push_back(C);
+  Fields[0] = CFConstantStringClassRef;
   
   // Flags.
-  const llvm::Type *Ty = getTypes().ConvertType(getContext().IntTy);
-  Fields.push_back(llvm::ConstantInt::get(Ty, 1992));
+  const llvm::Type *Ty = getTypes().ConvertType(getContext().UnsignedIntTy);
+  Fields[1] = llvm::ConstantInt::get(Ty, 0x07C8);
     
   // String pointer.
-  C = llvm::ConstantArray::get(str);
+  llvm::Constant *C = llvm::ConstantArray::get(str);
   C = new llvm::GlobalVariable(C->getType(), true, 
                                llvm::GlobalValue::InternalLinkage,
-                               C, ".str", &getModule());
-  
-  C = llvm::ConstantExpr::getGetElementPtr(C, Zeros, 2);
-  Fields.push_back(C);
+                               C, ".str", &getModule());  
+  Fields[2] = llvm::ConstantExpr::getGetElementPtr(C, Zeros, 2);
   
   // String length.
   Ty = getTypes().ConvertType(getContext().LongTy);
-  Fields.push_back(llvm::ConstantInt::get(Ty, str.length()));
+  Fields[3] = llvm::ConstantInt::get(Ty, str.length());
   
   // The struct.
   Ty = getTypes().ConvertType(getContext().getCFConstantStringType());
@@ -747,8 +754,10 @@ GetAddrOfConstantCFString(const std::string &str) {
     new llvm::GlobalVariable(C->getType(), true, 
                              llvm::GlobalVariable::InternalLinkage, 
                              C, "", &getModule());
+  
   GV->setSection("__DATA,__cfstring");
   Entry.setValue(GV);
+  
   return GV;
 }
 

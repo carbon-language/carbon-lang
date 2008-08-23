@@ -99,6 +99,10 @@ class CodeGenModule {
     
   llvm::StringMap<llvm::Constant*> CFConstantStringMap;
   llvm::StringMap<llvm::Constant*> ConstantStringMap;
+
+  /// CFConstantStringClassRef - Cached reference to the class for
+  /// constant strings. This value has type int * but is actually an
+  /// Obj-C class pointer.
   llvm::Constant *CFConstantStringClassRef;
   
   std::vector<llvm::Function *> BuiltinFunctions;

@@ -38,8 +38,6 @@ class ObjCTypesHelper {
 private:
   CodeGen::CodeGenModule &CGM;  
   
-  const llvm::StructType *CFStringType;
-  llvm::Constant *CFConstantStringClassReference;
   llvm::Function *MessageSendFn, *MessageSendStretFn;
   llvm::Function *MessageSendSuperFn, *MessageSendSuperStretFn;
 
@@ -129,8 +127,6 @@ public:
   ObjCTypesHelper(CodeGen::CodeGenModule &cgm);
   ~ObjCTypesHelper();
   
-  llvm::Constant *getCFConstantStringClassReference();
-  const llvm::StructType *getCFStringType();
   llvm::Value *getMessageSendFn(bool IsSuper, const llvm::Type *ReturnTy);
 };
 
@@ -388,40 +384,7 @@ llvm::Value *CGObjCMac::GetSelector(llvm::IRBuilder<> &Builder, Selector Sel) {
 */
 
 llvm::Constant *CGObjCMac::GenerateConstantString(const std::string &String) {
-  // FIXME: I have no idea what this constant is (it is a magic
-  // constant in GCC as well). Most likely the encoding of the string
-  // and at least one part of it relates to UTF-16. Is this just the
-  // code for UTF-8? Where is this handled for us?
-  //  See: <rdr://2996215>
-  unsigned flags = 0x07c8;
-
-  // FIXME: Use some machinery to unique this. We can't reuse the CGM
-  // one since we put them in a different section.
-  llvm::Constant *StringC = llvm::ConstantArray::get(String);
-  llvm::Constant *StringGV = 
-    new llvm::GlobalVariable(StringC->getType(), true, 
-                             llvm::GlobalValue::InternalLinkage,
-                             StringC, ".str", &CGM.getModule());
-  llvm::Constant *Values[4] = {
-    ObjCTypes.getCFConstantStringClassReference(),
-    llvm::ConstantInt::get(llvm::Type::Int32Ty, flags),
-    getConstantGEP(StringGV, 0, 0), // Decay array -> ptr
-    llvm::ConstantInt::get(ObjCTypes.LongTy, String.size())
-  };
-
-  llvm::Constant *CFStringC = 
-    llvm::ConstantStruct::get(ObjCTypes.getCFStringType(), 
-                              std::vector<llvm::Constant*>(Values, Values+4));
-
-  llvm::GlobalVariable *CFStringGV = 
-    new llvm::GlobalVariable(CFStringC->getType(), true,
-                             llvm::GlobalValue::InternalLinkage,
-                             CFStringC, "",
-                             &CGM.getModule());
-
-  CFStringGV->setSection("__DATA, __cfstring");
-
-  return CFStringGV;
+  return CGM.GetAddrOfConstantCFString(String);
 }
 
 /// Generates a message send where the super is the receiver.  This is
@@ -1537,9 +1500,7 @@ void CGObjCMac::FinishModule() {
 /* *** */
 
 ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm) 
-  : CGM(cgm),
-    CFStringType(0),
-    CFConstantStringClassReference(0)
+  : CGM(cgm)
 {
   CodeGen::CodeGenTypes &Types = CGM.getTypes();
   ASTContext &Ctx = CGM.getContext();
@@ -1768,37 +1729,6 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
 }
 
 ObjCTypesHelper::~ObjCTypesHelper() {
-}
-
-const llvm::StructType *ObjCTypesHelper::getCFStringType() {
-  if (!CFStringType) {
-    CFStringType = 
-      llvm::StructType::get(llvm::PointerType::getUnqual(llvm::Type::Int32Ty), 
-                            llvm::Type::Int32Ty,
-                            Int8PtrTy,
-                            LongTy,
-                            NULL);
-
-    CGM.getModule().addTypeName("struct.__builtin_CFString", CFStringType);
-  }
-
-  return CFStringType;
-}
-
-llvm::Constant *ObjCTypesHelper::getCFConstantStringClassReference() {
-  if (!CFConstantStringClassReference) {
-    llvm::GlobalValue *GV = 
-      new llvm::GlobalVariable(llvm::ArrayType::get(llvm::Type::Int32Ty, 0), 
-                               false,
-                               llvm::GlobalValue::ExternalLinkage,
-                               0, "__CFConstantStringClassReference", 
-                                                     &CGM.getModule());
-
-    // Decay to pointer.
-    CFConstantStringClassReference = getConstantGEP(GV, 0, 0);
-  }
-
-  return CFConstantStringClassReference;
 }
 
 llvm::Value *ObjCTypesHelper::getMessageSendFn(bool IsSuper, 
