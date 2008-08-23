@@ -371,14 +371,12 @@ void AggExprEmitter::EmitNullInitializationToLValue(LValue LV, QualType T) {
 }
 
 void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
-  if (E->isConstantExpr(CGF.getContext(), 0)) {
-    // FIXME: call into const expr emitter so that we can emit
-    // a memcpy instead of storing the individual members.
-    // This is purely for perf; both codepaths lead to equivalent
-    // (although not necessarily identical) code.
-    // It's worth noting that LLVM keeps on getting smarter, though,
-    // so it might not be worth bothering.
-  }
+  // FIXME: For constant expressions, call into const expr emitter so
+  // that we can emit a memcpy instead of storing the individual
+  // members.  This is purely for perf; both codepaths lead to
+  // equivalent (although not necessarily identical) code.  It's worth
+  // noting that LLVM keeps on getting smarter, though, so it might
+  // not be worth bothering.
   
   // Handle initialization of an array.
   if (E->getType()->isArrayType()) {
