@@ -85,10 +85,6 @@ public:
   /// the EOF was encountered.
   bool ParseTopLevelDecl(DeclTy*& Result);
   
-  /// Finalize - Shut down the parser.
-  ///
-  void Finalize();
-  
 private:
   //===--------------------------------------------------------------------===//
   // Low-Level token peeking and consumption methods.

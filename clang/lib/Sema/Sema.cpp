@@ -122,8 +122,6 @@ void Sema::ImpCastExprToType(Expr *&Expr, QualType Type) {
     Expr = new ImplicitCastExpr(Type, Expr);
 }
 
-
-
 void Sema::DeleteExpr(ExprTy *E) {
   delete static_cast<Expr*>(E);
 }

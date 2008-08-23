@@ -281,13 +281,6 @@ bool Parser::ParseTopLevelDecl(DeclTy*& Result) {
   return false;
 }
 
-/// Finalize - Shut down the parser.
-///
-void Parser::Finalize() {
-  ExitScope();
-  assert(CurScope == 0 && "Scope imbalance!");
-}
-
 /// ParseTranslationUnit:
 ///       translation-unit: [C99 6.9]
 ///         external-declaration
@@ -298,8 +291,9 @@ void Parser::ParseTranslationUnit() {
   DeclTy *Res;
   while (!ParseTopLevelDecl(Res))
     /*parse them all*/;
-
-  Finalize();
+  
+  ExitScope();
+  assert(CurScope == 0 && "Scope imbalance!");
 }
 
 /// ParseExternalDeclaration:

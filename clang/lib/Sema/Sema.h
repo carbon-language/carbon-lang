@@ -136,7 +136,7 @@ public:
   /// of known functions used by the semantic analysis to do various
   /// kinds of checking (e.g. checking format string errors in printf calls).
   /// This list is populated upon the creation of a Sema object.    
-  IdentifierInfo* KnownFunctionIDs[ id_num_known_functions ];
+  IdentifierInfo* KnownFunctionIDs[id_num_known_functions];
 
   /// SuperID - Identifier for "super" used for Objective-C checking.
   IdentifierInfo* SuperID;
@@ -243,8 +243,9 @@ private:
   virtual DeclTy *ActOnTag(Scope *S, unsigned TagType, TagKind TK,
                            SourceLocation KWLoc, IdentifierInfo *Name,
                            SourceLocation NameLoc, AttributeList *Attr);
-  virtual void ActOnDefs(Scope *S, SourceLocation DeclStart, IdentifierInfo
-      *ClassName, llvm::SmallVectorImpl<DeclTy*> &Decls);
+  virtual void ActOnDefs(Scope *S, SourceLocation DeclStart,
+                         IdentifierInfo *ClassName,
+                         llvm::SmallVectorImpl<DeclTy*> &Decls);
   virtual DeclTy *ActOnField(Scope *S, SourceLocation DeclStart,
                              Declarator &D, ExprTy *BitfieldWidth);
   
