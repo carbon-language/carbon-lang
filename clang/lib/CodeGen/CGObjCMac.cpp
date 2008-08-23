@@ -40,7 +40,7 @@ private:
   
   const llvm::StructType *CFStringType;
   llvm::Constant *CFConstantStringClassReference;
-  llvm::Function *MessageSendFn;
+  llvm::Function *MessageSendFn, *MessageSendSuperFn;
 
 public:
   const llvm::Type *ShortTy, *IntTy, *LongTy;
@@ -53,6 +53,9 @@ public:
   /// ProtocolPtrTy - LLVM type for external protocol handles
   /// (typeof(Protocol))
   const llvm::Type *ExternalProtocolPtrTy;
+
+  /// SuperTy - LLVM type for struct objc_super.
+  const llvm::StructType *SuperTy;
 
   /// SymtabTy - LLVM type for struct objc_symtab.
   const llvm::StructType *SymtabTy;
@@ -126,6 +129,7 @@ public:
   llvm::Constant *getCFConstantStringClassReference();
   const llvm::StructType *getCFStringType();
   llvm::Function *getMessageSendFn();
+  llvm::Function *getMessageSendSuperFn();
 };
 
 class CGObjCMac : public CodeGen::CGObjCRuntime {
@@ -421,8 +425,39 @@ CGObjCMac::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
                                     const ObjCMessageExpr *E,
                                     const ObjCInterfaceDecl *SuperClass,
                                     llvm::Value *Receiver) {
-  assert(0 && "Cannot generate message send to super for Mac runtime.");
-  return CodeGen::RValue::get(0);
+  // FIXME: This should be cached, not looked up every time. Meh. We
+  // should just make sure the optimizer hits it.
+  llvm::Value *ReceiverClass = EmitClassRef(CGF.Builder, SuperClass);
+  
+  // Create and init a super structure; this is a (receiver, class)
+  // pair we will pass to objc_msgSendSuper.
+  llvm::Value *ObjCSuper = 
+    CGF.Builder.CreateAlloca(ObjCTypes.SuperTy, 0, "objc_super");
+  llvm::Value *ReceiverAsObject = 
+    CGF.Builder.CreateBitCast(Receiver, ObjCTypes.ObjectPtrTy);
+  CGF.Builder.CreateStore(ReceiverAsObject, 
+                          CGF.Builder.CreateStructGEP(ObjCSuper, 0));
+  CGF.Builder.CreateStore(ReceiverClass, 
+                          CGF.Builder.CreateStructGEP(ObjCSuper, 1));
+
+  const llvm::Type *ReturnTy = CGM.getTypes().ConvertType(E->getType());
+  llvm::Function *F = ObjCTypes.getMessageSendSuperFn();
+  llvm::Value *Args[2];
+  Args[0] = ObjCSuper;
+  Args[1] = EmitSelector(CGF.Builder, E->getSelector());
+
+  std::vector<const llvm::Type*> Params(2);
+  Params[0] = llvm::PointerType::getUnqual(ObjCTypes.SuperTy);
+  Params[1] = ObjCTypes.SelectorPtrTy;
+  llvm::FunctionType *CallFTy = llvm::FunctionType::get(ReturnTy,
+                                                        Params,
+                                                        true);
+  llvm::Type *PCallFTy = llvm::PointerType::getUnqual(CallFTy);
+  llvm::Constant *C = llvm::ConstantExpr::getBitCast(F, PCallFTy);
+  return CGF.EmitCallExprExt(C, E->getType(),
+                             E->arg_begin(),
+                             E->arg_end(),
+                             Args, 2);
 }
 
 /// Generate code for a message send expression.  
@@ -435,9 +470,9 @@ CodeGen::RValue CGObjCMac::GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
   Args[0] = CGF.Builder.CreateBitCast(Receiver, ObjCTypes.ObjectPtrTy, "tmp");
   Args[1] = EmitSelector(CGF.Builder, E->getSelector());
 
-  std::vector<const llvm::Type*> Params;
-  Params.push_back(ObjCTypes.ObjectPtrTy);
-  Params.push_back(ObjCTypes.SelectorPtrTy);
+  std::vector<const llvm::Type*> Params(2);
+  Params[0] = ObjCTypes.ObjectPtrTy;
+  Params[1] = ObjCTypes.SelectorPtrTy;
   llvm::FunctionType *CallFTy = llvm::FunctionType::get(ReturnTy,
                                                         Params,
                                                         true);
@@ -1661,6 +1696,13 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
                                      NULL);
   CGM.getModule().addTypeName("struct._objc_category", CategoryTy);
 
+  SuperTy = 
+    llvm::StructType::get(ObjectPtrTy,
+                          ClassPtrTy,
+                          NULL);
+  CGM.getModule().addTypeName("struct._objc_super", 
+                              SuperTy);
+
   // Global metadata structures
 
   SymtabTy = llvm::StructType::get(LongTy,
@@ -1729,6 +1771,23 @@ llvm::Function *ObjCTypesHelper::getMessageSendFn() {
   }
 
   return MessageSendFn;
+}
+
+llvm::Function *ObjCTypesHelper::getMessageSendSuperFn() {
+  if (!MessageSendSuperFn) {
+    std::vector<const llvm::Type*> Params;
+    Params.push_back(llvm::PointerType::getUnqual(SuperTy));
+    Params.push_back(SelectorPtrTy);
+    MessageSendSuperFn = 
+      llvm::Function::Create(llvm::FunctionType::get(ObjectPtrTy,
+                                                     Params,
+                                                     true),
+                             llvm::Function::ExternalLinkage,
+                             "objc_msgSendSuper",
+                             &CGM.getModule());
+  }
+
+  return MessageSendSuperFn;
 }
 
 /* *** */
