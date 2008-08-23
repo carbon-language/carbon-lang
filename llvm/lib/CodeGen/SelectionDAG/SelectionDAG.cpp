@@ -763,6 +763,13 @@ unsigned SelectionDAG::getMVTAlignment(MVT VT) const {
   return TLI.getTargetData()->getABITypeAlignment(Ty);
 }
 
+SelectionDAG::SelectionDAG(TargetLowering &tli, MachineFunction &mf,
+                           FunctionLoweringInfo &fli, MachineModuleInfo *mmi,
+                           NodeAllocatorType &nodeallocator)
+  : TLI(tli), MF(mf), FLI(fli), MMI(mmi), NodeAllocator(nodeallocator) {
+  EntryNode = Root = getNode(ISD::EntryToken, MVT::Other);
+}
+
 SelectionDAG::~SelectionDAG() {
   while (!AllNodes.empty()) {
     SDNode *N = AllNodes.remove(AllNodes.begin());

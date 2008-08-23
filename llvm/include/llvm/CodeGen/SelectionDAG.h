@@ -102,10 +102,7 @@ class SelectionDAG {
 public:
   SelectionDAG(TargetLowering &tli, MachineFunction &mf, 
                FunctionLoweringInfo &fli, MachineModuleInfo *mmi,
-               NodeAllocatorType &nodeallocator)
-  : TLI(tli), MF(mf), FLI(fli), MMI(mmi), NodeAllocator(nodeallocator) {
-    EntryNode = Root = getNode(ISD::EntryToken, MVT::Other);
-  }
+               NodeAllocatorType &nodeallocator);
   ~SelectionDAG();
 
   MachineFunction &getMachineFunction() const { return MF; }
