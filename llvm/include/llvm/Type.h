@@ -158,7 +158,6 @@ protected:
 public:
   void print(raw_ostream &O) const;
   void print(std::ostream &O) const;
-  void print(std::ostream *O) const { if (O) print(*O); }
 
   /// @brief Debugging support: print to stderr
   void dump() const;
