@@ -40,7 +40,8 @@ private:
   
   const llvm::StructType *CFStringType;
   llvm::Constant *CFConstantStringClassReference;
-  llvm::Function *MessageSendFn, *MessageSendSuperFn;
+  llvm::Function *MessageSendFn, *MessageSendStretFn;
+  llvm::Function *MessageSendSuperFn, *MessageSendSuperStretFn;
 
 public:
   const llvm::Type *ShortTy, *IntTy, *LongTy;
@@ -56,6 +57,8 @@ public:
 
   /// SuperTy - LLVM type for struct objc_super.
   const llvm::StructType *SuperTy;
+  /// SuperPtrTy - LLVM type for struct objc_super *.
+  const llvm::Type *SuperPtrTy;
 
   /// SymtabTy - LLVM type for struct objc_symtab.
   const llvm::StructType *SymtabTy;
@@ -128,8 +131,7 @@ public:
   
   llvm::Constant *getCFConstantStringClassReference();
   const llvm::StructType *getCFStringType();
-  llvm::Function *getMessageSendFn();
-  llvm::Function *getMessageSendSuperFn();
+  llvm::Value *getMessageSendFn(bool IsSuper, const llvm::Type *ReturnTy);
 };
 
 class CGObjCMac : public CodeGen::CGObjCRuntime {
@@ -198,6 +200,11 @@ private:
   /// for the given class.
   llvm::Value *EmitClassRef(llvm::IRBuilder<> &Builder, 
                             const ObjCInterfaceDecl *ID);
+
+  CodeGen::RValue EmitMessageSend(CodeGen::CodeGenFunction &CGF,
+                                  const ObjCMessageExpr *E,
+                                  llvm::Value *Arg0,
+                                  bool IsSuper);
 
   /// EmitIvarList - Emit the ivar list for the given
   /// implementation. If ForClass is true the list of class ivars
@@ -440,45 +447,35 @@ CGObjCMac::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
   CGF.Builder.CreateStore(ReceiverClass, 
                           CGF.Builder.CreateStructGEP(ObjCSuper, 1));
 
-  const llvm::Type *ReturnTy = CGM.getTypes().ConvertType(E->getType());
-  llvm::Function *F = ObjCTypes.getMessageSendSuperFn();
-  llvm::Value *Args[2];
-  Args[0] = ObjCSuper;
-  Args[1] = EmitSelector(CGF.Builder, E->getSelector());
-
-  std::vector<const llvm::Type*> Params(2);
-  Params[0] = llvm::PointerType::getUnqual(ObjCTypes.SuperTy);
-  Params[1] = ObjCTypes.SelectorPtrTy;
-  llvm::FunctionType *CallFTy = llvm::FunctionType::get(ReturnTy,
-                                                        Params,
-                                                        true);
-  llvm::Type *PCallFTy = llvm::PointerType::getUnqual(CallFTy);
-  llvm::Constant *C = llvm::ConstantExpr::getBitCast(F, PCallFTy);
-  return CGF.EmitCallExprExt(C, E->getType(),
-                             E->arg_begin(),
-                             E->arg_end(),
-                             Args, 2);
+  return EmitMessageSend(CGF, E, ObjCSuper, true);
 }
-
+                                           
 /// Generate code for a message send expression.  
 CodeGen::RValue CGObjCMac::GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
                                                const ObjCMessageExpr *E,
                                                llvm::Value *Receiver) {
-  const llvm::Type *ReturnTy = CGM.getTypes().ConvertType(E->getType());
-  llvm::Function *F = ObjCTypes.getMessageSendFn();
+  llvm::Value *Arg0 = 
+    CGF.Builder.CreateBitCast(Receiver, ObjCTypes.ObjectPtrTy, "tmp");
+  return EmitMessageSend(CGF, E, Arg0, false);
+}
+
+CodeGen::RValue CGObjCMac::EmitMessageSend(CodeGen::CodeGenFunction &CGF,
+                                           const ObjCMessageExpr *E,
+                                           llvm::Value *Arg0,
+                                           bool IsSuper) {
   llvm::Value *Args[2];
-  Args[0] = CGF.Builder.CreateBitCast(Receiver, ObjCTypes.ObjectPtrTy, "tmp");
+  Args[0] = Arg0;
   Args[1] = EmitSelector(CGF.Builder, E->getSelector());
 
-  std::vector<const llvm::Type*> Params(2);
-  Params[0] = ObjCTypes.ObjectPtrTy;
-  Params[1] = ObjCTypes.SelectorPtrTy;
-  llvm::FunctionType *CallFTy = llvm::FunctionType::get(ReturnTy,
-                                                        Params,
-                                                        true);
-  llvm::Type *PCallFTy = llvm::PointerType::getUnqual(CallFTy);
-  llvm::Constant *C = llvm::ConstantExpr::getBitCast(F, PCallFTy);
-  return CGF.EmitCallExprExt(C, E->getType(),
+  // FIXME: This is a hack, we are implicitly coordinating with
+  // EmitCallExprExt, which will move the return type to the first
+  // parameter and set the structure return flag. See
+  // getMessageSendFn().
+
+                                                   
+  const llvm::Type *ReturnTy = CGM.getTypes().ConvertType(E->getType());
+  return CGF.EmitCallExprExt(ObjCTypes.getMessageSendFn(IsSuper, ReturnTy),
+                             E->getType(),
                              E->arg_begin(),
                              E->arg_end(),
                              Args, 2);
@@ -1542,8 +1539,7 @@ void CGObjCMac::FinishModule() {
 ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm) 
   : CGM(cgm),
     CFStringType(0),
-    CFConstantStringClassReference(0),
-    MessageSendFn(0)
+    CFConstantStringClassReference(0)
 {
   CodeGen::CodeGenTypes &Types = CGM.getTypes();
   ASTContext &Ctx = CGM.getContext();
@@ -1702,6 +1698,7 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
                           NULL);
   CGM.getModule().addTypeName("struct._objc_super", 
                               SuperTy);
+  SuperPtrTy = llvm::PointerType::getUnqual(SuperTy);
 
   // Global metadata structures
 
@@ -1721,6 +1718,53 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
                           SymtabPtrTy,
                           NULL);
   CGM.getModule().addTypeName("struct._objc_module", ModuleTy);
+
+  // Message send functions
+
+  std::vector<const llvm::Type*> Params;
+  Params.push_back(ObjectPtrTy);
+  Params.push_back(SelectorPtrTy);
+  MessageSendFn = llvm::Function::Create(llvm::FunctionType::get(ObjectPtrTy,
+                                                                 Params,
+                                                                 true),
+                                         llvm::Function::ExternalLinkage,
+                                         "objc_msgSend",
+                                         &CGM.getModule());
+  
+  Params.clear();
+  Params.push_back(Int8PtrTy);
+  Params.push_back(ObjectPtrTy);
+  Params.push_back(SelectorPtrTy);
+  MessageSendStretFn = 
+    llvm::Function::Create(llvm::FunctionType::get(llvm::Type::VoidTy,
+                                                   Params,
+                                                   true),
+                             llvm::Function::ExternalLinkage,
+                             "objc_msgSend_stret",
+                             &CGM.getModule());
+  
+  Params.clear();
+  Params.push_back(SuperPtrTy);
+  Params.push_back(SelectorPtrTy);
+  MessageSendSuperFn = 
+    llvm::Function::Create(llvm::FunctionType::get(ObjectPtrTy,
+                                                   Params,
+                                                   true),
+                           llvm::Function::ExternalLinkage,
+                           "objc_msgSendSuper",
+                           &CGM.getModule());
+
+  Params.clear();
+  Params.push_back(Int8PtrTy);
+  Params.push_back(SuperPtrTy);
+  Params.push_back(SelectorPtrTy);
+  MessageSendSuperStretFn = 
+    llvm::Function::Create(llvm::FunctionType::get(llvm::Type::VoidTy,
+                                                   Params,
+                                                   true),
+                           llvm::Function::ExternalLinkage,
+                           "objc_msgSendSuper_stret",
+                           &CGM.getModule());
 }
 
 ObjCTypesHelper::~ObjCTypesHelper() {
@@ -1757,37 +1801,29 @@ llvm::Constant *ObjCTypesHelper::getCFConstantStringClassReference() {
   return CFConstantStringClassReference;
 }
 
-llvm::Function *ObjCTypesHelper::getMessageSendFn() {
-  if (!MessageSendFn) {
-    std::vector<const llvm::Type*> Params;
-    Params.push_back(ObjectPtrTy);
-    Params.push_back(SelectorPtrTy);
-    MessageSendFn = llvm::Function::Create(llvm::FunctionType::get(ObjectPtrTy,
-                                                                   Params,
-                                                                   true),
-                                           llvm::Function::ExternalLinkage,
-                                           "objc_msgSend",
-                                           &CGM.getModule());
+llvm::Value *ObjCTypesHelper::getMessageSendFn(bool IsSuper, 
+                                               const llvm::Type *ReturnTy) {
+  llvm::Function *F;
+  llvm::FunctionType *CallFTy;
+  
+  // FIXME: Should we be caching any of this?
+  if (!ReturnTy->isSingleValueType()) {
+    F = IsSuper ? MessageSendSuperStretFn : MessageSendStretFn;
+    std::vector<const llvm::Type*> Params(3);
+    Params[0] = llvm::PointerType::getUnqual(ReturnTy);
+    Params[1] = IsSuper ? SuperPtrTy : ObjectPtrTy;
+    Params[2] = SelectorPtrTy;
+    CallFTy = llvm::FunctionType::get(llvm::Type::VoidTy, Params, true);
+  } else { // XXX floating point?
+    F = IsSuper ? MessageSendSuperFn : MessageSendFn;
+    std::vector<const llvm::Type*> Params(2);
+    Params[0] = IsSuper ? SuperPtrTy : ObjectPtrTy;
+    Params[1] = SelectorPtrTy;
+    CallFTy = llvm::FunctionType::get(ReturnTy, Params, true);
   }
 
-  return MessageSendFn;
-}
-
-llvm::Function *ObjCTypesHelper::getMessageSendSuperFn() {
-  if (!MessageSendSuperFn) {
-    std::vector<const llvm::Type*> Params;
-    Params.push_back(llvm::PointerType::getUnqual(SuperTy));
-    Params.push_back(SelectorPtrTy);
-    MessageSendSuperFn = 
-      llvm::Function::Create(llvm::FunctionType::get(ObjectPtrTy,
-                                                     Params,
-                                                     true),
-                             llvm::Function::ExternalLinkage,
-                             "objc_msgSendSuper",
-                             &CGM.getModule());
-  }
-
-  return MessageSendSuperFn;
+  return llvm::ConstantExpr::getBitCast(F, 
+                                        llvm::PointerType::getUnqual(CallFTy));
 }
 
 /* *** */
