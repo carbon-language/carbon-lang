@@ -11,8 +11,27 @@
 #
 ##===----------------------------------------------------------------------===##
 
+import os
 import sys
 import subprocess
+
+def checkenv(name, alternate=None):
+    """checkenv(var, alternate=None) - Return the given environment var,
+    or alternate if it is undefined or empty."""
+    v = os.getenv(name)
+    if v and v.strip():
+        return v.strip()
+    return alternate
+
+CCC_ECHO = checkenv('CCC_ECHO','1')
+CCC_NATIVE = checkenv('CCC_NATIVE')
+
+# We want to support use as CC or LD, so we need different defines.
+CLANG = checkenv('CLANG', 'clang')
+LLC = checkenv('LLC', 'llc')
+AS = checkenv('AS', 'as')
+CC = checkenv('CCC_CC', 'cc')
+LD = checkenv('CCC_LD', 'c++')
 
 def error(message):
     print >> sys.stderr, 'ccc: ' + message
@@ -23,25 +42,78 @@ def quote(arg):
         return repr(arg)
     return arg
 
+def stripoutput(args):
+    """stripoutput(args) -> (output_name, newargs)
+    
+    Remove the -o argument from the arg list and return the output
+    filename and a new argument list. Assumes there will be at most
+    one -o option. If no output argument is found the result is (None,
+    args)."""
+    for i,a in enumerate(args):
+        if a.startswith('-o'):
+            if a=='-o':
+                if i+1<len(args):
+                    return args[i+1],args[:i]+args[i+2:]
+            elif a.startswith('-o='):
+                opt,arg = a.split('=',1)
+                return arg,args[:i]+args[i+1:]
+    return None,args
+
 def run(args):
-    print ' '.join(map(quote, args))
+    if CCC_ECHO:
+        print ' '.join(map(quote, args))
     code = subprocess.call(args)
     if code > 255:
         code = 1
     if code:
         sys.exit(code)
 
+def remove(path):
+    """remove(path) -> bool - Attempt to remove the file at path (if any).
+
+    The result indicates if the remove was successful. A warning is
+    printed if there is an error removing the file."""
+    if os.path.exists(path):
+        try:
+            os.remove(path)
+        except:
+            print >>sys.stderr, 'WARNING: Unable to remove temp "%s"'%(path,)
+            return False
+    return True
+
 def preprocess(args):
-    command = 'clang -E'.split()
+    command = [CLANG,'-E']
     run(command + args)
 
-def compile(args):
-    command = 'clang -emit-llvm-bc'.split()
-    run(command + args)
+def compile(args, native, save_temps=False):
+    if native:
+        output,args = stripoutput(args)
+        if not output:
+            raise ValueError,'Expected to always have explicit -o in compile()'
 
-def link(args):
-    command = 'llvm-ld -native -disable-internalize'.split()
-    run(command + args)
+        # I prefer suffixing these to changing the extension, which is
+        # more likely to overwrite other things. We could of course
+        # use temp files.
+        bc_output = output + '.bc'
+        s_output = output + '.s'
+        command = [CLANG,'-emit-llvm-bc']
+        run(command + args + ['-o', bc_output])
+        # FIXME: What controls relocation model?
+        run([LLC, '-relocation-model=pic', '-f', '-o', s_output, bc_output])
+        run([AS, '-o', output, s_output])
+        if not save_temps:
+            remove(bc_output)
+            remove(s_output)
+    else:
+        command = [CLANG,'-emit-llvm-bc']
+        run(command + args)
+
+def link(args, native):
+    if native:
+        run([LD] + args)        
+    else:
+        command = ['llvm-ld', '-native', '-disable-internalize']
+        run(command + args)
 
 def extension(path):
     return path.split(".")[-1]
@@ -78,7 +150,8 @@ def main(args):
     files = []
     save_temps = 0
     language = ''
-    
+    native = CCC_NATIVE
+
     i = 0
     while i < len(args):
         arg = args[i]
@@ -92,6 +165,8 @@ def main(args):
             action = 'print-prog-name'
         if arg == '-save-temps':
             save_temps = 1
+        if arg == '-emit-llvm' or arg == '--emit-llvm':
+            native = False
 
         # Options with no arguments that should pass through
         if arg in ['-v']:
@@ -154,8 +229,6 @@ def main(args):
             i += 1
         if arg == '-x':
             language = args[i+1]
-            compile_opts.append(arg)
-            compile_opts.append(args[i+1])
             i += 1
         if arg[0] != '-':
             files.append(arg)
@@ -211,7 +284,7 @@ def main(args):
             else:
                 coutput = output
             args = ['-x', language, '-o', coutput, file] + compile_opts
-            compile(args)
+            compile(args, native, save_temps)
             language = ''
 
     if action == 'link':
@@ -220,12 +293,12 @@ def main(args):
             if ext != "o" and ext != "a" and ext != "so":
                 out = changeextension(file, "o")
                 args = ['-o', out, file] + compile_opts
-                compile(args)
+                compile(args, native, save_temps)
                 files[i] = out
         if not output:
             output = 'a.out'
         args = ['-o', output] + link_opts + files
-        link(args)
+        link(args, native)
 
 if __name__ == '__main__':
     main(sys.argv[1:])
