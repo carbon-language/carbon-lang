@@ -322,8 +322,8 @@ DIAG(err_parse_error, ERROR,
      "parse error")
 DIAG(err_expected_expression, ERROR,
      "expected expression")
-DIAG(err_invalid_receiver_to_message, ERROR,
-     "invalid receiver to message expression")
+DIAG(err_expected_type, ERROR,
+     "expected a type")
 DIAG(err_expected_external_declaration, ERROR,
      "expected external declaration")
 DIAG(err_expected_ident, ERROR,
@@ -386,6 +386,8 @@ DIAG(err_expected_string_literal, ERROR,
      "expected string literal")
 DIAG(err_expected_asm_operand, ERROR,
      "expected string literal or '[' for asm operand")
+DIAG(err_expected_selector_for_method, ERROR,
+     "expected selector for Objective-C method")
 
 DIAG(err_unexpected_at, ERROR,
      "unexpected '@' in program")
@@ -409,6 +411,8 @@ DIAG(warn_objc_protocol_qualifier_missing_id, WARNING,
 DIAG(warn_objc_array_of_interfaces, WARNING,
      "array of interface '%0' should probably be an array of pointers")
 
+DIAG(err_invalid_receiver_to_message, ERROR,
+     "invalid receiver to message expression")
 DIAG(err_objc_illegal_visibility_spec, ERROR,
      "illegal visibility specification")
 DIAG(err_objc_illegal_interface_qual, ERROR,

@@ -561,6 +561,7 @@ Parser::TypeTy *Parser::ParseObjCTypeName(ObjCDeclSpec &DS) {
   assert(Tok.is(tok::l_paren) && "expected (");
   
   SourceLocation LParenLoc = ConsumeParen(), RParenLoc;
+  SourceLocation TypeStartLoc = Tok.getLocation();
   TypeTy *Ty = 0;
   
   // Parse type qualifiers, in, inout, etc.
@@ -571,9 +572,17 @@ Parser::TypeTy *Parser::ParseObjCTypeName(ObjCDeclSpec &DS) {
     // FIXME: back when Sema support is in place...
     // assert(Ty && "Parser::ParseObjCTypeName(): missing type");
   }
+  
   if (Tok.isNot(tok::r_paren)) {
-    MatchRHSPunctuation(tok::r_paren, LParenLoc);
-    return 0; // FIXME: decide how we want to handle this error...
+    // If we didn't eat any tokens, then this isn't a type.
+    if (Tok.getLocation() == TypeStartLoc) {
+      Diag(Tok.getLocation(), diag::err_expected_type);
+      SkipUntil(tok::r_brace);
+    } else {
+      // Otherwise, we found *something*, but didn't get a ')' in the right
+      // place.  Emit an error then return what we have as the type.
+      MatchRHSPunctuation(tok::r_paren, LParenLoc);
+    }
   }
   RParenLoc = ConsumeParen();
   return Ty;
@@ -612,20 +621,24 @@ Parser::DeclTy *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
                                             DeclTy *IDecl,
                                             tok::ObjCKeywordKind MethodImplKind)
 {
-  // Parse the return type.
+  // Parse the return type if present.
   TypeTy *ReturnType = 0;
   ObjCDeclSpec DSRet;
   if (Tok.is(tok::l_paren))
     ReturnType = ParseObjCTypeName(DSRet);
+  
   SourceLocation selLoc;
   IdentifierInfo *SelIdent = ParseObjCSelector(selLoc);
+
+  if (!SelIdent) { // missing selector name.
+    Diag(Tok.getLocation(), diag::err_expected_selector_for_method,
+         SourceRange(mLoc, Tok.getLocation()));
+    // Skip until we get a ; or {}.
+    SkipUntil(tok::r_brace);
+    return 0;
+  }
+  
   if (Tok.isNot(tok::colon)) {
-    if (!SelIdent) {
-      Diag(Tok, diag::err_expected_ident); // missing selector name.
-      // FIXME: this creates a unary selector with a null identifier, is this
-      // ok??  Maybe we should skip to the next semicolon or something.
-    }
-    
     // If attributes exist after the method, parse them.
     AttributeList *MethodAttrs = 0;
     if (getLang().ObjC2 && Tok.is(tok::kw___attribute)) 
@@ -653,9 +666,8 @@ Parser::DeclTy *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
     }
     ConsumeToken(); // Eat the ':'.
     ObjCDeclSpec DSType;
-    if (Tok.is(tok::l_paren))  { // Parse the argument type.
+    if (Tok.is(tok::l_paren)) // Parse the argument type.
       TypeInfo = ParseObjCTypeName(DSType);
-    }
     else
       TypeInfo = 0;
     KeyTypes.push_back(TypeInfo);
