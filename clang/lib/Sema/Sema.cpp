@@ -27,17 +27,25 @@ bool Sema::isBuiltinObjCType(TypedefDecl *TD) {
          strcmp(typeName, "SEL") == 0 || strcmp(typeName, "Protocol") == 0;
 }
 
+static inline RecordDecl *CreateStructDecl(ASTContext &C, const char *Name)
+{
+  if (C.getLangOptions().CPlusPlus)
+    return CXXRecordDecl::Create(C, TagDecl::TK_struct, 
+                                 C.getTranslationUnitDecl(),
+                                 SourceLocation(), &C.Idents.get(Name), 0);
+  else
+    return RecordDecl::Create(C, TagDecl::TK_struct, 
+                              C.getTranslationUnitDecl(),
+                              SourceLocation(), &C.Idents.get(Name), 0);
+}
+
 void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
   TUScope = S;
   CurContext = Context.getTranslationUnitDecl();
   if (!PP.getLangOptions().ObjC1) return;
   
   // Synthesize "typedef struct objc_selector *SEL;"
-  RecordDecl *SelTag = RecordDecl::Create(Context, TagDecl::TK_struct,
-                                          CurContext,
-                                          SourceLocation(), 
-                                          &Context.Idents.get("objc_selector"),
-                                          0);
+  RecordDecl *SelTag = CreateStructDecl(Context, "objc_selector");
   PushOnScopeChains(SelTag, TUScope);
   
   QualType SelT = Context.getPointerType(Context.getTagDeclType(SelTag));
@@ -49,11 +57,7 @@ void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
   Context.setObjCSelType(SelTypedef);
 
   // FIXME: Make sure these don't leak!
-  RecordDecl *ClassTag = RecordDecl::Create(Context, TagDecl::TK_struct,
-                                            CurContext,
-                                            SourceLocation(),
-                                            &Context.Idents.get("objc_class"),
-                                            0);
+  RecordDecl *ClassTag = CreateStructDecl(Context, "objc_class");
   QualType ClassT = Context.getPointerType(Context.getTagDeclType(ClassTag));
   TypedefDecl *ClassTypedef = 
     TypedefDecl::Create(Context, CurContext, SourceLocation(),
@@ -70,10 +74,8 @@ void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
   PushOnScopeChains(ProtocolDecl, TUScope);
   
   // Synthesize "typedef struct objc_object { Class isa; } *id;"
-  RecordDecl *ObjectTag = 
-    RecordDecl::Create(Context, TagDecl::TK_struct, CurContext,
-                       SourceLocation(),
-                       &Context.Idents.get("objc_object"), 0);
+  RecordDecl *ObjectTag = CreateStructDecl(Context, "objc_object");
+
   QualType ObjT = Context.getPointerType(Context.getTagDeclType(ObjectTag));
   PushOnScopeChains(ObjectTag, TUScope);
   TypedefDecl *IdTypedef = TypedefDecl::Create(Context, CurContext,
