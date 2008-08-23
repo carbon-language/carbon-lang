@@ -1505,7 +1505,7 @@ void AssemblyWriter::printInfoComment(const Value &V) {
 void AssemblyWriter::printInstruction(const Instruction &I) {
   if (AnnotationWriter) AnnotationWriter->emitInstructionAnnot(&I, Out);
 
-  Out << "\t";
+  Out << '\t';
 
   // Print out name if it exists...
   if (I.hasName()) {
@@ -1527,7 +1527,7 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
 
   // Print out the compare instruction predicates
   if (const CmpInst *CI = dyn_cast<CmpInst>(&I))
-    Out << " " << getPredicateText(CI->getPredicate());
+    Out << ' ' << getPredicateText(CI->getPredicate());
 
   // Print out the type of the operands...
   const Value *Operand = I.getNumOperands() ? I.getOperand(0) : 0;
@@ -1542,12 +1542,15 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
 
   } else if (isa<SwitchInst>(I)) {
     // Special case switch statement to get formatting nice and correct...
-    writeOperand(Operand        , true); Out << ',';
-    writeOperand(I.getOperand(1), true); Out << " [";
+    writeOperand(Operand        , true);
+    Out << ',';
+    writeOperand(I.getOperand(1), true);
+    Out << " [";
 
     for (unsigned op = 2, Eop = I.getNumOperands(); op < Eop; op += 2) {
       Out << "\n\t\t";
-      writeOperand(I.getOperand(op  ), true); Out << ',';
+      writeOperand(I.getOperand(op  ), true);
+      Out << ',';
       writeOperand(I.getOperand(op+1), true);
     }
     Out << "\n\t]";
@@ -1715,7 +1718,7 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
   }
 
   printInfoComment(I);
-  Out << "\n";
+  Out << '\n';
 }
 
 
