@@ -17,6 +17,7 @@
 #include "CodeGenModule.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
+#include "clang/AST/DeclObjC.h"
 #include "llvm/ADT/StringExtras.h"
 
 using namespace clang;
@@ -29,10 +30,11 @@ using llvm::utostr;
 
 static void mangleDeclContextInternal(const DeclContext *D, std::string &S)
 {
-  assert(isa<TranslationUnitDecl>(D->getParent()) && 
+  // FIXME: Should ObjcMethodDecl have the TranslationUnitDecl as its parent?
+  assert(!D->getParent() || isa<TranslationUnitDecl>(D->getParent()) && 
          "Only one level of decl context mangling is currently supported!");
   
-  if (FunctionDecl* FD = dyn_cast<FunctionDecl>(D)) {
+  if (const FunctionDecl* FD = dyn_cast<FunctionDecl>(D)) {
     S += utostr(FD->getIdentifier()->getLength());
     S += FD->getIdentifier()->getName();
     
@@ -40,6 +42,18 @@ static void mangleDeclContextInternal(const DeclContext *D, std::string &S)
       S += 'v';
     else
       assert(0 && "mangling of types not supported yet!");
+  } else if (const ObjCMethodDecl* MD = dyn_cast<ObjCMethodDecl>(D)) {
+    
+    // FIXME: This should really use GetNameForMethod from CGObjCMac.
+    std::string Name;
+    Name += MD->isInstance() ? '-' : '+';
+    Name += '[';
+    Name += MD->getClassInterface()->getName();
+    Name += ' ';
+    Name += MD->getSelector().getName();
+    Name += ']';
+    S += utostr(Name.length());
+    S += Name;
   } else 
     assert(0 && "Unsupported decl type!");
 }
