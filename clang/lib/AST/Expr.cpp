@@ -720,6 +720,13 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
     Result.setIsUnsigned(!getType()->isSignedIntegerType());
     break;
   }
+  case CXXBoolLiteralExprClass: {
+    const CXXBoolLiteralExpr *BL = cast<CXXBoolLiteralExpr>(this);
+    Result.zextOrTrunc(static_cast<uint32_t>(Ctx.getTypeSize(getType())));
+    Result = BL->getValue();
+    Result.setIsUnsigned(!getType()->isSignedIntegerType());
+    break;
+  }
   case CXXZeroInitValueExprClass:
     Result.clear();
     break;
