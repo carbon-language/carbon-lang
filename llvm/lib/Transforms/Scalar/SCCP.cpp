@@ -36,6 +36,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
@@ -137,7 +138,7 @@ public:
 /// Constant Propagation.
 ///
 class SCCPSolver : public InstVisitor<SCCPSolver> {
-  SmallSet<BasicBlock*, 16> BBExecutable;// The basic blocks that are executable
+  DenseSet<BasicBlock*> BBExecutable;// The basic blocks that are executable
   std::map<Value*, LatticeVal> ValueState;  // The state each value is in.
 
   /// GlobalValue - If we are tracking any values for the contents of a global
@@ -153,7 +154,7 @@ class SCCPSolver : public InstVisitor<SCCPSolver> {
 
   /// TrackedMultipleRetVals - Same as TrackedRetVals, but used for functions
   /// that return multiple values.
-  std::map<std::pair<Function*, unsigned>, LatticeVal> TrackedMultipleRetVals;
+  DenseMap<std::pair<Function*, unsigned>, LatticeVal> TrackedMultipleRetVals;
 
   // The reason for two worklists is that overdefined is the lowest state
   // on the lattice, and moving things to overdefined as fast as possible
@@ -161,11 +162,11 @@ class SCCPSolver : public InstVisitor<SCCPSolver> {
   // By having a separate worklist, we accomplish this because everything
   // possibly overdefined will become overdefined at the soonest possible
   // point.
-  std::vector<Value*> OverdefinedInstWorkList;
-  std::vector<Value*> InstWorkList;
+  SmallVector<Value*, 64> OverdefinedInstWorkList;
+  SmallVector<Value*, 64> InstWorkList;
 
 
-  std::vector<BasicBlock*>  BBWorkList;  // The BasicBlock work list
+  SmallVector<BasicBlock*, 64>  BBWorkList;  // The BasicBlock work list
 
   /// UsersOfOverdefinedPHIs - Keep track of any users of PHI nodes that are not
   /// overdefined, despite the fact that the PHI node is overdefined.
@@ -173,8 +174,8 @@ class SCCPSolver : public InstVisitor<SCCPSolver> {
 
   /// KnownFeasibleEdges - Entries in this set are edges which have already had
   /// PHI nodes retriggered.
-  typedef std::pair<BasicBlock*,BasicBlock*> Edge;
-  std::set<Edge> KnownFeasibleEdges;
+  typedef std::pair<BasicBlock*, BasicBlock*> Edge;
+  DenseSet<Edge> KnownFeasibleEdges;
 public:
 
   /// MarkBlockExecutable - This method can be used by clients to mark all of
@@ -225,7 +226,7 @@ public:
 
   /// getExecutableBlocks - Once we have solved for constants, return the set of
   /// blocks that is known to be executable.
-  SmallSet<BasicBlock*, 16> &getExecutableBlocks() {
+  DenseSet<BasicBlock*> &getExecutableBlocks() {
     return BBExecutable;
   }
 
@@ -573,7 +574,7 @@ void SCCPSolver::visitPHINode(PHINode &PN) {
 
     if (isEdgeFeasible(PN.getIncomingBlock(i), PN.getParent())) {
       if (IV.isOverdefined()) {   // PHI node becomes overdefined!
-        markOverdefined(PNIV, &PN);
+        markOverdefined(&PN);
         return;
       }
 
@@ -589,7 +590,7 @@ void SCCPSolver::visitPHINode(PHINode &PN) {
           // Yes there is.  This means the PHI node is not constant.
           // You must be overdefined poor PHI.
           //
-          markOverdefined(PNIV, &PN);    // The PHI node now becomes overdefined
+          markOverdefined(&PN);    // The PHI node now becomes overdefined
           return;    // I'm done analyzing you
         }
       }
@@ -602,7 +603,7 @@ void SCCPSolver::visitPHINode(PHINode &PN) {
   // this is the case, the PHI remains undefined.
   //
   if (OperandVal)
-    markConstant(PNIV, &PN, OperandVal);      // Acquire operand value
+    markConstant(&PN, OperandVal);      // Acquire operand value
 }
 
 void SCCPSolver::visitReturnInst(ReturnInst &I) {
@@ -627,7 +628,7 @@ void SCCPSolver::visitReturnInst(ReturnInst &I) {
   // Handle functions that return multiple values.
   if (!TrackedMultipleRetVals.empty() && I.getNumOperands() > 1) {
     for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i) {
-      std::map<std::pair<Function*, unsigned>, LatticeVal>::iterator
+      DenseMap<std::pair<Function*, unsigned>, LatticeVal>::iterator
         It = TrackedMultipleRetVals.find(std::make_pair(F, i));
       if (It == TrackedMultipleRetVals.end()) break;
       mergeInValue(It->second, F, getValueState(I.getOperand(i)));
@@ -637,7 +638,7 @@ void SCCPSolver::visitReturnInst(ReturnInst &I) {
              isa<StructType>(I.getOperand(0)->getType())) {
     for (unsigned i = 0, e = I.getOperand(0)->getType()->getNumContainedTypes();
          i != e; ++i) {
-      std::map<std::pair<Function*, unsigned>, LatticeVal>::iterator
+      DenseMap<std::pair<Function*, unsigned>, LatticeVal>::iterator
         It = TrackedMultipleRetVals.find(std::make_pair(F, i));
       if (It == TrackedMultipleRetVals.end()) break;
       Value *Val = FindInsertedValue(I.getOperand(0), i);
@@ -694,13 +695,9 @@ void SCCPSolver::visitExtractValueInst(ExtractValueInst &EVI) {
     return;
   }
   
-  // See if we are tracking the result of the callee.
-  std::map<std::pair<Function*, unsigned>, LatticeVal>::iterator
-    It = TrackedMultipleRetVals.find(std::make_pair(F, *EVI.idx_begin()));
-
-  // If not tracking this function (for example, it is a declaration) just move
-  // to overdefined.
-  if (It == TrackedMultipleRetVals.end()) {
+  // See if we are tracking the result of the callee.  If not tracking this
+  // function (for example, it is a declaration) just move to overdefined.
+  if (!TrackedMultipleRetVals.count(std::make_pair(F, *EVI.idx_begin()))) {
     markOverdefined(&EVI);
     return;
   }
@@ -742,7 +739,7 @@ void SCCPSolver::visitInsertValueInst(InsertValueInst &IVI) {
   
   // See if we are tracking the result of the callee.
   Function *F = IVI.getParent()->getParent();
-  std::map<std::pair<Function*, unsigned>, LatticeVal>::iterator
+  DenseMap<std::pair<Function*, unsigned>, LatticeVal>::iterator
     It = TrackedMultipleRetVals.find(std::make_pair(F, *IVI.idx_begin()));
 
   // Merge in the inserted member value.
@@ -1220,8 +1217,8 @@ CallOverdefined:
   } else if (isa<StructType>(I->getType())) {
     // Check to see if we're tracking this callee, if not, handle it in the
     // common path above.
-    std::map<std::pair<Function*, unsigned>, LatticeVal>::iterator
-      TMRVI = TrackedMultipleRetVals.find(std::make_pair(F, 0));
+    DenseMap<std::pair<Function*, unsigned>, LatticeVal>::iterator
+    TMRVI = TrackedMultipleRetVals.find(std::make_pair(F, 0));
     if (TMRVI == TrackedMultipleRetVals.end())
       goto CallOverdefined;
     
@@ -1553,8 +1550,8 @@ bool SCCP::runOnFunction(Function &F) {
   // delete their contents now.  Note that we cannot actually delete the blocks,
   // as we cannot modify the CFG of the function.
   //
-  SmallSet<BasicBlock*, 16> &ExecutableBBs = Solver.getExecutableBlocks();
-  SmallVector<Instruction*, 32> Insts;
+  DenseSet<BasicBlock*> &ExecutableBBs = Solver.getExecutableBlocks();
+  SmallVector<Instruction*, 512> Insts;
   std::map<Value*, LatticeVal> &Values = Solver.getValueMapping();
 
   for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
@@ -1698,9 +1695,9 @@ bool IPSCCP::runOnModule(Module &M) {
   // Iterate over all of the instructions in the module, replacing them with
   // constants if we have found them to be of constant values.
   //
-  SmallSet<BasicBlock*, 16> &ExecutableBBs = Solver.getExecutableBlocks();
-  SmallVector<Instruction*, 32> Insts;
-  SmallVector<BasicBlock*, 32> BlocksToErase;
+  DenseSet<BasicBlock*> &ExecutableBBs = Solver.getExecutableBlocks();
+  SmallVector<Instruction*, 512> Insts;
+  SmallVector<BasicBlock*, 512> BlocksToErase;
   std::map<Value*, LatticeVal> &Values = Solver.getValueMapping();
 
   for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F) {
