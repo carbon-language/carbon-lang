@@ -511,42 +511,12 @@ void SROA::isSafeUseOfAllocation(Instruction *User, AllocationInst *AI,
 
   bool IsAllZeroIndices = true;
   
-  // If this is a use of an array allocation, do a bit more checking for sanity.
+  // If the first index is a non-constant index into an array, see if we can
+  // handle it as a special case.
   if (const ArrayType *AT = dyn_cast<ArrayType>(*I)) {
-    uint64_t NumElements = AT->getNumElements();
-
-    if (ConstantInt *Idx = dyn_cast<ConstantInt>(I.getOperand())) {
-      IsAllZeroIndices &= Idx->isZero();
-      
-      // Check to make sure that index falls within the array.  If not,
-      // something funny is going on, so we won't do the optimization.
-      //
-      if (Idx->getZExtValue() >= NumElements)
-        return MarkUnsafe(Info);
-
-      // We cannot scalar repl this level of the array unless any array
-      // sub-indices are in-range constants.  In particular, consider:
-      // A[0][i].  We cannot know that the user isn't doing invalid things like
-      // allowing i to index an out-of-range subscript that accesses A[1].
-      //
-      // Scalar replacing *just* the outer index of the array is probably not
-      // going to be a win anyway, so just give up.
-      for (++I; I != E && (isa<ArrayType>(*I) || isa<VectorType>(*I)); ++I) {
-        uint64_t NumElements;
-        if (const ArrayType *SubArrayTy = dyn_cast<ArrayType>(*I))
-          NumElements = SubArrayTy->getNumElements();
-        else
-          NumElements = cast<VectorType>(*I)->getNumElements();
-        
-        ConstantInt *IdxVal = dyn_cast<ConstantInt>(I.getOperand());
-        if (!IdxVal) return MarkUnsafe(Info);
-        if (IdxVal->getZExtValue() >= NumElements)
-          return MarkUnsafe(Info);
-        IsAllZeroIndices &= IdxVal->isZero();
-      }
-      
-    } else {
+    if (!isa<ConstantInt>(I.getOperand())) {
       IsAllZeroIndices = 0;
+      uint64_t NumElements = AT->getNumElements();
       
       // If this is an array index and the index is not constant, we cannot
       // promote... that is unless the array has exactly one or two elements in
@@ -560,7 +530,33 @@ void SROA::isSafeUseOfAllocation(Instruction *User, AllocationInst *AI,
       return MarkUnsafe(Info);
     }
   }
-
+  
+  
+  // Walk through the GEP type indices, checking the types that this indexes
+  // into.
+  for (; I != E; ++I) {
+    // Ignore struct elements, no extra checking needed for these.
+    if (isa<StructType>(*I))
+      continue;
+    
+    // Don't SROA pointers into vectors.
+    if (isa<VectorType>(*I))
+      return MarkUnsafe(Info);
+    
+    // Otherwise, we must have an index into an array type.  Verify that this is
+    // an in-range constant integer.  Specifically, consider A[0][i].  We
+    // cannot know that the user isn't doing invalid things like allowing i to
+    // index an out-of-range subscript that accesses A[1].  Because of this, we
+    // have to reject SROA of any accesses into structs where any of the
+    // components are variables.
+    ConstantInt *IdxVal = dyn_cast<ConstantInt>(I.getOperand());
+    if (!IdxVal) return MarkUnsafe(Info);
+    if (IdxVal->getZExtValue() >= cast<ArrayType>(*I)->getNumElements())
+      return MarkUnsafe(Info);
+    
+    IsAllZeroIndices &= IdxVal->isZero();
+  }
+  
   // If there are any non-simple uses of this getelementptr, make sure to reject
   // them.
   return isSafeElementUse(GEPI, IsAllZeroIndices, AI, Info);
