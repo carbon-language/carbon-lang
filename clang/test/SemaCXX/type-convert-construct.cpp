@@ -7,4 +7,7 @@ void f() {
   int v3 = arr(); // expected-error {{array types cannot be value-initialized}}
   int v4 = int();
   int v5 = int; // expected-error {{expected '(' for function-style cast or type construction}}
+  typedef int T;
+  int *p;
+  bool v6 = T(0) == p;
 }
