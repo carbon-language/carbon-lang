@@ -248,7 +248,10 @@ void MachineFunction::print(std::ostream &OS) const {
   JumpTableInfo->print(OS);
 
   // Print Constant Pool
-  ConstantPool->print(OS);
+  {
+    raw_os_ostream OSS(OS);
+    ConstantPool->print(OSS);
+  }
   
   const TargetRegisterInfo *TRI = getTarget().getRegisterInfo();
   
@@ -526,12 +529,7 @@ unsigned MachineConstantPool::getConstantPoolIndex(MachineConstantPoolValue *V,
   return Constants.size()-1;
 }
 
-void MachineConstantPoolValue::print(std::ostream &o) const {
-  raw_os_ostream OS(o);
-  print(OS);
-}
-
-void MachineConstantPool::print(std::ostream &OS) const {
+void MachineConstantPool::print(raw_ostream &OS) const {
   for (unsigned i = 0, e = Constants.size(); i != e; ++i) {
     OS << "  <cp #" << i << "> is";
     if (Constants[i].isMachineConstantPoolEntry())
@@ -543,4 +541,4 @@ void MachineConstantPool::print(std::ostream &OS) const {
   }
 }
 
-void MachineConstantPool::dump() const { print(*cerr.stream()); }
+void MachineConstantPool::dump() const { print(errs()); errs().flush(); }

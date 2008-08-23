@@ -23,10 +23,10 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/GraphWriter.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Config/config.h"
 #include <fstream>
-#include <sstream>
 using namespace llvm;
 
 namespace llvm {
@@ -138,18 +138,24 @@ std::string DOTGraphTraits<SelectionDAG*>::getNodeLabel(const SDNode *Node,
     Op += " " + itostr(JTDN->getIndex());
   } else if (const ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(Node)){
     if (CP->isMachineConstantPoolEntry()) {
-      std::ostringstream SS;
-      CP->getMachineCPVal()->print(SS);
-      Op += "<" + SS.str() + ">";
+      Op += '<';
+      {
+        raw_string_ostream OSS(Op);
+        OSS << *CP->getMachineCPVal();
+      }
+      Op += '>';
     } else {
       if (ConstantFP *CFP = dyn_cast<ConstantFP>(CP->getConstVal()))
         Op += "<" + ftostr(CFP->getValueAPF()) + ">";
       else if (ConstantInt *CI = dyn_cast<ConstantInt>(CP->getConstVal()))
         Op += "<" + utostr(CI->getZExtValue()) + ">";
       else {
-        std::ostringstream SS;
-        WriteAsOperand(SS, CP->getConstVal(), false);
-        Op += "<" + SS.str() + ">";
+        Op += '<';
+        {
+          raw_string_ostream OSS(Op);
+          WriteAsOperand(OSS, CP->getConstVal(), false);
+        }
+        Op += '>';
       }
     }
   } else if (const BasicBlockSDNode *BBDN = dyn_cast<BasicBlockSDNode>(Node)) {
@@ -188,9 +194,10 @@ std::string DOTGraphTraits<SelectionDAG*>::getNodeLabel(const SDNode *Node,
       Op += "(unknown)";
     } else if (isa<PseudoSourceValue>(V)) {
       // PseudoSourceValues don't have names, so use their print method.
-      std::ostringstream SS;
-      M->MO.getValue()->print(SS);
-      Op += SS.str();
+      {
+        raw_string_ostream OSS(Op);
+        OSS << *M->MO.getValue();
+      }
     } else {
       Op += V->getName();
     }

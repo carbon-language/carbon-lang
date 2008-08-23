@@ -16,10 +16,8 @@
 #define LLVM_CODEGEN_MACHINECONSTANTPOOL_H
 
 #include "llvm/ADT/FoldingSet.h"
-#include "llvm/Support/Streams.h"
 #include <cassert>
 #include <vector>
-#include <iosfwd>
 
 namespace llvm {
 
@@ -49,19 +47,10 @@ public:
 
   virtual void AddSelectionDAGCSEId(FoldingSetNodeID &ID) = 0;
 
-  /// print - Implement operator<<...
-  ///
-  void print(std::ostream &O) const;
-  void print(std::ostream *O) const { if (O) print(*O); }
+  /// print - Implement operator<<
   virtual void print(raw_ostream &O) const = 0;
 };
 
-inline std::ostream &operator<<(std::ostream &OS,
-                                const MachineConstantPoolValue &V) {
-  V.print(OS);
-  return OS;
-}
-  
 inline raw_ostream &operator<<(raw_ostream &OS,
                                const MachineConstantPoolValue &V) {
   V.print(OS);
@@ -147,11 +136,9 @@ public:
   /// print - Used by the MachineFunction printer to print information about
   /// constant pool objects.  Implemented in MachineFunction.cpp
   ///
-  void print(std::ostream &OS) const;
-  void print(std::ostream *OS) const { if (OS) print(*OS); }
+  void print(raw_ostream &OS) const;
 
-  /// dump - Call print(std::cerr) to be called from the debugger.
-  ///
+  /// dump - Call print(cerr) to be called from the debugger.
   void dump() const;
 };
 
