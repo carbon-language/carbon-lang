@@ -255,6 +255,7 @@ class RPDI<bits<8> o, Format F, dag outs, dag ins, string asm,
 //
 
 // MMXI   - MMX instructions with TB prefix.
+// MMXI64 - MMX instructions with TB prefix valid only in 64 bit mode.
 // MMX2I  - MMX / SSE2 instructions with TB and OpSize prefixes.
 // MMXIi8 - MMX instructions with ImmT == Imm8 and TB prefix.
 // MMXIi8 - MMX instructions with ImmT == Imm8 and TB prefix.
@@ -262,6 +263,8 @@ class RPDI<bits<8> o, Format F, dag outs, dag ins, string asm,
 // MMXIS  - MMX instructions with XS prefix.
 class MMXI<bits<8> o, Format F, dag outs, dag ins, string asm, list<dag> pattern>
       : I<o, F, outs, ins, asm, pattern>, TB, Requires<[HasMMX]>;
+class MMXI64<bits<8> o, Format F, dag outs, dag ins, string asm, list<dag> pattern>
+      : I<o, F, outs, ins, asm, pattern>, TB, Requires<[HasMMX,In64BitMode]>;
 class MMXRI<bits<8> o, Format F, dag outs, dag ins, string asm, list<dag> pattern>
       : I<o, F, outs, ins, asm, pattern>, TB, REX_W, Requires<[HasMMX]>;
 class MMX2I<bits<8> o, Format F, dag outs, dag ins, string asm, list<dag> pattern>

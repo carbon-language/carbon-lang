@@ -491,6 +491,10 @@ let Uses = [EDI] in
 def MMX_MASKMOVQ : MMXI<0xF7, MRMDestMem, (outs), (ins VR64:$src, VR64:$mask),
                         "maskmovq\t{$mask, $src|$src, $mask}",
                         [(int_x86_mmx_maskmovq VR64:$src, VR64:$mask, EDI)]>;
+let Uses = [RDI] in
+def MMX_MASKMOVQ64: MMXI64<0xF7, MRMDestMem, (outs), (ins VR64:$src, VR64:$mask),
+                           "maskmovq\t{$mask, $src|$src, $mask}",
+                           [(int_x86_mmx_maskmovq VR64:$src, VR64:$mask, RDI)]>;
 
 //===----------------------------------------------------------------------===//
 // Alias Instructions
