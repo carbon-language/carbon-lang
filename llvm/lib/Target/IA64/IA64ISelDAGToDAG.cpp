@@ -80,7 +80,7 @@ namespace {
 
     /// InstructionSelect - This callback is invoked by
     /// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
-    virtual void InstructionSelect(SelectionDAG &DAG);
+    virtual void InstructionSelect();
     
     virtual const char *getPassName() const {
       return "IA64 (Itanium) DAG->DAG Instruction Selector";
@@ -96,12 +96,12 @@ private:
 
 /// InstructionSelect - This callback is invoked by
 /// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
-void IA64DAGToDAGISel::InstructionSelect(SelectionDAG &DAG) {
+void IA64DAGToDAGISel::InstructionSelect() {
   DEBUG(BB->dump());
 
   // Select target instructions for the DAG.
   SelectRoot();
-  DAG.RemoveDeadNodes();
+  CurDAG->RemoveDeadNodes();
 }
 
 SDNode *IA64DAGToDAGISel::SelectDIV(SDValue Op) {

@@ -49,7 +49,7 @@ public:
   
   /// InstructionSelect - This callback is invoked by
   /// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
-  virtual void InstructionSelect(SelectionDAG &DAG);
+  virtual void InstructionSelect();
   
   virtual const char *getPassName() const {
     return "SPARC DAG->DAG Pattern Instruction Selection";
@@ -62,12 +62,12 @@ public:
 
 /// InstructionSelect - This callback is invoked by
 /// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
-void SparcDAGToDAGISel::InstructionSelect(SelectionDAG &DAG) {
+void SparcDAGToDAGISel::InstructionSelect() {
   DEBUG(BB->dump());
   
   // Select target instructions for the DAG.
   SelectRoot();
-  DAG.RemoveDeadNodes();
+  CurDAG->RemoveDeadNodes();
 }
 
 bool SparcDAGToDAGISel::SelectADDRri(SDValue Op, SDValue Addr,

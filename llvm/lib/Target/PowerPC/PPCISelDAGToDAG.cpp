@@ -144,8 +144,7 @@ namespace {
     /// inline asm expressions.
     virtual bool SelectInlineAsmMemoryOperand(const SDValue &Op,
                                               char ConstraintCode,
-                                              std::vector<SDValue> &OutOps,
-                                              SelectionDAG &DAG) {
+                                              std::vector<SDValue> &OutOps) {
       SDValue Op0, Op1;
       switch (ConstraintCode) {
       default: return true;
@@ -175,7 +174,7 @@ namespace {
     
     /// InstructionSelect - This callback is invoked by
     /// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
-    virtual void InstructionSelect(SelectionDAG &DAG);
+    virtual void InstructionSelect();
     
     void InsertVRSaveCode(Function &Fn);
 
@@ -203,12 +202,12 @@ private:
 
 /// InstructionSelect - This callback is invoked by
 /// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
-void PPCDAGToDAGISel::InstructionSelect(SelectionDAG &DAG) {
+void PPCDAGToDAGISel::InstructionSelect() {
   DEBUG(BB->dump());
 
   // Select target instructions for the DAG.
   SelectRoot();
-  DAG.RemoveDeadNodes();
+  CurDAG->RemoveDeadNodes();
 }
 
 /// InsertVRSaveCode - Once the entire function has been instruction selected,

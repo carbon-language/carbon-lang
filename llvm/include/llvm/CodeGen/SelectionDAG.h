@@ -36,13 +36,6 @@ class MachineFunction;
 class MachineConstantPoolValue;
 class FunctionLoweringInfo;
 
-/// NodeAllocatorType - The AllocatorType for allocating SDNodes. We use
-/// pool allocation with recycling.
-///
-typedef RecyclingAllocator<BumpPtrAllocator, SDNode, sizeof(LargestSDNode),
-                           AlignOf<MostAlignedSDNode>::Alignment>
-  NodeAllocatorType;
-
 template<> class ilist_traits<SDNode> : public ilist_default_traits<SDNode> {
   mutable SDNode Sentinel;
 public:
@@ -77,20 +70,30 @@ class SelectionDAG {
   FunctionLoweringInfo &FLI;
   MachineModuleInfo *MMI;
 
-  /// Root - The root of the entire DAG.  EntryNode - The starting token.
-  SDValue Root, EntryNode;
+  /// EntryNode - The starting token.
+  SDNode EntryNode;
+
+  /// Root - The root of the entire DAG.
+  SDValue Root;
 
   /// AllNodes - A linked list of nodes in the current DAG.
   ilist<SDNode> AllNodes;
 
-  /// NodeAllocator - Pool allocation for nodes. The allocator isn't
-  /// allocated inside this class because we want to reuse a single
-  /// recycler across multiple SelectionDAG runs.
-  NodeAllocatorType &NodeAllocator;
+  /// NodeAllocatorType - The AllocatorType for allocating SDNodes. We use
+  /// pool allocation with recycling.
+  typedef RecyclingAllocator<BumpPtrAllocator, SDNode, sizeof(LargestSDNode),
+                             AlignOf<MostAlignedSDNode>::Alignment>
+    NodeAllocatorType;
+
+  /// NodeAllocator - Pool allocation for nodes.
+  NodeAllocatorType NodeAllocator;
 
   /// CSEMap - This structure is used to memoize nodes, automatically performing
   /// CSE with existing nodes with a duplicate is requested.
   FoldingSet<SDNode> CSEMap;
+
+  /// OperandAllocator - Pool allocation for machine-opcode SDNode operands.
+  BumpPtrAllocator OperandAllocator;
 
   /// Allocator - Pool allocation for misc. objects that are created once per
   /// SelectionDAG.
@@ -101,9 +104,13 @@ class SelectionDAG {
 
 public:
   SelectionDAG(TargetLowering &tli, MachineFunction &mf, 
-               FunctionLoweringInfo &fli, MachineModuleInfo *mmi,
-               NodeAllocatorType &nodeallocator);
+               FunctionLoweringInfo &fli, MachineModuleInfo *mmi);
   ~SelectionDAG();
+
+  /// reset - Clear state and free memory necessary to make this
+  /// SelectionDAG ready to process a new block.
+  ///
+  void reset();
 
   MachineFunction &getMachineFunction() const { return MF; }
   const TargetMachine &getTarget() const;
@@ -152,7 +159,9 @@ public:
 
   /// getEntryNode - Return the token chain corresponding to the entry of the
   /// function.
-  const SDValue &getEntryNode() const { return EntryNode; }
+  SDValue getEntryNode() const {
+    return SDValue(const_cast<SDNode *>(&EntryNode), 0);
+  }
 
   /// setRoot - Set the current root tag of the SelectionDAG.
   ///
@@ -721,6 +730,8 @@ private:
   void DeleteNodeNotInCSEMaps(SDNode *N);
 
   unsigned getMVTAlignment(MVT MemoryVT) const;
+
+  void allnodes_clear();
   
   // List of non-single value types.
   std::vector<SDVTList> VTList;

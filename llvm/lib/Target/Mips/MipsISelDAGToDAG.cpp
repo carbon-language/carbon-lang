@@ -66,7 +66,7 @@ public:
   TM(tm), MipsLowering(*TM.getTargetLowering()), 
   Subtarget(tm.getSubtarget<MipsSubtarget>()) {}
   
-  virtual void InstructionSelect(SelectionDAG &SD);
+  virtual void InstructionSelect();
 
   // Pass Name
   virtual const char *getPassName() const {
@@ -103,7 +103,7 @@ private:
 /// InstructionSelect - This callback is invoked by
 /// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
 void MipsDAGToDAGISel::
-InstructionSelect(SelectionDAG &SD) 
+InstructionSelect() 
 {
   DEBUG(BB->dump());
   // Codegen the basic block.
@@ -119,7 +119,7 @@ InstructionSelect(SelectionDAG &SD)
   DOUT << "===== Instruction selection ends:\n";
   #endif
 
-  SD.RemoveDeadNodes();
+  CurDAG->RemoveDeadNodes();
 }
 
 /// getGlobalBaseReg - Output the instructions required to put the

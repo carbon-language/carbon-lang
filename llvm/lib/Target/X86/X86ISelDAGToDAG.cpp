@@ -147,7 +147,7 @@ namespace {
 
     /// InstructionSelect - This callback is invoked by
     /// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
-    virtual void InstructionSelect(SelectionDAG &DAG);
+    virtual void InstructionSelect();
 
     /// InstructionSelectPostProcessing - Post processing of selected and
     /// scheduled basic blocks.
@@ -178,15 +178,14 @@ namespace {
     bool TryFoldLoad(SDValue P, SDValue N,
                      SDValue &Base, SDValue &Scale,
                      SDValue &Index, SDValue &Disp);
-    void PreprocessForRMW(SelectionDAG &DAG);
-    void PreprocessForFPConvert(SelectionDAG &DAG);
+    void PreprocessForRMW();
+    void PreprocessForFPConvert();
 
     /// SelectInlineAsmMemoryOperand - Implement addressing mode selection for
     /// inline asm expressions.
     virtual bool SelectInlineAsmMemoryOperand(const SDValue &Op,
                                               char ConstraintCode,
-                                              std::vector<SDValue> &OutOps,
-                                              SelectionDAG &DAG);
+                                              std::vector<SDValue> &OutOps);
     
     void EmitSpecialCodeForMain(MachineBasicBlock *BB, MachineFrameInfo *MFI);
 
@@ -372,7 +371,7 @@ bool X86DAGToDAGISel::CanBeFoldedBy(SDNode *N, SDNode *U, SDNode *Root) const {
 /// MoveBelowTokenFactor - Replace TokenFactor operand with load's chain operand
 /// and move load below the TokenFactor. Replace store's chain operand with
 /// load's chain result.
-static void MoveBelowTokenFactor(SelectionDAG &DAG, SDValue Load,
+static void MoveBelowTokenFactor(SelectionDAG *CurDAG, SDValue Load,
                                  SDValue Store, SDValue TF) {
   std::vector<SDValue> Ops;
   for (unsigned i = 0, e = TF.Val->getNumOperands(); i != e; ++i)
@@ -380,10 +379,10 @@ static void MoveBelowTokenFactor(SelectionDAG &DAG, SDValue Load,
       Ops.push_back(Load.Val->getOperand(0));
     else
       Ops.push_back(TF.Val->getOperand(i));
-  DAG.UpdateNodeOperands(TF, &Ops[0], Ops.size());
-  DAG.UpdateNodeOperands(Load, TF, Load.getOperand(1), Load.getOperand(2));
-  DAG.UpdateNodeOperands(Store, Load.getValue(1), Store.getOperand(1),
-                         Store.getOperand(2), Store.getOperand(3));
+  CurDAG->UpdateNodeOperands(TF, &Ops[0], Ops.size());
+  CurDAG->UpdateNodeOperands(Load, TF, Load.getOperand(1), Load.getOperand(2));
+  CurDAG->UpdateNodeOperands(Store, Load.getValue(1), Store.getOperand(1),
+                             Store.getOperand(2), Store.getOperand(3));
 }
 
 /// isRMWLoad - Return true if N is a load that's part of RMW sub-DAG.
@@ -452,9 +451,9 @@ static bool isRMWLoad(SDValue N, SDValue Chain, SDValue Address,
 ///       \      /
 ///        \    /
 ///       [Store]
-void X86DAGToDAGISel::PreprocessForRMW(SelectionDAG &DAG) {
-  for (SelectionDAG::allnodes_iterator I = DAG.allnodes_begin(),
-         E = DAG.allnodes_end(); I != E; ++I) {
+void X86DAGToDAGISel::PreprocessForRMW() {
+  for (SelectionDAG::allnodes_iterator I = CurDAG->allnodes_begin(),
+         E = CurDAG->allnodes_end(); I != E; ++I) {
     if (!ISD::isNON_TRUNCStore(I))
       continue;
     SDValue Chain = I->getOperand(0);
@@ -504,7 +503,7 @@ void X86DAGToDAGISel::PreprocessForRMW(SelectionDAG &DAG) {
     }
 
     if (RModW) {
-      MoveBelowTokenFactor(DAG, Load, SDValue(I, 0), Chain);
+      MoveBelowTokenFactor(CurDAG, Load, SDValue(I, 0), Chain);
       ++NumLoadMoved;
     }
   }
@@ -519,9 +518,9 @@ void X86DAGToDAGISel::PreprocessForRMW(SelectionDAG &DAG) {
 /// hack on these between the call expansion and the node legalization.  As such
 /// this pass basically does "really late" legalization of these inline with the
 /// X86 isel pass.
-void X86DAGToDAGISel::PreprocessForFPConvert(SelectionDAG &DAG) {
-  for (SelectionDAG::allnodes_iterator I = DAG.allnodes_begin(),
-       E = DAG.allnodes_end(); I != E; ) {
+void X86DAGToDAGISel::PreprocessForFPConvert() {
+  for (SelectionDAG::allnodes_iterator I = CurDAG->allnodes_begin(),
+       E = CurDAG->allnodes_end(); I != E; ) {
     SDNode *N = I++;  // Preincrement iterator to avoid invalidation issues.
     if (N->getOpcode() != ISD::FP_ROUND && N->getOpcode() != ISD::FP_EXTEND)
       continue;
@@ -553,39 +552,40 @@ void X86DAGToDAGISel::PreprocessForFPConvert(SelectionDAG &DAG) {
     else
       MemVT = SrcIsSSE ? SrcVT : DstVT;
     
-    SDValue MemTmp = DAG.CreateStackTemporary(MemVT);
+    SDValue MemTmp = CurDAG->CreateStackTemporary(MemVT);
     
     // FIXME: optimize the case where the src/dest is a load or store?
-    SDValue Store = DAG.getTruncStore(DAG.getEntryNode(), N->getOperand(0),
-                                        MemTmp, NULL, 0, MemVT);
-    SDValue Result = DAG.getExtLoad(ISD::EXTLOAD, DstVT, Store, MemTmp,
-                                      NULL, 0, MemVT);
+    SDValue Store = CurDAG->getTruncStore(CurDAG->getEntryNode(),
+                                          N->getOperand(0),
+                                          MemTmp, NULL, 0, MemVT);
+    SDValue Result = CurDAG->getExtLoad(ISD::EXTLOAD, DstVT, Store, MemTmp,
+                                        NULL, 0, MemVT);
 
     // We're about to replace all uses of the FP_ROUND/FP_EXTEND with the
     // extload we created.  This will cause general havok on the dag because
     // anything below the conversion could be folded into other existing nodes.
     // To avoid invalidating 'I', back it up to the convert node.
     --I;
-    DAG.ReplaceAllUsesOfValueWith(SDValue(N, 0), Result);
+    CurDAG->ReplaceAllUsesOfValueWith(SDValue(N, 0), Result);
     
     // Now that we did that, the node is dead.  Increment the iterator to the
     // next node to process, then delete N.
     ++I;
-    DAG.DeleteNode(N);
+    CurDAG->DeleteNode(N);
   }  
 }
 
 /// InstructionSelectBasicBlock - This callback is invoked by SelectionDAGISel
 /// when it has created a SelectionDAG for us to codegen.
-void X86DAGToDAGISel::InstructionSelect(SelectionDAG &DAG) {
+void X86DAGToDAGISel::InstructionSelect() {
   CurBB = BB;  // BB can change as result of isel.
 
   DEBUG(BB->dump());
   if (!Fast)
-    PreprocessForRMW(DAG);
+    PreprocessForRMW();
 
   // FIXME: This should only happen when not -fast.
-  PreprocessForFPConvert(DAG);
+  PreprocessForFPConvert();
 
   // Codegen the basic block.
 #ifndef NDEBUG
@@ -597,7 +597,7 @@ void X86DAGToDAGISel::InstructionSelect(SelectionDAG &DAG) {
   DOUT << "===== Instruction selection ends:\n";
 #endif
 
-  DAG.RemoveDeadNodes();
+  CurDAG->RemoveDeadNodes();
 }
 
 void X86DAGToDAGISel::InstructionSelectPostProcessing() {
@@ -1599,7 +1599,7 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
 
 bool X86DAGToDAGISel::
 SelectInlineAsmMemoryOperand(const SDValue &Op, char ConstraintCode,
-                             std::vector<SDValue> &OutOps, SelectionDAG &DAG){
+                             std::vector<SDValue> &OutOps) {
   SDValue Op0, Op1, Op2, Op3;
   switch (ConstraintCode) {
   case 'o':   // offsetable        ??

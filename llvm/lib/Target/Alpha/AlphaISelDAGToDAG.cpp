@@ -163,7 +163,7 @@ namespace {
     
     /// InstructionSelect - This callback is invoked by
     /// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
-    virtual void InstructionSelect(SelectionDAG &DAG);
+    virtual void InstructionSelect();
     
     virtual const char *getPassName() const {
       return "Alpha DAG->DAG Pattern Instruction Selection";
@@ -173,8 +173,7 @@ namespace {
     /// inline asm expressions.
     virtual bool SelectInlineAsmMemoryOperand(const SDValue &Op,
                                               char ConstraintCode,
-                                              std::vector<SDValue> &OutOps,
-                                              SelectionDAG &DAG) {
+                                              std::vector<SDValue> &OutOps) {
       SDValue Op0;
       switch (ConstraintCode) {
       default: return true;
@@ -232,12 +231,12 @@ SDValue AlphaDAGToDAGISel::getGlobalRetAddr() {
 
 /// InstructionSelect - This callback is invoked by
 /// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
-void AlphaDAGToDAGISel::InstructionSelect(SelectionDAG &DAG) {
+void AlphaDAGToDAGISel::InstructionSelect() {
   DEBUG(BB->dump());
   
   // Select target instructions for the DAG.
   SelectRoot();
-  DAG.RemoveDeadNodes();
+  CurDAG->RemoveDeadNodes();
 }
 
 // Select - Convert the specified operand from a target-independent to a

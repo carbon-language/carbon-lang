@@ -54,7 +54,7 @@ public:
   } 
   
   SDNode *Select(SDValue Op);
-  virtual void InstructionSelect(SelectionDAG &DAG);
+  virtual void InstructionSelect();
   bool SelectAddrMode2(SDValue Op, SDValue N, SDValue &Base,
                        SDValue &Offset, SDValue &Opc);
   bool SelectAddrMode2Offset(SDValue Op, SDValue N,
@@ -91,11 +91,11 @@ public:
 };
 }
 
-void ARMDAGToDAGISel::InstructionSelect(SelectionDAG &DAG) {
+void ARMDAGToDAGISel::InstructionSelect() {
   DEBUG(BB->dump());
 
   SelectRoot();
-  DAG.RemoveDeadNodes();
+  CurDAG->RemoveDeadNodes();
 }
 
 bool ARMDAGToDAGISel::SelectAddrMode2(SDValue Op, SDValue N,

@@ -1864,7 +1864,7 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
   // Emit boilerplate.
   OS << "SDNode *Select_INLINEASM(SDValue N) {\n"
      << "  std::vector<SDValue> Ops(N.Val->op_begin(), N.Val->op_end());\n"
-     << "  SelectInlineAsmMemoryOperands(Ops, *CurDAG);\n\n"
+     << "  SelectInlineAsmMemoryOperands(Ops);\n\n"
     
      << "  // Ensure that the asm operands are themselves selected.\n"
      << "  for (unsigned j = 0, e = Ops.size(); j != e; ++j)\n"

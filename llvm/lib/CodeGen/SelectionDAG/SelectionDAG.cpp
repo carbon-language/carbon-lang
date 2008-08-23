@@ -547,11 +547,8 @@ void SelectionDAG::DeleteNodeNotInCSEMaps(SDNode *N) {
   // Drop all of the operands and decrement used nodes use counts.
   for (SDNode::op_iterator I = N->op_begin(), E = N->op_end(); I != E; ++I)
     I->getVal()->removeUser(std::distance(N->op_begin(), I), N);
-  if (N->OperandsNeedDelete) {
+  if (N->OperandsNeedDelete)
     delete[] N->OperandList;
-  }
-  N->OperandList = 0;
-  N->NumOperands = 0;
   
   AllNodes.remove(N);
 }
@@ -563,6 +560,9 @@ void SelectionDAG::DeleteNodeNotInCSEMaps(SDNode *N) {
 void SelectionDAG::RemoveNodeFromCSEMaps(SDNode *N) {
   bool Erased = false;
   switch (N->getOpcode()) {
+  case ISD::EntryToken:
+    assert(0 && "EntryToken should not be in CSEMaps!");
+    return;
   case ISD::HANDLENODE: return;  // noop.
   case ISD::CONDCODE:
     assert(CondCodeNodes[cast<CondCodeSDNode>(N)->get()] &&
@@ -764,22 +764,42 @@ unsigned SelectionDAG::getMVTAlignment(MVT VT) const {
 }
 
 SelectionDAG::SelectionDAG(TargetLowering &tli, MachineFunction &mf,
-                           FunctionLoweringInfo &fli, MachineModuleInfo *mmi,
-                           NodeAllocatorType &nodeallocator)
-  : TLI(tli), MF(mf), FLI(fli), MMI(mmi), NodeAllocator(nodeallocator) {
-  EntryNode = Root = getNode(ISD::EntryToken, MVT::Other);
+                           FunctionLoweringInfo &fli, MachineModuleInfo *mmi)
+  : TLI(tli), MF(mf), FLI(fli), MMI(mmi),
+    EntryNode(ISD::EntryToken, getVTList(MVT::Other)), 
+    Root(getEntryNode()) {
+  AllNodes.push_back(&EntryNode);
 }
 
 SelectionDAG::~SelectionDAG() {
+  allnodes_clear();
+}
+
+void SelectionDAG::allnodes_clear() {
   while (!AllNodes.empty()) {
     SDNode *N = AllNodes.remove(AllNodes.begin());
     N->SetNextInBucket(0);
-    if (N->OperandsNeedDelete) {
+    if (N->OperandsNeedDelete)
       delete [] N->OperandList;
-    }
-    N->OperandList = 0;
-    N->NumOperands = 0;
   }
+}
+
+void SelectionDAG::reset() {
+  allnodes_clear();
+  OperandAllocator.Reset();
+  CSEMap.clear();
+
+  ExtendedValueTypeNodes.clear();
+  ExternalSymbols.clear();
+  TargetExternalSymbols.clear();
+  std::fill(CondCodeNodes.begin(), CondCodeNodes.end(),
+            static_cast<CondCodeSDNode*>(0));
+  std::fill(ValueTypeNodes.begin(), ValueTypeNodes.end(),
+            static_cast<SDNode*>(0));
+
+  EntryNode.Uses = 0;
+  AllNodes.push_back(&EntryNode);
+  Root = getEntryNode();
 }
 
 SDValue SelectionDAG::getZeroExtendInReg(SDValue Op, MVT VT) {
@@ -3988,9 +4008,9 @@ SDNode *SelectionDAG::MorphNodeTo(SDNode *N, unsigned Opc,
       delete[] N->OperandList;
     if (N->isMachineOpcode()) {
       // We're creating a final node that will live unmorphed for the
-      // remainder of this SelectionDAG's duration, so we can allocate the
-      // operands directly out of the pool with no recycling metadata.
-      N->OperandList = Allocator.Allocate<SDUse>(NumOps);
+      // remainder of the current SelectionDAG iteration, so we can allocate
+      // the operands directly out of a pool with no recycling metadata.
+      N->OperandList = OperandAllocator.Allocate<SDUse>(NumOps);
       N->OperandsNeedDelete = false;
     } else {
       N->OperandList = new SDUse[NumOps];
