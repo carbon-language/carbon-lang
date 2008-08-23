@@ -21,6 +21,7 @@
 #include "clang/AST/Expr.h"
 #include "clang/Analysis/ProgramPoint.h"
 #include "clang/Analysis/PathDiagnostic.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/DenseMap.h"
 #include <sstream>
 
@@ -537,7 +538,8 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
                   continue;
                 }
                 
-                os << V;
+                llvm::raw_os_ostream OS(os);
+                OS << V;
               }              
               
               os << ":'  at line " 

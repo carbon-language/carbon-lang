@@ -15,7 +15,7 @@
 #include "clang/Analysis/PathSensitive/GRState.h"
 #include "llvm/ADT/SmallSet.h"
 #include "clang/Analysis/PathSensitive/GRTransferFuncs.h"
-
+#include "llvm/Support/raw_ostream.h"
 using namespace clang;
 
 GRStateManager::~GRStateManager() {
@@ -274,9 +274,11 @@ void GRState::print(std::ostream& Out, StoreManager& StoreMgr,
   if (!CE.isEmpty()) {
     Out << nl << sep << "'==' constraints:";
 
-    for (ConstEqTy::iterator I = CE.begin(), E = CE.end(); I!=E; ++I)
-      Out << nl << " $" << I.getKey()
-          << " : "   << *I.getData();
+    for (ConstEqTy::iterator I = CE.begin(), E = CE.end(); I!=E; ++I) {
+      Out << nl << " $" << I.getKey();
+      llvm::raw_os_ostream OS(Out);
+      OS << " : "   << *I.getData();
+    }
   }
 
   // Print != constraints.

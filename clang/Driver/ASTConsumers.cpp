@@ -707,7 +707,7 @@ public:
     }
     
     if (!EmitBitcode)
-      CodeGenModule->print(*Out);
+      *Out << *CodeGenModule.get();
     else
       llvm::WriteBitcodeToFile(CodeGenModule.get(), *Out);
     
