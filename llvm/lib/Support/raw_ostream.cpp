@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/Config/config.h"
 #include <ostream>
 
@@ -132,6 +133,55 @@ raw_ostream &raw_ostream::write(const char *Ptr, unsigned Size) {
   }
   OutBufCur += Size;
   return *this;
+}
+
+// Formatted output.
+raw_ostream &raw_ostream::operator<<(const format_object_base &Fmt) {
+  // If we have more than a few bytes left in our output buffer, try formatting
+  // directly onto its end.
+  unsigned NextBufferSize = 127;
+  if (OutBufEnd-OutBufCur > 3) {
+    unsigned BufferBytesLeft = OutBufEnd-OutBufCur;
+    unsigned BytesUsed = Fmt.print(OutBufCur, BufferBytesLeft);
+    
+    // Common case is that we have plenty of space.
+    if (BytesUsed < BufferBytesLeft) {
+      OutBufCur += BytesUsed;
+      return *this;
+    }
+    
+    // Otherwise, we overflowed and the return value tells us the size to try
+    // again with.
+    NextBufferSize = BytesUsed;
+  }
+  
+  // If we got here, we didn't have enough space in the output buffer for the
+  // string.  Try printing into a SmallVector that is resized to have enough
+  // space.  Iterate until we win.
+  SmallVector<char, 128> V;
+  
+  while (1) {
+    V.resize(NextBufferSize);
+    
+    // Try formatting into the SmallVector.
+    unsigned BytesUsed = Fmt.print(&V[0], NextBufferSize);
+    
+    // If BytesUsed fit into the vector, we win.
+    if (BytesUsed < NextBufferSize)
+      return write(&V[0], BytesUsed);
+    
+    // Otherwise, try again with a new size.
+    assert(BytesUsed > NextBufferSize && "Didn't grow buffer!?");
+    NextBufferSize = BytesUsed;
+  }
+}
+
+//===----------------------------------------------------------------------===//
+//  Formatted Output
+//===----------------------------------------------------------------------===//
+
+// Out of line virtual method.
+void format_object_base::home() {
 }
 
 //===----------------------------------------------------------------------===//
