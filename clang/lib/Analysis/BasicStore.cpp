@@ -41,8 +41,8 @@ public:
                                    DeclRootsTy& DRoots, LiveSymbolsTy& LSymbols,
                                    DeadSymbolsTy& DSymbols);
 
-  virtual Store AddDecl(Store store, BasicValueFactory& BasicVals,
-                        SymbolManager& SymMgr, const VarDecl* VD, Expr* Ex, 
+  virtual Store AddDecl(Store store, GRStateManager& StateMgr,
+                        const VarDecl* VD, Expr* Ex, 
                         RVal InitVal = UndefinedVal(), unsigned Count = 0);
 
   static inline VarBindingsTy GetVarBindings(Store store) {
@@ -243,9 +243,13 @@ Store BasicStoreManager::getInitialStore(GRStateManager& StateMgr) {
   return St;
 }
 
-Store BasicStoreManager::AddDecl(Store store, BasicValueFactory& BasicVals,
-                                 SymbolManager& SymMgr, const VarDecl* VD, 
-                                 Expr* Ex, RVal InitVal, unsigned Count) {
+Store BasicStoreManager::AddDecl(Store store, GRStateManager& StateMgr,
+                                 const VarDecl* VD, Expr* Ex,
+                                 RVal InitVal, unsigned Count) {
+  
+  BasicValueFactory& BasicVals = StateMgr.getBasicVals();
+  SymbolManager& SymMgr = StateMgr.getSymbolManager();
+  
   // BasicStore does not model arrays and structs.
   if (VD->getType()->isArrayType() || VD->getType()->isStructureType())
     return store;

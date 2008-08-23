@@ -148,13 +148,14 @@ const GRState* GRStateManager::AddDecl(const GRState* St, const VarDecl* VD,
   Store NewStore;
 
   if (Ex)
-    NewStore = StMgr->AddDecl(OldStore, BasicVals, SymMgr, VD, Ex, 
+    NewStore = StMgr->AddDecl(OldStore, *this, VD, Ex, 
                               GetRVal(St, Ex), Count);
   else
-    NewStore = StMgr->AddDecl(OldStore, BasicVals, SymMgr, VD, Ex);
+    NewStore = StMgr->AddDecl(OldStore, *this, VD, Ex);
                               
   if (NewStore == OldStore)
     return St;
+  
   GRState NewSt = *St;
   NewSt.St = NewStore;
   return getPersistentState(NewSt);

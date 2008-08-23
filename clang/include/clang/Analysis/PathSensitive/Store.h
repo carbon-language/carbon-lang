@@ -46,8 +46,8 @@ public:
                                    DeclRootsTy& DRoots, LiveSymbolsTy& LSymbols,                                  
                                    DeadSymbolsTy& DSymbols) = 0;
 
-  virtual Store AddDecl(Store store, BasicValueFactory& BasicVals,
-                        SymbolManager& SymMgr, const VarDecl* VD, Expr* Ex, 
+  virtual Store AddDecl(Store store, GRStateManager& StMgr,
+                        const VarDecl* VD, Expr* Ex, 
                         RVal InitVal = UndefinedVal(), unsigned Count = 0) = 0;
 
   virtual void print(Store store, std::ostream& Out,
