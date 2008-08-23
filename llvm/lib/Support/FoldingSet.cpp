@@ -200,18 +200,25 @@ static void **GetBucketFor(const FoldingSetNodeID &ID,
 //===----------------------------------------------------------------------===//
 // FoldingSetImpl Implementation
 
-FoldingSetImpl::FoldingSetImpl(unsigned Log2InitSize) : NumNodes(0) {
+FoldingSetImpl::FoldingSetImpl(unsigned Log2InitSize) {
   assert(5 < Log2InitSize && Log2InitSize < 32 &&
          "Initial hash table size out of range");
   NumBuckets = 1 << Log2InitSize;
   Buckets = new void*[NumBuckets+1];
-  memset(Buckets, 0, NumBuckets*sizeof(void*));
-  
-  // Set the very last bucket to be a non-null "pointer".
-  Buckets[NumBuckets] = reinterpret_cast<void*>(-1);
+  clear();
 }
 FoldingSetImpl::~FoldingSetImpl() {
   delete [] Buckets;
+}
+void FoldingSetImpl::clear() {
+  // Set all but the last bucket to null pointers.
+  memset(Buckets, 0, NumBuckets*sizeof(void*));
+
+  // Set the very last bucket to be a non-null "pointer".
+  Buckets[NumBuckets] = reinterpret_cast<void*>(-1);
+
+  // Reset the node count to zero.
+  NumNodes = 0;
 }
 
 /// GrowHashTable - Double the size of the hash table and rehash everything.
@@ -221,15 +228,9 @@ void FoldingSetImpl::GrowHashTable() {
   unsigned OldNumBuckets = NumBuckets;
   NumBuckets <<= 1;
   
-  // Reset the node count to zero: we're going to reinsert everything.
-  NumNodes = 0;
-  
   // Clear out new buckets.
   Buckets = new void*[NumBuckets+1];
-  memset(Buckets, 0, NumBuckets*sizeof(void*));
-
-  // Set the very last bucket to be a non-null "pointer".
-  Buckets[NumBuckets] = reinterpret_cast<void*>(-1);
+  clear();
 
   // Walk the old buckets, rehashing nodes into their new place.
   FoldingSetNodeID ID;

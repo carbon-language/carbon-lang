@@ -143,6 +143,9 @@ public:
     void SetNextInBucket(void *N) { NextInFoldingSetBucket = N; }
   };
 
+  /// clear - Remove all nodes from the folding set.
+  void clear();
+
   /// RemoveNode - Remove a node from the folding set, returning true if one
   /// was removed or false if the node was not in the folding set.
   bool RemoveNode(Node *N);
