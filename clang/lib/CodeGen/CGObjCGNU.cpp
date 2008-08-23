@@ -16,6 +16,7 @@
 
 #include "CGObjCRuntime.h"
 #include "CodeGenModule.h"
+#include "CodeGenFunction.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"
@@ -93,19 +94,15 @@ private:
 public:
   CGObjCGNU(CodeGen::CodeGenModule &cgm);
   virtual llvm::Constant *GenerateConstantString(const std::string &String);
-  virtual llvm::Value *GenerateMessageSend(llvm::IRBuilder<> &Builder,
-                                           const llvm::Type *ReturnTy,
-                                           llvm::Value *Receiver,
-                                           Selector Sel,
-                                           llvm::Value** ArgV,
-                                           unsigned ArgC);
-  virtual llvm::Value *GenerateMessageSendSuper(llvm::IRBuilder<> &Builder,
-                                                const llvm::Type *ReturnTy,
-                                            const ObjCInterfaceDecl *SuperClass,
-                                                llvm::Value *Receiver,
-                                                Selector Sel,
-                                                llvm::Value** ArgV,
-                                                unsigned ArgC);
+  virtual CodeGen::RValue 
+  GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
+                      const ObjCMessageExpr *E,
+                      llvm::Value *Receiver);
+  virtual CodeGen::RValue 
+  GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
+                           const ObjCMessageExpr *E,
+                           const ObjCInterfaceDecl *Super,
+                           llvm::Value *Receiver);
   virtual llvm::Value *GetClass(llvm::IRBuilder<> &Builder,
                                 const ObjCInterfaceDecl *OID);
   virtual llvm::Value *GetSelector(llvm::IRBuilder<> &Builder, Selector Sel);
@@ -236,16 +233,15 @@ llvm::Constant *CGObjCGNU::GenerateConstantString(const std::string &Str) {
 ///Generates a message send where the super is the receiver.  This is a message
 ///send to self with special delivery semantics indicating which class's method
 ///should be called.
-llvm::Value *CGObjCGNU::GenerateMessageSendSuper(llvm::IRBuilder<> &Builder,
-                                                 const llvm::Type *ReturnTy,
-                                            const ObjCInterfaceDecl *SuperClass,
-                                                 llvm::Value *Receiver,
-                                                 Selector Sel,
-                                                 llvm::Value** ArgV,
-                                                 unsigned ArgC) {
+CodeGen::RValue
+CGObjCGNU::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
+                                    const ObjCMessageExpr *E,
+                                    const ObjCInterfaceDecl *SuperClass,
+                                    llvm::Value *Receiver) {
+  const llvm::Type *ReturnTy = CGM.getTypes().ConvertType(E->getType());
   // TODO: This should be cached, not looked up every time.
-  llvm::Value *ReceiverClass = GetClass(Builder, SuperClass);
-  llvm::Value *cmd = GetSelector(Builder, Sel);
+  llvm::Value *ReceiverClass = GetClass(CGF.Builder, SuperClass);
+  llvm::Value *cmd = GetSelector(CGF.Builder, E->getSelector());
   std::vector<const llvm::Type*> impArgTypes;
   impArgTypes.push_back(Receiver->getType());
   impArgTypes.push_back(SelectorTy);
@@ -257,10 +253,10 @@ llvm::Value *CGObjCGNU::GenerateMessageSendSuper(llvm::IRBuilder<> &Builder,
   // Construct the structure used to look up the IMP
   llvm::StructType *ObjCSuperTy = llvm::StructType::get(Receiver->getType(),
       IdTy, NULL);
-  llvm::Value *ObjCSuper = Builder.CreateAlloca(ObjCSuperTy);
+  llvm::Value *ObjCSuper = CGF.Builder.CreateAlloca(ObjCSuperTy);
   // FIXME: volatility
-  Builder.CreateStore(Receiver, Builder.CreateStructGEP(ObjCSuper, 0));
-  Builder.CreateStore(ReceiverClass, Builder.CreateStructGEP(ObjCSuper, 1));
+  CGF.Builder.CreateStore(Receiver, CGF.Builder.CreateStructGEP(ObjCSuper, 0));
+  CGF.Builder.CreateStore(ReceiverClass, CGF.Builder.CreateStructGEP(ObjCSuper, 1));
 
   // Get the IMP
   llvm::Constant *lookupFunction = 
@@ -269,25 +265,24 @@ llvm::Value *CGObjCGNU::GenerateMessageSendSuper(llvm::IRBuilder<> &Builder,
                                    llvm::PointerType::getUnqual(ObjCSuperTy),
                                    SelectorTy, NULL);
   llvm::Value *lookupArgs[] = {ObjCSuper, cmd};
-  llvm::Value *imp = Builder.CreateCall(lookupFunction, lookupArgs,
+  llvm::Value *imp = CGF.Builder.CreateCall(lookupFunction, lookupArgs,
       lookupArgs+2);
 
   // Call the method
-  llvm::SmallVector<llvm::Value*, 8> callArgs;
-  callArgs.push_back(Receiver);
-  callArgs.push_back(cmd);
-  callArgs.insert(callArgs.end(), ArgV, ArgV+ArgC);
-  return Builder.CreateCall(imp, callArgs.begin(), callArgs.end());
+  llvm::Value *Args[2];
+  Args[0] = Receiver;
+  Args[1] = cmd;
+  return CGF.EmitCallExprExt(imp, E->getType(), E->arg_begin(), E->arg_end(),
+                             Args, 2);
 }
 
 /// Generate code for a message send expression.  
-llvm::Value *CGObjCGNU::GenerateMessageSend(llvm::IRBuilder<> &Builder,
-                                            const llvm::Type *ReturnTy,
-                                            llvm::Value *Receiver,
-                                            Selector Sel,
-                                            llvm::Value** ArgV,
-                                            unsigned ArgC) {
-  llvm::Value *cmd = GetSelector(Builder, Sel);
+CodeGen::RValue
+CGObjCGNU::GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
+                               const ObjCMessageExpr *E,
+                               llvm::Value *Receiver) {
+  const llvm::Type *ReturnTy = CGM.getTypes().ConvertType(E->getType());
+  llvm::Value *cmd = GetSelector(CGF.Builder, E->getSelector());
 
   // Look up the method implementation.
   std::vector<const llvm::Type*> impArgTypes;
@@ -313,22 +308,14 @@ llvm::Value *CGObjCGNU::GenerateMessageSend(llvm::IRBuilder<> &Builder,
      TheModule.getOrInsertFunction("objc_msg_lookup",
                                    llvm::PointerType::getUnqual(impType),
                                    Receiver->getType(), SelectorTy, NULL);
-  llvm::Value *imp = Builder.CreateCall2(lookupFunction, Receiver, cmd);
+  llvm::Value *imp = CGF.Builder.CreateCall2(lookupFunction, Receiver, cmd);
 
   // Call the method.
-  llvm::SmallVector<llvm::Value*, 16> Args;
-  if (!ReturnTy->isSingleValueType()) {
-    llvm::Value *Return = Builder.CreateAlloca(ReturnTy);
-    Args.push_back(Return);
-  }
-  Args.push_back(Receiver);
-  Args.push_back(cmd);
-  Args.insert(Args.end(), ArgV, ArgV+ArgC);
-  if (!ReturnTy->isSingleValueType()) {
-    Builder.CreateCall(imp, Args.begin(), Args.end());
-    return Args[0];
-  }
-  return Builder.CreateCall(imp, Args.begin(), Args.end());
+  llvm::Value *Args[2];
+  Args[0] = Receiver;
+  Args[1] = cmd;
+  return CGF.EmitCallExprExt(imp, E->getType(), E->arg_begin(), E->arg_end(), 
+                             Args, 2);
 }
 
 /// Generates a MethodList.  Used in construction of a objc_class and 

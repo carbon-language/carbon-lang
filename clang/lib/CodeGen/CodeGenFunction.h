@@ -24,12 +24,12 @@
 #include <vector>
 #include <map>
 
+#include "CGValue.h"
+
 namespace llvm {
   class BasicBlock;
   class Module;
 }
-
-#include "CGValue.h"
 
 namespace clang {
   class ASTContext;
@@ -286,6 +286,13 @@ public:
                       CallExpr::const_arg_iterator ArgBeg,
                       CallExpr::const_arg_iterator ArgEnd);
   
+  RValue EmitCallExprExt(llvm::Value *Callee, 
+                         QualType ResultType,
+                         CallExpr::const_arg_iterator ArgBeg,
+                         CallExpr::const_arg_iterator ArgEnd,
+                         llvm::Value **ExtraArgs,
+                         unsigned NumExtraArgs);
+  
   RValue EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E);
 
   llvm::Value *EmitX86BuiltinExpr(unsigned BuiltinID, const CallExpr *E);
@@ -298,7 +305,7 @@ public:
   llvm::Value *EmitObjCProtocolExpr(const ObjCProtocolExpr *E);
   llvm::Value *EmitObjCStringLiteral(const ObjCStringLiteral *E);
   llvm::Value *EmitObjCSelectorExpr(const ObjCSelectorExpr *E);
-  llvm::Value *EmitObjCMessageExpr(const ObjCMessageExpr *E);
+  RValue EmitObjCMessageExpr(const ObjCMessageExpr *E);
 
 
   //===--------------------------------------------------------------------===//

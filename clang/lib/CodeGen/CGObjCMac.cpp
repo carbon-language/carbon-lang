@@ -297,21 +297,15 @@ public:
   CGObjCMac(CodeGen::CodeGenModule &cgm);
   virtual llvm::Constant *GenerateConstantString(const std::string &String);
 
-  virtual llvm::Value *GenerateMessageSend(llvm::IRBuilder<> &Builder,
-                                           const llvm::Type *ReturnTy,
-                                           llvm::Value *Receiver,
-                                           Selector Sel,
-                                           llvm::Value** ArgV,
-                                           unsigned ArgC);
+  virtual CodeGen::RValue GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
+                                              const ObjCMessageExpr *E,
+                                              llvm::Value *Receiver);
 
-  virtual llvm::Value *
-  GenerateMessageSendSuper(llvm::IRBuilder<> &Builder,
-                           const llvm::Type *ReturnTy,
+  virtual CodeGen::RValue 
+  GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
+                           const ObjCMessageExpr *E,
                            const ObjCInterfaceDecl *SuperClass,
-                           llvm::Value *Receiver,
-                           Selector Sel,
-                           llvm::Value** ArgV,
-                           unsigned ArgC);
+                           llvm::Value *Receiver);
   
   virtual llvm::Value *GetClass(llvm::IRBuilder<> &Builder,
                                 const ObjCInterfaceDecl *ID);
@@ -422,30 +416,24 @@ llvm::Constant *CGObjCMac::GenerateConstantString(const std::string &String) {
 /// Generates a message send where the super is the receiver.  This is
 /// a message send to self with special delivery semantics indicating
 /// which class's method should be called.
-llvm::Value *
-CGObjCMac::GenerateMessageSendSuper(llvm::IRBuilder<> &Builder,
-                                    const llvm::Type *ReturnTy,
+CodeGen::RValue
+CGObjCMac::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
+                                    const ObjCMessageExpr *E,
                                     const ObjCInterfaceDecl *SuperClass,
-                                    llvm::Value *Receiver,
-                                    Selector Sel,
-                                    llvm::Value** ArgV,
-                                    unsigned ArgC) {
+                                    llvm::Value *Receiver) {
   assert(0 && "Cannot generate message send to super for Mac runtime.");
-  return 0;
+  return CodeGen::RValue::get(0);
 }
 
 /// Generate code for a message send expression.  
-llvm::Value *CGObjCMac::GenerateMessageSend(llvm::IRBuilder<> &Builder,
-                                            const llvm::Type *ReturnTy,
-                                            llvm::Value *Receiver,
-                                            Selector Sel,
-                                            llvm::Value** ArgV,
-                                            unsigned ArgC) {
+CodeGen::RValue CGObjCMac::GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
+                                               const ObjCMessageExpr *E,
+                                               llvm::Value *Receiver) {
+  const llvm::Type *ReturnTy = CGM.getTypes().ConvertType(E->getType());
   llvm::Function *F = ObjCTypes.getMessageSendFn();
-  llvm::Value **Args = new llvm::Value*[ArgC+2];
-  Args[0] = Builder.CreateBitCast(Receiver, ObjCTypes.ObjectPtrTy, "tmp");
-  Args[1] = EmitSelector(Builder, Sel);
-  std::copy(ArgV, ArgV+ArgC, Args+2);
+  llvm::Value *Args[2];
+  Args[0] = CGF.Builder.CreateBitCast(Receiver, ObjCTypes.ObjectPtrTy, "tmp");
+  Args[1] = EmitSelector(CGF.Builder, E->getSelector());
 
   std::vector<const llvm::Type*> Params;
   Params.push_back(ObjCTypes.ObjectPtrTy);
@@ -455,10 +443,10 @@ llvm::Value *CGObjCMac::GenerateMessageSend(llvm::IRBuilder<> &Builder,
                                                         true);
   llvm::Type *PCallFTy = llvm::PointerType::getUnqual(CallFTy);
   llvm::Constant *C = llvm::ConstantExpr::getBitCast(F, PCallFTy);
-  llvm::CallInst *CI = Builder.CreateCall(C, 
-                                          Args, Args+ArgC+2, "tmp");
-  delete[] Args;
-  return Builder.CreateBitCast(CI, ReturnTy, "tmp");
+  return CGF.EmitCallExprExt(C, E->getType(),
+                             E->arg_begin(),
+                             E->arg_end(),
+                             Args, 2);
 }
 
 llvm::Value *CGObjCMac::GenerateProtocolRef(llvm::IRBuilder<> &Builder, 
@@ -1185,7 +1173,7 @@ llvm::Function *CGObjCMac::GenerateMethod(const ObjCMethodDecl *OMD) {
          i = OMD->param_begin(), e = OMD->param_end();
        i != e; ++i) {
     const llvm::Type *Ty = CGM.getTypes().ConvertType((*i)->getType());
-    if (Ty->isFirstClassType()) {
+    if (Ty->isSingleValueType()) {
       ArgTys.push_back(Ty);
     } else {
       ArgTys.push_back(llvm::PointerType::getUnqual(Ty));
@@ -1203,8 +1191,21 @@ llvm::Function *CGObjCMac::GenerateMethod(const ObjCMethodDecl *OMD) {
                            Name,
                            &CGM.getModule());
 
-  if (useStructRet)
+  unsigned Offset = 3; // Return plus self and selector implicit args.
+  if (useStructRet) {
     Method->addParamAttr(1, llvm::ParamAttr::StructRet);
+    ++Offset;
+  }
+
+  // FIXME: This is horrible, we need to be reusing the machinery in
+  // CodeGenModule.cpp (SetFunctionAttributes).
+  for (ObjCMethodDecl::param_const_iterator 
+         i = OMD->param_begin(), e = OMD->param_end();
+       i != e; ++i, ++Offset) {
+    const llvm::Type *Ty = CGM.getTypes().ConvertType((*i)->getType());
+    if (!Ty->isSingleValueType())
+      Method->addParamAttr(Offset, llvm::ParamAttr::ByVal);
+  }
 
   return Method;
 }

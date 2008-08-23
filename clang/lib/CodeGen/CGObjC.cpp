@@ -42,7 +42,7 @@ llvm::Value *CodeGenFunction::EmitObjCProtocolExpr(const ObjCProtocolExpr *E) {
 }
 
 
-llvm::Value *CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E) {
+RValue CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E) {
   // Only the lookup mechanism and first two arguments of the method
   // implementation vary between runtimes.  We can get the receiver and
   // arguments in generic code.
@@ -74,38 +74,14 @@ llvm::Value *CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E) {
     Receiver = EmitScalarExpr(E->getReceiver());
   }
 
-  // Process the arguments
-  unsigned ArgC = E->getNumArgs();
-  llvm::SmallVector<llvm::Value*, 16> Args;
-  for (unsigned i = 0; i != ArgC; ++i) {
-    const Expr *ArgExpr = E->getArg(i);
-    QualType ArgTy = ArgExpr->getType();
-    if (!hasAggregateLLVMType(ArgTy)) {
-      // Scalar argument is passed by-value.
-      Args.push_back(EmitScalarExpr(ArgExpr));
-    } else if (ArgTy->isAnyComplexType()) {
-      // Make a temporary alloca to pass the argument.
-      llvm::Value *DestMem = CreateTempAlloca(ConvertType(ArgTy));
-      EmitComplexExprIntoAddr(ArgExpr, DestMem, false);
-      Args.push_back(DestMem);
-    } else {
-      llvm::Value *DestMem = CreateTempAlloca(ConvertType(ArgTy));
-      EmitAggExpr(ArgExpr, DestMem, false);
-      Args.push_back(DestMem);
-    }
-  }
-
   if (isSuperMessage) {
     // super is only valid in an Objective-C method
     const ObjCMethodDecl *OMD = cast<ObjCMethodDecl>(CurFuncDecl);
-    return Runtime.GenerateMessageSendSuper(Builder, ConvertType(E->getType()),
-                                             OMD->getClassInterface()->getSuperClass(),
-                                             Receiver, E->getSelector(),
-                                             &Args[0], Args.size());
+    return Runtime.GenerateMessageSendSuper(*this, E,
+                                            OMD->getClassInterface()->getSuperClass(),
+                                            Receiver);
   }
-  return Runtime.GenerateMessageSend(Builder, ConvertType(E->getType()),
-                                      Receiver, E->getSelector(),
-                                      &Args[0], Args.size());
+  return Runtime.GenerateMessageSend(*this, E, Receiver);
 }
 
 /// Generate an Objective-C method.  An Objective-C method is a C function with

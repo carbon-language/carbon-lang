@@ -202,10 +202,12 @@ void AggExprEmitter::VisitCallExpr(const CallExpr *E) {
 }
 
 void AggExprEmitter::VisitObjCMessageExpr(ObjCMessageExpr *E) {
-  RValue RV = RValue::getAggregate(CGF.EmitObjCMessageExpr(E));
+  RValue RV = CGF.EmitObjCMessageExpr(E);
+  assert(RV.isAggregate() && "Return value must be aggregate value!");
 
   // If the result is ignored, don't copy from the value.
   if (DestPtr == 0)
+    // FIXME: If the source is volatile, we must read from it.
     return;
   
   EmitAggregateCopy(DestPtr, RV.getAggregateAddr(), E->getType());

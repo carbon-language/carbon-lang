@@ -20,6 +20,8 @@
 #include "llvm/Support/IRBuilder.h"
 #include <string>
 
+#include "CGValue.h"
+
 namespace llvm {
   class Constant;
   class Type;
@@ -29,9 +31,14 @@ namespace llvm {
 }
 
 namespace clang {
+  namespace CodeGen {
+    class CodeGenFunction;
+  }
+
   class ObjCCategoryImplDecl;
   class ObjCImplementationDecl;
   class ObjCInterfaceDecl;
+  class ObjCMessageExpr;
   class ObjCMethodDecl;
   class ObjCProtocolDecl;
   class Selector;
@@ -70,23 +77,18 @@ public:
   virtual void GenerateClass(const ObjCImplementationDecl *OID) = 0;
   
   /// Generate an Objective-C message send operation.
-  virtual llvm::Value *GenerateMessageSend(BuilderType &Builder,
-                                           const llvm::Type *ReturnTy,
-                                           llvm::Value *Receiver,
-                                           Selector Sel,
-                                           llvm::Value** ArgV,
-                                           unsigned ArgC) = 0;
+  virtual CodeGen::RValue 
+  GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
+                      const ObjCMessageExpr *E,
+                      llvm::Value *Receiver) = 0;
 
   /// Generate an Objective-C message send operation to the super
   /// class.
-  virtual llvm::Value *
-  GenerateMessageSendSuper(llvm::IRBuilder<true> &Builder,
-                           const llvm::Type *ReturnTy,
-                           const ObjCInterfaceDecl *SuperClassName,
-                           llvm::Value *Receiver,
-                           Selector Sel,
-                           llvm::Value** ArgV,
-                           unsigned ArgC) = 0;
+  virtual CodeGen::RValue
+  GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
+                           const ObjCMessageExpr *E,
+                           const ObjCInterfaceDecl *SuperClass,
+                           llvm::Value *Receiver) = 0;
 
   /// Emit the code to return the named protocol as an object, as in a
   /// @protocol expression.

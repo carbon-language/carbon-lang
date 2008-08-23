@@ -776,7 +776,15 @@ RValue CodeGenFunction::EmitCallExpr(llvm::Value *Callee, QualType FnType,
   // type.
   FnType = FnType->getAsPointerType()->getPointeeType();
   QualType ResultType = FnType->getAsFunctionType()->getResultType();
+  return EmitCallExprExt(Callee, ResultType, ArgBeg, ArgEnd, 0, 0);
+}
 
+RValue CodeGenFunction::EmitCallExprExt(llvm::Value *Callee, 
+                                     QualType ResultType, 
+                                     CallExpr::const_arg_iterator ArgBeg,
+                                     CallExpr::const_arg_iterator ArgEnd,
+                                     llvm::Value **ExtraArgs,
+                                     unsigned NumExtraArgs) {
   llvm::SmallVector<llvm::Value*, 16> Args;
   
   // Handle struct-return functions by passing a pointer to the location that
@@ -787,6 +795,8 @@ RValue CodeGenFunction::EmitCallExpr(llvm::Value *Callee, QualType FnType,
     // FIXME: set the stret attribute on the argument.
   }
   
+  Args.insert(Args.end(), ExtraArgs, ExtraArgs + NumExtraArgs);
+
   for (CallExpr::const_arg_iterator I = ArgBeg; I != ArgEnd; ++I) {
     QualType ArgTy = I->getType();
 
@@ -812,7 +822,7 @@ RValue CodeGenFunction::EmitCallExpr(llvm::Value *Callee, QualType FnType,
   if (hasAggregateLLVMType(ResultType))
     ParamAttrList.push_back(
         llvm::ParamAttrsWithIndex::get(1, llvm::ParamAttr::StructRet));
-  unsigned increment = hasAggregateLLVMType(ResultType) ? 2 : 1;
+  unsigned increment = NumExtraArgs + (hasAggregateLLVMType(ResultType) ? 2 : 1);
   
   unsigned i = 0;
   for (CallExpr::const_arg_iterator I = ArgBeg; I != ArgEnd; ++I, ++i) {
