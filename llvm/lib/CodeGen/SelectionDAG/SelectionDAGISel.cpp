@@ -2814,16 +2814,17 @@ void SelectionDAGLowering::visitGetElementPtr(User &I) {
 
       // If this is a multiply by a power of two, turn it into a shl
       // immediately.  This is a very common case.
-      if (isPowerOf2_64(ElementSize)) {
-        unsigned Amt = Log2_64(ElementSize);
-        IdxN = DAG.getNode(ISD::SHL, N.getValueType(), IdxN,
-                           DAG.getConstant(Amt, TLI.getShiftAmountTy()));
-        N = DAG.getNode(ISD::ADD, N.getValueType(), N, IdxN);
-        continue;
+      if (ElementSize != 1) {
+        if (isPowerOf2_64(ElementSize)) {
+          unsigned Amt = Log2_64(ElementSize);
+          IdxN = DAG.getNode(ISD::SHL, N.getValueType(), IdxN,
+                             DAG.getConstant(Amt, TLI.getShiftAmountTy()));
+        } else {
+          SDValue Scale = DAG.getIntPtrConstant(ElementSize);
+          IdxN = DAG.getNode(ISD::MUL, N.getValueType(), IdxN, Scale);
+        }
       }
-      
-      SDValue Scale = DAG.getIntPtrConstant(ElementSize);
-      IdxN = DAG.getNode(ISD::MUL, N.getValueType(), IdxN, Scale);
+
       N = DAG.getNode(ISD::ADD, N.getValueType(), N, IdxN);
     }
   }
