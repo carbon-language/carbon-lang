@@ -320,7 +320,7 @@ namespace llvm {
     FunctionLoweringInfo(TargetLowering &TLI, Function &Fn,MachineFunction &MF);
 
     /// MBBMap - A mapping from LLVM basic blocks to their machine code entry.
-    std::map<const BasicBlock*, MachineBasicBlock *> MBBMap;
+    DenseMap<const BasicBlock*, MachineBasicBlock *> MBBMap;
 
     /// ValueMap - Since we emit code for the function a basic block at a time,
     /// we must remember which virtual registers hold the values for
@@ -330,7 +330,7 @@ namespace llvm {
     /// StaticAllocaMap - Keep track of frame indices for fixed sized allocas in
     /// the entry block.  This allows the allocas to be efficiently referenced
     /// anywhere in the function.
-    std::map<const AllocaInst*, int> StaticAllocaMap;
+    DenseMap<const AllocaInst*, int> StaticAllocaMap;
 
 #ifndef NDEBUG
     SmallSet<Instruction*, 8> CatchInfoLost;
@@ -1256,7 +1256,7 @@ SDValue SelectionDAGLowering::getValue(const Value *V) {
   // If this is a static alloca, generate it as the frameindex instead of
   // computation.
   if (const AllocaInst *AI = dyn_cast<AllocaInst>(V)) {
-    std::map<const AllocaInst*, int>::iterator SI =
+    DenseMap<const AllocaInst*, int>::iterator SI =
       FuncInfo.StaticAllocaMap.find(AI);
     if (SI != FuncInfo.StaticAllocaMap.end())
       return DAG.getFrameIndex(SI->second, TLI.getPointerTy());

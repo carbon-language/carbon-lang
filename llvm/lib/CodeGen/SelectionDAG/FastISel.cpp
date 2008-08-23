@@ -145,7 +145,7 @@ BasicBlock::iterator
 FastISel::SelectInstructions(BasicBlock::iterator Begin,
                              BasicBlock::iterator End,
                              DenseMap<const Value*, unsigned> &ValueMap,
-                             std::map<const BasicBlock*,
+                             DenseMap<const BasicBlock*,
                                       MachineBasicBlock *> &MBBMap,
                              MachineBasicBlock *mbb) {
   MBB = mbb;
