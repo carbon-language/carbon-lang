@@ -36,7 +36,6 @@
 #include "llvm/Support/ManagedStatic.h"
 #include <fstream>
 #include <iostream>
-
 using namespace llvm;
 
 //Command line options
@@ -87,8 +86,8 @@ int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, " BrainF compiler\n");
 
   if (InputFilename == "") {
-    cerr<<"Error: You must specify the filename of the program to "
-          "be compiled.  Use --help to see the options.\n";
+    std::cerr<<"Error: You must specify the filename of the program to "
+    "be compiled.  Use --help to see the options.\n";
     abort();
   }
 
@@ -130,13 +129,13 @@ int main(int argc, char **argv) {
 
   //Verify generated code
   if (verifyModule(*mod)) {
-    cerr<<"Error: module failed verification.  This shouldn't happen.\n";
+    std::cerr<<"Error: module failed verification.  This shouldn't happen.\n";
     abort();
   }
 
   //Write it out
   if (JIT) {
-    cout<<"------- Running JIT -------\n";
+    std::cout << "------- Running JIT -------\n";
     ExistingModuleProvider *mp = new ExistingModuleProvider(mod);
     ExecutionEngine *ee = ExecutionEngine::create(mp, false);
     std::vector<GenericValue> args;

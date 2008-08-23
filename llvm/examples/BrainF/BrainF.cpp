@@ -27,7 +27,7 @@
 #include "llvm/Constants.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/ADT/STLExtras.h"
-
+#include <iostream>
 using namespace llvm;
 
 //Set the constants for naming
@@ -291,7 +291,7 @@ void BrainF::readloop(PHINode *phi, BasicBlock *oldbb, BasicBlock *testbb) {
         break;
 
       default:
-        cerr<<"Error: Unknown symbol.\n";
+        std::cerr << "Error: Unknown symbol.\n";
         abort();
         break;
     }
@@ -404,7 +404,7 @@ void BrainF::readloop(PHINode *phi, BasicBlock *oldbb, BasicBlock *testbb) {
 
   if (cursym == SYM_ENDLOOP) {
     if (!phi) {
-      cerr<<"Error: Extra ']'\n";
+      std::cerr << "Error: Extra ']'\n";
       abort();
     }
 
@@ -450,7 +450,7 @@ void BrainF::readloop(PHINode *phi, BasicBlock *oldbb, BasicBlock *testbb) {
   builder->CreateBr(endbb);
 
   if (phi) {
-    cerr<<"Error: Missing ']'\n";
+    std::cerr << "Error: Missing ']'\n";
     abort();
   }
 }
