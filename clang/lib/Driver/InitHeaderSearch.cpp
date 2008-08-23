@@ -141,6 +141,9 @@ void InitHeaderSearch::AddDefaultSystemIncludePaths(const LangOptions &Lang) {
     AddPath("/usr/include/c++/4.3.1/backward", System, true, false, false);
     AddPath("/usr/include/c++/4.3.1/x86_64-unknown-linux-gnu", System, true,
         false, false);
+
+    // DragonFly
+    AddPath("/usr/include/c++/4.1", System, true, false, false);
   }
 
   AddPath("/usr/local/include", System, false, false, false);
@@ -205,6 +208,9 @@ void InitHeaderSearch::AddDefaultSystemIncludePaths(const LangOptions &Lang) {
   // Gentoo x86 stable
   AddPath("/usr/lib/gcc/i686-pc-linux-gnu/4.1.2/include", System,
       false, false, false);
+
+  // DragonFly
+  AddPath("/usr/libdata/gcc41", System, true, false, false);
 
   AddPath("/usr/include", System, false, false, false);
   AddPath("/System/Library/Frameworks", System, true, false, true);
