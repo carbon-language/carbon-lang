@@ -1097,8 +1097,7 @@ public:
       ConstantClass *Result =
         ConstantCreator<ConstantClass,TypeClass,ValType>::create(Ty, V);
 
-      /// FIXME: why does this assert fail when loading 176.gcc?
-      //assert(Result->getType() == Ty && "Type specified is not correct!");
+      assert(Result->getType() == Ty && "Type specified is not correct!");
       I = Map.insert(I, std::make_pair(MapKey(Ty, V), Result));
 
       if (HasLargeKey)  // Remember the reverse mapping if needed.
