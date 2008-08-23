@@ -272,7 +272,9 @@ public:
   LValue EmitLValueForField(llvm::Value* Base, FieldDecl* Field,
                             bool isUnion, unsigned CVRQualifiers);
       
+  LValue EmitObjCMessageExprLValue(const ObjCMessageExpr *E);
   LValue EmitObjCIvarRefLValue(const ObjCIvarRefExpr *E);
+
   //===--------------------------------------------------------------------===//
   //                         Scalar Expression Emission
   //===--------------------------------------------------------------------===//

@@ -104,8 +104,17 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
   case Expr::StringLiteralClass:
     return EmitStringLiteralLValue(cast<StringLiteral>(E));
 
+  case Expr::ObjCMessageExprClass:
+    return EmitObjCMessageExprLValue(cast<ObjCMessageExpr>(E));
   case Expr::ObjCIvarRefExprClass: 
     return EmitObjCIvarRefLValue(cast<ObjCIvarRefExpr>(E));
+  case Expr::ObjCPropertyRefExprClass: {
+    // FIXME: Implement!
+    ErrorUnsupported(E, "l-value expression (Objective-C property reference)");
+    llvm::Type *Ty = llvm::PointerType::getUnqual(ConvertType(E->getType()));
+    return LValue::MakeAddr(llvm::UndefValue::get(Ty),
+                            E->getType().getCVRQualifiers());
+  }
     
   case Expr::UnaryOperatorClass: 
     return EmitUnaryOpLValue(cast<UnaryOperator>(E));
@@ -729,6 +738,14 @@ RValue CodeGenFunction::EmitCallExpr(Expr *FnExpr,
 LValue CodeGenFunction::EmitCallExprLValue(const CallExpr *E) {
   // Can only get l-value for call expression returning aggregate type
   RValue RV = EmitCallExpr(E);
+  // FIXME: can this be volatile?
+  return LValue::MakeAddr(RV.getAggregateAddr(),
+                          E->getType().getCVRQualifiers());
+}
+
+LValue CodeGenFunction::EmitObjCMessageExprLValue(const ObjCMessageExpr *E) {
+  // Can only get l-value for message expression returning aggregate type
+  RValue RV = EmitObjCMessageExpr(E);
   // FIXME: can this be volatile?
   return LValue::MakeAddr(RV.getAggregateAddr(),
                           E->getType().getCVRQualifiers());

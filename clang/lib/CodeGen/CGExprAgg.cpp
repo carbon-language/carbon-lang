@@ -88,7 +88,13 @@ public:
   void VisitBinComma(const BinaryOperator *E);
 
   void VisitObjCMessageExpr(ObjCMessageExpr *E);
-
+  void VisitObjCIvarRefExpr(ObjCIvarRefExpr *E) {
+    EmitAggLoadOfLValue(E);
+  }
+  void VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *E) {
+    // FIXME: Implement!
+    CGF.ErrorUnsupported(E, "aggregate expression (Objective-C property reference)");
+  }
   
   void VisitConditionalOperator(const ConditionalOperator *CO);
   void VisitInitListExpr(InitListExpr *E);

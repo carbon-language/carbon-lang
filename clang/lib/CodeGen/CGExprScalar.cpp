@@ -134,6 +134,13 @@ public:
   Value *VisitObjCSelectorExpr(ObjCSelectorExpr *E);
   Value *VisitObjCProtocolExpr(ObjCProtocolExpr *E);
   Value *VisitObjCIvarRefExpr(ObjCIvarRefExpr *E) { return EmitLoadOfLValue(E);}
+  Value *VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *E) {
+    CGF.ErrorUnsupported(E, "scalar expression (Objective-C property reference)");
+    if (E->getType()->isVoidType())
+      return 0;
+    return llvm::UndefValue::get(CGF.ConvertType(E->getType()));    
+  }
+
   Value *VisitArraySubscriptExpr(ArraySubscriptExpr *E);
   Value *VisitShuffleVectorExpr(ShuffleVectorExpr *E);
   Value *VisitMemberExpr(Expr *E)           { return EmitLoadOfLValue(E); }
