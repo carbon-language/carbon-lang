@@ -274,7 +274,10 @@ void Parser::Initialize() {
 /// action tells us to.  This returns true if the EOF was encountered.
 bool Parser::ParseTopLevelDecl(DeclTy*& Result) {
   Result = 0;
-  if (Tok.is(tok::eof)) return true;
+  if (Tok.is(tok::eof)) {
+    Actions.ActOnEndOfTranslationUnit();
+    return true;
+  }
 
   Result = ParseExternalDeclaration();
   return false;
@@ -293,8 +296,6 @@ void Parser::ParseTranslationUnit() {
   
   ExitScope();
   assert(CurScope == 0 && "Scope imbalance!");
-  
-  Actions.ActOnEndOfTranslationUnit();
 }
 
 /// ParseExternalDeclaration:

@@ -129,6 +129,14 @@ void Sema::DeleteStmt(StmtTy *S) {
   delete static_cast<Stmt*>(S);
 }
 
+/// ActOnEndOfTranslationUnit - This is called at the very end of the
+/// translation unit when EOF is reached and all but the top-level scope is
+/// popped.
+void Sema::ActOnEndOfTranslationUnit() {
+
+}
+
+
 //===----------------------------------------------------------------------===//
 // Helper functions.
 //===----------------------------------------------------------------------===//

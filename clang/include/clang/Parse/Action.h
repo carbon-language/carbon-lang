@@ -181,6 +181,9 @@ public:
     return 0;
   }
   
+  /// ActOnEndOfTranslationUnit - This is called at the very end of the
+  /// translation unit when EOF is reached and all but the top-level scope is
+  /// popped.
   virtual void ActOnEndOfTranslationUnit() {}
   
   //===--------------------------------------------------------------------===//

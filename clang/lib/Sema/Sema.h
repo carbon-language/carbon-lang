@@ -197,6 +197,8 @@ public:
   virtual void DeleteExpr(ExprTy *E);
   virtual void DeleteStmt(StmtTy *S);
 
+  virtual void ActOnEndOfTranslationUnit();
+  
   //===--------------------------------------------------------------------===//
   // Type Analysis / Processing: SemaType.cpp.
   //
