@@ -720,6 +720,9 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
     Result.setIsUnsigned(!getType()->isSignedIntegerType());
     break;
   }
+  case CXXZeroInitValueExprClass:
+    Result.clear();
+    break;
   case TypesCompatibleExprClass: {
     const TypesCompatibleExpr *TCE = cast<TypesCompatibleExpr>(this);
     Result.zextOrTrunc(static_cast<uint32_t>(Ctx.getTypeSize(getType())));

@@ -61,6 +61,9 @@ public:
   llvm::Constant *VisitCXXBoolLiteralExpr(const CXXBoolLiteralExpr *E) {
     return llvm::ConstantInt::get(ConvertType(E->getType()), E->getValue());
   }
+  llvm::Constant *VisitCXXZeroInitValueExpr(const CXXZeroInitValueExpr *E) {
+    return llvm::Constant::getNullValue(ConvertType(E->getType()));
+  }
   llvm::Constant *VisitObjCStringLiteral(const ObjCStringLiteral *E) {
     std::string S(E->getString()->getStrData(), 
                   E->getString()->getByteLength());

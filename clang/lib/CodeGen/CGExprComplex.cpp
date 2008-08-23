@@ -124,6 +124,12 @@ public:
   ComplexPairTy VisitCXXDefaultArgExpr(CXXDefaultArgExpr *DAE) {
     return Visit(DAE->getExpr());
   }
+  ComplexPairTy VisitCXXZeroInitValueExpr(CXXZeroInitValueExpr *E) {
+    assert(E->getType()->isAnyComplexType() && "Expected complex type!");
+    QualType Elem = E->getType()->getAsComplexType()->getElementType();
+    llvm::Constant *Null = llvm::Constant::getNullValue(CGF.ConvertType(Elem));
+    return ComplexPairTy(Null, Null);
+  }
   
   struct BinOpInfo {
     ComplexPairTy LHS;
