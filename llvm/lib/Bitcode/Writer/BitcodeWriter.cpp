@@ -23,6 +23,7 @@
 #include "llvm/TypeSymbolTable.h"
 #include "llvm/ValueSymbolTable.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Support/Streams.h"
 #include "llvm/System/Program.h"
 using namespace llvm;
 
