@@ -857,6 +857,7 @@ public:
     switch (T->getStmtClass()) {
     case ImplicitCastExprClass:
     case ExplicitCastExprClass:
+    case CXXFunctionalCastExprClass:
       return true;
     default:
       return false;
