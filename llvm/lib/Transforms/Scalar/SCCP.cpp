@@ -224,10 +224,8 @@ public:
   /// should be rerun.
   bool ResolvedUndefsIn(Function &F);
 
-  /// getExecutableBlocks - Once we have solved for constants, return the set of
-  /// blocks that is known to be executable.
-  DenseSet<BasicBlock*> &getExecutableBlocks() {
-    return BBExecutable;
+  bool isBlockExecutable(BasicBlock *BB) const {
+    return BBExecutable.count(BB);
   }
 
   /// getValueMapping - Once we have solved for constants, return the mapping of
@@ -1550,12 +1548,11 @@ bool SCCP::runOnFunction(Function &F) {
   // delete their contents now.  Note that we cannot actually delete the blocks,
   // as we cannot modify the CFG of the function.
   //
-  DenseSet<BasicBlock*> &ExecutableBBs = Solver.getExecutableBlocks();
   SmallVector<Instruction*, 512> Insts;
   std::map<Value*, LatticeVal> &Values = Solver.getValueMapping();
 
   for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
-    if (!ExecutableBBs.count(BB)) {
+    if (!Solver.isBlockExecutable(BB)) {
       DOUT << "  BasicBlock Dead:" << *BB;
       ++NumDeadBlocks;
 
@@ -1695,7 +1692,6 @@ bool IPSCCP::runOnModule(Module &M) {
   // Iterate over all of the instructions in the module, replacing them with
   // constants if we have found them to be of constant values.
   //
-  DenseSet<BasicBlock*> &ExecutableBBs = Solver.getExecutableBlocks();
   SmallVector<Instruction*, 512> Insts;
   SmallVector<BasicBlock*, 512> BlocksToErase;
   std::map<Value*, LatticeVal> &Values = Solver.getValueMapping();
@@ -1718,7 +1714,7 @@ bool IPSCCP::runOnModule(Module &M) {
       }
 
     for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
-      if (!ExecutableBBs.count(BB)) {
+      if (!Solver.isBlockExecutable(BB)) {
         DOUT << "  BasicBlock Dead:" << *BB;
         ++IPNumDeadBlocks;
 
