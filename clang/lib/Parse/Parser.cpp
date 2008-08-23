@@ -285,7 +285,7 @@ bool Parser::ParseTopLevelDecl(DeclTy*& Result) {
 ///         external-declaration
 ///         translation-unit external-declaration
 void Parser::ParseTranslationUnit() {
-  Initialize();
+  Initialize();  // pushes a scope.
 
   DeclTy *Res;
   while (!ParseTopLevelDecl(Res))
@@ -293,6 +293,8 @@ void Parser::ParseTranslationUnit() {
   
   ExitScope();
   assert(CurScope == 0 && "Scope imbalance!");
+  
+  Actions.ActOnEndOfTranslationUnit();
 }
 
 /// ParseExternalDeclaration:
