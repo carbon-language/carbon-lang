@@ -501,6 +501,8 @@ public:
     PPC32TargetInfo::getTargetDefines(Defines);
     getDarwinDefines(Defines);
   }
+
+  virtual bool useNeXTRuntimeAsDefault() const { return true; }
 };
 } // end anonymous namespace.
 
@@ -512,6 +514,8 @@ public:
     PPC64TargetInfo::getTargetDefines(Defines);
     getDarwinDefines(Defines);
   }
+
+  virtual bool useNeXTRuntimeAsDefault() const { return true; }
 };
 } // end anonymous namespace.
 
@@ -656,6 +660,7 @@ public:
     X86_32TargetInfo::getTargetDefines(Defines);
     getDarwinDefines(Defines);
   }
+  virtual bool useNeXTRuntimeAsDefault() const { return true; }
 };
 } // end anonymous namespace
 
@@ -735,6 +740,8 @@ public:
     X86_64TargetInfo::getTargetDefines(Defines);
     getDarwinDefines(Defines);
   }
+
+  virtual bool useNeXTRuntimeAsDefault() const { return true; }
 };
 } // end anonymous namespace.
 

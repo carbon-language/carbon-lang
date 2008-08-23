@@ -206,8 +206,10 @@ public:
     const char * const Register;
   };
 
-  virtual bool useGlobalsForAutomaticVariables() const {return false;}
-  
+  virtual bool useGlobalsForAutomaticVariables() const { return false; }
+
+  virtual bool useNeXTRuntimeAsDefault() const { return false; }
+
 protected:
   virtual void getGCCRegNames(const char * const *&Names, 
                               unsigned &NumNames) const = 0;

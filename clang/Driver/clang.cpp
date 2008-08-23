@@ -387,7 +387,8 @@ NeXTRuntime("fnext-runtime",
 //   -trigraphs
 //   -fdollars-in-identifiers
 //   -fpascal-strings
-static void InitializeLanguageStandard(LangOptions &Options, LangKind LK) {
+static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
+                                       TargetInfo *Target) {
   if (LangStd == lang_unspecified) {
     // Based on the base language, pick one.
     switch (LK) {
@@ -454,8 +455,7 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK) {
   } else if (GNURuntime) {
     Options.NeXTRuntime = 0;
   } else {
-    // FIXME: Should autoselect based on platform.
-    Options.NeXTRuntime = 0;
+    Options.NeXTRuntime = Target->useNeXTRuntimeAsDefault();
   }
 }
 
@@ -1201,7 +1201,7 @@ int main(int argc, char **argv) {
       InitializeBaseLanguage();
       LangKind LK = GetLanguage(InFile);
       InitializeLangOptions(LangInfo, LK);
-      InitializeLanguageStandard(LangInfo, LK);
+      InitializeLanguageStandard(LangInfo, LK, Target.get());
       InitializeGCMode(LangInfo);
       
       // Process the -I options and set them in the HeaderInfo.
