@@ -47,6 +47,18 @@ static void getDarwinDefines(std::vector<char> &Defs) {
     Define(Defs, "__PASCAL_STRINGS__");
 }
 
+static void getDragonFlyDefines(std::vector<char> &Defs) {
+  // DragonFly defines; list based off of gcc output
+  Define(Defs, "__DragonFly__");
+  Define(Defs, "__DragonFly_cc_version", "100001");
+  Define(Defs, "__ELF__");
+  Define(Defs, "__KPRINTF_ATTRIBUTE__");
+  Define(Defs, "__tune_i386__");
+  Define(Defs, "unix");
+  Define(Defs, "__unix");
+  Define(Defs, "__unix__");
+}
+
 static void getLinuxDefines(std::vector<char> &Defs) {
   // Linux defines; list based off of gcc output
   Define(Defs, "__unix__");
@@ -665,6 +677,19 @@ public:
 } // end anonymous namespace
 
 namespace {
+// x86-32 DragonFly target
+class DragonFlyX86_32TargetInfo : public X86_32TargetInfo {
+public:
+  DragonFlyX86_32TargetInfo(const std::string& triple) : X86_32TargetInfo(triple) {
+  }
+  virtual void getTargetDefines(std::vector<char> &Defines) const {
+    X86_32TargetInfo::getTargetDefines(Defines);
+    getDragonFlyDefines(Defines);
+  }
+};
+} // end anonymous namespace
+
+namespace {
 // x86-32 Linux target
 class LinuxX86_32TargetInfo : public X86_32TargetInfo {
 public:
@@ -924,6 +949,7 @@ TargetInfo* TargetInfo::CreateTargetInfo(const std::string &T) {
   // OS detection; this isn't really anywhere near complete.
   // Additions and corrections are welcome.
   bool isDarwin = T.find("-darwin") != std::string::npos;
+  bool isDragonFly = T.find("-dragonfly") != std::string::npos;
   bool isSolaris = T.find("-solaris") != std::string::npos;
   bool isLinux = T.find("-linux") != std::string::npos;
   bool isWindows = T.find("-windows") != std::string::npos ||
@@ -968,6 +994,8 @@ TargetInfo* TargetInfo::CreateTargetInfo(const std::string &T) {
       return new DarwinI386TargetInfo(T);
     if (isLinux)
       return new LinuxX86_32TargetInfo(T);
+    if (isDragonFly)
+      return new DragonFlyX86_32TargetInfo(T);
     if (isWindows)
       return new WindowsX86_32TargetInfo(T);
     return new X86_32TargetInfo(T);
