@@ -31,26 +31,26 @@ Parser::DeclTy *Parser::ParseObjCAtDirectives() {
   SourceLocation AtLoc = ConsumeToken(); // the "@"
   
   switch (Tok.getObjCKeywordID()) {
-    case tok::objc_class:
-      return ParseObjCAtClassDeclaration(AtLoc);
-    case tok::objc_interface:
-      return ParseObjCAtInterfaceDeclaration(AtLoc);
-    case tok::objc_protocol:
-      return ParseObjCAtProtocolDeclaration(AtLoc);
-    case tok::objc_implementation:
-      return ParseObjCAtImplementationDeclaration(AtLoc);
-    case tok::objc_end:
-      return ParseObjCAtEndDeclaration(AtLoc);
-    case tok::objc_compatibility_alias:
-      return ParseObjCAtAliasDeclaration(AtLoc);
-    case tok::objc_synthesize:
-      return ParseObjCPropertySynthesize(AtLoc);
-    case tok::objc_dynamic:
-      return ParseObjCPropertyDynamic(AtLoc);
-    default:
-      Diag(AtLoc, diag::err_unexpected_at);
-      SkipUntil(tok::semi);
-      return 0;
+  case tok::objc_class:
+    return ParseObjCAtClassDeclaration(AtLoc);
+  case tok::objc_interface:
+    return ParseObjCAtInterfaceDeclaration(AtLoc);
+  case tok::objc_protocol:
+    return ParseObjCAtProtocolDeclaration(AtLoc);
+  case tok::objc_implementation:
+    return ParseObjCAtImplementationDeclaration(AtLoc);
+  case tok::objc_end:
+    return ParseObjCAtEndDeclaration(AtLoc);
+  case tok::objc_compatibility_alias:
+    return ParseObjCAtAliasDeclaration(AtLoc);
+  case tok::objc_synthesize:
+    return ParseObjCPropertySynthesize(AtLoc);
+  case tok::objc_dynamic:
+    return ParseObjCPropertyDynamic(AtLoc);
+  default:
+    Diag(AtLoc, diag::err_unexpected_at);
+    SkipUntil(tok::semi);
+    return 0;
   }
 }
 
@@ -511,7 +511,7 @@ bool Parser::isTokIdentifier_in() const {
   // valid tokens following an 'in'; such as an identifier, unary operators,
   // '[' etc.
   return (getLang().ObjC2 && Tok.is(tok::identifier) && 
-          Tok.getIdentifierInfo() == ObjCForCollectionInKW);
+          Tok.getIdentifierInfo() == ObjCTypeQuals[objc_in]);
 }
 
 /// ParseObjCTypeQualifierList - This routine parses the objective-c's type

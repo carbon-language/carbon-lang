@@ -354,7 +354,6 @@ private:
   IdentifierInfo *ObjCPropertyAttrs[objc_NumAttrs];
   bool isObjCPropertyAttribute();
   
-  IdentifierInfo *ObjCForCollectionInKW;
   bool isTokIdentifier_in() const;
 
   TypeTy *ParseObjCTypeName(ObjCDeclSpec &DS);
