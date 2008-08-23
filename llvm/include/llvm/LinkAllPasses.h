@@ -115,6 +115,7 @@ namespace {
       (void) llvm::createLoopDeletionPass();
       (void) llvm::createPostDomTree();
       (void) llvm::createPostDomFrontier();
+      (void) llvm::createInstructionNamerPass();
 
       (void)new llvm::IntervalPartition();
       (void)new llvm::FindUsedTypes();

@@ -325,6 +325,13 @@ FunctionPass *createSimplifyLibCallsPass();
 //
 FunctionPass *createCodeGenPreparePass(const TargetLowering *TLI = 0);
 
+  
+//===----------------------------------------------------------------------===//
+//
+// InstructionNamer - Give any unnamed non-void instructions "tmp" names.
+//
+FunctionPass *createInstructionNamerPass();
+  
 } // End llvm namespace
 
 #endif
