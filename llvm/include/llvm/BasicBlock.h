@@ -157,10 +157,6 @@ public:
   const InstListType &getInstList() const { return InstList; }
         InstListType &getInstList()       { return InstList; }
 
-  virtual void print(std::ostream &OS) const { print(OS, 0); }
-  void print(std::ostream *OS) const { if (OS) print(*OS); }
-  void print(std::ostream &OS, AssemblyAnnotationWriter *AAW) const;
-
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const BasicBlock *) { return true; }
   static inline bool classof(const Value *V) {

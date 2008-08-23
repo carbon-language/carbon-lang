@@ -21,6 +21,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Signals.h"
 #include <algorithm>
 #include <iostream>
@@ -71,12 +72,12 @@ namespace {
                      std::map<ProfileInfoLoader::Edge, unsigned> &EF)
       : FuncFreqs(FF), BlockFreqs(BF), EdgeFreqs(EF) {}
 
-    virtual void emitFunctionAnnot(const Function *F, std::ostream &OS) {
+    virtual void emitFunctionAnnot(const Function *F, raw_ostream &OS) {
       OS << ";;; %" << F->getName() << " called " << FuncFreqs[F]
          << " times.\n;;;\n";
     }
     virtual void emitBasicBlockStartAnnot(const BasicBlock *BB,
-                                          std::ostream &OS) {
+                                          raw_ostream &OS) {
       if (BlockFreqs.empty()) return;
       if (unsigned Count = BlockFreqs[BB])
         OS << "\t;;; Basic block executed " << Count << " times.\n";
@@ -84,7 +85,7 @@ namespace {
         OS << "\t;;; Never executed!\n";
     }
 
-    virtual void emitBasicBlockEndAnnot(const BasicBlock *BB, std::ostream &OS){
+    virtual void emitBasicBlockEndAnnot(const BasicBlock *BB, raw_ostream &OS) {
       if (EdgeFreqs.empty()) return;
 
       // Figure out how many times each successor executed.
@@ -235,7 +236,7 @@ int main(int argc, char **argv) {
       if (FunctionsToPrint.empty() || PrintAllCode)
         M->print(std::cout, &PA);
       else
-        // Print just a subset of the functions...
+        // Print just a subset of the functions.
         for (std::set<Function*>::iterator I = FunctionsToPrint.begin(),
                E = FunctionsToPrint.end(); I != E; ++I)
           (*I)->print(std::cout, &PA);

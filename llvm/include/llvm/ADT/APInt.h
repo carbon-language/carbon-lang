@@ -19,13 +19,13 @@
 #include "llvm/Support/MathExtras.h"
 #include <cassert>
 #include <cstring>
-#include <iosfwd>
 #include <string>
 
 namespace llvm {
   class Serializer;
   class Deserializer;
   class FoldingSetNodeID;
+  class raw_ostream;
   
   template<typename T>
   class SmallVectorImpl;
@@ -1115,8 +1115,7 @@ public:
   /// @}
   /// @name Conversion Functions
   /// @{
-
-  void print(std::ostream &OS, bool isSigned) const;
+  void print(raw_ostream &OS, bool isSigned) const;
   
   /// toString - Converts an APInt to a string and append it to Str.  Str is
   /// commonly a SmallString.
@@ -1385,7 +1384,7 @@ inline bool operator!=(uint64_t V1, const APInt& V2) {
   return V2 != V1;
 }
 
-inline std::ostream &operator<<(std::ostream &OS, const APInt &I) {
+inline raw_ostream &operator<<(raw_ostream &OS, const APInt &I) {
   I.print(OS, true);
   return OS;
 }

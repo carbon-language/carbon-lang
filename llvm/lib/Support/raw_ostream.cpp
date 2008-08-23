@@ -99,6 +99,12 @@ raw_ostream &raw_ostream::operator<<(long long N) {
   return this->operator<<(static_cast<unsigned long long>(N));
 }
 
+raw_ostream &raw_ostream::operator<<(const void *P) {
+  // FIXME: This could be much faster if it matters.
+  return *this << format("%p", P);
+}
+
+
 raw_ostream &raw_ostream::write(const char *Ptr, unsigned Size) {
   if (OutBufCur+Size > OutBufEnd)
     flush_impl();
@@ -249,6 +255,10 @@ raw_ostream &llvm::errs() {
 //===----------------------------------------------------------------------===//
 //  raw_os_ostream
 //===----------------------------------------------------------------------===//
+
+raw_os_ostream::~raw_os_ostream() {
+  flush();
+}
 
 /// flush_impl - The is the piece of the class that is implemented by
 /// subclasses.  This outputs the currently buffered data and resets the

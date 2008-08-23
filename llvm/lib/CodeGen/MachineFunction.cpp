@@ -28,6 +28,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/GraphWriter.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Config/config.h"
 #include <fstream>
@@ -525,6 +526,10 @@ unsigned MachineConstantPool::getConstantPoolIndex(MachineConstantPoolValue *V,
   return Constants.size()-1;
 }
 
+void MachineConstantPoolValue::print(std::ostream &o) const {
+  raw_os_ostream OS(o);
+  print(OS);
+}
 
 void MachineConstantPool::print(std::ostream &OS) const {
   for (unsigned i = 0, e = Constants.size(); i != e; ++i) {

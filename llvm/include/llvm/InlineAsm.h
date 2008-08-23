@@ -21,7 +21,6 @@
 
 namespace llvm {
 
-struct AssemblyAnnotationWriter;
 class PointerType;
 class FunctionType;
 class Module;
@@ -57,10 +56,6 @@ public:
   
   const std::string &getAsmString() const { return AsmString; }
   const std::string &getConstraintString() const { return Constraints; }
-
-  virtual void print(std::ostream &O) const { print(O, 0); }
-  void print(std::ostream *O) const { if (O) print(*O); }
-  void print(std::ostream &OS, AssemblyAnnotationWriter *AAW) const;
 
   /// Verify - This static method can be used by the parser to check to see if
   /// the specified constraint string is legal for the type.  This returns true

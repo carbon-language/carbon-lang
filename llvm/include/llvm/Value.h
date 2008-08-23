@@ -35,6 +35,8 @@ class ValueSymbolTable;
 class TypeSymbolTable;
 template<typename ValueTy> class StringMapEntry;
 typedef StringMapEntry<Value*> ValueName;
+class raw_ostream;
+class AssemblyAnnotationWriter;
 
 //===----------------------------------------------------------------------===//
 //                                 Value Class
@@ -76,10 +78,10 @@ public:
   //
   virtual void dump() const;
 
-  /// print - Implement operator<< on Value...
+  /// print - Implement operator<< on Value.
   ///
-  virtual void print(std::ostream &O) const = 0;
-  void print(std::ostream *O) const { if (O) print(*O); }
+  void print(std::ostream &O, AssemblyAnnotationWriter *AAW = 0) const;
+  void print(raw_ostream &O, AssemblyAnnotationWriter *AAW = 0) const;
 
   /// All values are typed, get the type of this value.
   ///
@@ -237,7 +239,11 @@ inline std::ostream &operator<<(std::ostream &OS, const Value &V) {
   V.print(OS);
   return OS;
 }
-
+inline raw_ostream &operator<<(raw_ostream &OS, const Value &V) {
+  V.print(OS);
+  return OS;
+}
+  
 void Use::init(Value *V, User *) {
   Val = V;
   if (V) V->addUse(*this);

@@ -69,7 +69,7 @@ public:
 
   virtual void AddSelectionDAGCSEId(FoldingSetNodeID &ID);
 
-  virtual void print(std::ostream &O) const;
+  virtual void print(raw_ostream &O) const;
 };
   
 }

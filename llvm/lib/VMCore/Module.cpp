@@ -88,11 +88,6 @@ Module::~Module() {
   delete TypeSymTab;
 }
 
-// Module::dump() - Allow printing from debugger
-void Module::dump() const {
-  print(*cerr.stream());
-}
-
 /// Target endian information...
 Module::Endianness Module::getEndianness() const {
   std::string temp = DataLayout;

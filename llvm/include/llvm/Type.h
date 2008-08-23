@@ -14,7 +14,6 @@
 #include "llvm/AbstractTypeUser.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/DataTypes.h"
-#include "llvm/Support/Streams.h"
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/iterator.h"
 #include <string>
@@ -26,6 +25,7 @@ class DerivedType;
 class PointerType;
 class IntegerType;
 class TypeMapBase;
+class raw_ostream;
 
 /// This file contains the declaration of the Type class.  For more "Type" type
 /// stuff, look in DerivedTypes.h.
@@ -156,6 +156,7 @@ protected:
   PATypeHandle *ContainedTys;
 
 public:
+  void print(raw_ostream &O) const;
   void print(std::ostream &O) const;
   void print(std::ostream *O) const { if (O) print(*O); }
 
@@ -450,6 +451,7 @@ template <> inline bool isa_impl<PointerType, Type>(const Type &Ty) {
 }
 
 std::ostream &operator<<(std::ostream &OS, const Type &T);
+raw_ostream &operator<<(raw_ostream &OS, const Type &T);
 
 } // End llvm namespace
 

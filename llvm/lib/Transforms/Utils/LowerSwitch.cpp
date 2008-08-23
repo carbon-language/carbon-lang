@@ -22,6 +22,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 using namespace llvm;
 
@@ -144,9 +145,10 @@ BasicBlock* LowerSwitch::switchConvert(CaseItr Begin, CaseItr End,
   DOUT << "RHS: " << RHS << "\n";
 
   CaseRange& Pivot = *(Begin + Mid);
-  DEBUG(cerr << "Pivot ==> " 
-             << cast<ConstantInt>(Pivot.Low)->getValue() << " -"
-             << cast<ConstantInt>(Pivot.High)->getValue() << "\n");
+  DEBUG(errs() << "Pivot ==> " 
+               << cast<ConstantInt>(Pivot.Low)->getValue() << " -"
+               << cast<ConstantInt>(Pivot.High)->getValue() << "\n";
+        errs().flush());
 
   BasicBlock* LBranch = switchConvert(LHS.begin(), LHS.end(), Val,
                                       OrigBlock, Default);

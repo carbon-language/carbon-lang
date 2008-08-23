@@ -922,7 +922,7 @@ namespace {
       void dump(std::ostream &os) const {
         os << "{";
         for (const_iterator I = begin(), E = end(); I != E; ++I) {
-          os << I->second << " (" << I->first->getDFSNumIn() << "), ";
+          os << &I->second << " (" << I->first->getDFSNumIn() << "), ";
         }
         os << "}";
       }

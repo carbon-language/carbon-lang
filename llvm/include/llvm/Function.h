@@ -301,10 +301,6 @@ public:
   size_t arg_size() const;
   bool arg_empty() const;
 
-  virtual void print(std::ostream &OS) const { print(OS, 0); }
-  void print(std::ostream *OS) const { if (OS) print(*OS); }
-  void print(std::ostream &OS, AssemblyAnnotationWriter *AAW) const;
-
   /// viewCFG - This function is meant for use from the debugger.  You can just
   /// say 'call F->viewCFG()' and a ghostview window should pop up from the
   /// program, displaying the CFG of the current function with the code for each

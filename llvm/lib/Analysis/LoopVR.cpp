@@ -6,6 +6,10 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+//
+// FIXME: What does this do?
+//
+//===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "loopvr"
 #include "llvm/Analysis/LoopVR.h"
@@ -15,13 +19,11 @@
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/Streams.h"
+#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
 char LoopVR::ID = 0;
-namespace {
 static RegisterPass<LoopVR> X("loopvr", "Loop Value Ranges", true, true);
-}
 
 /// getRange - determine the range for a particular SCEV within a given Loop
 ConstantRange LoopVR::getRange(SCEVHandle S, Loop *L, ScalarEvolution &SE) {
@@ -220,11 +222,10 @@ ConstantRange LoopVR::getRange(SCEVHandle S, SCEVHandle T, ScalarEvolution &SE){
 bool LoopVR::runOnFunction(Function &F) { Map.clear(); return false; }
 
 void LoopVR::print(std::ostream &os, const Module *) const {
+  raw_os_ostream OS(os);
   for (std::map<Value *, ConstantRange *>::const_iterator I = Map.begin(),
        E = Map.end(); I != E; ++I) {
-    os << *I->first << ": ";
-    I->second->print(os);
-    os << "\n";
+    OS << *I->first << ": " << *I->second << '\n';
   }
 }
 

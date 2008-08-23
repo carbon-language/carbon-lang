@@ -22,8 +22,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/ConstantRange.h"
-#include "llvm/Support/Streams.h"
-#include <ostream>
+#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
 /// Initialize a full (the default) or empty set for the specified type.
@@ -462,12 +461,12 @@ ConstantRange ConstantRange::truncate(uint32_t DstTySize) const {
 
 /// print - Print out the bounds to a stream...
 ///
-void ConstantRange::print(std::ostream &OS) const {
+void ConstantRange::print(raw_ostream &OS) const {
   OS << "[" << Lower << "," << Upper << ")";
 }
 
 /// dump - Allow printing from a debugger easily...
 ///
 void ConstantRange::dump() const {
-  print(cerr);
+  print(errs());
 }

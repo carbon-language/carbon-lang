@@ -133,9 +133,6 @@ public:
   /// replace constant initializers.
   virtual void replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U);
 
-  virtual void print(std::ostream &OS) const;
-  void print(std::ostream *OS) const { if (OS) print(*OS); }
-
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const GlobalVariable *) { return true; }
   static inline bool classof(const Value *V) {

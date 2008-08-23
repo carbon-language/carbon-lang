@@ -18,6 +18,7 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Support/raw_ostream.h"
 #include <cmath>
 #include <limits>
 #include <cstring>
@@ -41,8 +42,7 @@ inline static uint64_t* getMemory(uint32_t numWords) {
   return result;
 }
 
-void APInt::initSlowCase(uint32_t numBits, uint64_t val, bool isSigned) 
-{
+void APInt::initSlowCase(uint32_t numBits, uint64_t val, bool isSigned) {
   pVal = getClearedMemory(getNumWords());
   pVal[0] = val;
   if (isSigned && int64_t(val) < 0) 
@@ -51,7 +51,7 @@ void APInt::initSlowCase(uint32_t numBits, uint64_t val, bool isSigned)
 }
 
 APInt::APInt(uint32_t numBits, uint32_t numWords, const uint64_t bigVal[])
-  : BitWidth(numBits), VAL(0)  {
+  : BitWidth(numBits), VAL(0) {
   assert(BitWidth && "bitwidth too small");
   assert(bigVal && "Null pointer detected!");
   if (isSingleWord())
@@ -1995,12 +1995,11 @@ void APInt::dump() const {
   fprintf(stderr, "APInt(%db, %su %ss)", BitWidth, U.c_str(), S.c_str());
 }
 
-void APInt::print(std::ostream &OS, bool isSigned) const {
+void APInt::print(raw_ostream &OS, bool isSigned) const {
   SmallString<40> S;
   this->toString(S, 10, isSigned);
   OS << S.c_str();
 }
-
 
 // This implements a variety of operations on a representation of
 // arbitrary precision, two's-complement, bignum integer values.

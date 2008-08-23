@@ -96,7 +96,7 @@ public:
   raw_ostream &operator<<(long N);
   raw_ostream &operator<<(unsigned long long N);
   raw_ostream &operator<<(long long N);
-  
+  raw_ostream &operator<<(const void *P);
   raw_ostream &operator<<(unsigned int N) {
     return this->operator<<(static_cast<unsigned long>(N));
   }
@@ -201,7 +201,8 @@ class raw_os_ostream : public raw_ostream {
   std::ostream &OS;
 public:
   raw_os_ostream(std::ostream &O) : OS(O) {}
-  
+  ~raw_os_ostream();
+
   /// flush_impl - The is the piece of the class that is implemented by
   /// subclasses.  This outputs the currently buffered data and resets the
   /// buffer to empty.

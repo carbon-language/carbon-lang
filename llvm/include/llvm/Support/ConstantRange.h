@@ -32,8 +32,6 @@
 
 #include "llvm/ADT/APInt.h"
 #include "llvm/Support/DataTypes.h"
-#include "llvm/Support/Streams.h"
-#include <iosfwd>
 
 namespace llvm {
 
@@ -180,15 +178,14 @@ class ConstantRange {
 
   /// print - Print out the bounds to a stream...
   ///
-  void print(std::ostream &OS) const;
-  void print(std::ostream *OS) const { if (OS) print(*OS); }
+  void print(raw_ostream &OS) const;
 
   /// dump - Allow printing from a debugger easily...
   ///
   void dump() const;
 };
 
-inline std::ostream &operator<<(std::ostream &OS, const ConstantRange &CR) {
+inline raw_ostream &operator<<(raw_ostream &OS, const ConstantRange &CR) {
   CR.print(OS);
   return OS;
 }

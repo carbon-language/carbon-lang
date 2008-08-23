@@ -24,12 +24,14 @@ namespace llvm {
 class Type;
 class Module;
 class Value;
+class raw_ostream;
 
 // WriteTypeSymbolic - This attempts to write the specified type as a symbolic
 // type, iff there is an entry in the Module's symbol table for the specified
 // type or one of its component types.  This is slower than a simple x << Type;
 //
 void WriteTypeSymbolic(std::ostream &, const Type *, const Module *M);
+void WriteTypeSymbolic(raw_ostream &, const Type *, const Module *M);
 
 // WriteAsOperand - Write the name of the specified value out to the specified
 // ostream.  This can be useful when you just want to print int %reg126, not the
@@ -38,6 +40,8 @@ void WriteTypeSymbolic(std::ostream &, const Type *, const Module *M);
 // pointer is printed symbolically.
 //
 void WriteAsOperand(std::ostream &, const Value *, bool PrintTy = true,
+                    const Module *Context = 0);
+void WriteAsOperand(raw_ostream &, const Value *, bool PrintTy = true,
                     const Module *Context = 0);
 
 } // End llvm namespace

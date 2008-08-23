@@ -32,7 +32,7 @@
 #include "llvm/ExecutionEngine/JIT.h"
 #include "llvm/ExecutionEngine/Interpreter.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
-#include <iostream>
+#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
 static Function *CreateFibFunction(Module *M) {
@@ -100,15 +100,15 @@ int main(int argc, char **argv) {
   ExistingModuleProvider *MP = new ExistingModuleProvider(M);
   ExecutionEngine *EE = ExecutionEngine::create(MP, false);
 
-  std::cerr << "verifying... ";
+  errs() << "verifying... ";
   if (verifyModule(*M)) {
-    std::cerr << argv[0] << ": Error constructing function!\n";
+    errs() << argv[0] << ": Error constructing function!\n";
     return 1;
   }
 
-  std::cerr << "OK\n";
-  std::cerr << "We just constructed this LLVM module:\n\n---------\n" << *M;
-  std::cerr << "---------\nstarting fibonacci(" << n << ") with JIT...\n";
+  errs() << "OK\n";
+  errs() << "We just constructed this LLVM module:\n\n---------\n" << *M;
+  errs() << "---------\nstarting fibonacci(" << n << ") with JIT...\n";
 
   // Call the Fibonacci function with argument n:
   std::vector<GenericValue> Args(1);
@@ -116,6 +116,6 @@ int main(int argc, char **argv) {
   GenericValue GV = EE->runFunction(FibF, Args);
 
   // import result of execution
-  std::cout << "Result: " << GV.IntVal << "\n";
+  outs() << "Result: " << GV.IntVal << "\n";
   return 0;
 }

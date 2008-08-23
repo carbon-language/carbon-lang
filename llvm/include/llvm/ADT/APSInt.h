@@ -239,7 +239,7 @@ public:
   void Profile(FoldingSetNodeID& ID) const;
 };
   
-inline std::ostream &operator<<(std::ostream &OS, const APSInt &I) {
+inline raw_ostream &operator<<(raw_ostream &OS, const APSInt &I) {
   I.print(OS, I.isSigned());
   return OS;
 }

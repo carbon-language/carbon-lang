@@ -31,7 +31,6 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/MathExtras.h"
-#include "llvm/Support/Streams.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 #include <cctype>
@@ -126,7 +125,7 @@ enum PrefixType {
 /// PrintLLVMName - Turn the specified name into an 'LLVM name', which is either
 /// prefixed with % (if the string only contains simple characters) or is
 /// surrounded with ""'s (if it has special chars in it).  Print it out.
-static void PrintLLVMName(std::ostream &OS, const char *NameStr,
+static void PrintLLVMName(raw_ostream &OS, const char *NameStr,
                           unsigned NameLen, PrefixType Prefix) {
   assert(NameStr && "Cannot get empty name!");
   switch (Prefix) {
@@ -184,7 +183,7 @@ static void PrintLLVMName(std::ostream &OS, const char *NameStr,
 /// PrintLLVMName - Turn the specified name into an 'LLVM name', which is either
 /// prefixed with % (if the string only contains simple characters) or is
 /// surrounded with ""'s (if it has special chars in it).  Print it out.
-static void PrintLLVMName(std::ostream &OS, const Value *V) {
+static void PrintLLVMName(raw_ostream &OS, const Value *V) {
   PrintLLVMName(OS, V->getNameStart(), V->getNameLen(),
                 isa<GlobalValue>(V) ? GlobalPrefix : LocalPrefix);
 }
@@ -439,7 +438,7 @@ void SlotTracker::CreateFunctionSlot(const Value *V) {
 // AsmWriter Implementation
 //===----------------------------------------------------------------------===//
 
-static void WriteAsOperandInternal(std::ostream &Out, const Value *V,
+static void WriteAsOperandInternal(raw_ostream &Out, const Value *V,
                                std::map<const Type *, std::string> &TypeTable,
                                    SlotTracker *Machine);
 
@@ -579,7 +578,7 @@ static void calcTypeName(const Type *Ty,
 /// printTypeInt - The internal guts of printing out a type that has a
 /// potentially named portion.
 ///
-static void printTypeInt(std::ostream &Out, const Type *Ty,
+static void printTypeInt(raw_ostream &Out, const Type *Ty,
                          std::map<const Type *, std::string> &TypeNames) {
   // Primitive types always print out their description, regardless of whether
   // they have been named or not.
@@ -614,6 +613,11 @@ static void printTypeInt(std::ostream &Out, const Type *Ty,
 ///
 void llvm::WriteTypeSymbolic(std::ostream &Out, const Type *Ty,
                              const Module *M) {
+  raw_os_ostream RO(Out);
+  WriteTypeSymbolic(RO, Ty, M);
+}
+
+void llvm::WriteTypeSymbolic(raw_ostream &Out, const Type *Ty, const Module *M){
   Out << ' ';
 
   // If they want us to print out a type, but there is no context, we can't
@@ -629,7 +633,7 @@ void llvm::WriteTypeSymbolic(std::ostream &Out, const Type *Ty,
 
 // PrintEscapedString - Print each character of the specified string, escaping
 // it if it is not printable or if it is an escape char.
-static void PrintEscapedString(const std::string &Str, std::ostream &Out) {
+static void PrintEscapedString(const std::string &Str, raw_ostream &Out) {
   for (unsigned i = 0, e = Str.size(); i != e; ++i) {
     unsigned char C = Str[i];
     if (isprint(C) && C != '"' && C != '\\') {
@@ -675,7 +679,7 @@ static const char *getPredicateText(unsigned predicate) {
   return pred;
 }
 
-static void WriteConstantInt(std::ostream &Out, const Constant *CV,
+static void WriteConstantInt(raw_ostream &Out, const Constant *CV,
                              std::map<const Type *, std::string> &TypeTable,
                              SlotTracker *Machine) {
   if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
@@ -873,7 +877,7 @@ static void WriteConstantInt(std::ostream &Out, const Constant *CV,
 /// ostream.  This can be useful when you just want to print int %reg126, not
 /// the whole instruction that generated it.
 ///
-static void WriteAsOperandInternal(std::ostream &Out, const Value *V,
+static void WriteAsOperandInternal(raw_ostream &Out, const Value *V,
                                   std::map<const Type*, std::string> &TypeTable,
                                    SlotTracker *Machine) {
   Out << ' ';
@@ -936,6 +940,12 @@ static void WriteAsOperandInternal(std::ostream &Out, const Value *V,
 ///
 void llvm::WriteAsOperand(std::ostream &Out, const Value *V, bool PrintType,
                           const Module *Context) {
+  raw_os_ostream OS(Out);
+  WriteAsOperand(OS, V, PrintType, Context);
+}
+
+void llvm::WriteAsOperand(raw_ostream &Out, const Value *V, bool PrintType,
+                          const Module *Context) {
   std::map<const Type *, std::string> TypeNames;
   if (Context == 0) Context = getModuleFromVal(V);
 
@@ -952,13 +962,13 @@ void llvm::WriteAsOperand(std::ostream &Out, const Value *V, bool PrintType,
 namespace {
 
 class AssemblyWriter {
-  std::ostream &Out;
+  raw_ostream &Out;
   SlotTracker &Machine;
   const Module *TheModule;
   std::map<const Type *, std::string> TypeNames;
   AssemblyAnnotationWriter *AnnotationWriter;
 public:
-  inline AssemblyWriter(std::ostream &o, SlotTracker &Mac, const Module *M,
+  inline AssemblyWriter(raw_ostream &o, SlotTracker &Mac, const Module *M,
                         AssemblyAnnotationWriter *AAW)
     : Out(o), Machine(Mac), TheModule(M), AnnotationWriter(AAW) {
 
@@ -968,10 +978,19 @@ public:
     fillTypeNameTable(M, TypeNames);
   }
 
-  void write(const Module *M)         { printModule(M);       }
-  void write(const GlobalVariable *G) { printGlobal(G);       }
-  void write(const GlobalAlias *G)    { printAlias(G);        }
-  void write(const Function *F)       { printFunction(F);     }
+  void write(const Module *M) { printModule(M);       }
+  
+  void write(const GlobalValue *G) {
+    if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(G))
+      printGlobal(GV);
+    else if (const GlobalAlias *GA = dyn_cast<GlobalAlias>(G))
+      printAlias(GA);
+    else if (const Function *F = dyn_cast<Function>(G))
+      printFunction(F);
+    else
+      assert(0 && "Unknown global");
+  }
+  
   void write(const BasicBlock *BB)    { printBasicBlock(BB);  }
   void write(const Instruction *I)    { printInstruction(*I); }
   void write(const Type *Ty)          { printType(Ty);        }
@@ -1176,7 +1195,7 @@ void AssemblyWriter::printModule(const Module *M) {
     printFunction(I);
 }
 
-static void PrintLinkage(GlobalValue::LinkageTypes LT, std::ostream &Out) {
+static void PrintLinkage(GlobalValue::LinkageTypes LT, raw_ostream &Out) {
   switch (LT) {
   case GlobalValue::InternalLinkage:     Out << "internal "; break;
   case GlobalValue::LinkOnceLinkage:     Out << "linkonce "; break;
@@ -1195,7 +1214,7 @@ static void PrintLinkage(GlobalValue::LinkageTypes LT, std::ostream &Out) {
       
 
 static void PrintVisibility(GlobalValue::VisibilityTypes Vis,
-                            std::ostream &Out) {
+                            raw_ostream &Out) {
   switch (Vis) {
   default: assert(0 && "Invalid visibility style!");
   case GlobalValue::DefaultVisibility: break;
@@ -1705,74 +1724,75 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
 //===----------------------------------------------------------------------===//
 
 void Module::print(std::ostream &o, AssemblyAnnotationWriter *AAW) const {
+  raw_os_ostream OS(o);
+  print(OS, AAW);
+}
+void Module::print(raw_ostream &OS, AssemblyAnnotationWriter *AAW) const {
   SlotTracker SlotTable(this);
-  AssemblyWriter W(o, SlotTable, this, AAW);
+  AssemblyWriter W(OS, SlotTable, this, AAW);
   W.write(this);
-}
-
-void GlobalVariable::print(std::ostream &o) const {
-  SlotTracker SlotTable(getParent());
-  AssemblyWriter W(o, SlotTable, getParent(), 0);
-  W.write(this);
-}
-
-void GlobalAlias::print(std::ostream &o) const {
-  SlotTracker SlotTable(getParent());
-  AssemblyWriter W(o, SlotTable, getParent(), 0);
-  W.write(this);
-}
-
-void Function::print(std::ostream &o, AssemblyAnnotationWriter *AAW) const {
-  SlotTracker SlotTable(getParent());
-  AssemblyWriter W(o, SlotTable, getParent(), AAW);
-
-  W.write(this);
-}
-
-void InlineAsm::print(std::ostream &o, AssemblyAnnotationWriter *AAW) const {
-  WriteAsOperand(o, this, true, 0);
-}
-
-void BasicBlock::print(std::ostream &o, AssemblyAnnotationWriter *AAW) const {
-  SlotTracker SlotTable(getParent());
-  AssemblyWriter W(o, SlotTable,
-                   getParent() ? getParent()->getParent() : 0, AAW);
-  W.write(this);
-}
-
-void Instruction::print(std::ostream &o, AssemblyAnnotationWriter *AAW) const {
-  const Function *F = getParent() ? getParent()->getParent() : 0;
-  SlotTracker SlotTable(F);
-  AssemblyWriter W(o, SlotTable, F ? F->getParent() : 0, AAW);
-
-  W.write(this);
-}
-
-void Constant::print(std::ostream &o) const {
-  if (this == 0) { o << "<null> constant value\n"; return; }
-
-  o << ' ' << getType()->getDescription() << ' ';
-
-  std::map<const Type *, std::string> TypeTable;
-  WriteConstantInt(o, this, TypeTable, 0);
 }
 
 void Type::print(std::ostream &o) const {
+  raw_os_ostream OS(o);
+  print(OS);
+}
+
+void Type::print(raw_ostream &o) const {
   if (this == 0)
     o << "<null Type>";
   else
     o << getDescription();
 }
 
-void Argument::print(std::ostream &o) const {
-  WriteAsOperand(o, this, true, getParent() ? getParent()->getParent() : 0);
+void Value::print(raw_ostream &OS, AssemblyAnnotationWriter *AAW) const {
+  if (this == 0) {
+    OS << "printing a <null> value\n";
+    return;
+  }
+
+  if (const Instruction *I = dyn_cast<Instruction>(this)) {
+    const Function *F = I->getParent() ? I->getParent()->getParent() : 0;
+    SlotTracker SlotTable(F);
+    AssemblyWriter W(OS, SlotTable, F ? F->getParent() : 0, AAW);
+    W.write(I);
+  } else if (const BasicBlock *BB = dyn_cast<BasicBlock>(this)) {
+    SlotTracker SlotTable(BB->getParent());
+    AssemblyWriter W(OS, SlotTable,
+                     BB->getParent() ? BB->getParent()->getParent() : 0, AAW);
+    W.write(BB);
+  } else if (const GlobalValue *GV = dyn_cast<GlobalValue>(this)) {
+    SlotTracker SlotTable(GV->getParent());
+    AssemblyWriter W(OS, SlotTable, GV->getParent(), 0);
+    W.write(GV);
+  } else if (const Constant *C = dyn_cast<Constant>(this)) {
+    OS << ' ' << C->getType()->getDescription() << ' ';
+    std::map<const Type *, std::string> TypeTable;
+    WriteConstantInt(OS, C, TypeTable, 0);
+  } else if (const Argument *A = dyn_cast<Argument>(this)) {
+    WriteAsOperand(OS, this, true,
+                   A->getParent() ? A->getParent()->getParent() : 0);
+  } else if (isa<InlineAsm>(this)) {
+    WriteAsOperand(OS, this, true, 0);
+  } else {
+    assert(0 && "Unknown value to print out!");
+  }
+}
+
+void Value::print(std::ostream &O, AssemblyAnnotationWriter *AAW) const {
+  raw_os_ostream OS(O);
+  print(OS, AAW);
 }
 
 // Value::dump - allow easy printing of  Values from the debugger.
 // Located here because so much of the needed functionality is here.
-void Value::dump() const { print(*cerr.stream()); cerr << '\n'; }
+void Value::dump() const { print(errs()); errs() << '\n'; }
 
 // Type::dump - allow easy printing of  Values from the debugger.
 // Located here because so much of the needed functionality is here.
-void Type::dump() const { print(*cerr.stream()); cerr << '\n'; }
+void Type::dump() const { print(errs()); errs() << '\n'; }
+
+// Module::dump() - Allow printing from debugger
+void Module::dump() const { print(errs(), 0); }
+
 

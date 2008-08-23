@@ -15,6 +15,7 @@
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/GlobalValue.h"
 #include "llvm/Type.h"
+#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
 PIC16ConstantPoolValue::PIC16ConstantPoolValue(GlobalValue *gv, unsigned id,
@@ -70,7 +71,7 @@ PIC16ConstantPoolValue::AddSelectionDAGCSEId(FoldingSetNodeID &ID) {
   ID.AddInteger(PCAdjust);
 }
 
-void PIC16ConstantPoolValue::print(std::ostream &O) const {
+void PIC16ConstantPoolValue::print(raw_ostream &O) const {
   if (GV)
     O << GV->getName();
   else

@@ -65,11 +65,6 @@ public:
   /// removeAttr - Remove a ParamAttr from an argument
   void removeAttr(ParameterAttributes);
 
-  virtual void print(std::ostream &OS) const;
-  void print(std::ostream *OS) const {
-    if (OS) print(*OS);
-  }
-
   /// classof - Methods for support type inquiry through isa, cast, and
   /// dyn_cast:
   ///

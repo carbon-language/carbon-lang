@@ -20,8 +20,6 @@
 
 namespace llvm {
 
-struct AssemblyAnnotationWriter;
-
 template<typename ValueSubClass, typename ItemParentClass>
   class SymbolTableListTraits;
 
@@ -179,10 +177,6 @@ public:
     return isTrapping(getOpcode());
   }
   static bool isTrapping(unsigned op);
-
-  virtual void print(std::ostream &OS) const { print(OS, 0); }
-  void print(std::ostream *OS) const { if (OS) print(*OS); }
-  void print(std::ostream &OS, AssemblyAnnotationWriter *AAW) const;
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const Instruction *) { return true; }

@@ -42,7 +42,7 @@
 #include "llvm/ExecutionEngine/JIT.h"
 #include "llvm/ExecutionEngine/Interpreter.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
-#include <iostream>
+#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
 int main() {
@@ -99,14 +99,15 @@ int main() {
   ExistingModuleProvider* MP = new ExistingModuleProvider(M);
   ExecutionEngine* EE = ExecutionEngine::create(MP, false);
 
-  std::cout << "We just constructed this LLVM module:\n\n" << *M;
-  std::cout << "\n\nRunning foo: " << std::flush;
+  outs() << "We just constructed this LLVM module:\n\n" << *M;
+  outs() << "\n\nRunning foo: ";
+  outs().flush();
 
   // Call the `foo' function with no arguments:
   std::vector<GenericValue> noargs;
   GenericValue gv = EE->runFunction(FooF, noargs);
 
   // Import result of execution:
-  std::cout << "Result: " << gv.IntVal << "\n";
+  outs() << "Result: " << gv.IntVal << "\n";
   return 0;
 }

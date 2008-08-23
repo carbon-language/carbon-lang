@@ -1260,6 +1260,7 @@ public:
   ///
   std::string getOperationName(const SelectionDAG *G = 0) const;
   static const char* getIndexedModeName(ISD::MemIndexedMode AM);
+  void print(raw_ostream &OS, const SelectionDAG *G = 0) const;
   void dump() const;
   void dump(const SelectionDAG *G) const;
 

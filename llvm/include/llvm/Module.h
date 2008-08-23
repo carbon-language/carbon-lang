@@ -350,15 +350,11 @@ public:
 /// @name Utility functions for printing and dumping Module objects
 /// @{
 public:
-  /// Print the module to an output stream
-  void print(std::ostream &OS) const { print(OS, 0); }
-  void print(std::ostream *OS) const { if (OS) print(*OS); }
   /// Print the module to an output stream with AssemblyAnnotationWriter.
+  void print(raw_ostream &OS, AssemblyAnnotationWriter *AAW) const;
   void print(std::ostream &OS, AssemblyAnnotationWriter *AAW) const;
-  void print(std::ostream *OS, AssemblyAnnotationWriter *AAW) const {
-    if (OS) print(*OS, AAW);
-  }
-  /// Dump the module to std::cerr (for debugging).
+  
+  /// Dump the module to stderr (for debugging).
   void dump() const;
   /// This function causes all the subinstructions to "let go" of all references
   /// that they are maintaining.  This allows one to 'delete' a whole class at
@@ -385,9 +381,14 @@ public:
 
 /// An iostream inserter for modules.
 inline std::ostream &operator<<(std::ostream &O, const Module &M) {
-  M.print(O);
+  M.print(O, 0);
   return O;
 }
+inline raw_ostream &operator<<(raw_ostream &O, const Module &M) {
+  M.print(O, 0);
+  return O;
+}
+  
 
 inline ValueSymbolTable *
 ilist_traits<Function>::getSymTab(Module *M) {

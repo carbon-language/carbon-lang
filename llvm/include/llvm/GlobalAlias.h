@@ -62,9 +62,6 @@ public:
   ///
   void eraseFromParent();
 
-  virtual void print(std::ostream &OS) const;
-  void print(std::ostream *OS) const { if (OS) print(*OS); }
-
   /// set/getAliasee - These methods retrive and set alias target.
   void setAliasee(Constant* GV);
   const Constant* getAliasee() const {

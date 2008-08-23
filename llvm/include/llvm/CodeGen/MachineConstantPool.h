@@ -29,6 +29,7 @@ class TargetData;
 class TargetMachine;
 class Type;
 class MachineConstantPool;
+class raw_ostream;
 
 /// Abstract base class for all machine specific constantpool value subclasses.
 ///
@@ -50,8 +51,9 @@ public:
 
   /// print - Implement operator<<...
   ///
-  virtual void print(std::ostream &O) const = 0;
+  void print(std::ostream &O) const;
   void print(std::ostream *O) const { if (O) print(*O); }
+  virtual void print(raw_ostream &O) const = 0;
 };
 
 inline std::ostream &operator<<(std::ostream &OS,
@@ -59,6 +61,13 @@ inline std::ostream &operator<<(std::ostream &OS,
   V.print(OS);
   return OS;
 }
+  
+inline raw_ostream &operator<<(raw_ostream &OS,
+                               const MachineConstantPoolValue &V) {
+  V.print(OS);
+  return OS;
+}
+  
 
 /// This class is a data container for one entry in a MachineConstantPool.
 /// It contains a pointer to the value and an offset from the start of

@@ -24,12 +24,13 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
-#include "llvm/Support/MathExtras.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Support/MathExtras.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallSet.h"
@@ -4980,169 +4981,166 @@ std::string ISD::ArgFlagsTy::getArgFlagsString() {
 
 void SDNode::dump() const { dump(0); }
 void SDNode::dump(const SelectionDAG *G) const {
-  cerr << (void*)this << ": ";
+  print(errs(), G);
+}
+
+void SDNode::print(raw_ostream &OS, const SelectionDAG *G) const {
+  OS << (void*)this << ": ";
 
   for (unsigned i = 0, e = getNumValues(); i != e; ++i) {
-    if (i) cerr << ",";
+    if (i) OS << ",";
     if (getValueType(i) == MVT::Other)
-      cerr << "ch";
+      OS << "ch";
     else
-      cerr << getValueType(i).getMVTString();
+      OS << getValueType(i).getMVTString();
   }
-  cerr << " = " << getOperationName(G);
+  OS << " = " << getOperationName(G);
 
-  cerr << " ";
+  OS << " ";
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
-    if (i) cerr << ", ";
-    cerr << (void*)getOperand(i).Val;
+    if (i) OS << ", ";
+    OS << (void*)getOperand(i).Val;
     if (unsigned RN = getOperand(i).ResNo)
-      cerr << ":" << RN;
+      OS << ":" << RN;
   }
 
   if (!isTargetOpcode() && getOpcode() == ISD::VECTOR_SHUFFLE) {
     SDNode *Mask = getOperand(2).Val;
-    cerr << "<";
+    OS << "<";
     for (unsigned i = 0, e = Mask->getNumOperands(); i != e; ++i) {
-      if (i) cerr << ",";
+      if (i) OS << ",";
       if (Mask->getOperand(i).getOpcode() == ISD::UNDEF)
-        cerr << "u";
+        OS << "u";
       else
-        cerr << cast<ConstantSDNode>(Mask->getOperand(i))->getValue();
+        OS << cast<ConstantSDNode>(Mask->getOperand(i))->getValue();
     }
-    cerr << ">";
+    OS << ">";
   }
 
   if (const ConstantSDNode *CSDN = dyn_cast<ConstantSDNode>(this)) {
-    cerr << '<' << CSDN->getAPIntValue() << '>';
+    OS << '<' << CSDN->getAPIntValue() << '>';
   } else if (const ConstantFPSDNode *CSDN = dyn_cast<ConstantFPSDNode>(this)) {
     if (&CSDN->getValueAPF().getSemantics()==&APFloat::IEEEsingle)
-      cerr << '<' << CSDN->getValueAPF().convertToFloat() << '>';
+      OS << '<' << CSDN->getValueAPF().convertToFloat() << '>';
     else if (&CSDN->getValueAPF().getSemantics()==&APFloat::IEEEdouble)
-      cerr << '<' << CSDN->getValueAPF().convertToDouble() << '>';
+      OS << '<' << CSDN->getValueAPF().convertToDouble() << '>';
     else {
-      cerr << "<APFloat(";
+      OS << "<APFloat(";
       CSDN->getValueAPF().convertToAPInt().dump();
-      cerr << ")>";
+      OS << ")>";
     }
   } else if (const GlobalAddressSDNode *GADN =
              dyn_cast<GlobalAddressSDNode>(this)) {
     int offset = GADN->getOffset();
-    cerr << '<';
-    WriteAsOperand(*cerr.stream(), GADN->getGlobal());
-    cerr << '>';
+    OS << '<';
+    WriteAsOperand(OS, GADN->getGlobal());
+    OS << '>';
     if (offset > 0)
-      cerr << " + " << offset;
+      OS << " + " << offset;
     else
-      cerr << " " << offset;
+      OS << " " << offset;
   } else if (const FrameIndexSDNode *FIDN = dyn_cast<FrameIndexSDNode>(this)) {
-    cerr << "<" << FIDN->getIndex() << ">";
+    OS << "<" << FIDN->getIndex() << ">";
   } else if (const JumpTableSDNode *JTDN = dyn_cast<JumpTableSDNode>(this)) {
-    cerr << "<" << JTDN->getIndex() << ">";
+    OS << "<" << JTDN->getIndex() << ">";
   } else if (const ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(this)){
     int offset = CP->getOffset();
     if (CP->isMachineConstantPoolEntry())
-      cerr << "<" << *CP->getMachineCPVal() << ">";
+      OS << "<" << *CP->getMachineCPVal() << ">";
     else
-      cerr << "<" << *CP->getConstVal() << ">";
+      OS << "<" << *CP->getConstVal() << ">";
     if (offset > 0)
-      cerr << " + " << offset;
+      OS << " + " << offset;
     else
-      cerr << " " << offset;
+      OS << " " << offset;
   } else if (const BasicBlockSDNode *BBDN = dyn_cast<BasicBlockSDNode>(this)) {
-    cerr << "<";
+    OS << "<";
     const Value *LBB = (const Value*)BBDN->getBasicBlock()->getBasicBlock();
     if (LBB)
-      cerr << LBB->getName() << " ";
-    cerr << (const void*)BBDN->getBasicBlock() << ">";
+      OS << LBB->getName() << " ";
+    OS << (const void*)BBDN->getBasicBlock() << ">";
   } else if (const RegisterSDNode *R = dyn_cast<RegisterSDNode>(this)) {
     if (G && R->getReg() &&
         TargetRegisterInfo::isPhysicalRegister(R->getReg())) {
-      cerr << " " << G->getTarget().getRegisterInfo()->getName(R->getReg());
+      OS << " " << G->getTarget().getRegisterInfo()->getName(R->getReg());
     } else {
-      cerr << " #" << R->getReg();
+      OS << " #" << R->getReg();
     }
   } else if (const ExternalSymbolSDNode *ES =
              dyn_cast<ExternalSymbolSDNode>(this)) {
-    cerr << "'" << ES->getSymbol() << "'";
+    OS << "'" << ES->getSymbol() << "'";
   } else if (const SrcValueSDNode *M = dyn_cast<SrcValueSDNode>(this)) {
     if (M->getValue())
-      cerr << "<" << M->getValue() << ">";
+      OS << "<" << M->getValue() << ">";
     else
-      cerr << "<null>";
+      OS << "<null>";
   } else if (const MemOperandSDNode *M = dyn_cast<MemOperandSDNode>(this)) {
     if (M->MO.getValue())
-      cerr << "<" << M->MO.getValue() << ":" << M->MO.getOffset() << ">";
+      OS << "<" << M->MO.getValue() << ":" << M->MO.getOffset() << ">";
     else
-      cerr << "<null:" << M->MO.getOffset() << ">";
+      OS << "<null:" << M->MO.getOffset() << ">";
   } else if (const ARG_FLAGSSDNode *N = dyn_cast<ARG_FLAGSSDNode>(this)) {
-    cerr << N->getArgFlags().getArgFlagsString();
+    OS << N->getArgFlags().getArgFlagsString();
   } else if (const VTSDNode *N = dyn_cast<VTSDNode>(this)) {
-    cerr << ":" << N->getVT().getMVTString();
+    OS << ":" << N->getVT().getMVTString();
   }
   else if (const LoadSDNode *LD = dyn_cast<LoadSDNode>(this)) {
     const Value *SrcValue = LD->getSrcValue();
     int SrcOffset = LD->getSrcValueOffset();
-    cerr << " <";
+    OS << " <";
     if (SrcValue)
-      cerr << SrcValue;
+      OS << SrcValue;
     else
-      cerr << "null";
-    cerr << ":" << SrcOffset << ">";
+      OS << "null";
+    OS << ":" << SrcOffset << ">";
 
     bool doExt = true;
     switch (LD->getExtensionType()) {
     default: doExt = false; break;
-    case ISD::EXTLOAD:
-      cerr << " <anyext ";
-      break;
-    case ISD::SEXTLOAD:
-      cerr << " <sext ";
-      break;
-    case ISD::ZEXTLOAD:
-      cerr << " <zext ";
-      break;
+    case ISD::EXTLOAD: OS << " <anyext "; break;
+    case ISD::SEXTLOAD: OS << " <sext "; break;
+    case ISD::ZEXTLOAD: OS << " <zext "; break;
     }
     if (doExt)
-      cerr << LD->getMemoryVT().getMVTString() << ">";
+      OS << LD->getMemoryVT().getMVTString() << ">";
 
     const char *AM = getIndexedModeName(LD->getAddressingMode());
     if (*AM)
-      cerr << " " << AM;
+      OS << " " << AM;
     if (LD->isVolatile())
-      cerr << " <volatile>";
-    cerr << " alignment=" << LD->getAlignment();
+      OS << " <volatile>";
+    OS << " alignment=" << LD->getAlignment();
   } else if (const StoreSDNode *ST = dyn_cast<StoreSDNode>(this)) {
     const Value *SrcValue = ST->getSrcValue();
     int SrcOffset = ST->getSrcValueOffset();
-    cerr << " <";
+    OS << " <";
     if (SrcValue)
-      cerr << SrcValue;
+      OS << SrcValue;
     else
-      cerr << "null";
-    cerr << ":" << SrcOffset << ">";
+      OS << "null";
+    OS << ":" << SrcOffset << ">";
 
     if (ST->isTruncatingStore())
-      cerr << " <trunc "
-           << ST->getMemoryVT().getMVTString() << ">";
+      OS << " <trunc " << ST->getMemoryVT().getMVTString() << ">";
 
     const char *AM = getIndexedModeName(ST->getAddressingMode());
     if (*AM)
-      cerr << " " << AM;
+      OS << " " << AM;
     if (ST->isVolatile())
-      cerr << " <volatile>";
-    cerr << " alignment=" << ST->getAlignment();
+      OS << " <volatile>";
+    OS << " alignment=" << ST->getAlignment();
   } else if (const AtomicSDNode* AT = dyn_cast<AtomicSDNode>(this)) {
     const Value *SrcValue = AT->getSrcValue();
     int SrcOffset = AT->getSrcValueOffset();
-    cerr << " <";
+    OS << " <";
     if (SrcValue)
-      cerr << SrcValue;
+      OS << SrcValue;
     else
-      cerr << "null";
-    cerr << ":" << SrcOffset << ">";
+      OS << "null";
+    OS << ":" << SrcOffset << ">";
     if (AT->isVolatile())
-      cerr << " <volatile>";
-    cerr << " alignment=" << AT->getAlignment();
+      OS << " <volatile>";
+    OS << " alignment=" << AT->getAlignment();
   }
 }
 
