@@ -17,6 +17,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include <cassert>
 #include <cstring>
+#include <cstdio>
 #include <string>
 #include <iosfwd>
 
@@ -173,7 +174,11 @@ public:
   /// returns the length of the formatted string.  If the buffer is too small,
   /// this returns a length to retry with, which will be larger than BufferSize.
   virtual unsigned print(char *Buffer, unsigned BufferSize) const {
+#ifdef WIN32
+    int N = _snprintf(Buffer, BufferSize-1, Fmt, Val);
+#else
     int N = snprintf(Buffer, BufferSize-1, Fmt, Val);
+#endif
     if (N < 0)             // VC++ and old GlibC return negative on overflow.
       return BufferSize*2;
     if (unsigned(N) >= BufferSize-1)// Other impls yield number of bytes needed.
