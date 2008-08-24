@@ -179,20 +179,21 @@ public:
             const std::string &Msg2);
 
   /// More expressive diagnostic helpers for expressions (say that 6 times:-)
-  bool Diag(SourceLocation Loc, unsigned DiagID, SourceRange R1);
+  bool Diag(SourceLocation Loc, unsigned DiagID, const SourceRange& R1);
   bool Diag(SourceLocation Loc, unsigned DiagID, 
-            SourceRange R1, SourceRange R2);
+            const SourceRange& R1, const SourceRange& R2);
   bool Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg,
-            SourceRange R1);
+            const SourceRange& R1);
   bool Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg,
-            SourceRange R1, SourceRange R2);
+            const SourceRange& R1, const SourceRange& R2);
   bool Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg1, 
-            const std::string &Msg2, SourceRange R1);
+            const std::string &Msg2, const SourceRange& R1);
   bool Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg1, 
-            const std::string &Msg2, const std::string &Msg3, SourceRange R1);
+            const std::string &Msg2, const std::string &Msg3,
+            const SourceRange& R1);
   bool Diag(SourceLocation Loc, unsigned DiagID, 
             const std::string &Msg1, const std::string &Msg2, 
-            SourceRange R1, SourceRange R2);
+            const SourceRange& R1, const SourceRange& R2);
   
   virtual void DeleteExpr(ExprTy *E);
   virtual void DeleteStmt(StmtTy *S);
