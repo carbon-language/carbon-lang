@@ -1285,43 +1285,17 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
     break;
   case Intrinsic::gcroot:
   case Intrinsic::gcwrite:
-  case Intrinsic::gcread: {
-      Type *PtrTy    = PointerType::getUnqual(Type::Int8Ty),
-           *PtrPtrTy = PointerType::getUnqual(PtrTy);
+  case Intrinsic::gcread:
+    if (ID == Intrinsic::gcroot) {
+      Assert1(isa<AllocaInst>(CI.getOperand(1)->stripPointerCasts()),
+              "llvm.gcroot parameter #1 must be an alloca.", &CI);
+      Assert1(isa<Constant>(CI.getOperand(2)),
+              "llvm.gcroot parameter #2 must be a constant.", &CI);
+    }
       
-      switch (ID) {
-      default:
-        break;
-      case Intrinsic::gcroot:
-        Assert1(CI.getOperand(1)->getType() == PtrPtrTy,
-                "Intrinsic parameter #1 is not i8**.", &CI);
-        Assert1(CI.getOperand(2)->getType() == PtrTy,
-                "Intrinsic parameter #2 is not i8*.", &CI);
-        Assert1(isa<AllocaInst>(CI.getOperand(1)->stripPointerCasts()),
-                "llvm.gcroot parameter #1 must be an alloca.", &CI);
-        Assert1(isa<Constant>(CI.getOperand(2)),
-                "llvm.gcroot parameter #2 must be a constant.", &CI);
-        break;
-      case Intrinsic::gcwrite:
-        Assert1(CI.getOperand(1)->getType() == PtrTy,
-                "Intrinsic parameter #1 is not a i8*.", &CI);
-        Assert1(CI.getOperand(2)->getType() == PtrTy,
-                "Intrinsic parameter #2 is not a i8*.", &CI);
-        Assert1(CI.getOperand(3)->getType() == PtrPtrTy,
-                "Intrinsic parameter #3 is not a i8**.", &CI);
-        break;
-      case Intrinsic::gcread:
-        Assert1(CI.getOperand(1)->getType() == PtrTy,
-                "Intrinsic parameter #1 is not a i8*.", &CI);
-        Assert1(CI.getOperand(2)->getType() == PtrPtrTy,
-                "Intrinsic parameter #2 is not a i8**.", &CI);
-        break;
-      }
-      
-      Assert1(CI.getParent()->getParent()->hasGC(),
-              "Enclosing function does not use GC.",
-              &CI);
-    } break;
+    Assert1(CI.getParent()->getParent()->hasGC(),
+            "Enclosing function does not use GC.", &CI);
+    break;
   case Intrinsic::init_trampoline:
     Assert1(isa<Function>(CI.getOperand(2)->stripPointerCasts()),
             "llvm.init_trampoline parameter #2 must resolve to a function.",
