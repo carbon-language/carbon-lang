@@ -26,6 +26,7 @@
 
 #if defined(_MSC_VER)
 #include <io.h>
+#include <fcntl.h>
 #ifndef STDIN_FILENO
 # define STDIN_FILENO 0
 #endif

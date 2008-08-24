@@ -602,6 +602,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\lib\Transforms\Utils\InstructionNamer.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\..\lib\Transforms\Utils\LCSSA.cpp"
 					>
 				</File>
