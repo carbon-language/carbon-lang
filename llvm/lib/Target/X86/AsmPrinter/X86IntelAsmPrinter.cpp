@@ -15,9 +15,9 @@
 
 #define DEBUG_TYPE "asm-printer"
 #include "X86IntelAsmPrinter.h"
-#include "../X86InstrInfo.h"
-#include "../X86TargetAsmInfo.h"
-#include "../X86.h"
+#include "X86InstrInfo.h"
+#include "X86TargetAsmInfo.h"
+#include "X86.h"
 #include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
