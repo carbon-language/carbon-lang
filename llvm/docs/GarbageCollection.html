@@ -75,7 +75,7 @@
     <li><a href="#safe-points">Generating safe points:
       <tt>NeededSafePoints</tt></a></li>
     <li><a href="#assembly">Emitting assembly code:
-      <tt>beginAssembly</tt> and <tt>finishAssembly</tt></a></li>
+      <tt>GCMetadataPrinter</tt></a></li>
     </ul>
   </li>
 
@@ -205,7 +205,7 @@ garbage collector implementations in two manners:</p>
       your compiler. For <tt>llc</tt>, use the <tt>-load</tt> option.</li>
   <li>Selecting the collection algorithm by applying the <tt>gc "..."</tt> 
       attribute to your garbage collected functions, or equivalently with
-      the <tt>setCollector</tt> method.</li>
+      the <tt>setGC</tt> method.</li>
   <li>Linking your final executable with the garbage collector runtime.</li>
 </ul>
 
@@ -352,8 +352,7 @@ specified by the runtime.</p>
 
 <p>The <tt>gc</tt> function attribute is used to specify the desired collector
 algorithm to the compiler. It is equivalent to specifying the collector name
-programmatically using the <tt>setCollector</tt> method of
-<tt>Function</tt>.</p>
+programmatically using the <tt>setGC</tt> method of <tt>Function</tt>.</p>
 
 <p>Specifying the collector on a per-function basis allows LLVM to link together
 programs that use different garbage collection algorithms.</p>
@@ -616,35 +615,39 @@ TODO
 
 <div class="doc_text">
 
-<p>User code specifies which collector plugin to use with the <tt>gc</tt>
-function attribute or, equivalently, with the <tt>setCollector</tt> method of
+<p>User code specifies which GC code generation to use with the <tt>gc</tt>
+function attribute or, equivalently, with the <tt>setGC</tt> method of
 <tt>Function</tt>.</p>
 
-<p>To implement a collector plugin, it is necessary to subclass
-<tt>llvm::Collector</tt>, which can be accomplished in a few lines of
+<p>To implement a GC plugin, it is necessary to subclass
+<tt>llvm::GCStrategy</tt>, which can be accomplished in a few lines of
 boilerplate code. LLVM's infrastructure provides access to several important
 algorithms. For an uncontroversial collector, all that remains may be to emit
 the assembly code for the collector's unique stack map data structure, which
 might be accomplished in as few as 100 LOC.</p>
 
-<p>To subclass <tt>llvm::Collector</tt> and register a collector:</p>
+<p>This is not the appropriate place to implement a garbage collected heap or a
+garbage collector itself. That code should exist in the language's runtime
+library. The compiler plugin is responsible for generating code which is
+compatible with that runtime library.</p>
 
-<blockquote><pre>// lib/MyGC/MyGC.cpp - Example LLVM collector plugin
+<p>To subclass <tt>llvm::GCStrategy</tt> and register it with the compiler:</p>
 
-#include "llvm/CodeGen/Collector.h"
-#include "llvm/CodeGen/Collectors.h"
-#include "llvm/CodeGen/CollectorMetadata.h"
+<blockquote><pre>// lib/MyGC/MyGC.cpp - Example LLVM GC plugin
+
+#include "llvm/CodeGen/GCStrategy.h"
+#include "llvm/CodeGen/GCMetadata.h"
 #include "llvm/Support/Compiler.h"
 
 using namespace llvm;
 
 namespace {
-  class VISIBILITY_HIDDEN MyCollector : public Collector {
+  class VISIBILITY_HIDDEN MyGC : public GCStrategy {
   public:
-    MyCollector() {}
+    MyGC() {}
   };
   
-  CollectorRegistry::Add&lt;MyCollector&gt;
+  GCRegistry::Add&lt;MyGC&gt;
   X("mygc", "My bespoke garbage collector.");
 }</pre></blockquote>
 
@@ -986,21 +989,21 @@ interest.</p>
 
 <blockquote><pre
 >for (iterator I = begin(), E = end(); I != E; ++I) {
-  CollectorMetadata *MD = *I;
-  unsigned FrameSize = MD-&gt;getFrameSize();
-  size_t RootCount = MD-&gt;roots_size();
+  GCFunctionInfo *FI = *I;
+  unsigned FrameSize = FI-&gt;getFrameSize();
+  size_t RootCount = FI-&gt;roots_size();
 
-  for (CollectorMetadata::roots_iterator RI = MD-&gt;roots_begin(),
-                                         RE = MD-&gt;roots_end();
-                                         RI != RE; ++RI) {
+  for (GCFunctionInfo::roots_iterator RI = FI-&gt;roots_begin(),
+                                      RE = FI-&gt;roots_end();
+                                      RI != RE; ++RI) {
     int RootNum = RI->Num;
     int RootStackOffset = RI->StackOffset;
     Constant *RootMetadata = RI->Metadata;
   }
 }</pre></blockquote>
 
-<p>LLVM automatically computes a stack map. All a <tt>Collector</tt> needs to do
-is access it using <tt>CollectorMetadata::roots_begin()</tt> and
+<p>LLVM automatically computes a stack map. All a <tt>GCStrategy</tt> needs to do
+is access it using <tt>GCFunctionMetadata::roots_begin()</tt> and
 -<tt>end()</tt>. If the <tt>llvm.gcroot</tt> intrinsic is eliminated before code
 generation by a custom lowering pass, LLVM's stack map will be empty.</p>
 
@@ -1015,19 +1018,19 @@ generation by a custom lowering pass, LLVM's stack map will be empty.</p>
 <div class="doc_text">
 
 <blockquote><pre
->MyCollector::MyCollector() {
+>MyGC::MyGC() {
   InitRoots = true;
 }</pre></blockquote>
 
 <p>When set, LLVM will automatically initialize each root to <tt>null</tt> upon
-entry to the function. This prevents the reachability analysis from finding
-uninitialized values in stack roots at runtime, which will almost certainly
-cause it to segfault. This initialization occurs before custom lowering, so the
-two may be used together.</p>
+entry to the function. This prevents the GC's sweep phase from visiting
+uninitialized pointers, which will almost certainly cause it to crash. This
+initialization occurs before custom lowering, so the two may be used
+together.</p>
 
-<p>Since LLVM does not yet compute liveness information, this feature should be
-used by all collectors which do not custom lower <tt>llvm.gcroot</tt>, and even
-some that do.</p>
+<p>Since LLVM does not yet compute liveness information, there is no means of
+distinguishing an uninitialized stack root from an initialized one. Therefore,
+this feature should be used by all GC plugins. It is enabled by default.</p>
 
 </div>
 
@@ -1040,14 +1043,14 @@ some that do.</p>
 
 <div class="doc_text">
 
-<p>For collectors with barriers or unusual treatment of stack roots, these
-flags allow the collector to perform any required transformation on the LLVM
+<p>For GCs which use barriers or unusual treatment of stack roots, these
+flags allow the collector to perform arbitrary transformations of the LLVM
 IR:</p>
 
 <blockquote><pre
->class MyCollector : public Collector {
+>class MyGC : public GCStrategy {
 public:
-  MyCollector() {
+  MyGC() {
     CustomRoots = true;
     CustomReadBarriers = true;
     CustomWriteBarriers = true;
@@ -1058,8 +1061,8 @@ public:
 };</pre></blockquote>
 
 <p>If any of these flags are set, then LLVM suppresses its default lowering for
-the corresponding intrinsics and instead passes them on to a custom lowering
-pass specified by the collector.</p>
+the corresponding intrinsics and instead calls
+<tt>performCustomLowering</tt>.</p>
 
 <p>LLVM's default action for each intrinsic is as follows:</p>
 
@@ -1074,11 +1077,12 @@ pass specified by the collector.</p>
 then <tt>performCustomLowering</tt> <strong>must</strong> eliminate the
 corresponding barriers.</p>
 
-<p><tt>performCustomLowering</tt>, must comply with the same restrictions as <a
-href="WritingAnLLVMPass.html#runOnFunction"><tt>runOnFunction</tt></a>, and
-that <tt>initializeCustomLowering</tt> has the same semantics as <a
-href="WritingAnLLVMPass.html#doInitialization_mod"><tt>doInitialization(Module
-&amp;)</tt></a>.</p>
+<p><tt>performCustomLowering</tt> must comply with the same restrictions as <a
+href="WritingAnLLVMPass.html#runOnFunction"><tt
+>FunctionPass::runOnFunction</tt></a>.
+Likewise, <tt>initializeCustomLowering</tt> has the same semantics as <a
+href="WritingAnLLVMPass.html#doInitialization_mod"><tt
+>Pass::doInitialization(Module&amp;)</tt></a>.</p>
 
 <p>The following can be used as a template:</p>
 
@@ -1086,11 +1090,11 @@ href="WritingAnLLVMPass.html#doInitialization_mod"><tt>doInitialization(Module
 >#include "llvm/Module.h"
 #include "llvm/IntrinsicInst.h"
 
-bool MyCollector::initializeCustomLowering(Module &amp;M) {
+bool MyGC::initializeCustomLowering(Module &amp;M) {
   return false;
 }
 
-bool MyCollector::performCustomLowering(Function &amp;F) {
+bool MyGC::performCustomLowering(Function &amp;F) {
   bool MadeChange = false;
   
   for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
@@ -1146,7 +1150,7 @@ bool MyCollector::performCustomLowering(Function &amp;F) {
 <tt>NeededSafePoints</tt> mask:</p>
 
 <blockquote><pre
->MyCollector::MyCollector() {
+>MyGC::MyGC() {
   NeededSafePoints = 1 &lt;&lt; GC::Loop
                    | 1 &lt;&lt; GC::Return
                    | 1 &lt;&lt; GC::PreCall
@@ -1157,11 +1161,11 @@ bool MyCollector::performCustomLowering(Function &amp;F) {
 
 <blockquote><pre
 >for (iterator I = begin(), E = end(); I != E; ++I) {
-  CollectorMetadata *MD = *I;
+  GCFunctionInfo *MD = *I;
   size_t PointCount = MD-&gt;size();
 
-  for (CollectorMetadata::iterator PI = MD-&gt;begin(),
-                                   PE = MD-&gt;end(); PI != PE; ++PI) {
+  for (GCFunctionInfo::iterator PI = MD-&gt;begin(),
+                                PE = MD-&gt;end(); PI != PE; ++PI) {
     GC::PointKind PointKind = PI-&gt;Kind;
     unsigned PointNum = PI-&gt;Num;
   }
@@ -1187,33 +1191,56 @@ safe point (because only the topmost function has been patched).</p>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
-  <a name="assembly">Emitting assembly code:
-    <tt>beginAssembly</tt> and <tt>finishAssembly</tt></a>
+  <a name="assembly">Emitting assembly code: <tt>GCMetadataPrinter</tt></a>
 </div>
 
 <div class="doc_text">
 
-<p>LLVM allows a collector to print arbitrary assembly code before and after
-the rest of a module's assembly code. From the latter callback, the collector
-can print stack maps built by the code generator.</p>
+<p>LLVM allows a GC to print arbitrary assembly code before and after the rest
+of a module's assembly code. At the end of the module, the GC can print stack
+maps built by the code generator. (At the beginning, this information is not
+yet computed.)</p>
+
+<p>Since AsmWriter and CodeGen are separate components of LLVM, a separate
+abstract base class and registry is provided for printing assembly code, the
+<tt>GCMetadaPrinter</tt> and <tt>GCMetadaPrinterRegistry</tt>. The AsmWriter
+will look for such a subclass if the <tt>GCStrategy</tt> sets
+<tt>UsesMetadata</tt>:</p>
+
+<blockquote><pre
+>MyGC::MyGC() {
+  UsesMetadata = true;
+}</pre></blockquote>
 
 <p>Note that LLVM does not currently have analogous APIs to support code
 generation in the JIT, nor using the object writers.</p>
 
 <blockquote><pre
->class MyCollector : public Collector {
-public:
-  virtual void beginAssembly(std::ostream &amp;OS, AsmPrinter &amp;AP,
-                             const TargetAsmInfo &amp;TAI);
+>// lib/MyGC/MyGCPrinter.cpp - Example LLVM GC printer
 
-  virtual void finishAssembly(std::ostream &amp;OS, AsmPrinter &amp;AP,
-                              const TargetAsmInfo &amp;TAI);
+#include "llvm/CodeGen/GCMetadataPrinter.h"
+#include "llvm/Support/Compiler.h"
+
+using namespace llvm;
+
+namespace {
+  class VISIBILITY_HIDDEN MyGCPrinter : public GCMetadataPrinter {
+  public:
+    virtual void beginAssembly(std::ostream &amp;OS, AsmPrinter &amp;AP,
+                               const TargetAsmInfo &amp;TAI);
+  
+    virtual void finishAssembly(std::ostream &amp;OS, AsmPrinter &amp;AP,
+                                const TargetAsmInfo &amp;TAI);
+  };
+  
+  GCMetadataPrinterRegistry::Add&lt;MyGCPrinter&gt;
+  X("mygc", "My bespoke garbage collector.");
 }</pre></blockquote>
 
 <p>The collector should use <tt>AsmPrinter</tt> and <tt>TargetAsmInfo</tt> to
 print portable assembly code to the <tt>std::ostream</tt>. The collector itself
 contains the stack map for the entire module, and may access the
-<tt>CollectorMetadata</tt> using its own <tt>begin()</tt> and <tt>end()</tt>
+<tt>GCFunctionInfo</tt> using its own <tt>begin()</tt> and <tt>end()</tt>
 methods. Here's a realistic example:</p>
 
 <blockquote><pre
@@ -1223,12 +1250,12 @@ methods. Here's a realistic example:</p>
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetAsmInfo.h"
 
-void MyCollector::beginAssembly(std::ostream &amp;OS, AsmPrinter &amp;AP,
+void MyGCPrinter::beginAssembly(std::ostream &amp;OS, AsmPrinter &amp;AP,
                                 const TargetAsmInfo &amp;TAI) {
   // Nothing to do.
 }
 
-void MyCollector::finishAssembly(std::ostream &amp;OS, AsmPrinter &amp;AP,
+void MyGCPrinter::finishAssembly(std::ostream &amp;OS, AsmPrinter &amp;AP,
                                  const TargetAsmInfo &amp;TAI) {
   // Set up for emitting addresses.
   const char *AddressDirective;
@@ -1246,7 +1273,7 @@ void MyCollector::finishAssembly(std::ostream &amp;OS, AsmPrinter &amp;AP,
   
   // For each function...
   for (iterator FI = begin(), FE = end(); FI != FE; ++FI) {
-    CollectorMetadata &amp;MD = **FI;
+    GCFunctionInfo &amp;MD = **FI;
     
     // Emit this data structure:
     // 
@@ -1276,7 +1303,7 @@ void MyCollector::finishAssembly(std::ostream &amp;OS, AsmPrinter &amp;AP,
     AP.EOL("safe point count");
     
     // And each safe point...
-    for (CollectorMetadata::iterator PI = MD.begin(),
+    for (GCFunctionInfo::iterator PI = MD.begin(),
                                      PE = MD.end(); PI != PE; ++PI) {
       // Align to address width.
       AP.EmitAlignment(AddressAlignLog);
@@ -1295,7 +1322,7 @@ void MyCollector::finishAssembly(std::ostream &amp;OS, AsmPrinter &amp;AP,
       AP.EOL("live root count");
       
       // And for each live root...
-      for (CollectorMetadata::live_iterator LI = MD.live_begin(PI),
+      for (GCFunctionInfo::live_iterator LI = MD.live_begin(PI),
                                             LE = MD.live_end(PI);
                                             LI != LE; ++LI) {
         // Print its offset within the stack frame.
