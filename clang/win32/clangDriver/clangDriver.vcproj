@@ -204,10 +204,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\Driver\HTMLDiagnostics.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\Driver\HTMLPrint.cpp"
 				>
 			</File>
