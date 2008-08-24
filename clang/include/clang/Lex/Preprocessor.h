@@ -277,22 +277,22 @@ public:
   void RemoveTopOfLexerStack();
 
   /// EnableBacktrackAtThisPos - From the point that this method is called, and
-  /// until DisableBacktrack() or Backtrack() is called, the Preprocessor keeps
-  /// track of the lexed tokens so that a subsequent Backtrack() call will make
-  /// the Preprocessor re-lex the same tokens.
+  /// until CommitBacktrackedTokens() or Backtrack() is called, the Preprocessor
+  /// keeps track of the lexed tokens so that a subsequent Backtrack() call will
+  /// make the Preprocessor re-lex the same tokens.
   ///
   /// Nested backtracks are allowed, meaning that EnableBacktrackAtThisPos can
-  /// be called multiple times and DisableBacktrack/Backtrack calls will be
-  /// combined with the EnableBacktrackAtThisPos calls in reverse order.
+  /// be called multiple times and CommitBacktrackedTokens/Backtrack calls will
+  /// be combined with the EnableBacktrackAtThisPos calls in reverse order.
   ///
-  /// NOTE: *DO NOT* forget to call either DisableBacktrack() or Backtrack() at
-  /// some point after EnableBacktrackAtThisPos. If you don't, caching of tokens
-  /// will continue indefinitely.
+  /// NOTE: *DO NOT* forget to call either CommitBacktrackedTokens or Backtrack
+  /// at some point after EnableBacktrackAtThisPos. If you don't, caching of
+  /// tokens will continue indefinitely.
   ///
   void EnableBacktrackAtThisPos();
 
-  /// DisableBacktrack - Disable the last EnableBacktrackAtThisPos() call.
-  void DisableBacktrack();
+  /// CommitBacktrackedTokens - Disable the last EnableBacktrackAtThisPos call.
+  void CommitBacktrackedTokens();
 
   /// Backtrack - Make Preprocessor re-lex the tokens that were lexed since
   /// EnableBacktrackAtThisPos() was previously called. 
