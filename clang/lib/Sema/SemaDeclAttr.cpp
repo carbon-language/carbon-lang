@@ -467,7 +467,7 @@ static void HandleVisibilityAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 }
 
 static void HandleObjCGCAttr(Decl *d, const AttributeList &Attr, Sema &S) {
-  if (!Attr.getParameterName()) {
+  if (!Attr.getParameterName()) {    
     S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_string,
            "objc_gc", std::string("1"));
     return;
@@ -486,7 +486,7 @@ static void HandleObjCGCAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   
   if (TypeLen == 4 && !memcmp(TypeStr, "weak", 4))
     type = ObjCGCAttr::Weak;
-  else if (TypeLen == 5 && !memcmp(TypeStr, "strong", 5))
+  else if (TypeLen == 6 && !memcmp(TypeStr, "strong", 6))
     type = ObjCGCAttr::Strong;
   else {
     S.Diag(Attr.getLoc(), diag::warn_attribute_type_not_supported,
