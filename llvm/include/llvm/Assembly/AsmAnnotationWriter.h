@@ -24,7 +24,8 @@ class BasicBlock;
 class Instruction;
 class raw_ostream;
 
-struct AssemblyAnnotationWriter {
+class AssemblyAnnotationWriter {
+public:
 
   virtual ~AssemblyAnnotationWriter();
 

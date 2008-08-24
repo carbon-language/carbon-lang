@@ -36,7 +36,7 @@ class TypeSymbolTable;
 template<typename ValueTy> class StringMapEntry;
 typedef StringMapEntry<Value*> ValueName;
 class raw_ostream;
-struct AssemblyAnnotationWriter;
+class AssemblyAnnotationWriter;
 
 //===----------------------------------------------------------------------===//
 //                                 Value Class
