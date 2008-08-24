@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "HTMLDiagnostics.h"
+#include "clang/Driver/HTMLDiagnostics.h"
 #include "clang/Analysis/PathDiagnostic.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
