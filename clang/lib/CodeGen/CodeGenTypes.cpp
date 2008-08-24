@@ -321,9 +321,11 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     return llvm::StructType::get(IvarTypes);
   }
       
-  case Type::ObjCQualifiedInterface:
-    assert(0 && "FIXME: add missing functionality here");
-    break;
+  case Type::ObjCQualifiedInterface: {
+    ObjCQualifiedInterfaceType QIT = cast<ObjCQualifiedInterfaceType>(Ty);
+    
+    return ConvertTypeRecursive(Context.getObjCInterfaceType(QIT.getDecl()));
+  }
 
   case Type::ObjCQualifiedId:
     // Protocols don't influence the LLVM type.
