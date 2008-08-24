@@ -4982,6 +4982,7 @@ std::string ISD::ArgFlagsTy::getArgFlagsString() {
 void SDNode::dump() const { dump(0); }
 void SDNode::dump(const SelectionDAG *G) const {
   print(errs(), G);
+  errs().flush();
 }
 
 void SDNode::print(raw_ostream &OS, const SelectionDAG *G) const {
