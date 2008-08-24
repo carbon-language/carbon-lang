@@ -245,6 +245,8 @@ private:
   bool Diag(SourceLocation Loc, unsigned DiagID,
             const std::string &Msg = std::string());
   bool Diag(SourceLocation Loc, unsigned DiagID, const SourceRange &R);
+  bool Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg,
+            SourceRange R1);
   bool Diag(const Token &Tok, unsigned DiagID,
             const std::string &M = std::string()) {
     return Diag(Tok.getLocation(), DiagID, M);

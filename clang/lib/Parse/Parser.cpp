@@ -38,6 +38,12 @@ bool Parser::Diag(SourceLocation Loc, unsigned DiagID,
   return true;
 }
 
+bool Parser::Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg,
+                  SourceRange Range) {
+  Diags.Report(PP.getFullLoc(Loc), DiagID, &Msg, 1, &Range,1);
+  return true;
+}
+
 bool Parser::Diag(SourceLocation Loc, unsigned DiagID, const SourceRange &R) {
   Diags.Report(FullSourceLoc(Loc,PP.getSourceManager()), DiagID, 0, 0,
                &R, 1);
