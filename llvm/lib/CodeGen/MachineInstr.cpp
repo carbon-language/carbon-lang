@@ -24,6 +24,7 @@
 #include "llvm/Support/LeakDetector.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Streams.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/FoldingSet.h"
 #include <ostream>
 using namespace llvm;
@@ -756,9 +757,10 @@ void MachineInstr::print(std::ostream &OS, const TargetMachine *TM) const {
         OS << "<unknown>";
       else if (!V->getName().empty())
         OS << V->getName();
-      else if (const PseudoSourceValue *PSV = dyn_cast<PseudoSourceValue>(V))
-        OS << *PSV;
-      else
+      else if (const PseudoSourceValue *PSV = dyn_cast<PseudoSourceValue>(V)) {
+        raw_os_ostream OSS(OS);
+        PSV->print(OSS);
+      } else
         OS << V;
 
       OS << " + " << MRO.getOffset() << "]";

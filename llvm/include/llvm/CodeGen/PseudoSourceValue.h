@@ -28,8 +28,7 @@ namespace llvm {
   public:
     PseudoSourceValue();
 
-    virtual void print(std::ostream &OS) const;
-    virtual void print(raw_ostream &OS) const;
+    void print(raw_ostream &OS) const;
 
     /// isConstant - Test whether this PseudoSourceValue has a constant value.
     ///
@@ -61,16 +60,6 @@ namespace llvm {
     /// A SV referencing the jump table
     static const PseudoSourceValue *getJumpTable();
   };
-
-inline std::ostream &operator<<(std::ostream &OS,const PseudoSourceValue &PSV) {
-  PSV.print(OS);
-  return OS;
-}
-inline raw_ostream &operator<<(raw_ostream &OS, const PseudoSourceValue &PSV) {
-  PSV.print(OS);
-  return OS;
-}
-
 } // End llvm namespace
 
 #endif

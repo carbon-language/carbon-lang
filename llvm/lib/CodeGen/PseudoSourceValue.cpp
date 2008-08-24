@@ -18,36 +18,34 @@
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/raw_ostream.h"
 #include <map>
+using namespace llvm;
 
-namespace llvm {
-  static ManagedStatic<PseudoSourceValue[4]> PSVs;
+static ManagedStatic<PseudoSourceValue[4]> PSVs;
 
-  const PseudoSourceValue *PseudoSourceValue::getStack()
-  { return &(*PSVs)[0]; }
-  const PseudoSourceValue *PseudoSourceValue::getGOT()
-  { return &(*PSVs)[1]; }
-  const PseudoSourceValue *PseudoSourceValue::getJumpTable()
-  { return &(*PSVs)[2]; }
-  const PseudoSourceValue *PseudoSourceValue::getConstantPool()
-  { return &(*PSVs)[3]; }
+const PseudoSourceValue *PseudoSourceValue::getStack()
+{ return &(*PSVs)[0]; }
+const PseudoSourceValue *PseudoSourceValue::getGOT()
+{ return &(*PSVs)[1]; }
+const PseudoSourceValue *PseudoSourceValue::getJumpTable()
+{ return &(*PSVs)[2]; }
+const PseudoSourceValue *PseudoSourceValue::getConstantPool()
+{ return &(*PSVs)[3]; }
 
-  static const char *const PSVNames[] = {
-    "Stack",
-    "GOT",
-    "JumpTable",
-    "ConstantPool"
-  };
+static const char *const PSVNames[] = {
+  "Stack",
+  "GOT",
+  "JumpTable",
+  "ConstantPool"
+};
 
-  PseudoSourceValue::PseudoSourceValue() :
-    Value(PointerType::getUnqual(Type::Int8Ty), PseudoSourceValueVal) {}
+PseudoSourceValue::PseudoSourceValue() :
+  Value(PointerType::getUnqual(Type::Int8Ty), PseudoSourceValueVal) {}
 
-  void PseudoSourceValue::print(std::ostream &OS) const {
-    OS << PSVNames[this - *PSVs];
-  }
-  void PseudoSourceValue::print(raw_ostream &OS) const {
-    OS << PSVNames[this - *PSVs];
-  }
+void PseudoSourceValue::print(raw_ostream &OS) const {
+  OS << PSVNames[this - *PSVs];
+}
 
+namespace {
   /// FixedStackPseudoSourceValue - A specialized PseudoSourceValue
   /// for holding FixedStack values, which must include a frame
   /// index.
@@ -66,29 +64,28 @@ namespace llvm {
       OS << "FixedStack" << FI;
     }
   };
+}
 
-  static ManagedStatic<std::map<int, const PseudoSourceValue *> > FSValues;
+static ManagedStatic<std::map<int, const PseudoSourceValue *> > FSValues;
 
-  const PseudoSourceValue *PseudoSourceValue::getFixedStack(int FI) {
-    const PseudoSourceValue *&V = (*FSValues)[FI];
-    if (!V)
-      V = new FixedStackPseudoSourceValue(FI);
-    return V;
-  }
+const PseudoSourceValue *PseudoSourceValue::getFixedStack(int FI) {
+  const PseudoSourceValue *&V = (*FSValues)[FI];
+  if (!V)
+    V = new FixedStackPseudoSourceValue(FI);
+  return V;
+}
 
-  bool PseudoSourceValue::isConstant(const MachineFrameInfo *) const {
-    if (this == getStack())
-      return false;
-    if (this == getGOT() ||
-        this == getConstantPool() ||
-        this == getJumpTable())
-      return true;
-    assert(0 && "Unknown PseudoSourceValue!");
+bool PseudoSourceValue::isConstant(const MachineFrameInfo *) const {
+  if (this == getStack())
     return false;
-  }
+  if (this == getGOT() ||
+      this == getConstantPool() ||
+      this == getJumpTable())
+    return true;
+  assert(0 && "Unknown PseudoSourceValue!");
+  return false;
+}
 
-  bool
-  FixedStackPseudoSourceValue::isConstant(const MachineFrameInfo *MFI) const {
-    return MFI && MFI->isImmutableObjectIndex(FI);
-  }
+bool FixedStackPseudoSourceValue::isConstant(const MachineFrameInfo *MFI) const{
+  return MFI && MFI->isImmutableObjectIndex(FI);
 }
