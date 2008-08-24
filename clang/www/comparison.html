@@ -95,9 +95,10 @@
         refactoring tool that wants to rename 'x'.</li>
     <li>Clang can serialize its AST out to disk and read it back into another 
         program, which is useful for whole program analysis.  GCC does not have
-        this, but its current PCH mechanism is close.  However, GCC's current 
-        PCH support is architecturally only able to read the dump back into 
-        the exact same executable as the one that produced it.</li>
+        this.  GCC's PCH mechanism (which is just a dump of the compiler 
+        memory image) is related, but is architecturally only 
+        able to read the dump back into the exact same executable as the one 
+        that produced it (it is not a structured format).</li>
     <li>Clang is <a href="features.html#performance">much faster and uses far
         less memory</a> than GCC.</li>
     <li>Clang aims to provide extremely clear and concise diagnostics (error and
@@ -112,7 +113,7 @@
     <li>Clang inherits a number of features from its use of LLVM as a backend,
         including support for a bytecode representation for intermediate code,
         pluggable optimizers, link-time optimization support, Just-In-Time
-        compilation, etc.</li>
+        compilation, ability to link in multiple code generators, etc.</li>
     </ul>
 
     <!--=====================================================================-->
@@ -136,14 +137,15 @@
     
     <ul>
     <li>The Elsa community is extremely small and major development work seems
-        to have ceased in 2005, though it continues to be used by other projects
+        to have ceased in 2005, though it continues to be used by other small 
+        projects
         (e.g. Oink).  Clang has a vibrant community including developers that
         are paid to work on it full time.  In practice this means that you can
         file bugs against Clang and they will often be fixed for you.  If you
         use Elsa, you are (mostly) on your own for bug fixes and feature
         enhancements.</li>
     <li>Elsa is not built as a stack of reusable libraries like clang is.  It is
-        very difficult to use part of elsa without the whole front-end.  For
+        very difficult to use part of Elsa without the whole front-end.  For
         example, you cannot use Elsa to parse C/ObjC code without building an
         AST.  You can do this in Clang and it is much faster than building an
         AST.</li>
@@ -151,8 +153,8 @@
         difficult to accurately map from a source location in the AST back to
         its original position before preprocessing.  Like GCC, it does not keep
         track of macro expansions.</li>
-    <li>Elsa is slower and uses more memory than GCC, which requires far more
-        space and time than clang.</li>
+    <li>Elsa is even slower and uses more memory than GCC, which itself requires 
+        far more space and time than clang.</li>
     <li>Elsa only does partial semantic analysis.  It is intended to work on
         code that is already validated by GCC, so it does not do many semantic
         checks required by the languages it implements.</li>
@@ -164,7 +166,7 @@
        these shortcomings by loosely integrating a preprocessor. This allows it
        to map from a source location in the AST to the original position before
        preprocessing, providing it better support for static analysis and
-       refactoring.  For more details, please see the Pork page.</p>
+       refactoring.  Note that Pork is in stasis now too.</p>
 
     
     <!--=====================================================================-->
