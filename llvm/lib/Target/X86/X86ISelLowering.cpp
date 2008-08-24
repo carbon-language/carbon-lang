@@ -1457,12 +1457,12 @@ EmitTailCallStoreRetAddr(SelectionDAG & DAG, MachineFunction &MF,
 
 SDValue X86TargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
   MachineFunction &MF = DAG.getMachineFunction();
-  SDValue Chain       = Op.getOperand(0);
+  SDValue Chain     = Op.getOperand(0);
   unsigned CC         = cast<ConstantSDNode>(Op.getOperand(1))->getValue();
   bool isVarArg       = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
   bool IsTailCall     = cast<ConstantSDNode>(Op.getOperand(3))->getValue() != 0
                         && CC == CallingConv::Fast && PerformTailCallOpt;
-  SDValue Callee      = Op.getOperand(4);
+  SDValue Callee    = Op.getOperand(4);
   bool Is64Bit        = Subtarget->is64Bit();
   bool IsStructRet    = CallIsStructReturn(Op);
 
@@ -1499,11 +1499,6 @@ SDValue X86TargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
       MF.getInfo<X86MachineFunctionInfo>()->setTCReturnAddrDelta(FPDiff);
   }
 
-  // If the address is a load, i.e. indirect function call, move callseq_start
-  // above the load. This makes it possible for the load to fold into the call.
-  if (Callee.Val == Chain.Val && ISD::isNormalLoad(Callee.Val) &&
-      Chain.hasOneUse() && Callee.hasOneUse())
-    Chain = Chain.getOperand(0);
   Chain = DAG.getCALLSEQ_START(Chain, DAG.getIntPtrConstant(NumBytes));
 
   SDValue RetAddrFrIdx;
