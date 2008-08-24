@@ -142,8 +142,7 @@ class Preprocessor {
   unsigned NumCachedTokenLexers;
   TokenLexer *TokenLexerCache[TokenLexerCacheSize];
 
-  // Cached tokens state.
-
+private:  // Cached tokens state.
   typedef std::vector<Token> CachedTokensTy;
 
   /// CachedTokens - Cached tokens are stored here when we do backtracking or
