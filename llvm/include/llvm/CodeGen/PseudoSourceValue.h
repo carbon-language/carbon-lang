@@ -18,6 +18,7 @@
 
 namespace llvm {
   class MachineFrameInfo;
+  class raw_ostream;
 
   /// PseudoSourceValue - Special value supplied for machine level alias
   /// analysis. It indicates that the a memory access references the functions
@@ -28,6 +29,7 @@ namespace llvm {
     PseudoSourceValue();
 
     virtual void print(std::ostream &OS) const;
+    virtual void print(raw_ostream &OS) const;
 
     /// isConstant - Test whether this PseudoSourceValue has a constant value.
     ///
@@ -59,6 +61,16 @@ namespace llvm {
     /// A SV referencing the jump table
     static const PseudoSourceValue *getJumpTable();
   };
+
+inline std::ostream &operator<<(std::ostream &OS,const PseudoSourceValue &PSV) {
+  PSV.print(OS);
+  return OS;
+}
+inline raw_ostream &operator<<(raw_ostream &OS, const PseudoSourceValue &PSV) {
+  PSV.print(OS);
+  return OS;
+}
+
 } // End llvm namespace
 
 #endif

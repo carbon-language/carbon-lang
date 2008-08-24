@@ -756,8 +756,8 @@ void MachineInstr::print(std::ostream &OS, const TargetMachine *TM) const {
         OS << "<unknown>";
       else if (!V->getName().empty())
         OS << V->getName();
-      else if (isa<PseudoSourceValue>(V))
-        OS << *V;
+      else if (const PseudoSourceValue *PSV = dyn_cast<PseudoSourceValue>(V))
+        OS << *PSV;
       else
         OS << V;
 

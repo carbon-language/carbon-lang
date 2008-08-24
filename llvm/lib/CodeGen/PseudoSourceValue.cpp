@@ -16,6 +16,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/ManagedStatic.h"
+#include "llvm/Support/raw_ostream.h"
 #include <map>
 
 namespace llvm {
@@ -43,6 +44,9 @@ namespace llvm {
   void PseudoSourceValue::print(std::ostream &OS) const {
     OS << PSVNames[this - *PSVs];
   }
+  void PseudoSourceValue::print(raw_ostream &OS) const {
+    OS << PSVNames[this - *PSVs];
+  }
 
   /// FixedStackPseudoSourceValue - A specialized PseudoSourceValue
   /// for holding FixedStack values, which must include a frame
@@ -56,6 +60,9 @@ namespace llvm {
     virtual bool isConstant(const MachineFrameInfo *MFI) const;
 
     virtual void print(std::ostream &OS) const {
+      OS << "FixedStack" << FI;
+    }
+    virtual void print(raw_ostream &OS) const {
       OS << "FixedStack" << FI;
     }
   };
