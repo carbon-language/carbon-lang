@@ -246,7 +246,7 @@ FastISel::SelectInstructions(BasicBlock::iterator Begin,
           return I;
         if (!TLI.isConvertLegal(SrcVT, DstVT))
           // Illegal conversion.  Halt "fast" selection and bail.
-          return I:
+          return I;
         
         // Otherwise, insert a register-to-register copy.
         TargetRegisterClass* SrcClass = TLI.getRegClassFor(SrcVT);
