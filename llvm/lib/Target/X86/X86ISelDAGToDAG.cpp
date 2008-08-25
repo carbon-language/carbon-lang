@@ -373,12 +373,12 @@ bool X86DAGToDAGISel::CanBeFoldedBy(SDNode *N, SDNode *U, SDNode *Root) const {
 /// load's chain result.
 static void MoveBelowTokenFactor(SelectionDAG *CurDAG, SDValue Load,
                                  SDValue Store, SDValue TF) {
-  std::vector<SDValue> Ops;
+  SmallVector<SDValue, 4> Ops;
   for (unsigned i = 0, e = TF.Val->getNumOperands(); i != e; ++i)
-    if (Load.Val == TF.Val->getOperand(i).Val)
-      Ops.push_back(Load.Val->getOperand(0));
+    if (Load.Val == TF.getOperand(i).Val)
+      Ops.push_back(Load.getOperand(0));
     else
-      Ops.push_back(TF.Val->getOperand(i));
+      Ops.push_back(TF.getOperand(i));
   CurDAG->UpdateNodeOperands(TF, &Ops[0], Ops.size());
   CurDAG->UpdateNodeOperands(Load, TF, Load.getOperand(1), Load.getOperand(2));
   CurDAG->UpdateNodeOperands(Store, Load.getValue(1), Store.getOperand(1),
@@ -410,6 +410,49 @@ static bool isRMWLoad(SDValue N, SDValue Chain, SDValue Address,
   }
   return false;
 }
+
+/// MoveBelowCallSeqStart - Replace CALLSEQ_START operand with load's chain
+/// operand and move load below the call's chain operand.
+static void MoveBelowCallSeqStart(SelectionDAG *CurDAG, SDValue Load,
+                           SDValue Call, SDValue Chain) {
+  SmallVector<SDValue, 8> Ops;
+  for (unsigned i = 0, e = Chain.Val->getNumOperands(); i != e; ++i)
+    if (Load.Val == Chain.getOperand(i).Val)
+      Ops.push_back(Load.getOperand(0));
+    else
+      Ops.push_back(Chain.getOperand(i));
+  CurDAG->UpdateNodeOperands(Chain, &Ops[0], Ops.size());
+  CurDAG->UpdateNodeOperands(Load, Call.getOperand(0),
+                             Load.getOperand(1), Load.getOperand(2));
+  Ops.clear();
+  Ops.push_back(SDValue(Load.Val, 1));
+  for (unsigned i = 1, e = Call.Val->getNumOperands(); i != e; ++i)
+    Ops.push_back(Call.getOperand(i));
+  CurDAG->UpdateNodeOperands(Call, &Ops[0], Ops.size());
+}
+
+/// isCalleeLoad - Return true if call address is a load and it can be
+/// moved below CALLSEQ_START and the chains leading up to the call.
+/// Return the CALLSEQ_START by reference as a second output.
+static bool isCalleeLoad(SDValue Callee, SDValue &Chain) {
+  if (Callee.Val == Chain.Val || !Callee.hasOneUse())
+    return false;
+  LoadSDNode *LD = dyn_cast<LoadSDNode>(Callee.Val);
+  if (!LD ||
+      LD->isVolatile() ||
+      LD->getAddressingMode() != ISD::UNINDEXED ||
+      LD->getExtensionType() != ISD::NON_EXTLOAD)
+    return false;
+
+  // Now let's find the callseq_start.
+  while (Chain.getOpcode() != ISD::CALLSEQ_START) {
+    if (!Chain.hasOneUse())
+      return false;
+    Chain = Chain.getOperand(0);
+  }
+  return Chain.getOperand(0).Val == Callee.Val;
+}
+
 
 /// PreprocessForRMW - Preprocess the DAG to make instruction selection better.
 /// This is only run if not in -fast mode (aka -O0).
@@ -454,9 +497,39 @@ static bool isRMWLoad(SDValue N, SDValue Chain, SDValue Address,
 void X86DAGToDAGISel::PreprocessForRMW() {
   for (SelectionDAG::allnodes_iterator I = CurDAG->allnodes_begin(),
          E = CurDAG->allnodes_end(); I != E; ++I) {
+    if (I->getOpcode() == X86ISD::CALL) {
+      /// Also try moving call address load from outside callseq_start to just
+      /// before the call to allow it to be folded.
+      ///
+      ///     [Load chain]
+      ///         ^
+      ///         |
+      ///       [Load]
+      ///       ^    ^
+      ///       |    |
+      ///      /      \--
+      ///     /          |
+      ///[CALLSEQ_START] |
+      ///     ^          |
+      ///     |          |
+      /// [LOAD/C2Reg]   |
+      ///     |          |
+      ///      \        /
+      ///       \      /
+      ///       [CALL]
+      SDValue Chain = I->getOperand(0);
+      SDValue Load  = I->getOperand(1);
+      if (!isCalleeLoad(Load, Chain))
+        continue;
+      MoveBelowCallSeqStart(CurDAG, Load, SDValue(I, 0), Chain);
+      ++NumLoadMoved;
+      continue;
+    }
+
     if (!ISD::isNON_TRUNCStore(I))
       continue;
     SDValue Chain = I->getOperand(0);
+
     if (Chain.Val->getOpcode() != ISD::TokenFactor)
       continue;
 
@@ -471,35 +544,35 @@ void X86DAGToDAGISel::PreprocessForRMW() {
     SDValue Load;
     unsigned Opcode = N1.Val->getOpcode();
     switch (Opcode) {
-      case ISD::ADD:
-      case ISD::MUL:
-      case ISD::AND:
-      case ISD::OR:
-      case ISD::XOR:
-      case ISD::ADDC:
-      case ISD::ADDE:
-      case ISD::VECTOR_SHUFFLE: {
-        SDValue N10 = N1.getOperand(0);
-        SDValue N11 = N1.getOperand(1);
-        RModW = isRMWLoad(N10, Chain, N2, Load);
-        if (!RModW)
-          RModW = isRMWLoad(N11, Chain, N2, Load);
-        break;
-      }
-      case ISD::SUB:
-      case ISD::SHL:
-      case ISD::SRA:
-      case ISD::SRL:
-      case ISD::ROTL:
-      case ISD::ROTR:
-      case ISD::SUBC:
-      case ISD::SUBE:
-      case X86ISD::SHLD:
-      case X86ISD::SHRD: {
-        SDValue N10 = N1.getOperand(0);
-        RModW = isRMWLoad(N10, Chain, N2, Load);
-        break;
-      }
+    case ISD::ADD:
+    case ISD::MUL:
+    case ISD::AND:
+    case ISD::OR:
+    case ISD::XOR:
+    case ISD::ADDC:
+    case ISD::ADDE:
+    case ISD::VECTOR_SHUFFLE: {
+      SDValue N10 = N1.getOperand(0);
+      SDValue N11 = N1.getOperand(1);
+      RModW = isRMWLoad(N10, Chain, N2, Load);
+      if (!RModW)
+        RModW = isRMWLoad(N11, Chain, N2, Load);
+      break;
+    }
+    case ISD::SUB:
+    case ISD::SHL:
+    case ISD::SRA:
+    case ISD::SRL:
+    case ISD::ROTL:
+    case ISD::ROTR:
+    case ISD::SUBC:
+    case ISD::SUBE:
+    case X86ISD::SHLD:
+    case X86ISD::SHRD: {
+      SDValue N10 = N1.getOperand(0);
+      RModW = isRMWLoad(N10, Chain, N2, Load);
+      break;
+    }
     }
 
     if (RModW) {

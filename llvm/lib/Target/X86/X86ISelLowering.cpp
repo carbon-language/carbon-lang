@@ -1457,12 +1457,12 @@ EmitTailCallStoreRetAddr(SelectionDAG & DAG, MachineFunction &MF,
 
 SDValue X86TargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
   MachineFunction &MF = DAG.getMachineFunction();
-  SDValue Chain     = Op.getOperand(0);
+  SDValue Chain       = Op.getOperand(0);
   unsigned CC         = cast<ConstantSDNode>(Op.getOperand(1))->getValue();
   bool isVarArg       = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
   bool IsTailCall     = cast<ConstantSDNode>(Op.getOperand(3))->getValue() != 0
                         && CC == CallingConv::Fast && PerformTailCallOpt;
-  SDValue Callee    = Op.getOperand(4);
+  SDValue Callee      = Op.getOperand(4);
   bool Is64Bit        = Subtarget->is64Bit();
   bool IsStructRet    = CallIsStructReturn(Op);
 
