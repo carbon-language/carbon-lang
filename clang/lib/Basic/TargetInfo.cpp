@@ -193,10 +193,10 @@ bool TargetInfo::validateInputConstraint(const char *Name,
         if (i >= NumOutputs)
           return false;
       } else if (!validateAsmConstraint(*Name, info)) {
-        // FIXME: This assert is in place temporarily 
-        // so we can add more constraints as we hit it.
-        // Eventually, an unknown constraint should just be treated as 'g'.
-        assert(0 && "Unknown input constraint type!");
+        // FIXME: This error return is in place temporarily so we can
+        // add more constraints as we hit it.  Eventually, an unknown
+        // constraint should just be treated as 'g'.
+        return false;
       }        
     case '%': // commutative
       // FIXME: Fail if % is used with the last operand.
