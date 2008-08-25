@@ -532,11 +532,33 @@ let usesCustomDAGSchedInserter = 1 in {
       (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr),
       "${:comment} ATOMIC_LOAD_ADD_I32 PSEUDO!",
       [(set GPRC:$dst, (atomic_load_add_32 xoaddr:$ptr, GPRC:$incr))]>;
+    def ATOMIC_LOAD_SUB_I32 : Pseudo<
+      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr),
+      "${:comment} ATOMIC_LOAD_SUB_I32 PSEUDO!",
+      [(set GPRC:$dst, (atomic_load_sub_32 xoaddr:$ptr, GPRC:$incr))]>;
+    def ATOMIC_LOAD_AND_I32 : Pseudo<
+      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr),
+      "${:comment} ATOMIC_LOAD_AND_I32 PSEUDO!",
+      [(set GPRC:$dst, (atomic_load_and_32 xoaddr:$ptr, GPRC:$incr))]>;
+    def ATOMIC_LOAD_OR_I32 : Pseudo<
+      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr),
+      "${:comment} ATOMIC_LOAD_OR_I32 PSEUDO!",
+      [(set GPRC:$dst, (atomic_load_or_32 xoaddr:$ptr, GPRC:$incr))]>;
+    def ATOMIC_LOAD_XOR_I32 : Pseudo<
+      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr),
+      "${:comment} ATOMIC_LOAD_XOR_I32 PSEUDO!",
+      [(set GPRC:$dst, (atomic_load_xor_32 xoaddr:$ptr, GPRC:$incr))]>;
+    def ATOMIC_LOAD_NAND_I32 : Pseudo<
+      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr),
+      "${:comment} ATOMIC_LOAD_NAND_I32 PSEUDO!",
+      [(set GPRC:$dst, (atomic_load_nand_32 xoaddr:$ptr, GPRC:$incr))]>;
+
     def ATOMIC_CMP_SWAP_I32 : Pseudo<
       (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$old, GPRC:$new),
       "${:comment} ATOMIC_CMP_SWAP_I32 PSEUDO!",
       [(set GPRC:$dst, 
                     (atomic_cmp_swap_32 xoaddr:$ptr, GPRC:$old, GPRC:$new))]>;
+
     def ATOMIC_SWAP_I32 : Pseudo<
       (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$new),
       "${:comment} ATOMIC_SWAP_I32 PSEUDO!",

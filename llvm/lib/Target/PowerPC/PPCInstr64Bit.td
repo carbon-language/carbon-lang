@@ -123,11 +123,33 @@ let usesCustomDAGSchedInserter = 1 in {
       (outs G8RC:$dst), (ins memrr:$ptr, G8RC:$incr),
       "${:comment} ATOMIC_LOAD_ADD_I64 PSEUDO!",
       [(set G8RC:$dst, (atomic_load_add_64 xoaddr:$ptr, G8RC:$incr))]>;
+    def ATOMIC_LOAD_SUB_I64 : Pseudo<
+      (outs G8RC:$dst), (ins memrr:$ptr, G8RC:$incr),
+      "${:comment} ATOMIC_LOAD_SUB_I64 PSEUDO!",
+      [(set G8RC:$dst, (atomic_load_sub_64 xoaddr:$ptr, G8RC:$incr))]>;
+    def ATOMIC_LOAD_OR_I64 : Pseudo<
+      (outs G8RC:$dst), (ins memrr:$ptr, G8RC:$incr),
+      "${:comment} ATOMIC_LOAD_OR_I64 PSEUDO!",
+      [(set G8RC:$dst, (atomic_load_or_64 xoaddr:$ptr, G8RC:$incr))]>;
+    def ATOMIC_LOAD_XOR_I64 : Pseudo<
+      (outs G8RC:$dst), (ins memrr:$ptr, G8RC:$incr),
+      "${:comment} ATOMIC_LOAD_XOR_I64 PSEUDO!",
+      [(set G8RC:$dst, (atomic_load_xor_64 xoaddr:$ptr, G8RC:$incr))]>;
+    def ATOMIC_LOAD_AND_I64 : Pseudo<
+      (outs G8RC:$dst), (ins memrr:$ptr, G8RC:$incr),
+      "${:comment} ATOMIC_LOAD_AND_I64 PSEUDO!",
+      [(set G8RC:$dst, (atomic_load_and_64 xoaddr:$ptr, G8RC:$incr))]>;
+    def ATOMIC_LOAD_NAND_I64 : Pseudo<
+      (outs G8RC:$dst), (ins memrr:$ptr, G8RC:$incr),
+      "${:comment} ATOMIC_LOAD_NAND_I64 PSEUDO!",
+      [(set G8RC:$dst, (atomic_load_nand_64 xoaddr:$ptr, G8RC:$incr))]>;
+
     def ATOMIC_CMP_SWAP_I64 : Pseudo<
       (outs G8RC:$dst), (ins memrr:$ptr, G8RC:$old, G8RC:$new),
       "${:comment} ATOMIC_CMP_SWAP_I64 PSEUDO!",
       [(set G8RC:$dst, 
                     (atomic_cmp_swap_64 xoaddr:$ptr, G8RC:$old, G8RC:$new))]>;
+
     def ATOMIC_SWAP_I64 : Pseudo<
       (outs G8RC:$dst), (ins memrr:$ptr, G8RC:$new),
       "${:comment} ATOMIC_SWAP_I64 PSEUDO!",
@@ -313,7 +335,6 @@ def SUBFIC8: DForm_2< 8, (outs G8RC:$rD), (ins G8RC:$rA, s16imm64:$imm),
 def SUBF8 : XOForm_1<31, 40, 0, (outs G8RC:$rT), (ins G8RC:$rA, G8RC:$rB),
                      "subf $rT, $rA, $rB", IntGeneral,
                      [(set G8RC:$rT, (sub G8RC:$rB, G8RC:$rA))]>;
-
 def SUBFC8 : XOForm_1<31, 8, 0, (outs G8RC:$rT), (ins G8RC:$rA, G8RC:$rB),
                       "subfc $rT, $rA, $rB", IntGeneral,
                       [(set G8RC:$rT, (subc G8RC:$rB, G8RC:$rA))]>,

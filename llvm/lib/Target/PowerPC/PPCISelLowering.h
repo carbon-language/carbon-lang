@@ -282,6 +282,9 @@ namespace llvm {
 
     virtual MachineBasicBlock *EmitInstrWithCustomInserter(MachineInstr *MI,
                                                         MachineBasicBlock *MBB);
+    MachineBasicBlock *EmitAtomicBinary(MachineInstr *MI, 
+                                        MachineBasicBlock *MBB, bool is64Bit,
+                                        unsigned BinOpcode);
     
     ConstraintType getConstraintType(const std::string &Constraint) const;
     std::pair<unsigned, const TargetRegisterClass*> 

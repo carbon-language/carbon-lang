@@ -3861,6 +3861,60 @@ SDNode *PPCTargetLowering::ReplaceNodeResults(SDNode *N, SelectionDAG &DAG) {
 //===----------------------------------------------------------------------===//
 
 MachineBasicBlock *
+PPCTargetLowering::EmitAtomicBinary(MachineInstr *MI, MachineBasicBlock *BB,
+                                    bool is64bit, unsigned BinOpcode) {
+  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
+
+  const BasicBlock *LLVM_BB = BB->getBasicBlock();
+  MachineFunction *F = BB->getParent();
+  MachineFunction::iterator It = BB;
+  ++It;
+
+  unsigned dest = MI->getOperand(0).getReg();
+  unsigned ptrA = MI->getOperand(1).getReg();
+  unsigned ptrB = MI->getOperand(2).getReg();
+  unsigned incr = MI->getOperand(3).getReg();
+
+  MachineBasicBlock *loopMBB = F->CreateMachineBasicBlock(LLVM_BB);
+  MachineBasicBlock *exitMBB = F->CreateMachineBasicBlock(LLVM_BB);
+  F->insert(It, loopMBB);
+  F->insert(It, exitMBB);
+  exitMBB->transferSuccessors(BB);
+
+  MachineRegisterInfo &RegInfo = F->getRegInfo();
+  unsigned TmpReg = RegInfo.createVirtualRegister(
+    is64bit ? (const TargetRegisterClass *) &PPC::GPRCRegClass :
+              (const TargetRegisterClass *) &PPC::G8RCRegClass);
+
+  //  thisMBB:
+  //   ...
+  //   fallthrough --> loopMBB
+  BB->addSuccessor(loopMBB);
+
+  //  loopMBB:
+  //   l[wd]arx dest, ptr
+  //   add r0, dest, incr
+  //   st[wd]cx. r0, ptr
+  //   bne- loopMBB
+  //   fallthrough --> exitMBB
+  BB = loopMBB;
+  BuildMI(BB, TII->get(is64bit ? PPC::LDARX : PPC::LWARX), dest)
+    .addReg(ptrA).addReg(ptrB);
+  BuildMI(BB, TII->get(BinOpcode), TmpReg).addReg(incr).addReg(dest);
+  BuildMI(BB, TII->get(is64bit ? PPC::STDCX : PPC::STWCX))
+    .addReg(TmpReg).addReg(ptrA).addReg(ptrB);
+  BuildMI(BB, TII->get(PPC::BCC))
+    .addImm(PPC::PRED_NE).addReg(PPC::CR0).addMBB(loopMBB);    
+  BB->addSuccessor(loopMBB);
+  BB->addSuccessor(exitMBB);
+
+  //  exitMBB:
+  //   ...
+  BB = exitMBB;
+  return BB;
+}
+
+MachineBasicBlock *
 PPCTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
                                                MachineBasicBlock *BB) {
   const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
@@ -3920,53 +3974,30 @@ PPCTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
       .addReg(MI->getOperand(3).getReg()).addMBB(copy0MBB)
       .addReg(MI->getOperand(2).getReg()).addMBB(thisMBB);
   }
-  else if (MI->getOpcode() == PPC::ATOMIC_LOAD_ADD_I32 ||
-           MI->getOpcode() == PPC::ATOMIC_LOAD_ADD_I64) {
-    bool is64bit = MI->getOpcode() == PPC::ATOMIC_LOAD_ADD_I64;
-
-    unsigned dest = MI->getOperand(0).getReg();
-    unsigned ptrA = MI->getOperand(1).getReg();
-    unsigned ptrB = MI->getOperand(2).getReg();
-    unsigned incr = MI->getOperand(3).getReg();
-
-    MachineBasicBlock *loopMBB = F->CreateMachineBasicBlock(LLVM_BB);
-    MachineBasicBlock *exitMBB = F->CreateMachineBasicBlock(LLVM_BB);
-    F->insert(It, loopMBB);
-    F->insert(It, exitMBB);
-    exitMBB->transferSuccessors(BB);
-
-    MachineRegisterInfo &RegInfo = F->getRegInfo();
-    unsigned TmpReg = RegInfo.createVirtualRegister(
-      is64bit ? (const TargetRegisterClass *) &PPC::GPRCRegClass :
-                (const TargetRegisterClass *) &PPC::G8RCRegClass);
-
-    //  thisMBB:
-    //   ...
-    //   fallthrough --> loopMBB
-    BB->addSuccessor(loopMBB);
-
-    //  loopMBB:
-    //   l[wd]arx dest, ptr
-    //   add r0, dest, incr
-    //   st[wd]cx. r0, ptr
-    //   bne- loopMBB
-    //   fallthrough --> exitMBB
-    BB = loopMBB;
-    BuildMI(BB, TII->get(is64bit ? PPC::LDARX : PPC::LWARX), dest)
-      .addReg(ptrA).addReg(ptrB);
-    BuildMI(BB, TII->get(is64bit ? PPC::ADD4 : PPC::ADD8), TmpReg)
-      .addReg(incr).addReg(dest);
-    BuildMI(BB, TII->get(is64bit ? PPC::STDCX : PPC::STWCX))
-      .addReg(TmpReg).addReg(ptrA).addReg(ptrB);
-    BuildMI(BB, TII->get(PPC::BCC))
-      .addImm(PPC::PRED_NE).addReg(PPC::CR0).addMBB(loopMBB);    
-    BB->addSuccessor(loopMBB);
-    BB->addSuccessor(exitMBB);
-    
-    //  exitMBB:
-    //   ...
-    BB = exitMBB;
-  }
+  else if (MI->getOpcode() == PPC::ATOMIC_LOAD_ADD_I32)
+    BB = EmitAtomicBinary(MI, BB, false, PPC::ADD4);
+  else if (MI->getOpcode() == PPC::ATOMIC_LOAD_ADD_I64)
+    BB = EmitAtomicBinary(MI, BB, true, PPC::ADD8);
+  else if (MI->getOpcode() == PPC::ATOMIC_LOAD_AND_I32)
+    BB = EmitAtomicBinary(MI, BB, false, PPC::AND);
+  else if (MI->getOpcode() == PPC::ATOMIC_LOAD_AND_I64)
+    BB = EmitAtomicBinary(MI, BB, true, PPC::AND8);
+  else if (MI->getOpcode() == PPC::ATOMIC_LOAD_OR_I32)
+    BB = EmitAtomicBinary(MI, BB, false, PPC::OR);
+  else if (MI->getOpcode() == PPC::ATOMIC_LOAD_OR_I64)
+    BB = EmitAtomicBinary(MI, BB, true, PPC::OR8);
+  else if (MI->getOpcode() == PPC::ATOMIC_LOAD_XOR_I32)
+    BB = EmitAtomicBinary(MI, BB, false, PPC::XOR);
+  else if (MI->getOpcode() == PPC::ATOMIC_LOAD_XOR_I64)
+    BB = EmitAtomicBinary(MI, BB, true, PPC::XOR8);
+  else if (MI->getOpcode() == PPC::ATOMIC_LOAD_NAND_I32)
+    BB = EmitAtomicBinary(MI, BB, false, PPC::NAND);
+  else if (MI->getOpcode() == PPC::ATOMIC_LOAD_NAND_I64)
+    BB = EmitAtomicBinary(MI, BB, true, PPC::NAND8);
+  else if (MI->getOpcode() == PPC::ATOMIC_LOAD_SUB_I32)
+    BB = EmitAtomicBinary(MI, BB, false, PPC::SUBF);
+  else if (MI->getOpcode() == PPC::ATOMIC_LOAD_SUB_I64)
+    BB = EmitAtomicBinary(MI, BB, true, PPC::SUBF8);
   else if (MI->getOpcode() == PPC::ATOMIC_CMP_SWAP_I32 ||
            MI->getOpcode() == PPC::ATOMIC_CMP_SWAP_I64) {
     bool is64bit = MI->getOpcode() == PPC::ATOMIC_CMP_SWAP_I64;

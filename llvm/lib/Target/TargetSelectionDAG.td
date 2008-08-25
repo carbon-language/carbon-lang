@@ -767,6 +767,111 @@ def atomic_load_add_64 : PatFrag<(ops node:$ptr, node:$inc),
   return V->getValueType(0) == MVT::i64;
 }]>;
 
+def atomic_load_sub_8 : PatFrag<(ops node:$ptr, node:$inc),
+                    (atomic_load_sub node:$ptr, node:$inc), [{
+  AtomicSDNode* V = cast<AtomicSDNode>(N);
+  return V->getValueType(0) == MVT::i8;
+}]>;
+def atomic_load_sub_16 : PatFrag<(ops node:$ptr, node:$inc), 
+                    (atomic_load_sub node:$ptr, node:$inc), [{
+  AtomicSDNode* V = cast<AtomicSDNode>(N);
+  return V->getValueType(0) == MVT::i16;
+}]>;
+def atomic_load_sub_32 : PatFrag<(ops node:$ptr, node:$inc), 
+                    (atomic_load_sub node:$ptr, node:$inc), [{
+  AtomicSDNode* V = cast<AtomicSDNode>(N);
+  return V->getValueType(0) == MVT::i32;
+}]>;
+def atomic_load_sub_64 : PatFrag<(ops node:$ptr, node:$inc), 
+                    (atomic_load_sub node:$ptr, node:$inc), [{
+  AtomicSDNode* V = cast<AtomicSDNode>(N);
+  return V->getValueType(0) == MVT::i64;
+}]>;
+
+def atomic_load_and_8 : PatFrag<(ops node:$ptr, node:$inc),
+                    (atomic_load_and node:$ptr, node:$inc), [{
+  AtomicSDNode* V = cast<AtomicSDNode>(N);
+  return V->getValueType(0) == MVT::i8;
+}]>;
+def atomic_load_and_16 : PatFrag<(ops node:$ptr, node:$inc), 
+                    (atomic_load_and node:$ptr, node:$inc), [{
+  AtomicSDNode* V = cast<AtomicSDNode>(N);
+  return V->getValueType(0) == MVT::i16;
+}]>;
+def atomic_load_and_32 : PatFrag<(ops node:$ptr, node:$inc), 
+                    (atomic_load_and node:$ptr, node:$inc), [{
+  AtomicSDNode* V = cast<AtomicSDNode>(N);
+  return V->getValueType(0) == MVT::i32;
+}]>;
+def atomic_load_and_64 : PatFrag<(ops node:$ptr, node:$inc), 
+                    (atomic_load_and node:$ptr, node:$inc), [{
+  AtomicSDNode* V = cast<AtomicSDNode>(N);
+  return V->getValueType(0) == MVT::i64;
+}]>;
+
+def atomic_load_or_8 : PatFrag<(ops node:$ptr, node:$inc),
+                    (atomic_load_or node:$ptr, node:$inc), [{
+  AtomicSDNode* V = cast<AtomicSDNode>(N);
+  return V->getValueType(0) == MVT::i8;
+}]>;
+def atomic_load_or_16 : PatFrag<(ops node:$ptr, node:$inc), 
+                    (atomic_load_or node:$ptr, node:$inc), [{
+  AtomicSDNode* V = cast<AtomicSDNode>(N);
+  return V->getValueType(0) == MVT::i16;
+}]>;
+def atomic_load_or_32 : PatFrag<(ops node:$ptr, node:$inc), 
+                    (atomic_load_or node:$ptr, node:$inc), [{
+  AtomicSDNode* V = cast<AtomicSDNode>(N);
+  return V->getValueType(0) == MVT::i32;
+}]>;
+def atomic_load_or_64 : PatFrag<(ops node:$ptr, node:$inc), 
+                    (atomic_load_or node:$ptr, node:$inc), [{
+  AtomicSDNode* V = cast<AtomicSDNode>(N);
+  return V->getValueType(0) == MVT::i64;
+}]>;
+
+def atomic_load_xor_8 : PatFrag<(ops node:$ptr, node:$inc),
+                    (atomic_load_xor node:$ptr, node:$inc), [{
+  AtomicSDNode* V = cast<AtomicSDNode>(N);
+  return V->getValueType(0) == MVT::i8;
+}]>;
+def atomic_load_xor_16 : PatFrag<(ops node:$ptr, node:$inc), 
+                    (atomic_load_xor node:$ptr, node:$inc), [{
+  AtomicSDNode* V = cast<AtomicSDNode>(N);
+  return V->getValueType(0) == MVT::i16;
+}]>;
+def atomic_load_xor_32 : PatFrag<(ops node:$ptr, node:$inc), 
+                    (atomic_load_xor node:$ptr, node:$inc), [{
+  AtomicSDNode* V = cast<AtomicSDNode>(N);
+  return V->getValueType(0) == MVT::i32;
+}]>;
+def atomic_load_xor_64 : PatFrag<(ops node:$ptr, node:$inc), 
+                    (atomic_load_xor node:$ptr, node:$inc), [{
+  AtomicSDNode* V = cast<AtomicSDNode>(N);
+  return V->getValueType(0) == MVT::i64;
+}]>;
+
+def atomic_load_nand_8 : PatFrag<(ops node:$ptr, node:$inc),
+                    (atomic_load_nand node:$ptr, node:$inc), [{
+  AtomicSDNode* V = cast<AtomicSDNode>(N);
+  return V->getValueType(0) == MVT::i8;
+}]>;
+def atomic_load_nand_16 : PatFrag<(ops node:$ptr, node:$inc), 
+                    (atomic_load_nand node:$ptr, node:$inc), [{
+  AtomicSDNode* V = cast<AtomicSDNode>(N);
+  return V->getValueType(0) == MVT::i16;
+}]>;
+def atomic_load_nand_32 : PatFrag<(ops node:$ptr, node:$inc), 
+                    (atomic_load_nand node:$ptr, node:$inc), [{
+  AtomicSDNode* V = cast<AtomicSDNode>(N);
+  return V->getValueType(0) == MVT::i32;
+}]>;
+def atomic_load_nand_64 : PatFrag<(ops node:$ptr, node:$inc), 
+                    (atomic_load_nand node:$ptr, node:$inc), [{
+  AtomicSDNode* V = cast<AtomicSDNode>(N);
+  return V->getValueType(0) == MVT::i64;
+}]>;
+
 def atomic_swap_8 : PatFrag<(ops node:$ptr, node:$inc),
                     (atomic_swap node:$ptr, node:$inc), [{
   AtomicSDNode* V = cast<AtomicSDNode>(N);
