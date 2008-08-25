@@ -234,8 +234,36 @@ FastISel::SelectInstructions(BasicBlock::iterator Begin,
         } else
           // TODO: Support vector and fp constants.
           return I;
+      } else if (!isa<Constant>(I->getOperand(0))) {
+        // Bitcasts of non-constant values become reg-reg copies.
+        MVT SrcVT = MVT::getMVT(I->getOperand(0)->getType());
+        MVT DstVT = MVT::getMVT(I->getOperand(0)->getType());
+        
+        if (SrcVT == MVT::Other || !SrcVT.isSimple() ||
+            DstVT == MVT::Other || !DstVT.isSimple() ||
+            !TLI.isTypeLegal(SrcVT) || !TLI.isTypeLegal(DstVT))
+          // Unhandled type. Halt "fast" selection and bail.
+          return I;
+        if (!TLI.isConvertLegal(SrcVT, DstVT))
+          // Illegal conversion.  Halt "fast" selection and bail.
+          return I:
+        
+        // Otherwise, insert a register-to-register copy.
+        TargetRegisterClass* SrcClass = TLI.getRegClassFor(SrcVT);
+        TargetRegisterClass* DstClass = TLI.getRegClassFor(DstVT);
+        unsigned Op0 = ValueMap[I->getOperand(0)];
+        unsigned ResultReg = createResultReg(DstClass);
+        
+        if (Op0 == 0)
+          // Unhandled operand. Halt "fast" selection and bail.
+          return false;
+        
+        TII.copyRegToReg(*MBB, MBB->end(), ResultReg, Op0, DstClass, SrcClass);
+        ValueMap[I] = ResultReg;
+        
+        break;
       } else
-        // TODO: Support non-constant bitcasts.
+        // Casting a non-integral constant?
         return I;
 
     default:
