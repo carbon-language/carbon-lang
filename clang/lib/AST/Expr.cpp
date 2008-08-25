@@ -161,7 +161,8 @@ bool CallExpr::isBuiltinConstantExpr() const {
 
   // We have a builtin that is a constant expression
   return builtinID == Builtin::BI__builtin___CFStringMakeConstantString ||
-         builtinID == Builtin::BI__builtin_classify_type;
+         builtinID == Builtin::BI__builtin_classify_type ||
+         builtinID == Builtin::BI__builtin_huge_valf;
 }
 
 bool CallExpr::isBuiltinClassifyType(llvm::APSInt &Result) const {

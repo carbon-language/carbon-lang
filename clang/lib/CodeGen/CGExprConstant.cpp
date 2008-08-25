@@ -606,6 +606,20 @@ public:
 
     return Visit(E->getRHS());
   }
+
+  llvm::Constant *VisitCallExpr(const CallExpr *E) {
+    if (const ImplicitCastExpr *IcExpr = 
+        dyn_cast<const ImplicitCastExpr>(E->getCallee()))
+      if (const DeclRefExpr *DRExpr = 
+          dyn_cast<const DeclRefExpr>(IcExpr->getSubExpr()))
+        if (const FunctionDecl *FDecl = 
+            dyn_cast<const FunctionDecl>(DRExpr->getDecl()))
+          if (unsigned builtinID = FDecl->getIdentifier()->getBuiltinID())
+            return EmitBuiltinExpr(builtinID, E);
+
+    CGM.ErrorUnsupported(E, "constant call expression");
+    return llvm::Constant::getNullValue(ConvertType(E->getType()));
+  }
     
   // Utility methods
   const llvm::Type *ConvertType(QualType T) {
@@ -805,6 +819,20 @@ public:
     return llvm::UndefValue::get(Ty);
   }
 
+  llvm::Constant *EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E)
+  {
+    switch (BuiltinID) {
+    default:
+      CGM.ErrorUnsupported(E, "constant builtin function");
+      return 0;
+    case Builtin::BI__builtin_huge_valf: {
+      const llvm::fltSemantics &Sem =
+      CGM.getContext().getFloatTypeSemantics(E->getType());
+      return llvm::ConstantFP::get(llvm::APFloat::getInf(Sem));
+    }        
+    }
+  }
+    
 };
   
 }  // end anonymous namespace.
