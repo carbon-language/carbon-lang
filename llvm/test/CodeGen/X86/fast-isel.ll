@@ -41,3 +41,8 @@ exit:
   ret double %t2
 }
 
+define i32 @cast(){
+entry:
+	%tmp2 = bitcast i32 0 to i32
+	ret i32 %tmp2
+}

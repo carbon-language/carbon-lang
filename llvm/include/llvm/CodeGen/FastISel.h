@@ -81,11 +81,6 @@ protected:
                                ISD::NodeType Opcode,
                                unsigned Op0, unsigned Op1);
 
-  /// FastEmit_i - This method is called by target-independent code
-  /// to request that an instruction with the given type which materialize
-  /// the specified immediate value.
-  virtual unsigned FastEmit_i(MVT::SimpleValueType VT, uint64_t Imm);
-
   /// FastEmit_ri - This method is called by target-independent code
   /// to request that an instruction with the given type, opcode, and
   /// register and immediate operands be emitted.
@@ -110,6 +105,13 @@ protected:
                         ISD::NodeType Opcode,
                         unsigned Op0, uint64_t Imm,
                         MVT::SimpleValueType ImmType);
+  
+  /// FastEmit_i - This method is called by target-independent code
+  /// to request that an instruction with the given type, opcode, and
+  /// immediate operand be emitted.
+  virtual unsigned FastEmit_i(MVT::SimpleValueType VT,
+                              ISD::NodeType Opcode,
+                              uint64_t Imm);
 
   /// FastEmitInst_ - Emit a MachineInstr with no operands and a
   /// result register in the given register class.
@@ -144,6 +146,12 @@ protected:
   unsigned FastEmitInst_rri(unsigned MachineInstOpcode,
                             const TargetRegisterClass *RC,
                             unsigned Op0, unsigned Op1, uint64_t Imm);
+  
+  /// FastEmitInst_i - Emit a MachineInstr with a single immediate
+  /// operand, and a result register in the given register class.
+  unsigned FastEmitInst_i(unsigned MachineInstrOpcode,
+                          const TargetRegisterClass *RC,
+                          uint64_t Imm);
 
 private:
   unsigned createResultReg(const TargetRegisterClass *RC);

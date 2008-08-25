@@ -221,6 +221,22 @@ FastISel::SelectInstructions(BasicBlock::iterator Begin,
     case Instruction::PHI:
       // PHI nodes are already emitted.
       break;
+      
+    case Instruction::BitCast:
+      // BitCast consists of either an immediate to register move
+      // or a register to register move.
+      if (ConstantInt* CI = dyn_cast<ConstantInt>(I->getOperand(0))) {
+        if (I->getType()->isInteger()) {
+          MVT VT = MVT::getMVT(I->getType(), /*HandleUnknown=*/false);
+          ValueMap[I] = FastEmit_i(VT.getSimpleVT(), ISD::Constant,
+                                   CI->getZExtValue());
+          break;
+        } else
+          // TODO: Support vector and fp constants.
+          return I;
+      } else
+        // TODO: Support non-constant bitcasts.
+        return I;
 
     default:
       // Unhandled instruction. Halt "fast" selection and bail.
@@ -256,7 +272,8 @@ unsigned FastISel::FastEmit_rr(MVT::SimpleValueType, ISD::NodeType,
   return 0;
 }
 
-unsigned FastISel::FastEmit_i(MVT::SimpleValueType, uint64_t /*Imm*/) {
+unsigned FastISel::FastEmit_i(MVT::SimpleValueType, ISD::NodeType,
+                              uint64_t /*Imm*/) {
   return 0;
 }
 
@@ -284,7 +301,7 @@ unsigned FastISel::FastEmit_ri_(MVT::SimpleValueType VT, ISD::NodeType Opcode,
     ResultReg = FastEmit_ri(VT, Opcode, Op0, Imm);
   if (ResultReg != 0)
     return ResultReg;
-  unsigned MaterialReg = FastEmit_i(ImmType, Imm);
+  unsigned MaterialReg = FastEmit_i(ImmType, ISD::Constant, Imm);
   if (MaterialReg == 0)
     return 0;
   return FastEmit_rr(VT, Opcode, Op0, MaterialReg);
@@ -340,5 +357,15 @@ unsigned FastISel::FastEmitInst_rri(unsigned MachineInstOpcode,
   const TargetInstrDesc &II = TII.get(MachineInstOpcode);
 
   BuildMI(MBB, II, ResultReg).addReg(Op0).addReg(Op1).addImm(Imm);
+  return ResultReg;
+}
+
+unsigned FastISel::FastEmitInst_i(unsigned MachineInstOpcode,
+                                  const TargetRegisterClass *RC,
+                                  uint64_t Imm) {
+  unsigned ResultReg = createResultReg(RC);
+  const TargetInstrDesc &II = TII.get(MachineInstOpcode);
+  
+  BuildMI(MBB, II, ResultReg).addImm(Imm);
   return ResultReg;
 }

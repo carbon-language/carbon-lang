@@ -64,6 +64,12 @@ struct OperandsSignature {
                   const CodeGenTarget &Target,
                   MVT::SimpleValueType VT,
                   const CodeGenRegisterClass *DstRC) {
+    if (!InstPatNode->isLeaf() &&
+        InstPatNode->getOperator()->getName() == "imm") {
+      Operands.push_back("i");
+      return true;
+    }
+    
     for (unsigned i = 0, e = InstPatNode->getNumChildren(); i != e; ++i) {
       TreePatternNode *Op = InstPatNode->getChild(i);
       // For now, filter out any operand with a predicate.
@@ -218,9 +224,6 @@ void FastISelEmitter::run(std::ostream &OS) {
     // For now, filter out instructions which just set a register to
     // an Operand or an immediate, like MOV32ri.
     if (InstPatOp->isSubClassOf("Operand"))
-      continue;
-    if (InstPatOp->getName() == "imm" ||
-        InstPatOp->getName() == "fpimm")
       continue;
 
     // For now, filter out any instructions with predicates.
