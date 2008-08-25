@@ -762,27 +762,33 @@ LValue CodeGenFunction::EmitObjCIvarRefLValue(const ObjCIvarRefExpr *E) {
     assert(0 && "FIXME: Implement support for late-bound instance variables");
     return LValue(); // Not reached.
   }
-  
-  // Get a structure type for the object
-  QualType ExprTy = E->getBase()->getType();
-  const llvm::Type *ObjectType = ConvertType(ExprTy);
-  // TODO:  Add a special case for isa (index 0)
-  // Work out which index the ivar is
-  const ObjCIvarDecl *Decl = E->getDecl();
-  unsigned Index = CGM.getTypes().getLLVMFieldNo(Decl);
-    
-  // Get object pointer and coerce object pointer to correct type.
-  llvm::Value *Object = EmitLValue(E->getBase()).getAddress();
-  // FIXME: Volatility
-  Object = Builder.CreateLoad(Object, E->getDecl()->getName());
-  if (Object->getType() != ObjectType)
-    Object = Builder.CreateBitCast(Object, ObjectType);
 
+  // FIXME: A lot of the code below could be shared with EmitMemberExpr.
+  llvm::Value *BaseValue = 0;
+  const Expr *BaseExpr = E->getBase();
+  unsigned CVRQualifiers = 0;
+  if (E->isArrow()) {
+    BaseValue = EmitScalarExpr(BaseExpr);
+    const PointerType *PTy = 
+      cast<PointerType>(getContext().getCanonicalType(BaseExpr->getType()));
+    CVRQualifiers = PTy->getPointeeType().getCVRQualifiers();
+  } else {
+    LValue BaseLV = EmitLValue(BaseExpr);
+    // FIXME: this isn't right for bitfields.
+    BaseValue = BaseLV.getAddress();
+    CVRQualifiers = BaseExpr->getType().getCVRQualifiers();
+  }
   
-  // Return a pointer to the right element.
-  // FIXME: volatile
-  return LValue::MakeAddr(Builder.CreateStructGEP(Object, Index,
-                                                  Decl->getName()),0);
+  const ObjCIvarDecl *Field = E->getDecl();
+  assert(!Field->isBitField() && 
+         "Bitfields are currently not supported!");
+   
+  // TODO:  Add a special case for isa (index 0)
+  unsigned Index = CGM.getTypes().getLLVMFieldNo(Field);
+  
+  llvm::Value *V = Builder.CreateStructGEP(BaseValue, Index, "tmp");
+  return LValue::MakeAddr(V,
+                          Field->getType().getCVRQualifiers()|CVRQualifiers);
 }
 
 RValue CodeGenFunction::EmitCallExpr(llvm::Value *Callee, QualType FnType, 
