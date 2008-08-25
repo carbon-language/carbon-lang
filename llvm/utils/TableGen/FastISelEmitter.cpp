@@ -268,14 +268,16 @@ void FastISelEmitter::run(std::ostream &OS) {
         OS << "  unsigned FastEmit_" << getLegalCName(Opcode)
            << "_" << getLegalCName(getName(VT)) << "_";
         Operands.PrintManglingSuffix(OS);
-        OS << "(";
+        OS << "(MVT::SimpleValueType RetVT";
+        if (!Operands.empty())
+          OS << ", ";
         Operands.PrintParameters(OS);
         OS << ");\n";
       }
 
       OS << "  unsigned FastEmit_" << getLegalCName(Opcode) << "_";
       Operands.PrintManglingSuffix(OS);
-      OS << "(MVT::SimpleValueType VT";
+      OS << "(MVT::SimpleValueType VT, MVT::SimpleValueType RetVT";
       if (!Operands.empty())
         OS << ", ";
       Operands.PrintParameters(OS);
@@ -284,7 +286,7 @@ void FastISelEmitter::run(std::ostream &OS) {
 
     OS << "  unsigned FastEmit_";
     Operands.PrintManglingSuffix(OS);
-    OS << "(MVT::SimpleValueType VT, ISD::NodeType Opcode";
+    OS << "(MVT::SimpleValueType VT, MVT::SimpleValueType RetVT, ISD::NodeType Opcode";
     if (!Operands.empty())
       OS << ", ";
     Operands.PrintParameters(OS);
@@ -341,7 +343,9 @@ void FastISelEmitter::run(std::ostream &OS) {
              << getLegalCName(Opcode)
              << "_" << getLegalCName(getName(VT)) << "_";
           Operands.PrintManglingSuffix(OS);
-          OS << "(";
+          OS << "(MVT::SimpleValueType RetVT";
+          if (!Operands.empty())
+            OS << ", ";
           Operands.PrintParameters(OS);
           OS << ") {\n";
 
@@ -382,7 +386,7 @@ void FastISelEmitter::run(std::ostream &OS) {
       OS << "unsigned FastISel::FastEmit_"
          << getLegalCName(Opcode) << "_";
       Operands.PrintManglingSuffix(OS);
-      OS << "(MVT::SimpleValueType VT";
+      OS << "(MVT::SimpleValueType VT, MVT::SimpleValueType RetVT";
       if (!Operands.empty())
         OS << ", ";
       Operands.PrintParameters(OS);
@@ -395,7 +399,9 @@ void FastISelEmitter::run(std::ostream &OS) {
         OS << "  case " << TypeName << ": return FastEmit_"
            << getLegalCName(Opcode) << "_" << getLegalCName(TypeName) << "_";
         Operands.PrintManglingSuffix(OS);
-        OS << "(";
+        OS << "(RetVT";
+        if (!Operands.empty())
+          OS << ", ";
         Operands.PrintArguments(OS);
         OS << ");\n";
       }
@@ -412,7 +418,7 @@ void FastISelEmitter::run(std::ostream &OS) {
     // on opcode and type.
     OS << "unsigned FastISel::FastEmit_";
     Operands.PrintManglingSuffix(OS);
-    OS << "(MVT::SimpleValueType VT, ISD::NodeType Opcode";
+    OS << "(MVT::SimpleValueType VT, MVT::SimpleValueType RetVT, ISD::NodeType Opcode";
     if (!Operands.empty())
       OS << ", ";
     Operands.PrintParameters(OS);
@@ -425,7 +431,7 @@ void FastISelEmitter::run(std::ostream &OS) {
       OS << "  case " << Opcode << ": return FastEmit_"
          << getLegalCName(Opcode) << "_";
       Operands.PrintManglingSuffix(OS);
-      OS << "(VT";
+      OS << "(VT, RetVT";
       if (!Operands.empty())
         OS << ", ";
       Operands.PrintArguments(OS);

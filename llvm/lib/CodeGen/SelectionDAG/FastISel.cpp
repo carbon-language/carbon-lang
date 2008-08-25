@@ -55,7 +55,8 @@ bool FastISel::SelectBinaryOp(Instruction *I, ISD::NodeType ISDOpcode,
     // Unhandled operand. Halt "fast" selection and bail.
     return false;
 
-  unsigned ResultReg = FastEmit_rr(VT.getSimpleVT(), ISDOpcode, Op0, Op1);
+  unsigned ResultReg = FastEmit_rr(VT.getSimpleVT(), VT.getSimpleVT(),
+                                   ISDOpcode, Op0, Op1);
   if (ResultReg == 0)
     // Target-specific code wasn't able to find a machine opcode for
     // the given ISD opcode and type. Halt "fast" selection and bail.
@@ -117,9 +118,9 @@ bool FastISel::SelectGetElementPtr(Instruction *I,
       // it.
       MVT IdxVT = MVT::getMVT(Idx->getType(), /*HandleUnknown=*/false);
       if (IdxVT.bitsLT(VT))
-        IdxN = FastEmit_r(VT, ISD::SIGN_EXTEND, IdxN);
+        IdxN = FastEmit_r(VT, VT, ISD::SIGN_EXTEND, IdxN);
       else if (IdxVT.bitsGT(VT))
-        IdxN = FastEmit_r(VT, ISD::TRUNCATE, IdxN);
+        IdxN = FastEmit_r(VT, VT, ISD::TRUNCATE, IdxN);
       if (IdxN == 0)
         // Unhandled operand. Halt "fast" selection and bail.
         return false;
@@ -129,7 +130,7 @@ bool FastISel::SelectGetElementPtr(Instruction *I,
       if (IdxN == 0)
         // Unhandled operand. Halt "fast" selection and bail.
         return false;
-      N = FastEmit_rr(VT, ISD::ADD, N, IdxN);
+      N = FastEmit_rr(VT, VT, ISD::ADD, N, IdxN);
       if (N == 0)
         // Unhandled operand. Halt "fast" selection and bail.
         return false;
@@ -228,7 +229,8 @@ FastISel::SelectInstructions(BasicBlock::iterator Begin,
       if (ConstantInt* CI = dyn_cast<ConstantInt>(I->getOperand(0))) {
         if (I->getType()->isInteger()) {
           MVT VT = MVT::getMVT(I->getType(), /*HandleUnknown=*/false);
-          ValueMap[I] = FastEmit_i(VT.getSimpleVT(), ISD::Constant,
+          ValueMap[I] = FastEmit_i(VT.getSimpleVT(), VT.getSimpleVT(),
+                                   ISD::Constant,
                                    CI->getZExtValue());
           break;
         } else
@@ -286,31 +288,34 @@ FastISel::FastISel(MachineFunction &mf)
 
 FastISel::~FastISel() {}
 
-unsigned FastISel::FastEmit_(MVT::SimpleValueType, ISD::NodeType) {
+unsigned FastISel::FastEmit_(MVT::SimpleValueType, MVT::SimpleValueType, ISD::NodeType) {
   return 0;
 }
 
-unsigned FastISel::FastEmit_r(MVT::SimpleValueType, ISD::NodeType,
-                              unsigned /*Op0*/) {
+unsigned FastISel::FastEmit_r(MVT::SimpleValueType, MVT::SimpleValueType,
+                              ISD::NodeType, unsigned /*Op0*/) {
   return 0;
 }
 
-unsigned FastISel::FastEmit_rr(MVT::SimpleValueType, ISD::NodeType,
-                               unsigned /*Op0*/, unsigned /*Op0*/) {
+unsigned FastISel::FastEmit_rr(MVT::SimpleValueType, MVT::SimpleValueType, 
+                               ISD::NodeType, unsigned /*Op0*/,
+                               unsigned /*Op0*/) {
   return 0;
 }
 
-unsigned FastISel::FastEmit_i(MVT::SimpleValueType, ISD::NodeType,
-                              uint64_t /*Imm*/) {
+unsigned FastISel::FastEmit_i(MVT::SimpleValueType, MVT::SimpleValueType,
+                              ISD::NodeType, uint64_t /*Imm*/) {
   return 0;
 }
 
-unsigned FastISel::FastEmit_ri(MVT::SimpleValueType, ISD::NodeType,
-                               unsigned /*Op0*/, uint64_t /*Imm*/) {
+unsigned FastISel::FastEmit_ri(MVT::SimpleValueType, MVT::SimpleValueType,
+                               ISD::NodeType, unsigned /*Op0*/,
+                               uint64_t /*Imm*/) {
   return 0;
 }
 
-unsigned FastISel::FastEmit_rri(MVT::SimpleValueType, ISD::NodeType,
+unsigned FastISel::FastEmit_rri(MVT::SimpleValueType, MVT::SimpleValueType,
+                                ISD::NodeType,
                                 unsigned /*Op0*/, unsigned /*Op1*/,
                                 uint64_t /*Imm*/) {
   return 0;
@@ -326,13 +331,13 @@ unsigned FastISel::FastEmit_ri_(MVT::SimpleValueType VT, ISD::NodeType Opcode,
   unsigned ResultReg = 0;
   // First check if immediate type is legal. If not, we can't use the ri form.
   if (TLI.getOperationAction(ISD::Constant, ImmType) == TargetLowering::Legal)
-    ResultReg = FastEmit_ri(VT, Opcode, Op0, Imm);
+    ResultReg = FastEmit_ri(VT, VT, Opcode, Op0, Imm);
   if (ResultReg != 0)
     return ResultReg;
-  unsigned MaterialReg = FastEmit_i(ImmType, ISD::Constant, Imm);
+  unsigned MaterialReg = FastEmit_i(ImmType, ImmType, ISD::Constant, Imm);
   if (MaterialReg == 0)
     return 0;
-  return FastEmit_rr(VT, Opcode, Op0, MaterialReg);
+  return FastEmit_rr(VT, VT, Opcode, Op0, MaterialReg);
 }
 
 unsigned FastISel::createResultReg(const TargetRegisterClass* RC) {
