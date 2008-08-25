@@ -343,8 +343,8 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
 
       MachineInstr *New = 0;
       if (Old->getOpcode() == X86::ADJCALLSTACKDOWN) {
-        New=BuildMI(MF, TII.get(Is64Bit ? X86::SUB64ri32 : X86::SUB32ri), StackPtr)
-          .addReg(StackPtr).addImm(Amount);
+        New = BuildMI(MF, TII.get(Is64Bit ? X86::SUB64ri32 : X86::SUB32ri),
+                      StackPtr).addReg(StackPtr).addImm(Amount);
       } else {
         assert(Old->getOpcode() == X86::ADJCALLSTACKUP);
         // factor out the amount the callee already popped.
@@ -354,7 +354,8 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
           unsigned Opc = (Amount < 128) ?
             (Is64Bit ? X86::ADD64ri8 : X86::ADD32ri8) :
             (Is64Bit ? X86::ADD64ri32 : X86::ADD32ri);
-          New = BuildMI(MF, TII.get(Opc), StackPtr).addReg(StackPtr).addImm(Amount);
+          New = BuildMI(MF, TII.get(Opc), StackPtr)
+            .addReg(StackPtr).addImm(Amount);
         }
       }
 
