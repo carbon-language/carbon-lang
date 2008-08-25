@@ -379,9 +379,11 @@ Value *ScalarExprEmitter::EmitScalarConversion(Value *Src, QualType SrcType,
   if (Src->getType() == DstTy)
     return Src;
 
-  // Handle pointer conversions next: pointers can only be converted to/from
-  // other pointers and integers.
-  if (isa<PointerType>(DstType)) {
+  // Handle pointer conversions next: pointers can only be converted
+  // to/from other pointers and integers. Check for pointer types in
+  // terms of LLVM, as some native types (like Obj-C id) may map to a
+  // pointer type.
+  if (isa<llvm::PointerType>(DstTy)) {
     // The source value may be an integer, or a pointer.
     if (isa<llvm::PointerType>(Src->getType()))
       return Builder.CreateBitCast(Src, DstTy, "conv");
@@ -389,7 +391,7 @@ Value *ScalarExprEmitter::EmitScalarConversion(Value *Src, QualType SrcType,
     return Builder.CreateIntToPtr(Src, DstTy, "conv");
   }
   
-  if (isa<PointerType>(SrcType)) {
+  if (isa<llvm::PointerType>(Src->getType())) {
     // Must be an ptr to int cast.
     assert(isa<llvm::IntegerType>(DstTy) && "not ptr->int?");
     return Builder.CreatePtrToInt(Src, DstTy, "conv");
