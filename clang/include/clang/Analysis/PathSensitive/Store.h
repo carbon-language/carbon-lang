@@ -52,6 +52,9 @@ public:
 
   virtual void print(Store store, std::ostream& Out,
                      const char* nl, const char *sep) = 0;
+    
+  /// getExtent - Returns the size of the region in bits.
+  virtual RegionExtent getExtent(GRStateManager& SM, Region R) = 0;
 };
   
 } // end clang namespace

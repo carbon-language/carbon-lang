@@ -18,10 +18,12 @@
 
 namespace llvm {
   class llvm::BumpPtrAllocator; 
+  class ASTContext;
 }
   
 namespace clang {
-  StoreManager* CreateBasicStoreManager(llvm::BumpPtrAllocator& Alloc);
+  StoreManager* CreateBasicStoreManager(llvm::BumpPtrAllocator& Alloc,
+                                        ASTContext& Ctx);
 }
 
 #endif

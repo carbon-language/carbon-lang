@@ -304,6 +304,7 @@ public:
 
   const GRState* getInitialState();
         
+  ASTContext& getContext() { return BasicVals.getContext(); }
   BasicValueFactory& getBasicVals() { return BasicVals; }
   const BasicValueFactory& getBasicVals() const { return BasicVals; }
   SymbolManager& getSymbolManager() { return SymMgr; }

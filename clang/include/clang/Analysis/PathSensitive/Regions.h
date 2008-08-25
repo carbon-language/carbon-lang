@@ -15,11 +15,93 @@
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/ADT/FoldingSet.h"
+#include "clang/Analysis/PathSensitive/SymbolManager.h"
 
 #ifndef LLVM_CLANG_ANALYSIS_REGIONS_H
 #define LLVM_CLANG_ANALYSIS_REGIONS_H
 
+namespace llvm {
+  class APSInt;
+}
+
 namespace clang {
+  
+class BasicValueFactory;
+
+  
+//===----------------------------------------------------------------------===//
+// Region Extents.
+//===----------------------------------------------------------------------===//
+
+class RegionExtent {
+public:
+  enum Kind { Unknown = 0, Int = 0, Sym = 1 };
+
+protected:
+  const uintptr_t Raw;
+  RegionExtent(uintptr_t raw, Kind k) : Raw(raw | k) {}
+  uintptr_t getData() const { return Raw & ~0x1; }
+  
+public:
+  // Folding-set profiling.
+  void Profile(llvm::FoldingSetNodeID& ID) const {
+    ID.AddPointer((void*) Raw);
+  }  
+  // Comparing extents.
+  bool operator==(const RegionExtent& R) const {
+    return Raw == R.Raw;
+  }
+  bool operator!=(const RegionExtent& R) const {
+    return Raw != R.Raw;
+  }  
+  // Implement isa<T> support.
+  Kind getKind() const { return Kind(Raw & 0x1); }
+  uintptr_t getRaw() const { return Raw; }
+  
+  static inline bool classof(const RegionExtent*) {
+    return true;
+  }
+};
+
+class UnknownExtent : public RegionExtent {
+public:
+  UnknownExtent() : RegionExtent(0,Unknown) {}
+  
+  // Implement isa<T> support.
+  static inline bool classof(const RegionExtent* E) {
+    return E->getRaw() == 0;
+  }  
+};
+  
+class IntExtent : public RegionExtent {
+public:
+  IntExtent(const llvm::APSInt& X) : RegionExtent((uintptr_t) &X, Int) {}
+  
+  const llvm::APSInt& getInt() const {
+    return *((llvm::APSInt*) getData());
+  }
+  
+  // Implement isa<T> support.
+  static inline bool classof(const RegionExtent* E) {
+    return E->getKind() == Int && E->getRaw() != 0;
+  }
+};
+
+class SymExtent : public RegionExtent {
+public:
+  SymExtent(SymbolID S) : RegionExtent(S.getNumber() << 1, Sym) {}
+  
+  SymbolID getSymbol() const { return SymbolID(getData() >> 1); }
+  
+  // Implement isa<T> support.
+  static inline bool classof(const RegionExtent* E) {
+    return E->getKind() == Sym;
+  }  
+};
+
+//===----------------------------------------------------------------------===//
+// Regions.
+//===----------------------------------------------------------------------===//
   
 class Region {
 public:
@@ -61,6 +143,8 @@ public:
   /// getDecl - Return the declaration of the variable the region represents.
   const VarDecl* getDecl() const { return (const VarDecl*) getData(); }  
   operator const VarDecl*() const { return getDecl(); }
+  
+  RegionExtent getExtent(BasicValueFactory& BV) const;
   
   // Implement isa<T> support.
   static inline bool classof(const Region* R) {

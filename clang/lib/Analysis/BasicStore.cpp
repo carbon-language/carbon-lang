@@ -25,9 +25,12 @@ namespace {
 class VISIBILITY_HIDDEN BasicStoreManager : public StoreManager {
   typedef llvm::ImmutableMap<VarDecl*,RVal> VarBindingsTy;  
   VarBindingsTy::Factory VBFactory;
+  ASTContext& C;
   
 public:
-  BasicStoreManager(llvm::BumpPtrAllocator& A) : VBFactory(A) {}
+  BasicStoreManager(llvm::BumpPtrAllocator& A, ASTContext& c)
+    : VBFactory(A), C(c) {}
+  
   virtual ~BasicStoreManager() {}
 
   virtual RVal GetRVal(Store St, LVal LV, QualType T);  
@@ -51,13 +54,23 @@ public:
 
   virtual void print(Store store, std::ostream& Out,
                      const char* nl, const char *sep);
+  
+  virtual RegionExtent getExtent(GRStateManager& SM, Region R);
 };  
   
 } // end anonymous namespace
 
 
-StoreManager* clang::CreateBasicStoreManager(llvm::BumpPtrAllocator& A) {
-  return new BasicStoreManager(A);
+StoreManager* clang::CreateBasicStoreManager(llvm::BumpPtrAllocator& A,
+                                             ASTContext& C) {
+  return new BasicStoreManager(A, C);
+}
+
+RegionExtent BasicStoreManager::getExtent(GRStateManager& SM, Region R) {
+  if (VarRegion *VR = dyn_cast<VarRegion>(&R))
+    return VR->getExtent(SM.getBasicVals());
+  
+  return UnknownExtent();
 }
 
 RVal BasicStoreManager::GetRVal(Store St, LVal LV, QualType T) {
@@ -75,30 +88,8 @@ RVal BasicStoreManager::GetRVal(Store St, LVal LV, QualType T) {
       return T ? *T : UnknownVal();
     }
       
-    case lval::SymbolValKind: {
-      
-      // FIXME: This is a broken representation of memory, and is prone
-      //  to crashing the analyzer when addresses to symbolic values are
-      //  passed through casts.  We need a better representation of symbolic
-      //  memory (or just memory in general); probably we should do this
-      //  as a plugin class (similar to GRTransferFuncs).
-      
-#if 0      
-      const lval::SymbolVal& SV = cast<lval::SymbolVal>(LV);
-      assert (T.getTypePtr());
-      
-      // Punt on "symbolic" function pointers.
-      if (T->isFunctionType())
-        return UnknownVal();      
-      
-      if (T->isPointerType())
-        return lval::SymbolVal(SymMgr.getContentsOfSymbol(SV.getSymbol()));
-      else
-        return nonlval::SymbolVal(SymMgr.getContentsOfSymbol(SV.getSymbol()));
-#endif
-      
+    case lval::SymbolValKind:
       return UnknownVal();
-    }
       
     case lval::ConcreteIntKind:
       // Some clients may call GetRVal with such an option simply because
