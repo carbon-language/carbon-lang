@@ -138,10 +138,23 @@ void CodeGenFunction::GenerateCode(const FunctionDecl *FD,
     AI->setName("agg.result");
     ++AI;
   }
-  
-  for (unsigned i = 0, e = FD->getNumParams(); i != e; ++i, ++AI) {
-    assert(AI != CurFn->arg_end() && "Argument mismatch!");
-    EmitParmDecl(*FD->getParamDecl(i), AI);
+
+  if (FD->getNumParams()) {
+    const FunctionTypeProto* FProto = FD->getType()->getAsFunctionTypeProto();
+    assert(FProto && "Function def must have prototype!");
+    for (unsigned i = 0, e = FD->getNumParams(); i != e; ++i, ++AI) {
+      assert(AI != CurFn->arg_end() && "Argument mismatch!");
+      const ParmVarDecl* CurParam = FD->getParamDecl(i);
+      llvm::Value* V = AI;
+      if (!getContext().typesAreCompatible(FProto->getArgType(i),
+                                           CurParam->getType())) {
+        // This must be a promotion, for something like
+        // "void a(x) short x; {..."
+        V = EmitScalarConversion(V, FProto->getArgType(i),
+                                 CurParam->getType());
+      }
+      EmitParmDecl(*CurParam, V);
+    }
   }
   GenerateFunction(FD->getBody());
 }

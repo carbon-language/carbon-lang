@@ -397,14 +397,12 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
         D.setInvalidType(true);
       }
         
-      if (!FTI.hasPrototype) {
+      if (FTI.NumArgs == 0) {
         // Simple void foo(), where the incoming T is the result type.
         T = Context.getFunctionTypeNoProto(T);
-
+      } else if (FTI.ArgInfo[0].Param == 0) {
         // C99 6.7.5.3p3: Reject int(x,y,z) when it's not a function definition.
-        if (FTI.NumArgs != 0)
-          Diag(FTI.ArgInfo[0].IdentLoc, diag::err_ident_list_in_fn_declaration);
-        
+        Diag(FTI.ArgInfo[0].IdentLoc, diag::err_ident_list_in_fn_declaration);        
       } else {
         // Otherwise, we have a function with an argument list that is
         // potentially variadic.
@@ -457,6 +455,13 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
               
               // Do not add 'void' to the ArgTys list.
               break;
+            }
+          } else if (!FTI.hasPrototype) {
+            if (ArgTy->isPromotableIntegerType()) {
+              ArgTy = Context.IntTy;
+            } else if (const BuiltinType* BTy = ArgTy->getAsBuiltinType()) {
+              if (BTy->getKind() == BuiltinType::Float)
+                ArgTy = Context.DoubleTy;
             }
           }
           

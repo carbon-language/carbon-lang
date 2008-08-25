@@ -690,8 +690,7 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
 
     // Copy the parameter declarations from the declarator D to
     // the function declaration NewFD, if they are available.
-    if (D.getNumTypeObjects() > 0 &&
-        D.getTypeObject(0).Fun.hasPrototype) {
+    if (D.getNumTypeObjects() > 0) {
       DeclaratorChunk::FunctionTypeInfo &FTI = D.getTypeObject(0).Fun;
 
       // Create Decl objects for each parameter, adding them to the
@@ -716,7 +715,7 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
           Diag(Param->getLocation(), diag::ext_param_typedef_of_void);
         }
 
-      } else {
+      } else if (FTI.NumArgs > 0 && FTI.ArgInfo[0].Param != 0) {
         for (unsigned i = 0, e = FTI.NumArgs; i != e; ++i)
           Params.push_back((ParmVarDecl *)FTI.ArgInfo[i].Param);
       }
@@ -1540,11 +1539,6 @@ Sema::DeclTy *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Declarator &D) {
         FTI.ArgInfo[i].Param = ActOnParamDeclarator(FnBodyScope, ParamD);
       }
     }
-
-    // Since this is a function definition, act as though we have information
-    // about the arguments.
-    if (FTI.NumArgs)
-      FTI.hasPrototype = true;
   } else {
     // FIXME: Diagnose arguments without names in C. 
   }
