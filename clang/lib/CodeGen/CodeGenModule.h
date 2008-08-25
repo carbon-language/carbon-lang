@@ -31,6 +31,7 @@ namespace llvm {
 namespace clang {
   class ASTContext;
   class FunctionDecl;
+  class IdentifierInfo;
   class ObjCMethodDecl;
   class ObjCImplementationDecl;
   class ObjCCategoryImplDecl;
@@ -76,7 +77,7 @@ class CodeGenModule {
   /// decl, they should be bitcasted on retrieval. Also note that the
   /// globals are keyed on their source name, not the global name
   /// (which may change with attributes such as asm-labels).
-  llvm::StringMap<llvm::GlobalValue*> GlobalDeclMap;
+  llvm::DenseMap<IdentifierInfo*, llvm::GlobalValue*> GlobalDeclMap;
 
   /// List of static global for which code generation is delayed. When
   /// the translation unit has been fully processed we will lazily

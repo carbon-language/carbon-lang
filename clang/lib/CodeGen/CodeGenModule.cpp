@@ -250,7 +250,7 @@ void CodeGenModule::EmitStatics() {
       // Check if we have used a decl with the same name
       // FIXME: The AST should have some sort of aggregate decls or
       // global symbol map.
-      if (!GlobalDeclMap.count(D->getName()))
+      if (!GlobalDeclMap.count(D->getIdentifier()))
         continue;
 
       // Emit the definition.
@@ -362,7 +362,7 @@ void CodeGenModule::EmitGlobalDefinition(const ValueDecl *D) {
   const llvm::Type *PTy = llvm::PointerType::get(Ty, ASTTy.getAddressSpace());
 
   // Lookup the entry, lazily creating it if necessary.
-  llvm::GlobalValue *&Entry = GlobalDeclMap[D->getName()];
+  llvm::GlobalValue *&Entry = GlobalDeclMap[D->getIdentifier()];
   if (!Entry)
     Entry = new llvm::GlobalVariable(Ty, false, 
                                      llvm::GlobalValue::ExternalLinkage,
@@ -396,7 +396,7 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
   }
   const llvm::Type* InitType = Init->getType();
 
-  llvm::GlobalValue *&Entry = GlobalDeclMap[D->getName()];
+  llvm::GlobalValue *&Entry = GlobalDeclMap[D->getIdentifier()];
   llvm::GlobalVariable *GV = cast_or_null<llvm::GlobalVariable>(Entry);
   
   if (!GV) {
@@ -542,7 +542,7 @@ llvm::Constant *CodeGenModule::GetAddrOfFunction(const FunctionDecl *D) {
   const llvm::Type *PTy = llvm::PointerType::get(Ty, ASTTy.getAddressSpace());
   
   // Lookup the entry, lazily creating it if necessary.
-  llvm::GlobalValue *&Entry = GlobalDeclMap[D->getName()];
+  llvm::GlobalValue *&Entry = GlobalDeclMap[D->getIdentifier()];
   if (!Entry)
     Entry = EmitForwardFunctionDefinition(D);
 
@@ -550,7 +550,7 @@ llvm::Constant *CodeGenModule::GetAddrOfFunction(const FunctionDecl *D) {
 }
 
 void CodeGenModule::EmitGlobalFunctionDefinition(const FunctionDecl *D) {
-  llvm::GlobalValue *&Entry = GlobalDeclMap[D->getName()];
+  llvm::GlobalValue *&Entry = GlobalDeclMap[D->getIdentifier()];
   if (!Entry) {
     Entry = EmitForwardFunctionDefinition(D);
   } else {
