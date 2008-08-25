@@ -16,6 +16,7 @@
 #include "CodeGenModule.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
+#include "clang/AST/DeclObjC.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/GlobalVariable.h"
@@ -98,10 +99,13 @@ CodeGenFunction::GenerateStaticBlockVarDecl(const VarDecl &D,
   assert(Init && "Unable to create initialiser for static decl");
 
   std::string ContextName;
-  if (const FunctionDecl * FD = dyn_cast<FunctionDecl>(CurFuncDecl))
+  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(CurFuncDecl))
     ContextName = FD->getName();
+  else if (isa<ObjCMethodDecl>(CurFuncDecl))
+    ContextName = std::string(CurFn->getNameStart(), 
+                              CurFn->getNameStart() + CurFn->getNameLen());
   else
-    assert(0 && "Unknown context for block var decl"); // FIXME Handle objc.
+    assert(0 && "Unknown context for block var decl");
 
   llvm::GlobalValue *GV =
     new llvm::GlobalVariable(Init->getType(), false,
