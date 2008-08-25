@@ -318,7 +318,9 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     ObjCInterfaceType OIT = cast<ObjCInterfaceType>(Ty);
     std::vector<const llvm::Type*> IvarTypes;
     CollectObjCIvarTypes(OIT.getDecl(), IvarTypes);
-    return llvm::StructType::get(IvarTypes);
+    llvm::Type *T = llvm::StructType::get(IvarTypes);
+    TheModule.addTypeName(std::string("struct.") + OIT.getDecl()->getName(), T);
+    return T;
   }
       
   case Type::ObjCQualifiedInterface: {
