@@ -489,6 +489,8 @@ DIAG(err_collection_expr_type, ERROR,
      "collection expression type ('%0') is not a valid object")
 DIAG(err_selector_element_type, ERROR,
      "selector element type ('%0') is not a valid object")
+DIAG(err_selector_element_not_lvalue, ERROR,
+    "selector element is not a valid lvalue") 
 DIAG(err_toomany_element_decls, ERROR,
      "Only one element declaration is allowed")
 DIAG(warn_expected_implementation, WARNING,

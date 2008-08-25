@@ -562,11 +562,18 @@ Sema::ActOnObjCForCollectionStmt(SourceLocation ForLoc,
         return Diag(VD->getLocation(), diag::err_non_variable_decl_in_for);
       if (D->getNextDeclarator())
         return Diag(D->getLocation(), diag::err_toomany_element_decls);
-    } else
-      FirstType = static_cast<Expr*>(first)->getType();
+    } else {
+      Expr::isLvalueResult lval = cast<Expr>(First)->isLvalue(Context);
+      
+      if (lval != Expr::LV_Valid)
+        return Diag(First->getLocStart(), diag::err_selector_element_not_lvalue,
+                    First->getSourceRange());
+
+      FirstType = static_cast<Expr*>(first)->getType();        
+    }
     if (!Context.isObjCObjectPointerType(FirstType))
         Diag(ForLoc, diag::err_selector_element_type,
-             FirstType.getAsString(), First->getSourceRange());
+             FirstType.getAsString(), First->getSourceRange());          
   }
   if (Second) {
     DefaultFunctionArrayConversion(Second);
