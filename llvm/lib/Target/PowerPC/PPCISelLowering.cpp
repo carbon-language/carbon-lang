@@ -203,15 +203,6 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32  , Custom);
   setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i64  , Custom);
 
-  setOperationAction(ISD::ATOMIC_LOAD_ADD   , MVT::i32  , Custom);
-  setOperationAction(ISD::ATOMIC_CMP_SWAP   , MVT::i32  , Custom);
-  setOperationAction(ISD::ATOMIC_SWAP       , MVT::i32  , Custom);
-  if (TM.getSubtarget<PPCSubtarget>().has64BitSupport()) {
-    setOperationAction(ISD::ATOMIC_LOAD_ADD , MVT::i64  , Custom);
-    setOperationAction(ISD::ATOMIC_CMP_SWAP , MVT::i64  , Custom);
-    setOperationAction(ISD::ATOMIC_SWAP     , MVT::i64  , Custom);
-  }
-
   // We want to custom lower some of our intrinsics.
   setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::Other, Custom);
   
@@ -405,9 +396,6 @@ const char *PPCTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case PPCISD::VCMPo:           return "PPCISD::VCMPo";
   case PPCISD::LBRX:            return "PPCISD::LBRX";
   case PPCISD::STBRX:           return "PPCISD::STBRX";
-  case PPCISD::ATOMIC_LOAD_ADD: return "PPCISD::ATOMIC_LOAD_ADD";
-  case PPCISD::ATOMIC_CMP_SWAP: return "PPCISD::ATOMIC_CMP_SWAP";
-  case PPCISD::ATOMIC_SWAP:     return "PPCISD::ATOMIC_SWAP";
   case PPCISD::LARX:            return "PPCISD::LARX";
   case PPCISD::STCX:            return "PPCISD::STCX";
   case PPCISD::COND_BRANCH:     return "PPCISD::COND_BRANCH";
@@ -2722,53 +2710,6 @@ SDValue PPCTargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op,
   return DAG.getNode(PPCISD::DYNALLOC, VTs, Ops, 3);
 }
 
-SDValue PPCTargetLowering::LowerAtomicLOAD_ADD(SDValue Op, SelectionDAG &DAG) {
-  MVT VT = Op.Val->getValueType(0);
-  SDValue Chain   = Op.getOperand(0);
-  SDValue Ptr     = Op.getOperand(1);
-  SDValue Incr    = Op.getOperand(2);
-
-  SDVTList VTs = DAG.getVTList(VT, MVT::Other);
-  SDValue Ops[] = {
-    Chain,
-    Ptr,
-    Incr,
-  };
-  return DAG.getNode(PPCISD::ATOMIC_LOAD_ADD, VTs, Ops, 3);
-}
-
-SDValue PPCTargetLowering::LowerAtomicCMP_SWAP(SDValue Op, SelectionDAG &DAG) {
-  MVT VT = Op.Val->getValueType(0);
-  SDValue Chain   = Op.getOperand(0);
-  SDValue Ptr     = Op.getOperand(1);
-  SDValue NewVal  = Op.getOperand(2);
-  SDValue OldVal  = Op.getOperand(3);
-
-  SDVTList VTs = DAG.getVTList(VT, MVT::Other);
-  SDValue Ops[] = {
-    Chain,
-    Ptr,
-    OldVal,
-    NewVal,
-  };
-  return DAG.getNode(PPCISD::ATOMIC_CMP_SWAP, VTs, Ops, 4);
-}
-
-SDValue PPCTargetLowering::LowerAtomicSWAP(SDValue Op, SelectionDAG &DAG) {
-  MVT VT = Op.Val->getValueType(0);
-  SDValue Chain   = Op.getOperand(0);
-  SDValue Ptr     = Op.getOperand(1);
-  SDValue NewVal  = Op.getOperand(2);
-
-  SDVTList VTs = DAG.getVTList(VT, MVT::Other);
-  SDValue Ops[] = {
-    Chain,
-    Ptr,
-    NewVal,
-  };
-  return DAG.getNode(PPCISD::ATOMIC_SWAP, VTs, Ops, 3);
-}
-
 /// LowerSELECT_CC - Lower floating point select_cc's into fsel instruction when
 /// possible.
 SDValue PPCTargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) {
@@ -3876,10 +3817,6 @@ SDValue PPCTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   case ISD::DYNAMIC_STACKALLOC:
     return LowerDYNAMIC_STACKALLOC(Op, DAG, PPCSubTarget);
 
-  case ISD::ATOMIC_LOAD_ADD:    return LowerAtomicLOAD_ADD(Op, DAG);
-  case ISD::ATOMIC_CMP_SWAP:    return LowerAtomicCMP_SWAP(Op, DAG);
-  case ISD::ATOMIC_SWAP:        return LowerAtomicSWAP(Op, DAG);
-    
   case ISD::SELECT_CC:          return LowerSELECT_CC(Op, DAG);
   case ISD::FP_TO_SINT:         return LowerFP_TO_SINT(Op, DAG);
   case ISD::SINT_TO_FP:         return LowerSINT_TO_FP(Op, DAG);

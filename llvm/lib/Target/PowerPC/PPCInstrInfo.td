@@ -42,16 +42,6 @@ def SDT_PPCstbrx : SDTypeProfile<0, 4, [
   SDTCisVT<0, i32>, SDTCisPtrTy<1>, SDTCisVT<2, OtherVT>, SDTCisVT<3, OtherVT>
 ]>;
 
-def SDT_PPCatomic_load_add : SDTypeProfile<1, 2, [
-  SDTCisInt<0>, SDTCisPtrTy<1>, SDTCisInt<2>
-]>;
-def SDT_PPCatomic_cmp_swap : SDTypeProfile<1, 3, [
-  SDTCisInt<0>, SDTCisPtrTy<1>, SDTCisInt<2>, SDTCisInt<3>
-]>;
-def SDT_PPCatomic_swap : SDTypeProfile<1, 2, [
-  SDTCisInt<0>, SDTCisPtrTy<1>, SDTCisInt<2>
-]>;
-
 def SDT_PPClarx : SDTypeProfile<1, 1, [
   SDTCisInt<0>, SDTCisPtrTy<1>
 ]>;
@@ -148,17 +138,6 @@ def PPClbrx       : SDNode<"PPCISD::LBRX", SDT_PPClbrx,
                            [SDNPHasChain, SDNPMayLoad]>;
 def PPCstbrx      : SDNode<"PPCISD::STBRX", SDT_PPCstbrx,
                            [SDNPHasChain, SDNPMayStore]>;
-
-// Atomic operations
-def PPCatomic_load_add : SDNode<"PPCISD::ATOMIC_LOAD_ADD",
-                                SDT_PPCatomic_load_add,
-                                [SDNPHasChain, SDNPMayLoad, SDNPMayStore]>;
-def PPCatomic_cmp_swap : SDNode<"PPCISD::ATOMIC_CMP_SWAP",
-                                SDT_PPCatomic_cmp_swap,
-                                [SDNPHasChain, SDNPMayLoad, SDNPMayStore]>;
-def PPCatomic_swap : SDNode<"PPCISD::ATOMIC_SWAP",
-                            SDT_PPCatomic_swap,
-                            [SDNPHasChain, SDNPMayLoad, SDNPMayStore]>;
 
 // Instructions to support atomic operations
 def PPClarx      : SDNode<"PPCISD::LARX", SDT_PPClarx,
@@ -552,18 +531,16 @@ let usesCustomDAGSchedInserter = 1 in {
     def ATOMIC_LOAD_ADD_I32 : Pseudo<
       (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr),
       "${:comment} ATOMIC_LOAD_ADD_I32 PSEUDO!",
-      [(set GPRC:$dst, (PPCatomic_load_add xoaddr:$ptr, GPRC:$incr))]>;
-    def ATOMIC_SWAP_I32 : Pseudo<
-      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$new),
-      "${:comment} ATOMIC_SWAP_I32 PSEUDO!",
-      [(set GPRC:$dst, (PPCatomic_swap xoaddr:$ptr, GPRC:$new))]>;
-  }
-  let Uses = [CR0, CR1] in {
+      [(set GPRC:$dst, (atomic_load_add_32 xoaddr:$ptr, GPRC:$incr))]>;
     def ATOMIC_CMP_SWAP_I32 : Pseudo<
       (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$old, GPRC:$new),
       "${:comment} ATOMIC_CMP_SWAP_I32 PSEUDO!",
       [(set GPRC:$dst, 
-                    (PPCatomic_cmp_swap xoaddr:$ptr, GPRC:$old, GPRC:$new))]>;
+                    (atomic_cmp_swap_32 xoaddr:$ptr, GPRC:$old, GPRC:$new))]>;
+    def ATOMIC_SWAP_I32 : Pseudo<
+      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$new),
+      "${:comment} ATOMIC_SWAP_I32 PSEUDO!",
+      [(set GPRC:$dst, (atomic_swap_32 xoaddr:$ptr, GPRC:$new))]>;
   }
 }
 

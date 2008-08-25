@@ -152,11 +152,6 @@ namespace llvm {
       /// MTFSF = F8RC, INFLAG - This moves the register into the FPSCR.
       MTFSF,
 
-      /// ATOMIC_LOAD_ADD, ATOMIC_CMP_SWAP, ATOMIC_SWAP - These
-      /// correspond to the llvm.atomic.load.add, llvm.atomic.cmp.swap
-      /// and llvm.atomic.swap intrinsics.
-      ATOMIC_LOAD_ADD, ATOMIC_CMP_SWAP, ATOMIC_SWAP,
-
       /// LARX = This corresponds to PPC l{w|d}arx instrcution: load and
       /// reserve indexed. This is used to implement atomic operations.
       LARX,
@@ -363,9 +358,6 @@ namespace llvm {
     SDValue LowerDYNAMIC_STACKALLOC(SDValue Op, SelectionDAG &DAG,
                                       const PPCSubtarget &Subtarget);
     SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG);
-    SDValue LowerAtomicLOAD_ADD(SDValue Op, SelectionDAG &DAG);
-    SDValue LowerAtomicCMP_SWAP(SDValue Op, SelectionDAG &DAG);
-    SDValue LowerAtomicSWAP(SDValue Op, SelectionDAG &DAG);
     SDValue LowerFP_TO_SINT(SDValue Op, SelectionDAG &DAG);
     SDValue LowerSINT_TO_FP(SDValue Op, SelectionDAG &DAG);
     SDValue LowerFP_ROUND_INREG(SDValue Op, SelectionDAG &DAG);
