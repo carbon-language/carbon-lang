@@ -80,15 +80,18 @@ public:
   virtual CodeGen::RValue 
   GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
                       const ObjCMessageExpr *E,
-                      llvm::Value *Receiver) = 0;
+                      llvm::Value *Receiver,
+                      bool IsClassMessage) = 0;
 
   /// Generate an Objective-C message send operation to the super
-  /// class.
+  /// class initiated in a method for Class and with the given Self
+  /// object.
   virtual CodeGen::RValue
   GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
                            const ObjCMessageExpr *E,
-                           const ObjCInterfaceDecl *SuperClass,
-                           llvm::Value *Receiver) = 0;
+                           const ObjCInterfaceDecl *Class,
+                           llvm::Value *Self,
+                           bool IsClassMessage) = 0;
 
   /// Emit the code to return the named protocol as an object, as in a
   /// @protocol expression.

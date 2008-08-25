@@ -97,12 +97,14 @@ public:
   virtual CodeGen::RValue 
   GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
                       const ObjCMessageExpr *E,
-                      llvm::Value *Receiver);
+                      llvm::Value *Receiver,
+                      bool IsClassMessage);
   virtual CodeGen::RValue 
   GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
                            const ObjCMessageExpr *E,
-                           const ObjCInterfaceDecl *Super,
-                           llvm::Value *Receiver);
+                           const ObjCInterfaceDecl *Class,
+                           llvm::Value *Receiver,
+                           bool IsClassMessage);
   virtual llvm::Value *GetClass(llvm::IRBuilder<> &Builder,
                                 const ObjCInterfaceDecl *OID);
   virtual llvm::Value *GetSelector(llvm::IRBuilder<> &Builder, Selector Sel);
@@ -236,8 +238,10 @@ llvm::Constant *CGObjCGNU::GenerateConstantString(const std::string &Str) {
 CodeGen::RValue
 CGObjCGNU::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
                                     const ObjCMessageExpr *E,
-                                    const ObjCInterfaceDecl *SuperClass,
-                                    llvm::Value *Receiver) {
+                                    const ObjCInterfaceDecl *Class,
+                                    llvm::Value *Receiver,
+                                    bool IsClassMessage) {
+  const ObjCInterfaceDecl *SuperClass = Class->getSuperClass();
   const llvm::Type *ReturnTy = CGM.getTypes().ConvertType(E->getType());
   // TODO: This should be cached, not looked up every time.
   llvm::Value *ReceiverClass = GetClass(CGF.Builder, SuperClass);
@@ -280,7 +284,8 @@ CGObjCGNU::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
 CodeGen::RValue
 CGObjCGNU::GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
                                const ObjCMessageExpr *E,
-                               llvm::Value *Receiver) {
+                               llvm::Value *Receiver,
+                               bool IsClassMessage) {
   const llvm::Type *ReturnTy = CGM.getTypes().ConvertType(E->getType());
   llvm::Value *cmd = GetSelector(CGF.Builder, E->getSelector());
 

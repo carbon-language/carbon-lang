@@ -220,9 +220,14 @@ private:
   llvm::Constant *EmitIvarList(const ObjCImplementationDecl *ID,
                                bool ForClass,
                                const llvm::Type *InterfaceTy);
-  
+
+  /// EmitMetaClass - Emit a forward reference to the class structure
+  /// for the metaclass of the given interface. The return value has
+  /// type ClassPtrTy.
+  llvm::Constant *EmitMetaClassRef(const ObjCInterfaceDecl *ID);
+
   /// EmitMetaClass - Emit a class structure for the metaclass of the
-  /// given implementation. return value has type ClassPtrTy.
+  /// given implementation. The return value has type ClassPtrTy.
   llvm::Constant *EmitMetaClass(const ObjCImplementationDecl *ID,
                                 llvm::Constant *Protocols,
                                 const llvm::Type *InterfaceTy);
@@ -316,13 +321,15 @@ public:
 
   virtual CodeGen::RValue GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
                                               const ObjCMessageExpr *E,
-                                              llvm::Value *Receiver);
+                                              llvm::Value *Receiver,
+                                              bool IsClassMessage);
 
   virtual CodeGen::RValue 
   GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
                            const ObjCMessageExpr *E,
-                           const ObjCInterfaceDecl *SuperClass,
-                           llvm::Value *Receiver);
+                           const ObjCInterfaceDecl *Class,
+                           llvm::Value *Receiver,
+                           bool IsClassMessage);
   
   virtual llvm::Value *GetClass(llvm::IRBuilder<> &Builder,
                                 const ObjCInterfaceDecl *ID);
@@ -403,12 +410,9 @@ llvm::Constant *CGObjCMac::GenerateConstantString(const std::string &String) {
 CodeGen::RValue
 CGObjCMac::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
                                     const ObjCMessageExpr *E,
-                                    const ObjCInterfaceDecl *SuperClass,
-                                    llvm::Value *Receiver) {
-  // FIXME: This should be cached, not looked up every time. Meh. We
-  // should just make sure the optimizer hits it.
-  llvm::Value *ReceiverClass = EmitClassRef(CGF.Builder, SuperClass);
-  
+                                    const ObjCInterfaceDecl *Class,
+                                    llvm::Value *Receiver,
+                                    bool IsClassMessage) {
   // Create and init a super structure; this is a (receiver, class)
   // pair we will pass to objc_msgSendSuper.
   llvm::Value *ObjCSuper = 
@@ -417,16 +421,28 @@ CGObjCMac::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
     CGF.Builder.CreateBitCast(Receiver, ObjCTypes.ObjectPtrTy);
   CGF.Builder.CreateStore(ReceiverAsObject, 
                           CGF.Builder.CreateStructGEP(ObjCSuper, 0));
-  CGF.Builder.CreateStore(ReceiverClass, 
-                          CGF.Builder.CreateStructGEP(ObjCSuper, 1));
 
+  // If this is a class message the metaclass is passed as the target.
+  llvm::Value *Target;
+  if (IsClassMessage) {
+    llvm::Value *MetaClassPtr = EmitMetaClassRef(Class);
+    llvm::Value *SuperPtr = CGF.Builder.CreateStructGEP(MetaClassPtr, 1);
+    llvm::Value *Super = CGF.Builder.CreateLoad(SuperPtr);
+    Target = Super;
+  } else {
+    Target = EmitClassRef(CGF.Builder, Class->getSuperClass());
+  }
+  CGF.Builder.CreateStore(Target, 
+                          CGF.Builder.CreateStructGEP(ObjCSuper, 1));
+    
   return EmitMessageSend(CGF, E, ObjCSuper, true);
 }
                                            
 /// Generate code for a message send expression.  
 CodeGen::RValue CGObjCMac::GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
                                                const ObjCMessageExpr *E,
-                                               llvm::Value *Receiver) {
+                                               llvm::Value *Receiver,
+                                               bool IsClassMessage) {
   llvm::Value *Arg0 = 
     CGF.Builder.CreateBitCast(Receiver, ObjCTypes.ObjectPtrTy, "tmp");
   return EmitMessageSend(CGF, E, Arg0, false);
@@ -972,18 +988,53 @@ llvm::Constant *CGObjCMac::EmitMetaClass(const ObjCImplementationDecl *ID,
   llvm::Constant *Init = llvm::ConstantStruct::get(ObjCTypes.ClassTy,
                                                    Values);
 
-  llvm::GlobalVariable *GV = 
-    new llvm::GlobalVariable(ObjCTypes.ClassTy, false,
-                             llvm::GlobalValue::InternalLinkage,
-                             Init,
-                             std::string("\01L_OBJC_METACLASS_")+ClassName,
-                             &CGM.getModule());
+  std::string Name("\01L_OBJC_METACLASS_");
+  Name += ClassName;
+
+  // Check for a forward reference.
+  llvm::GlobalVariable *GV = CGM.getModule().getGlobalVariable(Name);
+  if (GV) {
+    assert(GV->getType()->getElementType() == ObjCTypes.ClassTy &&
+           "Forward metaclass reference has incorrect type.");
+    GV->setLinkage(llvm::GlobalValue::InternalLinkage);
+    GV->setInitializer(Init);
+  } else {
+    GV = new llvm::GlobalVariable(ObjCTypes.ClassTy, false,
+                                  llvm::GlobalValue::InternalLinkage,
+                                  Init, Name,
+                                  &CGM.getModule());
+  }
   GV->setSection("__OBJC,__meta_class,regular,no_dead_strip");
   UsedGlobals.push_back(GV);
   // FIXME: Why?
   GV->setAlignment(32);
 
   return GV;
+}
+
+llvm::Constant *CGObjCMac::EmitMetaClassRef(const ObjCInterfaceDecl *ID) {  
+  std::string Name("\01L_OBJC_METACLASS_");
+  Name += ID->getName();
+
+  // FIXME: Should we look these up somewhere other than the
+  // module. Its a bit silly since we only generate these while
+  // processing an implementation, so exactly one pointer would work
+  // if know when we entered/exitted an implementation block.
+
+  // Check for an existing forward reference.
+  if (llvm::GlobalVariable *GV = CGM.getModule().getGlobalVariable(Name)) {
+    assert(GV->getType()->getElementType() == ObjCTypes.ClassTy &&
+           "Forward metaclass reference has incorrect type.");
+    return GV;
+  } else {
+    // Generate as an external reference to keep a consistent
+    // module. This will be patched up when we emit the metaclass.
+    return new llvm::GlobalVariable(ObjCTypes.ClassTy, false,
+                                    llvm::GlobalValue::ExternalLinkage,
+                                    0,
+                                    Name,
+                                    &CGM.getModule());
+  }
 }
 
 /*

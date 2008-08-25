@@ -50,6 +50,7 @@ RValue CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E) {
   CGObjCRuntime &Runtime = CGM.getObjCRuntime();
   const Expr *ReceiverExpr = E->getReceiver();
   bool isSuperMessage = false;
+  bool isClassMessage = false;
   // Find the receiver
   llvm::Value *Receiver;
   if (!ReceiverExpr) {
@@ -60,11 +61,13 @@ RValue CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E) {
     if (!OID) {
       assert(!strcmp(E->getClassName()->getName(), "super") &&
              "Unexpected missing class interface in message send.");
-      OID = E->getMethodDecl()->getClassInterface();
       isSuperMessage = true;
+      Receiver = LoadObjCSelf();
+    } else {
+      Receiver = Runtime.GetClass(Builder, OID);
     }
-
-    Receiver = Runtime.GetClass(Builder, OID);   
+    
+    isClassMessage = true;
   } else if (const PredefinedExpr *PDE =
                dyn_cast<PredefinedExpr>(E->getReceiver())) {
     assert(PDE->getIdentType() == PredefinedExpr::ObjCSuper);
@@ -78,10 +81,11 @@ RValue CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E) {
     // super is only valid in an Objective-C method
     const ObjCMethodDecl *OMD = cast<ObjCMethodDecl>(CurFuncDecl);
     return Runtime.GenerateMessageSendSuper(*this, E,
-                                            OMD->getClassInterface()->getSuperClass(),
-                                            Receiver);
+                                            OMD->getClassInterface(),
+                                            Receiver,
+                                            isClassMessage);
   }
-  return Runtime.GenerateMessageSend(*this, E, Receiver);
+  return Runtime.GenerateMessageSend(*this, E, Receiver, isClassMessage);
 }
 
 /// Generate an Objective-C method.  An Objective-C method is a C function with
