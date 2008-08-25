@@ -336,7 +336,7 @@ Value *ScalarExprEmitter::EmitConversionToBool(Value *Src, QualType SrcType) {
     return Builder.CreateFCmpUNE(Src, Zero, "tobool");
   }
   
-  assert((SrcType->isIntegerType() || SrcType->isPointerType()) &&
+  assert((SrcType->isIntegerType() || isa<llvm::PointerType>(Src->getType())) &&
          "Unknown scalar type to convert");
   
   // Because of the type rules of C, we often end up computing a logical value,
