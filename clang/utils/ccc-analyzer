@@ -17,6 +17,9 @@ use warnings;
 use Cwd;
 use File::Temp qw/ tempfile /;
 use File::Path qw / mkpath /;
+
+my $CC = $ENV{'CCC_CC'};
+if (!defined $CC) { $CC = "gcc"; }
  
 ##----------------------------------------------------------------------------##
 #  Process Clang Crashes.
@@ -36,7 +39,7 @@ sub ProcessClangFailure {
                                   SUFFIX => GetPPExt($Lang),
                                   DIR => $Dir);
 
-  system "gcc", @$Args, "-E", "-o", $PPFile;  
+  system $CC, @$Args, "-E", "-o", $PPFile;
   close ($PPH);
   open (OUT, ">", "$PPFile.info") or die "Cannot open $PPFile.info\n";
   print OUT "$file\n";
@@ -184,8 +187,6 @@ my $Lang;
 my $Output;
 
 # Forward arguments to gcc.
-my $CC = $ENV{'CCC_CC'};
-if (!defined $CC) { $CC = "gcc"; }
 my $Status = system($CC,@ARGV);
 if ($Status) { exit($Status >> 8); }
 
