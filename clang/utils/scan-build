@@ -409,6 +409,20 @@ sub Postprocess {
   my @Index;    
   foreach my $file (@files) { ScanFile(\@Index, $Dir, $file); }
   
+  # Scan the crashes directory and use the information in the .info files
+  # to update the common prefix directory.
+  if (-d "$Dir/crashes") {
+    opendir(DIR, "$Dir/crashes");
+    my @files = grep { /[.]info$/; } readdir(DIR);
+    closedir(DIR);
+    foreach my $file (@files) {
+      open IN, "$Dir/crashes/$file" or DieDiag("cannot open $file\n");
+      my $Path = <IN>;
+      if (defined $Path) { UpdatePrefix($Path); }
+      close IN;
+    }    
+  }
+  
   # Generate an index.html file.  
   my $FName = "$Dir/index.html";  
   open(OUT, ">", $FName) or DieDiag("Cannot create file '$FName'\n");
@@ -588,6 +602,8 @@ ENDTEXT
         chomp $problem;
         close (INFO);
         # Print the information in the table.
+        my $prefix = GetPrefix();
+        if (defined $prefix) { $srcfile =~ s/^$prefix//; }        
         print OUT "<tr><td>$problem</td><td>$srcfile</td><td class=\"View\"><a href=\"crashes/$ppfile\">View</a></td></tr>\n";
       }
 
@@ -729,9 +745,10 @@ OPTIONS:
  -V             - View analysis results in a web browser when the build
  --view           completes.
 
-ENDTEXT
 
-  print " Available Source Code Analyses (multiple analyses may be specified):\n\n";
+ Available Source Code Analyses (multiple analyses may be specified):
+
+ENDTEXT
 
   foreach my $Analysis (sort keys %AvailableAnalyses) {
     if (defined $AnalysesDefaultEnabled{$Analysis}) {
