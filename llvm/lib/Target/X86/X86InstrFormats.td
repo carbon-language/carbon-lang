@@ -157,20 +157,16 @@ class PSIi8<bits<8> o, Format F, dag outs, dag ins, string asm,
 
 // SSE2 Instruction Templates:
 // 
-//   SDI    - SSE2 instructions with XD prefix.
-//   SDIi8  - SSE2 instructions with ImmT == Imm8 and XD prefix.
-//   SSDIi8 - SSE2 instructions with ImmT == Imm8 and XS prefix.
-//   PDI    - SSE2 instructions with TB and OpSize prefixes.
-//   PDIi8  - SSE2 instructions with ImmT == Imm8 and TB and OpSize prefixes.
+//   SDI   - SSE2 instructions with XD prefix.
+//   SDIi8 - SSE2 instructions with ImmT == Imm8 and XD prefix.
+//   PDI   - SSE2 instructions with TB and OpSize prefixes.
+//   PDIi8 - SSE2 instructions with ImmT == Imm8 and TB and OpSize prefixes.
 
 class SDI<bits<8> o, Format F, dag outs, dag ins, string asm, list<dag> pattern>
       : I<o, F, outs, ins, asm, pattern>, XD, Requires<[HasSSE2]>;
 class SDIi8<bits<8> o, Format F, dag outs, dag ins, string asm,
             list<dag> pattern>
       : Ii8<o, F, outs, ins, asm, pattern>, XD, Requires<[HasSSE2]>;
-class SSDIi8<bits<8> o, Format F, dag outs, dag ins, string asm,
-             list<dag> pattern>
-      : Ii8<o, F, outs, ins, asm, pattern>, XS, Requires<[HasSSE2]>;
 class PDI<bits<8> o, Format F, dag outs, dag ins, string asm, list<dag> pattern>
       : I<o, F, outs, ins, asm, pattern>, TB, OpSize, Requires<[HasSSE2]>;
 class PDIi8<bits<8> o, Format F, dag outs, dag ins, string asm,
