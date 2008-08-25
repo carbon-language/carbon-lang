@@ -680,7 +680,7 @@ sub RunBuildCommand {
     $ENV{'LDPLUSPLUS'} = $LDPLUSPLUS;    
   }
   
-  return system(@$Args);
+  return (system(@$Args) >> 8);
 }
 
 ##----------------------------------------------------------------------------##

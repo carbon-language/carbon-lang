@@ -187,7 +187,7 @@ my $Output;
 my $CC = $ENV{'CCC_CC'};
 if (!defined $CC) { $CC = "gcc"; }
 my $Status = system($CC,@ARGV);
-if ($Status) { exit($Status); }
+if ($Status) { exit($Status >> 8); }
 
 # Get the analysis options.
 my $Analyses = $ENV{'CCC_ANALYZER_ANALYSIS'};
@@ -323,6 +323,8 @@ foreach (my $i = 0; $i < scalar(@ARGV); ++$i) {
   if (!($Arg =~ /^-/)) {
     push @Files,$Arg; next;
   }
+  
+  exit 0;
 }
 
 if ($Action eq 'compile' or $Action eq 'link') {
