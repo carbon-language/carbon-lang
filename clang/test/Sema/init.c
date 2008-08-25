@@ -54,3 +54,7 @@ int pbool(void) {
 // rdar://5870981
 union { float f; unsigned u; } u = { 1.0f };
 
+// rdar://6156694
+int f3(int x) { return x; }
+typedef void (*vfunc)(void);
+void *bar = (vfunc) f3;
