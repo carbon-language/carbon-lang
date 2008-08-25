@@ -223,6 +223,12 @@ public:
   //                         LValue Expression Emission
   //===--------------------------------------------------------------------===//
 
+  /// EmitUnsupportedLValue - Emit a dummy l-value using the type of E
+  /// and issue an ErrorUnsupported style diagnostic (using the
+  /// provided Name).
+  LValue EmitUnsupportedLValue(const Expr *E,
+                               const char *Name);
+
   /// EmitLValue - Emit code to compute a designator that specifies the location
   /// of the expression.
   ///

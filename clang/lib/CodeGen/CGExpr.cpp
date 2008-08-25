@@ -71,6 +71,14 @@ unsigned CodeGenFunction::getAccessedFieldNo(unsigned Idx,
 //                         LValue Expression Emission
 //===----------------------------------------------------------------------===//
 
+LValue CodeGenFunction::EmitUnsupportedLValue(const Expr *E,
+                                              const char *Name) {
+  ErrorUnsupported(E, Name);
+  llvm::Type *Ty = llvm::PointerType::getUnqual(ConvertType(E->getType()));
+  return LValue::MakeAddr(llvm::UndefValue::get(Ty),
+                          E->getType().getCVRQualifiers());
+}
+
 /// EmitLValue - Emit code to compute a designator that specifies the location
 /// of the expression.
 ///
@@ -89,12 +97,7 @@ unsigned CodeGenFunction::getAccessedFieldNo(unsigned Idx,
 ///
 LValue CodeGenFunction::EmitLValue(const Expr *E) {
   switch (E->getStmtClass()) {
-  default: {
-    ErrorUnsupported(E, "l-value expression");
-    llvm::Type *Ty = llvm::PointerType::getUnqual(ConvertType(E->getType()));
-    return LValue::MakeAddr(llvm::UndefValue::get(Ty),
-                            E->getType().getCVRQualifiers());
-  }
+  default: return EmitUnsupportedLValue(E, "l-value expression");
 
   case Expr::CallExprClass: return EmitCallExprLValue(cast<CallExpr>(E));
   case Expr::DeclRefExprClass: return EmitDeclRefLValue(cast<DeclRefExpr>(E));
@@ -108,13 +111,10 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
     return EmitObjCMessageExprLValue(cast<ObjCMessageExpr>(E));
   case Expr::ObjCIvarRefExprClass: 
     return EmitObjCIvarRefLValue(cast<ObjCIvarRefExpr>(E));
-  case Expr::ObjCPropertyRefExprClass: {
+  case Expr::ObjCPropertyRefExprClass:
     // FIXME: Implement!
-    ErrorUnsupported(E, "l-value expression (Objective-C property reference)");
-    llvm::Type *Ty = llvm::PointerType::getUnqual(ConvertType(E->getType()));
-    return LValue::MakeAddr(llvm::UndefValue::get(Ty),
-                            E->getType().getCVRQualifiers());
-  }
+    return EmitUnsupportedLValue(E, 
+                                 "l-value expression (Objective-C property)");
     
   case Expr::UnaryOperatorClass: 
     return EmitUnaryOpLValue(cast<UnaryOperator>(E));
@@ -503,15 +503,17 @@ LValue CodeGenFunction::EmitPredefinedLValue(const PredefinedExpr *E) {
   std::string FunctionName;
   if(const FunctionDecl *FD = dyn_cast<FunctionDecl>(CurFuncDecl)) {
     FunctionName = FD->getName();
-  }
-  else {
-    assert(0 && "Attempting to load predefined constant for invalid decl type");
+  } else if (isa<ObjCMethodDecl>(CurFuncDecl)) {
+    // Just get the mangled name.
+    FunctionName  = CurFn->getName();
+  } else {
+    return EmitUnsupportedLValue(E, "predefined expression");
   }
   std::string GlobalVarName;
   
   switch (E->getIdentType()) {
     default:
-      assert(0 && "unknown pre-defined ident type");
+      return EmitUnsupportedLValue(E, "predefined expression");
     case PredefinedExpr::Func:
       GlobalVarName = "__func__.";
       break;
@@ -527,7 +529,7 @@ LValue CodeGenFunction::EmitPredefinedLValue(const PredefinedExpr *E) {
   GlobalVarName += FunctionName;
   
   // FIXME: Can cache/reuse these within the module.
-  llvm::Constant *C=llvm::ConstantArray::get(FunctionName);
+  llvm::Constant *C = llvm::ConstantArray::get(FunctionName);
   
   // Create a global variable for this.
   C = new llvm::GlobalVariable(C->getType(), true, 
@@ -565,7 +567,7 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
   // We know that the pointer points to a type of the correct size, unless the
   // size is a VLA.
   if (!E->getType()->isConstantSizeType())
-    assert(0 && "VLA idx not implemented");
+    return EmitUnsupportedLValue(E, "VLA index");
   QualType ExprTy = getContext().getCanonicalType(E->getBase()->getType());
 
   return LValue::MakeAddr(Builder.CreateGEP(Base, Idx, "arrayidx"),
@@ -759,8 +761,7 @@ LValue CodeGenFunction::EmitObjCIvarRefLValue(const ObjCIvarRefExpr *E) {
   // then the CGObjCRuntime subclass must return true to LateBoundIvars and
   // implement the lookup itself.
   if (CGM.getObjCRuntime().LateBoundIVars()) {
-    assert(0 && "FIXME: Implement support for late-bound instance variables");
-    return LValue(); // Not reached.
+    return EmitUnsupportedLValue(E, "late-bound instance variables");
   }
 
   // FIXME: A lot of the code below could be shared with EmitMemberExpr.
@@ -780,8 +781,8 @@ LValue CodeGenFunction::EmitObjCIvarRefLValue(const ObjCIvarRefExpr *E) {
   }
   
   const ObjCIvarDecl *Field = E->getDecl();
-  assert(!Field->isBitField() && 
-         "Bitfields are currently not supported!");
+  if (Field->isBitField())
+    return EmitUnsupportedLValue(E, "ivar bitfields");
    
   // TODO:  Add a special case for isa (index 0)
   unsigned Index = CGM.getTypes().getLLVMFieldNo(Field);
