@@ -137,6 +137,16 @@ private:
   /// ObjCABI - FIXME: Not sure yet.
   unsigned ObjCABI;
 
+  /// LazySymbols - Symbols to generate a lazy reference for. See
+  /// DefinedSymbols and FinishModule().
+  std::set<IdentifierInfo*> LazySymbols;
+  
+  /// DefinedSymbols - External symbols which are defined by this
+  /// module. The symbols in this list and LazySymbols are used to add
+  /// special linker symbols which ensure that Objective-C modules are
+  /// linked properly.
+  std::set<IdentifierInfo*> DefinedSymbols;
+
   /// ClassNames - uniqued class names.
   llvm::DenseMap<IdentifierInfo*, llvm::GlobalVariable*> ClassNames;
 
@@ -463,6 +473,11 @@ llvm::Value *CGObjCMac::GenerateProtocolRef(llvm::IRBuilder<> &Builder,
   See EmitProtocolExtension().
 */
 void CGObjCMac::GenerateProtocol(const ObjCProtocolDecl *PD) { 
+  // FIXME: I don't understand why gcc generates this, or where it is
+  // resolved. Investigate. Its also wasteful to look this up over and
+  // over.
+  LazySymbols.insert(&CGM.getContext().Idents.get("Protocol"));
+
   const char *ProtocolName = PD->getName();
   
   std::vector<llvm::Constant*> Values(5);
@@ -844,6 +859,8 @@ static bool IsClassHidden(const ObjCInterfaceDecl *ID) {
   See EmitClassExtension();
  */
 void CGObjCMac::GenerateClass(const ObjCImplementationDecl *ID) {
+  DefinedSymbols.insert(ID->getIdentifier());
+
   const char *ClassName = ID->getName();
   // FIXME: Gross
   ObjCInterfaceDecl *Interface = 
@@ -864,6 +881,9 @@ void CGObjCMac::GenerateClass(const ObjCImplementationDecl *ID) {
   std::vector<llvm::Constant*> Values(12);
   Values[ 0] = EmitMetaClass(ID, Protocols, InterfaceTy);
   if (ObjCInterfaceDecl *Super = Interface->getSuperClass()) {
+    // Record a reference to the super class.
+    LazySymbols.insert(Super->getIdentifier());
+
     Values[ 1] = 
       llvm::ConstantExpr::getBitCast(GetClassName(Super->getIdentifier()),
                                      ObjCTypes.ClassPtrTy);
@@ -1293,10 +1313,14 @@ void CGObjCMac::EmitModuleInfo() {
 }
 
 llvm::Constant *CGObjCMac::EmitModuleSymbols() {
-  std::vector<llvm::Constant*> Values(5);
   unsigned NumClasses = DefinedClasses.size();
   unsigned NumCategories = DefinedCategories.size();
 
+  // Return null if no symbols were defined.
+  if (!NumClasses && !NumCategories)
+    return llvm::Constant::getNullValue(ObjCTypes.SymtabPtrTy);
+
+  std::vector<llvm::Constant*> Values(5);
   Values[0] = llvm::ConstantInt::get(ObjCTypes.LongTy, 0);
   Values[1] = llvm::Constant::getNullValue(ObjCTypes.SelectorPtrTy);
   Values[2] = llvm::ConstantInt::get(ObjCTypes.ShortTy, NumClasses);
@@ -1333,6 +1357,8 @@ llvm::Constant *CGObjCMac::EmitModuleSymbols() {
 
 llvm::Value *CGObjCMac::EmitClassRef(llvm::IRBuilder<> &Builder, 
                                      const ObjCInterfaceDecl *ID) {
+  LazySymbols.insert(ID->getIdentifier());
+
   llvm::GlobalVariable *&Entry = ClassReferences[ID->getIdentifier()];
   
   if (!Entry) {
@@ -1495,6 +1521,23 @@ void CGObjCMac::FinishModule() {
                              &CGM.getModule());
 
   GV->setSection("llvm.metadata");
+
+  // Add assembler directives to add lazy undefined symbol references
+  // for classes which are referenced but not defined. This is
+  // important for correct linker interaction.
+
+  // FIXME: Uh, this isn't particularly portable.
+  std::stringstream s;
+  for (std::set<IdentifierInfo*>::iterator i = LazySymbols.begin(),
+         e = LazySymbols.end(); i != e; ++i) {
+    s << "\t.lazy_reference .objc_class_name_" << (*i)->getName() << "\n";
+  }
+  for (std::set<IdentifierInfo*>::iterator i = DefinedSymbols.begin(),
+         e = DefinedSymbols.end(); i != e; ++i) {
+    s << "\t.objc_class_name_" << (*i)->getName() << " = 0\n"
+      << "\t.globl .objc_class_name_" << (*i)->getName() << "\n";
+  }  
+  CGM.getModule().appendModuleInlineAsm(s.str());
 }
 
 /* *** */
