@@ -927,35 +927,37 @@ bool Sema::CheckAddressConstantExpression(const Expr* Init) {
     return CheckAddressConstantExpression(PExp) ||
            CheckArithmeticConstantExpression(IExp);
   }
-  case Expr::ImplicitCastExprClass: {
-    const Expr* SubExpr = cast<ImplicitCastExpr>(Init)->getSubExpr();
-
-    // Check for implicit promotion
-    if (SubExpr->getType()->isFunctionType() ||
-        SubExpr->getType()->isArrayType())
-      return CheckAddressConstantExpressionLValue(SubExpr);
-
-    // Check for pointer->pointer cast
-    if (SubExpr->getType()->isPointerType())
-      return CheckAddressConstantExpression(SubExpr);
-
-    if (SubExpr->getType()->isArithmeticType())
-      return CheckArithmeticConstantExpression(SubExpr);
-
-    Diag(Init->getExprLoc(),
-         diag::err_init_element_not_constant, Init->getSourceRange());
-    return true;
-  }
+  case Expr::ImplicitCastExprClass:
   case Expr::ExplicitCastExprClass: {
     const Expr* SubExpr = cast<CastExpr>(Init)->getSubExpr();
+    if (Init->getStmtClass() == Expr::ImplicitCastExprClass) {
+      // Check for implicit promotion
+      if (SubExpr->getType()->isFunctionType() ||
+          SubExpr->getType()->isArrayType())
+        return CheckAddressConstantExpressionLValue(SubExpr);
+    }
 
     // Check for pointer->pointer cast
     if (SubExpr->getType()->isPointerType())
       return CheckAddressConstantExpression(SubExpr);
 
-    // FIXME: Should we pedwarn for (int*)(0+0)?
-    if (SubExpr->getType()->isArithmeticType())
+    if (SubExpr->getType()->isIntegralType()) {
+      // Check for the special-case of a pointer->int->pointer cast;
+      // this isn't standard, but some code requires it. See
+      // PR2720 for an example.
+      if (const CastExpr* SubCast = dyn_cast<CastExpr>(SubExpr)) {
+        if (SubCast->getSubExpr()->getType()->isPointerType()) {
+          unsigned IntWidth = Context.getIntWidth(SubCast->getType());
+          unsigned PointerWidth = Context.getTypeSize(Context.VoidPtrTy);
+          if (IntWidth >= PointerWidth) {
+            return CheckAddressConstantExpression(SubCast->getSubExpr());
+          }
+        }
+      }
+    }
+    if (SubExpr->getType()->isArithmeticType()) {
       return CheckArithmeticConstantExpression(SubExpr);
+    }
 
     Diag(Init->getExprLoc(),
          diag::err_init_element_not_constant, Init->getSourceRange());
