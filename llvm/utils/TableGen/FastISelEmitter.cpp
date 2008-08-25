@@ -182,10 +182,11 @@ void FastISelEmitter::run(std::ostream &OS) {
   OS << "\n";
   
   typedef std::map<std::string, InstructionMemo> PredMap;
-  typedef std::map<MVT::SimpleValueType, PredMap> TypePredMap;
-  typedef std::map<std::string, TypePredMap> OpcodeTypePredMap;
-  typedef std::map<OperandsSignature, OpcodeTypePredMap> OperandsOpcodeTypePredMap;
-  OperandsOpcodeTypePredMap SimplePatterns;
+  typedef std::map<MVT::SimpleValueType, PredMap> RetPredMap;
+  typedef std::map<MVT::SimpleValueType, RetPredMap> TypeRetPredMap;
+  typedef std::map<std::string, TypeRetPredMap> OpcodeTypeRetPredMap;
+  typedef std::map<OperandsSignature, OpcodeTypeRetPredMap> OperandsOpcodeTypeRetPredMap;
+  OperandsOpcodeTypeRetPredMap SimplePatterns;
 
   // Scan through all the patterns and record the simple ones.
   for (CodeGenDAGPatterns::ptm_iterator I = CGP.ptm_begin(),
@@ -243,24 +244,24 @@ void FastISelEmitter::run(std::ostream &OS) {
       Pattern.getDstPattern()->getOperator()->getName(),
       DstRC
     };
-    assert(!SimplePatterns[Operands][OpcodeName][VT].count(PredicateCheck) &&
+    assert(!SimplePatterns[Operands][OpcodeName][VT][VT].count(PredicateCheck) &&
            "Duplicate pattern!");
-    SimplePatterns[Operands][OpcodeName][VT][PredicateCheck] = Memo;
+    SimplePatterns[Operands][OpcodeName][VT][VT][PredicateCheck] = Memo;
   }
 
   // Declare the target FastISel class.
   OS << "class FastISel : public llvm::FastISel {\n";
-  for (OperandsOpcodeTypePredMap::const_iterator OI = SimplePatterns.begin(),
+  for (OperandsOpcodeTypeRetPredMap::const_iterator OI = SimplePatterns.begin(),
        OE = SimplePatterns.end(); OI != OE; ++OI) {
     const OperandsSignature &Operands = OI->first;
-    const OpcodeTypePredMap &OTM = OI->second;
+    const OpcodeTypeRetPredMap &OTM = OI->second;
 
-    for (OpcodeTypePredMap::const_iterator I = OTM.begin(), E = OTM.end();
+    for (OpcodeTypeRetPredMap::const_iterator I = OTM.begin(), E = OTM.end();
          I != E; ++I) {
       const std::string &Opcode = I->first;
-      const TypePredMap &TM = I->second;
+      const TypeRetPredMap &TM = I->second;
 
-      for (TypePredMap::const_iterator TI = TM.begin(), TE = TM.end();
+      for (TypeRetPredMap::const_iterator TI = TM.begin(), TE = TM.end();
            TI != TE; ++TI) {
         MVT::SimpleValueType VT = TI->first;
 
@@ -312,63 +313,69 @@ void FastISelEmitter::run(std::ostream &OS) {
   OS << "\n";
 
   // Now emit code for all the patterns that we collected.
-  for (OperandsOpcodeTypePredMap::const_iterator OI = SimplePatterns.begin(),
+  for (OperandsOpcodeTypeRetPredMap::const_iterator OI = SimplePatterns.begin(),
        OE = SimplePatterns.end(); OI != OE; ++OI) {
     const OperandsSignature &Operands = OI->first;
-    const OpcodeTypePredMap &OTM = OI->second;
+    const OpcodeTypeRetPredMap &OTM = OI->second;
 
-    for (OpcodeTypePredMap::const_iterator I = OTM.begin(), E = OTM.end();
+    for (OpcodeTypeRetPredMap::const_iterator I = OTM.begin(), E = OTM.end();
          I != E; ++I) {
       const std::string &Opcode = I->first;
-      const TypePredMap &TM = I->second;
+      const TypeRetPredMap &TM = I->second;
 
       OS << "// FastEmit functions for " << Opcode << ".\n";
       OS << "\n";
 
       // Emit one function for each opcode,type pair.
-      for (TypePredMap::const_iterator TI = TM.begin(), TE = TM.end();
+      for (TypeRetPredMap::const_iterator TI = TM.begin(), TE = TM.end();
            TI != TE; ++TI) {
         MVT::SimpleValueType VT = TI->first;
-        const PredMap &PM = TI->second;
-        bool HasPred = false;
+        const RetPredMap &RM = TI->second;
 
-        OS << "unsigned FastISel::FastEmit_"
-           << getLegalCName(Opcode)
-           << "_" << getLegalCName(getName(VT)) << "_";
-        Operands.PrintManglingSuffix(OS);
-        OS << "(";
-        Operands.PrintParameters(OS);
-        OS << ") {\n";
+        for (RetPredMap::const_iterator RI = RM.begin(), RE = RM.end();
+             RI != RE; ++RI) {
+          const PredMap &PM = RI->second;
+          bool HasPred = false;
 
-        // Emit code for each possible instruction. There may be
-        // multiple if there are subtarget concerns.
-        for (PredMap::const_iterator PI = PM.begin(), PE = PM.end();
-             PI != PE; ++PI) {
-          std::string PredicateCheck = PI->first;
-          const InstructionMemo &Memo = PI->second;
-  
-          if (PredicateCheck.empty()) {
-            assert(!HasPred && "Multiple instructions match, at least one has "
-                               "a predicate and at least one doesn't!");
-          } else {
-            OS << "  if (" + PredicateCheck + ")\n";
-            OS << "  ";
-            HasPred = true;
-          }
-          OS << "  return FastEmitInst_";
+          OS << "unsigned FastISel::FastEmit_"
+             << getLegalCName(Opcode)
+             << "_" << getLegalCName(getName(VT)) << "_";
           Operands.PrintManglingSuffix(OS);
-          OS << "(" << InstNS << Memo.Name << ", ";
-          OS << InstNS << Memo.RC->getName() << "RegisterClass";
-          if (!Operands.empty())
-            OS << ", ";
-          Operands.PrintArguments(OS);
-          OS << ");\n";
+          OS << "(";
+          Operands.PrintParameters(OS);
+          OS << ") {\n";
+
+          // Emit code for each possible instruction. There may be
+          // multiple if there are subtarget concerns.
+          for (PredMap::const_iterator PI = PM.begin(), PE = PM.end();
+               PI != PE; ++PI) {
+            std::string PredicateCheck = PI->first;
+            const InstructionMemo &Memo = PI->second;
+  
+            if (PredicateCheck.empty()) {
+              assert(!HasPred &&
+                     "Multiple instructions match, at least one has "
+                     "a predicate and at least one doesn't!");
+            } else {
+              OS << "  if (" + PredicateCheck + ")\n";
+              OS << "  ";
+              HasPred = true;
+            }
+            OS << "  return FastEmitInst_";
+            Operands.PrintManglingSuffix(OS);
+            OS << "(" << InstNS << Memo.Name << ", ";
+            OS << InstNS << Memo.RC->getName() << "RegisterClass";
+            if (!Operands.empty())
+              OS << ", ";
+            Operands.PrintArguments(OS);
+            OS << ");\n";
+          }
+          // Return 0 if none of the predicates were satisfied.
+          if (HasPred)
+            OS << "  return 0;\n";
+          OS << "}\n";
+          OS << "\n";
         }
-        // Return 0 if none of the predicates were satisfied.
-        if (HasPred)
-          OS << "  return 0;\n";
-        OS << "}\n";
-        OS << "\n";
       }
 
       // Emit one function for the opcode that demultiplexes based on the type.
@@ -381,7 +388,7 @@ void FastISelEmitter::run(std::ostream &OS) {
       Operands.PrintParameters(OS);
       OS << ") {\n";
       OS << "  switch (VT) {\n";
-      for (TypePredMap::const_iterator TI = TM.begin(), TE = TM.end();
+      for (TypeRetPredMap::const_iterator TI = TM.begin(), TE = TM.end();
            TI != TE; ++TI) {
         MVT::SimpleValueType VT = TI->first;
         std::string TypeName = getName(VT);
@@ -411,7 +418,7 @@ void FastISelEmitter::run(std::ostream &OS) {
     Operands.PrintParameters(OS);
     OS << ") {\n";
     OS << "  switch (Opcode) {\n";
-    for (OpcodeTypePredMap::const_iterator I = OTM.begin(), E = OTM.end();
+    for (OpcodeTypeRetPredMap::const_iterator I = OTM.begin(), E = OTM.end();
          I != E; ++I) {
       const std::string &Opcode = I->first;
 
