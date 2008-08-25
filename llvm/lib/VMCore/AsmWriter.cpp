@@ -1790,13 +1790,13 @@ void Value::print(std::ostream &O, AssemblyAnnotationWriter *AAW) const {
 
 // Value::dump - allow easy printing of  Values from the debugger.
 // Located here because so much of the needed functionality is here.
-void Value::dump() const { print(errs()); errs() << '\n'; }
+void Value::dump() const { print(errs()); errs() << '\n'; errs().flush(); }
 
 // Type::dump - allow easy printing of  Values from the debugger.
 // Located here because so much of the needed functionality is here.
-void Type::dump() const { print(errs()); errs() << '\n'; }
+void Type::dump() const { print(errs()); errs() << '\n'; errs().flush(); }
 
 // Module::dump() - Allow printing from debugger
-void Module::dump() const { print(errs(), 0); }
+void Module::dump() const { print(errs(), 0); errs().flush(); }
 
 
