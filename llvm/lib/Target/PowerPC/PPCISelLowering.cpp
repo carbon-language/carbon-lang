@@ -4040,38 +4040,56 @@ PPCTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     unsigned oldval = MI->getOperand(3).getReg();
     unsigned newval = MI->getOperand(4).getReg();
 
-    MachineBasicBlock *loopMBB = F->CreateMachineBasicBlock(LLVM_BB);
+    MachineBasicBlock *loop1MBB = F->CreateMachineBasicBlock(LLVM_BB);
+    MachineBasicBlock *loop2MBB = F->CreateMachineBasicBlock(LLVM_BB);
+    MachineBasicBlock *midMBB = F->CreateMachineBasicBlock(LLVM_BB);
     MachineBasicBlock *exitMBB = F->CreateMachineBasicBlock(LLVM_BB);
-    F->insert(It, loopMBB);
+    F->insert(It, loop1MBB);
+    F->insert(It, loop2MBB);
+    F->insert(It, midMBB);
     F->insert(It, exitMBB);
     exitMBB->transferSuccessors(BB);
 
     //  thisMBB:
     //   ...
     //   fallthrough --> loopMBB
-    BB->addSuccessor(loopMBB);
+    BB->addSuccessor(loop1MBB);
 
-    //  loopMBB:
+    // loop1MBB:
     //   l[wd]arx dest, ptr
-    //   cmp[wd] CR1, dest, oldval
+    //   cmp[wd] dest, oldval
+    //   bne- midMBB
+    // loop2MBB:
     //   st[wd]cx. newval, ptr
-    //   bne- CR1, exitMBB
     //   bne- loopMBB
-    //   fallthrough --> exitMBB
-    BB = loopMBB;
+    //   b exitBB
+    // midMBB:
+    //   st[wd]cx. dest, ptr
+    // exitBB:
+    BB = loop1MBB;
     BuildMI(BB, TII->get(is64bit ? PPC::LDARX : PPC::LWARX), dest)
       .addReg(ptrA).addReg(ptrB);
-    BuildMI(BB, TII->get(is64bit ? PPC::CMPD : PPC::CMPW), PPC::CR1)
+    BuildMI(BB, TII->get(is64bit ? PPC::CMPD : PPC::CMPW), PPC::CR0)
       .addReg(oldval).addReg(dest);
+    BuildMI(BB, TII->get(PPC::BCC))
+      .addImm(PPC::PRED_NE).addReg(PPC::CR0).addMBB(midMBB);
+    BB->addSuccessor(loop2MBB);
+    BB->addSuccessor(midMBB);
+
+    BB = loop2MBB;
     BuildMI(BB, TII->get(is64bit ? PPC::STDCX : PPC::STWCX))
       .addReg(newval).addReg(ptrA).addReg(ptrB);
     BuildMI(BB, TII->get(PPC::BCC))
-      .addImm(PPC::PRED_NE).addReg(PPC::CR1).addMBB(exitMBB);
-    BuildMI(BB, TII->get(PPC::BCC))
-      .addImm(PPC::PRED_NE).addReg(PPC::CR0).addMBB(loopMBB);    
-    BB->addSuccessor(loopMBB);
+      .addImm(PPC::PRED_NE).addReg(PPC::CR0).addMBB(loop1MBB);
+    BuildMI(BB, TII->get(PPC::B)).addMBB(exitMBB);
+    BB->addSuccessor(loop1MBB);
     BB->addSuccessor(exitMBB);
     
+    BB = midMBB;
+    BuildMI(BB, TII->get(is64bit ? PPC::STDCX : PPC::STWCX))
+      .addReg(dest).addReg(ptrA).addReg(ptrB);
+    BB->addSuccessor(exitMBB);
+
     //  exitMBB:
     //   ...
     BB = exitMBB;
