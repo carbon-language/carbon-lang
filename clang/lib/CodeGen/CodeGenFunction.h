@@ -39,6 +39,7 @@ namespace clang {
   class FunctionTypeProto;
   class LabelStmt;
   class ObjCMethodDecl;
+  class ObjCPropertyImplDecl;
   class TargetInfo;
   class VarDecl;
 
@@ -112,9 +113,20 @@ public:
   ASTContext &getContext() const;
 
   void GenerateObjCMethod(const ObjCMethodDecl *OMD);
+
+  void StartObjCMethod(const ObjCMethodDecl *MD);
+
+  /// GenerateObjCGetter - Synthesize an Objective-C property getter
+  /// function.
+  void GenerateObjCGetter(const ObjCPropertyImplDecl *PID);
+
+  /// GenerateObjCSetter - Synthesize an Objective-C property setter
+  /// function for the given property.
+  void GenerateObjCSetter(const ObjCPropertyImplDecl *PID);
+
   void GenerateCode(const FunctionDecl *FD,
                     llvm::Function *Fn);
-  void GenerateFunction(const Stmt *Body);
+  void FinishFunction(SourceLocation EndLoc=SourceLocation());
   
   const llvm::Type *ConvertType(QualType T);
 

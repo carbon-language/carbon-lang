@@ -62,19 +62,15 @@ bool CodeGenFunction::hasAggregateLLVMType(QualType T) {
     !T->isVoidType() && !T->isVectorType() && !T->isFunctionType();
 }
 
-void CodeGenFunction::GenerateFunction(const Stmt *Body) {
-  // Emit the function body.
-  EmitStmt(Body);
-
+void CodeGenFunction::FinishFunction(SourceLocation EndLoc) {
   // Finish emission of indirect switches.
   EmitIndirectSwitches();
 
   // Emit debug descriptor for function end.
   CGDebugInfo *DI = CGM.getDebugInfo(); 
   if (DI) {
-    const CompoundStmt* s = dyn_cast<CompoundStmt>(Body);
-    if (s && s->getRBracLoc().isValid()) {
-      DI->setLocation(s->getRBracLoc());
+    if (EndLoc.isValid()) {
+      DI->setLocation(EndLoc);
     }
     DI->EmitRegionEnd(CurFn, Builder);
   }
@@ -156,7 +152,15 @@ void CodeGenFunction::GenerateCode(const FunctionDecl *FD,
       EmitParmDecl(*CurParam, V);
     }
   }
-  GenerateFunction(FD->getBody());
+
+  EmitStmt(FD->getBody());
+  
+  const CompoundStmt *S = dyn_cast<CompoundStmt>(FD->getBody());
+  if (S) {
+    FinishFunction(S->getRBracLoc());
+  } else {
+    FinishFunction();
+  }
 }
 
 /// isDummyBlock - Return true if BB is an empty basic block

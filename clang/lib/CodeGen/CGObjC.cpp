@@ -88,9 +88,12 @@ RValue CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E) {
   return Runtime.GenerateMessageSend(*this, E, Receiver, isClassMessage);
 }
 
-/// Generate an Objective-C method.  An Objective-C method is a C function with
-/// its pointer, name, and types registered in the class struture.  
-void CodeGenFunction::GenerateObjCMethod(const ObjCMethodDecl *OMD) {
+/// StartObjCMethod - Begin emission of an ObjCMethod. This generates
+/// the LLVM function and sets the other context used by
+/// CodeGenFunction.
+
+// FIXME: This should really be merged with GenerateCode.
+void CodeGenFunction::StartObjCMethod(const ObjCMethodDecl *OMD) {
   CurFn = CGM.getObjCRuntime().GenerateMethod(OMD);
   llvm::BasicBlock *EntryBB = llvm::BasicBlock::Create("entry", CurFn);
   
@@ -127,8 +130,87 @@ void CodeGenFunction::GenerateObjCMethod(const ObjCMethodDecl *OMD) {
     EmitParmDecl(*OMD->getParamDecl(i), AI);
   }
   assert(AI == CurFn->arg_end() && "Argument mismatch");
+}
 
-  GenerateFunction(OMD->getBody());
+/// Generate an Objective-C method.  An Objective-C method is a C function with
+/// its pointer, name, and types registered in the class struture.  
+void CodeGenFunction::GenerateObjCMethod(const ObjCMethodDecl *OMD) {
+  StartObjCMethod(OMD);
+  EmitStmt(OMD->getBody());
+
+  const CompoundStmt *S = dyn_cast<CompoundStmt>(OMD->getBody());
+  if (S) {
+    FinishFunction(S->getRBracLoc());
+  } else {
+    FinishFunction();
+  }
+}
+
+// FIXME: I wasn't sure about the synthesis approach. If we end up
+// generating an AST for the whole body we can just fall back to
+// having a GenerateFunction which takes the body Stmt.
+
+/// GenerateObjCGetter - Generate an Objective-C property getter
+/// function. The given Decl must be either an ObjCCategoryImplDecl
+/// or an ObjCImplementationDecl.
+void CodeGenFunction::GenerateObjCGetter(const ObjCPropertyImplDecl *PID) {
+  const ObjCPropertyDecl *PD = PID->getPropertyDecl();
+  ObjCMethodDecl *OMD = PD->getGetterMethodDecl();
+  assert(OMD && "Invalid call to generate getter (empty method)");
+  // FIXME: This is rather murky, we create this here since they will
+  // not have been created by Sema for us.
+  OMD->createImplicitParams(getContext());
+  StartObjCMethod(OMD);
+
+  // FIXME: What about nonatomic?
+  SourceLocation Loc = PD->getLocation();
+  ValueDecl *Self = OMD->getSelfDecl();
+  ObjCIvarDecl *Ivar = PID->getPropertyIvarDecl();
+  DeclRefExpr Base(Self, Self->getType(), Loc);
+  ObjCIvarRefExpr IvarRef(Ivar, Ivar->getType(), Loc, &Base,
+                          true, true);
+  ReturnStmt Return(Loc, &IvarRef);
+  EmitStmt(&Return);
+
+  FinishFunction();
+}
+
+/// GenerateObjCSetter - Generate an Objective-C property setter
+/// function. The given Decl must be either an ObjCCategoryImplDecl
+/// or an ObjCImplementationDecl.
+void CodeGenFunction::GenerateObjCSetter(const ObjCPropertyImplDecl *PID) {
+  const ObjCPropertyDecl *PD = PID->getPropertyDecl();
+  ObjCMethodDecl *OMD = PD->getSetterMethodDecl();
+  assert(OMD && "Invalid call to generate setter (empty method)");
+  // FIXME: This is rather murky, we create this here since they will
+  // not have been created by Sema for us.  
+  OMD->createImplicitParams(getContext());
+  StartObjCMethod(OMD);
+  
+  switch (PD->getSetterKind()) {
+  case ObjCPropertyDecl::Assign: break;
+  case ObjCPropertyDecl::Copy:
+      CGM.ErrorUnsupported(PID, "Obj-C setter with 'copy'");
+      break;
+  case ObjCPropertyDecl::Retain:
+      CGM.ErrorUnsupported(PID, "Obj-C setter with 'retain'");
+      break;
+  }
+
+  // FIXME: What about nonatomic?
+  SourceLocation Loc = PD->getLocation();
+  ValueDecl *Self = OMD->getSelfDecl();
+  ObjCIvarDecl *Ivar = PID->getPropertyIvarDecl();
+  DeclRefExpr Base(Self, Self->getType(), Loc);
+  ParmVarDecl *ArgDecl = OMD->getParamDecl(0);
+  DeclRefExpr Arg(ArgDecl, ArgDecl->getType(), Loc);
+  ObjCIvarRefExpr IvarRef(Ivar, Ivar->getType(), Loc, &Base,
+                          true, true);
+  BinaryOperator Assign(&IvarRef, &Arg, BinaryOperator::Assign,
+                        Ivar->getType(), Loc);
+  EmitStmt(&Assign);
+
+  FinishFunction();
 }
 
 llvm::Value *CodeGenFunction::LoadObjCSelf(void) {

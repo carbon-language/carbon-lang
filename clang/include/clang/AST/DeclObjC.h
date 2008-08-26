@@ -1172,7 +1172,8 @@ public:
     OBJC_PR_nonatomic = 0x40,
     OBJC_PR_setter    = 0x80
   };
-  
+
+  enum SetterKind { Assign, Retain, Copy };
   enum PropertyControl { None, Required, Optional };
 private:
   QualType DeclType;
@@ -1206,10 +1207,24 @@ public:
     PropertyAttributes |= PRVal;
   }
 
+  // Helper methods for accessing attributes.
+
+  /// isReadOnly - Return true iff the property has a setter.
   bool isReadOnly() const {
     return (PropertyAttributes & OBJC_PR_readonly);
   }
-  
+
+  /// getSetterKind - Return the method used for doing assignment in
+  /// the property setter. This is only valid if the property has been
+  /// defined to have a setter.
+  SetterKind getSetterKind() const {
+    if (PropertyAttributes & OBJC_PR_retain)
+      return Retain;
+    if (PropertyAttributes & OBJC_PR_copy)
+      return Copy;
+    return Assign;
+  }
+
   Selector getGetterName() const { return GetterName; }
   void setGetterName(Selector Sel) { GetterName = Sel; }
   
@@ -1278,7 +1293,7 @@ public:
     return PropertyIvarDecl ? Synthesize : Dynamic;
   }
   
-  ObjCIvarDecl *getPropertyIvarDecl() {
+  ObjCIvarDecl *getPropertyIvarDecl() const {
     return PropertyIvarDecl;
   }
   

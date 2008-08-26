@@ -233,9 +233,7 @@ private:
                                 const llvm::Type *InterfaceTy);
 
   /// EmitMethodList - Emit the method list for the given
-  /// implementation. If ForClass is true the list of class methods
-  /// will be emitted, otherwise the list of instance methods will be
-  /// generated. The return value has type MethodListPtrTy.
+  /// implementation. The return value has type MethodListPtrTy.
   llvm::Constant *EmitMethodList(const std::string &Name,
                                  const char *Section,
                    llvm::SmallVector<ObjCMethodDecl*, 32>::const_iterator begin,

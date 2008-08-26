@@ -836,6 +836,32 @@ llvm::Constant *CodeGenModule::GetAddrOfConstantCString(const std::string &str) 
   return GetAddrOfConstantString(str + "\0");
 }
 
+/// EmitObjCPropertyImplementations - Emit information for synthesized
+/// properties for an implementation.
+void CodeGenModule::EmitObjCPropertyImplementations(const 
+                                                    ObjCImplementationDecl *D) {
+  for (ObjCImplementationDecl::propimpl_iterator i = D->propimpl_begin(),
+         e = D->propimpl_end(); i != e; ++i) {
+    ObjCPropertyImplDecl *PID = *i;
+    
+    // Dynamic is just for type-checking.
+    if (PID->getPropertyImplementation() == ObjCPropertyImplDecl::Synthesize) {
+      ObjCPropertyDecl *PD = PID->getPropertyDecl();
+
+      // Determine which methods need to be implemented, some may have
+      // been overridden. Note that ::isSynthesized is not the method
+      // we want, that just indicates if the decl came from a
+      // property. What we want to know is if the method is defined in
+      // this implementation.
+      if (!D->getInstanceMethod(PD->getGetterName()))
+        CodeGenFunction(*this).GenerateObjCGetter(PID);
+      if (!PD->isReadOnly() &&
+          !D->getInstanceMethod(PD->getSetterName()))
+        CodeGenFunction(*this).GenerateObjCSetter(PID);
+    }
+  }
+}
+
 /// EmitTopLevelDecl - Emit code for a single top level declaration.
 void CodeGenModule::EmitTopLevelDecl(Decl *D) {
   // If an error has occurred, stop code generation, but continue
@@ -868,13 +894,18 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
     break;
 
   case Decl::ObjCCategoryImpl:
+    // Categories have properties but don't support synthesize so we
+    // can ignore them here.
+
     Runtime->GenerateCategory(cast<ObjCCategoryImplDecl>(D));
     break;
 
-  case Decl::ObjCImplementation:
-    Runtime->GenerateClass(cast<ObjCImplementationDecl>(D));
+  case Decl::ObjCImplementation: {
+    ObjCImplementationDecl *OMD = cast<ObjCImplementationDecl>(D);
+    EmitObjCPropertyImplementations(OMD);
+    Runtime->GenerateClass(OMD);
     break;
-    
+  } 
   case Decl::ObjCMethod: {
     ObjCMethodDecl *OMD = cast<ObjCMethodDecl>(D);
     // If this is not a prototype, emit the body.
@@ -882,9 +913,6 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
       CodeGenFunction(*this).GenerateObjCMethod(OMD);
     break;
   }
-  case Decl::ObjCPropertyImpl:
-    assert(0 && "FIXME: ObjCPropertyImpl unsupported");
-    break;
   case Decl::ObjCCompatibleAlias: 
     assert(0 && "FIXME: ObjCCompatibleAlias unsupported");
     break;

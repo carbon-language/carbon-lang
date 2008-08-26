@@ -217,6 +217,7 @@ private:
   llvm::GlobalValue *EmitForwardFunctionDefinition(const FunctionDecl *D);
   void EmitGlobalFunctionDefinition(const FunctionDecl *D);
   void EmitGlobalVarDefinition(const VarDecl *D);
+  void EmitObjCPropertyImplementations(const ObjCImplementationDecl *D);
   
   // FIXME: Hardcoding priority here is gross.
   void AddGlobalCtor(llvm::Function * Ctor, int Priority=65535);
