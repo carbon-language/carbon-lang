@@ -379,27 +379,6 @@ require a copy to be inserted (in X86InstrInfo::convertToThreeAddress).
 
 //===---------------------------------------------------------------------===//
 
-Another instruction selector deficiency:
-
-void %bar() {
-	%tmp = load int (int)** %foo
-	%tmp = tail call int %tmp( int 3 )
-	ret void
-}
-
-_bar:
-	subl $12, %esp
-	movl L_foo$non_lazy_ptr, %eax
-	movl (%eax), %eax
-	call *%eax
-	addl $12, %esp
-	ret
-
-The current isel scheme will not allow the load to be folded in the call since
-the load's chain result is read by the callseq_start.
-
-//===---------------------------------------------------------------------===//
-
 For this:
 
 int test(int a)
