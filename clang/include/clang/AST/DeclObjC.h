@@ -1230,9 +1230,9 @@ public:
 ///
 class ObjCPropertyImplDecl : public Decl {
 public:
-  enum PropertyImplKind {
-    OBJC_PR_IMPL_SYNTHSIZE,
-    OBJC_PR_IMPL_DYNAMIC
+  enum Kind {
+    Synthesize,
+    Dynamic
   };
 private:
   SourceLocation AtLoc;   // location of @synthesize or @dynamic
@@ -1242,28 +1242,28 @@ private:
   /// Null for @dynamic. Required for @synthesize.
   ObjCIvarDecl *PropertyIvarDecl;
 
-public:
   ObjCPropertyImplDecl(SourceLocation atLoc, SourceLocation L,
                        ObjCPropertyDecl *property, 
-                       PropertyImplKind propertyKind, 
+                       Kind PK, 
                        ObjCIvarDecl *ivarDecl)
-  : Decl(ObjCPropertyImpl, L), AtLoc(atLoc), PropertyDecl(property), 
-    PropertyIvarDecl(ivarDecl) {
-      assert (propertyKind == OBJC_PR_IMPL_DYNAMIC || PropertyIvarDecl);
-    }
+    : Decl(ObjCPropertyImpl, L), AtLoc(atLoc), PropertyDecl(property), 
+      PropertyIvarDecl(ivarDecl) {
+    assert (PK == Dynamic || PropertyIvarDecl);
+  }
   
+public:
   static ObjCPropertyImplDecl *Create(ASTContext &C, SourceLocation atLoc, 
                                       SourceLocation L, 
                                       ObjCPropertyDecl *property, 
-                                      PropertyImplKind propertyKind, 
+                                      Kind PK, 
                                       ObjCIvarDecl *ivarDecl);
 
   ObjCPropertyDecl *getPropertyDecl() const {
     return PropertyDecl;
   }
   
-  PropertyImplKind getPropertyImplementation() const {
-    return PropertyDecl ? OBJC_PR_IMPL_SYNTHSIZE : OBJC_PR_IMPL_DYNAMIC;
+  Kind getPropertyImplementation() const {
+    return PropertyIvarDecl ? Synthesize : Dynamic;
   }
   
   ObjCIvarDecl *getPropertyIvarDecl() {

@@ -705,10 +705,10 @@ ObjCPropertyImplDecl *ObjCPropertyImplDecl::Create(ASTContext &C,
                                                    SourceLocation atLoc,
                                                    SourceLocation L,
                                                    ObjCPropertyDecl *property,
-                                                   PropertyImplKind kind,
+                                                   Kind PK,
                                                    ObjCIvarDecl *ivar) {
   void *Mem = C.getAllocator().Allocate<ObjCPropertyImplDecl>();
-  return new (Mem) ObjCPropertyImplDecl(atLoc, L, property, kind, ivar);
+  return new (Mem) ObjCPropertyImplDecl(atLoc, L, property, PK, ivar);
 }
 
 

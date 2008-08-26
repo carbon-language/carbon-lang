@@ -1172,9 +1172,9 @@ Sema::DeclTy *Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
   ObjCPropertyImplDecl *PIDecl = 
     ObjCPropertyImplDecl::Create(Context, AtLoc, PropertyLoc, property, 
                                  (Synthesize ? 
-                                  ObjCPropertyImplDecl::OBJC_PR_IMPL_SYNTHSIZE 
-                                  : ObjCPropertyImplDecl::OBJC_PR_IMPL_DYNAMIC),
-                                  Ivar);
+                                  ObjCPropertyImplDecl::Synthesize 
+                                  : ObjCPropertyImplDecl::Dynamic),
+                                 Ivar);
   if (IC)
     IC->addPropertyImplementation(PIDecl);
   else

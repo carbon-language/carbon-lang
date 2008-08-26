@@ -407,8 +407,7 @@ void DeclPrinter::PrintObjCPropertyDecl(ObjCPropertyDecl *PDecl) {
 /// declaration syntax.
 ///
 void DeclPrinter::PrintObjCPropertyImplDecl(ObjCPropertyImplDecl *PID) {
-  if (PID->getPropertyImplementation() == 
-      ObjCPropertyImplDecl::OBJC_PR_IMPL_SYNTHSIZE)
+  if (PID->getPropertyImplementation() == ObjCPropertyImplDecl::Synthesize)
     Out << "\n@synthesize ";
   else
     Out << "\n@dynamic ";
