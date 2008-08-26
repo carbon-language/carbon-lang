@@ -124,18 +124,19 @@ bool FastISel::SelectGetElementPtr(Instruction *I,
       // it.
       MVT IdxVT = MVT::getMVT(Idx->getType(), /*HandleUnknown=*/false);
       if (IdxVT.bitsLT(VT))
-        IdxN = FastEmit_r(VT, VT, ISD::SIGN_EXTEND, IdxN);
+        IdxN = FastEmit_r(IdxVT.getSimpleVT(), VT, ISD::SIGN_EXTEND, IdxN);
       else if (IdxVT.bitsGT(VT))
-        IdxN = FastEmit_r(VT, VT, ISD::TRUNCATE, IdxN);
+        IdxN = FastEmit_r(IdxVT.getSimpleVT(), VT, ISD::TRUNCATE, IdxN);
       if (IdxN == 0)
         // Unhandled operand. Halt "fast" selection and bail.
         return false;
 
-      if (ElementSize != 1)
+      if (ElementSize != 1) {
         IdxN = FastEmit_ri_(VT, ISD::MUL, IdxN, ElementSize, VT);
-      if (IdxN == 0)
-        // Unhandled operand. Halt "fast" selection and bail.
-        return false;
+        if (IdxN == 0)
+          // Unhandled operand. Halt "fast" selection and bail.
+          return false;
+      }
       N = FastEmit_rr(VT, VT, ISD::ADD, N, IdxN);
       if (N == 0)
         // Unhandled operand. Halt "fast" selection and bail.
