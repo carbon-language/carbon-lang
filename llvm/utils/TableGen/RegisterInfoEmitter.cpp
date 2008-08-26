@@ -114,10 +114,9 @@ bool isSubRegisterClass(const CodeGenRegisterClass &RC,
 }
 
 static void addSuperReg(Record *R, Record *S,
-                        std::map<Record*, std::set<Record*>,
-                                 LessRecord> &SubRegs,
-                        std::map<Record*, std::set<Record*> > &SuperRegs,
-                        std::map<Record*, std::set<Record*> > &Aliases) {
+                  std::map<Record*, std::set<Record*>, LessRecord> &SubRegs,
+                  std::map<Record*, std::set<Record*>, LessRecord> &SuperRegs,
+                  std::map<Record*, std::set<Record*>, LessRecord> &Aliases) {
   if (R == S) {
     cerr << "Error: recursive sub-register relationship between"
          << " register " << getQualifiedName(R)
@@ -136,10 +135,9 @@ static void addSuperReg(Record *R, Record *S,
 }
 
 static void addSubSuperReg(Record *R, Record *S,
-                           std::map<Record*, std::set<Record*>,
-                                    LessRecord> &SubRegs,
-                           std::map<Record*, std::set<Record*> > &SuperRegs,
-                           std::map<Record*, std::set<Record*> > &Aliases) {
+                   std::map<Record*, std::set<Record*>, LessRecord> &SubRegs,
+                   std::map<Record*, std::set<Record*>, LessRecord> &SuperRegs,
+                   std::map<Record*, std::set<Record*>, LessRecord> &Aliases) {
   if (R == S) {
     cerr << "Error: recursive sub-register relationship between"
          << " register " << getQualifiedName(R)
@@ -421,8 +419,8 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
 
   // Emit register sub-registers / super-registers, aliases...
   std::map<Record*, std::set<Record*>, LessRecord> RegisterSubRegs;
-  std::map<Record*, std::set<Record*> > RegisterSuperRegs;
-  std::map<Record*, std::set<Record*> > RegisterAliases;
+  std::map<Record*, std::set<Record*>, LessRecord> RegisterSuperRegs;
+  std::map<Record*, std::set<Record*>, LessRecord> RegisterAliases;
   std::map<Record*, std::vector<std::pair<int, Record*> > > SubRegVectors;
   typedef std::map<Record*, std::vector<int>, LessRecord> DwarfRegNumsMapTy;
   DwarfRegNumsMapTy DwarfRegNums;
