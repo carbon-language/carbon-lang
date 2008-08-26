@@ -161,6 +161,25 @@ struct InstructionMemo {
   const CodeGenRegisterClass *RC;
 };
 
+class FastISelMap {
+  typedef std::map<std::string, InstructionMemo> PredMap;
+  typedef std::map<MVT::SimpleValueType, PredMap> RetPredMap;
+  typedef std::map<MVT::SimpleValueType, RetPredMap> TypeRetPredMap;
+  typedef std::map<std::string, TypeRetPredMap> OpcodeTypeRetPredMap;
+  typedef std::map<OperandsSignature, OpcodeTypeRetPredMap> OperandsOpcodeTypeRetPredMap;
+
+  OperandsOpcodeTypeRetPredMap SimplePatterns;
+
+  std::string InstNS;
+
+public:
+  explicit FastISelMap(std::string InstNS);
+
+  void CollectPatterns(CodeGenDAGPatterns &CGP);
+  void PrintClass(std::ostream &OS);
+  void PrintFunctionDefinitions(std::ostream &OS);
+};
+
 }
 
 static std::string getOpcodeName(Record *Op, CodeGenDAGPatterns &CGP) {
@@ -174,23 +193,16 @@ static std::string getLegalCName(std::string OpName) {
   return OpName;
 }
 
-void FastISelEmitter::run(std::ostream &OS) {
-  EmitSourceFileHeader("\"Fast\" Instruction Selector for the " +
-                       Target.getName() + " target", OS);
+FastISelMap::FastISelMap(std::string instns)
+  : InstNS(instns) {
+}
 
-  OS << "#include \"llvm/CodeGen/FastISel.h\"\n";
-  OS << "\n";
-  OS << "namespace llvm {\n";
-  OS << "\n";
-  OS << "namespace " << InstNS.substr(0, InstNS.size() - 2) << " {\n";
-  OS << "\n";
-  
-  typedef std::map<std::string, InstructionMemo> PredMap;
-  typedef std::map<MVT::SimpleValueType, PredMap> RetPredMap;
-  typedef std::map<MVT::SimpleValueType, RetPredMap> TypeRetPredMap;
-  typedef std::map<std::string, TypeRetPredMap> OpcodeTypeRetPredMap;
-  typedef std::map<OperandsSignature, OpcodeTypeRetPredMap> OperandsOpcodeTypeRetPredMap;
-  OperandsOpcodeTypeRetPredMap SimplePatterns;
+void FastISelMap::CollectPatterns(CodeGenDAGPatterns &CGP) {
+  const CodeGenTarget &Target = CGP.getTargetInfo();
+
+  // Determine the target's namespace name.
+  InstNS = Target.getInstNamespace() + "::";
+  assert(InstNS.size() > 2 && "Can't determine target-specific namespace!");
 
   // Scan through all the patterns and record the simple ones.
   for (CodeGenDAGPatterns::ptm_iterator I = CGP.ptm_begin(),
@@ -255,7 +267,9 @@ void FastISelEmitter::run(std::ostream &OS) {
            "Duplicate pattern!");
     SimplePatterns[Operands][OpcodeName][VT][RetVT][PredicateCheck] = Memo;
   }
+}
 
+void FastISelMap::PrintClass(std::ostream &OS) {
   // Declare the target FastISel class.
   OS << "class FastISel : public llvm::FastISel {\n";
   for (OperandsOpcodeTypeRetPredMap::const_iterator OI = SimplePatterns.begin(),
@@ -328,13 +342,9 @@ void FastISelEmitter::run(std::ostream &OS) {
      << "Subtarget>()) {}\n";
   OS << "};\n";
   OS << "\n";
+}
 
-  // Define the target FastISel creation function.
-  OS << "llvm::FastISel *createFastISel(MachineFunction &mf) {\n";
-  OS << "  return new FastISel(mf);\n";
-  OS << "}\n";
-  OS << "\n";
-
+void FastISelMap::PrintFunctionDefinitions(std::ostream &OS) {
   // Now emit code for all the patterns that we collected.
   for (OperandsOpcodeTypeRetPredMap::const_iterator OI = SimplePatterns.begin(),
        OE = SimplePatterns.end(); OI != OE; ++OI) {
@@ -536,6 +546,35 @@ void FastISelEmitter::run(std::ostream &OS) {
     OS << "}\n";
     OS << "\n";
   }
+}
+
+void FastISelEmitter::run(std::ostream &OS) {
+  const CodeGenTarget &Target = CGP.getTargetInfo();
+
+  // Determine the target's namespace name.
+  std::string InstNS = Target.getInstNamespace() + "::";
+  assert(InstNS.size() > 2 && "Can't determine target-specific namespace!");
+
+  EmitSourceFileHeader("\"Fast\" Instruction Selector for the " +
+                       Target.getName() + " target", OS);
+
+  OS << "#include \"llvm/CodeGen/FastISel.h\"\n";
+  OS << "\n";
+  OS << "namespace llvm {\n";
+  OS << "\n";
+  OS << "namespace " << InstNS.substr(0, InstNS.size() - 2) << " {\n";
+  OS << "\n";
+  
+  FastISelMap F(InstNS);
+  F.CollectPatterns(CGP);
+  F.PrintClass(OS);
+  F.PrintFunctionDefinitions(OS);
+
+  // Define the target FastISel creation function.
+  OS << "llvm::FastISel *createFastISel(MachineFunction &mf) {\n";
+  OS << "  return new FastISel(mf);\n";
+  OS << "}\n";
+  OS << "\n";
 
   OS << "} // namespace X86\n";
   OS << "\n";
@@ -544,9 +583,6 @@ void FastISelEmitter::run(std::ostream &OS) {
 
 FastISelEmitter::FastISelEmitter(RecordKeeper &R)
   : Records(R),
-    CGP(R),
-    Target(CGP.getTargetInfo()),
-    InstNS(Target.getInstNamespace() + "::") {
-
-  assert(InstNS.size() > 2 && "Can't determine target-specific namespace!");
+    CGP(R) {
 }
+

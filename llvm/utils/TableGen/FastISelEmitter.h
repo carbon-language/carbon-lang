@@ -27,8 +27,6 @@ class CodeGenTarget;
 class FastISelEmitter : public TableGenBackend {
   RecordKeeper &Records;
   CodeGenDAGPatterns CGP;
-  const CodeGenTarget &Target;
-  const std::string InstNS;
 public:
   explicit FastISelEmitter(RecordKeeper &R);
 
