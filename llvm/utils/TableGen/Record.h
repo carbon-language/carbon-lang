@@ -1175,6 +1175,23 @@ public:
   void dump() const;
 };
 
+/// LessRecord - Sorting predicate to sort record pointers by name.
+///
+struct LessRecord {
+  bool operator()(const Record *Rec1, const Record *Rec2) const {
+    return Rec1->getName() < Rec2->getName();
+  }
+};
+
+/// LessRecord - Sorting predicate to sort record pointers by their name field.
+///
+struct LessRecordFieldName {
+  bool operator()(const Record *Rec1, const Record *Rec2) const {
+    return Rec1->getValueAsString("Name") < Rec2->getValueAsString("Name");
+  }
+};
+
+  
 std::ostream &operator<<(std::ostream &OS, const RecordKeeper &RK);
 
 extern RecordKeeper Records;

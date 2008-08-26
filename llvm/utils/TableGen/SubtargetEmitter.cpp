@@ -20,24 +20,6 @@
 using namespace llvm;
 
 //
-// Record sort by name function.
-//
-struct LessRecord {
-  bool operator()(const Record *Rec1, const Record *Rec2) const {
-    return Rec1->getName() < Rec2->getName();
-  }
-};
-
-//
-// Record sort by field "Name" function.
-//
-struct LessRecordFieldName {
-  bool operator()(const Record *Rec1, const Record *Rec2) const {
-    return Rec1->getValueAsString("Name") < Rec2->getValueAsString("Name");
-  }
-};
-
-//
 // Enumeration - Emit the specified class as an enumeration.
 //
 void SubtargetEmitter::Enumeration(std::ostream &OS,

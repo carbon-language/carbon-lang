@@ -422,7 +422,8 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
   std::map<Record*, std::set<Record*> > RegisterSuperRegs;
   std::map<Record*, std::set<Record*> > RegisterAliases;
   std::map<Record*, std::vector<std::pair<int, Record*> > > SubRegVectors;
-  std::map<Record*, std::vector<int> > DwarfRegNums;
+  typedef std::map<Record*, std::vector<int>, LessRecord> DwarfRegNumsMapTy;
+  DwarfRegNumsMapTy DwarfRegNums;
   
   const std::vector<CodeGenRegister> &Regs = Target.getRegisters();
 
@@ -693,8 +694,8 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
   }
 
   // Now we know maximal length of number list. Append -1's, where needed
-  for (std::map<Record*, std::vector<int> >::iterator 
-        I = DwarfRegNums.begin(), E = DwarfRegNums.end(); I != E; ++I)
+  for (DwarfRegNumsMapTy::iterator 
+       I = DwarfRegNums.begin(), E = DwarfRegNums.end(); I != E; ++I)
     for (unsigned i = I->second.size(), e = maxLength; i != e; ++i)
       I->second.push_back(-1);
 
@@ -712,8 +713,11 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
        << "    default:\n"
        << "      assert(0 && \"Invalid RegNum\");\n"
        << "      return -1;\n";
+    
+    // Sort by name to get a stable order.
+    
 
-    for (std::map<Record*, std::vector<int> >::iterator 
+    for (DwarfRegNumsMapTy::iterator 
            I = DwarfRegNums.begin(), E = DwarfRegNums.end(); I != E; ++I) {
       int RegNo = I->second[i];
       if (RegNo != -2)
