@@ -787,7 +787,14 @@ llvm::Constant *CGObjCMac::EmitMethodDescList(const std::string &TypeName,
 void CGObjCMac::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
   unsigned Size = CGM.getTargetData().getABITypeSize(ObjCTypes.CategoryTy);
 
+  // FIXME: This is poor design, the OCD should have a pointer to the
+  // category decl. Additionally, note that Category can be null for
+  // the @implementation w/o an @interface case. Sema should just
+  // create one for us as it does for @implementation so everyone else
+  // can live life under a clear blue sky.
   const ObjCInterfaceDecl *Interface = OCD->getClassInterface();
+  const ObjCCategoryDecl *Category = 
+    Interface->FindCategoryDeclaration(OCD->getIdentifier());
   std::string ExtName(std::string(Interface->getName()) +
                       "_" +
                       OCD->getName());
@@ -821,9 +828,15 @@ void CGObjCMac::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
                      Interface->protocol_begin(),
                      Interface->protocol_end());
   Values[5] = llvm::ConstantInt::get(ObjCTypes.IntTy, Size);
-  Values[6] = EmitPropertyList(std::string("\01L_OBJC_$_PROP_LIST_") + ExtName,
-                               Interface->classprop_begin(),
-                               Interface->classprop_end());
+
+  // If there is no category @interface then there can be no properties.
+  if (Category) {
+    Values[6] = EmitPropertyList(std::string("\01L_OBJC_$_PROP_LIST_") + ExtName,
+                                 Category->classprop_begin(),
+                                 Category->classprop_end());
+  } else {
+    Values[6] = llvm::Constant::getNullValue(ObjCTypes.PropertyListPtrTy);
+  }
   
   llvm::Constant *Init = llvm::ConstantStruct::get(ObjCTypes.CategoryTy,
                                                    Values);
