@@ -62,7 +62,7 @@ protected:
   GRBlockCounter::Factory BCounterFactory;
   
   void GenerateNode(const ProgramPoint& Loc, const void* State,
-                    ExplodedNodeImpl* Pred = NULL);
+                    ExplodedNodeImpl* Pred);
   
   /// getInitialState - Gets the void* representing the initial 'state'
   ///  of the analysis.  This is simply a wrapper (implemented

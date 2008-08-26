@@ -75,7 +75,7 @@ bool GRCoreEngineImpl::ExecuteWorkList(unsigned Steps) {
     WList->setBlockCounter(BCounterFactory.GetEmptyCounter());
     
     // Generate the root.
-    GenerateNode(StartLoc, getInitialState());
+    GenerateNode(StartLoc, getInitialState(), 0);
   }
   
   while (Steps && WList->hasWork()) {
