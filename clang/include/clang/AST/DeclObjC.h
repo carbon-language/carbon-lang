@@ -131,8 +131,12 @@ private:
   // The following are only used for method definitions, null otherwise.
   // FIXME: space savings opportunity, consider a sub-class.
   Stmt *Body;
-  // Decls for implicit parameters
+
+  /// SelfDecl - Decl for the implicit self parameter. This is lazily
+  /// constructed by createImplicitParams.
   ImplicitParamDecl *SelfDecl;
+  /// CmdDecl - Decl for the implicit _cmd parameter. This is lazily
+  /// constructed by createImplicitParams.
   ImplicitParamDecl *CmdDecl;
   
   ObjCMethodDecl(SourceLocation beginLoc, SourceLocation endLoc,
@@ -207,10 +211,14 @@ public:
   }  
   void setMethodParams(ParmVarDecl **NewParamInfo, unsigned NumParams);
 
+  /// createImplicitParams - Used to lazily create the self and cmd
+  /// implict parameters. This must be called prior to using getSelfDecl()
+  /// or getCmdDecl(). The call is ignored if the implicit paramters
+  /// have already been created.
+  void createImplicitParams(ASTContext &Context);
+
   ImplicitParamDecl * getSelfDecl() const { return SelfDecl; }
-  void setSelfDecl(ImplicitParamDecl *decl) { SelfDecl = decl; }
   ImplicitParamDecl * getCmdDecl() const { return CmdDecl; }
-  void setCmdDecl(ImplicitParamDecl *decl) { CmdDecl = decl; }
   
   bool isInstance() const { return IsInstance; }
   bool isVariadic() const { return IsVariadic; }

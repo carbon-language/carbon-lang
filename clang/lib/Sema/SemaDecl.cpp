@@ -493,21 +493,6 @@ bool Sema::CheckParmsForFunctionDef(FunctionDecl *FD) {
   return HasInvalidParm;
 }
 
-/// CreateImplicitParameter - Creates an implicit function parameter
-/// in the scope S and with the given type. This routine is used, for
-/// example, to create the implicit "self" parameter in an Objective-C
-/// method.
-ImplicitParamDecl *
-Sema::CreateImplicitParameter(Scope *S, IdentifierInfo *Id, 
-                              SourceLocation IdLoc, QualType Type) {
-  ImplicitParamDecl *New = ImplicitParamDecl::Create(Context, CurContext,
-      IdLoc, Id, Type, 0);
-  if (Id)
-    PushOnScopeChains(New, S);
-
-  return New;
-}
-
 /// ParsedFreeStandingDeclSpec - This method is invoked when a declspec with
 /// no declarator (e.g. "struct foo;") is parsed.
 Sema::DeclTy *Sema::ParsedFreeStandingDeclSpec(Scope *S, DeclSpec &DS) {

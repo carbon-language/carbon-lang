@@ -40,28 +40,12 @@ void Sema::ObjCActOnStartOfMethodDef(Scope *FnBodyScope, DeclTy *D) {
 
   // Create Decl objects for each parameter, entrring them in the scope for
   // binding to their use.
-  struct DeclaratorChunk::ParamInfo PI;
 
   // Insert the invisible arguments, self and _cmd!
-  PI.Ident = &Context.Idents.get("self");
-  PI.IdentLoc = SourceLocation(); // synthesized vars have a null location.
-  QualType selfTy;
-  if (MDecl->isInstance()) {
-    selfTy = Context.getObjCIdType();
-    if (ObjCInterfaceDecl *OID = MDecl->getClassInterface()) {
-      // There may be no interface context due to error in declaration of the 
-      // interface (which has been reported). Recover gracefully
-      selfTy = Context.getObjCInterfaceType(OID);
-      selfTy = Context.getPointerType(selfTy);
-    }
-  } else // we have a factory method.
-    selfTy = Context.getObjCClassType();
-  getCurMethodDecl()->setSelfDecl(CreateImplicitParameter(FnBodyScope,
-        PI.Ident, PI.IdentLoc, selfTy));
+  MDecl->createImplicitParams(Context);
   
-  PI.Ident = &Context.Idents.get("_cmd");
-  getCurMethodDecl()->setCmdDecl(CreateImplicitParameter(FnBodyScope,
-        PI.Ident, PI.IdentLoc, Context.getObjCSelType()));
+  PushOnScopeChains(MDecl->getSelfDecl(), FnBodyScope);
+  PushOnScopeChains(MDecl->getCmdDecl(), FnBodyScope);
 
   // Introduce all of the other parameters into this scope.
   for (unsigned i = 0, e = MDecl->getNumParams(); i != e; ++i) {
