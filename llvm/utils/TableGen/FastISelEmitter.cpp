@@ -62,13 +62,14 @@ struct OperandsSignature {
   ///
   bool initialize(TreePatternNode *InstPatNode,
                   const CodeGenTarget &Target,
-                  MVT::SimpleValueType VT,
-                  const CodeGenRegisterClass *DstRC) {
+                  MVT::SimpleValueType VT) {
     if (!InstPatNode->isLeaf() &&
         InstPatNode->getOperator()->getName() == "imm") {
       Operands.push_back("i");
       return true;
     }
+    
+    const CodeGenRegisterClass *DstRC = 0;
     
     for (unsigned i = 0, e = InstPatNode->getNumChildren(); i != e; ++i) {
       TreePatternNode *Op = InstPatNode->getChild(i);
@@ -105,8 +106,11 @@ struct OperandsSignature {
       if (!RC)
         return false;
       // For now, all the operands must have the same register class.
-      if (DstRC != RC)
-        return false;
+      if (DstRC) {
+        if (DstRC != RC)
+          return false;
+      } else
+        DstRC = RC;
       Operands.push_back("r");
     }
     return true;
@@ -220,7 +224,10 @@ void FastISelEmitter::run(std::ostream &OS) {
 
     Record *InstPatOp = InstPatNode->getOperator();
     std::string OpcodeName = getOpcodeName(InstPatOp, CGP);
-    MVT::SimpleValueType VT = InstPatNode->getTypeNum(0);
+    MVT::SimpleValueType RetVT = InstPatNode->getTypeNum(0);
+    MVT::SimpleValueType VT = RetVT;
+    if (InstPatNode->getNumChildren())
+      VT = InstPatNode->getChild(0)->getTypeNum(0);
 
     // For now, filter out instructions which just set a register to
     // an Operand or an immediate, like MOV32ri.
@@ -233,7 +240,7 @@ void FastISelEmitter::run(std::ostream &OS) {
 
     // Check all the operands.
     OperandsSignature Operands;
-    if (!Operands.initialize(InstPatNode, Target, VT, DstRC))
+    if (!Operands.initialize(InstPatNode, Target, VT))
       continue;
 
     // Get the predicate that guards this pattern.
@@ -244,9 +251,9 @@ void FastISelEmitter::run(std::ostream &OS) {
       Pattern.getDstPattern()->getOperator()->getName(),
       DstRC
     };
-    assert(!SimplePatterns[Operands][OpcodeName][VT][VT].count(PredicateCheck) &&
+    assert(!SimplePatterns[Operands][OpcodeName][VT][RetVT].count(PredicateCheck) &&
            "Duplicate pattern!");
-    SimplePatterns[Operands][OpcodeName][VT][VT][PredicateCheck] = Memo;
+    SimplePatterns[Operands][OpcodeName][VT][RetVT][PredicateCheck] = Memo;
   }
 
   // Declare the target FastISel class.
@@ -398,7 +405,7 @@ void FastISelEmitter::run(std::ostream &OS) {
           // Emit one function for the type that demultiplexes on return type.
           OS << "unsigned FastISel::FastEmit_"
              << getLegalCName(Opcode) << "_"
-             << getLegalCName(getName(VT));
+             << getLegalCName(getName(VT)) << "_";
           Operands.PrintManglingSuffix(OS);
           OS << "(MVT::SimpleValueType RetVT";
           if (!Operands.empty())
