@@ -52,6 +52,11 @@ public:
     return *this;
   }
 
+  const MachineInstrBuilder &addFPImm(ConstantFP *Val) const {
+    MI->addOperand(MachineOperand::CreateFPImm(Val));
+    return *this;
+  }
+
   const MachineInstrBuilder &addMBB(MachineBasicBlock *MBB) const {
     MI->addOperand(MachineOperand::CreateMBB(MBB));
     return *this;
