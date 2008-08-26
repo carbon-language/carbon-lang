@@ -412,7 +412,7 @@ void ObjCInterfaceDecl::addPropertyMethods(
       ObjCMethodDecl::Create(Context, property->getLocation(), 
                              property->getLocation(), 
                              property->getSetterName(), 
-                             property->getType(),
+                             Context.VoidTy,
                              this,
                              true, false, true, ObjCMethodDecl::Required);
     insMethods.push_back(SetterDecl);
