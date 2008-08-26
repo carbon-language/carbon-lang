@@ -437,6 +437,9 @@ void FastISelEmitter::run(std::ostream &OS) {
           Operands.PrintParameters(OS);
           OS << ") {\n";
           
+          OS << "  if (RetVT != " << getName(RM.begin()->first)
+             << ")\n    return 0;\n";
+          
           const PredMap &PM = RM.begin()->second;
           bool HasPred = false;
           
