@@ -157,6 +157,10 @@ private:
   /// a StringMap here because have no other unique reference.
   llvm::StringMap<llvm::GlobalVariable*> MethodVarTypes;
 
+  /// MethodDefinitions - map of methods which have been defined in
+  /// this translation unit.
+  llvm::DenseMap<const ObjCMethodDecl*, llvm::Function*> MethodDefinitions;
+
   /// PropertyNames - uniqued method variable names.
   llvm::DenseMap<IdentifierInfo*, llvm::GlobalVariable*> PropertyNames;
 
@@ -230,14 +234,16 @@ private:
   /// given implementation. The return value has type ClassPtrTy.
   llvm::Constant *EmitMetaClass(const ObjCImplementationDecl *ID,
                                 llvm::Constant *Protocols,
-                                const llvm::Type *InterfaceTy);
+                                const llvm::Type *InterfaceTy,
+                                const std::vector<llvm::Constant*> &Methods);
 
   /// EmitMethodList - Emit the method list for the given
   /// implementation. The return value has type MethodListPtrTy.
   llvm::Constant *EmitMethodList(const std::string &Name,
                                  const char *Section,
-                   llvm::SmallVector<ObjCMethodDecl*, 32>::const_iterator begin,
-                   llvm::SmallVector<ObjCMethodDecl*, 32>::const_iterator end);
+                                 const std::vector<llvm::Constant*> &Methods);
+
+  llvm::Constant *GetMethodConstant(ObjCMethodDecl *MD);
 
   /// EmitMethodDescList - Emit a method description list for a list of
   /// method declarations. 
@@ -298,7 +304,7 @@ private:
   /// selector's name. The return value has type char *.
 
   // FIXME: This is a horrible name.
-  llvm::Constant *GetMethodVarType(ObjCMethodDecl *D);
+  llvm::Constant *GetMethodVarType(const ObjCMethodDecl *D);
   llvm::Constant *GetMethodVarType(const std::string &Name);
 
   /// GetPropertyName - Return a unique constant for the given
@@ -786,6 +792,18 @@ void CGObjCMac::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
                       "_" +
                       OCD->getName());
 
+  std::vector<llvm::Constant*> InstanceMethods, ClassMethods;
+  for (ObjCCategoryImplDecl::instmeth_iterator i = OCD->instmeth_begin(),
+         e = OCD->instmeth_end(); i != e; ++i) {
+    // Instance methods should always be defined.
+    InstanceMethods.push_back(GetMethodConstant(*i));
+  }
+  for (ObjCCategoryImplDecl::classmeth_iterator i = OCD->classmeth_begin(),
+         e = OCD->classmeth_end(); i != e; ++i) {
+    // Class methods should always be defined.
+    ClassMethods.push_back(GetMethodConstant(*i));
+  }
+
   std::vector<llvm::Constant*> Values(7);
   Values[0] = GetClassName(OCD->getIdentifier());
   Values[1] = GetClassName(Interface->getIdentifier());
@@ -793,13 +811,11 @@ void CGObjCMac::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
     EmitMethodList(std::string("\01L_OBJC_CATEGORY_INSTANCE_METHODS_") + 
                    ExtName,
                    "__OBJC,__cat_inst_meth,regular,no_dead_strip",
-                   OCD->instmeth_begin(),
-                   OCD->instmeth_end());
+                   InstanceMethods);
   Values[3] = 
     EmitMethodList(std::string("\01L_OBJC_CATEGORY_CLASS_METHODS_") + ExtName,
                    "__OBJC,__cat_class_meth,regular,no_dead_strip",
-                   OCD->classmeth_begin(),
-                   OCD->classmeth_end());
+                   ClassMethods);
   Values[4] = 
     EmitProtocolList(std::string("\01L_OBJC_CATEGORY_PROTOCOLS_") + ExtName,
                      Interface->protocol_begin(),
@@ -892,8 +908,36 @@ void CGObjCMac::GenerateClass(const ObjCImplementationDecl *ID) {
   if (IsClassHidden(ID->getClassInterface()))
     Flags |= eClassFlags_Hidden;
 
+  std::vector<llvm::Constant*> InstanceMethods, ClassMethods;
+  for (ObjCImplementationDecl::instmeth_iterator i = ID->instmeth_begin(),
+         e = ID->instmeth_end(); i != e; ++i) {
+    // Instance methods should always be defined.
+    InstanceMethods.push_back(GetMethodConstant(*i));
+  }
+  for (ObjCImplementationDecl::classmeth_iterator i = ID->classmeth_begin(),
+         e = ID->classmeth_end(); i != e; ++i) {
+    // Class methods should always be defined.
+    ClassMethods.push_back(GetMethodConstant(*i));
+  }
+
+  for (ObjCImplementationDecl::propimpl_iterator i = ID->propimpl_begin(),
+         e = ID->propimpl_end(); i != e; ++i) {
+    ObjCPropertyImplDecl *PID = *i;
+
+    if (PID->getPropertyImplementation() == ObjCPropertyImplDecl::Synthesize) {
+      ObjCPropertyDecl *PD = PID->getPropertyDecl();
+
+      if (ObjCMethodDecl *MD = PD->getGetterMethodDecl())
+        if (llvm::Constant *C = GetMethodConstant(MD))
+          InstanceMethods.push_back(C);
+      if (ObjCMethodDecl *MD = PD->getSetterMethodDecl())
+        if (llvm::Constant *C = GetMethodConstant(MD))
+          InstanceMethods.push_back(C);
+    }
+  }
+
   std::vector<llvm::Constant*> Values(12);
-  Values[ 0] = EmitMetaClass(ID, Protocols, InterfaceTy);
+  Values[ 0] = EmitMetaClass(ID, Protocols, InterfaceTy, ClassMethods);
   if (ObjCInterfaceDecl *Super = Interface->getSuperClass()) {
     // Record a reference to the super class.
     LazySymbols.insert(Super->getIdentifier());
@@ -913,8 +957,7 @@ void CGObjCMac::GenerateClass(const ObjCImplementationDecl *ID) {
   Values[ 7] = 
     EmitMethodList(std::string("\01L_OBJC_INSTANCE_METHODS_") + ID->getName(),
                    "__OBJC,__inst_meth,regular,no_dead_strip",
-                   ID->instmeth_begin(),
-                   ID->instmeth_end());
+                   InstanceMethods);
   // cache is always NULL.
   Values[ 8] = llvm::Constant::getNullValue(ObjCTypes.CachePtrTy);
   Values[ 9] = Protocols;
@@ -939,7 +982,8 @@ void CGObjCMac::GenerateClass(const ObjCImplementationDecl *ID) {
 
 llvm::Constant *CGObjCMac::EmitMetaClass(const ObjCImplementationDecl *ID,
                                          llvm::Constant *Protocols,
-                                         const llvm::Type *InterfaceTy) {
+                                         const llvm::Type *InterfaceTy,
+                                  const std::vector<llvm::Constant*> &Methods) {
   const char *ClassName = ID->getName();
   unsigned Flags = eClassFlags_Meta;
   unsigned Size = CGM.getTargetData().getABITypeSize(ObjCTypes.ClassTy);
@@ -974,8 +1018,7 @@ llvm::Constant *CGObjCMac::EmitMetaClass(const ObjCImplementationDecl *ID,
   Values[ 7] = 
     EmitMethodList(std::string("\01L_OBJC_CLASS_METHODS_") + ID->getName(),
                    "__OBJC,__inst_meth,regular,no_dead_strip",
-                   ID->classmeth_begin(),
-                   ID->classmeth_end());
+                   Methods);
   // cache is always NULL.
   Values[ 8] = llvm::Constant::getNullValue(ObjCTypes.CachePtrTy);
   Values[ 9] = Protocols;
@@ -1163,30 +1206,29 @@ llvm::Constant *CGObjCMac::EmitIvarList(const ObjCImplementationDecl *ID,
     struct objc_method methods_list[count];
   };
 */
+
+/// GetMethodConstant - Return a struct objc_method constant for the
+/// given method if it has been defined. The result is null if the
+/// method has not been defined. The return value has type MethodPtrTy.
+llvm::Constant *CGObjCMac::GetMethodConstant(ObjCMethodDecl *MD) {
+  // FIXME: Use DenseMap::lookup
+  llvm::Function *Fn = MethodDefinitions[MD];
+  if (!Fn)
+    return 0;
+  
+  std::vector<llvm::Constant*> Method(3);
+  Method[0] = 
+    llvm::ConstantExpr::getBitCast(GetMethodVarName(MD->getSelector()),
+                                   ObjCTypes.SelectorPtrTy);
+  Method[1] = GetMethodVarType(MD);
+  Method[2] = llvm::ConstantExpr::getBitCast(Fn, ObjCTypes.Int8PtrTy);
+  return llvm::ConstantStruct::get(ObjCTypes.MethodTy, Method);
+}
+
 llvm::Constant *CGObjCMac::EmitMethodList(const std::string &Name,
                                           const char *Section,
-                   llvm::SmallVector<ObjCMethodDecl*, 32>::const_iterator begin,
-                   llvm::SmallVector<ObjCMethodDecl*, 32>::const_iterator end) {
-  std::vector<llvm::Constant*> Methods, Method(3);
-
-  for (; begin != end; ++begin) {
-    ObjCMethodDecl *MD = *begin;
-
-    Method[0] = 
-      llvm::ConstantExpr::getBitCast(GetMethodVarName(MD->getSelector()),
-                                     ObjCTypes.SelectorPtrTy);
-    Method[1] = GetMethodVarType(MD);
-
-    // FIXME: This is gross, we shouldn't be looking up by name.
-    std::string Name;
-    GetNameForMethod(MD, Name);
-    Method[2] = 
-      llvm::ConstantExpr::getBitCast(CGM.getModule().getFunction(Name),
-                                     ObjCTypes.Int8PtrTy);
-    Methods.push_back(llvm::ConstantStruct::get(ObjCTypes.MethodTy,
-                                                Method));
-  }
-
+                                          const std::vector<llvm::Constant*> 
+                                            &Methods) {
   // Return null for empty list.
   if (Methods.empty())
     return llvm::Constant::getNullValue(ObjCTypes.MethodListPtrTy);
@@ -1254,6 +1296,7 @@ llvm::Function *CGObjCMac::GenerateMethod(const ObjCMethodDecl *OMD) {
                            llvm::GlobalValue::InternalLinkage,
                            Name,
                            &CGM.getModule());
+  MethodDefinitions.insert(std::make_pair(OMD, Method));
 
   unsigned Offset = 3; // Return plus self and selector implicit args.
   if (useStructRet) {
@@ -1507,9 +1550,10 @@ llvm::Constant *CGObjCMac::GetMethodVarType(const std::string &Name) {
 }
 
 // FIXME: Merge into a single cstring creation function.
-llvm::Constant *CGObjCMac::GetMethodVarType(ObjCMethodDecl *D) {
+llvm::Constant *CGObjCMac::GetMethodVarType(const ObjCMethodDecl *D) {
   std::string TypeStr;
-  CGM.getContext().getObjCEncodingForMethodDecl(D, TypeStr);
+  CGM.getContext().getObjCEncodingForMethodDecl(const_cast<ObjCMethodDecl*>(D),
+                                                TypeStr);
   return GetMethodVarType(TypeStr);
 }
 
