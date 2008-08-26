@@ -355,9 +355,35 @@ FastISel::SelectInstructions(BasicBlock::iterator Begin,
         
         ValueMap[I] = ResultReg;
         break;
-      } else
-        // TODO: Materialize constant and convert to FP.
-        return I;
+      } else {
+        // Materialize constant and convert to FP.
+        // TODO: Attempt constant folding?
+        ConstantInt* CI = cast<ConstantInt>(I->getOperand(0));
+        MVT SrcVT = MVT::getMVT(CI->getType());
+        MVT DstVT = MVT::getMVT(I->getType());
+        
+        if (SrcVT == MVT::Other || !SrcVT.isSimple() ||
+            DstVT == MVT::Other || !DstVT.isSimple() ||
+            !TLI.isTypeLegal(SrcVT) || !TLI.isTypeLegal(DstVT))
+          // Unhandled type. Halt "fast" selection and bail.
+          return I;
+        
+        unsigned ResultReg1 = FastEmit_i(SrcVT.getSimpleVT(),
+                                         SrcVT.getSimpleVT(),
+                                         ISD::Constant, CI->getZExtValue());
+        if (!ResultReg1)
+          return I;
+        
+        unsigned ResultReg2 = FastEmit_r(SrcVT.getSimpleVT(),
+                                         DstVT.getSimpleVT(),
+                                         ISD::SINT_TO_FP,
+                                         ResultReg1);
+        if (!ResultReg2)
+          return I;
+        
+        ValueMap[I] = ResultReg2;
+        break;
+      }
 
     default:
       // Unhandled instruction. Halt "fast" selection and bail.
