@@ -4427,39 +4427,34 @@ void SelectionDAG::ReplaceAllUsesOfValuesWith(const SDValue *From,
 /// of the SDNodes* in assigned order by reference.
 unsigned SelectionDAG::AssignTopologicalOrder(std::vector<SDNode*> &TopOrder) {
   unsigned DAGSize = AllNodes.size();
-  std::vector<unsigned> InDegree(DAGSize);
   std::vector<SDNode*> Sources;
 
-  // Use a two pass approach to avoid using a std::map which is slow.
-  unsigned Id = 0;
   for (allnodes_iterator I = allnodes_begin(),E = allnodes_end(); I != E; ++I){
     SDNode *N = I;
-    N->setNodeId(Id++);
     unsigned Degree = N->use_size();
-    InDegree[N->getNodeId()] = Degree;
+    // Temporarily use the Node Id as scratch space for the degree count.
+    N->setNodeId(Degree);
     if (Degree == 0)
       Sources.push_back(N);
   }
 
   TopOrder.clear();
   TopOrder.reserve(DAGSize);
+  int Id = 0;
   while (!Sources.empty()) {
     SDNode *N = Sources.back();
     Sources.pop_back();
     TopOrder.push_back(N);
+    N->setNodeId(Id++);
     for (SDNode::op_iterator I = N->op_begin(), E = N->op_end(); I != E; ++I) {
       SDNode *P = I->getVal();
-      unsigned Degree = --InDegree[P->getNodeId()];
+      unsigned Degree = P->getNodeId();
+      --Degree;
+      P->setNodeId(Degree);
       if (Degree == 0)
         Sources.push_back(P);
     }
   }
-
-  // Second pass, assign the actual topological order as node ids.
-  Id = 0;
-  for (std::vector<SDNode*>::iterator TI = TopOrder.begin(),TE = TopOrder.end();
-       TI != TE; ++TI)
-    (*TI)->setNodeId(Id++);
 
   return Id;
 }

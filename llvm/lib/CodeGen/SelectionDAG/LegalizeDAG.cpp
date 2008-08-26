@@ -270,45 +270,6 @@ SelectionDAGLegalize::SelectionDAGLegalize(SelectionDAG &dag)
          "Too many value types for ValueTypeActions to hold!");
 }
 
-/// ComputeTopDownOrdering - Compute a top-down ordering of the dag, where Order
-/// contains all of a nodes operands before it contains the node.
-static void ComputeTopDownOrdering(SelectionDAG &DAG,
-                                   SmallVector<SDNode*, 64> &Order) {
-
-  DenseMap<SDNode*, unsigned> Visited;
-  std::vector<SDNode*> Worklist;
-  Worklist.reserve(128);
-  
-  // Compute ordering from all of the leaves in the graphs, those (like the
-  // entry node) that have no operands.
-  for (SelectionDAG::allnodes_iterator I = DAG.allnodes_begin(),
-       E = DAG.allnodes_end(); I != E; ++I) {
-    if (I->getNumOperands() == 0) {
-      Visited[I] = 0 - 1U;
-      Worklist.push_back(I);
-    }
-  }
-  
-  while (!Worklist.empty()) {
-    SDNode *N = Worklist.back();
-    Worklist.pop_back();
-    
-    if (++Visited[N] != N->getNumOperands())
-      continue;  // Haven't visited all operands yet
-    
-    Order.push_back(N);
-
-    // Now that we have N in, add anything that uses it if all of their operands
-    // are now done.
-    Worklist.insert(Worklist.end(), N->use_begin(), N->use_end());
-  }
-
-  assert(Order.size() == Visited.size() &&
-         Order.size() == DAG.allnodes_size() &&
-         "Error: DAG is cyclic!");
-}
-
-
 void SelectionDAGLegalize::LegalizeDAG() {
   LastCALLSEQ_END = DAG.getEntryNode();
   IsLegalizingCall = false;
@@ -319,11 +280,11 @@ void SelectionDAGLegalize::LegalizeDAG() {
   // practice however, this causes us to run out of stack space on large basic
   // blocks.  To avoid this problem, compute an ordering of the nodes where each
   // node is only legalized after all of its operands are legalized.
-  SmallVector<SDNode*, 64> Order;
-  ComputeTopDownOrdering(DAG, Order);
-  
-  for (unsigned i = 0, e = Order.size(); i != e; ++i)
-    HandleOp(SDValue(Order[i], 0));
+  std::vector<SDNode *> TopOrder;
+  unsigned N = DAG.AssignTopologicalOrder(TopOrder);
+  for (unsigned i = N; i != 0; --i)
+    HandleOp(SDValue(TopOrder[i-1], 0));
+  TopOrder.clear();
 
   // Finally, it's possible the root changed.  Get the new root.
   SDValue OldRoot = DAG.getRoot();
