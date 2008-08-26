@@ -227,6 +227,7 @@ public:
                             const TargetRegisterClass *DestRC,
                             const TargetRegisterClass *SrcRC) const {
     assert(0 && "Target didn't implement TargetInstrInfo::copyRegToReg!");
+    return false;
   }
   
   virtual void storeRegToStackSlot(MachineBasicBlock &MBB,

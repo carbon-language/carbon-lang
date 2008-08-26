@@ -547,7 +547,7 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
   OS << "  const unsigned Empty_AliasSet[] = { 0 };\n";
   // Loop over all of the registers which have aliases, emitting the alias list
   // to memory.
-  for (std::map<Record*, std::set<Record*> >::iterator
+  for (std::map<Record*, std::set<Record*>, LessRecord >::iterator
          I = RegisterAliases.begin(), E = RegisterAliases.end(); I != E; ++I) {
     OS << "  const unsigned " << I->first->getName() << "_AliasSet[] = { ";
     for (std::set<Record*>::iterator ASI = I->second.begin(),
@@ -584,7 +584,7 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
   OS << "  const unsigned Empty_SuperRegsSet[] = { 0 };\n";
   // Loop over all of the registers which have super-registers, emitting the
   // super-registers list to memory.
-  for (std::map<Record*, std::set<Record*> >::iterator
+  for (std::map<Record*, std::set<Record*>, LessRecord >::iterator
          I = RegisterSuperRegs.begin(), E = RegisterSuperRegs.end(); I != E; ++I) {
     OS << "  const unsigned " << I->first->getName() << "_SuperRegsSet[] = { ";
 
