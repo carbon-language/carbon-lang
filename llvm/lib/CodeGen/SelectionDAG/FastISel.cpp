@@ -30,6 +30,12 @@ bool FastISel::SelectBinaryOp(Instruction *I, ISD::NodeType ISDOpcode,
   if (VT == MVT::Other || !VT.isSimple())
     // Unhandled type. Halt "fast" selection and bail.
     return false;
+  // We only handle legal types. For example, on x86-32 the instruction
+  // selector contains all of the 64-bit instructions from x86-64,
+  // under the assumption that i64 won't be used if the target doesn't
+  // support it.
+  if (!TLI.isTypeLegal(VT))
+    return false;
 
   unsigned Op0 = ValueMap[I->getOperand(0)];
   if (Op0 == 0)
