@@ -7221,56 +7221,68 @@ X86TargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
   // 16-bit register pieces "ax","dx","cx","bx","si","di","bp","sp".  If we
   // really want an 8-bit or 32-bit register, map to the appropriate register
   // class and return the appropriate register.
-  if (Res.second != X86::GR16RegisterClass)
-    return Res;
-
-  if (VT == MVT::i8) {
-    unsigned DestReg = 0;
-    switch (Res.first) {
-    default: break;
-    case X86::AX: DestReg = X86::AL; break;
-    case X86::DX: DestReg = X86::DL; break;
-    case X86::CX: DestReg = X86::CL; break;
-    case X86::BX: DestReg = X86::BL; break;
+  if (Res.second == X86::GR16RegisterClass) {
+    if (VT == MVT::i8) {
+      unsigned DestReg = 0;
+      switch (Res.first) {
+      default: break;
+      case X86::AX: DestReg = X86::AL; break;
+      case X86::DX: DestReg = X86::DL; break;
+      case X86::CX: DestReg = X86::CL; break;
+      case X86::BX: DestReg = X86::BL; break;
+      }
+      if (DestReg) {
+        Res.first = DestReg;
+        Res.second = Res.second = X86::GR8RegisterClass;
+      }
+    } else if (VT == MVT::i32) {
+      unsigned DestReg = 0;
+      switch (Res.first) {
+      default: break;
+      case X86::AX: DestReg = X86::EAX; break;
+      case X86::DX: DestReg = X86::EDX; break;
+      case X86::CX: DestReg = X86::ECX; break;
+      case X86::BX: DestReg = X86::EBX; break;
+      case X86::SI: DestReg = X86::ESI; break;
+      case X86::DI: DestReg = X86::EDI; break;
+      case X86::BP: DestReg = X86::EBP; break;
+      case X86::SP: DestReg = X86::ESP; break;
+      }
+      if (DestReg) {
+        Res.first = DestReg;
+        Res.second = Res.second = X86::GR32RegisterClass;
+      }
+    } else if (VT == MVT::i64) {
+      unsigned DestReg = 0;
+      switch (Res.first) {
+      default: break;
+      case X86::AX: DestReg = X86::RAX; break;
+      case X86::DX: DestReg = X86::RDX; break;
+      case X86::CX: DestReg = X86::RCX; break;
+      case X86::BX: DestReg = X86::RBX; break;
+      case X86::SI: DestReg = X86::RSI; break;
+      case X86::DI: DestReg = X86::RDI; break;
+      case X86::BP: DestReg = X86::RBP; break;
+      case X86::SP: DestReg = X86::RSP; break;
+      }
+      if (DestReg) {
+        Res.first = DestReg;
+        Res.second = Res.second = X86::GR64RegisterClass;
+      }
     }
-    if (DestReg) {
-      Res.first = DestReg;
-      Res.second = Res.second = X86::GR8RegisterClass;
-    }
-  } else if (VT == MVT::i32) {
-    unsigned DestReg = 0;
-    switch (Res.first) {
-    default: break;
-    case X86::AX: DestReg = X86::EAX; break;
-    case X86::DX: DestReg = X86::EDX; break;
-    case X86::CX: DestReg = X86::ECX; break;
-    case X86::BX: DestReg = X86::EBX; break;
-    case X86::SI: DestReg = X86::ESI; break;
-    case X86::DI: DestReg = X86::EDI; break;
-    case X86::BP: DestReg = X86::EBP; break;
-    case X86::SP: DestReg = X86::ESP; break;
-    }
-    if (DestReg) {
-      Res.first = DestReg;
-      Res.second = Res.second = X86::GR32RegisterClass;
-    }
-  } else if (VT == MVT::i64) {
-    unsigned DestReg = 0;
-    switch (Res.first) {
-    default: break;
-    case X86::AX: DestReg = X86::RAX; break;
-    case X86::DX: DestReg = X86::RDX; break;
-    case X86::CX: DestReg = X86::RCX; break;
-    case X86::BX: DestReg = X86::RBX; break;
-    case X86::SI: DestReg = X86::RSI; break;
-    case X86::DI: DestReg = X86::RDI; break;
-    case X86::BP: DestReg = X86::RBP; break;
-    case X86::SP: DestReg = X86::RSP; break;
-    }
-    if (DestReg) {
-      Res.first = DestReg;
-      Res.second = Res.second = X86::GR64RegisterClass;
-    }
+  } else if (Res.second == X86::FR32RegisterClass ||
+             Res.second == X86::FR64RegisterClass ||
+             Res.second == X86::VR128RegisterClass) {
+    // Handle references to XMM physical registers that got mapped into the
+    // wrong class.  This can happen with constraints like {xmm0} where the
+    // target independent register mapper will just pick the first match it can
+    // find, ignoring the required type.
+    if (VT == MVT::f32)
+      Res.second = X86::FR32RegisterClass;
+    else if (VT == MVT::f64)
+      Res.second = X86::FR64RegisterClass;
+    else if (X86::VR128RegisterClass->hasType(VT))
+      Res.second = X86::VR128RegisterClass;
   }
 
   return Res;
