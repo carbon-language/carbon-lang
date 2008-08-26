@@ -219,6 +219,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\lib\Analysis\GRState.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\Analysis\GRTransferFuncs.cpp"
 				>
 			</File>
@@ -235,6 +239,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\lib\Analysis\Regions.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\Analysis\RValues.cpp"
 				>
 			</File>
@@ -244,10 +252,6 @@
 			</File>
 			<File
 				RelativePath="..\..\lib\Analysis\UninitializedValues.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\lib\Analysis\GRState.cpp"
 				>
 			</File>
 		</Filter>
