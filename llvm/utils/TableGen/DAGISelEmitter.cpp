@@ -1190,7 +1190,7 @@ public:
         ReplaceFroms.push_back("SDValue(N.Val, " +
                                utostr(NumPatResults) + ")");
         ReplaceTos.push_back("SDValue(" + ChainName + ".Val, " +
-                             ChainName + ".ResNo" + ")");
+                             ChainName + ".getResNo()" + ")");
         ChainAssignmentNeeded |= NodeHasChain;
       }
 
@@ -1203,7 +1203,7 @@ public:
           ReplaceFroms.push_back("SDValue(N.Val, " +
                                  utostr(NumPatResults+1) +
                                  ")");
-          ReplaceTos.push_back("SDValue(ResNode, N.ResNo-1)");
+          ReplaceTos.push_back("SDValue(ResNode, N.getResNo()-1)");
         }
         ReplaceFroms.push_back("SDValue(N.Val, " +
                                utostr(NumPatResults) + ")");

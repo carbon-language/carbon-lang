@@ -253,7 +253,7 @@ static SDNode *findFlagUse(SDNode *N) {
     SDNode *User = *I;
     for (unsigned i = 0, e = User->getNumOperands(); i != e; ++i) {
       SDValue Op = User->getOperand(i);
-      if (Op.Val == N && Op.ResNo == FlagResNo)
+      if (Op.Val == N && Op.getResNo() == FlagResNo)
         return User;
     }
   }
@@ -888,7 +888,7 @@ DOUT << "AlreadySelected " << AlreadySelected << "\n";
   case ISD::SMUL_LOHI:
   case ISD::UMUL_LOHI:
     // A mul_lohi where we need the low part can be folded as a plain multiply.
-    if (N.ResNo != 0) break;
+    if (N.getResNo() != 0) break;
     // FALL THROUGH
   case ISD::MUL:
     // X*[3,5,9] -> X+X*[2,4,8]

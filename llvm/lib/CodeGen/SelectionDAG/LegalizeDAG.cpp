@@ -821,7 +821,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
 
       for (unsigned i = 0, e = Node->getNumValues(); i != e; ++i)
         AddLegalizedOperand(Op.getValue(i), Result.getValue(i));
-      return Result.getValue(Op.ResNo);
+      return Result.getValue(Op.getResNo());
     }
     // Otherwise this is an unhandled builtin node.  splat.
 #ifndef NDEBUG
@@ -901,7 +901,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     Tmp2 = LegalizeOp(Result.getValue(1));
     AddLegalizedOperand(Op.getValue(0), Tmp1);
     AddLegalizedOperand(Op.getValue(1), Tmp2);
-    return Op.ResNo ? Tmp2 : Tmp1;
+    return Op.getResNo() ? Tmp2 : Tmp1;
   case ISD::EHSELECTION: {
     Tmp1 = LegalizeOp(Node->getOperand(0));
     Tmp2 = LegalizeOp(Node->getOperand(1));
@@ -935,7 +935,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     Tmp2 = LegalizeOp(Result.getValue(1));
     AddLegalizedOperand(Op.getValue(0), Tmp1);
     AddLegalizedOperand(Op.getValue(1), Tmp2);
-    return Op.ResNo ? Tmp2 : Tmp1;
+    return Op.getResNo() ? Tmp2 : Tmp1;
   case ISD::EH_RETURN: {
     MVT VT = Node->getValueType(0);
     // The only "good" option for this node is to custom lower it.
@@ -959,7 +959,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     break;
   case ISD::MERGE_VALUES:
     // Legalize eliminates MERGE_VALUES nodes.
-    Result = Node->getOperand(Op.ResNo);
+    Result = Node->getOperand(Op.getResNo());
     break;
   case ISD::CopyFromReg:
     Tmp1 = LegalizeOp(Node->getOperand(0));
@@ -980,7 +980,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     // legalized both of them.
     AddLegalizedOperand(Op.getValue(0), Result);
     AddLegalizedOperand(Op.getValue(1), Result.getValue(1));
-    return Result.getValue(Op.ResNo);
+    return Result.getValue(Op.getResNo());
   case ISD::UNDEF: {
     MVT VT = Op.getValueType();
     switch (TLI.getOperationAction(ISD::UNDEF, VT)) {
@@ -1025,7 +1025,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     // legalized both of them.
     AddLegalizedOperand(SDValue(Node, 0), Result.getValue(0));
     AddLegalizedOperand(SDValue(Node, 1), Result.getValue(1));
-    return Result.getValue(Op.ResNo);
+    return Result.getValue(Op.getResNo());
   }    
 
   case ISD::DBG_STOPPOINT:
@@ -1199,7 +1199,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     }
     AddLegalizedOperand(SDValue(Node, 0), Result.getValue(0));
     AddLegalizedOperand(SDValue(Node, 1), Result.getValue(1));
-    return Result.getValue(Op.ResNo);
+    return Result.getValue(Op.getResNo());
   }
   case ISD::ATOMIC_LOAD_ADD:
   case ISD::ATOMIC_LOAD_SUB:
@@ -1232,7 +1232,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     }
     AddLegalizedOperand(SDValue(Node, 0), Result.getValue(0));
     AddLegalizedOperand(SDValue(Node, 1), Result.getValue(1));
-    return Result.getValue(Op.ResNo);
+    return Result.getValue(Op.getResNo());
   }
   case ISD::Constant: {
     ConstantSDNode *CN = cast<ConstantSDNode>(Node);
@@ -1331,7 +1331,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       if (Tmp3.Val->getValueType(i) == MVT::Flag)
         continue;
       Tmp1 = LegalizeOp(Tmp3.getValue(i));
-      if (Op.ResNo == i)
+      if (Op.getResNo() == i)
         Tmp2 = Tmp1;
       AddLegalizedOperand(SDValue(Node, i), Tmp1);
     }
@@ -1625,7 +1625,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     AddLegalizedOperand(SDValue(Node, 0), Result.getValue(0));
     if (Node->getNumValues() == 2)
       AddLegalizedOperand(SDValue(Node, 1), Result.getValue(1));
-    return Result.getValue(Op.ResNo);
+    return Result.getValue(Op.getResNo());
   case ISD::DYNAMIC_STACKALLOC: {
     MVT VT = Node->getValueType(0);
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
@@ -1684,7 +1684,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     // legalized both of them.
     AddLegalizedOperand(SDValue(Node, 0), Tmp1);
     AddLegalizedOperand(SDValue(Node, 1), Tmp2);
-    return Op.ResNo ? Tmp2 : Tmp1;
+    return Op.getResNo() ? Tmp2 : Tmp1;
   }
   case ISD::INLINEASM: {
     SmallVector<SDValue, 8> Ops(Node->op_begin(), Node->op_end());
@@ -1720,7 +1720,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     // INLINE asm returns a chain and flag, make sure to add both to the map.
     AddLegalizedOperand(SDValue(Node, 0), Result.getValue(0));
     AddLegalizedOperand(SDValue(Node, 1), Result.getValue(1));
-    return Result.getValue(Op.ResNo);
+    return Result.getValue(Op.getResNo());
   }
   case ISD::BR:
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
@@ -1935,7 +1935,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       // legalized both of them.
       AddLegalizedOperand(SDValue(Node, 0), Tmp3);
       AddLegalizedOperand(SDValue(Node, 1), Tmp4);
-      return Op.ResNo ? Tmp4 : Tmp3;
+      return Op.getResNo() ? Tmp4 : Tmp3;
     } else {
       MVT SrcVT = LD->getMemoryVT();
       unsigned SrcWidth = SrcVT.getSizeInBits();
@@ -2124,7 +2124,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       // both of them.
       AddLegalizedOperand(SDValue(Node, 0), Tmp1);
       AddLegalizedOperand(SDValue(Node, 1), Tmp2);
-      return Op.ResNo ? Tmp2 : Tmp1;
+      return Op.getResNo() ? Tmp2 : Tmp1;
     }
   }
   case ISD::EXTRACT_ELEMENT: {
@@ -2215,7 +2215,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
           Result = LegalizeOp(Result);
         } else {
           SDNode *InVal = Tmp2.Val;
-          int InIx = Tmp2.ResNo;
+          int InIx = Tmp2.getResNo();
           unsigned NumElems = InVal->getValueType(InIx).getVectorNumElements();
           MVT EVT = InVal->getValueType(InIx).getVectorElementType();
           
@@ -2411,7 +2411,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
         // in the high half of the vector.
         if (ST->getValue().getValueType().isVector()) {
           SDNode *InVal = ST->getValue().Val;
-          int InIx = ST->getValue().ResNo;
+          int InIx = ST->getValue().getResNo();
           MVT InVT = InVal->getValueType(InIx);
           unsigned NumElems = InVT.getVectorNumElements();
           MVT EVT = InVT.getVectorElementType();
@@ -2619,7 +2619,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     // legalized both of them.
     AddLegalizedOperand(SDValue(Node, 0), Tmp1);
     AddLegalizedOperand(SDValue(Node, 1), Tmp2);
-    return Op.ResNo ? Tmp2 : Tmp1;
+    return Op.getResNo() ? Tmp2 : Tmp1;
 
   case ISD::STACKRESTORE:
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
@@ -2875,7 +2875,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
         for (unsigned i = 0, e = Node->getNumValues(); i != e; ++i) {
           Tmp2 = LegalizeOp(Tmp1.getValue(i));
           AddLegalizedOperand(SDValue(Node, i), Tmp2);
-          if (i == Op.ResNo)
+          if (i == Op.getResNo())
             RetVal = Tmp2;
         }
         assert(RetVal.Val && "Illegal result number");
@@ -2888,7 +2888,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     // legalized all of them.
     for (unsigned i = 0, e = Node->getNumValues(); i != e; ++i)
       AddLegalizedOperand(SDValue(Node, i), Result.getValue(i));
-    return Result.getValue(Op.ResNo);
+    return Result.getValue(Op.getResNo());
   }
 
     // Binary operators
@@ -3278,7 +3278,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     // legalized both of them.
     AddLegalizedOperand(SDValue(Node, 0), Result);
     AddLegalizedOperand(SDValue(Node, 1), Tmp1);
-    return Op.ResNo ? Tmp1 : Result;
+    return Op.getResNo() ? Tmp1 : Result;
   }
     
   case ISD::VACOPY: 
@@ -3574,7 +3574,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       // The input has to be a vector type, we have to either scalarize it, pack
       // it, or convert it based on whether the input vector type is legal.
       SDNode *InVal = Node->getOperand(0).Val;
-      int InIx = Node->getOperand(0).ResNo;
+      int InIx = Node->getOperand(0).getResNo();
       unsigned NumElems = InVal->getValueType(InIx).getVectorNumElements();
       MVT EVT = InVal->getValueType(InIx).getVectorElementType();
     
@@ -3876,7 +3876,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     Result = LegalizeOp(Result);
     AddLegalizedOperand(SDValue(Node, 0), Result);
     AddLegalizedOperand(SDValue(Node, 1), Tmp1);
-    return Op.ResNo ? Tmp1 : Result;
+    return Op.getResNo() ? Tmp1 : Result;
   }
   case ISD::FLT_ROUNDS_: {
     MVT VT = Node->getValueType(0);
@@ -5808,7 +5808,7 @@ void SelectionDAGLegalize::ExpandOp(SDValue Op, SDValue &Lo, SDValue &Hi){
       break;
     }
     // FIXME: For now only expand i64,chain = MERGE_VALUES (x, y)
-    assert(Op.ResNo == 0 && Node->getNumValues() == 2 &&
+    assert(Op.getResNo() == 0 && Node->getNumValues() == 2 &&
            Op.getValue(1).getValueType() == MVT::Other &&
            "unhandled MERGE_VALUES");
     ExpandOp(Op.getOperand(0), Lo, Hi);

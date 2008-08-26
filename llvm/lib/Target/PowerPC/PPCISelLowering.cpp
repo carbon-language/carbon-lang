@@ -2511,7 +2511,7 @@ SDValue PPCTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG,
            "Flag must be set. Depend on flag being set in LowerRET");
     Chain = DAG.getNode(PPCISD::TAILCALL,
                         Op.Val->getVTList(), &Ops[0], Ops.size());
-    return SDValue(Chain.Val, Op.ResNo);
+    return SDValue(Chain.Val, Op.getResNo());
   }
 
   Chain = DAG.getNode(CallOpc, NodeTys, &Ops[0], Ops.size());
@@ -2548,7 +2548,7 @@ SDValue PPCTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG,
   ResultVals.push_back(Chain);
   SDValue Res = DAG.getMergeValues(Op.Val->getVTList(), &ResultVals[0],
                                      ResultVals.size());
-  return Res.getValue(Op.ResNo);
+  return Res.getValue(Op.getResNo());
 }
 
 SDValue PPCTargetLowering::LowerRET(SDValue Op, SelectionDAG &DAG, 

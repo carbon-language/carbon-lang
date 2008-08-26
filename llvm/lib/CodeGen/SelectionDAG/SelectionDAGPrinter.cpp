@@ -59,7 +59,7 @@ namespace llvm {
     static EdgeIter getEdgeTarget(const void *Node, EdgeIter I) {
       SDNode *TargetNode = *I;
       SDNodeIterator NI = SDNodeIterator::begin(TargetNode);
-      std::advance(NI, I.getNode()->getOperand(I.getOperand()).ResNo);
+      std::advance(NI, I.getNode()->getOperand(I.getOperand()).getResNo());
       return NI;
     }
 
@@ -110,7 +110,7 @@ namespace llvm {
                                        GraphWriter<SelectionDAG*> &GW) {
       GW.emitSimpleNode(0, "plaintext=circle", "GraphRoot");
       if (G->getRoot().Val)
-        GW.emitEdge(0, -1, G->getRoot().Val, G->getRoot().ResNo,
+        GW.emitEdge(0, -1, G->getRoot().Val, G->getRoot().getResNo(),
                     "color=blue,style=dashed");
     }
   };

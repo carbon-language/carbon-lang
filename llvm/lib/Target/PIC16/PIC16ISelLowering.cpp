@@ -544,7 +544,7 @@ LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG)
   ArgValues.push_back(Root);
 
   return DAG.getMergeValues(Op.Val->getVTList(), &ArgValues[0],
-                            ArgValues.size()).getValue(Op.ResNo);
+                            ArgValues.size()).getValue(Op.getResNo());
 }
 
 

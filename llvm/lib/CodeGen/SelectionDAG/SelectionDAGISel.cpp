@@ -1306,7 +1306,7 @@ void SelectionDAGLowering::visitRet(ReturnInst &I) {
       else if (F->paramHasAttr(0, ParamAttr::ZExt))
         ExtendKind = ISD::ZERO_EXTEND;
 
-      getCopyToParts(DAG, SDValue(RetOp.Val, RetOp.ResNo + j),
+      getCopyToParts(DAG, SDValue(RetOp.Val, RetOp.getResNo() + j),
                      &Parts[0], NumParts, PartVT, ExtendKind);
 
       for (unsigned i = 0; i < NumParts; ++i) {
@@ -2736,15 +2736,15 @@ void SelectionDAGLowering::visitInsertValue(InsertValueInst &I) {
   // Copy the beginning value(s) from the original aggregate.
   for (; i != LinearIndex; ++i)
     Values[i] = IntoUndef ? DAG.getNode(ISD::UNDEF, AggValueVTs[i]) :
-                SDValue(Agg.Val, Agg.ResNo + i);
+                SDValue(Agg.Val, Agg.getResNo() + i);
   // Copy values from the inserted value(s).
   for (; i != LinearIndex + NumValValues; ++i)
     Values[i] = FromUndef ? DAG.getNode(ISD::UNDEF, AggValueVTs[i]) :
-                SDValue(Val.Val, Val.ResNo + i - LinearIndex);
+                SDValue(Val.Val, Val.getResNo() + i - LinearIndex);
   // Copy remaining value(s) from the original aggregate.
   for (; i != NumAggValues; ++i)
     Values[i] = IntoUndef ? DAG.getNode(ISD::UNDEF, AggValueVTs[i]) :
-                SDValue(Agg.Val, Agg.ResNo + i);
+                SDValue(Agg.Val, Agg.getResNo() + i);
 
   setValue(&I, DAG.getMergeValues(DAG.getVTList(&AggValueVTs[0], NumAggValues),
                                   &Values[0], NumAggValues));
@@ -2769,8 +2769,8 @@ void SelectionDAGLowering::visitExtractValue(ExtractValueInst &I) {
   // Copy out the selected value(s).
   for (unsigned i = LinearIndex; i != LinearIndex + NumValValues; ++i)
     Values[i - LinearIndex] =
-      OutOfUndef ? DAG.getNode(ISD::UNDEF, Agg.Val->getValueType(Agg.ResNo + i)) :
-                   SDValue(Agg.Val, Agg.ResNo + i);
+      OutOfUndef ? DAG.getNode(ISD::UNDEF, Agg.Val->getValueType(Agg.getResNo() + i)) :
+                   SDValue(Agg.Val, Agg.getResNo() + i);
 
   setValue(&I, DAG.getMergeValues(DAG.getVTList(&ValValueVTs[0], NumValValues),
                                   &Values[0], NumValValues));
@@ -2965,7 +2965,7 @@ void SelectionDAGLowering::visitStore(StoreInst &I) {
   bool isVolatile = I.isVolatile();
   unsigned Alignment = I.getAlignment();
   for (unsigned i = 0; i != NumValues; ++i)
-    Chains[i] = DAG.getStore(Root, SDValue(Src.Val, Src.ResNo + i),
+    Chains[i] = DAG.getStore(Root, SDValue(Src.Val, Src.getResNo() + i),
                              DAG.getNode(ISD::ADD, PtrVT, Ptr,
                                          DAG.getConstant(Offsets[i], PtrVT)),
                              PtrV, Offsets[i],
@@ -3810,7 +3810,7 @@ void RegsForValue::getCopyToRegs(SDValue Val, SelectionDAG &DAG,
     unsigned NumParts = TLI->getNumRegisters(ValueVT);
     MVT RegisterVT = RegVTs[Value];
 
-    getCopyToParts(DAG, Val.getValue(Val.ResNo + Value),
+    getCopyToParts(DAG, Val.getValue(Val.getResNo() + Value),
                    &Parts[Part], NumParts, RegisterVT);
     Part += NumParts;
   }
@@ -4763,7 +4763,7 @@ TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
          Value != NumValues; ++Value) {
       MVT VT = ValueVTs[Value];
       const Type *ArgTy = VT.getTypeForMVT();
-      SDValue Op = SDValue(Args[i].Node.Val, Args[i].Node.ResNo + Value);
+      SDValue Op = SDValue(Args[i].Node.Val, Args[i].Node.getResNo() + Value);
       ISD::ArgFlagsTy Flags;
       unsigned OriginalAlignment =
         getTargetData()->getABITypeAlignment(ArgTy);
@@ -5017,8 +5017,8 @@ static bool IsPossiblyOverwrittenArgumentOfTailCall(SDValue Op,
       (Op.getOpcode() == ISD::LOAD &&
        IsFixedFrameObjectWithPosOffset(MFI, Op.getOperand(1))) ||
       (Op.getOpcode() == ISD::MERGE_VALUES &&
-       Op.getOperand(Op.ResNo).getOpcode() == ISD::LOAD &&
-       IsFixedFrameObjectWithPosOffset(MFI, Op.getOperand(Op.ResNo).
+       Op.getOperand(Op.getResNo()).getOpcode() == ISD::LOAD &&
+       IsFixedFrameObjectWithPosOffset(MFI, Op.getOperand(Op.getResNo()).
                                        getOperand(1))))
     return true;
   return false;

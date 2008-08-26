@@ -652,7 +652,7 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
   }
   for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
     const SDValue &Op = N->getOperand(i);
-    MVT VT = Op.Val->getValueType(Op.ResNo);
+    MVT VT = Op.Val->getValueType(Op.getResNo());
     if (VT == MVT::Flag)
       return NULL;
   }

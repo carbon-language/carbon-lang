@@ -1396,7 +1396,7 @@ X86TargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG) {
 
   // Return the new list of results.
   return DAG.getMergeValues(Op.Val->getVTList(), &ArgValues[0],
-                            ArgValues.size()).getValue(Op.ResNo);
+                            ArgValues.size()).getValue(Op.getResNo());
 }
 
 SDValue
@@ -1760,7 +1760,7 @@ SDValue X86TargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
     Chain = DAG.getNode(X86ISD::TAILCALL,
                         Op.Val->getVTList(), &Ops[0], Ops.size());
       
-    return SDValue(Chain.Val, Op.ResNo);
+    return SDValue(Chain.Val, Op.getResNo());
   }
 
   Chain = DAG.getNode(X86ISD::CALL, NodeTys, &Ops[0], Ops.size());
@@ -1787,7 +1787,7 @@ SDValue X86TargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
 
   // Handle result values, copying them out of physregs into vregs that we
   // return.
-  return SDValue(LowerCallResult(Chain, InFlag, Op.Val, CC, DAG), Op.ResNo);
+  return SDValue(LowerCallResult(Chain, InFlag, Op.Val, CC, DAG), Op.getResNo());
 }
 
 

@@ -646,7 +646,7 @@ SDValue ARMTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
 
   ResultVals.push_back(Chain);
   SDValue Res = DAG.getMergeValues(&ResultVals[0], ResultVals.size());
-  return Res.getValue(Op.ResNo);
+  return Res.getValue(Op.getResNo());
 }
 
 static SDValue LowerRET(SDValue Op, SelectionDAG &DAG) {

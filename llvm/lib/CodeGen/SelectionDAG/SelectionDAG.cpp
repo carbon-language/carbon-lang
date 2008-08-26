@@ -327,7 +327,7 @@ static void AddNodeIDOperands(FoldingSetNodeID &ID,
                               const SDValue *Ops, unsigned NumOps) {
   for (; NumOps; --NumOps, ++Ops) {
     ID.AddPointer(Ops->Val);
-    ID.AddInteger(Ops->ResNo);
+    ID.AddInteger(Ops->getResNo());
   }
 }
 
@@ -337,7 +337,7 @@ static void AddNodeIDOperands(FoldingSetNodeID &ID,
                               const SDUse *Ops, unsigned NumOps) {
   for (; NumOps; --NumOps, ++Ops) {
     ID.AddPointer(Ops->getVal());
-    ID.AddInteger(Ops->getSDValue().ResNo);
+    ID.AddInteger(Ops->getSDValue().getResNo());
   }
 }
 
@@ -3666,7 +3666,7 @@ SDValue SelectionDAG::UpdateNodeOperands(SDValue InN, SDValue Op) {
   // See if the modified node already exists.
   void *InsertPos = 0;
   if (SDNode *Existing = FindModifiedNodeSlot(N, Op, InsertPos))
-    return SDValue(Existing, InN.ResNo);
+    return SDValue(Existing, InN.getResNo());
   
   // Nope it doesn't.  Remove the node from its current place in the maps.
   if (InsertPos)
@@ -3695,7 +3695,7 @@ UpdateNodeOperands(SDValue InN, SDValue Op1, SDValue Op2) {
   // See if the modified node already exists.
   void *InsertPos = 0;
   if (SDNode *Existing = FindModifiedNodeSlot(N, Op1, Op2, InsertPos))
-    return SDValue(Existing, InN.ResNo);
+    return SDValue(Existing, InN.getResNo());
   
   // Nope it doesn't.  Remove the node from its current place in the maps.
   if (InsertPos)
@@ -3761,7 +3761,7 @@ UpdateNodeOperands(SDValue InN, const SDValue *Ops, unsigned NumOps) {
   // See if the modified node already exists.
   void *InsertPos = 0;
   if (SDNode *Existing = FindModifiedNodeSlot(N, Ops, NumOps, InsertPos))
-    return SDValue(Existing, InN.ResNo);
+    return SDValue(Existing, InN.getResNo());
   
   // Nope it doesn't.  Remove the node from its current place in the maps.
   if (InsertPos)
@@ -4161,7 +4161,7 @@ SDNode *SelectionDAG::getNodeIfExists(unsigned Opcode, SDVTList VTList,
 void SelectionDAG::ReplaceAllUsesWith(SDValue FromN, SDValue To,
                                       DAGUpdateListener *UpdateListener) {
   SDNode *From = FromN.Val;
-  assert(From->getNumValues() == 1 && FromN.ResNo == 0 && 
+  assert(From->getNumValues() == 1 && FromN.getResNo() == 0 && 
          "Cannot replace with this method!");
   assert(From != To.Val && "Cannot replace uses of with self");
 
@@ -4267,7 +4267,7 @@ void SelectionDAG::ReplaceAllUsesWith(SDNode *From,
     for (SDNode::op_iterator I = U->op_begin(), E = U->op_end();
          I != E; ++I, ++operandNum)
       if (I->getVal() == From) {
-        const SDValue &ToOp = To[I->getSDValue().ResNo];
+        const SDValue &ToOp = To[I->getSDValue().getResNo()];
         From->removeUser(operandNum, U);
         *I = ToOp;
         I->setUser(U);
@@ -4573,7 +4573,7 @@ bool SDNode::hasNUsesOfValue(unsigned NUses, unsigned Value) const {
 
   // TODO: Only iterate over uses of a given value of the node
   for (SDNode::use_iterator UI = use_begin(), E = use_end(); UI != E; ++UI) {
-    if (UI.getUse().getSDValue().ResNo == Value) {
+    if (UI.getUse().getSDValue().getResNo() == Value) {
       if (NUses == 0)
         return false;
       --NUses;
@@ -4591,7 +4591,7 @@ bool SDNode::hasAnyUseOfValue(unsigned Value) const {
   assert(Value < getNumValues() && "Bad value!");
 
   for (SDNode::use_iterator UI = use_begin(), E = use_end(); UI != E; ++UI)
-    if (UI.getUse().getSDValue().ResNo == Value)
+    if (UI.getUse().getSDValue().getResNo() == Value)
       return true;
 
   return false;
@@ -5000,7 +5000,7 @@ void SDNode::print(raw_ostream &OS, const SelectionDAG *G) const {
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
     if (i) OS << ", ";
     OS << (void*)getOperand(i).Val;
-    if (unsigned RN = getOperand(i).ResNo)
+    if (unsigned RN = getOperand(i).getResNo())
       OS << ":" << RN;
   }
 

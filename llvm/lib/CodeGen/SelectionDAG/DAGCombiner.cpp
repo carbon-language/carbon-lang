@@ -2730,7 +2730,7 @@ static bool ExtendUsesToFormExtLoad(SDNode *N, SDValue N0,
       SDNode *User = *UI;
       for (unsigned i = 0, e = User->getNumOperands(); i != e; ++i) {
         SDValue UseOp = User->getOperand(i);
-        if (UseOp.Val == N && UseOp.ResNo == 0) {
+        if (UseOp.Val == N && UseOp.getResNo() == 0) {
           BothLiveOut = true;
           break;
         }
@@ -3366,7 +3366,7 @@ static SDNode *getBuildPairElt(SDNode *N, unsigned i) {
   SDValue Elt = N->getOperand(i);
   if (Elt.getOpcode() != ISD::MERGE_VALUES)
     return Elt.Val;
-  return Elt.getOperand(Elt.ResNo).Val;
+  return Elt.getOperand(Elt.getResNo()).Val;
 }
 
 /// CombineConsecutiveLoads - build_pair (load, load) -> load

@@ -750,7 +750,7 @@ LowerCALL(SDValue Op, SelectionDAG &DAG)
 
   // Handle result values, copying them out of physregs into vregs that we
   // return.
-  return SDValue(LowerCallResult(Chain, InFlag, Op.Val, CC, DAG), Op.ResNo);
+  return SDValue(LowerCallResult(Chain, InFlag, Op.Val, CC, DAG), Op.getResNo());
 }
 
 /// LowerCallResult - Lower the result values of an ISD::CALL into the
@@ -926,7 +926,7 @@ LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG)
 
   // Return the new list of results.
   return DAG.getMergeValues(Op.Val->getVTList(), &ArgValues[0],
-                            ArgValues.size()).getValue(Op.ResNo);
+                            ArgValues.size()).getValue(Op.getResNo());
 }
 
 //===----------------------------------------------------------------------===//

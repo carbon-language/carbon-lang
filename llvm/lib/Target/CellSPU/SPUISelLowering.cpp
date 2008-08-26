@@ -1292,7 +1292,7 @@ LowerCALL(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   // Otherwise, merge everything together with a MERGE_VALUES node.
   ResultVals[NumResults++] = Chain;
   SDValue Res = DAG.getMergeValues(ResultVals, NumResults);
-  return Res.getValue(Op.ResNo);
+  return Res.getValue(Op.getResNo());
 }
 
 static SDValue

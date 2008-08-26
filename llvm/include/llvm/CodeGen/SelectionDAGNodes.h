@@ -811,10 +811,14 @@ namespace ISD {
 class SDValue {
 public:
   SDNode *Val;        // The node defining the value we are using.
+private:
   unsigned ResNo;     // Which return value of the node we are using.
-
+public:
   SDValue() : Val(0), ResNo(0) {}
   SDValue(SDNode *val, unsigned resno) : Val(val), ResNo(resno) {}
+
+  /// get the index which selects a specific result in the SDNode
+  unsigned getResNo() const { return ResNo; }
 
   bool operator==(const SDValue &O) const {
     return Val == O.Val && ResNo == O.ResNo;
@@ -882,7 +886,7 @@ template<> struct DenseMapInfo<SDValue> {
   }
   static unsigned getHashValue(const SDValue &Val) {
     return ((unsigned)((uintptr_t)Val.Val >> 4) ^
-            (unsigned)((uintptr_t)Val.Val >> 9)) + Val.ResNo;
+            (unsigned)((uintptr_t)Val.Val >> 9)) + Val.getResNo();
   }
   static bool isEqual(const SDValue &LHS, const SDValue &RHS) {
     return LHS == RHS;

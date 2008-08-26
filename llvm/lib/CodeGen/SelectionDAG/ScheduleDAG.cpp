@@ -62,7 +62,7 @@ static void CheckForPhysRegDependency(SDNode *Def, SDNode *User, unsigned Op,
   if (TargetRegisterInfo::isVirtualRegister(Reg))
     return;
 
-  unsigned ResNo = User->getOperand(2).ResNo;
+  unsigned ResNo = User->getOperand(2).getResNo();
   if (Def->isMachineOpcode()) {
     const TargetInstrDesc &II = TII->get(Def->getMachineOpcode());
     if (ResNo >= II.getNumDefs() &&
@@ -430,7 +430,7 @@ void ScheduleDAG::EmitCopyFromReg(SDNode *Node, unsigned ResNo,
     bool Match = true;
     if (User->getOpcode() == ISD::CopyToReg && 
         User->getOperand(2).Val == Node &&
-        User->getOperand(2).ResNo == ResNo) {
+        User->getOperand(2).getResNo() == ResNo) {
       unsigned DestReg = cast<RegisterSDNode>(User->getOperand(1))->getReg();
       if (TargetRegisterInfo::isVirtualRegister(DestReg)) {
         VRBase = DestReg;
@@ -440,9 +440,9 @@ void ScheduleDAG::EmitCopyFromReg(SDNode *Node, unsigned ResNo,
     } else {
       for (unsigned i = 0, e = User->getNumOperands(); i != e; ++i) {
         SDValue Op = User->getOperand(i);
-        if (Op.Val != Node || Op.ResNo != ResNo)
+        if (Op.Val != Node || Op.getResNo() != ResNo)
           continue;
-        MVT VT = Node->getValueType(Op.ResNo);
+        MVT VT = Node->getValueType(Op.getResNo());
         if (VT != MVT::Other && VT != MVT::Flag)
           Match = false;
       }
@@ -490,7 +490,7 @@ unsigned ScheduleDAG::getDstOfOnlyCopyToRegUse(SDNode *Node,
   SDNode *User = *Node->use_begin();
   if (User->getOpcode() == ISD::CopyToReg && 
       User->getOperand(2).Val == Node &&
-      User->getOperand(2).ResNo == ResNo) {
+      User->getOperand(2).getResNo() == ResNo) {
     unsigned Reg = cast<RegisterSDNode>(User->getOperand(1))->getReg();
     if (TargetRegisterInfo::isVirtualRegister(Reg))
       return Reg;
@@ -514,7 +514,7 @@ void ScheduleDAG::CreateVirtualRegisters(SDNode *Node, MachineInstr *MI,
       SDNode *User = *UI;
       if (User->getOpcode() == ISD::CopyToReg && 
           User->getOperand(2).Val == Node &&
-          User->getOperand(2).ResNo == i) {
+          User->getOperand(2).getResNo() == i) {
         unsigned Reg = cast<RegisterSDNode>(User->getOperand(1))->getReg();
         if (TargetRegisterInfo::isVirtualRegister(Reg)) {
           VRBase = Reg;
@@ -547,7 +547,7 @@ unsigned ScheduleDAG::getVR(SDValue Op,
   if (Op.isMachineOpcode() &&
       Op.getMachineOpcode() == TargetInstrInfo::IMPLICIT_DEF) {
     // Add an IMPLICIT_DEF instruction before every use.
-    unsigned VReg = getDstOfOnlyCopyToRegUse(Op.Val, Op.ResNo);
+    unsigned VReg = getDstOfOnlyCopyToRegUse(Op.Val, Op.getResNo());
     // IMPLICIT_DEF can produce any type of result so its TargetInstrDesc
     // does not include operand register class info.
     if (!VReg) {
