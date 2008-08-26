@@ -267,6 +267,7 @@ void ExecutionEngine::runStaticConstructorsDestructors(bool isDtors) {
   }
 }
 
+#ifndef NDEBUG
 /// isTargetNullPtr - Return whether the target pointer stored at Loc is null.
 static bool isTargetNullPtr(ExecutionEngine *EE, void *Loc) {
   unsigned PtrSize = EE->getTargetData()->getPointerSize();
@@ -275,6 +276,7 @@ static bool isTargetNullPtr(ExecutionEngine *EE, void *Loc) {
       return false;
   return true;
 }
+#endif
 
 /// runFunctionAsMain - This is a helper function which wraps runFunction to
 /// handle the common task of starting up main with the specified argc, argv,
