@@ -264,7 +264,21 @@ void FastISelEmitter::run(std::ostream &OS) {
       for (TypeRetPredMap::const_iterator TI = TM.begin(), TE = TM.end();
            TI != TE; ++TI) {
         MVT::SimpleValueType VT = TI->first;
-
+        const RetPredMap &RM = TI->second;
+        
+        if (RM.size() != 1)
+          for (RetPredMap::const_iterator RI = RM.begin(), RE = RM.end();
+               RI != RE; ++RI) {
+            MVT::SimpleValueType RetVT = RI->first;
+            OS << "  unsigned FastEmit_" << getLegalCName(Opcode)
+               << "_" << getLegalCName(getName(VT)) << "_"
+               << getLegalCName(getName(RetVT)) << "_";
+            Operands.PrintManglingSuffix(OS);
+            OS << "(";
+            Operands.PrintParameters(OS);
+            OS << ");\n";
+          }
+        
         OS << "  unsigned FastEmit_" << getLegalCName(Opcode)
            << "_" << getLegalCName(getName(VT)) << "_";
         Operands.PrintManglingSuffix(OS);
@@ -333,29 +347,98 @@ void FastISelEmitter::run(std::ostream &OS) {
            TI != TE; ++TI) {
         MVT::SimpleValueType VT = TI->first;
         const RetPredMap &RM = TI->second;
+        if (RM.size() != 1) {
+          for (RetPredMap::const_iterator RI = RM.begin(), RE = RM.end();
+               RI != RE; ++RI) {
+            MVT::SimpleValueType RetVT = RI->first;
+            const PredMap &PM = RI->second;
+            bool HasPred = false;
 
-        for (RetPredMap::const_iterator RI = RM.begin(), RE = RM.end();
-             RI != RE; ++RI) {
-          const PredMap &PM = RI->second;
-          bool HasPred = false;
+            OS << "unsigned FastISel::FastEmit_"
+               << getLegalCName(Opcode)
+               << "_" << getLegalCName(getName(VT))
+               << "_" << getLegalCName(getName(RetVT)) << "_";
+            Operands.PrintManglingSuffix(OS);
+            OS << "(";
+            Operands.PrintParameters(OS);
+            OS << ") {\n";
 
+            // Emit code for each possible instruction. There may be
+            // multiple if there are subtarget concerns.
+            for (PredMap::const_iterator PI = PM.begin(), PE = PM.end();
+                 PI != PE; ++PI) {
+              std::string PredicateCheck = PI->first;
+              const InstructionMemo &Memo = PI->second;
+  
+              if (PredicateCheck.empty()) {
+                assert(!HasPred &&
+                       "Multiple instructions match, at least one has "
+                       "a predicate and at least one doesn't!");
+              } else {
+                OS << "  if (" + PredicateCheck + ")\n";
+                OS << "  ";
+                HasPred = true;
+              }
+              OS << "  return FastEmitInst_";
+              Operands.PrintManglingSuffix(OS);
+              OS << "(" << InstNS << Memo.Name << ", ";
+              OS << InstNS << Memo.RC->getName() << "RegisterClass";
+              if (!Operands.empty())
+                OS << ", ";
+              Operands.PrintArguments(OS);
+              OS << ");\n";
+            }
+            // Return 0 if none of the predicates were satisfied.
+            if (HasPred)
+              OS << "  return 0;\n";
+            OS << "}\n";
+            OS << "\n";
+          }
+          
+          // Emit one function for the type that demultiplexes on return type.
           OS << "unsigned FastISel::FastEmit_"
-             << getLegalCName(Opcode)
-             << "_" << getLegalCName(getName(VT)) << "_";
+             << getLegalCName(Opcode) << "_"
+             << getLegalCName(getName(VT));
+          Operands.PrintManglingSuffix(OS);
+          OS << "(MVT::SimpleValueType RetVT";
+          if (!Operands.empty())
+            OS << ", ";
+          Operands.PrintParameters(OS);
+          OS << ") {\nswitch (RetVT) {\n";
+          for (RetPredMap::const_iterator RI = RM.begin(), RE = RM.end();
+               RI != RE; ++RI) {
+            MVT::SimpleValueType RetVT = RI->first;
+            OS << "  case " << getName(RetVT) << ": return FastEmit_"
+               << getLegalCName(Opcode) << "_" << getLegalCName(getName(VT))
+               << "_" << getLegalCName(getName(RetVT)) << "_";
+            Operands.PrintManglingSuffix(OS);
+            OS << "(";
+            Operands.PrintArguments(OS);
+            OS << ");\n";
+          }
+          OS << "  default: return 0;\n}\n}\n\n";
+          
+        } else {
+          // Non-variadic return type.
+          OS << "unsigned FastISel::FastEmit_"
+             << getLegalCName(Opcode) << "_"
+             << getLegalCName(getName(VT)) << "_";
           Operands.PrintManglingSuffix(OS);
           OS << "(MVT::SimpleValueType RetVT";
           if (!Operands.empty())
             OS << ", ";
           Operands.PrintParameters(OS);
           OS << ") {\n";
-
+          
+          const PredMap &PM = RM.begin()->second;
+          bool HasPred = false;
+          
           // Emit code for each possible instruction. There may be
           // multiple if there are subtarget concerns.
-          for (PredMap::const_iterator PI = PM.begin(), PE = PM.end();
-               PI != PE; ++PI) {
+          for (PredMap::const_iterator PI = PM.begin(), PE = PM.end(); PI != PE; ++PI) {
             std::string PredicateCheck = PI->first;
             const InstructionMemo &Memo = PI->second;
-  
+
             if (PredicateCheck.empty()) {
               assert(!HasPred &&
                      "Multiple instructions match, at least one has "
@@ -374,6 +457,7 @@ void FastISelEmitter::run(std::ostream &OS) {
             Operands.PrintArguments(OS);
             OS << ");\n";
           }
+          
           // Return 0 if none of the predicates were satisfied.
           if (HasPred)
             OS << "  return 0;\n";
