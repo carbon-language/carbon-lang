@@ -4231,7 +4231,7 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
     if (!SawEarlyClobber &&
         OpInfo.Type == InlineAsm::isClobber &&
         OpInfo.ConstraintType == TargetLowering::C_Register) {
-      // Note that we want to ignore things that we don't trick here, like
+      // Note that we want to ignore things that we don't track here, like
       // dirflag, fpsr, flags, etc.
       std::pair<unsigned, const TargetRegisterClass*> PhysReg = 
         TLI.getRegForInlineAsmConstraint(OpInfo.ConstraintCode,
