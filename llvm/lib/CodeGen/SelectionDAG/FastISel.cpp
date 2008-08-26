@@ -149,6 +149,72 @@ bool FastISel::SelectGetElementPtr(Instruction *I,
   return true;
 }
 
+bool FastISel::SelectBitCast(Instruction *I,
+                             DenseMap<const Value*, unsigned> &ValueMap) {
+  // BitCast consists of either an immediate to register move
+  // or a register to register move.
+  if (ConstantInt* CI = dyn_cast<ConstantInt>(I->getOperand(0))) {
+    if (I->getType()->isInteger()) {
+      MVT VT = MVT::getMVT(I->getType(), /*HandleUnknown=*/false);
+      unsigned result = FastEmit_i(VT.getSimpleVT(), VT.getSimpleVT(),
+                                   ISD::Constant,
+                                   CI->getZExtValue());
+      if (!result)
+        return false;
+      
+      ValueMap[I] = result;
+      return true;
+    }
+
+    // TODO: Support vector and fp constants.
+    return false;
+  }
+
+  if (!isa<Constant>(I->getOperand(0))) {
+    // Bitcasts of non-constant values become reg-reg copies.
+    MVT SrcVT = MVT::getMVT(I->getOperand(0)->getType());
+    MVT DstVT = MVT::getMVT(I->getType());
+    
+    if (SrcVT == MVT::Other || !SrcVT.isSimple() ||
+        DstVT == MVT::Other || !DstVT.isSimple() ||
+        !TLI.isTypeLegal(SrcVT) || !TLI.isTypeLegal(DstVT))
+      // Unhandled type. Halt "fast" selection and bail.
+      return false;
+    
+    unsigned Op0 = ValueMap[I->getOperand(0)];
+    if (Op0 == 0)
+      // Unhandled operand. Halt "fast" selection and bail.
+      return false;
+    
+    // First, try to perform the bitcast by inserting a reg-reg copy.
+    unsigned ResultReg = 0;
+    if (SrcVT.getSimpleVT() == DstVT.getSimpleVT()) {
+      TargetRegisterClass* SrcClass = TLI.getRegClassFor(SrcVT);
+      TargetRegisterClass* DstClass = TLI.getRegClassFor(DstVT);
+      ResultReg = createResultReg(DstClass);
+      
+      bool InsertedCopy = TII.copyRegToReg(*MBB, MBB->end(), ResultReg,
+                                           Op0, DstClass, SrcClass);
+      if (!InsertedCopy)
+        ResultReg = 0;
+    }
+    
+    // If the reg-reg copy failed, select a BIT_CONVERT opcode.
+    if (!ResultReg)
+      ResultReg = FastEmit_r(SrcVT.getSimpleVT(), DstVT.getSimpleVT(),
+                             ISD::BIT_CONVERT, Op0);
+    
+    if (!ResultReg)
+      return false;
+    
+    ValueMap[I] = ResultReg;
+    return true;
+  }
+
+  // TODO: Casting a non-integral constant?
+  return false;
+}
+
 BasicBlock::iterator
 FastISel::SelectInstructions(BasicBlock::iterator Begin,
                              BasicBlock::iterator End,
@@ -231,64 +297,8 @@ FastISel::SelectInstructions(BasicBlock::iterator Begin,
       break;
       
     case Instruction::BitCast:
-      // BitCast consists of either an immediate to register move
-      // or a register to register move.
-      if (ConstantInt* CI = dyn_cast<ConstantInt>(I->getOperand(0))) {
-        if (I->getType()->isInteger()) {
-          MVT VT = MVT::getMVT(I->getType(), /*HandleUnknown=*/false);
-          unsigned result = FastEmit_i(VT.getSimpleVT(), VT.getSimpleVT(),
-                                       ISD::Constant,
-                                       CI->getZExtValue());
-          if (!result)
-            return I;
-          
-          ValueMap[I] = result;
-          break;
-        } else
-          // TODO: Support vector and fp constants.
-          return I;
-      } else if (!isa<Constant>(I->getOperand(0))) {
-        // Bitcasts of non-constant values become reg-reg copies.
-        MVT SrcVT = MVT::getMVT(I->getOperand(0)->getType());
-        MVT DstVT = MVT::getMVT(I->getType());
-        
-        if (SrcVT == MVT::Other || !SrcVT.isSimple() ||
-            DstVT == MVT::Other || !DstVT.isSimple() ||
-            !TLI.isTypeLegal(SrcVT) || !TLI.isTypeLegal(DstVT))
-          // Unhandled type. Halt "fast" selection and bail.
-          return I;
-        
-        unsigned Op0 = ValueMap[I->getOperand(0)];
-        if (Op0 == 0)
-          // Unhandled operand. Halt "fast" selection and bail.
-          return false;
-        
-        // First, try to perform the bitcast by inserting a reg-reg copy.
-        unsigned ResultReg = 0;
-        if (SrcVT.getSimpleVT() == DstVT.getSimpleVT()) {
-          TargetRegisterClass* SrcClass = TLI.getRegClassFor(SrcVT);
-          TargetRegisterClass* DstClass = TLI.getRegClassFor(DstVT);
-          ResultReg = createResultReg(DstClass);
-          
-          bool InsertedCopy = TII.copyRegToReg(*MBB, MBB->end(), ResultReg,
-                                               Op0, DstClass, SrcClass);
-          if (!InsertedCopy)
-            ResultReg = 0;
-        }
-        
-        // If the reg-reg copy failed, select a BIT_CONVERT opcode.
-        if (!ResultReg)
-          ResultReg = FastEmit_r(SrcVT.getSimpleVT(), DstVT.getSimpleVT(),
-                                 ISD::BIT_CONVERT, Op0);
-        
-        if (!ResultReg)
-          return I;
-        
-        ValueMap[I] = ResultReg;
-        break;
-      } else
-        // TODO: Casting a non-integral constant?
-        return I;
+      if (!SelectBitCast(I, ValueMap)) return I;
+      break;
 
     case Instruction::FPToSI:
       if (!isa<ConstantFP>(I->getOperand(0))) {
@@ -348,6 +358,7 @@ FastISel::SelectInstructions(BasicBlock::iterator Begin,
       } else
         // TODO: Materialize constant and convert to FP.
         return I;
+
     default:
       // Unhandled instruction. Halt "fast" selection and bail.
       return I;

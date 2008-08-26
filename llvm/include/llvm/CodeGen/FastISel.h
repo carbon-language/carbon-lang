@@ -167,6 +167,9 @@ private:
 
   bool SelectGetElementPtr(Instruction *I,
                            DenseMap<const Value*, unsigned> &ValueMap);
+
+  bool SelectBitCast(Instruction *I,
+                     DenseMap<const Value*, unsigned> &ValueMap);
 };
 
 }
