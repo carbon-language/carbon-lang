@@ -114,7 +114,8 @@ bool isSubRegisterClass(const CodeGenRegisterClass &RC,
 }
 
 static void addSuperReg(Record *R, Record *S,
-                        std::map<Record*, std::set<Record*> > &SubRegs,
+                        std::map<Record*, std::set<Record*>,
+                                 LessRecord> &SubRegs,
                         std::map<Record*, std::set<Record*> > &SuperRegs,
                         std::map<Record*, std::set<Record*> > &Aliases) {
   if (R == S) {
@@ -135,7 +136,8 @@ static void addSuperReg(Record *R, Record *S,
 }
 
 static void addSubSuperReg(Record *R, Record *S,
-                           std::map<Record*, std::set<Record*> > &SubRegs,
+                           std::map<Record*, std::set<Record*>,
+                                    LessRecord> &SubRegs,
                            std::map<Record*, std::set<Record*> > &SuperRegs,
                            std::map<Record*, std::set<Record*> > &Aliases) {
   if (R == S) {
@@ -158,10 +160,10 @@ static void addSubSuperReg(Record *R, Record *S,
 
 class RegisterSorter {
 private:
-  std::map<Record*, std::set<Record*> > &RegisterSubRegs;
+  std::map<Record*, std::set<Record*>, LessRecord> &RegisterSubRegs;
 
 public:
-  RegisterSorter(std::map<Record*, std::set<Record*> > &RS)
+  RegisterSorter(std::map<Record*, std::set<Record*>, LessRecord> &RS)
     : RegisterSubRegs(RS) {};
 
   bool operator()(Record *RegA, Record *RegB) {
@@ -418,7 +420,7 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
   OS << "  };\n";
 
   // Emit register sub-registers / super-registers, aliases...
-  std::map<Record*, std::set<Record*> > RegisterSubRegs;
+  std::map<Record*, std::set<Record*>, LessRecord> RegisterSubRegs;
   std::map<Record*, std::set<Record*> > RegisterSuperRegs;
   std::map<Record*, std::set<Record*> > RegisterAliases;
   std::map<Record*, std::vector<std::pair<int, Record*> > > SubRegVectors;
@@ -563,7 +565,7 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
   OS << "  const unsigned Empty_SubRegsSet[] = { 0 };\n";
   // Loop over all of the registers which have sub-registers, emitting the
   // sub-registers list to memory.
-  for (std::map<Record*, std::set<Record*> >::iterator
+  for (std::map<Record*, std::set<Record*>, LessRecord>::iterator
          I = RegisterSubRegs.begin(), E = RegisterSubRegs.end(); I != E; ++I) {
     OS << "  const unsigned " << I->first->getName() << "_SubRegsSet[] = { ";
     std::vector<Record*> SubRegsVector;
