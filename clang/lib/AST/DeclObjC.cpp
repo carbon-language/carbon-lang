@@ -387,24 +387,48 @@ void ObjCInterfaceDecl::addPropertyMethods(
        llvm::SmallVector<ObjCMethodDecl*, 32> &insMethods) {
   // Find the default getter and if one not found, add one.
   ObjCMethodDecl *GetterDecl = getInstanceMethod(property->getGetterName());
-  if (GetterDecl) {
-    // An instance method with same name as property getter name found.
-    property->setGetterMethodDecl(GetterDecl);
-  }
-  else {
+  if (!GetterDecl) {
     // No instance method of same name as property getter name was found.
     // Declare a getter method and add it to the list of methods 
     // for this class.
-    QualType resultDeclType = property->getType();
-    ObjCMethodDecl* ObjCMethod =
-    ObjCMethodDecl::Create(Context, property->getLocation(), 
-                           property->getLocation(), 
-                           property->getGetterName(), resultDeclType,
-                           this,
-                           true, false, true, ObjCMethodDecl::Required);
-    property->setGetterMethodDecl(ObjCMethod);
-    insMethods.push_back(ObjCMethod);
+    GetterDecl = 
+      ObjCMethodDecl::Create(Context, property->getLocation(), 
+                             property->getLocation(), 
+                             property->getGetterName(), 
+                             property->getType(),
+                             this,
+                             true, false, true, ObjCMethodDecl::Required);
+    insMethods.push_back(GetterDecl);
   }
+  property->setGetterMethodDecl(GetterDecl);
+
+  // Find the default setter and if one not found, add one.
+  ObjCMethodDecl *SetterDecl = getInstanceMethod(property->getSetterName());
+  if (!SetterDecl) {
+    // No instance method of same name as property setter name was found.
+    // Declare a setter method and add it to the list of methods 
+    // for this class.
+    SetterDecl =
+      ObjCMethodDecl::Create(Context, property->getLocation(), 
+                             property->getLocation(), 
+                             property->getSetterName(), 
+                             property->getType(),
+                             this,
+                             true, false, true, ObjCMethodDecl::Required);
+    insMethods.push_back(SetterDecl);
+
+    // Invent the arguments for the setter. We don't bother making a
+    // nice name for the argument.
+    ParmVarDecl *Argument = ParmVarDecl::Create(Context, 
+                                               SetterDecl,
+                                               SourceLocation(), 
+                                               property->getIdentifier(),
+                                               property->getType(),
+                                               VarDecl::None,
+                                               0, 0);
+    SetterDecl->setMethodParams(&Argument, 1);
+  }
+  property->setSetterMethodDecl(SetterDecl);
 }
 
 /// addProperties - Insert property declaration AST nodes into

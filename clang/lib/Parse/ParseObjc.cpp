@@ -212,6 +212,23 @@ Parser::DeclTy *Parser::ParseObjCAtInterfaceDeclaration(
   return 0;
 }
 
+/// constructSetterName - Return the setter name for the given
+/// identifier, i.e. "set" + Name where the initial character of Name
+/// has been capitalized.
+static IdentifierInfo *constructSetterName(IdentifierTable &Idents,
+                                           const IdentifierInfo *Name) {
+  unsigned N = Name->getLength();
+  char *SelectorName = new char[3 + N];
+  memcpy(SelectorName, "set", 3);
+  memcpy(&SelectorName[3], Name->getName(), N);
+  SelectorName[3] = toupper(SelectorName[3]);
+
+  IdentifierInfo *Setter = 
+    &Idents.get(SelectorName, &SelectorName[3 + N]);
+  delete[] SelectorName;
+  return Setter;
+}
+
 ///   objc-interface-decl-list:
 ///     empty
 ///     objc-interface-decl-list objc-property-decl [OBJC2]
@@ -276,11 +293,12 @@ void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl,
           PP.getSelectorTable().getNullarySelector(OCDS.getGetterName() 
                                                    ? OCDS.getGetterName() 
                                                    : FD.D.getIdentifier());
+          IdentifierInfo *SetterName = OCDS.getSetterName();
+          if (!SetterName)
+            SetterName = constructSetterName(PP.getIdentifierTable(),
+                                             FD.D.getIdentifier());
           Selector SetterSel = 
-          PP.getSelectorTable().getNullarySelector(OCDS.getSetterName()
-                                                   ? OCDS.getSetterName()
-                                                   // FIXME. This is not right!
-                                                   : FD.D.getIdentifier());
+            PP.getSelectorTable().getUnarySelector(SetterName);
           DeclTy *Property = Actions.ActOnProperty(CurScope,
                                AtLoc, FD, OCDS,
                                GetterSel, SetterSel,
