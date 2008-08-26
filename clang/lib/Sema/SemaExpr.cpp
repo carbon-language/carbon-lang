@@ -1248,13 +1248,21 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
         Diag(questionLoc, diag::warn_typecheck_cond_incompatible_pointers,
              lexT.getAsString(), rexT.getAsString(),
              lex->getSourceRange(), rex->getSourceRange());
-        // In this situation, we assume void* type. No especially good
-        // reason, but this is what gcc does, and we do have to pick
-        // to get a consistent AST.
-        QualType voidPtrTy = Context.getPointerType(Context.VoidTy);
-        ImpCastExprToType(lex, voidPtrTy);
-        ImpCastExprToType(rex, voidPtrTy);
-        return voidPtrTy;
+        // In this situation, assume a conservative type; in general
+        // we assume void* type. No especially good reason, but this
+        // is what gcc does, and we do have to pick to get a
+        // consistent AST. However, if either type is an Objective-C
+        // object type then use id.
+        QualType incompatTy;
+        if (Context.isObjCObjectPointerType(lexT) || 
+            Context.isObjCObjectPointerType(rexT)) {
+          incompatTy = Context.getObjCIdType();
+        } else {
+          incompatTy = Context.getPointerType(Context.VoidTy);
+        }
+        ImpCastExprToType(lex, incompatTy);
+        ImpCastExprToType(rex, incompatTy);
+        return incompatTy;
       }
       // The pointer types are compatible.
       // C99 6.5.15p6: If both operands are pointers to compatible types *or* to
@@ -1271,10 +1279,15 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
   }
   // Need to handle "id<xx>" explicitly. Unlike "id", whose canonical type
   // evaluates to "struct objc_object *" (and is handled above when comparing
-  // id with statically typed objects). FIXME: Do we need an ImpCastExprToType?
+  // id with statically typed objects). 
   if (lexT->isObjCQualifiedIdType() || rexT->isObjCQualifiedIdType()) {
-    if (ObjCQualifiedIdTypesAreCompatible(lexT, rexT, true))
-      return Context.getObjCIdType();
+    if (ObjCQualifiedIdTypesAreCompatible(lexT, rexT, true)) {
+      // FIXME: This is not the correct composite type. 
+      QualType compositeType = Context.getObjCIdType();
+      ImpCastExprToType(lex, compositeType);
+      ImpCastExprToType(rex, compositeType);
+      return compositeType;
+    }
   }
   // Otherwise, the operands are not compatible.
   Diag(questionLoc, diag::err_typecheck_cond_incompatible_operands,
