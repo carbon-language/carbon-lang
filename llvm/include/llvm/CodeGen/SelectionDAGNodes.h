@@ -866,7 +866,7 @@ public:
   ///
   inline bool use_empty() const;
 
-  /// use_empty - Return true if there is exactly one node using value
+  /// hasOneUse - Return true if there is exactly one node using value
   /// ResNo of node Val.
   ///
   inline bool hasOneUse() const;
