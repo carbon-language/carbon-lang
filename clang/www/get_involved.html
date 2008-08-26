@@ -68,15 +68,14 @@ the clang type checker and verifier is quite close to complete (but not bug
 free!) for C and Objective C.  We appreciate all reports of code that is
 rejected by the front-end, and if you notice invalid code that is not rejected
 by clang, that is also very important to us.  For make-based projects,
-<a href="http://lists.cs.uiuc.edu/pipermail/cfe-dev/2007-December/000613.html">
-the script attached to this post</a> might help to get you started.</li>
+the <a href="get_started.html#ccc"><code>ccc</code></a> script in clang's
+<tt>utils</tt> folder might help to get you started.</li>
 
 <li><b>Compile your favorite C project with "clang -emit-llvm"</b>:
 The clang to LLVM converter is getting more mature, so you may be able to
 compile it.  If not, please let us know.  Again,
-<a href="http://lists.cs.uiuc.edu/pipermail/cfe-dev/2007-December/000613.html">
-the attachment to this post</a> might help you.  Once it compiles it should
-run.  If not, that's a bug :)</li>
+<a href="get_started.html#ccc"><code>ccc</code></a> might help you.  Once it
+compiles it should run.  If not, that's a bug :)</li>
 
 <li><b>Work on code generation for Objective C</b>: -emit-llvm support for
 Objective C is basically nonexistent at the time of this writing, this is a
