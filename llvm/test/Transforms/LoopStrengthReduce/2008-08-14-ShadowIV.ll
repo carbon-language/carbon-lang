@@ -1,5 +1,4 @@
 ; RUN: llvm-as < %s | opt -loop-reduce | llvm-dis | grep "phi double" | count 1
-; XFAIL: *
 
 define void @foobar(i32 %n) nounwind {
 entry:

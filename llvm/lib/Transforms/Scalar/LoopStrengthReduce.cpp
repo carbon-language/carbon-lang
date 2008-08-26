@@ -45,6 +45,7 @@ STATISTIC(NumReduced ,    "Number of GEPs strength reduced");
 STATISTIC(NumInserted,    "Number of PHIs inserted");
 STATISTIC(NumVariable,    "Number of PHIs with variable strides");
 STATISTIC(NumEliminated , "Number of strides eliminated");
+STATISTIC(NumShadow , "Number of Shadow IVs optimized");
 
 namespace {
 
@@ -164,6 +165,7 @@ namespace {
       AU.addRequired<DominatorTree>();
       AU.addRequired<TargetData>();
       AU.addRequired<ScalarEvolution>();
+      AU.addPreserved<ScalarEvolution>();
     }
     
     /// getCastedVersionOf - Return the specified value casted to uintptr_t.
@@ -177,8 +179,13 @@ private:
                                   IVStrideUse* &CondUse,
                                   const SCEVHandle* &CondStride);
     void OptimizeIndvars(Loop *L);
+
+    /// OptimizeShadowIV - If IV is used in a int-to-float cast
+    /// inside the loop then try to eliminate the cast opeation.
+    void OptimizeShadowIV(Loop *L);
+
     bool FindIVUserForCond(ICmpInst *Cond, IVStrideUse *&CondUse,
-                       const SCEVHandle *&CondStride);
+                           const SCEVHandle *&CondStride);
     bool RequiresTypeConversion(const Type *Ty, const Type *NewTy);
     unsigned CheckForIVReuse(bool, bool, const SCEVHandle&,
                              IVExpr&, const Type*,
@@ -1689,11 +1696,121 @@ ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
   return Cond;
 }
 
+/// OptimizeShadowIV - If IV is used in a int-to-float cast
+/// inside the loop then try to eliminate the cast opeation.
+void LoopStrengthReduce::OptimizeShadowIV(Loop *L) {
+
+  SCEVHandle IterationCount = SE->getIterationCount(L);
+  if (isa<SCEVCouldNotCompute>(IterationCount))
+    return;
+
+  for (unsigned Stride = 0, e = StrideOrder.size(); Stride != e;
+       ++Stride) {
+    std::map<SCEVHandle, IVUsersOfOneStride>::iterator SI = 
+      IVUsesByStride.find(StrideOrder[Stride]);
+    assert(SI != IVUsesByStride.end() && "Stride doesn't exist!");
+    if (!isa<SCEVConstant>(SI->first))
+      continue;
+
+    for (std::vector<IVStrideUse>::iterator UI = SI->second.Users.begin(),
+           E = SI->second.Users.end(); UI != E; /* empty */) {
+      std::vector<IVStrideUse>::iterator CandidateUI = UI;
+      UI++;
+      Instruction *ShadowUse = CandidateUI->User;
+      const Type *DestTy = NULL;
+
+      /* If shadow use is a int->float cast then insert a second IV
+         to elminate this cast.
+
+           for (unsigned i = 0; i < n; ++i) 
+             foo((double)i);
+
+         is trnasformed into
+
+           double d = 0.0;
+           for (unsigned i = 0; i < n; ++i, ++d) 
+             foo(d);
+      */
+      UIToFPInst *UCast = dyn_cast<UIToFPInst>(CandidateUI->User);
+      if (UCast) 
+        DestTy = UCast->getDestTy();
+      else {
+        SIToFPInst *SCast = dyn_cast<SIToFPInst>(CandidateUI->User);
+        if (!SCast) continue;
+        DestTy = SCast->getDestTy();
+      }
+      
+      PHINode *PH = dyn_cast<PHINode>(ShadowUse->getOperand(0));
+      if (!PH) continue;
+      if (PH->getNumIncomingValues() != 2) continue;
+
+      const Type *SrcTy = PH->getType();
+      int Mantissa = DestTy->getFPMantissaWidth();
+      if (Mantissa == -1) continue; 
+      if ((int)TD->getTypeSizeInBits(SrcTy) > Mantissa)
+        continue;
+
+      unsigned Entry, Latch;
+      if (PH->getIncomingBlock(0) == L->getLoopPreheader()) {
+        Entry = 0;
+        Latch = 1;
+      } else {
+        Entry = 1;
+        Latch = 0;
+      }
+        
+      ConstantInt *Init = dyn_cast<ConstantInt>(PH->getIncomingValue(Entry));
+      if (!Init) continue;
+      ConstantFP *NewInit = ConstantFP::get(DestTy, Init->getZExtValue());
+
+      BinaryOperator *Incr = 
+        dyn_cast<BinaryOperator>(PH->getIncomingValue(Latch));
+      if (!Incr) continue;
+      if (Incr->getOpcode() != Instruction::Add
+          && Incr->getOpcode() != Instruction::Sub)
+        continue;
+
+      /* Initialize new IV, double d = 0.0 in above example. */
+      ConstantInt *C = NULL;
+      if (Incr->getOperand(0) == PH)
+        C = dyn_cast<ConstantInt>(Incr->getOperand(1));
+      else if (Incr->getOperand(1) == PH)
+        C = dyn_cast<ConstantInt>(Incr->getOperand(0));
+      else
+        continue;
+
+      if (!C) continue;
+
+      /* Add new PHINode. */
+      PHINode *NewPH = PHINode::Create(DestTy, "IV.S.", PH);
+
+      /* create new icnrement. '++d' in above example. */
+      ConstantFP *CFP = ConstantFP::get(DestTy, C->getZExtValue());
+      BinaryOperator *NewIncr = 
+        BinaryOperator::Create(Incr->getOpcode(),
+                               NewPH, CFP, "IV.S.next.", Incr);
+
+      NewPH->addIncoming(NewInit, PH->getIncomingBlock(Entry));
+      NewPH->addIncoming(NewIncr, PH->getIncomingBlock(Latch));
+
+      /* Remove cast operation */
+      SE->deleteValueFromRecords(ShadowUse);
+      ShadowUse->replaceAllUsesWith(NewPH);
+      ShadowUse->eraseFromParent();
+      SI->second.Users.erase(CandidateUI);
+      NumShadow++;
+      break;
+    }
+  }
+}
+
 // OptimizeIndvars - Now that IVUsesByStride is set up with all of the indvar
 // uses in the loop, look to see if we can eliminate some, in favor of using
 // common indvars for the different uses.
 void LoopStrengthReduce::OptimizeIndvars(Loop *L) {
   // TODO: implement optzns here.
+
+  OptimizeShadowIV(L);
 
   // Finally, get the terminating condition for the loop if possible.  If we
   // can, we want to change it to use a post-incremented version of its
@@ -1852,6 +1969,5 @@ bool LoopStrengthReduce::runOnLoop(Loop *L, LPPassManager &LPM) {
     }
     DeleteTriviallyDeadInstructions(DeadInsts);
   }
-
   return Changed;
 }
