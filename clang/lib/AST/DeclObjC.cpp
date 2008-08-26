@@ -220,6 +220,31 @@ ObjCPropertyDecl *ObjCPropertyDecl::Create(ASTContext &C,
 // Objective-C Decl Implementation
 //===----------------------------------------------------------------------===//
 
+void ObjCMethodDecl::createImplicitParams(ASTContext &Context) {
+  QualType selfTy;
+  if (isInstance()) {
+    // There may be no interface context due to error in declaration
+    // of the interface (which has been reported). Recover gracefully.
+    if (ObjCInterfaceDecl *OID = getClassInterface()) {
+      selfTy = Context.getObjCInterfaceType(OID);
+      selfTy = Context.getPointerType(selfTy);
+    } else {
+      selfTy = Context.getObjCIdType();
+    }
+  } else // we have a factory method.
+    selfTy = Context.getObjCClassType();
+
+  SelfDecl = ImplicitParamDecl::Create(Context, this, 
+                                       SourceLocation(), 
+                                       &Context.Idents.get("self"),
+                                       selfTy, 0);
+
+  CmdDecl = ImplicitParamDecl::Create(Context, this, 
+                                      SourceLocation(), 
+                                      &Context.Idents.get("_cmd"), 
+                                      Context.getObjCSelType(), 0);
+}
+
 void ObjCMethodDecl::setMethodParams(ParmVarDecl **NewParamInfo,
                                      unsigned NumParams) {
   assert(ParamInfo == 0 && "Already has param info!");
