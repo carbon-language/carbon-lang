@@ -459,14 +459,14 @@ unsigned ARMInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *T
   return 2;
 }
 
-void ARMInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
+bool ARMInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
                                    MachineBasicBlock::iterator I,
                                    unsigned DestReg, unsigned SrcReg,
                                    const TargetRegisterClass *DestRC,
                                    const TargetRegisterClass *SrcRC) const {
   if (DestRC != SrcRC) {
-    cerr << "Not yet supported!";
-    abort();
+    // Not yet supported!
+    return false;
   }
 
   if (DestRC == ARM::GPRRegisterClass) {
@@ -484,7 +484,9 @@ void ARMInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
     AddDefaultPred(BuildMI(MBB, I, get(ARM::FCPYD), DestReg)
                    .addReg(SrcReg));
   else
-    abort();
+    return false;
+  
+  return true;
 }
 
 static const MachineInstrBuilder &ARMInstrAddOperand(MachineInstrBuilder &MIB,

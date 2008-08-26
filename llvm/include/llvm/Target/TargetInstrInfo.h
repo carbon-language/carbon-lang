@@ -221,7 +221,7 @@ public:
   }
   
   /// copyRegToReg - Add a copy between a pair of registers
-  virtual void copyRegToReg(MachineBasicBlock &MBB,
+  virtual bool copyRegToReg(MachineBasicBlock &MBB,
                             MachineBasicBlock::iterator MI,
                             unsigned DestReg, unsigned SrcReg,
                             const TargetRegisterClass *DestRC,

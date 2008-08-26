@@ -118,7 +118,7 @@ insertNoop(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI) const
   BuildMI(MBB, MI, get(Mips::NOP));
 }
 
-void MipsInstrInfo::
+bool MipsInstrInfo::
 copyRegToReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
              unsigned DestReg, unsigned SrcReg,
              const TargetRegisterClass *DestRC,
@@ -141,10 +141,10 @@ copyRegToReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
       BuildMI(MBB, I, get(Mips::MTC1A), DestReg).addReg(SrcReg);
     else if ((SrcRC == Mips::CCRRegisterClass) && 
              (SrcReg == Mips::FCR31))
-      return; // This register is used implicitly, no copy needed.
+      return true; // This register is used implicitly, no copy needed.
     else if ((DestRC == Mips::CCRRegisterClass) && 
              (DestReg == Mips::FCR31))
-      return; // This register is used implicitly, no copy needed.
+      return true; // This register is used implicitly, no copy needed.
     else if ((DestRC == Mips::HILORegisterClass) &&
              (SrcRC == Mips::CPURegsRegisterClass)) {
       unsigned Opc = (DestReg == Mips::HI) ? Mips::MTHI : Mips::MTLO;
@@ -154,9 +154,10 @@ copyRegToReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
       unsigned Opc = (SrcReg == Mips::HI) ? Mips::MFHI : Mips::MFLO;
       BuildMI(MBB, I, get(Opc), DestReg);
     } else
-      assert (0 && "DestRC != SrcRC, Can't copy this register");
+      // DestRC != SrcRC, Can't copy this register
+      return false;
 
-    return;
+    return true;
   }
 
   if (DestRC == Mips::CPURegsRegisterClass)
@@ -169,7 +170,10 @@ copyRegToReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
   else if (DestRC == Mips::AFGR64RegisterClass)
     BuildMI(MBB, I, get(Mips::FMOV_D32), DestReg).addReg(SrcReg);
   else
-    assert (0 && "Can't copy this register");
+    // Can't copy this register
+    return false;
+  
+  return true;
 }
 
 void MipsInstrInfo::

@@ -250,9 +250,6 @@ FastISel::SelectInstructions(BasicBlock::iterator Begin,
             !TLI.isTypeLegal(SrcVT) || !TLI.isTypeLegal(DstVT))
           // Unhandled type. Halt "fast" selection and bail.
           return I;
-        if (!TLI.isConvertLegal(SrcVT, DstVT))
-          // Illegal conversion.  Halt "fast" selection and bail.
-          return I;
         
         // Otherwise, insert a register-to-register copy.
         TargetRegisterClass* SrcClass = TLI.getRegClassFor(SrcVT);
@@ -264,9 +261,12 @@ FastISel::SelectInstructions(BasicBlock::iterator Begin,
           // Unhandled operand. Halt "fast" selection and bail.
           return false;
         
-        TII.copyRegToReg(*MBB, MBB->end(), ResultReg, Op0, DstClass, SrcClass);
-        ValueMap[I] = ResultReg;
+        bool InsertedCopy = TII.copyRegToReg(*MBB, MBB->end(), ResultReg,
+                                             Op0, DstClass, SrcClass);
+        if (!InsertedCopy)
+          return I;
         
+        ValueMap[I] = ResultReg;
         break;
       } else
         // TODO: Casting a non-integral constant?

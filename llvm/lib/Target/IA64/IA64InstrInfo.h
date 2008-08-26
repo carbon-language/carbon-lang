@@ -40,7 +40,7 @@ public:
   virtual unsigned InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
                                 MachineBasicBlock *FBB,
                             const SmallVectorImpl<MachineOperand> &Cond) const;
-  virtual void copyRegToReg(MachineBasicBlock &MBB,
+  virtual bool copyRegToReg(MachineBasicBlock &MBB,
                             MachineBasicBlock::iterator MI,
                             unsigned DestReg, unsigned SrcReg,
                             const TargetRegisterClass *DestRC,

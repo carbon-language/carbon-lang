@@ -109,14 +109,14 @@ SparcInstrInfo::InsertBranch(MachineBasicBlock &MBB,MachineBasicBlock *TBB,
   return 1;
 }
 
-void SparcInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
+bool SparcInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
                                      MachineBasicBlock::iterator I,
                                      unsigned DestReg, unsigned SrcReg,
                                      const TargetRegisterClass *DestRC,
                                      const TargetRegisterClass *SrcRC) const {
   if (DestRC != SrcRC) {
-    cerr << "Not yet supported!";
-    abort();
+    // Not yet supported!
+    return false;
   }
 
   if (DestRC == SP::IntRegsRegisterClass)
@@ -127,7 +127,10 @@ void SparcInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
     BuildMI(MBB, I, get(Subtarget.isV9() ? SP::FMOVD : SP::FpMOVD),DestReg)
       .addReg(SrcReg);
   else
-    assert (0 && "Can't copy this register");
+    // Can't copy this register
+    return false;
+
+  return true;
 }
 
 void SparcInstrInfo::

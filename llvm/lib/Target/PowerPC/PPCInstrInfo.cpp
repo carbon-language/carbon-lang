@@ -315,14 +315,14 @@ PPCInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
   return 2;
 }
 
-void PPCInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
+bool PPCInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
                                    MachineBasicBlock::iterator MI,
                                    unsigned DestReg, unsigned SrcReg,
                                    const TargetRegisterClass *DestRC,
                                    const TargetRegisterClass *SrcRC) const {
   if (DestRC != SrcRC) {
-    cerr << "Not yet supported!";
-    abort();
+    // Not yet supported!
+    return false;
   }
 
   if (DestRC == PPC::GPRCRegisterClass) {
@@ -340,9 +340,11 @@ void PPCInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
   } else if (DestRC == PPC::CRBITRCRegisterClass) {
     BuildMI(MBB, MI, get(PPC::CROR), DestReg).addReg(SrcReg).addReg(SrcReg);
   } else {
-    cerr << "Attempt to copy register that is not GPR or FPR";
-    abort();
+    // Attempt to copy register that is not GPR or FPR
+    return false;
   }
+  
+  return true;
 }
 
 bool

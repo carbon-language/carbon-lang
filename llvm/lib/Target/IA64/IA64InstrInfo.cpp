@@ -57,14 +57,14 @@ IA64InstrInfo::InsertBranch(MachineBasicBlock &MBB,MachineBasicBlock *TBB,
   return 1;
 }
 
-void IA64InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
+bool IA64InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
                                    MachineBasicBlock::iterator MI,
                                    unsigned DestReg, unsigned SrcReg,
                                    const TargetRegisterClass *DestRC,
                                    const TargetRegisterClass *SrcRC) const {
   if (DestRC != SrcRC) {
-    cerr << "Not yet supported!";
-    abort();
+    // Not yet supported!
+    return false;
   }
 
   if(DestRC == IA64::PRRegisterClass ) // if a bool, we use pseudocode
@@ -73,6 +73,8 @@ void IA64InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
       .addReg(IA64::r0).addReg(IA64::r0).addReg(SrcReg);
   else // otherwise, MOV works (for both gen. regs and FP regs)
     BuildMI(MBB, MI, get(IA64::MOV), DestReg).addReg(SrcReg);
+  
+  return true;
 }
 
 void IA64InstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,

@@ -180,7 +180,7 @@ SPUInstrInfo::isStoreToStackSlot(MachineInstr *MI, int &FrameIndex) const {
   return 0;
 }
 
-void SPUInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
+bool SPUInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
                                    MachineBasicBlock::iterator MI,
                                    unsigned DestReg, unsigned SrcReg,
                                    const TargetRegisterClass *DestRC,
@@ -218,9 +218,11 @@ void SPUInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
     BuildMI(MBB, MI, get(SPU::ORv4i32), DestReg).addReg(SrcReg)
       .addReg(SrcReg);
   } else {
-    cerr << "Attempt to copy unknown/unsupported register class!\n";
-    abort();
+    // Attempt to copy unknown/unsupported register class!
+    return false;
   }
+  
+  return true;
 }
 
 void

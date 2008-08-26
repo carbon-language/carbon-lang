@@ -1592,7 +1592,7 @@ X86InstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
   return 2;
 }
 
-void X86InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
+bool X86InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
                                 MachineBasicBlock::iterator MI,
                                 unsigned DestReg, unsigned SrcReg,
                                 const TargetRegisterClass *DestRC,
@@ -1626,11 +1626,10 @@ void X86InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
     } else if (DestRC == &X86::VR64RegClass) {
       Opc = X86::MMX_MOVQ64rr;
     } else {
-      assert(0 && "Unknown regclass");
-      abort();
+      return false;
     }
     BuildMI(MBB, MI, get(Opc), DestReg).addReg(SrcReg);
-    return;
+    return true;
   }
   
   // Moving EFLAGS to / from another register requires a push and a pop.
@@ -1639,30 +1638,31 @@ void X86InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
     if (DestRC == &X86::GR64RegClass) {
       BuildMI(MBB, MI, get(X86::PUSHFQ));
       BuildMI(MBB, MI, get(X86::POP64r), DestReg);
-      return;
+      return true;
     } else if (DestRC == &X86::GR32RegClass) {
       BuildMI(MBB, MI, get(X86::PUSHFD));
       BuildMI(MBB, MI, get(X86::POP32r), DestReg);
-      return;
+      return true;
     }
   } else if (DestRC == &X86::CCRRegClass) {
     assert(DestReg == X86::EFLAGS);
     if (SrcRC == &X86::GR64RegClass) {
       BuildMI(MBB, MI, get(X86::PUSH64r)).addReg(SrcReg);
       BuildMI(MBB, MI, get(X86::POPFQ));
-      return;
+      return true;
     } else if (SrcRC == &X86::GR32RegClass) {
       BuildMI(MBB, MI, get(X86::PUSH32r)).addReg(SrcReg);
       BuildMI(MBB, MI, get(X86::POPFD));
-      return;
+      return true;
     }
   }
   
   // Moving from ST(0) turns into FpGET_ST0_32 etc.
   if (SrcRC == &X86::RSTRegClass) {
     // Copying from ST(0)/ST(1).
-    assert((SrcReg == X86::ST0 || SrcReg == X86::ST1) &&
-           "Can only copy from ST(0)/ST(1) right now");
+    if (SrcReg != X86::ST0 && SrcReg != X86::ST1)
+      // Can only copy from ST(0)/ST(1) right now
+      return false;
     bool isST0 = SrcReg == X86::ST0;
     unsigned Opc;
     if (DestRC == &X86::RFP32RegClass)
@@ -1674,13 +1674,15 @@ void X86InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
       Opc = isST0 ? X86::FpGET_ST0_80 : X86::FpGET_ST1_80;
     }
     BuildMI(MBB, MI, get(Opc), DestReg);
-    return;
+    return true;
   }
 
   // Moving to ST(0) turns into FpSET_ST0_32 etc.
   if (DestRC == &X86::RSTRegClass) {
     // Copying to ST(0).  FIXME: handle ST(1) also
-    assert(DestReg == X86::ST0 && "Can only copy to TOS right now");
+    if (DestReg != X86::ST0)
+      // Can only copy to TOS right now
+      return false;
     unsigned Opc;
     if (SrcRC == &X86::RFP32RegClass)
       Opc = X86::FpSET_ST0_32;
@@ -1691,11 +1693,11 @@ void X86InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
       Opc = X86::FpSET_ST0_80;
     }
     BuildMI(MBB, MI, get(Opc)).addReg(SrcReg);
-    return;
+    return true;
   }
   
-  assert(0 && "Not yet supported!");
-  abort();
+  // Not yet supported!
+  return false;
 }
 
 static unsigned getStoreRegOpcode(const TargetRegisterClass *RC,
