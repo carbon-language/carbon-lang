@@ -293,10 +293,6 @@ FastISel::SelectInstructions(BasicBlock::iterator Begin,
             !TLI.isTypeLegal(SrcVT) || !TLI.isTypeLegal(DstVT))
           // Unhandled type. Halt "fast" selection and bail.
           return I;
-        if (TLI.getOperationAction(ISD::FP_TO_SINT, SrcVT) !=   
-            TargetLowering::Legal)
-          // Unhandled opcode on this type.  Halt "fast" seleciton and bail.
-          return I;
         
         unsigned InputReg = ValueMap[I->getOperand(0)];
         if (!InputReg)
@@ -317,6 +313,34 @@ FastISel::SelectInstructions(BasicBlock::iterator Begin,
         // or attempt constant folding.
         return I;
 
+    case Instruction::SIToFP:
+      if (!isa<ConstantInt>(I->getOperand(0))) {
+        MVT SrcVT = MVT::getMVT(I->getOperand(0)->getType());
+        MVT DstVT = MVT::getMVT(I->getType());
+        
+        if (SrcVT == MVT::Other || !SrcVT.isSimple() ||
+            DstVT == MVT::Other || !DstVT.isSimple() ||
+            !TLI.isTypeLegal(SrcVT) || !TLI.isTypeLegal(DstVT))
+          // Unhandled type. Halt "fast" selection and bail.
+          return I;
+        
+        unsigned InputReg = ValueMap[I->getOperand(0)];
+        if (!InputReg)
+          // Unhandled operan.  Halt "fast" selection and bail.
+          return I;
+        
+        unsigned ResultReg = FastEmit_r(SrcVT.getSimpleVT(),
+                                        DstVT.getSimpleVT(),
+                                        ISD::SINT_TO_FP,
+                                        InputReg);
+        if (!ResultReg)
+          return I;
+        
+        ValueMap[I] = ResultReg;
+        break;
+      } else
+        // TODO: Materialize constant and convert to FP.
+        return I;
     default:
       // Unhandled instruction. Halt "fast" selection and bail.
       return I;
