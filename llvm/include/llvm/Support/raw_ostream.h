@@ -220,7 +220,7 @@ public:
   ~raw_string_ostream();
   
   /// str - Flushes the stream contents to the target string and returns
-  ///  the strings reference.
+  ///  the string's reference.
   std::string& str() {
     flush();
     return OS;
