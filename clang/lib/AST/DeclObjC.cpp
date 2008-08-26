@@ -433,6 +433,10 @@ void ObjCInterfaceDecl::addPropertyMethods(
   }
   property->setGetterMethodDecl(GetterDecl);
 
+  // Skip setter if property is read-only.
+  if (property->isReadOnly())
+    return;
+
   // Find the default setter and if one not found, add one.
   ObjCMethodDecl *SetterDecl = getInstanceMethod(property->getSetterName());
   if (!SetterDecl) {

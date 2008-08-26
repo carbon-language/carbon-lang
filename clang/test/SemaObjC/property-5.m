@@ -29,3 +29,6 @@
 @property(readonly) ConstData *p_base; // expected-warning {{property type 'ConstData *' does not match property type inherited from 'Data'}}
 @end
 
+void foo(Base *b, id x) {
+  [ b setRef: x ]; // expected-warning {{method '-setRef:' not found}}
+}

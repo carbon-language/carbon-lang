@@ -1205,6 +1205,10 @@ public:
   void setPropertyAttributes(PropertyAttributeKind PRVal) { 
     PropertyAttributes |= PRVal;
   }
+
+  bool isReadOnly() const {
+    return (PropertyAttributes & OBJC_PR_readonly);
+  }
   
   Selector getGetterName() const { return GetterName; }
   void setGetterName(Selector Sel) { GetterName = Sel; }
