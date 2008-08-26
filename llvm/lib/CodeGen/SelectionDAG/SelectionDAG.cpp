@@ -523,7 +523,7 @@ void SelectionDAG::RemoveDeadNodes(SmallVectorImpl<SDNode *> &DeadNodes,
     N->NumOperands = 0;
     
     // Finally, remove N itself.
-    AllNodes.remove(N);
+    NodeAllocator.Deallocate(AllNodes.remove(N));
   }
 }
 
@@ -551,7 +551,8 @@ void SelectionDAG::DeleteNodeNotInCSEMaps(SDNode *N) {
   if (N->OperandsNeedDelete)
     delete[] N->OperandList;
   
-  AllNodes.remove(N);
+  assert(N != AllNodes.begin());
+  NodeAllocator.Deallocate(AllNodes.remove(N));
 }
 
 /// RemoveNodeFromCSEMaps - Take the specified node out of the CSE map that
@@ -777,11 +778,14 @@ SelectionDAG::~SelectionDAG() {
 }
 
 void SelectionDAG::allnodes_clear() {
+  assert(&*AllNodes.begin() == &EntryNode);
+  AllNodes.remove(AllNodes.begin());
   while (!AllNodes.empty()) {
     SDNode *N = AllNodes.remove(AllNodes.begin());
     N->SetNextInBucket(0);
     if (N->OperandsNeedDelete)
       delete [] N->OperandList;
+    NodeAllocator.Deallocate(N);
   }
 }
 
