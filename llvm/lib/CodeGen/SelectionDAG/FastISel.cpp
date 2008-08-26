@@ -251,19 +251,30 @@ FastISel::SelectInstructions(BasicBlock::iterator Begin,
           // Unhandled type. Halt "fast" selection and bail.
           return I;
         
-        // Otherwise, insert a register-to-register copy.
-        TargetRegisterClass* SrcClass = TLI.getRegClassFor(SrcVT);
-        TargetRegisterClass* DstClass = TLI.getRegClassFor(DstVT);
         unsigned Op0 = ValueMap[I->getOperand(0)];
-        unsigned ResultReg = createResultReg(DstClass);
-        
         if (Op0 == 0)
           // Unhandled operand. Halt "fast" selection and bail.
           return false;
         
-        bool InsertedCopy = TII.copyRegToReg(*MBB, MBB->end(), ResultReg,
-                                             Op0, DstClass, SrcClass);
-        if (!InsertedCopy)
+        // First, try to perform the bitcast by inserting a reg-reg copy.
+        unsigned ResultReg = 0;
+        if (SrcVT.getSimpleVT() == DstVT.getSimpleVT()) {
+          TargetRegisterClass* SrcClass = TLI.getRegClassFor(SrcVT);
+          TargetRegisterClass* DstClass = TLI.getRegClassFor(DstVT);
+          ResultReg = createResultReg(DstClass);
+          
+          bool InsertedCopy = TII.copyRegToReg(*MBB, MBB->end(), ResultReg,
+                                               Op0, DstClass, SrcClass);
+          if (!InsertedCopy)
+            ResultReg = 0;
+        }
+        
+        // If the reg-reg copy failed, select a BIT_CONVERT opcode.
+        if (!ResultReg)
+          ResultReg = FastEmit_r(SrcVT.getSimpleVT(), DstVT.getSimpleVT(),
+                                 ISD::BIT_CONVERT, Op0);
+        
+        if (!ResultReg)
           return I;
         
         ValueMap[I] = ResultReg;
