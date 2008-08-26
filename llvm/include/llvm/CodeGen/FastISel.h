@@ -170,6 +170,14 @@ private:
 
   bool SelectBitCast(Instruction *I,
                      DenseMap<const Value*, unsigned> &ValueMap);
+  
+  bool SelectCast(Instruction *I, ISD::NodeType Opcode,
+                  DenseMap<const Value*, unsigned> &ValueMap);
+  
+  bool SelectConstantCast(Instruction *I, ISD::NodeType Opcode,
+                          DenseMap<const Value*, unsigned> &ValueMap);
+  bool SelectConstantFPCast(Instruction *I, ISD::NodeType Opcode,
+                            DenseMap<const Value*, unsigned> &ValueMap);
 };
 
 }

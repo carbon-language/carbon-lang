@@ -149,6 +149,70 @@ bool FastISel::SelectGetElementPtr(Instruction *I,
   return true;
 }
 
+bool FastISel::SelectCast(Instruction *I, ISD::NodeType Opcode,
+                          DenseMap<const Value*, unsigned> &ValueMap) {
+  MVT SrcVT = MVT::getMVT(I->getOperand(0)->getType());
+  MVT DstVT = MVT::getMVT(I->getType());
+    
+  if (SrcVT == MVT::Other || !SrcVT.isSimple() ||
+      DstVT == MVT::Other || !DstVT.isSimple() ||
+      !TLI.isTypeLegal(SrcVT) || !TLI.isTypeLegal(DstVT))
+    // Unhandled type. Halt "fast" selection and bail.
+    return false;
+    
+  unsigned InputReg = ValueMap[I->getOperand(0)];
+  if (!InputReg)
+    // Unhandled operand.  Halt "fast" selection and bail.
+    return false;
+    
+  unsigned ResultReg = FastEmit_r(SrcVT.getSimpleVT(),
+                                  DstVT.getSimpleVT(),
+                                  Opcode,
+                                  InputReg);
+  if (!ResultReg)
+    return false;
+    
+  ValueMap[I] = ResultReg;
+  return true;
+}
+
+bool FastISel::SelectConstantCast(Instruction* I, ISD::NodeType Opcode,
+                                  DenseMap<const Value*, unsigned> &ValueMap) {
+  // Materialize constant and convert.
+  ConstantInt* CI = cast<ConstantInt>(I->getOperand(0));
+  MVT SrcVT = MVT::getMVT(CI->getType());
+  MVT DstVT = MVT::getMVT(I->getType());
+  
+  if (SrcVT == MVT::Other || !SrcVT.isSimple() ||
+      DstVT == MVT::Other || !DstVT.isSimple() ||
+      !TLI.isTypeLegal(SrcVT) || !TLI.isTypeLegal(DstVT))
+    // Unhandled type. Halt "fast" selection and bail.
+    return false;
+  
+  unsigned ResultReg1 = FastEmit_i(SrcVT.getSimpleVT(),
+                                   SrcVT.getSimpleVT(),
+                                   ISD::Constant, CI->getZExtValue());
+  if (!ResultReg1)
+    return false;
+  
+  unsigned ResultReg2 = FastEmit_r(SrcVT.getSimpleVT(),
+                                   DstVT.getSimpleVT(),
+                                   Opcode,
+                                   ResultReg1);
+  if (!ResultReg2)
+    return false;
+  
+  ValueMap[I] = ResultReg2;
+  return true;
+}
+
+bool FastISel::SelectConstantFPCast(Instruction* I, ISD::NodeType Opcode,
+                                  DenseMap<const Value*, unsigned> &ValueMap) {
+  // TODO: Implement casting of FP constants by materialization
+  // followed by conversion.
+  return false;
+}
+
 bool FastISel::SelectBitCast(Instruction *I,
                              DenseMap<const Value*, unsigned> &ValueMap) {
   // BitCast consists of either an immediate to register move
@@ -297,122 +361,32 @@ FastISel::SelectInstructions(BasicBlock::iterator Begin,
       break;
       
     case Instruction::BitCast:
-      if (!SelectBitCast(I, ValueMap)) return I;
-      break;
+      if (!SelectBitCast(I, ValueMap)) return I; break;
 
     case Instruction::FPToSI:
       if (!isa<ConstantFP>(I->getOperand(0))) {
-        MVT SrcVT = MVT::getMVT(I->getOperand(0)->getType());
-        MVT DstVT = MVT::getMVT(I->getType());
-        
-        if (SrcVT == MVT::Other || !SrcVT.isSimple() ||
-            DstVT == MVT::Other || !DstVT.isSimple() ||
-            !TLI.isTypeLegal(SrcVT) || !TLI.isTypeLegal(DstVT))
-          // Unhandled type. Halt "fast" selection and bail.
-          return I;
-        
-        unsigned InputReg = ValueMap[I->getOperand(0)];
-        if (!InputReg)
-          // Unhandled operand.  Halt "fast" selection and bail.
-          return I;
-        
-        unsigned ResultReg = FastEmit_r(SrcVT.getSimpleVT(),
-                                        DstVT.getSimpleVT(),
-                                        ISD::FP_TO_SINT,
-                                        InputReg);
-        if (!ResultReg)
-          return I;
-        
-        ValueMap[I] = ResultReg;
-        break;
+        if (!SelectCast(I, ISD::FP_TO_SINT, ValueMap)) return I; 
       } else
-        // TODO: Materialize the FP constant and then convert,
-        // or attempt constant folding.
-        return I;
-
+        if (!SelectConstantFPCast(I, ISD::FP_TO_SINT, ValueMap)) return I;
+      break;
     case Instruction::ZExt:
       if (!isa<ConstantInt>(I->getOperand(0))) {
-        MVT SrcVT = MVT::getMVT(I->getOperand(0)->getType());
-        MVT DstVT = MVT::getMVT(I->getType());
-        
-        if (SrcVT == MVT::Other || !SrcVT.isSimple() ||
-            DstVT == MVT::Other || !DstVT.isSimple() ||
-            !TLI.isTypeLegal(SrcVT) || !TLI.isTypeLegal(DstVT))
-          // Unhandled type. Halt "fast" selection and bail.
-          return I;
-        
-        unsigned InputReg = ValueMap[I->getOperand(0)];
-        if (!InputReg)
-          // Unhandled operand.  Halt "fast" selection and bail.
-          return I;
-        
-        unsigned ResultReg = FastEmit_r(SrcVT.getSimpleVT(),
-                                        DstVT.getSimpleVT(),
-                                        ISD::ZERO_EXTEND,
-                                        InputReg);
-        if (!ResultReg)
-          return I;
-        
-        ValueMap[I] = ResultReg;
-        break;
+        if (!SelectCast(I, ISD::ZERO_EXTEND, ValueMap)) return I;
       } else
-        // TODO: Support constant operands
-        return I;
-
+        if (!SelectConstantCast(I, ISD::ZERO_EXTEND, ValueMap)) return I;
+      break;
+    case Instruction::SExt:
+      if (!isa<ConstantInt>(I->getOperand(0))) {
+        if (!SelectCast(I, ISD::SIGN_EXTEND, ValueMap)) return I;
+      } else
+        if (!SelectConstantCast(I, ISD::SIGN_EXTEND, ValueMap)) return I;
+      break;
     case Instruction::SIToFP:
       if (!isa<ConstantInt>(I->getOperand(0))) {
-        MVT SrcVT = MVT::getMVT(I->getOperand(0)->getType());
-        MVT DstVT = MVT::getMVT(I->getType());
-        
-        if (SrcVT == MVT::Other || !SrcVT.isSimple() ||
-            DstVT == MVT::Other || !DstVT.isSimple() ||
-            !TLI.isTypeLegal(SrcVT) || !TLI.isTypeLegal(DstVT))
-          // Unhandled type. Halt "fast" selection and bail.
-          return I;
-        
-        unsigned InputReg = ValueMap[I->getOperand(0)];
-        if (!InputReg)
-          // Unhandled operan.  Halt "fast" selection and bail.
-          return I;
-        
-        unsigned ResultReg = FastEmit_r(SrcVT.getSimpleVT(),
-                                        DstVT.getSimpleVT(),
-                                        ISD::SINT_TO_FP,
-                                        InputReg);
-        if (!ResultReg)
-          return I;
-        
-        ValueMap[I] = ResultReg;
-        break;
-      } else {
-        // Materialize constant and convert to FP.
-        // TODO: Attempt constant folding?
-        ConstantInt* CI = cast<ConstantInt>(I->getOperand(0));
-        MVT SrcVT = MVT::getMVT(CI->getType());
-        MVT DstVT = MVT::getMVT(I->getType());
-        
-        if (SrcVT == MVT::Other || !SrcVT.isSimple() ||
-            DstVT == MVT::Other || !DstVT.isSimple() ||
-            !TLI.isTypeLegal(SrcVT) || !TLI.isTypeLegal(DstVT))
-          // Unhandled type. Halt "fast" selection and bail.
-          return I;
-        
-        unsigned ResultReg1 = FastEmit_i(SrcVT.getSimpleVT(),
-                                         SrcVT.getSimpleVT(),
-                                         ISD::Constant, CI->getZExtValue());
-        if (!ResultReg1)
-          return I;
-        
-        unsigned ResultReg2 = FastEmit_r(SrcVT.getSimpleVT(),
-                                         DstVT.getSimpleVT(),
-                                         ISD::SINT_TO_FP,
-                                         ResultReg1);
-        if (!ResultReg2)
-          return I;
-        
-        ValueMap[I] = ResultReg2;
-        break;
-      }
+        if (!SelectCast(I, ISD::SINT_TO_FP, ValueMap)) return I;
+      } else
+        if (!SelectConstantCast(I, ISD::SINT_TO_FP, ValueMap)) return I;
+      break;
 
     default:
       // Unhandled instruction. Halt "fast" selection and bail.
