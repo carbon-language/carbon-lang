@@ -219,6 +219,13 @@ public:
   raw_string_ostream(std::string &O) : OS(O) {}
   ~raw_string_ostream();
   
+  /// str - Flushes the stream contents to the target string and returns
+  ///  the strings reference.
+  std::string& str() {
+    flush();
+    return OS;
+  }
+  
   /// flush_impl - The is the piece of the class that is implemented by
   /// subclasses.  This outputs the currently buffered data and resets the
   /// buffer to empty.
