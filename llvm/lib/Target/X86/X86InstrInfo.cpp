@@ -1634,7 +1634,8 @@ bool X86InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
   
   // Moving EFLAGS to / from another register requires a push and a pop.
   if (SrcRC == &X86::CCRRegClass) {
-    assert(SrcReg == X86::EFLAGS);
+    if (SrcReg != X86::EFLAGS)
+      return false;
     if (DestRC == &X86::GR64RegClass) {
       BuildMI(MBB, MI, get(X86::PUSHFQ));
       BuildMI(MBB, MI, get(X86::POP64r), DestReg);
@@ -1645,7 +1646,8 @@ bool X86InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
       return true;
     }
   } else if (DestRC == &X86::CCRRegClass) {
-    assert(DestReg == X86::EFLAGS);
+    if (DestReg != X86::EFLAGS)
+      return false;
     if (SrcRC == &X86::GR64RegClass) {
       BuildMI(MBB, MI, get(X86::PUSH64r)).addReg(SrcReg);
       BuildMI(MBB, MI, get(X86::POPFQ));
@@ -1670,7 +1672,8 @@ bool X86InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
     else if (DestRC == &X86::RFP64RegClass)
       Opc = isST0 ? X86::FpGET_ST0_64 : X86::FpGET_ST1_64;
     else {
-      assert(DestRC == &X86::RFP80RegClass);
+      if (DestRC != &X86::RFP80RegClass)
+        return false;
       Opc = isST0 ? X86::FpGET_ST0_80 : X86::FpGET_ST1_80;
     }
     BuildMI(MBB, MI, get(Opc), DestReg);
@@ -1689,7 +1692,8 @@ bool X86InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
     else if (SrcRC == &X86::RFP64RegClass)
       Opc = X86::FpSET_ST0_64;
     else {
-      assert(SrcRC == &X86::RFP80RegClass);
+      if (SrcRC != &X86::RFP80RegClass)
+        return false;
       Opc = X86::FpSET_ST0_80;
     }
     BuildMI(MBB, MI, get(Opc)).addReg(SrcReg);
