@@ -410,6 +410,12 @@ void ObjCInterfaceDecl::addPropertyMethods(
        ASTContext &Context,
        ObjCPropertyDecl *property,
        llvm::SmallVector<ObjCMethodDecl*, 32> &insMethods) {
+  // FIXME: The synthesized property we set here is misleading. We
+  // almost always synthesize these methods unless the user explicitly
+  // provided prototypes (which is odd, but allowed). Sema should be
+  // typechecking that the declarations jive in that situation (which
+  // it is not currently).
+
   // Find the default getter and if one not found, add one.
   ObjCMethodDecl *GetterDecl = getInstanceMethod(property->getGetterName());
   if (!GetterDecl) {
@@ -626,20 +632,20 @@ ObjCMethodDecl *ObjCInterfaceDecl::lookupClassMethod(Selector Sel) {
   return NULL;
 }
 
-/// lookupInstanceMethod - This method returns an instance method by looking in
-/// the class implementation. Unlike interfaces, we don't look outside the
-/// implementation.
-ObjCMethodDecl *ObjCImplementationDecl::getInstanceMethod(Selector Sel) {
+/// getInstanceMethod - This method returns an instance method by
+/// looking in the class implementation. Unlike interfaces, we don't
+/// look outside the implementation.
+ObjCMethodDecl *ObjCImplementationDecl::getInstanceMethod(Selector Sel) const {
   for (instmeth_iterator I = instmeth_begin(), E = instmeth_end(); I != E; ++I)
     if ((*I)->getSelector() == Sel)
       return *I;
   return NULL;
 }
 
-/// lookupClassMethod - This method returns a class method by looking in
-/// the class implementation. Unlike interfaces, we don't look outside the
-/// implementation.
-ObjCMethodDecl *ObjCImplementationDecl::getClassMethod(Selector Sel) {
+/// getClassMethod - This method returns a class method by looking in
+/// the class implementation. Unlike interfaces, we don't look outside
+/// the implementation.
+ObjCMethodDecl *ObjCImplementationDecl::getClassMethod(Selector Sel) const {
   for (classmeth_iterator I = classmeth_begin(), E = classmeth_end();
        I != E; ++I)
     if ((*I)->getSelector() == Sel)
@@ -650,7 +656,7 @@ ObjCMethodDecl *ObjCImplementationDecl::getClassMethod(Selector Sel) {
 // lookupInstanceMethod - This method returns an instance method by looking in
 // the class implementation. Unlike interfaces, we don't look outside the
 // implementation.
-ObjCMethodDecl *ObjCCategoryImplDecl::getInstanceMethod(Selector Sel) {
+ObjCMethodDecl *ObjCCategoryImplDecl::getInstanceMethod(Selector Sel) const {
   for (instmeth_iterator I = instmeth_begin(), E = instmeth_end(); I != E; ++I)
     if ((*I)->getSelector() == Sel)
       return *I;
@@ -660,7 +666,7 @@ ObjCMethodDecl *ObjCCategoryImplDecl::getInstanceMethod(Selector Sel) {
 // lookupClassMethod - This method returns an instance method by looking in
 // the class implementation. Unlike interfaces, we don't look outside the
 // implementation.
-ObjCMethodDecl *ObjCCategoryImplDecl::getClassMethod(Selector Sel) {
+ObjCMethodDecl *ObjCCategoryImplDecl::getClassMethod(Selector Sel) const {
   for (classmeth_iterator I = classmeth_begin(), E = classmeth_end();
        I != E; ++I)
     if ((*I)->getSelector() == Sel)

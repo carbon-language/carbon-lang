@@ -418,7 +418,7 @@ public:
 
                                                                            
   // Get the local instance method declared in this interface.
-  ObjCMethodDecl *getInstanceMethod(Selector Sel) {
+  ObjCMethodDecl *getInstanceMethod(Selector Sel) const {
     for (instmeth_iterator I = instmeth_begin(), E = instmeth_end(); 
          I != E; ++I) {
       if ((*I)->getSelector() == Sel)
@@ -427,7 +427,7 @@ public:
     return 0;
   }
   // Get the local class method declared in this interface.
-  ObjCMethodDecl *getClassMethod(Selector Sel) {
+  ObjCMethodDecl *getClassMethod(Selector Sel) const {
     for (classmeth_iterator I = classmeth_begin(), E = classmeth_end(); 
          I != E; ++I) {
       if ((*I)->getSelector() == Sel)
@@ -645,7 +645,7 @@ public:
   }
 
   // Get the local instance method declared in this interface.
-  ObjCMethodDecl *getInstanceMethod(Selector Sel) {
+  ObjCMethodDecl *getInstanceMethod(Selector Sel) const {
     for (instmeth_iterator I = instmeth_begin(), E = instmeth_end();
          I != E; ++I) {
       if ((*I)->getSelector() == Sel)
@@ -654,7 +654,7 @@ public:
     return 0;
   }
   // Get the local class method declared in this interface.
-  ObjCMethodDecl *getClassMethod(Selector Sel) {
+  ObjCMethodDecl *getClassMethod(Selector Sel) const {
     for (classmeth_iterator I = classmeth_begin(), E = classmeth_end(); 
          I != E; ++I) {
       if ((*I)->getSelector() == Sel)
@@ -884,7 +884,7 @@ public:
   }
 
   // Get the local instance method declared in this interface.
-  ObjCMethodDecl *getInstanceMethod(Selector Sel) {
+  ObjCMethodDecl *getInstanceMethod(Selector Sel) const {
     for (instmeth_iterator I = instmeth_begin(), E = instmeth_end(); 
          I != E; ++I) {
       if ((*I)->getSelector() == Sel)
@@ -893,7 +893,7 @@ public:
     return 0;
   }
   // Get the local class method declared in this interface.
-  ObjCMethodDecl *getClassMethod(Selector Sel) {
+  ObjCMethodDecl *getClassMethod(Selector Sel) const {
     for (classmeth_iterator I = classmeth_begin(), E = classmeth_end(); 
          I != E; ++I) {
       if ((*I)->getSelector() == Sel)
@@ -971,10 +971,10 @@ public:
     ClassMethods.push_back(method);
   }   
   // Get the instance method definition for this implementation.
-  ObjCMethodDecl *getInstanceMethod(Selector Sel);
+  ObjCMethodDecl *getInstanceMethod(Selector Sel) const;
   
   // Get the class method definition for this implementation.
-  ObjCMethodDecl *getClassMethod(Selector Sel);
+  ObjCMethodDecl *getClassMethod(Selector Sel) const;
   
   void addPropertyImplementation(ObjCPropertyImplDecl *property) {
     PropertyImplementations.push_back(property);
@@ -1114,10 +1114,10 @@ public:
   classmeth_iterator classmeth_end() const { return ClassMethods.end(); }
   
   // Get the instance method definition for this implementation.
-  ObjCMethodDecl *getInstanceMethod(Selector Sel);
+  ObjCMethodDecl *getInstanceMethod(Selector Sel) const;
   
   // Get the class method definition for this implementation.
-  ObjCMethodDecl *getClassMethod(Selector Sel);
+  ObjCMethodDecl *getClassMethod(Selector Sel) const;
   
   typedef ObjCIvarDecl * const *ivar_iterator;
   ivar_iterator ivar_begin() const { return Ivars; }
