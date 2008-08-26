@@ -862,6 +862,12 @@ bool GVN::processNonLocalLoad(LoadInst* L,
   DenseMap<BasicBlock*, Value*> deps;
   MD.getNonLocalDependency(L, deps);
   
+  // If we had to process more than one hundred blocks to find the
+  // dependencies, this load isn't worth worrying about.  Optimizing
+  // it will be too expensive.
+  if (deps.size() > 100)
+    return false;
+  
   DenseMap<BasicBlock*, Value*> repl;
   
   // Filter out useless results (non-locals, etc)
