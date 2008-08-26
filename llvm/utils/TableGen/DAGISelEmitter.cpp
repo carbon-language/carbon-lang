@@ -1653,17 +1653,7 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
     for (unsigned i = 0, e = PatternsOfOp.size(); i != e; ++i) {
       const PatternToMatch *Pat = PatternsOfOp[i];
       TreePatternNode *SrcPat = Pat->getSrcPattern();
-      MVT::SimpleValueType VT = SrcPat->getTypeNum(0);
-      std::map<MVT::SimpleValueType,
-               std::vector<const PatternToMatch*> >::iterator TI = 
-        PatternsByType.find(VT);
-      if (TI != PatternsByType.end())
-        TI->second.push_back(Pat);
-      else {
-        std::vector<const PatternToMatch*> PVec;
-        PVec.push_back(Pat);
-        PatternsByType.insert(std::make_pair(VT, PVec));
-      }
+      PatternsByType[SrcPat->getTypeNum(0)].push_back(Pat);
     }
 
     for (std::map<MVT::SimpleValueType,
