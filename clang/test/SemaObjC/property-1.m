@@ -22,7 +22,7 @@
 @synthesize name;	// OK! property with same name as an accessible ivar of same name
 @end
 
-@implementation I(CAT)
+@implementation I(CAT)  // expected-warning {{incomplete implementation}}, expected-warning {{method definition for 'd1' not found}}, // expected-warning {{method definition for 'setD1:' not found}} 
 @synthesize d1;		// expected-error {{@synthesize not allowed in a category's implementation}}
 @dynamic bad;		// expected-error {{property implementation must have its declaration in the category 'CAT'}}
 @end
