@@ -765,12 +765,16 @@ unsigned SelectionDAG::getMVTAlignment(MVT VT) const {
   return TLI.getTargetData()->getABITypeAlignment(Ty);
 }
 
-SelectionDAG::SelectionDAG(TargetLowering &tli, MachineFunction &mf,
-                           FunctionLoweringInfo &fli, MachineModuleInfo *mmi)
-  : TLI(tli), MF(mf), FLI(fli), MMI(mmi),
-    EntryNode(ISD::EntryToken, getVTList(MVT::Other)), 
+SelectionDAG::SelectionDAG(TargetLowering &tli, FunctionLoweringInfo &fli)
+  : TLI(tli), FLI(fli),
+    EntryNode(ISD::EntryToken, getVTList(MVT::Other)),
     Root(getEntryNode()) {
   AllNodes.push_back(&EntryNode);
+}
+
+void SelectionDAG::init(MachineFunction &mf, MachineModuleInfo *mmi) {
+  MF = &mf;
+  MMI = mmi;
 }
 
 SelectionDAG::~SelectionDAG() {
@@ -789,7 +793,7 @@ void SelectionDAG::allnodes_clear() {
   }
 }
 
-void SelectionDAG::reset() {
+void SelectionDAG::clear() {
   allnodes_clear();
   OperandAllocator.Reset();
   CSEMap.clear();

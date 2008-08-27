@@ -66,7 +66,7 @@ private:
 ///
 class SelectionDAG {
   TargetLowering &TLI;
-  MachineFunction &MF;
+  MachineFunction *MF;
   FunctionLoweringInfo &FLI;
   MachineModuleInfo *MMI;
 
@@ -103,16 +103,20 @@ class SelectionDAG {
   void VerifyNode(SDNode *N);
 
 public:
-  SelectionDAG(TargetLowering &tli, MachineFunction &mf, 
-               FunctionLoweringInfo &fli, MachineModuleInfo *mmi);
+  SelectionDAG(TargetLowering &tli, FunctionLoweringInfo &fli);
   ~SelectionDAG();
 
-  /// reset - Clear state and free memory necessary to make this
+  /// init - Prepare this SelectionDAG to process code in the given
+  /// MachineFunction.
+  ///
+  void init(MachineFunction &mf, MachineModuleInfo *mmi);
+
+  /// clear - Clear state and free memory necessary to make this
   /// SelectionDAG ready to process a new block.
   ///
-  void reset();
+  void clear();
 
-  MachineFunction &getMachineFunction() const { return MF; }
+  MachineFunction &getMachineFunction() const { return *MF; }
   const TargetMachine &getTarget() const;
   TargetLowering &getTargetLoweringInfo() const { return TLI; }
   FunctionLoweringInfo &getFunctionLoweringInfo() const { return FLI; }

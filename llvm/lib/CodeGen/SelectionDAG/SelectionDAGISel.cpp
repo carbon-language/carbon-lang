@@ -313,11 +313,16 @@ namespace llvm {
   class FunctionLoweringInfo {
   public:
     TargetLowering &TLI;
-    Function &Fn;
-    MachineFunction &MF;
-    MachineRegisterInfo &RegInfo;
+    Function *Fn;
+    MachineFunction *MF;
+    MachineRegisterInfo *RegInfo;
 
-    FunctionLoweringInfo(TargetLowering &TLI, Function &Fn,MachineFunction &MF);
+    explicit FunctionLoweringInfo(TargetLowering &TLI);
+
+    /// set - Initialize this FunctionLoweringInfo with the given Function
+    /// and its associated MachineFunction.
+    ///
+    void set(Function &Fn, MachineFunction &MF);
 
     /// MBBMap - A mapping from LLVM basic blocks to their machine code entry.
     DenseMap<const BasicBlock*, MachineBasicBlock *> MBBMap;
@@ -338,7 +343,7 @@ namespace llvm {
 #endif
 
     unsigned MakeReg(MVT VT) {
-      return RegInfo.createVirtualRegister(TLI.getRegClassFor(VT));
+      return RegInfo->createVirtualRegister(TLI.getRegClassFor(VT));
     }
     
     /// isExportedInst - Return true if the specified value is an instruction
@@ -364,6 +369,20 @@ namespace llvm {
     /// LiveOutRegInfo - Information about live out vregs, indexed by their
     /// register number offset by 'FirstVirtualRegister'.
     std::vector<LiveOutInfo> LiveOutRegInfo;
+
+    /// clear - Clear out all the function-specific state. This returns this
+    /// FunctionLoweringInfo to an empty state, ready to be used for a
+    /// different function.
+    void clear() {
+      MBBMap.clear();
+      ValueMap.clear();
+      StaticAllocaMap.clear();
+#ifndef NDEBUG
+      CatchInfoLost.clear();
+      CatchInfoFound.clear();
+#endif
+      LiveOutRegInfo.clear();
+    }
   };
 }
 
@@ -406,13 +425,18 @@ static bool isOnlyUsedInEntryBlock(Argument *A) {
   return true;
 }
 
-FunctionLoweringInfo::FunctionLoweringInfo(TargetLowering &tli,
-                                           Function &fn, MachineFunction &mf)
-    : TLI(tli), Fn(fn), MF(mf), RegInfo(MF.getRegInfo()) {
+FunctionLoweringInfo::FunctionLoweringInfo(TargetLowering &tli)
+  : TLI(tli) {
+}
+
+void FunctionLoweringInfo::set(Function &fn, MachineFunction &mf) {
+   Fn = &fn;
+   MF = &mf;
+   RegInfo = &MF->getRegInfo();
 
   // Create a vreg for each argument register that is not dead and is used
   // outside of the entry block for the function.
-  for (Function::arg_iterator AI = Fn.arg_begin(), E = Fn.arg_end();
+  for (Function::arg_iterator AI = Fn->arg_begin(), E = Fn->arg_end();
        AI != E; ++AI)
     if (!isOnlyUsedInEntryBlock(AI))
       InitializeRegForValue(AI);
@@ -420,7 +444,7 @@ FunctionLoweringInfo::FunctionLoweringInfo(TargetLowering &tli,
   // Initialize the mapping of values to registers.  This is only set up for
   // instruction values that are used outside of the block that defines
   // them.
-  Function::iterator BB = Fn.begin(), EB = Fn.end();
+  Function::iterator BB = Fn->begin(), EB = Fn->end();
   for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
     if (AllocaInst *AI = dyn_cast<AllocaInst>(I))
       if (ConstantInt *CUI = dyn_cast<ConstantInt>(AI->getArraySize())) {
@@ -433,7 +457,7 @@ FunctionLoweringInfo::FunctionLoweringInfo(TargetLowering &tli,
         TySize *= CUI->getZExtValue();   // Get total allocated size.
         if (TySize == 0) TySize = 1; // Don't create zero-sized stack objects.
         StaticAllocaMap[AI] =
-          MF.getFrameInfo()->CreateStackObject(TySize, Align);
+          MF->getFrameInfo()->CreateStackObject(TySize, Align);
       }
 
   for (; BB != EB; ++BB)
@@ -446,10 +470,10 @@ FunctionLoweringInfo::FunctionLoweringInfo(TargetLowering &tli,
   // Create an initial MachineBasicBlock for each LLVM BasicBlock in F.  This
   // also creates the initial PHI MachineInstrs, though none of the input
   // operands are populated.
-  for (BB = Fn.begin(), EB = Fn.end(); BB != EB; ++BB) {
+  for (BB = Fn->begin(), EB = Fn->end(); BB != EB; ++BB) {
     MachineBasicBlock *MBB = mf.CreateMachineBasicBlock(BB);
     MBBMap[BB] = MBB;
-    MF.push_back(MBB);
+    MF->push_back(MBB);
 
     // Create Machine PHI nodes for LLVM PHI nodes, lowering them as
     // appropriate.
@@ -499,6 +523,84 @@ unsigned FunctionLoweringInfo::CreateRegForValue(const Value *V) {
   return FirstReg;
 }
 
+namespace {
+
+/// CaseBlock - This structure is used to communicate between SDLowering and
+/// SDISel for the code generation of additional basic blocks needed by multi-
+/// case switch statements.
+struct CaseBlock {
+  CaseBlock(ISD::CondCode cc, Value *cmplhs, Value *cmprhs, Value *cmpmiddle,
+            MachineBasicBlock *truebb, MachineBasicBlock *falsebb,
+            MachineBasicBlock *me)
+    : CC(cc), CmpLHS(cmplhs), CmpMHS(cmpmiddle), CmpRHS(cmprhs),
+      TrueBB(truebb), FalseBB(falsebb), ThisBB(me) {}
+  // CC - the condition code to use for the case block's setcc node
+  ISD::CondCode CC;
+  // CmpLHS/CmpRHS/CmpMHS - The LHS/MHS/RHS of the comparison to emit.
+  // Emit by default LHS op RHS. MHS is used for range comparisons:
+  // If MHS is not null: (LHS <= MHS) and (MHS <= RHS).
+  Value *CmpLHS, *CmpMHS, *CmpRHS;
+  // TrueBB/FalseBB - the block to branch to if the setcc is true/false.
+  MachineBasicBlock *TrueBB, *FalseBB;
+  // ThisBB - the block into which to emit the code for the setcc and branches
+  MachineBasicBlock *ThisBB;
+};
+struct JumpTable {
+  JumpTable(unsigned R, unsigned J, MachineBasicBlock *M,
+            MachineBasicBlock *D): Reg(R), JTI(J), MBB(M), Default(D) {}
+  
+  /// Reg - the virtual register containing the index of the jump table entry
+  //. to jump to.
+  unsigned Reg;
+  /// JTI - the JumpTableIndex for this jump table in the function.
+  unsigned JTI;
+  /// MBB - the MBB into which to emit the code for the indirect jump.
+  MachineBasicBlock *MBB;
+  /// Default - the MBB of the default bb, which is a successor of the range
+  /// check MBB.  This is when updating PHI nodes in successors.
+  MachineBasicBlock *Default;
+};
+struct JumpTableHeader {
+  JumpTableHeader(uint64_t F, uint64_t L, Value* SV, MachineBasicBlock* H,
+                  bool E = false):
+    First(F), Last(L), SValue(SV), HeaderBB(H), Emitted(E) {}
+  uint64_t First;
+  uint64_t Last;
+  Value *SValue;
+  MachineBasicBlock *HeaderBB;
+  bool Emitted;
+};
+typedef std::pair<JumpTableHeader, JumpTable> JumpTableBlock;
+
+struct BitTestCase {
+  BitTestCase(uint64_t M, MachineBasicBlock* T, MachineBasicBlock* Tr):
+    Mask(M), ThisBB(T), TargetBB(Tr) { }
+  uint64_t Mask;
+  MachineBasicBlock* ThisBB;
+  MachineBasicBlock* TargetBB;
+};
+
+typedef SmallVector<BitTestCase, 3> BitTestInfo;
+
+struct BitTestBlock {
+  BitTestBlock(uint64_t F, uint64_t R, Value* SV,
+               unsigned Rg, bool E,
+               MachineBasicBlock* P, MachineBasicBlock* D,
+               const BitTestInfo& C):
+    First(F), Range(R), SValue(SV), Reg(Rg), Emitted(E),
+    Parent(P), Default(D), Cases(C) { }
+  uint64_t First;
+  uint64_t Range;
+  Value  *SValue;
+  unsigned Reg;
+  bool Emitted;
+  MachineBasicBlock *Parent;
+  MachineBasicBlock *Default;
+  BitTestInfo Cases;
+};
+
+} // end anonymous namespace
+
 //===----------------------------------------------------------------------===//
 /// SelectionDAGLowering - This is the common target-independent lowering
 /// implementation that is parameterized by a TargetLowering object.
@@ -521,7 +623,7 @@ class SelectionDAGLowering {
   /// instruction, but they have no other ordering requirements. We bunch them
   /// up and the emit a single tokenfactor for them just before terminator
   /// instructions.
-  std::vector<SDValue> PendingExports;
+  SmallVector<SDValue, 8> PendingExports;
 
   /// Case - A struct to record the Value for a switch case, and the
   /// case's target basic block.
@@ -599,16 +701,24 @@ public:
   TargetLowering &TLI;
   SelectionDAG &DAG;
   const TargetData *TD;
-  AliasAnalysis &AA;
+  AliasAnalysis *AA;
 
   /// SwitchCases - Vector of CaseBlock structures used to communicate
   /// SwitchInst code generation information.
-  std::vector<SelectionDAGISel::CaseBlock> SwitchCases;
+  std::vector<CaseBlock> SwitchCases;
   /// JTCases - Vector of JumpTable structures used to communicate
   /// SwitchInst code generation information.
-  std::vector<SelectionDAGISel::JumpTableBlock> JTCases;
-  std::vector<SelectionDAGISel::BitTestBlock> BitTestCases;
+  std::vector<JumpTableBlock> JTCases;
+  /// BitTestCases - Vector of BitTestBlock structures used to communicate
+  /// SwitchInst code generation information.
+  std::vector<BitTestBlock> BitTestCases;
   
+  std::vector<std::pair<MachineInstr*, unsigned> > PHINodesToUpdate;
+
+  // Emit PHI-node-operand constants only once even if used by multiple
+  // PHI nodes.
+  DenseMap<Constant*, unsigned> ConstantsOut;
+
   /// FuncInfo - Information about the function as a whole.
   ///
   FunctionLoweringInfo &FuncInfo;
@@ -617,11 +727,27 @@ public:
   GCFunctionInfo *GFI;
 
   SelectionDAGLowering(SelectionDAG &dag, TargetLowering &tli,
-                       AliasAnalysis &aa,
-                       FunctionLoweringInfo &funcinfo,
-                       GCFunctionInfo *gfi)
-    : TLI(tli), DAG(dag), TD(DAG.getTarget().getTargetData()), AA(aa),
-      FuncInfo(funcinfo), GFI(gfi) {
+                       FunctionLoweringInfo &funcinfo)
+    : TLI(tli), DAG(dag), FuncInfo(funcinfo) {
+  }
+
+  void init(GCFunctionInfo *gfi, AliasAnalysis &aa) {
+    AA = &aa;
+    GFI = gfi;
+    TD = DAG.getTarget().getTargetData();
+  }
+
+  /// clear - Clear out the curret SelectionDAG and the associated
+  /// state and prepare this SelectionDAGLowering object to be used
+  /// for a new block. This doesn't clear out information about
+  /// additional blocks that are needed to complete switch lowering
+  /// or PHI node updating; that information is cleared out as it is
+  /// consumed.
+  void clear() {
+    NodeMap.clear();
+    PendingLoads.clear();
+    PendingExports.clear();
+    DAG.clear();
   }
 
   /// getRoot - Return the current virtual root of the Selection DAG,
@@ -741,14 +867,13 @@ public:
                                 CaseRecVector& WorkList,
                                 Value* SV,
                                 MachineBasicBlock* Default);  
-  void visitSwitchCase(SelectionDAGISel::CaseBlock &CB);
-  void visitBitTestHeader(SelectionDAGISel::BitTestBlock &B);
+  void visitSwitchCase(CaseBlock &CB);
+  void visitBitTestHeader(BitTestBlock &B);
   void visitBitTestCase(MachineBasicBlock* NextMBB,
                         unsigned Reg,
-                        SelectionDAGISel::BitTestCase &B);
-  void visitJumpTable(SelectionDAGISel::JumpTable &JT);
-  void visitJumpTableHeader(SelectionDAGISel::JumpTable &JT,
-                            SelectionDAGISel::JumpTableHeader &JTH);
+                        BitTestCase &B);
+  void visitJumpTable(JumpTable &JT);
+  void visitJumpTableHeader(JumpTable &JT, JumpTableHeader &JTH);
   
   // These all get lowered before this pass.
   void visitInvoke(InvokeInst &I);
@@ -1437,15 +1562,15 @@ void SelectionDAGLowering::FindMergedConditions(Value *Cond,
         assert(0 && "Unknown compare instruction");
       }
       
-      SelectionDAGISel::CaseBlock CB(Condition, BOp->getOperand(0), 
-                                     BOp->getOperand(1), NULL, TBB, FBB, CurBB);
+      CaseBlock CB(Condition, BOp->getOperand(0), 
+                   BOp->getOperand(1), NULL, TBB, FBB, CurBB);
       SwitchCases.push_back(CB);
       return;
     }
     
     // Create a CaseBlock record representing this branch.
-    SelectionDAGISel::CaseBlock CB(ISD::SETEQ, Cond, ConstantInt::getTrue(),
-                                   NULL, TBB, FBB, CurBB);
+    CaseBlock CB(ISD::SETEQ, Cond, ConstantInt::getTrue(),
+                 NULL, TBB, FBB, CurBB);
     SwitchCases.push_back(CB);
     return;
   }
@@ -1494,7 +1619,7 @@ void SelectionDAGLowering::FindMergedConditions(Value *Cond,
 /// If we should emit this as a bunch of and/or'd together conditions, return
 /// false.
 static bool 
-ShouldEmitAsBranches(const std::vector<SelectionDAGISel::CaseBlock> &Cases) {
+ShouldEmitAsBranches(const std::vector<CaseBlock> &Cases) {
   if (Cases.size() != 2) return true;
   
   // If this is two comparisons of the same values or'd or and'd together, they
@@ -1583,8 +1708,8 @@ void SelectionDAGLowering::visitBr(BranchInst &I) {
   }
   
   // Create a CaseBlock record representing this branch.
-  SelectionDAGISel::CaseBlock CB(ISD::SETEQ, CondVal, ConstantInt::getTrue(),
-                                 NULL, Succ0MBB, Succ1MBB, CurMBB);
+  CaseBlock CB(ISD::SETEQ, CondVal, ConstantInt::getTrue(),
+               NULL, Succ0MBB, Succ1MBB, CurMBB);
   // Use visitSwitchCase to actually insert the fast branch sequence for this
   // cond branch.
   visitSwitchCase(CB);
@@ -1592,7 +1717,7 @@ void SelectionDAGLowering::visitBr(BranchInst &I) {
 
 /// visitSwitchCase - Emits the necessary code to represent a single node in
 /// the binary search tree resulting from lowering a switch instruction.
-void SelectionDAGLowering::visitSwitchCase(SelectionDAGISel::CaseBlock &CB) {
+void SelectionDAGLowering::visitSwitchCase(CaseBlock &CB) {
   SDValue Cond;
   SDValue CondLHS = getValue(CB.CmpLHS);
   
@@ -1664,7 +1789,7 @@ void SelectionDAGLowering::visitSwitchCase(SelectionDAGISel::CaseBlock &CB) {
 }
 
 /// visitJumpTable - Emit JumpTable node in the current MBB
-void SelectionDAGLowering::visitJumpTable(SelectionDAGISel::JumpTable &JT) {
+void SelectionDAGLowering::visitJumpTable(JumpTable &JT) {
   // Emit the code for the jump table
   assert(JT.Reg != -1U && "Should lower JT Header first!");
   MVT PTy = TLI.getPointerTy();
@@ -1677,8 +1802,8 @@ void SelectionDAGLowering::visitJumpTable(SelectionDAGISel::JumpTable &JT) {
 
 /// visitJumpTableHeader - This function emits necessary code to produce index
 /// in the JumpTable from switch case.
-void SelectionDAGLowering::visitJumpTableHeader(SelectionDAGISel::JumpTable &JT,
-                                         SelectionDAGISel::JumpTableHeader &JTH) {
+void SelectionDAGLowering::visitJumpTableHeader(JumpTable &JT,
+                                                JumpTableHeader &JTH) {
   // Subtract the lowest switch case value from the value being switched on
   // and conditional branch to default mbb if the result is greater than the
   // difference between smallest and largest cases.
@@ -1729,7 +1854,7 @@ void SelectionDAGLowering::visitJumpTableHeader(SelectionDAGISel::JumpTable &JT,
 
 /// visitBitTestHeader - This function emits necessary code to produce value
 /// suitable for "bit tests"
-void SelectionDAGLowering::visitBitTestHeader(SelectionDAGISel::BitTestBlock &B) {
+void SelectionDAGLowering::visitBitTestHeader(BitTestBlock &B) {
   // Subtract the minimum value
   SDValue SwitchOp = getValue(B.SValue);
   MVT VT = SwitchOp.getValueType();
@@ -1783,7 +1908,7 @@ void SelectionDAGLowering::visitBitTestHeader(SelectionDAGISel::BitTestBlock &B)
 /// visitBitTestCase - this function produces one "bit test"
 void SelectionDAGLowering::visitBitTestCase(MachineBasicBlock* NextMBB,
                                             unsigned Reg,
-                                            SelectionDAGISel::BitTestCase &B) {
+                                            BitTestCase &B) {
   // Emit bit tests and jumps
   SDValue SwitchVal = DAG.getCopyFromReg(getControlRoot(), Reg, 
                                            TLI.getPointerTy());
@@ -1911,8 +2036,7 @@ bool SelectionDAGLowering::handleSmallSwitchRange(CaseRec& CR,
       CC = ISD::SETLE;
       LHS = I->Low; MHS = SV; RHS = I->High;
     }
-    SelectionDAGISel::CaseBlock CB(CC, LHS, RHS, MHS,
-                                   I->BB, FallThrough, CurBlock);
+    CaseBlock CB(CC, LHS, RHS, MHS, I->BB, FallThrough, CurBlock);
     
     // If emitting the first comparison, just call visitSwitchCase to emit the
     // code into the current block.  Otherwise, push the CaseBlock onto the
@@ -2019,13 +2143,12 @@ bool SelectionDAGLowering::handleJTSwitchCase(CaseRec& CR,
   
   // Set the jump table information so that we can codegen it as a second
   // MachineBasicBlock
-  SelectionDAGISel::JumpTable JT(-1U, JTI, JumpTableBB, Default);
-  SelectionDAGISel::JumpTableHeader JTH(First, Last, SV, CR.CaseBB,
-                                        (CR.CaseBB == CurMBB));
+  JumpTable JT(-1U, JTI, JumpTableBB, Default);
+  JumpTableHeader JTH(First, Last, SV, CR.CaseBB, (CR.CaseBB == CurMBB));
   if (CR.CaseBB == CurMBB)
     visitJumpTableHeader(JT, JTH);
         
-  JTCases.push_back(SelectionDAGISel::JumpTableBlock(JTH, JT));
+  JTCases.push_back(JumpTableBlock(JTH, JT));
 
   return true;
 }
@@ -2139,8 +2262,7 @@ bool SelectionDAGLowering::handleBTSplitSwitchCase(CaseRec& CR,
   // Create a CaseBlock record representing a conditional branch to
   // the LHS node if the value being switched on SV is less than C. 
   // Otherwise, branch to LHS.
-  SelectionDAGISel::CaseBlock CB(ISD::SETLT, SV, C, NULL,
-                                 TrueBB, FalseBB, CR.CaseBB);
+  CaseBlock CB(ISD::SETLT, SV, C, NULL, TrueBB, FalseBB, CR.CaseBB);
 
   if (CR.CaseBB == CurMBB)
     visitSwitchCase(CB);
@@ -2241,7 +2363,7 @@ bool SelectionDAGLowering::handleBitTestsSwitchCase(CaseRec& CR,
   }
   std::sort(CasesBits.begin(), CasesBits.end(), CaseBitsCmp());
   
-  SelectionDAGISel::BitTestInfo BTC;
+  BitTestInfo BTC;
 
   // Figure out which block is immediately after the current one.
   MachineFunction::iterator BBI = CR.CaseBB;
@@ -2256,14 +2378,14 @@ bool SelectionDAGLowering::handleBitTestsSwitchCase(CaseRec& CR,
 
     MachineBasicBlock *CaseBB = CurMF->CreateMachineBasicBlock(LLVMBB);
     CurMF->insert(BBI, CaseBB);
-    BTC.push_back(SelectionDAGISel::BitTestCase(CasesBits[i].Mask,
-                                                CaseBB,
-                                                CasesBits[i].BB));
+    BTC.push_back(BitTestCase(CasesBits[i].Mask,
+                              CaseBB,
+                              CasesBits[i].BB));
   }
   
-  SelectionDAGISel::BitTestBlock BTB(lowBound, range, SV,
-                                     -1U, (CR.CaseBB == CurMBB),
-                                     CR.CaseBB, Default, BTC);
+  BitTestBlock BTB(lowBound, range, SV,
+                   -1U, (CR.CaseBB == CurMBB),
+                   CR.CaseBB, Default, BTC);
 
   if (CR.CaseBB == CurMBB)
     visitBitTestHeader(BTB);
@@ -2906,7 +3028,7 @@ void SelectionDAGLowering::visitLoad(LoadInst &I) {
   if (I.isVolatile())
     // Serialize volatile loads with other side effects.
     Root = getRoot();
-  else if (AA.pointsToConstantMemory(SV)) {
+  else if (AA->pointsToConstantMemory(SV)) {
     // Do not serialize (non-volatile) loads of constant memory with anything.
     Root = DAG.getEntryNode();
     ConstantMemory = true;
@@ -3188,7 +3310,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     uint64_t Size = -1ULL;
     if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op3))
       Size = C->getValue();
-    if (AA.alias(I.getOperand(1), Size, I.getOperand(2), Size) ==
+    if (AA->alias(I.getOperand(1), Size, I.getOperand(2), Size) ==
         AliasAnalysis::NoAlias) {
       DAG.setRoot(DAG.getMemcpy(getRoot(), Op1, Op2, Op3, Align, false,
                                 I.getOperand(1), 0, I.getOperand(2), 0));
@@ -4885,6 +5007,22 @@ SDValue TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
 // SelectionDAGISel code
 //===----------------------------------------------------------------------===//
 
+SelectionDAGISel::SelectionDAGISel(TargetLowering &tli, bool fast) :
+  FunctionPass((intptr_t)&ID), TLI(tli),
+  FuncInfo(new FunctionLoweringInfo(TLI)),
+  CurDAG(new SelectionDAG(TLI, *FuncInfo)),
+  SDL(new SelectionDAGLowering(*CurDAG, TLI, *FuncInfo)),
+  GFI(),
+  Fast(fast),
+  DAGSize(0)
+{}
+
+SelectionDAGISel::~SelectionDAGISel() {
+  delete SDL;
+  delete CurDAG;
+  delete FuncInfo;
+}
+
 unsigned SelectionDAGISel::MakeReg(MVT VT) {
   return RegInfo->createVirtualRegister(TLI.getRegClassFor(VT));
 }
@@ -4907,27 +5045,31 @@ bool SelectionDAGISel::runOnFunction(Function &Fn) {
   RegInfo = &MF.getRegInfo();
   DOUT << "\n\n\n=== " << Fn.getName() << "\n";
 
-  FunctionLoweringInfo FuncInfo(TLI, Fn, MF);
+  FuncInfo->set(Fn, MF);
+  CurDAG->init(MF, getAnalysisToUpdate<MachineModuleInfo>());
+  SDL->init(GFI, *AA);
 
   for (Function::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I)
     if (InvokeInst *Invoke = dyn_cast<InvokeInst>(I->getTerminator()))
       // Mark landing pad.
-      FuncInfo.MBBMap[Invoke->getSuccessor(1)]->setIsLandingPad();
+      FuncInfo->MBBMap[Invoke->getSuccessor(1)]->setIsLandingPad();
 
-  SelectAllBasicBlocks(Fn, MF, FuncInfo);
+  SelectAllBasicBlocks(Fn, MF);
 
   // Add function live-ins to entry block live-in set.
   BasicBlock *EntryBB = &Fn.getEntryBlock();
-  BB = FuncInfo.MBBMap[EntryBB];
+  BB = FuncInfo->MBBMap[EntryBB];
   if (!RegInfo->livein_empty())
     for (MachineRegisterInfo::livein_iterator I = RegInfo->livein_begin(),
            E = RegInfo->livein_end(); I != E; ++I)
       BB->addLiveIn(I->first);
 
 #ifndef NDEBUG
-  assert(FuncInfo.CatchInfoFound.size() == FuncInfo.CatchInfoLost.size() &&
+  assert(FuncInfo->CatchInfoFound.size() == FuncInfo->CatchInfoLost.size() &&
          "Not all catch info was assigned to a landing pad!");
 #endif
+
+  FuncInfo->clear();
 
   return true;
 }
@@ -4946,13 +5088,12 @@ void SelectionDAGLowering::CopyValueToVirtualRegister(Value *V, unsigned Reg) {
 }
 
 void SelectionDAGISel::
-LowerArguments(BasicBlock *LLVMBB, SelectionDAGLowering &SDL) {
+LowerArguments(BasicBlock *LLVMBB) {
   // If this is the entry block, emit arguments.
   Function &F = *LLVMBB->getParent();
-  FunctionLoweringInfo &FuncInfo = SDL.FuncInfo;
-  SDValue OldRoot = SDL.DAG.getRoot();
+  SDValue OldRoot = SDL->DAG.getRoot();
   SmallVector<SDValue, 16> Args;
-  TLI.LowerArguments(F, SDL.DAG, Args);
+  TLI.LowerArguments(F, SDL->DAG, Args);
 
   unsigned a = 0;
   for (Function::arg_iterator AI = F.arg_begin(), E = F.arg_end();
@@ -4961,12 +5102,12 @@ LowerArguments(BasicBlock *LLVMBB, SelectionDAGLowering &SDL) {
     ComputeValueVTs(TLI, AI->getType(), ValueVTs);
     unsigned NumValues = ValueVTs.size();
     if (!AI->use_empty()) {
-      SDL.setValue(AI, SDL.DAG.getMergeValues(&Args[a], NumValues));
+      SDL->setValue(AI, SDL->DAG.getMergeValues(&Args[a], NumValues));
       // If this argument is live outside of the entry block, insert a copy from
       // whereever we got it to the vreg that other BB's will reference it as.
-      DenseMap<const Value*, unsigned>::iterator VMI=FuncInfo.ValueMap.find(AI);
-      if (VMI != FuncInfo.ValueMap.end()) {
-        SDL.CopyValueToVirtualRegister(AI, VMI->second);
+      DenseMap<const Value*, unsigned>::iterator VMI=FuncInfo->ValueMap.find(AI);
+      if (VMI != FuncInfo->ValueMap.end()) {
+        SDL->CopyValueToVirtualRegister(AI, VMI->second);
       }
     }
     a += NumValues;
@@ -4974,7 +5115,7 @@ LowerArguments(BasicBlock *LLVMBB, SelectionDAGLowering &SDL) {
 
   // Finally, if the target has anything special to do, allow it to do so.
   // FIXME: this should insert code into the DAG!
-  EmitFunctionEntryCode(F, SDL.DAG.getMachineFunction());
+  EmitFunctionEntryCode(F, SDL->DAG.getMachineFunction());
 }
 
 static void copyCatchInfo(BasicBlock *SrcBB, BasicBlock *DestBB,
@@ -5107,31 +5248,21 @@ static void CheckDAGForTailCallsAndFixThem(SelectionDAG &DAG,
 /// the end.
 ///
 void
-SelectionDAGISel::HandlePHINodesInSuccessorBlocks(BasicBlock *LLVMBB,
-                                                 FunctionLoweringInfo &FuncInfo,
-             std::vector<std::pair<MachineInstr*, unsigned> > &PHINodesToUpdate,
-                                                  SelectionDAGLowering &SDL) {
+SelectionDAGISel::HandlePHINodesInSuccessorBlocks(BasicBlock *LLVMBB) {
   TerminatorInst *TI = LLVMBB->getTerminator();
 
-  // Emit constants only once even if used by multiple PHI nodes.
-  std::map<Constant*, unsigned> ConstantsOut;
-  
-  BitVector SuccsHandled;
-  if (TI->getNumSuccessors())
-    SuccsHandled.resize(BB->getParent()->getNumBlockIDs());
-    
+  SmallPtrSet<MachineBasicBlock *, 4> SuccsHandled;
+
   // Check successor nodes' PHI nodes that expect a constant to be available
   // from this block.
   for (unsigned succ = 0, e = TI->getNumSuccessors(); succ != e; ++succ) {
     BasicBlock *SuccBB = TI->getSuccessor(succ);
     if (!isa<PHINode>(SuccBB->begin())) continue;
-    MachineBasicBlock *SuccMBB = FuncInfo.MBBMap[SuccBB];
+    MachineBasicBlock *SuccMBB = FuncInfo->MBBMap[SuccBB];
     
     // If this terminator has multiple identical successors (common for
     // switches), only handle each succ once.
-    unsigned SuccMBBNo = SuccMBB->getNumber();
-    if (SuccsHandled[SuccMBBNo]) continue;
-    SuccsHandled[SuccMBBNo] = true;
+    if (!SuccsHandled.insert(SuccMBB)) continue;
     
     MachineBasicBlock::iterator MBBI = SuccMBB->begin();
     PHINode *PN;
@@ -5143,25 +5274,25 @@ SelectionDAGISel::HandlePHINodesInSuccessorBlocks(BasicBlock *LLVMBB,
          (PN = dyn_cast<PHINode>(I)); ++I) {
       // Ignore dead phi's.
       if (PN->use_empty()) continue;
-      
+
       unsigned Reg;
       Value *PHIOp = PN->getIncomingValueForBlock(LLVMBB);
-      
+
       if (Constant *C = dyn_cast<Constant>(PHIOp)) {
-        unsigned &RegOut = ConstantsOut[C];
+        unsigned &RegOut = SDL->ConstantsOut[C];
         if (RegOut == 0) {
-          RegOut = FuncInfo.CreateRegForValue(C);
-          SDL.CopyValueToVirtualRegister(C, RegOut);
+          RegOut = FuncInfo->CreateRegForValue(C);
+          SDL->CopyValueToVirtualRegister(C, RegOut);
         }
         Reg = RegOut;
       } else {
-        Reg = FuncInfo.ValueMap[PHIOp];
+        Reg = FuncInfo->ValueMap[PHIOp];
         if (Reg == 0) {
           assert(isa<AllocaInst>(PHIOp) &&
-                 FuncInfo.StaticAllocaMap.count(cast<AllocaInst>(PHIOp)) &&
+                 FuncInfo->StaticAllocaMap.count(cast<AllocaInst>(PHIOp)) &&
                  "Didn't codegen value into a register!??");
-          Reg = FuncInfo.CreateRegForValue(PHIOp);
-          SDL.CopyValueToVirtualRegister(PHIOp, Reg);
+          Reg = FuncInfo->CreateRegForValue(PHIOp);
+          SDL->CopyValueToVirtualRegister(PHIOp, Reg);
         }
       }
 
@@ -5173,39 +5304,26 @@ SelectionDAGISel::HandlePHINodesInSuccessorBlocks(BasicBlock *LLVMBB,
         MVT VT = ValueVTs[vti];
         unsigned NumRegisters = TLI.getNumRegisters(VT);
         for (unsigned i = 0, e = NumRegisters; i != e; ++i)
-          PHINodesToUpdate.push_back(std::make_pair(MBBI++, Reg+i));
+          SDL->PHINodesToUpdate.push_back(std::make_pair(MBBI++, Reg+i));
         Reg += NumRegisters;
       }
     }
   }
-  ConstantsOut.clear();
+  SDL->ConstantsOut.clear();
 
   // Lower the terminator after the copies are emitted.
-  SDL.visit(*LLVMBB->getTerminator());
-
-  // Copy over any CaseBlock records that may now exist due to SwitchInst
-  // lowering, as well as any jump table information.
-  SwitchCases.clear();
-  SwitchCases = SDL.SwitchCases;
-  JTCases.clear();
-  JTCases = SDL.JTCases;
-  BitTestCases.clear();
-  BitTestCases = SDL.BitTestCases;
+  SDL->visit(*LLVMBB->getTerminator());
 }
 
 void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB,
                                         BasicBlock::iterator Begin,
                                         BasicBlock::iterator End,
-                                        bool DoArgs,
-       std::vector<std::pair<MachineInstr*, unsigned> > &PHINodesToUpdate,
-                                        FunctionLoweringInfo &FuncInfo) {
-  SelectionDAGLowering SDL(*CurDAG, TLI, *AA, FuncInfo, GFI);
-
+                                        bool DoArgs) {
   // Lower any arguments needed in this block if this is the entry block.
   if (DoArgs)
-    LowerArguments(LLVMBB, SDL);
+    LowerArguments(LLVMBB);
 
-  SDL.setCurrentBasicBlock(BB);
+  SDL->setCurrentBasicBlock(BB);
 
   MachineModuleInfo *MMI = CurDAG->getMachineModuleInfo();
 
@@ -5245,30 +5363,30 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB,
 
       if (I == E)
         // No catch info found - try to extract some from the successor.
-        copyCatchInfo(Br->getSuccessor(0), LLVMBB, MMI, FuncInfo);
+        copyCatchInfo(Br->getSuccessor(0), LLVMBB, MMI, *FuncInfo);
     }
   }
 
   // Lower all of the non-terminator instructions.
   for (BasicBlock::iterator I = Begin; I != End; ++I)
     if (!isa<TerminatorInst>(I))
-      SDL.visit(*I);
+      SDL->visit(*I);
 
   // Ensure that all instructions which are used outside of their defining
   // blocks are available as virtual registers.  Invoke is handled elsewhere.
   for (BasicBlock::iterator I = Begin; I != End; ++I)
     if (!I->use_empty() && !isa<PHINode>(I) && !isa<InvokeInst>(I)) {
-      DenseMap<const Value*, unsigned>::iterator VMI =FuncInfo.ValueMap.find(I);
-      if (VMI != FuncInfo.ValueMap.end())
-        SDL.CopyValueToVirtualRegister(I, VMI->second);
+      DenseMap<const Value*,unsigned>::iterator VMI =FuncInfo->ValueMap.find(I);
+      if (VMI != FuncInfo->ValueMap.end())
+        SDL->CopyValueToVirtualRegister(I, VMI->second);
     }
 
   // Handle PHI nodes in successor blocks.
   if (Begin != End && End == LLVMBB->end())
-    HandlePHINodesInSuccessorBlocks(LLVMBB, FuncInfo, PHINodesToUpdate, SDL);
+    HandlePHINodesInSuccessorBlocks(LLVMBB);
     
   // Make sure the root of the DAG is up-to-date.
-  CurDAG->setRoot(SDL.getControlRoot());
+  CurDAG->setRoot(SDL->getControlRoot());
 
   // Check whether calls in this block are real tail calls. Fix up CALL nodes
   // with correct tailcall attribute so that the target can rely on the tailcall
@@ -5278,7 +5396,7 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB,
 
   // Final step, emit the lowered DAG as machine code.
   CodeGenAndEmitDAG();
-  CurDAG->reset();
+  SDL->clear();
 }
 
 void SelectionDAGISel::ComputeLiveOutVRegInfo() {
@@ -5457,18 +5575,10 @@ void SelectionDAGISel::CodeGenAndEmitDAG() {
   DEBUG(BB->dump());
 }  
 
-void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn, MachineFunction &MF,
-                                            FunctionLoweringInfo &FuncInfo) {
-  // Define the SelectionDAG here so that memory allocation is reused for
-  // each basic block.
-  SelectionDAG DAG(TLI, MF, FuncInfo, 
-                   getAnalysisToUpdate<MachineModuleInfo>());
-  CurDAG = &DAG;
-
-  std::vector<std::pair<MachineInstr*, unsigned> > PHINodesToUpdate;
+void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn, MachineFunction &MF) {
   for (Function::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I) {
     BasicBlock *LLVMBB = &*I;
-    BB = FuncInfo.MBBMap[LLVMBB];
+    BB = FuncInfo->MBBMap[LLVMBB];
 
     BasicBlock::iterator Begin = LLVMBB->begin();
     BasicBlock::iterator End = LLVMBB->end();
@@ -5477,10 +5587,10 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn, MachineFunction &MF,
     // Before doing SelectionDAG ISel, see if FastISel has been requested.
     // FastISel doesn't support EH landing pads, which require special handling.
     if (EnableFastISel && !BB->isLandingPad()) {
-      if (FastISel *F = TLI.createFastISel(FuncInfo.MF)) {
+      if (FastISel *F = TLI.createFastISel(*FuncInfo->MF)) {
         while (Begin != End) {
-          Begin = F->SelectInstructions(Begin, End, FuncInfo.ValueMap,
-                                        FuncInfo.MBBMap, BB);
+          Begin = F->SelectInstructions(Begin, End, FuncInfo->ValueMap,
+                                        FuncInfo->MBBMap, BB);
 
           if (Begin == End)
             // The "fast" selector selected the entire block, so we're done.
@@ -5490,13 +5600,12 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn, MachineFunction &MF,
           if (isa<CallInst>(Begin) || isa<LoadInst>(Begin) ||
               isa<StoreInst>(Begin)) {
             if (Begin->getType() != Type::VoidTy) {
-              unsigned &R = FuncInfo.ValueMap[Begin];
+              unsigned &R = FuncInfo->ValueMap[Begin];
               if (!R)
-                R = FuncInfo.CreateRegForValue(Begin);
+                R = FuncInfo->CreateRegForValue(Begin);
             }
 
-            SelectBasicBlock(LLVMBB, Begin, next(Begin), DoArgs,
-                             PHINodesToUpdate, FuncInfo);
+            SelectBasicBlock(LLVMBB, Begin, next(Begin), DoArgs);
 
             ++Begin;
             DoArgs = false;
@@ -5522,18 +5631,14 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn, MachineFunction &MF,
     }
 
     if (Begin != End || DoArgs)
-      SelectBasicBlock(LLVMBB, Begin, End, DoArgs, PHINodesToUpdate, FuncInfo);
+      SelectBasicBlock(LLVMBB, Begin, End, DoArgs);
 
-    FinishBasicBlock(FuncInfo, PHINodesToUpdate);
-    PHINodesToUpdate.clear();
+    FinishBasicBlock();
   }
-
-  CurDAG = 0;
 }
 
 void
-SelectionDAGISel::FinishBasicBlock(FunctionLoweringInfo &FuncInfo,
-             std::vector<std::pair<MachineInstr*, unsigned> > &PHINodesToUpdate) {
+SelectionDAGISel::FinishBasicBlock() {
 
   // Perform target specific isel post processing.
   InstructionSelectPostProcessing();
@@ -5542,146 +5647,148 @@ SelectionDAGISel::FinishBasicBlock(FunctionLoweringInfo &FuncInfo,
   DEBUG(BB->dump());
 
   DOUT << "Total amount of phi nodes to update: "
-       << PHINodesToUpdate.size() << "\n";
-  DEBUG(for (unsigned i = 0, e = PHINodesToUpdate.size(); i != e; ++i)
-          DOUT << "Node " << i << " : (" << PHINodesToUpdate[i].first
-               << ", " << PHINodesToUpdate[i].second << ")\n";);
+       << SDL->PHINodesToUpdate.size() << "\n";
+  DEBUG(for (unsigned i = 0, e = SDL->PHINodesToUpdate.size(); i != e; ++i)
+          DOUT << "Node " << i << " : (" << SDL->PHINodesToUpdate[i].first
+               << ", " << SDL->PHINodesToUpdate[i].second << ")\n";);
   
   // Next, now that we know what the last MBB the LLVM BB expanded is, update
   // PHI nodes in successors.
-  if (SwitchCases.empty() && JTCases.empty() && BitTestCases.empty()) {
-    for (unsigned i = 0, e = PHINodesToUpdate.size(); i != e; ++i) {
-      MachineInstr *PHI = PHINodesToUpdate[i].first;
+  if (SDL->SwitchCases.empty() &&
+      SDL->JTCases.empty() &&
+      SDL->BitTestCases.empty()) {
+    for (unsigned i = 0, e = SDL->PHINodesToUpdate.size(); i != e; ++i) {
+      MachineInstr *PHI = SDL->PHINodesToUpdate[i].first;
       assert(PHI->getOpcode() == TargetInstrInfo::PHI &&
              "This is not a machine PHI node that we are updating!");
-      PHI->addOperand(MachineOperand::CreateReg(PHINodesToUpdate[i].second,
+      PHI->addOperand(MachineOperand::CreateReg(SDL->PHINodesToUpdate[i].second,
                                                 false));
       PHI->addOperand(MachineOperand::CreateMBB(BB));
     }
+    SDL->PHINodesToUpdate.clear();
     return;
   }
 
-  for (unsigned i = 0, e = BitTestCases.size(); i != e; ++i) {
+  for (unsigned i = 0, e = SDL->BitTestCases.size(); i != e; ++i) {
     // Lower header first, if it wasn't already lowered
-    if (!BitTestCases[i].Emitted) {
-      SelectionDAGLowering HSDL(*CurDAG, TLI, *AA, FuncInfo, GFI);
+    if (!SDL->BitTestCases[i].Emitted) {
       // Set the current basic block to the mbb we wish to insert the code into
-      BB = BitTestCases[i].Parent;
-      HSDL.setCurrentBasicBlock(BB);
+      BB = SDL->BitTestCases[i].Parent;
+      SDL->setCurrentBasicBlock(BB);
       // Emit the code
-      HSDL.visitBitTestHeader(BitTestCases[i]);
-      CurDAG->setRoot(HSDL.getRoot());
+      SDL->visitBitTestHeader(SDL->BitTestCases[i]);
+      CurDAG->setRoot(SDL->getRoot());
       CodeGenAndEmitDAG();
-      CurDAG->reset();
+      SDL->clear();
     }    
 
-    for (unsigned j = 0, ej = BitTestCases[i].Cases.size(); j != ej; ++j) {
-      SelectionDAGLowering BSDL(*CurDAG, TLI, *AA, FuncInfo, GFI);
+    for (unsigned j = 0, ej = SDL->BitTestCases[i].Cases.size(); j != ej; ++j) {
       // Set the current basic block to the mbb we wish to insert the code into
-      BB = BitTestCases[i].Cases[j].ThisBB;
-      BSDL.setCurrentBasicBlock(BB);
+      BB = SDL->BitTestCases[i].Cases[j].ThisBB;
+      SDL->setCurrentBasicBlock(BB);
       // Emit the code
       if (j+1 != ej)
-        BSDL.visitBitTestCase(BitTestCases[i].Cases[j+1].ThisBB,
-                              BitTestCases[i].Reg,
-                              BitTestCases[i].Cases[j]);
+        SDL->visitBitTestCase(SDL->BitTestCases[i].Cases[j+1].ThisBB,
+                              SDL->BitTestCases[i].Reg,
+                              SDL->BitTestCases[i].Cases[j]);
       else
-        BSDL.visitBitTestCase(BitTestCases[i].Default,
-                              BitTestCases[i].Reg,
-                              BitTestCases[i].Cases[j]);
+        SDL->visitBitTestCase(SDL->BitTestCases[i].Default,
+                              SDL->BitTestCases[i].Reg,
+                              SDL->BitTestCases[i].Cases[j]);
         
         
-      CurDAG->setRoot(BSDL.getRoot());
+      CurDAG->setRoot(SDL->getRoot());
       CodeGenAndEmitDAG();
-      CurDAG->reset();
+      SDL->clear();
     }
 
     // Update PHI Nodes
-    for (unsigned pi = 0, pe = PHINodesToUpdate.size(); pi != pe; ++pi) {
-      MachineInstr *PHI = PHINodesToUpdate[pi].first;
+    for (unsigned pi = 0, pe = SDL->PHINodesToUpdate.size(); pi != pe; ++pi) {
+      MachineInstr *PHI = SDL->PHINodesToUpdate[pi].first;
       MachineBasicBlock *PHIBB = PHI->getParent();
       assert(PHI->getOpcode() == TargetInstrInfo::PHI &&
              "This is not a machine PHI node that we are updating!");
       // This is "default" BB. We have two jumps to it. From "header" BB and
       // from last "case" BB.
-      if (PHIBB == BitTestCases[i].Default) {
-        PHI->addOperand(MachineOperand::CreateReg(PHINodesToUpdate[pi].second,
+      if (PHIBB == SDL->BitTestCases[i].Default) {
+        PHI->addOperand(MachineOperand::CreateReg(SDL->PHINodesToUpdate[pi].second,
                                                   false));
-        PHI->addOperand(MachineOperand::CreateMBB(BitTestCases[i].Parent));
-        PHI->addOperand(MachineOperand::CreateReg(PHINodesToUpdate[pi].second,
+        PHI->addOperand(MachineOperand::CreateMBB(SDL->BitTestCases[i].Parent));
+        PHI->addOperand(MachineOperand::CreateReg(SDL->PHINodesToUpdate[pi].second,
                                                   false));
-        PHI->addOperand(MachineOperand::CreateMBB(BitTestCases[i].Cases.
+        PHI->addOperand(MachineOperand::CreateMBB(SDL->BitTestCases[i].Cases.
                                                   back().ThisBB));
       }
       // One of "cases" BB.
-      for (unsigned j = 0, ej = BitTestCases[i].Cases.size(); j != ej; ++j) {
-        MachineBasicBlock* cBB = BitTestCases[i].Cases[j].ThisBB;
+      for (unsigned j = 0, ej = SDL->BitTestCases[i].Cases.size();
+           j != ej; ++j) {
+        MachineBasicBlock* cBB = SDL->BitTestCases[i].Cases[j].ThisBB;
         if (cBB->succ_end() !=
             std::find(cBB->succ_begin(),cBB->succ_end(), PHIBB)) {
-          PHI->addOperand(MachineOperand::CreateReg(PHINodesToUpdate[pi].second,
+          PHI->addOperand(MachineOperand::CreateReg(SDL->PHINodesToUpdate[pi].second,
                                                     false));
           PHI->addOperand(MachineOperand::CreateMBB(cBB));
         }
       }
     }
   }
+  SDL->BitTestCases.clear();
 
   // If the JumpTable record is filled in, then we need to emit a jump table.
   // Updating the PHI nodes is tricky in this case, since we need to determine
   // whether the PHI is a successor of the range check MBB or the jump table MBB
-  for (unsigned i = 0, e = JTCases.size(); i != e; ++i) {
+  for (unsigned i = 0, e = SDL->JTCases.size(); i != e; ++i) {
     // Lower header first, if it wasn't already lowered
-    if (!JTCases[i].first.Emitted) {
-      SelectionDAGLowering HSDL(*CurDAG, TLI, *AA, FuncInfo, GFI);
+    if (!SDL->JTCases[i].first.Emitted) {
       // Set the current basic block to the mbb we wish to insert the code into
-      BB = JTCases[i].first.HeaderBB;
-      HSDL.setCurrentBasicBlock(BB);
+      BB = SDL->JTCases[i].first.HeaderBB;
+      SDL->setCurrentBasicBlock(BB);
       // Emit the code
-      HSDL.visitJumpTableHeader(JTCases[i].second, JTCases[i].first);
-      CurDAG->setRoot(HSDL.getRoot());
+      SDL->visitJumpTableHeader(SDL->JTCases[i].second, SDL->JTCases[i].first);
+      CurDAG->setRoot(SDL->getRoot());
       CodeGenAndEmitDAG();
-      CurDAG->reset();
+      SDL->clear();
     }
     
-    SelectionDAGLowering JSDL(*CurDAG, TLI, *AA, FuncInfo, GFI);
     // Set the current basic block to the mbb we wish to insert the code into
-    BB = JTCases[i].second.MBB;
-    JSDL.setCurrentBasicBlock(BB);
+    BB = SDL->JTCases[i].second.MBB;
+    SDL->setCurrentBasicBlock(BB);
     // Emit the code
-    JSDL.visitJumpTable(JTCases[i].second);
-    CurDAG->setRoot(JSDL.getRoot());
+    SDL->visitJumpTable(SDL->JTCases[i].second);
+    CurDAG->setRoot(SDL->getRoot());
     CodeGenAndEmitDAG();
-    CurDAG->reset();
+    SDL->clear();
     
     // Update PHI Nodes
-    for (unsigned pi = 0, pe = PHINodesToUpdate.size(); pi != pe; ++pi) {
-      MachineInstr *PHI = PHINodesToUpdate[pi].first;
+    for (unsigned pi = 0, pe = SDL->PHINodesToUpdate.size(); pi != pe; ++pi) {
+      MachineInstr *PHI = SDL->PHINodesToUpdate[pi].first;
       MachineBasicBlock *PHIBB = PHI->getParent();
       assert(PHI->getOpcode() == TargetInstrInfo::PHI &&
              "This is not a machine PHI node that we are updating!");
       // "default" BB. We can go there only from header BB.
-      if (PHIBB == JTCases[i].second.Default) {
-        PHI->addOperand(MachineOperand::CreateReg(PHINodesToUpdate[pi].second,
+      if (PHIBB == SDL->JTCases[i].second.Default) {
+        PHI->addOperand(MachineOperand::CreateReg(SDL->PHINodesToUpdate[pi].second,
                                                   false));
-        PHI->addOperand(MachineOperand::CreateMBB(JTCases[i].first.HeaderBB));
+        PHI->addOperand(MachineOperand::CreateMBB(SDL->JTCases[i].first.HeaderBB));
       }
       // JT BB. Just iterate over successors here
       if (BB->succ_end() != std::find(BB->succ_begin(),BB->succ_end(), PHIBB)) {
-        PHI->addOperand(MachineOperand::CreateReg(PHINodesToUpdate[pi].second,
+        PHI->addOperand(MachineOperand::CreateReg(SDL->PHINodesToUpdate[pi].second,
                                                   false));
         PHI->addOperand(MachineOperand::CreateMBB(BB));
       }
     }
   }
+  SDL->JTCases.clear();
   
   // If the switch block involved a branch to one of the actual successors, we
   // need to update PHI nodes in that block.
-  for (unsigned i = 0, e = PHINodesToUpdate.size(); i != e; ++i) {
-    MachineInstr *PHI = PHINodesToUpdate[i].first;
+  for (unsigned i = 0, e = SDL->PHINodesToUpdate.size(); i != e; ++i) {
+    MachineInstr *PHI = SDL->PHINodesToUpdate[i].first;
     assert(PHI->getOpcode() == TargetInstrInfo::PHI &&
            "This is not a machine PHI node that we are updating!");
     if (BB->isSuccessor(PHI->getParent())) {
-      PHI->addOperand(MachineOperand::CreateReg(PHINodesToUpdate[i].second,
+      PHI->addOperand(MachineOperand::CreateReg(SDL->PHINodesToUpdate[i].second,
                                                 false));
       PHI->addOperand(MachineOperand::CreateMBB(BB));
     }
@@ -5689,48 +5796,50 @@ SelectionDAGISel::FinishBasicBlock(FunctionLoweringInfo &FuncInfo,
   
   // If we generated any switch lowering information, build and codegen any
   // additional DAGs necessary.
-  for (unsigned i = 0, e = SwitchCases.size(); i != e; ++i) {
-    SelectionDAGLowering SDL(*CurDAG, TLI, *AA, FuncInfo, GFI);
-    
+  for (unsigned i = 0, e = SDL->SwitchCases.size(); i != e; ++i) {
     // Set the current basic block to the mbb we wish to insert the code into
-    BB = SwitchCases[i].ThisBB;
-    SDL.setCurrentBasicBlock(BB);
+    BB = SDL->SwitchCases[i].ThisBB;
+    SDL->setCurrentBasicBlock(BB);
     
     // Emit the code
-    SDL.visitSwitchCase(SwitchCases[i]);
-    CurDAG->setRoot(SDL.getRoot());
+    SDL->visitSwitchCase(SDL->SwitchCases[i]);
+    CurDAG->setRoot(SDL->getRoot());
     CodeGenAndEmitDAG();
-    CurDAG->reset();
+    SDL->clear();
     
     // Handle any PHI nodes in successors of this chunk, as if we were coming
     // from the original BB before switch expansion.  Note that PHI nodes can
     // occur multiple times in PHINodesToUpdate.  We have to be very careful to
     // handle them the right number of times.
-    while ((BB = SwitchCases[i].TrueBB)) {  // Handle LHS and RHS.
+    while ((BB = SDL->SwitchCases[i].TrueBB)) {  // Handle LHS and RHS.
       for (MachineBasicBlock::iterator Phi = BB->begin();
            Phi != BB->end() && Phi->getOpcode() == TargetInstrInfo::PHI; ++Phi){
         // This value for this PHI node is recorded in PHINodesToUpdate, get it.
         for (unsigned pn = 0; ; ++pn) {
-          assert(pn != PHINodesToUpdate.size() && "Didn't find PHI entry!");
-          if (PHINodesToUpdate[pn].first == Phi) {
-            Phi->addOperand(MachineOperand::CreateReg(PHINodesToUpdate[pn].
+          assert(pn != SDL->PHINodesToUpdate.size() &&
+                 "Didn't find PHI entry!");
+          if (SDL->PHINodesToUpdate[pn].first == Phi) {
+            Phi->addOperand(MachineOperand::CreateReg(SDL->PHINodesToUpdate[pn].
                                                       second, false));
-            Phi->addOperand(MachineOperand::CreateMBB(SwitchCases[i].ThisBB));
+            Phi->addOperand(MachineOperand::CreateMBB(SDL->SwitchCases[i].ThisBB));
             break;
           }
         }
       }
       
       // Don't process RHS if same block as LHS.
-      if (BB == SwitchCases[i].FalseBB)
-        SwitchCases[i].FalseBB = 0;
+      if (BB == SDL->SwitchCases[i].FalseBB)
+        SDL->SwitchCases[i].FalseBB = 0;
       
       // If we haven't handled the RHS, do so now.  Otherwise, we're done.
-      SwitchCases[i].TrueBB = SwitchCases[i].FalseBB;
-      SwitchCases[i].FalseBB = 0;
+      SDL->SwitchCases[i].TrueBB = SDL->SwitchCases[i].FalseBB;
+      SDL->SwitchCases[i].FalseBB = 0;
     }
-    assert(SwitchCases[i].TrueBB == 0 && SwitchCases[i].FalseBB == 0);
+    assert(SDL->SwitchCases[i].TrueBB == 0 && SDL->SwitchCases[i].FalseBB == 0);
   }
+  SDL->SwitchCases.clear();
+
+  SDL->PHINodesToUpdate.clear();
 }
 
 
