@@ -159,11 +159,15 @@ NoCaretDiagnostics("fno-caret-diagnostics",
 //===----------------------------------------------------------------------===//
 
 static llvm::cl::opt<bool>
-VisualizeEG("visualize-egraph",
-            llvm::cl::desc("Display static analysis Exploded Graph"));
+VisualizeEGDot("analyzer-viz-egraph-graphviz",
+               llvm::cl::desc("Display exploded graph using GraphViz"));
 
 static llvm::cl::opt<bool>
-AnalyzeAll("checker-opt-analyze-headers",
+VisualizeEGUbi("analyzer-viz-egraph-ubigraph",
+               llvm::cl::desc("Display exploded graph using Ubigraph"));
+
+static llvm::cl::opt<bool>
+AnalyzeAll("analyzer-opt-analyze-headers",
     llvm::cl::desc("Force the static analyzer to analyze "
                    "functions defined in header files"));
 
@@ -964,8 +968,8 @@ static ASTConsumer* CreateASTConsumer(const std::string& InFile,
                                     &AnalysisList[0]+AnalysisList.size(),
                                     Diag, PP, PPF, LangOpts,
                                     AnalyzeSpecificFunction,
-                                    OutputFile, VisualizeEG, TrimGraph,
-                                    AnalyzeAll);
+                                    OutputFile, VisualizeEGDot, VisualizeEGUbi,
+                                    TrimGraph, AnalyzeAll);
   }
 }
 

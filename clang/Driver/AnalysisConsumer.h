@@ -28,8 +28,10 @@ ASTConsumer* CreateAnalysisConsumer(Analyses* Beg, Analyses* End,
                                     const LangOptions& lopts,
                                     const std::string& fname,
                                     const std::string& htmldir,
-                                    bool visualize, bool trim,
-                                    bool analyzeAll);
+                                    bool VisualizeGraphViz,
+                                    bool VisualizeUbi,
+                                    bool VizTrimGraph,
+                                    bool AnalyzeAll);
 } // end clang namespace
 
 #endif

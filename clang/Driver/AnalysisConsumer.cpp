@@ -31,11 +31,13 @@
 #include "clang/Analysis/PathSensitive/GRTransferFuncs.h"
 #include "clang/Analysis/PathSensitive/GRExprEngine.h"
 #include "llvm/Support/Streams.h"
-
+#include "llvm/Support/raw_ostream.h"
+#include "llvm/System/Path.h"
 #include <vector>
 
 using namespace clang;
 
+static ExplodedNodeImpl::Auditor* CreateUbiViz();
   
 //===----------------------------------------------------------------------===//
 // Basic type definitions.
@@ -59,7 +61,8 @@ namespace {
     Actions ObjCImplementationActions;
     
   public:
-    const bool Visualize;
+    const bool VisGraphviz;
+    const bool VisUbigraph;
     const bool TrimGraph;
     const LangOptions& LOpts;
     Diagnostic &Diags;
@@ -76,8 +79,9 @@ namespace {
                      const LangOptions& lopts,
                      const std::string& fname,
                      const std::string& htmldir,
-                     bool visualize, bool trim, bool analyzeAll) 
-      : Visualize(visualize), TrimGraph(trim), LOpts(lopts), Diags(diags),
+                     bool visgraphviz, bool visubi, bool trim, bool analyzeAll) 
+      : VisGraphviz(visgraphviz), VisUbigraph(visubi), TrimGraph(trim),
+        LOpts(lopts), Diags(diags),
         Ctx(0), PP(pp), PPF(ppf),
         HTMLDir(htmldir),
         FName(fname),
@@ -168,8 +172,16 @@ namespace {
       return liveness.get();
     }
     
+    bool shouldVisualizeGraphviz() const {
+      return C.VisGraphviz;
+    }
+    
+    bool shouldVisualizeUbigraph() const {
+      return C.VisUbigraph;
+    }
+    
     bool shouldVisualize() const {
-      return C.Visualize;
+      return C.VisGraphviz || C.VisUbigraph;
     }
     
     bool shouldTrimGraph() const {
@@ -319,15 +331,26 @@ static void ActionGRExprEngine(AnalysisManager& mgr, GRTransferFuncs* tf,
     Eng.RegisterInternalChecks();
     RegisterAppleChecks(Eng);
   }
+
+  // Set the graph auditor.
+  llvm::OwningPtr<ExplodedNodeImpl::Auditor> Auditor;
+  if (mgr.shouldVisualizeUbigraph()) {
+    Auditor.reset(CreateUbiViz());
+    ExplodedNodeImpl::SetAuditor(Auditor.get());
+  }
   
   // Execute the worklist algorithm.
   Eng.ExecuteWorkList();
+  
+  // Release the auditor (if any) so that it doesn't monitor the graph
+  // created BugReporter.
+  ExplodedNodeImpl::SetAuditor(0);
   
   // Display warnings.
   Eng.EmitWarnings(mgr);
   
   // Visualize the exploded graph.
-  if (mgr.shouldVisualize())
+  if (mgr.shouldVisualizeGraphviz())
     Eng.ViewGraph(mgr.shouldTrimGraph());
 }
 
@@ -418,12 +441,13 @@ ASTConsumer* clang::CreateAnalysisConsumer(Analyses* Beg, Analyses* End,
                                            const LangOptions& lopts,
                                            const std::string& fname,
                                            const std::string& htmldir,
-                                           bool visualize, bool trim,
+                                           bool VisGraphviz, bool VisUbi,
+                                           bool trim,
                                            bool analyzeAll) {
   
   llvm::OwningPtr<AnalysisConsumer>
   C(new AnalysisConsumer(diags, pp, ppf, lopts, fname, htmldir,
-                         visualize, trim, analyzeAll));
+                         VisGraphviz, VisUbi, trim, analyzeAll));
   
   for ( ; Beg != End ; ++Beg)
     switch (*Beg) {
@@ -436,5 +460,77 @@ ASTConsumer* clang::CreateAnalysisConsumer(Analyses* Beg, Analyses* End,
     }
   
   return C.take();
+}
+
+//===----------------------------------------------------------------------===//
+// Ubigraph Visualization.  FIXME: Move to separate file.
+//===----------------------------------------------------------------------===//
+
+namespace {
+  
+class UbigraphViz : public ExplodedNodeImpl::Auditor {
+  llvm::OwningPtr<llvm::raw_ostream> Out;
+  unsigned Cntr;
+
+  typedef llvm::DenseMap<void*,unsigned> VMap;
+  VMap M;
+  
+public:
+  UbigraphViz(llvm::raw_ostream* out) : Out(out), Cntr(0) {}  
+  virtual void AddEdge(ExplodedNodeImpl* Src, ExplodedNodeImpl* Dst);  
+};
+  
+} // end anonymous namespace
+
+static ExplodedNodeImpl::Auditor* CreateUbiViz() {
+  std::string ErrMsg;
+  
+  llvm::sys::Path Filename = llvm::sys::Path::GetTemporaryDirectory(&ErrMsg);
+  if (!ErrMsg.empty())
+    return 0;
+
+  Filename.appendComponent("llvm_ubi");
+  Filename.makeUnique(true,&ErrMsg);
+
+  if (!ErrMsg.empty())
+    return 0;
+
+  llvm::cerr << "Writing '" << Filename << "'.\n";
+  
+  llvm::OwningPtr<llvm::raw_fd_ostream> Stream;
+  std::string filename = Filename.toString();
+  Stream.reset(new llvm::raw_fd_ostream(filename.c_str(), ErrMsg));
+
+  if (!ErrMsg.empty())
+    return 0;
+  
+  return new UbigraphViz(Stream.take());
+}
+
+void UbigraphViz::AddEdge(ExplodedNodeImpl* Src, ExplodedNodeImpl* Dst) {
+  // Lookup the Src.  If it is a new node, it's a root.
+  VMap::iterator SrcI= M.find(Src);
+  unsigned SrcID;
+  
+  if (SrcI == M.end()) {
+    M[Src] = SrcID = Cntr++;
+    *Out << "('vertex', " << SrcID << ", ('color','#00ff00'))\n";
+  }
+  else
+    SrcID = SrcI->second;
+  
+  // Lookup the Dst.
+  VMap::iterator DstI= M.find(Dst);
+  unsigned DstID;
+
+  if (DstI == M.end()) {
+    M[Dst] = DstID = Cntr++;
+    *Out << "('vertex', " << DstID << ")\n";
+  }
+  else
+    DstID = DstI->second;
+
+  // Add the edge.
+  *Out << "('edge', " << SrcID << ", " << DstID << ")\n";
 }
 
