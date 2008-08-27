@@ -421,6 +421,17 @@ void Verifier::VerifyAttrs(ParameterAttributes Attrs, const Type *Ty,
   ParameterAttributes TypeI = Attrs & ParamAttr::typeIncompatible(Ty);
   Assert1(!TypeI, "Wrong type for attribute " +
           ParamAttr::getAsString(TypeI), V);
+
+  ParameterAttributes ByValI = Attrs & ParamAttr::ByVal;
+  if (const PointerType *PTy = dyn_cast<PointerType>(Ty)) {
+    Assert1(!ByValI || PTy->getElementType()->isSized(),
+            "Attribute " + ParamAttr::getAsString(ByValI) +
+            " does not support unsized types!", V);
+  } else {
+    Assert1(!ByValI,
+            "Attribute " + ParamAttr::getAsString(ByValI) +
+            " only applies to parameters with pointer type!", V);
+  }
 }
 
 // VerifyFunctionAttrs - Check parameter attributes against a function type.

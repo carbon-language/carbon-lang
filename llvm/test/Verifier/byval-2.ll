@@ -1,3 +1,4 @@
-; RUN: llvm-as %s -o /dev/null -f
+; RUN: not llvm-as < %s >& /dev/null
+; PR2711
 	%s = type opaque
 declare void @h(%s* byval %num)
