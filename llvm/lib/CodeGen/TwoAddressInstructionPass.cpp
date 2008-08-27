@@ -403,6 +403,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
           // If it's safe and profitable, remat the definition instead of
           // copying it.
           if (DefMI &&
+              DefMI->getDesc().isAsCheapAsAMove() &&
               DefMI->isSafeToReMat(TII, regB) &&
               isProfitableToReMat(regB, rc, mi, DefMI, mbbi, Dist,DistanceMap)){
             DEBUG(cerr << "2addr: REMATTING : " << *DefMI << "\n");
