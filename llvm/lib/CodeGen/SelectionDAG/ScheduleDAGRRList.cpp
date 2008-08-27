@@ -448,18 +448,19 @@ inline void ScheduleDAGRRList::Allocate(int n, int index) {
 /// immediately after X in Index2Node.
 void ScheduleDAGRRList::InitDAGTopologicalSorting() {
   unsigned DAGSize = SUnits.size();
-  std::vector<unsigned> InDegree(DAGSize);
   std::vector<SUnit*> WorkList;
   WorkList.reserve(DAGSize);
-  std::vector<SUnit*> TopOrder;
-  TopOrder.reserve(DAGSize);
+
+  Index2Node.resize(DAGSize);
+  Node2Index.resize(DAGSize);
 
   // Initialize the data structures.
   for (unsigned i = 0, e = DAGSize; i != e; ++i) {
     SUnit *SU = &SUnits[i];
     int NodeNum = SU->NodeNum;
     unsigned Degree = SU->Succs.size();
-    InDegree[NodeNum] = Degree;
+    // Temporarily use the Node2Index array as scratch space for degree counts.
+    Node2Index[NodeNum] = Degree;
 
     // Is it a node without dependencies?
     if (Degree == 0) {
@@ -469,34 +470,22 @@ void ScheduleDAGRRList::InitDAGTopologicalSorting() {
     }
   }  
 
+  int Id = DAGSize;
   while (!WorkList.empty()) {
     SUnit *SU = WorkList.back();
     WorkList.pop_back();
-    TopOrder.push_back(SU);
+    Allocate(SU->NodeNum, --Id);
     for (SUnit::const_pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
          I != E; ++I) {
       SUnit *SU = I->Dep;
-      if (!--InDegree[SU->NodeNum])
+      if (!--Node2Index[SU->NodeNum])
         // If all dependencies of the node are processed already,
         // then the node can be computed now.
         WorkList.push_back(SU);
     }
   }
 
-  // Second pass, assign the actual topological order as node ids.
-  int Id = 0;
-
-  Index2Node.clear();
-  Node2Index.clear();
-  Index2Node.resize(DAGSize);
-  Node2Index.resize(DAGSize);
   Visited.resize(DAGSize);
-
-  for (std::vector<SUnit*>::reverse_iterator TI = TopOrder.rbegin(),
-       TE = TopOrder.rend();TI != TE; ++TI) {
-    Allocate((*TI)->NodeNum, Id);
-    Id++;
-  }
 
 #ifndef NDEBUG
   // Check correctness of the ordering
