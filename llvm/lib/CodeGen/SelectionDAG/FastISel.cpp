@@ -525,6 +525,12 @@ unsigned FastISel::FastEmit_rf_(MVT::SimpleValueType VT, ISD::NodeType Opcode,
   // Materialize the constant in a register.
   unsigned MaterialReg = FastEmit_f(ImmType, ImmType, ISD::ConstantFP, FPImm);
   if (MaterialReg == 0) {
+    // If the target doesn't have a way to directly enter a floating-point
+    // value into a register, use an alternate approach.
+    // TODO: The current approach only supports floating-point constants
+    // that can be constructed by conversion from integer values. This should
+    // be replaced by code that creates a load from a constant-pool entry,
+    // which will require some target-specific work.
     const APFloat &Flt = FPImm->getValueAPF();
     MVT IntVT = TLI.getPointerTy();
 
