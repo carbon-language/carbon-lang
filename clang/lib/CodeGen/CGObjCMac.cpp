@@ -29,6 +29,8 @@ using namespace clang;
 
 namespace {
 
+  typedef std::vector<llvm::Constant*> ConstantVector;
+
   // FIXME: We should find a nicer way to make the labels for
   // metadata, string concatenation is lame.
 
@@ -235,15 +237,17 @@ private:
   llvm::Constant *EmitMetaClass(const ObjCImplementationDecl *ID,
                                 llvm::Constant *Protocols,
                                 const llvm::Type *InterfaceTy,
-                                const std::vector<llvm::Constant*> &Methods);
+                                const ConstantVector &Methods);
+
+  llvm::Constant *GetMethodConstant(const ObjCMethodDecl *MD);
+
+  llvm::Constant *GetMethodDescriptionConstant(const ObjCMethodDecl *MD);
 
   /// EmitMethodList - Emit the method list for the given
   /// implementation. The return value has type MethodListPtrTy.
   llvm::Constant *EmitMethodList(const std::string &Name,
                                  const char *Section,
-                                 const std::vector<llvm::Constant*> &Methods);
-
-  llvm::Constant *GetMethodConstant(ObjCMethodDecl *MD);
+                                 const ConstantVector &Methods);
 
   /// EmitMethodDescList - Emit a method description list for a list of
   /// method declarations. 
@@ -256,12 +260,9 @@ private:
   ///  - begin, end: The method list to output.
   ///
   /// The return value has type MethodDescriptionListPtrTy.
-  llvm::Constant *EmitMethodDescList(const std::string &TypeName,
-                                     bool IsProtocol,
-                                     bool ClassMethods,
-                                     bool Required,
-                                     ObjCMethodDecl * const *begin,
-                                     ObjCMethodDecl * const *end);
+  llvm::Constant *EmitMethodDescList(const std::string &Name,
+                                     const char *Section,
+                                     const ConstantVector &Methods);
 
   /// EmitPropertyList - Emit the given property list. The return
   /// value has type PropertyListPtrTy.
@@ -273,7 +274,10 @@ private:
   /// structure used to store optional instance and class methods, and
   /// protocol properties. The return value has type
   /// ProtocolExtensionPtrTy.
-  llvm::Constant *EmitProtocolExtension(const ObjCProtocolDecl *PD);
+  llvm::Constant *
+  EmitProtocolExtension(const ObjCProtocolDecl *PD,
+                        const ConstantVector &OptInstanceMethods,
+                        const ConstantVector &OptClassMethods);
 
   /// EmitProtocolList - Generate the list of referenced
   /// protocols. The return value has type ProtocolListPtrTy.
@@ -499,26 +503,49 @@ void CGObjCMac::GenerateProtocol(const ObjCProtocolDecl *PD) {
   LazySymbols.insert(&CGM.getContext().Idents.get("Protocol"));
 
   const char *ProtocolName = PD->getName();
-  
+
+  // Construct method lists.
+  std::vector<llvm::Constant*> InstanceMethods, ClassMethods;
+  std::vector<llvm::Constant*> OptInstanceMethods, OptClassMethods;
+  for (ObjCProtocolDecl::instmeth_iterator i = PD->instmeth_begin(),
+         e = PD->instmeth_end(); i != e; ++i) {
+    ObjCMethodDecl *MD = *i;
+    llvm::Constant *C = GetMethodDescriptionConstant(MD);
+    if (MD->getImplementationControl() == ObjCMethodDecl::Optional) {
+      OptInstanceMethods.push_back(C);
+    } else {
+      InstanceMethods.push_back(C);
+    }      
+  }
+
+  for (ObjCProtocolDecl::classmeth_iterator i = PD->classmeth_begin(),
+         e = PD->classmeth_end(); i != e; ++i) {
+    ObjCMethodDecl *MD = *i;
+    llvm::Constant *C = GetMethodDescriptionConstant(MD);
+    if (MD->getImplementationControl() == ObjCMethodDecl::Optional) {
+      OptClassMethods.push_back(C);
+    } else {
+      ClassMethods.push_back(C);
+    }      
+  }
+
   std::vector<llvm::Constant*> Values(5);
-  Values[0] = EmitProtocolExtension(PD);
+  Values[0] = EmitProtocolExtension(PD, OptInstanceMethods, OptClassMethods);
   Values[1] = GetClassName(PD->getIdentifier());
   Values[2] = 
     EmitProtocolList(std::string("\01L_OBJC_PROTOCOL_REFS_")+PD->getName(),
                      PD->protocol_begin(),
                      PD->protocol_end());
-  Values[3] = EmitMethodDescList(ProtocolName,
-                                 true, // IsProtocol
-                                 false, // ClassMethods
-                                 true, // Required
-                                 PD->instmeth_begin(),
-                                 PD->instmeth_end());
-  Values[4] = EmitMethodDescList(ProtocolName,
-                                 true, // IsProtocol
-                                 true, // ClassMethods
-                                 true, // Required
-                                 PD->classmeth_begin(),
-                                 PD->classmeth_end());
+  Values[3] = 
+    EmitMethodDescList(std::string("\01L_OBJC_PROTOCOL_INSTANCE_METHODS_") 
+                       + PD->getName(),
+                       "__OBJC,__cat_inst_meth,regular,no_dead_strip",
+                       InstanceMethods);
+  Values[4] = 
+    EmitMethodDescList(std::string("\01L_OBJC_PROTOCOL_CLASS_METHODS_") 
+                       + PD->getName(),
+                       "__OBJC,__cat_cls_meth,regular,no_dead_strip",
+                       ClassMethods);
   llvm::Constant *Init = llvm::ConstantStruct::get(ObjCTypes.ProtocolTy,
                                                    Values);
   
@@ -576,23 +603,24 @@ llvm::GlobalVariable *CGObjCMac::GetProtocolRef(const ObjCProtocolDecl *PD) {
     struct objc_property_list *instance_properties;
   };
 */
-llvm::Constant *CGObjCMac::EmitProtocolExtension(const ObjCProtocolDecl *PD) {
+llvm::Constant *
+CGObjCMac::EmitProtocolExtension(const ObjCProtocolDecl *PD,
+                                 const ConstantVector &OptInstanceMethods,
+                                 const ConstantVector &OptClassMethods) {
   uint64_t Size = 
     CGM.getTargetData().getABITypeSize(ObjCTypes.ProtocolExtensionTy);
   std::vector<llvm::Constant*> Values(4);
   Values[0] = llvm::ConstantInt::get(ObjCTypes.IntTy, Size);
-  Values[1] = EmitMethodDescList(PD->getName(),
-                                 true, // IsProtocol
-                                 false, // ClassMethods
-                                 false, // Required
-                                 PD->instmeth_begin(),
-                                 PD->instmeth_end());
-  Values[2] = EmitMethodDescList(PD->getName(),
-                                 true, // IsProtocol
-                                 true, // ClassMethods
-                                 false, // Required
-                                 PD->classmeth_begin(),
-                                 PD->classmeth_end());
+  Values[1] = 
+    EmitMethodDescList(std::string("\01L_OBJC_PROTOCOL_INSTANCE_METHODS_OPT_") 
+                       + PD->getName(),
+                       "__OBJC,__cat_inst_meth,regular,no_dead_strip",
+                       OptInstanceMethods);
+  Values[2] = 
+    EmitMethodDescList(std::string("\01L_OBJC_PROTOCOL_CLASS_METHODS_OPT_") 
+                       + PD->getName(),
+                       "__OBJC,__cat_cls_meth,regular,no_dead_strip",
+                       OptClassMethods);
   Values[3] = EmitPropertyList(std::string("\01L_OBJC_$_PROP_PROTO_LIST_") + 
                                PD->getName(),
                                PD->classprop_begin(),
@@ -718,29 +746,19 @@ llvm::Constant *CGObjCMac::EmitPropertyList(const std::string &Name,
     struct objc_method_description list[];
   };
 */
-llvm::Constant *CGObjCMac::EmitMethodDescList(const std::string &TypeName,
-                                              bool IsProtocol,
-                                              bool ClassMethods,
-                                              bool Required,
-                                              ObjCMethodDecl * const *begin,
-                                              ObjCMethodDecl * const *end) {
-  std::vector<llvm::Constant*> Methods, Desc(2);
-  for (; begin != end; ++begin) {
-    ObjCMethodDecl *D = *begin;
-    bool IsRequired = D->getImplementationControl() != ObjCMethodDecl::Optional;
+llvm::Constant *
+CGObjCMac::GetMethodDescriptionConstant(const ObjCMethodDecl *MD) {
+  std::vector<llvm::Constant*> Desc(2);
+  Desc[0] = llvm::ConstantExpr::getBitCast(GetMethodVarName(MD->getSelector()),
+                                           ObjCTypes.SelectorPtrTy);
+  Desc[1] = GetMethodVarType(MD);
+  return llvm::ConstantStruct::get(ObjCTypes.MethodDescriptionTy,
+                                   Desc);
+}
 
-    // Skip if this method is required and we are outputting optional
-    // methods, or vice versa.
-    if (Required != IsRequired)
-      continue;
-
-    Desc[0] = llvm::ConstantExpr::getBitCast(GetMethodVarName(D->getSelector()),
-                                             ObjCTypes.SelectorPtrTy);
-    Desc[1] = GetMethodVarType(D);
-    Methods.push_back(llvm::ConstantStruct::get(ObjCTypes.MethodDescriptionTy,
-                                                Desc));
-  }
-
+llvm::Constant *CGObjCMac::EmitMethodDescList(const std::string &Name,
+                                              const char *Section,
+                                              const ConstantVector &Methods) {
   // Return null for empty list.
   if (Methods.empty())
     return llvm::Constant::getNullValue(ObjCTypes.MethodDescriptionListPtrTy);
@@ -752,22 +770,11 @@ llvm::Constant *CGObjCMac::EmitMethodDescList(const std::string &TypeName,
   Values[1] = llvm::ConstantArray::get(AT, Methods);
   llvm::Constant *Init = llvm::ConstantStruct::get(Values);
 
-  char Prefix[256];
-  sprintf(Prefix, "\01L_OBJC_%s%sMETHODS_%s",
-          IsProtocol ? "PROTOCOL_" : "",
-          ClassMethods ? "CLASS_" : "INSTANCE_",
-          !Required ? "OPT_" : "");
   llvm::GlobalVariable *GV = 
     new llvm::GlobalVariable(Init->getType(), false,
                              llvm::GlobalValue::InternalLinkage,
-                             Init,
-                             std::string(Prefix) + TypeName,
-                             &CGM.getModule());
-  if (ClassMethods) {
-    GV->setSection("__OBJC,__cat_cls_meth,regular,no_dead_strip");
-  } else {
-    GV->setSection("__OBJC,__cat_inst_meth,regular,no_dead_strip");
-  }
+                             Init, Name, &CGM.getModule());
+  GV->setSection(Section);
   UsedGlobals.push_back(GV);
   return llvm::ConstantExpr::getBitCast(GV, 
                                         ObjCTypes.MethodDescriptionListPtrTy);
@@ -823,10 +830,14 @@ void CGObjCMac::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
     EmitMethodList(std::string("\01L_OBJC_CATEGORY_CLASS_METHODS_") + ExtName,
                    "__OBJC,__cat_class_meth,regular,no_dead_strip",
                    ClassMethods);
-  Values[4] = 
-    EmitProtocolList(std::string("\01L_OBJC_CATEGORY_PROTOCOLS_") + ExtName,
-                     Interface->protocol_begin(),
-                     Interface->protocol_end());
+  if (Category) {
+    Values[4] = 
+      EmitProtocolList(std::string("\01L_OBJC_CATEGORY_PROTOCOLS_") + ExtName,
+                       Category->protocol_begin(),
+                       Category->protocol_end());
+  } else {
+    Values[4] = llvm::Constant::getNullValue(ObjCTypes.ProtocolListPtrTy);
+  }
   Values[5] = llvm::ConstantInt::get(ObjCTypes.IntTy, Size);
 
   // If there is no category @interface then there can be no properties.
@@ -996,7 +1007,7 @@ void CGObjCMac::GenerateClass(const ObjCImplementationDecl *ID) {
 llvm::Constant *CGObjCMac::EmitMetaClass(const ObjCImplementationDecl *ID,
                                          llvm::Constant *Protocols,
                                          const llvm::Type *InterfaceTy,
-                                  const std::vector<llvm::Constant*> &Methods) {
+                                         const ConstantVector &Methods) {
   const char *ClassName = ID->getName();
   unsigned Flags = eClassFlags_Meta;
   unsigned Size = CGM.getTargetData().getABITypeSize(ObjCTypes.ClassTy);
@@ -1223,7 +1234,7 @@ llvm::Constant *CGObjCMac::EmitIvarList(const ObjCImplementationDecl *ID,
 /// GetMethodConstant - Return a struct objc_method constant for the
 /// given method if it has been defined. The result is null if the
 /// method has not been defined. The return value has type MethodPtrTy.
-llvm::Constant *CGObjCMac::GetMethodConstant(ObjCMethodDecl *MD) {
+llvm::Constant *CGObjCMac::GetMethodConstant(const ObjCMethodDecl *MD) {
   // FIXME: Use DenseMap::lookup
   llvm::Function *Fn = MethodDefinitions[MD];
   if (!Fn)
@@ -1240,8 +1251,7 @@ llvm::Constant *CGObjCMac::GetMethodConstant(ObjCMethodDecl *MD) {
 
 llvm::Constant *CGObjCMac::EmitMethodList(const std::string &Name,
                                           const char *Section,
-                                          const std::vector<llvm::Constant*> 
-                                            &Methods) {
+                                          const ConstantVector &Methods) {
   // Return null for empty list.
   if (Methods.empty())
     return llvm::Constant::getNullValue(ObjCTypes.MethodListPtrTy);
