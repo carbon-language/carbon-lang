@@ -458,10 +458,8 @@ unsigned FastISel::FastEmit_rri(MVT::SimpleValueType, MVT::SimpleValueType,
 unsigned FastISel::FastEmit_ri_(MVT::SimpleValueType VT, ISD::NodeType Opcode,
                                 unsigned Op0, uint64_t Imm,
                                 MVT::SimpleValueType ImmType) {
-  unsigned ResultReg = 0;
   // First check if immediate type is legal. If not, we can't use the ri form.
-  if (TLI.getOperationAction(ISD::Constant, ImmType) == TargetLowering::Legal)
-    ResultReg = FastEmit_ri(VT, VT, Opcode, Op0, Imm);
+  unsigned ResultReg = FastEmit_ri(VT, VT, Opcode, Op0, Imm);
   if (ResultReg != 0)
     return ResultReg;
   unsigned MaterialReg = FastEmit_i(ImmType, ImmType, ISD::Constant, Imm);
@@ -477,10 +475,8 @@ unsigned FastISel::FastEmit_ri_(MVT::SimpleValueType VT, ISD::NodeType Opcode,
 unsigned FastISel::FastEmit_rf_(MVT::SimpleValueType VT, ISD::NodeType Opcode,
                                 unsigned Op0, ConstantFP *FPImm,
                                 MVT::SimpleValueType ImmType) {
-  unsigned ResultReg = 0;
   // First check if immediate type is legal. If not, we can't use the rf form.
-  if (TLI.getOperationAction(ISD::Constant, ImmType) == TargetLowering::Legal)
-    ResultReg = FastEmit_rf(VT, VT, Opcode, Op0, FPImm);
+  unsigned ResultReg = FastEmit_rf(VT, VT, Opcode, Op0, FPImm);
   if (ResultReg != 0)
     return ResultReg;
 
