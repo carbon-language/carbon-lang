@@ -228,7 +228,7 @@ Sema::FindProtocolDeclaration(bool WarnOnDeclarations,
 }
 
 /// DiagnosePropertyMismatch - Compares two properties for their
-/// attributes and types and warns on a variety of inconsistancies.
+/// attributes and types and warns on a variety of inconsistencies.
 ///
 void
 Sema::DiagnosePropertyMismatch(ObjCPropertyDecl *Property, 
@@ -284,6 +284,7 @@ Sema::ComparePropertiesInBaseAndSuper(ObjCInterfaceDecl *IDecl) {
   ObjCInterfaceDecl *SDecl = IDecl->getSuperClass();
   if (!SDecl)
     return;
+  // FIXME: O(N^2)
   for (ObjCInterfaceDecl::classprop_iterator S = SDecl->classprop_begin(),
        E = SDecl->classprop_end(); S != E; ++S) {
     ObjCPropertyDecl *SuperPDecl = (*S);
@@ -568,6 +569,13 @@ void Sema::WarnUndefinedMethod(SourceLocation ImpLoc, ObjCMethodDecl *method,
   Diag(ImpLoc, diag::warn_undef_method_impl, method->getSelector().getName());
 }
 
+/// FIXME: Type hierarchies in Objective-C can be deep. We could most
+/// likely improve the efficiency of selector lookups and type
+/// checking by associating with each protocol / interface / category
+/// the flattened instance tables. If we used an immutable set to keep
+/// the table then it wouldn't add significant memory cost and it
+/// would be handy for lookups.
+
 /// CheckProtocolMethodDefs - This routine checks unimplemented methods
 /// Declared in protocol, and those referenced by it.
 void Sema::CheckProtocolMethodDefs(SourceLocation ImpLoc,
@@ -808,7 +816,7 @@ void Sema::ActOnAtEnd(SourceLocation AtEndLoc, DeclTy *classDecl,
     else if (ObjCCategoryDecl *CDecl = dyn_cast<ObjCCategoryDecl>(ClassDecl))
       CDecl->addProperties((ObjCPropertyDecl**)allProperties, pNum);
     else if (ObjCProtocolDecl *PDecl = dyn_cast<ObjCProtocolDecl>(ClassDecl))
-          PDecl->addProperties((ObjCPropertyDecl**)allProperties, pNum);
+      PDecl->addProperties((ObjCPropertyDecl**)allProperties, pNum);
     else
       assert(false && "ActOnAtEnd - property declaration misplaced");
   }
@@ -855,26 +863,31 @@ void Sema::ActOnAtEnd(SourceLocation AtEndLoc, DeclTy *classDecl,
   }
   
   if (ObjCInterfaceDecl *I = dyn_cast<ObjCInterfaceDecl>(ClassDecl)) {
-    // Compares properties declaraed in this class to those of its 
+    // Compares properties declared in this class to those of its 
     // super class.
     ComparePropertiesInBaseAndSuper(I);
     MergeProtocolPropertiesIntoClass(I, I);
-    for (ObjCInterfaceDecl::classprop_iterator P = I->classprop_begin(),
-         E = I->classprop_end(); P != E; ++P) {
-      // FIXME: It would be really nice if we could avoid this. Injecting 
-      // methods into the interface makes it hard to distinguish "real" methods
-      // from synthesized "property" methods (that aren't in the source). 
-      // This complicicates the rewriter's life.
-      I->addPropertyMethods(Context, *P, insMethods);
-    }
+    for (ObjCInterfaceDecl::classprop_iterator i = I->classprop_begin(),
+           e = I->classprop_end(); i != e; ++i)
+      I->addPropertyMethods(Context, *i, insMethods);
     I->addMethods(&insMethods[0], insMethods.size(),
                   &clsMethods[0], clsMethods.size(), AtEndLoc);
     
   } else if (ObjCProtocolDecl *P = dyn_cast<ObjCProtocolDecl>(ClassDecl)) {
+    for (ObjCProtocolDecl::classprop_iterator i = P->classprop_begin(),
+           e = P->classprop_end(); i != e; ++i)
+      P->addPropertyMethods(Context, *i, insMethods);
     P->addMethods(&insMethods[0], insMethods.size(),
                   &clsMethods[0], clsMethods.size(), AtEndLoc);
   }
   else if (ObjCCategoryDecl *C = dyn_cast<ObjCCategoryDecl>(ClassDecl)) {
+    // FIXME: Need to compare properties to those in interface?
+
+    // FIXME: If we merge properties into class we should probably
+    // merge them into category as well?
+    for (ObjCCategoryDecl::classprop_iterator i = C->classprop_begin(),
+           e = C->classprop_end(); i != e; ++i)
+      C->addPropertyMethods(Context, *i, insMethods);
     C->addMethods(&insMethods[0], insMethods.size(),
                   &clsMethods[0], clsMethods.size(), AtEndLoc);
   }
@@ -888,7 +901,7 @@ void Sema::ActOnAtEnd(SourceLocation AtEndLoc, DeclTy *classDecl,
     CatImplClass->setLocEnd(AtEndLoc);
     ObjCInterfaceDecl* IDecl = CatImplClass->getClassInterface();
     // Find category interface decl and then check that all methods declared
-    // in this interface is implemented in the category @implementation.
+    // in this interface are implemented in the category @implementation.
     if (IDecl) {
       for (ObjCCategoryDecl *Categories = IDecl->getCategoryList();
            Categories; Categories = Categories->getNextClassCategory()) {
