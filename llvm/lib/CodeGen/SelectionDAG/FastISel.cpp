@@ -586,3 +586,14 @@ unsigned FastISel::FastEmitInst_i(unsigned MachineInstOpcode,
   BuildMI(MBB, II, ResultReg).addImm(Imm);
   return ResultReg;
 }
+
+unsigned FastISel::FastEmitInst_extractsubreg(const TargetRegisterClass *RC,
+                                              unsigned Op0, uint32_t Idx) {
+  const TargetRegisterClass* SRC = *(RC->subregclasses_begin()+Idx-1);
+  
+  unsigned ResultReg = createResultReg(SRC);
+  const TargetInstrDesc &II = TII.get(TargetInstrInfo::EXTRACT_SUBREG);
+  
+  BuildMI(MBB, II, ResultReg).addReg(Op0);
+  return ResultReg;
+}
