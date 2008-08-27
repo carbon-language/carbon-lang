@@ -505,10 +505,9 @@ void Verifier::visitFunction(Function &F) {
     Assert2(I->getType() == FT->getParamType(i),
             "Argument value does not match function argument type!",
             I, FT->getParamType(i));
-    // Make sure no aggregates are passed by value.
     Assert1(I->getType()->isFirstClassType(),
-            "Functions cannot take aggregates as arguments by value!", I);
-   }
+            "Function arguments must have first-class types!", I);
+  }
 
   if (F.isDeclaration()) {
     Assert1(F.hasExternalLinkage() || F.hasDLLImportLinkage() ||
