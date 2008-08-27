@@ -388,6 +388,25 @@ FastISel::SelectInstructions(BasicBlock::iterator Begin,
         if (!SelectConstantCast(I, ISD::SINT_TO_FP, ValueMap)) return I;
       break;
 
+    case Instruction::IntToPtr: // Deliberate fall-through.
+    case Instruction::PtrToInt: {
+      MVT SrcVT = TLI.getValueType(I->getOperand(0)->getType());
+      MVT DstVT = TLI.getValueType(I->getType());
+      if (SrcVT.getSimpleVT() == DstVT.getSimpleVT()) {
+        ValueMap[I] = ValueMap[I->getOperand(0)];
+        break;
+      } else if (DstVT.bitsGT(SrcVT)) {
+        if (!isa<ConstantInt>(I->getOperand(0))) {
+          if (!SelectCast(I, ISD::ZERO_EXTEND, ValueMap)) return I;
+        } else
+          if (!SelectConstantCast(I, ISD::ZERO_EXTEND, ValueMap)) return I;
+        break;
+      } else {
+        // TODO: Handle SrcVT > DstVT, where truncation is needed.
+        return I;
+      }
+    }
+    
     default:
       // Unhandled instruction. Halt "fast" selection and bail.
       return I;
