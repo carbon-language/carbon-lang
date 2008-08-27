@@ -9,6 +9,7 @@ class RVal;
 
 class ConstraintManager {
 public:
+  virtual ~ConstraintManager();
   virtual const GRState* Assume(const GRState* St, RVal Cond, bool Assumption,
                                 bool& isFeasible) = 0;
 };

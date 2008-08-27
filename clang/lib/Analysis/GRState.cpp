@@ -13,10 +13,14 @@
 
 #include "clang/Analysis/PathSensitive/GRStateTrait.h"
 #include "clang/Analysis/PathSensitive/GRState.h"
-#include "llvm/ADT/SmallSet.h"
 #include "clang/Analysis/PathSensitive/GRTransferFuncs.h"
+#include "llvm/ADT/SmallSet.h"
 #include "llvm/Support/raw_ostream.h"
+
 using namespace clang;
+
+// Give the vtable for ConstraintManager somewhere to live.
+ConstraintManager::~ConstraintManager() {}
 
 GRStateManager::~GRStateManager() {
   for (std::vector<GRState::Printer*>::iterator I=Printers.begin(),
