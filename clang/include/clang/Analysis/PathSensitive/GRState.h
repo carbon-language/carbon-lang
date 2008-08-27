@@ -18,6 +18,7 @@
 
 #include "clang/Analysis/PathSensitive/Environment.h"
 #include "clang/Analysis/PathSensitive/Store.h"
+#include "clang/Analysis/PathSensitive/ConstraintManager.h"
 #include "clang/Analysis/PathSensitive/RValues.h"
 #include "clang/Analysis/PathSensitive/GRCoreEngine.h"
 #include "clang/AST/Expr.h"
@@ -233,6 +234,7 @@ class GRStateManager {
 private:
   EnvironmentManager                   EnvMgr;
   llvm::OwningPtr<StoreManager>        StMgr;
+  llvm::OwningPtr<ConstraintManager>   ConstraintMgr;
   GRState::IntSetTy::Factory           ISetFactory;
   
   GRState::GenericDataMap::Factory     GDMFactory;
@@ -286,9 +288,12 @@ private:
   const GRState* BindVar(const GRState* St, VarDecl* D, RVal V) {
     return SetRVal(St, lval::DeclVal(D), V);
   }
+
+  typedef ConstraintManager* (*ConstraintManagerCreater)(GRStateManager&);
     
 public:  
   GRStateManager(ASTContext& Ctx, StoreManager* stmgr,
+                 ConstraintManagerCreater CreateConstraintManager,
                  llvm::BumpPtrAllocator& alloc, CFG& c, LiveVariables& L) 
   : EnvMgr(alloc),
     StMgr(stmgr),
@@ -298,7 +303,9 @@ public:
     SymMgr(alloc),
     Alloc(alloc),
     cfg(c),
-    Liveness(L) {}
+    Liveness(L) {
+    ConstraintMgr.reset((*CreateConstraintManager)(*this));
+  }
   
   ~GRStateManager();
 
@@ -309,6 +316,7 @@ public:
   const BasicValueFactory& getBasicVals() const { return BasicVals; }
   SymbolManager& getSymbolManager() { return SymMgr; }
   LiveVariables& getLiveVariables() { return Liveness; }
+  llvm::BumpPtrAllocator& getAllocator() { return Alloc; }
 
   typedef StoreManager::DeadSymbolsTy DeadSymbolsTy;
 
@@ -440,52 +448,8 @@ public:
   // Assumption logic.
   const GRState* Assume(const GRState* St, RVal Cond, bool Assumption,
                            bool& isFeasible) {
-    
-    if (Cond.isUnknown()) {
-      isFeasible = true;
-      return St;
-    }
-    
-    if (isa<LVal>(Cond))
-      return Assume(St, cast<LVal>(Cond), Assumption, isFeasible);
-    else
-      return Assume(St, cast<NonLVal>(Cond), Assumption, isFeasible);
+    return ConstraintMgr->Assume(St, Cond, Assumption, isFeasible);
   }
-  
-  const GRState* Assume(const GRState* St, LVal Cond, bool Assumption,
-                           bool& isFeasible);
-
-  const GRState* Assume(const GRState* St, NonLVal Cond, bool Assumption,
-                           bool& isFeasible);
-
-private:  
-  const GRState* AssumeAux(const GRState* St, LVal Cond, bool Assumption,
-                              bool& isFeasible);
-  
-  
-  const GRState* AssumeAux(const GRState* St, NonLVal Cond,
-                              bool Assumption, bool& isFeasible);
-    
-  const GRState* AssumeSymInt(const GRState* St, bool Assumption,                                 
-                                 const SymIntConstraint& C, bool& isFeasible);
-  
-  const GRState* AssumeSymNE(const GRState* St, SymbolID sym,
-                                const llvm::APSInt& V, bool& isFeasible);
-  
-  const GRState* AssumeSymEQ(const GRState* St, SymbolID sym,
-                                const llvm::APSInt& V, bool& isFeasible);
-  
-  const GRState* AssumeSymLT(const GRState* St, SymbolID sym,
-                                const llvm::APSInt& V, bool& isFeasible);
-  
-  const GRState* AssumeSymLE(const GRState* St, SymbolID sym,
-                                const llvm::APSInt& V, bool& isFeasible);
-  
-  const GRState* AssumeSymGT(const GRState* St, SymbolID sym,
-                                const llvm::APSInt& V, bool& isFeasible);
-  
-  const GRState* AssumeSymGE(const GRState* St, SymbolID sym,
-                                const llvm::APSInt& V, bool& isFeasible);
 };
   
 //===----------------------------------------------------------------------===//

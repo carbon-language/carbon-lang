@@ -17,7 +17,7 @@
 #include "clang/Analysis/PathSensitive/Store.h"
 
 namespace llvm {
-  class llvm::BumpPtrAllocator; 
+  class BumpPtrAllocator; 
   class ASTContext;
 }
   
