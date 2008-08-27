@@ -1254,15 +1254,14 @@ def : Pat<(i64 (zext GR32:$src)),
 def : Pat<(zextloadi64i1 addr:$src), (MOVZX64rm8 addr:$src)>;
 
 // extload
-def : Pat<(extloadi64i1 addr:$src),
-          (INSERT_SUBREG (i64 (IMPLICIT_DEF)), (MOV8rm addr:$src),
-                         x86_subreg_8bit)>;
-def : Pat<(extloadi64i8 addr:$src),
-          (INSERT_SUBREG (i64 (IMPLICIT_DEF)), (MOV8rm addr:$src),
-                         x86_subreg_8bit)>;
-def : Pat<(extloadi64i16 addr:$src),
-          (INSERT_SUBREG (i64 (IMPLICIT_DEF)), (MOV16rm addr:$src),
-                         x86_subreg_16bit)>;
+// When extloading from 16-bit and smaller memory locations into 64-bit registers,
+// use zero-extending loads so that the entire 64-bit register is defined, avoiding
+// partial-register updates.
+def : Pat<(extloadi64i1 addr:$src),  (MOVZX64rm8  addr:$src)>;
+def : Pat<(extloadi64i8 addr:$src),  (MOVZX64rm8  addr:$src)>;
+def : Pat<(extloadi64i16 addr:$src), (MOVZX64rm16 addr:$src)>;
+// For other extloads, use subregs, since the high contents of the register are
+// defined after an extload.
 def : Pat<(extloadi64i32 addr:$src),
           (INSERT_SUBREG (i64 (IMPLICIT_DEF)), (MOV32rm addr:$src),
                          x86_subreg_32bit)>;
