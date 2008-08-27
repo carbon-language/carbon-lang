@@ -110,11 +110,7 @@ protected:
   
   /// addPredeccessor - Adds a predecessor to the current node, and 
   ///  in tandem add this node as a successor of the other node.
-  void addPredecessor(ExplodedNodeImpl* V) {
-    assert (!V->isSink());
-    Preds.addNode(V);
-    V->Succs.addNode(this);
-  }
+  void addPredecessor(ExplodedNodeImpl* V);
   
 public:
   

@@ -27,6 +27,12 @@ static inline std::vector<ExplodedNodeImpl*>& getVector(void* P) {
   return *reinterpret_cast<std::vector<ExplodedNodeImpl*>*>(P);
 }
 
+void ExplodedNodeImpl::addPredecessor(ExplodedNodeImpl* V) {
+  assert (!V->isSink());
+  Preds.addNode(V);
+  V->Succs.addNode(this);
+}
+
 void ExplodedNodeImpl::NodeGroup::addNode(ExplodedNodeImpl* N) {
   
   assert ((reinterpret_cast<uintptr_t>(N) & Mask) == 0x0);
