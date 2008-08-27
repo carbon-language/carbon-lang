@@ -250,6 +250,8 @@ public:
   /// the instruction's location and its intended destination.
   bool isSafeToMove(const TargetInstrInfo *TII, bool &SawStore);
 
+  bool isSafeToReMat(const TargetInstrInfo *TII, unsigned DstReg);
+
   //
   // Debugging support
   //

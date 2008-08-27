@@ -64,7 +64,6 @@ namespace {
                               unsigned Reg,
                               MachineBasicBlock::iterator OldPos);
 
-    bool isSafeToReMat(unsigned DstReg, MachineInstr *MI);
     bool isProfitableToReMat(unsigned Reg, const TargetRegisterClass *RC,
                              MachineInstr *MI, MachineInstr *DefMI,
                              MachineBasicBlock *MBB, unsigned Loc,
@@ -192,33 +191,6 @@ bool TwoAddressInstructionPass::Sink3AddrInstruction(MachineBasicBlock *MBB,
   MBB->insert(KillPos, MI);
 
   ++Num3AddrSunk;
-  return true;
-}
-
-/// isSafeToReMat - Return true if it's safe to rematerialize the specified
-/// instruction which defined the specified register instead of copying it.
-bool
-TwoAddressInstructionPass::isSafeToReMat(unsigned DstReg, MachineInstr *MI) {
-  const TargetInstrDesc &TID = MI->getDesc();
-  if (!TID.isAsCheapAsAMove())
-    return false;
-  bool SawStore = false;
-  if (!MI->isSafeToMove(TII, SawStore))
-    return false;
-  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-    MachineOperand &MO = MI->getOperand(i);
-    if (!MO.isRegister())
-      continue;
-    // FIXME: For now, do not remat any instruction with register operands.
-    // Later on, we can loosen the restriction is the register operands have
-    // not been modified between the def and use. Note, this is different from
-    // MachineSink because the code in no longer in two-address form (at least
-    // partially).
-    if (MO.isUse())
-      return false;
-    else if (!MO.isDead() && MO.getReg() != DstReg)
-      return false;
-  }
   return true;
 }
 
@@ -431,7 +403,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
           // If it's safe and profitable, remat the definition instead of
           // copying it.
           if (DefMI &&
-              isSafeToReMat(regB, DefMI) &&
+              DefMI->isSafeToReMat(TII, regB) &&
               isProfitableToReMat(regB, rc, mi, DefMI, mbbi, Dist,DistanceMap)){
             DEBUG(cerr << "2addr: REMATTING : " << *DefMI << "\n");
             TII->reMaterialize(*mbbi, mi, regA, DefMI);

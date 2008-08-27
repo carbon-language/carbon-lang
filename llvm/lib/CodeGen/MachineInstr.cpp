@@ -711,6 +711,31 @@ bool MachineInstr::isSafeToMove(const TargetInstrInfo *TII, bool &SawStore) {
   return true;
 }
 
+/// isSafeToReMat - Return true if it's safe to rematerialize the specified
+/// instruction which defined the specified register instead of copying it.
+bool MachineInstr::isSafeToReMat(const TargetInstrInfo *TII, unsigned DstReg) {
+  if (!TID->isAsCheapAsAMove())
+    return false;
+  bool SawStore = false;
+  if (!isSafeToMove(TII, SawStore))
+    return false;
+  for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
+    MachineOperand &MO = getOperand(i);
+    if (!MO.isRegister())
+      continue;
+    // FIXME: For now, do not remat any instruction with register operands.
+    // Later on, we can loosen the restriction is the register operands have
+    // not been modified between the def and use. Note, this is different from
+    // MachineSink because the code in no longer in two-address form (at least
+    // partially).
+    if (MO.isUse())
+      return false;
+    else if (!MO.isDead() && MO.getReg() != DstReg)
+      return false;
+  }
+  return true;
+}
+
 void MachineInstr::dump() const {
   cerr << "  " << *this;
 }
