@@ -22,6 +22,8 @@
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetMachineRegistry.h"
+#include "llvm/Target/SubtargetFeature.h"
 #include "llvm/Support/PassNameParser.h"
 #include "llvm/System/Signals.h"
 #include "llvm/Support/ManagedStatic.h"
@@ -92,6 +94,22 @@ QuietA("quiet", cl::desc("Alias for -q"), cl::aliasopt(Quiet));
 
 static cl::opt<bool>
 AnalyzeOnly("analyze", cl::desc("Only perform analysis, no optimization"));
+
+static cl::opt<const TargetMachineRegistry::entry*, false,
+               TargetMachineRegistry::Parser>
+MArch("march", cl::desc("Architecture to generate code for:"));
+
+static cl::opt<std::string>
+MCPU("mcpu", 
+  cl::desc("Target a specific cpu type (-mcpu=help for details)"),
+  cl::value_desc("cpu-name"),
+  cl::init(""));
+
+static cl::list<std::string>
+MAttrs("mattr", 
+  cl::CommaSeparated,
+  cl::desc("Target specific attributes (-mattr=help for details)"),
+  cl::value_desc("a1,+a2,-a3,..."));
 
 // ---------- Define Printers for module and function passes ------------
 namespace {
@@ -308,16 +326,42 @@ void AddStandardCompilePasses(PassManager &PM) {
 //===----------------------------------------------------------------------===//
 // main for opt
 //
+
+TargetMachine *getTargetMachine(Module &Mod) {
+
+  if (MArch == 0) {
+    std::string Err;
+    MArch = 
+      TargetMachineRegistry::getClosestStaticTargetForModule(Mod, Err);
+    if (MArch == 0) {
+      std::cerr << "Error auto-selecting target for module '"
+                << Err << "'.  Please use the -march option to explicitly "
+                << "pick a target.\n";
+      return NULL;
+    }
+  }
+  
+  // Package up features to be passed to target/subtarget
+  std::string FeaturesStr;
+  if (MCPU.size() || MAttrs.size()) {
+    SubtargetFeatures Features;
+    Features.setCPU(MCPU);
+    for (unsigned i = 0; i != MAttrs.size(); ++i)
+      Features.AddFeature(MAttrs[i]);
+    FeaturesStr = Features.getString();
+  }
+  
+  TargetMachine *Target = MArch->CtorFn(Mod, FeaturesStr);
+  assert(Target && "Could not allocate target machine!");
+  return Target;
+}
+
 int main(int argc, char **argv) {
   llvm_shutdown_obj X;  // Call llvm_shutdown() on exit.
   try {
     cl::ParseCommandLineOptions(argc, argv,
       "llvm .bc -> .bc modular optimizer and analysis printer\n");
     sys::PrintStackTraceOnErrorSignal();
-
-    // Allocate a full target machine description only if necessary.
-    // FIXME: The choice of target should be controllable on the command line.
-    std::auto_ptr<TargetMachine> target;
 
     std::string ErrorMessage;
 
