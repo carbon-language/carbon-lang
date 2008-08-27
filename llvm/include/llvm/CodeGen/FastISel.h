@@ -194,6 +194,9 @@ protected:
                           uint64_t Imm);
 
 private:
+  unsigned getRegForValue(Value *V,
+                          DenseMap<const Value*, unsigned> &ValueMap);
+
   unsigned createResultReg(const TargetRegisterClass *RC);
 
   bool SelectBinaryOp(Instruction *I, ISD::NodeType ISDOpcode,
@@ -207,11 +210,6 @@ private:
   
   bool SelectCast(Instruction *I, ISD::NodeType Opcode,
                   DenseMap<const Value*, unsigned> &ValueMap);
-  
-  bool SelectConstantCast(Instruction *I, ISD::NodeType Opcode,
-                          DenseMap<const Value*, unsigned> &ValueMap);
-  bool SelectConstantFPCast(Instruction *I, ISD::NodeType Opcode,
-                            DenseMap<const Value*, unsigned> &ValueMap);
 };
 
 }
