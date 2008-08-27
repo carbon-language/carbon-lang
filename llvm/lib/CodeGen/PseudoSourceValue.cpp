@@ -57,9 +57,6 @@ namespace {
 
     virtual bool isConstant(const MachineFrameInfo *MFI) const;
 
-    virtual void print(std::ostream &OS) const {
-      OS << "FixedStack" << FI;
-    }
     virtual void print(raw_ostream &OS) const {
       OS << "FixedStack" << FI;
     }
