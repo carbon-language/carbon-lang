@@ -625,6 +625,10 @@ public:
   ObjCPropertyDecl **getPropertyDecl() { return PropertyDecl; }
   
   void addProperties(ObjCPropertyDecl **Properties, unsigned NumProperties);
+
+  void addPropertyMethods(ASTContext &Context,
+                          ObjCPropertyDecl* Property,
+                          llvm::SmallVector<ObjCMethodDecl*, 32> &insMethods);
   
   typedef ObjCPropertyDecl * const * classprop_iterator;
   classprop_iterator classprop_begin() const { return PropertyDecl; }
@@ -862,6 +866,10 @@ public:
   ObjCPropertyDecl * const * getPropertyDecl() const { return PropertyDecl; }
   
   void addProperties(ObjCPropertyDecl **Properties, unsigned NumProperties);
+
+  void addPropertyMethods(ASTContext &Context,
+                          ObjCPropertyDecl* Property,
+                          llvm::SmallVector<ObjCMethodDecl*, 32> &insMethods);
   
   ObjCPropertyDecl *FindPropertyDeclaration(IdentifierInfo *PropertyId) const;
   

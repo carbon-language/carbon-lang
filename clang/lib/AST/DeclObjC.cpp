@@ -402,14 +402,28 @@ void ObjCInterfaceDecl::mergeProperties(ObjCPropertyDecl **Properties,
   }
 }
 
-/// addPropertyMethods - Goes through list of properties declared in this class
-/// and builds setter/getter method declartions depending on the setter/getter
-/// attributes of the property.
-///
-void ObjCInterfaceDecl::addPropertyMethods(
-       ASTContext &Context,
-       ObjCPropertyDecl *property,
-       llvm::SmallVector<ObjCMethodDecl*, 32> &insMethods) {
+static void 
+addPropertyMethods(Decl *D,
+                   ASTContext &Context,
+                   ObjCPropertyDecl *property,
+                   llvm::SmallVector<ObjCMethodDecl*, 32> &insMethods) {
+  ObjCMethodDecl *GetterDecl, *SetterDecl;
+
+  if (ObjCInterfaceDecl *OID = dyn_cast<ObjCInterfaceDecl>(D)) {
+    GetterDecl = OID->getInstanceMethod(property->getGetterName());
+    if (!property->isReadOnly())
+      SetterDecl = OID->getInstanceMethod(property->getSetterName());
+  } else if (ObjCCategoryDecl *OCD = dyn_cast<ObjCCategoryDecl>(D)) {
+    GetterDecl = OCD->getInstanceMethod(property->getGetterName());
+    if (!property->isReadOnly())
+      SetterDecl = OCD->getInstanceMethod(property->getSetterName());
+  } else {
+    ObjCProtocolDecl *OPD = cast<ObjCProtocolDecl>(D);
+    GetterDecl = OPD->getInstanceMethod(property->getGetterName());
+    if (!property->isReadOnly())
+      SetterDecl = OPD->getInstanceMethod(property->getSetterName());
+  }
+
   // FIXME: The synthesized property we set here is misleading. We
   // almost always synthesize these methods unless the user explicitly
   // provided prototypes (which is odd, but allowed). Sema should be
@@ -417,7 +431,6 @@ void ObjCInterfaceDecl::addPropertyMethods(
   // it is not currently).
 
   // Find the default getter and if one not found, add one.
-  ObjCMethodDecl *GetterDecl = getInstanceMethod(property->getGetterName());
   if (!GetterDecl) {
     // No instance method of same name as property getter name was found.
     // Declare a getter method and add it to the list of methods 
@@ -427,7 +440,7 @@ void ObjCInterfaceDecl::addPropertyMethods(
                              property->getLocation(), 
                              property->getGetterName(), 
                              property->getType(),
-                             this,
+                             D,
                              true, false, true, ObjCMethodDecl::Required);
     insMethods.push_back(GetterDecl);
   }
@@ -438,7 +451,6 @@ void ObjCInterfaceDecl::addPropertyMethods(
     return;
 
   // Find the default setter and if one not found, add one.
-  ObjCMethodDecl *SetterDecl = getInstanceMethod(property->getSetterName());
   if (!SetterDecl) {
     // No instance method of same name as property setter name was found.
     // Declare a setter method and add it to the list of methods 
@@ -448,7 +460,7 @@ void ObjCInterfaceDecl::addPropertyMethods(
                              property->getLocation(), 
                              property->getSetterName(), 
                              Context.VoidTy,
-                             this,
+                             D,
                              true, false, true, ObjCMethodDecl::Required);
     insMethods.push_back(SetterDecl);
 
@@ -464,6 +476,39 @@ void ObjCInterfaceDecl::addPropertyMethods(
     SetterDecl->setMethodParams(&Argument, 1);
   }
   property->setSetterMethodDecl(SetterDecl);
+}
+
+/// addPropertyMethods - Goes through list of properties declared in this class
+/// and builds setter/getter method declartions depending on the setter/getter
+/// attributes of the property.
+///
+void ObjCInterfaceDecl::addPropertyMethods(
+       ASTContext &Context,
+       ObjCPropertyDecl *property,
+       llvm::SmallVector<ObjCMethodDecl*, 32> &insMethods) {
+  ::addPropertyMethods(this, Context, property, insMethods);
+}
+
+/// addPropertyMethods - Goes through list of properties declared in this class
+/// and builds setter/getter method declartions depending on the setter/getter
+/// attributes of the property.
+///
+void ObjCCategoryDecl::addPropertyMethods(
+       ASTContext &Context,
+       ObjCPropertyDecl *property,
+       llvm::SmallVector<ObjCMethodDecl*, 32> &insMethods) {
+  ::addPropertyMethods(this, Context, property, insMethods);
+}
+
+/// addPropertyMethods - Goes through list of properties declared in this class
+/// and builds setter/getter method declartions depending on the setter/getter
+/// attributes of the property.
+///
+void ObjCProtocolDecl::addPropertyMethods(
+       ASTContext &Context,
+       ObjCPropertyDecl *property,
+       llvm::SmallVector<ObjCMethodDecl*, 32> &insMethods) {
+  ::addPropertyMethods(this, Context, property, insMethods);
 }
 
 /// addProperties - Insert property declaration AST nodes into
