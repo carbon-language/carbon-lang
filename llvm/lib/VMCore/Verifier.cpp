@@ -198,23 +198,22 @@ namespace {
     /// this condition, do so.
     ///
     bool abortIfBroken() {
-      if (Broken) {
-        msgs << "Broken module found, ";
-        switch (action) {
-          case AbortProcessAction:
-            msgs << "compilation aborted!\n";
-            cerr << msgs.str();
-            abort();
-          case PrintMessageAction:
-            msgs << "verification continues.\n";
-            cerr << msgs.str();
-            return false;
-          case ReturnStatusAction:
-            msgs << "compilation terminated.\n";
-            return Broken;
-        }
+      if (!Broken) return false;
+      msgs << "Broken module found, ";
+      switch (action) {
+      default: assert(0 && "Unknown action");
+      case AbortProcessAction:
+        msgs << "compilation aborted!\n";
+        cerr << msgs.str();
+        abort();
+      case PrintMessageAction:
+        msgs << "verification continues.\n";
+        cerr << msgs.str();
+        return false;
+      case ReturnStatusAction:
+        msgs << "compilation terminated.\n";
+        return Broken;
       }
-      return false;
     }
 
 
