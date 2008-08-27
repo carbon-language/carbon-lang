@@ -134,14 +134,20 @@ public:
       return llvm::ConstantInt::get(EC->getInitVal());
     return EmitLoadOfLValue(E);
   }
-  Value *VisitObjCSelectorExpr(ObjCSelectorExpr *E);
-  Value *VisitObjCProtocolExpr(ObjCProtocolExpr *E);
-  Value *VisitObjCIvarRefExpr(ObjCIvarRefExpr *E) { return EmitLoadOfLValue(E);}
+  Value *VisitObjCSelectorExpr(ObjCSelectorExpr *E) { 
+    return CGF.EmitObjCSelectorExpr(E); 
+  }
+  Value *VisitObjCProtocolExpr(ObjCProtocolExpr *E) { 
+    return CGF.EmitObjCProtocolExpr(E); 
+  }
+  Value *VisitObjCIvarRefExpr(ObjCIvarRefExpr *E) { 
+    return EmitLoadOfLValue(E);
+  }
   Value *VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *E) {
-    CGF.ErrorUnsupported(E, "scalar expression (Objective-C property reference)");
-    if (E->getType()->isVoidType())
-      return 0;
-    return llvm::UndefValue::get(CGF.ConvertType(E->getType()));    
+    return CGF.EmitObjCPropertyGet(E).getScalarVal();
+  }
+  Value *VisitObjCMessageExpr(ObjCMessageExpr *E) {
+    return CGF.EmitObjCMessageExpr(E).getScalarVal();
   }
 
   Value *VisitArraySubscriptExpr(ArraySubscriptExpr *E);
@@ -194,10 +200,6 @@ public:
 
   Value *VisitCallExpr(const CallExpr *E) {
     return CGF.EmitCallExpr(E).getScalarVal();
-  }
-
-  Value *VisitObjCMessageExpr(ObjCMessageExpr *E) {
-    return CGF.EmitObjCMessageExpr(E).getScalarVal();
   }
 
   Value *VisitStmtExpr(const StmtExpr *E);
@@ -479,14 +481,6 @@ Value *ScalarExprEmitter::VisitShuffleVectorExpr(ShuffleVectorExpr *E) {
   Value* V2 = CGF.EmitScalarExpr(E->getExpr(1));
   Value* SV = llvm::ConstantVector::get(indices.begin(), indices.size());
   return Builder.CreateShuffleVector(V1, V2, SV, "shuffle");
-}
-
-Value *ScalarExprEmitter::VisitObjCSelectorExpr(ObjCSelectorExpr *E) {
-  return CGF.EmitObjCSelectorExpr(E);
-}
-
-Value *ScalarExprEmitter::VisitObjCProtocolExpr(ObjCProtocolExpr *E) {
-  return CGF.EmitObjCProtocolExpr(E);
 }
 
 Value *ScalarExprEmitter::VisitArraySubscriptExpr(ArraySubscriptExpr *E) {

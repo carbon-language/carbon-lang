@@ -218,4 +218,24 @@ llvm::Value *CodeGenFunction::LoadObjCSelf(void) {
   return Builder.CreateLoad(LocalDeclMap[OMD->getSelfDecl()], "self");
 }
 
+RValue CodeGenFunction::EmitObjCPropertyGet(const ObjCPropertyRefExpr *E) {
+  // Determine getter selector.
+  Selector S;
+  if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(E->getDecl())) {
+    S = MD->getSelector();
+  } else {
+    S = cast<ObjCPropertyDecl>(E->getDecl())->getGetterName();
+  }
+
+  // FIXME: Improve location information.
+  SourceLocation Loc = E->getLocation();
+  // PropertyRefExprs are always instance messages.
+  // FIXME: Is there any reason to try and pass the method here?
+  ObjCMessageExpr GetExpr(const_cast<Expr*>(E->getBase()), 
+                          S, E->getType(), 0, Loc, Loc,
+                          0, 0);
+
+  return EmitObjCMessageExpr(&GetExpr);
+}
+
 CGObjCRuntime::~CGObjCRuntime() {}

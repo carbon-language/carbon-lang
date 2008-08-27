@@ -326,6 +326,7 @@ public:
   llvm::Value *EmitObjCStringLiteral(const ObjCStringLiteral *E);
   llvm::Value *EmitObjCSelectorExpr(const ObjCSelectorExpr *E);
   RValue EmitObjCMessageExpr(const ObjCMessageExpr *E);
+  RValue EmitObjCPropertyGet(const ObjCPropertyRefExpr *E);
 
 
   //===--------------------------------------------------------------------===//
