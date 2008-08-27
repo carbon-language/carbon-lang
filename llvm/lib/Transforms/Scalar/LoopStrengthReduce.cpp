@@ -1735,8 +1735,15 @@ void LoopStrengthReduce::OptimizeShadowIV(Loop *L) {
         DestTy = UCast->getDestTy();
       else if (SIToFPInst *SCast = dyn_cast<SIToFPInst>(CandidateUI->User))
         DestTy = SCast->getDestTy();
-    if (!DestTy) continue;
-      
+      if (!DestTy) continue;
+
+      if (TLI) {
+        /* If target does not support DestTy natively then do not apply
+           this transformation. */
+        MVT DVT = TLI->getValueType(DestTy);
+        if (!TLI->isTypeLegal(DVT)) continue;
+      }
+
       PHINode *PH = dyn_cast<PHINode>(ShadowUse->getOperand(0));
       if (!PH) continue;
       if (PH->getNumIncomingValues() != 2) continue;
