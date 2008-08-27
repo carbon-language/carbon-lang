@@ -36,6 +36,7 @@
 		35847BE50CC7DBAF00C40FFF /* StmtIterator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35847BE40CC7DBAF00C40FFF /* StmtIterator.cpp */; };
 		35862B0D0E3628CB0009F542 /* CheckDeadStores.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35862B0C0E3628CB0009F542 /* CheckDeadStores.cpp */; };
 		35862B120E3629850009F542 /* GRExprEngineInternalChecks.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35862B110E3629850009F542 /* GRExprEngineInternalChecks.cpp */; };
+		358CFBB80E65AB04002A8E19 /* BasicConstraintManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 358CFBB70E65AB04002A8E19 /* BasicConstraintManager.cpp */; };
 		358F51520E529AA4007F2102 /* GRState.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 358F51510E529AA4007F2102 /* GRState.cpp */; };
 		3593790A0DA48ABA0043B19C /* BugReporter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 359379090DA48ABA0043B19C /* BugReporter.cpp */; };
 		3595AFB80E1C8D62004CDF09 /* CheckObjCDealloc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3595AFB70E1C8D62004CDF09 /* CheckObjCDealloc.cpp */; };
@@ -310,6 +311,7 @@
 		35847BE40CC7DBAF00C40FFF /* StmtIterator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = StmtIterator.cpp; path = lib/AST/StmtIterator.cpp; sourceTree = "<group>"; };
 		35862B0C0E3628CB0009F542 /* CheckDeadStores.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CheckDeadStores.cpp; path = lib/Analysis/CheckDeadStores.cpp; sourceTree = "<group>"; };
 		35862B110E3629850009F542 /* GRExprEngineInternalChecks.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GRExprEngineInternalChecks.cpp; path = lib/Analysis/GRExprEngineInternalChecks.cpp; sourceTree = "<group>"; };
+		358CFBB70E65AB04002A8E19 /* BasicConstraintManager.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = BasicConstraintManager.cpp; path = lib/Analysis/BasicConstraintManager.cpp; sourceTree = "<group>"; };
 		358F514F0E529A87007F2102 /* GRState.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GRState.h; path = clang/Analysis/PathSensitive/GRState.h; sourceTree = "<group>"; };
 		358F51510E529AA4007F2102 /* GRState.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GRState.cpp; path = lib/Analysis/GRState.cpp; sourceTree = "<group>"; };
 		359378FF0DA486490043B19C /* BugReporter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BugReporter.h; path = clang/Analysis/PathSensitive/BugReporter.h; sourceTree = "<group>"; };
@@ -574,6 +576,7 @@
 		3507E4C60E27FE5500FB7B57 /* Path-Sensitive Core */ = {
 			isa = PBXGroup;
 			children = (
+				358CFBB70E65AB04002A8E19 /* BasicConstraintManager.cpp */,
 				3558F76C0E267C8300A5B0DF /* BasicStore.cpp */,
 				35D55B240D81D8C60092E734 /* BasicValueFactory.cpp */,
 				3536456A0E23EBF7009C6509 /* Environment.cpp */,
@@ -1219,6 +1222,7 @@
 				350F4B470E5F32E100A21EA9 /* InitHeaderSearch.cpp in Sources */,
 				359763260E633C7500B68AB7 /* HTMLDiagnostics.cpp in Sources */,
 				3597632A0E633CE300B68AB7 /* Regions.cpp in Sources */,
+				358CFBB80E65AB04002A8E19 /* BasicConstraintManager.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
