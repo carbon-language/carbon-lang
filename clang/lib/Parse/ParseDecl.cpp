@@ -1111,14 +1111,15 @@ void Parser::ParseDeclarator(Declarator &D) {
 void Parser::ParseDeclaratorInternal(Declarator &D) {
   tok::TokenKind Kind = Tok.getKind();
 
-  // Not a pointer or C++ reference.
-  if (Kind != tok::star && (Kind != tok::amp || !getLang().CPlusPlus))
+  // Not a pointer, C++ reference, or block.
+  if (Kind != tok::star && (Kind != tok::amp || !getLang().CPlusPlus) &&
+      (Kind != tok::caret || !getLang().Blocks))
     return ParseDirectDeclarator(D);
   
   // Otherwise, '*' -> pointer or '&' -> reference.
   SourceLocation Loc = ConsumeToken();  // Eat the * or &.
 
-  if (Kind == tok::star) {
+  if (Kind == tok::star || Kind == tok::caret) {
     // Is a pointer.
     DeclSpec DS;
     
@@ -1126,10 +1127,14 @@ void Parser::ParseDeclaratorInternal(Declarator &D) {
   
     // Recursively parse the declarator.
     ParseDeclaratorInternal(D);
-
-    // Remember that we parsed a pointer type, and remember the type-quals.
-    D.AddTypeInfo(DeclaratorChunk::getPointer(DS.getTypeQualifiers(), Loc,
-                                              DS.TakeAttributes()));
+    if (Kind == tok::star)
+      // Remember that we parsed a pointer type, and remember the type-quals.
+      D.AddTypeInfo(DeclaratorChunk::getPointer(DS.getTypeQualifiers(), Loc,
+                                                DS.TakeAttributes()));
+    else
+      // Remember that we parsed a Block type, and remember the type-quals.
+      D.AddTypeInfo(DeclaratorChunk::getBlockPointer(DS.getTypeQualifiers(), 
+                                                     Loc));	
   } else {
     // Is a reference
     DeclSpec DS;

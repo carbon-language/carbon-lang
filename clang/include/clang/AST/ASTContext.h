@@ -51,6 +51,7 @@ class ASTContext {
   llvm::FoldingSet<ASQualType> ASQualTypes;
   llvm::FoldingSet<ComplexType> ComplexTypes;
   llvm::FoldingSet<PointerType> PointerTypes;
+  llvm::FoldingSet<BlockPointerType> BlockPointerTypes;
   llvm::FoldingSet<ReferenceType> ReferenceTypes;
   llvm::FoldingSet<ConstantArrayType> ConstantArrayTypes;
   llvm::FoldingSet<IncompleteArrayType> IncompleteArrayTypes;
@@ -162,6 +163,10 @@ public:
   /// getPointerType - Return the uniqued reference to the type for a pointer to
   /// the specified type.
   QualType getPointerType(QualType T);
+
+  /// getBlockPointerType - Return the uniqued reference to the type for a block
+  /// of the specified type.
+  QualType getBlockPointerType(QualType T);
   
   /// getReferenceType - Return the uniqued reference to the type for a
   /// reference to the specified type.

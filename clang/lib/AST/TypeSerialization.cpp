@@ -99,6 +99,10 @@ void Type::Create(ASTContext& Context, unsigned i, Deserializer& D) {
     case Type::Pointer:
       D.RegisterPtr(PtrID,PointerType::CreateImpl(Context,D));
       break;
+
+    case Type::BlockPointer:
+      D.RegisterPtr(PtrID,BlockPointerType::CreateImpl(Context,D));
+      break;
       
     case Type::Tagged:
       D.RegisterPtr(PtrID,TagType::CreateImpl(Context,D));
@@ -127,6 +131,18 @@ Type* ASQualType::CreateImpl(ASTContext& Context, Deserializer& D) {
   QualType BaseTy = QualType::ReadVal(D);
   unsigned AddressSpace = D.ReadInt();
   return Context.getASQualType(BaseTy, AddressSpace).getTypePtr();
+}
+
+//===----------------------------------------------------------------------===//
+// BlockPointerType
+//===----------------------------------------------------------------------===//
+
+void BlockPointerType::EmitImpl(Serializer& S) const {
+  S.Emit(getPointeeType());
+}
+
+Type* BlockPointerType::CreateImpl(ASTContext& Context, Deserializer& D) {
+  return Context.getBlockPointerType(QualType::ReadVal(D)).getTypePtr();
 }
 
 //===----------------------------------------------------------------------===//

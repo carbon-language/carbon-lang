@@ -42,6 +42,7 @@ namespace clang {
   class SourceLocation;
   class PointerLikeType;
   class PointerType;
+  class BlockPointerType;
   class ReferenceType;
   class VectorType;
   class ArrayType;
@@ -239,7 +240,8 @@ public:
     TypeName, Tagged, ASQual,
     ObjCInterface, ObjCQualifiedInterface,
     ObjCQualifiedId,
-    TypeOfExp, TypeOfTyp // GNU typeof extension.
+    TypeOfExp, TypeOfTyp, // GNU typeof extension.
+    BlockPointer          // C extension
   };
 private:
   QualType CanonicalType;
@@ -319,6 +321,7 @@ public:
   bool isFunctionType() const;
   bool isPointerLikeType() const; // Pointer or Reference.
   bool isPointerType() const;
+  bool isBlockPointerType() const;
   bool isReferenceType() const;
   bool isFunctionPointerType() const;
   bool isArrayType() const;
@@ -344,6 +347,7 @@ public:
   const FunctionTypeProto *getAsFunctionTypeProto() const;   
   const PointerLikeType *getAsPointerLikeType() const; // Pointer or Reference.
   const PointerType *getAsPointerType() const;
+  const BlockPointerType *getAsBlockPointerType() const;
   const ReferenceType *getAsReferenceType() const;
   const RecordType *getAsRecordType() const;
   const RecordType *getAsStructureType() const;
@@ -566,6 +570,41 @@ protected:
   virtual void EmitImpl(llvm::Serializer& S) const;
   static Type* CreateImpl(ASTContext& Context,llvm::Deserializer& D);
   friend class Type;
+};
+
+/// BlockPointerType - pointer to a block type.
+/// This type is to represent types syntactically represented as
+/// "void (^)(int)", etc. Pointee is required to always be a function type.
+///
+class BlockPointerType : public Type, public llvm::FoldingSetNode {
+  QualType PointeeType;  // Block is some kind of pointer type
+  BlockPointerType(QualType Pointee, QualType CanonicalCls) :
+    Type(BlockPointer, CanonicalCls), PointeeType(Pointee) {
+  }
+  friend class ASTContext;  // ASTContext creates these.
+public:
+  
+  // Get the pointee type. Pointee is required to always be a function type.
+  QualType getPointeeType() const { return PointeeType; }
+
+  virtual void getAsStringInternal(std::string &InnerString) const;
+    
+  void Profile(llvm::FoldingSetNodeID &ID) {
+      Profile(ID, getPointeeType());
+  }
+  static void Profile(llvm::FoldingSetNodeID &ID, QualType Pointee) {
+      ID.AddPointer(Pointee.getAsOpaquePtr());
+  }
+    
+  static bool classof(const Type *T) { 
+    return T->getTypeClass() == BlockPointer; 
+  }
+  static bool classof(const BlockPointerType *) { return true; }
+
+  protected:  
+    virtual void EmitImpl(llvm::Serializer& S) const;
+    static Type* CreateImpl(ASTContext& Context,llvm::Deserializer& D);
+    friend class Type;
 };
 
 /// ReferenceType - C++ 8.3.2 - Reference Declarators.
@@ -1302,6 +1341,9 @@ inline bool Type::isFunctionType() const {
 }
 inline bool Type::isPointerType() const {
   return isa<PointerType>(CanonicalType.getUnqualifiedType()); 
+}
+inline bool Type::isBlockPointerType() const {
+    return isa<BlockPointerType>(CanonicalType); 
 }
 inline bool Type::isReferenceType() const {
   return isa<ReferenceType>(CanonicalType.getUnqualifiedType());

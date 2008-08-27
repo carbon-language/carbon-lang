@@ -859,6 +859,10 @@ DIAG(err_illegal_decl_pointer_to_reference, ERROR,
      "'%0' declared as a pointer to a reference")
 DIAG(err_illegal_decl_reference_to_reference, ERROR,
      "'%0' declared as a reference to a reference")
+DIAG(err_qualified_block_pointer_type, ERROR,
+     "qualifier specification on block pointer type not allowed")
+DIAG(err_nonfunction_block_type, ERROR,
+     "block pointer to non-function type is invalid")
 
 // Expressions.
 DIAG(ext_sizeof_function_type, EXTENSION,

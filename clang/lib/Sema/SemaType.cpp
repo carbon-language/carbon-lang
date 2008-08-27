@@ -253,6 +253,14 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
     DeclaratorChunk &DeclType = D.getTypeObject(e-i-1);
     switch (DeclType.Kind) {
     default: assert(0 && "Unknown decltype!");
+    case DeclaratorChunk::BlockPointer:
+      if (DeclType.Cls.TypeQuals)
+        Diag(D.getIdentifierLoc(), diag::err_qualified_block_pointer_type);
+      if (!T.getTypePtr()->isFunctionType())
+        Diag(D.getIdentifierLoc(), diag::err_nonfunction_block_type);
+      else
+        T = Context.getBlockPointerType(T);
+      break;
     case DeclaratorChunk::Pointer:
       if (T->isReferenceType()) {
         // C++ 8.3.2p4: There shall be no ... pointers to references ...

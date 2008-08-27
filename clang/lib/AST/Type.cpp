@@ -231,6 +231,20 @@ const PointerType *Type::getAsPointerType() const {
   return getDesugaredType()->getAsPointerType();
 }
 
+const BlockPointerType *Type::getAsBlockPointerType() const {
+  // If this is directly a block pointer type, return it.
+  if (const BlockPointerType *PTy = dyn_cast<BlockPointerType>(this))
+    return PTy;
+  
+  // If the canonical form of this type isn't the right kind, reject it.
+  if (!isa<BlockPointerType>(CanonicalType))
+    return 0;
+  
+  // If this is a typedef for a block pointer type, strip the typedef off 
+  // without losing all typedef information.
+  return getDesugaredType()->getAsBlockPointerType();
+}
+
 const ReferenceType *Type::getAsReferenceType() const {
   // If this is directly a reference type, return it.
   if (const ReferenceType *RTy = dyn_cast<ReferenceType>(this))
@@ -574,7 +588,9 @@ bool Type::isScalarType() const {
   }
   if (const ASQualType *ASQT = dyn_cast<ASQualType>(CanonicalType))
     return ASQT->getBaseType()->isScalarType();
-  return isa<PointerType>(CanonicalType) || isa<ComplexType>(CanonicalType) ||
+  return isa<PointerType>(CanonicalType) ||
+         isa<BlockPointerType>(CanonicalType) ||
+         isa<ComplexType>(CanonicalType) ||
          isa<ObjCQualifiedIdType>(CanonicalType);
 }
 
@@ -829,6 +845,11 @@ void PointerType::getAsStringInternal(std::string &S) const {
     S = '(' + S + ')';
   
   getPointeeType().getAsStringInternal(S);
+}
+
+void BlockPointerType::getAsStringInternal(std::string &S) const {
+  S = '^' + S;
+  PointeeType.getAsStringInternal(S);
 }
 
 void ReferenceType::getAsStringInternal(std::string &S) const {

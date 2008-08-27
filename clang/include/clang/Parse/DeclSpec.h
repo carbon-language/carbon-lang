@@ -376,7 +376,7 @@ private:
 /// This is intended to be a small value object.
 struct DeclaratorChunk {
   enum {
-    Pointer, Reference, Array, Function
+    Pointer, Reference, Array, Function, BlockPointer
   } Kind;
   
   /// Loc - The place where this type was defined.
@@ -455,12 +455,20 @@ struct DeclaratorChunk {
       delete[] ArgInfo;
     }
   };
-  
+
+  struct BlockPointerTypeInfo {
+    /// For now, sema will catch these as invalid.
+    /// The type qualifiers: const/volatile/restrict.
+    unsigned TypeQuals : 3;
+    void destroy() {}
+  };
+
   union {
-    PointerTypeInfo   Ptr;
-    ReferenceTypeInfo Ref;
-    ArrayTypeInfo     Arr;
-    FunctionTypeInfo  Fun;
+    PointerTypeInfo      Ptr;
+    ReferenceTypeInfo    Ref;
+    ArrayTypeInfo        Arr;
+    FunctionTypeInfo     Fun;
+    BlockPointerTypeInfo Cls;
   };
   
   
@@ -533,6 +541,16 @@ struct DeclaratorChunk {
       I.Fun.ArgInfo = new DeclaratorChunk::ParamInfo[NumArgs];
       memcpy(I.Fun.ArgInfo, ArgInfo, sizeof(ArgInfo[0])*NumArgs);
     }
+    return I;
+  }
+  /// getBlockPointer - Return a DeclaratorChunk for a block.
+  ///
+  static DeclaratorChunk getBlockPointer(unsigned TypeQuals, 
+                                         SourceLocation Loc) {
+    DeclaratorChunk I;
+    I.Kind          = BlockPointer;
+    I.Loc           = Loc;
+    I.Cls.TypeQuals = TypeQuals;
     return I;
   }
 };
@@ -619,6 +637,8 @@ public:
         DeclTypeInfo[i].Fun.destroy();
       else if (DeclTypeInfo[i].Kind == DeclaratorChunk::Pointer)
         DeclTypeInfo[i].Ptr.destroy();
+      else if (DeclTypeInfo[i].Kind == DeclaratorChunk::BlockPointer)
+        DeclTypeInfo[i].Cls.destroy();
       else if (DeclTypeInfo[i].Kind == DeclaratorChunk::Reference)
         DeclTypeInfo[i].Ref.destroy();
       else if (DeclTypeInfo[i].Kind == DeclaratorChunk::Array)
