@@ -407,7 +407,7 @@ addPropertyMethods(Decl *D,
                    ASTContext &Context,
                    ObjCPropertyDecl *property,
                    llvm::SmallVector<ObjCMethodDecl*, 32> &insMethods) {
-  ObjCMethodDecl *GetterDecl, *SetterDecl;
+  ObjCMethodDecl *GetterDecl, *SetterDecl = 0;
 
   if (ObjCInterfaceDecl *OID = dyn_cast<ObjCInterfaceDecl>(D)) {
     GetterDecl = OID->getInstanceMethod(property->getGetterName());
