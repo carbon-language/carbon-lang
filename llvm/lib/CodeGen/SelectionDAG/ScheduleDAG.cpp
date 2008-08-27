@@ -250,17 +250,15 @@ void ScheduleDAG::ComputeLatency(SUnit *SU) {
 /// paths in the DAG
 void ScheduleDAG::CalculateDepths() {
   unsigned DAGSize = SUnits.size();
-  std::vector<unsigned> InDegree(DAGSize);
   std::vector<SUnit*> WorkList;
   WorkList.reserve(DAGSize);
 
   // Initialize the data structures
   for (unsigned i = 0, e = DAGSize; i != e; ++i) {
     SUnit *SU = &SUnits[i];
-    int NodeNum = SU->NodeNum;
     unsigned Degree = SU->Preds.size();
-    InDegree[NodeNum] = Degree;
-    SU->Depth = 0;
+    // Temporarily use the Depth field as scratch space for the degree count.
+    SU->Depth = Degree;
 
     // Is it a node without dependencies?
     if (Degree == 0) {
@@ -274,7 +272,7 @@ void ScheduleDAG::CalculateDepths() {
   while (!WorkList.empty()) {
     SUnit *SU = WorkList.back();
     WorkList.pop_back();
-    unsigned &SUDepth  = SU->Depth;
+    unsigned SUDepth = 0;
 
     // Use dynamic programming:
     // When current node is being processed, all of its dependencies
@@ -288,11 +286,13 @@ void ScheduleDAG::CalculateDepths() {
       }
     }
 
-    // Update InDegrees of all nodes depending on current SUnit
+    SU->Depth = SUDepth;
+
+    // Update degrees of all nodes depending on current SUnit
     for (SUnit::const_succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
          I != E; ++I) {
       SUnit *SU = I->Dep;
-      if (!--InDegree[SU->NodeNum])
+      if (!--SU->Depth)
         // If all dependencies of the node are processed already,
         // then the longest path for the node can be computed now
         WorkList.push_back(SU);
@@ -304,17 +304,15 @@ void ScheduleDAG::CalculateDepths() {
 /// paths in the DAG
 void ScheduleDAG::CalculateHeights() {
   unsigned DAGSize = SUnits.size();
-  std::vector<unsigned> InDegree(DAGSize);
   std::vector<SUnit*> WorkList;
   WorkList.reserve(DAGSize);
 
   // Initialize the data structures
   for (unsigned i = 0, e = DAGSize; i != e; ++i) {
     SUnit *SU = &SUnits[i];
-    int NodeNum = SU->NodeNum;
     unsigned Degree = SU->Succs.size();
-    InDegree[NodeNum] = Degree;
-    SU->Height = 0;
+    // Temporarily use the Height field as scratch space for the degree count.
+    SU->Height = Degree;
 
     // Is it a node without dependencies?
     if (Degree == 0) {
@@ -329,7 +327,7 @@ void ScheduleDAG::CalculateHeights() {
   while (!WorkList.empty()) {
     SUnit *SU = WorkList.back();
     WorkList.pop_back();
-    unsigned &SUHeight  = SU->Height;
+    unsigned SUHeight = 0;
 
     // Use dynamic programming:
     // When current node is being processed, all of its dependencies
@@ -343,11 +341,13 @@ void ScheduleDAG::CalculateHeights() {
       }
     }
 
-    // Update InDegrees of all nodes depending on current SUnit
+    SU->Height = SUHeight;
+
+    // Update degrees of all nodes depending on current SUnit
     for (SUnit::const_pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
          I != E; ++I) {
       SUnit *SU = I->Dep;
-      if (!--InDegree[SU->NodeNum])
+      if (!--SU->Height)
         // If all dependencies of the node are processed already,
         // then the longest path for the node can be computed now
         WorkList.push_back(SU);
