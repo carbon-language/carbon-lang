@@ -393,8 +393,12 @@ FastISel::SelectInstructions(BasicBlock::iterator Begin,
       MVT SrcVT = TLI.getValueType(I->getOperand(0)->getType());
       MVT DstVT = TLI.getValueType(I->getType());
       if (SrcVT.getSimpleVT() == DstVT.getSimpleVT()) {
-        ValueMap[I] = ValueMap[I->getOperand(0)];
-        break;
+        if (ValueMap[I->getOperand(0)]) {
+          ValueMap[I] = ValueMap[I->getOperand(0)];
+          break;
+        } else
+          // Unhandled operand
+          return I;
       } else if (DstVT.bitsGT(SrcVT)) {
         if (!isa<ConstantInt>(I->getOperand(0))) {
           if (!SelectCast(I, ISD::ZERO_EXTEND, ValueMap)) return I;
