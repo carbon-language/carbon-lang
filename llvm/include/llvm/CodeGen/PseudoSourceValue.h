@@ -28,7 +28,7 @@ namespace llvm {
   public:
     PseudoSourceValue();
 
-    void print(raw_ostream &OS) const;
+    virtual void print(raw_ostream &OS) const;
 
     /// isConstant - Test whether this PseudoSourceValue has a constant value.
     ///
