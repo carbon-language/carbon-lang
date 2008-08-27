@@ -123,7 +123,19 @@ public:
   bool pred_empty() const { return Preds.empty(); }
   
   bool isSink() const { return Succs.getFlag(); }
-  void markAsSink() { Succs.setFlag(); }  
+  void markAsSink() { Succs.setFlag(); } 
+  
+  // For debugging.
+  
+public:
+  
+  class Auditor {
+  public:
+    virtual ~Auditor();
+    virtual void AddEdge(ExplodedNodeImpl* Src, ExplodedNodeImpl* Dst) = 0;
+  };
+  
+  static void SetAuditor(Auditor* A);
 };
 
 

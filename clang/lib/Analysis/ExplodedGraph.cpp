@@ -22,6 +22,26 @@
 
 using namespace clang;
 
+//===----------------------------------------------------------------------===//
+// Node auditing.
+//===----------------------------------------------------------------------===//
+
+// An out of line virtual method to provide a home for the class vtable.
+ExplodedNodeImpl::Auditor::~Auditor() {}
+
+#ifndef NDEBUG
+static ExplodedNodeImpl::Auditor* NodeAuditor = 0;
+#endif
+
+void ExplodedNodeImpl::SetAuditor(ExplodedNodeImpl::Auditor* A) {
+#ifndef NDEBUG
+  NodeAuditor = A;
+#endif
+}
+
+//===----------------------------------------------------------------------===//
+// ExplodedNodeImpl.
+//===----------------------------------------------------------------------===//
 
 static inline std::vector<ExplodedNodeImpl*>& getVector(void* P) {
   return *reinterpret_cast<std::vector<ExplodedNodeImpl*>*>(P);
@@ -31,6 +51,9 @@ void ExplodedNodeImpl::addPredecessor(ExplodedNodeImpl* V) {
   assert (!V->isSink());
   Preds.addNode(V);
   V->Succs.addNode(this);
+#ifndef NDEBUG
+  if (NodeAuditor) NodeAuditor->AddEdge(V, this);
+#endif
 }
 
 void ExplodedNodeImpl::NodeGroup::addNode(ExplodedNodeImpl* N) {
