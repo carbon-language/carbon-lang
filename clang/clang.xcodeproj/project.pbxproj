@@ -351,6 +351,7 @@
 		35EE48B00E0C4CCA00715C54 /* ParentMap.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ParentMap.cpp; path = lib/AST/ParentMap.cpp; sourceTree = "<group>"; };
 		35EF676F0DAD1D2C00B19414 /* SemaDeclCXX.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SemaDeclCXX.cpp; path = lib/Sema/SemaDeclCXX.cpp; sourceTree = "<group>"; };
 		35EFEFB50DB67ED60020783D /* GRTransferFuncs.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GRTransferFuncs.cpp; path = lib/Analysis/GRTransferFuncs.cpp; sourceTree = "<group>"; };
+		35F1ACE60E66166C001F4532 /* ConstraintManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ConstraintManager.h; path = clang/Analysis/PathSensitive/ConstraintManager.h; sourceTree = "<group>"; };
 		35F2A01D0E36AFF100D17527 /* CheckObjCUnusedIVars.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CheckObjCUnusedIVars.cpp; path = lib/Analysis/CheckObjCUnusedIVars.cpp; sourceTree = "<group>"; };
 		35F2BE7B0DAC2963006E7668 /* HTMLRewrite.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = HTMLRewrite.h; path = clang/Rewrite/HTMLRewrite.h; sourceTree = "<group>"; };
 		35F8D0CA0D9B7E8200D91C5E /* GRSimpleAPICheck.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GRSimpleAPICheck.h; path = clang/Analysis/PathSensitive/GRSimpleAPICheck.h; sourceTree = "<group>"; };
@@ -753,6 +754,7 @@
 		DE4121130D7F1B980080F80A /* PathSensitive */ = {
 			isa = PBXGroup;
 			children = (
+				35F1ACE60E66166C001F4532 /* ConstraintManager.h */,
 				3553EB9A0E5F7089007D7359 /* GRStateTrait.h */,
 				3553EB9B0E5F7089007D7359 /* Regions.h */,
 				3558F76E0E267C9A00A5B0DF /* BasicStore.h */,
