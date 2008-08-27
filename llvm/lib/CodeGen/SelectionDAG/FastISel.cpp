@@ -197,8 +197,8 @@ bool FastISel::SelectGetElementPtr(Instruction *I,
 
 bool FastISel::SelectCast(Instruction *I, ISD::NodeType Opcode,
                           DenseMap<const Value*, unsigned> &ValueMap) {
-  MVT SrcVT = MVT::getMVT(I->getOperand(0)->getType());
-  MVT DstVT = MVT::getMVT(I->getType());
+  MVT SrcVT = TLI.getValueType(I->getOperand(0)->getType());
+  MVT DstVT = TLI.getValueType(I->getType());
     
   if (SrcVT == MVT::Other || !SrcVT.isSimple() ||
       DstVT == MVT::Other || !DstVT.isSimple() ||
@@ -231,8 +231,8 @@ bool FastISel::SelectBitCast(Instruction *I,
   }
 
   // Bitcasts of other values become reg-reg copies or BIT_CONVERT operators.
-  MVT SrcVT = MVT::getMVT(I->getOperand(0)->getType());
-  MVT DstVT = MVT::getMVT(I->getType());
+  MVT SrcVT = TLI.getValueType(I->getOperand(0)->getType());
+  MVT DstVT = TLI.getValueType(I->getType());
   
   if (SrcVT == MVT::Other || !SrcVT.isSimple() ||
       DstVT == MVT::Other || !DstVT.isSimple() ||
