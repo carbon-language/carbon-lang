@@ -20,7 +20,9 @@
 #include <llvm/Support/Dwarf.h>
 #include <llvm/System/Path.h>
 
-namespace llvm {
+using namespace llvm;
+
+namespace {
     
 //===----------------------------------------------------------------------===//
 // Debug version -- copied from MachineModuleInfo (for now), in order to avoid
@@ -43,6 +45,8 @@ const char COMPILE_UNIT_NAME[] = "llvm.dbg.compile_unit";
 const char SUBPROGRAM_NAME[] = "llvm.dbg.subprogram";
 const char BASICTYPE_NAME[] = "llvm.dbg.basictype";
 const char DERIVEDTYPE_NAME[] = "llvm.dbg.derivedtype";
+
+} // end anonymous namespace
 
 DebugInfoBuilder::DebugInfoBuilder() {
     anyPtrType = PointerType::getUnqual(StructType::get(NULL, NULL));
@@ -267,6 +271,4 @@ GlobalVariable * DebugInfoBuilder::createPointerTypeDescriptor(
     Constant * structVal = ConstantStruct::get(values, false);
     return new GlobalVariable(structVal->getType(), true,
         GlobalValue::InternalLinkage, structVal, DERIVEDTYPE_NAME, module);
-}
-
 }
