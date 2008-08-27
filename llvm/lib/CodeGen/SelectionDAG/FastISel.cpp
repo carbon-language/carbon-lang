@@ -226,7 +226,10 @@ bool FastISel::SelectBitCast(Instruction *I,
                              DenseMap<const Value*, unsigned> &ValueMap) {
   // If the bitcast doesn't change the type, just use the operand value.
   if (I->getType() == I->getOperand(0)->getType()) {
-    ValueMap[I] = getRegForValue(I->getOperand(0), ValueMap);
+    unsigned Reg = getRegForValue(I->getOperand(0), ValueMap);
+    if (Reg == 0)
+      return false;
+    ValueMap[I] = Reg;
     return true;
   }
 
