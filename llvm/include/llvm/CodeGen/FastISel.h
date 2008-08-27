@@ -20,6 +20,7 @@
 
 namespace llvm {
 
+class ConstantFP;
 class MachineBasicBlock;
 class MachineFunction;
 class MachineRegisterInfo;
@@ -93,6 +94,15 @@ protected:
                                ISD::NodeType Opcode,
                                unsigned Op0, uint64_t Imm);
 
+  /// FastEmit_rf - This method is called by target-independent code
+  /// to request that an instruction with the given type, opcode, and
+  /// register and floating-point immediate operands be emitted.
+  ///
+  virtual unsigned FastEmit_rf(MVT::SimpleValueType VT,
+                               MVT::SimpleValueType RetVT,
+                               ISD::NodeType Opcode,
+                               unsigned Op0, ConstantFP *FPImm);
+
   /// FastEmit_rri - This method is called by target-independent code
   /// to request that an instruction with the given type, opcode, and
   /// register and immediate operands be emitted.
@@ -111,6 +121,15 @@ protected:
                         unsigned Op0, uint64_t Imm,
                         MVT::SimpleValueType ImmType);
   
+  /// FastEmit_rf_ - This method is a wrapper of FastEmit_rf. It first tries
+  /// to emit an instruction with an immediate operand using FastEmit_rf.
+  /// If that fails, it materializes the immediate into a register and try
+  /// FastEmit_rr instead.
+  unsigned FastEmit_rf_(MVT::SimpleValueType VT,
+                        ISD::NodeType Opcode,
+                        unsigned Op0, ConstantFP *FPImm,
+                        MVT::SimpleValueType ImmType);
+  
   /// FastEmit_i - This method is called by target-independent code
   /// to request that an instruction with the given type, opcode, and
   /// immediate operand be emitted.
@@ -118,6 +137,14 @@ protected:
                               MVT::SimpleValueType RetVT,
                               ISD::NodeType Opcode,
                               uint64_t Imm);
+
+  /// FastEmit_f - This method is called by target-independent code
+  /// to request that an instruction with the given type, opcode, and
+  /// floating-point immediate operand be emitted.
+  virtual unsigned FastEmit_f(MVT::SimpleValueType VT,
+                              MVT::SimpleValueType RetVT,
+                              ISD::NodeType Opcode,
+                              ConstantFP *FPImm);
 
   /// FastEmitInst_ - Emit a MachineInstr with no operands and a
   /// result register in the given register class.
@@ -145,6 +172,13 @@ protected:
   unsigned FastEmitInst_ri(unsigned MachineInstOpcode,
                            const TargetRegisterClass *RC,
                            unsigned Op0, uint64_t Imm);
+
+  /// FastEmitInst_rf - Emit a MachineInstr with two register operands
+  /// and a result register in the given register class.
+  ///
+  unsigned FastEmitInst_rf(unsigned MachineInstOpcode,
+                           const TargetRegisterClass *RC,
+                           unsigned Op0, ConstantFP *FPImm);
 
   /// FastEmitInst_rri - Emit a MachineInstr with two register operands,
   /// an immediate, and a result register in the given register class.

@@ -35,10 +35,11 @@ fast:
   %t0 = add double %r, %s
   %t1 = mul double %t0, %s
   %t2 = sub double %t1, %s
+  %t3 = add double %t2, 707.0
   br label %exit
 
 exit:
-  ret double %t2
+  ret double %t3
 }
 
 define i32 @cast(){

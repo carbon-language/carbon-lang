@@ -68,6 +68,11 @@ struct OperandsSignature {
       Operands.push_back("i");
       return true;
     }
+    if (!InstPatNode->isLeaf() &&
+        InstPatNode->getOperator()->getName() == "fpimm") {
+      Operands.push_back("f");
+      return true;
+    }
     
     const CodeGenRegisterClass *DstRC = 0;
     
@@ -85,6 +90,10 @@ struct OperandsSignature {
       if (!Op->isLeaf()) {
         if (Op->getOperator()->getName() == "imm") {
           Operands.push_back("i");
+          return true;
+        }
+        if (Op->getOperator()->getName() == "fpimm") {
+          Operands.push_back("f");
           return true;
         }
         // For now, ignore fpimm and other non-leaf nodes.
@@ -122,6 +131,8 @@ struct OperandsSignature {
         OS << "unsigned Op" << i;
       } else if (Operands[i] == "i") {
         OS << "uint64_t imm" << i;
+      } else if (Operands[i] == "f") {
+        OS << "ConstantFP *f" << i;
       } else {
         assert("Unknown operand kind!");
         abort();
@@ -137,6 +148,8 @@ struct OperandsSignature {
         OS << "Op" << i;
       } else if (Operands[i] == "i") {
         OS << "imm" << i;
+      } else if (Operands[i] == "f") {
+        OS << "f" << i;
       } else {
         assert("Unknown operand kind!");
         abort();

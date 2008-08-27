@@ -56,6 +56,20 @@ bool FastISel::SelectBinaryOp(Instruction *I, ISD::NodeType ISDOpcode,
     return true;
   }
 
+  // Check if the second operand is a constant float.
+  if (ConstantFP *CF = dyn_cast<ConstantFP>(I->getOperand(1))) {
+    unsigned ResultReg = FastEmit_rf_(VT.getSimpleVT(), ISDOpcode, Op0,
+                                      CF, VT.getSimpleVT());
+    if (ResultReg == 0)
+      // Target-specific code wasn't able to find a machine opcode for
+      // the given ISD opcode and type. Halt "fast" selection and bail.
+      return false;
+
+    // We successfully emitted code for the given LLVM Instruction.
+    ValueMap[I] = ResultReg;
+    return true;
+  }
+
   unsigned Op1 = ValueMap[I->getOperand(1)];
   if (Op1 == 0)
     // Unhandled operand. Halt "fast" selection and bail.
@@ -451,9 +465,20 @@ unsigned FastISel::FastEmit_i(MVT::SimpleValueType, MVT::SimpleValueType,
   return 0;
 }
 
+unsigned FastISel::FastEmit_f(MVT::SimpleValueType, MVT::SimpleValueType,
+                              ISD::NodeType, ConstantFP * /*FPImm*/) {
+  return 0;
+}
+
 unsigned FastISel::FastEmit_ri(MVT::SimpleValueType, MVT::SimpleValueType,
                                ISD::NodeType, unsigned /*Op0*/,
                                uint64_t /*Imm*/) {
+  return 0;
+}
+
+unsigned FastISel::FastEmit_rf(MVT::SimpleValueType, MVT::SimpleValueType,
+                               ISD::NodeType, unsigned /*Op0*/,
+                               ConstantFP * /*FPImm*/) {
   return 0;
 }
 
@@ -480,6 +505,45 @@ unsigned FastISel::FastEmit_ri_(MVT::SimpleValueType VT, ISD::NodeType Opcode,
   unsigned MaterialReg = FastEmit_i(ImmType, ImmType, ISD::Constant, Imm);
   if (MaterialReg == 0)
     return 0;
+  return FastEmit_rr(VT, VT, Opcode, Op0, MaterialReg);
+}
+
+/// FastEmit_rf_ - This method is a wrapper of FastEmit_ri. It first tries
+/// to emit an instruction with a floating-point immediate operand using
+/// FastEmit_rf. If that fails, it materializes the immediate into a register
+/// and try FastEmit_rr instead.
+unsigned FastISel::FastEmit_rf_(MVT::SimpleValueType VT, ISD::NodeType Opcode,
+                                unsigned Op0, ConstantFP *FPImm,
+                                MVT::SimpleValueType ImmType) {
+  unsigned ResultReg = 0;
+  // First check if immediate type is legal. If not, we can't use the rf form.
+  if (TLI.getOperationAction(ISD::Constant, ImmType) == TargetLowering::Legal)
+    ResultReg = FastEmit_rf(VT, VT, Opcode, Op0, FPImm);
+  if (ResultReg != 0)
+    return ResultReg;
+
+  // Materialize the constant in a register.
+  unsigned MaterialReg = FastEmit_f(ImmType, ImmType, ISD::ConstantFP, FPImm);
+  if (MaterialReg == 0) {
+    const APFloat &Flt = FPImm->getValueAPF();
+    MVT IntVT = TLI.getPointerTy();
+
+    uint64_t x[2];
+    uint32_t IntBitWidth = IntVT.getSizeInBits();
+    if (Flt.convertToInteger(x, IntBitWidth, /*isSigned=*/true,
+                             APFloat::rmTowardZero) != APFloat::opOK)
+      return 0;
+    APInt IntVal(IntBitWidth, 2, x);
+
+    unsigned IntegerReg = FastEmit_i(IntVT.getSimpleVT(), IntVT.getSimpleVT(),
+                                     ISD::Constant, IntVal.getZExtValue());
+    if (IntegerReg == 0)
+      return 0;
+    MaterialReg = FastEmit_r(IntVT.getSimpleVT(), VT,
+                             ISD::SINT_TO_FP, IntegerReg);
+    if (MaterialReg == 0)
+      return 0;
+  }
   return FastEmit_rr(VT, VT, Opcode, Op0, MaterialReg);
 }
 
@@ -523,6 +587,16 @@ unsigned FastISel::FastEmitInst_ri(unsigned MachineInstOpcode,
   const TargetInstrDesc &II = TII.get(MachineInstOpcode);
 
   BuildMI(MBB, II, ResultReg).addReg(Op0).addImm(Imm);
+  return ResultReg;
+}
+
+unsigned FastISel::FastEmitInst_rf(unsigned MachineInstOpcode,
+                                   const TargetRegisterClass *RC,
+                                   unsigned Op0, ConstantFP *FPImm) {
+  unsigned ResultReg = createResultReg(RC);
+  const TargetInstrDesc &II = TII.get(MachineInstOpcode);
+
+  BuildMI(MBB, II, ResultReg).addReg(Op0).addFPImm(FPImm);
   return ResultReg;
 }
 
