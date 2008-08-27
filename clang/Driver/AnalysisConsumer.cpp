@@ -531,6 +531,7 @@ void UbigraphViz::AddEdge(ExplodedNodeImpl* Src, ExplodedNodeImpl* Dst) {
     DstID = DstI->second;
 
   // Add the edge.
-  *Out << "('edge', " << SrcID << ", " << DstID << ")\n";
+  *Out << "('edge', " << SrcID << ", " << DstID 
+       << ", ('arrow','true'), ('oriented', 'true'))\n";
 }
 
