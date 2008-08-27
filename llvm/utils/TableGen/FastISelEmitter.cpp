@@ -96,7 +96,7 @@ struct OperandsSignature {
           Operands.push_back("f");
           return true;
         }
-        // For now, ignore fpimm and other non-leaf nodes.
+        // For now, ignore other non-leaf nodes.
         return false;
       }
       DefInit *OpDI = dynamic_cast<DefInit*>(Op->getLeafValue());
