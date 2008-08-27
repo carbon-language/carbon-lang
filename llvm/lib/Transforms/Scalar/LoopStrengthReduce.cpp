@@ -44,8 +44,8 @@ using namespace llvm;
 STATISTIC(NumReduced ,    "Number of GEPs strength reduced");
 STATISTIC(NumInserted,    "Number of PHIs inserted");
 STATISTIC(NumVariable,    "Number of PHIs with variable strides");
-STATISTIC(NumEliminated , "Number of strides eliminated");
-STATISTIC(NumShadow , "Number of Shadow IVs optimized");
+STATISTIC(NumEliminated,  "Number of strides eliminated");
+STATISTIC(NumShadow,      "Number of Shadow IVs optimized");
 
 namespace {
 
@@ -1715,30 +1715,27 @@ void LoopStrengthReduce::OptimizeShadowIV(Loop *L) {
     for (std::vector<IVStrideUse>::iterator UI = SI->second.Users.begin(),
            E = SI->second.Users.end(); UI != E; /* empty */) {
       std::vector<IVStrideUse>::iterator CandidateUI = UI;
-      UI++;
+      ++UI;
       Instruction *ShadowUse = CandidateUI->User;
       const Type *DestTy = NULL;
 
       /* If shadow use is a int->float cast then insert a second IV
-         to elminate this cast.
+         to eliminate this cast.
 
            for (unsigned i = 0; i < n; ++i) 
              foo((double)i);
 
-         is trnasformed into
+         is transformed into
 
            double d = 0.0;
            for (unsigned i = 0; i < n; ++i, ++d) 
              foo(d);
       */
-      UIToFPInst *UCast = dyn_cast<UIToFPInst>(CandidateUI->User);
-      if (UCast) 
+      if (UIToFPInst *UCast = dyn_cast<UIToFPInst>(CandidateUI->User))
         DestTy = UCast->getDestTy();
-      else {
-        SIToFPInst *SCast = dyn_cast<SIToFPInst>(CandidateUI->User);
-        if (!SCast) continue;
+      else if (SIToFPInst *SCast = dyn_cast<SIToFPInst>(CandidateUI->User))
         DestTy = SCast->getDestTy();
-      }
+    if (!DestTy) continue;
       
       PHINode *PH = dyn_cast<PHINode>(ShadowUse->getOperand(0));
       if (!PH) continue;
@@ -1784,7 +1781,7 @@ void LoopStrengthReduce::OptimizeShadowIV(Loop *L) {
       /* Add new PHINode. */
       PHINode *NewPH = PHINode::Create(DestTy, "IV.S.", PH);
 
-      /* create new icnrement. '++d' in above example. */
+      /* create new increment. '++d' in above example. */
       ConstantFP *CFP = ConstantFP::get(DestTy, C->getZExtValue());
       BinaryOperator *NewIncr = 
         BinaryOperator::Create(Incr->getOpcode(),
