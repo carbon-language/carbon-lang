@@ -38,6 +38,20 @@ def Display(G, data):
     edge = G.new_edge(src,dst)
     for attribute in data[3:]:
       G.set_edge_attribute(edge, attribute[0], attribute[1])
+  elif action == "vertex_style":
+    style_id = data[1]
+    parent_id = data[2]
+    G.new_vertex_style_w_id(style_id, parent_id)
+    for attribute in data[3:]:
+      G.set_vertex_style_attribute(style_id, attribute[0], attribute[1])
+  elif action == "vertex_style_attribute":
+    style_id = data[1]
+    for attribute in data[2:]:
+      G.set_vertex_style_attribute(style_id, attribute[0], attribute[1])
+  elif action == "change_vertex_style":
+     vertex_id = data[1]
+     style_id = data[2]
+     G.change_vertex_style(vertex_id,style_id)
 
 def main(args):
   if len(args) == 0:
