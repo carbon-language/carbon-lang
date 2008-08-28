@@ -479,8 +479,7 @@ class UbigraphViz : public ExplodedNodeImpl::Auditor {
   
 public:
   UbigraphViz(llvm::raw_ostream* out, llvm::sys::Path& dir,
-              llvm::sys::Path& filename)
-    : Out(out), Dir(dir), Filename(filename), Cntr(0) {} 
+              llvm::sys::Path& filename);
   
   ~UbigraphViz();
   
@@ -535,12 +534,24 @@ void UbigraphViz::AddEdge(ExplodedNodeImpl* Src, ExplodedNodeImpl* Dst) {
     M[Dst] = DstID = Cntr++;
     *Out << "('vertex', " << DstID << ")\n";
   }
-  else
+  else {
+    // We have hit DstID before.  Change its style to reflect a cache hit.
     DstID = DstI->second;
+    *Out << "('change_vertex_style', " << DstID << ", 1)\n";
+  }
 
   // Add the edge.
   *Out << "('edge', " << SrcID << ", " << DstID 
        << ", ('arrow','true'), ('oriented', 'true'))\n";
+}
+
+UbigraphViz::UbigraphViz(llvm::raw_ostream* out, llvm::sys::Path& dir,
+                         llvm::sys::Path& filename)
+  : Out(out), Dir(dir), Filename(filename), Cntr(0) {
+
+  *Out << "('vertex_style_attribute', 0, ('shape', 'icosahedron'))\n";
+  *Out << "('vertex_style', 1, 0, ('shape', 'sphere'), ('color', '#ffcc66'),"
+          " ('size', '1.5'))\n";
 }
 
 UbigraphViz::~UbigraphViz() {
