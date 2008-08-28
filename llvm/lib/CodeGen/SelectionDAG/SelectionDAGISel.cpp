@@ -5479,12 +5479,7 @@ SelectionDAGISel::HandlePHINodesInSuccessorBlocks(BasicBlock *LLVMBB) {
 
 void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB,
                                         BasicBlock::iterator Begin,
-                                        BasicBlock::iterator End,
-                                        bool DoArgs) {
-  // Lower any arguments needed in this block if this is the entry block.
-  if (DoArgs)
-    LowerArguments(LLVMBB);
-
+                                        BasicBlock::iterator End) {
   SDL->setCurrentBasicBlock(BB);
 
   MachineModuleInfo *MMI = CurDAG->getMachineModuleInfo();
@@ -5744,12 +5739,23 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn, MachineFunction &MF) {
 
     BasicBlock::iterator Begin = LLVMBB->begin();
     BasicBlock::iterator End = LLVMBB->end();
-    bool DoArgs = LLVMBB == &Fn.getEntryBlock();
+
+    // Lower any arguments needed in this block if this is the entry block.
+    if (LLVMBB == &Fn.getEntryBlock())
+      LowerArguments(LLVMBB);
 
     // Before doing SelectionDAG ISel, see if FastISel has been requested.
     // FastISel doesn't support EH landing pads, which require special handling.
     if (EnableFastISel && !BB->isLandingPad()) {
       if (FastISel *F = TLI.createFastISel(*FuncInfo->MF)) {
+        // Emit code for any incoming arguments. This must happen before
+        // beginning FastISel on the entry block.
+        if (LLVMBB == &Fn.getEntryBlock()) {
+          CurDAG->setRoot(SDL->getControlRoot());
+          CodeGenAndEmitDAG();
+          SDL->clear();
+        }
+        // Do FastISel on as many instructions as possible.
         while (Begin != End) {
           Begin = F->SelectInstructions(Begin, End, FuncInfo->ValueMap,
                                         FuncInfo->MBBMap, BB);
@@ -5767,10 +5773,8 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn, MachineFunction &MF) {
                 R = FuncInfo->CreateRegForValue(Begin);
             }
 
-            SelectBasicBlock(LLVMBB, Begin, next(Begin), DoArgs);
-
+            SelectBasicBlock(LLVMBB, Begin, next(Begin));
             ++Begin;
-            DoArgs = false;
             continue;
           }
 
@@ -5792,8 +5796,8 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn, MachineFunction &MF) {
       }
     }
 
-    if (Begin != End || DoArgs)
-      SelectBasicBlock(LLVMBB, Begin, End, DoArgs);
+    if (Begin != End)
+      SelectBasicBlock(LLVMBB, Begin, End);
 
     FinishBasicBlock();
   }
