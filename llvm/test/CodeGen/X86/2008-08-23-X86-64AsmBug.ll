@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=x86_64-apple-darwin | grep movd | count 1
+; RUN: llvm-as < %s | llc -mtriple=x86_64-apple-darwin | not grep movd
 ; RUN: llvm-as < %s | llc -mtriple=x86_64-apple-darwin | grep movq
 ; PR2677
 
