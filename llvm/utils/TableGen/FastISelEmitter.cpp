@@ -172,6 +172,7 @@ struct OperandsSignature {
 struct InstructionMemo {
   std::string Name;
   const CodeGenRegisterClass *RC;
+  unsigned char SubRegNo;
 };
 
 class FastISelMap {
@@ -235,12 +236,19 @@ void FastISelMap::CollectPatterns(CodeGenDAGPatterns &CGP) {
 
     // For now, ignore instructions where the first operand is not an
     // output register.
-    Record *Op0Rec = II.OperandList[0].Rec;
-    if (!Op0Rec->isSubClassOf("RegisterClass"))
-      continue;
-    const CodeGenRegisterClass *DstRC = &Target.getRegisterClass(Op0Rec);
-    if (!DstRC)
-      continue;
+    const CodeGenRegisterClass *DstRC = 0;
+    unsigned SubRegNo = ~0;
+    if (Op->getName() != "EXTRACT_SUBREG") {
+      Record *Op0Rec = II.OperandList[0].Rec;
+      if (!Op0Rec->isSubClassOf("RegisterClass"))
+        continue;
+      DstRC = &Target.getRegisterClass(Op0Rec);
+      if (!DstRC)
+        continue;
+    } else {
+      SubRegNo = static_cast<IntInit*>(
+                 Dst->getChild(1)->getLeafValue())->getValue();
+    }
 
     // Inspect the pattern.
     TreePatternNode *InstPatNode = Pattern.getSrcPattern();
@@ -274,7 +282,8 @@ void FastISelMap::CollectPatterns(CodeGenDAGPatterns &CGP) {
     // Ok, we found a pattern that we can handle. Remember it.
     InstructionMemo Memo = {
       Pattern.getDstPattern()->getOperator()->getName(),
-      DstRC
+      DstRC,
+      SubRegNo
     };
     assert(!SimplePatterns[Operands][OpcodeName][VT][RetVT].count(PredicateCheck) &&
            "Duplicate pattern!");
@@ -410,13 +419,19 @@ void FastISelMap::PrintFunctionDefinitions(std::ostream &OS) {
                 HasPred = true;
               }
               OS << "  return FastEmitInst_";
-              Operands.PrintManglingSuffix(OS);
-              OS << "(" << InstNS << Memo.Name << ", ";
-              OS << InstNS << Memo.RC->getName() << "RegisterClass";
-              if (!Operands.empty())
-                OS << ", ";
-              Operands.PrintArguments(OS);
-              OS << ");\n";
+              if (Memo.SubRegNo == (unsigned char)~0) {
+                Operands.PrintManglingSuffix(OS);
+                OS << "(" << InstNS << Memo.Name << ", ";
+                OS << InstNS << Memo.RC->getName() << "RegisterClass";
+                if (!Operands.empty())
+                  OS << ", ";
+                Operands.PrintArguments(OS);
+                OS << ");\n";
+              } else {
+                OS << "extractsubreg(Op0, ";
+                OS << (unsigned)Memo.SubRegNo;
+                OS << ");\n";
+              }
             }
             // Return 0 if none of the predicates were satisfied.
             if (HasPred)
@@ -482,13 +497,20 @@ void FastISelMap::PrintFunctionDefinitions(std::ostream &OS) {
               HasPred = true;
             }
             OS << "  return FastEmitInst_";
-            Operands.PrintManglingSuffix(OS);
-            OS << "(" << InstNS << Memo.Name << ", ";
-            OS << InstNS << Memo.RC->getName() << "RegisterClass";
-            if (!Operands.empty())
-              OS << ", ";
-            Operands.PrintArguments(OS);
-            OS << ");\n";
+            
+            if (Memo.SubRegNo == (unsigned char)~0) {
+              Operands.PrintManglingSuffix(OS);
+              OS << "(" << InstNS << Memo.Name << ", ";
+              OS << InstNS << Memo.RC->getName() << "RegisterClass";
+              if (!Operands.empty())
+                OS << ", ";
+              Operands.PrintArguments(OS);
+              OS << ");\n";
+            } else {
+              OS << "extractsubreg(Op0, ";
+              OS << (unsigned)Memo.SubRegNo;
+              OS << ");\n";
+            }
           }
           
           // Return 0 if none of the predicates were satisfied.
