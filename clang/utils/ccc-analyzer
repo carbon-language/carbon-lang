@@ -110,14 +110,14 @@ sub Analyze {
     push @CmdArgs,"--analyzer-viz-egraph-ubigraph";
   }
   
-  system $Cmd,@CmdArgs;
+  my $Result = system $Cmd,@CmdArgs;
 
    # Did the command die because of a signal?
-   if ($? & 127 and $Cmd eq $Clang and defined $HtmlDir) {
+   if ($Result & 127 and $Cmd eq $Clang and defined $HtmlDir) {
      ProcessClangFailure($Lang, $file, \@CmdArgsSansAnalyses, $HtmlDir,
                           "Crash");
    }
-   elsif ($?) {
+   elsif ($Result) {
      ProcessClangFailure($Lang, $file, \@CmdArgsSansAnalyses, $HtmlDir,
                           "Parser Rejects");
    }
