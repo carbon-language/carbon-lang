@@ -99,7 +99,7 @@ void DAGTypeLegalizer::PromoteIntegerResult(SDNode *N, unsigned ResNo) {
   }
 
   // If Result is null, the sub-method took care of registering the result.
-  if (Result.Val)
+  if (Result.getNode())
     SetPromotedInteger(SDValue(N, ResNo), Result);
 }
 
@@ -167,7 +167,7 @@ SDValue DAGTypeLegalizer::PromoteIntRes_BIT_CONVERT(SDNode *N) {
   // Otherwise, lower the bit-convert to a store/load from the stack, then
   // promote the load.
   SDValue Op = CreateStackStoreLoad(InOp, N->getValueType(0));
-  return PromoteIntRes_LOAD(cast<LoadSDNode>(Op.Val));
+  return PromoteIntRes_LOAD(cast<LoadSDNode>(Op.getNode()));
 }
 
 SDValue DAGTypeLegalizer::PromoteIntRes_BSWAP(SDNode *N) {
@@ -494,7 +494,7 @@ bool DAGTypeLegalizer::PromoteIntegerOperand(SDNode *N, unsigned OpNo) {
       == TargetLowering::Custom)
     Res = TLI.LowerOperation(SDValue(N, OpNo), DAG);
 
-  if (Res.Val == 0) {
+  if (Res.getNode() == 0) {
     switch (N->getOpcode()) {
       default:
   #ifndef NDEBUG
@@ -529,9 +529,9 @@ bool DAGTypeLegalizer::PromoteIntegerOperand(SDNode *N, unsigned OpNo) {
   }
 
   // If the result is null, the sub-method took care of registering results etc.
-  if (!Res.Val) return false;
+  if (!Res.getNode()) return false;
   // If the result is N, the sub-method updated N in place.
-  if (Res.Val == N) {
+  if (Res.getNode() == N) {
     // Mark N as new and remark N and its operands.  This allows us to correctly
     // revisit N if it needs another step of promotion and allows us to visit
     // any new operands to N.
@@ -885,7 +885,7 @@ void DAGTypeLegalizer::ExpandIntegerResult(SDNode *N, unsigned ResNo) {
   }
 
   // If Lo/Hi is null, the sub-method took care of registering results etc.
-  if (Lo.Val)
+  if (Lo.getNode())
     SetExpandedInteger(SDValue(N, ResNo), Lo, Hi);
 }
 
@@ -1395,7 +1395,7 @@ void DAGTypeLegalizer::ExpandIntRes_MUL(SDNode *N,
       if (HasUMUL_LOHI) {
         // We can emit a umul_lohi.
         Lo = DAG.getNode(ISD::UMUL_LOHI, DAG.getVTList(NVT, NVT), LL, RL);
-        Hi = SDValue(Lo.Val, 1);
+        Hi = SDValue(Lo.getNode(), 1);
         return;
       }
       if (HasMULHU) {
@@ -1410,7 +1410,7 @@ void DAGTypeLegalizer::ExpandIntRes_MUL(SDNode *N,
       if (HasSMUL_LOHI) {
         // We can emit a smul_lohi.
         Lo = DAG.getNode(ISD::SMUL_LOHI, DAG.getVTList(NVT, NVT), LL, RL);
-        Hi = SDValue(Lo.Val, 1);
+        Hi = SDValue(Lo.getNode(), 1);
         return;
       }
       if (HasMULHS) {
@@ -1706,7 +1706,7 @@ bool DAGTypeLegalizer::ExpandIntegerOperand(SDNode *N, unsigned OpNo) {
       == TargetLowering::Custom)
     Res = TLI.LowerOperation(SDValue(N, OpNo), DAG);
 
-  if (Res.Val == 0) {
+  if (Res.getNode() == 0) {
     switch (N->getOpcode()) {
     default:
   #ifndef NDEBUG
@@ -1732,10 +1732,10 @@ bool DAGTypeLegalizer::ExpandIntegerOperand(SDNode *N, unsigned OpNo) {
   }
 
   // If the result is null, the sub-method took care of registering results etc.
-  if (!Res.Val) return false;
+  if (!Res.getNode()) return false;
   // If the result is N, the sub-method updated N in place.  Check to see if any
   // operands are new, and if so, mark them.
-  if (Res.Val == N) {
+  if (Res.getNode() == N) {
     // Mark N as new and remark N and its operands.  This allows us to correctly
     // revisit N if it needs another step of expansion and allows us to visit
     // any new operands to N.
@@ -1814,16 +1814,16 @@ void DAGTypeLegalizer::IntegerExpandSetCCOperands(SDValue &NewLHS,
   SDValue Tmp1, Tmp2;
   Tmp1 = TLI.SimplifySetCC(TLI.getSetCCResultType(LHSLo), LHSLo, RHSLo, LowCC,
                            false, DagCombineInfo);
-  if (!Tmp1.Val)
+  if (!Tmp1.getNode())
     Tmp1 = DAG.getSetCC(TLI.getSetCCResultType(LHSLo), LHSLo, RHSLo, LowCC);
   Tmp2 = TLI.SimplifySetCC(TLI.getSetCCResultType(LHSHi), LHSHi, RHSHi,
                            CCCode, false, DagCombineInfo);
-  if (!Tmp2.Val)
+  if (!Tmp2.getNode())
     Tmp2 = DAG.getNode(ISD::SETCC, TLI.getSetCCResultType(LHSHi), LHSHi, RHSHi,
                        DAG.getCondCode(CCCode));
 
-  ConstantSDNode *Tmp1C = dyn_cast<ConstantSDNode>(Tmp1.Val);
-  ConstantSDNode *Tmp2C = dyn_cast<ConstantSDNode>(Tmp2.Val);
+  ConstantSDNode *Tmp1C = dyn_cast<ConstantSDNode>(Tmp1.getNode());
+  ConstantSDNode *Tmp2C = dyn_cast<ConstantSDNode>(Tmp2.getNode());
   if ((Tmp1C && Tmp1C->isNullValue()) ||
       (Tmp2C && Tmp2C->isNullValue() &&
        (CCCode == ISD::SETLE || CCCode == ISD::SETGE ||
@@ -1841,7 +1841,7 @@ void DAGTypeLegalizer::IntegerExpandSetCCOperands(SDValue &NewLHS,
 
   NewLHS = TLI.SimplifySetCC(TLI.getSetCCResultType(LHSHi), LHSHi, RHSHi,
                              ISD::SETEQ, false, DagCombineInfo);
-  if (!NewLHS.Val)
+  if (!NewLHS.getNode())
     NewLHS = DAG.getSetCC(TLI.getSetCCResultType(LHSHi), LHSHi, RHSHi,
                           ISD::SETEQ);
   NewLHS = DAG.getNode(ISD::SELECT, Tmp1.getValueType(),
@@ -1856,7 +1856,7 @@ SDValue DAGTypeLegalizer::ExpandIntOp_BR_CC(SDNode *N) {
 
   // If ExpandSetCCOperands returned a scalar, we need to compare the result
   // against zero to select between true and false values.
-  if (NewRHS.Val == 0) {
+  if (NewRHS.getNode() == 0) {
     NewRHS = DAG.getConstant(0, NewLHS.getValueType());
     CCCode = ISD::SETNE;
   }
@@ -1874,7 +1874,7 @@ SDValue DAGTypeLegalizer::ExpandIntOp_SELECT_CC(SDNode *N) {
 
   // If ExpandSetCCOperands returned a scalar, we need to compare the result
   // against zero to select between true and false values.
-  if (NewRHS.Val == 0) {
+  if (NewRHS.getNode() == 0) {
     NewRHS = DAG.getConstant(0, NewLHS.getValueType());
     CCCode = ISD::SETNE;
   }
@@ -1891,7 +1891,7 @@ SDValue DAGTypeLegalizer::ExpandIntOp_SETCC(SDNode *N) {
   IntegerExpandSetCCOperands(NewLHS, NewRHS, CCCode);
 
   // If ExpandSetCCOperands returned a scalar, use it.
-  if (NewRHS.Val == 0) {
+  if (NewRHS.getNode() == 0) {
     assert(NewLHS.getValueType() == N->getValueType(0) &&
            "Unexpected setcc expansion!");
     return NewLHS;

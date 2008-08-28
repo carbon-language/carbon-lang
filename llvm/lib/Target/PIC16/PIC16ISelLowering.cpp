@@ -334,7 +334,7 @@ PIC16TargetLowering::LowerLOAD(SDNode *N,
   LoadSDNode *LD  = cast<LoadSDNode>(N);
   SDValue Ptr   = LD->getBasePtr();
   if (LD->getExtensionType() == ISD::NON_EXTLOAD) {
-    if (ISD::isNON_TRUNCStore(Chain.Val)) {
+    if (ISD::isNON_TRUNCStore(Chain.getNode())) {
       StoreSDNode *PrevST = cast<StoreSDNode>(Chain);
       if (PrevST->getBasePtr() == Ptr &&
           PrevST->getValue().getValueType() == N->getValueType(0))
@@ -352,7 +352,7 @@ PIC16TargetLowering::LowerLOAD(SDNode *N,
   Outs[1] = DAG.getLoad(MVT::i8, Chain, toWorklist, NULL, 0);
   // FIXME: Add to worklist may not be needed. 
   // It is meant to merge sequences of add with constant into one. 
-  DCI.AddToWorklist(toWorklist.Val);   
+  DCI.AddToWorklist(toWorklist.getNode());   
   
   // Create the tokenfactors and carry it on to the build_pair node
   OutChains[0] = Outs[0].getValue(1);
@@ -443,7 +443,7 @@ PIC16TargetLowering::LowerADDSUB(SDNode *N, SelectionDAG &DAG,
       changed = true;
       // LowerLOAD returns a Package node or it may combine and return 
       // anything else.
-      SDValue lowered = LowerLOAD(InOp[i].Val, DAG, DCI);
+      SDValue lowered = LowerLOAD(InOp[i].getNode(), DAG, DCI);
 
       // So If LowerLOAD returns something other than Package, 
       // then just call ADD again.
@@ -462,7 +462,7 @@ PIC16TargetLowering::LowerADDSUB(SDNode *N, SelectionDAG &DAG,
       changed = true;
       // Must call LowerADDSUB recursively here,
       // LowerADDSUB returns a Package node.
-      SDValue lowered = LowerADDSUB(InOp[i].Val, DAG, DCI);
+      SDValue lowered = LowerADDSUB(InOp[i].getNode(), DAG, DCI);
 
       LoOps[i] = lowered.getOperand(0);
       HiOps[i] = lowered.getOperand(1);
@@ -543,7 +543,7 @@ LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG)
   // FIXME: Just copy right now.
   ArgValues.push_back(Root);
 
-  return DAG.getMergeValues(Op.Val->getVTList(), &ArgValues[0],
+  return DAG.getMergeValues(Op.getNode()->getVTList(), &ArgValues[0],
                             ArgValues.size()).getValue(Op.getResNo());
 }
 
@@ -622,7 +622,7 @@ SDValue PIC16TargetLowering::PerformDAGCombine(SDNode *N,
       if ((Src.getOpcode() == ISD::ANY_EXTEND) ||
           (Src.getOpcode() == ISD::SIGN_EXTEND) || 
           (Src.getOpcode() == ISD::ZERO_EXTEND)) {
-        Src = Src.Val->getOperand(0);
+        Src = Src.getNode()->getOperand(0);
         Stores[0] = DAG.getStore(Chain, Src, Dest, NULL,0);
         return Stores[0];
       }
@@ -721,10 +721,10 @@ SDValue PIC16TargetLowering::PerformDAGCombine(SDNode *N,
           // We want to merge sequence of add with constant to one add and a 
           // constant, so add the ADD node to worklist to have llvm do that 
           // automatically.
-          DCI.AddToWorklist(toWorkList.Val); 
+          DCI.AddToWorklist(toWorkList.getNode()); 
 
           // We don't need the Package so add to worklist so llvm deletes it
-          DCI.AddToWorklist(Src.Val);
+          DCI.AddToWorklist(Src.getNode());
           retVal = DAG.getNode(ISD::TokenFactor, MVT::Other, &Stores[0], 2);
         }
 

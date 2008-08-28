@@ -387,8 +387,8 @@ IA64TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
         break;
       }
       
-      if(ValToStore.Val) {
-        if(!StackPtr.Val) {
+      if(ValToStore.getNode()) {
+        if(!StackPtr.getNode()) {
           StackPtr = DAG.getRegister(IA64::r12, MVT::i64);
         }
         SDValue PtrOff = DAG.getConstant(ArgOffset, getPointerTy());
@@ -397,7 +397,7 @@ IA64TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
         ArgOffset += ObjSize;
       }
 
-      if(ValToConvert.Val) {
+      if(ValToConvert.getNode()) {
         Converts.push_back(DAG.getNode(IA64ISD::GETFD, MVT::i64, ValToConvert)); 
       }
     }
@@ -471,7 +471,7 @@ IA64TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
   CallOperands.push_back(Callee);
 
   // emit the call itself
-  if (InFlag.Val)
+  if (InFlag.getNode())
     CallOperands.push_back(InFlag);
   else
     assert(0 && "this should never happen!\n");

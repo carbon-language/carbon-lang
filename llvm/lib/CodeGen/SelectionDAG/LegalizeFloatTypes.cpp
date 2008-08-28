@@ -76,7 +76,7 @@ void DAGTypeLegalizer::SoftenFloatResult(SDNode *N, unsigned ResNo) {
   }
 
   // If R is null, the sub-method took care of registering the result.
-  if (R.Val)
+  if (R.getNode())
     SetSoftenedFloat(SDValue(N, ResNo), R);
 }
 
@@ -311,11 +311,11 @@ bool DAGTypeLegalizer::SoftenFloatOperand(SDNode *N, unsigned OpNo) {
   }
 
   // If the result is null, the sub-method took care of registering results etc.
-  if (!Res.Val) return false;
+  if (!Res.getNode()) return false;
 
   // If the result is N, the sub-method updated N in place.  Check to see if any
   // operands are new, and if so, mark them.
-  if (Res.Val == N) {
+  if (Res.getNode() == N) {
     // Mark N as new and remark N and its operands.  This allows us to correctly
     // revisit N if it needs another step of promotion and allows us to visit
     // any new operands to N.
@@ -438,7 +438,7 @@ SDValue DAGTypeLegalizer::SoftenFloatOp_BR_CC(SDNode *N) {
 
   // If SoftenSetCCOperands returned a scalar, we need to compare the result
   // against zero to select between true and false values.
-  if (NewRHS.Val == 0) {
+  if (NewRHS.getNode() == 0) {
     NewRHS = DAG.getConstant(0, NewLHS.getValueType());
     CCCode = ISD::SETNE;
   }
@@ -472,7 +472,7 @@ SDValue DAGTypeLegalizer::SoftenFloatOp_SELECT_CC(SDNode *N) {
 
   // If SoftenSetCCOperands returned a scalar, we need to compare the result
   // against zero to select between true and false values.
-  if (NewRHS.Val == 0) {
+  if (NewRHS.getNode() == 0) {
     NewRHS = DAG.getConstant(0, NewLHS.getValueType());
     CCCode = ISD::SETNE;
   }
@@ -489,7 +489,7 @@ SDValue DAGTypeLegalizer::SoftenFloatOp_SETCC(SDNode *N) {
   SoftenSetCCOperands(NewLHS, NewRHS, CCCode);
 
   // If SoftenSetCCOperands returned a scalar, use it.
-  if (NewRHS.Val == 0) {
+  if (NewRHS.getNode() == 0) {
     assert(NewLHS.getValueType() == N->getValueType(0) &&
            "Unexpected setcc expansion!");
     return NewLHS;
@@ -577,7 +577,7 @@ void DAGTypeLegalizer::ExpandFloatResult(SDNode *N, unsigned ResNo) {
   }
 
   // If Lo/Hi is null, the sub-method took care of registering results etc.
-  if (Lo.Val)
+  if (Lo.getNode())
     SetExpandedFloat(SDValue(N, ResNo), Lo, Hi);
 }
 
@@ -603,7 +603,7 @@ void DAGTypeLegalizer::ExpandFloatRes_FADD(SDNode *N, SDValue &Lo,
                                             RTLIB::ADD_PPCF128),
                                N->getValueType(0), Ops, 2,
                                false);
-  assert(Call.Val->getOpcode() == ISD::BUILD_PAIR && "Call lowered wrongly!");
+  assert(Call.getNode()->getOpcode() == ISD::BUILD_PAIR && "Call lowered wrongly!");
   Lo = Call.getOperand(0); Hi = Call.getOperand(1);
 }
 
@@ -630,7 +630,7 @@ void DAGTypeLegalizer::ExpandFloatRes_FDIV(SDNode *N, SDValue &Lo,
                                             RTLIB::DIV_PPCF128),
                                N->getValueType(0), Ops, 2,
                                false);
-  assert(Call.Val->getOpcode() == ISD::BUILD_PAIR && "Call lowered wrongly!");
+  assert(Call.getNode()->getOpcode() == ISD::BUILD_PAIR && "Call lowered wrongly!");
   Lo = Call.getOperand(0); Hi = Call.getOperand(1);
 }
 
@@ -644,7 +644,7 @@ void DAGTypeLegalizer::ExpandFloatRes_FMUL(SDNode *N, SDValue &Lo,
                                             RTLIB::MUL_PPCF128),
                                N->getValueType(0), Ops, 2,
                                false);
-  assert(Call.Val->getOpcode() == ISD::BUILD_PAIR && "Call lowered wrongly!");
+  assert(Call.getNode()->getOpcode() == ISD::BUILD_PAIR && "Call lowered wrongly!");
   Lo = Call.getOperand(0); Hi = Call.getOperand(1);
 }
 
@@ -672,7 +672,7 @@ void DAGTypeLegalizer::ExpandFloatRes_FSUB(SDNode *N, SDValue &Lo,
                                             RTLIB::SUB_PPCF128),
                                N->getValueType(0), Ops, 2,
                                false);
-  assert(Call.Val->getOpcode() == ISD::BUILD_PAIR && "Call lowered wrongly!");
+  assert(Call.getNode()->getOpcode() == ISD::BUILD_PAIR && "Call lowered wrongly!");
   Lo = Call.getOperand(0); Hi = Call.getOperand(1);
 }
 
@@ -734,7 +734,7 @@ void DAGTypeLegalizer::ExpandFloatRes_XINT_TO_FP(SDNode *N, SDValue &Lo,
     assert(LC != RTLIB::UNKNOWN_LIBCALL && "Unsupported XINT_TO_FP!");
 
     Hi = MakeLibCall(LC, VT, &Src, 1, true);
-    assert(Hi.Val->getOpcode() == ISD::BUILD_PAIR && "Call lowered wrongly!");
+    assert(Hi.getNode()->getOpcode() == ISD::BUILD_PAIR && "Call lowered wrongly!");
     Lo = Hi.getOperand(0); Hi = Hi.getOperand(1);
   }
 
@@ -790,7 +790,7 @@ bool DAGTypeLegalizer::ExpandFloatOperand(SDNode *N, unsigned OpNo) {
       == TargetLowering::Custom)
     Res = TLI.LowerOperation(SDValue(N, OpNo), DAG);
 
-  if (Res.Val == 0) {
+  if (Res.getNode() == 0) {
     switch (N->getOpcode()) {
     default:
   #ifndef NDEBUG
@@ -816,10 +816,10 @@ bool DAGTypeLegalizer::ExpandFloatOperand(SDNode *N, unsigned OpNo) {
   }
 
   // If the result is null, the sub-method took care of registering results etc.
-  if (!Res.Val) return false;
+  if (!Res.getNode()) return false;
   // If the result is N, the sub-method updated N in place.  Check to see if any
   // operands are new, and if so, mark them.
-  if (Res.Val == N) {
+  if (Res.getNode() == N) {
     // Mark N as new and remark N and its operands.  This allows us to correctly
     // revisit N if it needs another step of expansion and allows us to visit
     // any new operands to N.
@@ -869,7 +869,7 @@ SDValue DAGTypeLegalizer::ExpandFloatOp_BR_CC(SDNode *N) {
 
   // If ExpandSetCCOperands returned a scalar, we need to compare the result
   // against zero to select between true and false values.
-  if (NewRHS.Val == 0) {
+  if (NewRHS.getNode() == 0) {
     NewRHS = DAG.getConstant(0, NewLHS.getValueType());
     CCCode = ISD::SETNE;
   }
@@ -910,7 +910,7 @@ SDValue DAGTypeLegalizer::ExpandFloatOp_SELECT_CC(SDNode *N) {
 
   // If ExpandSetCCOperands returned a scalar, we need to compare the result
   // against zero to select between true and false values.
-  if (NewRHS.Val == 0) {
+  if (NewRHS.getNode() == 0) {
     NewRHS = DAG.getConstant(0, NewLHS.getValueType());
     CCCode = ISD::SETNE;
   }
@@ -927,7 +927,7 @@ SDValue DAGTypeLegalizer::ExpandFloatOp_SETCC(SDNode *N) {
   FloatExpandSetCCOperands(NewLHS, NewRHS, CCCode);
 
   // If ExpandSetCCOperands returned a scalar, use it.
-  if (NewRHS.Val == 0) {
+  if (NewRHS.getNode() == 0) {
     assert(NewLHS.getValueType() == N->getValueType(0) &&
            "Unexpected setcc expansion!");
     return NewLHS;

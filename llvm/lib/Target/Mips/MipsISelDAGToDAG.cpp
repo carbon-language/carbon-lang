@@ -193,7 +193,7 @@ SelectAddr(SDValue Op, SDValue Addr, SDValue &Offset, SDValue &Base)
 SDNode* MipsDAGToDAGISel::
 Select(SDValue N) 
 {
-  SDNode *Node = N.Val;
+  SDNode *Node = N.getNode();
   unsigned Opcode = Node->getOpcode();
 
   // Dump information about the Node being selected
@@ -252,7 +252,7 @@ Select(SDValue N)
       SDNode *AddCarry = CurDAG->getTargetNode(Mips::ADDu, VT, 
                                                SDValue(Carry,0), RHS);
 
-      return CurDAG->SelectNodeTo(N.Val, MOp, VT, MVT::Flag, 
+      return CurDAG->SelectNodeTo(N.getNode(), MOp, VT, MVT::Flag, 
                                   LHS, SDValue(AddCarry,0));
     }
 
@@ -391,8 +391,8 @@ Select(SDValue N)
 
   #ifndef NDEBUG
   DOUT << std::string(Indent-2, ' ') << "=> ";
-  if (ResNode == NULL || ResNode == N.Val)
-    DEBUG(N.Val->dump(CurDAG));
+  if (ResNode == NULL || ResNode == N.getNode())
+    DEBUG(N.getNode()->dump(CurDAG));
   else
     DEBUG(ResNode->dump(CurDAG));
   DOUT << "\n";

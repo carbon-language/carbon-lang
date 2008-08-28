@@ -24,13 +24,13 @@ def LO16_vec : SDNodeXForm<scalar_to_vector, [{
          && "LO16_vec got something other than a BUILD_VECTOR");
 
   // Get first constant operand...
-  for (unsigned i = 0, e = N->getNumOperands(); OpVal.Val == 0 && i != e; ++i) {
+  for (unsigned i = 0, e = N->getNumOperands(); OpVal.getNode() == 0 && i != e; ++i) {
     if (N->getOperand(i).getOpcode() == ISD::UNDEF) continue;
-    if (OpVal.Val == 0)
+    if (OpVal.getNode() == 0)
       OpVal = N->getOperand(i);
   }
   
-  assert(OpVal.Val != 0 && "LO16_vec did not locate a <defined> node");
+  assert(OpVal.getNode() != 0 && "LO16_vec did not locate a <defined> node");
   ConstantSDNode *CN = cast<ConstantSDNode>(OpVal);
   return getI32Imm((unsigned)CN->getValue() & 0xffff);
 }]>;
@@ -49,13 +49,13 @@ def HI16_vec : SDNodeXForm<scalar_to_vector, [{
          && "HI16_vec got something other than a BUILD_VECTOR");
   
   // Get first constant operand...
-  for (unsigned i = 0, e = N->getNumOperands(); OpVal.Val == 0 && i != e; ++i) {
+  for (unsigned i = 0, e = N->getNumOperands(); OpVal.getNode() == 0 && i != e; ++i) {
     if (N->getOperand(i).getOpcode() == ISD::UNDEF) continue;
-    if (OpVal.Val == 0)
+    if (OpVal.getNode() == 0)
       OpVal = N->getOperand(i);
   }
   
-  assert(OpVal.Val != 0 && "HI16_vec did not locate a <defined> node");
+  assert(OpVal.getNode() != 0 && "HI16_vec did not locate a <defined> node");
   ConstantSDNode *CN = cast<ConstantSDNode>(OpVal);
   return getI32Imm((unsigned)CN->getValue() >> 16);
 }]>;
@@ -244,7 +244,7 @@ def v16i8SExt8Imm_xform: SDNodeXForm<build_vector, [{
 // incoming constant being a 16-bit quantity, where the upper and lower bytes
 // are EXACTLY the same (e.g., 0x2a2a)
 def v16i8SExt8Imm: PatLeaf<(build_vector), [{
-  return SPU::get_vec_i8imm(N, *CurDAG, MVT::i8).Val != 0;
+  return SPU::get_vec_i8imm(N, *CurDAG, MVT::i8).getNode() != 0;
 }], v16i8SExt8Imm_xform>;
 
 // v16i8U8Imm_xform function: convert build_vector to unsigned 8-bit
@@ -259,7 +259,7 @@ def v16i8U8Imm_xform: SDNodeXForm<build_vector, [{
 // incoming constant being a 16-bit quantity, where the upper and lower bytes
 // are EXACTLY the same (e.g., 0x2a2a)
 def v16i8U8Imm: PatLeaf<(build_vector), [{
-  return SPU::get_vec_i8imm(N, *CurDAG, MVT::i8).Val != 0;
+  return SPU::get_vec_i8imm(N, *CurDAG, MVT::i8).getNode() != 0;
 }], v16i8U8Imm_xform>;
 
 // v8i16SExt8Imm_xform function: convert build_vector to 8-bit sign extended
@@ -271,7 +271,7 @@ def v8i16SExt8Imm_xform: SDNodeXForm<build_vector, [{
 // v8i16SExt8Imm: Predicate test for 8-bit sign extended immediate constant
 // load, works in conjunction with its transform function.
 def v8i16SExt8Imm: PatLeaf<(build_vector), [{
-  return SPU::get_vec_i8imm(N, *CurDAG, MVT::i16).Val != 0;
+  return SPU::get_vec_i8imm(N, *CurDAG, MVT::i16).getNode() != 0;
 }], v8i16SExt8Imm_xform>;
 
 // v8i16SExt10Imm_xform function: convert build_vector to 16-bit sign extended
@@ -283,7 +283,7 @@ def v8i16SExt10Imm_xform: SDNodeXForm<build_vector, [{
 // v8i16SExt10Imm: Predicate test for 16-bit sign extended immediate constant
 // load, works in conjunction with its transform function.
 def v8i16SExt10Imm: PatLeaf<(build_vector), [{
-  return SPU::get_vec_i10imm(N, *CurDAG, MVT::i16).Val != 0;
+  return SPU::get_vec_i10imm(N, *CurDAG, MVT::i16).getNode() != 0;
 }], v8i16SExt10Imm_xform>;
 
 // v8i16Uns10Imm_xform function: convert build_vector to 16-bit unsigned
@@ -295,7 +295,7 @@ def v8i16Uns10Imm_xform: SDNodeXForm<build_vector, [{
 // v8i16Uns10Imm: Predicate test for 16-bit unsigned immediate constant
 // load, works in conjunction with its transform function.
 def v8i16Uns10Imm: PatLeaf<(build_vector), [{
-  return SPU::get_vec_i10imm(N, *CurDAG, MVT::i16).Val != 0;
+  return SPU::get_vec_i10imm(N, *CurDAG, MVT::i16).getNode() != 0;
 }], v8i16Uns10Imm_xform>;
 
 // v8i16SExt16Imm_xform function: convert build_vector to 16-bit sign extended
@@ -307,7 +307,7 @@ def v8i16Uns16Imm_xform: SDNodeXForm<build_vector, [{
 // v8i16SExt16Imm: Predicate test for 16-bit sign extended immediate constant
 // load, works in conjunction with its transform function.
 def v8i16SExt16Imm: PatLeaf<(build_vector), [{
-  return SPU::get_vec_i16imm(N, *CurDAG, MVT::i16).Val != 0;
+  return SPU::get_vec_i16imm(N, *CurDAG, MVT::i16).getNode() != 0;
 }], v8i16Uns16Imm_xform>;
 
 // v4i32SExt10Imm_xform function: convert build_vector to 10-bit sign extended
@@ -319,7 +319,7 @@ def v4i32SExt10Imm_xform: SDNodeXForm<build_vector, [{
 // v4i32SExt10Imm: Predicate test for 10-bit sign extended immediate constant
 // load, works in conjunction with its transform function.
 def v4i32SExt10Imm: PatLeaf<(build_vector), [{
-  return SPU::get_vec_i10imm(N, *CurDAG, MVT::i32).Val != 0;
+  return SPU::get_vec_i10imm(N, *CurDAG, MVT::i32).getNode() != 0;
 }], v4i32SExt10Imm_xform>;
 
 // v4i32Uns10Imm_xform function: convert build_vector to 10-bit unsigned
@@ -331,7 +331,7 @@ def v4i32Uns10Imm_xform: SDNodeXForm<build_vector, [{
 // v4i32Uns10Imm: Predicate test for 10-bit unsigned immediate constant
 // load, works in conjunction with its transform function.
 def v4i32Uns10Imm: PatLeaf<(build_vector), [{
-  return SPU::get_vec_i10imm(N, *CurDAG, MVT::i32).Val != 0;
+  return SPU::get_vec_i10imm(N, *CurDAG, MVT::i32).getNode() != 0;
 }], v4i32Uns10Imm_xform>;
 
 // v4i32SExt16Imm_xform function: convert build_vector to 16-bit sign extended
@@ -343,7 +343,7 @@ def v4i32SExt16Imm_xform: SDNodeXForm<build_vector, [{
 // v4i32SExt16Imm: Predicate test for 16-bit sign extended immediate constant
 // load, works in conjunction with its transform function.
 def v4i32SExt16Imm: PatLeaf<(build_vector), [{
-  return SPU::get_vec_i16imm(N, *CurDAG, MVT::i32).Val != 0;
+  return SPU::get_vec_i16imm(N, *CurDAG, MVT::i32).getNode() != 0;
 }], v4i32SExt16Imm_xform>;
 
 // v4i32Uns18Imm_xform function: convert build_vector to 18-bit unsigned
@@ -355,7 +355,7 @@ def v4i32Uns18Imm_xform: SDNodeXForm<build_vector, [{
 // v4i32Uns18Imm: Predicate test for 18-bit unsigned immediate constant load,
 // works in conjunction with its transform function.
 def v4i32Uns18Imm: PatLeaf<(build_vector), [{
-  return SPU::get_vec_u18imm(N, *CurDAG, MVT::i32).Val != 0;
+  return SPU::get_vec_u18imm(N, *CurDAG, MVT::i32).getNode() != 0;
 }], v4i32Uns18Imm_xform>;
 
 // ILHUvec_get_imm xform function: convert build_vector to ILHUvec imm constant
@@ -366,7 +366,7 @@ def ILHUvec_get_imm: SDNodeXForm<build_vector, [{
 
 /// immILHUvec: Predicate test for a ILHU constant vector.
 def immILHUvec: PatLeaf<(build_vector), [{
-  return SPU::get_ILHUvec_imm(N, *CurDAG, MVT::i32).Val != 0;
+  return SPU::get_ILHUvec_imm(N, *CurDAG, MVT::i32).getNode() != 0;
 }], ILHUvec_get_imm>;
 
 // Catch-all for any other i32 vector constants
@@ -375,7 +375,7 @@ def v4i32_get_imm: SDNodeXForm<build_vector, [{
 }]>;
 
 def v4i32Imm: PatLeaf<(build_vector), [{
-  return SPU::get_v4i32_imm(N, *CurDAG).Val != 0;
+  return SPU::get_v4i32_imm(N, *CurDAG).getNode() != 0;
 }], v4i32_get_imm>;
 
 // v2i64SExt10Imm_xform function: convert build_vector to 10-bit sign extended
@@ -387,7 +387,7 @@ def v2i64SExt10Imm_xform: SDNodeXForm<build_vector, [{
 // v2i64SExt10Imm: Predicate test for 10-bit sign extended immediate constant
 // load, works in conjunction with its transform function.
 def v2i64SExt10Imm: PatLeaf<(build_vector), [{
-  return SPU::get_vec_i10imm(N, *CurDAG, MVT::i64).Val != 0;
+  return SPU::get_vec_i10imm(N, *CurDAG, MVT::i64).getNode() != 0;
 }], v2i64SExt10Imm_xform>;
 
 // v2i64SExt16Imm_xform function: convert build_vector to 16-bit sign extended
@@ -399,7 +399,7 @@ def v2i64SExt16Imm_xform: SDNodeXForm<build_vector, [{
 // v2i64SExt16Imm: Predicate test for 16-bit sign extended immediate constant
 // load, works in conjunction with its transform function.
 def v2i64SExt16Imm: PatLeaf<(build_vector), [{
-  return SPU::get_vec_i16imm(N, *CurDAG, MVT::i64).Val != 0;
+  return SPU::get_vec_i16imm(N, *CurDAG, MVT::i64).getNode() != 0;
 }], v2i64SExt16Imm_xform>;
 
 // v2i64Uns18Imm_xform function: convert build_vector to 18-bit unsigned
@@ -411,12 +411,12 @@ def v2i64Uns18Imm_xform: SDNodeXForm<build_vector, [{
 // v2i64Uns18Imm: Predicate test for 18-bit unsigned immediate constant load,
 // works in conjunction with its transform function.
 def v2i64Uns18Imm: PatLeaf<(build_vector), [{
-  return SPU::get_vec_u18imm(N, *CurDAG, MVT::i64).Val != 0;
+  return SPU::get_vec_u18imm(N, *CurDAG, MVT::i64).getNode() != 0;
 }], v2i64Uns18Imm_xform>;
 
 /// immILHUvec: Predicate test for a ILHU constant vector.
 def immILHUvec_i64: PatLeaf<(build_vector), [{
-  return SPU::get_ILHUvec_imm(N, *CurDAG, MVT::i64).Val != 0;
+  return SPU::get_ILHUvec_imm(N, *CurDAG, MVT::i64).getNode() != 0;
 }], ILHUvec_get_imm>;
 
 // Catch-all for any other i32 vector constants
@@ -425,7 +425,7 @@ def v2i64_get_imm: SDNodeXForm<build_vector, [{
 }]>;
 
 def v2i64Imm: PatLeaf<(build_vector), [{
-  return SPU::get_v2i64_imm(N, *CurDAG).Val != 0;
+  return SPU::get_v2i64_imm(N, *CurDAG).getNode() != 0;
 }], v2i64_get_imm>;
 
 //===----------------------------------------------------------------------===//

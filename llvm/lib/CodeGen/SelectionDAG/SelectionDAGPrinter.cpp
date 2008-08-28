@@ -109,8 +109,8 @@ namespace llvm {
     static void addCustomGraphFeatures(SelectionDAG *G,
                                        GraphWriter<SelectionDAG*> &GW) {
       GW.emitSimpleNode(0, "plaintext=circle", "GraphRoot");
-      if (G->getRoot().Val)
-        GW.emitEdge(0, -1, G->getRoot().Val, G->getRoot().getResNo(),
+      if (G->getRoot().getNode())
+        GW.emitEdge(0, -1, G->getRoot().getNode(), G->getRoot().getResNo(),
                     "color=blue,style=dashed");
     }
   };
@@ -356,7 +356,7 @@ namespace llvm {
     static void addCustomGraphFeatures(ScheduleDAG *G,
                                        GraphWriter<ScheduleDAG*> &GW) {
       GW.emitSimpleNode(0, "plaintext=circle", "GraphRoot");
-      const SDNode *N = G->DAG.getRoot().Val;
+      const SDNode *N = G->DAG.getRoot().getNode();
       if (N && N->getNodeId() != -1)
         GW.emitEdge(0, -1, &G->SUnits[N->getNodeId()], -1,
                     "color=blue,style=dashed");

@@ -75,7 +75,7 @@ namespace {
           Result |= 1 << i;
           if (((Constant >> 8*i) & 0xFF) == 0xFF) {
             // If the entire byte is set, zapnot the byte.
-          } else if (LHS.Val == 0) {
+          } else if (LHS.getNode() == 0) {
             // Otherwise, if the mask was previously validated, we know its okay
             // to zapnot this entire byte even though all the bits aren't set.
           } else {
@@ -242,7 +242,7 @@ void AlphaDAGToDAGISel::InstructionSelect() {
 // Select - Convert the specified operand from a target-independent to a
 // target-specific node if it hasn't already been changed.
 SDNode *AlphaDAGToDAGISel::Select(SDValue Op) {
-  SDNode *N = Op.Val;
+  SDNode *N = Op.getNode();
   if (N->isMachineOpcode()) {
     return NULL;   // Already selected.
   }
@@ -345,7 +345,7 @@ SDNode *AlphaDAGToDAGISel::Select(SDValue Op) {
   }
 
   case ISD::SETCC:
-    if (N->getOperand(0).Val->getValueType(0).isFloatingPoint()) {
+    if (N->getOperand(0).getNode()->getValueType(0).isFloatingPoint()) {
       ISD::CondCode CC = cast<CondCodeSDNode>(N->getOperand(2))->get();
 
       unsigned Opc = Alpha::WTF;
@@ -460,7 +460,7 @@ SDNode *AlphaDAGToDAGISel::Select(SDValue Op) {
 void AlphaDAGToDAGISel::SelectCALL(SDValue Op) {
   //TODO: add flag stuff to prevent nondeturministic breakage!
 
-  SDNode *N = Op.Val;
+  SDNode *N = Op.getNode();
   SDValue Chain = N->getOperand(0);
   SDValue Addr = N->getOperand(1);
   SDValue InFlag(0,0);  // Null incoming flag value.

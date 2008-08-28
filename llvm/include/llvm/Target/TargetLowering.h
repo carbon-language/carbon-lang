@@ -1086,11 +1086,11 @@ public:
   static bool CheckTailCallReturnConstraints(SDValue Call, SDValue Ret) {
     unsigned NumOps = Ret.getNumOperands();
     if ((NumOps == 1 &&
-       (Ret.getOperand(0) == SDValue(Call.Val,1) ||
-        Ret.getOperand(0) == SDValue(Call.Val,0))) ||
+       (Ret.getOperand(0) == SDValue(Call.getNode(),1) ||
+        Ret.getOperand(0) == SDValue(Call.getNode(),0))) ||
       (NumOps > 1 &&
-       Ret.getOperand(0) == SDValue(Call.Val,Call.Val->getNumValues()-1) &&
-       Ret.getOperand(1) == SDValue(Call.Val,0)))
+       Ret.getOperand(0) == SDValue(Call.getNode(),Call.getNode()->getNumValues()-1) &&
+       Ret.getOperand(1) == SDValue(Call.getNode(),0)))
       return true;
     return false;
   }

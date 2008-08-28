@@ -837,29 +837,33 @@ namespace ISD {
 /// of information is represented with the SDValue value type.
 ///
 class SDValue {
-public:
-  SDNode *Val;        // The node defining the value we are using.
-private:
+  SDNode *Node;       // The node defining the value we are using.
   unsigned ResNo;     // Which return value of the node we are using.
 public:
-  SDValue() : Val(0), ResNo(0) {}
-  SDValue(SDNode *val, unsigned resno) : Val(val), ResNo(resno) {}
+  SDValue() : Node(0), ResNo(0) {}
+  SDValue(SDNode *node, unsigned resno) : Node(node), ResNo(resno) {}
 
   /// get the index which selects a specific result in the SDNode
   unsigned getResNo() const { return ResNo; }
 
+  /// get the SDNode which holds the desired result
+  SDNode *getNode() const { return Node; }
+
+  /// set the SDNode
+  void setNode(SDNode *N) { Node = N; }
+
   bool operator==(const SDValue &O) const {
-    return Val == O.Val && ResNo == O.ResNo;
+    return Node == O.Node && ResNo == O.ResNo;
   }
   bool operator!=(const SDValue &O) const {
     return !operator==(O);
   }
   bool operator<(const SDValue &O) const {
-    return Val < O.Val || (Val == O.Val && ResNo < O.ResNo);
+    return Node < O.Node || (Node == O.Node && ResNo < O.ResNo);
   }
 
   SDValue getValue(unsigned R) const {
-    return SDValue(Val, R);
+    return SDValue(Node, R);
   }
 
   // isOperandOf - Return true if this node is an operand of N.
@@ -894,12 +898,12 @@ public:
                                       unsigned Depth = 2) const;
   
   /// use_empty - Return true if there are no nodes using value ResNo
-  /// of node Val.
+  /// of Node.
   ///
   inline bool use_empty() const;
 
   /// hasOneUse - Return true if there is exactly one node using value
-  /// ResNo of node Val.
+  /// ResNo of Node.
   ///
   inline bool hasOneUse() const;
 };
@@ -913,8 +917,8 @@ template<> struct DenseMapInfo<SDValue> {
     return SDValue((SDNode*)-1, 0);
   }
   static unsigned getHashValue(const SDValue &Val) {
-    return ((unsigned)((uintptr_t)Val.Val >> 4) ^
-            (unsigned)((uintptr_t)Val.Val >> 9)) + Val.getResNo();
+    return ((unsigned)((uintptr_t)Val.getNode() >> 4) ^
+            (unsigned)((uintptr_t)Val.getNode() >> 9)) + Val.getResNo();
   }
   static bool isEqual(const SDValue &LHS, const SDValue &RHS) {
     return LHS == RHS;
@@ -927,13 +931,13 @@ template<> struct DenseMapInfo<SDValue> {
 template<> struct simplify_type<SDValue> {
   typedef SDNode* SimpleType;
   static SimpleType getSimplifiedValue(const SDValue &Val) {
-    return static_cast<SimpleType>(Val.Val);
+    return static_cast<SimpleType>(Val.getNode());
   }
 };
 template<> struct simplify_type<const SDValue> {
   typedef SDNode* SimpleType;
   static SimpleType getSimplifiedValue(const SDValue &Val) {
-    return static_cast<SimpleType>(Val.Val);
+    return static_cast<SimpleType>(Val.getNode());
   }
 };
 
@@ -977,8 +981,9 @@ public:
 
   const SDValue& getSDValue() const { return Operand; }
 
-  SDNode *&getVal() { return Operand.Val; }
-  SDNode *const &getVal() const { return Operand.Val; }
+  SDValue &getSDValue() { return Operand; }
+  SDNode *getVal() { return Operand.getNode(); }
+  SDNode *getVal() const { return Operand.getNode(); } // FIXME: const correct?
 
   bool operator==(const SDValue &O) const {
     return Operand == O;
@@ -1323,7 +1328,7 @@ protected:
     for (unsigned i = 0; i != NumOps; ++i) {
       OperandList[i] = Ops[i];
       OperandList[i].setUser(this);
-      Ops[i].Val->addUse(OperandList[i]);
+      Ops[i].getNode()->addUse(OperandList[i]);
     }
     
     ValueList = VTs.VTs;
@@ -1393,34 +1398,34 @@ protected:
 // Define inline functions from the SDValue class.
 
 inline unsigned SDValue::getOpcode() const {
-  return Val->getOpcode();
+  return Node->getOpcode();
 }
 inline MVT SDValue::getValueType() const {
-  return Val->getValueType(ResNo);
+  return Node->getValueType(ResNo);
 }
 inline unsigned SDValue::getNumOperands() const {
-  return Val->getNumOperands();
+  return Node->getNumOperands();
 }
 inline const SDValue &SDValue::getOperand(unsigned i) const {
-  return Val->getOperand(i);
+  return Node->getOperand(i);
 }
 inline uint64_t SDValue::getConstantOperandVal(unsigned i) const {
-  return Val->getConstantOperandVal(i);
+  return Node->getConstantOperandVal(i);
 }
 inline bool SDValue::isTargetOpcode() const {
-  return Val->isTargetOpcode();
+  return Node->isTargetOpcode();
 }
 inline bool SDValue::isMachineOpcode() const {
-  return Val->isMachineOpcode();
+  return Node->isMachineOpcode();
 }
 inline unsigned SDValue::getMachineOpcode() const {
-  return Val->getMachineOpcode();
+  return Node->getMachineOpcode();
 }
 inline bool SDValue::use_empty() const {
-  return !Val->hasAnyUseOfValue(ResNo);
+  return !Node->hasAnyUseOfValue(ResNo);
 }
 inline bool SDValue::hasOneUse() const {
-  return Val->hasNUsesOfValue(1, ResNo);
+  return Node->hasNUsesOfValue(1, ResNo);
 }
 
 /// UnarySDNode - This class is used for single-operand SDNodes.  This is solely
@@ -2321,7 +2326,7 @@ public:
   }
 
   pointer operator*() const {
-    return Node->getOperand(Operand).Val;
+    return Node->getOperand(Operand).getNode();
   }
   pointer operator->() const { return operator*(); }
 

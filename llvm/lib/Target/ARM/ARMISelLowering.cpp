@@ -400,7 +400,7 @@ HowToPassArgument(MVT ObjectVT, unsigned NumGPRs,
 /// ARMISD:CALL <- callseq_end chain. Also add input and output parameter
 /// nodes.
 SDValue ARMTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
-  MVT RetVT= Op.Val->getValueType(0);
+  MVT RetVT= Op.getNode()->getValueType(0);
   SDValue Chain    = Op.getOperand(0);
   unsigned CallConv  = cast<ConstantSDNode>(Op.getOperand(1))->getValue();
   assert((CallConv == CallingConv::C ||
@@ -597,7 +597,7 @@ SDValue ARMTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
     Ops.push_back(DAG.getRegister(RegsToPass[i].first,
                                   RegsToPass[i].second.getValueType()));
 
-  if (InFlag.Val)
+  if (InFlag.getNode())
     Ops.push_back(InFlag);
   // Returns a chain and a flag for retval copy to use.
   Chain = DAG.getNode(CallOpc, DAG.getVTList(MVT::Other, MVT::Flag),
@@ -621,7 +621,7 @@ SDValue ARMTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
   case MVT::i32:
     Chain = DAG.getCopyFromReg(Chain, ARM::R0, MVT::i32, InFlag).getValue(1);
     ResultVals.push_back(Chain.getValue(0));
-    if (Op.Val->getValueType(1) == MVT::i32) {
+    if (Op.getNode()->getValueType(1) == MVT::i32) {
       // Returns a i64 value.
       Chain = DAG.getCopyFromReg(Chain, ARM::R1, MVT::i32,
                                  Chain.getValue(2)).getValue(1);
@@ -981,7 +981,7 @@ ARMTargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG) {
   unsigned ArgOffset = 0;   // Frame mechanisms handle retaddr slot
   unsigned NumGPRs = 0;     // GPRs used for parameter passing.
 
-  unsigned NumArgs = Op.Val->getNumValues()-1;
+  unsigned NumArgs = Op.getNode()->getNumValues()-1;
   for (unsigned ArgNo = 0; ArgNo < NumArgs; ++ArgNo)
     ArgValues.push_back(LowerFORMAL_ARGUMENT(Op, DAG, ArgNo,
                                              NumGPRs, ArgOffset));
@@ -1029,7 +1029,7 @@ ARMTargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG) {
   ArgValues.push_back(Root);
 
   // Return the new list of results.
-  return DAG.getMergeValues(Op.Val->getVTList(), &ArgValues[0],
+  return DAG.getMergeValues(Op.getNode()->getVTList(), &ArgValues[0],
                             ArgValues.size());
 }
 
@@ -1037,7 +1037,7 @@ ARMTargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG) {
 static bool isFloatingPointZero(SDValue Op) {
   if (ConstantFPSDNode *CFP = dyn_cast<ConstantFPSDNode>(Op))
     return CFP->getValueAPF().isPosZero();
-  else if (ISD::isEXTLoad(Op.Val) || ISD::isNON_EXTLoad(Op.Val)) {
+  else if (ISD::isEXTLoad(Op.getNode()) || ISD::isNON_EXTLoad(Op.getNode())) {
     // Maybe this has already been legalized into the constant pool?
     if (Op.getOperand(1).getOpcode() == ARMISD::Wrapper) {
       SDValue WrapperOp = Op.getOperand(1).getOperand(0);
@@ -1058,7 +1058,7 @@ static bool isLegalCmpImmediate(unsigned C, bool isThumb) {
 /// the given operands.
 static SDValue getARMCmp(SDValue LHS, SDValue RHS, ISD::CondCode CC,
                            SDValue &ARMCC, SelectionDAG &DAG, bool isThumb) {
-  if (ConstantSDNode *RHSC = dyn_cast<ConstantSDNode>(RHS.Val)) {
+  if (ConstantSDNode *RHSC = dyn_cast<ConstantSDNode>(RHS.getNode())) {
     unsigned C = RHSC->getValue();
     if (!isLegalCmpImmediate(C, isThumb)) {
       // Constant does not fit, try adjusting it by one?
@@ -1362,7 +1362,7 @@ static SDNode *ExpandBIT_CONVERT(SDNode *N, SelectionDAG &DAG) {
                               &Op, 1);
   
   // Merge the pieces into a single i64 value.
-  return DAG.getNode(ISD::BUILD_PAIR, MVT::i64, Cvt, Cvt.getValue(1)).Val;
+  return DAG.getNode(ISD::BUILD_PAIR, MVT::i64, Cvt, Cvt.getValue(1)).getNode();
 }
 
 static SDNode *ExpandSRx(SDNode *N, SelectionDAG &DAG, const ARMSubtarget *ST) {
@@ -1393,7 +1393,7 @@ static SDNode *ExpandSRx(SDNode *N, SelectionDAG &DAG, const ARMSubtarget *ST) {
   Lo = DAG.getNode(ARMISD::RRX, MVT::i32, Lo, Hi.getValue(1));
   
   // Merge the pieces into a single i64 value.
- return DAG.getNode(ISD::BUILD_PAIR, MVT::i64, Lo, Hi).Val;
+ return DAG.getNode(ISD::BUILD_PAIR, MVT::i64, Lo, Hi).getNode();
 }
 
 
@@ -1424,9 +1424,9 @@ SDValue ARMTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
       
       
   // FIXME: Remove these when LegalizeDAGTypes lands.
-  case ISD::BIT_CONVERT:   return SDValue(ExpandBIT_CONVERT(Op.Val, DAG), 0);
+  case ISD::BIT_CONVERT:   return SDValue(ExpandBIT_CONVERT(Op.getNode(), DAG), 0);
   case ISD::SRL:
-  case ISD::SRA:           return SDValue(ExpandSRx(Op.Val, DAG,Subtarget),0);
+  case ISD::SRA:           return SDValue(ExpandSRx(Op.getNode(), DAG,Subtarget),0);
   }
   return SDValue();
 }
@@ -1734,7 +1734,7 @@ ARMTargetLowering::getPreIndexedAddressParts(SDNode *N, SDValue &Base,
     return false;
 
   bool isInc;
-  bool isLegal = getIndexedAddressParts(Ptr.Val, VT, isSEXTLoad, Base, Offset,
+  bool isLegal = getIndexedAddressParts(Ptr.getNode(), VT, isSEXTLoad, Base, Offset,
                                         isInc, DAG);
   if (isLegal) {
     AM = isInc ? ISD::PRE_INC : ISD::PRE_DEC;

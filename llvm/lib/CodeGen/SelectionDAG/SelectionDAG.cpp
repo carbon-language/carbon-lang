@@ -96,7 +96,7 @@ bool ConstantFPSDNode::isValueValidForType(MVT VT,
 bool ISD::isBuildVectorAllOnes(const SDNode *N) {
   // Look through a bit convert.
   if (N->getOpcode() == ISD::BIT_CONVERT)
-    N = N->getOperand(0).Val;
+    N = N->getOperand(0).getNode();
   
   if (N->getOpcode() != ISD::BUILD_VECTOR) return false;
   
@@ -137,7 +137,7 @@ bool ISD::isBuildVectorAllOnes(const SDNode *N) {
 bool ISD::isBuildVectorAllZeros(const SDNode *N) {
   // Look through a bit convert.
   if (N->getOpcode() == ISD::BIT_CONVERT)
-    N = N->getOperand(0).Val;
+    N = N->getOperand(0).getNode();
   
   if (N->getOpcode() != ISD::BUILD_VECTOR) return false;
   
@@ -326,7 +326,7 @@ static void AddNodeIDValueTypes(FoldingSetNodeID &ID, SDVTList VTList) {
 static void AddNodeIDOperands(FoldingSetNodeID &ID,
                               const SDValue *Ops, unsigned NumOps) {
   for (; NumOps; --NumOps, ++Ops) {
-    ID.AddPointer(Ops->Val);
+    ID.AddPointer(Ops->getNode());
     ID.AddInteger(Ops->getResNo());
   }
 }
@@ -1230,9 +1230,9 @@ SDValue SelectionDAG::FoldSetCC(MVT VT, SDValue N1,
     break;
   }
   
-  if (ConstantSDNode *N2C = dyn_cast<ConstantSDNode>(N2.Val)) {
+  if (ConstantSDNode *N2C = dyn_cast<ConstantSDNode>(N2.getNode())) {
     const APInt &C2 = N2C->getAPIntValue();
-    if (ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1.Val)) {
+    if (ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1.getNode())) {
       const APInt &C1 = N1C->getAPIntValue();
       
       switch (Cond) {
@@ -1250,8 +1250,8 @@ SDValue SelectionDAG::FoldSetCC(MVT VT, SDValue N1,
       }
     }
   }
-  if (ConstantFPSDNode *N1C = dyn_cast<ConstantFPSDNode>(N1.Val)) {
-    if (ConstantFPSDNode *N2C = dyn_cast<ConstantFPSDNode>(N2.Val)) {
+  if (ConstantFPSDNode *N1C = dyn_cast<ConstantFPSDNode>(N1.getNode())) {
+    if (ConstantFPSDNode *N2C = dyn_cast<ConstantFPSDNode>(N2.getNode())) {
       // No compile time operations on this type yet.
       if (N1C->getValueType(0) == MVT::ppcf128)
         return SDValue();
@@ -1572,7 +1572,7 @@ void SelectionDAG::ComputeMaskedBits(SDValue Op, const APInt &Mask,
     return;
   }
   case ISD::LOAD: {
-    if (ISD::isZEXTLoad(Op.Val)) {
+    if (ISD::isZEXTLoad(Op.getNode())) {
       LoadSDNode *LD = cast<LoadSDNode>(Op);
       MVT VT = LD->getMemoryVT();
       unsigned MemBits = VT.getSizeInBits();
@@ -2024,7 +2024,7 @@ SDValue SelectionDAG::getShuffleScalarElt(const SDNode *N, unsigned i) {
   if (V.getOpcode() == ISD::BUILD_VECTOR)
     return V.getOperand(Index);
   if (V.getOpcode() == ISD::VECTOR_SHUFFLE)
-    return getShuffleScalarElt(V.Val, Index);
+    return getShuffleScalarElt(V.getNode(), Index);
   return SDValue();
 }
 
@@ -2050,7 +2050,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, MVT VT) {
 
 SDValue SelectionDAG::getNode(unsigned Opcode, MVT VT, SDValue Operand) {
   // Constant fold unary operations with an integer constant operand.
-  if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Operand.Val)) {
+  if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Operand.getNode())) {
     const APInt &Val = C->getAPIntValue();
     unsigned BitWidth = VT.getSizeInBits();
     switch (Opcode) {
@@ -2091,7 +2091,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, MVT VT, SDValue Operand) {
   }
 
   // Constant fold unary operations with a floating point constant operand.
-  if (ConstantFPSDNode *C = dyn_cast<ConstantFPSDNode>(Operand.Val)) {
+  if (ConstantFPSDNode *C = dyn_cast<ConstantFPSDNode>(Operand.getNode())) {
     APFloat V = C->getValueAPF();    // make copy
     if (VT != MVT::ppcf128 && Operand.getValueType() != MVT::ppcf128) {
       switch (Opcode) {
@@ -2130,7 +2130,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, MVT VT, SDValue Operand) {
     }
   }
 
-  unsigned OpOpcode = Operand.Val->getOpcode();
+  unsigned OpOpcode = Operand.getNode()->getOpcode();
   switch (Opcode) {
   case ISD::TokenFactor:
   case ISD::CONCAT_VECTORS:
@@ -2150,7 +2150,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, MVT VT, SDValue Operand) {
     assert(Operand.getValueType().bitsLT(VT)
            && "Invalid sext node, dst < src!");
     if (OpOpcode == ISD::SIGN_EXTEND || OpOpcode == ISD::ZERO_EXTEND)
-      return getNode(OpOpcode, VT, Operand.Val->getOperand(0));
+      return getNode(OpOpcode, VT, Operand.getNode()->getOperand(0));
     break;
   case ISD::ZERO_EXTEND:
     assert(VT.isInteger() && Operand.getValueType().isInteger() &&
@@ -2159,7 +2159,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, MVT VT, SDValue Operand) {
     assert(Operand.getValueType().bitsLT(VT)
            && "Invalid zext node, dst < src!");
     if (OpOpcode == ISD::ZERO_EXTEND)   // (zext (zext x)) -> (zext x)
-      return getNode(ISD::ZERO_EXTEND, VT, Operand.Val->getOperand(0));
+      return getNode(ISD::ZERO_EXTEND, VT, Operand.getNode()->getOperand(0));
     break;
   case ISD::ANY_EXTEND:
     assert(VT.isInteger() && Operand.getValueType().isInteger() &&
@@ -2169,7 +2169,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, MVT VT, SDValue Operand) {
            && "Invalid anyext node, dst < src!");
     if (OpOpcode == ISD::ZERO_EXTEND || OpOpcode == ISD::SIGN_EXTEND)
       // (ext (zext x)) -> (zext x)  and  (ext (sext x)) -> (sext x)
-      return getNode(OpOpcode, VT, Operand.Val->getOperand(0));
+      return getNode(OpOpcode, VT, Operand.getNode()->getOperand(0));
     break;
   case ISD::TRUNCATE:
     assert(VT.isInteger() && Operand.getValueType().isInteger() &&
@@ -2178,16 +2178,16 @@ SDValue SelectionDAG::getNode(unsigned Opcode, MVT VT, SDValue Operand) {
     assert(Operand.getValueType().bitsGT(VT)
            && "Invalid truncate node, src < dst!");
     if (OpOpcode == ISD::TRUNCATE)
-      return getNode(ISD::TRUNCATE, VT, Operand.Val->getOperand(0));
+      return getNode(ISD::TRUNCATE, VT, Operand.getNode()->getOperand(0));
     else if (OpOpcode == ISD::ZERO_EXTEND || OpOpcode == ISD::SIGN_EXTEND ||
              OpOpcode == ISD::ANY_EXTEND) {
       // If the source is smaller than the dest, we still need an extend.
-      if (Operand.Val->getOperand(0).getValueType().bitsLT(VT))
-        return getNode(OpOpcode, VT, Operand.Val->getOperand(0));
-      else if (Operand.Val->getOperand(0).getValueType().bitsGT(VT))
-        return getNode(ISD::TRUNCATE, VT, Operand.Val->getOperand(0));
+      if (Operand.getNode()->getOperand(0).getValueType().bitsLT(VT))
+        return getNode(OpOpcode, VT, Operand.getNode()->getOperand(0));
+      else if (Operand.getNode()->getOperand(0).getValueType().bitsGT(VT))
+        return getNode(ISD::TRUNCATE, VT, Operand.getNode()->getOperand(0));
       else
-        return Operand.Val->getOperand(0);
+        return Operand.getNode()->getOperand(0);
     }
     break;
   case ISD::BIT_CONVERT:
@@ -2215,14 +2215,14 @@ SDValue SelectionDAG::getNode(unsigned Opcode, MVT VT, SDValue Operand) {
     break;
   case ISD::FNEG:
     if (OpOpcode == ISD::FSUB)   // -(X-Y) -> (Y-X)
-      return getNode(ISD::FSUB, VT, Operand.Val->getOperand(1),
-                     Operand.Val->getOperand(0));
+      return getNode(ISD::FSUB, VT, Operand.getNode()->getOperand(1),
+                     Operand.getNode()->getOperand(0));
     if (OpOpcode == ISD::FNEG)  // --X -> X
-      return Operand.Val->getOperand(0);
+      return Operand.getNode()->getOperand(0);
     break;
   case ISD::FABS:
     if (OpOpcode == ISD::FNEG)  // abs(-X) -> abs(X)
-      return getNode(ISD::FABS, VT, Operand.Val->getOperand(0));
+      return getNode(ISD::FABS, VT, Operand.getNode()->getOperand(0));
     break;
   }
 
@@ -2252,8 +2252,8 @@ SDValue SelectionDAG::getNode(unsigned Opcode, MVT VT, SDValue Operand) {
 
 SDValue SelectionDAG::getNode(unsigned Opcode, MVT VT,
                               SDValue N1, SDValue N2) {
-  ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1.Val);
-  ConstantSDNode *N2C = dyn_cast<ConstantSDNode>(N2.Val);
+  ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1.getNode());
+  ConstantSDNode *N2C = dyn_cast<ConstantSDNode>(N2.getNode());
   switch (Opcode) {
   default: break;
   case ISD::TokenFactor:
@@ -2268,8 +2268,8 @@ SDValue SelectionDAG::getNode(unsigned Opcode, MVT VT,
     // one big BUILD_VECTOR.
     if (N1.getOpcode() == ISD::BUILD_VECTOR &&
         N2.getOpcode() == ISD::BUILD_VECTOR) {
-      SmallVector<SDValue, 16> Elts(N1.Val->op_begin(), N1.Val->op_end());
-      Elts.insert(Elts.end(), N2.Val->op_begin(), N2.Val->op_end());
+      SmallVector<SDValue, 16> Elts(N1.getNode()->op_begin(), N1.getNode()->op_end());
+      Elts.insert(Elts.end(), N2.getNode()->op_begin(), N2.getNode()->op_end());
       return getNode(ISD::BUILD_VECTOR, VT, &Elts[0], Elts.size());
     }
     break;
@@ -2471,8 +2471,8 @@ SDValue SelectionDAG::getNode(unsigned Opcode, MVT VT,
   }
 
   // Constant fold FP operations.
-  ConstantFPSDNode *N1CFP = dyn_cast<ConstantFPSDNode>(N1.Val);
-  ConstantFPSDNode *N2CFP = dyn_cast<ConstantFPSDNode>(N2.Val);
+  ConstantFPSDNode *N1CFP = dyn_cast<ConstantFPSDNode>(N1.getNode());
+  ConstantFPSDNode *N2CFP = dyn_cast<ConstantFPSDNode>(N2.getNode());
   if (N1CFP) {
     if (!N2CFP && isCommutativeBinOp(Opcode)) {
       // Cannonicalize constant to RHS if commutative
@@ -2615,8 +2615,8 @@ SDValue SelectionDAG::getNode(unsigned Opcode, MVT VT,
 SDValue SelectionDAG::getNode(unsigned Opcode, MVT VT,
                               SDValue N1, SDValue N2, SDValue N3) {
   // Perform various simplifications.
-  ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1.Val);
-  ConstantSDNode *N2C = dyn_cast<ConstantSDNode>(N2.Val);
+  ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1.getNode());
+  ConstantSDNode *N2C = dyn_cast<ConstantSDNode>(N2.getNode());
   switch (Opcode) {
   case ISD::CONCAT_VECTORS:
     // A CONCAT_VECTOR with all operands BUILD_VECTOR can be simplified to
@@ -2624,16 +2624,16 @@ SDValue SelectionDAG::getNode(unsigned Opcode, MVT VT,
     if (N1.getOpcode() == ISD::BUILD_VECTOR &&
         N2.getOpcode() == ISD::BUILD_VECTOR &&
         N3.getOpcode() == ISD::BUILD_VECTOR) {
-      SmallVector<SDValue, 16> Elts(N1.Val->op_begin(), N1.Val->op_end());
-      Elts.insert(Elts.end(), N2.Val->op_begin(), N2.Val->op_end());
-      Elts.insert(Elts.end(), N3.Val->op_begin(), N3.Val->op_end());
+      SmallVector<SDValue, 16> Elts(N1.getNode()->op_begin(), N1.getNode()->op_end());
+      Elts.insert(Elts.end(), N2.getNode()->op_begin(), N2.getNode()->op_end());
+      Elts.insert(Elts.end(), N3.getNode()->op_begin(), N3.getNode()->op_end());
       return getNode(ISD::BUILD_VECTOR, VT, &Elts[0], Elts.size());
     }
     break;
   case ISD::SETCC: {
     // Use FoldSetCC to simplify SETCC's.
     SDValue Simp = FoldSetCC(VT, N1, N2, cast<CondCodeSDNode>(N3)->get());
-    if (Simp.Val) return Simp;
+    if (Simp.getNode()) return Simp;
     break;
   }
   case ISD::SELECT:
@@ -3049,7 +3049,7 @@ SDValue SelectionDAG::getMemcpy(SDValue Chain, SDValue Dst,
     SDValue Result =
       getMemcpyLoadsAndStores(*this, Chain, Dst, Src, ConstantSize->getValue(),
                               Align, false, DstSV, DstSVOff, SrcSV, SrcSVOff);
-    if (Result.Val)
+    if (Result.getNode())
       return Result;
   }
 
@@ -3059,7 +3059,7 @@ SDValue SelectionDAG::getMemcpy(SDValue Chain, SDValue Dst,
     TLI.EmitTargetCodeForMemcpy(*this, Chain, Dst, Src, Size, Align,
                                 AlwaysInline,
                                 DstSV, DstSVOff, SrcSV, SrcSVOff);
-  if (Result.Val)
+  if (Result.getNode())
     return Result;
 
   // If we really need inline code and the target declined to provide it,
@@ -3103,7 +3103,7 @@ SDValue SelectionDAG::getMemmove(SDValue Chain, SDValue Dst,
     SDValue Result =
       getMemmoveLoadsAndStores(*this, Chain, Dst, Src, ConstantSize->getValue(),
                                Align, false, DstSV, DstSVOff, SrcSV, SrcSVOff);
-    if (Result.Val)
+    if (Result.getNode())
       return Result;
   }
 
@@ -3112,7 +3112,7 @@ SDValue SelectionDAG::getMemmove(SDValue Chain, SDValue Dst,
   SDValue Result =
     TLI.EmitTargetCodeForMemmove(*this, Chain, Dst, Src, Size, Align,
                                  DstSV, DstSVOff, SrcSV, SrcSVOff);
-  if (Result.Val)
+  if (Result.getNode())
     return Result;
 
   // Emit a library call.
@@ -3146,7 +3146,7 @@ SDValue SelectionDAG::getMemset(SDValue Chain, SDValue Dst,
     SDValue Result =
       getMemsetStores(*this, Chain, Dst, Src, ConstantSize->getValue(), Align,
                       DstSV, DstSVOff);
-    if (Result.Val)
+    if (Result.getNode())
       return Result;
   }
 
@@ -3155,7 +3155,7 @@ SDValue SelectionDAG::getMemset(SDValue Chain, SDValue Dst,
   SDValue Result =
     TLI.EmitTargetCodeForMemset(*this, Chain, Dst, Src, Size, Align,
                                 DstSV, DstSVOff);
-  if (Result.Val)
+  if (Result.getNode())
     return Result;
 
   // Emit a library call.
@@ -3737,7 +3737,7 @@ SDVTList SelectionDAG::getVTList(const MVT *VTs, unsigned NumVTs) {
 /// input node is returned.  As a degenerate case, if you specify the same
 /// input operands as the node already has, the input node is returned.
 SDValue SelectionDAG::UpdateNodeOperands(SDValue InN, SDValue Op) {
-  SDNode *N = InN.Val;
+  SDNode *N = InN.getNode();
   assert(N->getNumOperands() == 1 && "Update with wrong number of operands");
   
   // Check to see if there is no change.
@@ -3756,7 +3756,7 @@ SDValue SelectionDAG::UpdateNodeOperands(SDValue InN, SDValue Op) {
   N->OperandList[0].getVal()->removeUser(0, N);
   N->OperandList[0] = Op;
   N->OperandList[0].setUser(N);
-  Op.Val->addUser(0, N);
+  Op.getNode()->addUser(0, N);
   
   // If this gets put into a CSE map, add it.
   if (InsertPos) CSEMap.InsertNode(N, InsertPos);
@@ -3765,7 +3765,7 @@ SDValue SelectionDAG::UpdateNodeOperands(SDValue InN, SDValue Op) {
 
 SDValue SelectionDAG::
 UpdateNodeOperands(SDValue InN, SDValue Op1, SDValue Op2) {
-  SDNode *N = InN.Val;
+  SDNode *N = InN.getNode();
   assert(N->getNumOperands() == 2 && "Update with wrong number of operands");
   
   // Check to see if there is no change.
@@ -3786,13 +3786,13 @@ UpdateNodeOperands(SDValue InN, SDValue Op1, SDValue Op2) {
     N->OperandList[0].getVal()->removeUser(0, N);
     N->OperandList[0] = Op1;
     N->OperandList[0].setUser(N);
-    Op1.Val->addUser(0, N);
+    Op1.getNode()->addUser(0, N);
   }
   if (N->OperandList[1] != Op2) {
     N->OperandList[1].getVal()->removeUser(1, N);
     N->OperandList[1] = Op2;
     N->OperandList[1].setUser(N);
-    Op2.Val->addUser(1, N);
+    Op2.getNode()->addUser(1, N);
   }
   
   // If this gets put into a CSE map, add it.
@@ -3822,7 +3822,7 @@ UpdateNodeOperands(SDValue N, SDValue Op1, SDValue Op2,
 
 SDValue SelectionDAG::
 UpdateNodeOperands(SDValue InN, const SDValue *Ops, unsigned NumOps) {
-  SDNode *N = InN.Val;
+  SDNode *N = InN.getNode();
   assert(N->getNumOperands() == NumOps &&
          "Update with wrong number of operands");
   
@@ -3853,7 +3853,7 @@ UpdateNodeOperands(SDValue InN, const SDValue *Ops, unsigned NumOps) {
       N->OperandList[i].getVal()->removeUser(i, N);
       N->OperandList[i] = Ops[i];
       N->OperandList[i].setUser(N);
-      Ops[i].Val->addUser(i, N);
+      Ops[i].getNode()->addUser(i, N);
     }
   }
 
@@ -4134,70 +4134,70 @@ SDNode *SelectionDAG::MorphNodeTo(SDNode *N, unsigned Opc,
 /// node of the specified opcode and operands, it returns that node instead of
 /// the current one.
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT) {
-  return getNode(~Opcode, VT).Val;
+  return getNode(~Opcode, VT).getNode();
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT, SDValue Op1) {
-  return getNode(~Opcode, VT, Op1).Val;
+  return getNode(~Opcode, VT, Op1).getNode();
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT,
                                     SDValue Op1, SDValue Op2) {
-  return getNode(~Opcode, VT, Op1, Op2).Val;
+  return getNode(~Opcode, VT, Op1, Op2).getNode();
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT,
                                     SDValue Op1, SDValue Op2,
                                     SDValue Op3) {
-  return getNode(~Opcode, VT, Op1, Op2, Op3).Val;
+  return getNode(~Opcode, VT, Op1, Op2, Op3).getNode();
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT,
                                     const SDValue *Ops, unsigned NumOps) {
-  return getNode(~Opcode, VT, Ops, NumOps).Val;
+  return getNode(~Opcode, VT, Ops, NumOps).getNode();
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT1, MVT VT2) {
   const MVT *VTs = getNodeValueTypes(VT1, VT2);
   SDValue Op;
-  return getNode(~Opcode, VTs, 2, &Op, 0).Val;
+  return getNode(~Opcode, VTs, 2, &Op, 0).getNode();
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT1,
                                     MVT VT2, SDValue Op1) {
   const MVT *VTs = getNodeValueTypes(VT1, VT2);
-  return getNode(~Opcode, VTs, 2, &Op1, 1).Val;
+  return getNode(~Opcode, VTs, 2, &Op1, 1).getNode();
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT1,
                                     MVT VT2, SDValue Op1,
                                     SDValue Op2) {
   const MVT *VTs = getNodeValueTypes(VT1, VT2);
   SDValue Ops[] = { Op1, Op2 };
-  return getNode(~Opcode, VTs, 2, Ops, 2).Val;
+  return getNode(~Opcode, VTs, 2, Ops, 2).getNode();
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT1,
                                     MVT VT2, SDValue Op1,
                                     SDValue Op2, SDValue Op3) {
   const MVT *VTs = getNodeValueTypes(VT1, VT2);
   SDValue Ops[] = { Op1, Op2, Op3 };
-  return getNode(~Opcode, VTs, 2, Ops, 3).Val;
+  return getNode(~Opcode, VTs, 2, Ops, 3).getNode();
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT1, MVT VT2,
                                     const SDValue *Ops, unsigned NumOps) {
   const MVT *VTs = getNodeValueTypes(VT1, VT2);
-  return getNode(~Opcode, VTs, 2, Ops, NumOps).Val;
+  return getNode(~Opcode, VTs, 2, Ops, NumOps).getNode();
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT1, MVT VT2, MVT VT3,
                                     SDValue Op1, SDValue Op2) {
   const MVT *VTs = getNodeValueTypes(VT1, VT2, VT3);
   SDValue Ops[] = { Op1, Op2 };
-  return getNode(~Opcode, VTs, 3, Ops, 2).Val;
+  return getNode(~Opcode, VTs, 3, Ops, 2).getNode();
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT1, MVT VT2, MVT VT3,
                                     SDValue Op1, SDValue Op2,
                                     SDValue Op3) {
   const MVT *VTs = getNodeValueTypes(VT1, VT2, VT3);
   SDValue Ops[] = { Op1, Op2, Op3 };
-  return getNode(~Opcode, VTs, 3, Ops, 3).Val;
+  return getNode(~Opcode, VTs, 3, Ops, 3).getNode();
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT1, MVT VT2, MVT VT3,
                                     const SDValue *Ops, unsigned NumOps) {
   const MVT *VTs = getNodeValueTypes(VT1, VT2, VT3);
-  return getNode(~Opcode, VTs, 3, Ops, NumOps).Val;
+  return getNode(~Opcode, VTs, 3, Ops, NumOps).getNode();
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT1,
                                     MVT VT2, MVT VT3, MVT VT4,
@@ -4208,14 +4208,14 @@ SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT1,
   VTList.push_back(VT3);
   VTList.push_back(VT4);
   const MVT *VTs = getNodeValueTypes(VTList);
-  return getNode(~Opcode, VTs, 4, Ops, NumOps).Val;
+  return getNode(~Opcode, VTs, 4, Ops, NumOps).getNode();
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode,
                                     const std::vector<MVT> &ResultTys,
                                     const SDValue *Ops, unsigned NumOps) {
   const MVT *VTs = getNodeValueTypes(ResultTys);
   return getNode(~Opcode, VTs, ResultTys.size(),
-                 Ops, NumOps).Val;
+                 Ops, NumOps).getNode();
 }
 
 /// getNodeIfExists - Get the specified node if it's already available, or
@@ -4240,10 +4240,10 @@ SDNode *SelectionDAG::getNodeIfExists(unsigned Opcode, SDVTList VTList,
 ///
 void SelectionDAG::ReplaceAllUsesWith(SDValue FromN, SDValue To,
                                       DAGUpdateListener *UpdateListener) {
-  SDNode *From = FromN.Val;
+  SDNode *From = FromN.getNode();
   assert(From->getNumValues() == 1 && FromN.getResNo() == 0 && 
          "Cannot replace with this method!");
-  assert(From != To.Val && "Cannot replace uses of with self");
+  assert(From != To.getNode() && "Cannot replace uses of with self");
 
   while (!From->use_empty()) {
     SDNode::use_iterator UI = From->use_begin();
@@ -4258,7 +4258,7 @@ void SelectionDAG::ReplaceAllUsesWith(SDValue FromN, SDValue To,
         From->removeUser(operandNum, U);
         *I = To;
         I->setUser(U);
-        To.Val->addUser(operandNum, U);
+        To.getNode()->addUser(operandNum, U);
       }    
 
     // Now that we have modified U, add it back to the CSE maps.  If it already
@@ -4305,7 +4305,7 @@ void SelectionDAG::ReplaceAllUsesWith(SDNode *From, SDNode *To,
          I != E; ++I, ++operandNum)
       if (I->getVal() == From) {
         From->removeUser(operandNum, U);
-        I->getVal() = To;
+        I->getSDValue().setNode(To);
         To->addUser(operandNum, U);
       }
 
@@ -4351,7 +4351,7 @@ void SelectionDAG::ReplaceAllUsesWith(SDNode *From,
         From->removeUser(operandNum, U);
         *I = ToOp;
         I->setUser(U);
-        ToOp.Val->addUser(operandNum, U);
+        ToOp.getNode()->addUser(operandNum, U);
       }
 
     // Now that we have modified U, add it back to the CSE maps.  If it already
@@ -4372,7 +4372,7 @@ void SelectionDAG::ReplaceAllUsesWith(SDNode *From,
 }
 
 /// ReplaceAllUsesOfValueWith - Replace any uses of From with To, leaving
-/// uses of other values produced by From.Val alone.  The Deleted vector is
+/// uses of other values produced by From.getVal() alone.  The Deleted vector is
 /// handled the same way as for ReplaceAllUsesWith.
 void SelectionDAG::ReplaceAllUsesOfValueWith(SDValue From, SDValue To,
                                              DAGUpdateListener *UpdateListener){
@@ -4380,14 +4380,14 @@ void SelectionDAG::ReplaceAllUsesOfValueWith(SDValue From, SDValue To,
   if (From == To) return;
 
   // Handle the simple, trivial, case efficiently.
-  if (From.Val->getNumValues() == 1) {
+  if (From.getNode()->getNumValues() == 1) {
     ReplaceAllUsesWith(From, To, UpdateListener);
     return;
   }
 
-  // Get all of the users of From.Val.  We want these in a nice,
+  // Get all of the users of From.getNode().  We want these in a nice,
   // deterministically ordered and uniqued set, so we use a SmallSetVector.
-  SmallSetVector<SDNode*, 16> Users(From.Val->use_begin(), From.Val->use_end());
+  SmallSetVector<SDNode*, 16> Users(From.getNode()->use_begin(), From.getNode()->use_end());
 
   while (!Users.empty()) {
     // We know that this user uses some value of From.  If it is the right
@@ -4410,10 +4410,10 @@ void SelectionDAG::ReplaceAllUsesOfValueWith(SDValue From, SDValue To,
     // Update all operands that match "From" in case there are multiple uses.
     for (; Op != E; ++Op) {
       if (*Op == From) {
-        From.Val->removeUser(Op-User->op_begin(), User);
+        From.getNode()->removeUser(Op-User->op_begin(), User);
         *Op = To;
         Op->setUser(User);
-        To.Val->addUser(Op-User->op_begin(), User);
+        To.getNode()->addUser(Op-User->op_begin(), User);
       }
     }
                
@@ -4437,7 +4437,7 @@ void SelectionDAG::ReplaceAllUsesOfValueWith(SDValue From, SDValue To,
 }
 
 /// ReplaceAllUsesOfValuesWith - Replace any uses of From with To, leaving
-/// uses of other values produced by From.Val alone.  The same value may
+/// uses of other values produced by From.getVal() alone.  The same value may
 /// appear in both the From and To list.  The Deleted vector is
 /// handled the same way as for ReplaceAllUsesWith.
 void SelectionDAG::ReplaceAllUsesOfValuesWith(const SDValue *From,
@@ -4450,8 +4450,8 @@ void SelectionDAG::ReplaceAllUsesOfValuesWith(const SDValue *From,
 
   SmallVector<std::pair<SDNode *, unsigned>, 16> Users;
   for (unsigned i = 0; i != Num; ++i)
-    for (SDNode::use_iterator UI = From[i].Val->use_begin(), 
-         E = From[i].Val->use_end(); UI != E; ++UI)
+    for (SDNode::use_iterator UI = From[i].getNode()->use_begin(), 
+         E = From[i].getNode()->use_end(); UI != E; ++UI)
       Users.push_back(std::make_pair(*UI, i));
 
   while (!Users.empty()) {
@@ -4476,10 +4476,10 @@ void SelectionDAG::ReplaceAllUsesOfValuesWith(const SDValue *From,
     // Update all operands that match "From" in case there are multiple uses.
     for (; Op != E; ++Op) {
       if (*Op == From[i]) {
-        From[i].Val->removeUser(Op-User->op_begin(), User);
+        From[i].getNode()->removeUser(Op-User->op_begin(), User);
         *Op = To[i];
         Op->setUser(User);
-        To[i].Val->addUser(Op-User->op_begin(), User);
+        To[i].getNode()->addUser(Op-User->op_begin(), User);
       }
     }
                
@@ -4617,7 +4617,7 @@ MachineMemOperand MemSDNode::getMemOperand() const {
   
   // Check if the memory reference references a frame index
   const FrameIndexSDNode *FI = 
-  dyn_cast<const FrameIndexSDNode>(getBasePtr().Val);
+  dyn_cast<const FrameIndexSDNode>(getBasePtr().getNode());
   if (!getSrcValue() && FI)
     return MachineMemOperand(PseudoSourceValue::getFixedStack(FI->getIndex()),
                              Flags, 0, Size, getAlignment());
@@ -4746,7 +4746,7 @@ static void findPredecessor(SDNode *N, const SDNode *P, bool &found,
     return;
 
   for (unsigned i = 0, e = N->getNumOperands(); !found && i != e; ++i) {
-    SDNode *Op = N->getOperand(i).Val;
+    SDNode *Op = N->getOperand(i).getNode();
     if (Op == P) {
       found = true;
       return;
@@ -5115,13 +5115,13 @@ void SDNode::print(raw_ostream &OS, const SelectionDAG *G) const {
   OS << " ";
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
     if (i) OS << ", ";
-    OS << (void*)getOperand(i).Val;
+    OS << (void*)getOperand(i).getNode();
     if (unsigned RN = getOperand(i).getResNo())
       OS << ":" << RN;
   }
 
   if (!isTargetOpcode() && getOpcode() == ISD::VECTOR_SHUFFLE) {
-    SDNode *Mask = getOperand(2).Val;
+    SDNode *Mask = getOperand(2).getNode();
     OS << "<";
     for (unsigned i = 0, e = Mask->getNumOperands(); i != e; ++i) {
       if (i) OS << ",";
@@ -5262,11 +5262,11 @@ void SDNode::print(raw_ostream &OS, const SelectionDAG *G) const {
 
 static void DumpNodes(const SDNode *N, unsigned indent, const SelectionDAG *G) {
   for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
-    if (N->getOperand(i).Val->hasOneUse())
-      DumpNodes(N->getOperand(i).Val, indent+2, G);
+    if (N->getOperand(i).getNode()->hasOneUse())
+      DumpNodes(N->getOperand(i).getNode(), indent+2, G);
     else
       cerr << "\n" << std::string(indent+2, ' ')
-           << (void*)N->getOperand(i).Val << ": <multiple use>";
+           << (void*)N->getOperand(i).getNode() << ": <multiple use>";
 
 
   cerr << "\n" << std::string(indent, ' ');
@@ -5279,11 +5279,11 @@ void SelectionDAG::dump() const {
   for (allnodes_const_iterator I = allnodes_begin(), E = allnodes_end();
        I != E; ++I) {
     const SDNode *N = I;
-    if (!N->hasOneUse() && N != getRoot().Val)
+    if (!N->hasOneUse() && N != getRoot().getNode())
       DumpNodes(N, 2, this);
   }
 
-  if (getRoot().Val) DumpNodes(getRoot().Val, 2, this);
+  if (getRoot().getNode()) DumpNodes(getRoot().getNode(), 2, this);
 
   cerr << "\n\n";
 }

@@ -224,7 +224,7 @@ void ScheduleDAGRRList::CommuteNodesToReducePressure() {
         if (TID.getOperandConstraint(j+NumRes, TOI::TIED_TO) == -1)
           continue;
 
-        SDNode *OpN = SU->Node->getOperand(j).Val;
+        SDNode *OpN = SU->Node->getOperand(j).getNode();
         SUnit *OpSU = isPassiveNode(OpN) ? NULL : &SUnits[OpN->getNodeId()];
         if (OpSU && OperandSeen.count(OpSU) == 1) {
           // Ok, so SU is not the last use of OpSU, but SU is two-address so
@@ -233,7 +233,7 @@ void ScheduleDAGRRList::CommuteNodesToReducePressure() {
           bool DoCommute = true;
           for (unsigned k = 0; k < NumOps; ++k) {
             if (k != j) {
-              OpN = SU->Node->getOperand(k).Val;
+              OpN = SU->Node->getOperand(k).getNode();
               OpSU = isPassiveNode(OpN) ? NULL : &SUnits[OpN->getNodeId()];
               if (OpSU && OperandSeen.count(OpSU) == 1) {
                 DoCommute = false;
@@ -641,7 +641,7 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
   }
   for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
     const SDValue &Op = N->getOperand(i);
-    MVT VT = Op.Val->getValueType(Op.getResNo());
+    MVT VT = Op.getNode()->getValueType(Op.getResNo());
     if (VT == MVT::Flag)
       return NULL;
   }
@@ -930,7 +930,7 @@ void ScheduleDAGRRList::ListScheduleBottomUp() {
   unsigned CurCycle = 0;
   // Add root to Available queue.
   if (!SUnits.empty()) {
-    SUnit *RootSU = &SUnits[DAG.getRoot().Val->getNodeId()];
+    SUnit *RootSU = &SUnits[DAG.getRoot().getNode()->getNodeId()];
     assert(RootSU->Succs.empty() && "Graph root shouldn't have successors!");
     RootSU->isAvailable = true;
     AvailableQueue->push(RootSU);
@@ -1668,7 +1668,7 @@ BURegReductionPriorityQueue::canClobber(const SUnit *SU, const SUnit *Op) {
     unsigned NumOps = TID.getNumOperands() - NumRes;
     for (unsigned i = 0; i != NumOps; ++i) {
       if (TID.getOperandConstraint(i+NumRes, TOI::TIED_TO) != -1) {
-        SDNode *DU = SU->Node->getOperand(i).Val;
+        SDNode *DU = SU->Node->getOperand(i).getNode();
         if (DU->getNodeId() != -1 &&
             Op->OrigNode == &(*SUnits)[DU->getNodeId()])
           return true;
@@ -1742,7 +1742,7 @@ void BURegReductionPriorityQueue::AddPseudoTwoAddrDeps() {
     unsigned NumOps = TID.getNumOperands() - NumRes;
     for (unsigned j = 0; j != NumOps; ++j) {
       if (TID.getOperandConstraint(j+NumRes, TOI::TIED_TO) != -1) {
-        SDNode *DU = SU->Node->getOperand(j).Val;
+        SDNode *DU = SU->Node->getOperand(j).getNode();
         if (DU->getNodeId() == -1)
           continue;
         const SUnit *DUSU = &(*SUnits)[DU->getNodeId()];

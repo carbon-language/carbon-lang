@@ -88,7 +88,7 @@ void DAGTypeLegalizer::ScalarizeVectorResult(SDNode *N, unsigned ResNo) {
   }
 
   // If R is null, the sub-method took care of registering the result.
-  if (R.Val)
+  if (R.getNode())
     SetScalarizedVector(SDValue(N, ResNo), R);
 }
 
@@ -184,7 +184,7 @@ bool DAGTypeLegalizer::ScalarizeVectorOperand(SDNode *N, unsigned OpNo) {
         cerr << "\n");
   SDValue Res = SDValue();
 
-  if (Res.Val == 0) {
+  if (Res.getNode() == 0) {
     switch (N->getOpcode()) {
     default:
 #ifndef NDEBUG
@@ -206,11 +206,11 @@ bool DAGTypeLegalizer::ScalarizeVectorOperand(SDNode *N, unsigned OpNo) {
   }
 
   // If the result is null, the sub-method took care of registering results etc.
-  if (!Res.Val) return false;
+  if (!Res.getNode()) return false;
 
   // If the result is N, the sub-method updated N in place.  Check to see if any
   // operands are new, and if so, mark them.
-  if (Res.Val == N) {
+  if (Res.getNode() == N) {
     // Mark N as new and remark N and its operands.  This allows us to correctly
     // revisit N if it needs another step of promotion and allows us to visit
     // any new operands to N.
@@ -332,7 +332,7 @@ void DAGTypeLegalizer::SplitVectorResult(SDNode *N, unsigned ResNo) {
   }
 
   // If Lo/Hi is null, the sub-method took care of registering results etc.
-  if (Lo.Val)
+  if (Lo.getNode())
     SetSplitVector(SDValue(N, ResNo), Lo, Hi);
 }
 
@@ -475,7 +475,7 @@ void DAGTypeLegalizer::SplitVecRes_INSERT_VECTOR_ELT(SDNode *N, SDValue &Lo,
   SDValue Load = DAG.getLoad(VecVT, Store, StackPtr, NULL, 0);
 
   // Split it.
-  SplitVecRes_LOAD(cast<LoadSDNode>(Load.Val), Lo, Hi);
+  SplitVecRes_LOAD(cast<LoadSDNode>(Load.getNode()), Lo, Hi);
 }
 
 void DAGTypeLegalizer::SplitVecRes_LOAD(LoadSDNode *LD, SDValue &Lo,
@@ -595,7 +595,7 @@ bool DAGTypeLegalizer::SplitVectorOperand(SDNode *N, unsigned OpNo) {
   DEBUG(cerr << "Split node operand: "; N->dump(&DAG); cerr << "\n");
   SDValue Res = SDValue();
 
-  if (Res.Val == 0) {
+  if (Res.getNode() == 0) {
     switch (N->getOpcode()) {
     default:
 #ifndef NDEBUG
@@ -615,11 +615,11 @@ bool DAGTypeLegalizer::SplitVectorOperand(SDNode *N, unsigned OpNo) {
   }
 
   // If the result is null, the sub-method took care of registering results etc.
-  if (!Res.Val) return false;
+  if (!Res.getNode()) return false;
 
   // If the result is N, the sub-method updated N in place.  Check to see if any
   // operands are new, and if so, mark them.
-  if (Res.Val == N) {
+  if (Res.getNode() == N) {
     // Mark N as new and remark N and its operands.  This allows us to correctly
     // revisit N if it needs another step of promotion and allows us to visit
     // any new operands to N.

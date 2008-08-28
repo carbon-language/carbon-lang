@@ -168,11 +168,11 @@ StoreInDirectAM (SDValue Op, SDValue N, SDValue &fsr)
     if (LD) {
       fsr = LD->getBasePtr();
     }
-    else if (isa<RegisterSDNode>(N.Val)) { 
+    else if (isa<RegisterSDNode>(N.getNode())) { 
       //FIXME an attempt to retrieve the register number
       //but does not work
       DOUT << "this is a register\n";
-      Reg = dyn_cast<RegisterSDNode>(N.Val);
+      Reg = dyn_cast<RegisterSDNode>(N.getNode());
       fsr = CurDAG->getRegister(Reg->getReg(),MVT::i16);  
     }
     else {
@@ -198,7 +198,7 @@ LoadFSR (SDValue Op, SDValue N, SDValue &Base, SDValue &Offset)
     return true;
   }
   else if (N.getOpcode() == PIC16ISD::Package) {
-    CurDAG->setGraphColor(Op.Val, "blue");
+    CurDAG->setGraphColor(Op.getNode(), "blue");
     CurDAG->viewGraph();
   }
 
@@ -227,7 +227,7 @@ LoadNothing (SDValue Op, SDValue N, SDValue &Base, SDValue &Offset)
 /// expanded, promoted and normal instructions.
 SDNode* PIC16DAGToDAGISel::Select(SDValue N) 
 {
-  SDNode *Node = N.Val;
+  SDNode *Node = N.getNode();
   unsigned Opcode = Node->getOpcode();
 
   // Dump information about the Node being selected
@@ -262,8 +262,8 @@ SDNode* PIC16DAGToDAGISel::Select(SDValue N)
 
 #ifndef NDEBUG
   DOUT << std::string(Indent-2, ' ') << "=> ";
-  if (ResNode == NULL || ResNode == N.Val)
-    DEBUG(N.Val->dump(CurDAG));
+  if (ResNode == NULL || ResNode == N.getNode())
+    DEBUG(N.getNode()->dump(CurDAG));
   else
     DEBUG(ResNode->dump(CurDAG));
   DOUT << "\n";

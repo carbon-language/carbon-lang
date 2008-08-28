@@ -105,7 +105,7 @@ void IA64DAGToDAGISel::InstructionSelect() {
 }
 
 SDNode *IA64DAGToDAGISel::SelectDIV(SDValue Op) {
-  SDNode *N = Op.Val;
+  SDNode *N = Op.getNode();
   SDValue Chain = N->getOperand(0);
   SDValue Tmp1 = N->getOperand(0);
   SDValue Tmp2 = N->getOperand(1);
@@ -304,7 +304,7 @@ SDNode *IA64DAGToDAGISel::SelectDIV(SDValue Op) {
 // Select - Convert the specified operand from a target-independent to a
 // target-specific node if it hasn't already been changed.
 SDNode *IA64DAGToDAGISel::Select(SDValue Op) {
-  SDNode *N = Op.Val;
+  SDNode *N = Op.getNode();
   if (N->isMachineOpcode())
     return NULL;   // Already selected.
 
@@ -367,7 +367,7 @@ SDNode *IA64DAGToDAGISel::Select(SDValue Op) {
   }
  
    // Finally, once everything is setup, emit the call itself
-   if(InFlag.Val)
+   if (InFlag.getNode())
      Chain = SDValue(CurDAG->getTargetNode(CallOpcode, MVT::Other, MVT::Flag,
                                              CallOperand, InFlag), 0);
    else // there might be no arguments

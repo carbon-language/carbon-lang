@@ -157,7 +157,8 @@ public:
   /// for the specified node, adding it to the worklist if ready.
   void ReanalyzeNode(SDNode *N) {
     N->setNodeId(NewNode);
-    AnalyzeNewNode(N);
+    SDValue V(N, 0);
+    AnalyzeNewNode(V); // FIXME: ignore the change?
   }
 
   void NoteDeletion(SDNode *Old, SDNode *New) {
@@ -168,7 +169,7 @@ public:
   }
 
 private:
-  void AnalyzeNewNode(SDNode *&N);
+  void AnalyzeNewNode(SDValue &Val);
 
   void ReplaceValueWith(SDValue From, SDValue To);
   void ReplaceNodeWith(SDNode *From, SDNode *To);
@@ -197,7 +198,7 @@ private:
   SDValue GetPromotedInteger(SDValue Op) {
     SDValue &PromotedOp = PromotedIntegers[Op];
     RemapNode(PromotedOp);
-    assert(PromotedOp.Val && "Operand wasn't promoted?");
+    assert(PromotedOp.getNode() && "Operand wasn't promoted?");
     return PromotedOp;
   }
   void SetPromotedInteger(SDValue Op, SDValue Result);
@@ -324,7 +325,7 @@ private:
   SDValue GetSoftenedFloat(SDValue Op) {
     SDValue &SoftenedOp = SoftenedFloats[Op];
     RemapNode(SoftenedOp);
-    assert(SoftenedOp.Val && "Operand wasn't converted to integer?");
+    assert(SoftenedOp.getNode() && "Operand wasn't converted to integer?");
     return SoftenedOp;
   }
   void SetSoftenedFloat(SDValue Op, SDValue Result);
@@ -403,7 +404,7 @@ private:
   SDValue GetScalarizedVector(SDValue Op) {
     SDValue &ScalarizedOp = ScalarizedVectors[Op];
     RemapNode(ScalarizedOp);
-    assert(ScalarizedOp.Val && "Operand wasn't scalarized?");
+    assert(ScalarizedOp.getNode() && "Operand wasn't scalarized?");
     return ScalarizedOp;
   }
   void SetScalarizedVector(SDValue Op, SDValue Result);

@@ -215,7 +215,7 @@ static SDValue LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG,
   unsigned args_float[] = {
     Alpha::F16, Alpha::F17, Alpha::F18, Alpha::F19, Alpha::F20, Alpha::F21};
   
-  for (unsigned ArgNo = 0, e = Op.Val->getNumValues()-1; ArgNo != e; ++ArgNo) {
+  for (unsigned ArgNo = 0, e = Op.getNode()->getNumValues()-1; ArgNo != e; ++ArgNo) {
     SDValue argt;
     MVT ObjectVT = Op.getValue(ArgNo).getValueType();
     SDValue ArgVal;
@@ -255,7 +255,7 @@ static SDValue LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG,
   // If the functions takes variable number of arguments, copy all regs to stack
   bool isVarArg = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
   if (isVarArg) {
-    VarArgsOffset = (Op.Val->getNumValues()-1) * 8;
+    VarArgsOffset = (Op.getNode()->getNumValues()-1) * 8;
     std::vector<SDValue> LS;
     for (int i = 0; i < 6; ++i) {
       if (TargetRegisterInfo::isPhysicalRegister(args_int[i]))
@@ -281,7 +281,7 @@ static SDValue LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG,
   ArgValues.push_back(Root);
 
   // Return the new list of results.
-  return DAG.getMergeValues(Op.Val->getVTList(), &ArgValues[0],
+  return DAG.getMergeValues(Op.getNode()->getVTList(), &ArgValues[0],
                             ArgValues.size());
 }
 
@@ -491,10 +491,10 @@ SDValue AlphaTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   case ISD::SREM:
     //Expand only on constant case
     if (Op.getOperand(1).getOpcode() == ISD::Constant) {
-      MVT VT = Op.Val->getValueType(0);
-      SDValue Tmp1 = Op.Val->getOpcode() == ISD::UREM ?
-        BuildUDIV(Op.Val, DAG, NULL) :
-        BuildSDIV(Op.Val, DAG, NULL);
+      MVT VT = Op.getNode()->getValueType(0);
+      SDValue Tmp1 = Op.getNode()->getOpcode() == ISD::UREM ?
+        BuildUDIV(Op.getNode(), DAG, NULL) :
+        BuildSDIV(Op.getNode(), DAG, NULL);
       Tmp1 = DAG.getNode(ISD::MUL, VT, Tmp1, Op.getOperand(1));
       Tmp1 = DAG.getNode(ISD::SUB, VT, Op.getOperand(0), Tmp1);
       return Tmp1;
@@ -504,8 +504,8 @@ SDValue AlphaTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   case ISD::UDIV:
     if (Op.getValueType().isInteger()) {
       if (Op.getOperand(1).getOpcode() == ISD::Constant)
-        return Op.getOpcode() == ISD::SDIV ? BuildSDIV(Op.Val, DAG, NULL) 
-          : BuildUDIV(Op.Val, DAG, NULL);
+        return Op.getOpcode() == ISD::SDIV ? BuildSDIV(Op.getNode(), DAG, NULL) 
+          : BuildUDIV(Op.getNode(), DAG, NULL);
       const char* opstr = 0;
       switch (Op.getOpcode()) {
       case ISD::UREM: opstr = "__remqu"; break;
@@ -522,7 +522,7 @@ SDValue AlphaTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
 
   case ISD::VAARG: {
     SDValue Chain, DataPtr;
-    LowerVAARG(Op.Val, Chain, DataPtr, DAG);
+    LowerVAARG(Op.getNode(), Chain, DataPtr, DAG);
 
     SDValue Result;
     if (Op.getValueType() == MVT::i32)
@@ -578,7 +578,7 @@ SDNode *AlphaTargetLowering::ReplaceNodeResults(SDNode *N,
 
   SDValue Chain, DataPtr;
   LowerVAARG(N, Chain, DataPtr, DAG);
-  return DAG.getLoad(N->getValueType(0), Chain, DataPtr, NULL, 0).Val;
+  return DAG.getLoad(N->getValueType(0), Chain, DataPtr, NULL, 0).getNode();
 }
 
 

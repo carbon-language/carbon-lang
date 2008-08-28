@@ -170,7 +170,7 @@ public:
   /// setRoot - Set the current root tag of the SelectionDAG.
   ///
   const SDValue &setRoot(SDValue N) {
-    assert((!N.Val || N.getValueType() == MVT::Other) &&
+    assert((!N.getNode() || N.getValueType() == MVT::Other) &&
            "DAG root value is not a chain!");
     return Root = N;
   }
@@ -295,7 +295,7 @@ public:
                          SDValue Flag) {
     const MVT *VTs = getNodeValueTypes(MVT::Other, MVT::Flag);
     SDValue Ops[] = { Chain, getRegister(Reg, N.getValueType()), N, Flag };
-    return getNode(ISD::CopyToReg, VTs, 2, Ops, Flag.Val ? 4 : 3);
+    return getNode(ISD::CopyToReg, VTs, 2, Ops, Flag.getNode() ? 4 : 3);
   }
 
   // Similar to last getCopyToReg() except parameter Reg is a SDValue
@@ -303,7 +303,7 @@ public:
                          SDValue Flag) {
     const MVT *VTs = getNodeValueTypes(MVT::Other, MVT::Flag);
     SDValue Ops[] = { Chain, Reg, N, Flag };
-    return getNode(ISD::CopyToReg, VTs, 2, Ops, Flag.Val ? 4 : 3);
+    return getNode(ISD::CopyToReg, VTs, 2, Ops, Flag.getNode() ? 4 : 3);
   }
   
   SDValue getCopyFromReg(SDValue Chain, unsigned Reg, MVT VT) {
@@ -319,7 +319,7 @@ public:
                            SDValue Flag) {
     const MVT *VTs = getNodeValueTypes(VT, MVT::Other, MVT::Flag);
     SDValue Ops[] = { Chain, getRegister(Reg, VT), Flag };
-    return getNode(ISD::CopyFromReg, VTs, 3, Ops, Flag.Val ? 3 : 2);
+    return getNode(ISD::CopyFromReg, VTs, 3, Ops, Flag.getNode() ? 3 : 2);
   }
 
   SDValue getCondCode(ISD::CondCode Cond);
@@ -347,7 +347,7 @@ public:
     Ops.push_back(Op2);
     Ops.push_back(InFlag);
     return getNode(ISD::CALLSEQ_END, NodeTys, &Ops[0],
-                   (unsigned)Ops.size() - (InFlag.Val == 0 ? 1 : 0));
+                   (unsigned)Ops.size() - (InFlag.getNode() == 0 ? 1 : 0));
   }
 
   /// getNode - Gets or creates the specified node.

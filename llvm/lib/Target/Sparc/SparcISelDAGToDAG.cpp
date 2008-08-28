@@ -120,7 +120,7 @@ bool SparcDAGToDAGISel::SelectADDRrr(SDValue Op, SDValue Addr,
   
   if (Addr.getOpcode() == ISD::ADD) {
     if (isa<ConstantSDNode>(Addr.getOperand(1)) &&
-        Predicate_simm13(Addr.getOperand(1).Val))
+        Predicate_simm13(Addr.getOperand(1).getNode()))
       return false;  // Let the reg+imm pattern catch this!
     if (Addr.getOperand(0).getOpcode() == SPISD::Lo ||
         Addr.getOperand(1).getOpcode() == SPISD::Lo)
@@ -136,7 +136,7 @@ bool SparcDAGToDAGISel::SelectADDRrr(SDValue Op, SDValue Addr,
 }
 
 SDNode *SparcDAGToDAGISel::Select(SDValue Op) {
-  SDNode *N = Op.Val;
+  SDNode *N = Op.getNode();
   if (N->isMachineOpcode())
     return NULL;   // Already selected.
 

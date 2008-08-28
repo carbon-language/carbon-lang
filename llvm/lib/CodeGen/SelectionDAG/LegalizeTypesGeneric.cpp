@@ -75,7 +75,7 @@ void DAGTypeLegalizer::ExpandRes_BIT_CONVERT(SDNode *N, SDValue &Lo,
 
   // Lower the bit-convert to a store/load from the stack, then expand the load.
   SDValue Op = CreateStackStoreLoad(InOp, N->getValueType(0));
-  ExpandRes_NormalLoad(Op.Val, Lo, Hi);
+  ExpandRes_NormalLoad(Op.getNode(), Lo, Hi);
 }
 
 void DAGTypeLegalizer::ExpandRes_BUILD_PAIR(SDNode *N, SDValue &Lo,

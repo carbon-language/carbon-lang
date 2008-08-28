@@ -602,7 +602,7 @@ LowerCALL(SDValue Op, SelectionDAG &DAG)
     MFI->CreateFixedObject(VTsize, (VTsize*3));
   }
 
-  CCInfo.AnalyzeCallOperands(Op.Val, CC_Mips);
+  CCInfo.AnalyzeCallOperands(Op.getNode(), CC_Mips);
   
   // Get a count of how many bytes are to be pushed on the stack.
   unsigned NumBytes = CCInfo.getNextStackOffset();
@@ -706,7 +706,7 @@ LowerCALL(SDValue Op, SelectionDAG &DAG)
     Ops.push_back(DAG.getRegister(RegsToPass[i].first,
                                   RegsToPass[i].second.getValueType()));
 
-  if (InFlag.Val)
+  if (InFlag.getNode())
     Ops.push_back(InFlag);
 
   Chain  = DAG.getNode(MipsISD::JmpLink, NodeTys, &Ops[0], Ops.size());
@@ -750,7 +750,7 @@ LowerCALL(SDValue Op, SelectionDAG &DAG)
 
   // Handle result values, copying them out of physregs into vregs that we
   // return.
-  return SDValue(LowerCallResult(Chain, InFlag, Op.Val, CC, DAG), Op.getResNo());
+  return SDValue(LowerCallResult(Chain, InFlag, Op.getNode(), CC, DAG), Op.getResNo());
 }
 
 /// LowerCallResult - Lower the result values of an ISD::CALL into the
@@ -783,7 +783,7 @@ LowerCallResult(SDValue Chain, SDValue InFlag, SDNode *TheCall,
 
   // Merge everything together with a MERGE_VALUES node.
   return DAG.getMergeValues(TheCall->getVTList(), &ResultVals[0],
-                            ResultVals.size()).Val;
+                            ResultVals.size()).getNode();
 }
 
 //===----------------------------------------------------------------------===//
@@ -814,7 +814,7 @@ LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG)
   SmallVector<CCValAssign, 16> ArgLocs;
   CCState CCInfo(CC, isVarArg, getTargetMachine(), ArgLocs);
 
-  CCInfo.AnalyzeFormalArguments(Op.Val, CC_Mips);
+  CCInfo.AnalyzeFormalArguments(Op.getNode(), CC_Mips);
   SmallVector<SDValue, 16> ArgValues;
   SDValue StackPtr;
 
@@ -865,7 +865,7 @@ LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG)
       // To meet ABI, when VARARGS are passed on registers, the registers
       // must have their values written to the caller stack frame. 
       if ((isVarArg) && (Subtarget->isABI_O32())) {
-        if (StackPtr.Val == 0)
+        if (StackPtr.getNode() == 0)
           StackPtr = DAG.getRegister(StackReg, getPointerTy());
      
         // The stack pointer offset is relative to the caller stack frame. 
@@ -925,7 +925,7 @@ LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG)
   ArgValues.push_back(Root);
 
   // Return the new list of results.
-  return DAG.getMergeValues(Op.Val->getVTList(), &ArgValues[0],
+  return DAG.getMergeValues(Op.getNode()->getVTList(), &ArgValues[0],
                             ArgValues.size()).getValue(Op.getResNo());
 }
 
@@ -946,7 +946,7 @@ LowerRET(SDValue Op, SelectionDAG &DAG)
   CCState CCInfo(CC, isVarArg, getTargetMachine(), RVLocs);
 
   // Analize return values of ISD::RET
-  CCInfo.AnalyzeReturn(Op.Val, RetCC_Mips);
+  CCInfo.AnalyzeReturn(Op.getNode(), RetCC_Mips);
 
   // If this is the first return lowered for this function, add 
   // the regs to the liveout set for the function.
@@ -992,7 +992,7 @@ LowerRET(SDValue Op, SelectionDAG &DAG)
   }
 
   // Return on Mips is always a "jr $ra"
-  if (Flag.Val)
+  if (Flag.getNode())
     return DAG.getNode(MipsISD::Ret, MVT::Other, 
                        Chain, DAG.getRegister(Mips::RA, MVT::i32), Flag);
   else // Return Void

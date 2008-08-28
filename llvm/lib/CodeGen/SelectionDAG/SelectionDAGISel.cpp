@@ -784,8 +784,8 @@ public:
     if (Root.getOpcode() != ISD::EntryToken) {
       unsigned i = 0, e = PendingExports.size();
       for (; i != e; ++i) {
-        assert(PendingExports[i].Val->getNumOperands() > 1);
-        if (PendingExports[i].Val->getOperand(0) == Root)
+        assert(PendingExports[i].getNode()->getNumOperands() > 1);
+        if (PendingExports[i].getNode()->getOperand(0) == Root)
           break;  // Don't add the root if we already indirectly depend on it.
       }
         
@@ -824,7 +824,7 @@ public:
 
   void setValue(const Value *V, SDValue NewN) {
     SDValue &N = NodeMap[V];
-    assert(N.Val == 0 && "Already set a value for this node!");
+    assert(N.getNode() == 0 && "Already set a value for this node!");
     N = NewN;
   }
   
@@ -1286,7 +1286,7 @@ static void getCopyToParts(SelectionDAG &DAG,
 
 SDValue SelectionDAGLowering::getValue(const Value *V) {
   SDValue &N = NodeMap[V];
-  if (N.Val) return N;
+  if (N.getNode()) return N;
   
   if (Constant *C = const_cast<Constant*>(dyn_cast<Constant>(V))) {
     MVT VT = TLI.getValueType(V->getType(), true);
@@ -1310,7 +1310,7 @@ SDValue SelectionDAGLowering::getValue(const Value *V) {
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
       visit(CE->getOpcode(), *CE);
       SDValue N1 = NodeMap[V];
-      assert(N1.Val && "visit didn't populate the ValueMap!");
+      assert(N1.getNode() && "visit didn't populate the ValueMap!");
       return N1;
     }
     
@@ -1318,7 +1318,7 @@ SDValue SelectionDAGLowering::getValue(const Value *V) {
       SmallVector<SDValue, 4> Constants;
       for (User::const_op_iterator OI = C->op_begin(), OE = C->op_end();
            OI != OE; ++OI) {
-        SDNode *Val = getValue(*OI).Val;
+        SDNode *Val = getValue(*OI).getNode();
         for (unsigned i = 0, e = Val->getNumValues(); i != e; ++i)
           Constants.push_back(SDValue(Val, i));
       }
@@ -1428,7 +1428,7 @@ void SelectionDAGLowering::visitRet(ReturnInst &I) {
       else if (F->paramHasAttr(0, ParamAttr::ZExt))
         ExtendKind = ISD::ZERO_EXTEND;
 
-      getCopyToParts(DAG, SDValue(RetOp.Val, RetOp.getResNo() + j),
+      getCopyToParts(DAG, SDValue(RetOp.getNode(), RetOp.getResNo() + j),
                      &Parts[0], NumParts, PartVT, ExtendKind);
 
       for (unsigned i = 0; i < NumParts; ++i) {
@@ -2855,15 +2855,15 @@ void SelectionDAGLowering::visitInsertValue(InsertValueInst &I) {
   // Copy the beginning value(s) from the original aggregate.
   for (; i != LinearIndex; ++i)
     Values[i] = IntoUndef ? DAG.getNode(ISD::UNDEF, AggValueVTs[i]) :
-                SDValue(Agg.Val, Agg.getResNo() + i);
+                SDValue(Agg.getNode(), Agg.getResNo() + i);
   // Copy values from the inserted value(s).
   for (; i != LinearIndex + NumValValues; ++i)
     Values[i] = FromUndef ? DAG.getNode(ISD::UNDEF, AggValueVTs[i]) :
-                SDValue(Val.Val, Val.getResNo() + i - LinearIndex);
+                SDValue(Val.getNode(), Val.getResNo() + i - LinearIndex);
   // Copy remaining value(s) from the original aggregate.
   for (; i != NumAggValues; ++i)
     Values[i] = IntoUndef ? DAG.getNode(ISD::UNDEF, AggValueVTs[i]) :
-                SDValue(Agg.Val, Agg.getResNo() + i);
+                SDValue(Agg.getNode(), Agg.getResNo() + i);
 
   setValue(&I, DAG.getMergeValues(DAG.getVTList(&AggValueVTs[0], NumAggValues),
                                   &Values[0], NumAggValues));
@@ -2888,8 +2888,8 @@ void SelectionDAGLowering::visitExtractValue(ExtractValueInst &I) {
   // Copy out the selected value(s).
   for (unsigned i = LinearIndex; i != LinearIndex + NumValValues; ++i)
     Values[i - LinearIndex] =
-      OutOfUndef ? DAG.getNode(ISD::UNDEF, Agg.Val->getValueType(Agg.getResNo() + i)) :
-                   SDValue(Agg.Val, Agg.getResNo() + i);
+      OutOfUndef ? DAG.getNode(ISD::UNDEF, Agg.getNode()->getValueType(Agg.getResNo() + i)) :
+                   SDValue(Agg.getNode(), Agg.getResNo() + i);
 
   setValue(&I, DAG.getMergeValues(DAG.getVTList(&ValValueVTs[0], NumValValues),
                                   &Values[0], NumValValues));
@@ -3084,7 +3084,7 @@ void SelectionDAGLowering::visitStore(StoreInst &I) {
   bool isVolatile = I.isVolatile();
   unsigned Alignment = I.getAlignment();
   for (unsigned i = 0; i != NumValues; ++i)
-    Chains[i] = DAG.getStore(Root, SDValue(Src.Val, Src.getResNo() + i),
+    Chains[i] = DAG.getStore(Root, SDValue(Src.getNode(), Src.getResNo() + i),
                              DAG.getNode(ISD::ADD, PtrVT, Ptr,
                                          DAG.getConstant(Offsets[i], PtrVT)),
                              PtrV, Offsets[i],
@@ -3154,7 +3154,7 @@ void SelectionDAGLowering::visitTargetIntrinsic(CallInst &I,
                          &Ops[0], Ops.size());
 
   if (HasChain) {
-    SDValue Chain = Result.getValue(Result.Val->getNumValues()-1);
+    SDValue Chain = Result.getValue(Result.getNode()->getNumValues()-1);
     if (OnlyLoad)
       PendingLoads.push_back(Chain);
     else
@@ -3621,7 +3621,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
       Value *Alloca = I.getOperand(1);
       Constant *TypeMap = cast<Constant>(I.getOperand(2));
       
-      FrameIndexSDNode *FI = cast<FrameIndexSDNode>(getValue(Alloca).Val);
+      FrameIndexSDNode *FI = cast<FrameIndexSDNode>(getValue(Alloca).getNode());
       GFI->addStackRoot(FI->getIndex(), TypeMap);
     }
     return 0;
@@ -4751,7 +4751,7 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
   
   // Finish up input operands.
   AsmNodeOperands[0] = Chain;
-  if (Flag.Val) AsmNodeOperands.push_back(Flag);
+  if (Flag.getNode()) AsmNodeOperands.push_back(Flag);
   
   Chain = DAG.getNode(ISD::INLINEASM, 
                       DAG.getNodeValueTypes(MVT::Other, MVT::Flag), 2,
@@ -4770,7 +4770,7 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
     // bit_convert.
     if (const StructType *ResSTy = dyn_cast<StructType>(CS.getType())) {
       for (unsigned i = 0, e = ResSTy->getNumElements(); i != e; ++i) {
-        if (Val.Val->getValueType(i).isVector())
+        if (Val.getNode()->getValueType(i).isVector())
           Val = DAG.getNode(ISD::BIT_CONVERT,
                             TLI.getValueType(ResSTy->getElementType(i)), Val);
       }
@@ -4963,7 +4963,7 @@ void TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG,
   // Create the node.
   SDNode *Result = DAG.getNode(ISD::FORMAL_ARGUMENTS,
                                DAG.getVTList(&RetVals[0], RetVals.size()),
-                               &Ops[0], Ops.size()).Val;
+                               &Ops[0], Ops.size()).getNode();
   
   // Prelower FORMAL_ARGUMENTS.  This isn't required for functionality, but
   // allows exposing the loads that may be part of the argument access to the
@@ -4972,18 +4972,18 @@ void TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG,
   
   // The number of results should match up, except that the lowered one may have
   // an extra flag result.
-  assert((Result->getNumValues() == TmpRes.Val->getNumValues() ||
-          (Result->getNumValues()+1 == TmpRes.Val->getNumValues() &&
+  assert((Result->getNumValues() == TmpRes.getNode()->getNumValues() ||
+          (Result->getNumValues()+1 == TmpRes.getNode()->getNumValues() &&
            TmpRes.getValue(Result->getNumValues()).getValueType() == MVT::Flag))
          && "Lowering produced unexpected number of results!");
 
   // The FORMAL_ARGUMENTS node itself is likely no longer needed.
-  if (Result != TmpRes.Val && Result->use_empty()) {
+  if (Result != TmpRes.getNode() && Result->use_empty()) {
     HandleSDNode Dummy(DAG.getRoot());
     DAG.RemoveDeadNode(Result);
   }
 
-  Result = TmpRes.Val;
+  Result = TmpRes.getNode();
   
   unsigned NumArgRegs = Result->getNumValues() - 1;
   DAG.setRoot(SDValue(Result, NumArgRegs));
@@ -5044,7 +5044,7 @@ TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
          Value != NumValues; ++Value) {
       MVT VT = ValueVTs[Value];
       const Type *ArgTy = VT.getTypeForMVT();
-      SDValue Op = SDValue(Args[i].Node.Val, Args[i].Node.getResNo() + Value);
+      SDValue Op = SDValue(Args[i].Node.getNode(), Args[i].Node.getResNo() + Value);
       ISD::ArgFlagsTy Flags;
       unsigned OriginalAlignment =
         getTargetData()->getABITypeAlignment(ArgTy);
@@ -5333,7 +5333,7 @@ static void CheckDAGForTailCallsAndFixThem(SelectionDAG &DAG,
 
   // Find RET node.
   if (Terminator.getOpcode() == ISD::RET) {
-    Ret = Terminator.Val;
+    Ret = Terminator.getNode();
   }
  
   // Fix tail call attribute of CALL nodes.
@@ -5355,8 +5355,8 @@ static void CheckDAGForTailCallsAndFixThem(SelectionDAG &DAG,
         // Not eligible. Mark CALL node as non tail call.
         SmallVector<SDValue, 32> Ops;
         unsigned idx=0;
-        for(SDNode::op_iterator I =OpCall.Val->op_begin(),
-              E = OpCall.Val->op_end(); I != E; I++, idx++) {
+        for(SDNode::op_iterator I =OpCall.getNode()->op_begin(),
+              E = OpCall.getNode()->op_end(); I != E; I++, idx++) {
           if (idx!=3)
             Ops.push_back(*I);
           else
@@ -5369,8 +5369,8 @@ static void CheckDAGForTailCallsAndFixThem(SelectionDAG &DAG,
         SmallVector<SDValue, 32> Ops;
         SDValue Chain = OpCall.getOperand(0), InFlag;
         unsigned idx=0;
-        for(SDNode::op_iterator I = OpCall.Val->op_begin(),
-              E = OpCall.Val->op_end(); I != E; I++, idx++) {
+        for(SDNode::op_iterator I = OpCall.getNode()->op_begin(),
+              E = OpCall.getNode()->op_end(); I != E; I++, idx++) {
           SDValue Arg = *I;
           if (idx > 4 && (idx % 2)) {
             bool isByVal = cast<ARG_FLAGSSDNode>(OpCall.getOperand(idx+1))->
@@ -5557,7 +5557,7 @@ void SelectionDAGISel::ComputeLiveOutVRegInfo() {
   SmallPtrSet<SDNode*, 128> VisitedNodes;
   SmallVector<SDNode*, 128> Worklist;
   
-  Worklist.push_back(CurDAG->getRoot().Val);
+  Worklist.push_back(CurDAG->getRoot().getNode());
   
   APInt Mask;
   APInt KnownZero;
@@ -5574,7 +5574,7 @@ void SelectionDAGISel::ComputeLiveOutVRegInfo() {
     // Otherwise, add all chain operands to the worklist.
     for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
       if (N->getOperand(i).getValueType() == MVT::Other)
-        Worklist.push_back(N->getOperand(i).Val);
+        Worklist.push_back(N->getOperand(i).getNode());
     
     // If this is a CopyToReg with a vreg dest, process it.
     if (N->getOpcode() != ISD::CopyToReg)

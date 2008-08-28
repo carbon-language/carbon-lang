@@ -294,7 +294,7 @@ SDNode *PPCDAGToDAGISel::getGlobalBaseReg() {
       BuildMI(FirstMBB, MBBI, TII.get(PPC::MFLR8), GlobalBaseReg);
     }
   }
-  return CurDAG->getRegister(GlobalBaseReg, PPCLowering.getPointerTy()).Val;
+  return CurDAG->getRegister(GlobalBaseReg, PPCLowering.getPointerTy()).getNode();
 }
 
 /// isIntS16Immediate - This method tests to see if the node is either a 32-bit
@@ -313,7 +313,7 @@ static bool isIntS16Immediate(SDNode *N, short &Imm) {
 }
 
 static bool isIntS16Immediate(SDValue Op, short &Imm) {
-  return isIntS16Immediate(Op.Val, Imm);
+  return isIntS16Immediate(Op.getNode(), Imm);
 }
 
 
@@ -340,7 +340,7 @@ static bool isInt64Immediate(SDNode *N, uint64_t &Imm) {
 // isInt32Immediate - This method tests to see if a constant operand.
 // If so Imm will receive the 32 bit value.
 static bool isInt32Immediate(SDValue N, unsigned &Imm) {
-  return isInt32Immediate(N.Val, Imm);
+  return isInt32Immediate(N.getNode(), Imm);
 }
 
 
@@ -348,7 +348,7 @@ static bool isInt32Immediate(SDValue N, unsigned &Imm) {
 // opcode and that it has a immediate integer right operand.
 // If so Imm will receive the 32 bit value.
 static bool isOpcWithIntImmediate(SDNode *N, unsigned Opc, unsigned& Imm) {
-  return N->getOpcode() == Opc && isInt32Immediate(N->getOperand(1).Val, Imm);
+  return N->getOpcode() == Opc && isInt32Immediate(N->getOperand(1).getNode(), Imm);
 }
 
 bool PPCDAGToDAGISel::isRunOfOnes(unsigned Val, unsigned &MB, unsigned &ME) {
@@ -384,7 +384,7 @@ bool PPCDAGToDAGISel::isRotateAndMask(SDNode *N, unsigned Mask,
   unsigned Indeterminant = ~0;  // bit mask marking indeterminant results
   unsigned Opcode = N->getOpcode();
   if (N->getNumOperands() != 2 ||
-      !isInt32Immediate(N->getOperand(1).Val, Shift) || (Shift > 31))
+      !isInt32Immediate(N->getOperand(1).getNode(), Shift) || (Shift > 31))
     return false;
   
   if (Opcode == ISD::SHL) {
@@ -540,7 +540,7 @@ SDValue PPCDAGToDAGISel::SelectCC(SDValue LHS, SDValue RHS,
   } else if (LHS.getValueType() == MVT::i64) {
     uint64_t Imm;
     if (CC == ISD::SETEQ || CC == ISD::SETNE) {
-      if (isInt64Immediate(RHS.Val, Imm)) {
+      if (isInt64Immediate(RHS.getNode(), Imm)) {
         // SETEQ/SETNE comparison with 16-bit immediate, fold it.
         if (isUInt16(Imm))
           return SDValue(CurDAG->getTargetNode(PPC::CMPLDI, MVT::i64, LHS,
@@ -568,7 +568,7 @@ SDValue PPCDAGToDAGISel::SelectCC(SDValue LHS, SDValue RHS,
       }
       Opc = PPC::CMPLD;
     } else if (ISD::isUnsignedIntSetCC(CC)) {
-      if (isInt64Immediate(RHS.Val, Imm) && isUInt16(Imm))
+      if (isInt64Immediate(RHS.getNode(), Imm) && isUInt16(Imm))
         return SDValue(CurDAG->getTargetNode(PPC::CMPLDI, MVT::i64, LHS,
                                                getI64Imm(Imm & 0xFFFF)), 0);
       Opc = PPC::CMPLD;
@@ -653,7 +653,7 @@ static unsigned getCRIdxForSetCC(ISD::CondCode CC, bool &Invert, int &Other) {
 }
 
 SDNode *PPCDAGToDAGISel::SelectSETCC(SDValue Op) {
-  SDNode *N = Op.Val;
+  SDNode *N = Op.getNode();
   unsigned Imm;
   ISD::CondCode CC = cast<CondCodeSDNode>(N->getOperand(2))->get();
   if (isInt32Immediate(N->getOperand(1), Imm)) {
@@ -773,7 +773,7 @@ SDNode *PPCDAGToDAGISel::SelectSETCC(SDValue Op) {
 // Select - Convert the specified operand from a target-independent to a
 // target-specific node if it hasn't already been changed.
 SDNode *PPCDAGToDAGISel::Select(SDValue Op) {
-  SDNode *N = Op.Val;
+  SDNode *N = Op.getNode();
   if (N->isMachineOpcode())
     return NULL;   // Already selected.
 
@@ -974,7 +974,7 @@ SDNode *PPCDAGToDAGISel::Select(SDValue Op) {
     // If this is an and of a value rotated between 0 and 31 bits and then and'd
     // with a mask, emit rlwinm
     if (isInt32Immediate(N->getOperand(1), Imm) &&
-        isRotateAndMask(N->getOperand(0).Val, Imm, false, SH, MB, ME)) {
+        isRotateAndMask(N->getOperand(0).getNode(), Imm, false, SH, MB, ME)) {
       SDValue Val = N->getOperand(0).getOperand(0);
       AddToISelQueue(Val);
       SDValue Ops[] = { Val, getI32Imm(SH), getI32Imm(MB), getI32Imm(ME) };
@@ -1025,7 +1025,7 @@ SDNode *PPCDAGToDAGISel::Select(SDValue Op) {
     break;
   case ISD::SHL: {
     unsigned Imm, SH, MB, ME;
-    if (isOpcWithIntImmediate(N->getOperand(0).Val, ISD::AND, Imm) &&
+    if (isOpcWithIntImmediate(N->getOperand(0).getNode(), ISD::AND, Imm) &&
         isRotateAndMask(N, Imm, true, SH, MB, ME)) {
       AddToISelQueue(N->getOperand(0).getOperand(0));
       SDValue Ops[] = { N->getOperand(0).getOperand(0),
@@ -1038,7 +1038,7 @@ SDNode *PPCDAGToDAGISel::Select(SDValue Op) {
   }
   case ISD::SRL: {
     unsigned Imm, SH, MB, ME;
-    if (isOpcWithIntImmediate(N->getOperand(0).Val, ISD::AND, Imm) &&
+    if (isOpcWithIntImmediate(N->getOperand(0).getNode(), ISD::AND, Imm) &&
         isRotateAndMask(N, Imm, true, SH, MB, ME)) { 
       AddToISelQueue(N->getOperand(0).getOperand(0));
       SDValue Ops[] = { N->getOperand(0).getOperand(0),

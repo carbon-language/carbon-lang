@@ -37,7 +37,7 @@ static bool IsChainCompatible(SDNode *Chain, SDNode *Op) {
   else if (Chain->getNumOperands() > 0) {
     SDValue C0 = Chain->getOperand(0);
     if (C0.getValueType() == MVT::Other)
-      return C0.Val != Op && IsChainCompatible(C0.Val, Op);
+      return C0.getNode() != Op && IsChainCompatible(C0.getNode(), Op);
   }
   return true;
 }
@@ -76,9 +76,9 @@ inline bool isSelected(int Id) {
 /// AddToISelQueue - adds a node to the instruction 
 /// selection queue.
 void AddToISelQueue(SDValue N) DISABLE_INLINE {
-  int Id = N.Val->getNodeId();
+  int Id = N.getNode()->getNodeId();
   if (Id != -1 && !isQueued(Id)) {
-    ISelQueue.push_back(N.Val);
+    ISelQueue.push_back(N.getNode());
     std::push_heap(ISelQueue.begin(), ISelQueue.end(), isel_sort());
     setQueued(Id);
   }
@@ -120,7 +120,7 @@ inline void UpdateQueue(const ISelQueueUpdater &ISQU) {
 void ReplaceUses(SDValue F, SDValue T) DISABLE_INLINE {
   ISelQueueUpdater ISQU(ISelQueue);
   CurDAG->ReplaceAllUsesOfValueWith(F, T, &ISQU);
-  setSelected(F.Val->getNodeId());
+  setSelected(F.getNode()->getNodeId());
   UpdateQueue(ISQU);
 }
 
@@ -131,7 +131,7 @@ void ReplaceUses(const SDValue *F, const SDValue *T,
   ISelQueueUpdater ISQU(ISelQueue);
   CurDAG->ReplaceAllUsesOfValuesWith(F, T, Num, &ISQU);
   for (unsigned i = 0; i != Num; ++i)
-    setSelected(F[i].Val->getNodeId());
+    setSelected(F[i].getNode()->getNodeId());
   UpdateQueue(ISQU);
 }
 
@@ -165,7 +165,7 @@ void SelectRoot() {
   // a reference to the root node, preventing it from being deleted,
   // and tracking any changes of the root.
   HandleSDNode Dummy(CurDAG->getRoot());
-  ISelQueue.push_back(CurDAG->getRoot().Val);
+  ISelQueue.push_back(CurDAG->getRoot().getNode());
 
   // Select pending nodes from the instruction selection queue
   // until no more nodes are left for selection.

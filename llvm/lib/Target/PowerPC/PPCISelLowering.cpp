@@ -423,7 +423,7 @@ MVT PPCTargetLowering::getSetCCResultType(const SDValue &) const {
 static bool isFloatingPointZero(SDValue Op) {
   if (ConstantFPSDNode *CFP = dyn_cast<ConstantFPSDNode>(Op))
     return CFP->getValueAPF().isZero();
-  else if (ISD::isEXTLoad(Op.Val) || ISD::isNON_EXTLoad(Op.Val)) {
+  else if (ISD::isEXTLoad(Op.getNode()) || ISD::isNON_EXTLoad(Op.getNode())) {
     // Maybe this has already been legalized into the constant pool?
     if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(Op.getOperand(1)))
       if (ConstantFP *CFP = dyn_cast<ConstantFP>(CP->getConstVal()))
@@ -625,7 +625,7 @@ SDValue PPC::get_VSPLTI_elt(SDNode *N, unsigned ByteSize, SelectionDAG &DAG) {
       if (!isa<ConstantSDNode>(N->getOperand(i))) return SDValue();
 
           
-      if (UniquedVals[i&(Multiple-1)].Val == 0)
+      if (UniquedVals[i&(Multiple-1)].getNode() == 0)
         UniquedVals[i&(Multiple-1)] = N->getOperand(i);
       else if (UniquedVals[i&(Multiple-1)] != N->getOperand(i))
         return SDValue();  // no match.
@@ -640,21 +640,21 @@ SDValue PPC::get_VSPLTI_elt(SDNode *N, unsigned ByteSize, SelectionDAG &DAG) {
     bool LeadingZero = true;
     bool LeadingOnes = true;
     for (unsigned i = 0; i != Multiple-1; ++i) {
-      if (UniquedVals[i].Val == 0) continue;  // Must have been undefs.
+      if (UniquedVals[i].getNode() == 0) continue;  // Must have been undefs.
       
       LeadingZero &= cast<ConstantSDNode>(UniquedVals[i])->isNullValue();
       LeadingOnes &= cast<ConstantSDNode>(UniquedVals[i])->isAllOnesValue();
     }
     // Finally, check the least significant entry.
     if (LeadingZero) {
-      if (UniquedVals[Multiple-1].Val == 0)
+      if (UniquedVals[Multiple-1].getNode() == 0)
         return DAG.getTargetConstant(0, MVT::i32);  // 0,0,0,undef
       int Val = cast<ConstantSDNode>(UniquedVals[Multiple-1])->getValue();
       if (Val < 16)
         return DAG.getTargetConstant(Val, MVT::i32);  // 0,0,0,4 -> vspltisw(4)
     }
     if (LeadingOnes) {
-      if (UniquedVals[Multiple-1].Val == 0)
+      if (UniquedVals[Multiple-1].getNode() == 0)
         return DAG.getTargetConstant(~0U, MVT::i32);  // -1,-1,-1,undef
       int Val =cast<ConstantSDNode>(UniquedVals[Multiple-1])->getSignExtended();
       if (Val >= -16)                            // -1,-1,-1,-2 -> vspltisw(-2)
@@ -667,13 +667,13 @@ SDValue PPC::get_VSPLTI_elt(SDNode *N, unsigned ByteSize, SelectionDAG &DAG) {
   // Check to see if this buildvec has a single non-undef value in its elements.
   for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
     if (N->getOperand(i).getOpcode() == ISD::UNDEF) continue;
-    if (OpVal.Val == 0)
+    if (OpVal.getNode() == 0)
       OpVal = N->getOperand(i);
     else if (OpVal != N->getOperand(i))
       return SDValue();
   }
   
-  if (OpVal.Val == 0) return SDValue();  // All UNDEF: use implicit def.
+  if (OpVal.getNode() == 0) return SDValue();  // All UNDEF: use implicit def.
   
   unsigned ValSizeInBytes = 0;
   uint64_t Value = 0;
@@ -735,7 +735,7 @@ static bool isIntS16Immediate(SDNode *N, short &Imm) {
     return Imm == (int64_t)cast<ConstantSDNode>(N)->getValue();
 }
 static bool isIntS16Immediate(SDValue Op, short &Imm) {
-  return isIntS16Immediate(Op.Val, Imm);
+  return isIntS16Immediate(Op.getNode(), Imm);
 }
 
 
@@ -1389,7 +1389,7 @@ PPCTargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op,
   // to handle Elf here.
   unsigned VecArgOffset = ArgOffset;
   if (!isVarArg && !isPPC64) {
-    for (unsigned ArgNo = 0, e = Op.Val->getNumValues()-1; ArgNo != e; 
+    for (unsigned ArgNo = 0, e = Op.getNode()->getNumValues()-1; ArgNo != e; 
          ++ArgNo) {
       MVT ObjectVT = Op.getValue(ArgNo).getValueType();
       unsigned ObjSize = ObjectVT.getSizeInBits()/8;
@@ -1439,7 +1439,7 @@ PPCTargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op,
 
   SmallVector<SDValue, 8> MemOps;
   unsigned nAltivecParamsAtEnd = 0;
-  for (unsigned ArgNo = 0, e = Op.Val->getNumValues()-1; ArgNo != e; ++ArgNo) {
+  for (unsigned ArgNo = 0, e = Op.getNode()->getNumValues()-1; ArgNo != e; ++ArgNo) {
     SDValue ArgVal;
     bool needsLoad = false;
     MVT ObjectVT = Op.getValue(ArgNo).getValueType();
@@ -1765,7 +1765,7 @@ PPCTargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op,
   ArgValues.push_back(Root);
  
   // Return the new list of results.
-  return DAG.getMergeValues(Op.Val->getVTList(), &ArgValues[0],
+  return DAG.getMergeValues(Op.getNode()->getVTList(), &ArgValues[0],
                             ArgValues.size());
 }
 
@@ -1906,7 +1906,7 @@ static SDNode *isBLACompatibleAddress(SDValue Op, SelectionDAG &DAG) {
     return 0;  // Top 6 bits have to be sext of immediate.
   
   return DAG.getConstant((int)C->getValue() >> 2,
-                         DAG.getTargetLoweringInfo().getPointerTy()).Val;
+                         DAG.getTargetLoweringInfo().getPointerTy()).getNode();
 }
 
 namespace {
@@ -2001,10 +2001,10 @@ SDValue PPCTargetLowering::EmitTailCallLoadFPAndRetAddr(SelectionDAG & DAG,
     MVT VT = PPCSubTarget.isPPC64() ? MVT::i64 : MVT::i32;
     LROpOut = getReturnAddrFrameIndex(DAG);
     LROpOut = DAG.getLoad(VT, Chain, LROpOut, NULL, 0);
-    Chain = SDValue(LROpOut.Val, 1);
+    Chain = SDValue(LROpOut.getNode(), 1);
     FPOpOut = getFramePointerFrameIndex(DAG);
     FPOpOut = DAG.getLoad(VT, Chain, FPOpOut, NULL, 0);
-    Chain = SDValue(FPOpOut.Val, 1);
+    Chain = SDValue(FPOpOut.getNode(), 1);
   }
   return Chain;
 }
@@ -2193,12 +2193,12 @@ SDValue PPCTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG,
           SDValue Const = DAG.getConstant(4 - Size, PtrOff.getValueType());
           SDValue AddPtr = DAG.getNode(ISD::ADD, PtrVT, PtrOff, Const);
           SDValue MemcpyCall = CreateCopyOfByValArgument(Arg, AddPtr,
-                                CallSeqStart.Val->getOperand(0), 
+                                CallSeqStart.getNode()->getOperand(0), 
                                 Flags, DAG, Size);
           // This must go outside the CALLSEQ_START..END.
           SDValue NewCallSeqStart = DAG.getCALLSEQ_START(MemcpyCall,
-                               CallSeqStart.Val->getOperand(1));
-          DAG.ReplaceAllUsesWith(CallSeqStart.Val, NewCallSeqStart.Val);
+                               CallSeqStart.getNode()->getOperand(1));
+          DAG.ReplaceAllUsesWith(CallSeqStart.getNode(), NewCallSeqStart.getNode());
           Chain = CallSeqStart = NewCallSeqStart;
           ArgOffset += PtrByteSize;
         }
@@ -2208,12 +2208,12 @@ SDValue PPCTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG,
       // code assumes it is there, even if it could be put entirely into
       // registers.  (This is not what the doc says.)
       SDValue MemcpyCall = CreateCopyOfByValArgument(Arg, PtrOff,
-                            CallSeqStart.Val->getOperand(0), 
+                            CallSeqStart.getNode()->getOperand(0), 
                             Flags, DAG, Size);
       // This must go outside the CALLSEQ_START..END.
       SDValue NewCallSeqStart = DAG.getCALLSEQ_START(MemcpyCall,
-                           CallSeqStart.Val->getOperand(1));
-      DAG.ReplaceAllUsesWith(CallSeqStart.Val, NewCallSeqStart.Val);
+                           CallSeqStart.getNode()->getOperand(1));
+      DAG.ReplaceAllUsesWith(CallSeqStart.getNode(), NewCallSeqStart.getNode());
       Chain = CallSeqStart = NewCallSeqStart;
       // And copy the pieces of it that fit into registers.
       for (unsigned j=0; j<Size; j+=PtrByteSize) {
@@ -2432,7 +2432,7 @@ SDValue PPCTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG,
     CallSeqOps.push_back(Chain);
     CallSeqOps.push_back(DAG.getIntPtrConstant(NumBytes));
     CallSeqOps.push_back(DAG.getIntPtrConstant(0));
-    if (InFlag.Val)
+    if (InFlag.getNode())
       CallSeqOps.push_back(InFlag);
     Chain = DAG.getNode(ISD::CALLSEQ_END, CallSeqNodeTys, &CallSeqOps[0],
                         CallSeqOps.size());
@@ -2460,7 +2460,7 @@ SDValue PPCTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG,
     // Otherwise, this is an indirect call.  We have to use a MTCTR/BCTRL pair
     // to do the call, we can't use PPCISD::CALL.
     SDValue MTCTROps[] = {Chain, Callee, InFlag};
-    Chain = DAG.getNode(PPCISD::MTCTR, NodeTys, MTCTROps, 2+(InFlag.Val!=0));
+    Chain = DAG.getNode(PPCISD::MTCTR, NodeTys, MTCTROps, 2+(InFlag.getNode()!=0));
     InFlag = Chain.getValue(1);
     
     // Copy the callee address into R12/X12 on darwin.
@@ -2475,14 +2475,14 @@ SDValue PPCTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG,
     NodeTys.push_back(MVT::Flag);
     Ops.push_back(Chain);
     CallOpc = isMachoABI ? PPCISD::BCTRL_Macho : PPCISD::BCTRL_ELF;
-    Callee.Val = 0;
+    Callee.setNode(0);
     // Add CTR register as callee so a bctr can be emitted later.
     if (isTailCall)
       Ops.push_back(DAG.getRegister(PPC::CTR, getPointerTy()));
   }
 
   // If this is a direct call, pass the chain and the callee.
-  if (Callee.Val) {
+  if (Callee.getNode()) {
     Ops.push_back(Chain);
     Ops.push_back(Callee);
   }
@@ -2502,16 +2502,16 @@ SDValue PPCTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG,
   int BytesCalleePops =
     (CC==CallingConv::Fast && PerformTailCallOpt) ? NumBytes : 0;
 
-  if (InFlag.Val)
+  if (InFlag.getNode())
     Ops.push_back(InFlag);
 
   // Emit tail call.
   if (isTailCall) {
-    assert(InFlag.Val &&
+    assert(InFlag.getNode() &&
            "Flag must be set. Depend on flag being set in LowerRET");
     Chain = DAG.getNode(PPCISD::TAILCALL,
-                        Op.Val->getVTList(), &Ops[0], Ops.size());
-    return SDValue(Chain.Val, Op.getResNo());
+                        Op.getNode()->getVTList(), &Ops[0], Ops.size());
+    return SDValue(Chain.getNode(), Op.getResNo());
   }
 
   Chain = DAG.getNode(CallOpc, NodeTys, &Ops[0], Ops.size());
@@ -2521,14 +2521,14 @@ SDValue PPCTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG,
                              DAG.getConstant(NumBytes, PtrVT),
                              DAG.getConstant(BytesCalleePops, PtrVT),
                              InFlag);
-  if (Op.Val->getValueType(0) != MVT::Other)
+  if (Op.getNode()->getValueType(0) != MVT::Other)
     InFlag = Chain.getValue(1);
 
   SmallVector<SDValue, 16> ResultVals;
   SmallVector<CCValAssign, 16> RVLocs;
   unsigned CallerCC = DAG.getMachineFunction().getFunction()->getCallingConv();
   CCState CCInfo(CallerCC, isVarArg, TM, RVLocs);
-  CCInfo.AnalyzeCallResult(Op.Val, RetCC_PPC);
+  CCInfo.AnalyzeCallResult(Op.getNode(), RetCC_PPC);
   
   // Copy all of the result registers out of their specified physreg.
   for (unsigned i = 0, e = RVLocs.size(); i != e; ++i) {
@@ -2546,7 +2546,7 @@ SDValue PPCTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG,
   
   // Otherwise, merge everything together with a MERGE_VALUES node.
   ResultVals.push_back(Chain);
-  SDValue Res = DAG.getMergeValues(Op.Val->getVTList(), &ResultVals[0],
+  SDValue Res = DAG.getMergeValues(Op.getNode()->getVTList(), &ResultVals[0],
                                      ResultVals.size());
   return Res.getValue(Op.getResNo());
 }
@@ -2557,7 +2557,7 @@ SDValue PPCTargetLowering::LowerRET(SDValue Op, SelectionDAG &DAG,
   unsigned CC = DAG.getMachineFunction().getFunction()->getCallingConv();
   bool isVarArg = DAG.getMachineFunction().getFunction()->isVarArg();
   CCState CCInfo(CC, isVarArg, TM, RVLocs);
-  CCInfo.AnalyzeReturn(Op.Val, RetCC_PPC);
+  CCInfo.AnalyzeReturn(Op.getNode(), RetCC_PPC);
   
   // If this is the first return lowered for this function, add the regs to the
   // liveout set for the function.
@@ -2607,7 +2607,7 @@ SDValue PPCTargetLowering::LowerRET(SDValue Op, SelectionDAG &DAG,
     Flag = Chain.getValue(1);
   }
 
-  if (Flag.Val)
+  if (Flag.getNode())
     return DAG.getNode(PPCISD::RET_FLAG, MVT::Other, Chain, Flag);
   else
     return DAG.getNode(PPCISD::RET_FLAG, MVT::Other, Chain);
@@ -2818,11 +2818,11 @@ SDValue PPCTargetLowering::LowerFP_TO_SINT(SDValue Op, SelectionDAG &DAG) {
 SDValue PPCTargetLowering::LowerFP_ROUND_INREG(SDValue Op, 
                                                  SelectionDAG &DAG) {
   assert(Op.getValueType() == MVT::ppcf128);
-  SDNode *Node = Op.Val;
+  SDNode *Node = Op.getNode();
   assert(Node->getOperand(0).getValueType() == MVT::ppcf128);
-  assert(Node->getOperand(0).Val->getOpcode() == ISD::BUILD_PAIR);
-  SDValue Lo = Node->getOperand(0).Val->getOperand(0);
-  SDValue Hi = Node->getOperand(0).Val->getOperand(1);
+  assert(Node->getOperand(0).getNode()->getOpcode() == ISD::BUILD_PAIR);
+  SDValue Lo = Node->getOperand(0).getNode()->getOperand(0);
+  SDValue Hi = Node->getOperand(0).getNode()->getOperand(1);
 
   // This sequence changes FPSCR to do round-to-zero, adds the two halves
   // of the long double, and puts FPSCR back the way it was.  We do not
@@ -3237,7 +3237,7 @@ SDValue PPCTargetLowering::LowerBUILD_VECTOR(SDValue Op,
   // zero. 
   uint64_t VectorBits[2];
   uint64_t UndefBits[2];
-  if (GetConstantBuildVectorBits(Op.Val, VectorBits, UndefBits))
+  if (GetConstantBuildVectorBits(Op.getNode(), VectorBits, UndefBits))
     return SDValue();   // Not a constant vector.
   
   // If this is a splat (repetition) of a value across the whole vector, return
@@ -3483,18 +3483,18 @@ SDValue PPCTargetLowering::LowerVECTOR_SHUFFLE(SDValue Op,
   // (such as vsplt*) should be left as VECTOR_SHUFFLE nodes so they can be
   // selected by the instruction selector.
   if (V2.getOpcode() == ISD::UNDEF) {
-    if (PPC::isSplatShuffleMask(PermMask.Val, 1) ||
-        PPC::isSplatShuffleMask(PermMask.Val, 2) ||
-        PPC::isSplatShuffleMask(PermMask.Val, 4) ||
-        PPC::isVPKUWUMShuffleMask(PermMask.Val, true) ||
-        PPC::isVPKUHUMShuffleMask(PermMask.Val, true) ||
-        PPC::isVSLDOIShuffleMask(PermMask.Val, true) != -1 ||
-        PPC::isVMRGLShuffleMask(PermMask.Val, 1, true) ||
-        PPC::isVMRGLShuffleMask(PermMask.Val, 2, true) ||
-        PPC::isVMRGLShuffleMask(PermMask.Val, 4, true) ||
-        PPC::isVMRGHShuffleMask(PermMask.Val, 1, true) ||
-        PPC::isVMRGHShuffleMask(PermMask.Val, 2, true) ||
-        PPC::isVMRGHShuffleMask(PermMask.Val, 4, true)) {
+    if (PPC::isSplatShuffleMask(PermMask.getNode(), 1) ||
+        PPC::isSplatShuffleMask(PermMask.getNode(), 2) ||
+        PPC::isSplatShuffleMask(PermMask.getNode(), 4) ||
+        PPC::isVPKUWUMShuffleMask(PermMask.getNode(), true) ||
+        PPC::isVPKUHUMShuffleMask(PermMask.getNode(), true) ||
+        PPC::isVSLDOIShuffleMask(PermMask.getNode(), true) != -1 ||
+        PPC::isVMRGLShuffleMask(PermMask.getNode(), 1, true) ||
+        PPC::isVMRGLShuffleMask(PermMask.getNode(), 2, true) ||
+        PPC::isVMRGLShuffleMask(PermMask.getNode(), 4, true) ||
+        PPC::isVMRGHShuffleMask(PermMask.getNode(), 1, true) ||
+        PPC::isVMRGHShuffleMask(PermMask.getNode(), 2, true) ||
+        PPC::isVMRGHShuffleMask(PermMask.getNode(), 4, true)) {
       return Op;
     }
   }
@@ -3502,15 +3502,15 @@ SDValue PPCTargetLowering::LowerVECTOR_SHUFFLE(SDValue Op,
   // Altivec has a variety of "shuffle immediates" that take two vector inputs
   // and produce a fixed permutation.  If any of these match, do not lower to
   // VPERM.
-  if (PPC::isVPKUWUMShuffleMask(PermMask.Val, false) ||
-      PPC::isVPKUHUMShuffleMask(PermMask.Val, false) ||
-      PPC::isVSLDOIShuffleMask(PermMask.Val, false) != -1 ||
-      PPC::isVMRGLShuffleMask(PermMask.Val, 1, false) ||
-      PPC::isVMRGLShuffleMask(PermMask.Val, 2, false) ||
-      PPC::isVMRGLShuffleMask(PermMask.Val, 4, false) ||
-      PPC::isVMRGHShuffleMask(PermMask.Val, 1, false) ||
-      PPC::isVMRGHShuffleMask(PermMask.Val, 2, false) ||
-      PPC::isVMRGHShuffleMask(PermMask.Val, 4, false))
+  if (PPC::isVPKUWUMShuffleMask(PermMask.getNode(), false) ||
+      PPC::isVPKUHUMShuffleMask(PermMask.getNode(), false) ||
+      PPC::isVSLDOIShuffleMask(PermMask.getNode(), false) != -1 ||
+      PPC::isVMRGLShuffleMask(PermMask.getNode(), 1, false) ||
+      PPC::isVMRGLShuffleMask(PermMask.getNode(), 2, false) ||
+      PPC::isVMRGLShuffleMask(PermMask.getNode(), 4, false) ||
+      PPC::isVMRGHShuffleMask(PermMask.getNode(), 1, false) ||
+      PPC::isVMRGHShuffleMask(PermMask.getNode(), 2, false) ||
+      PPC::isVMRGHShuffleMask(PermMask.getNode(), 4, false))
     return Op;
   
   // Check to see if this is a shuffle of 4-byte values.  If so, we can use our
@@ -3842,7 +3842,7 @@ SDNode *PPCTargetLowering::ReplaceNodeResults(SDNode *N, SelectionDAG &DAG) {
     // Use MERGE_VALUES to drop the chain result value and get a node with one
     // result.  This requires turning off getMergeValues simplification, since
     // otherwise it will give us Res back.
-    return DAG.getMergeValues(&Res, 1, false).Val;
+    return DAG.getMergeValues(&Res, 1, false).getNode();
   }
   }
 }
@@ -4292,17 +4292,17 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
           SDValue Val = N->getOperand(0).getOperand(0);
           if (Val.getValueType() == MVT::f32) {
             Val = DAG.getNode(ISD::FP_EXTEND, MVT::f64, Val);
-            DCI.AddToWorklist(Val.Val);
+            DCI.AddToWorklist(Val.getNode());
           }
             
           Val = DAG.getNode(PPCISD::FCTIDZ, MVT::f64, Val);
-          DCI.AddToWorklist(Val.Val);
+          DCI.AddToWorklist(Val.getNode());
           Val = DAG.getNode(PPCISD::FCFID, MVT::f64, Val);
-          DCI.AddToWorklist(Val.Val);
+          DCI.AddToWorklist(Val.getNode());
           if (N->getValueType(0) == MVT::f32) {
             Val = DAG.getNode(ISD::FP_ROUND, MVT::f32, Val, 
                               DAG.getIntPtrConstant(0));
-            DCI.AddToWorklist(Val.Val);
+            DCI.AddToWorklist(Val.getNode());
           }
           return Val;
         } else if (N->getOperand(0).getValueType() == MVT::i32) {
@@ -4322,20 +4322,20 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
       SDValue Val = N->getOperand(1).getOperand(0);
       if (Val.getValueType() == MVT::f32) {
         Val = DAG.getNode(ISD::FP_EXTEND, MVT::f64, Val);
-        DCI.AddToWorklist(Val.Val);
+        DCI.AddToWorklist(Val.getNode());
       }
       Val = DAG.getNode(PPCISD::FCTIWZ, MVT::f64, Val);
-      DCI.AddToWorklist(Val.Val);
+      DCI.AddToWorklist(Val.getNode());
 
       Val = DAG.getNode(PPCISD::STFIWX, MVT::Other, N->getOperand(0), Val,
                         N->getOperand(2), N->getOperand(3));
-      DCI.AddToWorklist(Val.Val);
+      DCI.AddToWorklist(Val.getNode());
       return Val;
     }
     
     // Turn STORE (BSWAP) -> sthbrx/stwbrx.
     if (N->getOperand(1).getOpcode() == ISD::BSWAP &&
-        N->getOperand(1).Val->hasOneUse() &&
+        N->getOperand(1).getNode()->hasOneUse() &&
         (N->getOperand(1).getValueType() == MVT::i32 ||
          N->getOperand(1).getValueType() == MVT::i16)) {
       SDValue BSwapOp = N->getOperand(1).getOperand(0);
@@ -4350,7 +4350,7 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
     break;
   case ISD::BSWAP:
     // Turn BSWAP (LOAD) -> lhbrx/lwbrx.
-    if (ISD::isNON_EXTLoad(N->getOperand(0).Val) &&
+    if (ISD::isNON_EXTLoad(N->getOperand(0).getNode()) &&
         N->getOperand(0).hasOneUse() &&
         (N->getValueType(0) == MVT::i32 || N->getValueType(0) == MVT::i16)) {
       SDValue Load = N->getOperand(0);
@@ -4379,7 +4379,7 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
 
       // Next, combine the load away, we give it a bogus result value but a real
       // chain result.  The result value is dead because the bswap is dead.
-      DCI.CombineTo(Load.Val, ResVal, BSLoad.getValue(1));
+      DCI.CombineTo(Load.getNode(), ResVal, BSLoad.getValue(1));
       
       // Return N so it doesn't get rechecked!
       return SDValue(N, 0);
@@ -4398,7 +4398,7 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
       // Scan all of the users of the LHS, looking for VCMPo's that match.
       SDNode *VCMPoNode = 0;
       
-      SDNode *LHSN = N->getOperand(0).Val;
+      SDNode *LHSN = N->getOperand(0).getNode();
       for (SDNode::use_iterator UI = LHSN->use_begin(), E = LHSN->use_end();
            UI != E; ++UI)
         if (UI->getOpcode() == PPCISD::VCMPo &&
@@ -4650,7 +4650,7 @@ void PPCTargetLowering::LowerAsmOperandForConstraint(SDValue Op, char Letter,
   }
   }
   
-  if (Result.Val) {
+  if (Result.getNode()) {
     Ops.push_back(Result);
     return;
   }

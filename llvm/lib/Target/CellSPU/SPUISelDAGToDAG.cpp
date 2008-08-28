@@ -579,7 +579,7 @@ SPUDAGToDAGISel::SelectXFormAddr(SDValue Op, SDValue N, SDValue &Base,
  */
 SDNode *
 SPUDAGToDAGISel::Select(SDValue Op) {
-  SDNode *N = Op.Val;
+  SDNode *N = Op.getNode();
   unsigned Opc = N->getOpcode();
   int n_ops = -1;
   unsigned NewOpc;
@@ -669,9 +669,9 @@ SPUDAGToDAGISel::Select(SDValue Op) {
       MVT VT = Op.getValueType();
 
       DEBUG(cerr << "CellSPU: IndirectAddr(LDRESULT, imm):\nOp0 = ");
-      DEBUG(Op.getOperand(0).Val->dump(CurDAG));
+      DEBUG(Op.getOperand(0).getNode()->dump(CurDAG));
       DEBUG(cerr << "\nOp1 = ");
-      DEBUG(Op.getOperand(1).Val->dump(CurDAG));
+      DEBUG(Op.getOperand(1).getNode()->dump(CurDAG));
       DEBUG(cerr << "\n");
 
       if (Op1.getOpcode() == ISD::Constant) {

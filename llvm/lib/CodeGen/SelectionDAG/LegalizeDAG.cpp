@@ -260,7 +260,7 @@ SDNode *SelectionDAGLegalize::isShuffleLegal(MVT VT, SDValue Mask) const {
     break;
   }
   }
-  return TLI.isShuffleMaskLegal(Mask, VT) ? Mask.Val : 0;
+  return TLI.isShuffleMaskLegal(Mask, VT) ? Mask.getNode() : 0;
 }
 
 SelectionDAGLegalize::SelectionDAGLegalize(SelectionDAG &dag)
@@ -350,7 +350,7 @@ static SDNode *FindCallStartFromCallEnd(SDNode *Node) {
   
   assert(Node->getOperand(0).getValueType() == MVT::Other &&
          "Node doesn't have a token chain argument!");
-  return FindCallStartFromCallEnd(Node->getOperand(0).Val);
+  return FindCallStartFromCallEnd(Node->getOperand(0).getNode());
 }
 
 /// LegalizeAllNodesNotLeadingTo - Recursively walk the uses of N, looking to
@@ -387,7 +387,7 @@ bool SelectionDAGLegalize::LegalizeAllNodesNotLeadingTo(SDNode *N, SDNode *Dest,
   bool OperandsLeadToDest = false;
   for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
     OperandsLeadToDest |=     // If an operand leads to Dest, so do we.
-      LegalizeAllNodesNotLeadingTo(N->getOperand(i).Val, Dest, NodesLeadingTo);
+      LegalizeAllNodesNotLeadingTo(N->getOperand(i).getNode(), Dest, NodesLeadingTo);
 
   if (OperandsLeadToDest) {
     NodesLeadingTo.insert(N);
@@ -667,7 +667,7 @@ SDValue SelectionDAGLegalize::UnrollVectorOp(SDValue Op) {
   MVT VT = Op.getValueType();
   assert(isTypeLegal(VT) &&
          "Caller should expand or promote operands that are not legal!");
-  assert(Op.Val->getNumValues() == 1 &&
+  assert(Op.getNode()->getNumValues() == 1 &&
          "Can't unroll a vector with multiple results!");
   unsigned NE = VT.getVectorNumElements();
   MVT EltVT = VT.getVectorElementType();
@@ -733,7 +733,7 @@ PerformInsertVectorEltInMemory(SDValue Vec, SDValue Val, SDValue Idx) {
   MVT PtrVT = TLI.getPointerTy();
   SDValue StackPtr = DAG.CreateStackTemporary(VT);
 
-  int SPFI = cast<FrameIndexSDNode>(StackPtr.Val)->getIndex();
+  int SPFI = cast<FrameIndexSDNode>(StackPtr.getNode())->getIndex();
 
   // Store the vector.
   SDValue Ch = DAG.getStore(DAG.getEntryNode(), Tmp1, StackPtr,
@@ -764,7 +764,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
   
   assert(isTypeLegal(Op.getValueType()) &&
          "Caller should expand or promote operands that are not legal!");
-  SDNode *Node = Op.Val;
+  SDNode *Node = Op.getNode();
 
   // If this operation defines any values that cannot be represented in a
   // register on this target, make sure to expand or promote them.
@@ -839,7 +839,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     default: assert(0 && "This action is not supported yet!");
     case TargetLowering::Custom:
       Tmp1 = TLI.LowerOperation(Op, DAG);
-      if (Tmp1.Val) Result = Tmp1;
+      if (Tmp1.getNode()) Result = Tmp1;
       // FALLTHROUGH if the target doesn't want to lower this op after all.
     case TargetLowering::Legal:
       break;
@@ -850,7 +850,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     // The only option for these nodes is to custom lower them.  If the target
     // does not custom lower them, then return zero.
     Tmp1 = TLI.LowerOperation(Op, DAG);
-    if (Tmp1.Val) 
+    if (Tmp1.getNode()) 
       Result = Tmp1;
     else
       Result = DAG.getConstant(0, TLI.getPointerTy());
@@ -861,7 +861,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     default: assert(0 && "This action is not supported yet!");
     case TargetLowering::Custom:
       Result = TLI.LowerOperation(Op, DAG);
-      if (Result.Val) break;
+      if (Result.getNode()) break;
       // Fall Thru
     case TargetLowering::Legal:
       Result = DAG.getConstant(0, VT);
@@ -881,7 +881,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       break;
     case TargetLowering::Custom:
       Result = TLI.LowerOperation(Op, DAG);
-      if (Result.Val) break;
+      if (Result.getNode()) break;
       // Fall Thru
     case TargetLowering::Legal: {
       SDValue Ops[] = { DAG.getConstant(0, VT), Tmp1 };
@@ -890,9 +890,9 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     }
     }
     }
-    if (Result.Val->getNumValues() == 1) break;
+    if (Result.getNode()->getNumValues() == 1) break;
 
-    assert(Result.Val->getNumValues() == 2 &&
+    assert(Result.getNode()->getNumValues() == 2 &&
            "Cannot return more than two values!");
 
     // Since we produced two values, make sure to remember that we
@@ -915,7 +915,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       break;
     case TargetLowering::Custom:
       Result = TLI.LowerOperation(Op, DAG);
-      if (Result.Val) break;
+      if (Result.getNode()) break;
       // Fall Thru
     case TargetLowering::Legal: {
       SDValue Ops[] = { DAG.getConstant(0, VT), Tmp2 };
@@ -924,9 +924,9 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     }
     }
     }
-    if (Result.Val->getNumValues() == 1) break;
+    if (Result.getNode()->getNumValues() == 1) break;
 
-    assert(Result.Val->getNumValues() == 2 &&
+    assert(Result.getNode()->getNumValues() == 2 &&
            "Cannot return more than two values!");
 
     // Since we produced two values, make sure to remember that we
@@ -943,7 +943,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     default: assert(0 && "This action is not supported at all!");
     case TargetLowering::Custom:
       Result = TLI.LowerOperation(Op, DAG);
-      if (Result.Val) break;
+      if (Result.getNode()) break;
       // Fall Thru
     case TargetLowering::Legal:
       // Target does not know, how to lower this, lower to noop
@@ -1012,13 +1012,13 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     if (TLI.getOperationAction(Node->getOpcode(), MVT::Other) == 
         TargetLowering::Custom) {
       Tmp3 = TLI.LowerOperation(Result, DAG);
-      if (Tmp3.Val) Result = Tmp3;
+      if (Tmp3.getNode()) Result = Tmp3;
     }
 
-    if (Result.Val->getNumValues() == 1) break;
+    if (Result.getNode()->getNumValues() == 1) break;
 
     // Must have return value and chain result.
-    assert(Result.Val->getNumValues() == 2 &&
+    assert(Result.getNode()->getNumValues() == 2 &&
            "Cannot return more than two values!");
 
     // Since loads produce two values, make sure to remember that we 
@@ -1261,7 +1261,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       Result = TLI.LowerOperation(Result, DAG);
       break;
     case TargetLowering::Expand:
-      Result = SDValue(TLI.ReplaceNodeResults(Op.Val, DAG),0);
+      Result = SDValue(TLI.ReplaceNodeResults(Op.getNode(), DAG),0);
       break;
     case TargetLowering::Legal:
       break;
@@ -1280,7 +1280,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
 
     if (opAction == TargetLowering::Custom) {
       Tmp1 = TLI.LowerOperation(Result, DAG);
-      if (Tmp1.Val)
+      if (Tmp1.getNode())
         Result = Tmp1;
     }
     break;
@@ -1298,7 +1298,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       break;
     case TargetLowering::Custom:
       Tmp3 = TLI.LowerOperation(Result, DAG);
-      if (Tmp3.Val) {
+      if (Tmp3.getNode()) {
         Result = Tmp3;
         break;
       }
@@ -1344,27 +1344,27 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
   case ISD::CALL:
     // The only option for this is to custom lower it.
     Tmp3 = TLI.LowerOperation(Result.getValue(0), DAG);
-    assert(Tmp3.Val && "Target didn't custom lower this node!");
+    assert(Tmp3.getNode() && "Target didn't custom lower this node!");
     // A call within a calling sequence must be legalized to something
     // other than the normal CALLSEQ_END.  Violating this gets Legalize
     // into an infinite loop.
     assert ((!IsLegalizingCall ||
              Node->getOpcode() != ISD::CALL ||
-             Tmp3.Val->getOpcode() != ISD::CALLSEQ_END) &&
+             Tmp3.getNode()->getOpcode() != ISD::CALLSEQ_END) &&
             "Nested CALLSEQ_START..CALLSEQ_END not supported.");
 
     // The number of incoming and outgoing values should match; unless the final
     // outgoing value is a flag.
-    assert((Tmp3.Val->getNumValues() == Result.Val->getNumValues() ||
-            (Tmp3.Val->getNumValues() == Result.Val->getNumValues() + 1 &&
-             Tmp3.Val->getValueType(Tmp3.Val->getNumValues() - 1) ==
+    assert((Tmp3.getNode()->getNumValues() == Result.getNode()->getNumValues() ||
+            (Tmp3.getNode()->getNumValues() == Result.getNode()->getNumValues() + 1 &&
+             Tmp3.getNode()->getValueType(Tmp3.getNode()->getNumValues() - 1) ==
                MVT::Flag)) &&
            "Lowering call/formal_arguments produced unexpected # results!");
     
     // Since CALL/FORMAL_ARGUMENTS nodes produce multiple values, make sure to
     // remember that we legalized all of them, so it doesn't get relegalized.
-    for (unsigned i = 0, e = Tmp3.Val->getNumValues(); i != e; ++i) {
-      if (Tmp3.Val->getValueType(i) == MVT::Flag)
+    for (unsigned i = 0, e = Tmp3.getNode()->getNumValues(); i != e; ++i) {
+      if (Tmp3.getNode()->getValueType(i) == MVT::Flag)
         continue;
       Tmp1 = LegalizeOp(Tmp3.getValue(i));
       if (Op.getResNo() == i)
@@ -1394,13 +1394,13 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     default: assert(0 && "This action is not supported yet!");
     case TargetLowering::Custom:
       Tmp3 = TLI.LowerOperation(Result, DAG);
-      if (Tmp3.Val) {
+      if (Tmp3.getNode()) {
         Result = Tmp3;
         break;
       }
       // FALLTHROUGH
     case TargetLowering::Expand:
-      Result = ExpandBUILD_VECTOR(Result.Val);
+      Result = ExpandBUILD_VECTOR(Result.getNode());
       break;
     }
     break;
@@ -1425,7 +1425,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       break;
     case TargetLowering::Custom:
       Tmp4 = TLI.LowerOperation(Result, DAG);
-      if (Tmp4.Val) {
+      if (Tmp4.getNode()) {
         Result = Tmp4;
         break;
       }
@@ -1485,7 +1485,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       break;
     case TargetLowering::Custom:
       Tmp3 = TLI.LowerOperation(Result, DAG);
-      if (Tmp3.Val) {
+      if (Tmp3.getNode()) {
         Result = Tmp3;
         break;
       }
@@ -1509,7 +1509,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       break;
     case TargetLowering::Custom:
       Tmp3 = TLI.LowerOperation(Result, DAG);
-      if (Tmp3.Val) {
+      if (Tmp3.getNode()) {
         Result = Tmp3;
         break;
       }
@@ -1550,7 +1550,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       
       // Convert the shuffle mask to the right # elements.
       Tmp3 = SDValue(isShuffleLegal(OVT, Node->getOperand(2)), 0);
-      assert(Tmp3.Val && "Shuffle not legal?");
+      assert(Tmp3.getNode() && "Shuffle not legal?");
       Result = DAG.getNode(ISD::VECTOR_SHUFFLE, NVT, Tmp1, Tmp2, Tmp3);
       Result = DAG.getNode(ISD::BIT_CONVERT, OVT, Result);
       break;
@@ -1580,7 +1580,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     // are inserted *before* the CALLSEQ_START.
     {SmallPtrSet<SDNode*, 32> NodesLeadingTo;
     for (unsigned i = 0, e = CallEnd->getNumOperands(); i != e; ++i)
-      LegalizeAllNodesNotLeadingTo(CallEnd->getOperand(i).Val, Node,
+      LegalizeAllNodesNotLeadingTo(CallEnd->getOperand(i).getNode(), Node,
                                    NodesLeadingTo);
     }
 
@@ -1624,7 +1624,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
   case ISD::CALLSEQ_END:
     // If the CALLSEQ_START node hasn't been legalized first, legalize it.  This
     // will cause this node to be legalized as well as handling libcalls right.
-    if (LastCALLSEQ_END.Val != Node) {
+    if (LastCALLSEQ_END.getNode() != Node) {
       LegalizeOp(SDValue(FindCallStartFromCallEnd(Node), 0));
       DenseMap<SDValue, SDValue>::iterator I = LegalizedNodes.find(Op);
       assert(I != LegalizedNodes.end() &&
@@ -1708,7 +1708,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     }
     case TargetLowering::Custom:
       Tmp3 = TLI.LowerOperation(Tmp1, DAG);
-      if (Tmp3.Val) {
+      if (Tmp3.getNode()) {
         Tmp1 = LegalizeOp(Tmp3);
         Tmp2 = LegalizeOp(Tmp3.getValue(1));
       }
@@ -1797,7 +1797,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     case TargetLowering::Legal: break;
     case TargetLowering::Custom:
       Tmp1 = TLI.LowerOperation(Result, DAG);
-      if (Tmp1.Val) Result = Tmp1;
+      if (Tmp1.getNode()) Result = Tmp1;
       break;
     case TargetLowering::Expand: {
       SDValue Chain = Result.getOperand(0);
@@ -1866,7 +1866,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     case TargetLowering::Legal: break;
     case TargetLowering::Custom:
       Tmp1 = TLI.LowerOperation(Result, DAG);
-      if (Tmp1.Val) Result = Tmp1;
+      if (Tmp1.getNode()) Result = Tmp1;
       break;
     case TargetLowering::Expand:
       // Expand brcond's setcc into its constituent parts and create a BR_CC
@@ -1899,7 +1899,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     // If we didn't get both a LHS and RHS back from LegalizeSetCCOperands,
     // the LHS is a legal SETCC itself.  In this case, we need to compare
     // the result against zero to select between true and false values.
-    if (Tmp3.Val == 0) {
+    if (Tmp3.getNode() == 0) {
       Tmp3 = DAG.getConstant(0, Tmp2.getValueType());
       Tmp4 = DAG.getCondCode(ISD::SETNE);
     }
@@ -1912,7 +1912,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     case TargetLowering::Legal: break;
     case TargetLowering::Custom:
       Tmp4 = TLI.LowerOperation(Result, DAG);
-      if (Tmp4.Val) Result = Tmp4;
+      if (Tmp4.getNode()) Result = Tmp4;
       break;
     }
     break;
@@ -1937,7 +1937,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
           unsigned ABIAlignment = TLI.getTargetData()->
             getABITypeAlignment(LD->getMemoryVT().getTypeForMVT());
           if (LD->getAlignment() < ABIAlignment){
-            Result = ExpandUnalignedLoad(cast<LoadSDNode>(Result.Val), DAG,
+            Result = ExpandUnalignedLoad(cast<LoadSDNode>(Result.getNode()), DAG,
                                          TLI);
             Tmp3 = Result.getOperand(0);
             Tmp4 = Result.getOperand(1);
@@ -1948,7 +1948,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
         break;
       case TargetLowering::Custom:
         Tmp1 = TLI.LowerOperation(Tmp3, DAG);
-        if (Tmp1.Val) {
+        if (Tmp1.getNode()) {
           Tmp3 = LegalizeOp(Tmp1);
           Tmp4 = LegalizeOp(Tmp1.getValue(1));
         }
@@ -2105,7 +2105,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
 
           if (isCustom) {
             Tmp3 = TLI.LowerOperation(Result, DAG);
-            if (Tmp3.Val) {
+            if (Tmp3.getNode()) {
               Tmp1 = LegalizeOp(Tmp3);
               Tmp2 = LegalizeOp(Tmp3.getValue(1));
             }
@@ -2116,7 +2116,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
               unsigned ABIAlignment = TLI.getTargetData()->
                 getABITypeAlignment(LD->getMemoryVT().getTypeForMVT());
               if (LD->getAlignment() < ABIAlignment){
-                Result = ExpandUnalignedLoad(cast<LoadSDNode>(Result.Val), DAG,
+                Result = ExpandUnalignedLoad(cast<LoadSDNode>(Result.getNode()), DAG,
                                              TLI);
                 Tmp1 = Result.getOperand(0);
                 Tmp2 = Result.getOperand(1);
@@ -2244,13 +2244,13 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
           if (TLI.isBigEndian())
             std::swap(Lo, Hi);
           
-          if (Hi.Val)
+          if (Hi.getNode())
             Result = DAG.getNode(ISD::RET, MVT::Other, Tmp1, Lo, Tmp3, Hi,Tmp3);
           else
             Result = DAG.getNode(ISD::RET, MVT::Other, Tmp1, Lo, Tmp3);
           Result = LegalizeOp(Result);
         } else {
-          SDNode *InVal = Tmp2.Val;
+          SDNode *InVal = Tmp2.getNode();
           int InIx = Tmp2.getResNo();
           unsigned NumElems = InVal->getValueType(InIx).getVectorNumElements();
           MVT EVT = InVal->getValueType(InIx).getVectorElementType();
@@ -2310,7 +2310,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
           ExpandOp(Node->getOperand(i), Lo, Hi);
           NewValues.push_back(Lo);
           NewValues.push_back(Node->getOperand(i+1));
-          if (Hi.Val) {
+          if (Hi.getNode()) {
             NewValues.push_back(Hi);
             NewValues.push_back(Node->getOperand(i+1));
           }
@@ -2335,7 +2335,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       case TargetLowering::Legal: break;
       case TargetLowering::Custom:
         Tmp1 = TLI.LowerOperation(Result, DAG);
-        if (Tmp1.Val) Result = Tmp1;
+        if (Tmp1.getNode()) Result = Tmp1;
         break;
       }
     }
@@ -2411,13 +2411,13 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
             unsigned ABIAlignment = TLI.getTargetData()->
               getABITypeAlignment(ST->getMemoryVT().getTypeForMVT());
             if (ST->getAlignment() < ABIAlignment)
-              Result = ExpandUnalignedStore(cast<StoreSDNode>(Result.Val), DAG,
+              Result = ExpandUnalignedStore(cast<StoreSDNode>(Result.getNode()), DAG,
                                             TLI);
           }
           break;
         case TargetLowering::Custom:
           Tmp1 = TLI.LowerOperation(Result, DAG);
-          if (Tmp1.Val) Result = Tmp1;
+          if (Tmp1.getNode()) Result = Tmp1;
           break;
         case TargetLowering::Promote:
           assert(VT.isVector() && "Unknown legal promote case!");
@@ -2446,7 +2446,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
         // the product of the element size in bytes, and the number of elements
         // in the high half of the vector.
         if (ST->getValue().getValueType().isVector()) {
-          SDNode *InVal = ST->getValue().Val;
+          SDNode *InVal = ST->getValue().getNode();
           int InIx = ST->getValue().getResNo();
           MVT InVT = InVal->getValueType(InIx);
           unsigned NumElems = InVT.getVectorNumElements();
@@ -2473,12 +2473,12 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
             break;
           } else {
             SplitVectorOp(ST->getValue(), Lo, Hi);
-            IncrementSize = Lo.Val->getValueType(0).getVectorNumElements() *
+            IncrementSize = Lo.getNode()->getValueType(0).getVectorNumElements() *
                             EVT.getSizeInBits()/8;
           }
         } else {
           ExpandOp(ST->getValue(), Lo, Hi);
-          IncrementSize = Hi.Val ? Hi.getValueType().getSizeInBits()/8 : 0;
+          IncrementSize = Hi.getNode() ? Hi.getValueType().getSizeInBits()/8 : 0;
 
           if (TLI.isBigEndian())
             std::swap(Lo, Hi);
@@ -2487,7 +2487,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
         Lo = DAG.getStore(Tmp1, Lo, Tmp2, ST->getSrcValue(),
                           SVOffset, isVolatile, Alignment);
 
-        if (Hi.Val == NULL) {
+        if (Hi.getNode() == NULL) {
           // Must be int <-> float one-to-one expansion.
           Result = Lo;
           break;
@@ -2598,7 +2598,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
             unsigned ABIAlignment = TLI.getTargetData()->
               getABITypeAlignment(ST->getMemoryVT().getTypeForMVT());
             if (ST->getAlignment() < ABIAlignment)
-              Result = ExpandUnalignedStore(cast<StoreSDNode>(Result.Val), DAG,
+              Result = ExpandUnalignedStore(cast<StoreSDNode>(Result.getNode()), DAG,
                                             TLI);
           }
           break;
@@ -2632,7 +2632,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     case TargetLowering::Legal: break;
     case TargetLowering::Custom:
       Tmp3 = TLI.LowerOperation(Result, DAG);
-      if (Tmp3.Val) {
+      if (Tmp3.getNode()) {
         Tmp1 = LegalizeOp(Tmp3);
         Tmp2 = LegalizeOp(Tmp3.getValue(1));
       }
@@ -2667,7 +2667,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     case TargetLowering::Legal: break;
     case TargetLowering::Custom:
       Tmp1 = TLI.LowerOperation(Result, DAG);
-      if (Tmp1.Val) Result = Tmp1;
+      if (Tmp1.getNode()) Result = Tmp1;
       break;
     case TargetLowering::Expand:
       // Expand to CopyToReg if the target set 
@@ -2730,7 +2730,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     case TargetLowering::Legal: break;
     case TargetLowering::Custom: {
       Tmp1 = TLI.LowerOperation(Result, DAG);
-      if (Tmp1.Val) Result = Tmp1;
+      if (Tmp1.getNode()) Result = Tmp1;
       break;
     }
     case TargetLowering::Expand:
@@ -2784,7 +2784,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     // If we didn't get both a LHS and RHS back from LegalizeSetCCOperands,
     // the LHS is a legal SETCC itself.  In this case, we need to compare
     // the result against zero to select between true and false values.
-    if (Tmp2.Val == 0) {
+    if (Tmp2.getNode() == 0) {
       Tmp2 = DAG.getConstant(0, Tmp1.getValueType());
       CC = DAG.getCondCode(ISD::SETNE);
     }
@@ -2796,7 +2796,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     case TargetLowering::Legal: break;
     case TargetLowering::Custom:
       Tmp1 = TLI.LowerOperation(Result, DAG);
-      if (Tmp1.Val) Result = Tmp1;
+      if (Tmp1.getNode()) Result = Tmp1;
       break;
     }
     break;
@@ -2810,7 +2810,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     // If we had to Expand the SetCC operands into a SELECT node, then it may 
     // not always be possible to return a true LHS & RHS.  In this case, just 
     // return the value we legalized, returned in the LHS
-    if (Tmp2.Val == 0) {
+    if (Tmp2.getNode() == 0) {
       Result = Tmp1;
       break;
     }
@@ -2824,7 +2824,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2, Tmp3);
       if (isCustom) {
         Tmp4 = TLI.LowerOperation(Result, DAG);
-        if (Tmp4.Val) Result = Tmp4;
+        if (Tmp4.getNode()) Result = Tmp4;
       }
       break;
     case TargetLowering::Promote: {
@@ -2882,7 +2882,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     case TargetLowering::Legal: break;
     case TargetLowering::Custom:
       Tmp1 = TLI.LowerOperation(Result, DAG);
-      if (Tmp1.Val) Result = Tmp1;
+      if (Tmp1.getNode()) Result = Tmp1;
       break;
     }
     break;
@@ -2906,7 +2906,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     case TargetLowering::Legal: break;
     case TargetLowering::Custom:
       Tmp1 = TLI.LowerOperation(Result, DAG);
-      if (Tmp1.Val) {
+      if (Tmp1.getNode()) {
         SDValue Tmp2, RetVal(0, 0);
         for (unsigned i = 0, e = Node->getNumValues(); i != e; ++i) {
           Tmp2 = LegalizeOp(Tmp1.getValue(i));
@@ -2914,7 +2914,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
           if (i == Op.getResNo())
             RetVal = Tmp2;
         }
-        assert(RetVal.Val && "Illegal result number");
+        assert(RetVal.getNode() && "Illegal result number");
         return RetVal;
       }
       break;
@@ -2974,7 +2974,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     case TargetLowering::Legal: break;
     case TargetLowering::Custom:
       Tmp1 = TLI.LowerOperation(Result, DAG);
-      if (Tmp1.Val) {
+      if (Tmp1.getNode()) {
         Result = Tmp1;
         break;
       }
@@ -3004,28 +3004,28 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
           OpToUse = ISD::UMUL_LOHI;
         }
         if (OpToUse) {
-          Result = SDValue(DAG.getNode(OpToUse, VTs, Tmp1, Tmp2).Val, 0);
+          Result = SDValue(DAG.getNode(OpToUse, VTs, Tmp1, Tmp2).getNode(), 0);
           break;
         }
       }
       if (Node->getOpcode() == ISD::MULHS &&
           TLI.isOperationLegal(ISD::SMUL_LOHI, VT)) {
-        Result = SDValue(DAG.getNode(ISD::SMUL_LOHI, VTs, Tmp1, Tmp2).Val, 1);
+        Result = SDValue(DAG.getNode(ISD::SMUL_LOHI, VTs, Tmp1, Tmp2).getNode(), 1);
         break;
       }
       if (Node->getOpcode() == ISD::MULHU && 
           TLI.isOperationLegal(ISD::UMUL_LOHI, VT)) {
-        Result = SDValue(DAG.getNode(ISD::UMUL_LOHI, VTs, Tmp1, Tmp2).Val, 1);
+        Result = SDValue(DAG.getNode(ISD::UMUL_LOHI, VTs, Tmp1, Tmp2).getNode(), 1);
         break;
       }
       if (Node->getOpcode() == ISD::SDIV &&
           TLI.isOperationLegal(ISD::SDIVREM, VT)) {
-        Result = SDValue(DAG.getNode(ISD::SDIVREM, VTs, Tmp1, Tmp2).Val, 0);
+        Result = SDValue(DAG.getNode(ISD::SDIVREM, VTs, Tmp1, Tmp2).getNode(), 0);
         break;
       }
       if (Node->getOpcode() == ISD::UDIV &&
           TLI.isOperationLegal(ISD::UDIVREM, VT)) {
-        Result = SDValue(DAG.getNode(ISD::UDIVREM, VTs, Tmp1, Tmp2).Val, 0);
+        Result = SDValue(DAG.getNode(ISD::UDIVREM, VTs, Tmp1, Tmp2).getNode(), 0);
         break;
       }
 
@@ -3113,7 +3113,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     default: assert(0 && "Operation not supported");
     case TargetLowering::Custom:
       Tmp1 = TLI.LowerOperation(Result, DAG);
-      if (Tmp1.Val) Result = Tmp1;
+      if (Tmp1.getNode()) Result = Tmp1;
       break;
     case TargetLowering::Legal: break;
     case TargetLowering::Expand: {
@@ -3216,7 +3216,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2);
       if (isCustom) {
         Tmp1 = TLI.LowerOperation(Result, DAG);
-        if (Tmp1.Val) Result = Tmp1;
+        if (Tmp1.getNode()) Result = Tmp1;
       }
       break;
     case TargetLowering::Expand: {
@@ -3228,12 +3228,12 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       SDVTList VTs = DAG.getVTList(VT, VT);
       if (Node->getOpcode() == ISD::SREM &&
           TLI.isOperationLegal(ISD::SDIVREM, VT)) {
-        Result = SDValue(DAG.getNode(ISD::SDIVREM, VTs, Tmp1, Tmp2).Val, 1);
+        Result = SDValue(DAG.getNode(ISD::SDIVREM, VTs, Tmp1, Tmp2).getNode(), 1);
         break;
       }
       if (Node->getOpcode() == ISD::UREM &&
           TLI.isOperationLegal(ISD::UDIVREM, VT)) {
-        Result = SDValue(DAG.getNode(ISD::UDIVREM, VTs, Tmp1, Tmp2).Val, 1);
+        Result = SDValue(DAG.getNode(ISD::UDIVREM, VTs, Tmp1, Tmp2).getNode(), 1);
         break;
       }
 
@@ -3288,7 +3288,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
 
       if (isCustom) {
         Tmp2 = TLI.LowerOperation(Result, DAG);
-        if (Tmp2.Val) {
+        if (Tmp2.getNode()) {
           Result = LegalizeOp(Tmp2);
           Tmp1 = LegalizeOp(Tmp2.getValue(1));
         }
@@ -3332,7 +3332,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
                                       Node->getOperand(3), Node->getOperand(4));
       if (isCustom) {
         Tmp1 = TLI.LowerOperation(Result, DAG);
-        if (Tmp1.Val) Result = Tmp1;
+        if (Tmp1.getNode()) Result = Tmp1;
       }
       break;
     case TargetLowering::Expand:
@@ -3359,7 +3359,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2, Node->getOperand(2));
       if (isCustom) {
         Tmp1 = TLI.LowerOperation(Tmp1, DAG);
-        if (Tmp1.Val) Result = Tmp1;
+        if (Tmp1.getNode()) Result = Tmp1;
       }
       break;
     case TargetLowering::Expand:
@@ -3379,7 +3379,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     case TargetLowering::Legal: break;
     case TargetLowering::Custom:
       Tmp1 = TLI.LowerOperation(Result, DAG);
-      if (Tmp1.Val) Result = Tmp1;
+      if (Tmp1.getNode()) Result = Tmp1;
       break;
     }
     break;
@@ -3397,7 +3397,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       break;
     case TargetLowering::Custom:
       Tmp1 = TLI.LowerOperation(Result, DAG);
-      if (Tmp1.Val) Result = Tmp1;
+      if (Tmp1.getNode()) Result = Tmp1;
       break;
     case TargetLowering::Promote:
       assert(0 && "Do not know how to promote ROTL/ROTR");
@@ -3444,7 +3444,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       if (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0)) ==
           TargetLowering::Custom) {
         Tmp1 = TLI.LowerOperation(Result, DAG);
-        if (Tmp1.Val) {
+        if (Tmp1.getNode()) {
           Result = Tmp1;
         }
       }
@@ -3505,7 +3505,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       Result = DAG.UpdateNodeOperands(Result, Tmp1);
       if (isCustom) {
         Tmp1 = TLI.LowerOperation(Result, DAG);
-        if (Tmp1.Val) Result = Tmp1;
+        if (Tmp1.getNode()) Result = Tmp1;
       }
       break;
     case TargetLowering::Expand:
@@ -3609,7 +3609,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     } else if (Op.getOperand(0).getValueType().isVector()) {
       // The input has to be a vector type, we have to either scalarize it, pack
       // it, or convert it based on whether the input vector type is legal.
-      SDNode *InVal = Node->getOperand(0).Val;
+      SDNode *InVal = Node->getOperand(0).getNode();
       int InIx = Node->getOperand(0).getResNo();
       unsigned NumElems = InVal->getValueType(InIx).getVectorNumElements();
       MVT EVT = InVal->getValueType(InIx).getVectorElementType();
@@ -3690,7 +3690,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
         Result = DAG.UpdateNodeOperands(Result, Tmp1);
         if (isCustom) {
           Tmp1 = TLI.LowerOperation(Result, DAG);
-          if (Tmp1.Val) Result = Tmp1;
+          if (Tmp1.getNode()) Result = Tmp1;
         }
         break;
       case TargetLowering::Promote:
@@ -3832,7 +3832,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       if (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0)) ==
           TargetLowering::Custom) {
         Tmp1 = TLI.LowerOperation(Result, DAG);
-        if (Tmp1.Val) Result = Tmp1;
+        if (Tmp1.getNode()) Result = Tmp1;
       }
       break;
     case Promote:
@@ -3904,7 +3904,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     Result = DAG.UpdateNodeOperands(Result, Ops, 6);
     // The only option for this node is to custom lower it.
     Result = TLI.LowerOperation(Result, DAG);
-    assert(Result.Val && "Should always custom lower!");
+    assert(Result.getNode() && "Should always custom lower!");
 
     // Since trampoline produces two values, make sure to remember that we
     // legalized both of them.
@@ -3920,7 +3920,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     default: assert(0 && "This action not supported for this op yet!");
     case TargetLowering::Custom:
       Result = TLI.LowerOperation(Op, DAG);
-      if (Result.Val) break;
+      if (Result.getNode()) break;
       // Fall Thru
     case TargetLowering::Legal:
       // If this operation is not supported, lower it to constant 1
@@ -3939,7 +3939,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       break;
     case TargetLowering::Custom:
       Result = TLI.LowerOperation(Op, DAG);
-      if (Result.Val) break;
+      if (Result.getNode()) break;
       // Fall Thru
     case TargetLowering::Expand:
       // If this operation is not supported, lower it to 'abort()' call
@@ -3984,7 +3984,7 @@ SDValue SelectionDAGLegalize::PromoteOp(SDValue Op) {
 
   SDValue Tmp1, Tmp2, Tmp3;
   SDValue Result;
-  SDNode *Node = Op.Val;
+  SDNode *Node = Op.getNode();
 
   DenseMap<SDValue, SDValue>::iterator I = PromotedNodes.find(Op);
   if (I != PromotedNodes.end()) return I->second;
@@ -4461,7 +4461,7 @@ SDValue SelectionDAGLegalize::PromoteOp(SDValue Op) {
     break;
   }
 
-  assert(Result.Val && "Didn't set a result!");
+  assert(Result.getNode() && "Didn't set a result!");
 
   // Make sure the result is itself legal.
   Result = LegalizeOp(Result);
@@ -4491,7 +4491,7 @@ SDValue SelectionDAGLegalize::ExpandEXTRACT_VECTOR_ELT(SDValue Op) {
     Vec = LegalizeOp(Vec);
     Op = DAG.UpdateNodeOperands(Op, Vec, Idx);
     SDValue Tmp3 = TLI.LowerOperation(Op, DAG);
-    if (Tmp3.Val)
+    if (Tmp3.getNode())
       return Tmp3;
     break;
   }
@@ -4697,14 +4697,14 @@ void SelectionDAGLegalize::LegalizeSetCCOperands(SDValue &LHS,
 
       SDValue Dummy;
       SDValue Ops[2] = { LHS, RHS };
-      Tmp1 = ExpandLibCall(LC1, DAG.getMergeValues(Ops, 2).Val,
+      Tmp1 = ExpandLibCall(LC1, DAG.getMergeValues(Ops, 2).getNode(),
                            false /*sign irrelevant*/, Dummy);
       Tmp2 = DAG.getConstant(0, MVT::i32);
       CC = DAG.getCondCode(TLI.getCmpLibcallCC(LC1));
       if (LC2 != RTLIB::UNKNOWN_LIBCALL) {
         Tmp1 = DAG.getNode(ISD::SETCC, TLI.getSetCCResultType(Tmp1), Tmp1, Tmp2,
                            CC);
-        LHS = ExpandLibCall(LC2, DAG.getMergeValues(Ops, 2).Val,
+        LHS = ExpandLibCall(LC2, DAG.getMergeValues(Ops, 2).getNode(),
                             false /*sign irrelevant*/, Dummy);
         Tmp2 = DAG.getNode(ISD::SETCC, TLI.getSetCCResultType(LHS), LHS, Tmp2,
                            DAG.getCondCode(TLI.getCmpLibcallCC(LC2)));
@@ -4791,16 +4791,16 @@ void SelectionDAGLegalize::LegalizeSetCCOperands(SDValue &LHS,
       TargetLowering::DAGCombinerInfo DagCombineInfo(DAG, false, true, NULL);
       Tmp1 = TLI.SimplifySetCC(TLI.getSetCCResultType(LHSLo), LHSLo, RHSLo,
                                LowCC, false, DagCombineInfo);
-      if (!Tmp1.Val)
+      if (!Tmp1.getNode())
         Tmp1 = DAG.getSetCC(TLI.getSetCCResultType(LHSLo), LHSLo, RHSLo, LowCC);
       Tmp2 = TLI.SimplifySetCC(TLI.getSetCCResultType(LHSHi), LHSHi, RHSHi,
                                CCCode, false, DagCombineInfo);
-      if (!Tmp2.Val)
+      if (!Tmp2.getNode())
         Tmp2 = DAG.getNode(ISD::SETCC, TLI.getSetCCResultType(LHSHi), LHSHi,
                            RHSHi,CC);
       
-      ConstantSDNode *Tmp1C = dyn_cast<ConstantSDNode>(Tmp1.Val);
-      ConstantSDNode *Tmp2C = dyn_cast<ConstantSDNode>(Tmp2.Val);
+      ConstantSDNode *Tmp1C = dyn_cast<ConstantSDNode>(Tmp1.getNode());
+      ConstantSDNode *Tmp2C = dyn_cast<ConstantSDNode>(Tmp2.getNode());
       if ((Tmp1C && Tmp1C->isNullValue()) ||
           (Tmp2C && Tmp2C->isNullValue() &&
            (CCCode == ISD::SETLE || CCCode == ISD::SETGE ||
@@ -4816,7 +4816,7 @@ void SelectionDAGLegalize::LegalizeSetCCOperands(SDValue &LHS,
       } else {
         Result = TLI.SimplifySetCC(TLI.getSetCCResultType(LHSHi), LHSHi, RHSHi,
                                    ISD::SETEQ, false, DagCombineInfo);
-        if (!Result.Val)
+        if (!Result.getNode())
           Result=DAG.getSetCC(TLI.getSetCCResultType(LHSHi), LHSHi, RHSHi,
                               ISD::SETEQ);
         Result = LegalizeOp(DAG.getNode(ISD::SELECT, Tmp1.getValueType(),
@@ -4958,7 +4958,7 @@ SDValue SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
                        PseudoSourceValue::getConstantPool(), 0);
   }
   
-  if (SplatValue.Val) {   // Splat of one value?
+  if (SplatValue.getNode()) {   // Splat of one value?
     // Build the shuffle constant vector: <0, 0, 0, 0>
     MVT MaskVT = MVT::getIntVectorWithNumElements(NumElems);
     SDValue Zero = DAG.getConstant(0, MaskVT.getVectorElementType());
@@ -5095,7 +5095,7 @@ bool SelectionDAGLegalize::ExpandShift(unsigned Opc, SDValue Op,SDValue Amt,
   unsigned NVTBits = NVT.getSizeInBits();
 
   // Handle the case when Amt is an immediate.
-  if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Amt.Val)) {
+  if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Amt.getNode())) {
     unsigned Cst = CN->getValue();
     // Expand the incoming operand to be shifted, so that we have its parts
     SDValue InL, InH;
@@ -5292,14 +5292,14 @@ LegalizeINT_TO_FP(SDValue Result, bool isSigned, MVT DestTy, SDValue Op) {
       // FALLTHROUGH
     case TargetLowering::Legal:
       Tmp1 = LegalizeOp(Op);
-      if (Result.Val)
+      if (Result.getNode())
         Result = DAG.UpdateNodeOperands(Result, Tmp1);
       else
         Result = DAG.getNode(isSigned ? ISD::SINT_TO_FP : ISD::UINT_TO_FP,
                              DestTy, Tmp1);
       if (isCustom) {
         Tmp1 = TLI.LowerOperation(Result, DAG);
-        if (Tmp1.Val) Result = Tmp1;
+        if (Tmp1.getNode()) Result = Tmp1;
       }
       break;
     case TargetLowering::Expand:
@@ -5322,7 +5322,7 @@ LegalizeINT_TO_FP(SDValue Result, bool isSigned, MVT DestTy, SDValue Op) {
       Tmp1 = DAG.getZeroExtendInReg(Tmp1,
                                     Op.getValueType());
     }
-    if (Result.Val)
+    if (Result.getNode())
       Result = DAG.UpdateNodeOperands(Result, Tmp1);
     else
       Result = DAG.getNode(isSigned ? ISD::SINT_TO_FP : ISD::UINT_TO_FP,
@@ -5427,7 +5427,7 @@ ExpandIntToFP(bool isSigned, MVT DestTy, SDValue Source) {
   case TargetLowering::Custom: {
     SDValue NV = TLI.LowerOperation(DAG.getNode(ISD::SINT_TO_FP, DestTy,
                                                   Source), DAG);
-    if (NV.Val)
+    if (NV.getNode())
       return LegalizeOp(NV);
     break;   // The target decided this was legal after all
   }
@@ -5448,8 +5448,8 @@ ExpandIntToFP(bool isSigned, MVT DestTy, SDValue Source) {
 
   Source = DAG.getNode(ISD::SINT_TO_FP, DestTy, Source);
   SDValue HiPart;
-  SDValue Result = ExpandLibCall(LC, Source.Val, isSigned, HiPart);
-  if (Result.getValueType() != DestTy && HiPart.Val)
+  SDValue Result = ExpandLibCall(LC, Source.getNode(), isSigned, HiPart);
+  if (Result.getValueType() != DestTy && HiPart.getNode())
     Result = DAG.getNode(ISD::BUILD_PAIR, DestTy, Result, HiPart);
   return Result;
 }
@@ -5665,8 +5665,8 @@ SDValue SelectionDAGLegalize::PromoteLegalFP_TO_INT(SDValue LegalOp,
   // the target lowering hooks to expand it.  Just keep the low part of the
   // expanded operation, we know that we're truncating anyway.
   if (getTypeAction(NewOutTy) == Expand) {
-    Operation = SDValue(TLI.ReplaceNodeResults(Operation.Val, DAG), 0);
-    assert(Operation.Val && "Didn't return anything");
+    Operation = SDValue(TLI.ReplaceNodeResults(Operation.getNode(), DAG), 0);
+    assert(Operation.getNode() && "Didn't return anything");
   }
 
   // Truncate the result of the extended FP_TO_*INT operation to the desired
@@ -5794,7 +5794,7 @@ SDValue SelectionDAGLegalize::ExpandBitCount(unsigned Opc, SDValue Op) {
 void SelectionDAGLegalize::ExpandOp(SDValue Op, SDValue &Lo, SDValue &Hi){
   MVT VT = Op.getValueType();
   MVT NVT = TLI.getTypeToTransformTo(VT);
-  SDNode *Node = Op.Val;
+  SDNode *Node = Op.getNode();
   assert(getTypeAction(VT) == Expand && "Not an expanded type!");
   assert(((NVT.isInteger() && NVT.bitsLT(VT)) || VT.isFloatingPoint() ||
          VT.isVector()) && "Cannot expand to FP value or to larger int value!");
@@ -5820,9 +5820,9 @@ void SelectionDAGLegalize::ExpandOp(SDValue Op, SDValue &Lo, SDValue &Hi){
       Src = DAG.getNode(ISD::BUILD_PAIR, VT, SrcLo, SrcHi);
       SDValue Result = TLI.LowerOperation(
         DAG.getNode(ISD::FP_ROUND_INREG, VT, Src, Op.getOperand(1)), DAG);
-      assert(Result.Val->getOpcode() == ISD::BUILD_PAIR);
-      Lo = Result.Val->getOperand(0);
-      Hi = Result.Val->getOperand(1);
+      assert(Result.getNode()->getOpcode() == ISD::BUILD_PAIR);
+      Lo = Result.getNode()->getOperand(0);
+      Hi = Result.getNode()->getOperand(1);
       break;
     }
     // fall through
@@ -6145,7 +6145,7 @@ void SelectionDAGLegalize::ExpandOp(SDValue Op, SDValue &Lo, SDValue &Hi){
     }
 
     // Turn this into a load/store pair by default.
-    if (Tmp.Val == 0)
+    if (Tmp.getNode() == 0)
       Tmp = EmitStackConvert(Node->getOperand(0), VT, VT);
     
     ExpandOp(Tmp, Lo, Hi);
@@ -6157,7 +6157,7 @@ void SelectionDAGLegalize::ExpandOp(SDValue Op, SDValue &Lo, SDValue &Hi){
                  TargetLowering::Custom &&
            "Must custom expand ReadCycleCounter");
     SDValue Tmp = TLI.LowerOperation(Op, DAG);
-    assert(Tmp.Val && "Node must be custom expanded!");
+    assert(Tmp.getNode() && "Node must be custom expanded!");
     ExpandOp(Tmp.getValue(0), Lo, Hi);
     AddLegalizedOperand(SDValue(Node, 1), // Remember we legalized the chain.
                         LegalizeOp(Tmp.getValue(1)));
@@ -6170,7 +6170,7 @@ void SelectionDAGLegalize::ExpandOp(SDValue Op, SDValue &Lo, SDValue &Hi){
   case ISD::ATOMIC_CMP_SWAP_32:
   case ISD::ATOMIC_CMP_SWAP_64: {
     SDValue Tmp = TLI.LowerOperation(Op, DAG);
-    assert(Tmp.Val && "Node must be custom expanded!");
+    assert(Tmp.getNode() && "Node must be custom expanded!");
     ExpandOp(Tmp.getValue(0), Lo, Hi);
     AddLegalizedOperand(SDValue(Node, 1), // Remember we legalized the chain.
                         LegalizeOp(Tmp.getValue(1)));
@@ -6194,7 +6194,7 @@ void SelectionDAGLegalize::ExpandOp(SDValue Op, SDValue &Lo, SDValue &Hi){
 
       // Now that the custom expander is done, expand the result, which is still
       // VT.
-      if (Op.Val) {
+      if (Op.getNode()) {
         ExpandOp(Op, Lo, Hi);
         break;
       }
@@ -6219,7 +6219,7 @@ void SelectionDAGLegalize::ExpandOp(SDValue Op, SDValue &Lo, SDValue &Hi){
       Op = TLI.LowerOperation(DAG.getNode(ISD::FP_TO_UINT, VT, Op), DAG);
 
       // Now that the custom expander is done, expand the result.
-      if (Op.Val) {
+      if (Op.getNode()) {
         ExpandOp(Op, Lo, Hi);
         break;
       }
@@ -6238,7 +6238,7 @@ void SelectionDAGLegalize::ExpandOp(SDValue Op, SDValue &Lo, SDValue &Hi){
     if (TLI.getOperationAction(ISD::SHL, VT) == TargetLowering::Custom) {
       SDValue Op = DAG.getNode(ISD::SHL, VT, Node->getOperand(0), ShiftAmt);
       Op = TLI.LowerOperation(Op, DAG);
-      if (Op.Val) {
+      if (Op.getNode()) {
         // Now that the custom expander is done, expand the result, which is
         // still VT.
         ExpandOp(Op, Lo, Hi);
@@ -6288,7 +6288,7 @@ void SelectionDAGLegalize::ExpandOp(SDValue Op, SDValue &Lo, SDValue &Hi){
     if (TLI.getOperationAction(ISD::SRA, VT) == TargetLowering::Custom) {
       SDValue Op = DAG.getNode(ISD::SRA, VT, Node->getOperand(0), ShiftAmt);
       Op = TLI.LowerOperation(Op, DAG);
-      if (Op.Val) {
+      if (Op.getNode()) {
         // Now that the custom expander is done, expand the result, which is
         // still VT.
         ExpandOp(Op, Lo, Hi);
@@ -6320,7 +6320,7 @@ void SelectionDAGLegalize::ExpandOp(SDValue Op, SDValue &Lo, SDValue &Hi){
     if (TLI.getOperationAction(ISD::SRL, VT) == TargetLowering::Custom) {
       SDValue Op = DAG.getNode(ISD::SRL, VT, Node->getOperand(0), ShiftAmt);
       Op = TLI.LowerOperation(Op, DAG);
-      if (Op.Val) {
+      if (Op.getNode()) {
         // Now that the custom expander is done, expand the result, which is
         // still VT.
         ExpandOp(Op, Lo, Hi);
@@ -6352,7 +6352,7 @@ void SelectionDAGLegalize::ExpandOp(SDValue Op, SDValue &Lo, SDValue &Hi){
     if (TLI.getOperationAction(Node->getOpcode(), VT) ==
             TargetLowering::Custom) {
       SDValue Result = TLI.LowerOperation(Op, DAG);
-      if (Result.Val) {
+      if (Result.getNode()) {
         ExpandOp(Result, Lo, Hi);
         break;
       }
@@ -6425,7 +6425,7 @@ void SelectionDAGLegalize::ExpandOp(SDValue Op, SDValue &Lo, SDValue &Hi){
     // If the target wants to custom expand this, let them.
     if (TLI.getOperationAction(ISD::MUL, VT) == TargetLowering::Custom) {
       SDValue New = TLI.LowerOperation(Op, DAG);
-      if (New.Val) {
+      if (New.getNode()) {
         ExpandOp(New, Lo, Hi);
         break;
       }
@@ -6450,7 +6450,7 @@ void SelectionDAGLegalize::ExpandOp(SDValue Op, SDValue &Lo, SDValue &Hi){
         if (HasUMUL_LOHI) {
           // We can emit a umul_lohi.
           Lo = DAG.getNode(ISD::UMUL_LOHI, DAG.getVTList(NVT, NVT), LL, RL);
-          Hi = SDValue(Lo.Val, 1);
+          Hi = SDValue(Lo.getNode(), 1);
           break;
         }
         if (HasMULHU) {
@@ -6465,7 +6465,7 @@ void SelectionDAGLegalize::ExpandOp(SDValue Op, SDValue &Lo, SDValue &Hi){
         if (HasSMUL_LOHI) {
           // We can emit a smul_lohi.
           Lo = DAG.getNode(ISD::SMUL_LOHI, DAG.getVTList(NVT, NVT), LL, RL);
-          Hi = SDValue(Lo.Val, 1);
+          Hi = SDValue(Lo.getNode(), 1);
           break;
         }
         if (HasMULHS) {
@@ -6678,7 +6678,7 @@ void SelectionDAGLegalize::ExpandOp(SDValue Op, SDValue &Lo, SDValue &Hi){
         ? DAG.getNode(ISD::SIGN_EXTEND_INREG, Tmp.getValueType(), Tmp,
                       DAG.getValueType(SrcVT))
         : DAG.getZeroExtendInReg(Tmp, SrcVT);
-      Node = DAG.UpdateNodeOperands(Op, Tmp).Val;
+      Node = DAG.UpdateNodeOperands(Op, Tmp).getNode();
       SrcVT = Node->getOperand(0).getValueType();
     }
 
@@ -6739,7 +6739,7 @@ void SelectionDAGLegalize::ExpandOp(SDValue Op, SDValue &Lo, SDValue &Hi){
   // is a type that requires multi-step expansion.
   if (getTypeAction(NVT) != Expand && NVT != MVT::isVoid) {
     Lo = LegalizeOp(Lo);
-    if (Hi.Val)
+    if (Hi.getNode())
       // Don't legalize the high part if it is expanded to a single node.
       Hi = LegalizeOp(Hi);
   }
@@ -6755,7 +6755,7 @@ void SelectionDAGLegalize::ExpandOp(SDValue Op, SDValue &Lo, SDValue &Hi){
 void SelectionDAGLegalize::SplitVectorOp(SDValue Op, SDValue &Lo,
                                          SDValue &Hi) {
   assert(Op.getValueType().isVector() && "Cannot split non-vector type!");
-  SDNode *Node = Op.Val;
+  SDNode *Node = Op.getNode();
   unsigned NumElements = Op.getValueType().getVectorNumElements();
   assert(NumElements > 1 && "Cannot split a single element vector!");
 
@@ -7033,7 +7033,7 @@ void SelectionDAGLegalize::SplitVectorOp(SDValue Op, SDValue &Lo,
       unsigned LdAlign = TLI.getTargetData()->getPrefTypeAlignment(
                                             Op.getValueType().getTypeForMVT());
       SDValue Ptr = DAG.CreateStackTemporary(InOp.getValueType(), LdAlign);
-      int FI = cast<FrameIndexSDNode>(Ptr.Val)->getIndex();
+      int FI = cast<FrameIndexSDNode>(Ptr.getNode())->getIndex();
 
       SDValue St = DAG.getStore(DAG.getEntryNode(),
                                   InOp, Ptr,
@@ -7061,7 +7061,7 @@ void SelectionDAGLegalize::SplitVectorOp(SDValue Op, SDValue &Lo,
 /// scalar (e.g. f32) value.
 SDValue SelectionDAGLegalize::ScalarizeVectorOp(SDValue Op) {
   assert(Op.getValueType().isVector() && "Bad ScalarizeVectorOp invocation!");
-  SDNode *Node = Op.Val;
+  SDNode *Node = Op.getNode();
   MVT NewVT = Op.getValueType().getVectorElementType();
   assert(Op.getValueType().getVectorNumElements() == 1);
   

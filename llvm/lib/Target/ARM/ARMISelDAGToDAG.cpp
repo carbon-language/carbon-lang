@@ -529,7 +529,7 @@ static inline SDValue getAL(SelectionDAG *CurDAG) {
 
 
 SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
-  SDNode *N = Op.Val;
+  SDNode *N = Op.getNode();
 
   if (N->isMachineOpcode())
     return NULL;   // Already selected.
@@ -729,11 +729,11 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
     SDValue Ops[] = { N1, Tmp2, N3, Chain, InFlag };
     SDNode *ResNode = CurDAG->getTargetNode(Opc, MVT::Other, MVT::Flag, Ops, 5);
     Chain = SDValue(ResNode, 0);
-    if (Op.Val->getNumValues() == 2) {
+    if (Op.getNode()->getNumValues() == 2) {
       InFlag = SDValue(ResNode, 1);
-      ReplaceUses(SDValue(Op.Val, 1), InFlag);
+      ReplaceUses(SDValue(Op.getNode(), 1), InFlag);
     }
-    ReplaceUses(SDValue(Op.Val, 0), SDValue(Chain.Val, Chain.getResNo()));
+    ReplaceUses(SDValue(Op.getNode(), 0), SDValue(Chain.getNode(), Chain.getResNo()));
     return NULL;
   }
   case ARMISD::CMOV: {
@@ -763,7 +763,7 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       SDValue Tmp2 = CurDAG->getTargetConstant(((unsigned)
                                cast<ConstantSDNode>(N2)->getValue()), MVT::i32);
       SDValue Ops[] = { N0, CPTmp0, CPTmp1, CPTmp2, Tmp2, N3, InFlag };
-      return CurDAG->SelectNodeTo(Op.Val, ARM::MOVCCs, MVT::i32, Ops, 7);
+      return CurDAG->SelectNodeTo(Op.getNode(), ARM::MOVCCs, MVT::i32, Ops, 7);
     }
 
     // Pattern: (ARMcmov:i32 GPR:i32:$false,
@@ -774,16 +774,16 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
     // Pattern complexity = 10  cost = 1  size = 0
     if (VT == MVT::i32 &&
         N3.getOpcode() == ISD::Constant &&
-        Predicate_so_imm(N3.Val)) {
+        Predicate_so_imm(N3.getNode())) {
       AddToISelQueue(N0);
       AddToISelQueue(InFlag);
       SDValue Tmp1 = CurDAG->getTargetConstant(((unsigned)
                                cast<ConstantSDNode>(N1)->getValue()), MVT::i32);
-      Tmp1 = Transform_so_imm_XFORM(Tmp1.Val);
+      Tmp1 = Transform_so_imm_XFORM(Tmp1.getNode());
       SDValue Tmp2 = CurDAG->getTargetConstant(((unsigned)
                                cast<ConstantSDNode>(N2)->getValue()), MVT::i32);
       SDValue Ops[] = { N0, Tmp1, Tmp2, N3, InFlag };
-      return CurDAG->SelectNodeTo(Op.Val, ARM::MOVCCi, MVT::i32, Ops, 5);
+      return CurDAG->SelectNodeTo(Op.getNode(), ARM::MOVCCi, MVT::i32, Ops, 5);
     }
 
     // Pattern: (ARMcmov:i32 GPR:i32:$false, GPR:i32:$true, (imm:i32):$cc)
@@ -815,7 +815,7 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       Opc = ARM::FCPYDcc;
       break; 
     }
-    return CurDAG->SelectNodeTo(Op.Val, Opc, VT, Ops, 5);
+    return CurDAG->SelectNodeTo(Op.getNode(), Opc, VT, Ops, 5);
   }
   case ARMISD::CNEG: {
     MVT VT = Op.getValueType();
@@ -844,7 +844,7 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       Opc = ARM::FNEGDcc;
       break; 
     }
-    return CurDAG->SelectNodeTo(Op.Val, Opc, VT, Ops, 5);
+    return CurDAG->SelectNodeTo(Op.getNode(), Opc, VT, Ops, 5);
   }
   }
   return SelectCode(Op);
