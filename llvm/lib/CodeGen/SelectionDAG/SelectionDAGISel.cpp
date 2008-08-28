@@ -523,84 +523,6 @@ unsigned FunctionLoweringInfo::CreateRegForValue(const Value *V) {
   return FirstReg;
 }
 
-namespace {
-
-/// CaseBlock - This structure is used to communicate between SDLowering and
-/// SDISel for the code generation of additional basic blocks needed by multi-
-/// case switch statements.
-struct CaseBlock {
-  CaseBlock(ISD::CondCode cc, Value *cmplhs, Value *cmprhs, Value *cmpmiddle,
-            MachineBasicBlock *truebb, MachineBasicBlock *falsebb,
-            MachineBasicBlock *me)
-    : CC(cc), CmpLHS(cmplhs), CmpMHS(cmpmiddle), CmpRHS(cmprhs),
-      TrueBB(truebb), FalseBB(falsebb), ThisBB(me) {}
-  // CC - the condition code to use for the case block's setcc node
-  ISD::CondCode CC;
-  // CmpLHS/CmpRHS/CmpMHS - The LHS/MHS/RHS of the comparison to emit.
-  // Emit by default LHS op RHS. MHS is used for range comparisons:
-  // If MHS is not null: (LHS <= MHS) and (MHS <= RHS).
-  Value *CmpLHS, *CmpMHS, *CmpRHS;
-  // TrueBB/FalseBB - the block to branch to if the setcc is true/false.
-  MachineBasicBlock *TrueBB, *FalseBB;
-  // ThisBB - the block into which to emit the code for the setcc and branches
-  MachineBasicBlock *ThisBB;
-};
-struct JumpTable {
-  JumpTable(unsigned R, unsigned J, MachineBasicBlock *M,
-            MachineBasicBlock *D): Reg(R), JTI(J), MBB(M), Default(D) {}
-  
-  /// Reg - the virtual register containing the index of the jump table entry
-  //. to jump to.
-  unsigned Reg;
-  /// JTI - the JumpTableIndex for this jump table in the function.
-  unsigned JTI;
-  /// MBB - the MBB into which to emit the code for the indirect jump.
-  MachineBasicBlock *MBB;
-  /// Default - the MBB of the default bb, which is a successor of the range
-  /// check MBB.  This is when updating PHI nodes in successors.
-  MachineBasicBlock *Default;
-};
-struct JumpTableHeader {
-  JumpTableHeader(uint64_t F, uint64_t L, Value* SV, MachineBasicBlock* H,
-                  bool E = false):
-    First(F), Last(L), SValue(SV), HeaderBB(H), Emitted(E) {}
-  uint64_t First;
-  uint64_t Last;
-  Value *SValue;
-  MachineBasicBlock *HeaderBB;
-  bool Emitted;
-};
-typedef std::pair<JumpTableHeader, JumpTable> JumpTableBlock;
-
-struct BitTestCase {
-  BitTestCase(uint64_t M, MachineBasicBlock* T, MachineBasicBlock* Tr):
-    Mask(M), ThisBB(T), TargetBB(Tr) { }
-  uint64_t Mask;
-  MachineBasicBlock* ThisBB;
-  MachineBasicBlock* TargetBB;
-};
-
-typedef SmallVector<BitTestCase, 3> BitTestInfo;
-
-struct BitTestBlock {
-  BitTestBlock(uint64_t F, uint64_t R, Value* SV,
-               unsigned Rg, bool E,
-               MachineBasicBlock* P, MachineBasicBlock* D,
-               const BitTestInfo& C):
-    First(F), Range(R), SValue(SV), Reg(Rg), Emitted(E),
-    Parent(P), Default(D), Cases(C) { }
-  uint64_t First;
-  uint64_t Range;
-  Value  *SValue;
-  unsigned Reg;
-  bool Emitted;
-  MachineBasicBlock *Parent;
-  MachineBasicBlock *Default;
-  BitTestInfo Cases;
-};
-
-} // end anonymous namespace
-
 //===----------------------------------------------------------------------===//
 /// SelectionDAGLowering - This is the common target-independent lowering
 /// implementation that is parameterized by a TargetLowering object.
@@ -694,6 +616,80 @@ class SelectionDAGLowering {
 
   unsigned Clusterify(CaseVector& Cases, const SwitchInst &SI);
   
+  /// CaseBlock - This structure is used to communicate between SDLowering and
+  /// SDISel for the code generation of additional basic blocks needed by multi-
+  /// case switch statements.
+  struct CaseBlock {
+    CaseBlock(ISD::CondCode cc, Value *cmplhs, Value *cmprhs, Value *cmpmiddle,
+              MachineBasicBlock *truebb, MachineBasicBlock *falsebb,
+              MachineBasicBlock *me)
+      : CC(cc), CmpLHS(cmplhs), CmpMHS(cmpmiddle), CmpRHS(cmprhs),
+        TrueBB(truebb), FalseBB(falsebb), ThisBB(me) {}
+    // CC - the condition code to use for the case block's setcc node
+    ISD::CondCode CC;
+    // CmpLHS/CmpRHS/CmpMHS - The LHS/MHS/RHS of the comparison to emit.
+    // Emit by default LHS op RHS. MHS is used for range comparisons:
+    // If MHS is not null: (LHS <= MHS) and (MHS <= RHS).
+    Value *CmpLHS, *CmpMHS, *CmpRHS;
+    // TrueBB/FalseBB - the block to branch to if the setcc is true/false.
+    MachineBasicBlock *TrueBB, *FalseBB;
+    // ThisBB - the block into which to emit the code for the setcc and branches
+    MachineBasicBlock *ThisBB;
+  };
+  struct JumpTable {
+    JumpTable(unsigned R, unsigned J, MachineBasicBlock *M,
+              MachineBasicBlock *D): Reg(R), JTI(J), MBB(M), Default(D) {}
+  
+    /// Reg - the virtual register containing the index of the jump table entry
+    //. to jump to.
+    unsigned Reg;
+    /// JTI - the JumpTableIndex for this jump table in the function.
+    unsigned JTI;
+    /// MBB - the MBB into which to emit the code for the indirect jump.
+    MachineBasicBlock *MBB;
+    /// Default - the MBB of the default bb, which is a successor of the range
+    /// check MBB.  This is when updating PHI nodes in successors.
+    MachineBasicBlock *Default;
+  };
+  struct JumpTableHeader {
+    JumpTableHeader(uint64_t F, uint64_t L, Value* SV, MachineBasicBlock* H,
+                    bool E = false):
+      First(F), Last(L), SValue(SV), HeaderBB(H), Emitted(E) {}
+    uint64_t First;
+    uint64_t Last;
+    Value *SValue;
+    MachineBasicBlock *HeaderBB;
+    bool Emitted;
+  };
+  typedef std::pair<JumpTableHeader, JumpTable> JumpTableBlock;
+
+  struct BitTestCase {
+    BitTestCase(uint64_t M, MachineBasicBlock* T, MachineBasicBlock* Tr):
+      Mask(M), ThisBB(T), TargetBB(Tr) { }
+    uint64_t Mask;
+    MachineBasicBlock* ThisBB;
+    MachineBasicBlock* TargetBB;
+  };
+
+  typedef SmallVector<BitTestCase, 3> BitTestInfo;
+
+  struct BitTestBlock {
+    BitTestBlock(uint64_t F, uint64_t R, Value* SV,
+                 unsigned Rg, bool E,
+                 MachineBasicBlock* P, MachineBasicBlock* D,
+                 const BitTestInfo& C):
+      First(F), Range(R), SValue(SV), Reg(Rg), Emitted(E),
+      Parent(P), Default(D), Cases(C) { }
+    uint64_t First;
+    uint64_t Range;
+    Value  *SValue;
+    unsigned Reg;
+    bool Emitted;
+    MachineBasicBlock *Parent;
+    MachineBasicBlock *Default;
+    BitTestInfo Cases;
+  };
+
 public:
   // TLI - This is information that describes the available target features we
   // need for lowering.  This indicates when operations are unavailable,
@@ -839,6 +835,7 @@ public:
   void FindMergedConditions(Value *Cond, MachineBasicBlock *TBB,
                             MachineBasicBlock *FBB, MachineBasicBlock *CurBB,
                             unsigned Opc);
+  bool ShouldEmitAsBranches(const std::vector<CaseBlock> &Cases);
   bool isExportableFromCurrentBlock(Value *V, const BasicBlock *FromBB);
   void ExportFromCurrentBlock(Value *V);
   void LowerCallTo(CallSite CS, SDValue Callee, bool IsTailCall,
@@ -1618,8 +1615,8 @@ void SelectionDAGLowering::FindMergedConditions(Value *Cond,
 /// If the set of cases should be emitted as a series of branches, return true.
 /// If we should emit this as a bunch of and/or'd together conditions, return
 /// false.
-static bool 
-ShouldEmitAsBranches(const std::vector<CaseBlock> &Cases) {
+bool 
+SelectionDAGLowering::ShouldEmitAsBranches(const std::vector<CaseBlock> &Cases){
   if (Cases.size() != 2) return true;
   
   // If this is two comparisons of the same values or'd or and'd together, they
