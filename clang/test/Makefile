@@ -1,8 +1,8 @@
 LEVEL = ../../..
 include $(LEVEL)/Makefile.common
 
-# Test in all immediate subdirectories.
-TESTDIRS = $(shell echo $(PROJ_SRC_DIR)/*/)
+# Test in all immediate subdirectories if unset.
+TESTDIRS ?= $(shell echo $(PROJ_SRC_DIR)/*/)
 
 # Only run rewriter tests on darwin.
 ifeq ($(OS),Darwin)
