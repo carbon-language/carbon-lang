@@ -512,9 +512,9 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::SREM, (MVT::SimpleValueType)VT, Expand);
     setOperationAction(ISD::UREM, (MVT::SimpleValueType)VT, Expand);
     setOperationAction(ISD::LOAD, (MVT::SimpleValueType)VT, Expand);
-    setOperationAction(ISD::VECTOR_SHUFFLE,     (MVT::SimpleValueType)VT, Expand);
-    setOperationAction(ISD::EXTRACT_VECTOR_ELT, (MVT::SimpleValueType)VT, Expand);
-    setOperationAction(ISD::INSERT_VECTOR_ELT,  (MVT::SimpleValueType)VT, Expand);
+    setOperationAction(ISD::VECTOR_SHUFFLE, (MVT::SimpleValueType)VT, Expand);
+    setOperationAction(ISD::EXTRACT_VECTOR_ELT,(MVT::SimpleValueType)VT,Expand);
+    setOperationAction(ISD::INSERT_VECTOR_ELT,(MVT::SimpleValueType)VT, Expand);
     setOperationAction(ISD::FABS, (MVT::SimpleValueType)VT, Expand);
     setOperationAction(ISD::FSIN, (MVT::SimpleValueType)VT, Expand);
     setOperationAction(ISD::FCOS, (MVT::SimpleValueType)VT, Expand);
@@ -1787,7 +1787,8 @@ SDValue X86TargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
 
   // Handle result values, copying them out of physregs into vregs that we
   // return.
-  return SDValue(LowerCallResult(Chain, InFlag, Op.getNode(), CC, DAG), Op.getResNo());
+  return SDValue(LowerCallResult(Chain, InFlag, Op.getNode(), CC, DAG),
+                 Op.getResNo());
 }
 
 
@@ -3091,13 +3092,14 @@ static SDValue getVShift(bool isLeft, MVT VT, SDValue SrcOp,
   SrcOp = DAG.getNode(ISD::BIT_CONVERT, ShVT, SrcOp);
   return DAG.getNode(ISD::BIT_CONVERT, VT,
                      DAG.getNode(Opc, ShVT, SrcOp,
-                              DAG.getConstant(NumBits, TLI.getShiftAmountTy())));
+                             DAG.getConstant(NumBits, TLI.getShiftAmountTy())));
 }
 
 SDValue
 X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
   // All zero's are handled with pxor, all one's are handled with pcmpeqd.
-  if (ISD::isBuildVectorAllZeros(Op.getNode()) || ISD::isBuildVectorAllOnes(Op.getNode())) {
+  if (ISD::isBuildVectorAllZeros(Op.getNode())
+      || ISD::isBuildVectorAllOnes(Op.getNode())) {
     // Canonicalize this to either <4 x i32> or <2 x i32> (SSE vs MMX) to
     // 1) ensure the zero vectors are CSE'd, and 2) ensure that i64 scalars are
     // eliminated on x86-32 hosts.
@@ -3668,7 +3670,8 @@ static SDValue getVZextMovL(MVT VT, MVT OpVT,
         return DAG.getNode(ISD::BIT_CONVERT, VT,
                            DAG.getNode(X86ISD::VZEXT_MOVL, OpVT,
                                        DAG.getNode(ISD::SCALAR_TO_VECTOR, OpVT,
-                                                   SrcOp.getOperand(0).getOperand(0))));
+                                                   SrcOp.getOperand(0)
+                                                          .getOperand(0))));
       }
     }
   }
@@ -5874,7 +5877,8 @@ SDValue X86TargetLowering::LowerCMP_SWAP(SDValue Op, SelectionDAG &DAG) {
   return cpOut;
 }
 
-SDNode* X86TargetLowering::ExpandATOMIC_CMP_SWAP(SDNode* Op, SelectionDAG &DAG) {
+SDNode* X86TargetLowering::ExpandATOMIC_CMP_SWAP(SDNode* Op,
+                                                 SelectionDAG &DAG) {
   MVT T = Op->getValueType(0);
   assert (T == MVT::i64 && "Only know how to expand i64 Cmp and Swap");
   SDValue cpInL, cpInH;
@@ -5910,7 +5914,8 @@ SDNode* X86TargetLowering::ExpandATOMIC_CMP_SWAP(SDNode* Op, SelectionDAG &DAG) 
   return DAG.getMergeValues(Vals, 2).getNode();
 }
 
-SDNode* X86TargetLowering::ExpandATOMIC_LOAD_SUB(SDNode* Op, SelectionDAG &DAG) {
+SDNode* X86TargetLowering::ExpandATOMIC_LOAD_SUB(SDNode* Op,
+                                                 SelectionDAG &DAG) {
   MVT T = Op->getValueType(0);
   SDValue negOp = DAG.getNode(ISD::SUB, T,
                                 DAG.getConstant(0, T), Op->getOperand(2));
@@ -6933,7 +6938,8 @@ static SDValue PerformSTORECombine(SDNode *N, SelectionDAG &DAG,
                           St->getSrcValue(), St->getSrcValueOffset(),
                           St->isVolatile(), St->getAlignment());
       SDValue HiSt = DAG.getStore(NewChain, HiLd, HiAddr,
-                                    St->getSrcValue(), St->getSrcValueOffset()+4,
+                                    St->getSrcValue(),
+                                    St->getSrcValueOffset() + 4,
                                     St->isVolatile(), 
                                     MinAlign(St->getAlignment(), 4));
       return DAG.getNode(ISD::TokenFactor, MVT::Other, LoSt, HiSt);
