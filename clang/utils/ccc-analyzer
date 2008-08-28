@@ -192,6 +192,7 @@ my $Output;
 
 # Forward arguments to gcc.
 my $Status = system($CC,@ARGV);
+if ($Status) { exit($Status >> 8); }
 
 # Get the analysis options.
 my $Analyses = $ENV{'CCC_ANALYZER_ANALYSIS'};
