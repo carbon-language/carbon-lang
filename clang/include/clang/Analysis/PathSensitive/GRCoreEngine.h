@@ -230,7 +230,8 @@ public:
   }
   
   NodeTy* MakeNode(ExplodedNodeSet<StateTy>& Dst, Stmt* S,
-                   NodeTy* Pred, const StateTy* St) {    
+                   NodeTy* Pred, const StateTy* St,
+                   ProgramPoint::Kind K = ProgramPoint::PostStmtKind) {    
     
     const StateTy* PredState = GetState(Pred);
         
@@ -240,7 +241,7 @@ public:
       return NULL;
     }
     
-    NodeTy* N = generateNode(S, St, Pred);
+    NodeTy* N = generateNode(S, St, Pred, K);
     
     if (N) {      
       if (BuildSinks)

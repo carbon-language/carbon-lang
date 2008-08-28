@@ -442,9 +442,10 @@ protected:
     return StateMgr.Assume(St, Cond, Assumption, isFeasible);
   }
 
-  NodeTy* MakeNode(NodeSet& Dst, Stmt* S, NodeTy* Pred, const GRState* St) {
+  NodeTy* MakeNode(NodeSet& Dst, Stmt* S, NodeTy* Pred, const GRState* St,
+                   ProgramPoint::Kind K = ProgramPoint::PostStmtKind) {
     assert (Builder && "GRStmtNodeBuilder not present.");
-    return Builder->MakeNode(Dst, S, Pred, St);
+    return Builder->MakeNode(Dst, S, Pred, St, K);
   }
     
   /// Visit - Transfer function logic for all statements.  Dispatches to

@@ -954,22 +954,23 @@ void GRExprEngine::EvalLoad(NodeSet& Dst, Expr* Ex, NodeTy* Pred,
     return;
   
   // Proceed with the load.
+  ProgramPoint::Kind K = ProgramPoint::PostLoadKind;
 
   // FIXME: Currently symbolic analysis "generates" new symbols
   //  for the contents of values.  We need a better approach.
 
   // FIXME: The "CheckOnly" option exists only because Array and Field
   //  loads aren't fully implemented.  Eventually this option will go away.
-  
+
   if (CheckOnly)
-    MakeNode(Dst, Ex, Pred, St);
+    MakeNode(Dst, Ex, Pred, St, K);
   else if (location.isUnknown()) {
     // This is important.  We must nuke the old binding.
-    MakeNode(Dst, Ex, Pred, SetRVal(St, Ex, UnknownVal()));
+    MakeNode(Dst, Ex, Pred, SetRVal(St, Ex, UnknownVal()), K);
   }
   else    
     MakeNode(Dst, Ex, Pred, SetRVal(St, Ex, GetRVal(St, cast<LVal>(location),
-                                                    Ex->getType())));  
+                                                    Ex->getType())), K);  
 }
 
 const GRState* GRExprEngine::EvalLocation(Expr* Ex, NodeTy* Pred,
