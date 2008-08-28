@@ -31,6 +31,8 @@ unsigned FastISel::getRegForValue(Value *V, DenseMap<const Value*, unsigned> &Va
     if (CI->getValue().getActiveBits() > 64)
       return 0;
     Reg = FastEmit_i(VT, VT, ISD::Constant, CI->getZExtValue());
+  } else if (isa<ConstantPointerNull>(V)) {
+    Reg = FastEmit_i(VT, VT, ISD::Constant, 0);
   } else if (ConstantFP *CF = dyn_cast<ConstantFP>(V)) {
     Reg = FastEmit_f(VT, VT, ISD::ConstantFP, CF);
 
@@ -53,6 +55,9 @@ unsigned FastISel::getRegForValue(Value *V, DenseMap<const Value*, unsigned> &Va
       if (Reg == 0)
         return 0;
     }
+  } else if (isa<UndefValue>(V)) {
+    Reg = createResultReg(TLI.getRegClassFor(VT));
+    BuildMI(MBB, TII.get(TargetInstrInfo::IMPLICIT_DEF), Reg);
   }
 
   return Reg;
