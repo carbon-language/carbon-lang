@@ -814,6 +814,7 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
       Result = ~Result;
       break;
     case UnaryOperator::OffsetOf:
+      Result.zextOrTrunc(static_cast<uint32_t>(Ctx.getTypeSize(getType())));
       Result = Exp->evaluateOffsetOf(Ctx);
     }
     break;

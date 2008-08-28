@@ -1,8 +1,9 @@
 // RUN: clang -verify -fsyntax-only -std=c90 %s &&
 // RUN: clang -verify -fsyntax-only -std=c99 %s
 
-int f (int x)
+struct s
 {
-  // sizeof applied to a type should not delete the type.
-  return sizeof (int[x]);
-}
+  int a;
+};
+
+int a[__builtin_offsetof(struct s, a) == 0];
