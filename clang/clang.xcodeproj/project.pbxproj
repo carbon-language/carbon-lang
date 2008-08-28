@@ -296,7 +296,6 @@
 		3552E7580E520DD7003A8CA5 /* CGObjCMac.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CGObjCMac.cpp; path = lib/CodeGen/CGObjCMac.cpp; sourceTree = "<group>"; };
 		3553EB9A0E5F7089007D7359 /* GRStateTrait.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GRStateTrait.h; path = clang/Analysis/PathSensitive/GRStateTrait.h; sourceTree = "<group>"; };
 		3558F76C0E267C8300A5B0DF /* BasicStore.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = BasicStore.cpp; path = lib/Analysis/BasicStore.cpp; sourceTree = "<group>"; };
-		3558F76E0E267C9A00A5B0DF /* BasicStore.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BasicStore.h; path = clang/Analysis/PathSensitive/BasicStore.h; sourceTree = "<group>"; };
 		3558F76F0E267C9A00A5B0DF /* Store.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Store.h; path = clang/Analysis/PathSensitive/Store.h; sourceTree = "<group>"; };
 		355CF6820C90A8B600A08AA3 /* LocalCheckers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LocalCheckers.h; path = clang/Analysis/LocalCheckers.h; sourceTree = "<group>"; };
 		356B89760D9BFDC100CBEBE9 /* BasicObjCFoundationChecks.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BasicObjCFoundationChecks.h; path = lib/Analysis/BasicObjCFoundationChecks.h; sourceTree = "<group>"; };
@@ -752,7 +751,6 @@
 			children = (
 				35F1ACE60E66166C001F4532 /* ConstraintManager.h */,
 				3553EB9A0E5F7089007D7359 /* GRStateTrait.h */,
-				3558F76E0E267C9A00A5B0DF /* BasicStore.h */,
 				3558F76F0E267C9A00A5B0DF /* Store.h */,
 				3536457C0E2406B0009C6509 /* Environment.h */,
 				DE4121230D7F1BBE0080F80A /* GRCoreEngine.h */,
