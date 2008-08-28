@@ -366,6 +366,9 @@ FastISel::SelectInstructions(BasicBlock::iterator Begin,
     case Instruction::SExt:
       if (!SelectCast(I, ISD::SIGN_EXTEND, ValueMap)) return I;
       break;
+    case Instruction::Trunc:
+      if (!SelectCast(I, ISD::TRUNCATE, ValueMap)) return I;
+      break;
     case Instruction::SIToFP:
       if (!SelectCast(I, ISD::SINT_TO_FP, ValueMap)) return I;
       break;
@@ -594,6 +597,6 @@ unsigned FastISel::FastEmitInst_extractsubreg(unsigned Op0, uint32_t Idx) {
   unsigned ResultReg = createResultReg(SRC);
   const TargetInstrDesc &II = TII.get(TargetInstrInfo::EXTRACT_SUBREG);
   
-  BuildMI(MBB, II, ResultReg).addReg(Op0);
+  BuildMI(MBB, II, ResultReg).addReg(Op0).addImm(Idx);
   return ResultReg;
 }
