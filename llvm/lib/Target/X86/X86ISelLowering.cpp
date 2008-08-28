@@ -1909,7 +1909,6 @@ SDValue X86TargetLowering::getReturnAddressFrameIndex(SelectionDAG &DAG) {
 }
 
 
-
 /// translateX86CC - do a one to one translation of a ISD::CondCode to the X86
 /// specific condition code. It returns a false if it cannot do a direct
 /// translation. X86CC is the translated CondCode.  LHS/RHS are modified as
@@ -1936,7 +1935,10 @@ static bool translateX86CC(ISD::CondCode SetCCOpcode, bool isFP,
         return true;
       }
     }
+  }
 
+  bool Flip = false;
+  if (!isFP) {
     switch (SetCCOpcode) {
     default: break;
     case ISD::SETEQ:  X86CC = X86::COND_E;  break;
@@ -1957,7 +1959,6 @@ static bool translateX86CC(ISD::CondCode SetCCOpcode, bool isFP,
     //  0 | 0 | 1 | X < Y
     //  1 | 0 | 0 | X == Y
     //  1 | 1 | 1 | unordered
-    bool Flip = false;
     switch (SetCCOpcode) {
     default: break;
     case ISD::SETUEQ:
@@ -1979,11 +1980,24 @@ static bool translateX86CC(ISD::CondCode SetCCOpcode, bool isFP,
     case ISD::SETUO: X86CC = X86::COND_P;  break;
     case ISD::SETO:  X86CC = X86::COND_NP; break;
     }
-    if (Flip)
-      std::swap(LHS, RHS);
   }
 
-  return X86CC != X86::COND_INVALID;
+  if (X86CC == X86::COND_INVALID)
+    return false;
+
+  if (Flip)
+    std::swap(LHS, RHS);
+
+  if (isFP) {
+    bool LHSCanFold = ISD::isNON_EXTLoad(LHS.getNode()) && LHS.hasOneUse();
+    bool RHSCanFold = ISD::isNON_EXTLoad(RHS.getNode()) && RHS.hasOneUse();
+    if (LHSCanFold && !RHSCanFold) {
+      X86CC = X86::GetSwappedBranchCondition(static_cast<X86::CondCode>(X86CC));
+      std::swap(LHS, RHS);
+    }
+  }
+
+  return true;
 }
 
 /// hasFPCMov - is there a floating point cmov for the specific X86 condition

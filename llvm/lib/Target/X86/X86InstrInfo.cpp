@@ -1433,6 +1433,30 @@ X86::CondCode X86::GetOppositeBranchCondition(X86::CondCode CC) {
   }
 }
 
+/// GetSwappedBranchCondition - Return the branch condition that would be
+/// the result of exchanging the two operands of a comparison without
+/// changing the result produced.
+/// e.g. COND_E to COND_E, COND_G -> COND_L
+X86::CondCode X86::GetSwappedBranchCondition(X86::CondCode CC) {
+  switch (CC) {
+  default: assert(0 && "Illegal condition code!");
+  case X86::COND_E:  return X86::COND_E;
+  case X86::COND_NE: return X86::COND_NE;
+  case X86::COND_L:  return X86::COND_G;
+  case X86::COND_LE: return X86::COND_GE;
+  case X86::COND_G:  return X86::COND_L;
+  case X86::COND_GE: return X86::COND_LE;
+  case X86::COND_B:  return X86::COND_A;
+  case X86::COND_BE: return X86::COND_AE;
+  case X86::COND_A:  return X86::COND_B;
+  case X86::COND_AE: return X86::COND_BE;
+  case X86::COND_P:  return X86::COND_P;
+  case X86::COND_NP: return X86::COND_NP;
+  case X86::COND_O:  return X86::COND_O;
+  case X86::COND_NO: return X86::COND_NO;
+  }
+}
+
 bool X86InstrInfo::isUnpredicatedTerminator(const MachineInstr *MI) const {
   const TargetInstrDesc &TID = MI->getDesc();
   if (!TID.isTerminator()) return false;
@@ -2373,7 +2397,8 @@ bool X86InstrInfo::BlockHasNoFallThrough(MachineBasicBlock &MBB) const {
 bool X86InstrInfo::
 ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const {
   assert(Cond.size() == 1 && "Invalid X86 branch condition!");
-  Cond[0].setImm(GetOppositeBranchCondition((X86::CondCode)Cond[0].getImm()));
+  X86::CondCode CC = static_cast<X86::CondCode>(Cond[0].getImm());
+  Cond[0].setImm(GetOppositeBranchCondition(CC));
   return false;
 }
 

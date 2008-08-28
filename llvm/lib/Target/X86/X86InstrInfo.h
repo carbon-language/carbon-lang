@@ -54,6 +54,11 @@ namespace X86 {
   /// e.g. turning COND_E to COND_NE.
   CondCode GetOppositeBranchCondition(X86::CondCode CC);
 
+  /// GetSwappedBranchCondition - Return the branch condition that would be
+  /// the result of exchanging the two operands of a comparison without
+  /// changing the result produced.
+  /// e.g. COND_E to COND_E, COND_G -> COND_L
+  CondCode GetSwappedBranchCondition(X86::CondCode CC);
 }
   
 /// X86II - This namespace holds all of the target specific flags that
