@@ -19,3 +19,23 @@
 #include "X86FastISel.h"
 #include "X86TargetMachine.h"
 #include "X86GenFastISel.inc"
+
+namespace llvm {
+
+namespace X86 {
+
+bool
+FastISel::TargetSelectInstruction(Instruction *I,
+                                  DenseMap<const Value *, unsigned> &ValueMap,
+                      DenseMap<const BasicBlock *, MachineBasicBlock *> &MBBMap,
+                                  MachineBasicBlock *MBB)  {
+  switch (I->getOpcode()) {
+  default: break;
+  }
+
+  return false;
+}
+
+}
+
+}

@@ -5757,9 +5757,14 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn, MachineFunction &MF) {
           Begin = F->SelectInstructions(Begin, End, FuncInfo->ValueMap,
                                         FuncInfo->MBBMap, BB);
 
+          // If the "fast" selector selected the entire block, we're done.
           if (Begin == End)
-            // The "fast" selector selected the entire block, so we're done.
             break;
+
+          // Next, try calling the target to attempt to handle the instruction.
+          if (F->TargetSelectInstruction(Begin, FuncInfo->ValueMap,
+                                         FuncInfo->MBBMap, BB))
+            continue;
 
           // Handle certain instructions as single-LLVM-Instruction blocks.
           if (isa<CallInst>(Begin) || isa<LoadInst>(Begin) ||
@@ -5783,7 +5788,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn, MachineFunction &MF) {
             // The "fast" selector couldn't handle something and bailed.
             // For the purpose of debugging, just abort.
 #ifndef NDEBUG
-              Begin->dump();
+            Begin->dump();
 #endif
             assert(0 && "FastISel didn't select the entire block");
           }

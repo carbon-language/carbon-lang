@@ -52,9 +52,20 @@ public:
   /// the generated MachineInstrs.
   BasicBlock::iterator
   SelectInstructions(BasicBlock::iterator Begin, BasicBlock::iterator End,
-                     DenseMap<const Value*, unsigned> &ValueMap,
-                     DenseMap<const BasicBlock*, MachineBasicBlock *> &MBBMap,
+                     DenseMap<const Value *, unsigned> &ValueMap,
+                     DenseMap<const BasicBlock *, MachineBasicBlock *> &MBBMap,
                      MachineBasicBlock *MBB);
+
+  /// TargetSelectInstruction - This method is called by target-independent
+  /// code when the normal FastISel process fails to select an instruction.
+  /// This gives targets a chance to emit code for anything that doesn't
+  /// fit into FastISel's framework. It returns true if it was successful.
+  ///
+  virtual bool
+  TargetSelectInstruction(Instruction *I,
+                          DenseMap<const Value *, unsigned> &ValueMap,
+                      DenseMap<const BasicBlock *, MachineBasicBlock *> &MBBMap,
+                          MachineBasicBlock *MBB) = 0;
 
   virtual ~FastISel();
 

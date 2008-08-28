@@ -351,6 +351,14 @@ void FastISelMap::PrintClass(std::ostream &OS) {
   }
   OS << "\n";
 
+  OS << "bool TargetSelectInstruction(Instruction *I,\n";
+  OS << "                             "
+        "DenseMap<const Value *, unsigned> &ValueMap,\n";
+  OS << "                             "
+        "DenseMap<const BasicBlock *, MachineBasicBlock *> &MBBMap,\n";
+  OS << "                             "
+        "MachineBasicBlock *MBB);\n";
+
   // Declare the Subtarget member, which is used for predicate checks.
   OS << "  const " << InstNS.substr(0, InstNS.size() - 2)
      << "Subtarget *Subtarget;\n";
