@@ -239,10 +239,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\lib\Analysis\Regions.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\lib\Analysis\RValues.cpp"
 				>
 			</File>
