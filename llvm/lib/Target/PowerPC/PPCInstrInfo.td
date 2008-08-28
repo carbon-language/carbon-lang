@@ -528,6 +528,54 @@ def DCBZL  : DCB_Form<1014, 1, (outs), (ins memrr:$dst),
 // Atomic operations
 let usesCustomDAGSchedInserter = 1 in {
   let Uses = [CR0] in {
+    def ATOMIC_LOAD_ADD_I8 : Pseudo<
+      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr),
+      "${:comment} ATOMIC_LOAD_ADD_I8 PSEUDO!",
+      [(set GPRC:$dst, (atomic_load_add_8 xoaddr:$ptr, GPRC:$incr))]>;
+    def ATOMIC_LOAD_SUB_I8 : Pseudo<
+      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr),
+      "${:comment} ATOMIC_LOAD_SUB_I8 PSEUDO!",
+      [(set GPRC:$dst, (atomic_load_sub_8 xoaddr:$ptr, GPRC:$incr))]>;
+    def ATOMIC_LOAD_AND_I8 : Pseudo<
+      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr),
+      "${:comment} ATOMIC_LOAD_AND_I8 PSEUDO!",
+      [(set GPRC:$dst, (atomic_load_and_8 xoaddr:$ptr, GPRC:$incr))]>;
+    def ATOMIC_LOAD_OR_I8 : Pseudo<
+      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr),
+      "${:comment} ATOMIC_LOAD_OR_I8 PSEUDO!",
+      [(set GPRC:$dst, (atomic_load_or_8 xoaddr:$ptr, GPRC:$incr))]>;
+    def ATOMIC_LOAD_XOR_I8 : Pseudo<
+      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr),
+      "${:comment} ATOMIC_LOAD_XOR_I8 PSEUDO!",
+      [(set GPRC:$dst, (atomic_load_xor_8 xoaddr:$ptr, GPRC:$incr))]>;
+    def ATOMIC_LOAD_NAND_I8 : Pseudo<
+      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr),
+      "${:comment} ATOMIC_LOAD_NAND_I8 PSEUDO!",
+      [(set GPRC:$dst, (atomic_load_nand_8 xoaddr:$ptr, GPRC:$incr))]>;
+    def ATOMIC_LOAD_ADD_I16 : Pseudo<
+      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr),
+      "${:comment} ATOMIC_LOAD_ADD_I16 PSEUDO!",
+      [(set GPRC:$dst, (atomic_load_add_16 xoaddr:$ptr, GPRC:$incr))]>;
+    def ATOMIC_LOAD_SUB_I16 : Pseudo<
+      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr),
+      "${:comment} ATOMIC_LOAD_SUB_I16 PSEUDO!",
+      [(set GPRC:$dst, (atomic_load_sub_16 xoaddr:$ptr, GPRC:$incr))]>;
+    def ATOMIC_LOAD_AND_I16 : Pseudo<
+      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr),
+      "${:comment} ATOMIC_LOAD_AND_I16 PSEUDO!",
+      [(set GPRC:$dst, (atomic_load_and_16 xoaddr:$ptr, GPRC:$incr))]>;
+    def ATOMIC_LOAD_OR_I16 : Pseudo<
+      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr),
+      "${:comment} ATOMIC_LOAD_OR_I16 PSEUDO!",
+      [(set GPRC:$dst, (atomic_load_or_16 xoaddr:$ptr, GPRC:$incr))]>;
+    def ATOMIC_LOAD_XOR_I16 : Pseudo<
+      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr),
+      "${:comment} ATOMIC_LOAD_XOR_I16 PSEUDO!",
+      [(set GPRC:$dst, (atomic_load_xor_16 xoaddr:$ptr, GPRC:$incr))]>;
+    def ATOMIC_LOAD_NAND_I16 : Pseudo<
+      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr),
+      "${:comment} ATOMIC_LOAD_NAND_I16 PSEUDO!",
+      [(set GPRC:$dst, (atomic_load_nand_16 xoaddr:$ptr, GPRC:$incr))]>;
     def ATOMIC_LOAD_ADD_I32 : Pseudo<
       (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr),
       "${:comment} ATOMIC_LOAD_ADD_I32 PSEUDO!",
@@ -553,12 +601,30 @@ let usesCustomDAGSchedInserter = 1 in {
       "${:comment} ATOMIC_LOAD_NAND_I32 PSEUDO!",
       [(set GPRC:$dst, (atomic_load_nand_32 xoaddr:$ptr, GPRC:$incr))]>;
 
+    def ATOMIC_CMP_SWAP_I8 : Pseudo<
+      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$old, GPRC:$new),
+      "${:comment} ATOMIC_CMP_SWAP_I8 PSEUDO!",
+      [(set GPRC:$dst, 
+                    (atomic_cmp_swap_8 xoaddr:$ptr, GPRC:$old, GPRC:$new))]>;
+    def ATOMIC_CMP_SWAP_I16 : Pseudo<
+      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$old, GPRC:$new),
+      "${:comment} ATOMIC_CMP_SWAP_I16 PSEUDO!",
+      [(set GPRC:$dst, 
+                    (atomic_cmp_swap_16 xoaddr:$ptr, GPRC:$old, GPRC:$new))]>;
     def ATOMIC_CMP_SWAP_I32 : Pseudo<
       (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$old, GPRC:$new),
       "${:comment} ATOMIC_CMP_SWAP_I32 PSEUDO!",
       [(set GPRC:$dst, 
                     (atomic_cmp_swap_32 xoaddr:$ptr, GPRC:$old, GPRC:$new))]>;
 
+    def ATOMIC_SWAP_I8 : Pseudo<
+      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$new),
+      "${:comment} ATOMIC_SWAP_I8 PSEUDO!",
+      [(set GPRC:$dst, (atomic_swap_8 xoaddr:$ptr, GPRC:$new))]>;
+    def ATOMIC_SWAP_I16 : Pseudo<
+      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$new),
+      "${:comment} ATOMIC_SWAP_I16 PSEUDO!",
+      [(set GPRC:$dst, (atomic_swap_16 xoaddr:$ptr, GPRC:$new))]>;
     def ATOMIC_SWAP_I32 : Pseudo<
       (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$new),
       "${:comment} ATOMIC_SWAP_I32 PSEUDO!",

@@ -285,6 +285,9 @@ namespace llvm {
     MachineBasicBlock *EmitAtomicBinary(MachineInstr *MI, 
                                         MachineBasicBlock *MBB, bool is64Bit,
                                         unsigned BinOpcode);
+    MachineBasicBlock *EmitPartwordAtomicBinary(MachineInstr *MI, 
+                                                MachineBasicBlock *MBB, 
+                                                bool is8bit, unsigned Opcode);
     
     ConstraintType getConstraintType(const std::string &Constraint) const;
     std::pair<unsigned, const TargetRegisterClass*> 
