@@ -1750,13 +1750,13 @@ check-line-length:
 	@echo searching for overlength lines in files: $(Sources)
 	@echo
 	@echo
-	@egrep -n '.{81}' $(Sources) /dev/null
+	egrep -n '.{81}' $(Sources) /dev/null
 
 check-for-tabs:
 	@echo searching for tabs in files: $(Sources)
 	@echo
 	@echo
-	@egrep -n '	' $(Sources) /dev/null
+	egrep -n '	' $(Sources) /dev/null
 
 check-footprint:
 	@ls -l $(LibDir) | awk '\
