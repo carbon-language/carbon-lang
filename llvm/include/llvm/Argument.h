@@ -16,6 +16,7 @@
 
 #include "llvm/Value.h"
 #include "llvm/ParameterAttributes.h"
+#include "llvm/ADT/ilist_node.h"
 
 namespace llvm {
 
