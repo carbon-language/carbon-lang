@@ -1116,10 +1116,10 @@ void Parser::ParseDeclaratorInternal(Declarator &D) {
       (Kind != tok::caret || !getLang().Blocks))
     return ParseDirectDeclarator(D);
   
-  // Otherwise, '*' -> pointer or '&' -> reference.
+  // Otherwise, '*' -> pointer, '^' -> block, '&' -> reference.
   SourceLocation Loc = ConsumeToken();  // Eat the * or &.
 
-  if (Kind == tok::star || Kind == tok::caret) {
+  if (Kind == tok::star || (Kind == tok::caret && getLang().Blocks)) {
     // Is a pointer.
     DeclSpec DS;
     
