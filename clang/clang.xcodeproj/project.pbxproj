@@ -43,7 +43,6 @@
 		359603460E49496E00C6282B /* TextDiagnosticBuffer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 359603430E49496E00C6282B /* TextDiagnosticBuffer.cpp */; };
 		359603470E49496E00C6282B /* TextDiagnosticPrinter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 359603440E49496E00C6282B /* TextDiagnosticPrinter.cpp */; };
 		359763260E633C7500B68AB7 /* HTMLDiagnostics.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 359763250E633C7500B68AB7 /* HTMLDiagnostics.cpp */; };
-		3597632A0E633CE300B68AB7 /* Regions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 359763290E633CE300B68AB7 /* Regions.cpp */; };
 		3599299B0DE2425300A8A33E /* SemaInit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3599299A0DE2425300A8A33E /* SemaInit.cpp */; };
 		359DBBD40E1AC9CC00F43FA0 /* AnalysisConsumer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 359DBBD30E1AC9CC00F43FA0 /* AnalysisConsumer.cpp */; };
 		35A3E7020DD3874400757F74 /* CGDebugInfo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35A3E7000DD3874400757F74 /* CGDebugInfo.cpp */; };
@@ -296,7 +295,6 @@
 		3552E7540E520D80003A8CA5 /* PPCaching.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PPCaching.cpp; sourceTree = "<group>"; };
 		3552E7580E520DD7003A8CA5 /* CGObjCMac.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CGObjCMac.cpp; path = lib/CodeGen/CGObjCMac.cpp; sourceTree = "<group>"; };
 		3553EB9A0E5F7089007D7359 /* GRStateTrait.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GRStateTrait.h; path = clang/Analysis/PathSensitive/GRStateTrait.h; sourceTree = "<group>"; };
-		3553EB9B0E5F7089007D7359 /* Regions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Regions.h; path = clang/Analysis/PathSensitive/Regions.h; sourceTree = "<group>"; };
 		3558F76C0E267C8300A5B0DF /* BasicStore.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = BasicStore.cpp; path = lib/Analysis/BasicStore.cpp; sourceTree = "<group>"; };
 		3558F76E0E267C9A00A5B0DF /* BasicStore.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BasicStore.h; path = clang/Analysis/PathSensitive/BasicStore.h; sourceTree = "<group>"; };
 		3558F76F0E267C9A00A5B0DF /* Store.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Store.h; path = clang/Analysis/PathSensitive/Store.h; sourceTree = "<group>"; };
@@ -323,7 +321,6 @@
 		359603440E49496E00C6282B /* TextDiagnosticPrinter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TextDiagnosticPrinter.cpp; path = lib/Driver/TextDiagnosticPrinter.cpp; sourceTree = "<group>"; };
 		359763240E633C6500B68AB7 /* HTMLDiagnostics.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = HTMLDiagnostics.h; path = clang/Driver/HTMLDiagnostics.h; sourceTree = "<group>"; };
 		359763250E633C7500B68AB7 /* HTMLDiagnostics.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = HTMLDiagnostics.cpp; path = lib/Driver/HTMLDiagnostics.cpp; sourceTree = "<group>"; };
-		359763290E633CE300B68AB7 /* Regions.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Regions.cpp; path = lib/Analysis/Regions.cpp; sourceTree = "<group>"; };
 		3599299A0DE2425300A8A33E /* SemaInit.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SemaInit.cpp; path = lib/Sema/SemaInit.cpp; sourceTree = "<group>"; };
 		359DBBD30E1AC9CC00F43FA0 /* AnalysisConsumer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = AnalysisConsumer.cpp; path = Driver/AnalysisConsumer.cpp; sourceTree = "<group>"; };
 		359DBBE20E1ACD4700F43FA0 /* AnalysisConsumer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AnalysisConsumer.h; path = Driver/AnalysisConsumer.h; sourceTree = "<group>"; };
@@ -589,7 +586,6 @@
 				358F51510E529AA4007F2102 /* GRState.cpp */,
 				35EFEFB50DB67ED60020783D /* GRTransferFuncs.cpp */,
 				DE4121320D7F1C1C0080F80A /* ProgramPoint.cpp */,
-				359763290E633CE300B68AB7 /* Regions.cpp */,
 				DE41212E0D7F1C1C0080F80A /* RValues.cpp */,
 				DE4121270D7F1C1C0080F80A /* SymbolManager.cpp */,
 			);
@@ -756,7 +752,6 @@
 			children = (
 				35F1ACE60E66166C001F4532 /* ConstraintManager.h */,
 				3553EB9A0E5F7089007D7359 /* GRStateTrait.h */,
-				3553EB9B0E5F7089007D7359 /* Regions.h */,
 				3558F76E0E267C9A00A5B0DF /* BasicStore.h */,
 				3558F76F0E267C9A00A5B0DF /* Store.h */,
 				3536457C0E2406B0009C6509 /* Environment.h */,
@@ -1223,7 +1218,6 @@
 				1A5D5E580E5E81010023C059 /* CGCXX.cpp in Sources */,
 				350F4B470E5F32E100A21EA9 /* InitHeaderSearch.cpp in Sources */,
 				359763260E633C7500B68AB7 /* HTMLDiagnostics.cpp in Sources */,
-				3597632A0E633CE300B68AB7 /* Regions.cpp in Sources */,
 				358CFBB80E65AB04002A8E19 /* BasicConstraintManager.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
