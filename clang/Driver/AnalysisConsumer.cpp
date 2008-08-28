@@ -322,8 +322,7 @@ static void ActionGRExprEngine(AnalysisManager& mgr, GRTransferFuncs* tf,
   if (!L) return;
   
   // Display progress.
-  if (!mgr.shouldVisualize())
-    mgr.DisplayFunction();
+  mgr.DisplayFunction();
   
   GRExprEngine Eng(*mgr.getCFG(), *mgr.getCodeDecl(), mgr.getContext(), *L);
   Eng.setTransferFunctions(tf);
@@ -515,6 +514,9 @@ static ExplodedNodeImpl::Auditor* CreateUbiViz() {
 }
 
 void UbigraphViz::AddEdge(ExplodedNodeImpl* Src, ExplodedNodeImpl* Dst) {
+  
+  assert (Src != Dst && "Self-edges are not allowed.");
+  
   // Lookup the Src.  If it is a new node, it's a root.
   VMap::iterator SrcI= M.find(Src);
   unsigned SrcID;
