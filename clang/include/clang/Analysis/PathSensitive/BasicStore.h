@@ -16,14 +16,9 @@
 
 #include "clang/Analysis/PathSensitive/Store.h"
 
-namespace llvm {
-  class BumpPtrAllocator; 
-  class ASTContext;
-}
-  
 namespace clang {
-  StoreManager* CreateBasicStoreManager(llvm::BumpPtrAllocator& Alloc,
-                                        ASTContext& Ctx);
+  class GRStateManager;
+  StoreManager* CreateBasicStoreManager(GRStateManager& StMgr);
 }
 
 #endif

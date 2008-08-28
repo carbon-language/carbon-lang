@@ -288,15 +288,17 @@ private:
   const GRState* BindVar(const GRState* St, VarDecl* D, RVal V) {
     return SetRVal(St, lval::DeclVal(D), V);
   }
-
-  typedef ConstraintManager* (*ConstraintManagerCreater)(GRStateManager&);
     
-public:  
-  GRStateManager(ASTContext& Ctx, StoreManager* stmgr,
-                 ConstraintManagerCreater CreateConstraintManager,
+public:
+  
+  typedef ConstraintManager* (*ConstraintManagerCreator)(GRStateManager&);
+  typedef StoreManager* (*StoreManagerCreator)(GRStateManager&);
+  
+  GRStateManager(ASTContext& Ctx,
+                 StoreManagerCreator CreateStoreManager,
+                 ConstraintManagerCreator CreateConstraintManager,
                  llvm::BumpPtrAllocator& alloc, CFG& c, LiveVariables& L) 
   : EnvMgr(alloc),
-    StMgr(stmgr),
     ISetFactory(alloc), 
     GDMFactory(alloc),
     BasicVals(Ctx, alloc),
@@ -304,7 +306,8 @@ public:
     Alloc(alloc),
     cfg(c),
     Liveness(L) {
-    ConstraintMgr.reset((*CreateConstraintManager)(*this));
+      StMgr.reset((*CreateStoreManager)(*this));
+      ConstraintMgr.reset((*CreateConstraintManager)(*this));
   }
   
   ~GRStateManager();

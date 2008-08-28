@@ -11,25 +11,26 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Analysis/Analyses/LiveVariables.h"
 #include "clang/Analysis/PathSensitive/BasicStore.h"
+#include "clang/Analysis/Analyses/LiveVariables.h"
 #include "clang/Analysis/PathSensitive/GRState.h"
 #include "llvm/ADT/ImmutableMap.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Streams.h"
 
 using namespace clang;
+using store::Region;
+using store::RegionExtent;
 
 namespace {
   
 class VISIBILITY_HIDDEN BasicStoreManager : public StoreManager {
   typedef llvm::ImmutableMap<VarDecl*,RVal> VarBindingsTy;  
   VarBindingsTy::Factory VBFactory;
-  ASTContext& C;
+  GRStateManager& StMgr;
   
 public:
-  BasicStoreManager(llvm::BumpPtrAllocator& A, ASTContext& c)
-    : VBFactory(A), C(c) {}
+  BasicStoreManager(GRStateManager& mgr) : StMgr(mgr) {}
   
   virtual ~BasicStoreManager() {}
 
@@ -55,23 +56,32 @@ public:
   virtual void print(Store store, std::ostream& Out,
                      const char* nl, const char *sep);
   
-  virtual RegionExtent getExtent(GRStateManager& SM, Region R);
+  virtual RegionExtent getExtent(Region R);
 };  
   
 } // end anonymous namespace
 
 
-StoreManager* clang::CreateBasicStoreManager(llvm::BumpPtrAllocator& A,
-                                             ASTContext& C) {
-  return new BasicStoreManager(A, C);
+StoreManager* clang::CreateBasicStoreManager(GRStateManager& StMgr) {
+  return new BasicStoreManager(StMgr);
 }
 
-RegionExtent BasicStoreManager::getExtent(GRStateManager& SM, Region R) {
-  if (VarRegion *VR = dyn_cast<VarRegion>(&R))
-    return VR->getExtent(SM.getBasicVals());
+RegionExtent BasicStoreManager::getExtent(Region R) {
+  VarDecl* VD = (VarDecl*) R;
+  QualType T = VD->getType();
   
-  return UnknownExtent();
+  // FIXME: Add support for VLAs.  This may require passing in additional
+  //  information, or tracking a different region type.
+  if (!T.getTypePtr()->isConstantSizeType())
+    return store::UnknownExtent();
+  
+  ASTContext& C = StMgr.getContext();
+  assert (!T->isObjCInterfaceType()); // @interface not a possible VarDecl type.
+  assert (T != C.VoidTy); // void not a possible VarDecl type.  
+  return store::IntExtent(StMgr.getBasicVals().getValue(C.getTypeSize(T),
+                                                        C.VoidPtrTy));
 }
+
 
 RVal BasicStoreManager::GetRVal(Store St, LVal LV, QualType T) {
   

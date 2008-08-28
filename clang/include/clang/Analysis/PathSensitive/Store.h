@@ -15,7 +15,6 @@
 #define LLVM_CLANG_ANALYSIS_STORE_H
 
 #include "clang/Analysis/PathSensitive/RValues.h"
-#include "clang/Analysis/PathSensitive/Regions.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/DenseSet.h"
@@ -25,6 +24,78 @@
 namespace clang {
   
 typedef const void* Store;
+  
+namespace store {
+  typedef const void* Binding;
+  typedef const void* Region;
+  
+  class RegionExtent {
+  public:
+    enum Kind { Unknown = 0, Int = 0, Sym = 1 };
+    
+  protected:
+    const uintptr_t Raw;
+    RegionExtent(uintptr_t raw, Kind k) : Raw(raw | k) {}
+    uintptr_t getData() const { return Raw & ~0x1; }
+    
+  public:
+    // Folding-set profiling.
+    void Profile(llvm::FoldingSetNodeID& ID) const {
+      ID.AddPointer((void*) Raw);
+    }  
+    // Comparing extents.
+    bool operator==(const RegionExtent& R) const {
+      return Raw == R.Raw;
+    }
+    bool operator!=(const RegionExtent& R) const {
+      return Raw != R.Raw;
+    }  
+    // Implement isa<T> support.
+    Kind getKind() const { return Kind(Raw & 0x1); }
+    uintptr_t getRaw() const { return Raw; }
+    
+    static inline bool classof(const RegionExtent*) {
+      return true;
+    }
+  };
+  
+  class UnknownExtent : public RegionExtent {
+  public:
+    UnknownExtent() : RegionExtent(0,Unknown) {}
+    
+    // Implement isa<T> support.
+    static inline bool classof(const RegionExtent* E) {
+      return E->getRaw() == 0;
+    }  
+  };
+  
+  class IntExtent : public RegionExtent {
+  public:
+    IntExtent(const llvm::APSInt& X) : RegionExtent((uintptr_t) &X, Int) {}
+    
+    const llvm::APSInt& getInt() const {
+      return *((llvm::APSInt*) getData());
+    }
+    
+    // Implement isa<T> support.
+    static inline bool classof(const RegionExtent* E) {
+      return E->getKind() == Int && E->getRaw() != 0;
+    }
+  };
+  
+  class SymExtent : public RegionExtent {
+  public:
+    SymExtent(SymbolID S) : RegionExtent(S.getNumber() << 1, Sym) {}
+    
+    SymbolID getSymbol() const { return SymbolID(getData() >> 1); }
+    
+    // Implement isa<T> support.
+    static inline bool classof(const RegionExtent* E) {
+      return E->getKind() == Sym;
+    }  
+  };
+} // end store namespace
+  
 class GRStateManager;
 class LiveVariables;
 class Stmt;
@@ -54,7 +125,7 @@ public:
                      const char* nl, const char *sep) = 0;
     
   /// getExtent - Returns the size of the region in bits.
-  virtual RegionExtent getExtent(GRStateManager& SM, Region R) = 0;
+  virtual store::RegionExtent getExtent(store::Region R) =0;
 };
   
 } // end clang namespace
