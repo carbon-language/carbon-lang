@@ -442,6 +442,11 @@ private:
   ExprResult ParseInitializerWithPotentialDesignator();
   
   //===--------------------------------------------------------------------===//
+  // clang Expressions
+  
+  ExprResult ParseBlockLiteralExpression();  // ^{...}
+
+  //===--------------------------------------------------------------------===//
   // Objective-C Expressions
   
   bool isTokObjCMessageIdentifierReceiver() const {

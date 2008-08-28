@@ -533,6 +533,27 @@ public:
     return 0;
   }
 
+  //===------------------------- "Block" Extension ------------------------===//
+
+  /// ActOnBlockStart - This callback is invoked when a block literal is
+  /// started.  The result pointer is passed into the block finalizers.
+  virtual void ActOnBlockStart(SourceLocation CaretLoc, Scope *CurScope,
+                               Declarator &ParamInfo) {}
+  
+  /// ActOnBlockError - If there is an error parsing a block, this callback
+  /// is invoked to pop the information about the block from the action impl.
+  virtual void ActOnBlockError(SourceLocation CaretLoc, Scope *CurScope) {}
+  
+  /// ActOnBlockStmtExpr - This is called when the body of a block statement
+  /// literal was successfully completed.  ^(int x){...}
+  virtual ExprResult ActOnBlockStmtExpr(SourceLocation CaretLoc, StmtTy *Body,
+                                        Scope *CurScope) { return 0; }
+
+  /// ActOnBlockExprExpr - This is called when the body of a block
+  /// expression literal was successfully completed.  ^(int x)[foo bar: x]
+  virtual ExprResult ActOnBlockExprExpr(SourceLocation CaretLoc, ExprTy *Body,
+                                        Scope *CurScope) { return 0; }
+
   //===------------------------- C++ Declarations -------------------------===//
 
   /// ActOnStartNamespaceDef - This is called at the start of a namespace

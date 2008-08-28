@@ -1116,6 +1116,10 @@ DIAG(warn_selfcomparison,WARNING,
 // CHECK: use of uninitialized values
 DIAG(warn_uninit_val, WARNING, "use of uninitialized variable")
 
+// Blocks
+DIAG(err_expected_block_lbrace, ERROR,
+     "expected '{' in block literal")
+
 // CFString checking
 DIAG(err_cfstring_literal_not_string_constant, ERROR,
   "CFString literal is not a string constant")

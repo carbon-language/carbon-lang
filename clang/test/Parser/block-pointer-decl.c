@@ -7,12 +7,20 @@ struct blockStruct {
 
 int blockTaker (int (^myBlock)(int), int other_input)
 {
-  return 0;
+  return 5 * myBlock (other_input);
 }
 
 int main (int argc, char **argv)
 {
-  int (^blockptr) (int);
+  int (^blockptr) (int) = ^(int inval) {
+    printf ("Inputs: %d, %d.\n", argc, inval);
+    return argc * inval;
+  };
+
+
+  argc = 10;
+  printf ("I got: %d.\n",
+          blockTaker (blockptr, 6));
   return 0;
 }
 

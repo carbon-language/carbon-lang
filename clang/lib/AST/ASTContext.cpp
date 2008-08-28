@@ -613,8 +613,8 @@ QualType ASTContext::getPointerType(QualType T) {
 /// getBlockPointerType - Return the uniqued reference to the type for 
 /// a pointer to the specified block.
 QualType ASTContext::getBlockPointerType(QualType T) {
-  assert(T->isFunctionType() && "closure of function types only");
-  // Unique pointers, to guarantee there is only one closure of a particular
+  assert(T->isFunctionType() && "block of function types only");
+  // Unique pointers, to guarantee there is only one block of a particular
   // structure.
   llvm::FoldingSetNodeID ID;
   BlockPointerType::Profile(ID, T);
@@ -624,7 +624,7 @@ QualType ASTContext::getBlockPointerType(QualType T) {
         BlockPointerTypes.FindNodeOrInsertPos(ID, InsertPos))
     return QualType(PT, 0);
   
-  // If the closure pointee type isn't canonical, this won't be a canonical 
+  // If the block pointee type isn't canonical, this won't be a canonical 
   // type either so fill in the canonical type field.
   QualType Canonical;
   if (!T->isCanonical()) {

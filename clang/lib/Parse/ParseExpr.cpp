@@ -21,6 +21,7 @@
 
 #include "clang/Parse/Parser.h"
 #include "clang/Parse/DeclSpec.h"
+#include "clang/Parse/Scope.h"
 #include "clang/Basic/Diagnostic.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/SmallString.h"
@@ -380,6 +381,7 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec) {
 /// [C++]   'reinterpret_cast' '<' type-name '>' '(' expression ')' [C++ 5.2p1]
 /// [C++]   'static_cast' '<' type-name '>' '(' expression ')'      [C++ 5.2p1]
 /// [C++]   'this'          [C++ 9.3.2]
+/// [clang] '^' block-literal
 ///
 ///       constant: [C99 6.4.4]
 ///         integer-constant
@@ -595,6 +597,11 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
     if (getLang().ObjC1)
       return ParsePostfixExpressionSuffix(ParseObjCMessageExpression());
     // FALL THROUGH.
+  case tok::caret:
+    if (getLang().Blocks)
+      return ParsePostfixExpressionSuffix(ParseBlockLiteralExpression());
+    Diag(Tok, diag::err_expected_expression);
+    return ExprResult(true);
   default:
   UnhandledToken:
     Diag(Tok, diag::err_expected_expression);
@@ -1068,3 +1075,74 @@ bool Parser::ParseExpressionList(ExprListTy &Exprs, CommaLocsTy &CommaLocs) {
     CommaLocs.push_back(ConsumeToken());
   }
 }
+
+/// ParseBlockLiteralExpression - Parse a block literal, which roughly looks
+/// like ^(int x){ return x+1; }  or   ^(int y)foo(4, y, z)
+///
+///         block-literal:
+/// [clang]   '^' block-args[opt] compound-statement
+/// [clang]   '^' block-args cast-expression
+/// [clang] block-args:
+/// [clang]   '(' parameter-list ')'
+///
+Parser::ExprResult Parser::ParseBlockLiteralExpression() {
+  assert(Tok.is(tok::caret) && "block literal starts with ^");
+  SourceLocation CaretLoc = ConsumeToken();
+  
+  // Enter a scope to hold everything within the block.  This includes the 
+  // argument decls, decls within the compound expression, etc.  This also
+  // allows determining whether a variable reference inside the block is
+  // within or outside of the block.
+  EnterScope(Scope::BlockScope|Scope::FnScope|Scope::BreakScope|
+             Scope::ContinueScope|Scope::DeclScope);
+  
+  // Parse the return type if present.
+  DeclSpec DS;
+  Declarator ParamInfo(DS, Declarator::PrototypeContext);
+  
+  // If this block has arguments, parse them.  There is no ambiguity here with
+  // the expression case, because the expression case requires a parameter list.
+  if (Tok.is(tok::l_paren)) {
+    ParseParenDeclarator(ParamInfo);
+    // Parse the pieces after the identifier as if we had "int(...)".
+    ParamInfo.SetIdentifier(0, CaretLoc);
+    if (ParamInfo.getInvalidType()) {
+      // If there was an error parsing the arguments, they may have tried to use
+      // ^(x+y) which requires an argument list.  Just skip the whole block
+      // literal.
+      ExitScope();
+      return true;
+    }
+  } else {
+    // Otherwise, pretend we saw (void).
+    ParamInfo.AddTypeInfo(DeclaratorChunk::getFunction(true, false,
+                                                       0, 0, CaretLoc));
+  }
+
+  // Inform sema that we are starting a block.
+  Actions.ActOnBlockStart(CaretLoc, CurScope, ParamInfo);
+  
+  ExprResult Result;
+  if (Tok.is(tok::l_brace)) {
+    StmtResult Stmt = ParseCompoundStatementBody();
+    if (!Stmt.isInvalid) {
+      Result = Actions.ActOnBlockStmtExpr(CaretLoc, Stmt.Val, CurScope);
+    } else {
+      Actions.ActOnBlockError(CaretLoc, CurScope);
+      Result = true;
+    }
+  } else {
+    ExprResult Expr = ParseCastExpression(false);
+    if (!Expr.isInvalid) {
+      Result = Actions.ActOnBlockExprExpr(CaretLoc, Expr.Val, CurScope);
+    } else {
+      Actions.ActOnBlockError(CaretLoc, CurScope);
+      Diag(Tok, diag::err_expected_block_lbrace);
+      Result = true;
+    }
+  }
+
+  ExitScope();
+  return Result;
+}
+

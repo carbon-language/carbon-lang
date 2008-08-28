@@ -481,6 +481,7 @@ struct DeclaratorChunk {
     case Reference: return Ref.AttrList;
     case Array:    return 0;
     case Function:  return 0;
+    case BlockPointer: return 0; // FIXME: Do blocks have attr list?
     }
   }
   

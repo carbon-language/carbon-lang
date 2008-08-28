@@ -45,7 +45,13 @@ public:
     DeclScope = 0x08,
 
     /// CXXClassScope - The scope of a C++ struct/union/class definition.
-    CXXClassScope = 0x10
+    CXXClassScope = 0x10,
+    
+    /// BlockScope - This is a scope that corresponds to a block object.
+    /// Blocks serve as top-level scopes for some objects like labels, they
+    /// also prevent things like break and continue.  BlockScopes have the
+    /// other flags set as well.
+    BlockScope = 0x20
   };
 private:
   /// The parent scope for this scope.  This is null for the translation-unit
