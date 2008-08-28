@@ -59,9 +59,6 @@ public:
   //
   IntervalPartition(IntervalPartition &I, bool);
 
-  // Destructor - Free memory
-  ~IntervalPartition() { destroy(); }
-
   // print - Show contents in human readable format...
   virtual void print(std::ostream &O, const Module* = 0) const;
   void print(std::ostream *O, const Module* M = 0) const {
@@ -92,10 +89,10 @@ public:
   // Interface to Intervals vector...
   const std::vector<Interval*> &getIntervals() const { return Intervals; }
 
-private:
-  // destroy - Reset state back to before function was analyzed
-  void destroy();
+  // releaseMemory - Reset state back to before function was analyzed
+  void releaseMemory();
 
+private:
   // addIntervalToPartition - Add an interval to the internal list of intervals,
   // and then add mappings from all of the basic blocks in the interval to the
   // interval itself (in the IntervalMap).

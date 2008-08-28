@@ -23,8 +23,8 @@ X("intervals", "Interval Partition Construction", true, true);
 // IntervalPartition Implementation
 //===----------------------------------------------------------------------===//
 
-// destroy - Reset state back to before function was analyzed
-void IntervalPartition::destroy() {
+// releaseMemory - Reset state back to before function was analyzed
+void IntervalPartition::releaseMemory() {
   for (unsigned i = 0, e = Intervals.size(); i != e; ++i)
     delete Intervals[i];
   IntervalMap.clear();
