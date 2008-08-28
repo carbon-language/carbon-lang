@@ -33,6 +33,7 @@
 #include "llvm/Support/Streams.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Path.h"
+#include "llvm/System/Program.h"
 #include <vector>
 
 using namespace clang;
@@ -470,13 +471,19 @@ namespace {
   
 class UbigraphViz : public ExplodedNodeImpl::Auditor {
   llvm::OwningPtr<llvm::raw_ostream> Out;
+  llvm::sys::Path Dir, Filename;
   unsigned Cntr;
 
   typedef llvm::DenseMap<void*,unsigned> VMap;
   VMap M;
   
 public:
-  UbigraphViz(llvm::raw_ostream* out) : Out(out), Cntr(0) {}  
+  UbigraphViz(llvm::raw_ostream* out, llvm::sys::Path& dir,
+              llvm::sys::Path& filename)
+    : Out(out), Dir(dir), Filename(filename), Cntr(0) {} 
+  
+  ~UbigraphViz();
+  
   virtual void AddEdge(ExplodedNodeImpl* Src, ExplodedNodeImpl* Dst);  
 };
   
@@ -485,10 +492,11 @@ public:
 static ExplodedNodeImpl::Auditor* CreateUbiViz() {
   std::string ErrMsg;
   
-  llvm::sys::Path Filename = llvm::sys::Path::GetTemporaryDirectory(&ErrMsg);
+  llvm::sys::Path Dir = llvm::sys::Path::GetTemporaryDirectory(&ErrMsg);
   if (!ErrMsg.empty())
     return 0;
 
+  llvm::sys::Path Filename = Dir;
   Filename.appendComponent("llvm_ubi");
   Filename.makeUnique(true,&ErrMsg);
 
@@ -504,7 +512,7 @@ static ExplodedNodeImpl::Auditor* CreateUbiViz() {
   if (!ErrMsg.empty())
     return 0;
   
-  return new UbigraphViz(Stream.take());
+  return new UbigraphViz(Stream.take(), Dir, Filename);
 }
 
 void UbigraphViz::AddEdge(ExplodedNodeImpl* Src, ExplodedNodeImpl* Dst) {
@@ -535,3 +543,20 @@ void UbigraphViz::AddEdge(ExplodedNodeImpl* Src, ExplodedNodeImpl* Dst) {
        << ", ('arrow','true'), ('oriented', 'true'))\n";
 }
 
+UbigraphViz::~UbigraphViz() {
+  Out.reset(0);
+  llvm::cerr << "Running 'ubiviz' program... ";
+  std::string ErrMsg;
+  llvm::sys::Path Ubiviz = llvm::sys::Program::FindProgramByName("ubiviz");
+  std::vector<const char*> args;
+  args.push_back(Ubiviz.c_str());
+  args.push_back(Filename.c_str());
+  args.push_back(0);
+  
+  if (llvm::sys::Program::ExecuteAndWait(Ubiviz, &args[0],0,0,0,0,&ErrMsg)) {
+    llvm::cerr << "Error viewing graph: " << ErrMsg << "\n";
+  }
+  
+  // Delete the directory.
+  Dir.eraseFromDisk(true); 
+}

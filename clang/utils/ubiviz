@@ -50,6 +50,9 @@ def main(args):
     G.clear()
     for x in StreamData(arg):
       Display(G,x)
+  
+  sys.exit(0)
+  
 
 if __name__ == '__main__':
     main(sys.argv[1:])
