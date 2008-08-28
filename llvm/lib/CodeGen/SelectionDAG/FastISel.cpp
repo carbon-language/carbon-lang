@@ -587,8 +587,8 @@ unsigned FastISel::FastEmitInst_i(unsigned MachineInstOpcode,
   return ResultReg;
 }
 
-unsigned FastISel::FastEmitInst_extractsubreg(const TargetRegisterClass *RC,
-                                              unsigned Op0, uint32_t Idx) {
+unsigned FastISel::FastEmitInst_extractsubreg(unsigned Op0, uint32_t Idx) {
+  const TargetRegisterClass* RC = MRI.getRegClass(Op0);
   const TargetRegisterClass* SRC = *(RC->subregclasses_begin()+Idx-1);
   
   unsigned ResultReg = createResultReg(SRC);

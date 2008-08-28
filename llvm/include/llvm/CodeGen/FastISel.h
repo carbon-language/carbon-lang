@@ -195,8 +195,7 @@ protected:
 
   /// FastEmitInst_extractsubreg - Emit a MachineInstr for an extract_subreg
   /// from a specified index of a superregister.
-  unsigned FastEmitInst_extractsubreg(const TargetRegisterClass *RC,
-                                      unsigned Op0, uint32_t Idx);
+  unsigned FastEmitInst_extractsubreg(unsigned Op0, uint32_t Idx);
 
 private:
   unsigned getRegForValue(Value *V,
