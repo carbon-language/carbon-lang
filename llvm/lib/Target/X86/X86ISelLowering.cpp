@@ -3686,7 +3686,7 @@ LowerVECTOR_SHUFFLE_4wide(SDValue V1, SDValue V2,
   MVT MaskVT = PermMask.getValueType();
   MVT MaskEVT = MaskVT.getVectorElementType();
   SmallVector<std::pair<int, int>, 8> Locs;
-  Locs.reserve(4);
+  Locs.resize(4);
   SmallVector<SDValue, 8> Mask1(4, DAG.getNode(ISD::UNDEF, MaskEVT));
   unsigned NumHi = 0;
   unsigned NumLo = 0;
