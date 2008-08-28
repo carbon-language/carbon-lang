@@ -53,11 +53,30 @@ namespace {
     bool AfterLegalize;
     bool Fast;
 
+    // Create a dummy node (which is not added to allnodes), that adds a reference
+    // to the root node, preventing it from being deleted, and tracking any
+    // changes of the root.
+    HandleSDNode Dummy;
+  
     // Worklist of all of the nodes that need to be simplified.
-    std::vector<SDNode*> WorkList;
+    SmallVector<SDNode*, 8> WorkList;
+
+    // The current position of our iteration through the allnodes list.
+    SelectionDAG::allnodes_iterator CurNode;
 
     // AA - Used for DAG load/store alias analysis.
     AliasAnalysis &AA;
+
+    /// AdvanceCurNode - Update CurNode to point to the next node to process.
+    ///
+    void AdvanceCurNode() {
+      // We start at the end of the list and work towards the front. Setting
+      // CurNode to DAG.allnodes_end() indicates that we're done.
+      if (CurNode == DAG.allnodes_begin())
+        CurNode = DAG.allnodes_end();
+      else
+        --CurNode;
+    }
 
     /// AddUsersToWorkList - When an instruction is simplified, add all users of
     /// the instruction to the work lists because they might get more simplified
@@ -86,6 +105,10 @@ namespace {
     void removeFromWorkList(SDNode *N) {
       WorkList.erase(std::remove(WorkList.begin(), WorkList.end(), N),
                      WorkList.end());
+      // If the next node we were planning to process is deleted,
+      // skip past it.
+      if (N == CurNode)
+        AdvanceCurNode();
     }
     
     SDValue CombineTo(SDNode *N, const SDValue *To, unsigned NumTo,
@@ -243,10 +266,14 @@ public:
         TLI(D.getTargetLoweringInfo()),
         AfterLegalize(false),
         Fast(fast),
+        Dummy(D.getRoot()),
         AA(A) {}
     
     /// Run - runs the dag combiner on all nodes in the work list
     void Run(bool RunningAfterLegalize); 
+
+    /// ProcessNode - runs the dag combiner on a node
+    void ProcessNode(SDNode *N);
   };
 }
 
@@ -575,91 +602,89 @@ bool DAGCombiner::SimplifyDemandedBits(SDValue Op, const APInt &Demanded) {
 //  Main DAG Combiner implementation
 //===----------------------------------------------------------------------===//
 
+void DAGCombiner::ProcessNode(SDNode *N) {
+  // If N has no uses, it is dead.  Make sure to revisit all N's operands once
+  // N is deleted from the DAG, since they too may now be dead or may have a
+  // reduced number of uses, allowing other xforms.
+  if (N->use_empty() && N != &Dummy) {
+    for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
+      AddToWorkList(N->getOperand(i).Val);
+    
+    DAG.DeleteNode(N);
+    return;
+  }
+    
+  SDValue RV = combine(N);
+  
+  if (RV.Val == 0)
+    return;
+  
+  ++NodesCombined;
+  
+  // If we get back the same node we passed in, rather than a new node or
+  // zero, we know that the node must have defined multiple values and
+  // CombineTo was used.  Since CombineTo takes care of the worklist 
+  // mechanics for us, we have no work to do in this case.
+  if (RV.Val == N)
+    return;
+  
+  assert(N->getOpcode() != ISD::DELETED_NODE &&
+         RV.Val->getOpcode() != ISD::DELETED_NODE &&
+         "Node was deleted but visit returned new node!");
+
+  DOUT << "\nReplacing.3 "; DEBUG(N->dump(&DAG));
+  DOUT << "\nWith: "; DEBUG(RV.Val->dump(&DAG));
+  DOUT << '\n';
+
+  if (N->getNumValues() == RV.Val->getNumValues())
+    DAG.ReplaceAllUsesWith(N, RV.Val);
+  else {
+    assert(N->getValueType(0) == RV.getValueType() &&
+           N->getNumValues() == 1 && "Type mismatch");
+    SDValue OpV = RV;
+    DAG.ReplaceAllUsesWith(N, &OpV);
+  }
+
+  // Delete the old node.
+  removeFromWorkList(N);
+  DAG.DeleteNode(N);
+
+  // Push the new node and any users onto the worklist
+  AddToWorkList(RV.Val);
+  AddUsersToWorkList(RV.Val);
+}
+
 void DAGCombiner::Run(bool RunningAfterLegalize) {
   // set the instance variable, so that the various visit routines may use it.
   AfterLegalize = RunningAfterLegalize;
 
-  // Add all the dag nodes to the worklist.
-  WorkList.reserve(DAG.allnodes_size());
-  for (SelectionDAG::allnodes_iterator I = DAG.allnodes_begin(),
-       E = DAG.allnodes_end(); I != E; ++I)
-    WorkList.push_back(I);
-  
-  // Create a dummy node (which is not added to allnodes), that adds a reference
-  // to the root node, preventing it from being deleted, and tracking any
-  // changes of the root.
-  HandleSDNode Dummy(DAG.getRoot());
-  
   // The root of the dag may dangle to deleted nodes until the dag combiner is
   // done.  Set it to null to avoid confusion.
   DAG.setRoot(SDValue());
   
-  // while the worklist isn't empty, inspect the node on the end of it and
-  // try and combine it.
-  while (!WorkList.empty()) {
-    SDNode *N = WorkList.back();
-    WorkList.pop_back();
-    
-    // If N has no uses, it is dead.  Make sure to revisit all N's operands once
-    // N is deleted from the DAG, since they too may now be dead or may have a
-    // reduced number of uses, allowing other xforms.
-    if (N->use_empty() && N != &Dummy) {
-      for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
-        AddToWorkList(N->getOperand(i).Val);
-      
-      DAG.DeleteNode(N);
-      continue;
+  // Process all the original dag nodes. We process starting from the
+  // end of the list and working forward, which is in roughly topological
+  // order. Starting at the end and working forward means we won't
+  // accidentally revisit nodes created during the dagcombine process.
+  CurNode = prior(DAG.allnodes_end());
+  do {
+    SDNode *N = &*CurNode;
+    AdvanceCurNode();
+    ProcessNode(N);
+    // Processing the node may have resulted in nodes being added to the
+    // worklist, because the were newly created or because one of their 
+    // operands changed or some other reason they should be revisited.
+    // While the worklist isn't empty, inspect the node on the end of it
+    // and try and combine it.
+    while (!WorkList.empty()) {
+      SDNode *N = WorkList.back();
+      WorkList.pop_back();
+      if (N == CurNode)
+        AdvanceCurNode();
+      ProcessNode(N);
     }
-    
-    SDValue RV = combine(N);
-    
-    if (RV.Val == 0)
-      continue;
-    
-    ++NodesCombined;
-    
-    // If we get back the same node we passed in, rather than a new node or
-    // zero, we know that the node must have defined multiple values and
-    // CombineTo was used.  Since CombineTo takes care of the worklist 
-    // mechanics for us, we have no work to do in this case.
-    if (RV.Val == N)
-      continue;
-    
-    assert(N->getOpcode() != ISD::DELETED_NODE &&
-           RV.Val->getOpcode() != ISD::DELETED_NODE &&
-           "Node was deleted but visit returned new node!");
+  } while (CurNode != DAG.allnodes_end());
 
-    DOUT << "\nReplacing.3 "; DEBUG(N->dump(&DAG));
-    DOUT << "\nWith: "; DEBUG(RV.Val->dump(&DAG));
-    DOUT << '\n';
-    WorkListRemover DeadNodes(*this);
-    if (N->getNumValues() == RV.Val->getNumValues())
-      DAG.ReplaceAllUsesWith(N, RV.Val, &DeadNodes);
-    else {
-      assert(N->getValueType(0) == RV.getValueType() &&
-             N->getNumValues() == 1 && "Type mismatch");
-      SDValue OpV = RV;
-      DAG.ReplaceAllUsesWith(N, &OpV, &DeadNodes);
-    }
-      
-    // Push the new node and any users onto the worklist
-    AddToWorkList(RV.Val);
-    AddUsersToWorkList(RV.Val);
-    
-    // Add any uses of the old node to the worklist in case this node is the
-    // last one that uses them.  They may become dead after this node is
-    // deleted.
-    for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
-      AddToWorkList(N->getOperand(i).Val);
-      
-    // Nodes can be reintroduced into the worklist.  Make sure we do not
-    // process a node that has been replaced.
-    removeFromWorkList(N);
-    
-    // Finally, since the node is now dead, remove it from the graph.
-    DAG.DeleteNode(N);
-  }
-  
   // If the root changed (e.g. it was a dead load, update the root).
   DAG.setRoot(Dummy.getValue());
 }
