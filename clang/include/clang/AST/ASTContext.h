@@ -284,7 +284,7 @@ public:
   /// this method declaration. If non-NULL, Container must be either
   /// an ObjCCategoryImplDecl or ObjCImplementationDecl; it should
   /// only be NULL when getting encodings for protocol properties.
-  void getObjCEncodingForPropertyDecl(const ObjCPropertyDecl *Decl, 
+  void getObjCEncodingForPropertyDecl(const ObjCPropertyDecl *PD, 
                                       const Decl *Container,
                                       std::string &S);
   
