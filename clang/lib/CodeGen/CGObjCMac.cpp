@@ -267,6 +267,7 @@ private:
   /// EmitPropertyList - Emit the given property list. The return
   /// value has type PropertyListPtrTy.
   llvm::Constant *EmitPropertyList(const std::string &Name,
+                                   const Decl *Container,
                                    ObjCPropertyDecl * const *begin,
                                    ObjCPropertyDecl * const *end);
 
@@ -315,8 +316,9 @@ private:
   /// name. The return value has type char *.
   llvm::Constant *GetPropertyName(IdentifierInfo *Ident);
 
-  // FIXME: This is a horrible name too.
-  llvm::Constant *GetPropertyType(const ObjCPropertyDecl *PD);
+  // FIXME: This can be dropped once string functions are unified.
+  llvm::Constant *GetPropertyTypeString(const ObjCPropertyDecl *PD,
+                                        const Decl *Container);
 
   /// GetNameForMethod - Return a name for the given method.
   /// \param[out] NameOut - The return value.
@@ -623,6 +625,7 @@ CGObjCMac::EmitProtocolExtension(const ObjCProtocolDecl *PD,
                        OptClassMethods);
   Values[3] = EmitPropertyList(std::string("\01L_OBJC_$_PROP_PROTO_LIST_") + 
                                PD->getName(),
+                               0,
                                PD->classprop_begin(),
                                PD->classprop_end());
 
@@ -702,13 +705,14 @@ CGObjCMac::EmitProtocolList(const std::string &Name,
   };
 */
 llvm::Constant *CGObjCMac::EmitPropertyList(const std::string &Name,
+                                            const Decl *Container,
                                             ObjCPropertyDecl * const *begin,
                                             ObjCPropertyDecl * const *end) {
   std::vector<llvm::Constant*> Properties, Prop(2);
   for (; begin != end; ++begin) {
     const ObjCPropertyDecl *PD = *begin;
     Prop[0] = GetPropertyName(PD->getIdentifier());
-    Prop[1] = GetPropertyType(PD);
+    Prop[1] = GetPropertyTypeString(PD, Container);
     Properties.push_back(llvm::ConstantStruct::get(ObjCTypes.PropertyTy,
                                                    Prop));
   }
@@ -843,6 +847,7 @@ void CGObjCMac::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
   // If there is no category @interface then there can be no properties.
   if (Category) {
     Values[6] = EmitPropertyList(std::string("\01L_OBJC_$_PROP_LIST_") + ExtName,
+                                 OCD,
                                  Category->classprop_begin(),
                                  Category->classprop_end());
   } else {
@@ -1120,6 +1125,7 @@ CGObjCMac::EmitClassExtension(const ObjCImplementationDecl *ID) {
   Values[1] = llvm::Constant::getNullValue(ObjCTypes.Int8PtrTy);
   Values[2] = EmitPropertyList(std::string("\01L_OBJC_$_PROP_LIST_") + 
                                ID->getName(),
+                               ID,
                                ID->getClassInterface()->classprop_begin(),
                                ID->getClassInterface()->classprop_end());
 
@@ -1599,9 +1605,11 @@ llvm::Constant *CGObjCMac::GetPropertyName(IdentifierInfo *Ident) {
 }
 
 // FIXME: Merge into a single cstring creation function.
-llvm::Constant *CGObjCMac::GetPropertyType(const ObjCPropertyDecl *PD) {
-  std::string TypeStr("MOOO!");
-  //CGM.getContext().getObjCEncodingForMethodDecl(D, TypeStr);
+// FIXME: This Decl should be more precise.
+llvm::Constant *CGObjCMac::GetPropertyTypeString(const ObjCPropertyDecl *PD,
+                                                 const Decl *Container) {
+  std::string TypeStr;
+  CGM.getContext().getObjCEncodingForPropertyDecl(PD, Container, TypeStr);
   return GetPropertyName(&CGM.getContext().Idents.get(TypeStr));
 }
 
@@ -1650,7 +1658,7 @@ void CGObjCMac::FinishModule() {
   }
   for (std::set<IdentifierInfo*>::iterator i = DefinedSymbols.begin(),
          e = DefinedSymbols.end(); i != e; ++i) {
-    s << "\t.objc_class_name_" << (*i)->getName() << " = 0\n"
+    s << "\t.objc_class_name_" << (*i)->getName() << "=0\n"
       << "\t.globl .objc_class_name_" << (*i)->getName() << "\n";
   }  
   CGM.getModule().appendModuleInlineAsm(s.str());

@@ -1396,9 +1396,10 @@ int ASTContext::getObjCEncodingTypeSize(QualType type) {
 
 /// getObjCEncodingForMethodDecl - Return the encoded type for this method
 /// declaration.
-void ASTContext::getObjCEncodingForMethodDecl(ObjCMethodDecl *Decl, 
+void ASTContext::getObjCEncodingForMethodDecl(const ObjCMethodDecl *Decl, 
                                               std::string& S)
 {
+  // FIXME: This is not very efficient.
   // Encode type qualifer, 'in', 'inout', etc. for the return type.
   getObjCEncodingForTypeQualifier(Decl->getObjCDeclQualifier(), S);
   // Encode result type.
@@ -1434,6 +1435,91 @@ void ASTContext::getObjCEncodingForMethodDecl(ObjCMethodDecl *Decl,
     S += llvm::utostr(ParmOffset);
     ParmOffset += getObjCEncodingTypeSize(PType);
   }
+}
+
+/// getObjCEncodingForPropertyDecl - Return the encoded type for this
+/// method declaration. If non-NULL, Container must be either an
+/// ObjCCategoryImplDecl or ObjCImplementationDecl; it should only be
+/// NULL when getting encodings for protocol properties.
+void ASTContext::getObjCEncodingForPropertyDecl(const ObjCPropertyDecl *PD, 
+                                                const Decl *Container,
+                                                std::string& S)
+{
+  // Collect information from the property implementation decl(s).
+  bool Dynamic = false;
+  ObjCPropertyImplDecl *SynthesizePID = 0;
+
+  // FIXME: Duplicated code due to poor abstraction.
+  if (Container) {
+    if (const ObjCCategoryImplDecl *CID = 
+        dyn_cast<ObjCCategoryImplDecl>(Container)) {
+      for (ObjCCategoryImplDecl::propimpl_iterator
+             i = CID->propimpl_begin(), e = CID->propimpl_end(); i != e; ++i) {
+        ObjCPropertyImplDecl *PID = *i;
+        if (PID->getPropertyDecl() == PD) {
+          if (PID->getPropertyImplementation()==ObjCPropertyImplDecl::Dynamic) {
+            Dynamic = true;
+          } else {
+            SynthesizePID = PID;
+          }
+        }
+      }
+    } else {
+      const ObjCImplementationDecl *OID = cast<ObjCImplementationDecl>(Container);
+      for (ObjCCategoryImplDecl::propimpl_iterator
+             i = OID->propimpl_begin(), e = OID->propimpl_end(); i != e; ++i) {
+        ObjCPropertyImplDecl *PID = *i;
+        if (PID->getPropertyDecl() == PD) {
+          if (PID->getPropertyImplementation()==ObjCPropertyImplDecl::Dynamic) {
+            Dynamic = true;
+          } else {
+            SynthesizePID = PID;
+          }
+        }
+      }      
+    }
+  }
+
+  // FIXME: This is not very efficient.
+  S = "T";
+
+  // Encode result type.
+  // FIXME: GCC uses a generating_property_type_encoding mode during
+  // this part. Investigate.
+  getObjCEncodingForType(PD->getType(), S, EncodingRecordTypes);
+
+  if (PD->isReadOnly()) {
+    S += ",R";
+  } else {
+    switch (PD->getSetterKind()) {
+    case ObjCPropertyDecl::Assign: break;
+    case ObjCPropertyDecl::Copy:   S += ",C"; break;
+    case ObjCPropertyDecl::Retain: S += ",&"; break;      
+    }
+  }
+
+  // It really isn't clear at all what this means, since properties
+  // are "dynamic by default".
+  if (Dynamic)
+    S += ",D";
+
+  if (PD->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_getter) {
+    S += ",G";
+    S += PD->getGetterName().getName();
+  }
+
+  if (PD->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_setter) {
+    S += ",S";
+    S += PD->getSetterName().getName();
+  }
+
+  if (SynthesizePID) {
+    const ObjCIvarDecl *OID = SynthesizePID->getPropertyIvarDecl();
+    S += ",V";
+    S += OID->getName();
+  }
+
+  // FIXME: OBJCGC: weak & strong
 }
 
 void ASTContext::getObjCEncodingForType(QualType T, std::string& S,
