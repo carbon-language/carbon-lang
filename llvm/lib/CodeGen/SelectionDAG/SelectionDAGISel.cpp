@@ -4014,7 +4014,7 @@ SDValue RegsForValue::getCopyFromRegs(SelectionDAG &DAG,
     unsigned NumRegs = TLI->getNumRegisters(ValueVT);
     MVT RegisterVT = RegVTs[Value];
 
-    Parts.resize(Part + NumRegs);
+    Parts.resize(NumRegs);
     for (unsigned i = 0; i != NumRegs; ++i) {
       SDValue P;
       if (Flag == 0)
@@ -4067,12 +4067,13 @@ SDValue RegsForValue::getCopyFromRegs(SelectionDAG &DAG,
         }
       }
       
-      Parts[Part+i] = P;
+      Parts[i] = P;
     }
   
-    Values[Value] = getCopyFromParts(DAG, &Parts[Part], NumRegs, RegisterVT,
+    Values[Value] = getCopyFromParts(DAG, Parts.begin(), NumRegs, RegisterVT,
                                      ValueVT);
     Part += NumRegs;
+    Parts.clear();
   }
 
   return DAG.getMergeValues(DAG.getVTList(&ValueVTs[0], ValueVTs.size()),
