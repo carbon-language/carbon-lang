@@ -540,6 +540,8 @@ public:
     Expr(SizeOfAlignOfTypeExprClass, resultType),
     isSizeof(issizeof), Ty(argType), OpLoc(op), RParenLoc(rp) {}
   
+  virtual void Destroy(ASTContext& C);
+
   bool isSizeOf() const { return isSizeof; }
   QualType getArgumentType() const { return Ty; }
   

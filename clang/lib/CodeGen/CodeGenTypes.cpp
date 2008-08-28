@@ -352,6 +352,10 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     TheModule.addTypeName(TypeName, Res);  
     return Res;
   }
+
+  case Type::BlockPointer: {
+    assert(0 && "FIXME: Cannot get type of block pointer.");
+  }
   }
   
   // FIXME: implement.

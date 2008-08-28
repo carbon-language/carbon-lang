@@ -1236,6 +1236,11 @@ int64_t UnaryOperator::evaluateOffsetOf(ASTContext& C) const
   return ::evaluateOffsetOf(C, cast<Expr>(Val)) / CharSize;
 }
 
+void SizeOfAlignOfTypeExpr::Destroy(ASTContext& C) {
+  // Override default behavior of traversing children. We do not want
+  // to delete the type.
+}
+
 //===----------------------------------------------------------------------===//
 //  Child Iterators for iterating over subexpressions/substatements
 //===----------------------------------------------------------------------===//
