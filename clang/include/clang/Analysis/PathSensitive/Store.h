@@ -128,6 +128,9 @@ public:
   virtual store::RegionExtent getExtent(store::Region R) =0;
 };
   
+StoreManager* CreateBasicStoreManager(GRStateManager& StMgr);
+
+  
 } // end clang namespace
 
 #endif

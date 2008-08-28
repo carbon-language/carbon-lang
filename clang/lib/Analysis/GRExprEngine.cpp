@@ -13,7 +13,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Analysis/PathSensitive/BasicStore.h"
 #include "clang/Analysis/PathSensitive/GRExprEngine.h"
 #include "clang/Analysis/PathSensitive/BugReporter.h"
 #include "clang/Basic/SourceManager.h"

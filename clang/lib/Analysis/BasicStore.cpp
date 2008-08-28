@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Analysis/PathSensitive/BasicStore.h"
 #include "clang/Analysis/Analyses/LiveVariables.h"
 #include "clang/Analysis/PathSensitive/GRState.h"
 #include "llvm/ADT/ImmutableMap.h"
