@@ -4014,7 +4014,7 @@ SDValue RegsForValue::getCopyFromRegs(SelectionDAG &DAG,
     unsigned NumRegs = TLI->getNumRegisters(ValueVT);
     MVT RegisterVT = RegVTs[Value];
 
-    Parts.resize(NumRegs);
+    Parts.resize(Part + NumRegs);
     for (unsigned i = 0; i != NumRegs; ++i) {
       SDValue P;
       if (Flag == 0)
