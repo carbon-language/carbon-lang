@@ -38,6 +38,7 @@ STATISTIC(numJoins    , "Number of interval joins performed");
 STATISTIC(numSubJoins , "Number of subclass joins performed");
 STATISTIC(numCommutes , "Number of instruction commuting performed");
 STATISTIC(numExtends  , "Number of copies extended");
+STATISTIC(NumReMats   , "Number of instructions re-materialized");
 STATISTIC(numPeep     , "Number of identity moves eliminated after coalescing");
 STATISTIC(numAborts   , "Number of times interval joining aborted");
 
@@ -426,6 +427,43 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(LiveInterval &IntA,
   return true;
 }
 
+/// ReMaterializeTrivialDef - If the source of a copy is defined by a trivial
+/// computation, replace the copy by rematerialize the definition.
+bool SimpleRegisterCoalescing::ReMaterializeTrivialDef(LiveInterval &SrcInt,
+                                                       unsigned DstReg,
+                                                       MachineInstr *CopyMI) {
+  unsigned CopyIdx = li_->getUseIndex(li_->getInstructionIndex(CopyMI));
+  LiveInterval::iterator SrcLR = SrcInt.FindLiveRangeContaining(CopyIdx);
+  if (SrcLR == SrcInt.end()) // Should never happen!
+    return false;
+  VNInfo *ValNo = SrcLR->valno;
+  // If other defs can reach uses of this def, then it's not safe to perform
+  // the optimization.
+  if (ValNo->def == ~0U || ValNo->def == ~1U || ValNo->hasPHIKill)
+    return false;
+  MachineInstr *DefMI = li_->getInstructionFromIndex(ValNo->def);
+  const TargetInstrDesc &TID = DefMI->getDesc();
+  if (!TID.isAsCheapAsAMove())
+    return false;
+  bool SawStore = false;
+  if (!DefMI->isSafeToMove(tii_, SawStore))
+    return false;
+
+  unsigned DefIdx = li_->getDefIndex(CopyIdx);
+  const LiveRange *DLR= li_->getInterval(DstReg).getLiveRangeContaining(DefIdx);
+  DLR->valno->copy = NULL;
+
+  MachineBasicBlock::iterator MII = CopyMI;
+  MachineBasicBlock *MBB = CopyMI->getParent();
+  tii_->reMaterialize(*MBB, MII, DstReg, DefMI);
+  MachineInstr *NewMI = prior(MII);
+  li_->ReplaceMachineInstrInMaps(CopyMI, NewMI);
+  CopyMI->eraseFromParent();
+  ReMatCopies.insert(CopyMI);
+  ++NumReMats;
+  return true;
+}
+
 /// isBackEdgeCopy - Returns true if CopyMI is a back edge copy.
 ///
 bool SimpleRegisterCoalescing::isBackEdgeCopy(MachineInstr *CopyMI,
@@ -475,6 +513,17 @@ SimpleRegisterCoalescing::UpdateRegDefsUses(unsigned SrcReg, unsigned DstReg,
       unsigned UseDstReg = DstReg;
       if (OldSubIdx)
           UseDstReg = tri_->getSubReg(DstReg, OldSubIdx);
+
+      unsigned CopySrcReg, CopyDstReg;
+      if (tii_->isMoveInstr(*UseMI, CopySrcReg, CopyDstReg) &&
+          CopySrcReg != CopyDstReg &&
+          CopySrcReg == SrcReg && CopyDstReg != UseDstReg) {
+        // If the use is a copy and it won't be coalesced away, and its source
+        // is defined by a trivial computation, try to rematerialize it instead.
+        if (ReMaterializeTrivialDef(li_->getInterval(SrcReg), CopyDstReg,UseMI))
+          continue;
+      }
+
       O.setReg(UseDstReg);
       O.setSubReg(0);
     } else {
@@ -865,7 +914,7 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
   MachineInstr *CopyMI = TheCopy.MI;
 
   Again = false;
-  if (JoinedCopies.count(CopyMI))
+  if (JoinedCopies.count(CopyMI) || ReMatCopies.count(CopyMI))
     return false; // Already done.
 
   DOUT << li_->getInstructionIndex(CopyMI) << '\t' << *CopyMI;
@@ -1108,6 +1157,12 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
 
   if (!isEmpty && !JoinIntervals(DstInt, SrcInt, Swapped)) {
     // Coalescing failed.
+
+    // If definition of source is defined by trivial computation, try
+    // rematerializing it.
+    if (!isExtSubReg && !isInsSubReg &&
+        ReMaterializeTrivialDef(SrcInt, DstInt.reg, CopyMI))
+      return true;
     
     // If we can eliminate the copy without merging the live ranges, do so now.
     if (!isExtSubReg && !isInsSubReg &&
@@ -1211,9 +1266,6 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
   if (TargetRegisterInfo::isVirtualRegister(DstReg))
     RemoveUnnecessaryKills(DstReg, *ResDstInt);
 
-  // SrcReg is guarateed to be the register whose live interval that is
-  // being merged.
-  li_->removeInterval(SrcReg);
   if (isInsSubReg)
     // Avoid:
     // r1024 = op
@@ -1222,6 +1274,10 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
     //       = r1024
     RemoveDeadImpDef(DstReg, *ResDstInt);
   UpdateRegDefsUses(SrcReg, DstReg, SubIdx);
+
+  // SrcReg is guarateed to be the register whose live interval that is
+  // being merged.
+  li_->removeInterval(SrcReg);
 
   if (isEmpty) {
     // Now the copy is being coalesced away, the val# previously defined
@@ -2018,6 +2074,7 @@ void SimpleRegisterCoalescing::printRegName(unsigned reg) const {
 
 void SimpleRegisterCoalescing::releaseMemory() {
   JoinedCopies.clear();
+  ReMatCopies.clear();
 }
 
 static bool isZeroLengthInterval(LiveInterval *li) {

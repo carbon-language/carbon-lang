@@ -96,6 +96,10 @@ namespace llvm {
     ///
     SmallPtrSet<MachineInstr*, 32> JoinedCopies;
 
+    /// ReMatCopies - Keep track of copies eliminated due to remat.
+    ///
+    SmallPtrSet<MachineInstr*, 32> ReMatCopies;
+
   public:
     static char ID; // Pass identifcation, replacement for typeid
     SimpleRegisterCoalescing() : MachineFunctionPass((intptr_t)&ID) {}
@@ -193,6 +197,9 @@ namespace llvm {
     /// can transform the copy into a noop by commuting the definition.
     bool RemoveCopyByCommutingDef(LiveInterval &IntA, LiveInterval &IntB,
                                   MachineInstr *CopyMI);
+
+    bool ReMaterializeTrivialDef(LiveInterval &SrcInt, unsigned DstReg,
+                                 MachineInstr *CopyMI);
 
     /// TurnCopyIntoImpDef - If source of the specified copy is an implicit def,
     /// turn the copy into an implicit def.
