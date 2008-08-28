@@ -494,9 +494,6 @@ protected:
   /// VisitDeclStmt - Transfer function logic for DeclStmts.
   void VisitDeclStmt(DeclStmt* DS, NodeTy* Pred, NodeSet& Dst); 
   
-  void VisitDeclStmtAux(DeclStmt* DS, ScopedDecl* D,
-                        NodeTy* Pred, NodeSet& Dst);
-  
   /// VisitGuardedExpr - Transfer function logic for ?, __builtin_choose
   void VisitGuardedExpr(Expr* Ex, Expr* L, Expr* R, NodeTy* Pred, NodeSet& Dst);
   
