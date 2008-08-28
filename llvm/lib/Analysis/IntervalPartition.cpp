@@ -28,6 +28,7 @@ void IntervalPartition::destroy() {
   for (unsigned i = 0, e = Intervals.size(); i != e; ++i)
     delete Intervals[i];
   IntervalMap.clear();
+  Intervals.clear();
   RootInterval = 0;
 }
 
