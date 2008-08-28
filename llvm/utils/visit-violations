@@ -1,0 +1,5 @@
+#!/usr/bin/env tcsh
+
+make check-line-length Sources="$1" \
+| awk -F : '/:[0-9]*:/ {print "emacs", "+" $2, $1}' \
+| sort -r
