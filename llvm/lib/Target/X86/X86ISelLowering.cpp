@@ -293,15 +293,15 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::MEMBARRIER    , MVT::Other, Expand);
 
   // Expand certain atomics
-  setOperationAction(ISD::ATOMIC_CMP_SWAP , MVT::i8, Custom);
-  setOperationAction(ISD::ATOMIC_CMP_SWAP , MVT::i16, Custom);
-  setOperationAction(ISD::ATOMIC_CMP_SWAP , MVT::i32, Custom);
-  setOperationAction(ISD::ATOMIC_CMP_SWAP , MVT::i64, Custom);
+  setOperationAction(ISD::ATOMIC_CMP_SWAP_8 , MVT::i8, Custom);
+  setOperationAction(ISD::ATOMIC_CMP_SWAP_16, MVT::i16, Custom);
+  setOperationAction(ISD::ATOMIC_CMP_SWAP_32, MVT::i32, Custom);
+  setOperationAction(ISD::ATOMIC_CMP_SWAP_64, MVT::i64, Custom);
 
-  setOperationAction(ISD::ATOMIC_LOAD_SUB , MVT::i8, Expand);
-  setOperationAction(ISD::ATOMIC_LOAD_SUB , MVT::i16, Expand);
-  setOperationAction(ISD::ATOMIC_LOAD_SUB , MVT::i32, Expand);
-  setOperationAction(ISD::ATOMIC_LOAD_SUB , MVT::i64, Expand);
+  setOperationAction(ISD::ATOMIC_LOAD_SUB_8, MVT::i8, Expand);
+  setOperationAction(ISD::ATOMIC_LOAD_SUB_16, MVT::i16, Expand);
+  setOperationAction(ISD::ATOMIC_LOAD_SUB_32, MVT::i32, Expand);
+  setOperationAction(ISD::ATOMIC_LOAD_SUB_64, MVT::i64, Expand);
 
   // Use the default ISD::DBG_STOPPOINT, ISD::DECLARE expansion.
   setOperationAction(ISD::DBG_STOPPOINT, MVT::Other, Expand);
@@ -5914,8 +5914,11 @@ SDNode* X86TargetLowering::ExpandATOMIC_LOAD_SUB(SDNode* Op, SelectionDAG &DAG) 
   MVT T = Op->getValueType(0);
   SDValue negOp = DAG.getNode(ISD::SUB, T,
                                 DAG.getConstant(0, T), Op->getOperand(2));
-  return DAG.getAtomic(ISD::ATOMIC_LOAD_ADD, Op->getOperand(0),
-                       Op->getOperand(1), negOp,
+  return DAG.getAtomic((T==MVT::i8 ? ISD::ATOMIC_LOAD_ADD_8:
+                        T==MVT::i16 ? ISD::ATOMIC_LOAD_ADD_16:
+                        T==MVT::i32 ? ISD::ATOMIC_LOAD_ADD_32:
+                        T==MVT::i64 ? ISD::ATOMIC_LOAD_ADD_64: 0),
+                       Op->getOperand(0), Op->getOperand(1), negOp,
                        cast<AtomicSDNode>(Op)->getSrcValue(),
                        cast<AtomicSDNode>(Op)->getAlignment()).Val;
 }
@@ -5925,7 +5928,10 @@ SDNode* X86TargetLowering::ExpandATOMIC_LOAD_SUB(SDNode* Op, SelectionDAG &DAG) 
 SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   switch (Op.getOpcode()) {
   default: assert(0 && "Should not custom lower this!");
-  case ISD::ATOMIC_CMP_SWAP:    return LowerCMP_SWAP(Op,DAG);
+  case ISD::ATOMIC_CMP_SWAP_8:  return LowerCMP_SWAP(Op,DAG);
+  case ISD::ATOMIC_CMP_SWAP_16: return LowerCMP_SWAP(Op,DAG);
+  case ISD::ATOMIC_CMP_SWAP_32: return LowerCMP_SWAP(Op,DAG);
+  case ISD::ATOMIC_CMP_SWAP_64: return LowerCMP_SWAP(Op,DAG);
   case ISD::BUILD_VECTOR:       return LowerBUILD_VECTOR(Op, DAG);
   case ISD::VECTOR_SHUFFLE:     return LowerVECTOR_SHUFFLE(Op, DAG);
   case ISD::EXTRACT_VECTOR_ELT: return LowerEXTRACT_VECTOR_ELT(Op, DAG);
@@ -5979,8 +5985,11 @@ SDNode *X86TargetLowering::ReplaceNodeResults(SDNode *N, SelectionDAG &DAG) {
   default: assert(0 && "Should not custom lower this!");
   case ISD::FP_TO_SINT:         return ExpandFP_TO_SINT(N, DAG);
   case ISD::READCYCLECOUNTER:   return ExpandREADCYCLECOUNTER(N, DAG);
-  case ISD::ATOMIC_CMP_SWAP:    return ExpandATOMIC_CMP_SWAP(N, DAG);
-  case ISD::ATOMIC_LOAD_SUB:    return ExpandATOMIC_LOAD_SUB(N,DAG);
+  case ISD::ATOMIC_CMP_SWAP_64: return ExpandATOMIC_CMP_SWAP(N, DAG);
+  case ISD::ATOMIC_LOAD_SUB_8:  return ExpandATOMIC_LOAD_SUB(N,DAG);
+  case ISD::ATOMIC_LOAD_SUB_16: return ExpandATOMIC_LOAD_SUB(N,DAG);
+  case ISD::ATOMIC_LOAD_SUB_32: return ExpandATOMIC_LOAD_SUB(N,DAG);
+  case ISD::ATOMIC_LOAD_SUB_64: return ExpandATOMIC_LOAD_SUB(N,DAG);
   }
 }
 

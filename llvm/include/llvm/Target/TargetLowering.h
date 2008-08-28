@@ -1386,7 +1386,7 @@ private:
   MVT TransformToType[MVT::LAST_VALUETYPE];
 
   // Defines the capacity of the TargetLowering::OpActions table
-  static const int OpActionsCapacity = 176;
+  static const int OpActionsCapacity = 212;
 
   /// OpActions - For each operation and each value type, keep a LegalizeAction
   /// that indicates how instruction selection should deal with the operation.

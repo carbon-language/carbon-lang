@@ -1181,7 +1181,10 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     break;
   }
 
-  case ISD::ATOMIC_CMP_SWAP: {
+  case ISD::ATOMIC_CMP_SWAP_8:
+  case ISD::ATOMIC_CMP_SWAP_16:
+  case ISD::ATOMIC_CMP_SWAP_32:
+  case ISD::ATOMIC_CMP_SWAP_64: {
     unsigned int num_operands = 4;
     assert(Node->getNumOperands() == num_operands && "Invalid Atomic node!");
     SDValue Ops[4];
@@ -1201,17 +1204,50 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     AddLegalizedOperand(SDValue(Node, 1), Result.getValue(1));
     return Result.getValue(Op.getResNo());
   }
-  case ISD::ATOMIC_LOAD_ADD:
-  case ISD::ATOMIC_LOAD_SUB:
-  case ISD::ATOMIC_LOAD_AND:
-  case ISD::ATOMIC_LOAD_OR:
-  case ISD::ATOMIC_LOAD_XOR:
-  case ISD::ATOMIC_LOAD_NAND:
-  case ISD::ATOMIC_LOAD_MIN:
-  case ISD::ATOMIC_LOAD_MAX:
-  case ISD::ATOMIC_LOAD_UMIN:
-  case ISD::ATOMIC_LOAD_UMAX:
-  case ISD::ATOMIC_SWAP: {
+  case ISD::ATOMIC_LOAD_ADD_8:
+  case ISD::ATOMIC_LOAD_SUB_8:
+  case ISD::ATOMIC_LOAD_AND_8:
+  case ISD::ATOMIC_LOAD_OR_8:
+  case ISD::ATOMIC_LOAD_XOR_8:
+  case ISD::ATOMIC_LOAD_NAND_8:
+  case ISD::ATOMIC_LOAD_MIN_8:
+  case ISD::ATOMIC_LOAD_MAX_8:
+  case ISD::ATOMIC_LOAD_UMIN_8:
+  case ISD::ATOMIC_LOAD_UMAX_8:
+  case ISD::ATOMIC_SWAP_8: 
+  case ISD::ATOMIC_LOAD_ADD_16:
+  case ISD::ATOMIC_LOAD_SUB_16:
+  case ISD::ATOMIC_LOAD_AND_16:
+  case ISD::ATOMIC_LOAD_OR_16:
+  case ISD::ATOMIC_LOAD_XOR_16:
+  case ISD::ATOMIC_LOAD_NAND_16:
+  case ISD::ATOMIC_LOAD_MIN_16:
+  case ISD::ATOMIC_LOAD_MAX_16:
+  case ISD::ATOMIC_LOAD_UMIN_16:
+  case ISD::ATOMIC_LOAD_UMAX_16:
+  case ISD::ATOMIC_SWAP_16:
+  case ISD::ATOMIC_LOAD_ADD_32:
+  case ISD::ATOMIC_LOAD_SUB_32:
+  case ISD::ATOMIC_LOAD_AND_32:
+  case ISD::ATOMIC_LOAD_OR_32:
+  case ISD::ATOMIC_LOAD_XOR_32:
+  case ISD::ATOMIC_LOAD_NAND_32:
+  case ISD::ATOMIC_LOAD_MIN_32:
+  case ISD::ATOMIC_LOAD_MAX_32:
+  case ISD::ATOMIC_LOAD_UMIN_32:
+  case ISD::ATOMIC_LOAD_UMAX_32:
+  case ISD::ATOMIC_SWAP_32:
+  case ISD::ATOMIC_LOAD_ADD_64:
+  case ISD::ATOMIC_LOAD_SUB_64:
+  case ISD::ATOMIC_LOAD_AND_64:
+  case ISD::ATOMIC_LOAD_OR_64:
+  case ISD::ATOMIC_LOAD_XOR_64:
+  case ISD::ATOMIC_LOAD_NAND_64:
+  case ISD::ATOMIC_LOAD_MIN_64:
+  case ISD::ATOMIC_LOAD_MAX_64:
+  case ISD::ATOMIC_LOAD_UMIN_64:
+  case ISD::ATOMIC_LOAD_UMAX_64:
+  case ISD::ATOMIC_SWAP_64: {
     unsigned int num_operands = 3;
     assert(Node->getNumOperands() == num_operands && "Invalid Atomic node!");
     SDValue Ops[3];
@@ -4155,7 +4191,10 @@ SDValue SelectionDAGLegalize::PromoteOp(SDValue Op) {
     break;
   }
     
-  case ISD::ATOMIC_CMP_SWAP: {
+  case ISD::ATOMIC_CMP_SWAP_8:
+  case ISD::ATOMIC_CMP_SWAP_16:
+  case ISD::ATOMIC_CMP_SWAP_32:
+  case ISD::ATOMIC_CMP_SWAP_64: {
     AtomicSDNode* AtomNode = cast<AtomicSDNode>(Node);
     Tmp2 = PromoteOp(Node->getOperand(2));
     Tmp3 = PromoteOp(Node->getOperand(3));
@@ -4167,17 +4206,50 @@ SDValue SelectionDAGLegalize::PromoteOp(SDValue Op) {
     AddLegalizedOperand(Op.getValue(1), LegalizeOp(Result.getValue(1)));
     break;
   }
-  case ISD::ATOMIC_LOAD_ADD:
-  case ISD::ATOMIC_LOAD_SUB:
-  case ISD::ATOMIC_LOAD_AND:
-  case ISD::ATOMIC_LOAD_OR:
-  case ISD::ATOMIC_LOAD_XOR:
-  case ISD::ATOMIC_LOAD_NAND:
-  case ISD::ATOMIC_LOAD_MIN:
-  case ISD::ATOMIC_LOAD_MAX:
-  case ISD::ATOMIC_LOAD_UMIN:
-  case ISD::ATOMIC_LOAD_UMAX:
-  case ISD::ATOMIC_SWAP: {
+  case ISD::ATOMIC_LOAD_ADD_8:
+  case ISD::ATOMIC_LOAD_SUB_8:
+  case ISD::ATOMIC_LOAD_AND_8:
+  case ISD::ATOMIC_LOAD_OR_8:
+  case ISD::ATOMIC_LOAD_XOR_8:
+  case ISD::ATOMIC_LOAD_NAND_8:
+  case ISD::ATOMIC_LOAD_MIN_8:
+  case ISD::ATOMIC_LOAD_MAX_8:
+  case ISD::ATOMIC_LOAD_UMIN_8:
+  case ISD::ATOMIC_LOAD_UMAX_8:
+  case ISD::ATOMIC_SWAP_8: 
+  case ISD::ATOMIC_LOAD_ADD_16:
+  case ISD::ATOMIC_LOAD_SUB_16:
+  case ISD::ATOMIC_LOAD_AND_16:
+  case ISD::ATOMIC_LOAD_OR_16:
+  case ISD::ATOMIC_LOAD_XOR_16:
+  case ISD::ATOMIC_LOAD_NAND_16:
+  case ISD::ATOMIC_LOAD_MIN_16:
+  case ISD::ATOMIC_LOAD_MAX_16:
+  case ISD::ATOMIC_LOAD_UMIN_16:
+  case ISD::ATOMIC_LOAD_UMAX_16:
+  case ISD::ATOMIC_SWAP_16:
+  case ISD::ATOMIC_LOAD_ADD_32:
+  case ISD::ATOMIC_LOAD_SUB_32:
+  case ISD::ATOMIC_LOAD_AND_32:
+  case ISD::ATOMIC_LOAD_OR_32:
+  case ISD::ATOMIC_LOAD_XOR_32:
+  case ISD::ATOMIC_LOAD_NAND_32:
+  case ISD::ATOMIC_LOAD_MIN_32:
+  case ISD::ATOMIC_LOAD_MAX_32:
+  case ISD::ATOMIC_LOAD_UMIN_32:
+  case ISD::ATOMIC_LOAD_UMAX_32:
+  case ISD::ATOMIC_SWAP_32:
+  case ISD::ATOMIC_LOAD_ADD_64:
+  case ISD::ATOMIC_LOAD_SUB_64:
+  case ISD::ATOMIC_LOAD_AND_64:
+  case ISD::ATOMIC_LOAD_OR_64:
+  case ISD::ATOMIC_LOAD_XOR_64:
+  case ISD::ATOMIC_LOAD_NAND_64:
+  case ISD::ATOMIC_LOAD_MIN_64:
+  case ISD::ATOMIC_LOAD_MAX_64:
+  case ISD::ATOMIC_LOAD_UMIN_64:
+  case ISD::ATOMIC_LOAD_UMAX_64:
+  case ISD::ATOMIC_SWAP_64: {
     AtomicSDNode* AtomNode = cast<AtomicSDNode>(Node);
     Tmp2 = PromoteOp(Node->getOperand(2));
     Result = DAG.getAtomic(Node->getOpcode(), AtomNode->getChain(), 
@@ -6092,7 +6164,11 @@ void SelectionDAGLegalize::ExpandOp(SDValue Op, SDValue &Lo, SDValue &Hi){
     break;
   }
 
-  case ISD::ATOMIC_CMP_SWAP: {
+  // FIXME: should the LOAD_BIN and SWAP atomics get here too?  Probably.
+  case ISD::ATOMIC_CMP_SWAP_8:
+  case ISD::ATOMIC_CMP_SWAP_16:
+  case ISD::ATOMIC_CMP_SWAP_32:
+  case ISD::ATOMIC_CMP_SWAP_64: {
     SDValue Tmp = TLI.LowerOperation(Op, DAG);
     assert(Tmp.Val && "Node must be custom expanded!");
     ExpandOp(Tmp.getValue(0), Lo, Hi);

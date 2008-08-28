@@ -439,18 +439,54 @@ static void AddNodeIDNode(FoldingSetNodeID &ID, const SDNode *N) {
     ID.AddInteger(ST->getRawFlags());
     break;
   }
-  case ISD::ATOMIC_CMP_SWAP:
-  case ISD::ATOMIC_LOAD_ADD:
-  case ISD::ATOMIC_SWAP:
-  case ISD::ATOMIC_LOAD_SUB:
-  case ISD::ATOMIC_LOAD_AND:
-  case ISD::ATOMIC_LOAD_OR:
-  case ISD::ATOMIC_LOAD_XOR:
-  case ISD::ATOMIC_LOAD_NAND:
-  case ISD::ATOMIC_LOAD_MIN:
-  case ISD::ATOMIC_LOAD_MAX:
-  case ISD::ATOMIC_LOAD_UMIN:
-  case ISD::ATOMIC_LOAD_UMAX: {
+  case ISD::ATOMIC_CMP_SWAP_8:
+  case ISD::ATOMIC_SWAP_8:
+  case ISD::ATOMIC_LOAD_ADD_8:
+  case ISD::ATOMIC_LOAD_SUB_8:
+  case ISD::ATOMIC_LOAD_AND_8:
+  case ISD::ATOMIC_LOAD_OR_8:
+  case ISD::ATOMIC_LOAD_XOR_8:
+  case ISD::ATOMIC_LOAD_NAND_8:
+  case ISD::ATOMIC_LOAD_MIN_8:
+  case ISD::ATOMIC_LOAD_MAX_8:
+  case ISD::ATOMIC_LOAD_UMIN_8:
+  case ISD::ATOMIC_LOAD_UMAX_8: 
+  case ISD::ATOMIC_CMP_SWAP_16:
+  case ISD::ATOMIC_SWAP_16:
+  case ISD::ATOMIC_LOAD_ADD_16:
+  case ISD::ATOMIC_LOAD_SUB_16:
+  case ISD::ATOMIC_LOAD_AND_16:
+  case ISD::ATOMIC_LOAD_OR_16:
+  case ISD::ATOMIC_LOAD_XOR_16:
+  case ISD::ATOMIC_LOAD_NAND_16:
+  case ISD::ATOMIC_LOAD_MIN_16:
+  case ISD::ATOMIC_LOAD_MAX_16:
+  case ISD::ATOMIC_LOAD_UMIN_16:
+  case ISD::ATOMIC_LOAD_UMAX_16: 
+  case ISD::ATOMIC_CMP_SWAP_32:
+  case ISD::ATOMIC_SWAP_32:
+  case ISD::ATOMIC_LOAD_ADD_32:
+  case ISD::ATOMIC_LOAD_SUB_32:
+  case ISD::ATOMIC_LOAD_AND_32:
+  case ISD::ATOMIC_LOAD_OR_32:
+  case ISD::ATOMIC_LOAD_XOR_32:
+  case ISD::ATOMIC_LOAD_NAND_32:
+  case ISD::ATOMIC_LOAD_MIN_32:
+  case ISD::ATOMIC_LOAD_MAX_32:
+  case ISD::ATOMIC_LOAD_UMIN_32:
+  case ISD::ATOMIC_LOAD_UMAX_32: 
+  case ISD::ATOMIC_CMP_SWAP_64:
+  case ISD::ATOMIC_SWAP_64:
+  case ISD::ATOMIC_LOAD_ADD_64:
+  case ISD::ATOMIC_LOAD_SUB_64:
+  case ISD::ATOMIC_LOAD_AND_64:
+  case ISD::ATOMIC_LOAD_OR_64:
+  case ISD::ATOMIC_LOAD_XOR_64:
+  case ISD::ATOMIC_LOAD_NAND_64:
+  case ISD::ATOMIC_LOAD_MIN_64:
+  case ISD::ATOMIC_LOAD_MAX_64:
+  case ISD::ATOMIC_LOAD_UMIN_64:
+  case ISD::ATOMIC_LOAD_UMAX_64: {
     const AtomicSDNode *AT = cast<AtomicSDNode>(N);
     ID.AddInteger(AT->getRawFlags());
     break;
@@ -3149,7 +3185,10 @@ SDValue SelectionDAG::getAtomic(unsigned Opcode, SDValue Chain,
                                 SDValue Ptr, SDValue Cmp, 
                                 SDValue Swp, const Value* PtrVal,
                                 unsigned Alignment) {
-  assert(Opcode == ISD::ATOMIC_CMP_SWAP && "Invalid Atomic Op");
+  assert((Opcode == ISD::ATOMIC_CMP_SWAP_8  ||
+          Opcode == ISD::ATOMIC_CMP_SWAP_16 ||
+          Opcode == ISD::ATOMIC_CMP_SWAP_32 ||
+          Opcode == ISD::ATOMIC_CMP_SWAP_64) && "Invalid Atomic Op");
   assert(Cmp.getValueType() == Swp.getValueType() && "Invalid Atomic Op Types");
 
   MVT VT = Cmp.getValueType();
@@ -3175,13 +3214,50 @@ SDValue SelectionDAG::getAtomic(unsigned Opcode, SDValue Chain,
                                 SDValue Ptr, SDValue Val, 
                                 const Value* PtrVal,
                                 unsigned Alignment) {
-  assert((   Opcode == ISD::ATOMIC_LOAD_ADD || Opcode == ISD::ATOMIC_LOAD_SUB
-          || Opcode == ISD::ATOMIC_SWAP || Opcode == ISD::ATOMIC_LOAD_AND
-          || Opcode == ISD::ATOMIC_LOAD_OR || Opcode == ISD::ATOMIC_LOAD_XOR
-          || Opcode == ISD::ATOMIC_LOAD_NAND 
-          || Opcode == ISD::ATOMIC_LOAD_MIN || Opcode == ISD::ATOMIC_LOAD_MAX
-          || Opcode == ISD::ATOMIC_LOAD_UMIN || Opcode == ISD::ATOMIC_LOAD_UMAX) 
-         && "Invalid Atomic Op");
+  assert((Opcode == ISD::ATOMIC_LOAD_ADD_8 ||
+          Opcode == ISD::ATOMIC_LOAD_SUB_8 ||
+          Opcode == ISD::ATOMIC_LOAD_AND_8 ||
+          Opcode == ISD::ATOMIC_LOAD_OR_8 ||
+          Opcode == ISD::ATOMIC_LOAD_XOR_8 ||
+          Opcode == ISD::ATOMIC_LOAD_NAND_8 ||
+          Opcode == ISD::ATOMIC_LOAD_MIN_8 || 
+          Opcode == ISD::ATOMIC_LOAD_MAX_8 ||
+          Opcode == ISD::ATOMIC_LOAD_UMIN_8 || 
+          Opcode == ISD::ATOMIC_LOAD_UMAX_8 ||
+          Opcode == ISD::ATOMIC_SWAP_8 || 
+          Opcode == ISD::ATOMIC_LOAD_ADD_16 ||
+          Opcode == ISD::ATOMIC_LOAD_SUB_16 ||
+          Opcode == ISD::ATOMIC_LOAD_AND_16 ||
+          Opcode == ISD::ATOMIC_LOAD_OR_16 ||
+          Opcode == ISD::ATOMIC_LOAD_XOR_16 ||
+          Opcode == ISD::ATOMIC_LOAD_NAND_16 ||
+          Opcode == ISD::ATOMIC_LOAD_MIN_16 || 
+          Opcode == ISD::ATOMIC_LOAD_MAX_16 ||
+          Opcode == ISD::ATOMIC_LOAD_UMIN_16 || 
+          Opcode == ISD::ATOMIC_LOAD_UMAX_16 ||
+          Opcode == ISD::ATOMIC_SWAP_16 || 
+          Opcode == ISD::ATOMIC_LOAD_ADD_32 ||
+          Opcode == ISD::ATOMIC_LOAD_SUB_32 ||
+          Opcode == ISD::ATOMIC_LOAD_AND_32 ||
+          Opcode == ISD::ATOMIC_LOAD_OR_32 ||
+          Opcode == ISD::ATOMIC_LOAD_XOR_32 ||
+          Opcode == ISD::ATOMIC_LOAD_NAND_32 ||
+          Opcode == ISD::ATOMIC_LOAD_MIN_32 || 
+          Opcode == ISD::ATOMIC_LOAD_MAX_32 ||
+          Opcode == ISD::ATOMIC_LOAD_UMIN_32 || 
+          Opcode == ISD::ATOMIC_LOAD_UMAX_32 ||
+          Opcode == ISD::ATOMIC_SWAP_32 || 
+          Opcode == ISD::ATOMIC_LOAD_ADD_64 ||
+          Opcode == ISD::ATOMIC_LOAD_SUB_64 ||
+          Opcode == ISD::ATOMIC_LOAD_AND_64 ||
+          Opcode == ISD::ATOMIC_LOAD_OR_64 ||
+          Opcode == ISD::ATOMIC_LOAD_XOR_64 ||
+          Opcode == ISD::ATOMIC_LOAD_NAND_64 ||
+          Opcode == ISD::ATOMIC_LOAD_MIN_64 || 
+          Opcode == ISD::ATOMIC_LOAD_MAX_64 ||
+          Opcode == ISD::ATOMIC_LOAD_UMIN_64 || 
+          Opcode == ISD::ATOMIC_LOAD_UMAX_64 ||
+          Opcode == ISD::ATOMIC_SWAP_64)        && "Invalid Atomic Op");
 
   MVT VT = Val.getValueType();
 
@@ -4721,18 +4797,54 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
 #endif
   case ISD::PREFETCH:      return "Prefetch";
   case ISD::MEMBARRIER:    return "MemBarrier";
-  case ISD::ATOMIC_CMP_SWAP:  return "AtomicCmpSwap";
-  case ISD::ATOMIC_LOAD_ADD:  return "AtomicLoadAdd";
-  case ISD::ATOMIC_LOAD_SUB:  return "AtomicLoadSub";
-  case ISD::ATOMIC_LOAD_AND:  return "AtomicLoadAnd";
-  case ISD::ATOMIC_LOAD_OR:   return "AtomicLoadOr";
-  case ISD::ATOMIC_LOAD_XOR:  return "AtomicLoadXor";
-  case ISD::ATOMIC_LOAD_NAND: return "AtomicLoadNand";
-  case ISD::ATOMIC_LOAD_MIN:  return "AtomicLoadMin";
-  case ISD::ATOMIC_LOAD_MAX:  return "AtomicLoadMax";
-  case ISD::ATOMIC_LOAD_UMIN: return "AtomicLoadUMin";
-  case ISD::ATOMIC_LOAD_UMAX: return "AtomicLoadUMax";
-  case ISD::ATOMIC_SWAP:   return "AtomicSWAP";
+  case ISD::ATOMIC_CMP_SWAP_8:  return "AtomicCmpSwap8";
+  case ISD::ATOMIC_SWAP_8:      return "AtomicSwap8";
+  case ISD::ATOMIC_LOAD_ADD_8:  return "AtomicLoadAdd8";
+  case ISD::ATOMIC_LOAD_SUB_8:  return "AtomicLoadSub8";
+  case ISD::ATOMIC_LOAD_AND_8:  return "AtomicLoadAnd8";
+  case ISD::ATOMIC_LOAD_OR_8:   return "AtomicLoadOr8";
+  case ISD::ATOMIC_LOAD_XOR_8:  return "AtomicLoadXor8";
+  case ISD::ATOMIC_LOAD_NAND_8: return "AtomicLoadNand8";
+  case ISD::ATOMIC_LOAD_MIN_8:  return "AtomicLoadMin8";
+  case ISD::ATOMIC_LOAD_MAX_8:  return "AtomicLoadMax8";
+  case ISD::ATOMIC_LOAD_UMIN_8: return "AtomicLoadUMin8";
+  case ISD::ATOMIC_LOAD_UMAX_8: return "AtomicLoadUMax8";
+  case ISD::ATOMIC_CMP_SWAP_16:  return "AtomicCmpSwap16";
+  case ISD::ATOMIC_SWAP_16:      return "AtomicSwap16";
+  case ISD::ATOMIC_LOAD_ADD_16:  return "AtomicLoadAdd16";
+  case ISD::ATOMIC_LOAD_SUB_16:  return "AtomicLoadSub16";
+  case ISD::ATOMIC_LOAD_AND_16:  return "AtomicLoadAnd16";
+  case ISD::ATOMIC_LOAD_OR_16:   return "AtomicLoadOr16";
+  case ISD::ATOMIC_LOAD_XOR_16:  return "AtomicLoadXor16";
+  case ISD::ATOMIC_LOAD_NAND_16: return "AtomicLoadNand16";
+  case ISD::ATOMIC_LOAD_MIN_16:  return "AtomicLoadMin16";
+  case ISD::ATOMIC_LOAD_MAX_16:  return "AtomicLoadMax16";
+  case ISD::ATOMIC_LOAD_UMIN_16: return "AtomicLoadUMin16";
+  case ISD::ATOMIC_LOAD_UMAX_16: return "AtomicLoadUMax16";
+  case ISD::ATOMIC_CMP_SWAP_32:  return "AtomicCmpSwap32";
+  case ISD::ATOMIC_SWAP_32:      return "AtomicSwap32";
+  case ISD::ATOMIC_LOAD_ADD_32:  return "AtomicLoadAdd32";
+  case ISD::ATOMIC_LOAD_SUB_32:  return "AtomicLoadSub32";
+  case ISD::ATOMIC_LOAD_AND_32:  return "AtomicLoadAnd32";
+  case ISD::ATOMIC_LOAD_OR_32:   return "AtomicLoadOr32";
+  case ISD::ATOMIC_LOAD_XOR_32:  return "AtomicLoadXor32";
+  case ISD::ATOMIC_LOAD_NAND_32: return "AtomicLoadNand32";
+  case ISD::ATOMIC_LOAD_MIN_32:  return "AtomicLoadMin32";
+  case ISD::ATOMIC_LOAD_MAX_32:  return "AtomicLoadMax32";
+  case ISD::ATOMIC_LOAD_UMIN_32: return "AtomicLoadUMin32";
+  case ISD::ATOMIC_LOAD_UMAX_32: return "AtomicLoadUMax32";
+  case ISD::ATOMIC_CMP_SWAP_64:  return "AtomicCmpSwap64";
+  case ISD::ATOMIC_SWAP_64:      return "AtomicSwap64";
+  case ISD::ATOMIC_LOAD_ADD_64:  return "AtomicLoadAdd64";
+  case ISD::ATOMIC_LOAD_SUB_64:  return "AtomicLoadSub64";
+  case ISD::ATOMIC_LOAD_AND_64:  return "AtomicLoadAnd64";
+  case ISD::ATOMIC_LOAD_OR_64:   return "AtomicLoadOr64";
+  case ISD::ATOMIC_LOAD_XOR_64:  return "AtomicLoadXor64";
+  case ISD::ATOMIC_LOAD_NAND_64: return "AtomicLoadNand64";
+  case ISD::ATOMIC_LOAD_MIN_64:  return "AtomicLoadMin64";
+  case ISD::ATOMIC_LOAD_MAX_64:  return "AtomicLoadMax64";
+  case ISD::ATOMIC_LOAD_UMIN_64: return "AtomicLoadUMin64";
+  case ISD::ATOMIC_LOAD_UMAX_64: return "AtomicLoadUMax64";
   case ISD::PCMARKER:      return "PCMarker";
   case ISD::READCYCLECOUNTER: return "ReadCycleCounter";
   case ISD::SRCVALUE:      return "SrcValue";
