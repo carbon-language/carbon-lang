@@ -224,6 +224,10 @@ namespace {
     void visitGlobalAlias(GlobalAlias &GA);
     void visitFunction(Function &F);
     void visitBasicBlock(BasicBlock &BB);
+    using InstVisitor<Verifier>::visit;
+       
+    void visit(Instruction &I);
+       
     void visitTruncInst(TruncInst &I);
     void visitZExtInst(ZExtInst &I);
     void visitSExtInst(SExtInst &I);
@@ -324,6 +328,13 @@ static RegisterPass<Verifier> X("verify", "Module Verifier");
   do { if (!(C)) { CheckFailed(M, V1, V2, V3); return; } } while (0)
 #define Assert4(C, M, V1, V2, V3, V4) \
   do { if (!(C)) { CheckFailed(M, V1, V2, V3, V4); return; } } while (0)
+
+
+void Verifier::visit(Instruction &I) {
+  for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i)
+    Assert1(I.getOperand(i) != 0, "Operand is null", &I);
+  InstVisitor<Verifier>::visit(I);
+}
 
 
 void Verifier::visitGlobalValue(GlobalValue &GV) {
