@@ -249,10 +249,12 @@ static bool inFunctionScope() { return CurFun.CurrentFunction != 0; }
 //               Code to handle definitions of all the types
 //===----------------------------------------------------------------------===//
 
-static void InsertValue(Value *V, ValueList &ValueTab = CurFun.Values) {
+/// InsertValue - Insert a value into the value table.  If it is named, this
+/// returns -1, otherwise it returns the slot number for the value.
+static int InsertValue(Value *V, ValueList &ValueTab = CurFun.Values) {
   // Things that have names or are void typed don't get slot numbers
   if (V->hasName() || (V->getType() == Type::VoidTy))
-    return;
+    return -1;
 
   // In the case of function values, we have to allow for the forward reference
   // of basic blocks, which are included in the numbering. Consequently, we keep
@@ -262,10 +264,11 @@ static void InsertValue(Value *V, ValueList &ValueTab = CurFun.Values) {
     if (ValueTab.size() <= CurFun.NextValNum)
       ValueTab.resize(CurFun.NextValNum+1);
     ValueTab[CurFun.NextValNum++] = V;
-    return;
+    return CurFun.NextValNum-1;
   } 
   // For all other lists, its okay to just tack it on the back of the vector.
   ValueTab.push_back(V);
+  return ValueTab.size()-1;
 }
 
 static const Type *getTypeVal(const ValID &D, bool DoNotImprovise = false) {
@@ -1084,7 +1087,7 @@ Module *llvm::RunVMAsmParser(llvm::MemoryBuffer *MB) {
 %token CC_TOK CCC_TOK FASTCC_TOK COLDCC_TOK X86_STDCALLCC_TOK X86_FASTCALLCC_TOK
 %token X86_SSECALLCC_TOK
 %token DATALAYOUT
-%type <UIntVal> OptCallingConv
+%type <UIntVal> OptCallingConv LocalNumber
 %type <ParamAttrs> OptParamAttrs ParamAttr 
 %type <ParamAttrs> OptFuncAttrs  FuncAttr
 
@@ -1176,6 +1179,12 @@ OptLocalAssign : LocalName '=' {
     $$ = 0;
     CHECK_FOR_ERROR
   };
+
+LocalNumber : LOCALVAL_ID '=' {
+  $$ = $1;
+  CHECK_FOR_ERROR
+};
+
 
 GlobalName : GLOBALVAR | ATSTRINGCONSTANT ;
 
@@ -2673,7 +2682,7 @@ BasicBlockList : BasicBlockList BasicBlock {
 // Basic blocks are terminated by branching instructions: 
 // br, br/cc, switch, ret
 //
-BasicBlock : InstructionList OptLocalAssign BBTerminatorInst  {
+BasicBlock : InstructionList OptLocalAssign BBTerminatorInst {
     setValueName($3, $2);
     CHECK_FOR_ERROR
     InsertValue($3);
@@ -2681,6 +2690,19 @@ BasicBlock : InstructionList OptLocalAssign BBTerminatorInst  {
     $$ = $1;
     CHECK_FOR_ERROR
   };
+
+BasicBlock : InstructionList LocalNumber BBTerminatorInst {
+  CHECK_FOR_ERROR
+  int ValNum = InsertValue($3);
+  if (ValNum != (int)$2)
+    GEN_ERROR("Result value number %" + utostr($2) +
+              " is incorrect, expected %" + utostr((unsigned)ValNum));
+  
+  $1->getInstList().push_back($3);
+  $$ = $1;
+  CHECK_FOR_ERROR
+};
+
 
 InstructionList : InstructionList Inst {
     if (CastInst *CI1 = dyn_cast<CastInst>($2))
@@ -2897,6 +2919,18 @@ Inst : OptLocalAssign InstVal {
     setValueName($2, $1);
     CHECK_FOR_ERROR
     InsertValue($2);
+    $$ = $2;
+    CHECK_FOR_ERROR
+  };
+
+Inst : LocalNumber InstVal {
+    CHECK_FOR_ERROR
+    int ValNum = InsertValue($2);
+  
+    if (ValNum != (int)$1)
+      GEN_ERROR("Result value number %" + utostr($1) +
+                " is incorrect, expected %" + utostr((unsigned)ValNum));
+
     $$ = $2;
     CHECK_FOR_ERROR
   };
