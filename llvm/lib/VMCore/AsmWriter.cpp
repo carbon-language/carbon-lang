@@ -1486,7 +1486,7 @@ void AssemblyWriter::printInfoComment(const Value &V) {
     printType(V.getType());
     Out << '>';
 
-    if (!V.hasName()) {
+    if (!V.hasName() && !isa<Instruction>(V)) {
       int SlotNum;
       if (const GlobalValue *GV = dyn_cast<GlobalValue>(&V))
         SlotNum = Machine.getGlobalSlot(GV);
@@ -1511,6 +1511,13 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
   if (I.hasName()) {
     PrintLLVMName(Out, &I);
     Out << " = ";
+  } else if (I.getType() != Type::VoidTy) {
+    // Print out the def slot taken.
+    int SlotNum = Machine.getLocalSlot(&I);
+    if (SlotNum == -1)
+      Out << "<badref> = ";
+    else
+      Out << '%' << SlotNum << " = ";
   }
 
   // If this is a volatile load or store, print out the volatile marker.
