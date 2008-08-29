@@ -2301,15 +2301,14 @@ PathDiagnosticPiece* CFRefReport::VisitNode(ExplodedNode<GRState>* N,
   return P;
 }
 
-static std::pair<ExplodedNode<GRState>*,VarDecl*>
-GetAllocationSite(ExplodedNode<GRState>* N, SymbolID Sym) {
+static std::pair<ExplodedNode<GRState>*,store::Binding>
+GetAllocationSite(GRStateManager* StateMgr, ExplodedNode<GRState>* N,
+                  SymbolID Sym) {
 
+  // Find both first node that referred to the tracked symbol and the
+  // memory location that value was store to.
   ExplodedNode<GRState>* Last = N;
-  
-  // Find the first node that referred to the tracked symbol.  We also
-  // try and find the first VarDecl the value was stored to.
-  
-  VarDecl* FirstDecl = 0;
+  store::Binding FirstBinding = 0;  
   
   while (N) {
     const GRState* St = N->getState();
@@ -2317,35 +2316,27 @@ GetAllocationSite(ExplodedNode<GRState>* N, SymbolID Sym) {
     
     if (!B.lookup(Sym))
       break;
-    
-    VarDecl* VD = 0;
-    
-    // Determine if there is an LVal binding to the symbol.
-    for (GRState::vb_iterator I=St->vb_begin(), E=St->vb_end(); I!=E; ++I) {
-      if (!isa<lval::SymbolVal>(I->second)  // Is the value a symbol?
-          || cast<lval::SymbolVal>(I->second).getSymbol() != Sym)
-        continue;
-      
-      if (VD) {  // Multiple decls map to this symbol.
-        VD = 0;
-        break;
-      }
-      
-      VD = I->first;
+
+    if (StateMgr) {
+      llvm::SmallVector<store::Binding, 5> Bindings;
+      StateMgr->getBindings(Bindings, St, Sym);
+
+      if (Bindings.size() == 1)
+        FirstBinding = Bindings[0];
     }
-    
-    if (VD) FirstDecl = VD;
     
     Last = N;
     N = N->pred_empty() ? NULL : *(N->pred_begin());    
   }
   
-  return std::make_pair(Last, FirstDecl);
+  return std::make_pair(Last, FirstBinding);
 }
 
-PathDiagnosticPiece* CFRefReport::getEndPath(BugReporter& BR,
+PathDiagnosticPiece* CFRefReport::getEndPath(BugReporter& br,
                                              ExplodedNode<GRState>* EndN) {
 
+  GRBugReporter& BR = cast<GRBugReporter>(br);
+  
   // Tell the BugReporter to report cases when the tracked symbol is
   // assigned to different variables, etc.
   cast<GRBugReporter>(BR).addNotableSymbol(Sym);
@@ -2360,8 +2351,10 @@ PathDiagnosticPiece* CFRefReport::getEndPath(BugReporter& BR,
   // symbol appeared, and also get the first VarDecl that tracked object
   // is stored to.
   ExplodedNode<GRState>* AllocNode = 0;
-  VarDecl* FirstDecl = 0;
-  llvm::tie(AllocNode, FirstDecl) = GetAllocationSite(EndN, Sym);
+  store::Binding FirstBinding = 0;
+
+  llvm::tie(AllocNode, FirstBinding) =
+    GetAllocationSite(&BR.getStateManager(), EndN, Sym);
   
   // Get the allocate site.  
   assert (AllocNode);
@@ -2413,9 +2406,9 @@ PathDiagnosticPiece* CFRefReport::getEndPath(BugReporter& BR,
   
   os << "Object allocated on line " << AllocLine;
   
-  if (FirstDecl)
-    os << " and stored into '" << FirstDecl->getName() << '\'';
-    
+  if (FirstBinding)
+    os << " and stored into '" 
+       << BR.getStateManager().BindingAsString(FirstBinding) << '\'';    
   os << " is no longer referenced after this point and has a retain count of +"
      << RetCount << " (object leaked).";
   
@@ -2474,7 +2467,7 @@ bool Leak::isCached(BugReport& R) {
   SymbolID Sym = static_cast<CFRefReport&>(R).getSymbol();
 
   ExplodedNode<GRState>* AllocNode =
-    GetAllocationSite(R.getEndNode(), Sym).first;
+    GetAllocationSite(0, R.getEndNode(), Sym).first;
   
   if (!AllocNode)
     return false;

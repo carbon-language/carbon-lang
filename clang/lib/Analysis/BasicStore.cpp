@@ -56,6 +56,14 @@ public:
                      const char* nl, const char *sep);
   
   virtual RegionExtent getExtent(Region R);
+  
+  /// getBindings - Returns all bindings in the specified store that bind
+  ///  to the specified symbolic value.
+  virtual void getBindings(llvm::SmallVectorImpl<store::Binding>& bindings,
+                           Store store, SymbolID Sym);
+  
+  /// BindingAsString - Returns a string representing the given binding.
+  virtual std::string BindingAsString(store::Binding binding);
 };  
   
 } // end anonymous namespace
@@ -325,4 +333,30 @@ void BasicStoreManager::print(Store store, std::ostream& Out,
     Out << ' ' << I.getKey()->getName() << " : ";
     I.getData().print(Out);
   }
+}
+
+void
+BasicStoreManager::getBindings(llvm::SmallVectorImpl<store::Binding>& bindings,
+                               Store store, SymbolID Sym) {
+  
+  VarBindingsTy VB((VarBindingsTy::TreeTy*) store);
+  
+  for (VarBindingsTy::iterator I=VB.begin(), E=VB.end(); I!=E; ++I) {
+    if (const lval::SymbolVal* SV=dyn_cast<lval::SymbolVal>(&I->second)) {
+      if (SV->getSymbol() == Sym) 
+        bindings.push_back(I->first);
+      
+      continue;
+    }
+    
+    if (const nonlval::SymbolVal* SV=dyn_cast<nonlval::SymbolVal>(&I->second)){
+      if (SV->getSymbol() == Sym) 
+        bindings.push_back(I->first);
+    }
+  }
+}
+
+std::string BasicStoreManager::BindingAsString(store::Binding binding) {
+  // A binding is just an VarDecl*.
+  return ((VarDecl*) binding)->getName();
 }

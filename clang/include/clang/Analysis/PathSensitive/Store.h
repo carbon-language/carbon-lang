@@ -18,6 +18,7 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/SmallVector.h"
 #include <vector>
 #include <iosfwd>
 
@@ -124,6 +125,14 @@ public:
   virtual void print(Store store, std::ostream& Out,
                      const char* nl, const char *sep) = 0;
     
+  /// getBindings - Returns all bindings in the specified store that bind
+  ///  to the specified symbolic value.
+  virtual void getBindings(llvm::SmallVectorImpl<store::Binding>& bindings,
+                           Store store, SymbolID Sym) = 0;
+  
+  /// BindingAsString - Returns a string representing the given binding.
+  virtual std::string BindingAsString(store::Binding binding) = 0;
+  
   /// getExtent - Returns the size of the region in bits.
   virtual store::RegionExtent getExtent(store::Region R) =0;
 };

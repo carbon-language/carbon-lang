@@ -381,6 +381,19 @@ public:
   const GRState* addGDM(const GRState* St, void* Key, void* Data);
   
   // Methods that query & manipulate the Store.
+  
+  /// getBindings - Returns all store bindings in the specified state that bind
+  ///  to the specified symbolic value.
+  void getBindings(llvm::SmallVectorImpl<store::Binding>& bindings,
+                   const GRState* St, SymbolID Sym) {
+    StMgr->getBindings(bindings, St->getStore(), Sym);    
+  }
+  
+  /// BindingAsString - Returns a string representing the given store binding.
+  std::string BindingAsString(store::Binding binding) {
+    return StMgr->BindingAsString(binding);
+  }
+  
   RVal GetRVal(const GRState* St, LVal LV, QualType T = QualType()) {
     return StMgr->GetRVal(St->getStore(), LV, T);
   }
