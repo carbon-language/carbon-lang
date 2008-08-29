@@ -343,7 +343,6 @@ class VISIBILITY_HIDDEN AuditCFNumberCreate : public GRSimpleAPICheck {
   GRStateManager* VMgr;
     
   RVal GetRVal(const GRState* St, Expr* E) { return VMgr->GetRVal(St, E); }
-  RVal GetRVal(const GRState* St, LVal LV) { return VMgr->GetRVal(St, LV); }
   
 public:
 
