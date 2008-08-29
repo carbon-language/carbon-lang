@@ -18,6 +18,7 @@
 #include "X86ISelLowering.h"
 #include "X86FastISel.h"
 #include "X86TargetMachine.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "X86GenFastISel.inc"
 
 namespace llvm {

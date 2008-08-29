@@ -44,6 +44,16 @@ using namespace llvm;
 
 namespace {
 
+/// InstructionMemo - This class holds additional information about an
+/// instruction needed to emit code for it.
+///
+struct InstructionMemo {
+  std::string Name;
+  const CodeGenRegisterClass *RC;
+  unsigned char SubRegNo;
+  std::vector<std::string>* PhysRegs;
+};
+
 /// OperandsSignature - This class holds a description of a list of operand
 /// types. It has utility methods for emitting text based on the operands.
 ///
@@ -103,15 +113,17 @@ struct OperandsSignature {
       if (!OpDI)
         return false;
       Record *OpLeafRec = OpDI->getDef();
-      // TODO: handle instructions which have physreg operands.
-      if (OpLeafRec->isSubClassOf("Register"))
-        return false;
       // For now, the only other thing we accept is register operands.
-      if (!OpLeafRec->isSubClassOf("RegisterClass"))
+      
+      const CodeGenRegisterClass *RC = 0;
+      if (OpLeafRec->isSubClassOf("RegisterClass"))
+        RC = &Target.getRegisterClass(OpLeafRec);
+      else if (OpLeafRec->isSubClassOf("Register"))
+        RC = Target.getRegisterClassForRegister(OpLeafRec);
+      else
         return false;
       // For now, require the register operands' register classes to all
       // be the same.
-      const CodeGenRegisterClass *RC = &Target.getRegisterClass(OpLeafRec);
       if (!RC)
         return false;
       // For now, all the operands must have the same register class.
@@ -142,6 +154,27 @@ struct OperandsSignature {
     }
   }
 
+  void PrintArguments(std::ostream &OS,
+                      const std::vector<std::string>& PR) const {
+    assert(PR.size() == Operands.size());
+    for (unsigned i = 0, e = Operands.size(); i != e; ++i) {
+      if (PR[i] != "") {
+        OS << PR[i];
+      } else if (Operands[i] == "r") {
+        OS << "Op" << i;
+      } else if (Operands[i] == "i") {
+        OS << "imm" << i;
+      } else if (Operands[i] == "f") {
+        OS << "f" << i;
+      } else {
+        assert("Unknown operand kind!");
+        abort();
+      }
+      if (i + 1 != e)
+        OS << ", ";
+    }
+  }
+
   void PrintArguments(std::ostream &OS) const {
     for (unsigned i = 0, e = Operands.size(); i != e; ++i) {
       if (Operands[i] == "r") {
@@ -159,20 +192,12 @@ struct OperandsSignature {
     }
   }
 
+
   void PrintManglingSuffix(std::ostream &OS) const {
     for (unsigned i = 0, e = Operands.size(); i != e; ++i) {
       OS << Operands[i];
     }
   }
-};
-
-/// InstructionMemo - This class holds additional information about an
-/// instruction needed to emit code for it.
-///
-struct InstructionMemo {
-  std::string Name;
-  const CodeGenRegisterClass *RC;
-  unsigned char SubRegNo;
 };
 
 class FastISelMap {
@@ -275,6 +300,41 @@ void FastISelMap::CollectPatterns(CodeGenDAGPatterns &CGP) {
     OperandsSignature Operands;
     if (!Operands.initialize(InstPatNode, Target, VT))
       continue;
+    
+    std::vector<std::string>* PhysRegInputs = new std::vector<std::string>();
+    if (!InstPatNode->isLeaf() &&
+        (InstPatNode->getOperator()->getName() == "imm" ||
+         InstPatNode->getOperator()->getName() == "fpimmm"))
+      PhysRegInputs->push_back("");
+    else if (!InstPatNode->isLeaf()) {
+      for (unsigned i = 0, e = InstPatNode->getNumChildren(); i != e; ++i) {
+        TreePatternNode *Op = InstPatNode->getChild(i);
+        if (!Op->isLeaf()) {
+          PhysRegInputs->push_back("");
+          continue;
+        }
+        
+        DefInit *OpDI = dynamic_cast<DefInit*>(Op->getLeafValue());
+        Record *OpLeafRec = OpDI->getDef();
+        std::string PhysReg;
+        if (OpLeafRec->isSubClassOf("Register")) {
+          PhysReg += static_cast<StringInit*>(OpLeafRec->getValue( \
+                     "Namespace")->getValue())->getValue();
+          PhysReg += "::";
+          
+          std::vector<CodeGenRegister> Regs = Target.getRegisters();
+          for (unsigned i = 0; i < Regs.size(); ++i) {
+            if (Regs[i].TheDef == OpLeafRec) {
+              PhysReg += Regs[i].getName();
+              break;
+            }
+          }
+        }
+      
+        PhysRegInputs->push_back(PhysReg);
+      }
+    } else
+      PhysRegInputs->push_back("");
 
     // Get the predicate that guards this pattern.
     std::string PredicateCheck = Pattern.getPredicateCheck();
@@ -283,7 +343,8 @@ void FastISelMap::CollectPatterns(CodeGenDAGPatterns &CGP) {
     InstructionMemo Memo = {
       Pattern.getDstPattern()->getOperator()->getName(),
       DstRC,
-      SubRegNo
+      SubRegNo,
+      PhysRegInputs
     };
     assert(!SimplePatterns[Operands][OpcodeName][VT][RetVT].count(PredicateCheck) &&
            "Duplicate pattern!");
@@ -422,10 +483,20 @@ void FastISelMap::PrintFunctionDefinitions(std::ostream &OS) {
                        "Multiple instructions match, at least one has "
                        "a predicate and at least one doesn't!");
               } else {
-                OS << "  if (" + PredicateCheck + ")\n";
+                OS << "  if (" + PredicateCheck + ") {\n";
                 OS << "  ";
                 HasPred = true;
               }
+              
+              for (unsigned i = 0; i < Memo.PhysRegs->size(); ++i) {
+                if ((*Memo.PhysRegs)[i] != "")
+                  OS << "  TII.copyRegToReg(*MBB, MBB->end(), "
+                     << (*Memo.PhysRegs)[i] << ", Op" << i << ", "
+                     << "TM.getRegisterInfo()->getPhysicalRegisterRegClass("
+                     << (*Memo.PhysRegs)[i] << "), "
+                     << "MRI.getRegClass(Op" << i << "));\n";
+              }
+              
               OS << "  return FastEmitInst_";
               if (Memo.SubRegNo == (unsigned char)~0) {
                 Operands.PrintManglingSuffix(OS);
@@ -433,13 +504,17 @@ void FastISelMap::PrintFunctionDefinitions(std::ostream &OS) {
                 OS << InstNS << Memo.RC->getName() << "RegisterClass";
                 if (!Operands.empty())
                   OS << ", ";
-                Operands.PrintArguments(OS);
+                Operands.PrintArguments(OS, *Memo.PhysRegs);
                 OS << ");\n";
               } else {
                 OS << "extractsubreg(Op0, ";
                 OS << (unsigned)Memo.SubRegNo;
                 OS << ");\n";
               }
+              
+              if (HasPred)
+                OS << "}\n";
+              
             }
             // Return 0 if none of the predicates were satisfied.
             if (HasPred)
@@ -500,10 +575,20 @@ void FastISelMap::PrintFunctionDefinitions(std::ostream &OS) {
                      "Multiple instructions match, at least one has "
                      "a predicate and at least one doesn't!");
             } else {
-              OS << "  if (" + PredicateCheck + ")\n";
+              OS << "  if (" + PredicateCheck + ") {\n";
               OS << "  ";
               HasPred = true;
             }
+            
+             for (unsigned i = 0; i < Memo.PhysRegs->size(); ++i) {
+                if ((*Memo.PhysRegs)[i] != "")
+                  OS << "  TII.copyRegToReg(*MBB, MBB->end(), "
+                     << (*Memo.PhysRegs)[i] << ", Op" << i << ", "
+                     << "TM.getRegisterInfo()->getPhysicalRegisterRegClass("
+                     << (*Memo.PhysRegs)[i] << "), "
+                     << "MRI.getRegClass(Op" << i << "));\n";
+              }
+            
             OS << "  return FastEmitInst_";
             
             if (Memo.SubRegNo == (unsigned char)~0) {
@@ -512,13 +597,16 @@ void FastISelMap::PrintFunctionDefinitions(std::ostream &OS) {
               OS << InstNS << Memo.RC->getName() << "RegisterClass";
               if (!Operands.empty())
                 OS << ", ";
-              Operands.PrintArguments(OS);
+              Operands.PrintArguments(OS, *Memo.PhysRegs);
               OS << ");\n";
             } else {
               OS << "extractsubreg(Op0, ";
               OS << (unsigned)Memo.SubRegNo;
               OS << ");\n";
             }
+            
+             if (HasPred)
+               OS << "  }\n";
           }
           
           // Return 0 if none of the predicates were satisfied.
