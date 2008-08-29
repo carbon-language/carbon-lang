@@ -142,6 +142,14 @@ public:
   /// value is outside of the current translation unit...
   virtual bool isDeclaration() const = 0;
 
+  /// removeFromParent - This method unlinks 'this' from the containing module,
+  /// but does not delete it.
+  virtual void removeFromParent() = 0;
+
+  /// eraseFromParent - This method unlinks 'this' from the containing module
+  /// and deletes it.
+  virtual void eraseFromParent() = 0;
+
   /// getParent - Get the module that this global value is contained inside
   /// of...
   inline Module *getParent() { return Parent; }

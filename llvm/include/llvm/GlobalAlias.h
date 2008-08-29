@@ -55,12 +55,12 @@ public:
   /// removeFromParent - This method unlinks 'this' from the containing module,
   /// but does not delete it.
   ///
-  void removeFromParent();
+  virtual void removeFromParent();
 
   /// eraseFromParent - This method unlinks 'this' from the containing module
   /// and deletes it.
   ///
-  void eraseFromParent();
+  virtual void eraseFromParent();
 
   /// set/getAliasee - These methods retrive and set alias target.
   void setAliasee(Constant* GV);

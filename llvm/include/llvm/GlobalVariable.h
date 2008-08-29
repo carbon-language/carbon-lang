@@ -122,12 +122,12 @@ public:
   /// removeFromParent - This method unlinks 'this' from the containing module,
   /// but does not delete it.
   ///
-  void removeFromParent();
+  virtual void removeFromParent();
 
   /// eraseFromParent - This method unlinks 'this' from the containing module
   /// and deletes it.
   ///
-  void eraseFromParent();
+  virtual void eraseFromParent();
 
   /// Override Constant's implementation of this method so we can
   /// replace constant initializers.
