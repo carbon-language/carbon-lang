@@ -37,24 +37,20 @@ void CodeGenFunction::EmitDecl(const Decl &D) {
   case Decl::Union:     // union X;
   case Decl::Class:     // class X;
   case Decl::Enum:      // enum X;
+  case Decl::EnumConstant: // enum ? { X = ? } 
   case Decl::CXXStruct: // struct X; [C++]
   case Decl::CXXUnion:  // union X; [C++]
   case Decl::CXXClass:  // class X; [C++]
     // None of these decls require codegen support.
     return;
     
-  case Decl::Var:
-    if (cast<VarDecl>(D).isBlockVarDecl())
-      return EmitBlockVarDecl(cast<VarDecl>(D));
-    assert(0 && "Should not see file-scope variables inside a function!");
-  
-  case Decl::EnumConstant:
-    return EmitEnumConstantDecl(cast<EnumConstantDecl>(D));
+  case Decl::Var: {
+    const VarDecl &VD = cast<VarDecl>(D);
+    assert(VD.isBlockVarDecl() && 
+           "Should not see file-scope variables inside a function!");
+    return EmitBlockVarDecl(VD);
   }
-}
-
-void CodeGenFunction::EmitEnumConstantDecl(const EnumConstantDecl &D) {
-  assert(0 && "FIXME: Enum constant decls not implemented yet!");  
+  }
 }
 
 /// EmitBlockVarDecl - This method handles emission of any variable declaration
@@ -169,8 +165,13 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
       DeclPtr = GenerateStaticBlockVarDecl(D, true, Class);
     }
   } else {
-    // TODO: Create a dynamic alloca.
-    assert(0 && "FIXME: Local VLAs not implemented yet");
+    CGM.ErrorUnsupported(&D, "variable-length array");
+
+    // FIXME: VLA: Add VLA support. For now just make up enough to let
+    // the compile go through.
+    const llvm::Type *LTy = ConvertType(Ty);
+    llvm::AllocaInst * Alloc = CreateTempAlloca(LTy, D.getName());
+    DeclPtr = Alloc;
   }
   
   llvm::Value *&DMEntry = LocalDeclMap[&D];

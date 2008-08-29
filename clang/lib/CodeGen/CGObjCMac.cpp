@@ -1911,7 +1911,7 @@ llvm::Value *ObjCTypesHelper::getMessageSendFn(bool IsSuper,
     Params[1] = IsSuper ? SuperPtrTy : ObjectPtrTy;
     Params[2] = SelectorPtrTy;
     CallFTy = llvm::FunctionType::get(llvm::Type::VoidTy, Params, true);
-  } else { // XXX floating point?
+  } else { // FIXME: floating point?
     F = IsSuper ? MessageSendSuperFn : MessageSendFn;
     std::vector<const llvm::Type*> Params(2);
     Params[0] = IsSuper ? SuperPtrTy : ObjectPtrTy;

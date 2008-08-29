@@ -464,7 +464,7 @@ void CodeGenFunction::EmitContinueStmt() {
 /// add multiple cases to switch instruction, one for each value within
 /// the range. If range is too big then emit "if" condition check.
 void CodeGenFunction::EmitCaseStmtRange(const CaseStmt &S) {
-  // XXX kill me with param - ddunbar
+  // FIXME: kill me with param - ddunbar
   assert(S.getRHS() && "Expected RHS value in CaseStmt");
 
   llvm::APSInt LHS = S.getLHS()->getIntegerConstantExprValue(getContext());
@@ -755,7 +755,7 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
         if (ConvertType(InputExpr->getType())->isSingleValueType()) {
           Arg = EmitScalarExpr(InputExpr);
         } else {
-          assert(0 && "FIXME: Implement passing multiple-value types as inputs");
+          ErrorUnsupported(&S, "asm statement passing multiple-value types as inputs");
         }
       } else {
         LValue Dest = EmitLValue(InputExpr);
@@ -796,7 +796,7 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
       if (ConvertType(InputExpr->getType())->isSingleValueType()) {
         Arg = EmitScalarExpr(InputExpr);
       } else {
-        assert(0 && "FIXME: Implement passing multiple-value types as inputs");
+        ErrorUnsupported(&S, "asm statement passing multiple-value types as inputs");
       }
     } else {
       LValue Dest = EmitLValue(InputExpr);

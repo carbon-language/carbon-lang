@@ -764,7 +764,11 @@ GetAddrOfConstantCFString(const std::string &str) {
 /// GetStringForStringLiteral - Return the appropriate bytes for a
 /// string literal, properly padded to match the literal type.
 std::string CodeGenModule::GetStringForStringLiteral(const StringLiteral *E) {
-  assert(!E->isWide() && "FIXME: Wide strings not supported yet!");
+  if (E->isWide()) {
+    ErrorUnsupported(E, "wide string");
+    return "FIXME";
+  }
+
   const char *StrData = E->getStrData();
   unsigned Len = E->getByteLength();
 
@@ -877,7 +881,7 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
     break;
 
   case Decl::Namespace:
-    assert(0 && "FIXME: Namespace unsupported");
+    ErrorUnsupported(D, "namespace");
     break;
 
     // Objective-C Decls
@@ -914,7 +918,7 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
     break;
   }
   case Decl::ObjCCompatibleAlias: 
-    assert(0 && "FIXME: ObjCCompatibleAlias unsupported");
+    ErrorUnsupported(D, "Objective-C compatible alias");
     break;
 
   case Decl::LinkageSpec: {

@@ -198,7 +198,6 @@ public:
   //===--------------------------------------------------------------------===//
   
   void EmitDecl(const Decl &D);
-  void EmitEnumConstantDecl(const EnumConstantDecl &D);
   void EmitBlockVarDecl(const VarDecl &D);
   void EmitLocalBlockVarDecl(const VarDecl &D);
   void EmitStaticBlockVarDecl(const VarDecl &D);
