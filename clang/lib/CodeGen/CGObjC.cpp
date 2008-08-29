@@ -14,6 +14,7 @@
 #include "CGObjCRuntime.h"
 #include "CodeGenFunction.h"
 #include "CodeGenModule.h"
+#include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
 
 using namespace clang;
@@ -236,6 +237,11 @@ RValue CodeGenFunction::EmitObjCPropertyGet(const ObjCPropertyRefExpr *E) {
                           0, 0);
 
   return EmitObjCMessageExpr(&GetExpr);
+}
+
+void CodeGenFunction::EmitObjCPropertySet(const ObjCPropertyRefExpr *E,
+                                          RValue Src) {
+  ErrorUnsupported(E, "Objective-C property setter call");
 }
 
 CGObjCRuntime::~CGObjCRuntime() {}

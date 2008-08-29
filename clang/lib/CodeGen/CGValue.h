@@ -18,6 +18,8 @@
 #include "clang/AST/Type.h"
 
 namespace clang {
+  class ObjCPropertyRefExpr;
+
 namespace CodeGen {
 
 /// RValue - This trivial value class is used to represent the result of an
@@ -95,7 +97,9 @@ class LValue {
     Simple,       // This is a normal l-value, use getAddress().
     VectorElt,    // This is a vector element l-value (V[i]), use getVector*
     BitField,     // This is a bitfield l-value, use getBitfield*.
-    ExtVectorElt  // This is an extended vector subset, use getExtVectorComp
+    ExtVectorElt, // This is an extended vector subset, use getExtVectorComp
+    PropertyRef   // This is an Objective-C property reference, use
+                  // getPropertyRefExpr
   } LVType;
   
   llvm::Value *V;
@@ -113,6 +117,9 @@ class LValue {
       unsigned short Size;
       bool IsSigned;
     } BitfieldData;
+
+    // Obj-C property reference expression
+    const ObjCPropertyRefExpr *PropertyRefExpr;
   };
 
   bool Volatile:1;
@@ -130,7 +137,8 @@ public:
   bool isVectorElt() const { return LVType == VectorElt; }
   bool isBitfield() const { return LVType == BitField; }
   bool isExtVectorElt() const { return LVType == ExtVectorElt; }
-  
+  bool isPropertyRef() const { return LVType == PropertyRef; }
+
   bool isVolatileQualified() const { return Volatile; }
   bool isRestrictQualified() const { return Restrict; }
 
@@ -158,6 +166,11 @@ public:
   bool isBitfieldSigned() const {
     assert(isBitfield());
     return BitfieldData.IsSigned;
+  }
+  // property ref lvalue
+  const ObjCPropertyRefExpr *getPropertyRefExpr() const {
+    assert(isPropertyRef());
+    return PropertyRefExpr;
   }
 
   static LValue MakeAddr(llvm::Value *V, unsigned Qualifiers) {
@@ -197,6 +210,15 @@ public:
     R.BitfieldData.StartBit = StartBit;
     R.BitfieldData.Size = Size;
     R.BitfieldData.IsSigned = IsSigned;
+    SetQualifiers(Qualifiers,R);
+    return R;
+  }
+
+  static LValue MakePropertyRef(const ObjCPropertyRefExpr *E,
+                                unsigned Qualifiers) {
+    LValue R;
+    R.LVType = PropertyRef;
+    R.PropertyRefExpr = E;
     SetQualifiers(Qualifiers,R);
     return R;
   }

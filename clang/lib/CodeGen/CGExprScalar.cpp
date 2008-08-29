@@ -144,7 +144,7 @@ public:
     return EmitLoadOfLValue(E);
   }
   Value *VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *E) {
-    return CGF.EmitObjCPropertyGet(E).getScalarVal();
+    return EmitLoadOfLValue(E);
   }
   Value *VisitObjCMessageExpr(ObjCMessageExpr *E) {
     return CGF.EmitObjCMessageExpr(E).getScalarVal();
@@ -783,11 +783,12 @@ Value *ScalarExprEmitter::EmitCompoundAssign(const CompoundAssignOperator *E,
   // Store the result value into the LHS lvalue.
   CGF.EmitStoreThroughLValue(RValue::get(Result), LHSLV, LHSTy);
 
-  // For bitfields, we need the value in the bitfield
+  // For bitfields, we need the value in the bitfield. Note that
+  // property references do not reload their value (even though the
+  // setter may have changed it).
   // FIXME: This adds an extra bitfield load
   if (LHSLV.isBitfield())
     Result = EmitLoadOfLValue(LHSLV, LHSTy);
-
   return Result;
 }
 
@@ -1000,10 +1001,13 @@ Value *ScalarExprEmitter::VisitBinAssign(const BinaryOperator *E) {
   // FIXME: Volatility!
   CGF.EmitStoreThroughLValue(RValue::get(RHS), LHS, E->getType());
 
-  // For bitfields, we need the value in the bitfield
+  // For bitfields, we need the value in the bitfield. Note that
+  // property references do not reload their value (even though the
+  // setter may have changed it).
   // FIXME: This adds an extra bitfield load
   if (LHS.isBitfield())
     return EmitLoadOfLValue(LHS, E->getLHS()->getType());
+
   // Return the RHS.
   return RHS;
 }

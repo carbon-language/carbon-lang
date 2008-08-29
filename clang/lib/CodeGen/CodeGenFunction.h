@@ -265,6 +265,7 @@ public:
   RValue EmitLoadOfLValue(LValue V, QualType LVType);
   RValue EmitLoadOfExtVectorElementLValue(LValue V, QualType LVType);
   RValue EmitLoadOfBitfieldLValue(LValue LV, QualType ExprType);
+  RValue EmitLoadOfPropertyRefLValue(LValue LV, QualType ExprType);
 
   
   /// EmitStoreThroughLValue - Store the specified rvalue into the specified
@@ -274,6 +275,7 @@ public:
   void EmitStoreThroughExtVectorComponentLValue(RValue Src, LValue Dst,
                                                 QualType Ty);
   void EmitStoreThroughBitfieldLValue(RValue Src, LValue Dst, QualType Ty);
+  void EmitStoreThroughPropertyRefLValue(RValue Src, LValue Dst, QualType Ty);
    
   // Note: only availabe for agg return types
   LValue EmitCallExprLValue(const CallExpr *E);
@@ -292,6 +294,7 @@ public:
       
   LValue EmitObjCMessageExprLValue(const ObjCMessageExpr *E);
   LValue EmitObjCIvarRefLValue(const ObjCIvarRefExpr *E);
+  LValue EmitObjCPropertyRefLValue(const ObjCPropertyRefExpr *E);
 
   //===--------------------------------------------------------------------===//
   //                         Scalar Expression Emission
@@ -327,6 +330,7 @@ public:
   llvm::Value *EmitObjCSelectorExpr(const ObjCSelectorExpr *E);
   RValue EmitObjCMessageExpr(const ObjCMessageExpr *E);
   RValue EmitObjCPropertyGet(const ObjCPropertyRefExpr *E);
+  void EmitObjCPropertySet(const ObjCPropertyRefExpr *E, RValue Src);
 
 
   //===--------------------------------------------------------------------===//

@@ -112,9 +112,7 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
   case Expr::ObjCIvarRefExprClass: 
     return EmitObjCIvarRefLValue(cast<ObjCIvarRefExpr>(E));
   case Expr::ObjCPropertyRefExprClass:
-    // FIXME: Implement!
-    return EmitUnsupportedLValue(E, 
-                                 "l-value expression (Objective-C property)");
+    return EmitObjCPropertyRefLValue(cast<ObjCPropertyRefExpr>(E));
     
   case Expr::UnaryOperatorClass: 
     return EmitUnaryOpLValue(cast<UnaryOperator>(E));
@@ -168,6 +166,9 @@ RValue CodeGenFunction::EmitLoadOfLValue(LValue LV, QualType ExprType) {
 
   if (LV.isBitfield())
     return EmitLoadOfBitfieldLValue(LV, ExprType);
+
+  if (LV.isPropertyRef())
+    return EmitLoadOfPropertyRefLValue(LV, ExprType);
 
   assert(0 && "Unknown LValue type!");
   //an invalid RValue, but the assert will
@@ -236,6 +237,11 @@ RValue CodeGenFunction::EmitLoadOfBitfieldLValue(LValue LV,
   Val = Builder.CreateIntCast(Val, ConvertType(ExprType), false, "tmp");
 
   return RValue::get(Val);
+}
+
+RValue CodeGenFunction::EmitLoadOfPropertyRefLValue(LValue LV,
+                                                    QualType ExprType) {
+  return EmitObjCPropertyGet(LV.getPropertyRefExpr());
 }
 
 // If this is a reference to a subset of the elements of a vector, either
@@ -317,6 +323,9 @@ void CodeGenFunction::EmitStoreThroughLValue(RValue Src, LValue Dst,
 
     if (Dst.isBitfield())
       return EmitStoreThroughBitfieldLValue(Src, Dst, Ty);
+
+    if (Dst.isPropertyRef())
+      return EmitStoreThroughPropertyRefLValue(Src, Dst, Ty);
 
     assert(0 && "Unknown LValue type");
   }
@@ -405,6 +414,12 @@ void CodeGenFunction::EmitStoreThroughBitfieldLValue(RValue Src, LValue Dst,
     // Write back.
     Builder.CreateStore(HighVal, HighPtr, Dst.isVolatileQualified());
   }
+}
+
+void CodeGenFunction::EmitStoreThroughPropertyRefLValue(RValue Src,
+                                                        LValue Dst,
+                                                        QualType Ty) {
+  EmitObjCPropertySet(Dst.getPropertyRefExpr(), Src);
 }
 
 void CodeGenFunction::EmitStoreThroughExtVectorComponentLValue(RValue Src,
@@ -790,6 +805,13 @@ LValue CodeGenFunction::EmitObjCIvarRefLValue(const ObjCIvarRefExpr *E) {
   llvm::Value *V = Builder.CreateStructGEP(BaseValue, Index, "tmp");
   return LValue::MakeAddr(V,
                           Field->getType().getCVRQualifiers()|CVRQualifiers);
+}
+
+LValue 
+CodeGenFunction::EmitObjCPropertyRefLValue(const ObjCPropertyRefExpr *E) {
+  // This is a special l-value that just issues sends when we load or
+  // store through it.
+  return LValue::MakePropertyRef(E, E->getType().getCVRQualifiers());
 }
 
 RValue CodeGenFunction::EmitCallExpr(llvm::Value *Callee, QualType FnType, 
