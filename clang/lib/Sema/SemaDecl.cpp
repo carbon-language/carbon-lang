@@ -264,21 +264,10 @@ TypedefDecl *Sema::MergeTypeDefDecl(TypedefDecl *New, Decl *OldD) {
   // this adhoc compatibility rule. FIXME: The following code will not
   // work properly when compiling ".i" files (containing preprocessed output).
   SourceManager &SrcMgr = Context.getSourceManager();
-  HeaderSearch &HdrInfo = PP.getHeaderSearchInfo();
-  const FileEntry *OldDeclFile = SrcMgr.getFileEntryForLoc(Old->getLocation());
-  if (OldDeclFile) {
-    DirectoryLookup::DirType OldDirType = HdrInfo.getFileDirFlavor(OldDeclFile);
-    // Allow reclarations in both SystemHeaderDir and ExternCSystemHeaderDir.
-    if (OldDirType != DirectoryLookup::NormalHeaderDir)
-      return New;
-  }
-  const FileEntry *NewDeclFile = SrcMgr.getFileEntryForLoc(New->getLocation());
-  if (NewDeclFile) {
-    DirectoryLookup::DirType NewDirType = HdrInfo.getFileDirFlavor(NewDeclFile);
-    // Allow reclarations in both SystemHeaderDir and ExternCSystemHeaderDir.
-    if (NewDirType != DirectoryLookup::NormalHeaderDir)
-      return New;
-  }
+  if (SrcMgr.isInSystemHeader(Old->getLocation()))
+    return New;
+  if (SrcMgr.isInSystemHeader(New->getLocation()))
+    return New;
 
   Diag(New->getLocation(), diag::err_redefinition, New->getName());
   Diag(Old->getLocation(), diag::err_previous_definition);

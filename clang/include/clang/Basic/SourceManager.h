@@ -432,8 +432,7 @@ public:
 
   /// isInSystemHeader - Returns if a SourceLocation is in a system header.
   bool isInSystemHeader(SourceLocation Loc) const {
-    assert (Loc.isFileID() && "method only valid for file ids");
-    return getFIDInfo(Loc.getFileID())->isSystemHeader();
+    return getFIDInfo(getPhysicalLoc(Loc).getFileID())->isSystemHeader();
   }
   
   /// PrintStats - Print statistics to stderr.
