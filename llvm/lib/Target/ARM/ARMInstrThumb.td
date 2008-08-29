@@ -18,51 +18,6 @@
 def ARMtcall : SDNode<"ARMISD::tCALL", SDT_ARMcall,
                       [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
 
-// TI - Thumb instruction.
-
-// ThumbPat - Same as Pat<>, but requires that the compiler be in Thumb mode.
-class ThumbPat<dag pattern, dag result> : Pat<pattern, result> {
-  list<Predicate> Predicates = [IsThumb];
-}
-
-class ThumbV5Pat<dag pattern, dag result> : Pat<pattern, result> {
-  list<Predicate> Predicates = [IsThumb, HasV5T];
-}
-
-class ThumbI<dag outs, dag ins, AddrMode am, SizeFlagVal sz,
-             string asm, string cstr, list<dag> pattern>
-  // FIXME: Set all opcodes to 0 for now.
-  : InstARM<0, am, sz, IndexModeNone, ThumbFrm, cstr> {
-  let OutOperandList = outs;
-  let InOperandList = ins;
-  let AsmString   = asm;
-  let Pattern = pattern;
-  list<Predicate> Predicates = [IsThumb];
-}
-
-class TI<dag outs, dag ins, string asm, list<dag> pattern>
-  : ThumbI<outs, ins, AddrModeNone, Size2Bytes, asm, "", pattern>;
-class TI1<dag outs, dag ins, string asm, list<dag> pattern>
-  : ThumbI<outs, ins, AddrModeT1, Size2Bytes, asm, "", pattern>;
-class TI2<dag outs, dag ins, string asm, list<dag> pattern>
-  : ThumbI<outs, ins, AddrModeT2, Size2Bytes, asm, "", pattern>;
-class TI4<dag outs, dag ins, string asm, list<dag> pattern>
-  : ThumbI<outs, ins, AddrModeT4, Size2Bytes, asm, "", pattern>;
-class TIs<dag outs, dag ins, string asm, list<dag> pattern>
-  : ThumbI<outs, ins, AddrModeTs, Size2Bytes, asm, "", pattern>;
-
-// Two-address instructions
-class TIt<dag outs, dag ins, string asm, list<dag> pattern>
-  : ThumbI<outs, ins, AddrModeNone, Size2Bytes, asm, "$lhs = $dst", pattern>;
-
-// BL, BLX(1) are translated by assembler into two instructions
-class TIx2<dag outs, dag ins, string asm, list<dag> pattern>
-  : ThumbI<outs, ins, AddrModeNone, Size4Bytes, asm, "", pattern>;
-
-// BR_JT instructions
-class TJTI<dag outs, dag ins, string asm, list<dag> pattern>
-  : ThumbI<outs, ins, AddrModeNone, SizeSpecial, asm, "", pattern>;
-
 def imm_neg_XFORM : SDNodeXForm<imm, [{
   return CurDAG->getTargetConstant(-(int)N->getValue(), MVT::i32);
 }]>;
