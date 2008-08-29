@@ -25,6 +25,10 @@ def checkenv(name, alternate=None):
 
 CCC_ECHO = checkenv('CCC_ECHO','1')
 CCC_NATIVE = checkenv('CCC_NATIVE')
+CCC_FALLBACK = checkenv('CCC_FALLBACK')
+CCC_LANGUAGES = checkenv('CCC_LANGUAGES')
+if CCC_LANGUAGES:
+    CCC_LANGUAGES = set([s.strip() for s in CCC_LANGUAGES.split(',')])
 
 # We want to support use as CC or LD, so we need different defines.
 CLANG = checkenv('CLANG', 'clang')
@@ -38,7 +42,7 @@ def error(message):
     sys.exit(1)
 
 def quote(arg):
-    if '"' in arg:
+    if '"' in arg or ' ' in arg:
         return repr(arg)
     return arg
 
@@ -62,6 +66,7 @@ def stripoutput(args):
 def run(args):
     if CCC_ECHO:
         print ' '.join(map(quote, args))
+        sys.stdout.flush()
     code = subprocess.call(args)
     if code > 255:
         code = 1
@@ -85,6 +90,10 @@ def preprocess(args):
     command = [CLANG,'-E']
     run(command + args)
 
+def compile_fallback(args):
+    command = [CC,'-c']
+    run(command + args)
+    
 def compile(args, native, save_temps=False):
     if native:
         output,args = stripoutput(args)
@@ -97,20 +106,35 @@ def compile(args, native, save_temps=False):
         bc_output = output + '.bc'
         s_output = output + '.s'
         command = [CLANG,'-emit-llvm-bc']
-        run(command + args + ['-o', bc_output])
-        # FIXME: What controls relocation model?
-        run([LLC, '-relocation-model=pic', '-f', '-o', s_output, bc_output])
-        run([AS, '-o', output, s_output])
-        if not save_temps:
-            remove(bc_output)
-            remove(s_output)
+        try:
+            run(command + args + ['-o', bc_output])
+            # FIXME: What controls relocation model?
+            run([LLC, '-relocation-model=pic', '-f', '-o', s_output, bc_output])
+            run([AS, '-o', output, s_output])
+        finally:
+            if not save_temps:
+                remove(bc_output)
+                remove(s_output)
     else:
         command = [CLANG,'-emit-llvm-bc']
         run(command + args)
 
+def checked_compile(args, native, language, save_temps):
+    if CCC_LANGUAGES and language and language not in CCC_LANGUAGES:
+        print >>sys.stderr, 'NOTE: ccc: Using fallback compiler for: %s'%(' '.join(map(quote, args)),)
+        compile_fallback(args)
+    elif CCC_FALLBACK:
+        try:
+            compile(args, native, save_temps)
+        except:
+            print >>sys.stderr, 'WARNING: ccc: Using fallback compiler for: %s'%(' '.join(map(quote, args)),)
+            compile_fallback(args)
+    else:
+        compile(args, native, save_temps)
+    
 def link(args, native):
     if native:
-        run([LD] + args)        
+        run([LD] + args)
     else:
         command = ['llvm-ld', '-native', '-disable-internalize']
         run(command + args)
@@ -123,7 +147,6 @@ def changeextension(path, newext):
     if i < 0:
         return path
     j = path.rfind('/', 0, i)
-    print path
     if j < 0:
         return path[:i] + "." + newext
     return path[j+1:i] + "." + newext
@@ -137,6 +160,8 @@ def inferlanguage(extension):
         return "c-cpp-output"
     elif extension == "m":
         return "objective-c"
+    elif extension == "mm":
+        return "objective-c++"
     elif extension == "mi":
         return "objective-c-cpp-output"
     else:
@@ -169,7 +194,8 @@ def main(args):
             native = False
 
         # Options with no arguments that should pass through
-        if arg in ['-v']:
+        if arg in ['-v', '-fobjc-gc', '-fobjc-gc-only', '-fnext-runtime',
+                   '-fgnu-runtime']:
             compile_opts.append(arg)
             link_opts.append(arg)
         
@@ -199,7 +225,7 @@ def main(args):
             i += 1
 
         # Options with one argument that should pass through
-        if arg in ['-framework']:
+        if arg in ['-framework', '-multiply_defined', '-bundle_loader']:
             link_opts.append(arg)
             link_opts.append(args[i+1])
             i += 1
@@ -284,16 +310,19 @@ def main(args):
             else:
                 coutput = output
             args = ['-x', language, '-o', coutput, file] + compile_opts
-            compile(args, native, save_temps)
+            checked_compile(args, native, language, save_temps)
             language = ''
 
     if action == 'link':
         for i, file in enumerate(files):
+            if not language:
+                language = inferlanguage(extension(file))
             ext = extension(file)
             if ext != "o" and ext != "a" and ext != "so":
                 out = changeextension(file, "o")
-                args = ['-o', out, file] + compile_opts
-                compile(args, native, save_temps)
+                args = ['-x', language, '-o', out, file] + compile_opts
+                checked_compile(args, native, language, save_temps)
+                language = ''
                 files[i] = out
         if not output:
             output = 'a.out'
