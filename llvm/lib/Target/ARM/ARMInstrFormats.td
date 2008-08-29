@@ -50,7 +50,6 @@ def ThumbFrm    : Format<25>;
 def VFPFrm      : Format<26>;
 
 
-
 //===----------------------------------------------------------------------===//
 
 // ARM Instruction templates.
@@ -59,6 +58,8 @@ def VFPFrm      : Format<26>;
 class InstARM<bits<4> opcod, AddrMode am, SizeFlagVal sz, IndexMode im,
               Format f, string cstr>
   : Instruction {
+  field bits<32> Inst;
+
   let Namespace = "ARM";
 
   bits<4> Opcode = opcod;
@@ -122,11 +123,17 @@ class AsI<bits<4> opcod, dag oops, dag iops, Format f, string opc,
 class AI1<bits<4> opcod, dag oops, dag iops, Format f, string opc,
           string asm, list<dag> pattern>
   : I<opcod, oops, iops, AddrMode1, Size4Bytes, IndexModeNone, f, opc,
-      asm, "", pattern>;
+      asm, "", pattern> {
+  let Inst{5-6}  = 0;
+  let Inst{7-10} = opcod;
+}
 class AsI1<bits<4> opcod, dag oops, dag iops, Format f, string opc,
            string asm, list<dag> pattern>
   : sI<opcod, oops, iops, AddrMode1, Size4Bytes, IndexModeNone, f, opc,
-       asm, "", pattern>;
+       asm, "", pattern> {
+  let Inst{5-6}  = 0;
+  let Inst{7-10} = opcod;
+}
 class AI2<bits<4> opcod, dag oops, dag iops, Format f, string opc,
           string asm, list<dag> pattern>
   : I<opcod, oops, iops, AddrMode2, Size4Bytes, IndexModeNone, f, opc,
