@@ -1,0 +1,606 @@
+#!/usr/bin/python
+
+import os
+import re
+import time
+from pprint import pprint
+
+###
+
+c99URL = 'http://www.open-std.org/jtc1/sc22/wg14/www/docs/n1124.pdf'
+c99TOC = [('Foreword', 'xi'),
+('Introduction', 'xiv'),
+('1. Scope', '1'),
+('2. Normative references', '2'),
+('3. Terms, definitions, and symbols', '3'),
+('4. Conformance', '7'),
+('5. Environment', '9'),
+('5.1 Conceptual models', '9'),
+('5.1.1 Translation environment', '9'),
+('5.1.2 Execution environments', '11'),
+('5.2 Environmental considerations', '17'),
+('5.2.1 Character sets', '17'),
+('5.2.2 Character display semantics', '19'),
+('5.2.3 Signals and interrupts', '20'),
+('5.2.4 Environmental limits', '20'),
+('6. Language', '29'),
+('6.1 Notation', '29'),
+('6.2 Concepts', '29'),
+('6.2.1 Scopes of identifiers', '29'),
+('6.2.2 Linkages of identifiers', '30'),
+('6.2.3 Name spaces of identifiers', '31'),
+('6.2.4 Storage durations of objects', '32'),
+('6.2.5 Types', '33'),
+('6.2.6 Representations of types', '37'),
+('6.2.7 Compatible type and composite type', '40'),
+('6.3 Conversions', '42'),
+('6.3.1 Arithmetic operands', '42'),
+('6.3.2 Other operands', '46'),
+('6.4 Lexical elements', '49'),
+('6.4.1 Keywords', '50'),
+('6.4.2 Identifiers', '51'),
+('6.4.3 Universal character names', '53'),
+('6.4.4 Constants', '54'),
+('6.4.5 String literals', '62'),
+('6.4.6 Punctuators', '63'),
+('6.4.7 Header names', '64'),
+('6.4.8 Preprocessing numbers', '65'),
+('6.4.9 Comments', '66'),
+('6.5 Expressions', '67'),
+('6.5.1 Primary expressions', '69'),
+('6.5.2 Postfix operators', '69'),
+('6.5.3 Unary operators', '78'),
+('6.5.4 Cast operators', '81'),
+('6.5.5 Multiplicative operators', '82'),
+('6.5.6 Additive operators', '82'),
+('6.5.7 Bitwise shift operators', '84'),
+('6.5.8 Relational operators', '85'),
+('6.5.9 Equality operators', '86'),
+('6.5.10 Bitwise AND operator', '87'),
+('6.5.11 Bitwise exclusive OR operator', '88'),
+('6.5.12 Bitwise inclusive OR operator', '88'),
+('6.5.13 Logical AND operator', '89'),
+('6.5.14 Logical OR operator', '89'),
+('6.5.15 Conditional operator', '90'),
+('6.5.16 Assignment operators', '91'),
+('6.5.17 Comma operator', '94'),
+('6.6 Constant expressions', '95'),
+('6.7 Declarations', '97'),
+('6.7.1 Storage-class specifiers', '98'),
+('6.7.2 Type specifiers', '99'),
+('6.7.3 Type qualifiers', '108'),
+('6.7.4 Function specifiers', '112'),
+('6.7.5 Declarators', '114'),
+('6.7.6 Type names', '122'),
+('6.7.7 Type definitions', '123'),
+('6.7.8 Initialization', '125'),
+('6.8 Statements and blocks', '131'),
+('6.8.1 Labeled statements', '131'),
+('6.8.2 Compound statement', '132'),
+('6.8.3 Expression and null statements', '132'),
+('6.8.4 Selection statements', '133'),
+('6.8.5 Iteration statements', '135'),
+('6.8.6 Jump statements', '136'),
+('6.9 External definitions', '140'),
+('6.9.1 Function definitions', '141'),
+('6.9.2 External object definitions', '143'),
+('6.10 Preprocessing directives', '145'),
+('6.10.1 Conditional inclusion', '147'),
+('6.10.2 Source file inclusion', '149'),
+('6.10.3 Macro replacement', '151'),
+('6.10.4 Line control', '158'),
+('6.10.5 Error directive', '159'),
+('6.10.6 Pragma directive', '159'),
+('6.10.7 Null directive', '160'),
+('6.10.8 Predefined macro names', '160'),
+('6.10.9 Pragma operator', '161'),
+('6.11 Future language directions', '163'),
+('6.11.1 Floating types', '163'),
+('6.11.2 Linkages of identifiers', '163'),
+('6.11.3 External names', '163'),
+('6.11.4 Character escape sequences', '163'),
+('6.11.5 Storage-class specifiers', '163'),
+('6.11.6 Function declarators', '163'),
+('6.11.7 Function definitions', '163'),
+('6.11.8 Pragma directives', '163'),
+('6.11.9 Predefined macro names', '163'),
+('7. Library', '164'),
+('7.1 Introduction', '164'),
+('7.1.1 Definitions of terms', '164'),
+('7.1.2 Standard headers', '165'),
+('7.1.3 Reserved identifiers', '166'),
+('7.1.4 Use of library functions', '166'),
+('7.2 Diagnostics <assert.h>', '169'),
+('7.2.1 Program diagnostics', '169'),
+('7.3 Complex arithmetic <complex.h>', '170'),
+('7.3.1 Introduction', '170'),
+('7.3.2 Conventions', '170'),
+('7.3.3 Branch cuts', '171'),
+('7.3.4 The CX_LIMITED_RANGE pragma', '171'),
+('7.3.5 Trigonometric functions', '172'),
+('7.3.6 Hyperbolic functions', '174'),
+('7.3.7 Exponential and logarithmic functions', '176'),
+('7.3.8 Power and absolute-value functions', '177'),
+('7.3.9 Manipulation functions', '178'),
+('7.4 Character handling <ctype.h>', '181'),
+('7.4.1 Character classification functions', '181'),
+('7.4.2 Character case mapping functions', '184'),
+('7.5 Errors <errno.h>', '186'),
+('7.6 Floating-point environment <fenv.h>', '187'),
+('7.6.1 The FENV_ACCESS pragma', '189'),
+('7.6.2 Floating-point exceptions', '190'),
+('7.6.3 Rounding', '193'),
+('7.6.4 Environment', '194'),
+('7.7 Characteristics of floating types <float.h>', '197'),
+('7.8 Format conversion of integer types <inttypes.h>', '198'),
+('7.8.1 Macros for format specifiers', '198'),
+('7.8.2 Functions for greatest-width integer types', '199'),
+('7.9 Alternative spellings <iso646.h>', '202'),
+('7.10 Sizes of integer types <limits.h>', '203'),
+('7.11 Localization <locale.h>', '204'),
+('7.11.1 Locale control', '205'),
+('7.11.2 Numeric formatting convention inquiry', '206'),
+('7.12 Mathematics <math.h>', '212'),
+('7.12.1 Treatment of error conditions', '214'),
+('7.12.2 The FP_CONTRACT pragma', '215'),
+('7.12.3 Classification macros', '216'),
+('7.12.4 Trigonometric functions', '218'),
+('7.12.5 Hyperbolic functions', '221'),
+('7.12.6 Exponential and logarithmic functions', '223'),
+('7.12.7 Power and absolute-value functions', '228'),
+('7.12.8 Error and gamma functions', '230'),
+('7.12.9 Nearest integer functions', '231'),
+('7.12.10 Remainder functions', '235'),
+('7.12.11 Manipulation functions', '236'),
+('7.12.12 Maximum, minimum, and positive difference functions', '238'),
+('7.12.13 Floating multiply-add', '239'),
+('7.12.14 Comparison macros', '240'),
+('7.13 Nonlocal jumps <setjmp.h>', '243'),
+('7.13.1 Save calling environment', '243'),
+('7.13.2 Restore calling environment', '244'),
+('7.14 Signal handling <signal.h>', '246'),
+('7.14.1 Specify signal handling', '247'),
+('7.14.2 Send signal', '248'),
+('7.15 Variable arguments <stdarg.h>', '249'),
+('7.15.1 Variable argument list access macros', '249'),
+('7.16 Boolean type and values <stdbool.h>', '253'),
+('7.17 Common definitions <stddef.h>', '254'),
+('7.18 Integer types <stdint.h>', '255'),
+('7.18.1 Integer types', '255'),
+('7.18.2 Limits of specified-width integer types', '257'),
+('7.18.3 Limits of other integer types', '259'),
+('7.18.4 Macros for integer constants', '260'),
+('7.19 Input/output <stdio.h>', '262'),
+('7.19.1 Introduction', '262'),
+('7.19.2 Streams', '264'),
+('7.19.3 Files', '266'),
+('7.19.4 Operations on files', '268'),
+('7.19.5 File access functions', '270'),
+('7.19.6 Formatted input/output functions', '274'),
+('7.19.7 Character input/output functions', '296'),
+('7.19.8 Direct input/output functions', '301'),
+('7.19.9 File positioning functions', '302'),
+('7.19.10 Error-handling functions', '304'),
+('7.20 General utilities <stdlib.h>', '306'),
+('7.20.1 Numeric conversion functions', '307'),
+('7.20.2 Pseudo-random sequence generation functions', '312'),
+('7.20.3 Memory management functions', '313'),
+('7.20.4 Communication with the environment', '315'),
+('7.20.5 Searching and sorting utilities', '318'),
+('7.20.6 Integer arithmetic functions', '320'),
+('7.20.7 Multibyte/wide character conversion functions', '321'),
+('7.20.8 Multibyte/wide string conversion functions', '323'),
+('7.21 String handling <string.h>', '325'),
+('7.21.1 String function conventions', '325'),
+('7.21.2 Copying functions', '325'),
+('7.21.3 Concatenation functions', '327'),
+('7.21.4 Comparison functions', '328'),
+('7.21.5 Search functions', '330'),
+('7.21.6 Miscellaneous functions', '333'),
+('7.22 Type-generic math <tgmath.h>', '335'),
+('7.23 Date and time <time.h>', '338'),
+('7.23.1 Components of time', '338'),
+('7.23.2 Time manipulation functions', '339'),
+('7.23.3 Time conversion functions', '341'),
+('7.24 Extended multibyte and wide character utilities <wchar.h>', '348'),
+('7.24.1 Introduction', '348'),
+('7.24.2 Formatted wide character input/output functions', '349'),
+('7.24.3 Wide character input/output functions', '367'),
+('7.24.4 General wide string utilities', '371'),
+('7.24.5 Wide character time conversion functions', '385'),
+('7.24.6 Extended multibyte/wide character conversion utilities', '386'),
+('7.25 Wide character classification and mapping utilities <wctype.h>',
+  '393'),
+('7.25.1 Introduction', '393'),
+('7.25.2 Wide character classification utilities', '394'),
+('7.25.3 Wide character case mapping utilities', '399'),
+('7.26 Future library directions', '401'),
+('7.26.1 Complex arithmetic <complex.h>', '401'),
+('7.26.2 Character handling <ctype.h>', '401'),
+('7.26.3 Errors <errno.h>', '401'),
+('7.26.4 Format conversion of integer types <inttypes.h>', '401'),
+('7.26.5 Localization <locale.h>', '401'),
+('7.26.6 Signal handling <signal.h>', '401'),
+('7.26.7 Boolean type and values <stdbool.h>', '401'),
+('7.26.8 Integer types <stdint.h>', '401'),
+('7.26.9 Input/output <stdio.h>', '402'),
+('7.26.10 General utilities <stdlib.h>', '402'),
+('7.26.11 String handling <string.h>', '402'),
+('<wchar.h>', '402'),
+('<wctype.h>', '402'),
+('Annex A (informative) Language syntax summary', '403'),
+('A.1 Lexical grammar', '403'),
+('A.2 Phrase structure grammar', '409'),
+('A.3 Preprocessing directives', '416'),
+('Annex B (informative) Library summary', '418'),
+('B.1 Diagnostics <assert.h>', '418'),
+('B.2 Complex <complex.h>', '418'),
+('B.3 Character handling <ctype.h>', '420'),
+('B.4 Errors <errno.h>', '420'),
+('B.5 Floating-point environment <fenv.h>', '420'),
+('B.6 Characteristics of floating types <float.h>', '421'),
+('B.7 Format conversion of integer types <inttypes.h>', '421'),
+('B.8 Alternative spellings <iso646.h>', '422'),
+('B.9 Sizes of integer types <limits.h>', '422'),
+('B.10 Localization <locale.h>', '422'),
+('B.11 Mathematics <math.h>', '422'),
+('B.12 Nonlocal jumps <setjmp.h>', '427'),
+('B.13 Signal handling <signal.h>', '427'),
+('B.14 Variable arguments <stdarg.h>', '427'),
+('B.15 Boolean type and values <stdbool.h>', '427'),
+('B.16 Common definitions <stddef.h>', '428'),
+('B.17 Integer types <stdint.h>', '428'),
+('B.18 Input/output <stdio.h>', '428'),
+('B.19 General utilities <stdlib.h>', '430'),
+('B.20 String handling <string.h>', '432'),
+('B.21 Type-generic math <tgmath.h>', '433'),
+('B.22 Date and time <time.h>', '433'),
+('B.23 Extended multibyte/wide character utilities <wchar.h>', '434'),
+('B.24 Wide character classification and mapping utilities <wctype.h>',
+  '436'),
+('Annex C (informative) Sequence points', '438'),
+('Annex D (normative) Universal character names for identifiers', '439'),
+('Annex E (informative) Implementation limits', '441'),
+('Annex F (normative) IEC 60559 floating-point arithmetic', '443'),
+('F.1 Introduction', '443'),
+('F.2 Types', '443'),
+('F.3 Operators and functions', '444'),
+('F.4 Floating to integer conversion', '446'),
+('F.5 Binary-decimal conversion', '446'),
+('F.6 Contracted expressions', '447'),
+('F.7 Floating-point environment', '447'),
+('F.8 Optimization', '450'),
+('F.9 Mathematics <math.h>', '453'),
+('Annex G (informative) IEC 60559-compatible complex arithmetic', '466'),
+('G.1 Introduction', '466'),
+('G.2 Types', '466'),
+('G.3 Conventions', '466'),
+('G.4 Conversions', '467'),
+('G.5 Binary operators', '467'),
+('G.6 Complex arithmetic <complex.h>', '471'),
+('G.7 Type-generic math <tgmath.h>', '479'),
+('Annex H (informative) Language independent arithmetic', '480'),
+('H.1 Introduction', '480'),
+('H.2 Types', '480'),
+('H.3 Notification', '484'),
+('Annex I (informative) Common warnings', '486'),
+('Annex J (informative) Portability issues', '488'),
+('J.1 Unspecified behavior', '488'),
+('J.2 Undefined behavior', '491'),
+('J.3 Implementation-defined behavior', '504'),
+('J.4 Locale-specific behavior', '511'),
+('J.5 Common extensions', '512'),
+('Bibliography', '515'),
+('Index', '517')]
+
+kDocuments = {
+    'C99' : (c99URL, c99TOC, 12)
+}
+
+def findClosestTOCEntry(data, target):
+    offset = data[2]
+    best = None
+    for (name,page) in data[1]:
+        if ' ' in name:
+            section,name = name.split(' ',1)
+            if section == 'Annex':
+                section,name = name.split(' ',1)
+                section = 'Annex '+section
+        else:
+            section = None
+        try:
+            page = int(page) + offset
+        except:
+            page = 1
+        try:
+            spec = SpecIndex.fromstring(section)
+        except:
+            spec = None
+
+        # Meh, could be better...
+        if spec is not None:
+            dist = spec - target
+            if best is None or dist < best[0]:
+                best = (dist, (section, name, page))
+    return best[1]
+
+# What a hack. Slow to boot.
+doxyLineRefRE = re.compile(r"<a name=\"l([0-9]+)\"></a>")
+def findClosestLineReference(clangRoot, doxyName, target):
+    try:
+        f = open(os.path.join(clangRoot, 'docs', 'doxygen', 'html', doxyName))
+    except:
+        return None
+    
+    best = None
+    for m in doxyLineRefRE.finditer(f.read()):
+        line = int(m.group(1), 10)
+        dist = abs(line - target)
+        if best is None or dist < best[0]:
+            best = (dist,'l'+m.group(1))
+    f.close()
+    if best is not None:
+        return best[1]
+    return None
+
+###
+
+nameAndSpecRefRE = re.compile(r"(C99|C90|C\+\+|H\&S) (([0-9]+)(\.[0-9]+)*(p[0-9]+)?)")
+loneSpecRefRE = re.compile(r" (([0-9]+)(\.[0-9]+){2,100}(p[0-9]+)?)")
+def scanFile(path, filename):
+    try:
+        f = open(path)
+    except IOError:
+        print >>sys.stderr,'WARNING: Unable to open:',path
+        return
+
+    try:
+        for i,ln in enumerate(f):
+            ignore = set()
+            for m in nameAndSpecRefRE.finditer(ln):
+                section = m.group(2)
+                name = m.group(1)
+                if section.endswith('.'):
+                    section = section[:-1]
+                yield RefItem(name, section, filename, path, i+1)
+                ignore.add(section)
+            for m in loneSpecRefRE.finditer(ln):
+                section = m.group(1)
+                if section.endswith('.'):
+                    section = section[:-1]
+                if section not in ignore:
+                    yield RefItem(None, section, filename, path, i+1)
+    finally:                
+        f.close()
+
+###
+
+class SpecIndex:
+    @staticmethod
+    def fromstring(str):
+        secs = str.split('.')
+        paragraph = None
+        if 'p' in secs[-1]:
+            secs[-1],p = secs[-1].split('p',1)
+            paragraph = int(p)
+        indices = map(int, secs)
+        return SpecIndex(indices, paragraph)
+
+    def __init__(self, indices, paragraph=None):
+        assert len(indices)>0
+        self.indices = tuple(indices)
+        self.paragraph = paragraph
+
+    def __str__(self):
+        s =  '.'.join(map(str,self.indices))
+        if self.paragraph is not None:
+            s += '.p%d'%(self.paragraph,)
+        return s                            
+
+    def __repr__(self):
+        return 'SpecIndex(%s, %s)'%(self.indices, self.paragraph)
+
+    def __cmp__(self, b):
+        return cmp((self.indices,self.paragraph),
+                   (b.indices,b.paragraph))
+
+    def __hash__(self):
+        return hash((self.indices,self.paragraph))
+
+    def __sub__(self, indices):
+        def sub(a,b):
+            a = a or 0
+            b = b or 0
+            return abs(a-b)
+        return map(sub,self.indices,indices)
+
+class RefItem:
+    def __init__(self, name, section, filename, path, line):
+        self.name = name
+        self.section = SpecIndex.fromstring(section)
+        self.filename = filename
+        self.path = path
+        self.line = line
+    
+    def __str__(self):
+        if self.name is not None:
+            return '%s %s'%(self.name, self.section)
+        else:
+            return '--- %s'%(self.section,)
+
+    def __repr__(self):
+        return 'RefItem(%s, %r, "%s", "%s", %d)'%(self.name, 
+                                              self.section,
+                                              self.filename,
+                                              self.path,
+                                              self.line)
+
+    def __cmp__(self, b):
+        return cmp((self.name,self.section,self.filename,self.path,self.line),
+                   (b.name,b.section,self.filename,self.path,self.line))
+
+    def __hash__(self):
+        return hash((self.name,self.section,self.filename,self.path,self.line))
+
+###
+
+def sorted(l):
+    l = list(l)
+    l.sort()
+    return l
+
+def getRevision(path):
+    import svn, svn.core, svn.client
+
+    revision = [None]
+    
+    def info_cb(path, info, pool):
+        revision[0] = info.rev
+
+    try:
+        root = os.path.abspath(path)
+        svn.core.apr_initialize()
+        pool = svn.core.svn_pool_create(None)
+        ctx = svn.client.svn_client_ctx_t()
+        svn.client.svn_client_info(root,
+                                   None,
+                                   None,
+                                   info_cb,
+                                   False,
+                                   ctx,
+                                   pool)
+        svn.core.svn_pool_destroy(pool)
+    except:
+        pass
+
+    return revision[0]
+
+def buildRefTree(references):
+    root = (None, {}, [])
+
+    def getNode(keys):
+        if not keys:
+            return root
+        key,parent = keys[-1],getNode(keys[:-1])
+        node = parent[1].get(key)
+        if node is None:
+            parent[1][key] = node = (key, {}, [])
+        return node
+            
+    for ref in references:
+        n = getNode((ref.name,) + ref.section.indices)
+        n[2].append(ref)
+
+    def flatten((key, children, data)):
+        children = sorted(map(flatten,children.values()))
+        return (key, children, sorted(data))
+
+    return flatten(root)
+
+def preorder(node,parents=(),first=True):
+    (key,children,data) = node
+    if first:
+        yield parents+(node,)
+    for c in children:
+        for item in preorder(c, parents+(node,)):
+            yield item
+
+def main():
+    global options
+    from optparse import OptionParser
+    parser = OptionParser("usage: %prog [options] CLANG_ROOT <output-dir>")
+    
+    (options, args) = parser.parse_args()
+
+    if len(args) != 2:
+        parser.error("incorrect number of arguments")
+
+    references = []
+    root,outputDir = args
+    for (dirpath, dirnames, filenames) in os.walk(root):
+        for filename in filenames:
+            name,ext = os.path.splitext(filename)
+            if ext in ('.c', '.cpp', '.h', '.def'):
+                fullpath = os.path.join(dirpath, filename)                
+                references.extend(list(scanFile(fullpath, filename)))
+
+    refTree = buildRefTree(references)
+
+    specs = {}
+    for ref in references:
+        spec = specs[ref.name] = specs.get(ref.name,{})
+        items = spec[ref.section] = spec.get(ref.section,[])
+        items.append(ref)
+
+    print 'Found %d references.'%(len(references),)
+
+    referencesPath = os.path.join(outputDir,'references.html')
+    print 'Writing: %s'%(referencesPath,)
+    f = open(referencesPath,'w')   
+    print >>f, '<html><head><title>clang: Specification References</title></head>'
+    print >>f, '<body>'
+    print >>f, '\t<h2>Specification References</h2>'
+    for i,node in enumerate(refTree[1]):
+        specName = node[0] or 'Unknown'
+        print >>f, '<a href="#spec%d">%s</a><br>'%(i,specName)
+    for i,node in enumerate(refTree[1]):
+        specName = node[0] or 'Unknown'
+        print >>f, '<hr>'
+        print >>f, '<a name="spec%d">'%(i,)
+        print >>f, '<h3>Document: %s</h3>'%(specName or 'Unknown',)
+        print >>f, '<table border="1" cellspacing="2" width="80%">'
+        print >>f, '<tr><th width="20%">Name</th><th>References</th></tr>'
+        docData = kDocuments.get(specName)
+        for path in preorder(node,first=False):
+            if not path[-1][2]:
+                continue
+            components = '.'.join([str(p[0]) for p in path[1:]])
+            print >>f, '\t<tr>'
+            tocEntry = None            
+            if docData is not None:
+                tocEntry = findClosestTOCEntry(docData, [p[0] for p in path[1:]])
+            if tocEntry is not None:
+                section,name,page = tocEntry
+                # If section is exact print the TOC name
+                if page is not None:
+                    linkStr = '<a href="%s#page=%d">%s</a> (pg.%d)'%(docData[0],page,components,page)
+                else:
+                    linkStr = components
+                if section == components:
+                    print >>f, '\t\t<td valign=top>%s<br>%s</td>'%(linkStr,name)
+                else:
+                    print >>f, '\t\t<td valign=top>%s</td>'%(linkStr,)
+            else:
+                print >>f, '\t\t<td valign=top>%s</td>'%(components,)
+            print >>f, '\t\t<td valign=top>'
+            for item in path[-1][2]:
+                # XXX total hack
+                relativePath = item.path[len(root):]
+                if relativePath.startswith('/'):
+                    relativePath = relativePath[1:]
+                # XXX this is broken, how does doxygen mangle w/ multiple
+                # refs? Can we just read its map?
+                filename = os.path.basename(relativePath)
+                doxyName = '%s-source.html'%(filename.replace('.','_8'),)
+                # Grrr, why can't doxygen write line number references.
+                lineReference = findClosestLineReference(root,doxyName,item.line)
+                if lineReference is not None:
+                    linkStr = 'http://clang.llvm.org/doxygen/%s#%s'%(doxyName,lineReference)
+                else:
+                    linkStr = 'http://clang.llvm.org/doxygen/%s'%(doxyName,)
+                if item.section.paragraph is not None:
+                    paraText = '&nbsp;(p%d)'%(item.section.paragraph,)
+                else:
+                    paraText = ''
+                print >>f,'<a href="%s">%s:%d</a>%s<br>'%(linkStr,relativePath,item.line,paraText)
+            print >>f, '\t\t</td>'
+            print >>f, '\t</tr>'
+        print >>f, '</table>'
+    print >>f, '<hr>'
+    print >>f, 'Generated: %s<br>'%(time.strftime('%Y-%m-%d %H:%M'),)
+    print >>f, 'SVN Revision: %s'%(getRevision(root),)
+    print >>f, '</body>'
+    f.close()
+    
+if __name__=='__main__':
+   main()
