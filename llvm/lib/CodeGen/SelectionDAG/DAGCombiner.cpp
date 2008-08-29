@@ -3063,7 +3063,8 @@ SDValue DAGCombiner::visitANY_EXTEND(SDNode *N) {
                                        LN0->getAlignment());
     CombineTo(N, ExtLoad);
     // Redirect any chain users to the new load.
-    DAG.ReplaceAllUsesOfValueWith(SDValue(LN0, 1), SDValue(ExtLoad.getNode(), 1));
+    DAG.ReplaceAllUsesOfValueWith(SDValue(LN0, 1),
+                                  SDValue(ExtLoad.getNode(), 1));
     // If any node needs the original loaded value, recompute it.
     if (!LN0->use_empty())
       CombineTo(LN0, DAG.getNode(ISD::TRUNCATE, N0.getValueType(), ExtLoad),
@@ -3086,7 +3087,8 @@ SDValue DAGCombiner::visitANY_EXTEND(SDNode *N) {
                                        LN0->isVolatile(), 
                                        LN0->getAlignment());
     CombineTo(N, ExtLoad);
-    CombineTo(N0.getNode(), DAG.getNode(ISD::TRUNCATE, N0.getValueType(), ExtLoad),
+    CombineTo(N0.getNode(),
+              DAG.getNode(ISD::TRUNCATE, N0.getValueType(), ExtLoad),
               ExtLoad.getValue(1));
     return SDValue(N, 0);   // Return N so it doesn't get rechecked!
   }
