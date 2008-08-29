@@ -2373,7 +2373,8 @@ bool X86InstrInfo::BlockHasNoFallThrough(MachineBasicBlock &MBB) const {
 bool X86InstrInfo::
 ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const {
   assert(Cond.size() == 1 && "Invalid X86 branch condition!");
-  Cond[0].setImm(GetOppositeBranchCondition((X86::CondCode)Cond[0].getImm()));
+  X86::CondCode CC = static_cast<X86::CondCode>(Cond[0].getImm());
+  Cond[0].setImm(GetOppositeBranchCondition(CC));
   return false;
 }
 
