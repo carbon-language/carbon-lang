@@ -3,7 +3,7 @@
 define i32 @test(double %A) nounwind  {
  entry:
  %tmp2 = fcmp ogt double %A, 1.500000e+02; <i1> [#uses=1]
- %tmp5 = fcmp olt double %A, 7.500000e+01; <i1> [#uses=1]
+ %tmp5 = fcmp ult double %A, 7.500000e+01; <i1> [#uses=1]
  %bothcond = or i1 %tmp2, %tmp5; <i1> [#uses=1]
  br i1 %bothcond, label %bb8, label %bb12
 

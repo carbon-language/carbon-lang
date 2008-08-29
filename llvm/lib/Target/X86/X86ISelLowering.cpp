@@ -1909,7 +1909,6 @@ SDValue X86TargetLowering::getReturnAddressFrameIndex(SelectionDAG &DAG) {
 }
 
 
-
 /// translateX86CC - do a one to one translation of a ISD::CondCode to the X86
 /// specific condition code. It returns a false if it cannot do a direct
 /// translation. X86CC is the translated CondCode.  LHS/RHS are modified as
@@ -1951,36 +1950,71 @@ static bool translateX86CC(ISD::CondCode SetCCOpcode, bool isFP,
     case ISD::SETUGE: X86CC = X86::COND_AE; break;
     }
   } else {
+    // First determine if it requires or is profitable to flip the operands.
+    bool Flip = false;
+    switch (SetCCOpcode) {
+    default: break;
+    case ISD::SETOLT:
+    case ISD::SETOLE:
+    case ISD::SETUGT:
+    case ISD::SETUGE:
+      Flip = true;
+      break;
+    }
+
+    // If LHS is a foldable load, but RHS is not, flip the condition.
+    if (!Flip &&
+        (ISD::isNON_EXTLoad(LHS.getNode()) && LHS.hasOneUse()) &&
+        !(ISD::isNON_EXTLoad(RHS.getNode()) && RHS.hasOneUse())) {
+      SetCCOpcode = getSetCCSwappedOperands(SetCCOpcode);
+      Flip = true;
+    }
+    if (Flip)
+      std::swap(LHS, RHS);
+
     // On a floating point condition, the flags are set as follows:
     // ZF  PF  CF   op
     //  0 | 0 | 0 | X > Y
     //  0 | 0 | 1 | X < Y
     //  1 | 0 | 0 | X == Y
     //  1 | 1 | 1 | unordered
-    bool Flip = false;
     switch (SetCCOpcode) {
     default: break;
     case ISD::SETUEQ:
-    case ISD::SETEQ: X86CC = X86::COND_E;  break;
-    case ISD::SETOLT: Flip = true; // Fallthrough
+    case ISD::SETEQ:
+      X86CC = X86::COND_E;
+      break;
+    case ISD::SETOLT:              // flipped
     case ISD::SETOGT:
-    case ISD::SETGT: X86CC = X86::COND_A;  break;
-    case ISD::SETOLE: Flip = true; // Fallthrough
+    case ISD::SETGT:
+      X86CC = X86::COND_A;
+      break;
+    case ISD::SETOLE:              // flipped
     case ISD::SETOGE:
-    case ISD::SETGE: X86CC = X86::COND_AE; break;
-    case ISD::SETUGT: Flip = true; // Fallthrough
+    case ISD::SETGE:
+      X86CC = X86::COND_AE;
+      break;
+    case ISD::SETUGT:              // flipped
     case ISD::SETULT:
-    case ISD::SETLT: X86CC = X86::COND_B;  break;
-    case ISD::SETUGE: Flip = true; // Fallthrough
+    case ISD::SETLT:
+      X86CC = X86::COND_B;
+      break;
+    case ISD::SETUGE:              // flipped
     case ISD::SETULE:
-    case ISD::SETLE: X86CC = X86::COND_BE; break;
+    case ISD::SETLE:
+      X86CC = X86::COND_BE;
+      break;
     case ISD::SETONE:
-    case ISD::SETNE: X86CC = X86::COND_NE; break;
-    case ISD::SETUO: X86CC = X86::COND_P;  break;
-    case ISD::SETO:  X86CC = X86::COND_NP; break;
+    case ISD::SETNE:
+      X86CC = X86::COND_NE;
+      break;
+    case ISD::SETUO:
+      X86CC = X86::COND_P;
+      break;
+    case ISD::SETO:
+      X86CC = X86::COND_NP;
+      break;
     }
-    if (Flip)
-      std::swap(LHS, RHS);
   }
 
   return X86CC != X86::COND_INVALID;
