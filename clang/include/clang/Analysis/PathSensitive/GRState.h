@@ -115,13 +115,6 @@ public:
     Profile(ID, this);
   }
   
-  // Queries.
-  
-  bool isNotEqual(SymbolID sym, const llvm::APSInt& V) const;
-  bool isEqual(SymbolID sym, const llvm::APSInt& V) const;
-  
-  const llvm::APSInt* getSymVal(SymbolID sym) const;
- 
   RVal LookupExpr(Expr* E) const {
     return Env.LookupExpr(E);
   }
@@ -153,7 +146,8 @@ public:
   void* const* FindGDM(void* K) const;
   
   template <typename T>
-  typename GRStateTrait<T>::data_type get() const {
+  typename GRStateTrait<T>::data_type
+  get() const {
     return GRStateTrait<T>::MakeData(FindGDM(GRStateTrait<T>::GDMIndex()));
   }
   
@@ -173,6 +167,7 @@ public:
   };
 
   void print(std::ostream& Out, StoreManager& StoreMgr,
+             ConstraintManager& ConstraintMgr,
              Printer **Beg = 0, Printer **End = 0,
              const char* nl = "\n", const char *sep = "") const;  
 };
@@ -412,12 +407,6 @@ public:
   
   const GRState* getPersistentState(GRState& Impl);
   
-  const GRState* AddEQ(const GRState* St, SymbolID sym,
-                          const llvm::APSInt& V);
-
-  const GRState* AddNE(const GRState* St, SymbolID sym,
-                          const llvm::APSInt& V);
-  
   bool isEqual(const GRState* state, Expr* Ex, const llvm::APSInt& V);
   bool isEqual(const GRState* state, Expr* Ex, uint64_t);
   
@@ -460,11 +449,18 @@ public:
     
     return GRStateTrait<T>::MakeContext(p);
   }
-  
-  // Assumption logic.
+
   const GRState* Assume(const GRState* St, RVal Cond, bool Assumption,
                            bool& isFeasible) {
     return ConstraintMgr->Assume(St, Cond, Assumption, isFeasible);
+  }
+
+  const GRState* AddNE(const GRState* St, SymbolID sym, const llvm::APSInt& V) {
+    return ConstraintMgr->AddNE(St, sym, V);
+  }
+
+  const llvm::APSInt* getSymVal(const GRState* St, SymbolID sym) {
+    return ConstraintMgr->getSymVal(St, sym);
   }
 };
   

@@ -1905,7 +1905,7 @@ const GRState* CFRefCount::EvalAssume(GRStateManager& VMgr,
   for (RefBindings::iterator I=B.begin(), E=B.end(); I!=E; ++I) {    
     // Check if the symbol is null (or equal to any constant).
     // If this is the case, stop tracking the symbol.
-    if (St->getSymVal(I.getKey())) {
+    if (VMgr.getSymVal(St, I.getKey())) {
       changed = true;
       B = RefBFactory.Remove(B, I.getKey());
     }
