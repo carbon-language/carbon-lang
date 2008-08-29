@@ -35,7 +35,9 @@ public:
   virtual void InitializeTU(TranslationUnit& TU);
   
   /// HandleTopLevelDecl - Handle the specified top-level declaration.  This is
-  ///  called by HandleTopLevelDeclaration to process every top-level Decl*.
+  ///  called by the parser to process every top-level Decl*. Note that D can
+  ///  be the head of a chain of Decls (e.g. for `int a, b` the chain will have
+  ///  two elements). Use ScopedDecl::getNextDeclarator() to walk the chain.
   virtual void HandleTopLevelDecl(Decl *D) {}
   
   /// HandleTranslationUnit - This method is called when the ASTs for entire
