@@ -189,6 +189,15 @@ public:
     return end();
   }
   
+  /// lookup - Return the entry for the specified key, or a default
+  /// constructed value if no such entry exists.
+  ValueT lookup(const KeyT &Val) const {
+    BucketT *TheBucket;
+    if (LookupBucketFor(Val, TheBucket))
+      return TheBucket->second;
+    return ValueT();
+  }
+
   std::pair<iterator, bool> insert(const std::pair<KeyT, ValueT> &KV) {
     BucketT *TheBucket;
     if (LookupBucketFor(KV.first, TheBucket))
