@@ -338,7 +338,7 @@ include "ARMInstrFormats.td"
 // Multiclass helpers...
 //
 
-/// AI1_bin_irs - Defines a set of (op r, {so_imm|r|so_reg}) patterns for a
+/// AsI1_bin_irs - Defines a set of (op r, {so_imm|r|so_reg}) patterns for a
 /// binop that produces a value.
 multiclass AsI1_bin_irs<bits<4> opcod, string opc, PatFrag opnode> {
   def ri : AsI1<opcod, (outs GPR:$dst), (ins GPR:$a, so_imm:$b), DPRIm,
@@ -873,13 +873,13 @@ defm ORR   : AsI1_bin_irs<0xC, "orr", BinOpFrag<(or  node:$LHS, node:$RHS)>>;
 defm EOR   : AsI1_bin_irs<0x1, "eor", BinOpFrag<(xor node:$LHS, node:$RHS)>>;
 defm BIC   : AsI1_bin_irs<0xE, "bic", BinOpFrag<(and node:$LHS, (not node:$RHS))>>;
 
-def  MVNr  : AsI<0xE, (outs GPR:$dst), (ins GPR:$src), DPRdReg,
-                 "mvn", " $dst, $src", [(set GPR:$dst, (not GPR:$src))]>;
-def  MVNs  : AsI<0xE, (outs GPR:$dst), (ins so_reg:$src), DPRdSoReg,
-                 "mvn", " $dst, $src", [(set GPR:$dst, (not so_reg:$src))]>;
+def  MVNr  : AsI1<0xE, (outs GPR:$dst), (ins GPR:$src), DPRdReg,
+                  "mvn", " $dst, $src", [(set GPR:$dst, (not GPR:$src))]>;
+def  MVNs  : AsI1<0xE, (outs GPR:$dst), (ins so_reg:$src), DPRdSoReg,
+                  "mvn", " $dst, $src", [(set GPR:$dst, (not so_reg:$src))]>;
 let isReMaterializable = 1 in
-def  MVNi  : AsI<0xE, (outs GPR:$dst), (ins so_imm:$imm), DPRdIm,
-                 "mvn", " $dst, $imm", [(set GPR:$dst, so_imm_not:$imm)]>;
+def  MVNi  : AsI1<0xE, (outs GPR:$dst), (ins so_imm:$imm), DPRdIm,
+                  "mvn", " $dst, $imm", [(set GPR:$dst, so_imm_not:$imm)]>;
 
 def : ARMPat<(and   GPR:$src, so_imm_not:$imm),
              (BICri GPR:$src, so_imm_not:$imm)>;
