@@ -1,3 +1,17 @@
+//== BasicConstraintManager.cpp - Manage basic constraints.------*- C++ -*--==//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+//  This file defines BasicConstraintManager, a class that tracks simple 
+//  equality and inequality constraints on symbolic values of GRState.
+//
+//===----------------------------------------------------------------------===//
+
 #include "clang/Analysis/PathSensitive/ConstraintManager.h"
 #include "clang/Analysis/PathSensitive/GRState.h"
 #include "clang/Analysis/PathSensitive/GRStateTrait.h"
