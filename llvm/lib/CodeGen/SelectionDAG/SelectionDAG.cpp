@@ -4053,7 +4053,7 @@ SDNode *SelectionDAG::MorphNodeTo(SDNode *N, unsigned Opc,
 ///
 /// Using MorphNodeTo is faster than creating a new node and swapping it in
 /// with ReplaceAllUsesWith both because it often avoids allocating a new
-/// node, and because it doesn't require CSE recalulation for any of
+/// node, and because it doesn't require CSE recalculation for any of
 /// the node's users.
 ///
 SDNode *SelectionDAG::MorphNodeTo(SDNode *N, unsigned Opc,
