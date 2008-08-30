@@ -460,6 +460,10 @@ void LLVMRemoveInstrParamAttr(LLVMValueRef Instr, unsigned index,
 void LLVMSetInstrParamAlignment(LLVMValueRef Instr, unsigned index, 
                                 unsigned align);
 
+/* Operations on call instructions (only) */
+int LLVMIsTailCall(LLVMValueRef CallInst);
+void LLVMSetTailCall(LLVMValueRef CallInst, int IsTailCall);
+
 /* Operations on phi nodes */
 void LLVMAddIncoming(LLVMValueRef PhiNode, LLVMValueRef *IncomingValues,
                      LLVMBasicBlockRef *IncomingBlocks, unsigned Count);

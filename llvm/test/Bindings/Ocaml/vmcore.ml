@@ -979,11 +979,15 @@ let test_builder () =
      * RUN: grep {Inst49.*extractelement.*Vec1.*P2} < %t.ll
      * RUN: grep {Inst50.*insertelement.*Vec1.*P1.*P2} < %t.ll
      * RUN: grep {Inst51.*shufflevector.*Vec1.*Vec2.*1.*1.*0.*0} < %t.ll
+     * RUN: grep {CallInst.*tail call} < %t.ll
      *)
     let ci = build_call fn [| p2; p1 |] "CallInst" atentry in
     insist (CallConv.c = instruction_call_conv ci);
     set_instruction_call_conv 63 ci;
     insist (63 = instruction_call_conv ci);
+    insist (not (is_tail_call ci));
+    set_tail_call true ci;
+    insist (is_tail_call ci);
     
     let inst46 = build_icmp Icmp.Eq p1 p2 "Inst46" atentry in
          ignore (build_select inst46 p1 p2 "Inst47" atentry);

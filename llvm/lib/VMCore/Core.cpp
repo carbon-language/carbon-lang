@@ -963,6 +963,16 @@ void LLVMSetInstrParamAlignment(LLVMValueRef Instr, unsigned index,
         ParamAttr::constructAlignmentFromInt(align)));
 }
 
+/*--.. Operations on call instructions (only) ..............................--*/
+
+int LLVMIsTailCall(LLVMValueRef Call) {
+  return unwrap<CallInst>(Call)->isTailCall();
+}
+
+void LLVMSetTailCall(LLVMValueRef Call, int isTailCall) {
+  unwrap<CallInst>(Call)->setTailCall(isTailCall);
+}
+
 /*--.. Operations on phi nodes .............................................--*/
 
 void LLVMAddIncoming(LLVMValueRef PhiNode, LLVMValueRef *IncomingValues,

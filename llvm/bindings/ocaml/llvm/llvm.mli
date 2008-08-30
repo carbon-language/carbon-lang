@@ -1126,6 +1126,17 @@ external instruction_call_conv: llvalue -> int
 external set_instruction_call_conv: int -> llvalue -> unit
                                   = "llvm_set_instruction_call_conv"
 
+(** {Operations on call instructions (only)} *)
+
+(** [is_tail_call ci] is [true] if the call instruction [ci] is flagged as
+    eligible for tail call optimization, [false] otherwise.
+    See the method [llvm::CallInst::isTailCall]. *)
+external is_tail_call : llvalue -> bool = "llvm_is_tail_call"
+
+(** [set_tail_call tc ci] flags the call instruction [ci] as eligible for tail
+    call optimization if [tc] is [true], clears otherwise.
+    See the method [llvm::CallInst::setTailCall]. *)
+external set_tail_call : bool -> llvalue -> unit = "llvm_set_tail_call"
 
 (** {7 Operations on phi nodes} *)
 

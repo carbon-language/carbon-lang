@@ -733,6 +733,20 @@ CAMLprim value llvm_set_instruction_call_conv(value CC, LLVMValueRef Inst) {
   return Val_unit;
 }
 
+/*--... Operations on call instructions (only) .............................--*/
+
+/* llvalue -> bool */
+CAMLprim value llvm_is_tail_call(LLVMValueRef CallInst) {
+  return Val_bool(LLVMIsTailCall(CallInst));
+}
+
+/* bool -> llvalue -> unit */
+CAMLprim value llvm_set_tail_call(value IsTailCall,
+                                  LLVMValueRef CallInst) {
+  LLVMSetTailCall(CallInst, Bool_val(IsTailCall));
+  return Val_unit;
+}
+
 /*--... Operations on phi nodes ............................................--*/
 
 /* (llvalue * llbasicblock) -> llvalue -> unit */

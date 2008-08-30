@@ -586,6 +586,10 @@ external instruction_call_conv: llvalue -> int
 external set_instruction_call_conv: int -> llvalue -> unit
                                   = "llvm_set_instruction_call_conv"
 
+(*--... Operations on call instructions (only) .............................--*)
+external is_tail_call : llvalue -> bool = "llvm_is_tail_call"
+external set_tail_call : bool -> llvalue -> unit = "llvm_set_tail_call"
+
 (*--... Operations on phi nodes ............................................--*)
 external add_incoming : (llvalue * llbasicblock) -> llvalue -> unit
                       = "llvm_add_incoming"
