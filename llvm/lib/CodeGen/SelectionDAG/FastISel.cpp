@@ -63,6 +63,21 @@ unsigned FastISel::getRegForValue(Value *V, DenseMap<const Value*, unsigned> &Va
   return Reg;
 }
 
+/// UpdateValueMap - Update the value map to include the new mapping for this
+/// instruction, or insert an extra copy to get the result in a previous
+/// determined register.
+/// NOTE: This is only necessary because we might select a block that uses
+/// a value before we select the block that defines the value.  It might be
+/// possible to fix this by selecting blocks in reverse postorder.
+void FastISel::UpdateValueMap(Instruction* I, unsigned Reg, 
+                              DenseMap<const Value*, unsigned> &ValueMap) {
+  if (!ValueMap.count(I))
+    ValueMap[I] = Reg;
+  else
+     TII.copyRegToReg(*MBB, MBB->end(), ValueMap[I],
+                      Reg, MRI.getRegClass(Reg), MRI.getRegClass(Reg));
+}
+
 /// SelectBinaryOp - Select and emit code for a binary operator instruction,
 /// which has an opcode which directly corresponds to the given ISD opcode.
 ///
@@ -90,7 +105,7 @@ bool FastISel::SelectBinaryOp(Instruction *I, ISD::NodeType ISDOpcode,
                                      ISDOpcode, Op0, CI->getZExtValue());
     if (ResultReg != 0) {
       // We successfully emitted code for the given LLVM Instruction.
-      ValueMap[I] = ResultReg;
+      UpdateValueMap(I, ResultReg, ValueMap);
       return true;
     }
   }
@@ -101,7 +116,7 @@ bool FastISel::SelectBinaryOp(Instruction *I, ISD::NodeType ISDOpcode,
                                      ISDOpcode, Op0, CF);
     if (ResultReg != 0) {
       // We successfully emitted code for the given LLVM Instruction.
-      ValueMap[I] = ResultReg;
+      UpdateValueMap(I, ResultReg, ValueMap);
       return true;
     }
   }
@@ -120,7 +135,7 @@ bool FastISel::SelectBinaryOp(Instruction *I, ISD::NodeType ISDOpcode,
     return false;
 
   // We successfully emitted code for the given LLVM Instruction.
-  ValueMap[I] = ResultReg;
+  UpdateValueMap(I, ResultReg, ValueMap);
   return true;
 }
 
@@ -196,7 +211,7 @@ bool FastISel::SelectGetElementPtr(Instruction *I,
   }
 
   // We successfully emitted code for the given LLVM Instruction.
-  ValueMap[I] = N;
+  UpdateValueMap(I, N, ValueMap);
   return true;
 }
 
@@ -223,7 +238,7 @@ bool FastISel::SelectCast(Instruction *I, ISD::NodeType Opcode,
   if (!ResultReg)
     return false;
     
-  ValueMap[I] = ResultReg;
+  UpdateValueMap(I, ResultReg, ValueMap);
   return true;
 }
 
@@ -234,7 +249,7 @@ bool FastISel::SelectBitCast(Instruction *I,
     unsigned Reg = getRegForValue(I->getOperand(0), ValueMap);
     if (Reg == 0)
       return false;
-    ValueMap[I] = Reg;
+    UpdateValueMap(I, Reg, ValueMap);
     return true;
   }
 
@@ -274,7 +289,7 @@ bool FastISel::SelectBitCast(Instruction *I,
   if (!ResultReg)
     return false;
   
-  ValueMap[I] = ResultReg;
+  UpdateValueMap(I, ResultReg, ValueMap);
   return true;
 }
 
@@ -384,7 +399,7 @@ FastISel::SelectInstructions(BasicBlock::iterator Begin,
       MVT DstVT = TLI.getValueType(I->getType());
       if (SrcVT.getSimpleVT() == DstVT.getSimpleVT()) {
         if (ValueMap[I->getOperand(0)]) {
-          ValueMap[I] = ValueMap[I->getOperand(0)];
+          UpdateValueMap(I, ValueMap[I->getOperand(0)], ValueMap);
           break;
         } else
           // Unhandled operand

@@ -225,6 +225,9 @@ private:
   
   bool SelectCast(Instruction *I, ISD::NodeType Opcode,
                   DenseMap<const Value*, unsigned> &ValueMap);
+                  
+  void UpdateValueMap(Instruction* I, unsigned Reg, 
+                      DenseMap<const Value*, unsigned> &ValueMap);
 };
 
 }
