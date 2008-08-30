@@ -2310,6 +2310,26 @@ SDValue DAGCombiner::visitSHL(SDNode *N) {
   if (DAG.MaskedValueIsZero(SDValue(N, 0),
                             APInt::getAllOnesValue(VT.getSizeInBits())))
     return DAG.getConstant(0, VT);
+  // fold (shl x, (trunc (and y, c))) -> (shl x, (and (trunc y), c))
+  // iff (trunc c) == c
+  if (N1.getOpcode() == ISD::TRUNCATE &&
+      N1.getOperand(0).getOpcode() == ISD::AND) {
+    SDValue N101 = N1.getOperand(0).getOperand(1);
+    ConstantSDNode *N101C = dyn_cast<ConstantSDNode>(N101);
+    if (N101C) {
+      MVT TruncVT = N1.getValueType();
+      unsigned TruncBitSize = TruncVT.getSizeInBits();
+      APInt ShAmt = N101C->getAPIntValue();
+      if (ShAmt.trunc(TruncBitSize).getZExtValue() == N101C->getValue()) {
+        SDValue N100 = N1.getOperand(0).getOperand(0);
+        return DAG.getNode(ISD::SHL, VT, N0,
+                           DAG.getNode(ISD::AND, TruncVT,
+                                  DAG.getNode(ISD::TRUNCATE, TruncVT, N100),
+                                  DAG.getConstant(N101C->getValue(), TruncVT)));
+      }
+    }
+  }
+
   if (N1C && SimplifyDemandedBits(SDValue(N, 0)))
     return SDValue(N, 0);
   // fold (shl (shl x, c1), c2) -> 0 or (shl x, c1+c2)
@@ -2421,6 +2441,26 @@ SDValue DAGCombiner::visitSRA(SDNode *N) {
     }
   }
   
+  // fold (sra x, (trunc (and y, c))) -> (sra x, (and (trunc y), c))
+  // iff (trunc c) == c
+  if (N1.getOpcode() == ISD::TRUNCATE &&
+      N1.getOperand(0).getOpcode() == ISD::AND) {
+    SDValue N101 = N1.getOperand(0).getOperand(1);
+    ConstantSDNode *N101C = dyn_cast<ConstantSDNode>(N101);
+    if (N101C) {
+      MVT TruncVT = N1.getValueType();
+      unsigned TruncBitSize = TruncVT.getSizeInBits();
+      APInt ShAmt = N101C->getAPIntValue();
+      if (ShAmt.trunc(TruncBitSize).getZExtValue() == N101C->getValue()) {
+        SDValue N100 = N1.getOperand(0).getOperand(0);
+        return DAG.getNode(ISD::SRA, VT, N0,
+                           DAG.getNode(ISD::AND, TruncVT,
+                                  DAG.getNode(ISD::TRUNCATE, TruncVT, N100),
+                                  DAG.getConstant(N101C->getValue(), TruncVT)));
+      }
+    }
+  }
+
   // Simplify, based on bits shifted out of the LHS. 
   if (N1C && SimplifyDemandedBits(SDValue(N, 0)))
     return SDValue(N, 0);
@@ -2518,6 +2558,26 @@ SDValue DAGCombiner::visitSRL(SDNode *N) {
         AddToWorkList(Op.getNode());
       }
       return DAG.getNode(ISD::XOR, VT, Op, DAG.getConstant(1, VT));
+    }
+  }
+
+  // fold (srl x, (trunc (and y, c))) -> (srl x, (and (trunc y), c))
+  // iff (trunc c) == c
+  if (N1.getOpcode() == ISD::TRUNCATE &&
+      N1.getOperand(0).getOpcode() == ISD::AND) {
+    SDValue N101 = N1.getOperand(0).getOperand(1);
+    ConstantSDNode *N101C = dyn_cast<ConstantSDNode>(N101);
+    if (N101C) {
+      MVT TruncVT = N1.getValueType();
+      unsigned TruncBitSize = TruncVT.getSizeInBits();
+      APInt ShAmt = N101C->getAPIntValue();
+      if (ShAmt.trunc(TruncBitSize).getZExtValue() == N101C->getValue()) {
+        SDValue N100 = N1.getOperand(0).getOperand(0);
+        return DAG.getNode(ISD::SRL, VT, N0,
+                           DAG.getNode(ISD::AND, TruncVT,
+                                  DAG.getNode(ISD::TRUNCATE, TruncVT, N100),
+                                  DAG.getConstant(N101C->getValue(), TruncVT)));
+      }
     }
   }
   

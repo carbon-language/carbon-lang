@@ -2849,6 +2849,46 @@ def : Pat<(shl GR8 :$src1, (i8 1)), (ADD8rr  GR8 :$src1, GR8 :$src1)>;
 def : Pat<(shl GR16:$src1, (i8 1)), (ADD16rr GR16:$src1, GR16:$src1)>;
 def : Pat<(shl GR32:$src1, (i8 1)), (ADD32rr GR32:$src1, GR32:$src1)>;
 
+// (shl x (and y, 31)) ==> (shl x, y)
+def : Pat<(shl GR8:$src1, (and CL:$amt, 31)),
+          (SHL8rCL GR8:$src1)>;
+def : Pat<(shl GR16:$src1, (and CL:$amt, 31)),
+          (SHL16rCL GR16:$src1)>;
+def : Pat<(shl GR32:$src1, (and CL:$amt, 31)),
+          (SHL32rCL GR32:$src1)>;
+def : Pat<(store (shl (loadi8 addr:$dst), (and CL:$amt, 31)), addr:$dst),
+          (SHL8mCL addr:$dst)>;
+def : Pat<(store (shl (loadi16 addr:$dst), (and CL:$amt, 31)), addr:$dst),
+          (SHL16mCL addr:$dst)>;
+def : Pat<(store (shl (loadi32 addr:$dst), (and CL:$amt, 31)), addr:$dst),
+          (SHL32mCL addr:$dst)>;
+
+def : Pat<(srl GR8:$src1, (and CL:$amt, 31)),
+          (SHR8rCL GR8:$src1)>;
+def : Pat<(srl GR16:$src1, (and CL:$amt, 31)),
+          (SHR16rCL GR16:$src1)>;
+def : Pat<(srl GR32:$src1, (and CL:$amt, 31)),
+          (SHR32rCL GR32:$src1)>;
+def : Pat<(store (srl (loadi8 addr:$dst), (and CL:$amt, 31)), addr:$dst),
+          (SHR8mCL addr:$dst)>;
+def : Pat<(store (srl (loadi16 addr:$dst), (and CL:$amt, 31)), addr:$dst),
+          (SHR16mCL addr:$dst)>;
+def : Pat<(store (srl (loadi32 addr:$dst), (and CL:$amt, 31)), addr:$dst),
+          (SHR32mCL addr:$dst)>;
+
+def : Pat<(sra GR8:$src1, (and CL:$amt, 31)),
+          (SAR8rCL GR8:$src1)>;
+def : Pat<(sra GR16:$src1, (and CL:$amt, 31)),
+          (SAR16rCL GR16:$src1)>;
+def : Pat<(sra GR32:$src1, (and CL:$amt, 31)),
+          (SAR32rCL GR32:$src1)>;
+def : Pat<(store (sra (loadi8 addr:$dst), (and CL:$amt, 31)), addr:$dst),
+          (SAR8mCL addr:$dst)>;
+def : Pat<(store (sra (loadi16 addr:$dst), (and CL:$amt, 31)), addr:$dst),
+          (SAR16mCL addr:$dst)>;
+def : Pat<(store (sra (loadi32 addr:$dst), (and CL:$amt, 31)), addr:$dst),
+          (SAR32mCL addr:$dst)>;
+
 // (or (x >> c) | (y << (32 - c))) ==> (shrd32 x, y, c)
 def : Pat<(or (srl GR32:$src1, CL:$amt),
               (shl GR32:$src2, (sub 32, CL:$amt))),

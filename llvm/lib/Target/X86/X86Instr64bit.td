@@ -1341,6 +1341,22 @@ def : Pat<(i8 (trunc GR16:$src)),
 // (shl x, 1) ==> (add x, x)
 def : Pat<(shl GR64:$src1, (i8 1)), (ADD64rr GR64:$src1, GR64:$src1)>;
 
+// (shl x (and y, 63)) ==> (shl x, y)
+def : Pat<(shl GR64:$src1, (and CL:$amt, 63)),
+          (SHL64rCL GR64:$src1)>;
+def : Pat<(store (shl (loadi64 addr:$dst), (and CL:$amt, 63)), addr:$dst),
+          (SHL64mCL addr:$dst)>;
+
+def : Pat<(srl GR64:$src1, (and CL:$amt, 63)),
+          (SHR64rCL GR64:$src1)>;
+def : Pat<(store (srl (loadi64 addr:$dst), (and CL:$amt, 63)), addr:$dst),
+          (SHR64mCL addr:$dst)>;
+
+def : Pat<(sra GR64:$src1, (and CL:$amt, 63)),
+          (SAR64rCL GR64:$src1)>;
+def : Pat<(store (sra (loadi64 addr:$dst), (and CL:$amt, 63)), addr:$dst),
+          (SAR64mCL addr:$dst)>;
+
 // (or (x >> c) | (y << (64 - c))) ==> (shrd64 x, y, c)
 def : Pat<(or (srl GR64:$src1, CL:$amt),
               (shl GR64:$src2, (sub 64, CL:$amt))),
