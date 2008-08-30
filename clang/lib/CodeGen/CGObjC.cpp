@@ -16,6 +16,7 @@
 #include "CodeGenModule.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
+#include "llvm/ADT/STLExtras.h"
 
 using namespace clang;
 using namespace CodeGen;
@@ -258,6 +259,11 @@ void CodeGenFunction::EmitObjCPropertySet(const ObjCPropertyRefExpr *E,
   CGM.getObjCRuntime().GenerateMessageSend(*this, getContext().VoidTy, S, 
                                            EmitScalarExpr(E->getBase()), 
                                            false, Args);
+}
+
+void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S)
+{
+  ErrorUnsupported(&S, "for ... in statement");
 }
 
 CGObjCRuntime::~CGObjCRuntime() {}

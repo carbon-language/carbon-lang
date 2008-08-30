@@ -193,6 +193,9 @@ public:
 
   unsigned GetIDForAddrOfLabel(const LabelStmt *L);
 
+  /// EmitMemSetToZero - Generate code to memset a value of the given type to 0;
+  void EmitMemSetToZero(llvm::Value *DestPtr, QualType Ty);
+  
   //===--------------------------------------------------------------------===//
   //                            Declaration Emission
   //===--------------------------------------------------------------------===//
@@ -229,6 +232,8 @@ public:
   void EmitCaseStmt(const CaseStmt &S);
   void EmitCaseStmtRange(const CaseStmt &S);
   void EmitAsmStmt(const AsmStmt &S);
+  
+  void EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S);
   
   //===--------------------------------------------------------------------===//
   //                         LValue Expression Emission

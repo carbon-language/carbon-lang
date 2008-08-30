@@ -114,24 +114,7 @@ public:
 void AggExprEmitter::EmitAggregateClear(llvm::Value *DestPtr, QualType Ty) {
   assert(!Ty->isAnyComplexType() && "Shouldn't happen for complex");
 
-  // Aggregate assignment turns into llvm.memset.
-  const llvm::Type *BP = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
-  if (DestPtr->getType() != BP)
-    DestPtr = Builder.CreateBitCast(DestPtr, BP, "tmp");
-
-  // Get size and alignment info for this aggregate.
-  std::pair<uint64_t, unsigned> TypeInfo = CGF.getContext().getTypeInfo(Ty);
-
-  // FIXME: Handle variable sized types.
-  const llvm::Type *IntPtr = llvm::IntegerType::get(CGF.LLVMPointerWidth);
-
-  Builder.CreateCall4(CGF.CGM.getMemSetFn(), 
-                      DestPtr,
-                      llvm::ConstantInt::getNullValue(llvm::Type::Int8Ty),
-                      // TypeInfo.first describes size in bits.
-                      llvm::ConstantInt::get(IntPtr, TypeInfo.first/8),
-                      llvm::ConstantInt::get(llvm::Type::Int32Ty, 
-                                             TypeInfo.second/8));
+  CGF.EmitMemSetToZero(DestPtr, Ty);
 }
 
 void AggExprEmitter::EmitAggregateCopy(llvm::Value *DestPtr,

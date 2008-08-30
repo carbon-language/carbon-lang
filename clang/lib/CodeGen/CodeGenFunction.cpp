@@ -201,6 +201,26 @@ unsigned CodeGenFunction::GetIDForAddrOfLabel(const LabelStmt *L) {
   return LabelIDs.insert(std::make_pair(L, LabelIDs.size())).first->second;
 }
 
+void CodeGenFunction::EmitMemSetToZero(llvm::Value *DestPtr, QualType Ty)
+{
+  const llvm::Type *BP = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+  if (DestPtr->getType() != BP)
+    DestPtr = Builder.CreateBitCast(DestPtr, BP, "tmp");
+
+  // Get size and alignment info for this aggregate.
+  std::pair<uint64_t, unsigned> TypeInfo = getContext().getTypeInfo(Ty);
+
+  // FIXME: Handle variable sized types.
+  const llvm::Type *IntPtr = llvm::IntegerType::get(LLVMPointerWidth);
+
+  Builder.CreateCall4(CGM.getMemSetFn(), DestPtr,
+                      llvm::ConstantInt::getNullValue(llvm::Type::Int8Ty),
+                      // TypeInfo.first describes size in bits.
+                      llvm::ConstantInt::get(IntPtr, TypeInfo.first/8),
+                      llvm::ConstantInt::get(llvm::Type::Int32Ty, 
+                                             TypeInfo.second/8));
+}
+
 void CodeGenFunction::EmitIndirectSwitches() {
   llvm::BasicBlock *Default;
   
