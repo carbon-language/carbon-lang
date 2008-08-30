@@ -86,13 +86,15 @@ RValue CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E) {
   if (isSuperMessage) {
     // super is only valid in an Objective-C method
     const ObjCMethodDecl *OMD = cast<ObjCMethodDecl>(CurFuncDecl);
-    return Runtime.GenerateMessageSendSuper(*this, E,
+    return Runtime.GenerateMessageSendSuper(*this, E->getType(),
+                                            E->getSelector(),
                                             OMD->getClassInterface(),
                                             Receiver,
                                             isClassMessage,
                                             Args);
   }
-  return Runtime.GenerateMessageSend(*this, E, Receiver, isClassMessage, Args);
+  return Runtime.GenerateMessageSend(*this, E->getType(), E->getSelector(), 
+                                     Receiver, isClassMessage, Args);
 }
 
 /// StartObjCMethod - Begin emission of an ObjCMethod. This generates
@@ -234,20 +236,28 @@ RValue CodeGenFunction::EmitObjCPropertyGet(const ObjCPropertyRefExpr *E) {
     S = cast<ObjCPropertyDecl>(E->getDecl())->getGetterName();
   }
 
-  // FIXME: Improve location information.
-  SourceLocation Loc = E->getLocation();
-  // PropertyRefExprs are always instance messages.
-  // FIXME: Is there any reason to try and pass the method here?
-  ObjCMessageExpr GetExpr(const_cast<Expr*>(E->getBase()), 
-                          S, E->getType(), 0, Loc, Loc,
-                          0, 0);
-
-  return EmitObjCMessageExpr(&GetExpr);
+  return CGM.getObjCRuntime().
+    GenerateMessageSend(*this, E->getType(), S, 
+                        EmitScalarExpr(E->getBase()), 
+                        false, CallArgList());
 }
 
 void CodeGenFunction::EmitObjCPropertySet(const ObjCPropertyRefExpr *E,
                                           RValue Src) {
-  ErrorUnsupported(E, "Objective-C property setter call");
+  Selector S;
+  if (const ObjCPropertyDecl *PD = dyn_cast<ObjCPropertyDecl>(E->getDecl())) {
+    S = PD->getSetterName();
+  } else {
+    // FIXME: How can we have a method decl here?
+    ErrorUnsupported(E, "Objective-C property setter call");
+    return;
+  }
+
+  CallArgList Args;
+  EmitCallArg(Src, E->getType(), Args);
+  CGM.getObjCRuntime().GenerateMessageSend(*this, getContext().VoidTy, S, 
+                                           EmitScalarExpr(E->getBase()), 
+                                           false, Args);
 }
 
 CGObjCRuntime::~CGObjCRuntime() {}

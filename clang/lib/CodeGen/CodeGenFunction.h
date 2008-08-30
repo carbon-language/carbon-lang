@@ -299,8 +299,22 @@ public:
   //                         Scalar Expression Emission
   //===--------------------------------------------------------------------===//
 
+  /// CallArgList - Type for representing both the value and type of
+  /// arguments in a call.
   typedef llvm::SmallVector<std::pair<llvm::Value*, QualType>, 16> CallArgList;
+
+  /// EmitCallArg - Emit the given expression and append the result
+  /// onto the given Args list.
   void EmitCallArg(const Expr *E, CallArgList &Args);
+
+  /// EmitCallArg - Append the appropriate call argument for the given
+  /// rvalue and type onto the Args list.
+  void EmitCallArg(RValue RV, QualType Ty, CallArgList &Args);
+
+  /// EmitCall - Generate a call of the given function, expecting the
+  /// given result type, and using the given argument list which
+  /// specifies both the LLVM arguments and the types they were
+  /// derived from.
   RValue EmitCall(llvm::Value *Callee,
                   QualType ResultType,
                   const CallArgList &Args);
@@ -366,6 +380,10 @@ public:
   /// of complex type, storing into the specified Value*.
   void EmitComplexExprIntoAddr(const Expr *E, llvm::Value *DestAddr,
                                bool DestIsVolatile);
+
+  /// StoreComplexToAddr - Store a complex number into the specified address.
+  void StoreComplexToAddr(ComplexPairTy V, llvm::Value *DestAddr,
+                          bool DestIsVolatile);
   /// LoadComplexFromAddr - Load a complex number from the specified address.
   ComplexPairTy LoadComplexFromAddr(llvm::Value *SrcAddr, bool SrcIsVolatile);
 

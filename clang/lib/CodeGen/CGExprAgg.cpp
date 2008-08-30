@@ -264,14 +264,26 @@ void AggExprEmitter::VisitBinAssign(const BinaryOperator *E) {
          && "Invalid assignment");
   LValue LHS = CGF.EmitLValue(E->getLHS());
 
-  // Codegen the RHS so that it stores directly into the LHS.
-  CGF.EmitAggExpr(E->getRHS(), LHS.getAddress(), false /*FIXME: VOLATILE LHS*/);
-
-  if (DestPtr == 0)
-    return;
-
-  // If the result of the assignment is used, copy the RHS there also.
-  EmitAggregateCopy(DestPtr, LHS.getAddress(), E->getType());
+  // We have to special case property setters, otherwise we must have
+  // a simple lvalue (no aggregates inside vectors, bitfields).
+  if (LHS.isPropertyRef()) {
+    // FIXME: Volatility?
+    llvm::Value *AggLoc = DestPtr;
+    if (!AggLoc)
+      AggLoc = CGF.CreateTempAlloca(CGF.ConvertType(E->getRHS()->getType()));
+    CGF.EmitAggExpr(E->getRHS(), AggLoc, false);
+    CGF.EmitObjCPropertySet(LHS.getPropertyRefExpr(), 
+                            RValue::getAggregate(AggLoc));
+  } else {
+    // Codegen the RHS so that it stores directly into the LHS.
+    CGF.EmitAggExpr(E->getRHS(), LHS.getAddress(), false /*FIXME: VOLATILE LHS*/);
+    
+    if (DestPtr == 0)
+      return;
+    
+    // If the result of the assignment is used, copy the RHS there also.
+    EmitAggregateCopy(DestPtr, LHS.getAddress(), E->getType());
+  }
 }
 
 void AggExprEmitter::VisitConditionalOperator(const ConditionalOperator *E) {

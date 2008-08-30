@@ -869,7 +869,11 @@ ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
     
     // FIXME: The logic for looking up nullary and unary selectors should be
     // shared with the code in ActOnInstanceMessage.
-    
+
+    // FIXME: This logic is not correct, we should search for
+    // properties first. Additionally, the AST node doesn't currently
+    // have enough information to store the setter argument.
+#if 0
     // Before we look for explicit property declarations, we check for
     // nullary methods (which allow '.' notation).
     Selector Sel = PP.getSelectorTable().getNullarySelector(&Member);
@@ -886,6 +890,7 @@ ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
             return new ObjCPropertyRefExpr(MD, MD->getResultType(), 
                                            MemberLoc, BaseExpr);
     }      
+#endif
     
     // FIXME: Need to deal with setter methods that take 1 argument. E.g.:
     // @interface NSBundle : NSObject {}

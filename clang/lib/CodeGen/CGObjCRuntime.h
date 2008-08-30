@@ -81,7 +81,8 @@ public:
   /// Generate an Objective-C message send operation.
   virtual CodeGen::RValue 
   GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
-                      const ObjCMessageExpr *E,
+                      QualType ResultType,
+                      Selector Sel,
                       llvm::Value *Receiver,
                       bool IsClassMessage,
                       const CallArgList &CallArgs) = 0;
@@ -91,7 +92,8 @@ public:
   /// object.
   virtual CodeGen::RValue
   GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
-                           const ObjCMessageExpr *E,
+                           QualType ResultType,
+                           Selector Sel,
                            const ObjCInterfaceDecl *Class,
                            llvm::Value *Self,
                            bool IsClassMessage,

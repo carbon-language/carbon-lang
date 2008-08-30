@@ -96,13 +96,15 @@ public:
   virtual llvm::Constant *GenerateConstantString(const std::string &String);
   virtual CodeGen::RValue 
   GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
-                      const ObjCMessageExpr *E,
+                      QualType ResultType,
+                      Selector Sel,
                       llvm::Value *Receiver,
                       bool IsClassMessage,
                       const CallArgList &CallArgs);
   virtual CodeGen::RValue 
   GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
-                           const ObjCMessageExpr *E,
+                           QualType ResultType,
+                           Selector Sel,
                            const ObjCInterfaceDecl *Class,
                            llvm::Value *Receiver,
                            bool IsClassMessage,
@@ -239,16 +241,17 @@ llvm::Constant *CGObjCGNU::GenerateConstantString(const std::string &Str) {
 ///should be called.
 CodeGen::RValue
 CGObjCGNU::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
-                                    const ObjCMessageExpr *E,
+                                    QualType ResultType,
+                                    Selector Sel,
                                     const ObjCInterfaceDecl *Class,
                                     llvm::Value *Receiver,
                                     bool IsClassMessage,
                                     const CallArgList &CallArgs) {
   const ObjCInterfaceDecl *SuperClass = Class->getSuperClass();
-  const llvm::Type *ReturnTy = CGM.getTypes().ConvertType(E->getType());
+  const llvm::Type *ReturnTy = CGM.getTypes().ConvertType(ResultType);
   // TODO: This should be cached, not looked up every time.
   llvm::Value *ReceiverClass = GetClass(CGF.Builder, SuperClass);
-  llvm::Value *cmd = GetSelector(CGF.Builder, E->getSelector());
+  llvm::Value *cmd = GetSelector(CGF.Builder, Sel);
   std::vector<const llvm::Type*> impArgTypes;
   impArgTypes.push_back(Receiver->getType());
   impArgTypes.push_back(SelectorTy);
@@ -282,18 +285,19 @@ CGObjCGNU::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
   ActualArgs.push_back(std::make_pair(cmd,
                                       CGF.getContext().getObjCSelType()));
   ActualArgs.insert(ActualArgs.end(), CallArgs.begin(), CallArgs.end());
-  return CGF.EmitCall(imp, E->getType(), ActualArgs);
+  return CGF.EmitCall(imp, ResultType, ActualArgs);
 }
 
 /// Generate code for a message send expression.  
 CodeGen::RValue
 CGObjCGNU::GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
-                               const ObjCMessageExpr *E,
+                               QualType ResultType,
+                               Selector Sel,
                                llvm::Value *Receiver,
                                bool IsClassMessage,
                                const CallArgList &CallArgs) {
-  const llvm::Type *ReturnTy = CGM.getTypes().ConvertType(E->getType());
-  llvm::Value *cmd = GetSelector(CGF.Builder, E->getSelector());
+  const llvm::Type *ReturnTy = CGM.getTypes().ConvertType(ResultType);
+  llvm::Value *cmd = GetSelector(CGF.Builder, Sel);
 
   // Look up the method implementation.
   std::vector<const llvm::Type*> impArgTypes;
@@ -328,7 +332,7 @@ CGObjCGNU::GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
   ActualArgs.push_back(std::make_pair(cmd,
                                       CGF.getContext().getObjCSelType()));
   ActualArgs.insert(ActualArgs.end(), CallArgs.begin(), CallArgs.end());
-  return CGF.EmitCall(imp, E->getType(), ActualArgs);
+  return CGF.EmitCall(imp, ResultType, ActualArgs);
 }
 
 /// Generates a MethodList.  Used in construction of a objc_class and 

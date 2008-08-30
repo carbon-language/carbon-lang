@@ -219,7 +219,8 @@ private:
                             const ObjCInterfaceDecl *ID);
 
   CodeGen::RValue EmitMessageSend(CodeGen::CodeGenFunction &CGF,
-                                  const ObjCMessageExpr *E,
+                                  QualType ResultType,
+                                  Selector Sel,
                                   llvm::Value *Arg0,
                                   QualType Arg0Ty,
                                   bool IsSuper,
@@ -337,14 +338,16 @@ public:
   virtual llvm::Constant *GenerateConstantString(const std::string &String);
 
   virtual CodeGen::RValue GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
-                                              const ObjCMessageExpr *E,
+                                              QualType ResultType,
+                                              Selector Sel,
                                               llvm::Value *Receiver,
                                               bool IsClassMessage,
                                               const CallArgList &CallArgs);
 
   virtual CodeGen::RValue 
   GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
-                           const ObjCMessageExpr *E,
+                           QualType ResultType,
+                           Selector Sel,
                            const ObjCInterfaceDecl *Class,
                            llvm::Value *Receiver,
                            bool IsClassMessage,
@@ -428,7 +431,8 @@ llvm::Constant *CGObjCMac::GenerateConstantString(const std::string &String) {
 /// which class's method should be called.
 CodeGen::RValue
 CGObjCMac::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
-                                    const ObjCMessageExpr *E,
+                                    QualType ResultType,
+                                    Selector Sel,
                                     const ObjCInterfaceDecl *Class,
                                     llvm::Value *Receiver,
                                     bool IsClassMessage,
@@ -460,34 +464,35 @@ CGObjCMac::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
   CGF.Builder.CreateStore(Target, 
                           CGF.Builder.CreateStructGEP(ObjCSuper, 1));
     
-  return EmitMessageSend(CGF, E, 
+  return EmitMessageSend(CGF, ResultType, Sel, 
                          ObjCSuper, ObjCTypes.SuperPtrCTy,
                          true, CallArgs);
 }
                                            
 /// Generate code for a message send expression.  
 CodeGen::RValue CGObjCMac::GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
-                                               const ObjCMessageExpr *E,
+                                               QualType ResultType,
+                                               Selector Sel,
                                                llvm::Value *Receiver,
                                                bool IsClassMessage,
                                                const CallArgList &CallArgs) {
   llvm::Value *Arg0 = 
     CGF.Builder.CreateBitCast(Receiver, ObjCTypes.ObjectPtrTy, "tmp");
-  return EmitMessageSend(CGF, E, 
+  return EmitMessageSend(CGF, ResultType, Sel,
                          Arg0, CGF.getContext().getObjCIdType(),
                          false, CallArgs);
 }
 
 CodeGen::RValue CGObjCMac::EmitMessageSend(CodeGen::CodeGenFunction &CGF,
-                                           const ObjCMessageExpr *E,
+                                           QualType ResultType,
+                                           Selector Sel,
                                            llvm::Value *Arg0,
                                            QualType Arg0Ty,
                                            bool IsSuper,
                                            const CallArgList &CallArgs) {
   CallArgList ActualArgs;
   ActualArgs.push_back(std::make_pair(Arg0, Arg0Ty));
-  ActualArgs.push_back(std::make_pair(EmitSelector(CGF.Builder, 
-                                                   E->getSelector()),
+  ActualArgs.push_back(std::make_pair(EmitSelector(CGF.Builder, Sel),
                                       CGF.getContext().getObjCSelType()));
   ActualArgs.insert(ActualArgs.end(), CallArgs.begin(), CallArgs.end());
 
@@ -496,10 +501,9 @@ CodeGen::RValue CGObjCMac::EmitMessageSend(CodeGen::CodeGenFunction &CGF,
   // parameter and set the structure return flag. See
   // getMessageSendFn().
                                                    
-  const llvm::Type *ReturnTy = CGM.getTypes().ConvertType(E->getType());
+  const llvm::Type *ReturnTy = CGM.getTypes().ConvertType(ResultType);
   return CGF.EmitCall(ObjCTypes.getMessageSendFn(IsSuper, ReturnTy),
-                      E->getType(),
-                      ActualArgs);
+                      ResultType, ActualArgs);
 }
 
 llvm::Value *CGObjCMac::GenerateProtocolRef(llvm::IRBuilder<> &Builder, 

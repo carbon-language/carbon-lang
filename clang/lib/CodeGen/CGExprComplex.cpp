@@ -546,6 +546,13 @@ void CodeGenFunction::EmitComplexExprIntoAddr(const Expr *E,
   Emitter.EmitStoreOfComplex(Val, DestAddr, DestIsVolatile);
 }
 
+/// StoreComplexToAddr - Store a complex number into the specified address.
+void CodeGenFunction::StoreComplexToAddr(ComplexPairTy V,
+                                         llvm::Value *DestAddr,
+                                         bool DestIsVolatile) {
+  ComplexExprEmitter(*this).EmitStoreOfComplex(V, DestAddr, DestIsVolatile);
+}
+
 /// LoadComplexFromAddr - Load a complex number from the specified address.
 ComplexPairTy CodeGenFunction::LoadComplexFromAddr(llvm::Value *SrcAddr, 
                                                    bool SrcIsVolatile) {

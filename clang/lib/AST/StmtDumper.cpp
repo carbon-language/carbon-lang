@@ -136,6 +136,7 @@ namespace  {
     void VisitObjCMessageExpr(ObjCMessageExpr* Node);
     void VisitObjCSelectorExpr(ObjCSelectorExpr *Node);
     void VisitObjCProtocolExpr(ObjCProtocolExpr *Node);
+    void VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *Node);
     void VisitObjCIvarRefExpr(ObjCIvarRefExpr *Node);
   };
 }
@@ -449,6 +450,18 @@ void StmtDumper::VisitObjCProtocolExpr(ObjCProtocolExpr *Node) {
   fprintf(F, " ");
   fprintf(F, "%s", Node->getProtocol()->getName());
 }
+
+void StmtDumper::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *Node) {
+  DumpExpr(Node);
+  
+  if (ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(Node->getDecl())) {
+    fprintf(F, " MethodDecl=\"%s\"", MD->getSelector().getName().c_str());
+  } else {
+    ObjCPropertyDecl *PD = dyn_cast<ObjCPropertyDecl>(Node->getDecl());
+    fprintf(F, " PropertyDecl=\"%s\"", PD->getName());
+  }
+}
+
 //===----------------------------------------------------------------------===//
 // Stmt method implementations
 //===----------------------------------------------------------------------===//

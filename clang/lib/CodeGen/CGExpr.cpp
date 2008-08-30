@@ -830,6 +830,24 @@ RValue CodeGenFunction::EmitCallExpr(llvm::Value *Callee, QualType FnType,
   return EmitCall(Callee, ResultType, Args);
 }
 
+// FIXME: Merge the following two functions.
+void CodeGenFunction::EmitCallArg(RValue RV, QualType Ty,
+                                  CallArgList &Args) {
+  llvm::Value *ArgValue;
+
+  if (RV.isScalar()) {
+    ArgValue = RV.getScalarVal();
+  } else if (RV.isComplex()) {
+    // Make a temporary alloca to pass the argument.
+    ArgValue = CreateTempAlloca(ConvertType(Ty));
+    StoreComplexToAddr(RV.getComplexVal(), ArgValue, false); 
+  } else {
+    ArgValue = RV.getAggregateAddr();
+  }
+
+  Args.push_back(std::make_pair(ArgValue, Ty));
+}
+
 void CodeGenFunction::EmitCallArg(const Expr *E, CallArgList &Args) {
   QualType ArgTy = E->getType();
   llvm::Value *ArgValue;
