@@ -2316,8 +2316,7 @@ Constant *ConstantExpr::getInsertElement(Constant *Val, Constant *Elt,
          && "Insertelement types must match!");
   assert(Idx->getType() == Type::Int32Ty &&
          "Insertelement index must be i32 type!");
-  return getInsertElementTy(cast<VectorType>(Val->getType())->getElementType(),
-                            Val, Elt, Idx);
+  return getInsertElementTy(Val->getType(), Val, Elt, Idx);
 }
 
 Constant *ConstantExpr::getShuffleVectorTy(const Type *ReqTy, Constant *V1,
