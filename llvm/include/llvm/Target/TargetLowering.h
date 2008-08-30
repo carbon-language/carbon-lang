@@ -1089,7 +1089,8 @@ public:
        (Ret.getOperand(0) == SDValue(Call.getNode(),1) ||
         Ret.getOperand(0) == SDValue(Call.getNode(),0))) ||
       (NumOps > 1 &&
-       Ret.getOperand(0) == SDValue(Call.getNode(),Call.getNode()->getNumValues()-1) &&
+       Ret.getOperand(0) == SDValue(Call.getNode(),
+                                    Call.getNode()->getNumValues()-1) &&
        Ret.getOperand(1) == SDValue(Call.getNode(),0)))
       return true;
     return false;

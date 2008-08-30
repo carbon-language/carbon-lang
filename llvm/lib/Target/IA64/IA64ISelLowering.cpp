@@ -398,7 +398,7 @@ IA64TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
       }
 
       if(ValToConvert.getNode()) {
-        Converts.push_back(DAG.getNode(IA64ISD::GETFD, MVT::i64, ValToConvert)); 
+        Converts.push_back(DAG.getNode(IA64ISD::GETFD, MVT::i64, ValToConvert));
       }
     }
 

@@ -359,7 +359,8 @@ SDNode *IA64DAGToDAGISel::Select(SDValue Op) {
 
     Chain = CurDAG->getCopyToReg(Chain, IA64::r1, targetGP, InFlag);
     InFlag = Chain.getValue(1);
-    Chain = CurDAG->getCopyToReg(Chain, IA64::B6, targetEntryPoint, InFlag); // FLAG these?
+    Chain = CurDAG->getCopyToReg(Chain, IA64::B6,
+                                 targetEntryPoint, InFlag); // FLAG these?
     InFlag = Chain.getValue(1);
     
     CallOperand = CurDAG->getRegister(IA64::B6, MVT::i64);
@@ -520,7 +521,8 @@ SDNode *IA64DAGToDAGISel::Select(SDValue Op) {
         AddToISelQueue(Tmp);
         Tmp =
           SDValue(CurDAG->getTargetNode(IA64::TPCADDS, MVT::i64, Initial,
-                                          CurDAG->getTargetConstant(1, MVT::i64),
+                                          CurDAG->getTargetConstant(1,
+                                                                    MVT::i64),
                                           Tmp), 0);
         return CurDAG->SelectNodeTo(N, Opc, MVT::Other, Address, Tmp, Chain);
       }
