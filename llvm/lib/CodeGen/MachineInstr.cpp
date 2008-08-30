@@ -715,7 +715,9 @@ bool MachineInstr::isSafeToMove(const TargetInstrInfo *TII, bool &SawStore) {
 /// instruction which defined the specified register instead of copying it.
 bool MachineInstr::isSafeToReMat(const TargetInstrInfo *TII, unsigned DstReg) {
   bool SawStore = false;
-  if (!isSafeToMove(TII, SawStore))
+  if (!getDesc().isRematerializable() ||
+      !TII->isTriviallyReMaterializable(this) ||
+      !isSafeToMove(TII, SawStore))
     return false;
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
     MachineOperand &MO = getOperand(i);
