@@ -241,6 +241,10 @@ else
   endif
 endif
 
+ifeq ($(ENABLE_VISIBILITY_INLINES_HIDDEN),1)
+    CXX.Flags += -fvisibility-inlines-hidden
+endif
+
 # IF REQUIRES_EH=1 is specified then don't disable exceptions
 ifndef REQUIRES_EH
   CXX.Flags += -fno-exceptions
