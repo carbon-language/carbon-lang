@@ -767,7 +767,7 @@ def OR64mi8  : RIi8<0x83, MRM1m, (outs), (ins i64mem:$dst, i64i8imm:$src),
                   [(store (or (load addr:$dst), i64immSExt8:$src), addr:$dst)]>;
 
 let isTwoAddress = 1 in {
-let isCommutable = 1, isAsCheapAsAMove = 1 in
+let isCommutable = 1 in
 def XOR64rr  : RI<0x31, MRMDestReg,  (outs GR64:$dst), (ins GR64:$src1, GR64:$src2), 
                   "xor{q}\t{$src2, $dst|$dst, $src2}",
                   [(set GR64:$dst, (xor GR64:$src1, GR64:$src2))]>;
