@@ -125,15 +125,13 @@ void AggExprEmitter::EmitAggregateClear(llvm::Value *DestPtr, QualType Ty) {
   // FIXME: Handle variable sized types.
   const llvm::Type *IntPtr = llvm::IntegerType::get(CGF.LLVMPointerWidth);
 
-  llvm::Value *MemSetOps[4] = {
-    DestPtr,
-    llvm::ConstantInt::getNullValue(llvm::Type::Int8Ty),
-    // TypeInfo.first describes size in bits.
-    llvm::ConstantInt::get(IntPtr, TypeInfo.first/8),
-    llvm::ConstantInt::get(llvm::Type::Int32Ty, TypeInfo.second/8)
-  };
- 
-  Builder.CreateCall(CGF.CGM.getMemSetFn(), MemSetOps, MemSetOps+4);
+  Builder.CreateCall4(CGF.CGM.getMemSetFn(), 
+                      DestPtr,
+                      llvm::ConstantInt::getNullValue(llvm::Type::Int8Ty),
+                      // TypeInfo.first describes size in bits.
+                      llvm::ConstantInt::get(IntPtr, TypeInfo.first/8),
+                      llvm::ConstantInt::get(llvm::Type::Int32Ty, 
+                                             TypeInfo.second/8));
 }
 
 void AggExprEmitter::EmitAggregateCopy(llvm::Value *DestPtr,
@@ -153,14 +151,12 @@ void AggExprEmitter::EmitAggregateCopy(llvm::Value *DestPtr,
   // FIXME: Handle variable sized types.
   const llvm::Type *IntPtr = llvm::IntegerType::get(CGF.LLVMPointerWidth);
   
-  llvm::Value *MemMoveOps[4] = {
-    DestPtr, SrcPtr,
-    // TypeInfo.first describes size in bits.
-    llvm::ConstantInt::get(IntPtr, TypeInfo.first/8),
-    llvm::ConstantInt::get(llvm::Type::Int32Ty, TypeInfo.second/8)
-  };
-  
-  Builder.CreateCall(CGF.CGM.getMemMoveFn(), MemMoveOps, MemMoveOps+4);
+  Builder.CreateCall4(CGF.CGM.getMemMoveFn(),
+                      DestPtr, SrcPtr,
+                      // TypeInfo.first describes size in bits.
+                      llvm::ConstantInt::get(IntPtr, TypeInfo.first/8),
+                      llvm::ConstantInt::get(llvm::Type::Int32Ty, 
+                                             TypeInfo.second/8));
 }
 
 

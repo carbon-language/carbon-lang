@@ -351,15 +351,14 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
   case Builtin::BI__sync_fetch_and_xor:
     return EmitBinaryAtomic(*this, Intrinsic::atomic_load_xor, E);
   case Builtin::BI__sync_val_compare_and_swap: {
-    Value *Args[3];
-    Args[0]= EmitScalarExpr(E->getArg(0));
-    Args[1] = EmitScalarExpr(E->getArg(1));
-    Args[2] = EmitScalarExpr(E->getArg(2));
     const llvm::Type *ResType[2];
     ResType[0]= ConvertType(E->getType());
     ResType[1] = ConvertType(E->getArg(0)->getType());
     Value *AtomF = CGM.getIntrinsic(Intrinsic::atomic_cmp_swap, ResType, 2);
-    return RValue::get(Builder.CreateCall(AtomF, &Args[0], &Args[1]+2));
+    return RValue::get(Builder.CreateCall3(AtomF, 
+                                           EmitScalarExpr(E->getArg(0)),
+                                           EmitScalarExpr(E->getArg(1)),
+                                           EmitScalarExpr(E->getArg(2))));
   }
   case Builtin::BI__sync_lock_test_and_set:
     return EmitBinaryAtomic(*this, Intrinsic::atomic_swap, E);
