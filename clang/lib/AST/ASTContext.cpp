@@ -30,7 +30,8 @@ enum FloatingRank {
 ASTContext::ASTContext(const LangOptions& LOpts, SourceManager &SM, TargetInfo &t,
                        IdentifierTable &idents, SelectorTable &sels,
                        unsigned size_reserve) : 
-  CFConstantStringTypeDecl(0), SourceMgr(SM), LangOpts(LOpts), Target(t), 
+  CFConstantStringTypeDecl(0), ObjCFastEnumerationStateTypeDecl(0),
+  SourceMgr(SM), LangOpts(LOpts), Target(t), 
   Idents(idents), Selectors(sels) 
 {  
   if (size_reserve > 0) Types.reserve(size_reserve);    
@@ -1369,6 +1370,32 @@ QualType ASTContext::getCFConstantStringType() {
   }
   
   return getTagDeclType(CFConstantStringTypeDecl);
+}
+
+QualType ASTContext::getObjCFastEnumerationStateType()
+{
+  if (!ObjCFastEnumerationStateTypeDecl) {
+    QualType FieldTypes[] = {
+      UnsignedLongTy,
+      getPointerType(ObjCIdType),
+      getPointerType(UnsignedLongTy),
+      getConstantArrayType(UnsignedLongTy,
+                           llvm::APInt(32, 5), ArrayType::Normal, 0)
+    };
+    
+    FieldDecl *FieldDecls[4];
+    for (size_t i = 0; i < 4; ++i)
+      FieldDecls[i] = FieldDecl::Create(*this, SourceLocation(), 0, 
+                                        FieldTypes[i]);
+    
+    ObjCFastEnumerationStateTypeDecl =
+      RecordDecl::Create(*this, TagDecl::TK_struct, TUDecl, SourceLocation(),
+                         &Idents.get("__objcFastEnumerationState"), 0);
+    
+    ObjCFastEnumerationStateTypeDecl->defineBody(FieldDecls, 4);
+  }
+  
+  return getTagDeclType(ObjCFastEnumerationStateTypeDecl);
 }
 
 // This returns true if a type has been typedefed to BOOL:

@@ -94,6 +94,8 @@ class ASTContext {
   QualType ObjCConstantStringType;
   RecordDecl *CFConstantStringTypeDecl;
 
+  RecordDecl *ObjCFastEnumerationStateTypeDecl;
+  
   TranslationUnitDecl *TUDecl;
 
   /// SourceMgr - The associated SourceManager object.
@@ -268,6 +270,9 @@ public:
     return ObjCConstantStringType; 
   }
 
+  //// This gets the struct used to keep track of fast enumerations.
+  QualType getObjCFastEnumerationStateType();
+  
   // Return the ObjC type encoding for a given type.
   void getObjCEncodingForType(QualType t, std::string &S, 
                               llvm::SmallVector<const RecordType*,8> &RT) const;
