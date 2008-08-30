@@ -78,15 +78,21 @@ RValue CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E) {
     Receiver = EmitScalarExpr(E->getReceiver());
   }
 
+  CallArgList Args;
+  for (CallExpr::const_arg_iterator i = E->arg_begin(), e = E->arg_end(); 
+       i != e; ++i)
+    EmitCallArg(*i, Args);
+  
   if (isSuperMessage) {
     // super is only valid in an Objective-C method
     const ObjCMethodDecl *OMD = cast<ObjCMethodDecl>(CurFuncDecl);
     return Runtime.GenerateMessageSendSuper(*this, E,
                                             OMD->getClassInterface(),
                                             Receiver,
-                                            isClassMessage);
+                                            isClassMessage,
+                                            Args);
   }
-  return Runtime.GenerateMessageSend(*this, E, Receiver, isClassMessage);
+  return Runtime.GenerateMessageSend(*this, E, Receiver, isClassMessage, Args);
 }
 
 /// StartObjCMethod - Begin emission of an ObjCMethod. This generates

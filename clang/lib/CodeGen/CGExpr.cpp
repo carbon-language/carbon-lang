@@ -822,66 +822,77 @@ RValue CodeGenFunction::EmitCallExpr(llvm::Value *Callee, QualType FnType,
   // type.
   FnType = FnType->getAsPointerType()->getPointeeType();
   QualType ResultType = FnType->getAsFunctionType()->getResultType();
-  return EmitCallExprExt(Callee, ResultType, ArgBeg, ArgEnd, 0, 0);
+
+  CallArgList Args;
+  for (CallExpr::const_arg_iterator I = ArgBeg; I != ArgEnd; ++I)
+    EmitCallArg(*I, Args);
+
+  return EmitCall(Callee, ResultType, Args);
 }
 
-RValue CodeGenFunction::EmitCallExprExt(llvm::Value *Callee, 
-                                        QualType ResultType, 
-                                        CallExpr::const_arg_iterator ArgBeg,
-                                        CallExpr::const_arg_iterator ArgEnd,
-                                        llvm::Value **ExtraArgs,
-                                        unsigned NumExtraArgs) {
-  llvm::SmallVector<llvm::Value*, 16> Args;
+void CodeGenFunction::EmitCallArg(const Expr *E, CallArgList &Args) {
+  QualType ArgTy = E->getType();
+  llvm::Value *ArgValue;
   
+  if (!hasAggregateLLVMType(ArgTy)) {
+    // Scalar argument is passed by-value.
+    ArgValue = EmitScalarExpr(E);
+  } else if (ArgTy->isAnyComplexType()) {
+    // Make a temporary alloca to pass the argument.
+    ArgValue = CreateTempAlloca(ConvertType(ArgTy));
+    EmitComplexExprIntoAddr(E, ArgValue, false);
+  } else {
+    ArgValue = CreateTempAlloca(ConvertType(ArgTy));
+    EmitAggExpr(E, ArgValue, false);
+  }
+  
+  Args.push_back(std::make_pair(ArgValue, E->getType()));
+}
+
+RValue CodeGenFunction::EmitCall(llvm::Value *Callee, 
+                                 QualType ResultType, 
+                                 const CallArgList &CallArgs) {
+  llvm::SmallVector<llvm::Value*, 16> Args;
+  llvm::Value *TempArg0 = 0;
+
   // Handle struct-return functions by passing a pointer to the location that
   // we would like to return into.
   if (hasAggregateLLVMType(ResultType)) {
     // Create a temporary alloca to hold the result of the call. :(
-    Args.push_back(CreateTempAlloca(ConvertType(ResultType)));
-    // FIXME: set the stret attribute on the argument.
+    TempArg0 = CreateTempAlloca(ConvertType(ResultType));
+    Args.push_back(TempArg0);
   }
   
-  Args.insert(Args.end(), ExtraArgs, ExtraArgs + NumExtraArgs);
-
-  for (CallExpr::const_arg_iterator I = ArgBeg; I != ArgEnd; ++I) {
-    QualType ArgTy = I->getType();
-
-    if (!hasAggregateLLVMType(ArgTy)) {
-      // Scalar argument is passed by-value.
-      Args.push_back(EmitScalarExpr(*I));
-    } else if (ArgTy->isAnyComplexType()) {
-      // Make a temporary alloca to pass the argument.
-      llvm::Value *DestMem = CreateTempAlloca(ConvertType(ArgTy));
-      EmitComplexExprIntoAddr(*I, DestMem, false);
-      Args.push_back(DestMem);
-    } else {
-      llvm::Value *DestMem = CreateTempAlloca(ConvertType(ArgTy));
-      EmitAggExpr(*I, DestMem, false);
-      Args.push_back(DestMem);
-    }
-  }
+  for (CallArgList::const_iterator I = CallArgs.begin(), E = CallArgs.end(); 
+       I != E; ++I)
+    Args.push_back(I->first);
   
   llvm::CallInst *CI = Builder.CreateCall(Callee,&Args[0],&Args[0]+Args.size());
 
   // Note that there is parallel code in SetFunctionAttributes in CodeGenModule
   llvm::SmallVector<llvm::ParamAttrsWithIndex, 8> ParamAttrList;
-  if (hasAggregateLLVMType(ResultType))
+  unsigned Index = 1;
+  if (TempArg0) {
     ParamAttrList.push_back(
-        llvm::ParamAttrsWithIndex::get(1, llvm::ParamAttr::StructRet));
-  unsigned increment = NumExtraArgs + (hasAggregateLLVMType(ResultType) ? 2 : 1);
-  
-  unsigned i = 0;
-  for (CallExpr::const_arg_iterator I = ArgBeg; I != ArgEnd; ++I, ++i) {
-    QualType ParamType = I->getType();
+        llvm::ParamAttrsWithIndex::get(Index, llvm::ParamAttr::StructRet));
+    ++Index;
+  }
+
+  for (CallArgList::const_iterator I = CallArgs.begin(), E = CallArgs.end(); 
+       I != E; ++I, ++Index) {
+    QualType ParamType = I->second;
     unsigned ParamAttrs = 0;
     if (ParamType->isRecordType())
       ParamAttrs |= llvm::ParamAttr::ByVal;
-    if (ParamType->isSignedIntegerType() && ParamType->isPromotableIntegerType())
-      ParamAttrs |= llvm::ParamAttr::SExt;
-    if (ParamType->isUnsignedIntegerType() && ParamType->isPromotableIntegerType())
-      ParamAttrs |= llvm::ParamAttr::ZExt;
+    if (ParamType->isPromotableIntegerType()) {
+      if (ParamType->isSignedIntegerType()) {
+        ParamAttrs |= llvm::ParamAttr::SExt;
+      } else if (ParamType->isUnsignedIntegerType()) {
+        ParamAttrs |= llvm::ParamAttr::ZExt;
+      }
+    }
     if (ParamAttrs)
-      ParamAttrList.push_back(llvm::ParamAttrsWithIndex::get(i + increment,
+      ParamAttrList.push_back(llvm::ParamAttrsWithIndex::get(Index,
                                                              ParamAttrs));
   }
   CI->setParamAttrs(llvm::PAListPtr::get(ParamAttrList.begin(),
@@ -892,15 +903,15 @@ RValue CodeGenFunction::EmitCallExprExt(llvm::Value *Callee,
   if (CI->getType() != llvm::Type::VoidTy)
     CI->setName("call");
   else if (ResultType->isAnyComplexType())
-    return RValue::getComplex(LoadComplexFromAddr(Args[0], false));
+    return RValue::getComplex(LoadComplexFromAddr(TempArg0, false));
   else if (hasAggregateLLVMType(ResultType))
     // Struct return.
-    return RValue::getAggregate(Args[0]);
+    return RValue::getAggregate(TempArg0);
   else {
     // void return.
     assert(ResultType->isVoidType() && "Should only have a void expr here");
     CI = 0;
   }
       
-  return RValue::get(CI);
+  return RValue::get(CI);  
 }

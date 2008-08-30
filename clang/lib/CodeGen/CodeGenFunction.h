@@ -299,6 +299,12 @@ public:
   //                         Scalar Expression Emission
   //===--------------------------------------------------------------------===//
 
+  typedef llvm::SmallVector<std::pair<llvm::Value*, QualType>, 16> CallArgList;
+  void EmitCallArg(const Expr *E, CallArgList &Args);
+  RValue EmitCall(llvm::Value *Callee,
+                  QualType ResultType,
+                  const CallArgList &Args);
+
   RValue EmitCallExpr(const CallExpr *E);
 
   RValue EmitCallExpr(Expr *FnExpr, CallExpr::const_arg_iterator ArgBeg,
@@ -307,13 +313,6 @@ public:
   RValue EmitCallExpr(llvm::Value *Callee, QualType FnType,
                       CallExpr::const_arg_iterator ArgBeg,
                       CallExpr::const_arg_iterator ArgEnd);
-  
-  RValue EmitCallExprExt(llvm::Value *Callee, 
-                         QualType ResultType,
-                         CallExpr::const_arg_iterator ArgBeg,
-                         CallExpr::const_arg_iterator ArgEnd,
-                         llvm::Value **ExtraArgs,
-                         unsigned NumExtraArgs);
   
   RValue EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E);
 

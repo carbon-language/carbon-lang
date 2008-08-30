@@ -43,6 +43,8 @@ namespace clang {
   class ObjCProtocolDecl;
   class Selector;
 
+  typedef llvm::SmallVector<std::pair<llvm::Value*, QualType>, 16> CallArgList;
+
 namespace CodeGen {
   class CodeGenModule;
 
@@ -81,7 +83,8 @@ public:
   GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
                       const ObjCMessageExpr *E,
                       llvm::Value *Receiver,
-                      bool IsClassMessage) = 0;
+                      bool IsClassMessage,
+                      const CallArgList &CallArgs) = 0;
 
   /// Generate an Objective-C message send operation to the super
   /// class initiated in a method for Class and with the given Self
@@ -91,7 +94,8 @@ public:
                            const ObjCMessageExpr *E,
                            const ObjCInterfaceDecl *Class,
                            llvm::Value *Self,
-                           bool IsClassMessage) = 0;
+                           bool IsClassMessage,
+                           const CallArgList &CallArgs) = 0;
 
   /// Emit the code to return the named protocol as an object, as in a
   /// @protocol expression.
@@ -120,7 +124,7 @@ public:
   /// return true, otherwise instance variables will be accessed directly from
   /// the structure.  If this returns true then @defs is invalid for this
   /// runtime and a warning should be generated.
-  virtual bool LateBoundIVars() { return false; }
+  virtual bool LateBoundIVars() const { return false; }
 };
 
 /// Creates an instance of an Objective-C runtime class.  

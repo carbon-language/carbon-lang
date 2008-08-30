@@ -55,6 +55,11 @@ public:
   /// (typeof(Protocol))
   const llvm::Type *ExternalProtocolPtrTy;
 
+  // SuperCTy - clang type for struct objc_super.
+  QualType SuperCTy;
+  // SuperPtrCTy - clang type for struct objc_super *.
+  QualType SuperPtrCTy;
+
   /// SuperTy - LLVM type for struct objc_super.
   const llvm::StructType *SuperTy;
   /// SuperPtrTy - LLVM type for struct objc_super *.
@@ -216,7 +221,9 @@ private:
   CodeGen::RValue EmitMessageSend(CodeGen::CodeGenFunction &CGF,
                                   const ObjCMessageExpr *E,
                                   llvm::Value *Arg0,
-                                  bool IsSuper);
+                                  QualType Arg0Ty,
+                                  bool IsSuper,
+                                  const CallArgList &CallArgs);
 
   /// EmitIvarList - Emit the ivar list for the given
   /// implementation. If ForClass is true the list of class ivars
@@ -332,14 +339,16 @@ public:
   virtual CodeGen::RValue GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
                                               const ObjCMessageExpr *E,
                                               llvm::Value *Receiver,
-                                              bool IsClassMessage);
+                                              bool IsClassMessage,
+                                              const CallArgList &CallArgs);
 
   virtual CodeGen::RValue 
   GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
                            const ObjCMessageExpr *E,
                            const ObjCInterfaceDecl *Class,
                            llvm::Value *Receiver,
-                           bool IsClassMessage);
+                           bool IsClassMessage,
+                           const CallArgList &CallArgs);
   
   virtual llvm::Value *GetClass(llvm::IRBuilder<> &Builder,
                                 const ObjCInterfaceDecl *ID);
@@ -422,7 +431,8 @@ CGObjCMac::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
                                     const ObjCMessageExpr *E,
                                     const ObjCInterfaceDecl *Class,
                                     llvm::Value *Receiver,
-                                    bool IsClassMessage) {
+                                    bool IsClassMessage,
+                                    const CallArgList &CallArgs) {
   // Create and init a super structure; this is a (receiver, class)
   // pair we will pass to objc_msgSendSuper.
   llvm::Value *ObjCSuper = 
@@ -442,42 +452,54 @@ CGObjCMac::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
   } else {
     Target = EmitClassRef(CGF.Builder, Class->getSuperClass());
   }
+  // FIXME: We shouldn't need to do this cast, rectify the ASTContext
+  // and ObjCTypes types.
+  const llvm::Type *ClassTy = 
+    CGM.getTypes().ConvertType(CGF.getContext().getObjCClassType());
+  Target = CGF.Builder.CreateBitCast(Target, ClassTy);                                     
   CGF.Builder.CreateStore(Target, 
                           CGF.Builder.CreateStructGEP(ObjCSuper, 1));
     
-  return EmitMessageSend(CGF, E, ObjCSuper, true);
+  return EmitMessageSend(CGF, E, 
+                         ObjCSuper, ObjCTypes.SuperPtrCTy,
+                         true, CallArgs);
 }
                                            
 /// Generate code for a message send expression.  
 CodeGen::RValue CGObjCMac::GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
                                                const ObjCMessageExpr *E,
                                                llvm::Value *Receiver,
-                                               bool IsClassMessage) {
+                                               bool IsClassMessage,
+                                               const CallArgList &CallArgs) {
   llvm::Value *Arg0 = 
     CGF.Builder.CreateBitCast(Receiver, ObjCTypes.ObjectPtrTy, "tmp");
-  return EmitMessageSend(CGF, E, Arg0, false);
+  return EmitMessageSend(CGF, E, 
+                         Arg0, CGF.getContext().getObjCIdType(),
+                         false, CallArgs);
 }
 
 CodeGen::RValue CGObjCMac::EmitMessageSend(CodeGen::CodeGenFunction &CGF,
                                            const ObjCMessageExpr *E,
                                            llvm::Value *Arg0,
-                                           bool IsSuper) {
-  llvm::Value *Args[2];
-  Args[0] = Arg0;
-  Args[1] = EmitSelector(CGF.Builder, E->getSelector());
+                                           QualType Arg0Ty,
+                                           bool IsSuper,
+                                           const CallArgList &CallArgs) {
+  CallArgList ActualArgs;
+  ActualArgs.push_back(std::make_pair(Arg0, Arg0Ty));
+  ActualArgs.push_back(std::make_pair(EmitSelector(CGF.Builder, 
+                                                   E->getSelector()),
+                                      CGF.getContext().getObjCSelType()));
+  ActualArgs.insert(ActualArgs.end(), CallArgs.begin(), CallArgs.end());
 
   // FIXME: This is a hack, we are implicitly coordinating with
   // EmitCallExprExt, which will move the return type to the first
   // parameter and set the structure return flag. See
   // getMessageSendFn().
-
                                                    
   const llvm::Type *ReturnTy = CGM.getTypes().ConvertType(E->getType());
-  return CGF.EmitCallExprExt(ObjCTypes.getMessageSendFn(IsSuper, ReturnTy),
-                             E->getType(),
-                             E->arg_begin(),
-                             E->arg_end(),
-                             Args, 2);
+  return CGF.EmitCall(ObjCTypes.getMessageSendFn(IsSuper, ReturnTy),
+                      E->getType(),
+                      ActualArgs);
 }
 
 llvm::Value *CGObjCMac::GenerateProtocolRef(llvm::IRBuilder<> &Builder, 
@@ -1820,12 +1842,27 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
                                      NULL);
   CGM.getModule().addTypeName("struct._objc_category", CategoryTy);
 
-  SuperTy = 
-    llvm::StructType::get(ObjectPtrTy,
-                          ClassPtrTy,
-                          NULL);
-  CGM.getModule().addTypeName("struct._objc_super", 
-                              SuperTy);
+  // I'm not sure I like this. The implicit coordination is a bit
+  // gross. We should solve this in a reasonable fashion because this
+  // is a pretty common task (match some runtime data structure with
+  // an LLVM data structure).
+
+  // FIXME: This is leaked.
+  // FIXME: Merge with rewriter code?
+  RecordDecl *RD = RecordDecl::Create(Ctx, TagDecl::TK_struct, 0,
+                                      SourceLocation(),
+                                      &Ctx.Idents.get("_objc_super"), 0);  
+  FieldDecl *FieldDecls[2];
+  FieldDecls[0] = FieldDecl::Create(Ctx, SourceLocation(), 0, 
+                                    Ctx.getObjCIdType());
+  FieldDecls[1] = FieldDecl::Create(Ctx, SourceLocation(), 0,
+                                    Ctx.getObjCClassType());
+  RD->defineBody(FieldDecls, 2);
+
+  SuperCTy = Ctx.getTagDeclType(RD);
+  SuperPtrCTy = Ctx.getPointerType(SuperCTy);
+
+  SuperTy = cast<llvm::StructType>(Types.ConvertType(SuperCTy));
   SuperPtrTy = llvm::PointerType::getUnqual(SuperTy);
 
   // Global metadata structures
