@@ -263,7 +263,157 @@ void CodeGenFunction::EmitObjCPropertySet(const ObjCPropertyRefExpr *E,
 
 void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S)
 {
-  ErrorUnsupported(&S, "for ... in statement");
+  llvm::Value *DeclAddress;
+  QualType ElementTy;
+  
+  if (const DeclStmt *SD = dyn_cast<DeclStmt>(S.getElement())) {
+    EmitStmt(SD);
+    
+    ElementTy = cast<ValueDecl>(SD->getDecl())->getType();
+    DeclAddress = LocalDeclMap[SD->getDecl()];    
+  } else {
+    ElementTy = cast<Expr>(S.getElement())->getType();
+    DeclAddress = 0;
+  }
+  
+  // Fast enumeration state.
+  QualType StateTy = getContext().getObjCFastEnumerationStateType();
+  llvm::AllocaInst *StatePtr = CreateTempAlloca(ConvertType(StateTy), 
+                                                "state.ptr");
+  StatePtr->setAlignment(getContext().getTypeAlign(StateTy) >> 3);  
+  EmitMemSetToZero(StatePtr,StateTy);
+  
+  // Number of elements in the items array.
+  static const unsigned NumItems = 2;
+  
+  // Get selector
+  llvm::SmallVector<IdentifierInfo*, 3> II;
+  II.push_back(&CGM.getContext().Idents.get("countByEnumeratingWithState"));
+  II.push_back(&CGM.getContext().Idents.get("objects"));
+  II.push_back(&CGM.getContext().Idents.get("count"));
+  Selector FastEnumSel = CGM.getContext().Selectors.getSelector(II.size(), 
+                                                                &II[0]);
+
+  QualType ItemsTy =
+    getContext().getConstantArrayType(getContext().getObjCIdType(),
+                                      llvm::APInt(32, NumItems), 
+                                      ArrayType::Normal, 0);
+  llvm::Value *ItemsPtr = CreateTempAlloca(ConvertType(ItemsTy), "items.ptr");
+  
+  llvm::Value *Collection = EmitScalarExpr(S.getCollection());
+  
+  CallArgList Args;
+  Args.push_back(std::make_pair(StatePtr, 
+                                getContext().getPointerType(StateTy)));
+  
+  Args.push_back(std::make_pair(ItemsPtr, 
+                                getContext().getPointerType(ItemsTy)));
+  
+  const llvm::Type *UnsignedLongLTy = ConvertType(getContext().UnsignedLongTy);
+  llvm::Constant *Count = llvm::ConstantInt::get(UnsignedLongLTy, NumItems);
+  Args.push_back(std::make_pair(Count, getContext().UnsignedLongTy));
+  
+  RValue CountRV = 
+    CGM.getObjCRuntime().GenerateMessageSend(*this, 
+                                             getContext().UnsignedLongTy,
+                                             FastEnumSel,
+                                             Collection, false, Args);
+
+  llvm::Value *LimitPtr = CreateTempAlloca(UnsignedLongLTy, "limit.ptr");
+  Builder.CreateStore(CountRV.getScalarVal(), LimitPtr);
+  
+  llvm::BasicBlock *NoElements = llvm::BasicBlock::Create("noelements");
+  llvm::BasicBlock *LoopStart = llvm::BasicBlock::Create("loopstart");
+  
+  llvm::Value *Limit = Builder.CreateLoad(LimitPtr);
+  llvm::Value *Zero = llvm::Constant::getNullValue(UnsignedLongLTy);
+
+  llvm::Value *IsZero = Builder.CreateICmpEQ(Limit, Zero, "iszero");
+  Builder.CreateCondBr(IsZero, NoElements, LoopStart);
+
+  EmitBlock(LoopStart);
+
+  llvm::BasicBlock *LoopBody = llvm::BasicBlock::Create("loopbody");
+
+  llvm::Value *CounterPtr = CreateTempAlloca(UnsignedLongLTy, "counter.ptr");
+  Builder.CreateStore(Zero, CounterPtr);
+  
+  EmitBlock(LoopBody);
+
+  llvm::Value *StateItemsPtr = 
+    Builder.CreateStructGEP(StatePtr, 1, "stateitems.ptr");
+
+  llvm::Value *Counter = Builder.CreateLoad(CounterPtr, "counter");
+
+  llvm::Value *EnumStateItems = Builder.CreateLoad(StateItemsPtr,
+                                                   "stateitems");
+
+  llvm::Value *CurrentItemPtr = 
+    Builder.CreateGEP(EnumStateItems, Counter, "currentitem.ptr");
+  
+  llvm::Value *CurrentItem = Builder.CreateLoad(CurrentItemPtr, "currentitem");
+  
+  // Cast the item to the right type.
+  CurrentItem = Builder.CreateBitCast(CurrentItem,
+                                      ConvertType(ElementTy), "tmp");
+  
+  if (!DeclAddress) {
+    LValue LV = EmitLValue(cast<Expr>(S.getElement()));
+    
+    // Set the value to null.
+    Builder.CreateStore(CurrentItem, LV.getAddress());
+  } else
+    Builder.CreateStore(CurrentItem, DeclAddress);
+  
+  // Increment the counter.
+  Counter = Builder.CreateAdd(Counter, 
+                              llvm::ConstantInt::get(UnsignedLongLTy, 1));
+  Builder.CreateStore(Counter, CounterPtr);
+  
+  llvm::BasicBlock *LoopEnd = llvm::BasicBlock::Create("loopend");
+  llvm::BasicBlock *AfterBody = llvm::BasicBlock::Create("afterbody");
+  
+  BreakContinueStack.push_back(BreakContinue(LoopEnd, AfterBody));
+
+  EmitStmt(S.getBody());
+  
+  BreakContinueStack.pop_back();
+  
+  EmitBlock(AfterBody);
+  
+  llvm::BasicBlock *FetchMore = llvm::BasicBlock::Create("fetchmore");
+  
+  llvm::Value *IsLess = Builder.CreateICmpULT(Counter, Limit, "isless");
+  Builder.CreateCondBr(IsLess, LoopBody, FetchMore);
+
+  // Fetch more elements.
+  EmitBlock(FetchMore);
+  
+  CountRV = 
+    CGM.getObjCRuntime().GenerateMessageSend(*this, 
+                                             getContext().UnsignedLongTy,
+                                             FastEnumSel, 
+                                             Collection, false, Args);
+  Builder.CreateStore(CountRV.getScalarVal(), LimitPtr);
+  Limit = Builder.CreateLoad(LimitPtr);
+  
+  IsZero = Builder.CreateICmpEQ(Limit, Zero, "iszero");
+  Builder.CreateCondBr(IsZero, NoElements, LoopStart);
+  
+  // No more elements.
+  EmitBlock(NoElements);
+
+  if (!DeclAddress) {
+    // If the element was not a declaration, set it to be null.
+
+    LValue LV = EmitLValue(cast<Expr>(S.getElement()));
+    
+    // Set the value to null.
+    Builder.CreateStore(llvm::Constant::getNullValue(ConvertType(ElementTy)),
+                        LV.getAddress());
+  }
+
+  EmitBlock(LoopEnd);
 }
 
 CGObjCRuntime::~CGObjCRuntime() {}
