@@ -288,6 +288,7 @@ void html::AddHeaderFooterInternalBuiltinCSS(Rewriter& R, unsigned FileID,
       " .code { line-height: 1.2em }\n"
       " .comment { color: green; font-style: oblique }\n"
       " .keyword { color: blue }\n"
+      " .string_literal { color: red }\n"
       " .directive { color: darkmagenta }\n"
       // Macro expansions.
       " .expansion { display: none; }\n"
@@ -377,6 +378,15 @@ void html::SyntaxHighlight(Rewriter &R, unsigned FileID, Preprocessor &PP) {
     case tok::comment:
       HighlightRange(RB, TokOffs, TokOffs+TokLen, BufferStart,
                      "<span class='comment'>", "</span>");
+      break;
+    case tok::wide_string_literal:
+      // Chop off the L prefix
+      ++TokOffs;
+      --TokLen;
+      // FALL THROUGH.
+    case tok::string_literal:
+      HighlightRange(RB, TokOffs, TokOffs+TokLen, BufferStart,
+                     "<span class='string_literal'>", "</span>");
       break;
     case tok::hash: {
       // If this is a preprocessor directive, all tokens to end of line are too.
