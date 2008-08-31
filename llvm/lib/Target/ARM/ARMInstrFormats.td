@@ -124,15 +124,16 @@ class AI1<bits<4> opcod, dag oops, dag iops, Format f, string opc,
           string asm, list<dag> pattern>
   : I<opcod, oops, iops, AddrMode1, Size4Bytes, IndexModeNone, f, opc,
       asm, "", pattern> {
-  let Inst{5-6}  = 0;
-  let Inst{7-10} = opcod;
+  let Inst{21-24} = opcod;
+  let Inst{26-27} = 0;
 }
 class AsI1<bits<4> opcod, dag oops, dag iops, Format f, string opc,
            string asm, list<dag> pattern>
   : sI<opcod, oops, iops, AddrMode1, Size4Bytes, IndexModeNone, f, opc,
        asm, "", pattern> {
-  let Inst{5-6}  = 0;
-  let Inst{7-10} = opcod;
+  let Inst{20}    = 1;
+  let Inst{21-24} = opcod;
+  let Inst{26-27} = 0;
 }
 class AI2<bits<4> opcod, dag oops, dag iops, Format f, string opc,
           string asm, list<dag> pattern>
