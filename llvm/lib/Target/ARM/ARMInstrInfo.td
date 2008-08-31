@@ -587,13 +587,13 @@ let isBranch = 1, isTerminator = 1 in {
 
 // Load
 let isSimpleLoad = 1 in 
-def LDR  : AI2<0x0, (outs GPR:$dst), (ins addrmode2:$addr), LdFrm,
+def LDR  : AI2ldw<0x0, (outs GPR:$dst), (ins addrmode2:$addr), LdFrm,
                "ldr", " $dst, $addr",
                [(set GPR:$dst, (load addrmode2:$addr))]>;
 
 // Special LDR for loads from non-pc-relative constpools.
 let isSimpleLoad = 1, mayLoad = 1, isReMaterializable = 1 in
-def LDRcp : AI2<0x0, (outs GPR:$dst), (ins addrmode2:$addr), LdFrm,
+def LDRcp : AI2ldw<0x0, (outs GPR:$dst), (ins addrmode2:$addr), LdFrm,
                  "ldr", " $dst, $addr", []>;
 
 // Loads with zero extension
@@ -601,7 +601,7 @@ def LDRH  : AI3<0xB, (outs GPR:$dst), (ins addrmode3:$addr), LdFrm,
                  "ldr", "h $dst, $addr",
                 [(set GPR:$dst, (zextloadi16 addrmode3:$addr))]>;
 
-def LDRB  : AI2<0x1, (outs GPR:$dst), (ins addrmode2:$addr), LdFrm,
+def LDRB  : AI2ldb<0x1, (outs GPR:$dst), (ins addrmode2:$addr), LdFrm,
                  "ldr", "b $dst, $addr",
                 [(set GPR:$dst, (zextloadi8 addrmode2:$addr))]>;
 

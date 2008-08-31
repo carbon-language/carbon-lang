@@ -135,10 +135,30 @@ class AsI1<bits<4> opcod, dag oops, dag iops, Format f, string opc,
   let Inst{21-24} = opcod;
   let Inst{26-27} = 0;
 }
+
 class AI2<bits<4> opcod, dag oops, dag iops, Format f, string opc,
           string asm, list<dag> pattern>
   : I<opcod, oops, iops, AddrMode2, Size4Bytes, IndexModeNone, f, opc,
-      asm, "", pattern>;
+      asm, "", pattern> {
+  let Inst{26-27} = 1;
+}
+class AI2ldw<bits<4> opcod, dag oops, dag iops, Format f, string opc,
+          string asm, list<dag> pattern>
+  : AI2<opcod, oops, iops, f, opc, asm, pattern> {
+  let Inst{20}    = 1; // load bit
+  let Inst{21}    = 0; // W bit
+  let Inst{22}    = 0; // B bit
+  let Inst{24}    = 1; // P bit
+}
+class AI2ldb<bits<4> opcod, dag oops, dag iops, Format f, string opc,
+          string asm, list<dag> pattern>
+  : AI2<opcod, oops, iops, f, opc, asm, pattern> {
+  let Inst{20}    = 1; // load bit
+  let Inst{21}    = 0; // W bit
+  let Inst{22}    = 1; // B bit
+  let Inst{24}    = 1; // P bit
+}
+
 class AI3<bits<4> opcod, dag oops, dag iops, Format f, string opc,
           string asm, list<dag> pattern>
   : I<opcod, oops, iops, AddrMode3, Size4Bytes, IndexModeNone, f, opc,
