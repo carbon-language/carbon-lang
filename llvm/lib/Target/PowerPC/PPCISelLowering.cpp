@@ -125,6 +125,7 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   
   // PowerPC does not have ROTR
   setOperationAction(ISD::ROTR, MVT::i32   , Expand);
+  setOperationAction(ISD::ROTR, MVT::i64   , Expand);
   
   // PowerPC does not have Select
   setOperationAction(ISD::SELECT, MVT::i32, Expand);
