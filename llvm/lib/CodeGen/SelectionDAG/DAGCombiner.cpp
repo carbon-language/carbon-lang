@@ -2044,10 +2044,10 @@ SDNode *DAGCombiner::MatchRotate(SDValue LHS, SDValue RHS) {
     if (ConstantSDNode *SUBC = 
           dyn_cast<ConstantSDNode>(LHSShiftAmt.getOperand(0))) {
       if (SUBC->getAPIntValue() == OpSizeInBits) {
-        if (HasROTL)
-          return DAG.getNode(ISD::ROTL, VT, LHSShiftArg, LHSShiftAmt).getNode();
-        else
+        if (HasROTR)
           return DAG.getNode(ISD::ROTR, VT, LHSShiftArg, RHSShiftAmt).getNode();
+        else
+          return DAG.getNode(ISD::ROTL, VT, LHSShiftArg, LHSShiftAmt).getNode();
       }
     }
   }
