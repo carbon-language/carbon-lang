@@ -202,9 +202,13 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
 
   // SPU can do rotate right and left, so legalize it... but customize for i8
   // because instructions don't exist.
-  setOperationAction(ISD::ROTR, MVT::i32,    Legal);
-  setOperationAction(ISD::ROTR, MVT::i16,    Legal);
-  setOperationAction(ISD::ROTR, MVT::i8,     Custom);
+
+  // FIXME: Change from "expand" to appropriate type once ROTR is supported in
+  //        .td files.
+  setOperationAction(ISD::ROTR, MVT::i32,    Expand /*Legal*/);
+  setOperationAction(ISD::ROTR, MVT::i16,    Expand /*Legal*/);
+  setOperationAction(ISD::ROTR, MVT::i8,     Expand /*Custom*/);
+
   setOperationAction(ISD::ROTL, MVT::i32,    Legal);
   setOperationAction(ISD::ROTL, MVT::i16,    Legal);
   setOperationAction(ISD::ROTL, MVT::i8,     Custom);
