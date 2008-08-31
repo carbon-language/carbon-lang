@@ -281,10 +281,10 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S)
   llvm::AllocaInst *StatePtr = CreateTempAlloca(ConvertType(StateTy), 
                                                 "state.ptr");
   StatePtr->setAlignment(getContext().getTypeAlign(StateTy) >> 3);  
-  EmitMemSetToZero(StatePtr,StateTy);
+  EmitMemSetToZero(StatePtr, StateTy);
   
   // Number of elements in the items array.
-  static const unsigned NumItems = 2;
+  static const unsigned NumItems = 16;
   
   // Get selector
   llvm::SmallVector<IdentifierInfo*, 3> II;
@@ -323,23 +323,64 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S)
   Builder.CreateStore(CountRV.getScalarVal(), LimitPtr);
   
   llvm::BasicBlock *NoElements = llvm::BasicBlock::Create("noelements");
-  llvm::BasicBlock *LoopStart = llvm::BasicBlock::Create("loopstart");
+  llvm::BasicBlock *SetStartMutations = 
+    llvm::BasicBlock::Create("setstartmutations");
   
   llvm::Value *Limit = Builder.CreateLoad(LimitPtr);
   llvm::Value *Zero = llvm::Constant::getNullValue(UnsignedLongLTy);
 
   llvm::Value *IsZero = Builder.CreateICmpEQ(Limit, Zero, "iszero");
-  Builder.CreateCondBr(IsZero, NoElements, LoopStart);
+  Builder.CreateCondBr(IsZero, NoElements, SetStartMutations);
 
+  EmitBlock(SetStartMutations);
+  
+  llvm::Value *StartMutationsPtr = 
+    CreateTempAlloca(UnsignedLongLTy);
+  
+  llvm::Value *StateMutationsPtrPtr = 
+    Builder.CreateStructGEP(StatePtr, 2, "mutationsptr.ptr");
+  llvm::Value *StateMutationsPtr = Builder.CreateLoad(StateMutationsPtrPtr, 
+                                                      "mutationsptr");
+  
+  llvm::Value *StateMutations = Builder.CreateLoad(StateMutationsPtr, 
+                                                   "mutations");
+  
+  Builder.CreateStore(StateMutations, StartMutationsPtr);
+  
+  llvm::BasicBlock *LoopStart = llvm::BasicBlock::Create("loopstart");
   EmitBlock(LoopStart);
-
-  llvm::BasicBlock *LoopBody = llvm::BasicBlock::Create("loopbody");
 
   llvm::Value *CounterPtr = CreateTempAlloca(UnsignedLongLTy, "counter.ptr");
   Builder.CreateStore(Zero, CounterPtr);
   
+  llvm::BasicBlock *LoopBody = llvm::BasicBlock::Create("loopbody"); 
   EmitBlock(LoopBody);
 
+  StateMutationsPtr = Builder.CreateLoad(StateMutationsPtrPtr, "mutationsptr");
+  StateMutations = Builder.CreateLoad(StateMutationsPtr, "statemutations");
+
+  llvm::Value *StartMutations = Builder.CreateLoad(StartMutationsPtr, 
+                                                   "mutations");
+  llvm::Value *MutationsEqual = Builder.CreateICmpEQ(StateMutations, 
+                                                     StartMutations,
+                                                     "tobool");
+  
+  
+  llvm::BasicBlock *WasMutated = llvm::BasicBlock::Create("wasmutated");
+  llvm::BasicBlock *WasNotMutated = llvm::BasicBlock::Create("wasnotmutated");
+  
+  Builder.CreateCondBr(MutationsEqual, WasNotMutated, WasMutated);
+  
+  EmitBlock(WasMutated);
+  llvm::Value *V =
+    Builder.CreateBitCast(Collection, 
+                          ConvertType(getContext().getObjCIdType()),
+                          "tmp");
+  Builder.CreateCall(CGM.getObjCRuntime().EnumerationMutationFunction(),
+                     V);
+  
+  EmitBlock(WasNotMutated);
+  
   llvm::Value *StateItemsPtr = 
     Builder.CreateStructGEP(StatePtr, 1, "stateitems.ptr");
 
@@ -384,7 +425,7 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S)
   llvm::BasicBlock *FetchMore = llvm::BasicBlock::Create("fetchmore");
   
   llvm::Value *IsLess = Builder.CreateICmpULT(Counter, Limit, "isless");
-  Builder.CreateCondBr(IsLess, LoopBody, FetchMore);
+  Builder.CreateCondBr(IsLess, LoopStart, FetchMore);
 
   // Fetch more elements.
   EmitBlock(FetchMore);

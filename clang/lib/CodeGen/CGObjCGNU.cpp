@@ -120,6 +120,7 @@ public:
                                            const ObjCProtocolDecl *PD);
   virtual void GenerateProtocol(const ObjCProtocolDecl *PD);
   virtual llvm::Function *ModuleInitFunction();
+  virtual llvm::Function *EnumerationMutationFunction();
 };
 } // end anonymous namespace
 
@@ -956,6 +957,13 @@ llvm::Function *CGObjCGNU::GenerateMethod(const ObjCMethodDecl *OMD) {
       FunctionName,
       &TheModule);
   return Method;
+}
+
+llvm::Function *CGObjCGNU::EnumerationMutationFunction()
+{
+  assert(0 && "No enumeration mutation function in the GNU runtime!");
+  
+  return 0;
 }
 
 CodeGen::CGObjCRuntime *CodeGen::CreateGNUObjCRuntime(CodeGen::CodeGenModule &CGM){

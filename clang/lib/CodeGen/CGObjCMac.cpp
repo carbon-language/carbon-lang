@@ -130,6 +130,7 @@ public:
   /// MethodListPtrTy - LLVM type for struct objc_method_list *.
   const llvm::Type *MethodListPtrTy;
 
+  llvm::Function *EnumerationMutationFn;
 public:
   ObjCTypesHelper(CodeGen::CodeGenModule &cgm);
   ~ObjCTypesHelper();
@@ -370,6 +371,7 @@ public:
   virtual void GenerateProtocol(const ObjCProtocolDecl *PD);
 
   virtual llvm::Function *ModuleInitFunction();
+  virtual llvm::Function *EnumerationMutationFunction();
 };
 } // end anonymous namespace
 
@@ -1379,6 +1381,11 @@ llvm::Function *CGObjCMac::ModuleInitFunction() {
   return NULL;
 }
 
+llvm::Function *CGObjCMac::EnumerationMutationFunction()
+{
+  return ObjCTypes.EnumerationMutationFn;
+}
+
 /* *** Private Interface *** */
 
 /// EmitImageInfo - Emit the image info marker used to encode some module
@@ -1933,6 +1940,18 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
                                                    true),
                            llvm::Function::ExternalLinkage,
                            "objc_msgSendSuper_stret",
+                           &CGM.getModule());
+  
+  // Enumeration mutation.
+  
+  Params.clear();
+  Params.push_back(ObjectPtrTy);
+  EnumerationMutationFn = 
+    llvm::Function::Create(llvm::FunctionType::get(llvm::Type::VoidTy,
+                                                   Params,
+                                                   false),
+                           llvm::Function::ExternalLinkage,
+                           "objc_enumerationMutation",
                            &CGM.getModule());
 }
 

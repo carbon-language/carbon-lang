@@ -122,6 +122,10 @@ public:
   virtual llvm::Value *GetClass(BuilderType &Builder, 
                                 const ObjCInterfaceDecl *OID) = 0;
 
+  /// EnumerationMutationFunction - Return the function that's called by the
+  /// compiler when a mutation is detected during foreach iteration.
+  virtual llvm::Function *EnumerationMutationFunction() = 0;
+    
   /// If instance variable addresses are determined at runtime then this should
   /// return true, otherwise instance variables will be accessed directly from
   /// the structure.  If this returns true then @defs is invalid for this
