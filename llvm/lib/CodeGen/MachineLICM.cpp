@@ -34,7 +34,6 @@ namespace {
   class VISIBILITY_HIDDEN MachineLICM : public MachineFunctionPass {
     const TargetMachine   *TM;
     const TargetInstrInfo *TII;
-    MachineFunction       *CurMF;  // Current MachineFunction
 
     // Various analyses that we use...
     MachineLoopInfo      *LI;      // Current MachineLoopInfo
@@ -112,30 +111,7 @@ namespace {
     /// 
     void MoveInstToEndOfBlock(MachineBasicBlock *ToMBB,
                               MachineBasicBlock *FromMBB,
-                              MachineInstr *MI) {
-      DEBUG({
-          DOUT << "Hoisting " << *MI;
-          if (ToMBB->getBasicBlock())
-            DOUT << " to MachineBasicBlock "
-                 << ToMBB->getBasicBlock()->getName();
-          if (FromMBB->getBasicBlock())
-            DOUT << " from MachineBasicBlock "
-                 << FromMBB->getBasicBlock()->getName();
-          DOUT << "\n";
-        });
-
-      MachineBasicBlock::iterator WhereIter = ToMBB->getFirstTerminator();
-      MachineBasicBlock::iterator To, From = FromMBB->begin();
-
-      while (&*From != MI)
-        ++From;
-
-      assert(From != FromMBB->end() && "Didn't find instr in BB!");
-
-      To = From;
-      ToMBB->splice(WhereIter, FromMBB, From, ++To);
-      ++NumHoisted;
-    }
+                              MachineInstr *MI);
 
     /// HoistRegion - Walk the specified region of the CFG (defined by all
     /// blocks dominated by the specified block, and that are in the current
@@ -166,10 +142,9 @@ bool MachineLICM::runOnMachineFunction(MachineFunction &MF) {
   DOUT << "******** Machine LICM ********\n";
 
   Changed = false;
-  CurMF = &MF;
-  TM = &CurMF->getTarget();
+  TM = &MF.getTarget();
   TII = TM->getInstrInfo();
-  RegInfo = &CurMF->getRegInfo();
+  RegInfo = &MF.getRegInfo();
 
   // Get our Loop information...
   LI = &getAnalysis<MachineLoopInfo>();
@@ -303,6 +278,36 @@ bool MachineLICM::IsLoopInvariantInst(MachineInstr &I) {
   return true;
 }
 
+/// MoveInstToEndOfBlock - Moves the machine instruction to the bottom of the
+/// predecessor basic block (but before the terminator instructions).
+/// 
+void MachineLICM::MoveInstToEndOfBlock(MachineBasicBlock *ToMBB,
+                                       MachineBasicBlock *FromMBB,
+                                       MachineInstr *MI) {
+  DEBUG({
+      DOUT << "Hoisting " << *MI;
+      if (ToMBB->getBasicBlock())
+        DOUT << " to MachineBasicBlock "
+             << ToMBB->getBasicBlock()->getName();
+      if (FromMBB->getBasicBlock())
+        DOUT << " from MachineBasicBlock "
+             << FromMBB->getBasicBlock()->getName();
+      DOUT << "\n";
+    });
+
+  MachineBasicBlock::iterator WhereIter = ToMBB->getFirstTerminator();
+  MachineBasicBlock::iterator To, From = FromMBB->begin();
+
+  while (&*From != MI)
+    ++From;
+
+  assert(From != FromMBB->end() && "Didn't find instr in BB!");
+
+  To = From;
+  ToMBB->splice(WhereIter, FromMBB, From, ++To);
+  ++NumHoisted;
+}
+
 /// Hoist - When an instruction is found to use only loop invariant operands
 /// that are safe to hoist, this instruction is called to do the dirty work.
 ///
@@ -318,9 +323,9 @@ void MachineLICM::Hoist(MachineInstr &MI) {
   // is forbidden.
   if (Preds.empty() || Preds.size() != 1) return;
 
-  // Check that the predecessor is qualified to take the hoisted
-  // instruction. I.e., there is only one edge from the predecessor, and it's to
-  // the loop header.
+  // Check that the predecessor is qualified to take the hoisted instruction.
+  // I.e., there is only one edge from the predecessor, and it's to the loop
+  // header.
   MachineBasicBlock *MBB = Preds.front();
 
   // FIXME: We are assuming at first that the basic block coming into this loop
