@@ -2075,14 +2075,14 @@ SDNode *DAGCombiner::MatchRotate(SDValue LHS, SDValue RHS) {
       }
     } else if (LExtOp0.getOpcode() == ISD::SUB &&
                RExtOp0 == LExtOp0.getOperand(1)) {
-      // fold (or (shl x, (*ext (sub 32, y))), (srl x, (*ext r))) -> 
+      // fold (or (shl x, (*ext (sub 32, y))), (srl x, (*ext y))) -> 
       //   (rotr x, y)
-      // fold (or (shl x, (*ext (sub 32, y))), (srl x, (*ext r))) ->
+      // fold (or (shl x, (*ext (sub 32, y))), (srl x, (*ext y))) ->
       //   (rotl x, (sub 32, y))
       if (ConstantSDNode *SUBC = cast<ConstantSDNode>(LExtOp0.getOperand(0))) {
         if (SUBC->getAPIntValue() == OpSizeInBits) {
-          return DAG.getNode(HasROTL ? ISD::ROTL : ISD::ROTR, VT, LHSShiftArg,
-                             HasROTL ? LHSShiftAmt : RHSShiftAmt).getNode();
+          return DAG.getNode(HasROTR ? ISD::ROTR : ISD::ROTL, VT, LHSShiftArg,
+                             HasROTR ? RHSShiftAmt : LHSShiftAmt).getNode();
         }
       }
     }
