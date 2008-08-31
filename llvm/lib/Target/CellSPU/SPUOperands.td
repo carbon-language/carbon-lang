@@ -24,7 +24,8 @@ def LO16_vec : SDNodeXForm<scalar_to_vector, [{
          && "LO16_vec got something other than a BUILD_VECTOR");
 
   // Get first constant operand...
-  for (unsigned i = 0, e = N->getNumOperands(); OpVal.getNode() == 0 && i != e; ++i) {
+  for (unsigned i = 0, e = N->getNumOperands();
+       OpVal.getNode() == 0 && i != e; ++i) {
     if (N->getOperand(i).getOpcode() == ISD::UNDEF) continue;
     if (OpVal.getNode() == 0)
       OpVal = N->getOperand(i);
@@ -49,7 +50,8 @@ def HI16_vec : SDNodeXForm<scalar_to_vector, [{
          && "HI16_vec got something other than a BUILD_VECTOR");
   
   // Get first constant operand...
-  for (unsigned i = 0, e = N->getNumOperands(); OpVal.getNode() == 0 && i != e; ++i) {
+  for (unsigned i = 0, e = N->getNumOperands();
+       OpVal.getNode() == 0 && i != e; ++i) {
     if (N->getOperand(i).getOpcode() == ISD::UNDEF) continue;
     if (OpVal.getNode() == 0)
       OpVal = N->getOperand(i);

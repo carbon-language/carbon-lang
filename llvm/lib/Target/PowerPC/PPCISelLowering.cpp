@@ -1440,7 +1440,8 @@ PPCTargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op,
 
   SmallVector<SDValue, 8> MemOps;
   unsigned nAltivecParamsAtEnd = 0;
-  for (unsigned ArgNo = 0, e = Op.getNode()->getNumValues()-1; ArgNo != e; ++ArgNo) {
+  for (unsigned ArgNo = 0, e = Op.getNode()->getNumValues() - 1;
+       ArgNo != e; ++ArgNo) {
     SDValue ArgVal;
     bool needsLoad = false;
     MVT ObjectVT = Op.getValue(ArgNo).getValueType();
@@ -2199,7 +2200,8 @@ SDValue PPCTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG,
           // This must go outside the CALLSEQ_START..END.
           SDValue NewCallSeqStart = DAG.getCALLSEQ_START(MemcpyCall,
                                CallSeqStart.getNode()->getOperand(1));
-          DAG.ReplaceAllUsesWith(CallSeqStart.getNode(), NewCallSeqStart.getNode());
+          DAG.ReplaceAllUsesWith(CallSeqStart.getNode(),
+                                 NewCallSeqStart.getNode());
           Chain = CallSeqStart = NewCallSeqStart;
           ArgOffset += PtrByteSize;
         }
@@ -2461,7 +2463,8 @@ SDValue PPCTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG,
     // Otherwise, this is an indirect call.  We have to use a MTCTR/BCTRL pair
     // to do the call, we can't use PPCISD::CALL.
     SDValue MTCTROps[] = {Chain, Callee, InFlag};
-    Chain = DAG.getNode(PPCISD::MTCTR, NodeTys, MTCTROps, 2+(InFlag.getNode()!=0));
+    Chain = DAG.getNode(PPCISD::MTCTR, NodeTys, MTCTROps,
+                        2 + (InFlag.getNode() != 0));
     InFlag = Chain.getValue(1);
     
     // Copy the callee address into R12/X12 on darwin.

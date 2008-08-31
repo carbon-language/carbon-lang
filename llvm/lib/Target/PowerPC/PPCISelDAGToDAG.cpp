@@ -294,7 +294,8 @@ SDNode *PPCDAGToDAGISel::getGlobalBaseReg() {
       BuildMI(FirstMBB, MBBI, TII.get(PPC::MFLR8), GlobalBaseReg);
     }
   }
-  return CurDAG->getRegister(GlobalBaseReg, PPCLowering.getPointerTy()).getNode();
+  return CurDAG->getRegister(GlobalBaseReg,
+                             PPCLowering.getPointerTy()).getNode();
 }
 
 /// isIntS16Immediate - This method tests to see if the node is either a 32-bit
@@ -348,7 +349,8 @@ static bool isInt32Immediate(SDValue N, unsigned &Imm) {
 // opcode and that it has a immediate integer right operand.
 // If so Imm will receive the 32 bit value.
 static bool isOpcWithIntImmediate(SDNode *N, unsigned Opc, unsigned& Imm) {
-  return N->getOpcode() == Opc && isInt32Immediate(N->getOperand(1).getNode(), Imm);
+  return N->getOpcode() == Opc
+         && isInt32Immediate(N->getOperand(1).getNode(), Imm);
 }
 
 bool PPCDAGToDAGISel::isRunOfOnes(unsigned Val, unsigned &MB, unsigned &ME) {

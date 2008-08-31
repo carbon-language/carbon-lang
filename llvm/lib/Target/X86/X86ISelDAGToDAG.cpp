@@ -80,12 +80,14 @@ namespace {
     }
     void dump() {
       cerr << "X86ISelAddressMode " << this << "\n";
-      cerr << "Base.Reg "; if (Base.Reg.getNode()!=0) Base.Reg.getNode()->dump(); 
-                           else cerr << "nul";
+      cerr << "Base.Reg ";
+              if (Base.Reg.getNode() != 0) Base.Reg.getNode()->dump(); 
+              else cerr << "nul";
       cerr << " Base.FrameIndex " << Base.FrameIndex << "\n";
       cerr << "isRIPRel " << isRIPRel << " Scale" << Scale << "\n";
-      cerr << "IndexReg "; if (IndexReg.getNode()!=0) IndexReg.getNode()->dump();
-                          else cerr << "nul"; 
+      cerr << "IndexReg ";
+              if (IndexReg.getNode() != 0) IndexReg.getNode()->dump();
+              else cerr << "nul"; 
       cerr << " Disp " << Disp << "\n";
       cerr << "GV "; if (GV) GV->dump(); 
                      else cerr << "nul";
@@ -202,7 +204,8 @@ namespace {
       if (AM.GV)
         Disp = CurDAG->getTargetGlobalAddress(AM.GV, MVT::i32, AM.Disp);
       else if (AM.CP)
-        Disp = CurDAG->getTargetConstantPool(AM.CP, MVT::i32, AM.Align, AM.Disp);
+        Disp = CurDAG->getTargetConstantPool(AM.CP, MVT::i32,
+                                             AM.Align, AM.Disp);
       else if (AM.ES)
         Disp = CurDAG->getTargetExternalSymbol(AM.ES, MVT::i32);
       else if (AM.JT != -1)
@@ -245,7 +248,8 @@ namespace {
   };
 }
 
-/// findFlagUse - Return use of MVT::Flag value produced by the specified SDNode.
+/// findFlagUse - Return use of MVT::Flag value produced by the specified
+/// SDNode.
 ///
 static SDNode *findFlagUse(SDNode *N) {
   unsigned FlagResNo = N->getNumValues()-1;
@@ -847,7 +851,8 @@ DOUT << "AlreadySelected " << AlreadySelected << "\n";
   }
 
   case ISD::FrameIndex:
-    if (AM.BaseType == X86ISelAddressMode::RegBase && AM.Base.Reg.getNode() == 0) {
+    if (AM.BaseType == X86ISelAddressMode::RegBase
+        && AM.Base.Reg.getNode() == 0) {
       AM.BaseType = X86ISelAddressMode::FrameIndexBase;
       AM.Base.FrameIndex = cast<FrameIndexSDNode>(N)->getIndex();
       return false;
@@ -855,10 +860,12 @@ DOUT << "AlreadySelected " << AlreadySelected << "\n";
     break;
 
   case ISD::SHL:
-    if (AlreadySelected || AM.IndexReg.getNode() != 0 || AM.Scale != 1 || AM.isRIPRel)
+    if (AlreadySelected || AM.IndexReg.getNode() != 0
+        || AM.Scale != 1 || AM.isRIPRel)
       break;
       
-    if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getNode()->getOperand(1))) {
+    if (ConstantSDNode
+          *CN = dyn_cast<ConstantSDNode>(N.getNode()->getOperand(1))) {
       unsigned Val = CN->getValue();
       if (Val == 1 || Val == 2 || Val == 3) {
         AM.Scale = 1 << Val;
@@ -897,7 +904,8 @@ DOUT << "AlreadySelected " << AlreadySelected << "\n";
         AM.Base.Reg.getNode() == 0 &&
         AM.IndexReg.getNode() == 0 &&
         !AM.isRIPRel) {
-      if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getNode()->getOperand(1)))
+      if (ConstantSDNode
+            *CN = dyn_cast<ConstantSDNode>(N.getNode()->getOperand(1)))
         if (CN->getValue() == 3 || CN->getValue() == 5 || CN->getValue() == 9) {
           AM.Scale = unsigned(CN->getValue())-1;
 
@@ -1298,7 +1306,8 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
           if (Subtarget->is64Bit()) {
             SDValue Ops[] = { CurDAG->getRegister(0, PtrVT), getI8Imm(1),
                                 CurDAG->getRegister(0, PtrVT), C };
-            return CurDAG->SelectNodeTo(N.getNode(), X86::LEA64r, MVT::i64, Ops, 4);
+            return CurDAG->SelectNodeTo(N.getNode(), X86::LEA64r,
+                                        MVT::i64, Ops, 4);
           } else
             return CurDAG->SelectNodeTo(N.getNode(), X86::MOV32ri, PtrVT, C);
         }
@@ -1393,7 +1402,7 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
                                           X86::AX, MVT::i16, InFlag);
           InFlag = Result.getValue(2);
           Result = SDValue(CurDAG->getTargetNode(X86::SHR16ri, MVT::i16, Result,
-                                       CurDAG->getTargetConstant(8, MVT::i8)), 0);
+                                     CurDAG->getTargetConstant(8, MVT::i8)), 0);
           // Then truncate it down to i8.
           SDValue SRIdx = CurDAG->getTargetConstant(1, MVT::i32); // SubRegSet 1
           Result = SDValue(CurDAG->getTargetNode(X86::EXTRACT_SUBREG,
@@ -1552,7 +1561,7 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
                                           X86::AX, MVT::i16, InFlag);
           InFlag = Result.getValue(2);
           Result = SDValue(CurDAG->getTargetNode(X86::SHR16ri, MVT::i16, Result,
-                                       CurDAG->getTargetConstant(8, MVT::i8)), 0);
+                                     CurDAG->getTargetConstant(8, MVT::i8)), 0);
           // Then truncate it down to i8.
           SDValue SRIdx = CurDAG->getTargetConstant(1, MVT::i32); // SubRegSet 1
           Result = SDValue(CurDAG->getTargetNode(X86::EXTRACT_SUBREG,
