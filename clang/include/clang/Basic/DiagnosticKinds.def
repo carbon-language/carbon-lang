@@ -692,7 +692,9 @@ DIAG(err_mode_wrong_type, ERROR,
      "type of machine mode does not match type of base type")
 DIAG(err_attr_wrong_decl, ERROR,
      "'%0' attribute invalid on this declaration, requires typedef or value")
-     
+DIAG(warn_attribute_nonnull_no_pointers, WARNING,
+  "'nonnull' attribute applied to function with no pointer arguments")
+  
 // Clang-Specific Attributes
 DIAG(err_attribute_iboutlet_non_ivar, ERROR,
      "'iboutlet' attribute can only be applied to instance variables")

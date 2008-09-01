@@ -282,20 +282,32 @@ static void HandleNonNullAttr(Decl *d, const AttributeList &Attr, Sema &S) {
       // FIXME: Should also highlight argument in decl.
       S.Diag(Attr.getLoc(), diag::err_nonnull_pointers_only,
              "nonnull", Ex->getSourceRange());
-      return;    
+      continue;
     }
     
     NonNullArgs.push_back(x);
   }
   
-  if (!NonNullArgs.empty()) {
-    unsigned* start = &NonNullArgs[0];
-    unsigned size = NonNullArgs.size();
-    std::sort(start, start + size);
-    d->addAttr(new NonNullAttr(start, size));
+  // If no arguments were specified to __attribute__((nonnull)) then all
+  // pointer arguments have a nonnull attribute.
+  if (NonNullArgs.empty()) {
+    unsigned idx = 0;
+    
+    for (FunctionTypeProto::arg_type_iterator
+         I=proto->arg_type_begin(), E=proto->arg_type_end(); I!=E; ++I, ++idx)
+      if ((*I)->isPointerType())
+        NonNullArgs.push_back(idx);
+    
+    if (NonNullArgs.empty()) {
+      S.Diag(Attr.getLoc(), diag::warn_attribute_nonnull_no_pointers);
+      return;
+    }
   }
-  else
-    d->addAttr(new NonNullAttr());
+
+  unsigned* start = &NonNullArgs[0];
+  unsigned size = NonNullArgs.size();
+  std::sort(start, start + size);
+  d->addAttr(new NonNullAttr(start, size));
 }
 
 static void HandleAliasAttr(Decl *d, const AttributeList &Attr, Sema &S) {
