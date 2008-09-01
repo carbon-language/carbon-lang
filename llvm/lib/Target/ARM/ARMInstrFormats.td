@@ -577,11 +577,33 @@ class AI3sthpo<bits<4> opcod, dag oops, dag iops, Format f, string opc,
 class AI4<bits<4> opcod, dag oops, dag iops, Format f, string opc,
           string asm, list<dag> pattern>
   : I<opcod, oops, iops, AddrMode4, Size4Bytes, IndexModeNone, f, opc,
-      asm, "", pattern>;
-class AXI4<bits<4> opcod, dag oops, dag iops, Format f, string asm,
+      asm, "", pattern> {
+  let Inst{25-27} = 0x4;
+}
+class AXI4ld<bits<4> opcod, dag oops, dag iops, Format f, string asm,
            list<dag> pattern>
   : XI<opcod, oops, iops, AddrMode4, Size4Bytes, IndexModeNone, f, asm,
-       "", pattern>;
+       "", pattern> {
+  let Inst{20}    = 1; // L bit
+  let Inst{22}    = 0; // S bit
+  let Inst{25-27} = 0x4;
+}
+class AXI4ldpc<bits<4> opcod, dag oops, dag iops, Format f, string asm,
+           list<dag> pattern>
+  : XI<opcod, oops, iops, AddrMode4, Size4Bytes, IndexModeNone, f, asm,
+       "", pattern> {
+  let Inst{20}    = 1; // L bit
+  let Inst{22}    = 1; // S bit
+  let Inst{25-27} = 0x4;
+}
+class AXI4st<bits<4> opcod, dag oops, dag iops, Format f, string asm,
+           list<dag> pattern>
+  : XI<opcod, oops, iops, AddrMode4, Size4Bytes, IndexModeNone, f, asm,
+       "", pattern> {
+  let Inst{20}    = 0; // L bit
+  let Inst{22}    = 0; // S bit
+  let Inst{25-27} = 0x4;
+}
 
 
 // BR_JT instructions

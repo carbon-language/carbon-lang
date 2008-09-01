@@ -523,7 +523,7 @@ let isReturn = 1, isTerminator = 1 in
 // FIXME: $dst1 should be a def. But the extra ops must be in the end of the
 // operand list.
 let isReturn = 1, isTerminator = 1 in
-  def LDM_RET : AXI4<0x0, (outs),
+  def LDM_RET : AXI4ldpc<0x0, (outs),
                     (ins addrmode4:$addr, pred:$p, reglist:$dst1, variable_ops),
                     LdFrm, "ldm${p}${addr:submode} $addr, $dst1",
                     []>;
@@ -725,13 +725,13 @@ def STRB_POST: AI2stbpo<0x1, (outs GPR:$base_wb),
 
 // FIXME: $dst1 should be a def.
 let mayLoad = 1 in
-def LDM : AXI4<0x0, (outs),
+def LDM : AXI4ld<0x0, (outs),
                (ins addrmode4:$addr, pred:$p, reglist:$dst1, variable_ops),
                LdFrm, "ldm${p}${addr:submode} $addr, $dst1",
                []>;
 
 let mayStore = 1 in
-def STM : AXI4<0x0, (outs),
+def STM : AXI4st<0x0, (outs),
                (ins addrmode4:$addr, pred:$p, reglist:$src1, variable_ops),
                StFrm, "stm${p}${addr:submode} $addr, $src1",
                []>;
