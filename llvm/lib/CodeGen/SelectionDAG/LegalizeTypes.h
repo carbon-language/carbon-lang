@@ -155,10 +155,11 @@ public:
 
   /// ReanalyzeNode - Recompute the NodeID and correct processed operands
   /// for the specified node, adding it to the worklist if ready.
-  void ReanalyzeNode(SDNode *N) {
+  SDNode *ReanalyzeNode(SDNode *N) {
     N->setNodeId(NewNode);
     SDValue V(N, 0);
     AnalyzeNewNode(V); // FIXME: ignore the change?
+    return V.getNode();
   }
 
   void NoteDeletion(SDNode *Old, SDNode *New) {
