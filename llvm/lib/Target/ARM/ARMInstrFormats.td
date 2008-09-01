@@ -112,6 +112,17 @@ class sI<bits<4> opcod, dag oops, dag iops, AddrMode am, SizeFlagVal sz,
   list<Predicate> Predicates = [IsARM];
 }
 
+// Special cases
+class XI<bits<4> opcod, dag oops, dag iops, AddrMode am, SizeFlagVal sz,
+         IndexMode im, Format f, string asm, string cstr, list<dag> pattern>
+  : InstARM<opcod, am, sz, im, f, cstr> {
+  let OutOperandList = oops;
+  let InOperandList = iops;
+  let AsmString   = asm;
+  let Pattern = pattern;
+  list<Predicate> Predicates = [IsARM];
+}
+
 class AI<bits<4> opcod, dag oops, dag iops, Format f, string opc,
          string asm, list<dag> pattern>
   : I<opcod, oops, iops, AddrModeNone, Size4Bytes, IndexModeNone, f, opc,
@@ -120,6 +131,14 @@ class AsI<bits<4> opcod, dag oops, dag iops, Format f, string opc,
           string asm, list<dag> pattern>
   : sI<opcod, oops, iops, AddrModeNone, Size4Bytes, IndexModeNone, f, opc,
        asm,"",pattern>;
+class AXI<bits<4> opcod, dag oops, dag iops, Format f, string asm,
+          list<dag> pattern>
+  : XI<opcod, oops, iops, AddrModeNone, Size4Bytes, IndexModeNone, f, asm,
+       "", pattern>;
+class AXIx2<bits<4> opcod, dag oops, dag iops, Format f, string asm,
+            list<dag> pattern>
+  : XI<opcod, oops, iops, AddrModeNone, Size8Bytes, IndexModeNone, f, asm,
+       "", pattern>;
 
 // addrmode1 instructions
 class AI1<bits<4> opcod, dag oops, dag iops, Format f, string opc,
@@ -137,6 +156,14 @@ class AsI1<bits<4> opcod, dag oops, dag iops, Format f, string opc,
   let Inst{21-24} = opcod;
   let Inst{26-27} = 0;
 }
+class AXI1<bits<4> opcod, dag oops, dag iops, Format f, string asm,
+           list<dag> pattern>
+  : XI<opcod, oops, iops, AddrMode1, Size4Bytes, IndexModeNone, f, asm,
+       "", pattern> {
+  let Inst{20}    = 1;
+  let Inst{21-24} = opcod;
+  let Inst{26-27} = 0;
+}
 class AI1x2<bits<4> opcod, dag oops, dag iops, Format f, string opc,
             string asm, list<dag> pattern>
   : I<opcod, oops, iops, AddrMode1, Size8Bytes, IndexModeNone, f, opc,
@@ -150,6 +177,10 @@ class AI2<bits<4> opcod, dag oops, dag iops, Format f, string opc,
       asm, "", pattern> {
   let Inst{26-27} = 1;
 }
+class AXI2<bits<4> opcod, dag oops, dag iops, Format f, string asm,
+           list<dag> pattern>
+  : XI<opcod, oops, iops, AddrMode2, Size4Bytes, IndexModeNone, f, asm,
+       "", pattern>;
 
 // loads
 class AI2ldw<bits<4> opcod, dag oops, dag iops, Format f, string opc,
@@ -272,6 +303,10 @@ class AI3<bits<4> opcod, dag oops, dag iops, Format f, string opc,
           string asm, list<dag> pattern>
   : I<opcod, oops, iops, AddrMode3, Size4Bytes, IndexModeNone, f, opc,
       asm, "", pattern>;
+class AXI3<bits<4> opcod, dag oops, dag iops, Format f, string asm,
+           list<dag> pattern>
+  : XI<opcod, oops, iops, AddrMode3, Size4Bytes, IndexModeNone, f, asm,
+       "", pattern>;
 
 // loads
 class AI3ldh<bits<4> opcod, dag oops, dag iops, Format f, string opc,
@@ -459,45 +494,11 @@ class AI4<bits<4> opcod, dag oops, dag iops, Format f, string opc,
           string asm, list<dag> pattern>
   : I<opcod, oops, iops, AddrMode4, Size4Bytes, IndexModeNone, f, opc,
       asm, "", pattern>;
-
-
-
-// Special cases.
-class XI<bits<4> opcod, dag oops, dag iops, AddrMode am, SizeFlagVal sz,
-         IndexMode im, Format f, string asm, string cstr, list<dag> pattern>
-  : InstARM<opcod, am, sz, im, f, cstr> {
-  let OutOperandList = oops;
-  let InOperandList = iops;
-  let AsmString   = asm;
-  let Pattern = pattern;
-  list<Predicate> Predicates = [IsARM];
-}
-
-class AXI<bits<4> opcod, dag oops, dag iops, Format f, string asm,
-          list<dag> pattern>
-  : XI<opcod, oops, iops, AddrModeNone, Size4Bytes, IndexModeNone, f, asm,
-       "", pattern>;
-class AXI1<bits<4> opcod, dag oops, dag iops, Format f, string asm,
-           list<dag> pattern>
-  : XI<opcod, oops, iops, AddrMode1, Size4Bytes, IndexModeNone, f, asm,
-       "", pattern>;
-class AXI2<bits<4> opcod, dag oops, dag iops, Format f, string asm,
-           list<dag> pattern>
-  : XI<opcod, oops, iops, AddrMode2, Size4Bytes, IndexModeNone, f, asm,
-       "", pattern>;
-class AXI3<bits<4> opcod, dag oops, dag iops, Format f, string asm,
-           list<dag> pattern>
-  : XI<opcod, oops, iops, AddrMode3, Size4Bytes, IndexModeNone, f, asm,
-       "", pattern>;
 class AXI4<bits<4> opcod, dag oops, dag iops, Format f, string asm,
            list<dag> pattern>
   : XI<opcod, oops, iops, AddrMode4, Size4Bytes, IndexModeNone, f, asm,
        "", pattern>;
 
-class AXIx2<bits<4> opcod, dag oops, dag iops, Format f, string asm,
-            list<dag> pattern>
-  : XI<opcod, oops, iops, AddrModeNone, Size8Bytes, IndexModeNone, f, asm,
-       "", pattern>;
 
 // BR_JT instructions
 class JTI<bits<4> opcod, dag oops, dag iops, string asm, list<dag> pattern>
