@@ -85,6 +85,7 @@ namespace {
       (void) llvm::createLowerInvokePass();
       (void) llvm::createLowerSetJmpPass();
       (void) llvm::createLowerSwitchPass();
+      (void) llvm::createMarkModRefPass();
       (void) llvm::createNoAAPass();
       (void) llvm::createNoProfileInfoPass();
       (void) llvm::createProfileLoaderPass();

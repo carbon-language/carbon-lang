@@ -137,6 +137,11 @@ LoopPass *createLoopRotatePass();
 //
 LoopPass *createLoopIndexSplitPass();
 
+//===----------------------------------------------------------------------===//
+//
+// MarkModRef - This pass marks functions readnone/readonly.
+//
+FunctionPass *createMarkModRefPass();
 
 //===----------------------------------------------------------------------===//
 //
