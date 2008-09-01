@@ -449,6 +449,7 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
   }
 
   GV->setInitializer(Init);
+  GV->setConstant(D->getType().isConstant(Context));
 
   // FIXME: This is silly; getTypeAlign should just work for incomplete arrays
   unsigned Align;

@@ -131,6 +131,8 @@ public:
   bool isRestrictQualified() const {
     return (ThePtr & Restrict) ? true : false;
   }
+
+  bool isConstant(ASTContext& Ctx) const;
   
   /// addConst/addVolatile/addRestrict - add the specified type qual to this
   /// QualType.

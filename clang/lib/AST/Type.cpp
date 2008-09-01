@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/AST/ASTContext.h"
 #include "clang/AST/Type.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
@@ -18,6 +19,16 @@
 #include "llvm/ADT/StringExtras.h"
 #include <sstream>
 using namespace clang;
+
+bool QualType::isConstant(ASTContext& Ctx) const {
+  if (isConstQualified())
+    return true;
+
+  if (getTypePtr()->isArrayType())
+    return Ctx.getAsArrayType(*this)->getElementType().isConstant(Ctx);
+
+  return false;
+}
 
 void Type::Destroy(ASTContext& C) { delete this; }
 
