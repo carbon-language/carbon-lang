@@ -235,3 +235,6 @@ struct soft_segment_descriptor gdt_segs[] = {
 	{(int) &dblfault_tss},
 	{ (int)xpto},
 };
+
+static void sppp_ipv6cp_up();
+const struct {} ipcp = { sppp_ipv6cp_up }; //expected-warning{{empty struct extension}} expected-warning{{excess elements in array initializer}}

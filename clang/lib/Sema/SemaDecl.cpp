@@ -1269,6 +1269,9 @@ bool Sema::CheckForConstantInitializer(Expr *Init, QualType DclT) {
   if (Init->getType()->isArrayType())
     return false;
 
+  if (Init->getType()->isFunctionType())
+    return false;
+
   Diag(Init->getExprLoc(), diag::err_init_element_not_constant,
        Init->getSourceRange());
   return true;
