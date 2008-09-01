@@ -157,9 +157,7 @@ public:
   /// for the specified node, adding it to the worklist if ready.
   SDNode *ReanalyzeNode(SDNode *N) {
     N->setNodeId(NewNode);
-    SDValue V(N, 0);
-    AnalyzeNewNode(V); // FIXME: ignore the change?
-    return V.getNode();
+    return AnalyzeNewNode(N);
   }
 
   void NoteDeletion(SDNode *Old, SDNode *New) {
@@ -171,6 +169,7 @@ public:
 
 private:
   void AnalyzeNewNode(SDValue &Val);
+  SDNode *AnalyzeNewNode(SDNode *N);
 
   void ReplaceValueWith(SDValue From, SDValue To);
   void ReplaceNodeWith(SDNode *From, SDNode *To);

@@ -221,11 +221,11 @@ NodeDone:
 /// AnalyzeNewNode - The specified node is the root of a subtree of potentially
 /// new nodes.  Correct any processed operands (this may change the node) and
 /// calculate the NodeId.
-void DAGTypeLegalizer::AnalyzeNewNode(SDValue &Val) {
-  SDNode * const N(Val.getNode());
+/// Returns the potentially changed node.
+SDNode *DAGTypeLegalizer::AnalyzeNewNode(SDNode *N) {
   // If this was an existing node that is already done, we're done.
   if (N->getNodeId() != NewNode)
-    return;
+    return N;
 
   // Remove any stale map entries.
   ExpungeNode(N);
@@ -268,15 +268,25 @@ void DAGTypeLegalizer::AnalyzeNewNode(SDValue &Val) {
 
   // Some operands changed - update the node.
   if (!NewOps.empty())
-    Val.setNode(DAG.UpdateNodeOperands(SDValue(N, 0),
-				       &NewOps[0],
-				       NewOps.size()).getNode());
+    N = DAG.UpdateNodeOperands(SDValue(N, 0),
+                               &NewOps[0],
+                               NewOps.size()).getNode();
 
-  SDNode * const Nu(Val.getNode());
-  Nu->setNodeId(Nu->getNumOperands()-NumProcessed);
-  if (Nu->getNodeId() == ReadyToProcess)
-    Worklist.push_back(Nu);
+  N->setNodeId(N->getNumOperands()-NumProcessed);
+  if (N->getNodeId() == ReadyToProcess)
+    Worklist.push_back(N);
+  return N;
 }
+
+/// AnalyzeNewNode - call AnalyzeNewNode(SDNode *N)
+/// and update the node in SDValue if necessary.
+void DAGTypeLegalizer::AnalyzeNewNode(SDValue &Val) {
+  SDNode *N(Val.getNode());
+  SDNode *M(AnalyzeNewNode(N));
+  if (N != M)
+    Val.setNode(M);
+}
+
 
 namespace {
   /// NodeUpdateListener - This class is a DAGUpdateListener that listens for
@@ -338,9 +348,7 @@ void DAGTypeLegalizer::ReplaceNodeWith(SDNode *From, SDNode *To) {
   // If expansion produced new nodes, make sure they are properly marked.
   ExpungeNode(From);
 
-  SDValue ToNode(To, 0);
-  AnalyzeNewNode(ToNode); // Expunges To.
-  To = ToNode.getNode();
+  To = AnalyzeNewNode(To); // Expunges To.
 
   assert(From->getNumValues() == To->getNumValues() &&
          "Node results don't match");
