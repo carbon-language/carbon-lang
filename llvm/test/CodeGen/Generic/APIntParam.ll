@@ -1,5 +1,4 @@
-; RUN: llvm-as < %s | llc
-; XFAIL: *
+; RUN: llvm-as < %s | llc -enable-legalize-types
 @i1_s = external global i1		; <i1*> [#uses=1]
 @i2_s = external global i2		; <i2*> [#uses=1]
 @i3_s = external global i3		; <i3*> [#uses=1]
