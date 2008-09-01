@@ -531,16 +531,16 @@ let isReturn = 1, isTerminator = 1 in
 let isCall = 1,
   Defs = [R0, R1, R2, R3, R12, LR,
           D0, D1, D2, D3, D4, D5, D6, D7, CPSR] in {
-  def BL  : AXI<0xB, (outs), (ins i32imm:$func, variable_ops), Branch,
+  def BL  : ABLI<0xB, (outs), (ins i32imm:$func, variable_ops), Branch,
                 "bl ${func:call}",
                 [(ARMcall tglobaladdr:$func)]>;
 
-  def BL_pred : AI<0xB, (outs), (ins i32imm:$func, variable_ops),
-                   Branch, "bl", " ${func:call}",
+  def BL_pred : ABLpredI<0xB, (outs), (ins i32imm:$func, variable_ops), Branch,
+                   "bl", " ${func:call}",
                    [(ARMcall_pred tglobaladdr:$func)]>;
 
   // ARMv5T and above
-  def BLX : AXI<0x2, (outs), (ins GPR:$func, variable_ops), BranchMisc,
+  def BLX : ABLXI<0x2, (outs), (ins GPR:$func, variable_ops), BranchMisc,
                 "blx $func",
                 [(ARMcall GPR:$func)]>, Requires<[IsARM, HasV5T]>;
   let Uses = [LR] in {
@@ -576,7 +576,7 @@ let isBranch = 1, isTerminator = 1 in {
 
   // FIXME: should be able to write a pattern for ARMBrcond, but can't use
   // a two-value operand where a dag node expects two operands. :( 
-  def Bcc : AI<0xA, (outs), (ins brtarget:$target), Branch,
+  def Bcc : ABccI<0xA, (outs), (ins brtarget:$target), Branch,
                "b", " $target",
                [/*(ARMbrcond bb:$target, imm:$cc, CCR:$ccr)*/]>;
 }

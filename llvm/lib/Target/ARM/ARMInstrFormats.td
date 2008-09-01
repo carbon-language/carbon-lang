@@ -135,10 +135,76 @@ class AXI<bits<4> opcod, dag oops, dag iops, Format f, string asm,
           list<dag> pattern>
   : XI<opcod, oops, iops, AddrModeNone, Size4Bytes, IndexModeNone, f, asm,
        "", pattern>;
+
+// Ctrl flow instructions
+class ABLpredI<bits<4> opcod, dag oops, dag iops, Format f, string opc,
+         string asm, list<dag> pattern>
+  : I<opcod, oops, iops, AddrModeNone, Size4Bytes, IndexModeNone, f, opc,
+      asm,"",pattern> {
+  let Inst{24}    = 1; // L bit
+  let Inst{25-27} = 5;
+}
+class ABLI<bits<4> opcod, dag oops, dag iops, Format f, string asm,
+          list<dag> pattern>
+  : XI<opcod, oops, iops, AddrModeNone, Size4Bytes, IndexModeNone, f, asm,
+       "", pattern> {
+  let Inst{24}    = 1; // L bit
+  let Inst{25-27} = 5;
+}
+class ABLXI<bits<4> opcod, dag oops, dag iops, Format f, string asm,
+          list<dag> pattern>
+  : XI<opcod, oops, iops, AddrModeNone, Size4Bytes, IndexModeNone, f, asm,
+       "", pattern> {
+  let Inst{4-7}   = 3;
+  let Inst{20-27} = 0x12;
+}
+// FIXME: BX
 class AXIx2<bits<4> opcod, dag oops, dag iops, Format f, string asm,
             list<dag> pattern>
   : XI<opcod, oops, iops, AddrModeNone, Size8Bytes, IndexModeNone, f, asm,
        "", pattern>;
+class ABI<bits<4> opcod, dag oops, dag iops, Format f, string asm,
+          list<dag> pattern>
+  : XI<opcod, oops, iops, AddrModeNone, Size4Bytes, IndexModeNone, f, asm,
+       "", pattern> {
+  let Inst{24}    = 0; // L bit
+  let Inst{25-27} = 5;
+}
+class ABccI<bits<4> opcod, dag oops, dag iops, Format f, string opc,
+         string asm, list<dag> pattern>
+  : I<opcod, oops, iops, AddrModeNone, Size4Bytes, IndexModeNone, f, opc,
+      asm,"",pattern> {
+  let Inst{24}    = 0; // L bit
+  let Inst{25-27} = 5;
+}
+
+// BR_JT instructions
+// == mov pc
+class JTI<bits<4> opcod, dag oops, dag iops, string asm, list<dag> pattern>
+  : XI<opcod, oops, iops, AddrModeNone, SizeSpecial, IndexModeNone, BranchMisc,
+       asm, "", pattern> {
+  let Inst{20}    = 0; // S Bit
+  let Inst{21-24} = 0xd;
+  let Inst{26-27} = 0;
+}
+// == ldr pc
+class JTI1<bits<4> opcod, dag oops, dag iops, string asm, list<dag> pattern>
+  : XI<opcod, oops, iops, AddrMode1, SizeSpecial, IndexModeNone, BranchMisc,
+       asm, "", pattern> {
+  let Inst{20}    = 1; // L bit
+  let Inst{21}    = 0; // W bit
+  let Inst{22}    = 0; // B bit
+  let Inst{24}    = 1; // P bit
+}
+// == add pc
+class JTI2<bits<4> opcod, dag oops, dag iops, string asm, list<dag> pattern>
+  : XI<opcod, oops, iops, AddrMode2, SizeSpecial, IndexModeNone, BranchMisc,
+       asm, "", pattern> {
+  let Inst{20}    = 0; // S bit
+  let Inst{21-24} = 4;
+  let Inst{26-27} = 0;
+}
+
 
 // addrmode1 instructions
 class AI1<bits<4> opcod, dag oops, dag iops, Format f, string opc,
@@ -604,18 +670,6 @@ class AXI4st<bits<4> opcod, dag oops, dag iops, Format f, string asm,
   let Inst{22}    = 0; // S bit
   let Inst{25-27} = 0x4;
 }
-
-
-// BR_JT instructions
-class JTI<bits<4> opcod, dag oops, dag iops, string asm, list<dag> pattern>
-  : XI<opcod, oops, iops, AddrModeNone, SizeSpecial, IndexModeNone, BranchMisc,
-       asm, "", pattern>;
-class JTI1<bits<4> opcod, dag oops, dag iops, string asm, list<dag> pattern>
-  : XI<opcod, oops, iops, AddrMode1, SizeSpecial, IndexModeNone, BranchMisc,
-       asm, "", pattern>;
-class JTI2<bits<4> opcod, dag oops, dag iops, string asm, list<dag> pattern>
-  : XI<opcod, oops, iops, AddrMode2, SizeSpecial, IndexModeNone, BranchMisc,
-       asm, "", pattern>;
 
 
 //===----------------------------------------------------------------------===//
