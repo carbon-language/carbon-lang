@@ -1076,13 +1076,6 @@ bool Sema::CheckArithmeticConstantExpression(const Expr* Init) {
     const Decl *D = cast<DeclRefExpr>(Init)->getDecl();
     if (isa<EnumConstantDecl>(D))
       return false;
-
-    if (const ValueDecl *VD = dyn_cast<ValueDecl>(D)) {
-      QualType Ty = VD->getType();
-      if (Ty->isPointerLikeType() || Ty->isArrayType())
-        return false;
-    }
-
     Diag(Init->getExprLoc(),
          diag::err_init_element_not_constant, Init->getSourceRange());
     return true;
@@ -1105,8 +1098,6 @@ bool Sema::CheckArithmeticConstantExpression(const Expr* Init) {
       Diag(Init->getExprLoc(),
            diag::err_init_element_not_constant, Init->getSourceRange());
       return true;
-    case UnaryOperator::AddrOf:
-      return false;
     case UnaryOperator::SizeOf:
     case UnaryOperator::AlignOf:
     case UnaryOperator::OffsetOf:
@@ -1169,7 +1160,12 @@ bool Sema::CheckArithmeticConstantExpression(const Expr* Init) {
   case Expr::ImplicitCastExprClass:
   case Expr::ExplicitCastExprClass: {
     const Expr *SubExpr = cast<CastExpr>(Init)->getSubExpr();
-    return CheckArithmeticConstantExpression(SubExpr);
+    if (SubExpr->getType()->isArithmeticType())
+      return CheckArithmeticConstantExpression(SubExpr);
+
+    Diag(Init->getExprLoc(),
+         diag::err_init_element_not_constant, Init->getSourceRange());
+    return true;
   }
   case Expr::ConditionalOperatorClass: {
     const ConditionalOperator *Exp = cast<ConditionalOperator>(Init);
