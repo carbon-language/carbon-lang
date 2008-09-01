@@ -191,9 +191,27 @@ class AI2ldw<bits<4> opcod, dag oops, dag iops, Format f, string opc,
   let Inst{22}    = 0; // B bit
   let Inst{24}    = 1; // P bit
 }
+class AXI2ldw<bits<4> opcod, dag oops, dag iops, Format f, string asm,
+           list<dag> pattern>
+  : XI<opcod, oops, iops, AddrMode2, Size4Bytes, IndexModeNone, f, asm,
+       "", pattern> {
+  let Inst{20}    = 1; // L bit
+  let Inst{21}    = 0; // W bit
+  let Inst{22}    = 0; // B bit
+  let Inst{24}    = 1; // P bit
+}
 class AI2ldb<bits<4> opcod, dag oops, dag iops, Format f, string opc,
           string asm, list<dag> pattern>
   : AI2<opcod, oops, iops, f, opc, asm, pattern> {
+  let Inst{20}    = 1; // L bit
+  let Inst{21}    = 0; // W bit
+  let Inst{22}    = 1; // B bit
+  let Inst{24}    = 1; // P bit
+}
+class AXI2ldb<bits<4> opcod, dag oops, dag iops, Format f, string asm,
+           list<dag> pattern>
+  : XI<opcod, oops, iops, AddrMode2, Size4Bytes, IndexModeNone, f, asm,
+       "", pattern> {
   let Inst{20}    = 1; // L bit
   let Inst{21}    = 0; // W bit
   let Inst{22}    = 1; // B bit
@@ -209,9 +227,27 @@ class AI2stw<bits<4> opcod, dag oops, dag iops, Format f, string opc,
   let Inst{22}    = 0; // B bit
   let Inst{24}    = 1; // P bit
 }
+class AXI2stw<bits<4> opcod, dag oops, dag iops, Format f, string asm,
+           list<dag> pattern>
+  : XI<opcod, oops, iops, AddrMode2, Size4Bytes, IndexModeNone, f, asm,
+       "", pattern> {
+  let Inst{20}    = 0; // L bit
+  let Inst{21}    = 0; // W bit
+  let Inst{22}    = 0; // B bit
+  let Inst{24}    = 1; // P bit
+}
 class AI2stb<bits<4> opcod, dag oops, dag iops, Format f, string opc,
           string asm, list<dag> pattern>
   : AI2<opcod, oops, iops, f, opc, asm, pattern> {
+  let Inst{20}    = 0; // L bit
+  let Inst{21}    = 0; // W bit
+  let Inst{22}    = 1; // B bit
+  let Inst{24}    = 1; // P bit
+}
+class AXI2stb<bits<4> opcod, dag oops, dag iops, Format f, string asm,
+           list<dag> pattern>
+  : XI<opcod, oops, iops, AddrMode2, Size4Bytes, IndexModeNone, f, asm,
+       "", pattern> {
   let Inst{20}    = 0; // L bit
   let Inst{21}    = 0; // W bit
   let Inst{22}    = 1; // B bit
@@ -321,6 +357,18 @@ class AI3ldh<bits<4> opcod, dag oops, dag iops, Format f, string opc,
   let Inst{21}    = 0; // W bit
   let Inst{24}    = 1; // P bit
 }
+class AXI3ldh<bits<4> opcod, dag oops, dag iops, Format f, string asm,
+           list<dag> pattern>
+  : XI<opcod, oops, iops, AddrMode3, Size4Bytes, IndexModeNone, f, asm,
+       "", pattern> {
+  let Inst{4}     = 1;
+  let Inst{5}     = 1; // H bit
+  let Inst{6}     = 0; // S bit
+  let Inst{7}     = 1;
+  let Inst{20}    = 1; // L bit
+  let Inst{21}    = 0; // W bit
+  let Inst{24}    = 1; // P bit
+}
 class AI3ldsh<bits<4> opcod, dag oops, dag iops, Format f, string opc,
           string asm, list<dag> pattern>
   : I<opcod, oops, iops, AddrMode3, Size4Bytes, IndexModeNone, f, opc,
@@ -333,10 +381,34 @@ class AI3ldsh<bits<4> opcod, dag oops, dag iops, Format f, string opc,
   let Inst{21}    = 0; // W bit
   let Inst{24}    = 1; // P bit
 }
+class AXI3ldsh<bits<4> opcod, dag oops, dag iops, Format f, string asm,
+           list<dag> pattern>
+  : XI<opcod, oops, iops, AddrMode3, Size4Bytes, IndexModeNone, f, asm,
+       "", pattern> {
+  let Inst{4}     = 1;
+  let Inst{5}     = 1; // H bit
+  let Inst{6}     = 1; // S bit
+  let Inst{7}     = 1;
+  let Inst{20}    = 1; // L bit
+  let Inst{21}    = 0; // W bit
+  let Inst{24}    = 1; // P bit
+}
 class AI3ldsb<bits<4> opcod, dag oops, dag iops, Format f, string opc,
           string asm, list<dag> pattern>
   : I<opcod, oops, iops, AddrMode3, Size4Bytes, IndexModeNone, f, opc,
       asm, "", pattern> {
+  let Inst{4}     = 1;
+  let Inst{5}     = 0; // H bit
+  let Inst{6}     = 1; // S bit
+  let Inst{7}     = 1;
+  let Inst{20}    = 1; // L bit
+  let Inst{21}    = 0; // W bit
+  let Inst{24}    = 1; // P bit
+}
+class AXI3ldsb<bits<4> opcod, dag oops, dag iops, Format f, string asm,
+           list<dag> pattern>
+  : XI<opcod, oops, iops, AddrMode3, Size4Bytes, IndexModeNone, f, asm,
+       "", pattern> {
   let Inst{4}     = 1;
   let Inst{5}     = 0; // H bit
   let Inst{6}     = 1; // S bit
@@ -363,6 +435,18 @@ class AI3sth<bits<4> opcod, dag oops, dag iops, Format f, string opc,
           string asm, list<dag> pattern>
   : I<opcod, oops, iops, AddrMode3, Size4Bytes, IndexModeNone, f, opc,
       asm, "", pattern> {
+  let Inst{4}     = 1;
+  let Inst{5}     = 1; // H bit
+  let Inst{6}     = 0; // S bit
+  let Inst{7}     = 1;
+  let Inst{20}    = 0; // L bit
+  let Inst{21}    = 0; // W bit
+  let Inst{24}    = 1; // P bit
+}
+class AXI3sth<bits<4> opcod, dag oops, dag iops, Format f, string asm,
+           list<dag> pattern>
+  : XI<opcod, oops, iops, AddrMode3, Size4Bytes, IndexModeNone, f, asm,
+       "", pattern> {
   let Inst{4}     = 1;
   let Inst{5}     = 1; // H bit
   let Inst{6}     = 0; // S bit

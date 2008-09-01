@@ -469,44 +469,44 @@ def PICADD : AXI1<0x0, (outs GPR:$dst), (ins GPR:$a, pclabel:$cp, pred:$p),
 
 let AddedComplexity = 10 in {
 let isSimpleLoad = 1 in
-def PICLD   : AXI2<0x0, (outs GPR:$dst), (ins addrmodepc:$addr, pred:$p),
+def PICLD   : AXI2ldw<0x0, (outs GPR:$dst), (ins addrmodepc:$addr, pred:$p),
                   Pseudo, "${addr:label}:\n\tldr$p $dst, $addr",
                   [(set GPR:$dst, (load addrmodepc:$addr))]>;
 
-def PICLDZH : AXI3<0x0, (outs GPR:$dst), (ins addrmodepc:$addr, pred:$p),
+def PICLDZH : AXI3ldh<0x0, (outs GPR:$dst), (ins addrmodepc:$addr, pred:$p),
                   Pseudo, "${addr:label}:\n\tldr${p}h $dst, $addr",
                   [(set GPR:$dst, (zextloadi16 addrmodepc:$addr))]>;
 
-def PICLDZB : AXI2<0x0, (outs GPR:$dst), (ins addrmodepc:$addr, pred:$p),
+def PICLDZB : AXI2ldb<0x0, (outs GPR:$dst), (ins addrmodepc:$addr, pred:$p),
                   Pseudo, "${addr:label}:\n\tldr${p}b $dst, $addr",
                   [(set GPR:$dst, (zextloadi8 addrmodepc:$addr))]>;
 
-def PICLDH  : AXI3<0x0, (outs GPR:$dst), (ins addrmodepc:$addr, pred:$p),
+def PICLDH  : AXI3ldh<0x0, (outs GPR:$dst), (ins addrmodepc:$addr, pred:$p),
                   Pseudo, "${addr:label}:\n\tldr${p}h $dst, $addr",
                   [(set GPR:$dst, (extloadi16 addrmodepc:$addr))]>;
 
-def PICLDB  : AXI2<0x0, (outs GPR:$dst), (ins addrmodepc:$addr, pred:$p),
+def PICLDB  : AXI2ldb<0x0, (outs GPR:$dst), (ins addrmodepc:$addr, pred:$p),
                   Pseudo, "${addr:label}:\n\tldr${p}b $dst, $addr",
                   [(set GPR:$dst, (extloadi8 addrmodepc:$addr))]>;
 
-def PICLDSH : AXI3<0x0, (outs GPR:$dst), (ins addrmodepc:$addr, pred:$p),
+def PICLDSH : AXI3ldsh<0x0, (outs GPR:$dst), (ins addrmodepc:$addr, pred:$p),
                   Pseudo, "${addr:label}:\n\tldr${p}sh $dst, $addr",
                   [(set GPR:$dst, (sextloadi16 addrmodepc:$addr))]>;
 
-def PICLDSB : AXI3<0x0, (outs GPR:$dst), (ins addrmodepc:$addr, pred:$p),
+def PICLDSB : AXI3ldsb<0x0, (outs GPR:$dst), (ins addrmodepc:$addr, pred:$p),
                   Pseudo, "${addr:label}:\n\tldr${p}sb $dst, $addr",
                   [(set GPR:$dst, (sextloadi8 addrmodepc:$addr))]>;
 }
 let AddedComplexity = 10 in {
-def PICSTR  : AXI2<0x0, (outs), (ins GPR:$src, addrmodepc:$addr, pred:$p),
+def PICSTR  : AXI2stw<0x0, (outs), (ins GPR:$src, addrmodepc:$addr, pred:$p),
                Pseudo, "${addr:label}:\n\tstr$p $src, $addr",
                [(store GPR:$src, addrmodepc:$addr)]>;
 
-def PICSTRH : AXI3<0x0, (outs), (ins GPR:$src, addrmodepc:$addr, pred:$p),
+def PICSTRH : AXI3sth<0x0, (outs), (ins GPR:$src, addrmodepc:$addr, pred:$p),
                Pseudo, "${addr:label}:\n\tstr${p}h $src, $addr",
                [(truncstorei16 GPR:$src, addrmodepc:$addr)]>;
 
-def PICSTRB : AXI2<0x0, (outs), (ins GPR:$src, addrmodepc:$addr, pred:$p),
+def PICSTRB : AXI2stb<0x0, (outs), (ins GPR:$src, addrmodepc:$addr, pred:$p),
                Pseudo, "${addr:label}:\n\tstr${p}b $src, $addr",
                [(truncstorei8 GPR:$src, addrmodepc:$addr)]>;
 }
