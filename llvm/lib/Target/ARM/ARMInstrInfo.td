@@ -597,7 +597,7 @@ def LDRcp : AI2ldw<0x0, (outs GPR:$dst), (ins addrmode2:$addr), LdFrm,
                  "ldr", " $dst, $addr", []>;
 
 // Loads with zero extension
-def LDRH  : AI3<0xB, (outs GPR:$dst), (ins addrmode3:$addr), LdFrm,
+def LDRH  : AI3ldh<0xB, (outs GPR:$dst), (ins addrmode3:$addr), LdFrm,
                  "ldr", "h $dst, $addr",
                 [(set GPR:$dst, (zextloadi16 addrmode3:$addr))]>;
 
@@ -606,17 +606,17 @@ def LDRB  : AI2ldb<0x1, (outs GPR:$dst), (ins addrmode2:$addr), LdFrm,
                 [(set GPR:$dst, (zextloadi8 addrmode2:$addr))]>;
 
 // Loads with sign extension
-def LDRSH : AI3<0xE, (outs GPR:$dst), (ins addrmode3:$addr), LdFrm,
+def LDRSH : AI3ldsh<0xE, (outs GPR:$dst), (ins addrmode3:$addr), LdFrm,
                  "ldr", "sh $dst, $addr",
                 [(set GPR:$dst, (sextloadi16 addrmode3:$addr))]>;
 
-def LDRSB : AI3<0xD, (outs GPR:$dst), (ins addrmode3:$addr), LdFrm,
+def LDRSB : AI3ldsb<0xD, (outs GPR:$dst), (ins addrmode3:$addr), LdFrm,
                  "ldr", "sb $dst, $addr",
                 [(set GPR:$dst, (sextloadi8 addrmode3:$addr))]>;
 
 let mayLoad = 1 in {
 // Load doubleword
-def LDRD  : AI3<0xD, (outs GPR:$dst), (ins addrmode3:$addr), LdFrm,
+def LDRD  : AI3ldd<0xD, (outs GPR:$dst), (ins addrmode3:$addr), LdFrm,
                  "ldr", "d $dst, $addr",
                 []>, Requires<[IsARM, HasV5T]>;
 
@@ -629,11 +629,11 @@ def LDR_POST : AI2ldwpo<0x0, (outs GPR:$dst, GPR:$base_wb),
                      (ins GPR:$base, am2offset:$offset), LdFrm,
                      "ldr", " $dst, [$base], $offset", "$base = $base_wb", []>;
 
-def LDRH_PRE  : AI3pr<0xB, (outs GPR:$dst, GPR:$base_wb),
+def LDRH_PRE  : AI3ldhpr<0xB, (outs GPR:$dst, GPR:$base_wb),
                      (ins addrmode3:$addr), LdFrm,
                      "ldr", "h $dst, $addr!", "$addr.base = $base_wb", []>;
 
-def LDRH_POST : AI3po<0xB, (outs GPR:$dst, GPR:$base_wb),
+def LDRH_POST : AI3ldhpo<0xB, (outs GPR:$dst, GPR:$base_wb),
                      (ins GPR:$base,am3offset:$offset), LdFrm,
                      "ldr", "h $dst, [$base], $offset", "$base = $base_wb", []>;
 
@@ -645,19 +645,19 @@ def LDRB_POST : AI2ldbpo<0x1, (outs GPR:$dst, GPR:$base_wb),
                      (ins GPR:$base,am2offset:$offset), LdFrm,
                      "ldr", "b $dst, [$base], $offset", "$base = $base_wb", []>;
 
-def LDRSH_PRE : AI3pr<0xE, (outs GPR:$dst, GPR:$base_wb),
+def LDRSH_PRE : AI3ldshpr<0xE, (outs GPR:$dst, GPR:$base_wb),
                       (ins addrmode3:$addr), LdFrm,
                       "ldr", "sh $dst, $addr!", "$addr.base = $base_wb", []>;
 
-def LDRSH_POST: AI3po<0xE, (outs GPR:$dst, GPR:$base_wb),
+def LDRSH_POST: AI3ldshpo<0xE, (outs GPR:$dst, GPR:$base_wb),
                       (ins GPR:$base,am3offset:$offset), LdFrm,
                       "ldr", "sh $dst, [$base], $offset", "$base = $base_wb", []>;
 
-def LDRSB_PRE : AI3pr<0xD, (outs GPR:$dst, GPR:$base_wb),
+def LDRSB_PRE : AI3ldsbpr<0xD, (outs GPR:$dst, GPR:$base_wb),
                       (ins addrmode3:$addr), LdFrm,
                       "ldr", "sb $dst, $addr!", "$addr.base = $base_wb", []>;
 
-def LDRSB_POST: AI3po<0xD, (outs GPR:$dst, GPR:$base_wb),
+def LDRSB_POST: AI3ldsbpo<0xD, (outs GPR:$dst, GPR:$base_wb),
                       (ins GPR:$base,am3offset:$offset), LdFrm,
                       "ldr", "sb $dst, [$base], $offset", "$base = $base_wb", []>;
 }
@@ -668,7 +668,7 @@ def STR  : AI2stw<0x0, (outs), (ins GPR:$src, addrmode2:$addr), StFrm,
                [(store GPR:$src, addrmode2:$addr)]>;
 
 // Stores with truncate
-def STRH : AI3<0xB, (outs), (ins GPR:$src, addrmode3:$addr), StFrm,
+def STRH : AI3sth<0xB, (outs), (ins GPR:$src, addrmode3:$addr), StFrm,
                "str", "h $src, $addr",
                [(truncstorei16 GPR:$src, addrmode3:$addr)]>;
 
@@ -678,7 +678,7 @@ def STRB : AI2stb<0x1, (outs), (ins GPR:$src, addrmode2:$addr), StFrm,
 
 // Store doubleword
 let mayStore = 1 in
-def STRD : AI3<0xF, (outs), (ins GPR:$src, addrmode3:$addr), StFrm,
+def STRD : AI3std<0xF, (outs), (ins GPR:$src, addrmode3:$addr), StFrm,
                "str", "d $src, $addr",
                []>, Requires<[IsARM, HasV5T]>;
 
@@ -695,13 +695,13 @@ def STR_POST : AI2stwpo<0x0, (outs GPR:$base_wb),
                     [(set GPR:$base_wb,
                       (post_store GPR:$src, GPR:$base, am2offset:$offset))]>;
 
-def STRH_PRE : AI3pr<0xB, (outs GPR:$base_wb),
+def STRH_PRE : AI3sthpr<0xB, (outs GPR:$base_wb),
                      (ins GPR:$src, GPR:$base,am3offset:$offset), StFrm,
                      "str", "h $src, [$base, $offset]!", "$base = $base_wb",
                     [(set GPR:$base_wb,
                       (pre_truncsti16 GPR:$src, GPR:$base,am3offset:$offset))]>;
 
-def STRH_POST: AI3po<0xB, (outs GPR:$base_wb),
+def STRH_POST: AI3sthpo<0xB, (outs GPR:$base_wb),
                      (ins GPR:$src, GPR:$base,am3offset:$offset), StFrm,
                      "str", "h $src, [$base], $offset", "$base = $base_wb",
                     [(set GPR:$base_wb, (post_truncsti16 GPR:$src,
