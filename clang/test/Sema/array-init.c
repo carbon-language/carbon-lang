@@ -222,3 +222,16 @@ struct {int:5;} x[] = {6}; //expected-error{{initializer for aggregate with no e
 struct {int a; int:5;} noNamedImplicit[] = {1,2,3};
 int noNamedImplicitCheck[sizeof(noNamedImplicit) == 3 * sizeof(*noNamedImplicit) ? 1 : -1];
 
+
+// ptrs are constant
+struct soft_segment_descriptor {
+	int ssd_base;
+};
+static int dblfault_tss;
+
+union uniao { int ola; } xpto[1];
+
+struct soft_segment_descriptor gdt_segs[] = {
+	{(int) &dblfault_tss},
+	{ (int)xpto},
+};
