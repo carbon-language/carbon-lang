@@ -965,7 +965,9 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
 
     TheJIT->RegisterTable(FrameRegister);
   }
-  MMI->EndFunction();
+
+  if (MMI)
+    MMI->EndFunction();
  
   return false;
 }
