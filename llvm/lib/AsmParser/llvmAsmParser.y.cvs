@@ -1297,21 +1297,21 @@ OptFuncAttrs  : /* empty */ { $$ = ParamAttr::None; }
 FuncNoteList  : FuncNote { $$ = $1; }
               | FuncNoteList ',' FuncNote { 
                 FunctionNotes tmp = $1 | $3;
-                if ($3 == FP_NoInline && ($1 & FP_AlwaysInline))
+                if ($3 == FN_NOTE_NoInline && ($1 & FN_NOTE_AlwaysInline))
                   GEN_ERROR("Function Notes may include only one inline notes!")
-                if ($3 == FP_AlwaysInline && ($1 & FP_NoInline))
+                if ($3 == FN_NOTE_AlwaysInline && ($1 & FN_NOTE_NoInline))
                   GEN_ERROR("Function Notes may include only one inline notes!")
                 $$ = tmp;
                 CHECK_FOR_ERROR 
               }
               ;
 
-FuncNote      : INLINE '=' NEVER { $$ = FP_NoInline; }
-              | INLINE '=' ALWAYS { $$ = FP_AlwaysInline; }
-              | OPTIMIZEFORSIZE { $$ = FP_OptimizeForSize; }
+FuncNote      : INLINE '=' NEVER { $$ = FN_NOTE_NoInline; }
+              | INLINE '=' ALWAYS { $$ = FN_NOTE_AlwaysInline; }
+              | OPTIMIZEFORSIZE { $$ = FN_NOTE_OptimizeForSize; }
               ;
 
-OptFuncNotes  : /* empty */ { $$ = FP_None; }
+OptFuncNotes  : /* empty */ { $$ = FN_NOTE_None; }
               | FNNOTE '(' FuncNoteList  ')' {
                 $$ =  $3;
               }

@@ -142,9 +142,9 @@ bool Inliner::runOnSCC(const std::vector<CallGraphNode*> &SCC) {
 
         Function *Fn = CS.getCalledFunction();
         bool AlwaysInline = false;
-        if (Fn && (Fn->getNotes() & FP_AlwaysInline))
+        if (Fn && (Fn->getNotes() & FN_NOTE_AlwaysInline))
           AlwaysInline = true;
-        if (Fn && (Fn->getNotes() & FP_NoInline))
+        if (Fn && (Fn->getNotes() & FN_NOTE_NoInline))
           DOUT << "NOT Inlining: inline=never is set" << *CS.getInstruction();
         else if (!AlwaysInline 
                  && InlineCost >= (int)(InlineThreshold * FudgeFactor)) {

@@ -1396,11 +1396,11 @@ void AssemblyWriter::printFunction(const Function *F) {
   if (F->hasGC())
     Out << " gc \"" << F->getGC() << '"';
   FunctionNotes FNotes = F->getNotes();
-  if (FNotes != FP_None) {
+  if (FNotes != FN_NOTE_None) {
     Out << " notes(";
-    if (FNotes & FP_AlwaysInline)
+    if (FNotes & FN_NOTE_AlwaysInline)
       Out << "inline=always";
-    else if (FNotes & FP_NoInline)
+    else if (FNotes & FN_NOTE_NoInline)
       Out << "inline=never";
     Out << ")";
   }

@@ -52,10 +52,10 @@ template<> struct ilist_traits<Argument>
 };
 
 typedef unsigned FunctionNotes;
-const FunctionNotes FP_None            = 0;   
-const FunctionNotes FP_NoInline        = 1<<0;
-const FunctionNotes FP_AlwaysInline    = 1<<1;
-const FunctionNotes FP_OptimizeForSize = 1<<2;
+const FunctionNotes FN_NOTE_None            = 0;   
+const FunctionNotes FN_NOTE_NoInline        = 1<<0;
+const FunctionNotes FN_NOTE_AlwaysInline    = 1<<1;
+const FunctionNotes FN_NOTE_OptimizeForSize = 1<<2;
 
 class Function : public GlobalValue, public Annotable,
                  public ilist_node<Function> {
@@ -155,13 +155,13 @@ public:
   ///
   void setParamAttrs(const PAListPtr &attrs) { ParamAttrs = attrs; }
 
-  /// getNotes - Return this function properties
+  /// getNotes - Return function notes
   ///
   const FunctionNotes &getNotes() const { return Notes; }
 
-  /// setNotes - Set properties for this function
+  /// setNotes - Set notes for this function
   ///
-  void setNotes(const FunctionNotes P) { Notes = P;}
+  void setNotes(const FunctionNotes P) { Notes = Notes | P;}
 
   /// hasGC/getGC/setGC/clearGC - The name of the garbage collection algorithm
   ///                             to use during code generation.
