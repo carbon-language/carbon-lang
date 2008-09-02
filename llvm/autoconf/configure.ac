@@ -975,6 +975,8 @@ if test "$binding_prereqs_failed" = 1 ; then
   AC_MSG_ERROR([Prequisites for bindings not satisfied. Fix them or use configure --disable-bindings.])
 fi
 
+dnl Determine if the compiler supports -fvisibility-inlines-hidden.
+AC_CXX_USE_VISIBILITY_INLINES_HIDDEN
 
 dnl===-----------------------------------------------------------------------===
 dnl===
