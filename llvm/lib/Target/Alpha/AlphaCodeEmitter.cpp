@@ -33,7 +33,8 @@ namespace {
 
     /// getMachineOpValue - evaluates the MachineOperand of a given MachineInstr
     ///
-    int getMachineOpValue(MachineInstr &MI, MachineOperand &MO);
+    unsigned getMachineOpValue(const MachineInstr &MI,
+                               const MachineOperand &MO);
 
   public:
     static char ID;
@@ -55,7 +56,7 @@ namespace {
     /// CodeEmitterGenerator using TableGen, produces the binary encoding for
     /// machine instructions.
     ///
-    unsigned getBinaryCodeForInstr(MachineInstr &MI);
+    unsigned getBinaryCodeForInstr(const MachineInstr &MI);
 
   private:
     void emitBasicBlock(MachineBasicBlock &MBB);
@@ -87,7 +88,7 @@ void AlphaCodeEmitter::emitBasicBlock(MachineBasicBlock &MBB) {
   MCE.StartMachineBasicBlock(&MBB);
   for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end();
        I != E; ++I) {
-    MachineInstr &MI = *I;
+    const MachineInstr &MI = *I;
     switch(MI.getOpcode()) {
     default:
       MCE.emitWordLE(getBinaryCodeForInstr(*I));
@@ -141,10 +142,11 @@ static unsigned getAlphaRegNumber(unsigned Reg) {
   }
 }
 
-int AlphaCodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
+unsigned AlphaCodeEmitter::getMachineOpValue(const MachineInstr &MI,
+                                             const MachineOperand &MO) {
 
-  int rv = 0; // Return value; defaults to 0 for unhandled cases
-              // or things that get fixed up later by the JIT.
+  unsigned rv = 0; // Return value; defaults to 0 for unhandled cases
+                   // or things that get fixed up later by the JIT.
 
   if (MO.isRegister()) {
     rv = getAlphaRegNumber(MO.getReg());

@@ -38,7 +38,7 @@ namespace {
     
     /// getMachineOpValue - evaluates the MachineOperand of a given MachineInstr
     ///
-    int getMachineOpValue(MachineInstr &MI, MachineOperand &MO);
+    unsigned getMachineOpValue(const MachineInstr &MI, const MachineOperand &MO);
     
     void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<MachineModuleInfo>();
@@ -68,7 +68,7 @@ namespace {
     /// CodeEmitterGenerator using TableGen, produces the binary encoding for
     /// machine instructions.
     ///
-    unsigned getBinaryCodeForInstr(MachineInstr &MI);
+    unsigned getBinaryCodeForInstr(const MachineInstr &MI);
   };
   char PPCCodeEmitter::ID = 0;
 }
@@ -100,10 +100,10 @@ void PPCCodeEmitter::emitBasicBlock(MachineBasicBlock &MBB) {
   MCE.StartMachineBasicBlock(&MBB);
   
   for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end(); I != E; ++I){
-    MachineInstr &MI = *I;
+    const MachineInstr &MI = *I;
     switch (MI.getOpcode()) {
     default:
-      MCE.emitWordBE(getBinaryCodeForInstr(*I));
+      MCE.emitWordBE(getBinaryCodeForInstr(MI));
       break;
     case TargetInstrInfo::DBG_LABEL:
     case TargetInstrInfo::EH_LABEL:
@@ -121,9 +121,10 @@ void PPCCodeEmitter::emitBasicBlock(MachineBasicBlock &MBB) {
   }
 }
 
-int PPCCodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
+unsigned PPCCodeEmitter::getMachineOpValue(const MachineInstr &MI,
+                                           const MachineOperand &MO) {
 
-  intptr_t rv = 0; // Return value; defaults to 0 for unhandled cases
+  unsigned rv = 0; // Return value; defaults to 0 for unhandled cases
                    // or things that get fixed up later by the JIT.
   if (MO.isRegister()) {
     rv = PPCRegisterInfo::getRegisterNumbering(MO.getReg());

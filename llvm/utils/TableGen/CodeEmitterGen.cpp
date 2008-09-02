@@ -89,7 +89,7 @@ void CodeEmitterGen::run(std::ostream &o) {
 
   // Emit function declaration
   o << "unsigned " << Target.getName() << "CodeEmitter::"
-    << "getBinaryCodeForInstr(MachineInstr &MI) {\n";
+    << "getBinaryCodeForInstr(const MachineInstr &MI) {\n";
 
   // Emit instruction base values
   o << "  static const unsigned InstBits[] = {\n";
@@ -221,6 +221,7 @@ void CodeEmitterGen::run(std::ostream &o) {
   o << "  const unsigned opcode = MI.getOpcode();\n"
     << "  unsigned Value = InstBits[opcode];\n"
     << "  unsigned op;\n"
+    << "  op = op;  // suppress warning\n"
     << "  switch (opcode) {\n";
 
   // Emit each case statement
