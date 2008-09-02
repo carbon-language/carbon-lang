@@ -26,7 +26,7 @@ def checkenv(name, alternate=None):
 CCC_ECHO = checkenv('CCC_ECHO','1')
 CCC_NATIVE = checkenv('CCC_NATIVE')
 CCC_FALLBACK = checkenv('CCC_FALLBACK')
-CCC_LANGUAGES = checkenv('CCC_LANGUAGES')
+CCC_LANGUAGES = checkenv('CCC_LANGUAGES','c,c++,c-cpp-output,objective-c,objective-c++,objective-c-cpp-output')
 if CCC_LANGUAGES:
     CCC_LANGUAGES = set([s.strip() for s in CCC_LANGUAGES.split(',')])
 
@@ -164,6 +164,10 @@ def inferlanguage(extension):
         return "objective-c++"
     elif extension == "mi":
         return "objective-c-cpp-output"
+    elif extension == "s":
+        return "assembler"
+    elif extension == "S":
+        return "assembler-with-cpp"
     else:
         return "unknown"
 
