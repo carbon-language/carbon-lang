@@ -1512,10 +1512,12 @@ bool llvm::verifyFunction(const Function &f, VerifierFailureAction action) {
   Function &F = const_cast<Function&>(f);
   assert(!F.isDeclaration() && "Cannot verify external functions");
 
-  FunctionPassManager FPM(new ExistingModuleProvider(F.getParent()));
+  ExistingModuleProvider MP(F.getParent());
+  FunctionPassManager FPM(&MP);
   Verifier *V = new Verifier(action);
   FPM.add(V);
   FPM.run(F);
+  MP.releaseModule();
   return V->Broken;
 }
 
