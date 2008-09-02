@@ -476,13 +476,6 @@ static void InitializePredefinedMacros(Preprocessor &PP,
     DefineBuiltinMacro(Buf, "__int64=long long");
     DefineBuiltinMacro(Buf, "__declspec(X)=");
   }
-  if (PP.getLangOptions().Blocks) {
-    DefineBuiltinMacro(Buf, "__byref=__attribute__((__blocks__(byref)))");
-    DefineBuiltinMacro(Buf, "__block=__attribute__((__blocks__(byref)))");
-  } else {
-    DefineBuiltinMacro(Buf, "__byref=");
-    DefineBuiltinMacro(Buf, "__block=");
-  }
   // FIXME: Should emit a #line directive here.
 }
 
