@@ -1683,9 +1683,10 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
   // If this is a named struct, check to see if there was a previous forward
   // declaration or definition.
   // Use ScopedDecl instead of TagDecl, because a NamespaceDecl may come up.
-  if (ScopedDecl *PrevDecl = 
-          dyn_cast_or_null<ScopedDecl>(LookupDecl(Name, Decl::IDNS_Tag, S))) {
-    
+  ScopedDecl *PrevDecl = 
+    dyn_cast_or_null<ScopedDecl>(LookupDecl(Name, Decl::IDNS_Tag, S));
+  
+  if (PrevDecl) {    
     assert((isa<TagDecl>(PrevDecl) || isa<NamespaceDecl>(PrevDecl)) &&
             "unexpected Decl type");
     if (TagDecl *PrevTagDecl = dyn_cast<TagDecl>(PrevDecl)) {
@@ -1758,9 +1759,18 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
     // struct X { int A; } D;    D should chain to X.
     if (getLangOptions().CPlusPlus)
       // FIXME: Look for a way to use RecordDecl for simple structs.
-      New = CXXRecordDecl::Create(Context, Kind, CurContext, Loc, Name, 0);
+
+      // We use 'dyn_cast' instead of 'cast' because PrevDecl might not
+      // be a CXXRecordDecl* if we had a redefinition error.  In this case,
+      // the dyn_cast will return a NULL pointer.
+      New = CXXRecordDecl::Create(Context, Kind, CurContext, Loc, Name,
+                                  dyn_cast_or_null<CXXRecordDecl>(PrevDecl));
     else
-      New = RecordDecl::Create(Context, Kind, CurContext, Loc, Name, 0);
+      // We use 'dyn_cast' instead of 'cast' because PrevDecl might not
+      // be a RecordDecl* if we had a redefinition error.  In this case,
+      // the dyn_cast will return a NULL pointer.      
+      New = RecordDecl::Create(Context, Kind, CurContext, Loc, Name,
+                               dyn_cast_or_null<RecordDecl>(PrevDecl));
   }
   
   // If this has an identifier, add it to the scope stack.
