@@ -5536,7 +5536,7 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB,
     }
 
   // Handle PHI nodes in successor blocks.
-  if (Begin != End && End == LLVMBB->end())
+  if (End == LLVMBB->end())
     HandlePHINodesInSuccessorBlocks(LLVMBB);
     
   // Make sure the root of the DAG is up-to-date.
@@ -5798,8 +5798,14 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn, MachineFunction &MF) {
       }
     }
 
-    if (Begin != End)
-      SelectBasicBlock(LLVMBB, Begin, End);
+    // Run SelectionDAG instruction selection on the remainder of the block
+    // not handled by FastISel. If FastISel is not run, this is the entire
+    // block. If FastISel is run and happens to handle all of the
+    // LLVM Instructions in the block, [Begin,End) will be an empty range,
+    // but we still need to run this so that
+    // HandlePHINodesInSuccessorBlocks is called and any resulting code
+    // is emitted.
+    SelectBasicBlock(LLVMBB, Begin, End);
 
     FinishBasicBlock();
   }
