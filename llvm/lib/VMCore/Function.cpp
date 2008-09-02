@@ -173,6 +173,8 @@ Function::Function(const FunctionType *Ty, LinkageTypes Linkage,
   // Ensure intrinsics have the right parameter attributes.
   if (unsigned IID = getIntrinsicID(true))
     setParamAttrs(Intrinsic::getParamAttrs(Intrinsic::ID(IID)));
+
+  Notes = 0;
 }
 
 Function::~Function() {
