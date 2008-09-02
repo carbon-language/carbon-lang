@@ -449,11 +449,11 @@ void RecordDecl::EmitImpl(Serializer& S) const {
   ScopedDecl::EmitInRec(S);
   S.EmitBool(isDefinition());
   S.EmitBool(hasFlexibleArrayMember());
+  S.EmitPtr(NextDecl);
   S.EmitSInt(getNumMembers());
   if (getNumMembers() > 0) {
     assert (Members);
-    S.BatchEmitOwnedPtrs((unsigned) getNumMembers(),
-                         (Decl**) &Members[0],getNextDeclarator());
+    S.BatchEmitOwnedPtrs((unsigned) getNumMembers(), (Decl**) &Members[0]);
   }
   else
     ScopedDecl::EmitOutRec(S);
@@ -468,17 +468,14 @@ RecordDecl* RecordDecl::CreateImpl(Decl::Kind DK, Deserializer& D,
   decl->ScopedDecl::ReadInRec(D, C);
   decl->setDefinition(D.ReadBool());
   decl->setHasFlexibleArrayMember(D.ReadBool());
+  D.ReadPtr(decl->NextDecl); // Allow backpatching.
   decl->NumMembers = D.ReadSInt();
   
   if (decl->getNumMembers() > 0) {
-    Decl* next_declarator;
     decl->Members = new FieldDecl*[(unsigned) decl->getNumMembers()];
                               
     D.BatchReadOwnedPtrs((unsigned) decl->getNumMembers(),
-                         (Decl**) &decl->Members[0],
-                         next_declarator, C);
-    
-    decl->setNextDeclarator(cast_or_null<ScopedDecl>(next_declarator));                             
+                         (Decl**) &decl->Members[0], C);
   }
   else
     decl->ScopedDecl::ReadOutRec(D, C);
