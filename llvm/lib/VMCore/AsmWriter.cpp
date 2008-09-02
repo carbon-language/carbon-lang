@@ -1395,7 +1395,15 @@ void AssemblyWriter::printFunction(const Function *F) {
     Out << " align " << F->getAlignment();
   if (F->hasGC())
     Out << " gc \"" << F->getGC() << '"';
-
+  FunctionNotes FNotes = F->getNotes();
+  if (FNotes != FP_None) {
+    Out << " notes(";
+    if (FNotes && FP_AlwaysInline)
+      Out << "inline=always";
+    else if (FNotes && FP_NoInline)
+      Out << "inline=never";
+    Out << ")";
+  }
   if (F->isDeclaration()) {
     Out << "\n";
   } else {
