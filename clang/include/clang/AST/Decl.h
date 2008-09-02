@@ -802,6 +802,7 @@ class RecordDecl : public TagDecl {
   ///  (i.e., all forward declarations appear first in the chain).  Note that
   ///  one should make no other assumption about the order of the RecordDecl's
   ///  within this chain with respect to the original source.
+  ///  NOTE: This is *not* an owning reference.
   RecordDecl* NextDecl;
   
   /// Members/NumMembers - This is a new[]'d array of pointers to Decls.
@@ -820,6 +821,18 @@ public:
                             RecordDecl *PrevDecl);
 
   virtual void Destroy(ASTContext& C);
+  
+  /// isForwardDeclaration - Returns true if this RecordDecl represents a
+  ///  forward declaration.
+  bool isForwardDeclaration() const {
+    assert ((!Members || NextDecl == 0) && "(Members != 0) => (NextDecl == 0)");
+    return !Members;
+  }
+  
+  /// getDefinitionDecl - Returns the RecordDecl for the struct/union that
+  ///  represents the actual definition (i.e., not a forward declaration).
+  ///  This method returns NULL if no such RecordDecl exists.
+  const RecordDecl* getDefinitionDecl() const;  
   
   bool hasFlexibleArrayMember() const { return HasFlexibleArrayMember; }
   void setHasFlexibleArrayMember(bool V) { HasFlexibleArrayMember = V; }

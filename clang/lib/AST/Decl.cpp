@@ -160,6 +160,18 @@ RecordDecl *RecordDecl::Create(ASTContext &C, TagKind TK, DeclContext *DC,
   return new (Mem) RecordDecl(DK, DC, L, Id, PrevDecl);
 }
 
+/// getDefinitionDecl - Returns the RecordDecl for the struct/union that
+///  represents the actual definition (i.e., not a forward declaration).
+///  This method returns NULL if no such RecordDecl exists.
+const RecordDecl* RecordDecl::getDefinitionDecl() const {
+  const RecordDecl* R = this;
+  
+  for (RecordDecl* N = R->NextDecl; N; N = R->NextDecl)
+    R = N;
+  
+  return R->Members ? R : 0;
+}
+
 
 FileScopeAsmDecl *FileScopeAsmDecl::Create(ASTContext &C,
                                            SourceLocation L,
