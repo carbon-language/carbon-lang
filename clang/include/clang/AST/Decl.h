@@ -821,14 +821,7 @@ public:
                             RecordDecl *PrevDecl);
 
   virtual void Destroy(ASTContext& C);
-  
-  /// isForwardDeclaration - Returns true if this RecordDecl represents a
-  ///  forward declaration.
-  bool isForwardDeclaration() const {
-    assert ((!Members || NextDecl == 0) && "(Members != 0) => (NextDecl == 0)");
-    return !Members;
-  }
-  
+    
   /// getDefinitionDecl - Returns the RecordDecl for the struct/union that
   ///  represents the actual definition (i.e., not a forward declaration).
   ///  This method returns NULL if no such RecordDecl exists.
