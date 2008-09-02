@@ -37,7 +37,10 @@ public:
     // Start out ready to flush.
     OutBufStart = OutBufEnd = OutBufCur = 0;
   }
-  virtual ~raw_ostream() {}
+
+  virtual ~raw_ostream() {
+    delete [] OutBufStart;
+  }
   
   //===--------------------------------------------------------------------===//
   // Configuration Interface
