@@ -21,7 +21,8 @@
 #include "llvm/Target/TargetMachine.h"
 using namespace llvm;
 
-unsigned FastISel::getRegForValue(Value *V, DenseMap<const Value*, unsigned> &ValueMap) {
+unsigned FastISel::getRegForValue(Value *V,
+                                  DenseMap<const Value*, unsigned> &ValueMap) {
   unsigned &Reg = ValueMap[V];
   if (Reg != 0)
     return Reg;
@@ -433,7 +434,8 @@ FastISel::FastISel(MachineFunction &mf)
 
 FastISel::~FastISel() {}
 
-unsigned FastISel::FastEmit_(MVT::SimpleValueType, MVT::SimpleValueType, ISD::NodeType) {
+unsigned FastISel::FastEmit_(MVT::SimpleValueType, MVT::SimpleValueType,
+                             ISD::NodeType) {
   return 0;
 }
 
