@@ -51,6 +51,12 @@ template<> struct ilist_traits<Argument>
   static int getListOffset();
 };
 
+typedef unsigned FunctionNotes;
+const FunctionNotes FP_None            = 0;   
+const FunctionNotes FP_NoInline        = 1<<0;
+const FunctionNotes FP_AlwaysInline    = 1<<1;
+const FunctionNotes FP_OptimizeForSize = 1<<2;
+
 class Function : public GlobalValue, public Annotable,
                  public ilist_node<Function> {
 public:
@@ -70,7 +76,8 @@ private:
   mutable ArgumentListType ArgumentList;  ///< The formal arguments
   ValueSymbolTable *SymTab;               ///< Symbol table of args/instructions
   PAListPtr ParamAttrs;                   ///< Parameter attributes
-  
+  FunctionNotes Notes;                    ///< Function properties
+
   // The Calling Convention is stored in Value::SubclassData.
   /*unsigned CallingConvention;*/
 
@@ -147,6 +154,14 @@ public:
   /// setParamAttrs - Set the parameter attributes for this Function.
   ///
   void setParamAttrs(const PAListPtr &attrs) { ParamAttrs = attrs; }
+
+  /// getNotes - Return this function properties
+  ///
+  const FunctionNotes &getNotes() const { return Notes; }
+
+  /// setNotes - Set properties for this function
+  ///
+  void setNotes(const FunctionNotes P) { Notes = P;}
 
   /// hasGC/getGC/setGC/clearGC - The name of the garbage collection algorithm
   ///                             to use during code generation.
