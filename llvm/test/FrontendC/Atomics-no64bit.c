@@ -1,15 +1,15 @@
 // Test frontend handling of __sync builtins.
 // Modified from a gcc testcase.
-// RUN: %llvmgcc -S %s -o - | grep atomic | count 242
+// RUN: %llvmgcc -S %s -o - | grep atomic | count 192
 // RUN: %llvmgcc -S %s -o - | grep p0i8 | count 50
 // RUN: %llvmgcc -S %s -o - | grep p0i16 | count 50
 // RUN: %llvmgcc -S %s -o - | grep p0i32 | count 92
-// RUN: %llvmgcc -S %s -o - | grep volatile | count 10
+// RUN: %llvmgcc -S %s -o - | grep volatile | count 8
 
 // Currently this is implemented only for Alpha, X86, PowerPC.
 // Add your target here if it doesn't work.
-// PPC32 does not translate the long long variants, so fails this test.
-// XFAIL: sparc|arm|ia64|powerpc
+// This version of the test does not include long long.
+// XFAIL: sparc|arm|ia64
 
 signed char sc;
 unsigned char uc;
@@ -19,8 +19,6 @@ signed int si;
 unsigned int ui;
 signed long sl;
 unsigned long ul;
-signed long long sll;
-unsigned long long ull;
 
 void test_op_ignore (void)
 {
@@ -32,8 +30,6 @@ void test_op_ignore (void)
   (void) __sync_fetch_and_add (&ui, 1);
   (void) __sync_fetch_and_add (&sl, 1);
   (void) __sync_fetch_and_add (&ul, 1);
-  (void) __sync_fetch_and_add (&sll, 1);
-  (void) __sync_fetch_and_add (&ull, 1);
 
   (void) __sync_fetch_and_sub (&sc, 1);
   (void) __sync_fetch_and_sub (&uc, 1);
@@ -43,8 +39,6 @@ void test_op_ignore (void)
   (void) __sync_fetch_and_sub (&ui, 1);
   (void) __sync_fetch_and_sub (&sl, 1);
   (void) __sync_fetch_and_sub (&ul, 1);
-  (void) __sync_fetch_and_sub (&sll, 1);
-  (void) __sync_fetch_and_sub (&ull, 1);
 
   (void) __sync_fetch_and_or (&sc, 1);
   (void) __sync_fetch_and_or (&uc, 1);
@@ -54,8 +48,6 @@ void test_op_ignore (void)
   (void) __sync_fetch_and_or (&ui, 1);
   (void) __sync_fetch_and_or (&sl, 1);
   (void) __sync_fetch_and_or (&ul, 1);
-  (void) __sync_fetch_and_or (&sll, 1);
-  (void) __sync_fetch_and_or (&ull, 1);
 
   (void) __sync_fetch_and_xor (&sc, 1);
   (void) __sync_fetch_and_xor (&uc, 1);
@@ -65,8 +57,6 @@ void test_op_ignore (void)
   (void) __sync_fetch_and_xor (&ui, 1);
   (void) __sync_fetch_and_xor (&sl, 1);
   (void) __sync_fetch_and_xor (&ul, 1);
-  (void) __sync_fetch_and_xor (&sll, 1);
-  (void) __sync_fetch_and_xor (&ull, 1);
 
   (void) __sync_fetch_and_and (&sc, 1);
   (void) __sync_fetch_and_and (&uc, 1);
@@ -76,8 +66,6 @@ void test_op_ignore (void)
   (void) __sync_fetch_and_and (&ui, 1);
   (void) __sync_fetch_and_and (&sl, 1);
   (void) __sync_fetch_and_and (&ul, 1);
-  (void) __sync_fetch_and_and (&sll, 1);
-  (void) __sync_fetch_and_and (&ull, 1);
 
   (void) __sync_fetch_and_nand (&sc, 1);
   (void) __sync_fetch_and_nand (&uc, 1);
@@ -87,8 +75,6 @@ void test_op_ignore (void)
   (void) __sync_fetch_and_nand (&ui, 1);
   (void) __sync_fetch_and_nand (&sl, 1);
   (void) __sync_fetch_and_nand (&ul, 1);
-  (void) __sync_fetch_and_nand (&sll, 1);
-  (void) __sync_fetch_and_nand (&ull, 1);
 }
 
 void test_fetch_and_op (void)
@@ -101,8 +87,6 @@ void test_fetch_and_op (void)
   ui = __sync_fetch_and_add (&ui, 11);
   sl = __sync_fetch_and_add (&sl, 11);
   ul = __sync_fetch_and_add (&ul, 11);
-  sll = __sync_fetch_and_add (&sll, 11);
-  ull = __sync_fetch_and_add (&ull, 11);
 
   sc = __sync_fetch_and_sub (&sc, 11);
   uc = __sync_fetch_and_sub (&uc, 11);
@@ -112,8 +96,6 @@ void test_fetch_and_op (void)
   ui = __sync_fetch_and_sub (&ui, 11);
   sl = __sync_fetch_and_sub (&sl, 11);
   ul = __sync_fetch_and_sub (&ul, 11);
-  sll = __sync_fetch_and_sub (&sll, 11);
-  ull = __sync_fetch_and_sub (&ull, 11);
 
   sc = __sync_fetch_and_or (&sc, 11);
   uc = __sync_fetch_and_or (&uc, 11);
@@ -123,8 +105,6 @@ void test_fetch_and_op (void)
   ui = __sync_fetch_and_or (&ui, 11);
   sl = __sync_fetch_and_or (&sl, 11);
   ul = __sync_fetch_and_or (&ul, 11);
-  sll = __sync_fetch_and_or (&sll, 11);
-  ull = __sync_fetch_and_or (&ull, 11);
 
   sc = __sync_fetch_and_xor (&sc, 11);
   uc = __sync_fetch_and_xor (&uc, 11);
@@ -134,8 +114,6 @@ void test_fetch_and_op (void)
   ui = __sync_fetch_and_xor (&ui, 11);
   sl = __sync_fetch_and_xor (&sl, 11);
   ul = __sync_fetch_and_xor (&ul, 11);
-  sll = __sync_fetch_and_xor (&sll, 11);
-  ull = __sync_fetch_and_xor (&ull, 11);
 
   sc = __sync_fetch_and_and (&sc, 11);
   uc = __sync_fetch_and_and (&uc, 11);
@@ -145,8 +123,6 @@ void test_fetch_and_op (void)
   ui = __sync_fetch_and_and (&ui, 11);
   sl = __sync_fetch_and_and (&sl, 11);
   ul = __sync_fetch_and_and (&ul, 11);
-  sll = __sync_fetch_and_and (&sll, 11);
-  ull = __sync_fetch_and_and (&ull, 11);
 
   sc = __sync_fetch_and_nand (&sc, 11);
   uc = __sync_fetch_and_nand (&uc, 11);
@@ -156,8 +132,6 @@ void test_fetch_and_op (void)
   ui = __sync_fetch_and_nand (&ui, 11);
   sl = __sync_fetch_and_nand (&sl, 11);
   ul = __sync_fetch_and_nand (&ul, 11);
-  sll = __sync_fetch_and_nand (&sll, 11);
-  ull = __sync_fetch_and_nand (&ull, 11);
 }
 
 void test_op_and_fetch (void)
@@ -170,8 +144,6 @@ void test_op_and_fetch (void)
   ui = __sync_add_and_fetch (&ui, uc);
   sl = __sync_add_and_fetch (&sl, uc);
   ul = __sync_add_and_fetch (&ul, uc);
-  sll = __sync_add_and_fetch (&sll, uc);
-  ull = __sync_add_and_fetch (&ull, uc);
 
   sc = __sync_sub_and_fetch (&sc, uc);
   uc = __sync_sub_and_fetch (&uc, uc);
@@ -181,8 +153,6 @@ void test_op_and_fetch (void)
   ui = __sync_sub_and_fetch (&ui, uc);
   sl = __sync_sub_and_fetch (&sl, uc);
   ul = __sync_sub_and_fetch (&ul, uc);
-  sll = __sync_sub_and_fetch (&sll, uc);
-  ull = __sync_sub_and_fetch (&ull, uc);
 
   sc = __sync_or_and_fetch (&sc, uc);
   uc = __sync_or_and_fetch (&uc, uc);
@@ -192,8 +162,6 @@ void test_op_and_fetch (void)
   ui = __sync_or_and_fetch (&ui, uc);
   sl = __sync_or_and_fetch (&sl, uc);
   ul = __sync_or_and_fetch (&ul, uc);
-  sll = __sync_or_and_fetch (&sll, uc);
-  ull = __sync_or_and_fetch (&ull, uc);
 
   sc = __sync_xor_and_fetch (&sc, uc);
   uc = __sync_xor_and_fetch (&uc, uc);
@@ -203,8 +171,6 @@ void test_op_and_fetch (void)
   ui = __sync_xor_and_fetch (&ui, uc);
   sl = __sync_xor_and_fetch (&sl, uc);
   ul = __sync_xor_and_fetch (&ul, uc);
-  sll = __sync_xor_and_fetch (&sll, uc);
-  ull = __sync_xor_and_fetch (&ull, uc);
 
   sc = __sync_and_and_fetch (&sc, uc);
   uc = __sync_and_and_fetch (&uc, uc);
@@ -214,8 +180,6 @@ void test_op_and_fetch (void)
   ui = __sync_and_and_fetch (&ui, uc);
   sl = __sync_and_and_fetch (&sl, uc);
   ul = __sync_and_and_fetch (&ul, uc);
-  sll = __sync_and_and_fetch (&sll, uc);
-  ull = __sync_and_and_fetch (&ull, uc);
 
   sc = __sync_nand_and_fetch (&sc, uc);
   uc = __sync_nand_and_fetch (&uc, uc);
@@ -225,8 +189,6 @@ void test_op_and_fetch (void)
   ui = __sync_nand_and_fetch (&ui, uc);
   sl = __sync_nand_and_fetch (&sl, uc);
   ul = __sync_nand_and_fetch (&ul, uc);
-  sll = __sync_nand_and_fetch (&sll, uc);
-  ull = __sync_nand_and_fetch (&ull, uc);
 }
 
 void test_compare_and_swap (void)
@@ -239,8 +201,6 @@ void test_compare_and_swap (void)
   ui = __sync_val_compare_and_swap (&ui, uc, sc);
   sl = __sync_val_compare_and_swap (&sl, uc, sc);
   ul = __sync_val_compare_and_swap (&ul, uc, sc);
-  sll = __sync_val_compare_and_swap (&sll, uc, sc);
-  ull = __sync_val_compare_and_swap (&ull, uc, sc);
 
   ui = __sync_bool_compare_and_swap (&sc, uc, sc);
   ui = __sync_bool_compare_and_swap (&uc, uc, sc);
@@ -250,8 +210,6 @@ void test_compare_and_swap (void)
   ui = __sync_bool_compare_and_swap (&ui, uc, sc);
   ui = __sync_bool_compare_and_swap (&sl, uc, sc);
   ui = __sync_bool_compare_and_swap (&ul, uc, sc);
-  ui = __sync_bool_compare_and_swap (&sll, uc, sc);
-  ui = __sync_bool_compare_and_swap (&ull, uc, sc);
 }
 
 void test_lock (void)
@@ -264,8 +222,6 @@ void test_lock (void)
   ui = __sync_lock_test_and_set (&ui, 1);
   sl = __sync_lock_test_and_set (&sl, 1);
   ul = __sync_lock_test_and_set (&ul, 1);
-  sll = __sync_lock_test_and_set (&sll, 1);
-  ull = __sync_lock_test_and_set (&ull, 1);
 
   __sync_synchronize ();
 
@@ -277,6 +233,4 @@ void test_lock (void)
   __sync_lock_release (&ui);
   __sync_lock_release (&sl);
   __sync_lock_release (&ul);
-  __sync_lock_release (&sll);
-  __sync_lock_release (&ull);
 }
