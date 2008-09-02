@@ -1163,6 +1163,13 @@ bool Sema::CheckArithmeticConstantExpression(const Expr* Init) {
     if (SubExpr->getType()->isArithmeticType())
       return CheckArithmeticConstantExpression(SubExpr);
 
+    if (SubExpr->getType()->isPointerType()) {
+      const Expr* Base = FindExpressionBaseAddress(SubExpr);
+      // If the pointer has a null base, this is an offsetof-like construct
+      if (!Base)
+        return CheckAddressConstantExpression(SubExpr);
+    }
+
     Diag(Init->getExprLoc(),
          diag::err_init_element_not_constant, Init->getSourceRange());
     return true;

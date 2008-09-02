@@ -58,3 +58,11 @@ union { float f; unsigned u; } u = { 1.0f };
 int f3(int x) { return x; }
 typedef void (*vfunc)(void);
 void *bar = (vfunc) f3;
+
+// PR2747
+struct sym_reg {
+        char nc_gpreg;
+};
+int sym_fw1a_scr[] = {
+           ((int)(&((struct sym_reg *)0)->nc_gpreg)) & 0
+};
