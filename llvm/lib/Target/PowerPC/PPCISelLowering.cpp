@@ -3881,8 +3881,8 @@ PPCTargetLowering::EmitAtomicBinary(MachineInstr *MI, MachineBasicBlock *BB,
   MachineRegisterInfo &RegInfo = F->getRegInfo();
   unsigned TmpReg = (!BinOpcode) ? incr :
     RegInfo.createVirtualRegister(
-       is64bit ? (const TargetRegisterClass *) &PPC::GPRCRegClass :
-                 (const TargetRegisterClass *) &PPC::G8RCRegClass);
+       is64bit ? (const TargetRegisterClass *) &PPC::G8RCRegClass :
+                 (const TargetRegisterClass *) &PPC::GPRCRegClass);
 
   //  thisMBB:
   //   ...
@@ -3944,8 +3944,8 @@ PPCTargetLowering::EmitPartwordAtomicBinary(MachineInstr *MI,
 
   MachineRegisterInfo &RegInfo = F->getRegInfo();
   const TargetRegisterClass *RC = 
-    is64bit ? (const TargetRegisterClass *) &PPC::GPRCRegClass :
-              (const TargetRegisterClass *) &PPC::G8RCRegClass;
+    is64bit ? (const TargetRegisterClass *) &PPC::G8RCRegClass :
+              (const TargetRegisterClass *) &PPC::GPRCRegClass;
   unsigned PtrReg = RegInfo.createVirtualRegister(RC);
   unsigned Shift1Reg = RegInfo.createVirtualRegister(RC);
   unsigned ShiftReg = RegInfo.createVirtualRegister(RC);
@@ -3969,7 +3969,7 @@ PPCTargetLowering::EmitPartwordAtomicBinary(MachineInstr *MI,
   // anywhere in the word.  Hence all this nasty bookkeeping code.
   //   add ptr1, ptrA, ptrB [copy if ptrA==0]
   //   rlwinm shift1, ptr1, 3, 27, 28 [3, 27, 27]
-  //   xor shift, shift1, 24 [16]
+  //   xori shift, shift1, 24 [16]
   //   rlwinm ptr, ptr1, 0, 0, 29
   //   slw incr2, incr, shift
   //   li mask2, 255 [li mask3, 0; ori mask2, mask3, 65535]
@@ -3994,7 +3994,7 @@ PPCTargetLowering::EmitPartwordAtomicBinary(MachineInstr *MI,
   }
   BuildMI(BB, TII->get(PPC::RLWINM), Shift1Reg).addReg(Ptr1Reg)
       .addImm(3).addImm(27).addImm(is8bit ? 28 : 27);
-  BuildMI(BB, TII->get(is64bit ? PPC::XOR8 : PPC::XOR), ShiftReg)
+  BuildMI(BB, TII->get(is64bit ? PPC::XORI8 : PPC::XORI), ShiftReg)
       .addReg(Shift1Reg).addImm(is8bit ? 24 : 16);
   if (is64bit)
     BuildMI(BB, TII->get(PPC::RLDICR), PtrReg)
@@ -4251,8 +4251,8 @@ PPCTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
 
     MachineRegisterInfo &RegInfo = F->getRegInfo();
     const TargetRegisterClass *RC = 
-      is64bit ? (const TargetRegisterClass *) &PPC::GPRCRegClass :
-                (const TargetRegisterClass *) &PPC::G8RCRegClass;
+      is64bit ? (const TargetRegisterClass *) &PPC::G8RCRegClass :
+                (const TargetRegisterClass *) &PPC::GPRCRegClass;
     unsigned PtrReg = RegInfo.createVirtualRegister(RC);
     unsigned Shift1Reg = RegInfo.createVirtualRegister(RC);
     unsigned ShiftReg = RegInfo.createVirtualRegister(RC);
@@ -4277,7 +4277,7 @@ PPCTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     // anywhere in the word.  Hence all this nasty bookkeeping code.
     //   add ptr1, ptrA, ptrB [copy if ptrA==0]
     //   rlwinm shift1, ptr1, 3, 27, 28 [3, 27, 27]
-    //   xor shift, shift1, 24 [16]
+    //   xori shift, shift1, 24 [16]
     //   rlwinm ptr, ptr1, 0, 0, 29
     //   slw newval2, newval, shift
     //   slw oldval2, oldval,shift
@@ -4309,7 +4309,7 @@ PPCTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     }
     BuildMI(BB, TII->get(PPC::RLWINM), Shift1Reg).addReg(Ptr1Reg)
         .addImm(3).addImm(27).addImm(is8bit ? 28 : 27);
-    BuildMI(BB, TII->get(is64bit ? PPC::XOR8 : PPC::XOR), ShiftReg)
+    BuildMI(BB, TII->get(is64bit ? PPC::XORI8 : PPC::XORI), ShiftReg)
         .addReg(Shift1Reg).addImm(is8bit ? 24 : 16);
     if (is64bit)
       BuildMI(BB, TII->get(PPC::RLDICR), PtrReg)
