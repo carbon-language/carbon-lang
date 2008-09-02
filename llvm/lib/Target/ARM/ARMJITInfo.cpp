@@ -29,6 +29,14 @@ void ARMJITInfo::replaceMachineCodeForFunction(void *Old, void *New) {
 /// compile a function lazily.
 static TargetJITInfo::JITCompilerFn JITCompilerFunction;
 
+// Get the ASMPREFIX for the current host.  This is often '_'.
+#ifndef __USER_LABEL_PREFIX__
+#define __USER_LABEL_PREFIX__
+#endif
+#define GETASMPREFIX2(X) #X
+#define GETASMPREFIX(X) GETASMPREFIX2(X)
+#define ASMPREFIX GETASMPREFIX(__USER_LABEL_PREFIX__)
+
 // CompilationCallback stub - We can't use a C function with inline assembly in
 // it, because we the prolog/epilog inserted by GCC won't work for us.  Instead,
 // write our own wrapper, which does things our way, so we have complete control
@@ -39,21 +47,37 @@ extern "C" {
   asm(
     ".text\n"
     ".align 2\n"
-    ".globl ARMCompilationCallback\n"
-    "ARMCompilationCallback:\n"
+    ".globl " ASMPREFIX "ARMCompilationCallback\n"
+    ASMPREFIX "ARMCompilationCallback:\n"
     // save main registers
+#if defined(__APPLE__)
+    "stmfd  sp!, {r4, r5, r6, r7, lr}\n"
+    "mov    r0, r7\n"  // stub's frame
+    "stmfd  sp!, {r8, r10, r11}\n"
+#else
     "mov    ip, sp\n"
     "stmfd  sp!, {fp, ip, lr, pc}\n"
     "sub    fp, ip, #4\n"
+#endif // __APPLE__
     // arguments to Compilation Callback
     // r0 - our lr (address of the call instruction in stub plus 4)
     // r1 - stub's lr (address of instruction that called the stub plus 4)
+#if defined(__APPLE__)
+    "mov    r0, r7\n"  // stub's frame
+#else
     "mov    r0, fp\n"  // stub's frame
+#endif // __APPLE__
     "mov    r1, lr\n"  // stub's lr
-    "bl     ARMCompilationCallbackC\n"
+    "bl     " ASMPREFIX "ARMCompilationCallbackC\n"
     // restore main registers
-    "ldmfd  sp, {fp, sp, pc}\n");
-#else // Not an ARM host
+#if defined(__APPLE__)
+    "ldmfd  sp!, {r8, r10, r11}\n"
+    "ldmfd  sp!, {r4, r5, r6, r7, pc}\n"
+#else
+    "ldmfd  sp, {fp, sp, pc}\n"
+#endif // __APPLE__
+      );
+#else  // Not an ARM host
   void ARMCompilationCallback() {
     assert(0 && "Cannot call ARMCompilationCallback() on a non-ARM arch!\n");
     abort();
