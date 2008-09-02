@@ -64,5 +64,6 @@ struct sym_reg {
         char nc_gpreg;
 };
 int sym_fw1a_scr[] = {
-           ((int)(&((struct sym_reg *)0)->nc_gpreg)) & 0
+           ((int)(&((struct sym_reg *)0)->nc_gpreg)) & 0,
+           8 * ((int)(&((struct sym_reg *)0)->nc_gpreg))
 };
