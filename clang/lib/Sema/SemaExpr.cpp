@@ -1013,7 +1013,7 @@ ActOnCallExpr(ExprTy *fn, SourceLocation LParenLoc,
       AssignConvertType ConvTy =
         CheckSingleAssignmentConstraints(ProtoArgType, Arg);
       TheCall->setArg(i, Arg);
-      
+
       if (DiagnoseAssignmentResult(ConvTy, Arg->getLocStart(), ProtoArgType,
                                    ArgType, Arg, "passing"))
         return true;
@@ -1700,8 +1700,9 @@ QualType Sema::CheckSubtractionOperands(Expr *&lex, Expr *&rex,
       }
       
       // Pointee types must be compatible.
-      if (!Context.typesAreCompatible(lpointee.getUnqualifiedType(), 
-                                      rpointee.getUnqualifiedType())) {
+      if (!Context.typesAreCompatible(
+              Context.getCanonicalType(lpointee).getUnqualifiedType(), 
+              Context.getCanonicalType(rpointee).getUnqualifiedType())) {
         Diag(loc, diag::err_typecheck_sub_ptr_compatible,
              lex->getType().getAsString(), rex->getType().getAsString(),
              lex->getSourceRange(), rex->getSourceRange());
