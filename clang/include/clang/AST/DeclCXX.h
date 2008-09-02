@@ -44,14 +44,14 @@ public:
 class CXXRecordDecl : public RecordDecl, public DeclContext {
 protected:
   CXXRecordDecl(Kind DK, DeclContext *DC, SourceLocation L, IdentifierInfo *Id,
-             ScopedDecl *PrevDecl) : RecordDecl(DK, DC, L, Id, PrevDecl),
+             CXXRecordDecl *PrevDecl) : RecordDecl(DK, DC, L, Id, PrevDecl),
                                      DeclContext(DK) {
     assert(classof(static_cast<Decl*>(this)) && "Invalid Kind!");
   }
 public:
   static CXXRecordDecl *Create(ASTContext &C, TagKind TK, DeclContext *DC,
-                            SourceLocation L, IdentifierInfo *Id,
-                            ScopedDecl *PrevDecl);
+                               SourceLocation L, IdentifierInfo *Id,
+                               CXXRecordDecl *PrevDecl);
   
   const CXXFieldDecl *getMember(unsigned i) const {
     return cast<const CXXFieldDecl>(RecordDecl::getMember(i));

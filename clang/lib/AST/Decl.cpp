@@ -109,9 +109,45 @@ EnumDecl *EnumDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L,
   return new (Mem) EnumDecl(DC, L, Id, PrevDecl);
 }
 
+void EnumDecl::Destroy(ASTContext& C) {
+  if (getEnumConstantList()) getEnumConstantList()->Destroy(C);
+  Decl::Destroy(C);
+}
+
+//==------------------------------------------------------------------------==//
+// RecordDecl methods.
+//==------------------------------------------------------------------------==//
+
+RecordDecl::RecordDecl(Kind DK, DeclContext *DC, SourceLocation L,
+                       IdentifierInfo *Id, RecordDecl *PrevDecl)
+  : TagDecl(DK, DC, L, Id, 0), NextDecl(0) {
+    
+  HasFlexibleArrayMember = false;
+  assert(classof(static_cast<Decl*>(this)) && "Invalid Kind!");
+  Members = 0;
+  NumMembers = -1;
+    
+  // Hook up the RecordDecl chain.
+  if (PrevDecl) {
+    RecordDecl* Tmp = PrevDecl->NextDecl;    
+    // 'Tmp' might be non-NULL if it is the RecordDecl that provides the
+    // definition of the struct/union. By construction, the last RecordDecl
+    // in the chain is the 'defining' RecordDecl.
+    if (Tmp) { 
+      assert (Tmp->NextDecl == 0);
+      assert (Tmp->Members && "Previous RecordDecl has a NextDecl that is "
+                              "not the 'defining' RecordDecl");
+      
+      NextDecl = Tmp;
+    }
+
+    PrevDecl->NextDecl = this;
+  }
+}
+
 RecordDecl *RecordDecl::Create(ASTContext &C, TagKind TK, DeclContext *DC,
                                SourceLocation L, IdentifierInfo *Id,
-                               ScopedDecl *PrevDecl) {
+                               RecordDecl *PrevDecl) {
   void *Mem = C.getAllocator().Allocate<RecordDecl>();
   Kind DK;
   switch (TK) {
@@ -122,11 +158,6 @@ RecordDecl *RecordDecl::Create(ASTContext &C, TagKind TK, DeclContext *DC,
     case TK_class:  DK = Class;  break;
   }
   return new (Mem) RecordDecl(DK, DC, L, Id, PrevDecl);
-}
-
-void EnumDecl::Destroy(ASTContext& C) {
-  if (getEnumConstantList()) getEnumConstantList()->Destroy(C);
-  Decl::Destroy(C);
 }
 
 

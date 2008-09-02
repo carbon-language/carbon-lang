@@ -796,25 +796,28 @@ class RecordDecl : public TagDecl {
   /// If so, this cannot be contained in arrays or other structs as a member.
   bool HasFlexibleArrayMember : 1;
 
+  /// NextDecl - A pointer to the next RecordDecl in a chain of RecordDecls
+  ///  for the same struct/union.  By construction, the last RecordDecl in
+  ///  the chain is the one that provides the definition of the struct/union
+  ///  (i.e., all forward declarations appear first in the chain).  Note that
+  ///  one should make no other assumption about the order of the RecordDecl's
+  ///  within this chain with respect to the original source.
+  RecordDecl* NextDecl;
+  
   /// Members/NumMembers - This is a new[]'d array of pointers to Decls.
   FieldDecl **Members;   // Null if not defined.
   int NumMembers;   // -1 if not defined.
 
 protected:
   RecordDecl(Kind DK, DeclContext *DC, SourceLocation L, IdentifierInfo *Id, 
-             ScopedDecl *PrevDecl) : TagDecl(DK, DC, L, Id, PrevDecl) {
-    HasFlexibleArrayMember = false;
-    assert(classof(static_cast<Decl*>(this)) && "Invalid Kind!");
-    Members = 0;
-    NumMembers = -1;
-  }
+             RecordDecl *PrevDecl);
 
   virtual ~RecordDecl();
 
 public:
   static RecordDecl *Create(ASTContext &C, TagKind TK, DeclContext *DC,
                             SourceLocation L, IdentifierInfo *Id,
-                            ScopedDecl *PrevDecl);
+                            RecordDecl *PrevDecl);
 
   virtual void Destroy(ASTContext& C);
   

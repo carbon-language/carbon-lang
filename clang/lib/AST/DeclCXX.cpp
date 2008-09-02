@@ -28,7 +28,7 @@ CXXFieldDecl *CXXFieldDecl::Create(ASTContext &C, CXXRecordDecl *RD,
 
 CXXRecordDecl *CXXRecordDecl::Create(ASTContext &C, TagKind TK, DeclContext *DC,
                                      SourceLocation L, IdentifierInfo *Id,
-                                     ScopedDecl *PrevDecl) {
+                                     CXXRecordDecl *PrevDecl) {
   Kind DK;
   switch (TK) {
     default: assert(0 && "Invalid TagKind!");
