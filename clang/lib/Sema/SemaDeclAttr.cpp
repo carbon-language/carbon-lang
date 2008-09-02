@@ -725,19 +725,34 @@ static void HandleTransparentUnionAttr(Decl *d, const AttributeList &Attr,
     return;
   }
 
-  TypeDecl *decl = dyn_cast<TypeDecl>(d);
-
-  if (!decl || !S.Context.getTypeDeclType(decl)->isUnionType()) {
+  // FIXME: This shouldn't be restricted to typedefs
+  TypedefDecl *TD = dyn_cast<TypedefDecl>(d);
+  if (!TD || !TD->getUnderlyingType()->isUnionType()) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type,
          "transparent_union", "union");
     return;
   }
 
-  //QualType QTy = Context.getTypeDeclType(decl);
-  //const RecordType *Ty = QTy->getAsUnionType();
+  RecordDecl* RD = TD->getUnderlyingType()->getAsUnionType()->getDecl();
 
-// FIXME
-// Ty->addAttr(new TransparentUnionAttr());
+  // FIXME: Should we do a check for RD->isDefinition()?
+
+  // FIXME: This isn't supposed to be restricted to pointers, but otherwise
+  // we might silently generate incorrect code; see following code
+  for (int i = 0; i < RD->getNumMembers(); i++) {
+    if (!RD->getMember(i)->getType()->isPointerType()) {
+      S.Diag(Attr.getLoc(), diag::warn_transparent_union_nonpointer);
+      return;
+    }
+  }
+
+  // FIXME: This is a complete hack; we should be properly propagating
+  // transparent_union through Sema.  That said, this is close enough to
+  // correctly compile all the common cases of transparent_union without
+  // errors or warnings
+  QualType NewTy = S.Context.VoidPtrTy;
+  NewTy.addConst();
+  TD->setUnderlyingType(NewTy);
 }
 
 static void HandleAnnotateAttr(Decl *d, const AttributeList &Attr, Sema &S) {

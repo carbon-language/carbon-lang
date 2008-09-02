@@ -694,6 +694,9 @@ DIAG(err_attr_wrong_decl, ERROR,
      "'%0' attribute invalid on this declaration, requires typedef or value")
 DIAG(warn_attribute_nonnull_no_pointers, WARNING,
   "'nonnull' attribute applied to function with no pointer arguments")
+DIAG(warn_transparent_union_nonpointer, WARNING,
+  "'transparent_union' attribute support incomplete; only supported for"
+  "pointer unions")
   
 // Clang-Specific Attributes
 DIAG(err_attribute_iboutlet_non_ivar, ERROR,
