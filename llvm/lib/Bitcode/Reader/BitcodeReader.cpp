@@ -1197,6 +1197,9 @@ bool BitcodeReader::ParseModule(const std::string &ModuleID) {
           return Error("Invalid GC ID");
         Func->setGC(GCTable[Record[8]-1].c_str());
       }
+      if (!isProto && Record.size() > 9 && Record[9]) {
+        Func->setNotes(Record[9]);
+      }
       
       ValueList.push_back(Func);
       
