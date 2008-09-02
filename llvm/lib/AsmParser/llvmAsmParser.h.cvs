@@ -190,9 +190,14 @@
      READNONE = 406,
      READONLY = 407,
      GC = 408,
-     DEFAULT = 409,
-     HIDDEN = 410,
-     PROTECTED = 411
+     FNNOTE = 409,
+     INLINE = 410,
+     ALWAYS = 411,
+     NEVER = 412,
+     OPTIMIZEFORSIZE = 413,
+     DEFAULT = 414,
+     HIDDEN = 415,
+     PROTECTED = 416
    };
 #endif
 /* Tokens.  */
@@ -347,16 +352,21 @@
 #define READNONE 406
 #define READONLY 407
 #define GC 408
-#define DEFAULT 409
-#define HIDDEN 410
-#define PROTECTED 411
+#define FNNOTE 409
+#define INLINE 410
+#define ALWAYS 411
+#define NEVER 412
+#define OPTIMIZEFORSIZE 413
+#define DEFAULT 414
+#define HIDDEN 415
+#define PROTECTED 416
 
 
 
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 970 "/Users/sabre/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 970 "/Volumes/Nanpura/fn_prop/llvm/lib/AsmParser/llvmAsmParser.y"
 {
   llvm::Module                           *ModuleVal;
   llvm::Function                         *FunctionVal;
@@ -385,6 +395,7 @@ typedef union YYSTYPE
   llvm::GlobalValue::LinkageTypes         Linkage;
   llvm::GlobalValue::VisibilityTypes      Visibility;
   llvm::ParameterAttributes         ParamAttrs;
+  llvm::FunctionNotes               FunctionNotes;
   llvm::APInt                       *APIntVal;
   int64_t                           SInt64Val;
   uint64_t                          UInt64Val;
@@ -405,7 +416,7 @@ typedef union YYSTYPE
   llvm::FCmpInst::Predicate         FPredicate;
 }
 /* Line 1529 of yacc.c.  */
-#line 409 "llvmAsmParser.tab.h"
+#line 420 "llvmAsmParser.tab.h"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
