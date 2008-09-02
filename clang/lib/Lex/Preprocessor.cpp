@@ -476,6 +476,14 @@ static void InitializePredefinedMacros(Preprocessor &PP,
     DefineBuiltinMacro(Buf, "__int64=long long");
     DefineBuiltinMacro(Buf, "__declspec(X)=");
   }
+  // Directly modeled after the attribute-based implementation in GCC. 
+  if (PP.getLangOptions().Blocks)
+     DefineBuiltinMacro(Buf, "__block=__attribute__((__blocks__(byref)))");
+  else
+    // This allows "__block int unusedVar;" even when blocks are disabled.
+    // This is modeled after GCC's handling of __strong/__weak.
+    DefineBuiltinMacro(Buf, "__block=");
+
   // FIXME: Should emit a #line directive here.
 }
 
@@ -594,8 +602,7 @@ void Preprocessor::HandleIdentifier(Token &Identifier) {
   Identifier.setKind(II.getTokenID());
     
   // If this is an extension token, diagnose its use.
-  // FIXME: tried (unsuccesfully) to shut this up when compiling with gnu99
-  // For now, I'm just commenting it out (while I work on attributes).
-  if (II.isExtensionToken() && Features.C99) 
+  // We avoid diagnosing tokens that originate from macro definitions.
+  if (II.isExtensionToken() && Features.C99 && !DisableMacroExpansion)
     Diag(Identifier, diag::ext_token_used);
 }
