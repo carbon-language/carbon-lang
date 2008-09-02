@@ -1398,9 +1398,9 @@ void AssemblyWriter::printFunction(const Function *F) {
   FunctionNotes FNotes = F->getNotes();
   if (FNotes != FP_None) {
     Out << " notes(";
-    if (FNotes && FP_AlwaysInline)
+    if (FNotes & FP_AlwaysInline)
       Out << "inline=always";
-    else if (FNotes && FP_NoInline)
+    else if (FNotes & FP_NoInline)
       Out << "inline=never";
     Out << ")";
   }
