@@ -46,6 +46,7 @@ STATISTIC(NumInserted,    "Number of PHIs inserted");
 STATISTIC(NumVariable,    "Number of PHIs with variable strides");
 STATISTIC(NumEliminated,  "Number of strides eliminated");
 STATISTIC(NumShadow,      "Number of Shadow IVs optimized");
+STATISTIC(NumIVType,      "Number of IV types optimized");
 
 namespace {
 
@@ -183,6 +184,10 @@ private:
     /// OptimizeShadowIV - If IV is used in a int-to-float cast
     /// inside the loop then try to eliminate the cast opeation.
     void OptimizeShadowIV(Loop *L);
+
+    /// OptimizeIVType - If IV is always sext'ed or zext'ed then
+    /// change the type of IV, if possible.
+    void OptimizeIVType(Loop *L);
 
     bool FindIVUserForCond(ICmpInst *Cond, IVStrideUse *&CondUse,
                            const SCEVHandle *&CondStride);
@@ -1808,6 +1813,200 @@ void LoopStrengthReduce::OptimizeShadowIV(Loop *L) {
   }
 }
 
+/// suitableExtInstruction - Helper function used by OptimizeIVType.
+/// If I is a suitable SEXT or ZEXT instruction then return type 
+/// to which I is extended to. Otherwise return NULL.
+const Type *suitableExtInstruction(Instruction *I, bool isSigned,
+                                    const Type *ExtType) {
+
+  const Type *DestType = NULL;
+  if (ZExtInst *ZI = dyn_cast<ZExtInst>(I)) 
+    DestType = ZI->getDestTy();
+  else if (SExtInst *SI = dyn_cast<SExtInst>(I)) {
+    // If the inital value is signed then this is not suitable for
+    // OptimizeIVType transformation.
+    if (isSigned)
+      return NULL;
+    DestType = SI->getDestTy();
+  }
+   
+  if (!DestType) return NULL;
+          
+  if (!ExtType) 
+    return DestType;
+
+  // If another use of IV extended to some other type then the IV is not 
+  // suitable for OptimizeIVType transformation.
+  if (ExtType != DestType) 
+    return NULL;
+  
+  return DestType;
+}
+
+/// suitableIVIncr -  Helper function used by OptimizeIVType. If I is
+/// a suitable binary operator whose all uses are either SEXT or ZEXT
+/// then return the type to which all uses are extended to. Otherwise
+/// return NULL.
+const Type *suitableIVIncr(Instruction *I, 
+                           Instruction *PHI, bool isSigned,
+                           const Type *ExtType) {
+
+  BinaryOperator *Incr = dyn_cast<BinaryOperator>(I);
+  if (!Incr) return NULL;
+
+  if (Incr->getOpcode() != Instruction::Add) 
+    return NULL;
+
+  ConstantInt *C = NULL;
+  if (Incr->getOperand(0) == PHI)
+    C = dyn_cast<ConstantInt>(Incr->getOperand(1));
+  else if (Incr->getOperand(1) == PHI)
+    C = dyn_cast<ConstantInt>(Incr->getOperand(0));
+
+  if (!C) return NULL;
+
+  const Type *RExtType = NULL;
+  for (Value::use_iterator IncUI = Incr->use_begin(), 
+         IncUE = Incr->use_end(); IncUI != IncUE; ++IncUI) {
+    
+    Instruction *U2 = dyn_cast<Instruction>(*IncUI);
+    if (U2 == PHI)
+            continue;
+    const Type *DestType = suitableExtInstruction(U2, isSigned, ExtType);
+    if (!DestType)
+      return NULL;
+   
+    if (!RExtType)
+      RExtType = DestType;
+
+    if (DestType != RExtType)
+      return NULL;
+  }
+
+  return RExtType;
+
+}
+
+/// getNewPHIIncrement - Create a new increment instruction for newPHI
+/// using type Ty based on increment instruction Incr. 
+/// Helper function used by OptimizeIVType.
+BinaryOperator *getNewPHIIncrement(BinaryOperator *Incr, PHINode *PHI, 
+                                   PHINode *NewPHI, const Type *Ty) {
+  ConstantInt *C = NULL;
+  if (Incr->getOperand(0) == PHI)
+    C = dyn_cast<ConstantInt>(Incr->getOperand(1));
+  else if (Incr->getOperand(1) == PHI)
+    C = dyn_cast<ConstantInt>(Incr->getOperand(0));
+
+  assert (C && "Unexpected Incr operand!");
+  return BinaryOperator::Create(Incr->getOpcode(), NewPHI,
+                                ConstantInt::get(Ty, C->getZExtValue()), 
+                                "IV.next", Incr);
+}
+
+/// OptimizeIVType - If IV is always sext'ed or zext'ed then
+/// change the type of IV, if possible.
+void LoopStrengthReduce::OptimizeIVType(Loop *L) {
+
+  BasicBlock *LPH = L->getLoopPreheader();
+  SmallVector<PHINode *, 4> PHIs;
+  for (BasicBlock::iterator BI = L->getHeader()->begin(), 
+         BE = L->getHeader()->end(); BI != BE; ++BI) {
+    if (PHINode *PHI = dyn_cast<PHINode>(BI))
+      PHIs.push_back(PHI);
+    else
+      break;
+  }
+
+  while(!PHIs.empty()) {
+    PHINode *PHI = PHIs.back(); PHIs.pop_back();
+    if (PHI->getNumIncomingValues() != 2) continue;
+
+    unsigned Entry = 0, Latch = 1;
+    if (PHI->getIncomingBlock(0) != LPH) {
+      Entry = 1;
+      Latch = 0;
+    }
+
+    ConstantInt *CInit = dyn_cast<ConstantInt>(PHI->getIncomingValue(Entry));
+    if (!CInit) return;
+
+    bool signedInit = CInit->getValue().isNegative();
+    
+    bool TransformPhi = true;
+    const Type *ExtType = NULL;
+    BinaryOperator *Incr =  NULL;
+    SmallVector<Instruction *, 4> PHIUses;
+
+    // Collect all IV uses.
+    for (Value::use_iterator UI = PHI->use_begin(), 
+           UE = PHI->use_end(); UI != UE; ++UI) {
+      Instruction *Use = dyn_cast<Instruction>(*UI);
+      if (!Use) {
+        TransformPhi = false;
+        break;
+      }
+        
+      ExtType = suitableIVIncr(Use, PHI, signedInit, ExtType);
+      if (ExtType) {
+        Incr = cast<BinaryOperator>(Use);
+        continue;
+      }
+      ExtType = suitableExtInstruction(Use, signedInit, ExtType);
+      if (ExtType) {
+        PHIUses.push_back(Use);
+        continue;
+      }
+      
+      TransformPhi = false;
+      break;
+    }
+
+    if (!TransformPhi || Incr == false || PHIUses.empty())
+      continue;
+
+    // Apply transformation. Extend IV type and eliminate SEXT or ZEXT 
+    // instructions.
+    NumIVType++;
+    
+    PHINode *NewPH = PHINode::Create(ExtType, "IV", PHI);
+    ConstantInt *NewCInit = ConstantInt::get(ExtType, CInit->getZExtValue());
+    BinaryOperator *NewIncr = getNewPHIIncrement(Incr, PHI, NewPH, ExtType);
+
+    NewPH->addIncoming(NewCInit, PHI->getIncomingBlock(Entry));
+    NewPH->addIncoming(NewIncr, PHI->getIncomingBlock(Latch));
+
+    // Replace all SEXT or ZEXT uses with new IV directly.
+    while (!PHIUses.empty()) {
+      Instruction *Use = PHIUses.back(); PHIUses.pop_back();
+      SE->deleteValueFromRecords(Use);
+      Use->replaceAllUsesWith(NewPH);
+      Use->eraseFromParent();
+    }
+
+    // Replace all uses of IV increment with new increment.
+    SmallVector<Instruction *, 2> IncrUses;
+    for (Value::use_iterator UI2 = Incr->use_begin(), 
+               UE2 = Incr->use_end(); UI2 != UE2; ++UI2) 
+      IncrUses.push_back(cast<Instruction>(*UI2));
+
+    while (!IncrUses.empty()) {
+      Instruction *Use = IncrUses.back(); IncrUses.pop_back();
+      if (Use == PHI) continue;
+      SE->deleteValueFromRecords(Use);
+      Use->replaceAllUsesWith(NewIncr);
+      Use->eraseFromParent();
+    }
+
+    // Remove old PHI and increment instruction.
+    SE->deleteValueFromRecords(PHI);
+    PHI->removeIncomingValue(Entry);
+    PHI->removeIncomingValue(Latch);
+    SE->deleteValueFromRecords(Incr);
+    Incr->eraseFromParent();
+  }
+}
+
 // OptimizeIndvars - Now that IVUsesByStride is set up with all of the indvar
 // uses in the loop, look to see if we can eliminate some, in favor of using
 // common indvars for the different uses.
@@ -1876,6 +2075,8 @@ bool LoopStrengthReduce::runOnLoop(Loop *L, LPPassManager &LPM) {
   TD = &getAnalysis<TargetData>();
   UIntPtrTy = TD->getIntPtrType();
   Changed = false;
+
+  OptimizeIVType(L);
 
   // Find all uses of induction variables in this loop, and catagorize
   // them by stride.  Start by finding all of the PHI nodes in the header for
