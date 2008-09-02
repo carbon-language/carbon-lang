@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file defines GRWorkList, a pure virtual class that represents an
-//  opaque worklist used by GRCoreEngine to explore the reachability state space.
+//  This file defines GRWorkList, a pure virtual class that represents an opaque
+//  worklist used by GRCoreEngine to explore the reachability state space.
 //
 //===----------------------------------------------------------------------===//
 
