@@ -1398,10 +1398,19 @@ void AssemblyWriter::printFunction(const Function *F) {
   FunctionNotes FNotes = F->getNotes();
   if (FNotes != FN_NOTE_None) {
     Out << " notes(";
-    if (FNotes & FN_NOTE_AlwaysInline)
+    bool NeedComma = false;
+    if (FNotes & FN_NOTE_AlwaysInline) {
+      NeedComma = true;
       Out << "inline=always";
-    else if (FNotes & FN_NOTE_NoInline)
+    }
+    else if (FNotes & FN_NOTE_NoInline) {
+      NeedComma = true;
       Out << "inline=never";
+    }
+    if (NeedComma)
+      Out << ",";
+    if (FNotes & FN_NOTE_OptimizeForSize)
+      Out << "opt_size";
     Out << ")";
   }
   if (F->isDeclaration()) {

@@ -501,7 +501,7 @@ int LLLexer::LexIdentifier() {
   KEYWORD("inline", INLINE);
   KEYWORD("always", ALWAYS);
   KEYWORD("never", NEVER);
-  KEYWORD("optimizeforsize", OPTIMIZEFORSIZE);
+  KEYWORD("opt_size", OPTIMIZEFORSIZE);
 
   KEYWORD("type", TYPE);
   KEYWORD("opaque", OPAQUE);
