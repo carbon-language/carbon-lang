@@ -36,6 +36,7 @@ class TargetRegisterClass;
 class FastISel {
 protected:
   MachineBasicBlock *MBB;
+  DenseMap<const Value *, unsigned> LocalValueMap;
   DenseMap<const Value *, unsigned> &ValueMap;
   DenseMap<const BasicBlock *, MachineBasicBlock *> &MBBMap;
   MachineFunction &MF;

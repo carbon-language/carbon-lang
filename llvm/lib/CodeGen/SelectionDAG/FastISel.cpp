@@ -21,13 +21,16 @@
 #include "llvm/Target/TargetMachine.h"
 using namespace llvm;
 
-// Don't cache constant materializations.  To do so would require
-// tracking what uses they dominate.  Non-constants, however, already
-// have the SSA def-doms-use requirement enforced, so we can cache their
-// computations.
 unsigned FastISel::getRegForValue(Value *V) {
+  // Look up the value to see if we already have a register for it. We
+  // cache values defined by Instructions across blocks, and other values
+  // only locally. This is because Instructions already have the SSA
+  // def-dominatess-use requirement enforced.
   if (ValueMap.count(V))
     return ValueMap[V];
+  unsigned Reg = LocalValueMap[V];
+  if (Reg != 0)
+    return Reg;
 
   MVT::SimpleValueType VT = TLI.getValueType(V->getType()).getSimpleVT();
   if (ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
@@ -35,11 +38,11 @@ unsigned FastISel::getRegForValue(Value *V) {
       return 0;
     // Don't cache constant materializations.  To do so would require
     // tracking what uses they dominate.
-    return FastEmit_i(VT, VT, ISD::Constant, CI->getZExtValue());
+    Reg = FastEmit_i(VT, VT, ISD::Constant, CI->getZExtValue());
   } else if (isa<ConstantPointerNull>(V)) {
-    return FastEmit_i(VT, VT, ISD::Constant, 0);
+    Reg = FastEmit_i(VT, VT, ISD::Constant, 0);
   } else if (ConstantFP *CF = dyn_cast<ConstantFP>(V)) {
-    unsigned Reg = FastEmit_f(VT, VT, ISD::ConstantFP, CF);
+    Reg = FastEmit_f(VT, VT, ISD::ConstantFP, CF);
 
     if (!Reg) {
       const APFloat &Flt = CF->getValueAPF();
@@ -60,15 +63,15 @@ unsigned FastISel::getRegForValue(Value *V) {
       if (Reg == 0)
         return 0;
     }
-    
-    return Reg;
   } else if (isa<UndefValue>(V)) {
-    unsigned Reg = createResultReg(TLI.getRegClassFor(VT));
+    Reg = createResultReg(TLI.getRegClassFor(VT));
     BuildMI(MBB, TII.get(TargetInstrInfo::IMPLICIT_DEF), Reg);
-    return Reg;
+  } else {
+    return 0;
   }
   
-  return 0;
+  LocalValueMap[V] = Reg;
+  return Reg;
 }
 
 /// UpdateValueMap - Update the value map to include the new mapping for this
