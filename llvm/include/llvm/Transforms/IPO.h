@@ -182,6 +182,12 @@ ModulePass *createIndMemRemPass();
 /// (prototypes) that are not used.
 ModulePass *createStripDeadPrototypesPass();
 
+//===----------------------------------------------------------------------===//
+/// createPartialSpecializationPass - This pass specializes functions for
+/// constant arguments.
+///
+ModulePass* createPartialSpecializationPass();
+
 } // End llvm namespace
 
 #endif

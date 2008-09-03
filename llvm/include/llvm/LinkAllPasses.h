@@ -118,6 +118,7 @@ namespace {
       (void) llvm::createPostDomTree();
       (void) llvm::createPostDomFrontier();
       (void) llvm::createInstructionNamerPass();
+      (void) llvm::createPartialSpecializationPass();
 
       (void)new llvm::IntervalPartition();
       (void)new llvm::FindUsedTypes();
