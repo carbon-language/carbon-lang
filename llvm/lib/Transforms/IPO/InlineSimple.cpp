@@ -63,6 +63,11 @@ bool SimpleInliner::doInitialization(CallGraph &CG) {
   
   Module &M = CG.getModule();
   
+  for (Module::iterator I = M.begin(), E = M.end();
+       I != E; ++I)
+    if (!I->isDeclaration() && I->getNotes() == FN_NOTE_NoInline)
+      NeverInline.insert(I);
+
   // Get llvm.noinline
   GlobalVariable *GV = M.getNamedGlobal("llvm.noinline");
   
