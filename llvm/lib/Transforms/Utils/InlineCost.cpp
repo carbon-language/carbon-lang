@@ -221,6 +221,9 @@ int InlineCostAnalyzer::getInlineCost(CallSite CS,
   // If we should never inline this, return a huge cost.
   if (CalleeFI.NeverInline)
     return 2000000000;
+
+  if (Callee->getNotes() & FN_NOTE_AlwaysInline)
+    return -2000000000;
     
   // Add to the inline quality for properties that make the call valuable to
   // inline.  This includes factors that indicate that the result of inlining
