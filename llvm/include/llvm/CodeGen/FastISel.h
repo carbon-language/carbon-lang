@@ -208,12 +208,15 @@ protected:
   /// from a specified index of a superregister.
   unsigned FastEmitInst_extractsubreg(unsigned Op0, uint32_t Idx);
 
-private:
   unsigned getRegForValue(Value *V,
                           DenseMap<const Value*, unsigned> &ValueMap);
 
+  void UpdateValueMap(Instruction* I, unsigned Reg, 
+                      DenseMap<const Value*, unsigned> &ValueMap);
+
   unsigned createResultReg(const TargetRegisterClass *RC);
 
+private:
   bool SelectBinaryOp(Instruction *I, ISD::NodeType ISDOpcode,
                       DenseMap<const Value*, unsigned> &ValueMap);
 
@@ -224,10 +227,7 @@ private:
                      DenseMap<const Value*, unsigned> &ValueMap);
   
   bool SelectCast(Instruction *I, ISD::NodeType Opcode,
-                  DenseMap<const Value*, unsigned> &ValueMap);
-                  
-  void UpdateValueMap(Instruction* I, unsigned Reg, 
-                      DenseMap<const Value*, unsigned> &ValueMap);
+                  DenseMap<const Value*, unsigned> &ValueMap);                  
 };
 
 }
