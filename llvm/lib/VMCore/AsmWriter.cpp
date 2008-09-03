@@ -1407,10 +1407,11 @@ void AssemblyWriter::printFunction(const Function *F) {
       NeedComma = true;
       Out << "inline=never";
     }
-    if (NeedComma)
-      Out << ",";
-    if (FNotes & FN_NOTE_OptimizeForSize)
+    if (FNotes & FN_NOTE_OptimizeForSize) {
+      if (NeedComma)
+        Out << ",";
       Out << "opt_size";
+    }
     Out << ")";
   }
   if (F->isDeclaration()) {
