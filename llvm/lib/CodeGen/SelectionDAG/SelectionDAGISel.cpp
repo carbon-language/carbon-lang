@@ -5763,8 +5763,10 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn, MachineFunction &MF) {
 
           // Next, try calling the target to attempt to handle the instruction.
           if (F->TargetSelectInstruction(Begin, FuncInfo->ValueMap,
-                                         FuncInfo->MBBMap, BB))
+                                         FuncInfo->MBBMap, BB)) {
+            ++Begin;
             continue;
+          }
 
           // Handle certain instructions as single-LLVM-Instruction blocks.
           if (isa<CallInst>(Begin) || isa<LoadInst>(Begin) ||
