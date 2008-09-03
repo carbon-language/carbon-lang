@@ -64,6 +64,7 @@ namespace clang {
   class ObjCIvarDecl;
   class ObjCMethodDecl;
   class ObjCPropertyDecl;
+  struct BlockSemaInfo;
 
 /// Sema - This implements semantic analysis and AST building for C.
 class Sema : public Action {
@@ -74,6 +75,10 @@ public:
 
   /// CurContext - This is the current declaration context of parsing.
   DeclContext *CurContext;
+
+  /// CurBlock - If inside of a block definition, this contains a pointer to
+  /// the active block object that represents it.
+  BlockSemaInfo *CurBlock;
 
   /// LabelMap - This is a mapping from label identifiers to the LabelStmt for
   /// it (which acts like the label decl in some ways).  Forward referenced
@@ -408,6 +413,7 @@ public:
   
   virtual StmtResult ActOnReturnStmt(SourceLocation ReturnLoc,
                                      ExprTy *RetValExp);
+  StmtResult ActOnBlockReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp);
   
   virtual StmtResult ActOnAsmStmt(SourceLocation AsmLoc,
                                   bool IsSimple,
@@ -536,6 +542,27 @@ public:
   virtual ExprResult ActOnVAArg(SourceLocation BuiltinLoc,
                                 ExprTy *expr, TypeTy *type,
                                 SourceLocation RPLoc);
+
+  //===------------------------- "Block" Extension ------------------------===//
+
+  /// ActOnBlockStart - This callback is invoked when a block literal is
+  /// started.
+  virtual void ActOnBlockStart(SourceLocation CaretLoc, Scope *CurScope,
+                               Declarator &ParamInfo);
+  
+  /// ActOnBlockError - If there is an error parsing a block, this callback
+  /// is invoked to pop the information about the block from the action impl.
+  virtual void ActOnBlockError(SourceLocation CaretLoc, Scope *CurScope);
+  
+  /// ActOnBlockStmtExpr - This is called when the body of a block statement
+  /// literal was successfully completed.  ^(int x){...}
+  virtual ExprResult ActOnBlockStmtExpr(SourceLocation CaretLoc, StmtTy *Body,
+                                        Scope *CurScope);
+
+  /// ActOnBlockExprExpr - This is called when the body of a block
+  /// expression literal was successfully completed.  ^(int x)[foo bar: x]
+  virtual ExprResult ActOnBlockExprExpr(SourceLocation CaretLoc, ExprTy *Body,
+                                        Scope *CurScope);
   
   // Act on C++ namespaces
   virtual DeclTy *ActOnStartNamespaceDef(Scope *S, SourceLocation IdentLoc,
@@ -958,6 +985,27 @@ class InitListChecker {
 public:
   InitListChecker(Sema *S, InitListExpr *IL, QualType &T);
   bool HadError() { return hadError; }
+};
+
+/// BlockSemaInfo - When a block is being parsed, this contains information
+/// about the block.  It is pointed to from Sema::CurBlock.
+struct BlockSemaInfo {
+  llvm::SmallVector<ParmVarDecl*, 8> Params;
+  llvm::SmallPtrSet<Decl*, 4> ByRefVars;
+  bool hasPrototype;
+  bool isVariadic;
+  
+  /// TheScope - This is the scope for the block itself, which contains
+  /// arguments etc.
+  Scope *TheScope;
+  
+  /// ReturnType - This will get set to block result type, by looking at
+  /// return types, if any, in the block body.
+  Type *ReturnType;
+  
+  /// PrevBlockInfo - If this is nested inside another block, this points
+  /// to the outer block.
+  BlockSemaInfo *PrevBlockInfo;
 };
 
 

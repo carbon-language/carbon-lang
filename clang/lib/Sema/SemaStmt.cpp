@@ -588,6 +588,10 @@ Sema::ActOnObjCForCollectionStmt(SourceLocation ForLoc,
 Action::StmtResult 
 Sema::ActOnGotoStmt(SourceLocation GotoLoc, SourceLocation LabelLoc,
                     IdentifierInfo *LabelII) {
+  // If we are in a block, reject all gotos for now.
+  if (CurBlock)
+    return Diag(GotoLoc, diag::err_goto_in_block);
+
   // Look up the record for this label identifier.
   LabelStmt *&LabelDecl = LabelMap[LabelII];
 
@@ -630,10 +634,61 @@ Sema::ActOnBreakStmt(SourceLocation BreakLoc, Scope *CurScope) {
   return new BreakStmt(BreakLoc);
 }
 
+/// ActOnBlockReturnStmt - Utilty routine to figure out block's return type.
+///
+Action::StmtResult
+Sema::ActOnBlockReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
+ 
+  // If this is the first return we've seen in the block, infer the type of
+  // the block from it.
+  if (CurBlock->ReturnType == 0) {
+    if (RetValExp)
+      CurBlock->ReturnType = RetValExp->getType().getTypePtr();
+    else
+      CurBlock->ReturnType = Context.VoidTy.getTypePtr();
+    return new ReturnStmt(ReturnLoc, RetValExp);
+  }
+  
+  // Otherwise, verify that this result type matches the previous one.  We are
+  // pickier with blocks than for normal functions because we don't have GCC
+  // compatibility to worry about here.
+  if (CurBlock->ReturnType->isVoidType()) {
+    if (RetValExp) {
+      Diag(ReturnLoc, diag::err_return_block_has_expr);
+      delete RetValExp;
+      RetValExp = 0;
+    }
+    return new ReturnStmt(ReturnLoc, RetValExp);
+  }
+  
+  if (!RetValExp) {
+    Diag(ReturnLoc, diag::err_block_return_missing_expr);
+    return true;
+  }
+  
+  // we have a non-void block with an expression, continue checking
+  QualType RetValType = RetValExp->getType();
+  
+  // For now, restrict multiple return statements in a block to have 
+  // strict compatible types only.
+  QualType BlockQT = QualType(CurBlock->ReturnType, 0);
+  if (Context.getCanonicalType(BlockQT).getTypePtr() 
+      != Context.getCanonicalType(RetValType).getTypePtr()) {
+    DiagnoseAssignmentResult(Incompatible, ReturnLoc, BlockQT,
+                             RetValType, RetValExp, "returning");
+    return true;
+  }
+  
+  if (RetValExp) CheckReturnStackAddr(RetValExp, BlockQT, ReturnLoc);
+  
+  return new ReturnStmt(ReturnLoc, (Expr*)RetValExp);
+}
 
 Action::StmtResult
 Sema::ActOnReturnStmt(SourceLocation ReturnLoc, ExprTy *rex) {
   Expr *RetValExp = static_cast<Expr *>(rex);
+  if (CurBlock)
+    return ActOnBlockReturnStmt(ReturnLoc, RetValExp);
   QualType FnRetType =
         getCurFunctionDecl() ? getCurFunctionDecl()->getResultType() : 
                                getCurMethodDecl()->getResultType();

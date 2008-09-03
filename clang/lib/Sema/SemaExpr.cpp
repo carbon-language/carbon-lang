@@ -21,6 +21,8 @@
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
+#include "clang/Parse/DeclSpec.h"
+#include "clang/Parse/Scope.h"
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -2605,6 +2607,124 @@ Sema::ExprResult Sema::ActOnChooseExpr(SourceLocation BuiltinLoc, ExprTy *cond,
   QualType resType = condEval.getZExtValue() ? LHSExpr->getType() : 
                                                RHSExpr->getType();
   return new ChooseExpr(BuiltinLoc, CondExpr, LHSExpr, RHSExpr, resType, RPLoc);
+}
+
+//===----------------------------------------------------------------------===//
+// Clang Extensions.
+//===----------------------------------------------------------------------===//
+
+/// ActOnBlockStart - This callback is invoked when a block literal is started.
+void Sema::ActOnBlockStart(SourceLocation CaretLoc, Scope *BlockScope,
+                           Declarator &ParamInfo) {
+  // Analyze block parameters.
+  BlockSemaInfo *BSI = new BlockSemaInfo();
+  
+  // Add BSI to CurBlock.
+  BSI->PrevBlockInfo = CurBlock;
+  CurBlock = BSI;
+  
+  BSI->ReturnType = 0;
+  BSI->TheScope = BlockScope;
+  
+  // Analyze arguments to block.
+  assert(ParamInfo.getTypeObject(0).Kind == DeclaratorChunk::Function &&
+         "Not a function declarator!");
+  DeclaratorChunk::FunctionTypeInfo &FTI = ParamInfo.getTypeObject(0).Fun;
+  
+  BSI->hasPrototype = FTI.hasPrototype;
+  BSI->isVariadic = true;
+  
+  // Check for C99 6.7.5.3p10 - foo(void) is a non-varargs function that takes
+  // no arguments, not a function that takes a single void argument.
+  if (FTI.hasPrototype &&
+      FTI.NumArgs == 1 && !FTI.isVariadic && FTI.ArgInfo[0].Ident == 0 &&
+      (!((ParmVarDecl *)FTI.ArgInfo[0].Param)->getType().getCVRQualifiers() &&
+        ((ParmVarDecl *)FTI.ArgInfo[0].Param)->getType()->isVoidType())) {
+    // empty arg list, don't push any params.
+    BSI->isVariadic = false;
+  } else if (FTI.hasPrototype) {
+    for (unsigned i = 0, e = FTI.NumArgs; i != e; ++i)
+      BSI->Params.push_back((ParmVarDecl *)FTI.ArgInfo[i].Param);
+    BSI->isVariadic = FTI.isVariadic;
+  }
+}
+
+/// ActOnBlockError - If there is an error parsing a block, this callback
+/// is invoked to pop the information about the block from the action impl.
+void Sema::ActOnBlockError(SourceLocation CaretLoc, Scope *CurScope) {
+  // Ensure that CurBlock is deleted.
+  llvm::OwningPtr<BlockSemaInfo> CC(CurBlock);
+  
+  // Pop off CurBlock, handle nested blocks.
+  CurBlock = CurBlock->PrevBlockInfo;
+  
+  // FIXME: Delete the ParmVarDecl objects as well???
+  
+}
+
+/// ActOnBlockStmtExpr - This is called when the body of a block statement
+/// literal was successfully completed.  ^(int x){...}
+Sema::ExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc, StmtTy *body,
+                                          Scope *CurScope) {
+  // Ensure that CurBlock is deleted.
+  llvm::OwningPtr<BlockSemaInfo> BSI(CurBlock);
+  llvm::OwningPtr<CompoundStmt> Body(static_cast<CompoundStmt*>(body));
+
+  // Pop off CurBlock, handle nested blocks.
+  CurBlock = CurBlock->PrevBlockInfo;
+  
+  QualType RetTy = Context.VoidTy;
+  if (BSI->ReturnType)
+    RetTy = QualType(BSI->ReturnType, 0);
+  
+  llvm::SmallVector<QualType, 8> ArgTypes;
+  for (unsigned i = 0, e = BSI->Params.size(); i != e; ++i)
+    ArgTypes.push_back(BSI->Params[i]->getType());
+  
+  QualType BlockTy;
+  if (!BSI->hasPrototype)
+    BlockTy = Context.getFunctionTypeNoProto(RetTy);
+  else
+    BlockTy = Context.getFunctionType(RetTy, &ArgTypes[0], ArgTypes.size(),
+                                      BSI->isVariadic);
+  
+  BlockTy = Context.getBlockPointerType(BlockTy);
+  return new BlockStmtExpr(CaretLoc, BlockTy, 
+                           &BSI->Params[0], BSI->Params.size(), Body.take());
+}
+
+/// ActOnBlockExprExpr - This is called when the body of a block
+/// expression literal was successfully completed.  ^(int x)[foo bar: x]
+Sema::ExprResult Sema::ActOnBlockExprExpr(SourceLocation CaretLoc, ExprTy *body,
+                                      Scope *CurScope) {
+  // Ensure that CurBlock is deleted.
+  llvm::OwningPtr<BlockSemaInfo> BSI(CurBlock);
+  llvm::OwningPtr<Expr> Body(static_cast<Expr*>(body));
+
+  // Pop off CurBlock, handle nested blocks.
+  CurBlock = CurBlock->PrevBlockInfo;
+  
+  if (BSI->ReturnType) {
+    Diag(CaretLoc, diag::err_return_in_block_expression);
+    return true;
+  }
+  
+  QualType RetTy = Body->getType();
+  
+  llvm::SmallVector<QualType, 8> ArgTypes;
+  for (unsigned i = 0, e = BSI->Params.size(); i != e; ++i)
+    ArgTypes.push_back(BSI->Params[i]->getType());
+  
+  QualType BlockTy;
+  if (!BSI->hasPrototype)
+    BlockTy = Context.getFunctionTypeNoProto(RetTy);
+  else
+    BlockTy = Context.getFunctionType(RetTy, &ArgTypes[0], ArgTypes.size(),
+                                      BSI->isVariadic);
+  
+  BlockTy = Context.getBlockPointerType(BlockTy);
+  return new BlockExprExpr(CaretLoc, BlockTy, 
+                           &BSI->Params[0], BSI->Params.size(), Body.take());
 }
 
 /// ExprsMatchFnType - return true if the Exprs in array Args have

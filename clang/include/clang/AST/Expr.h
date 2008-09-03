@@ -1475,6 +1475,124 @@ private:
   InitListExpr() : Expr(InitListExprClass, QualType()) {}
 };
 
+//===----------------------------------------------------------------------===//
+// Clang Extensions
+//===----------------------------------------------------------------------===//
+
+/// BlockExpr - Common base class between BlockStmtExpr and BlockExprExpr.
+class BlockExpr : public Expr {
+  SourceLocation CaretLocation;
+  llvm::SmallVector<ParmVarDecl*, 8> Args;
+protected:
+  BlockExpr(StmtClass SC, QualType ty, SourceLocation caretloc,
+              ParmVarDecl **args, unsigned numargs)
+    : Expr(SC, ty), CaretLocation(caretloc), Args(args, args+numargs) {}
+public:
+  SourceLocation getCaretLocation() const { return CaretLocation; }
+
+  /// getFunctionType - Return the underlying function type for this block.
+  const FunctionType *getFunctionType() const;
+  
+  /// arg_iterator - Iterate over the ParmVarDecl's for the arguments to this
+  /// block.
+  typedef llvm::SmallVector<ParmVarDecl*, 8>::const_iterator arg_iterator;
+  bool arg_empty() const { return Args.empty(); }
+  arg_iterator arg_begin() const { return Args.begin(); }
+  arg_iterator arg_end() const { return Args.end(); }
+  
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == BlockStmtExprClass ||
+           T->getStmtClass() == BlockExprExprClass; 
+  }
+  static bool classof(const BlockExpr *) { return true; }
+};
+  
+/// BlockStmtExpr - Represent a block literal with a syntax:
+/// ^{ statement-body }   or   ^(int arg1, float arg2){ statement-body }
+class BlockStmtExpr : public BlockExpr {
+  CompoundStmt *Body;
+public:
+  BlockStmtExpr(SourceLocation CaretLoc, QualType Ty, ParmVarDecl **args, 
+                   unsigned numargs, CompoundStmt *body) : 
+    BlockExpr(BlockStmtExprClass, Ty, CaretLoc,
+                args, numargs), Body(body) {}
+    
+  const CompoundStmt *getBody() const { return Body; }
+  CompoundStmt *getBody() { return Body; }
+
+  virtual SourceRange getSourceRange() const {
+    return SourceRange(getCaretLocation(), Body->getLocEnd());
+  }
+  
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == BlockStmtExprClass; 
+  }
+  static bool classof(const BlockStmtExpr *) { return true; }
+
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
+    
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static BlockStmtExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
+};
+  
+/// BlockExprExpr - Represents a block literal with syntax:
+///   ^(expression)   or ^(int arg1, float arg2)(expression)
+class BlockExprExpr : public BlockExpr {
+  Expr *BodyExpr;
+public:
+  BlockExprExpr(SourceLocation CaretLoc, QualType Ty, ParmVarDecl **args, 
+                   unsigned numargs, Expr *body) : 
+    BlockExpr(BlockExprExprClass, Ty, CaretLoc,
+                args, numargs), BodyExpr(body) {}
+  
+  const Expr *getExpr() const { return BodyExpr; }
+  Expr *getExpr() { return BodyExpr; }
+
+  virtual SourceRange getSourceRange() const {
+    return SourceRange(getCaretLocation(), BodyExpr->getLocEnd());
+  }
+  
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
+  
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == BlockExprExprClass; 
+  }
+  static bool classof(const BlockExprExpr *) { return true; }
+};
+
+/// BlockDeclRefExpr - A reference to a declared variable, function,
+/// enum, etc.
+class BlockDeclRefExpr : public Expr {
+  ValueDecl *D; 
+  SourceLocation Loc;
+  bool IsByRef;
+public:
+  BlockDeclRefExpr(ValueDecl *d, QualType t, SourceLocation l, bool ByRef) : 
+       Expr(BlockDeclRefExprClass, t), D(d), Loc(l), IsByRef(ByRef) {}
+  
+  ValueDecl *getDecl() { return D; }
+  const ValueDecl *getDecl() const { return D; }
+  virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
+  
+  bool isByRef() const { return IsByRef; }
+  
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == BlockDeclRefExprClass; 
+  }
+  static bool classof(const BlockDeclRefExpr *) { return true; }
+  
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
+  
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static BlockDeclRefExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
+};
+
 }  // end namespace clang
 
 #endif

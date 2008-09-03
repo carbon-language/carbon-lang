@@ -868,6 +868,12 @@ DIAG(err_qualified_block_pointer_type, ERROR,
      "qualifier specification on block pointer type not allowed")
 DIAG(err_nonfunction_block_type, ERROR,
      "block pointer to non-function type is invalid")
+DIAG(err_return_block_has_expr, ERROR,
+     "void block should not return a value")
+DIAG(err_block_return_missing_expr, ERROR,
+     "non-void block should return a value")
+DIAG(err_block_with_return_type_requires_args, ERROR,
+     "block with explicit return type requires argument list")
 
 // Expressions.
 DIAG(ext_sizeof_function_type, EXTENSION,
@@ -1124,6 +1130,10 @@ DIAG(warn_uninit_val, WARNING, "use of uninitialized variable")
 // Blocks
 DIAG(err_expected_block_lbrace, ERROR,
      "expected '{' in block literal")
+DIAG(err_goto_in_block, ERROR,
+     "goto not allowed in closure literal")
+DIAG(err_return_in_block_expression, ERROR,
+     "return not allowed in block expression literal")
 
 // CFString checking
 DIAG(err_cfstring_literal_not_string_constant, ERROR,

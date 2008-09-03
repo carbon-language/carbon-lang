@@ -874,6 +874,46 @@ void StmtPrinter::VisitObjCMessageExpr(ObjCMessageExpr *Mess) {
   OS << "]";
 }
 
+void StmtPrinter::VisitBlockExpr(BlockExpr *Node) {
+  OS << "^";
+  
+  const FunctionType *AFT = Node->getFunctionType();
+  
+  if (isa<FunctionTypeNoProto>(AFT)) {
+    OS << "()";
+  } else if (!Node->arg_empty() || cast<FunctionTypeProto>(AFT)->isVariadic()) {
+    const FunctionTypeProto *FT = cast<FunctionTypeProto>(AFT);
+    OS << '(';
+    std::string ParamStr;
+    for (BlockStmtExpr::arg_iterator AI = Node->arg_begin(),
+         E = Node->arg_end(); AI != E; ++AI) {
+      if (AI != Node->arg_begin()) OS << ", ";
+      ParamStr = (*AI)->getName();
+      (*AI)->getType().getAsStringInternal(ParamStr);
+      OS << ParamStr;
+    }
+    
+    if (FT->isVariadic()) {
+      if (!Node->arg_empty()) OS << ", ";
+      OS << "...";
+    }
+    OS << ')';
+  }
+}
+
+void StmtPrinter::VisitBlockStmtExpr(BlockStmtExpr *Node) {
+  VisitBlockExpr(Node);
+  PrintRawCompoundStmt(Node->getBody());
+}
+
+void StmtPrinter::VisitBlockExprExpr(BlockExprExpr *Node) {
+  VisitBlockExpr(Node);
+  PrintExpr(Node->getExpr());
+}
+
+void StmtPrinter::VisitBlockDeclRefExpr(BlockDeclRefExpr *Node) {
+  OS << Node->getDecl()->getName();
+}
 //===----------------------------------------------------------------------===//
 // Stmt method implementations
 //===----------------------------------------------------------------------===//

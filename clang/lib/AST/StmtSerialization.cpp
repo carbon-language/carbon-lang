@@ -1109,6 +1109,38 @@ ObjCStringLiteral* ObjCStringLiteral::CreateImpl(Deserializer& D, ASTContext& C)
 }
 
 //===----------------------------------------------------------------------===//
+//   Serialization for Clang Extensions.
+//===----------------------------------------------------------------------===//
+
+void BlockStmtExpr::EmitImpl(Serializer& S) const {
+  S.Emit(getType());
+  S.Emit(getCaretLocation());
+  S.EmitOwnedPtr(Body);
+}
+
+BlockStmtExpr* BlockStmtExpr::CreateImpl(Deserializer& D, ASTContext& C) {
+  QualType Q = QualType::ReadVal(D);
+  SourceLocation L = SourceLocation::ReadVal(D);
+  /*CompoundStmt* BodyStmt = cast<CompoundStmt>(*/D.ReadOwnedPtr<Stmt>(C)/*)*/;
+  assert(0 && "Cannot deserialize BlockBlockExpr yet");
+  // FIXME: need to handle parameters.
+  //return new BlockBlockExpr(L, Q, BodyStmt);
+  return 0;
+}
+
+void BlockDeclRefExpr::EmitImpl(Serializer& S) const {
+  S.Emit(Loc);
+  S.Emit(getType());
+  S.EmitBool(false);
+  S.EmitPtr(getDecl());
+}
+
+BlockDeclRefExpr* BlockDeclRefExpr::CreateImpl(Deserializer& D, ASTContext& C) {
+  assert(0 && "Cannot deserialize BlockDeclRefExpr yet");
+  return 0;
+}
+
+//===----------------------------------------------------------------------===//
 //   C++ Serialization
 //===----------------------------------------------------------------------===//
 void CXXDefaultArgExpr::EmitImpl(Serializer& S) const {

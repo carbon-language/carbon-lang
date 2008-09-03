@@ -282,6 +282,13 @@ InitListExpr::InitListExpr(SourceLocation lbraceloc,
     InitExprs.push_back(initexprs[i]);
 }
 
+/// getFunctionType - Return the underlying function type for this closure.
+///
+const FunctionType *BlockExpr::getFunctionType() const {
+  return getType()->getAsBlockPointerType()->
+                    getPointeeType()->getAsFunctionType();
+}
+
 //===----------------------------------------------------------------------===//
 // Generic Expression Routines
 //===----------------------------------------------------------------------===//
@@ -1430,5 +1437,20 @@ Stmt::child_iterator ObjCMessageExpr::child_begin() {
 }
 Stmt::child_iterator ObjCMessageExpr::child_end() {
   return &SubExprs[0]+ARGS_START+getNumArgs();
+}
+
+// Blocks
+Stmt::child_iterator BlockStmtExpr::child_begin() {
+  return reinterpret_cast<Stmt**>(&Body);
+}
+Stmt::child_iterator BlockStmtExpr::child_end() {
+  return reinterpret_cast<Stmt**>(&Body)+1;
+}
+
+Stmt::child_iterator BlockExprExpr::child_begin() {
+  return reinterpret_cast<Stmt**>(&BodyExpr);
+}
+Stmt::child_iterator BlockExprExpr::child_end() {
+  return reinterpret_cast<Stmt**>(&BodyExpr)+1;
 }
 

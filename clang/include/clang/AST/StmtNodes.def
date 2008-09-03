@@ -108,8 +108,12 @@ STMT(76, ObjCPropertyRefExpr  , Expr)
 // Clang Extensions.
 STMT(77, OverloadExpr         , Expr)
 STMT(78, ShuffleVectorExpr    , Expr)
+STMT(79, BlockExpr            , Expr)
+STMT(80, BlockStmtExpr        , BlockExpr)
+STMT(81, BlockExprExpr        , BlockExpr)
+STMT(82, BlockDeclRefExpr     , Expr)
 
-LAST_EXPR(78)
+LAST_EXPR(82)
 
 #undef STMT
 #undef FIRST_STMT
