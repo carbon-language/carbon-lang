@@ -1252,6 +1252,23 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
     ImpCastExprToType(lex, rexT); // promote the null to a pointer.
     return rexT;
   }
+  // Allow any Objective-C types to devolve to id type.
+  // FIXME: This seems to match gcc behavior, although that is very
+  // arguably incorrect. For example, (xxx ? (id<P>) : (id<P>)) has
+  // type id, which seems broken.
+  if (Context.isObjCObjectPointerType(lexT) && 
+      Context.isObjCObjectPointerType(rexT)) {
+    // FIXME: This is not the correct composite type. This only
+    // happens to work because id can more or less be used anywhere,
+    // however this may change the type of method sends.
+    // FIXME: gcc adds some type-checking of the arguments and emits
+    // (confusing) incompatible comparison warnings in some
+    // cases. Investigate.
+    QualType compositeType = Context.getObjCIdType();
+    ImpCastExprToType(lex, compositeType);
+    ImpCastExprToType(rex, compositeType);
+    return compositeType;
+  }
   // Handle the case where both operands are pointers before we handle null
   // pointer constants in case both operands are null pointer constants.
   if (const PointerType *LHSPT = lexT->getAsPointerType()) { // C99 6.5.15p3,6
@@ -1307,18 +1324,6 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
       // FIXME: Need to calculate the composite type.
       // FIXME: Need to add qualifiers
       QualType compositeType = lexT;
-      ImpCastExprToType(lex, compositeType);
-      ImpCastExprToType(rex, compositeType);
-      return compositeType;
-    }
-  }
-  // Need to handle "id<xx>" explicitly. Unlike "id", whose canonical type
-  // evaluates to "struct objc_object *" (and is handled above when comparing
-  // id with statically typed objects). 
-  if (lexT->isObjCQualifiedIdType() || rexT->isObjCQualifiedIdType()) {
-    if (ObjCQualifiedIdTypesAreCompatible(lexT, rexT, true)) {
-      // FIXME: This is not the correct composite type. 
-      QualType compositeType = Context.getObjCIdType();
       ImpCastExprToType(lex, compositeType);
       ImpCastExprToType(rex, compositeType);
       return compositeType;

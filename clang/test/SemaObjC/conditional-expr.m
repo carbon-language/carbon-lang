@@ -29,7 +29,7 @@
   id <DTOutputStreams> nextOutputStream = [self nextOutputStream];
   // GCC warns about both of these.
   self = nextOutputStream; // expected-error {{incompatible type assigning 'id<DTOutputStreams>', expected 'DTFilterOutputStream2 *'}}
-  return nextOutputStream ? nextOutputStream : self; // expected-error {{incompatible operand types ('id<DTOutputStreams>' and 'DTFilterOutputStream2 *')}}
+  return nextOutputStream ? nextOutputStream : self;
 }
 @end
 
@@ -39,6 +39,6 @@
   id <DTOutputStreams> nextOutputStream = [self nextOutputStream];
   // GCC warns about both of these as well (no errors).
   self = nextOutputStream; // expected-error {{incompatible type assigning 'id<DTOutputStreams>', expected 'DTFilterOutputStream3 *'}}
-  return nextOutputStream ? nextOutputStream : self; // expected-error {{incompatible operand types ('id<DTOutputStreams>' and 'DTFilterOutputStream3 *')}}
+  return nextOutputStream ? nextOutputStream : self;
 }
 @end
