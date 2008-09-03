@@ -1,4 +1,4 @@
-//===- InlineAlways.cpp - Code to perform simple function inlining --------===//
+//===- InlineAlways.cpp - Code to inline always_inline functions ----------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements bottom-up inlining of functions into callees.
+// This file implements a custom inliner that handles only functions that
+// are markes as "always inline".
 //
 //===----------------------------------------------------------------------===//
 
