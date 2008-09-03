@@ -1909,6 +1909,7 @@ BinaryOperator *getNewPHIIncrement(BinaryOperator *Incr, PHINode *PHI,
 void LoopStrengthReduce::OptimizeIVType(Loop *L) {
 
   BasicBlock *LPH = L->getLoopPreheader();
+  BasicBlock *LatchBB = L->getLoopLatch();
   SmallVector<PHINode *, 4> PHIs;
   for (BasicBlock::iterator BI = L->getHeader()->begin(), 
          BE = L->getHeader()->end(); BI != BE; ++BI) {
@@ -2000,8 +2001,8 @@ void LoopStrengthReduce::OptimizeIVType(Loop *L) {
 
     // Remove old PHI and increment instruction.
     SE->deleteValueFromRecords(PHI);
-    PHI->removeIncomingValue(Entry);
-    PHI->removeIncomingValue(Latch);
+    PHI->removeIncomingValue(LatchBB);
+    PHI->removeIncomingValue(LPH);
     SE->deleteValueFromRecords(Incr);
     Incr->eraseFromParent();
   }
