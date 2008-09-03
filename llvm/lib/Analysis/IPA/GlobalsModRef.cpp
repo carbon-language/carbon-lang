@@ -354,13 +354,18 @@ void GlobalsModRef::AnalyzeCallGraph(CallGraph &CG, Module &M) {
   for (scc_iterator<CallGraph*> I = scc_begin(&CG), E = scc_end(&CG); I != E;
        ++I) {
     std::vector<CallGraphNode *> &SCC = *I;
-    assert(!SCC.empty() && "SCC with no functions?");
 
-    if (!SCC[0]->getFunction())
-      // Do not process the external node, assume the worst.
+    FunctionRecord *FR = 0;
+    // Find a function record from the SCC (it doesn't matter which one).
+    for (unsigned i = 0, e = SCC.size(); i != e; ++i)
+      if (Function *F = SCC[i]->getFunction()) {
+        FR = &FunctionInfo[F];
+        break;
+      }
+
+    if (!FR)
+      // Nothing to do.
       continue;
-
-    FunctionRecord &FR = FunctionInfo[SCC[0]->getFunction()];
 
     bool KnowNothing = false;
     unsigned FunctionEffect = 0;
@@ -384,7 +389,7 @@ void GlobalsModRef::AnalyzeCallGraph(CallGraph &CG, Module &M) {
           // mark all globals read somewhere as being read by this function.
           for (std::set<GlobalValue*>::iterator GI = ReadGlobals.begin(),
                E = ReadGlobals.end(); GI != E; ++GI)
-            FR.GlobalInfo[*GI] |= Ref;
+            FR->GlobalInfo[*GI] |= Ref;
         } else {
           // Can't say anything useful.
           KnowNothing = true;
@@ -403,7 +408,7 @@ void GlobalsModRef::AnalyzeCallGraph(CallGraph &CG, Module &M) {
             for (std::map<GlobalValue*, unsigned>::iterator GI =
                    CalleeFR->GlobalInfo.begin(), E = CalleeFR->GlobalInfo.end();
                  GI != E; ++GI)
-              FR.GlobalInfo[GI->first] |= GI->second;
+              FR->GlobalInfo[GI->first] |= GI->second;
           } else {
             // Can't say anything about it.  However, if it is inside our SCC,
             // then nothing needs to be done.
@@ -440,12 +445,12 @@ void GlobalsModRef::AnalyzeCallGraph(CallGraph &CG, Module &M) {
       ++NumReadMemFunctions;
     if (FunctionEffect == 0)
       ++NumNoMemFunctions;
-    FR.FunctionEffect = FunctionEffect;
+    FR->FunctionEffect = FunctionEffect;
 
     // Finally, now that we know the full effect on this SCC, clone the
     // information to each function in the SCC.
     for (unsigned i = 1, e = SCC.size(); i != e; ++i)
-      FunctionInfo[SCC[i]->getFunction()] = FR;
+      FunctionInfo[SCC[i]->getFunction()] = *FR;
   }
 }
 
