@@ -19,7 +19,7 @@
 #include "X86RegisterInfo.h"
 #include "X86MachineFunctionInfo.h"
 #include "llvm/Target/TargetLowering.h"
-#include "llvm/CodeGen/FastIsel.h"
+#include "llvm/CodeGen/FastISel.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/CallingConvLower.h"
 
