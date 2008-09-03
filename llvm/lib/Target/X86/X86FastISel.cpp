@@ -14,8 +14,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "X86.h"
-#include "X86RegisterInfo.h"
 #include "X86ISelLowering.h"
+#include "X86RegisterInfo.h"
+#include "X86Subtarget.h"
 #include "X86TargetMachine.h"
 #include "llvm/CodeGen/FastISel.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
@@ -28,7 +29,9 @@ class X86FastISel : public FastISel {
   const X86Subtarget *Subtarget;
     
  public:
-  explicit X86FastISel(MachineFunction &mf) : FastISel(mf) {}
+  explicit X86FastISel(MachineFunction &mf) : FastISel(mf) {
+    Subtarget = &TM.getSubtarget<X86Subtarget>();
+  }
 
   virtual bool
     TargetSelectInstruction(Instruction *I,
