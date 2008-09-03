@@ -1908,6 +1908,10 @@ BinaryOperator *getNewPHIIncrement(BinaryOperator *Incr, PHINode *PHI,
 /// change the type of IV, if possible.
 void LoopStrengthReduce::OptimizeIVType(Loop *L) {
 
+  SCEVHandle IterationCount = SE->getIterationCount(L);
+  if (isa<SCEVCouldNotCompute>(IterationCount))
+    return;
+
   BasicBlock *LPH = L->getLoopPreheader();
   BasicBlock *LatchBB = L->getLoopLatch();
   SmallVector<PHINode *, 4> PHIs;

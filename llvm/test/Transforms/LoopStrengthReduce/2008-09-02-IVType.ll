@@ -49,7 +49,7 @@ bb28:		; preds = %bb8, %bb
 	store i16* %theDCTBufferIter.0.lcssa, i16** %tmp6, align 4
 	%tmp37 = add i16 %component.09, 1		; <i16> [#uses=2]
 	%phitmp15 = sext i16 %tmp37 to i32		; <i32> [#uses=1]
-	%tmp46 = icmp slt i32 %phitmp15, %tmp4412		; <i1> [#uses=1]
+	%tmp46 = icmp slt i32 %phitmp15, 42		; <i1> [#uses=1]
 	br i1 %tmp46, label %bb, label %bb49
 
 bb49:		; preds = %bb28, %entry
