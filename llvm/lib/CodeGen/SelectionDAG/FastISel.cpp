@@ -68,6 +68,8 @@ unsigned FastISel::getRegForValue(Value *V,
     BuildMI(MBB, TII.get(TargetInstrInfo::IMPLICIT_DEF), Reg);
     return Reg;
   }
+  
+  return 0;
 }
 
 /// UpdateValueMap - Update the value map to include the new mapping for this
