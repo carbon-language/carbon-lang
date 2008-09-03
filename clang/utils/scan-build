@@ -24,6 +24,7 @@ my $Verbose = 0;       # Verbose output from this script.
 my $Prog = "scan-build";
 my $BuildName;
 my $BuildDate;
+my $CXX = 'g++';
 
 my $UseColor = ((($ENV{'TERM'} eq 'xterm-color') and -t STDOUT)
                 and defined($ENV{'SCAN_BUILD_COLOR'}));
@@ -45,7 +46,7 @@ sub Diag {
 sub DiagCrashes {
   my $Dir = shift;
   Diag ("The analyzer crashed on some source files.\n");
-  Diag ("Preprocessed versions of crashed files were depositied in '$Dir/crashes'.\n");
+  Diag ("Preprocessed versions of crashed files were deposited in '$Dir/crashes'.\n");
   Diag ("Please consider submitting a bug report using these files:\n");
   Diag ("  http://clang.llvm.org/StaticAnalysisUsage.html#filingbugs\n")
 }
@@ -691,7 +692,7 @@ sub RunBuildCommand {
     # When 'CC' is set, xcodebuild uses it to do all linking, even if we are
     # linking C++ object files.  Set 'LDPLUSPLUS' so that xcodebuild uses 'g++'
     # when linking such files.
-    my $LDPLUSPLUS = `which g++`;
+    my $LDPLUSPLUS = `$CXX`;
     $LDPLUSPLUS =~ s/\015?\012//;  # strip newlines
     $ENV{'LDPLUSPLUS'} = $LDPLUSPLUS;    
   }
@@ -735,18 +736,22 @@ OPTIONS:
                   exit status of $Prog to be 1 if it found potential bugs
                   and 0 otherwise.
 
- --use-cc [compiler path]  - By default, $Prog uses 'gcc' to compile
- --use-cc=[compiler path]    your code. This option specifies what compiler
-                             to use for regular code compilation.
+ --use-cc [compiler path]   - By default, $Prog uses 'gcc' to compile and link
+ --use-cc=[compiler path]     your C and Objective-C code. Use this option
+                              to specify an alternate compiler.
+
+ --use-c++ [compiler path]  - By default, $Prog uses 'g++' to compile and link
+ --use-c++=[compiler path]    your C++ and Objective-C++ code. Use this option
+                              to specify an alternate compiler.
 
  -v             - Verbose output from $Prog and the analyzer.
-                  A second and third "-v" increases verbosity.
+                  A second and third '-v' increases verbosity.
 
  -V             - View analysis results in a web browser when the build
  --view           completes.
 
 
- Available Source Code Analyses (multiple analyses may be specified):
+AVAILABLE ANALYSES (multiple analyses may be specified):
 
 ENDTEXT
 
@@ -791,7 +796,6 @@ my $IgnoreErrors = 0;  # Ignore build errors.
 my $ViewResults  = 0;  # View results when the build terminates.
 my $ExitStatusFoundBugs = 0; # Exit status reflects whether bugs were found
 my @AnalysesToRun;
-
 
 if (!@ARGV) {
   DisplayHelp();
@@ -850,6 +854,21 @@ while (@ARGV) {
     next;
   }
   
+  if ($arg =~ /^--use-c[+][+](=(.+))?$/) {
+    shift @ARGV;
+    
+    if ($2 eq "") {
+      if (!@ARGV) {
+        DieDiag("'--use-c++' option requires a compiler executable name.\n");
+      }
+      $CXX = shift @ARGV;
+    }
+    else {
+      $CXX = $2;
+    }
+    next;
+  }
+  
   if ($arg eq "-v") {
     shift @ARGV;
     $Verbose++;
@@ -879,6 +898,8 @@ if (!@ARGV) {
   exit 1;
 }
 
+
+
 # Determine the output directory for the HTML reports.
 my $BaseDir = $HtmlDir;
 $HtmlDir = GetHTMLRunDir($HtmlDir);
@@ -896,6 +917,7 @@ if (! -x $ClangSB) {
   Diag("Using 'clang' from path.\n");
 }
 
+$ENV{'CXX'} = $CXX;
 $ENV{'CC'} = $Cmd;
 $ENV{'CLANG'} = $Clang;
 
