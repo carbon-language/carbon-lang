@@ -21,10 +21,11 @@ using namespace clang;
 using store::Region;
 using store::RegionExtent;
 
+typedef llvm::ImmutableMap<VarDecl*,RVal> VarBindingsTy;  
+
 namespace {
   
 class VISIBILITY_HIDDEN BasicStoreManager : public StoreManager {
-  typedef llvm::ImmutableMap<VarDecl*,RVal> VarBindingsTy;  
   VarBindingsTy::Factory VBFactory;
   GRStateManager& StMgr;
   
@@ -44,6 +45,8 @@ public:
                                    DeclRootsTy& DRoots, LiveSymbolsTy& LSymbols,
                                    DeadSymbolsTy& DSymbols);
 
+  virtual void iterBindings(Store store, BindingsHandler& f);
+
   virtual Store AddDecl(Store store, GRStateManager& StateMgr,
                         const VarDecl* VD, Expr* Ex, 
                         RVal InitVal = UndefinedVal(), unsigned Count = 0);
@@ -57,14 +60,38 @@ public:
   
   virtual RegionExtent getExtent(Region R);
   
-  /// getBindings - Returns all bindings in the specified store that bind
-  ///  to the specified symbolic value.
-  virtual void getBindings(llvm::SmallVectorImpl<store::Binding>& bindings,
-                           Store store, SymbolID Sym);
-  
   /// BindingAsString - Returns a string representing the given binding.
   virtual std::string BindingAsString(store::Binding binding);
-};  
+  
+  /// getRVal - Returns the bound RVal for a given binding.
+  virtual RVal getRVal(Store store, store::Binding binding);
+};
+  
+class VISIBILITY_HIDDEN VarRegion : public store::Region {
+public:
+  VarRegion(VarDecl* VD) : Region(VD) {}  
+  VarDecl* getDecl() const { return (VarDecl*) Data; }    
+  static bool classof(const store::Region*) { return true; }
+};
+
+class VISIBILITY_HIDDEN VarBinding : public store::Binding {
+public:
+  VarBinding(VarBindingsTy::value_type* T) : store::Binding(T) {}
+  
+  const VarBindingsTy::value_type_ref getValue() const {
+    return *static_cast<const VarBindingsTy::value_type*>(first);
+  }
+    
+  std::string getName() const {
+    return getValue().first->getName();
+  }
+  
+  RVal getRVal() const {
+    return getValue().second;
+  }
+  
+  static inline bool classof(const store::Binding*) { return true; }
+};
   
 } // end anonymous namespace
 
@@ -74,8 +101,7 @@ StoreManager* clang::CreateBasicStoreManager(GRStateManager& StMgr) {
 }
 
 RegionExtent BasicStoreManager::getExtent(Region R) {
-  VarDecl* VD = (VarDecl*) R;
-  QualType T = VD->getType();
+  QualType T = cast<VarRegion>(&R)->getDecl()->getType();
   
   // FIXME: Add support for VLAs.  This may require passing in additional
   //  information, or tracking a different region type.
@@ -85,8 +111,8 @@ RegionExtent BasicStoreManager::getExtent(Region R) {
   ASTContext& C = StMgr.getContext();
   assert (!T->isObjCInterfaceType()); // @interface not a possible VarDecl type.
   assert (T != C.VoidTy); // void not a possible VarDecl type.  
-  return store::IntExtent(StMgr.getBasicVals().getValue(C.getTypeSize(T),
-                                                        C.VoidPtrTy));
+  return store::FixedExtent(StMgr.getBasicVals().getValue(C.getTypeSize(T),
+                                                          C.VoidPtrTy));
 }
 
 
@@ -335,28 +361,62 @@ void BasicStoreManager::print(Store store, std::ostream& Out,
   }
 }
 
-void
-BasicStoreManager::getBindings(llvm::SmallVectorImpl<store::Binding>& bindings,
-                               Store store, SymbolID Sym) {
+
+void BasicStoreManager::iterBindings(Store store, BindingsHandler& f) {
+  VarBindingsTy B = GetVarBindings(store);
   
-  VarBindingsTy VB((VarBindingsTy::TreeTy*) store);
-  
-  for (VarBindingsTy::iterator I=VB.begin(), E=VB.end(); I!=E; ++I) {
-    if (const lval::SymbolVal* SV=dyn_cast<lval::SymbolVal>(&I->second)) {
-      if (SV->getSymbol() == Sym) 
-        bindings.push_back(I->first);
-      
-      continue;
-    }
-    
-    if (const nonlval::SymbolVal* SV=dyn_cast<nonlval::SymbolVal>(&I->second)){
-      if (SV->getSymbol() == Sym) 
-        bindings.push_back(I->first);
-    }
+  for (VarBindingsTy::iterator I=B.begin(), E=B.end(); I != E; ++I) {
+    VarBinding binding(&(*I));
+    f.HandleBinding(*this, store, binding);
   }
 }
 
+
 std::string BasicStoreManager::BindingAsString(store::Binding binding) {
-  // A binding is just an VarDecl*.
-  return ((VarDecl*) binding)->getName();
+  return cast<VarBinding>(binding).getName();
 }
+
+RVal BasicStoreManager::getRVal(Store store, store::Binding binding) {
+  return cast<VarBinding>(binding).getRVal();
+}
+
+//==------------------------------------------------------------------------==//
+// Generic store operations.
+//==------------------------------------------------------------------------==//
+
+namespace {
+class VISIBILITY_HIDDEN GetBindingsIterator : public StoreManager::BindingsHandler {
+  SymbolID Sym;
+  llvm::SmallVectorImpl<store::Binding>& bindings;
+public:
+  GetBindingsIterator(SymbolID s, llvm::SmallVectorImpl<store::Binding>& b)
+  : Sym(s), bindings(b) {}
+  
+  virtual bool HandleBinding(StoreManager& SMgr, Store store,
+                             store::Binding binding) {
+    
+    RVal V = SMgr.getRVal(store, binding);
+    
+    if (const lval::SymbolVal* SV=dyn_cast<lval::SymbolVal>(&V)) {
+      if (SV->getSymbol() == Sym) 
+        bindings.push_back(binding);      
+    }    
+    else if (const nonlval::SymbolVal* SV=dyn_cast<nonlval::SymbolVal>(&V)){
+      if (SV->getSymbol() == Sym) 
+        bindings.push_back(binding);
+    }
+    
+    return true;
+  }
+}; 
+} // end anonymous namespace
+
+void StoreManager::getBindings(llvm::SmallVectorImpl<store::Binding>& bindings,
+                               Store store, SymbolID Sym) {
+  
+  GetBindingsIterator BI(Sym, bindings);
+  iterBindings(store, BI);
+}
+
+StoreManager::BindingsHandler::~BindingsHandler() {}
+

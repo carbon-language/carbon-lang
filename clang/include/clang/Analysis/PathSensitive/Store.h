@@ -27,12 +27,38 @@ namespace clang {
 typedef const void* Store;
   
 namespace store {
-  typedef const void* Binding;
-  typedef const void* Region;
+  /// Region - A region represents an abstract chunk of memory.  Subclasses
+  ///  of StoreManager are responsible for defining the particular semantics
+  ///  of Region for the store they represent.
+  class Region {
+  protected:
+    const void* Data;
+    Region(const void* data) : Data(data) {}
+  public:
+    Region() : Data(0) {}
+  };
   
+  /// Binding - A "binding" represents a binding of a value to an abstract
+  ///  chunk of memory (which is represented by a region).  Subclasses of
+  ///  StoreManager are responsible for defining the particular semantics
+  ///  of a Binding.
+  class Binding {
+  protected:
+    const void* first;
+    const void* second;
+    Binding(const void* f, const void* s = 0) : first(f), second(s) {}
+  public:
+    Binding() : first(0), second(0) {}
+    operator bool() const { return first || second; }
+  };
+  
+  /// RegionExtent - Represents the size, or extent, or an abstract memory
+  ///  chunk (a region).  Sizes are in bits.  RegionExtent is essentially a
+  ///  variant with three subclasses: UnknownExtent, FixedExtent,
+  ///  and SymbolicExtent.  
   class RegionExtent {
   public:
-    enum Kind { Unknown = 0, Int = 0, Sym = 1 };
+    enum Kind { Unknown = 0, Fixed = 0, Sym = 1 };
     
   protected:
     const uintptr_t Raw;
@@ -60,6 +86,8 @@ namespace store {
     }
   };
   
+  /// UnknownExtent - Represents a region extent with no available information
+  ///  about the size of the region.
   class UnknownExtent : public RegionExtent {
   public:
     UnknownExtent() : RegionExtent(0,Unknown) {}
@@ -70,9 +98,12 @@ namespace store {
     }  
   };
   
-  class IntExtent : public RegionExtent {
+  /// FixedExtent - Represents a region extent with a known fixed size.
+  ///  Typically FixedExtents are used to represent the size of variables, but
+  ///  they can also be used to represent the size of a constant-sized array.
+  class FixedExtent : public RegionExtent {
   public:
-    IntExtent(const llvm::APSInt& X) : RegionExtent((uintptr_t) &X, Int) {}
+    FixedExtent(const llvm::APSInt& X) : RegionExtent((uintptr_t) &X, Fixed) {}
     
     const llvm::APSInt& getInt() const {
       return *((llvm::APSInt*) getData());
@@ -80,13 +111,16 @@ namespace store {
     
     // Implement isa<T> support.
     static inline bool classof(const RegionExtent* E) {
-      return E->getKind() == Int && E->getRaw() != 0;
+      return E->getKind() == Fixed && E->getRaw() != 0;
     }
   };
   
-  class SymExtent : public RegionExtent {
+  /// SymbolicExtent - Represents the extent of a region where the extent
+  ///  itself is a symbolic value.  These extents can be used to represent
+  ///  the sizes of dynamically allocated chunks of memory with variable size.
+  class SymbolicExtent : public RegionExtent {
   public:
-    SymExtent(SymbolID S) : RegionExtent(S.getNumber() << 1, Sym) {}
+    SymbolicExtent(SymbolID S) : RegionExtent(S.getNumber() << 1, Sym) {}
     
     SymbolID getSymbol() const { return SymbolID(getData() >> 1); }
     
@@ -124,17 +158,30 @@ public:
 
   virtual void print(Store store, std::ostream& Out,
                      const char* nl, const char *sep) = 0;
-    
+      
+  class BindingsHandler {
+  public:    
+    virtual ~BindingsHandler();
+    virtual bool HandleBinding(StoreManager& SMgr, Store store,
+                               store::Binding binding) = 0;
+  };
+  
+  /// iterBindings - Iterate over the bindings in the Store.
+  virtual void iterBindings(Store store, BindingsHandler& f) = 0;
+  
   /// getBindings - Returns all bindings in the specified store that bind
   ///  to the specified symbolic value.
-  virtual void getBindings(llvm::SmallVectorImpl<store::Binding>& bindings,
-                           Store store, SymbolID Sym) = 0;
+  void getBindings(llvm::SmallVectorImpl<store::Binding>& bindings,
+                   Store store, SymbolID Sym);
   
   /// BindingAsString - Returns a string representing the given binding.
   virtual std::string BindingAsString(store::Binding binding) = 0;
   
   /// getExtent - Returns the size of the region in bits.
-  virtual store::RegionExtent getExtent(store::Region R) =0;
+  virtual store::RegionExtent getExtent(store::Region R) = 0;
+
+  /// getRVal - Returns the bound RVal for a given binding.
+  virtual RVal getRVal(Store store, store::Binding binding) = 0;
 };
   
 StoreManager* CreateBasicStoreManager(GRStateManager& StMgr);

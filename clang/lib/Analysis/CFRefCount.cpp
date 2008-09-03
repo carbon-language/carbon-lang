@@ -2308,7 +2308,7 @@ GetAllocationSite(GRStateManager* StateMgr, ExplodedNode<GRState>* N,
   // Find both first node that referred to the tracked symbol and the
   // memory location that value was store to.
   ExplodedNode<GRState>* Last = N;
-  store::Binding FirstBinding = 0;  
+  store::Binding FirstBinding;  
   
   while (N) {
     const GRState* St = N->getState();
@@ -2351,7 +2351,7 @@ PathDiagnosticPiece* CFRefReport::getEndPath(BugReporter& br,
   // symbol appeared, and also get the first VarDecl that tracked object
   // is stored to.
   ExplodedNode<GRState>* AllocNode = 0;
-  store::Binding FirstBinding = 0;
+  store::Binding FirstBinding;
 
   llvm::tie(AllocNode, FirstBinding) =
     GetAllocationSite(&BR.getStateManager(), EndN, Sym);
