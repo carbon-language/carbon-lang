@@ -1131,9 +1131,11 @@ bool GVN::runOnFunction(Function& F) {
   }
   
   if (EnablePRE) {
-    bool PREChanged = false;
-    while ((PREChanged = performPRE(F)))
+    bool PREChanged = true;
+    while (PREChanged) {
+      PREChanged = performPRE(F);
       changed |= PREChanged;
+    }
   }
   
   return changed;
@@ -1256,7 +1258,7 @@ bool GVN::performPRE(Function& F) {
       unsigned succNum = 0;
       for (unsigned i = 0, e = PREPred->getTerminator()->getNumSuccessors();
            i != e; ++i)
-        if (PREPred->getTerminator()->getSuccessor(i) == PREPred) {
+        if (PREPred->getTerminator()->getSuccessor(i) == CurrentBlock) {
           succNum = i;
           break;
         }
