@@ -421,7 +421,7 @@ void GlobalsModRef::AnalyzeCallGraph(CallGraph &CG, Module &M) {
     if (KnowNothing) {
       for (unsigned i = 0, e = SCC.size(); i != e; ++i)
         FunctionInfo.erase(SCC[i]->getFunction());
-      return;
+      continue;
     }
 
     // Scan the function bodies for explicit loads or stores.
