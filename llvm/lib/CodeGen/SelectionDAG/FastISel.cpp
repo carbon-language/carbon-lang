@@ -21,21 +21,26 @@
 #include "llvm/Target/TargetMachine.h"
 using namespace llvm;
 
+// Don't cache constant materializations.  To do so would require
+// tracking what uses they dominate.  Non-constants, however, already
+// have the SSA def-doms-use requirement enforced, so we can cache their
+// computations.
 unsigned FastISel::getRegForValue(Value *V,
                                   DenseMap<const Value*, unsigned> &ValueMap) {
-  unsigned &Reg = ValueMap[V];
-  if (Reg != 0)
-    return Reg;
+  if (ValueMap.count(V))
+    return ValueMap[V];
 
   MVT::SimpleValueType VT = TLI.getValueType(V->getType()).getSimpleVT();
   if (ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
     if (CI->getValue().getActiveBits() > 64)
       return 0;
-    Reg = FastEmit_i(VT, VT, ISD::Constant, CI->getZExtValue());
+    // Don't cache constant materializations.  To do so would require
+    // tracking what uses they dominate.
+    return FastEmit_i(VT, VT, ISD::Constant, CI->getZExtValue());
   } else if (isa<ConstantPointerNull>(V)) {
-    Reg = FastEmit_i(VT, VT, ISD::Constant, 0);
+    return FastEmit_i(VT, VT, ISD::Constant, 0);
   } else if (ConstantFP *CF = dyn_cast<ConstantFP>(V)) {
-    Reg = FastEmit_f(VT, VT, ISD::ConstantFP, CF);
+    unsigned Reg = FastEmit_f(VT, VT, ISD::ConstantFP, CF);
 
     if (!Reg) {
       const APFloat &Flt = CF->getValueAPF();
@@ -56,12 +61,13 @@ unsigned FastISel::getRegForValue(Value *V,
       if (Reg == 0)
         return 0;
     }
+    
+    return Reg;
   } else if (isa<UndefValue>(V)) {
-    Reg = createResultReg(TLI.getRegClassFor(VT));
+    unsigned Reg = createResultReg(TLI.getRegClassFor(VT));
     BuildMI(MBB, TII.get(TargetInstrInfo::IMPLICIT_DEF), Reg);
+    return Reg;
   }
-
-  return Reg;
 }
 
 /// UpdateValueMap - Update the value map to include the new mapping for this
