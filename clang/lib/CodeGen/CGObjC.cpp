@@ -16,6 +16,7 @@
 #include "CodeGenModule.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
+#include "clang/Basic/Diagnostic.h"
 #include "llvm/ADT/STLExtras.h"
 
 using namespace clang;
@@ -231,10 +232,10 @@ llvm::Value *CodeGenFunction::LoadObjCSelf(void) {
 RValue CodeGenFunction::EmitObjCPropertyGet(const ObjCPropertyRefExpr *E) {
   // Determine getter selector.
   Selector S;
-  if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(E->getDecl())) {
-    S = MD->getSelector();
+  if (E->getKind() == ObjCPropertyRefExpr::MethodRef) {
+    S = E->getGetterMethod()->getSelector();
   } else {
-    S = cast<ObjCPropertyDecl>(E->getDecl())->getGetterName();
+    S = E->getProperty()->getGetterName();
   }
 
   return CGM.getObjCRuntime().
@@ -246,12 +247,21 @@ RValue CodeGenFunction::EmitObjCPropertyGet(const ObjCPropertyRefExpr *E) {
 void CodeGenFunction::EmitObjCPropertySet(const ObjCPropertyRefExpr *E,
                                           RValue Src) {
   Selector S;
-  if (const ObjCPropertyDecl *PD = dyn_cast<ObjCPropertyDecl>(E->getDecl())) {
-    S = PD->getSetterName();
+  if (E->getKind() == ObjCPropertyRefExpr::MethodRef) {
+    ObjCMethodDecl *Setter = E->getSetterMethod(); 
+    
+    if (Setter) {
+      S = Setter->getSelector();
+    } else {
+      // FIXME: This should be diagnosed by sema.
+      SourceRange Range = E->getSourceRange();
+      CGM.getDiags().Report(getContext().getFullLoc(E->getLocStart()),
+                            diag::err_typecheck_assign_const, 0, 0,
+                            &Range, 1);
+      return;
+    }
   } else {
-    // FIXME: How can we have a method decl here?
-    ErrorUnsupported(E, "Objective-C property setter call");
-    return;
+    S = E->getProperty()->getSetterName();
   }
 
   CallArgList Args;

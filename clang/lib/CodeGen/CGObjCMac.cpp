@@ -499,9 +499,8 @@ CodeGen::RValue CGObjCMac::EmitMessageSend(CodeGen::CodeGenFunction &CGF,
   ActualArgs.insert(ActualArgs.end(), CallArgs.begin(), CallArgs.end());
 
   // FIXME: This is a hack, we are implicitly coordinating with
-  // EmitCallExprExt, which will move the return type to the first
-  // parameter and set the structure return flag. See
-  // getMessageSendFn().
+  // EmitCall, which will move the return type to the first parameter
+  // and set the structure return flag. See getMessageSendFn().
                                                    
   const llvm::Type *ReturnTy = CGM.getTypes().ConvertType(ResultType);
   return CGF.EmitCall(ObjCTypes.getMessageSendFn(IsSuper, ReturnTy),

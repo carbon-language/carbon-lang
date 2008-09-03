@@ -20,6 +20,8 @@
 namespace clang {
   class IdentifierInfo;
   class ASTContext;
+  class ObjCMethodDecl;
+  class ObjCPropertyDecl;
   
 /// ObjCStringLiteral, used for Objective-C string literals
 /// i.e. @"foo".
@@ -189,18 +191,70 @@ public:
   static ObjCIvarRefExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
-/// ObjCPropertyRefExpr - A reference to an ObjC property.
+/// ObjCPropertyRefExpr - A dot-syntax expression to access an ObjC
+/// property. Note that dot-syntax can also be used to access
+/// "implicit" properties (i.e. methods following the property naming
+/// convention). Additionally, sema is not yet smart enough to know if
+/// a property reference is to a getter or a setter, so the expr must
+/// have access to both methods.
+///
+// FIXME: Consider splitting these into separate Expr classes.
 class ObjCPropertyRefExpr : public Expr {
-  class Decl *D; // an ObjCMethodDecl or ObjCPropertyDecl
+public:
+  enum Kind {
+    PropertyRef, // This expressions references a declared property.
+    MethodRef   // This expressions references methods.
+  };
+
+private:
+  // A dot-syntax reference via methods must always have a getter. We
+  // avoid storing the kind explicitly by relying on this invariant
+  // and assuming this is a MethodRef iff Getter is non-null. Setter
+  // can be null in situations which access a read-only property.
+  union {
+    ObjCPropertyDecl *AsProperty;
+    struct {
+      ObjCMethodDecl *Setter;
+      ObjCMethodDecl *Getter;
+    } AsMethod;
+  } Referent;
   SourceLocation Loc;
   Stmt *Base;
   
 public:
-  ObjCPropertyRefExpr(Decl *d, QualType t, SourceLocation l, Expr *base) : 
-    Expr(ObjCPropertyRefExprClass, t), D(d), Loc(l), Base(base) {}
-  
-  Decl *getDecl() { return D; }
-  const Decl *getDecl() const { return D; }
+  ObjCPropertyRefExpr(ObjCPropertyDecl *PD, QualType t, 
+                      SourceLocation l, Expr *base)
+    : Expr(ObjCPropertyRefExprClass, t), Loc(l), Base(base) {
+    Referent.AsMethod.Getter = Referent.AsMethod.Setter = NULL;
+    Referent.AsProperty = PD;
+  }
+  ObjCPropertyRefExpr(ObjCMethodDecl *Getter, ObjCMethodDecl *Setter,
+                      QualType t, 
+                      SourceLocation l, Expr *base)
+    : Expr(ObjCPropertyRefExprClass, t), Loc(l), Base(base) {
+    Referent.AsMethod.Getter = Getter;
+    Referent.AsMethod.Setter = Setter;
+  }
+
+  Kind getKind() const { 
+    return Referent.AsMethod.Getter ? MethodRef : PropertyRef; 
+  }
+
+  ObjCPropertyDecl *getProperty() const {
+    assert(getKind() == PropertyRef && 
+           "Cannot get property from an ObjCPropertyRefExpr using methods");
+    return Referent.AsProperty;
+  }
+  ObjCMethodDecl *getGetterMethod() const {
+    assert(getKind() == MethodRef && 
+           "Cannot get method from an ObjCPropertyRefExpr using a property");
+    return Referent.AsMethod.Getter;
+  }
+  ObjCMethodDecl *getSetterMethod() const {
+    assert(getKind() == MethodRef && 
+           "Cannot get method from an ObjCPropertyRefExpr using a property");
+    return Referent.AsMethod.Setter;
+  }
   
   virtual SourceRange getSourceRange() const { 
     return SourceRange(getBase()->getLocStart(), Loc); 

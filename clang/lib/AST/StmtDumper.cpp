@@ -453,12 +453,15 @@ void StmtDumper::VisitObjCProtocolExpr(ObjCProtocolExpr *Node) {
 
 void StmtDumper::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *Node) {
   DumpExpr(Node);
-  
-  if (ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(Node->getDecl())) {
-    fprintf(F, " MethodDecl=\"%s\"", MD->getSelector().getName().c_str());
+
+  if (Node->getKind() == ObjCPropertyRefExpr::MethodRef) {
+    ObjCMethodDecl *Getter = Node->getGetterMethod();
+    ObjCMethodDecl *Setter = Node->getSetterMethod();
+    fprintf(F, " Kind=MethodRef Getter=\"%s\" Setter=\"%s\"", 
+            Getter->getSelector().getName().c_str(),
+            Setter ? Setter->getSelector().getName().c_str() : "(null)");
   } else {
-    ObjCPropertyDecl *PD = dyn_cast<ObjCPropertyDecl>(Node->getDecl());
-    fprintf(F, " PropertyDecl=\"%s\"", PD->getName());
+    fprintf(F, " Kind=PropertyRef Property=\"%s\"", Node->getProperty()->getName());
   }
 }
 
