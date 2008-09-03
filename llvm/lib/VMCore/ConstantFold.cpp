@@ -238,12 +238,8 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
       std::vector<Constant*> res;
       const VectorType *DestVecTy = cast<VectorType>(DestTy);
       const Type *DstEltTy = DestVecTy->getElementType();
-      for (unsigned i = 0, e = CV->getType()->getNumElements(); i != e; ++i) {
-        Constant *C = ConstantFoldCastInstruction(opc, CV->getOperand(i),
-                                                  DstEltTy);
-        if (!C) return 0;       // Can't fold operand.
-        res.push_back(C);
-      }
+      for (unsigned i = 0, e = CV->getType()->getNumElements(); i != e; ++i)
+        res.push_back(ConstantExpr::getCast(opc, CV->getOperand(i), DstEltTy));
       return ConstantVector::get(DestVecTy, res);
     }
     return 0; // Can't fold.
@@ -271,12 +267,8 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
       std::vector<Constant*> res;
       const VectorType *DestVecTy = cast<VectorType>(DestTy);
       const Type *DstEltTy = DestVecTy->getElementType();
-      for (unsigned i = 0, e = CV->getType()->getNumElements(); i != e; ++i) {
-        Constant *C = ConstantFoldCastInstruction(opc, CV->getOperand(i),
-                                                  DstEltTy);
-        if (!C) return 0;       // Can't fold operand.
-        res.push_back(C);
-      }
+      for (unsigned i = 0, e = CV->getType()->getNumElements(); i != e; ++i)
+        res.push_back(ConstantExpr::getCast(opc, CV->getOperand(i), DstEltTy));
       return ConstantVector::get(DestVecTy, res);
     }
     return 0;
