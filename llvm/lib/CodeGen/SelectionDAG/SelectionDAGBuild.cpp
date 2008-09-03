@@ -121,7 +121,7 @@ static void ComputeValueVTs(const TargetLowering &TLI, const Type *Ty,
     Offsets->push_back(StartingOffset);
 }
 
-namespace {
+namespace llvm {
   /// RegsForValue - This struct represents the registers (physical or virtual)
   /// that a particular set of values is assigned, and the type information about
   /// the value. The most common situation is to represent one value at a time,
