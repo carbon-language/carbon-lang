@@ -116,8 +116,8 @@ void Sema::ActOnPopScope(SourceLocation Loc, Scope *S) {
     IdentifierInfo *II = D->getIdentifier();
     if (!II) continue;
     
-    // We only want to remove the decls from the identifier decl chains for local
-    // scopes, when inside a function/method.
+    // We only want to remove the decls from the identifier decl chains for
+    // local scopes, when inside a function/method.
     if (S->getFnParent() != 0)
       IdResolver.RemoveDecl(D);
 
@@ -1730,8 +1730,8 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
     } else {
       // PrevDecl is a namespace.
       if (IdResolver.isDeclInScope(PrevDecl, CurContext, S)) {
-        // The tag name clashes with a namespace name, issue an error and recover
-        // by making this tag be anonymous.
+        // The tag name clashes with a namespace name, issue an error and
+        // recover by making this tag be anonymous.
         Diag(NameLoc, diag::err_redefinition_different_kind, Name->getName());
         Diag(PrevDecl->getLocation(), diag::err_previous_definition);
         Name = 0;
@@ -1797,9 +1797,9 @@ static void CollectIvars(ObjCInterfaceDecl *Class, ASTContext& Ctx,
     CollectIvars(Class->getSuperClass(), Ctx, ivars);
   
   // For each ivar, create a fresh ObjCAtDefsFieldDecl.
-  for (ObjCInterfaceDecl::ivar_iterator I=Class->ivar_begin(), E=Class->ivar_end(); 
-       I!=E; ++I) {
-
+  for (ObjCInterfaceDecl::ivar_iterator
+        I=Class->ivar_begin(), E=Class->ivar_end(); I!=E; ++I) {
+    
     ObjCIvarDecl* ID = *I;
     ivars.push_back(ObjCAtDefsFieldDecl::Create(Ctx, ID->getLocation(),
                                                 ID->getIdentifier(),
@@ -1853,8 +1853,7 @@ Sema::DeclTy *Sema::ActOnField(Scope *S,
   
   // FIXME: Unnamed fields can be handled in various different ways, for
   // example, unnamed unions inject all members into the struct namespace!
-  
-  
+    
   if (BitWidth) {
     // TODO: Validate.
     //printf("WARNING: BITFIELDS IGNORED!\n");
