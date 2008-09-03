@@ -376,14 +376,16 @@ void GlobalsModRef::AnalyzeCallGraph(CallGraph &CG, Module &M) {
 
       if (F->isDeclaration()) {
         // Try to get mod/ref behaviour from function attributes.
-        if (F->onlyReadsMemory()) {
+        if (F->doesNotAccessMemory()) {
+          // Can't do better than that!
+        } else if (F->onlyReadsMemory()) {
           FunctionEffect |= Ref;
           // This function might call back into the module and read a global, so
           // mark all globals read somewhere as being read by this function.
           for (std::set<GlobalValue*>::iterator GI = ReadGlobals.begin(),
                E = ReadGlobals.end(); GI != E; ++GI)
             FR.GlobalInfo[*GI] |= Ref;
-        } else if (!F->doesNotAccessMemory()) {
+        } else {
           // Can't say anything useful.
           KnowNothing = true;
         }
