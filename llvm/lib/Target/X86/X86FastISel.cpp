@@ -30,34 +30,27 @@ class X86FastISel : public FastISel {
   const X86Subtarget *Subtarget;
     
 public:
-  explicit X86FastISel(MachineFunction &mf) : FastISel(mf) {
+  explicit X86FastISel(MachineFunction &mf,
+                       DenseMap<const Value *, unsigned> &vm,
+                       DenseMap<const BasicBlock *, MachineBasicBlock *> &bm)
+    : FastISel(mf, vm, bm) {
     Subtarget = &TM.getSubtarget<X86Subtarget>();
   }
 
-  virtual bool
-    TargetSelectInstruction(Instruction *I,
-                            DenseMap<const Value *, unsigned> &ValueMap,
-                      DenseMap<const BasicBlock *, MachineBasicBlock *> &MBBMap,
-                            MachineBasicBlock *MBB);
+  virtual bool TargetSelectInstruction(Instruction *I);
 
 #include "X86GenFastISel.inc"
 
 private:
-  bool X86SelectConstAddr(Value *V,
-                          DenseMap<const Value *, unsigned> &ValueMap,
-                          MachineBasicBlock *MBB, unsigned &Op0);
+  bool X86SelectConstAddr(Value *V, unsigned &Op0);
 
-  bool X86SelectLoad(Instruction *I,
-                     DenseMap<const Value *, unsigned> &ValueMap,
-                     MachineBasicBlock *MBB);
+  bool X86SelectLoad(Instruction *I);
 };
 
 /// X86SelectConstAddr - Select and emit code to materialize constant address.
 /// 
 bool X86FastISel::X86SelectConstAddr(Value *V,
-                                    DenseMap<const Value *, unsigned> &ValueMap,
-                                    MachineBasicBlock *MBB,
-                                    unsigned &Op0) {
+                                     unsigned &Op0) {
   // FIXME: Only GlobalAddress for now.
   GlobalValue *GV = dyn_cast<GlobalValue>(V);
   if (!GV)
@@ -84,9 +77,7 @@ bool X86FastISel::X86SelectConstAddr(Value *V,
 
 /// X86SelectLoad - Select and emit code to implement load instructions.
 ///
-bool X86FastISel::X86SelectLoad(Instruction *I,
-                                DenseMap<const Value *, unsigned> &ValueMap,
-                                MachineBasicBlock *MBB)  {
+bool X86FastISel::X86SelectLoad(Instruction *I)  {
   MVT VT = MVT::getMVT(I->getType(), /*HandleUnknown=*/true);
   if (VT == MVT::Other || !VT.isSimple())
     // Unhandled type. Halt "fast" selection and bail.
@@ -102,10 +93,10 @@ bool X86FastISel::X86SelectLoad(Instruction *I,
     return false;
 
   Value *V = I->getOperand(0);
-  unsigned Op0 = getRegForValue(V, ValueMap);
+  unsigned Op0 = getRegForValue(V);
   if (Op0 == 0) {
     // Handle constant load address.
-    if (!isa<Constant>(V) || !X86SelectConstAddr(V, ValueMap, MBB, Op0))
+    if (!isa<Constant>(V) || !X86SelectConstAddr(V, Op0))
       // Unhandled operand. Halt "fast" selection and bail.
       return false;    
   }
@@ -164,27 +155,26 @@ bool X86FastISel::X86SelectLoad(Instruction *I,
   else
     AM.GV = cast<GlobalValue>(V);
   addFullAddress(BuildMI(MBB, TII.get(Opc), ResultReg), AM);
-  UpdateValueMap(I, ResultReg, ValueMap);
+  UpdateValueMap(I, ResultReg);
   return true;
 }
 
 
 bool
-X86FastISel::TargetSelectInstruction(Instruction *I,
-                                  DenseMap<const Value *, unsigned> &ValueMap,
-                      DenseMap<const BasicBlock *, MachineBasicBlock *> &MBBMap,
-                                  MachineBasicBlock *MBB)  {
+X86FastISel::TargetSelectInstruction(Instruction *I)  {
   switch (I->getOpcode()) {
   default: break;
   case Instruction::Load:
-    return X86SelectLoad(I, ValueMap, MBB);
+    return X86SelectLoad(I);
   }
 
   return false;
 }
 
 namespace llvm {
-  llvm::FastISel *X86::createFastISel(MachineFunction &mf) {
-    return new X86FastISel(mf);
+  llvm::FastISel *X86::createFastISel(MachineFunction &mf,
+                        DenseMap<const Value *, unsigned> &vm,
+                        DenseMap<const BasicBlock *, MachineBasicBlock *> &bm) {
+    return new X86FastISel(mf, vm, bm);
   }
 }

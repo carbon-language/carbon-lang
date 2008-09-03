@@ -4757,9 +4757,64 @@ SelectionDAGISel::HandlePHINodesInSuccessorBlocks(BasicBlock *LLVMBB) {
     }
   }
   SDL->ConstantsOut.clear();
-
-  // Lower the terminator after the copies are emitted.
-  SDL->visit(*LLVMBB->getTerminator());
 }
 
+/// This is the Fast-ISel version of HandlePHINodesInSuccessorBlocks. It only
+/// supports legal types, and it emits MachineInstrs directly instead of
+/// creating SelectionDAG nodes.
+///
+bool
+SelectionDAGISel::HandlePHINodesInSuccessorBlocksFast(BasicBlock *LLVMBB,
+                                                      FastISel *F) {
+  TerminatorInst *TI = LLVMBB->getTerminator();
 
+  SmallPtrSet<MachineBasicBlock *, 4> SuccsHandled;
+  unsigned OrigNumPHINodesToUpdate = SDL->PHINodesToUpdate.size();
+
+  // Check successor nodes' PHI nodes that expect a constant to be available
+  // from this block.
+  for (unsigned succ = 0, e = TI->getNumSuccessors(); succ != e; ++succ) {
+    BasicBlock *SuccBB = TI->getSuccessor(succ);
+    if (!isa<PHINode>(SuccBB->begin())) continue;
+    MachineBasicBlock *SuccMBB = FuncInfo->MBBMap[SuccBB];
+    
+    // If this terminator has multiple identical successors (common for
+    // switches), only handle each succ once.
+    if (!SuccsHandled.insert(SuccMBB)) continue;
+    
+    MachineBasicBlock::iterator MBBI = SuccMBB->begin();
+    PHINode *PN;
+
+    // At this point we know that there is a 1-1 correspondence between LLVM PHI
+    // nodes and Machine PHI nodes, but the incoming operands have not been
+    // emitted yet.
+    for (BasicBlock::iterator I = SuccBB->begin();
+         (PN = dyn_cast<PHINode>(I)); ++I) {
+      // Ignore dead phi's.
+      if (PN->use_empty()) continue;
+
+      // Only handle legal types. Two interesting things to note here. First,
+      // by bailing out early, we may leave behind some dead instructions,
+      // since SelectionDAG's HandlePHINodesInSuccessorBlocks will insert its
+      // own moves. Second, this check is necessary becuase FastISel doesn't
+      // use CreateRegForValue to create registers, so it always creates
+      // exactly one register for each non-void instruction.
+      MVT VT = TLI.getValueType(PN->getType(), /*AllowUnknown=*/true);
+      if (VT == MVT::Other || !TLI.isTypeLegal(VT)) {
+        SDL->PHINodesToUpdate.resize(OrigNumPHINodesToUpdate);
+        return false;
+      }
+
+      Value *PHIOp = PN->getIncomingValueForBlock(LLVMBB);
+
+      unsigned Reg = F->getRegForValue(PHIOp);
+      if (Reg == 0) {
+        SDL->PHINodesToUpdate.resize(OrigNumPHINodesToUpdate);
+        return false;
+      }
+      SDL->PHINodesToUpdate.push_back(std::make_pair(MBBI++, Reg));
+    }
+  }
+
+  return true;
+}

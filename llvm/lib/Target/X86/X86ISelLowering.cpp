@@ -1879,8 +1879,12 @@ bool X86TargetLowering::IsEligibleForTailCallOptimization(SDValue Call,
   return false;
 }
 
-FastISel *X86TargetLowering::createFastISel(MachineFunction &mf) {
-  return X86::createFastISel(mf);
+FastISel *
+X86TargetLowering::createFastISel(MachineFunction &mf,
+                                  DenseMap<const Value *, unsigned> &vm,
+                                  DenseMap<const BasicBlock *,
+                                           MachineBasicBlock *> &bm) {
+  return X86::createFastISel(mf, vm, bm);
 }
 
 

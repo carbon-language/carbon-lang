@@ -25,8 +25,7 @@ using namespace llvm;
 // tracking what uses they dominate.  Non-constants, however, already
 // have the SSA def-doms-use requirement enforced, so we can cache their
 // computations.
-unsigned FastISel::getRegForValue(Value *V,
-                                  DenseMap<const Value*, unsigned> &ValueMap) {
+unsigned FastISel::getRegForValue(Value *V) {
   if (ValueMap.count(V))
     return ValueMap[V];
 
@@ -78,8 +77,7 @@ unsigned FastISel::getRegForValue(Value *V,
 /// NOTE: This is only necessary because we might select a block that uses
 /// a value before we select the block that defines the value.  It might be
 /// possible to fix this by selecting blocks in reverse postorder.
-void FastISel::UpdateValueMap(Instruction* I, unsigned Reg, 
-                              DenseMap<const Value*, unsigned> &ValueMap) {
+void FastISel::UpdateValueMap(Instruction* I, unsigned Reg) {
   if (!ValueMap.count(I))
     ValueMap[I] = Reg;
   else
@@ -90,8 +88,7 @@ void FastISel::UpdateValueMap(Instruction* I, unsigned Reg,
 /// SelectBinaryOp - Select and emit code for a binary operator instruction,
 /// which has an opcode which directly corresponds to the given ISD opcode.
 ///
-bool FastISel::SelectBinaryOp(Instruction *I, ISD::NodeType ISDOpcode,
-                              DenseMap<const Value*, unsigned> &ValueMap) {
+bool FastISel::SelectBinaryOp(Instruction *I, ISD::NodeType ISDOpcode) {
   MVT VT = MVT::getMVT(I->getType(), /*HandleUnknown=*/true);
   if (VT == MVT::Other || !VT.isSimple())
     // Unhandled type. Halt "fast" selection and bail.
@@ -103,7 +100,7 @@ bool FastISel::SelectBinaryOp(Instruction *I, ISD::NodeType ISDOpcode,
   if (!TLI.isTypeLegal(VT))
     return false;
 
-  unsigned Op0 = getRegForValue(I->getOperand(0), ValueMap);
+  unsigned Op0 = getRegForValue(I->getOperand(0));
   if (Op0 == 0)
     // Unhandled operand. Halt "fast" selection and bail.
     return false;
@@ -114,7 +111,7 @@ bool FastISel::SelectBinaryOp(Instruction *I, ISD::NodeType ISDOpcode,
                                      ISDOpcode, Op0, CI->getZExtValue());
     if (ResultReg != 0) {
       // We successfully emitted code for the given LLVM Instruction.
-      UpdateValueMap(I, ResultReg, ValueMap);
+      UpdateValueMap(I, ResultReg);
       return true;
     }
   }
@@ -125,12 +122,12 @@ bool FastISel::SelectBinaryOp(Instruction *I, ISD::NodeType ISDOpcode,
                                      ISDOpcode, Op0, CF);
     if (ResultReg != 0) {
       // We successfully emitted code for the given LLVM Instruction.
-      UpdateValueMap(I, ResultReg, ValueMap);
+      UpdateValueMap(I, ResultReg);
       return true;
     }
   }
 
-  unsigned Op1 = getRegForValue(I->getOperand(1), ValueMap);
+  unsigned Op1 = getRegForValue(I->getOperand(1));
   if (Op1 == 0)
     // Unhandled operand. Halt "fast" selection and bail.
     return false;
@@ -144,13 +141,12 @@ bool FastISel::SelectBinaryOp(Instruction *I, ISD::NodeType ISDOpcode,
     return false;
 
   // We successfully emitted code for the given LLVM Instruction.
-  UpdateValueMap(I, ResultReg, ValueMap);
+  UpdateValueMap(I, ResultReg);
   return true;
 }
 
-bool FastISel::SelectGetElementPtr(Instruction *I,
-                                   DenseMap<const Value*, unsigned> &ValueMap) {
-  unsigned N = getRegForValue(I->getOperand(0), ValueMap);
+bool FastISel::SelectGetElementPtr(Instruction *I) {
+  unsigned N = getRegForValue(I->getOperand(0));
   if (N == 0)
     // Unhandled operand. Halt "fast" selection and bail.
     return false;
@@ -190,7 +186,7 @@ bool FastISel::SelectGetElementPtr(Instruction *I,
       
       // N = N + Idx * ElementSize;
       uint64_t ElementSize = TD.getABITypeSize(Ty);
-      unsigned IdxN = getRegForValue(Idx, ValueMap);
+      unsigned IdxN = getRegForValue(Idx);
       if (IdxN == 0)
         // Unhandled operand. Halt "fast" selection and bail.
         return false;
@@ -220,12 +216,11 @@ bool FastISel::SelectGetElementPtr(Instruction *I,
   }
 
   // We successfully emitted code for the given LLVM Instruction.
-  UpdateValueMap(I, N, ValueMap);
+  UpdateValueMap(I, N);
   return true;
 }
 
-bool FastISel::SelectCast(Instruction *I, ISD::NodeType Opcode,
-                          DenseMap<const Value*, unsigned> &ValueMap) {
+bool FastISel::SelectCast(Instruction *I, ISD::NodeType Opcode) {
   MVT SrcVT = TLI.getValueType(I->getOperand(0)->getType());
   MVT DstVT = TLI.getValueType(I->getType());
     
@@ -235,7 +230,7 @@ bool FastISel::SelectCast(Instruction *I, ISD::NodeType Opcode,
     // Unhandled type. Halt "fast" selection and bail.
     return false;
     
-  unsigned InputReg = getRegForValue(I->getOperand(0), ValueMap);
+  unsigned InputReg = getRegForValue(I->getOperand(0));
   if (!InputReg)
     // Unhandled operand.  Halt "fast" selection and bail.
     return false;
@@ -247,18 +242,17 @@ bool FastISel::SelectCast(Instruction *I, ISD::NodeType Opcode,
   if (!ResultReg)
     return false;
     
-  UpdateValueMap(I, ResultReg, ValueMap);
+  UpdateValueMap(I, ResultReg);
   return true;
 }
 
-bool FastISel::SelectBitCast(Instruction *I,
-                             DenseMap<const Value*, unsigned> &ValueMap) {
+bool FastISel::SelectBitCast(Instruction *I) {
   // If the bitcast doesn't change the type, just use the operand value.
   if (I->getType() == I->getOperand(0)->getType()) {
-    unsigned Reg = getRegForValue(I->getOperand(0), ValueMap);
+    unsigned Reg = getRegForValue(I->getOperand(0));
     if (Reg == 0)
       return false;
-    UpdateValueMap(I, Reg, ValueMap);
+    UpdateValueMap(I, Reg);
     return true;
   }
 
@@ -272,7 +266,7 @@ bool FastISel::SelectBitCast(Instruction *I,
     // Unhandled type. Halt "fast" selection and bail.
     return false;
   
-  unsigned Op0 = getRegForValue(I->getOperand(0), ValueMap);
+  unsigned Op0 = getRegForValue(I->getOperand(0));
   if (Op0 == 0)
     // Unhandled operand. Halt "fast" selection and bail.
     return false;
@@ -298,143 +292,124 @@ bool FastISel::SelectBitCast(Instruction *I,
   if (!ResultReg)
     return false;
   
-  UpdateValueMap(I, ResultReg, ValueMap);
+  UpdateValueMap(I, ResultReg);
   return true;
 }
 
-BasicBlock::iterator
-FastISel::SelectInstructions(BasicBlock::iterator Begin,
-                             BasicBlock::iterator End,
-                             DenseMap<const Value*, unsigned> &ValueMap,
-                             DenseMap<const BasicBlock*,
-                                      MachineBasicBlock *> &MBBMap,
-                             MachineBasicBlock *mbb) {
-  MBB = mbb;
-  BasicBlock::iterator I = Begin;
+bool
+FastISel::SelectInstruction(Instruction *I) {
+  switch (I->getOpcode()) {
+  case Instruction::Add: {
+    ISD::NodeType Opc = I->getType()->isFPOrFPVector() ? ISD::FADD : ISD::ADD;
+    return SelectBinaryOp(I, Opc);
+  }
+  case Instruction::Sub: {
+    ISD::NodeType Opc = I->getType()->isFPOrFPVector() ? ISD::FSUB : ISD::SUB;
+    return SelectBinaryOp(I, Opc);
+  }
+  case Instruction::Mul: {
+    ISD::NodeType Opc = I->getType()->isFPOrFPVector() ? ISD::FMUL : ISD::MUL;
+    return SelectBinaryOp(I, Opc);
+  }
+  case Instruction::SDiv:
+    return SelectBinaryOp(I, ISD::SDIV);
+  case Instruction::UDiv:
+    return SelectBinaryOp(I, ISD::UDIV);
+  case Instruction::FDiv:
+    return SelectBinaryOp(I, ISD::FDIV);
+  case Instruction::SRem:
+    return SelectBinaryOp(I, ISD::SREM);
+  case Instruction::URem:
+    return SelectBinaryOp(I, ISD::UREM);
+  case Instruction::FRem:
+    return SelectBinaryOp(I, ISD::FREM);
+  case Instruction::Shl:
+    return SelectBinaryOp(I, ISD::SHL);
+  case Instruction::LShr:
+    return SelectBinaryOp(I, ISD::SRL);
+  case Instruction::AShr:
+    return SelectBinaryOp(I, ISD::SRA);
+  case Instruction::And:
+    return SelectBinaryOp(I, ISD::AND);
+  case Instruction::Or:
+    return SelectBinaryOp(I, ISD::OR);
+  case Instruction::Xor:
+    return SelectBinaryOp(I, ISD::XOR);
 
-  for (; I != End; ++I) {
-    switch (I->getOpcode()) {
-    case Instruction::Add: {
-      ISD::NodeType Opc = I->getType()->isFPOrFPVector() ? ISD::FADD : ISD::ADD;
-      if (!SelectBinaryOp(I, Opc, ValueMap))  return I; break;
-    }
-    case Instruction::Sub: {
-      ISD::NodeType Opc = I->getType()->isFPOrFPVector() ? ISD::FSUB : ISD::SUB;
-      if (!SelectBinaryOp(I, Opc, ValueMap))  return I; break;
-    }
-    case Instruction::Mul: {
-      ISD::NodeType Opc = I->getType()->isFPOrFPVector() ? ISD::FMUL : ISD::MUL;
-      if (!SelectBinaryOp(I, Opc, ValueMap))  return I; break;
-    }
-    case Instruction::SDiv:
-      if (!SelectBinaryOp(I, ISD::SDIV, ValueMap)) return I; break;
-    case Instruction::UDiv:
-      if (!SelectBinaryOp(I, ISD::UDIV, ValueMap)) return I; break;
-    case Instruction::FDiv:
-      if (!SelectBinaryOp(I, ISD::FDIV, ValueMap)) return I; break;
-    case Instruction::SRem:
-      if (!SelectBinaryOp(I, ISD::SREM, ValueMap)) return I; break;
-    case Instruction::URem:
-      if (!SelectBinaryOp(I, ISD::UREM, ValueMap)) return I; break;
-    case Instruction::FRem:
-      if (!SelectBinaryOp(I, ISD::FREM, ValueMap)) return I; break;
-    case Instruction::Shl:
-      if (!SelectBinaryOp(I, ISD::SHL, ValueMap)) return I; break;
-    case Instruction::LShr:
-      if (!SelectBinaryOp(I, ISD::SRL, ValueMap)) return I; break;
-    case Instruction::AShr:
-      if (!SelectBinaryOp(I, ISD::SRA, ValueMap)) return I; break;
-    case Instruction::And:
-      if (!SelectBinaryOp(I, ISD::AND, ValueMap)) return I; break;
-    case Instruction::Or:
-      if (!SelectBinaryOp(I, ISD::OR, ValueMap)) return I; break;
-    case Instruction::Xor:
-      if (!SelectBinaryOp(I, ISD::XOR, ValueMap)) return I; break;
+  case Instruction::GetElementPtr:
+    return SelectGetElementPtr(I);
 
-    case Instruction::GetElementPtr:
-      if (!SelectGetElementPtr(I, ValueMap)) return I;
-      break;
+  case Instruction::Br: {
+    BranchInst *BI = cast<BranchInst>(I);
 
-    case Instruction::Br: {
-      BranchInst *BI = cast<BranchInst>(I);
+    if (BI->isUnconditional()) {
+      MachineFunction::iterator NextMBB =
+         next(MachineFunction::iterator(MBB));
+      BasicBlock *LLVMSucc = BI->getSuccessor(0);
+      MachineBasicBlock *MSucc = MBBMap[LLVMSucc];
 
-      if (BI->isUnconditional()) {
-        MachineFunction::iterator NextMBB =
-           next(MachineFunction::iterator(MBB));
-        BasicBlock *LLVMSucc = BI->getSuccessor(0);
-        MachineBasicBlock *MSucc = MBBMap[LLVMSucc];
-
-        if (NextMBB != MF.end() && MSucc == NextMBB) {
-          // The unconditional fall-through case, which needs no instructions.
-        } else {
-          // The unconditional branch case.
-          TII.InsertBranch(*MBB, MSucc, NULL, SmallVector<MachineOperand, 0>());
-        }
-        MBB->addSuccessor(MSucc);
-        break;
-      }
-
-      // Conditional branches are not handed yet.
-      // Halt "fast" selection and bail.
-      return I;
-    }
-
-    case Instruction::PHI:
-      // PHI nodes are already emitted.
-      break;
-      
-    case Instruction::BitCast:
-      if (!SelectBitCast(I, ValueMap)) return I; break;
-
-    case Instruction::FPToSI:
-      if (!SelectCast(I, ISD::FP_TO_SINT, ValueMap)) return I; 
-      break;
-    case Instruction::ZExt:
-      if (!SelectCast(I, ISD::ZERO_EXTEND, ValueMap)) return I;
-      break;
-    case Instruction::SExt:
-      if (!SelectCast(I, ISD::SIGN_EXTEND, ValueMap)) return I;
-      break;
-    case Instruction::Trunc:
-      if (!SelectCast(I, ISD::TRUNCATE, ValueMap)) return I;
-      break;
-    case Instruction::SIToFP:
-      if (!SelectCast(I, ISD::SINT_TO_FP, ValueMap)) return I;
-      break;
-
-    case Instruction::IntToPtr: // Deliberate fall-through.
-    case Instruction::PtrToInt: {
-      MVT SrcVT = TLI.getValueType(I->getOperand(0)->getType());
-      MVT DstVT = TLI.getValueType(I->getType());
-      if (SrcVT.getSimpleVT() == DstVT.getSimpleVT()) {
-        if (ValueMap[I->getOperand(0)]) {
-          UpdateValueMap(I, ValueMap[I->getOperand(0)], ValueMap);
-          break;
-        } else
-          // Unhandled operand
-          return I;
-      } else if (DstVT.bitsGT(SrcVT)) {
-        if (!SelectCast(I, ISD::ZERO_EXTEND, ValueMap)) return I;
-        break;
+      if (NextMBB != MF.end() && MSucc == NextMBB) {
+        // The unconditional fall-through case, which needs no instructions.
       } else {
-        // TODO: Handle SrcVT > DstVT, where truncation is needed.
-        return I;
+        // The unconditional branch case.
+        TII.InsertBranch(*MBB, MSucc, NULL, SmallVector<MachineOperand, 0>());
       }
+      MBB->addSuccessor(MSucc);
+      return true;
     }
-    
-    default:
-      // Unhandled instruction. Halt "fast" selection and bail.
-      return I;
-    }
+
+    // Conditional branches are not handed yet.
+    // Halt "fast" selection and bail.
+    return false;
   }
 
-  return I;
+  case Instruction::PHI:
+    // PHI nodes are already emitted.
+    return true;
+    
+  case Instruction::BitCast:
+    return SelectBitCast(I);
+
+  case Instruction::FPToSI:
+    return SelectCast(I, ISD::FP_TO_SINT);
+  case Instruction::ZExt:
+    return SelectCast(I, ISD::ZERO_EXTEND);
+  case Instruction::SExt:
+    return SelectCast(I, ISD::SIGN_EXTEND);
+  case Instruction::Trunc:
+    return SelectCast(I, ISD::TRUNCATE);
+  case Instruction::SIToFP:
+    return SelectCast(I, ISD::SINT_TO_FP);
+
+  case Instruction::IntToPtr: // Deliberate fall-through.
+  case Instruction::PtrToInt: {
+    MVT SrcVT = TLI.getValueType(I->getOperand(0)->getType());
+    MVT DstVT = TLI.getValueType(I->getType());
+    if (DstVT.bitsGT(SrcVT))
+      return SelectCast(I, ISD::ZERO_EXTEND);
+    if (DstVT.bitsLT(SrcVT))
+      return SelectCast(I, ISD::TRUNCATE);
+    unsigned Reg = getRegForValue(I->getOperand(0));
+    if (Reg == 0) return false;
+    UpdateValueMap(I, Reg);
+    return true;
+  }
+  
+  default:
+    // Unhandled instruction. Halt "fast" selection and bail.
+    return false;
+  }
 }
 
-FastISel::FastISel(MachineFunction &mf)
-  : MF(mf),
-    MRI(mf.getRegInfo()),
-    TM(mf.getTarget()),
+FastISel::FastISel(MachineFunction &mf,
+                   DenseMap<const Value *, unsigned> &vm,
+                   DenseMap<const BasicBlock *, MachineBasicBlock *> &bm)
+  : MBB(0),
+    ValueMap(vm),
+    MBBMap(bm),
+    MF(mf),
+    MRI(MF.getRegInfo()),
+    TM(MF.getTarget()),
     TD(*TM.getTargetData()),
     TII(*TM.getInstrInfo()),
     TLI(*TM.getTargetLowering()) {

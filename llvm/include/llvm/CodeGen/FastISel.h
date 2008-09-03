@@ -36,6 +36,8 @@ class TargetRegisterClass;
 class FastISel {
 protected:
   MachineBasicBlock *MBB;
+  DenseMap<const Value *, unsigned> &ValueMap;
+  DenseMap<const BasicBlock *, MachineBasicBlock *> &MBBMap;
   MachineFunction &MF;
   MachineRegisterInfo &MRI;
   const TargetMachine &TM;
@@ -44,17 +46,18 @@ protected:
   const TargetLowering &TLI;
 
 public:
-  /// SelectInstructions - Do "fast" instruction selection over the
-  /// LLVM IR instructions in the range [Begin, N) where N is either
-  /// End or the first unsupported instruction. Return N.
-  /// ValueMap is filled in with a mapping of LLVM IR Values to
-  /// virtual register numbers. MBB is a block to which to append
-  /// the generated MachineInstrs.
-  BasicBlock::iterator
-  SelectInstructions(BasicBlock::iterator Begin, BasicBlock::iterator End,
-                     DenseMap<const Value *, unsigned> &ValueMap,
-                     DenseMap<const BasicBlock *, MachineBasicBlock *> &MBBMap,
-                     MachineBasicBlock *MBB);
+  /// setCurrentBlock - Set the current block, to which generated
+  /// machine instructions will be appended.
+  ///
+  void setCurrentBlock(MachineBasicBlock *mbb) {
+    MBB = mbb;
+  }
+
+  /// SelectInstruction - Do "fast" instruction selection for the given
+  /// LLVM IR instruction, and append generated machine instructions to
+  /// the current block. Return true if selection was successful.
+  ///
+  bool SelectInstruction(Instruction *I);
 
   /// TargetSelectInstruction - This method is called by target-independent
   /// code when the normal FastISel process fails to select an instruction.
@@ -62,15 +65,18 @@ public:
   /// fit into FastISel's framework. It returns true if it was successful.
   ///
   virtual bool
-  TargetSelectInstruction(Instruction *I,
-                          DenseMap<const Value *, unsigned> &ValueMap,
-                      DenseMap<const BasicBlock *, MachineBasicBlock *> &MBBMap,
-                          MachineBasicBlock *MBB) = 0;
+  TargetSelectInstruction(Instruction *I) = 0;
+
+  /// getRegForValue - Create a virtual register and arrange for it to
+  /// be assigned the value for the given LLVM value.
+  unsigned getRegForValue(Value *V);
 
   virtual ~FastISel();
 
 protected:
-  explicit FastISel(MachineFunction &mf);
+  FastISel(MachineFunction &mf,
+           DenseMap<const Value *, unsigned> &vm,
+           DenseMap<const BasicBlock *, MachineBasicBlock *> &bm);
 
   /// FastEmit_r - This method is called by target-independent code
   /// to request that an instruction with the given type and opcode
@@ -208,26 +214,18 @@ protected:
   /// from a specified index of a superregister.
   unsigned FastEmitInst_extractsubreg(unsigned Op0, uint32_t Idx);
 
-  unsigned getRegForValue(Value *V,
-                          DenseMap<const Value*, unsigned> &ValueMap);
-
-  void UpdateValueMap(Instruction* I, unsigned Reg, 
-                      DenseMap<const Value*, unsigned> &ValueMap);
+  void UpdateValueMap(Instruction* I, unsigned Reg);
 
   unsigned createResultReg(const TargetRegisterClass *RC);
 
 private:
-  bool SelectBinaryOp(Instruction *I, ISD::NodeType ISDOpcode,
-                      DenseMap<const Value*, unsigned> &ValueMap);
+  bool SelectBinaryOp(Instruction *I, ISD::NodeType ISDOpcode);
 
-  bool SelectGetElementPtr(Instruction *I,
-                           DenseMap<const Value*, unsigned> &ValueMap);
+  bool SelectGetElementPtr(Instruction *I);
 
-  bool SelectBitCast(Instruction *I,
-                     DenseMap<const Value*, unsigned> &ValueMap);
+  bool SelectBitCast(Instruction *I);
   
-  bool SelectCast(Instruction *I, ISD::NodeType Opcode,
-                  DenseMap<const Value*, unsigned> &ValueMap);                  
+  bool SelectCast(Instruction *I, ISD::NodeType Opcode);
 };
 
 }

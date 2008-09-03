@@ -21,6 +21,7 @@
 #include "llvm/CodeGen/SelectionDAG.h"
 
 namespace llvm {
+  class FastISel;
   class SelectionDAGLowering;
   class SDValue;
   class MachineRegisterInfo;
@@ -117,6 +118,8 @@ private:
   void ComputeLiveOutVRegInfo();
 
   void HandlePHINodesInSuccessorBlocks(BasicBlock *LLVMBB);
+
+  bool HandlePHINodesInSuccessorBlocksFast(BasicBlock *LLVMBB, FastISel *F);
 
   /// Pick a safe ordering for instructions for each target node in the
   /// graph.

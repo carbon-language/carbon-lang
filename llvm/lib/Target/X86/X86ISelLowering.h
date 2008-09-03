@@ -470,7 +470,10 @@ namespace llvm {
 
     /// createFastISel - This method returns a target specific FastISel object,
     /// or null if the target does not support "fast" ISel.
-    virtual FastISel *createFastISel(MachineFunction &mf);
+    virtual FastISel *
+    createFastISel(MachineFunction &mf,
+                   DenseMap<const Value *, unsigned> &,
+                   DenseMap<const BasicBlock *, MachineBasicBlock *> &);
     
   private:
     /// Subtarget - Keep a pointer to the X86Subtarget around so that we can
@@ -598,7 +601,9 @@ namespace llvm {
   };
 
   namespace X86 {
-    FastISel *createFastISel(MachineFunction &mf);
+    FastISel *createFastISel(MachineFunction &mf,
+                           DenseMap<const Value *, unsigned> &,
+                           DenseMap<const BasicBlock *, MachineBasicBlock *> &);
   }
 }
 

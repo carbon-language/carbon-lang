@@ -27,6 +27,7 @@
 #include "llvm/CodeGen/SelectionDAGNodes.h"
 #include "llvm/CodeGen/RuntimeLibcalls.h"
 #include "llvm/ADT/APFloat.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/STLExtras.h"
 #include <map>
 #include <vector>
@@ -1116,7 +1117,12 @@ public:
 
   /// createFastISel - This method returns a target specific FastISel object,
   /// or null if the target does not support "fast" ISel.
-  virtual FastISel *createFastISel(MachineFunction &) { return 0; }
+  virtual FastISel *
+  createFastISel(MachineFunction &,
+                 DenseMap<const Value *, unsigned> &,
+                 DenseMap<const BasicBlock *, MachineBasicBlock *> &) {
+    return 0;
+  }
 
   //===--------------------------------------------------------------------===//
   // Inline Asm Support hooks
