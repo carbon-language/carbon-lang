@@ -363,6 +363,7 @@ namespace llvm {
     void printVisibility(const std::string& Name, unsigned Visibility) const;
 
   private:
+    const GlobalValue *findGlobalValue(const Constant* CV);
     void EmitLLVMUsedList(Constant *List);
     void EmitXXStructorList(Constant *List);
     void EmitConstantPool(unsigned Alignment, const char *Section,

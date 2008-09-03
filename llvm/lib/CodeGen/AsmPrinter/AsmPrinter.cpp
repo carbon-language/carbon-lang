@@ -425,8 +425,34 @@ bool AsmPrinter::EmitSpecialLLVMGlobal(const GlobalVariable *GV) {
   return false;
 }
 
+/// findGlobalValue - if CV is an expression equivalent to a single
+/// global value, return that value.
+const GlobalValue * AsmPrinter::findGlobalValue(const Constant *CV) {
+  if (const GlobalValue *GV = dyn_cast<GlobalValue>(CV))
+    return GV;
+  else if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(CV)) {
+    const TargetData *TD = TM.getTargetData();
+    unsigned Opcode = CE->getOpcode();    
+    switch (Opcode) {
+    case Instruction::GetElementPtr: {
+      const Constant *ptrVal = CE->getOperand(0);
+      SmallVector<Value*, 8> idxVec(CE->op_begin()+1, CE->op_end());
+      if (TD->getIndexedOffset(ptrVal->getType(), &idxVec[0], idxVec.size()))
+        return 0;
+      return findGlobalValue(ptrVal);
+    }
+    case Instruction::BitCast:
+      return findGlobalValue(CE->getOperand(0));
+    default:
+      return 0;
+    }
+  }
+  return 0;
+}
+
 /// EmitLLVMUsedList - For targets that define a TAI::UsedDirective, mark each
 /// global in the specified llvm.used list as being used with this directive.
+/// Non-globals (i.e. internal linkage) should not be emitted.
 void AsmPrinter::EmitLLVMUsedList(Constant *List) {
   const char *Directive = TAI->getUsedDirective();
 
@@ -435,9 +461,12 @@ void AsmPrinter::EmitLLVMUsedList(Constant *List) {
   if (InitList == 0) return;
   
   for (unsigned i = 0, e = InitList->getNumOperands(); i != e; ++i) {
-    O << Directive;
-    EmitConstantValueOnly(InitList->getOperand(i));
-    O << '\n';
+    const GlobalValue *GV = findGlobalValue(InitList->getOperand(i));
+    if (GV && !GV->hasInternalLinkage()) {
+      O << Directive;
+      EmitConstantValueOnly(InitList->getOperand(i));
+      O << '\n';
+    }
   }
 }
 
