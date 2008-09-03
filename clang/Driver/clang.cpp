@@ -307,7 +307,8 @@ static void InitializeLangOptions(LangOptions &Options, LangKind LK) {
 enum LangStds {
   lang_unspecified,  
   lang_c89, lang_c94, lang_c99,
-  lang_gnu89, lang_gnu99,
+  lang_gnu_START,
+  lang_gnu89 = lang_gnu_START, lang_gnu99,
   lang_cxx98, lang_gnucxx98,
   lang_cxx0x, lang_gnucxx0x
 };
@@ -386,13 +387,23 @@ static llvm::cl::opt<bool>
 NeXTRuntime("fnext-runtime",
             llvm::cl::desc("Generate output compatible with the NeXT runtime."));
 
+
+
+static llvm::cl::opt<bool>
+Trigraphs("trigraphs", llvm::cl::desc("Process trigraph sequences."));
+
+static llvm::cl::opt<bool>
+Ansi("ansi", llvm::cl::desc("Equivalent to specifying -std=c89."));
+
 // FIXME: add:
-//   -ansi
-//   -trigraphs
 //   -fdollars-in-identifiers
 //   -fpascal-strings
 static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
                                        TargetInfo *Target) {
+  
+  if (Ansi) // "The -ansi option is equivalent to -std=c89."
+    LangStd = lang_c89;
+  
   if (LangStd == lang_unspecified) {
     // Based on the base language, pick one.
     switch (LK) {
@@ -446,7 +457,11 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
     Options.ImplicitInt = 1;
   else
     Options.ImplicitInt = 0;
-  Options.Trigraphs = 1; // -trigraphs or -ansi
+  
+  // Mimicing gcc's behavior, trigraphs are only enabled if -trigraphs or -ansi
+  // is specified, or -std is set to a conforming mode.  
+  Options.Trigraphs = LangStd < lang_gnu_START || Trigraphs ? 1 : 0;
+
   Options.DollarIdents = 1;  // FIXME: Really a target property.
   Options.PascalStrings = PascalStrings;
   Options.Microsoft = MSExtensions;

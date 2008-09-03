@@ -1,10 +1,10 @@
 /*
-  RUN: clang -E %s | grep bar &&
-  RUN: clang -E %s | grep foo &&
-  RUN: clang -E %s | not grep abc &&
-  RUN: clang -E %s | not grep xyz &&
-  RUN: clang -fsyntax-only -verify %s
- */
+  RUN: clang -E -trigraphs %s | grep bar &&
+  RUN: clang -E -trigraphs %s | grep foo &&
+  RUN: clang -E -trigraphs %s | not grep abc &&
+  RUN: clang -E -trigraphs %s | not grep xyz &&
+  RUN: clang -fsyntax-only -trigraphs -verify %s  
+*/
 
 // This is a simple comment, /*/ does not end a comment, the trailing */ does.
 int i = /*/ */ 1;
