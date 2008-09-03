@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 // This file implements a custom inliner that handles only functions that
-// are markes as "always inline".
+// are marked as "always inline".
 //
 //===----------------------------------------------------------------------===//
 
