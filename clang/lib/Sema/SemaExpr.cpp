@@ -801,6 +801,25 @@ CheckExtVectorComponent(QualType baseType, SourceLocation OpLoc,
   return VT; // should never get here (a typedef type should always be found).
 }
 
+/// constructSetterName - Return the setter name for the given
+/// identifier, i.e. "set" + Name where the initial character of Name
+/// has been capitalized.
+// FIXME: Merge with same routine in Parser. But where should this
+// live?
+static IdentifierInfo *constructSetterName(IdentifierTable &Idents,
+                                           const IdentifierInfo *Name) {
+  unsigned N = Name->getLength();
+  char *SelectorName = new char[3 + N];
+  memcpy(SelectorName, "set", 3);
+  memcpy(&SelectorName[3], Name->getName(), N);
+  SelectorName[3] = toupper(SelectorName[3]);
+
+  IdentifierInfo *Setter = 
+    &Idents.get(SelectorName, &SelectorName[3 + N]);
+  delete[] SelectorName;
+  return Setter;
+}
+
 Action::ExprResult Sema::
 ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
                          tok::TokenKind OpKind, SourceLocation MemberLoc,
@@ -866,47 +885,58 @@ ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
   if (OpKind == tok::period && (PTy = BaseType->getAsPointerType()) &&
       (IFTy = PTy->getPointeeType()->getAsObjCInterfaceType())) {
     ObjCInterfaceDecl *IFace = IFTy->getDecl();
-    
-    // FIXME: The logic for looking up nullary and unary selectors should be
-    // shared with the code in ActOnInstanceMessage.
 
-    // FIXME: This logic is not correct, we should search for
-    // properties first. Additionally, the AST node doesn't currently
-    // have enough information to store the setter argument.
-#if 0
-    // Before we look for explicit property declarations, we check for
-    // nullary methods (which allow '.' notation).
-    Selector Sel = PP.getSelectorTable().getNullarySelector(&Member);
-    if (ObjCMethodDecl *MD = IFace->lookupInstanceMethod(Sel))
-      return new ObjCPropertyRefExpr(MD, MD->getResultType(), 
-                                     MemberLoc, BaseExpr);
-    
-    // If this reference is in an @implementation, check for 'private' methods.
-    if (ObjCMethodDecl *CurMeth = getCurMethodDecl()) {
-      if (ObjCInterfaceDecl *ClassDecl = CurMeth->getClassInterface())
-        if (ObjCImplementationDecl *ImpDecl = 
-              ObjCImplementations[ClassDecl->getIdentifier()])
-          if (ObjCMethodDecl *MD = ImpDecl->getInstanceMethod(Sel))
-            return new ObjCPropertyRefExpr(MD, MD->getResultType(), 
-                                           MemberLoc, BaseExpr);
-    }      
-#endif
-    
-    // FIXME: Need to deal with setter methods that take 1 argument. E.g.:
-    // @interface NSBundle : NSObject {}
-    // - (NSString *)bundlePath;
-    // - (void)setBundlePath:(NSString *)x;
-    // @end
-    // void someMethod() { frameworkBundle.bundlePath = 0; }
-    //
+    // Search for a declared property first.
     if (ObjCPropertyDecl *PD = IFace->FindPropertyDeclaration(&Member))
       return new ObjCPropertyRefExpr(PD, PD->getType(), MemberLoc, BaseExpr);
     
-    // Lastly, check protocols on qualified interfaces.
+    // Check protocols on qualified interfaces.
     for (ObjCInterfaceType::qual_iterator I = IFTy->qual_begin(),
          E = IFTy->qual_end(); I != E; ++I)
       if (ObjCPropertyDecl *PD = (*I)->FindPropertyDeclaration(&Member))
         return new ObjCPropertyRefExpr(PD, PD->getType(), MemberLoc, BaseExpr);
+
+    // If that failed, look for an "implicit" property by seeing if the nullary
+    // selector is implemented.
+
+    // FIXME: The logic for looking up nullary and unary selectors should be
+    // shared with the code in ActOnInstanceMessage.
+
+    Selector Sel = PP.getSelectorTable().getNullarySelector(&Member);
+    ObjCMethodDecl *Getter = IFace->lookupInstanceMethod(Sel);
+    
+    // If this reference is in an @implementation, check for 'private' methods.
+    if (!Getter)
+      if (ObjCMethodDecl *CurMeth = getCurMethodDecl())
+        if (ObjCInterfaceDecl *ClassDecl = CurMeth->getClassInterface())
+          if (ObjCImplementationDecl *ImpDecl = 
+              ObjCImplementations[ClassDecl->getIdentifier()])
+            Getter = ImpDecl->getInstanceMethod(Sel);
+
+    if (Getter) {
+      // If we found a getter then this may be a valid dot-reference, we
+      // need to also look for the matching setter.
+      IdentifierInfo *SetterName = constructSetterName(PP.getIdentifierTable(),
+                                                       &Member);
+      Selector SetterSel = PP.getSelectorTable().getUnarySelector(SetterName);
+      ObjCMethodDecl *Setter = IFace->lookupInstanceMethod(SetterSel);
+
+      if (!Setter) {
+        if (ObjCMethodDecl *CurMeth = getCurMethodDecl())
+          if (ObjCInterfaceDecl *ClassDecl = CurMeth->getClassInterface())
+            if (ObjCImplementationDecl *ImpDecl = 
+                ObjCImplementations[ClassDecl->getIdentifier()])
+              Setter = ImpDecl->getInstanceMethod(SetterSel);
+      }
+
+      // FIXME: There are some issues here. First, we are not
+      // diagnosing accesses to read-only properties because we do not
+      // know if this is a getter or setter yet. Second, we are
+      // checking that the type of the setter matches the type we
+      // expect.
+      return new ObjCPropertyRefExpr(Getter, Setter, Getter->getResultType(), 
+                                     MemberLoc, BaseExpr);
+    }
   }
   
   // Handle 'field access' to vectors, such as 'V.xx'.
