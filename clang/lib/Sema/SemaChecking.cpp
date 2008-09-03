@@ -62,6 +62,9 @@ Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCallRaw) {
     if (SemaBuiltinPrefetch(TheCall.get()))
       return true;
     return TheCall.take();
+  case Builtin::BI__builtin_object_size:
+    if (SemaBuiltinObjectSize(TheCall.get()))
+      return true;
   }
   
   // Search the KnownFunctionIDs for the identifier.
@@ -300,8 +303,7 @@ bool Sema::SemaBuiltinPrefetch(CallExpr *TheCall) {
     QualType RWType = Arg->getType();
 
     const BuiltinType *BT = RWType->getAsBuiltinType();
-    // FIXME: 32 is wrong, needs to be proper width of Int
-    llvm::APSInt Result(32);
+    llvm::APSInt Result;
     if (!BT || BT->getKind() != BuiltinType::Int ||
         !Arg->isIntegerConstantExpr(Result, Context)) {
       if (Diag(TheCall->getLocStart(), diag::err_prefetch_invalid_argument,
@@ -316,18 +318,41 @@ bool Sema::SemaBuiltinPrefetch(CallExpr *TheCall) {
     // is 3.
     if (i==1) {
       if (Result.getSExtValue() < 0 || Result.getSExtValue() > 1)
-        res |= Diag(TheCall->getLocStart(), diag::err_prefetch_invalid_range,
+        res |= Diag(TheCall->getLocStart(), diag::err_argument_invalid_range,
                     "0", "1", 
                     SourceRange(Arg->getLocStart(), Arg->getLocEnd()));
     } else {
       if (Result.getSExtValue() < 0 || Result.getSExtValue() > 3)
-        res |= Diag(TheCall->getLocStart(), diag::err_prefetch_invalid_range,
+        res |= Diag(TheCall->getLocStart(), diag::err_argument_invalid_range,
                     "0", "3", 
                     SourceRange(Arg->getLocStart(), Arg->getLocEnd()));
     }
   }
 
   return res;
+}
+
+/// SemaBuiltinObjectSize - Handle __builtin_object_size(void *ptr,
+/// int type). This simply type checks that type is one of the defined
+/// constants (0-3).
+bool Sema::SemaBuiltinObjectSize(CallExpr *TheCall) {
+  Expr *Arg = TheCall->getArg(1);
+  QualType ArgType = Arg->getType();  
+  const BuiltinType *BT = ArgType->getAsBuiltinType();  
+  llvm::APSInt Result(32);
+  if (!BT || BT->getKind() != BuiltinType::Int ||
+      !Arg->isIntegerConstantExpr(Result, Context)) {
+    return Diag(TheCall->getLocStart(), diag::err_object_size_invalid_argument,
+                SourceRange(Arg->getLocStart(), Arg->getLocEnd()));
+  }
+
+  if (Result.getSExtValue() < 0 || Result.getSExtValue() > 3) {
+    return Diag(TheCall->getLocStart(), diag::err_argument_invalid_range,
+                "0", "3", 
+                SourceRange(Arg->getLocStart(), Arg->getLocEnd()));
+  }
+
+  return false;
 }
 
 /// CheckPrintfArguments - Check calls to printf (and similar functions) for

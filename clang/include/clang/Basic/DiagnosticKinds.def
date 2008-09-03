@@ -1197,7 +1197,10 @@ DIAG(err_stack_const_level, ERROR,
 
 DIAG(err_prefetch_invalid_argument, ERROR,
      "argument to __builtin_prefetch must be a constant integer")
-DIAG(err_prefetch_invalid_range, ERROR,
+DIAG(err_argument_invalid_range, ERROR,
      "argument should be a value from %0 to %1")
+
+DIAG(err_object_size_invalid_argument, ERROR,
+     "argument to __builtin_object_size must be a constant integer")
 
 #undef DIAG

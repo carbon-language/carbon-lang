@@ -124,6 +124,7 @@ BUILTIN(__builtin_memset, "v*v*cz", "n")
 BUILTIN(__builtin_return_address, "v*Ui", "n")
 BUILTIN(__builtin_frame_address, "v*Ui", "n")
 // GCC Object size checking builtins
+BUILTIN(__builtin_object_size, "zv*i", "n")
 BUILTIN(__builtin___memset_chk, "v*v*izz", "nF")
 BUILTIN(__builtin___memcpy_chk, "v*v*vC*zz", "nF")
 BUILTIN(__builtin___memmove_chk, "v*v*vC*zz", "nF")

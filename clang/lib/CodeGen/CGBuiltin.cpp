@@ -199,6 +199,16 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
     Value *F = CGM.getIntrinsic(Intrinsic::bswap, &ArgType, 1);
     return RValue::get(Builder.CreateCall(F, ArgValue, "tmp"));
   }    
+  case Builtin::BI__builtin_object_size: {
+    // FIXME: Implement. For now we just always fail and pretend we
+    // don't know the object size.
+    llvm::APSInt TypeArg = 
+      E->getArg(1)->getIntegerConstantExprValue(CGM.getContext());
+    const llvm::Type *ResType = ConvertType(E->getType());
+    //    bool UseSubObject = TypeArg.getZExtValue() & 1;
+    bool UseMinimum = TypeArg.getZExtValue() & 2;
+    return RValue::get(ConstantInt::get(ResType, UseMinimum ? 0 : -1LL));
+  }
   case Builtin::BI__builtin_prefetch: {
     Value *Locality, *RW, *Address = EmitScalarExpr(E->getArg(0));
     // FIXME: Technically these constants should of type 'int', yes?
