@@ -19,6 +19,7 @@
 #include "X86RegisterInfo.h"
 #include "X86MachineFunctionInfo.h"
 #include "llvm/Target/TargetLowering.h"
+#include "llvm/CodeGen/FastIsel.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/CallingConvLower.h"
 
@@ -595,6 +596,10 @@ namespace llvm {
                                                           MachineBasicBlock *BB,
                                                           unsigned cmovOpc);
   };
+
+  namespace X86 {
+    FastISel *createFastISel(MachineFunction &mf);
+  }
 }
 
 #endif    // X86ISELLOWERING_H

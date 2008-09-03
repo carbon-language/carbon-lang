@@ -16,17 +16,31 @@
 #include "X86.h"
 #include "X86RegisterInfo.h"
 #include "X86ISelLowering.h"
-#include "X86FastISel.h"
 #include "X86TargetMachine.h"
+#include "llvm/CodeGen/FastISel.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+
+using namespace llvm;
+
+class X86FastISel : public FastISel {
+  /// Subtarget - Keep a pointer to the X86Subtarget around so that we can
+  /// make the right decision when generating code for different targets.
+  const X86Subtarget *Subtarget;
+    
+ public:
+  explicit X86FastISel(MachineFunction &mf) : FastISel(mf) {}
+
+  virtual bool
+    TargetSelectInstruction(Instruction *I,
+                            DenseMap<const Value *, unsigned> &ValueMap,
+                      DenseMap<const BasicBlock *, MachineBasicBlock *> &MBBMap,
+                            MachineBasicBlock *MBB);
+
 #include "X86GenFastISel.inc"
-
-namespace llvm {
-
-namespace X86 {
+};
 
 bool
-FastISel::TargetSelectInstruction(Instruction *I,
+X86FastISel::TargetSelectInstruction(Instruction *I,
                                   DenseMap<const Value *, unsigned> &ValueMap,
                       DenseMap<const BasicBlock *, MachineBasicBlock *> &MBBMap,
                                   MachineBasicBlock *MBB)  {
@@ -37,6 +51,8 @@ FastISel::TargetSelectInstruction(Instruction *I,
   return false;
 }
 
-}
-
+namespace llvm {
+  llvm::FastISel *X86::createFastISel(MachineFunction &mf) {
+    return new X86FastISel(mf);
+  }
 }

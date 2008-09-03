@@ -352,89 +352,6 @@ void FastISelMap::CollectPatterns(CodeGenDAGPatterns &CGP) {
   }
 }
 
-void FastISelMap::PrintClass(std::ostream &OS) {
-  // Declare the target FastISel class.
-  OS << "class FastISel : public llvm::FastISel {\n";
-  for (OperandsOpcodeTypeRetPredMap::const_iterator OI = SimplePatterns.begin(),
-       OE = SimplePatterns.end(); OI != OE; ++OI) {
-    const OperandsSignature &Operands = OI->first;
-    const OpcodeTypeRetPredMap &OTM = OI->second;
-
-    for (OpcodeTypeRetPredMap::const_iterator I = OTM.begin(), E = OTM.end();
-         I != E; ++I) {
-      const std::string &Opcode = I->first;
-      const TypeRetPredMap &TM = I->second;
-
-      for (TypeRetPredMap::const_iterator TI = TM.begin(), TE = TM.end();
-           TI != TE; ++TI) {
-        MVT::SimpleValueType VT = TI->first;
-        const RetPredMap &RM = TI->second;
-        
-        if (RM.size() != 1)
-          for (RetPredMap::const_iterator RI = RM.begin(), RE = RM.end();
-               RI != RE; ++RI) {
-            MVT::SimpleValueType RetVT = RI->first;
-            OS << "  unsigned FastEmit_" << getLegalCName(Opcode)
-               << "_" << getLegalCName(getName(VT)) << "_"
-               << getLegalCName(getName(RetVT)) << "_";
-            Operands.PrintManglingSuffix(OS);
-            OS << "(";
-            Operands.PrintParameters(OS);
-            OS << ");\n";
-          }
-        
-        OS << "  unsigned FastEmit_" << getLegalCName(Opcode)
-           << "_" << getLegalCName(getName(VT)) << "_";
-        Operands.PrintManglingSuffix(OS);
-        OS << "(MVT::SimpleValueType RetVT";
-        if (!Operands.empty())
-          OS << ", ";
-        Operands.PrintParameters(OS);
-        OS << ");\n";
-      }
-
-      OS << "  unsigned FastEmit_" << getLegalCName(Opcode) << "_";
-      Operands.PrintManglingSuffix(OS);
-      OS << "(MVT::SimpleValueType VT, MVT::SimpleValueType RetVT";
-      if (!Operands.empty())
-        OS << ", ";
-      Operands.PrintParameters(OS);
-      OS << ");\n";
-    }
-
-    OS << "  unsigned FastEmit_";
-    Operands.PrintManglingSuffix(OS);
-    OS << "(MVT::SimpleValueType VT, MVT::SimpleValueType RetVT, ISD::NodeType Opcode";
-    if (!Operands.empty())
-      OS << ", ";
-    Operands.PrintParameters(OS);
-    OS << ");\n";
-  }
-  OS << "\n";
-
-  OS << "bool TargetSelectInstruction(Instruction *I,\n";
-  OS << "                             "
-        "DenseMap<const Value *, unsigned> &ValueMap,\n";
-  OS << "                             "
-        "DenseMap<const BasicBlock *, MachineBasicBlock *> &MBBMap,\n";
-  OS << "                             "
-        "MachineBasicBlock *MBB);\n";
-
-  // Declare the Subtarget member, which is used for predicate checks.
-  OS << "  const " << InstNS.substr(0, InstNS.size() - 2)
-     << "Subtarget *Subtarget;\n";
-  OS << "\n";
-
-  // Declare the constructor.
-  OS << "public:\n";
-  OS << "  explicit FastISel(MachineFunction &mf)\n";
-  OS << "     : llvm::FastISel(mf),\n";
-  OS << "       Subtarget(&TM.getSubtarget<" << InstNS.substr(0, InstNS.size() - 2)
-     << "Subtarget>()) {}\n";
-  OS << "};\n";
-  OS << "\n";
-}
-
 void FastISelMap::PrintFunctionDefinitions(std::ostream &OS) {
   // Now emit code for all the patterns that we collected.
   for (OperandsOpcodeTypeRetPredMap::const_iterator OI = SimplePatterns.begin(),
@@ -462,7 +379,7 @@ void FastISelMap::PrintFunctionDefinitions(std::ostream &OS) {
             const PredMap &PM = RI->second;
             bool HasPred = false;
 
-            OS << "unsigned FastISel::FastEmit_"
+            OS << "unsigned FastEmit_"
                << getLegalCName(Opcode)
                << "_" << getLegalCName(getName(VT))
                << "_" << getLegalCName(getName(RetVT)) << "_";
@@ -524,7 +441,7 @@ void FastISelMap::PrintFunctionDefinitions(std::ostream &OS) {
           }
           
           // Emit one function for the type that demultiplexes on return type.
-          OS << "unsigned FastISel::FastEmit_"
+          OS << "unsigned FastEmit_"
              << getLegalCName(Opcode) << "_"
              << getLegalCName(getName(VT)) << "_";
           Operands.PrintManglingSuffix(OS);
@@ -548,7 +465,7 @@ void FastISelMap::PrintFunctionDefinitions(std::ostream &OS) {
           
         } else {
           // Non-variadic return type.
-          OS << "unsigned FastISel::FastEmit_"
+          OS << "unsigned FastEmit_"
              << getLegalCName(Opcode) << "_"
              << getLegalCName(getName(VT)) << "_";
           Operands.PrintManglingSuffix(OS);
@@ -618,7 +535,7 @@ void FastISelMap::PrintFunctionDefinitions(std::ostream &OS) {
       }
 
       // Emit one function for the opcode that demultiplexes based on the type.
-      OS << "unsigned FastISel::FastEmit_"
+      OS << "unsigned FastEmit_"
          << getLegalCName(Opcode) << "_";
       Operands.PrintManglingSuffix(OS);
       OS << "(MVT::SimpleValueType VT, MVT::SimpleValueType RetVT";
@@ -651,7 +568,7 @@ void FastISelMap::PrintFunctionDefinitions(std::ostream &OS) {
 
     // Emit one function for the operand signature that demultiplexes based
     // on opcode and type.
-    OS << "unsigned FastISel::FastEmit_";
+    OS << "unsigned FastEmit_";
     Operands.PrintManglingSuffix(OS);
     OS << "(MVT::SimpleValueType VT, MVT::SimpleValueType RetVT, ISD::NodeType Opcode";
     if (!Operands.empty())
@@ -689,27 +606,9 @@ void FastISelEmitter::run(std::ostream &OS) {
   EmitSourceFileHeader("\"Fast\" Instruction Selector for the " +
                        Target.getName() + " target", OS);
 
-  OS << "#include \"llvm/CodeGen/FastISel.h\"\n";
-  OS << "\n";
-  OS << "namespace llvm {\n";
-  OS << "\n";
-  OS << "namespace " << InstNS.substr(0, InstNS.size() - 2) << " {\n";
-  OS << "\n";
-  
   FastISelMap F(InstNS);
   F.CollectPatterns(CGP);
-  F.PrintClass(OS);
   F.PrintFunctionDefinitions(OS);
-
-  // Define the target FastISel creation function.
-  OS << "llvm::FastISel *createFastISel(MachineFunction &mf) {\n";
-  OS << "  return new FastISel(mf);\n";
-  OS << "}\n";
-  OS << "\n";
-
-  OS << "} // namespace X86\n";
-  OS << "\n";
-  OS << "} // namespace llvm\n";
 }
 
 FastISelEmitter::FastISelEmitter(RecordKeeper &R)
