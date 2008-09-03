@@ -1935,6 +1935,7 @@ void LoopStrengthReduce::OptimizeIVType(Loop *L) {
 
     ConstantInt *CInit = dyn_cast<ConstantInt>(PHI->getIncomingValue(Entry));
     if (!CInit) return;
+    if (!CInit->isZero()) return;
 
     bool signedInit = CInit->getValue().isNegative();
     
