@@ -86,3 +86,6 @@ void f5() {
   int *_dummy1 = &(arr + 1); // expected-error {{address expression must be an lvalue or a function designator}}
 }
 
+void f6(register int x) {
+  int * dummy0 = &x; // expected-error {{address of register variable requested}}
+}

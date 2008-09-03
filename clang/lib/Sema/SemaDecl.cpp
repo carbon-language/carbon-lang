@@ -1421,8 +1421,10 @@ Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
   const DeclSpec &DS = D.getDeclSpec();
   
   // Verify C99 6.7.5.3p2: The only SCS allowed is 'register'.
-  if (DS.getStorageClassSpec() != DeclSpec::SCS_unspecified &&
-      DS.getStorageClassSpec() != DeclSpec::SCS_register) {
+  VarDecl::StorageClass StorageClass = VarDecl::None;
+  if (DS.getStorageClassSpec() == DeclSpec::SCS_register) {
+    StorageClass = VarDecl::Register;
+  } else if (DS.getStorageClassSpec() != DeclSpec::SCS_unspecified) {
     Diag(DS.getStorageClassSpecLoc(),
          diag::err_invalid_storage_class_in_func_decl);
     D.getMutableDeclSpec().ClearStorageClassSpecs();
@@ -1485,7 +1487,7 @@ Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
   
   ParmVarDecl *New = ParmVarDecl::Create(Context, CurContext, 
                                          D.getIdentifierLoc(), II,
-                                         parmDeclType, VarDecl::None, 
+                                         parmDeclType, StorageClass, 
                                          0, 0);
   
   if (D.getInvalidType())
