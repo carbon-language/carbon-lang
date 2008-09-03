@@ -64,20 +64,24 @@ namespace {
   };
 
   /// GlobalsModRef - The actual analysis pass.
-  class VISIBILITY_HIDDEN GlobalsModRef 
+  class VISIBILITY_HIDDEN GlobalsModRef
       : public ModulePass, public AliasAnalysis {
     /// NonAddressTakenGlobals - The globals that do not have their addresses
     /// taken.
     std::set<GlobalValue*> NonAddressTakenGlobals;
 
+    /// ReadGlobals - The globals without addresses taken that are read by
+    /// some function.
+    std::set<GlobalValue*> ReadGlobals;
+
     /// IndirectGlobals - The memory pointed to by this global is known to be
     /// 'owned' by the global.
     std::set<GlobalValue*> IndirectGlobals;
-    
+
     /// AllocsForIndirectGlobals - If an instruction allocates memory for an
     /// indirect global, this map indicates which one.
     std::map<Value*, GlobalValue*> AllocsForIndirectGlobals;
-    
+
     /// FunctionInfo - For each function, keep track of what globals are
     /// modified or read.
     std::map<Function*, FunctionRecord> FunctionInfo;
@@ -129,8 +133,7 @@ namespace {
 
   private:
     /// getFunctionInfo - Return the function info for the function, or null if
-    /// the function calls an external function (in which case we don't have
-    /// anything useful to say about it).
+    /// we don't have anything useful to say about it.
     FunctionRecord *getFunctionInfo(Function *F) {
       std::map<Function*, FunctionRecord>::iterator I = FunctionInfo.find(F);
       if (I != FunctionInfo.end())
@@ -140,7 +143,6 @@ namespace {
 
     void AnalyzeGlobals(Module &M);
     void AnalyzeCallGraph(CallGraph &CG, Module &M);
-    void AnalyzeSCC(std::vector<CallGraphNode *> &SCC);
     bool AnalyzeUsesOfPointer(Value *V, std::vector<Function*> &Readers,
                               std::vector<Function*> &Writers,
                               GlobalValue *OkayStoreDest = 0);
@@ -160,26 +162,26 @@ Pass *llvm::createGlobalsModRefPass() { return new GlobalsModRef(); }
 /// a global object, return it.
 static Value *getUnderlyingObject(Value *V) {
   if (!isa<PointerType>(V->getType())) return V;
-  
+
   // If we are at some type of object... return it.
   if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) return GV;
-  
+
   // Traverse through different addressing mechanisms.
   if (Instruction *I = dyn_cast<Instruction>(V)) {
     if (isa<BitCastInst>(I) || isa<GetElementPtrInst>(I))
       return getUnderlyingObject(I->getOperand(0));
   } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
-    if (CE->getOpcode() == Instruction::BitCast || 
+    if (CE->getOpcode() == Instruction::BitCast ||
         CE->getOpcode() == Instruction::GetElementPtr)
       return getUnderlyingObject(CE->getOperand(0));
   }
-  
-  // Othewise, we don't know what this is, return it as the base pointer.
+
+  // Otherwise, we don't know what this is, return it as the base pointer.
   return V;
 }
 
 /// AnalyzeGlobals - Scan through the users of all of the internal
-/// GlobalValue's in the program.  If none of them have their "Address taken"
+/// GlobalValue's in the program.  If none of them have their "address taken"
 /// (really, their address passed to something nontrivial), record this fact,
 /// and record the functions that they are used directly in.
 void GlobalsModRef::AnalyzeGlobals(Module &M) {
@@ -200,6 +202,11 @@ void GlobalsModRef::AnalyzeGlobals(Module &M) {
       if (!AnalyzeUsesOfPointer(I, Readers, Writers)) {
         // Remember that we are tracking this global, and the mod/ref fns
         NonAddressTakenGlobals.insert(I);
+
+        if (!Readers.empty())
+          // Some function read this global - remember that.
+          ReadGlobals.insert(I);
+
         for (unsigned i = 0, e = Readers.size(); i != e; ++i)
           FunctionInfo[Readers[i]].GlobalInfo[I] |= Ref;
 
@@ -207,7 +214,7 @@ void GlobalsModRef::AnalyzeGlobals(Module &M) {
           for (unsigned i = 0, e = Writers.size(); i != e; ++i)
             FunctionInfo[Writers[i]].GlobalInfo[I] |= Mod;
         ++NumNonAddrTakenGlobalVars;
-        
+
         // If this global holds a pointer type, see if it is an indirect global.
         if (isa<PointerType>(I->getType()->getElementType()) &&
             AnalyzeIndirectGlobalMemory(I))
@@ -251,7 +258,7 @@ bool GlobalsModRef::AnalyzeUsesOfPointer(Value *V,
       for (unsigned i = 3, e = II->getNumOperands(); i != e; ++i)
         if (II->getOperand(i) == V) return true;
     } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(*UI)) {
-      if (CE->getOpcode() == Instruction::GetElementPtr || 
+      if (CE->getOpcode() == Instruction::GetElementPtr ||
           CE->getOpcode() == Instruction::BitCast) {
         if (AnalyzeUsesOfPointer(CE, Readers, Writers))
           return true;
@@ -280,7 +287,7 @@ bool GlobalsModRef::AnalyzeIndirectGlobalMemory(GlobalValue *GV) {
   // Keep track of values related to the allocation of the memory, f.e. the
   // value produced by the malloc call and any casts.
   std::vector<Value*> AllocRelatedValues;
-  
+
   // Walk the user list of the global.  If we find anything other than a direct
   // load or store, bail out.
   for (Value::use_iterator I = GV->use_begin(), E = GV->use_end(); I != E; ++I){
@@ -295,11 +302,11 @@ bool GlobalsModRef::AnalyzeIndirectGlobalMemory(GlobalValue *GV) {
     } else if (StoreInst *SI = dyn_cast<StoreInst>(*I)) {
       // Storing the global itself.
       if (SI->getOperand(0) == GV) return false;
-      
+
       // If storing the null pointer, ignore it.
       if (isa<ConstantPointerNull>(SI->getOperand(0)))
         continue;
-      
+
       // Check the value being stored.
       Value *Ptr = getUnderlyingObject(SI->getOperand(0));
 
@@ -312,7 +319,7 @@ bool GlobalsModRef::AnalyzeIndirectGlobalMemory(GlobalValue *GV) {
       } else {
         return false;  // Too hard to analyze.
       }
-      
+
       // Analyze all uses of the allocation.  If any of them are used in a
       // non-simple way (e.g. stored to another global) bail out.
       std::vector<Function*> ReadersWriters;
@@ -326,7 +333,7 @@ bool GlobalsModRef::AnalyzeIndirectGlobalMemory(GlobalValue *GV) {
       return false;
     }
   }
-  
+
   // Okay, this is an indirect global.  Remember all of the allocations for
   // this global in AllocsForIndirectGlobals.
   while (!AllocRelatedValues.empty()) {
@@ -344,81 +351,78 @@ bool GlobalsModRef::AnalyzeIndirectGlobalMemory(GlobalValue *GV) {
 void GlobalsModRef::AnalyzeCallGraph(CallGraph &CG, Module &M) {
   // We do a bottom-up SCC traversal of the call graph.  In other words, we
   // visit all callees before callers (leaf-first).
-  for (scc_iterator<CallGraph*> I = scc_begin(&CG), E = scc_end(&CG); I!=E; ++I)
-    if ((*I).size() != 1) {
-      AnalyzeSCC(*I);
-    } else if (Function *F = (*I)[0]->getFunction()) {
-      if (!F->isDeclaration()) {
-        // Nonexternal function.
-        AnalyzeSCC(*I);
-      } else {
-        // Otherwise external function.  Handle intrinsics and other special
-        // cases here.
-        if (getAnalysis<AliasAnalysis>().doesNotAccessMemory(F))
-          // If it does not access memory, process the function, causing us to
-          // realize it doesn't do anything (the body is empty).
-          AnalyzeSCC(*I);
-        else {
-          // Otherwise, don't process it.  This will cause us to conservatively
-          // assume the worst.
-        }
-      }
-    } else {
+  for (scc_iterator<CallGraph*> I = scc_begin(&CG), E = scc_end(&CG); I != E;
+       ++I) {
+    std::vector<CallGraphNode *> &SCC = *I;
+    assert(!SCC.empty() && "SCC with no functions?");
+
+    if (!SCC[0]->getFunction())
       // Do not process the external node, assume the worst.
-    }
-}
+      continue;
 
-void GlobalsModRef::AnalyzeSCC(std::vector<CallGraphNode *> &SCC) {
-  assert(!SCC.empty() && "SCC with no functions?");
-  FunctionRecord &FR = FunctionInfo[SCC[0]->getFunction()];
+    FunctionRecord &FR = FunctionInfo[SCC[0]->getFunction()];
 
-  bool CallsExternal = false;
-  unsigned FunctionEffect = 0;
+    bool KnowNothing = false;
+    unsigned FunctionEffect = 0;
 
-  // Collect the mod/ref properties due to called functions.  We only compute
-  // one mod-ref set
-  for (unsigned i = 0, e = SCC.size(); i != e && !CallsExternal; ++i)
-    for (CallGraphNode::iterator CI = SCC[i]->begin(), E = SCC[i]->end();
-         CI != E; ++CI)
-      if (Function *Callee = CI->second->getFunction()) {
-        if (FunctionRecord *CalleeFR = getFunctionInfo(Callee)) {
-          // Propagate function effect up.
-          FunctionEffect |= CalleeFR->FunctionEffect;
-
-          // Incorporate callee's effects on globals into our info.
-          for (std::map<GlobalValue*, unsigned>::iterator GI =
-                 CalleeFR->GlobalInfo.begin(), E = CalleeFR->GlobalInfo.end();
-               GI != E; ++GI)
-            FR.GlobalInfo[GI->first] |= GI->second;
-
-        } else {
-          // Okay, if we can't say anything about it, maybe some other alias
-          // analysis can.
-          ModRefBehavior MRB =
-            AliasAnalysis::getModRefBehavior(Callee);
-          if (MRB != DoesNotAccessMemory) {
-            // FIXME: could make this more aggressive for functions that just
-            // read memory.  We should just say they read all globals.
-            CallsExternal = true;
-            break;
-          }
-        }
-      } else {
-        CallsExternal = true;
+    // Collect the mod/ref properties due to called functions.  We only compute
+    // one mod-ref set.
+    for (unsigned i = 0, e = SCC.size(); i != e && !KnowNothing; ++i) {
+      Function *F = SCC[i]->getFunction();
+      if (!F) {
+        KnowNothing = true;
         break;
       }
 
-  // If this SCC calls an external function, we can't say anything about it, so
-  // remove all SCC functions from the FunctionInfo map.
-  if (CallsExternal) {
-    for (unsigned i = 0, e = SCC.size(); i != e; ++i)
-      FunctionInfo.erase(SCC[i]->getFunction());
-    return;
-  }
+      if (F->isDeclaration()) {
+        // Try to get mod/ref behaviour from function attributes.
+        if (F->onlyReadsMemory()) {
+          FunctionEffect |= Ref;
+          // This function might call back into the module and read a global, so
+          // mark all globals read somewhere as being read by this function.
+          for (std::set<GlobalValue*>::iterator GI = ReadGlobals.begin(),
+               E = ReadGlobals.end(); GI != E; ++GI)
+            FR.GlobalInfo[*GI] |= Ref;
+        } else if (!F->doesNotAccessMemory()) {
+          // Can't say anything useful.
+          KnowNothing = true;
+        }
+        continue;
+      }
 
-  // Otherwise, unless we already know that this function mod/refs memory, scan
-  // the function bodies to see if there are any explicit loads or stores.
-  if (FunctionEffect != ModRef) {
+      for (CallGraphNode::iterator CI = SCC[i]->begin(), E = SCC[i]->end();
+           CI != E; ++CI)
+        if (Function *Callee = CI->second->getFunction()) {
+          if (FunctionRecord *CalleeFR = getFunctionInfo(Callee)) {
+            // Propagate function effect up.
+            FunctionEffect |= CalleeFR->FunctionEffect;
+
+            // Incorporate callee's effects on globals into our info.
+            for (std::map<GlobalValue*, unsigned>::iterator GI =
+                   CalleeFR->GlobalInfo.begin(), E = CalleeFR->GlobalInfo.end();
+                 GI != E; ++GI)
+              FR.GlobalInfo[GI->first] |= GI->second;
+          } else {
+            // Can't say anything about it.  However, if it is inside our SCC,
+            // then nothing needs to be done.
+            CallGraphNode *CalleeNode = CG[Callee];
+            if (std::find(SCC.begin(), SCC.end(), CalleeNode) == SCC.end())
+              KnowNothing = true;
+          }
+        } else {
+          KnowNothing = true;
+        }
+    }
+
+    // If we can't say anything useful about this SCC, remove all SCC functions
+    // from the FunctionInfo map.
+    if (KnowNothing) {
+      for (unsigned i = 0, e = SCC.size(); i != e; ++i)
+        FunctionInfo.erase(SCC[i]->getFunction());
+      return;
+    }
+
+    // Scan the function bodies for explicit loads or stores.
     for (unsigned i = 0, e = SCC.size(); i != e && FunctionEffect != ModRef;++i)
       for (inst_iterator II = inst_begin(SCC[i]->getFunction()),
              E = inst_end(SCC[i]->getFunction());
@@ -429,18 +433,18 @@ void GlobalsModRef::AnalyzeSCC(std::vector<CallGraphNode *> &SCC) {
           FunctionEffect |= Mod;
         else if (isa<MallocInst>(*II) || isa<FreeInst>(*II))
           FunctionEffect |= ModRef;
+
+    if ((FunctionEffect & Mod) == 0)
+      ++NumReadMemFunctions;
+    if (FunctionEffect == 0)
+      ++NumNoMemFunctions;
+    FR.FunctionEffect = FunctionEffect;
+
+    // Finally, now that we know the full effect on this SCC, clone the
+    // information to each function in the SCC.
+    for (unsigned i = 1, e = SCC.size(); i != e; ++i)
+      FunctionInfo[SCC[i]->getFunction()] = FR;
   }
-
-  if ((FunctionEffect & Mod) == 0)
-    ++NumReadMemFunctions;
-  if (FunctionEffect == 0)
-    ++NumNoMemFunctions;
-  FR.FunctionEffect = FunctionEffect;
-
-  // Finally, now that we know the full effect on this SCC, clone the
-  // information to each function in the SCC.
-  for (unsigned i = 1, e = SCC.size(); i != e; ++i)
-    FunctionInfo[SCC[i]->getFunction()] = FR;
 }
 
 
@@ -454,7 +458,7 @@ GlobalsModRef::alias(const Value *V1, unsigned V1Size,
   // Get the base object these pointers point to.
   Value *UV1 = getUnderlyingObject(const_cast<Value*>(V1));
   Value *UV2 = getUnderlyingObject(const_cast<Value*>(V2));
-  
+
   // If either of the underlying values is a global, they may be non-addr-taken
   // globals, which we can answer queries about.
   GlobalValue *GV1 = dyn_cast<GlobalValue>(UV1);
@@ -473,7 +477,7 @@ GlobalsModRef::alias(const Value *V1, unsigned V1Size,
     // Otherwise if they are both derived from the same addr-taken global, we
     // can't know the two accesses don't overlap.
   }
-  
+
   // These pointers may be based on the memory owned by an indirect global.  If
   // so, we may be able to handle this.  First check to see if the base pointer
   // is a direct load from an indirect global.
@@ -486,21 +490,21 @@ GlobalsModRef::alias(const Value *V1, unsigned V1Size,
     if (GlobalVariable *GV = dyn_cast<GlobalVariable>(LI->getOperand(0)))
       if (IndirectGlobals.count(GV))
         GV2 = GV;
-  
+
   // These pointers may also be from an allocation for the indirect global.  If
   // so, also handle them.
   if (AllocsForIndirectGlobals.count(UV1))
     GV1 = AllocsForIndirectGlobals[UV1];
   if (AllocsForIndirectGlobals.count(UV2))
     GV2 = AllocsForIndirectGlobals[UV2];
-  
+
   // Now that we know whether the two pointers are related to indirect globals,
   // use this to disambiguate the pointers.  If either pointer is based on an
   // indirect global and if they are not both based on the same indirect global,
   // they cannot alias.
   if ((GV1 || GV2) && GV1 != GV2)
     return NoAlias;
-  
+
   return AliasAnalysis::alias(V1, V1Size, V2, V2Size);
 }
 
@@ -545,11 +549,11 @@ void GlobalsModRef::deleteValue(Value *V) {
       }
     }
   }
-  
+
   // Otherwise, if this is an allocation related to an indirect global, remove
   // it.
   AllocsForIndirectGlobals.erase(V);
-  
+
   AliasAnalysis::deleteValue(V);
 }
 
