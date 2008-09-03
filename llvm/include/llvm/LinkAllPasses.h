@@ -62,6 +62,7 @@ namespace {
       (void) llvm::createDeadTypeEliminationPass();
       (void) llvm::createEdgeProfilerPass();
       (void) llvm::createFunctionInliningPass();
+      (void) llvm::createAlwaysInlinerPass();
       (void) llvm::createFunctionProfilerPass();
       (void) llvm::createGlobalDCEPass();
       (void) llvm::createGlobalOptimizerPass();

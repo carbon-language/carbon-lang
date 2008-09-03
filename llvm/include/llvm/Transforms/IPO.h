@@ -95,6 +95,11 @@ Pass *createFunctionInliningPass();
 Pass *createFunctionInliningPass(int Threshold);
 
 //===----------------------------------------------------------------------===//
+/// createAlwaysInlinerPass - Return a new pass object that inlines only 
+/// functions that are marked as "always_inline".
+Pass *createAlwaysInlinerPass();
+
+//===----------------------------------------------------------------------===//
 /// createPruneEHPass - Return a new pass object which transforms invoke
 /// instructions into calls, if the callee can _not_ unwind the stack.
 ///
