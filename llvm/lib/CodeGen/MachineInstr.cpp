@@ -800,6 +800,7 @@ bool MachineInstr::addRegisterKilled(unsigned IncomingReg,
                                      bool AddIfNotFound) {
   bool isPhysReg = TargetRegisterInfo::isPhysicalRegister(IncomingReg);
   bool hasAliases = isPhysReg && RegInfo->getAliasSet(IncomingReg);
+  bool Found = false;
   SmallVector<unsigned,4> DeadOps;
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
     MachineOperand &MO = getOperand(i);
@@ -810,11 +811,15 @@ bool MachineInstr::addRegisterKilled(unsigned IncomingReg,
       continue;
 
     if (Reg == IncomingReg) {
-      MO.setIsKill();
-      return true;
-    }
-    if (hasAliases && MO.isKill() &&
-        TargetRegisterInfo::isPhysicalRegister(Reg)) {
+      if (!Found) {
+        if (MO.isKill())
+          // The register is already marked kill.
+          return true;
+        MO.setIsKill();
+        Found = true;
+      }
+    } else if (hasAliases && MO.isKill() &&
+               TargetRegisterInfo::isPhysicalRegister(Reg)) {
       // A super-register kill already exists.
       if (RegInfo->isSuperRegister(IncomingReg, Reg))
         return true;
@@ -835,14 +840,14 @@ bool MachineInstr::addRegisterKilled(unsigned IncomingReg,
 
   // If not found, this means an alias of one of the operands is killed. Add a
   // new implicit operand if required.
-  if (AddIfNotFound) {
+  if (!Found && AddIfNotFound) {
     addOperand(MachineOperand::CreateReg(IncomingReg,
                                          false /*IsDef*/,
                                          true  /*IsImp*/,
                                          true  /*IsKill*/));
     return true;
   }
-  return false;
+  return Found;
 }
 
 bool MachineInstr::addRegisterDead(unsigned IncomingReg,
@@ -850,18 +855,26 @@ bool MachineInstr::addRegisterDead(unsigned IncomingReg,
                                    bool AddIfNotFound) {
   bool isPhysReg = TargetRegisterInfo::isPhysicalRegister(IncomingReg);
   bool hasAliases = isPhysReg && RegInfo->getAliasSet(IncomingReg);
+  bool Found = false;
   SmallVector<unsigned,4> DeadOps;
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
     MachineOperand &MO = getOperand(i);
     if (!MO.isRegister() || !MO.isDef())
       continue;
     unsigned Reg = MO.getReg();
+    if (!Reg)
+      continue;
+
     if (Reg == IncomingReg) {
-      MO.setIsDead();
-      return true;
-    }
-    if (hasAliases && MO.isDead() &&
-        TargetRegisterInfo::isPhysicalRegister(Reg)) {
+      if (!Found) {
+        if (MO.isDead())
+          // The register is already marked dead.
+          return true;
+        MO.setIsDead();
+        Found = true;
+      }
+    } else if (hasAliases && MO.isDead() &&
+               TargetRegisterInfo::isPhysicalRegister(Reg)) {
       // There exists a super-register that's marked dead.
       if (RegInfo->isSuperRegister(IncomingReg, Reg))
         return true;
@@ -882,13 +895,15 @@ bool MachineInstr::addRegisterDead(unsigned IncomingReg,
     DeadOps.pop_back();
   }
 
-  // If not found, this means an alias of one of the operand is dead. Add a
-  // new implicit operand.
-  if (AddIfNotFound) {
-    addOperand(MachineOperand::CreateReg(IncomingReg, true/*IsDef*/,
-                                         true/*IsImp*/,false/*IsKill*/,
-                                         true/*IsDead*/));
+  // If not found, this means an alias of one of the operands is dead. Add a
+  // new implicit operand if required.
+  if (!Found && AddIfNotFound) {
+    addOperand(MachineOperand::CreateReg(IncomingReg,
+                                         true  /*IsDef*/,
+                                         true  /*IsImp*/,
+                                         false /*IsKill*/,
+                                         true  /*IsDead*/));
     return true;
   }
-  return false;
+  return Found;
 }
