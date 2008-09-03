@@ -2,7 +2,7 @@
 
 ; This tests very minimal fast-isel functionality.
 
-define i32* @foo(i32* %p, i32* %q, i32** %z) {
+define i32* @foo(i32* %p, i32* %q, i32** %z) nounwind {
 entry:
   %r = load i32* %p
   %s = load i32* %q
@@ -25,7 +25,7 @@ exit:
   ret i32* %t8
 }
 
-define double @bar(double* %p, double* %q) {
+define double @bar(double* %p, double* %q) nounwind {
 entry:
   %r = load double* %p
   %s = load double* %q
@@ -42,8 +42,16 @@ exit:
   ret double %t3
 }
 
-define i32 @cast(){
+define i32 @cast() nounwind {
 entry:
 	%tmp2 = bitcast i32 0 to i32
 	ret i32 %tmp2
+}
+
+@src = external global i32
+
+define i32 @loadgv() nounwind {
+entry:
+	%0 = load i32* @src, align 4
+	ret i32 %0
 }
