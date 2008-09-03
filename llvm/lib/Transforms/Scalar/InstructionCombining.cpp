@@ -2948,8 +2948,9 @@ Instruction *InstCombiner::visitSRem(BinaryOperator &I) {
     return common;
   
   if (Value *RHSNeg = dyn_castNegVal(Op1))
-    if (!isa<ConstantInt>(RHSNeg) || 
-        cast<ConstantInt>(RHSNeg)->getValue().isStrictlyPositive()) {
+    if (!isa<Constant>(RHSNeg) ||
+        (isa<ConstantInt>(RHSNeg) &&
+         cast<ConstantInt>(RHSNeg)->getValue().isStrictlyPositive())) {
       // X % -Y -> X % Y
       AddUsesToWorkList(I);
       I.setOperand(1, RHSNeg);
@@ -5495,7 +5496,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
       if (Op0I->getOpcode() == Op1I->getOpcode() && Op0I->hasOneUse() &&
           Op1I->hasOneUse() && Op0I->getOperand(1) == Op1I->getOperand(1) &&
           I.isEquality()) {
-	switch (Op0I->getOpcode()) {
+        switch (Op0I->getOpcode()) {
         default: break;
         case Instruction::Add:
         case Instruction::Sub:
