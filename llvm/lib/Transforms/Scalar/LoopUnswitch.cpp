@@ -190,6 +190,7 @@ bool LoopUnswitch::runOnLoop(Loop *L, LPPassManager &LPM_Ref) {
   DF = getAnalysisToUpdate<DominanceFrontier>();
   DT = getAnalysisToUpdate<DominatorTree>();
   currentLoop = L;
+  Function *F = currentLoop->getHeader()->getParent();
   bool Changed = false;
   do {
     assert(currentLoop->isLCSSAForm());
@@ -197,6 +198,13 @@ bool LoopUnswitch::runOnLoop(Loop *L, LPPassManager &LPM_Ref) {
     Changed |= processCurrentLoop();
   } while(redoLoop);
 
+  if (Changed) {
+    // FIXME: Reconstruct dom info, because it is not preserved properly.
+    if (DT)
+      DT->runOnFunction(*F);
+    if (DF)
+      DF->runOnFunction(*F);
+  }
   return Changed;
 }
 
@@ -450,11 +458,6 @@ bool LoopUnswitch::UnswitchIfProfitable(Value *LoopCond, Constant *Val){
     UnswitchNontrivialCondition(LoopCond, Val, currentLoop);
   }
 
-  // FIXME: Reconstruct dom info, because it is not preserved properly.
-  if (DT)
-    DT->runOnFunction(*F);
-  if (DF)
-    DF->runOnFunction(*F);
   return true;
 }
 
