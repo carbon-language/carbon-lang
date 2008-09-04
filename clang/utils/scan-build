@@ -24,7 +24,7 @@ my $Verbose = 0;       # Verbose output from this script.
 my $Prog = "scan-build";
 my $BuildName;
 my $BuildDate;
-my $CXX = 'g++';
+my $CXX;  # Leave undefined initially.
 
 my $UseColor = ((($ENV{'TERM'} eq 'xterm-color') and -t STDOUT)
                 and defined($ENV{'SCAN_BUILD_COLOR'}));
@@ -692,7 +692,8 @@ sub RunBuildCommand {
     # When 'CC' is set, xcodebuild uses it to do all linking, even if we are
     # linking C++ object files.  Set 'LDPLUSPLUS' so that xcodebuild uses 'g++'
     # when linking such files.
-    my $LDPLUSPLUS = `$CXX`;
+    die if (!defined $CXX);
+    my $LDPLUSPLUS = `which $CXX`;
     $LDPLUSPLUS =~ s/\015?\012//;  # strip newlines
     $ENV{'LDPLUSPLUS'} = $LDPLUSPLUS;    
   }
@@ -917,7 +918,14 @@ if (! -x $ClangSB) {
   Diag("Using 'clang' from path.\n");
 }
 
-$ENV{'CXX'} = $CXX;
+if (defined $CXX) {
+  $ENV{'CXX'} = $CXX;
+}
+else {
+  $CXX = 'g++';  # This variable is used by other parts of scan-build
+                 # that need to know a default C++ compiler to fall back to.
+}
+  
 $ENV{'CC'} = $Cmd;
 $ENV{'CLANG'} = $Clang;
 
