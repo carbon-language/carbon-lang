@@ -721,18 +721,24 @@ CFGBlock* CFGBuilder::VisitForStmt(ForStmt* F) {
     SaveAndRestore<CFGBlock*> save_Block(Block), save_Succ(Succ),
     save_continue(ContinueTargetBlock),
     save_break(BreakTargetBlock);      
-
-    // All continues within this loop should go to the condition block
-    ContinueTargetBlock = EntryConditionBlock;
-    
-    // All breaks should go to the code following the loop.
-    BreakTargetBlock = LoopSuccessor;
-    
+ 
     // Create a new block to contain the (bottom) of the loop body.
     Block = NULL;
     
-    // If we have increment code, insert it at the end of the body block.
-    if (Stmt* I = F->getInc()) Block = addStmt(I);
+    if (Stmt* I = F->getInc()) {
+      // Generate increment code in its own basic block.  This is the target
+      // of continue statements.
+      Succ = addStmt(I);
+      Block = 0;
+      ContinueTargetBlock = Succ;    
+    }
+    else {
+      // No increment code.  Continues should go the the entry condition block.
+      ContinueTargetBlock = EntryConditionBlock;
+    }
+    
+    // All breaks should go to the code following the loop.
+    BreakTargetBlock = LoopSuccessor;    
     
     // Now populate the body block, and in the process create new blocks
     // as we walk the body of the loop.
