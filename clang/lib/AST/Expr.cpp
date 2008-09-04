@@ -282,7 +282,7 @@ InitListExpr::InitListExpr(SourceLocation lbraceloc,
     InitExprs.push_back(initexprs[i]);
 }
 
-/// getFunctionType - Return the underlying function type for this closure.
+/// getFunctionType - Return the underlying function type for this block.
 ///
 const FunctionType *BlockExpr::getFunctionType() const {
   return getType()->getAsBlockPointerType()->

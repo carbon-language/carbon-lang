@@ -817,15 +817,15 @@ private:
     /// c/v/r qualifiers, which we accept as an extension.
     CompatiblePointerDiscardsQualifiers,
 
-    /// IntToBlockPointer - The assignment converts an int to a closure 
+    /// IntToBlockPointer - The assignment converts an int to a block 
     /// pointer. We disallow this.
     IntToBlockPointer,
 
-    /// IncompatibleBlockPointer - The assignment is between two closure 
+    /// IncompatibleBlockPointer - The assignment is between two block 
     /// pointers types that are not compatible.
     IncompatibleBlockPointer,
     
-    /// BlockVoidPointer - The assignment is between a closure pointer and
+    /// BlockVoidPointer - The assignment is between a block pointer and
     /// void*, we accept for now.
     BlockVoidPointer,
     

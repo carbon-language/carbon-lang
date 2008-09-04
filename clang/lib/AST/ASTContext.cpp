@@ -1768,7 +1768,7 @@ bool ASTContext::isObjCObjectPointerType(QualType Ty) const {
 //===----------------------------------------------------------------------===//
 
 /// typesAreBlockCompatible - This routine is called when comparing two
-/// closure types. Types must be strictly compatible here.
+/// block types. Types must be strictly compatible here.
 bool ASTContext::typesAreBlockCompatible(QualType lhs, QualType rhs) {
   if (lhs.getCVRQualifiers() != rhs.getCVRQualifiers())
     return false;
