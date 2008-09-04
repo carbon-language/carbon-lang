@@ -194,12 +194,18 @@ public:
                                    const AnnotateAttr *AA, unsigned LineNo);
     
   /// ErrorUnsupported - Print out an error that codegen doesn't support the
-  /// specified stmt yet.    
-  void ErrorUnsupported(const Stmt *S, const char *Type);
+  /// specified stmt yet.
+  /// \param OmitOnError - If true, then this error should only be
+  /// emitted if no other errors have been reported.
+  void ErrorUnsupported(const Stmt *S, const char *Type, 
+                        bool OmitOnError=false);
   
   /// ErrorUnsupported - Print out an error that codegen doesn't support the
   /// specified decl yet.
-  void ErrorUnsupported(const Decl *D, const char *Type);
+  /// \param OmitOnError - If true, then this error should only be
+  /// emitted if no other errors have been reported.
+  void ErrorUnsupported(const Decl *D, const char *Type,
+                        bool OmitOnError=false);
 
 private:
   void SetFunctionAttributes(const FunctionDecl *FD,

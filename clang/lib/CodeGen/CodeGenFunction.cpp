@@ -192,8 +192,9 @@ const CGRecordLayout *CodeGenFunction::getCGRecordLayout(CodeGenTypes &CGT,
 
 /// ErrorUnsupported - Print out an error that codegen doesn't support the
 /// specified stmt yet.
-void CodeGenFunction::ErrorUnsupported(const Stmt *S, const char *Type) {
-  CGM.ErrorUnsupported(S, Type);
+void CodeGenFunction::ErrorUnsupported(const Stmt *S, const char *Type,
+                                       bool OmitOnError) {
+  CGM.ErrorUnsupported(S, Type, OmitOnError);
 }
 
 unsigned CodeGenFunction::GetIDForAddrOfLabel(const LabelStmt *L) {

@@ -516,7 +516,7 @@ Value *ScalarExprEmitter::VisitImplicitCastExpr(const ImplicitCastExpr *E) {
     if (!(isa<llvm::PointerType>(V->getType()) &&
           isa<llvm::ArrayType>(cast<llvm::PointerType>(V->getType())
                                ->getElementType()))) {
-      CGF.ErrorUnsupported(E, "variable-length array cast");
+      CGF.ErrorUnsupported(E, "variable-length array cast", true);
       if (E->getType()->isVoidType())
         return 0;
       return llvm::UndefValue::get(CGF.ConvertType(E->getType()));
