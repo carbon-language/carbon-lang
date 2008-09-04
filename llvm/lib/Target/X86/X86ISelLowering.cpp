@@ -1379,14 +1379,6 @@ X86TargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG) {
     }
   }
   
-  // Make sure the instruction takes 8n+4 bytes to make sure the start of the
-  // arguments and the arguments after the retaddr has been pushed are
-  // aligned.
-  if (!Is64Bit && CC == CallingConv::X86_FastCall &&
-      !Subtarget->isTargetCygMing() && !Subtarget->isTargetWindows() &&
-      (StackSize & 7) == 0)
-    StackSize += 4;
-
   ArgValues.push_back(Root);
 
   // Some CCs need callee pop.
@@ -1493,13 +1485,6 @@ SDValue X86TargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
   unsigned NumBytes = CCInfo.getNextStackOffset();
   if (CC == CallingConv::Fast)
     NumBytes = GetAlignedArgumentStackSize(NumBytes, DAG);
-
-  // Make sure the instruction takes 8n+4 bytes to make sure the start of the
-  // arguments and the arguments after the retaddr has been pushed are aligned.
-  if (!Is64Bit && CC == CallingConv::X86_FastCall &&
-      !Subtarget->isTargetCygMing() && !Subtarget->isTargetWindows() &&
-      (NumBytes & 7) == 0)
-    NumBytes += 4;
 
   int FPDiff = 0;
   if (IsTailCall) {
