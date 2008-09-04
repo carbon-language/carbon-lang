@@ -46,6 +46,8 @@ sub ProcessClangFailure {
   print OUT "$ErrorType\n";
   print OUT "@$Args\n";
   close OUT;
+  `uname -a >> $PPFile.info 2>&1`;
+  `$CC -v >> $PPFile.info 2>&1`;
   system 'mv',$ofile,"$PPFile.output";
 }
 
