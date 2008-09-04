@@ -27,6 +27,7 @@
       <li><a href="#aliasstructure">Aliases</a>
       <li><a href="#paramattrs">Parameter Attributes</a></li>
       <li><a href="#gc">Garbage Collector Names</a></li>
+      <li><a href="#notes">Function Notes</a></li>
       <li><a href="#moduleasm">Module-Level Inline Assembly</a></li>
       <li><a href="#datalayout">Data Layout</a></li>
     </ol>
@@ -917,7 +918,8 @@ the named garbage collection algorithm.</p>
 </div>
 
 <div class="doc_text">
-<p>Each function may specify function notes.</p>
+<p>The function definition may list function notes which are used by
+various passes.</p>
 
 <div class="doc_code">
 <pre>define void @f() notes(inline=Always) { ... }</pre>
