@@ -71,6 +71,8 @@ bool X86FastISel::X86SelectConstAddr(Value *V,
     X86AddressMode AM;
     AM.GV = GV;
     addFullAddress(BuildMI(MBB, TII.get(Opc), Op0), AM);
+    // Prevent loading GV stub multiple times in same MBB.
+    LocalValueMap[V] = Op0;
   }
   return true;
 }

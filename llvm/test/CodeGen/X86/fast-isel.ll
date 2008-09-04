@@ -47,11 +47,3 @@ entry:
 	%tmp2 = bitcast i32 0 to i32
 	ret i32 %tmp2
 }
-
-@src = external global i32
-
-define i32 @loadgv() nounwind {
-entry:
-	%0 = load i32* @src, align 4
-	ret i32 %0
-}
