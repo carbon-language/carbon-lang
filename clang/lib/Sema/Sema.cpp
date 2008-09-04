@@ -114,14 +114,29 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer)
 
 /// ImpCastExprToType - If Expr is not of type 'Type', insert an implicit cast. 
 /// If there is already an implicit cast, merge into the existing one.
-void Sema::ImpCastExprToType(Expr *&Expr, QualType Type) {
-  if (Context.getCanonicalType(Expr->getType()) ==
-        Context.getCanonicalType(Type)) return;
+void Sema::ImpCastExprToType(Expr *&Expr, QualType Ty) {
+  QualType ExprTy = Context.getCanonicalType(Expr->getType());
+  QualType TypeTy = Context.getCanonicalType(Ty);
+  
+  if (ExprTy == TypeTy)
+    return;
+  
+  if (Expr->getType().getTypePtr()->isPointerType() &&
+      Ty.getTypePtr()->isPointerType()) {
+    QualType ExprBaseType = 
+      cast<PointerType>(ExprTy.getUnqualifiedType())->getPointeeType();
+    QualType BaseType =
+      cast<PointerType>(TypeTy.getUnqualifiedType())->getPointeeType();
+    if (ExprBaseType.getAddressSpace() != BaseType.getAddressSpace()) {
+      Diag(Expr->getExprLoc(), diag::err_implicit_pointer_address_space_cast,
+           Expr->getSourceRange());
+    }
+  }
   
   if (ImplicitCastExpr *ImpCast = dyn_cast<ImplicitCastExpr>(Expr))
-    ImpCast->setType(Type);
+    ImpCast->setType(Ty);
   else 
-    Expr = new ImplicitCastExpr(Type, Expr);
+    Expr = new ImplicitCastExpr(Ty, Expr);
 }
 
 void Sema::DeleteExpr(ExprTy *E) {
