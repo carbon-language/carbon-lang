@@ -418,6 +418,7 @@ unsigned LoopUnswitch::getLoopUnswitchCost(Value *LIC) {
 /// unswitch the loop, reprocess the pieces, then return true.
 bool LoopUnswitch::UnswitchIfProfitable(Value *LoopCond, Constant *Val){
 
+  initLoopData();
   Function *F = loopHeader->getParent();
 
   // Do not unswitch if the function is optimized for size.
@@ -440,8 +441,6 @@ bool LoopUnswitch::UnswitchIfProfitable(Value *LoopCond, Constant *Val){
          << currentLoop->getBlocks().size() << "\n";
     return false;
   }
-
-  initLoopData();
 
   Constant *CondVal;
   BasicBlock *ExitBlock;
