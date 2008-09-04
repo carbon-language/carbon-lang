@@ -61,7 +61,12 @@ grep 'RUN:' $FILENAME | \
       -e "s|%t|$TEMPOUTPUT|g" \
       -e "s|clang|$CLANG|g" > $SCRIPT  
 
-grep -q XFAIL $FILENAME && (printf "XFAILED '$TESTNAME': "; grep XFAIL $FILENAME)
+IS_XFAIL=0
+if (grep -q XFAIL $FILENAME); then
+    IS_XFAIL=1
+    printf "XFAILED '$TESTNAME': "
+    grep XFAIL $FILENAME
+fi
 
 /bin/sh $SCRIPT > $OUTPUT 2>&1
 SCRIPT_STATUS=$?
@@ -72,12 +77,22 @@ else
   VG_STATUS=0
 fi
 
+if [ $IS_XFAIL -ne 0 ]; then
+    if [ $SCRIPT_STATUS -ne 0 ]; then
+        SCRIPT_STATUS=0
+    else
+        SCRIPT_STATUS=1
+    fi
+fi
+
 if [ $SCRIPT_STATUS -ne 0 -o $VG_STATUS -ne 0 ]; then
   echo "******************** TEST '$TESTNAME' FAILED! ********************"
   echo "Command: "
   cat $SCRIPT
   if [ $SCRIPT_STATUS -eq 0 ]; then
     echo "Output:"
+  elif [ $IS_XFAIL -ne 0 ]; then
+    echo "Incorrect Output (Expected Failure):"
   else
     echo "Incorrect Output:"
   fi
