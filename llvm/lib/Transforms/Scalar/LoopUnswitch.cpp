@@ -417,6 +417,13 @@ unsigned LoopUnswitch::getLoopUnswitchCost(Value *LIC) {
 /// LoopCond == Val to simplify the loop.  If we decide that this is profitable,
 /// unswitch the loop, reprocess the pieces, then return true.
 bool LoopUnswitch::UnswitchIfProfitable(Value *LoopCond, Constant *Val){
+
+  Function *F = loopHeader->getParent();
+
+  // Do not unswitch if the function is optimized for size.
+  if (F->getNotes() & FN_NOTE_OptimizeForSize)
+    return false;
+
   // Check to see if it would be profitable to unswitch current loop.
   unsigned Cost = getLoopUnswitchCost(LoopCond);
 
@@ -445,7 +452,6 @@ bool LoopUnswitch::UnswitchIfProfitable(Value *LoopCond, Constant *Val){
   }
 
   // FIXME: Reconstruct dom info, because it is not preserved properly.
-  Function *F = loopHeader->getParent();
   if (DT)
     DT->runOnFunction(*F);
   if (DF)
