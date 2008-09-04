@@ -750,7 +750,8 @@ an optional <a href="#linkage">linkage type</a>, an optional
 <a href="#paramattrs">parameter attribute</a> for the return type, a function 
 name, a (possibly empty) argument list (each with optional 
 <a href="#paramattrs">parameter attributes</a>), an optional section, an
-optional alignment, an optional <a href="#gc">garbage collector name</a>, an
+optional alignment, an optional <a href="#gc">garbage collector name</a>, 
+an optional <a href="#notes">function notes</a>, an
 opening curly brace, a list of basic blocks, and a closing curly brace.
 
 LLVM function declarations consist of the "<tt>declare</tt>" keyword, an
@@ -908,6 +909,41 @@ string.</p>
 <p>The compiler declares the supported values of <i>name</i>. Specifying a
 collector which will cause the compiler to alter its output in order to support
 the named garbage collection algorithm.</p>
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="notes">Function Notes</a>
+</div>
+
+<div class="doc_text">
+<p>Each function may specify function notes.</p>
+
+<div class="doc_code">
+<pre>define void @f() notes(inline=Always) { ... }</pre>
+<pre>define void @f() notes(inline=Always,opt-size) { ... }</pre>
+<pre>define void @f() notes(inline=Never,opt-size) { ... }</pre>
+<pre>define void @f() notes(opt-size) { ... }</pre>
+</div>
+
+<p>
+<li>inline=Always
+<p>
+This note requests inliner to inline this function irrespective of
+inlining size threshold for this function.
+</p></li>
+<li>inline=Never
+<p>
+This note requests inliner to never inline this function in any situation. 
+This note may not be used together with inline=Always note.
+</p></li>
+<li>opt-size
+<p>
+This note suggests optimization passes and code generator passes to make 
+choices that help reduce code size.
+</p></li>
+<p>
+The notes that are not documented here are considered invalid notes.
 </div>
 
 <!-- ======================================================================= -->
