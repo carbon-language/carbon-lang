@@ -46,20 +46,20 @@ if [ ! -n "$CLANG" ]; then
     CLANG="clang"
 fi
 if [ -n "$VG" ]; then
-  rm -f $OUTPUT.vg.*
-  CLANG="valgrind --leak-check=full --quiet --log-file=$OUTPUT.vg.%p $CLANG"
+  rm -f $OUTPUT.vg
+  CLANG="valgrind --leak-check=full --quiet --log-file=$OUTPUT.vg $CLANG"
 fi
 
 SCRIPT=$OUTPUT.script
 TEMPOUTPUT=$OUTPUT.tmp
 grep 'RUN:' $FILENAME | \
   sed -e "s|^.*RUN:\(.*\)$|\1|g" \
+      -e "s|clang|$CLANG|g" \
       -e "s|%s|$SUBST|g" \
       -e "s|%llvmgcc|llvm-gcc -emit-llvm|g" \
       -e "s|%llvmgxx|llvm-g++ -emit-llvm|g" \
       -e "s|%prcontext|prcontext.tcl|g" \
-      -e "s|%t|$TEMPOUTPUT|g" \
-      -e "s|clang|$CLANG|g" > $SCRIPT  
+      -e "s|%t|$TEMPOUTPUT|g" > $SCRIPT
 
 IS_XFAIL=0
 if (grep -q XFAIL $FILENAME); then
@@ -72,7 +72,8 @@ fi
 SCRIPT_STATUS=$?
 
 if [ -n "$VG" ]; then
-  VG_STATUS=`cat $OUTPUT.vg.* | wc -l`
+  [ ! -s $OUTPUT.vg ]
+  VG_STATUS=$?
 else
   VG_STATUS=0
 fi
@@ -99,7 +100,7 @@ if [ $SCRIPT_STATUS -ne 0 -o $VG_STATUS -ne 0 ]; then
   cat $OUTPUT
   if [ $VG_STATUS -ne 0 ]; then
     echo "Valgrind Output:"
-    cat $OUTPUT.vg.*
+    cat $OUTPUT.vg
   fi
   echo "******************** TEST '$TESTNAME' FAILED! ********************"
   exit 1
