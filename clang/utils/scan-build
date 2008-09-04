@@ -196,14 +196,15 @@ sub GetHTMLRunDir {
   die "RunNumber must be defined!" if (!defined $RunNumber);
   
   # Append the run number.
+  my $NewDir;
   if ($TmpMode) {
-    my $NewDir = "$Dir/$Prog-$DateString-$RunNumber";
-    mkdir $NewDir;
-    return $NewDir;
+    $NewDir = "$Dir/$Prog-$DateString-$RunNumber";
   }
   else {
-    return "$Dir/$DateString-$RunNumber";
+    $NewDir = "$Dir/$DateString-$RunNumber";
   }
+  system 'mkdir','-p',$NewDir;
+  return $NewDir;
 }
 
 sub SetHtmlEnv {
@@ -401,8 +402,6 @@ sub Postprocess {
   if (scalar(@files) == 0 and $Crashes == 0) {
     Diag("Removing directory '$Dir' because it contains no reports.\n");
     system ("rm", "-fR", $Dir);
-    # Remove the base directory if it contains no files (don't use '-R').
-    system ("rm", "-f", $BaseDir) if (defined $BaseDir);
     return 0;
   }
   
