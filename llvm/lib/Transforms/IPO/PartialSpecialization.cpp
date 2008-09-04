@@ -26,7 +26,9 @@
 #include "llvm/Pass.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Transforms/Utils/Cloning.h"
+#include "llvm/Support/CallSite.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/ADT/DenseSet.h"
 #include <map>
 using namespace llvm;
 
@@ -41,7 +43,6 @@ static const double ConstValPercent = .1;
 namespace {
   class VISIBILITY_HIDDEN PartSpec : public ModulePass {
     void scanForInterest(Function&, SmallVector<int, 6>&);
-    void replaceUsersFor(Function&, int, Constant*, Function*);
     int scanDistribution(Function&, int, std::map<Constant*, int>&);
   public :
     static char ID; // Pass identification, replacement for typeid
@@ -53,6 +54,55 @@ namespace {
 char PartSpec::ID = 0;
 static RegisterPass<PartSpec>
 X("partialspecialization", "Partial Specialization");
+
+// Specialize F by replacing the arguments (keys) in replacements with the 
+// constants (values).  Replace all calls to F with those constants with
+// a call to the specialized function.  Returns the specialized function
+static Function* 
+SpecializeFunction(Function* F, 
+                   DenseMap<const Value*, Value*>& replacements) {
+  // arg numbers of deleted arguments
+  DenseSet<unsigned> deleted;
+  for (DenseMap<const Value*, Value*>::iterator 
+         repb = replacements.begin(), repe = replacements.end();
+       repb != repe; ++ repb)
+    deleted.insert(cast<Argument>(repb->first)->getArgNo());
+
+  Function* NF = CloneFunction(F, replacements);
+  NF->setLinkage(GlobalValue::InternalLinkage);
+  F->getParent()->getFunctionList().push_back(NF);
+
+  for (Value::use_iterator ii = F->use_begin(), ee = F->use_end(); 
+       ii != ee; ) {
+    Value::use_iterator i = ii;;
+    ++ii;
+    if (isa<CallInst>(i) || isa<InvokeInst>(i)) {
+      CallSite CS(cast<Instruction>(i));
+      if (CS.getCalledFunction() == F) {
+        
+        SmallVector<Value*, 6> args;
+        for (unsigned x = 0; x < CS.arg_size(); ++x)
+          if (!deleted.count(x))
+            args.push_back(CS.getArgument(x));
+        Value* NCall;
+        if (isa<CallInst>(i))
+          NCall = CallInst::Create(NF, args.begin(), args.end(), 
+                                   CS.getInstruction()->getName(), 
+                                   CS.getInstruction());
+        else
+          NCall = InvokeInst::Create(NF, cast<InvokeInst>(i)->getNormalDest(),
+                                     cast<InvokeInst>(i)->getUnwindDest(),
+                                     args.begin(), args.end(), 
+                                     CS.getInstruction()->getName(), 
+                                     CS.getInstruction());
+        CS.getInstruction()->replaceAllUsesWith(NCall);
+        CS.getInstruction()->eraseFromParent();
+      }
+    }
+  }
+  return NF;
+}
+
 
 bool PartSpec::runOnModule(Module &M) {
   bool Changed = false;
@@ -74,10 +124,13 @@ bool PartSpec::runOnModule(Module &M) {
                ee = distribution.end(); ii != ee; ++ii)
           if (total > ii->second && ii->first &&
                ii->second > total * ConstValPercent) {
-            Function* NF = CloneFunction(&F);
-            NF->setLinkage(GlobalValue::InternalLinkage);
-            M.getFunctionList().push_back(NF);
-            replaceUsersFor(F, interestingArgs[x], ii->first, NF);
+            DenseMap<const Value*, Value*> m;
+            Function::arg_iterator arg = F.arg_begin();
+            for (int y = 0; y < interestingArgs[x]; ++y)
+              ++arg;
+            m[&*arg] = ii->first;
+            SpecializeFunction(&F, m);
+            ++numSpecialized;
             breakOuter = true;
             Changed = true;
           }
@@ -93,26 +146,23 @@ void PartSpec::scanForInterest(Function& F, SmallVector<int, 6>& args) {
       ii != ee; ++ii) {
     for(Value::use_iterator ui = ii->use_begin(), ue = ii->use_end();
         ui != ue; ++ui) {
-      // As an initial proxy for control flow, specialize on arguments
-      // that are used in comparisons.
-      if (isa<CmpInst>(ui)) {
+
+      bool interesting = false;
+
+      if (isa<CmpInst>(ui)) interesting = true;
+      else if (isa<CallInst>(ui))
+        interesting = ui->getOperand(0) == ii;
+      else if (isa<InvokeInst>(ui))
+        interesting = ui->getOperand(0) == ii;
+      else if (isa<SwitchInst>(ui)) interesting = true;
+      else if (isa<BranchInst>(ui)) interesting = true;
+
+      if (interesting) {
         args.push_back(std::distance(F.arg_begin(), ii));
         break;
       }
     }
   }
-}
-
-/// replaceUsersFor - Replace direct calls to F with NF if the arg argnum is
-/// the constant val
-void PartSpec::replaceUsersFor(Function& F , int argnum, Constant* val, 
-                               Function* NF) {
-  ++numSpecialized;
-  for(Value::use_iterator ii = F.use_begin(), ee = F.use_end();
-      ii != ee; ++ii)
-    if (CallInst* CI = dyn_cast<CallInst>(ii))
-      if (CI->getOperand(0) == &F && CI->getOperand(argnum + 1) == val)
-        CI->setOperand(0, NF);
 }
 
 int PartSpec::scanDistribution(Function& F, int arg, 
