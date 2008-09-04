@@ -99,3 +99,12 @@ int f13(void)
   return (a + b + c);
 }
 
+// Filed with PR 2763.
+int f41(int count) {
+  int index, nextLineIndex;
+  for (index = 0; index < count; index = nextLineIndex+1) {
+    nextLineIndex = index+1;  // no-warning
+    continue;
+  }
+  return index;
+}
