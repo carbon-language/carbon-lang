@@ -45,6 +45,8 @@ private:
   bool X86SelectConstAddr(Value *V, unsigned &Op0);
 
   bool X86SelectLoad(Instruction *I);
+  
+  bool X86SelectStore(Instruction *I);
 };
 
 /// X86SelectConstAddr - Select and emit code to materialize constant address.
@@ -74,6 +76,91 @@ bool X86FastISel::X86SelectConstAddr(Value *V,
     // Prevent loading GV stub multiple times in same MBB.
     LocalValueMap[V] = Op0;
   }
+  return true;
+}
+
+/// X86SelectStore - Select and emit code to implement store instructions.
+bool X86FastISel::X86SelectStore(Instruction* I) {
+  MVT VT = MVT::getMVT(I->getOperand(0)->getType());
+  if (VT == MVT::Other || !VT.isSimple())
+    // Unhandled type.  Halt "fast" selection and bail.
+    return false;
+  if (VT == MVT::iPTR)
+    // Use pointer type.
+    VT = TLI.getPointerTy();
+  // We only handle legal types. For example, on x86-32 the instruction
+  // selector contains all of the 64-bit instructions from x86-64,
+  // under the assumption that i64 won't be used if the target doesn't
+  // support it.
+  if (!TLI.isTypeLegal(VT))
+    return false;
+  unsigned Op0 = getRegForValue(I->getOperand(0));
+  if (Op0 == 0)
+    // Unhandled operand. Halt "fast" selection and bail.
+    return false;    
+
+  Value *V = I->getOperand(1);
+  unsigned Op1 = getRegForValue(V);
+  if (Op1 == 0) {
+    // Handle constant load address.
+    if (!isa<Constant>(V) || !X86SelectConstAddr(V, Op1))
+      // Unhandled operand. Halt "fast" selection and bail.
+      return false;    
+  }
+  
+  // Get opcode and regclass of the output for the given load instruction.
+  unsigned Opc = 0;
+  const TargetRegisterClass *RC = NULL;
+  switch (VT.getSimpleVT()) {
+  default: return false;
+  case MVT::i8:
+    Opc = X86::MOV8mr;
+    RC  = X86::GR8RegisterClass;
+    break;
+  case MVT::i16:
+    Opc = X86::MOV16mr;
+    RC  = X86::GR16RegisterClass;
+    break;
+  case MVT::i32:
+    Opc = X86::MOV32mr;
+    RC  = X86::GR32RegisterClass;
+    break;
+  case MVT::i64:
+    // Must be in x86-64 mode.
+    Opc = X86::MOV64mr;
+    RC  = X86::GR64RegisterClass;
+    break;
+  case MVT::f32:
+    if (Subtarget->hasSSE1()) {
+      Opc = X86::MOVSSmr;
+      RC  = X86::FR32RegisterClass;
+    } else {
+      Opc = X86::ST_Fp32m;
+      RC  = X86::RFP32RegisterClass;
+    }
+    break;
+  case MVT::f64:
+    if (Subtarget->hasSSE2()) {
+      Opc = X86::MOVSDmr;
+      RC  = X86::FR64RegisterClass;
+    } else {
+      Opc = X86::ST_Fp64m;
+      RC  = X86::RFP64RegisterClass;
+    }
+    break;
+  case MVT::f80:
+    Opc = X86::ST_FP80m;
+    RC  = X86::RFP80RegisterClass;
+    break;
+  }
+
+  X86AddressMode AM;
+  if (Op1)
+    // Address is in register.
+    AM.Base.Reg = Op0;
+  else
+    AM.GV = cast<GlobalValue>(V);
+  addFullAddress(BuildMI(MBB, TII.get(Opc)), AM);
   return true;
 }
 
