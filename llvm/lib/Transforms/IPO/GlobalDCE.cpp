@@ -31,7 +31,7 @@ STATISTIC(NumVariables, "Number of global variables removed");
 namespace {
   struct VISIBILITY_HIDDEN GlobalDCE : public ModulePass {
     static char ID; // Pass identification, replacement for typeid
-    GlobalDCE() : ModulePass((intptr_t)&ID) {}
+    GlobalDCE() : ModulePass(&ID) {}
  
     // run - Do the GlobalDCE pass on the specified module, optionally updating
     // the specified callgraph to reflect the changes.

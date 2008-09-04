@@ -43,7 +43,7 @@ namespace {
     IA64TargetMachine &TM;
 
     IA64BundlingPass(IA64TargetMachine &tm) 
-      : MachineFunctionPass((intptr_t)&ID), TM(tm) { }
+      : MachineFunctionPass(&ID), TM(tm) { }
 
     virtual const char *getPassName() const {
       return "IA64 (Itanium) Bundling Pass";

@@ -48,7 +48,7 @@ namespace {
   public:
     static char ID;
     PPCCodeEmitter(TargetMachine &T, MachineCodeEmitter &M)
-      : MachineFunctionPass((intptr_t)&ID), TM(T), MCE(M) {}
+      : MachineFunctionPass(&ID), TM(T), MCE(M) {}
 
     const char *getPassName() const { return "PowerPC Machine Code Emitter"; }
 

@@ -74,7 +74,7 @@ EnableLICMConstantMotion("enable-licm-constant-variables", cl::Hidden,
 namespace {
   struct VISIBILITY_HIDDEN LICM : public LoopPass {
     static char ID; // Pass identification, replacement for typeid
-    LICM() : LoopPass((intptr_t)&ID) {}
+    LICM() : LoopPass(&ID) {}
 
     virtual bool runOnLoop(Loop *L, LPPassManager &LPM);
 

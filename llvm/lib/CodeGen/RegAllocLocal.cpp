@@ -44,8 +44,7 @@ namespace {
   class VISIBILITY_HIDDEN RALocal : public MachineFunctionPass {
   public:
     static char ID;
-    RALocal() : MachineFunctionPass((intptr_t)&ID),
-      StackSlotForVirtReg(-1) {}
+    RALocal() : MachineFunctionPass(&ID), StackSlotForVirtReg(-1) {}
   private:
     const TargetMachine *TM;
     MachineFunction *MF;

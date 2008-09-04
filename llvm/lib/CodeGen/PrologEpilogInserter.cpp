@@ -35,7 +35,7 @@ using namespace llvm;
 namespace {
   struct VISIBILITY_HIDDEN PEI : public MachineFunctionPass {
     static char ID;
-    PEI() : MachineFunctionPass((intptr_t)&ID) {}
+    PEI() : MachineFunctionPass(&ID) {}
 
     const char *getPassName() const {
       return "Prolog/Epilog Insertion & Frame Finalization";

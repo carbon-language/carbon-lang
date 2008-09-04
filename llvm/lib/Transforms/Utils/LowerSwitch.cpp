@@ -33,7 +33,7 @@ namespace {
   class VISIBILITY_HIDDEN LowerSwitch : public FunctionPass {
   public:
     static char ID; // Pass identification, replacement for typeid
-    LowerSwitch() : FunctionPass((intptr_t) &ID) {} 
+    LowerSwitch() : FunctionPass(&ID) {} 
 
     virtual bool runOnFunction(Function &F);
     

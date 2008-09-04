@@ -35,7 +35,7 @@ STATISTIC(NumInstKilled, "Number of instructions killed");
 namespace {
   struct VISIBILITY_HIDDEN ConstantPropagation : public FunctionPass {
     static char ID; // Pass identification, replacement for typeid
-    ConstantPropagation() : FunctionPass((intptr_t)&ID) {}
+    ConstantPropagation() : FunctionPass(&ID) {}
 
     bool runOnFunction(Function &F);
 

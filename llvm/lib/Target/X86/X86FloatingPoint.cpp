@@ -53,7 +53,7 @@ STATISTIC(NumFP  , "Number of floating point instructions");
 namespace {
   struct VISIBILITY_HIDDEN FPS : public MachineFunctionPass {
     static char ID;
-    FPS() : MachineFunctionPass((intptr_t)&ID) {}
+    FPS() : MachineFunctionPass(&ID) {}
 
     virtual bool runOnMachineFunction(MachineFunction &MF);
 

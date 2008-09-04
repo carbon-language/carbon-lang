@@ -35,7 +35,7 @@ STATISTIC(NumBroken, "Number of blocks inserted");
 namespace {
   struct VISIBILITY_HIDDEN BreakCriticalEdges : public FunctionPass {
     static char ID; // Pass identification, replacement for typeid
-    BreakCriticalEdges() : FunctionPass((intptr_t)&ID) {}
+    BreakCriticalEdges() : FunctionPass(&ID) {}
 
     virtual bool runOnFunction(Function &F);
 

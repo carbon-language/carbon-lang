@@ -431,7 +431,7 @@ namespace {
 
   public:
     static char ID;
-    Andersens() : ModulePass((intptr_t)&ID) {}
+    Andersens() : ModulePass(&ID) {}
 
     bool runOnModule(Module &M) {
       InitializeAliasAnalysis(this);

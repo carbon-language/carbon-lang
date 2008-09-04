@@ -48,7 +48,7 @@ namespace {
 
   public:
     static char ID; // Pass ID, replacement for typeid
-    LoopRotate() : LoopPass((intptr_t)&ID) {}
+    LoopRotate() : LoopPass(&ID) {}
 
     // Rotate Loop L as many times as possible. Return true if
     // loop is rotated at least once.

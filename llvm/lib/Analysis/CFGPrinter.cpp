@@ -92,7 +92,7 @@ struct DOTGraphTraits<const Function*> : public DefaultDOTGraphTraits {
 namespace {
   struct VISIBILITY_HIDDEN CFGViewer : public FunctionPass {
     static char ID; // Pass identifcation, replacement for typeid
-    CFGViewer() : FunctionPass((intptr_t)&ID) {}
+    CFGViewer() : FunctionPass(&ID) {}
 
     virtual bool runOnFunction(Function &F) {
       F.viewCFG();
@@ -114,7 +114,7 @@ V0("view-cfg", "View CFG of function", false, true);
 namespace {
   struct VISIBILITY_HIDDEN CFGOnlyViewer : public FunctionPass {
     static char ID; // Pass identifcation, replacement for typeid
-    CFGOnlyViewer() : FunctionPass((intptr_t)&ID) {}
+    CFGOnlyViewer() : FunctionPass(&ID) {}
 
     virtual bool runOnFunction(Function &F) {
       CFGOnly = true;
@@ -139,8 +139,8 @@ V1("view-cfg-only",
 namespace {
   struct VISIBILITY_HIDDEN CFGPrinter : public FunctionPass {
     static char ID; // Pass identification, replacement for typeid
-    CFGPrinter() : FunctionPass((intptr_t)&ID) {}
-    explicit CFGPrinter(intptr_t pid) : FunctionPass(pid) {}
+    CFGPrinter() : FunctionPass(&ID) {}
+    explicit CFGPrinter(void *pid) : FunctionPass(pid) {}
 
     virtual bool runOnFunction(Function &F) {
       std::string Filename = "cfg." + F.getName() + ".dot";
@@ -170,7 +170,7 @@ P1("print-cfg", "Print CFG of function to 'dot' file", false, true);
 namespace {
   struct VISIBILITY_HIDDEN CFGOnlyPrinter : public CFGPrinter {
     static char ID; // Pass identification, replacement for typeid
-    CFGOnlyPrinter() : CFGPrinter((intptr_t)&ID) {}
+    CFGOnlyPrinter() : CFGPrinter(&ID) {}
     virtual bool runOnFunction(Function &F) {
       bool OldCFGOnly = CFGOnly;
       CFGOnly = true;

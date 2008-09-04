@@ -49,7 +49,7 @@ namespace {
 
     virtual bool runOnSCC(const std::vector<CallGraphNode *> &SCC);
     static char ID; // Pass identification, replacement for typeid
-    SRETPromotion() : CallGraphSCCPass((intptr_t)&ID) {}
+    SRETPromotion() : CallGraphSCCPass(&ID) {}
 
   private:
     bool PromoteReturn(CallGraphNode *CGN);

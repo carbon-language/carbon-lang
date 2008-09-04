@@ -34,7 +34,7 @@ namespace {
     bool runOnModule(Module &M);
   public:
     static char ID; // Pass identification, replacement for typeid
-    EdgeProfiler() : ModulePass((intptr_t)&ID) {}
+    EdgeProfiler() : ModulePass(&ID) {}
   };
 }
 

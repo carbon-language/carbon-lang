@@ -41,7 +41,7 @@ namespace {
     
   public:
     static char ID; // Class identification, replacement for typeinfo
-    AliasDebugger() : ModulePass((intptr_t)&ID) {}
+    AliasDebugger() : ModulePass(&ID) {}
 
     bool runOnModule(Module &M) {
       InitializeAliasAnalysis(this);                 // set up super class

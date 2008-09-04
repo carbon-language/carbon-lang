@@ -103,7 +103,7 @@ namespace {
   public:
     static char ID;
     explicit CppWriter(raw_ostream &o) :
-      ModulePass((intptr_t)&ID), Out(o), uniqueNum(0), is_inline(false) {}
+      ModulePass(&ID), Out(o), uniqueNum(0), is_inline(false) {}
 
     virtual const char *getPassName() const { return "C++ backend"; }
 

@@ -30,7 +30,7 @@ namespace {
 class VISIBILITY_HIDDEN StripDeadPrototypesPass : public ModulePass {
 public:
   static char ID; // Pass identification, replacement for typeid
-  StripDeadPrototypesPass() : ModulePass((intptr_t)&ID) { }
+  StripDeadPrototypesPass() : ModulePass(&ID) { }
   virtual bool runOnModule(Module &M);
 };
 

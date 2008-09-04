@@ -27,6 +27,7 @@ namespace llvm {
 struct MachineFunctionPass : public FunctionPass {
 
   explicit MachineFunctionPass(intptr_t ID) : FunctionPass(ID) {}
+  explicit MachineFunctionPass(void *ID) : FunctionPass(ID) {}
 
 protected:
   /// runOnMachineFunction - This method must be overloaded to perform the

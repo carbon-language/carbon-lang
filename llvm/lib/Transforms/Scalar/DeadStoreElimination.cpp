@@ -39,7 +39,7 @@ STATISTIC(NumFastOther , "Number of other instrs removed");
 namespace {
   struct VISIBILITY_HIDDEN DSE : public FunctionPass {
     static char ID; // Pass identification, replacement for typeid
-    DSE() : FunctionPass((intptr_t)&ID) {}
+    DSE() : FunctionPass(&ID) {}
 
     virtual bool runOnFunction(Function &F) {
       bool Changed = false;

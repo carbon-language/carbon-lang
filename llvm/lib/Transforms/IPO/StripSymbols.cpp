@@ -38,7 +38,7 @@ namespace {
   public:
     static char ID; // Pass identification, replacement for typeid
     explicit StripSymbols(bool ODI = false) 
-      : ModulePass((intptr_t)&ID), OnlyDebugInfo(ODI) {}
+      : ModulePass(&ID), OnlyDebugInfo(ODI) {}
 
     virtual bool runOnModule(Module &M);
 

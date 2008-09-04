@@ -70,7 +70,7 @@ namespace {
   public:
 
    static char ID; // Pass identification, replacement for typeid
-   IndVarSimplify() : LoopPass((intptr_t)&ID) {}
+   IndVarSimplify() : LoopPass(&ID) {}
 
    bool runOnLoop(Loop *L, LPPassManager &LPM);
    bool doInitialization(Loop *L, LPPassManager &LPM);

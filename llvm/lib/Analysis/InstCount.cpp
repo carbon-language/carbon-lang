@@ -52,7 +52,7 @@ namespace {
     }
   public:
     static char ID; // Pass identification, replacement for typeid
-    InstCount() : FunctionPass((intptr_t)&ID) {}
+    InstCount() : FunctionPass(&ID) {}
 
     virtual bool runOnFunction(Function &F);
 

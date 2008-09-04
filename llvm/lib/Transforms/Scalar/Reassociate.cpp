@@ -72,7 +72,7 @@ namespace {
     bool MadeChange;
   public:
     static char ID; // Pass identification, replacement for typeid
-    Reassociate() : FunctionPass((intptr_t)&ID) {}
+    Reassociate() : FunctionPass(&ID) {}
 
     bool runOnFunction(Function &F);
 

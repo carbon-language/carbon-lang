@@ -38,7 +38,7 @@ using namespace llvm;
 namespace {
   struct VISIBILITY_HIDDEN StrongPHIElimination : public MachineFunctionPass {
     static char ID; // Pass identification, replacement for typeid
-    StrongPHIElimination() : MachineFunctionPass((intptr_t)&ID) {}
+    StrongPHIElimination() : MachineFunctionPass(&ID) {}
 
     // Waiting stores, for each MBB, the set of copies that need to
     // be inserted into that MBB

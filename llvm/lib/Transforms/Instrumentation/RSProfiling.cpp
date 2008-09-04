@@ -144,7 +144,7 @@ namespace {
   /// ProfilerRS - Insert the random sampling framework
   struct VISIBILITY_HIDDEN ProfilerRS : public FunctionPass {
     static char ID; // Pass identification, replacement for typeid
-    ProfilerRS() : FunctionPass((intptr_t)&ID) {}
+    ProfilerRS() : FunctionPass(&ID) {}
 
     std::map<Value*, Value*> TransCache;
     std::set<BasicBlock*> ChoicePoints;

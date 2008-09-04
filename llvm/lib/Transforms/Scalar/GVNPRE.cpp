@@ -672,7 +672,7 @@ namespace {
     bool runOnFunction(Function &F);
   public:
     static char ID; // Pass identification, replacement for typeid
-    GVNPRE() : FunctionPass((intptr_t)&ID) { }
+    GVNPRE() : FunctionPass(&ID) {}
 
   private:
     ValueTable VN;

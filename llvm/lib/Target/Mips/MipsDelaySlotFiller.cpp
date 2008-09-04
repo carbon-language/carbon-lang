@@ -32,7 +32,7 @@ namespace {
 
     static char ID;
     Filler(TargetMachine &tm) 
-      : MachineFunctionPass((intptr_t)&ID), TM(tm), TII(tm.getInstrInfo()) { }
+      : MachineFunctionPass(&ID), TM(tm), TII(tm.getInstrInfo()) { }
 
     virtual const char *getPassName() const {
       return "Mips Delay Slot Filler";

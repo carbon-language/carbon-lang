@@ -94,7 +94,7 @@ namespace llvm {
 
   public:
     static char ID; // Pass identification, replacement for typeid
-    LiveIntervals() : MachineFunctionPass((intptr_t)&ID) {}
+    LiveIntervals() : MachineFunctionPass(&ID) {}
 
     struct InstrSlots {
       enum {

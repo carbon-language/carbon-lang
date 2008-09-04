@@ -191,7 +191,7 @@ namespace llvm {
     void *Impl;    // ScalarEvolution uses the pimpl pattern
   public:
     static char ID; // Pass identification, replacement for typeid
-    ScalarEvolution() : FunctionPass((intptr_t)&ID), Impl(0) {}
+    ScalarEvolution() : FunctionPass(&ID), Impl(0) {}
 
     /// getSCEV - Return a SCEV expression handle for the full generality of the
     /// specified expression.

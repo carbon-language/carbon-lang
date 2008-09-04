@@ -50,7 +50,7 @@ class VISIBILITY_HIDDEN BasicCallGraph : public CallGraph, public ModulePass {
 
 public:
   static char ID; // Class identification, replacement for typeinfo
-  BasicCallGraph() : ModulePass((intptr_t)&ID), Root(0), 
+  BasicCallGraph() : ModulePass(&ID), Root(0), 
     ExternalCallingNode(0), CallsExternalNode(0) {}
 
   // runOnModule - Compute the call graph for the specified module.

@@ -720,7 +720,7 @@ public:
   static char ID; // Pass ID, replacement for typeid
   DominatorTreeBase<BasicBlock>* DT;
   
-  DominatorTree() : FunctionPass(intptr_t(&ID)) {
+  DominatorTree() : FunctionPass(&ID) {
     DT = new DominatorTreeBase<BasicBlock>(false);
   }
   
@@ -911,7 +911,7 @@ protected:
   const bool IsPostDominators;
   
 public:
-  DominanceFrontierBase(intptr_t ID, bool isPostDom) 
+  DominanceFrontierBase(void *ID, bool isPostDom) 
     : FunctionPass(ID), IsPostDominators(isPostDom) {}
 
   /// getRoots -  Return the root blocks of the current CFG.  This may include
@@ -1030,7 +1030,7 @@ class DominanceFrontier : public DominanceFrontierBase {
 public:
   static char ID; // Pass ID, replacement for typeid
   DominanceFrontier() : 
-    DominanceFrontierBase(intptr_t(&ID), false) {}
+    DominanceFrontierBase(&ID, false) {}
 
   BasicBlock *getRoot() const {
     assert(Roots.size() == 1 && "Should always have entry node!");

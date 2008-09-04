@@ -1497,7 +1497,7 @@ namespace {
   ///
   struct VISIBILITY_HIDDEN SCCP : public FunctionPass {
     static char ID; // Pass identification, replacement for typeid
-    SCCP() : FunctionPass((intptr_t)&ID) {}
+    SCCP() : FunctionPass(&ID) {}
 
     // runOnFunction - Run the Sparse Conditional Constant Propagation
     // algorithm, and return true if the function was modified.
@@ -1611,7 +1611,7 @@ namespace {
   ///
   struct VISIBILITY_HIDDEN IPSCCP : public ModulePass {
     static char ID;
-    IPSCCP() : ModulePass((intptr_t)&ID) {}
+    IPSCCP() : ModulePass(&ID) {}
     bool runOnModule(Module &M);
   };
 } // end anonymous namespace

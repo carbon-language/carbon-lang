@@ -39,7 +39,7 @@ namespace {
 
     static char ID;
     AlphaLLRPPass(AlphaTargetMachine &tm) 
-      : MachineFunctionPass((intptr_t)&ID), TM(tm) { }
+      : MachineFunctionPass(&ID), TM(tm) { }
 
     virtual const char *getPassName() const {
       return "Alpha NOP inserter";

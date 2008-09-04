@@ -37,7 +37,7 @@ using namespace llvm;
 char AsmPrinter::ID = 0;
 AsmPrinter::AsmPrinter(raw_ostream &o, TargetMachine &tm,
                        const TargetAsmInfo *T)
-  : MachineFunctionPass((intptr_t)&ID), FunctionNumber(0), O(o),
+  : MachineFunctionPass(&ID), FunctionNumber(0), O(o),
     TM(tm), TAI(T), TRI(tm.getRegisterInfo()),
     IsInTextSection(false)
 {}

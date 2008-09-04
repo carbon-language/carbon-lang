@@ -70,7 +70,7 @@ namespace {  // Anonymous namespace for class
   struct VISIBILITY_HIDDEN PreVerifier : public FunctionPass {
     static char ID; // Pass ID, replacement for typeid
 
-    PreVerifier() : FunctionPass((intptr_t)&ID) { }
+    PreVerifier() : FunctionPass(&ID) { }
 
     // Check that the prerequisites for successful DominatorTree construction
     // are satisfied.
@@ -118,20 +118,20 @@ namespace {
     SmallPtrSet<Instruction*, 16> InstsInThisBlock;
 
     Verifier()
-      : FunctionPass((intptr_t)&ID), 
+      : FunctionPass(&ID), 
       Broken(false), RealPass(true), action(AbortProcessAction),
       DT(0), msgs( std::ios::app | std::ios::out ) {}
     explicit Verifier(VerifierFailureAction ctn)
-      : FunctionPass((intptr_t)&ID), 
+      : FunctionPass(&ID), 
       Broken(false), RealPass(true), action(ctn), DT(0),
       msgs( std::ios::app | std::ios::out ) {}
     explicit Verifier(bool AB)
-      : FunctionPass((intptr_t)&ID), 
+      : FunctionPass(&ID), 
       Broken(false), RealPass(true),
       action( AB ? AbortProcessAction : PrintMessageAction), DT(0),
       msgs( std::ios::app | std::ios::out ) {}
     explicit Verifier(DominatorTree &dt)
-      : FunctionPass((intptr_t)&ID), 
+      : FunctionPass(&ID), 
       Broken(false), RealPass(false), action(PrintMessageAction),
       DT(&dt), msgs( std::ios::app | std::ios::out ) {}
 

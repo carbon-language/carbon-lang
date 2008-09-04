@@ -49,7 +49,7 @@ STATISTIC(NumLCSSA, "Number of live out of a loop variables");
 namespace {
   struct VISIBILITY_HIDDEN LCSSA : public LoopPass {
     static char ID; // Pass identification, replacement for typeid
-    LCSSA() : LoopPass((intptr_t)&ID) {}
+    LCSSA() : LoopPass(&ID) {}
 
     // Cached analysis information for the current function.
     LoopInfo *LI;

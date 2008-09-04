@@ -1612,7 +1612,7 @@ DebugScope::~DebugScope() {
 //===----------------------------------------------------------------------===//
 
 MachineModuleInfo::MachineModuleInfo()
-: ImmutablePass((intptr_t)&ID)
+: ImmutablePass(&ID)
 , DR()
 , VR()
 , CompileUnits()
@@ -2011,7 +2011,7 @@ namespace llvm {
 
 struct DebugLabelFolder : public MachineFunctionPass {
   static char ID;
-  DebugLabelFolder() : MachineFunctionPass((intptr_t)&ID) {}
+  DebugLabelFolder() : MachineFunctionPass(&ID) {}
 
   virtual bool runOnMachineFunction(MachineFunction &MF);
   virtual const char *getPassName() const { return "Label Folder"; }

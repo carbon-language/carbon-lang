@@ -57,7 +57,7 @@ namespace {
       AU.addRequired<TargetData>();
     }
     static char ID; // Pass identification, replacement for typeid
-    GlobalOpt() : ModulePass((intptr_t)&ID) {}
+    GlobalOpt() : ModulePass(&ID) {}
 
     bool runOnModule(Module &M);
 

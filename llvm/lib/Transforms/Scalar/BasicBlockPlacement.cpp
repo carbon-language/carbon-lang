@@ -42,7 +42,7 @@ STATISTIC(NumMoved, "Number of basic blocks moved");
 namespace {
   struct VISIBILITY_HIDDEN BlockPlacement : public FunctionPass {
     static char ID; // Pass identification, replacement for typeid
-    BlockPlacement() : FunctionPass((intptr_t)&ID) {}
+    BlockPlacement() : FunctionPass(&ID) {}
 
     virtual bool runOnFunction(Function &F);
 

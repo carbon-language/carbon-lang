@@ -29,7 +29,7 @@ namespace {
   class VISIBILITY_HIDDEN SchedulePostRATDList : public MachineFunctionPass {
   public:
     static char ID;
-    SchedulePostRATDList() : MachineFunctionPass((intptr_t)&ID) {}
+    SchedulePostRATDList() : MachineFunctionPass(&ID) {}
   private:
     MachineFunction *MF;
     const TargetMachine *TM;

@@ -33,7 +33,7 @@ namespace {
   class VISIBILITY_HIDDEN IndMemRemPass : public ModulePass {
   public:
     static char ID; // Pass identification, replacement for typeid
-    IndMemRemPass() : ModulePass((intptr_t)&ID) {}
+    IndMemRemPass() : ModulePass(&ID) {}
 
     virtual bool runOnModule(Module &M);
   };

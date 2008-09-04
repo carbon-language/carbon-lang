@@ -60,7 +60,7 @@ static RegisterPass<InternalizePass>
 X("internalize", "Internalize Global Symbols");
 
 InternalizePass::InternalizePass(bool AllButMain)
-  : ModulePass((intptr_t)&ID), AllButMain(AllButMain){
+  : ModulePass(&ID), AllButMain(AllButMain){
   if (!APIFile.empty())           // If a filename is specified, use it.
     LoadFile(APIFile.c_str());
   if (!APIList.empty())           // If a list is specified, use it as well.
@@ -68,7 +68,7 @@ InternalizePass::InternalizePass(bool AllButMain)
 }
 
 InternalizePass::InternalizePass(const std::vector<const char *>&exportList) 
-  : ModulePass((intptr_t)&ID), AllButMain(false){
+  : ModulePass(&ID), AllButMain(false){
   for(std::vector<const char *>::const_iterator itr = exportList.begin();
         itr != exportList.end(); itr++) {
     ExternalNames.insert(*itr);

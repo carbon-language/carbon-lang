@@ -55,7 +55,7 @@ linearscanRegAlloc("linearscan", "  linear scan register allocator",
 namespace {
   struct VISIBILITY_HIDDEN RALinScan : public MachineFunctionPass {
     static char ID;
-    RALinScan() : MachineFunctionPass((intptr_t)&ID) {}
+    RALinScan() : MachineFunctionPass(&ID) {}
 
     typedef std::pair<LiveInterval*, LiveInterval::iterator> IntervalPtr;
     typedef SmallVector<IntervalPtr, 32> IntervalPtrs;

@@ -41,7 +41,7 @@ namespace {
   class VISIBILITY_HIDDEN RegAllocSimple : public MachineFunctionPass {
   public:
     static char ID;
-    RegAllocSimple() : MachineFunctionPass((intptr_t)&ID) {}
+    RegAllocSimple() : MachineFunctionPass(&ID) {}
   private:
     MachineFunction *MF;
     const TargetMachine *TM;

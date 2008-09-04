@@ -82,7 +82,7 @@ namespace {
   class VISIBILITY_HIDDEN RABigBlock : public MachineFunctionPass {
   public:
     static char ID;
-    RABigBlock() : MachineFunctionPass((intptr_t)&ID) {}
+    RABigBlock() : MachineFunctionPass(&ID) {}
   private:
     /// TM - For getting at TargetMachine info 
     ///

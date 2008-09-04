@@ -52,7 +52,7 @@ namespace {
   class VISIBILITY_HIDDEN JumpThreading : public FunctionPass {
   public:
     static char ID; // Pass identification
-    JumpThreading() : FunctionPass((intptr_t)&ID) {}
+    JumpThreading() : FunctionPass(&ID) {}
 
     bool runOnFunction(Function &F);
     bool ThreadBlock(BasicBlock *BB);

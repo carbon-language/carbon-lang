@@ -1118,7 +1118,7 @@ unsigned getX86SubSuperRegister(unsigned Reg, MVT VT, bool High) {
 namespace {
   struct VISIBILITY_HIDDEN MSAC : public MachineFunctionPass {
     static char ID;
-    MSAC() : MachineFunctionPass((intptr_t)&ID) {}
+    MSAC() : MachineFunctionPass(&ID) {}
 
     virtual bool runOnMachineFunction(MachineFunction &MF) {
       MachineFrameInfo *FFI = MF.getFrameInfo();

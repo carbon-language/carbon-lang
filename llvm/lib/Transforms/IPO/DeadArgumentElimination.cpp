@@ -121,7 +121,7 @@ namespace {
 
   public:
     static char ID; // Pass identification, replacement for typeid
-    DAE() : ModulePass((intptr_t)&ID) {}
+    DAE() : ModulePass(&ID) {}
     bool runOnModule(Module &M);
 
     virtual bool ShouldHackArguments() const { return false; }

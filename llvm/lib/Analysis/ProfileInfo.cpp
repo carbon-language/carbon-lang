@@ -85,7 +85,7 @@ namespace {
   struct VISIBILITY_HIDDEN NoProfileInfo 
     : public ImmutablePass, public ProfileInfo {
     static char ID; // Class identification, replacement for typeinfo
-    NoProfileInfo() : ImmutablePass((intptr_t)&ID) {}
+    NoProfileInfo() : ImmutablePass(&ID) {}
   };
 }  // End of anonymous namespace
 

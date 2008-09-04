@@ -35,7 +35,7 @@ STATISTIC(NumRemoved, "Number of instructions removed");
 namespace {
   struct VISIBILITY_HIDDEN ADCE : public FunctionPass {
     static char ID; // Pass identification, replacement for typeid
-    ADCE() : FunctionPass((intptr_t)&ID) {}
+    ADCE() : FunctionPass(&ID) {}
     
     virtual bool runOnFunction(Function& F);
     

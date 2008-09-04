@@ -37,7 +37,7 @@ namespace {
   public:
     static char ID; // Pass identification, replacement for typeid
     RaiseAllocations() 
-      : ModulePass((intptr_t)&ID), MallocFunc(0), FreeFunc(0) {}
+      : ModulePass(&ID), MallocFunc(0), FreeFunc(0) {}
 
     // doPassInitialization - For the raise allocations pass, this finds a
     // declaration for malloc and free if they exist.

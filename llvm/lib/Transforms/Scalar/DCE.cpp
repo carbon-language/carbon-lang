@@ -69,7 +69,7 @@ namespace {
   //
   struct DCE : public FunctionPass {
     static char ID; // Pass identification, replacement for typeid
-    DCE() : FunctionPass((intptr_t)&ID) {}
+    DCE() : FunctionPass(&ID) {}
 
     virtual bool runOnFunction(Function &F);
 

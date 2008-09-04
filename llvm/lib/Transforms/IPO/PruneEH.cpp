@@ -35,7 +35,7 @@ STATISTIC(NumUnreach, "Number of noreturn calls optimized");
 namespace {
   struct VISIBILITY_HIDDEN PruneEH : public CallGraphSCCPass {
     static char ID; // Pass identification, replacement for typeid
-    PruneEH() : CallGraphSCCPass((intptr_t)&ID) {}
+    PruneEH() : CallGraphSCCPass(&ID) {}
 
     // runOnSCC - Analyze the SCC, performing the transformation if possible.
     bool runOnSCC(const std::vector<CallGraphNode *> &SCC);

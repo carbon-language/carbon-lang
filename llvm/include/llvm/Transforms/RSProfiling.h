@@ -27,7 +27,7 @@ namespace llvm {
   /// multiple profilers can be support simultaniously.
   struct RSProfilers : public ModulePass {
     static char ID; // Pass identification, replacement for typeinfo
-    RSProfilers() : ModulePass((intptr_t)&ID) {}
+    RSProfilers() : ModulePass(&ID) {}
 
     /// isProfiling - This method returns true if the value passed it was 
     /// inserted by the profiler.

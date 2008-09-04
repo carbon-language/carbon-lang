@@ -158,7 +158,7 @@ MachineBasicBlock *TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
 //===----------------------------------------------------------------------===//
 
 SelectionDAGISel::SelectionDAGISel(TargetLowering &tli, bool fast) :
-  FunctionPass((intptr_t)&ID), TLI(tli),
+  FunctionPass(&ID), TLI(tli),
   FuncInfo(new FunctionLoweringInfo(TLI)),
   CurDAG(new SelectionDAG(TLI, *FuncInfo)),
   SDL(new SelectionDAGLowering(*CurDAG, TLI, *FuncInfo)),

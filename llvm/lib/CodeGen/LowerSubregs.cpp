@@ -24,7 +24,7 @@ namespace {
   struct VISIBILITY_HIDDEN LowerSubregsInstructionPass
    : public MachineFunctionPass {
     static char ID; // Pass identification, replacement for typeid
-    LowerSubregsInstructionPass() : MachineFunctionPass((intptr_t)&ID) {}
+    LowerSubregsInstructionPass() : MachineFunctionPass(&ID) {}
     
     const char *getPassName() const {
       return "Subregister lowering instruction pass";

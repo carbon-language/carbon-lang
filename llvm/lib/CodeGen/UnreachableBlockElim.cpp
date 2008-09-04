@@ -40,7 +40,7 @@ namespace {
     virtual bool runOnFunction(Function &F);
   public:
     static char ID; // Pass identification, replacement for typeid
-    UnreachableBlockElim() : FunctionPass((intptr_t)&ID) {}
+    UnreachableBlockElim() : FunctionPass(&ID) {}
   };
 }
 char UnreachableBlockElim::ID = 0;
@@ -90,7 +90,7 @@ namespace {
     
   public:
     static char ID; // Pass identification, replacement for typeid
-    UnreachableMachineBlockElim() : MachineFunctionPass((intptr_t)&ID) {}
+    UnreachableMachineBlockElim() : MachineFunctionPass(&ID) {}
   };
 }
 char UnreachableMachineBlockElim::ID = 0;

@@ -70,7 +70,7 @@ namespace {
                              DenseMap<MachineInstr*, unsigned> &DistanceMap);
   public:
     static char ID; // Pass identification, replacement for typeid
-    TwoAddressInstructionPass() : MachineFunctionPass((intptr_t)&ID) {}
+    TwoAddressInstructionPass() : MachineFunctionPass(&ID) {}
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addPreserved<LiveVariables>();

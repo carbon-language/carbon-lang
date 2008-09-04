@@ -146,7 +146,7 @@ namespace {
     bool MadeChange;
   public:
     static char ID;
-    IfConverter() : MachineFunctionPass((intptr_t)&ID) {}
+    IfConverter() : MachineFunctionPass(&ID) {}
 
     virtual bool runOnMachineFunction(MachineFunction &MF);
     virtual const char *getPassName() const { return "If Converter"; }

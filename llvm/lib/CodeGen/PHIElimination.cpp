@@ -38,7 +38,7 @@ namespace {
 
   public:
     static char ID; // Pass identification, replacement for typeid
-    PNE() : MachineFunctionPass((intptr_t)&ID) {}
+    PNE() : MachineFunctionPass(&ID) {}
 
     virtual bool runOnMachineFunction(MachineFunction &Fn);
     

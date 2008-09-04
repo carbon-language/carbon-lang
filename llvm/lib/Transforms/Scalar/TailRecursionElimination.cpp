@@ -68,7 +68,7 @@ STATISTIC(NumAccumAdded, "Number of accumulators introduced");
 namespace {
   struct VISIBILITY_HIDDEN TailCallElim : public FunctionPass {
     static char ID; // Pass identification, replacement for typeid
-    TailCallElim() : FunctionPass((intptr_t)&ID) {}
+    TailCallElim() : FunctionPass(&ID) {}
 
     virtual bool runOnFunction(Function &F);
 

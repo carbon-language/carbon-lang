@@ -2249,7 +2249,7 @@ namespace {
 
   public:
     static char ID; // Pass identification, replacement for typeid
-    PredicateSimplifier() : FunctionPass((intptr_t)&ID) {}
+    PredicateSimplifier() : FunctionPass(&ID) {}
 
     bool runOnFunction(Function &F);
 

@@ -39,11 +39,11 @@ namespace {
   public:
     static char ID;
     explicit ARMCodeEmitter(TargetMachine &tm, MachineCodeEmitter &mce)
-      : MachineFunctionPass((intptr_t)&ID), II(0), TD(0), TM(tm),
+      : MachineFunctionPass(&ID), II(0), TD(0), TM(tm),
       MCE(mce) {}
     ARMCodeEmitter(TargetMachine &tm, MachineCodeEmitter &mce,
             const ARMInstrInfo &ii, const TargetData &td)
-      : MachineFunctionPass((intptr_t)&ID), II(&ii), TD(&td), TM(tm),
+      : MachineFunctionPass(&ID), II(&ii), TD(&td), TM(tm),
       MCE(mce) {}
 
     bool runOnMachineFunction(MachineFunction &MF);

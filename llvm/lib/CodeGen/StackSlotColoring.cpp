@@ -62,7 +62,7 @@ namespace {
 
   public:
     static char ID; // Pass identification
-    StackSlotColoring() : MachineFunctionPass((intptr_t)&ID), NextColor(-1) {}
+    StackSlotColoring() : MachineFunctionPass(&ID), NextColor(-1) {}
     
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<LiveStacks>();

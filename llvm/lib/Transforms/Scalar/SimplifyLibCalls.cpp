@@ -1206,7 +1206,7 @@ namespace {
     FWriteOpt FWrite; FPutsOpt FPuts; FPrintFOpt FPrintF;
   public:
     static char ID; // Pass identification
-    SimplifyLibCalls() : FunctionPass((intptr_t)&ID) {}
+    SimplifyLibCalls() : FunctionPass(&ID) {}
 
     void InitOptimizations();
     bool runOnFunction(Function &F);

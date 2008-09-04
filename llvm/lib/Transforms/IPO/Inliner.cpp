@@ -34,11 +34,11 @@ static cl::opt<int>
 InlineLimit("inline-threshold", cl::Hidden, cl::init(200),
         cl::desc("Control the amount of inlining to perform (default = 200)"));
 
-Inliner::Inliner(const void *ID) 
-  : CallGraphSCCPass((intptr_t)ID), InlineThreshold(InlineLimit) {}
+Inliner::Inliner(void *ID) 
+  : CallGraphSCCPass(ID), InlineThreshold(InlineLimit) {}
 
-Inliner::Inliner(const void *ID, int Threshold) 
-  : CallGraphSCCPass((intptr_t)ID), InlineThreshold(Threshold) {}
+Inliner::Inliner(void *ID, int Threshold) 
+  : CallGraphSCCPass(ID), InlineThreshold(Threshold) {}
 
 /// getAnalysisUsage - For this class, we declare that we require and preserve
 /// the call graph.  If the derived class implements this method, it should

@@ -66,7 +66,7 @@ namespace {
 
     virtual bool runOnSCC(const std::vector<CallGraphNode *> &SCC);
     static char ID; // Pass identification, replacement for typeid
-    ArgPromotion(unsigned maxElements = 3) : CallGraphSCCPass((intptr_t)&ID),
+    ArgPromotion(unsigned maxElements = 3) : CallGraphSCCPass(&ID),
                                              maxElements(maxElements) {}
     
     /// A vector used to hold the indices of a single GEP instruction

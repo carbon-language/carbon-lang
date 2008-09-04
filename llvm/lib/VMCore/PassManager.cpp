@@ -73,7 +73,7 @@ class VISIBILITY_HIDDEN BBPassManager : public PMDataManager,
 public:
   static char ID;
   explicit BBPassManager(int Depth) 
-    : PMDataManager(Depth), FunctionPass((intptr_t)&ID) {}
+    : PMDataManager(Depth), FunctionPass(&ID) {}
 
   /// Execute all of the passes scheduled for execution.  Keep track of
   /// whether any of the passes modifies the function, and if so, return true.
@@ -129,7 +129,7 @@ class FunctionPassManagerImpl : public Pass,
 public:
   static char ID;
   explicit FunctionPassManagerImpl(int Depth) : 
-    Pass((intptr_t)&ID), PMDataManager(Depth), 
+    Pass(&ID), PMDataManager(Depth), 
     PMTopLevelManager(TLM_Function) { }
 
   /// add - Add a pass to the queue of passes to run.  This passes ownership of
@@ -193,7 +193,7 @@ class MPPassManager : public Pass, public PMDataManager {
 public:
   static char ID;
   explicit MPPassManager(int Depth) :
-    Pass((intptr_t)&ID), PMDataManager(Depth) { }
+    Pass(&ID), PMDataManager(Depth) { }
 
   // Delete on the fly managers.
   virtual ~MPPassManager() {
@@ -269,8 +269,7 @@ class PassManagerImpl : public Pass,
 public:
   static char ID;
   explicit PassManagerImpl(int Depth) :
-    Pass((intptr_t)&ID), PMDataManager(Depth),
-    PMTopLevelManager(TLM_Pass) { }
+    Pass(&ID), PMDataManager(Depth), PMTopLevelManager(TLM_Pass) { }
 
   /// add - Add a pass to the queue of passes to run.  This passes ownership of
   /// the Pass to the PassManager.  When the PassManager is destroyed, the pass

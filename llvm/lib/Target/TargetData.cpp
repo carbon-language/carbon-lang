@@ -232,7 +232,7 @@ void TargetData::init(const std::string &TargetDescription) {
 }
 
 TargetData::TargetData(const Module *M) 
-  : ImmutablePass((intptr_t)&ID) {
+  : ImmutablePass(&ID) {
   init(M->getDataLayout());
 }
 

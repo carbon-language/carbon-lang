@@ -39,10 +39,10 @@ namespace {
   public:
     static char ID;
     explicit AlphaCodeEmitter(TargetMachine &tm, MachineCodeEmitter &mce)
-      : MachineFunctionPass((intptr_t)&ID), II(0), TM(tm), MCE(mce) {}
+      : MachineFunctionPass(&ID), II(0), TM(tm), MCE(mce) {}
     AlphaCodeEmitter(TargetMachine &tm, MachineCodeEmitter &mce,
                      const AlphaInstrInfo& ii)
-      : MachineFunctionPass((intptr_t)&ID), II(&ii), TM(tm), MCE(mce) {}
+      : MachineFunctionPass(&ID), II(&ii), TM(tm), MCE(mce) {}
 
     bool runOnMachineFunction(MachineFunction &MF);
 

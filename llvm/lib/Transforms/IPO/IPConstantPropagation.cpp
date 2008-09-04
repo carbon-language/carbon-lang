@@ -36,7 +36,7 @@ namespace {
   ///
   struct VISIBILITY_HIDDEN IPCP : public ModulePass {
     static char ID; // Pass identification, replacement for typeid
-    IPCP() : ModulePass((intptr_t)&ID) {}
+    IPCP() : ModulePass(&ID) {}
 
     bool runOnModule(Module &M);
   private:

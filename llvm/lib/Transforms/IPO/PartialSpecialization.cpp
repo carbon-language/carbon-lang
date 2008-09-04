@@ -45,7 +45,7 @@ namespace {
     int scanDistribution(Function&, int, std::map<Constant*, int>&);
   public :
     static char ID; // Pass identification, replacement for typeid
-    PartSpec() : ModulePass((intptr_t)&ID) {}
+    PartSpec() : ModulePass(&ID) {}
     bool runOnModule(Module &M);
   };
 }

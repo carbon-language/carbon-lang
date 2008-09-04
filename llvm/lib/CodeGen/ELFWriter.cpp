@@ -195,7 +195,7 @@ bool ELFCodeEmitter::finishFunction(MachineFunction &F) {
 //===----------------------------------------------------------------------===//
 
 ELFWriter::ELFWriter(raw_ostream &o, TargetMachine &tm) 
-  : MachineFunctionPass((intptr_t)&ID), O(o), TM(tm) {
+  : MachineFunctionPass(&ID), O(o), TM(tm) {
   e_flags = 0;    // e_flags defaults to 0, no flags.
 
   is64Bit = TM.getTargetData()->getPointerSizeInBits() == 64;

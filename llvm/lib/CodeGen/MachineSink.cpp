@@ -36,7 +36,7 @@ namespace {
 
   public:
     static char ID; // Pass identification
-    MachineSinking() : MachineFunctionPass((intptr_t)&ID) {}
+    MachineSinking() : MachineFunctionPass(&ID) {}
     
     virtual bool runOnMachineFunction(MachineFunction &MF);
     

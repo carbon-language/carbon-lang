@@ -45,7 +45,7 @@ namespace {
     MachineLoop *CurLoop;          // The current loop we are working on.
   public:
     static char ID; // Pass identification, replacement for typeid
-    MachineLICM() : MachineFunctionPass((intptr_t)&ID) {}
+    MachineLICM() : MachineFunctionPass(&ID) {}
 
     virtual bool runOnMachineFunction(MachineFunction &MF);
 

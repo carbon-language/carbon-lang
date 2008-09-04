@@ -28,7 +28,7 @@ STATISTIC(NumReadOnly, "Number of functions marked readonly");
 namespace {
   struct VISIBILITY_HIDDEN MarkModRef : public FunctionPass {
     static char ID; // Pass identification, replacement for typeid
-    MarkModRef() : FunctionPass((intptr_t)&ID) {}
+    MarkModRef() : FunctionPass(&ID) {}
 
     bool runOnFunction(Function &F);
 

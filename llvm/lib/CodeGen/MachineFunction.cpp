@@ -49,7 +49,7 @@ namespace {
     const std::string Banner;
 
     Printer (std::ostream *os, const std::string &banner) 
-      : MachineFunctionPass((intptr_t)&ID), OS(os), Banner(banner) {}
+      : MachineFunctionPass(&ID), OS(os), Banner(banner) {}
 
     const char *getPassName() const { return "MachineFunction Printer"; }
 
@@ -77,7 +77,7 @@ FunctionPass *llvm::createMachineFunctionPrinterPass(std::ostream *OS,
 namespace {
   struct VISIBILITY_HIDDEN Deleter : public MachineFunctionPass {
     static char ID;
-    Deleter() : MachineFunctionPass((intptr_t)&ID) {}
+    Deleter() : MachineFunctionPass(&ID) {}
 
     const char *getPassName() const { return "Machine Code Deleter"; }
 

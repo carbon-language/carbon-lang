@@ -23,7 +23,7 @@ using namespace llvm;
 namespace {
   struct VISIBILITY_HIDDEN AlphaBSel : public MachineFunctionPass {
     static char ID;
-    AlphaBSel() : MachineFunctionPass((intptr_t)&ID) {}
+    AlphaBSel() : MachineFunctionPass(&ID) {}
 
     virtual bool runOnMachineFunction(MachineFunction &Fn);
 

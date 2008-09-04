@@ -41,7 +41,7 @@ namespace {
     unsigned NumLoops;
 
     explicit LoopExtractor(unsigned numLoops = ~0) 
-      : FunctionPass((intptr_t)&ID), NumLoops(numLoops) {}
+      : FunctionPass(&ID), NumLoops(numLoops) {}
 
     virtual bool runOnFunction(Function &F);
 
@@ -167,11 +167,11 @@ namespace {
   public:
     static char ID; // Pass identification, replacement for typeid
     explicit BlockExtractorPass(const std::vector<BasicBlock*> &B) 
-      : ModulePass((intptr_t)&ID), BlocksToNotExtract(B) {
+      : ModulePass(&ID), BlocksToNotExtract(B) {
       if (!BlockFile.empty())
         LoadFile(BlockFile.c_str());
     }
-    BlockExtractorPass() : ModulePass((intptr_t)&ID) {}
+    BlockExtractorPass() : ModulePass(&ID) {}
 
     bool runOnModule(Module &M);
   };

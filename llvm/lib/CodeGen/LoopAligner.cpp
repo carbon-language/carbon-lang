@@ -26,7 +26,7 @@ namespace {
   class LoopAligner : public MachineFunctionPass {
   public:
     static char ID;
-    LoopAligner() : MachineFunctionPass((intptr_t)&ID) {}
+    LoopAligner() : MachineFunctionPass(&ID) {}
 
     virtual bool runOnMachineFunction(MachineFunction &MF);
     virtual const char *getPassName() const { return "Loop aligner"; }

@@ -38,7 +38,7 @@ namespace {
   public:
     static char ID; // Pass ID, replacement for typeid
     explicit LowerAllocations(bool LowerToInt = false)
-      : BasicBlockPass((intptr_t)&ID), MallocFunc(0), FreeFunc(0), 
+      : BasicBlockPass(&ID), MallocFunc(0), FreeFunc(0), 
         LowerMallocArgToInteger(LowerToInt) {}
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {

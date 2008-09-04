@@ -39,7 +39,7 @@ STATISTIC(NumFSTMGened, "Number of fstm instructions generated");
 namespace {
   struct VISIBILITY_HIDDEN ARMLoadStoreOpt : public MachineFunctionPass {
     static char ID;
-    ARMLoadStoreOpt() : MachineFunctionPass((intptr_t)&ID) {}
+    ARMLoadStoreOpt() : MachineFunctionPass(&ID) {}
 
     const TargetInstrInfo *TII;
     const TargetRegisterInfo *TRI;
