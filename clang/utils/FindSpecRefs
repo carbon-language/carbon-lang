@@ -354,24 +354,21 @@ def scanFile(path, filename):
         print >>sys.stderr,'WARNING: Unable to open:',path
         return
 
-    try:
-        for i,ln in enumerate(f):
-            ignore = set()
-            for m in nameAndSpecRefRE.finditer(ln):
-                section = m.group(2)
-                name = m.group(1)
-                if section.endswith('.'):
-                    section = section[:-1]
-                yield RefItem(name, section, filename, path, i+1)
-                ignore.add(section)
-            for m in loneSpecRefRE.finditer(ln):
-                section = m.group(1)
-                if section.endswith('.'):
-                    section = section[:-1]
-                if section not in ignore:
-                    yield RefItem(None, section, filename, path, i+1)
-    finally:                
-        f.close()
+    for i,ln in enumerate(f):
+        ignore = set()
+        for m in nameAndSpecRefRE.finditer(ln):
+            section = m.group(2)
+            name = m.group(1)
+            if section.endswith('.'):
+                section = section[:-1]
+            yield RefItem(name, section, filename, path, i+1)
+            ignore.add(section)
+        for m in loneSpecRefRE.finditer(ln):
+            section = m.group(1)
+            if section.endswith('.'):
+                section = section[:-1]
+            if section not in ignore:
+                yield RefItem(None, section, filename, path, i+1)
 
 ###
 
@@ -450,30 +447,14 @@ def sorted(l):
     return l
 
 def getRevision(path):
-    import svn, svn.core, svn.client
-
-    revision = [None]
-    
-    def info_cb(path, info, pool):
-        revision[0] = info.rev
-
-    try:
-        root = os.path.abspath(path)
-        svn.core.apr_initialize()
-        pool = svn.core.svn_pool_create(None)
-        ctx = svn.client.svn_client_ctx_t()
-        svn.client.svn_client_info(root,
-                                   None,
-                                   None,
-                                   info_cb,
-                                   False,
-                                   ctx,
-                                   pool)
-        svn.core.svn_pool_destroy(pool)
-    except:
-        pass
-
-    return revision[0]
+    import subprocess
+    p = subprocess.Popen(['svn', 'info', path],
+                         stdin=open('/dev/null','r'), 
+                         stdout=subprocess.PIPE)
+    for ln in p.stdout.read(1024).split('\n'):
+        if ln.startswith('Revision:'):
+            return ln.split(':',1)[1].strip()
+    return None
 
 def buildRefTree(references):
     root = (None, {}, [])
