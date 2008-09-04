@@ -509,6 +509,11 @@ CodeGen::RValue CGObjCMac::EmitMessageSend(CodeGen::CodeGenFunction &CGF,
 
 llvm::Value *CGObjCMac::GenerateProtocolRef(llvm::IRBuilder<> &Builder, 
                                             const ObjCProtocolDecl *PD) {
+  // FIXME: I don't understand why gcc generates this, or where it is
+  // resolved. Investigate. Its also wasteful to look this up over and
+  // over.
+  LazySymbols.insert(&CGM.getContext().Idents.get("Protocol"));
+
   return llvm::ConstantExpr::getBitCast(GetProtocolRef(PD),
                                         ObjCTypes.ExternalProtocolPtrTy);
 }
