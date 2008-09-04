@@ -3015,6 +3015,31 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
                              getValue(I.getOperand(1)).getValueType(),
                              getValue(I.getOperand(1))));
     return 0;
+  case Intrinsic::log:
+    setValue(&I, DAG.getNode(ISD::FLOG,
+                             getValue(I.getOperand(1)).getValueType(),
+                             getValue(I.getOperand(1))));
+    return 0;
+  case Intrinsic::log2:
+    setValue(&I, DAG.getNode(ISD::FLOG2,
+                             getValue(I.getOperand(1)).getValueType(),
+                             getValue(I.getOperand(1))));
+    return 0;
+  case Intrinsic::log10:
+    setValue(&I, DAG.getNode(ISD::FLOG10,
+                             getValue(I.getOperand(1)).getValueType(),
+                             getValue(I.getOperand(1))));
+    return 0;
+  case Intrinsic::exp:
+    setValue(&I, DAG.getNode(ISD::FEXP,
+                             getValue(I.getOperand(1)).getValueType(),
+                             getValue(I.getOperand(1))));
+    return 0;
+  case Intrinsic::exp2:
+    setValue(&I, DAG.getNode(ISD::FEXP2,
+                             getValue(I.getOperand(1)).getValueType(),
+                             getValue(I.getOperand(1))));
+    return 0;
   case Intrinsic::pow:
     setValue(&I, DAG.getNode(ISD::FPOW,
                              getValue(I.getOperand(1)).getValueType(),

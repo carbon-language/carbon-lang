@@ -494,6 +494,22 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   setOperationAction(ISD::FPOW             , MVT::f64  , Expand);
   setOperationAction(ISD::FPOW             , MVT::f80  , Expand);
 
+  setOperationAction(ISD::FLOG, MVT::f32, Expand);
+  setOperationAction(ISD::FLOG, MVT::f64, Expand);
+  setOperationAction(ISD::FLOG, MVT::f80, Expand);
+  setOperationAction(ISD::FLOG2, MVT::f32, Expand);
+  setOperationAction(ISD::FLOG2, MVT::f64, Expand);
+  setOperationAction(ISD::FLOG2, MVT::f80, Expand);
+  setOperationAction(ISD::FLOG10, MVT::f32, Expand);
+  setOperationAction(ISD::FLOG10, MVT::f64, Expand);
+  setOperationAction(ISD::FLOG10, MVT::f80, Expand);
+  setOperationAction(ISD::FEXP, MVT::f32, Expand);
+  setOperationAction(ISD::FEXP, MVT::f64, Expand);
+  setOperationAction(ISD::FEXP, MVT::f80, Expand);
+  setOperationAction(ISD::FEXP2, MVT::f32, Expand);
+  setOperationAction(ISD::FEXP2, MVT::f64, Expand);
+  setOperationAction(ISD::FEXP2, MVT::f80, Expand);
+
   // First set operation action for all vector types to expand. Then we
   // will selectively turn on ones that can be effectively codegen'd.
   for (unsigned VT = (unsigned)MVT::FIRST_VECTOR_VALUETYPE;

@@ -3490,6 +3490,11 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
   case ISD::FSQRT:
   case ISD::FSIN:
   case ISD::FCOS:
+  case ISD::FLOG:
+  case ISD::FLOG2:
+  case ISD::FLOG10:
+  case ISD::FEXP:
+  case ISD::FEXP2:
   case ISD::FTRUNC:
   case ISD::FFLOOR:
   case ISD::FCEIL:
@@ -3526,6 +3531,11 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
         Result = DAG.getNode(ISD::SELECT, VT, Tmp2, Tmp1, Tmp3);
         break;
       }
+      case ISD::FLOG:
+      case ISD::FLOG2:
+      case ISD::FLOG10:
+      case ISD::FEXP:
+      case ISD::FEXP2:
       case ISD::FTRUNC:
       case ISD::FFLOOR:
       case ISD::FCEIL:
@@ -3555,6 +3565,26 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
         case ISD::FCOS:
           LC = GetFPLibCall(VT, RTLIB::COS_F32, RTLIB::COS_F64,
                             RTLIB::COS_F80, RTLIB::COS_PPCF128);
+          break;
+        case ISD::FLOG:
+          LC = GetFPLibCall(VT, RTLIB::LOG_F32, RTLIB::LOG_F64,
+                            RTLIB::LOG_F80, RTLIB::LOG_PPCF128);
+          break;
+        case ISD::FLOG2:
+          LC = GetFPLibCall(VT, RTLIB::LOG2_F32, RTLIB::LOG2_F64,
+                            RTLIB::LOG2_F80, RTLIB::LOG2_PPCF128);
+          break;
+        case ISD::FLOG10:
+          LC = GetFPLibCall(VT, RTLIB::LOG10_F32, RTLIB::LOG10_F64,
+                            RTLIB::LOG10_F80, RTLIB::LOG10_PPCF128);
+          break;
+        case ISD::FEXP:
+          LC = GetFPLibCall(VT, RTLIB::EXP_F32, RTLIB::EXP_F64,
+                            RTLIB::EXP_F80, RTLIB::EXP_PPCF128);
+          break;
+        case ISD::FEXP2:
+          LC = GetFPLibCall(VT, RTLIB::EXP2_F32, RTLIB::EXP2_F64,
+                            RTLIB::EXP2_F80, RTLIB::EXP2_PPCF128);
           break;
         case ISD::FTRUNC:
           LC = GetFPLibCall(VT, RTLIB::TRUNC_F32, RTLIB::TRUNC_F64,
@@ -4163,6 +4193,11 @@ SDValue SelectionDAGLegalize::PromoteOp(SDValue Op) {
     // precision, and these operations don't modify precision at all.
     break;
 
+  case ISD::FLOG:
+  case ISD::FLOG2:
+  case ISD::FLOG10:
+  case ISD::FEXP:
+  case ISD::FEXP2:
   case ISD::FSQRT:
   case ISD::FSIN:
   case ISD::FCOS:
@@ -6574,6 +6609,11 @@ void SelectionDAGLegalize::ExpandOp(SDValue Op, SDValue &Lo, SDValue &Hi){
                                         RTLIB::POWI_PPCF128),
                        Node, false, Hi);
     break;
+  case ISD::FLOG:
+  case ISD::FLOG2:
+  case ISD::FLOG10:
+  case ISD::FEXP:
+  case ISD::FEXP2:
   case ISD::FTRUNC:
   case ISD::FFLOOR:
   case ISD::FCEIL:
@@ -6595,6 +6635,26 @@ void SelectionDAGLegalize::ExpandOp(SDValue Op, SDValue &Lo, SDValue &Hi){
     case ISD::FCOS:
       LC = GetFPLibCall(VT, RTLIB::COS_F32, RTLIB::COS_F64,
                         RTLIB::COS_F80, RTLIB::COS_PPCF128);
+      break;
+    case ISD::FLOG:
+      LC = GetFPLibCall(VT, RTLIB::LOG_F32, RTLIB::LOG_F64,
+                        RTLIB::LOG_F80, RTLIB::LOG_PPCF128);
+      break;
+    case ISD::FLOG2:
+      LC = GetFPLibCall(VT, RTLIB::LOG2_F32, RTLIB::LOG2_F64,
+                        RTLIB::LOG2_F80, RTLIB::LOG2_PPCF128);
+      break;
+    case ISD::FLOG10:
+      LC = GetFPLibCall(VT, RTLIB::LOG10_F32, RTLIB::LOG10_F64,
+                        RTLIB::LOG10_F80, RTLIB::LOG10_PPCF128);
+      break;
+    case ISD::FEXP:
+      LC = GetFPLibCall(VT, RTLIB::EXP_F32, RTLIB::EXP_F64,
+                        RTLIB::EXP_F80, RTLIB::EXP_PPCF128);
+      break;
+    case ISD::FEXP2:
+      LC = GetFPLibCall(VT, RTLIB::EXP2_F32, RTLIB::EXP2_F64,
+                        RTLIB::EXP2_F80, RTLIB::EXP2_PPCF128);
       break;
     case ISD::FTRUNC:
       LC = GetFPLibCall(VT, RTLIB::TRUNC_F32, RTLIB::TRUNC_F64,
@@ -6966,6 +7026,11 @@ void SelectionDAGLegalize::SplitVectorOp(SDValue Op, SDValue &Lo,
   case ISD::FSQRT:
   case ISD::FSIN:
   case ISD::FCOS:
+  case ISD::FLOG:
+  case ISD::FLOG2:
+  case ISD::FLOG10:
+  case ISD::FEXP:
+  case ISD::FEXP2:
   case ISD::FP_TO_SINT:
   case ISD::FP_TO_UINT:
   case ISD::SINT_TO_FP:
@@ -7102,6 +7167,11 @@ SDValue SelectionDAGLegalize::ScalarizeVectorOp(SDValue Op) {
   case ISD::FSQRT:
   case ISD::FSIN:
   case ISD::FCOS:
+  case ISD::FLOG:
+  case ISD::FLOG2:
+  case ISD::FLOG10:
+  case ISD::FEXP:
+  case ISD::FEXP2:
   case ISD::FP_TO_SINT:
   case ISD::FP_TO_UINT:
   case ISD::SINT_TO_FP:

@@ -426,9 +426,11 @@ namespace ISD {
     BIT_CONVERT,
     
     // FNEG, FABS, FSQRT, FSIN, FCOS, FPOWI, FPOW,
+    // FLOG, FLOG2, FLOG10, FEXP, FEXP2,
     // FCEIL, FTRUNC, FRINT, FNEARBYINT, FFLOOR - Perform various unary floating
     // point operations. These are inspired by libm.
     FNEG, FABS, FSQRT, FSIN, FCOS, FPOWI, FPOW,
+    FLOG, FLOG2, FLOG10, FEXP, FEXP2,
     FCEIL, FTRUNC, FRINT, FNEARBYINT, FFLOOR,
     
     // LOAD and STORE have token chains as their first operand, then the same

@@ -99,10 +99,20 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   setOperationAction(ISD::FCOS , MVT::f64, Expand);
   setOperationAction(ISD::FREM , MVT::f64, Expand);
   setOperationAction(ISD::FPOW , MVT::f64, Expand);
+  setOperationAction(ISD::FLOG , MVT::f64, Expand);
+  setOperationAction(ISD::FLOG2, MVT::f64, Expand);
+  setOperationAction(ISD::FLOG10,MVT::f64, Expand);
+  setOperationAction(ISD::FEXP  ,MVT::f64, Expand);
+  setOperationAction(ISD::FEXP2 ,MVT::f64, Expand);
   setOperationAction(ISD::FSIN , MVT::f32, Expand);
   setOperationAction(ISD::FCOS , MVT::f32, Expand);
   setOperationAction(ISD::FREM , MVT::f32, Expand);
   setOperationAction(ISD::FPOW , MVT::f32, Expand);
+  setOperationAction(ISD::FLOG , MVT::f32, Expand);
+  setOperationAction(ISD::FLOG2 ,MVT::f32, Expand);
+  setOperationAction(ISD::FLOG10,MVT::f32, Expand);
+  setOperationAction(ISD::FEXP  ,MVT::f32, Expand);
+  setOperationAction(ISD::FEXP2 ,MVT::f32, Expand);
 
   setOperationAction(ISD::FLT_ROUNDS_, MVT::i32, Custom);
   
@@ -350,6 +360,11 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
     setLibcallName(RTLIB::REM_PPCF128, "fmodl$LDBL128");
     setLibcallName(RTLIB::SIN_PPCF128, "sinl$LDBL128");
     setLibcallName(RTLIB::SQRT_PPCF128, "sqrtl$LDBL128");
+    setLibcallName(RTLIB::LOG_PPCF128, "logl$LDBL128");
+    setLibcallName(RTLIB::LOG2_PPCF128, "log2l$LDBL128");
+    setLibcallName(RTLIB::LOG10_PPCF128, "log10l$LDBL128");
+    setLibcallName(RTLIB::EXP_PPCF128, "expl$LDBL128");
+    setLibcallName(RTLIB::EXP2_PPCF128, "exp2l$LDBL128");
   }
 
   computeRegisterProperties();

@@ -160,6 +160,81 @@ void IntrinsicLowering::AddPrototypes(Module &M) {
                                I->arg_begin()->getType());
         }
         break;
+      case Intrinsic::log:
+        switch((int)I->arg_begin()->getType()->getTypeID()) {
+        case Type::FloatTyID:
+          EnsureFunctionExists(M, "logf", I->arg_begin(), I->arg_end(),
+                               Type::FloatTy);
+        case Type::DoubleTyID:
+          EnsureFunctionExists(M, "log", I->arg_begin(), I->arg_end(),
+                               Type::DoubleTy);
+        case Type::X86_FP80TyID:
+        case Type::FP128TyID:
+        case Type::PPC_FP128TyID:
+          EnsureFunctionExists(M, "logl", I->arg_begin(), I->arg_end(),
+                               I->arg_begin()->getType());
+        }
+        break;
+      case Intrinsic::log2:
+        switch((int)I->arg_begin()->getType()->getTypeID()) {
+        case Type::FloatTyID:
+          EnsureFunctionExists(M, "log2f", I->arg_begin(), I->arg_end(),
+                               Type::FloatTy);
+        case Type::DoubleTyID:
+          EnsureFunctionExists(M, "log2", I->arg_begin(), I->arg_end(),
+                               Type::DoubleTy);
+        case Type::X86_FP80TyID:
+        case Type::FP128TyID:
+        case Type::PPC_FP128TyID:
+          EnsureFunctionExists(M, "log2l", I->arg_begin(), I->arg_end(),
+                               I->arg_begin()->getType());
+        }
+        break;
+      case Intrinsic::log10:
+        switch((int)I->arg_begin()->getType()->getTypeID()) {
+        case Type::FloatTyID:
+          EnsureFunctionExists(M, "log10f", I->arg_begin(), I->arg_end(),
+                               Type::FloatTy);
+        case Type::DoubleTyID:
+          EnsureFunctionExists(M, "log10", I->arg_begin(), I->arg_end(),
+                               Type::DoubleTy);
+        case Type::X86_FP80TyID:
+        case Type::FP128TyID:
+        case Type::PPC_FP128TyID:
+          EnsureFunctionExists(M, "log10l", I->arg_begin(), I->arg_end(),
+                               I->arg_begin()->getType());
+        }
+        break;
+      case Intrinsic::exp:
+        switch((int)I->arg_begin()->getType()->getTypeID()) {
+        case Type::FloatTyID:
+          EnsureFunctionExists(M, "expf", I->arg_begin(), I->arg_end(),
+                               Type::FloatTy);
+        case Type::DoubleTyID:
+          EnsureFunctionExists(M, "exp", I->arg_begin(), I->arg_end(),
+                               Type::DoubleTy);
+        case Type::X86_FP80TyID:
+        case Type::FP128TyID:
+        case Type::PPC_FP128TyID:
+          EnsureFunctionExists(M, "expl", I->arg_begin(), I->arg_end(),
+                               I->arg_begin()->getType());
+        }
+        break;
+      case Intrinsic::exp2:
+        switch((int)I->arg_begin()->getType()->getTypeID()) {
+        case Type::FloatTyID:
+          EnsureFunctionExists(M, "exp2f", I->arg_begin(), I->arg_end(),
+                               Type::FloatTy);
+        case Type::DoubleTyID:
+          EnsureFunctionExists(M, "exp2", I->arg_begin(), I->arg_end(),
+                               Type::DoubleTy);
+        case Type::X86_FP80TyID:
+        case Type::FP128TyID:
+        case Type::PPC_FP128TyID:
+          EnsureFunctionExists(M, "exp2l", I->arg_begin(), I->arg_end(),
+                               I->arg_begin()->getType());
+        }
+        break;
       }
 }
 
@@ -853,6 +928,144 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
     case Type::PPC_FP128TyID:
       ReplaceCallWith("sqrtl", CI, CI->op_begin()+1, CI->op_end(),
                     CI->getOperand(1)->getType(), sqrtLDCache);
+      break;
+    }
+    break;
+  }
+  case Intrinsic::log: {
+    static Constant *logfFCache = 0;
+    static Constant *logFCache = 0;
+    static Constant *logLDCache = 0;
+    switch (CI->getOperand(1)->getType()->getTypeID()) {
+    default: assert(0 && "Invalid type in log"); abort();
+    case Type::FloatTyID:
+      ReplaceCallWith("logf", CI, CI->op_begin()+1, CI->op_end(),
+                    Type::FloatTy, logfFCache);
+      break;
+    case Type::DoubleTyID:
+      ReplaceCallWith("log", CI, CI->op_begin()+1, CI->op_end(),
+                    Type::DoubleTy, logFCache);
+      break;
+    case Type::X86_FP80TyID:
+    case Type::FP128TyID:
+    case Type::PPC_FP128TyID:
+      ReplaceCallWith("logl", CI, CI->op_begin()+1, CI->op_end(),
+                    CI->getOperand(1)->getType(), logLDCache);
+      break;
+    }
+    break;
+  }
+  case Intrinsic::log2: {
+    static Constant *log2fFCache = 0;
+    static Constant *log2FCache = 0;
+    static Constant *log2LDCache = 0;
+    switch (CI->getOperand(1)->getType()->getTypeID()) {
+    default: assert(0 && "Invalid type in log2"); abort();
+    case Type::FloatTyID:
+      ReplaceCallWith("log2f", CI, CI->op_begin()+1, CI->op_end(),
+                    Type::FloatTy, log2fFCache);
+      break;
+    case Type::DoubleTyID:
+      ReplaceCallWith("log2", CI, CI->op_begin()+1, CI->op_end(),
+                    Type::DoubleTy, log2FCache);
+      break;
+    case Type::X86_FP80TyID:
+    case Type::FP128TyID:
+    case Type::PPC_FP128TyID:
+      ReplaceCallWith("log2l", CI, CI->op_begin()+1, CI->op_end(),
+                    CI->getOperand(1)->getType(), log2LDCache);
+      break;
+    }
+    break;
+  }
+  case Intrinsic::log10: {
+    static Constant *log10fFCache = 0;
+    static Constant *log10FCache = 0;
+    static Constant *log10LDCache = 0;
+    switch (CI->getOperand(1)->getType()->getTypeID()) {
+    default: assert(0 && "Invalid type in log10"); abort();
+    case Type::FloatTyID:
+      ReplaceCallWith("log10f", CI, CI->op_begin()+1, CI->op_end(),
+                    Type::FloatTy, log10fFCache);
+      break;
+    case Type::DoubleTyID:
+      ReplaceCallWith("log10", CI, CI->op_begin()+1, CI->op_end(),
+                    Type::DoubleTy, log10FCache);
+      break;
+    case Type::X86_FP80TyID:
+    case Type::FP128TyID:
+    case Type::PPC_FP128TyID:
+      ReplaceCallWith("log10l", CI, CI->op_begin()+1, CI->op_end(),
+                    CI->getOperand(1)->getType(), log10LDCache);
+      break;
+    }
+    break;
+  }
+  case Intrinsic::exp: {
+    static Constant *expfFCache = 0;
+    static Constant *expFCache = 0;
+    static Constant *expLDCache = 0;
+    switch (CI->getOperand(1)->getType()->getTypeID()) {
+    default: assert(0 && "Invalid type in exp"); abort();
+    case Type::FloatTyID:
+      ReplaceCallWith("expf", CI, CI->op_begin()+1, CI->op_end(),
+                    Type::FloatTy, expfFCache);
+      break;
+    case Type::DoubleTyID:
+      ReplaceCallWith("exp", CI, CI->op_begin()+1, CI->op_end(),
+                    Type::DoubleTy, expFCache);
+      break;
+    case Type::X86_FP80TyID:
+    case Type::FP128TyID:
+    case Type::PPC_FP128TyID:
+      ReplaceCallWith("expl", CI, CI->op_begin()+1, CI->op_end(),
+                    CI->getOperand(1)->getType(), expLDCache);
+      break;
+    }
+    break;
+  }
+  case Intrinsic::exp2: {
+    static Constant *exp2fFCache = 0;
+    static Constant *exp2FCache = 0;
+    static Constant *exp2LDCache = 0;
+    switch (CI->getOperand(1)->getType()->getTypeID()) {
+    default: assert(0 && "Invalid type in exp2"); abort();
+    case Type::FloatTyID:
+      ReplaceCallWith("exp2f", CI, CI->op_begin()+1, CI->op_end(),
+                    Type::FloatTy, exp2fFCache);
+      break;
+    case Type::DoubleTyID:
+      ReplaceCallWith("exp2", CI, CI->op_begin()+1, CI->op_end(),
+                    Type::DoubleTy, exp2FCache);
+      break;
+    case Type::X86_FP80TyID:
+    case Type::FP128TyID:
+    case Type::PPC_FP128TyID:
+      ReplaceCallWith("exp2l", CI, CI->op_begin()+1, CI->op_end(),
+                    CI->getOperand(1)->getType(), exp2LDCache);
+      break;
+    }
+    break;
+  }
+  case Intrinsic::pow: {
+    static Constant *powfFCache = 0;
+    static Constant *powFCache = 0;
+    static Constant *powLDCache = 0;
+    switch (CI->getOperand(1)->getType()->getTypeID()) {
+    default: assert(0 && "Invalid type in pow"); abort();
+    case Type::FloatTyID:
+      ReplaceCallWith("powf", CI, CI->op_begin()+1, CI->op_end(),
+                    Type::FloatTy, powfFCache);
+      break;
+    case Type::DoubleTyID:
+      ReplaceCallWith("pow", CI, CI->op_begin()+1, CI->op_end(),
+                    Type::DoubleTy, powFCache);
+      break;
+    case Type::X86_FP80TyID:
+    case Type::FP128TyID:
+    case Type::PPC_FP128TyID:
+      ReplaceCallWith("powl", CI, CI->op_begin()+1, CI->op_end(),
+                    CI->getOperand(1)->getType(), powLDCache);
       break;
     }
     break;

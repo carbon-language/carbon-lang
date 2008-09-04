@@ -98,6 +98,17 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM) : TargetLowering(TM)
 
   setOperationAction(ISD::FPOW , MVT::f32, Expand);
   setOperationAction(ISD::FPOW , MVT::f64, Expand);
+
+  setOperationAction(ISD::FLOG, MVT::f32, Expand);
+  setOperationAction(ISD::FLOG, MVT::f64, Expand);
+  setOperationAction(ISD::FLOG2, MVT::f32, Expand);
+  setOperationAction(ISD::FLOG2, MVT::f64, Expand);
+  setOperationAction(ISD::FLOG10, MVT::f32, Expand);
+  setOperationAction(ISD::FLOG10, MVT::f64, Expand);
+  setOperationAction(ISD::FEXP, MVT::f32, Expand);
+  setOperationAction(ISD::FEXP, MVT::f64, Expand);
+  setOperationAction(ISD::FEXP2, MVT::f32, Expand);
+  setOperationAction(ISD::FEXP2, MVT::f64, Expand);
   
   setOperationAction(ISD::SETCC, MVT::f32, Promote);
 
