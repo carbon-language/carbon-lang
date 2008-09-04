@@ -99,6 +99,8 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
   switch (E->getStmtClass()) {
   default: return EmitUnsupportedLValue(E, "l-value expression");
 
+  case Expr::BinaryOperatorClass: 
+    return EmitBinaryOperatorLValue(cast<BinaryOperator>(E));
   case Expr::CallExprClass: return EmitCallExprLValue(cast<CallExpr>(E));
   case Expr::DeclRefExprClass: return EmitDeclRefLValue(cast<DeclRefExpr>(E));
   case Expr::ParenExprClass:return EmitLValue(cast<ParenExpr>(E)->getSubExpr());
@@ -738,7 +740,7 @@ RValue CodeGenFunction::EmitCallExpr(const CallExpr *E) {
           dyn_cast<const FunctionDecl>(DRExpr->getDecl()))
         if (unsigned builtinID = FDecl->getIdentifier()->getBuiltinID())
           return EmitBuiltinExpr(builtinID, E);
-        
+
   llvm::Value *Callee = EmitScalarExpr(E->getCallee());
   return EmitCallExpr(Callee, E->getCallee()->getType(),
                       E->arg_begin(), E->arg_end());
@@ -750,6 +752,18 @@ RValue CodeGenFunction::EmitCallExpr(Expr *FnExpr,
 
   llvm::Value *Callee = EmitScalarExpr(FnExpr);
   return EmitCallExpr(Callee, FnExpr->getType(), ArgBeg, ArgEnd);
+}
+
+LValue CodeGenFunction::EmitBinaryOperatorLValue(const BinaryOperator *E) {
+  // Can only get l-value for binary operator expressions which are a
+  // simple assignment of aggregate type.
+  if (E->getOpcode() != BinaryOperator::Assign)
+    return EmitUnsupportedLValue(E, "binary l-value expression");
+
+  llvm::Value *Temp = CreateTempAlloca(ConvertType(E->getType()));
+  EmitAggExpr(E, Temp, false);
+  // FIXME: Are these qualifiers correct?
+  return LValue::MakeAddr(Temp, E->getType().getCVRQualifiers());
 }
 
 LValue CodeGenFunction::EmitCallExprLValue(const CallExpr *E) {

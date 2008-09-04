@@ -282,6 +282,8 @@ public:
   void EmitStoreThroughPropertyRefLValue(RValue Src, LValue Dst, QualType Ty);
    
   // Note: only availabe for agg return types
+  LValue EmitBinaryOperatorLValue(const BinaryOperator *E);
+  // Note: only availabe for agg return types
   LValue EmitCallExprLValue(const CallExpr *E);
   
   LValue EmitDeclRefLValue(const DeclRefExpr *E);

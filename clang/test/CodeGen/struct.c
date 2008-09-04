@@ -69,7 +69,6 @@ typedef struct {
   int location;
   int length;
 } range;
-
 extern range f6();
 void f7()
 {
@@ -166,3 +165,27 @@ struct __attribute__((packed)) S2839 { double a[19];  signed char b; } s2839[5];
 
 struct __attribute__((packed)) SS { long double a; char b; } SS;
 
+
+/* As lvalue */
+
+int f15() {
+  extern range f15_ext();
+  return f15_ext().location;
+}
+
+range f16() {
+  extern rangepair f16_ext();
+  return f16_ext().range1;
+}
+
+int f17() {
+  extern range f17_ext();
+  range r;
+  return (r = f17_ext()).location;
+}
+
+range f18() {
+  extern rangepair f18_ext();
+  rangepair rp;
+  return (rp = f18_ext()).range1;
+}
