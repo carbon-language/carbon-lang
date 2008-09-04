@@ -816,6 +816,18 @@ private:
     /// CompatiblePointerDiscardsQualifiers - The assignment discards
     /// c/v/r qualifiers, which we accept as an extension.
     CompatiblePointerDiscardsQualifiers,
+
+    /// IntToBlockPointer - The assignment converts an int to a closure 
+    /// pointer. We disallow this.
+    IntToBlockPointer,
+
+    /// IncompatibleBlockPointer - The assignment is between two closure 
+    /// pointers types that are not compatible.
+    IncompatibleBlockPointer,
+    
+    /// BlockVoidPointer - The assignment is between a closure pointer and
+    /// void*, we accept for now.
+    BlockVoidPointer,
     
     /// Incompatible - We reject this conversion outright, it is invalid to
     /// represent it in the AST.
@@ -849,6 +861,11 @@ private:
   // Helper function for CheckAssignmentConstraints (C99 6.5.16.1p1)
   AssignConvertType CheckPointerTypesForAssignment(QualType lhsType, 
                                                    QualType rhsType);
+                                                   
+  // Helper function for CheckAssignmentConstraints involving two
+  // blcok pointer types.
+  AssignConvertType CheckBlockPointerTypesForAssignment(QualType lhsType, 
+                                                        QualType rhsType);
   
   /// the following "Check" methods will return a valid/converted QualType
   /// or a null QualType (indicating an error diagnostic was issued).

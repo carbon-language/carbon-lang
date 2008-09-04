@@ -1767,6 +1767,52 @@ bool ASTContext::isObjCObjectPointerType(QualType Ty) const {
 //                        Type Compatibility Testing
 //===----------------------------------------------------------------------===//
 
+/// typesAreBlockCompatible - This routine is called when comparing two
+/// closure types. Types must be strictly compatible here.
+bool ASTContext::typesAreBlockCompatible(QualType lhs, QualType rhs) {
+  if (lhs.getCVRQualifiers() != rhs.getCVRQualifiers())
+    return false;
+  
+  QualType lcanon = getCanonicalType(lhs);
+  QualType rcanon = getCanonicalType(rhs);
+  
+  // If two types are identical, they are are compatible
+  if (lcanon == rcanon)
+    return true;
+  if (isa<FunctionType>(lcanon) && isa<FunctionType>(rcanon)) {
+    const FunctionType *lbase = cast<FunctionType>(lcanon);
+    const FunctionType *rbase = cast<FunctionType>(rcanon);
+    
+    // First check the return types.
+    if (!typesAreBlockCompatible(lbase->getResultType(),rbase->getResultType()))
+      return false;
+
+    // Return types matched, now check the argument types.
+    const FunctionTypeProto *lproto = dyn_cast<FunctionTypeProto>(lbase);
+    const FunctionTypeProto *rproto = dyn_cast<FunctionTypeProto>(rbase);
+        
+    if (lproto && rproto) { // two C99 style function prototypes
+      unsigned lproto_nargs = lproto->getNumArgs();
+      unsigned rproto_nargs = rproto->getNumArgs();
+      
+      if (lproto_nargs != rproto_nargs)
+        return false;
+      
+      if (lproto->isVariadic() || rproto->isVariadic())
+        return false;
+
+      // The use of ellipsis agree...now check the argument types.
+      for (unsigned i = 0; i < lproto_nargs; i++)
+        if (!typesAreBlockCompatible(lproto->getArgType(i), 
+                                     rproto->getArgType(i)))
+          return false;
+      return true;
+    }
+    return (!lproto && !rproto); // two K&R style function decls match.
+  }
+  return false;
+}
+
 /// areCompatVectorTypes - Return true if the two specified vector types are 
 /// compatible.
 static bool areCompatVectorTypes(const VectorType *LHS,

@@ -1431,6 +1431,34 @@ Sema::CheckPointerTypesForAssignment(QualType lhsType, QualType rhsType) {
   return ConvTy;
 }
 
+/// CheckBlockPointerTypesForAssignment - This routine determines whether two
+/// block pointer types are compatible or whether a block and normal pointer
+/// are compatible. It is more restrict than comparing two function pointer
+// types.
+Sema::AssignConvertType 
+Sema::CheckBlockPointerTypesForAssignment(QualType lhsType, 
+                                          QualType rhsType) {
+  QualType lhptee, rhptee;
+  
+  // get the "pointed to" type (ignoring qualifiers at the top level)
+  lhptee = lhsType->getAsBlockPointerType()->getPointeeType();
+  rhptee = rhsType->getAsBlockPointerType()->getPointeeType(); 
+  
+  // make sure we operate on the canonical type
+  lhptee = Context.getCanonicalType(lhptee);
+  rhptee = Context.getCanonicalType(rhptee);
+  
+  AssignConvertType ConvTy = Compatible;
+  
+  // For blocks we enforce that qualifiers are identical.
+  if (lhptee.getCVRQualifiers() != rhptee.getCVRQualifiers())
+    ConvTy = CompatiblePointerDiscardsQualifiers;
+    
+  if (!Context.typesAreBlockCompatible(lhptee, rhptee))
+    return IncompatibleBlockPointer; 
+  return ConvTy;
+}
+
 /// CheckAssignmentConstraints (C99 6.5.16) - This routine currently 
 /// has code to accommodate several GCC extensions when type checking 
 /// pointers. Here are some objectionable examples that GCC considers warnings:
@@ -1500,6 +1528,25 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
 
     if (isa<PointerType>(rhsType))
       return CheckPointerTypesForAssignment(lhsType, rhsType);
+      
+    if (const BlockPointerType *BPT = rhsType->getAsBlockPointerType())
+      if (BPT->getPointeeType()->isVoidType())
+        return BlockVoidPointer;
+      
+    return Incompatible;
+  }
+
+  if (isa<BlockPointerType>(lhsType)) {
+    if (rhsType->isIntegerType())
+      return IntToPointer;
+    
+    if (rhsType->isBlockPointerType())
+      return CheckBlockPointerTypesForAssignment(lhsType, rhsType);
+      
+    if (const PointerType *RHSPT = rhsType->getAsPointerType()) {
+      if (RHSPT->getPointeeType()->isVoidType())
+        return BlockVoidPointer;
+    }
     return Incompatible;
   }
 
@@ -1513,6 +1560,10 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
 
     if (isa<PointerType>(lhsType)) 
       return CheckPointerTypesForAssignment(lhsType, rhsType);
+      
+    if (isa<BlockPointerType>(lhsType) && 
+        rhsType->getAsPointerType()->getPointeeType()->isVoidType())
+      return BlockVoidPointer;
     return Incompatible;
   }
 
@@ -1532,6 +1583,11 @@ Sema::CheckSingleAssignmentConstraints(QualType lhsType, Expr *&rExpr) {
     ImpCastExprToType(rExpr, lhsType);
     return Compatible;
   }
+  
+  // We don't allow conversion of non-null-pointer constants to integers.
+  if (lhsType->isBlockPointerType() && rExpr->getType()->isIntegerType())
+    return IntToBlockPointer;
+
   // This check seems unnatural, however it is necessary to ensure the proper
   // conversion of functions/arrays. If the conversion were done for all
   // DeclExpr's (created by ActOnIdentifierExpr), it would mess up the unary
@@ -1849,6 +1905,21 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation loc,
     ImpCastExprToType(rex, lType); // promote the pointer to pointer
     return Context.IntTy;
   }
+  // Handle block pointer types.
+  if (lType->isBlockPointerType() && rType->isBlockPointerType()) {
+    QualType lpointee = lType->getAsBlockPointerType()->getPointeeType();
+    QualType rpointee = rType->getAsBlockPointerType()->getPointeeType();
+    
+    if (!LHSIsNull && !RHSIsNull &&
+        !Context.typesAreBlockCompatible(lpointee, rpointee)) {
+      Diag(loc, diag::err_typecheck_comparison_of_distinct_blocks,
+           lType.getAsString(), rType.getAsString(),
+           lex->getSourceRange(), rex->getSourceRange());
+    }
+    ImpCastExprToType(rex, lType); // promote the pointer to pointer
+    return Context.IntTy;
+  }
+
   if ((lType->isObjCQualifiedIdType() || rType->isObjCQualifiedIdType())) {
     if (ObjCQualifiedIdTypesAreCompatible(lType, rType, true)) {
       ImpCastExprToType(rex, lType);
@@ -2874,6 +2945,15 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
     break;
   case CompatiblePointerDiscardsQualifiers:
     DiagKind = diag::ext_typecheck_convert_discards_qualifiers;
+    break;
+  case IntToBlockPointer:
+    DiagKind = diag::err_int_to_block_pointer;
+    break;
+  case IncompatibleBlockPointer:
+    DiagKind = diag::err_typecheck_convert_incompatible_block_pointer;
+    break;
+  case BlockVoidPointer:
+    DiagKind = diag::ext_typecheck_convert_pointer_void_block;
     break;
   case Incompatible:
     DiagKind = diag::err_typecheck_convert_incompatible;

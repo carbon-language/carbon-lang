@@ -998,6 +998,14 @@ DIAG(ext_typecheck_convert_incompatible_pointer, EXTWARN,
      "incompatible pointer types %2 '%1', expected '%0'")
 DIAG(ext_typecheck_convert_discards_qualifiers, EXTWARN,
      "%2 '%1' discards qualifiers, expected '%0'")
+DIAG(err_int_to_block_pointer, ERROR,
+     "invalid conversion %2 integer '%1', expected block pointer '%0'")
+DIAG(err_typecheck_comparison_of_distinct_blocks, ERROR,
+     "comparison of distinct block types ('%0' and '%1')")
+DIAG(err_typecheck_convert_incompatible_block_pointer, ERROR,
+     "incompatible block pointer types %2 '%1', expected '%0'")
+DIAG(ext_typecheck_convert_pointer_void_block, EXTENSION,
+     "%2 '%1' converts between void* and block pointer, expected '%0'")
      
 DIAG(err_typecheck_array_not_modifiable_lvalue, ERROR,
      "array type '%0' is not assignable")
@@ -1133,7 +1141,7 @@ DIAG(warn_uninit_val, WARNING, "use of uninitialized variable")
 DIAG(err_expected_block_lbrace, ERROR,
      "expected '{' in block literal")
 DIAG(err_goto_in_block, ERROR,
-     "goto not allowed in closure literal")
+     "goto not allowed in block literal")
 DIAG(err_return_in_block_expression, ERROR,
      "return not allowed in block expression literal")
 
