@@ -106,6 +106,9 @@ RValue CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E) {
 // FIXME: This should really be merged with GenerateCode.
 void CodeGenFunction::StartObjCMethod(const ObjCMethodDecl *OMD) {
   CurFn = CGM.getObjCRuntime().GenerateMethod(OMD);
+
+  CGM.SetMethodAttributes(OMD, CurFn);
+  
   llvm::BasicBlock *EntryBB = llvm::BasicBlock::Create("entry", CurFn);
   
   // Create a marker to make it easy to insert allocas into the entryblock

@@ -196,9 +196,10 @@ void CodeGenModule::SetGlobalValueAttributes(const FunctionDecl *FD,
   }
 }
 
-void CodeGenModule::SetFunctionAttributes(const FunctionDecl *FD,
-                                          llvm::Function *F,
-                                          const llvm::FunctionType *FTy) {
+static void 
+SetFunctionAttributesFromTypes(const Decl *FD,
+                               llvm::Function *F,
+                               const llvm::SmallVector<QualType, 16> &ArgTypes) {
   unsigned FuncAttrs = 0;
   if (FD->getAttr<NoThrowAttr>())
     FuncAttrs |= llvm::ParamAttr::NoUnwind;
@@ -209,28 +210,26 @@ void CodeGenModule::SetFunctionAttributes(const FunctionDecl *FD,
   if (FuncAttrs)
     ParamAttrList.push_back(llvm::ParamAttrsWithIndex::get(0, FuncAttrs));
   // Note that there is parallel code in CodeGenFunction::EmitCallExpr
-  bool AggregateReturn = CodeGenFunction::hasAggregateLLVMType(FD->getResultType());
+  bool AggregateReturn = CodeGenFunction::hasAggregateLLVMType(ArgTypes[0]);
   if (AggregateReturn)
     ParamAttrList.push_back(
         llvm::ParamAttrsWithIndex::get(1, llvm::ParamAttr::StructRet));
   unsigned increment = AggregateReturn ? 2 : 1;
-  const FunctionTypeProto* FTP = dyn_cast<FunctionTypeProto>(FD->getType());
-  if (FTP) {
-    for (unsigned i = 0; i < FTP->getNumArgs(); i++) {
-      QualType ParamType = FTP->getArgType(i);
-      unsigned ParamAttrs = 0;
-      if (ParamType->isRecordType())
-        ParamAttrs |= llvm::ParamAttr::ByVal;
-      if (ParamType->isSignedIntegerType() &&
-          ParamType->isPromotableIntegerType())
-        ParamAttrs |= llvm::ParamAttr::SExt;
-      if (ParamType->isUnsignedIntegerType() &&
-          ParamType->isPromotableIntegerType())
-        ParamAttrs |= llvm::ParamAttr::ZExt;
-      if (ParamAttrs)
-        ParamAttrList.push_back(llvm::ParamAttrsWithIndex::get(i + increment,
-                                                               ParamAttrs));
-    }
+  for (llvm::SmallVector<QualType, 8>::const_iterator i = ArgTypes.begin() + 1,
+         e = ArgTypes.end(); i != e; ++i, ++increment) {
+    QualType ParamType = *i;
+    unsigned ParamAttrs = 0;
+    if (ParamType->isRecordType())
+      ParamAttrs |= llvm::ParamAttr::ByVal;
+    if (ParamType->isSignedIntegerType() &&
+        ParamType->isPromotableIntegerType())
+      ParamAttrs |= llvm::ParamAttr::SExt;
+    if (ParamType->isUnsignedIntegerType() &&
+        ParamType->isPromotableIntegerType())
+      ParamAttrs |= llvm::ParamAttr::ZExt;
+    if (ParamAttrs)
+      ParamAttrList.push_back(llvm::ParamAttrsWithIndex::get(increment,
+                                                             ParamAttrs));
   }
 
   F->setParamAttrs(llvm::PAListPtr::get(ParamAttrList.begin(),
@@ -239,6 +238,45 @@ void CodeGenModule::SetFunctionAttributes(const FunctionDecl *FD,
   // Set the appropriate calling convention for the Function.
   if (FD->getAttr<FastCallAttr>())
     F->setCallingConv(llvm::CallingConv::Fast);
+}
+
+/// SetFunctionAttributesForDefinition - Set function attributes
+/// specific to a function definition.
+void CodeGenModule::SetFunctionAttributesForDefinition(llvm::Function *F) {
+  if (!Features.Exceptions)
+    F->addParamAttr(0, llvm::ParamAttr::NoUnwind);  
+}
+
+void CodeGenModule::SetMethodAttributes(const ObjCMethodDecl *MD,
+                                        llvm::Function *F) {
+  llvm::SmallVector<QualType, 16> ArgTypes;
+  
+  ArgTypes.push_back(MD->getResultType());
+  ArgTypes.push_back(MD->getSelfDecl()->getType());
+  ArgTypes.push_back(Context.getObjCSelType());
+  for (ObjCMethodDecl::param_const_iterator i = MD->param_begin(),
+         e = MD->param_end(); i != e; ++i)
+    ArgTypes.push_back((*i)->getType());
+
+  SetFunctionAttributesFromTypes(MD, F, ArgTypes);
+  
+  SetFunctionAttributesForDefinition(F);
+
+  // FIXME: set visibility
+}
+
+void CodeGenModule::SetFunctionAttributes(const FunctionDecl *FD,
+                                          llvm::Function *F) {
+  llvm::SmallVector<QualType, 16> ArgTypes;
+  const FunctionType *FTy = FD->getType()->getAsFunctionType();
+  const FunctionTypeProto *FTP = dyn_cast<FunctionTypeProto>(FTy);
+  
+  ArgTypes.push_back(FTy->getResultType());
+  if (FTP)
+    for (unsigned i = 0, e = FTP->getNumArgs(); i != e; ++i)
+      ArgTypes.push_back(FTP->getArgType(i));
+
+  SetFunctionAttributesFromTypes(FD, F, ArgTypes);
 
   SetGlobalValueAttributes(FD, F);
 }
@@ -533,12 +571,11 @@ CodeGenModule::EmitForwardFunctionDefinition(const FunctionDecl *D) {
     return alias;
   } else {
     const llvm::Type *Ty = getTypes().ConvertType(D->getType());
-    const llvm::FunctionType *FTy = cast<llvm::FunctionType>(Ty);
-    llvm::Function *F = llvm::Function::Create(FTy, 
+    llvm::Function *F = llvm::Function::Create(cast<llvm::FunctionType>(Ty), 
                                                llvm::Function::ExternalLinkage,
                                                D->getName(), &getModule());
     
-    SetFunctionAttributes(D, F, FTy);
+    SetFunctionAttributes(D, F);
     return F;
   }
 }
@@ -601,11 +638,7 @@ void CodeGenModule::EmitGlobalFunctionDefinition(const FunctionDecl *D) {
     llvm::Function *Fn = cast<llvm::Function>(Entry);    
     CodeGenFunction(*this).GenerateCode(D, Fn);
 
-    // Set attributes specific to definition. 
-    // FIXME: This needs to be cleaned up by clearly emitting the
-    // declaration / definition at separate times.
-    if (!Features.Exceptions)
-      Fn->addParamAttr(0, llvm::ParamAttr::NoUnwind);  
+    SetFunctionAttributesForDefinition(Fn);
 
     if (const ConstructorAttr *CA = D->getAttr<ConstructorAttr>()) {
       AddGlobalCtor(Fn, CA->getPriority());

@@ -207,10 +207,16 @@ public:
   void ErrorUnsupported(const Decl *D, const char *Type,
                         bool OmitOnError=false);
 
+  void SetMethodAttributes(const ObjCMethodDecl *MD,
+                           llvm::Function *F);
+
 private:
+  /// SetFunctionAttributesForDefinition - Set function attributes
+  /// specific to a function definition.
+  void SetFunctionAttributesForDefinition(llvm::Function *F);
+
   void SetFunctionAttributes(const FunctionDecl *FD,
-                             llvm::Function *F,
-                             const llvm::FunctionType *FTy);
+                             llvm::Function *F);
 
   void SetGlobalValueAttributes(const FunctionDecl *FD,
                                 llvm::GlobalValue *GV);
