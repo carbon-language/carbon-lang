@@ -19,6 +19,8 @@
 #include "X86RegisterInfo.h"
 #include "X86Subtarget.h"
 #include "X86TargetMachine.h"
+#include "llvm/InstrTypes.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/CodeGen/FastISel.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 
@@ -47,6 +49,8 @@ private:
   bool X86SelectLoad(Instruction *I);
   
   bool X86SelectStore(Instruction *I);
+
+  bool X86SelectCmp(Instruction *I);
 };
 
 /// X86SelectConstAddr - Select and emit code to materialize constant address.
@@ -248,6 +252,138 @@ bool X86FastISel::X86SelectLoad(Instruction *I)  {
   return true;
 }
 
+bool X86FastISel::X86SelectCmp(Instruction *I) {
+  CmpInst *CI = cast<CmpInst>(I);
+
+  unsigned Op0Reg = getRegForValue(CI->getOperand(0));
+  unsigned Op1Reg = getRegForValue(CI->getOperand(1));
+
+  unsigned Opc;
+  switch (TLI.getValueType(I->getOperand(0)->getType()).getSimpleVT()) {
+  case MVT::i8: Opc = X86::CMP8rr; break;
+  case MVT::i16: Opc = X86::CMP16rr; break;
+  case MVT::i32: Opc = X86::CMP32rr; break;
+  case MVT::i64: Opc = X86::CMP64rr; break;
+  case MVT::f32: Opc = X86::UCOMISSrr; break;
+  case MVT::f64: Opc = X86::UCOMISDrr; break;
+  default: return false;
+  }
+
+  unsigned ResultReg = createResultReg(&X86::GR8RegClass);
+  switch (CI->getPredicate()) {
+  case CmpInst::FCMP_OEQ: {
+    unsigned EReg = createResultReg(&X86::GR8RegClass);
+    unsigned NPReg = createResultReg(&X86::GR8RegClass);
+    BuildMI(MBB, TII.get(Opc)).addReg(Op0Reg).addReg(Op1Reg);
+    BuildMI(MBB, TII.get(X86::SETEr), EReg);
+    BuildMI(MBB, TII.get(X86::SETNPr), NPReg);
+    BuildMI(MBB, TII.get(X86::AND8rr), ResultReg).addReg(NPReg).addReg(EReg);
+    break;
+  }
+  case CmpInst::FCMP_UNE: {
+    unsigned NEReg = createResultReg(&X86::GR8RegClass);
+    unsigned PReg = createResultReg(&X86::GR8RegClass);
+    BuildMI(MBB, TII.get(Opc)).addReg(Op0Reg).addReg(Op1Reg);
+    BuildMI(MBB, TII.get(X86::SETNEr), NEReg);
+    BuildMI(MBB, TII.get(X86::SETPr), PReg);
+    BuildMI(MBB, TII.get(X86::OR8rr), ResultReg).addReg(PReg).addReg(NEReg);
+    break;
+  }
+  case CmpInst::FCMP_OGT:
+    BuildMI(MBB, TII.get(Opc)).addReg(Op0Reg).addReg(Op1Reg);
+    BuildMI(MBB, TII.get(X86::SETAr), ResultReg);
+    break;
+  case CmpInst::FCMP_OGE:
+    BuildMI(MBB, TII.get(Opc)).addReg(Op0Reg).addReg(Op1Reg);
+    BuildMI(MBB, TII.get(X86::SETAEr), ResultReg);
+    break;
+  case CmpInst::FCMP_OLT:
+    BuildMI(MBB, TII.get(Opc)).addReg(Op1Reg).addReg(Op0Reg);
+    BuildMI(MBB, TII.get(X86::SETAr), ResultReg);
+    break;
+  case CmpInst::FCMP_OLE:
+    BuildMI(MBB, TII.get(Opc)).addReg(Op1Reg).addReg(Op0Reg);
+    BuildMI(MBB, TII.get(X86::SETAEr), ResultReg);
+    break;
+  case CmpInst::FCMP_ONE:
+    BuildMI(MBB, TII.get(Opc)).addReg(Op0Reg).addReg(Op1Reg);
+    BuildMI(MBB, TII.get(X86::SETNEr), ResultReg);
+    break;
+  case CmpInst::FCMP_ORD:
+    BuildMI(MBB, TII.get(Opc)).addReg(Op0Reg).addReg(Op1Reg);
+    BuildMI(MBB, TII.get(X86::SETNPr), ResultReg);
+    break;
+  case CmpInst::FCMP_UNO:
+    BuildMI(MBB, TII.get(Opc)).addReg(Op0Reg).addReg(Op1Reg);
+    BuildMI(MBB, TII.get(X86::SETPr), ResultReg);
+    break;
+  case CmpInst::FCMP_UEQ:
+    BuildMI(MBB, TII.get(Opc)).addReg(Op0Reg).addReg(Op1Reg);
+    BuildMI(MBB, TII.get(X86::SETEr), ResultReg);
+    break;
+  case CmpInst::FCMP_UGT:
+    BuildMI(MBB, TII.get(Opc)).addReg(Op1Reg).addReg(Op0Reg);
+    BuildMI(MBB, TII.get(X86::SETBr), ResultReg);
+    break;
+  case CmpInst::FCMP_UGE:
+    BuildMI(MBB, TII.get(Opc)).addReg(Op1Reg).addReg(Op0Reg);
+    BuildMI(MBB, TII.get(X86::SETBEr), ResultReg);
+    break;
+  case CmpInst::FCMP_ULT:
+    BuildMI(MBB, TII.get(Opc)).addReg(Op0Reg).addReg(Op1Reg);
+    BuildMI(MBB, TII.get(X86::SETBr), ResultReg);
+    break;
+  case CmpInst::FCMP_ULE:
+    BuildMI(MBB, TII.get(Opc)).addReg(Op0Reg).addReg(Op1Reg);
+    BuildMI(MBB, TII.get(X86::SETBEr), ResultReg);
+    break;
+  case CmpInst::ICMP_EQ:
+    BuildMI(MBB, TII.get(Opc)).addReg(Op0Reg).addReg(Op1Reg);
+    BuildMI(MBB, TII.get(X86::SETEr), ResultReg);
+    break;
+  case CmpInst::ICMP_NE:
+    BuildMI(MBB, TII.get(Opc)).addReg(Op0Reg).addReg(Op1Reg);
+    BuildMI(MBB, TII.get(X86::SETNEr), ResultReg);
+    break;
+  case CmpInst::ICMP_UGT:
+    BuildMI(MBB, TII.get(Opc)).addReg(Op0Reg).addReg(Op1Reg);
+    BuildMI(MBB, TII.get(X86::SETAr), ResultReg);
+    break;
+  case CmpInst::ICMP_UGE:
+    BuildMI(MBB, TII.get(Opc)).addReg(Op0Reg).addReg(Op1Reg);
+    BuildMI(MBB, TII.get(X86::SETAEr), ResultReg);
+    break;
+  case CmpInst::ICMP_ULT:
+    BuildMI(MBB, TII.get(Opc)).addReg(Op0Reg).addReg(Op1Reg);
+    BuildMI(MBB, TII.get(X86::SETBr), ResultReg);
+    break;
+  case CmpInst::ICMP_ULE:
+    BuildMI(MBB, TII.get(Opc)).addReg(Op0Reg).addReg(Op1Reg);
+    BuildMI(MBB, TII.get(X86::SETBEr), ResultReg);
+    break;
+  case CmpInst::ICMP_SGT:
+    BuildMI(MBB, TII.get(Opc)).addReg(Op0Reg).addReg(Op1Reg);
+    BuildMI(MBB, TII.get(X86::SETGr), ResultReg);
+    break;
+  case CmpInst::ICMP_SGE:
+    BuildMI(MBB, TII.get(Opc)).addReg(Op0Reg).addReg(Op1Reg);
+    BuildMI(MBB, TII.get(X86::SETGEr), ResultReg);
+    break;
+  case CmpInst::ICMP_SLT:
+    BuildMI(MBB, TII.get(Opc)).addReg(Op0Reg).addReg(Op1Reg);
+    BuildMI(MBB, TII.get(X86::SETLr), ResultReg);
+    break;
+  case CmpInst::ICMP_SLE:
+    BuildMI(MBB, TII.get(Opc)).addReg(Op0Reg).addReg(Op1Reg);
+    BuildMI(MBB, TII.get(X86::SETLEr), ResultReg);
+    break;
+  default:
+    return false;
+  }
+
+  UpdateValueMap(I, ResultReg);
+  return true;
+}
 
 bool
 X86FastISel::TargetSelectInstruction(Instruction *I)  {
@@ -257,6 +393,9 @@ X86FastISel::TargetSelectInstruction(Instruction *I)  {
     return X86SelectLoad(I);
   case Instruction::Store:
     return X86SelectStore(I);
+  case Instruction::ICmp:
+  case Instruction::FCmp:
+    return X86SelectCmp(I);
   }
 
   return false;
