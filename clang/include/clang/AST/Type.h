@@ -530,6 +530,9 @@ protected:
 };
 
 /// PointerLikeType - Common base class for pointers and references.
+/// FIXME: Add more documentation on this classes design point. For example,
+/// should BlockPointerType inherit from it? Is the concept of a PointerLikeType
+/// in the C++ standard?
 ///
 class PointerLikeType : public Type {
   QualType PointeeType;
@@ -577,6 +580,9 @@ protected:
 /// BlockPointerType - pointer to a block type.
 /// This type is to represent types syntactically represented as
 /// "void (^)(int)", etc. Pointee is required to always be a function type.
+/// FIXME: Should BlockPointerType inherit from PointerLikeType? It could
+/// simplfy some type checking code, however PointerLikeType doesn't appear
+/// to be used by the type checker.
 ///
 class BlockPointerType : public Type, public llvm::FoldingSetNode {
   QualType PointeeType;  // Block is some kind of pointer type

@@ -1578,7 +1578,8 @@ Sema::AssignConvertType
 Sema::CheckSingleAssignmentConstraints(QualType lhsType, Expr *&rExpr) {
   // C99 6.5.16.1p1: the left operand is a pointer and the right is
   // a null pointer constant.
-  if ((lhsType->isPointerType() || lhsType->isObjCQualifiedIdType()) 
+  if ((lhsType->isPointerType() || lhsType->isObjCQualifiedIdType() ||
+       lhsType->isBlockPointerType()) 
       && rExpr->isNullPointerConstant(Context)) {
     ImpCastExprToType(rExpr, lhsType);
     return Compatible;
@@ -1937,6 +1938,23 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation loc,
   }
   if (lType->isIntegerType() && 
       (rType->isPointerType() || rType->isObjCQualifiedIdType())) {
+    if (!LHSIsNull)
+      Diag(loc, diag::ext_typecheck_comparison_of_pointer_integer,
+           lType.getAsString(), rType.getAsString(),
+           lex->getSourceRange(), rex->getSourceRange());
+    ImpCastExprToType(lex, rType); // promote the integer to pointer
+    return Context.IntTy;
+  }
+  // Handle block pointers.
+  if (lType->isBlockPointerType() && rType->isIntegerType()) {
+    if (!RHSIsNull)
+      Diag(loc, diag::ext_typecheck_comparison_of_pointer_integer,
+           lType.getAsString(), rType.getAsString(),
+           lex->getSourceRange(), rex->getSourceRange());
+    ImpCastExprToType(rex, lType); // promote the integer to pointer
+    return Context.IntTy;
+  }
+  if (lType->isIntegerType() && rType->isBlockPointerType()) {
     if (!LHSIsNull)
       Diag(loc, diag::ext_typecheck_comparison_of_pointer_integer,
            lType.getAsString(), rType.getAsString(),
