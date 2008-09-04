@@ -302,7 +302,7 @@ ISD::CondCode ISD::getSetCCAndOperation(ISD::CondCode Op1, ISD::CondCode Op2,
 }
 
 const TargetMachine &SelectionDAG::getTarget() const {
-  return TLI.getTargetMachine();
+  return MF->getTarget();
 }
 
 //===----------------------------------------------------------------------===//

@@ -187,7 +187,7 @@ namespace {
     virtual HazardRecognizer *CreateTargetHazardRecognizer() {
       // Should use subtarget info to pick the right hazard recognizer.  For
       // now, always return a PPC970 recognizer.
-      const TargetInstrInfo *II = PPCLowering.getTargetMachine().getInstrInfo();
+      const TargetInstrInfo *II = TM.getInstrInfo();
       assert(II && "No InstrInfo?");
       return new PPCHazardRecognizer970(*II); 
     }

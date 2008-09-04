@@ -3452,7 +3452,7 @@ SDValue DAGCombiner::CombineConsecutiveLoads(SDNode *N, MVT VT) {
       TLI.isConsecutiveLoad(LD2, LD1, LD1VT.getSizeInBits()/8, 1, MFI)) {
     LoadSDNode *LD = cast<LoadSDNode>(LD1);
     unsigned Align = LD->getAlignment();
-    unsigned NewAlign = TLI.getTargetMachine().getTargetData()->
+    unsigned NewAlign = TLI.getTargetData()->
       getABITypeAlignment(VT.getTypeForMVT());
     if (NewAlign <= Align &&
         (!AfterLegalize || TLI.isOperationLegal(ISD::LOAD, VT)))
@@ -3507,7 +3507,7 @@ SDValue DAGCombiner::visitBIT_CONVERT(SDNode *N) {
       !cast<LoadSDNode>(N0)->isVolatile() &&
       (!AfterLegalize || TLI.isOperationLegal(ISD::LOAD, VT))) {
     LoadSDNode *LN0 = cast<LoadSDNode>(N0);
-    unsigned Align = TLI.getTargetMachine().getTargetData()->
+    unsigned Align = TLI.getTargetData()->
       getABITypeAlignment(VT.getTypeForMVT());
     unsigned OrigAlign = LN0->getAlignment();
     if (Align <= OrigAlign) {
@@ -4611,7 +4611,7 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
       ST->isUnindexed()) {
     unsigned Align = ST->getAlignment();
     MVT SVT = Value.getOperand(0).getValueType();
-    unsigned OrigAlign = TLI.getTargetMachine().getTargetData()->
+    unsigned OrigAlign = TLI.getTargetData()->
       getABITypeAlignment(SVT.getTypeForMVT());
     if (Align <= OrigAlign &&
         ((!AfterLegalize && !ST->isVolatile()) ||
@@ -4842,7 +4842,7 @@ SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
     if (NewLoad) {
       // Check the resultant load doesn't need a higher alignment than the
       // original load.
-      unsigned NewAlign = TLI.getTargetMachine().getTargetData()->
+      unsigned NewAlign = TLI.getTargetData()->
         getABITypeAlignment(LVT.getTypeForMVT());
       if (NewAlign > Align || !TLI.isOperationLegal(ISD::LOAD, LVT))
         return SDValue();
