@@ -435,7 +435,7 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S)
   llvm::BasicBlock *FetchMore = llvm::BasicBlock::Create("fetchmore");
   
   llvm::Value *IsLess = Builder.CreateICmpULT(Counter, Limit, "isless");
-  Builder.CreateCondBr(IsLess, LoopStart, FetchMore);
+  Builder.CreateCondBr(IsLess, LoopBody, FetchMore);
 
   // Fetch more elements.
   EmitBlock(FetchMore);
