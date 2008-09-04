@@ -341,3 +341,20 @@ def CC_X86_32_FastCall : CallingConv<[
   // Otherwise, same as everything else.
   CCDelegateTo<CC_X86_32_Common>
 ]>;
+
+def CC_X86_32_FastCC : CallingConv<[
+  // Promote i8/i16 arguments to i32.
+  CCIfType<[i8, i16], CCPromoteToType<i32>>,
+
+  // The 'nest' parameter, if any, is passed in EAX.
+  CCIfNest<CCAssignToReg<[EAX]>>,
+
+  // The first 2 integer arguments are passed in ECX/EDX
+  CCIfType<[i32], CCAssignToReg<[ECX, EDX]>>,
+
+  // Doubles get 8-byte slots that are 8-byte aligned.
+  CCIfType<[f64], CCAssignToStack<8, 8>>,
+
+  // Otherwise, same as everything else.
+  CCDelegateTo<CC_X86_32_Common>
+]>;

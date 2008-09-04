@@ -4,7 +4,7 @@
 
 	%struct.quad_struct = type { i32, i32, %struct.quad_struct*, %struct.quad_struct*, %struct.quad_struct*, %struct.quad_struct*, %struct.quad_struct* }
 
-define fastcc %struct.quad_struct* @MakeTree(i32 %size, i32 %center_x, i32 %center_y, i32 %lo_proc, i32 %hi_proc, %struct.quad_struct* %parent, i32 %ct, i32 %level) nounwind  {
+define  %struct.quad_struct* @MakeTree(i32 %size, i32 %center_x, i32 %center_y, i32 %lo_proc, i32 %hi_proc, %struct.quad_struct* %parent, i32 %ct, i32 %level) nounwind  {
 entry:
 	br i1 true, label %bb43.i, label %bb.i
 
@@ -39,12 +39,12 @@ bb34:		; preds = %CheckOutside.exit20.i
 	%tmp15.reg2mem.0 = sdiv i32 %size, 2		; <i32> [#uses=7]
 	%tmp85 = sub i32 %center_y, %tmp15.reg2mem.0		; <i32> [#uses=2]
 	%tmp88 = sub i32 %center_x, %tmp15.reg2mem.0		; <i32> [#uses=2]
-	%tmp92 = tail call fastcc %struct.quad_struct* @MakeTree( i32 %tmp15.reg2mem.0, i32 %tmp88, i32 %tmp85, i32 0, i32 %hi_proc, %struct.quad_struct* null, i32 2, i32 0 ) nounwind 		; <%struct.quad_struct*> [#uses=0]
+	%tmp92 = tail call  %struct.quad_struct* @MakeTree( i32 %tmp15.reg2mem.0, i32 %tmp88, i32 %tmp85, i32 0, i32 %hi_proc, %struct.quad_struct* null, i32 2, i32 0 ) nounwind 		; <%struct.quad_struct*> [#uses=0]
 	%tmp99 = add i32 0, %hi_proc		; <i32> [#uses=1]
 	%tmp100 = sdiv i32 %tmp99, 2		; <i32> [#uses=1]
-	%tmp110 = tail call fastcc %struct.quad_struct* @MakeTree( i32 %tmp15.reg2mem.0, i32 0, i32 %tmp85, i32 0, i32 %tmp100, %struct.quad_struct* null, i32 3, i32 0 ) nounwind 		; <%struct.quad_struct*> [#uses=0]
+	%tmp110 = tail call  %struct.quad_struct* @MakeTree( i32 %tmp15.reg2mem.0, i32 0, i32 %tmp85, i32 0, i32 %tmp100, %struct.quad_struct* null, i32 3, i32 0 ) nounwind 		; <%struct.quad_struct*> [#uses=0]
 	%tmp122 = add i32 %tmp15.reg2mem.0, %center_y		; <i32> [#uses=2]
-	%tmp129 = tail call fastcc %struct.quad_struct* @MakeTree( i32 %tmp15.reg2mem.0, i32 0, i32 %tmp122, i32 0, i32 0, %struct.quad_struct* null, i32 1, i32 0 ) nounwind 		; <%struct.quad_struct*> [#uses=0]
-	%tmp147 = tail call fastcc %struct.quad_struct* @MakeTree( i32 %tmp15.reg2mem.0, i32 %tmp88, i32 %tmp122, i32 %lo_proc, i32 0, %struct.quad_struct* null, i32 0, i32 0 ) nounwind 		; <%struct.quad_struct*> [#uses=0]
+	%tmp129 = tail call  %struct.quad_struct* @MakeTree( i32 %tmp15.reg2mem.0, i32 0, i32 %tmp122, i32 0, i32 0, %struct.quad_struct* null, i32 1, i32 0 ) nounwind 		; <%struct.quad_struct*> [#uses=0]
+	%tmp147 = tail call  %struct.quad_struct* @MakeTree( i32 %tmp15.reg2mem.0, i32 %tmp88, i32 %tmp122, i32 %lo_proc, i32 0, %struct.quad_struct* null, i32 0, i32 0 ) nounwind 		; <%struct.quad_struct*> [#uses=0]
 	unreachable
 }
