@@ -197,14 +197,14 @@ namespace {
       DisplayedFunction = true;
       
       if (FunctionDecl *FD = dyn_cast<FunctionDecl>(getCodeDecl())) {
-        llvm::cerr << "ANALYZE: "
+        llvm::cout << "ANALYZE: "
         << getContext().getSourceManager().getSourceName(FD->getLocation())
         << ' '
         << FD->getIdentifier()->getName()
         << '\n';
       }
       else if (ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(getCodeDecl())) {
-        llvm::cerr << "ANALYZE (ObjC Method): "
+        llvm::cout << "ANALYZE (ObjC Method): "
         << getContext().getSourceManager().getSourceName(MD->getLocation())
         << " '"
         << MD->getSelector().getName() << "'\n";
