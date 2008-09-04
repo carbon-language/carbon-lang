@@ -1246,9 +1246,19 @@ void SimplifyLibCalls::InitOptimizations() {
   Optimizations["powf"] = &Pow;
   Optimizations["pow"] = &Pow;
   Optimizations["powl"] = &Pow;
+  Optimizations["llvm.pow.f32"] = &Pow;
+  Optimizations["llvm.pow.f64"] = &Pow;
+  Optimizations["llvm.pow.f80"] = &Pow;
+  Optimizations["llvm.pow.f128"] = &Pow;
+  Optimizations["llvm.pow.ppcf128"] = &Pow;
   Optimizations["exp2l"] = &Exp2;
   Optimizations["exp2"] = &Exp2;
   Optimizations["exp2f"] = &Exp2;
+  Optimizations["llvm.exp2.ppcf128"] = &Exp2;
+  Optimizations["llvm.exp2.f128"] = &Exp2;
+  Optimizations["llvm.exp2.f80"] = &Exp2;
+  Optimizations["llvm.exp2.f64"] = &Exp2;
+  Optimizations["llvm.exp2.f32"] = &Exp2;
   
 #ifdef HAVE_FLOORF
   Optimizations["floor"] = &UnaryDoubleFP;
