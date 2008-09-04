@@ -7,7 +7,7 @@
 @interface A <P0>
 @end
 
-/// Interface conforms to inherited protocol
+// Interface conforms to inherited protocol
 
 @interface B0 : A <P0>
 @end
@@ -15,8 +15,8 @@
 @implementation B0
 @end
 
-/// Interface conforms to a protocol which extends another. The other
-/// protocol is inherited, and extended methods are implemented.
+// Interface conforms to a protocol which extends another. The other
+// protocol is inherited, and extended methods are implemented.
 
 @protocol P1 <P0>
 -foo;
@@ -29,8 +29,8 @@
 -foo {};
 @end
 
-/// Interface conforms to a protocol whose methods are provided by an
-/// alternate inherited protocol.
+// Interface conforms to a protocol whose methods are provided by an
+// alternate inherited protocol.
 
 @protocol P2
 -bar;
@@ -42,7 +42,7 @@
 @implementation B2
 @end
 
-/// Interface conforms to a protocol whose methods are provided by a base class.
+// Interface conforms to a protocol whose methods are provided by a base class.
 
 @interface A1 
 -bar;
