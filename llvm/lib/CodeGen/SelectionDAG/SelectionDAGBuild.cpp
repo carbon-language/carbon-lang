@@ -14,6 +14,7 @@
 #define DEBUG_TYPE "isel"
 #include "SelectionDAGBuild.h"
 #include "llvm/ADT/BitVector.h"
+#include "llvm/ADT/SmallSet.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Constants.h"
 #include "llvm/CallingConv.h"
