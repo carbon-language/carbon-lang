@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | llc -fast-isel -mtriple=i386-apple-darwin -mattr=sse2 | \
-; RUN:   grep mov | grep lazy_ptr | count 2
+; RUN:   grep mov | grep lazy_ptr | count 1
 
 @src = external global i32
 

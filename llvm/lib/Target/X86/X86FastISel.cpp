@@ -157,10 +157,10 @@ bool X86FastISel::X86SelectStore(Instruction* I) {
   X86AddressMode AM;
   if (Op1)
     // Address is in register.
-    AM.Base.Reg = Op0;
+    AM.Base.Reg = Op1;
   else
     AM.GV = cast<GlobalValue>(V);
-  addFullAddress(BuildMI(MBB, TII.get(Opc)), AM);
+  addFullAddress(BuildMI(MBB, TII.get(Opc)), AM).addReg(Op0);
   return true;
 }
 
@@ -255,6 +255,8 @@ X86FastISel::TargetSelectInstruction(Instruction *I)  {
   default: break;
   case Instruction::Load:
     return X86SelectLoad(I);
+  case Instruction::Store:
+    return X86SelectStore(I);
   }
 
   return false;
