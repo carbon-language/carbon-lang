@@ -322,13 +322,16 @@ private:
   void WarnUndefinedMethod(SourceLocation ImpLoc, ObjCMethodDecl *method,
                            bool &IncompleteImpl);
                            
-  /// CheckProtocolMethodDefs - This routine checks unimpletented methods
-  /// Declared in protocol, and those referenced by it.
+  /// CheckProtocolMethodDefs - This routine checks unimpletented
+  /// methods declared in protocol, and those referenced by it.
+  /// \param IDecl - Used for checking for methods which may have been
+  /// inherited.
   void CheckProtocolMethodDefs(SourceLocation ImpLoc,
                                ObjCProtocolDecl *PDecl,
                                bool& IncompleteImpl,
                                const llvm::DenseSet<Selector> &InsMap,
-                               const llvm::DenseSet<Selector> &ClsMap);
+                               const llvm::DenseSet<Selector> &ClsMap,
+                               ObjCInterfaceDecl *IDecl);
   
   /// CheckImplementationIvars - This routine checks if the instance variables
   /// listed in the implelementation match those listed in the interface. 

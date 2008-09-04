@@ -128,7 +128,7 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
 }
 
 /// ActOnCompatiblityAlias - this action is called after complete parsing of
-/// @compaatibility_alias declaration. It sets up the alias relationships.
+/// @compatibility_alias declaration. It sets up the alias relationships.
 Sema::DeclTy *Sema::ActOnCompatiblityAlias(SourceLocation AtLoc,
                                            IdentifierInfo *AliasName, 
                                            SourceLocation AliasLocation,
@@ -203,8 +203,8 @@ Sema::ActOnStartProtocolInterface(SourceLocation AtProtoInterfaceLoc,
 }
 
 /// FindProtocolDeclaration - This routine looks up protocols and
-/// issuer error if they are not declared. It returns list of protocol
-/// declarations in its 'Protocols' argument.
+/// issues an error if they are not declared. It returns list of
+/// protocol declarations in its 'Protocols' argument.
 void
 Sema::FindProtocolDeclaration(bool WarnOnDeclarations,
                               const IdentifierLocPair *ProtocolId,
@@ -582,27 +582,37 @@ void Sema::CheckProtocolMethodDefs(SourceLocation ImpLoc,
                                    ObjCProtocolDecl *PDecl,
                                    bool& IncompleteImpl,
                                    const llvm::DenseSet<Selector> &InsMap,
-                                   const llvm::DenseSet<Selector> &ClsMap) {
+                                   const llvm::DenseSet<Selector> &ClsMap,
+                                   ObjCInterfaceDecl *IDecl) {
+  ObjCInterfaceDecl *Super = IDecl->getSuperClass();
+
+  // If a method lookup fails locally we still need to look and see if
+  // the method was implemented by a base class or an inherited
+  // protocol. This lookup is slow, but occurs rarely in correct code
+  // and otherwise would terminate in a warning.
+
   // check unimplemented instance methods.
   for (ObjCProtocolDecl::instmeth_iterator I = PDecl->instmeth_begin(), 
        E = PDecl->instmeth_end(); I != E; ++I) {
     ObjCMethodDecl *method = *I;
-    if (!InsMap.count(method->getSelector()) && 
-        method->getImplementationControl() != ObjCMethodDecl::Optional)
+    if (method->getImplementationControl() != ObjCMethodDecl::Optional && 
+        !InsMap.count(method->getSelector()) &&
+        (!Super || !Super->lookupInstanceMethod(method->getSelector())))
       WarnUndefinedMethod(ImpLoc, method, IncompleteImpl);
   }
   // check unimplemented class methods
   for (ObjCProtocolDecl::classmeth_iterator I = PDecl->classmeth_begin(), 
        E = PDecl->classmeth_end(); I != E; ++I) {
     ObjCMethodDecl *method = *I;
-    if (!ClsMap.count(method->getSelector()) &&
-        method->getImplementationControl() != ObjCMethodDecl::Optional)
+    if (method->getImplementationControl() != ObjCMethodDecl::Optional &&
+        !ClsMap.count(method->getSelector()) &&
+        (!Super || !Super->lookupClassMethod(method->getSelector())))
       WarnUndefinedMethod(ImpLoc, method, IncompleteImpl);
   }
   // Check on this protocols's referenced protocols, recursively.
   for (ObjCProtocolDecl::protocol_iterator PI = PDecl->protocol_begin(),
        E = PDecl->protocol_end(); PI != E; ++PI)
-    CheckProtocolMethodDefs(ImpLoc, *PI, IncompleteImpl, InsMap, ClsMap);
+    CheckProtocolMethodDefs(ImpLoc, *PI, IncompleteImpl, InsMap, ClsMap, IDecl);
 }
 
 void Sema::ImplMethodsVsClassMethods(ObjCImplementationDecl* IMPDecl, 
@@ -639,11 +649,11 @@ void Sema::ImplMethodsVsClassMethods(ObjCImplementationDecl* IMPDecl,
   for (ObjCList<ObjCProtocolDecl>::iterator I = Protocols.begin(),
        E = Protocols.end(); I != E; ++I)
     CheckProtocolMethodDefs(IMPDecl->getLocation(), *I, 
-                            IncompleteImpl, InsMap, ClsMap);
+                            IncompleteImpl, InsMap, ClsMap, IDecl);
 }
 
 /// ImplCategoryMethodsVsIntfMethods - Checks that methods declared in the
-/// category interface is implemented in the category @implementation.
+/// category interface are implemented in the category @implementation.
 void Sema::ImplCategoryMethodsVsIntfMethods(ObjCCategoryImplDecl *CatImplDecl,
                                             ObjCCategoryDecl *CatClassDecl) {
   llvm::DenseSet<Selector> InsMap;
@@ -677,7 +687,7 @@ void Sema::ImplCategoryMethodsVsIntfMethods(ObjCCategoryImplDecl *CatImplDecl,
   for (ObjCCategoryDecl::protocol_iterator PI = CatClassDecl->protocol_begin(),
        E = CatClassDecl->protocol_end(); PI != E; ++PI)
     CheckProtocolMethodDefs(CatImplDecl->getLocation(), *PI, IncompleteImpl, 
-                            InsMap, ClsMap);
+                            InsMap, ClsMap, CatClassDecl->getClassInterface());
 }
 
 /// ActOnForwardClassDeclaration - 
