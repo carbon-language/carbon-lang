@@ -50,6 +50,7 @@ private:
   bool EmittedTokensOnThisLine;
   DirectoryLookup::DirType FileType;
   llvm::SmallString<512> CurFilename;
+  bool Initialized;
 public:
   PrintPPOutputPPCallbacks(Preprocessor &pp, llvm::raw_ostream &os)
      : PP(pp), OS(os) {
@@ -57,6 +58,7 @@ public:
     CurFilename += "<uninit>";
     EmittedTokensOnThisLine = false;
     FileType = DirectoryLookup::NormalHeaderDir;
+    Initialized = false;
   }
   
   void SetEmittedTokensOnThisLine() { EmittedTokensOnThisLine = true; }
@@ -70,16 +72,40 @@ public:
   bool HandleFirstTokOnLine(Token &Tok);
   bool MoveToLine(SourceLocation Loc);
   bool AvoidConcat(const Token &PrevTok, const Token &Tok);
+  void WriteLineInfo(unsigned LineNo, const char *Extra=0, unsigned ExtraLen=0);
 };
 }  // end anonymous namespace
+
+void PrintPPOutputPPCallbacks::WriteLineInfo(unsigned LineNo,
+                                             const char *Extra,
+                                             unsigned ExtraLen) {
+  if (EmittedTokensOnThisLine) {
+    OS << '\n';
+    EmittedTokensOnThisLine = false;
+  }
+
+  OS << '#' << ' ' << LineNo << ' ' << '"';
+  OS.write(&CurFilename[0], CurFilename.size());
+  OS << '"';
+  
+  if (ExtraLen)
+    OS.write(Extra, ExtraLen);
+
+  if (FileType == DirectoryLookup::SystemHeaderDir)
+    OS.write(" 3", 2);
+  else if (FileType == DirectoryLookup::ExternCSystemHeaderDir)
+    OS.write(" 3 4", 4);
+  OS << '\n';
+}
 
 /// MoveToLine - Move the output to the source line specified by the location
 /// object.  We can do this by emitting some number of \n's, or be emitting a
 /// #line directive.  This returns false if already at the specified line, true
 /// if some newlines were emitted.
 bool PrintPPOutputPPCallbacks::MoveToLine(SourceLocation Loc) {
+  unsigned LineNo = PP.getSourceManager().getLogicalLineNumber(Loc);
+
   if (DisableLineMarkers) {
-    unsigned LineNo = PP.getSourceManager().getLogicalLineNumber(Loc);
     if (LineNo == CurLine) return false;
     
     CurLine = LineNo;
@@ -91,9 +117,7 @@ bool PrintPPOutputPPCallbacks::MoveToLine(SourceLocation Loc) {
     EmittedTokensOnThisLine = false;
     return true;
   }
-  
-  unsigned LineNo = PP.getSourceManager().getLogicalLineNumber(Loc);
-  
+
   // If this line is "close enough" to the original line, just print newlines,
   // otherwise print a #line directive.
   if (LineNo-CurLine < 8) {
@@ -105,25 +129,11 @@ bool PrintPPOutputPPCallbacks::MoveToLine(SourceLocation Loc) {
       const char *NewLines = "\n\n\n\n\n\n\n\n";
       OS.write(NewLines, LineNo-CurLine);
     }
-    CurLine = LineNo;
   } else {
-    if (EmittedTokensOnThisLine) {
-      OS << '\n';
-      EmittedTokensOnThisLine = false;
-    }
-    
-    CurLine = LineNo;
-    
-    OS << '#' << ' ' << LineNo << ' ' << '"';
-    OS.write(&CurFilename[0], CurFilename.size());
-    OS << '"';
-    
-    if (FileType == DirectoryLookup::SystemHeaderDir)
-      OS.write(" 3", 2);
-    else if (FileType == DirectoryLookup::ExternCSystemHeaderDir)
-      OS.write(" 3 4", 4);
-    OS << '\n';
+    WriteLineInfo(LineNo, 0, 0);
   } 
+
+  CurLine = LineNo;    
   return true;
 }
 
@@ -133,7 +143,7 @@ bool PrintPPOutputPPCallbacks::MoveToLine(SourceLocation Loc) {
 /// position.
 void PrintPPOutputPPCallbacks::FileChanged(SourceLocation Loc,
                                            FileChangeReason Reason,
-                                           DirectoryLookup::DirType FileType) {
+                                           DirectoryLookup::DirType NewFileType) {
   // Unless we are exiting a #include, make sure to skip ahead to the line the
   // #include directive was at.
   SourceManager &SourceMgr = PP.getSourceManager();
@@ -149,40 +159,31 @@ void PrintPPOutputPPCallbacks::FileChanged(SourceLocation Loc,
   
   Loc = SourceMgr.getLogicalLoc(Loc);
   CurLine = SourceMgr.getLineNumber(Loc);
-  
+
   if (DisableLineMarkers) return;
 
   CurFilename.clear();
   CurFilename += SourceMgr.getSourceName(Loc);
   Lexer::Stringify(CurFilename);
-  FileType = FileType;
-  
-  if (EmittedTokensOnThisLine) {
-    OS << '\n';
-    EmittedTokensOnThisLine = false;
+  FileType = NewFileType;
+
+  if (!Initialized) {
+    WriteLineInfo(CurLine);
+    Initialized = true;
   }
-  
-  OS << '#' << ' ' << CurLine << ' ' << '"';
-  OS.write(&CurFilename[0], CurFilename.size());
-  OS << '"';
-  
+
   switch (Reason) {
   case PPCallbacks::EnterFile:
-    OS.write(" 1", 2);
+    WriteLineInfo(CurLine, " 1", 2);
     break;
   case PPCallbacks::ExitFile:
-    OS.write(" 2", 2);
+    WriteLineInfo(CurLine, " 2", 2);
     break;
-  case PPCallbacks::SystemHeaderPragma: break;
-  case PPCallbacks::RenameFile: break;
+  case PPCallbacks::SystemHeaderPragma: 
+  case PPCallbacks::RenameFile: 
+    WriteLineInfo(CurLine);
+    break;
   }
-  
-  if (FileType == DirectoryLookup::SystemHeaderDir)
-    OS.write(" 3", 2);
-  else if (FileType == DirectoryLookup::ExternCSystemHeaderDir)
-    OS.write(" 3 4", 4);
-  
-  OS << '\n';
 }
 
 /// HandleIdent - Handle #ident directives when read by the preprocessor.
