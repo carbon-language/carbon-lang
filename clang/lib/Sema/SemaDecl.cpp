@@ -1760,16 +1760,8 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
     // FIXME: Tag decls should be chained to any simultaneous vardecls, e.g.:
     // struct X { int A; } D;    D should chain to X.
     if (getLangOptions().CPlusPlus)
-      // FIXME: Look for a way to use RecordDecl for simple structs.
-
-      // We use 'dyn_cast' instead of 'cast' because PrevDecl might not
-      // be a CXXRecordDecl* if we had a redefinition error.  In this case,
-      // the dyn_cast will return a NULL pointer.
       New = CXXRecordDecl::Create(Context, Kind, CurContext, Loc, Name);
     else
-      // We use 'dyn_cast' instead of 'cast' because PrevDecl might not
-      // be a RecordDecl* if we had a redefinition error.  In this case,
-      // the dyn_cast will return a NULL pointer.      
       New = RecordDecl::Create(Context, Kind, CurContext, Loc, Name);
   }
   
