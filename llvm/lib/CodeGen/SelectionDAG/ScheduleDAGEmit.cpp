@@ -30,13 +30,6 @@ using namespace llvm;
 
 STATISTIC(NumCommutes,   "Number of instructions commuted");
 
-namespace {
-  static cl::opt<bool>
-  SchedLiveInCopies("schedule-livein-copies",
-                    cl::desc("Schedule copies of livein registers"),
-                    cl::init(false));
-}
-
 /// getInstrOperandRegClass - Return register class of the operand of an
 /// instruction of the specified TargetInstrDesc.
 static const TargetRegisterClass*
@@ -653,100 +646,8 @@ void ScheduleDAG::EmitCrossRCCopy(SUnit *SU,
   }
 }
 
-/// EmitLiveInCopy - Emit a copy for a live in physical register. If the
-/// physical register has only a single copy use, then coalesced the copy
-/// if possible.
-void ScheduleDAG::EmitLiveInCopy(MachineBasicBlock *MBB,
-                                 MachineBasicBlock::iterator &InsertPos,
-                                 unsigned VirtReg, unsigned PhysReg,
-                                 const TargetRegisterClass *RC,
-                                 DenseMap<MachineInstr*, unsigned> &CopyRegMap){
-  unsigned NumUses = 0;
-  MachineInstr *UseMI = NULL;
-  for (MachineRegisterInfo::use_iterator UI = MRI.use_begin(VirtReg),
-         UE = MRI.use_end(); UI != UE; ++UI) {
-    UseMI = &*UI;
-    if (++NumUses > 1)
-      break;
-  }
-
-  // If the number of uses is not one, or the use is not a move instruction,
-  // don't coalesce. Also, only coalesce away a virtual register to virtual
-  // register copy.
-  bool Coalesced = false;
-  unsigned SrcReg, DstReg;
-  if (NumUses == 1 &&
-      TII->isMoveInstr(*UseMI, SrcReg, DstReg) &&
-      TargetRegisterInfo::isVirtualRegister(DstReg)) {
-    VirtReg = DstReg;
-    Coalesced = true;
-  }
-
-  // Now find an ideal location to insert the copy.
-  MachineBasicBlock::iterator Pos = InsertPos;
-  while (Pos != MBB->begin()) {
-    MachineInstr *PrevMI = prior(Pos);
-    DenseMap<MachineInstr*, unsigned>::iterator RI = CopyRegMap.find(PrevMI);
-    // copyRegToReg might emit multiple instructions to do a copy.
-    unsigned CopyDstReg = (RI == CopyRegMap.end()) ? 0 : RI->second;
-    if (CopyDstReg && !TRI->regsOverlap(CopyDstReg, PhysReg))
-      // This is what the BB looks like right now:
-      // r1024 = mov r0
-      // ...
-      // r1    = mov r1024
-      //
-      // We want to insert "r1025 = mov r1". Inserting this copy below the
-      // move to r1024 makes it impossible for that move to be coalesced.
-      //
-      // r1025 = mov r1
-      // r1024 = mov r0
-      // ...
-      // r1    = mov 1024
-      // r2    = mov 1025
-      break; // Woot! Found a good location.
-    --Pos;
-  }
-
-  TII->copyRegToReg(*MBB, Pos, VirtReg, PhysReg, RC, RC);
-  CopyRegMap.insert(std::make_pair(prior(Pos), VirtReg));
-  if (Coalesced) {
-    if (&*InsertPos == UseMI) ++InsertPos;
-    MBB->erase(UseMI);
-  }
-}
-
-/// EmitLiveInCopies - If this is the first basic block in the function,
-/// and if it has live ins that need to be copied into vregs, emit the
-/// copies into the top of the block.
-void ScheduleDAG::EmitLiveInCopies(MachineBasicBlock *MBB) {
-  DenseMap<MachineInstr*, unsigned> CopyRegMap;
-  MachineBasicBlock::iterator InsertPos = MBB->begin();
-  for (MachineRegisterInfo::livein_iterator LI = MRI.livein_begin(),
-         E = MRI.livein_end(); LI != E; ++LI)
-    if (LI->second) {
-      const TargetRegisterClass *RC = MRI.getRegClass(LI->second);
-      EmitLiveInCopy(MBB, InsertPos, LI->second, LI->first, RC, CopyRegMap);
-    }
-}
-
 /// EmitSchedule - Emit the machine code in scheduled order.
 MachineBasicBlock *ScheduleDAG::EmitSchedule() {
-  bool isEntryBB = &MF->front() == BB;
-
-  if (isEntryBB && !SchedLiveInCopies) {
-    // If this is the first basic block in the function, and if it has live ins
-    // that need to be copied into vregs, emit the copies into the top of the
-    // block before emitting the code for the block.
-    for (MachineRegisterInfo::livein_iterator LI = MRI.livein_begin(),
-           E = MRI.livein_end(); LI != E; ++LI)
-      if (LI->second) {
-        const TargetRegisterClass *RC = MRI.getRegClass(LI->second);
-        TII->copyRegToReg(*MF->begin(), MF->begin()->end(), LI->second,
-                          LI->first, RC, RC);
-      }
-  }
-
-  // Finally, emit the code for all of the scheduled instructions.
   DenseMap<SDValue, unsigned> VRBaseMap;
   DenseMap<SUnit*, unsigned> CopyVRBaseMap;
   for (unsigned i = 0, e = Sequence.size(); i != e; i++) {
@@ -763,9 +664,6 @@ MachineBasicBlock *ScheduleDAG::EmitSchedule() {
     else
       EmitNode(SU->Node, SU->OrigNode != SU, VRBaseMap);
   }
-
-  if (isEntryBB && SchedLiveInCopies)
-    EmitLiveInCopies(MF->begin());
 
   return BB;
 }
