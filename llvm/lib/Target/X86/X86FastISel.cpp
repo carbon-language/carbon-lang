@@ -263,10 +263,16 @@ bool X86FastISel::X86SelectCmp(Instruction *I) {
   CmpInst *CI = cast<CmpInst>(I);
 
   unsigned Op0Reg = getRegForValue(CI->getOperand(0));
+  if (Op0Reg == 0) return false;
   unsigned Op1Reg = getRegForValue(CI->getOperand(1));
+  if (Op1Reg == 0) return false;
+
+  MVT VT = TLI.getValueType(I->getOperand(0)->getType());
+  if (!TLI.isTypeLegal(VT))
+    return false;
 
   unsigned Opc;
-  switch (TLI.getValueType(I->getOperand(0)->getType()).getSimpleVT()) {
+  switch (VT.getSimpleVT()) {
   case MVT::i8: Opc = X86::CMP8rr; break;
   case MVT::i16: Opc = X86::CMP16rr; break;
   case MVT::i32: Opc = X86::CMP32rr; break;
@@ -398,6 +404,7 @@ bool X86FastISel::X86SelectZExt(Instruction *I) {
   if (I->getType() == Type::Int8Ty &&
       I->getOperand(0)->getType() == Type::Int1Ty) {
     unsigned ResultReg = getRegForValue(I->getOperand(0));
+    if (ResultReg == 0) return false;
     UpdateValueMap(I, ResultReg);
     return true;
   }
@@ -409,6 +416,7 @@ bool X86FastISel::X86SelectBranch(Instruction *I) {
   BranchInst *BI = cast<BranchInst>(I);
   // Unconditional branches are selected by tablegen-generated code.
   unsigned OpReg = getRegForValue(BI->getCondition());
+  if (OpReg == 0) return false;
   MachineBasicBlock *TrueMBB = MBBMap[BI->getSuccessor(0)];
   MachineBasicBlock *FalseMBB = MBBMap[BI->getSuccessor(1)];
 
