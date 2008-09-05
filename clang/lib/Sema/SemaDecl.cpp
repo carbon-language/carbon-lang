@@ -1766,6 +1766,7 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
     // FIXME: Tag decls should be chained to any simultaneous vardecls, e.g.:
     // struct X { int A; } D;    D should chain to X.
     if (getLangOptions().CPlusPlus)
+      // FIXME: Look for a way to use RecordDecl for simple structs.
       New = CXXRecordDecl::Create(Context, Kind, CurContext, Loc, Name);
     else
       New = RecordDecl::Create(Context, Kind, CurContext, Loc, Name);
@@ -1878,6 +1879,7 @@ Sema::DeclTy *Sema::ActOnTagStruct(Scope *S, TagDecl::TagKind Kind, TagKind TK,
   // FIXME: Tag decls should be chained to any simultaneous vardecls, e.g.:
   // struct X { int A; } D;    D should chain to X.
   if (getLangOptions().CPlusPlus)
+    // FIXME: Look for a way to use RecordDecl for simple structs.
     New = CXXRecordDecl::Create(Context, Kind, CurContext, Loc, Name,
                                 dyn_cast_or_null<CXXRecordDecl>(PrevDecl));
   else
