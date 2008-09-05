@@ -56,6 +56,10 @@ private:
   bool X86SelectZExt(Instruction *I);
 
   bool X86SelectBranch(Instruction *I);
+
+  bool X86SelectShift(Instruction *I);
+
+  bool X86SelectSelect(Instruction *I);
   
   unsigned TargetSelectConstantPoolLoad(Constant *C, MachineConstantPool* MCP);
 };
@@ -430,6 +434,95 @@ bool X86FastISel::X86SelectBranch(Instruction *I) {
   return true;
 }
 
+bool X86FastISel::X86SelectShift(Instruction *I) {
+  unsigned CReg = 0;
+  unsigned Opc = 0;
+  const TargetRegisterClass *RC = NULL;
+  if (I->getType() == Type::Int8Ty) {
+    CReg = X86::CL;
+    RC = &X86::GR8RegClass;
+    switch (I->getOpcode()) {
+    case Instruction::LShr: Opc = X86::SHL8rCL; break;
+    case Instruction::AShr: Opc = X86::SAR8rCL; break;
+    case Instruction::Shl:  Opc = X86::SHR8rCL; break;
+    default: return false;
+    }
+  } else if (I->getType() == Type::Int16Ty) {
+    CReg = X86::CX;
+    RC = &X86::GR16RegClass;
+    switch (I->getOpcode()) {
+    case Instruction::LShr: Opc = X86::SHL16rCL; break;
+    case Instruction::AShr: Opc = X86::SAR16rCL; break;
+    case Instruction::Shl:  Opc = X86::SHR16rCL; break;
+    default: return false;
+    }
+  } else if (I->getType() == Type::Int32Ty) {
+    CReg = X86::ECX;
+    RC = &X86::GR32RegClass;
+    switch (I->getOpcode()) {
+    case Instruction::LShr: Opc = X86::SHL32rCL; break;
+    case Instruction::AShr: Opc = X86::SAR32rCL; break;
+    case Instruction::Shl:  Opc = X86::SHR32rCL; break;
+    default: return false;
+    }
+  } else if (I->getType() == Type::Int64Ty) {
+    CReg = X86::RCX;
+    RC = &X86::GR64RegClass;
+    switch (I->getOpcode()) {
+    case Instruction::LShr: Opc = X86::SHL64rCL; break;
+    case Instruction::AShr: Opc = X86::SAR64rCL; break;
+    case Instruction::Shl:  Opc = X86::SHR64rCL; break;
+    default: return false;
+    }
+  } else {
+    return false;
+  }
+
+  unsigned Op0Reg = getRegForValue(I->getOperand(0));
+  if (Op0Reg == 0) return false;
+  unsigned Op1Reg = getRegForValue(I->getOperand(1));
+  if (Op1Reg == 0) return false;
+  TII.copyRegToReg(*MBB, MBB->end(), CReg, Op1Reg, RC, RC);
+  unsigned ResultReg = createResultReg(RC);
+  BuildMI(MBB, TII.get(Opc), ResultReg).addReg(Op0Reg);
+  UpdateValueMap(I, ResultReg);
+  return true;
+}
+
+bool X86FastISel::X86SelectSelect(Instruction *I) {
+  const Type *Ty = I->getOperand(1)->getType();
+  if (isa<PointerType>(Ty))
+    Ty = TLI.getTargetData()->getIntPtrType();
+
+  unsigned Opc = 0;
+  const TargetRegisterClass *RC = NULL;
+  if (Ty == Type::Int16Ty) {
+    Opc = X86::CMOVNE16rr;
+    RC = &X86::GR16RegClass;
+  } else if (Ty == Type::Int32Ty) {
+    Opc = X86::CMOVNE32rr;
+    RC = &X86::GR32RegClass;
+  } else if (Ty == Type::Int64Ty) {
+    Opc = X86::CMOVNE64rr;
+    RC = &X86::GR64RegClass;
+  } else {
+    return false; 
+  }
+
+  unsigned Op0Reg = getRegForValue(I->getOperand(0));
+  if (Op0Reg == 0) return false;
+  unsigned Op1Reg = getRegForValue(I->getOperand(1));
+  if (Op1Reg == 0) return false;
+  unsigned Op2Reg = getRegForValue(I->getOperand(2));
+  if (Op2Reg == 0) return false;
+
+  BuildMI(MBB, TII.get(X86::TEST8rr)).addReg(Op0Reg).addReg(Op0Reg);
+  unsigned ResultReg = createResultReg(RC);
+  BuildMI(MBB, TII.get(Opc), ResultReg).addReg(Op1Reg).addReg(Op2Reg);
+  UpdateValueMap(I, ResultReg);
+  return true;
+}
+
 bool
 X86FastISel::TargetSelectInstruction(Instruction *I)  {
   switch (I->getOpcode()) {
@@ -445,6 +538,12 @@ X86FastISel::TargetSelectInstruction(Instruction *I)  {
     return X86SelectZExt(I);
   case Instruction::Br:
     return X86SelectBranch(I);
+  case Instruction::LShr:
+  case Instruction::AShr:
+  case Instruction::Shl:
+    return X86SelectShift(I);
+  case Instruction::Select:
+    return X86SelectSelect(I);
   }
 
   return false;
