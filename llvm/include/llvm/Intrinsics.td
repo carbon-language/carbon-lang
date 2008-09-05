@@ -193,7 +193,10 @@ let Properties = [IntrWriteArgMem] in {
                                    llvm_i64_ty, llvm_i32_ty]>;
 }
 
-let Properties = [IntrNoMem] in {
+// These functions do not actually read memory, but they are sensitive to the
+// rounding mode.  This needs to be modelled separately; in the meantime
+// declaring them as reading memory is conservatively correct.
+let Properties = [IntrReadMem] in {
   def int_sqrt : Intrinsic<[llvm_anyfloat_ty, LLVMMatchType<0>]>;
   def int_powi : Intrinsic<[llvm_anyfloat_ty, LLVMMatchType<0>, llvm_i32_ty]>;
   def int_sin  : Intrinsic<[llvm_anyfloat_ty, LLVMMatchType<0>]>;
