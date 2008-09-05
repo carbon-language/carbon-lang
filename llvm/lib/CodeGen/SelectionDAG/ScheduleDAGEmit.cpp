@@ -731,9 +731,7 @@ void ScheduleDAG::EmitLiveInCopies(MachineBasicBlock *MBB) {
 
 /// EmitSchedule - Emit the machine code in scheduled order.
 MachineBasicBlock *ScheduleDAG::EmitSchedule() {
-  // If we're emitting the first code into the entry block, we
-  // have additional work to do.
-  bool isEntryBB = &MF->front() == BB && BB->empty();
+  bool isEntryBB = &MF->front() == BB;
 
   if (isEntryBB && !SchedLiveInCopies) {
     // If this is the first basic block in the function, and if it has live ins
