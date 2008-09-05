@@ -3491,7 +3491,7 @@ SDValue DAGCombiner::visitBIT_CONVERT(SDNode *N) {
     }
   }
   
-  // If the input is a constant, let Val fold it.
+  // If the input is a constant, let getNode fold it.
   if (isa<ConstantSDNode>(N0) || isa<ConstantFPSDNode>(N0)) {
     SDValue Res = DAG.getNode(ISD::BIT_CONVERT, VT, N0);
     if (Res.getNode() != N) return Res;
