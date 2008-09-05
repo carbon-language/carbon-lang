@@ -104,16 +104,16 @@ public:
     return I->second;
   }
 
-  /// Returns the CallGraphNode which is used to represent undetermined calls 
+  /// Returns the CallGraphNode which is used to represent undetermined calls
   /// into the callgraph.  Override this if you want behavioral inheritance.
   virtual CallGraphNode* getExternalCallingNode() const { return 0; }
-  
+
   /// Return the root/main method in the module, or some other root node, such
-  /// as the externalcallingnode.  Overload these if you behavioral 
+  /// as the externalcallingnode.  Overload these if you behavioral
   /// inheritance.
   virtual CallGraphNode* getRoot() { return 0; }
   virtual const CallGraphNode* getRoot() const { return 0; }
-  
+
   //===---------------------------------------------------------------------
   // Functions to keep a call graph up to date with a function that has been
   // modified.
@@ -140,17 +140,17 @@ public:
   /// it will insert a new CallGraphNode for the specified function if one does
   /// not already exist.
   CallGraphNode *getOrInsertFunction(const Function *F);
-  
+
   //===---------------------------------------------------------------------
   // Pass infrastructure interface glue code...
   //
 protected:
   CallGraph() {}
-  
+
 public:
   virtual ~CallGraph() { destroy(); }
 
-  /// initialize - Call this method before calling other methods, 
+  /// initialize - Call this method before calling other methods,
   /// re/initializes the state of the CallGraph.
   ///
   void initialize(Module &M);
@@ -158,7 +158,7 @@ public:
   virtual void print(std::ostream &o, const Module *M) const;
   void print(std::ostream *o, const Module *M) const { if (o) print(*o, M); }
   void dump() const;
-  
+
 protected:
   // destroy - Release memory for the call graph
   virtual void destroy();
@@ -229,7 +229,7 @@ public:
   /// specified call site.  Note that this method takes linear time, so it
   /// should be used sparingly.
   void removeCallEdgeFor(CallSite CS);
-  
+
   /// removeAnyCallEdgeTo - This method removes any call edges from this node to
   /// the specified callee function.  This takes more time to execute than
   /// removeCallEdgeTo, so it should not be used unless necessary.
@@ -253,22 +253,22 @@ template <> struct GraphTraits<CallGraphNode*> {
 
   typedef std::pair<CallSite, CallGraphNode*> CGNPairTy;
   typedef std::pointer_to_unary_function<CGNPairTy, CallGraphNode*> CGNDerefFun;
-  
+
   static NodeType *getEntryNode(CallGraphNode *CGN) { return CGN; }
-  
+
   typedef mapped_iterator<NodeType::iterator, CGNDerefFun> ChildIteratorType;
-  
+
   static inline ChildIteratorType child_begin(NodeType *N) {
     return map_iterator(N->begin(), CGNDerefFun(CGNDeref));
   }
   static inline ChildIteratorType child_end  (NodeType *N) {
     return map_iterator(N->end(), CGNDerefFun(CGNDeref));
   }
-  
+
   static CallGraphNode *CGNDeref(CGNPairTy P) {
     return P.second;
   }
-  
+
 };
 
 template <> struct GraphTraits<const CallGraphNode*> {
