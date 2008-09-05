@@ -19,6 +19,7 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/System/Path.h"
+#include "llvm/Config/config.h"
 
 #include <vector>
 
@@ -105,6 +106,20 @@ void InitHeaderSearch::AddEnvVarPaths(const char *Name) {
 void InitHeaderSearch::AddDefaultSystemIncludePaths(const LangOptions &Lang) {
   // FIXME: temporary hack: hard-coded paths.
   // FIXME: get these from the target?
+
+#ifdef LLVM_ON_WIN32
+  if (Lang.CPlusPlus) {
+    // Mingw32 GCC version 4
+    AddPath("c:/mingw/lib/gcc/mingw32/4.3.0/include/c++", System, true, false, false);
+    AddPath("c:/mingw/lib/gcc/mingw32/4.3.0/include/c++/mingw32", System, true, false, false);
+    AddPath("c:/mingw/lib/gcc/mingw32/4.3.0/include/c++/backward", System, true, false, false);
+  }
+
+  // Mingw32 GCC version 4
+  AddPath("C:/mingw/lib/gcc/mingw32/4.3.0/include", System, false, false, false);
+  AddPath("C:/mingw/include", System, false, false, false);
+#else
+
   if (Lang.CPlusPlus) {
     AddPath("/usr/include/c++/4.2.1", System, true, false, false);
     AddPath("/usr/include/c++/4.2.1/i686-apple-darwin10", System, true, false,
@@ -144,11 +159,6 @@ void InitHeaderSearch::AddDefaultSystemIncludePaths(const LangOptions &Lang) {
 
     // DragonFly
     AddPath("/usr/include/c++/4.1", System, true, false, false);
-
-    // Mingw32 GCC version 4
-    AddPath("c:/mingw/lib/gcc/mingw32/4.3.0/include/c++", System, true, false, false);
-    AddPath("c:/mingw/lib/gcc/mingw32/4.3.0/include/c++/mingw32", System, true, false, false);
-    AddPath("c:/mingw/lib/gcc/mingw32/4.3.0/include/c++/backward", System, true, false, false);
   }
 
   AddPath("/usr/local/include", System, false, false, false);
@@ -217,13 +227,11 @@ void InitHeaderSearch::AddDefaultSystemIncludePaths(const LangOptions &Lang) {
   // DragonFly
   AddPath("/usr/libdata/gcc41", System, true, false, false);
 
-  // Mingw32 GCC version 4
-  AddPath("C:/mingw/lib/gcc/mingw32/4.3.0/include", System, false, false, false);
-  AddPath("C:/mingw/include", System, false, false, false);
-
   AddPath("/usr/include", System, false, false, false);
   AddPath("/System/Library/Frameworks", System, true, false, true);
   AddPath("/Library/Frameworks", System, true, false, true);
+
+#endif
 }
 
 void InitHeaderSearch::AddDefaultEnvVarPaths(const LangOptions &Lang) {
