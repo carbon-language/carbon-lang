@@ -504,6 +504,10 @@ bool X86FastISel::X86SelectShift(Instruction *I) {
     return false;
   }
 
+  MVT VT = MVT::getMVT(I->getType(), /*HandleUnknown=*/true);
+  if (VT == MVT::Other || !TLI.isTypeLegal(VT))
+    return false;
+
   unsigned Op0Reg = getRegForValue(I->getOperand(0));
   if (Op0Reg == 0) return false;
   unsigned Op1Reg = getRegForValue(I->getOperand(1));
@@ -516,7 +520,7 @@ bool X86FastISel::X86SelectShift(Instruction *I) {
 }
 
 bool X86FastISel::X86SelectSelect(Instruction *I) {
-  const Type *Ty = I->getOperand(1)->getType();
+  const Type *Ty = I->getType();
   if (isa<PointerType>(Ty))
     Ty = TLI.getTargetData()->getIntPtrType();
 
@@ -534,6 +538,10 @@ bool X86FastISel::X86SelectSelect(Instruction *I) {
   } else {
     return false; 
   }
+
+  MVT VT = MVT::getMVT(Ty, /*HandleUnknown=*/true);
+  if (VT == MVT::Other || !TLI.isTypeLegal(VT))
+    return false;
 
   unsigned Op0Reg = getRegForValue(I->getOperand(0));
   if (Op0Reg == 0) return false;
