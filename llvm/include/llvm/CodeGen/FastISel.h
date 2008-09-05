@@ -227,8 +227,10 @@ protected:
 
   unsigned createResultReg(const TargetRegisterClass *RC);
   
-  virtual unsigned TargetSelectConstantPoolLoad(Constant* C,
-                                                MachineConstantPool* MCP) {
+  /// TargetMaterializeConstant - Emit a constant in a register using 
+  /// target-specific logic, such as constant pool loads.
+  virtual unsigned TargetMaterializeConstant(Constant* C,
+                                             MachineConstantPool* MCP) {
     return 0;
   }
 

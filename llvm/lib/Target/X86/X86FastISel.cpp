@@ -61,7 +61,7 @@ private:
 
   bool X86SelectSelect(Instruction *I);
   
-  unsigned TargetSelectConstantPoolLoad(Constant *C, MachineConstantPool* MCP);
+  unsigned TargetMaterializeConstant(Constant *C, MachineConstantPool* MCP);
 };
 
 /// X86SelectConstAddr - Select and emit code to materialize constant address.
@@ -549,8 +549,8 @@ X86FastISel::TargetSelectInstruction(Instruction *I)  {
   return false;
 }
 
-unsigned X86FastISel::TargetSelectConstantPoolLoad(Constant *C,
-                                                   MachineConstantPool* MCP) {
+unsigned X86FastISel::TargetMaterializeConstant(Constant *C,
+                                                MachineConstantPool* MCP) {
   unsigned CPLoad = getRegForValue(C);
   if (CPLoad != 0)
     return CPLoad;
