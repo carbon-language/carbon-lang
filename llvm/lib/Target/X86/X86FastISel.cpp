@@ -468,36 +468,36 @@ bool X86FastISel::X86SelectShift(Instruction *I) {
     CReg = X86::CL;
     RC = &X86::GR8RegClass;
     switch (I->getOpcode()) {
-    case Instruction::LShr: Opc = X86::SHL8rCL; break;
+    case Instruction::LShr: Opc = X86::SHR8rCL; break;
     case Instruction::AShr: Opc = X86::SAR8rCL; break;
-    case Instruction::Shl:  Opc = X86::SHR8rCL; break;
+    case Instruction::Shl:  Opc = X86::SHL8rCL; break;
     default: return false;
     }
   } else if (I->getType() == Type::Int16Ty) {
     CReg = X86::CX;
     RC = &X86::GR16RegClass;
     switch (I->getOpcode()) {
-    case Instruction::LShr: Opc = X86::SHL16rCL; break;
+    case Instruction::LShr: Opc = X86::SHR16rCL; break;
     case Instruction::AShr: Opc = X86::SAR16rCL; break;
-    case Instruction::Shl:  Opc = X86::SHR16rCL; break;
+    case Instruction::Shl:  Opc = X86::SHL16rCL; break;
     default: return false;
     }
   } else if (I->getType() == Type::Int32Ty) {
     CReg = X86::ECX;
     RC = &X86::GR32RegClass;
     switch (I->getOpcode()) {
-    case Instruction::LShr: Opc = X86::SHL32rCL; break;
+    case Instruction::LShr: Opc = X86::SHR32rCL; break;
     case Instruction::AShr: Opc = X86::SAR32rCL; break;
-    case Instruction::Shl:  Opc = X86::SHR32rCL; break;
+    case Instruction::Shl:  Opc = X86::SHL32rCL; break;
     default: return false;
     }
   } else if (I->getType() == Type::Int64Ty) {
     CReg = X86::RCX;
     RC = &X86::GR64RegClass;
     switch (I->getOpcode()) {
-    case Instruction::LShr: Opc = X86::SHL64rCL; break;
+    case Instruction::LShr: Opc = X86::SHR64rCL; break;
     case Instruction::AShr: Opc = X86::SAR64rCL; break;
-    case Instruction::Shl:  Opc = X86::SHR64rCL; break;
+    case Instruction::Shl:  Opc = X86::SHL64rCL; break;
     default: return false;
     }
   } else {
@@ -523,13 +523,13 @@ bool X86FastISel::X86SelectSelect(Instruction *I) {
   unsigned Opc = 0;
   const TargetRegisterClass *RC = NULL;
   if (Ty == Type::Int16Ty) {
-    Opc = X86::CMOVNE16rr;
+    Opc = X86::CMOVE16rr;
     RC = &X86::GR16RegClass;
   } else if (Ty == Type::Int32Ty) {
-    Opc = X86::CMOVNE32rr;
+    Opc = X86::CMOVE32rr;
     RC = &X86::GR32RegClass;
   } else if (Ty == Type::Int64Ty) {
-    Opc = X86::CMOVNE64rr;
+    Opc = X86::CMOVE64rr;
     RC = &X86::GR64RegClass;
   } else {
     return false; 
