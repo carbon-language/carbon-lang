@@ -1866,7 +1866,7 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
   // FIXME: Merge with rewriter code?
   RecordDecl *RD = RecordDecl::Create(Ctx, TagDecl::TK_struct, 0,
                                       SourceLocation(),
-                                      &Ctx.Idents.get("_objc_super"), 0);  
+                                      &Ctx.Idents.get("_objc_super"));  
   FieldDecl *FieldDecls[2];
   FieldDecls[0] = FieldDecl::Create(Ctx, SourceLocation(), 0, 
                                     Ctx.getObjCIdType());

@@ -32,11 +32,11 @@ static inline RecordDecl *CreateStructDecl(ASTContext &C, const char *Name)
   if (C.getLangOptions().CPlusPlus)
     return CXXRecordDecl::Create(C, TagDecl::TK_struct, 
                                  C.getTranslationUnitDecl(),
-                                 SourceLocation(), &C.Idents.get(Name), 0);
+                                 SourceLocation(), &C.Idents.get(Name));
   else
     return RecordDecl::Create(C, TagDecl::TK_struct, 
                               C.getTranslationUnitDecl(),
-                              SourceLocation(), &C.Idents.get(Name), 0);
+                              SourceLocation(), &C.Idents.get(Name));
 }
 
 void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {

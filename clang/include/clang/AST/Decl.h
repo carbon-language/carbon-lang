@@ -795,38 +795,21 @@ class RecordDecl : public TagDecl {
   /// array member (e.g. int X[]) or if this union contains a struct that does.
   /// If so, this cannot be contained in arrays or other structs as a member.
   bool HasFlexibleArrayMember : 1;
-
-  /// NextDecl - A pointer to the next RecordDecl in a chain of RecordDecls
-  ///  for the same struct/union.  By construction, the last RecordDecl in
-  ///  the chain is the one that provides the definition of the struct/union
-  ///  (i.e., all forward declarations appear first in the chain).  Note that
-  ///  one should make no other assumption about the order of the RecordDecl's
-  ///  within this chain with respect to the original source.
-  ///  NOTE: This is *not* an owning reference.
-  RecordDecl* NextDecl;
   
   /// Members/NumMembers - This is a new[]'d array of pointers to Decls.
   FieldDecl **Members;   // Null if not defined.
   int NumMembers;   // -1 if not defined.
 
 protected:
-  RecordDecl(Kind DK, DeclContext *DC, SourceLocation L, IdentifierInfo *Id, 
-             RecordDecl *PrevDecl);
-
+  RecordDecl(Kind DK, DeclContext *DC, SourceLocation L, IdentifierInfo *Id);
   virtual ~RecordDecl();
 
 public:
   static RecordDecl *Create(ASTContext &C, TagKind TK, DeclContext *DC,
-                            SourceLocation L, IdentifierInfo *Id,
-                            RecordDecl *PrevDecl);
+                            SourceLocation L, IdentifierInfo *Id);
 
   virtual void Destroy(ASTContext& C);
-    
-  /// getDefinitionDecl - Returns the RecordDecl for the struct/union that
-  ///  represents the actual definition (i.e., not a forward declaration).
-  ///  This method returns NULL if no such RecordDecl exists.
-  const RecordDecl* getDefinitionDecl() const;  
-  
+      
   bool hasFlexibleArrayMember() const { return HasFlexibleArrayMember; }
   void setHasFlexibleArrayMember(bool V) { HasFlexibleArrayMember = V; }
   

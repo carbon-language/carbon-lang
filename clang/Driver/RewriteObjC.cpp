@@ -880,7 +880,7 @@ Stmt *RewriteObjC::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV,
       RecName += "_IMPL";
       IdentifierInfo *II = &Context->Idents.get(RecName.c_str());
       RecordDecl *RD = RecordDecl::Create(*Context, TagDecl::TK_struct, TUDecl,
-                                          SourceLocation(), II, 0);
+                                          SourceLocation(), II);
       assert(RD && "RewriteObjCIvarRefExpr(): Can't find RecordDecl");
       QualType castT = Context->getPointerType(Context->getTagDeclType(RD));
       CastExpr *castExpr = new ExplicitCastExpr(castT, IV->getBase(),
@@ -922,7 +922,7 @@ Stmt *RewriteObjC::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV,
       RecName += "_IMPL";
       IdentifierInfo *II = &Context->Idents.get(RecName.c_str());
       RecordDecl *RD = RecordDecl::Create(*Context, TagDecl::TK_struct, TUDecl,
-                                          SourceLocation(), II, 0);
+                                          SourceLocation(), II);
       assert(RD && "RewriteObjCIvarRefExpr(): Can't find RecordDecl");
       QualType castT = Context->getPointerType(Context->getTagDeclType(RD));
       CastExpr *castExpr = new ExplicitCastExpr(castT, IV->getBase(),
@@ -1795,7 +1795,7 @@ void RewriteObjC::SynthMsgSendSuperFunctionDecl() {
   llvm::SmallVector<QualType, 16> ArgTys;
   RecordDecl *RD = RecordDecl::Create(*Context, TagDecl::TK_struct, TUDecl,
                                       SourceLocation(),
-                                      &Context->Idents.get("objc_super"), 0);
+                                      &Context->Idents.get("objc_super"));
   QualType argT = Context->getPointerType(Context->getTagDeclType(RD));
   assert(!argT.isNull() && "Can't build 'struct objc_super *' type");
   ArgTys.push_back(argT);
@@ -1838,7 +1838,7 @@ void RewriteObjC::SynthMsgSendSuperStretFunctionDecl() {
   llvm::SmallVector<QualType, 16> ArgTys;
   RecordDecl *RD = RecordDecl::Create(*Context, TagDecl::TK_struct, TUDecl,
                                       SourceLocation(),
-                                      &Context->Idents.get("objc_super"), 0);
+                                      &Context->Idents.get("objc_super"));
   QualType argT = Context->getPointerType(Context->getTagDeclType(RD));
   assert(!argT.isNull() && "Can't build 'struct objc_super *' type");
   ArgTys.push_back(argT);
@@ -1964,7 +1964,7 @@ QualType RewriteObjC::getSuperStructType() {
   if (!SuperStructDecl) {
     SuperStructDecl = RecordDecl::Create(*Context, TagDecl::TK_struct, TUDecl,
                                          SourceLocation(), 
-                                         &Context->Idents.get("objc_super"), 0);
+                                         &Context->Idents.get("objc_super"));
     QualType FieldTypes[2];
   
     // struct objc_object *receiver;
@@ -1987,7 +1987,7 @@ QualType RewriteObjC::getConstantStringStructType() {
   if (!ConstantStringDecl) {
     ConstantStringDecl = RecordDecl::Create(*Context, TagDecl::TK_struct, TUDecl,
                                             SourceLocation(), 
-                         &Context->Idents.get("__NSConstantStringImpl"), 0);
+                         &Context->Idents.get("__NSConstantStringImpl"));
     QualType FieldTypes[4];
   
     // struct objc_object *receiver;

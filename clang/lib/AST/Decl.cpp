@@ -204,36 +204,18 @@ unsigned FunctionDecl::getMinRequiredArguments() const {
 //===----------------------------------------------------------------------===//
 
 RecordDecl::RecordDecl(Kind DK, DeclContext *DC, SourceLocation L,
-                       IdentifierInfo *Id, RecordDecl *PrevDecl)
-: TagDecl(DK, DC, L, Id, 0), NextDecl(0) {
+                       IdentifierInfo *Id)
+: TagDecl(DK, DC, L, Id, 0) {
   
   HasFlexibleArrayMember = false;
   assert(classof(static_cast<Decl*>(this)) && "Invalid Kind!");
   Members = 0;
-  NumMembers = -1;
-  
-  // Hook up the RecordDecl chain.
-  if (PrevDecl) {
-    RecordDecl* Tmp = PrevDecl->NextDecl;    
-    // 'Tmp' might be non-NULL if it is the RecordDecl that provides the
-    // definition of the struct/union. By construction, the last RecordDecl
-    // in the chain is the 'defining' RecordDecl.
-    if (Tmp) { 
-      assert (Tmp->NextDecl == 0);
-      assert (Tmp->isDefinition()
-              && "Previous RecordDecl has a NextDecl that is "
-              "not the 'defining' RecordDecl");
-      
-      NextDecl = Tmp;
-    }
-    
-    PrevDecl->NextDecl = this;
-  }
+  NumMembers = -1;  
 }
 
 RecordDecl *RecordDecl::Create(ASTContext &C, TagKind TK, DeclContext *DC,
-                               SourceLocation L, IdentifierInfo *Id,
-                               RecordDecl *PrevDecl) {
+                               SourceLocation L, IdentifierInfo *Id) {
+  
   void *Mem = C.getAllocator().Allocate<RecordDecl>();
   Kind DK;
   switch (TK) {
@@ -243,7 +225,7 @@ RecordDecl *RecordDecl::Create(ASTContext &C, TagKind TK, DeclContext *DC,
     case TK_union:  DK = Union;  break;
     case TK_class:  DK = Class;  break;
   }
-  return new (Mem) RecordDecl(DK, DC, L, Id, PrevDecl);
+  return new (Mem) RecordDecl(DK, DC, L, Id);
 }
 
 RecordDecl::~RecordDecl() {
@@ -281,16 +263,3 @@ FieldDecl *RecordDecl::getMember(IdentifierInfo *II) {
       return Members[i];
   return 0;
 }
-
-/// getDefinitionDecl - Returns the RecordDecl for the struct/union that
-///  represents the actual definition (i.e., not a forward declaration).
-///  This method returns NULL if no such RecordDecl exists.
-const RecordDecl* RecordDecl::getDefinitionDecl() const {
-  const RecordDecl* R = this;
-  
-  for (RecordDecl* N = R->NextDecl; N; N = R->NextDecl)
-    R = N;
-  
-  return R->Members ? R : 0;
-}
-

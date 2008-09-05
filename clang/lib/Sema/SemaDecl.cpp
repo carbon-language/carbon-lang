@@ -1765,14 +1765,12 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
       // We use 'dyn_cast' instead of 'cast' because PrevDecl might not
       // be a CXXRecordDecl* if we had a redefinition error.  In this case,
       // the dyn_cast will return a NULL pointer.
-      New = CXXRecordDecl::Create(Context, Kind, CurContext, Loc, Name,
-                                  dyn_cast_or_null<CXXRecordDecl>(PrevDecl));
+      New = CXXRecordDecl::Create(Context, Kind, CurContext, Loc, Name);
     else
       // We use 'dyn_cast' instead of 'cast' because PrevDecl might not
       // be a RecordDecl* if we had a redefinition error.  In this case,
       // the dyn_cast will return a NULL pointer.      
-      New = RecordDecl::Create(Context, Kind, CurContext, Loc, Name,
-                               dyn_cast_or_null<RecordDecl>(PrevDecl));
+      New = RecordDecl::Create(Context, Kind, CurContext, Loc, Name);
   }
   
   // If this has an identifier, add it to the scope stack.

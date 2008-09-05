@@ -43,15 +43,13 @@ public:
 /// The only difference with RecordDecl is that CXXRecordDecl is a DeclContext.
 class CXXRecordDecl : public RecordDecl, public DeclContext {
 protected:
-  CXXRecordDecl(Kind DK, DeclContext *DC, SourceLocation L, IdentifierInfo *Id,
-             CXXRecordDecl *PrevDecl) : RecordDecl(DK, DC, L, Id, PrevDecl),
-                                     DeclContext(DK) {
+  CXXRecordDecl(Kind DK, DeclContext *DC, SourceLocation L, IdentifierInfo *Id) 
+    : RecordDecl(DK, DC, L, Id), DeclContext(DK) {
     assert(classof(static_cast<Decl*>(this)) && "Invalid Kind!");
   }
 public:
   static CXXRecordDecl *Create(ASTContext &C, TagKind TK, DeclContext *DC,
-                               SourceLocation L, IdentifierInfo *Id,
-                               CXXRecordDecl *PrevDecl);
+                               SourceLocation L, IdentifierInfo *Id);
   
   const CXXFieldDecl *getMember(unsigned i) const {
     return cast<const CXXFieldDecl>(RecordDecl::getMember(i));

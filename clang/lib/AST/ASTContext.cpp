@@ -1348,7 +1348,7 @@ QualType ASTContext::getCFConstantStringType() {
   if (!CFConstantStringTypeDecl) {
     CFConstantStringTypeDecl = 
       RecordDecl::Create(*this, TagDecl::TK_struct, TUDecl, SourceLocation(), 
-                         &Idents.get("NSConstantString"), 0);
+                         &Idents.get("NSConstantString"));
     QualType FieldTypes[4];
   
     // const int *isa;
@@ -1390,7 +1390,7 @@ QualType ASTContext::getObjCFastEnumerationStateType()
     
     ObjCFastEnumerationStateTypeDecl =
       RecordDecl::Create(*this, TagDecl::TK_struct, TUDecl, SourceLocation(),
-                         &Idents.get("__objcFastEnumerationState"), 0);
+                         &Idents.get("__objcFastEnumerationState"));
     
     ObjCFastEnumerationStateTypeDecl->defineBody(FieldDecls, 4);
   }

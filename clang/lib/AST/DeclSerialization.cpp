@@ -449,7 +449,6 @@ void RecordDecl::EmitImpl(Serializer& S) const {
   ScopedDecl::EmitInRec(S);
   S.EmitBool(isDefinition());
   S.EmitBool(hasFlexibleArrayMember());
-  S.EmitPtr(NextDecl);
   S.EmitSInt(getNumMembers());
   if (getNumMembers() > 0) {
     assert (Members);
@@ -463,12 +462,11 @@ RecordDecl* RecordDecl::CreateImpl(Decl::Kind DK, Deserializer& D,
                                    ASTContext& C) {
 
   void *Mem = C.getAllocator().Allocate<RecordDecl>();
-  RecordDecl* decl = new (Mem) RecordDecl(DK, 0, SourceLocation(), NULL, NULL);
+  RecordDecl* decl = new (Mem) RecordDecl(DK, 0, SourceLocation(), NULL);
     
   decl->ScopedDecl::ReadInRec(D, C);
   decl->setDefinition(D.ReadBool());
   decl->setHasFlexibleArrayMember(D.ReadBool());
-  D.ReadPtr(decl->NextDecl); // Allow backpatching.
   decl->NumMembers = D.ReadSInt();
   
   if (decl->getNumMembers() > 0) {
