@@ -105,6 +105,23 @@ void CCState::AnalyzeCallOperands(SDNode *TheCall, CCAssignFn Fn) {
   }
 }
 
+/// AnalyzeCallOperands - Same as above except it takes vectors of types
+/// and argument flags.
+void CCState::AnalyzeCallOperands(SmallVectorImpl<MVT> ArgVTs,
+                                  SmallVectorImpl<ISD::ArgFlagsTy> &Flags,
+                                  CCAssignFn Fn) {
+  unsigned NumOps = ArgVTs.size();
+  for (unsigned i = 0; i != NumOps; ++i) {
+    MVT ArgVT = ArgVTs[i];
+    ISD::ArgFlagsTy ArgFlags = Flags[i];
+    if (Fn(i, ArgVT, ArgVT, CCValAssign::Full, ArgFlags, *this)) {
+      cerr << "Call operand #" << i << " has unhandled type "
+           << ArgVT.getMVTString() << "\n";
+      abort();
+    }
+  }
+}
+
 /// AnalyzeCallResult - Analyze the return values of an ISD::CALL node,
 /// incorporating info about the passed values into this state.
 void CCState::AnalyzeCallResult(SDNode *TheCall, CCAssignFn Fn) {

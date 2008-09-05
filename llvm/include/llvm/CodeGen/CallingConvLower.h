@@ -145,6 +145,12 @@ public:
   /// about the passed values into this state.
   void AnalyzeCallOperands(SDNode *TheCall, CCAssignFn Fn);
 
+  /// AnalyzeCallOperands - Same as above except it takes vectors of types
+  /// and argument flags.
+  void AnalyzeCallOperands(SmallVectorImpl<MVT> ArgVTs,
+                           SmallVectorImpl<ISD::ArgFlagsTy> &Flags,
+                           CCAssignFn Fn);
+
   /// AnalyzeCallResult - Analyze the return values of an ISD::CALL node,
   /// incorporating info about the passed values into this state.
   void AnalyzeCallResult(SDNode *TheCall, CCAssignFn Fn);
