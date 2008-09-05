@@ -555,7 +555,6 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
 
   // Rewrite all induction variables in terms of the canonical induction
   // variable.
-  std::map<unsigned, Value*> InsertedSizes;
   while (!IndVars.empty()) {
     PHINode *PN = IndVars.back().first;
     Value *NewVal = Rewriter.expandCodeFor(IndVars.back().second, InsertPt);
