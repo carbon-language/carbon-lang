@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -mtriple=i686-apple-darwin | grep mov | grep ecx | grep 0
-; RUN: llvm-as < %s | llc -mtriple=i686-apple-darwin | grep mov | grep xmm0 | grep 8
+; RUN: llvm-as < %s | llc -mtriple=i686-apple-darwin -mattr=+sse2 | grep mov | grep ecx | grep 0
+; RUN: llvm-as < %s | llc -mtriple=i686-apple-darwin -mattr=+sse2 | grep mov | grep xmm0 | grep 8
 
 @d = external global double		; <double*> [#uses=1]
 @c = external global double		; <double*> [#uses=1]
