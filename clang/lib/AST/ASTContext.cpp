@@ -1781,7 +1781,19 @@ bool ASTContext::isObjCObjectPointerType(QualType Ty) const {
 //===----------------------------------------------------------------------===//
 
 /// typesAreBlockCompatible - This routine is called when comparing two
-/// block types. Types must be strictly compatible here.
+/// block types. Types must be strictly compatible here. For example,
+/// C unfortunately doesn't produce an error for the following:
+/// 
+///   int (*emptyArgFunc)();
+///   int (*intArgList)(int) = emptyArgFunc;
+/// 
+/// For blocks, we will produce an error for the following (similar to C++):
+///
+///   int (^emptyArgBlock)();
+///   int (^intArgBlock)(int) = emptyArgBlock;
+///
+/// FIXME: When the dust settles on this integration, fold this into mergeTypes.
+///
 bool ASTContext::typesAreBlockCompatible(QualType lhs, QualType rhs) {
   if (lhs.getCVRQualifiers() != rhs.getCVRQualifiers())
     return false;

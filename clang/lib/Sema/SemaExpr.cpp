@@ -299,6 +299,24 @@ Sema::ActOnStringLiteral(const Token *StringToks, unsigned NumStringToks) {
                            StringToks[NumStringToks-1].getLocation());
 }
 
+/// DeclDefinedWithinScope - Return true if the specified decl is defined at or
+/// within the 'Within' scope.  The current Scope is CurScope.
+///
+/// NOTE: This method is extremely inefficient (linear scan), this should not be
+/// used in common cases.
+///
+static bool DeclDefinedWithinScope(ScopedDecl *D, Scope *Within,
+                                   Scope *CurScope) {
+  while (1) {
+    assert(CurScope && "CurScope not nested within 'Within'?");
+
+    // Check this scope for the decl.
+    if (CurScope->isDeclScope(D)) return true;
+    
+    if (CurScope == Within) return false;
+    CurScope = CurScope->getParent();
+  }
+}
 
 /// ActOnIdentifierExpr - The parser read an identifier in expression context,
 /// validate it per-C99 6.5.1.  HasTrailingLParen indicates whether this
@@ -350,17 +368,6 @@ Sema::ExprResult Sema::ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
     }
   }
   
-  if (ValueDecl *VD = dyn_cast<ValueDecl>(D)) {
-    // check if referencing an identifier with __attribute__((deprecated)).
-    if (VD->getAttr<DeprecatedAttr>())
-      Diag(Loc, diag::warn_deprecated, VD->getName());
-
-    // Only create DeclRefExpr's for valid Decl's.
-    if (VD->isInvalidDecl())
-      return true;
-    return new DeclRefExpr(VD, VD->getType(), Loc);
-  }
-
   if (CXXFieldDecl *FD = dyn_cast<CXXFieldDecl>(D)) {
     if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(CurContext)) {
       if (MD->isStatic())
@@ -383,7 +390,6 @@ Sema::ExprResult Sema::ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
 
     return Diag(Loc, diag::err_invalid_non_static_member_use, FD->getName());
   }
-  
   if (isa<TypedefDecl>(D))
     return Diag(Loc, diag::err_unexpected_typedef, II.getName());
   if (isa<ObjCInterfaceDecl>(D))
@@ -391,8 +397,36 @@ Sema::ExprResult Sema::ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
   if (isa<NamespaceDecl>(D))
     return Diag(Loc, diag::err_unexpected_namespace, II.getName());
 
-  assert(0 && "Invalid decl");
-  abort();
+  // Make the DeclRefExpr or BlockDeclRefExpr for the decl.
+  ValueDecl *VD = cast<ValueDecl>(D);
+  
+  // check if referencing an identifier with __attribute__((deprecated)).
+  if (VD->getAttr<DeprecatedAttr>())
+    Diag(Loc, diag::warn_deprecated, VD->getName());
+
+  // Only create DeclRefExpr's for valid Decl's.
+  if (VD->isInvalidDecl())
+    return true;
+    
+  // If this reference is not in a block or if the referenced variable is
+  // within the block, create a normal DeclRefExpr.
+  //
+  // FIXME: This will create BlockDeclRefExprs for global variables,
+  // function references, enums constants, etc which is suboptimal :) and breaks
+  // things like "integer constant expression" tests.
+  //
+  if (!CurBlock || DeclDefinedWithinScope(VD, CurBlock->TheScope, S))
+    return new DeclRefExpr(VD, VD->getType(), Loc);
+  
+  // If we are in a block and the variable is outside the current block,
+  // bind the variable reference with a BlockDeclRefExpr.
+  
+  // If the variable is in the byref set, bind it directly, otherwise it will be
+  // bound by-copy, thus we make it const within the closure.
+  if (!CurBlock->ByRefVars.count(VD))
+    VD->getType().addConst();
+    
+  return new BlockDeclRefExpr(VD, VD->getType(), Loc, false);
 }
 
 Sema::ExprResult Sema::ActOnPredefinedExpr(SourceLocation Loc,
@@ -983,14 +1017,19 @@ ActOnCallExpr(ExprTy *fn, SourceLocation LParenLoc,
   // of arguments and function on error.
   llvm::OwningPtr<CallExpr> TheCall(new CallExpr(Fn, Args, NumArgs,
                                                  Context.BoolTy, RParenLoc));
-  
-  // C99 6.5.2.2p1 - "The expression that denotes the called function shall have
-  // type pointer to function".
-  const PointerType *PT = Fn->getType()->getAsPointerType();
-  if (PT == 0)
-    return Diag(LParenLoc, diag::err_typecheck_call_not_function,
-                Fn->getSourceRange());
-  const FunctionType *FuncT = PT->getPointeeType()->getAsFunctionType();
+  const FunctionType *FuncT;
+  if (!Fn->getType()->isBlockPointerType()) {
+    // C99 6.5.2.2p1 - "The expression that denotes the called function shall
+    // have type pointer to function".
+    const PointerType *PT = Fn->getType()->getAsPointerType();
+    if (PT == 0)
+      return Diag(LParenLoc, diag::err_typecheck_call_not_function,
+                  Fn->getSourceRange());
+    FuncT = PT->getPointeeType()->getAsFunctionType();
+  } else { // This is a block call.
+    FuncT = Fn->getType()->getAsBlockPointerType()->getPointeeType()->
+                getAsFunctionType();
+  }
   if (FuncT == 0)
     return Diag(LParenLoc, diag::err_typecheck_call_not_function,
                 Fn->getSourceRange());
@@ -1012,7 +1051,10 @@ ActOnCallExpr(ExprTy *fn, SourceLocation LParenLoc,
         NumArgsToCheck = NumArgsInProto;
         TheCall->setNumArgs(NumArgsInProto);
       } else
-        return Diag(RParenLoc, diag::err_typecheck_call_too_few_args,
+        return Diag(RParenLoc, 
+                    !Fn->getType()->isBlockPointerType()
+                      ? diag::err_typecheck_call_too_few_args
+                      : diag::err_typecheck_block_too_few_args,
                     Fn->getSourceRange());
     }
 
@@ -1021,7 +1063,10 @@ ActOnCallExpr(ExprTy *fn, SourceLocation LParenLoc,
     if (NumArgs > NumArgsInProto) {
       if (!Proto->isVariadic()) {
         Diag(Args[NumArgsInProto]->getLocStart(), 
-             diag::err_typecheck_call_too_many_args, Fn->getSourceRange(),
+               !Fn->getType()->isBlockPointerType()
+                 ? diag::err_typecheck_call_too_many_args
+                 : diag::err_typecheck_block_too_many_args, 
+             Fn->getSourceRange(),
              SourceRange(Args[NumArgsInProto]->getLocStart(),
                          Args[NumArgs-1]->getLocEnd()));
         // This deletes the extra arguments.
@@ -1529,8 +1574,8 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
     if (isa<PointerType>(rhsType))
       return CheckPointerTypesForAssignment(lhsType, rhsType);
       
-    if (const BlockPointerType *BPT = rhsType->getAsBlockPointerType())
-      if (BPT->getPointeeType()->isVoidType())
+    if (rhsType->getAsBlockPointerType())
+      if (lhsType->getAsPointerType()->getPointeeType()->isVoidType())
         return BlockVoidPointer;
       
     return Incompatible;

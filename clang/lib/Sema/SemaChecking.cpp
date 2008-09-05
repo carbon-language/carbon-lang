@@ -711,11 +711,15 @@ Sema::CheckReturnStackAddr(Expr *RetValExp, QualType lhsType,
                            SourceLocation ReturnLoc) {
    
   // Perform checking for returned stack addresses.
-  if (lhsType->isPointerType()) {
+  if (lhsType->isPointerType() || lhsType->isBlockPointerType()) {
     if (DeclRefExpr *DR = EvalAddr(RetValExp))
       Diag(DR->getLocStart(), diag::warn_ret_stack_addr,
            DR->getDecl()->getIdentifier()->getName(),
            RetValExp->getSourceRange());
+           
+    if (BlockExpr *C = dyn_cast_or_null<BlockExpr>(EvalAddr(RetValExp)))
+      Diag(C->getLocStart(), diag::err_ret_local_block,
+           C->getSourceRange());
   }
   // Perform checking for stack values returned by reference.
   else if (lhsType->isReferenceType()) {
@@ -751,7 +755,8 @@ Sema::CheckReturnStackAddr(Expr *RetValExp, QualType lhsType,
 ///   * taking the address of an array element where the array is on the stack
 static DeclRefExpr* EvalAddr(Expr *E) {
   // We should only be called for evaluating pointer expressions.
-  assert((E->getType()->isPointerType() || 
+  assert((E->getType()->isPointerType() ||
+          E->getType()->isBlockPointerType() ||
           E->getType()->isObjCQualifiedIdType()) &&
          "EvalAddr only works on pointers");
     
@@ -814,7 +819,9 @@ static DeclRefExpr* EvalAddr(Expr *E) {
     Expr* SubExpr = cast<CastExpr>(E)->getSubExpr();
     QualType T = SubExpr->getType();
     
-    if (T->isPointerType() || T->isObjCQualifiedIdType())
+    if (SubExpr->getType()->isPointerType() ||
+        SubExpr->getType()->isBlockPointerType() ||
+        SubExpr->getType()->isObjCQualifiedIdType())
       return EvalAddr(SubExpr);
     else if (T->isArrayType())
       return EvalVal(SubExpr);
@@ -832,7 +839,7 @@ static DeclRefExpr* EvalAddr(Expr *E) {
     
     if (C->getOpcode() == CXXCastExpr::ReinterpretCast) {
       Expr *S = C->getSubExpr();
-      if (S->getType()->isPointerType())
+      if (S->getType()->isPointerType() || S->getType()->isBlockPointerType())
         return EvalAddr(S);
       else
         return NULL;

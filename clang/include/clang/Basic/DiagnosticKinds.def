@@ -1022,8 +1022,14 @@ DIAG(err_typecheck_call_not_function, ERROR,
      "called object is not a function or function pointer")
 DIAG(err_typecheck_call_too_few_args, ERROR,
      "too few arguments to function")
+DIAG(err_typecheck_block_too_few_args, ERROR,
+     "too few arguments to block")
 DIAG(err_typecheck_call_too_many_args, ERROR,
      "too many arguments to function")
+DIAG(err_typecheck_block_too_many_args, ERROR,
+     "too many arguments to block call")
+DIAG(err_typecheck_closure_too_many_args, ERROR,
+     "too many arguments to closure call")
 DIAG(err_typecheck_call_invalid_ordered_compare, ERROR,
      "ordered compare requires two args of floating point type ('%0' and '%1')")
 DIAG(err_typecheck_cond_expect_scalar, ERROR,
@@ -1144,6 +1150,9 @@ DIAG(err_goto_in_block, ERROR,
      "goto not allowed in block literal")
 DIAG(err_return_in_block_expression, ERROR,
      "return not allowed in block expression literal")
+
+DIAG(err_ret_local_block, ERROR,
+     "returning block that lives on the local stack")
 
 // CFString checking
 DIAG(err_cfstring_literal_not_string_constant, ERROR,

@@ -423,6 +423,12 @@ Expr::isLvalueResult Expr::isLvalue(ASTContext &Ctx) const {
       return LV_Valid;
     break;
   }
+  case BlockDeclRefExprClass: {
+    const BlockDeclRefExpr *BDR = cast<BlockDeclRefExpr>(this);
+    if (BDR->isByRef() && isa<VarDecl>(BDR->getDecl()))
+      return LV_Valid;
+    break;
+  }
   case MemberExprClass: { // C99 6.5.2.3p4
     const MemberExpr *m = cast<MemberExpr>(this);
     return m->isArrow() ? LV_Valid : m->getBase()->isLvalue(Ctx);
@@ -1453,4 +1459,6 @@ Stmt::child_iterator BlockExprExpr::child_begin() {
 Stmt::child_iterator BlockExprExpr::child_end() {
   return reinterpret_cast<Stmt**>(&BodyExpr)+1;
 }
+Stmt::child_iterator BlockDeclRefExpr::child_begin(){return child_iterator();}
+Stmt::child_iterator BlockDeclRefExpr::child_end() { return child_iterator();}
 
