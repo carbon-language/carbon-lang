@@ -352,6 +352,12 @@ def CC_X86_32_FastCC : CallingConv<[
   // The first 2 integer arguments are passed in ECX/EDX
   CCIfType<[i32], CCAssignToReg<[ECX, EDX]>>,
 
+  // The first 3 float or double arguments, if the call is not a vararg
+  // call and if SSE2 is available, are passed in SSE registers.
+  CCIfNotVarArg<CCIfType<[f32,f64],
+                CCIfSubtarget<"hasSSE2()",
+                CCAssignToReg<[XMM0,XMM1,XMM2]>>>>,
+
   // Doubles get 8-byte slots that are 8-byte aligned.
   CCIfType<[f64], CCAssignToStack<8, 8>>,
 
