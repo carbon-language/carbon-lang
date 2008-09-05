@@ -2753,6 +2753,58 @@ SelectionDAGLowering::implVisitBinaryAtomic(CallInst& I, ISD::NodeType Op) {
   return 0;
 }
 
+/// visitExp - lower an exp intrinsic.  Handles the special sequences
+/// for limited-precision mode.
+
+void
+SelectionDAGLowering::visitExp(CallInst &I) {
+  SDValue result;
+  // No special expansion.
+  result = DAG.getNode(ISD::FEXP,
+                       getValue(I.getOperand(1)).getValueType(),
+                       getValue(I.getOperand(1)));
+  setValue(&I, result);
+}
+
+/// visitLog - lower a log intrinsic.  Handles the special sequences
+/// for limited-precision mode.
+
+void
+SelectionDAGLowering::visitLog(CallInst &I) {
+  SDValue result;
+  // No special expansion.
+  result = DAG.getNode(ISD::FLOG,
+                       getValue(I.getOperand(1)).getValueType(),
+                       getValue(I.getOperand(1)));
+  setValue(&I, result);
+}
+
+/// visitLog2 - lower a log2 intrinsic.  Handles the special sequences
+/// for limited-precision mode.
+
+void
+SelectionDAGLowering::visitLog2(CallInst &I) {
+  SDValue result;
+  // No special expansion.
+  result = DAG.getNode(ISD::FLOG2,
+                       getValue(I.getOperand(1)).getValueType(),
+                       getValue(I.getOperand(1)));
+  setValue(&I, result);
+}
+
+/// visitLog10 - lower a log10 intrinsic.  Handles the special sequences
+/// for limited-precision mode.
+
+void
+SelectionDAGLowering::visitLog10(CallInst &I) {
+  SDValue result;
+  // No special expansion.
+  result = DAG.getNode(ISD::FLOG10,
+                       getValue(I.getOperand(1)).getValueType(),
+                       getValue(I.getOperand(1)));
+  setValue(&I, result);
+}
+
 /// visitExp2 - lower an exp2 intrinsic.  Handles the special sequences
 /// for limited-precision mode.
 
@@ -3071,24 +3123,16 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
                              getValue(I.getOperand(1))));
     return 0;
   case Intrinsic::log:
-    setValue(&I, DAG.getNode(ISD::FLOG,
-                             getValue(I.getOperand(1)).getValueType(),
-                             getValue(I.getOperand(1))));
+    visitLog(I);
     return 0;
   case Intrinsic::log2:
-    setValue(&I, DAG.getNode(ISD::FLOG2,
-                             getValue(I.getOperand(1)).getValueType(),
-                             getValue(I.getOperand(1))));
+    visitLog2(I);
     return 0;
   case Intrinsic::log10:
-    setValue(&I, DAG.getNode(ISD::FLOG10,
-                             getValue(I.getOperand(1)).getValueType(),
-                             getValue(I.getOperand(1))));
+    visitLog10(I);
     return 0;
   case Intrinsic::exp:
-    setValue(&I, DAG.getNode(ISD::FEXP,
-                             getValue(I.getOperand(1)).getValueType(),
-                             getValue(I.getOperand(1))));
+    visitExp(I);
     return 0;
   case Intrinsic::exp2:
     visitExp2(I);

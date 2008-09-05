@@ -506,6 +506,10 @@ private:
   void visitTargetIntrinsic(CallInst &I, unsigned Intrinsic);
 
   void visitExp2(CallInst &I);
+  void visitExp(CallInst &I);
+  void visitLog(CallInst &I);
+  void visitLog2(CallInst &I);
+  void visitLog10(CallInst &I);
 
   void visitVAStart(CallInst &I);
   void visitVAArg(VAArgInst &I);
