@@ -103,12 +103,20 @@ bool FastISel::SelectBinaryOp(User *I, ISD::NodeType ISDOpcode) {
   if (VT == MVT::Other || !VT.isSimple())
     // Unhandled type. Halt "fast" selection and bail.
     return false;
+
   // We only handle legal types. For example, on x86-32 the instruction
   // selector contains all of the 64-bit instructions from x86-64,
   // under the assumption that i64 won't be used if the target doesn't
   // support it.
-  if (!TLI.isTypeLegal(VT))
-    return false;
+  if (!TLI.isTypeLegal(VT)) {
+    // MVT::i1 is special. Allow AND and OR (but not XOR) because they
+    // don't require additional zeroing, which makes them easy.
+    if (VT == MVT::i1 &&
+        (ISDOpcode == ISD::AND || ISDOpcode == ISD::OR))
+      VT = TLI.getTypeToTransformTo(VT);
+    else
+      return false;
+  }
 
   unsigned Op0 = getRegForValue(I->getOperand(0));
   if (Op0 == 0)
