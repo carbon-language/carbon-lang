@@ -19,7 +19,7 @@
 #include "X86RegisterInfo.h"
 #include "X86Subtarget.h"
 #include "X86TargetMachine.h"
-#include "llvm/InstrTypes.h"
+#include "llvm/Instructions.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/CodeGen/FastISel.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
@@ -52,6 +52,10 @@ private:
   bool X86SelectStore(Instruction *I);
 
   bool X86SelectCmp(Instruction *I);
+
+  bool X86SelectZExt(Instruction *I);
+
+  bool X86SelectBranch(Instruction *I);
   
   unsigned TargetSelectConstantPoolLoad(Constant *C, MachineConstantPool* MCP);
 };
@@ -388,6 +392,36 @@ bool X86FastISel::X86SelectCmp(Instruction *I) {
   return true;
 }
 
+bool X86FastISel::X86SelectZExt(Instruction *I) {
+  // Special-case hack: The only i1 values we know how to produce currently
+  // set the upper bits of an i8 value to zero.
+  if (I->getType() == Type::Int8Ty &&
+      I->getOperand(0)->getType() == Type::Int1Ty) {
+    unsigned ResultReg = getRegForValue(I->getOperand(0));
+    UpdateValueMap(I, ResultReg);
+    return true;
+  }
+
+  return false;
+}
+
+bool X86FastISel::X86SelectBranch(Instruction *I) {
+  BranchInst *BI = cast<BranchInst>(I);
+  // Unconditional branches are selected by tablegen-generated code.
+  unsigned OpReg = getRegForValue(BI->getCondition());
+  MachineBasicBlock *TrueMBB = MBBMap[BI->getSuccessor(0)];
+  MachineBasicBlock *FalseMBB = MBBMap[BI->getSuccessor(1)];
+
+  BuildMI(MBB, TII.get(X86::TEST8rr)).addReg(OpReg).addReg(OpReg);
+  BuildMI(MBB, TII.get(X86::JNE)).addMBB(TrueMBB);
+  BuildMI(MBB, TII.get(X86::JMP)).addMBB(FalseMBB);
+
+  MBB->addSuccessor(TrueMBB);
+  MBB->addSuccessor(FalseMBB);
+
+  return true;
+}
+
 bool
 X86FastISel::TargetSelectInstruction(Instruction *I)  {
   switch (I->getOpcode()) {
@@ -399,6 +433,10 @@ X86FastISel::TargetSelectInstruction(Instruction *I)  {
   case Instruction::ICmp:
   case Instruction::FCmp:
     return X86SelectCmp(I);
+  case Instruction::ZExt:
+    return X86SelectZExt(I);
+  case Instruction::Br:
+    return X86SelectBranch(I);
   }
 
   return false;
