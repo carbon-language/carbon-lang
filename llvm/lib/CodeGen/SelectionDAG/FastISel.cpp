@@ -35,7 +35,8 @@ unsigned FastISel::getRegForValue(Value *V) {
   MVT::SimpleValueType VT = TLI.getValueType(V->getType()).getSimpleVT();
   if (ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
     if (CI->getValue().getActiveBits() > 64)
-      return 0;
+      return TargetMaterializeConstant(CI,
+                                       MBB->getParent()->getConstantPool());
     // Don't cache constant materializations.  To do so would require
     // tracking what uses they dominate.
     Reg = FastEmit_i(VT, VT, ISD::Constant, CI->getZExtValue());
@@ -52,16 +53,19 @@ unsigned FastISel::getRegForValue(Value *V) {
       uint32_t IntBitWidth = IntVT.getSizeInBits();
       if (Flt.convertToInteger(x, IntBitWidth, /*isSigned=*/true,
                                APFloat::rmTowardZero) != APFloat::opOK)
-        return 0;
+        return TargetMaterializeConstant(CF,    
+                                         MBB->getParent()->getConstantPool());
       APInt IntVal(IntBitWidth, 2, x);
 
       unsigned IntegerReg = FastEmit_i(IntVT.getSimpleVT(), IntVT.getSimpleVT(),
                                        ISD::Constant, IntVal.getZExtValue());
       if (IntegerReg == 0)
-        return 0;
+        return TargetMaterializeConstant(CF,
+                                         MBB->getParent()->getConstantPool());
       Reg = FastEmit_r(IntVT.getSimpleVT(), VT, ISD::SINT_TO_FP, IntegerReg);
       if (Reg == 0)
-        return 0;
+        return TargetMaterializeConstant(CF,
+                                         MBB->getParent()->getConstantPool());;
     }
   } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
     if (!SelectOperator(CE, CE->getOpcode())) return 0;
@@ -72,6 +76,10 @@ unsigned FastISel::getRegForValue(Value *V) {
   } else {
     return 0;
   }
+  
+  if (!Reg && isa<Constant>(V))
+    return TargetMaterializeConstant(cast<Constant>(V),
+                                     MBB->getParent()->getConstantPool());
   
   LocalValueMap[V] = Reg;
   return Reg;

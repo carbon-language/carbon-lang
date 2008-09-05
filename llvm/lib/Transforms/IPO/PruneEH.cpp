@@ -222,10 +222,13 @@ void PruneEH::DeleteBasicBlock(BasicBlock *BB) {
   CallGraphNode *CGN = CG[BB->getParent()];
   for (BasicBlock::iterator I = BB->end(), E = BB->begin(); I != E; ) {
     --I;
-    if (CallInst *CI = dyn_cast<CallInst>(I))
-      CGN->removeCallEdgeFor(CI);
-    else if (InvokeInst *II = dyn_cast<InvokeInst>(I))
-      CGN->removeCallEdgeFor(II);
+    if (CallInst *CI = dyn_cast<CallInst>(I)) {
+      if (Function *Callee = CI->getCalledFunction())
+        CGN->removeCallEdgeTo(CG[Callee]);
+    } else if (InvokeInst *II = dyn_cast<InvokeInst>(I)) {
+      if (Function *Callee = II->getCalledFunction())
+        CGN->removeCallEdgeTo(CG[Callee]);
+    }
     if (!I->use_empty())
       I->replaceAllUsesWith(UndefValue::get(I->getType()));
   }

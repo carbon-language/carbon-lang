@@ -282,6 +282,16 @@ void CallGraphNode::print(std::ostream &OS) const {
 
 void CallGraphNode::dump() const { print(cerr); }
 
+void CallGraphNode::removeCallEdgeTo(CallGraphNode *Callee) {
+  for (unsigned i = CalledFunctions.size(); ; --i) {
+    assert(i && "Cannot find callee to remove!");
+    if (CalledFunctions[i-1].second == Callee) {
+      CalledFunctions.erase(CalledFunctions.begin()+i-1);
+      return;
+    }
+  }
+}
+
 /// removeCallEdgeFor - This method removes the edge in the node for the
 /// specified call site.  Note that this method takes linear time, so it
 /// should be used sparingly.
