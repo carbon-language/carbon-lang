@@ -61,6 +61,13 @@ public:
   ///
   bool SelectInstruction(Instruction *I);
 
+  /// SelectInstruction - Do "fast" instruction selection for the given
+  /// LLVM IR operator (Instruction or ConstantExpr), and append
+  /// generated machine instructions to the current block. Return true
+  /// if selection was successful.
+  ///
+  bool SelectOperator(User *I, unsigned Opcode);
+
   /// TargetSelectInstruction - This method is called by target-independent
   /// code when the normal FastISel process fails to select an instruction.
   /// This gives targets a chance to emit code for anything that doesn't
@@ -226,13 +233,13 @@ protected:
   }
 
 private:
-  bool SelectBinaryOp(Instruction *I, ISD::NodeType ISDOpcode);
+  bool SelectBinaryOp(User *I, ISD::NodeType ISDOpcode);
 
-  bool SelectGetElementPtr(Instruction *I);
+  bool SelectGetElementPtr(User *I);
 
-  bool SelectBitCast(Instruction *I);
+  bool SelectBitCast(User *I);
   
-  bool SelectCast(Instruction *I, ISD::NodeType Opcode);
+  bool SelectCast(User *I, ISD::NodeType Opcode);
 };
 
 }

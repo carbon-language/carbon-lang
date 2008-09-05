@@ -63,6 +63,9 @@ unsigned FastISel::getRegForValue(Value *V) {
       if (Reg == 0)
         return 0;
     }
+  } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
+    if (!SelectOperator(CE, CE->getOpcode())) return 0;
+    Reg = LocalValueMap[CE];
   } else if (isa<UndefValue>(V)) {
     Reg = createResultReg(TLI.getRegClassFor(VT));
     BuildMI(MBB, TII.get(TargetInstrInfo::IMPLICIT_DEF), Reg);
@@ -81,6 +84,10 @@ unsigned FastISel::getRegForValue(Value *V) {
 /// a value before we select the block that defines the value.  It might be
 /// possible to fix this by selecting blocks in reverse postorder.
 void FastISel::UpdateValueMap(Value* I, unsigned Reg) {
+  if (!isa<Instruction>(I)) {
+    LocalValueMap[I] = Reg;
+    return;
+  }
   if (!ValueMap.count(I))
     ValueMap[I] = Reg;
   else
@@ -91,7 +98,7 @@ void FastISel::UpdateValueMap(Value* I, unsigned Reg) {
 /// SelectBinaryOp - Select and emit code for a binary operator instruction,
 /// which has an opcode which directly corresponds to the given ISD opcode.
 ///
-bool FastISel::SelectBinaryOp(Instruction *I, ISD::NodeType ISDOpcode) {
+bool FastISel::SelectBinaryOp(User *I, ISD::NodeType ISDOpcode) {
   MVT VT = MVT::getMVT(I->getType(), /*HandleUnknown=*/true);
   if (VT == MVT::Other || !VT.isSimple())
     // Unhandled type. Halt "fast" selection and bail.
@@ -148,7 +155,7 @@ bool FastISel::SelectBinaryOp(Instruction *I, ISD::NodeType ISDOpcode) {
   return true;
 }
 
-bool FastISel::SelectGetElementPtr(Instruction *I) {
+bool FastISel::SelectGetElementPtr(User *I) {
   unsigned N = getRegForValue(I->getOperand(0));
   if (N == 0)
     // Unhandled operand. Halt "fast" selection and bail.
@@ -223,7 +230,7 @@ bool FastISel::SelectGetElementPtr(Instruction *I) {
   return true;
 }
 
-bool FastISel::SelectCast(Instruction *I, ISD::NodeType Opcode) {
+bool FastISel::SelectCast(User *I, ISD::NodeType Opcode) {
   MVT SrcVT = TLI.getValueType(I->getOperand(0)->getType());
   MVT DstVT = TLI.getValueType(I->getType());
     
@@ -249,7 +256,7 @@ bool FastISel::SelectCast(Instruction *I, ISD::NodeType Opcode) {
   return true;
 }
 
-bool FastISel::SelectBitCast(Instruction *I) {
+bool FastISel::SelectBitCast(User *I) {
   // If the bitcast doesn't change the type, just use the operand value.
   if (I->getType() == I->getOperand(0)->getType()) {
     unsigned Reg = getRegForValue(I->getOperand(0));
@@ -301,7 +308,12 @@ bool FastISel::SelectBitCast(Instruction *I) {
 
 bool
 FastISel::SelectInstruction(Instruction *I) {
-  switch (I->getOpcode()) {
+  return SelectOperator(I, I->getOpcode());
+}
+
+bool
+FastISel::SelectOperator(User *I, unsigned Opcode) {
+  switch (Opcode) {
   case Instruction::Add: {
     ISD::NodeType Opc = I->getType()->isFPOrFPVector() ? ISD::FADD : ISD::ADD;
     return SelectBinaryOp(I, Opc);
