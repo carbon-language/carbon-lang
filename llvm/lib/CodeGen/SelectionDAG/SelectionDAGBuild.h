@@ -505,6 +505,8 @@ private:
   const char *visitIntrinsicCall(CallInst &I, unsigned Intrinsic);
   void visitTargetIntrinsic(CallInst &I, unsigned Intrinsic);
 
+  void visitExp2(CallInst &I);
+
   void visitVAStart(CallInst &I);
   void visitVAArg(VAArgInst &I);
   void visitVAEnd(CallInst &I);

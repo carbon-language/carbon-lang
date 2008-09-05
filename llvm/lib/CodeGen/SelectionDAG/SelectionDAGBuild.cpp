@@ -49,6 +49,17 @@
 #include <algorithm>
 using namespace llvm;
 
+/// LimitFloatPrecision - Generate low-precision inline sequences for
+/// some float libcalls (6, 8 or 12 bits).
+static unsigned LimitFloatPrecision;
+
+static cl::opt<unsigned, true>
+LimitFPPrecision("limit-float-precision",
+                 cl::desc("Generate low-precision inline sequences "
+                          "for some float libcalls"),
+                 cl::location(LimitFloatPrecision),
+                 cl::init(0));
+
 /// ComputeLinearIndex - Given an LLVM IR aggregate type and a sequence
 /// insertvalue or extractvalue indices that identify a member, return
 /// the linearized index of the start of the member.
@@ -2742,6 +2753,49 @@ SelectionDAGLowering::implVisitBinaryAtomic(CallInst& I, ISD::NodeType Op) {
   return 0;
 }
 
+/// visitExp2 - lower an exp2 intrinsic.  Handles the special sequences
+/// for limited-precision mode.
+
+void
+SelectionDAGLowering::visitExp2(CallInst &I) {
+  SDValue result;
+  if (getValue(I.getOperand(1)).getValueType() == MVT::f32 &&
+      LimitFloatPrecision>0 && LimitFloatPrecision<=12) {
+    SDValue operand = getValue(I.getOperand(1));
+    SDValue t0 = DAG.getNode(ISD::FP_TO_SINT, MVT::i32, operand);
+    SDValue t1 = DAG.getNode(ISD::SINT_TO_FP, MVT::f32, t0);
+    SDValue t2 = DAG.getNode(ISD::FSUB, MVT::f32, operand, t1);
+    SDValue t3 = DAG.getNode(ISD::SHL, MVT::i32, t0, 
+                                       DAG.getConstant(23, MVT::i32));
+    SDValue t4 = DAG.getNode(ISD::FP_EXTEND, MVT::f64, t2);
+    SDValue t5 = DAG.getNode(ISD::FMUL, MVT::f64, t4,
+                      DAG.getConstantFP(APFloat(
+                          APInt(64, 0x3fb446bc609aa9cdULL)), MVT::f64));
+    SDValue t6 = DAG.getNode(ISD::FADD, MVT::f64, t5,
+                      DAG.getConstantFP(APFloat(
+                          APInt(64, 0x3fccb71e629f3a20ULL)), MVT::f64));
+    SDValue t7 = DAG.getNode(ISD::FMUL, MVT::f64, t6, t4);
+    SDValue t8 = DAG.getNode(ISD::FADD, MVT::f64, t7, 
+                      DAG.getConstantFP(APFloat(
+                          APInt(64, 0x3fe64960db7bd5feULL)), MVT::f64));
+    SDValue t9 = DAG.getNode(ISD::FMUL, MVT::f64, t8, t4);
+    SDValue t10 = DAG.getNode(ISD::FADD, MVT::f64, t9,
+                      DAG.getConstantFP(APFloat(
+                          APInt(64, 0x3fefff1f934bd549ULL)), MVT::f64));
+    SDValue t11 = DAG.getNode(ISD::FP_ROUND, MVT::f32, t10, 
+                          DAG.getConstant(0, MVT::i32));
+    SDValue t12 = DAG.getNode(ISD::BIT_CONVERT, MVT::i32, t11);
+    SDValue t13 = DAG.getNode(ISD::ADD, MVT::i32, t12, t3);
+    result = DAG.getNode(ISD::BIT_CONVERT, MVT::f32, t13);
+  } else {
+  // No special expansion.
+    result = DAG.getNode(ISD::FEXP2,
+                         getValue(I.getOperand(1)).getValueType(),
+                         getValue(I.getOperand(1)));
+  }
+  setValue(&I, result);
+}
+
 /// visitIntrinsicCall - Lower the call to the specified intrinsic function.  If
 /// we want to emit this as a call to a named external function, return the name
 /// otherwise lower it and return null.
@@ -3037,9 +3091,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
                              getValue(I.getOperand(1))));
     return 0;
   case Intrinsic::exp2:
-    setValue(&I, DAG.getNode(ISD::FEXP2,
-                             getValue(I.getOperand(1)).getValueType(),
-                             getValue(I.getOperand(1))));
+    visitExp2(I);
     return 0;
   case Intrinsic::pow:
     setValue(&I, DAG.getNode(ISD::FPOW,
