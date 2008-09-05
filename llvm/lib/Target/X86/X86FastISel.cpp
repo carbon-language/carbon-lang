@@ -22,6 +22,7 @@
 #include "llvm/InstrTypes.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/CodeGen/FastISel.h"
+#include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 
 using namespace llvm;
@@ -51,6 +52,8 @@ private:
   bool X86SelectStore(Instruction *I);
 
   bool X86SelectCmp(Instruction *I);
+  
+  unsigned TargetSelectConstantPoolLoad(Constant *C, MachineConstantPool* MCP);
 };
 
 /// X86SelectConstAddr - Select and emit code to materialize constant address.
@@ -399,6 +402,91 @@ X86FastISel::TargetSelectInstruction(Instruction *I)  {
   }
 
   return false;
+}
+
+unsigned X86FastISel::TargetSelectConstantPoolLoad(Constant *C,
+                                                   MachineConstantPool* MCP) {
+  unsigned CPLoad = getRegForValue(C);
+  if (CPLoad != 0)
+    return CPLoad;
+  
+  // Can't handle PIC-mode yet.
+  if (TM.getRelocationModel() == Reloc::PIC_)
+    return 0;
+  
+  MVT VT = MVT::getMVT(C->getType(), /*HandleUnknown=*/true);
+  if (VT == MVT::Other || !VT.isSimple())
+    // Unhandled type. Halt "fast" selection and bail.
+    return false;
+  if (VT == MVT::iPTR)
+    // Use pointer type.
+    VT = TLI.getPointerTy();
+  // We only handle legal types. For example, on x86-32 the instruction
+  // selector contains all of the 64-bit instructions from x86-64,
+  // under the assumption that i64 won't be used if the target doesn't
+  // support it.
+  if (!TLI.isTypeLegal(VT))
+    return false;
+  
+  // Get opcode and regclass of the output for the given load instruction.
+  unsigned Opc = 0;
+  const TargetRegisterClass *RC = NULL;
+  switch (VT.getSimpleVT()) {
+  default: return false;
+  case MVT::i8:
+    Opc = X86::MOV8rm;
+    RC  = X86::GR8RegisterClass;
+    break;
+  case MVT::i16:
+    Opc = X86::MOV16rm;
+    RC  = X86::GR16RegisterClass;
+    break;
+  case MVT::i32:
+    Opc = X86::MOV32rm;
+    RC  = X86::GR32RegisterClass;
+    break;
+  case MVT::i64:
+    // Must be in x86-64 mode.
+    Opc = X86::MOV64rm;
+    RC  = X86::GR64RegisterClass;
+    break;
+  case MVT::f32:
+    if (Subtarget->hasSSE1()) {
+      Opc = X86::MOVSSrm;
+      RC  = X86::FR32RegisterClass;
+    } else {
+      Opc = X86::LD_Fp32m;
+      RC  = X86::RFP32RegisterClass;
+    }
+    break;
+  case MVT::f64:
+    if (Subtarget->hasSSE2()) {
+      Opc = X86::MOVSDrm;
+      RC  = X86::FR64RegisterClass;
+    } else {
+      Opc = X86::LD_Fp64m;
+      RC  = X86::RFP64RegisterClass;
+    }
+    break;
+  case MVT::f80:
+    Opc = X86::LD_Fp80m;
+    RC  = X86::RFP80RegisterClass;
+    break;
+  }
+  
+  unsigned ResultReg = createResultReg(RC);
+  if (isa<GlobalValue>(C)) {
+    if (X86SelectConstAddr(C, ResultReg))
+      return ResultReg;
+    else
+      return 0;
+  }
+  
+  
+  unsigned MCPOffset = MCP->getConstantPoolIndex(C, 0);
+  addConstantPoolReference(BuildMI(MBB, TII.get(Opc), ResultReg), MCPOffset);
+  UpdateValueMap(C, ResultReg);
+  return ResultReg;
 }
 
 namespace llvm {

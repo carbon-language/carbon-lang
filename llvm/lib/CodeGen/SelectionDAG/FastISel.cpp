@@ -80,7 +80,7 @@ unsigned FastISel::getRegForValue(Value *V) {
 /// NOTE: This is only necessary because we might select a block that uses
 /// a value before we select the block that defines the value.  It might be
 /// possible to fix this by selecting blocks in reverse postorder.
-void FastISel::UpdateValueMap(Instruction* I, unsigned Reg) {
+void FastISel::UpdateValueMap(Value* I, unsigned Reg) {
   if (!ValueMap.count(I))
     ValueMap[I] = Reg;
   else

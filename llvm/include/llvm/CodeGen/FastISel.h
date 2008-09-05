@@ -22,6 +22,7 @@ namespace llvm {
 
 class ConstantFP;
 class MachineBasicBlock;
+class MachineConstantPool;
 class MachineFunction;
 class MachineRegisterInfo;
 class TargetData;
@@ -215,9 +216,14 @@ protected:
   /// from a specified index of a superregister.
   unsigned FastEmitInst_extractsubreg(unsigned Op0, uint32_t Idx);
 
-  void UpdateValueMap(Instruction* I, unsigned Reg);
+  void UpdateValueMap(Value* I, unsigned Reg);
 
   unsigned createResultReg(const TargetRegisterClass *RC);
+  
+  virtual unsigned TargetSelectConstantPoolLoad(Constant* C,
+                                                MachineConstantPool* MCP) {
+    return 0;
+  }
 
 private:
   bool SelectBinaryOp(Instruction *I, ISD::NodeType ISDOpcode);
