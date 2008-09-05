@@ -143,16 +143,18 @@ static void HandleInlinedInvoke(InvokeInst *II, BasicBlock *FirstNewBlock,
 /// UpdateCallGraphAfterInlining - Once we have cloned code over from a callee
 /// into the caller, update the specified callgraph to reflect the changes we
 /// made.  Note that it's possible that not all code was copied over, so only
-/// some edges of the callgraph will be remain.
-static void UpdateCallGraphAfterInlining(const Function *Caller,
-                                         const Function *Callee,
+/// some edges of the callgraph may remain.
+static void UpdateCallGraphAfterInlining(CallSite CS,
                                          Function::iterator FirstNewBlock,
                                        DenseMap<const Value*, Value*> &ValueMap,
                                          CallGraph &CG) {
+  const Function *Caller = CS.getInstruction()->getParent()->getParent();
+  const Function *Callee = CS.getCalledFunction();
+
   // Update the call graph by deleting the edge from Callee to Caller
   CallGraphNode *CalleeNode = CG[Callee];
   CallGraphNode *CallerNode = CG[Caller];
-  CallerNode->removeCallEdgeTo(CalleeNode);
+  CallerNode->removeCallEdgeFor(CS);
 
   // Since we inlined some uninlined call sites in the callee into the caller,
   // add edges from the caller to all of the callees of the callee.
@@ -302,8 +304,7 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
 
     // Update the callgraph if requested.
     if (CG)
-      UpdateCallGraphAfterInlining(Caller, CalledFunc, FirstNewBlock, ValueMap,
-                                   *CG);
+      UpdateCallGraphAfterInlining(CS, FirstNewBlock, ValueMap, *CG);
   }
 
   // If there are any alloca instructions in the block that used to be the entry
