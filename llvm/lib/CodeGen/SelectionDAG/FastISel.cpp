@@ -366,6 +366,10 @@ FastISel::SelectInstruction(Instruction *I) {
     return false;
   }
 
+  case Instruction::Unreachable:
+    // Nothing to emit.
+    return true;
+
   case Instruction::PHI:
     // PHI nodes are already emitted.
     return true;
