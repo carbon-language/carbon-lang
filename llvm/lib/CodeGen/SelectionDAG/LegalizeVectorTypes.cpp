@@ -524,7 +524,25 @@ void DAGTypeLegalizer::SplitVecRes_UnaryOp(SDNode *N, SDValue &Lo,
   MVT LoVT, HiVT;
   GetSplitDestVTs(N->getValueType(0), LoVT, HiVT);
 
-  GetSplitVector(N->getOperand(0), Lo, Hi);
+  // Split the input.
+  MVT InVT = N->getOperand(0).getValueType();
+  switch (getTypeAction(InVT)) {
+  default: assert(0 && "Unexpected type action!");
+  case Legal: {
+    assert(LoVT == HiVT && "Legal non-power-of-two vector type?");
+    MVT InNVT = MVT::getVectorVT(InVT.getVectorElementType(),
+                                 LoVT.getVectorNumElements());
+    Lo = DAG.getNode(ISD::EXTRACT_SUBVECTOR, InNVT, N->getOperand(0),
+                     DAG.getIntPtrConstant(0));
+    Hi = DAG.getNode(ISD::EXTRACT_SUBVECTOR, InNVT, N->getOperand(0),
+                     DAG.getIntPtrConstant(InNVT.getVectorNumElements()));
+    break;
+  }
+  case SplitVector:
+    GetSplitVector(N->getOperand(0), Lo, Hi);
+    break;
+  }
+
   Lo = DAG.getNode(N->getOpcode(), LoVT, Lo);
   Hi = DAG.getNode(N->getOpcode(), HiVT, Hi);
 }
