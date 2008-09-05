@@ -1556,9 +1556,10 @@ void Parser::ParseBracketDeclarator(Declarator &D) {
                                           NumElements.Val, StartLoc));
 }
 
-/// [GNU] typeof-specifier:
-///         typeof ( expressions )
-///         typeof ( type-name )
+/// [GNU]   typeof-specifier:
+///           typeof ( expressions )
+///           typeof ( type-name )
+/// [GNU/C++] typeof unary-expression
 ///
 void Parser::ParseTypeofSpecifier(DeclSpec &DS) {
   assert(Tok.is(tok::kw_typeof) && "Not a typeof specifier");
@@ -1566,9 +1567,26 @@ void Parser::ParseTypeofSpecifier(DeclSpec &DS) {
   SourceLocation StartLoc = ConsumeToken();
 
   if (Tok.isNot(tok::l_paren)) {
-    Diag(Tok, diag::err_expected_lparen_after, BuiltinII->getName());
+    if (!getLang().CPlusPlus) {
+      Diag(Tok, diag::err_expected_lparen_after, BuiltinII->getName());
+      return;
+    }
+
+    ExprResult Result = ParseCastExpression(true/*isUnaryExpression*/);
+    if (Result.isInvalid)
+      return;
+
+    const char *PrevSpec = 0;
+    // Check for duplicate type specifiers.
+    if (DS.SetTypeSpecType(DeclSpec::TST_typeofExpr, StartLoc, PrevSpec, 
+                           Result.Val))
+      Diag(StartLoc, diag::err_invalid_decl_spec_combination, PrevSpec);
+
+    // FIXME: Not accurate, the range gets one token more than it should.
+    DS.SetRangeEnd(Tok.getLocation());
     return;
   }
+
   SourceLocation LParenLoc = ConsumeParen(), RParenLoc;
   
   if (isTypeSpecifierQualifier()) {
