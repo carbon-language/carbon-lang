@@ -207,14 +207,21 @@ SetFunctionAttributesFromTypes(const Decl *FD,
     FuncAttrs |= llvm::ParamAttr::NoReturn;
 
   llvm::SmallVector<llvm::ParamAttrsWithIndex, 8> ParamAttrList;
-  if (FuncAttrs)
-    ParamAttrList.push_back(llvm::ParamAttrsWithIndex::get(0, FuncAttrs));
   // Note that there is parallel code in CodeGenFunction::EmitCallExpr
-  bool AggregateReturn = CodeGenFunction::hasAggregateLLVMType(ArgTypes[0]);
-  if (AggregateReturn)
+  unsigned increment = 1;
+  if (CodeGenFunction::hasAggregateLLVMType(ArgTypes[0])) {
     ParamAttrList.push_back(
         llvm::ParamAttrsWithIndex::get(1, llvm::ParamAttr::StructRet));
-  unsigned increment = AggregateReturn ? 2 : 1;
+    ++increment;
+  } else if (ArgTypes[0]->isPromotableIntegerType()) {
+    if (ArgTypes[0]->isSignedIntegerType()) {
+      FuncAttrs |= llvm::ParamAttr::SExt;
+    } else if (ArgTypes[0]->isUnsignedIntegerType()) {
+      FuncAttrs |= llvm::ParamAttr::ZExt;
+    }
+  }
+  if (FuncAttrs)
+    ParamAttrList.push_back(llvm::ParamAttrsWithIndex::get(0, FuncAttrs));
   for (llvm::SmallVector<QualType, 8>::const_iterator i = ArgTypes.begin() + 1,
          e = ArgTypes.end(); i != e; ++i, ++increment) {
     QualType ParamType = *i;
