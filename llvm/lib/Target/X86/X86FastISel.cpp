@@ -262,14 +262,14 @@ bool X86FastISel::X86SelectLoad(Instruction *I)  {
 bool X86FastISel::X86SelectCmp(Instruction *I) {
   CmpInst *CI = cast<CmpInst>(I);
 
+  MVT VT = TLI.getValueType(I->getOperand(0)->getType());
+  if (!TLI.isTypeLegal(VT))
+    return false;
+
   unsigned Op0Reg = getRegForValue(CI->getOperand(0));
   if (Op0Reg == 0) return false;
   unsigned Op1Reg = getRegForValue(CI->getOperand(1));
   if (Op1Reg == 0) return false;
-
-  MVT VT = TLI.getValueType(I->getOperand(0)->getType());
-  if (!TLI.isTypeLegal(VT))
-    return false;
 
   unsigned Opc;
   switch (VT.getSimpleVT()) {
