@@ -213,7 +213,7 @@ public:
 
   /// getTypeDeclType - Return the unique reference to the type for
   /// the specified type declaration.
-  QualType getTypeDeclType(TypeDecl *Decl);
+  QualType getTypeDeclType(TypeDecl *Decl, TypeDecl* PrevDecl=0);
 
   /// getTypedefType - Return the unique reference to the type for the
   /// specified typename decl.
@@ -467,6 +467,12 @@ private:
   
   void InitBuiltinTypes();
   void InitBuiltinType(QualType &R, BuiltinType::Kind K);
+  
+  /// setRecordDefinition - Used by RecordDecl::defineBody to inform ASTContext
+  ///  about which RecordDecl serves as the definition of a particular
+  ///  struct/union/class.  This will eventually be used by enums as well.
+  void setTagDefinition(TagDecl* R);
+  friend class RecordDecl;
 };
   
 }  // end namespace clang

@@ -200,6 +200,16 @@ unsigned FunctionDecl::getMinRequiredArguments() const {
 }
 
 //===----------------------------------------------------------------------===//
+// TagdDecl Implementation
+//===----------------------------------------------------------------------===//
+
+TagDecl* TagDecl::getDefinition(ASTContext& C) const {
+  QualType T = C.getTypeDeclType(const_cast<TagDecl*>(this));
+  TagDecl* D = cast<TagDecl>(cast<TagType>(T)->getDecl());  
+  return D->isDefinition() ? D : 0;
+}
+
+//===----------------------------------------------------------------------===//
 // RecordDecl Implementation
 //===----------------------------------------------------------------------===//
 
@@ -214,7 +224,8 @@ RecordDecl::RecordDecl(Kind DK, DeclContext *DC, SourceLocation L,
 }
 
 RecordDecl *RecordDecl::Create(ASTContext &C, TagKind TK, DeclContext *DC,
-                               SourceLocation L, IdentifierInfo *Id) {
+                               SourceLocation L, IdentifierInfo *Id,
+                               RecordDecl* PrevDecl) {
   
   void *Mem = C.getAllocator().Allocate<RecordDecl>();
   Kind DK;
@@ -225,7 +236,10 @@ RecordDecl *RecordDecl::Create(ASTContext &C, TagKind TK, DeclContext *DC,
     case TK_union:  DK = Union;  break;
     case TK_class:  DK = Class;  break;
   }
-  return new (Mem) RecordDecl(DK, DC, L, Id);
+  
+  RecordDecl* R = new (Mem) RecordDecl(DK, DC, L, Id);
+  C.getTypeDeclType(R, PrevDecl);
+  return R;
 }
 
 RecordDecl::~RecordDecl() {
@@ -243,7 +257,8 @@ void RecordDecl::Destroy(ASTContext& C) {
 /// defineBody - When created, RecordDecl's correspond to a forward declared
 /// record.  This method is used to mark the decl as being defined, with the
 /// specified contents.
-void RecordDecl::defineBody(FieldDecl **members, unsigned numMembers) {
+void RecordDecl::defineBody(ASTContext& C, FieldDecl **members,
+                            unsigned numMembers) {
   assert(!isDefinition() && "Cannot redefine record!");
   setDefinition(true);
   NumMembers = numMembers;
@@ -251,7 +266,11 @@ void RecordDecl::defineBody(FieldDecl **members, unsigned numMembers) {
     Members = new FieldDecl*[numMembers];
     memcpy(Members, members, numMembers*sizeof(Decl*));
   }
+  
+  // Let ASTContext know that this is the defining RecordDecl this type.
+  C.setTagDefinition(this);
 }
+
 
 FieldDecl *RecordDecl::getMember(IdentifierInfo *II) {
   if (Members == 0 || NumMembers < 0)

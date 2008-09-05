@@ -1978,7 +1978,7 @@ QualType RewriteObjC::getSuperStructType() {
       FieldDecls[i] = FieldDecl::Create(*Context, SourceLocation(), 0, 
                                         FieldTypes[i]);
   
-    SuperStructDecl->defineBody(FieldDecls, 4);
+    SuperStructDecl->defineBody(*Context, FieldDecls, 4);
   }
   return Context->getTagDeclType(SuperStructDecl);
 }
@@ -2005,7 +2005,7 @@ QualType RewriteObjC::getConstantStringStructType() {
       FieldDecls[i] = FieldDecl::Create(*Context, SourceLocation(), 0,
                                         FieldTypes[i]);
   
-    ConstantStringDecl->defineBody(FieldDecls, 4);
+    ConstantStringDecl->defineBody(*Context, FieldDecls, 4);
   }
   return Context->getTagDeclType(ConstantStringDecl);
 }

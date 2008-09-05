@@ -27,7 +27,8 @@ CXXFieldDecl *CXXFieldDecl::Create(ASTContext &C, CXXRecordDecl *RD,
 }
 
 CXXRecordDecl *CXXRecordDecl::Create(ASTContext &C, TagKind TK, DeclContext *DC,
-                                     SourceLocation L, IdentifierInfo *Id) {
+                                     SourceLocation L, IdentifierInfo *Id,
+                                     CXXRecordDecl* PrevDecl) {
   Kind DK;
   switch (TK) {
     default: assert(0 && "Invalid TagKind!");
@@ -37,7 +38,9 @@ CXXRecordDecl *CXXRecordDecl::Create(ASTContext &C, TagKind TK, DeclContext *DC,
     case TK_class:  DK = CXXClass;  break;
   }
   void *Mem = C.getAllocator().Allocate<CXXRecordDecl>();
-  return new (Mem) CXXRecordDecl(DK, DC, L, Id);
+  CXXRecordDecl* R = new (Mem) CXXRecordDecl(DK, DC, L, Id);
+  C.getTypeDeclType(R, PrevDecl);  
+  return R;
 }
 
 CXXMethodDecl *

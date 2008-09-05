@@ -1682,6 +1682,12 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
   case DeclSpec::TST_enum:   Kind = TagDecl::TK_enum; break;
   }
   
+  // Two code paths: a new one for structs/unions/classes where we create
+  //   separate decls for forward declarations, and an old (eventually to
+  //   be removed) code path for enums.
+  if (Kind != TagDecl::TK_enum)
+    return ActOnTagStruct(S, Kind, TK, KWLoc, Name, NameLoc, Attr);
+  
   // If this is a named struct, check to see if there was a previous forward
   // declaration or definition.
   // Use ScopedDecl instead of TagDecl, because a NamespaceDecl may come up.
@@ -1780,6 +1786,121 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
     ProcessDeclAttributeList(New, Attr);
   return New;
 }
+
+/// ActOnTagStruct - New "ActOnTag" logic for structs/unions/classes.  Unlike
+///  the logic for enums, we create separate decls for forward declarations.
+///  This is called by ActOnTag, but eventually will replace its logic.
+Sema::DeclTy *Sema::ActOnTagStruct(Scope *S, TagDecl::TagKind Kind, TagKind TK,
+                             SourceLocation KWLoc, IdentifierInfo *Name,
+                             SourceLocation NameLoc, AttributeList *Attr) {
+  
+  // If this is a named struct, check to see if there was a previous forward
+  // declaration or definition.
+  // Use ScopedDecl instead of TagDecl, because a NamespaceDecl may come up.
+  ScopedDecl *PrevDecl = 
+    dyn_cast_or_null<ScopedDecl>(LookupDecl(Name, Decl::IDNS_Tag, S));
+  
+  if (PrevDecl) {    
+    assert((isa<TagDecl>(PrevDecl) || isa<NamespaceDecl>(PrevDecl)) &&
+           "unexpected Decl type");
+    
+    if (TagDecl *PrevTagDecl = dyn_cast<TagDecl>(PrevDecl)) {
+      // If this is a use of a previous tag, or if the tag is already declared
+      // in the same scope (so that the definition/declaration completes or
+      // rementions the tag), reuse the decl.
+      if (TK == TK_Reference ||
+          IdResolver.isDeclInScope(PrevDecl, CurContext, S)) {
+        // Make sure that this wasn't declared as an enum and now used as a
+        // struct or something similar.
+        if (PrevTagDecl->getTagKind() != Kind) {
+          Diag(KWLoc, diag::err_use_with_wrong_tag, Name->getName());
+          Diag(PrevDecl->getLocation(), diag::err_previous_use);
+          // Recover by making this an anonymous redefinition.
+          Name = 0;
+          PrevDecl = 0;
+        } else {
+          // If this is a use, return the original decl.
+          
+          // FIXME: In the future, return a variant or some other clue
+          //  for the consumer of this Decl to know it doesn't own it.
+          //  For our current ASTs this shouldn't be a problem, but will
+          //  need to be changed with DeclGroups.
+          if (TK == TK_Reference)
+            return PrevDecl;
+          
+          // The new decl is a definition?
+          if (TK == TK_Definition) {
+            // Diagnose attempts to redefine a tag.
+            if (RecordDecl* DefRecord =
+                cast<RecordDecl>(PrevTagDecl)->getDefinition(Context)) {
+              Diag(NameLoc, diag::err_redefinition, Name->getName());
+              Diag(DefRecord->getLocation(), diag::err_previous_definition);
+              // If this is a redefinition, recover by making this struct be
+              // anonymous, which will make any later references get the previous
+              // definition.
+              Name = 0;
+              PrevDecl = 0;
+            }
+            // Okay, this is definition of a previously declared or referenced
+            // tag.  We're going to create a new Decl.
+          }
+        }
+        // If we get here we have (another) forward declaration.  Just create
+        // a new decl.        
+      }
+      else {
+        // If we get here, this is a definition of a new struct type in a nested
+        // scope, e.g. "struct foo; void bar() { struct foo; }", just create a 
+        // new decl/type.  We set PrevDecl to NULL so that the Records
+        // have distinct types.
+        PrevDecl = 0;
+      }
+    } else {
+      // PrevDecl is a namespace.
+      if (IdResolver.isDeclInScope(PrevDecl, CurContext, S)) {
+        // The tag name clashes with a namespace name, issue an error and
+        // recover by making this tag be anonymous.
+        Diag(NameLoc, diag::err_redefinition_different_kind, Name->getName());
+        Diag(PrevDecl->getLocation(), diag::err_previous_definition);
+        Name = 0;
+      }
+    }
+  }
+  
+  // If there is an identifier, use the location of the identifier as the
+  // location of the decl, otherwise use the location of the struct/union
+  // keyword.
+  SourceLocation Loc = NameLoc.isValid() ? NameLoc : KWLoc;
+  
+  // Otherwise, if this is the first time we've seen this tag, create the decl.
+  TagDecl *New;
+    
+  // FIXME: Tag decls should be chained to any simultaneous vardecls, e.g.:
+  // struct X { int A; } D;    D should chain to X.
+  if (getLangOptions().CPlusPlus)
+    New = CXXRecordDecl::Create(Context, Kind, CurContext, Loc, Name,
+                                dyn_cast_or_null<CXXRecordDecl>(PrevDecl));
+  else
+    New = RecordDecl::Create(Context, Kind, CurContext, Loc, Name,
+                             dyn_cast_or_null<RecordDecl>(PrevDecl));
+  
+  // If this has an identifier, add it to the scope stack.
+  if ((TK == TK_Definition || !PrevDecl) && Name) {
+    // The scope passed in may not be a decl scope.  Zip up the scope tree until
+    // we find one that is.
+    while ((S->getFlags() & Scope::DeclScope) == 0)
+      S = S->getParent();
+    
+    // Add it to the decl chain.
+    PushOnScopeChains(New, S);
+  }
+  
+  if (Attr)
+    ProcessDeclAttributeList(New, Attr);
+
+  return New;
+}
+
 
 /// Collect the instance variables declared in an Objective-C object.  Used in
 /// the creation of structures from objects using the @defs directive.
@@ -1977,17 +2098,19 @@ void Sema::ActOnFields(Scope* S,
   assert(EnclosingDecl && "missing record or interface decl");
   RecordDecl *Record = dyn_cast<RecordDecl>(EnclosingDecl);
   
-  if (Record && Record->isDefinition()) {
-    // Diagnose code like:
-    //     struct S { struct S {} X; };
-    // We discover this when we complete the outer S.  Reject and ignore the
-    // outer S.
-    Diag(Record->getLocation(), diag::err_nested_redefinition,
-         Record->getKindName());
-    Diag(RecLoc, diag::err_previous_definition);
-    Record->setInvalidDecl();
-    return;
-  }
+  if (Record)
+    if (RecordDecl* DefRecord = Record->getDefinition(Context)) {
+      // Diagnose code like:
+      //     struct S { struct S {} X; };
+      // We discover this when we complete the outer S.  Reject and ignore the
+      // outer S.
+      Diag(DefRecord->getLocation(), diag::err_nested_redefinition,
+           DefRecord->getKindName());
+      Diag(RecLoc, diag::err_previous_definition);
+      Record->setInvalidDecl();
+      return;
+    }
+  
   // Verify that all the fields are okay.
   unsigned NumNamedMembers = 0;
   llvm::SmallVector<FieldDecl*, 32> RecFields;
@@ -2099,7 +2222,7 @@ void Sema::ActOnFields(Scope* S,
  
   // Okay, we successfully defined 'Record'.
   if (Record) {
-    Record->defineBody(&RecFields[0], RecFields.size());
+    Record->defineBody(Context, &RecFields[0], RecFields.size());
     // If this is a C++ record, HandleTagDeclDefinition will be invoked in
     // Sema::ActOnFinishCXXClassDef.
     if (!isa<CXXRecordDecl>(Record))

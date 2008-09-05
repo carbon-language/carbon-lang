@@ -49,7 +49,8 @@ protected:
   }
 public:
   static CXXRecordDecl *Create(ASTContext &C, TagKind TK, DeclContext *DC,
-                               SourceLocation L, IdentifierInfo *Id);
+                               SourceLocation L, IdentifierInfo *Id,
+                               CXXRecordDecl* PrevDecl=0);
   
   const CXXFieldDecl *getMember(unsigned i) const {
     return cast<const CXXFieldDecl>(RecordDecl::getMember(i));

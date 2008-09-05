@@ -1872,7 +1872,7 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
                                     Ctx.getObjCIdType());
   FieldDecls[1] = FieldDecl::Create(Ctx, SourceLocation(), 0,
                                     Ctx.getObjCClassType());
-  RD->defineBody(FieldDecls, 2);
+  RD->defineBody(Ctx, FieldDecls, 2);
 
   SuperCTy = Ctx.getTagDeclType(RD);
   SuperPtrCTy = Ctx.getPointerType(SuperCTy);

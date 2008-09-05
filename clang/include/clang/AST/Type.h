@@ -1070,6 +1070,7 @@ public:
 
 class TagType : public Type {
   TagDecl *decl;
+  friend class ASTContext;
 
 protected:
   TagType(TagDecl *D, QualType can) : Type(Tagged, can), decl(D) {}

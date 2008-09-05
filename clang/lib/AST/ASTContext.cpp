@@ -483,7 +483,8 @@ ASTContext::getASTObjCInterfaceLayout(const ObjCInterfaceDecl *D) {
 /// specified record (struct/union/class), which indicates its size and field
 /// position information.
 const ASTRecordLayout &ASTContext::getASTRecordLayout(const RecordDecl *D) {
-  assert(D->isDefinition() && "Cannot get layout of forward declarations!");
+  D = D->getDefinition(*this);
+  assert(D && "Cannot get layout of forward declarations!");
 
   // Look up this layout, if already laid out, return what we have.
   const ASTRecordLayout *&Entry = ASTRecordLayouts[D];
@@ -898,7 +899,7 @@ QualType ASTContext::getFunctionType(QualType ResultTy, const QualType *ArgArray
 
 /// getTypeDeclType - Return the unique reference to the type for the
 /// specified type declaration.
-QualType ASTContext::getTypeDeclType(TypeDecl *Decl) {
+QualType ASTContext::getTypeDeclType(TypeDecl *Decl, TypeDecl* PrevDecl) {
   if (Decl->TypeForDecl) return QualType(Decl->TypeForDecl, 0);
   
   if (TypedefDecl *Typedef = dyn_cast_or_null<TypedefDecl>(Decl))
@@ -907,17 +908,29 @@ QualType ASTContext::getTypeDeclType(TypeDecl *Decl) {
              = dyn_cast_or_null<ObjCInterfaceDecl>(Decl))
     return getObjCInterfaceType(ObjCInterface);
 
-  if (CXXRecordDecl *CXXRecord = dyn_cast_or_null<CXXRecordDecl>(Decl))
-    Decl->TypeForDecl = new CXXRecordType(CXXRecord);
-  else if (RecordDecl *Record = dyn_cast_or_null<RecordDecl>(Decl))
-    Decl->TypeForDecl = new RecordType(Record);
+  if (CXXRecordDecl *CXXRecord = dyn_cast_or_null<CXXRecordDecl>(Decl)) {
+    Decl->TypeForDecl = PrevDecl ? PrevDecl->TypeForDecl
+                                 : new CXXRecordType(CXXRecord);
+  }
+  else if (RecordDecl *Record = dyn_cast_or_null<RecordDecl>(Decl)) {
+    Decl->TypeForDecl = PrevDecl ? PrevDecl->TypeForDecl
+                                 : new RecordType(Record);
+  }
   else if (EnumDecl *Enum = dyn_cast_or_null<EnumDecl>(Decl))
     Decl->TypeForDecl = new EnumType(Enum);
   else
     assert(false && "TypeDecl without a type?");
 
-  Types.push_back(Decl->TypeForDecl);
+  if (!PrevDecl) Types.push_back(Decl->TypeForDecl);
   return QualType(Decl->TypeForDecl, 0);
+}
+
+/// setTagDefinition - Used by RecordDecl::defineBody to inform ASTContext
+///  about which RecordDecl serves as the definition of a particular
+///  struct/union/class.  This will eventually be used by enums as well.
+void ASTContext::setTagDefinition(TagDecl* D) {
+  assert (D->isDefinition());
+  cast<TagType>(D->TypeForDecl)->decl = D;  
 }
 
 /// getTypedefType - Return the unique reference to the type for the
@@ -1366,7 +1379,7 @@ QualType ASTContext::getCFConstantStringType() {
       FieldDecls[i] = FieldDecl::Create(*this, SourceLocation(), 0,
                                         FieldTypes[i]);
   
-    CFConstantStringTypeDecl->defineBody(FieldDecls, 4);
+    CFConstantStringTypeDecl->defineBody(*this, FieldDecls, 4);
   }
   
   return getTagDeclType(CFConstantStringTypeDecl);
@@ -1392,7 +1405,7 @@ QualType ASTContext::getObjCFastEnumerationStateType()
       RecordDecl::Create(*this, TagDecl::TK_struct, TUDecl, SourceLocation(),
                          &Idents.get("__objcFastEnumerationState"));
     
-    ObjCFastEnumerationStateTypeDecl->defineBody(FieldDecls, 4);
+    ObjCFastEnumerationStateTypeDecl->defineBody(*this, FieldDecls, 4);
   }
   
   return getTagDeclType(ObjCFastEnumerationStateTypeDecl);

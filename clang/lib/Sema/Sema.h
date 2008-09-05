@@ -251,6 +251,11 @@ private:
   virtual DeclTy *ActOnTag(Scope *S, unsigned TagType, TagKind TK,
                            SourceLocation KWLoc, IdentifierInfo *Name,
                            SourceLocation NameLoc, AttributeList *Attr);
+  
+  DeclTy* ActOnTagStruct(Scope *S, TagDecl::TagKind Kind, TagKind TK,
+                         SourceLocation KWLoc, IdentifierInfo *Name,
+                         SourceLocation NameLoc, AttributeList *Attr);  
+  
   virtual void ActOnDefs(Scope *S, SourceLocation DeclStart,
                          IdentifierInfo *ClassName,
                          llvm::SmallVectorImpl<DeclTy*> &Decls);

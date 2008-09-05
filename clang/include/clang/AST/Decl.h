@@ -690,6 +690,15 @@ public:
     return IsDefinition;
   }
   
+  /// getDefinition - Returns the TagDecl that actually defines this 
+  ///  struct/union/class/enum.  When determining whether or not a
+  ///  struct/union/class/enum is completely defined, one should use this method
+  ///  as opposed to 'isDefinition'.  'isDefinition' indicates whether or not a
+  ///  specific TagDecl is defining declaration, not whether or not the
+  ///  struct/union/class/enum type is defined.  This method returns NULL if
+  ///  there is no TagDecl that defines the struct/union/class/enum.
+  TagDecl* getDefinition(ASTContext& C) const;
+  
   const char *getKindName() const {
     switch (getTagKind()) {
     default: assert(0 && "Unknown TagKind!");
@@ -806,12 +815,24 @@ protected:
 
 public:
   static RecordDecl *Create(ASTContext &C, TagKind TK, DeclContext *DC,
-                            SourceLocation L, IdentifierInfo *Id);
+                            SourceLocation L, IdentifierInfo *Id,
+                            RecordDecl* PrevDecl = 0);
 
   virtual void Destroy(ASTContext& C);
       
   bool hasFlexibleArrayMember() const { return HasFlexibleArrayMember; }
   void setHasFlexibleArrayMember(bool V) { HasFlexibleArrayMember = V; }
+  
+  /// getDefinition - Returns the RecordDecl that actually defines this 
+  ///  struct/union/class.  When determining whether or not a struct/union/class
+  ///  is completely defined, one should use this method as opposed to
+  ///  'isDefinition'.  'isDefinition' indicates whether or not a specific
+  ///  RecordDecl is defining declaration, not whether or not the record
+  ///  type is defined.  This method returns NULL if there is no RecordDecl
+  ///  that defines the struct/union/tag.
+  RecordDecl* getDefinition(ASTContext& C) const {
+    return cast_or_null<RecordDecl>(TagDecl::getDefinition(C));
+  }
   
   /// getNumMembers - Return the number of members, or -1 if this is a forward
   /// definition.
@@ -844,7 +865,7 @@ public:
   /// defineBody - When created, RecordDecl's correspond to a forward declared
   /// record.  This method is used to mark the decl as being defined, with the
   /// specified contents.
-  void defineBody(FieldDecl **Members, unsigned numMembers);
+  void defineBody(ASTContext& C, FieldDecl **Members, unsigned numMembers);
 
   /// getMember - If the member doesn't exist, or there are no members, this 
   /// function will return 0;
