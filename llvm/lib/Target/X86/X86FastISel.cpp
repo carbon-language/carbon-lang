@@ -45,6 +45,10 @@ public:
 #include "X86GenFastISel.inc"
 
 private:
+  bool X86FastEmitLoad(MVT VT, unsigned Op0, Value *V, unsigned &RR);
+
+  bool X86FastEmitStore(MVT VT, unsigned Op0, unsigned Op1, Value *V);
+  
   bool X86SelectConstAddr(Value *V, unsigned &Op0);
 
   bool X86SelectLoad(Instruction *I);
@@ -60,9 +64,132 @@ private:
   bool X86SelectShift(Instruction *I);
 
   bool X86SelectSelect(Instruction *I);
-  
+
   unsigned TargetMaterializeConstant(Constant *C, MachineConstantPool* MCP);
 };
+
+/// X86FastEmitLoad - Emit a machine instruction to load a value of type VT.
+/// The address is either pre-computed, i.e. Op0, or a GlobalAddress, i.e. V.
+/// Return true and the result register by reference if it is possible.
+bool X86FastISel::X86FastEmitLoad(MVT VT, unsigned Op0, Value *V,
+                                  unsigned &ResultReg) {
+  // Get opcode and regclass of the output for the given load instruction.
+  unsigned Opc = 0;
+  const TargetRegisterClass *RC = NULL;
+  switch (VT.getSimpleVT()) {
+  default: return false;
+  case MVT::i8:
+    Opc = X86::MOV8rm;
+    RC  = X86::GR8RegisterClass;
+    break;
+  case MVT::i16:
+    Opc = X86::MOV16rm;
+    RC  = X86::GR16RegisterClass;
+    break;
+  case MVT::i32:
+    Opc = X86::MOV32rm;
+    RC  = X86::GR32RegisterClass;
+    break;
+  case MVT::i64:
+    // Must be in x86-64 mode.
+    Opc = X86::MOV64rm;
+    RC  = X86::GR64RegisterClass;
+    break;
+  case MVT::f32:
+    if (Subtarget->hasSSE1()) {
+      Opc = X86::MOVSSrm;
+      RC  = X86::FR32RegisterClass;
+    } else {
+      Opc = X86::LD_Fp32m;
+      RC  = X86::RFP32RegisterClass;
+    }
+    break;
+  case MVT::f64:
+    if (Subtarget->hasSSE2()) {
+      Opc = X86::MOVSDrm;
+      RC  = X86::FR64RegisterClass;
+    } else {
+      Opc = X86::LD_Fp64m;
+      RC  = X86::RFP64RegisterClass;
+    }
+    break;
+  case MVT::f80:
+    Opc = X86::LD_Fp80m;
+    RC  = X86::RFP80RegisterClass;
+    break;
+  }
+
+  ResultReg = createResultReg(RC);
+  X86AddressMode AM;
+  if (Op0)
+    // Address is in register.
+    AM.Base.Reg = Op0;
+  else
+    AM.GV = cast<GlobalValue>(V);
+  addFullAddress(BuildMI(MBB, TII.get(Opc), ResultReg), AM);
+  return true;
+}
+
+/// X86FastEmitStore - Emit a machine instruction to store a value Op0 of
+/// type VT. The address is either pre-computed, i.e. Op1, or a GlobalAddress,
+/// i.e. V. Return true if it is possible.
+bool
+X86FastISel::X86FastEmitStore(MVT VT, unsigned Op0, unsigned Op1, Value *V) {
+  // Get opcode and regclass of the output for the given load instruction.
+  unsigned Opc = 0;
+  const TargetRegisterClass *RC = NULL;
+  switch (VT.getSimpleVT()) {
+  default: return false;
+  case MVT::i8:
+    Opc = X86::MOV8mr;
+    RC  = X86::GR8RegisterClass;
+    break;
+  case MVT::i16:
+    Opc = X86::MOV16mr;
+    RC  = X86::GR16RegisterClass;
+    break;
+  case MVT::i32:
+    Opc = X86::MOV32mr;
+    RC  = X86::GR32RegisterClass;
+    break;
+  case MVT::i64:
+    // Must be in x86-64 mode.
+    Opc = X86::MOV64mr;
+    RC  = X86::GR64RegisterClass;
+    break;
+  case MVT::f32:
+    if (Subtarget->hasSSE1()) {
+      Opc = X86::MOVSSmr;
+      RC  = X86::FR32RegisterClass;
+    } else {
+      Opc = X86::ST_Fp32m;
+      RC  = X86::RFP32RegisterClass;
+    }
+    break;
+  case MVT::f64:
+    if (Subtarget->hasSSE2()) {
+      Opc = X86::MOVSDmr;
+      RC  = X86::FR64RegisterClass;
+    } else {
+      Opc = X86::ST_Fp64m;
+      RC  = X86::RFP64RegisterClass;
+    }
+    break;
+  case MVT::f80:
+    Opc = X86::ST_FP80m;
+    RC  = X86::RFP80RegisterClass;
+    break;
+  }
+
+  X86AddressMode AM;
+  if (Op1)
+    // Address is in register.
+    AM.Base.Reg = Op1;
+  else
+    AM.GV = cast<GlobalValue>(V);
+  addFullAddress(BuildMI(MBB, TII.get(Opc)), AM).addReg(Op0);
+  return true;
+}
 
 /// X86SelectConstAddr - Select and emit code to materialize constant address.
 /// 
@@ -122,61 +249,8 @@ bool X86FastISel::X86SelectStore(Instruction* I) {
       // Unhandled operand. Halt "fast" selection and bail.
       return false;    
   }
-  
-  // Get opcode and regclass of the output for the given load instruction.
-  unsigned Opc = 0;
-  const TargetRegisterClass *RC = NULL;
-  switch (VT.getSimpleVT()) {
-  default: return false;
-  case MVT::i8:
-    Opc = X86::MOV8mr;
-    RC  = X86::GR8RegisterClass;
-    break;
-  case MVT::i16:
-    Opc = X86::MOV16mr;
-    RC  = X86::GR16RegisterClass;
-    break;
-  case MVT::i32:
-    Opc = X86::MOV32mr;
-    RC  = X86::GR32RegisterClass;
-    break;
-  case MVT::i64:
-    // Must be in x86-64 mode.
-    Opc = X86::MOV64mr;
-    RC  = X86::GR64RegisterClass;
-    break;
-  case MVT::f32:
-    if (Subtarget->hasSSE1()) {
-      Opc = X86::MOVSSmr;
-      RC  = X86::FR32RegisterClass;
-    } else {
-      Opc = X86::ST_Fp32m;
-      RC  = X86::RFP32RegisterClass;
-    }
-    break;
-  case MVT::f64:
-    if (Subtarget->hasSSE2()) {
-      Opc = X86::MOVSDmr;
-      RC  = X86::FR64RegisterClass;
-    } else {
-      Opc = X86::ST_Fp64m;
-      RC  = X86::RFP64RegisterClass;
-    }
-    break;
-  case MVT::f80:
-    Opc = X86::ST_FP80m;
-    RC  = X86::RFP80RegisterClass;
-    break;
-  }
 
-  X86AddressMode AM;
-  if (Op1)
-    // Address is in register.
-    AM.Base.Reg = Op1;
-  else
-    AM.GV = cast<GlobalValue>(V);
-  addFullAddress(BuildMI(MBB, TII.get(Opc)), AM).addReg(Op0);
-  return true;
+  return X86FastEmitStore(VT, Op0, Op1, V);
 }
 
 /// X86SelectLoad - Select and emit code to implement load instructions.
@@ -200,67 +274,19 @@ bool X86FastISel::X86SelectLoad(Instruction *I)  {
   unsigned Op0 = getRegForValue(V);
   if (Op0 == 0) {
     // Handle constant load address.
+    // FIXME: If load type is something we can't handle, this can result in
+    // a dead stub load instruction.
     if (!isa<Constant>(V) || !X86SelectConstAddr(V, Op0))
       // Unhandled operand. Halt "fast" selection and bail.
       return false;    
   }
 
-  // Get opcode and regclass of the output for the given load instruction.
-  unsigned Opc = 0;
-  const TargetRegisterClass *RC = NULL;
-  switch (VT.getSimpleVT()) {
-  default: return false;
-  case MVT::i8:
-    Opc = X86::MOV8rm;
-    RC  = X86::GR8RegisterClass;
-    break;
-  case MVT::i16:
-    Opc = X86::MOV16rm;
-    RC  = X86::GR16RegisterClass;
-    break;
-  case MVT::i32:
-    Opc = X86::MOV32rm;
-    RC  = X86::GR32RegisterClass;
-    break;
-  case MVT::i64:
-    // Must be in x86-64 mode.
-    Opc = X86::MOV64rm;
-    RC  = X86::GR64RegisterClass;
-    break;
-  case MVT::f32:
-    if (Subtarget->hasSSE1()) {
-      Opc = X86::MOVSSrm;
-      RC  = X86::FR32RegisterClass;
-    } else {
-      Opc = X86::LD_Fp32m;
-      RC  = X86::RFP32RegisterClass;
-    }
-    break;
-  case MVT::f64:
-    if (Subtarget->hasSSE2()) {
-      Opc = X86::MOVSDrm;
-      RC  = X86::FR64RegisterClass;
-    } else {
-      Opc = X86::LD_Fp64m;
-      RC  = X86::RFP64RegisterClass;
-    }
-    break;
-  case MVT::f80:
-    Opc = X86::LD_Fp80m;
-    RC  = X86::RFP80RegisterClass;
-    break;
+  unsigned ResultReg = 0;
+  if (X86FastEmitLoad(VT, Op0, V, ResultReg)) {
+    UpdateValueMap(I, ResultReg);
+    return true;
   }
-
-  unsigned ResultReg = createResultReg(RC);
-  X86AddressMode AM;
-  if (Op0)
-    // Address is in register.
-    AM.Base.Reg = Op0;
-  else
-    AM.GV = cast<GlobalValue>(V);
-  addFullAddress(BuildMI(MBB, TII.get(Opc), ResultReg), AM);
-  UpdateValueMap(I, ResultReg);
-  return true;
+  return false;
 }
 
 bool X86FastISel::X86SelectCmp(Instruction *I) {
@@ -621,10 +647,11 @@ unsigned X86FastISel::TargetMaterializeConstant(Constant *C,
   
   unsigned ResultReg = createResultReg(RC);
   if (isa<GlobalValue>(C)) {
+    // FIXME: If store value type is something we can't handle, this can result
+    // in a dead stub load instruction.
     if (X86SelectConstAddr(C, ResultReg))
       return ResultReg;
-    else
-      return 0;
+    return 0;
   }
   
   
