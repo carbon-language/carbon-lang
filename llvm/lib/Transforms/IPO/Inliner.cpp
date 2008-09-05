@@ -61,11 +61,10 @@ static bool InlineCallIfPossible(CallSite CS, CallGraph &CG,
   if (Callee->use_empty() && Callee->hasInternalLinkage() &&
       !SCCFunctions.count(Callee)) {
     DOUT << "    -> Deleting dead function: " << Callee->getName() << "\n";
+    CallGraphNode *CalleeNode = CG[Callee];
 
     // Remove any call graph edges from the callee to its callees.
-    CallGraphNode *CalleeNode = CG[Callee];
-    while (!CalleeNode->empty())
-      CalleeNode->removeCallEdgeTo((CalleeNode->end()-1)->second);
+    CalleeNode->removeAllCalledFunctions();
 
     // Removing the node for callee from the call graph and delete it.
     delete CG.removeFunctionFromModule(CalleeNode);
@@ -198,8 +197,7 @@ bool Inliner::doFinalization(CallGraph &CG) {
           F->use_empty()) {
 
         // Remove any call graph edges from the function to its callees.
-        while (!CGN->empty())
-          CGN->removeCallEdgeTo((CGN->end()-1)->second);
+        CGN->removeAllCalledFunctions();
 
         // Remove any edges from the external node to the function's call graph
         // node.  These edges might have been made irrelegant due to
