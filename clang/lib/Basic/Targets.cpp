@@ -698,6 +698,7 @@ public:
   virtual void getTargetDefines(std::vector<char> &Defines) const {
     X86_32TargetInfo::getTargetDefines(Defines);
     getLinuxDefines(Defines);
+    Define(Defines, "__USER_LABEL_PREFIX__", "");
   }
 };
 } // end anonymous namespace
@@ -724,6 +725,7 @@ public:
     Define(Defines, "WINNT");
     Define(Defines, "_X86_");
     Define(Defines, "__MSVCRT__");
+    Define(Defines, "__USER_LABEL_PREFIX__", "_");
   }
 };
 } // end anonymous namespace
