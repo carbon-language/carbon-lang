@@ -235,6 +235,11 @@ public:
   /// removeCallEdgeTo, so it should not be used unless necessary.
   void removeAnyCallEdgeTo(CallGraphNode *Callee);
 
+  /// replaceCallSite - Make the edge in the node for Old CallSite be for
+  /// New CallSite instead.  Note that this method takes linear time, so it
+  /// should be used sparingly.
+  void replaceCallSite(CallSite Old, CallSite New);
+
   friend class CallGraph;
 
   // CallGraphNode ctor - Create a node for the specified function.

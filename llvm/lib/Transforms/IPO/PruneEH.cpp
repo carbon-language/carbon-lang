@@ -156,6 +156,9 @@ bool PruneEH::runOnSCC(const std::vector<CallGraphNode *> &SCC) {
 // function if we have invokes to non-unwinding functions or code after calls to
 // no-return functions.
 bool PruneEH::SimplifyFunction(Function *F) {
+  CallGraph &CG = getAnalysis<CallGraph>();
+  CallGraphNode *CGN = CG[F];
+
   bool MadeChange = false;
   for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
     if (InvokeInst *II = dyn_cast<InvokeInst>(BB->getTerminator()))
@@ -173,6 +176,9 @@ bool PruneEH::SimplifyFunction(Function *F) {
         II->replaceAllUsesWith(Call);
         BasicBlock *UnwindBlock = II->getUnwindDest();
         UnwindBlock->removePredecessor(II->getParent());
+
+        // Fix up the call graph.
+        CGN->replaceCallSite(II, Call);
 
         // Insert a branch to the normal destination right before the
         // invoke.

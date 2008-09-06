@@ -297,7 +297,7 @@ void CallGraphNode::removeCallEdgeTo(CallGraphNode *Callee) {
 /// should be used sparingly.
 void CallGraphNode::removeCallEdgeFor(CallSite CS) {
   for (unsigned i = CalledFunctions.size(); ; --i) {
-    assert(i && "Cannot find callee to remove!");
+    assert(i && "Cannot find callsite to remove!");
     if (CalledFunctions[i-1].first == CS) {
       CalledFunctions.erase(CalledFunctions.begin()+i-1);
       return;
@@ -316,6 +316,19 @@ void CallGraphNode::removeAnyCallEdgeTo(CallGraphNode *Callee) {
       CalledFunctions.pop_back();
       --i; --e;
     }
+}
+
+/// replaceCallSite - Make the edge in the node for Old CallSite be for
+/// New CallSite instead.  Note that this method takes linear time, so it
+/// should be used sparingly.
+void CallGraphNode::replaceCallSite(CallSite Old, CallSite New) {
+  for (unsigned i = CalledFunctions.size(); ; --i) {
+    assert(i && "Cannot find callsite to replace!");
+    if (CalledFunctions[i-1].first == Old) {
+      CalledFunctions[i-1].first = New;
+      return;
+    }
+  }
 }
 
 // Enuse that users of CallGraph.h also link with this file
