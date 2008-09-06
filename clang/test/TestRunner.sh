@@ -68,6 +68,20 @@ if (grep -q XFAIL $FILENAME); then
     grep XFAIL $FILENAME
 fi
 
+if (grep -q "%llvmgcc" $FILENAME); then
+  if [ -z "$(llvm-gcc --version 2> /dev/null)" ]; then
+    IS_XFAIL=1
+    echo "llvm-gcc not found"
+  fi
+fi
+
+if (grep -q "%llvmgxx" $FILENAME); then
+  if [ -z "$(llvm-g++ --version 2> /dev/null)" ]; then
+    IS_XFAIL=1
+    echo "llvm-g++ not found"
+  fi
+fi
+
 /bin/sh $SCRIPT > $OUTPUT 2>&1
 SCRIPT_STATUS=$?
 
