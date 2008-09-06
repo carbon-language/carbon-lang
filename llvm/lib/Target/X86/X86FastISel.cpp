@@ -585,10 +585,6 @@ X86FastISel::TargetSelectInstruction(Instruction *I)  {
 
 unsigned X86FastISel::TargetMaterializeConstant(Constant *C,
                                                 MachineConstantPool* MCP) {
-  unsigned CPLoad = getRegForValue(C);
-  if (CPLoad != 0)
-    return CPLoad;
-  
   // Can't handle PIC-mode yet.
   if (TM.getRelocationModel() == Reloc::PIC_)
     return 0;
@@ -662,10 +658,17 @@ unsigned X86FastISel::TargetMaterializeConstant(Constant *C,
     return 0;
   }
   
+  // MachineConstantPool wants an explicit alignment.
+  unsigned Align =
+               TM.getTargetData()->getPreferredTypeAlignmentShift(C->getType());
+  if (Align == 0) {
+    // Alignment of vector types.  FIXME!
+    Align = TM.getTargetData()->getABITypeSize(C->getType());
+    Align = Log2_64(Align);
+  }
   
-  unsigned MCPOffset = MCP->getConstantPoolIndex(C, 0);
+  unsigned MCPOffset = MCP->getConstantPoolIndex(C, Align);
   addConstantPoolReference(BuildMI(MBB, TII.get(Opc), ResultReg), MCPOffset);
-  UpdateValueMap(C, ResultReg);
   return ResultReg;
 }
 

@@ -119,9 +119,7 @@ addFrameReference(const MachineInstrBuilder &MIB, int FI, int Offset = 0) {
 /// offset to be added as well.
 ///
 inline const MachineInstrBuilder &
-addConstantPoolReference(const MachineInstrBuilder &MIB, unsigned CPI,
-                         int Offset = 0) {
-  assert(Offset == 0 && "Non-zero offsets not supported!");
+addConstantPoolReference(const MachineInstrBuilder &MIB, unsigned CPI) {
   return MIB.addReg(0).addImm(1).addReg(0).addConstantPoolIndex(CPI);
 }
 
