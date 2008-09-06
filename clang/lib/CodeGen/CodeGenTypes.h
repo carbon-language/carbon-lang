@@ -84,13 +84,13 @@ class CodeGenTypes {
   llvm::SmallVector<std::pair<const PointerLikeType *,
                               llvm::OpaqueType *>, 8>  PointersToResolve;
 
-  llvm::DenseMap<const TagDecl*, llvm::PATypeHolder> TagDeclTypes;
+  llvm::DenseMap<const Type*, llvm::PATypeHolder> TagDeclTypes;
 
   /// CGRecordLayouts - This maps llvm struct type with corresponding 
   /// record layout info. 
   /// FIXME : If CGRecordLayout is less than 16 bytes then use 
   /// inline it in the map.
-  llvm::DenseMap<const TagDecl*, CGRecordLayout *> CGRecordLayouts;
+  llvm::DenseMap<const Type*, CGRecordLayout *> CGRecordLayouts;
 
   /// FieldInfo - This maps struct field with corresponding llvm struct type
   /// field no. This info is populated by record organizer.

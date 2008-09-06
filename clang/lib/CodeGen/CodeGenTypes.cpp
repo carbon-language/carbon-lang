@@ -66,7 +66,7 @@ CodeGenTypes::CodeGenTypes(ASTContext &Ctx, llvm::Module& M,
 }
 
 CodeGenTypes::~CodeGenTypes() {
-  for(llvm::DenseMap<const TagDecl *, CGRecordLayout *>::iterator
+  for(llvm::DenseMap<const Type *, CGRecordLayout *>::iterator
         I = CGRecordLayouts.begin(), E = CGRecordLayouts.end();
       I != E; ++I)
     delete I->second;
@@ -131,8 +131,10 @@ const llvm::Type *CodeGenTypes::ConvertTypeForMem(QualType T) {
 /// UpdateCompletedType - When we find the full definition for a TagDecl,
 /// replace the 'opaque' type we previously made for it if applicable.
 void CodeGenTypes::UpdateCompletedType(const TagDecl *TD) {
-  llvm::DenseMap<const TagDecl*, llvm::PATypeHolder>::iterator TDTI = 
-    TagDeclTypes.find(TD);
+  const Type *Key = 
+    Context.getTagDeclType(const_cast<TagDecl*>(TD)).getTypePtr();
+  llvm::DenseMap<const Type*, llvm::PATypeHolder>::iterator TDTI = 
+    TagDeclTypes.find(Key);
   if (TDTI == TagDeclTypes.end()) return;
   
   // Remember the opaque LLVM type for this tagdecl.
@@ -377,8 +379,12 @@ void CodeGenTypes::DecodeArgumentTypes(const FunctionTypeProto &FTP,
 /// ConvertTagDeclType - Lay out a tagged decl type like struct or union or
 /// enum.
 const llvm::Type *CodeGenTypes::ConvertTagDeclType(const TagDecl *TD) {
-  llvm::DenseMap<const TagDecl*, llvm::PATypeHolder>::iterator TDTI = 
-    TagDeclTypes.find(TD);
+  // TagDecl's are not necessarily unique, instead use the (clang)
+  // type connected to the decl.
+  const Type *Key = 
+    Context.getTagDeclType(const_cast<TagDecl*>(TD)).getTypePtr();
+  llvm::DenseMap<const Type*, llvm::PATypeHolder>::iterator TDTI = 
+    TagDeclTypes.find(Key);
   
   // If we've already compiled this tag type, use the previous definition.
   if (TDTI != TagDeclTypes.end())
@@ -388,7 +394,7 @@ const llvm::Type *CodeGenTypes::ConvertTagDeclType(const TagDecl *TD) {
   // for this tagged decl.
   if (!TD->isDefinition()) {
     llvm::Type *ResultType = llvm::OpaqueType::get();  
-    TagDeclTypes.insert(std::make_pair(TD, ResultType));
+    TagDeclTypes.insert(std::make_pair(Key, ResultType));
     return ResultType;
   }
   
@@ -406,7 +412,7 @@ const llvm::Type *CodeGenTypes::ConvertTagDeclType(const TagDecl *TD) {
   // Create new OpaqueType now for later use in case this is a recursive
   // type.  This will later be refined to the actual type.
   llvm::PATypeHolder ResultHolder = llvm::OpaqueType::get();
-  TagDeclTypes.insert(std::make_pair(TD, ResultHolder));
+  TagDeclTypes.insert(std::make_pair(Key, ResultHolder));
   
   const llvm::Type *ResultType;
   const RecordDecl *RD = cast<const RecordDecl>(TD);
@@ -417,8 +423,10 @@ const llvm::Type *CodeGenTypes::ConvertTagDeclType(const TagDecl *TD) {
     RO.layoutStructFields(Context.getASTRecordLayout(RD));
     
     // Get llvm::StructType.
-    CGRecordLayouts[TD] = new CGRecordLayout(RO.getLLVMType(), 
-                                             RO.getPaddingFields());
+    const Type *Key = 
+      Context.getTagDeclType(const_cast<TagDecl*>(TD)).getTypePtr();
+    CGRecordLayouts[Key] = new CGRecordLayout(RO.getLLVMType(), 
+                                              RO.getPaddingFields());
     ResultType = RO.getLLVMType();
     
   } else if (TD->isUnion()) {
@@ -430,8 +438,10 @@ const llvm::Type *CodeGenTypes::ConvertTagDeclType(const TagDecl *TD) {
       RO.layoutUnionFields(Context.getASTRecordLayout(RD));
       
       // Get llvm::StructType.
-      CGRecordLayouts[TD] = new CGRecordLayout(RO.getLLVMType(),
-                                               RO.getPaddingFields());
+      const Type *Key = 
+        Context.getTagDeclType(const_cast<TagDecl*>(TD)).getTypePtr();
+      CGRecordLayouts[Key] = new CGRecordLayout(RO.getLLVMType(),
+                                                RO.getPaddingFields());
       ResultType = RO.getLLVMType();
     } else {       
       ResultType = llvm::StructType::get(std::vector<const llvm::Type*>());
@@ -485,8 +495,10 @@ void CodeGenTypes::addBitFieldInfo(const FieldDecl *FD, unsigned Begin,
 /// getCGRecordLayout - Return record layout info for the given llvm::Type.
 const CGRecordLayout *
 CodeGenTypes::getCGRecordLayout(const TagDecl *TD) const {
-  llvm::DenseMap<const TagDecl*, CGRecordLayout *>::iterator I
-    = CGRecordLayouts.find(TD);
+  const Type *Key = 
+    Context.getTagDeclType(const_cast<TagDecl*>(TD)).getTypePtr();
+  llvm::DenseMap<const Type*, CGRecordLayout *>::iterator I
+    = CGRecordLayouts.find(Key);
   assert (I != CGRecordLayouts.end() 
           && "Unable to find record layout information for type");
   return I->second;
