@@ -51,8 +51,7 @@ bool IndMemRemPass::runOnModule(Module &M) {
   //happen through intrinsics.
   bool changed = false;
   if (Function* F = M.getFunction("free")) {
-    assert(F->isDeclaration() && "free not external?");
-    if (!F->use_empty()) {
+    if (F->isDeclaration() && F->arg_size() == 1 && !F->use_empty()) {
       Function* FN = Function::Create(F->getFunctionType(),
                                       GlobalValue::LinkOnceLinkage,
                                       "free_llvm_bounce", &M);
@@ -66,8 +65,7 @@ bool IndMemRemPass::runOnModule(Module &M) {
     }
   }
   if (Function* F = M.getFunction("malloc")) {
-    assert(F->isDeclaration() && "malloc not external?");
-    if (!F->use_empty()) {
+    if (F->isDeclaration() && F->arg_size() == 1 && !F->use_empty()) {
       Function* FN = Function::Create(F->getFunctionType(), 
                                       GlobalValue::LinkOnceLinkage, 
                                       "malloc_llvm_bounce", &M);
