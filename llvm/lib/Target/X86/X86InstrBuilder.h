@@ -121,7 +121,8 @@ addFrameReference(const MachineInstrBuilder &MIB, int FI, int Offset = 0) {
 inline const MachineInstrBuilder &
 addConstantPoolReference(const MachineInstrBuilder &MIB, unsigned CPI,
                          int Offset = 0) {
-  return MIB.addConstantPoolIndex(CPI).addImm(1).addReg(0).addImm(Offset);
+  assert(Offset == 0 && "Non-zero offsets not supported!");
+  return MIB.addReg(0).addImm(1).addReg(0).addConstantPoolIndex(CPI);
 }
 
 } // End llvm namespace
