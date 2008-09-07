@@ -65,6 +65,8 @@ private:
 
   bool X86SelectSelect(Instruction *I);
 
+  bool X86SelectTrunc(Instruction *I);
+
   unsigned TargetMaterializeConstant(Constant *C, MachineConstantPool* MCP);
 };
 
@@ -557,6 +559,40 @@ bool X86FastISel::X86SelectSelect(Instruction *I) {
   return true;
 }
 
+bool X86FastISel::X86SelectTrunc(Instruction *I) {
+  if (Subtarget->is64Bit())
+    // All other cases should be handled by the tblgen generated code.
+    return false;
+  MVT SrcVT = TLI.getValueType(I->getOperand(0)->getType());
+  MVT DstVT = TLI.getValueType(I->getType());
+  if (DstVT != MVT::i8)
+    // All other cases should be handled by the tblgen generated code.
+    return false;
+  if (SrcVT != MVT::i16 && SrcVT != MVT::i32)
+    // All other cases should be handled by the tblgen generated code.
+    return false;
+
+  unsigned InputReg = getRegForValue(I->getOperand(0));
+  if (!InputReg)
+    // Unhandled operand.  Halt "fast" selection and bail.
+    return false;
+
+  // First issue a copy to GR16_ or GR32_.
+  unsigned CopyOpc = (SrcVT == MVT::i16) ? X86::MOV16to16_ : X86::MOV32to32_;
+  const TargetRegisterClass *CopyRC = (SrcVT == MVT::i16)
+    ? X86::GR16_RegisterClass : X86::GR32_RegisterClass;
+  unsigned CopyReg = createResultReg(CopyRC);
+  BuildMI(MBB, TII.get(CopyOpc), CopyReg).addReg(InputReg);
+
+  // Then issue an extract_subreg.
+  unsigned ResultReg = FastEmitInst_extractsubreg(CopyReg,1); // x86_subreg_8bit
+  if (!ResultReg)
+    return false;
+
+  UpdateValueMap(I, ResultReg);
+  return true;
+}
+
 bool
 X86FastISel::TargetSelectInstruction(Instruction *I)  {
   switch (I->getOpcode()) {
@@ -578,6 +614,8 @@ X86FastISel::TargetSelectInstruction(Instruction *I)  {
     return X86SelectShift(I);
   case Instruction::Select:
     return X86SelectSelect(I);
+  case Instruction::Trunc:
+    return X86SelectTrunc(I);
   }
 
   return false;
