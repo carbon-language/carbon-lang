@@ -444,7 +444,7 @@ void FastISelMap::PrintFunctionDefinitions(std::ostream &OS) {
               }
               
               if (HasPred)
-                OS << "}\n";
+                OS << "  }\n";
               
             }
             // Return 0 if none of the predicates were satisfied.
