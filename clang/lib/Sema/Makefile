@@ -13,7 +13,7 @@
 ##===----------------------------------------------------------------------===##
 
 LEVEL = ../../../..
-LIBRARYNAME := clangSEMA
+LIBRARYNAME := clangSema
 BUILD_ARCHIVE = 1
 CXXFLAGS = -fno-rtti
 
