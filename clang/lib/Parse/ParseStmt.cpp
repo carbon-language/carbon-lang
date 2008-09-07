@@ -35,6 +35,7 @@ using namespace clang;
 ///         selection-statement
 ///         iteration-statement
 ///         jump-statement
+/// [C++]   declaration-statement
 /// [OBC]   objc-throw-statement
 /// [OBC]   objc-try-catch-statement
 /// [OBC]   objc-synchronized-statement
@@ -93,7 +94,7 @@ Parser::StmtResult Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
     // PASS THROUGH.
 
   default:
-    if (!OnlyStatement && isDeclarationSpecifier()) {
+    if ((getLang().CPlusPlus || !OnlyStatement) && isDeclarationSpecifier()) {
       SourceLocation DeclStart = Tok.getLocation();
       DeclTy *Res = ParseDeclaration(Declarator::BlockContext);
       // FIXME: Pass in the right location for the end of the declstmt.
