@@ -99,8 +99,8 @@ void FastISel::UpdateValueMap(Value* I, unsigned Reg) {
   if (!ValueMap.count(I))
     ValueMap[I] = Reg;
   else
-     TII.copyRegToReg(*MBB, MBB->end(), ValueMap[I],
-                      Reg, MRI.getRegClass(Reg), MRI.getRegClass(Reg));
+    TII.copyRegToReg(*MBB, MBB->end(), ValueMap[I],
+                     Reg, MRI.getRegClass(Reg), MRI.getRegClass(Reg));
 }
 
 /// SelectBinaryOp - Select and emit code for a binary operator instruction,
