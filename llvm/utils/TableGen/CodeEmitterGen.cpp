@@ -220,7 +220,7 @@ void CodeEmitterGen::run(std::ostream &o) {
   // Emit initial function code
   o << "  const unsigned opcode = MI.getOpcode();\n"
     << "  unsigned Value = InstBits[opcode];\n"
-    << "  unsigned op;\n"
+    << "  unsigned op = 0;\n"
     << "  op = op;  // suppress warning\n"
     << "  switch (opcode) {\n";
 
