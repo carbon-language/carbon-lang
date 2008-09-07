@@ -1088,12 +1088,10 @@ CCAssignFn *X86TargetLowering::CCAssignFnForNode(SDValue Op) const {
   if (Subtarget->is64Bit()) {
     if (Subtarget->isTargetWin64())
       return CC_X86_Win64_C;
-    else {
-      if (CC == CallingConv::Fast && PerformTailCallOpt)
-        return CC_X86_64_TailCall;
-      else
-        return CC_X86_64_C;
-    }
+    else if (CC == CallingConv::Fast && PerformTailCallOpt)
+      return CC_X86_64_TailCall;
+    else
+      return CC_X86_64_C;
   }
 
   if (CC == CallingConv::X86_FastCall)
@@ -1294,7 +1292,7 @@ X86TargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG) {
 
   unsigned StackSize = CCInfo.getNextStackOffset();
   // align stack specially for tail calls
-  if (CC == CallingConv::Fast)
+  if (PerformTailCallOpt && CC == CallingConv::Fast)
     StackSize = GetAlignedArgumentStackSize(StackSize, DAG);
 
   // If the function takes variable number of arguments, make a frame index for
@@ -1485,7 +1483,7 @@ SDValue X86TargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
   
   // Get a count of how many bytes are to be pushed on the stack.
   unsigned NumBytes = CCInfo.getNextStackOffset();
-  if (CC == CallingConv::Fast)
+  if (IsTailCall)
     NumBytes = GetAlignedArgumentStackSize(NumBytes, DAG);
 
   int FPDiff = 0;
@@ -1829,25 +1827,22 @@ SDValue X86TargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
 /// for a 16 byte align requirement.
 unsigned X86TargetLowering::GetAlignedArgumentStackSize(unsigned StackSize, 
                                                         SelectionDAG& DAG) {
-  if (PerformTailCallOpt) {
-    MachineFunction &MF = DAG.getMachineFunction();
-    const TargetMachine &TM = MF.getTarget();
-    const TargetFrameInfo &TFI = *TM.getFrameInfo();
-    unsigned StackAlignment = TFI.getStackAlignment();
-    uint64_t AlignMask = StackAlignment - 1; 
-    int64_t Offset = StackSize;
-    unsigned SlotSize = Subtarget->is64Bit() ? 8 : 4;
-    if ( (Offset & AlignMask) <= (StackAlignment - SlotSize) ) {
-      // Number smaller than 12 so just add the difference.
-      Offset += ((StackAlignment - SlotSize) - (Offset & AlignMask));
-    } else {
-      // Mask out lower bits, add stackalignment once plus the 12 bytes.
-      Offset = ((~AlignMask) & Offset) + StackAlignment + 
-        (StackAlignment-SlotSize);
-    }
-    StackSize = Offset;
+  MachineFunction &MF = DAG.getMachineFunction();
+  const TargetMachine &TM = MF.getTarget();
+  const TargetFrameInfo &TFI = *TM.getFrameInfo();
+  unsigned StackAlignment = TFI.getStackAlignment();
+  uint64_t AlignMask = StackAlignment - 1; 
+  int64_t Offset = StackSize;
+  unsigned SlotSize = Subtarget->is64Bit() ? 8 : 4;
+  if ( (Offset & AlignMask) <= (StackAlignment - SlotSize) ) {
+    // Number smaller than 12 so just add the difference.
+    Offset += ((StackAlignment - SlotSize) - (Offset & AlignMask));
+  } else {
+    // Mask out lower bits, add stackalignment once plus the 12 bytes.
+    Offset = ((~AlignMask) & Offset) + StackAlignment + 
+      (StackAlignment-SlotSize);
   }
-  return StackSize;
+  return Offset;
 }
 
 /// IsEligibleForTailCallElimination - Check to see whether the next instruction
