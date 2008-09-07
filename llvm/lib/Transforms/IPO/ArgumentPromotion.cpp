@@ -19,7 +19,7 @@
 // scalarizing them if the elements of the aggregate are only loaded.  Note that
 // by default it refuses to scalarize aggregates which would require passing in
 // more than three operands to the function, because passing thousands of
-// operands for a large array or structure is unprofitable! This limit is can be
+// operands for a large array or structure is unprofitable! This limit can be
 // configured or disabled, however.
 //
 // Note that this transformation could also be done for arguments that are only
@@ -68,14 +68,14 @@ namespace {
     static char ID; // Pass identification, replacement for typeid
     ArgPromotion(unsigned maxElements = 3) : CallGraphSCCPass(&ID),
                                              maxElements(maxElements) {}
-    
+
     /// A vector used to hold the indices of a single GEP instruction
     typedef std::vector<uint64_t> IndicesVector;
 
   private:
     bool PromoteArguments(CallGraphNode *CGN);
     bool isSafeToPromoteArgument(Argument *Arg, bool isByVal) const;
-    Function *DoPromotion(Function *F, 
+    Function *DoPromotion(Function *F,
                           SmallPtrSet<Argument*, 8> &ArgsToPromote,
                           SmallPtrSet<Argument*, 8> &ByValArgsToTransform);
     /// The maximum number of elements to expand, or 0 for unlimited.
@@ -135,7 +135,7 @@ bool ArgPromotion::PromoteArguments(CallGraphNode *CGN) {
 
     // Ensure that this call site is CALLING the function, not passing it as
     // an argument.
-    if (UI.getOperandNo() != 0) 
+    if (UI.getOperandNo() != 0)
       return false;
   }
 
@@ -145,7 +145,7 @@ bool ArgPromotion::PromoteArguments(CallGraphNode *CGN) {
   SmallPtrSet<Argument*, 8> ByValArgsToTransform;
   for (unsigned i = 0; i != PointerArgs.size(); ++i) {
     bool isByVal = F->paramHasAttr(PointerArgs[i].second+1, ParamAttr::ByVal);
-    
+
     // If this is a byval argument, and if the aggregate type is small, just
     // pass the elements, which is always safe.
     Argument *PtrArg = PointerArgs[i].first;
@@ -164,7 +164,7 @@ bool ArgPromotion::PromoteArguments(CallGraphNode *CGN) {
               AllSimple = false;
               break;
             }
-          
+
           // Safe to transform, don't even bother trying to "promote" it.
           // Passing the elements as a scalar will allow scalarrepl to hack on
           // the new alloca we introduce.
@@ -175,12 +175,12 @@ bool ArgPromotion::PromoteArguments(CallGraphNode *CGN) {
         }
       }
     }
-    
+
     // Otherwise, see if we can promote the pointer to its value.
     if (isSafeToPromoteArgument(PtrArg, isByVal))
       ArgsToPromote.insert(PtrArg);
   }
-  
+
   // No promotable pointer arguments.
   if (ArgsToPromote.empty() && ByValArgsToTransform.empty()) return false;
 
@@ -278,9 +278,9 @@ static void MarkIndicesSafe(const ArgPromotion::IndicesVector &ToMark,
       return;
 
     // Increment Low, so we can use it as a "insert before" hint
-    ++Low; 
+    ++Low;
   }
-  // Insert 
+  // Insert
   Low = Safe.insert(Low, ToMark);
   ++Low;
   // If there we're a prefix of longer index list(s), remove those
@@ -324,7 +324,7 @@ bool ArgPromotion::isSafeToPromoteArgument(Argument *Arg, bool isByVal) const {
   // This set contains all the sets of indices that we are planning to promote.
   // This makes it possible to limit the number of arguments added.
   GEPIndicesSet ToPromote;
-  
+
   // If the pointer is always valid, any load with first index 0 is valid.
   if(isByVal || AllCalleesPassInValidPointerForArgument(Arg))
     SafeToUnconditionallyLoad.insert(IndicesVector(1, 0));
@@ -407,7 +407,7 @@ bool ArgPromotion::isSafeToPromoteArgument(Argument *Arg, bool isByVal) const {
     } else {
       return false;  // Not a load or a GEP.
     }
-     
+
     // Now, see if it is safe to promote this load / loads of this GEP. Loading
     // is safe if Operands, or a prefix of Operands, is marked as safe.
     if (!PrefixIn(Operands, SafeToUnconditionallyLoad))
@@ -510,7 +510,7 @@ Function *ArgPromotion::DoPromotion(Function *F,
   // Add any return attributes.
   if (ParameterAttributes attrs = PAL.getParamAttrs(0))
     ParamAttrsVec.push_back(ParamAttrsWithIndex::get(0, attrs));
-  
+
   // First, determine the new argument list
   unsigned ArgIndex = 1;
   for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E;
@@ -615,7 +615,7 @@ Function *ArgPromotion::DoPromotion(Function *F,
     CallSite CS = CallSite::get(F->use_back());
     Instruction *Call = CS.getInstruction();
     const PAListPtr &CallPAL = CS.getParamAttrs();
-    
+
     // Add any return attributes.
     if (ParameterAttributes attrs = CallPAL.getParamAttrs(0))
       ParamAttrsVec.push_back(ParamAttrsWithIndex::get(0, attrs));
@@ -628,10 +628,10 @@ Function *ArgPromotion::DoPromotion(Function *F,
          I != E; ++I, ++AI, ++ArgIndex)
       if (!ArgsToPromote.count(I) && !ByValArgsToTransform.count(I)) {
         Args.push_back(*AI);          // Unmodified argument
-        
+
         if (ParameterAttributes Attrs = CallPAL.getParamAttrs(ArgIndex))
           ParamAttrsVec.push_back(ParamAttrsWithIndex::get(Args.size(), Attrs));
-        
+
       } else if (ByValArgsToTransform.count(I)) {
         // Emit a GEP and load for each element of the struct.
         const Type *AgTy = cast<PointerType>(I->getType())->getElementType();
@@ -644,7 +644,7 @@ Function *ArgPromotion::DoPromotion(Function *F,
                                                  Call);
           // TODO: Tell AA about the new values?
           Args.push_back(new LoadInst(Idx, Idx->getName()+".val", Call));
-        }        
+        }
       } else if (!I->use_empty()) {
         // Non-dead argument: insert GEPs and loads as appropriate.
         ScalarizeTable &ArgIndices = ScalarizedElements[I];
@@ -658,7 +658,7 @@ Function *ArgPromotion::DoPromotion(Function *F,
           if (!SI->empty()) {
             Ops.reserve(SI->size());
             const Type *ElTy = V->getType();
-            for (IndicesVector::const_iterator II = SI->begin(), 
+            for (IndicesVector::const_iterator II = SI->begin(),
                  IE = SI->end(); II != IE; ++II) {
               // Use i32 to index structs, and i64 for others (pointers/arrays).
               // This satisfies GEP constraints.
@@ -739,18 +739,18 @@ Function *ArgPromotion::DoPromotion(Function *F,
       ++I2;
       continue;
     }
-    
+
     if (ByValArgsToTransform.count(I)) {
       // In the callee, we create an alloca, and store each of the new incoming
       // arguments into the alloca.
       Instruction *InsertPt = NF->begin()->begin();
-      
+
       // Just add all the struct element types.
       const Type *AgTy = cast<PointerType>(I->getType())->getElementType();
       Value *TheAlloca = new AllocaInst(AgTy, 0, "", InsertPt);
       const StructType *STy = cast<StructType>(AgTy);
       Value *Idxs[2] = { ConstantInt::get(Type::Int32Ty, 0), 0 };
-      
+
       for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
         Idxs[1] = ConstantInt::get(Type::Int32Ty, i);
         std::string Name = TheAlloca->getName()+"."+utostr(i);
@@ -759,19 +759,19 @@ Function *ArgPromotion::DoPromotion(Function *F,
         I2->setName(I->getName()+"."+utostr(i));
         new StoreInst(I2++, Idx, InsertPt);
       }
-      
+
       // Anything that used the arg should now use the alloca.
       I->replaceAllUsesWith(TheAlloca);
       TheAlloca->takeName(I);
       AA.replaceWithNewValue(I, TheAlloca);
       continue;
-    } 
-    
+    }
+
     if (I->use_empty()) {
       AA.deleteValue(I);
       continue;
     }
-    
+
     // Otherwise, if we promoted this argument, then all users are load
     // instructions (or GEPs with only load users), and all loads should be
     // using the new argument that we added.
