@@ -922,30 +922,30 @@ the named garbage collection algorithm.</p>
 various passes.</p>
 
 <div class="doc_code">
-<pre>define void @f() notes(inline=Always) { ... }</pre>
-<pre>define void @f() notes(inline=Always,opt-size) { ... }</pre>
-<pre>define void @f() notes(inline=Never,opt-size) { ... }</pre>
-<pre>define void @f() notes(opt-size) { ... }</pre>
+<pre>
+define void @f() notes(inline=Always) { ... }
+define void @f() notes(inline=Always,opt-size) { ... }
+define void @f() notes(inline=Never,opt-size) { ... }
+define void @f() notes(opt-size) { ... }
+</pre>
 </div>
 
-<p>
-<li>inline=Always
-<p>
-This note requests inliner to inline this function irrespective of
-inlining size threshold for this function.
-</p></li>
-<li>inline=Never
-<p>
-This note requests inliner to never inline this function in any situation. 
-This note may not be used together with inline=Always note.
-</p></li>
-<li>opt-size
-<p>
-This note suggests optimization passes and code generator passes to make 
-choices that help reduce code size.
-</p></li>
-<p>
-The notes that are not documented here are considered invalid notes.
+<dl>
+<dt><tt>inline=Always</tt></dt>
+<dd>This note requests inliner to inline this function irrespective of inlining
+size threshold for this function.</dd>
+
+<dt><tt>inline=Never</tt></dt>
+<dd>This note requests inliner to never inline this function in any situation.
+This note may not be used together with <tt>inline=Always</tt> note.</dd>
+
+<dt><tt>opt-size</tt></dt>
+<dd>This note suggests optimization passes and code generator passes to make 
+choices that help reduce code size.</dd>
+
+</dl>
+
+<p>Any notes that are not documented here are considered invalid notes.</p>
 </div>
 
 <!-- ======================================================================= -->
@@ -1395,7 +1395,8 @@ instruction.</p>
     <td class="left"><tt>&lt; { i32, i32, i32 } &gt;</tt></td>
     <td class="left">A triple of three <tt>i32</tt> values</td>
   </tr><tr class="layout">
-  <td class="left"><tt>&lt; { float, i32 (i32)* } &gt;</tt></td>
+  <td class="left">
+<tt>&lt;&nbsp;{&nbsp;float,&nbsp;i32&nbsp;(i32)*&nbsp;}&nbsp;&gt;</tt></td>
     <td class="left">A pair, where the first element is a <tt>float</tt> and the
       second element is a <a href="#t_pointer">pointer</a> to a
       <a href="#t_function">function</a> that takes an <tt>i32</tt>, returning
