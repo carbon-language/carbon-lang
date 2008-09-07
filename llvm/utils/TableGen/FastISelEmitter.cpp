@@ -259,6 +259,20 @@ void FastISelMap::CollectPatterns(CodeGenDAGPatterns &CGP) {
     if (II.OperandList.empty())
       continue;
 
+    // For now, ignore multi-instruction patterns.
+    bool MultiInsts = false;
+    for (unsigned i = 0, e = Dst->getNumChildren(); i != e; ++i) {
+      TreePatternNode *ChildOp = Dst->getChild(i);
+      if (ChildOp->isLeaf())
+        continue;
+      if (ChildOp->getOperator()->isSubClassOf("Instruction")) {
+        MultiInsts = true;
+        break;
+      }
+    }
+    if (MultiInsts)
+      continue;
+
     // For now, ignore instructions where the first operand is not an
     // output register.
     const CodeGenRegisterClass *DstRC = 0;
