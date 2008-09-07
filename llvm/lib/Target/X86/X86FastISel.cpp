@@ -19,25 +19,46 @@
 #include "X86RegisterInfo.h"
 #include "X86Subtarget.h"
 #include "X86TargetMachine.h"
-#include "llvm/Instructions.h"
+#include "llvm/CallingConv.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/Instructions.h"
 #include "llvm/CodeGen/FastISel.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/Support/CallSite.h"
 
 using namespace llvm;
 
 class X86FastISel : public FastISel {
+  /// MFI - Keep track of objects allocated on the stack.
+  ///
+  MachineFrameInfo *MFI;
+
   /// Subtarget - Keep a pointer to the X86Subtarget around so that we can
   /// make the right decision when generating code for different targets.
   const X86Subtarget *Subtarget;
-    
+
+  /// StackPtr - Register used as the stack pointer.
+  ///
+  unsigned StackPtr;
+
+  /// X86ScalarSSEf32, X86ScalarSSEf64 - Select between SSE or x87 
+  /// floating point ops.
+  /// When SSE is available, use it for f32 operations.
+  /// When SSE2 is available, use it for f64 operations.
+  bool X86ScalarSSEf64;
+  bool X86ScalarSSEf32;
+
 public:
   explicit X86FastISel(MachineFunction &mf,
                        DenseMap<const Value *, unsigned> &vm,
                        DenseMap<const BasicBlock *, MachineBasicBlock *> &bm)
-    : FastISel(mf, vm, bm) {
+    : FastISel(mf, vm, bm), MFI(MF.getFrameInfo()) {
     Subtarget = &TM.getSubtarget<X86Subtarget>();
+    StackPtr = Subtarget->is64Bit() ? X86::RSP : X86::ESP;
+    X86ScalarSSEf64 = Subtarget->hasSSE2();
+    X86ScalarSSEf32 = Subtarget->hasSSE1();
   }
 
   virtual bool TargetSelectInstruction(Instruction *I);
@@ -47,9 +68,10 @@ public:
 private:
   bool X86FastEmitLoad(MVT VT, unsigned Op0, Value *V, unsigned &RR);
 
-  bool X86FastEmitStore(MVT VT, unsigned Op0, unsigned Op1, Value *V);
+  bool X86FastEmitStore(MVT VT, unsigned Val,
+                        unsigned Ptr, unsigned Offset, Value *V);
   
-  bool X86SelectConstAddr(Value *V, unsigned &Op0);
+  bool X86SelectConstAddr(Value *V, unsigned &Op0, bool isCall = false);
 
   bool X86SelectLoad(Instruction *I);
   
@@ -67,13 +89,64 @@ private:
 
   bool X86SelectTrunc(Instruction *I);
 
+  bool X86SelectCall(Instruction *I);
+
+  CCAssignFn *CCAssignFnForCall(unsigned CC, bool isTailCall = false);
+
   unsigned TargetMaterializeConstant(Constant *C, MachineConstantPool* MCP);
+
+  /// isScalarFPTypeInSSEReg - Return true if the specified scalar FP type is
+  /// computed in an SSE register, not on the X87 floating point stack.
+  bool isScalarFPTypeInSSEReg(MVT VT) const {
+    return (VT == MVT::f64 && X86ScalarSSEf64) || // f64 is when SSE2
+      (VT == MVT::f32 && X86ScalarSSEf32);   // f32 is when SSE1
+  }
+
 };
 
+static bool isTypeLegal(const Type *Ty, const TargetLowering &TLI, MVT &VT) {
+  VT = MVT::getMVT(Ty, /*HandleUnknown=*/true);
+  if (VT == MVT::Other || !VT.isSimple())
+    // Unhandled type. Halt "fast" selection and bail.
+    return false;
+  if (VT == MVT::iPTR)
+    // Use pointer type.
+    VT = TLI.getPointerTy();
+  // We only handle legal types. For example, on x86-32 the instruction
+  // selector contains all of the 64-bit instructions from x86-64,
+  // under the assumption that i64 won't be used if the target doesn't
+  // support it.
+  return TLI.isTypeLegal(VT);
+}
+
+#include "X86GenCallingConv.inc"
+
+/// CCAssignFnForCall - Selects the correct CCAssignFn for a given calling
+/// convention.
+CCAssignFn *X86FastISel::CCAssignFnForCall(unsigned CC, bool isTaillCall) {
+  if (Subtarget->is64Bit()) {
+    if (Subtarget->isTargetWin64())
+      return CC_X86_Win64_C;
+    else if (CC == CallingConv::Fast && isTaillCall)
+      return CC_X86_64_TailCall;
+    else
+      return CC_X86_64_C;
+  }
+
+  if (CC == CallingConv::X86_FastCall)
+    return CC_X86_32_FastCall;
+  else if (CC == CallingConv::Fast && isTaillCall)
+    return CC_X86_32_TailCall;
+  else if (CC == CallingConv::Fast)
+    return CC_X86_32_FastCC;
+  else
+    return CC_X86_32_C;
+}
+
 /// X86FastEmitLoad - Emit a machine instruction to load a value of type VT.
-/// The address is either pre-computed, i.e. Op0, or a GlobalAddress, i.e. V.
+/// The address is either pre-computed, i.e. Ptr, or a GlobalAddress, i.e. GV.
 /// Return true and the result register by reference if it is possible.
-bool X86FastISel::X86FastEmitLoad(MVT VT, unsigned Op0, Value *V,
+bool X86FastISel::X86FastEmitLoad(MVT VT, unsigned Ptr, Value *GV,
                                   unsigned &ResultReg) {
   // Get opcode and regclass of the output for the given load instruction.
   unsigned Opc = 0;
@@ -123,20 +196,22 @@ bool X86FastISel::X86FastEmitLoad(MVT VT, unsigned Op0, Value *V,
 
   ResultReg = createResultReg(RC);
   X86AddressMode AM;
-  if (Op0)
+  if (Ptr)
     // Address is in register.
-    AM.Base.Reg = Op0;
+    AM.Base.Reg = Ptr;
   else
-    AM.GV = cast<GlobalValue>(V);
+    AM.GV = cast<GlobalValue>(GV);
   addFullAddress(BuildMI(MBB, TII.get(Opc), ResultReg), AM);
   return true;
 }
 
-/// X86FastEmitStore - Emit a machine instruction to store a value Op0 of
-/// type VT. The address is either pre-computed, i.e. Op1, or a GlobalAddress,
+/// X86FastEmitStore - Emit a machine instruction to store a value Val of
+/// type VT. The address is either pre-computed, consisted of a base ptr, Ptr
+/// and a displacement offset, or a GlobalAddress,
 /// i.e. V. Return true if it is possible.
 bool
-X86FastISel::X86FastEmitStore(MVT VT, unsigned Op0, unsigned Op1, Value *V) {
+X86FastISel::X86FastEmitStore(MVT VT, unsigned Val,
+                              unsigned Ptr, unsigned Offset, Value *V) {
   // Get opcode and regclass of the output for the given load instruction.
   unsigned Opc = 0;
   const TargetRegisterClass *RC = NULL;
@@ -184,25 +259,25 @@ X86FastISel::X86FastEmitStore(MVT VT, unsigned Op0, unsigned Op1, Value *V) {
   }
 
   X86AddressMode AM;
-  if (Op1)
+  if (Ptr) {
     // Address is in register.
-    AM.Base.Reg = Op1;
-  else
+    AM.Base.Reg = Ptr;
+    AM.Disp = Offset;
+  } else
     AM.GV = cast<GlobalValue>(V);
-  addFullAddress(BuildMI(MBB, TII.get(Opc)), AM).addReg(Op0);
+  addFullAddress(BuildMI(MBB, TII.get(Opc)), AM).addReg(Val);
   return true;
 }
 
 /// X86SelectConstAddr - Select and emit code to materialize constant address.
 /// 
-bool X86FastISel::X86SelectConstAddr(Value *V,
-                                     unsigned &Op0) {
+bool X86FastISel::X86SelectConstAddr(Value *V, unsigned &Op0, bool isCall) {
   // FIXME: Only GlobalAddress for now.
   GlobalValue *GV = dyn_cast<GlobalValue>(V);
   if (!GV)
     return false;
 
-  if (Subtarget->GVRequiresExtraLoad(GV, TM, false)) {
+  if (Subtarget->GVRequiresExtraLoad(GV, TM, isCall)) {
     // Issue load from stub if necessary.
     unsigned Opc = 0;
     const TargetRegisterClass *RC = NULL;
@@ -238,53 +313,43 @@ bool X86FastISel::X86SelectStore(Instruction* I) {
   // support it.
   if (!TLI.isTypeLegal(VT))
     return false;
-  unsigned Op0 = getRegForValue(I->getOperand(0));
-  if (Op0 == 0)
+  unsigned Val = getRegForValue(I->getOperand(0));
+  if (Val == 0)
     // Unhandled operand. Halt "fast" selection and bail.
     return false;    
 
   Value *V = I->getOperand(1);
-  unsigned Op1 = getRegForValue(V);
-  if (Op1 == 0) {
+  unsigned Ptr = getRegForValue(V);
+  if (Ptr == 0) {
     // Handle constant load address.
-    if (!isa<Constant>(V) || !X86SelectConstAddr(V, Op1))
+    if (!isa<Constant>(V) || !X86SelectConstAddr(V, Ptr))
       // Unhandled operand. Halt "fast" selection and bail.
       return false;    
   }
 
-  return X86FastEmitStore(VT, Op0, Op1, V);
+  return X86FastEmitStore(VT, Val, Ptr, 0, V);
 }
 
 /// X86SelectLoad - Select and emit code to implement load instructions.
 ///
 bool X86FastISel::X86SelectLoad(Instruction *I)  {
-  MVT VT = MVT::getMVT(I->getType(), /*HandleUnknown=*/true);
-  if (VT == MVT::Other || !VT.isSimple())
-    // Unhandled type. Halt "fast" selection and bail.
-    return false;
-  if (VT == MVT::iPTR)
-    // Use pointer type.
-    VT = TLI.getPointerTy();
-  // We only handle legal types. For example, on x86-32 the instruction
-  // selector contains all of the 64-bit instructions from x86-64,
-  // under the assumption that i64 won't be used if the target doesn't
-  // support it.
-  if (!TLI.isTypeLegal(VT))
+  MVT VT;
+  if (!isTypeLegal(I->getType(), TLI, VT))
     return false;
 
   Value *V = I->getOperand(0);
-  unsigned Op0 = getRegForValue(V);
-  if (Op0 == 0) {
+  unsigned Ptr = getRegForValue(V);
+  if (Ptr == 0) {
     // Handle constant load address.
     // FIXME: If load type is something we can't handle, this can result in
     // a dead stub load instruction.
-    if (!isa<Constant>(V) || !X86SelectConstAddr(V, Op0))
+    if (!isa<Constant>(V) || !X86SelectConstAddr(V, Ptr))
       // Unhandled operand. Halt "fast" selection and bail.
       return false;    
   }
 
   unsigned ResultReg = 0;
-  if (X86FastEmitLoad(VT, Op0, V, ResultReg)) {
+  if (X86FastEmitLoad(VT, Ptr, V, ResultReg)) {
     UpdateValueMap(I, ResultReg);
     return true;
   }
@@ -593,6 +658,203 @@ bool X86FastISel::X86SelectTrunc(Instruction *I) {
   return true;
 }
 
+bool X86FastISel::X86SelectCall(Instruction *I) {
+  CallInst *CI = cast<CallInst>(I);
+  Value *Callee = I->getOperand(0);
+
+  // Can't handle inline asm yet.
+  if (isa<InlineAsm>(Callee))
+    return false;
+
+  // FIXME: Handle some intrinsics.
+  if (Function *F = CI->getCalledFunction()) {
+    if (F->isDeclaration() &&F->getIntrinsicID())
+      return false;
+  }
+
+  // Materialize callee address in a register. FIXME: GV address can be
+  // handled with a CALLpcrel32 instead.
+  unsigned CalleeOp = getRegForValue(Callee);
+  if (CalleeOp == 0) {
+    if (!isa<Constant>(Callee) || !X86SelectConstAddr(Callee, CalleeOp, true))
+      // Unhandled operand. Halt "fast" selection and bail.
+      return false;    
+  }
+
+  // Handle only C and fastcc calling conventions for now.
+  CallSite CS(CI);
+  unsigned CC = CS.getCallingConv();
+  if (CC != CallingConv::C &&
+      CC != CallingConv::Fast &&
+      CC != CallingConv::X86_FastCall)
+    return false;
+
+  // Let SDISel handle vararg functions.
+  const PointerType *PT = cast<PointerType>(CS.getCalledValue()->getType());
+  const FunctionType *FTy = cast<FunctionType>(PT->getElementType());
+  if (FTy->isVarArg())
+    return false;
+
+  // Handle *simple* calls for now.
+  const Type *RetTy = CS.getType();
+  MVT RetVT;
+  if (!isTypeLegal(RetTy, TLI, RetVT))
+    return false;
+
+  // Deal with call operands first.
+  SmallVector<unsigned, 4> Args;
+  SmallVector<MVT, 4> ArgVTs;
+  SmallVector<ISD::ArgFlagsTy, 4> ArgFlags;
+  Args.reserve(CS.arg_size());
+  ArgVTs.reserve(CS.arg_size());
+  ArgFlags.reserve(CS.arg_size());
+  for (CallSite::arg_iterator i = CS.arg_begin(), e = CS.arg_end();
+       i != e; ++i) {
+    unsigned Arg = getRegForValue(*i);
+    if (Arg == 0)
+      return false;
+    ISD::ArgFlagsTy Flags;
+    unsigned AttrInd = i - CS.arg_begin() + 1;
+    if (CS.paramHasAttr(AttrInd, ParamAttr::SExt))
+      Flags.setSExt();
+    if (CS.paramHasAttr(AttrInd, ParamAttr::ZExt))
+      Flags.setZExt();
+
+    // FIXME: Only handle *easy* calls for now.
+    if (CS.paramHasAttr(AttrInd, ParamAttr::InReg) ||
+        CS.paramHasAttr(AttrInd, ParamAttr::StructRet) ||
+        CS.paramHasAttr(AttrInd, ParamAttr::Nest) ||
+        CS.paramHasAttr(AttrInd, ParamAttr::ByVal))
+      return false;
+
+    const Type *ArgTy = (*i)->getType();
+    MVT ArgVT;
+    if (!isTypeLegal(ArgTy, TLI, ArgVT))
+      return false;
+    unsigned OriginalAlignment = TD.getABITypeAlignment(ArgTy);
+    Flags.setOrigAlign(OriginalAlignment);
+
+    Args.push_back(Arg);
+    ArgVTs.push_back(ArgVT);
+    ArgFlags.push_back(Flags);
+  }
+
+  // Analyze operands of the call, assigning locations to each operand.
+  SmallVector<CCValAssign, 16> ArgLocs;
+  CCState CCInfo(CC, false, TM, ArgLocs);
+  CCInfo.AnalyzeCallOperands(ArgVTs, ArgFlags, CCAssignFnForCall(CC));
+
+  // Get a count of how many bytes are to be pushed on the stack.
+  unsigned NumBytes = CCInfo.getNextStackOffset();
+
+  // Issue CALLSEQ_START
+  BuildMI(MBB, TII.get(X86::ADJCALLSTACKDOWN)).addImm(NumBytes);
+
+  // Process argumenet: walk the register/memloc assignments, inserting
+  // copies / loads.
+  SmallVector<unsigned, 4> RegArgs;
+  for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
+    CCValAssign &VA = ArgLocs[i];
+    unsigned Arg = Args[VA.getValNo()];
+    MVT ArgVT = ArgVTs[VA.getValNo()];
+  
+    // Promote the value if needed.
+    switch (VA.getLocInfo()) {
+    default: assert(0 && "Unknown loc info!");
+    case CCValAssign::Full: break;
+    case CCValAssign::SExt:
+      abort(); // FIXME
+      break;
+    case CCValAssign::ZExt:
+      abort();
+      break;
+    case CCValAssign::AExt:
+      abort();
+      break;
+    }
+    
+    if (VA.isRegLoc()) {
+      TargetRegisterClass* RC = TLI.getRegClassFor(ArgVT);
+      bool Emitted = TII.copyRegToReg(*MBB, MBB->end(), VA.getLocReg(),
+                                      Arg, RC, RC);
+      assert(Emitted && "Failed to emit a copy instruction!");
+      RegArgs.push_back(VA.getLocReg());
+    } else {
+      unsigned LocMemOffset = VA.getLocMemOffset();
+      X86FastEmitStore(ArgVT, Arg, StackPtr, LocMemOffset, NULL);
+    }
+  }
+
+  // Issue the call.
+  unsigned CallOpc = CalleeOp
+    ? (Subtarget->is64Bit() ? X86::CALL64r       : X86::CALL32r)
+    : (Subtarget->is64Bit() ? X86::CALL64pcrel32 : X86::CALLpcrel32);
+  MachineInstrBuilder MIB = CalleeOp
+    ? BuildMI(MBB, TII.get(CallOpc)).addReg(CalleeOp)
+    :BuildMI(MBB, TII.get(CallOpc)).addGlobalAddress(cast<GlobalValue>(Callee));
+  // Add implicit physical register uses to the call.
+  while (!RegArgs.empty()) {
+    MIB.addReg(RegArgs.back());
+    RegArgs.pop_back();
+  }
+
+  // Issue CALLSEQ_END
+  BuildMI(MBB, TII.get(X86::ADJCALLSTACKUP)).addImm(NumBytes).addImm(0);
+
+  // Now handle call return value (if any).
+#if 0 // FIXME
+  bool isSExt = CS.paramHasAttr(0, ParamAttr::SExt);
+  bool isZExt = CS.paramHasAttr(0, ParamAttr::ZExt);
+#endif
+  if (RetVT.getSimpleVT() != MVT::isVoid) {
+    SmallVector<CCValAssign, 16> RVLocs;
+    CCState CCInfo(CC, false, TM, RVLocs);
+    CCInfo.AnalyzeCallResult(RetVT, RetCC_X86);
+
+    // Copy all of the result registers out of their specified physreg.
+    assert(RVLocs.size() == 1 && "Can't handle multi-value calls!");
+    MVT CopyVT = RVLocs[0].getValVT();
+    TargetRegisterClass* DstRC = TLI.getRegClassFor(CopyVT);
+    TargetRegisterClass *SrcRC = DstRC;
+    
+    // If this is a call to a function that returns an fp value on the x87 fp
+    // stack, but where we prefer to use the value in xmm registers, copy it
+    // out as F80 and use a truncate to move it from fp stack reg to xmm reg.
+    if ((RVLocs[0].getLocReg() == X86::ST0 ||
+         RVLocs[0].getLocReg() == X86::ST1) &&
+        isScalarFPTypeInSSEReg(RVLocs[0].getValVT())) {
+      CopyVT = MVT::f80;
+      SrcRC = X86::RSTRegisterClass;
+      DstRC = X86::RFP80RegisterClass;
+    }
+
+    unsigned ResultReg = createResultReg(DstRC);
+    bool Emitted = TII.copyRegToReg(*MBB, MBB->end(), ResultReg,
+                                    RVLocs[0].getLocReg(), DstRC, SrcRC);
+    assert(Emitted && "Failed to emit a copy instruction!");
+    if (CopyVT != RVLocs[0].getValVT()) {
+      // Round the F80 the right size, which also moves to the appropriate xmm
+      // register. This is accomplished by storing the F80 value in memory and
+      // then loading it back. Ewww...
+      MVT ResVT = RVLocs[0].getValVT();
+      unsigned Opc = ResVT == MVT::f32 ? X86::ST_Fp80m32 : X86::ST_Fp80m64;
+      unsigned MemSize = ResVT.getSizeInBits()/8;
+      int FI = MFI->CreateStackObject(MemSize, MemSize);
+      addFrameReference(BuildMI(MBB, TII.get(Opc)), FI).addReg(ResultReg);
+      DstRC = ResVT == MVT::f32
+        ? X86::FR32RegisterClass : X86::FR64RegisterClass;
+      Opc = ResVT == MVT::f32 ? X86::MOVSSrm : X86::MOVSDrm;
+      ResultReg = createResultReg(DstRC);
+      addFrameReference(BuildMI(MBB, TII.get(Opc), ResultReg), FI);
+    }
+
+    UpdateValueMap(I, ResultReg);
+  }
+
+  return true;
+}
+
+
 bool
 X86FastISel::TargetSelectInstruction(Instruction *I)  {
   switch (I->getOpcode()) {
@@ -608,6 +870,10 @@ X86FastISel::TargetSelectInstruction(Instruction *I)  {
     return X86SelectZExt(I);
   case Instruction::Br:
     return X86SelectBranch(I);
+#if 0
+  case Instruction::Call:
+    return X86SelectCall(I);
+#endif
   case Instruction::LShr:
   case Instruction::AShr:
   case Instruction::Shl:
