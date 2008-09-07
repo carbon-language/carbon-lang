@@ -147,7 +147,7 @@ public:
 
   /// AnalyzeCallOperands - Same as above except it takes vectors of types
   /// and argument flags.
-  void AnalyzeCallOperands(SmallVectorImpl<MVT> ArgVTs,
+  void AnalyzeCallOperands(SmallVectorImpl<MVT> &ArgVTs,
                            SmallVectorImpl<ISD::ArgFlagsTy> &Flags,
                            CCAssignFn Fn);
 
@@ -155,6 +155,9 @@ public:
   /// incorporating info about the passed values into this state.
   void AnalyzeCallResult(SDNode *TheCall, CCAssignFn Fn);
   
+  /// AnalyzeCallResult - Same as above except it's specialized for calls which
+  /// produce a single value.
+  void AnalyzeCallResult(MVT VT, CCAssignFn Fn);
 
   /// getFirstUnallocated - Return the first unallocated register in the set, or
   /// NumRegs if they are all allocated.

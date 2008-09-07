@@ -107,7 +107,7 @@ void CCState::AnalyzeCallOperands(SDNode *TheCall, CCAssignFn Fn) {
 
 /// AnalyzeCallOperands - Same as above except it takes vectors of types
 /// and argument flags.
-void CCState::AnalyzeCallOperands(SmallVectorImpl<MVT> ArgVTs,
+void CCState::AnalyzeCallOperands(SmallVectorImpl<MVT> &ArgVTs,
                                   SmallVectorImpl<ISD::ArgFlagsTy> &Flags,
                                   CCAssignFn Fn) {
   unsigned NumOps = ArgVTs.size();
@@ -132,5 +132,15 @@ void CCState::AnalyzeCallResult(SDNode *TheCall, CCAssignFn Fn) {
            << VT.getMVTString() << "\n";
       abort();
     }
+  }
+}
+
+/// AnalyzeCallResult - Same as above except it's specialized for calls which
+/// produce a single value.
+void CCState::AnalyzeCallResult(MVT VT, CCAssignFn Fn) {
+  if (Fn(0, VT, VT, CCValAssign::Full, ISD::ArgFlagsTy(), *this)) {
+    cerr << "Call result has unhandled type "
+         << VT.getMVTString() << "\n";
+    abort();
   }
 }
