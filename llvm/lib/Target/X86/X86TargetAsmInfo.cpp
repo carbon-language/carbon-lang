@@ -261,8 +261,7 @@ X86ELFTargetAsmInfo::X86ELFTargetAsmInfo(const X86TargetMachine &TM):
   DwarfMacInfoSection = "\t.section\t.debug_macinfo,\"\",@progbits";
 
   // Exceptions handling
-  if (!is64Bit)
-    SupportsExceptionHandling = true;
+  SupportsExceptionHandling = true;
   AbsoluteEHSectionOffsets = false;
   DwarfEHFrameSection = "\t.section\t.eh_frame,\"aw\",@progbits";
   DwarfExceptionSection = "\t.section\t.gcc_except_table,\"a\",@progbits";
