@@ -272,25 +272,19 @@ void CallGraphNode::print(std::ostream &OS) const {
   else
     OS << "Call graph node <<null function: 0x" << this << ">>:\n";
 
-  for (const_iterator I = begin(), E = end(); I != E; ++I)
+  for (const_iterator I = begin(), E = end(); I != E; ++I) {
     if (I->second->getFunction())
-      OS << "  Calls function '" << I->second->getFunction()->getName() <<"'\n";
-  else
-    OS << "  Calls external node\n";
+      OS << "  Calls function '" << I->second->getFunction()->getName() << "'";
+    else
+      OS << "  Calls external node";
+    if (I->first.getInstruction())
+      OS << " from '" << *I->first.getInstruction() << "'";
+    OS << "\n";
+  }
   OS << "\n";
 }
 
 void CallGraphNode::dump() const { print(cerr); }
-
-void CallGraphNode::removeCallEdgeTo(CallGraphNode *Callee) {
-  for (unsigned i = CalledFunctions.size(); ; --i) {
-    assert(i && "Cannot find callee to remove!");
-    if (CalledFunctions[i-1].second == Callee) {
-      CalledFunctions.erase(CalledFunctions.begin()+i-1);
-      return;
-    }
-  }
-}
 
 /// removeCallEdgeFor - This method removes the edge in the node for the
 /// specified call site.  Note that this method takes linear time, so it
