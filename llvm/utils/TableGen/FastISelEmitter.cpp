@@ -114,7 +114,7 @@ struct OperandsSignature {
         return false;
       Record *OpLeafRec = OpDI->getDef();
       // For now, the only other thing we accept is register operands.
-      
+
       const CodeGenRegisterClass *RC = 0;
       if (OpLeafRec->isSubClassOf("RegisterClass"))
         RC = &Target.getRegisterClass(OpLeafRec);
@@ -157,21 +157,27 @@ struct OperandsSignature {
   void PrintArguments(std::ostream &OS,
                       const std::vector<std::string>& PR) const {
     assert(PR.size() == Operands.size());
+    bool PrintedArg = false;
     for (unsigned i = 0, e = Operands.size(); i != e; ++i) {
-      if (PR[i] != "") {
-        OS << PR[i];
-      } else if (Operands[i] == "r") {
+      if (PR[i] != "")
+        // Implicit physical register operand.
+        continue;
+
+      if (PrintedArg)
+        OS << ", ";
+      if (Operands[i] == "r") {
         OS << "Op" << i;
+        PrintedArg = true;
       } else if (Operands[i] == "i") {
         OS << "imm" << i;
+        PrintedArg = true;
       } else if (Operands[i] == "f") {
         OS << "f" << i;
+        PrintedArg = true;
       } else {
         assert("Unknown operand kind!");
         abort();
       }
-      if (i + 1 != e)
-        OS << ", ";
     }
   }
 
@@ -192,6 +198,20 @@ struct OperandsSignature {
     }
   }
 
+
+  void PrintManglingSuffix(std::ostream &OS,
+                           const std::vector<std::string>& PR) const {
+    for (unsigned i = 0, e = Operands.size(); i != e; ++i) {
+      if (PR[i] != "")
+        // Implicit physical register operand. e.g. Instruction::Mul expect to
+        // select to a binary op. On x86, mul may take a single operand with
+        // the other operand being implicit. We must emit something that looks
+        // like a binary instruction except for the very inner FastEmitInst_*
+        // call.
+        continue;
+      OS << Operands[i];
+    }
+  }
 
   void PrintManglingSuffix(std::ostream &OS) const {
     for (unsigned i = 0, e = Operands.size(); i != e; ++i) {
@@ -430,7 +450,7 @@ void FastISelMap::PrintFunctionDefinitions(std::ostream &OS) {
               
               OS << "  return FastEmitInst_";
               if (Memo.SubRegNo == (unsigned char)~0) {
-                Operands.PrintManglingSuffix(OS);
+                Operands.PrintManglingSuffix(OS, *Memo.PhysRegs);
                 OS << "(" << InstNS << Memo.Name << ", ";
                 OS << InstNS << Memo.RC->getName() << "RegisterClass";
                 if (!Operands.empty())
@@ -497,7 +517,8 @@ void FastISelMap::PrintFunctionDefinitions(std::ostream &OS) {
           
           // Emit code for each possible instruction. There may be
           // multiple if there are subtarget concerns.
-          for (PredMap::const_iterator PI = PM.begin(), PE = PM.end(); PI != PE; ++PI) {
+          for (PredMap::const_iterator PI = PM.begin(), PE = PM.end(); PI != PE;
+               ++PI) {
             std::string PredicateCheck = PI->first;
             const InstructionMemo &Memo = PI->second;
 
@@ -523,7 +544,7 @@ void FastISelMap::PrintFunctionDefinitions(std::ostream &OS) {
             OS << "  return FastEmitInst_";
             
             if (Memo.SubRegNo == (unsigned char)~0) {
-              Operands.PrintManglingSuffix(OS);
+              Operands.PrintManglingSuffix(OS, *Memo.PhysRegs);
               OS << "(" << InstNS << Memo.Name << ", ";
               OS << InstNS << Memo.RC->getName() << "RegisterClass";
               if (!Operands.empty())
