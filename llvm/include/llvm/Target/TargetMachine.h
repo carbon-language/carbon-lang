@@ -68,15 +68,6 @@ namespace FileModel {
   };
 }
 
-// Stack canary model types.
-namespace StackCanaries {
-  enum Model {
-    Default,
-    On,
-    Always
-  };
-}
-
 //===----------------------------------------------------------------------===//
 ///
 /// TargetMachine - Primary interface to the complete machine description for
