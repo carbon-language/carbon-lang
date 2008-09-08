@@ -56,6 +56,7 @@ CodeGenModule::~CodeGenModule() {
 
 void CodeGenModule::Release() {
   EmitStatics();
+  EmitAliases();
   if (Runtime)
     if (llvm::Function *ObjCInitFunction = Runtime->ModuleInitFunction())
       AddGlobalCtor(ObjCInitFunction);
@@ -63,7 +64,10 @@ void CodeGenModule::Release() {
   EmitCtorList(GlobalDtors, "llvm.global_dtors");
   EmitAnnotations();
   // Run the verifier to check that the generated code is consistent.
-  assert(!verifyModule(TheModule));
+  if (verifyModule(TheModule, llvm::PrintMessageAction)) {
+    TheModule.dump();
+    assert(0 && "Module failed verification!");
+  }
 }
 
 /// ErrorUnsupported - Print out an error that codegen doesn't support the
@@ -176,18 +180,25 @@ void CodeGenModule::EmitAnnotations() {
 static void SetGlobalValueAttributes(const Decl *D, 
                                      bool IsInternal,
                                      bool IsInline,
-                                     llvm::GlobalValue *GV) {
+                                     llvm::GlobalValue *GV,
+                                     bool ForDefinition) {
   // TODO: Set up linkage and many other things.  Note, this is a simple 
   // approximation of what we really want.
-  if (IsInternal) {
-    GV->setLinkage(llvm::Function::InternalLinkage);
-  } else {
+  if (!ForDefinition) {
+    // Only a few attributes are set on declarations.
     if (D->getAttr<DLLImportAttr>())
       GV->setLinkage(llvm::Function::DLLImportLinkage);
-    else if (D->getAttr<DLLExportAttr>())
-      GV->setLinkage(llvm::Function::DLLExportLinkage);
-    else if (D->getAttr<WeakAttr>() || IsInline)
-      GV->setLinkage(llvm::Function::WeakLinkage);
+  } else {
+    if (IsInternal) {
+      GV->setLinkage(llvm::Function::InternalLinkage);
+    } else {
+      if (D->getAttr<DLLImportAttr>())
+        GV->setLinkage(llvm::Function::DLLImportLinkage);
+      else if (D->getAttr<DLLExportAttr>())
+        GV->setLinkage(llvm::Function::DLLExportLinkage);
+      else if (D->getAttr<WeakAttr>() || IsInline)
+        GV->setLinkage(llvm::Function::WeakLinkage);
+    }
   }
 
   if (const VisibilityAttr *attr = D->getAttr<VisibilityAttr>())
@@ -201,7 +212,7 @@ static void SetGlobalValueAttributes(const Decl *D,
   }
 }
 
-static void SetFunctionAttrs(const CGFunctionInfo &Info, llvm::Function *F) {
+static void SetFunctionParamAttrs(const CGFunctionInfo &Info, llvm::Function *F) {
   ParamAttrListType ParamAttrList;
   Info.constructParamAttrList(ParamAttrList);
 
@@ -215,26 +226,79 @@ static void SetFunctionAttrs(const CGFunctionInfo &Info, llvm::Function *F) {
 
 /// SetFunctionAttributesForDefinition - Set function attributes
 /// specific to a function definition.
-void CodeGenModule::SetFunctionAttributesForDefinition(llvm::Function *F) {
+void CodeGenModule::SetFunctionAttributesForDefinition(const Decl *D,
+                                                       llvm::Function *F) {
+  if (isa<ObjCMethodDecl>(D)) {
+    SetGlobalValueAttributes(D, true, false, F, true);
+  } else {
+    const FunctionDecl *FD = cast<FunctionDecl>(D);
+    SetGlobalValueAttributes(FD, FD->getStorageClass() == FunctionDecl::Static,
+                             FD->isInline(), F, true);
+  }
+                             
   if (!Features.Exceptions)
     F->addParamAttr(0, llvm::ParamAttr::NoUnwind);  
 }
 
 void CodeGenModule::SetMethodAttributes(const ObjCMethodDecl *MD,
                                         llvm::Function *F) {
-  SetFunctionAttrs(CGFunctionInfo(MD, Context), F);
+  SetFunctionParamAttrs(CGFunctionInfo(MD, Context), F);
   
-  SetFunctionAttributesForDefinition(F);
-
-  SetGlobalValueAttributes(MD, true, false, F);
+  SetFunctionAttributesForDefinition(MD, F);
 }
 
 void CodeGenModule::SetFunctionAttributes(const FunctionDecl *FD,
                                           llvm::Function *F) {
-  SetFunctionAttrs(CGFunctionInfo(FD), F);
+  SetFunctionParamAttrs(CGFunctionInfo(FD), F);
 
-  SetGlobalValueAttributes(FD, FD->getStorageClass() == FunctionDecl::Static, 
-                           FD->isInline(), F);
+  SetGlobalValueAttributes(FD, FD->getStorageClass() == FunctionDecl::Static,
+                           FD->isInline(), F, false);
+}
+
+void CodeGenModule::EmitAliases() {
+  for (unsigned i = 0, e = Aliases.size(); i != e; ++i) {
+    const FunctionDecl *D = Aliases[i];
+    const AliasAttr *AA = D->getAttr<AliasAttr>();
+
+    // This is something of a hack, if the FunctionDecl got overridden
+    // then its attributes will be moved to the new declaration. In
+    // this case the current decl has no alias attribute, but we will
+    // eventually see it.
+    if (!AA)
+      continue;
+
+    const std::string& aliaseeName = AA->getAliasee();
+    llvm::Function *aliasee = getModule().getFunction(aliaseeName);
+    if (!aliasee) {
+      // FIXME: This isn't unsupported, this is just an error, which
+      // sema should catch, but...
+      ErrorUnsupported(D, "alias referencing a missing function");
+      continue;
+    }
+
+    llvm::GlobalValue *GA = 
+      new llvm::GlobalAlias(aliasee->getType(),
+                            llvm::Function::ExternalLinkage,
+                            D->getName(),
+                            aliasee,
+                            &getModule());
+    
+    llvm::GlobalValue *&Entry = GlobalDeclMap[D->getIdentifier()];
+    if (Entry) {
+      // If we created a dummy function for this then replace it.
+      GA->takeName(Entry);
+            
+      llvm::Value *Casted = 
+        llvm::ConstantExpr::getBitCast(GA, Entry->getType());
+      Entry->replaceAllUsesWith(Casted);
+      Entry->eraseFromParent();
+
+      Entry = GA;
+    }
+
+    // Alias should never be internal or inline.
+    SetGlobalValueAttributes(D, false, false, GA, true);
+  }
 }
 
 void CodeGenModule::EmitStatics() {
@@ -250,6 +314,8 @@ void CodeGenModule::EmitStatics() {
       // Check if we have used a decl with the same name
       // FIXME: The AST should have some sort of aggregate decls or
       // global symbol map.
+      // FIXME: This is missing some important cases. For example, we
+      // need to check for uses in an alias and in a constructor.
       if (!GlobalDeclMap.count(D->getIdentifier()))
         continue;
 
@@ -316,8 +382,16 @@ void CodeGenModule::EmitGlobal(const ValueDecl *Global) {
   bool isDef, isStatic;
 
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(Global)) {
-    isDef = (FD->isThisDeclarationADefinition() ||
-             FD->getAttr<AliasAttr>());
+    // Aliases are deferred until code for everything else has been
+    // emitted.
+    if (FD->getAttr<AliasAttr>()) {
+      assert(!FD->isThisDeclarationADefinition() && 
+             "Function alias cannot have a definition!");
+      Aliases.push_back(FD);
+      return;
+    }
+
+    isDef = FD->isThisDeclarationADefinition();
     isStatic = FD->getStorageClass() == FunctionDecl::Static;
   } else if (const VarDecl *VD = cast<VarDecl>(Global)) {
     assert(VD->isFileVarDecl() && "Cannot emit local var decl as global.");
@@ -512,29 +586,12 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
 
 llvm::GlobalValue *
 CodeGenModule::EmitForwardFunctionDefinition(const FunctionDecl *D) {
-  // FIXME: param attributes for sext/zext etc.
-  if (const AliasAttr *AA = D->getAttr<AliasAttr>()) {
-    assert(!D->getBody() && "Unexpected alias attr on function with body.");
-    
-    const std::string& aliaseeName = AA->getAliasee();
-    llvm::Function *aliasee = getModule().getFunction(aliaseeName);
-    llvm::GlobalValue *alias = new llvm::GlobalAlias(aliasee->getType(),
-                                              llvm::Function::ExternalLinkage,
-                                                     D->getName(),
-                                                     aliasee,
-                                                     &getModule());
-    // Alias should never be internal
-    SetGlobalValueAttributes(D, false, false, alias);
-    return alias;
-  } else {
-    const llvm::Type *Ty = getTypes().ConvertType(D->getType());
-    llvm::Function *F = llvm::Function::Create(cast<llvm::FunctionType>(Ty), 
-                                               llvm::Function::ExternalLinkage,
-                                               D->getName(), &getModule());
-    
-    SetFunctionAttributes(D, F);
-    return F;
-  }
+  const llvm::Type *Ty = getTypes().ConvertType(D->getType());
+  llvm::Function *F = llvm::Function::Create(cast<llvm::FunctionType>(Ty), 
+                                             llvm::Function::ExternalLinkage,
+                                             D->getName(), &getModule());
+  SetFunctionAttributes(D, F);
+  return F;
 }
 
 llvm::Constant *CodeGenModule::GetAddrOfFunction(const FunctionDecl *D) {
@@ -575,33 +632,22 @@ void CodeGenModule::EmitGlobalFunctionDefinition(const FunctionDecl *D) {
       Entry->replaceAllUsesWith(NewPtrForOldDecl);
             
       // Ok, delete the old function now, which is dead.
-      // FIXME: Add GlobalValue->eraseFromParent().
       assert(Entry->isDeclaration() && "Shouldn't replace non-declaration");
-      if (llvm::Function *F = dyn_cast<llvm::Function>(Entry)) {
-        F->eraseFromParent();
-      } else if (llvm::GlobalAlias *GA = dyn_cast<llvm::GlobalAlias>(Entry)) {
-        GA->eraseFromParent();
-      } else {
-        assert(0 && "Invalid global variable type.");
-      }
+      Entry->eraseFromParent();
       
       Entry = NewFn;
     }
   }
 
-  if (D->getAttr<AliasAttr>()) {
-    ;
-  } else {
-    llvm::Function *Fn = cast<llvm::Function>(Entry);    
-    CodeGenFunction(*this).GenerateCode(D, Fn);
+  llvm::Function *Fn = cast<llvm::Function>(Entry);    
+  CodeGenFunction(*this).GenerateCode(D, Fn);
 
-    SetFunctionAttributesForDefinition(Fn);
-
-    if (const ConstructorAttr *CA = D->getAttr<ConstructorAttr>()) {
-      AddGlobalCtor(Fn, CA->getPriority());
-    } else if (const DestructorAttr *DA = D->getAttr<DestructorAttr>()) {
-      AddGlobalDtor(Fn, DA->getPriority());
-    }
+  SetFunctionAttributesForDefinition(D, Fn);
+  
+  if (const ConstructorAttr *CA = D->getAttr<ConstructorAttr>()) {
+    AddGlobalCtor(Fn, CA->getPriority());
+  } else if (const DestructorAttr *DA = D->getAttr<DestructorAttr>()) {
+    AddGlobalDtor(Fn, DA->getPriority());
   }
 }
 

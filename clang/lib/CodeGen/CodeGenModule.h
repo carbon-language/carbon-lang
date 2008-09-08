@@ -79,11 +79,16 @@ class CodeGenModule {
   /// (which may change with attributes such as asm-labels).
   llvm::DenseMap<IdentifierInfo*, llvm::GlobalValue*> GlobalDeclMap;
 
-  /// List of static global for which code generation is delayed. When
-  /// the translation unit has been fully processed we will lazily
-  /// emit definitions for only the decls that were actually used.
-  /// This should contain only Function and Var decls, and only those
-  /// which actually define something.
+  /// Aliases - List of aliases in module. These cannot be emitted
+  /// until all the code has been seen, as they reference things by
+  /// name instead of directly and may reference forward.
+  std::vector<const FunctionDecl*> Aliases;
+
+  /// StaticDecls - List of static global for which code generation is
+  /// delayed. When the translation unit has been fully processed we
+  /// will lazily emit definitions for only the decls that were
+  /// actually used.  This should contain only Function and Var decls,
+  /// and only those which actually define something.
   std::vector<const ValueDecl*> StaticDecls;
   
   /// GlobalCtors - Store the list of global constructors and their
@@ -213,7 +218,9 @@ public:
 private:
   /// SetFunctionAttributesForDefinition - Set function attributes
   /// specific to a function definition.
-  void SetFunctionAttributesForDefinition(llvm::Function *F);
+  /// \param D - The ObjCMethodDecl or FunctionDecl defining \arg F.
+  void SetFunctionAttributesForDefinition(const Decl *D,
+                                          llvm::Function *F);
 
   void SetFunctionAttributes(const FunctionDecl *FD,
                              llvm::Function *F);
@@ -238,9 +245,9 @@ private:
   /// or destructor array.
   void EmitCtorList(const CtorList &Fns, const char *GlobalName);
 
+  void EmitAliases(void);
   void EmitAnnotations(void);
   void EmitStatics(void);
-
 };
 }  // end namespace CodeGen
 }  // end namespace clang
