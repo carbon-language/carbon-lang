@@ -148,9 +148,10 @@ static bool MarkAliveBlocks(BasicBlock *BB,
   return Changed;
 }
 
-/// RemoveUnreachableBlocks - Remove blocks that are not reachable, even if they
-/// are in a dead cycle.  Return true if a change was made, false otherwise.
-static bool RemoveUnreachableBlocks(Function &F) {
+/// RemoveUnreachableBlocksFromFn - Remove blocks that are not reachable, even 
+/// if they are in a dead cycle.  Return true if a change was made, false 
+/// otherwise.
+static bool RemoveUnreachableBlocksFromFn(Function &F) {
   SmallPtrSet<BasicBlock*, 128> Reachable;
   bool Changed = MarkAliveBlocks(F.begin(), Reachable);
   
@@ -208,23 +209,23 @@ static bool IterativeSimplifyCFG(Function &F) {
 // simplify the CFG.
 //
 bool CFGSimplifyPass::runOnFunction(Function &F) {
-  bool EverChanged = RemoveUnreachableBlocks(F);
+  bool EverChanged = RemoveUnreachableBlocksFromFn(F);
   EverChanged |= IterativeSimplifyCFG(F);
   
   // If neither pass changed anything, we're done.
   if (!EverChanged) return false;
 
   // IterativeSimplifyCFG can (rarely) make some loops dead.  If this happens,
-  // RemoveUnreachableBlocks is needed to nuke them, which means we should
+  // RemoveUnreachableBlocksFromFn is needed to nuke them, which means we should
   // iterate between the two optimizations.  We structure the code like this to
   // avoid reruning IterativeSimplifyCFG if the second pass of 
-  // RemoveUnreachableBlocks doesn't do anything.
-  if (!RemoveUnreachableBlocks(F))
+  // RemoveUnreachableBlocksFromFn doesn't do anything.
+  if (!RemoveUnreachableBlocksFromFn(F))
     return true;
   
   do {
     EverChanged = IterativeSimplifyCFG(F);
-    EverChanged |= RemoveUnreachableBlocks(F);
+    EverChanged |= RemoveUnreachableBlocksFromFn(F);
   } while (EverChanged);
   
   return true;
