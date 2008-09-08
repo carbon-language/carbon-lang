@@ -1423,6 +1423,7 @@ SDValue DAGCombiner::visitUREM(SDNode *N) {
   // X%C to the equivalent of X-X/C*C.
   if (N1C && !N1C->isNullValue()) {
     SDValue Div = DAG.getNode(ISD::UDIV, VT, N0, N1);
+    AddToWorkList(Div.getNode());
     SDValue OptimizedDiv = combine(Div.getNode());
     if (OptimizedDiv.getNode() && OptimizedDiv.getNode() != Div.getNode()) {
       SDValue Mul = DAG.getNode(ISD::MUL, VT, OptimizedDiv, N1);
