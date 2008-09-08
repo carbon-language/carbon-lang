@@ -1729,7 +1729,8 @@ following is the syntax for constant expressions:</p>
   was stored to memory and read back as TYPE. In other words, no bits change 
   with this operator, just the type.  This can be used for conversion of
   vector types to any other type, as long as they have the same bit width. For
-  pointers it is only valid to cast to another pointer type.
+  pointers it is only valid to cast to another pointer type. It is not valid
+  to bitcast to or from an aggregate type.
   </dd>
 
   <dt><b><tt>getelementptr ( CSTPTR, IDX0, IDX1, ... )</tt></b></dt>
@@ -3808,8 +3809,9 @@ nothing is done (<i>no-op cast</i>).</p>
 <h5>Arguments:</h5>
 
 <p>The '<tt>bitcast</tt>' instruction takes a value to cast, which must be 
-a first class value, and a type to cast it to, which must also be a <a
-  href="#t_firstclass">first class</a> type. The bit sizes of <tt>value</tt>
+a non-aggregate first class value, and a type to cast it to, which must also be
+a non-aggregate <a href="#t_firstclass">first class</a> type. The bit sizes of
+<tt>value</tt>
 and the destination type, <tt>ty2</tt>, must be identical. If the source
 type is a pointer, the destination type must also be a pointer.  This
 instruction supports bitwise conversion of vectors to integers and to vectors

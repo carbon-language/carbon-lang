@@ -883,6 +883,12 @@ void Verifier::visitBitCastInst(BitCastInst &I) {
           "Bitcast requires both operands to be pointer or neither", &I);
   Assert1(SrcBitSize == DestBitSize, "Bitcast requies types of same width", &I);
 
+  // Disallow aggregates.
+  Assert1(!SrcTy->isAggregateType(),
+          "Bitcast operand must not be aggregate", &I);
+  Assert1(!DestTy->isAggregateType(),
+          "Bitcast type must not be aggregate", &I);
+
   visitInstruction(I);
 }
 
