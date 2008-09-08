@@ -1062,26 +1062,41 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV) {
       }
       return;
     } else assert(0 && "Floating point constant type not handled");
-  } else if (CV->getType() == Type::Int64Ty) {
+  } else if (CV->getType()->isInteger() &&
+             cast<IntegerType>(CV->getType())->getBitWidth() >= 64) {
     if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
-      uint64_t Val = CI->getZExtValue();
+      unsigned BitWidth = CI->getBitWidth();
+      assert(isPowerOf2_32(BitWidth) &&
+             "Non-power-of-2-sized integers not handled!");
 
-      if (TAI->getData64bitsDirective())
-        O << TAI->getData64bitsDirective() << Val << '\n';
-      else if (TD->isBigEndian()) {
-        O << TAI->getData32bitsDirective() << unsigned(Val >> 32)
-          << '\t' << TAI->getCommentString()
-          << " Double-word most significant word " << Val << '\n';
-        O << TAI->getData32bitsDirective() << unsigned(Val)
-          << '\t' << TAI->getCommentString()
-          << " Double-word least significant word " << Val << '\n';
-      } else {
-        O << TAI->getData32bitsDirective() << unsigned(Val)
-          << '\t' << TAI->getCommentString()
-          << " Double-word least significant word " << Val << '\n';
-        O << TAI->getData32bitsDirective() << unsigned(Val >> 32)
-          << '\t' << TAI->getCommentString()
-          << " Double-word most significant word " << Val << '\n';
+      // We don't expect assemblers to support integer data directives
+      // for more than 64 bits, so we emit the data in at most 64-bit
+      // quantities at a time.
+      const uint64_t *RawData = CI->getValue().getRawData();
+      for (unsigned i = 0, e = BitWidth / 64; i != e; ++i) {
+        uint64_t Val;
+        if (TD->isBigEndian())
+          Val = RawData[e - i - 1];
+        else
+          Val = RawData[i];
+
+        if (TAI->getData64bitsDirective())
+          O << TAI->getData64bitsDirective() << Val << '\n';
+        else if (TD->isBigEndian()) {
+          O << TAI->getData32bitsDirective() << unsigned(Val >> 32)
+            << '\t' << TAI->getCommentString()
+            << " Double-word most significant word " << Val << '\n';
+          O << TAI->getData32bitsDirective() << unsigned(Val)
+            << '\t' << TAI->getCommentString()
+            << " Double-word least significant word " << Val << '\n';
+        } else {
+          O << TAI->getData32bitsDirective() << unsigned(Val)
+            << '\t' << TAI->getCommentString()
+            << " Double-word least significant word " << Val << '\n';
+          O << TAI->getData32bitsDirective() << unsigned(Val >> 32)
+            << '\t' << TAI->getCommentString()
+            << " Double-word most significant word " << Val << '\n';
+        }
       }
       return;
     }
@@ -1440,6 +1455,8 @@ void AsmPrinter::printDataDirective(const Type *type) {
       assert(TAI->getData64bitsDirective() &&
              "Target cannot handle 64-bit constant exprs!");
       O << TAI->getData64bitsDirective();
+    } else {
+      assert(0 && "Target cannot handle given data directive width!");
     }
     break;
   }
