@@ -258,7 +258,8 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   }
   // X86 ret instruction may pop stack.
   setOperationAction(ISD::RET             , MVT::Other, Custom);
-  setOperationAction(ISD::EH_RETURN       , MVT::Other, Custom);
+  if (!Subtarget->is64Bit())
+    setOperationAction(ISD::EH_RETURN       , MVT::Other, Custom);
 
   // Darwin ABI issue.
   setOperationAction(ISD::ConstantPool    , MVT::i32  , Custom);
@@ -324,8 +325,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setExceptionSelectorRegister(X86::EDX);
   }
   setOperationAction(ISD::FRAME_TO_ARGS_OFFSET, MVT::i32, Custom);
-  setOperationAction(ISD::FRAME_TO_ARGS_OFFSET, MVT::i64, Custom);
-
+  
   setOperationAction(ISD::TRAMPOLINE, MVT::Other, Custom);
 
   setOperationAction(ISD::TRAP, MVT::Other, Legal);
@@ -5593,15 +5593,19 @@ SDValue X86TargetLowering::LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG) {
   // Depths > 0 not supported yet!
   if (cast<ConstantSDNode>(Op.getOperand(0))->getValue() > 0)
     return SDValue();
-
+    
   SDValue RetAddrFI = getReturnAddressFrameIndex(DAG);
-  return DAG.getNode(ISD::SUB, getPointerTy(), RetAddrFI,
+  return DAG.getNode(ISD::SUB, getPointerTy(), RetAddrFI, 
                      DAG.getIntPtrConstant(!Subtarget->is64Bit() ? 4 : 8));
 }
 
 SDValue X86TargetLowering::LowerFRAME_TO_ARGS_OFFSET(SDValue Op,
-                                                     SelectionDAG &DAG) {
-  return DAG.getIntPtrConstant(Subtarget->is64Bit() ? 16 : 8);
+                                                       SelectionDAG &DAG) {
+  // Is not yet supported on x86-64
+  if (Subtarget->is64Bit())
+    return SDValue();
+  
+  return DAG.getIntPtrConstant(8);
 }
 
 SDValue X86TargetLowering::LowerEH_RETURN(SDValue Op, SelectionDAG &DAG)
