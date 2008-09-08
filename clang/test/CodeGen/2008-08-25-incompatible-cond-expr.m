@@ -1,3 +1,5 @@
+// RUN: clang -emit-llvm -o %t %s
+
 @protocol P0
 @end
 @interface A <P0>
