@@ -251,7 +251,7 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
       std::string Name = RC.TheDef->getName();
 
       OS << "  // " << Name 
-         << " Sub-register Classess...\n"
+         << " Sub-register Classes...\n"
          << "  static const TargetRegisterClass* const "
          << Name << "SubRegClasses [] = {\n    ";
 
@@ -296,7 +296,7 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
       std::string Name = RC.TheDef->getName();
 
       OS << "  // " << Name 
-         << " Super-register Classess...\n"
+         << " Super-register Classes...\n"
          << "  static const TargetRegisterClass* const "
          << Name << "SuperRegClasses [] = {\n    ";
 
