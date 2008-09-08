@@ -316,7 +316,6 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   setOperationAction(ISD::EXCEPTIONADDR, MVT::i32, Expand);
   setOperationAction(ISD::EHSELECTION,   MVT::i32, Expand);
   if (Subtarget->is64Bit()) {
-    // FIXME: Verify
     setExceptionPointerRegister(X86::RAX);
     setExceptionSelectorRegister(X86::RDX);
   } else {
@@ -5596,7 +5595,7 @@ SDValue X86TargetLowering::LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG) {
 
   SDValue RetAddrFI = getReturnAddressFrameIndex(DAG);
   return DAG.getNode(ISD::SUB, getPointerTy(), RetAddrFI,
-                     DAG.getIntPtrConstant(!Subtarget->is64Bit() ? 4 : 8));
+                     DAG.getIntPtrConstant(Subtarget->is64Bit() ? 8 : 4));
 }
 
 SDValue X86TargetLowering::LowerFRAME_TO_ARGS_OFFSET(SDValue Op,
@@ -5606,26 +5605,26 @@ SDValue X86TargetLowering::LowerFRAME_TO_ARGS_OFFSET(SDValue Op,
 
 SDValue X86TargetLowering::LowerEH_RETURN(SDValue Op, SelectionDAG &DAG)
 {
-  assert(!Subtarget->is64Bit() &&
-         "Lowering of eh_return builtin is not supported yet on x86-64");
-    
   MachineFunction &MF = DAG.getMachineFunction();
   SDValue Chain     = Op.getOperand(0);
   SDValue Offset    = Op.getOperand(1);
   SDValue Handler   = Op.getOperand(2);
 
-  SDValue Frame = DAG.getRegister(RegInfo->getFrameRegister(MF),
-                                    getPointerTy());
+  SDValue Frame = DAG.getRegister(Subtarget->is64Bit() ? X86::RBP : X86::EBP,
+                                  getPointerTy());
+  unsigned StoreAddrReg = (Subtarget->is64Bit() ? X86::RCX : X86::ECX);
 
   SDValue StoreAddr = DAG.getNode(ISD::SUB, getPointerTy(), Frame,
-                                    DAG.getIntPtrConstant(-4UL));
+                                  DAG.getIntPtrConstant(Subtarget->is64Bit() ?
+                                                        -8UL: -4UL));
   StoreAddr = DAG.getNode(ISD::ADD, getPointerTy(), StoreAddr, Offset);
   Chain = DAG.getStore(Chain, Handler, StoreAddr, NULL, 0);
-  Chain = DAG.getCopyToReg(Chain, X86::ECX, StoreAddr);
-  MF.getRegInfo().addLiveOut(X86::ECX);
+  Chain = DAG.getCopyToReg(Chain, StoreAddrReg, StoreAddr);
+  MF.getRegInfo().addLiveOut(StoreAddrReg);
 
-  return DAG.getNode(X86ISD::EH_RETURN, MVT::Other,
-                     Chain, DAG.getRegister(X86::ECX, getPointerTy()));
+  return DAG.getNode(X86ISD::EH_RETURN,
+                     MVT::Other,
+                     Chain, DAG.getRegister(StoreAddrReg, getPointerTy()));
 }
 
 SDValue X86TargetLowering::LowerTRAMPOLINE(SDValue Op,
