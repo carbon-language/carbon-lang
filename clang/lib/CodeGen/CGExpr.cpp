@@ -13,6 +13,7 @@
 
 #include "CodeGenFunction.h"
 #include "CodeGenModule.h"
+#include "CGCall.h"
 #include "CGObjCRuntime.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
@@ -884,11 +885,12 @@ void CodeGenFunction::EmitCallArg(const Expr *E, CallArgList &Args) {
 RValue CodeGenFunction::EmitCall(llvm::Value *Callee, 
                                  QualType ResultType, 
                                  const CallArgList &CallArgs) {
+  // FIXME: Factor out code to load from args into locals into target.
   llvm::SmallVector<llvm::Value*, 16> Args;
   llvm::Value *TempArg0 = 0;
 
-  // Handle struct-return functions by passing a pointer to the location that
-  // we would like to return into.
+  // Handle struct-return functions by passing a pointer to the
+  // location that we would like to return into.
   if (hasAggregateLLVMType(ResultType)) {
     // Create a temporary alloca to hold the result of the call. :(
     TempArg0 = CreateTempAlloca(ConvertType(ResultType));
@@ -900,35 +902,12 @@ RValue CodeGenFunction::EmitCall(llvm::Value *Callee,
     Args.push_back(I->first);
   
   llvm::CallInst *CI = Builder.CreateCall(Callee,&Args[0],&Args[0]+Args.size());
+  CGCallInfo CallInfo(ResultType, CallArgs);
 
-  // Note that there is parallel code in SetFunctionAttributes in CodeGenModule
-  llvm::SmallVector<llvm::ParamAttrsWithIndex, 8> ParamAttrList;
-  unsigned Index = 1;
-  if (TempArg0) {
-    ParamAttrList.push_back(
-        llvm::ParamAttrsWithIndex::get(Index, llvm::ParamAttr::StructRet));
-    ++Index;
-  }
-
-  for (CallArgList::const_iterator I = CallArgs.begin(), E = CallArgs.end(); 
-       I != E; ++I, ++Index) {
-    QualType ParamType = I->second;
-    unsigned ParamAttrs = 0;
-    if (ParamType->isRecordType())
-      ParamAttrs |= llvm::ParamAttr::ByVal;
-    if (ParamType->isPromotableIntegerType()) {
-      if (ParamType->isSignedIntegerType()) {
-        ParamAttrs |= llvm::ParamAttr::SExt;
-      } else if (ParamType->isUnsignedIntegerType()) {
-        ParamAttrs |= llvm::ParamAttr::ZExt;
-      }
-    }
-    if (ParamAttrs)
-      ParamAttrList.push_back(llvm::ParamAttrsWithIndex::get(Index,
-                                                             ParamAttrs));
-  }
-  CI->setParamAttrs(llvm::PAListPtr::get(ParamAttrList.begin(),
-                                         ParamAttrList.size()));
+  CodeGen::ParamAttrListType ParamAttrList;
+  CallInfo.constructParamAttrList(ParamAttrList);
+  CI->setParamAttrs(llvm::PAListPtr::get(ParamAttrList.begin(), 
+                                         ParamAttrList.size()));  
 
   if (const llvm::Function *F = dyn_cast<llvm::Function>(Callee))
     CI->setCallingConv(F->getCallingConv());

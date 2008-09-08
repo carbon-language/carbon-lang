@@ -218,9 +218,6 @@ private:
   void SetFunctionAttributes(const FunctionDecl *FD,
                              llvm::Function *F);
 
-  void SetGlobalValueAttributes(const FunctionDecl *FD,
-                                llvm::GlobalValue *GV);
-  
   /// EmitGlobal - Emit code for a singal global function or var
   /// decl. Forward declarations are emitted lazily.
   void EmitGlobal(const ValueDecl *D);

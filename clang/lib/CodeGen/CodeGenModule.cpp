@@ -14,6 +14,7 @@
 #include "CGDebugInfo.h"
 #include "CodeGenModule.h"
 #include "CodeGenFunction.h"
+#include "CGCall.h"
 #include "CGObjCRuntime.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
@@ -172,78 +173,43 @@ void CodeGenModule::EmitAnnotations() {
   gv->setSection("llvm.metadata");
 }
 
-void CodeGenModule::SetGlobalValueAttributes(const FunctionDecl *FD,
-                                             llvm::GlobalValue *GV) {
+static void SetGlobalValueAttributes(const Decl *D, 
+                                     bool IsInternal,
+                                     bool IsInline,
+                                     llvm::GlobalValue *GV) {
   // TODO: Set up linkage and many other things.  Note, this is a simple 
   // approximation of what we really want.
-  if (FD->getStorageClass() == FunctionDecl::Static)
+  if (IsInternal) {
     GV->setLinkage(llvm::Function::InternalLinkage);
-  else if (FD->getAttr<DLLImportAttr>())
-    GV->setLinkage(llvm::Function::DLLImportLinkage);
-  else if (FD->getAttr<DLLExportAttr>())
-    GV->setLinkage(llvm::Function::DLLExportLinkage);
-  else if (FD->getAttr<WeakAttr>() || FD->isInline())
-    GV->setLinkage(llvm::Function::WeakLinkage);
+  } else {
+    if (D->getAttr<DLLImportAttr>())
+      GV->setLinkage(llvm::Function::DLLImportLinkage);
+    else if (D->getAttr<DLLExportAttr>())
+      GV->setLinkage(llvm::Function::DLLExportLinkage);
+    else if (D->getAttr<WeakAttr>() || IsInline)
+      GV->setLinkage(llvm::Function::WeakLinkage);
+  }
 
-  if (const VisibilityAttr *attr = FD->getAttr<VisibilityAttr>())
+  if (const VisibilityAttr *attr = D->getAttr<VisibilityAttr>())
     setGlobalVisibility(GV, attr->getVisibility());
   // FIXME: else handle -fvisibility
 
-  if (const AsmLabelAttr *ALA = FD->getAttr<AsmLabelAttr>()) {
+  if (const AsmLabelAttr *ALA = D->getAttr<AsmLabelAttr>()) {
     // Prefaced with special LLVM marker to indicate that the name
     // should not be munged.
     GV->setName("\01" + ALA->getLabel());
   }
 }
 
-static void 
-SetFunctionAttributesFromTypes(const Decl *FD,
-                               llvm::Function *F,
-                               const llvm::SmallVector<QualType, 16> &ArgTypes) {
-  unsigned FuncAttrs = 0;
-  if (FD->getAttr<NoThrowAttr>())
-    FuncAttrs |= llvm::ParamAttr::NoUnwind;
-  if (FD->getAttr<NoReturnAttr>())
-    FuncAttrs |= llvm::ParamAttr::NoReturn;
-
-  llvm::SmallVector<llvm::ParamAttrsWithIndex, 8> ParamAttrList;
-  // Note that there is parallel code in CodeGenFunction::EmitCallExpr
-  unsigned increment = 1;
-  if (CodeGenFunction::hasAggregateLLVMType(ArgTypes[0])) {
-    ParamAttrList.push_back(
-        llvm::ParamAttrsWithIndex::get(1, llvm::ParamAttr::StructRet));
-    ++increment;
-  } else if (ArgTypes[0]->isPromotableIntegerType()) {
-    if (ArgTypes[0]->isSignedIntegerType()) {
-      FuncAttrs |= llvm::ParamAttr::SExt;
-    } else if (ArgTypes[0]->isUnsignedIntegerType()) {
-      FuncAttrs |= llvm::ParamAttr::ZExt;
-    }
-  }
-  if (FuncAttrs)
-    ParamAttrList.push_back(llvm::ParamAttrsWithIndex::get(0, FuncAttrs));
-  for (llvm::SmallVector<QualType, 8>::const_iterator i = ArgTypes.begin() + 1,
-         e = ArgTypes.end(); i != e; ++i, ++increment) {
-    QualType ParamType = *i;
-    unsigned ParamAttrs = 0;
-    if (ParamType->isRecordType())
-      ParamAttrs |= llvm::ParamAttr::ByVal;
-    if (ParamType->isSignedIntegerType() &&
-        ParamType->isPromotableIntegerType())
-      ParamAttrs |= llvm::ParamAttr::SExt;
-    if (ParamType->isUnsignedIntegerType() &&
-        ParamType->isPromotableIntegerType())
-      ParamAttrs |= llvm::ParamAttr::ZExt;
-    if (ParamAttrs)
-      ParamAttrList.push_back(llvm::ParamAttrsWithIndex::get(increment,
-                                                             ParamAttrs));
-  }
+static void SetFunctionAttrs(const CGFunctionInfo &Info, llvm::Function *F) {
+  ParamAttrListType ParamAttrList;
+  Info.constructParamAttrList(ParamAttrList);
 
   F->setParamAttrs(llvm::PAListPtr::get(ParamAttrList.begin(),
                                         ParamAttrList.size()));
 
   // Set the appropriate calling convention for the Function.
-  if (FD->getAttr<FastCallAttr>())
+  if (Info.getDecl()->getAttr<FastCallAttr>())
     F->setCallingConv(llvm::CallingConv::Fast);
 }
 
@@ -256,36 +222,19 @@ void CodeGenModule::SetFunctionAttributesForDefinition(llvm::Function *F) {
 
 void CodeGenModule::SetMethodAttributes(const ObjCMethodDecl *MD,
                                         llvm::Function *F) {
-  llvm::SmallVector<QualType, 16> ArgTypes;
-  
-  ArgTypes.push_back(MD->getResultType());
-  ArgTypes.push_back(MD->getSelfDecl()->getType());
-  ArgTypes.push_back(Context.getObjCSelType());
-  for (ObjCMethodDecl::param_const_iterator i = MD->param_begin(),
-         e = MD->param_end(); i != e; ++i)
-    ArgTypes.push_back((*i)->getType());
-
-  SetFunctionAttributesFromTypes(MD, F, ArgTypes);
+  SetFunctionAttrs(CGFunctionInfo(MD, Context), F);
   
   SetFunctionAttributesForDefinition(F);
 
-  // FIXME: set visibility
+  SetGlobalValueAttributes(MD, true, false, F);
 }
 
 void CodeGenModule::SetFunctionAttributes(const FunctionDecl *FD,
                                           llvm::Function *F) {
-  llvm::SmallVector<QualType, 16> ArgTypes;
-  const FunctionType *FTy = FD->getType()->getAsFunctionType();
-  const FunctionTypeProto *FTP = dyn_cast<FunctionTypeProto>(FTy);
-  
-  ArgTypes.push_back(FTy->getResultType());
-  if (FTP)
-    for (unsigned i = 0, e = FTP->getNumArgs(); i != e; ++i)
-      ArgTypes.push_back(FTP->getArgType(i));
+  SetFunctionAttrs(CGFunctionInfo(FD), F);
 
-  SetFunctionAttributesFromTypes(FD, F, ArgTypes);
-
-  SetGlobalValueAttributes(FD, F);
+  SetGlobalValueAttributes(FD, FD->getStorageClass() == FunctionDecl::Static, 
+                           FD->isInline(), F);
 }
 
 void CodeGenModule::EmitStatics() {
@@ -574,7 +523,8 @@ CodeGenModule::EmitForwardFunctionDefinition(const FunctionDecl *D) {
                                                      D->getName(),
                                                      aliasee,
                                                      &getModule());
-    SetGlobalValueAttributes(D, alias);
+    // Alias should never be internal
+    SetGlobalValueAttributes(D, false, false, alias);
     return alias;
   } else {
     const llvm::Type *Ty = getTypes().ConvertType(D->getType());

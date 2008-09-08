@@ -24,6 +24,7 @@
 #include <vector>
 #include <map>
 
+#include "CGCall.h"
 #include "CGValue.h"
 
 namespace llvm {
@@ -306,10 +307,6 @@ public:
   //===--------------------------------------------------------------------===//
   //                         Scalar Expression Emission
   //===--------------------------------------------------------------------===//
-
-  /// CallArgList - Type for representing both the value and type of
-  /// arguments in a call.
-  typedef llvm::SmallVector<std::pair<llvm::Value*, QualType>, 16> CallArgList;
 
   /// EmitCallArg - Emit the given expression and append the result
   /// onto the given Args list.
