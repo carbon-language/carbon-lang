@@ -1111,7 +1111,7 @@ SDValue DAGCombiner::visitSUB(SDNode *N) {
     return DAG.getConstant(0, N->getValueType(0));
   // fold (sub c1, c2) -> c1-c2
   if (N0C && N1C)
-    return DAG.getConstant(N0C->getAPIntValue() - N1C->getAPIntValue(), VT);
+    return DAG.getNode(ISD::SUB, VT, N0, N1);
   // fold (sub x, c) -> (add x, -c)
   if (N1C)
     return DAG.getNode(ISD::ADD, VT, N0,
