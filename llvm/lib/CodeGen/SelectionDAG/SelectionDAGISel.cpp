@@ -741,7 +741,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn, MachineFunction &MF) {
         for (; BI != End; ++BI) {
           // Just before the terminator instruction, insert instructions to
           // feed PHI nodes in successor blocks.
-          if (isa<TerminatorInst>(I))
+          if (isa<TerminatorInst>(BI))
             if (!HandlePHINodesInSuccessorBlocksFast(LLVMBB, F)) {
               if (DisableFastISelAbort)
                 break;
@@ -763,7 +763,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn, MachineFunction &MF) {
           if (isa<CallInst>(BI) || isa<LoadInst>(BI) ||
               isa<StoreInst>(BI)) {
             if (BI->getType() != Type::VoidTy) {
-              unsigned &R = FuncInfo->ValueMap[I];
+              unsigned &R = FuncInfo->ValueMap[BI];
               if (!R)
                 R = FuncInfo->CreateRegForValue(BI);
             }
