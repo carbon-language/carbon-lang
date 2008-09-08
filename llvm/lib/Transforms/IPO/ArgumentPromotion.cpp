@@ -607,6 +607,10 @@ Function *ArgPromotion::DoPromotion(Function *F,
   // changes.
   AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
 
+  // Get the callgraph information that we need to update to reflect our
+  // changes.
+  CallGraph &CG = getAnalysis<CallGraph>();
+
   // Loop over all of the callers of the function, transforming the call sites
   // to pass in the loaded pointers.
   //
@@ -709,6 +713,9 @@ Function *ArgPromotion::DoPromotion(Function *F,
     // Update the alias analysis implementation to know that we are replacing
     // the old call with a new one.
     AA.replaceWithNewValue(Call, New);
+
+    // Update the callgraph to know that the callsite has been transformed.
+    CG[Call->getParent()->getParent()]->replaceCallSite(Call, New);
 
     if (!Call->use_empty()) {
       Call->replaceAllUsesWith(New);
