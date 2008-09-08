@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 | grep 18446744073709551615 | count 14
+; RUN: llvm-as < %s | llc -march=x86 -mtriple=i686-pc-linux-gnu | grep 18446744073709551615 | count 14
 ; RUN: llvm-as < %s | llc -march=ppc32 | grep 4294967295 | count 28
 
 ; These static initializers are too big to hand off to assemblers
