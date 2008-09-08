@@ -107,7 +107,8 @@ private:
 
 };
 
-static bool isTypeLegal(const Type *Ty, const TargetLowering &TLI, MVT &VT) {
+static bool isTypeLegal(const Type *Ty, const TargetLowering &TLI, MVT &VT,
+                        bool AllowI1 = false) {
   VT = MVT::getMVT(Ty, /*HandleUnknown=*/true);
   if (VT == MVT::Other || !VT.isSimple())
     // Unhandled type. Halt "fast" selection and bail.
@@ -119,7 +120,7 @@ static bool isTypeLegal(const Type *Ty, const TargetLowering &TLI, MVT &VT) {
   // selector contains all of the 64-bit instructions from x86-64,
   // under the assumption that i64 won't be used if the target doesn't
   // support it.
-  return TLI.isTypeLegal(VT);
+  return (AllowI1 && VT == MVT::i1) || TLI.isTypeLegal(VT);
 }
 
 #include "X86GenCallingConv.inc"
@@ -701,8 +702,15 @@ bool X86FastISel::X86SelectCall(Instruction *I) {
   // Handle *simple* calls for now.
   const Type *RetTy = CS.getType();
   MVT RetVT;
-  if (!isTypeLegal(RetTy, TLI, RetVT))
+  if (!isTypeLegal(RetTy, TLI, RetVT, true))
     return false;
+
+  // Allow calls which produce i1 results.
+  bool AndToI1 = false;
+  if (RetVT == MVT::i1) {
+    RetVT = MVT::i8;
+    AndToI1 = true;
+  }
 
   // Deal with call operands first.
   SmallVector<unsigned, 4> Args;
@@ -857,6 +865,13 @@ bool X86FastISel::X86SelectCall(Instruction *I) {
       Opc = ResVT == MVT::f32 ? X86::MOVSSrm : X86::MOVSDrm;
       ResultReg = createResultReg(DstRC);
       addFrameReference(BuildMI(MBB, TII.get(Opc), ResultReg), FI);
+    }
+
+    if (AndToI1) {
+      // Mask out all but lowest bit for some call which produces an i1.
+      unsigned AndResult = createResultReg(X86::GR8RegisterClass);
+      BuildMI(MBB, TII.get(X86::AND8ri), AndResult).addReg(ResultReg).addImm(1);
+      ResultReg = AndResult;
     }
 
     UpdateValueMap(I, ResultReg);
