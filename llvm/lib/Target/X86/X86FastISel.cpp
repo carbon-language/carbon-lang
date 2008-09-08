@@ -70,6 +70,9 @@ private:
 
   bool X86FastEmitStore(MVT VT, unsigned Val,
                         unsigned Ptr, unsigned Offset, Value *V);
+
+  bool X86FastEmitExtend(ISD::NodeType Opc, MVT DstVT, unsigned Src, MVT SrcVT,
+                         unsigned &ResultReg);
   
   bool X86SelectConstAddr(Value *V, unsigned &Op0, bool isCall = false);
 
@@ -269,6 +272,16 @@ X86FastISel::X86FastEmitStore(MVT VT, unsigned Val,
   return true;
 }
 
+/// X86FastEmitExtend - Emit a machine instruction to extend a value Src of
+/// type SrcVT to type DstVT using the specified extension opcode Opc (e.g.
+/// ISD::SIGN_EXTEND).
+bool X86FastISel::X86FastEmitExtend(ISD::NodeType Opc, MVT DstVT,
+                                    unsigned Src, MVT SrcVT,
+                                    unsigned &ResultReg) {
+  ResultReg = FastEmit_r(SrcVT.getSimpleVT(), DstVT.getSimpleVT(), Opc, Src);
+  return ResultReg != 0;
+}
+
 /// X86SelectConstAddr - Select and emit code to materialize constant address.
 /// 
 bool X86FastISel::X86SelectConstAddr(Value *V, unsigned &Op0, bool isCall) {
@@ -300,18 +313,8 @@ bool X86FastISel::X86SelectConstAddr(Value *V, unsigned &Op0, bool isCall) {
 
 /// X86SelectStore - Select and emit code to implement store instructions.
 bool X86FastISel::X86SelectStore(Instruction* I) {
-  MVT VT = MVT::getMVT(I->getOperand(0)->getType());
-  if (VT == MVT::Other || !VT.isSimple())
-    // Unhandled type.  Halt "fast" selection and bail.
-    return false;
-  if (VT == MVT::iPTR)
-    // Use pointer type.
-    VT = TLI.getPointerTy();
-  // We only handle legal types. For example, on x86-32 the instruction
-  // selector contains all of the 64-bit instructions from x86-64,
-  // under the assumption that i64 won't be used if the target doesn't
-  // support it.
-  if (!TLI.isTypeLegal(VT))
+  MVT VT;
+  if (!isTypeLegal(I->getOperand(0)->getType(), TLI, VT))
     return false;
   unsigned Val = getRegForValue(I->getOperand(0));
   if (Val == 0)
@@ -762,15 +765,27 @@ bool X86FastISel::X86SelectCall(Instruction *I) {
     switch (VA.getLocInfo()) {
     default: assert(0 && "Unknown loc info!");
     case CCValAssign::Full: break;
-    case CCValAssign::SExt:
-      abort(); // FIXME
+    case CCValAssign::SExt: {
+      bool Emitted = X86FastEmitExtend(ISD::SIGN_EXTEND, VA.getLocVT(),
+                                       Arg, ArgVT, Arg);
+      assert(Emitted && "Failed to emit a sext!");
+      ArgVT = VA.getLocVT();
       break;
-    case CCValAssign::ZExt:
-      abort();
+    }
+    case CCValAssign::ZExt: {
+      bool Emitted = X86FastEmitExtend(ISD::ZERO_EXTEND, VA.getLocVT(),
+                                       Arg, ArgVT, Arg);
+      assert(Emitted && "Failed to emit a zext!");
+      ArgVT = VA.getLocVT();
       break;
-    case CCValAssign::AExt:
-      abort();
+    }
+    case CCValAssign::AExt: {
+      bool Emitted = X86FastEmitExtend(ISD::ANY_EXTEND, VA.getLocVT(),
+                                       Arg, ArgVT, Arg);
+      assert(Emitted && "Failed to emit a aext!");
+      ArgVT = VA.getLocVT();
       break;
+    }
     }
     
     if (VA.isRegLoc()) {
@@ -802,10 +817,6 @@ bool X86FastISel::X86SelectCall(Instruction *I) {
   BuildMI(MBB, TII.get(X86::ADJCALLSTACKUP)).addImm(NumBytes).addImm(0);
 
   // Now handle call return value (if any).
-#if 0 // FIXME
-  bool isSExt = CS.paramHasAttr(0, ParamAttr::SExt);
-  bool isZExt = CS.paramHasAttr(0, ParamAttr::ZExt);
-#endif
   if (RetVT.getSimpleVT() != MVT::isVoid) {
     SmallVector<CCValAssign, 16> RVLocs;
     CCState CCInfo(CC, false, TM, RVLocs);
@@ -870,10 +881,8 @@ X86FastISel::TargetSelectInstruction(Instruction *I)  {
     return X86SelectZExt(I);
   case Instruction::Br:
     return X86SelectBranch(I);
-#if 0
   case Instruction::Call:
     return X86SelectCall(I);
-#endif
   case Instruction::LShr:
   case Instruction::AShr:
   case Instruction::Shl:
