@@ -228,12 +228,14 @@ private:
   Stmt *Init;
   // FIXME: This can be packed into the bitfields in Decl.
   unsigned SClass : 3;
+  bool ThreadSpecified : 1;
   
   friend class StmtIteratorBase;
 protected:
   VarDecl(Kind DK, DeclContext *DC, SourceLocation L, IdentifierInfo *Id,
           QualType T, StorageClass SC, ScopedDecl *PrevDecl)
-    : ValueDecl(DK, DC, L, Id, T, PrevDecl), Init(0) { SClass = SC; }
+    : ValueDecl(DK, DC, L, Id, T, PrevDecl), Init(0),
+          ThreadSpecified(false) { SClass = SC; }
 public:
   static VarDecl *Create(ASTContext &C, DeclContext *DC,
                          SourceLocation L, IdentifierInfo *Id,
@@ -245,6 +247,11 @@ public:
   Expr *getInit() { return (Expr*) Init; }
   void setInit(Expr *I) { Init = (Stmt*) I; }
       
+  void setThreadSpecified(bool T) { ThreadSpecified = T; }
+  bool isThreadSpecified() const {
+    return ThreadSpecified;
+  }
+  
   /// hasLocalStorage - Returns true if a variable with function scope
   ///  is a non-static local variable.
   bool hasLocalStorage() const {

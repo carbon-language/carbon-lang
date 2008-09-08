@@ -743,6 +743,7 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
                                       D.getIdentifierLoc(), II,
                                       R, LastDeclarator);
     } else {
+      bool ThreadSpecified = D.getDeclSpec().isThreadSpecified();
       if (S->getFnParent() == 0) {
         // C99 6.9p2: The storage-class specifiers auto and register shall not
         // appear in the declaration specifiers in an external declaration.
@@ -751,12 +752,10 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
                R.getAsString());
           InvalidDecl = true;
         }
-        NewVD = VarDecl::Create(Context, CurContext, D.getIdentifierLoc(),
-                                II, R, SC, LastDeclarator);
-      } else {
-        NewVD = VarDecl::Create(Context, CurContext, D.getIdentifierLoc(),
-                                II, R, SC, LastDeclarator);
       }
+        NewVD = VarDecl::Create(Context, CurContext, D.getIdentifierLoc(), 
+                                II, R, SC, LastDeclarator);
+        NewVD->setThreadSpecified(ThreadSpecified);
     }
     // Handle attributes prior to checking for duplicates in MergeVarDecl
     ProcessDeclAttributes(NewVD, D);
