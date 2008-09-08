@@ -230,7 +230,6 @@ X86DarwinTargetAsmInfo::PreferredEHDataFormat(DwarfEncoding::Target Reason,
 
 X86ELFTargetAsmInfo::X86ELFTargetAsmInfo(const X86TargetMachine &TM):
   X86TargetAsmInfo(TM), ELFTargetAsmInfo(TM) {
-  bool is64Bit = ETM->getSubtarget<X86Subtarget>().is64Bit();
 
   ReadOnlySection = ".rodata";
   FourByteConstantSection = "\t.section\t.rodata.cst4,\"aM\",@progbits,4";
