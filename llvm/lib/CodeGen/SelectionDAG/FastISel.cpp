@@ -576,7 +576,16 @@ unsigned FastISel::FastEmitInst_r(unsigned MachineInstOpcode,
   unsigned ResultReg = createResultReg(RC);
   const TargetInstrDesc &II = TII.get(MachineInstOpcode);
 
-  BuildMI(MBB, II, ResultReg).addReg(Op0);
+  if (II.getNumDefs() >= 1)
+    BuildMI(MBB, II, ResultReg).addReg(Op0);
+  else {
+    BuildMI(MBB, II).addReg(Op0);
+    bool InsertedCopy = TII.copyRegToReg(*MBB, MBB->end(), ResultReg,
+                                         II.ImplicitDefs[0], RC, RC);
+    if (!InsertedCopy)
+      ResultReg = 0;
+  }
+
   return ResultReg;
 }
 
@@ -586,7 +595,15 @@ unsigned FastISel::FastEmitInst_rr(unsigned MachineInstOpcode,
   unsigned ResultReg = createResultReg(RC);
   const TargetInstrDesc &II = TII.get(MachineInstOpcode);
 
-  BuildMI(MBB, II, ResultReg).addReg(Op0).addReg(Op1);
+  if (II.getNumDefs() >= 1)
+    BuildMI(MBB, II, ResultReg).addReg(Op0).addReg(Op1);
+  else {
+    BuildMI(MBB, II).addReg(Op0).addReg(Op1);
+    bool InsertedCopy = TII.copyRegToReg(*MBB, MBB->end(), ResultReg,
+                                         II.ImplicitDefs[0], RC, RC);
+    if (!InsertedCopy)
+      ResultReg = 0;
+  }
   return ResultReg;
 }
 
@@ -596,7 +613,15 @@ unsigned FastISel::FastEmitInst_ri(unsigned MachineInstOpcode,
   unsigned ResultReg = createResultReg(RC);
   const TargetInstrDesc &II = TII.get(MachineInstOpcode);
 
-  BuildMI(MBB, II, ResultReg).addReg(Op0).addImm(Imm);
+  if (II.getNumDefs() >= 1)
+    BuildMI(MBB, II, ResultReg).addReg(Op0).addImm(Imm);
+  else {
+    BuildMI(MBB, II).addReg(Op0).addImm(Imm);
+    bool InsertedCopy = TII.copyRegToReg(*MBB, MBB->end(), ResultReg,
+                                         II.ImplicitDefs[0], RC, RC);
+    if (!InsertedCopy)
+      ResultReg = 0;
+  }
   return ResultReg;
 }
 
@@ -606,7 +631,15 @@ unsigned FastISel::FastEmitInst_rf(unsigned MachineInstOpcode,
   unsigned ResultReg = createResultReg(RC);
   const TargetInstrDesc &II = TII.get(MachineInstOpcode);
 
-  BuildMI(MBB, II, ResultReg).addReg(Op0).addFPImm(FPImm);
+  if (II.getNumDefs() >= 1)
+    BuildMI(MBB, II, ResultReg).addReg(Op0).addFPImm(FPImm);
+  else {
+    BuildMI(MBB, II).addReg(Op0).addFPImm(FPImm);
+    bool InsertedCopy = TII.copyRegToReg(*MBB, MBB->end(), ResultReg,
+                                         II.ImplicitDefs[0], RC, RC);
+    if (!InsertedCopy)
+      ResultReg = 0;
+  }
   return ResultReg;
 }
 
@@ -616,7 +649,15 @@ unsigned FastISel::FastEmitInst_rri(unsigned MachineInstOpcode,
   unsigned ResultReg = createResultReg(RC);
   const TargetInstrDesc &II = TII.get(MachineInstOpcode);
 
-  BuildMI(MBB, II, ResultReg).addReg(Op0).addReg(Op1).addImm(Imm);
+  if (II.getNumDefs() >= 1)
+    BuildMI(MBB, II, ResultReg).addReg(Op0).addReg(Op1).addImm(Imm);
+  else {
+    BuildMI(MBB, II).addReg(Op0).addReg(Op1).addImm(Imm);
+    bool InsertedCopy = TII.copyRegToReg(*MBB, MBB->end(), ResultReg,
+                                         II.ImplicitDefs[0], RC, RC);
+    if (!InsertedCopy)
+      ResultReg = 0;
+  }
   return ResultReg;
 }
 
@@ -626,7 +667,15 @@ unsigned FastISel::FastEmitInst_i(unsigned MachineInstOpcode,
   unsigned ResultReg = createResultReg(RC);
   const TargetInstrDesc &II = TII.get(MachineInstOpcode);
   
-  BuildMI(MBB, II, ResultReg).addImm(Imm);
+  if (II.getNumDefs() >= 1)
+    BuildMI(MBB, II, ResultReg).addImm(Imm);
+  else {
+    BuildMI(MBB, II).addImm(Imm);
+    bool InsertedCopy = TII.copyRegToReg(*MBB, MBB->end(), ResultReg,
+                                         II.ImplicitDefs[0], RC, RC);
+    if (!InsertedCopy)
+      ResultReg = 0;
+  }
   return ResultReg;
 }
 
@@ -637,6 +686,14 @@ unsigned FastISel::FastEmitInst_extractsubreg(unsigned Op0, uint32_t Idx) {
   unsigned ResultReg = createResultReg(SRC);
   const TargetInstrDesc &II = TII.get(TargetInstrInfo::EXTRACT_SUBREG);
   
-  BuildMI(MBB, II, ResultReg).addReg(Op0).addImm(Idx);
+  if (II.getNumDefs() >= 1)
+    BuildMI(MBB, II, ResultReg).addReg(Op0).addImm(Idx);
+  else {
+    BuildMI(MBB, II).addReg(Op0).addImm(Idx);
+    bool InsertedCopy = TII.copyRegToReg(*MBB, MBB->end(), ResultReg,
+                                         II.ImplicitDefs[0], RC, RC);
+    if (!InsertedCopy)
+      ResultReg = 0;
+  }
   return ResultReg;
 }
