@@ -252,7 +252,7 @@ Function *SRETPromotion::cloneFunctionBody(Function *F,
 
 /// updateCallSites - Update all sites that call F to use NF.
 void SRETPromotion::updateCallSites(Function *F, Function *NF) {
-
+  CallGraph &CG = getAnalysis<CallGraph>();
   SmallVector<Value*, 16> Args;
 
   // ParamAttrs - Keep track of the parameter attributes for the arguments.
@@ -302,6 +302,9 @@ void SRETPromotion::updateCallSites(Function *F, Function *NF) {
     Args.clear();
     ArgAttrsVec.clear();
     New->takeName(Call);
+
+    // Update the callgraph to know that the callsite has been transformed.
+    CG[Call->getParent()->getParent()]->replaceCallSite(Call, New);
 
     // Update all users of sret parameter to extract value using extractvalue.
     for (Value::use_iterator UI = FirstCArg->use_begin(), 
