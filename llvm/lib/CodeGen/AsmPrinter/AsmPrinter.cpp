@@ -462,7 +462,7 @@ void AsmPrinter::EmitLLVMUsedList(Constant *List) {
   
   for (unsigned i = 0, e = InitList->getNumOperands(); i != e; ++i) {
     const GlobalValue *GV = findGlobalValue(InitList->getOperand(i));
-    if (GV && !GV->hasInternalLinkage()) {
+    if (GV && (!GV->hasInternalLinkage() || isa<Function>(GV))) {
       O << Directive;
       EmitConstantValueOnly(InitList->getOperand(i));
       O << '\n';
