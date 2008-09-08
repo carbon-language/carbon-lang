@@ -718,7 +718,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn, MachineFunction &MF) {
 
     BasicBlock::iterator const Begin = LLVMBB->begin();
     BasicBlock::iterator const End = LLVMBB->end();
-    BasicBlock::iterator I = Begin;
+    BasicBlock::iterator BI = Begin;
 
     // Lower any arguments needed in this block if this is the entry block.
     if (LLVMBB == &Fn.getEntryBlock())
@@ -738,7 +738,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn, MachineFunction &MF) {
         }
         F->setCurrentBlock(BB);
         // Do FastISel on as many instructions as possible.
-        for (; I != End; ++I) {
+        for (; BI != End; ++BI) {
           // Just before the terminator instruction, insert instructions to
           // feed PHI nodes in successor blocks.
           if (isa<TerminatorInst>(I))
@@ -746,41 +746,41 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn, MachineFunction &MF) {
               if (DisableFastISelAbort)
                 break;
 #ifndef NDEBUG
-              I->dump();
+              BI->dump();
 #endif  
               assert(0 && "FastISel didn't handle a PHI in a successor");
             }
 
           // First try normal tablegen-generated "fast" selection.
-          if (F->SelectInstruction(I))
+          if (F->SelectInstruction(BI))
             continue;
 
           // Next, try calling the target to attempt to handle the instruction.
-          if (F->TargetSelectInstruction(I))
+          if (F->TargetSelectInstruction(BI))
             continue;
 
           // Then handle certain instructions as single-LLVM-Instruction blocks.
-          if (isa<CallInst>(I) || isa<LoadInst>(I) ||
-              isa<StoreInst>(I)) {
-            if (I->getType() != Type::VoidTy) {
+          if (isa<CallInst>(BI) || isa<LoadInst>(BI) ||
+              isa<StoreInst>(BI)) {
+            if (BI->getType() != Type::VoidTy) {
               unsigned &R = FuncInfo->ValueMap[I];
               if (!R)
-                R = FuncInfo->CreateRegForValue(I);
+                R = FuncInfo->CreateRegForValue(BI);
             }
 
-            SelectBasicBlock(LLVMBB, I, next(I));
+            SelectBasicBlock(LLVMBB, BI, next(BI));
             continue;
           }
 
           if (!DisableFastISelAbort &&
               // For now, don't abort on non-conditional-branch terminators.
-              (!isa<TerminatorInst>(I) ||
-               (isa<BranchInst>(I) &&
-                cast<BranchInst>(I)->isUnconditional()))) {
+              (!isa<TerminatorInst>(BI) ||
+               (isa<BranchInst>(BI) &&
+                cast<BranchInst>(BI)->isUnconditional()))) {
             // The "fast" selector couldn't handle something and bailed.
             // For the purpose of debugging, just abort.
 #ifndef NDEBUG
-            I->dump();
+            BI->dump();
 #endif
             assert(0 && "FastISel didn't select the entire block");
           }
@@ -793,8 +793,8 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn, MachineFunction &MF) {
     // Run SelectionDAG instruction selection on the remainder of the block
     // not handled by FastISel. If FastISel is not run, this is the entire
     // block.
-    if (I != End)
-      SelectBasicBlock(LLVMBB, I, End);
+    if (BI != End)
+      SelectBasicBlock(LLVMBB, BI, End);
 
     FinishBasicBlock();
   }
