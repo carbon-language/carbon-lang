@@ -1,5 +1,6 @@
 ; RUN: llvm-as < %s | opt -loop-reduce | llvm-dis | grep sext | count 1
 ; ModuleID = '<stdin>'
+; XFAIL: *
 	%struct.App1Marker = type <{ i32, i32, i32, i32, i32, i32, i32, i32, i32, i32 }>
 	%struct.ComponentInstanceRecord = type <{ [1 x i32] }>
 	%struct.DCPredictors = type { [5 x i16] }
