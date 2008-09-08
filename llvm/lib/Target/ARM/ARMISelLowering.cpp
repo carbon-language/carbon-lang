@@ -927,7 +927,6 @@ static SDValue LowerFORMAL_ARGUMENT(SDValue Op, SelectionDAG &DAG,
   MachineFunction &MF = DAG.getMachineFunction();
   MVT ObjectVT = Op.getValue(ArgNo).getValueType();
   SDValue Root = Op.getOperand(0);
-  std::vector<SDValue> ArgValues;
   MachineRegisterInfo &RegInfo = MF.getRegInfo();
 
   static const unsigned GPRArgRegs[] = {
