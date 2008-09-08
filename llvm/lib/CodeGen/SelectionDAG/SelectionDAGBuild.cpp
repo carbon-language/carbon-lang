@@ -2801,28 +2801,25 @@ SelectionDAGLowering::visitLog2(CallInst &I) {
     SDValue t5 = DAG.getNode(ISD::AND, MVT::i32, t4,
                                        DAG.getConstant(1073741823, MVT::i32));
     SDValue t6 = DAG.getNode(ISD::BIT_CONVERT, MVT::f32, t5);
-    SDValue t7 = DAG.getNode(ISD::FP_EXTEND, MVT::f64, t6);
-    SDValue t8 = DAG.getNode(ISD::FMUL, MVT::f64, t7,
+    SDValue t7 = DAG.getNode(ISD::FMUL, MVT::f32, t6,
                       DAG.getConstantFP(APFloat(
-                          APInt(64, 0xbfb4e4c5b6dfced3ULL)), MVT::f64));
-    SDValue t9 = DAG.getNode(ISD::FADD, MVT::f64, t8,
+                          APInt(32, 0xbda7262e)), MVT::f32));
+    SDValue t8 = DAG.getNode(ISD::FADD, MVT::f32, t7,
                       DAG.getConstantFP(APFloat(
-                          APInt(64, 0x3fe4a5015b0db188ULL)), MVT::f64));
-    SDValue t10 = DAG.getNode(ISD::FMUL, MVT::f64, t9, t7);
-    SDValue t11 = DAG.getNode(ISD::FSUB, MVT::f64, t10,
+                          APInt(32, 0x3f25280b)), MVT::f32));
+    SDValue t9 = DAG.getNode(ISD::FMUL, MVT::f32, t8, t6);
+    SDValue t10 = DAG.getNode(ISD::FSUB, MVT::f32, t9,
                       DAG.getConstantFP(APFloat(
-                          APInt(64, 0x4000f724658ffcb8ULL)), MVT::f64));
-    SDValue t12 = DAG.getNode(ISD::FMUL, MVT::f64, t11, t7);
-    SDValue t13 = DAG.getNode(ISD::FADD, MVT::f64, t12,
+                          APInt(32, 0x4007b923)), MVT::f32));
+    SDValue t11 = DAG.getNode(ISD::FMUL, MVT::f32, t10, t6);
+    SDValue t12 = DAG.getNode(ISD::FADD, MVT::f32, t11,
                       DAG.getConstantFP(APFloat(
-                          APInt(64, 0x401047c5d1dbd553ULL)), MVT::f64));
-    SDValue t14 = DAG.getNode(ISD::FMUL, MVT::f64, t13, t7);
-    SDValue t15 = DAG.getNode(ISD::FSUB, MVT::f64, t14,
+                          APInt(32, 0x40823e2f)), MVT::f32));
+    SDValue t13 = DAG.getNode(ISD::FMUL, MVT::f32, t12, t6);
+    SDValue t14 = DAG.getNode(ISD::FSUB, MVT::f32, t13,
                       DAG.getConstantFP(APFloat(
-                          APInt(64, 0x40041a537b273db2ULL)), MVT::f64));
-    SDValue t16 = DAG.getNode(ISD::FP_ROUND, MVT::f32, t15,
-                          DAG.getConstant(0, MVT::i32));
-    result = DAG.getNode(ISD::FADD, MVT::f32, t3, t16);
+                          APInt(32, 0x4020d29c)), MVT::f32));
+    result = DAG.getNode(ISD::FADD, MVT::f32, t3, t14);
   } else {
   // No special expansion.
     result = DAG.getNode(ISD::FLOG2,
@@ -2857,24 +2854,21 @@ SelectionDAGLowering::visitLog10(CallInst &I) {
     SDValue t6 = DAG.getNode(ISD::AND, MVT::i32, t5,
                                        DAG.getConstant(1073741823, MVT::i32));
     SDValue t7 = DAG.getNode(ISD::BIT_CONVERT, MVT::f32, t6);
-    SDValue t8 = DAG.getNode(ISD::FP_EXTEND, MVT::f64, t7);
-    SDValue t9 = DAG.getNode(ISD::FMUL, MVT::f64, t8,
+    SDValue t8 = DAG.getNode(ISD::FMUL, MVT::f32, t7,
                       DAG.getConstantFP(APFloat(
-                          APInt(64, 0x3fa863e61d44a337ULL)), MVT::f64));
-    SDValue t10 = DAG.getNode(ISD::FSUB, MVT::f64, t9,
+                          APInt(32, 0x3d431f31)), MVT::f32));
+    SDValue t9 = DAG.getNode(ISD::FSUB, MVT::f32, t8,
                       DAG.getConstantFP(APFloat(
-                          APInt(64, 0x3fd443f63982ad9aULL)), MVT::f64));
-    SDValue t11 = DAG.getNode(ISD::FMUL, MVT::f64, t10, t8);
-    SDValue t12 = DAG.getNode(ISD::FADD, MVT::f64, t11,
+                          APInt(32, 0x3ea21fb2)), MVT::f32));
+    SDValue t10 = DAG.getNode(ISD::FMUL, MVT::f32, t9, t7);
+    SDValue t11 = DAG.getNode(ISD::FADD, MVT::f32, t10,
                       DAG.getConstantFP(APFloat(
-                          APInt(64, 0x3fed5c4641d8bd71ULL)), MVT::f64));
-    SDValue t13 = DAG.getNode(ISD::FMUL, MVT::f64, t12, t8);
-    SDValue t14 = DAG.getNode(ISD::FSUB, MVT::f64, t13,
+                          APInt(32, 0x3f6ae232)), MVT::f32));
+    SDValue t12 = DAG.getNode(ISD::FMUL, MVT::f32, t11, t7);
+    SDValue t13 = DAG.getNode(ISD::FSUB, MVT::f32, t12,
                       DAG.getConstantFP(APFloat(
-                          APInt(64, 0x3fe4bef863538c6fULL)), MVT::f64));
-    SDValue t15 = DAG.getNode(ISD::FP_ROUND, MVT::f32, t14, 
-                          DAG.getConstant(0, MVT::i32));
-    result = DAG.getNode(ISD::FADD, MVT::f32, t4, t15);
+                          APInt(32, 0x3f25f7c3)), MVT::f32));
+    result = DAG.getNode(ISD::FADD, MVT::f32, t4, t13);
   } else {
   // No special expansion.
     result = DAG.getNode(ISD::FLOG10,
@@ -2898,26 +2892,23 @@ SelectionDAGLowering::visitExp2(CallInst &I) {
     SDValue t2 = DAG.getNode(ISD::FSUB, MVT::f32, operand, t1);
     SDValue t3 = DAG.getNode(ISD::SHL, MVT::i32, t0, 
                                        DAG.getConstant(23, MVT::i32));
-    SDValue t4 = DAG.getNode(ISD::FP_EXTEND, MVT::f64, t2);
-    SDValue t5 = DAG.getNode(ISD::FMUL, MVT::f64, t4,
+    SDValue t4 = DAG.getNode(ISD::FMUL, MVT::f32, t2,
                       DAG.getConstantFP(APFloat(
-                          APInt(64, 0x3fb446bc609aa9cdULL)), MVT::f64));
-    SDValue t6 = DAG.getNode(ISD::FADD, MVT::f64, t5,
+                          APInt(32, 0x3da235e3)), MVT::f32));
+    SDValue t5 = DAG.getNode(ISD::FADD, MVT::f32, t4,
                       DAG.getConstantFP(APFloat(
-                          APInt(64, 0x3fccb71e629f3a20ULL)), MVT::f64));
-    SDValue t7 = DAG.getNode(ISD::FMUL, MVT::f64, t6, t4);
-    SDValue t8 = DAG.getNode(ISD::FADD, MVT::f64, t7, 
+                          APInt(32, 0x3e65b8f3)), MVT::f32));
+    SDValue t6 = DAG.getNode(ISD::FMUL, MVT::f32, t5, t2);
+    SDValue t7 = DAG.getNode(ISD::FADD, MVT::f32, t6, 
                       DAG.getConstantFP(APFloat(
-                          APInt(64, 0x3fe64960db7bd5feULL)), MVT::f64));
-    SDValue t9 = DAG.getNode(ISD::FMUL, MVT::f64, t8, t4);
-    SDValue t10 = DAG.getNode(ISD::FADD, MVT::f64, t9,
+                          APInt(32, 0x3f324b07)), MVT::f32));
+    SDValue t8 = DAG.getNode(ISD::FMUL, MVT::f32, t7, t2);
+    SDValue t9 = DAG.getNode(ISD::FADD, MVT::f32, t8,
                       DAG.getConstantFP(APFloat(
-                          APInt(64, 0x3fefff1f934bd549ULL)), MVT::f64));
-    SDValue t11 = DAG.getNode(ISD::FP_ROUND, MVT::f32, t10, 
-                          DAG.getConstant(0, MVT::i32));
-    SDValue t12 = DAG.getNode(ISD::BIT_CONVERT, MVT::i32, t11);
-    SDValue t13 = DAG.getNode(ISD::ADD, MVT::i32, t12, t3);
-    result = DAG.getNode(ISD::BIT_CONVERT, MVT::f32, t13);
+                          APInt(32, 0x3f7ff8fd)), MVT::f32));
+    SDValue t10 = DAG.getNode(ISD::BIT_CONVERT, MVT::i32, t9);
+    SDValue t11 = DAG.getNode(ISD::ADD, MVT::i32, t10, t3);
+    result = DAG.getNode(ISD::BIT_CONVERT, MVT::f32, t11);
   } else {
   // No special expansion.
     result = DAG.getNode(ISD::FEXP2,
