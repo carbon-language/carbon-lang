@@ -46,7 +46,6 @@ STATISTIC(NumInserted,    "Number of PHIs inserted");
 STATISTIC(NumVariable,    "Number of PHIs with variable strides");
 STATISTIC(NumEliminated,  "Number of strides eliminated");
 STATISTIC(NumShadow,      "Number of Shadow IVs optimized");
-STATISTIC(NumIVType,      "Number of IV types optimized");
 
 namespace {
 
