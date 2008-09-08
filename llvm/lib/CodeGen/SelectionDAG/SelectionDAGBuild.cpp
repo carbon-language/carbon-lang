@@ -3115,7 +3115,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     MachineModuleInfo *MMI = DAG.getMachineModuleInfo();
     MVT VT = (Intrinsic == Intrinsic::eh_typeid_for_i32 ?
                          MVT::i32 : MVT::i64);
-
+    
     if (MMI) {
       // Find the type id for the given typeinfo.
       GlobalVariable *GV = ExtractTypeInfo(I.getOperand(1));
@@ -3130,9 +3130,10 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     return 0;
   }
 
-  case Intrinsic::eh_return_i32:
-  case Intrinsic::eh_return_i64:
-    if (MachineModuleInfo *MMI = DAG.getMachineModuleInfo()) {
+  case Intrinsic::eh_return: {
+    MachineModuleInfo *MMI = DAG.getMachineModuleInfo();
+
+    if (MMI) {
       MMI->setCallsEHReturn(true);
       DAG.setRoot(DAG.getNode(ISD::EH_RETURN,
                               MVT::Other,
@@ -3144,36 +3145,39 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     }
 
     return 0;
-  case Intrinsic::eh_unwind_init:
-    if (MachineModuleInfo *MMI = DAG.getMachineModuleInfo()) {
-      MMI->setCallsUnwindInit(true);
-    }
+  }
 
-    return 0;
+   case Intrinsic::eh_unwind_init: {    
+     if (MachineModuleInfo *MMI = DAG.getMachineModuleInfo()) {
+       MMI->setCallsUnwindInit(true);
+     }
 
-  case Intrinsic::eh_dwarf_cfa: {
-    MVT VT = getValue(I.getOperand(1)).getValueType();
-    SDValue CfaArg;
-    if (VT.bitsGT(TLI.getPointerTy()))
-      CfaArg = DAG.getNode(ISD::TRUNCATE,
-                           TLI.getPointerTy(), getValue(I.getOperand(1)));
-    else
-      CfaArg = DAG.getNode(ISD::SIGN_EXTEND,
-                           TLI.getPointerTy(), getValue(I.getOperand(1)));
+     return 0;
+   }
 
-    SDValue Offset = DAG.getNode(ISD::ADD,
-                                 TLI.getPointerTy(),
-                                 DAG.getNode(ISD::FRAME_TO_ARGS_OFFSET,
-                                             TLI.getPointerTy()),
-                                 CfaArg);
-    setValue(&I, DAG.getNode(ISD::ADD,
-                             TLI.getPointerTy(),
-                             DAG.getNode(ISD::FRAMEADDR,
-                                         TLI.getPointerTy(),
-                                         DAG.getConstant(0,
-                                                         TLI.getPointerTy())),
-                             Offset));
-    return 0;
+   case Intrinsic::eh_dwarf_cfa: {
+     MVT VT = getValue(I.getOperand(1)).getValueType();
+     SDValue CfaArg;
+     if (VT.bitsGT(TLI.getPointerTy()))
+       CfaArg = DAG.getNode(ISD::TRUNCATE,
+                            TLI.getPointerTy(), getValue(I.getOperand(1)));
+     else
+       CfaArg = DAG.getNode(ISD::SIGN_EXTEND,
+                            TLI.getPointerTy(), getValue(I.getOperand(1)));
+
+     SDValue Offset = DAG.getNode(ISD::ADD,
+                                    TLI.getPointerTy(),
+                                    DAG.getNode(ISD::FRAME_TO_ARGS_OFFSET,
+                                                TLI.getPointerTy()),
+                                    CfaArg);
+     setValue(&I, DAG.getNode(ISD::ADD,
+                              TLI.getPointerTy(),
+                              DAG.getNode(ISD::FRAMEADDR,
+                                          TLI.getPointerTy(),
+                                          DAG.getConstant(0,
+                                                          TLI.getPointerTy())),
+                              Offset));
+     return 0;
   }
 
   case Intrinsic::sqrt:

@@ -130,17 +130,6 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
 }
 
 //===----------------------------------------------------------------------===//
-// EH Pseudo Instructions
-//
-let isTerminator = 1, isReturn = 1, isBarrier = 1,
-    hasCtrlDep = 1 in {
-def EH_RETURN64   : I<0xC3, RawFrm, (outs), (ins GR64:$addr),
-                     "ret\t#eh_return, addr: $addr",
-                     [(X86ehret GR64:$addr)]>;
-
-}
-
-//===----------------------------------------------------------------------===//
 //  Miscellaneous Instructions...
 //
 let Defs = [RBP,RSP], Uses = [RBP,RSP], mayLoad = 1, neverHasSideEffects = 1 in

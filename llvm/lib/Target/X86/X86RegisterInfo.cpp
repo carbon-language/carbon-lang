@@ -159,14 +159,6 @@ X86RegisterInfo::getCrossCopyRegClass(const TargetRegisterClass *RC) const {
 
 const unsigned *
 X86RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
-  bool callsEHReturn = false;
-
-  if (MF) {
-    const MachineFrameInfo *MFI = MF->getFrameInfo();
-    const MachineModuleInfo *MMI = MFI->getMachineModuleInfo();
-    callsEHReturn = (MMI ? MMI->callsEHReturn() : false);
-  }
-
   static const unsigned CalleeSavedRegs32Bit[] = {
     X86::ESI, X86::EDI, X86::EBX, X86::EBP,  0
   };
@@ -179,11 +171,6 @@ X86RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
     X86::RBX, X86::R12, X86::R13, X86::R14, X86::R15, X86::RBP, 0
   };
 
-  static const unsigned CalleeSavedRegs64EHRet[] = {
-    X86::RAX, X86::RDX, X86::RBX, X86::R12,
-    X86::R13, X86::R14, X86::R15, X86::RBP, 0
-  };
-
   static const unsigned CalleeSavedRegsWin64[] = {
     X86::RBX, X86::RBP, X86::RDI, X86::RSI,
     X86::R12, X86::R13, X86::R14, X86::R15, 0
@@ -193,22 +180,20 @@ X86RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
     if (IsWin64)
       return CalleeSavedRegsWin64;
     else
-      return (callsEHReturn ? CalleeSavedRegs64EHRet : CalleeSavedRegs64Bit);
+      return CalleeSavedRegs64Bit;
   } else {
-    return (callsEHReturn ? CalleeSavedRegs32EHRet : CalleeSavedRegs32Bit);
+    if (MF) {
+        const MachineFrameInfo *MFI = MF->getFrameInfo();
+        const MachineModuleInfo *MMI = MFI->getMachineModuleInfo();
+        if (MMI && MMI->callsEHReturn())
+          return CalleeSavedRegs32EHRet;
+    }
+    return CalleeSavedRegs32Bit;
   }
 }
 
 const TargetRegisterClass* const*
 X86RegisterInfo::getCalleeSavedRegClasses(const MachineFunction *MF) const {
-  bool callsEHReturn = false;
-
-  if (MF) {
-    const MachineFrameInfo *MFI = MF->getFrameInfo();
-    const MachineModuleInfo *MMI = MFI->getMachineModuleInfo();
-    callsEHReturn = (MMI ? MMI->callsEHReturn() : false);
-  }
-
   static const TargetRegisterClass * const CalleeSavedRegClasses32Bit[] = {
     &X86::GR32RegClass, &X86::GR32RegClass,
     &X86::GR32RegClass, &X86::GR32RegClass,  0
@@ -219,12 +204,6 @@ X86RegisterInfo::getCalleeSavedRegClasses(const MachineFunction *MF) const {
     &X86::GR32RegClass, &X86::GR32RegClass,  0
   };
   static const TargetRegisterClass * const CalleeSavedRegClasses64Bit[] = {
-    &X86::GR64RegClass, &X86::GR64RegClass,
-    &X86::GR64RegClass, &X86::GR64RegClass,
-    &X86::GR64RegClass, &X86::GR64RegClass, 0
-  };
-  static const TargetRegisterClass * const CalleeSavedRegClasses64EHRet[] = {
-    &X86::GR64RegClass, &X86::GR64RegClass,
     &X86::GR64RegClass, &X86::GR64RegClass,
     &X86::GR64RegClass, &X86::GR64RegClass,
     &X86::GR64RegClass, &X86::GR64RegClass, 0
@@ -240,12 +219,17 @@ X86RegisterInfo::getCalleeSavedRegClasses(const MachineFunction *MF) const {
     if (IsWin64)
       return CalleeSavedRegClassesWin64;
     else
-      return (callsEHReturn ?
-              CalleeSavedRegClasses64EHRet : CalleeSavedRegClasses64Bit);
+      return CalleeSavedRegClasses64Bit;
   } else {
-    return (callsEHReturn ?
-            CalleeSavedRegClasses32EHRet : CalleeSavedRegClasses32Bit);
+    if (MF) {
+        const MachineFrameInfo *MFI = MF->getFrameInfo();
+        const MachineModuleInfo *MMI = MFI->getMachineModuleInfo();
+        if (MMI && MMI->callsEHReturn())
+          return CalleeSavedRegClasses32EHRet;
+    }
+    return CalleeSavedRegClasses32Bit;
   }
+
 }
 
 BitVector X86RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
@@ -803,7 +787,6 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
   case X86::TCRETURNri64:
   case X86::TCRETURNdi64:
   case X86::EH_RETURN:
-  case X86::EH_RETURN64:
   case X86::TAILJMPd:
   case X86::TAILJMPr:
   case X86::TAILJMPm: break;  // These are ok
@@ -877,13 +860,12 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
   }
 
   // We're returning from function via eh_return.
-  if (RetOpcode == X86::EH_RETURN || RetOpcode == X86::EH_RETURN64) {
+  if (RetOpcode == X86::EH_RETURN) {
     MBBI = prior(MBB.end());
     MachineOperand &DestAddr  = MBBI->getOperand(0);
     assert(DestAddr.isRegister() && "Offset should be in register!");
-    BuildMI(MBB, MBBI,
-            TII.get(Is64Bit ? X86::MOV64rr : X86::MOV32rr),
-            StackPtr).addReg(DestAddr.getReg());
+    BuildMI(MBB, MBBI, TII.get(Is64Bit ? X86::MOV64rr : X86::MOV32rr),StackPtr).
+      addReg(DestAddr.getReg());
   // Tail call return: adjust the stack pointer and jump to callee
   } else if (RetOpcode == X86::TCRETURNri || RetOpcode == X86::TCRETURNdi ||
              RetOpcode== X86::TCRETURNri64 || RetOpcode == X86::TCRETURNdi64) {

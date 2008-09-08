@@ -40,6 +40,7 @@ namespace llvm {
   bool RealignStack;
   bool VerboseAsm;
   bool DisableJumpTables;
+  StackCanaries::Model StackProtectors;
 }
 
 static cl::opt<bool, true> PrintCode("print-machineinstrs",
@@ -162,6 +163,21 @@ DisableSwitchTables(cl::Hidden, "disable-jump-tables",
            cl::desc("Do not generate jump tables."),
            cl::location(DisableJumpTables),
            cl::init(false));
+
+static cl::opt<llvm::StackCanaries::Model, true>
+GenerateStackProtectors("stack-protector",
+                        cl::desc("Generate stack protectors"),
+                        cl::location(StackProtectors),
+                        cl::init(StackCanaries::Default),
+                        cl::values(
+                         clEnumValN(StackCanaries::Default, "default",
+                           "  No stack protectors"),
+                         clEnumValN(StackCanaries::On, "on",
+                           "  Generate stack protectors for functions that"
+                           "need them"),
+                         clEnumValN(StackCanaries::Always, "all",
+                           "  Generate stack protectors for all functions"),
+                         clEnumValEnd));
 
 //---------------------------------------------------------------------------
 // TargetMachine Class

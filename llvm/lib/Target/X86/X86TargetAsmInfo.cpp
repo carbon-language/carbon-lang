@@ -230,6 +230,7 @@ X86DarwinTargetAsmInfo::PreferredEHDataFormat(DwarfEncoding::Target Reason,
 
 X86ELFTargetAsmInfo::X86ELFTargetAsmInfo(const X86TargetMachine &TM):
   X86TargetAsmInfo(TM), ELFTargetAsmInfo(TM) {
+  bool is64Bit = ETM->getSubtarget<X86Subtarget>().is64Bit();
 
   ReadOnlySection = ".rodata";
   FourByteConstantSection = "\t.section\t.rodata.cst4,\"aM\",@progbits,4";
@@ -260,7 +261,8 @@ X86ELFTargetAsmInfo::X86ELFTargetAsmInfo(const X86TargetMachine &TM):
   DwarfMacInfoSection = "\t.section\t.debug_macinfo,\"\",@progbits";
 
   // Exceptions handling
-  SupportsExceptionHandling = true;
+  if (!is64Bit)
+    SupportsExceptionHandling = true;
   AbsoluteEHSectionOffsets = false;
   DwarfEHFrameSection = "\t.section\t.eh_frame,\"aw\",@progbits";
   DwarfExceptionSection = "\t.section\t.gcc_except_table,\"a\",@progbits";
