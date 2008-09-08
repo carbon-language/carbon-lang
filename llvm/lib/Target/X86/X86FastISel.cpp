@@ -215,7 +215,7 @@ bool X86FastISel::X86FastEmitLoad(MVT VT, unsigned Ptr, Value *GV,
 bool
 X86FastISel::X86FastEmitStore(MVT VT, unsigned Val,
                               unsigned Ptr, unsigned Offset, Value *V) {
-  // Get opcode and regclass of the output for the given load instruction.
+  // Get opcode and regclass of the output for the given store instruction.
   unsigned Opc = 0;
   const TargetRegisterClass *RC = NULL;
   switch (VT.getSimpleVT()) {
@@ -324,7 +324,7 @@ bool X86FastISel::X86SelectStore(Instruction* I) {
   Value *V = I->getOperand(1);
   unsigned Ptr = getRegForValue(V);
   if (Ptr == 0) {
-    // Handle constant load address.
+    // Handle constant store address.
     if (!isa<Constant>(V) || !X86SelectConstAddr(V, Ptr))
       // Unhandled operand. Halt "fast" selection and bail.
       return false;    
