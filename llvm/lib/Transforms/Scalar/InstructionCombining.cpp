@@ -1355,8 +1355,7 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, uint64_t DemandedElts,
   unsigned VWidth = cast<VectorType>(V->getType())->getNumElements();
   assert(VWidth <= 64 && "Vector too wide to analyze!");
   uint64_t EltMask = ~0ULL >> (64-VWidth);
-  assert(DemandedElts != EltMask && (DemandedElts & ~EltMask) == 0 &&
-         "Invalid DemandedElts!");
+  assert((DemandedElts & ~EltMask) == 0 && "Invalid DemandedElts!");
 
   if (isa<UndefValue>(V)) {
     // If the entire vector is undefined, just return this info.
@@ -1400,14 +1399,23 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, uint64_t DemandedElts,
     return ConstantVector::get(Elts);
   }
   
-  if (!V->hasOneUse()) {    // Other users may use these bits.
-    if (Depth != 0) {       // Not at the root.
+  // Limit search depth.
+  if (Depth == 10)
+    return false;
+
+  // If multiple users are using the root value, procede with
+  // simplification conservatively assuming that all elements
+  // are needed.
+  if (!V->hasOneUse()) {
+    // Quit if we find multiple users of a non-root value though.
+    // They'll be handled when it's their turn to be visited by
+    // the main instcombine process.
+    if (Depth != 0)
       // TODO: Just compute the UndefElts information recursively.
       return false;
-    }
-    return false;
-  } else if (Depth == 10) {        // Limit search depth.
-    return false;
+
+    // Conservatively assume that all elements are needed.
+    DemandedElts = EltMask;
   }
   
   Instruction *I = dyn_cast<Instruction>(V);
@@ -1446,7 +1454,65 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, uint64_t DemandedElts,
     if (TmpV) { I->setOperand(0, TmpV); MadeChange = true; }
 
     // The inserted element is defined.
-    UndefElts |= 1ULL << IdxNo;
+    UndefElts &= ~(1ULL << IdxNo);
+    break;
+  }
+  case Instruction::ShuffleVector: {
+    ShuffleVectorInst *Shuffle = cast<ShuffleVectorInst>(I);
+    uint64_t LeftDemanded = 0, RightDemanded = 0;
+    for (unsigned i = 0; i < VWidth; i++) {
+      if (DemandedElts & (1ULL << i)) {
+        unsigned MaskVal = Shuffle->getMaskValue(i);
+        if (MaskVal != -1u) {
+          assert(MaskVal < VWidth * 2 &&
+                 "shufflevector mask index out of range!");
+          if (MaskVal < VWidth)
+            LeftDemanded |= 1ULL << MaskVal;
+          else
+            RightDemanded |= 1ULL << (MaskVal - VWidth);
+        }
+      }
+    }
+
+    TmpV = SimplifyDemandedVectorElts(I->getOperand(0), LeftDemanded,
+                                      UndefElts2, Depth+1);
+    if (TmpV) { I->setOperand(0, TmpV); MadeChange = true; }
+
+    uint64_t UndefElts3;
+    TmpV = SimplifyDemandedVectorElts(I->getOperand(1), RightDemanded,
+                                      UndefElts3, Depth+1);
+    if (TmpV) { I->setOperand(1, TmpV); MadeChange = true; }
+
+    bool NewUndefElts = false;
+    for (unsigned i = 0; i < VWidth; i++) {
+      unsigned MaskVal = Shuffle->getMaskValue(i);
+      if (MaskVal == -1) {
+        uint64_t NewBit = 1ULL << i;
+        UndefElts |= NewBit;
+      } else if (MaskVal < VWidth) {
+        uint64_t NewBit = ((UndefElts2 >> MaskVal) & 1) << i;
+        NewUndefElts |= NewBit;
+        UndefElts |= NewBit;
+      } else {
+        uint64_t NewBit = ((UndefElts3 >> (MaskVal - VWidth)) & 1) << i;
+        NewUndefElts |= NewBit;
+        UndefElts |= NewBit;
+      }
+    }
+
+    if (NewUndefElts) {
+      // Add additional discovered undefs.
+      std::vector<Constant*> Elts;
+      for (unsigned i = 0; i < VWidth; ++i) {
+        if (UndefElts & (1ULL << i))
+          Elts.push_back(UndefValue::get(Type::Int32Ty));
+        else
+          Elts.push_back(ConstantInt::get(Type::Int32Ty,
+                                          Shuffle->getMaskValue(i)));
+      }
+      I->setOperand(2, ConstantVector::get(Elts));
+      MadeChange = true;
+    }
     break;
   }
   case Instruction::BitCast: {
@@ -11224,31 +11290,13 @@ Instruction *InstCombiner::visitShuffleVectorInst(ShuffleVectorInst &SVI) {
   // Undefined shuffle mask -> undefined value.
   if (isa<UndefValue>(SVI.getOperand(2)))
     return ReplaceInstUsesWith(SVI, UndefValue::get(SVI.getType()));
-  
-  // If we have shuffle(x, undef, mask) and any elements of mask refer to
-  // the undef, change them to undefs.
-  if (isa<UndefValue>(SVI.getOperand(1))) {
-    // Scan to see if there are any references to the RHS.  If so, replace them
-    // with undef element refs and set MadeChange to true.
-    for (unsigned i = 0, e = Mask.size(); i != e; ++i) {
-      if (Mask[i] >= e && Mask[i] != 2*e) {
-        Mask[i] = 2*e;
-        MadeChange = true;
-      }
-    }
-    
-    if (MadeChange) {
-      // Remap any references to RHS to use LHS.
-      std::vector<Constant*> Elts;
-      for (unsigned i = 0, e = Mask.size(); i != e; ++i) {
-        if (Mask[i] == 2*e)
-          Elts.push_back(UndefValue::get(Type::Int32Ty));
-        else
-          Elts.push_back(ConstantInt::get(Type::Int32Ty, Mask[i]));
-      }
-      SVI.setOperand(2, ConstantVector::get(Elts));
-    }
-  }
+
+  uint64_t UndefElts;
+  unsigned VWidth = cast<VectorType>(SVI.getType())->getNumElements();
+  uint64_t AllOnesEltMask = ~0ULL >> (64-VWidth);
+  if (VWidth <= 64 &&
+      SimplifyDemandedVectorElts(&SVI, AllOnesEltMask, UndefElts))
+    MadeChange = true;
   
   // Canonicalize shuffle(x    ,x,mask) -> shuffle(x, undef,mask')
   // Canonicalize shuffle(undef,x,mask) -> shuffle(x, undef,mask').
