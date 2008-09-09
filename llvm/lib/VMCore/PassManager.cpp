@@ -1590,7 +1590,7 @@ void ModulePass::assignPassManager(PMStack &PMS,
 void FunctionPass::assignPassManager(PMStack &PMS,
                                      PassManagerType PreferredType) {
 
-  // Find Module Pass Manager (TODO : Or Call Graph Pass Manager)
+  // Find Module Pass Manager
   while(!PMS.empty()) {
     if (PMS.top()->getPassManagerType() > PMT_FunctionPassManager)
       PMS.pop();
@@ -1614,13 +1614,7 @@ void FunctionPass::assignPassManager(PMStack &PMS,
 
     // [3] Assign manager to manage this new manager. This may create
     // and push new managers into PMS
-
-    // If Call Graph Pass Manager is active then use it to manage
-    // this new Function Pass manager.
-    if (PMD->getPassManagerType() == PMT_CallGraphPassManager)
-      FPP->assignPassManager(PMS, PMT_CallGraphPassManager);
-    else
-      FPP->assignPassManager(PMS);
+    FPP->assignPassManager(PMS, PMD->getPassManagerType());
 
     // [4] Push new manager into PMS
     PMS.push(FPP);
