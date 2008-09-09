@@ -416,6 +416,7 @@ BUILTIN(__builtin_ia32_movqv4si, "V4iV4i", "")
 BUILTIN(__builtin_ia32_loadlv4si, "V4iV2i*", "")
 BUILTIN(__builtin_ia32_storelv4si, "vV2i*V2LLi", "")
 
+BUILTIN(__builtin_ia32_packusdw128, "V8sV4iV4i", "")
 BUILTIN(__builtin_ia32_pmovsxbd128, "V4iV16c", "")
 BUILTIN(__builtin_ia32_pmovsxbq128, "V2LLiV16c", "")
 BUILTIN(__builtin_ia32_pmovsxbw128, "V8sV16c", "")
