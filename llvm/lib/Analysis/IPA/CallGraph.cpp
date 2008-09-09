@@ -124,25 +124,18 @@ private:
       }
     }
 
+    // Loop over all of the users of the function, looking for non-call uses.
+    for (Value::use_iterator I = F->use_begin(), E = F->use_end(); I != E; ++I)
+      if ((!isa<CallInst>(*I) && !isa<InvokeInst>(*I)) || I.getOperandNo()) {
+        // Not a call, or being used as a parameter rather than as the callee.
+        ExternalCallingNode->addCalledFunction(CallSite(), Node);
+        break;
+      }
+
     // If this function is not defined in this translation unit, it could call
     // anything.
     if (F->isDeclaration() && !F->isIntrinsic())
       Node->addCalledFunction(CallSite(), CallsExternalNode);
-
-    // Loop over all of the users of the function, looking for non-call uses.
-    bool isUsedExternally = false;
-    for (Value::use_iterator I = F->use_begin(), E = F->use_end();
-         I != E && !isUsedExternally; ++I) {
-      if (Instruction *Inst = dyn_cast<Instruction>(*I)) {
-        CallSite CS = CallSite::get(Inst);
-        // Not a call?  Or F being passed as a parameter not as the callee?
-        isUsedExternally = !CS.getInstruction() || I.getOperandNo();
-      } else {                        // User is not a direct call!
-        isUsedExternally = true;
-      }
-    }
-    if (isUsedExternally)
-      ExternalCallingNode->addCalledFunction(CallSite(), Node);
 
     // Look for calls by this function.
     for (Function::iterator BB = F->begin(), BBE = F->end(); BB != BBE; ++BB)
