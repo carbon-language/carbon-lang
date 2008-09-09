@@ -40,6 +40,9 @@ unsigned FastISel::getRegForValue(Value *V) {
     // Don't cache constant materializations.  To do so would require
     // tracking what uses they dominate.
     Reg = FastEmit_i(VT, VT, ISD::Constant, CI->getZExtValue());
+  } else if (isa<GlobalValue>(V)) {
+    return TargetMaterializeConstant(dyn_cast<Constant>(V),
+                                     MBB->getParent()->getConstantPool());
   } else if (isa<ConstantPointerNull>(V)) {
     Reg = FastEmit_i(VT, VT, ISD::Constant, 0);
   } else if (ConstantFP *CF = dyn_cast<ConstantFP>(V)) {
@@ -83,6 +86,16 @@ unsigned FastISel::getRegForValue(Value *V) {
   
   LocalValueMap[V] = Reg;
   return Reg;
+}
+
+unsigned FastISel::lookUpRegForValue(Value *V) {
+  // Look up the value to see if we already have a register for it. We
+  // cache values defined by Instructions across blocks, and other values
+  // only locally. This is because Instructions already have the SSA
+  // def-dominatess-use requirement enforced.
+  if (ValueMap.count(V))
+    return ValueMap[V];
+  return LocalValueMap[V];
 }
 
 /// UpdateValueMap - Update the value map to include the new mapping for this

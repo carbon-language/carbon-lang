@@ -74,7 +74,8 @@ private:
   bool X86FastEmitExtend(ISD::NodeType Opc, MVT DstVT, unsigned Src, MVT SrcVT,
                          unsigned &ResultReg);
   
-  bool X86SelectConstAddr(Value *V, unsigned &Op0, bool isCall = false);
+  bool X86SelectConstAddr(Value *V, unsigned &Op0,
+                          bool isCall = false, bool inReg = false);
 
   bool X86SelectLoad(Instruction *I);
   
@@ -285,7 +286,8 @@ bool X86FastISel::X86FastEmitExtend(ISD::NodeType Opc, MVT DstVT,
 
 /// X86SelectConstAddr - Select and emit code to materialize constant address.
 /// 
-bool X86FastISel::X86SelectConstAddr(Value *V, unsigned &Op0, bool isCall) {
+bool X86FastISel::X86SelectConstAddr(Value *V, unsigned &Op0,
+                                     bool isCall, bool inReg) {
   // FIXME: Only GlobalAddress for now.
   GlobalValue *GV = dyn_cast<GlobalValue>(V);
   if (!GV)
@@ -308,7 +310,24 @@ bool X86FastISel::X86SelectConstAddr(Value *V, unsigned &Op0, bool isCall) {
     addFullAddress(BuildMI(MBB, TII.get(Opc), Op0), AM);
     // Prevent loading GV stub multiple times in same MBB.
     LocalValueMap[V] = Op0;
+  } else if (inReg) {
+    unsigned Opc = 0;
+    const TargetRegisterClass *RC = NULL;
+    if (TLI.getPointerTy() == MVT::i32) {
+      Opc = X86::LEA32r;
+      RC  = X86::GR32RegisterClass;
+    } else {
+      Opc = X86::LEA64r;
+      RC  = X86::GR64RegisterClass;
+    }
+    Op0 = createResultReg(RC);
+    X86AddressMode AM;
+    AM.GV = GV;
+    addFullAddress(BuildMI(MBB, TII.get(Opc), Op0), AM);
+    // Prevent materializing GV address multiple times in same MBB.
+    LocalValueMap[V] = Op0;
   }
+
   return true;
 }
 
@@ -323,12 +342,17 @@ bool X86FastISel::X86SelectStore(Instruction* I) {
     return false;    
 
   Value *V = I->getOperand(1);
-  unsigned Ptr = getRegForValue(V);
-  if (Ptr == 0) {
-    // Handle constant store address.
-    if (!isa<Constant>(V) || !X86SelectConstAddr(V, Ptr))
-      // Unhandled operand. Halt "fast" selection and bail.
-      return false;    
+  unsigned Ptr = lookUpRegForValue(V);
+  if (!Ptr) {
+    // Handle constant load address.
+    // FIXME: If load type is something we can't handle, this can result in
+    // a dead stub load instruction.
+    if (!isa<Constant>(V) || !X86SelectConstAddr(V, Ptr)) {
+      Ptr = getRegForValue(V);
+      if (Ptr == 0)
+        // Unhandled operand. Halt "fast" selection and bail.
+        return false;    
+    }
   }
 
   return X86FastEmitStore(VT, Val, Ptr, 0, V);
@@ -342,14 +366,17 @@ bool X86FastISel::X86SelectLoad(Instruction *I)  {
     return false;
 
   Value *V = I->getOperand(0);
-  unsigned Ptr = getRegForValue(V);
-  if (Ptr == 0) {
+  unsigned Ptr = lookUpRegForValue(V);
+  if (!Ptr) {
     // Handle constant load address.
     // FIXME: If load type is something we can't handle, this can result in
     // a dead stub load instruction.
-    if (!isa<Constant>(V) || !X86SelectConstAddr(V, Ptr))
-      // Unhandled operand. Halt "fast" selection and bail.
-      return false;    
+    if (!isa<Constant>(V) || !X86SelectConstAddr(V, Ptr)) {
+      Ptr = getRegForValue(V);
+      if (Ptr == 0)
+        // Unhandled operand. Halt "fast" selection and bail.
+        return false;    
+    }
   }
 
   unsigned ResultReg = 0;
@@ -917,18 +944,8 @@ unsigned X86FastISel::TargetMaterializeConstant(Constant *C,
   if (TM.getRelocationModel() == Reloc::PIC_)
     return 0;
   
-  MVT VT = MVT::getMVT(C->getType(), /*HandleUnknown=*/true);
-  if (VT == MVT::Other || !VT.isSimple())
-    // Unhandled type. Halt "fast" selection and bail.
-    return false;
-  if (VT == MVT::iPTR)
-    // Use pointer type.
-    VT = TLI.getPointerTy();
-  // We only handle legal types. For example, on x86-32 the instruction
-  // selector contains all of the 64-bit instructions from x86-64,
-  // under the assumption that i64 won't be used if the target doesn't
-  // support it.
-  if (!TLI.isTypeLegal(VT))
+  MVT VT;
+  if (!isTypeLegal(C->getType(), TLI, VT))
     return false;
   
   // Get opcode and regclass of the output for the given load instruction.
@@ -979,9 +996,7 @@ unsigned X86FastISel::TargetMaterializeConstant(Constant *C,
   
   unsigned ResultReg = createResultReg(RC);
   if (isa<GlobalValue>(C)) {
-    // FIXME: If store value type is something we can't handle, this can result
-    // in a dead stub load instruction.
-    if (X86SelectConstAddr(C, ResultReg))
+    if (X86SelectConstAddr(C, ResultReg, false, true))
       return ResultReg;
     return 0;
   }

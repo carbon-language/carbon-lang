@@ -80,6 +80,11 @@ public:
   /// be assigned the value for the given LLVM value.
   unsigned getRegForValue(Value *V);
 
+  /// lookUpRegForValue - Look up the value to see if its value is already
+  /// cached in a register. It may be defined by instructions across blocks or
+  /// defined locally.
+  unsigned lookUpRegForValue(Value *V);
+
   virtual ~FastISel();
 
 protected:
