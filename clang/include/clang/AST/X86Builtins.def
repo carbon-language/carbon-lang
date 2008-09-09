@@ -412,11 +412,21 @@ BUILTIN(__builtin_ia32_vec_ext_v2si, "iV2ii", "")
 BUILTIN(__builtin_ia32_vec_set_v8hi, "V8sV8ssi", "")
 BUILTIN(__builtin_ia32_vec_set_v4hi, "V4sv4ssi", "")
 
-// Apple local SSE builtins?  These are probably not needed eventually, but are
-// in the apple-gcc xmmintrin.h file (rdar://4099020).
 BUILTIN(__builtin_ia32_movqv4si, "V4iV4i", "")
 BUILTIN(__builtin_ia32_loadlv4si, "V4iV2i*", "")
 BUILTIN(__builtin_ia32_storelv4si, "vV2i*V2LLi", "")
 
+BUILTIN(__builtin_ia32_pmovsxbd128, "V4iV16c", "")
+BUILTIN(__builtin_ia32_pmovsxbq128, "V2LLiV16c", "")
+BUILTIN(__builtin_ia32_pmovsxbw128, "V8sV16c", "")
+BUILTIN(__builtin_ia32_pmovsxdq128, "V2LLiV4i", "")
+BUILTIN(__builtin_ia32_pmovsxwd128, "V4iV8s", "")
+BUILTIN(__builtin_ia32_pmovsxwq128, "V2LLiV8s", "")
+BUILTIN(__builtin_ia32_pmovzxbd128, "V4iV16c", "")
+BUILTIN(__builtin_ia32_pmovzxbq128, "V2LLiV16c", "")
+BUILTIN(__builtin_ia32_pmovzxbw128, "V8sV16c", "")
+BUILTIN(__builtin_ia32_pmovzxdq128, "V2LLiV4i", "")
+BUILTIN(__builtin_ia32_pmovzxwd128, "V4iV8s", "")
+BUILTIN(__builtin_ia32_pmovzxwq128, "V2LLiV8s", "")
 
 #undef BUILTIN
