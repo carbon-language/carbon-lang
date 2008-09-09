@@ -60,6 +60,10 @@ static cl::opt<bool>
 EnableFastISel("fast-isel", cl::Hidden,
           cl::desc("Enable the experimental \"fast\" instruction selector"));
 static cl::opt<bool>
+EnableFastISelVerbose("fast-isel-verbose", cl::Hidden,
+          cl::desc("Enable verbose messages in the experimental \"fast\" "
+                   "instruction selector"));
+static cl::opt<bool>
 DisableFastISelAbort("fast-isel-no-abort", cl::Hidden,
           cl::desc("Use the SelectionDAGISel when \"fast\" instruction "
                    "selection fails"));
@@ -743,12 +747,12 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn, MachineFunction &MF) {
           // feed PHI nodes in successor blocks.
           if (isa<TerminatorInst>(BI))
             if (!HandlePHINodesInSuccessorBlocksFast(LLVMBB, F)) {
-              if (DisableFastISelAbort)
-                break;
-#ifndef NDEBUG
-              BI->dump();
-#endif  
-              assert(0 && "FastISel didn't handle a PHI in a successor");
+              if (EnableFastISelVerbose || !DisableFastISelAbort) {
+                cerr << "FastISel miss: ";
+                BI->dump();
+              }
+              if (!DisableFastISelAbort)
+                assert(0 && "FastISel didn't handle a PHI in a successor");
             }
 
           // First try normal tablegen-generated "fast" selection.
@@ -771,15 +775,17 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn, MachineFunction &MF) {
             continue;
           }
 
-          if (!DisableFastISelAbort &&
-              // For now, don't abort on non-conditional-branch terminators.
-              (!isa<TerminatorInst>(BI) || isa<BranchInst>(BI))) {
-            // The "fast" selector couldn't handle something and bailed.
-            // For the purpose of debugging, just abort.
-#ifndef NDEBUG
-            BI->dump();
-#endif
-            assert(0 && "FastISel didn't select the entire block");
+          // Otherwise, give up on FastISel for the rest of the block.
+          // For now, be a little lenient about non-branch terminators.
+          if (!isa<TerminatorInst>(BI) || isa<BranchInst>(BI)) {
+            if (EnableFastISelVerbose || !DisableFastISelAbort) {
+              cerr << "FastISel miss: ";
+              BI->dump();
+            }
+            if (!DisableFastISelAbort)
+              // The "fast" selector couldn't handle something and bailed.
+              // For the purpose of debugging, just abort.
+              assert(0 && "FastISel didn't select the entire block");
           }
           break;
         }
