@@ -2955,6 +2955,25 @@ SelectionDAGLowering::visitLog10(CallInst &I) {
     SDValue X = DAG.getNode(ISD::BIT_CONVERT, MVT::f32, t5);
 
     if (LimitFloatPrecision <= 6) {
+      // For floating-point precision of 6:
+      // 
+      //   Log10ofMantissa =
+      //     -0.50419619f +
+      //       (0.60948995f - 0.10380950f * x) * x;
+      //
+      // error 0.0014886165, which is 6 bits
+      SDValue t6 = DAG.getNode(ISD::FMUL, MVT::f32, X,
+                               DAG.getConstantFP(APFloat(
+                                 APInt(32, 0xbdd49a13)), MVT::f32));
+      SDValue t7 = DAG.getNode(ISD::FADD, MVT::f32, t6,
+                                DAG.getConstantFP(APFloat(
+                                  APInt(32, 0x3f1c0789)), MVT::f32));
+      SDValue t8 = DAG.getNode(ISD::FMUL, MVT::f32, t7, X);
+      SDValue Log10ofMantissa = DAG.getNode(ISD::FSUB, MVT::f32, t8,
+                                  DAG.getConstantFP(APFloat(
+                                    APInt(32, 0x3f011300)), MVT::f32));
+
+      result = DAG.getNode(ISD::FADD, MVT::f32, LogOfExponent, Log10ofMantissa);
     } else if (LimitFloatPrecision > 6 && LimitFloatPrecision <= 12) {
       // For floating-point precision of 12:
       //
@@ -2975,14 +2994,46 @@ SelectionDAGLowering::visitLog10(CallInst &I) {
                                 DAG.getConstantFP(APFloat(
                                   APInt(32, 0x3f6ae232)), MVT::f32));
       SDValue t10 = DAG.getNode(ISD::FMUL, MVT::f32, t9, X);
-      SDValue t11 = DAG.getNode(ISD::FSUB, MVT::f32, t10,
-                                DAG.getConstantFP(APFloat(
-                                  APInt(32, 0x3f25f7c3)), MVT::f32));
-      SDValue Log10ofMantissa = DAG.getNode(ISD::FP_ROUND, MVT::f32, t11, 
-                                            DAG.getConstant(0, MVT::i32));
+      SDValue Log10ofMantissa = DAG.getNode(ISD::FSUB, MVT::f32, t10,
+                                  DAG.getConstantFP(APFloat(
+                                    APInt(32, 0x3f25f7c3)), MVT::f32));
 
       result = DAG.getNode(ISD::FADD, MVT::f32, LogOfExponent, Log10ofMantissa);
     } else { // LimitFloatPrecision > 12 && LimitFloatPrecision <= 18
+      // For floating-point precision of 18:
+      //
+      //   Log10ofMantissa =
+      //     -0.84299375f +
+      //       (1.5327582f +
+      //         (-1.0688956f +
+      //           (0.49102474f +
+      //             (-0.12539807f + 0.13508273e-1f * x) * x) * x) * x) * x;
+      //
+      // error 0.0000037995730, which is better than 18 bits
+      SDValue t6 = DAG.getNode(ISD::FMUL, MVT::f32, X,
+                               DAG.getConstantFP(APFloat(
+                                 APInt(32, 0x3c5d51ce)), MVT::f32));
+      SDValue t7 = DAG.getNode(ISD::FSUB, MVT::f32, t6,
+                                DAG.getConstantFP(APFloat(
+                                  APInt(32, 0x3e00685a)), MVT::f32));
+      SDValue t8 = DAG.getNode(ISD::FMUL, MVT::f32, t7, X);
+      SDValue t9 = DAG.getNode(ISD::FADD, MVT::f32, t8,
+                                DAG.getConstantFP(APFloat(
+                                  APInt(32, 0x3efb6798)), MVT::f32));
+      SDValue t10 = DAG.getNode(ISD::FMUL, MVT::f32, t9, X);
+      SDValue t11 = DAG.getNode(ISD::FSUB, MVT::f32, t10,
+                                DAG.getConstantFP(APFloat(
+                                  APInt(32, 0x3f88d192)), MVT::f32));
+      SDValue t12 = DAG.getNode(ISD::FMUL, MVT::f32, t11, X);
+      SDValue t13 = DAG.getNode(ISD::FADD, MVT::f32, t12,
+                                DAG.getConstantFP(APFloat(
+                                  APInt(32, 0x3fc4316c)), MVT::f32));
+      SDValue t14 = DAG.getNode(ISD::FMUL, MVT::f32, t13, X);
+      SDValue Log10ofMantissa = DAG.getNode(ISD::FSUB, MVT::f32, t14,
+                                  DAG.getConstantFP(APFloat(
+                                    APInt(32, 0x3f57ce70)), MVT::f32));
+
+      result = DAG.getNode(ISD::FADD, MVT::f32, LogOfExponent, Log10ofMantissa);
     }
   } else {
     // No special expansion.
