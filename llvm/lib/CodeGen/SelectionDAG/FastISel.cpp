@@ -39,6 +39,8 @@ unsigned FastISel::getRegForValue(Value *V) {
                                        MBB->getParent()->getConstantPool());
     // Don't cache constant materializations.  To do so would require
     // tracking what uses they dominate.
+    if (!TLI.isTypeLegal(VT))
+      return false;
     Reg = FastEmit_i(VT, VT, ISD::Constant, CI->getZExtValue());
   } else if (isa<GlobalValue>(V)) {
     return TargetMaterializeConstant(dyn_cast<Constant>(V),
