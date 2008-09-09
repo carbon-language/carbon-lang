@@ -38,6 +38,7 @@ PPCDarwinTargetAsmInfo::PPCDarwinTargetAsmInfo(const PPCTargetMachine &TM):
   CommentString = ";";
   GlobalPrefix = "_";
   PrivateGlobalPrefix = "L";
+  LessPrivateGlobalPrefix = "l";
   StringConstantPrefix = "\1LC";
   ConstantPoolSection = "\t.const\t";
   JumpTableDataSection = ".const";

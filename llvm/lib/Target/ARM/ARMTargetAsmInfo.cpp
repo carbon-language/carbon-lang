@@ -62,6 +62,7 @@ ARMDarwinTargetAsmInfo::ARMDarwinTargetAsmInfo(const ARMTargetMachine &TM):
 
   GlobalPrefix = "_";
   PrivateGlobalPrefix = "L";
+  LessPrivateGlobalPrefix = "l";
   StringConstantPrefix = "\1LC";
   BSSSection = 0;                       // no BSS section
   ZeroDirective = "\t.space\t";

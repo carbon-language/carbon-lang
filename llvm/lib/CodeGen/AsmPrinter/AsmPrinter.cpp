@@ -452,7 +452,9 @@ const GlobalValue * AsmPrinter::findGlobalValue(const Constant *CV) {
 
 /// EmitLLVMUsedList - For targets that define a TAI::UsedDirective, mark each
 /// global in the specified llvm.used list as being used with this directive.
-/// Non-globals (i.e. internal linkage) should not be emitted.
+/// Internally linked data beginning with the PrivateGlobalPrefix or the
+/// LessPrivateGlobalPrefix does not have the directive emitted (this 
+/// occurs in ObjC metadata).
 void AsmPrinter::EmitLLVMUsedList(Constant *List) {
   const char *Directive = TAI->getUsedDirective();
 
@@ -462,7 +464,17 @@ void AsmPrinter::EmitLLVMUsedList(Constant *List) {
   
   for (unsigned i = 0, e = InitList->getNumOperands(); i != e; ++i) {
     const GlobalValue *GV = findGlobalValue(InitList->getOperand(i));
-    if (GV && (!GV->hasInternalLinkage() || isa<Function>(GV))) {
+    if (GV) {
+      if (GV->hasInternalLinkage() && !isa<Function>(GV) &&
+          ((strlen(TAI->getPrivateGlobalPrefix()) != 0 &&
+            Mang->getValueName(GV)
+              .substr(0,strlen(TAI->getPrivateGlobalPrefix())) ==
+              TAI->getPrivateGlobalPrefix()) ||
+           (strlen(TAI->getLessPrivateGlobalPrefix()) != 0 &&
+            Mang->getValueName(GV)
+              .substr(0,strlen(TAI->getLessPrivateGlobalPrefix())) ==
+              TAI->getLessPrivateGlobalPrefix())))
+        continue;
       O << Directive;
       EmitConstantValueOnly(InitList->getOperand(i));
       O << '\n';

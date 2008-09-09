@@ -50,6 +50,7 @@ TargetAsmInfo::TargetAsmInfo() :
   CommentString("#"),
   GlobalPrefix(""),
   PrivateGlobalPrefix("."),
+  LessPrivateGlobalPrefix(""),
   JumpTableSpecialLabelPrefix(0),
   GlobalVarAddrPrefix(""),
   GlobalVarAddrSuffix(""),

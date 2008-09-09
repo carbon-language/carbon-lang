@@ -136,6 +136,7 @@ X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const X86TargetMachine &TM):
     Data64bitsDirective = 0;       // we can't emit a 64-bit unit
   ZeroDirective = "\t.space\t";  // ".space N" emits N zeros.
   PrivateGlobalPrefix = "L";     // Marker for constant pool idxs
+  LessPrivateGlobalPrefix = "l";  // Marker for some ObjC metadata
   BSSSection = 0;                       // no BSS section.
   ZeroFillDirective = "\t.zerofill\t";  // Uses .zerofill
   if (DTM->getRelocationModel() != Reloc::Static)
