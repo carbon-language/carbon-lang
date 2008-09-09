@@ -1581,7 +1581,7 @@ void ModulePass::assignPassManager(PMStack &PMS,
     else
       break;
   }
-
+  assert(!PMS.empty() && "Unable to find appropriate Pass Manager");
   PMS.top()->add(this);
 }
 
