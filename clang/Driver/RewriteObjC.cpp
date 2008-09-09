@@ -1380,6 +1380,11 @@ Stmt *RewriteObjC::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
     buf += " else { /* @catch continue */";
     
     InsertText(startLoc, buf.c_str(), buf.size());
+  } else { /* no catch list */
+    buf = "}\nelse {\n";
+    buf += "  _rethrow = objc_exception_extract(&_stack);\n";
+    buf += "}";
+    ReplaceText(lastCurlyLoc, 1, buf.c_str(), buf.size());
   }
   bool sawIdTypedCatch = false;
   Stmt *lastCatchBody = 0;
