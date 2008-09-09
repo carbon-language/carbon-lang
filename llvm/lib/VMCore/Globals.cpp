@@ -260,7 +260,7 @@ const GlobalValue *GlobalAlias::resolveAliasedGlobal(bool traverseWeak) const {
 
   // Iterate over aliasing chain, stopping on weak alias if necessary.
   while (const GlobalAlias *GA = dyn_cast<GlobalAlias>(GV)) {
-    if (traverseWeak && GA->hasWeakLinkage())
+    if (!traverseWeak && GA->hasWeakLinkage())
       break;
 
     GV = GA->getAliasedGlobal();
