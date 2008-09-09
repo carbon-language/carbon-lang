@@ -49,10 +49,11 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   X86ScalarSSEf64 = Subtarget->hasSSE2();
   X86ScalarSSEf32 = Subtarget->hasSSE1();
   X86StackPtr = Subtarget->is64Bit() ? X86::RSP : X86::ESP;
-  
+
   bool Fast = false;
 
   RegInfo = TM.getRegisterInfo();
+  TD = getTargetData();
 
   // Set up the TargetLowering object.
 
@@ -812,7 +813,7 @@ static void getMaxByValAlign(const Type *Ty, unsigned &MaxAlign) {
 unsigned X86TargetLowering::getByValTypeAlignment(const Type *Ty) const {
   if (Subtarget->is64Bit()) {
     // Max of 8 and alignment of type.
-    unsigned TyAlign = getTargetData()->getABITypeAlignment(Ty);
+    unsigned TyAlign = TD->getABITypeAlignment(Ty);
     if (TyAlign > 8)
       return TyAlign;
     return 8;
@@ -1832,7 +1833,7 @@ unsigned X86TargetLowering::GetAlignedArgumentStackSize(unsigned StackSize,
   unsigned StackAlignment = TFI.getStackAlignment();
   uint64_t AlignMask = StackAlignment - 1; 
   int64_t Offset = StackSize;
-  unsigned SlotSize = Subtarget->is64Bit() ? 8 : 4;
+  uint64_t SlotSize = TD->getPointerSize();
   if ( (Offset & AlignMask) <= (StackAlignment - SlotSize) ) {
     // Number smaller than 12 so just add the difference.
     Offset += ((StackAlignment - SlotSize) - (Offset & AlignMask));
@@ -1894,14 +1895,11 @@ SDValue X86TargetLowering::getReturnAddressFrameIndex(SelectionDAG &DAG) {
   MachineFunction &MF = DAG.getMachineFunction();
   X86MachineFunctionInfo *FuncInfo = MF.getInfo<X86MachineFunctionInfo>();
   int ReturnAddrIndex = FuncInfo->getRAIndex();
+  uint64_t SlotSize = TD->getPointerSize();
 
   if (ReturnAddrIndex == 0) {
     // Set up a frame object for the return address.
-    if (Subtarget->is64Bit())
-      ReturnAddrIndex = MF.getFrameInfo()->CreateFixedObject(8, -8);
-    else
-      ReturnAddrIndex = MF.getFrameInfo()->CreateFixedObject(4, -4);
-
+    ReturnAddrIndex = MF.getFrameInfo()->CreateFixedObject(SlotSize, -SlotSize);
     FuncInfo->setRAIndex(ReturnAddrIndex);
   }
 
@@ -5092,7 +5090,7 @@ X86TargetLowering::EmitTargetCodeForMemset(SelectionDAG &DAG,
     if (const char *bzeroEntry = 
           V && V->isNullValue() ? Subtarget->getBZeroEntry() : 0) {
       MVT IntPtr = getPointerTy();
-      const Type *IntPtrTy = getTargetData()->getIntPtrType();
+      const Type *IntPtrTy = TD->getIntPtrType();
       TargetLowering::ArgListTy Args; 
       TargetLowering::ArgListEntry Entry;
       Entry.Node = Dst;
@@ -5595,12 +5593,12 @@ SDValue X86TargetLowering::LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG) {
 
   SDValue RetAddrFI = getReturnAddressFrameIndex(DAG);
   return DAG.getNode(ISD::SUB, getPointerTy(), RetAddrFI,
-                     DAG.getIntPtrConstant(Subtarget->is64Bit() ? 8 : 4));
+                     DAG.getIntPtrConstant(TD->getPointerSize()));
 }
 
 SDValue X86TargetLowering::LowerFRAME_TO_ARGS_OFFSET(SDValue Op,
                                                      SelectionDAG &DAG) {
-  return DAG.getIntPtrConstant(Subtarget->is64Bit() ? 16 : 8);
+  return DAG.getIntPtrConstant(2*TD->getPointerSize());
 }
 
 SDValue X86TargetLowering::LowerEH_RETURN(SDValue Op, SelectionDAG &DAG)
@@ -5615,8 +5613,7 @@ SDValue X86TargetLowering::LowerEH_RETURN(SDValue Op, SelectionDAG &DAG)
   unsigned StoreAddrReg = (Subtarget->is64Bit() ? X86::RCX : X86::ECX);
 
   SDValue StoreAddr = DAG.getNode(ISD::SUB, getPointerTy(), Frame,
-                                  DAG.getIntPtrConstant(Subtarget->is64Bit() ?
-                                                        -8ULL: -4ULL));
+                                  DAG.getIntPtrConstant(-TD->getPointerSize()));
   StoreAddr = DAG.getNode(ISD::ADD, getPointerTy(), StoreAddr, Offset);
   Chain = DAG.getStore(Chain, Handler, StoreAddr, NULL, 0);
   Chain = DAG.getCopyToReg(Chain, StoreAddrReg, StoreAddr);
@@ -5712,7 +5709,7 @@ SDValue X86TargetLowering::LowerTRAMPOLINE(SDValue Op,
              E = FTy->param_end(); I != E; ++I, ++Idx)
           if (Attrs.paramHasAttr(Idx, ParamAttr::InReg))
             // FIXME: should only count parameters that are lowered to integers.
-            InRegCount += (getTargetData()->getTypeSizeInBits(*I) + 31) / 32;
+            InRegCount += (TD->getTypeSizeInBits(*I) + 31) / 32;
 
         if (InRegCount > 2) {
           cerr << "Nest register in use - reduce number of inreg parameters!\n";
