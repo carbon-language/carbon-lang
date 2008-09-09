@@ -122,6 +122,11 @@ public:
   virtual void GenerateProtocol(const ObjCProtocolDecl *PD);
   virtual llvm::Function *ModuleInitFunction();
   virtual llvm::Function *EnumerationMutationFunction();
+  
+  virtual void EmitTryStmt(CodeGen::CodeGenFunction &CGF,
+                           const ObjCAtTryStmt &S);
+  virtual void EmitThrowStmt(CodeGen::CodeGenFunction &CGF,
+                             const ObjCAtThrowStmt &S);
 };
 } // end anonymous namespace
 
@@ -965,6 +970,18 @@ llvm::Function *CGObjCGNU::EnumerationMutationFunction()
   assert(0 && "No enumeration mutation function in the GNU runtime!");
   
   return 0;
+}
+
+void CGObjCGNU::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
+                            const ObjCAtTryStmt &S)
+{
+  CGF.ErrorUnsupported(&S, "@try statement");
+}
+
+void CGObjCGNU::EmitThrowStmt(CodeGen::CodeGenFunction &CGF,
+                              const ObjCAtThrowStmt &S)
+{
+  CGF.ErrorUnsupported(&S, "@throw statement");
 }
 
 CodeGen::CGObjCRuntime *CodeGen::CreateGNUObjCRuntime(CodeGen::CodeGenModule &CGM){

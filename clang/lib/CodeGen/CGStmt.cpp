@@ -78,16 +78,16 @@ void CodeGenFunction::EmitStmt(const Stmt *S) {
   case Stmt::AsmStmtClass:      EmitAsmStmt(cast<AsmStmt>(*S));           break;
 
   case Stmt::ObjCAtTryStmtClass:
-    ErrorUnsupported(S, "@try statement");
-    break;
+    EmitObjCAtTryStmt(cast<ObjCAtTryStmt>(*S));
+    break;    
   case Stmt::ObjCAtCatchStmtClass:
-    ErrorUnsupported(S, "@catch statement");
+    assert(0 && "@catch statements should be handled by EmitObjCAtTryStmt");
     break;
   case Stmt::ObjCAtFinallyStmtClass:
-    ErrorUnsupported(S, "@finally statement");
+    assert(0 && "@finally statements should be handled by EmitObjCAtTryStmt");
     break;
   case Stmt::ObjCAtThrowStmtClass:
-    ErrorUnsupported(S, "@throw statement");
+    EmitObjCAtThrowStmt(cast<ObjCAtThrowStmt>(*S));
     break;
   case Stmt::ObjCAtSynchronizedStmtClass:
     ErrorUnsupported(S, "@synchronized statement");

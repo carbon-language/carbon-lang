@@ -471,4 +471,14 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S)
   EmitBlock(LoopEnd);
 }
 
+void CodeGenFunction::EmitObjCAtTryStmt(const ObjCAtTryStmt &S)
+{
+  CGM.getObjCRuntime().EmitTryStmt(*this, S);
+}
+
+void CodeGenFunction::EmitObjCAtThrowStmt(const ObjCAtThrowStmt &S)
+{
+  CGM.getObjCRuntime().EmitThrowStmt(*this, S);
+}
+
 CGObjCRuntime::~CGObjCRuntime() {}

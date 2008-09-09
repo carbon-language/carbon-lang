@@ -373,6 +373,12 @@ public:
 
   virtual llvm::Function *ModuleInitFunction();
   virtual llvm::Function *EnumerationMutationFunction();
+  
+  virtual void EmitTryStmt(CodeGen::CodeGenFunction &CGF,
+                           const ObjCAtTryStmt &S);
+  virtual void EmitThrowStmt(CodeGen::CodeGenFunction &CGF,
+                             const ObjCAtThrowStmt &S);
+  
 };
 } // end anonymous namespace
 
@@ -1390,6 +1396,18 @@ llvm::Function *CGObjCMac::ModuleInitFunction() {
 llvm::Function *CGObjCMac::EnumerationMutationFunction()
 {
   return ObjCTypes.EnumerationMutationFn;
+}
+
+void CGObjCMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
+                            const ObjCAtTryStmt &S)
+{
+  CGF.ErrorUnsupported(&S, "@try statement");
+}
+
+void CGObjCMac::EmitThrowStmt(CodeGen::CodeGenFunction &CGF,
+                              const ObjCAtThrowStmt &S)
+{
+  CGF.ErrorUnsupported(&S, "@throw statement");
 }
 
 /* *** Private Interface *** */

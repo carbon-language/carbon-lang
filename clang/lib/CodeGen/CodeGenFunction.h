@@ -242,6 +242,8 @@ public:
   void EmitAsmStmt(const AsmStmt &S);
   
   void EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S);
+  void EmitObjCAtTryStmt(const ObjCAtTryStmt &S);
+  void EmitObjCAtThrowStmt(const ObjCAtThrowStmt &S);
   
   //===--------------------------------------------------------------------===//
   //                         LValue Expression Emission

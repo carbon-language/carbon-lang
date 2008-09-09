@@ -36,6 +36,8 @@ namespace CodeGen {
   class CodeGenFunction;
 }
 
+  class ObjCAtTryStmt;
+  class ObjCAtThrowStmt;
   class ObjCCategoryImplDecl;
   class ObjCImplementationDecl;
   class ObjCInterfaceDecl;
@@ -130,6 +132,11 @@ public:
   /// the structure.  If this returns true then @defs is invalid for this
   /// runtime and a warning should be generated.
   virtual bool LateBoundIVars() const { return false; }
+
+  virtual void EmitTryStmt(CodeGen::CodeGenFunction &CGF,
+                           const ObjCAtTryStmt &S) = 0;
+  virtual void EmitThrowStmt(CodeGen::CodeGenFunction &CGF,
+                             const ObjCAtThrowStmt &S) = 0;
 };
 
 /// Creates an instance of an Objective-C runtime class.  
