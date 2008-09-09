@@ -135,7 +135,8 @@ private:
          I != E && !isUsedExternally; ++I) {
       if (Instruction *Inst = dyn_cast<Instruction>(*I)) {
         CallSite CS = CallSite::get(Inst);
-        isUsedExternally = !CS.getInstruction() || CS.hasArgument(F);
+        // Not a call?  Or F being passed as a parameter not as the callee?
+        isUsedExternally = !CS.getInstruction() || I.getOperandNo();
       } else {                        // User is not a direct call!
         isUsedExternally = true;
       }
