@@ -417,6 +417,8 @@ Parser::StmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
 ///       if-statement: [C99 6.8.4.1]
 ///         'if' '(' expression ')' statement
 ///         'if' '(' expression ')' statement 'else' statement
+/// [C++]   'if' '(' condition ')' statement
+/// [C++]   'if' '(' condition ')' statement 'else' statement
 ///
 Parser::StmtResult Parser::ParseIfStatement() {
   assert(Tok.is(tok::kw_if) && "Not an if stmt!");
@@ -427,17 +429,27 @@ Parser::StmtResult Parser::ParseIfStatement() {
     SkipUntil(tok::semi);
     return true;
   }
-  
+
+  bool C99orCXX = getLang().C99 || getLang().CPlusPlus;
+
   // C99 6.8.4p3 - In C99, the if statement is a block.  This is not
   // the case for C90.
-  if (getLang().C99)
-    EnterScope(Scope::DeclScope);
+  if (C99orCXX)
+    EnterScope(Scope::DeclScope | Scope::ControlScope);
 
   // Parse the condition.
-  ExprResult CondExp = ParseSimpleParenExpression();
+  ExprResult CondExp;
+  if (getLang().CPlusPlus) {
+    SourceLocation LParenLoc = ConsumeParen();
+    CondExp = ParseCXXCondition();
+    MatchRHSPunctuation(tok::r_paren, LParenLoc);
+  } else {
+    CondExp = ParseSimpleParenExpression();
+  }
+
   if (CondExp.isInvalid) {
     SkipUntil(tok::semi);
-    if (getLang().C99)
+    if (C99orCXX)
       ExitScope();
     return true;
   }
@@ -445,9 +457,9 @@ Parser::StmtResult Parser::ParseIfStatement() {
   // C99 6.8.4p3 - In C99, the body of the if statement is a scope, even if
   // there is no compound stmt.  C90 does not have this clause.  We only do this
   // if the body isn't a compound statement to avoid push/pop in common cases.
-  bool NeedsInnerScope = getLang().C99 && Tok.isNot(tok::l_brace);
+  bool NeedsInnerScope = C99orCXX && Tok.isNot(tok::l_brace);
   if (NeedsInnerScope) EnterScope(Scope::DeclScope);
-  
+
   // Read the 'then' stmt.
   SourceLocation ThenStmtLoc = Tok.getLocation();
   StmtResult ThenStmt = ParseStatement();
@@ -467,7 +479,7 @@ Parser::StmtResult Parser::ParseIfStatement() {
     // there is no compound stmt.  C90 does not have this clause.  We only do
     // this if the body isn't a compound statement to avoid push/pop in common
     // cases.
-    NeedsInnerScope = getLang().C99 && Tok.isNot(tok::l_brace);
+    NeedsInnerScope = C99orCXX && Tok.isNot(tok::l_brace);
     if (NeedsInnerScope) EnterScope(Scope::DeclScope);
     
     ElseStmtLoc = Tok.getLocation();
@@ -477,7 +489,7 @@ Parser::StmtResult Parser::ParseIfStatement() {
     if (NeedsInnerScope) ExitScope();
   }
   
-  if (getLang().C99)
+  if (C99orCXX)
     ExitScope();
 
   // If the then or else stmt is invalid and the other is valid (and present),
@@ -505,6 +517,7 @@ Parser::StmtResult Parser::ParseIfStatement() {
 /// ParseSwitchStatement
 ///       switch-statement:
 ///         'switch' '(' expression ')' statement
+/// [C++]   'switch' '(' condition ')' statement
 Parser::StmtResult Parser::ParseSwitchStatement() {
   assert(Tok.is(tok::kw_switch) && "Not a switch stmt!");
   SourceLocation SwitchLoc = ConsumeToken();  // eat the 'switch'.
@@ -515,15 +528,24 @@ Parser::StmtResult Parser::ParseSwitchStatement() {
     return true;
   }
 
+  bool C99orCXX = getLang().C99 || getLang().CPlusPlus;
+
   // C99 6.8.4p3 - In C99, the switch statement is a block.  This is
   // not the case for C90.  Start the switch scope.
-  if (getLang().C99)
-    EnterScope(Scope::BreakScope|Scope::DeclScope);
+  if (C99orCXX)
+    EnterScope(Scope::BreakScope | Scope::DeclScope | Scope::ControlScope);
   else
     EnterScope(Scope::BreakScope);
 
   // Parse the condition.
-  ExprResult Cond = ParseSimpleParenExpression();
+  ExprResult Cond;
+  if (getLang().CPlusPlus) {
+    SourceLocation LParenLoc = ConsumeParen();
+    Cond = ParseCXXCondition();
+    MatchRHSPunctuation(tok::r_paren, LParenLoc);
+  } else {
+    Cond = ParseSimpleParenExpression();
+  }
   
   if (Cond.isInvalid) {
     ExitScope();
@@ -535,7 +557,7 @@ Parser::StmtResult Parser::ParseSwitchStatement() {
   // C99 6.8.4p3 - In C99, the body of the switch statement is a scope, even if
   // there is no compound stmt.  C90 does not have this clause.  We only do this
   // if the body isn't a compound statement to avoid push/pop in common cases.
-  bool NeedsInnerScope = getLang().C99 && Tok.isNot(tok::l_brace);
+  bool NeedsInnerScope = C99orCXX && Tok.isNot(tok::l_brace);
   if (NeedsInnerScope) EnterScope(Scope::DeclScope);
   
   // Read the body statement.
@@ -557,6 +579,7 @@ Parser::StmtResult Parser::ParseSwitchStatement() {
 /// ParseWhileStatement
 ///       while-statement: [C99 6.8.5.1]
 ///         'while' '(' expression ')' statement
+/// [C++]   'while' '(' condition ')' statement
 Parser::StmtResult Parser::ParseWhileStatement() {
   assert(Tok.is(tok::kw_while) && "Not a while stmt!");
   SourceLocation WhileLoc = Tok.getLocation();
@@ -568,20 +591,30 @@ Parser::StmtResult Parser::ParseWhileStatement() {
     return true;
   }
   
+  bool C99orCXX = getLang().C99 || getLang().CPlusPlus;
+
   // C99 6.8.5p5 - In C99, the while statement is a block.  This is not
   // the case for C90.  Start the loop scope.
-  if (getLang().C99)
-    EnterScope(Scope::BreakScope | Scope::ContinueScope | Scope::DeclScope);
+  if (C99orCXX)
+    EnterScope(Scope::BreakScope | Scope::ContinueScope |
+               Scope::DeclScope  | Scope::ControlScope);
   else
     EnterScope(Scope::BreakScope | Scope::ContinueScope);
 
   // Parse the condition.
-  ExprResult Cond = ParseSimpleParenExpression();
+  ExprResult Cond;
+  if (getLang().CPlusPlus) {
+    SourceLocation LParenLoc = ConsumeParen();
+    Cond = ParseCXXCondition();
+    MatchRHSPunctuation(tok::r_paren, LParenLoc);
+  } else {
+    Cond = ParseSimpleParenExpression();
+  }
   
   // C99 6.8.5p5 - In C99, the body of the if statement is a scope, even if
   // there is no compound stmt.  C90 does not have this clause.  We only do this
   // if the body isn't a compound statement to avoid push/pop in common cases.
-  bool NeedsInnerScope = getLang().C99 && Tok.isNot(tok::l_brace);
+  bool NeedsInnerScope = C99orCXX && Tok.isNot(tok::l_brace);
   if (NeedsInnerScope) EnterScope(Scope::DeclScope);
   
   // Read the body statement.
@@ -654,8 +687,15 @@ Parser::StmtResult Parser::ParseDoStatement() {
 ///       for-statement: [C99 6.8.5.3]
 ///         'for' '(' expr[opt] ';' expr[opt] ';' expr[opt] ')' statement
 ///         'for' '(' declaration expr[opt] ';' expr[opt] ')' statement
+/// [C++]   'for' '(' for-init-statement condition[opt] ';' expression[opt] ')'
+/// [C++]       statement
 /// [OBJC2] 'for' '(' declaration 'in' expr ')' statement
 /// [OBJC2] 'for' '(' expr 'in' expr ')' statement
+///
+/// [C++] for-init-statement:
+/// [C++]   expression-statement
+/// [C++]   simple-declaration
+///
 Parser::StmtResult Parser::ParseForStatement() {
   assert(Tok.is(tok::kw_for) && "Not a for stmt!");
   SourceLocation ForLoc = ConsumeToken();  // eat the 'for'.
@@ -666,10 +706,13 @@ Parser::StmtResult Parser::ParseForStatement() {
     return true;
   }
   
+  bool C99orCXX = getLang().C99 || getLang().CPlusPlus;
+
   // C99 6.8.5p5 - In C99, the for statement is a block.  This is not
   // the case for C90.  Start the loop scope.
-  if (getLang().C99)
-    EnterScope(Scope::BreakScope | Scope::ContinueScope | Scope::DeclScope);
+  if (C99orCXX)
+    EnterScope(Scope::BreakScope | Scope::ContinueScope |
+               Scope::DeclScope  | Scope::ControlScope);
   else
     EnterScope(Scope::BreakScope | Scope::ContinueScope);
 
@@ -687,11 +730,11 @@ Parser::StmtResult Parser::ParseForStatement() {
     ConsumeToken();
   } else if (isDeclarationSpecifier()) {  // for (int X = 4;
     // Parse declaration, which eats the ';'.
-    if (!getLang().C99)   // Use of C99-style for loops in C90 mode?
+    if (!C99orCXX)   // Use of C99-style for loops in C90 mode?
       Diag(Tok, diag::ext_c99_variable_decl_in_for_loop);
     
     SourceLocation DeclStart = Tok.getLocation();
-    DeclTy *aBlockVarDecl = ParseDeclaration(Declarator::ForContext);
+    DeclTy *aBlockVarDecl = ParseSimpleDeclaration(Declarator::ForContext);
     // FIXME: Pass in the right location for the end of the declstmt.
     StmtResult stmtResult = Actions.ActOnDeclStmt(aBlockVarDecl, DeclStart,
                                                   DeclStart);
@@ -732,7 +775,8 @@ Parser::StmtResult Parser::ParseForStatement() {
       // no second part.
       Value = ExprResult();
     } else {
-      Value = ParseExpression();
+      Value = getLang().CPlusPlus ? ParseCXXCondition()
+                                  : ParseExpression();
       if (!Value.isInvalid)
         SecondPart = Value.Val;
     }
@@ -764,7 +808,7 @@ Parser::StmtResult Parser::ParseForStatement() {
   // C99 6.8.5p5 - In C99, the body of the if statement is a scope, even if
   // there is no compound stmt.  C90 does not have this clause.  We only do this
   // if the body isn't a compound statement to avoid push/pop in common cases.
-  bool NeedsInnerScope = getLang().C99 && Tok.isNot(tok::l_brace);
+  bool NeedsInnerScope = C99orCXX && Tok.isNot(tok::l_brace);
   if (NeedsInnerScope) EnterScope(Scope::DeclScope);
   
   // Read the body statement.

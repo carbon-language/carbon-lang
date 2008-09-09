@@ -153,6 +153,55 @@ Parser::ExprResult Parser::ParseCXXTypeConstructExpression(const DeclSpec &DS) {
                                            &CommaLocs[0], RParenLoc);
 }
 
+/// ParseCXXCondition - if/switch/while/for condition expression.
+///
+///       condition:
+///         expression
+///         type-specifier-seq declarator '=' assignment-expression
+/// [GNU]   type-specifier-seq declarator simple-asm-expr[opt] attributes[opt]
+///             '=' assignment-expression
+///
+Parser::ExprResult Parser::ParseCXXCondition() {
+  if (!isDeclarationSpecifier())
+    return ParseExpression(); // expression
+
+  SourceLocation StartLoc = Tok.getLocation();
+
+  // type-specifier-seq
+  DeclSpec DS;
+  ParseSpecifierQualifierList(DS);
+
+  // declarator
+  Declarator DeclaratorInfo(DS, Declarator::ConditionContext);
+  ParseDeclarator(DeclaratorInfo);
+
+  // simple-asm-expr[opt]
+  if (Tok.is(tok::kw_asm)) {
+    ExprResult AsmLabel = ParseSimpleAsm();
+    if (AsmLabel.isInvalid) {
+      SkipUntil(tok::semi);
+      return true;
+    }
+    DeclaratorInfo.setAsmLabel(AsmLabel.Val);
+  }
+
+  // If attributes are present, parse them.
+  if (Tok.is(tok::kw___attribute))
+    DeclaratorInfo.AddAttributes(ParseAttributes());
+
+  // '=' assignment-expression
+  if (Tok.isNot(tok::equal))
+    return Diag(Tok, diag::err_expected_equal_after_declarator);
+  SourceLocation EqualLoc = ConsumeToken();
+  ExprResult AssignExpr = ParseAssignmentExpression();
+  if (AssignExpr.isInvalid)
+    return true;
+  
+  return Actions.ActOnCXXConditionDeclarationExpr(CurScope, StartLoc,
+                                                  DeclaratorInfo,
+                                                  EqualLoc, AssignExpr.Val);
+}
+
 /// ParseCXXSimpleTypeSpecifier - [C++ 7.1.5.2] Simple type specifiers.
 /// This should only be called when the current token is known to be part of
 /// simple-type-specifier.

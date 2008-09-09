@@ -580,7 +580,8 @@ public:
     TypeNameContext,     // Abstract declarator for types.
     MemberContext,       // Struct/Union field.
     BlockContext,        // Declaration within a block in a function.
-    ForContext           // Declaration within first part of a for loop.
+    ForContext,          // Declaration within first part of a for loop.
+    ConditionContext     // Condition declaration in a C++ if/switch/while/for.
   };
 private:
   /// Context - Where we are parsing this declarator.

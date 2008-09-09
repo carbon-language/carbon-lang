@@ -44,14 +44,17 @@ public:
     /// just contain loop constructs but don't contain decls.
     DeclScope = 0x08,
 
+    /// ControlScope - The controlling scope in a if/switch/while/for statement.
+    ControlScope = 0x10,
+
     /// CXXClassScope - The scope of a C++ struct/union/class definition.
-    CXXClassScope = 0x10,
+    CXXClassScope = 0x20,
     
     /// BlockScope - This is a scope that corresponds to a block object.
     /// Blocks serve as top-level scopes for some objects like labels, they
     /// also prevent things like break and continue.  BlockScopes have the
     /// other flags set as well.
-    BlockScope = 0x20
+    BlockScope = 0x40
   };
 private:
   /// The parent scope for this scope.  This is null for the translation-unit

@@ -437,6 +437,10 @@ private:
   void ParseCXXSimpleTypeSpecifier(DeclSpec &DS);
 
   //===--------------------------------------------------------------------===//
+  // C++ if/switch/while/for condition expression.
+  ExprResult ParseCXXCondition();
+
+  //===--------------------------------------------------------------------===//
   // C99 6.7.8: Initialization.
   ExprResult ParseInitializer();
   ExprResult ParseInitializerWithPotentialDesignator();

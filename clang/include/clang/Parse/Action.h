@@ -618,6 +618,17 @@ public:
     return 0;
   }
 
+  /// ActOnCXXConditionDeclarationExpr - Parsed a condition declaration of a
+  /// C++ if/switch/while/for statement.
+  /// e.g: "if (int x = f()) {...}"
+  virtual ExprResult ActOnCXXConditionDeclarationExpr(Scope *S,
+                                                      SourceLocation StartLoc,
+                                                      Declarator &D,
+                                                      SourceLocation EqualLoc,
+                                                      ExprTy *AssignExprVal) {
+    return 0;
+  }
+
   //===---------------------------- C++ Classes ---------------------------===//
   /// ActOnBaseSpecifier - Parsed a base specifier
   virtual void ActOnBaseSpecifier(DeclTy *classdecl, SourceRange SpecifierRange,
