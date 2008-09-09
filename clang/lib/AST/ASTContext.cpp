@@ -1697,8 +1697,6 @@ void ASTContext::setBuiltinVaListType(QualType T)
 
 void ASTContext::setObjCIdType(TypedefDecl *TD)
 {
-  assert(ObjCIdType.isNull() && "'id' type already set!");
-    
   ObjCIdType = getTypedefType(TD);
 
   // typedef struct objc_object *id;
@@ -1711,8 +1709,6 @@ void ASTContext::setObjCIdType(TypedefDecl *TD)
 
 void ASTContext::setObjCSelType(TypedefDecl *TD)
 {
-  assert(ObjCSelType.isNull() && "'SEL' type already set!");
-    
   ObjCSelType = getTypedefType(TD);
 
   // typedef struct objc_selector *SEL;
@@ -1725,14 +1721,11 @@ void ASTContext::setObjCSelType(TypedefDecl *TD)
 
 void ASTContext::setObjCProtoType(QualType QT)
 {
-  assert(ObjCProtoType.isNull() && "'Protocol' type already set!");
   ObjCProtoType = QT;
 }
 
 void ASTContext::setObjCClassType(TypedefDecl *TD)
 {
-  assert(ObjCClassType.isNull() && "'Class' type already set!");
-    
   ObjCClassType = getTypedefType(TD);
 
   // typedef struct objc_class *Class;

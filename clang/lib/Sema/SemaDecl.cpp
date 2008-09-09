@@ -230,6 +230,25 @@ ScopedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid,
 /// situation, merging decls or emitting diagnostics as appropriate.
 ///
 TypedefDecl *Sema::MergeTypeDefDecl(TypedefDecl *New, Decl *OldD) {
+  // Allow multiple definitions for ObjC built-in typedefs.
+  // FIXME: Verify the underlying types are equivalent!
+  if (getLangOptions().ObjC1) {
+    const IdentifierInfo *typeIdent = New->getIdentifier();
+    if (typeIdent == Ident_id) {
+      Context.setObjCIdType(New);
+      return New;
+    } else if (typeIdent == Ident_Class) {
+      Context.setObjCClassType(New);
+      return New;
+    } else if (typeIdent == Ident_SEL) {
+      Context.setObjCSelType(New);
+      return New;
+    } else if (typeIdent == Ident_Protocol) {
+      Context.setObjCProtoType(New->getUnderlyingType());
+      return New;
+    }
+    // Fall through - the typedef name was not a builtin type.
+  }
   // Verify the old decl was also a typedef.
   TypedefDecl *Old = dyn_cast<TypedefDecl>(OldD);
   if (!Old) {
@@ -251,11 +270,6 @@ TypedefDecl *Sema::MergeTypeDefDecl(TypedefDecl *New, Decl *OldD) {
     return Old;
   }
   
-  // Allow multiple definitions for ObjC built-in typedefs.
-  // FIXME: Verify the underlying types are equivalent!
-  if (getLangOptions().ObjC1 && isBuiltinObjCType(New))
-    return Old;
-
   if (getLangOptions().Microsoft) return New;
 
   // Redeclaration of a type is a constraint violation (6.7.2.3p1).

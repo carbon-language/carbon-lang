@@ -21,12 +21,6 @@
 
 using namespace clang;
 
-bool Sema::isBuiltinObjCType(TypedefDecl *TD) {
-  const char *typeName = TD->getIdentifier()->getName();
-  return strcmp(typeName, "id") == 0 || strcmp(typeName, "Class") == 0 ||
-         strcmp(typeName, "SEL") == 0 || strcmp(typeName, "Protocol") == 0;
-}
-
 static inline RecordDecl *CreateStructDecl(ASTContext &C, const char *Name)
 {
   if (C.getLangOptions().CPlusPlus)
@@ -106,6 +100,12 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer)
   KnownFunctionIDs[id_vprintf]   = &IT.get("vprintf");
 
   SuperID = &IT.get("super");
+
+  // ObjC builtin typedef names.
+  Ident_id = &IT.get("id");
+  Ident_Class = &IT.get("Class");
+  Ident_SEL = &IT.get("SEL");
+  Ident_Protocol = &IT.get("Protocol");
 
   TUScope = 0;
   if (getLangOptions().CPlusPlus)

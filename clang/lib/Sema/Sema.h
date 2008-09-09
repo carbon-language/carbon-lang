@@ -146,6 +146,10 @@ public:
   /// SuperID - Identifier for "super" used for Objective-C checking.
   IdentifierInfo* SuperID;
 
+  /// Identifiers for builtin ObjC typedef names.
+  IdentifierInfo *Ident_id, *Ident_Class;     // "id", "Class"
+  IdentifierInfo *Ident_SEL, *Ident_Protocol; // "SEL", "Protocol"
+
   /// Translation Unit Scope - useful to Objective-C actions that need
   /// to lookup file scope declarations in the "ordinary" C decl namespace.
   /// For example, user-defined classes, built-in "id" type, etc.
@@ -357,10 +361,6 @@ private:
   /// true, or false, accordingly.
   bool MatchTwoMethodDeclarations(const ObjCMethodDecl *Method, 
                                   const ObjCMethodDecl *PrevMethod); 
-
-  /// isBuiltinObjCType - Returns true of the type is "id", "SEL", "Class"
-  /// or "Protocol".
-  bool isBuiltinObjCType(TypedefDecl *TD);
 
   /// AddInstanceMethodToGlobalPool - All instance methods in a translation
   /// unit are added to a global pool. This allows us to efficiently associate
