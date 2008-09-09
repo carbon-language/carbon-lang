@@ -221,10 +221,12 @@ public:
   /// The decl must already be part of the decl chain.
   void RemoveDecl(NamedDecl *D);
 
-  IdentifierResolver();
+  explicit IdentifierResolver(const LangOptions &LangOpt);
   ~IdentifierResolver();
 
 private:
+  const LangOptions &LangOpt;
+
   class IdDeclInfoMap;
   IdDeclInfoMap *IdDeclInfos;
 

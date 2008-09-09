@@ -134,7 +134,9 @@ void IdentifierResolver::IdDeclInfo::RemoveDecl(NamedDecl *D) {
 // IdentifierResolver Implementation
 //===----------------------------------------------------------------------===//
 
-IdentifierResolver::IdentifierResolver() : IdDeclInfos(new IdDeclInfoMap) {}
+IdentifierResolver::IdentifierResolver(const LangOptions &langOpt)
+    : LangOpt(langOpt), IdDeclInfos(new IdDeclInfoMap) {
+}
 IdentifierResolver::~IdentifierResolver() {
   delete IdDeclInfos;
 }
