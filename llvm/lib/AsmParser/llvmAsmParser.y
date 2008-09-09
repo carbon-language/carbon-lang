@@ -1102,7 +1102,7 @@ Module *llvm::RunVMAsmParser(llvm::MemoryBuffer *MB) {
 %token <BinaryOpVal> ADD SUB MUL UDIV SDIV FDIV UREM SREM FREM AND OR XOR
 %token <BinaryOpVal> SHL LSHR ASHR
 
-%token <OtherOpVal> ICMP FCMP VICMP VFCMP
+%token <OtherOpVal> ICMP FCMP VICMP VFCMP 
 %type  <IPredicate> IPredicates
 %type  <FPredicate> FPredicates
 %token  EQ NE SLT SGT SLE SGE ULT UGT ULE UGE 
@@ -3097,8 +3097,6 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
   | ICMP IPredicates Types ValueRef ',' ValueRef  {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*$3)->getDescription());
-    if (isa<VectorType>((*$3).get()))
-      GEN_ERROR("Vector types not supported by icmp instruction");
     Value* tmpVal1 = getVal(*$3, $4);
     CHECK_FOR_ERROR
     Value* tmpVal2 = getVal(*$3, $6);
@@ -3111,8 +3109,6 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
   | FCMP FPredicates Types ValueRef ',' ValueRef  {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*$3)->getDescription());
-    if (isa<VectorType>((*$3).get()))
-      GEN_ERROR("Vector types not supported by fcmp instruction");
     Value* tmpVal1 = getVal(*$3, $4);
     CHECK_FOR_ERROR
     Value* tmpVal2 = getVal(*$3, $6);
@@ -3133,7 +3129,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     CHECK_FOR_ERROR
     $$ = CmpInst::Create($1, $2, tmpVal1, tmpVal2);
     if ($$ == 0)
-      GEN_ERROR("icmp operator returned null");
+      GEN_ERROR("vicmp operator returned null");
     delete $3;
   }
   | VFCMP FPredicates Types ValueRef ',' ValueRef  {
@@ -3147,7 +3143,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     CHECK_FOR_ERROR
     $$ = CmpInst::Create($1, $2, tmpVal1, tmpVal2);
     if ($$ == 0)
-      GEN_ERROR("fcmp operator returned null");
+      GEN_ERROR("vfcmp operator returned null");
     delete $3;
   }
   | CastOps ResolvedVal TO Types {
@@ -3163,10 +3159,23 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     delete $4;
   }
   | SELECT ResolvedVal ',' ResolvedVal ',' ResolvedVal {
-    if ($2->getType() != Type::Int1Ty)
-      GEN_ERROR("select condition must be boolean");
+    if (isa<VectorType>($2->getType())) {
+      // vector select
+      if (!isa<VectorType>($4->getType())
+      || !isa<VectorType>($6->getType()) )
+        GEN_ERROR("vector select value types must be vector types");
+      const VectorType* cond_type = cast<VectorType>($2->getType());
+      const VectorType* select_type = cast<VectorType>($4->getType());
+      if (cond_type->getElementType() != Type::Int1Ty)
+        GEN_ERROR("vector select condition element type must be boolean");
+      if (cond_type->getNumElements() != select_type->getNumElements())
+        GEN_ERROR("vector select number of elements must be the same");
+    } else {
+      if ($2->getType() != Type::Int1Ty)
+        GEN_ERROR("select condition must be boolean");
+    }
     if ($4->getType() != $6->getType())
-      GEN_ERROR("select value types should match");
+      GEN_ERROR("select value types must match");
     $$ = SelectInst::Create($2, $4, $6);
     CHECK_FOR_ERROR
   }

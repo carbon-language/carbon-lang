@@ -659,8 +659,21 @@ void Verifier::visitSwitchInst(SwitchInst &SI) {
 }
 
 void Verifier::visitSelectInst(SelectInst &SI) {
-  Assert1(SI.getCondition()->getType() == Type::Int1Ty,
-          "Select condition type must be bool!", &SI);
+  if (const VectorType* vt
+             = dyn_cast<VectorType>(SI.getCondition()->getType())) {
+    Assert1( vt->getElementType() == Type::Int1Ty,
+            "Select condition type must be vector of bool!", &SI);
+    if (const VectorType* val_vt
+             = dyn_cast<VectorType>(SI.getTrueValue()->getType())) {
+      Assert1( vt->getNumElements() == val_vt->getNumElements(),
+               "Select vector size != value vector size", &SI);
+    } else {
+      Assert1(0, "Vector select values must have vector types", &SI);
+    }
+  } else {
+    Assert1(SI.getCondition()->getType() == Type::Int1Ty,
+            "Select condition type must be bool!", &SI);
+  }
   Assert1(SI.getTrueValue()->getType() == SI.getFalseValue()->getType(),
           "Select values must have identical types!", &SI);
   Assert1(SI.getTrueValue()->getType() == SI.getType(),
@@ -1028,7 +1041,7 @@ void Verifier::visitICmpInst(ICmpInst& IC) {
   Assert1(Op0Ty == Op1Ty,
           "Both operands to ICmp instruction are not of the same type!", &IC);
   // Check that the operands are the right type
-  Assert1(Op0Ty->isInteger() || isa<PointerType>(Op0Ty),
+  Assert1(Op0Ty->isIntOrIntVector() || isa<PointerType>(Op0Ty),
           "Invalid operand types for ICmp instruction", &IC);
   visitInstruction(IC);
 }
@@ -1040,7 +1053,7 @@ void Verifier::visitFCmpInst(FCmpInst& FC) {
   Assert1(Op0Ty == Op1Ty,
           "Both operands to FCmp instruction are not of the same type!", &FC);
   // Check that the operands are the right type
-  Assert1(Op0Ty->isFloatingPoint(),
+  Assert1(Op0Ty->isFPOrFPVector(),
           "Invalid operand types for FCmp instruction", &FC);
   visitInstruction(FC);
 }

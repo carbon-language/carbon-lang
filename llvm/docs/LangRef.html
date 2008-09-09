@@ -3846,11 +3846,12 @@ instructions, which defy better classification.</p>
 </div>
 <div class="doc_text">
 <h5>Syntax:</h5>
-<pre>  &lt;result&gt; = icmp &lt;cond&gt; &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;   <i>; yields {i1}:result</i>
+<pre>  &lt;result&gt; = icmp &lt;cond&gt; &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;   <i>; yields {i1} or {&lt;N x i1&gt}:result</i>
 </pre>
 <h5>Overview:</h5>
-<p>The '<tt>icmp</tt>' instruction returns a boolean value based on comparison
-of its two integer or pointer operands.</p>
+<p>The '<tt>icmp</tt>' instruction returns a boolean value or
+a vector of boolean values based on comparison
+of its two integer, integer vector, or pointer operands.</p>
 <h5>Arguments:</h5>
 <p>The '<tt>icmp</tt>' instruction takes three operands. The first operand is
 the condition code indicating the kind of comparison to perform. It is not
@@ -3868,11 +3869,13 @@ a value, just a keyword. The possible condition code are:
   <li><tt>sle</tt>: signed less or equal</li>
 </ol>
 <p>The remaining two arguments must be <a href="#t_integer">integer</a> or
-<a href="#t_pointer">pointer</a> typed. They must also be identical types.</p>
+<a href="#t_pointer">pointer</a>
+or integer <a href="#t_vector">vector</a> typed.
+They must also be identical types.</p>
 <h5>Semantics:</h5>
 <p>The '<tt>icmp</tt>' compares <tt>op1</tt> and <tt>op2</tt> according to 
 the condition code given as <tt>cond</tt>. The comparison performed always
-yields a <a href="#t_primitive">i1</a> result, as follows: 
+yields either an <a href="#t_primitive"><tt>i1</tt></a> or vector of <tt>i1</tt> result, as follows: 
 <ol>
   <li><tt>eq</tt>: yields <tt>true</tt> if the operands are equal, 
   <tt>false</tt> otherwise. No sign interpretation is necessary or performed.
@@ -3898,6 +3901,11 @@ yields a <a href="#t_primitive">i1</a> result, as follows:
 </ol>
 <p>If the operands are <a href="#t_pointer">pointer</a> typed, the pointer
 values are compared as if they were integers.</p>
+<p>If the operands are integer vectors, then they are compared
+element by element. The result is an <tt>i1</tt> vector with
+the same number of elements as the values being compared.
+Otherwise, the result is an <tt>i1</tt>.
+</p>
 
 <h5>Example:</h5>
 <pre>  &lt;result&gt; = icmp eq i32 4, 5          <i>; yields: result=false</i>
@@ -3914,11 +3922,19 @@ values are compared as if they were integers.</p>
 </div>
 <div class="doc_text">
 <h5>Syntax:</h5>
-<pre>  &lt;result&gt; = fcmp &lt;cond&gt; &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;     <i>; yields {i1}:result</i>
+<pre>  &lt;result&gt; = fcmp &lt;cond&gt; &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;     <i>; yields {i1} or {&lt;N x i1&gt}:result</i>
 </pre>
 <h5>Overview:</h5>
-<p>The '<tt>fcmp</tt>' instruction returns a boolean value based on comparison
-of its floating point operands.</p>
+<p>The '<tt>fcmp</tt>' instruction returns a boolean value
+or vector of boolean values based on comparison
+of its operands.
+<p>
+If the operands are floating point scalars, then the result
+type is a boolean (<a href="#t_primitive"><tt>i1</tt></a>).
+</p>
+<p>If the operands are floating point vectors, then the result type
+is a vector of boolean with the same number of elements as the
+operands being compared.</p>
 <h5>Arguments:</h5>
 <p>The '<tt>fcmp</tt>' instruction takes three operands. The first operand is
 the condition code indicating the kind of comparison to perform. It is not
@@ -3943,13 +3959,17 @@ a value, just a keyword. The possible condition code are:
 </ol>
 <p><i>Ordered</i> means that neither operand is a QNAN while
 <i>unordered</i> means that either operand may be a QNAN.</p>
-<p>The <tt>val1</tt> and <tt>val2</tt> arguments must be
-<a href="#t_floating">floating point</a> typed.  They must have identical 
-types.</p>
+<p>Each of <tt>val1</tt> and <tt>val2</tt> arguments must be
+either a <a href="#t_floating">floating point</a> type
+or a <a href="#t_vector">vector</a> of floating point type.
+They must have identical types.</p>
 <h5>Semantics:</h5>
 <p>The '<tt>fcmp</tt>' instruction compares <tt>op1</tt> and <tt>op2</tt>
-according to the condition code given as <tt>cond</tt>. The comparison performed 
-always yields a <a href="#t_primitive">i1</a> result, as follows: 
+according to the condition code given as <tt>cond</tt>.
+If the operands are vectors, then the vectors are compared
+element by element.
+Each comparison performed 
+always yields an <a href="#t_primitive">i1</a> result, as follows: 
 <ol>
   <li><tt>false</tt>: always yields <tt>false</tt>, regardless of operands.</li>
   <li><tt>oeq</tt>: yields <tt>true</tt> if both operands are not a QNAN and 
@@ -3983,9 +4003,9 @@ always yields a <a href="#t_primitive">i1</a> result, as follows:
 
 <h5>Example:</h5>
 <pre>  &lt;result&gt; = fcmp oeq float 4.0, 5.0    <i>; yields: result=false</i>
-  &lt;result&gt; = icmp one float 4.0, 5.0    <i>; yields: result=true</i>
-  &lt;result&gt; = icmp olt float 4.0, 5.0    <i>; yields: result=true</i>
-  &lt;result&gt; = icmp ueq double 1.0, 2.0   <i>; yields: result=false</i>
+  &lt;result&gt; = fcmp one float 4.0, 5.0    <i>; yields: result=true</i>
+  &lt;result&gt; = fcmp olt float 4.0, 5.0    <i>; yields: result=true</i>
+  &lt;result&gt; = fcmp ueq double 1.0, 2.0   <i>; yields: result=false</i>
 </pre>
 </div>
 
@@ -4016,7 +4036,7 @@ a value, just a keyword. The possible condition code are:
   <li><tt>slt</tt>: signed less than</li>
   <li><tt>sle</tt>: signed less or equal</li>
 </ol>
-<p>The remaining two arguments must be <a href="#t_vector">vector</a> of 
+<p>The remaining two arguments must be <a href="#t_vector">vector</a> or
 <a href="#t_integer">integer</a> typed. They must also be identical types.</p>
 <h5>Semantics:</h5>
 <p>The '<tt>vicmp</tt>' instruction compares <tt>op1</tt> and <tt>op2</tt>
@@ -4140,7 +4160,9 @@ Loop:       ; Infinite loop that counts from 0 on up...
 <h5>Syntax:</h5>
 
 <pre>
-  &lt;result&gt; = select i1 &lt;cond&gt;, &lt;ty&gt; &lt;val1&gt;, &lt;ty&gt; &lt;val2&gt;             <i>; yields ty</i>
+  &lt;result&gt; = select <i>selty</i> &lt;cond&gt;, &lt;ty&gt; &lt;val1&gt;, &lt;ty&gt; &lt;val2&gt;             <i>; yields ty</i>
+
+  <i>selty</i> is either i1 or {&lt;N x i1&gt}
 </pre>
 
 <h5>Overview:</h5>
@@ -4154,17 +4176,24 @@ condition, without branching.
 <h5>Arguments:</h5>
 
 <p>
-The '<tt>select</tt>' instruction requires an 'i1' value indicating the
+The '<tt>select</tt>' instruction requires an 'i1' value or
+a vector of 'i1' values indicating the
 condition, and two values of the same <a href="#t_firstclass">first class</a>
-type.  If the val1/val2 are vectors, the entire vectors are selected, not
+type.  If the val1/val2 are vectors and
+the condition is a scalar, then entire vectors are selected, not
 individual elements.
 </p>
 
 <h5>Semantics:</h5>
 
 <p>
-If the i1 condition evaluates is 1, the instruction returns the first
+If the condition is an i1 and it evaluates to 1, the instruction returns the first
 value argument; otherwise, it returns the second value argument.
+</p>
+<p>
+If the condition is a vector of i1, then the value arguments must
+be vectors of the same size, and the selection is done element 
+by element.
 </p>
 
 <h5>Example:</h5>

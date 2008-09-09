@@ -621,7 +621,8 @@ public:
     Value *RHS,      ///< The right-hand-side of the expression
     const std::string &NameStr = "",  ///< Name of the instruction
     Instruction *InsertBefore = 0  ///< Where to insert
-  ) : CmpInst(Type::Int1Ty, Instruction::ICmp, pred, LHS, RHS, NameStr,
+  ) : CmpInst(makeCmpResultType(LHS->getType()),
+              Instruction::ICmp, pred, LHS, RHS, NameStr,
               InsertBefore) {
     assert(pred >= CmpInst::FIRST_ICMP_PREDICATE &&
            pred <= CmpInst::LAST_ICMP_PREDICATE &&
@@ -629,7 +630,7 @@ public:
     assert(getOperand(0)->getType() == getOperand(1)->getType() &&
           "Both operands to ICmp instruction are not of the same type!");
     // Check that the operands are the right type
-    assert((getOperand(0)->getType()->isInteger() || 
+    assert((getOperand(0)->getType()->isIntOrIntVector() || 
             isa<PointerType>(getOperand(0)->getType())) &&
            "Invalid operand types for ICmp instruction");
   }
@@ -641,7 +642,8 @@ public:
     Value *RHS,     ///< The right-hand-side of the expression
     const std::string &NameStr,  ///< Name of the instruction
     BasicBlock *InsertAtEnd   ///< Block to insert into.
-  ) : CmpInst(Type::Int1Ty, Instruction::ICmp, pred, LHS, RHS, NameStr,
+  ) : CmpInst(makeCmpResultType(LHS->getType()),
+              Instruction::ICmp, pred, LHS, RHS, NameStr,
               InsertAtEnd) {
     assert(pred >= CmpInst::FIRST_ICMP_PREDICATE &&
            pred <= CmpInst::LAST_ICMP_PREDICATE &&
@@ -649,7 +651,7 @@ public:
     assert(getOperand(0)->getType() == getOperand(1)->getType() &&
           "Both operands to ICmp instruction are not of the same type!");
     // Check that the operands are the right type
-    assert((getOperand(0)->getType()->isInteger() || 
+    assert((getOperand(0)->getType()->isIntOrIntVector() || 
             isa<PointerType>(getOperand(0)->getType())) &&
            "Invalid operand types for ICmp instruction");
   }
@@ -754,6 +756,7 @@ public:
   static inline bool classof(const Value *V) {
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
   }
+
 };
 
 //===----------------------------------------------------------------------===//
@@ -773,14 +776,15 @@ public:
     Value *RHS,      ///< The right-hand-side of the expression
     const std::string &NameStr = "",  ///< Name of the instruction
     Instruction *InsertBefore = 0  ///< Where to insert
-  ) : CmpInst(Type::Int1Ty, Instruction::FCmp, pred, LHS, RHS, NameStr,
+  ) : CmpInst(makeCmpResultType(LHS->getType()),
+              Instruction::FCmp, pred, LHS, RHS, NameStr,
               InsertBefore) {
     assert(pred <= FCmpInst::LAST_FCMP_PREDICATE &&
            "Invalid FCmp predicate value");
     assert(getOperand(0)->getType() == getOperand(1)->getType() &&
            "Both operands to FCmp instruction are not of the same type!");
     // Check that the operands are the right type
-    assert(getOperand(0)->getType()->isFloatingPoint() &&
+    assert(getOperand(0)->getType()->isFPOrFPVector() &&
            "Invalid operand types for FCmp instruction");
   }
 
@@ -791,14 +795,15 @@ public:
     Value *RHS,     ///< The right-hand-side of the expression
     const std::string &NameStr,  ///< Name of the instruction
     BasicBlock *InsertAtEnd   ///< Block to insert into.
-  ) : CmpInst(Type::Int1Ty, Instruction::FCmp, pred, LHS, RHS, NameStr,
+  ) : CmpInst(makeCmpResultType(LHS->getType()),
+              Instruction::FCmp, pred, LHS, RHS, NameStr,
               InsertAtEnd) {
     assert(pred <= FCmpInst::LAST_FCMP_PREDICATE &&
            "Invalid FCmp predicate value");
     assert(getOperand(0)->getType() == getOperand(1)->getType() &&
            "Both operands to FCmp instruction are not of the same type!");
     // Check that the operands are the right type
-    assert(getOperand(0)->getType()->isFloatingPoint() &&
+    assert(getOperand(0)->getType()->isFPOrFPVector() &&
            "Invalid operand types for FCmp instruction");
   }
 
@@ -837,6 +842,7 @@ public:
   static inline bool classof(const Value *V) {
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
   }
+  
 };
 
 //===----------------------------------------------------------------------===//

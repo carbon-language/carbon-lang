@@ -1499,8 +1499,19 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       Value *TrueVal, *FalseVal, *Cond;
       if (getValueTypePair(Record, OpNum, NextValueNo, TrueVal) ||
           getValue(Record, OpNum, TrueVal->getType(), FalseVal) ||
-          getValue(Record, OpNum, Type::Int1Ty, Cond))
+          getValue(Record, OpNum, 0 /*skip type check*/, Cond))
         return Error("Invalid SELECT record");
+
+      // select condition can be either i1 or [N x i1]
+      if (const VectorType* vector_type = dyn_cast<const VectorType>(Cond->getType())) {
+        // expect <n x i1>
+        if (vector_type->getElementType() != Type::Int1Ty) 
+          return Error("Invalid SELECT condition type");
+      } else {
+        // expect i1
+        if (Cond->getType() != Type::Int1Ty) 
+          return Error("Invalid SELECT condition type");
+      } 
       
       I = SelectInst::Create(Cond, TrueVal, FalseVal);
       break;
@@ -1561,6 +1572,22 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
         I = new VFCmpInst((FCmpInst::Predicate)Record[OpNum], LHS, RHS);
       else
         I = new VICmpInst((ICmpInst::Predicate)Record[OpNum], LHS, RHS);
+      break;
+    }
+    case bitc::FUNC_CODE_INST_VCMP: { // VCMP: [opty, opval, opval, pred]
+      // Fcmp/ICmp returning vector of bool
+      unsigned OpNum = 0;
+      Value *LHS, *RHS;
+      if (getValueTypePair(Record, OpNum, NextValueNo, LHS) ||
+          getValue(Record, OpNum, LHS->getType(), RHS) ||
+          OpNum+1 != Record.size())
+        return Error("Invalid VCMP record");
+      
+      // will always be vector
+      if (LHS->getType()->isFPOrFPVector())
+        I = new FCmpInst((FCmpInst::Predicate)Record[OpNum], LHS, RHS);
+      else 
+        I = new ICmpInst((ICmpInst::Predicate)Record[OpNum], LHS, RHS);
       break;
     }
     case bitc::FUNC_CODE_INST_GETRESULT: { // GETRESULT: [ty, val, n]

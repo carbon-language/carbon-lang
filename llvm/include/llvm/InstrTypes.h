@@ -18,6 +18,7 @@
 
 #include "llvm/Instruction.h"
 #include "llvm/OperandTraits.h"
+#include "llvm/DerivedTypes.h"
 
 namespace llvm {
 
@@ -731,6 +732,13 @@ public:
   }
   static inline bool classof(const Value *V) {
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
+  /// @brief Create a result type for fcmp/icmp (but not vicmp/vfcmp)
+  static const Type* makeCmpResultType(const Type* opnd_type) {
+    if (const VectorType* vt = dyn_cast<const VectorType>(opnd_type)) {
+      return VectorType::get(Type::Int1Ty, vt->getNumElements());
+    }
+    return Type::Int1Ty;
   }
   /// Backward-compatible interfaces
   /// @deprecated in 2.4, do not use, will disappear soon

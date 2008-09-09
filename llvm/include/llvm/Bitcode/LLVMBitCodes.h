@@ -205,7 +205,9 @@ namespace bitc {
     // FIXME: Remove GETRESULT in favor of EXTRACTVAL in LLVM 3.0
     FUNC_CODE_INST_GETRESULT   = 25, // GETRESULT:  [ty, opval, n]
     FUNC_CODE_INST_EXTRACTVAL  = 26, // EXTRACTVAL: [n x operands]
-    FUNC_CODE_INST_INSERTVAL   = 27  // INSERTVAL:  [n x operands]
+    FUNC_CODE_INST_INSERTVAL   = 27, // INSERTVAL:  [n x operands]
+    // fcmp/icmp returning vector of Int1Ty, NOT for vicmp/vfcmp
+    FUNC_CODE_INST_VCMP        = 28  // VCMP:       [opty, opval, opval, pred]
   };
 } // End bitc namespace
 } // End llvm namespace
