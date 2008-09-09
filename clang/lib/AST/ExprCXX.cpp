@@ -14,6 +14,12 @@
 #include "clang/AST/ExprCXX.h"
 using namespace clang;
 
+void CXXConditionDeclExpr::Destroy(ASTContext& C) {
+  getVarDecl()->Destroy(C);
+  delete this;
+}
+
+
 //===----------------------------------------------------------------------===//
 //  Child Iterators for iterating over subexpressions/substatements
 //===----------------------------------------------------------------------===//
@@ -51,5 +57,13 @@ Stmt::child_iterator CXXZeroInitValueExpr::child_begin() {
   return child_iterator();
 }
 Stmt::child_iterator CXXZeroInitValueExpr::child_end() {
+  return child_iterator();
+}
+
+// CXXConditionDeclExpr
+Stmt::child_iterator CXXConditionDeclExpr::child_begin() {
+  return getVarDecl();
+}
+Stmt::child_iterator CXXConditionDeclExpr::child_end() {
   return child_iterator();
 }

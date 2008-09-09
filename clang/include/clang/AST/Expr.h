@@ -206,17 +206,24 @@ public:
 class DeclRefExpr : public Expr {
   ValueDecl *D; 
   SourceLocation Loc;
+
+protected:
+  DeclRefExpr(StmtClass SC, ValueDecl *d, QualType t, SourceLocation l) :
+    Expr(SC, t), D(d), Loc(l) {}
+
 public:
   DeclRefExpr(ValueDecl *d, QualType t, SourceLocation l) : 
     Expr(DeclRefExprClass, t), D(d), Loc(l) {}
   
   ValueDecl *getDecl() { return D; }
   const ValueDecl *getDecl() const { return D; }
+  SourceLocation getLocation() const { return Loc; }
   virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
   
   
   static bool classof(const Stmt *T) { 
-    return T->getStmtClass() == DeclRefExprClass; 
+    return T->getStmtClass() == DeclRefExprClass ||
+           T->getStmtClass() == CXXConditionDeclExprClass; 
   }
   static bool classof(const DeclRefExpr *) { return true; }
   

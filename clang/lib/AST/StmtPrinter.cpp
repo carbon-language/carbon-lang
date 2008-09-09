@@ -829,6 +829,11 @@ void StmtPrinter::VisitCXXZeroInitValueExpr(CXXZeroInitValueExpr *Node) {
   OS << Node->getType().getAsString() << "()";
 }
 
+void
+StmtPrinter::VisitCXXConditionDeclExpr(CXXConditionDeclExpr *E) {
+  PrintRawDecl(E->getVarDecl());
+}
+
 // Obj-C 
 
 void StmtPrinter::VisitObjCStringLiteral(ObjCStringLiteral *Node) {
