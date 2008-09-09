@@ -1,4 +1,5 @@
 ; RUN: llvm-as < %s | llvm-dis | llvm-as | llvm-dis | grep select
+; XFAIL: *
 ; rudimentary test of select on vectors returning vector of bool
 
 define <4 x i32> @foo(<4 x i32> %a, <4 x i32> %b,

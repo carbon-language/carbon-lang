@@ -1499,7 +1499,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       Value *TrueVal, *FalseVal, *Cond;
       if (getValueTypePair(Record, OpNum, NextValueNo, TrueVal) ||
           getValue(Record, OpNum, TrueVal->getType(), FalseVal) ||
-          getValue(Record, OpNum, 0 /*skip type check*/, Cond))
+          getValue(Record, OpNum, Type::Int1Ty, Cond))
         return Error("Invalid SELECT record");
 
       // select condition can be either i1 or [N x i1]
