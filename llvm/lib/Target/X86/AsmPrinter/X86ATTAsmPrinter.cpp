@@ -369,7 +369,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
       // If GV is an alias then use the aliasee for determining
       // thread-localness.
       if (const GlobalAlias *GA = dyn_cast<GlobalAlias>(GV))
-        GVar = dyn_cast_or_null<GlobalVariable>(GA->resolveAliasedGlobal());
+        GVar = dyn_cast_or_null<GlobalVariable>(GA->resolveAliasedGlobal(false));
     }
 
     bool isThreadLocal = GVar && GVar->isThreadLocal();

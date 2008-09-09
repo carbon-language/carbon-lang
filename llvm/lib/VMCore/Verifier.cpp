@@ -394,7 +394,7 @@ void Verifier::visitGlobalAlias(GlobalAlias &GA) {
             &GA);
   }
 
-  const GlobalValue* Aliasee = GA.resolveAliasedGlobal();
+  const GlobalValue* Aliasee = GA.resolveAliasedGlobal(/*stopOnWeak*/ false);
   Assert1(Aliasee,
           "Aliasing chain should end with function or global variable", &GA);
 

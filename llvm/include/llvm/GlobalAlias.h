@@ -76,10 +76,10 @@ public:
 
   /// resolveAliasedGlobal() - This method tries to ultimately resolve the alias
   /// by going through the aliasing chain and trying to find the very last
-  /// global. Returns NULL if a cycle was found. If traverseWeak is true, then
+  /// global. Returns NULL if a cycle was found. If stopOnWeak is false, then
   /// the whole chain aliasing chain is traversed, otherwise - only strong
   /// aliases.
-  const GlobalValue* resolveAliasedGlobal(bool traverseWeak = true) const;
+  const GlobalValue* resolveAliasedGlobal(bool stopOnWeak = true) const;
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const GlobalAlias *) { return true; }

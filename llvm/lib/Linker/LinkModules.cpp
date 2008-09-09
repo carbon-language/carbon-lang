@@ -1169,7 +1169,7 @@ static bool LinkAppendingVars(Module *M,
 static bool ResolveAliases(Module *Dest) {
   for (Module::alias_iterator I = Dest->alias_begin(), E = Dest->alias_end();
        I != E; ++I)
-    if (const GlobalValue *GV = I->resolveAliasedGlobal(/*traverseWeak*/ false))
+    if (const GlobalValue *GV = I->resolveAliasedGlobal())
       if (GV != I && !GV->isDeclaration())
         I->replaceAllUsesWith(const_cast<GlobalValue*>(GV));
 

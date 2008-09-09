@@ -2223,7 +2223,7 @@ bool GlobalOpt::ResolveAliases(Module &M) {
     if (I->use_empty())
       continue;
 
-    if (const GlobalValue *GV = I->resolveAliasedGlobal(/*traverseWeak*/ false))
+    if (const GlobalValue *GV = I->resolveAliasedGlobal())
       if (GV != I) {
         I->replaceAllUsesWith(const_cast<GlobalValue*>(GV));
         Changed = true;
@@ -2252,7 +2252,6 @@ bool GlobalOpt::runOnModule(Module &M) {
     
     // Optimize non-address-taken globals.
     LocalChange |= OptimizeGlobalVars(M);
-    Changed |= LocalChange;
 
     // Resolve aliases, when possible.
     LocalChange |= ResolveAliases(M);
