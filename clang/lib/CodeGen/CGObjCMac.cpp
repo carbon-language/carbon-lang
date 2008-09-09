@@ -158,7 +158,8 @@ public:
   ObjCTypesHelper(CodeGen::CodeGenModule &cgm);
   ~ObjCTypesHelper();
   
-  llvm::Value *getMessageSendFn(bool IsSuper, const llvm::Type *ReturnTy);
+  llvm::Value *getMessageSendFn(bool IsSuper, bool isStret, 
+                                const llvm::Type *ReturnTy);
 };
 
 class CGObjCMac : public CodeGen::CGObjCRuntime {
@@ -528,13 +529,11 @@ CodeGen::RValue CGObjCMac::EmitMessageSend(CodeGen::CodeGenFunction &CGF,
                                       CGF.getContext().getObjCSelType()));
   ActualArgs.insert(ActualArgs.end(), CallArgs.begin(), CallArgs.end());
 
-  // FIXME: This is a hack, we are implicitly coordinating with
-  // EmitCall, which will move the return type to the first parameter
-  // and set the structure return flag. See getMessageSendFn().
-                                                   
-  const llvm::Type *ReturnTy = CGM.getTypes().ConvertType(ResultType);
-  return CGF.EmitCall(ObjCTypes.getMessageSendFn(IsSuper, ReturnTy),
-                      ResultType, ActualArgs);
+  llvm::Value *Fn = 
+    ObjCTypes.getMessageSendFn(IsSuper, 
+                               CGF.ReturnTypeUsesSret(ResultType),
+                               CGM.getTypes().ConvertType(ResultType));
+  return CGF.EmitCall(Fn, ResultType, ActualArgs);
 }
 
 llvm::Value *CGObjCMac::GenerateProtocolRef(llvm::IRBuilder<> &Builder, 
@@ -2249,12 +2248,13 @@ ObjCTypesHelper::~ObjCTypesHelper() {
 }
 
 llvm::Value *ObjCTypesHelper::getMessageSendFn(bool IsSuper, 
+                                               bool IsStret,
                                                const llvm::Type *ReturnTy) {
   llvm::Function *F;
   llvm::FunctionType *CallFTy;
   
   // FIXME: Should we be caching any of this?
-  if (!ReturnTy->isSingleValueType()) {
+  if (IsStret) {
     F = IsSuper ? MessageSendSuperStretFn : MessageSendStretFn;
     std::vector<const llvm::Type*> Params(3);
     Params[0] = llvm::PointerType::getUnqual(ReturnTy);

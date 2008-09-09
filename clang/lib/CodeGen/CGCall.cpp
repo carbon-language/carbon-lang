@@ -117,6 +117,10 @@ void CGCallInfo::constructParamAttrList(ParamAttrListType &PAL) const {
 
 /***/
 
+bool CodeGenFunction::ReturnTypeUsesSret(QualType RetTy) {
+  return hasAggregateLLVMType(RetTy);
+}
+
 void CodeGenFunction::EmitFunctionProlog(llvm::Function *Fn,
                                          QualType RetTy, 
                                          const FunctionArgList &Args) {
