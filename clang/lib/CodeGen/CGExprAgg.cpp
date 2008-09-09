@@ -48,11 +48,6 @@ public:
   /// then loads the result into DestPtr.
   void EmitAggLoadOfLValue(const Expr *E);
   
-  void EmitAggregateCopy(llvm::Value *DestPtr, llvm::Value *SrcPtr,
-                         QualType EltTy);
-
-  void EmitAggregateClear(llvm::Value *DestPtr, QualType Ty);
-
   void EmitNonConstInit(InitListExpr *E);
 
   //===--------------------------------------------------------------------===//
@@ -111,38 +106,6 @@ public:
 //                                Utilities
 //===----------------------------------------------------------------------===//
 
-void AggExprEmitter::EmitAggregateClear(llvm::Value *DestPtr, QualType Ty) {
-  assert(!Ty->isAnyComplexType() && "Shouldn't happen for complex");
-
-  CGF.EmitMemSetToZero(DestPtr, Ty);
-}
-
-void AggExprEmitter::EmitAggregateCopy(llvm::Value *DestPtr,
-                                       llvm::Value *SrcPtr, QualType Ty) {
-  assert(!Ty->isAnyComplexType() && "Shouldn't happen for complex");
-  
-  // Aggregate assignment turns into llvm.memmove.
-  const llvm::Type *BP = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
-  if (DestPtr->getType() != BP)
-    DestPtr = Builder.CreateBitCast(DestPtr, BP, "tmp");
-  if (SrcPtr->getType() != BP)
-    SrcPtr = Builder.CreateBitCast(SrcPtr, BP, "tmp");
-  
-  // Get size and alignment info for this aggregate.
-  std::pair<uint64_t, unsigned> TypeInfo = CGF.getContext().getTypeInfo(Ty);
-  
-  // FIXME: Handle variable sized types.
-  const llvm::Type *IntPtr = llvm::IntegerType::get(CGF.LLVMPointerWidth);
-  
-  Builder.CreateCall4(CGF.CGM.getMemMoveFn(),
-                      DestPtr, SrcPtr,
-                      // TypeInfo.first describes size in bits.
-                      llvm::ConstantInt::get(IntPtr, TypeInfo.first/8),
-                      llvm::ConstantInt::get(llvm::Type::Int32Ty, 
-                                             TypeInfo.second/8));
-}
-
-
 /// EmitAggLoadOfLValue - Given an expression with aggregate type that
 /// represents a value lvalue, this method emits the address of the lvalue,
 /// then loads the result into DestPtr.
@@ -156,7 +119,7 @@ void AggExprEmitter::EmitAggLoadOfLValue(const Expr *E) {
     // FIXME: If the source is volatile, we must read from it.
     return;
 
-  EmitAggregateCopy(DestPtr, SrcPtr, E->getType());
+  CGF.EmitAggregateCopy(DestPtr, SrcPtr, E->getType());
 }
 
 //===----------------------------------------------------------------------===//
@@ -180,7 +143,7 @@ void AggExprEmitter::VisitCallExpr(const CallExpr *E) {
     // FIXME: If the source is volatile, we must read from it.
     return;
   
-  EmitAggregateCopy(DestPtr, RV.getAggregateAddr(), E->getType());
+  CGF.EmitAggregateCopy(DestPtr, RV.getAggregateAddr(), E->getType());
 }
 
 void AggExprEmitter::VisitObjCMessageExpr(ObjCMessageExpr *E) {
@@ -192,7 +155,7 @@ void AggExprEmitter::VisitObjCMessageExpr(ObjCMessageExpr *E) {
     // FIXME: If the source is volatile, we must read from it.
     return;
   
-  EmitAggregateCopy(DestPtr, RV.getAggregateAddr(), E->getType());
+  CGF.EmitAggregateCopy(DestPtr, RV.getAggregateAddr(), E->getType());
 }
 
 void AggExprEmitter::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *E) {
@@ -204,7 +167,7 @@ void AggExprEmitter::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *E) {
     // FIXME: If the source is volatile, we must read from it.
     return;
   
-  EmitAggregateCopy(DestPtr, RV.getAggregateAddr(), E->getType());
+  CGF.EmitAggregateCopy(DestPtr, RV.getAggregateAddr(), E->getType());
 }
 
 void AggExprEmitter::VisitOverloadExpr(const OverloadExpr *E) {
@@ -218,7 +181,7 @@ void AggExprEmitter::VisitOverloadExpr(const OverloadExpr *E) {
     // FIXME: If the source is volatile, we must read from it.
     return;
   
-  EmitAggregateCopy(DestPtr, RV.getAggregateAddr(), E->getType());
+  CGF.EmitAggregateCopy(DestPtr, RV.getAggregateAddr(), E->getType());
 }
 
 void AggExprEmitter::VisitBinComma(const BinaryOperator *E) {
@@ -261,7 +224,7 @@ void AggExprEmitter::VisitBinAssign(const BinaryOperator *E) {
       return;
     
     // If the result of the assignment is used, copy the RHS there also.
-    EmitAggregateCopy(DestPtr, LHS.getAddress(), E->getType());
+    CGF.EmitAggregateCopy(DestPtr, LHS.getAddress(), E->getType());
   }
 }
 
@@ -329,7 +292,7 @@ void AggExprEmitter::EmitNonConstInit(InitListExpr *E) {
         // FIXME: volatility
         Builder.CreateStore(llvm::Constant::getNullValue(EType), NextVal);
       else
-        EmitAggregateClear(NextVal, QType);
+        CGF.EmitAggregateClear(NextVal, QType);
     }
   } else
     assert(false && "Invalid initializer");
@@ -468,4 +431,35 @@ void CodeGenFunction::EmitAggExpr(const Expr *E, llvm::Value *DestPtr,
          "Invalid aggregate expression to emit");
   
   AggExprEmitter(*this, DestPtr, VolatileDest).Visit(const_cast<Expr*>(E));
+}
+
+void CodeGenFunction::EmitAggregateClear(llvm::Value *DestPtr, QualType Ty) {
+  assert(!Ty->isAnyComplexType() && "Shouldn't happen for complex");
+
+  EmitMemSetToZero(DestPtr, Ty);
+}
+
+void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
+                                        llvm::Value *SrcPtr, QualType Ty) {
+  assert(!Ty->isAnyComplexType() && "Shouldn't happen for complex");
+  
+  // Aggregate assignment turns into llvm.memmove.
+  const llvm::Type *BP = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+  if (DestPtr->getType() != BP)
+    DestPtr = Builder.CreateBitCast(DestPtr, BP, "tmp");
+  if (SrcPtr->getType() != BP)
+    SrcPtr = Builder.CreateBitCast(SrcPtr, BP, "tmp");
+  
+  // Get size and alignment info for this aggregate.
+  std::pair<uint64_t, unsigned> TypeInfo = getContext().getTypeInfo(Ty);
+  
+  // FIXME: Handle variable sized types.
+  const llvm::Type *IntPtr = llvm::IntegerType::get(LLVMPointerWidth);
+  
+  Builder.CreateCall4(CGM.getMemMoveFn(),
+                      DestPtr, SrcPtr,
+                      // TypeInfo.first describes size in bits.
+                      llvm::ConstantInt::get(IntPtr, TypeInfo.first/8),
+                      llvm::ConstantInt::get(llvm::Type::Int32Ty, 
+                                             TypeInfo.second/8));
 }

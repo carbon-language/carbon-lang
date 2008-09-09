@@ -181,6 +181,11 @@ public:
   RValue EmitAnyExprToTemp(const Expr *E, llvm::Value *AggLoc = 0, 
                            bool isAggLocVolatile = false);
 
+  void EmitAggregateCopy(llvm::Value *DestPtr, llvm::Value *SrcPtr,
+                         QualType EltTy);
+
+  void EmitAggregateClear(llvm::Value *DestPtr, QualType Ty);
+
   /// isDummyBlock - Return true if BB is an empty basic block
   /// with no predecessors.
   static bool isDummyBlock(const llvm::BasicBlock *BB);
