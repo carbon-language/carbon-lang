@@ -132,6 +132,28 @@ public:
   const llvm::Type *MethodListPtrTy;
 
   llvm::Function *EnumerationMutationFn;
+  
+  /// ExceptionDataTy - LLVM type for struct _objc_exception_data.
+  const llvm::Type *ExceptionDataTy;
+  
+  /// ExceptionThrowFn - LLVM objc_exception_throw function.
+  llvm::Function *ExceptionThrowFn;
+  
+  /// ExceptionTryEnterFn - LLVM objc_exception_try_enter function.
+  llvm::Function *ExceptionTryEnterFn;
+
+  /// ExceptionTryExitFn - LLVM objc_exception_try_exit function.
+  llvm::Function *ExceptionTryExitFn;
+
+  /// ExceptionExtractFn - LLVM objc_exception_extract function.
+  llvm::Function *ExceptionExtractFn;
+  
+  /// ExceptionMatchFn - LLVM objc_exception_match function.
+  llvm::Function *ExceptionMatchFn;
+  
+  /// SetJmpFn - LLVM _setjmp function.
+  llvm::Function *SetJmpFn;
+
 public:
   ObjCTypesHelper(CodeGen::CodeGenModule &cgm);
   ~ObjCTypesHelper();
@@ -1977,6 +1999,77 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
                            llvm::Function::ExternalLinkage,
                            "objc_enumerationMutation",
                            &CGM.getModule());
+  
+  // FIXME: This is the size of the setjmp buffer and should be 
+  // target specific. 18 is what's used on 32-bit X86.
+  uint64_t SetJmpBufferSize = 18;
+ 
+  // Exceptions
+  const llvm::Type *StackPtrTy = 
+    llvm::PointerType::getUnqual(llvm::ArrayType::get(llvm::Type::Int8Ty, 4));
+                           
+  ExceptionDataTy = 
+    llvm::StructType::get(llvm::ArrayType::get(llvm::Type::Int32Ty, 
+                                               SetJmpBufferSize),
+                          StackPtrTy, NULL);
+  CGM.getModule().addTypeName("struct._objc_exception_data", 
+                              ExceptionDataTy);
+
+  Params.clear();
+  Params.push_back(ObjectPtrTy);
+  ExceptionThrowFn =
+   llvm::Function::Create(llvm::FunctionType::get(llvm::Type::VoidTy,
+                                                   Params,
+                                                   false),
+                           llvm::Function::ExternalLinkage,
+                           "objc_exception_throw",
+                           &CGM.getModule());
+  
+  Params.clear();
+  Params.push_back(llvm::PointerType::getUnqual(ExceptionDataTy));
+  ExceptionTryEnterFn = 
+   llvm::Function::Create(llvm::FunctionType::get(llvm::Type::VoidTy,
+                                                   Params,
+                                                   false),
+                           llvm::Function::ExternalLinkage,
+                           "objc_exception_try_enter",
+                           &CGM.getModule());
+  ExceptionTryExitFn = 
+    llvm::Function::Create(llvm::FunctionType::get(llvm::Type::VoidTy,
+                                                   Params,
+                                                   false),
+                           llvm::Function::ExternalLinkage,
+                           "objc_exception_try_exit",
+                           &CGM.getModule());
+  ExceptionExtractFn =
+    llvm::Function::Create(llvm::FunctionType::get(ObjectPtrTy,
+                                                   Params,
+                                                   false),
+                           llvm::Function::ExternalLinkage,
+                           "objc_exception_extract",
+                           &CGM.getModule());
+  
+  Params.clear();
+  Params.push_back(ClassPtrTy);
+  Params.push_back(ObjectPtrTy);
+  ExceptionMatchFn = 
+    llvm::Function::Create(llvm::FunctionType::get(llvm::Type::Int32Ty,
+                                                   Params,
+                                                   false),
+                           llvm::Function::ExternalLinkage,
+                           "objc_exception_match",
+                           &CGM.getModule());
+
+  Params.clear();
+  Params.push_back(llvm::PointerType::getUnqual(llvm::Type::Int32Ty));
+  SetJmpFn =
+    llvm::Function::Create(llvm::FunctionType::get(llvm::Type::Int32Ty,
+                                                   Params,
+                                                   false),
+                           llvm::Function::ExternalLinkage,
+                           "_setjmp",
+                           &CGM.getModule());                          
+
 }
 
 ObjCTypesHelper::~ObjCTypesHelper() {
