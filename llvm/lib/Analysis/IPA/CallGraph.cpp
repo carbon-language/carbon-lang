@@ -21,14 +21,6 @@
 #include <ostream>
 using namespace llvm;
 
-/// isOnlyADirectCall - Return true if this callsite is *just* a direct call to
-/// the specified function.  Specifically return false if the callsite also
-/// takes the address of the function.
-static bool isOnlyADirectCall(Function *F, CallSite CS) {
-  if (!CS.getInstruction()) return false;
-  return !CS.hasArgument(F);
-}
-
 namespace {
 
 //===----------------------------------------------------------------------===//
@@ -137,44 +129,32 @@ private:
     if (F->isDeclaration() && !F->isIntrinsic())
       Node->addCalledFunction(CallSite(), CallsExternalNode);
 
-    // Loop over all of the users of the function... looking for callers...
-    //
+    // Loop over all of the users of the function, looking for non-call uses.
     bool isUsedExternally = false;
-    for (Value::use_iterator I = F->use_begin(), E = F->use_end(); I != E; ++I){
+    for (Value::use_iterator I = F->use_begin(), E = F->use_end();
+         I != E && !isUsedExternally; ++I) {
       if (Instruction *Inst = dyn_cast<Instruction>(*I)) {
         CallSite CS = CallSite::get(Inst);
-        if (isOnlyADirectCall(F, CS))
-          getOrInsertFunction(Inst->getParent()->getParent())
-              ->addCalledFunction(CS, Node);
-        else
-          isUsedExternally = true;
-      } else if (GlobalValue *GV = dyn_cast<GlobalValue>(*I)) {
-        for (Value::use_iterator I = GV->use_begin(), E = GV->use_end();
-             I != E; ++I)
-          if (Instruction *Inst = dyn_cast<Instruction>(*I)) {
-            CallSite CS = CallSite::get(Inst);
-            if (isOnlyADirectCall(F, CS))
-              getOrInsertFunction(Inst->getParent()->getParent())
-                ->addCalledFunction(CS, Node);
-            else
-              isUsedExternally = true;
-          } else {
-            isUsedExternally = true;
-          }
-      } else {                        // Can't classify the user!
+        isUsedExternally = !CS.getInstruction() || CS.hasArgument(F);
+      } else {                        // User is not a direct call!
         isUsedExternally = true;
       }
     }
     if (isUsedExternally)
       ExternalCallingNode->addCalledFunction(CallSite(), Node);
 
-    // Look for an indirect function call.
+    // Look for calls by this function.
     for (Function::iterator BB = F->begin(), BBE = F->end(); BB != BBE; ++BB)
       for (BasicBlock::iterator II = BB->begin(), IE = BB->end();
            II != IE; ++II) {
-      CallSite CS = CallSite::get(II);
-      if (CS.getInstruction() && !CS.getCalledFunction())
-        Node->addCalledFunction(CS, CallsExternalNode);
+        CallSite CS = CallSite::get(II);
+        if (CS.getInstruction()) {
+          const Function *Callee = CS.getCalledFunction();
+          if (Callee)
+            Node->addCalledFunction(CS, getOrInsertFunction(Callee));
+          else
+            Node->addCalledFunction(CS, CallsExternalNode);
+        }
       }
   }
 
