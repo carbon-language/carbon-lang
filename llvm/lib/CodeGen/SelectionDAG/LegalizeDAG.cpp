@@ -6602,13 +6602,9 @@ void SelectionDAGLegalize::ExpandOp(SDValue Op, SDValue &Lo, SDValue &Hi){
     Lo = ExpandLibCall(LC, Node, true, Hi);
     break;
   }
-  case ISD::FPOWI:
-    Lo = ExpandLibCall(GetFPLibCall(VT, RTLIB::POWI_F32,
-                                        RTLIB::POWI_F64,
-                                        RTLIB::POWI_F80,
-                                        RTLIB::POWI_PPCF128),
-                       Node, false, Hi);
-    break;
+  case ISD::FSQRT:
+  case ISD::FSIN:
+  case ISD::FCOS: 
   case ISD::FLOG:
   case ISD::FLOG2:
   case ISD::FLOG10:
@@ -6619,9 +6615,7 @@ void SelectionDAGLegalize::ExpandOp(SDValue Op, SDValue &Lo, SDValue &Hi){
   case ISD::FCEIL:
   case ISD::FRINT:
   case ISD::FNEARBYINT:
-  case ISD::FSQRT:
-  case ISD::FSIN:
-  case ISD::FCOS: {
+  case ISD::FPOW: {
     RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
     switch(Node->getOpcode()) {
     case ISD::FSQRT:
@@ -6675,6 +6669,14 @@ void SelectionDAGLegalize::ExpandOp(SDValue Op, SDValue &Lo, SDValue &Hi){
     case ISD::FNEARBYINT:
       LC = GetFPLibCall(VT, RTLIB::NEARBYINT_F32, RTLIB::NEARBYINT_F64,
                         RTLIB::NEARBYINT_F80, RTLIB::NEARBYINT_PPCF128);
+      break;
+    case ISD::FPOW:
+      LC = GetFPLibCall(VT, RTLIB::POW_F32, RTLIB::POW_F64, RTLIB::POW_F80,
+                        RTLIB::POW_PPCF128);
+      break;
+    case ISD::FPOWI:
+      LC = GetFPLibCall(VT, RTLIB::POWI_F32, RTLIB::POWI_F64, RTLIB::POWI_F80,
+                        RTLIB::POWI_PPCF128);
       break;
     default: assert(0 && "Unreachable!");
     }
