@@ -1,4 +1,4 @@
-// RUN: clang -parse-noop %s -verify
+// RUN: clang -parse-noop -verify %s
 
 void f() {
   int a;
