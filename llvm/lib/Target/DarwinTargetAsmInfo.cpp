@@ -17,6 +17,7 @@
 #include "llvm/Function.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/Mangler.h"
 #include "llvm/Target/DarwinTargetAsmInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetData.h"
@@ -48,6 +49,26 @@ DarwinTargetAsmInfo::DarwinTargetAsmInfo(const TargetMachine &TM) {
   ConstDataSection = getUnnamedSection(".const_data", SectionFlags::None);
   DataCoalSection = getUnnamedSection(".section __DATA,__datacoal_nt,coalesced",
                                       SectionFlags::Writeable);
+}
+
+/// emitUsedDirectiveFor - On Darwin, internally linked data beginning with
+/// the PrivateGlobalPrefix or the LessPrivateGlobalPrefix does not have the
+/// directive emitted (this occurs in ObjC metadata).
+
+bool
+DarwinTargetAsmInfo::emitUsedDirectiveFor(const GlobalValue* GV,
+                                          Mangler *Mang) const {
+  if (GV==0)
+    return false;
+  if (GV->hasInternalLinkage() && !isa<Function>(GV) &&
+      ((strlen(getPrivateGlobalPrefix()) != 0 &&
+        Mang->getValueName(GV).substr(0,strlen(getPrivateGlobalPrefix())) ==
+          getPrivateGlobalPrefix()) ||
+       (strlen(getLessPrivateGlobalPrefix()) != 0 &&
+        Mang->getValueName(GV).substr(0,strlen(getLessPrivateGlobalPrefix())) ==
+          getLessPrivateGlobalPrefix())))
+    return false;
+  return true;
 }
 
 const Section*

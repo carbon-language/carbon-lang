@@ -100,6 +100,7 @@ namespace llvm {
   class CallInst;
   class GlobalValue;
   class Type;
+  class Mangler;
 
   class Section {
     friend class TargetAsmInfo;
@@ -220,9 +221,9 @@ namespace llvm {
     /// have names in the .o file.  This is often "." or "L".
     const char *PrivateGlobalPrefix;      // Defaults to "."
     
-    /// LessPrivateGlobalPrefix - This prefix is used for some Objective C
-    /// metadata symbols that should be passed through the assembler but be
-    /// removed by the linker.  This is "l" on Darwin.
+    /// LessPrivateGlobalPrefix - This prefix is used for symbols that should
+    /// be passed through the assembler but be removed by the linker.  This
+    /// is "l" on Darwin, currently used for some ObjC metadata.
     const char *LessPrivateGlobalPrefix;      // Defaults to ""
     
     /// JumpTableSpecialLabelPrefix - If not null, a extra (dead) label is
@@ -541,6 +542,13 @@ namespace llvm {
     /// compiler more information about the behavior of the code.
     virtual bool ExpandInlineAsm(CallInst *CI) const {
       return false;
+    }
+
+    /// emitUsedDirectiveFor - This hook allows targets to selectively decide
+    /// not to emit the UsedDirective for some symbols in llvm.used.
+    virtual bool emitUsedDirectiveFor(const GlobalValue *GV,
+                                      Mangler *Mang) const {
+      return (GV!=0);
     }
 
     /// PreferredEHDataFormat - This hook allows the target to select data

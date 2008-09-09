@@ -22,6 +22,7 @@ namespace llvm {
   class GlobalValue;
   class GlobalVariable;
   class Type;
+  class Mangler;
 
   struct DarwinTargetAsmInfo: public virtual TargetAsmInfo {
     const Section* TextCoalSection;
@@ -33,6 +34,8 @@ namespace llvm {
     virtual const Section* SelectSectionForGlobal(const GlobalValue *GV) const;
     virtual std::string UniqueSectionForGlobal(const GlobalValue* GV,
                                                SectionKind::Kind kind) const;
+    virtual bool emitUsedDirectiveFor(const GlobalValue *GV,
+                                      Mangler *Mang) const;
     const Section* MergeableConstSection(const GlobalVariable *GV) const;
     const Section* MergeableConstSection(const Type *Ty) const;
     const Section* MergeableStringSection(const GlobalVariable *GV) const;
