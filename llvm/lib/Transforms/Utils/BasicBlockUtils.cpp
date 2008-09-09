@@ -54,7 +54,17 @@ bool llvm::MergeBlockIntoPredecessor(BasicBlock* BB, Pass* P) {
   
   // Can't merge if there are multiple successors.
   if (!OnlySucc) return false;
-  
+
+  // Can't merge if there is PHI loop.
+  for (BasicBlock::iterator BI = BB->begin(), BE = BB->end(); BI != BE; ++BI) {
+    if (PHINode *PN = dyn_cast<PHINode>(BI)) {
+      for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
+        if (PN->getIncomingValue(i) == PN)
+          return false;
+    } else
+      break;
+  }
+
   // Begin by getting rid of unneeded PHIs.
   while (PHINode *PN = dyn_cast<PHINode>(&BB->front())) {
     PN->replaceAllUsesWith(PN->getIncomingValue(0));
