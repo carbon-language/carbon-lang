@@ -25,12 +25,20 @@ using namespace llvm;
 
 namespace {
   cl::opt<std::string>
-  RSHHost("rsh-host",
-          cl::desc("Remote execution (rsh) host"));
+  RemoteClient("remote-client",
+               cl::desc("Remote execution client (rsh/ssh)"));
 
   cl::opt<std::string>
-  RSHUser("rsh-user",
-          cl::desc("Remote execution (rsh) user id"));
+  RemoteHost("remote-host",
+             cl::desc("Remote execution (rsh/ssh) host"));
+
+  cl::opt<std::string>
+  RemoteUser("remote-user",
+             cl::desc("Remote execution (rsh/ssh) user id"));
+
+  cl::opt<std::string>
+  RemoteExtra("remote-extra-options",
+          cl::desc("Remote execution (rsh/ssh) extra options"));
 }
 
 ToolExecutionError::~ToolExecutionError() throw() { }
@@ -597,13 +605,16 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
 
   std::vector<const char*> ProgramArgs;
 
-  if (RSHPath.isEmpty())
+  if (RemoteClientPath.isEmpty())
     ProgramArgs.push_back(OutputBinary.c_str());
   else {
-    ProgramArgs.push_back(RSHPath.c_str());
-    ProgramArgs.push_back(RSHHost.c_str());
+    ProgramArgs.push_back(RemoteClientPath.c_str());
+    ProgramArgs.push_back(RemoteHost.c_str());
     ProgramArgs.push_back("-l");
-    ProgramArgs.push_back(RSHUser.c_str());
+    ProgramArgs.push_back(RemoteUser.c_str());
+    if (!RemoteExtra.empty()) {
+      ProgramArgs.push_back(RemoteExtra.c_str());
+    }
 
     char* env_pwd = getenv("PWD");
     std::string Exec = "cd ";
@@ -628,12 +639,12 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
 
   FileRemover OutputBinaryRemover(OutputBinary);
 
-  if (RSHPath.isEmpty())
+  if (RemoteClientPath.isEmpty())
     return RunProgramWithTimeout(OutputBinary, &ProgramArgs[0],
         sys::Path(InputFile), sys::Path(OutputFile), sys::Path(OutputFile),
         Timeout, MemoryLimit);
   else
-    return RunProgramWithTimeout(sys::Path(RSHPath), &ProgramArgs[0],
+    return RunProgramWithTimeout(sys::Path(RemoteClientPath), &ProgramArgs[0],
         sys::Path(InputFile), sys::Path(OutputFile), sys::Path(OutputFile),
         Timeout, MemoryLimit);
 }
@@ -721,10 +732,10 @@ GCC *GCC::create(const std::string &ProgramPath, std::string &Message) {
     return 0;
   }
 
-  sys::Path RSHPath;
-  if (!RSHHost.empty())
-    RSHPath = FindExecutable("rsh", ProgramPath);
+  sys::Path RemoteClientPath;
+  if (!RemoteClient.empty())
+    RemoteClientPath = FindExecutable(RemoteClient.c_str(), ProgramPath);
 
   Message = "Found gcc: " + GCCPath.toString() + "\n";
-  return new GCC(GCCPath, RSHPath);
+  return new GCC(GCCPath, RemoteClientPath);
 }

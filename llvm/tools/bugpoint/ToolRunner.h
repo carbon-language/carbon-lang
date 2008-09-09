@@ -44,9 +44,9 @@ public:
 //
 class GCC {
   sys::Path GCCPath;          // The path to the gcc executable
-  sys::Path RSHPath;          // The path to the rsh executable
-  GCC(const sys::Path &gccPath, const sys::Path &rshPath)
-    : GCCPath(gccPath), RSHPath(rshPath) { }
+  sys::Path RemoteClientPath; // The path to the rsh / ssh executable
+  GCC(const sys::Path &gccPath, const sys::Path &RemotePath)
+    : GCCPath(gccPath), RemoteClientPath(RemotePath) { }
 public:
   enum FileType { AsmFile, CFile };
 
