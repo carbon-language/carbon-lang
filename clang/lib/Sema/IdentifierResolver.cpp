@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "IdentifierResolver.h"
+#include "clang/Basic/LangOptions.h"
 #include <list>
 #include <vector>
 
@@ -144,9 +145,26 @@ IdentifierResolver::~IdentifierResolver() {
 /// isDeclInScope - If 'Ctx' is a function/method, isDeclInScope returns true
 /// if 'D' is in Scope 'S', otherwise 'S' is ignored and isDeclInScope returns
 /// true if 'D' belongs to the given declaration context.
-bool IdentifierResolver::isDeclInScope(Decl *D, DeclContext *Ctx, Scope *S) {
-  if (Ctx->isFunctionOrMethod())
-    return S->isDeclScope(D);
+bool IdentifierResolver::isDeclInScope(Decl *D, DeclContext *Ctx,
+                                       Scope *S) const {
+  if (Ctx->isFunctionOrMethod()) {
+    if (S->isDeclScope(D))
+      return true;
+    if (LangOpt.CPlusPlus) {
+      // C++ 3.3.2p4:
+      // Names declared in the for-init-statement, and in the condition of if,
+      // while, for, and switch statements are local to the if, while, for, or
+      // switch statement (including the controlled statement), and shall not be
+      // redeclared in a subsequent condition of that statement nor in the
+      // outermost block (or, for the if statement, any of the outermost blocks)
+      // of the controlled statement.
+      //
+      assert(S->getParent() && "No TUScope?");
+      if (S->getParent()->getFlags() & Scope::ControlScope)
+        return S->getParent()->isDeclScope(D);
+    }
+    return false;
+  }
 
   return LookupContext(D) == LookupContext(Ctx);
 }

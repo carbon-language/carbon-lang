@@ -207,7 +207,7 @@ public:
   /// isDeclInScope - If 'Ctx' is a function/method, isDeclInScope returns true
   /// if 'D' is in Scope 'S', otherwise 'S' is ignored and isDeclInScope returns
   /// true if 'D' belongs to the given declaration context.
-  static bool isDeclInScope(Decl *D, DeclContext *Ctx, Scope *S = 0);
+  bool isDeclInScope(Decl *D, DeclContext *Ctx, Scope *S = 0) const;
 
   /// AddDecl - Link the decl to its shadowed decl chain.
   void AddDecl(NamedDecl *D);
