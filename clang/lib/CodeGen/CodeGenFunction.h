@@ -137,7 +137,18 @@ public:
                      llvm::Function *Fn,
                      const FunctionArgList &Args);
   void FinishFunction(SourceLocation EndLoc=SourceLocation());
-  
+
+  /// EmitFunctionProlog - Emit the target specific LLVM code to load
+  /// the arguments for the given function. This is also responsible
+  /// for naming the LLVM function arguments.
+  void EmitFunctionProlog(llvm::Function *Fn, QualType RetTy, 
+                          const FunctionArgList &Args);
+
+  /// EmitFunctionEpilog - Emit the target specific LLVM code to
+  /// return the given temporary.
+  void EmitFunctionEpilog(QualType RetTy, 
+                          llvm::Value *ReturnValue);
+
   const llvm::Type *ConvertType(QualType T);
 
   /// LoadObjCSelf - Load the value of self. This function is only

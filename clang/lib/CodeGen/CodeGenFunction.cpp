@@ -86,21 +86,9 @@ void CodeGenFunction::FinishFunction(SourceLocation EndLoc) {
   assert(BreakContinueStack.empty() &&
          "mismatched push/pop in break/continue stack!");
 
-  // Emit code to actually return.
+  // Emit function epilog (to return).
   Builder.SetInsertPoint(ReturnBlock);
-  if (!ReturnValue) {
-    Builder.CreateRetVoid();
-  } else { 
-    if (!hasAggregateLLVMType(FnRetTy)) {
-      Builder.CreateRet(Builder.CreateLoad(ReturnValue));
-    } else if (FnRetTy->isAnyComplexType()) {
-      EmitAggregateCopy(CurFn->arg_begin(), ReturnValue, FnRetTy);
-      Builder.CreateRetVoid();
-    } else {
-      EmitAggregateCopy(CurFn->arg_begin(), ReturnValue, FnRetTy);
-      Builder.CreateRetVoid();
-    }
-  }
+  EmitFunctionEpilog(FnRetTy, ReturnValue);
 
   // Remove the AllocaInsertPt instruction, which is just a convenience for us.
   AllocaInsertPt->eraseFromParent();
@@ -146,29 +134,7 @@ void CodeGenFunction::StartFunction(const Decl *D, QualType RetTy,
     }
   }
 
-  // Emit allocs for param decls.  Give the LLVM Argument nodes names.
-  llvm::Function::arg_iterator AI = CurFn->arg_begin();
-  
-  // Name the struct return argument.
-  if (hasAggregateLLVMType(FnRetTy)) {
-    AI->setName("agg.result");
-    ++AI;
-  }
-     
-  for (FunctionArgList::const_iterator i = Args.begin(), e = Args.end();
-       i != e; ++i, ++AI) {
-    const VarDecl *Arg = i->first;
-    QualType T = i->second;
-    assert(AI != CurFn->arg_end() && "Argument mismatch!");
-    llvm::Value* V = AI;
-    if (!getContext().typesAreCompatible(T, Arg->getType())) {
-      // This must be a promotion, for something like
-      // "void a(x) short x; {..."
-      V = EmitScalarConversion(V, T, Arg->getType());
-      }
-    EmitParmDecl(*Arg, V);
-  }
-  assert(AI == CurFn->arg_end() && "Argument mismatch!");
+  EmitFunctionProlog(CurFn, FnRetTy, Args);
 }
 
 void CodeGenFunction::GenerateCode(const FunctionDecl *FD,
