@@ -301,6 +301,13 @@ private:
   /// Add this decl to the scope shadowed decl chains.
   void PushOnScopeChains(NamedDecl *D, Scope *S);
 
+  /// isDeclInScope - If 'Ctx' is a function/method, isDeclInScope returns true
+  /// if 'D' is in Scope 'S', otherwise 'S' is ignored and isDeclInScope returns
+  /// true if 'D' belongs to the given declaration context.
+  bool isDeclInScope(Decl *D, DeclContext *Ctx, Scope *S = 0) {
+    return IdResolver.isDeclInScope(D, Ctx, S);
+  }
+
   /// Subroutines of ActOnDeclarator().
   TypedefDecl *ParseTypedefDecl(Scope *S, Declarator &D, QualType T,
                                 ScopedDecl *LastDecl);

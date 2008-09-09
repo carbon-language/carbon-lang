@@ -86,8 +86,7 @@ void Sema::PushOnScopeChains(NamedDecl *D, Scope *S) {
     IdentifierResolver::iterator
         I = IdResolver.begin(TD->getIdentifier(),
                              TD->getDeclContext(), false/*LookInParentCtx*/);
-    if (I != IdResolver.end() &&
-        IdResolver.isDeclInScope(*I, TD->getDeclContext(), S)) {
+    if (I != IdResolver.end() && isDeclInScope(*I, TD->getDeclContext(), S)) {
       // There is already a declaration with the same name in the same
       // scope. It must be found before we find the new declaration,
       // so swap the order on the shadowed declaration chain.
@@ -392,7 +391,7 @@ void Sema::CheckForFileScopedRedefinitions(Scope *S, VarDecl *VD) {
        I = IdResolver.begin(VD->getIdentifier(), 
                             VD->getDeclContext(), false/*LookInParentCtx*/), 
        E = IdResolver.end(); I != E; ++I) {
-    if (*I != VD && IdResolver.isDeclInScope(*I, VD->getDeclContext(), S)) {
+    if (*I != VD && isDeclInScope(*I, VD->getDeclContext(), S)) {
       VarDecl *OldDecl = dyn_cast<VarDecl>(*I);
       
       // Handle the following case:
@@ -621,7 +620,7 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
     ProcessDeclAttributes(NewTD, D);
     // Merge the decl with the existing one if appropriate. If the decl is
     // in an outer scope, it isn't the same thing.
-    if (PrevDecl && IdResolver.isDeclInScope(PrevDecl, CurContext, S)) {
+    if (PrevDecl && isDeclInScope(PrevDecl, CurContext, S)) {
       NewTD = MergeTypeDefDecl(NewTD, PrevDecl);
       if (NewTD == 0) return 0;
     }
@@ -714,8 +713,7 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
     // Merge the decl with the existing one if appropriate. Since C functions
     // are in a flat namespace, make sure we consider decls in outer scopes.
     if (PrevDecl &&
-        (!getLangOptions().CPlusPlus ||
-         IdResolver.isDeclInScope(PrevDecl, CurContext, S)) ) {
+        (!getLangOptions().CPlusPlus||isDeclInScope(PrevDecl, CurContext, S))) {
       bool Redeclaration = false;
       NewFD = MergeFunctionDecl(NewFD, PrevDecl, Redeclaration);
       if (NewFD == 0) return 0;
@@ -792,7 +790,7 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
     }
     // Merge the decl with the existing one if appropriate. If the decl is
     // in an outer scope, it isn't the same thing.
-    if (PrevDecl && IdResolver.isDeclInScope(PrevDecl, CurContext, S)) {
+    if (PrevDecl && isDeclInScope(PrevDecl, CurContext, S)) {
       NewVD = MergeVarDecl(NewVD, PrevDecl);
       if (NewVD == 0) return 0;
     }
@@ -1547,7 +1545,7 @@ Sema::DeclTy *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Declarator &D) {
   // See if this is a redefinition.
   Decl *PrevDcl = LookupDecl(D.getIdentifier(), Decl::IDNS_Ordinary,
                              GlobalScope);
-  if (PrevDcl && IdResolver.isDeclInScope(PrevDcl, CurContext)) {
+  if (PrevDcl && isDeclInScope(PrevDcl, CurContext)) {
     if (FunctionDecl *FD = dyn_cast<FunctionDecl>(PrevDcl)) {
       const FunctionDecl *Definition;
       if (FD->getBody(Definition)) {
@@ -1714,8 +1712,7 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
       // If this is a use of a previous tag, or if the tag is already declared
       // in the same scope (so that the definition/declaration completes or
       // rementions the tag), reuse the decl.
-      if (TK == TK_Reference ||
-          IdResolver.isDeclInScope(PrevDecl, CurContext, S)) {
+      if (TK == TK_Reference || isDeclInScope(PrevDecl, CurContext, S)) {
         // Make sure that this wasn't declared as an enum and now used as a
         // struct or something similar.
         if (PrevTagDecl->getTagKind() != Kind) {
@@ -1750,7 +1747,7 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
       // type.
     } else {
       // PrevDecl is a namespace.
-      if (IdResolver.isDeclInScope(PrevDecl, CurContext, S)) {
+      if (isDeclInScope(PrevDecl, CurContext, S)) {
         // The tag name clashes with a namespace name, issue an error and
         // recover by making this tag be anonymous.
         Diag(NameLoc, diag::err_redefinition_different_kind, Name->getName());
@@ -1822,8 +1819,7 @@ Sema::DeclTy *Sema::ActOnTagStruct(Scope *S, TagDecl::TagKind Kind, TagKind TK,
       // If this is a use of a previous tag, or if the tag is already declared
       // in the same scope (so that the definition/declaration completes or
       // rementions the tag), reuse the decl.
-      if (TK == TK_Reference ||
-          IdResolver.isDeclInScope(PrevDecl, CurContext, S)) {
+      if (TK == TK_Reference || isDeclInScope(PrevDecl, CurContext, S)) {
         // Make sure that this wasn't declared as an enum and now used as a
         // struct or something similar.
         if (PrevTagDecl->getTagKind() != Kind) {
@@ -1871,7 +1867,7 @@ Sema::DeclTy *Sema::ActOnTagStruct(Scope *S, TagDecl::TagKind Kind, TagKind TK,
       }
     } else {
       // PrevDecl is a namespace.
-      if (IdResolver.isDeclInScope(PrevDecl, CurContext, S)) {
+      if (isDeclInScope(PrevDecl, CurContext, S)) {
         // The tag name clashes with a namespace name, issue an error and
         // recover by making this tag be anonymous.
         Diag(NameLoc, diag::err_redefinition_different_kind, Name->getName());
@@ -2276,8 +2272,7 @@ Sema::DeclTy *Sema::ActOnEnumConstant(Scope *S, DeclTy *theEnumDecl,
     // enum constant will 'hide' the tag.
     assert((getLangOptions().CPlusPlus || !isa<TagDecl>(PrevDecl)) &&
            "Received TagDecl when not in C++!");
-    if (!isa<TagDecl>(PrevDecl) &&
-        IdResolver.isDeclInScope(PrevDecl, CurContext, S)) {
+    if (!isa<TagDecl>(PrevDecl) && isDeclInScope(PrevDecl, CurContext, S)) {
       if (isa<EnumConstantDecl>(PrevDecl))
         Diag(IdLoc, diag::err_redefinition_of_enumerator, Id->getName());
       else
