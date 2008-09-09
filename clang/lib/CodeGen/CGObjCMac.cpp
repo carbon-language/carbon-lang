@@ -1423,7 +1423,168 @@ llvm::Function *CGObjCMac::EnumerationMutationFunction()
 void CGObjCMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
                             const ObjCAtTryStmt &S)
 {
-  CGF.ErrorUnsupported(&S, "@try statement");
+  // Allocate exception data.
+  llvm::Value *ExceptionData = CGF.CreateTempAlloca(ObjCTypes.ExceptionDataTy,
+                                                    "exceptiondata.ptr");
+  
+  // Allocate memory for the rethrow pointer.
+  llvm::Value *RethrowPtr = CGF.CreateTempAlloca(ObjCTypes.ObjectPtrTy);
+  CGF.Builder.CreateStore(llvm::Constant::getNullValue(ObjCTypes.ObjectPtrTy),
+                          RethrowPtr);
+  
+  // Enter a new try block and call setjmp.
+  CGF.Builder.CreateCall(ObjCTypes.ExceptionTryEnterFn, ExceptionData);
+  llvm::Value *JmpBufPtr = CGF.Builder.CreateStructGEP(ExceptionData, 0, 
+                                                       "jmpbufarray");
+  JmpBufPtr = CGF.Builder.CreateStructGEP(JmpBufPtr, 0, "tmp");
+  llvm::Value *SetJmpResult = CGF.Builder.CreateCall(ObjCTypes.SetJmpFn,
+                                                     JmpBufPtr, "result");
+  
+  
+  llvm::BasicBlock *FinallyBlock = llvm::BasicBlock::Create("finally");
+  
+  llvm::BasicBlock *TryBlock = llvm::BasicBlock::Create("try");
+  llvm::BasicBlock *ExceptionInTryBlock = 
+    llvm::BasicBlock::Create("exceptionintry");
+
+  // If setjmp returns 1, there was an exception in the @try block.
+  llvm::Value *Zero = llvm::Constant::getNullValue(llvm::Type::Int32Ty);
+  llvm::Value *IsZero = CGF.Builder.CreateICmpEQ(SetJmpResult, Zero, "iszero");
+  CGF.Builder.CreateCondBr(IsZero, TryBlock, ExceptionInTryBlock);
+
+  // Emit the @try block.
+  CGF.EmitBlock(TryBlock);
+  CGF.EmitStmt(S.getTryBody());
+  CGF.Builder.CreateBr(FinallyBlock);
+  
+  // Emit the "exception in @try" block.
+  CGF.EmitBlock(ExceptionInTryBlock);
+  
+  if (const ObjCAtCatchStmt* CatchStmt = S.getCatchStmts()) {
+    // Allocate memory for the caught exception and extract it from the 
+    // exception data.
+    llvm::Value *CaughtPtr = CGF.CreateTempAlloca(ObjCTypes.ObjectPtrTy);
+    llvm::Value *Extract = CGF.Builder.CreateCall(ObjCTypes.ExceptionExtractFn,
+                                                  ExceptionData);
+    CGF.Builder.CreateStore(Extract, CaughtPtr);
+    
+    // Enter a new exception try block 
+    // (in case a @catch block throws an exception).
+    CGF.Builder.CreateCall(ObjCTypes.ExceptionTryEnterFn, ExceptionData);
+    
+    llvm::Value *SetJmpResult = CGF.Builder.CreateCall(ObjCTypes.SetJmpFn,
+                                                       JmpBufPtr, "result");
+    
+    
+    llvm::Value *Zero = llvm::Constant::getNullValue(llvm::Type::Int32Ty);
+    llvm::Value *IsZero = CGF.Builder.CreateICmpEQ(SetJmpResult, Zero, 
+                                                   "iszero");
+
+    llvm::BasicBlock *CatchBlock = llvm::BasicBlock::Create("catch");
+    llvm::BasicBlock *ExceptionInCatchBlock = 
+      llvm::BasicBlock::Create("exceptionincatch");
+    CGF.Builder.CreateCondBr(IsZero, CatchBlock, ExceptionInCatchBlock);
+    
+    CGF.EmitBlock(CatchBlock);
+        
+    // Handle catch list
+    for (; CatchStmt; CatchStmt = CatchStmt->getNextCatchStmt()) {
+      llvm::BasicBlock *NextCatchBlock = llvm::BasicBlock::Create("nextcatch");
+
+      QualType T;
+      bool MatchesAll = false;
+      
+      // catch(...) always matches.
+      if (CatchStmt->hasEllipsis())
+        MatchesAll = true;
+      else {
+        const DeclStmt *DS = cast<DeclStmt>(CatchStmt->getCatchParamStmt());
+        QualType PT = cast<ValueDecl>(DS->getDecl())->getType();
+        T = PT->getAsPointerType()->getPointeeType();
+        
+        // catch(id e) always matches.
+        if (CGF.getContext().isObjCIdType(T))
+          MatchesAll = true;
+      }
+      
+      if (MatchesAll) {        
+        CGF.EmitStmt(CatchStmt->getCatchBody());
+        CGF.Builder.CreateBr(FinallyBlock);
+        
+        CGF.EmitBlock(NextCatchBlock);        
+        break;
+      }
+      
+      const ObjCInterfaceType *ObjCType = T->getAsPointerToObjCInterfaceType();
+      assert(ObjCType && "Catch parameter must have Objective-C type!");
+
+      // Check if the @catch block matches the exception object.
+      llvm::Value *Class = EmitClassRef(CGF.Builder, ObjCType->getDecl());
+      
+      llvm::Value *Caught = CGF.Builder.CreateLoad(CaughtPtr, "caught");
+      llvm::Value *Match = CGF.Builder.CreateCall2(ObjCTypes.ExceptionMatchFn,
+                                                   Class, Caught, "match");
+                                                   
+      llvm::Value *DidMatch = CGF.Builder.CreateICmpNE(Match, Zero, "iszero");
+      
+      llvm::BasicBlock *MatchedBlock = llvm::BasicBlock::Create("matched");
+      
+      CGF.Builder.CreateCondBr(DidMatch, MatchedBlock, NextCatchBlock);
+      
+      // Emit the @catch block.
+      CGF.EmitBlock(MatchedBlock);
+      CGF.EmitStmt(CatchStmt->getCatchBody());
+      CGF.Builder.CreateBr(FinallyBlock);
+      
+      CGF.EmitBlock(NextCatchBlock);
+    }
+
+    // None of the handlers caught the exception, so store it and rethrow
+    // it later.
+    llvm::Value *Caught = CGF.Builder.CreateLoad(CaughtPtr, "caught");
+    CGF.Builder.CreateStore(Caught, RethrowPtr);
+    CGF.Builder.CreateCall(ObjCTypes.ExceptionTryExitFn,
+                           ExceptionData);
+    
+    CGF.Builder.CreateBr(FinallyBlock);
+    
+    CGF.EmitBlock(ExceptionInCatchBlock);
+    
+    Extract = CGF.Builder.CreateCall(ObjCTypes.ExceptionExtractFn,
+                                     ExceptionData);
+    CGF.Builder.CreateStore(Extract, RethrowPtr);
+  }
+  
+  // Emit the @finally block.
+  CGF.EmitBlock(FinallyBlock);
+
+  llvm::Value *Rethrow = CGF.Builder.CreateLoad(RethrowPtr);
+  llvm::Value *ZeroPtr = llvm::Constant::getNullValue(ObjCTypes.ObjectPtrTy);
+
+  llvm::Value *RethrowIsZero = CGF.Builder.CreateICmpEQ(Rethrow, ZeroPtr);
+  
+  llvm::BasicBlock *TryExitBlock = llvm::BasicBlock::Create("tryexit");
+  llvm::BasicBlock *AfterTryExitBlock = 
+    llvm::BasicBlock::Create("aftertryexit");
+  
+  CGF.Builder.CreateCondBr(RethrowIsZero, TryExitBlock, AfterTryExitBlock);
+  CGF.EmitBlock(TryExitBlock);  
+  CGF.Builder.CreateCall(ObjCTypes.ExceptionTryExitFn, ExceptionData);
+  CGF.EmitBlock(AfterTryExitBlock);
+  
+  if (const ObjCAtFinallyStmt* FinallyStmt = S.getFinallyStmt())
+    CGF.EmitStmt(FinallyStmt->getFinallyBody());
+
+  llvm::Value *RethrowIsNotZero = CGF.Builder.CreateICmpNE(Rethrow, ZeroPtr);
+  
+  llvm::BasicBlock *RethrowBlock = llvm::BasicBlock::Create("rethrow");  
+  llvm::BasicBlock *FinallyEndBlock = llvm::BasicBlock::Create("finallyend");
+
+  // If necessary, rethrow the exception.
+  CGF.Builder.CreateCondBr(RethrowIsNotZero, RethrowBlock, FinallyEndBlock);
+  CGF.EmitBlock(RethrowBlock);
+  CGF.Builder.CreateCall(ObjCTypes.ExceptionThrowFn, Rethrow);
+  CGF.EmitBlock(FinallyEndBlock);
 }
 
 void CGObjCMac::EmitThrowStmt(CodeGen::CodeGenFunction &CGF,
@@ -1440,7 +1601,8 @@ void CGObjCMac::EmitThrowStmt(CodeGen::CodeGenFunction &CGF,
   }
   
   CGF.Builder.CreateCall(ObjCTypes.ExceptionThrowFn, ExceptionAsObject);
-
+  CGF.Builder.CreateUnreachable();
+  CGF.EmitBlock(llvm::BasicBlock::Create("bb"));
 }
 
 /* *** Private Interface *** */
