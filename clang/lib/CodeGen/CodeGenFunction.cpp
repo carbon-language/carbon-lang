@@ -67,8 +67,7 @@ void CodeGenFunction::FinishFunction(SourceLocation EndLoc) {
   EmitIndirectSwitches();
 
   // Emit debug descriptor for function end.
-  CGDebugInfo *DI = CGM.getDebugInfo(); 
-  if (DI) {
+  if (CGDebugInfo *DI = CGM.getDebugInfo()) {
     if (EndLoc.isValid()) {
       DI->setLocation(EndLoc);
     }
@@ -78,18 +77,31 @@ void CodeGenFunction::FinishFunction(SourceLocation EndLoc) {
   // Emit a return for code that falls off the end. If insert point
   // is a dummy block with no predecessors then remove the block itself.
   llvm::BasicBlock *BB = Builder.GetInsertBlock();
-  if (isDummyBlock(BB))
+  if (isDummyBlock(BB)) {
     BB->eraseFromParent();
-  else {
-    // FIXME: if this is C++ main, this should return 0.
-    if (CurFn->getReturnType() == llvm::Type::VoidTy)
-      Builder.CreateRetVoid();
-    else
-      Builder.CreateRet(llvm::UndefValue::get(CurFn->getReturnType()));
+  } else {
+    // Just transfer to return
+    Builder.CreateBr(ReturnBlock);
   }
   assert(BreakContinueStack.empty() &&
          "mismatched push/pop in break/continue stack!");
-  
+
+  // Emit code to actually return.
+  Builder.SetInsertPoint(ReturnBlock);
+  if (!ReturnValue) {
+    Builder.CreateRetVoid();
+  } else { 
+    if (!hasAggregateLLVMType(FnRetTy)) {
+      Builder.CreateRet(Builder.CreateLoad(ReturnValue));
+    } else if (FnRetTy->isAnyComplexType()) {
+      EmitAggregateCopy(CurFn->arg_begin(), ReturnValue, FnRetTy);
+      Builder.CreateRetVoid();
+    } else {
+      EmitAggregateCopy(CurFn->arg_begin(), ReturnValue, FnRetTy);
+      Builder.CreateRetVoid();
+    }
+  }
+
   // Remove the AllocaInsertPt instruction, which is just a convenience for us.
   AllocaInsertPt->eraseFromParent();
   AllocaInsertPt = 0;
@@ -98,6 +110,7 @@ void CodeGenFunction::FinishFunction(SourceLocation EndLoc) {
   assert(!verifyFunction(*CurFn) && "Generated function is not well formed.");
 }
 
+// FIXME: There is parallel code in StartObjCMethod.
 void CodeGenFunction::GenerateCode(const FunctionDecl *FD,
                                    llvm::Function *Fn) {
   CurFuncDecl = FD;
@@ -106,14 +119,19 @@ void CodeGenFunction::GenerateCode(const FunctionDecl *FD,
   assert(CurFn->isDeclaration() && "Function already has body?");
 
   llvm::BasicBlock *EntryBB = llvm::BasicBlock::Create("entry", CurFn);
-  
+
   // Create a marker to make it easy to insert allocas into the entryblock
   // later.  Don't create this with the builder, because we don't want it
   // folded.
   llvm::Value *Undef = llvm::UndefValue::get(llvm::Type::Int32Ty);
   AllocaInsertPt = new llvm::BitCastInst(Undef, llvm::Type::Int32Ty, "allocapt",
                                          EntryBB);
-  
+
+  ReturnBlock = llvm::BasicBlock::Create("return", CurFn);
+  ReturnValue = 0;
+  if (!FnRetTy->isVoidType())
+    ReturnValue = CreateTempAlloca(ConvertType(FnRetTy), "retval");
+    
   Builder.SetInsertPoint(EntryBB);
   
   // Emit subprogram debug descriptor.

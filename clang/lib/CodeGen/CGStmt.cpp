@@ -405,33 +405,25 @@ void CodeGenFunction::EmitForStmt(const ForStmt &S) {
 void CodeGenFunction::EmitReturnStmt(const ReturnStmt &S) {
   // Emit the result value, even if unused, to evalute the side effects.
   const Expr *RV = S.getRetValue();
-
-  llvm::Value* RetValue = 0;
-  if (FnRetTy->isVoidType()) {
-    // Make sure not to return anything
-    if (RV) {
-      // Evaluate the expression for side effects
+  
+  // FIXME: Clean this up by using an LValue for ReturnTemp,
+  // EmitStoreThroughLValue, and EmitAnyExpr.
+  if (!ReturnValue) {
+    // Make sure not to return anything, but evaluate the expression
+    // for side effects.
+    if (RV)
       EmitAnyExpr(RV);
-    }
   } else if (RV == 0) {
-    const llvm::Type *RetTy = CurFn->getFunctionType()->getReturnType();
-    if (RetTy != llvm::Type::VoidTy) {
-      // Handle "return;" in a function that returns a value.
-      RetValue = llvm::UndefValue::get(RetTy);
-    }
+    // Do nothing (return value is left uninitialized)
   } else if (!hasAggregateLLVMType(RV->getType())) {
-    RetValue = EmitScalarExpr(RV);
+    Builder.CreateStore(EmitScalarExpr(RV), ReturnValue);
   } else if (RV->getType()->isAnyComplexType()) {
-    EmitComplexExprIntoAddr(RV, CurFn->arg_begin(), false);
+    EmitComplexExprIntoAddr(RV, ReturnValue, false);
   } else {
-    EmitAggExpr(RV, CurFn->arg_begin(), false);
+    EmitAggExpr(RV, ReturnValue, false);
   }
 
-  if (RetValue) {
-    Builder.CreateRet(RetValue);
-  } else {
-    Builder.CreateRetVoid();
-  }
+  Builder.CreateBr(ReturnBlock);
   
   // Emit a block after the branch so that dead code after a return has some
   // place to go.

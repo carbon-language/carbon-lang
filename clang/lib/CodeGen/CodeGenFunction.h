@@ -64,6 +64,12 @@ public:
   QualType FnRetTy;
   llvm::Function *CurFn;
 
+  /// ReturnBlock - Unified return block.
+  llvm::BasicBlock *ReturnBlock;
+  /// ReturnValue - The temporary alloca to hold the return value. This
+  /// is null iff the function has no return value.
+  llvm::Instruction *ReturnValue;
+  
   /// AllocaInsertPoint - This is an instruction in the entry block before which
   /// we prefer to insert allocas.
   llvm::Instruction *AllocaInsertPt;

@@ -121,6 +121,11 @@ void CodeGenFunction::StartObjCMethod(const ObjCMethodDecl *OMD) {
   FnRetTy = OMD->getResultType();
   CurFuncDecl = OMD;
 
+  ReturnBlock = llvm::BasicBlock::Create("return", CurFn);
+  ReturnValue = 0;
+  if (!FnRetTy->isVoidType())
+    ReturnValue = CreateTempAlloca(ConvertType(FnRetTy), "retval");
+
   Builder.SetInsertPoint(EntryBB);
   
   // Emit allocs for param decls.  Give the LLVM Argument nodes names.
