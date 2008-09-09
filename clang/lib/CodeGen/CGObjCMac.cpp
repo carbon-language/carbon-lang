@@ -26,6 +26,7 @@
 #include <sstream>
 
 using namespace clang;
+using namespace CodeGen;
 
 namespace {
 
@@ -438,7 +439,7 @@ CGObjCMac::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
                                     const ObjCInterfaceDecl *Class,
                                     llvm::Value *Receiver,
                                     bool IsClassMessage,
-                                    const CallArgList &CallArgs) {
+                                    const CodeGen::CallArgList &CallArgs) {
   // Create and init a super structure; this is a (receiver, class)
   // pair we will pass to objc_msgSendSuper.
   llvm::Value *ObjCSuper = 
@@ -493,8 +494,9 @@ CodeGen::RValue CGObjCMac::EmitMessageSend(CodeGen::CodeGenFunction &CGF,
                                            bool IsSuper,
                                            const CallArgList &CallArgs) {
   CallArgList ActualArgs;
-  ActualArgs.push_back(std::make_pair(Arg0, Arg0Ty));
-  ActualArgs.push_back(std::make_pair(EmitSelector(CGF.Builder, Sel),
+  ActualArgs.push_back(std::make_pair(RValue::get(Arg0), Arg0Ty));
+  ActualArgs.push_back(std::make_pair(RValue::get(EmitSelector(CGF.Builder, 
+                                                               Sel)),
                                       CGF.getContext().getObjCSelType()));
   ActualArgs.insert(ActualArgs.end(), CallArgs.begin(), CallArgs.end());
 

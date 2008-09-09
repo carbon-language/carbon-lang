@@ -17,6 +17,8 @@
 
 #include "clang/AST/Type.h"
 
+#include "CGValue.h"
+
 namespace llvm {
   class Function;
   struct ParamAttrsWithIndex;
@@ -36,7 +38,7 @@ namespace CodeGen {
 
   /// CallArgList - Type for representing both the value and type of
   /// arguments in a call.
-  typedef llvm::SmallVector<std::pair<llvm::Value*, QualType>, 16> CallArgList;
+  typedef llvm::SmallVector<std::pair<RValue, QualType>, 16> CallArgList;
 
   /// CGFunctionInfo - Class to encapsulate the information about a
   /// function definition.

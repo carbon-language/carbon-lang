@@ -175,6 +175,12 @@ public:
   RValue EmitAnyExpr(const Expr *E, llvm::Value *AggLoc = 0, 
                      bool isAggLocVolatile = false);
 
+  /// EmitAnyExprToTemp - Similary to EmitAnyExpr(), however, the result
+  /// will always be accessible even if no aggregate location is
+  /// provided.
+  RValue EmitAnyExprToTemp(const Expr *E, llvm::Value *AggLoc = 0, 
+                           bool isAggLocVolatile = false);
+
   /// isDummyBlock - Return true if BB is an empty basic block
   /// with no predecessors.
   static bool isDummyBlock(const llvm::BasicBlock *BB);
@@ -307,14 +313,6 @@ public:
   //===--------------------------------------------------------------------===//
   //                         Scalar Expression Emission
   //===--------------------------------------------------------------------===//
-
-  /// EmitCallArg - Emit the given expression and append the result
-  /// onto the given Args list.
-  void EmitCallArg(const Expr *E, CallArgList &Args);
-
-  /// EmitCallArg - Append the appropriate call argument for the given
-  /// rvalue and type onto the Args list.
-  void EmitCallArg(RValue RV, QualType Ty, CallArgList &Args);
 
   /// EmitCall - Generate a call of the given function, expecting the
   /// given result type, and using the given argument list which

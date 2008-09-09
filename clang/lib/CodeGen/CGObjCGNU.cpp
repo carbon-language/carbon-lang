@@ -28,6 +28,7 @@
 #include "llvm/Target/TargetData.h"
 #include <map>
 using namespace clang;
+using namespace CodeGen;
 using llvm::dyn_cast;
 
 // The version of the runtime that this class targets.  Must match the version
@@ -281,9 +282,9 @@ CGObjCGNU::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
 
   // Call the method
   CallArgList ActualArgs;
-  ActualArgs.push_back(std::make_pair(Receiver, 
+  ActualArgs.push_back(std::make_pair(RValue::get(Receiver), 
                                       CGF.getContext().getObjCIdType()));
-  ActualArgs.push_back(std::make_pair(cmd,
+  ActualArgs.push_back(std::make_pair(RValue::get(cmd),
                                       CGF.getContext().getObjCSelType()));
   ActualArgs.insert(ActualArgs.end(), CallArgs.begin(), CallArgs.end());
   return CGF.EmitCall(imp, ResultType, ActualArgs);
@@ -328,9 +329,9 @@ CGObjCGNU::GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
 
   // Call the method.
   CallArgList ActualArgs;
-  ActualArgs.push_back(std::make_pair(Receiver, 
+  ActualArgs.push_back(std::make_pair(RValue::get(Receiver), 
                                       CGF.getContext().getObjCIdType()));
-  ActualArgs.push_back(std::make_pair(cmd,
+  ActualArgs.push_back(std::make_pair(RValue::get(cmd),
                                       CGF.getContext().getObjCSelType()));
   ActualArgs.insert(ActualArgs.end(), CallArgs.begin(), CallArgs.end());
   return CGF.EmitCall(imp, ResultType, ActualArgs);

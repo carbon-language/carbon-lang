@@ -57,6 +57,17 @@ RValue CodeGenFunction::EmitAnyExpr(const Expr *E, llvm::Value *AggLoc,
   return RValue::getAggregate(AggLoc);
 }
 
+/// EmitAnyExprToTemp - Similary to EmitAnyExpr(), however, the result
+/// will always be accessible even if no aggregate location is
+/// provided.
+RValue CodeGenFunction::EmitAnyExprToTemp(const Expr *E, llvm::Value *AggLoc, 
+                                          bool isAggLocVolatile) {
+  if (!AggLoc && hasAggregateLLVMType(E->getType()) && 
+      !E->getType()->isAnyComplexType())
+    AggLoc = CreateTempAlloca(ConvertType(E->getType()), "agg.tmp");
+  return EmitAnyExpr(E, AggLoc, isAggLocVolatile);
+}
+
 /// getAccessedFieldNo - Given an encoded value and a result number, return
 /// the input field number being accessed.
 unsigned CodeGenFunction::getAccessedFieldNo(unsigned Idx, 
@@ -840,46 +851,10 @@ RValue CodeGenFunction::EmitCallExpr(llvm::Value *Callee, QualType FnType,
 
   CallArgList Args;
   for (CallExpr::const_arg_iterator I = ArgBeg; I != ArgEnd; ++I)
-    EmitCallArg(*I, Args);
+    Args.push_back(std::make_pair(EmitAnyExprToTemp(*I), 
+                                  I->getType()));
 
   return EmitCall(Callee, ResultType, Args);
-}
-
-// FIXME: Merge the following two functions.
-void CodeGenFunction::EmitCallArg(RValue RV, QualType Ty,
-                                  CallArgList &Args) {
-  llvm::Value *ArgValue;
-
-  if (RV.isScalar()) {
-    ArgValue = RV.getScalarVal();
-  } else if (RV.isComplex()) {
-    // Make a temporary alloca to pass the argument.
-    ArgValue = CreateTempAlloca(ConvertType(Ty));
-    StoreComplexToAddr(RV.getComplexVal(), ArgValue, false); 
-  } else {
-    ArgValue = RV.getAggregateAddr();
-  }
-
-  Args.push_back(std::make_pair(ArgValue, Ty));
-}
-
-void CodeGenFunction::EmitCallArg(const Expr *E, CallArgList &Args) {
-  QualType ArgTy = E->getType();
-  llvm::Value *ArgValue;
-  
-  if (!hasAggregateLLVMType(ArgTy)) {
-    // Scalar argument is passed by-value.
-    ArgValue = EmitScalarExpr(E);
-  } else if (ArgTy->isAnyComplexType()) {
-    // Make a temporary alloca to pass the argument.
-    ArgValue = CreateTempAlloca(ConvertType(ArgTy));
-    EmitComplexExprIntoAddr(E, ArgValue, false);
-  } else {
-    ArgValue = CreateTempAlloca(ConvertType(ArgTy));
-    EmitAggExpr(E, ArgValue, false);
-  }
-  
-  Args.push_back(std::make_pair(ArgValue, E->getType()));
 }
 
 RValue CodeGenFunction::EmitCall(llvm::Value *Callee, 
@@ -898,8 +873,18 @@ RValue CodeGenFunction::EmitCall(llvm::Value *Callee,
   }
   
   for (CallArgList::const_iterator I = CallArgs.begin(), E = CallArgs.end(); 
-       I != E; ++I)
-    Args.push_back(I->first);
+       I != E; ++I) {
+    RValue RV = I->first;
+    if (RV.isScalar()) {
+      Args.push_back(RV.getScalarVal());
+    } else if (RV.isComplex()) {
+      // Make a temporary alloca to pass the argument.
+      Args.push_back(CreateTempAlloca(ConvertType(I->second)));
+      StoreComplexToAddr(RV.getComplexVal(), Args.back(), false); 
+    } else {
+      Args.push_back(RV.getAggregateAddr());
+    }
+  }
   
   llvm::CallInst *CI = Builder.CreateCall(Callee,&Args[0],&Args[0]+Args.size());
   CGCallInfo CallInfo(ResultType, CallArgs);

@@ -17,6 +17,11 @@
 
 #include "clang/AST/Type.h"
 
+namespace llvm {
+  class Constant;
+  class Value;
+}
+
 namespace clang {
   class ObjCPropertyRefExpr;
 

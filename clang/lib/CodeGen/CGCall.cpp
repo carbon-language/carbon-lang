@@ -102,8 +102,7 @@ void CGFunctionInfo::constructParamAttrList(ParamAttrListType &PAL) const {
 
 /***/
 
-CGCallInfo::CGCallInfo(QualType _ResultType,
-                       const llvm::SmallVector<std::pair<llvm::Value*, QualType>, 16> &_Args) 
+CGCallInfo::CGCallInfo(QualType _ResultType, const CallArgList &_Args)
   : ResultType(_ResultType),
     Args(_Args) {
   ArgTypes.push_back(ResultType);

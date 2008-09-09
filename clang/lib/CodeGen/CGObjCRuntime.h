@@ -21,6 +21,7 @@
 #include <string>
 
 #include "CGValue.h"
+#include "CGCall.h"
 
 namespace llvm {
   class Constant;
@@ -31,9 +32,9 @@ namespace llvm {
 }
 
 namespace clang {
-  namespace CodeGen {
-    class CodeGenFunction;
-  }
+namespace CodeGen {
+  class CodeGenFunction;
+}
 
   class ObjCCategoryImplDecl;
   class ObjCImplementationDecl;
@@ -42,8 +43,6 @@ namespace clang {
   class ObjCMethodDecl;
   class ObjCProtocolDecl;
   class Selector;
-
-  typedef llvm::SmallVector<std::pair<llvm::Value*, QualType>, 16> CallArgList;
 
 namespace CodeGen {
   class CodeGenModule;

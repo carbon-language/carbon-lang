@@ -83,7 +83,7 @@ RValue CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E) {
   CallArgList Args;
   for (CallExpr::const_arg_iterator i = E->arg_begin(), e = E->arg_end(); 
        i != e; ++i)
-    EmitCallArg(*i, Args);
+    Args.push_back(std::make_pair(EmitAnyExprToTemp(*i), (*i)->getType()));
   
   if (isSuperMessage) {
     // super is only valid in an Objective-C method
@@ -268,7 +268,7 @@ void CodeGenFunction::EmitObjCPropertySet(const ObjCPropertyRefExpr *E,
   }
 
   CallArgList Args;
-  EmitCallArg(Src, E->getType(), Args);
+  Args.push_back(std::make_pair(Src, E->getType()));
   CGM.getObjCRuntime().GenerateMessageSend(*this, getContext().VoidTy, S, 
                                            EmitScalarExpr(E->getBase()), 
                                            false, Args);
@@ -316,15 +316,16 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S)
   llvm::Value *Collection = EmitScalarExpr(S.getCollection());
   
   CallArgList Args;
-  Args.push_back(std::make_pair(StatePtr, 
+  Args.push_back(std::make_pair(RValue::get(StatePtr), 
                                 getContext().getPointerType(StateTy)));
   
-  Args.push_back(std::make_pair(ItemsPtr, 
+  Args.push_back(std::make_pair(RValue::get(ItemsPtr), 
                                 getContext().getPointerType(ItemsTy)));
   
   const llvm::Type *UnsignedLongLTy = ConvertType(getContext().UnsignedLongTy);
   llvm::Constant *Count = llvm::ConstantInt::get(UnsignedLongLTy, NumItems);
-  Args.push_back(std::make_pair(Count, getContext().UnsignedLongTy));
+  Args.push_back(std::make_pair(RValue::get(Count), 
+                                getContext().UnsignedLongTy));
   
   RValue CountRV = 
     CGM.getObjCRuntime().GenerateMessageSend(*this, 
