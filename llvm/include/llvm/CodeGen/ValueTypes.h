@@ -29,7 +29,7 @@ namespace llvm {
 
     enum SimpleValueType {
       // If you change this numbering, you must change the values in
-      // ValueTypes.td well!
+      // ValueTypes.td as well!
       Other          =   0,   // This is a non-standard value
       i1             =   1,   // This is a 1 bit integer value
       i8             =   2,   // This is an 8 bit integer value
@@ -103,10 +103,11 @@ namespace llvm {
     /// Extended types are either vector types or arbitrary precision integers.
     /// Arbitrary precision integers have iAny in the first SimpleTypeBits bits,
     /// and the bit-width in the next PrecisionBits bits, offset by minus one.
-    /// Vector types are encoded by having the first SimpleTypeBits+PrecisionBits
-    /// bits encode the vector element type (which must be a scalar type, possibly
-    /// an arbitrary precision integer) and the remaining VectorBits upper bits
-    /// encode the vector length, offset by one.
+    /// Vector types are encoded by having the first
+    /// SimpleTypeBits+PrecisionBits bits encode the vector element type
+    /// (which must be a scalar type, possibly an arbitrary precision integer)
+    /// and the remaining VectorBits upper bits encode the vector length, offset
+    /// by one.
     ///
     /// 32--------------16-----------8-------------0
     ///  | Vector length | Precision | Simple type |
@@ -136,7 +137,7 @@ namespace llvm {
   public:
 
     MVT() {}
-    MVT(SimpleValueType S) { V = S; }
+    MVT(SimpleValueType S) : V(S) {}
 
     inline bool operator== (const MVT VT) const { return V == VT.V; }
     inline bool operator!= (const MVT VT) const { return V != VT.V; }
