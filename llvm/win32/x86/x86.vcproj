@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8.00"
+	Version="8,00"
 	Name="x86"
 	ProjectGUID="{144EEBF6-8C9B-4473-B715-2C821666AF6C}"
 	RootNamespace="x86"
@@ -429,6 +429,10 @@
 			</File>
 			<File
 				RelativePath="..\..\lib\Target\X86\X86RegisterInfo.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\lib\Target\X86\X86Relocations.h"
 				>
 			</File>
 			<File
