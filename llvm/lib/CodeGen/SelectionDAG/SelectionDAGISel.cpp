@@ -760,8 +760,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn, MachineFunction &MF) {
             continue;
 
           // Then handle certain instructions as single-LLVM-Instruction blocks.
-          if (isa<CallInst>(BI) || isa<LoadInst>(BI) ||
-              isa<StoreInst>(BI)) {
+          if (isa<CallInst>(BI)) {
             if (BI->getType() != Type::VoidTy) {
               unsigned &R = FuncInfo->ValueMap[BI];
               if (!R)
@@ -774,9 +773,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn, MachineFunction &MF) {
 
           if (!DisableFastISelAbort &&
               // For now, don't abort on non-conditional-branch terminators.
-              (!isa<TerminatorInst>(BI) ||
-               (isa<BranchInst>(BI) &&
-                cast<BranchInst>(BI)->isUnconditional()))) {
+              (!isa<TerminatorInst>(BI) || isa<BranchInst>(BI))) {
             // The "fast" selector couldn't handle something and bailed.
             // For the purpose of debugging, just abort.
 #ifndef NDEBUG
