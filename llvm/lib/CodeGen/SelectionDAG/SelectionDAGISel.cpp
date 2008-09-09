@@ -64,9 +64,8 @@ EnableFastISelVerbose("fast-isel-verbose", cl::Hidden,
           cl::desc("Enable verbose messages in the experimental \"fast\" "
                    "instruction selector"));
 static cl::opt<bool>
-DisableFastISelAbort("fast-isel-no-abort", cl::Hidden,
-          cl::desc("Use the SelectionDAGISel when \"fast\" instruction "
-                   "selection fails"));
+EnableFastISelAbort("fast-isel-abort", cl::Hidden,
+          cl::desc("Enable abort calls when \"fast\" instruction fails"));
 static cl::opt<bool>
 SchedLiveInCopies("schedule-livein-copies",
                   cl::desc("Schedule copies of livein registers"),
@@ -287,6 +286,12 @@ void SelectionDAGISel::getAnalysisUsage(AnalysisUsage &AU) const {
 }
 
 bool SelectionDAGISel::runOnFunction(Function &Fn) {
+  // Do some sanity-checking on the command-line options.
+  assert((!EnableFastISelVerbose || EnableFastISel) &&
+         "-fast-isel-verbose requires -fast-isel");
+  assert((!EnableFastISelAbort || EnableFastISel) &&
+         "-fast-isel-abort requires -fast-isel");
+
   // Get alias analysis for load/store combining.
   AA = &getAnalysis<AliasAnalysis>();
 
@@ -747,11 +752,11 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn, MachineFunction &MF) {
           // feed PHI nodes in successor blocks.
           if (isa<TerminatorInst>(BI))
             if (!HandlePHINodesInSuccessorBlocksFast(LLVMBB, F)) {
-              if (EnableFastISelVerbose || !DisableFastISelAbort) {
+              if (EnableFastISelVerbose || EnableFastISelAbort) {
                 cerr << "FastISel miss: ";
                 BI->dump();
               }
-              if (!DisableFastISelAbort)
+              if (EnableFastISelAbort)
                 assert(0 && "FastISel didn't handle a PHI in a successor");
             }
 
@@ -778,11 +783,11 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn, MachineFunction &MF) {
           // Otherwise, give up on FastISel for the rest of the block.
           // For now, be a little lenient about non-branch terminators.
           if (!isa<TerminatorInst>(BI) || isa<BranchInst>(BI)) {
-            if (EnableFastISelVerbose || !DisableFastISelAbort) {
+            if (EnableFastISelVerbose || EnableFastISelAbort) {
               cerr << "FastISel miss: ";
               BI->dump();
             }
-            if (!DisableFastISelAbort)
+            if (EnableFastISelAbort)
               // The "fast" selector couldn't handle something and bailed.
               // For the purpose of debugging, just abort.
               assert(0 && "FastISel didn't select the entire block");
