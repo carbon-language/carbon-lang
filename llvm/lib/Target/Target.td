@@ -390,6 +390,8 @@ def IMPLICIT_DEF : Instruction {
   let AsmString = "";
   let Namespace = "TargetInstrInfo";
   let neverHasSideEffects = 1;
+  let isReMaterializable = 1;
+  let isAsCheapAsAMove = 1;
 }
 def SUBREG_TO_REG : Instruction {
   let OutOperandList = (ops unknown:$dst);
