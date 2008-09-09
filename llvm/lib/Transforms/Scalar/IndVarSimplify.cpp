@@ -93,6 +93,8 @@ namespace {
     void RewriteLoopExitValues(Loop *L, SCEV *IterationCount);
 
     void DeleteTriviallyDeadInstructions(std::set<Instruction*> &Insts);
+
+    void OptimizeCanonicalIVType(Loop *L);
   };
 }
 
@@ -597,7 +599,122 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
 #endif
 
   DeleteTriviallyDeadInstructions(DeadInsts);
-  
+  OptimizeCanonicalIVType(L);
   assert(L->isLCSSAForm());
   return Changed;
 }
+
+/// OptimizeCanonicalIVType - If loop induction variable is always
+/// sign or zero extended then extend the type of induction 
+/// variable.
+void IndVarSimplify::OptimizeCanonicalIVType(Loop *L) {
+  PHINode *PH = L->getCanonicalInductionVariable();
+  if (!PH) return;
+  
+  // Check loop iteration count.
+  SCEVHandle IC = SE->getIterationCount(L);
+  if (isa<SCEVCouldNotCompute>(IC)) return;
+  SCEVConstant *IterationCount = dyn_cast<SCEVConstant>(IC);
+  if (!IterationCount) return;
+
+  unsigned IncomingEdge = L->contains(PH->getIncomingBlock(0));
+  unsigned BackEdge     = IncomingEdge^1;
+  
+  // Check IV uses. If all IV uses are either SEXT or ZEXT (except
+  // IV increment instruction) then this IV is suitable for this
+  // transformstion.
+  bool isSEXT =  false;
+  BinaryOperator *Incr = NULL;
+  const Type *NewType   = NULL;
+  for(Value::use_iterator UI = PH->use_begin(), UE = PH->use_end(); 
+      UI != UE; ++UI) {
+    const Type *CandidateType = NULL;
+    if (ZExtInst *ZI = dyn_cast<ZExtInst>(UI))
+      CandidateType = ZI->getDestTy();
+    else if (SExtInst *SI = dyn_cast<SExtInst>(UI)) {
+      CandidateType = SI->getDestTy();
+      isSEXT =  true;
+    }
+    else if ((Incr = dyn_cast<BinaryOperator>(UI))) {
+      // Validate IV increment instruction.
+      if (PH->getIncomingValue(BackEdge) == Incr)
+        continue;
+    }
+    if (!CandidateType) {
+      NewType = NULL;
+      break;
+    }
+    if (!NewType)
+      NewType = CandidateType;
+    else if (NewType != CandidateType) {
+      NewType = NULL;
+      break;
+    }
+  }
+
+  // IV uses are not suitable then avoid this transformation.
+  if (!NewType || !Incr)
+    return;
+
+  // IV increment instruction has two uses, one is loop exit condition
+  // and second is the IV (phi node) itself.
+  ICmpInst *Exit = NULL;
+  for(Value::use_iterator II = Incr->use_begin(), IE = Incr->use_end();
+      II != IE; ++II) {
+    if (PH == *II)  continue;
+    Exit = dyn_cast<ICmpInst>(*II);
+    break;
+  }
+  if (!Exit) return;
+  ConstantInt *EV = dyn_cast<ConstantInt>(Exit->getOperand(0));
+  if (!EV) 
+    EV = dyn_cast<ConstantInt>(Exit->getOperand(1));
+  if (!EV) return;
+
+  // Check iteration count max value to avoid loops that wrap around IV.
+  APInt ICount = IterationCount->getValue()->getValue();
+  if (ICount.isNegative()) return;
+  uint32_t BW = PH->getType()->getPrimitiveSizeInBits();
+  APInt Max = (isSEXT ? APInt::getSignedMaxValue(BW) : APInt::getMaxValue(BW));
+  if (ICount.getZExtValue() > Max.getZExtValue())  return;                         
+
+  // Extend IV type.
+
+  SCEVExpander Rewriter(*SE, *LI);
+  Value *NewIV = Rewriter.getOrInsertCanonicalInductionVariable(L,NewType);
+  PHINode *NewPH = cast<PHINode>(NewIV);
+  Instruction *NewIncr = cast<Instruction>(NewPH->getIncomingValue(BackEdge));
+
+  // Replace all SEXT or ZEXT uses.
+  SmallVector<Instruction *, 4> PHUses;
+  for(Value::use_iterator UI = PH->use_begin(), UE = PH->use_end(); 
+      UI != UE; ++UI) {
+      Instruction *I = cast<Instruction>(UI);
+      PHUses.push_back(I);
+  }
+  while (!PHUses.empty()){
+    Instruction *Use = PHUses.back(); PHUses.pop_back();
+    if (Incr == Use) continue;
+    
+    SE->deleteValueFromRecords(Use);
+    Use->replaceAllUsesWith(NewIV);
+    Use->eraseFromParent();
+  }
+
+  // Replace exit condition.
+  ConstantInt *NEV = ConstantInt::get(NewType, EV->getZExtValue());
+  Instruction *NE = new ICmpInst(Exit->getPredicate(),
+                                 NewIncr, NEV, "new.exit", 
+                                 Exit->getParent()->getTerminator());
+  SE->deleteValueFromRecords(Exit);
+  Exit->replaceAllUsesWith(NE);
+  Exit->eraseFromParent();
+  
+  // Remove old IV and increment instructions.
+  SE->deleteValueFromRecords(PH);
+  PH->removeIncomingValue((unsigned)0);
+  PH->removeIncomingValue((unsigned)0);
+  SE->deleteValueFromRecords(Incr);
+  Incr->eraseFromParent();
+}
+
