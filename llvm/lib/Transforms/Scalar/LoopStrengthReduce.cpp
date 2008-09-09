@@ -1551,8 +1551,7 @@ ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
 
   // Check stride constant and the comparision constant signs to detect
   // overflow.
-  if (ICmpInst::isSignedPredicate(Predicate) &&
-      (CmpVal & SignBit) != (CmpSSInt & SignBit))
+  if ((CmpVal & SignBit) != (CmpSSInt & SignBit))
     return Cond;
 
   // Look for a suitable stride / iv as replacement.
