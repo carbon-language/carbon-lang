@@ -1429,7 +1429,18 @@ void CGObjCMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
 void CGObjCMac::EmitThrowStmt(CodeGen::CodeGenFunction &CGF,
                               const ObjCAtThrowStmt &S)
 {
-  CGF.ErrorUnsupported(&S, "@throw statement");
+  llvm::Value *ExceptionAsObject;
+  
+  if (const Expr *ThrowExpr = S.getThrowExpr()) {
+    llvm::Value *Exception = CGF.EmitScalarExpr(ThrowExpr);
+    ExceptionAsObject = 
+      CGF.Builder.CreateBitCast(Exception, ObjCTypes.ObjectPtrTy, "tmp");
+  } else {
+    assert(0 && "FIXME: rethrows not supported!");
+  }
+  
+  CGF.Builder.CreateCall(ObjCTypes.ExceptionThrowFn, ExceptionAsObject);
+
 }
 
 /* *** Private Interface *** */
