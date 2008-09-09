@@ -1317,6 +1317,14 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
     }
   }
 
+  // If resulting interval has a preference that no longer fits because of subreg
+  // coalescing, just clear the preference.
+  if (ResDstInt->preference && (isExtSubReg || isInsSubReg)) {
+    const TargetRegisterClass *RC = mri_->getRegClass(ResDstInt->reg);
+    if (!RC->contains(ResDstInt->preference))
+      ResDstInt->preference = 0;
+  }
+
   DOUT << "\n\t\tJoined.  Result = "; ResDstInt->print(DOUT, tri_);
   DOUT << "\n";
 
