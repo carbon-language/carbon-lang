@@ -1036,7 +1036,7 @@ unsigned RALinScan::getFreePhysReg(LiveInterval *cur) {
   // If copy coalescer has assigned a "preferred" register, check if it's
   // available first.
   if (cur->preference) {
-    if (prt_->isRegAvail(cur->preference)) {
+    if (prt_->isRegAvail(cur->preference) && RC->contains(cur->preference)) {
       DOUT << "\t\tassigned the preferred register: "
            << tri_->getName(cur->preference) << "\n";
       return cur->preference;
