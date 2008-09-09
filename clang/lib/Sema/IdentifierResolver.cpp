@@ -18,6 +18,9 @@
 
 using namespace clang;
 
+//===----------------------------------------------------------------------===//
+// IdDeclInfoMap class
+//===----------------------------------------------------------------------===//
 
 /// IdDeclInfoMap - Associates IdDeclInfos with Identifiers.
 /// Allocates 'pools' (vectors of IdDeclInfos) to avoid allocating each
@@ -38,9 +41,112 @@ public:
 };
 
 
+//===----------------------------------------------------------------------===//
+// LookupContext Implementation
+//===----------------------------------------------------------------------===//
+
+/// getContext - Returns translation unit context for non ScopedDecls and
+/// for EnumConstantDecls returns the parent context of their EnumDecl.
+DeclContext *IdentifierResolver::LookupContext::getContext(Decl *D) {
+  DeclContext *Ctx;
+
+  if (CXXFieldDecl *FD = dyn_cast<CXXFieldDecl>(D))
+    return FD->getParent();
+
+  if (EnumConstantDecl *EnumD = dyn_cast<EnumConstantDecl>(D)) {
+    Ctx = EnumD->getDeclContext()->getParent();
+  } else if (ScopedDecl *SD = dyn_cast<ScopedDecl>(D))
+    Ctx = SD->getDeclContext();
+  else
+    return TUCtx();
+
+  if (isa<TranslationUnitDecl>(Ctx))
+    return TUCtx();
+
+  return Ctx;
+}
+
+/// isEqOrContainedBy - Returns true of the given context is the same or a
+/// parent of this one.
+bool IdentifierResolver::LookupContext::isEqOrContainedBy(
+                                                const LookupContext &PC) const {
+  if (PC.isTU()) return true;
+
+  for (LookupContext Next = *this; !Next.isTU();  Next = Next.getParent())
+    if (Next.Ctx == PC.Ctx) return true;
+
+  return false;
+}
+
+
+//===----------------------------------------------------------------------===//
+// IdDeclInfo Implementation
+//===----------------------------------------------------------------------===//
+
+/// FindContext - Returns an iterator pointing just after the decl that is
+/// in the given context or in a parent of it. The search is in reverse
+/// order, from end to begin.
+IdentifierResolver::IdDeclInfo::DeclsTy::iterator
+IdentifierResolver::IdDeclInfo::FindContext(const LookupContext &Ctx,
+                                            const DeclsTy::iterator &Start) {
+  for (DeclsTy::iterator I = Start; I != Decls.begin(); --I) {
+    if (Ctx.isEqOrContainedBy(LookupContext(*(I-1))))
+      return I;
+  }
+
+  return Decls.begin();
+}
+
+/// AddShadowed - Add a decl by putting it directly above the 'Shadow' decl.
+/// Later lookups will find the 'Shadow' decl first. The 'Shadow' decl must
+/// be already added to the scope chain and must be in the same context as
+/// the decl that we want to add.
+void IdentifierResolver::IdDeclInfo::AddShadowed(NamedDecl *D,
+                                                 NamedDecl *Shadow) {
+  assert(LookupContext(D) == LookupContext(Shadow) &&
+    "Decl and Shadow not in same context!");
+
+  for (DeclsTy::iterator I = Decls.end(); I != Decls.begin(); --I) {
+    if (Shadow == *(I-1)) {
+      Decls.insert(I-1, D);
+      return;
+    }
+  }
+
+  assert(0 && "Shadow wasn't in scope chain!");
+}
+
+/// RemoveDecl - Remove the decl from the scope chain.
+/// The decl must already be part of the decl chain.
+void IdentifierResolver::IdDeclInfo::RemoveDecl(NamedDecl *D) {
+  for (DeclsTy::iterator I = Decls.end(); I != Decls.begin(); --I) {
+    if (D == *(I-1)) {
+      Decls.erase(I-1);
+      return;
+    }
+  }
+
+  assert(0 && "Didn't find this decl on its identifier's chain!");
+}
+
+
+//===----------------------------------------------------------------------===//
+// IdentifierResolver Implementation
+//===----------------------------------------------------------------------===//
+
 IdentifierResolver::IdentifierResolver() : IdDeclInfos(new IdDeclInfoMap) {}
 IdentifierResolver::~IdentifierResolver() {
   delete IdDeclInfos;
+}
+
+/// isDeclInScope - If 'Ctx' is a function/method, isDeclInScope returns true
+/// if 'D' is in Scope 'S', otherwise 'S' is ignored and isDeclInScope returns
+/// true if 'D' belongs to the given declaration context.
+bool IdentifierResolver::isDeclInScope(Decl *D, DeclContext *Ctx, Scope *S) {
+  if (Ctx->isFunctionOrMethod())
+    return S->isDeclScope(D);
+
+  return LookupContext(D) == LookupContext(Ctx);
 }
 
 /// AddDecl - Link the decl to its shadowed decl chain.
@@ -177,6 +283,10 @@ void IdentifierResolver::iterator::PreIncIter() {
     *this = end();
 }
 
+
+//===----------------------------------------------------------------------===//
+// IdDeclInfoMap Implementation
+//===----------------------------------------------------------------------===//
 
 /// Returns the IdDeclInfo associated to the IdentifierInfo.
 /// It creates a new IdDeclInfo if one was not created before for this id.

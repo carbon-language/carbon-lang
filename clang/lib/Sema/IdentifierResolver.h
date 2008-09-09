@@ -43,24 +43,7 @@ class IdentifierResolver {
 
     /// getContext - Returns translation unit context for non ScopedDecls and
     /// for EnumConstantDecls returns the parent context of their EnumDecl.
-    static DeclContext *getContext(Decl *D) {
-      DeclContext *Ctx;
-
-      if (CXXFieldDecl *FD = dyn_cast<CXXFieldDecl>(D))
-        return FD->getParent();
-
-      if (EnumConstantDecl *EnumD = dyn_cast<EnumConstantDecl>(D)) {
-        Ctx = EnumD->getDeclContext()->getParent();
-      } else if (ScopedDecl *SD = dyn_cast<ScopedDecl>(D))
-        Ctx = SD->getDeclContext();
-      else
-        return TUCtx();
-
-      if (isa<TranslationUnitDecl>(Ctx))
-        return TUCtx();
-
-      return Ctx;
-    }
+    static DeclContext *getContext(Decl *D);
 
   public:
     LookupContext(Decl *D) {
@@ -86,14 +69,7 @@ class IdentifierResolver {
 
     /// isEqOrContainedBy - Returns true of the given context is the same or a
     /// parent of this one.
-    bool isEqOrContainedBy(const LookupContext &PC) const {
-      if (PC.isTU()) return true;
-
-      for (LookupContext Next = *this; !Next.isTU();  Next = Next.getParent())
-        if (Next.Ctx == PC.Ctx) return true;
-
-      return false;
-    }
+    bool isEqOrContainedBy(const LookupContext &PC) const;
 
     bool operator==(const LookupContext &RHS) const {
       return Ctx == RHS.Ctx;
@@ -125,14 +101,7 @@ class IdentifierResolver {
     /// in the given context or in a parent of it. The search is in reverse
     /// order, from end to begin.
     DeclsTy::iterator FindContext(const LookupContext &Ctx,
-                                  const DeclsTy::iterator &Start) {
-      for (DeclsTy::iterator I = Start; I != Decls.begin(); --I) {
-        if (Ctx.isEqOrContainedBy(LookupContext(*(I-1))))
-          return I;
-      }
-
-      return Decls.begin();
-    }
+                                  const DeclsTy::iterator &Start);
 
     void AddDecl(NamedDecl *D) {
       Decls.insert(FindContext(LookupContext(D)), D);
@@ -142,32 +111,11 @@ class IdentifierResolver {
     /// Later lookups will find the 'Shadow' decl first. The 'Shadow' decl must
     /// be already added to the scope chain and must be in the same context as
     /// the decl that we want to add.
-    void AddShadowed(NamedDecl *D, NamedDecl *Shadow) {
-      assert(LookupContext(D) == LookupContext(Shadow) &&
-             "Decl and Shadow not in same context!");
-
-      for (DeclsTy::iterator I = Decls.end(); I != Decls.begin(); --I) {
-        if (Shadow == *(I-1)) {
-          Decls.insert(I-1, D);
-          return;
-        }
-      }
-
-      assert(0 && "Shadow wasn't in scope chain!");
-    }
+    void AddShadowed(NamedDecl *D, NamedDecl *Shadow);
 
     /// RemoveDecl - Remove the decl from the scope chain.
     /// The decl must already be part of the decl chain.
-    void RemoveDecl(NamedDecl *D) {
-      for (DeclsTy::iterator I = Decls.end(); I != Decls.begin(); --I) {
-        if (D == *(I-1)) {
-          Decls.erase(I-1);
-          return;
-        }
-      }
-
-      assert(0 && "Didn't find this decl on its identifier's chain!");
-    }
+    void RemoveDecl(NamedDecl *D);
 
   private:
     DeclsTy Decls;
@@ -259,12 +207,7 @@ public:
   /// isDeclInScope - If 'Ctx' is a function/method, isDeclInScope returns true
   /// if 'D' is in Scope 'S', otherwise 'S' is ignored and isDeclInScope returns
   /// true if 'D' belongs to the given declaration context.
-  static bool isDeclInScope(Decl *D, DeclContext *Ctx, Scope *S = 0) {
-    if (Ctx->isFunctionOrMethod())
-      return S->isDeclScope(D);
-
-    return LookupContext(D) == LookupContext(Ctx);
-  }
+  static bool isDeclInScope(Decl *D, DeclContext *Ctx, Scope *S = 0);
 
   /// AddDecl - Link the decl to its shadowed decl chain.
   void AddDecl(NamedDecl *D);
