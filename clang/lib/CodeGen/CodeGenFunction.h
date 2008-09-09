@@ -133,6 +133,9 @@ public:
 
   void GenerateCode(const FunctionDecl *FD,
                     llvm::Function *Fn);
+  void StartFunction(const Decl *D, QualType RetTy, 
+                     llvm::Function *Fn,
+                     const FunctionArgList &Args);
   void FinishFunction(SourceLocation EndLoc=SourceLocation());
   
   const llvm::Type *ConvertType(QualType T);

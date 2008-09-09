@@ -110,11 +110,11 @@ void CodeGenFunction::FinishFunction(SourceLocation EndLoc) {
   assert(!verifyFunction(*CurFn) && "Generated function is not well formed.");
 }
 
-// FIXME: There is parallel code in StartObjCMethod.
-void CodeGenFunction::GenerateCode(const FunctionDecl *FD,
-                                   llvm::Function *Fn) {
-  CurFuncDecl = FD;
-  FnRetTy = FD->getResultType();
+void CodeGenFunction::StartFunction(const Decl *D, QualType RetTy, 
+                                    llvm::Function *Fn,
+                                    const FunctionArgList &Args) {
+  CurFuncDecl = D;
+  FnRetTy = RetTy;
   CurFn = Fn;
   assert(CurFn->isDeclaration() && "Function already has body?");
 
@@ -129,47 +129,61 @@ void CodeGenFunction::GenerateCode(const FunctionDecl *FD,
 
   ReturnBlock = llvm::BasicBlock::Create("return", CurFn);
   ReturnValue = 0;
-  if (!FnRetTy->isVoidType())
-    ReturnValue = CreateTempAlloca(ConvertType(FnRetTy), "retval");
+  if (!RetTy->isVoidType())
+    ReturnValue = CreateTempAlloca(ConvertType(RetTy), "retval");
     
   Builder.SetInsertPoint(EntryBB);
   
   // Emit subprogram debug descriptor.
-  CGDebugInfo *DI = CGM.getDebugInfo();
-  if (DI) {
-    CompoundStmt* body = dyn_cast<CompoundStmt>(FD->getBody());
-    if (body && body->getLBracLoc().isValid()) {
-      DI->setLocation(body->getLBracLoc());
+  // FIXME: The cast here is a huge hack.
+  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+    if (CGDebugInfo *DI = CGM.getDebugInfo()) {
+      CompoundStmt* body = dyn_cast<CompoundStmt>(FD->getBody());
+      if (body && body->getLBracLoc().isValid()) {
+        DI->setLocation(body->getLBracLoc());
+      }
+      DI->EmitFunctionStart(FD, CurFn, Builder);
     }
-    DI->EmitFunctionStart(FD, CurFn, Builder);
   }
 
   // Emit allocs for param decls.  Give the LLVM Argument nodes names.
   llvm::Function::arg_iterator AI = CurFn->arg_begin();
   
   // Name the struct return argument.
-  if (hasAggregateLLVMType(FD->getResultType())) {
+  if (hasAggregateLLVMType(FnRetTy)) {
     AI->setName("agg.result");
     ++AI;
   }
+     
+  for (FunctionArgList::const_iterator i = Args.begin(), e = Args.end();
+       i != e; ++i, ++AI) {
+    const VarDecl *Arg = i->first;
+    QualType T = i->second;
+    assert(AI != CurFn->arg_end() && "Argument mismatch!");
+    llvm::Value* V = AI;
+    if (!getContext().typesAreCompatible(T, Arg->getType())) {
+      // This must be a promotion, for something like
+      // "void a(x) short x; {..."
+      V = EmitScalarConversion(V, T, Arg->getType());
+      }
+    EmitParmDecl(*Arg, V);
+  }
+  assert(AI == CurFn->arg_end() && "Argument mismatch!");
+}
 
+void CodeGenFunction::GenerateCode(const FunctionDecl *FD,
+                                   llvm::Function *Fn) {
+  FunctionArgList Args;
   if (FD->getNumParams()) {
     const FunctionTypeProto* FProto = FD->getType()->getAsFunctionTypeProto();
     assert(FProto && "Function def must have prototype!");
-    for (unsigned i = 0, e = FD->getNumParams(); i != e; ++i, ++AI) {
-      assert(AI != CurFn->arg_end() && "Argument mismatch!");
-      const ParmVarDecl* CurParam = FD->getParamDecl(i);
-      llvm::Value* V = AI;
-      if (!getContext().typesAreCompatible(FProto->getArgType(i),
-                                           CurParam->getType())) {
-        // This must be a promotion, for something like
-        // "void a(x) short x; {..."
-        V = EmitScalarConversion(V, FProto->getArgType(i),
-                                 CurParam->getType());
-      }
-      EmitParmDecl(*CurParam, V);
-    }
+
+    for (unsigned i = 0, e = FD->getNumParams(); i != e; ++i)
+      Args.push_back(std::make_pair(FD->getParamDecl(i), 
+                                    FProto->getArgType(i)));
   }
+
+  StartFunction(FD, FD->getResultType(), Fn, Args);
 
   EmitStmt(FD->getBody());
   

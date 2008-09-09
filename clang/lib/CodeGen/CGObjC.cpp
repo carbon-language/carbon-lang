@@ -102,53 +102,23 @@ RValue CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E) {
 /// StartObjCMethod - Begin emission of an ObjCMethod. This generates
 /// the LLVM function and sets the other context used by
 /// CodeGenFunction.
-
-// FIXME: This should really be merged with GenerateCode.
 void CodeGenFunction::StartObjCMethod(const ObjCMethodDecl *OMD) {
-  CurFn = CGM.getObjCRuntime().GenerateMethod(OMD);
+  FunctionArgList Args;
+  llvm::Function *Fn = CGM.getObjCRuntime().GenerateMethod(OMD);
 
-  CGM.SetMethodAttributes(OMD, CurFn);
-  
-  llvm::BasicBlock *EntryBB = llvm::BasicBlock::Create("entry", CurFn);
-  
-  // Create a marker to make it easy to insert allocas into the entryblock
-  // later.  Don't create this with the builder, because we don't want it
-  // folded.
-  llvm::Value *Undef = llvm::UndefValue::get(llvm::Type::Int32Ty);
-  AllocaInsertPt = new llvm::BitCastInst(Undef, llvm::Type::Int32Ty, "allocapt",
-                                         EntryBB);
+  CGM.SetMethodAttributes(OMD, Fn);
 
-  FnRetTy = OMD->getResultType();
-  CurFuncDecl = OMD;
+  Args.push_back(std::make_pair(OMD->getSelfDecl(), 
+                                OMD->getSelfDecl()->getType()));
+  Args.push_back(std::make_pair(OMD->getCmdDecl(),
+                                OMD->getCmdDecl()->getType()));
 
-  ReturnBlock = llvm::BasicBlock::Create("return", CurFn);
-  ReturnValue = 0;
-  if (!FnRetTy->isVoidType())
-    ReturnValue = CreateTempAlloca(ConvertType(FnRetTy), "retval");
-
-  Builder.SetInsertPoint(EntryBB);
-  
-  // Emit allocs for param decls.  Give the LLVM Argument nodes names.
-  llvm::Function::arg_iterator AI = CurFn->arg_begin();
-  
-  // Name the struct return argument.
-  if (hasAggregateLLVMType(OMD->getResultType())) {
-    AI->setName("agg.result");
-    ++AI;
+  for (unsigned i = 0, e = OMD->getNumParams(); i != e; ++i) {
+    ParmVarDecl *IPD = OMD->getParamDecl(i);
+    Args.push_back(std::make_pair(IPD, IPD->getType()));
   }
 
-  // Add implicit parameters to the decl map.
-  EmitParmDecl(*OMD->getSelfDecl(), AI); 
-  ++AI;
-
-  EmitParmDecl(*OMD->getCmdDecl(), AI); 
-  ++AI;
-
-  for (unsigned i = 0, e = OMD->getNumParams(); i != e; ++i, ++AI) {
-    assert(AI != CurFn->arg_end() && "Argument mismatch!");
-    EmitParmDecl(*OMD->getParamDecl(i), AI);
-  }
-  assert(AI == CurFn->arg_end() && "Argument mismatch");
+  StartFunction(OMD, OMD->getResultType(), Fn, Args);
 }
 
 /// Generate an Objective-C method.  An Objective-C method is a C function with
