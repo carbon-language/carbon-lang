@@ -3531,6 +3531,9 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
         Result = DAG.getNode(ISD::SELECT, VT, Tmp2, Tmp1, Tmp3);
         break;
       }
+      case ISD::FSQRT:
+      case ISD::FSIN:
+      case ISD::FCOS: 
       case ISD::FLOG:
       case ISD::FLOG2:
       case ISD::FLOG10:
@@ -3540,10 +3543,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       case ISD::FFLOOR:
       case ISD::FCEIL:
       case ISD::FRINT:
-      case ISD::FNEARBYINT:
-      case ISD::FSQRT:
-      case ISD::FSIN:
-      case ISD::FCOS: {
+      case ISD::FNEARBYINT: {
         MVT VT = Node->getValueType(0);
 
         // Expand unsupported unary vector operators by unrolling them.
@@ -3606,6 +3606,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
           LC = GetFPLibCall(VT, RTLIB::NEARBYINT_F32, RTLIB::NEARBYINT_F64,
                             RTLIB::NEARBYINT_F80, RTLIB::NEARBYINT_PPCF128);
           break;
+      break;
         default: assert(0 && "Unreachable!");
         }
         SDValue Dummy;
@@ -4214,12 +4215,16 @@ SDValue SelectionDAGLegalize::PromoteOp(SDValue Op) {
                            DAG.getValueType(VT));
     break;
 
+  case ISD::FPOW:
   case ISD::FPOWI: {
-    // Promote f32 powi to f64 powi.  Note that this could insert a libcall
+    // Promote f32 pow(i) to f64 pow(i).  Note that this could insert a libcall
     // directly as well, which may be better.
     Tmp1 = PromoteOp(Node->getOperand(0));
+    Tmp2 = Node->getOperand(1);
+    if (Node->getOpcode() == ISD::FPOW)
+      Tmp2 = PromoteOp(Tmp2);
     assert(Tmp1.getValueType() == NVT);
-    Result = DAG.getNode(ISD::FPOWI, NVT, Tmp1, Node->getOperand(1));
+    Result = DAG.getNode(Node->getOpcode(), NVT, Tmp1, Tmp2);
     if (NoExcessFPPrecision)
       Result = DAG.getNode(ISD::FP_ROUND_INREG, NVT, Result,
                            DAG.getValueType(VT));
@@ -6615,7 +6620,8 @@ void SelectionDAGLegalize::ExpandOp(SDValue Op, SDValue &Lo, SDValue &Hi){
   case ISD::FCEIL:
   case ISD::FRINT:
   case ISD::FNEARBYINT:
-  case ISD::FPOW: {
+  case ISD::FPOW:
+  case ISD::FPOWI: {
     RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
     switch(Node->getOpcode()) {
     case ISD::FSQRT:
