@@ -65,6 +65,7 @@ namespace {
     GlobalVariable *FindGlobalCtors(Module &M);
     bool OptimizeFunctions(Module &M);
     bool OptimizeGlobalVars(Module &M);
+    bool ResolveAliases(Module &M);
     bool OptimizeGlobalCtorsList(GlobalVariable *&GCL);
     bool ProcessInternalGlobal(GlobalVariable *GV,Module::global_iterator &GVI);
   };
@@ -2214,6 +2215,23 @@ bool GlobalOpt::OptimizeGlobalCtorsList(GlobalVariable *&GCL) {
   return true;
 }
 
+bool GlobalOpt::ResolveAliases(Module &M) {
+  bool Changed = false;
+
+  for (Module::alias_iterator I = M.alias_begin(),
+         E = M.alias_end(); I != E; ++I) {
+    if (I->use_empty())
+      continue;
+
+    if (const GlobalValue *GV = I->resolveAliasedGlobal(/*traverseWeak*/ false))
+      if (GV != I) {
+        I->replaceAllUsesWith(const_cast<GlobalValue*>(GV));
+        Changed = true;
+      }
+  }
+
+  return Changed;
+}
 
 bool GlobalOpt::runOnModule(Module &M) {
   bool Changed = false;
@@ -2234,6 +2252,10 @@ bool GlobalOpt::runOnModule(Module &M) {
     
     // Optimize non-address-taken globals.
     LocalChange |= OptimizeGlobalVars(M);
+    Changed |= LocalChange;
+
+    // Resolve aliases, when possible.
+    LocalChange |= ResolveAliases(M);
     Changed |= LocalChange;
   }
   
