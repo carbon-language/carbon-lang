@@ -33,14 +33,14 @@ unsigned FastISel::getRegForValue(Value *V) {
     return Reg;
 
   MVT::SimpleValueType VT = TLI.getValueType(V->getType()).getSimpleVT();
+  if (!TLI.isTypeLegal(VT))
+    return 0;
   if (ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
     if (CI->getValue().getActiveBits() > 64)
       return TargetMaterializeConstant(CI,
                                        MBB->getParent()->getConstantPool());
     // Don't cache constant materializations.  To do so would require
     // tracking what uses they dominate.
-    if (!TLI.isTypeLegal(VT))
-      return false;
     Reg = FastEmit_i(VT, VT, ISD::Constant, CI->getZExtValue());
   } else if (isa<GlobalValue>(V)) {
     return TargetMaterializeConstant(dyn_cast<Constant>(V),
