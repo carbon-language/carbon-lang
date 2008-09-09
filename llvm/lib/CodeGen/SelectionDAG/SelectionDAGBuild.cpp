@@ -2761,7 +2761,7 @@ GetSignificand(SelectionDAG &DAG, SDValue Op) {
 static SDValue
 GetExponent(SelectionDAG &DAG, SDValue Op) {
     SDValue t1 = DAG.getNode(ISD::AND, MVT::i32, Op,
-                              DAG.getConstant(0x7f800000, MVT::i32));
+                             DAG.getConstant(0x7f800000, MVT::i32));
     SDValue t2 = DAG.getNode(ISD::SRL, MVT::i32, t1,
                              DAG.getConstant(23, MVT::i32));
     SDValue t3 = DAG.getNode(ISD::SUB, MVT::i32, t2,
@@ -2784,15 +2784,142 @@ SelectionDAGLowering::implVisitBinaryAtomic(CallInst& I, ISD::NodeType Op) {
   return 0;
 }
 
-/// visitExp - lower an exp intrinsic.  Handles the special sequences
-/// for limited-precision mode.
+/// visitExp - Lower an exp intrinsic. Handles the special sequences for
+/// limited-precision mode.
 void
 SelectionDAGLowering::visitExp(CallInst &I) {
   SDValue result;
-  // No special expansion.
-  result = DAG.getNode(ISD::FEXP,
-                       getValue(I.getOperand(1)).getValueType(),
-                       getValue(I.getOperand(1)));
+
+  if (getValue(I.getOperand(1)).getValueType() == MVT::f32 &&
+      LimitFloatPrecision > 0 && LimitFloatPrecision <= 18) {
+    SDValue Op = getValue(I.getOperand(1));
+
+    // Put the exponent in the right bit position for later addition to the
+    // final result:
+    //
+    //   #define LOG2OFe 1.4426950f
+    //   IntegerPartOfX = ((int32_t)(X * LOG2OFe));
+    SDValue t0 = DAG.getNode(ISD::FMUL, MVT::f32, Op,
+                             DAG.getConstantFP(APFloat(
+                               APInt(32, 0x3fb8aa3b)), MVT::f32));
+    SDValue IntegerPartOfX = DAG.getNode(ISD::FP_TO_SINT, MVT::i32, t0);
+
+    //   FractionalPartOfX = (X * LOG2OFe) - (float)IntegerPartOfX;
+    SDValue t1 = DAG.getNode(ISD::SINT_TO_FP, MVT::f32, IntegerPartOfX);
+    SDValue X = DAG.getNode(ISD::FSUB, MVT::f32, t0, t1);
+
+    //   IntegerPartOfX <<= 23;
+    IntegerPartOfX = DAG.getNode(ISD::SHL, MVT::i32, IntegerPartOfX,
+                                 DAG.getConstant(23, MVT::i32));
+
+    if (LimitFloatPrecision <= 6) {
+      // For floating-point precision of 6:
+      //
+      //   TwoToFractionalPartOfX =
+      //     0.997535578f +
+      //       (0.735607626f + 0.252464424f * x) * x;
+      //
+      // error 0.0144103317, which is 6 bits
+      SDValue t2 = DAG.getNode(ISD::FMUL, MVT::f32, X,
+                               DAG.getConstantFP(APFloat(
+                                 APInt(32, 0x3e814304)), MVT::f32));
+      SDValue t3 = DAG.getNode(ISD::FADD, MVT::f32, t2,
+                               DAG.getConstantFP(APFloat(
+                                 APInt(32, 0x3f3c50c8)), MVT::f32));
+      SDValue t4 = DAG.getNode(ISD::FMUL, MVT::f32, t3, X);
+      SDValue t5 = DAG.getNode(ISD::FADD, MVT::f32, t4,
+                               DAG.getConstantFP(APFloat(
+                                 APInt(32, 0x3f7f5e7e)), MVT::f32));
+      SDValue TwoToFracPartOfX = DAG.getNode(ISD::BIT_CONVERT, MVT::i32, t5);
+
+      // Add the exponent into the result in integer domain.
+      SDValue t6 = DAG.getNode(ISD::ADD, MVT::i32,
+                               TwoToFracPartOfX, IntegerPartOfX);
+
+      result = DAG.getNode(ISD::BIT_CONVERT, MVT::f32, t6);
+    } else if (LimitFloatPrecision > 6 && LimitFloatPrecision <= 12) {
+      // For floating-point precision of 12:
+      //
+      //   TwoToFractionalPartOfX =
+      //     0.999892986f +
+      //       (0.696457318f +
+      //         (0.224338339f + 0.792043434e-1f * x) * x) * x;
+      //
+      // 0.000107046256 error, which is 13 to 14 bits
+      SDValue t2 = DAG.getNode(ISD::FMUL, MVT::f32, X,
+                               DAG.getConstantFP(APFloat(
+                                 APInt(32, 0x3da235e3)), MVT::f32));
+      SDValue t3 = DAG.getNode(ISD::FADD, MVT::f32, t2,
+                               DAG.getConstantFP(APFloat(
+                                 APInt(32, 0x3e65b8f3)), MVT::f32));
+      SDValue t4 = DAG.getNode(ISD::FMUL, MVT::f32, t3, X);
+      SDValue t5 = DAG.getNode(ISD::FADD, MVT::f32, t4,
+                               DAG.getConstantFP(APFloat(
+                                 APInt(32, 0x3f324b07)), MVT::f32));
+      SDValue t6 = DAG.getNode(ISD::FMUL, MVT::f32, t5, X);
+      SDValue t7 = DAG.getNode(ISD::FADD, MVT::f32, t6,
+                               DAG.getConstantFP(APFloat(
+                                 APInt(32, 0x3f7ff8fd)), MVT::f32));
+      SDValue TwoToFracPartOfX = DAG.getNode(ISD::BIT_CONVERT, MVT::i32, t7);
+
+      // Add the exponent into the result in integer domain.
+      SDValue t8 = DAG.getNode(ISD::ADD, MVT::i32,
+                               TwoToFracPartOfX, IntegerPartOfX);
+
+      result = DAG.getNode(ISD::BIT_CONVERT, MVT::f32, t8);
+    } else { // LimitFloatPrecision > 12 && LimitFloatPrecision <= 18
+      // For floating-point precision of 18:
+      //
+      //   TwoToFractionalPartOfX =
+      //     0.999999982f +
+      //       (0.693148872f +
+      //         (0.240227044f +
+      //           (0.554906021e-1f +
+      //             (0.961591928e-2f +
+      //               (0.136028312e-2f + 0.157059148e-3f *x)*x)*x)*x)*x)*x;
+      //
+      // error 2.47208000*10^(-7), which is better than 18 bits
+      SDValue t2 = DAG.getNode(ISD::FMUL, MVT::f32, X,
+                               DAG.getConstantFP(APFloat(
+                                 APInt(32, 0x3924b03e)), MVT::f32));
+      SDValue t3 = DAG.getNode(ISD::FADD, MVT::f32, t2,
+                               DAG.getConstantFP(APFloat(
+                                 APInt(32, 0x3ab24b87)), MVT::f32));
+      SDValue t4 = DAG.getNode(ISD::FMUL, MVT::f32, t3, X);
+      SDValue t5 = DAG.getNode(ISD::FADD, MVT::f32, t4,
+                               DAG.getConstantFP(APFloat(
+                                 APInt(32, 0x3c1d8c17)), MVT::f32));
+      SDValue t6 = DAG.getNode(ISD::FMUL, MVT::f32, t5, X);
+      SDValue t7 = DAG.getNode(ISD::FADD, MVT::f32, t6,
+                               DAG.getConstantFP(APFloat(
+                                 APInt(32, 0x3d634a1d)), MVT::f32));
+      SDValue t8 = DAG.getNode(ISD::FMUL, MVT::f32, t7, X);
+      SDValue t9 = DAG.getNode(ISD::FADD, MVT::f32, t8,
+                               DAG.getConstantFP(APFloat(
+                                 APInt(32, 0x3e75fe14)), MVT::f32));
+      SDValue t10 = DAG.getNode(ISD::FMUL, MVT::f32, t9, X);
+      SDValue t11 = DAG.getNode(ISD::FADD, MVT::f32, t10,
+                               DAG.getConstantFP(APFloat(
+                                 APInt(32, 0x3f317234)), MVT::f32));
+      SDValue t12 = DAG.getNode(ISD::FMUL, MVT::f32, t11, X);
+      SDValue t13 = DAG.getNode(ISD::FADD, MVT::f32, t12,
+                               DAG.getConstantFP(APFloat(
+                                 APInt(32, 0x3f800000)), MVT::f32));
+      SDValue TwoToFracPartOfX = DAG.getNode(ISD::BIT_CONVERT, MVT::i32, t13);
+
+      // Add the exponent into the result in integer domain.
+      SDValue t14 = DAG.getNode(ISD::ADD, MVT::i32,
+                                TwoToFracPartOfX, IntegerPartOfX);
+
+      result = DAG.getNode(ISD::BIT_CONVERT, MVT::f32, t14);
+    }
+  } else {
+    // No special expansion.
+    result = DAG.getNode(ISD::FEXP,
+                         getValue(I.getOperand(1)).getValueType(),
+                         getValue(I.getOperand(1)));
+  }
+
   setValue(&I, result);
 }
 
