@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8.00"
+	Version="8,00"
 	Name="clangCodeGen"
 	ProjectGUID="{4CEC5897-D957-47E7-A6AE-2021D4F44A8F}"
 	RootNamespace="clangCodeGen"
@@ -159,6 +159,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\lib\CodeGen\CGCall.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\CodeGen\CGCXX.cpp"
 				>
 			</File>
@@ -228,6 +232,22 @@
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
+			<File
+				RelativePath="..\..\lib\CodeGen\CGCall.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\lib\CodeGen\CGDebugInfo.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\lib\CodeGen\CGObjCRuntime.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\lib\CodeGen\CGValue.h"
+				>
+			</File>
 			<File
 				RelativePath="..\..\lib\CodeGen\CodeGenFunction.h"
 				>

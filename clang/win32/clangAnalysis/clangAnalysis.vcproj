@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8.00"
+	Version="8,00"
 	Name="clangAnalysis"
 	ProjectGUID="{6C98551A-4C36-4E74-8419-4D3EEEC9D8E0}"
 	RootNamespace="clangAnalysis"
@@ -155,7 +155,15 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath="..\..\lib\Analysis\BasicConstraintManager.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\Analysis\BasicObjCFoundationChecks.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\lib\Analysis\BasicObjCFoundationChecks.h"
 				>
 			</File>
 			<File
@@ -216,6 +224,10 @@
 			</File>
 			<File
 				RelativePath="..\..\lib\Analysis\GRSimpleVals.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\lib\Analysis\GRSimpleVals.h"
 				>
 			</File>
 			<File
