@@ -92,6 +92,9 @@ private:
 
   bool X86SelectTrunc(Instruction *I);
 
+  bool X86SelectFPExt(Instruction *I);
+  bool X86SelectFPTrunc(Instruction *I);
+
   bool X86SelectCall(Instruction *I);
 
   CCAssignFn *CCAssignFnForCall(unsigned CC, bool isTailCall = false);
@@ -656,6 +659,42 @@ bool X86FastISel::X86SelectSelect(Instruction *I) {
   return true;
 }
 
+bool X86FastISel::X86SelectFPExt(Instruction *I) {
+  if (Subtarget->hasSSE2()) {
+    if (I->getType() == Type::DoubleTy) {
+      Value *V = I->getOperand(0);
+      if (V->getType() == Type::FloatTy) {
+        unsigned OpReg = getRegForValue(V);
+        if (OpReg == 0) return false;
+        unsigned ResultReg = createResultReg(X86::FR64RegisterClass);
+        BuildMI(MBB, TII.get(X86::CVTSS2SDrr), ResultReg).addReg(OpReg);
+        UpdateValueMap(I, ResultReg);
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+bool X86FastISel::X86SelectFPTrunc(Instruction *I) {
+  if (Subtarget->hasSSE2()) {
+    if (I->getType() == Type::FloatTy) {
+      Value *V = I->getOperand(0);
+      if (V->getType() == Type::DoubleTy) {
+        unsigned OpReg = getRegForValue(V);
+        if (OpReg == 0) return false;
+        unsigned ResultReg = createResultReg(X86::FR32RegisterClass);
+        BuildMI(MBB, TII.get(X86::CVTSD2SSrr), ResultReg).addReg(OpReg);
+        UpdateValueMap(I, ResultReg);
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
 bool X86FastISel::X86SelectTrunc(Instruction *I) {
   if (Subtarget->is64Bit())
     // All other cases should be handled by the tblgen generated code.
@@ -937,6 +976,10 @@ X86FastISel::TargetSelectInstruction(Instruction *I)  {
     return X86SelectSelect(I);
   case Instruction::Trunc:
     return X86SelectTrunc(I);
+  case Instruction::FPExt:
+    return X86SelectFPExt(I);
+  case Instruction::FPTrunc:
+    return X86SelectFPTrunc(I);
   }
 
   return false;
