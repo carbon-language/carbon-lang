@@ -4497,7 +4497,8 @@ isAllocatableRegister(unsigned Reg, MachineFunction &MF,
 namespace llvm {
 /// AsmOperandInfo - This contains information for each constraint that we are
 /// lowering.
-struct VISIBILITY_HIDDEN SDISelAsmOperandInfo : public TargetLowering::AsmOperandInfo {
+struct VISIBILITY_HIDDEN SDISelAsmOperandInfo : 
+    public TargetLowering::AsmOperandInfo {
   /// CallOperand - If this is the result output operand or a clobber
   /// this is null, otherwise it is the incoming operand to the CallInst.
   /// This gets modified as the asm is processed.
