@@ -605,7 +605,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
 }
 
 /// OptimizeCanonicalIVType - If loop induction variable is always
-/// sign or zero extended then extend the type of induction 
+/// sign or zero extended then extend the type of the induction 
 /// variable.
 void IndVarSimplify::OptimizeCanonicalIVType(Loop *L) {
   PHINode *PH = L->getCanonicalInductionVariable();
@@ -622,10 +622,10 @@ void IndVarSimplify::OptimizeCanonicalIVType(Loop *L) {
   
   // Check IV uses. If all IV uses are either SEXT or ZEXT (except
   // IV increment instruction) then this IV is suitable for this
-  // transformstion.
-  bool isSEXT =  false;
+  // transformation.
+  bool isSEXT = false;
   BinaryOperator *Incr = NULL;
-  const Type *NewType   = NULL;
+  const Type *NewType = NULL;
   for(Value::use_iterator UI = PH->use_begin(), UE = PH->use_end(); 
       UI != UE; ++UI) {
     const Type *CandidateType = NULL;
@@ -633,7 +633,7 @@ void IndVarSimplify::OptimizeCanonicalIVType(Loop *L) {
       CandidateType = ZI->getDestTy();
     else if (SExtInst *SI = dyn_cast<SExtInst>(UI)) {
       CandidateType = SI->getDestTy();
-      isSEXT =  true;
+      isSEXT = true;
     }
     else if ((Incr = dyn_cast<BinaryOperator>(UI))) {
       // Validate IV increment instruction.
