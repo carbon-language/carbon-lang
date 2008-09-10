@@ -832,8 +832,10 @@ namespace {
             }
             Spills.ClobberPhysReg(NewPhysReg);
             Spills.ClobberPhysReg(NewOp.PhysRegReused);
-            
-            MI->getOperand(NewOp.Operand).setReg(NewPhysReg);
+
+            unsigned SubIdx = MI->getOperand(NewOp.Operand).getSubReg();
+            unsigned RReg = SubIdx ? TRI->getSubReg(NewPhysReg, SubIdx) : NewPhysReg;
+            MI->getOperand(NewOp.Operand).setReg(RReg);
             
             Spills.addAvailable(NewOp.StackSlotOrReMat, MI, NewPhysReg);
             --MII;
