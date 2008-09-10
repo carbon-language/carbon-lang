@@ -104,18 +104,19 @@ public:
 
 private:
   Kind TheKind;
-  QualType TypeData;
+  const llvm::Type *TypeData;
 
-  ABIArgInfo(Kind K, QualType TD) : TheKind(K),
-                                    TypeData(TD) {}
+  ABIArgInfo(Kind K, const llvm::Type *TD) : TheKind(K),
+                                             TypeData(TD) {}
 public:
   static ABIArgInfo getDefault() { 
-    return ABIArgInfo(Default, QualType()); 
+    return ABIArgInfo(Default, 0); 
   }
   static ABIArgInfo getStructRet() { 
-    return ABIArgInfo(StructRet, QualType()); 
+    return ABIArgInfo(StructRet, 0); 
   }
-  static ABIArgInfo getCoerce(QualType T) { 
+  static ABIArgInfo getCoerce(const llvm::Type *T) { 
+    assert(T->isSingleValueType() && "Can only coerce to simple types");
     return ABIArgInfo(Coerce, T);
   }
 
@@ -125,7 +126,7 @@ public:
   bool isCoerce() const { return TheKind == Coerce; }
 
   // Coerce accessors
-  QualType getCoerceToType() const {
+  const llvm::Type *getCoerceToType() const {
     assert(TheKind == Coerce && "Invalid kind!");
     return TypeData;
   }
@@ -133,9 +134,21 @@ public:
 
 /***/
 
-static ABIArgInfo classifyReturnType(QualType RetTy) {
+static ABIArgInfo classifyReturnType(QualType RetTy,
+                                     ASTContext &Context) {
   if (CodeGenFunction::hasAggregateLLVMType(RetTy)) {
-    return ABIArgInfo::getStructRet();
+    uint64_t Size = Context.getTypeSize(RetTy);
+    if (Size == 8) {
+      return ABIArgInfo::getCoerce(llvm::Type::Int8Ty);
+    } else if (Size == 16) {
+      return ABIArgInfo::getCoerce(llvm::Type::Int16Ty);
+    } else if (Size == 32) {
+      return ABIArgInfo::getCoerce(llvm::Type::Int32Ty);
+    } else if (Size == 64) {
+      return ABIArgInfo::getCoerce(llvm::Type::Int64Ty);
+    } else {
+      return ABIArgInfo::getStructRet();
+    }
   } else {
     return ABIArgInfo::getDefault();
   }
@@ -161,7 +174,7 @@ CodeGenTypes::GetFunctionType(ArgTypeIterator begin, ArgTypeIterator end,
   const llvm::Type *ResultType = 0;
 
   QualType RetTy = *begin;
-  ABIArgInfo RetAI = classifyReturnType(RetTy);
+  ABIArgInfo RetAI = classifyReturnType(RetTy, getContext());
   switch (RetAI.getKind()) {    
   case ABIArgInfo::Default:
     if (RetTy->isVoidType()) {
@@ -179,8 +192,7 @@ CodeGenTypes::GetFunctionType(ArgTypeIterator begin, ArgTypeIterator end,
   }
 
   case ABIArgInfo::Coerce:
-    ResultType = llvm::Type::VoidTy;
-    ArgTys.push_back(ConvertType(RetAI.getCoerceToType()));
+    ResultType = RetAI.getCoerceToType();
     break;
   }
   
@@ -196,9 +208,8 @@ CodeGenTypes::GetFunctionType(ArgTypeIterator begin, ArgTypeIterator end,
   return llvm::FunctionType::get(ResultType, ArgTys, IsVariadic);
 }
 
-// FIXME: This can die now?
 bool CodeGenModule::ReturnTypeUsesSret(QualType RetTy) {
-  return classifyReturnType(RetTy).isStructRet();
+  return classifyReturnType(RetTy, getContext()).isStructRet();
 }
 
 void CodeGenModule::ConstructParamAttrList(const Decl *TargetDecl,
@@ -216,7 +227,7 @@ void CodeGenModule::ConstructParamAttrList(const Decl *TargetDecl,
 
   QualType RetTy = *begin;
   unsigned Index = 1;
-  ABIArgInfo RetAI = classifyReturnType(RetTy);
+  ABIArgInfo RetAI = classifyReturnType(RetTy, getContext());
   switch (RetAI.getKind()) {
   case ABIArgInfo::Default:
     if (RetTy->isPromotableIntegerType()) {
@@ -235,7 +246,6 @@ void CodeGenModule::ConstructParamAttrList(const Decl *TargetDecl,
     break;
 
   case ABIArgInfo::Coerce:
-    assert(0 && "FIXME: ABIArgInfo::Coerce not handled\n");
     break;
   }
 
@@ -292,7 +302,7 @@ void CodeGenFunction::EmitFunctionEpilog(QualType RetTy,
 
   // Functions with no result always return void.
   if (ReturnValue) { 
-    ABIArgInfo RetAI = classifyReturnType(RetTy);
+    ABIArgInfo RetAI = classifyReturnType(RetTy, getContext());
     
     switch (RetAI.getKind()) {
     case ABIArgInfo::StructRet:
@@ -303,9 +313,11 @@ void CodeGenFunction::EmitFunctionEpilog(QualType RetTy,
       RV = Builder.CreateLoad(ReturnValue);
       break;
 
-    case ABIArgInfo::Coerce:
-      assert(0 && "FIXME: ABIArgInfo::Coerce not handled\n");
-      break;
+    case ABIArgInfo::Coerce: {
+      const llvm::Type *CoerceToPTy = 
+        llvm::PointerType::getUnqual(RetAI.getCoerceToType());
+      RV = Builder.CreateLoad(Builder.CreateBitCast(ReturnValue, CoerceToPTy));
+    }
     }
   }
   
@@ -325,7 +337,7 @@ RValue CodeGenFunction::EmitCall(llvm::Value *Callee,
 
   // Handle struct-return functions by passing a pointer to the
   // location that we would like to return into.
-  ABIArgInfo RetAI = classifyReturnType(RetTy);
+  ABIArgInfo RetAI = classifyReturnType(RetTy, getContext());
   switch (RetAI.getKind()) {
   case ABIArgInfo::StructRet:
     // Create a temporary alloca to hold the result of the call. :(
@@ -334,10 +346,7 @@ RValue CodeGenFunction::EmitCall(llvm::Value *Callee,
     break;
     
   case ABIArgInfo::Default:
-    break;
-
   case ABIArgInfo::Coerce:
-    assert(0 && "FIXME: ABIArgInfo::Coerce not handled\n");
     break;
   }
   
@@ -382,9 +391,13 @@ RValue CodeGenFunction::EmitCall(llvm::Value *Callee,
   case ABIArgInfo::Default:
     return RValue::get(RetTy->isVoidType() ? 0 : CI);
 
-  case ABIArgInfo::Coerce:
-    assert(0 && "FIXME: ABIArgInfo::Coerce not handled\n");
-    return RValue::get(0);
+  case ABIArgInfo::Coerce: {
+    const llvm::Type *CoerceToPTy = 
+      llvm::PointerType::getUnqual(RetAI.getCoerceToType());
+    llvm::Value *V = CreateTempAlloca(ConvertType(RetTy), "tmp");
+    Builder.CreateStore(CI, Builder.CreateBitCast(V, CoerceToPTy));
+    return RValue::getAggregate(V);
+  }
   }
 
   assert(0 && "Unhandled ABIArgInfo::Kind");
