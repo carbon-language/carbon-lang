@@ -758,6 +758,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn, MachineFunction &MF) {
               }
               if (EnableFastISelAbort)
                 assert(0 && "FastISel didn't handle a PHI in a successor");
+              break;
             }
 
           // First try normal tablegen-generated "fast" selection.
