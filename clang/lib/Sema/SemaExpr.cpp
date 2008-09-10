@@ -354,7 +354,12 @@ Sema::ExprResult Sema::ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
       return new PredefinedExpr(Loc, T, PredefinedExpr::ObjCSuper);
     }
   }
-  
+  // If we are parsing a block, check the block parameter list.
+  if (CurBlock) {
+    for (unsigned i = 0, e = CurBlock->Params.size(); i != e; ++i)
+      if (CurBlock->Params[i]->getIdentifier() == &II)
+        D = CurBlock->Params[i];
+  }
   if (D == 0) {
     // Otherwise, this could be an implicitly declared function reference (legal
     // in C90, extension in C99).
