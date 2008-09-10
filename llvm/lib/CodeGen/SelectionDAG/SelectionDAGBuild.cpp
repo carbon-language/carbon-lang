@@ -3409,6 +3409,7 @@ SelectionDAGLowering::visitPow(CallInst &I) {
   bool IsExp10 = false;
 
   if (getValue(Val).getValueType() == MVT::f32 &&
+      getValue(I.getOperand(2)).getValueType() == MVT::f32 &&
       LimitFloatPrecision > 0 && LimitFloatPrecision <= 18) {
     if (Constant *C = const_cast<Constant*>(dyn_cast<Constant>(Val))) {
       if (ConstantFP *CFP = dyn_cast<ConstantFP>(C)) {
