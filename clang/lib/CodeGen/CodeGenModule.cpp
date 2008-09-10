@@ -212,18 +212,18 @@ static void SetGlobalValueAttributes(const Decl *D,
   }
 }
 
-void CodeGenModule::SetFunctionParamAttrs(const CGFunctionInfo &Info, 
+void CodeGenModule::SetFunctionParamAttrs(const Decl *D,
+                                          const CGFunctionInfo &Info, 
                                           llvm::Function *F) {
   ParamAttrListType ParamAttrList;
-  ConstructParamAttrList(Info.getDecl(),
-                         Info.argtypes_begin(), Info.argtypes_end(),
+  ConstructParamAttrList(D, Info.argtypes_begin(), Info.argtypes_end(),
                          ParamAttrList);
 
   F->setParamAttrs(llvm::PAListPtr::get(ParamAttrList.begin(),
                                         ParamAttrList.size()));
 
   // Set the appropriate calling convention for the Function.
-  if (Info.getDecl()->getAttr<FastCallAttr>())
+  if (D->getAttr<FastCallAttr>())
     F->setCallingConv(llvm::CallingConv::Fast);
 }
 
@@ -245,18 +245,19 @@ void CodeGenModule::SetFunctionAttributesForDefinition(const Decl *D,
 
 void CodeGenModule::SetMethodAttributes(const ObjCMethodDecl *MD,
                                         llvm::Function *F) {
-  SetFunctionParamAttrs(CGFunctionInfo(MD, Context), F);
+  SetFunctionParamAttrs(MD, CGFunctionInfo(MD, Context), F);
   
   SetFunctionAttributesForDefinition(MD, F);
 }
 
 void CodeGenModule::SetFunctionAttributes(const FunctionDecl *FD,
                                           llvm::Function *F) {
-  SetFunctionParamAttrs(CGFunctionInfo(FD), F);
-
+  SetFunctionParamAttrs(FD, CGFunctionInfo(FD), F);
+  
   SetGlobalValueAttributes(FD, FD->getStorageClass() == FunctionDecl::Static,
                            FD->isInline(), F, false);
 }
+
 
 void CodeGenModule::EmitAliases() {
   for (unsigned i = 0, e = Aliases.size(); i != e; ++i) {

@@ -921,40 +921,15 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
 }
 
 llvm::Function *CGObjCGNU::GenerateMethod(const ObjCMethodDecl *OMD) {  
-  const llvm::Type *ReturnTy = 
-    CGM.getTypes().ConvertReturnType(OMD->getResultType());
   const ObjCCategoryImplDecl *OCD = 
     dyn_cast<ObjCCategoryImplDecl>(OMD->getMethodContext());
   const std::string &CategoryName = OCD ? OCD->getName() : "";
-  const llvm::Type *SelfTy = llvm::PointerType::getUnqual(llvm::Type::Int32Ty);
   const std::string &ClassName = OMD->getClassInterface()->getName();
   const std::string &MethodName = OMD->getSelector().getName();
-  unsigned ArgC = OMD->param_size();
   bool isClassMethod = !OMD->isInstance();
-  bool isVarArg = OMD->isVariadic();
 
-  llvm::SmallVector<const llvm::Type *, 16> ArgTy;
-  for (unsigned i=0 ; i<OMD->param_size() ; i++) {
-    const llvm::Type *Ty = 
-      CGM.getTypes().ConvertType(OMD->getParamDecl(i)->getType());
-    if (Ty->isFirstClassType())
-      ArgTy.push_back(Ty);
-    else
-      ArgTy.push_back(llvm::PointerType::getUnqual(Ty));
-  }
-
-  std::vector<const llvm::Type*> Args;
-  if (!ReturnTy->isSingleValueType() && ReturnTy != llvm::Type::VoidTy) {
-    Args.push_back(llvm::PointerType::getUnqual(ReturnTy));
-    ReturnTy = llvm::Type::VoidTy;
-  }
-  Args.push_back(SelfTy);
-  Args.push_back(SelectorTy);
-  Args.insert(Args.end(), ArgTy.begin(), ArgTy.begin()+ArgC);
-
-  llvm::FunctionType *MethodTy = llvm::FunctionType::get(ReturnTy,
-      Args,
-      isVarArg);
+  const llvm::FunctionType *MethodTy = 
+    CGM.getTypes().GetFunctionType(CGFunctionInfo(OMD, CGM.getContext()));
   std::string FunctionName = SymbolNameForMethod(ClassName, CategoryName,
       MethodName, isClassMethod);
 

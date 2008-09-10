@@ -19,28 +19,30 @@
 #include <vector>
 
 namespace llvm {
+  class FunctionType;
   class Module;
-  class Type;
   class OpaqueType;
   class PATypeHolder;
   class TargetData;
+  class Type;
 }
 
 namespace clang {
   class ASTContext;
-  class TagDecl;
-  class TargetInfo;
-  class QualType;
-  class PointerType;
-  class PointerLikeType;
-  class Type;
-  class FunctionTypeProto;
   class FieldDecl;
-  class RecordDecl;
+  class FunctionTypeProto;
   class ObjCInterfaceDecl;
   class ObjCIvarDecl;
+  class PointerLikeType;
+  class PointerType;
+  class QualType;
+  class RecordDecl;
+  class TagDecl;
+  class TargetInfo;
+  class Type;
 
 namespace CodeGen {
+  class CGFunctionInfo;
   class CodeGenTypes;
 
   /// CGRecordLayout - This class handles struct and union layout info while 
@@ -132,15 +134,15 @@ public:
   /// ConvertType - Convert type T into a llvm::Type.  
   const llvm::Type *ConvertType(QualType T);
   const llvm::Type *ConvertTypeRecursive(QualType T);
-  /// ConvertReturnType - Convert T into an llvm::Type assuming that it will be
-  /// used as a function return type.
-  const llvm::Type *ConvertReturnType(QualType T);
   
   /// ConvertTypeForMem - Convert type T into a llvm::Type.  This differs from
   /// ConvertType in that it is used to convert to the memory representation for
   /// a type.  For example, the scalar representation for _Bool is i1, but the
   /// memory representation is usually i8 or i32, depending on the target.
   const llvm::Type *ConvertTypeForMem(QualType T);
+
+  /// GetFunctionType - Get the LLVM function type from Info.
+  const llvm::FunctionType *GetFunctionType(const CGFunctionInfo &Info);
   
   void CollectObjCIvarTypes(ObjCInterfaceDecl *ObjCClass,
                             std::vector<const llvm::Type*> &IvarTypes);
@@ -160,9 +162,6 @@ public:
   void UpdateCompletedType(const TagDecl *TD);
   
 public:  // These are internal details of CGT that shouldn't be used externally.
-  void DecodeArgumentTypes(const FunctionTypeProto &FTP, 
-                           std::vector<const llvm::Type*> &ArgTys);
-
   /// addFieldInfo - Assign field number to field FD.
   void addFieldInfo(const FieldDecl *FD, unsigned No);
 

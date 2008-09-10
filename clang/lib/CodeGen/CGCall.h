@@ -54,18 +54,18 @@ namespace CodeGen {
   /// CGFunctionInfo - Class to encapsulate the information about a
   /// function definition.
   class CGFunctionInfo {
-    /// TheDecl - The decl we are storing information for. This is
-    /// either a Function or ObjCMethod Decl.
-    const Decl *TheDecl;
+    bool IsVariadic;
 
     llvm::SmallVector<QualType, 16> ArgTypes;
 
   public:
+    CGFunctionInfo(const FunctionTypeNoProto *FTNP);
+    CGFunctionInfo(const FunctionTypeProto *FTP);
     CGFunctionInfo(const FunctionDecl *FD);
     CGFunctionInfo(const ObjCMethodDecl *MD,
                    const ASTContext &Context);
 
-    const Decl* getDecl() const { return TheDecl; }
+    bool isVariadic() const { return IsVariadic; }
 
     ArgTypeIterator argtypes_begin() const;
     ArgTypeIterator argtypes_end() const;

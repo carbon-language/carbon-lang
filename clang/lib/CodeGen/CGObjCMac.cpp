@@ -1344,65 +1344,17 @@ llvm::Constant *CGObjCMac::EmitMethodList(const std::string &Name,
 }
 
 llvm::Function *CGObjCMac::GenerateMethod(const ObjCMethodDecl *OMD) { 
-  const llvm::Type *ReturnTy = 
-    CGM.getTypes().ConvertReturnType(OMD->getResultType());
-  const llvm::Type *SelfTy = 
-    CGM.getTypes().ConvertType(OMD->getSelfDecl()->getType());
-
-  std::vector<const llvm::Type*> ArgTys;
-  ArgTys.reserve(1 + 2 + OMD->param_size());
-
-  // FIXME: This is not something we should have to be dealing with
-  // here.
-  bool useStructRet = 
-    CodeGen::CodeGenFunction::hasAggregateLLVMType(OMD->getResultType());
-  if (useStructRet) {
-    ArgTys.push_back(llvm::PointerType::getUnqual(ReturnTy));
-    ReturnTy = llvm::Type::VoidTy;
-  }
-
-  // Implicit arguments
-  ArgTys.push_back(SelfTy);
-  ArgTys.push_back(ObjCTypes.SelectorPtrTy);
-
-  for (ObjCMethodDecl::param_const_iterator 
-         i = OMD->param_begin(), e = OMD->param_end();
-       i != e; ++i) {
-    const llvm::Type *Ty = CGM.getTypes().ConvertType((*i)->getType());
-    if (Ty->isSingleValueType()) {
-      ArgTys.push_back(Ty);
-    } else {
-      ArgTys.push_back(llvm::PointerType::getUnqual(Ty));
-    }
-  }
-
   std::string Name;
   GetNameForMethod(OMD, Name);
 
+  const llvm::FunctionType *MethodTy =
+    CGM.getTypes().GetFunctionType(CGFunctionInfo(OMD, CGM.getContext()));
   llvm::Function *Method = 
-    llvm::Function::Create(llvm::FunctionType::get(ReturnTy,
-                                                   ArgTys,
-                                                   OMD->isVariadic()),
+    llvm::Function::Create(MethodTy,
                            llvm::GlobalValue::InternalLinkage,
                            Name,
                            &CGM.getModule());
   MethodDefinitions.insert(std::make_pair(OMD, Method));
-
-  unsigned Offset = 3; // Return plus self and selector implicit args.
-  if (useStructRet) {
-    Method->addParamAttr(1, llvm::ParamAttr::StructRet);
-    ++Offset;
-  }
-
-  // FIXME: This is horrible, we need to be reusing the machinery in
-  // CodeGenModule.cpp (SetFunctionAttributes).
-  for (ObjCMethodDecl::param_const_iterator 
-         i = OMD->param_begin(), e = OMD->param_end();
-       i != e; ++i, ++Offset) {
-    const llvm::Type *Ty = CGM.getTypes().ConvertType((*i)->getType());
-    if (!Ty->isSingleValueType())
-      Method->addParamAttr(Offset, llvm::ParamAttr::ByVal);
-  }
 
   return Method;
 }

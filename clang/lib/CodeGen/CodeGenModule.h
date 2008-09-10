@@ -217,7 +217,8 @@ public:
   void SetMethodAttributes(const ObjCMethodDecl *MD,
                            llvm::Function *F);
 
-  void SetFunctionParamAttrs(const CGFunctionInfo &Info, 
+  void SetFunctionParamAttrs(const Decl *D,
+                             const CGFunctionInfo &Info, 
                              llvm::Function *F);
 
   /// ReturnTypeUsesSret - Return true iff the given type uses 'sret'

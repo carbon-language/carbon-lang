@@ -26,21 +26,39 @@ using namespace CodeGen;
 
 // FIXME: Use iterator and sidestep silly type array creation.
 
+CGFunctionInfo::CGFunctionInfo(const FunctionTypeNoProto *FTNP)
+  : IsVariadic(true)
+{
+  ArgTypes.push_back(FTNP->getResultType());
+}
+
+CGFunctionInfo::CGFunctionInfo(const FunctionTypeProto *FTP)
+  : IsVariadic(FTP->isVariadic())
+{
+  ArgTypes.push_back(FTP->getResultType());
+  for (unsigned i = 0, e = FTP->getNumArgs(); i != e; ++i)
+    ArgTypes.push_back(FTP->getArgType(i));
+}
+
+// FIXME: Is there really any reason to have this still?
 CGFunctionInfo::CGFunctionInfo(const FunctionDecl *FD)
-  : TheDecl(FD) 
 {
   const FunctionType *FTy = FD->getType()->getAsFunctionType();
   const FunctionTypeProto *FTP = dyn_cast<FunctionTypeProto>(FTy);
-  
+
   ArgTypes.push_back(FTy->getResultType());
-  if (FTP)
+  if (FTP) {
+    IsVariadic = FTP->isVariadic();
     for (unsigned i = 0, e = FTP->getNumArgs(); i != e; ++i)
       ArgTypes.push_back(FTP->getArgType(i));
+  } else {
+    IsVariadic = true;
+  }
 }
 
 CGFunctionInfo::CGFunctionInfo(const ObjCMethodDecl *MD,
                                const ASTContext &Context)
-  : TheDecl(MD) 
+  : IsVariadic(MD->isVariadic())
 {
   ArgTypes.push_back(MD->getResultType());
   ArgTypes.push_back(MD->getSelfDecl()->getType());
@@ -105,6 +123,12 @@ public:
   bool isDefault() const { return TheKind == Default; }
   bool isStructRet() const { return TheKind == StructRet; }
   bool isCoerce() const { return TheKind == Coerce; }
+
+  // Coerce accessors
+  QualType getCoerceToType() const {
+    assert(TheKind == Coerce && "Invalid kind!");
+    return TypeData;
+  }
 };
 
 /***/
@@ -118,6 +142,49 @@ static ABIArgInfo classifyReturnType(QualType RetTy) {
 }
 
 /***/
+
+const llvm::FunctionType *
+CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI) {
+  std::vector<const llvm::Type*> ArgTys;
+
+  const llvm::Type *ResultType = 0;
+
+  ArgTypeIterator begin = FI.argtypes_begin(), end = FI.argtypes_end();
+  QualType RetTy = *begin;
+  ABIArgInfo RetAI = classifyReturnType(RetTy);
+  switch (RetAI.getKind()) {    
+  case ABIArgInfo::Default:
+    if (RetTy->isVoidType()) {
+      ResultType = llvm::Type::VoidTy;
+    } else {
+      ResultType = ConvertTypeRecursive(RetTy);
+    }
+    break;
+
+  case ABIArgInfo::StructRet: {
+    ResultType = llvm::Type::VoidTy;
+    const llvm::Type *STy = ConvertTypeRecursive(RetTy);
+    ArgTys.push_back(llvm::PointerType::get(STy, RetTy.getAddressSpace()));
+    break;
+  }
+
+  case ABIArgInfo::Coerce:
+    ResultType = llvm::Type::VoidTy;
+    ArgTys.push_back(ConvertTypeRecursive(RetAI.getCoerceToType()));
+    break;
+  }
+  
+  for (++begin; begin != end; ++begin) {
+    const llvm::Type *Ty = ConvertTypeRecursive(*begin);
+    if (Ty->isSingleValueType())
+      ArgTys.push_back(Ty);
+    else
+      // byval arguments are always on the stack, which is addr space #0.
+      ArgTys.push_back(llvm::PointerType::getUnqual(Ty));
+  }
+
+  return llvm::FunctionType::get(ResultType, ArgTys, FI.isVariadic());
+}
 
 bool CodeGenModule::ReturnTypeUsesSret(QualType RetTy) {
   return classifyReturnType(RetTy).isStructRet();
@@ -138,8 +205,8 @@ void CodeGenModule::ConstructParamAttrList(const Decl *TargetDecl,
 
   QualType RetTy = *begin;
   unsigned Index = 1;
-  ABIArgInfo ResAI = classifyReturnType(RetTy);
-  switch (ResAI.getKind()) {
+  ABIArgInfo RetAI = classifyReturnType(RetTy);
+  switch (RetAI.getKind()) {
   case ABIArgInfo::Default:
     if (RetTy->isPromotableIntegerType()) {
       if (RetTy->isSignedIntegerType()) {

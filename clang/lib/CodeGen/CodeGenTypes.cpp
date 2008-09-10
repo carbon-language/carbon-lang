@@ -20,6 +20,8 @@
 #include "llvm/Module.h"
 #include "llvm/Target/TargetData.h"
 
+#include "CGCall.h"
+
 using namespace clang;
 using namespace CodeGen;
 
@@ -167,13 +169,6 @@ void CodeGenTypes::CollectObjCIvarTypes(ObjCInterfaceDecl *ObjCClass,
   }
 }
 
-const llvm::Type *CodeGenTypes::ConvertReturnType(QualType T) {
-  if (T->isVoidType())
-    return llvm::Type::VoidTy;    // Result of function uses llvm void.
-  else
-    return ConvertType(T);
-}
-
 static const llvm::Type* getTypeForFormat(const llvm::fltSemantics &format) {
   if (&format == &llvm::APFloat::IEEEsingle)
     return llvm::Type::FloatTy;
@@ -273,35 +268,9 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
                                  VT.getNumElements());
   }
   case Type::FunctionNoProto:
-  case Type::FunctionProto: {
-    const FunctionType &FP = cast<FunctionType>(Ty);
-    const llvm::Type *ResultType;
-    
-    if (FP.getResultType()->isVoidType())
-      ResultType = llvm::Type::VoidTy;    // Result of function uses llvm void.
-    else
-      ResultType = ConvertTypeRecursive(FP.getResultType());
-    
-    // FIXME: Convert argument types.
-    bool isVarArg;
-    std::vector<const llvm::Type*> ArgTys;
-    
-    // Struct return passes the struct byref.
-    if (!ResultType->isSingleValueType() && ResultType != llvm::Type::VoidTy) {
-      ArgTys.push_back(llvm::PointerType::get(ResultType, 
-                                        FP.getResultType().getAddressSpace()));
-      ResultType = llvm::Type::VoidTy;
-    }
-    
-    if (const FunctionTypeProto *FTP = dyn_cast<FunctionTypeProto>(&FP)) {
-      DecodeArgumentTypes(*FTP, ArgTys);
-      isVarArg = FTP->isVariadic();
-    } else {
-      isVarArg = true;
-    }
-    
-    return llvm::FunctionType::get(ResultType, ArgTys, isVarArg);
-  }
+    return GetFunctionType(CGFunctionInfo(cast<FunctionTypeNoProto>(&Ty)));
+  case Type::FunctionProto:
+    return GetFunctionType(CGFunctionInfo(cast<FunctionTypeProto>(&Ty)));
   
   case Type::ASQual:
     return
@@ -362,18 +331,6 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
   
   // FIXME: implement.
   return llvm::OpaqueType::get();
-}
-
-void CodeGenTypes::DecodeArgumentTypes(const FunctionTypeProto &FTP, 
-                                       std::vector<const llvm::Type*> &ArgTys) {
-  for (unsigned i = 0, e = FTP.getNumArgs(); i != e; ++i) {
-    const llvm::Type *Ty = ConvertTypeRecursive(FTP.getArgType(i));
-    if (Ty->isSingleValueType())
-      ArgTys.push_back(Ty);
-    else
-      // byval arguments are always on the stack, which is addr space #0.
-      ArgTys.push_back(llvm::PointerType::getUnqual(Ty));
-  }
 }
 
 /// ConvertTagDeclType - Lay out a tagged decl type like struct or union or
