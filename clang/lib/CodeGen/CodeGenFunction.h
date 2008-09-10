@@ -19,6 +19,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/IRBuilder.h"
 #include "clang/AST/Expr.h"
+#include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExprObjC.h"
 
 #include <vector>
@@ -333,6 +334,8 @@ public:
   LValue EmitLValueForField(llvm::Value* Base, FieldDecl* Field,
                             bool isUnion, unsigned CVRQualifiers);
       
+  LValue EmitCXXConditionDeclLValue(const CXXConditionDeclExpr *E);
+
   LValue EmitObjCMessageExprLValue(const ObjCMessageExpr *E);
   LValue EmitObjCIvarRefLValue(const ObjCIvarRefExpr *E);
   LValue EmitObjCPropertyRefLValue(const ObjCPropertyRefExpr *E);

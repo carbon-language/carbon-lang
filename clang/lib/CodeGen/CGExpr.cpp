@@ -121,6 +121,9 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
   case Expr::StringLiteralClass:
     return EmitStringLiteralLValue(cast<StringLiteral>(E));
 
+  case Expr::CXXConditionDeclExprClass:
+    return EmitCXXConditionDeclLValue(cast<CXXConditionDeclExpr>(E));
+
   case Expr::ObjCMessageExprClass:
     return EmitObjCMessageExprLValue(cast<ObjCMessageExpr>(E));
   case Expr::ObjCIvarRefExprClass: 
@@ -784,6 +787,12 @@ LValue CodeGenFunction::EmitCallExprLValue(const CallExpr *E) {
   // FIXME: can this be volatile?
   return LValue::MakeAddr(RV.getAggregateAddr(),
                           E->getType().getCVRQualifiers());
+}
+
+LValue
+CodeGenFunction::EmitCXXConditionDeclLValue(const CXXConditionDeclExpr *E) {
+  EmitLocalBlockVarDecl(*E->getVarDecl());
+  return EmitDeclRefLValue(E);
 }
 
 LValue CodeGenFunction::EmitObjCMessageExprLValue(const ObjCMessageExpr *E) {
