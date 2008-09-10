@@ -857,16 +857,27 @@ an illegal DAG into a legal DAG.</p>
 rest of the code generation passes are run.</p>
 
 <p>One great way to visualize what is going on here is to take advantage of a 
-few LLC command line options.  In particular, the <tt>-view-isel-dags</tt>
-option pops up a window with the SelectionDAG input to the Select phase for all
-of the code compiled (if you only get errors printed to the console while using
-this, you probably <a href="ProgrammersManual.html#ViewGraph">need to configure
-your system</a> to add support for it).  The <tt>-view-sched-dags</tt> option
-views the SelectionDAG output from the Select phase and input to the Scheduler
-phase.  The <tt>-view-sunit-dags</tt> option views the ScheduleDAG, which is
-based on the final SelectionDAG, with nodes that must be scheduled as a unit
-bundled together into a single node, and with immediate operands and other
-nodes that aren't relevent for scheduling omitted.
+few LLC command line options.  The following options pop up a window displaying
+the SelectionDAG at specific times (if you only get errors printed to the console
+while using this, you probably
+<a href="ProgrammersManual.html#ViewGraph">need to configure your system</a> to
+add support for it).</p>
+
+<ul>
+<li><tt>-view-dag-combine1-dags</tt> displays the DAG after being built, before
+    the first optimization pass.</li>
+<li><tt>-view-legalize-dags</tt> displays the DAG before Legalization.</li>
+<li><tt>-view-dag-combine2-dags</tt> displays the DAG before the second
+    optimization pass.</li>
+<li><tt>-view-isel-dags</tt> displays the DAG before the Select phase.</li>
+<li><tt>-view-sched-dags</tt> displays the DAG before Scheduling.</li>
+</ul>
+
+<p>The <tt>-view-sunit-dags</tt> displays the Scheduler's dependency graph.
+This graph is based on the final SelectionDAG, with nodes that must be
+scheduled together bundled into a single scheduling-unit node, and with
+immediate operands and other nodes that aren't relevent for scheduling
+omitted.
 </p>
 
 </div>
