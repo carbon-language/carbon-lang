@@ -20,10 +20,12 @@
 
 namespace llvm {
 
+class AllocaInst;
 class ConstantFP;
 class MachineBasicBlock;
 class MachineConstantPool;
 class MachineFunction;
+class MachineFrameInfo;
 class MachineRegisterInfo;
 class TargetData;
 class TargetInstrInfo;
@@ -40,8 +42,11 @@ protected:
   DenseMap<const Value *, unsigned> LocalValueMap;
   DenseMap<const Value *, unsigned> &ValueMap;
   DenseMap<const BasicBlock *, MachineBasicBlock *> &MBBMap;
+  DenseMap<const AllocaInst *, int> &StaticAllocaMap;
   MachineFunction &MF;
   MachineRegisterInfo &MRI;
+  MachineFrameInfo &MFI;
+  MachineConstantPool &MCP;
   const TargetMachine &TM;
   const TargetData &TD;
   const TargetInstrInfo &TII;
@@ -90,7 +95,8 @@ public:
 protected:
   FastISel(MachineFunction &mf,
            DenseMap<const Value *, unsigned> &vm,
-           DenseMap<const BasicBlock *, MachineBasicBlock *> &bm);
+           DenseMap<const BasicBlock *, MachineBasicBlock *> &bm,
+           DenseMap<const AllocaInst *, int> &am);
 
   /// FastEmit_r - This method is called by target-independent code
   /// to request that an instruction with the given type and opcode
@@ -234,8 +240,13 @@ protected:
   
   /// TargetMaterializeConstant - Emit a constant in a register using 
   /// target-specific logic, such as constant pool loads.
-  virtual unsigned TargetMaterializeConstant(Constant* C,
-                                             MachineConstantPool* MCP) {
+  virtual unsigned TargetMaterializeConstant(Constant* C) {
+    return 0;
+  }
+
+  /// TargetMaterializeAlloca - Emit an alloca address in a register using
+  /// target-specific logic.
+  virtual unsigned TargetMaterializeAlloca(AllocaInst* C) {
     return 0;
   }
 

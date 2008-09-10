@@ -473,7 +473,8 @@ namespace llvm {
     virtual FastISel *
     createFastISel(MachineFunction &mf,
                    DenseMap<const Value *, unsigned> &,
-                   DenseMap<const BasicBlock *, MachineBasicBlock *> &);
+                   DenseMap<const BasicBlock *, MachineBasicBlock *> &,
+                   DenseMap<const AllocaInst *, int> &);
     
   private:
     /// Subtarget - Keep a pointer to the X86Subtarget around so that we can
@@ -604,7 +605,8 @@ namespace llvm {
   namespace X86 {
     FastISel *createFastISel(MachineFunction &mf,
                            DenseMap<const Value *, unsigned> &,
-                           DenseMap<const BasicBlock *, MachineBasicBlock *> &);
+                           DenseMap<const BasicBlock *, MachineBasicBlock *> &,
+                           DenseMap<const AllocaInst *, int> &);
   }
 }
 

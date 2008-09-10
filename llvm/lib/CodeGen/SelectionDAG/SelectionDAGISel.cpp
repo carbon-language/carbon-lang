@@ -737,7 +737,8 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn, MachineFunction &MF) {
     // FastISel doesn't support EH landing pads, which require special handling.
     if (EnableFastISel && !BB->isLandingPad()) {
       if (FastISel *F = TLI.createFastISel(*FuncInfo->MF, FuncInfo->ValueMap,
-                                           FuncInfo->MBBMap)) {
+                                           FuncInfo->MBBMap,
+                                           FuncInfo->StaticAllocaMap)) {
         // Emit code for any incoming arguments. This must happen before
         // beginning FastISel on the entry block.
         if (LLVMBB == &Fn.getEntryBlock()) {

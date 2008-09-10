@@ -37,14 +37,14 @@ unsigned FastISel::getRegForValue(Value *V) {
     return 0;
   if (ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
     if (CI->getValue().getActiveBits() > 64)
-      return TargetMaterializeConstant(CI,
-                                       MBB->getParent()->getConstantPool());
+      return TargetMaterializeConstant(CI);
     // Don't cache constant materializations.  To do so would require
     // tracking what uses they dominate.
     Reg = FastEmit_i(VT, VT, ISD::Constant, CI->getZExtValue());
   } else if (isa<GlobalValue>(V)) {
-    return TargetMaterializeConstant(dyn_cast<Constant>(V),
-                                     MBB->getParent()->getConstantPool());
+    return TargetMaterializeConstant(cast<Constant>(V));
+  } else if (isa<AllocaInst>(V)) {
+    return TargetMaterializeAlloca(cast<AllocaInst>(V));
   } else if (isa<ConstantPointerNull>(V)) {
     Reg = FastEmit_i(VT, VT, ISD::Constant, 0);
   } else if (ConstantFP *CF = dyn_cast<ConstantFP>(V)) {
@@ -58,19 +58,16 @@ unsigned FastISel::getRegForValue(Value *V) {
       uint32_t IntBitWidth = IntVT.getSizeInBits();
       if (Flt.convertToInteger(x, IntBitWidth, /*isSigned=*/true,
                                APFloat::rmTowardZero) != APFloat::opOK)
-        return TargetMaterializeConstant(CF,    
-                                         MBB->getParent()->getConstantPool());
+        return TargetMaterializeConstant(CF);
       APInt IntVal(IntBitWidth, 2, x);
 
       unsigned IntegerReg = FastEmit_i(IntVT.getSimpleVT(), IntVT.getSimpleVT(),
                                        ISD::Constant, IntVal.getZExtValue());
       if (IntegerReg == 0)
-        return TargetMaterializeConstant(CF,
-                                         MBB->getParent()->getConstantPool());
+        return TargetMaterializeConstant(CF);
       Reg = FastEmit_r(IntVT.getSimpleVT(), VT, ISD::SINT_TO_FP, IntegerReg);
       if (Reg == 0)
-        return TargetMaterializeConstant(CF,
-                                         MBB->getParent()->getConstantPool());;
+        return TargetMaterializeConstant(CF);
     }
   } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
     if (!SelectOperator(CE, CE->getOpcode())) return 0;
@@ -83,8 +80,7 @@ unsigned FastISel::getRegForValue(Value *V) {
   }
   
   if (!Reg && isa<Constant>(V))
-    return TargetMaterializeConstant(cast<Constant>(V),
-                                     MBB->getParent()->getConstantPool());
+    return TargetMaterializeConstant(cast<Constant>(V));
   
   LocalValueMap[V] = Reg;
   return Reg;
@@ -416,6 +412,14 @@ FastISel::SelectOperator(User *I, unsigned Opcode) {
   case Instruction::PHI:
     // PHI nodes are already emitted.
     return true;
+
+  case Instruction::Alloca:
+    // FunctionLowering has the static-sized case covered.
+    if (StaticAllocaMap.count(cast<AllocaInst>(I)))
+      return true;
+
+    // Dynamic-sized alloca is not handled yet.
+    return false;
     
   case Instruction::BitCast:
     return SelectBitCast(I);
@@ -453,12 +457,16 @@ FastISel::SelectOperator(User *I, unsigned Opcode) {
 
 FastISel::FastISel(MachineFunction &mf,
                    DenseMap<const Value *, unsigned> &vm,
-                   DenseMap<const BasicBlock *, MachineBasicBlock *> &bm)
+                   DenseMap<const BasicBlock *, MachineBasicBlock *> &bm,
+                   DenseMap<const AllocaInst *, int> &am)
   : MBB(0),
     ValueMap(vm),
     MBBMap(bm),
+    StaticAllocaMap(am),
     MF(mf),
     MRI(MF.getRegInfo()),
+    MFI(*MF.getFrameInfo()),
+    MCP(*MF.getConstantPool()),
     TM(MF.getTarget()),
     TD(*TM.getTargetData()),
     TII(*TM.getInstrInfo()),

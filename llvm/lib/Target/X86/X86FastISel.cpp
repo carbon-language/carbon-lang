@@ -31,10 +31,6 @@
 using namespace llvm;
 
 class X86FastISel : public FastISel {
-  /// MFI - Keep track of objects allocated on the stack.
-  ///
-  MachineFrameInfo *MFI;
-
   /// Subtarget - Keep a pointer to the X86Subtarget around so that we can
   /// make the right decision when generating code for different targets.
   const X86Subtarget *Subtarget;
@@ -53,8 +49,9 @@ class X86FastISel : public FastISel {
 public:
   explicit X86FastISel(MachineFunction &mf,
                        DenseMap<const Value *, unsigned> &vm,
-                       DenseMap<const BasicBlock *, MachineBasicBlock *> &bm)
-    : FastISel(mf, vm, bm), MFI(MF.getFrameInfo()) {
+                       DenseMap<const BasicBlock *, MachineBasicBlock *> &bm,
+                       DenseMap<const AllocaInst *, int> &am)
+    : FastISel(mf, vm, bm, am) {
     Subtarget = &TM.getSubtarget<X86Subtarget>();
     StackPtr = Subtarget->is64Bit() ? X86::RSP : X86::ESP;
     X86ScalarSSEf64 = Subtarget->hasSSE2();
@@ -66,16 +63,18 @@ public:
 #include "X86GenFastISel.inc"
 
 private:
-  bool X86FastEmitLoad(MVT VT, unsigned Op0, Value *V, unsigned &RR);
+  bool X86FastEmitLoad(MVT VT, const X86AddressMode &AM, unsigned &RR);
 
   bool X86FastEmitStore(MVT VT, unsigned Val,
-                        unsigned Ptr, unsigned Offset, Value *V);
+                        const X86AddressMode &AM);
 
   bool X86FastEmitExtend(ISD::NodeType Opc, MVT DstVT, unsigned Src, MVT SrcVT,
                          unsigned &ResultReg);
   
   bool X86SelectConstAddr(Value *V, unsigned &Op0,
                           bool isCall = false, bool inReg = false);
+
+  bool X86SelectAddress(Value *V, X86AddressMode &AM);
 
   bool X86SelectLoad(Instruction *I);
   
@@ -97,7 +96,9 @@ private:
 
   CCAssignFn *CCAssignFnForCall(unsigned CC, bool isTailCall = false);
 
-  unsigned TargetMaterializeConstant(Constant *C, MachineConstantPool* MCP);
+  unsigned TargetMaterializeConstant(Constant *C);
+
+  unsigned TargetMaterializeAlloca(AllocaInst *C);
 
   /// isScalarFPTypeInSSEReg - Return true if the specified scalar FP type is
   /// computed in an SSE register, not on the X87 floating point stack.
@@ -151,7 +152,7 @@ CCAssignFn *X86FastISel::CCAssignFnForCall(unsigned CC, bool isTaillCall) {
 /// X86FastEmitLoad - Emit a machine instruction to load a value of type VT.
 /// The address is either pre-computed, i.e. Ptr, or a GlobalAddress, i.e. GV.
 /// Return true and the result register by reference if it is possible.
-bool X86FastISel::X86FastEmitLoad(MVT VT, unsigned Ptr, Value *GV,
+bool X86FastISel::X86FastEmitLoad(MVT VT, const X86AddressMode &AM,
                                   unsigned &ResultReg) {
   // Get opcode and regclass of the output for the given load instruction.
   unsigned Opc = 0;
@@ -200,12 +201,6 @@ bool X86FastISel::X86FastEmitLoad(MVT VT, unsigned Ptr, Value *GV,
   }
 
   ResultReg = createResultReg(RC);
-  X86AddressMode AM;
-  if (Ptr)
-    // Address is in register.
-    AM.Base.Reg = Ptr;
-  else
-    AM.GV = cast<GlobalValue>(GV);
   addFullAddress(BuildMI(MBB, TII.get(Opc), ResultReg), AM);
   return true;
 }
@@ -216,7 +211,7 @@ bool X86FastISel::X86FastEmitLoad(MVT VT, unsigned Ptr, Value *GV,
 /// i.e. V. Return true if it is possible.
 bool
 X86FastISel::X86FastEmitStore(MVT VT, unsigned Val,
-                              unsigned Ptr, unsigned Offset, Value *V) {
+                              const X86AddressMode &AM) {
   // Get opcode and regclass of the output for the given store instruction.
   unsigned Opc = 0;
   const TargetRegisterClass *RC = NULL;
@@ -263,13 +258,6 @@ X86FastISel::X86FastEmitStore(MVT VT, unsigned Val,
     break;
   }
 
-  X86AddressMode AM;
-  if (Ptr) {
-    // Address is in register.
-    AM.Base.Reg = Ptr;
-    AM.Disp = Offset;
-  } else
-    AM.GV = cast<GlobalValue>(V);
   addFullAddress(BuildMI(MBB, TII.get(Opc)), AM).addReg(Val);
   return true;
 }
@@ -331,6 +319,39 @@ bool X86FastISel::X86SelectConstAddr(Value *V, unsigned &Op0,
   return true;
 }
 
+/// X86SelectAddress - Attempt to fill in an address from the given value.
+///
+bool X86FastISel::X86SelectAddress(Value *V, X86AddressMode &AM) {
+  // Look past bitcasts.
+  if (const BitCastInst *BC = dyn_cast<BitCastInst>(V))
+    return X86SelectAddress(BC->getOperand(0), AM);
+
+  if (const AllocaInst *A = dyn_cast<AllocaInst>(V)) {
+    DenseMap<const AllocaInst*, int>::iterator SI = StaticAllocaMap.find(A);
+    if (SI == StaticAllocaMap.end())
+      return false;
+    AM.BaseType = X86AddressMode::FrameIndexBase;
+    AM.Base.FrameIndex = SI->second;
+  } else if (unsigned Ptr = lookUpRegForValue(V)) {
+    AM.Base.Reg = Ptr;
+  } else {
+    // Handle constant address.
+    // FIXME: If load type is something we can't handle, this can result in
+    // a dead stub load instruction.
+    if (isa<Constant>(V) && X86SelectConstAddr(V, AM.Base.Reg)) {
+      if (AM.Base.Reg == 0)
+        AM.GV = cast<GlobalValue>(V);
+    } else {
+      AM.Base.Reg = getRegForValue(V);
+      if (AM.Base.Reg == 0)
+        // Unhandled operand. Halt "fast" selection and bail.
+        return false;
+    }
+  }
+
+  return true;
+}
+
 /// X86SelectStore - Select and emit code to implement store instructions.
 bool X86FastISel::X86SelectStore(Instruction* I) {
   MVT VT;
@@ -341,21 +362,11 @@ bool X86FastISel::X86SelectStore(Instruction* I) {
     // Unhandled operand. Halt "fast" selection and bail.
     return false;    
 
-  Value *V = I->getOperand(1);
-  unsigned Ptr = lookUpRegForValue(V);
-  if (!Ptr) {
-    // Handle constant load address.
-    // FIXME: If load type is something we can't handle, this can result in
-    // a dead stub load instruction.
-    if (!isa<Constant>(V) || !X86SelectConstAddr(V, Ptr)) {
-      Ptr = getRegForValue(V);
-      if (Ptr == 0)
-        // Unhandled operand. Halt "fast" selection and bail.
-        return false;    
-    }
-  }
+  X86AddressMode AM;
+  if (!X86SelectAddress(I->getOperand(1), AM))
+    return false;
 
-  return X86FastEmitStore(VT, Val, Ptr, 0, V);
+  return X86FastEmitStore(VT, Val, AM);
 }
 
 /// X86SelectLoad - Select and emit code to implement load instructions.
@@ -365,22 +376,12 @@ bool X86FastISel::X86SelectLoad(Instruction *I)  {
   if (!isTypeLegal(I->getType(), TLI, VT))
     return false;
 
-  Value *V = I->getOperand(0);
-  unsigned Ptr = lookUpRegForValue(V);
-  if (!Ptr) {
-    // Handle constant load address.
-    // FIXME: If load type is something we can't handle, this can result in
-    // a dead stub load instruction.
-    if (!isa<Constant>(V) || !X86SelectConstAddr(V, Ptr)) {
-      Ptr = getRegForValue(V);
-      if (Ptr == 0)
-        // Unhandled operand. Halt "fast" selection and bail.
-        return false;    
-    }
-  }
+  X86AddressMode AM;
+  if (!X86SelectAddress(I->getOperand(0), AM))
+    return false;
 
   unsigned ResultReg = 0;
-  if (X86FastEmitLoad(VT, Ptr, V, ResultReg)) {
+  if (X86FastEmitLoad(VT, AM, ResultReg)) {
     UpdateValueMap(I, ResultReg);
     return true;
   }
@@ -831,7 +832,10 @@ bool X86FastISel::X86SelectCall(Instruction *I) {
       RegArgs.push_back(VA.getLocReg());
     } else {
       unsigned LocMemOffset = VA.getLocMemOffset();
-      X86FastEmitStore(ArgVT, Arg, StackPtr, LocMemOffset, NULL);
+      X86AddressMode AM;
+      AM.Base.Reg = StackPtr;
+      AM.Disp = LocMemOffset;
+      X86FastEmitStore(ArgVT, Arg, AM);
     }
   }
 
@@ -885,7 +889,7 @@ bool X86FastISel::X86SelectCall(Instruction *I) {
       MVT ResVT = RVLocs[0].getValVT();
       unsigned Opc = ResVT == MVT::f32 ? X86::ST_Fp80m32 : X86::ST_Fp80m64;
       unsigned MemSize = ResVT.getSizeInBits()/8;
-      int FI = MFI->CreateStackObject(MemSize, MemSize);
+      int FI = MFI.CreateStackObject(MemSize, MemSize);
       addFrameReference(BuildMI(MBB, TII.get(Opc)), FI).addReg(ResultReg);
       DstRC = ResVT == MVT::f32
         ? X86::FR32RegisterClass : X86::FR64RegisterClass;
@@ -938,8 +942,7 @@ X86FastISel::TargetSelectInstruction(Instruction *I)  {
   return false;
 }
 
-unsigned X86FastISel::TargetMaterializeConstant(Constant *C,
-                                                MachineConstantPool* MCP) {
+unsigned X86FastISel::TargetMaterializeConstant(Constant *C) {
   // Can't handle PIC-mode yet.
   if (TM.getRelocationModel() == Reloc::PIC_)
     return 0;
@@ -1010,15 +1013,27 @@ unsigned X86FastISel::TargetMaterializeConstant(Constant *C,
     Align = Log2_64(Align);
   }
   
-  unsigned MCPOffset = MCP->getConstantPoolIndex(C, Align);
+  unsigned MCPOffset = MCP.getConstantPoolIndex(C, Align);
   addConstantPoolReference(BuildMI(MBB, TII.get(Opc), ResultReg), MCPOffset);
+  return ResultReg;
+}
+
+unsigned X86FastISel::TargetMaterializeAlloca(AllocaInst *C) {
+  X86AddressMode AM;
+  if (!X86SelectAddress(C, AM))
+    return 0;
+  unsigned Opc = Subtarget->is64Bit() ? X86::LEA64r : X86::LEA32r;
+  TargetRegisterClass* RC = TLI.getRegClassFor(TLI.getPointerTy());
+  unsigned ResultReg = createResultReg(RC);
+  addFullAddress(BuildMI(MBB, TII.get(Opc), ResultReg), AM);
   return ResultReg;
 }
 
 namespace llvm {
   llvm::FastISel *X86::createFastISel(MachineFunction &mf,
                         DenseMap<const Value *, unsigned> &vm,
-                        DenseMap<const BasicBlock *, MachineBasicBlock *> &bm) {
-    return new X86FastISel(mf, vm, bm);
+                        DenseMap<const BasicBlock *, MachineBasicBlock *> &bm,
+                        DenseMap<const AllocaInst *, int> &am) {
+    return new X86FastISel(mf, vm, bm, am);
   }
 }

@@ -33,6 +33,7 @@
 #include <vector>
 
 namespace llvm {
+  class AllocaInst;
   class Function;
   class FastISel;
   class MachineBasicBlock;
@@ -1120,7 +1121,8 @@ public:
   virtual FastISel *
   createFastISel(MachineFunction &,
                  DenseMap<const Value *, unsigned> &,
-                 DenseMap<const BasicBlock *, MachineBasicBlock *> &) {
+                 DenseMap<const BasicBlock *, MachineBasicBlock *> &,
+                 DenseMap<const AllocaInst *, int> &) {
     return 0;
   }
 
