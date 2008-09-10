@@ -5717,6 +5717,7 @@ SDValue X86TargetLowering::LowerTRAMPOLINE(SDValue Op,
       break;
     }
     case CallingConv::X86_FastCall:
+    case CallingConv::FastCC:
       // Pass 'nest' parameter in EAX.
       // Must be kept in sync with X86CallingConv.td
       NestReg = X86::EAX;
