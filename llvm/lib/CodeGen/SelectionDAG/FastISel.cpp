@@ -33,8 +33,16 @@ unsigned FastISel::getRegForValue(Value *V) {
     return Reg;
 
   MVT::SimpleValueType VT = TLI.getValueType(V->getType()).getSimpleVT();
-  if (!TLI.isTypeLegal(VT))
-    return 0;
+
+  // Ignore illegal types.
+  if (!TLI.isTypeLegal(VT)) {
+    // Promote MVT::i1 to a legal type though, because it's common and easy.
+    if (VT == MVT::i1)
+      VT = TLI.getTypeToTransformTo(VT).getSimpleVT();
+    else
+      return 0;
+  }
+
   if (ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
     if (CI->getValue().getActiveBits() > 64)
       return TargetMaterializeConstant(CI);
