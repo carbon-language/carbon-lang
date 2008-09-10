@@ -552,6 +552,11 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::ROTR, (MVT::SimpleValueType)VT, Expand);
     setOperationAction(ISD::BSWAP, (MVT::SimpleValueType)VT, Expand);
     setOperationAction(ISD::VSETCC, (MVT::SimpleValueType)VT, Expand);
+    setOperationAction(ISD::FLOG, (MVT::SimpleValueType)VT, Expand);
+    setOperationAction(ISD::FLOG2, (MVT::SimpleValueType)VT, Expand);
+    setOperationAction(ISD::FLOG10, (MVT::SimpleValueType)VT, Expand);
+    setOperationAction(ISD::FEXP, (MVT::SimpleValueType)VT, Expand);
+    setOperationAction(ISD::FEXP2, (MVT::SimpleValueType)VT, Expand);
   }
 
   if (Subtarget->hasMMX()) {
