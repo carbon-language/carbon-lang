@@ -76,14 +76,57 @@ ArgTypeIterator CGCallInfo::argtypes_end() const {
 
 /***/
 
+class ABIArgInfo {
+public:
+  enum Kind {
+    Default,
+    StructRet, // Only valid for struct return types
+    Coerce     // Only valid for return types
+  };
+
+private:
+  Kind TheKind;
+  QualType TypeData;
+
+  ABIArgInfo(Kind K, QualType TD) : TheKind(K),
+                                    TypeData(TD) {}
+public:
+  static ABIArgInfo getDefault() { 
+    return ABIArgInfo(Default, QualType()); 
+  }
+  static ABIArgInfo getStructRet() { 
+    return ABIArgInfo(StructRet, QualType()); 
+  }
+  static ABIArgInfo getCoerce(QualType T) { 
+    return ABIArgInfo(Coerce, T);
+  }
+
+  Kind getKind() const { return TheKind; }
+  bool isDefault() const { return TheKind == Default; }
+  bool isStructRet() const { return TheKind == StructRet; }
+  bool isCoerce() const { return TheKind == Coerce; }
+};
+
+/***/
+
+static ABIArgInfo classifyReturnType(QualType RetTy) {
+  if (CodeGenFunction::hasAggregateLLVMType(RetTy)) {
+    return ABIArgInfo::getStructRet();
+  } else {
+    return ABIArgInfo::getDefault();
+  }
+}
+
+/***/
+
 bool CodeGenModule::ReturnTypeUsesSret(QualType RetTy) {
-  return CodeGenFunction::hasAggregateLLVMType(RetTy);
+  return classifyReturnType(RetTy).isStructRet();
 }
 
 void CodeGenModule::ConstructParamAttrList(const Decl *TargetDecl,
-                                             ArgTypeIterator begin,
-                                             ArgTypeIterator end,
-                                             ParamAttrListType &PAL) {
+                                           ArgTypeIterator begin,
+                                           ArgTypeIterator end,
+                                           ParamAttrListType &PAL) {
   unsigned FuncAttrs = 0;
 
   if (TargetDecl) {
@@ -93,19 +136,31 @@ void CodeGenModule::ConstructParamAttrList(const Decl *TargetDecl,
       FuncAttrs |= llvm::ParamAttr::NoReturn;
   }
 
-  QualType ResTy = *begin;
+  QualType RetTy = *begin;
   unsigned Index = 1;
-  if (ReturnTypeUsesSret(ResTy)) {
+  ABIArgInfo ResAI = classifyReturnType(RetTy);
+  switch (ResAI.getKind()) {
+  case ABIArgInfo::Default:
+    if (RetTy->isPromotableIntegerType()) {
+      if (RetTy->isSignedIntegerType()) {
+        FuncAttrs |= llvm::ParamAttr::SExt;
+      } else if (RetTy->isUnsignedIntegerType()) {
+        FuncAttrs |= llvm::ParamAttr::ZExt;
+      }
+    }
+    break;
+
+  case ABIArgInfo::StructRet:
     PAL.push_back(llvm::ParamAttrsWithIndex::get(Index, 
                                                  llvm::ParamAttr::StructRet));
     ++Index;
-  } else if (ResTy->isPromotableIntegerType()) {
-    if (ResTy->isSignedIntegerType()) {
-      FuncAttrs |= llvm::ParamAttr::SExt;
-    } else if (ResTy->isUnsignedIntegerType()) {
-      FuncAttrs |= llvm::ParamAttr::ZExt;
-    }
+    break;
+
+  case ABIArgInfo::Coerce:
+    assert(0 && "FIXME: ABIArgInfo::Coerce not handled\n");
+    break;
   }
+
   if (FuncAttrs)
     PAL.push_back(llvm::ParamAttrsWithIndex::get(0, FuncAttrs));
   for (++begin; begin != end; ++begin, ++Index) {
@@ -132,7 +187,7 @@ void CodeGenFunction::EmitFunctionProlog(llvm::Function *Fn,
   llvm::Function::arg_iterator AI = Fn->arg_begin();
   
   // Name the struct return argument.
-  if (hasAggregateLLVMType(RetTy)) {
+  if (CGM.ReturnTypeUsesSret(RetTy)) {
     AI->setName("agg.result");
     ++AI;
   }
@@ -155,23 +210,36 @@ void CodeGenFunction::EmitFunctionProlog(llvm::Function *Fn,
 
 void CodeGenFunction::EmitFunctionEpilog(QualType RetTy, 
                                          llvm::Value *ReturnValue) {
-  if (!ReturnValue) {
-    Builder.CreateRetVoid();
-  } else { 
-    if (!hasAggregateLLVMType(RetTy)) {
-      Builder.CreateRet(Builder.CreateLoad(ReturnValue));
-    } else if (RetTy->isAnyComplexType()) {
+  llvm::Value *RV = 0;
+
+  // Functions with no result always return void.
+  if (ReturnValue) { 
+    ABIArgInfo RetAI = classifyReturnType(RetTy);
+    
+    switch (RetAI.getKind()) {
+    case ABIArgInfo::StructRet:
       EmitAggregateCopy(CurFn->arg_begin(), ReturnValue, RetTy);
-      Builder.CreateRetVoid();
-    } else {
-      EmitAggregateCopy(CurFn->arg_begin(), ReturnValue, RetTy);
-      Builder.CreateRetVoid();
+      break;
+     
+    case ABIArgInfo::Default:
+      RV = Builder.CreateLoad(ReturnValue);
+      break;
+
+    case ABIArgInfo::Coerce:
+      assert(0 && "FIXME: ABIArgInfo::Coerce not handled\n");
+      break;
     }
+  }
+  
+  if (RV) {
+    Builder.CreateRet(RV);
+  } else {
+    Builder.CreateRetVoid();
   }
 }
 
 RValue CodeGenFunction::EmitCall(llvm::Value *Callee, 
-                                 QualType ResultType, 
+                                 QualType RetTy, 
                                  const CallArgList &CallArgs) {
   // FIXME: Factor out code to load from args into locals into target.
   llvm::SmallVector<llvm::Value*, 16> Args;
@@ -179,10 +247,20 @@ RValue CodeGenFunction::EmitCall(llvm::Value *Callee,
 
   // Handle struct-return functions by passing a pointer to the
   // location that we would like to return into.
-  if (hasAggregateLLVMType(ResultType)) {
+  ABIArgInfo RetAI = classifyReturnType(RetTy);
+  switch (RetAI.getKind()) {
+  case ABIArgInfo::StructRet:
     // Create a temporary alloca to hold the result of the call. :(
-    TempArg0 = CreateTempAlloca(ConvertType(ResultType));
+    TempArg0 = CreateTempAlloca(ConvertType(RetTy));
     Args.push_back(TempArg0);
+    break;
+    
+  case ABIArgInfo::Default:
+    break;
+
+  case ABIArgInfo::Coerce:
+    assert(0 && "FIXME: ABIArgInfo::Coerce not handled\n");
+    break;
   }
   
   for (CallArgList::const_iterator I = CallArgs.begin(), E = CallArgs.end(); 
@@ -200,7 +278,7 @@ RValue CodeGenFunction::EmitCall(llvm::Value *Callee,
   }
   
   llvm::CallInst *CI = Builder.CreateCall(Callee,&Args[0],&Args[0]+Args.size());
-  CGCallInfo CallInfo(ResultType, CallArgs);
+  CGCallInfo CallInfo(RetTy, CallArgs);
 
   // FIXME: Provide TargetDecl so nounwind, noreturn, etc, etc get set.
   CodeGen::ParamAttrListType ParamAttrList;
@@ -214,16 +292,23 @@ RValue CodeGenFunction::EmitCall(llvm::Value *Callee,
     CI->setCallingConv(F->getCallingConv());
   if (CI->getType() != llvm::Type::VoidTy)
     CI->setName("call");
-  else if (ResultType->isAnyComplexType())
-    return RValue::getComplex(LoadComplexFromAddr(TempArg0, false));
-  else if (hasAggregateLLVMType(ResultType))
-    // Struct return.
-    return RValue::getAggregate(TempArg0);
-  else {
-    // void return.
-    assert(ResultType->isVoidType() && "Should only have a void expr here");
-    CI = 0;
+
+  switch (RetAI.getKind()) {
+  case ABIArgInfo::StructRet:
+    if (RetTy->isAnyComplexType())
+      return RValue::getComplex(LoadComplexFromAddr(TempArg0, false));
+    else 
+      // Struct return.
+      return RValue::getAggregate(TempArg0);
+    
+  case ABIArgInfo::Default:
+    return RValue::get(RetTy->isVoidType() ? 0 : CI);
+
+  case ABIArgInfo::Coerce:
+    assert(0 && "FIXME: ABIArgInfo::Coerce not handled\n");
+    return RValue::get(0);
   }
-      
-  return RValue::get(CI);  
+
+  assert(0 && "Unhandled ABIArgInfo::Kind");
+  return RValue::get(0);
 }
