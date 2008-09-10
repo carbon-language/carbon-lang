@@ -19,6 +19,8 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringMap.h"
 
+#include "CGCall.h"
+
 namespace llvm {
   class Module;
   class Constant;
@@ -214,6 +216,18 @@ public:
 
   void SetMethodAttributes(const ObjCMethodDecl *MD,
                            llvm::Function *F);
+
+  void SetFunctionParamAttrs(const CGFunctionInfo &Info, 
+                             llvm::Function *F);
+
+  /// ReturnTypeUsesSret - Return true iff the given type uses 'sret'
+  /// when used as a return type.
+  bool ReturnTypeUsesSret(QualType RetTy);
+
+  void ConstructParamAttrList(const Decl *TargetDecl,
+                              const ArgTypeIterator begin,
+                              const ArgTypeIterator end,
+                              ParamAttrListType &PAL);
 
 private:
   /// SetFunctionAttributesForDefinition - Set function attributes

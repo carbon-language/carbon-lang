@@ -531,7 +531,7 @@ CodeGen::RValue CGObjCMac::EmitMessageSend(CodeGen::CodeGenFunction &CGF,
 
   llvm::Value *Fn = 
     ObjCTypes.getMessageSendFn(IsSuper, 
-                               CGF.ReturnTypeUsesSret(ResultType),
+                               CGM.ReturnTypeUsesSret(ResultType),
                                CGM.getTypes().ConvertType(ResultType));
   return CGF.EmitCall(Fn, ResultType, ActualArgs);
 }

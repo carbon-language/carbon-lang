@@ -14,6 +14,7 @@
 
 #include "CGCall.h"
 #include "CodeGenFunction.h"
+#include "CodeGenModule.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"
@@ -75,11 +76,11 @@ ArgTypeIterator CGCallInfo::argtypes_end() const {
 
 /***/
 
-bool CodeGenFunction::ReturnTypeUsesSret(QualType RetTy) {
-  return hasAggregateLLVMType(RetTy);
+bool CodeGenModule::ReturnTypeUsesSret(QualType RetTy) {
+  return CodeGenFunction::hasAggregateLLVMType(RetTy);
 }
 
-void CodeGenFunction::ConstructParamAttrList(const Decl *TargetDecl,
+void CodeGenModule::ConstructParamAttrList(const Decl *TargetDecl,
                                              ArgTypeIterator begin,
                                              ArgTypeIterator end,
                                              ParamAttrListType &PAL) {
@@ -94,7 +95,7 @@ void CodeGenFunction::ConstructParamAttrList(const Decl *TargetDecl,
 
   QualType ResTy = *begin;
   unsigned Index = 1;
-  if (CodeGenFunction::hasAggregateLLVMType(ResTy)) {
+  if (ReturnTypeUsesSret(ResTy)) {
     PAL.push_back(llvm::ParamAttrsWithIndex::get(Index, 
                                                  llvm::ParamAttr::StructRet));
     ++Index;
@@ -203,8 +204,9 @@ RValue CodeGenFunction::EmitCall(llvm::Value *Callee,
 
   // FIXME: Provide TargetDecl so nounwind, noreturn, etc, etc get set.
   CodeGen::ParamAttrListType ParamAttrList;
-  ConstructParamAttrList(0, CallInfo.argtypes_begin(), CallInfo.argtypes_end(),
-                         ParamAttrList);
+  CGM.ConstructParamAttrList(0, 
+                             CallInfo.argtypes_begin(), CallInfo.argtypes_end(),
+                             ParamAttrList);
   CI->setParamAttrs(llvm::PAListPtr::get(ParamAttrList.begin(), 
                                          ParamAttrList.size()));  
 

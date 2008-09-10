@@ -138,15 +138,6 @@ public:
                      const FunctionArgList &Args);
   void FinishFunction(SourceLocation EndLoc=SourceLocation());
 
-  /// ReturnTypeUsesSret - Return true iff the given type uses 'sret'
-  /// when used as a return type.
-  static bool ReturnTypeUsesSret(QualType RetTy);
-
-  static void ConstructParamAttrList(const Decl *TargetDecl,
-                                     const ArgTypeIterator begin,
-                                     const ArgTypeIterator end,
-                                     ParamAttrListType &PAL);
-
   /// EmitFunctionProlog - Emit the target specific LLVM code to load
   /// the arguments for the given function. This is also responsible
   /// for naming the LLVM function arguments.
