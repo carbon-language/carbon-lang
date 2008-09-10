@@ -717,7 +717,7 @@ Sema::CheckReturnStackAddr(Expr *RetValExp, QualType lhsType,
            DR->getDecl()->getIdentifier()->getName(),
            RetValExp->getSourceRange());
            
-    if (BlockExpr *C = dyn_cast_or_null<BlockExpr>(EvalAddr(RetValExp)))
+    if (BlockExpr *C = dyn_cast_or_null<BlockExpr>(RetValExp))
       Diag(C->getLocStart(), diag::err_ret_local_block,
            C->getSourceRange());
   }
@@ -797,7 +797,7 @@ static DeclRefExpr* EvalAddr(Expr *E) {
     assert (Base->getType()->isPointerType());
     return EvalAddr(Base);
   }
-    
+
   // For conditional operators we need to see if either the LHS or RHS are
   // valid DeclRefExpr*s.  If one of them is valid, we return it.
   case Stmt::ConditionalOperatorClass: {

@@ -77,6 +77,10 @@ private:
   /// preceeding BreakParent/ContinueParent if this scope is not one, or null if
   /// there is no containing break/continue scope.
   Scope *BreakParent, *ContinueParent;
+
+  /// BlockParent - This is a direct link to the immediately containing
+  /// BlockScope if this scope is not one, or null if there is none.
+  Scope *BlockParent;
   
   /// DeclsInScope - This keeps track of all declarations in this scope.  When
   /// the declaration is added to the scope, it is set as the current
@@ -96,6 +100,10 @@ public:
   ///
   unsigned getFlags() const { return Flags; }
 
+  /// isBlockScope - Return true if this scope does not correspond to a
+  /// closure.
+  bool isBlockScope() const { return Flags & BlockScope; }
+
   /// getParent - Return the scope that this is nested in.
   ///
   const Scope *getParent() const { return AnyParent; }
@@ -107,15 +115,32 @@ public:
   Scope *getFnParent() { return FnParent; }
   
   /// getContinueParent - Return the closest scope that a continue statement
-  /// would be affected by.
-  const Scope *getContinueParent() const { return ContinueParent; }
-  Scope *getContinueParent() { return ContinueParent; }
+  /// would be affected by.  If the closest scope is a closure scope, we know 
+  /// that there is no loop *inside* the closure.
+  Scope *getContinueParent() {
+    if (ContinueParent && !ContinueParent->isBlockScope())
+      return ContinueParent;
+    return 0;
+  }
+
+  const Scope *getContinueParent() const {
+    return const_cast<Scope*>(this)->getContinueParent();
+  }
   
   /// getBreakParent - Return the closest scope that a break statement
-  /// would be affected by.
-  const Scope *getBreakParent() const { return BreakParent; }
-  Scope *getBreakParent() { return BreakParent; }
-  
+  /// would be affected by.  If the closest scope is a block scope, we know 
+  /// that there is no loop *inside* the block.
+  Scope *getBreakParent() {
+    if (BreakParent && !BreakParent->isBlockScope())
+      return BreakParent;
+    return 0;
+  }
+  const Scope *getBreakParent() const {
+    return const_cast<Scope*>(this)->getBreakParent();
+  }
+ 
+  Scope *getBlockParent() { return BlockParent; }
+  const Scope *getBlockParent() const { return BlockParent; }  
  
   typedef DeclSetTy::iterator decl_iterator;
   decl_iterator decl_begin() const { return DeclsInScope.begin(); }
@@ -158,14 +183,16 @@ public:
       FnParent       = AnyParent->FnParent;
       BreakParent    = AnyParent->BreakParent;
       ContinueParent = AnyParent->ContinueParent;
+      BlockParent  = AnyParent->BlockParent;
     } else {
-      FnParent = BreakParent = ContinueParent = 0;
+      FnParent = BreakParent = ContinueParent = BlockParent = 0;
     }
     
     // If this scope is a function or contains breaks/continues, remember it.
     if (Flags & FnScope)       FnParent = this;
     if (Flags & BreakScope)    BreakParent = this;
     if (Flags & ContinueScope) ContinueParent = this;
+    if (Flags & BlockScope)  BlockParent = this;
     
     DeclsInScope.clear();
   }      

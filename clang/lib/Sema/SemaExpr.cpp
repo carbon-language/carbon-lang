@@ -1296,11 +1296,13 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
   }
   // C99 6.5.15p6 - "if one operand is a null pointer constant, the result has
   // the type of the other operand."
-  if (lexT->isPointerType() && rex->isNullPointerConstant(Context)) {
+  if ((lexT->isPointerType() || lexT->isBlockPointerType()) &&
+      rex->isNullPointerConstant(Context)) {
     ImpCastExprToType(rex, lexT); // promote the null to a pointer.
     return lexT;
   }
-  if (rexT->isPointerType() && lex->isNullPointerConstant(Context)) {
+  if ((rexT->isPointerType() || rexT->isBlockPointerType()) &&
+      lex->isNullPointerConstant(Context)) {
     ImpCastExprToType(lex, rexT); // promote the null to a pointer.
     return rexT;
   }
@@ -1381,6 +1383,11 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
       return compositeType;
     }
   }
+  // Selection between block pointer types is ok as long as they are the same.
+  if (lexT->isBlockPointerType() && rexT->isBlockPointerType() &&
+      Context.getCanonicalType(lexT) == Context.getCanonicalType(rexT))
+    return lexT;
+
   // Otherwise, the operands are not compatible.
   Diag(questionLoc, diag::err_typecheck_cond_incompatible_operands,
        lexT.getAsString(), rexT.getAsString(),
