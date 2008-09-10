@@ -464,7 +464,7 @@ bool SimpleRegisterCoalescing::ReMaterializeTrivialDef(LiveInterval &SrcInt,
     MachineOperand &MO = CopyMI->getOperand(i);
     if (MO.isReg() && MO.isImplicit())
       NewMI->addOperand(MO);
-    if (MO.isDef()) {
+    if (MO.isDef() && li_->hasInterval(MO.getReg())) {
       unsigned Reg = MO.getReg();
       DLR = li_->getInterval(Reg).getLiveRangeContaining(DefIdx);
       if (DLR && DLR->valno->copy == CopyMI)
