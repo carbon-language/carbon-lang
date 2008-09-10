@@ -502,8 +502,7 @@ Sema::DeclTy *Sema::ActOnStartNamespaceDef(Scope *NamespcScope,
         LookupDecl(II, Decl::IDNS_Tag | Decl::IDNS_Ordinary, DeclRegionScope,
                    /*enableLazyBuiltinCreation=*/false);
 
-    if (PrevDecl &&
-        IdResolver.isDeclInScope(PrevDecl, CurContext, DeclRegionScope)) {
+    if (PrevDecl && isDeclInScope(PrevDecl, CurContext, DeclRegionScope)) {
       if (NamespaceDecl *OrigNS = dyn_cast<NamespaceDecl>(PrevDecl)) {
         // This is an extended namespace definition.
         // Attach this namespace decl to the chain of extended namespace
