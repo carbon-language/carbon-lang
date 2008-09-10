@@ -144,12 +144,22 @@ static ABIArgInfo classifyReturnType(QualType RetTy) {
 /***/
 
 const llvm::FunctionType *
+CodeGenTypes::GetFunctionType(const CGCallInfo &CI, bool IsVariadic) {
+  return GetFunctionType(CI.argtypes_begin(), CI.argtypes_end(), IsVariadic);
+}
+
+const llvm::FunctionType *
 CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI) {
+  return GetFunctionType(FI.argtypes_begin(), FI.argtypes_end(), FI.isVariadic());
+}
+
+const llvm::FunctionType *
+CodeGenTypes::GetFunctionType(ArgTypeIterator begin, ArgTypeIterator end,
+                              bool IsVariadic) {
   std::vector<const llvm::Type*> ArgTys;
 
   const llvm::Type *ResultType = 0;
 
-  ArgTypeIterator begin = FI.argtypes_begin(), end = FI.argtypes_end();
   QualType RetTy = *begin;
   ABIArgInfo RetAI = classifyReturnType(RetTy);
   switch (RetAI.getKind()) {    
@@ -157,25 +167,25 @@ CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI) {
     if (RetTy->isVoidType()) {
       ResultType = llvm::Type::VoidTy;
     } else {
-      ResultType = ConvertTypeRecursive(RetTy);
+      ResultType = ConvertType(RetTy);
     }
     break;
 
   case ABIArgInfo::StructRet: {
     ResultType = llvm::Type::VoidTy;
-    const llvm::Type *STy = ConvertTypeRecursive(RetTy);
+    const llvm::Type *STy = ConvertType(RetTy);
     ArgTys.push_back(llvm::PointerType::get(STy, RetTy.getAddressSpace()));
     break;
   }
 
   case ABIArgInfo::Coerce:
     ResultType = llvm::Type::VoidTy;
-    ArgTys.push_back(ConvertTypeRecursive(RetAI.getCoerceToType()));
+    ArgTys.push_back(ConvertType(RetAI.getCoerceToType()));
     break;
   }
   
   for (++begin; begin != end; ++begin) {
-    const llvm::Type *Ty = ConvertTypeRecursive(*begin);
+    const llvm::Type *Ty = ConvertType(*begin);
     if (Ty->isSingleValueType())
       ArgTys.push_back(Ty);
     else
@@ -183,9 +193,10 @@ CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI) {
       ArgTys.push_back(llvm::PointerType::getUnqual(Ty));
   }
 
-  return llvm::FunctionType::get(ResultType, ArgTys, FI.isVariadic());
+  return llvm::FunctionType::get(ResultType, ArgTys, IsVariadic);
 }
 
+// FIXME: This can die now?
 bool CodeGenModule::ReturnTypeUsesSret(QualType RetTy) {
   return classifyReturnType(RetTy).isStructRet();
 }

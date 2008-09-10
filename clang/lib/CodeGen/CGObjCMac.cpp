@@ -158,8 +158,7 @@ public:
   ObjCTypesHelper(CodeGen::CodeGenModule &cgm);
   ~ObjCTypesHelper();
   
-  llvm::Value *getMessageSendFn(bool IsSuper, bool isStret, 
-                                const llvm::Type *ReturnTy);
+  llvm::Constant *getMessageSendFn(bool IsSuper, bool isStret);
 };
 
 class CGObjCMac : public CodeGen::CGObjCRuntime {
@@ -529,10 +528,12 @@ CodeGen::RValue CGObjCMac::EmitMessageSend(CodeGen::CodeGenFunction &CGF,
                                       CGF.getContext().getObjCSelType()));
   ActualArgs.insert(ActualArgs.end(), CallArgs.begin(), CallArgs.end());
 
-  llvm::Value *Fn = 
-    ObjCTypes.getMessageSendFn(IsSuper, 
-                               CGM.ReturnTypeUsesSret(ResultType),
-                               CGM.getTypes().ConvertType(ResultType));
+  const llvm::FunctionType *FTy = 
+    CGM.getTypes().GetFunctionType(CGCallInfo(ResultType, ActualArgs),
+                                   false);
+  llvm::Constant *Fn = 
+    ObjCTypes.getMessageSendFn(IsSuper, CGM.ReturnTypeUsesSret(ResultType));
+  Fn = llvm::ConstantExpr::getBitCast(Fn, llvm::PointerType::getUnqual(FTy));
   return CGF.EmitCall(Fn, ResultType, ActualArgs);
 }
 
@@ -2199,30 +2200,12 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
 ObjCTypesHelper::~ObjCTypesHelper() {
 }
 
-llvm::Value *ObjCTypesHelper::getMessageSendFn(bool IsSuper, 
-                                               bool IsStret,
-                                               const llvm::Type *ReturnTy) {
-  llvm::Function *F;
-  llvm::FunctionType *CallFTy;
-  
-  // FIXME: Should we be caching any of this?
+llvm::Constant *ObjCTypesHelper::getMessageSendFn(bool IsSuper, bool IsStret) {
   if (IsStret) {
-    F = IsSuper ? MessageSendSuperStretFn : MessageSendStretFn;
-    std::vector<const llvm::Type*> Params(3);
-    Params[0] = llvm::PointerType::getUnqual(ReturnTy);
-    Params[1] = IsSuper ? SuperPtrTy : ObjectPtrTy;
-    Params[2] = SelectorPtrTy;
-    CallFTy = llvm::FunctionType::get(llvm::Type::VoidTy, Params, true);
+    return IsSuper ? MessageSendSuperStretFn : MessageSendStretFn;
   } else { // FIXME: floating point?
-    F = IsSuper ? MessageSendSuperFn : MessageSendFn;
-    std::vector<const llvm::Type*> Params(2);
-    Params[0] = IsSuper ? SuperPtrTy : ObjectPtrTy;
-    Params[1] = SelectorPtrTy;
-    CallFTy = llvm::FunctionType::get(ReturnTy, Params, true);
+    return IsSuper ? MessageSendSuperFn : MessageSendFn;
   }
-
-  return llvm::ConstantExpr::getBitCast(F, 
-                                        llvm::PointerType::getUnqual(CallFTy));
 }
 
 /* *** */

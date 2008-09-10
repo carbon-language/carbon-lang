@@ -18,6 +18,8 @@
 #include "llvm/ADT/SmallSet.h"
 #include <vector>
 
+#include "CGCall.h"
+
 namespace llvm {
   class FunctionType;
   class Module;
@@ -42,7 +44,6 @@ namespace clang {
   class Type;
 
 namespace CodeGen {
-  class CGFunctionInfo;
   class CodeGenTypes;
 
   /// CGRecordLayout - This class handles struct and union layout info while 
@@ -143,6 +144,17 @@ public:
 
   /// GetFunctionType - Get the LLVM function type from Info.
   const llvm::FunctionType *GetFunctionType(const CGFunctionInfo &Info);
+  /// GetFunctionType - Get the LLVM function type from Info. 
+  /// \param IsVariadic Should the resulting type be variadic?
+  const llvm::FunctionType *GetFunctionType(const CGCallInfo &Info,
+                                            bool IsVariadic);
+
+  /// GetFunctionType - Get the LLVM function type for the given types
+  /// and variadicness.
+  // FIXME: Do we even need IsVariadic here?
+  const llvm::FunctionType *GetFunctionType(ArgTypeIterator begin,
+                                            ArgTypeIterator end,
+                                            bool IsVariadic);
   
   void CollectObjCIvarTypes(ObjCInterfaceDecl *ObjCClass,
                             std::vector<const llvm::Type*> &IvarTypes);
