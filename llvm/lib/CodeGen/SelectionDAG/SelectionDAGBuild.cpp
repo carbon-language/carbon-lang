@@ -5612,8 +5612,13 @@ SelectionDAGISel::HandlePHINodesInSuccessorBlocksFast(BasicBlock *LLVMBB,
       // exactly one register for each non-void instruction.
       MVT VT = TLI.getValueType(PN->getType(), /*AllowUnknown=*/true);
       if (VT == MVT::Other || !TLI.isTypeLegal(VT)) {
-        SDL->PHINodesToUpdate.resize(OrigNumPHINodesToUpdate);
-        return false;
+        // Promote MVT::i1.
+        if (VT == MVT::i1)
+          VT = TLI.getTypeToTransformTo(VT);
+        else {
+          SDL->PHINodesToUpdate.resize(OrigNumPHINodesToUpdate);
+          return false;
+        }
       }
 
       Value *PHIOp = PN->getIncomingValueForBlock(LLVMBB);
