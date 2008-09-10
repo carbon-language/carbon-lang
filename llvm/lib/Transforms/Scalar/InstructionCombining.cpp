@@ -4695,6 +4695,21 @@ static bool AddWithOverflow(ConstantInt *&Result, ConstantInt *In1,
     return Result->getValue().ult(In1->getValue());
 }
 
+/// SubWithOverflow - Compute Result = In1-In2, returning true if the result
+/// overflowed for this type.
+static bool SubWithOverflow(ConstantInt *&Result, ConstantInt *In1,
+                            ConstantInt *In2, bool IsSigned = false) {
+  Result = cast<ConstantInt>(Add(In1, In2));
+
+  if (IsSigned)
+    if (In2->getValue().isNegative())
+      return Result->getValue().slt(In1->getValue());
+    else
+      return Result->getValue().sgt(In1->getValue());
+  else
+    return Result->getValue().ugt(In1->getValue());
+}
+
 /// EmitGEPOffset - Given a getelementptr instruction/constantexpr, emit the
 /// code necessary to compute the offset from the base pointer (without adding
 /// in the base pointer).  Return the result as a signed integer of intptr size.
@@ -5774,7 +5789,7 @@ Instruction *InstCombiner::FoldICmpDivCst(ICmpInst &ICI, BinaryOperator *DivI,
       // e.g. X/-5 op -3  --> [15, 20)
       LoBound = Prod;
       LoOverflow = HiOverflow = ProdOV ? 1 : 0;
-      HiBound = Subtract(Prod, DivRHS);
+      HiOverflow = SubWithOverflow(HiBound, Prod, DivRHS, true);
     }
     
     // Dividing by a negative swaps the condition.  LT <-> GT
