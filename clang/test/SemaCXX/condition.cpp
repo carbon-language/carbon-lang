@@ -1,8 +1,8 @@
 // RUN: clang -fsyntax-only -verify %s 
 
 void test() {
-  int a;
-  if (a) ++a;
+  int x;
+  if (x) ++x;
   if (int x=0) ++x;
 
   typedef int arr[10];
@@ -10,7 +10,7 @@ void test() {
   while (int f()=0) ; // expected-error: {{a function type is not allowed here}}
 
   struct S {} s;
-  if (s) ++a; // expected-error: {{expression must have bool type (or be convertible to bool) ('struct S' invalid)}}
+  if (s) ++x; // expected-error: {{expression must have bool type (or be convertible to bool) ('struct S' invalid)}}
   while (struct S x=s) ; // expected-error: {{expression must have bool type (or be convertible to bool) ('struct S' invalid)}}
   switch (s) {} // expected-error: {{statement requires expression of integer type ('struct S' invalid)}}
 
