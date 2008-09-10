@@ -1103,6 +1103,8 @@ CCAssignFn *X86TargetLowering::CCAssignFnForNode(SDValue Op) const {
     return CC_X86_32_FastCall;
   else if (CC == CallingConv::Fast && PerformTailCallOpt)
     return CC_X86_32_TailCall;
+  else if (CC == CallingConv::Fast)
+    return CC_X86_32_FastCC;
   else
     return CC_X86_32_C;
 }
@@ -1391,7 +1393,7 @@ X86TargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG) {
   } else {
     BytesToPopOnReturn  = 0; // Callee pops nothing.
     // If this is an sret function, the return should pop the hidden pointer.
-    if (!Is64Bit && ArgsAreStructReturn(Op))
+    if (!Is64Bit && CC != CallingConv::Fast && ArgsAreStructReturn(Op))
       BytesToPopOnReturn = 4;  
     BytesCallerReserves = StackSize;
   }
@@ -1773,7 +1775,7 @@ SDValue X86TargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
   unsigned NumBytesForCalleeToPush;
   if (IsCalleePop(Op))
     NumBytesForCalleeToPush = NumBytes;    // Callee pops everything
-  else if (!Is64Bit && IsStructRet)
+  else if (!Is64Bit && CC != CallingConv::Fast && IsStructRet)
     // If this is is a call to a struct-return function, the callee
     // pops the hidden struct pointer, so we have to push it back.
     // This is common for Darwin/X86, Linux & Mingw32 targets.
