@@ -1029,10 +1029,10 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
         mri_->getRegClass(isExtSubReg ? SrcReg : DstReg);
       if (isExtSubReg) {
         RealDstReg = getMatchingSuperReg(DstReg, SubIdx, RC, tri_);
-        assert(RealDstReg && "Invalid extra_subreg instruction!");
+        assert(RealDstReg && "Invalid extract_subreg instruction!");
       } else {
         RealSrcReg = getMatchingSuperReg(SrcReg, SubIdx, RC, tri_);
-        assert(RealSrcReg && "Invalid extra_subreg instruction!");
+        assert(RealSrcReg && "Invalid extract_subreg instruction!");
       }
 
       // For this type of EXTRACT_SUBREG, conservatively
