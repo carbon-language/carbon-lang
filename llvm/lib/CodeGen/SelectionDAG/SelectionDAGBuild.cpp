@@ -2755,18 +2755,16 @@ GetSignificand(SelectionDAG &DAG, SDValue Op) {
 
 // GetExponent - Get the exponent:
 //
-//   (float)(((Op1 & 0x7f800000) >> 23) - 127);
+//   (float)((Op1 >> 23) - 127);
 //
 // where Op is the hexidecimal representation of floating point value.
 static SDValue
 GetExponent(SelectionDAG &DAG, SDValue Op) {
-    SDValue t1 = DAG.getNode(ISD::AND, MVT::i32, Op,
-                             DAG.getConstant(0x7f800000, MVT::i32));
-    SDValue t2 = DAG.getNode(ISD::SRL, MVT::i32, t1,
+    SDValue t1 = DAG.getNode(ISD::SRL, MVT::i32, Op,
                              DAG.getConstant(23, MVT::i32));
-    SDValue t3 = DAG.getNode(ISD::SUB, MVT::i32, t2,
+    SDValue t2 = DAG.getNode(ISD::SUB, MVT::i32, t1,
                              DAG.getConstant(127, MVT::i32));
-    return DAG.getNode(ISD::UINT_TO_FP, MVT::f32, t3);
+    return DAG.getNode(ISD::UINT_TO_FP, MVT::f32, t2);
 }
 
 /// Inlined utility function to implement binary input atomic intrinsics for 
