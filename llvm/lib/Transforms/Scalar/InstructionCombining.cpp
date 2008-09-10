@@ -1486,7 +1486,7 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, uint64_t DemandedElts,
     bool NewUndefElts = false;
     for (unsigned i = 0; i < VWidth; i++) {
       unsigned MaskVal = Shuffle->getMaskValue(i);
-      if (MaskVal == -1) {
+      if (MaskVal == -1u) {
         uint64_t NewBit = 1ULL << i;
         UndefElts |= NewBit;
       } else if (MaskVal < VWidth) {
