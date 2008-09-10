@@ -140,7 +140,12 @@ public:
 
   /// ReturnTypeUsesSret - Return true iff the given type uses 'sret'
   /// when used as a return type.
-  bool ReturnTypeUsesSret(QualType RetTy);
+  static bool ReturnTypeUsesSret(QualType RetTy);
+
+  static void ConstructParamAttrList(const Decl *TargetDecl,
+                                     const ArgTypeIterator begin,
+                                     const ArgTypeIterator end,
+                                     ParamAttrListType &PAL);
 
   /// EmitFunctionProlog - Emit the target specific LLVM code to load
   /// the arguments for the given function. This is also responsible

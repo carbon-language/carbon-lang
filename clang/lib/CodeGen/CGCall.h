@@ -46,6 +46,10 @@ namespace CodeGen {
   /// ParmVarDecl or ImplicitParamDecl.
   typedef llvm::SmallVector<std::pair<const VarDecl*, QualType>, 
                             16> FunctionArgList;
+  
+  // FIXME: This should be a better iterator type so that we can avoid
+  // construction of the ArgTypes smallvectors.
+  typedef llvm::SmallVector<QualType, 16>::const_iterator ArgTypeIterator;
 
   /// CGFunctionInfo - Class to encapsulate the information about a
   /// function definition.
@@ -63,21 +67,20 @@ namespace CodeGen {
 
     const Decl* getDecl() const { return TheDecl; }
 
-    void constructParamAttrList(ParamAttrListType &Args) const;
+    ArgTypeIterator argtypes_begin() const;
+    ArgTypeIterator argtypes_end() const;
   };
 
   /// CGCallInfo - Class to encapsulate the arguments and clang types
   /// used in a call.
   class CGCallInfo {
-    QualType ResultType;
-    const CallArgList &Args;
-
     llvm::SmallVector<QualType, 16> ArgTypes;
 
   public:
     CGCallInfo(QualType _ResultType, const CallArgList &Args);
-    
-    void constructParamAttrList(ParamAttrListType &Args) const;
+
+    ArgTypeIterator argtypes_begin() const;
+    ArgTypeIterator argtypes_end() const;
   };
 }  // end namespace CodeGen
 }  // end namespace clang

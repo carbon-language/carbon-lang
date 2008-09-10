@@ -23,53 +23,6 @@ using namespace CodeGen;
 
 /***/
 
-static void 
-constructParamAttrListInternal(const Decl *TargetDecl,
-                               const llvm::SmallVector<QualType, 16> &ArgTypes,
-                               ParamAttrListType &PAL) {
-  unsigned FuncAttrs = 0;
-
-  if (TargetDecl) {
-    if (TargetDecl->getAttr<NoThrowAttr>())
-      FuncAttrs |= llvm::ParamAttr::NoUnwind;
-    if (TargetDecl->getAttr<NoReturnAttr>())
-      FuncAttrs |= llvm::ParamAttr::NoReturn;
-  }
-
-  unsigned Index = 1;
-  if (CodeGenFunction::hasAggregateLLVMType(ArgTypes[0])) {
-    PAL.push_back(llvm::ParamAttrsWithIndex::get(Index, 
-                                                 llvm::ParamAttr::StructRet));
-    ++Index;
-  } else if (ArgTypes[0]->isPromotableIntegerType()) {
-    if (ArgTypes[0]->isSignedIntegerType()) {
-      FuncAttrs |= llvm::ParamAttr::SExt;
-    } else if (ArgTypes[0]->isUnsignedIntegerType()) {
-      FuncAttrs |= llvm::ParamAttr::ZExt;
-    }
-  }
-  if (FuncAttrs)
-    PAL.push_back(llvm::ParamAttrsWithIndex::get(0, FuncAttrs));
-  for (llvm::SmallVector<QualType, 8>::const_iterator i = ArgTypes.begin() + 1,
-         e = ArgTypes.end(); i != e; ++i, ++Index) {
-    QualType ParamType = *i;
-    unsigned ParamAttrs = 0;
-    if (ParamType->isRecordType())
-      ParamAttrs |= llvm::ParamAttr::ByVal;
-    if (ParamType->isPromotableIntegerType()) {
-      if (ParamType->isSignedIntegerType()) {
-        ParamAttrs |= llvm::ParamAttr::SExt;
-      } else if (ParamType->isUnsignedIntegerType()) {
-        ParamAttrs |= llvm::ParamAttr::ZExt;
-      }
-    }
-    if (ParamAttrs)
-      PAL.push_back(llvm::ParamAttrsWithIndex::get(Index, ParamAttrs));
-  }
-}
-
-/***/
-
 // FIXME: Use iterator and sidestep silly type array creation.
 
 CGFunctionInfo::CGFunctionInfo(const FunctionDecl *FD)
@@ -96,29 +49,79 @@ CGFunctionInfo::CGFunctionInfo(const ObjCMethodDecl *MD,
     ArgTypes.push_back((*i)->getType());
 }
 
-void CGFunctionInfo::constructParamAttrList(ParamAttrListType &PAL) const {
-  constructParamAttrListInternal(TheDecl, ArgTypes, PAL);
+ArgTypeIterator CGFunctionInfo::argtypes_begin() const {
+  return ArgTypes.begin();
+}
+
+ArgTypeIterator CGFunctionInfo::argtypes_end() const {
+  return ArgTypes.end();
 }
 
 /***/
 
-CGCallInfo::CGCallInfo(QualType _ResultType, const CallArgList &_Args)
-  : ResultType(_ResultType),
-    Args(_Args) {
-  ArgTypes.push_back(ResultType);
-  for (CallArgList::const_iterator i = Args.begin(), e = Args.end(); i!=e; ++i)
+CGCallInfo::CGCallInfo(QualType _ResultType, const CallArgList &_Args) {
+  ArgTypes.push_back(_ResultType);
+  for (CallArgList::const_iterator i = _Args.begin(), e = _Args.end(); i!=e; ++i)
     ArgTypes.push_back(i->second);
 }
 
-void CGCallInfo::constructParamAttrList(ParamAttrListType &PAL) const {
-  // FIXME: Provide TargetDecl so nounwind, noreturn, etc, etc get set.
-  constructParamAttrListInternal(0, ArgTypes, PAL);
+ArgTypeIterator CGCallInfo::argtypes_begin() const {
+  return ArgTypes.begin();
+}
+
+ArgTypeIterator CGCallInfo::argtypes_end() const {
+  return ArgTypes.end();
 }
 
 /***/
 
 bool CodeGenFunction::ReturnTypeUsesSret(QualType RetTy) {
   return hasAggregateLLVMType(RetTy);
+}
+
+void CodeGenFunction::ConstructParamAttrList(const Decl *TargetDecl,
+                                             ArgTypeIterator begin,
+                                             ArgTypeIterator end,
+                                             ParamAttrListType &PAL) {
+  unsigned FuncAttrs = 0;
+
+  if (TargetDecl) {
+    if (TargetDecl->getAttr<NoThrowAttr>())
+      FuncAttrs |= llvm::ParamAttr::NoUnwind;
+    if (TargetDecl->getAttr<NoReturnAttr>())
+      FuncAttrs |= llvm::ParamAttr::NoReturn;
+  }
+
+  QualType ResTy = *begin;
+  unsigned Index = 1;
+  if (CodeGenFunction::hasAggregateLLVMType(ResTy)) {
+    PAL.push_back(llvm::ParamAttrsWithIndex::get(Index, 
+                                                 llvm::ParamAttr::StructRet));
+    ++Index;
+  } else if (ResTy->isPromotableIntegerType()) {
+    if (ResTy->isSignedIntegerType()) {
+      FuncAttrs |= llvm::ParamAttr::SExt;
+    } else if (ResTy->isUnsignedIntegerType()) {
+      FuncAttrs |= llvm::ParamAttr::ZExt;
+    }
+  }
+  if (FuncAttrs)
+    PAL.push_back(llvm::ParamAttrsWithIndex::get(0, FuncAttrs));
+  for (++begin; begin != end; ++begin, ++Index) {
+    QualType ParamType = *begin;
+    unsigned ParamAttrs = 0;
+    if (ParamType->isRecordType())
+      ParamAttrs |= llvm::ParamAttr::ByVal;
+    if (ParamType->isPromotableIntegerType()) {
+      if (ParamType->isSignedIntegerType()) {
+        ParamAttrs |= llvm::ParamAttr::SExt;
+      } else if (ParamType->isUnsignedIntegerType()) {
+        ParamAttrs |= llvm::ParamAttr::ZExt;
+      }
+    }
+    if (ParamAttrs)
+      PAL.push_back(llvm::ParamAttrsWithIndex::get(Index, ParamAttrs));
+  }
 }
 
 void CodeGenFunction::EmitFunctionProlog(llvm::Function *Fn,
@@ -198,8 +201,10 @@ RValue CodeGenFunction::EmitCall(llvm::Value *Callee,
   llvm::CallInst *CI = Builder.CreateCall(Callee,&Args[0],&Args[0]+Args.size());
   CGCallInfo CallInfo(ResultType, CallArgs);
 
+  // FIXME: Provide TargetDecl so nounwind, noreturn, etc, etc get set.
   CodeGen::ParamAttrListType ParamAttrList;
-  CallInfo.constructParamAttrList(ParamAttrList);
+  ConstructParamAttrList(0, CallInfo.argtypes_begin(), CallInfo.argtypes_end(),
+                         ParamAttrList);
   CI->setParamAttrs(llvm::PAListPtr::get(ParamAttrList.begin(), 
                                          ParamAttrList.size()));  
 

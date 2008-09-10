@@ -214,7 +214,10 @@ static void SetGlobalValueAttributes(const Decl *D,
 
 static void SetFunctionParamAttrs(const CGFunctionInfo &Info, llvm::Function *F) {
   ParamAttrListType ParamAttrList;
-  Info.constructParamAttrList(ParamAttrList);
+  CodeGenFunction::ConstructParamAttrList(Info.getDecl(),
+                                          Info.argtypes_begin(), 
+                                          Info.argtypes_end(),
+                                          ParamAttrList);
 
   F->setParamAttrs(llvm::PAListPtr::get(ParamAttrList.begin(),
                                         ParamAttrList.size()));
