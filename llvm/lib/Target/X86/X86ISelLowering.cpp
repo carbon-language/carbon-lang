@@ -1098,8 +1098,6 @@ CCAssignFn *X86TargetLowering::CCAssignFnForNode(SDValue Op) const {
     return CC_X86_32_FastCall;
   else if (CC == CallingConv::Fast && PerformTailCallOpt)
     return CC_X86_32_TailCall;
-  else if (CC == CallingConv::Fast)
-    return CC_X86_32_FastCC;
   else
     return CC_X86_32_C;
 }
