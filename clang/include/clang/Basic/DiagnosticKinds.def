@@ -985,6 +985,14 @@ DIAG(err_value_init_for_array_type, ERROR,
 // Temporary
 DIAG(err_unsupported_class_constructor, ERROR,
      "class constructors are not supported yet")
+DIAG(err_invalid_use_of_function_type, ERROR,
+     "a function type is not allowed here")
+DIAG(err_invalid_use_of_array_type, ERROR,
+     "an array type is not allowed here")
+DIAG(err_type_defined_in_condition, ERROR,
+     "types may not be defined in conditions")
+DIAG(err_typecheck_bool_condition, ERROR,
+    "expression must have bool type (or be convertible to bool) ('%0' invalid)")
 
 
 // assignment related diagnostics (also for argument passing, returning, etc).

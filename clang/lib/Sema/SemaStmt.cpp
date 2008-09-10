@@ -185,7 +185,10 @@ Sema::ActOnIfStmt(SourceLocation IfLoc, ExprTy *CondVal,
   DefaultFunctionArrayConversion(condExpr);
   QualType condType = condExpr->getType();
   
-  if (!condType->isScalarType()) // C99 6.8.4.1p1
+  if (getLangOptions().CPlusPlus) {
+    if (CheckCXXBooleanCondition(condExpr)) // C++ 6.4p4
+      return true;
+  } else if (!condType->isScalarType()) // C99 6.8.4.1p1
     return Diag(IfLoc, diag::err_typecheck_statement_requires_scalar,
              condType.getAsString(), condExpr->getSourceRange());
 
@@ -205,8 +208,30 @@ Action::StmtResult
 Sema::ActOnStartOfSwitchStmt(ExprTy *cond) {
   Expr *Cond = static_cast<Expr*>(cond);
   
-  // C99 6.8.4.2p5 - Integer promotions are performed on the controlling expr.
-  UsualUnaryConversions(Cond);
+  if (getLangOptions().CPlusPlus) {
+    // C++ 6.4.2.p2:
+    // The condition shall be of integral type, enumeration type, or of a class
+    // type for which a single conversion function to integral or enumeration
+    // type exists (12.3). If the condition is of class type, the condition is
+    // converted by calling that conversion function, and the result of the
+    // conversion is used in place of the original condition for the remainder
+    // of this section. Integral promotions are performed.
+
+    QualType Ty = Cond->getType();
+
+    // FIXME: Handle class types.
+
+    // If the type is wrong a diagnostic will be emitted later at
+    // ActOnFinishSwitchStmt.
+    if (Ty->isIntegralType() || Ty->isEnumeralType()) {
+      // Integral promotions are performed.
+      // FIXME: Integral promotions for C++ are not complete.
+      UsualUnaryConversions(Cond);
+    }
+  } else {
+    // C99 6.8.4.2p5 - Integer promotions are performed on the controlling expr.
+    UsualUnaryConversions(Cond);
+  }
   
   SwitchStmt *SS = new SwitchStmt(Cond);
   SwitchStack.push_back(SS);
@@ -486,7 +511,10 @@ Sema::ActOnWhileStmt(SourceLocation WhileLoc, ExprTy *Cond, StmtTy *Body) {
   DefaultFunctionArrayConversion(condExpr);
   QualType condType = condExpr->getType();
   
-  if (!condType->isScalarType()) // C99 6.8.5p2
+  if (getLangOptions().CPlusPlus) {
+    if (CheckCXXBooleanCondition(condExpr)) // C++ 6.4p4
+      return true;
+  } else if (!condType->isScalarType()) // C99 6.8.5p2
     return Diag(WhileLoc, diag::err_typecheck_statement_requires_scalar,
              condType.getAsString(), condExpr->getSourceRange());
 
@@ -518,24 +546,29 @@ Sema::ActOnForStmt(SourceLocation ForLoc, SourceLocation LParenLoc,
   Expr *Third  = static_cast<Expr*>(third);
   Stmt *Body  = static_cast<Stmt*>(body);
   
-  if (DeclStmt *DS = dyn_cast_or_null<DeclStmt>(First)) {
-    // C99 6.8.5p3: The declaration part of a 'for' statement shall only declare
-    // identifiers for objects having storage class 'auto' or 'register'.
-    for (DeclStmt::decl_iterator DI=DS->decl_begin(), DE=DS->decl_end();
-         DI!=DE; ++DI) {
-      VarDecl *VD = dyn_cast<VarDecl>(*DI);
-      if (VD && VD->isBlockVarDecl() && !VD->hasLocalStorage())
-        VD = 0;
-      if (VD == 0)
-        Diag((*DI)->getLocation(), diag::err_non_variable_decl_in_for);
-      // FIXME: mark decl erroneous!
+  if (!getLangOptions().CPlusPlus) {
+    if (DeclStmt *DS = dyn_cast_or_null<DeclStmt>(First)) {
+      // C99 6.8.5p3: The declaration part of a 'for' statement shall only declare
+      // identifiers for objects having storage class 'auto' or 'register'.
+      for (DeclStmt::decl_iterator DI=DS->decl_begin(), DE=DS->decl_end();
+           DI!=DE; ++DI) {
+        VarDecl *VD = dyn_cast<VarDecl>(*DI);
+        if (VD && VD->isBlockVarDecl() && !VD->hasLocalStorage())
+          VD = 0;
+        if (VD == 0)
+          Diag((*DI)->getLocation(), diag::err_non_variable_decl_in_for);
+        // FIXME: mark decl erroneous!
+      }
     }
   }
   if (Second) {
     DefaultFunctionArrayConversion(Second);
     QualType SecondType = Second->getType();
     
-    if (!SecondType->isScalarType()) // C99 6.8.5p2
+    if (getLangOptions().CPlusPlus) {
+      if (CheckCXXBooleanCondition(Second)) // C++ 6.4p4
+        return true;
+    } else if (!SecondType->isScalarType()) // C99 6.8.5p2
       return Diag(ForLoc, diag::err_typecheck_statement_requires_scalar,
                   SecondType.getAsString(), Second->getSourceRange());
   }

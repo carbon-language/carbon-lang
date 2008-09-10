@@ -615,6 +615,15 @@ public:
                                                SourceLocation *CommaLocs,
                                                SourceLocation RParenLoc);
 
+  /// ActOnCXXConditionDeclarationExpr - Parsed a condition declaration of a
+  /// C++ if/switch/while/for statement.
+  /// e.g: "if (int x = f()) {...}"
+  virtual ExprResult ActOnCXXConditionDeclarationExpr(Scope *S,
+                                                      SourceLocation StartLoc,
+                                                      Declarator &D,
+                                                      SourceLocation EqualLoc,
+                                                      ExprTy *AssignExprVal);
+
   // ParseObjCStringLiteral - Parse Objective-C string literals.
   virtual ExprResult ParseObjCStringLiteral(SourceLocation *AtLocs, 
                                             ExprTy **Strings,
@@ -955,6 +964,9 @@ private:
   // returns true if there were any incompatible arguments.                           
   bool CheckMessageArgumentTypes(Expr **Args, unsigned NumArgs,
                                  ObjCMethodDecl *Method);
+
+  /// CheckCXXBooleanCondition - Returns true if conversion to bool is invalid.
+  bool CheckCXXBooleanCondition(Expr *&CondExpr);
                     
   /// ConvertIntegerToTypeWarnOnOverflow - Convert the specified APInt to have
   /// the specified width and sign.  If an overflow occurs, detect it and emit

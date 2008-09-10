@@ -14,6 +14,7 @@
 #include "Sema.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/Parse/DeclSpec.h"
 #include "clang/Basic/Diagnostic.h"
 using namespace clang;
 
@@ -131,4 +132,73 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
                 Ty.getAsString(), FullRange);
 
   return new CXXZeroInitValueExpr(Ty, TyBeginLoc, RParenLoc);
+}
+
+
+/// ActOnCXXConditionDeclarationExpr - Parsed a condition declaration of a
+/// C++ if/switch/while/for statement.
+/// e.g: "if (int x = f()) {...}"
+Action::ExprResult
+Sema::ActOnCXXConditionDeclarationExpr(Scope *S, SourceLocation StartLoc,
+                                       Declarator &D,
+                                       SourceLocation EqualLoc,
+                                       ExprTy *AssignExprVal) {
+  assert(AssignExprVal && "Null assignment expression");
+
+  // C++ 6.4p2:
+  // The declarator shall not specify a function or an array.
+  // The type-specifier-seq shall not contain typedef and shall not declare a
+  // new class or enumeration.
+
+  assert(D.getDeclSpec().getStorageClassSpec() != DeclSpec::SCS_typedef &&
+         "Parser allowed 'typedef' as storage class of condition decl.");
+
+  QualType Ty = GetTypeForDeclarator(D, S);
+  
+  if (Ty->isFunctionType()) { // The declarator shall not specify a function...
+    // We exit without creating a CXXConditionDeclExpr because a FunctionDecl
+    // would be created and CXXConditionDeclExpr wants a VarDecl.
+    return Diag(StartLoc, diag::err_invalid_use_of_function_type,
+                SourceRange(StartLoc, EqualLoc));
+  } else if (Ty->isArrayType()) { // ...or an array.
+    Diag(StartLoc, diag::err_invalid_use_of_array_type,
+         SourceRange(StartLoc, EqualLoc));
+  } else if (const RecordType *RT = Ty->getAsRecordType()) {
+    RecordDecl *RD = RT->getDecl();
+    // The type-specifier-seq shall not declare a new class...
+    if (RD->isDefinition() && (RD->getIdentifier() == 0 || S->isDeclScope(RD)))
+      Diag(RD->getLocation(), diag::err_type_defined_in_condition);
+  } else if (const EnumType *ET = Ty->getAsEnumType()) {
+    EnumDecl *ED = ET->getDecl();
+    // ...or enumeration.
+    if (ED->isDefinition() && (ED->getIdentifier() == 0 || S->isDeclScope(ED)))
+      Diag(ED->getLocation(), diag::err_type_defined_in_condition);
+  }
+
+  DeclTy *Dcl = ActOnDeclarator(S, D, 0);
+  if (!Dcl)
+    return true;
+  AddInitializerToDecl(Dcl, AssignExprVal);
+
+  return new CXXConditionDeclExpr(StartLoc, EqualLoc,
+                                       cast<VarDecl>(static_cast<Decl *>(Dcl)));
+}
+
+/// CheckCXXBooleanCondition - Returns true if a conversion to bool is invalid.
+bool Sema::CheckCXXBooleanCondition(Expr *&CondExpr) {
+  // C++ 6.4p4:
+  // The value of a condition that is an initialized declaration in a statement
+  // other than a switch statement is the value of the declared variable
+  // implicitly converted to type bool. If that conversion is ill-formed, the
+  // program is ill-formed.
+  // The value of a condition that is an expression is the value of the
+  // expression, implicitly converted to bool.
+  //
+  QualType Ty = CondExpr->getType(); // Save the type.
+  AssignConvertType
+    ConvTy = CheckSingleAssignmentConstraints(Context.BoolTy, CondExpr);
+  if (ConvTy == Incompatible)
+    return Diag(CondExpr->getLocStart(), diag::err_typecheck_bool_condition,
+                Ty.getAsString(), CondExpr->getSourceRange());
+  return false;
 }
