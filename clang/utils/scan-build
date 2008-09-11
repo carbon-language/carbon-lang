@@ -26,8 +26,9 @@ my $BuildName;
 my $BuildDate;
 my $CXX;  # Leave undefined initially.
 
-my $UseColor = ((($ENV{'TERM'} eq 'xterm-color') and -t STDOUT)
-                and defined($ENV{'SCAN_BUILD_COLOR'}));
+my $TERM = $ENV{'TERM'};
+my $UseColor = (defined $TERM and $TERM eq 'xterm-color' and -t STDOUT
+                and defined $ENV{'SCAN_BUILD_COLOR'});
 
 ##----------------------------------------------------------------------------##
 # Diagnostics
