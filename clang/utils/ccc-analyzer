@@ -117,15 +117,24 @@ sub Analyze {
   # Capture the STDOUT of clang and reroute it to ccc-analyzer's STDERR.
   # We save the output file in the 'crashes' directory if clang encounters
   # any problems with the file.  
-  my ($ofh, $ofile) = tempfile("clang_output_XXXXXX", DIR => $HtmlDir);
+  pipe (FROM_CHILD, TO_PARENT);
   my $pid = fork();
   if ($pid == 0) {
-    open(STDOUT,">&", \*STDERR);
-    open(STDERR,">&", $ofh);
+    close FROM_CHILD;
+    open(STDOUT,">&", \*TO_PARENT);
+    open(STDERR,">&", \*TO_PARENT);
     exec $Cmd, @CmdArgs;
   }
-  close ($ofh);
-  wait;
+  
+  close TO_PARENT;
+  my ($ofh, $ofile) = tempfile("clang_output_XXXXXX", DIR => $HtmlDir);
+  
+  while (<FROM_CHILD>) {
+    print $ofh $_;
+    print STDERR $_;    
+  }
+
+  waitpid($pid,0);
   my $Result = $?;
 
   # Did the command die because of a signal?
