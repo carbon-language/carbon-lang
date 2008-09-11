@@ -107,10 +107,22 @@ Sema::ExprResult Sema::ParseObjCProtocolExpression(IdentifierInfo *ProtocolId,
   return new ObjCProtocolExpr(t, PDecl, AtLoc, RParenLoc);
 }
 
-bool Sema::CheckMessageArgumentTypes(Expr **Args, unsigned NumArgs,
-                                     ObjCMethodDecl *Method) {
+bool Sema::CheckMessageArgumentTypes(Expr **Args, Selector Sel,
+                                     ObjCMethodDecl *Method, 
+                                     const char *PrefixStr,
+                                     SourceLocation lbrac, SourceLocation rbrac,
+                                     QualType &ReturnType) {  
+  unsigned NumArgs = Sel.getNumArgs();  
+  if (!Method) {
+    Diag(lbrac, diag::warn_method_not_found, std::string(PrefixStr),
+         Sel.getName(), SourceRange(lbrac, rbrac));
+    ReturnType = Context.getObjCIdType();
+    return false;
+  } else {
+    ReturnType = Method->getResultType();
+  }
+   
   bool anyIncompatibleArgs = false;
-  
   for (unsigned i = 0; i < NumArgs; i++) {
     Expr *argExpr = Args[i];
     assert(argExpr && "CheckMessageArgumentTypes(): missing expression");
@@ -204,17 +216,9 @@ Sema::ExprResult Sema::ActOnClassMessage(
   if (!Method)
     Method = ClassDecl->lookupInstanceMethod(Sel);
 
-  if (!Method) {
-    Diag(lbrac, diag::warn_method_not_found, std::string("+"), Sel.getName(),
-         SourceRange(lbrac, rbrac));
-    returnType = Context.getObjCIdType();
-  } else {
-    returnType = Method->getResultType();
-    if (Sel.getNumArgs()) {
-      if (CheckMessageArgumentTypes(ArgExprs, Sel.getNumArgs(), Method))
-        return true;
-    }
-  }
+  if (CheckMessageArgumentTypes(ArgExprs, Sel, Method, "+", 
+                                lbrac, rbrac, returnType))
+    return true;
 
   // If we have the ObjCInterfaceDecl* for the class that is receiving
   // the message, use that to construct the ObjCMessageExpr.  Otherwise
@@ -251,16 +255,9 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
     ObjCMethodDecl *Method = InstanceMethodPool[Sel].Method;
     if (!Method)
       Method = FactoryMethodPool[Sel].Method;
-    if (!Method) {
-      Diag(lbrac, diag::warn_method_not_found, std::string("-"), Sel.getName(),
-           SourceRange(lbrac, rbrac));
-      returnType = Context.getObjCIdType();
-    } else {
-      returnType = Method->getResultType();
-      if (Sel.getNumArgs())
-        if (CheckMessageArgumentTypes(ArgExprs, Sel.getNumArgs(), Method))
-          return true;
-    }
+    if (CheckMessageArgumentTypes(ArgExprs, Sel, Method, "-", 
+                                  lbrac, rbrac, returnType))
+      return true;
     return new ObjCMessageExpr(RExpr, Sel, returnType, Method, lbrac, rbrac, 
                                ArgExprs, NumArgs);
   }
@@ -279,17 +276,9 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
       Method = FactoryMethodPool[Sel].Method;
     if (!Method)
       Method = InstanceMethodPool[Sel].Method;
-    if (!Method) {
-      Diag(lbrac, diag::warn_method_not_found, std::string("-"), Sel.getName(),
-           RExpr->getSourceRange());
-      returnType = Context.getObjCIdType();
-    } else {
-      returnType = Method->getResultType();
-      if (Sel.getNumArgs())
-        if (CheckMessageArgumentTypes(ArgExprs, Sel.getNumArgs(), Method))
-          return true;
-    }
-
+    if (CheckMessageArgumentTypes(ArgExprs, Sel, Method, "-", 
+                                  lbrac, rbrac, returnType))
+      return true;
     return new ObjCMessageExpr(RExpr, Sel, returnType, Method, lbrac, rbrac, 
                                ArgExprs, NumArgs);
   }
@@ -351,16 +340,9 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
         if (!Method)
           Method = InstanceMethodPool[Sel].Method;
   }
-  if (!Method) {
-    Diag(lbrac, diag::warn_method_not_found, std::string("-"), Sel.getName(),
-         SourceRange(lbrac, rbrac));
-    returnType = Context.getObjCIdType();
-  } else {
-    returnType = Method->getResultType();
-    if (Sel.getNumArgs())
-      if (CheckMessageArgumentTypes(ArgExprs, Sel.getNumArgs(), Method))
-        return true;
-  }
+  if (CheckMessageArgumentTypes(ArgExprs, Sel, Method, "-", 
+                                lbrac, rbrac, returnType))
+    return true;
   return new ObjCMessageExpr(RExpr, Sel, returnType, Method, lbrac, rbrac, 
                              ArgExprs, NumArgs);
 }

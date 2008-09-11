@@ -961,9 +961,14 @@ private:
   // returns true if the cast is invalid
   bool CheckVectorCast(SourceRange R, QualType VectorTy, QualType Ty);
   
-  // returns true if there were any incompatible arguments.                           
-  bool CheckMessageArgumentTypes(Expr **Args, unsigned NumArgs,
-                                 ObjCMethodDecl *Method);
+  /// CheckMessageArgumentTypes - Check types in an Obj-C message send. 
+  /// \param Method - May be null.
+  /// \param [out] ReturnType - The return type of the send.
+  /// \return true iff there were any incompatible types.
+  bool CheckMessageArgumentTypes(Expr **Args, Selector Sel,
+                                 ObjCMethodDecl *Method, const char *PrefixStr,
+                                 SourceLocation lbrac, SourceLocation rbrac,
+                                 QualType &ReturnType);  
 
   /// CheckCXXBooleanCondition - Returns true if conversion to bool is invalid.
   bool CheckCXXBooleanCondition(Expr *&CondExpr);
