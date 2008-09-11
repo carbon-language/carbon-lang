@@ -857,6 +857,13 @@ bool X86FastISel::X86SelectCall(Instruction *I) {
     case CCValAssign::AExt: {
       bool Emitted = X86FastEmitExtend(ISD::ANY_EXTEND, VA.getLocVT(),
                                        Arg, ArgVT, Arg);
+      if (!Emitted)
+        Emitted = X86FastEmitExtend(ISD::ZERO_EXTEND, VA.getLocVT(),
+                                         Arg, ArgVT, Arg);
+      if (!Emitted)
+        Emitted = X86FastEmitExtend(ISD::SIGN_EXTEND, VA.getLocVT(),
+                                    Arg, ArgVT, Arg);
+      
       assert(Emitted && "Failed to emit a aext!");
       ArgVT = VA.getLocVT();
       break;
