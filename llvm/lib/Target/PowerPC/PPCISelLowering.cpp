@@ -4151,13 +4151,13 @@ PPCTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     BB = EmitAtomicBinary(MI, BB, true, PPC::XOR8);
 
   else if (MI->getOpcode() == PPC::ATOMIC_LOAD_NAND_I8)
-    BB = EmitPartwordAtomicBinary(MI, BB, true, PPC::NAND);
+    BB = EmitPartwordAtomicBinary(MI, BB, true, PPC::ANDC);
   else if (MI->getOpcode() == PPC::ATOMIC_LOAD_NAND_I16)
-    BB = EmitPartwordAtomicBinary(MI, BB, false, PPC::NAND);
+    BB = EmitPartwordAtomicBinary(MI, BB, false, PPC::ANDC);
   else if (MI->getOpcode() == PPC::ATOMIC_LOAD_NAND_I32)
-    BB = EmitAtomicBinary(MI, BB, false, PPC::NAND);
+    BB = EmitAtomicBinary(MI, BB, false, PPC::ANDC);
   else if (MI->getOpcode() == PPC::ATOMIC_LOAD_NAND_I64)
-    BB = EmitAtomicBinary(MI, BB, true, PPC::NAND8);
+    BB = EmitAtomicBinary(MI, BB, true, PPC::ANDC8);
 
   else if (MI->getOpcode() == PPC::ATOMIC_LOAD_SUB_I8)
     BB = EmitPartwordAtomicBinary(MI, BB, true, PPC::SUBF);
