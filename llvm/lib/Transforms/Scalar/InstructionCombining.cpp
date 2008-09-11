@@ -5789,7 +5789,8 @@ Instruction *InstCombiner::FoldICmpDivCst(ICmpInst &ICI, BinaryOperator *DivI,
       // e.g. X/-5 op -3  --> [15, 20)
       LoBound = Prod;
       LoOverflow = HiOverflow = ProdOV ? 1 : 0;
-      HiOverflow = SubWithOverflow(HiBound, Prod, DivRHS, true);
+      if (!HiOverflow)
+        HiOverflow = SubWithOverflow(HiBound, Prod, DivRHS, true);
     }
     
     // Dividing by a negative swaps the condition.  LT <-> GT
