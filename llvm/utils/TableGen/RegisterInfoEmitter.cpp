@@ -660,11 +660,11 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
         I = SubRegVectors.begin(), E = SubRegVectors.end(); I != E; ++I) {
     OS << "  case " << getQualifiedName(I->first) << ":\n";
     OS << "    switch (Index) {\n";
-    OS << "    default:\n      return 0;\n";
+    OS << "    default: return 0;\n";
     for (unsigned i = 0, e = I->second.size(); i != e; ++i)
       OS << "    case " << (I->second)[i].first << ": return "
          << getQualifiedName((I->second)[i].second) << ";\n";
-    OS << "    }; break;\n";
+    OS << "    };\n" << "    break;\n";
   }
   OS << "  };\n";
   OS << "  return 0;\n";
