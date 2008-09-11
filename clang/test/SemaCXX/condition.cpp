@@ -12,6 +12,8 @@ void test() {
   struct S {} s;
   if (s) ++x; // expected-error: {{expression must have bool type (or be convertible to bool) ('struct S' invalid)}}
   while (struct S x=s) ; // expected-error: {{expression must have bool type (or be convertible to bool) ('struct S' invalid)}}
+  do ; while (s); // expected-error: {{expression must have bool type (or be convertible to bool) ('struct S' invalid)}}
+  for (;s;) ; // expected-error: {{expression must have bool type (or be convertible to bool) ('struct S' invalid)}}
   switch (s) {} // expected-error: {{statement requires expression of integer type ('struct S' invalid)}}
 
   while (struct S {} x=0) ; // expected-error: {{types may not be defined in conditions}} expected-error: {{incompatible type}} expected-error: {{expression must have bool type}}

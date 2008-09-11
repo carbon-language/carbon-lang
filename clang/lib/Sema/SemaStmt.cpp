@@ -530,7 +530,10 @@ Sema::ActOnDoStmt(SourceLocation DoLoc, StmtTy *Body,
   DefaultFunctionArrayConversion(condExpr);
   QualType condType = condExpr->getType();
   
-  if (!condType->isScalarType()) // C99 6.8.5p2
+  if (getLangOptions().CPlusPlus) {
+    if (CheckCXXBooleanCondition(condExpr)) // C++ 6.4p4
+      return true;
+  } else if (!condType->isScalarType()) // C99 6.8.5p2
     return Diag(DoLoc, diag::err_typecheck_statement_requires_scalar,
              condType.getAsString(), condExpr->getSourceRange());
 
