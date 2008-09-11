@@ -47,7 +47,13 @@ void Sema::DefaultFunctionArrayConversion(Expr *&E) {
     // to type'...".  In C99 this was changed to: C99 6.3.2.1p3: "an expression
     // that has type 'array of type' ...".  The relevant change is "an lvalue"
     // (C90) to "an expression" (C99).
-    if (getLangOptions().C99 || E->isLvalue(Context) == Expr::LV_Valid)
+    //
+    // C++ 4.2p1:
+    // An lvalue or rvalue of type "array of N T" or "array of unknown bound of
+    // T" can be converted to an rvalue of type "pointer to T".
+    //
+    if (getLangOptions().C99 || getLangOptions().CPlusPlus ||
+        E->isLvalue(Context) == Expr::LV_Valid)
       ImpCastExprToType(E, Context.getArrayDecayedType(Ty));
   }
 }
