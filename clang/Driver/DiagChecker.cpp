@@ -40,6 +40,7 @@ typedef TextDiagnosticBuffer::const_iterator const_diag_iterator;
 
 static const char * const ExpectedErrStr = "expected-error";
 static const char * const ExpectedWarnStr = "expected-warning";
+static const char * const ExpectedNoteStr = "expected-note";
 
 /// FindDiagnostics - Go through the comment and see if it indicates expected
 /// diagnostics. If so, then put them in a diagnostic list.
@@ -86,7 +87,8 @@ static void FindDiagnostics(const std::string &Comment,
 //   expected errors and warnings.
 static void FindExpectedDiags(Preprocessor &PP,
                               DiagList &ExpectedErrors,
-                              DiagList &ExpectedWarnings) {
+                              DiagList &ExpectedWarnings,
+                              DiagList &ExpectedNotes) {
   // Return comments as tokens, this is how we find expected diagnostics.
   PP.SetCommentRetentionState(true, true);
 
@@ -114,6 +116,10 @@ static void FindExpectedDiags(Preprocessor &PP,
       // Find all expected warnings
       FindDiagnostics(Comment, ExpectedWarnings, PP.getSourceManager(),
                       Tok.getLocation(), ExpectedWarnStr);
+
+      // Find all expected notes
+      FindDiagnostics(Comment, ExpectedNotes, PP.getSourceManager(),
+                      Tok.getLocation(), ExpectedNoteStr);
     }
   } while (Tok.isNot(tok::eof));
 
@@ -182,7 +188,8 @@ static bool CompareDiagLists(SourceManager &SourceMgr,
 /// 
 static bool CheckResults(Preprocessor &PP,
                          const DiagList &ExpectedErrors,
-                         const DiagList &ExpectedWarnings) {
+                         const DiagList &ExpectedWarnings,
+                         const DiagList &ExpectedNotes) {
   const DiagnosticClient *DiagClient = PP.getDiagnostics().getClient();
   assert(DiagClient != 0 &&
       "DiagChecker requires a valid TextDiagnosticBuffer");
@@ -223,6 +230,20 @@ static bool CheckResults(Preprocessor &PP,
                                  ExpectedWarnings.end(),
                                  "Warnings seen but not expected:");
 
+  // See if there were notes that were expected but not seen.
+  HadProblem |= CompareDiagLists(SourceMgr,
+                                 ExpectedNotes.begin(),
+                                 ExpectedNotes.end(),
+                                 Diags.note_begin(), Diags.note_end(),
+                                 "Notes expected but not seen:");
+
+  // See if there were notes that were seen but not expected.
+  HadProblem |= CompareDiagLists(SourceMgr,
+                                 Diags.note_begin(), Diags.note_end(),
+                                 ExpectedNotes.begin(),
+                                 ExpectedNotes.end(),
+                                 "Notes seen but not expected:");
+
   return HadProblem;
 }
 
@@ -238,9 +259,9 @@ bool clang::CheckASTConsumer(Preprocessor &PP, ASTConsumer* C) {
 /// CheckDiagnostics - Gather the expected diagnostics and check them.
 bool clang::CheckDiagnostics(Preprocessor &PP) {
   // Gather the set of expected diagnostics.
-  DiagList ExpectedErrors, ExpectedWarnings;
-  FindExpectedDiags(PP, ExpectedErrors, ExpectedWarnings);
+  DiagList ExpectedErrors, ExpectedWarnings, ExpectedNotes;
+  FindExpectedDiags(PP, ExpectedErrors, ExpectedWarnings, ExpectedNotes);
 
   // Check that the expected diagnostics occurred.
-  return CheckResults(PP, ExpectedErrors, ExpectedWarnings);
+  return CheckResults(PP, ExpectedErrors, ExpectedWarnings, ExpectedNotes);
 }

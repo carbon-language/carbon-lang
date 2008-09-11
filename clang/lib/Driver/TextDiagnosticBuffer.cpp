@@ -26,6 +26,11 @@ void TextDiagnosticBuffer::HandleDiagnostic(Diagnostic &Diags,
                                             unsigned) {
   switch (Level) {
   default: assert(0 && "Diagnostic not handled during diagnostic buffering!");
+  case Diagnostic::Note:
+    Notes.push_back(std::make_pair(Pos.getLocation(),
+                                   FormatDiagnostic(Diags, Level, ID, 
+                                                    Strs, NumStrs)));
+    break;
   case Diagnostic::Warning:
     Warnings.push_back(std::make_pair(Pos.getLocation(),
                                       FormatDiagnostic(Diags, Level, ID, 
