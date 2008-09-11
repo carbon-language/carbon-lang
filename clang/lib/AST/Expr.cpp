@@ -460,6 +460,8 @@ Expr::isLvalueResult Expr::isLvalue(ASTContext &Ctx) const {
             ? LV_InvalidExpression : LV_Valid);
   case CXXDefaultArgExprClass:
     return cast<CXXDefaultArgExpr>(this)->getExpr()->isLvalue(Ctx);
+  case CXXConditionDeclExprClass:
+    return LV_Valid;
   default:
     break;
   }
