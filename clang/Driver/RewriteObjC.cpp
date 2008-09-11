@@ -1455,9 +1455,16 @@ Stmt *RewriteObjC::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
     SourceLocation bodyLoc = lastCatchBody->getLocEnd();
     assert(*SM->getCharacterData(bodyLoc) == '}' &&
            "bogus @catch body location");
-    bodyLoc = bodyLoc.getFileLocWithOffset(1);
-    buf = " } } /* @catch end */\n";
   
+    // Insert the last (implicit) else clause *before* the right curly brace.
+    bodyLoc = bodyLoc.getFileLocWithOffset(-1);
+    buf = "} /* last catch end */\n";
+    buf += "else {\n";
+    buf += " _rethrow = _caught;\n";
+    buf += " objc_exception_try_exit(&_stack);\n";
+    buf += "} } /* @catch end */\n";
+    if (!S->getFinallyStmt())
+      buf += "}\n";
     InsertText(bodyLoc, buf.c_str(), buf.size());
     
     // Set lastCurlyLoc
@@ -1488,6 +1495,12 @@ Stmt *RewriteObjC::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
     
     // Set lastCurlyLoc
     lastCurlyLoc = body->getLocEnd();
+  } else { /* no finally clause - make sure we synthesize an implicit one */
+    buf = "{ /* implicit finally clause */\n";
+    buf += " if (!_rethrow) objc_exception_try_exit(&_stack);\n";
+    buf += " if (_rethrow) objc_exception_throw(_rethrow);\n";
+    buf += "}";
+    ReplaceText(lastCurlyLoc, 1, buf.c_str(), buf.size());
   }
   // Now emit the final closing curly brace...
   lastCurlyLoc = lastCurlyLoc.getFileLocWithOffset(1);
