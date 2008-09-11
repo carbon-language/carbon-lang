@@ -177,36 +177,6 @@ public:
     return I;
   }
   
-  /// hasSubRegClass - return true if the specified TargetRegisterClass is a
-  /// class of a sub-register class for this TargetRegisterClass.
-  bool hasSubRegClass(const TargetRegisterClass *cs) const {
-    for (int i = 0; SubRegClasses[i] != NULL; ++i) 
-      if (SubRegClasses[i] == cs)
-        return true;
-    return false;
-  }
-
-  /// hasClassForSubReg - return true if the specified TargetRegisterClass is a
-  /// class of a sub-register class for this TargetRegisterClass.
-  bool hasClassForSubReg(unsigned SubReg) const {
-    --SubReg;
-    for (unsigned i = 0; SubRegClasses[i] != NULL; ++i) 
-      if (i == SubReg)
-        return true;
-    return false;
-  }
-
-  /// getClassForSubReg - return theTargetRegisterClass for the sub-register
-  /// at idx for this TargetRegisterClass.
-  sc_iterator getClassForSubReg(unsigned SubReg) const {
-    --SubReg;
-    for (unsigned i = 0; SubRegClasses[i] != NULL; ++i) 
-      if (i == SubReg)
-        return &SubRegClasses[i];
-    assert(0 && "Invalid subregister index for register class");
-    return NULL;
-  }
-  
   /// subregclasses_begin / subregclasses_end - Loop over all of
   /// the subregister classes of this register class.
   sc_iterator subregclasses_begin() const {
