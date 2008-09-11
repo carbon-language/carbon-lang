@@ -107,12 +107,11 @@ Sema::ExprResult Sema::ParseObjCProtocolExpression(IdentifierInfo *ProtocolId,
   return new ObjCProtocolExpr(t, PDecl, AtLoc, RParenLoc);
 }
 
-bool Sema::CheckMessageArgumentTypes(Expr **Args, Selector Sel,
-                                     ObjCMethodDecl *Method, 
+bool Sema::CheckMessageArgumentTypes(Expr **Args, unsigned NumArgs, 
+                                     Selector Sel, ObjCMethodDecl *Method, 
                                      const char *PrefixStr,
                                      SourceLocation lbrac, SourceLocation rbrac,
                                      QualType &ReturnType) {  
-  unsigned NumArgs = Sel.getNumArgs();  
   if (!Method) {
     // Apply default argument promotion as for (C99 6.5.2.2p6).
     for (unsigned i = 0; i != NumArgs; i++)
@@ -126,8 +125,11 @@ bool Sema::CheckMessageArgumentTypes(Expr **Args, Selector Sel,
     ReturnType = Method->getResultType();
   }
    
+  unsigned NumNamedArgs = Sel.getNumArgs();
+  assert(NumArgs >= NumNamedArgs && "Too few arguments for selector!");
+
   bool anyIncompatibleArgs = false;
-  for (unsigned i = 0; i < NumArgs; i++) {
+  for (unsigned i = 0; i < NumNamedArgs; i++) {
     Expr *argExpr = Args[i];
     assert(argExpr && "CheckMessageArgumentTypes(): missing expression");
     
@@ -149,6 +151,22 @@ bool Sema::CheckMessageArgumentTypes(Expr **Args, Selector Sel,
       DiagnoseAssignmentResult(Result, argExpr->getLocStart(), lhsType, rhsType,
                                argExpr, "sending");
   }
+
+  // Promote additional arguments to variadic methods.
+  if (Method->isVariadic()) {
+    for (unsigned i = NumNamedArgs; i < NumArgs; ++i)
+      DefaultArgumentPromotion(Args[i]);
+  } else {
+    // Check for extra arguments to non-variadic methods.
+    if (NumArgs != NumNamedArgs) {
+      Diag(Args[NumNamedArgs]->getLocStart(), 
+           diag::err_typecheck_call_too_many_args,
+           Method->getSourceRange(),
+           SourceRange(Args[NumNamedArgs]->getLocStart(),
+                       Args[NumArgs-1]->getLocEnd()));
+    }
+  }
+
   return anyIncompatibleArgs;
 }
 
@@ -220,7 +238,7 @@ Sema::ExprResult Sema::ActOnClassMessage(
   if (!Method)
     Method = ClassDecl->lookupInstanceMethod(Sel);
 
-  if (CheckMessageArgumentTypes(ArgExprs, Sel, Method, "+", 
+  if (CheckMessageArgumentTypes(ArgExprs, NumArgs, Sel, Method, "+", 
                                 lbrac, rbrac, returnType))
     return true;
 
@@ -259,7 +277,7 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
     ObjCMethodDecl *Method = InstanceMethodPool[Sel].Method;
     if (!Method)
       Method = FactoryMethodPool[Sel].Method;
-    if (CheckMessageArgumentTypes(ArgExprs, Sel, Method, "-", 
+    if (CheckMessageArgumentTypes(ArgExprs, NumArgs, Sel, Method, "-", 
                                   lbrac, rbrac, returnType))
       return true;
     return new ObjCMessageExpr(RExpr, Sel, returnType, Method, lbrac, rbrac, 
@@ -280,7 +298,7 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
       Method = FactoryMethodPool[Sel].Method;
     if (!Method)
       Method = InstanceMethodPool[Sel].Method;
-    if (CheckMessageArgumentTypes(ArgExprs, Sel, Method, "-", 
+    if (CheckMessageArgumentTypes(ArgExprs, NumArgs, Sel, Method, "-", 
                                   lbrac, rbrac, returnType))
       return true;
     return new ObjCMessageExpr(RExpr, Sel, returnType, Method, lbrac, rbrac, 
@@ -344,7 +362,7 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
         if (!Method)
           Method = InstanceMethodPool[Sel].Method;
   }
-  if (CheckMessageArgumentTypes(ArgExprs, Sel, Method, "-", 
+  if (CheckMessageArgumentTypes(ArgExprs, NumArgs, Sel, Method, "-", 
                                 lbrac, rbrac, returnType))
     return true;
   return new ObjCMessageExpr(RExpr, Sel, returnType, Method, lbrac, rbrac, 

@@ -61,3 +61,10 @@ extern Class NSClassFromObject(id object);
 }
 @end
 
+@interface I0
+-(void) nonVararg: (int) x;
+@end
+
+int f0(I0 *ob) {
+  [ ob nonVararg: 0, 1, 2]; // expected-error {{too many arguments to function}}
+}
