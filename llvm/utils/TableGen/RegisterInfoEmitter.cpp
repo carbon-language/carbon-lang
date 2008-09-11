@@ -655,12 +655,12 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
   OS << "unsigned " << ClassName 
      << "::getSubReg(unsigned RegNo, unsigned Index) const {\n"
      << "  switch (RegNo) {\n"
-     << "  default: abort(); break;\n";
+     << "  default:\n    return 0;\n";
   for (std::map<Record*, std::vector<std::pair<int, Record*> > >::iterator 
         I = SubRegVectors.begin(), E = SubRegVectors.end(); I != E; ++I) {
     OS << "  case " << getQualifiedName(I->first) << ":\n";
     OS << "    switch (Index) {\n";
-    OS << "    default: abort(); break;\n";
+    OS << "    default:\n      return 0;\n";
     for (unsigned i = 0, e = I->second.size(); i != e; ++i)
       OS << "    case " << (I->second)[i].first << ": return "
          << getQualifiedName((I->second)[i].second) << ";\n";

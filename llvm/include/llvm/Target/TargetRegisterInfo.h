@@ -457,7 +457,8 @@ public:
   virtual BitVector getReservedRegs(const MachineFunction &MF) const = 0;
 
   /// getSubReg - Returns the physical register number of sub-register "Index"
-  /// for physical register RegNo.
+  /// for physical register RegNo. Return zero if the sub-register does not
+  /// exist.
   virtual unsigned getSubReg(unsigned RegNo, unsigned Index) const = 0;
 
   //===--------------------------------------------------------------------===//
