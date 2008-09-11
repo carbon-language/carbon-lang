@@ -11311,8 +11311,11 @@ Instruction *InstCombiner::visitShuffleVectorInst(ShuffleVectorInst &SVI) {
   unsigned VWidth = cast<VectorType>(SVI.getType())->getNumElements();
   uint64_t AllOnesEltMask = ~0ULL >> (64-VWidth);
   if (VWidth <= 64 &&
-      SimplifyDemandedVectorElts(&SVI, AllOnesEltMask, UndefElts))
+      SimplifyDemandedVectorElts(&SVI, AllOnesEltMask, UndefElts)) {
+    LHS = SVI.getOperand(0);
+    RHS = SVI.getOperand(1);
     MadeChange = true;
+  }
   
   // Canonicalize shuffle(x    ,x,mask) -> shuffle(x, undef,mask')
   // Canonicalize shuffle(undef,x,mask) -> shuffle(x, undef,mask').
