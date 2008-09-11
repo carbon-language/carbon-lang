@@ -94,41 +94,69 @@ ArgTypeIterator CGCallInfo::argtypes_end() const {
 
 /***/
 
+/// ABIArgInfo - Helper class to encapsulate information about how a
+/// specific C type should be passed to or returned from a function.
 class ABIArgInfo {
 public:
   enum Kind {
     Default,
-    StructRet, // Only valid for struct return types
-    Coerce     // Only valid for return types
+    StructRet, /// Only valid for aggregate return types.
+
+    Coerce,    /// Only valid for aggregate types, the argument should
+               /// be accessed by coercion to a provided type.
+
+    ByVal,     /// Only valid for aggregate argument types. The
+               /// structure should be passed "byval" with the
+               /// specified alignment (0 indicates default
+               /// alignment).
+
+    Expand,    /// Only valid for aggregate argument types. The
+               /// structure should be expanded into consecutive
+               /// arguments for its constituent fields.
+
+    KindFirst=Default, KindLast=Expand
   };
 
 private:
   Kind TheKind;
   const llvm::Type *TypeData;
+  unsigned UIntData;
 
-  ABIArgInfo(Kind K, const llvm::Type *TD) : TheKind(K),
-                                             TypeData(TD) {}
+  ABIArgInfo(Kind K, const llvm::Type *TD=0,
+             unsigned UI=0) : TheKind(K),
+                              TypeData(TD),
+                              UIntData(0) {}
 public:
   static ABIArgInfo getDefault() { 
-    return ABIArgInfo(Default, 0); 
+    return ABIArgInfo(Default); 
   }
   static ABIArgInfo getStructRet() { 
-    return ABIArgInfo(StructRet, 0); 
+    return ABIArgInfo(StructRet); 
   }
   static ABIArgInfo getCoerce(const llvm::Type *T) { 
     assert(T->isSingleValueType() && "Can only coerce to simple types");
     return ABIArgInfo(Coerce, T);
+  }
+  static ABIArgInfo getByVal(unsigned Alignment) {
+    return ABIArgInfo(ByVal, 0, Alignment);
   }
 
   Kind getKind() const { return TheKind; }
   bool isDefault() const { return TheKind == Default; }
   bool isStructRet() const { return TheKind == StructRet; }
   bool isCoerce() const { return TheKind == Coerce; }
+  bool isByVal() const { return TheKind == ByVal; }
 
   // Coerce accessors
   const llvm::Type *getCoerceToType() const {
     assert(TheKind == Coerce && "Invalid kind!");
     return TypeData;
+  }
+
+  // ByVal accessors
+  unsigned getByValAlignment() const {
+    assert(TheKind == ByVal && "Invalid kind!");
+    return UIntData;
   }
 };
 
@@ -156,6 +184,18 @@ static ABIArgInfo classifyReturnType(QualType RetTy,
   }
 }
 
+static ABIArgInfo classifyArgumentType(QualType Ty,
+                                       ASTContext &Context,
+                                       CodeGenTypes &Types) {
+  assert(!Ty->isArrayType() && "Array types cannot be passed directly.");
+
+  if (!Types.ConvertType(Ty)->isSingleValueType()) {
+    return ABIArgInfo::getByVal(0);
+  } else {
+    return ABIArgInfo::getDefault();
+  }
+}
+
 /***/
 
 const llvm::FunctionType *
@@ -177,7 +217,11 @@ CodeGenTypes::GetFunctionType(ArgTypeIterator begin, ArgTypeIterator end,
 
   QualType RetTy = *begin;
   ABIArgInfo RetAI = classifyReturnType(RetTy, getContext());
-  switch (RetAI.getKind()) {    
+  switch (RetAI.getKind()) {
+  case ABIArgInfo::ByVal:
+  case ABIArgInfo::Expand:
+    assert(0 && "Invalid ABI kind for return argument");
+
   case ABIArgInfo::Default:
     if (RetTy->isVoidType()) {
       ResultType = llvm::Type::VoidTy;
@@ -199,14 +243,31 @@ CodeGenTypes::GetFunctionType(ArgTypeIterator begin, ArgTypeIterator end,
   }
   
   for (++begin; begin != end; ++begin) {
+    ABIArgInfo AI = classifyArgumentType(*begin, getContext(), *this);
     const llvm::Type *Ty = ConvertType(*begin);
-    assert(!(*begin)->isArrayType() && 
-           "Array types cannot be passed directly.");
-    if (Ty->isSingleValueType())
-      ArgTys.push_back(Ty);
-    else
+    
+    switch (AI.getKind()) {
+    case ABIArgInfo::StructRet:
+      assert(0 && "Invalid ABI kind for non-return argument");
+    
+    case ABIArgInfo::ByVal:
       // byval arguments are always on the stack, which is addr space #0.
       ArgTys.push_back(llvm::PointerType::getUnqual(Ty));
+      assert(AI.getByValAlignment() == 0 && "FIXME: alignment unhandled");
+      break;
+      
+    case ABIArgInfo::Default:
+      ArgTys.push_back(Ty);
+      break;
+
+    case ABIArgInfo::Coerce:
+      assert(0 && "FIXME: ABIArgInfo::Coerce unhandled for arguments");
+      break;
+     
+    case ABIArgInfo::Expand:
+      assert(0 && "FIXME: ABIArgInfo::Expand unhandled for arguments");
+      break;
+    }
   }
 
   return llvm::FunctionType::get(ResultType, ArgTys, IsVariadic);
@@ -251,6 +312,10 @@ void CodeGenModule::ConstructParamAttrList(const Decl *TargetDecl,
 
   case ABIArgInfo::Coerce:
     break;
+
+  case ABIArgInfo::ByVal:
+  case ABIArgInfo::Expand:
+    assert(0 && "Invalid ABI kind for return argument");    
   }
 
   if (FuncAttrs)
@@ -258,17 +323,36 @@ void CodeGenModule::ConstructParamAttrList(const Decl *TargetDecl,
   for (++begin; begin != end; ++begin, ++Index) {
     QualType ParamType = *begin;
     unsigned ParamAttrs = 0;
-    assert(!ParamType->isArrayType() && 
-           "Array types cannot be passed directly.");
-    if (ParamType->isRecordType())
+    ABIArgInfo AI = classifyArgumentType(ParamType, getContext(), getTypes());
+    
+    switch (AI.getKind()) {
+    case ABIArgInfo::StructRet:
+      assert(0 && "Invalid ABI kind for non-return argument");
+    
+    case ABIArgInfo::ByVal:
       ParamAttrs |= llvm::ParamAttr::ByVal;
-    if (ParamType->isPromotableIntegerType()) {
-      if (ParamType->isSignedIntegerType()) {
-        ParamAttrs |= llvm::ParamAttr::SExt;
-      } else if (ParamType->isUnsignedIntegerType()) {
-        ParamAttrs |= llvm::ParamAttr::ZExt;
+      assert(AI.getByValAlignment() == 0 && "FIXME: alignment unhandled");
+      break;
+      
+    case ABIArgInfo::Default:
+      if (ParamType->isPromotableIntegerType()) {
+        if (ParamType->isSignedIntegerType()) {
+          ParamAttrs |= llvm::ParamAttr::SExt;
+        } else if (ParamType->isUnsignedIntegerType()) {
+          ParamAttrs |= llvm::ParamAttr::ZExt;
+        }
       }
+      break;
+
+    case ABIArgInfo::Coerce:
+      assert(0 && "FIXME: ABIArgInfo::Coerce unhandled for arguments");
+      break;
+     
+    case ABIArgInfo::Expand:
+      assert(0 && "FIXME: ABIArgInfo::Expand unhandled for arguments");
+      break;
     }
+      
     if (ParamAttrs)
       PAL.push_back(llvm::ParamAttrsWithIndex::get(Index, ParamAttrs));
   }
@@ -290,14 +374,33 @@ void CodeGenFunction::EmitFunctionProlog(llvm::Function *Fn,
        i != e; ++i, ++AI) {
     const VarDecl *Arg = i->first;
     QualType T = i->second;
-    assert(AI != Fn->arg_end() && "Argument mismatch!");
-    llvm::Value* V = AI;
-    if (!getContext().typesAreCompatible(T, Arg->getType())) {
-      // This must be a promotion, for something like
-      // "void a(x) short x; {..."
-      V = EmitScalarConversion(V, T, Arg->getType());
+    ABIArgInfo ArgI = classifyArgumentType(T, getContext(), CGM.getTypes());
+
+    switch (ArgI.getKind()) {
+    case ABIArgInfo::ByVal: 
+    case ABIArgInfo::Default: {
+      assert(AI != Fn->arg_end() && "Argument mismatch!");
+      llvm::Value* V = AI;
+      if (!getContext().typesAreCompatible(T, Arg->getType())) {
+        // This must be a promotion, for something like
+        // "void a(x) short x; {..."
+        V = EmitScalarConversion(V, T, Arg->getType());
       }
-    EmitParmDecl(*Arg, V);
+      EmitParmDecl(*Arg, V);
+      break;
+    }
+
+    case ABIArgInfo::Coerce:
+      assert(0 && "FIXME: ABIArgInfo::Coerce unhandled for arguments");
+      break;
+      
+    case ABIArgInfo::Expand:
+      assert(0 && "FIXME: ABIArgInfo::Expand unhandled for arguments");
+      break;
+      
+    case ABIArgInfo::StructRet:
+      assert(0 && "Invalid ABI kind for non-return argument");        
+    }
   }
   assert(AI == Fn->arg_end() && "Argument mismatch!");
 }
@@ -314,7 +417,7 @@ void CodeGenFunction::EmitFunctionEpilog(QualType RetTy,
     case ABIArgInfo::StructRet:
       EmitAggregateCopy(CurFn->arg_begin(), ReturnValue, RetTy);
       break;
-     
+
     case ABIArgInfo::Default:
       RV = Builder.CreateLoad(ReturnValue);
       break;
@@ -323,7 +426,12 @@ void CodeGenFunction::EmitFunctionEpilog(QualType RetTy,
       const llvm::Type *CoerceToPTy = 
         llvm::PointerType::getUnqual(RetAI.getCoerceToType());
       RV = Builder.CreateLoad(Builder.CreateBitCast(ReturnValue, CoerceToPTy));
+      break;
     }
+
+    case ABIArgInfo::ByVal:
+    case ABIArgInfo::Expand:
+      assert(0 && "Invalid ABI kind for return argument");    
     }
   }
   
@@ -354,6 +462,10 @@ RValue CodeGenFunction::EmitCall(llvm::Value *Callee,
   case ABIArgInfo::Default:
   case ABIArgInfo::Coerce:
     break;
+
+  case ABIArgInfo::ByVal:
+  case ABIArgInfo::Expand:
+    assert(0 && "Invalid ABI kind for return argument");    
   }
   
   for (CallArgList::const_iterator I = CallArgs.begin(), E = CallArgs.end(); 
@@ -393,7 +505,7 @@ RValue CodeGenFunction::EmitCall(llvm::Value *Callee,
     else 
       // Struct return.
       return RValue::getAggregate(TempArg0);
-    
+
   case ABIArgInfo::Default:
     return RValue::get(RetTy->isVoidType() ? 0 : CI);
 
@@ -404,6 +516,10 @@ RValue CodeGenFunction::EmitCall(llvm::Value *Callee,
     Builder.CreateStore(CI, Builder.CreateBitCast(V, CoerceToPTy));
     return RValue::getAggregate(V);
   }
+
+  case ABIArgInfo::ByVal:
+  case ABIArgInfo::Expand:
+    assert(0 && "Invalid ABI kind for return argument");    
   }
 
   assert(0 && "Unhandled ABIArgInfo::Kind");
