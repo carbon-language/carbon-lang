@@ -1467,7 +1467,7 @@ void CGObjCMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
         break;
       }
       
-      const ObjCInterfaceType *ObjCType = T->getAsPointerToObjCInterfaceType();
+      const ObjCInterfaceType *ObjCType = T->getAsObjCInterfaceType();
       assert(ObjCType && "Catch parameter must have Objective-C type!");
 
       // Check if the @catch block matches the exception object.
