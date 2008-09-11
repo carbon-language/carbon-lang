@@ -439,6 +439,10 @@ Parser::StmtResult Parser::ParseIfStatement() {
   // A name introduced by a declaration in a condition is in scope from its
   // point of declaration until the end of the substatements controlled by the
   // condition.
+  // C++ 3.3.2p4:
+  // Names declared in the for-init-statement, and in the condition of if,
+  // while, for, and switch statements are local to the if, while, for, or
+  // switch statement (including the controlled statement).
   //
   if (C99orCXX)
     EnterScope(Scope::DeclScope | Scope::ControlScope);
@@ -563,6 +567,10 @@ Parser::StmtResult Parser::ParseSwitchStatement() {
   // A name introduced by a declaration in a condition is in scope from its
   // point of declaration until the end of the substatements controlled by the
   // condition.
+  // C++ 3.3.2p4:
+  // Names declared in the for-init-statement, and in the condition of if,
+  // while, for, and switch statements are local to the if, while, for, or
+  // switch statement (including the controlled statement).
   //
   if (C99orCXX)
     EnterScope(Scope::BreakScope | Scope::DeclScope | Scope::ControlScope);
@@ -640,6 +648,10 @@ Parser::StmtResult Parser::ParseWhileStatement() {
   // A name introduced by a declaration in a condition is in scope from its
   // point of declaration until the end of the substatements controlled by the
   // condition.
+  // C++ 3.3.2p4:
+  // Names declared in the for-init-statement, and in the condition of if,
+  // while, for, and switch statements are local to the if, while, for, or
+  // switch statement (including the controlled statement).
   //
   if (C99orCXX)
     EnterScope(Scope::BreakScope | Scope::ContinueScope |
@@ -775,6 +787,10 @@ Parser::StmtResult Parser::ParseForStatement() {
   // A name introduced by a declaration in a condition is in scope from its
   // point of declaration until the end of the substatements controlled by the
   // condition.
+  // C++ 3.3.2p4:
+  // Names declared in the for-init-statement, and in the condition of if,
+  // while, for, and switch statements are local to the if, while, for, or
+  // switch statement (including the controlled statement).
   // C++ 6.5.3p1:
   // Names declared in the for-init-statement are in the same declarative-region
   // as those declared in the condition.
