@@ -271,8 +271,13 @@ X86FastISel::X86FastEmitStore(MVT VT, unsigned Val,
 bool X86FastISel::X86FastEmitExtend(ISD::NodeType Opc, MVT DstVT,
                                     unsigned Src, MVT SrcVT,
                                     unsigned &ResultReg) {
-  ResultReg = FastEmit_r(SrcVT.getSimpleVT(), DstVT.getSimpleVT(), Opc, Src);
-  return ResultReg != 0;
+  unsigned RR = FastEmit_r(SrcVT.getSimpleVT(), DstVT.getSimpleVT(), Opc, Src);
+  
+  if (RR != 0) {
+    ResultReg = RR;
+    return true;
+  } else
+    return false;
 }
 
 /// X86SelectConstAddr - Select and emit code to materialize constant address.
