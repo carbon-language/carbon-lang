@@ -603,52 +603,6 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
   }
 }
 
-/// ParseTag - Parse "struct-or-union-or-class-or-enum identifier[opt]", where
-/// the first token has already been read and has been turned into an instance
-/// of DeclSpec::TST (TagType).  This returns true if there is an error parsing,
-/// otherwise it returns false and fills in Decl.
-bool Parser::ParseTag(DeclTy *&Decl, unsigned TagType, SourceLocation StartLoc){
-  AttributeList *Attr = 0;
-  // If attributes exist after tag, parse them.
-  if (Tok.is(tok::kw___attribute))
-    Attr = ParseAttributes();
-  
-  // Must have either 'struct name' or 'struct {...}'.
-  if (Tok.isNot(tok::identifier) && Tok.isNot(tok::l_brace)) {
-    Diag(Tok, diag::err_expected_ident_lbrace);
-    
-    // Skip the rest of this declarator, up until the comma or semicolon.
-    SkipUntil(tok::comma, true);
-    return true;
-  }
-  
-  // If an identifier is present, consume and remember it.
-  IdentifierInfo *Name = 0;
-  SourceLocation NameLoc;
-  if (Tok.is(tok::identifier)) {
-    Name = Tok.getIdentifierInfo();
-    NameLoc = ConsumeToken();
-  }
-  
-  // There are three options here.  If we have 'struct foo;', then this is a
-  // forward declaration.  If we have 'struct foo {...' then this is a
-  // definition. Otherwise we have something like 'struct foo xyz', a reference.
-  //
-  // This is needed to handle stuff like this right (C99 6.7.2.3p11):
-  // struct foo {..};  void bar() { struct foo; }    <- new foo in bar.
-  // struct foo {..};  void bar() { struct foo x; }  <- use of old foo.
-  //
-  Action::TagKind TK;
-  if (Tok.is(tok::l_brace))
-    TK = Action::TK_Definition;
-  else if (Tok.is(tok::semi))
-    TK = Action::TK_Declaration;
-  else
-    TK = Action::TK_Reference;
-  Decl = Actions.ActOnTag(CurScope, TagType, TK, StartLoc, Name, NameLoc, Attr);
-  return false;
-}
-
 /// ParseStructDeclaration - Parse a struct declaration without the terminating
 /// semicolon.
 ///
@@ -834,9 +788,46 @@ void Parser::ParseEnumSpecifier(DeclSpec &DS) {
   SourceLocation StartLoc = ConsumeToken();
   
   // Parse the tag portion of this.
-  DeclTy *TagDecl;
-  if (ParseTag(TagDecl, DeclSpec::TST_enum, StartLoc))
+
+  AttributeList *Attr = 0;
+  // If attributes exist after tag, parse them.
+  if (Tok.is(tok::kw___attribute))
+    Attr = ParseAttributes();
+  
+  // Must have either 'enum name' or 'enum {...}'.
+  if (Tok.isNot(tok::identifier) && Tok.isNot(tok::l_brace)) {
+    Diag(Tok, diag::err_expected_ident_lbrace);
+    
+    // Skip the rest of this declarator, up until the comma or semicolon.
+    SkipUntil(tok::comma, true);
     return;
+  }
+  
+  // If an identifier is present, consume and remember it.
+  IdentifierInfo *Name = 0;
+  SourceLocation NameLoc;
+  if (Tok.is(tok::identifier)) {
+    Name = Tok.getIdentifierInfo();
+    NameLoc = ConsumeToken();
+  }
+  
+  // There are three options here.  If we have 'enum foo;', then this is a
+  // forward declaration.  If we have 'enum foo {...' then this is a
+  // definition. Otherwise we have something like 'enum foo xyz', a reference.
+  //
+  // This is needed to handle stuff like this right (C99 6.7.2.3p11):
+  // enum foo {..};  void bar() { enum foo; }    <- new foo in bar.
+  // enum foo {..};  void bar() { enum foo x; }  <- use of old foo.
+  //
+  Action::TagKind TK;
+  if (Tok.is(tok::l_brace))
+    TK = Action::TK_Definition;
+  else if (Tok.is(tok::semi))
+    TK = Action::TK_Declaration;
+  else
+    TK = Action::TK_Reference;
+  DeclTy *TagDecl = Actions.ActOnTag(CurScope, DeclSpec::TST_enum, TK, StartLoc,
+                                     Name, NameLoc, Attr);
   
   if (Tok.is(tok::l_brace))
     ParseEnumBody(StartLoc, TagDecl);

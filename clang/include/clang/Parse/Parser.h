@@ -519,7 +519,6 @@ private:
   
   void ParseObjCTypeQualifierList(ObjCDeclSpec &DS);
 
-  bool ParseTag(DeclTy *&Decl, unsigned TagType, SourceLocation StartLoc);
   void ParseEnumSpecifier(DeclSpec &DS);
   void ParseEnumBody(SourceLocation StartLoc, DeclTy *TagDecl);
   void ParseStructUnionBody(SourceLocation StartLoc, unsigned TagType,
