@@ -70,7 +70,7 @@ static void AddKeyword(const char *Keyword, unsigned KWLen,
                        const LangOptions &LangOpts, IdentifierTable &Table) {
   int Flags = 0;
   if (BoolSupport != 0) {
-    Flags = LangOpts.Boolean ? BoolSupport : 2;
+    Flags = LangOpts.CPlusPlus? 0 : LangOpts.Boolean ? BoolSupport : 2;
   } else if (LangOpts.CPlusPlus) {
     Flags = LangOpts.CPlusPlus0x ? CXX0x : CXX;
   } else if (LangOpts.C99) {
