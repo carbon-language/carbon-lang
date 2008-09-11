@@ -114,6 +114,10 @@ bool Sema::CheckMessageArgumentTypes(Expr **Args, Selector Sel,
                                      QualType &ReturnType) {  
   unsigned NumArgs = Sel.getNumArgs();  
   if (!Method) {
+    // Apply default argument promotion as for (C99 6.5.2.2p6).
+    for (unsigned i = 0; i != NumArgs; i++)
+      DefaultArgumentPromotion(Args[i]);
+
     Diag(lbrac, diag::warn_method_not_found, std::string(PrefixStr),
          Sel.getName(), SourceRange(lbrac, rbrac));
     ReturnType = Context.getObjCIdType();

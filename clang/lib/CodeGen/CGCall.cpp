@@ -136,6 +136,8 @@ public:
 
 static ABIArgInfo classifyReturnType(QualType RetTy,
                                      ASTContext &Context) {
+  assert(!RetTy->isArrayType() && 
+         "Array types cannot be passed directly.");
   if (CodeGenFunction::hasAggregateLLVMType(RetTy)) {
     uint64_t Size = Context.getTypeSize(RetTy);
     if (Size == 8) {
@@ -198,6 +200,8 @@ CodeGenTypes::GetFunctionType(ArgTypeIterator begin, ArgTypeIterator end,
   
   for (++begin; begin != end; ++begin) {
     const llvm::Type *Ty = ConvertType(*begin);
+    assert(!(*begin)->isArrayType() && 
+           "Array types cannot be passed directly.");
     if (Ty->isSingleValueType())
       ArgTys.push_back(Ty);
     else
@@ -254,6 +258,8 @@ void CodeGenModule::ConstructParamAttrList(const Decl *TargetDecl,
   for (++begin; begin != end; ++begin, ++Index) {
     QualType ParamType = *begin;
     unsigned ParamAttrs = 0;
+    assert(!ParamType->isArrayType() && 
+           "Array types cannot be passed directly.");
     if (ParamType->isRecordType())
       ParamAttrs |= llvm::ParamAttr::ByVal;
     if (ParamType->isPromotableIntegerType()) {
