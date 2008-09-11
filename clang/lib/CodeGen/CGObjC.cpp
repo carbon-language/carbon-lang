@@ -456,4 +456,12 @@ void CodeGenFunction::EmitObjCAtThrowStmt(const ObjCAtThrowStmt &S)
   CGM.getObjCRuntime().EmitThrowStmt(*this, S);
 }
 
+void CodeGenFunction::EmitObjCAtCatchStmt(const ObjCAtCatchStmt &S)
+{
+  if (const Stmt *CatchParam = S.getCatchParamStmt())
+    EmitStmt(CatchParam);
+  
+  EmitStmt(S.getCatchBody());
+}
+
 CGObjCRuntime::~CGObjCRuntime() {}

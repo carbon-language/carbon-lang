@@ -1459,8 +1459,9 @@ void CGObjCMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
           MatchesAll = true;
       }
       
-      if (MatchesAll) {        
-        CGF.EmitStmt(CatchStmt->getCatchBody());
+      if (MatchesAll) {   
+        CGF.EmitStmt(CatchStmt);
+        
         CGF.Builder.CreateBr(FinallyBlock);
         
         CGF.EmitBlock(NextCatchBlock);        
@@ -1485,7 +1486,7 @@ void CGObjCMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
       
       // Emit the @catch block.
       CGF.EmitBlock(MatchedBlock);
-      CGF.EmitStmt(CatchStmt->getCatchBody());
+      CGF.EmitStmt(CatchStmt);
       CGF.Builder.CreateBr(FinallyBlock);
       
       CGF.EmitBlock(NextCatchBlock);

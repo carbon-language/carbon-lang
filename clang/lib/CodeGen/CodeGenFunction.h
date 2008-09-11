@@ -269,6 +269,7 @@ public:
   
   void EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S);
   void EmitObjCAtTryStmt(const ObjCAtTryStmt &S);
+  void EmitObjCAtCatchStmt(const ObjCAtCatchStmt &S);
   void EmitObjCAtThrowStmt(const ObjCAtThrowStmt &S);
   
   //===--------------------------------------------------------------------===//
