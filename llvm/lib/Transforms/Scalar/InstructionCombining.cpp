@@ -9795,7 +9795,8 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
         }
       }
       // If we are using a wider index than needed for this platform, shrink it
-      // to what we need.  If the incoming value needs a cast instruction,
+      // to what we need.  If narrower, sign-extend it to what we need.
+      // If the incoming value needs a cast instruction,
       // insert it.  This explicit cast can make subsequent optimizations more
       // obvious.
       Value *Op = *i;
@@ -9805,6 +9806,16 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
           MadeChange = true;
         } else {
           Op = InsertCastBefore(Instruction::Trunc, Op, TD->getIntPtrType(),
+                                GEP);
+          *i = Op;
+          MadeChange = true;
+        }
+      } else if (TD->getTypeSizeInBits(Op->getType()) < TD->getPointerSizeInBits()) {
+        if (Constant *C = dyn_cast<Constant>(Op)) {
+          *i = ConstantExpr::getSExt(C, TD->getIntPtrType());
+          MadeChange = true;
+        } else {
+          Op = InsertCastBefore(Instruction::SExt, Op, TD->getIntPtrType(),
                                 GEP);
           *i = Op;
           MadeChange = true;
