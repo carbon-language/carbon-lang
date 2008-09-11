@@ -223,6 +223,13 @@ namespace llvm {
     bool isProfitableToCoalesceToSubRC(unsigned SrcReg, unsigned DstReg,
                                        MachineBasicBlock *MBB);
 
+    /// HasIncompatibleSubRegDefUse - If we are trying to coalesce a virtual
+    /// register with a physical register, check if any of the virtual register
+    /// operand is a sub-register use or def. If so, make sure it won't result
+    /// in an illegal extract_subreg or insert_subreg instruction.
+    bool HasIncompatibleSubRegDefUse(MachineInstr *CopyMI,
+                                     unsigned VirtReg, unsigned PhysReg);
+
     /// RangeIsDefinedByCopyFromReg - Return true if the specified live range of
     /// the specified live interval is defined by a copy from the specified
     /// register.

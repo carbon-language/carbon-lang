@@ -875,6 +875,8 @@ void SimpleRegisterCoalescing::RemoveCopiesFromValNo(LiveInterval &li,
   }
 }
 
+/// getMatchingSuperReg - Return a super-register of the specified register
+/// Reg so its sub-register of index SubIdx is Reg.
 static unsigned getMatchingSuperReg(unsigned Reg, unsigned SubIdx, 
                                     const TargetRegisterClass *RC,
                                     const TargetRegisterInfo* TRI) {
@@ -917,6 +919,61 @@ SimpleRegisterCoalescing::isProfitableToCoalesceToSubRC(unsigned SrcReg,
   const TargetRegisterClass *RC = mri_->getRegClass(DstReg);
   unsigned Threshold = allocatableRCRegs_[RC].count() * 2;
   return (SrcSize + DstSize) <= Threshold;
+}
+
+/// HasIncompatibleSubRegDefUse - If we are trying to coalesce a virtual
+/// register with a physical register, check if any of the virtual register
+/// operand is a sub-register use or def. If so, make sure it won't result
+/// in an illegal extract_subreg or insert_subreg instruction. e.g.
+/// vr1024 = extract_subreg vr1025, 1
+/// ...
+/// vr1024 = mov8rr AH
+/// If vr1024 is coalesced with AH, the extract_subreg is now illegal since
+/// AH does not have a super-reg whose sub-register 1 is AH.
+bool
+SimpleRegisterCoalescing::HasIncompatibleSubRegDefUse(MachineInstr *CopyMI,
+                                                      unsigned VirtReg,
+                                                      unsigned PhysReg) {
+  for (MachineRegisterInfo::reg_iterator I = mri_->reg_begin(VirtReg),
+         E = mri_->reg_end(); I != E; ++I) {
+    MachineOperand &O = I.getOperand();
+    MachineInstr *MI = &*I;
+    if (MI == CopyMI || JoinedCopies.count(MI))
+      continue;
+    unsigned SubIdx = O.getSubReg();
+    if (SubIdx && !tri_->getSubReg(PhysReg, SubIdx))
+      return true;
+    if (MI->getOpcode() == TargetInstrInfo::EXTRACT_SUBREG) {
+      SubIdx = MI->getOperand(2).getImm();
+      if (O.isUse() && !tri_->getSubReg(PhysReg, SubIdx))
+        return true;
+      if (O.isDef()) {
+        unsigned SrcReg = MI->getOperand(1).getReg();
+        const TargetRegisterClass *RC =
+          TargetRegisterInfo::isPhysicalRegister(SrcReg)
+          ? tri_->getPhysicalRegisterRegClass(SrcReg)
+          : mri_->getRegClass(SrcReg);
+        if (!getMatchingSuperReg(PhysReg, SubIdx, RC, tri_))
+          return true;
+      }
+    }
+    if (MI->getOpcode() == TargetInstrInfo::INSERT_SUBREG) {
+      SubIdx = MI->getOperand(3).getImm();
+      if (VirtReg == MI->getOperand(0).getReg()) {
+        if (!tri_->getSubReg(PhysReg, SubIdx))
+          return true;
+      } else {
+        unsigned DstReg = MI->getOperand(0).getReg();
+        const TargetRegisterClass *RC =
+          TargetRegisterInfo::isPhysicalRegister(DstReg)
+          ? tri_->getPhysicalRegisterRegClass(DstReg)
+          : mri_->getRegClass(DstReg);
+        if (!getMatchingSuperReg(PhysReg, SubIdx, RC, tri_))
+          return true;
+      }
+    }
+  }
+  return false;
 }
 
 
@@ -1111,6 +1168,12 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
       return false;
     }
   }
+
+  // Will it create illegal extract_subreg / insert_subreg?
+  if (SrcIsPhys && HasIncompatibleSubRegDefUse(CopyMI, DstReg, SrcReg))
+    return false;
+  if (DstIsPhys && HasIncompatibleSubRegDefUse(CopyMI, SrcReg, DstReg))
+    return false;
   
   LiveInterval &SrcInt = li_->getInterval(SrcReg);
   LiveInterval &DstInt = li_->getInterval(DstReg);
