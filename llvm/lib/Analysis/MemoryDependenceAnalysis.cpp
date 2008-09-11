@@ -97,7 +97,7 @@ Instruction* MemoryDependenceAnalysis::getCallSiteDependency(CallSite C,
   BasicBlock::iterator blockBegin = C.getInstruction()->getParent()->begin();
   BasicBlock::iterator QI = C.getInstruction();
   
-  // If the starting point was specifiy, use it
+  // If the starting point was specified, use it
   if (start) {
     QI = start;
     blockBegin = start->getParent()->begin();
