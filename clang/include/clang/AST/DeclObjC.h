@@ -180,6 +180,9 @@ public:
   // Location information, modeled after the Stmt API.
   SourceLocation getLocStart() const { return getLocation(); }
   SourceLocation getLocEnd() const { return EndLoc; }
+  SourceRange getSourceRange() const { 
+    return SourceRange(getLocation(), EndLoc); 
+  }
   
   NamedDecl *getMethodContext() const { return MethodContext; }
   
