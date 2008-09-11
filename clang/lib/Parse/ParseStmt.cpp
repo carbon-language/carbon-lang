@@ -430,9 +430,17 @@ Parser::StmtResult Parser::ParseIfStatement() {
     return true;
   }
 
+  bool C99orCXX = getLang().C99 || getLang().CPlusPlus;
+
   // C99 6.8.4p3 - In C99, the if statement is a block.  This is not
   // the case for C90.
-  if (getLang().C99)
+  //
+  // C++ 6.4p3:
+  // A name introduced by a declaration in a condition is in scope from its
+  // point of declaration until the end of the substatements controlled by the
+  // condition.
+  //
+  if (C99orCXX)
     EnterScope(Scope::DeclScope | Scope::ControlScope);
 
   // Parse the condition.
@@ -447,7 +455,7 @@ Parser::StmtResult Parser::ParseIfStatement() {
 
   if (CondExp.isInvalid) {
     SkipUntil(tok::semi);
-    if (getLang().C99)
+    if (C99orCXX)
       ExitScope();
     return true;
   }
@@ -455,7 +463,22 @@ Parser::StmtResult Parser::ParseIfStatement() {
   // C99 6.8.4p3 - In C99, the body of the if statement is a scope, even if
   // there is no compound stmt.  C90 does not have this clause.  We only do this
   // if the body isn't a compound statement to avoid push/pop in common cases.
-  bool NeedsInnerScope = getLang().C99 && Tok.isNot(tok::l_brace);
+  //
+  // C++ 6.4p1:
+  // The substatement in a selection-statement (each substatement, in the else
+  // form of the if statement) implicitly defines a local scope.
+  //
+  // For C++ we create a scope for the condition and a new scope for
+  // substatements because:
+  // -When the 'then' scope exits, we want the condition declaration to still be
+  //    active for the 'else' scope too.
+  // -Sema will detect name clashes by considering declarations of a
+  //    'ControlScope' as part of its direct subscope.
+  // -If we wanted the condition and substatement to be in the same scope, we
+  //    would have to notify ParseStatement not to create a new scope. It's
+  //    simpler to let it create a new scope.
+  //
+  bool NeedsInnerScope = C99orCXX && Tok.isNot(tok::l_brace);
   if (NeedsInnerScope) EnterScope(Scope::DeclScope);
 
   // Read the 'then' stmt.
@@ -477,7 +500,12 @@ Parser::StmtResult Parser::ParseIfStatement() {
     // there is no compound stmt.  C90 does not have this clause.  We only do
     // this if the body isn't a compound statement to avoid push/pop in common
     // cases.
-    NeedsInnerScope = getLang().C99 && Tok.isNot(tok::l_brace);
+    //
+    // C++ 6.4p1:
+    // The substatement in a selection-statement (each substatement, in the else
+    // form of the if statement) implicitly defines a local scope.
+    //
+    NeedsInnerScope = C99orCXX && Tok.isNot(tok::l_brace);
     if (NeedsInnerScope) EnterScope(Scope::DeclScope);
     
     ElseStmtLoc = Tok.getLocation();
@@ -487,7 +515,7 @@ Parser::StmtResult Parser::ParseIfStatement() {
     if (NeedsInnerScope) ExitScope();
   }
   
-  if (getLang().C99)
+  if (C99orCXX)
     ExitScope();
 
   // If the then or else stmt is invalid and the other is valid (and present),
@@ -526,9 +554,17 @@ Parser::StmtResult Parser::ParseSwitchStatement() {
     return true;
   }
 
+  bool C99orCXX = getLang().C99 || getLang().CPlusPlus;
+
   // C99 6.8.4p3 - In C99, the switch statement is a block.  This is
   // not the case for C90.  Start the switch scope.
-  if (getLang().C99)
+  //
+  // C++ 6.4p3:
+  // A name introduced by a declaration in a condition is in scope from its
+  // point of declaration until the end of the substatements controlled by the
+  // condition.
+  //
+  if (C99orCXX)
     EnterScope(Scope::BreakScope | Scope::DeclScope | Scope::ControlScope);
   else
     EnterScope(Scope::BreakScope);
@@ -553,7 +589,15 @@ Parser::StmtResult Parser::ParseSwitchStatement() {
   // C99 6.8.4p3 - In C99, the body of the switch statement is a scope, even if
   // there is no compound stmt.  C90 does not have this clause.  We only do this
   // if the body isn't a compound statement to avoid push/pop in common cases.
-  bool NeedsInnerScope = getLang().C99 && Tok.isNot(tok::l_brace);
+  //
+  // C++ 6.4p1:
+  // The substatement in a selection-statement (each substatement, in the else
+  // form of the if statement) implicitly defines a local scope.
+  //
+  // See comments in ParseIfStatement for why we create a scope for the
+  // condition and a new scope for substatement in C++.
+  //
+  bool NeedsInnerScope = C99orCXX && Tok.isNot(tok::l_brace);
   if (NeedsInnerScope) EnterScope(Scope::DeclScope);
   
   // Read the body statement.
@@ -587,9 +631,17 @@ Parser::StmtResult Parser::ParseWhileStatement() {
     return true;
   }
   
+  bool C99orCXX = getLang().C99 || getLang().CPlusPlus;
+
   // C99 6.8.5p5 - In C99, the while statement is a block.  This is not
   // the case for C90.  Start the loop scope.
-  if (getLang().C99)
+  //
+  // C++ 6.4p3:
+  // A name introduced by a declaration in a condition is in scope from its
+  // point of declaration until the end of the substatements controlled by the
+  // condition.
+  //
+  if (C99orCXX)
     EnterScope(Scope::BreakScope | Scope::ContinueScope |
                Scope::DeclScope  | Scope::ControlScope);
   else
@@ -608,7 +660,15 @@ Parser::StmtResult Parser::ParseWhileStatement() {
   // C99 6.8.5p5 - In C99, the body of the if statement is a scope, even if
   // there is no compound stmt.  C90 does not have this clause.  We only do this
   // if the body isn't a compound statement to avoid push/pop in common cases.
-  bool NeedsInnerScope = getLang().C99 && Tok.isNot(tok::l_brace);
+  //
+  // C++ 6.5p2:
+  // The substatement in an iteration-statement implicitly defines a local scope
+  // which is entered and exited each time through the loop.
+  //
+  // See comments in ParseIfStatement for why we create a scope for the
+  // condition and a new scope for substatement in C++.
+  //
+  bool NeedsInnerScope = C99orCXX && Tok.isNot(tok::l_brace);
   if (NeedsInnerScope) EnterScope(Scope::DeclScope);
   
   // Read the body statement.
@@ -700,9 +760,20 @@ Parser::StmtResult Parser::ParseForStatement() {
     return true;
   }
   
+  bool C99orCXX = getLang().C99 || getLang().CPlusPlus;
+
   // C99 6.8.5p5 - In C99, the for statement is a block.  This is not
   // the case for C90.  Start the loop scope.
-  if (getLang().C99)
+  //
+  // C++ 6.4p3:
+  // A name introduced by a declaration in a condition is in scope from its
+  // point of declaration until the end of the substatements controlled by the
+  // condition.
+  // C++ 6.5.3p1:
+  // Names declared in the for-init-statement are in the same declarative-region
+  // as those declared in the condition.
+  //
+  if (C99orCXX)
     EnterScope(Scope::BreakScope | Scope::ContinueScope |
                Scope::DeclScope  | Scope::ControlScope);
   else
@@ -722,7 +793,7 @@ Parser::StmtResult Parser::ParseForStatement() {
     ConsumeToken();
   } else if (isDeclarationSpecifier()) {  // for (int X = 4;
     // Parse declaration, which eats the ';'.
-    if (!getLang().C99)   // Use of C99-style for loops in C90 mode?
+    if (!C99orCXX)   // Use of C99-style for loops in C90 mode?
       Diag(Tok, diag::ext_c99_variable_decl_in_for_loop);
     
     SourceLocation DeclStart = Tok.getLocation();
@@ -800,7 +871,15 @@ Parser::StmtResult Parser::ParseForStatement() {
   // C99 6.8.5p5 - In C99, the body of the if statement is a scope, even if
   // there is no compound stmt.  C90 does not have this clause.  We only do this
   // if the body isn't a compound statement to avoid push/pop in common cases.
-  bool NeedsInnerScope = getLang().C99 && Tok.isNot(tok::l_brace);
+  //
+  // C++ 6.5p2:
+  // The substatement in an iteration-statement implicitly defines a local scope
+  // which is entered and exited each time through the loop.
+  //
+  // See comments in ParseIfStatement for why we create a scope for
+  // for-init-statement/condition and a new scope for substatement in C++.
+  //
+  bool NeedsInnerScope = C99orCXX && Tok.isNot(tok::l_brace);
   if (NeedsInnerScope) EnterScope(Scope::DeclScope);
   
   // Read the body statement.
