@@ -118,7 +118,8 @@ TargetInstrInfoImpl::GetFunctionSizeInBytes(const MachineFunction &MF) const {
   for (MachineFunction::const_iterator MBBI = MF.begin(), E = MF.end();
        MBBI != E; ++MBBI) {
     const MachineBasicBlock &MBB = *MBBI;
-    for (MachineBasicBlock::const_iterator I = MBB.begin(),E = MBB.end(); I != E; ++I)
+    for (MachineBasicBlock::const_iterator I = MBB.begin(),E = MBB.end();
+         I != E; ++I)
       FnSize += GetInstSizeInBytes(I);
   }
   return FnSize;
