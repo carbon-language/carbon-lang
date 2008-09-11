@@ -61,7 +61,7 @@ void SubtargetEmitter::FeatureKeyValues(std::ostream &OS) {
   // Gather and sort all the features
   std::vector<Record*> FeatureList =
                            Records.getAllDerivedDefinitions("SubtargetFeature");
-  std::sort(FeatureList.begin(), FeatureList.end(), LessRecord());
+  std::sort(FeatureList.begin(), FeatureList.end(), LessRecordFieldName());
 
   // Begin feature table
   OS << "// Sorted (by key) array of values for CPU features.\n"

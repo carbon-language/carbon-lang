@@ -1183,7 +1183,8 @@ struct LessRecord {
   }
 };
 
-/// LessRecord - Sorting predicate to sort record pointers by their name field.
+/// LessRecordFieldName - Sorting predicate to sort record pointers by their 
+/// name field.
 ///
 struct LessRecordFieldName {
   bool operator()(const Record *Rec1, const Record *Rec2) const {
