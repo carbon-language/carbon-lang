@@ -384,11 +384,13 @@ void GlobalsModRef::AnalyzeCallGraph(CallGraph &CG, Module &M) {
           // Can't do better than that!
         } else if (F->onlyReadsMemory()) {
           FunctionEffect |= Ref;
-          // This function might call back into the module and read a global, so
-          // mark all globals read somewhere as being read by this function.
-          for (std::set<GlobalValue*>::iterator GI = ReadGlobals.begin(),
-               E = ReadGlobals.end(); GI != E; ++GI)
-            FR.GlobalInfo[*GI] |= Ref;
+          if (!F->isIntrinsic()) {
+            // This function might call back into the module and read a global -
+            // mark all globals read somewhere as being read by this function.
+            for (std::set<GlobalValue*>::iterator GI = ReadGlobals.begin(),
+                 E = ReadGlobals.end(); GI != E; ++GI)
+              FR.GlobalInfo[*GI] |= Ref;
+          }
         } else {
           // Can't say anything useful.
           KnowNothing = true;
