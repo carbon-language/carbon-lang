@@ -47,6 +47,11 @@ CodeGenFunction::GetAddrOfStaticLocalVar(const VarDecl *BVD) {
   return cast<llvm::Constant>(LocalDeclMap[BVD]);
 }
 
+llvm::Value *CodeGenFunction::GetAddrOfLocalVar(const VarDecl *VD)
+{
+  return LocalDeclMap[VD];
+}
+
 const llvm::Type *CodeGenFunction::ConvertType(QualType T) {
   return CGM.getTypes().ConvertType(T);
 }

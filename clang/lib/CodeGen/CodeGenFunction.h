@@ -221,6 +221,9 @@ public:
   /// GetAddrOfStaticLocalVar - Return the address of a static local variable.
   llvm::Constant *GetAddrOfStaticLocalVar(const VarDecl *BVD);
 
+  /// GetAddrOfLocalVar - Return the address of a local variable.
+  llvm::Value *GetAddrOfLocalVar(const VarDecl *VD);
+  
   /// getAccessedFieldNo - Given an encoded value and a result number, return
   /// the input field number being accessed.
   static unsigned getAccessedFieldNo(unsigned Idx, const llvm::Constant *Elts);
@@ -269,7 +272,6 @@ public:
   
   void EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S);
   void EmitObjCAtTryStmt(const ObjCAtTryStmt &S);
-  void EmitObjCAtCatchStmt(const ObjCAtCatchStmt &S);
   void EmitObjCAtThrowStmt(const ObjCAtThrowStmt &S);
   
   //===--------------------------------------------------------------------===//

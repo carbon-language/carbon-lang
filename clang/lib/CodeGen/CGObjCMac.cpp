@@ -1442,16 +1442,18 @@ void CGObjCMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
     // Handle catch list
     for (; CatchStmt; CatchStmt = CatchStmt->getNextCatchStmt()) {
       llvm::BasicBlock *NextCatchBlock = llvm::BasicBlock::Create("nextcatch");
+      llvm::Value *Caught = CGF.Builder.CreateLoad(CaughtPtr, "caught");
 
       QualType T;
       bool MatchesAll = false;
-      
+      const DeclStmt *CatchParam = 
+        cast_or_null<DeclStmt>(CatchStmt->getCatchParamStmt());
+
       // catch(...) always matches.
-      if (CatchStmt->hasEllipsis())
+      if (!CatchParam)
         MatchesAll = true;
       else {
-        const DeclStmt *DS = cast<DeclStmt>(CatchStmt->getCatchParamStmt());
-        QualType PT = cast<ValueDecl>(DS->getDecl())->getType();
+        QualType PT = cast<ValueDecl>(CatchParam->getDecl())->getType();
         T = PT->getAsPointerType()->getPointeeType();
         
         // catch(id e) always matches.
@@ -1460,10 +1462,18 @@ void CGObjCMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
       }
       
       if (MatchesAll) {   
-        CGF.EmitStmt(CatchStmt);
+        if (CatchParam) {
+          CGF.EmitStmt(CatchParam);
+          
+          const VarDecl *VD = cast<VarDecl>(CatchParam->getDecl());
+          
+          llvm::Value *V = CGF.GetAddrOfLocalVar(VD);
+          
+          CGF.Builder.CreateStore(Caught, V);
+        }
         
+        CGF.EmitStmt(CatchStmt->getCatchBody());
         CGF.Builder.CreateBr(FinallyBlock);
-        
         CGF.EmitBlock(NextCatchBlock);        
         break;
       }
@@ -1474,7 +1484,6 @@ void CGObjCMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
       // Check if the @catch block matches the exception object.
       llvm::Value *Class = EmitClassRef(CGF.Builder, ObjCType->getDecl());
       
-      llvm::Value *Caught = CGF.Builder.CreateLoad(CaughtPtr, "caught");
       llvm::Value *Match = CGF.Builder.CreateCall2(ObjCTypes.ExceptionMatchFn,
                                                    Class, Caught, "match");
                                                    
@@ -1486,7 +1495,18 @@ void CGObjCMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
       
       // Emit the @catch block.
       CGF.EmitBlock(MatchedBlock);
-      CGF.EmitStmt(CatchStmt);
+      if (CatchParam) {
+        CGF.EmitStmt(CatchParam);
+        
+        const VarDecl *VD = cast<VarDecl>(CatchParam->getDecl());
+        
+        llvm::Value *Tmp = 
+          CGF.Builder.CreateBitCast(Caught, CGF.ConvertType(VD->getType()), 
+                                    "tmp");
+        CGF.Builder.CreateStore(Tmp, CGF.GetAddrOfLocalVar(VD));
+      }
+      
+      CGF.EmitStmt(CatchStmt->getCatchBody());
       CGF.Builder.CreateBr(FinallyBlock);
       
       CGF.EmitBlock(NextCatchBlock);
