@@ -1588,11 +1588,18 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
             if (DestReg != InReg) {
               const TargetRegisterClass *RC = RegInfo->getRegClass(VirtReg);
               TII->copyRegToReg(MBB, &MI, DestReg, InReg, RC, RC);
+              MachineOperand *DefMO = MI.findRegisterDefOperand(DestReg);
+              unsigned SubIdx = DefMO->getSubReg();
               // Revisit the copy so we make sure to notice the effects of the
               // operation on the destreg (either needing to RA it if it's 
               // virtual or needing to clobber any values if it's physical).
               NextMII = &MI;
               --NextMII;  // backtrack to the copy.
+              // Propagate the sub-register index over.
+              if (SubIdx) {
+                DefMO = NextMII->findRegisterDefOperand(DestReg);
+                DefMO->setSubReg(SubIdx);
+              }
               BackTracked = true;
             } else {
               DOUT << "Removing now-noop copy: " << MI;
