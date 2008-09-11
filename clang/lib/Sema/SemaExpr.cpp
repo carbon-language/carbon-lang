@@ -1302,32 +1302,17 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
   }
   // C99 6.5.15p6 - "if one operand is a null pointer constant, the result has
   // the type of the other operand."
-  if ((lexT->isPointerType() || lexT->isBlockPointerType()) &&
+  if ((lexT->isPointerType() || lexT->isBlockPointerType() ||
+       Context.isObjCObjectPointerType(lexT)) &&
       rex->isNullPointerConstant(Context)) {
     ImpCastExprToType(rex, lexT); // promote the null to a pointer.
     return lexT;
   }
-  if ((rexT->isPointerType() || rexT->isBlockPointerType()) &&
+  if ((rexT->isPointerType() || rexT->isBlockPointerType() ||
+       Context.isObjCObjectPointerType(rexT)) &&
       lex->isNullPointerConstant(Context)) {
     ImpCastExprToType(lex, rexT); // promote the null to a pointer.
     return rexT;
-  }
-  // Allow any Objective-C types to devolve to id type.
-  // FIXME: This seems to match gcc behavior, although that is very
-  // arguably incorrect. For example, (xxx ? (id<P>) : (id<P>)) has
-  // type id, which seems broken.
-  if (Context.isObjCObjectPointerType(lexT) && 
-      Context.isObjCObjectPointerType(rexT)) {
-    // FIXME: This is not the correct composite type. This only
-    // happens to work because id can more or less be used anywhere,
-    // however this may change the type of method sends.
-    // FIXME: gcc adds some type-checking of the arguments and emits
-    // (confusing) incompatible comparison warnings in some
-    // cases. Investigate.
-    QualType compositeType = Context.getObjCIdType();
-    ImpCastExprToType(lex, compositeType);
-    ImpCastExprToType(rex, compositeType);
-    return compositeType;
   }
   // Handle the case where both operands are pointers before we handle null
   // pointer constants in case both operands are null pointer constants.
@@ -1355,23 +1340,55 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
         return destType;
       }
 
-      if (!Context.typesAreCompatible(lhptee.getUnqualifiedType(), 
-                                      rhptee.getUnqualifiedType())) {
+      QualType compositeType = lexT;
+      
+      // If either type is an Objective-C object type then check
+      // compatibility according to Objective-C.
+      if (Context.isObjCObjectPointerType(lexT) || 
+          Context.isObjCObjectPointerType(rexT)) {
+        // If both operands are interfaces and either operand can be
+        // assigned to the other, use that type as the composite
+        // type. This allows
+        //   xxx ? (A*) a : (B*) b
+        // where B is a subclass of A.
+        //
+        // Additionally, as for assignment, if either type is 'id'
+        // allow silent coercion. Finally, if the types are
+        // incompatible then make sure to use 'id' as the composite
+        // type so the result is acceptable for sending messages to.
+
+        // FIXME: This code should not be localized to here. Also this
+        // should use a compatible check instead of abusing the
+        // canAssignObjCInterfaces code.
+        const ObjCInterfaceType* LHSIface = lhptee->getAsObjCInterfaceType();
+        const ObjCInterfaceType* RHSIface = rhptee->getAsObjCInterfaceType();
+        if (LHSIface && RHSIface &&
+            Context.canAssignObjCInterfaces(LHSIface, RHSIface)) {
+          compositeType = lexT;
+        } else if (LHSIface && RHSIface &&
+                   Context.canAssignObjCInterfaces(LHSIface, RHSIface)) {
+          compositeType = rexT;
+        } else if (Context.isObjCIdType(lhptee) || 
+                   Context.isObjCIdType(rhptee)) { 
+          // FIXME: This code looks wrong, because isObjCIdType checks
+          // the struct but getObjCIdType returns the pointer to
+          // struct. This is horrible and should be fixed.
+          compositeType = Context.getObjCIdType();
+        } else {
+          QualType incompatTy = Context.getObjCIdType();
+          ImpCastExprToType(lex, incompatTy);
+          ImpCastExprToType(rex, incompatTy);
+          return incompatTy;          
+        }
+      } else if (!Context.typesAreCompatible(lhptee.getUnqualifiedType(), 
+                                             rhptee.getUnqualifiedType())) {
         Diag(questionLoc, diag::warn_typecheck_cond_incompatible_pointers,
              lexT.getAsString(), rexT.getAsString(),
              lex->getSourceRange(), rex->getSourceRange());
-        // In this situation, assume a conservative type; in general
-        // we assume void* type. No especially good reason, but this
-        // is what gcc does, and we do have to pick to get a
-        // consistent AST. However, if either type is an Objective-C
-        // object type then use id.
-        QualType incompatTy;
-        if (Context.isObjCObjectPointerType(lexT) || 
-            Context.isObjCObjectPointerType(rexT)) {
-          incompatTy = Context.getObjCIdType();
-        } else {
-          incompatTy = Context.getPointerType(Context.VoidTy);
-        }
+        // In this situation, we assume void* type. No especially good
+        // reason, but this is what gcc does, and we do have to pick
+        // to get a consistent AST.
+        QualType incompatTy = Context.getPointerType(Context.VoidTy);
         ImpCastExprToType(lex, incompatTy);
         ImpCastExprToType(rex, incompatTy);
         return incompatTy;
@@ -1383,12 +1400,36 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
       // type.
       // FIXME: Need to calculate the composite type.
       // FIXME: Need to add qualifiers
-      QualType compositeType = lexT;
       ImpCastExprToType(lex, compositeType);
       ImpCastExprToType(rex, compositeType);
       return compositeType;
     }
   }
+  // Need to handle "id<xx>" explicitly. Unlike "id", whose canonical type
+  // evaluates to "struct objc_object *" (and is handled above when comparing
+  // id with statically typed objects). 
+  if (lexT->isObjCQualifiedIdType() || rexT->isObjCQualifiedIdType()) {    
+    // GCC allows qualified id and any Objective-C type to devolve to
+    // id. Currently localizing to here until clear this should be
+    // part of ObjCQualifiedIdTypesAreCompatible.
+    if (ObjCQualifiedIdTypesAreCompatible(lexT, rexT, true) ||
+        (lexT->isObjCQualifiedIdType() && 
+         Context.isObjCObjectPointerType(rexT)) ||
+        (rexT->isObjCQualifiedIdType() &&
+         Context.isObjCObjectPointerType(lexT))) {
+      // FIXME: This is not the correct composite type. This only
+      // happens to work because id can more or less be used anywhere,
+      // however this may change the type of method sends.
+      // FIXME: gcc adds some type-checking of the arguments and emits
+      // (confusing) incompatible comparison warnings in some
+      // cases. Investigate.
+      QualType compositeType = Context.getObjCIdType();
+      ImpCastExprToType(lex, compositeType);
+      ImpCastExprToType(rex, compositeType);
+      return compositeType;
+    }
+  }
+
   // Selection between block pointer types is ok as long as they are the same.
   if (lexT->isBlockPointerType() && rexT->isBlockPointerType() &&
       Context.getCanonicalType(lexT) == Context.getCanonicalType(rexT))
