@@ -702,7 +702,13 @@ Parser::StmtResult Parser::ParseDoStatement() {
   // C99 6.8.5p5 - In C99, the body of the if statement is a scope, even if
   // there is no compound stmt.  C90 does not have this clause. We only do this
   // if the body isn't a compound statement to avoid push/pop in common cases.
-  bool NeedsInnerScope = getLang().C99 && Tok.isNot(tok::l_brace);
+  //
+  // C++ 6.5p2:
+  // The substatement in an iteration-statement implicitly defines a local scope
+  // which is entered and exited each time through the loop.
+  //
+  bool NeedsInnerScope = (getLang().C99 || getLang().CPlusPlus) &&
+                         Tok.isNot(tok::l_brace);
   if (NeedsInnerScope) EnterScope(Scope::DeclScope);
   
   // Read the body statement.
