@@ -4699,7 +4699,7 @@ static bool AddWithOverflow(ConstantInt *&Result, ConstantInt *In1,
 /// overflowed for this type.
 static bool SubWithOverflow(ConstantInt *&Result, ConstantInt *In1,
                             ConstantInt *In2, bool IsSigned = false) {
-  Result = cast<ConstantInt>(Add(In1, In2));
+  Result = cast<ConstantInt>(Subtract(In1, In2));
 
   if (IsSigned)
     if (In2->getValue().isNegative())
