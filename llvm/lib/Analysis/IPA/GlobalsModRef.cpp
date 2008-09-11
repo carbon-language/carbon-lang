@@ -392,8 +392,10 @@ void GlobalsModRef::AnalyzeCallGraph(CallGraph &CG, Module &M) {
               FR.GlobalInfo[*GI] |= Ref;
           }
         } else {
-          // Can't say anything useful.
-          KnowNothing = true;
+          FunctionEffect |= ModRef;
+          // Can't say anything useful unless it's an intrinsic - they don't
+          // read or write global variables of the kind considered here.
+          KnowNothing = !F->isIntrinsic();
         }
         continue;
       }
