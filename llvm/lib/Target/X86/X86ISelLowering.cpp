@@ -5899,10 +5899,10 @@ SDValue X86TargetLowering::LowerCMP_SWAP(SDValue Op, SelectionDAG &DAG) {
     break;
   };
   SDValue cpIn = DAG.getCopyToReg(Op.getOperand(0), Reg,
-                                    Op.getOperand(3), SDValue());
+                                    Op.getOperand(2), SDValue());
   SDValue Ops[] = { cpIn.getValue(0),
                       Op.getOperand(1),
-                      Op.getOperand(2),
+                      Op.getOperand(3),
                       DAG.getTargetConstant(size, MVT::i8),
                       cpIn.getValue(1) };
   SDVTList Tys = DAG.getVTList(MVT::Other, MVT::Flag);
@@ -5917,18 +5917,18 @@ SDNode* X86TargetLowering::ExpandATOMIC_CMP_SWAP(SDNode* Op,
   MVT T = Op->getValueType(0);
   assert (T == MVT::i64 && "Only know how to expand i64 Cmp and Swap");
   SDValue cpInL, cpInH;
-  cpInL = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op->getOperand(3),
+  cpInL = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op->getOperand(2),
                       DAG.getConstant(0, MVT::i32));
-  cpInH = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op->getOperand(3),
+  cpInH = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op->getOperand(2),
                       DAG.getConstant(1, MVT::i32));
   cpInL = DAG.getCopyToReg(Op->getOperand(0), X86::EAX,
                            cpInL, SDValue());
   cpInH = DAG.getCopyToReg(cpInL.getValue(0), X86::EDX,
                            cpInH, cpInL.getValue(1));
   SDValue swapInL, swapInH;
-  swapInL = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op->getOperand(2),
+  swapInL = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op->getOperand(3),
                         DAG.getConstant(0, MVT::i32));
-  swapInH = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op->getOperand(2),
+  swapInH = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op->getOperand(3),
                         DAG.getConstant(1, MVT::i32));
   swapInL = DAG.getCopyToReg(cpInH.getValue(0), X86::EBX,
                              swapInL, cpInH.getValue(1));

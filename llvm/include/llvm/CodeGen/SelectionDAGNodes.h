@@ -1624,8 +1624,8 @@ class AtomicSDNode : public MemSDNode {
                 Align, /*isVolatile=*/true) {
     Ops[0] = Chain;
     Ops[1] = Ptr;
-    Ops[2] = Swp;
-    Ops[3] = Cmp;
+    Ops[2] = Cmp;
+    Ops[3] = Swp;
     InitOperands(Ops, 4);
   }
   AtomicSDNode(unsigned Opc, SDVTList VTL, SDValue Chain, SDValue Ptr, 
