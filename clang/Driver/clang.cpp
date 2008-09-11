@@ -452,6 +452,11 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
   case lang_c89:
     break;
   }
+
+  if (Options.CPlusPlus) {
+    Options.C99 = 0;
+    Options.HexFloats = (LangStd == lang_gnucxx98 || LangStd==lang_gnucxx0x);
+  }
   
   if (LangStd == lang_c89 || LangStd == lang_c94 || LangStd == lang_gnu89)
     Options.ImplicitInt = 1;
