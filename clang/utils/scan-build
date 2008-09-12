@@ -587,7 +587,7 @@ ENDTEXT
 <p>The analyzer had problems processing the following files:</p>
 
 <table>
-<thead><tr><td>Problem</td><td>Source File</td><td>Preprocessed File</td></tr></thead>
+<thead><tr><td>Problem</td><td>Source File</td><td>Preprocessed File</td><td>STDERR Output</td></tr></thead>
 ENDTEXT
   
       foreach my $file (sort @files) {
@@ -604,8 +604,8 @@ ENDTEXT
         close (INFO);
         # Print the information in the table.
         my $prefix = GetPrefix();
-        if (defined $prefix) { $srcfile =~ s/^$prefix//; }        
-        print OUT "<tr><td>$problem</td><td>$srcfile</td><td class=\"View\"><a href=\"crashes/$ppfile\">View</a></td></tr>\n";
+        if (defined $prefix) { $srcfile =~ s/^\Q$prefix//; }
+        print OUT "<tr><td>$problem</td><td>$srcfile</td><td><a href=\"crashes/$ppfile\">$ppfile</a></td><td><a href=\"crashes/$ppfile.stderr.txt\">$ppfile.stderr.txt</a></td></tr>\n";
       }
 
       print OUT <<ENDTEXT;
