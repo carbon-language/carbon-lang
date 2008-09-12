@@ -550,7 +550,7 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
             }
           }
           else {
-            os << "'Default' branch taken.";
+            os << "'Default' branch taken. ";
             ExecutionContinues(os, SMgr, LastNode);
           }
           
@@ -587,7 +587,7 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
             
             std::ostringstream os;          
             
-            os << "Loop condition is true.";
+            os << "Loop condition is true. ";
             ExecutionContinues(os, SMgr, Dst);
             
             PD.push_front(new PathDiagnosticPiece(L, os.str()));
@@ -606,7 +606,7 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
             
             std::ostringstream os;          
 
-            os << "Loop condition is false.";
+            os << "Loop condition is false. ";
             ExecutionContinues(os, SMgr, Dst);
           
             PD.push_front(new PathDiagnosticPiece(L, os.str()));
