@@ -26,6 +26,8 @@
     <a href="http://llvm.org/bugs/">Bug Reports</a>
     <a href="http://llvm.org/svn/llvm-project/cfe/trunk/">Browse Source</a>
     <a href="http://clang.llvm.org/doxygen/">doxygen</a>
+    <a href="http://keeda.stanford.edu/~ddunbar/clang/references.html">Spec. References</a>
+    <a href="http://keeda.stanford.edu/~ddunbar/clang/coverage/">Testing Coverage</a>
   </div>
   
   <div class="submenu">
