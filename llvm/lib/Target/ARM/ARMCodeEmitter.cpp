@@ -57,7 +57,12 @@ namespace {
   private:
     unsigned getAddrModeNoneInstrBinary(const MachineInstr &MI,
                                         const TargetInstrDesc &Desc,
-                                        unsigned Binary) ;
+                                        unsigned Binary);
+
+    unsigned getMachineSoRegOpValue(const MachineInstr &MI,
+                                    const TargetInstrDesc &Desc,
+                                    unsigned OpIdx);
+
     unsigned getAddrMode1InstrBinary(const MachineInstr &MI,
                                      const TargetInstrDesc &Desc,
                                      unsigned Binary);
@@ -259,145 +264,114 @@ unsigned ARMCodeEmitter::getAddrModeNoneInstrBinary(const MachineInstr &MI,
   return Binary;
 }
 
+unsigned ARMCodeEmitter::getMachineSoRegOpValue(const MachineInstr &MI,
+                                                const TargetInstrDesc &Desc,
+                                                unsigned OpIdx) {
+  // Set last operand (register Rm)
+  unsigned Binary = getMachineOpValue(MI, OpIdx);
+
+  const MachineOperand &MO1 = MI.getOperand(OpIdx + 1);
+  const MachineOperand &MO2 = MI.getOperand(OpIdx + 2);
+  ARM_AM::ShiftOpc SOpc = ARM_AM::getSORegShOp(MO2.getImm());
+
+  // Encode the shift opcode.
+  unsigned SBits = 0;
+  unsigned Rs = MO1.getReg();
+  if (Rs) {
+    // Set shift operand (bit[7:4]).
+    // LSL - 0001
+    // LSR - 0011
+    // ASR - 0101
+    // ROR - 0111
+    // RRX - 0110 and bit[11:8] clear.
+    switch (SOpc) {
+    default: assert(0 && "Unknown shift opc!");
+    case ARM_AM::lsl: SBits = 0x1; break;
+    case ARM_AM::lsr: SBits = 0x3; break;
+    case ARM_AM::asr: SBits = 0x5; break;
+    case ARM_AM::ror: SBits = 0x7; break;
+    case ARM_AM::rrx: SBits = 0x6; break;
+    }
+  } else {
+    // Set shift operand (bit[6:4]).
+    // LSL - 000
+    // LSR - 010
+    // ASR - 100
+    // ROR - 110
+    switch (SOpc) {
+    default: assert(0 && "Unknown shift opc!");
+    case ARM_AM::lsl: SBits = 0x0; break;
+    case ARM_AM::lsr: SBits = 0x2; break;
+    case ARM_AM::asr: SBits = 0x4; break;
+    case ARM_AM::ror: SBits = 0x6; break;
+    }
+  }
+  Binary |= SBits << 4;
+  if (SOpc == ARM_AM::rrx)
+    return Binary;
+
+  // Encode the shift operation Rs or shift_imm (except rrx).
+  if (Rs) {
+    // Encode Rs bit[11:8].
+    assert(ARM_AM::getSORegOffset(MO2.getImm()) == 0);
+    return Binary |
+      (ARMRegisterInfo::getRegisterNumbering(Rs) << ARMII::RegRsShift);
+  }
+
+  // Encode shift_imm bit[11:7].
+  return Binary | ARM_AM::getSORegOffset(MO2.getImm()) << 7;
+}
+
 unsigned ARMCodeEmitter::getAddrMode1InstrBinary(const MachineInstr &MI,
                                                  const TargetInstrDesc &Desc,
                                                  unsigned Binary) {
-  // FIXME: Clean up.
-  // Treat 3 special instructions: MOVsra_flag, MOVsrl_flag and MOVrx.
+  if (MI.getOpcode() == ARM::MOVi2pieces)
+    // FIXME.
+    abort();
+
   unsigned Format = Desc.TSFlags & ARMII::FormMask;
-  if (Format == ARMII::DPRdMisc) {
-    Binary |= getMachineOpValue(MI, 0) << ARMII::RegRdShift;
-    Binary |= getMachineOpValue(MI, 1);
-    switch (Desc.Opcode) {
-    case ARM::MOVsra_flag:
-      Binary |= 0x1 << 6;
-      Binary |= 0x1 << 7;
-      break;
-    case ARM::MOVsrl_flag:
-      Binary |= 0x1 << 5;
-      Binary |= 0x1 << 7;
-      break;
-    case ARM::MOVrx:
-      Binary |= 0x3 << 5;
-      break;
-    }
-    return Binary;
+  // FIXME: Consolidate into a single bit.
+  bool isUnary = (Format == ARMII::DPRdMisc  ||
+                  Format == ARMII::DPRdIm    ||
+                  Format == ARMII::DPRdReg   ||
+                  Format == ARMII::DPRdSoReg ||
+                  Format == ARMII::DPRnIm    ||
+                  Format == ARMII::DPRnReg   ||
+                  Format == ARMII::DPRnSoReg);
+
+  unsigned OpIdx = 0;
+
+  // Encode register def if there is one.
+  unsigned NumDefs = Desc.getNumDefs();
+  if (NumDefs) {
+    Binary |= getMachineOpValue(MI, OpIdx) << ARMII::RegRdShift;
+    ++OpIdx;
   }
 
-  // FIXME: Clean up this part.
-  // Data processing operand instructions has 3 possible encodings (for more
-  // information, see ARM-ARM page A3-10):
-  // 1. <instr> <Rd>,<shifter_operand>
-  // 2. <instr> <Rn>,<shifter_operand>
-  // 3. <instr> <Rd>,<Rn>,<shifter_operand>
-  bool IsDataProcessing1 = Format == ARMII::DPRdIm    ||
-                           Format == ARMII::DPRdReg   ||
-                           Format == ARMII::DPRdSoReg;
-  bool IsDataProcessing2 = Format == ARMII::DPRnIm    ||
-                           Format == ARMII::DPRnReg   ||
-                           Format == ARMII::DPRnSoReg;
-  bool IsDataProcessing3 = false;
-
-  if (Format == ARMII::DPRImS || Format == ARMII::DPRRegS ||
-      Format == ARMII::DPRSoRegS || IsDataProcessing2)
-    IsDataProcessing3 = !IsDataProcessing2;
-
-  IsDataProcessing3 = Format == ARMII::DPRIm     ||
-                      Format == ARMII::DPRReg    ||
-                      Format == ARMII::DPRSoReg  ||
-                      IsDataProcessing3;
-
-  // Set first operand
-  if (IsDataProcessing1 || IsDataProcessing3) {
-    Binary |= getMachineOpValue(MI, 0) << ARMII::RegRdShift;
-  } else if (IsDataProcessing2) {
-    Binary |= getMachineOpValue(MI, 0) << ARMII::RegRnShift;
+  // Encode first non-shifter register operand if ther is one.
+  if (!isUnary) {
+    Binary |= getMachineOpValue(MI, OpIdx) << ARMII::RegRnShift;
+    ++OpIdx;
   }
 
-  // Set second operand of data processing #3 instructions
-  if (IsDataProcessing3)
-    Binary |= getMachineOpValue(MI, 1) << ARMII::RegRnShift;
+  // Encode shifter operand.
+  if (Desc.getNumOperands() - OpIdx > 1)
+    // Encode SoReg.
+    return Binary | getMachineSoRegOpValue(MI, Desc, OpIdx);
 
-  unsigned OpIdx = IsDataProcessing3 ? 2 : 1;
-  switch (Format) {
-  default:
-    assert(false && "Unknown operand type!");
-    break;
-  case ARMII::DPRdIm: case ARMII::DPRnIm:
-  case ARMII::DPRIm:  case ARMII::DPRImS: {
-    // Set bit I(25) to identify this is the immediate form of <shifter_op>
-    Binary |= 1 << ARMII::I_BitShift;
-    // Set immed_8 field
-    const MachineOperand &MO = MI.getOperand(OpIdx);
-    Binary |= ARM_AM::getSOImmVal(MO.getImm());
-    break;
-  }
-  case ARMII::DPRdReg: case ARMII::DPRnReg:
-  case ARMII::DPRReg:  case ARMII::DPRRegS: {
-    // Set last operand (register Rm)
-    Binary |= getMachineOpValue(MI, OpIdx);
-    break;
-  }
-  case ARMII::DPRdSoReg: case ARMII::DPRnSoReg:
-  case ARMII::DPRSoReg:  case ARMII::DPRSoRegS: {
-    // Set last operand (register Rm)
-    Binary |= getMachineOpValue(MI, OpIdx);
+  const MachineOperand &MO = MI.getOperand(OpIdx);
+  if (MO.isRegister())
+    // Encode register Rm.
+    return Binary | getMachineOpValue(MI, NumDefs + 1);
 
-    const MachineOperand &MO1 = MI.getOperand(OpIdx + 1);
-    const MachineOperand &MO2 = MI.getOperand(OpIdx + 2);
-
-    // Identify it the instr is in immed or register shifts encoding
-    bool IsShiftByRegister = MO1.getReg() > 0;
-    // Set shift operand (bit[6:4]).
-    // ASR - 101 if it is in register shifts encoding; 100, otherwise.
-    // LSL - 001 if it is in register shifts encoding; 000, otherwise.
-    // LSR - 011 if it is in register shifts encoding; 010, otherwise.
-    // ROR - 111 if it is in register shifts encoding; 110, otherwise.
-    // RRX - 110 and bit[11:7] clear.
-    switch (ARM_AM::getSORegShOp(MO2.getImm())) {
-    default: assert(0 && "Unknown shift opc!");
-    case ARM_AM::asr:
-      if (IsShiftByRegister)
-        Binary |= 0x5 << 4;
-      else
-        Binary |= 0x1 << 6;
-      break;
-    case ARM_AM::lsl:
-      if (IsShiftByRegister)
-        Binary |= 0x1 << 4;
-      break;
-    case ARM_AM::lsr:
-      if (IsShiftByRegister)
-        Binary |= 0x3 << 4;
-      else
-        Binary |= 0x1 << 5;
-      break;
-    case ARM_AM::ror:
-      if (IsShiftByRegister)
-        Binary |= 0x7 << 4;
-      else
-        Binary |= 0x3 << 5;
-      break;
-    case ARM_AM::rrx:
-      Binary |= 0x3 << 5;
-      break;
-    }
-
-    // Set the field related to shift operations (except rrx).
-    if (ARM_AM::getSORegShOp(MO2.getImm()) != ARM_AM::rrx) {
-      if (IsShiftByRegister) {
-        // Set the value of bit[11:8] (register Rs).
-        assert(ARM_AM::getSORegOffset(MO2.getImm()) == 0);
-        Binary |= (ARMRegisterInfo::getRegisterNumbering(MO1.getReg()) <<
-                   ARMII::RegRsShift);
-      } else
-        // Set the value of bit [11:7] (shift_immed field).
-        Binary |= ARM_AM::getSORegOffset(MO2.getImm()) << 7;
-    }
-    break;
-  }
-  }
-
+  // Encode so_imm.
+  // Set bit I(25) to identify this is the immediate form of <shifter_op>
+  Binary |= 1 << ARMII::I_BitShift;
+  unsigned SoImm = MO.getImm();
+  // Encode rotate_imm.
+  Binary |= ARM_AM::getSOImmValRot(SoImm) << ARMII::RotImmShift;
+  // Encode immed_8.
+  Binary |= ARM_AM::getSOImmVal(SoImm);
   return Binary;
 }
 
