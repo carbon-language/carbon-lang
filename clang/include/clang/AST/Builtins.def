@@ -52,6 +52,7 @@
 //  n -> nothrow
 //  c -> const
 //  F -> this is a libc/libm function with a '__builtin_' prefix added.
+//  FIXME: gcc has nonnull
 
 // Standard libc/libm functions:
 BUILTIN(__builtin_huge_val, "d", "nc")
@@ -125,13 +126,24 @@ BUILTIN(__builtin_return_address, "v*Ui", "n")
 BUILTIN(__builtin_frame_address, "v*Ui", "n")
 // GCC Object size checking builtins
 BUILTIN(__builtin_object_size, "zv*i", "n")
-BUILTIN(__builtin___memset_chk, "v*v*izz", "nF")
 BUILTIN(__builtin___memcpy_chk, "v*v*vC*zz", "nF")
 BUILTIN(__builtin___memmove_chk, "v*v*vC*zz", "nF")
 BUILTIN(__builtin___mempcpy_chk, "v*v*vC*zz", "nF")
-BUILTIN(__builtin___strncpy_chk, "c*cC*cC*zz", "nF")
-BUILTIN(__builtin___strcpy_chk, "c*cC*cC*z", "nF")
+BUILTIN(__builtin___memset_chk, "v*v*izz", "nF")
+BUILTIN(__builtin___stpcpy_chk, "c*c*cC*z", "nF")
 BUILTIN(__builtin___strcat_chk, "c*c*cC*z", "nF")
+BUILTIN(__builtin___strcpy_chk, "c*c*cC*z", "nF")
+BUILTIN(__builtin___strncat_chk, "c*c*cC*zz", "nF")
+BUILTIN(__builtin___strncpy_chk, "c*c*cC*zz", "nF")
+BUILTIN(__builtin___snprintf_chk, "ic*zizcC*.", "F") // FIXME: format printf attribute
+BUILTIN(__builtin___sprintf_chk, "ic*izcC*.", "F") // FIXME: format printf attribute
+BUILTIN(__builtin___vsnprintf_chk, "ic*zizcC*a", "F") // FIXME: format printf attribute
+BUILTIN(__builtin___vsprintf_chk, "ic*izcC*a", "F") // FIXME: format printf attribute
+//BUILTIN(__builtin___fprintf_chk, "i(FIXME:FILEPTR)icC*.", "F") // FIXME: format printf attribute
+BUILTIN(__builtin___printf_chk, "iicC*.", "F")
+//BUILTIN(__builtin___vfprintf_chk, "i(FIXME:FILEPTR)icC*a", "F") // FIXME: format printf attribute
+BUILTIN(__builtin___vprintf_chk, "iicC*a", "F") // FIXME: format printf attribute
+
 BUILTIN(__builtin_expect, "iii"   , "nc")
 BUILTIN(__builtin_prefetch, "vCv*.", "nc")
 BUILTIN(__builtin_trap, "v", "n")
