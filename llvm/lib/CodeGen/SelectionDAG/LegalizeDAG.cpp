@@ -4763,14 +4763,16 @@ void SelectionDAGLegalize::LegalizeSetCCOperands(SDValue &LHS,
 
     if (VT==MVT::ppcf128) {
       // FIXME:  This generated code sucks.  We want to generate
-      //         FCMP crN, hi1, hi2
+      //         FCMPU crN, hi1, hi2
       //         BNE crN, L:
-      //         FCMP crN, lo1, lo2
+      //         FCMPU crN, lo1, lo2
       // The following can be improved, but not that much.
-      Tmp1 = DAG.getSetCC(TLI.getSetCCResultType(LHSHi), LHSHi, RHSHi, ISD::SETEQ);
+      Tmp1 = DAG.getSetCC(TLI.getSetCCResultType(LHSHi), LHSHi, RHSHi, 
+                                                         ISD::SETOEQ);
       Tmp2 = DAG.getSetCC(TLI.getSetCCResultType(LHSLo), LHSLo, RHSLo, CCCode);
       Tmp3 = DAG.getNode(ISD::AND, Tmp1.getValueType(), Tmp1, Tmp2);
-      Tmp1 = DAG.getSetCC(TLI.getSetCCResultType(LHSHi), LHSHi, RHSHi, ISD::SETNE);
+      Tmp1 = DAG.getSetCC(TLI.getSetCCResultType(LHSHi), LHSHi, RHSHi, 
+                                                         ISD::SETUNE);
       Tmp2 = DAG.getSetCC(TLI.getSetCCResultType(LHSHi), LHSHi, RHSHi, CCCode);
       Tmp1 = DAG.getNode(ISD::AND, Tmp1.getValueType(), Tmp1, Tmp2);
       Tmp1 = DAG.getNode(ISD::OR, Tmp1.getValueType(), Tmp1, Tmp3);
