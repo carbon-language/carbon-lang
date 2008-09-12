@@ -229,7 +229,8 @@ def main(args):
             i += 1
 
         # Options with one argument that should pass through
-        if arg in ['-framework', '-multiply_defined', '-bundle_loader']:
+        if arg in ('-framework', '-multiply_defined', '-bundle_loader',
+                   '-e'):
             link_opts.append(arg)
             link_opts.append(args[i+1])
             i += 1
@@ -241,6 +242,11 @@ def main(args):
             link_opts.append(arg)
             link_opts.append(args[i+1])
             i += 1
+        
+        # Options with three arguments that should pass through
+        if arg in ('-sectorder',):
+            link_opts.extend(args[i:i+4])
+            i += 3
 
         # Prefix matches for the link mode
         if arg[:2] in ['-l', '-L', '-F', '-R']:
