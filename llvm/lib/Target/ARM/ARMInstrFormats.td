@@ -28,26 +28,15 @@ def MulSMUL     : Format<6>;
 def Branch      : Format<7>;
 def BranchMisc  : Format<8>;
 
-def DPRdIm      : Format<9>;
-def DPRdReg     : Format<10>;
-def DPRdSoReg   : Format<11>;
-def DPRdMisc    : Format<12>;
-def DPRnIm      : Format<13>;
-def DPRnReg     : Format<14>;
-def DPRnSoReg   : Format<15>;
-def DPRIm       : Format<16>;
-def DPRReg      : Format<17>;
-def DPRSoReg    : Format<18>;
-def DPRImS      : Format<19>;
-def DPRRegS     : Format<20>;
-def DPRSoRegS   : Format<21>;
+def UnaryFrm    : Format<9>;
+def BinaryFrm   : Format<10>;
 
-def LdFrm       : Format<22>;
-def StFrm       : Format<23>;
+def LdFrm       : Format<11>;
+def StFrm       : Format<12>;
 
-def ArithMisc   : Format<24>;
-def ThumbFrm    : Format<25>;
-def VFPFrm      : Format<26>;
+def ArithMisc   : Format<13>;
+def ThumbFrm    : Format<14>;
+def VFPFrm      : Format<15>;
 
 
 //===----------------------------------------------------------------------===//
