@@ -520,6 +520,11 @@ ErrorOnExtensions("pedantic-errors",
                   llvm::cl::desc("Issue an error on uses of GCC extensions"));
 
 static llvm::cl::opt<bool>
+SuppressSystemWarnings("suppress-system-warnings",
+                     llvm::cl::desc("Issue an error on uses of GCC extensions"),
+                       llvm::cl::init(true));
+
+static llvm::cl::opt<bool>
 WarnUnusedMacros("Wunused_macros",
          llvm::cl::desc("Warn for unused macros in the main translation unit"));
 
@@ -546,6 +551,9 @@ static void InitializeDiagnostics(Diagnostic &Diags) {
   Diags.setWarningsAsErrors(WarningsAsErrors);
   Diags.setWarnOnExtensions(WarnOnExtensions);
   Diags.setErrorOnExtensions(ErrorOnExtensions);
+
+  // Suppress warnings in system headers unless requested not to.
+  Diags.setSuppressSystemWarnings(SuppressSystemWarnings);
 
   // Silence the "macro is not used" warning unless requested.
   if (!WarnUnusedMacros)

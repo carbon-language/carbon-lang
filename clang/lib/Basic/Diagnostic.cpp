@@ -113,6 +113,7 @@ Diagnostic::Diagnostic(DiagnosticClient *client) : Client(client) {
   WarningsAsErrors = false;
   WarnOnExtensions = false;
   ErrorOnExtensions = false;
+  SuppressSystemWarnings = false;
   // Clear all mappings, setting them to MAP_DEFAULT.
   memset(DiagMappings, 0, sizeof(DiagMappings));
   
@@ -224,7 +225,8 @@ void Diagnostic::Report(DiagnosticClient* C,
   // have to check on the original DiagID here, because we also want to
   // ignore extensions and warnings in -Werror and -pedantic-errors modes,
   // which *map* warnings/extensions to errors.
-  if (DiagID < diag::NUM_BUILTIN_DIAGNOSTICS &&
+  if (SuppressSystemWarnings &&
+      DiagID < diag::NUM_BUILTIN_DIAGNOSTICS &&
       getBuiltinDiagClass(DiagID) != ERROR &&
       Loc.isValid() && Loc.isFileID() && Loc.isInSystemHeader())
     return;

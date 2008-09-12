@@ -61,6 +61,7 @@ private:
   bool WarningsAsErrors;      // Treat warnings like errors: 
   bool WarnOnExtensions;      // Enables warnings for gcc extensions: -pedantic.
   bool ErrorOnExtensions;     // Error on extensions: -pedantic-errors.
+  bool SuppressSystemWarnings;// Suppress warnings in system headers.
   DiagnosticClient *Client;
 
   /// DiagMappings - Mapping information for diagnostics.  Mapping info is
@@ -109,6 +110,11 @@ public:
   /// instead of warnings.  This is the equivalent to GCC's -pedantic-errors.
   void setErrorOnExtensions(bool Val) { ErrorOnExtensions = Val; }
   bool getErrorOnExtensions() const { return ErrorOnExtensions; }
+
+  /// setSuppressSystemWarnings - When set to true mask warnings that
+  /// come from system headers.
+  void setSuppressSystemWarnings(bool Val) { SuppressSystemWarnings = Val; }
+  bool getSuppressSystemWarnings() const { return SuppressSystemWarnings; }
 
   /// setDiagnosticMapping - This allows the client to specify that certain
   /// warnings are ignored.  Only NOTEs, WARNINGs, and EXTENSIONs can be mapped.

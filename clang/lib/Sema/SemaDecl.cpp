@@ -276,11 +276,13 @@ TypedefDecl *Sema::MergeTypeDefDecl(TypedefDecl *New, Decl *OldD) {
   // *either* declaration is in a system header. The code below implements
   // this adhoc compatibility rule. FIXME: The following code will not
   // work properly when compiling ".i" files (containing preprocessed output).
-  SourceManager &SrcMgr = Context.getSourceManager();
-  if (SrcMgr.isInSystemHeader(Old->getLocation()))
-    return New;
-  if (SrcMgr.isInSystemHeader(New->getLocation()))
-    return New;
+  if (PP.getDiagnostics().getSuppressSystemWarnings()) {
+    SourceManager &SrcMgr = Context.getSourceManager();
+    if (SrcMgr.isInSystemHeader(Old->getLocation()))
+      return New;
+    if (SrcMgr.isInSystemHeader(New->getLocation()))
+      return New;
+  }
 
   Diag(New->getLocation(), diag::err_redefinition, New->getName());
   Diag(Old->getLocation(), diag::err_previous_definition);
