@@ -890,6 +890,8 @@ private:
   // blcok pointer types.
   AssignConvertType CheckBlockPointerTypesForAssignment(QualType lhsType, 
                                                         QualType rhsType);
+
+  bool IsStringLiteralToNonConstPointerConversion(Expr *From, QualType ToType);
   
   /// the following "Check" methods will return a valid/converted QualType
   /// or a null QualType (indicating an error diagnostic was issued).

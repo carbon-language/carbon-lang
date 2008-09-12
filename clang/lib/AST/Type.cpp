@@ -498,6 +498,14 @@ bool Type::isCharType() const {
   return false;
 }
 
+bool Type::isWideCharType() const {
+  if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
+    return BT->getKind() == BuiltinType::WChar;
+  if (const ASQualType *ASQT = dyn_cast<ASQualType>(CanonicalType))
+    return ASQT->getBaseType()->isWideCharType();
+  return false;
+}
+
 /// isSignedIntegerType - Return true if this is an integer type that is
 /// signed, according to C99 6.2.5p4 [char, signed char, short, int, long..],
 /// an enum decl which has a signed representation, or a vector of signed

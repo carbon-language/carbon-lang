@@ -302,6 +302,7 @@ public:
   bool isEnumeralType() const;
   bool isBooleanType() const;
   bool isCharType() const;
+  bool isWideCharType() const;
   bool isIntegralType() const;
   
   /// Floating point categories.

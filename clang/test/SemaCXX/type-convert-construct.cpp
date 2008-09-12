@@ -10,4 +10,8 @@ void f() {
   typedef int T;
   int *p;
   bool v6 = T(0) == p;
+  char *str;
+  str = "a string";
+  wchar_t *wstr;
+  wstr = L"a wide string";
 }

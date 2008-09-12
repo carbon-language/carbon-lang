@@ -290,6 +290,10 @@ Sema::ActOnStringLiteral(const Token *StringToks, unsigned NumStringToks) {
   QualType StrTy = Context.CharTy;
   if (Literal.AnyWide) StrTy = Context.getWCharType();
   if (Literal.Pascal) StrTy = Context.UnsignedCharTy;
+
+  // A C++ string literal has a const-qualified element type (C++ 2.13.4p1).
+  if (getLangOptions().CPlusPlus)
+    StrTy.addConst();
   
   // Get an array type for the string, according to C99 6.4.5.  This includes
   // the nul terminator character as well as the string length for pascal
@@ -3066,6 +3070,18 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
     DiagKind = diag::ext_typecheck_convert_pointer_void_func;
     break;
   case CompatiblePointerDiscardsQualifiers:
+    // If the qualifiers lost were because we were applying the
+    // (deprecated) C++ conversion from a string literal to a char*
+    // (or wchar_t*), then there was no error (C++ 4.2p2).  FIXME:
+    // Ideally, this check would be performed in
+    // CheckPointerTypesForAssignment. However, that would require a
+    // bit of refactoring (so that the second argument is an
+    // expression, rather than a type), which should be done as part
+    // of a larger effort to fix CheckPointerTypesForAssignment for
+    // C++ semantics.
+    if (getLangOptions().CPlusPlus &&
+        IsStringLiteralToNonConstPointerConversion(SrcExpr, DstType))
+      return false;
     DiagKind = diag::ext_typecheck_convert_discards_qualifiers;
     break;
   case IntToBlockPointer:

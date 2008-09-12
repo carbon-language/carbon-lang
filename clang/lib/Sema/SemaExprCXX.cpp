@@ -202,3 +202,34 @@ bool Sema::CheckCXXBooleanCondition(Expr *&CondExpr) {
                 Ty.getAsString(), CondExpr->getSourceRange());
   return false;
 }
+
+/// Helper function to determine whether this is the (deprecated) C++
+/// conversion from a string literal to a pointer to non-const char or
+/// non-const wchar_t (for narrow and wide string literals,
+/// respectively).
+bool 
+Sema::IsStringLiteralToNonConstPointerConversion(Expr *From, QualType ToType) {
+  // Look inside the implicit cast, if it exists.
+  if (ImplicitCastExpr *Cast = dyn_cast<ImplicitCastExpr>(From))
+    From = Cast->getSubExpr();
+
+  // A string literal (2.13.4) that is not a wide string literal can
+  // be converted to an rvalue of type "pointer to char"; a wide
+  // string literal can be converted to an rvalue of type "pointer
+  // to wchar_t" (C++ 4.2p2).
+  if (StringLiteral *StrLit = dyn_cast<StringLiteral>(From))
+    if (const PointerType *ToPtrType = ToType->getAsPointerType())
+      if (const BuiltinType *ToPointeeType 
+          = ToPtrType->getPointeeType()->getAsBuiltinType()) {
+        // This conversion is considered only when there is an
+        // explicit appropriate pointer target type (C++ 4.2p2).
+        if (ToPtrType->getPointeeType().getCVRQualifiers() == 0 &&
+            ((StrLit->isWide() && ToPointeeType->isWideCharType()) ||
+             (!StrLit->isWide() &&
+              (ToPointeeType->getKind() == BuiltinType::Char_U ||
+               ToPointeeType->getKind() == BuiltinType::Char_S))))
+          return true;
+      }
+
+  return false;
+}
