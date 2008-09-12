@@ -231,6 +231,7 @@ public:
   //
   SDValue getConstant(uint64_t Val, MVT VT, bool isTarget = false);
   SDValue getConstant(const APInt &Val, MVT VT, bool isTarget = false);
+  SDValue getConstant(const ConstantInt &Val, MVT VT, bool isTarget = false);
   SDValue getIntPtrConstant(uint64_t Val, bool isTarget = false);
   SDValue getTargetConstant(uint64_t Val, MVT VT) {
     return getConstant(Val, VT, true);
@@ -238,12 +239,19 @@ public:
   SDValue getTargetConstant(const APInt &Val, MVT VT) {
     return getConstant(Val, VT, true);
   }
+  SDValue getTargetConstant(const ConstantInt &Val, MVT VT) {
+    return getConstant(Val, VT, true);
+  }
   SDValue getConstantFP(double Val, MVT VT, bool isTarget = false);
   SDValue getConstantFP(const APFloat& Val, MVT VT, bool isTarget = false);
+  SDValue getConstantFP(const ConstantFP &CF, MVT VT, bool isTarget = false);
   SDValue getTargetConstantFP(double Val, MVT VT) {
     return getConstantFP(Val, VT, true);
   }
   SDValue getTargetConstantFP(const APFloat& Val, MVT VT) {
+    return getConstantFP(Val, VT, true);
+  }
+  SDValue getTargetConstantFP(const ConstantFP &Val, MVT VT) {
     return getConstantFP(Val, VT, true);
   }
   SDValue getGlobalAddress(const GlobalValue *GV, MVT VT,

@@ -792,9 +792,9 @@ public:
         assert(N->getExtTypes().size() == 1 && "Multiple types not handled!");
         std::string TmpVar =  "Tmp" + utostr(ResNo);
         emitCode("SDValue " + TmpVar + 
-                 " = CurDAG->getTargetConstantFP(cast<ConstantFPSDNode>(" + 
-                 Val + ")->getValueAPF(), cast<ConstantFPSDNode>(" + Val +
-                 ")->getValueType(0));");
+                 " = CurDAG->getTargetConstantFP(*cast<ConstantFPSDNode>(" + 
+                 Val + ")->getConstantFPValue(), cast<ConstantFPSDNode>(" +
+                 Val + ")->getValueType(0));");
         // Add Tmp<ResNo> to VariableMap, so that we don't multiply select this
         // value if used multiple times by this pattern result.
         Val = TmpVar;

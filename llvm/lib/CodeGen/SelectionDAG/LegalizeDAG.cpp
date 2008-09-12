@@ -442,7 +442,7 @@ static SDValue ExpandConstantFP(ConstantFPSDNode *CFP, bool UseCP,
   // an FP extending load is the same cost as a normal load (such as on the x87
   // fp stack or PPC FP unit).
   MVT VT = CFP->getValueType(0);
-  ConstantFP *LLVMC = ConstantFP::get(CFP->getValueAPF());
+  ConstantFP *LLVMC = const_cast<ConstantFP*>(CFP->getConstantFPValue());
   if (!UseCP) {
     if (VT!=MVT::f64 && VT!=MVT::f32)
       assert(0 && "Invalid type expansion");
@@ -4984,10 +4984,10 @@ SDValue SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
     for (unsigned i = 0, e = NumElems; i != e; ++i) {
       if (ConstantFPSDNode *V = 
           dyn_cast<ConstantFPSDNode>(Node->getOperand(i))) {
-        CV.push_back(ConstantFP::get(V->getValueAPF()));
+        CV.push_back(const_cast<ConstantFP *>(V->getConstantFPValue()));
       } else if (ConstantSDNode *V = 
                    dyn_cast<ConstantSDNode>(Node->getOperand(i))) {
-        CV.push_back(ConstantInt::get(V->getAPIntValue()));
+        CV.push_back(const_cast<ConstantInt *>(V->getConstantIntValue()));
       } else {
         assert(Node->getOperand(i).getOpcode() == ISD::UNDEF);
         const Type *OpNTy = 

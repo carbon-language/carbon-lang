@@ -4021,7 +4021,7 @@ SDValue DAGCombiner::visitFP_ROUND_INREG(SDNode *N) {
   
   // fold (fp_round_inreg c1fp) -> c1fp
   if (N0CFP) {
-    SDValue Round = DAG.getConstantFP(N0CFP->getValueAPF(), EVT);
+    SDValue Round = DAG.getConstantFP(*N0CFP->getConstantFPValue(), EVT);
     return DAG.getNode(ISD::FP_EXTEND, VT, Round);
   }
   return SDValue();

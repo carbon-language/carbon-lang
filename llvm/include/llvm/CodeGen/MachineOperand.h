@@ -86,7 +86,7 @@ private:
   /// Contents union - This contains the payload for the various operand types.
   union {
     MachineBasicBlock *MBB;   // For MO_MachineBasicBlock.
-    ConstantFP *CFP;          // For MO_FPImmediate.
+    const ConstantFP *CFP;    // For MO_FPImmediate.
     int64_t ImmVal;           // For MO_Immediate.
 
     struct {                  // For MO_Register.
@@ -252,7 +252,7 @@ public:
     return Contents.ImmVal;
   }
   
-  ConstantFP *getFPImm() const {
+  const ConstantFP *getFPImm() const {
     assert(isFPImmediate() && "Wrong MachineOperand accessor");
     return Contents.CFP;
   }
@@ -340,7 +340,7 @@ public:
     return Op;
   }
   
-  static MachineOperand CreateFPImm(ConstantFP *CFP) {
+  static MachineOperand CreateFPImm(const ConstantFP *CFP) {
     MachineOperand Op(MachineOperand::MO_FPImmediate);
     Op.Contents.CFP = CFP;
     return Op;

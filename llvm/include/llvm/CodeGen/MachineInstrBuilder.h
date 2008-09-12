@@ -52,7 +52,7 @@ public:
     return *this;
   }
 
-  const MachineInstrBuilder &addFPImm(ConstantFP *Val) const {
+  const MachineInstrBuilder &addFPImm(const ConstantFP *Val) const {
     MI->addOperand(MachineOperand::CreateFPImm(Val));
     return *this;
   }

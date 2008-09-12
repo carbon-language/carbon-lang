@@ -256,7 +256,7 @@ void ScheduleDAG::AddOperand(MachineInstr *MI, SDValue Op,
   } else if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op)) {
     MI->addOperand(MachineOperand::CreateImm(C->getZExtValue()));
   } else if (ConstantFPSDNode *F = dyn_cast<ConstantFPSDNode>(Op)) {
-    ConstantFP *CFP = ConstantFP::get(F->getValueAPF());
+    const ConstantFP *CFP = F->getConstantFPValue();
     MI->addOperand(MachineOperand::CreateFPImm(CFP));
   } else if (RegisterSDNode *R = dyn_cast<RegisterSDNode>(Op)) {
     MI->addOperand(MachineOperand::CreateReg(R->getReg(), false));

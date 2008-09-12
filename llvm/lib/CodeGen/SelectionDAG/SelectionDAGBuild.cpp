@@ -794,7 +794,7 @@ SDValue SelectionDAGLowering::getValue(const Value *V) {
     MVT VT = TLI.getValueType(V->getType(), true);
     
     if (ConstantInt *CI = dyn_cast<ConstantInt>(C))
-      return N = DAG.getConstant(CI->getValue(), VT);
+      return N = DAG.getConstant(*CI, VT);
 
     if (GlobalValue *GV = dyn_cast<GlobalValue>(C))
       return N = DAG.getGlobalAddress(GV, VT);
@@ -803,7 +803,7 @@ SDValue SelectionDAGLowering::getValue(const Value *V) {
       return N = DAG.getConstant(0, TLI.getPointerTy());
     
     if (ConstantFP *CFP = dyn_cast<ConstantFP>(C))
-      return N = DAG.getConstantFP(CFP->getValueAPF(), VT);
+      return N = DAG.getConstantFP(*CFP, VT);
     
     if (isa<UndefValue>(C) && !isa<VectorType>(V->getType()) &&
         !V->getType()->isAggregateType())

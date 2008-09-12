@@ -69,7 +69,7 @@ SelectionDAG::DAGUpdateListener::~DAGUpdateListener() {}
 /// As such, this method can be used to do an exact bit-for-bit comparison of
 /// two floating point values.
 bool ConstantFPSDNode::isExactlyValue(const APFloat& V) const {
-  return Value.bitwiseIsEqual(V);
+  return getValueAPF().bitwiseIsEqual(V);
 }
 
 bool ConstantFPSDNode::isValueValidForType(MVT VT,
@@ -367,11 +367,11 @@ static void AddNodeIDNode(FoldingSetNodeID &ID, const SDNode *N) {
     break;
   case ISD::TargetConstant:
   case ISD::Constant:
-    ID.Add(cast<ConstantSDNode>(N)->getAPIntValue());
+    ID.AddPointer(cast<ConstantSDNode>(N)->getConstantIntValue());
     break;
   case ISD::TargetConstantFP:
   case ISD::ConstantFP: {
-    ID.Add(cast<ConstantFPSDNode>(N)->getValueAPF());
+    ID.AddPointer(cast<ConstantFPSDNode>(N)->getConstantFPValue());
     break;
   }
   case ISD::TargetGlobalAddress:
@@ -861,6 +861,10 @@ SDValue SelectionDAG::getConstant(uint64_t Val, MVT VT, bool isT) {
 }
 
 SDValue SelectionDAG::getConstant(const APInt &Val, MVT VT, bool isT) {
+  return getConstant(*ConstantInt::get(Val), VT, isT);
+}
+
+SDValue SelectionDAG::getConstant(const ConstantInt &Val, MVT VT, bool isT) {
   assert(VT.isInteger() && "Cannot create FP integer constant!");
 
   MVT EltVT = VT.isVector() ? VT.getVectorElementType() : VT;
@@ -870,7 +874,7 @@ SDValue SelectionDAG::getConstant(const APInt &Val, MVT VT, bool isT) {
   unsigned Opc = isT ? ISD::TargetConstant : ISD::Constant;
   FoldingSetNodeID ID;
   AddNodeIDNode(ID, Opc, getVTList(EltVT), 0, 0);
-  ID.Add(Val);
+  ID.AddPointer(&Val);
   void *IP = 0;
   SDNode *N = NULL;
   if ((N = CSEMap.FindNodeOrInsertPos(ID, IP)))
@@ -878,7 +882,7 @@ SDValue SelectionDAG::getConstant(const APInt &Val, MVT VT, bool isT) {
       return SDValue(N, 0);
   if (!N) {
     N = NodeAllocator.Allocate<ConstantSDNode>();
-    new (N) ConstantSDNode(isT, Val, EltVT);
+    new (N) ConstantSDNode(isT, &Val, EltVT);
     CSEMap.InsertNode(N, IP);
     AllNodes.push_back(N);
   }
@@ -898,6 +902,10 @@ SDValue SelectionDAG::getIntPtrConstant(uint64_t Val, bool isTarget) {
 
 
 SDValue SelectionDAG::getConstantFP(const APFloat& V, MVT VT, bool isTarget) {
+  return getConstantFP(*ConstantFP::get(V), VT, isTarget);
+}
+
+SDValue SelectionDAG::getConstantFP(const ConstantFP& V, MVT VT, bool isTarget){
   assert(VT.isFloatingPoint() && "Cannot create integer FP constant!");
                                 
   MVT EltVT =
@@ -909,7 +917,7 @@ SDValue SelectionDAG::getConstantFP(const APFloat& V, MVT VT, bool isTarget) {
   unsigned Opc = isTarget ? ISD::TargetConstantFP : ISD::ConstantFP;
   FoldingSetNodeID ID;
   AddNodeIDNode(ID, Opc, getVTList(EltVT), 0, 0);
-  ID.Add(V);
+  ID.AddPointer(&V);
   void *IP = 0;
   SDNode *N = NULL;
   if ((N = CSEMap.FindNodeOrInsertPos(ID, IP)))
@@ -917,7 +925,7 @@ SDValue SelectionDAG::getConstantFP(const APFloat& V, MVT VT, bool isTarget) {
       return SDValue(N, 0);
   if (!N) {
     N = NodeAllocator.Allocate<ConstantFPSDNode>();
-    new (N) ConstantFPSDNode(isTarget, V, EltVT);
+    new (N) ConstantFPSDNode(isTarget, &V, EltVT);
     CSEMap.InsertNode(N, IP);
     AllNodes.push_back(N);
   }

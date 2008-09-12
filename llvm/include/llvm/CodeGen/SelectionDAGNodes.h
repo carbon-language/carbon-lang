@@ -20,11 +20,10 @@
 #define LLVM_CODEGEN_SELECTIONDAGNODES_H
 
 #include "llvm/Value.h"
+#include "llvm/Constants.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/iterator.h"
-#include "llvm/ADT/APFloat.h"
-#include "llvm/ADT/APInt.h"
 #include "llvm/ADT/ilist_node.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/ValueTypes.h"
@@ -1704,28 +1703,27 @@ class AtomicSDNode : public MemSDNode {
 };
 
 class ConstantSDNode : public SDNode {
-  APInt Value;
+  const ConstantInt *Value;
   virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
 protected:
   friend class SelectionDAG;
-  ConstantSDNode(bool isTarget, const APInt &val, MVT VT)
+  ConstantSDNode(bool isTarget, const ConstantInt *val, MVT VT)
     : SDNode(isTarget ? ISD::TargetConstant : ISD::Constant, getSDVTList(VT)),
       Value(val) {
   }
 public:
 
-  const APInt &getAPIntValue() const { return Value; }
-  uint64_t getZExtValue() const { return Value.getZExtValue(); }
+  const ConstantInt *getConstantIntValue() const { return Value; }
+  const APInt &getAPIntValue() const { return Value->getValue(); }
+  uint64_t getZExtValue() const { return Value->getZExtValue(); }
 
   int64_t getSignExtended() const {
     unsigned Bits = getValueType(0).getSizeInBits();
-    return ((int64_t)Value.getZExtValue() << (64-Bits)) >> (64-Bits);
+    return ((int64_t)getZExtValue() << (64-Bits)) >> (64-Bits);
   }
 
-  bool isNullValue() const { return Value == 0; }
-  bool isAllOnesValue() const {
-    return Value == getValueType(0).getIntegerVTBitMask();
-  }
+  bool isNullValue() const { return Value->isNullValue(); }
+  bool isAllOnesValue() const { return Value->isAllOnesValue(); }
 
   static bool classof(const ConstantSDNode *) { return true; }
   static bool classof(const SDNode *N) {
@@ -1735,17 +1733,18 @@ public:
 };
 
 class ConstantFPSDNode : public SDNode {
-  APFloat Value;
+  const ConstantFP *Value;
   virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
 protected:
   friend class SelectionDAG;
-  ConstantFPSDNode(bool isTarget, const APFloat& val, MVT VT)
+  ConstantFPSDNode(bool isTarget, const ConstantFP *val, MVT VT)
     : SDNode(isTarget ? ISD::TargetConstantFP : ISD::ConstantFP,
              getSDVTList(VT)), Value(val) {
   }
 public:
 
-  const APFloat& getValueAPF() const { return Value; }
+  const APFloat& getValueAPF() const { return Value->getValueAPF(); }
+  const ConstantFP *getConstantFPValue() const { return Value; }
 
   /// isExactlyValue - We don't rely on operator== working on double values, as
   /// it returns true for things that are clearly not equal, like -0.0 and 0.0.
@@ -1757,10 +1756,11 @@ public:
   /// have to duplicate its logic everywhere it's called.
   bool isExactlyValue(double V) const {
     // convert is not supported on this type
-    if (&Value.getSemantics() == &APFloat::PPCDoubleDouble)
+    if (&Value->getValueAPF().getSemantics() == &APFloat::PPCDoubleDouble)
       return false;
     APFloat Tmp(V);
-    Tmp.convert(Value.getSemantics(), APFloat::rmNearestTiesToEven);
+    Tmp.convert(Value->getValueAPF().getSemantics(),
+                APFloat::rmNearestTiesToEven);
     return isExactlyValue(Tmp);
   }
   bool isExactlyValue(const APFloat& V) const;
