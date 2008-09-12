@@ -49,18 +49,22 @@ namespace {
     /// function.
     std::map<GlobalValue*, unsigned> GlobalInfo;
 
+    /// MayReadAnyGlobal - May read global variables, but it is not known which.
+    bool MayReadAnyGlobal;
+
     unsigned getInfoForGlobal(GlobalValue *GV) const {
+      unsigned Effect = MayReadAnyGlobal ? AliasAnalysis::Ref : 0;
       std::map<GlobalValue*, unsigned>::const_iterator I = GlobalInfo.find(GV);
       if (I != GlobalInfo.end())
-        return I->second;
-      return 0;
+        Effect |= I->second;
+      return Effect;
     }
 
     /// FunctionEffect - Capture whether or not this function reads or writes to
     /// ANY memory.  If not, we can do a lot of aggressive analysis on it.
     unsigned FunctionEffect;
 
-    FunctionRecord() : FunctionEffect(0) {}
+    FunctionRecord() : MayReadAnyGlobal (false), FunctionEffect(0) {}
   };
 
   /// GlobalsModRef - The actual analysis pass.
@@ -69,10 +73,6 @@ namespace {
     /// NonAddressTakenGlobals - The globals that do not have their addresses
     /// taken.
     std::set<GlobalValue*> NonAddressTakenGlobals;
-
-    /// ReadGlobals - The globals without addresses taken that are read by
-    /// some function.
-    std::set<GlobalValue*> ReadGlobals;
 
     /// IndirectGlobals - The memory pointed to by this global is known to be
     /// 'owned' by the global.
@@ -202,10 +202,6 @@ void GlobalsModRef::AnalyzeGlobals(Module &M) {
       if (!AnalyzeUsesOfPointer(I, Readers, Writers)) {
         // Remember that we are tracking this global, and the mod/ref fns
         NonAddressTakenGlobals.insert(I);
-
-        if (!Readers.empty())
-          // Some function read this global - remember that.
-          ReadGlobals.insert(I);
 
         for (unsigned i = 0, e = Readers.size(); i != e; ++i)
           FunctionInfo[Readers[i]].GlobalInfo[I] |= Ref;
@@ -384,13 +380,10 @@ void GlobalsModRef::AnalyzeCallGraph(CallGraph &CG, Module &M) {
           // Can't do better than that!
         } else if (F->onlyReadsMemory()) {
           FunctionEffect |= Ref;
-          if (!F->isIntrinsic()) {
+          if (!F->isIntrinsic())
             // This function might call back into the module and read a global -
-            // mark all globals read somewhere as being read by this function.
-            for (std::set<GlobalValue*>::iterator GI = ReadGlobals.begin(),
-                 E = ReadGlobals.end(); GI != E; ++GI)
-              FR.GlobalInfo[*GI] |= Ref;
-          }
+            // consider every global as possibly being read by this function.
+            FR.MayReadAnyGlobal = true;
         } else {
           FunctionEffect |= ModRef;
           // Can't say anything useful unless it's an intrinsic - they don't
@@ -412,6 +405,7 @@ void GlobalsModRef::AnalyzeCallGraph(CallGraph &CG, Module &M) {
                    CalleeFR->GlobalInfo.begin(), E = CalleeFR->GlobalInfo.end();
                  GI != E; ++GI)
               FR.GlobalInfo[GI->first] |= GI->second;
+            FR.MayReadAnyGlobal |= CalleeFR->MayReadAnyGlobal;
           } else {
             // Can't say anything about it.  However, if it is inside our SCC,
             // then nothing needs to be done.
