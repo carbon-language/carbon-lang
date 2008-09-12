@@ -541,20 +541,34 @@ SimpleRegisterCoalescing::UpdateRegDefsUses(unsigned SrcReg, unsigned DstReg,
 
       O.setReg(UseDstReg);
       O.setSubReg(0);
-    } else {
-      // Sub-register indexes goes from small to large. e.g.
-      // RAX: 1 -> AL, 2 -> AX, 3 -> EAX
-      // EAX: 1 -> AL, 2 -> AX
-      // So RAX's sub-register 2 is AX, RAX's sub-regsiter 3 is EAX, whose
-      // sub-register 2 is also AX.
-      if (SubIdx && OldSubIdx && SubIdx != OldSubIdx)
-        assert(OldSubIdx < SubIdx && "Conflicting sub-register index!");
-      else if (SubIdx)
-        O.setSubReg(SubIdx);
-      // Remove would-be duplicated kill marker.
-      if (O.isKill() && UseMI->killsRegister(DstReg))
-        O.setIsKill(false);
-      O.setReg(DstReg);
+      continue;
+    }
+
+    // Sub-register indexes goes from small to large. e.g.
+    // RAX: 1 -> AL, 2 -> AX, 3 -> EAX
+    // EAX: 1 -> AL, 2 -> AX
+    // So RAX's sub-register 2 is AX, RAX's sub-regsiter 3 is EAX, whose
+    // sub-register 2 is also AX.
+    if (SubIdx && OldSubIdx && SubIdx != OldSubIdx)
+      assert(OldSubIdx < SubIdx && "Conflicting sub-register index!");
+    else if (SubIdx)
+      O.setSubReg(SubIdx);
+    // Remove would-be duplicated kill marker.
+    if (O.isKill() && UseMI->killsRegister(DstReg))
+      O.setIsKill(false);
+    O.setReg(DstReg);
+
+    // After updating the operand, check if the machine instruction has
+    // become a copy. If so, update its val# information.
+    const TargetInstrDesc &TID = UseMI->getDesc();
+    unsigned CopySrcReg, CopyDstReg;
+    if (TID.getNumDefs() == 1 && TID.getNumOperands() > 2 &&
+        tii_->isMoveInstr(*UseMI, CopySrcReg, CopyDstReg) &&
+        CopySrcReg != CopyDstReg) {
+      LiveInterval &LI = li_->getInterval(CopyDstReg);
+      unsigned DefIdx = li_->getDefIndex(li_->getInstructionIndex(UseMI));
+      const LiveRange *DLR = LI.getLiveRangeContaining(DefIdx);
+      DLR->valno->copy = UseMI;
     }
   }
 }
