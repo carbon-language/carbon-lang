@@ -56,24 +56,27 @@ namespace {
 
   private:
     unsigned getAddrModeNoneInstrBinary(const MachineInstr &MI,
-                                        const TargetInstrDesc &Desc,
+                                        const TargetInstrDesc &TID,
                                         unsigned Binary);
 
     unsigned getMachineSoRegOpValue(const MachineInstr &MI,
-                                    const TargetInstrDesc &Desc,
+                                    const TargetInstrDesc &TID,
                                     unsigned OpIdx);
 
+    unsigned getAddrMode1SBit(const MachineInstr &MI,
+                              const TargetInstrDesc &TID) const;
+
     unsigned getAddrMode1InstrBinary(const MachineInstr &MI,
-                                     const TargetInstrDesc &Desc,
+                                     const TargetInstrDesc &TID,
                                      unsigned Binary);
     unsigned getAddrMode2InstrBinary(const MachineInstr &MI,
-                                     const TargetInstrDesc &Desc,
+                                     const TargetInstrDesc &TID,
                                      unsigned Binary);
     unsigned getAddrMode3InstrBinary(const MachineInstr &MI,
-                                     const TargetInstrDesc &Desc,
+                                     const TargetInstrDesc &TID,
                                      unsigned Binary);
     unsigned getAddrMode4InstrBinary(const MachineInstr &MI,
-                                     const TargetInstrDesc &Desc,
+                                     const TargetInstrDesc &TID,
                                      unsigned Binary);
 
     /// getInstrBinary - Return binary encoding for the specified
@@ -232,9 +235,9 @@ void ARMCodeEmitter::emitInstruction(const MachineInstr &MI) {
 }
 
 unsigned ARMCodeEmitter::getAddrModeNoneInstrBinary(const MachineInstr &MI,
-                                                    const TargetInstrDesc &Desc,
+                                                    const TargetInstrDesc &TID,
                                                     unsigned Binary) {
-  switch (Desc.TSFlags & ARMII::FormMask) {
+  switch (TID.TSFlags & ARMII::FormMask) {
   default:
     assert(0 && "Unknown instruction subtype!");
     break;
@@ -243,7 +246,7 @@ unsigned ARMCodeEmitter::getAddrModeNoneInstrBinary(const MachineInstr &MI,
     Binary |= getMachineOpValue(MI, 0);
 
     // if it is a conditional branch, set cond field
-    if (Desc.Opcode == ARM::Bcc) {
+    if (TID.Opcode == ARM::Bcc) {
       Binary &= 0x0FFFFFFF;                      // clear conditional field
       Binary |= getMachineOpValue(MI, 1) << 28;  // set conditional field
     }
@@ -252,7 +255,7 @@ unsigned ARMCodeEmitter::getAddrModeNoneInstrBinary(const MachineInstr &MI,
   case ARMII::BranchMisc: {
     // Set bit[19:8] to 0xFFF
     Binary |= 0xfff << 8;
-    if (Desc.Opcode == ARM::BX_RET)
+    if (TID.Opcode == ARM::BX_RET)
       Binary |= 0xe; // the return register is LR
     else 
       // otherwise, set the return register
@@ -265,7 +268,7 @@ unsigned ARMCodeEmitter::getAddrModeNoneInstrBinary(const MachineInstr &MI,
 }
 
 unsigned ARMCodeEmitter::getMachineSoRegOpValue(const MachineInstr &MI,
-                                                const TargetInstrDesc &Desc,
+                                                const TargetInstrDesc &TID,
                                                 unsigned OpIdx) {
   // Set last operand (register Rm)
   unsigned Binary = getMachineOpValue(MI, OpIdx);
@@ -322,14 +325,27 @@ unsigned ARMCodeEmitter::getMachineSoRegOpValue(const MachineInstr &MI,
   return Binary | ARM_AM::getSORegOffset(MO2.getImm()) << 7;
 }
 
+unsigned ARMCodeEmitter::getAddrMode1SBit(const MachineInstr &MI,
+                                          const TargetInstrDesc &TID) const {
+  for (unsigned i = MI.getNumOperands(), e = TID.getNumOperands(); i != e; --i){
+    const MachineOperand &MO = MI.getOperand(i-1);
+    if (MO.isRegister() && MO.isDef() && MO.getReg() == ARM::CPSR)
+      return 1 << ARMII::S_BitShift;
+  }
+  return 0;
+}
+
 unsigned ARMCodeEmitter::getAddrMode1InstrBinary(const MachineInstr &MI,
-                                                 const TargetInstrDesc &Desc,
+                                                 const TargetInstrDesc &TID,
                                                  unsigned Binary) {
   if (MI.getOpcode() == ARM::MOVi2pieces)
     // FIXME.
     abort();
 
-  unsigned Format = Desc.TSFlags & ARMII::FormMask;
+  // Encode S bit if MI modifies CPSR.
+  Binary |= getAddrMode1SBit(MI, TID);
+
+  unsigned Format = TID.TSFlags & ARMII::FormMask;
   // FIXME: Consolidate into a single bit.
   bool isUnary = (Format == ARMII::DPRdMisc  ||
                   Format == ARMII::DPRdIm    ||
@@ -342,7 +358,7 @@ unsigned ARMCodeEmitter::getAddrMode1InstrBinary(const MachineInstr &MI,
   unsigned OpIdx = 0;
 
   // Encode register def if there is one.
-  unsigned NumDefs = Desc.getNumDefs();
+  unsigned NumDefs = TID.getNumDefs();
   if (NumDefs) {
     Binary |= getMachineOpValue(MI, OpIdx) << ARMII::RegRdShift;
     ++OpIdx;
@@ -355,9 +371,9 @@ unsigned ARMCodeEmitter::getAddrMode1InstrBinary(const MachineInstr &MI,
   }
 
   // Encode shifter operand.
-  if (Desc.getNumOperands() - OpIdx > 1)
+  if (TID.getNumOperands() - OpIdx > 1)
     // Encode SoReg.
-    return Binary | getMachineSoRegOpValue(MI, Desc, OpIdx);
+    return Binary | getMachineSoRegOpValue(MI, TID, OpIdx);
 
   const MachineOperand &MO = MI.getOperand(OpIdx);
   if (MO.isRegister())
@@ -376,7 +392,7 @@ unsigned ARMCodeEmitter::getAddrMode1InstrBinary(const MachineInstr &MI,
 }
 
 unsigned ARMCodeEmitter::getAddrMode2InstrBinary(const MachineInstr &MI,
-                                                 const TargetInstrDesc &Desc,
+                                                 const TargetInstrDesc &TID,
                                                  unsigned Binary) {
   // Set first operand
   Binary |= getMachineOpValue(MI, 0) << ARMII::RegRdShift;
@@ -414,7 +430,7 @@ unsigned ARMCodeEmitter::getAddrMode2InstrBinary(const MachineInstr &MI,
 }
 
 unsigned ARMCodeEmitter::getAddrMode3InstrBinary(const MachineInstr &MI,
-                                                 const TargetInstrDesc &Desc,
+                                                 const TargetInstrDesc &TID,
                                                  unsigned Binary) {
   // Set first operand
   Binary |= getMachineOpValue(MI, 0) << ARMII::RegRdShift;
@@ -448,7 +464,7 @@ unsigned ARMCodeEmitter::getAddrMode3InstrBinary(const MachineInstr &MI,
 }
 
 unsigned ARMCodeEmitter::getAddrMode4InstrBinary(const MachineInstr &MI,
-                                                 const TargetInstrDesc &Desc,
+                                                 const TargetInstrDesc &TID,
                                                  unsigned Binary) {
   // Set first operand
   Binary |= getMachineOpValue(MI, 0) << ARMII::RegRnShift;
@@ -492,18 +508,18 @@ unsigned ARMCodeEmitter::getInstrBinary(const MachineInstr &MI) {
   // Part of binary is determined by TableGn.
   unsigned Binary = getBinaryCodeForInstr(MI);
 
-  const TargetInstrDesc &Desc = MI.getDesc();
-  switch (Desc.TSFlags & ARMII::AddrModeMask) {
+  const TargetInstrDesc &TID = MI.getDesc();
+  switch (TID.TSFlags & ARMII::AddrModeMask) {
   case ARMII::AddrModeNone:
-    return getAddrModeNoneInstrBinary(MI, Desc, Binary);
+    return getAddrModeNoneInstrBinary(MI, TID, Binary);
   case ARMII::AddrMode1:
-    return getAddrMode1InstrBinary(MI, Desc, Binary);
+    return getAddrMode1InstrBinary(MI, TID, Binary);
   case ARMII::AddrMode2:
-    return getAddrMode2InstrBinary(MI, Desc, Binary);
+    return getAddrMode2InstrBinary(MI, TID, Binary);
   case ARMII::AddrMode3:
-    return getAddrMode3InstrBinary(MI, Desc, Binary);
+    return getAddrMode3InstrBinary(MI, TID, Binary);
   case ARMII::AddrMode4:
-    return getAddrMode4InstrBinary(MI, Desc, Binary);
+    return getAddrMode4InstrBinary(MI, TID, Binary);
   }
 
   abort();

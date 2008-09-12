@@ -218,7 +218,6 @@ class AsI1<bits<4> opcod, dag oops, dag iops, Format f, string opc,
            string asm, list<dag> pattern>
   : sI<opcod, oops, iops, AddrMode1, Size4Bytes, IndexModeNone, f, opc,
        asm, "", pattern> {
-  let Inst{20}    = 1;
   let Inst{21-24} = opcod;
   let Inst{26-27} = 0;
 }
@@ -226,7 +225,6 @@ class AXI1<bits<4> opcod, dag oops, dag iops, Format f, string asm,
            list<dag> pattern>
   : XI<opcod, oops, iops, AddrMode1, Size4Bytes, IndexModeNone, f, asm,
        "", pattern> {
-  let Inst{20}    = 1;
   let Inst{21-24} = opcod;
   let Inst{26-27} = 0;
 }
