@@ -10,7 +10,7 @@
 //===----------------------------------------------------------------------===//
 
 def LO16 : SDNodeXForm<imm, [{
-  unsigned val = N->getValue();
+  unsigned val = N->getZExtValue();
   // Transformation function: get the low 16 bits.
   return getI32Imm(val & 0xffff);
 }]>;
@@ -33,12 +33,12 @@ def LO16_vec : SDNodeXForm<scalar_to_vector, [{
   
   assert(OpVal.getNode() != 0 && "LO16_vec did not locate a <defined> node");
   ConstantSDNode *CN = cast<ConstantSDNode>(OpVal);
-  return getI32Imm((unsigned)CN->getValue() & 0xffff);
+  return getI32Imm((unsigned)CN->getZExtValue() & 0xffff);
 }]>;
 
 // Transform an immediate, returning the high 16 bits shifted down:
 def HI16 : SDNodeXForm<imm, [{
-  return getI32Imm((unsigned)N->getValue() >> 16);
+  return getI32Imm((unsigned)N->getZExtValue() >> 16);
 }]>;
 
 // Transformation function: shift the high 16 bit immediate from a build_vector
@@ -59,7 +59,7 @@ def HI16_vec : SDNodeXForm<scalar_to_vector, [{
   
   assert(OpVal.getNode() != 0 && "HI16_vec did not locate a <defined> node");
   ConstantSDNode *CN = cast<ConstantSDNode>(OpVal);
-  return getI32Imm((unsigned)CN->getValue() >> 16);
+  return getI32Imm((unsigned)CN->getZExtValue() >> 16);
 }]>;
 
 // simm7 predicate - True if the immediate fits in an 7-bit signed
@@ -72,7 +72,7 @@ def simm7: PatLeaf<(imm), [{
 // uimm7 predicate - True if the immediate fits in an 7-bit unsigned
 // field.
 def uimm7: PatLeaf<(imm), [{
-  return (N->getValue() <= 0x7f);
+  return (N->getZExtValue() <= 0x7f);
 }]>;
 
 // immSExt8 predicate - True if the immediate fits in an 8-bit sign extended
@@ -84,7 +84,7 @@ def immSExt8  : PatLeaf<(imm), [{
 
 // immU8: immediate, unsigned 8-bit quantity
 def immU8 : PatLeaf<(imm), [{
-  return (N->getValue() <= 0xff);
+  return (N->getZExtValue() <= 0xff);
 }]>;
 
 // i64ImmSExt10 predicate - True if the i64 immediate fits in a 10-bit sign
@@ -127,17 +127,17 @@ def immSExt16  : PatLeaf<(imm), [{
 def immZExt16  : PatLeaf<(imm), [{
   // immZExt16 predicate - True if the immediate fits in a 16-bit zero extended
   // field.
-  return (uint64_t)N->getValue() == (unsigned short)N->getValue();
+  return (uint64_t)N->getZExtValue() == (unsigned short)N->getZExtValue();
 }], LO16>;
 
 def immU16 : PatLeaf<(imm), [{
   // immU16 predicate- True if the immediate fits into a 16-bit unsigned field.
-  return (uint64_t)N->getValue() == (N->getValue() & 0xffff);
+  return (uint64_t)N->getZExtValue() == (N->getZExtValue() & 0xffff);
 }]>;
 
 def imm18  : PatLeaf<(imm), [{
   // imm18 predicate: True if the immediate fits into an 18-bit unsigned field.
-  int Value = (int) N->getValue();
+  int Value = (int) N->getZExtValue();
   return ((Value & ((1 << 19) - 1)) == Value);
 }]>;
 
@@ -145,7 +145,7 @@ def lo16 : PatLeaf<(imm), [{
   // lo16 predicate - returns true if the immediate has all zeros in the
   // low order bits and is a 32-bit constant:
   if (N->getValueType(0) == MVT::i32) {
-    uint32_t val = N->getValue();
+    uint32_t val = N->getZExtValue();
     return ((val & 0x0000ffff) == val);
   }
 
@@ -156,10 +156,10 @@ def hi16 : PatLeaf<(imm), [{
   // hi16 predicate - returns true if the immediate has all zeros in the
   // low order bits and is a 32-bit constant:
   if (N->getValueType(0) == MVT::i32) {
-    uint32_t val = uint32_t(N->getValue());
+    uint32_t val = uint32_t(N->getZExtValue());
     return ((val & 0xffff0000) == val);
   } else if (N->getValueType(0) == MVT::i64) {
-    uint64_t val = N->getValue();
+    uint64_t val = N->getZExtValue();
     return ((val & 0xffff0000ULL) == val);
   }
 
@@ -169,7 +169,7 @@ def hi16 : PatLeaf<(imm), [{
 def bitshift : PatLeaf<(imm), [{
   // bitshift predicate - returns true if 0 < imm <= 7 for SHLQBII
   // (shift left quadword by bits immediate)
-  int64_t Val = N->getValue();
+  int64_t Val = N->getZExtValue();
   return (Val > 0 && Val <= 7);
 }]>;
 

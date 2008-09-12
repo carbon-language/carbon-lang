@@ -121,7 +121,7 @@ std::string DOTGraphTraits<SelectionDAG*>::getNodeLabel(const SDNode *Node,
   std::string Op = Node->getOperationName(G);
 
   if (const ConstantSDNode *CSDN = dyn_cast<ConstantSDNode>(Node)) {
-    Op += ": " + utostr(CSDN->getValue());
+    Op += ": " + utostr(CSDN->getZExtValue());
   } else if (const ConstantFPSDNode *CSDN = dyn_cast<ConstantFPSDNode>(Node)) {
     Op += ": " + ftostr(CSDN->getValueAPF());
   } else if (const GlobalAddressSDNode *GADN =

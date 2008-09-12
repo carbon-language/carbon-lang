@@ -421,7 +421,8 @@ LowerBRCOND(SDValue Op, SelectionDAG &DAG)
   
   SDValue CondRes = Op.getOperand(1);
   SDValue CCNode  = CondRes.getOperand(2);
-  Mips::CondCode CC = (Mips::CondCode)cast<ConstantSDNode>(CCNode)->getValue();
+  Mips::CondCode CC =
+    (Mips::CondCode)cast<ConstantSDNode>(CCNode)->getZExtValue();
   SDValue BrCode = DAG.getConstant(GetFPBranchCodeFromCond(CC), MVT::i32); 
 
   return DAG.getNode(MipsISD::FPBrcond, Op.getValueType(), Chain, BrCode, 
@@ -586,7 +587,7 @@ LowerCALL(SDValue Op, SelectionDAG &DAG)
 
   SDValue Chain = Op.getOperand(0);
   SDValue Callee = Op.getOperand(4);
-  bool isVarArg = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
+  bool isVarArg = cast<ConstantSDNode>(Op.getOperand(2))->getZExtValue() != 0;
   unsigned CC = DAG.getMachineFunction().getFunction()->getCallingConv();
 
   MachineFrameInfo *MFI = MF.getFrameInfo();
@@ -762,7 +763,8 @@ SDNode *MipsTargetLowering::
 LowerCallResult(SDValue Chain, SDValue InFlag, SDNode *TheCall, 
         unsigned CallingConv, SelectionDAG &DAG) {
   
-  bool isVarArg = cast<ConstantSDNode>(TheCall->getOperand(2))->getValue() != 0;
+  bool isVarArg =
+    cast<ConstantSDNode>(TheCall->getOperand(2))->getZExtValue() != 0;
 
   // Assign locations to each value returned by this call.
   SmallVector<CCValAssign, 16> RVLocs;
@@ -802,7 +804,7 @@ LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG)
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
 
-  bool isVarArg = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
+  bool isVarArg = cast<ConstantSDNode>(Op.getOperand(2))->getZExtValue() != 0;
   unsigned CC = DAG.getMachineFunction().getFunction()->getCallingConv();
 
   unsigned StackReg = MF.getTarget().getRegisterInfo()->getFrameRegister(MF);

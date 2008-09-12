@@ -390,7 +390,8 @@ PIC16TargetLowering::LowerADDSUB(SDNode *N, SelectionDAG &DAG,
           InOp[1].getOpcode() == ISD::Constant) {
         ConstantSDNode *CST0 = dyn_cast<ConstantSDNode>(InOp[0]);
         ConstantSDNode *CST1 = dyn_cast<ConstantSDNode>(InOp[1]);
-        return DAG.getConstant(CST0->getValue() + CST1->getValue(), MVT::i16);
+        return DAG.getConstant(CST0->getZExtValue() + CST1->getZExtValue(),
+                               MVT::i16);
       }
       break;
 
@@ -406,7 +407,8 @@ PIC16TargetLowering::LowerADDSUB(SDNode *N, SelectionDAG &DAG,
           InOp[1].getOpcode() == ISD::Constant) {
         ConstantSDNode *CST0 = dyn_cast<ConstantSDNode>(InOp[0]);
         ConstantSDNode *CST1 = dyn_cast<ConstantSDNode>(InOp[1]);
-        return DAG.getConstant(CST0->getValue() - CST1->getValue(), MVT::i16);
+        return DAG.getConstant(CST0->getZExtValue() - CST1->getZExtValue(),
+                               MVT::i16);
       }
       break;
 
@@ -432,8 +434,8 @@ PIC16TargetLowering::LowerADDSUB(SDNode *N, SelectionDAG &DAG,
     else if (InOp[i].getOpcode() == ISD::Constant) {
       changed = true;
       ConstantSDNode *CST = dyn_cast<ConstantSDNode>(InOp[i]);
-      LoOps[i] = DAG.getConstant(CST->getValue() & 0xFF, MVT::i8);
-      HiOps[i] = DAG.getConstant(CST->getValue() >> 8, MVT::i8);
+      LoOps[i] = DAG.getConstant(CST->getZExtValue() & 0xFF, MVT::i8);
+      HiOps[i] = DAG.getConstant(CST->getZExtValue() >> 8, MVT::i8);
     }
     else if (InOp[i].getOpcode() == PIC16ISD::Package) {
       LoOps[i] = InOp[i].getOperand(0);
@@ -670,7 +672,7 @@ SDValue PIC16TargetLowering::PerformDAGCombine(SDNode *N,
         //create direct addressing a = CONST
         CST = dyn_cast<ConstantSDNode>(Src);
         for (i = 0; i < NUM_STORES; i++) {
-          SDValue CNST = DAG.getConstant(CST->getValue() >> i*8, MVT::i8);
+          SDValue CNST = DAG.getConstant(CST->getZExtValue() >> i*8, MVT::i8);
           SDValue ADN = DAG.getNode(ISD::ADD, MVT::i16, Dest,
                                       DAG.getConstant(DstOff, MVT::i16));
           Stores[i] = DAG.getStore(Chain, CNST, ADN, NULL, 0);
@@ -690,7 +692,7 @@ SDValue PIC16TargetLowering::PerformDAGCombine(SDNode *N,
         Load = DAG.getLoad(MVT::i16, Chain,Dest.getOperand(1), NULL, 0);
         Chain = Load.getValue(1);
         for (i=0; i<NUM_STORES; i++) {
-          SDValue CNST = DAG.getConstant(CST->getValue() >> i*8, MVT::i8);
+          SDValue CNST = DAG.getConstant(CST->getZExtValue() >> i*8, MVT::i8);
           Stores[i] = DAG.getStore(Chain, CNST, Load, NULL, 0);
           Chain = Stores[i];
           DstOff += 1;

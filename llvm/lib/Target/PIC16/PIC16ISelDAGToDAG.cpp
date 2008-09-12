@@ -141,10 +141,11 @@ SelectDirectAM (SDValue Op, SDValue N, SDValue &Base, SDValue &Offset)
 
   if (N.getOpcode() == ISD::ADD) {
     GC = dyn_cast<ConstantSDNode>(N.getOperand(1));
-    Offset = CurDAG->getTargetConstant((unsigned char)GC->getValue(), MVT::i8);
+    Offset = CurDAG->getTargetConstant((unsigned char)GC->getZExtValue(),
+                                       MVT::i8);
     if ((GA = dyn_cast<GlobalAddressSDNode>(N.getOperand(0)))) {
       Base = CurDAG->getTargetGlobalAddress(GA->getGlobal(), MVT::i16, 
-                                            GC->getValue());
+                                            GC->getZExtValue());
       return true;
     }
     else if (FrameIndexSDNode *FIN 

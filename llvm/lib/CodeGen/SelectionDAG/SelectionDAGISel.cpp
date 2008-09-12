@@ -406,7 +406,7 @@ static void CheckDAGForTailCallsAndFixThem(SelectionDAG &DAG,
       SDValue OpRet(Ret, 0);
       SDValue OpCall(BI, 0);
       bool isMarkedTailCall = 
-        cast<ConstantSDNode>(OpCall.getOperand(3))->getValue() != 0;
+        cast<ConstantSDNode>(OpCall.getOperand(3))->getZExtValue() != 0;
       // If CALL node has tail call attribute set to true and the call is not
       // eligible (no RET or the target rejects) the attribute is fixed to
       // false. The TargetLowering::IsEligibleForTailCallOptimization function
@@ -1122,7 +1122,7 @@ SelectInlineAsmMemoryOperands(std::vector<SDValue> &Ops) {
     --e;  // Don't process a flag operand if it is here.
   
   while (i != e) {
-    unsigned Flags = cast<ConstantSDNode>(InOps[i])->getValue();
+    unsigned Flags = cast<ConstantSDNode>(InOps[i])->getZExtValue();
     if ((Flags & 7) != 4 /*MEM*/) {
       // Just skip over this operand, copying the operands verbatim.
       Ops.insert(Ops.end(), InOps.begin()+i, InOps.begin()+i+(Flags >> 3) + 1);

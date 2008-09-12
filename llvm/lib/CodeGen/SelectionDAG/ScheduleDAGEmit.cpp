@@ -254,7 +254,7 @@ void ScheduleDAG::AddOperand(MachineInstr *MI, SDValue Op,
     }
 #endif
   } else if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op)) {
-    MI->addOperand(MachineOperand::CreateImm(C->getValue()));
+    MI->addOperand(MachineOperand::CreateImm(C->getZExtValue()));
   } else if (ConstantFPSDNode *F = dyn_cast<ConstantFPSDNode>(Op)) {
     ConstantFP *CFP = ConstantFP::get(F->getValueAPF());
     MI->addOperand(MachineOperand::CreateFPImm(CFP));
@@ -363,7 +363,7 @@ void ScheduleDAG::EmitSubregNode(SDNode *Node,
   }
   
   if (Opc == TargetInstrInfo::EXTRACT_SUBREG) {
-    unsigned SubIdx = cast<ConstantSDNode>(Node->getOperand(1))->getValue();
+    unsigned SubIdx = cast<ConstantSDNode>(Node->getOperand(1))->getZExtValue();
 
     // Create the extract_subreg machine instruction.
     MachineInstr *MI = BuildMI(*MF, TII->get(TargetInstrInfo::EXTRACT_SUBREG));
@@ -397,7 +397,7 @@ void ScheduleDAG::EmitSubregNode(SDNode *Node,
     SDValue N1 = Node->getOperand(1);
     SDValue N2 = Node->getOperand(2);
     unsigned SubReg = getVR(N1, VRBaseMap);
-    unsigned SubIdx = cast<ConstantSDNode>(N2)->getValue();
+    unsigned SubIdx = cast<ConstantSDNode>(N2)->getZExtValue();
     
       
     // Figure out the register class to create for the destreg.
@@ -419,7 +419,7 @@ void ScheduleDAG::EmitSubregNode(SDNode *Node,
     // is an implicit value immediate, otherwise it's a register
     if (Opc == TargetInstrInfo::SUBREG_TO_REG) {
       const ConstantSDNode *SD = cast<ConstantSDNode>(N0);
-      MI->addOperand(MachineOperand::CreateImm(SD->getValue()));
+      MI->addOperand(MachineOperand::CreateImm(SD->getZExtValue()));
     } else
       AddOperand(MI, N0, 0, 0, VRBaseMap);
     // Add the subregster being inserted
@@ -577,7 +577,8 @@ void ScheduleDAG::EmitNode(SDNode *Node, bool IsClone,
       
     // Add all of the operand registers to the instruction.
     for (unsigned i = 2; i != NumOps;) {
-      unsigned Flags = cast<ConstantSDNode>(Node->getOperand(i))->getValue();
+      unsigned Flags =
+        cast<ConstantSDNode>(Node->getOperand(i))->getZExtValue();
       unsigned NumVals = Flags >> 3;
         
       MI->addOperand(MachineOperand::CreateImm(Flags));

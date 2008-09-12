@@ -3601,7 +3601,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     // lower memmove as memcpy.
     uint64_t Size = -1ULL;
     if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op3))
-      Size = C->getValue();
+      Size = C->getZExtValue();
     if (AA->alias(I.getOperand(1), Size, I.getOperand(2), Size) ==
         AliasAnalysis::NoAlias) {
       DAG.setRoot(DAG.getMemcpy(getRoot(), Op1, Op2, Op3, Align, false,
@@ -4957,7 +4957,7 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
         for (; OperandNo; --OperandNo) {
           // Advance to the next operand.
           unsigned NumOps = 
-            cast<ConstantSDNode>(AsmNodeOperands[CurOp])->getValue();
+            cast<ConstantSDNode>(AsmNodeOperands[CurOp])->getZExtValue();
           assert(((NumOps & 7) == 2 /*REGDEF*/ ||
                   (NumOps & 7) == 4 /*MEM*/) &&
                  "Skipped past definitions?");
@@ -4965,7 +4965,7 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
         }
 
         unsigned NumOps = 
-          cast<ConstantSDNode>(AsmNodeOperands[CurOp])->getValue();
+          cast<ConstantSDNode>(AsmNodeOperands[CurOp])->getZExtValue();
         if ((NumOps & 7) == 2 /*REGDEF*/) {
           // Add NumOps>>3 registers to MatchedRegs.
           RegsForValue MatchedRegs;

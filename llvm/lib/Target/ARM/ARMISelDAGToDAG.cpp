@@ -104,7 +104,7 @@ bool ARMDAGToDAGISel::SelectAddrMode2(SDValue Op, SDValue N,
   if (N.getOpcode() == ISD::MUL) {
     if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
       // X * [3,5,9] -> X + X * [2,4,8] etc.
-      int RHSC = (int)RHS->getValue();
+      int RHSC = (int)RHS->getZExtValue();
       if (RHSC & 1) {
         RHSC = RHSC & ~1;
         ARM_AM::AddrOpc AddSub = ARM_AM::add;
@@ -142,7 +142,7 @@ bool ARMDAGToDAGISel::SelectAddrMode2(SDValue Op, SDValue N,
   // Match simple R +/- imm12 operands.
   if (N.getOpcode() == ISD::ADD)
     if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
-      int RHSC = (int)RHS->getValue();
+      int RHSC = (int)RHS->getZExtValue();
       if ((RHSC >= 0 && RHSC < 0x1000) ||
           (RHSC < 0 && RHSC > -0x1000)) { // 12 bits.
         Base = N.getOperand(0);
@@ -177,7 +177,7 @@ bool ARMDAGToDAGISel::SelectAddrMode2(SDValue Op, SDValue N,
     // it.
     if (ConstantSDNode *Sh =
            dyn_cast<ConstantSDNode>(N.getOperand(1).getOperand(1))) {
-      ShAmt = Sh->getValue();
+      ShAmt = Sh->getZExtValue();
       Offset = N.getOperand(1).getOperand(0);
     } else {
       ShOpcVal = ARM_AM::no_shift;
@@ -192,7 +192,7 @@ bool ARMDAGToDAGISel::SelectAddrMode2(SDValue Op, SDValue N,
       // fold it.
       if (ConstantSDNode *Sh =
           dyn_cast<ConstantSDNode>(N.getOperand(0).getOperand(1))) {
-        ShAmt = Sh->getValue();
+        ShAmt = Sh->getZExtValue();
         Offset = N.getOperand(0).getOperand(0);
         Base = N.getOperand(1);
       } else {
@@ -215,7 +215,7 @@ bool ARMDAGToDAGISel::SelectAddrMode2Offset(SDValue Op, SDValue N,
   ARM_AM::AddrOpc AddSub = (AM == ISD::PRE_INC || AM == ISD::POST_INC)
     ? ARM_AM::add : ARM_AM::sub;
   if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(N)) {
-    int Val = (int)C->getValue();
+    int Val = (int)C->getZExtValue();
     if (Val >= 0 && Val < 0x1000) { // 12 bits.
       Offset = CurDAG->getRegister(0, MVT::i32);
       Opc = CurDAG->getTargetConstant(ARM_AM::getAM2Opc(AddSub, Val,
@@ -232,7 +232,7 @@ bool ARMDAGToDAGISel::SelectAddrMode2Offset(SDValue Op, SDValue N,
     // Check to see if the RHS of the shift is a constant, if not, we can't fold
     // it.
     if (ConstantSDNode *Sh = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
-      ShAmt = Sh->getValue();
+      ShAmt = Sh->getZExtValue();
       Offset = N.getOperand(0);
     } else {
       ShOpcVal = ARM_AM::no_shift;
@@ -269,7 +269,7 @@ bool ARMDAGToDAGISel::SelectAddrMode3(SDValue Op, SDValue N,
   
   // If the RHS is +/- imm8, fold into addr mode.
   if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
-    int RHSC = (int)RHS->getValue();
+    int RHSC = (int)RHS->getZExtValue();
     if ((RHSC >= 0 && RHSC < 256) ||
         (RHSC < 0 && RHSC > -256)) { // note -256 itself isn't allowed.
       Base = N.getOperand(0);
@@ -304,7 +304,7 @@ bool ARMDAGToDAGISel::SelectAddrMode3Offset(SDValue Op, SDValue N,
   ARM_AM::AddrOpc AddSub = (AM == ISD::PRE_INC || AM == ISD::POST_INC)
     ? ARM_AM::add : ARM_AM::sub;
   if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(N)) {
-    int Val = (int)C->getValue();
+    int Val = (int)C->getZExtValue();
     if (Val >= 0 && Val < 256) {
       Offset = CurDAG->getRegister(0, MVT::i32);
       Opc = CurDAG->getTargetConstant(ARM_AM::getAM3Opc(AddSub, Val), MVT::i32);
@@ -335,7 +335,7 @@ bool ARMDAGToDAGISel::SelectAddrMode5(SDValue Op, SDValue N,
   
   // If the RHS is +/- imm8, fold into addr mode.
   if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
-    int RHSC = (int)RHS->getValue();
+    int RHSC = (int)RHS->getZExtValue();
     if ((RHSC & 3) == 0) {  // The constant is implicitly multiplied by 4.
       RHSC >>= 2;
       if ((RHSC >= 0 && RHSC < 256) ||
@@ -369,7 +369,7 @@ bool ARMDAGToDAGISel::SelectAddrModePC(SDValue Op, SDValue N,
   if (N.getOpcode() == ARMISD::PIC_ADD && N.hasOneUse()) {
     Offset = N.getOperand(0);
     SDValue N1 = N.getOperand(1);
-    Label  = CurDAG->getTargetConstant(cast<ConstantSDNode>(N1)->getValue(),
+    Label  = CurDAG->getTargetConstant(cast<ConstantSDNode>(N1)->getZExtValue(),
                                        MVT::i32);
     return true;
   }
@@ -426,7 +426,7 @@ ARMDAGToDAGISel::SelectThumbAddrModeRI5(SDValue Op, SDValue N,
 
   // If the RHS is + imm5 * scale, fold into addr mode.
   if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
-    int RHSC = (int)RHS->getValue();
+    int RHSC = (int)RHS->getZExtValue();
     if ((RHSC & (Scale-1)) == 0) {  // The constant is implicitly multiplied.
       RHSC /= Scale;
       if (RHSC >= 0 && RHSC < 32) {
@@ -479,7 +479,7 @@ bool ARMDAGToDAGISel::SelectThumbAddrModeSP(SDValue Op, SDValue N,
       (LHSR && LHSR->getReg() == ARM::SP)) {
     // If the RHS is + imm8 * scale, fold into addr mode.
     if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
-      int RHSC = (int)RHS->getValue();
+      int RHSC = (int)RHS->getZExtValue();
       if ((RHSC & 3) == 0) {  // The constant is implicitly multiplied.
         RHSC >>= 2;
         if (RHSC >= 0 && RHSC < 256) {
@@ -513,7 +513,7 @@ bool ARMDAGToDAGISel::SelectShifterOperandReg(SDValue Op,
   unsigned ShImmVal = 0;
   if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
     ShReg = CurDAG->getRegister(0, MVT::i32);
-    ShImmVal = RHS->getValue() & 31;
+    ShImmVal = RHS->getZExtValue() & 31;
   } else {
     ShReg = N.getOperand(1);
   }
@@ -537,7 +537,7 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
   switch (N->getOpcode()) {
   default: break;
   case ISD::Constant: {
-    unsigned Val = cast<ConstantSDNode>(N)->getValue();
+    unsigned Val = cast<ConstantSDNode>(N)->getZExtValue();
     bool UseCP = true;
     if (Subtarget->isThumb())
       UseCP = (Val > 255 &&                          // MOV
@@ -609,7 +609,7 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
     if (Subtarget->isThumb())
       break;
     if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
-      unsigned RHSV = C->getValue();
+      unsigned RHSV = C->getZExtValue();
       if (!RHSV) break;
       if (isPowerOf2_32(RHSV-1)) {  // 2^n+1?
         SDValue V = Op.getOperand(0);
@@ -725,7 +725,8 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
     AddToISelQueue(N1);
     AddToISelQueue(InFlag);
     SDValue Tmp2 = CurDAG->getTargetConstant(((unsigned)
-                               cast<ConstantSDNode>(N2)->getValue()), MVT::i32);
+                               cast<ConstantSDNode>(N2)->getZExtValue()),
+                               MVT::i32);
     SDValue Ops[] = { N1, Tmp2, N3, Chain, InFlag };
     SDNode *ResNode = CurDAG->getTargetNode(Opc, MVT::Other, MVT::Flag, Ops, 5);
     Chain = SDValue(ResNode, 0);
@@ -761,7 +762,8 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       AddToISelQueue(CPTmp2);
       AddToISelQueue(InFlag);
       SDValue Tmp2 = CurDAG->getTargetConstant(((unsigned)
-                               cast<ConstantSDNode>(N2)->getValue()), MVT::i32);
+                               cast<ConstantSDNode>(N2)->getZExtValue()),
+                               MVT::i32);
       SDValue Ops[] = { N0, CPTmp0, CPTmp1, CPTmp2, Tmp2, N3, InFlag };
       return CurDAG->SelectNodeTo(Op.getNode(), ARM::MOVCCs, MVT::i32, Ops, 7);
     }
@@ -778,10 +780,12 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       AddToISelQueue(N0);
       AddToISelQueue(InFlag);
       SDValue Tmp1 = CurDAG->getTargetConstant(((unsigned)
-                               cast<ConstantSDNode>(N1)->getValue()), MVT::i32);
+                               cast<ConstantSDNode>(N1)->getZExtValue()),
+                               MVT::i32);
       Tmp1 = Transform_so_imm_XFORM(Tmp1.getNode());
       SDValue Tmp2 = CurDAG->getTargetConstant(((unsigned)
-                               cast<ConstantSDNode>(N2)->getValue()), MVT::i32);
+                               cast<ConstantSDNode>(N2)->getZExtValue()),
+                               MVT::i32);
       SDValue Ops[] = { N0, Tmp1, Tmp2, N3, InFlag };
       return CurDAG->SelectNodeTo(Op.getNode(), ARM::MOVCCi, MVT::i32, Ops, 5);
     }
@@ -799,7 +803,8 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
     AddToISelQueue(N1);
     AddToISelQueue(InFlag);
     SDValue Tmp2 = CurDAG->getTargetConstant(((unsigned)
-                               cast<ConstantSDNode>(N2)->getValue()), MVT::i32);
+                               cast<ConstantSDNode>(N2)->getZExtValue()),
+                               MVT::i32);
     SDValue Ops[] = { N0, N1, Tmp2, N3, InFlag };
     unsigned Opc = 0;
     switch (VT.getSimpleVT()) {
@@ -831,7 +836,8 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
     AddToISelQueue(N1);
     AddToISelQueue(InFlag);
     SDValue Tmp2 = CurDAG->getTargetConstant(((unsigned)
-                               cast<ConstantSDNode>(N2)->getValue()), MVT::i32);
+                               cast<ConstantSDNode>(N2)->getZExtValue()),
+                               MVT::i32);
     SDValue Ops[] = { N0, N1, Tmp2, N3, InFlag };
     unsigned Opc = 0;
     switch (VT.getSimpleVT()) {

@@ -1988,8 +1988,8 @@ SDNode *DAGCombiner::MatchRotate(SDValue LHS, SDValue RHS) {
   // fold (or (shl x, C1), (srl x, C2)) -> (rotr x, C2)
   if (LHSShiftAmt.getOpcode() == ISD::Constant &&
       RHSShiftAmt.getOpcode() == ISD::Constant) {
-    uint64_t LShVal = cast<ConstantSDNode>(LHSShiftAmt)->getValue();
-    uint64_t RShVal = cast<ConstantSDNode>(RHSShiftAmt)->getValue();
+    uint64_t LShVal = cast<ConstantSDNode>(LHSShiftAmt)->getZExtValue();
+    uint64_t RShVal = cast<ConstantSDNode>(RHSShiftAmt)->getZExtValue();
     if ((LShVal + RShVal) != OpSizeInBits)
       return 0;
 
@@ -2300,7 +2300,7 @@ SDValue DAGCombiner::visitSHL(SDNode *N) {
   if (N0C && N0C->isNullValue())
     return N0;
   // fold (shl x, c >= size(x)) -> undef
-  if (N1C && N1C->getValue() >= OpSizeInBits)
+  if (N1C && N1C->getZExtValue() >= OpSizeInBits)
     return DAG.getNode(ISD::UNDEF, VT);
   // fold (shl x, 0) -> x
   if (N1C && N1C->isNullValue())
@@ -2319,12 +2319,13 @@ SDValue DAGCombiner::visitSHL(SDNode *N) {
       MVT TruncVT = N1.getValueType();
       unsigned TruncBitSize = TruncVT.getSizeInBits();
       APInt ShAmt = N101C->getAPIntValue();
-      if (ShAmt.trunc(TruncBitSize).getZExtValue() == N101C->getValue()) {
+      if (ShAmt.trunc(TruncBitSize).getZExtValue() == N101C->getZExtValue()) {
         SDValue N100 = N1.getOperand(0).getOperand(0);
         return DAG.getNode(ISD::SHL, VT, N0,
                            DAG.getNode(ISD::AND, TruncVT,
                                   DAG.getNode(ISD::TRUNCATE, TruncVT, N100),
-                                  DAG.getConstant(N101C->getValue(), TruncVT)));
+                                  DAG.getConstant(N101C->getZExtValue(),
+                                                  TruncVT)));
       }
     }
   }
@@ -2334,8 +2335,8 @@ SDValue DAGCombiner::visitSHL(SDNode *N) {
   // fold (shl (shl x, c1), c2) -> 0 or (shl x, c1+c2)
   if (N1C && N0.getOpcode() == ISD::SHL && 
       N0.getOperand(1).getOpcode() == ISD::Constant) {
-    uint64_t c1 = cast<ConstantSDNode>(N0.getOperand(1))->getValue();
-    uint64_t c2 = N1C->getValue();
+    uint64_t c1 = cast<ConstantSDNode>(N0.getOperand(1))->getZExtValue();
+    uint64_t c2 = N1C->getZExtValue();
     if (c1 + c2 > OpSizeInBits)
       return DAG.getConstant(0, VT);
     return DAG.getNode(ISD::SHL, VT, N0.getOperand(0), 
@@ -2345,8 +2346,8 @@ SDValue DAGCombiner::visitSHL(SDNode *N) {
   //                               (srl (and x, -1 << c1), c1-c2)
   if (N1C && N0.getOpcode() == ISD::SRL && 
       N0.getOperand(1).getOpcode() == ISD::Constant) {
-    uint64_t c1 = cast<ConstantSDNode>(N0.getOperand(1))->getValue();
-    uint64_t c2 = N1C->getValue();
+    uint64_t c1 = cast<ConstantSDNode>(N0.getOperand(1))->getZExtValue();
+    uint64_t c2 = N1C->getZExtValue();
     SDValue Mask = DAG.getNode(ISD::AND, VT, N0.getOperand(0),
                                  DAG.getConstant(~0ULL << c1, VT));
     if (c2 > c1)
@@ -2359,9 +2360,9 @@ SDValue DAGCombiner::visitSHL(SDNode *N) {
   // fold (shl (sra x, c1), c1) -> (and x, -1 << c1)
   if (N1C && N0.getOpcode() == ISD::SRA && N1 == N0.getOperand(1))
     return DAG.getNode(ISD::AND, VT, N0.getOperand(0),
-                       DAG.getConstant(~0ULL << N1C->getValue(), VT));
+                       DAG.getConstant(~0ULL << N1C->getZExtValue(), VT));
   
-  return N1C ? visitShiftByConstant(N, N1C->getValue()) : SDValue();
+  return N1C ? visitShiftByConstant(N, N1C->getZExtValue()) : SDValue();
 }
 
 SDValue DAGCombiner::visitSRA(SDNode *N) {
@@ -2381,7 +2382,7 @@ SDValue DAGCombiner::visitSRA(SDNode *N) {
   if (N0C && N0C->isAllOnesValue())
     return N0;
   // fold (sra x, c >= size(x)) -> undef
-  if (N1C && N1C->getValue() >= VT.getSizeInBits())
+  if (N1C && N1C->getZExtValue() >= VT.getSizeInBits())
     return DAG.getNode(ISD::UNDEF, VT);
   // fold (sra x, 0) -> x
   if (N1C && N1C->isNullValue())
@@ -2389,7 +2390,7 @@ SDValue DAGCombiner::visitSRA(SDNode *N) {
   // fold (sra (shl x, c1), c1) -> sext_inreg for some c1 and target supports
   // sext_inreg.
   if (N1C && N0.getOpcode() == ISD::SHL && N1 == N0.getOperand(1)) {
-    unsigned LowBits = VT.getSizeInBits() - (unsigned)N1C->getValue();
+    unsigned LowBits = VT.getSizeInBits() - (unsigned)N1C->getZExtValue();
     MVT EVT = MVT::getIntegerVT(LowBits);
     if (EVT.isSimple() && // TODO: remove when apint codegen support lands.
         (!AfterLegalize || TLI.isOperationLegal(ISD::SIGN_EXTEND_INREG, EVT)))
@@ -2400,7 +2401,7 @@ SDValue DAGCombiner::visitSRA(SDNode *N) {
   // fold (sra (sra x, c1), c2) -> (sra x, c1+c2)
   if (N1C && N0.getOpcode() == ISD::SRA) {
     if (ConstantSDNode *C1 = dyn_cast<ConstantSDNode>(N0.getOperand(1))) {
-      unsigned Sum = N1C->getValue() + C1->getValue();
+      unsigned Sum = N1C->getZExtValue() + C1->getZExtValue();
       if (Sum >= VT.getSizeInBits()) Sum = VT.getSizeInBits()-1;
       return DAG.getNode(ISD::SRA, VT, N0.getOperand(0),
                          DAG.getConstant(Sum, N1C->getValueType(0)));
@@ -2419,9 +2420,9 @@ SDValue DAGCombiner::visitSRA(SDNode *N) {
       // Determine what the truncate's result bitsize and type would be.
       unsigned VTValSize = VT.getSizeInBits();
       MVT TruncVT =
-        MVT::getIntegerVT(VTValSize - N1C->getValue());
+        MVT::getIntegerVT(VTValSize - N1C->getZExtValue());
       // Determine the residual right-shift amount.
-      unsigned ShiftAmt = N1C->getValue() - N01C->getValue();
+      unsigned ShiftAmt = N1C->getZExtValue() - N01C->getZExtValue();
 
       // If the shift is not a no-op (in which case this should be just a sign 
       // extend already), the truncated to type is legal, sign_extend is legal 
@@ -2450,12 +2451,13 @@ SDValue DAGCombiner::visitSRA(SDNode *N) {
       MVT TruncVT = N1.getValueType();
       unsigned TruncBitSize = TruncVT.getSizeInBits();
       APInt ShAmt = N101C->getAPIntValue();
-      if (ShAmt.trunc(TruncBitSize).getZExtValue() == N101C->getValue()) {
+      if (ShAmt.trunc(TruncBitSize).getZExtValue() == N101C->getZExtValue()) {
         SDValue N100 = N1.getOperand(0).getOperand(0);
         return DAG.getNode(ISD::SRA, VT, N0,
                            DAG.getNode(ISD::AND, TruncVT,
                                   DAG.getNode(ISD::TRUNCATE, TruncVT, N100),
-                                  DAG.getConstant(N101C->getValue(), TruncVT)));
+                                  DAG.getConstant(N101C->getZExtValue(),
+                                                  TruncVT)));
       }
     }
   }
@@ -2469,7 +2471,7 @@ SDValue DAGCombiner::visitSRA(SDNode *N) {
   if (DAG.SignBitIsZero(N0))
     return DAG.getNode(ISD::SRL, VT, N0, N1);
 
-  return N1C ? visitShiftByConstant(N, N1C->getValue()) : SDValue();
+  return N1C ? visitShiftByConstant(N, N1C->getZExtValue()) : SDValue();
 }
 
 SDValue DAGCombiner::visitSRL(SDNode *N) {
@@ -2487,7 +2489,7 @@ SDValue DAGCombiner::visitSRL(SDNode *N) {
   if (N0C && N0C->isNullValue())
     return N0;
   // fold (srl x, c >= size(x)) -> undef
-  if (N1C && N1C->getValue() >= OpSizeInBits)
+  if (N1C && N1C->getZExtValue() >= OpSizeInBits)
     return DAG.getNode(ISD::UNDEF, VT);
   // fold (srl x, 0) -> x
   if (N1C && N1C->isNullValue())
@@ -2500,8 +2502,8 @@ SDValue DAGCombiner::visitSRL(SDNode *N) {
   // fold (srl (srl x, c1), c2) -> 0 or (srl x, c1+c2)
   if (N1C && N0.getOpcode() == ISD::SRL && 
       N0.getOperand(1).getOpcode() == ISD::Constant) {
-    uint64_t c1 = cast<ConstantSDNode>(N0.getOperand(1))->getValue();
-    uint64_t c2 = N1C->getValue();
+    uint64_t c1 = cast<ConstantSDNode>(N0.getOperand(1))->getZExtValue();
+    uint64_t c2 = N1C->getZExtValue();
     if (c1 + c2 > OpSizeInBits)
       return DAG.getConstant(0, VT);
     return DAG.getNode(ISD::SRL, VT, N0.getOperand(0), 
@@ -2512,7 +2514,7 @@ SDValue DAGCombiner::visitSRL(SDNode *N) {
   if (N1C && N0.getOpcode() == ISD::ANY_EXTEND) {
     // Shifting in all undef bits?
     MVT SmallVT = N0.getOperand(0).getValueType();
-    if (N1C->getValue() >= SmallVT.getSizeInBits())
+    if (N1C->getZExtValue() >= SmallVT.getSizeInBits())
       return DAG.getNode(ISD::UNDEF, VT);
 
     SDValue SmallShift = DAG.getNode(ISD::SRL, SmallVT, N0.getOperand(0), N1);
@@ -2522,7 +2524,7 @@ SDValue DAGCombiner::visitSRL(SDNode *N) {
   
   // fold (srl (sra X, Y), 31) -> (srl X, 31).  This srl only looks at the sign
   // bit, which is unmodified by sra.
-  if (N1C && N1C->getValue()+1 == VT.getSizeInBits()) {
+  if (N1C && N1C->getZExtValue()+1 == VT.getSizeInBits()) {
     if (N0.getOpcode() == ISD::SRA)
       return DAG.getNode(ISD::SRL, VT, N0.getOperand(0), N1);
   }
@@ -2570,12 +2572,13 @@ SDValue DAGCombiner::visitSRL(SDNode *N) {
       MVT TruncVT = N1.getValueType();
       unsigned TruncBitSize = TruncVT.getSizeInBits();
       APInt ShAmt = N101C->getAPIntValue();
-      if (ShAmt.trunc(TruncBitSize).getZExtValue() == N101C->getValue()) {
+      if (ShAmt.trunc(TruncBitSize).getZExtValue() == N101C->getZExtValue()) {
         SDValue N100 = N1.getOperand(0).getOperand(0);
         return DAG.getNode(ISD::SRL, VT, N0,
                            DAG.getNode(ISD::AND, TruncVT,
                                   DAG.getNode(ISD::TRUNCATE, TruncVT, N100),
-                                  DAG.getConstant(N101C->getValue(), TruncVT)));
+                                  DAG.getConstant(N101C->getZExtValue(),
+                                                  TruncVT)));
       }
     }
   }
@@ -2585,7 +2588,7 @@ SDValue DAGCombiner::visitSRL(SDNode *N) {
   if (N1C && SimplifyDemandedBits(SDValue(N, 0)))
     return SDValue(N, 0);
   
-  return N1C ? visitShiftByConstant(N, N1C->getValue()) : SDValue();
+  return N1C ? visitShiftByConstant(N, N1C->getZExtValue()) : SDValue();
 }
 
 SDValue DAGCombiner::visitCTLZ(SDNode *N) {
@@ -3188,7 +3191,7 @@ SDValue DAGCombiner::GetDemandedBits(SDValue V, const APInt &Mask) {
       break;
     if (ConstantSDNode *RHSC = dyn_cast<ConstantSDNode>(V.getOperand(1))) {
       // See if we can recursively simplify the LHS.
-      unsigned Amt = RHSC->getValue();
+      unsigned Amt = RHSC->getZExtValue();
       APInt NewMask = Mask << Amt;
       SDValue SimplifyLHS = GetDemandedBits(V.getOperand(0), NewMask);
       if (SimplifyLHS.getNode()) {
@@ -3230,7 +3233,7 @@ SDValue DAGCombiner::ReduceLoadWidth(SDNode *N) {
   bool CombineSRL =  false;
   if (N0.getOpcode() == ISD::SRL && N0.hasOneUse()) {
     if (ConstantSDNode *N01 = dyn_cast<ConstantSDNode>(N0.getOperand(1))) {
-      ShAmt = N01->getValue();
+      ShAmt = N01->getZExtValue();
       // Is the shift amount a multiple of size of VT?
       if ((ShAmt & (EVTBits-1)) == 0) {
         N0 = N0.getOperand(0);
@@ -3340,11 +3343,11 @@ SDValue DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
   // We already fold "(sext_in_reg (srl X, 25), i8) -> srl X, 25" above.
   if (N0.getOpcode() == ISD::SRL) {
     if (ConstantSDNode *ShAmt = dyn_cast<ConstantSDNode>(N0.getOperand(1)))
-      if (ShAmt->getValue()+EVTBits <= VT.getSizeInBits()) {
+      if (ShAmt->getZExtValue()+EVTBits <= VT.getSizeInBits()) {
         // We can turn this into an SRA iff the input to the SRL is already sign
         // extended enough.
         unsigned InSignBits = DAG.ComputeNumSignBits(N0.getOperand(0));
-        if (VT.getSizeInBits()-(ShAmt->getValue()+EVTBits) < InSignBits)
+        if (VT.getSizeInBits()-(ShAmt->getZExtValue()+EVTBits) < InSignBits)
           return DAG.getNode(ISD::SRA, VT, N0.getOperand(0), N0.getOperand(1));
       }
   }
@@ -4775,7 +4778,7 @@ SDValue DAGCombiner::visitINSERT_VECTOR_ELT(SDNode *N) {
   // If the invec is a BUILD_VECTOR and if EltNo is a constant, build a new
   // vector with the inserted element.
   if (InVec.getOpcode() == ISD::BUILD_VECTOR && isa<ConstantSDNode>(EltNo)) {
-    unsigned Elt = cast<ConstantSDNode>(EltNo)->getValue();
+    unsigned Elt = cast<ConstantSDNode>(EltNo)->getZExtValue();
     SmallVector<SDValue, 8> Ops(InVec.getNode()->op_begin(),
                                 InVec.getNode()->op_end());
     if (Elt < Ops.size())
@@ -4800,7 +4803,7 @@ SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
   SDValue EltNo = N->getOperand(1);
 
   if (isa<ConstantSDNode>(EltNo)) {
-    unsigned Elt = cast<ConstantSDNode>(EltNo)->getValue();
+    unsigned Elt = cast<ConstantSDNode>(EltNo)->getZExtValue();
     bool NewLoad = false;
     MVT VT = InVec.getValueType();
     MVT EVT = VT.getVectorElementType();
@@ -4826,7 +4829,7 @@ SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
       // =>
       // (load $addr+1*size)
       unsigned Idx = cast<ConstantSDNode>(InVec.getOperand(2).
-                                          getOperand(Elt))->getValue();
+                                          getOperand(Elt))->getZExtValue();
       unsigned NumElems = InVec.getOperand(2).getNumOperands();
       InVec = (Idx < NumElems) ? InVec.getOperand(0) : InVec.getOperand(1);
       if (InVec.getOpcode() == ISD::BIT_CONVERT)
@@ -4930,7 +4933,8 @@ SDValue DAGCombiner::visitBUILD_VECTOR(SDNode *N) {
       }
 
       // Otherwise, use InIdx + VecSize
-      unsigned Idx = cast<ConstantSDNode>(Extract.getOperand(1))->getValue();
+      unsigned Idx =
+        cast<ConstantSDNode>(Extract.getOperand(1))->getZExtValue();
       BuildVecIndices.push_back(DAG.getIntPtrConstant(Idx+NumInScalars));
     }
     
@@ -4981,7 +4985,7 @@ SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
   bool isIdentity = true;
   for (unsigned i = 0; i != NumElts; ++i) {
     if (ShufMask.getOperand(i).getOpcode() != ISD::UNDEF &&
-        cast<ConstantSDNode>(ShufMask.getOperand(i))->getValue() != i) {
+        cast<ConstantSDNode>(ShufMask.getOperand(i))->getZExtValue() != i) {
       isIdentity = false;
       break;
     }
@@ -4992,7 +4996,8 @@ SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
   isIdentity = true;
   for (unsigned i = 0; i != NumElts; ++i) {
     if (ShufMask.getOperand(i).getOpcode() != ISD::UNDEF &&
-        cast<ConstantSDNode>(ShufMask.getOperand(i))->getValue() != i+NumElts) {
+        cast<ConstantSDNode>(ShufMask.getOperand(i))->getZExtValue() !=
+          i+NumElts) {
       isIdentity = false;
       break;
     }
@@ -5007,7 +5012,7 @@ SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
   unsigned BaseIdx = 0;
   for (unsigned i = 0; i != NumElts; ++i)
     if (ShufMask.getOperand(i).getOpcode() != ISD::UNDEF) {
-      unsigned Idx = cast<ConstantSDNode>(ShufMask.getOperand(i))->getValue();
+      unsigned Idx=cast<ConstantSDNode>(ShufMask.getOperand(i))->getZExtValue();
       int V = (Idx < NumElts) ? 0 : 1;
       if (VecNum == -1) {
         VecNum = V;
@@ -5078,11 +5083,13 @@ SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
     SmallVector<SDValue, 8> MappedOps;
     for (unsigned i = 0; i != NumElts; ++i) {
       if (ShufMask.getOperand(i).getOpcode() == ISD::UNDEF ||
-          cast<ConstantSDNode>(ShufMask.getOperand(i))->getValue() < NumElts) {
+          cast<ConstantSDNode>(ShufMask.getOperand(i))->getZExtValue() <
+            NumElts) {
         MappedOps.push_back(ShufMask.getOperand(i));
       } else {
         unsigned NewIdx = 
-          cast<ConstantSDNode>(ShufMask.getOperand(i))->getValue() - NumElts;
+          cast<ConstantSDNode>(ShufMask.getOperand(i))->getZExtValue() -
+          NumElts;
         MappedOps.push_back(DAG.getConstant(NewIdx,
                                         ShufMask.getOperand(i).getValueType()));
       }
@@ -5556,7 +5563,7 @@ static bool FindBaseOffset(SDValue Ptr, SDValue &Base, int64_t &Offset) {
   if (Base.getOpcode() == ISD::ADD) {
     if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Base.getOperand(1))) {
       Base = Base.getOperand(0);
-      Offset += C->getValue();
+      Offset += C->getZExtValue();
     }
   }
   

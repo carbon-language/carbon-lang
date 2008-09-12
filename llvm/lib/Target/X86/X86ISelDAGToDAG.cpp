@@ -866,7 +866,7 @@ DOUT << "AlreadySelected " << AlreadySelected << "\n";
       
     if (ConstantSDNode
           *CN = dyn_cast<ConstantSDNode>(N.getNode()->getOperand(1))) {
-      unsigned Val = CN->getValue();
+      unsigned Val = CN->getZExtValue();
       if (Val == 1 || Val == 2 || Val == 3) {
         AM.Scale = 1 << Val;
         SDValue ShVal = N.getNode()->getOperand(0);
@@ -879,7 +879,7 @@ DOUT << "AlreadySelected " << AlreadySelected << "\n";
           AM.IndexReg = ShVal.getNode()->getOperand(0);
           ConstantSDNode *AddVal =
             cast<ConstantSDNode>(ShVal.getNode()->getOperand(1));
-          uint64_t Disp = AM.Disp + (AddVal->getValue() << Val);
+          uint64_t Disp = AM.Disp + (AddVal->getZExtValue() << Val);
           if (isInt32(Disp))
             AM.Disp = Disp;
           else
@@ -906,8 +906,9 @@ DOUT << "AlreadySelected " << AlreadySelected << "\n";
         !AM.isRIPRel) {
       if (ConstantSDNode
             *CN = dyn_cast<ConstantSDNode>(N.getNode()->getOperand(1)))
-        if (CN->getValue() == 3 || CN->getValue() == 5 || CN->getValue() == 9) {
-          AM.Scale = unsigned(CN->getValue())-1;
+        if (CN->getZExtValue() == 3 || CN->getZExtValue() == 5 ||
+            CN->getZExtValue() == 9) {
+          AM.Scale = unsigned(CN->getZExtValue())-1;
 
           SDValue MulVal = N.getNode()->getOperand(0);
           SDValue Reg;
@@ -920,7 +921,8 @@ DOUT << "AlreadySelected " << AlreadySelected << "\n";
             Reg = MulVal.getNode()->getOperand(0);
             ConstantSDNode *AddVal =
               cast<ConstantSDNode>(MulVal.getNode()->getOperand(1));
-            uint64_t Disp = AM.Disp + AddVal->getValue() * CN->getValue();
+            uint64_t Disp = AM.Disp + AddVal->getZExtValue() *
+                                      CN->getZExtValue();
             if (isInt32(Disp))
               AM.Disp = Disp;
             else
@@ -963,7 +965,7 @@ DOUT << "AlreadySelected " << AlreadySelected << "\n";
           isInt32(AM.Disp + CN->getSignExtended()) &&
           // Check to see if the LHS & C is zero.
           CurDAG->MaskedValueIsZero(N.getOperand(0), CN->getAPIntValue())) {
-        AM.Disp += CN->getValue();
+        AM.Disp += CN->getZExtValue();
         return false;
       }
       AM = Backup;
@@ -994,7 +996,7 @@ DOUT << "AlreadySelected " << AlreadySelected << "\n";
       break;
     
     // Verify that the shift amount is something we can fold.
-    unsigned ShiftCst = C1->getValue();
+    unsigned ShiftCst = C1->getZExtValue();
     if (ShiftCst != 1 && ShiftCst != 2 && ShiftCst != 3)
       break;
     
@@ -1065,7 +1067,7 @@ bool X86DAGToDAGISel::SelectAddr(SDValue Op, SDValue N, SDValue &Base,
 /// constant +0.0.
 static inline bool isZeroNode(SDValue Elt) {
   return ((isa<ConstantSDNode>(Elt) &&
-  cast<ConstantSDNode>(Elt)->getValue() == 0) ||
+  cast<ConstantSDNode>(Elt)->getZExtValue() == 0) ||
   (isa<ConstantFPSDNode>(Elt) &&
   cast<ConstantFPSDNode>(Elt)->getValueAPF().isPosZero()));
 }
@@ -1288,7 +1290,7 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
       if (N.getNode()->getValueType(0) == PtrVT &&
           N0.getOpcode() == X86ISD::Wrapper &&
           N1.getOpcode() == ISD::Constant) {
-        unsigned Offset = (unsigned)cast<ConstantSDNode>(N1)->getValue();
+        unsigned Offset = (unsigned)cast<ConstantSDNode>(N1)->getZExtValue();
         SDValue C(0, 0);
         // TODO: handle ExternalSymbolSDNode.
         if (GlobalAddressSDNode *G =

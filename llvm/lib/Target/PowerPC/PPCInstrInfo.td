@@ -155,47 +155,47 @@ def PPCdynalloc   : SDNode<"PPCISD::DYNALLOC", SDTDynOp, [SDNPHasChain]>;
 
 def SHL32 : SDNodeXForm<imm, [{
   // Transformation function: 31 - imm
-  return getI32Imm(31 - N->getValue());
+  return getI32Imm(31 - N->getZExtValue());
 }]>;
 
 def SRL32 : SDNodeXForm<imm, [{
   // Transformation function: 32 - imm
-  return N->getValue() ? getI32Imm(32 - N->getValue()) : getI32Imm(0);
+  return N->getZExtValue() ? getI32Imm(32 - N->getZExtValue()) : getI32Imm(0);
 }]>;
 
 def LO16 : SDNodeXForm<imm, [{
   // Transformation function: get the low 16 bits.
-  return getI32Imm((unsigned short)N->getValue());
+  return getI32Imm((unsigned short)N->getZExtValue());
 }]>;
 
 def HI16 : SDNodeXForm<imm, [{
   // Transformation function: shift the immediate value down into the low bits.
-  return getI32Imm((unsigned)N->getValue() >> 16);
+  return getI32Imm((unsigned)N->getZExtValue() >> 16);
 }]>;
 
 def HA16 : SDNodeXForm<imm, [{
   // Transformation function: shift the immediate value down into the low bits.
-  signed int Val = N->getValue();
+  signed int Val = N->getZExtValue();
   return getI32Imm((Val - (signed short)Val) >> 16);
 }]>;
 def MB : SDNodeXForm<imm, [{
   // Transformation function: get the start bit of a mask
   unsigned mb, me;
-  (void)isRunOfOnes((unsigned)N->getValue(), mb, me);
+  (void)isRunOfOnes((unsigned)N->getZExtValue(), mb, me);
   return getI32Imm(mb);
 }]>;
 
 def ME : SDNodeXForm<imm, [{
   // Transformation function: get the end bit of a mask
   unsigned mb, me;
-  (void)isRunOfOnes((unsigned)N->getValue(), mb, me);
+  (void)isRunOfOnes((unsigned)N->getZExtValue(), mb, me);
   return getI32Imm(me);
 }]>;
 def maskimm32 : PatLeaf<(imm), [{
   // maskImm predicate - True if immediate is a run of ones.
   unsigned mb, me;
   if (N->getValueType(0) == MVT::i32)
-    return isRunOfOnes((unsigned)N->getValue(), mb, me);
+    return isRunOfOnes((unsigned)N->getZExtValue(), mb, me);
   else
     return false;
 }]>;
@@ -204,14 +204,14 @@ def immSExt16  : PatLeaf<(imm), [{
   // immSExt16 predicate - True if the immediate fits in a 16-bit sign extended
   // field.  Used by instructions like 'addi'.
   if (N->getValueType(0) == MVT::i32)
-    return (int32_t)N->getValue() == (short)N->getValue();
+    return (int32_t)N->getZExtValue() == (short)N->getZExtValue();
   else
-    return (int64_t)N->getValue() == (short)N->getValue();
+    return (int64_t)N->getZExtValue() == (short)N->getZExtValue();
 }]>;
 def immZExt16  : PatLeaf<(imm), [{
   // immZExt16 predicate - True if the immediate fits in a 16-bit zero extended
   // field.  Used by instructions like 'ori'.
-  return (uint64_t)N->getValue() == (unsigned short)N->getValue();
+  return (uint64_t)N->getZExtValue() == (unsigned short)N->getZExtValue();
 }], LO16>;
 
 // imm16Shifted* - These match immediates where the low 16-bits are zero.  There
@@ -222,18 +222,18 @@ def immZExt16  : PatLeaf<(imm), [{
 def imm16ShiftedZExt : PatLeaf<(imm), [{
   // imm16ShiftedZExt predicate - True if only bits in the top 16-bits of the
   // immediate are set.  Used by instructions like 'xoris'.
-  return (N->getValue() & ~uint64_t(0xFFFF0000)) == 0;
+  return (N->getZExtValue() & ~uint64_t(0xFFFF0000)) == 0;
 }], HI16>;
 
 def imm16ShiftedSExt : PatLeaf<(imm), [{
   // imm16ShiftedSExt predicate - True if only bits in the top 16-bits of the
   // immediate are set.  Used by instructions like 'addis'.  Identical to 
   // imm16ShiftedZExt in 32-bit mode.
-  if (N->getValue() & 0xFFFF) return false;
+  if (N->getZExtValue() & 0xFFFF) return false;
   if (N->getValueType(0) == MVT::i32)
     return true;
   // For 64-bit, make sure it is sext right.
-  return N->getValue() == (uint64_t)(int)N->getValue();
+  return N->getZExtValue() == (uint64_t)(int)N->getZExtValue();
 }], HI16>;
 
 

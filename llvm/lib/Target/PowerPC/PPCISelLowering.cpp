@@ -452,7 +452,7 @@ static bool isFloatingPointZero(SDValue Op) {
 /// true if Op is undef or if it matches the specified value.
 static bool isConstantOrUndef(SDValue Op, unsigned Val) {
   return Op.getOpcode() == ISD::UNDEF || 
-         cast<ConstantSDNode>(Op)->getValue() == Val;
+         cast<ConstantSDNode>(Op)->getZExtValue() == Val;
 }
 
 /// isVPKUHUMShuffleMask - Return true if this is the shuffle mask for a
@@ -541,7 +541,7 @@ int PPC::isVSLDOIShuffleMask(SDNode *N, bool isUnary) {
   
   // Otherwise, check to see if the rest of the elements are consequtively
   // numbered from this value.
-  unsigned ShiftAmt = cast<ConstantSDNode>(N->getOperand(i))->getValue();
+  unsigned ShiftAmt = cast<ConstantSDNode>(N->getOperand(i))->getZExtValue();
   if (ShiftAmt < i) return -1;
   ShiftAmt -= i;
 
@@ -573,17 +573,17 @@ bool PPC::isSplatShuffleMask(SDNode *N, unsigned EltSize) {
   unsigned ElementBase = 0;
   SDValue Elt = N->getOperand(0);
   if (ConstantSDNode *EltV = dyn_cast<ConstantSDNode>(Elt))
-    ElementBase = EltV->getValue();
+    ElementBase = EltV->getZExtValue();
   else
     return false;   // FIXME: Handle UNDEF elements too!
 
-  if (cast<ConstantSDNode>(Elt)->getValue() >= 16)
+  if (cast<ConstantSDNode>(Elt)->getZExtValue() >= 16)
     return false;
   
   // Check that they are consequtive.
   for (unsigned i = 1; i != EltSize; ++i) {
     if (!isa<ConstantSDNode>(N->getOperand(i)) ||
-        cast<ConstantSDNode>(N->getOperand(i))->getValue() != i+ElementBase)
+        cast<ConstantSDNode>(N->getOperand(i))->getZExtValue() != i+ElementBase)
       return false;
   }
   
@@ -614,7 +614,7 @@ bool PPC::isAllNegativeZeroVector(SDNode *N) {
 /// specified isSplatShuffleMask VECTOR_SHUFFLE mask.
 unsigned PPC::getVSPLTImmediate(SDNode *N, unsigned EltSize) {
   assert(isSplatShuffleMask(N, EltSize));
-  return cast<ConstantSDNode>(N->getOperand(0))->getValue() / EltSize;
+  return cast<ConstantSDNode>(N->getOperand(0))->getZExtValue() / EltSize;
 }
 
 /// get_VSPLTI_elt - If this is a build_vector of constants which can be formed
@@ -665,7 +665,7 @@ SDValue PPC::get_VSPLTI_elt(SDNode *N, unsigned ByteSize, SelectionDAG &DAG) {
     if (LeadingZero) {
       if (UniquedVals[Multiple-1].getNode() == 0)
         return DAG.getTargetConstant(0, MVT::i32);  // 0,0,0,undef
-      int Val = cast<ConstantSDNode>(UniquedVals[Multiple-1])->getValue();
+      int Val = cast<ConstantSDNode>(UniquedVals[Multiple-1])->getZExtValue();
       if (Val < 16)
         return DAG.getTargetConstant(Val, MVT::i32);  // 0,0,0,4 -> vspltisw(4)
     }
@@ -694,7 +694,7 @@ SDValue PPC::get_VSPLTI_elt(SDNode *N, unsigned ByteSize, SelectionDAG &DAG) {
   unsigned ValSizeInBytes = 0;
   uint64_t Value = 0;
   if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(OpVal)) {
-    Value = CN->getValue();
+    Value = CN->getZExtValue();
     ValSizeInBytes = CN->getValueType(0).getSizeInBits()/8;
   } else if (ConstantFPSDNode *CN = dyn_cast<ConstantFPSDNode>(OpVal)) {
     assert(CN->getValueType(0) == MVT::f32 && "Only one legal FP vector type!");
@@ -744,11 +744,11 @@ static bool isIntS16Immediate(SDNode *N, short &Imm) {
   if (N->getOpcode() != ISD::Constant)
     return false;
   
-  Imm = (short)cast<ConstantSDNode>(N)->getValue();
+  Imm = (short)cast<ConstantSDNode>(N)->getZExtValue();
   if (N->getValueType(0) == MVT::i32)
-    return Imm == (int32_t)cast<ConstantSDNode>(N)->getValue();
+    return Imm == (int32_t)cast<ConstantSDNode>(N)->getZExtValue();
   else
-    return Imm == (int64_t)cast<ConstantSDNode>(N)->getValue();
+    return Imm == (int64_t)cast<ConstantSDNode>(N)->getZExtValue();
 }
 static bool isIntS16Immediate(SDValue Op, short &Imm) {
   return isIntS16Immediate(Op.getNode(), Imm);
@@ -824,7 +824,7 @@ bool PPCTargetLowering::SelectAddressRegImm(SDValue N, SDValue &Disp,
       return true; // [r+i]
     } else if (N.getOperand(1).getOpcode() == PPCISD::Lo) {
       // Match LOAD (ADD (X, Lo(G))).
-      assert(!cast<ConstantSDNode>(N.getOperand(1).getOperand(1))->getValue()
+     assert(!cast<ConstantSDNode>(N.getOperand(1).getOperand(1))->getZExtValue()
              && "Cannot handle constant offsets yet!");
       Disp = N.getOperand(1).getOperand(0);  // The global address.
       assert(Disp.getOpcode() == ISD::TargetGlobalAddress ||
@@ -867,8 +867,8 @@ bool PPCTargetLowering::SelectAddressRegImm(SDValue N, SDValue &Disp,
 
     // Handle 32-bit sext immediates with LIS + addr mode.
     if (CN->getValueType(0) == MVT::i32 ||
-        (int64_t)CN->getValue() == (int)CN->getValue()) {
-      int Addr = (int)CN->getValue();
+        (int64_t)CN->getZExtValue() == (int)CN->getZExtValue()) {
+      int Addr = (int)CN->getZExtValue();
       
       // Otherwise, break this down into an LIS + disp.
       Disp = DAG.getTargetConstant((short)Addr, MVT::i32);
@@ -936,7 +936,7 @@ bool PPCTargetLowering::SelectAddressRegImmShift(SDValue N, SDValue &Disp,
       return true; // [r+i]
     } else if (N.getOperand(1).getOpcode() == PPCISD::Lo) {
       // Match LOAD (ADD (X, Lo(G))).
-      assert(!cast<ConstantSDNode>(N.getOperand(1).getOperand(1))->getValue()
+     assert(!cast<ConstantSDNode>(N.getOperand(1).getOperand(1))->getZExtValue()
              && "Cannot handle constant offsets yet!");
       Disp = N.getOperand(1).getOperand(0);  // The global address.
       assert(Disp.getOpcode() == ISD::TargetGlobalAddress ||
@@ -966,7 +966,7 @@ bool PPCTargetLowering::SelectAddressRegImmShift(SDValue N, SDValue &Disp,
     }
   } else if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N)) {
     // Loading from a constant address.  Verify low two bits are clear.
-    if ((CN->getValue() & 3) == 0) {
+    if ((CN->getZExtValue() & 3) == 0) {
       // If this address fits entirely in a 14-bit sext immediate field, codegen
       // this as "d, 0"
       short Imm;
@@ -978,8 +978,8 @@ bool PPCTargetLowering::SelectAddressRegImmShift(SDValue N, SDValue &Disp,
     
       // Fold the low-part of 32-bit absolute addresses into addr mode.
       if (CN->getValueType(0) == MVT::i32 ||
-          (int64_t)CN->getValue() == (int)CN->getValue()) {
-        int Addr = (int)CN->getValue();
+          (int64_t)CN->getZExtValue() == (int)CN->getZExtValue()) {
+        int Addr = (int)CN->getZExtValue();
       
         // Otherwise, break this down into an LIS + disp.
         Disp = DAG.getTargetConstant((short)Addr >> 2, MVT::i32);
@@ -1355,7 +1355,7 @@ PPCTargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op,
   MachineRegisterInfo &RegInfo = MF.getRegInfo();
   SmallVector<SDValue, 8> ArgValues;
   SDValue Root = Op.getOperand(0);
-  bool isVarArg = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
+  bool isVarArg = cast<ConstantSDNode>(Op.getOperand(2))->getZExtValue() != 0;
   
   MVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
   bool isPPC64 = PtrVT == MVT::i64;
@@ -1881,12 +1881,13 @@ PPCTargetLowering::IsEligibleForTailCallOptimization(SDValue Call,
                                                      SelectionDAG& DAG) const {
   // Variable argument functions are not supported.
   if (!PerformTailCallOpt ||
-      cast<ConstantSDNode>(Call.getOperand(2))->getValue() != 0) return false;
+      cast<ConstantSDNode>(Call.getOperand(2))->getZExtValue() != 0)
+    return false;
 
   if (CheckTailCallReturnConstraints(Call, Ret)) {
     MachineFunction &MF = DAG.getMachineFunction();
     unsigned CallerCC = MF.getFunction()->getCallingConv();
-    unsigned CalleeCC = cast<ConstantSDNode>(Call.getOperand(1))->getValue();
+    unsigned CalleeCC= cast<ConstantSDNode>(Call.getOperand(1))->getZExtValue();
     if (CalleeCC == CallingConv::Fast && CallerCC == CalleeCC) {
       // Functions containing by val parameters are not supported.
       for (unsigned i = 0; i != ((Call.getNumOperands()-5)/2); i++) {
@@ -1917,12 +1918,12 @@ static SDNode *isBLACompatibleAddress(SDValue Op, SelectionDAG &DAG) {
   ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op);
   if (!C) return 0;
   
-  int Addr = C->getValue();
+  int Addr = C->getZExtValue();
   if ((Addr & 3) != 0 ||  // Low 2 bits are implicitly zero.
       (Addr << 6 >> 6) != Addr)
     return 0;  // Top 6 bits have to be sext of immediate.
   
-  return DAG.getConstant((int)C->getValue() >> 2,
+  return DAG.getConstant((int)C->getZExtValue() >> 2,
                          DAG.getTargetLoweringInfo().getPointerTy()).getNode();
 }
 
@@ -2070,10 +2071,10 @@ SDValue PPCTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG,
                                        const PPCSubtarget &Subtarget,
                                        TargetMachine &TM) {
   SDValue Chain  = Op.getOperand(0);
-  bool isVarArg    = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
-  unsigned CC      = cast<ConstantSDNode>(Op.getOperand(1))->getValue();
-  bool isTailCall  = cast<ConstantSDNode>(Op.getOperand(3))->getValue() != 0 &&
-                     CC == CallingConv::Fast && PerformTailCallOpt;
+  bool isVarArg   = cast<ConstantSDNode>(Op.getOperand(2))->getZExtValue() != 0;
+  unsigned CC     = cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();
+  bool isTailCall = cast<ConstantSDNode>(Op.getOperand(3))->getZExtValue() != 0
+                 && CC == CallingConv::Fast && PerformTailCallOpt;
   SDValue Callee = Op.getOperand(4);
   unsigned NumOps  = (Op.getNumOperands() - 5) / 2;
   
@@ -3108,7 +3109,7 @@ static bool GetConstantBuildVectorBits(SDNode *BV, uint64_t VectorBits[2],
       UndefBits[PartNo] |= EltUndefBits << (SlotNo*EltBitSize);
       continue;
     } else if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(OpVal)) {
-      EltBits = CN->getValue() & (~0U >> (32-EltBitSize));
+      EltBits = CN->getZExtValue() & (~0U >> (32-EltBitSize));
     } else if (ConstantFPSDNode *CN = dyn_cast<ConstantFPSDNode>(OpVal)) {
       assert(CN->getValueType(0) == MVT::f32 &&
              "Only one legal FP vector type!");
@@ -3543,7 +3544,7 @@ SDValue PPCTargetLowering::LowerVECTOR_SHUFFLE(SDValue Op,
         continue;   // Undef, ignore it.
       
       unsigned ByteSource = 
-        cast<ConstantSDNode>(PermMask.getOperand(i*4+j))->getValue();
+        cast<ConstantSDNode>(PermMask.getOperand(i*4+j))->getZExtValue();
       if ((ByteSource & 3) != j) {
         isFourElementShuffle = false;
         break;
@@ -3600,7 +3601,7 @@ SDValue PPCTargetLowering::LowerVECTOR_SHUFFLE(SDValue Op,
     if (PermMask.getOperand(i).getOpcode() == ISD::UNDEF)
       SrcElt = 0;
     else 
-      SrcElt = cast<ConstantSDNode>(PermMask.getOperand(i))->getValue();
+      SrcElt = cast<ConstantSDNode>(PermMask.getOperand(i))->getZExtValue();
     
     for (unsigned j = 0; j != BytesPerElement; ++j)
       ResultMask.push_back(DAG.getConstant(SrcElt*BytesPerElement+j,
@@ -3617,7 +3618,8 @@ SDValue PPCTargetLowering::LowerVECTOR_SHUFFLE(SDValue Op,
 /// information about the intrinsic.
 static bool getAltivecCompareInfo(SDValue Intrin, int &CompareOpc,
                                   bool &isDot) {
-  unsigned IntrinsicID = cast<ConstantSDNode>(Intrin.getOperand(0))->getValue();
+  unsigned IntrinsicID =
+    cast<ConstantSDNode>(Intrin.getOperand(0))->getZExtValue();
   CompareOpc = -1;
   isDot = false;
   switch (IntrinsicID) {
@@ -3694,7 +3696,7 @@ SDValue PPCTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
   // Unpack the result based on how the target uses it.
   unsigned BitNo;   // Bit # of CR6.
   bool InvertBit;   // Invert result?
-  switch (cast<ConstantSDNode>(Op.getOperand(1))->getValue()) {
+  switch (cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue()) {
   default:  // Can't happen, don't crash on invalid number though.
   case 0:   // Return the value of the EQ bit of CR6.
     BitNo = 0; InvertBit = false;
@@ -4400,19 +4402,19 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
   default: break;
   case PPCISD::SHL:
     if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(N->getOperand(0))) {
-      if (C->getValue() == 0)   // 0 << V -> 0.
+      if (C->getZExtValue() == 0)   // 0 << V -> 0.
         return N->getOperand(0);
     }
     break;
   case PPCISD::SRL:
     if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(N->getOperand(0))) {
-      if (C->getValue() == 0)   // 0 >>u V -> 0.
+      if (C->getZExtValue() == 0)   // 0 >>u V -> 0.
         return N->getOperand(0);
     }
     break;
   case PPCISD::SRA:
     if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(N->getOperand(0))) {
-      if (C->getValue() == 0 ||   //  0 >>s V -> 0.
+      if (C->getZExtValue() == 0 ||   //  0 >>s V -> 0.
           C->isAllOnesValue())    // -1 >>s V -> -1.
         return N->getOperand(0);
     }
@@ -4591,7 +4593,7 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
       
       // If this is a comparison against something other than 0/1, then we know
       // that the condition is never/always true.
-      unsigned Val = cast<ConstantSDNode>(RHS)->getValue();
+      unsigned Val = cast<ConstantSDNode>(RHS)->getZExtValue();
       if (Val != 0 && Val != 1) {
         if (CC == ISD::SETEQ)      // Cond never true, remove branch.
           return N->getOperand(0);
@@ -4615,7 +4617,7 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
       
       // Unpack the result based on how the target uses it.
       PPC::Predicate CompOpc;
-      switch (cast<ConstantSDNode>(LHS.getOperand(1))->getValue()) {
+      switch (cast<ConstantSDNode>(LHS.getOperand(1))->getZExtValue()) {
       default:  // Can't happen, don't crash on invalid number though.
       case 0:   // Branch on the value of the EQ bit of CR6.
         CompOpc = BranchOnWhenPredTrue ? PPC::PRED_EQ : PPC::PRED_NE;
@@ -4663,7 +4665,7 @@ void PPCTargetLowering::computeMaskedBitsForTargetNode(const SDValue Op,
     break;
   }
   case ISD::INTRINSIC_WO_CHAIN: {
-    switch (cast<ConstantSDNode>(Op.getOperand(0))->getValue()) {
+    switch (cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue()) {
     default: break;
     case Intrinsic::ppc_altivec_vcmpbfp_p:
     case Intrinsic::ppc_altivec_vcmpeqfp_p:
@@ -4750,7 +4752,7 @@ void PPCTargetLowering::LowerAsmOperandForConstraint(SDValue Op, char Letter,
   case 'P': {
     ConstantSDNode *CST = dyn_cast<ConstantSDNode>(Op);
     if (!CST) return; // Must be an immediate to match.
-    unsigned Value = CST->getValue();
+    unsigned Value = CST->getZExtValue();
     switch (Letter) {
     default: assert(0 && "Unknown constraint letter!");
     case 'I':  // "I" is a signed 16-bit constant.
@@ -4846,7 +4848,7 @@ bool PPCTargetLowering::isLegalAddressImmediate(llvm::GlobalValue* GV) const {
 
 SDValue PPCTargetLowering::LowerRETURNADDR(SDValue Op, SelectionDAG &DAG) {
   // Depths > 0 not supported yet! 
-  if (cast<ConstantSDNode>(Op.getOperand(0))->getValue() > 0)
+  if (cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue() > 0)
     return SDValue();
 
   MachineFunction &MF = DAG.getMachineFunction();
@@ -4863,7 +4865,7 @@ SDValue PPCTargetLowering::LowerRETURNADDR(SDValue Op, SelectionDAG &DAG) {
 
 SDValue PPCTargetLowering::LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG) {
   // Depths > 0 not supported yet! 
-  if (cast<ConstantSDNode>(Op.getOperand(0))->getValue() > 0)
+  if (cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue() > 0)
     return SDValue();
   
   MVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();

@@ -224,10 +224,10 @@ SparcTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG,
 }
 
 static SDValue LowerCALL(SDValue Op, SelectionDAG &DAG) {
-  unsigned CallingConv = cast<ConstantSDNode>(Op.getOperand(1))->getValue();
+  unsigned CallingConv = cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();
   SDValue Chain = Op.getOperand(0);
   SDValue Callee = Op.getOperand(4);
-  bool isVarArg = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
+  bool isVarArg = cast<ConstantSDNode>(Op.getOperand(2))->getZExtValue() != 0;
 
 #if 0
   // Analyze operands of the call, assigning locations to each operand.
@@ -691,7 +691,8 @@ void SparcTargetLowering::computeMaskedBitsForTargetNode(const SDValue Op,
 // set LHS/RHS and SPCC to the LHS/RHS of the setcc and SPCC to the condition.
 static void LookThroughSetCC(SDValue &LHS, SDValue &RHS,
                              ISD::CondCode CC, unsigned &SPCC) {
-  if (isa<ConstantSDNode>(RHS) && cast<ConstantSDNode>(RHS)->getValue() == 0 &&
+  if (isa<ConstantSDNode>(RHS) &&
+      cast<ConstantSDNode>(RHS)->getZExtValue() == 0 &&
       CC == ISD::SETNE && 
       ((LHS.getOpcode() == SPISD::SELECT_ICC &&
         LHS.getOperand(3).getOpcode() == SPISD::CMPICC) ||
@@ -699,10 +700,10 @@ static void LookThroughSetCC(SDValue &LHS, SDValue &RHS,
         LHS.getOperand(3).getOpcode() == SPISD::CMPFCC)) &&
       isa<ConstantSDNode>(LHS.getOperand(0)) &&
       isa<ConstantSDNode>(LHS.getOperand(1)) &&
-      cast<ConstantSDNode>(LHS.getOperand(0))->getValue() == 1 &&
-      cast<ConstantSDNode>(LHS.getOperand(1))->getValue() == 0) {
+      cast<ConstantSDNode>(LHS.getOperand(0))->getZExtValue() == 1 &&
+      cast<ConstantSDNode>(LHS.getOperand(1))->getZExtValue() == 0) {
     SDValue CMPCC = LHS.getOperand(3);
-    SPCC = cast<ConstantSDNode>(LHS.getOperand(2))->getValue();
+    SPCC = cast<ConstantSDNode>(LHS.getOperand(2))->getZExtValue();
     LHS = CMPCC.getOperand(0);
     RHS = CMPCC.getOperand(1);
   }

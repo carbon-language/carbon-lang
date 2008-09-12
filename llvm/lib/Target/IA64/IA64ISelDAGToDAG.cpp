@@ -560,7 +560,7 @@ SDNode *IA64DAGToDAGISel::Select(SDValue Op) {
 
   case ISD::CALLSEQ_START:
   case ISD::CALLSEQ_END: {
-    int64_t Amt = cast<ConstantSDNode>(N->getOperand(1))->getValue();
+    int64_t Amt = cast<ConstantSDNode>(N->getOperand(1))->getZExtValue();
     unsigned Opc = N->getOpcode() == ISD::CALLSEQ_START ?
       IA64::ADJUSTCALLSTACKDOWN : IA64::ADJUSTCALLSTACKUP;
     SDValue N0 = N->getOperand(0);

@@ -177,7 +177,7 @@ SelectAddr(SDValue Op, SDValue Addr, SDValue &Offset, SDValue &Base)
           Base = Addr.getOperand(0);
         }
 
-        Offset = CurDAG->getTargetConstant(CN->getValue(), MVT::i32);
+        Offset = CurDAG->getTargetConstant(CN->getZExtValue(), MVT::i32);
         return true;
       }
     }

@@ -87,7 +87,7 @@ namespace {
   bool
   isI16IntU10Immediate(ConstantSDNode *CN)
   {
-    return isU10Constant((short) CN->getValue());
+    return isU10Constant((short) CN->getZExtValue());
   }
 
   //! SDNode predicate for i16 sign-extended, 10-bit immediate values
@@ -111,15 +111,15 @@ namespace {
   isIntS16Immediate(ConstantSDNode *CN, short &Imm)
   {
     MVT vt = CN->getValueType(0);
-    Imm = (short) CN->getValue();
+    Imm = (short) CN->getZExtValue();
     if (vt.getSimpleVT() >= MVT::i1 && vt.getSimpleVT() <= MVT::i16) {
       return true;
     } else if (vt == MVT::i32) {
-      int32_t i_val = (int32_t) CN->getValue();
+      int32_t i_val = (int32_t) CN->getZExtValue();
       short s_val = (short) i_val;
       return i_val == s_val;
     } else {
-      int64_t i_val = (int64_t) CN->getValue();
+      int64_t i_val = (int64_t) CN->getZExtValue();
       short s_val = (short) i_val;
       return i_val == s_val;
     }
@@ -676,7 +676,7 @@ SPUDAGToDAGISel::Select(SDValue Op) {
 
       if (Op1.getOpcode() == ISD::Constant) {
         ConstantSDNode *CN = cast<ConstantSDNode>(Op1);
-        Op1 = CurDAG->getTargetConstant(CN->getValue(), VT);
+        Op1 = CurDAG->getTargetConstant(CN->getZExtValue(), VT);
         NewOpc = (isI32IntS10Immediate(CN) ? SPU::AIr32 : SPU::Ar32);
         AddToISelQueue(Op0);
         AddToISelQueue(Op1);

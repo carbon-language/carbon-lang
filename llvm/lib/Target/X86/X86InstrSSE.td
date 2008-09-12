@@ -168,7 +168,7 @@ def fp32imm0 : PatLeaf<(f32 fpimm), [{
 
 def PSxLDQ_imm  : SDNodeXForm<imm, [{
   // Transformation function: imm >> 3
-  return getI32Imm(N->getValue() >> 3);
+  return getI32Imm(N->getZExtValue() >> 3);
 }]>;
 
 // SHUFFLE_get_shuf_imm xform function: convert vector_shuffle mask to PSHUF*,

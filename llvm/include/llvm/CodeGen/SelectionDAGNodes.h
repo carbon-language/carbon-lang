@@ -1715,7 +1715,7 @@ protected:
 public:
 
   const APInt &getAPIntValue() const { return Value; }
-  uint64_t getValue() const { return Value.getZExtValue(); }
+  uint64_t getZExtValue() const { return Value.getZExtValue(); }
 
   int64_t getSignExtended() const {
     unsigned Bits = getValueType(0).getSizeInBits();

@@ -412,7 +412,7 @@ HowToPassArgument(MVT ObjectVT, unsigned NumGPRs,
 SDValue ARMTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
   MVT RetVT= Op.getNode()->getValueType(0);
   SDValue Chain    = Op.getOperand(0);
-  unsigned CallConv  = cast<ConstantSDNode>(Op.getOperand(1))->getValue();
+  unsigned CallConv  = cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();
   assert((CallConv == CallingConv::C ||
           CallConv == CallingConv::Fast) && "unknown calling convention");
   SDValue Callee   = Op.getOperand(4);
@@ -903,7 +903,7 @@ SDValue ARMTargetLowering::LowerGLOBAL_OFFSET_TABLE(SDValue Op,
 
 static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) {
   MVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
-  unsigned IntNo = cast<ConstantSDNode>(Op.getOperand(0))->getValue();
+  unsigned IntNo = cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue();
   switch (IntNo) {
   default: return SDValue();    // Don't custom lower most intrinsics.
   case Intrinsic::arm_thread_pointer:
@@ -995,7 +995,7 @@ ARMTargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG) {
     ArgValues.push_back(LowerFORMAL_ARGUMENT(Op, DAG, ArgNo,
                                              NumGPRs, ArgOffset));
 
-  bool isVarArg = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
+  bool isVarArg = cast<ConstantSDNode>(Op.getOperand(2))->getZExtValue() != 0;
   if (isVarArg) {
     static const unsigned GPRArgRegs[] = {
       ARM::R0, ARM::R1, ARM::R2, ARM::R3
@@ -1068,7 +1068,7 @@ static bool isLegalCmpImmediate(unsigned C, bool isThumb) {
 static SDValue getARMCmp(SDValue LHS, SDValue RHS, ISD::CondCode CC,
                            SDValue &ARMCC, SelectionDAG &DAG, bool isThumb) {
   if (ConstantSDNode *RHSC = dyn_cast<ConstantSDNode>(RHS.getNode())) {
-    unsigned C = RHSC->getValue();
+    unsigned C = RHSC->getZExtValue();
     if (!isLegalCmpImmediate(C, isThumb)) {
       // Constant does not fit, try adjusting it by one?
       switch (CC) {
@@ -1270,7 +1270,7 @@ ARMTargetLowering::EmitTargetCodeForMemcpy(SelectionDAG &DAG,
   ConstantSDNode *ConstantSize = dyn_cast<ConstantSDNode>(Size);
   if (!ConstantSize)
     return SDValue();
-  uint64_t SizeVal = ConstantSize->getValue();
+  uint64_t SizeVal = ConstantSize->getZExtValue();
   if (!AlwaysInline && SizeVal > getSubtarget()->getMaxInlineSizeThreshold())
     return SDValue();
 
@@ -1381,7 +1381,7 @@ static SDNode *ExpandSRx(SDNode *N, SelectionDAG &DAG, const ARMSubtarget *ST) {
   
   // We only lower SRA, SRL of 1 here, all others use generic lowering.
   if (!isa<ConstantSDNode>(N->getOperand(1)) ||
-      cast<ConstantSDNode>(N->getOperand(1))->getValue() != 1)
+      cast<ConstantSDNode>(N->getOperand(1))->getZExtValue() != 1)
     return 0;
   
   // If we are in thumb mode, we don't have RRX.
@@ -1673,7 +1673,7 @@ static bool getIndexedAddressParts(SDNode *Ptr, MVT VT,
     // AddressingMode 3
     Base = Ptr->getOperand(0);
     if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(Ptr->getOperand(1))) {
-      int RHSC = (int)RHS->getValue();
+      int RHSC = (int)RHS->getZExtValue();
       if (RHSC < 0 && RHSC > -256) {
         isInc = false;
         Offset = DAG.getConstant(-RHSC, RHS->getValueType(0));
@@ -1686,7 +1686,7 @@ static bool getIndexedAddressParts(SDNode *Ptr, MVT VT,
   } else if (VT == MVT::i32 || VT == MVT::i8 || VT == MVT::i1) {
     // AddressingMode 2
     if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(Ptr->getOperand(1))) {
-      int RHSC = (int)RHS->getValue();
+      int RHSC = (int)RHS->getZExtValue();
       if (RHSC < 0 && RHSC > -0x1000) {
         isInc = false;
         Offset = DAG.getConstant(-RHSC, RHS->getValueType(0));

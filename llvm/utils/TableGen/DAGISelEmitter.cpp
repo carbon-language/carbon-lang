@@ -781,7 +781,7 @@ public:
         }
         emitCode("SDValue " + TmpVar + 
                  " = CurDAG->getTargetConstant(((" + CastType +
-                 ") cast<ConstantSDNode>(" + Val + ")->getValue()), " +
+                 ") cast<ConstantSDNode>(" + Val + ")->getZExtValue()), " +
                  getEnumName(N->getTypeNum(0)) + ");");
         // Add Tmp<ResNo> to VariableMap, so that we don't multiply select this
         // value if used multiple times by this pattern result.
@@ -1839,7 +1839,7 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
           OS << "  N.getNode()->dump(CurDAG);\n";
         } else {
           OS << "  unsigned iid = cast<ConstantSDNode>(N.getOperand("
-            "N.getOperand(0).getValueType() == MVT::Other))->getValue();\n"
+            "N.getOperand(0).getValueType() == MVT::Other))->getZExtValue();\n"
              << "  cerr << \"intrinsic %\"<< "
             "Intrinsic::getName((Intrinsic::ID)iid);\n";
         }
@@ -1914,7 +1914,7 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
   OS << "SDNode *Select_EXTRACT_SUBREG(const SDValue &N) {\n"
      << "  SDValue N0 = N.getOperand(0);\n"
      << "  SDValue N1 = N.getOperand(1);\n"
-     << "  unsigned C = cast<ConstantSDNode>(N1)->getValue();\n"
+     << "  unsigned C = cast<ConstantSDNode>(N1)->getZExtValue();\n"
      << "  SDValue Tmp = CurDAG->getTargetConstant(C, MVT::i32);\n"
      << "  AddToISelQueue(N0);\n"
      << "  return CurDAG->SelectNodeTo(N.getNode(), TargetInstrInfo::EXTRACT_SUBREG,\n"
@@ -1925,7 +1925,7 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "  SDValue N0 = N.getOperand(0);\n"
      << "  SDValue N1 = N.getOperand(1);\n"
      << "  SDValue N2 = N.getOperand(2);\n"
-     << "  unsigned C = cast<ConstantSDNode>(N2)->getValue();\n"
+     << "  unsigned C = cast<ConstantSDNode>(N2)->getZExtValue();\n"
      << "  SDValue Tmp = CurDAG->getTargetConstant(C, MVT::i32);\n"
      << "  AddToISelQueue(N1);\n"
      << "  AddToISelQueue(N0);\n"
@@ -2036,7 +2036,8 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "    N.getNode()->dump(CurDAG);\n"
      << "  } else {\n"
      << "    unsigned iid = cast<ConstantSDNode>(N.getOperand("
-               "N.getOperand(0).getValueType() == MVT::Other))->getValue();\n"
+               "N.getOperand(0).getValueType() == "
+               "MVT::Other))->getZExtValue();\n"
      << "    cerr << \"intrinsic %\"<< "
                "Intrinsic::getName((Intrinsic::ID)iid);\n"
      << "  }\n"

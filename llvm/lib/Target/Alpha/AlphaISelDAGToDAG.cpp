@@ -300,7 +300,7 @@ SDNode *AlphaDAGToDAGISel::Select(SDValue Op) {
   }
 
   case ISD::Constant: {
-    uint64_t uval = cast<ConstantSDNode>(N)->getValue();
+    uint64_t uval = cast<ConstantSDNode>(N)->getZExtValue();
     
     if (uval == 0) {
       SDValue Result = CurDAG->getCopyFromReg(CurDAG->getEntryNode(),
@@ -426,8 +426,8 @@ SDNode *AlphaDAGToDAGISel::Select(SDValue Op) {
     if (N->getOperand(0).getOpcode() == ISD::SRL &&
         (MC = dyn_cast<ConstantSDNode>(N->getOperand(1))) &&
         (SC = dyn_cast<ConstantSDNode>(N->getOperand(0).getOperand(1)))) {
-      uint64_t sval = SC->getValue();
-      uint64_t mval = MC->getValue();
+      uint64_t sval = SC->getZExtValue();
+      uint64_t mval = MC->getZExtValue();
       // If the result is a zap, let the autogened stuff handle it.
       if (get_zapImm(N->getOperand(0), mval))
         break;

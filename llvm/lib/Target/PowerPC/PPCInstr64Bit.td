@@ -34,22 +34,22 @@ def symbolLo64 : Operand<i64> {
 
 def SHL64 : SDNodeXForm<imm, [{
   // Transformation function: 63 - imm
-  return getI32Imm(63 - N->getValue());
+  return getI32Imm(63 - N->getZExtValue());
 }]>;
 
 def SRL64 : SDNodeXForm<imm, [{
   // Transformation function: 64 - imm
-  return N->getValue() ? getI32Imm(64 - N->getValue()) : getI32Imm(0);
+  return N->getZExtValue() ? getI32Imm(64 - N->getZExtValue()) : getI32Imm(0);
 }]>;
 
 def HI32_48 : SDNodeXForm<imm, [{
   // Transformation function: shift the immediate value down into the low bits.
-  return getI32Imm((unsigned short)(N->getValue() >> 32));
+  return getI32Imm((unsigned short)(N->getZExtValue() >> 32));
 }]>;
 
 def HI48_64 : SDNodeXForm<imm, [{
   // Transformation function: shift the immediate value down into the low bits.
-  return getI32Imm((unsigned short)(N->getValue() >> 48));
+  return getI32Imm((unsigned short)(N->getZExtValue() >> 48));
 }]>;
 
 

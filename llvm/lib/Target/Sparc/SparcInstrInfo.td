@@ -45,25 +45,29 @@ def UseDeprecatedInsts : Predicate<"Subtarget.useDeprecatedV8Instructions()">;
 
 def simm11  : PatLeaf<(imm), [{
   // simm11 predicate - True if the imm fits in a 11-bit sign extended field.
-  return (((int)N->getValue() << (32-11)) >> (32-11)) == (int)N->getValue();
+  return (((int)N->getZExtValue() << (32-11)) >> (32-11)) ==
+         (int)N->getZExtValue();
 }]>;
 
 def simm13  : PatLeaf<(imm), [{
   // simm13 predicate - True if the imm fits in a 13-bit sign extended field.
-  return (((int)N->getValue() << (32-13)) >> (32-13)) == (int)N->getValue();
+  return (((int)N->getZExtValue() << (32-13)) >> (32-13)) ==
+         (int)N->getZExtValue();
 }]>;
 
 def LO10 : SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant((unsigned)N->getValue() & 1023, MVT::i32);
+  return CurDAG->getTargetConstant((unsigned)N->getZExtValue() & 1023,
+                                   MVT::i32);
 }]>;
 
 def HI22 : SDNodeXForm<imm, [{
   // Transformation function: shift the immediate value down into the low bits.
-  return CurDAG->getTargetConstant((unsigned)N->getValue() >> 10, MVT::i32);
+  return CurDAG->getTargetConstant((unsigned)N->getZExtValue() >> 10, MVT::i32);
 }]>;
 
 def SETHIimm : PatLeaf<(imm), [{
-  return (((unsigned)N->getValue() >> 10) << 10) == (unsigned)N->getValue();
+  return (((unsigned)N->getZExtValue() >> 10) << 10) ==
+         (unsigned)N->getZExtValue();
 }], HI22>;
 
 // Addressing modes.

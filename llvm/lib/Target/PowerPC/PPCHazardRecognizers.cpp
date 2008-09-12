@@ -101,8 +101,8 @@ isLoadOfStoredAddress(unsigned LoadSize, SDValue Ptr1, SDValue Ptr2) const {
         if (ConstantSDNode *LoadOffset = dyn_cast<ConstantSDNode>(Ptr1)) {
           // Okay the base pointers match, so we have [c1+r] vs [c2+r].  Check
           // to see if the load and store actually overlap.
-          int StoreOffs = StoreOffset->getValue();
-          int LoadOffs  = LoadOffset->getValue();
+          int StoreOffs = StoreOffset->getZExtValue();
+          int LoadOffs  = LoadOffset->getZExtValue();
           if (StoreOffs < LoadOffs) {
             if (int(StoreOffs+StoreSize[i]) > LoadOffs) return true;
           } else {

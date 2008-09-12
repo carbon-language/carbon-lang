@@ -249,7 +249,7 @@ SDNode *SelectionDAGLegalize::isShuffleLegal(MVT VT, SDValue Mask) const {
           if (InOp.getOpcode() == ISD::UNDEF)
             Ops.push_back(DAG.getNode(ISD::UNDEF, EltVT));
           else {
-            unsigned InEltNo = cast<ConstantSDNode>(InOp)->getValue();
+            unsigned InEltNo = cast<ConstantSDNode>(InOp)->getZExtValue();
             Ops.push_back(DAG.getConstant(InEltNo*NumEltsGrowth+j, EltVT));
           }
         }
@@ -1376,7 +1376,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       Tmp1 = LegalizeOp(Node->getOperand(0));
       ConstantSDNode *idx = dyn_cast<ConstantSDNode>(Node->getOperand(1));
       assert(idx && "Operand must be a constant");
-      Tmp2 = DAG.getTargetConstant(idx->getValue(), idx->getValueType(0));
+      Tmp2 = DAG.getTargetConstant(idx->getAPIntValue(), idx->getValueType(0));
       Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2);
     }
     break;
@@ -1385,7 +1385,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       Tmp2 = LegalizeOp(Node->getOperand(1));      
       ConstantSDNode *idx = dyn_cast<ConstantSDNode>(Node->getOperand(2));
       assert(idx && "Operand must be a constant");
-      Tmp3 = DAG.getTargetConstant(idx->getValue(), idx->getValueType(0));
+      Tmp3 = DAG.getTargetConstant(idx->getAPIntValue(), idx->getValueType(0));
       Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2, Tmp3);
     }
     break;      
@@ -1451,7 +1451,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
           // elt 0 of the RHS.
           SmallVector<SDValue, 8> ShufOps;
           for (unsigned i = 0; i != NumElts; ++i) {
-            if (i != InsertPos->getValue())
+            if (i != InsertPos->getZExtValue())
               ShufOps.push_back(DAG.getConstant(i, ShufMaskEltVT));
             else
               ShufOps.push_back(DAG.getConstant(NumElts, ShufMaskEltVT));
@@ -1527,7 +1527,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
           Ops.push_back(DAG.getNode(ISD::UNDEF, EltVT));
         } else {
           assert(isa<ConstantSDNode>(Arg) && "Invalid VECTOR_SHUFFLE mask!");
-          unsigned Idx = cast<ConstantSDNode>(Arg)->getValue();
+          unsigned Idx = cast<ConstantSDNode>(Arg)->getZExtValue();
           if (Idx < NumElems)
             Ops.push_back(DAG.getNode(ISD::EXTRACT_VECTOR_ELT, EltVT, Tmp1,
                                       DAG.getConstant(Idx, PtrVT)));
@@ -1687,7 +1687,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       SDValue Size  = Tmp2.getOperand(1);
       SDValue SP = DAG.getCopyFromReg(Chain, SPReg, VT);
       Chain = SP.getValue(1);
-      unsigned Align = cast<ConstantSDNode>(Tmp3)->getValue();
+      unsigned Align = cast<ConstantSDNode>(Tmp3)->getZExtValue();
       unsigned StackAlign =
         TLI.getTargetMachine().getFrameInfo()->getStackAlignment();
       if (Align > StackAlign)
@@ -1734,7 +1734,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
 
     bool HasInFlag = Ops.back().getValueType() == MVT::Flag;
     for (unsigned i = 2, e = Ops.size()-HasInFlag; i < e; ) {
-      unsigned NumVals = cast<ConstantSDNode>(Ops[i])->getValue() >> 3;
+      unsigned NumVals = cast<ConstantSDNode>(Ops[i])->getZExtValue() >> 3;
       for (++i; NumVals; ++i, --NumVals) {
         SDValue Op = LegalizeOp(Ops[i]);
         if (Op != Ops[i]) {
@@ -2168,7 +2168,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     switch (getTypeAction(OpTy)) {
     default: assert(0 && "EXTRACT_ELEMENT action for type unimplemented!");
     case Legal:
-      if (cast<ConstantSDNode>(Node->getOperand(1))->getValue()) {
+      if (cast<ConstantSDNode>(Node->getOperand(1))->getZExtValue()) {
         // 1 -> Hi
         Result = DAG.getNode(ISD::SRL, OpTy, Node->getOperand(0),
                              DAG.getConstant(OpTy.getSizeInBits()/2,
@@ -2183,7 +2183,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     case Expand:
       // Get both the low and high parts.
       ExpandOp(Node->getOperand(0), Tmp1, Tmp2);
-      if (cast<ConstantSDNode>(Node->getOperand(1))->getValue())
+      if (cast<ConstantSDNode>(Node->getOperand(1))->getZExtValue())
         Result = Tmp2;  // 1 -> Hi
       else
         Result = Tmp1;  // 0 -> Lo
@@ -4554,11 +4554,11 @@ SDValue SelectionDAGLegalize::ExpandEXTRACT_VECTOR_ELT(SDValue Op) {
     ConstantSDNode *CIdx = cast<ConstantSDNode>(Idx);
     SDValue Lo, Hi;
     SplitVectorOp(Vec, Lo, Hi);
-    if (CIdx->getValue() < NumLoElts) {
+    if (CIdx->getZExtValue() < NumLoElts) {
       Vec = Lo;
     } else {
       Vec = Hi;
-      Idx = DAG.getConstant(CIdx->getValue() - NumLoElts,
+      Idx = DAG.getConstant(CIdx->getZExtValue() - NumLoElts,
                             Idx.getValueType());
     }
   
@@ -4606,11 +4606,12 @@ SDValue SelectionDAGLegalize::ExpandEXTRACT_SUBVECTOR(SDValue Op) {
   ConstantSDNode *CIdx = cast<ConstantSDNode>(Idx);
   SDValue Lo, Hi;
   SplitVectorOp(Vec, Lo, Hi);
-  if (CIdx->getValue() < NumElems/2) {
+  if (CIdx->getZExtValue() < NumElems/2) {
     Vec = Lo;
   } else {
     Vec = Hi;
-    Idx = DAG.getConstant(CIdx->getValue() - NumElems/2, Idx.getValueType());
+    Idx = DAG.getConstant(CIdx->getZExtValue() - NumElems/2,
+                          Idx.getValueType());
   }
   
   // It's now an extract from the appropriate high or low part.  Recurse.
@@ -5138,7 +5139,7 @@ bool SelectionDAGLegalize::ExpandShift(unsigned Opc, SDValue Op,SDValue Amt,
 
   // Handle the case when Amt is an immediate.
   if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Amt.getNode())) {
-    unsigned Cst = CN->getValue();
+    unsigned Cst = CN->getZExtValue();
     // Expand the incoming operand to be shifted, so that we have its parts
     SDValue InL, InH;
     ExpandOp(Op, InL, InH);
@@ -5876,7 +5877,7 @@ void SelectionDAGLegalize::ExpandOp(SDValue Op, SDValue &Lo, SDValue &Hi){
     abort();
   case ISD::EXTRACT_ELEMENT:
     ExpandOp(Node->getOperand(0), Lo, Hi);
-    if (cast<ConstantSDNode>(Node->getOperand(1))->getValue())
+    if (cast<ConstantSDNode>(Node->getOperand(1))->getZExtValue())
       return ExpandOp(Hi, Lo, Hi);
     return ExpandOp(Lo, Lo, Hi);
   case ISD::EXTRACT_VECTOR_ELT:
@@ -6863,7 +6864,7 @@ void SelectionDAGLegalize::SplitVectorOp(SDValue Op, SDValue &Lo,
   case ISD::INSERT_VECTOR_ELT: {
     if (ConstantSDNode *Idx = dyn_cast<ConstantSDNode>(Node->getOperand(2))) {
       SplitVectorOp(Node->getOperand(0), Lo, Hi);
-      unsigned Index = Idx->getValue();
+      unsigned Index = Idx->getZExtValue();
       SDValue ScalarOp = Node->getOperand(1);
       if (Index < NewNumElts_Lo)
         Lo = DAG.getNode(ISD::INSERT_VECTOR_ELT, NewVT_Lo, Lo, ScalarOp,
@@ -6894,7 +6895,7 @@ void SelectionDAGLegalize::SplitVectorOp(SDValue Op, SDValue &Lo,
         Ops.push_back(DAG.getNode(ISD::UNDEF, NewEltVT));
         continue;
       }
-      unsigned Idx = cast<ConstantSDNode>(IdxNode)->getValue();
+      unsigned Idx = cast<ConstantSDNode>(IdxNode)->getZExtValue();
       SDValue InVec = Node->getOperand(0);
       if (Idx >= NumElements) {
         InVec = Node->getOperand(1);
@@ -6912,7 +6913,7 @@ void SelectionDAGLegalize::SplitVectorOp(SDValue Op, SDValue &Lo,
         Ops.push_back(DAG.getNode(ISD::UNDEF, NewEltVT));
         continue;
       }
-      unsigned Idx = cast<ConstantSDNode>(IdxNode)->getValue();
+      unsigned Idx = cast<ConstantSDNode>(IdxNode)->getZExtValue();
       SDValue InVec = Node->getOperand(0);
       if (Idx >= NumElements) {
         InVec = Node->getOperand(1);
@@ -7240,7 +7241,7 @@ SDValue SelectionDAGLegalize::ScalarizeVectorOp(SDValue Op) {
   case ISD::VECTOR_SHUFFLE: {
     // Figure out if the scalar is the LHS or RHS and return it.
     SDValue EltNum = Node->getOperand(2).getOperand(0);
-    if (cast<ConstantSDNode>(EltNum)->getValue())
+    if (cast<ConstantSDNode>(EltNum)->getZExtValue())
       Result = ScalarizeVectorOp(Node->getOperand(1));
     else
       Result = ScalarizeVectorOp(Node->getOperand(0));

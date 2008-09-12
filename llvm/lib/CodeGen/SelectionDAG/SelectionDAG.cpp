@@ -1462,7 +1462,7 @@ void SelectionDAG::ComputeMaskedBits(SDValue Op, const APInt &Mask,
   case ISD::SHL:
     // (shl X, C1) & C2 == 0   iff   (X & C2 >>u C1) == 0
     if (ConstantSDNode *SA = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
-      unsigned ShAmt = SA->getValue();
+      unsigned ShAmt = SA->getZExtValue();
 
       // If the shift count is an invalid immediate, don't do anything.
       if (ShAmt >= BitWidth)
@@ -1480,7 +1480,7 @@ void SelectionDAG::ComputeMaskedBits(SDValue Op, const APInt &Mask,
   case ISD::SRL:
     // (ushr X, C1) & C2 == 0   iff  (-1 >> C1) & C2 == 0
     if (ConstantSDNode *SA = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
-      unsigned ShAmt = SA->getValue();
+      unsigned ShAmt = SA->getZExtValue();
 
       // If the shift count is an invalid immediate, don't do anything.
       if (ShAmt >= BitWidth)
@@ -1498,7 +1498,7 @@ void SelectionDAG::ComputeMaskedBits(SDValue Op, const APInt &Mask,
     return;
   case ISD::SRA:
     if (ConstantSDNode *SA = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
-      unsigned ShAmt = SA->getValue();
+      unsigned ShAmt = SA->getZExtValue();
 
       // If the shift count is an invalid immediate, don't do anything.
       if (ShAmt >= BitWidth)
@@ -1823,7 +1823,7 @@ unsigned SelectionDAG::ComputeNumSignBits(SDValue Op, unsigned Depth) const{
     Tmp = ComputeNumSignBits(Op.getOperand(0), Depth+1);
     // SRA X, C   -> adds C sign bits.
     if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
-      Tmp += C->getValue();
+      Tmp += C->getZExtValue();
       if (Tmp > VTBits) Tmp = VTBits;
     }
     return Tmp;
@@ -1831,9 +1831,9 @@ unsigned SelectionDAG::ComputeNumSignBits(SDValue Op, unsigned Depth) const{
     if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
       // shl destroys sign bits.
       Tmp = ComputeNumSignBits(Op.getOperand(0), Depth+1);
-      if (C->getValue() >= VTBits ||      // Bad shift.
-          C->getValue() >= Tmp) break;    // Shifted all sign bits out.
-      return Tmp - C->getValue();
+      if (C->getZExtValue() >= VTBits ||      // Bad shift.
+          C->getZExtValue() >= Tmp) break;    // Shifted all sign bits out.
+      return Tmp - C->getZExtValue();
     }
     break;
   case ISD::AND:
@@ -1865,7 +1865,7 @@ unsigned SelectionDAG::ComputeNumSignBits(SDValue Op, unsigned Depth) const{
   case ISD::ROTL:
   case ISD::ROTR:
     if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
-      unsigned RotAmt = C->getValue() & (VTBits-1);
+      unsigned RotAmt = C->getZExtValue() & (VTBits-1);
       
       // Handle rotate right by N like a rotate left by 32-N.
       if (Op.getOpcode() == ISD::ROTR)
@@ -2008,7 +2008,7 @@ SDValue SelectionDAG::getShuffleScalarElt(const SDNode *N, unsigned i) {
   SDValue Idx = PermMask.getOperand(i);
   if (Idx.getOpcode() == ISD::UNDEF)
     return getNode(ISD::UNDEF, VT.getVectorElementType());
-  unsigned Index = cast<ConstantSDNode>(Idx)->getValue();
+  unsigned Index = cast<ConstantSDNode>(Idx)->getZExtValue();
   unsigned NumElems = PermMask.getNumOperands();
   SDValue V = (Index < NumElems) ? N->getOperand(0) : N->getOperand(1);
   Index %= NumElems;
@@ -2389,14 +2389,15 @@ SDValue SelectionDAG::getNode(unsigned Opcode, MVT VT,
       unsigned Factor =
         N1.getOperand(0).getValueType().getVectorNumElements();
       return getNode(ISD::EXTRACT_VECTOR_ELT, VT,
-                     N1.getOperand(N2C->getValue() / Factor),
-                     getConstant(N2C->getValue() % Factor, N2.getValueType()));
+                     N1.getOperand(N2C->getZExtValue() / Factor),
+                     getConstant(N2C->getZExtValue() % Factor,
+                                 N2.getValueType()));
     }
 
     // EXTRACT_VECTOR_ELT of BUILD_VECTOR is often formed while lowering is
     // expanding large vector constants.
     if (N2C && N1.getOpcode() == ISD::BUILD_VECTOR)
-      return N1.getOperand(N2C->getValue());
+      return N1.getOperand(N2C->getZExtValue());
       
     // EXTRACT_VECTOR_ELT of INSERT_VECTOR_ELT is often formed when vector
     // operations are lowered to scalars.
@@ -2408,7 +2409,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, MVT VT,
     }
     break;
   case ISD::EXTRACT_ELEMENT:
-    assert(N2C && (unsigned)N2C->getValue() < 2 && "Bad EXTRACT_ELEMENT!");
+    assert(N2C && (unsigned)N2C->getZExtValue() < 2 && "Bad EXTRACT_ELEMENT!");
     assert(!N1.getValueType().isVector() && !VT.isVector() &&
            (N1.getValueType().isInteger() == VT.isInteger()) &&
            "Wrong types for EXTRACT_ELEMENT!");
@@ -2417,12 +2418,12 @@ SDValue SelectionDAG::getNode(unsigned Opcode, MVT VT,
     // 64-bit integers into 32-bit parts.  Instead of building the extract of
     // the BUILD_PAIR, only to have legalize rip it apart, just do it now. 
     if (N1.getOpcode() == ISD::BUILD_PAIR)
-      return N1.getOperand(N2C->getValue());
+      return N1.getOperand(N2C->getZExtValue());
 
     // EXTRACT_ELEMENT of a constant int is also very common.
     if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(N1)) {
       unsigned ElementSize = VT.getSizeInBits();
-      unsigned Shift = ElementSize * N2C->getValue();
+      unsigned Shift = ElementSize * N2C->getZExtValue();
       APInt ShiftedVal = C->getAPIntValue().lshr(Shift);
       return getConstant(ShiftedVal.trunc(ElementSize), VT);
     }
@@ -2638,7 +2639,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, MVT VT,
   }
   case ISD::SELECT:
     if (N1C) {
-     if (N1C->getValue())
+     if (N1C->getZExtValue())
         return N2;             // select true, X, Y -> X
       else
         return N3;             // select false, X, Y -> Y
@@ -2648,7 +2649,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, MVT VT,
     break;
   case ISD::BRCOND:
     if (N2C) {
-      if (N2C->getValue()) // Unconditional branch
+      if (N2C->getZExtValue()) // Unconditional branch
         return getNode(ISD::BR, MVT::Other, N1, N3);
       else
         return N1;         // Never-taken branch
@@ -2712,7 +2713,7 @@ static SDValue getMemsetValue(SDValue Value, MVT VT, SelectionDAG &DAG) {
   unsigned NumBits = VT.isVector() ?
     VT.getVectorElementType().getSizeInBits() : VT.getSizeInBits();
   if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Value)) {
-    APInt Val = APInt(NumBits, C->getValue() & 255);
+    APInt Val = APInt(NumBits, C->getZExtValue() & 255);
     unsigned Shift = 8;
     for (unsigned i = NumBits; i > 8; i >>= 1) {
       Val = (Val << Shift) | Val;
@@ -2783,7 +2784,7 @@ static bool isMemSrcFromString(SDValue Src, std::string &Str) {
            Src.getOperand(0).getOpcode() == ISD::GlobalAddress &&
            Src.getOperand(1).getOpcode() == ISD::Constant) {
     G = cast<GlobalAddressSDNode>(Src.getOperand(0));
-    SrcDelta = cast<ConstantSDNode>(Src.getOperand(1))->getValue();
+    SrcDelta = cast<ConstantSDNode>(Src.getOperand(1))->getZExtValue();
   }
   if (!G)
     return false;
@@ -3047,7 +3048,8 @@ SDValue SelectionDAG::getMemcpy(SDValue Chain, SDValue Dst,
       return Chain;
 
     SDValue Result =
-      getMemcpyLoadsAndStores(*this, Chain, Dst, Src, ConstantSize->getValue(),
+      getMemcpyLoadsAndStores(*this, Chain, Dst, Src,
+                              ConstantSize->getZExtValue(),
                               Align, false, DstSV, DstSVOff, SrcSV, SrcSVOff);
     if (Result.getNode())
       return Result;
@@ -3067,7 +3069,7 @@ SDValue SelectionDAG::getMemcpy(SDValue Chain, SDValue Dst,
   if (AlwaysInline) {
     assert(ConstantSize && "AlwaysInline requires a constant size!");
     return getMemcpyLoadsAndStores(*this, Chain, Dst, Src,
-                                   ConstantSize->getValue(), Align, true,
+                                   ConstantSize->getZExtValue(), Align, true,
                                    DstSV, DstSVOff, SrcSV, SrcSVOff);
   }
 
@@ -3101,7 +3103,8 @@ SDValue SelectionDAG::getMemmove(SDValue Chain, SDValue Dst,
       return Chain;
 
     SDValue Result =
-      getMemmoveLoadsAndStores(*this, Chain, Dst, Src, ConstantSize->getValue(),
+      getMemmoveLoadsAndStores(*this, Chain, Dst, Src,
+                               ConstantSize->getZExtValue(),
                                Align, false, DstSV, DstSVOff, SrcSV, SrcSVOff);
     if (Result.getNode())
       return Result;
@@ -3144,8 +3147,8 @@ SDValue SelectionDAG::getMemset(SDValue Chain, SDValue Dst,
       return Chain;
 
     SDValue Result =
-      getMemsetStores(*this, Chain, Dst, Src, ConstantSize->getValue(), Align,
-                      DstSV, DstSVOff);
+      getMemsetStores(*this, Chain, Dst, Src, ConstantSize->getZExtValue(),
+                      Align, DstSV, DstSVOff);
     if (Result.getNode())
       return Result;
   }
@@ -4768,7 +4771,7 @@ bool SDNode::isPredecessorOf(SDNode *N) const {
 
 uint64_t SDNode::getConstantOperandVal(unsigned Num) const {
   assert(Num < NumOperands && "Invalid child # of SDNode!");
-  return cast<ConstantSDNode>(OperandList[Num])->getValue();
+  return cast<ConstantSDNode>(OperandList[Num])->getZExtValue();
 }
 
 std::string SDNode::getOperationName(const SelectionDAG *G) const {
@@ -4875,12 +4878,12 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::ConstantPool:  return "ConstantPool";
   case ISD::ExternalSymbol: return "ExternalSymbol";
   case ISD::INTRINSIC_WO_CHAIN: {
-    unsigned IID = cast<ConstantSDNode>(getOperand(0))->getValue();
+    unsigned IID = cast<ConstantSDNode>(getOperand(0))->getZExtValue();
     return Intrinsic::getName((Intrinsic::ID)IID);
   }
   case ISD::INTRINSIC_VOID:
   case ISD::INTRINSIC_W_CHAIN: {
-    unsigned IID = cast<ConstantSDNode>(getOperand(1))->getValue();
+    unsigned IID = cast<ConstantSDNode>(getOperand(1))->getZExtValue();
     return Intrinsic::getName((Intrinsic::ID)IID);
   }
 
@@ -5128,7 +5131,7 @@ void SDNode::print(raw_ostream &OS, const SelectionDAG *G) const {
       if (Mask->getOperand(i).getOpcode() == ISD::UNDEF)
         OS << "u";
       else
-        OS << cast<ConstantSDNode>(Mask->getOperand(i))->getValue();
+        OS << cast<ConstantSDNode>(Mask->getOperand(i))->getZExtValue();
     }
     OS << ">";
   }

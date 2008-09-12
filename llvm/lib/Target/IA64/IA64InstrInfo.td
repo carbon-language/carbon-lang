@@ -66,7 +66,7 @@ let PrintMethod = "printCallOperand" in
 def is32ones : PatLeaf<(i64 imm), [{
   // is32ones predicate - True if the immediate is 0x00000000FFFFFFFF 
   // Used to create ZXT4s appropriately 
-  uint64_t v = (uint64_t)N->getValue();
+  uint64_t v = (uint64_t)N->getZExtValue();
   return (v == 0x00000000FFFFFFFFLL);
 }]>;
 
@@ -75,36 +75,36 @@ def is32ones : PatLeaf<(i64 imm), [{
 // etc, through 0x00000000FFFFFFFF
 // Used to test for the suitability of mix* 
 def isMIX1Lable: PatLeaf<(i64 imm), [{
-  return((uint64_t)N->getValue()==0xFF00FF00FF00FF00LL);
+  return((uint64_t)N->getZExtValue()==0xFF00FF00FF00FF00LL);
 }]>;
 def isMIX1Rable: PatLeaf<(i64 imm), [{
-  return((uint64_t)N->getValue()==0x00FF00FF00FF00FFLL);
+  return((uint64_t)N->getZExtValue()==0x00FF00FF00FF00FFLL);
 }]>;
 def isMIX2Lable: PatLeaf<(i64 imm), [{
-  return((uint64_t)N->getValue()==0xFFFF0000FFFF0000LL);
+  return((uint64_t)N->getZExtValue()==0xFFFF0000FFFF0000LL);
 }]>;
 def isMIX2Rable: PatLeaf<(i64 imm), [{
-  return((uint64_t)N->getValue()==0x0000FFFF0000FFFFLL);
+  return((uint64_t)N->getZExtValue()==0x0000FFFF0000FFFFLL);
 }]>;
 def isMIX4Lable: PatLeaf<(i64 imm), [{
-  return((uint64_t)N->getValue()==0xFFFFFFFF00000000LL);
+  return((uint64_t)N->getZExtValue()==0xFFFFFFFF00000000LL);
 }]>;
 def isMIX4Rable: PatLeaf<(i64 imm), [{
-  return((uint64_t)N->getValue()==0x00000000FFFFFFFFLL);
+  return((uint64_t)N->getZExtValue()==0x00000000FFFFFFFFLL);
 }]>;
 
 def isSHLADDimm: PatLeaf<(i64 imm), [{
   // isSHLADDimm predicate - True if the immediate is exactly 1, 2, 3 or 4
   // - 0 is *not* okay.
   // Used to create shladd instructions appropriately
-  int64_t v = (int64_t)N->getValue();
+  int64_t v = (int64_t)N->getZExtValue();
   return (v >= 1 && v <= 4);
 }]>;
 
 def immSExt14  : PatLeaf<(i64 imm), [{
   // immSExt14 predicate - True if the immediate fits in a 14-bit sign extended
   // field.  Used by instructions like 'adds'.
-  int64_t v = (int64_t)N->getValue();
+  int64_t v = (int64_t)N->getZExtValue();
   return (v <= 8191 && v >= -8192);
 }]>;
 

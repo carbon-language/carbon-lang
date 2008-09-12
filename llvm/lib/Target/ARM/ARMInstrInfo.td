@@ -108,47 +108,49 @@ class RegConstraint<string C> {
 // so_imm_XFORM - Return a so_imm value packed into the format described for
 // so_imm def below.
 def so_imm_XFORM : SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant(ARM_AM::getSOImmVal(N->getValue()),
+  return CurDAG->getTargetConstant(ARM_AM::getSOImmVal(N->getZExtValue()),
                                    MVT::i32);
 }]>;
 
 // so_imm_neg_XFORM - Return a so_imm value packed into the format described for
 // so_imm_neg def below.
 def so_imm_neg_XFORM : SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant(ARM_AM::getSOImmVal(-(int)N->getValue()),
+  return CurDAG->getTargetConstant(ARM_AM::getSOImmVal(-(int)N->getZExtValue()),
                                    MVT::i32);
 }]>;
 
 // so_imm_not_XFORM - Return a so_imm value packed into the format described for
 // so_imm_not def below.
 def so_imm_not_XFORM : SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant(ARM_AM::getSOImmVal(~(int)N->getValue()),
+  return CurDAG->getTargetConstant(ARM_AM::getSOImmVal(~(int)N->getZExtValue()),
                                    MVT::i32);
 }]>;
 
 // rot_imm predicate - True if the 32-bit immediate is equal to 8, 16, or 24.
 def rot_imm : PatLeaf<(i32 imm), [{
-  int32_t v = (int32_t)N->getValue();
+  int32_t v = (int32_t)N->getZExtValue();
   return v == 8 || v == 16 || v == 24;
 }]>;
 
 /// imm1_15 predicate - True if the 32-bit immediate is in the range [1,15].
 def imm1_15 : PatLeaf<(i32 imm), [{
-  return (int32_t)N->getValue() >= 1 && (int32_t)N->getValue() < 16;
+  return (int32_t)N->getZExtValue() >= 1 && (int32_t)N->getZExtValue() < 16;
 }]>;
 
 /// imm16_31 predicate - True if the 32-bit immediate is in the range [16,31].
 def imm16_31 : PatLeaf<(i32 imm), [{
-  return (int32_t)N->getValue() >= 16 && (int32_t)N->getValue() < 32;
+  return (int32_t)N->getZExtValue() >= 16 && (int32_t)N->getZExtValue() < 32;
 }]>;
 
 def so_imm_neg : 
-  PatLeaf<(imm), [{ return ARM_AM::getSOImmVal(-(int)N->getValue()) != -1; }],
-          so_imm_neg_XFORM>;
+  PatLeaf<(imm), [{
+    return ARM_AM::getSOImmVal(-(int)N->getZExtValue()) != -1;
+  }], so_imm_neg_XFORM>;
 
 def so_imm_not :
-  PatLeaf<(imm), [{ return ARM_AM::getSOImmVal(~(int)N->getValue()) != -1; }],
-          so_imm_not_XFORM>;
+  PatLeaf<(imm), [{
+    return ARM_AM::getSOImmVal(~(int)N->getZExtValue()) != -1;
+  }], so_imm_not_XFORM>;
 
 // sext_16_node predicate - True if the SDNode is sign-extended 16 or more bits.
 def sext_16_node : PatLeaf<(i32 GPR:$a), [{
@@ -199,7 +201,7 @@ def so_reg : Operand<i32>,    // reg reg imm
 // [bits 0-7], the 4-bit shift amount is the next 4 bits [bits 8-11].
 def so_imm : Operand<i32>,
              PatLeaf<(imm),
-                     [{ return ARM_AM::getSOImmVal(N->getValue()) != -1; }],
+                     [{ return ARM_AM::getSOImmVal(N->getZExtValue()) != -1; }],
                      so_imm_XFORM> {
   let PrintMethod = "printSOImmOperand";
 }
@@ -208,18 +210,19 @@ def so_imm : Operand<i32>,
 // bits set in them.  This uses so_imm2part to match and so_imm2part_[12] to
 // get the first/second pieces.
 def so_imm2part : Operand<i32>,
-                  PatLeaf<(imm),
-             [{ return ARM_AM::isSOImmTwoPartVal((unsigned)N->getValue()); }]> {
+                  PatLeaf<(imm), [{
+      return ARM_AM::isSOImmTwoPartVal((unsigned)N->getZExtValue());
+    }]> {
   let PrintMethod = "printSOImm2PartOperand";
 }
 
 def so_imm2part_1 : SDNodeXForm<imm, [{
-  unsigned V = ARM_AM::getSOImmTwoPartFirst((unsigned)N->getValue());
+  unsigned V = ARM_AM::getSOImmTwoPartFirst((unsigned)N->getZExtValue());
   return CurDAG->getTargetConstant(ARM_AM::getSOImmVal(V), MVT::i32);
 }]>;
 
 def so_imm2part_2 : SDNodeXForm<imm, [{
-  unsigned V = ARM_AM::getSOImmTwoPartSecond((unsigned)N->getValue());
+  unsigned V = ARM_AM::getSOImmTwoPartSecond((unsigned)N->getZExtValue());
   return CurDAG->getTargetConstant(ARM_AM::getSOImmVal(V), MVT::i32);
 }]>;
 

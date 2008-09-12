@@ -51,7 +51,7 @@ def PIC16Wrapper  : SDNode<"PIC16ISD::Wrapper", SDTIntUnaryOp>;
 // so_imm_XFORM - Return a so_imm value packed into the format described for
 // so_imm def below.
 def so_imm_XFORM : SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant((int8_t)N->getValue(), MVT::i32);
+  return CurDAG->getTargetConstant((int8_t)N->getZExtValue(), MVT::i32);
 }]>;
 
 def so_imm : Operand<i8>,

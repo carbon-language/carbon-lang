@@ -306,11 +306,11 @@ static bool isIntS16Immediate(SDNode *N, short &Imm) {
   if (N->getOpcode() != ISD::Constant)
     return false;
 
-  Imm = (short)cast<ConstantSDNode>(N)->getValue();
+  Imm = (short)cast<ConstantSDNode>(N)->getZExtValue();
   if (N->getValueType(0) == MVT::i32)
-    return Imm == (int32_t)cast<ConstantSDNode>(N)->getValue();
+    return Imm == (int32_t)cast<ConstantSDNode>(N)->getZExtValue();
   else
-    return Imm == (int64_t)cast<ConstantSDNode>(N)->getValue();
+    return Imm == (int64_t)cast<ConstantSDNode>(N)->getZExtValue();
 }
 
 static bool isIntS16Immediate(SDValue Op, short &Imm) {
@@ -322,7 +322,7 @@ static bool isIntS16Immediate(SDValue Op, short &Imm) {
 /// operand. If so Imm will receive the 32-bit value.
 static bool isInt32Immediate(SDNode *N, unsigned &Imm) {
   if (N->getOpcode() == ISD::Constant && N->getValueType(0) == MVT::i32) {
-    Imm = cast<ConstantSDNode>(N)->getValue();
+    Imm = cast<ConstantSDNode>(N)->getZExtValue();
     return true;
   }
   return false;
@@ -332,7 +332,7 @@ static bool isInt32Immediate(SDNode *N, unsigned &Imm) {
 /// operand.  If so Imm will receive the 64-bit value.
 static bool isInt64Immediate(SDNode *N, uint64_t &Imm) {
   if (N->getOpcode() == ISD::Constant && N->getValueType(0) == MVT::i64) {
-    Imm = cast<ConstantSDNode>(N)->getValue();
+    Imm = cast<ConstantSDNode>(N)->getZExtValue();
     return true;
   }
   return false;
@@ -785,7 +785,7 @@ SDNode *PPCDAGToDAGISel::Select(SDValue Op) {
   case ISD::Constant: {
     if (N->getValueType(0) == MVT::i64) {
       // Get 64 bit value.
-      int64_t Imm = cast<ConstantSDNode>(N)->getValue();
+      int64_t Imm = cast<ConstantSDNode>(N)->getZExtValue();
       // Assume no remaining bits.
       unsigned Remainder = 0;
       // Assume no shift required.
@@ -1059,7 +1059,7 @@ SDNode *PPCDAGToDAGISel::Select(SDValue Op) {
       if (ConstantSDNode *N2C = dyn_cast<ConstantSDNode>(N->getOperand(2)))
         if (ConstantSDNode *N3C = dyn_cast<ConstantSDNode>(N->getOperand(3)))
           if (N1C->isNullValue() && N3C->isNullValue() &&
-              N2C->getValue() == 1ULL && CC == ISD::SETNE &&
+              N2C->getZExtValue() == 1ULL && CC == ISD::SETNE &&
               // FIXME: Implement this optzn for PPC64.
               N->getValueType(0) == MVT::i32) {
             AddToISelQueue(N->getOperand(0));
@@ -1100,7 +1100,7 @@ SDNode *PPCDAGToDAGISel::Select(SDValue Op) {
     AddToISelQueue(N->getOperand(4));  // Op #4 is the Flag.
     // Prevent PPC::PRED_* from being selected into LI.
     SDValue Pred =
-      getI32Imm(cast<ConstantSDNode>(N->getOperand(1))->getValue());
+      getI32Imm(cast<ConstantSDNode>(N->getOperand(1))->getZExtValue());
     SDValue Ops[] = { Pred, N->getOperand(2), N->getOperand(3),
       N->getOperand(0), N->getOperand(4) };
     return CurDAG->SelectNodeTo(N, PPC::BCC, MVT::Other, Ops, 5);

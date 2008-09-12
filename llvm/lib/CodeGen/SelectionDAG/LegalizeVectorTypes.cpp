@@ -157,7 +157,7 @@ SDValue DAGTypeLegalizer::ScalarizeVecRes_SELECT(SDNode *N) {
 SDValue DAGTypeLegalizer::ScalarizeVecRes_VECTOR_SHUFFLE(SDNode *N) {
   // Figure out if the scalar is the LHS or RHS and return it.
   SDValue EltNum = N->getOperand(2).getOperand(0);
-  unsigned Op = cast<ConstantSDNode>(EltNum)->getValue() != 0;
+  unsigned Op = cast<ConstantSDNode>(EltNum)->getZExtValue() != 0;
   return GetScalarizedVector(N->getOperand(Op));
 }
 
@@ -450,7 +450,7 @@ void DAGTypeLegalizer::SplitVecRes_INSERT_VECTOR_ELT(SDNode *N, SDValue &Lo,
   GetSplitVector(Vec, Lo, Hi);
 
   if (ConstantSDNode *CIdx = dyn_cast<ConstantSDNode>(Idx)) {
-    unsigned IdxVal = CIdx->getValue();
+    unsigned IdxVal = CIdx->getZExtValue();
     unsigned LoNumElts = Lo.getValueType().getVectorNumElements();
     if (IdxVal < LoNumElts)
       Lo = DAG.getNode(ISD::INSERT_VECTOR_ELT, Lo.getValueType(), Lo, Elt, Idx);
@@ -562,7 +562,7 @@ void DAGTypeLegalizer::SplitVecRes_VECTOR_SHUFFLE(SDNode *N, SDValue &Lo,
   // buildvector of extractelement here because the input vectors will have
   // to be legalized, so this makes the code simpler.
   for (unsigned i = 0; i != LoNumElts; ++i) {
-    unsigned Idx = cast<ConstantSDNode>(Mask.getOperand(i))->getValue();
+    unsigned Idx = cast<ConstantSDNode>(Mask.getOperand(i))->getZExtValue();
     SDValue InVec = N->getOperand(0);
     if (Idx >= NumElements) {
       InVec = N->getOperand(1);
@@ -575,7 +575,7 @@ void DAGTypeLegalizer::SplitVecRes_VECTOR_SHUFFLE(SDNode *N, SDValue &Lo,
   Ops.clear();
 
   for (unsigned i = LoNumElts; i != NumElements; ++i) {
-    unsigned Idx = cast<ConstantSDNode>(Mask.getOperand(i))->getValue();
+    unsigned Idx = cast<ConstantSDNode>(Mask.getOperand(i))->getZExtValue();
     SDValue InVec = N->getOperand(0);
     if (Idx >= NumElements) {
       InVec = N->getOperand(1);
@@ -677,7 +677,7 @@ SDValue DAGTypeLegalizer::SplitVecOp_EXTRACT_SUBVECTOR(SDNode *N) {
   GetSplitVector(N->getOperand(0), Lo, Hi);
 
   uint64_t LoElts = Lo.getValueType().getVectorNumElements();
-  uint64_t IdxVal = cast<ConstantSDNode>(Idx)->getValue();
+  uint64_t IdxVal = cast<ConstantSDNode>(Idx)->getZExtValue();
 
   if (IdxVal < LoElts) {
     assert(IdxVal + SubVT.getVectorNumElements() <= LoElts &&
@@ -695,7 +695,7 @@ SDValue DAGTypeLegalizer::SplitVecOp_EXTRACT_VECTOR_ELT(SDNode *N) {
   MVT VecVT = Vec.getValueType();
 
   if (isa<ConstantSDNode>(Idx)) {
-    uint64_t IdxVal = cast<ConstantSDNode>(Idx)->getValue();
+    uint64_t IdxVal = cast<ConstantSDNode>(Idx)->getZExtValue();
     assert(IdxVal < VecVT.getVectorNumElements() && "Invalid vector index!");
 
     SDValue Lo, Hi;
@@ -803,7 +803,7 @@ SDValue DAGTypeLegalizer::SplitVecOp_VECTOR_SHUFFLE(SDNode *N, unsigned OpNo){
       SmallVector<SDValue, 16> Ops(MaskLength);
       for (unsigned i = 0; i < MaskLength; ++i) {
         uint64_t Idx =
-          cast<ConstantSDNode>(Mask.getOperand(i))->getValue();
+          cast<ConstantSDNode>(Mask.getOperand(i))->getZExtValue();
         Ops[i] = DAG.getConstant(Idx, OpVT);
       }
       return DAG.UpdateNodeOperands(SDValue(N,0),

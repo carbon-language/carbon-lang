@@ -1481,7 +1481,7 @@ void DAGTypeLegalizer::ExpandIntRes_Shift(SDNode *N,
   // If we can emit an efficient shift operation, do so now.  Check to see if
   // the RHS is a constant.
   if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N->getOperand(1)))
-    return ExpandShiftByConstant(N, CN->getValue(), Lo, Hi);
+    return ExpandShiftByConstant(N, CN->getZExtValue(), Lo, Hi);
 
   // If we can determine that the high bit of the shift is zero or one, even if
   // the low bits are variable, emit this shift in an optimized form.

@@ -46,25 +46,25 @@ def lea64addr : ComplexPattern<i64, 4, "SelectLEAAddr",
 def i64immSExt32  : PatLeaf<(i64 imm), [{
   // i64immSExt32 predicate - True if the 64-bit immediate fits in a 32-bit
   // sign extended field.
-  return (int64_t)N->getValue() == (int32_t)N->getValue();
+  return (int64_t)N->getZExtValue() == (int32_t)N->getZExtValue();
 }]>;
 
 def i64immZExt32  : PatLeaf<(i64 imm), [{
   // i64immZExt32 predicate - True if the 64-bit immediate fits in a 32-bit
   // unsignedsign extended field.
-  return (uint64_t)N->getValue() == (uint32_t)N->getValue();
+  return (uint64_t)N->getZExtValue() == (uint32_t)N->getZExtValue();
 }]>;
 
 def i64immSExt8  : PatLeaf<(i64 imm), [{
   // i64immSExt8 predicate - True if the 64-bit immediate fits in a 8-bit
   // sign extended field.
-  return (int64_t)N->getValue() == (int8_t)N->getValue();
+  return (int64_t)N->getZExtValue() == (int8_t)N->getZExtValue();
 }]>;
 
 def i64immFFFFFFFF  : PatLeaf<(i64 imm), [{
   // i64immFFFFFFFF - True if this is a specific constant we can't write in
   // tblgen files.
-  return N->getValue() == 0x00000000FFFFFFFFULL;
+  return N->getZExtValue() == 0x00000000FFFFFFFFULL;
 }]>;
 
 

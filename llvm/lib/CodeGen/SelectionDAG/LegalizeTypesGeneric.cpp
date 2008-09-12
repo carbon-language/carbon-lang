@@ -88,7 +88,8 @@ void DAGTypeLegalizer::ExpandRes_BUILD_PAIR(SDNode *N, SDValue &Lo,
 void DAGTypeLegalizer::ExpandRes_EXTRACT_ELEMENT(SDNode *N, SDValue &Lo,
                                                  SDValue &Hi) {
   GetExpandedOp(N->getOperand(0), Lo, Hi);
-  SDValue Part = cast<ConstantSDNode>(N->getOperand(1))->getValue() ? Hi : Lo;
+  SDValue Part = cast<ConstantSDNode>(N->getOperand(1))->getZExtValue() ?
+                   Hi : Lo;
 
   assert(Part.getValueType() == N->getValueType(0) &&
          "Type twice as big as expanded type not itself expanded!");
@@ -233,7 +234,7 @@ SDValue DAGTypeLegalizer::ExpandOp_BUILD_VECTOR(SDNode *N) {
 SDValue DAGTypeLegalizer::ExpandOp_EXTRACT_ELEMENT(SDNode *N) {
   SDValue Lo, Hi;
   GetExpandedOp(N->getOperand(0), Lo, Hi);
-  return cast<ConstantSDNode>(N->getOperand(1))->getValue() ? Hi : Lo;
+  return cast<ConstantSDNode>(N->getOperand(1))->getZExtValue() ? Hi : Lo;
 }
 
 SDValue DAGTypeLegalizer::ExpandOp_NormalStore(SDNode *N, unsigned OpNo) {

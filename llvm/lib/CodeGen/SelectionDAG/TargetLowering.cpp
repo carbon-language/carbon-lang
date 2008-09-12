@@ -900,7 +900,7 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
     break;
   case ISD::SHL:
     if (ConstantSDNode *SA = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
-      unsigned ShAmt = SA->getValue();
+      unsigned ShAmt = SA->getZExtValue();
       SDValue InOp = Op.getOperand(0);
 
       // If the shift count is an invalid immediate, don't do anything.
@@ -913,7 +913,7 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
       if (InOp.getOpcode() == ISD::SRL &&
           isa<ConstantSDNode>(InOp.getOperand(1))) {
         if (ShAmt && (NewMask & APInt::getLowBitsSet(BitWidth, ShAmt)) == 0) {
-          unsigned C1 = cast<ConstantSDNode>(InOp.getOperand(1))->getValue();
+          unsigned C1= cast<ConstantSDNode>(InOp.getOperand(1))->getZExtValue();
           unsigned Opc = ISD::SHL;
           int Diff = ShAmt-C1;
           if (Diff < 0) {
@@ -932,16 +932,16 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
       if (SimplifyDemandedBits(Op.getOperand(0), NewMask.lshr(ShAmt),
                                KnownZero, KnownOne, TLO, Depth+1))
         return true;
-      KnownZero <<= SA->getValue();
-      KnownOne  <<= SA->getValue();
+      KnownZero <<= SA->getZExtValue();
+      KnownOne  <<= SA->getZExtValue();
       // low bits known zero.
-      KnownZero |= APInt::getLowBitsSet(BitWidth, SA->getValue());
+      KnownZero |= APInt::getLowBitsSet(BitWidth, SA->getZExtValue());
     }
     break;
   case ISD::SRL:
     if (ConstantSDNode *SA = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
       MVT VT = Op.getValueType();
-      unsigned ShAmt = SA->getValue();
+      unsigned ShAmt = SA->getZExtValue();
       unsigned VTSize = VT.getSizeInBits();
       SDValue InOp = Op.getOperand(0);
       
@@ -955,7 +955,7 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
       if (InOp.getOpcode() == ISD::SHL &&
           isa<ConstantSDNode>(InOp.getOperand(1))) {
         if (ShAmt && (NewMask & APInt::getHighBitsSet(VTSize, ShAmt)) == 0) {
-          unsigned C1 = cast<ConstantSDNode>(InOp.getOperand(1))->getValue();
+          unsigned C1= cast<ConstantSDNode>(InOp.getOperand(1))->getZExtValue();
           unsigned Opc = ISD::SRL;
           int Diff = ShAmt-C1;
           if (Diff < 0) {
@@ -985,7 +985,7 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
   case ISD::SRA:
     if (ConstantSDNode *SA = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
       MVT VT = Op.getValueType();
-      unsigned ShAmt = SA->getValue();
+      unsigned ShAmt = SA->getZExtValue();
       
       // If the shift count is an invalid immediate, don't do anything.
       if (ShAmt >= BitWidth)
@@ -1162,10 +1162,10 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
         if (ConstantSDNode *ShAmt = dyn_cast<ConstantSDNode>(In.getOperand(1))){
           APInt HighBits = APInt::getHighBitsSet(InBitWidth,
                                                  InBitWidth - BitWidth);
-          HighBits = HighBits.lshr(ShAmt->getValue());
+          HighBits = HighBits.lshr(ShAmt->getZExtValue());
           HighBits.trunc(BitWidth);
           
-          if (ShAmt->getValue() < BitWidth && !(HighBits & NewMask)) {
+          if (ShAmt->getZExtValue() < BitWidth && !(HighBits & NewMask)) {
             // None of the shifted in bits are needed.  Add a truncate of the
             // shift input, then shift it.
             SDValue NewTrunc = TLO.DAG.getNode(ISD::TRUNCATE, 
@@ -1290,7 +1290,7 @@ TargetLowering::SimplifySetCC(MVT VT, SDValue N0, SDValue N1,
       if (N0.getOpcode() == ISD::SRL && (C1 == 0 || C1 == 1) &&
           N0.getOperand(0).getOpcode() == ISD::CTLZ &&
           N0.getOperand(1).getOpcode() == ISD::Constant) {
-        unsigned ShAmt = cast<ConstantSDNode>(N0.getOperand(1))->getValue();
+        unsigned ShAmt = cast<ConstantSDNode>(N0.getOperand(1))->getZExtValue();
         if ((Cond == ISD::SETEQ || Cond == ISD::SETNE) &&
             ShAmt == Log2_32(N0.getValueType().getSizeInBits())) {
           if ((C1 == 0) == (Cond == ISD::SETEQ)) {
@@ -1389,7 +1389,7 @@ TargetLowering::SimplifySetCC(MVT VT, SDValue N0, SDValue N1,
         
         // SETCC (SETCC), [0|1], [EQ|NE]  -> SETCC
         if (N0.getOpcode() == ISD::SETCC) {
-          bool TrueWhenTrue = (Cond == ISD::SETEQ) ^ (N1C->getValue() != 1);
+          bool TrueWhenTrue = (Cond == ISD::SETEQ) ^ (N1C->getZExtValue() != 1);
           if (TrueWhenTrue)
             return N0;
           
@@ -1498,12 +1498,12 @@ TargetLowering::SimplifySetCC(MVT VT, SDValue N0, SDValue N1,
                     dyn_cast<ConstantSDNode>(N0.getOperand(1))) {
           if (Cond == ISD::SETNE && C1 == 0) {// (X & 8) != 0  -->  (X & 8) >> 3
             // Perform the xform if the AND RHS is a single bit.
-            if (isPowerOf2_64(AndRHS->getValue())) {
+            if (isPowerOf2_64(AndRHS->getZExtValue())) {
               return DAG.getNode(ISD::SRL, VT, N0,
-                             DAG.getConstant(Log2_64(AndRHS->getValue()),
+                             DAG.getConstant(Log2_64(AndRHS->getZExtValue()),
                                              getShiftAmountTy()));
             }
-          } else if (Cond == ISD::SETEQ && C1 == AndRHS->getValue()) {
+          } else if (Cond == ISD::SETEQ && C1 == AndRHS->getZExtValue()) {
             // (X & 8) == 8  -->  (X & 8) >> 3
             // Perform the xform if C1 is a single bit.
             if (C1.isPowerOf2()) {
@@ -1586,7 +1586,8 @@ TargetLowering::SimplifySetCC(MVT VT, SDValue N0, SDValue N1,
           // Turn (X+C1) == C2 --> X == C2-C1
           if (N0.getOpcode() == ISD::ADD && N0.getNode()->hasOneUse()) {
             return DAG.getSetCC(VT, N0.getOperand(0),
-                              DAG.getConstant(RHSC->getValue()-LHSR->getValue(),
+                                DAG.getConstant(RHSC->getAPIntValue()-
+                                                LHSR->getAPIntValue(),
                                 N0.getValueType()), Cond);
           }
           
@@ -1878,7 +1879,7 @@ void TargetLowering::LowerAsmOperandForConstraint(SDValue Op,
     if (GA) {   // Either &GV   or   &GV+C
       if (ConstraintLetter != 'n') {
         int64_t Offs = GA->getOffset();
-        if (C) Offs += C->getValue();
+        if (C) Offs += C->getZExtValue();
         Ops.push_back(DAG.getTargetGlobalAddress(GA->getGlobal(),
                                                  Op.getValueType(), Offs));
         return;
@@ -1887,7 +1888,8 @@ void TargetLowering::LowerAsmOperandForConstraint(SDValue Op,
     if (C) {   // just C, no GV.
       // Simple constants are not allowed for 's'.
       if (ConstraintLetter != 's') {
-        Ops.push_back(DAG.getTargetConstant(C->getValue(), Op.getValueType()));
+        Ops.push_back(DAG.getTargetConstant(C->getAPIntValue(),
+                                            Op.getValueType()));
         return;
       }
     }
@@ -2336,7 +2338,7 @@ SDValue TargetLowering::BuildUDIV(SDNode *N, SelectionDAG &DAG,
   if (!isTypeLegal(VT) || (VT != MVT::i32 && VT != MVT::i64))
     return SDValue();       // BuildUDIV only operates on i32 or i64
   
-  uint64_t d = cast<ConstantSDNode>(N->getOperand(1))->getValue();
+  uint64_t d = cast<ConstantSDNode>(N->getOperand(1))->getZExtValue();
   mu magics = (VT == MVT::i32) ? magicu32(d) : magicu64(d);
   
   // Multiply the numerator (operand 0) by the magic value

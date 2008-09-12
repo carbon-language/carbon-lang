@@ -91,7 +91,7 @@ bool SparcDAGToDAGISel::SelectADDRri(SDValue Op, SDValue Addr,
         } else {
           Base = Addr.getOperand(0);
         }
-        Offset = CurDAG->getTargetConstant(CN->getValue(), MVT::i32);
+        Offset = CurDAG->getTargetConstant(CN->getZExtValue(), MVT::i32);
         return true;
       }
     }

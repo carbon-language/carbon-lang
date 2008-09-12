@@ -19,33 +19,33 @@ def ARMtcall : SDNode<"ARMISD::tCALL", SDT_ARMcall,
                       [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
 
 def imm_neg_XFORM : SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant(-(int)N->getValue(), MVT::i32);
+  return CurDAG->getTargetConstant(-(int)N->getZExtValue(), MVT::i32);
 }]>;
 def imm_comp_XFORM : SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant(~((uint32_t)N->getValue()), MVT::i32);
+  return CurDAG->getTargetConstant(~((uint32_t)N->getZExtValue()), MVT::i32);
 }]>;
 
 
 /// imm0_7 predicate - True if the 32-bit immediate is in the range [0,7].
 def imm0_7 : PatLeaf<(i32 imm), [{
-  return (uint32_t)N->getValue() < 8;
+  return (uint32_t)N->getZExtValue() < 8;
 }]>;
 def imm0_7_neg : PatLeaf<(i32 imm), [{
-  return (uint32_t)-N->getValue() < 8;
+  return (uint32_t)-N->getZExtValue() < 8;
 }], imm_neg_XFORM>;
 
 def imm0_255 : PatLeaf<(i32 imm), [{
-  return (uint32_t)N->getValue() < 256;
+  return (uint32_t)N->getZExtValue() < 256;
 }]>;
 def imm0_255_comp : PatLeaf<(i32 imm), [{
-  return ~((uint32_t)N->getValue()) < 256;
+  return ~((uint32_t)N->getZExtValue()) < 256;
 }]>;
 
 def imm8_255 : PatLeaf<(i32 imm), [{
-  return (uint32_t)N->getValue() >= 8 && (uint32_t)N->getValue() < 256;
+  return (uint32_t)N->getZExtValue() >= 8 && (uint32_t)N->getZExtValue() < 256;
 }]>;
 def imm8_255_neg : PatLeaf<(i32 imm), [{
-  unsigned Val = -N->getValue();
+  unsigned Val = -N->getZExtValue();
   return Val >= 8 && Val < 256;
 }], imm_neg_XFORM>;
 
@@ -53,16 +53,16 @@ def imm8_255_neg : PatLeaf<(i32 imm), [{
 // This uses thumb_immshifted to match and thumb_immshifted_val and
 // thumb_immshifted_shamt to get the val/shift pieces.
 def thumb_immshifted : PatLeaf<(imm), [{
-  return ARM_AM::isThumbImmShiftedVal((unsigned)N->getValue());
+  return ARM_AM::isThumbImmShiftedVal((unsigned)N->getZExtValue());
 }]>;
 
 def thumb_immshifted_val : SDNodeXForm<imm, [{
-  unsigned V = ARM_AM::getThumbImmNonShiftedVal((unsigned)N->getValue());
+  unsigned V = ARM_AM::getThumbImmNonShiftedVal((unsigned)N->getZExtValue());
   return CurDAG->getTargetConstant(V, MVT::i32);
 }]>;
 
 def thumb_immshifted_shamt : SDNodeXForm<imm, [{
-  unsigned V = ARM_AM::getThumbImmValShift((unsigned)N->getValue());
+  unsigned V = ARM_AM::getThumbImmValShift((unsigned)N->getZExtValue());
   return CurDAG->getTargetConstant(V, MVT::i32);
 }]>;
 

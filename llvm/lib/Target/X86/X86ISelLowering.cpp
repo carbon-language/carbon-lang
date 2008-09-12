@@ -982,7 +982,8 @@ LowerCallResult(SDValue Chain, SDValue InFlag, SDNode *TheCall,
   
   // Assign locations to each value returned by this call.
   SmallVector<CCValAssign, 16> RVLocs;
-  bool isVarArg = cast<ConstantSDNode>(TheCall->getOperand(2))->getValue() != 0;
+  bool isVarArg =
+    cast<ConstantSDNode>(TheCall->getOperand(2))->getZExtValue() != 0;
   CCState CCInfo(CallingConv, isVarArg, getTargetMachine(), RVLocs);
   CCInfo.AnalyzeCallResult(TheCall, RetCC_X86);
 
@@ -1069,11 +1070,11 @@ static bool ArgsAreStructReturn(SDValue Op) {
 /// the callee to pop its own arguments. Callee pop is necessary to support tail
 /// calls.
 bool X86TargetLowering::IsCalleePop(SDValue Op) {
-  bool IsVarArg = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
+  bool IsVarArg = cast<ConstantSDNode>(Op.getOperand(2))->getZExtValue() != 0;
   if (IsVarArg)
     return false;
 
-  switch (cast<ConstantSDNode>(Op.getOperand(1))->getValue()) {
+  switch (cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue()) {
   default:
     return false;
   case CallingConv::X86_StdCall:
@@ -1088,7 +1089,7 @@ bool X86TargetLowering::IsCalleePop(SDValue Op) {
 /// CCAssignFnForNode - Selects the correct CCAssignFn for a CALL or
 /// FORMAL_ARGUMENTS node.
 CCAssignFn *X86TargetLowering::CCAssignFnForNode(SDValue Op) const {
-  unsigned CC = cast<ConstantSDNode>(Op.getOperand(1))->getValue();
+  unsigned CC = cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();
   
   if (Subtarget->is64Bit()) {
     if (Subtarget->isTargetWin64())
@@ -1113,7 +1114,7 @@ CCAssignFn *X86TargetLowering::CCAssignFnForNode(SDValue Op) const {
 /// apply to a MachineFunction containing a given FORMAL_ARGUMENTS node.
 NameDecorationStyle
 X86TargetLowering::NameDecorationForFORMAL_ARGUMENTS(SDValue Op) {
-  unsigned CC = cast<ConstantSDNode>(Op.getOperand(1))->getValue();
+  unsigned CC = cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();
   if (CC == CallingConv::X86_FastCall)
     return FastCall;
   else if (CC == CallingConv::X86_StdCall)
@@ -1191,7 +1192,7 @@ X86TargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG) {
   
   MachineFrameInfo *MFI = MF.getFrameInfo();
   SDValue Root = Op.getOperand(0);
-  bool isVarArg = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
+  bool isVarArg = cast<ConstantSDNode>(Op.getOperand(2))->getZExtValue() != 0;
   unsigned CC = MF.getFunction()->getCallingConv();
   bool Is64Bit = Subtarget->is64Bit();
   bool IsWin64 = Subtarget->isTargetWin64();
@@ -1470,9 +1471,9 @@ EmitTailCallStoreRetAddr(SelectionDAG & DAG, MachineFunction &MF,
 SDValue X86TargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
   MachineFunction &MF = DAG.getMachineFunction();
   SDValue Chain       = Op.getOperand(0);
-  unsigned CC         = cast<ConstantSDNode>(Op.getOperand(1))->getValue();
-  bool isVarArg       = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
-  bool IsTailCall     = cast<ConstantSDNode>(Op.getOperand(3))->getValue() != 0
+  unsigned CC         = cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();
+  bool isVarArg   = cast<ConstantSDNode>(Op.getOperand(2))->getZExtValue() != 0;
+  bool IsTailCall = cast<ConstantSDNode>(Op.getOperand(3))->getZExtValue() != 0
                         && CC == CallingConv::Fast && PerformTailCallOpt;
   SDValue Callee      = Op.getOperand(4);
   bool Is64Bit        = Subtarget->is64Bit();
@@ -1863,7 +1864,7 @@ bool X86TargetLowering::IsEligibleForTailCallOptimization(SDValue Call,
   if (CheckTailCallReturnConstraints(Call, Ret)) {
     MachineFunction &MF = DAG.getMachineFunction();
     unsigned CallerCC = MF.getFunction()->getCallingConv();
-    unsigned CalleeCC = cast<ConstantSDNode>(Call.getOperand(1))->getValue();
+    unsigned CalleeCC= cast<ConstantSDNode>(Call.getOperand(1))->getZExtValue();
     if (CalleeCC == CallingConv::Fast && CallerCC == CalleeCC) {
       SDValue Callee = Call.getOperand(4);
       // On x86/32Bit PIC/GOT  tail calls are supported.
@@ -1933,7 +1934,7 @@ static bool translateX86CC(ISD::CondCode SetCCOpcode, bool isFP,
         // X < 0   -> X == 0, jump on sign.
         X86CC = X86::COND_S;
         return true;
-      } else if (SetCCOpcode == ISD::SETLT && RHSC->getValue() == 1) {
+      } else if (SetCCOpcode == ISD::SETLT && RHSC->getZExtValue() == 1) {
         // X < 1   -> X <= 0
         RHS = DAG.getConstant(0, RHS.getValueType());
         X86CC = X86::COND_LE;
@@ -2050,7 +2051,7 @@ static bool isUndefOrInRange(SDValue Op, unsigned Low, unsigned Hi) {
   if (Op.getOpcode() == ISD::UNDEF)
     return true;
 
-  unsigned Val = cast<ConstantSDNode>(Op)->getValue();
+  unsigned Val = cast<ConstantSDNode>(Op)->getZExtValue();
   return (Val >= Low && Val < Hi);
 }
 
@@ -2059,7 +2060,7 @@ static bool isUndefOrInRange(SDValue Op, unsigned Low, unsigned Hi) {
 static bool isUndefOrEqual(SDValue Op, unsigned Val) {
   if (Op.getOpcode() == ISD::UNDEF)
     return true;
-  return cast<ConstantSDNode>(Op)->getValue() == Val;
+  return cast<ConstantSDNode>(Op)->getZExtValue() == Val;
 }
 
 /// isPSHUFDMask - Return true if the specified VECTOR_SHUFFLE operand
@@ -2075,7 +2076,7 @@ bool X86::isPSHUFDMask(SDNode *N) {
     SDValue Arg = N->getOperand(i);
     if (Arg.getOpcode() == ISD::UNDEF) continue;
     assert(isa<ConstantSDNode>(Arg) && "Invalid VECTOR_SHUFFLE mask!");
-    if (cast<ConstantSDNode>(Arg)->getValue() >= e)
+    if (cast<ConstantSDNode>(Arg)->getZExtValue() >= e)
       return false;
   }
 
@@ -2095,7 +2096,7 @@ bool X86::isPSHUFHWMask(SDNode *N) {
     SDValue Arg = N->getOperand(i);
     if (Arg.getOpcode() == ISD::UNDEF) continue;
     assert(isa<ConstantSDNode>(Arg) && "Invalid VECTOR_SHUFFLE mask!");
-    if (cast<ConstantSDNode>(Arg)->getValue() != i)
+    if (cast<ConstantSDNode>(Arg)->getZExtValue() != i)
       return false;
   }
 
@@ -2104,7 +2105,7 @@ bool X86::isPSHUFHWMask(SDNode *N) {
     SDValue Arg = N->getOperand(i);
     if (Arg.getOpcode() == ISD::UNDEF) continue;
     assert(isa<ConstantSDNode>(Arg) && "Invalid VECTOR_SHUFFLE mask!");
-    unsigned Val = cast<ConstantSDNode>(Arg)->getValue();
+    unsigned Val = cast<ConstantSDNode>(Arg)->getZExtValue();
     if (Val < 4 || Val > 7)
       return false;
   }
@@ -2420,7 +2421,7 @@ bool X86::isMOVSHDUPMask(SDNode *N) {
     SDValue Arg = N->getOperand(i);
     if (Arg.getOpcode() == ISD::UNDEF) continue;
     assert(isa<ConstantSDNode>(Arg) && "Invalid VECTOR_SHUFFLE mask!");
-    unsigned Val = cast<ConstantSDNode>(Arg)->getValue();
+    unsigned Val = cast<ConstantSDNode>(Arg)->getZExtValue();
     if (Val != 1) return false;
   }
 
@@ -2429,7 +2430,7 @@ bool X86::isMOVSHDUPMask(SDNode *N) {
     SDValue Arg = N->getOperand(i);
     if (Arg.getOpcode() == ISD::UNDEF) continue;
     assert(isa<ConstantSDNode>(Arg) && "Invalid VECTOR_SHUFFLE mask!");
-    unsigned Val = cast<ConstantSDNode>(Arg)->getValue();
+    unsigned Val = cast<ConstantSDNode>(Arg)->getZExtValue();
     if (Val != 3) return false;
     HasHi = true;
   }
@@ -2451,7 +2452,7 @@ bool X86::isMOVSLDUPMask(SDNode *N) {
     SDValue Arg = N->getOperand(i);
     if (Arg.getOpcode() == ISD::UNDEF) continue;
     assert(isa<ConstantSDNode>(Arg) && "Invalid VECTOR_SHUFFLE mask!");
-    unsigned Val = cast<ConstantSDNode>(Arg)->getValue();
+    unsigned Val = cast<ConstantSDNode>(Arg)->getZExtValue();
     if (Val != 0) return false;
   }
 
@@ -2460,7 +2461,7 @@ bool X86::isMOVSLDUPMask(SDNode *N) {
     SDValue Arg = N->getOperand(i);
     if (Arg.getOpcode() == ISD::UNDEF) continue;
     assert(isa<ConstantSDNode>(Arg) && "Invalid VECTOR_SHUFFLE mask!");
-    unsigned Val = cast<ConstantSDNode>(Arg)->getValue();
+    unsigned Val = cast<ConstantSDNode>(Arg)->getZExtValue();
     if (Val != 2) return false;
     HasHi = true;
   }
@@ -2508,7 +2509,7 @@ static bool isSplatMask(SDNode *N) {
   }
 
   // Make sure it is a splat of the first vector operand.
-  return cast<ConstantSDNode>(ElementBase)->getValue() < NumElems;
+  return cast<ConstantSDNode>(ElementBase)->getZExtValue() < NumElems;
 }
 
 /// isSplatMask - Return true if the specified VECTOR_SHUFFLE operand specifies
@@ -2544,7 +2545,7 @@ unsigned X86::getShuffleSHUFImmediate(SDNode *N) {
     unsigned Val = 0;
     SDValue Arg = N->getOperand(NumOperands-i-1);
     if (Arg.getOpcode() != ISD::UNDEF)
-      Val = cast<ConstantSDNode>(Arg)->getValue();
+      Val = cast<ConstantSDNode>(Arg)->getZExtValue();
     if (Val >= NumOperands) Val -= NumOperands;
     Mask |= Val;
     if (i != NumOperands - 1)
@@ -2564,7 +2565,7 @@ unsigned X86::getShufflePSHUFHWImmediate(SDNode *N) {
     unsigned Val = 0;
     SDValue Arg = N->getOperand(i);
     if (Arg.getOpcode() != ISD::UNDEF)
-      Val = cast<ConstantSDNode>(Arg)->getValue();
+      Val = cast<ConstantSDNode>(Arg)->getZExtValue();
     Mask |= (Val - 4);
     if (i != 4)
       Mask <<= 2;
@@ -2583,7 +2584,7 @@ unsigned X86::getShufflePSHUFLWImmediate(SDNode *N) {
     unsigned Val = 0;
     SDValue Arg = N->getOperand(i);
     if (Arg.getOpcode() != ISD::UNDEF)
-      Val = cast<ConstantSDNode>(Arg)->getValue();
+      Val = cast<ConstantSDNode>(Arg)->getZExtValue();
     Mask |= Val;
     if (i != 0)
       Mask <<= 2;
@@ -2606,7 +2607,7 @@ static bool isPSHUFHW_PSHUFLWMask(SDNode *N) {
     SDValue Arg = N->getOperand(i);
     if (Arg.getOpcode() == ISD::UNDEF) continue;
     assert(isa<ConstantSDNode>(Arg) && "Invalid VECTOR_SHUFFLE mask!");
-    unsigned Val = cast<ConstantSDNode>(Arg)->getValue();
+    unsigned Val = cast<ConstantSDNode>(Arg)->getZExtValue();
     if (Val >= 4)
       return false;
   }
@@ -2616,7 +2617,7 @@ static bool isPSHUFHW_PSHUFLWMask(SDNode *N) {
     SDValue Arg = N->getOperand(i);
     if (Arg.getOpcode() == ISD::UNDEF) continue;
     assert(isa<ConstantSDNode>(Arg) && "Invalid VECTOR_SHUFFLE mask!");
-    unsigned Val = cast<ConstantSDNode>(Arg)->getValue();
+    unsigned Val = cast<ConstantSDNode>(Arg)->getZExtValue();
     if (Val < 4 || Val > 7)
       return false;
   }
@@ -2642,7 +2643,7 @@ static SDValue CommuteVectorShuffle(SDValue Op, SDValue &V1,
       continue;
     }
     assert(isa<ConstantSDNode>(Arg) && "Invalid VECTOR_SHUFFLE mask!");
-    unsigned Val = cast<ConstantSDNode>(Arg)->getValue();
+    unsigned Val = cast<ConstantSDNode>(Arg)->getZExtValue();
     if (Val < NumElems)
       MaskVec.push_back(DAG.getConstant(Val + NumElems, EltVT));
     else
@@ -2669,7 +2670,7 @@ SDValue CommuteVectorShuffleMask(SDValue Mask, SelectionDAG &DAG) {
       continue;
     }
     assert(isa<ConstantSDNode>(Arg) && "Invalid VECTOR_SHUFFLE mask!");
-    unsigned Val = cast<ConstantSDNode>(Arg)->getValue();
+    unsigned Val = cast<ConstantSDNode>(Arg)->getZExtValue();
     if (Val < NumElems)
       MaskVec.push_back(DAG.getConstant(Val + NumElems, EltVT));
     else
@@ -2762,7 +2763,7 @@ static bool isUndefShuffle(SDNode *N) {
   for (unsigned i = 0; i != NumElems; ++i) {
     SDValue Arg = Mask.getOperand(i);
     if (Arg.getOpcode() != ISD::UNDEF) {
-      unsigned Val = cast<ConstantSDNode>(Arg)->getValue();
+      unsigned Val = cast<ConstantSDNode>(Arg)->getZExtValue();
       if (Val < NumElems && V1.getOpcode() != ISD::UNDEF)
         return false;
       else if (Val >= NumElems && V2.getOpcode() != ISD::UNDEF)
@@ -2776,7 +2777,7 @@ static bool isUndefShuffle(SDNode *N) {
 /// constant +0.0.
 static inline bool isZeroNode(SDValue Elt) {
   return ((isa<ConstantSDNode>(Elt) &&
-           cast<ConstantSDNode>(Elt)->getValue() == 0) ||
+           cast<ConstantSDNode>(Elt)->getZExtValue() == 0) ||
           (isa<ConstantFPSDNode>(Elt) &&
            cast<ConstantFPSDNode>(Elt)->getValueAPF().isPosZero()));
 }
@@ -2796,7 +2797,7 @@ static bool isZeroShuffle(SDNode *N) {
     if (Arg.getOpcode() == ISD::UNDEF)
       continue;
     
-    unsigned Idx = cast<ConstantSDNode>(Arg)->getValue();
+    unsigned Idx = cast<ConstantSDNode>(Arg)->getZExtValue();
     if (Idx < NumElems) {
       unsigned Opc = V1.getNode()->getOpcode();
       if (Opc == ISD::UNDEF || ISD::isBuildVectorAllZeros(V1.getNode()))
@@ -2865,7 +2866,7 @@ static SDValue NormalizeMask(SDValue Mask, SelectionDAG &DAG) {
   for (unsigned i = 0; i != NumElems; ++i) {
     SDValue Arg = Mask.getOperand(i);
     if (Arg.getOpcode() != ISD::UNDEF) {
-      unsigned Val = cast<ConstantSDNode>(Arg)->getValue();
+      unsigned Val = cast<ConstantSDNode>(Arg)->getZExtValue();
       if (Val > NumElems) {
         Arg = DAG.getConstant(NumElems, Arg.getValueType());
         Changed = true;
@@ -3029,7 +3030,7 @@ static bool isVectorShift(SDValue Op, SDValue Mask, SelectionDAG &DAG,
     SDValue Idx = Mask.getOperand(isLeft ? i : (i - NumZeros));
     if (Idx.getOpcode() == ISD::UNDEF)
       continue;
-    unsigned Index = cast<ConstantSDNode>(Idx)->getValue();
+    unsigned Index = cast<ConstantSDNode>(Idx)->getZExtValue();
     if (Index < NumElems)
       SeenV1 = true;
     else {
@@ -3394,7 +3395,7 @@ SDValue LowerVECTOR_SHUFFLEv8i16(SDValue V1, SDValue V2,
     SDValue Elt = MaskElts[i];
     if (Elt.getOpcode() == ISD::UNDEF)
       continue;
-    unsigned EltIdx = cast<ConstantSDNode>(Elt)->getValue();
+    unsigned EltIdx = cast<ConstantSDNode>(Elt)->getZExtValue();
     int QuadIdx = EltIdx / 4;
     ++LowQuad[QuadIdx];
   }
@@ -3414,7 +3415,7 @@ SDValue LowerVECTOR_SHUFFLEv8i16(SDValue V1, SDValue V2,
     SDValue Elt = MaskElts[i];
     if (Elt.getOpcode() == ISD::UNDEF)
       continue;
-    unsigned EltIdx = cast<ConstantSDNode>(Elt)->getValue();
+    unsigned EltIdx = cast<ConstantSDNode>(Elt)->getZExtValue();
     int QuadIdx = EltIdx / 4;
     ++HighQuad[QuadIdx];
   }
@@ -3462,7 +3463,7 @@ SDValue LowerVECTOR_SHUFFLEv8i16(SDValue V1, SDValue V2,
           MaskVec.push_back(Elt);
           InOrder.set(i);
         } else {
-          unsigned EltIdx = cast<ConstantSDNode>(Elt)->getValue();
+          unsigned EltIdx = cast<ConstantSDNode>(Elt)->getZExtValue();
           if (EltIdx != i)
             AnyOutOrder = true;
 
@@ -3496,7 +3497,7 @@ SDValue LowerVECTOR_SHUFFLEv8i16(SDValue V1, SDValue V2,
           MaskVec.push_back(Elt);
           InOrder.set(i);
         } else {
-          unsigned EltIdx = cast<ConstantSDNode>(Elt)->getValue();
+          unsigned EltIdx = cast<ConstantSDNode>(Elt)->getZExtValue();
           if (EltIdx != i)
             AnyOutOrder = true;
 
@@ -3522,7 +3523,7 @@ SDValue LowerVECTOR_SHUFFLEv8i16(SDValue V1, SDValue V2,
       SDValue Elt = MaskElts[i];
       if (Elt.getOpcode() == ISD::UNDEF)
         continue;
-      unsigned EltIdx = cast<ConstantSDNode>(Elt)->getValue();
+      unsigned EltIdx = cast<ConstantSDNode>(Elt)->getZExtValue();
       SDValue ExtOp = (EltIdx < 8)
         ? DAG.getNode(ISD::EXTRACT_VECTOR_ELT, MVT::i16, V1,
                       DAG.getConstant(EltIdx, PtrVT))
@@ -3553,7 +3554,7 @@ SDValue LowerVECTOR_SHUFFLEv8i16(SDValue V1, SDValue V2,
       ++V2InOrder;
       continue;
     }
-    unsigned EltIdx = cast<ConstantSDNode>(Elt)->getValue();
+    unsigned EltIdx = cast<ConstantSDNode>(Elt)->getZExtValue();
     if (EltIdx == i) {
       V1Elts.push_back(Elt);
       V2Elts.push_back(DAG.getConstant(i+8, MaskEVT));
@@ -3590,7 +3591,7 @@ SDValue LowerVECTOR_SHUFFLEv8i16(SDValue V1, SDValue V2,
           MaskVec.push_back(DAG.getNode(ISD::UNDEF, MaskEVT));
           continue;
         }
-        unsigned EltIdx = cast<ConstantSDNode>(Elt)->getValue();
+        unsigned EltIdx = cast<ConstantSDNode>(Elt)->getZExtValue();
         if (EltIdx >= 8)
           MaskVec.push_back(DAG.getNode(ISD::UNDEF, MaskEVT));
         else
@@ -3605,7 +3606,7 @@ SDValue LowerVECTOR_SHUFFLEv8i16(SDValue V1, SDValue V2,
       SDValue Elt = V1Elts[i];
       if (Elt.getOpcode() == ISD::UNDEF)
         continue;
-      unsigned EltIdx = cast<ConstantSDNode>(Elt)->getValue();
+      unsigned EltIdx = cast<ConstantSDNode>(Elt)->getZExtValue();
       if (EltIdx < 8)
         continue;
       SDValue ExtOp = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, MVT::i16, V2,
@@ -3621,7 +3622,7 @@ SDValue LowerVECTOR_SHUFFLEv8i16(SDValue V1, SDValue V2,
       SDValue Elt = V1Elts[i];
       if (Elt.getOpcode() == ISD::UNDEF)
         continue;
-      unsigned EltIdx = cast<ConstantSDNode>(Elt)->getValue();
+      unsigned EltIdx = cast<ConstantSDNode>(Elt)->getZExtValue();
       SDValue ExtOp = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, MVT::i16, V1,
                                     DAG.getConstant(EltIdx, PtrVT));
       NewV = DAG.getNode(ISD::INSERT_VECTOR_ELT, MVT::v8i16, NewV, ExtOp,
@@ -3668,7 +3669,7 @@ SDValue RewriteAsNarrowerShuffle(SDValue V1, SDValue V2,
       SDValue Elt = PermMask.getOperand(i+j);
       if (Elt.getOpcode() == ISD::UNDEF)
         continue;
-      unsigned EltIdx = cast<ConstantSDNode>(Elt)->getValue();
+      unsigned EltIdx = cast<ConstantSDNode>(Elt)->getZExtValue();
       if (StartIdx == ~0U)
         StartIdx = EltIdx - (EltIdx % Scale);
       if (EltIdx != StartIdx + j)
@@ -3737,7 +3738,7 @@ LowerVECTOR_SHUFFLE_4wide(SDValue V1, SDValue V2,
     if (Elt.getOpcode() == ISD::UNDEF) {
       Locs[i] = std::make_pair(-1, -1);
     } else {
-      unsigned Val = cast<ConstantSDNode>(Elt)->getValue();
+      unsigned Val = cast<ConstantSDNode>(Elt)->getZExtValue();
       assert(Val < 8 && "Invalid VECTOR_SHUFFLE index!");
       if (Val < 4) {
         Locs[i] = std::make_pair(0, NumLo);
@@ -3795,7 +3796,7 @@ LowerVECTOR_SHUFFLE_4wide(SDValue V1, SDValue V2,
       SDValue Elt = PermMask.getOperand(HiIndex);
       if (Elt.getOpcode() == ISD::UNDEF)
         continue;
-      unsigned Val = cast<ConstantSDNode>(Elt)->getValue();
+      unsigned Val = cast<ConstantSDNode>(Elt)->getZExtValue();
       if (Val >= 4)
         break;
     }
@@ -3820,11 +3821,13 @@ LowerVECTOR_SHUFFLE_4wide(SDValue V1, SDValue V2,
       Mask1[2] = PermMask.getOperand(2);
       Mask1[3] = PermMask.getOperand(3);
       if (Mask1[2].getOpcode() != ISD::UNDEF)
-        Mask1[2] = DAG.getConstant(cast<ConstantSDNode>(Mask1[2])->getValue()+4,
-                                   MaskEVT);
+        Mask1[2] =
+          DAG.getConstant(cast<ConstantSDNode>(Mask1[2])->getZExtValue()+4,
+                          MaskEVT);
       if (Mask1[3].getOpcode() != ISD::UNDEF)
-        Mask1[3] = DAG.getConstant(cast<ConstantSDNode>(Mask1[3])->getValue()+4,
-                                   MaskEVT);
+        Mask1[3] =
+          DAG.getConstant(cast<ConstantSDNode>(Mask1[3])->getZExtValue()+4,
+                          MaskEVT);
       return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V2, V1,
                          DAG.getNode(ISD::BUILD_VECTOR, MaskVT, &Mask1[0], 4));
     }
@@ -3848,7 +3851,7 @@ LowerVECTOR_SHUFFLE_4wide(SDValue V1, SDValue V2,
     SDValue Elt = PermMask.getOperand(i);
     if (Elt.getOpcode() == ISD::UNDEF) {
       Locs[i] = std::make_pair(-1, -1);
-    } else if (cast<ConstantSDNode>(Elt)->getValue() < 4) {
+    } else if (cast<ConstantSDNode>(Elt)->getZExtValue() < 4) {
       Locs[i] = std::make_pair(MaskIdx, LoIdx);
       (*MaskPtr)[LoIdx] = Elt;
       LoIdx++;
@@ -4144,7 +4147,7 @@ X86TargetLowering::LowerEXTRACT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) {
   // TODO: handle v16i8.
   if (VT.getSizeInBits() == 16) {
     SDValue Vec = Op.getOperand(0);
-    unsigned Idx = cast<ConstantSDNode>(Op.getOperand(1))->getValue();
+    unsigned Idx = cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();
     if (Idx == 0)
       return DAG.getNode(ISD::TRUNCATE, MVT::i16,
                          DAG.getNode(ISD::EXTRACT_VECTOR_ELT, MVT::i32,
@@ -4158,7 +4161,7 @@ X86TargetLowering::LowerEXTRACT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) {
                                     DAG.getValueType(VT));
     return DAG.getNode(ISD::TRUNCATE, VT, Assert);
   } else if (VT.getSizeInBits() == 32) {
-    unsigned Idx = cast<ConstantSDNode>(Op.getOperand(1))->getValue();
+    unsigned Idx = cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();
     if (Idx == 0)
       return Op;
     // SHUFPS the element to the lowest double word, then movss.
@@ -4183,7 +4186,7 @@ X86TargetLowering::LowerEXTRACT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) {
     // FIXME: .td only matches this for <2 x f64>, not <2 x i64> on 32b
     // FIXME: seems like this should be unnecessary if mov{h,l}pd were taught
     //        to match extract_elt for f64.
-    unsigned Idx = cast<ConstantSDNode>(Op.getOperand(1))->getValue();
+    unsigned Idx = cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();
     if (Idx == 0)
       return Op;
 
@@ -4225,7 +4228,7 @@ X86TargetLowering::LowerINSERT_VECTOR_ELT_SSE4(SDValue Op, SelectionDAG &DAG){
     if (N1.getValueType() != MVT::i32)
       N1 = DAG.getNode(ISD::ANY_EXTEND, MVT::i32, N1);
     if (N2.getValueType() != MVT::i32)
-      N2 = DAG.getIntPtrConstant(cast<ConstantSDNode>(N2)->getValue());
+      N2 = DAG.getIntPtrConstant(cast<ConstantSDNode>(N2)->getZExtValue());
     return DAG.getNode(Opc, VT, N0, N1, N2);
   } else if (EVT == MVT::f32 && isa<ConstantSDNode>(N2)) {
     // Bits [7:6] of the constant are the source select.  This will always be
@@ -4236,7 +4239,7 @@ X86TargetLowering::LowerINSERT_VECTOR_ELT_SSE4(SDValue Op, SelectionDAG &DAG){
     //  value of the incoming immediate.
     // Bits [3:0] of the constant are the zero mask.  The DAG Combiner may 
     //   combine either bitwise AND or insert of float 0.0 to set these bits.
-    N2 = DAG.getIntPtrConstant(cast<ConstantSDNode>(N2)->getValue() << 4);
+    N2 = DAG.getIntPtrConstant(cast<ConstantSDNode>(N2)->getZExtValue() << 4);
     return DAG.getNode(X86ISD::INSERTPS, VT, N0, N1, N2);
   }
   return SDValue();
@@ -4263,7 +4266,7 @@ X86TargetLowering::LowerINSERT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) {
     if (N1.getValueType() != MVT::i32)
       N1 = DAG.getNode(ISD::ANY_EXTEND, MVT::i32, N1);
     if (N2.getValueType() != MVT::i32)
-      N2 = DAG.getIntPtrConstant(cast<ConstantSDNode>(N2)->getValue());
+      N2 = DAG.getIntPtrConstant(cast<ConstantSDNode>(N2)->getZExtValue());
     return DAG.getNode(X86ISD::PINSRW, VT, N0, N1, N2);
   }
   return SDValue();
@@ -5089,7 +5092,8 @@ X86TargetLowering::EmitTargetCodeForMemset(SelectionDAG &DAG,
   /// address value and run time information about the CPU.
   if ((Align & 3) != 0 ||
       !ConstantSize ||
-      ConstantSize->getValue() > getSubtarget()->getMaxInlineSizeThreshold()) {
+      ConstantSize->getZExtValue() >
+        getSubtarget()->getMaxInlineSizeThreshold()) {
     SDValue InFlag(0, 0);
 
     // Check to see if there is a specialized entry-point for memory zeroing.
@@ -5116,7 +5120,7 @@ X86TargetLowering::EmitTargetCodeForMemset(SelectionDAG &DAG,
     return SDValue();
   }
 
-  uint64_t SizeVal = ConstantSize->getValue();
+  uint64_t SizeVal = ConstantSize->getZExtValue();
   SDValue InFlag(0, 0);
   MVT AVT;
   SDValue Count;
@@ -5125,7 +5129,7 @@ X86TargetLowering::EmitTargetCodeForMemset(SelectionDAG &DAG,
   bool TwoRepStos = false;
   if (ValC) {
     unsigned ValReg;
-    uint64_t Val = ValC->getValue() & 255;
+    uint64_t Val = ValC->getZExtValue() & 255;
 
     // If the value is a constant, then we can potentially use larger sets.
     switch (Align & 3) {
@@ -5227,7 +5231,7 @@ X86TargetLowering::EmitTargetCodeForMemcpy(SelectionDAG &DAG,
   ConstantSDNode *ConstantSize = dyn_cast<ConstantSDNode>(Size);
   if (!ConstantSize)
     return SDValue();
-  uint64_t SizeVal = ConstantSize->getValue();
+  uint64_t SizeVal = ConstantSize->getZExtValue();
   if (!AlwaysInline && SizeVal > getSubtarget()->getMaxInlineSizeThreshold())
     return SDValue();
 
@@ -5387,7 +5391,7 @@ SDValue X86TargetLowering::LowerVACOPY(SDValue Op, SelectionDAG &DAG) {
 
 SDValue
 X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) {
-  unsigned IntNo = cast<ConstantSDNode>(Op.getOperand(0))->getValue();
+  unsigned IntNo = cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue();
   switch (IntNo) {
   default: return SDValue();    // Don't custom lower most intrinsics.
   // Comparison intrinsics.
@@ -5585,7 +5589,7 @@ X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) {
 
 SDValue X86TargetLowering::LowerRETURNADDR(SDValue Op, SelectionDAG &DAG) {
   // Depths > 0 not supported yet!
-  if (cast<ConstantSDNode>(Op.getOperand(0))->getValue() > 0)
+  if (cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue() > 0)
     return SDValue();
   
   // Just load the return address
@@ -5595,7 +5599,7 @@ SDValue X86TargetLowering::LowerRETURNADDR(SDValue Op, SelectionDAG &DAG) {
 
 SDValue X86TargetLowering::LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG) {
   // Depths > 0 not supported yet!
-  if (cast<ConstantSDNode>(Op.getOperand(0))->getValue() > 0)
+  if (cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue() > 0)
     return SDValue();
 
   SDValue RetAddrFI = getReturnAddressFrameIndex(DAG);
@@ -7087,16 +7091,16 @@ void X86TargetLowering::LowerAsmOperandForConstraint(SDValue Op,
   default: break;
   case 'I':
     if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op)) {
-      if (C->getValue() <= 31) {
-        Result = DAG.getTargetConstant(C->getValue(), Op.getValueType());
+      if (C->getZExtValue() <= 31) {
+        Result = DAG.getTargetConstant(C->getZExtValue(), Op.getValueType());
         break;
       }
     }
     return;
   case 'N':
     if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op)) {
-      if (C->getValue() <= 255) {
-        Result = DAG.getTargetConstant(C->getValue(), Op.getValueType());
+      if (C->getZExtValue() <= 255) {
+        Result = DAG.getTargetConstant(C->getZExtValue(), Op.getValueType());
         break;
       }
     }
@@ -7104,7 +7108,7 @@ void X86TargetLowering::LowerAsmOperandForConstraint(SDValue Op,
   case 'i': {
     // Literal immediates are always ok.
     if (ConstantSDNode *CST = dyn_cast<ConstantSDNode>(Op)) {
-      Result = DAG.getTargetConstant(CST->getValue(), Op.getValueType());
+      Result = DAG.getTargetConstant(CST->getZExtValue(), Op.getValueType());
       break;
     }
 
@@ -7120,12 +7124,12 @@ void X86TargetLowering::LowerAsmOperandForConstraint(SDValue Op,
       ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op.getOperand(1));
       GA = dyn_cast<GlobalAddressSDNode>(Op.getOperand(0));
       if (C && GA) {
-        Offset = GA->getOffset()+C->getValue();
+        Offset = GA->getOffset()+C->getZExtValue();
       } else {
         C = dyn_cast<ConstantSDNode>(Op.getOperand(1));
         GA = dyn_cast<GlobalAddressSDNode>(Op.getOperand(0));
         if (C && GA)
-          Offset = GA->getOffset()+C->getValue();
+          Offset = GA->getOffset()+C->getZExtValue();
         else
           C = 0, GA = 0;
       }

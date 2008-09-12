@@ -219,13 +219,13 @@ def X86_COND_S   : PatLeaf<(i8 15)>;
 def i16immSExt8  : PatLeaf<(i16 imm), [{
   // i16immSExt8 predicate - True if the 16-bit immediate fits in a 8-bit
   // sign extended field.
-  return (int16_t)N->getValue() == (int8_t)N->getValue();
+  return (int16_t)N->getZExtValue() == (int8_t)N->getZExtValue();
 }]>;
 
 def i32immSExt8  : PatLeaf<(i32 imm), [{
   // i32immSExt8 predicate - True if the 32-bit immediate fits in a 8-bit
   // sign extended field.
-  return (int32_t)N->getValue() == (int8_t)N->getValue();
+  return (int32_t)N->getZExtValue() == (int8_t)N->getZExtValue();
 }]>;
 
 // Helper fragments for loads.

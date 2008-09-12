@@ -264,7 +264,7 @@ static SDValue LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG,
   }
 
   // If the functions takes variable number of arguments, copy all regs to stack
-  bool isVarArg = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
+  bool isVarArg = cast<ConstantSDNode>(Op.getOperand(2))->getZExtValue() != 0;
   if (isVarArg) {
     VarArgsOffset = (Op.getNode()->getNumValues()-1) * 8;
     std::vector<SDValue> LS;

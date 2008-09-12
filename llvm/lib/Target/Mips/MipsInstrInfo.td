@@ -85,21 +85,21 @@ def mem : Operand<i32> {
 
 // Transformation Function - get the lower 16 bits.
 def LO16 : SDNodeXForm<imm, [{
-  return getI32Imm((unsigned)N->getValue() & 0xFFFF);
+  return getI32Imm((unsigned)N->getZExtValue() & 0xFFFF);
 }]>;
 
 // Transformation Function - get the higher 16 bits.
 def HI16 : SDNodeXForm<imm, [{
-  return getI32Imm((unsigned)N->getValue() >> 16);
+  return getI32Imm((unsigned)N->getZExtValue() >> 16);
 }]>;
 
 // Node immediate fits as 16-bit sign extended on target immediate.
 // e.g. addi, andi
 def immSExt16  : PatLeaf<(imm), [{
   if (N->getValueType(0) == MVT::i32)
-    return (int32_t)N->getValue() == (short)N->getValue();
+    return (int32_t)N->getZExtValue() == (short)N->getZExtValue();
   else
-    return (int64_t)N->getValue() == (short)N->getValue();
+    return (int64_t)N->getZExtValue() == (short)N->getZExtValue();
 }]>;
 
 // Node immediate fits as 16-bit zero extended on target immediate.
@@ -108,14 +108,14 @@ def immSExt16  : PatLeaf<(imm), [{
 // e.g. addiu, sltiu
 def immZExt16  : PatLeaf<(imm), [{
   if (N->getValueType(0) == MVT::i32)
-    return (uint32_t)N->getValue() == (unsigned short)N->getValue();
+    return (uint32_t)N->getZExtValue() == (unsigned short)N->getZExtValue();
   else
-    return (uint64_t)N->getValue() == (unsigned short)N->getValue();
+    return (uint64_t)N->getZExtValue() == (unsigned short)N->getZExtValue();
 }], LO16>;
 
 // shamt field must fit in 5 bits.
 def immZExt5 : PatLeaf<(imm), [{
-  return N->getValue() == ((N->getValue()) & 0x1f) ;
+  return N->getZExtValue() == ((N->getZExtValue()) & 0x1f) ;
 }]>;
 
 // Mips Address Mode! SDNode frameindex could possibily be a match
