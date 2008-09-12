@@ -280,11 +280,13 @@ void AddStandardCompilePasses(PassManager &PM) {
   addPass(PM, createLoopUnswitchPass());         // Unswitch loops.
   addPass(PM, createLoopIndexSplitPass());       // Index split loops.
   // FIXME : Removing instcombine causes nestedloop regression.
-  addPass(PM, createInstructionCombiningPass()); 
+  addPass(PM, createInstructionCombiningPass());
   addPass(PM, createIndVarSimplifyPass());       // Canonicalize indvars
   addPass(PM, createLoopDeletionPass());         // Delete dead loops
   addPass(PM, createLoopUnrollPass());           // Unroll small loops
   addPass(PM, createInstructionCombiningPass()); // Clean up after the unroller
+  addPass(PM, createGlobalsModRefPass());        // Alias analysis of globals
+  addPass(PM, createMarkModRefPass());       // Mark functions readonly/readnone
   addPass(PM, createGVNPass());                  // Remove redundancies
   addPass(PM, createMemCpyOptPass());            // Remove memcpy / form memset
   addPass(PM, createSCCPPass());                 // Constant prop with SCCP
