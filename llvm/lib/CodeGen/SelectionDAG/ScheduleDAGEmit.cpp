@@ -592,6 +592,13 @@ void ScheduleDAG::EmitNode(SDNode *Node, bool IsClone,
           MI->addOperand(MachineOperand::CreateReg(Reg, true));
         }
         break;
+      case 6:   // Def of earlyclobber register.
+        for (; NumVals; --NumVals, ++i) {
+          unsigned Reg = cast<RegisterSDNode>(Node->getOperand(i))->getReg();
+          MI->addOperand(MachineOperand::CreateReg(Reg, true, false, false, 
+                                                   false, 0, true));
+        }
+        break;
       case 1:  // Use of register.
       case 3:  // Immediate.
       case 4:  // Addressing mode.

@@ -68,6 +68,13 @@ private:
   /// This is only valid on definitions of registers.
   bool IsDead : 1;
 
+  /// IsEarlyClobber flag - this is only valid for MO_Register operands in
+  /// an inline asm.
+
+  /// IsEarlyClobber - True if this operand is marked earlyclobber in an
+  /// inline asm.  See gcc doc for description of earlyclobber.
+  bool IsEarlyClobber : 1;
+
   /// SubReg - Subregister number, only valid for MO_Register.  A value of 0
   /// indicates the MO_Register has no subReg.
   unsigned char SubReg;
@@ -181,6 +188,11 @@ public:
     return IsKill;
   }
   
+  bool isEarlyClobber() const {
+    assert(isRegister() && "Wrong MachineOperand accessor");
+    return IsEarlyClobber;
+  }
+
   /// getNextOperandForReg - Return the next MachineOperand in the function that
   /// uses or defines this register.
   MachineOperand *getNextOperandForReg() const {
@@ -226,6 +238,10 @@ public:
     IsDead = Val;
   }
 
+  void setIsEarlyClobber(bool Val = true) {
+    assert(isRegister() && IsDef && "Wrong MachineOperand accessor");
+    IsEarlyClobber = Val;
+  }
 
   //===--------------------------------------------------------------------===//
   // Accessors for various operand types.
@@ -311,7 +327,8 @@ public:
   /// the specified value.  If an operand is known to be an register already,
   /// the setReg method should be used.
   void ChangeToRegister(unsigned Reg, bool isDef, bool isImp = false,
-                        bool isKill = false, bool isDead = false);
+                        bool isKill = false, bool isDead = false,
+                        bool isEarlyClobber = false);
   
   //===--------------------------------------------------------------------===//
   // Construction methods.
@@ -331,12 +348,14 @@ public:
   
   static MachineOperand CreateReg(unsigned Reg, bool isDef, bool isImp = false,
                                   bool isKill = false, bool isDead = false,
-                                  unsigned SubReg = 0) {
+                                  unsigned SubReg = 0,
+                                  bool isEarlyClobber = false) {
     MachineOperand Op(MachineOperand::MO_Register);
     Op.IsDef = isDef;
     Op.IsImp = isImp;
     Op.IsKill = isKill;
     Op.IsDead = isDead;
+    Op.IsEarlyClobber = isEarlyClobber;
     Op.Contents.Reg.RegNo = Reg;
     Op.Contents.Reg.Prev = 0;
     Op.Contents.Reg.Next = 0;
@@ -382,6 +401,7 @@ public:
     IsImp    = MO.IsImp;
     IsKill   = MO.IsKill;
     IsDead   = MO.IsDead;
+    IsEarlyClobber = MO.IsEarlyClobber;
     SubReg   = MO.SubReg;
     ParentMI = MO.ParentMI;
     Contents = MO.Contents;

@@ -4939,8 +4939,10 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
       
       // Add information to the INLINEASM node to know that this register is
       // set.
-      OpInfo.AssignedRegs.AddInlineAsmOperands(2 /*REGDEF*/, DAG,
-                                               AsmNodeOperands);
+      OpInfo.AssignedRegs.AddInlineAsmOperands(OpInfo.isEarlyClobber ?
+                                               6 /* EARLYCLOBBER REGDEF */ :
+                                               2 /* REGDEF */ ,
+                                               DAG, AsmNodeOperands);
       break;
     }
     case InlineAsm::isInput: {
@@ -4959,6 +4961,7 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
           unsigned NumOps = 
             cast<ConstantSDNode>(AsmNodeOperands[CurOp])->getZExtValue();
           assert(((NumOps & 7) == 2 /*REGDEF*/ ||
+                  (NumOps & 7) == 6 /*EARLYCLOBBER REGDEF*/ ||
                   (NumOps & 7) == 4 /*MEM*/) &&
                  "Skipped past definitions?");
           CurOp += (NumOps>>3)+1;
@@ -4966,7 +4969,8 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
 
         unsigned NumOps = 
           cast<ConstantSDNode>(AsmNodeOperands[CurOp])->getZExtValue();
-        if ((NumOps & 7) == 2 /*REGDEF*/) {
+        if ((NumOps & 7) == 2 /*REGDEF*/ 
+            || (NumOps & 7) == 6 /* EARLYCLOBBER REGDEF */) {
           // Add NumOps>>3 registers to MatchedRegs.
           RegsForValue MatchedRegs;
           MatchedRegs.TLI = &TLI;
