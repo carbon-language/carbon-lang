@@ -408,9 +408,9 @@ unsigned ARMCodeEmitter::getAddrMode2InstrBinary(const MachineInstr &MI,
   const MachineOperand &MO2 = MI.getOperand(2);
   const MachineOperand &MO3 = MI.getOperand(3);
 
-  // Set bit U(23) according to signal of immed value (positive or negative).
+  // Set bit U(23) according to sign of immed value (positive or negative).
   Binary |= ((ARM_AM::getAM2Op(MO3.getImm()) == ARM_AM::add ? 1 : 0) <<
-            ARMII::U_BitShift);
+             ARMII::U_BitShift);
   if (!MO2.getReg()) { // is immediate
     if (ARM_AM::getAM2Offset(MO3.getImm()))
       // Set the value of offset_12 field
@@ -446,7 +446,7 @@ unsigned ARMCodeEmitter::getAddrMode3InstrBinary(const MachineInstr &MI,
   const MachineOperand &MO2 = MI.getOperand(2);
   const MachineOperand &MO3 = MI.getOperand(3);
 
-  // Set bit U(23) according to signal of immed value (positive or negative)
+  // Set bit U(23) according to sign of immed value (positive or negative)
   Binary |= ((ARM_AM::getAM2Op(MO3.getImm()) == ARM_AM::add ? 1 : 0) <<
              ARMII::U_BitShift);
 
