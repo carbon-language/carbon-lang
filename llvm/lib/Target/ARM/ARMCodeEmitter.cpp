@@ -343,7 +343,7 @@ unsigned ARMCodeEmitter::getAddrMode1SBit(const MachineInstr &MI,
 unsigned ARMCodeEmitter::getAddrMode1InstrBinary(const MachineInstr &MI,
                                                  const TargetInstrDesc &TID,
                                                  unsigned Binary) {
-  if ((TID.TSFlags & ARMII::FormMask) != ARMII::Pseudo)
+  if ((TID.TSFlags & ARMII::FormMask) == ARMII::Pseudo)
     abort(); // FIXME
 
   // Encode S bit if MI modifies CPSR.
