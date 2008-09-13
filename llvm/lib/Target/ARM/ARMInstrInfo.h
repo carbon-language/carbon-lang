@@ -82,21 +82,35 @@ namespace ARMII {
     BranchMisc  = 8 << FormShift,
 
     // Data Processing instructions
-    UnaryFrm    = 9  << FormShift,
-    BinaryFrm   = 10 << FormShift,
+    DPRdIm      = 9 << FormShift,
+    DPRdReg     = 10 << FormShift,
+    DPRdSoReg   = 11 << FormShift,
+    DPRdMisc    = 12 << FormShift,
+
+    DPRnIm      = 13 << FormShift,
+    DPRnReg     = 14 << FormShift,
+    DPRnSoReg   = 15 << FormShift,
+
+    DPRIm       = 16 << FormShift,
+    DPRReg      = 17 << FormShift,
+    DPRSoReg    = 18 << FormShift,
+
+    DPRImS      = 19 << FormShift,
+    DPRRegS     = 20 << FormShift,
+    DPRSoRegS   = 21 << FormShift,
 
     // Load and Store
-    LdFrm       = 11 << FormShift,
-    StFrm       = 12 << FormShift,
+    LdFrm       = 22 << FormShift,
+    StFrm       = 23 << FormShift,
 
     // Miscellaneous arithmetic instructions
-    ArithMisc   = 13 << FormShift,
+    ArithMisc   = 24 << FormShift,
 
     // Thumb format
-    ThumbFrm    = 14 << FormShift,
+    ThumbFrm    = 25 << FormShift,
 
     // VFP format
-    VPFFrm      = 15 << FormShift,
+    VPFFrm      = 26 << FormShift,
 
     // Field shifts - such shifts are used to set field while generating
     // machine instructions.
@@ -104,8 +118,10 @@ namespace ARMII {
     RegRsShift  = 8,
     RegRdShift  = 12,
     RegRnShift  = 16,
+    L_BitShift  = 20,
     S_BitShift  = 20,
     U_BitShift  = 23,
+    IndexShift  = 24,
     I_BitShift  = 25
   };
 }

@@ -343,7 +343,8 @@ unsigned ARMCodeEmitter::getAddrMode1SBit(const MachineInstr &MI,
 unsigned ARMCodeEmitter::getAddrMode1InstrBinary(const MachineInstr &MI,
                                                  const TargetInstrDesc &TID,
                                                  unsigned Binary) {
-  if ((TID.TSFlags & ARMII::FormMask) == ARMII::Pseudo)
+  unsigned Format = TID.TSFlags & ARMII::FormMask;
+  if (Format == ARMII::Pseudo)
     abort(); // FIXME
 
   // Encode S bit if MI modifies CPSR.
@@ -358,7 +359,14 @@ unsigned ARMCodeEmitter::getAddrMode1InstrBinary(const MachineInstr &MI,
   }
 
   // Encode first non-shifter register operand if ther is one.
-  if ((TID.TSFlags & ARMII::FormMask) != ARMII::UnaryFrm) {
+  bool isUnary = (Format == ARMII::DPRdMisc  ||
+                  Format == ARMII::DPRdIm    ||
+                  Format == ARMII::DPRdReg   ||
+                  Format == ARMII::DPRdSoReg ||
+                  Format == ARMII::DPRnIm    ||
+                  Format == ARMII::DPRnReg   ||
+                  Format == ARMII::DPRnSoReg);
+  if (!isUnary) {
     Binary |= getMachineOpValue(MI, OpIdx) << ARMII::RegRnShift;
     ++OpIdx;
   }
