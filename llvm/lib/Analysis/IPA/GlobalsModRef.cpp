@@ -431,12 +431,20 @@ void GlobalsModRef::AnalyzeCallGraph(CallGraph &CG, Module &M) {
       for (inst_iterator II = inst_begin(SCC[i]->getFunction()),
              E = inst_end(SCC[i]->getFunction());
            II != E && FunctionEffect != ModRef; ++II)
-        if (isa<LoadInst>(*II))
+        if (isa<LoadInst>(*II)) {
           FunctionEffect |= Ref;
-        else if (isa<StoreInst>(*II))
+          if (cast<LoadInst>(*II).isVolatile())
+            // Volatile loads may have side-effects, so mark them as writing
+            // memory (for example, a flag inside the processor).
+            FunctionEffect |= Mod;
+        } else if (isa<StoreInst>(*II)) {
           FunctionEffect |= Mod;
-        else if (isa<MallocInst>(*II) || isa<FreeInst>(*II))
+          if (cast<StoreInst>(*II).isVolatile())
+            // Treat volatile stores as reading memory somewhere.
+            FunctionEffect |= Ref;
+        } else if (isa<MallocInst>(*II) || isa<FreeInst>(*II)) {
           FunctionEffect |= ModRef;
+        }
 
     if ((FunctionEffect & Mod) == 0)
       ++NumReadMemFunctions;
