@@ -14,6 +14,7 @@
 #ifndef DRIVER_ASTCONSUMERS_H
 #define DRIVER_ASTCONSUMERS_H
 
+#include "llvm/Support/raw_ostream.h"
 #include <string>
 #include <iosfwd>
 
@@ -30,7 +31,7 @@ struct LangOptions;
 class Preprocessor;
 class PreprocessorFactory;
 
-ASTConsumer *CreateASTPrinter(std::ostream* OS = NULL);
+ASTConsumer *CreateASTPrinter(llvm::raw_ostream* OS = NULL);
 
 ASTConsumer *CreateASTDumper();
 

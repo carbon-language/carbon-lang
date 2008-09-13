@@ -16,7 +16,7 @@
 #include "clang/AST/Stmt.h"
 #include "clang/Lex/Lexer.h"
 #include "clang/Basic/SourceManager.h"
-#include <sstream>
+#include "llvm/Support/raw_ostream.h"
 using namespace clang;
 
 void RewriteBuffer::RemoveText(unsigned OrigOffset, unsigned Size) {
@@ -166,7 +166,8 @@ bool Rewriter::ReplaceStmt(Stmt *From, Stmt *To) {
     return true;
   
   // Get the new text.
-  std::ostringstream S;
+  std::string SStr;
+  llvm::raw_string_ostream S(SStr);
   To->printPretty(S);
   const std::string &Str = S.str();
 

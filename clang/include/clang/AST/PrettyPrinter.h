@@ -14,7 +14,7 @@
 #ifndef LLVM_CLANG_AST_PRETTY_PRINTER_H
 #define LLVM_CLANG_AST_PRETTY_PRINTER_H
 
-#include <iosfwd>
+#include "llvm/Support/raw_ostream.h"
 
 namespace clang {
 
@@ -23,7 +23,7 @@ class Stmt;
 class PrinterHelper {
 public:
   virtual ~PrinterHelper();
-  virtual bool handledStmt(Stmt* E, std::ostream& OS) = 0;
+  virtual bool handledStmt(Stmt* E, llvm::raw_ostream& OS) = 0;
 };
 
 } // end namespace clang

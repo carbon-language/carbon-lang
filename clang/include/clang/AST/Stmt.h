@@ -15,12 +15,12 @@
 #define LLVM_CLANG_AST_STMT_H
 
 #include "llvm/Support/Casting.h"
+#include "llvm/Support/raw_ostream.h"
 #include "clang/Basic/SourceLocation.h"
 #include "clang/AST/StmtIterator.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/iterator.h"
 #include "llvm/Bitcode/SerializationFwd.h"
-#include <iosfwd>
 #include <string>
 
 using llvm::dyn_cast_or_null;
@@ -92,7 +92,7 @@ public:
   /// dumpPretty/printPretty - These two methods do a "pretty print" of the AST
   /// back to its original source language syntax.
   void dumpPretty() const;
-  void printPretty(std::ostream &OS, PrinterHelper* = NULL) const;
+  void printPretty(llvm::raw_ostream &OS, PrinterHelper* = NULL) const;
   
   /// viewAST - Visualize an AST rooted at this Stmt* using GraphViz.  Only
   ///   works on systems with GraphViz (Mac OS X) or dot+gv installed.

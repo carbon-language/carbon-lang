@@ -910,7 +910,8 @@ void VariableArrayType::getAsStringInternal(std::string &S) const {
     S += '*';
   
   if (getSizeExpr()) {
-    std::ostringstream s;
+    std::string SStr;
+    llvm::raw_string_ostream s(SStr);
     getSizeExpr()->printPretty(s);
     S += s.str();
   }
@@ -937,7 +938,8 @@ void ExtVectorType::getAsStringInternal(std::string &S) const {
 void TypeOfExpr::getAsStringInternal(std::string &InnerString) const {
   if (!InnerString.empty())    // Prefix the basic type, e.g. 'typeof(e) X'.
     InnerString = ' ' + InnerString;
-  std::ostringstream s;
+  std::string Str;
+  llvm::raw_string_ostream s(Str);
   getUnderlyingExpr()->printPretty(s);
   InnerString = "typeof(" + s.str() + ")" + InnerString;
 }

@@ -20,7 +20,7 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include <sstream>
+#include "llvm/Support/raw_ostream.h"
 using namespace clang;
 
 
@@ -161,7 +161,8 @@ std::string html::EscapeText(const std::string& s, bool EscapeSpaces,
                              bool ReplaceTabs) {
   
   unsigned len = s.size();
-  std::ostringstream os;
+  std::string Str;
+  llvm::raw_string_ostream os(Str);
   
   for (unsigned i = 0 ; i < len; ++i) {
     
@@ -272,7 +273,8 @@ void html::AddHeaderFooterInternalBuiltinCSS(Rewriter& R, unsigned FileID,
   SourceLocation StartLoc = SourceLocation::getFileLoc(FileID, 0);
   SourceLocation EndLoc = SourceLocation::getFileLoc(FileID, FileEnd-FileStart);
 
-  std::ostringstream os;
+  std::string s;
+  llvm::raw_string_ostream os(s);
   os << "<!doctype html>\n" // Use HTML 5 doctype
         "<html>\n<head>\n";
   

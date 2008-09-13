@@ -19,6 +19,7 @@
 #include "llvm/Support/Streams.h"
 #include "llvm/ADT/ImmutableList.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/raw_ostream.h"
 
 #ifndef NDEBUG
 #include "llvm/Support/GraphWriter.h"
@@ -2194,7 +2195,9 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRExprEngine::NodeTy*> :
         SourceLocation SLoc = S->getLocStart();
 
         Out << S->getStmtClassName() << ' ' << (void*) S << ' ';        
-        S->printPretty(Out);
+        llvm::raw_os_ostream OutS(Out);
+        S->printPretty(OutS);
+        OutS.flush();
         
         if (SLoc.isFileID()) {        
           Out << "\\lline="
@@ -2237,7 +2240,9 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRExprEngine::NodeTy*> :
          
           Out << "\\|Terminator: ";
           
-          E.getSrc()->printTerminator(Out);
+          llvm::raw_os_ostream OutS(Out);
+          E.getSrc()->printTerminator(OutS);
+          OutS.flush();
           
           if (SLoc.isFileID()) {
             Out << "\\lline="
@@ -2251,11 +2256,14 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRExprEngine::NodeTy*> :
             if (Label) {                        
               if (CaseStmt* C = dyn_cast<CaseStmt>(Label)) {
                 Out << "\\lcase ";
-                C->getLHS()->printPretty(Out);
-                
+                llvm::raw_os_ostream OutS(Out);
+                C->getLHS()->printPretty(OutS);
+                OutS.flush();
+              
                 if (Stmt* RHS = C->getRHS()) {
                   Out << " .. ";
-                  RHS->printPretty(Out);
+                  RHS->printPretty(OutS);
+                  OutS.flush();
                 }
                 
                 Out << ":";

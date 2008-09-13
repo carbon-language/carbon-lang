@@ -24,6 +24,7 @@
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/Support/Timer.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/OwningPtr.h"
 #include <fstream>
 
@@ -35,10 +36,11 @@ using namespace clang;
 namespace {
   class DeclPrinter {
   public:
-    std::ostream& Out;
+    llvm::raw_ostream& Out;
 
-    DeclPrinter(std::ostream* out) : Out(out ? *out : *llvm::cerr.stream()) {}
-    DeclPrinter() : Out(*llvm::cerr.stream()) {}
+    DeclPrinter(llvm::raw_ostream* out) : Out(out ? *out : llvm::errs()) {}
+    DeclPrinter() : Out(llvm::errs()) {}
+    virtual ~DeclPrinter();
     
     void PrintDecl(Decl *D);
     void PrintFunctionDeclStart(FunctionDecl *FD);    
@@ -55,6 +57,10 @@ namespace {
     void PrintObjCPropertyImplDecl(ObjCPropertyImplDecl *PID);
   };
 } // end anonymous namespace
+
+DeclPrinter::~DeclPrinter() {
+  Out.flush();
+}
 
 void DeclPrinter:: PrintDecl(Decl *D) {
   if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
@@ -422,7 +428,7 @@ void DeclPrinter::PrintObjCPropertyImplDecl(ObjCPropertyImplDecl *PID) {
 namespace {
   class ASTPrinter : public ASTConsumer, public DeclPrinter {
   public:
-    ASTPrinter(std::ostream* o = NULL) : DeclPrinter(o) {}
+    ASTPrinter(llvm::raw_ostream* o = NULL) : DeclPrinter(o) {}
     
     virtual void HandleTopLevelDecl(Decl *D) {
       PrintDecl(D);
@@ -430,7 +436,7 @@ namespace {
   };
 }
 
-ASTConsumer *clang::CreateASTPrinter(std::ostream* out) {
+ASTConsumer *clang::CreateASTPrinter(llvm::raw_ostream* out) {
   return new ASTPrinter(out);
 }
 

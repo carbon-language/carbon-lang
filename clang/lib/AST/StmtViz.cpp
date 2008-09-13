@@ -33,7 +33,8 @@ struct DOTGraphTraits<const Stmt*> : public DefaultDOTGraphTraits {
   static std::string getNodeLabel(const Stmt* Node, const Stmt* Graph) {
     
 #ifndef NDEBUG
-    std::ostringstream Out;
+    std::string OutSStr;
+    llvm::raw_string_ostream Out(OutSStr);
     
     if (Node)
       Out << Node->getStmtClassName();

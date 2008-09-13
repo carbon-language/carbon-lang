@@ -17,9 +17,9 @@
 
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/Support/Allocator.h"
+#include "llvm/Support/raw_ostream.h"
 #include <list>
 #include <vector>
-#include <iosfwd>
 #include <cassert>
 
 namespace clang {
@@ -174,8 +174,8 @@ public:
   unsigned getBlockID() const { return BlockID; }
   
   void dump(const CFG* cfg) const;
-  void print(std::ostream& OS, const CFG* cfg) const;
-  void printTerminator(std::ostream& OS) const;
+  void print(llvm::raw_ostream& OS, const CFG* cfg) const;
+  void printTerminator(llvm::raw_ostream& OS) const;
 };
   
 
@@ -276,7 +276,7 @@ public:
   //===--------------------------------------------------------------------===//
 
   void viewCFG() const;
-  void print(std::ostream& OS) const;
+  void print(llvm::raw_ostream& OS) const;
   void dump() const;
 
   //===--------------------------------------------------------------------===//

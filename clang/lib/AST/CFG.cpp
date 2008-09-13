@@ -21,6 +21,7 @@
 #include "llvm/Support/Streams.h"
 #include "llvm/Support/Compiler.h"
 #include <llvm/Support/Allocator.h>
+#include <llvm/Support/Format.h>
 #include <iomanip>
 #include <algorithm>
 #include <sstream>
@@ -1306,7 +1307,7 @@ public:
   void setBlockID(signed i) { CurrentBlock = i; }
   void setStmtID(unsigned i) { CurrentStmt = i; }
   
-  virtual bool handledStmt(Stmt* Terminator, std::ostream& OS) {
+  virtual bool handledStmt(Stmt* Terminator, llvm::raw_ostream& OS) {
     
     StmtMapTy::iterator I = StmtMap.find(Terminator);
 
@@ -1325,10 +1326,10 @@ public:
 class VISIBILITY_HIDDEN CFGBlockTerminatorPrint
   : public StmtVisitor<CFGBlockTerminatorPrint,void> {
   
-  std::ostream& OS;
+  llvm::raw_ostream& OS;
   StmtPrinterHelper* Helper;
 public:
-  CFGBlockTerminatorPrint(std::ostream& os, StmtPrinterHelper* helper)
+  CFGBlockTerminatorPrint(llvm::raw_ostream& os, StmtPrinterHelper* helper)
     : OS(os), Helper(helper) {}
   
   void VisitIfStmt(IfStmt* I) {
@@ -1406,7 +1407,7 @@ public:
 };
   
   
-void print_stmt(std::ostream&OS, StmtPrinterHelper* Helper, Stmt* Terminator) {    
+void print_stmt(llvm::raw_ostream&OS, StmtPrinterHelper* Helper, Stmt* Terminator) {    
   if (Helper) {
     // special printing for statement-expressions.
     if (StmtExpr* SE = dyn_cast<StmtExpr>(Terminator)) {
@@ -1437,7 +1438,7 @@ void print_stmt(std::ostream&OS, StmtPrinterHelper* Helper, Stmt* Terminator) {
   if (isa<Expr>(Terminator)) OS << '\n';
 }
   
-void print_block(std::ostream& OS, const CFG* cfg, const CFGBlock& B,
+void print_block(llvm::raw_ostream& OS, const CFG* cfg, const CFGBlock& B,
                  StmtPrinterHelper* Helper, bool print_edges) {
  
   if (Helper) Helper->setBlockID(B.getBlockID());
@@ -1488,7 +1489,7 @@ void print_block(std::ostream& OS, const CFG* cfg, const CFGBlock& B,
     if (print_edges)
       OS << "    ";
       
-    OS << std::setw(3) << j << ": ";
+    OS << llvm::format("%3d", j) << ": ";
     
     if (Helper)
       Helper->setStmtID(j);
@@ -1546,10 +1547,10 @@ void print_block(std::ostream& OS, const CFG* cfg, const CFGBlock& B,
 } // end anonymous namespace
 
 /// dump - A simple pretty printer of a CFG that outputs to stderr.
-void CFG::dump() const { print(*llvm::cerr.stream()); }
+void CFG::dump() const { print(llvm::errs()); }
 
 /// print - A simple pretty printer of a CFG that outputs to an ostream.
-void CFG::print(std::ostream& OS) const {
+void CFG::print(llvm::raw_ostream& OS) const {
   
   StmtPrinterHelper Helper(this);
   
@@ -1570,17 +1571,17 @@ void CFG::print(std::ostream& OS) const {
 }  
 
 /// dump - A simply pretty printer of a CFGBlock that outputs to stderr.
-void CFGBlock::dump(const CFG* cfg) const { print(*llvm::cerr.stream(), cfg); }
+void CFGBlock::dump(const CFG* cfg) const { print(llvm::errs(), cfg); }
 
 /// print - A simple pretty printer of a CFGBlock that outputs to an ostream.
 ///   Generally this will only be called from CFG::print.
-void CFGBlock::print(std::ostream& OS, const CFG* cfg) const {
+void CFGBlock::print(llvm::raw_ostream& OS, const CFG* cfg) const {
   StmtPrinterHelper Helper(cfg);
   print_block(OS, cfg, *this, &Helper, true);
 }
 
 /// printTerminator - A simple pretty printer of the terminator of a CFGBlock.
-void CFGBlock::printTerminator(std::ostream& OS) const {  
+void CFGBlock::printTerminator(llvm::raw_ostream& OS) const {  
   CFGBlockTerminatorPrint TPrinter(OS,NULL);
   TPrinter.Visit(const_cast<Stmt*>(getTerminator()));
 }
@@ -1685,9 +1686,10 @@ struct DOTGraphTraits<const CFG*> : public DefaultDOTGraphTraits {
   static std::string getNodeLabel(const CFGBlock* Node, const CFG* Graph) {
 
 #ifndef NDEBUG
-    std::ostringstream Out;
+    std::string OutSStr;
+    llvm::raw_string_ostream Out(OutSStr);
     print_block(Out,Graph, *Node, GraphHelper, false);
-    std::string OutStr = Out.str();
+    std::string& OutStr = Out.str();
 
     if (OutStr[0] == '\n') OutStr.erase(OutStr.begin());
 

@@ -23,9 +23,9 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Streams.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Path.h"
 #include <fstream>
-#include <sstream>
 
 using namespace clang;
 
@@ -220,7 +220,8 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D) {
   // Add the name of the file as an <h1> tag.  
   
   {
-    std::ostringstream os;
+    std::string s;
+    llvm::raw_string_ostream os(s);
     
     os << "<h3>Bug Summary</h3>\n<table class=\"simpletable\">\n"
           "<tr><td class=\"rowname\">File:</td><td>"
@@ -252,26 +253,30 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D) {
   const std::string& BugDesc = D.getDescription();
   
   if (!BugDesc.empty()) {
-    std::ostringstream os;
+    std::string s;
+    llvm::raw_string_ostream os(s);
     os << "\n<!-- BUGDESC " << BugDesc << " -->\n";
     R.InsertStrBefore(SourceLocation::getFileLoc(FileID, 0), os.str());
   }
   
   {
-    std::ostringstream os;
+    std::string s;
+    llvm::raw_string_ostream os(s);
     os << "\n<!-- BUGFILE " << DirName << Entry->getName() << " -->\n";
     R.InsertStrBefore(SourceLocation::getFileLoc(FileID, 0), os.str());
   }
   
   {
-    std::ostringstream os;
+    std::string s;
+    llvm::raw_string_ostream os(s);
     os << "\n<!-- BUGLINE " << D.back()->getLocation().getLogicalLineNumber()
        << " -->\n";
     R.InsertStrBefore(SourceLocation::getFileLoc(FileID, 0), os.str());
   }
   
   {
-    std::ostringstream os;
+    std::string s;
+    llvm::raw_string_ostream os(s);
     os << "\n<!-- BUGPATHLENGTH " << D.size() << " -->\n";
     R.InsertStrBefore(SourceLocation::getFileLoc(FileID, 0), os.str());
   }
@@ -365,7 +370,8 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R, unsigned BugFileID,
   
   // Create the html for the message.
   
-  std::ostringstream os;
+  std::string s;
+  llvm::raw_string_ostream os(s);
   
   os << "\n<tr><td class=\"num\"></td><td class=\"line\">"
      << "<div id=\"";

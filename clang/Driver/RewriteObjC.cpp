@@ -22,12 +22,12 @@
 #include "clang/Lex/Lexer.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Streams.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Path.h"
-#include <sstream>
-#include <fstream>
 using namespace clang;
 using llvm::utostr;
 
@@ -453,20 +453,23 @@ void RewriteObjC::HandleTranslationUnit(TranslationUnit& TU) {
 
   // Create the output file.
   
-  std::ostream *OutFile;
+  llvm::OwningPtr<llvm::raw_ostream> OwnedStream;
+  llvm::raw_ostream *OutFile;
   if (OutFileName == "-") {
-    OutFile = llvm::cout.stream();
+    OutFile = &llvm::outs();
   } else if (!OutFileName.empty()) {
-    OutFile = new std::ofstream(OutFileName.c_str(), 
-                                std::ios_base::binary|std::ios_base::out);
+    std::string Err;
+    OutFile = new llvm::raw_fd_ostream(OutFileName.c_str(), Err);
+    OwnedStream.reset(OutFile);
   } else if (InFileName == "-") {
-    OutFile = llvm::cout.stream();
+    OutFile = &llvm::outs();
   } else {
     llvm::sys::Path Path(InFileName);
     Path.eraseSuffix();
     Path.appendSuffix("cpp");
-    OutFile = new std::ofstream(Path.toString().c_str(), 
-                                std::ios_base::binary|std::ios_base::out);
+    std::string Err;
+    OutFile = new llvm::raw_fd_ostream(Path.toString().c_str(), Err);
+    OwnedStream.reset(OutFile);
   }
   
   RewriteInclude();
@@ -489,6 +492,7 @@ void RewriteObjC::HandleTranslationUnit(TranslationUnit& TU) {
   }
   // Emit metadata.
   *OutFile << ResultStr;
+  OutFile->flush();
 }
 
 //===----------------------------------------------------------------------===//
@@ -1040,7 +1044,8 @@ Stmt *RewriteObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
   if (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(S)) {
     CastExpr *Replacement = new CastExpr(ICE->getType(), ICE->getSubExpr(), SourceLocation());
     // Get the new text.
-    std::ostringstream Buf;
+    std::string SStr;
+    llvm::raw_string_ostream Buf(SStr);
     Replacement->printPretty(Buf);
     const std::string &Str = Buf.str();
 
@@ -1333,7 +1338,8 @@ Stmt *RewriteObjC::RewriteObjCSynchronizedStmt(ObjCAtSynchronizedStmt *S) {
   buf += "  objc_sync_exit(";
   Expr *syncExpr = new ExplicitCastExpr(Context->getObjCIdType(), 
                                         S->getSynchExpr(), SourceLocation());
-  std::ostringstream syncExprBuf;
+  std::string syncExprBufS;
+  llvm::raw_string_ostream syncExprBuf(syncExprBufS);
   syncExpr->printPretty(syncExprBuf);
   buf += syncExprBuf.str();
   buf += ");\n";
@@ -1942,7 +1948,8 @@ Stmt *RewriteObjC::RewriteObjCStringLiteral(ObjCStringLiteral *Exp) {
   Preamble += " __attribute__ ((section (\"__DATA, __cfstring\"))) = {__CFConstantStringClassReference,";
   Preamble += "0x000007c8,"; // utf8_str
   // The pretty printer for StringLiteral handles escape characters properly.
-  std::ostringstream prettyBuf;
+  std::string prettyBufS;
+  llvm::raw_string_ostream prettyBuf(prettyBufS);
   Exp->getString()->printPretty(prettyBuf);
   Preamble += prettyBuf.str();
   Preamble += ",";

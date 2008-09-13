@@ -17,6 +17,7 @@
 #include "clang/AST/PrettyPrinter.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Streams.h"
+#include "llvm/Support/Format.h"
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -25,11 +26,11 @@ using namespace clang;
 
 namespace  {
   class VISIBILITY_HIDDEN StmtPrinter : public StmtVisitor<StmtPrinter> {
-    std::ostream &OS;
+    llvm::raw_ostream &OS;
     unsigned IndentLevel;
     clang::PrinterHelper* Helper;
   public:
-    StmtPrinter(std::ostream &os, PrinterHelper* helper) : 
+    StmtPrinter(llvm::raw_ostream &os, PrinterHelper* helper) : 
       OS(os), IndentLevel(0), Helper(helper) {}
     
     void PrintStmt(Stmt *S, int SubIndent = 1) {
@@ -58,7 +59,7 @@ namespace  {
         OS << "<null expr>";
     }
     
-    std::ostream &Indent(int Delta = 0) const {
+    llvm::raw_ostream &Indent(int Delta = 0) const {
       for (int i = 0, e = IndentLevel+Delta; i < e; ++i)
         OS << "  ";
       return OS;
@@ -547,7 +548,7 @@ void StmtPrinter::VisitCharacterLiteral(CharacterLiteral *Node) {
     if (value < 256 && isprint(value)) {
       OS << "'" << (char)value << "'";
     } else if (value < 256) {
-      OS << "'\\x" << std::hex << value << std::dec << "'";
+      OS << "'\\x" << llvm::format("%x", value) << "'";
     } else {
       // FIXME what to really do here?
       OS << value;
@@ -924,10 +925,10 @@ void StmtPrinter::VisitBlockDeclRefExpr(BlockDeclRefExpr *Node) {
 //===----------------------------------------------------------------------===//
 
 void Stmt::dumpPretty() const {
-  printPretty(*llvm::cerr.stream());
+  printPretty(llvm::errs());
 }
 
-void Stmt::printPretty(std::ostream &OS, PrinterHelper* Helper) const {
+void Stmt::printPretty(llvm::raw_ostream &OS, PrinterHelper* Helper) const {
   if (this == 0) {
     OS << "<NULL>";
     return;

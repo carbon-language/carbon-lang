@@ -17,8 +17,9 @@
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/Support/Streams.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Path.h"
-#include <fstream>
+#include "llvm/ADT/OwningPtr.h"
 using namespace clang;
 
 /// isSameToken - Return true if the two specified tokens start have the same
@@ -205,20 +206,23 @@ void clang::RewriteMacrosInInput(Preprocessor &PP,const std::string &InFileName,
   }
   
   // Create the output file.
-  std::ostream *OutFile;
+  llvm::OwningPtr<llvm::raw_ostream> OwnedStream;
+  llvm::raw_ostream *OutFile;
   if (OutFileName == "-") {
-    OutFile = llvm::cout.stream();
+    OutFile = &llvm::outs();
   } else if (!OutFileName.empty()) {
-    OutFile = new std::ofstream(OutFileName.c_str(), 
-                                std::ios_base::binary|std::ios_base::out);
+    std::string Err;
+    OutFile = new llvm::raw_fd_ostream(OutFileName.c_str(), Err);
+    OwnedStream.reset(OutFile);
   } else if (InFileName == "-") {
-    OutFile = llvm::cout.stream();
+    OutFile = &llvm::outs();
   } else {
     llvm::sys::Path Path(InFileName);
     Path.eraseSuffix();
     Path.appendSuffix("cpp");
-    OutFile = new std::ofstream(Path.toString().c_str(), 
-                                std::ios_base::binary|std::ios_base::out);
+    std::string Err;
+    OutFile = new llvm::raw_fd_ostream(Path.toString().c_str(), Err);
+    OwnedStream.reset(OutFile);
   }
 
   // Get the buffer corresponding to MainFileID.  If we haven't changed it, then
@@ -230,4 +234,5 @@ void clang::RewriteMacrosInInput(Preprocessor &PP,const std::string &InFileName,
   } else {
     fprintf(stderr, "No changes\n");
   }
+  OutFile->flush();
 }

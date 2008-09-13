@@ -154,7 +154,9 @@ void GRState::print(std::ostream& Out, StoreManager& StoreMgr,
     else { Out << nl; }
     
     Out << " (" << (void*) I.getKey() << ") ";
-    I.getKey()->printPretty(Out);
+    llvm::raw_os_ostream OutS(Out);
+    I.getKey()->printPretty(OutS);
+    OutS.flush();
     Out << " : ";
     I.getData().print(Out);
   }
@@ -171,7 +173,9 @@ void GRState::print(std::ostream& Out, StoreManager& StoreMgr,
     else { Out << nl; }
     
     Out << " (" << (void*) I.getKey() << ") ";
-    I.getKey()->printPretty(Out);
+    llvm::raw_os_ostream OutS(Out);
+    I.getKey()->printPretty(OutS);
+    OutS.flush();
     Out << " : ";
     I.getData().print(Out);
   }
