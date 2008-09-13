@@ -184,8 +184,10 @@ unsigned ARMCodeEmitter::getMachineOpValue(const MachineInstr &MI,
     emitJumpTableAddress(MO.getIndex(), ARM::reloc_arm_relative);
   else if (MO.isMachineBasicBlock())
     emitMachineBasicBlock(MO.getMBB());
-
-  abort();
+  else {
+    cerr << "ERROR: Unknown type of MachineOperand: " << MO << "\n";
+    abort();
+  }
   return 0;
 }
 
