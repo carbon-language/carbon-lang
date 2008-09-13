@@ -372,7 +372,11 @@ unsigned ARMCodeEmitter::getAddrMode1InstrBinary(const MachineInstr &MI,
   }
 
   // Encode shifter operand.
-  if (TID.getNumOperands() - OpIdx > 1)
+  bool HasSoReg = (Format == ARMII::DPRdSoReg ||
+                   Format == ARMII::DPRnSoReg ||
+                   Format == ARMII::DPRSoReg  ||
+                   Format == ARMII::DPRSoRegS);
+  if (HasSoReg)
     // Encode SoReg.
     return Binary | getMachineSoRegOpValue(MI, TID, OpIdx);
 
