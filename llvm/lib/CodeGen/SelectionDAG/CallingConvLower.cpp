@@ -91,12 +91,11 @@ void CCState::AnalyzeReturn(SDNode *TheRet, CCAssignFn Fn) {
 
 /// AnalyzeCallOperands - Analyze an ISD::CALL node, incorporating info
 /// about the passed values into this state.
-void CCState::AnalyzeCallOperands(SDNode *TheCall, CCAssignFn Fn) {
-  unsigned NumOps = (TheCall->getNumOperands() - 5) / 2;
+void CCState::AnalyzeCallOperands(CallSDNode *TheCall, CCAssignFn Fn) {
+  unsigned NumOps = TheCall->getNumArgs();
   for (unsigned i = 0; i != NumOps; ++i) {
-    MVT ArgVT = TheCall->getOperand(5+2*i).getValueType();
-    ISD::ArgFlagsTy ArgFlags =
-      cast<ARG_FLAGSSDNode>(TheCall->getOperand(5+2*i+1))->getArgFlags();
+    MVT ArgVT = TheCall->getArg(i).getValueType();
+    ISD::ArgFlagsTy ArgFlags = TheCall->getArgFlags(i);
     if (Fn(i, ArgVT, ArgVT, CCValAssign::Full, ArgFlags, *this)) {
       cerr << "Call operand #" << i << " has unhandled type "
            << ArgVT.getMVTString() << "\n";
@@ -124,9 +123,9 @@ void CCState::AnalyzeCallOperands(SmallVectorImpl<MVT> &ArgVTs,
 
 /// AnalyzeCallResult - Analyze the return values of an ISD::CALL node,
 /// incorporating info about the passed values into this state.
-void CCState::AnalyzeCallResult(SDNode *TheCall, CCAssignFn Fn) {
-  for (unsigned i = 0, e = TheCall->getNumValues() - 1; i != e; ++i) {
-    MVT VT = TheCall->getValueType(i);
+void CCState::AnalyzeCallResult(CallSDNode *TheCall, CCAssignFn Fn) {
+  for (unsigned i = 0, e = TheCall->getNumRetVals(); i != e; ++i) {
+    MVT VT = TheCall->getRetValType(i);
     if (Fn(i, VT, VT, CCValAssign::Full, ISD::ArgFlagsTy(), *this)) {
       cerr << "Call result #" << i << " has unhandled type "
            << VT.getMVTString() << "\n";

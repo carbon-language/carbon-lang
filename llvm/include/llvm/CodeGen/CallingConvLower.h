@@ -143,7 +143,7 @@ public:
   
   /// AnalyzeCallOperands - Analyze an ISD::CALL node, incorporating info
   /// about the passed values into this state.
-  void AnalyzeCallOperands(SDNode *TheCall, CCAssignFn Fn);
+  void AnalyzeCallOperands(CallSDNode *TheCall, CCAssignFn Fn);
 
   /// AnalyzeCallOperands - Same as above except it takes vectors of types
   /// and argument flags.
@@ -153,7 +153,7 @@ public:
 
   /// AnalyzeCallResult - Analyze the return values of an ISD::CALL node,
   /// incorporating info about the passed values into this state.
-  void AnalyzeCallResult(SDNode *TheCall, CCAssignFn Fn);
+  void AnalyzeCallResult(CallSDNode *TheCall, CCAssignFn Fn);
   
   /// AnalyzeCallResult - Same as above except it's specialized for calls which
   /// produce a single value.

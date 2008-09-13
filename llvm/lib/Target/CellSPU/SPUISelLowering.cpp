@@ -1101,13 +1101,14 @@ static SDNode *isLSAAddress(SDValue Op, SelectionDAG &DAG) {
 static
 SDValue
 LowerCALL(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
-  SDValue Chain = Op.getOperand(0);
+  CallSDNode *TheCall = cast<CallSDNode>(Op.getNode());
+  SDValue Chain = TheCall->getChain();
 #if 0
-  bool isVarArg   = cast<ConstantSDNode>(Op.getOperand(2))->getZExtValue() != 0;
-  bool isTailCall = cast<ConstantSDNode>(Op.getOperand(3))->getZExtValue() != 0;
+  bool isVarArg   = TheCall->isVarArg();
+  bool isTailCall = TheCall->isTailCall();
 #endif
-  SDValue Callee    = Op.getOperand(4);
-  unsigned NumOps     = (Op.getNumOperands() - 5) / 2;
+  SDValue Callee    = TheCall->getCallee();
+  unsigned NumOps     = TheCall->getNumArgs();
   unsigned StackSlotSize = SPUFrameInfo::stackSlotSize();
   const unsigned *ArgRegs = SPURegisterInfo::getArgRegs();
   const unsigned NumArgRegs = SPURegisterInfo::getNumArgRegs();
@@ -1136,7 +1137,7 @@ LowerCALL(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   SmallVector<SDValue, 8> MemOpChains;
 
   for (unsigned i = 0; i != NumOps; ++i) {
-    SDValue Arg = Op.getOperand(5+2*i);
+    SDValue Arg = TheCall->getArg(i);
 
     // PtrOff will be used to store the current argument to the stack if a
     // register cannot be found for it.
@@ -1256,18 +1257,18 @@ LowerCALL(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
                              DAG.getConstant(NumStackBytes, PtrVT),
                              DAG.getConstant(0, PtrVT),
                              InFlag);
-  if (Op.getNode()->getValueType(0) != MVT::Other)
+  if (TheCall->getValueType(0) != MVT::Other)
     InFlag = Chain.getValue(1);
 
   SDValue ResultVals[3];
   unsigned NumResults = 0;
 
   // If the call has results, copy the values out of the ret val registers.
-  switch (Op.getNode()->getValueType(0).getSimpleVT()) {
+  switch (TheCall->getValueType(0).getSimpleVT()) {
   default: assert(0 && "Unexpected ret value!");
   case MVT::Other: break;
   case MVT::i32:
-    if (Op.getNode()->getValueType(1) == MVT::i32) {
+    if (TheCall->getValueType(1) == MVT::i32) {
       Chain = DAG.getCopyFromReg(Chain, SPU::R4, MVT::i32, InFlag).getValue(1);
       ResultVals[0] = Chain.getValue(0);
       Chain = DAG.getCopyFromReg(Chain, SPU::R3, MVT::i32,
@@ -1287,7 +1288,7 @@ LowerCALL(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
     break;
   case MVT::f32:
   case MVT::f64:
-    Chain = DAG.getCopyFromReg(Chain, SPU::R3, Op.getNode()->getValueType(0),
+    Chain = DAG.getCopyFromReg(Chain, SPU::R3, TheCall->getValueType(0),
                                InFlag).getValue(1);
     ResultVals[0] = Chain.getValue(0);
     NumResults = 1;
@@ -1297,7 +1298,7 @@ LowerCALL(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   case MVT::v4i32:
   case MVT::v8i16:
   case MVT::v16i8:
-    Chain = DAG.getCopyFromReg(Chain, SPU::R3, Op.getNode()->getValueType(0),
+    Chain = DAG.getCopyFromReg(Chain, SPU::R3, TheCall->getValueType(0),
                                    InFlag).getValue(1);
     ResultVals[0] = Chain.getValue(0);
     NumResults = 1;

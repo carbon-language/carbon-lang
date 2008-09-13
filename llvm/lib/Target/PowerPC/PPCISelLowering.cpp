@@ -1328,10 +1328,9 @@ static const unsigned *GetFPR(const PPCSubtarget &Subtarget) {
 
 /// CalculateStackSlotSize - Calculates the size reserved for this argument on
 /// the stack.
-static unsigned CalculateStackSlotSize(SDValue Arg, SDValue Flag,
+static unsigned CalculateStackSlotSize(SDValue Arg, ISD::ArgFlagsTy Flags,
                                        bool isVarArg, unsigned PtrByteSize) {
   MVT ArgVT = Arg.getValueType();
-  ISD::ArgFlagsTy Flags = cast<ARG_FLAGSSDNode>(Flag)->getArgFlags();
   unsigned ArgSize =ArgVT.getSizeInBits()/8;
   if (Flags.isByVal())
     ArgSize = Flags.getByValSize();
@@ -1475,14 +1474,14 @@ PPCTargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op,
       if (isVarArg || isPPC64) {
         MinReservedArea = ((MinReservedArea+15)/16)*16;
         MinReservedArea += CalculateStackSlotSize(Op.getValue(ArgNo),
-                                                  Op.getOperand(ArgNo+3),
+                                                  Flags,
                                                   isVarArg,
                                                   PtrByteSize);
       } else  nAltivecParamsAtEnd++;
     } else
       // Calculate min reserved area.
       MinReservedArea += CalculateStackSlotSize(Op.getValue(ArgNo),
-                                                Op.getOperand(ArgNo+3),
+                                                Flags,
                                                 isVarArg,
                                                 PtrByteSize);
 
@@ -1794,13 +1793,13 @@ CalculateParameterAndLinkageAreaSize(SelectionDAG &DAG,
                                      bool isMachoABI,
                                      bool isVarArg,
                                      unsigned CC,
-                                     SDValue Call,
+                                     CallSDNode *TheCall,
                                      unsigned &nAltivecParamsAtEnd) {
   // Count how many bytes are to be pushed on the stack, including the linkage
   // area, and parameter passing area.  We start with 24/48 bytes, which is
   // prereserved space for [SP][CR][LR][3 x unused].
   unsigned NumBytes = PPCFrameInfo::getLinkageSize(isPPC64, isMachoABI);
-  unsigned NumOps = (Call.getNumOperands() - 5) / 2;
+  unsigned NumOps = TheCall->getNumArgs();
   unsigned PtrByteSize = isPPC64 ? 8 : 4;
 
   // Add up all the space actually used.
@@ -1811,8 +1810,8 @@ CalculateParameterAndLinkageAreaSize(SelectionDAG &DAG,
   // 16-byte aligned.
   nAltivecParamsAtEnd = 0;
   for (unsigned i = 0; i != NumOps; ++i) {
-    SDValue Arg = Call.getOperand(5+2*i);
-    SDValue Flag = Call.getOperand(5+2*i+1);
+    SDValue Arg = TheCall->getArg(i);
+    ISD::ArgFlagsTy Flags = TheCall->getArgFlags(i);
     MVT ArgVT = Arg.getValueType();
     // Varargs Altivec parameters are padded to a 16 byte boundary.
     if (ArgVT==MVT::v4f32 || ArgVT==MVT::v4i32 ||
@@ -1826,7 +1825,7 @@ CalculateParameterAndLinkageAreaSize(SelectionDAG &DAG,
       // Varargs and 64-bit Altivec parameters are padded to 16 byte boundary.
       NumBytes = ((NumBytes+15)/16)*16;
     }
-    NumBytes += CalculateStackSlotSize(Arg, Flag, isVarArg, PtrByteSize);
+    NumBytes += CalculateStackSlotSize(Arg, Flags, isVarArg, PtrByteSize);
   }
 
    // Allow for Altivec parameters at the end, if needed.
@@ -1876,27 +1875,25 @@ static int CalculateTailCallSPDiff(SelectionDAG& DAG, bool IsTailCall,
 /// calling conventions match, currently only fastcc supports tail calls, and
 /// the function CALL is immediatly followed by a RET.
 bool
-PPCTargetLowering::IsEligibleForTailCallOptimization(SDValue Call,
+PPCTargetLowering::IsEligibleForTailCallOptimization(CallSDNode *TheCall,
                                                      SDValue Ret,
                                                      SelectionDAG& DAG) const {
   // Variable argument functions are not supported.
-  if (!PerformTailCallOpt ||
-      cast<ConstantSDNode>(Call.getOperand(2))->getZExtValue() != 0)
+  if (!PerformTailCallOpt || TheCall->isVarArg())
     return false;
 
-  if (CheckTailCallReturnConstraints(Call, Ret)) {
+  if (CheckTailCallReturnConstraints(TheCall, Ret)) {
     MachineFunction &MF = DAG.getMachineFunction();
     unsigned CallerCC = MF.getFunction()->getCallingConv();
-    unsigned CalleeCC= cast<ConstantSDNode>(Call.getOperand(1))->getZExtValue();
+    unsigned CalleeCC = TheCall->getCallingConv();
     if (CalleeCC == CallingConv::Fast && CallerCC == CalleeCC) {
       // Functions containing by val parameters are not supported.
-      for (unsigned i = 0; i != ((Call.getNumOperands()-5)/2); i++) {
-         ISD::ArgFlagsTy Flags = cast<ARG_FLAGSSDNode>(Call.getOperand(5+2*i+1))
-           ->getArgFlags();
+      for (unsigned i = 0; i != TheCall->getNumArgs(); i++) {
+         ISD::ArgFlagsTy Flags = TheCall->getArgFlags(i);
          if (Flags.isByVal()) return false;
       }
 
-      SDValue Callee = Call.getOperand(4);
+      SDValue Callee = TheCall->getCallee();
       // Non PIC/GOT  tail calls are supported.
       if (getTargetMachine().getRelocationModel() != Reloc::PIC_)
         return true;
@@ -2070,13 +2067,14 @@ LowerMemOpCallTo(SelectionDAG &DAG, MachineFunction &MF, SDValue Chain,
 SDValue PPCTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG,
                                        const PPCSubtarget &Subtarget,
                                        TargetMachine &TM) {
-  SDValue Chain  = Op.getOperand(0);
-  bool isVarArg   = cast<ConstantSDNode>(Op.getOperand(2))->getZExtValue() != 0;
-  unsigned CC     = cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();
-  bool isTailCall = cast<ConstantSDNode>(Op.getOperand(3))->getZExtValue() != 0
+  CallSDNode *TheCall = cast<CallSDNode>(Op.getNode());
+  SDValue Chain  = TheCall->getChain();
+  bool isVarArg   = TheCall->isVarArg();
+  unsigned CC     = TheCall->getCallingConv();
+  bool isTailCall = TheCall->isTailCall()
                  && CC == CallingConv::Fast && PerformTailCallOpt;
-  SDValue Callee = Op.getOperand(4);
-  unsigned NumOps  = (Op.getNumOperands() - 5) / 2;
+  SDValue Callee = TheCall->getCallee();
+  unsigned NumOps  = TheCall->getNumArgs();
   
   bool isMachoABI = Subtarget.isMachoABI();
   bool isELF32_ABI  = Subtarget.isELF32_ABI();
@@ -2106,7 +2104,7 @@ SDValue PPCTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG,
   // prereserved space for [SP][CR][LR][3 x unused].
   unsigned NumBytes =
     CalculateParameterAndLinkageAreaSize(DAG, isPPC64, isMachoABI, isVarArg, CC,
-                                         Op, nAltivecParamsAtEnd);
+                                         TheCall, nAltivecParamsAtEnd);
 
   // Calculate by how many bytes the stack has to be adjusted in case of tail
   // call optimization.
@@ -2165,9 +2163,8 @@ SDValue PPCTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG,
   SmallVector<SDValue, 8> MemOpChains;
   for (unsigned i = 0; i != NumOps; ++i) {
     bool inMem = false;
-    SDValue Arg = Op.getOperand(5+2*i);
-    ISD::ArgFlagsTy Flags =
-      cast<ARG_FLAGSSDNode>(Op.getOperand(5+2*i+1))->getArgFlags();
+    SDValue Arg = TheCall->getArg(i);
+    ISD::ArgFlagsTy Flags = TheCall->getArgFlags(i);
     // See if next argument requires stack alignment in ELF
     bool Align = Flags.isSplit();
 
@@ -2391,7 +2388,7 @@ SDValue PPCTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG,
     ArgOffset = ((ArgOffset+15)/16)*16;
     ArgOffset += 12*16;
     for (unsigned i = 0; i != NumOps; ++i) {
-      SDValue Arg = Op.getOperand(5+2*i);
+      SDValue Arg = TheCall->getArg(i);
       MVT ArgType = Arg.getValueType();
       if (ArgType==MVT::v4f32 || ArgType==MVT::v4i32 ||
           ArgType==MVT::v8i16 || ArgType==MVT::v16i8) {
@@ -2530,7 +2527,7 @@ SDValue PPCTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG,
     assert(InFlag.getNode() &&
            "Flag must be set. Depend on flag being set in LowerRET");
     Chain = DAG.getNode(PPCISD::TAILCALL,
-                        Op.getNode()->getVTList(), &Ops[0], Ops.size());
+                        TheCall->getVTList(), &Ops[0], Ops.size());
     return SDValue(Chain.getNode(), Op.getResNo());
   }
 
@@ -2541,14 +2538,14 @@ SDValue PPCTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG,
                              DAG.getConstant(NumBytes, PtrVT),
                              DAG.getConstant(BytesCalleePops, PtrVT),
                              InFlag);
-  if (Op.getNode()->getValueType(0) != MVT::Other)
+  if (TheCall->getValueType(0) != MVT::Other)
     InFlag = Chain.getValue(1);
 
   SmallVector<SDValue, 16> ResultVals;
   SmallVector<CCValAssign, 16> RVLocs;
   unsigned CallerCC = DAG.getMachineFunction().getFunction()->getCallingConv();
   CCState CCInfo(CallerCC, isVarArg, TM, RVLocs);
-  CCInfo.AnalyzeCallResult(Op.getNode(), RetCC_PPC);
+  CCInfo.AnalyzeCallResult(TheCall, RetCC_PPC);
   
   // Copy all of the result registers out of their specified physreg.
   for (unsigned i = 0, e = RVLocs.size(); i != e; ++i) {
@@ -2566,7 +2563,7 @@ SDValue PPCTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG,
   
   // Otherwise, merge everything together with a MERGE_VALUES node.
   ResultVals.push_back(Chain);
-  SDValue Res = DAG.getMergeValues(Op.getNode()->getVTList(), &ResultVals[0],
+  SDValue Res = DAG.getMergeValues(TheCall->getVTList(), &ResultVals[0],
                                      ResultVals.size());
   return Res.getValue(Op.getResNo());
 }

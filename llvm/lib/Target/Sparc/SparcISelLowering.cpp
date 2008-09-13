@@ -224,10 +224,11 @@ SparcTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG,
 }
 
 static SDValue LowerCALL(SDValue Op, SelectionDAG &DAG) {
-  unsigned CallingConv = cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();
-  SDValue Chain = Op.getOperand(0);
-  SDValue Callee = Op.getOperand(4);
-  bool isVarArg = cast<ConstantSDNode>(Op.getOperand(2))->getZExtValue() != 0;
+  CallSDNode *TheCall = cast<CallSDNode>(Op.getNode());
+  unsigned CallingConv = TheCall->getCallingConv();
+  SDValue Chain = TheCall->getChain();
+  SDValue Callee = TheCall->getCallee();
+  bool isVarArg = TheCall->isVarArg();
 
 #if 0
   // Analyze operands of the call, assigning locations to each operand.
@@ -243,8 +244,8 @@ static SDValue LowerCALL(SDValue Op, SelectionDAG &DAG) {
   
   // Count the size of the outgoing arguments.
   unsigned ArgsSize = 0;
-  for (unsigned i = 5, e = Op.getNumOperands(); i != e; i += 2) {
-    switch (Op.getOperand(i).getValueType().getSimpleVT()) {
+  for (unsigned i = 0, e = TheCall->getNumArgs(); i != e; ++i) {
+    switch (TheCall->getArg(i).getValueType().getSimpleVT()) {
       default: assert(0 && "Unknown value type!");
       case MVT::i1:
       case MVT::i8:
@@ -279,7 +280,7 @@ static SDValue LowerCALL(SDValue Op, SelectionDAG &DAG) {
     CCValAssign &VA = ArgLocs[i];
     
     // Arguments start after the 5 first operands of ISD::CALL
-    SDValue Arg = Op.getOperand(5+2*VA.getValNo());
+    SDValue Arg = TheCall->getArg(i);
 
     // Promote the value if needed.
     switch (VA.getLocInfo()) {
@@ -319,8 +320,8 @@ static SDValue LowerCALL(SDValue Op, SelectionDAG &DAG) {
   };
   unsigned ArgOffset = 68;
 
-  for (unsigned i = 5, e = Op.getNumOperands(); i != e; i += 2) {
-    SDValue Val = Op.getOperand(i);
+  for (unsigned i = 0, e = TheCall->getNumArgs(); i != e; ++i) {
+    SDValue Val = TheCall->getArg(i);
     MVT ObjectVT = Val.getValueType();
     SDValue ValToStore(0, 0);
     unsigned ObjSize;
@@ -428,7 +429,7 @@ static SDValue LowerCALL(SDValue Op, SelectionDAG &DAG) {
   SmallVector<CCValAssign, 16> RVLocs;
   CCState RVInfo(CallingConv, isVarArg, DAG.getTarget(), RVLocs);
   
-  RVInfo.AnalyzeCallResult(Op.getNode(), RetCC_Sparc32);
+  RVInfo.AnalyzeCallResult(TheCall, RetCC_Sparc32);
   SmallVector<SDValue, 8> ResultVals;
   
   // Copy all of the result registers out of their specified physreg.
@@ -448,7 +449,7 @@ static SDValue LowerCALL(SDValue Op, SelectionDAG &DAG) {
   ResultVals.push_back(Chain);
 
   // Merge everything together with a MERGE_VALUES node.
-  return DAG.getMergeValues(Op.getNode()->getVTList(), &ResultVals[0],
+  return DAG.getMergeValues(TheCall->getVTList(), &ResultVals[0],
                             ResultVals.size());
 }
 

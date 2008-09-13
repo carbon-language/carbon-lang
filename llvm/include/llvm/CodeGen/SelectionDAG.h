@@ -463,6 +463,11 @@ public:
     return getNode(ISD::MERGE_VALUES, VTs, Ops, NumOps);
   }
 
+  /// getCall - Create a CALL node from the given information.
+  ///
+  SDValue getCall(unsigned CallingConv, bool IsVarArgs, bool IsTailCall,
+                  SDVTList VTs, const SDValue *Operands, unsigned NumOperands);
+
   /// getLoad - Loads are not normal binary operators: their result type is not
   /// determined by their operands, and they produce a value AND a token chain.
   ///
@@ -731,7 +736,7 @@ public:
   SDValue getShuffleScalarElt(const SDNode *N, unsigned Idx);
   
 private:
-  void RemoveNodeFromCSEMaps(SDNode *N);
+  bool RemoveNodeFromCSEMaps(SDNode *N);
   SDNode *AddNonLeafNodeToCSEMaps(SDNode *N);
   SDNode *FindModifiedNodeSlot(SDNode *N, SDValue Op, void *&InsertPos);
   SDNode *FindModifiedNodeSlot(SDNode *N, SDValue Op1, SDValue Op2,

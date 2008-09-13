@@ -453,7 +453,7 @@ namespace llvm {
     /// IsEligibleForTailCallOptimization - Check whether the call is eligible
     /// for tail call optimization. Target which want to do tail call
     /// optimization should implement this function.
-    virtual bool IsEligibleForTailCallOptimization(SDValue Call, 
+    virtual bool IsEligibleForTailCallOptimization(CallSDNode *TheCall, 
                                                    SDValue Ret, 
                                                    SelectionDAG &DAG) const;
 
@@ -493,27 +493,27 @@ namespace llvm {
     bool X86ScalarSSEf32;
     bool X86ScalarSSEf64;
 
-    SDNode *LowerCallResult(SDValue Chain, SDValue InFlag, SDNode*TheCall,
+    SDNode *LowerCallResult(SDValue Chain, SDValue InFlag, CallSDNode *TheCall,
                             unsigned CallingConv, SelectionDAG &DAG);
 
     SDValue LowerMemArgument(SDValue Op, SelectionDAG &DAG,
                                const CCValAssign &VA,  MachineFrameInfo *MFI,
                                unsigned CC, SDValue Root, unsigned i);
 
-    SDValue LowerMemOpCallTo(SDValue Op, SelectionDAG &DAG,
+    SDValue LowerMemOpCallTo(CallSDNode *TheCall, SelectionDAG &DAG,
                                const SDValue &StackPtr,
                                const CCValAssign &VA, SDValue Chain,
-                               SDValue Arg);
+                               SDValue Arg, ISD::ArgFlagsTy Flags);
 
     // Call lowering helpers.
-    bool IsCalleePop(SDValue Op);
+    bool IsCalleePop(bool isVarArg, unsigned CallingConv);
     bool CallRequiresGOTPtrInReg(bool Is64Bit, bool IsTailCall);
     bool CallRequiresFnAddressInReg(bool Is64Bit, bool IsTailCall);
     SDValue EmitTailCallLoadRetAddr(SelectionDAG &DAG, SDValue &OutRetAddr,
                                 SDValue Chain, bool IsTailCall, bool Is64Bit,
                                 int FPDiff);
 
-    CCAssignFn *CCAssignFnForNode(SDValue Op) const;
+    CCAssignFn *CCAssignFnForNode(unsigned CallingConv) const;
     NameDecorationStyle NameDecorationForFORMAL_ARGUMENTS(SDValue Op);
     unsigned GetAlignedArgumentStackSize(unsigned StackSize, SelectionDAG &DAG);
 

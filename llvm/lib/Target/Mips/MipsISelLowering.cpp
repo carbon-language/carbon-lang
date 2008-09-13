@@ -585,10 +585,11 @@ LowerCALL(SDValue Op, SelectionDAG &DAG)
 {
   MachineFunction &MF = DAG.getMachineFunction();
 
-  SDValue Chain = Op.getOperand(0);
-  SDValue Callee = Op.getOperand(4);
-  bool isVarArg = cast<ConstantSDNode>(Op.getOperand(2))->getZExtValue() != 0;
-  unsigned CC = DAG.getMachineFunction().getFunction()->getCallingConv();
+  CallSDNode *TheCall = cast<CallSDNode>(Op.getNode());
+  SDValue Chain = TheCall->getChain();
+  SDValue Callee = TheCall->getCallee();
+  bool isVarArg = TheCall->isVarArg();
+  unsigned CC = TheCall->getCallingConv();
 
   MachineFrameInfo *MFI = MF.getFrameInfo();
 
@@ -603,7 +604,7 @@ LowerCALL(SDValue Op, SelectionDAG &DAG)
     MFI->CreateFixedObject(VTsize, (VTsize*3));
   }
 
-  CCInfo.AnalyzeCallOperands(Op.getNode(), CC_Mips);
+  CCInfo.AnalyzeCallOperands(TheCall, CC_Mips);
   
   // Get a count of how many bytes are to be pushed on the stack.
   unsigned NumBytes = CCInfo.getNextStackOffset();
@@ -624,7 +625,7 @@ LowerCALL(SDValue Op, SelectionDAG &DAG)
     CCValAssign &VA = ArgLocs[i];
 
     // Arguments start after the 5 first operands of ISD::CALL
-    SDValue Arg = Op.getOperand(5+2*VA.getValNo());
+    SDValue Arg = TheCall->getArg(i);
     
     // Promote the value if needed.
     switch (VA.getLocInfo()) {
@@ -751,7 +752,7 @@ LowerCALL(SDValue Op, SelectionDAG &DAG)
 
   // Handle result values, copying them out of physregs into vregs that we
   // return.
-  return SDValue(LowerCallResult(Chain, InFlag, Op.getNode(), CC, DAG), Op.getResNo());
+  return SDValue(LowerCallResult(Chain, InFlag, TheCall, CC, DAG), Op.getResNo());
 }
 
 /// LowerCallResult - Lower the result values of an ISD::CALL into the
@@ -760,11 +761,10 @@ LowerCALL(SDValue Op, SelectionDAG &DAG)
 /// being lowered. Returns a SDNode with the same number of values as the 
 /// ISD::CALL.
 SDNode *MipsTargetLowering::
-LowerCallResult(SDValue Chain, SDValue InFlag, SDNode *TheCall, 
+LowerCallResult(SDValue Chain, SDValue InFlag, CallSDNode *TheCall, 
         unsigned CallingConv, SelectionDAG &DAG) {
   
-  bool isVarArg =
-    cast<ConstantSDNode>(TheCall->getOperand(2))->getZExtValue() != 0;
+  bool isVarArg = TheCall->isVarArg();
 
   // Assign locations to each value returned by this call.
   SmallVector<CCValAssign, 16> RVLocs;

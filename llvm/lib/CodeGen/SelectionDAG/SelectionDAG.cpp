@@ -595,13 +595,13 @@ void SelectionDAG::DeleteNodeNotInCSEMaps(SDNode *N) {
 /// correspond to it.  This is useful when we're about to delete or repurpose
 /// the node.  We don't want future request for structurally identical nodes
 /// to return N anymore.
-void SelectionDAG::RemoveNodeFromCSEMaps(SDNode *N) {
+bool SelectionDAG::RemoveNodeFromCSEMaps(SDNode *N) {
   bool Erased = false;
   switch (N->getOpcode()) {
   case ISD::EntryToken:
     assert(0 && "EntryToken should not be in CSEMaps!");
-    return;
-  case ISD::HANDLENODE: return;  // noop.
+    return false;
+  case ISD::HANDLENODE: return false;  // noop.
   case ISD::CONDCODE:
     assert(CondCodeNodes[cast<CondCodeSDNode>(N)->get()] &&
            "Cond code doesn't exist!");
@@ -635,7 +635,8 @@ void SelectionDAG::RemoveNodeFromCSEMaps(SDNode *N) {
   // flag result (which cannot be CSE'd) or is one of the special cases that are
   // not subject to CSE.
   if (!Erased && N->getValueType(N->getNumValues()-1) != MVT::Flag &&
-      !N->isTargetOpcode() &&
+      !N->isMachineOpcode() &&
+      N->getOpcode() != ISD::CALL &&
       N->getOpcode() != ISD::DBG_LABEL &&
       N->getOpcode() != ISD::DBG_STOPPOINT &&
       N->getOpcode() != ISD::EH_LABEL &&
@@ -645,6 +646,7 @@ void SelectionDAG::RemoveNodeFromCSEMaps(SDNode *N) {
     assert(0 && "Node is not in map!");
   }
 #endif
+  return Erased;
 }
 
 /// AddNonLeafNodeToCSEMaps - Add the specified node back to the CSE maps.  It
@@ -660,6 +662,7 @@ SDNode *SelectionDAG::AddNonLeafNodeToCSEMaps(SDNode *N) {
 
   switch (N->getOpcode()) {
   default: break;
+  case ISD::CALL:
   case ISD::HANDLENODE:
   case ISD::DBG_LABEL:
   case ISD::DBG_STOPPOINT:
@@ -3304,6 +3307,21 @@ SDValue SelectionDAG::getMergeValues(const SDValue *Ops, unsigned NumOps,
 }
 
 SDValue
+SelectionDAG::getCall(unsigned CallingConv, bool IsVarArgs, bool IsTailCall,
+                      SDVTList VTs,
+                      const SDValue *Operands, unsigned NumOperands) {
+  // Do not CSE calls. Note that in addition to being a compile-time
+  // optimization (since attempting CSE of calls is unlikely to be
+  // meaningful), we actually depend on this behavior. CallSDNode can
+  // be mutated, which is only safe if calls are not CSE'd.
+  SDNode *N = NodeAllocator.Allocate<CallSDNode>();
+  new (N) CallSDNode(CallingConv, IsVarArgs, IsTailCall,
+                     VTs, Operands, NumOperands);
+  AllNodes.push_back(N);
+  return SDValue(N, 0);
+}
+
+SDValue
 SelectionDAG::getLoad(ISD::MemIndexedMode AM, ISD::LoadExtType ExtType,
                       MVT VT, SDValue Chain,
                       SDValue Ptr, SDValue Offset,
@@ -3761,7 +3779,8 @@ SDValue SelectionDAG::UpdateNodeOperands(SDValue InN, SDValue Op) {
   
   // Nope it doesn't.  Remove the node from its current place in the maps.
   if (InsertPos)
-    RemoveNodeFromCSEMaps(N);
+    if (!RemoveNodeFromCSEMaps(N))
+      InsertPos = 0;
   
   // Now we update the operands.
   N->OperandList[0].getVal()->removeUser(0, N);
@@ -3790,7 +3809,8 @@ UpdateNodeOperands(SDValue InN, SDValue Op1, SDValue Op2) {
   
   // Nope it doesn't.  Remove the node from its current place in the maps.
   if (InsertPos)
-    RemoveNodeFromCSEMaps(N);
+    if (!RemoveNodeFromCSEMaps(N))
+      InsertPos = 0;
   
   // Now we update the operands.
   if (N->OperandList[0] != Op1) {
@@ -3856,7 +3876,8 @@ UpdateNodeOperands(SDValue InN, const SDValue *Ops, unsigned NumOps) {
   
   // Nope it doesn't.  Remove the node from its current place in the maps.
   if (InsertPos)
-    RemoveNodeFromCSEMaps(N);
+    if (!RemoveNodeFromCSEMaps(N))
+      InsertPos = 0;
   
   // Now we update the operands.
   for (unsigned i = 0; i != NumOps; ++i) {
@@ -4079,7 +4100,8 @@ SDNode *SelectionDAG::MorphNodeTo(SDNode *N, unsigned Opc,
       return ON;
   }
 
-  RemoveNodeFromCSEMaps(N);
+  if (!RemoveNodeFromCSEMaps(N))
+    IP = 0;
 
   // Start the morphing.
   N->NodeType = Opc;
@@ -4582,6 +4604,7 @@ void MemSDNode::ANCHOR() {}
 void LoadSDNode::ANCHOR() {}
 void StoreSDNode::ANCHOR() {}
 void AtomicSDNode::ANCHOR() {}
+void CallSDNode::ANCHOR() {}
 
 HandleSDNode::~HandleSDNode() {
   DropOperands();

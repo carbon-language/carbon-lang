@@ -179,6 +179,12 @@ std::string DOTGraphTraits<SelectionDAG*>::getNodeLabel(const SDNode *Node,
       Op += ":" + utostr(D->getColumn());
   } else if (const LabelSDNode *L = dyn_cast<LabelSDNode>(Node)) {
     Op += ": LabelID=" + utostr(L->getLabelID());
+  } else if (const CallSDNode *C = dyn_cast<CallSDNode>(Node)) {
+    Op += ": CallingConv=" + utostr(C->getCallingConv());
+    if (C->isVarArg())
+      Op += ", isVarArg";
+    if (C->isTailCall())
+      Op += ", isTailCall";
   } else if (const ExternalSymbolSDNode *ES =
              dyn_cast<ExternalSymbolSDNode>(Node)) {
     Op += "'" + std::string(ES->getSymbol()) + "'";

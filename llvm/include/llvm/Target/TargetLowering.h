@@ -1075,7 +1075,7 @@ public:
   /// IsEligibleForTailCallOptimization - Check whether the call is eligible for
   /// tail call optimization. Targets which want to do tail call optimization
   /// should override this function. 
-  virtual bool IsEligibleForTailCallOptimization(SDValue Call, 
+  virtual bool IsEligibleForTailCallOptimization(CallSDNode *Call, 
                                                  SDValue Ret, 
                                                  SelectionDAG &DAG) const {
     return false;
@@ -1085,15 +1085,15 @@ public:
   /// preceeds the RET node and whether the return uses the result of the node
   /// or is a void return. This function can be used by the target to determine
   /// eligiblity of tail call optimization.
-  static bool CheckTailCallReturnConstraints(SDValue Call, SDValue Ret) {
+  static bool CheckTailCallReturnConstraints(CallSDNode *TheCall, SDValue Ret) {
     unsigned NumOps = Ret.getNumOperands();
     if ((NumOps == 1 &&
-       (Ret.getOperand(0) == SDValue(Call.getNode(),1) ||
-        Ret.getOperand(0) == SDValue(Call.getNode(),0))) ||
+       (Ret.getOperand(0) == SDValue(TheCall,1) ||
+        Ret.getOperand(0) == SDValue(TheCall,0))) ||
       (NumOps > 1 &&
-       Ret.getOperand(0) == SDValue(Call.getNode(),
-                                    Call.getNode()->getNumValues()-1) &&
-       Ret.getOperand(1) == SDValue(Call.getNode(),0)))
+       Ret.getOperand(0) == SDValue(TheCall,
+                                    TheCall->getNumValues()-1) &&
+       Ret.getOperand(1) == SDValue(TheCall,0)))
       return true;
     return false;
   }

@@ -179,7 +179,7 @@ namespace ISD {
     /// 
     FORMAL_ARGUMENTS,
     
-    /// RV1, RV2...RVn, CHAIN = CALL(CHAIN, CC#, ISVARARG, ISTAILCALL, CALLEE,
+    /// RV1, RV2...RVn, CHAIN = CALL(CHAIN, CALLEE,
     ///                              ARG0, FLAG0, ARG1, FLAG1, ... ARGn, FLAGn)
     /// This node represents a fully general function call, before the legalizer
     /// runs.  This has one result value for each argument / flag pair, plus
@@ -194,6 +194,11 @@ namespace ISD {
     /// Bit 10-26 - size of byval structures
     /// Bits 31:27 - argument ABI alignment in the first argument piece and
     /// alignment '1' in other argument pieces.
+    ///
+    /// CALL nodes use the CallSDNode subclass of SDNode, which
+    /// additionally carries information about the calling convention,
+    /// whether the call is varargs, and if it's marked as a tail call.
+    ///
     CALL,
 
     // EXTRACT_ELEMENT - This is used to get the lower or upper (determined by
@@ -2178,6 +2183,49 @@ public:
   static bool classof(const ARG_FLAGSSDNode *) { return true; }
   static bool classof(const SDNode *N) {
     return N->getOpcode() == ISD::ARG_FLAGS;
+  }
+};
+
+/// CallSDNode - Node for calls -- ISD::CALL.
+class CallSDNode : public SDNode {
+  unsigned CallingConv;
+  bool IsVarArg;
+  bool IsTailCall;
+  virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
+protected:
+  friend class SelectionDAG;
+  CallSDNode(unsigned cc, bool isvararg, bool istailcall,
+             SDVTList VTs, const SDValue *Operands, unsigned numOperands)
+    : SDNode(ISD::CALL, VTs, Operands, numOperands),
+      CallingConv(cc), IsVarArg(isvararg), IsTailCall(istailcall) {}
+public:
+  unsigned getCallingConv() const { return CallingConv; }
+  unsigned isVarArg() const { return IsVarArg; }
+  unsigned isTailCall() const { return IsTailCall; }
+
+  /// Set this call to not be marked as a tail call. Normally setter
+  /// methods in SDNodes are unsafe because it breaks the CSE map,
+  /// but we don't CSE calls so it's ok in this case.
+  void setNotTailCall() { IsTailCall = false; }
+
+  SDValue getChain() const { return getOperand(0); }
+  SDValue getCallee() const { return getOperand(1); }
+
+  unsigned getNumArgs() const { return (getNumOperands() - 2) / 2; }
+  SDValue getArg(unsigned i) const { return getOperand(2+2*i); }
+  SDValue getArgFlagsVal(unsigned i) const {
+    return getOperand(3+2*i);
+  }
+  ISD::ArgFlagsTy getArgFlags(unsigned i) const {
+    return cast<ARG_FLAGSSDNode>(getArgFlagsVal(i).getNode())->getArgFlags();
+  }
+
+  unsigned getNumRetVals() const { return getNumValues() - 1; }
+  MVT getRetValType(unsigned i) const { return getValueType(i); }
+
+  static bool classof(const CallSDNode *) { return true; }
+  static bool classof(const SDNode *N) {
+    return N->getOpcode() == ISD::CALL;
   }
 };
 

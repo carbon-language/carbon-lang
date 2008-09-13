@@ -402,56 +402,45 @@ static void CheckDAGForTailCallsAndFixThem(SelectionDAG &DAG,
   for (SelectionDAG::allnodes_iterator BE = DAG.allnodes_begin(),
          BI = DAG.allnodes_end(); BI != BE; ) {
     --BI;
-    if (BI->getOpcode() == ISD::CALL) {
+    if (CallSDNode *TheCall = dyn_cast<CallSDNode>(BI)) {
       SDValue OpRet(Ret, 0);
       SDValue OpCall(BI, 0);
-      bool isMarkedTailCall = 
-        cast<ConstantSDNode>(OpCall.getOperand(3))->getZExtValue() != 0;
+      bool isMarkedTailCall = TheCall->isTailCall();
       // If CALL node has tail call attribute set to true and the call is not
       // eligible (no RET or the target rejects) the attribute is fixed to
       // false. The TargetLowering::IsEligibleForTailCallOptimization function
       // must correctly identify tail call optimizable calls.
       if (!isMarkedTailCall) continue;
       if (Ret==NULL ||
-          !TLI.IsEligibleForTailCallOptimization(OpCall, OpRet, DAG)) {
-        // Not eligible. Mark CALL node as non tail call.
-        SmallVector<SDValue, 32> Ops;
-        unsigned idx=0;
-        for(SDNode::op_iterator I =OpCall.getNode()->op_begin(),
-              E = OpCall.getNode()->op_end(); I != E; I++, idx++) {
-          if (idx!=3)
-            Ops.push_back(*I);
-          else
-            Ops.push_back(DAG.getConstant(false, TLI.getPointerTy()));
-        }
-        DAG.UpdateNodeOperands(OpCall, Ops.begin(), Ops.size());
+          !TLI.IsEligibleForTailCallOptimization(TheCall, OpRet, DAG)) {
+        // Not eligible. Mark CALL node as non tail call. Note that we
+        // can modify the call node in place since calls are not CSE'd.
+        TheCall->setNotTailCall();
       } else {
         // Look for tail call clobbered arguments. Emit a series of
         // copyto/copyfrom virtual register nodes to protect them.
         SmallVector<SDValue, 32> Ops;
-        SDValue Chain = OpCall.getOperand(0), InFlag;
-        unsigned idx=0;
-        for(SDNode::op_iterator I = OpCall.getNode()->op_begin(),
-              E = OpCall.getNode()->op_end(); I != E; I++, idx++) {
-          SDValue Arg = *I;
-          if (idx > 4 && (idx % 2)) {
-            bool isByVal = cast<ARG_FLAGSSDNode>(OpCall.getOperand(idx+1))->
-              getArgFlags().isByVal();
-            MachineFunction &MF = DAG.getMachineFunction();
-            MachineFrameInfo *MFI = MF.getFrameInfo();
-            if (!isByVal &&
-                IsPossiblyOverwrittenArgumentOfTailCall(Arg, MFI)) {
-              MVT VT = Arg.getValueType();
-              unsigned VReg = MF.getRegInfo().
-                createVirtualRegister(TLI.getRegClassFor(VT));
-              Chain = DAG.getCopyToReg(Chain, VReg, Arg, InFlag);
-              InFlag = Chain.getValue(1);
-              Arg = DAG.getCopyFromReg(Chain, VReg, VT, InFlag);
-              Chain = Arg.getValue(1);
-              InFlag = Arg.getValue(2);
-            }
+        SDValue Chain = TheCall->getChain(), InFlag;
+        Ops.push_back(Chain);
+        Ops.push_back(TheCall->getCallee());
+        for (unsigned i = 0, e = TheCall->getNumArgs(); i != e; ++i) {
+          SDValue Arg = TheCall->getArg(i);
+          bool isByVal = TheCall->getArgFlags(i).isByVal();
+          MachineFunction &MF = DAG.getMachineFunction();
+          MachineFrameInfo *MFI = MF.getFrameInfo();
+          if (!isByVal &&
+              IsPossiblyOverwrittenArgumentOfTailCall(Arg, MFI)) {
+            MVT VT = Arg.getValueType();
+            unsigned VReg = MF.getRegInfo().
+              createVirtualRegister(TLI.getRegClassFor(VT));
+            Chain = DAG.getCopyToReg(Chain, VReg, Arg, InFlag);
+            InFlag = Chain.getValue(1);
+            Arg = DAG.getCopyFromReg(Chain, VReg, VT, InFlag);
+            Chain = Arg.getValue(1);
+            InFlag = Arg.getValue(2);
           }
           Ops.push_back(Arg);
+          Ops.push_back(TheCall->getArgFlagsVal(i));
         }
         // Link in chain of CopyTo/CopyFromReg.
         Ops[0] = Chain;

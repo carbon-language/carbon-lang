@@ -410,13 +410,14 @@ HowToPassArgument(MVT ObjectVT, unsigned NumGPRs,
 /// ARMISD:CALL <- callseq_end chain. Also add input and output parameter
 /// nodes.
 SDValue ARMTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
-  MVT RetVT= Op.getNode()->getValueType(0);
-  SDValue Chain    = Op.getOperand(0);
-  unsigned CallConv  = cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();
+  CallSDNode *TheCall = cast<CallSDNode>(Op.getNode());
+  MVT RetVT = TheCall->getRetValType(0);
+  SDValue Chain    = TheCall->getChain();
+  unsigned CallConv  = TheCall->getCallingConv();
   assert((CallConv == CallingConv::C ||
           CallConv == CallingConv::Fast) && "unknown calling convention");
-  SDValue Callee   = Op.getOperand(4);
-  unsigned NumOps    = (Op.getNumOperands() - 5) / 2;
+  SDValue Callee   = TheCall->getCallee();
+  unsigned NumOps    = TheCall->getNumArgs();
   unsigned ArgOffset = 0;   // Frame mechanisms handle retaddr slot
   unsigned NumGPRs = 0;     // GPRs used for parameter passing.
 
@@ -429,9 +430,8 @@ SDValue ARMTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
     unsigned ObjGPRs;
     unsigned StackPad;
     unsigned GPRPad;
-    MVT ObjectVT = Op.getOperand(5+2*i).getValueType();
-    ISD::ArgFlagsTy Flags =
-      cast<ARG_FLAGSSDNode>(Op.getOperand(5+2*i+1))->getArgFlags();
+    MVT ObjectVT = TheCall->getArg(i).getValueType();
+    ISD::ArgFlagsTy Flags = TheCall->getArgFlags(i);
     HowToPassArgument(ObjectVT, NumGPRs, NumBytes, ObjGPRs, ObjSize,
                       GPRPad, StackPad, Flags);
     NumBytes += ObjSize + StackPad;
@@ -453,9 +453,8 @@ SDValue ARMTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
   std::vector<std::pair<unsigned, SDValue> > RegsToPass;
   std::vector<SDValue> MemOpChains;
   for (unsigned i = 0; i != NumOps; ++i) {
-    SDValue Arg = Op.getOperand(5+2*i);
-    ISD::ArgFlagsTy Flags =
-      cast<ARG_FLAGSSDNode>(Op.getOperand(5+2*i+1))->getArgFlags();
+    SDValue Arg = TheCall->getArg(i);
+    ISD::ArgFlagsTy Flags = TheCall->getArgFlags(i);
     MVT ArgVT = Arg.getValueType();
 
     unsigned ObjSize;
@@ -631,7 +630,8 @@ SDValue ARMTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
   case MVT::i32:
     Chain = DAG.getCopyFromReg(Chain, ARM::R0, MVT::i32, InFlag).getValue(1);
     ResultVals.push_back(Chain.getValue(0));
-    if (Op.getNode()->getValueType(1) == MVT::i32) {
+    if (TheCall->getNumRetVals() > 1 &&
+        TheCall->getRetValType(1) == MVT::i32) {
       // Returns a i64 value.
       Chain = DAG.getCopyFromReg(Chain, ARM::R1, MVT::i32,
                                  Chain.getValue(2)).getValue(1);

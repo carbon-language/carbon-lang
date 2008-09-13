@@ -5325,9 +5325,6 @@ TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
                             ArgListTy &Args, SelectionDAG &DAG) {
   SmallVector<SDValue, 32> Ops;
   Ops.push_back(Chain);   // Op#0 - Chain
-  Ops.push_back(DAG.getConstant(CallingConv, getPointerTy())); // Op#1 - CC
-  Ops.push_back(DAG.getConstant(isVarArg, getPointerTy()));    // Op#2 - VarArg
-  Ops.push_back(DAG.getConstant(isTailCall, getPointerTy()));  // Op#3 - Tail
   Ops.push_back(Callee);
   
   // Handle all of the outgoing arguments.
@@ -5412,10 +5409,10 @@ TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
   LoweredRetTys.push_back(MVT::Other);  // Always has a chain.
   
   // Create the CALL node.
-  SDValue Res = DAG.getNode(ISD::CALL,
-                              DAG.getVTList(&LoweredRetTys[0],
-                                            LoweredRetTys.size()),
-                              &Ops[0], Ops.size());
+  SDValue Res = DAG.getCall(CallingConv, isVarArg, isTailCall,
+                            DAG.getVTList(&LoweredRetTys[0],
+                                          LoweredRetTys.size()),
+                            &Ops[0], Ops.size());
   Chain = Res.getValue(LoweredRetTys.size() - 1);
 
   // Gather up the call result into a single value.

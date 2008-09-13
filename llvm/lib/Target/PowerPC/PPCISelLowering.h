@@ -322,7 +322,7 @@ namespace llvm {
      /// IsEligibleForTailCallOptimization - Check whether the call is eligible
     /// for tail call optimization. Target which want to do tail call
     /// optimization should implement this function.
-    virtual bool IsEligibleForTailCallOptimization(SDValue Call,
+    virtual bool IsEligibleForTailCallOptimization(CallSDNode *TheCall,
                                                    SDValue Ret,
                                                    SelectionDAG &DAG) const;
 
