@@ -133,7 +133,7 @@ public:
   void uncheckedReplaceAllUsesWith(Value *V);
 
   //----------------------------------------------------------------------
-  // Methods for handling the vector of uses of this Value.
+  // Methods for handling the chain of uses of this Value.
   //
   typedef value_use_iterator<User>       use_iterator;
   typedef value_use_iterator<const User> use_const_iterator;
@@ -144,7 +144,7 @@ public:
   use_iterator       use_end()         { return use_iterator(0);   }
   use_const_iterator use_end()   const { return use_const_iterator(0);   }
   User              *use_back()        { return *use_begin(); }
-  const User        *use_back() const  { return *use_begin(); }
+  const User        *use_back()  const { return *use_begin(); }
 
   /// hasOneUse - Return true if there is exactly one user of this value.  This
   /// is specialized because it is a common request and does not require
