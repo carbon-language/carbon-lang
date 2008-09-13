@@ -161,7 +161,7 @@ bool BranchFolder::OptimizeImpDefsBlock(MachineBasicBlock *MBB) {
     // See if it uses any of the implicitly defined registers.
     for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) {
       MachineOperand &MO = I->getOperand(i);
-      if (!MO.isReg() || !MO.isUse())
+      if (!MO.isRegister() || !MO.isUse())
         continue;
       unsigned Reg = MO.getReg();
       if (ImpDefRegs.count(Reg))

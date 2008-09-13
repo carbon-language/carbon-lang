@@ -127,7 +127,7 @@ bool UnreachableMachineBlockElim::runOnMachineFunction(MachineFunction &F) {
         while (start != succ->end() &&
                start->getOpcode() == TargetInstrInfo::PHI) {
           for (unsigned i = start->getNumOperands() - 1; i >= 2; i-=2)
-            if (start->getOperand(i).isMBB() &&
+            if (start->getOperand(i).isMachineBasicBlock() &&
                 start->getOperand(i).getMBB() == BB) {
               start->RemoveOperand(i);
               start->RemoveOperand(i-1);

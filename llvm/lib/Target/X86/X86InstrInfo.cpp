@@ -705,8 +705,8 @@ unsigned X86InstrInfo::isLoadFromStackSlot(MachineInstr *MI,
   case X86::MOVAPDrm:
   case X86::MMX_MOVD64rm:
   case X86::MMX_MOVQ64rm:
-    if (MI->getOperand(1).isFI() && MI->getOperand(2).isImm() &&
-        MI->getOperand(3).isReg() && MI->getOperand(4).isImm() &&
+    if (MI->getOperand(1).isFrameIndex() && MI->getOperand(2).isImmediate() &&
+        MI->getOperand(3).isRegister() && MI->getOperand(4).isImmediate() &&
         MI->getOperand(2).getImm() == 1 &&
         MI->getOperand(3).getReg() == 0 &&
         MI->getOperand(4).getImm() == 0) {
@@ -736,8 +736,8 @@ unsigned X86InstrInfo::isStoreToStackSlot(MachineInstr *MI,
   case X86::MMX_MOVD64mr:
   case X86::MMX_MOVQ64mr:
   case X86::MMX_MOVNTQmr:
-    if (MI->getOperand(0).isFI() && MI->getOperand(1).isImm() &&
-        MI->getOperand(2).isReg() && MI->getOperand(3).isImm() &&
+    if (MI->getOperand(0).isFrameIndex() && MI->getOperand(1).isImmediate() &&
+        MI->getOperand(2).isRegister() && MI->getOperand(3).isImmediate() &&
         MI->getOperand(1).getImm() == 1 &&
         MI->getOperand(2).getReg() == 0 &&
         MI->getOperand(3).getImm() == 0) {
@@ -789,17 +789,17 @@ X86InstrInfo::isReallyTriviallyReMaterializable(const MachineInstr *MI) const {
     case X86::MMX_MOVD64rm:
     case X86::MMX_MOVQ64rm: {
       // Loads from constant pools are trivially rematerializable.
-      if (MI->getOperand(1).isReg() &&
-          MI->getOperand(2).isImm() &&
-          MI->getOperand(3).isReg() && MI->getOperand(3).getReg() == 0 &&
-          (MI->getOperand(4).isCPI() ||
-           (MI->getOperand(4).isGlobal() &&
+      if (MI->getOperand(1).isRegister() &&
+          MI->getOperand(2).isImmediate() &&
+          MI->getOperand(3).isRegister() && MI->getOperand(3).getReg() == 0 &&
+          (MI->getOperand(4).isConstantPoolIndex() ||
+           (MI->getOperand(4).isGlobalAddress() &&
             isGVStub(MI->getOperand(4).getGlobal(), TM)))) {
         unsigned BaseReg = MI->getOperand(1).getReg();
         if (BaseReg == 0)
           return true;
         // Allow re-materialization of PIC load.
-        if (!ReMatPICStubLoad && MI->getOperand(4).isGlobal())
+        if (!ReMatPICStubLoad && MI->getOperand(4).isGlobalAddress())
           return false;
         const MachineFunction &MF = *MI->getParent()->getParent();
         const MachineRegisterInfo &MRI = MF.getRegInfo();
@@ -819,10 +819,10 @@ X86InstrInfo::isReallyTriviallyReMaterializable(const MachineInstr *MI) const {
  
      case X86::LEA32r:
      case X86::LEA64r: {
-       if (MI->getOperand(1).isReg() &&
-           MI->getOperand(2).isImm() &&
-           MI->getOperand(3).isReg() && MI->getOperand(3).getReg() == 0 &&
-           !MI->getOperand(4).isReg()) {
+       if (MI->getOperand(1).isRegister() &&
+           MI->getOperand(2).isImmediate() &&
+           MI->getOperand(3).isRegister() && MI->getOperand(3).getReg() == 0 &&
+           !MI->getOperand(4).isRegister()) {
          // lea fi#, lea GV, etc. are all rematerializable.
          unsigned BaseReg = MI->getOperand(1).getReg();
          if (BaseReg == 0)
@@ -879,7 +879,7 @@ void X86InstrInfo::reMaterialize(MachineBasicBlock &MBB,
                                  MachineBasicBlock::iterator I,
                                  unsigned DestReg,
                                  const MachineInstr *Orig) const {
-  unsigned SubIdx = Orig->getOperand(0).isReg()
+  unsigned SubIdx = Orig->getOperand(0).isRegister()
     ? Orig->getOperand(0).getSubReg() : 0;
   bool ChangeSubIdx = SubIdx != 0;
   if (SubIdx && TargetRegisterInfo::isPhysicalRegister(DestReg)) {
@@ -941,14 +941,14 @@ bool X86InstrInfo::isInvariantLoad(MachineInstr *MI) const {
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
     // Loads from constant pools are trivially invariant.
-    if (MO.isCPI())
+    if (MO.isConstantPoolIndex())
       return true;
 
-    if (MO.isGlobal())
+    if (MO.isGlobalAddress())
       return isGVStub(MO.getGlobal(), TM);
 
     // If this is a load from an invariant stack slot, the load is a constant.
-    if (MO.isFI()) {
+    if (MO.isFrameIndex()) {
       const MachineFrameInfo &MFI =
         *MI->getParent()->getParent()->getFrameInfo();
       int Idx = MO.getIndex();

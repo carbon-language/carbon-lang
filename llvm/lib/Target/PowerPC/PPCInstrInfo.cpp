@@ -106,8 +106,8 @@ unsigned PPCInstrInfo::isLoadFromStackSlot(MachineInstr *MI,
   case PPC::LWZ:
   case PPC::LFS:
   case PPC::LFD:
-    if (MI->getOperand(1).isImm() && !MI->getOperand(1).getImm() &&
-        MI->getOperand(2).isFI()) {
+    if (MI->getOperand(1).isImmediate() && !MI->getOperand(1).getImm() &&
+        MI->getOperand(2).isFrameIndex()) {
       FrameIndex = MI->getOperand(2).getIndex();
       return MI->getOperand(0).getReg();
     }
@@ -124,8 +124,8 @@ unsigned PPCInstrInfo::isStoreToStackSlot(MachineInstr *MI,
   case PPC::STW:
   case PPC::STFS:
   case PPC::STFD:
-    if (MI->getOperand(1).isImm() && !MI->getOperand(1).getImm() &&
-        MI->getOperand(2).isFI()) {
+    if (MI->getOperand(1).isImmediate() && !MI->getOperand(1).getImm() &&
+        MI->getOperand(2).isFrameIndex()) {
       FrameIndex = MI->getOperand(2).getIndex();
       return MI->getOperand(0).getReg();
     }

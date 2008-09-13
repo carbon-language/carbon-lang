@@ -462,7 +462,7 @@ bool SimpleRegisterCoalescing::ReMaterializeTrivialDef(LiveInterval &SrcInt,
   for (unsigned i = CopyMI->getDesc().getNumOperands(),
          e = CopyMI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = CopyMI->getOperand(i);
-    if (MO.isReg() && MO.isImplicit())
+    if (MO.isRegister() && MO.isImplicit())
       NewMI->addOperand(MO);
     if (MO.isDef() && li_->hasInterval(MO.getReg())) {
       unsigned Reg = MO.getReg();
@@ -867,7 +867,7 @@ void SimpleRegisterCoalescing::RemoveCopiesFromValNo(LiveInterval &li,
       // Each use MI may have multiple uses of this register. Change them all.
       for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
         MachineOperand &MO = MI->getOperand(i);
-        if (MO.isReg() && MO.getReg() == li.reg)
+        if (MO.isRegister() && MO.getReg() == li.reg)
           MO.setReg(DstReg);
       }
       JoinedCopies.insert(MI);

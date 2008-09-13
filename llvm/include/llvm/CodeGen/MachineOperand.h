@@ -139,15 +139,6 @@ public:
   bool isGlobalAddress() const { return OpKind == MO_GlobalAddress; }
   bool isExternalSymbol() const { return OpKind == MO_ExternalSymbol; }
 
-  bool isReg() const { return OpKind == MO_Register; }
-  bool isImm() const { return OpKind == MO_Immediate; }
-  bool isMBB() const { return OpKind == MO_MachineBasicBlock; }
-  bool isFI() const { return OpKind == MO_FrameIndex; }
-  bool isCPI() const { return OpKind == MO_ConstantPoolIndex; }
-  bool isJTI() const { return OpKind == MO_JumpTableIndex; }
-  bool isGlobal() const { return OpKind == MO_GlobalAddress; }
-  bool isSymbol() const { return OpKind == MO_ExternalSymbol; }
-  
   //===--------------------------------------------------------------------===//
   // Accessors for Register Operands
   //===--------------------------------------------------------------------===//
@@ -419,7 +410,7 @@ private:
   /// or false if not.  This can only be called for register operands that are
   /// part of a machine instruction.
   bool isOnRegUseList() const {
-    assert(isReg() && "Can only add reg operand to use lists");
+    assert(isRegister() && "Can only add reg operand to use lists");
     return Contents.Reg.Prev != 0;
   }
   

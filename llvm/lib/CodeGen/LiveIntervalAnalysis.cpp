@@ -858,7 +858,7 @@ bool LiveIntervals::isReMaterializable(const LiveInterval &li,
     unsigned ImpUse = 0;
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
       const MachineOperand &MO = MI->getOperand(i);
-      if (MO.isReg()) {
+      if (MO.isRegister()) {
         unsigned Reg = MO.getReg();
         if (Reg == 0)
           continue;
@@ -1592,7 +1592,7 @@ LiveIntervals::handleSpilledImpDefs(const LiveInterval &li, VirtRegMap &vrm,
       NewLIs.push_back(&getOrCreateInterval(NewVReg));
       for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
         MachineOperand &MO = MI->getOperand(i);
-        if (MO.isReg() && MO.getReg() == li.reg)
+        if (MO.isRegister() && MO.getReg() == li.reg)
           MO.setReg(NewVReg);
       }
     }
@@ -1636,7 +1636,7 @@ addIntervalsForSpillsFast(const LiveInterval &li,
     
     for (unsigned i = 0; i != MI->getNumOperands(); ++i) {
       MachineOperand& mop = MI->getOperand(i);
-      if (!mop.isReg() || mop.getReg() != li.reg) continue;
+      if (!mop.isRegister() || mop.getReg() != li.reg) continue;
       
       HasUse |= MI->getOperand(i).isUse();
       HasDef |= MI->getOperand(i).isDef();

@@ -173,7 +173,7 @@ void SparcInstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
     else if (MO.isImmediate())
       MIB.addImm(MO.getImm());
     else {
-      assert(MO.isFI());
+      assert(MO.isFrameIndex());
       MIB.addFrameIndex(MO.getIndex());
     }
   }
@@ -212,12 +212,12 @@ void SparcInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
   MachineInstrBuilder MIB = BuildMI(MF, get(Opc), DestReg);
   for (unsigned i = 0, e = Addr.size(); i != e; ++i) {
     MachineOperand &MO = Addr[i];
-    if (MO.isReg())
+    if (MO.isRegister())
       MIB.addReg(MO.getReg());
-    else if (MO.isImm())
+    else if (MO.isImmediate())
       MIB.addImm(MO.getImm());
     else {
-      assert(MO.isFI());
+      assert(MO.isFrameIndex());
       MIB.addFrameIndex(MO.getIndex());
     }
   }

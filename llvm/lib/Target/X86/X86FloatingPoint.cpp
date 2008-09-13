@@ -1015,7 +1015,7 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {
     unsigned NumKills = 0;
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
       MachineOperand &Op = MI->getOperand(i);
-      if (!Op.isReg() || Op.getReg() < X86::FP0 || Op.getReg() > X86::FP6)
+      if (!Op.isRegister() || Op.getReg() < X86::FP0 || Op.getReg() > X86::FP6)
         continue;
       assert(Op.isUse() && "Only handle inline asm uses right now");
       
@@ -1055,7 +1055,7 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {
     
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
       MachineOperand &Op = MI->getOperand(i);
-      if (!Op.isReg() || Op.getReg() < X86::FP0 || Op.getReg() > X86::FP6)
+      if (!Op.isRegister() || Op.getReg() < X86::FP0 || Op.getReg() > X86::FP6)
         continue;
       // FP Register uses must be kills unless there are two uses of the same
       // register, in which case only one will be a kill.

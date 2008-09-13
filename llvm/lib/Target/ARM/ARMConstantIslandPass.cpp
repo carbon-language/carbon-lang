@@ -1058,7 +1058,7 @@ bool ARMConstantIslands::HandleConstantPoolUser(MachineFunction &Fn,
   
   // Finally, change the CPI in the instruction operand to be ID.
   for (unsigned i = 0, e = UserMI->getNumOperands(); i != e; ++i)
-    if (UserMI->getOperand(i).isCPI()) {
+    if (UserMI->getOperand(i).isConstantPoolIndex()) {
       UserMI->getOperand(i).setIndex(ID);
       break;
     }

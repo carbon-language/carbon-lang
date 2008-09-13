@@ -1368,7 +1368,7 @@ void PPCRegisterInfo::emitEpilogue(MachineFunction &MF,
   } else if (RetOpcode == PPC::TCRETURNri) {
     MBBI = prior(MBB.end());
     MachineOperand &JumpTarget = MBBI->getOperand(0);
-    assert(JumpTarget.isReg() && "Expecting register operand.");
+    assert(JumpTarget.isRegister() && "Expecting register operand.");
     BuildMI(MBB, MBBI, TII.get(PPC::TAILBCTR));
   } else if (RetOpcode == PPC::TCRETURNai) {
     MBBI = prior(MBB.end());
@@ -1382,7 +1382,7 @@ void PPCRegisterInfo::emitEpilogue(MachineFunction &MF,
   } else if (RetOpcode == PPC::TCRETURNri8) {
     MBBI = prior(MBB.end());
     MachineOperand &JumpTarget = MBBI->getOperand(0);
-    assert(JumpTarget.isReg() && "Expecting register operand.");
+    assert(JumpTarget.isRegister() && "Expecting register operand.");
     BuildMI(MBB, MBBI, TII.get(PPC::TAILBCTR8));
   } else if (RetOpcode == PPC::TCRETURNai8) {
     MBBI = prior(MBB.end());

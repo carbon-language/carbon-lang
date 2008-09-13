@@ -37,7 +37,7 @@ using namespace llvm;
 /// MachineRegisterInfo.  If it is null, then the next/prev fields should be
 /// explicitly nulled out.
 void MachineOperand::AddRegOperandToRegInfo(MachineRegisterInfo *RegInfo) {
-  assert(isReg() && "Can only add reg operand to use lists");
+  assert(isRegister() && "Can only add reg operand to use lists");
   
   // If the reginfo pointer is null, just explicitly null out or next/prev
   // pointers, to ensure they are not garbage.
@@ -92,7 +92,7 @@ void MachineOperand::setReg(unsigned Reg) {
 void MachineOperand::ChangeToImmediate(int64_t ImmVal) {
   // If this operand is currently a register operand, and if this is in a
   // function, deregister the operand from the register's use/def list.
-  if (isReg() && getParent() && getParent()->getParent() &&
+  if (isRegister() && getParent() && getParent()->getParent() &&
       getParent()->getParent()->getParent())
     RemoveRegOperandFromRegInfo();
   
@@ -108,7 +108,7 @@ void MachineOperand::ChangeToRegister(unsigned Reg, bool isDef, bool isImp,
                                       bool isEarlyClobber) {
   // If this operand is already a register operand, use setReg to update the 
   // register's use/def lists.
-  if (isReg()) {
+  if (isRegister()) {
     setReg(Reg);
   } else {
     // Otherwise, change this to a register and set the reg#.
@@ -354,7 +354,7 @@ MachineInstr::~MachineInstr() {
 #ifndef NDEBUG
   for (unsigned i = 0, e = Operands.size(); i != e; ++i) {
     assert(Operands[i].ParentMI == this && "ParentMI mismatch!");
-    assert((!Operands[i].isReg() || !Operands[i].isOnRegUseList()) &&
+    assert((!Operands[i].isRegister() || !Operands[i].isOnRegUseList()) &&
            "Reg operand def/use list corrupted");
   }
 #endif
@@ -374,7 +374,7 @@ MachineRegisterInfo *MachineInstr::getRegInfo() {
 /// operands already be on their use lists.
 void MachineInstr::RemoveRegOperandsFromUseLists() {
   for (unsigned i = 0, e = Operands.size(); i != e; ++i) {
-    if (Operands[i].isReg())
+    if (Operands[i].isRegister())
       Operands[i].RemoveRegOperandFromRegInfo();
   }
 }
@@ -384,7 +384,7 @@ void MachineInstr::RemoveRegOperandsFromUseLists() {
 /// operands not be on their use lists yet.
 void MachineInstr::AddRegOperandsToUseLists(MachineRegisterInfo &RegInfo) {
   for (unsigned i = 0, e = Operands.size(); i != e; ++i) {
-    if (Operands[i].isReg())
+    if (Operands[i].isRegister())
       Operands[i].AddRegOperandToRegInfo(&RegInfo);
   }
 }
@@ -395,7 +395,7 @@ void MachineInstr::AddRegOperandsToUseLists(MachineRegisterInfo &RegInfo) {
 /// an explicit operand it is added at the end of the explicit operand list
 /// (before the first implicit operand). 
 void MachineInstr::addOperand(const MachineOperand &Op) {
-  bool isImpReg = Op.isReg() && Op.isImplicit();
+  bool isImpReg = Op.isRegister() && Op.isImplicit();
   assert((isImpReg || !OperandsComplete()) &&
          "Trying to add an operand to a machine instr that is already done!");
 
@@ -411,7 +411,7 @@ void MachineInstr::addOperand(const MachineOperand &Op) {
       Operands.back().ParentMI = this;
   
       // If the operand is a register, update the operand's use list.
-      if (Op.isReg())
+      if (Op.isRegister())
         Operands.back().AddRegOperandToRegInfo(getRegInfo());
       return;
     }
@@ -431,7 +431,7 @@ void MachineInstr::addOperand(const MachineOperand &Op) {
 
     // Do explicitly set the reginfo for this operand though, to ensure the
     // next/prev fields are properly nulled out.
-    if (Operands[OpNo].isReg())
+    if (Operands[OpNo].isRegister())
       Operands[OpNo].AddRegOperandToRegInfo(0);
 
   } else if (Operands.size()+1 <= Operands.capacity()) {
@@ -444,7 +444,7 @@ void MachineInstr::addOperand(const MachineOperand &Op) {
     // list, just remove the implicit operands, add the operand, then re-add all
     // the rest of the operands.
     for (unsigned i = OpNo, e = Operands.size(); i != e; ++i) {
-      assert(Operands[i].isReg() && "Should only be an implicit reg!");
+      assert(Operands[i].isRegister() && "Should only be an implicit reg!");
       Operands[i].RemoveRegOperandFromRegInfo();
     }
     
@@ -452,12 +452,12 @@ void MachineInstr::addOperand(const MachineOperand &Op) {
     Operands.insert(Operands.begin()+OpNo, Op);
     Operands[OpNo].ParentMI = this;
 
-    if (Operands[OpNo].isReg())
+    if (Operands[OpNo].isRegister())
       Operands[OpNo].AddRegOperandToRegInfo(RegInfo);
     
     // Re-add all the implicit ops.
     for (unsigned i = OpNo+1, e = Operands.size(); i != e; ++i) {
-      assert(Operands[i].isReg() && "Should only be an implicit reg!");
+      assert(Operands[i].isRegister() && "Should only be an implicit reg!");
       Operands[i].AddRegOperandToRegInfo(RegInfo);
     }
   } else {
@@ -483,7 +483,7 @@ void MachineInstr::RemoveOperand(unsigned OpNo) {
   // Special case removing the last one.
   if (OpNo == Operands.size()-1) {
     // If needed, remove from the reg def/use list.
-    if (Operands.back().isReg() && Operands.back().isOnRegUseList())
+    if (Operands.back().isRegister() && Operands.back().isOnRegUseList())
       Operands.back().RemoveRegOperandFromRegInfo();
     
     Operands.pop_back();
@@ -496,7 +496,7 @@ void MachineInstr::RemoveOperand(unsigned OpNo) {
   MachineRegisterInfo *RegInfo = getRegInfo();
   if (RegInfo) {
     for (unsigned i = OpNo, e = Operands.size(); i != e; ++i) {
-      if (Operands[i].isReg())
+      if (Operands[i].isRegister())
         Operands[i].RemoveRegOperandFromRegInfo();
     }
   }
@@ -505,7 +505,7 @@ void MachineInstr::RemoveOperand(unsigned OpNo) {
 
   if (RegInfo) {
     for (unsigned i = OpNo, e = Operands.size(); i != e; ++i) {
-      if (Operands[i].isReg())
+      if (Operands[i].isRegister())
         Operands[i].AddRegOperandToRegInfo(RegInfo);
     }
   }

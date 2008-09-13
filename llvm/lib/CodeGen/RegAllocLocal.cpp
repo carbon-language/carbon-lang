@@ -575,7 +575,7 @@ void RALocal::ComputeLocalLiveness(MachineBasicBlock& MBB) {
       // them for later.  Also, we have to process these
       // _before_ processing the defs, since an instr
       // uses regs before it defs them.
-      if (MO.isReg() && MO.getReg() && MO.isUse())
+      if (MO.isRegister() && MO.getReg() && MO.isUse())
         LastUseDef[MO.getReg()] = std::make_pair(I, i);
     }
     
@@ -584,7 +584,7 @@ void RALocal::ComputeLocalLiveness(MachineBasicBlock& MBB) {
       // Defs others than 2-addr redefs _do_ trigger flag changes:
       //   - A def followed by a def is dead
       //   - A use followed by a def is a kill
-      if (MO.isReg() && MO.getReg() && MO.isDef()) {
+      if (MO.isRegister() && MO.getReg() && MO.isDef()) {
         DenseMap<unsigned, std::pair<MachineInstr*, unsigned> >::iterator
           last = LastUseDef.find(MO.getReg());
         if (last != LastUseDef.end()) {

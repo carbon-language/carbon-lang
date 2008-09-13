@@ -6273,9 +6273,10 @@ X86TargetLowering::EmitAtomicBitwiseWithCustomInserter(MachineInstr *bInstr,
     tt = t1;
 
   unsigned t2 = F->getRegInfo().createVirtualRegister(RC);
-  assert(   (argOpers[valArgIndx]->isReg() || argOpers[valArgIndx]->isImm())
-         && "invalid operand");
-  if (argOpers[valArgIndx]->isReg())
+  assert((argOpers[valArgIndx]->isRegister() ||
+          argOpers[valArgIndx]->isImmediate()) &&
+         "invalid operand");
+  if (argOpers[valArgIndx]->isRegister())
     MIB = BuildMI(newMBB, TII->get(regOpc), t2);
   else
     MIB = BuildMI(newMBB, TII->get(immOpc), t2);
@@ -6360,11 +6361,12 @@ X86TargetLowering::EmitAtomicMinMaxWithCustomInserter(MachineInstr *mInstr,
     (*MIB).addOperand(*argOpers[i]);
 
   // We only support register and immediate values
-  assert(   (argOpers[valArgIndx]->isReg() || argOpers[valArgIndx]->isImm())
-         && "invalid operand");
+  assert((argOpers[valArgIndx]->isRegister() ||
+          argOpers[valArgIndx]->isImmediate()) &&
+         "invalid operand");
   
   unsigned t2 = F->getRegInfo().createVirtualRegister(X86::GR32RegisterClass);  
-  if (argOpers[valArgIndx]->isReg())
+  if (argOpers[valArgIndx]->isRegister())
     MIB = BuildMI(newMBB, TII->get(X86::MOV32rr), t2);
   else 
     MIB = BuildMI(newMBB, TII->get(X86::MOV32rr), t2);
