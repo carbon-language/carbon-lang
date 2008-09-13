@@ -19,6 +19,7 @@
 #include "ARMRelocations.h"
 #include "ARMSubtarget.h"
 #include "ARMTargetMachine.h"
+#include "llvm/Function.h"
 #include "llvm/PassManager.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -26,6 +27,7 @@
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/Debug.h"
 using namespace llvm;
 
 STATISTIC(NumEmitted, "Number of machine instructions emitted");
@@ -136,6 +138,7 @@ bool ARMCodeEmitter::runOnMachineFunction(MachineFunction &MF) {
   TD = ((ARMTargetMachine&)MF.getTarget()).getTargetData();
 
   do {
+    DOUT << "JITTing function '" << MF.getFunction()->getName() << "'\n";
     MCE.startFunction(MF);
     for (MachineFunction::iterator MBB = MF.begin(), E = MF.end(); 
          MBB != E; ++MBB) {
@@ -230,6 +233,8 @@ void ARMCodeEmitter::emitMachineBasicBlock(MachineBasicBlock *BB) {
 }
 
 void ARMCodeEmitter::emitInstruction(const MachineInstr &MI) {
+  DOUT << MI;
+
   NumEmitted++;  // Keep track of the # of mi's emitted
   MCE.emitWordLE(getInstrBinary(MI));
 }
