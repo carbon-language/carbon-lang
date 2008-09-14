@@ -68,11 +68,9 @@ private:
   /// This is only valid on definitions of registers.
   bool IsDead : 1;
 
-  /// IsEarlyClobber flag - this is only valid for MO_Register operands in
-  /// an inline asm.
-
-  /// IsEarlyClobber - True if this operand is marked earlyclobber in an
-  /// inline asm.  See gcc doc for description of earlyclobber.
+  /// IsEarlyClobber - True if this MO_Register operand is marked earlyclobber
+  /// in an inline asm.  Flag is not valid for any other case.   See gcc doc
+  /// for description of earlyclobber.
   bool IsEarlyClobber : 1;
 
   /// SubReg - Subregister number, only valid for MO_Register.  A value of 0
@@ -318,8 +316,7 @@ public:
   /// the specified value.  If an operand is known to be an register already,
   /// the setReg method should be used.
   void ChangeToRegister(unsigned Reg, bool isDef, bool isImp = false,
-                        bool isKill = false, bool isDead = false,
-                        bool isEarlyClobber = false);
+                        bool isKill = false, bool isDead = false);
   
   //===--------------------------------------------------------------------===//
   // Construction methods.

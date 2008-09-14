@@ -104,11 +104,11 @@ void MachineOperand::ChangeToImmediate(int64_t ImmVal) {
 /// the specified value.  If an operand is known to be an register already,
 /// the setReg method should be used.
 void MachineOperand::ChangeToRegister(unsigned Reg, bool isDef, bool isImp,
-                                      bool isKill, bool isDead,
-                                      bool isEarlyClobber) {
+                                      bool isKill, bool isDead) {
   // If this operand is already a register operand, use setReg to update the 
   // register's use/def lists.
   if (isRegister()) {
+    assert(!isEarlyClobber());
     setReg(Reg);
   } else {
     // Otherwise, change this to a register and set the reg#.
@@ -127,7 +127,7 @@ void MachineOperand::ChangeToRegister(unsigned Reg, bool isDef, bool isImp,
   IsImp = isImp;
   IsKill = isKill;
   IsDead = isDead;
-  IsEarlyClobber = isEarlyClobber;
+  IsEarlyClobber = false;
   SubReg = 0;
 }
 
