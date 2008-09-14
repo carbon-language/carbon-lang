@@ -777,15 +777,18 @@ static void WriteConstantInt(raw_ostream &Out, const Constant *CV,
       if (CA->getNumOperands()) {
         Out << ' ';
         printTypeInt(Out, ETy, TypeTable);
+        Out << ' ';
         WriteAsOperandInternal(Out, CA->getOperand(0),
                                TypeTable, Machine);
         for (unsigned i = 1, e = CA->getNumOperands(); i != e; ++i) {
           Out << ", ";
           printTypeInt(Out, ETy, TypeTable);
+          Out << ' ';
           WriteAsOperandInternal(Out, CA->getOperand(i), TypeTable, Machine);
         }
+        Out << ' ';
       }
-      Out << " ]";
+      Out << ']';
     }
     return;
   }
@@ -798,18 +801,21 @@ static void WriteConstantInt(raw_ostream &Out, const Constant *CV,
     if (N) {
       Out << ' ';
       printTypeInt(Out, CS->getOperand(0)->getType(), TypeTable);
+      Out << ' ';
 
       WriteAsOperandInternal(Out, CS->getOperand(0), TypeTable, Machine);
 
       for (unsigned i = 1; i < N; i++) {
         Out << ", ";
         printTypeInt(Out, CS->getOperand(i)->getType(), TypeTable);
+        Out << ' ';
 
         WriteAsOperandInternal(Out, CS->getOperand(i), TypeTable, Machine);
       }
+      Out << ' ';
     }
  
-    Out << " }";
+    Out << '}';
     if (CS->getType()->isPacked())
       Out << '>';
     return;
@@ -821,10 +827,12 @@ static void WriteConstantInt(raw_ostream &Out, const Constant *CV,
            "Number of operands for a PackedConst must be > 0");
     Out << "< ";
     printTypeInt(Out, ETy, TypeTable);
+    Out << ' ';
     WriteAsOperandInternal(Out, CP->getOperand(0), TypeTable, Machine);
     for (unsigned i = 1, e = CP->getNumOperands(); i != e; ++i) {
       Out << ", ";
       printTypeInt(Out, ETy, TypeTable);
+      Out << ' ';
       WriteAsOperandInternal(Out, CP->getOperand(i), TypeTable, Machine);
     }
     Out << " >";
@@ -849,6 +857,7 @@ static void WriteConstantInt(raw_ostream &Out, const Constant *CV,
 
     for (User::const_op_iterator OI=CE->op_begin(); OI != CE->op_end(); ++OI) {
       printTypeInt(Out, (*OI)->getType(), TypeTable);
+      Out << ' ';
       WriteAsOperandInternal(Out, *OI, TypeTable, Machine);
       if (OI+1 != CE->op_end())
         Out << ", ";
@@ -880,7 +889,6 @@ static void WriteConstantInt(raw_ostream &Out, const Constant *CV,
 static void WriteAsOperandInternal(raw_ostream &Out, const Value *V,
                                   std::map<const Type*, std::string> &TypeTable,
                                    SlotTracker *Machine) {
-  Out << ' ';
   if (V->hasName()) {
     PrintLLVMName(Out, V);
     return;
@@ -952,8 +960,10 @@ void llvm::WriteAsOperand(raw_ostream &Out, const Value *V, bool PrintType,
   if (Context)
     fillTypeNameTable(Context, TypeNames);
 
-  if (PrintType)
+  if (PrintType) {
     printTypeInt(Out, V->getType(), TypeNames);
+    Out << ' ';
+  }
 
   WriteAsOperandInternal(Out, V, TypeNames, 0);
 }
@@ -1108,8 +1118,8 @@ void AssemblyWriter::writeOperand(const Value *Operand, bool PrintType) {
     Out << "<null operand!>";
   } else {
     if (PrintType) {
-      Out << ' ';
       printType(Operand->getType());
+      Out << ' ';
     }
     WriteAsOperandInternal(Out, Operand, TypeNames, &Machine);
   }
@@ -1120,12 +1130,12 @@ void AssemblyWriter::writeParamOperand(const Value *Operand,
   if (Operand == 0) {
     Out << "<null operand!>";
   } else {
-    Out << ' ';
     // Print the type
     printType(Operand->getType());
     // Print parameter attributes list
     if (Attrs != ParamAttr::None)
       Out << ' ' << ParamAttr::getAsString(Attrs);
+    Out << ' ';
     // Print the operand
     WriteAsOperandInternal(Out, Operand, TypeNames, &Machine);
   }
@@ -1239,8 +1249,10 @@ void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
   Out << (GV->isConstant() ? "constant " : "global ");
   printType(GV->getType()->getElementType());
 
-  if (GV->hasInitializer())
+  if (GV->hasInitializer()) {
+    Out << ' ';
     writeOperand(GV->getInitializer(), false);
+  }
 
   if (unsigned AddressSpace = GV->getType()->getAddressSpace())
     Out << " addrspace(" << AddressSpace << ") ";
@@ -1474,10 +1486,10 @@ void AssemblyWriter::printBasicBlock(const BasicBlock *BB) {
     if (PI == PE) {
       Out << " No predecessors!";
     } else {
-      Out << " preds =";
+      Out << " preds = ";
       writeOperand(*PI, false);
       for (++PI; PI != PE; ++PI) {
-        Out << ',';
+        Out << ", ";
         writeOperand(*PI, false);
       }
     }
@@ -1559,23 +1571,25 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
 
   // Special case conditional branches to swizzle the condition out to the front
   if (isa<BranchInst>(I) && I.getNumOperands() > 1) {
+    Out << ' ';
     writeOperand(I.getOperand(2), true);
-    Out << ',';
+    Out << ", ";
     writeOperand(Operand, true);
-    Out << ',';
+    Out << ", ";
     writeOperand(I.getOperand(1), true);
 
   } else if (isa<SwitchInst>(I)) {
     // Special case switch statement to get formatting nice and correct...
+    Out << ' ';
     writeOperand(Operand        , true);
-    Out << ',';
+    Out << ", ";
     writeOperand(I.getOperand(1), true);
     Out << " [";
 
     for (unsigned op = 2, Eop = I.getNumOperands(); op < Eop; op += 2) {
       Out << "\n\t\t";
       writeOperand(I.getOperand(op  ), true);
-      Out << ',';
+      Out << ", ";
       writeOperand(I.getOperand(op+1), true);
     }
     Out << "\n\t]";
@@ -1586,16 +1600,18 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
 
     for (unsigned op = 0, Eop = I.getNumOperands(); op < Eop; op += 2) {
       if (op) Out << ", ";
-      Out << '[';
-      writeOperand(I.getOperand(op  ), false); Out << ',';
+      Out << "[ ";
+      writeOperand(I.getOperand(op  ), false); Out << ", ";
       writeOperand(I.getOperand(op+1), false); Out << " ]";
     }
   } else if (const ExtractValueInst *EVI = dyn_cast<ExtractValueInst>(&I)) {
+    Out << ' ';
     writeOperand(I.getOperand(0), true);
     for (const unsigned *i = EVI->idx_begin(), *e = EVI->idx_end(); i != e; ++i)
       Out << ", " << *i;
   } else if (const InsertValueInst *IVI = dyn_cast<InsertValueInst>(&I)) {
-    writeOperand(I.getOperand(0), true); Out << ',';
+    Out << ' ';
+    writeOperand(I.getOperand(0), true); Out << ", ";
     writeOperand(I.getOperand(1), true);
     for (const unsigned *i = IVI->idx_begin(), *e = IVI->idx_end(); i != e; ++i)
       Out << ", " << *i;
@@ -1622,10 +1638,12 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     // only do this if the first argument is a pointer to a nonvararg function,
     // and if the return type is not a pointer to a function.
     //
+    Out << ' ';
     if (!FTy->isVarArg() &&
         (!isa<PointerType>(RetTy) ||
          !isa<FunctionType>(cast<PointerType>(RetTy)->getElementType()))) {
-      Out << ' '; printType(RetTy);
+      printType(RetTy);
+      Out << ' ';
       writeOperand(Operand, false);
     } else {
       writeOperand(Operand, true);
@@ -1633,10 +1651,10 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     Out << '(';
     for (unsigned op = 1, Eop = I.getNumOperands(); op < Eop; ++op) {
       if (op > 1)
-        Out << ',';
+        Out << ", ";
       writeParamOperand(I.getOperand(op), PAL.getParamAttrs(op));
     }
-    Out << " )";
+    Out << ')';
     if (PAL.getParamAttrs(0) != ParamAttr::None)
       Out << ' ' << ParamAttr::getAsString(PAL.getParamAttrs(0));
   } else if (const InvokeInst *II = dyn_cast<InvokeInst>(&I)) {
@@ -1650,9 +1668,9 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     case CallingConv::C: break;   // default
     case CallingConv::Fast:  Out << " fastcc"; break;
     case CallingConv::Cold:  Out << " coldcc"; break;
-    case CallingConv::X86_StdCall:  Out << "x86_stdcallcc "; break;
-    case CallingConv::X86_FastCall: Out << "x86_fastcallcc "; break;
-    case CallingConv::X86_SSECall: Out << "x86_ssecallcc "; break;
+    case CallingConv::X86_StdCall:  Out << " x86_stdcallcc"; break;
+    case CallingConv::X86_FastCall: Out << " x86_fastcallcc"; break;
+    case CallingConv::X86_SSECall: Out << " x86_ssecallcc"; break;
     default: Out << " cc" << II->getCallingConv(); break;
     }
 
@@ -1666,40 +1684,47 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
       Out << ' '; printType(RetTy);
       writeOperand(Operand, false);
     } else {
+      Out << ' ';
       writeOperand(Operand, true);
     }
 
     Out << '(';
     for (unsigned op = 3, Eop = I.getNumOperands(); op < Eop; ++op) {
       if (op > 3)
-        Out << ',';
+        Out << ", ";
       writeParamOperand(I.getOperand(op), PAL.getParamAttrs(op-2));
     }
 
-    Out << " )";
+    Out << ')';
     if (PAL.getParamAttrs(0) != ParamAttr::None)
       Out << ' ' << ParamAttr::getAsString(PAL.getParamAttrs(0));
-    Out << "\n\t\t\tto";
+    Out << "\n\t\t\tto ";
     writeOperand(II->getNormalDest(), true);
-    Out << " unwind";
+    Out << " unwind ";
     writeOperand(II->getUnwindDest(), true);
 
   } else if (const AllocationInst *AI = dyn_cast<AllocationInst>(&I)) {
     Out << ' ';
     printType(AI->getType()->getElementType());
     if (AI->isArrayAllocation()) {
-      Out << ',';
+      Out << ", ";
       writeOperand(AI->getArraySize(), true);
     }
     if (AI->getAlignment()) {
       Out << ", align " << AI->getAlignment();
     }
   } else if (isa<CastInst>(I)) {
-    if (Operand) writeOperand(Operand, true);   // Work with broken code
+    if (Operand) {
+      Out << ' ';
+      writeOperand(Operand, true);   // Work with broken code
+    }
     Out << " to ";
     printType(I.getType());
   } else if (isa<VAArgInst>(I)) {
-    if (Operand) writeOperand(Operand, true);   // Work with broken code
+    if (Operand) {
+      Out << ' ';
+      writeOperand(Operand, true);   // Work with broken code
+    }
     Out << ", ";
     printType(I.getType());
   } else if (Operand) {   // Print the normal way...
@@ -1729,8 +1754,9 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
       printType(TheType);
     }
 
+    Out << ' ';
     for (unsigned i = 0, E = I.getNumOperands(); i != E; ++i) {
-      if (i) Out << ',';
+      if (i) Out << ", ";
       writeOperand(I.getOperand(i), PrintAllTypes);
     }
   }

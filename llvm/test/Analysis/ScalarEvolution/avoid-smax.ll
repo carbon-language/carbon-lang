@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -scalar-evolution -analyze | grep {Loop bb3: ( -1 +  %n) iterations!}
+; RUN: llvm-as < %s | opt -scalar-evolution -analyze | grep {Loop bb3: (-1 + %n) iterations!}
 
 ; We don't want to use a max in the trip count expression in
 ; this testcase.

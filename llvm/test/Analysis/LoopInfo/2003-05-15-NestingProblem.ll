@@ -2,7 +2,7 @@
 ; not a child of the loopentry.6 loop.
 ;
 ; RUN: llvm-as < %s | opt -analyze -loops | \
-; RUN:   grep {^            Loop Containing:  %loopentry.7}
+; RUN:   grep {^            Loop Containing: %loopentry.7}
 
 define void @getAndMoveToFrontDecode() {
 	br label %endif.2

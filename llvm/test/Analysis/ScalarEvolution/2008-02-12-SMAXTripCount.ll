@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -scalar-evolution -analyze | grep {Loop loop: ( 100 + ( -100 smax  %n)) iterations!}
+; RUN: llvm-as < %s | opt -scalar-evolution -analyze | grep {Loop loop: (100 + (-100 smax %n)) iterations!}
 ; PR2002
 
 define void @foo(i8 %n) {

@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | opt -analyze -scalar-evolution \
-; RUN:   -scalar-evolution-max-iterations=0 | grep {Loop bb:  100 iterations}
+; RUN:   -scalar-evolution-max-iterations=0 | grep {Loop bb: 100 iterations}
 ; PR1533
 
 @array = weak global [101 x i32] zeroinitializer, align 32		; <[100 x i32]*> [#uses=1]

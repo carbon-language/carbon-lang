@@ -891,7 +891,7 @@ SCEVHandle ScalarEvolution::getAddExpr(std::vector<SCEVHandle> &Ops) {
 
     // If we found some loop invariants, fold them into the recurrence.
     if (!LIOps.empty()) {
-      //  NLI + LI + { Start,+,Step}  -->  NLI + { LI+Start,+,Step }
+      //  NLI + LI + {Start,+,Step}  -->  NLI + {LI+Start,+,Step}
       LIOps.push_back(AddRec->getStart());
 
       std::vector<SCEVHandle> AddRecOps(AddRec->op_begin(), AddRec->op_end());
@@ -1039,7 +1039,7 @@ SCEVHandle ScalarEvolution::getMulExpr(std::vector<SCEVHandle> &Ops) {
 
     // If we found some loop invariants, fold them into the recurrence.
     if (!LIOps.empty()) {
-      //  NLI * LI * { Start,+,Step}  -->  NLI * { LI*Start,+,LI*Step }
+      //  NLI * LI * {Start,+,Step}  -->  NLI * {LI*Start,+,LI*Step}
       std::vector<SCEVHandle> NewOps;
       NewOps.reserve(AddRec->getNumOperands());
       if (LIOps.size() == 1) {
@@ -1155,7 +1155,7 @@ SCEVHandle ScalarEvolution::getAddRecExpr(std::vector<SCEVHandle> &Operands,
 
   if (Operands.back()->isZero()) {
     Operands.pop_back();
-    return getAddRecExpr(Operands, L);             // { X,+,0 }  -->  X
+    return getAddRecExpr(Operands, L);             // {X,+,0}  -->  X
   }
 
   // Canonicalize nested AddRecs in by nesting them in order of loop depth.
@@ -3044,7 +3044,7 @@ void ScalarEvolution::print(std::ostream &OS, const Module* ) const {
   for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I)
     if (I->getType()->isInteger()) {
       OS << *I;
-      OS << "  --> ";
+      OS << "  -->  ";
       SCEVHandle SV = getSCEV(&*I);
       SV->print(OS);
       OS << "\t\t";

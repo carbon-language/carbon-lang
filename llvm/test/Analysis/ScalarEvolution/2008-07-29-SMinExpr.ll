@@ -1,6 +1,6 @@
 ; RUN: llvm-as < %s | opt -analyze -scalar-evolution -disable-output \
 ; RUN:   -scalar-evolution-max-iterations=0 | \
-; RUN: grep -F "( -2147483632 + ( 2147483632 smax ( -1 + ( -1 *  %x)) smax ( -1 + ( -1 *  %y)))) iterations"
+; RUN: grep -F "(-2147483632 + (2147483632 smax (-1 + (-1 * %x)) smax (-1 + (-1 * %y)))) iterations"
 ; PR2607
 
 define i32 @b(i32 %x, i32 %y) {

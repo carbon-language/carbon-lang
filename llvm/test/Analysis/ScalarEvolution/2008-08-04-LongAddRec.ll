@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | opt -analyze -scalar-evolution -disable-output \
-; RUN:   -scalar-evolution-max-iterations=0 | grep -F "Exits:  -19168"
+; RUN:   -scalar-evolution-max-iterations=0 | grep -F "Exits: -19168"
 ; PR2621
 
 define i32 @a() nounwind  {

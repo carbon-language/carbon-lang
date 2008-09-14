@@ -1,6 +1,6 @@
 ; RUN: llvm-as < %s | opt -analyze -scalar-evolution -disable-output \
 ; RUN:   -scalar-evolution-max-iterations=0 | \
-; RUN: grep -F "( -1 + ( -1 *  %j)) iterations"
+; RUN: grep -F "(-1 + (-1 * %j)) iterations"
 ; PR2607
 
 define i32 @_Z1aj(i32 %j) nounwind  {
