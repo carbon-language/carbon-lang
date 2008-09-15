@@ -182,16 +182,20 @@ bool SimpleRegisterCoalescing::AdjustCopiesBackFrom(LiveInterval &IntA,
   }
 
   // Okay, merge "B1" into the same value number as "B0".
-  if (BValNo != ValLR->valno)
+  if (BValNo != ValLR->valno) {
+    IntB.addKills(ValLR->valno, BValNo->kills);
     IntB.MergeValueNumberInto(BValNo, ValLR->valno);
+  }
   DOUT << "   result = "; IntB.print(DOUT, tri_);
   DOUT << "\n";
 
   // If the source instruction was killing the source register before the
   // merge, unset the isKill marker given the live range has been extended.
   int UIdx = ValLREndInst->findRegisterUseOperandIdx(IntB.reg, true);
-  if (UIdx != -1)
+  if (UIdx != -1) {
     ValLREndInst->getOperand(UIdx).setIsKill(false);
+    IntB.removeKill(ValLR->valno, FillerStart);
+  }
 
   ++numExtends;
   return true;
@@ -568,7 +572,8 @@ SimpleRegisterCoalescing::UpdateRegDefsUses(unsigned SrcReg, unsigned DstReg,
       LiveInterval &LI = li_->getInterval(CopyDstReg);
       unsigned DefIdx = li_->getDefIndex(li_->getInstructionIndex(UseMI));
       const LiveRange *DLR = LI.getLiveRangeContaining(DefIdx);
-      DLR->valno->copy = UseMI;
+      if (DLR->valno->def == DefIdx)
+        DLR->valno->copy = UseMI;
     }
   }
 }
