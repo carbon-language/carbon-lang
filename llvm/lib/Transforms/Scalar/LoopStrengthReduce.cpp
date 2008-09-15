@@ -184,6 +184,11 @@ private:
     /// inside the loop then try to eliminate the cast opeation.
     void OptimizeShadowIV(Loop *L);
 
+    /// OptimizeSMax - Rewrite the loop's terminating condition
+    /// if it uses an smax computation.
+    ICmpInst *OptimizeSMax(Loop *L, ICmpInst *Cond,
+                           IVStrideUse* &CondUse);
+
     bool FindIVUserForCond(ICmpInst *Cond, IVStrideUse *&CondUse,
                            const SCEVHandle *&CondStride);
     bool RequiresTypeConversion(const Type *Ty, const Type *NewTy);
@@ -1695,6 +1700,123 @@ ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
   return Cond;
 }
 
+/// OptimizeSMax - Rewrite the loop's terminating condition if it uses
+/// an smax computation.
+///
+/// This is a narrow solution to a specific, but acute, problem. For loops
+/// like this:
+///
+///   i = 0;
+///   do {
+///     p[i] = 0.0;
+///   } while (++i < n);
+///
+/// where the comparison is signed, the trip count isn't just 'n', because
+/// 'n' could be negative. And unfortunately this can come up even for loops
+/// where the user didn't use a C do-while loop. For example, seemingly
+/// well-behaved top-test loops will commonly be lowered like this:
+//
+///   if (n > 0) {
+///     i = 0;
+///     do {
+///       p[i] = 0.0;
+///     } while (++i < n);
+///   }
+///
+/// and then it's possible for subsequent optimization to obscure the if
+/// test in such a way that indvars can't find it.
+///
+/// When indvars can't find the if test in loops like this, it creates a
+/// signed-max expression, which allows it to give the loop a canonical
+/// induction variable:
+///
+///   i = 0;
+///   smax = n < 1 ? 1 : n;
+///   do {
+///     p[i] = 0.0;
+///   } while (++i != smax);
+///
+/// Canonical induction variables are necessary because the loop passes
+/// are designed around them. The most obvious example of this is the
+/// LoopInfo analysis, which doesn't remember trip count values. It
+/// expects to be able to rediscover the trip count each time it is
+/// needed, and it does this using a simple analyis that only succeeds if
+/// the loop has a canonical induction variable.
+///
+/// However, when it comes time to generate code, the maximum operation
+/// can be quite costly, especially if it's inside of an outer loop.
+///
+/// This function solves this problem by detecting this type of loop and
+/// rewriting their conditions from ICMP_NE back to ICMP_SLT, and deleting
+/// the instructions for the maximum computation.
+///
+ICmpInst *LoopStrengthReduce::OptimizeSMax(Loop *L, ICmpInst *Cond,
+                                           IVStrideUse* &CondUse) {
+  // Check that the loop matches the pattern we're looking for.
+  if (Cond->getPredicate() != CmpInst::ICMP_EQ &&
+      Cond->getPredicate() != CmpInst::ICMP_NE)
+    return Cond;
+
+  SelectInst *Sel = dyn_cast<SelectInst>(Cond->getOperand(1));
+  if (!Sel || !Sel->hasOneUse()) return Cond;
+
+  SCEVHandle IterationCount = SE->getIterationCount(L);
+  if (isa<SCEVCouldNotCompute>(IterationCount))
+    return Cond;
+  SCEVHandle One = SE->getIntegerSCEV(1, IterationCount->getType());
+
+  // Adjust for an annoying getIterationCount quirk.
+  IterationCount = SE->getAddExpr(IterationCount, One);
+
+  // Check for a max calculation that matches the pattern.
+  SCEVSMaxExpr *SMax = dyn_cast<SCEVSMaxExpr>(IterationCount);
+  if (!SMax || SMax != SE->getSCEV(Sel)) return Cond;
+
+  SCEVHandle SMaxLHS = SMax->getOperand(0);
+  SCEVHandle SMaxRHS = SMax->getOperand(1);
+  if (!SMaxLHS || SMaxLHS != One) return Cond;
+
+  // Check the relevant induction variable for conformance to
+  // the pattern.
+  SCEVHandle IV = SE->getSCEV(Cond->getOperand(0));
+  SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(IV);
+  if (!AR || !AR->isAffine() ||
+      AR->getStart() != One ||
+      AR->getStepRecurrence(*SE) != One)
+    return Cond;
+
+  // Check the right operand of the select, and remember it, as it will
+  // be used in the new comparison instruction.
+  Value *NewRHS = 0;
+  if (SE->getSCEV(Sel->getOperand(1)) == SMaxRHS)
+    NewRHS = Sel->getOperand(1);
+  else if (SE->getSCEV(Sel->getOperand(2)) == SMaxRHS)
+    NewRHS = Sel->getOperand(2);
+  if (!NewRHS) return Cond;
+
+  // Ok, everything looks ok to change the condition into an SLT or SGE and
+  // delete the max calculation.
+  ICmpInst *NewCond =
+    new ICmpInst(Cond->getPredicate() == CmpInst::ICMP_NE ?
+                   CmpInst::ICMP_SLT :
+                   CmpInst::ICMP_SGE,
+                 Cond->getOperand(0), NewRHS, "scmp", Cond);
+
+  // Delete the max calculation instructions.
+  Cond->replaceAllUsesWith(NewCond);
+  Cond->eraseFromParent();
+  SE->deleteValueFromRecords(Cond);
+  Instruction *Cmp = cast<Instruction>(Sel->getOperand(0));
+  Sel->eraseFromParent();
+  SE->deleteValueFromRecords(Sel);
+  if (Cmp->use_empty()) {
+    Cmp->eraseFromParent();
+    SE->deleteValueFromRecords(Cmp);
+  }
+  CondUse->User = NewCond;
+  return NewCond;
+}
+
 /// OptimizeShadowIV - If IV is used in a int-to-float cast
 /// inside the loop then try to eliminate the cast opeation.
 void LoopStrengthReduce::OptimizeShadowIV(Loop *L) {
@@ -1835,6 +1957,11 @@ void LoopStrengthReduce::OptimizeIndvars(Loop *L) {
 
   if (!FindIVUserForCond(Cond, CondUse, CondStride))
     return; // setcc doesn't use the IV.
+
+  // If the trip count is computed in terms of an smax (due to ScalarEvolution
+  // being unable to find a sufficient guard, for example), change the loop
+  // comparison to use SLT instead of NE.
+  Cond = OptimizeSMax(L, Cond, CondUse);
 
   // If possible, change stride and operands of the compare instruction to
   // eliminate one stride.
