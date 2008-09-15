@@ -1944,9 +1944,9 @@ and <tt>ReplaceInstWithInst</tt>.</p>
 <ul>
   <li><tt>ReplaceInstWithValue</tt>
 
-    <p>This function replaces all uses (within a basic block) of a given
-    instruction with a value, and then removes the original instruction. The
-    following example illustrates the replacement of the result of a particular
+    <p>This function replaces all uses of a given instruction with a value,
+    and then removes the original instruction. The following example
+    illustrates the replacement of the result of a particular
     <tt>AllocaInst</tt> that allocates memory for a single integer with a null
     pointer to an integer.</p>
 
@@ -1962,8 +1962,10 @@ ReplaceInstWithValue(instToReplace-&gt;getParent()-&gt;getInstList(), ii,
   <li><tt>ReplaceInstWithInst</tt> 
 
     <p>This function replaces a particular instruction with another
-    instruction. The following example illustrates the replacement of one
-    <tt>AllocaInst</tt> with another.</p>
+    instruction, inserting the new instruction into the basic block at the
+    location where the old instruction was, and replacing any uses of the old
+    instruction with the new instruction. The following example illustrates
+    the replacement of one <tt>AllocaInst</tt> with another.</p>
 
 <div class="doc_code">
 <pre>
