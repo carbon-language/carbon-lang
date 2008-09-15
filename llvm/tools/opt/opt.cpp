@@ -285,8 +285,6 @@ void AddStandardCompilePasses(PassManager &PM) {
   addPass(PM, createLoopDeletionPass());         // Delete dead loops
   addPass(PM, createLoopUnrollPass());           // Unroll small loops
   addPass(PM, createInstructionCombiningPass()); // Clean up after the unroller
-  addPass(PM, createGlobalsModRefPass());        // Alias analysis of globals
-  addPass(PM, createMarkModRefPass());       // Mark functions readonly/readnone
   addPass(PM, createGVNPass());                  // Remove redundancies
   addPass(PM, createMemCpyOptPass());            // Remove memcpy / form memset
   addPass(PM, createSCCPPass());                 // Constant prop with SCCP
