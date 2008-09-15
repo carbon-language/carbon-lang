@@ -624,7 +624,11 @@ void LiveIntervals::handleLiveInRegister(MachineBasicBlock *MBB,
   MachineBasicBlock::iterator mi = MBB->begin();
   unsigned baseIndex = MIIdx;
   unsigned start = baseIndex;
-  unsigned end = start;
+  while (baseIndex / InstrSlots::NUM < i2miMap_.size() && 
+         getInstructionFromIndex(baseIndex) == 0)
+    baseIndex += InstrSlots::NUM;
+  unsigned end = baseIndex;
+  
   while (mi != MBB->end()) {
     if (mi->killsRegister(interval.reg, tri_)) {
       DOUT << " killed";
@@ -659,7 +663,7 @@ exit:
     }
   }
 
-  LiveRange LR(start, end, interval.getNextValue(start, 0, VNInfoAllocator));
+  LiveRange LR(start, end, interval.getNextValue(~0U, 0, VNInfoAllocator));
   interval.addRange(LR);
   interval.addKill(LR.valno, end);
   DOUT << " +" << LR << '\n';
@@ -675,11 +679,6 @@ void LiveIntervals::computeIntervals() {
        << ((Value*)mf_->getFunction())->getName() << '\n';
   // Track the index of the current machine instr.
   unsigned MIIndex = 0;
-  
-  // Skip over empty initial indices.
-  while (MIIndex / InstrSlots::NUM < i2miMap_.size() &&
-         getInstructionFromIndex(MIIndex) == 0)
-    MIIndex += InstrSlots::NUM;
   
   for (MachineFunction::iterator MBBI = mf_->begin(), E = mf_->end();
        MBBI != E; ++MBBI) {
@@ -698,6 +697,11 @@ void LiveIntervals::computeIntervals() {
           handleLiveInRegister(MBB, MIIndex, getOrCreateInterval(*AS),
                                true);
     }
+    
+    // Skip over empty initial indices.
+    while (MIIndex / InstrSlots::NUM < i2miMap_.size() &&
+           getInstructionFromIndex(MIIndex) == 0)
+      MIIndex += InstrSlots::NUM;
     
     for (; MI != miEnd; ++MI) {
       DOUT << MIIndex << "\t" << *MI;
