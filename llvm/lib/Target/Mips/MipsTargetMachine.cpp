@@ -46,7 +46,7 @@ MipsTargetMachine(const Module &M, const std::string &FS, bool isLittle=false):
   TLInfo(*this) 
 {
   // Abicall enables PIC by default
-  if (Subtarget.hasABICall() && (getRelocationModel() != Reloc::Static))
+  if (Subtarget.hasABICall())
     setRelocationModel(Reloc::PIC_);  
 
   // TODO: create an option to enable long calls, like -mlong-calls, 

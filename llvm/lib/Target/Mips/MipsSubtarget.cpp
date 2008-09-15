@@ -65,9 +65,9 @@ MipsSubtarget::MipsSubtarget(const TargetMachine &TM, const Module &M,
     HasCondMov = true;
   }
 
-  // Abicall is the default for O32 ABI and is ignored 
-  // for EABI.
-  if (NotABICall || isABI_EABI())
+  // Abicall is the default for O32 ABI, but is disabled within EABI and in
+  // static code.
+  if (NotABICall || isABI_EABI() || (TM.getRelocationModel() == Reloc::Static))
     HasABICall = false;
 
   // TODO: disable when handling 64 bit symbols in the future.
