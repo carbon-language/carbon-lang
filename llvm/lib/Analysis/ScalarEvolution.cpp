@@ -1480,6 +1480,12 @@ namespace {
     SCEVHandle HowManyLessThans(SCEV *LHS, SCEV *RHS, const Loop *L,
                                 bool isSigned);
 
+    /// getPredecessorWithUniqueSuccessorForBB - Return a predecessor of BB
+    /// (which may not be an immediate predecessor) which has exactly one
+    /// successor from which BB is reachable, or null if no such block is
+    /// found.
+    BasicBlock* getPredecessorWithUniqueSuccessorForBB(BasicBlock *BB);
+
     /// executesAtLeastOnce - Test whether entry to the loop is protected by
     /// a conditional between LHS and RHS.
     bool executesAtLeastOnce(const Loop *L, bool isSigned, SCEV *LHS, SCEV *RHS);
@@ -1825,6 +1831,11 @@ SCEVHandle ScalarEvolutionsImpl::createSCEV(Value *V) {
   case Instruction::Select:
     // This could be a smax or umax that was lowered earlier.
     // Try to recover it.
+    //
+    // FIXME: This doesn't recognize code like this:
+    //    %t = icmp sgt i32 %n, -1
+    //    %max = select i1 %t, i32 %n, i32 0
+    //
     if (ICmpInst *ICI = dyn_cast<ICmpInst>(U->getOperand(0))) {
       Value *LHS = ICI->getOperand(0);
       Value *RHS = ICI->getOperand(1);
@@ -2703,6 +2714,28 @@ SCEVHandle ScalarEvolutionsImpl::HowFarToNonZero(SCEV *V, const Loop *L) {
   return UnknownValue;
 }
 
+/// getPredecessorWithUniqueSuccessorForBB - Return a predecessor of BB
+/// (which may not be an immediate predecessor) which has exactly one
+/// successor from which BB is reachable, or null if no such block is
+/// found.
+///
+BasicBlock *
+ScalarEvolutionsImpl::getPredecessorWithUniqueSuccessorForBB(BasicBlock *BB) {
+  // If the block has a unique predecessor, the predecessor must have
+  // no other successors from which BB is reachable.
+  if (BasicBlock *Pred = BB->getSinglePredecessor())
+    return Pred;
+
+  // A loop's header is defined to be a block that dominates the loop.
+  // If the loop has a preheader, it must be a block that has exactly
+  // one successor that can reach BB. This is slightly more strict
+  // than necessary, but works if critical edges are split.
+  if (Loop *L = LI.getLoopFor(BB))
+    return L->getLoopPreheader();
+
+  return 0;
+}
+
 /// executesAtLeastOnce - Test whether entry to the loop is protected by
 /// a conditional between LHS and RHS.
 bool ScalarEvolutionsImpl::executesAtLeastOnce(const Loop *L, bool isSigned,
@@ -2711,14 +2744,11 @@ bool ScalarEvolutionsImpl::executesAtLeastOnce(const Loop *L, bool isSigned,
   BasicBlock *PreheaderDest = L->getHeader();
 
   // Starting at the preheader, climb up the predecessor chain, as long as
-  // there are unique predecessors, looking for a conditional branch that
-  // protects the loop.
-  // 
-  // This is a conservative apporoximation of a climb of the
-  // control-dependence predecessors.
-
-  for (; Preheader; PreheaderDest = Preheader,
-                    Preheader = Preheader->getSinglePredecessor()) {
+  // there are predecessors that can be found that have unique successors
+  // leading to the original header.
+  for (; Preheader;
+       PreheaderDest = Preheader,
+       Preheader = getPredecessorWithUniqueSuccessorForBB(Preheader)) {
 
     BranchInst *LoopEntryPredicate =
       dyn_cast<BranchInst>(Preheader->getTerminator());
