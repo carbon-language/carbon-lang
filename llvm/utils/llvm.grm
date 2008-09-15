@@ -123,6 +123,7 @@ OptCallingConv ::= + _ |
                  coldcc |
                  "x86_stdcallcc" |
                  "x86_fastcallcc" |
+                 "x86_ssecallcc" |
                  cc EUINT64VAL ;
 
 ParamAttr ::= zeroext
@@ -148,6 +149,19 @@ FuncAttr      ::= noreturn
  ;
 
 OptFuncAttrs  ::= + _ | OptFuncAttrs FuncAttr ;
+
+FuncNoteList  ::= FuncNote
+              | FuncNoteList ^ "," FuncNote
+              ;
+
+FuncNote      ::= inline ^ "=" ^ never
+              | inline ^ "=" ^ always
+              | "opt_size"
+              ;
+
+OptFuncNotes  ::= _
+              | notes ^ "(" ^ FuncNoteList ^ ")"
+              ;
 
 OptGC         ::= + _ | gc STRINGCONSTANT ;
 
@@ -175,9 +189,9 @@ Types
  | "[" ^ EUINT64VAL "x" Types ^ "]"
  | "<" ^ EUINT64VAL "x" Types ^ ">"
  | "{" TypeListI "}"
- | "{" "}"
+ | "{" ^ "}"
  | "<" ^ "{" TypeListI "}" ^ ">"
- | "<" ^ "{" "}" ^ ">"
+ | "<" ^ "{" ^ "}" ^ ">"
  ;
 
 ArgType ::= Types OptParamAttrs ;
@@ -191,13 +205,13 @@ ArgTypeListI ::= ArgTypeList | ArgTypeList ^ "," "..." | "..." | _ ;
 TypeListI ::= Types | TypeListI ^ "," Types ;
 
 ConstVal::= Types "[" ^ ConstVector ^ "]"
- | Types "[" "]"
+ | Types "[" ^ "]"
  | Types "c" ^ STRINGCONSTANT
  | Types "<" ^ ConstVector ^ ">"
  | Types "{" ConstVector "}"
- | Types "{" "}"
+ | Types "{" ^ "}"
  | Types "<" ^ "{" ConstVector "}" ^ ">"
- | Types "<" ^ "{" "}" ^ ">"
+ | Types "<" ^ "{" ^ "}" ^ ">"
  | Types null
  | Types undef
  | Types SymbolicValueRef
@@ -271,7 +285,7 @@ ArgListH ::= ArgListH ^ "," Types OptParamAttrs OptLocalName
 ArgList ::= ArgListH | ArgListH ^ "," "..." | "..." | _ ;
 
 FunctionHeaderH ::= OptCallingConv ResultTypes GlobalName "(" ^ ArgList ^ ")"
-                  OptFuncAttrs OptSection OptAlign OptGC ;
+                  OptFuncAttrs OptSection OptAlign OptGC OptFuncNotes ;
 
 BEGIN ::= ( begin | "{" ) ^ "\n";
 
@@ -296,12 +310,12 @@ ConstValueRef ::= ESINT64VAL
  | zeroinitializer
  | "<" ConstVector ">"
  | "[" ConstVector "]"
- | "[" "]"
+ | "[" ^ "]"
  | "c" ^ STRINGCONSTANT
  | "{" ConstVector "}"
- | "{" "}"
+ | "{" ^ "}"
  | "<" ^ "{" ConstVector "}" ^ ">"
- | "<" ^ "{" "}" ^ ">"
+ | "<" ^ "{" ^ "}" ^ ">"
  | ConstExpr
  | asm OptSideEffect STRINGCONSTANT ^ "," STRINGCONSTANT ;
 
@@ -330,8 +344,9 @@ BBTerminatorInst ::= ^ "  " ^
  | br label ValueRef
  | br INTTYPE ValueRef ^ "," label ValueRef ^ "," label ValueRef
  | switch IntType ValueRef ^ "," label ValueRef "[" JumpTable "]"
- | switch IntType ValueRef ^ "," label ValueRef "[" "]"
- | invoke OptCallingConv ResultTypes ValueRef "(" ^ ParamList ^ ")" OptFuncAttrs
+ | switch IntType ValueRef ^ "," label ValueRef "[" ^ "]"
+ | invoke OptCallingConv ResultTypes ValueRef ^ "(" ^ ParamList ^ ")"
+   OptFuncAttrs
    to label ValueRef unwind label ValueRef
  | unwind
  | unreachable ) ^ "\n";
@@ -370,7 +385,7 @@ InstVal ::=
  | insertelement ResolvedVal ^ "," ResolvedVal ^ "," ResolvedVal
  | shufflevector ResolvedVal ^ "," ResolvedVal ^ "," ResolvedVal
  | phi PHIList
- | OptTailCall OptCallingConv ResultTypes ValueRef "(" ^ ParamList ^ ")"
+ | OptTailCall OptCallingConv ResultTypes ValueRef ^ "(" ^ ParamList ^ ")"
    OptFuncAttrs
  | MemoryInst ;
 
