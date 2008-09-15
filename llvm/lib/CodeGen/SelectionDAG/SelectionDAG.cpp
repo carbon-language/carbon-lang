@@ -423,6 +423,12 @@ static void AddNodeIDNode(FoldingSetNodeID &ID, const SDNode *N) {
       ID.AddPointer(CP->getConstVal());
     break;
   }
+  case ISD::CALL: {
+    const CallSDNode *Call = cast<CallSDNode>(N);
+    ID.AddInteger(Call->getCallingConv());
+    ID.AddInteger(Call->isVarArg());
+    break;
+  }
   case ISD::LOAD: {
     const LoadSDNode *LD = cast<LoadSDNode>(N);
     ID.AddInteger(LD->getAddressingMode());
@@ -636,7 +642,6 @@ bool SelectionDAG::RemoveNodeFromCSEMaps(SDNode *N) {
   // not subject to CSE.
   if (!Erased && N->getValueType(N->getNumValues()-1) != MVT::Flag &&
       !N->isMachineOpcode() &&
-      N->getOpcode() != ISD::CALL &&
       N->getOpcode() != ISD::DBG_LABEL &&
       N->getOpcode() != ISD::DBG_STOPPOINT &&
       N->getOpcode() != ISD::EH_LABEL &&
@@ -662,7 +667,6 @@ SDNode *SelectionDAG::AddNonLeafNodeToCSEMaps(SDNode *N) {
 
   switch (N->getOpcode()) {
   default: break;
-  case ISD::CALL:
   case ISD::HANDLENODE:
   case ISD::DBG_LABEL:
   case ISD::DBG_STOPPOINT:
@@ -3310,13 +3314,23 @@ SDValue
 SelectionDAG::getCall(unsigned CallingConv, bool IsVarArgs, bool IsTailCall,
                       SDVTList VTs,
                       const SDValue *Operands, unsigned NumOperands) {
-  // Do not CSE calls. Note that in addition to being a compile-time
-  // optimization (since attempting CSE of calls is unlikely to be
-  // meaningful), we actually depend on this behavior. CallSDNode can
-  // be mutated, which is only safe if calls are not CSE'd.
+  // Do not include isTailCall in the folding set profile.
+  FoldingSetNodeID ID;
+  AddNodeIDNode(ID, ISD::CALL, VTs, Operands, NumOperands);
+  ID.AddInteger(CallingConv);
+  ID.AddInteger(IsVarArgs);
+  void *IP = 0;
+  if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP)) {
+    // Instead of including isTailCall in the folding set, we just
+    // set the flag of the existing node.
+    if (!IsTailCall)
+      cast<CallSDNode>(E)->setNotTailCall();
+    return SDValue(E, 0);
+  }
   SDNode *N = NodeAllocator.Allocate<CallSDNode>();
   new (N) CallSDNode(CallingConv, IsVarArgs, IsTailCall,
                      VTs, Operands, NumOperands);
+  CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
   return SDValue(N, 0);
 }

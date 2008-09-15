@@ -2205,7 +2205,8 @@ public:
 
   /// Set this call to not be marked as a tail call. Normally setter
   /// methods in SDNodes are unsafe because it breaks the CSE map,
-  /// but we don't CSE calls so it's ok in this case.
+  /// but we don't include the tail call flag for calls so it's ok
+  /// in this case.
   void setNotTailCall() { IsTailCall = false; }
 
   SDValue getChain() const { return getOperand(0); }
