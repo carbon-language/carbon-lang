@@ -96,7 +96,7 @@ int f9(int len) {
   int *p = 0;
 
   for (int i = 0; i < len; ++i)
-   p = foo(i);
+   p = qux(i);
 
   return *p++; // no-warning
 }
