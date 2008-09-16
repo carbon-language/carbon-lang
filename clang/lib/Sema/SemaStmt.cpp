@@ -678,9 +678,10 @@ Sema::ActOnBlockReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
   // If this is the first return we've seen in the block, infer the type of
   // the block from it.
   if (CurBlock->ReturnType == 0) {
-    if (RetValExp)
+    if (RetValExp) {
+      UsualUnaryConversions(RetValExp);
       CurBlock->ReturnType = RetValExp->getType().getTypePtr();
-    else
+    } else
       CurBlock->ReturnType = Context.VoidTy.getTypePtr();
     return new ReturnStmt(ReturnLoc, RetValExp);
   }

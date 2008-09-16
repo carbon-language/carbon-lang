@@ -716,7 +716,12 @@ Sema::CheckReturnStackAddr(Expr *RetValExp, QualType lhsType,
       Diag(DR->getLocStart(), diag::warn_ret_stack_addr,
            DR->getDecl()->getIdentifier()->getName(),
            RetValExp->getSourceRange());
-           
+    
+    // Skip over implicit cast expressions when checking for block expressions.
+    if (ImplicitCastExpr *IcExpr = 
+          dyn_cast_or_null<ImplicitCastExpr>(RetValExp))
+      RetValExp = IcExpr->getSubExpr();
+
     if (BlockExpr *C = dyn_cast_or_null<BlockExpr>(RetValExp))
       Diag(C->getLocStart(), diag::err_ret_local_block,
            C->getSourceRange());
