@@ -228,6 +228,12 @@ BasicConstraintManager::AssumeSymInt(const GRState* St, bool Assumption,
     else
       return AssumeSymLT(St, C.getSymbol(), C.getInt(), isFeasible);
 
+  case BinaryOperator::LT:
+    if (Assumption)
+      return AssumeSymLT(St, C.getSymbol(), C.getInt(), isFeasible);
+    else
+      return AssumeSymGE(St, C.getSymbol(), C.getInt(), isFeasible);
+      
   case BinaryOperator::LE:
     if (Assumption)
       return AssumeSymLE(St, C.getSymbol(), C.getInt(), isFeasible);
@@ -302,15 +308,30 @@ const GRState*
 BasicConstraintManager::AssumeSymGE(const GRState* St, SymbolID sym,
                                     const llvm::APSInt& V, bool& isFeasible) {
 
-  // FIXME: Primitive logic for now.  Only reject a path if the value of
-  //  sym is a constant X and !(X >= V).
-
+  // Reject a path if the value of sym is a constant X and !(X >= V).
   if (const llvm::APSInt* X = getSymVal(St, sym)) {
     isFeasible = *X >= V;
     return St;
   }
 
-  isFeasible = true;
+  // sym is not a constant, but it might be not-equal to a constant.
+  // Observe: V >= sym is the same as sym <= V.
+  //  check: is sym != V?
+  //  check: is sym > V?
+  // if both are true, the path is infeasible.
+  
+  if (isNotEqual(St, sym, V)) {
+    // Is sym > V?
+    //
+    //  We're not doing heavy range analysis yet, so all we can accurately
+    //  reason about are the edge cases.
+    //
+    //  If V == 0, since we know that sym != V, we also know that sym > V.    
+    isFeasible = V != 0;
+  }
+  else
+    isFeasible = true;
+
   return St;
 }
 

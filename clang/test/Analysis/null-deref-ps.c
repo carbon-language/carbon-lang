@@ -1,6 +1,7 @@
 // RUN: clang -checker-simple -verify %s
 
 #include<stdint.h>
+#include <assert.h>
 
 void f1(int *p) {  
   if (p) *p = 1;
@@ -86,4 +87,16 @@ int f8(int *p, int *q) {
   if (q)
     if (!q)
       *q = 1; // no-warning
+}
+
+int* qux();
+
+int f9(int len) {
+  assert (len != 0);
+  int *p = 0;
+
+  for (int i = 0; i < len; ++i)
+   p = foo(i);
+
+  return *p++; // no-warning
 }
