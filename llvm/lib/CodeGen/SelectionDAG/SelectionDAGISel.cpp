@@ -526,7 +526,8 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB,
   // with correct tailcall attribute so that the target can rely on the tailcall
   // attribute indicating whether the call is really eligible for tail call
   // optimization.
-  CheckDAGForTailCallsAndFixThem(*CurDAG, TLI);
+  if (PerformTailCallOpt)
+    CheckDAGForTailCallsAndFixThem(*CurDAG, TLI);
 
   // Final step, emit the lowered DAG as machine code.
   CodeGenAndEmitDAG();

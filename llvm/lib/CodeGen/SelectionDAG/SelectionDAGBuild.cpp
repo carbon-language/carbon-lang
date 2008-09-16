@@ -4201,7 +4201,8 @@ void SelectionDAGLowering::LowerCallTo(CallSite CS, SDValue Callee,
     TLI.LowerCallTo(getRoot(), CS.getType(),
                     CS.paramHasAttr(0, ParamAttr::SExt),
                     CS.paramHasAttr(0, ParamAttr::ZExt),
-                    FTy->isVarArg(), CS.getCallingConv(), IsTailCall,
+                    FTy->isVarArg(), CS.getCallingConv(),
+                    IsTailCall && PerformTailCallOpt,
                     Callee, Args, DAG);
   if (CS.getType() != Type::VoidTy)
     setValue(CS.getInstruction(), Result.first);
@@ -5138,7 +5139,8 @@ void SelectionDAGLowering::visitMalloc(MallocInst &I) {
 
   std::pair<SDValue,SDValue> Result =
     TLI.LowerCallTo(getRoot(), I.getType(), false, false, false, CallingConv::C,
-                    true, DAG.getExternalSymbol("malloc", IntPtr), Args, DAG);
+                    PerformTailCallOpt, DAG.getExternalSymbol("malloc", IntPtr),
+                    Args, DAG);
   setValue(&I, Result.first);  // Pointers always fit in registers
   DAG.setRoot(Result.second);
 }
@@ -5152,7 +5154,7 @@ void SelectionDAGLowering::visitFree(FreeInst &I) {
   MVT IntPtr = TLI.getPointerTy();
   std::pair<SDValue,SDValue> Result =
     TLI.LowerCallTo(getRoot(), Type::VoidTy, false, false, false,
-                    CallingConv::C, true,
+                    CallingConv::C, PerformTailCallOpt,
                     DAG.getExternalSymbol("free", IntPtr), Args, DAG);
   DAG.setRoot(Result.second);
 }
@@ -5323,6 +5325,9 @@ TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
                             unsigned CallingConv, bool isTailCall,
                             SDValue Callee,
                             ArgListTy &Args, SelectionDAG &DAG) {
+  assert((!isTailCall || PerformTailCallOpt) &&
+         "isTailCall set when tail-call optimizations are disabled!");
+
   SmallVector<SDValue, 32> Ops;
   Ops.push_back(Chain);   // Op#0 - Chain
   Ops.push_back(Callee);
