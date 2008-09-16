@@ -158,6 +158,7 @@ std::string DOTGraphTraits<SelectionDAG*>::getNodeLabel(const SDNode *Node,
         Op += '>';
       }
     }
+    Op += " A=" + itostr(1 << CP->getAlignment());
   } else if (const BasicBlockSDNode *BBDN = dyn_cast<BasicBlockSDNode>(Node)) {
     Op = "BB: ";
     const Value *LBB = (const Value*)BBDN->getBasicBlock()->getBasicBlock();
