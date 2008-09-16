@@ -792,7 +792,7 @@ RopePiece RewriteRope::MakeRopeString(const char *Start, const char *End) {
   if (AllocBuffer && --AllocBuffer->RefCount == 0)
     delete [] (char*)AllocBuffer;
   
-  unsigned AllocSize = sizeof(RopeRefCountString)-1+AllocChunkSize;
+  unsigned AllocSize = offsetof(RopeRefCountString, Data) + AllocChunkSize;
   AllocBuffer = reinterpret_cast<RopeRefCountString *>(new char[AllocSize]);
   AllocBuffer->RefCount = 0;
   memcpy(AllocBuffer->Data, Start, Len);
