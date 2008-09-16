@@ -18,7 +18,7 @@
 #include <sys/mman.h>
 #endif
 
-/// AllocateRWXMemory - Allocate a slab of memory with read/write/execute
+/// AllocateRWX - Allocate a slab of memory with read/write/execute
 /// permissions.  This is typically used for JIT applications where we want
 /// to emit code to the memory then jump to it.  Getting this type of memory
 /// is very OS specific.
