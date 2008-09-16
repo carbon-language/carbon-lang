@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Module.h"
+#include "llvm/ModuleProvider.h"
 #include "llvm/PassManager.h"
 #include "llvm/CallGraphSCCPass.h"
 #include "llvm/Bitcode/ReaderWriter.h"
@@ -83,6 +84,26 @@ DisableOptimizations("disable-opt",
 static cl::opt<bool>
 StandardCompileOpts("std-compile-opts", 
                    cl::desc("Include the standard compile time optimizations"));
+
+static cl::opt<bool>
+OptLevelO1("O1",
+           cl::desc("Optimization level 1. Similar to llvm-gcc -O1"));
+
+static cl::opt<bool>
+OptLevelO2("O2",
+           cl::desc("Optimization level 1. Similar to llvm-gcc -O2"));
+
+static cl::opt<bool>
+OptLevelO3("O3",
+           cl::desc("Optimization level 1. Similar to llvm-gcc -O3"));
+
+static cl::opt<bool>
+UnitAtATime("funit-at-a-time",
+            cl::desc("Enable IPO. This is same is llvm-gcc's -funit-at-a-time"));
+
+static cl::opt<bool>
+DisableSimplifyLibCalls("disable-simplify-libcalls",
+                        cl::desc("Disable simplify libcalls"));
 
 static cl::opt<bool>
 Quiet("q", cl::desc("Obsolete option"), cl::Hidden);
@@ -237,6 +258,88 @@ inline void addPass(PassManager &PM, Pass *P) {
   if (VerifyEach) PM.add(createVerifierPass());
 }
 
+/// AddOptimizationPasses - This routine adds optimization passes 
+/// based on selected optimization level, OptLevel. This routine 
+/// duplicates llvm-gcc behaviour.
+///
+/// OptLevel - Optimization Level
+/// PruneEH - Add PruneEHPass, if set.
+/// UnrollLoop - Unroll loops, if set.
+  void AddOptimizationPasses(PassManager &MPM, FunctionPassManager &FPM,
+                             unsigned OptLevel) {
+
+  if (OptLevel == 0) 
+    return;
+
+  FPM.add(createCFGSimplificationPass());
+  if (OptLevel == 1)
+    FPM.add(createPromoteMemoryToRegisterPass());
+  else
+    FPM.add(createScalarReplAggregatesPass());
+  FPM.add(createInstructionCombiningPass());
+
+  if (UnitAtATime)
+    MPM.add(createRaiseAllocationsPass());      // call %malloc -> malloc inst
+  MPM.add(createCFGSimplificationPass());       // Clean up disgusting code
+  MPM.add(createPromoteMemoryToRegisterPass()); // Kill useless allocas
+  if (UnitAtATime) {
+    MPM.add(createGlobalOptimizerPass());       // OptLevel out global vars
+    MPM.add(createGlobalDCEPass());             // Remove unused fns and globs
+    MPM.add(createIPConstantPropagationPass()); // IP Constant Propagation
+    MPM.add(createDeadArgEliminationPass());    // Dead argument elimination
+  }
+  MPM.add(createInstructionCombiningPass());    // Clean up after IPCP & DAE
+  MPM.add(createCFGSimplificationPass());       // Clean up after IPCP & DAE
+  if (UnitAtATime)
+    MPM.add(createPruneEHPass());               // Remove dead EH info
+  if (OptLevel > 1)
+    MPM.add(createFunctionInliningPass());      // Inline small functions
+  if (OptLevel > 2)
+    MPM.add(createArgumentPromotionPass());   // Scalarize uninlined fn args
+  if (!DisableSimplifyLibCalls)
+    MPM.add(createSimplifyLibCallsPass());    // Library Call Optimizations
+  MPM.add(createInstructionCombiningPass());  // Cleanup for scalarrepl.
+  MPM.add(createJumpThreadingPass());         // Thread jumps.
+  MPM.add(createCFGSimplificationPass());     // Merge & remove BBs
+  MPM.add(createScalarReplAggregatesPass());  // Break up aggregate allocas
+  MPM.add(createInstructionCombiningPass());  // Combine silly seq's
+  MPM.add(createCondPropagationPass());       // Propagate conditionals
+  MPM.add(createTailCallEliminationPass());   // Eliminate tail calls
+  MPM.add(createCFGSimplificationPass());     // Merge & remove BBs
+  MPM.add(createReassociatePass());           // Reassociate expressions
+  MPM.add(createLoopRotatePass());            // Rotate Loop
+  MPM.add(createLICMPass());                  // Hoist loop invariants
+  MPM.add(createLoopUnswitchPass());
+  MPM.add(createLoopIndexSplitPass());        // Split loop index
+  MPM.add(createInstructionCombiningPass());  
+  MPM.add(createIndVarSimplifyPass());        // Canonicalize indvars
+  MPM.add(createLoopDeletionPass());          // Delete dead loops
+  if (OptLevel > 1)
+    MPM.add(createLoopUnrollPass());          // Unroll small loops
+  MPM.add(createInstructionCombiningPass());  // Clean up after the unroller
+  MPM.add(createGVNPass());                   // Remove redundancies
+  MPM.add(createMemCpyOptPass());             // Remove memcpy / form memset
+  MPM.add(createSCCPPass());                  // Constant prop with SCCP
+  
+  // Run instcombine after redundancy elimination to exploit opportunities
+  // opened up by them.
+  MPM.add(createInstructionCombiningPass());
+  MPM.add(createCondPropagationPass());       // Propagate conditionals
+  MPM.add(createDeadStoreEliminationPass());  // Delete dead stores
+  MPM.add(createAggressiveDCEPass());   // Delete dead instructions
+  MPM.add(createCFGSimplificationPass());     // Merge & remove BBs
+  
+  if (UnitAtATime) {
+    MPM.add(createStripDeadPrototypesPass());   // Get rid of dead prototypes
+    MPM.add(createDeadTypeEliminationPass());   // Eliminate dead types
+  }
+  
+  if (OptLevel > 1 && UnitAtATime)
+    MPM.add(createConstantMergePass());       // Merge dup global constants 
+  
+  return;
+}
+
 void AddStandardCompilePasses(PassManager &PM) {
   PM.add(createVerifierPass());                  // Verify that input is correct
 
@@ -378,6 +481,12 @@ int main(int argc, char **argv) {
     // Add an appropriate TargetData instance for this module...
     Passes.add(new TargetData(M.get()));
 
+    FunctionPassManager *FPasses = NULL;
+    if (OptLevelO1 || OptLevelO2 || OptLevelO3) {
+      FPasses = new FunctionPassManager(new ExistingModuleProvider(M.get()));
+      FPasses->add(new TargetData(M.get()));
+    }
+      
     // If the -strip-debug command line option was specified, add it.  If
     // -std-compile-opts was also specified, it will handle StripDebug.
     if (StripDebug && !StandardCompileOpts)
@@ -393,6 +502,21 @@ int main(int argc, char **argv) {
         StandardCompileOpts = false;
       }
       
+      if (OptLevelO1 && OptLevelO1.getPosition() < PassList.getPosition(i)) {
+        AddOptimizationPasses(Passes, *FPasses, 1);
+        OptLevelO1 = false;
+      }
+
+      if (OptLevelO2 && OptLevelO2.getPosition() < PassList.getPosition(i)) {
+        AddOptimizationPasses(Passes, *FPasses, 2);
+        OptLevelO2 = false;
+      }
+
+      if (OptLevelO3 && OptLevelO3.getPosition() < PassList.getPosition(i)) {
+        AddOptimizationPasses(Passes, *FPasses, 3);
+        OptLevelO3 = false;
+      }
+
       const PassInfo *PassInf = PassList[i];
       Pass *P = 0;
       if (PassInf->getNormalCtor())
@@ -426,6 +550,24 @@ int main(int argc, char **argv) {
       AddStandardCompilePasses(Passes);
       StandardCompileOpts = false;
     }    
+
+    if (OptLevelO1) {
+        AddOptimizationPasses(Passes, *FPasses, 1);
+      }
+
+    if (OptLevelO2) {
+        AddOptimizationPasses(Passes, *FPasses, 2);
+      }
+
+    if (OptLevelO3) {
+        AddOptimizationPasses(Passes, *FPasses, 3);
+      }
+
+    if (OptLevelO1 || OptLevelO2 || OptLevelO3) {
+      for (Module::iterator I = M.get()->begin(), E = M.get()->end();
+           I != E; ++I)
+        FPasses->run(*I);
+    }
 
     // Check that the module is well formed on completion of optimization
     if (!NoVerify && !VerifyEach)
