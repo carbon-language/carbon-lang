@@ -479,7 +479,8 @@ MachineConstantPool::~MachineConstantPool() {
 }
 
 /// getConstantPoolIndex - Create a new entry in the constant pool or return
-/// an existing one.  User must specify an alignment in bytes for the object.
+/// an existing one.  User must specify the log2 of the minimum required
+/// alignment for the object.
 ///
 unsigned MachineConstantPool::getConstantPoolIndex(Constant *C, 
                                                    unsigned Alignment) {
