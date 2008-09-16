@@ -799,7 +799,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
   case ISD::TargetConstantPool:
   case ISD::TargetGlobalAddress:
   case ISD::TargetGlobalTLSAddress:
-  case ISD::TargetSymbol:
+  case ISD::TargetExternalSymbol:
   case ISD::VALUETYPE:
   case ISD::SRCVALUE:
   case ISD::MEMOPERAND:
@@ -832,7 +832,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
   case ISD::GLOBAL_OFFSET_TABLE:
   case ISD::GlobalAddress:
   case ISD::GlobalTLSAddress:
-  case ISD::Symbol:
+  case ISD::ExternalSymbol:
   case ISD::ConstantPool:
   case ISD::JumpTable: // Nothing to do.
     switch (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0))) {
@@ -3979,7 +3979,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       std::pair<SDValue,SDValue> CallResult =
         TLI.LowerCallTo(Tmp1, Type::VoidTy,
                         false, false, false, CallingConv::C, false,
-                        DAG.getSymbol("abort", TLI.getPointerTy()),
+                        DAG.getExternalSymbol("abort", TLI.getPointerTy()),
                         Args, DAG);
       Result = CallResult.second;
       break;
@@ -5293,9 +5293,8 @@ SDValue SelectionDAGLegalize::ExpandLibCall(RTLIB::Libcall LC, SDNode *Node,
     Entry.isZExt = !isSigned;
     Args.push_back(Entry);
   }
-
-  SDValue Callee = DAG.getSymbol(TLI.getLibcallName(LC),
-                                 TLI.getPointerTy());
+  SDValue Callee = DAG.getExternalSymbol(TLI.getLibcallName(LC),
+                                           TLI.getPointerTy());
 
   // Splice the libcall in wherever FindInputOutputChains tells us to.
   const Type *RetTy = Node->getValueType(0).getTypeForMVT();

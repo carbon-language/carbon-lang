@@ -268,12 +268,12 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   setOperationAction(ISD::GlobalTLSAddress, MVT::i32  , Custom);
   if (Subtarget->is64Bit())
     setOperationAction(ISD::GlobalTLSAddress, MVT::i64, Custom);
-  setOperationAction(ISD::Symbol          , MVT::i32  , Custom);
+  setOperationAction(ISD::ExternalSymbol  , MVT::i32  , Custom);
   if (Subtarget->is64Bit()) {
     setOperationAction(ISD::ConstantPool  , MVT::i64  , Custom);
     setOperationAction(ISD::JumpTable     , MVT::i64  , Custom);
     setOperationAction(ISD::GlobalAddress , MVT::i64  , Custom);
-    setOperationAction(ISD::Symbol        , MVT::i64  , Custom);
+    setOperationAction(ISD::ExternalSymbol, MVT::i64  , Custom);
   }
   // 64-bit addm sub, shl, sra, srl (iff 32-bit x86)
   setOperationAction(ISD::SHL_PARTS       , MVT::i32  , Custom);
@@ -892,7 +892,7 @@ SDValue X86TargetLowering::LowerRET(SDValue Op, SelectionDAG &DAG) {
     assert(((TargetAddress.getOpcode() == ISD::Register &&
                (cast<RegisterSDNode>(TargetAddress)->getReg() == X86::ECX ||
                 cast<RegisterSDNode>(TargetAddress)->getReg() == X86::R9)) ||
-              TargetAddress.getOpcode() == ISD::TargetSymbol ||
+              TargetAddress.getOpcode() == ISD::TargetExternalSymbol ||
               TargetAddress.getOpcode() == ISD::TargetGlobalAddress) && 
              "Expecting an global address, external symbol, or register");
     assert(StackAdjustment.getOpcode() == ISD::Constant &&
@@ -1608,8 +1608,8 @@ SDValue X86TargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
     if (G &&  !G->getGlobal()->hasHiddenVisibility() &&
         !G->getGlobal()->hasProtectedVisibility())
       Callee =  LowerGlobalAddress(Callee, DAG);
-    else if (isa<SymbolSDNode>(Callee))
-      Callee = LowerExternalSymbol(Callee, DAG);
+    else if (isa<ExternalSymbolSDNode>(Callee))
+      Callee = LowerExternalSymbol(Callee,DAG);
   }
 
   if (Is64Bit && isVarArg) {
@@ -1697,9 +1697,8 @@ SDValue X86TargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
     if (!Subtarget->GVRequiresExtraLoad(G->getGlobal(),
                                         getTargetMachine(), true))
       Callee = DAG.getTargetGlobalAddress(G->getGlobal(), getPointerTy());
-  } else if (SymbolSDNode *S = dyn_cast<SymbolSDNode>(Callee)) {
-    Callee = DAG.getTargetSymbol(S->getSymbol(), getPointerTy(),
-                                 S->getLinkage());
+  } else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee)) {
+    Callee = DAG.getTargetExternalSymbol(S->getSymbol(), getPointerTy());
   } else if (IsTailCall) {
     unsigned Opc = Is64Bit ? X86::R9 : X86::ECX;
 
@@ -4287,11 +4286,12 @@ X86TargetLowering::LowerSCALAR_TO_VECTOR(SDValue Op, SelectionDAG &DAG) {
                      DAG.getNode(ISD::SCALAR_TO_VECTOR, VT, AnyExt));
 }
 
-// ConstantPool, JumpTable, GlobalAddress, and Symbol are lowered as their
-// target countpart wrapped in the X86ISD::Wrapper node. Suppose N is one of the
-// above mentioned nodes. It has to be wrapped because otherwise Select(N)
-// returns N. So the raw TargetGlobalAddress nodes, etc. can only be used to
-// form addressing mode. These wrapped nodes will be selected into MOV32ri.
+// ConstantPool, JumpTable, GlobalAddress, and ExternalSymbol are lowered as
+// their target countpart wrapped in the X86ISD::Wrapper node. Suppose N is
+// one of the above mentioned nodes. It has to be wrapped because otherwise
+// Select(N) returns N. So the raw TargetGlobalAddress nodes, etc. can only
+// be used to form addressing mode. These wrapped nodes will be selected
+// into MOV32ri.
 SDValue
 X86TargetLowering::LowerConstantPool(SDValue Op, SelectionDAG &DAG) {
   ConstantPoolSDNode *CP = cast<ConstantPoolSDNode>(Op);
@@ -4362,7 +4362,8 @@ LowerToTLSGeneralDynamicModel32(GlobalAddressSDNode *GA, SelectionDAG &DAG,
 
   NodeTys = DAG.getVTList(MVT::Other, MVT::Flag);
   SDValue Ops1[] = { Chain,
-                      DAG.getTargetSymbol("___tls_get_addr", PtrVT),
+                      DAG.getTargetExternalSymbol("___tls_get_addr",
+                                                  PtrVT),
                       DAG.getRegister(X86::EAX, PtrVT),
                       DAG.getRegister(X86::EBX, PtrVT),
                       InFlag };
@@ -4395,7 +4396,8 @@ LowerToTLSGeneralDynamicModel64(GlobalAddressSDNode *GA, SelectionDAG &DAG,
 
   NodeTys = DAG.getVTList(MVT::Other, MVT::Flag);
   SDValue Ops1[] = { Chain,
-                      DAG.getTargetSymbol("__tls_get_addr", PtrVT),
+                      DAG.getTargetExternalSymbol("__tls_get_addr",
+                                                  PtrVT),
                       DAG.getRegister(X86::RDI, PtrVT),
                       InFlag };
   Chain = DAG.getNode(X86ISD::CALL, NodeTys, Ops1, 4);
@@ -4447,9 +4449,8 @@ X86TargetLowering::LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) {
 
 SDValue
 X86TargetLowering::LowerExternalSymbol(SDValue Op, SelectionDAG &DAG) {
-  SymbolSDNode *Sym = cast<SymbolSDNode>(Op);
-  SDValue Result = DAG.getTargetSymbol(Sym->getSymbol(), getPointerTy(),
-                                       Sym->getLinkage());
+  const char *Sym = cast<ExternalSymbolSDNode>(Op)->getSymbol();
+  SDValue Result = DAG.getTargetExternalSymbol(Sym, getPointerTy());
   Result = DAG.getNode(X86ISD::Wrapper, getPointerTy(), Result);
   // With PIC, the address is actually $g + Offset.
   if (getTargetMachine().getRelocationModel() == Reloc::PIC_ &&
@@ -5053,7 +5054,7 @@ X86TargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op,
 
   SDVTList  NodeTys = DAG.getVTList(MVT::Other, MVT::Flag);
   SDValue Ops[] = { Chain,
-                      DAG.getTargetSymbol("_alloca", IntPtr),
+                      DAG.getTargetExternalSymbol("_alloca", IntPtr),
                       DAG.getRegister(X86::EAX, IntPtr),
                       DAG.getRegister(X86StackPtr, SPTy),
                       Flag };
@@ -5103,7 +5104,7 @@ X86TargetLowering::EmitTargetCodeForMemset(SelectionDAG &DAG,
       Args.push_back(Entry);
       std::pair<SDValue,SDValue> CallResult =
         LowerCallTo(Chain, Type::VoidTy, false, false, false, CallingConv::C,
-                    false, DAG.getSymbol(bzeroEntry, IntPtr),
+                    false, DAG.getExternalSymbol(bzeroEntry, IntPtr),
                     Args, DAG);
       return CallResult.second;
     }
@@ -5976,7 +5977,7 @@ SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   case ISD::ConstantPool:       return LowerConstantPool(Op, DAG);
   case ISD::GlobalAddress:      return LowerGlobalAddress(Op, DAG);
   case ISD::GlobalTLSAddress:   return LowerGlobalTLSAddress(Op, DAG);
-  case ISD::Symbol:             return LowerExternalSymbol(Op, DAG);
+  case ISD::ExternalSymbol:     return LowerExternalSymbol(Op, DAG);
   case ISD::SHL_PARTS:
   case ISD::SRA_PARTS:
   case ISD::SRL_PARTS:          return LowerShift(Op, DAG);

@@ -265,10 +265,10 @@ def frameindex  : SDNode<"ISD::FrameIndex",           SDTPtrLeaf, [],
                          "FrameIndexSDNode">;
 def tframeindex : SDNode<"ISD::TargetFrameIndex",     SDTPtrLeaf, [],
                          "FrameIndexSDNode">;
-def externalsym : SDNode<"ISD::Symbol",               SDTPtrLeaf, [],
-                         "SymbolSDNode">;
-def texternalsym: SDNode<"ISD::TargetSymbol",         SDTPtrLeaf, [],
-                         "SymbolSDNode">;
+def externalsym : SDNode<"ISD::ExternalSymbol",       SDTPtrLeaf, [],
+                         "ExternalSymbolSDNode">;
+def texternalsym: SDNode<"ISD::TargetExternalSymbol", SDTPtrLeaf, [],
+                         "ExternalSymbolSDNode">;
 
 def add        : SDNode<"ISD::ADD"       , SDTIntBinOp   ,
                         [SDNPCommutative, SDNPAssociative]>;

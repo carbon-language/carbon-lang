@@ -207,7 +207,7 @@ namespace {
         Disp = CurDAG->getTargetConstantPool(AM.CP, MVT::i32,
                                              AM.Align, AM.Disp);
       else if (AM.ES)
-        Disp = CurDAG->getTargetSymbol(AM.ES, MVT::i32);
+        Disp = CurDAG->getTargetExternalSymbol(AM.ES, MVT::i32);
       else if (AM.JT != -1)
         Disp = CurDAG->getTargetJumpTable(AM.JT, MVT::i32);
       else
@@ -835,7 +835,7 @@ DOUT << "AlreadySelected " << AlreadySelected << "\n";
         AM.isRIPRel = TM.getRelocationModel() != Reloc::Static &&
           Subtarget->isPICStyleRIPRel();
         return false;
-      } else if (SymbolSDNode *S = dyn_cast<SymbolSDNode>(N0)) {
+      } else if (ExternalSymbolSDNode *S =dyn_cast<ExternalSymbolSDNode>(N0)) {
         AM.ES = S->getSymbol();
         AM.isRIPRel = TM.getRelocationModel() != Reloc::Static &&
           Subtarget->isPICStyleRIPRel();
@@ -1292,7 +1292,7 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
           N1.getOpcode() == ISD::Constant) {
         unsigned Offset = (unsigned)cast<ConstantSDNode>(N1)->getZExtValue();
         SDValue C(0, 0);
-        // TODO: handle SymbolSDNode.
+        // TODO: handle ExternalSymbolSDNode.
         if (GlobalAddressSDNode *G =
             dyn_cast<GlobalAddressSDNode>(N0.getOperand(0))) {
           C = CurDAG->getTargetGlobalAddress(G->getGlobal(), PtrVT,

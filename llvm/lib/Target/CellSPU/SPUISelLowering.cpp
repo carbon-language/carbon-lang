@@ -92,12 +92,12 @@ namespace {
             || Opc == ISD::GlobalTLSAddress
             || Opc == ISD::JumpTable
             || Opc == ISD::ConstantPool
-            || Opc == ISD::Symbol
+            || Opc == ISD::ExternalSymbol
             || Opc == ISD::TargetGlobalAddress
             || Opc == ISD::TargetGlobalTLSAddress
             || Opc == ISD::TargetJumpTable
             || Opc == ISD::TargetConstantPool
-            || Opc == ISD::TargetSymbol
+            || Opc == ISD::TargetExternalSymbol
             || Opc == SPUISD::AFormAddr);
   }
 
@@ -1201,9 +1201,9 @@ LowerCALL(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   SmallVector<SDValue, 8> Ops;
   unsigned CallOpc = SPUISD::CALL;
 
-  // If the callee is a GlobalAddress/Symbol node (quite common, every direct
-  // call is) turn it into a TargetGlobalAddress/TargetSymbol node so that
-  // legalize doesn't hack it.
+  // If the callee is a GlobalAddress/ExternalSymbol node (quite common, every
+  // direct call is) turn it into a TargetGlobalAddress/TargetExternalSymbol
+  // node so that legalize doesn't hack it.
   if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
     GlobalValue *GV = G->getGlobal();
     MVT CalleeVT = Callee.getValueType();
@@ -1229,9 +1229,8 @@ LowerCALL(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
       // address pairs:
       Callee = DAG.getNode(SPUISD::IndirectAddr, PtrVT, GA, Zero);
     }
-  } else if (SymbolSDNode *S = dyn_cast<SymbolSDNode>(Callee))
-    Callee = DAG.getSymbol(S->getSymbol(), Callee.getValueType(),
-                           S->getLinkage());
+  } else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee))
+    Callee = DAG.getExternalSymbol(S->getSymbol(), Callee.getValueType());
   else if (SDNode *Dest = isLSAAddress(Callee, DAG)) {
     // If this is an absolute destination address that appears to be a legal
     // local store address, use the munged value.

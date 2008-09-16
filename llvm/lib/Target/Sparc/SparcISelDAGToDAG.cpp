@@ -77,7 +77,7 @@ bool SparcDAGToDAGISel::SelectADDRri(SDValue Op, SDValue Addr,
     Offset = CurDAG->getTargetConstant(0, MVT::i32);
     return true;
   }
-  if (Addr.getOpcode() == ISD::TargetSymbol ||
+  if (Addr.getOpcode() == ISD::TargetExternalSymbol ||
       Addr.getOpcode() == ISD::TargetGlobalAddress)
     return false;  // direct calls.
   
@@ -114,7 +114,7 @@ bool SparcDAGToDAGISel::SelectADDRri(SDValue Op, SDValue Addr,
 bool SparcDAGToDAGISel::SelectADDRrr(SDValue Op, SDValue Addr,
                                      SDValue &R1,  SDValue &R2) {
   if (Addr.getOpcode() == ISD::FrameIndex) return false;
-  if (Addr.getOpcode() == ISD::TargetSymbol ||
+  if (Addr.getOpcode() == ISD::TargetExternalSymbol ||
       Addr.getOpcode() == ISD::TargetGlobalAddress)
     return false;  // direct calls.
   

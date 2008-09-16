@@ -614,11 +614,12 @@ bool SelectionDAG::RemoveNodeFromCSEMaps(SDNode *N) {
     Erased = CondCodeNodes[cast<CondCodeSDNode>(N)->get()] != 0;
     CondCodeNodes[cast<CondCodeSDNode>(N)->get()] = 0;
     break;
-  case ISD::Symbol:
-    Erased = Symbols.erase(cast<SymbolSDNode>(N)->getSymbol());
+  case ISD::ExternalSymbol:
+    Erased = ExternalSymbols.erase(cast<ExternalSymbolSDNode>(N)->getSymbol());
     break;
-  case ISD::TargetSymbol:
-    Erased = TargetSymbols.erase(cast<SymbolSDNode>(N)->getSymbol());
+  case ISD::TargetExternalSymbol:
+    Erased =
+      TargetExternalSymbols.erase(cast<ExternalSymbolSDNode>(N)->getSymbol());
     break;
   case ISD::VALUETYPE: {
     MVT VT = cast<VTSDNode>(N)->getVT();
@@ -841,8 +842,8 @@ void SelectionDAG::clear() {
   CSEMap.clear();
 
   ExtendedValueTypeNodes.clear();
-  Symbols.clear();
-  TargetSymbols.clear();
+  ExternalSymbols.clear();
+  TargetExternalSymbols.clear();
   std::fill(CondCodeNodes.begin(), CondCodeNodes.end(),
             static_cast<CondCodeSDNode*>(0));
   std::fill(ValueTypeNodes.begin(), ValueTypeNodes.end(),
@@ -1097,22 +1098,20 @@ SDValue SelectionDAG::getValueType(MVT VT) {
   return SDValue(N, 0);
 }
 
-SDValue SelectionDAG::getSymbol(const char *Sym, MVT VT,
-                                GlobalValue::LinkageTypes LT) {
-  SDNode *&N = Symbols[Sym];
+SDValue SelectionDAG::getExternalSymbol(const char *Sym, MVT VT) {
+  SDNode *&N = ExternalSymbols[Sym];
   if (N) return SDValue(N, 0);
-  N = NodeAllocator.Allocate<SymbolSDNode>();
-  new (N) SymbolSDNode(false, Sym, VT, LT);
+  N = NodeAllocator.Allocate<ExternalSymbolSDNode>();
+  new (N) ExternalSymbolSDNode(false, Sym, VT);
   AllNodes.push_back(N);
   return SDValue(N, 0);
 }
 
-SDValue SelectionDAG::getTargetSymbol(const char *Sym, MVT VT,
-                                      GlobalValue::LinkageTypes LT) {
-  SDNode *&N = TargetSymbols[Sym];
+SDValue SelectionDAG::getTargetExternalSymbol(const char *Sym, MVT VT) {
+  SDNode *&N = TargetExternalSymbols[Sym];
   if (N) return SDValue(N, 0);
-  N = NodeAllocator.Allocate<SymbolSDNode>();
-  new (N) SymbolSDNode(true, Sym, VT, LT);
+  N = NodeAllocator.Allocate<ExternalSymbolSDNode>();
+  new (N) ExternalSymbolSDNode(true, Sym, VT);
   AllNodes.push_back(N);
   return SDValue(N, 0);
 }
@@ -3099,7 +3098,7 @@ SDValue SelectionDAG::getMemcpy(SDValue Chain, SDValue Dst,
   std::pair<SDValue,SDValue> CallResult =
     TLI.LowerCallTo(Chain, Type::VoidTy,
                     false, false, false, CallingConv::C, false,
-                    getSymbol("memcpy", TLI.getPointerTy()),
+                    getExternalSymbol("memcpy", TLI.getPointerTy()),
                     Args, *this);
   return CallResult.second;
 }
@@ -3144,7 +3143,7 @@ SDValue SelectionDAG::getMemmove(SDValue Chain, SDValue Dst,
   std::pair<SDValue,SDValue> CallResult =
     TLI.LowerCallTo(Chain, Type::VoidTy,
                     false, false, false, CallingConv::C, false,
-                    getSymbol("memmove", TLI.getPointerTy()),
+                    getExternalSymbol("memmove", TLI.getPointerTy()),
                     Args, *this);
   return CallResult.second;
 }
@@ -3195,7 +3194,7 @@ SDValue SelectionDAG::getMemset(SDValue Chain, SDValue Dst,
   std::pair<SDValue,SDValue> CallResult =
     TLI.LowerCallTo(Chain, Type::VoidTy,
                     false, false, false, CallingConv::C, false,
-                    getSymbol("memset", TLI.getPointerTy()),
+                    getExternalSymbol("memset", TLI.getPointerTy()),
                     Args, *this);
   return CallResult.second;
 }
@@ -4611,7 +4610,7 @@ void MemOperandSDNode::ANCHOR() {}
 void RegisterSDNode::ANCHOR() {}
 void DbgStopPointSDNode::ANCHOR() {}
 void LabelSDNode::ANCHOR() {}
-void SymbolSDNode::ANCHOR() {}
+void ExternalSymbolSDNode::ANCHOR() {}
 void CondCodeSDNode::ANCHOR() {}
 void ARG_FLAGSSDNode::ANCHOR() {}
 void VTSDNode::ANCHOR() {}
@@ -4915,14 +4914,14 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::FrameIndex:    return "FrameIndex";
   case ISD::JumpTable:     return "JumpTable";
   case ISD::GLOBAL_OFFSET_TABLE: return "GLOBAL_OFFSET_TABLE";
-  case ISD::RETURNADDR:    return "RETURNADDR";
-  case ISD::FRAMEADDR:     return "FRAMEADDR";
+  case ISD::RETURNADDR: return "RETURNADDR";
+  case ISD::FRAMEADDR: return "FRAMEADDR";
   case ISD::FRAME_TO_ARGS_OFFSET: return "FRAME_TO_ARGS_OFFSET";
   case ISD::EXCEPTIONADDR: return "EXCEPTIONADDR";
-  case ISD::EHSELECTION:   return "EHSELECTION";
-  case ISD::EH_RETURN:     return "EH_RETURN";
+  case ISD::EHSELECTION: return "EHSELECTION";
+  case ISD::EH_RETURN: return "EH_RETURN";
   case ISD::ConstantPool:  return "ConstantPool";
-  case ISD::Symbol:        return "Symbol";
+  case ISD::ExternalSymbol: return "ExternalSymbol";
   case ISD::INTRINSIC_WO_CHAIN: {
     unsigned IID = cast<ConstantSDNode>(getOperand(0))->getZExtValue();
     return Intrinsic::getName((Intrinsic::ID)IID);
@@ -4941,7 +4940,7 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::TargetFrameIndex: return "TargetFrameIndex";
   case ISD::TargetJumpTable:  return "TargetJumpTable";
   case ISD::TargetConstantPool:  return "TargetConstantPool";
-  case ISD::TargetSymbol:  return "TargetSymbol";
+  case ISD::TargetExternalSymbol: return "TargetExternalSymbol";
 
   case ISD::CopyToReg:     return "CopyToReg";
   case ISD::CopyFromReg:   return "CopyFromReg";
@@ -5231,23 +5230,9 @@ void SDNode::print(raw_ostream &OS, const SelectionDAG *G) const {
     } else {
       OS << " #" << R->getReg();
     }
-  } else if (const SymbolSDNode *S =
-             dyn_cast<SymbolSDNode>(this)) {
-    OS << "'" << S->getSymbol() << "' ";
-
-    switch (S->getLinkage()) {
-    default: assert(0 && "Invalid linkage type!"); break;
-    case GlobalValue::ExternalLinkage:       OS << "[external]"; break;
-    case GlobalValue::LinkOnceLinkage:       OS << "[once]"; break;
-    case GlobalValue::WeakLinkage:           OS << "[weak]"; break;
-    case GlobalValue::AppendingLinkage:      OS << "[appending]"; break;
-    case GlobalValue::InternalLinkage:       OS << "[internal]"; break;
-    case GlobalValue::DLLImportLinkage:      OS << "[dllimport]"; break;
-    case GlobalValue::DLLExportLinkage:      OS << "[dllexport]"; break;
-    case GlobalValue::ExternalWeakLinkage:   OS << "[externweak]"; break;
-    case GlobalValue::GhostLinkage:          OS << "[ghost]"; break;
-    case GlobalValue::CommonLinkage:         OS << "[common]"; break;
-    }
+  } else if (const ExternalSymbolSDNode *ES =
+             dyn_cast<ExternalSymbolSDNode>(this)) {
+    OS << "'" << ES->getSymbol() << "'";
   } else if (const SrcValueSDNode *M = dyn_cast<SrcValueSDNode>(this)) {
     if (M->getValue())
       OS << "<" << M->getValue() << ">";

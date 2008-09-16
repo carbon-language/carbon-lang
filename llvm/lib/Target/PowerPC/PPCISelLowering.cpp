@@ -2462,14 +2462,13 @@ SDValue PPCTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG,
   SmallVector<SDValue, 8> Ops;
   unsigned CallOpc = isMachoABI? PPCISD::CALL_Macho : PPCISD::CALL_ELF;
   
-  // If the callee is a GlobalAddress/Symbol node (quite common, every direct
-  // call is) turn it into a TargetGlobalAddress/TargetSymbol node so that
-  // legalize doesn't hack it.
+  // If the callee is a GlobalAddress/ExternalSymbol node (quite common, every
+  // direct call is) turn it into a TargetGlobalAddress/TargetExternalSymbol
+  // node so that legalize doesn't hack it.
   if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
     Callee = DAG.getTargetGlobalAddress(G->getGlobal(), Callee.getValueType());
-  else if (SymbolSDNode *S = dyn_cast<SymbolSDNode>(Callee))
-    Callee = DAG.getTargetSymbol(S->getSymbol(), Callee.getValueType(),
-                                 S->getLinkage());
+  else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee))
+    Callee = DAG.getTargetExternalSymbol(S->getSymbol(), Callee.getValueType());
   else if (SDNode *Dest = isBLACompatibleAddress(Callee, DAG))
     // If this is an absolute destination address, use the munged value.
     Callee = SDValue(Dest, 0);
@@ -2594,7 +2593,7 @@ SDValue PPCTargetLowering::LowerRET(SDValue Op, SelectionDAG &DAG,
 
     assert(((TargetAddress.getOpcode() == ISD::Register &&
              cast<RegisterSDNode>(TargetAddress)->getReg() == PPC::CTR) ||
-            TargetAddress.getOpcode() == ISD::TargetSymbol ||
+            TargetAddress.getOpcode() == ISD::TargetExternalSymbol ||
             TargetAddress.getOpcode() == ISD::TargetGlobalAddress ||
             isa<ConstantSDNode>(TargetAddress)) &&
     "Expecting an global address, external symbol, absolute value or register");
@@ -3415,7 +3414,7 @@ SDValue PPCTargetLowering::LowerBUILD_VECTOR(SDValue Op,
 static SDValue GeneratePerfectShuffle(unsigned PFEntry, SDValue LHS,
                                         SDValue RHS, SelectionDAG &DAG) {
   unsigned OpNum = (PFEntry >> 26) & 0x0F;
-  unsigned LHSID = (PFEntry >> 13) & ((1 << 13)-1);
+  unsigned LHSID  = (PFEntry >> 13) & ((1 << 13)-1);
   unsigned RHSID = (PFEntry >>  0) & ((1 << 13)-1);
   
   enum {

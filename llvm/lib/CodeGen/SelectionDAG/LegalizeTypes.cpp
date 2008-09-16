@@ -623,8 +623,8 @@ SDValue DAGTypeLegalizer::MakeLibCall(RTLIB::Libcall LC, MVT RetVT,
     Entry.isZExt = !isSigned;
     Args.push_back(Entry);
   }
-
-  SDValue Callee = DAG.getSymbol(TLI.getLibcallName(LC), TLI.getPointerTy());
+  SDValue Callee = DAG.getExternalSymbol(TLI.getLibcallName(LC),
+                                           TLI.getPointerTy());
 
   const Type *RetTy = RetVT.getTypeForMVT();
   std::pair<SDValue,SDValue> CallInfo =

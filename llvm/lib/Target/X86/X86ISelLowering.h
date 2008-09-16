@@ -145,8 +145,8 @@ namespace llvm {
       /// at function entry, used for PIC code.
       GlobalBaseReg,
 
-      /// Wrapper - A wrapper node for TargetConstantPool, TargetSymbol, and
-      /// TargetGlobalAddress.
+      /// Wrapper - A wrapper node for TargetConstantPool,
+      /// TargetExternalSymbol, and TargetGlobalAddress.
       Wrapper,
 
       /// WrapperRIP - Special wrapper used under X86-64 PIC mode for RIP
