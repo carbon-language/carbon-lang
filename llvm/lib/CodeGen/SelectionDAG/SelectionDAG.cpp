@@ -1019,6 +1019,9 @@ SDValue SelectionDAG::getJumpTable(int JTI, MVT VT, bool isTarget){
 SDValue SelectionDAG::getConstantPool(Constant *C, MVT VT,
                                       unsigned Alignment, int Offset,
                                       bool isTarget) {
+  if (Alignment == 0)
+    Alignment =
+      TLI.getTargetData()->getPreferredTypeAlignmentShift(C->getType());
   unsigned Opc = isTarget ? ISD::TargetConstantPool : ISD::ConstantPool;
   FoldingSetNodeID ID;
   AddNodeIDNode(ID, Opc, getVTList(VT), 0, 0);
@@ -1039,6 +1042,9 @@ SDValue SelectionDAG::getConstantPool(Constant *C, MVT VT,
 SDValue SelectionDAG::getConstantPool(MachineConstantPoolValue *C, MVT VT,
                                       unsigned Alignment, int Offset,
                                       bool isTarget) {
+  if (Alignment == 0)
+    Alignment =
+      TLI.getTargetData()->getPreferredTypeAlignmentShift(C->getType());
   unsigned Opc = isTarget ? ISD::TargetConstantPool : ISD::ConstantPool;
   FoldingSetNodeID ID;
   AddNodeIDNode(ID, Opc, getVTList(VT), 0, 0);

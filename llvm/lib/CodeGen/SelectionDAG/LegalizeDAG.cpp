@@ -467,12 +467,13 @@ static SDValue ExpandConstantFP(ConstantFPSDNode *CFP, bool UseCP,
   }
 
   SDValue CPIdx = DAG.getConstantPool(LLVMC, TLI.getPointerTy());
+  unsigned Alignment = 1 << cast<ConstantPoolSDNode>(CPIdx)->getAlignment();
   if (Extend)
     return DAG.getExtLoad(ISD::EXTLOAD, OrigVT, DAG.getEntryNode(),
                           CPIdx, PseudoSourceValue::getConstantPool(),
-                          0, VT);
+                          0, VT, false, Alignment);
   return DAG.getLoad(OrigVT, DAG.getEntryNode(), CPIdx,
-                     PseudoSourceValue::getConstantPool(), 0);
+                     PseudoSourceValue::getConstantPool(), 0, false, Alignment);
 }
 
 
@@ -4997,8 +4998,10 @@ SDValue SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
     }
     Constant *CP = ConstantVector::get(CV);
     SDValue CPIdx = DAG.getConstantPool(CP, TLI.getPointerTy());
+    unsigned Alignment = 1 << cast<ConstantPoolSDNode>(CPIdx)->getAlignment();
     return DAG.getLoad(VT, DAG.getEntryNode(), CPIdx,
-                       PseudoSourceValue::getConstantPool(), 0);
+                       PseudoSourceValue::getConstantPool(), 0,
+                       false, Alignment);
   }
   
   if (SplatValue.getNode()) {   // Splat of one value?
@@ -5433,17 +5436,19 @@ ExpandIntToFP(bool isSigned, MVT DestTy, SDValue Source) {
     static Constant *FudgeFactor = ConstantInt::get(Type::Int64Ty, FF);
 
     SDValue CPIdx = DAG.getConstantPool(FudgeFactor, TLI.getPointerTy());
+    unsigned Alignment = 1 << cast<ConstantPoolSDNode>(CPIdx)->getAlignment();
     CPIdx = DAG.getNode(ISD::ADD, TLI.getPointerTy(), CPIdx, CstOffset);
     SDValue FudgeInReg;
     if (DestTy == MVT::f32)
       FudgeInReg = DAG.getLoad(MVT::f32, DAG.getEntryNode(), CPIdx,
-                               PseudoSourceValue::getConstantPool(), 0);
+                               PseudoSourceValue::getConstantPool(), 0,
+                               false, Alignment);
     else if (DestTy.bitsGT(MVT::f32))
       // FIXME: Avoid the extend by construction the right constantpool?
       FudgeInReg = DAG.getExtLoad(ISD::EXTLOAD, DestTy, DAG.getEntryNode(),
                                   CPIdx,
                                   PseudoSourceValue::getConstantPool(), 0,
-                                  MVT::f32);
+                                  MVT::f32, false, Alignment);
     else 
       assert(0 && "Unexpected conversion");
 
@@ -5582,17 +5587,19 @@ SDValue SelectionDAGLegalize::ExpandLegalINT_TO_FP(bool isSigned,
   static Constant *FudgeFactor = ConstantInt::get(Type::Int64Ty, FF);
 
   SDValue CPIdx = DAG.getConstantPool(FudgeFactor, TLI.getPointerTy());
+  unsigned Alignment = 1 << cast<ConstantPoolSDNode>(CPIdx)->getAlignment();
   CPIdx = DAG.getNode(ISD::ADD, TLI.getPointerTy(), CPIdx, CstOffset);
   SDValue FudgeInReg;
   if (DestVT == MVT::f32)
     FudgeInReg = DAG.getLoad(MVT::f32, DAG.getEntryNode(), CPIdx,
-                             PseudoSourceValue::getConstantPool(), 0);
+                             PseudoSourceValue::getConstantPool(), 0,
+                             false, Alignment);
   else {
     FudgeInReg =
       LegalizeOp(DAG.getExtLoad(ISD::EXTLOAD, DestVT,
                                 DAG.getEntryNode(), CPIdx,
                                 PseudoSourceValue::getConstantPool(), 0,
-                                MVT::f32));
+                                MVT::f32, false, Alignment));
   }
 
   return DAG.getNode(ISD::FADD, DestVT, Tmp1, FudgeInReg);
