@@ -1981,8 +1981,8 @@ SCEVHandle ScalarEvolutionsImpl::ComputeIterationCount(const Loop *L) {
 
   // At this point, we would like to compute how many iterations of the 
   // loop the predicate will return true for these inputs.
-  if (isa<SCEVConstant>(LHS) && !isa<SCEVConstant>(RHS)) {
-    // If there is a constant, force it into the RHS.
+  if (LHS->isLoopInvariant(L) && !RHS->isLoopInvariant(L)) {
+    // If there is a loop-invariant, force it into the RHS.
     std::swap(LHS, RHS);
     Cond = ICmpInst::getSwappedPredicate(Cond);
   }
