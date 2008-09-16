@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -scalar-evolution -analyze | grep {Loop header: ( 0 smax  %n) iterations!}
+; RUN: llvm-as < %s | opt -scalar-evolution -analyze | grep {Loop header: (0 smax %n) iterations!}
 ; XFAIL: *
 
 define void @foo(i32 %n) {
