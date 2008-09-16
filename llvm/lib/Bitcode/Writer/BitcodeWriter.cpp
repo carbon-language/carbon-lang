@@ -746,10 +746,10 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
     break;
   }
   case Instruction::Select:
-    Code = bitc::FUNC_CODE_INST_SELECT;
+    Code = bitc::FUNC_CODE_INST_VSELECT;
     PushValueAndType(I.getOperand(1), InstID, Vals, VE);
     Vals.push_back(VE.getValueID(I.getOperand(2)));
-    Vals.push_back(VE.getValueID(I.getOperand(0)));
+    PushValueAndType(I.getOperand(0), InstID, Vals, VE);
     break;
   case Instruction::ExtractElement:
     Code = bitc::FUNC_CODE_INST_EXTRACTELT;
@@ -772,11 +772,10 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
   case Instruction::FCmp:
   case Instruction::VICmp:
   case Instruction::VFCmp:
-    if (isa<VectorType>(I.getOperand(0)->getType())
-        && (I.getOpcode() == Instruction::ICmp
-            || I.getOpcode() == Instruction::FCmp)) {
-      // compare returning vector of Int1Ty
-      Code = bitc::FUNC_CODE_INST_VCMP;
+    if (I.getOpcode() == Instruction::ICmp
+        || I.getOpcode() == Instruction::FCmp) {
+      // compare returning Int1Ty or vector of Int1Ty
+      Code = bitc::FUNC_CODE_INST_CMP2;
     } else {
       Code = bitc::FUNC_CODE_INST_CMP;
     }

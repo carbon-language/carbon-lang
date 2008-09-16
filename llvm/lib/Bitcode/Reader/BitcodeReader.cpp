@@ -1495,15 +1495,32 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
     }
       
     case bitc::FUNC_CODE_INST_SELECT: { // SELECT: [opval, ty, opval, opval]
+      // obsolete form of select
+      // handles select i1 ... in old bitcode
       unsigned OpNum = 0;
       Value *TrueVal, *FalseVal, *Cond;
       if (getValueTypePair(Record, OpNum, NextValueNo, TrueVal) ||
           getValue(Record, OpNum, TrueVal->getType(), FalseVal) ||
           getValue(Record, OpNum, Type::Int1Ty, Cond))
         return Error("Invalid SELECT record");
+      
+      I = SelectInst::Create(Cond, TrueVal, FalseVal);
+      break;
+    }
+      
+    case bitc::FUNC_CODE_INST_VSELECT: {// VSELECT: [ty,opval,opval,predty,pred]
+      // new form of select
+      // handles select i1 or select [N x i1]
+      unsigned OpNum = 0;
+      Value *TrueVal, *FalseVal, *Cond;
+      if (getValueTypePair(Record, OpNum, NextValueNo, TrueVal) ||
+          getValue(Record, OpNum, TrueVal->getType(), FalseVal) ||
+          getValueTypePair(Record, OpNum, NextValueNo, Cond))
+        return Error("Invalid SELECT record");
 
       // select condition can be either i1 or [N x i1]
-      if (const VectorType* vector_type = dyn_cast<const VectorType>(Cond->getType())) {
+      if (const VectorType* vector_type =
+          dyn_cast<const VectorType>(Cond->getType())) {
         // expect <n x i1>
         if (vector_type->getElementType() != Type::Int1Ty) 
           return Error("Invalid SELECT condition type");
@@ -1557,6 +1574,8 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
     }
       
     case bitc::FUNC_CODE_INST_CMP: { // CMP: [opty, opval, opval, pred]
+      // VFCmp/VICmp
+      // or old form of ICmp/FCmp returning bool
       unsigned OpNum = 0;
       Value *LHS, *RHS;
       if (getValueTypePair(Record, OpNum, NextValueNo, LHS) ||
@@ -1574,16 +1593,15 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
         I = new VICmpInst((ICmpInst::Predicate)Record[OpNum], LHS, RHS);
       break;
     }
-    case bitc::FUNC_CODE_INST_VCMP: { // VCMP: [opty, opval, opval, pred]
-      // Fcmp/ICmp returning vector of bool
+    case bitc::FUNC_CODE_INST_CMP2: { // CMP2: [opty, opval, opval, pred]
+      // Fcmp/ICmp returning bool or vector of bool
       unsigned OpNum = 0;
       Value *LHS, *RHS;
       if (getValueTypePair(Record, OpNum, NextValueNo, LHS) ||
           getValue(Record, OpNum, LHS->getType(), RHS) ||
           OpNum+1 != Record.size())
-        return Error("Invalid VCMP record");
+        return Error("Invalid CMP2 record");
       
-      // will always be vector
       if (LHS->getType()->isFPOrFPVector())
         I = new FCmpInst((FCmpInst::Predicate)Record[OpNum], LHS, RHS);
       else 
