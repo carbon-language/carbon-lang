@@ -1213,69 +1213,11 @@ unsigned CFG::getNumBlkExprs() {
 }
 
 //===----------------------------------------------------------------------===//
-// Internal Block-Edge Set; used for modeling persistent <CFGBlock*,CFGBlock*>
-// pairs for use with ProgramPoint.
-//===----------------------------------------------------------------------===//
-
-typedef std::pair<CFGBlock*,CFGBlock*> BPairTy;
-
-namespace llvm {
-  template<> struct FoldingSetTrait<BPairTy*> {
-    static void Profile(const BPairTy* X, FoldingSetNodeID& profile) {
-      profile.AddPointer(X->first);
-      profile.AddPointer(X->second);
-    }
-  };
-}
-
-typedef llvm::FoldingSetNodeWrapper<BPairTy*> PersistPairTy;
-typedef llvm::FoldingSet<PersistPairTy> BlkEdgeSetTy;
-
-const std::pair<CFGBlock*,CFGBlock*>*
-CFG::getBlockEdgeImpl(const CFGBlock* B1, const CFGBlock* B2) {
-  
-  if (!BlkEdgeSet)
-    BlkEdgeSet = new BlkEdgeSetTy();
-    
-  BlkEdgeSetTy* p = static_cast<BlkEdgeSetTy*>(BlkEdgeSet);
-
-  // Profile the edges.
-  llvm::FoldingSetNodeID profile;
-  void* InsertPos;
-  
-  profile.AddPointer(B1);
-  profile.AddPointer(B2);
-  
-  PersistPairTy* V = p->FindNodeOrInsertPos(profile, InsertPos);  
-  
-  if (!V) {
-    assert (llvm::AlignOf<BPairTy>::Alignment_LessEqual_8Bytes);
-    
-    // Allocate the pair, forcing an 8-byte alignment.
-    BPairTy* pair = (BPairTy*) Alloc.Allocate(sizeof(*pair), 8);
-
-    new (pair) BPairTy(const_cast<CFGBlock*>(B1),
-                       const_cast<CFGBlock*>(B2));
-    
-    // Allocate the meta data to store the pair in the FoldingSet.
-    PersistPairTy* ppair = (PersistPairTy*) Alloc.Allocate<PersistPairTy>();
-    new (ppair) PersistPairTy(pair);
-    
-    p->InsertNode(ppair, InsertPos);
-    
-    return pair;
-  }
-  
-  return V->getValue();
-}
-
-//===----------------------------------------------------------------------===//
 // Cleanup: CFG dstor.
 //===----------------------------------------------------------------------===//
 
 CFG::~CFG() {
   delete reinterpret_cast<const BlkExprMapTy*>(BlkExprMap);
-  delete reinterpret_cast<BlkEdgeSetTy*>(BlkEdgeSet);
 }
   
 //===----------------------------------------------------------------------===//

@@ -689,13 +689,10 @@ bool BugTypeCacheLocation::isCached(BugReport& R) {
 }
 
 bool BugTypeCacheLocation::isCached(ProgramPoint P) {
-  
-  void* p = P.getRawData();
-  
-  if (CachedErrors.count(p))
+  if (CachedErrors.count(P))
     return true;
   
-  CachedErrors.insert(p);  
+  CachedErrors.insert(P);  
   return false;
 }
 

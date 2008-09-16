@@ -25,38 +25,67 @@ namespace clang {
     
 class ProgramPoint {
 public:
-  enum Kind { BlockEntranceKind=0,
-              PostStmtKind=1, PostLoadKind=2, PostPurgeDeadSymbolsKind=3,    
-              BlockExitKind=4, BlockEdgeSrcKind=5, BlockEdgeDstKind=6,
-              BlockEdgeAuxKind=7 }; 
-protected:
-  uintptr_t Data;
+  enum Kind { BlockEdgeKind=0, BlockEntranceKind, BlockExitKind, 
+              // Keep the following three together and in this order.
+              PostStmtKind, PostLoadKind, PostPurgeDeadSymbolsKind };
 
-  ProgramPoint(const void* Ptr, Kind k) {
-    setRawData(Ptr, k);
+private:
+  std::pair<uintptr_t,uintptr_t> Data;
+  
+protected:
+  ProgramPoint(const void* P, Kind k)
+    : Data(reinterpret_cast<uintptr_t>(P), (uintptr_t) k) {}
+    
+  ProgramPoint(const void* P1, const void* P2)
+    : Data(reinterpret_cast<uintptr_t>(P1) | 0x1,
+           reinterpret_cast<uintptr_t>(P2)) {}
+  
+protected:
+  void* getData1NoMask() const {
+    assert (getKind() != BlockEdgeKind);
+    return reinterpret_cast<void*>(Data.first);
   }
   
-  ProgramPoint() : Data(0) {}
+  void* getData1() const {
+    assert (getKind() == BlockEdgeKind);
+    return reinterpret_cast<void*>(Data.first & ~0x1);
+  }
 
-  void setRawData(const void* Ptr, Kind k) {
-    assert ((reinterpret_cast<uintptr_t>(const_cast<void*>(Ptr)) & 0x7) == 0
-            && "Address must have at least an 8-byte alignment.");
-    
-    Data = reinterpret_cast<uintptr_t>(const_cast<void*>(Ptr)) | k;
+  void* getData2() const { 
+    assert (getKind() == BlockEdgeKind);
+    return reinterpret_cast<void*>(Data.second);
   }
   
 public:    
-  unsigned getKind() const { return Data & 0x7; }  
-  void* getRawPtr() const { return reinterpret_cast<void*>(Data & ~0x7); }
-  void* getRawData() const { return reinterpret_cast<void*>(Data); }
+
+  uintptr_t getKind() const {
+    return Data.first & 0x1 ? (uintptr_t) BlockEdgeKind : Data.second;
+  }
+
+  // For use with DenseMap.
+  unsigned getHashValue() const {
+    std::pair<void*,void*> P(reinterpret_cast<void*>(Data.first),
+                             reinterpret_cast<void*>(Data.second));
+    return llvm::DenseMapInfo<std::pair<void*,void*> >::getHashValue(P);
+  }
   
   static bool classof(const ProgramPoint*) { return true; }
-  bool operator==(const ProgramPoint & RHS) const { return Data == RHS.Data; }
-  bool operator!=(const ProgramPoint& RHS) const { return Data != RHS.Data; }
+
+  bool operator==(const ProgramPoint & RHS) const {
+    return Data == RHS.Data;
+  }
+
+  bool operator!=(const ProgramPoint& RHS) const {
+    return Data != RHS.Data;
+  }
+    
+  bool operator<(const ProgramPoint& RHS) const {
+    return Data < RHS.Data;
+  }
   
   void Profile(llvm::FoldingSetNodeID& ID) const {
-    ID.AddInteger(getKind());
-    ID.AddPointer(getRawPtr());
+    ID.AddPointer(reinterpret_cast<void*>(Data.first));
+    ID.AddPointer(reinterpret_cast<void*>(Data.second));
   }    
 };
                
@@ -65,7 +94,7 @@ public:
   BlockEntrance(const CFGBlock* B) : ProgramPoint(B, BlockEntranceKind) {}
     
   CFGBlock* getBlock() const {
-    return reinterpret_cast<CFGBlock*>(getRawPtr());
+    return reinterpret_cast<CFGBlock*>(getData1NoMask());
   }
   
   Stmt* getFirstStmt() const {
@@ -83,7 +112,7 @@ public:
   BlockExit(const CFGBlock* B) : ProgramPoint(B, BlockExitKind) {}
   
   CFGBlock* getBlock() const {
-    return reinterpret_cast<CFGBlock*>(getRawPtr());
+    return reinterpret_cast<CFGBlock*>(getData1NoMask());
   }
 
   Stmt* getLastStmt() const {
@@ -107,7 +136,7 @@ protected:
 public:
   PostStmt(const Stmt* S) : ProgramPoint(S, PostStmtKind) {}
       
-  Stmt* getStmt() const { return (Stmt*) getRawPtr(); }
+  Stmt* getStmt() const { return (Stmt*) getData1NoMask(); }
 
   static bool classof(const ProgramPoint* Location) {
     unsigned k = Location->getKind();
@@ -134,26 +163,22 @@ public:
 };
   
 class BlockEdge : public ProgramPoint {
-  typedef std::pair<CFGBlock*,CFGBlock*> BPair;
 public:
-  BlockEdge(CFG& cfg, const CFGBlock* B1, const CFGBlock* B2);
-  
-  /// This ctor forces the BlockEdge to be constructed using an explicitly
-  ///  allocated pair object that is stored in the CFG.  This is usually
-  ///  used to construct edges representing jumps using computed gotos.
-  BlockEdge(CFG& cfg, const CFGBlock* B1, const CFGBlock* B2, bool)
-    : ProgramPoint(cfg.getBlockEdgeImpl(B1, B2), BlockEdgeAuxKind) {}
-
-
-  CFGBlock* getSrc() const;
-  CFGBlock* getDst() const;
+  BlockEdge(const CFGBlock* B1, const CFGBlock* B2)
+    : ProgramPoint(B1, B2) {}
+    
+  CFGBlock* getSrc() const {
+    return static_cast<CFGBlock*>(getData1());
+  }
+    
+  CFGBlock* getDst() const {
+    return static_cast<CFGBlock*>(getData2());
+  }
   
   static bool classof(const ProgramPoint* Location) {
-    unsigned k = Location->getKind();
-    return k >= BlockEdgeSrcKind && k <= BlockEdgeAuxKind;
+    return Location->getKind() == BlockEdgeKind;
   }
 };
-  
 
   
 } // end namespace clang
@@ -163,32 +188,30 @@ namespace llvm { // Traits specialization for DenseMap
   
 template <> struct DenseMapInfo<clang::ProgramPoint> {
 
-  static inline clang::ProgramPoint getEmptyKey() {
-    uintptr_t x =
-     reinterpret_cast<uintptr_t>(DenseMapInfo<void*>::getEmptyKey()) & ~0x7;
-    
-    return clang::BlockEntrance(reinterpret_cast<clang::CFGBlock*>(x));
-  }
-  
-  static inline clang::ProgramPoint getTombstoneKey() {
-    uintptr_t x =
-     reinterpret_cast<uintptr_t>(DenseMapInfo<void*>::getTombstoneKey()) & ~0x7;
-    
-    return clang::BlockEntrance(reinterpret_cast<clang::CFGBlock*>(x));
-  }
-  
-  static unsigned getHashValue(const clang::ProgramPoint& Loc) {
-    return DenseMapInfo<void*>::getHashValue(Loc.getRawData());
-  }
-  
-  static bool isEqual(const clang::ProgramPoint& L,
-                      const clang::ProgramPoint& R) {
-    return L == R;
-  }
-  
-  static bool isPod() {
-    return true;
-  }
+static inline clang::ProgramPoint getEmptyKey() {
+  uintptr_t x =
+   reinterpret_cast<uintptr_t>(DenseMapInfo<void*>::getEmptyKey()) & ~0x7;    
+  return clang::BlockEntrance(reinterpret_cast<clang::CFGBlock*>(x));
+}
+
+static inline clang::ProgramPoint getTombstoneKey() {
+  uintptr_t x =
+   reinterpret_cast<uintptr_t>(DenseMapInfo<void*>::getTombstoneKey()) & ~0x7;    
+  return clang::BlockEntrance(reinterpret_cast<clang::CFGBlock*>(x));
+}
+
+static unsigned getHashValue(const clang::ProgramPoint& Loc) {
+  return Loc.getHashValue();
+}
+
+static bool isEqual(const clang::ProgramPoint& L,
+                    const clang::ProgramPoint& R) {
+  return L == R;
+}
+
+static bool isPod() {
+  return true;
+}
 };
 } // end namespace llvm
 

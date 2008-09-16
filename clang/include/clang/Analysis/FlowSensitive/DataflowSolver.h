@@ -69,12 +69,12 @@ template <> struct ItrTraits<forward_analysis_tag> {
   static StmtItr StmtBegin(const CFGBlock* B) { return B->begin(); }
   static StmtItr StmtEnd(const CFGBlock* B) { return B->end(); }
   
-  static BlockEdge PrevEdge(CFG& cfg, const CFGBlock* B, const CFGBlock* Prev) {
-    return BlockEdge(cfg,Prev,B);
+  static BlockEdge PrevEdge(const CFGBlock* B, const CFGBlock* Prev) {
+    return BlockEdge(Prev, B);
   }
   
-  static BlockEdge NextEdge(CFG& cfg, const CFGBlock* B, const CFGBlock* Next) {
-    return BlockEdge(cfg,B,Next);
+  static BlockEdge NextEdge(const CFGBlock* B, const CFGBlock* Next) {
+    return BlockEdge(B, Next);
   }
 };
 
@@ -92,12 +92,12 @@ template <> struct ItrTraits<backward_analysis_tag> {
   static StmtItr StmtBegin(const CFGBlock* B) { return B->rbegin(); }
   static StmtItr StmtEnd(const CFGBlock* B) { return B->rend(); }    
   
-  static BlockEdge PrevEdge(CFG& cfg, const CFGBlock* B, const CFGBlock* Prev) {
-    return BlockEdge(cfg,B,Prev);
+  static BlockEdge PrevEdge(const CFGBlock* B, const CFGBlock* Prev) {
+    return BlockEdge(B, Prev);
   }
   
-  static BlockEdge NextEdge(CFG& cfg, const CFGBlock* B, const CFGBlock* Next) {
-    return BlockEdge(cfg,Next,B);
+  static BlockEdge NextEdge(const CFGBlock* B, const CFGBlock* Next) {
+    return BlockEdge(Next, B);
   }
 };
 } // end namespace dataflow
@@ -237,7 +237,7 @@ private:
     for (PrevBItr I=ItrTraits::PrevBegin(B),E=ItrTraits::PrevEnd(B); I!=E; ++I){
 
       typename EdgeDataMapTy::iterator EI =
-        M.find(ItrTraits::PrevEdge(cfg,B,*I));
+        M.find(ItrTraits::PrevEdge(B, *I));
 
       if (EI != M.end()) {
         if (firstMerge) {
@@ -287,7 +287,7 @@ private:
   //    forward/backward analysis respectively)
   void UpdateEdges(CFG& cfg, const CFGBlock* B, ValTy& V) {
     for (NextBItr I=ItrTraits::NextBegin(B), E=ItrTraits::NextEnd(B); I!=E; ++I)
-      UpdateEdgeValue(ItrTraits::NextEdge(cfg,B,*I),V,*I);
+      UpdateEdgeValue(ItrTraits::NextEdge(B, *I),V,*I);
   }
     
   /// UpdateEdgeValue - Update the value associated with a given edge.

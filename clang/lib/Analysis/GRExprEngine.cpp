@@ -2324,17 +2324,16 @@ template <typename ITERATOR>
 static void AddSources(std::vector<GRExprEngine::NodeTy*>& Sources,
                        ITERATOR I, ITERATOR E) {
   
-  llvm::SmallPtrSet<void*,10> CachedSources;
+  llvm::SmallSet<ProgramPoint,10> CachedSources;
   
   for ( ; I != E; ++I ) {
     GRExprEngine::NodeTy* N = GetGraphNode(I);
-    void* p = N->getLocation().getRawData();
+    ProgramPoint P = N->getLocation();
     
-    if (CachedSources.count(p))
+    if (CachedSources.count(P))
       continue;
     
-    CachedSources.insert(p);
-    
+    CachedSources.insert(P);    
     Sources.push_back(N);
   }
 }

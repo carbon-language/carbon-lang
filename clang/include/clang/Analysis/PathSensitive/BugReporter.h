@@ -57,7 +57,7 @@ public:
 };
   
 class BugTypeCacheLocation : public BugType {
-  llvm::SmallPtrSet<void*,10> CachedErrors;
+  llvm::SmallSet<ProgramPoint,10> CachedErrors;
 public:
   BugTypeCacheLocation() {}
   virtual ~BugTypeCacheLocation() {}  

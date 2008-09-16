@@ -69,7 +69,7 @@ bool GRCoreEngineImpl::ExecuteWorkList(unsigned Steps) {
     
     // Construct an edge representing the
     // starting location in the function.
-    BlockEdge StartLoc(getCFG(), Entry, Succ);
+    BlockEdge StartLoc(Entry, Succ);
     
     // Set the current block counter to being empty.
     WList->setBlockCounter(BCounterFactory.GetEmptyCounter());
@@ -230,7 +230,7 @@ void GRCoreEngineImpl::HandleBlockExit(CFGBlock * B, ExplodedNodeImpl* Pred) {
   assert (B->succ_size() == 1 &&
           "Blocks with no terminator should have at most 1 successor.");
     
-  GenerateNode(BlockEdge(getCFG(),B,*(B->succ_begin())), Pred->State, Pred);
+  GenerateNode(BlockEdge(B, *(B->succ_begin())), Pred->State, Pred);
 }
 
 void GRCoreEngineImpl::HandleBranch(Expr* Cond, Stmt* Term, CFGBlock * B,
@@ -350,8 +350,7 @@ ExplodedNodeImpl* GRBranchNodeBuilderImpl::generateNodeImpl(const void* State,
   bool IsNew;
   
   ExplodedNodeImpl* Succ =
-    Eng.G->getNodeImpl(BlockEdge(Eng.getCFG(), Src, branch ? DstT : DstF),
-                       State, &IsNew);
+    Eng.G->getNodeImpl(BlockEdge(Src, branch ? DstT : DstF), State, &IsNew);
   
   Succ->addPredecessor(Pred);
   
@@ -382,8 +381,7 @@ GRIndirectGotoNodeBuilderImpl::generateNodeImpl(const Iterator& I,
   bool IsNew;
   
   ExplodedNodeImpl* Succ =
-    Eng.G->getNodeImpl(BlockEdge(Eng.getCFG(), Src, I.getBlock(), true),
-                       St, &IsNew);
+    Eng.G->getNodeImpl(BlockEdge(Src, I.getBlock()), St, &IsNew);
               
   Succ->addPredecessor(Pred);
   
@@ -407,9 +405,8 @@ GRSwitchNodeBuilderImpl::generateCaseStmtNodeImpl(const Iterator& I,
 
   bool IsNew;
   
-  ExplodedNodeImpl* Succ = Eng.G->getNodeImpl(BlockEdge(Eng.getCFG(), Src,
-                                                        I.getBlock()),
-                                              St, &IsNew);  
+  ExplodedNodeImpl* Succ = Eng.G->getNodeImpl(BlockEdge(Src, I.getBlock()),
+                                                St, &IsNew);  
   Succ->addPredecessor(Pred);
   
   if (IsNew) {
@@ -431,9 +428,8 @@ GRSwitchNodeBuilderImpl::generateDefaultCaseNodeImpl(const void* St,
   
   bool IsNew;
   
-  ExplodedNodeImpl* Succ = Eng.G->getNodeImpl(BlockEdge(Eng.getCFG(), Src,
-                                                        DefaultBlock),
-                                              St, &IsNew);  
+  ExplodedNodeImpl* Succ = Eng.G->getNodeImpl(BlockEdge(Src, DefaultBlock),
+                                                St, &IsNew);  
   Succ->addPredecessor(Pred);
   
   if (IsNew) {

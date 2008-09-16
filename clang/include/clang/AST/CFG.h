@@ -284,7 +284,7 @@ public:
   //===--------------------------------------------------------------------===//
 
   CFG() : Entry(NULL), Exit(NULL), IndirectGotoBlock(NULL), NumBlockIDs(0), 
-          BlkExprMap(NULL), BlkEdgeSet(NULL) {};
+          BlkExprMap(NULL) {};
   
   ~CFG();
   
@@ -304,26 +304,9 @@ private:
   //  It represents a map from Expr* to integers to record the set of 
   //  block-level expressions and their "statement number" in the CFG.
   void*     BlkExprMap;
-  
-  /// BlkEdgeSet - An opaque pointer to prevent inclusion of FoldingSet.h.
-  ///  The set contains std::pair<CFGBlock*,CFGBlock*> objects that have
-  ///  stable references for use by the 'BlockEdge' class.  This set is intended
-  ///  to be sparse, as it only contains edges whether both the source
-  ///  and destination block have multiple successors/predecessors.
-  void*     BlkEdgeSet;
-  
-  /// Alloc - An internal allocator used for BlkEdgeSet.
-  llvm::BumpPtrAllocator Alloc;
-  
-  friend class BlockEdge;
-  
-  /// getBlockEdgeImpl - Utility method used by the class BlockEdge.  The CFG
-  ///  stores a set of interned std::pair<CFGBlock*,CFGBlock*> that can
-  ///  be used by BlockEdge to refer to edges that cannot be represented
-  ///  by a single pointer.
-  const std::pair<CFGBlock*,CFGBlock*>* getBlockEdgeImpl(const CFGBlock* B1,
-                                                         const CFGBlock* B2);
-  
+    
+  /// Alloc - An internal allocator.
+  llvm::BumpPtrAllocator Alloc;  
 };
 } // end namespace clang
 
