@@ -1831,11 +1831,6 @@ SCEVHandle ScalarEvolutionsImpl::createSCEV(Value *V) {
   case Instruction::Select:
     // This could be a smax or umax that was lowered earlier.
     // Try to recover it.
-    //
-    // FIXME: This doesn't recognize code like this:
-    //    %t = icmp sgt i32 %n, -1
-    //    %max = select i1 %t, i32 %n, i32 0
-    //
     if (ICmpInst *ICI = dyn_cast<ICmpInst>(U->getOperand(0))) {
       Value *LHS = ICI->getOperand(0);
       Value *RHS = ICI->getOperand(1);
