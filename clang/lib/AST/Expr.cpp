@@ -1455,12 +1455,6 @@ Stmt::child_iterator BlockStmtExpr::child_end() {
   return reinterpret_cast<Stmt**>(&Body)+1;
 }
 
-Stmt::child_iterator BlockExprExpr::child_begin() {
-  return reinterpret_cast<Stmt**>(&BodyExpr);
-}
-Stmt::child_iterator BlockExprExpr::child_end() {
-  return reinterpret_cast<Stmt**>(&BodyExpr)+1;
-}
 Stmt::child_iterator BlockDeclRefExpr::child_begin(){return child_iterator();}
 Stmt::child_iterator BlockDeclRefExpr::child_end() { return child_iterator();}
 

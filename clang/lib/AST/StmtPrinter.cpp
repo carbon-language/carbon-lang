@@ -912,11 +912,6 @@ void StmtPrinter::VisitBlockStmtExpr(BlockStmtExpr *Node) {
   PrintRawCompoundStmt(Node->getBody());
 }
 
-void StmtPrinter::VisitBlockExprExpr(BlockExprExpr *Node) {
-  VisitBlockExpr(Node);
-  PrintExpr(Node->getExpr());
-}
-
 void StmtPrinter::VisitBlockDeclRefExpr(BlockDeclRefExpr *Node) {
   OS << Node->getDecl()->getName();
 }

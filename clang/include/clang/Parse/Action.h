@@ -549,11 +549,6 @@ public:
   virtual ExprResult ActOnBlockStmtExpr(SourceLocation CaretLoc, StmtTy *Body,
                                         Scope *CurScope) { return 0; }
 
-  /// ActOnBlockExprExpr - This is called when the body of a block
-  /// expression literal was successfully completed.  ^(int x)[foo bar: x]
-  virtual ExprResult ActOnBlockExprExpr(SourceLocation CaretLoc, ExprTy *Body,
-                                        Scope *CurScope) { return 0; }
-
   //===------------------------- C++ Declarations -------------------------===//
 
   /// ActOnStartNamespaceDef - This is called at the start of a namespace

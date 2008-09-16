@@ -21,8 +21,6 @@ T somefunction() {
 
 	I(^{ });
 
-  noop = ^noop; // expected-error {{incompatible block pointer types}}
-
 	return ^{printf("\nClosure\n"); };  // expected-error {{returning block that lives on the local stack}}
 }
 void test2() {
@@ -42,10 +40,6 @@ void test2() {
 
 foo:
 	takeclosure(^{ x = 4; });  // expected-error {{expression is not assignable}}
-  
-  takeclosure(^test2());
-  takeclosure(^(void)(void)printf("hello world!\n"));
-
 }
 
 
@@ -61,17 +55,7 @@ void test4() {
 void *X;
 
 void test_arguments() {
-  takeintint(^(int x)(x+1));
-
-  // Closure expr of statement expr.
-  takeintint(^(int x)({ return 42; }));  // expected-error {{return not allowed in block expression literal}}
-  
   int y;
-  takeintint(^(int x)(x+y));
-#if 0
-  // FIXME: this causes clang to crash.
-  X = ^(x+r); // expected-error {{expected ')' in argument list}}
-#endif
   int (^c)(char);
   (1 ? c : 0)('x');
   (1 ? 0 : c)('x');

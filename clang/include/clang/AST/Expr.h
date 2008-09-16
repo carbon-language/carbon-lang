@@ -1487,6 +1487,7 @@ private:
 //===----------------------------------------------------------------------===//
 
 /// BlockExpr - Common base class between BlockStmtExpr and BlockExprExpr.
+/// FIXME: Combine with BlockStmtExpr...no more need for a common base.
 class BlockExpr : public Expr {
   SourceLocation CaretLocation;
   llvm::SmallVector<ParmVarDecl*, 8> Args;
@@ -1508,8 +1509,7 @@ public:
   arg_iterator arg_end() const { return Args.end(); }
   
   static bool classof(const Stmt *T) { 
-    return T->getStmtClass() == BlockStmtExprClass ||
-           T->getStmtClass() == BlockExprExprClass; 
+    return T->getStmtClass() == BlockStmtExprClass;
   }
   static bool classof(const BlockExpr *) { return true; }
 };
@@ -1544,33 +1544,6 @@ public:
   static BlockStmtExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
   
-/// BlockExprExpr - Represents a block literal with syntax:
-///   ^(expression)   or ^(int arg1, float arg2)(expression)
-class BlockExprExpr : public BlockExpr {
-  Expr *BodyExpr;
-public:
-  BlockExprExpr(SourceLocation CaretLoc, QualType Ty, ParmVarDecl **args, 
-                   unsigned numargs, Expr *body) : 
-    BlockExpr(BlockExprExprClass, Ty, CaretLoc,
-                args, numargs), BodyExpr(body) {}
-  
-  const Expr *getExpr() const { return BodyExpr; }
-  Expr *getExpr() { return BodyExpr; }
-
-  virtual SourceRange getSourceRange() const {
-    return SourceRange(getCaretLocation(), BodyExpr->getLocEnd());
-  }
-  
-  // Iterators
-  virtual child_iterator child_begin();
-  virtual child_iterator child_end();
-  
-  static bool classof(const Stmt *T) { 
-    return T->getStmtClass() == BlockExprExprClass; 
-  }
-  static bool classof(const BlockExprExpr *) { return true; }
-};
-
 /// BlockDeclRefExpr - A reference to a declared variable, function,
 /// enum, etc.
 class BlockDeclRefExpr : public Expr {

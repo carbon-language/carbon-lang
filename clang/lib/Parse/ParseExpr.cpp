@@ -1077,11 +1077,10 @@ bool Parser::ParseExpressionList(ExprListTy &Exprs, CommaLocsTy &CommaLocs) {
 }
 
 /// ParseBlockLiteralExpression - Parse a block literal, which roughly looks
-/// like ^(int x){ return x+1; }  or   ^(int y)foo(4, y, z)
+/// like ^(int x){ return x+1; }
 ///
 ///         block-literal:
 /// [clang]   '^' block-args[opt] compound-statement
-/// [clang]   '^' block-args cast-expression
 /// [clang] block-args:
 /// [clang]   '(' parameter-list ')'
 ///
@@ -1122,26 +1121,15 @@ Parser::ExprResult Parser::ParseBlockLiteralExpression() {
   // Inform sema that we are starting a block.
   Actions.ActOnBlockStart(CaretLoc, CurScope, ParamInfo);
   
-  ExprResult Result;
+  ExprResult Result = true;
   if (Tok.is(tok::l_brace)) {
     StmtResult Stmt = ParseCompoundStatementBody();
     if (!Stmt.isInvalid) {
       Result = Actions.ActOnBlockStmtExpr(CaretLoc, Stmt.Val, CurScope);
     } else {
       Actions.ActOnBlockError(CaretLoc, CurScope);
-      Result = true;
-    }
-  } else {
-    ExprResult Expr = ParseCastExpression(false);
-    if (!Expr.isInvalid) {
-      Result = Actions.ActOnBlockExprExpr(CaretLoc, Expr.Val, CurScope);
-    } else {
-      Actions.ActOnBlockError(CaretLoc, CurScope);
-      Diag(Tok, diag::err_expected_block_lbrace);
-      Result = true;
     }
   }
-
   ExitScope();
   return Result;
 }

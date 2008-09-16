@@ -2890,40 +2890,6 @@ Sema::ExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc, StmtTy *body,
                            &BSI->Params[0], BSI->Params.size(), Body.take());
 }
 
-/// ActOnBlockExprExpr - This is called when the body of a block
-/// expression literal was successfully completed.  ^(int x)[foo bar: x]
-Sema::ExprResult Sema::ActOnBlockExprExpr(SourceLocation CaretLoc, ExprTy *body,
-                                      Scope *CurScope) {
-  // Ensure that CurBlock is deleted.
-  llvm::OwningPtr<BlockSemaInfo> BSI(CurBlock);
-  llvm::OwningPtr<Expr> Body(static_cast<Expr*>(body));
-
-  // Pop off CurBlock, handle nested blocks.
-  CurBlock = CurBlock->PrevBlockInfo;
-  
-  if (BSI->ReturnType) {
-    Diag(CaretLoc, diag::err_return_in_block_expression);
-    return true;
-  }
-  
-  QualType RetTy = Body->getType();
-  
-  llvm::SmallVector<QualType, 8> ArgTypes;
-  for (unsigned i = 0, e = BSI->Params.size(); i != e; ++i)
-    ArgTypes.push_back(BSI->Params[i]->getType());
-  
-  QualType BlockTy;
-  if (!BSI->hasPrototype)
-    BlockTy = Context.getFunctionTypeNoProto(RetTy);
-  else
-    BlockTy = Context.getFunctionType(RetTy, &ArgTypes[0], ArgTypes.size(),
-                                      BSI->isVariadic);
-  
-  BlockTy = Context.getBlockPointerType(BlockTy);
-  return new BlockExprExpr(CaretLoc, BlockTy, 
-                           &BSI->Params[0], BSI->Params.size(), Body.take());
-}
-
 /// ExprsMatchFnType - return true if the Exprs in array Args have
 /// QualTypes that match the QualTypes of the arguments of the FnType.
 /// The number of arguments has already been validated to match the number of

@@ -574,11 +574,6 @@ public:
   virtual ExprResult ActOnBlockStmtExpr(SourceLocation CaretLoc, StmtTy *Body,
                                         Scope *CurScope);
 
-  /// ActOnBlockExprExpr - This is called when the body of a block
-  /// expression literal was successfully completed.  ^(int x)[foo bar: x]
-  virtual ExprResult ActOnBlockExprExpr(SourceLocation CaretLoc, ExprTy *Body,
-                                        Scope *CurScope);
-  
   // Act on C++ namespaces
   virtual DeclTy *ActOnStartNamespaceDef(Scope *S, SourceLocation IdentLoc,
                                         IdentifierInfo *Ident,
