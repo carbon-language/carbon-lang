@@ -1192,7 +1192,7 @@ def ATOMUMAX64: I<0, Pseudo, (outs GR64:$dst),(ins i64mem:$ptr, GR64:$val),
 // Non-Instruction Patterns
 //===----------------------------------------------------------------------===//
 
-// ConstantPool GlobalAddress, ExternalSymbol, and JumpTable
+// ConstantPool GlobalAddress, Symbol, and JumpTable
 def : Pat<(i64 (X86Wrapper tconstpool  :$dst)),
           (MOV64ri tconstpool  :$dst)>, Requires<[NotSmallCode]>;
 def : Pat<(i64 (X86Wrapper tjumptable  :$dst)),

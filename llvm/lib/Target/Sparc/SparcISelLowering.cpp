@@ -407,11 +407,11 @@ static SDValue LowerCALL(SDValue Op, SelectionDAG &DAG) {
 
   // If the callee is a GlobalAddress node (quite common, every direct call is)
   // turn it into a TargetGlobalAddress node so that legalize doesn't hack it.
-  // Likewise ExternalSymbol -> TargetExternalSymbol.
+  // Likewise Symbol -> TargetSymbol.
   if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
     Callee = DAG.getTargetGlobalAddress(G->getGlobal(), MVT::i32);
-  else if (ExternalSymbolSDNode *E = dyn_cast<ExternalSymbolSDNode>(Callee))
-    Callee = DAG.getTargetExternalSymbol(E->getSymbol(), MVT::i32);
+  else if (SymbolSDNode *S = dyn_cast<SymbolSDNode>(Callee))
+    Callee = DAG.getTargetSymbol(S->getSymbol(), MVT::i32, S->getLinkage());
 
   std::vector<MVT> NodeTys;
   NodeTys.push_back(MVT::Other);   // Returns a chain

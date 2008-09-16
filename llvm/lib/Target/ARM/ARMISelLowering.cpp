@@ -531,9 +531,9 @@ SDValue ARMTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
     InFlag = Chain.getValue(1);
   }
 
-  // If the callee is a GlobalAddress/ExternalSymbol node (quite common, every
-  // direct call is) turn it into a TargetGlobalAddress/TargetExternalSymbol
-  // node so that legalize doesn't hack it.
+  // If the callee is a GlobalAddress/Symbol node (quite common, every direct
+  // call is) turn it into a TargetGlobalAddress/TargetSymbol node so that
+  // legalize doesn't hack it.
   bool isDirect = false;
   bool isARMFunc = false;
   bool isLocalARMFunc = false;
@@ -558,7 +558,7 @@ SDValue ARMTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
       Callee = DAG.getNode(ARMISD::PIC_ADD, getPointerTy(), Callee, PICLabel);
    } else
       Callee = DAG.getTargetGlobalAddress(GV, getPointerTy());
-  } else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee)) {
+  } else if (SymbolSDNode *S = dyn_cast<SymbolSDNode>(Callee)) {
     isDirect = true;
     bool isStub = Subtarget->isTargetDarwin() &&
                   getTargetMachine().getRelocationModel() != Reloc::Static;
@@ -574,7 +574,7 @@ SDValue ARMTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
       SDValue PICLabel = DAG.getConstant(ARMPCLabelIndex++, MVT::i32);
       Callee = DAG.getNode(ARMISD::PIC_ADD, getPointerTy(), Callee, PICLabel);
     } else
-      Callee = DAG.getTargetExternalSymbol(Sym, getPointerTy());
+      Callee = DAG.getTargetSymbol(Sym, getPointerTy(), S->getLinkage());
   }
 
   // FIXME: handle tail calls differently.
@@ -715,12 +715,11 @@ static SDValue LowerRET(SDValue Op, SelectionDAG &DAG) {
   return DAG.getNode(ARMISD::RET_FLAG, MVT::Other, Copy, Copy.getValue(1));
 }
 
-// ConstantPool, JumpTable, GlobalAddress, and ExternalSymbol are lowered as 
-// their target countpart wrapped in the ARMISD::Wrapper node. Suppose N is
-// one of the above mentioned nodes. It has to be wrapped because otherwise
-// Select(N) returns N. So the raw TargetGlobalAddress nodes, etc. can only
-// be used to form addressing mode. These wrapped nodes will be selected
-// into MOVi.
+// ConstantPool, JumpTable, GlobalAddress, and Symbol are lowered as their
+// target countpart wrapped in the ARMISD::Wrapper node. Suppose N is one of the
+// above mentioned nodes. It has to be wrapped because otherwise Select(N)
+// returns N. So the raw TargetGlobalAddress nodes, etc. can only be used to
+// form addressing mode. These wrapped nodes will be selected into MOVi.
 static SDValue LowerConstantPool(SDValue Op, SelectionDAG &DAG) {
   MVT PtrVT = Op.getValueType();
   ConstantPoolSDNode *CP = cast<ConstantPoolSDNode>(Op);
@@ -760,7 +759,7 @@ ARMTargetLowering::LowerToTLSGeneralDynamicModel(GlobalAddressSDNode *GA,
   std::pair<SDValue, SDValue> CallResult =
     LowerCallTo(Chain, (const Type *) Type::Int32Ty, false, false, false,
                 CallingConv::C, false,
-                DAG.getExternalSymbol("__tls_get_addr", PtrVT), Args, DAG);
+                DAG.getSymbol("__tls_get_addr", PtrVT), Args, DAG);
   return CallResult.first;
 }
 

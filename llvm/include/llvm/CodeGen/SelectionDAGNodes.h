@@ -21,6 +21,7 @@
 
 #include "llvm/Value.h"
 #include "llvm/Constants.h"
+#include "llvm/GlobalValue.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/iterator.h"
@@ -89,7 +90,7 @@ namespace ISD {
     BasicBlock, VALUETYPE, ARG_FLAGS, CONDCODE, Register,
     Constant, ConstantFP,
     GlobalAddress, GlobalTLSAddress, FrameIndex,
-    JumpTable, ConstantPool, ExternalSymbol,
+    JumpTable, ConstantPool, Symbol,
 
     // The address of the GOT
     GLOBAL_OFFSET_TABLE,
@@ -133,7 +134,7 @@ namespace ISD {
     TargetFrameIndex,
     TargetJumpTable,
     TargetConstantPool,
-    TargetExternalSymbol,
+    TargetSymbol,
     
     /// RESULT = INTRINSIC_WO_CHAIN(INTRINSICID, arg1, arg2, ...)
     /// This node represents a target intrinsic function with no side effects.
@@ -487,7 +488,7 @@ namespace ISD {
     // INLINEASM - Represents an inline asm block.  This node always has two
     // return values: a chain and a flag result.  The inputs are as follows:
     //   Operand #0   : Input chain.
-    //   Operand #1   : a ExternalSymbolSDNode with a pointer to the asm string.
+    //   Operand #1   : A SymbolSDNode with a pointer to the asm string.
     //   Operand #2n+2: A RegisterNode.
     //   Operand #2n+3: A TargetConstant, indicating if the reg is a use/def
     //   Operand #last: Optional, an incoming flag.
@@ -2045,23 +2046,24 @@ public:
   }
 };
 
-class ExternalSymbolSDNode : public SDNode {
+class SymbolSDNode : public SDNode {
   const char *Symbol;
+  GlobalValue::LinkageTypes Linkage;
   virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
 protected:
   friend class SelectionDAG;
-  ExternalSymbolSDNode(bool isTarget, const char *Sym, MVT VT)
-    : SDNode(isTarget ? ISD::TargetExternalSymbol : ISD::ExternalSymbol,
-             getSDVTList(VT)), Symbol(Sym) {
-  }
+  SymbolSDNode(bool isTarget, const char *Sym, MVT VT,
+               GlobalValue::LinkageTypes L)
+    : SDNode(isTarget ? ISD::TargetSymbol : ISD::Symbol,
+             getSDVTList(VT)), Symbol(Sym), Linkage(L) {}
 public:
-
   const char *getSymbol() const { return Symbol; }
+  GlobalValue::LinkageTypes getLinkage() const { return Linkage; }
 
-  static bool classof(const ExternalSymbolSDNode *) { return true; }
+  static bool classof(const SymbolSDNode *) { return true; }
   static bool classof(const SDNode *N) {
-    return N->getOpcode() == ISD::ExternalSymbol ||
-           N->getOpcode() == ISD::TargetExternalSymbol;
+    return N->getOpcode() == ISD::Symbol ||
+           N->getOpcode() == ISD::TargetSymbol;
   }
 };
 

@@ -282,8 +282,11 @@ public:
     return getConstantPool(C, VT, Align, Offset, true);
   }
   SDValue getBasicBlock(MachineBasicBlock *MBB);
-  SDValue getExternalSymbol(const char *Sym, MVT VT);
-  SDValue getTargetExternalSymbol(const char *Sym, MVT VT);
+  SDValue getSymbol(const char *Sym, MVT VT,
+                   GlobalValue::LinkageTypes LT = GlobalValue::ExternalLinkage);
+  SDValue getTargetSymbol(const char *Sym, MVT VT,
+                          GlobalValue::LinkageTypes LT =
+                            GlobalValue::ExternalLinkage);
   SDValue getArgFlags(ISD::ArgFlagsTy Flags);
   SDValue getValueType(MVT);
   SDValue getRegister(unsigned Reg, MVT VT);
@@ -758,8 +761,8 @@ private:
 
   std::vector<SDNode*> ValueTypeNodes;
   std::map<MVT, SDNode*, MVT::compareRawBits> ExtendedValueTypeNodes;
-  StringMap<SDNode*> ExternalSymbols;
-  StringMap<SDNode*> TargetExternalSymbols;
+  StringMap<SDNode*> Symbols;
+  StringMap<SDNode*> TargetSymbols;
 };
 
 template <> struct GraphTraits<SelectionDAG*> : public GraphTraits<SDNode*> {

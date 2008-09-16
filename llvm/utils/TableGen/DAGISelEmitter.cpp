@@ -802,11 +802,11 @@ public:
         NodeOps.push_back(Val);
       } else if (!N->isLeaf() && N->getOperator()->getName() == "texternalsym"){
         Record *Op = OperatorMap[N->getName()];
-        // Transform ExternalSymbol to TargetExternalSymbol
+        // Transform Symbol to TargetSymbol
         if (Op && Op->getName() == "externalsym") {
           std::string TmpVar = "Tmp"+utostr(ResNo);
           emitCode("SDValue " + TmpVar + " = CurDAG->getTarget"
-                   "ExternalSymbol(cast<ExternalSymbolSDNode>(" +
+                   "Symbol(cast<SymbolSDNode>(" +
                    Val + ")->getSymbol(), " +
                    getEnumName(N->getTypeNum(0)) + ");");
           // Add Tmp<ResNo> to VariableMap, so that we don't multiply select
@@ -1949,7 +1949,7 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "  case ISD::TargetConstantFP:\n"
      << "  case ISD::TargetConstantPool:\n"
      << "  case ISD::TargetFrameIndex:\n"
-     << "  case ISD::TargetExternalSymbol:\n"
+     << "  case ISD::TargetSymbol:\n"
      << "  case ISD::TargetJumpTable:\n"
      << "  case ISD::TargetGlobalTLSAddress:\n"
      << "  case ISD::TargetGlobalAddress: {\n"

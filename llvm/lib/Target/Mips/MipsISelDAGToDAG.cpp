@@ -159,7 +159,7 @@ SelectAddr(SDValue Op, SDValue Addr, SDValue &Offset, SDValue &Base)
       return true;
     }
   } else {
-    if ((Addr.getOpcode() == ISD::TargetExternalSymbol ||
+    if ((Addr.getOpcode() == ISD::TargetSymbol ||
         Addr.getOpcode() == ISD::TargetGlobalAddress))
       return false;
   }    
@@ -354,7 +354,7 @@ Select(SDValue N)
         SDValue InFlag(0, 0);
 
         if ( (isa<GlobalAddressSDNode>(Callee)) ||
-             (isa<ExternalSymbolSDNode>(Callee)) )
+             (isa<SymbolSDNode>(Callee)) )
         {
           /// Direct call for global addresses and external symbols
           SDValue GPReg = CurDAG->getRegister(Mips::GP, MVT::i32);

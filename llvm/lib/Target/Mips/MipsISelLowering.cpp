@@ -684,14 +684,14 @@ LowerCALL(SDValue Op, SelectionDAG &DAG)
     InFlag = Chain.getValue(1);
   }
 
-  // If the callee is a GlobalAddress/ExternalSymbol node (quite common, every
-  // direct call is) turn it into a TargetGlobalAddress/TargetExternalSymbol 
-  // node so that legalize doesn't hack it. 
+  // If the callee is a GlobalAddress/Symbol node (quite common, every direct
+  // call is) turn it into a TargetGlobalAddress/TargetSymbol node so that
+  // legalize doesn't hack it.
   if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) 
     Callee = DAG.getTargetGlobalAddress(G->getGlobal(), getPointerTy());
-  else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee))
-    Callee = DAG.getTargetExternalSymbol(S->getSymbol(), getPointerTy());
-
+  else if (SymbolSDNode *S = dyn_cast<SymbolSDNode>(Callee))
+    Callee = DAG.getTargetSymbol(S->getSymbol(), getPointerTy(),
+                                 S->getLinkage());
 
   // MipsJmpLink = #chain, #target_address, #opt_in_flags...
   //             = Chain, Callee, Reg#1, Reg#2, ...  

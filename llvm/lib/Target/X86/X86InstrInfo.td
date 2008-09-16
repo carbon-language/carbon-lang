@@ -2703,7 +2703,7 @@ def ATOMNAND8 : I<0, Pseudo,(outs GR8:$dst),(ins i8mem:$ptr, GR8:$val),
 // Non-Instruction Patterns
 //===----------------------------------------------------------------------===//
 
-// ConstantPool GlobalAddress, ExternalSymbol, and JumpTable
+// ConstantPool GlobalAddress, Symbol, and JumpTable
 def : Pat<(i32 (X86Wrapper tconstpool  :$dst)), (MOV32ri tconstpool  :$dst)>;
 def : Pat<(i32 (X86Wrapper tjumptable  :$dst)), (MOV32ri tjumptable  :$dst)>;
 def : Pat<(i32 (X86Wrapper tglobaltlsaddr:$dst)),(MOV32ri tglobaltlsaddr:$dst)>;

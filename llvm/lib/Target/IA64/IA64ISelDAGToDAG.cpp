@@ -329,7 +329,7 @@ SDNode *IA64DAGToDAGISel::Select(SDValue Op) {
       dyn_cast<GlobalAddressSDNode>(N->getOperand(1))) {
       CallOpcode = IA64::BRCALL_IPREL_GA;
       CallOperand = CurDAG->getTargetGlobalAddress(GASD->getGlobal(), MVT::i64);
-    } else if (isa<ExternalSymbolSDNode>(N->getOperand(1))) {
+    } else if (isa<SymbolSDNode>(N->getOperand(1))) {
       // FIXME: we currently NEED this case for correctness, to avoid
       // "non-pic code with imm reloc.n against dynamic symbol" errors
     CallOpcode = IA64::BRCALL_IPREL_ES;
@@ -448,9 +448,9 @@ SDNode *IA64DAGToDAGISel::Select(SDValue Op) {
   }
   
 /* XXX
-   case ISD::ExternalSymbol: {
-     SDValue EA = CurDAG->getTargetExternalSymbol(
-       cast<ExternalSymbolSDNode>(N)->getSymbol(),
+   case ISD::Symbol: {
+     SDValue EA = CurDAG->getTargetSymbol(
+       cast<SymbolSDNode>(N)->getSymbol(),
        MVT::i64);
      SDValue Tmp = CurDAG->getTargetNode(IA64::ADDL_EA, MVT::i64, 
                                            CurDAG->getRegister(IA64::r1,

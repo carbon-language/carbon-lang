@@ -288,7 +288,7 @@ void ScheduleDAG::AddOperand(MachineInstr *MI, SDValue Op,
     else
       Idx = ConstPool->getConstantPoolIndex(CP->getConstVal(), Align);
     MI->addOperand(MachineOperand::CreateCPI(Idx, Offset));
-  } else if (ExternalSymbolSDNode *ES = dyn_cast<ExternalSymbolSDNode>(Op)) {
+  } else if (SymbolSDNode *ES = dyn_cast<SymbolSDNode>(Op)) {
     MI->addOperand(MachineOperand::CreateES(ES->getSymbol()));
   } else {
     assert(Op.getValueType() != MVT::Other &&
@@ -571,8 +571,7 @@ void ScheduleDAG::EmitNode(SDNode *Node, bool IsClone,
     MachineInstr *MI = BuildMI(*MF, TII->get(TargetInstrInfo::INLINEASM));
 
     // Add the asm string as an external symbol operand.
-    const char *AsmStr =
-      cast<ExternalSymbolSDNode>(Node->getOperand(1))->getSymbol();
+    const char *AsmStr = cast<SymbolSDNode>(Node->getOperand(1))->getSymbol();
     MI->addOperand(MachineOperand::CreateES(AsmStr));
       
     // Add all of the operand registers to the instruction.

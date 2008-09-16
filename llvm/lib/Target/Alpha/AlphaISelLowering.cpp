@@ -125,12 +125,11 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM) : TargetLowering(TM)
   setOperationAction(ISD::STACKRESTORE, MVT::Other, Expand);
   setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i64, Expand);
 
-  // We want to legalize GlobalAddress and ConstantPool and
-  // ExternalSymbols nodes into the appropriate instructions to
-  // materialize the address.
+  // We want to legalize GlobalAddress and ConstantPool and Symbols nodes into
+  // the appropriate instructions to materialize the address.
   setOperationAction(ISD::GlobalAddress,  MVT::i64, Custom);
   setOperationAction(ISD::ConstantPool,   MVT::i64, Custom);
-  setOperationAction(ISD::ExternalSymbol, MVT::i64, Custom);
+  setOperationAction(ISD::Symbol, MVT::i64, Custom);
   setOperationAction(ISD::GlobalTLSAddress, MVT::i64, Custom);
 
   setOperationAction(ISD::VASTART, MVT::Other, Custom);
@@ -491,13 +490,13 @@ SDValue AlphaTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
       return DAG.getNode(AlphaISD::RelLit, MVT::i64, GA, 
                          DAG.getNode(ISD::GLOBAL_OFFSET_TABLE, MVT::i64));
   }
-  case ISD::ExternalSymbol: {
+  case ISD::Symbol: {
+    SymbolSDNode *S = cast<SymbolSDNode>(Op);
     return DAG.getNode(AlphaISD::RelLit, MVT::i64, 
-                       DAG.getTargetExternalSymbol(cast<ExternalSymbolSDNode>(Op)
-                                                   ->getSymbol(), MVT::i64),
+                       DAG.getTargetSymbol(S->getSymbol(), MVT::i64,
+                                           S->getLinkage()),
                        DAG.getNode(ISD::GLOBAL_OFFSET_TABLE, MVT::i64));
   }
-
   case ISD::UREM:
   case ISD::SREM:
     //Expand only on constant case
@@ -526,7 +525,7 @@ SDValue AlphaTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
       }
       SDValue Tmp1 = Op.getOperand(0),
         Tmp2 = Op.getOperand(1),
-        Addr = DAG.getExternalSymbol(opstr, MVT::i64);
+        Addr = DAG.getSymbol(opstr, MVT::i64);
       return DAG.getNode(AlphaISD::DivCall, MVT::i64, Addr, Tmp1, Tmp2);
     }
     break;

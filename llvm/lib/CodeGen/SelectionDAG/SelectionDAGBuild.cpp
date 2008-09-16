@@ -4293,7 +4293,7 @@ void SelectionDAGLowering::visitCall(CallInst &I) {
   if (!RenameFn)
     Callee = getValue(I.getOperand(0));
   else
-    Callee = DAG.getExternalSymbol(RenameFn, TLI.getPointerTy());
+    Callee = DAG.getSymbol(RenameFn, TLI.getPointerTy());
 
   LowerCallTo(&I, Callee, I.isTailCall());
 }
@@ -4888,7 +4888,7 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
   std::vector<SDValue> AsmNodeOperands;
   AsmNodeOperands.push_back(SDValue());  // reserve space for input chain
   AsmNodeOperands.push_back(
-          DAG.getTargetExternalSymbol(IA->getAsmString().c_str(), MVT::Other));
+          DAG.getTargetSymbol(IA->getAsmString().c_str(), MVT::Other));
   
   
   // Loop over all of the inputs, copying the operand values into the
@@ -5139,7 +5139,7 @@ void SelectionDAGLowering::visitMalloc(MallocInst &I) {
 
   std::pair<SDValue,SDValue> Result =
     TLI.LowerCallTo(getRoot(), I.getType(), false, false, false, CallingConv::C,
-                    PerformTailCallOpt, DAG.getExternalSymbol("malloc", IntPtr),
+                    PerformTailCallOpt, DAG.getSymbol("malloc", IntPtr),
                     Args, DAG);
   setValue(&I, Result.first);  // Pointers always fit in registers
   DAG.setRoot(Result.second);
@@ -5155,7 +5155,7 @@ void SelectionDAGLowering::visitFree(FreeInst &I) {
   std::pair<SDValue,SDValue> Result =
     TLI.LowerCallTo(getRoot(), Type::VoidTy, false, false, false,
                     CallingConv::C, PerformTailCallOpt,
-                    DAG.getExternalSymbol("free", IntPtr), Args, DAG);
+                    DAG.getSymbol("free", IntPtr), Args, DAG);
   DAG.setRoot(Result.second);
 }
 
