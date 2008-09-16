@@ -31,7 +31,7 @@ all::
 	@ echo '--- Running clang tests ---'
 	@ $(MAKE) $(TESTS)
 	@ $(DONE)
-	@ cat $(TESTS) | grep -v ' HAS NO RUN LINE! ****' | $(LLVM_SRC_ROOT)/test/Scripts/count 0 > /dev/null
+	@ cat $(TESTS) | grep -v 'XFAILED' | grep -v ' HAS NO RUN LINE! ****' | $(LLVM_SRC_ROOT)/test/Scripts/count 0 > /dev/null
 
 report: $(TESTS)
 	@ cat $^
