@@ -807,16 +807,22 @@ public:
            "Invalid operand types for FCmp instruction");
   }
 
-  /// This also tests for commutativity. If isEquality() returns true then
-  /// the predicate is also commutative. Only the equality predicates are
-  /// commutative.
   /// @returns true if the predicate of this instruction is EQ or NE.
   /// @brief Determine if this is an equality predicate.
   bool isEquality() const {
     return SubclassData == FCMP_OEQ || SubclassData == FCMP_ONE ||
            SubclassData == FCMP_UEQ || SubclassData == FCMP_UNE;
   }
-  bool isCommutative() const { return isEquality(); }
+
+  /// @returns true if the predicate of this instruction is commutative.
+  /// @brief Determine if this is a commutative predicate.
+  bool isCommutative() const {
+    return isEquality() ||
+           SubclassData == FCMP_FALSE ||
+           SubclassData == FCMP_TRUE ||
+           SubclassData == FCMP_ORD ||
+           SubclassData == FCMP_UNO;
+  }
 
   /// @returns true if the predicate is relational (not EQ or NE). 
   /// @brief Determine if this a relational predicate.
