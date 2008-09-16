@@ -111,7 +111,6 @@
 		DE41213C0D7F1C1C0080F80A /* GRSimpleVals.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE41212F0D7F1C1C0080F80A /* GRSimpleVals.cpp */; };
 		DE41213D0D7F1C1C0080F80A /* GRBlockCounter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE4121300D7F1C1C0080F80A /* GRBlockCounter.cpp */; };
 		DE41213E0D7F1C1C0080F80A /* GRExprEngine.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE4121310D7F1C1C0080F80A /* GRExprEngine.cpp */; };
-		DE41213F0D7F1C1C0080F80A /* ProgramPoint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE4121320D7F1C1C0080F80A /* ProgramPoint.cpp */; };
 		DE4264FC0C113592005A861D /* CGDecl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE4264FB0C113592005A861D /* CGDecl.cpp */; };
 		DE46BF280AE0A82D00CC047C /* TargetInfo.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE46BF270AE0A82D00CC047C /* TargetInfo.h */; };
 		DE4772FA0C10EAE5002239E8 /* CGStmt.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE4772F90C10EAE5002239E8 /* CGStmt.cpp */; };
@@ -423,7 +422,6 @@
 		DE41212F0D7F1C1C0080F80A /* GRSimpleVals.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GRSimpleVals.cpp; path = lib/Analysis/GRSimpleVals.cpp; sourceTree = "<group>"; };
 		DE4121300D7F1C1C0080F80A /* GRBlockCounter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GRBlockCounter.cpp; path = lib/Analysis/GRBlockCounter.cpp; sourceTree = "<group>"; };
 		DE4121310D7F1C1C0080F80A /* GRExprEngine.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GRExprEngine.cpp; path = lib/Analysis/GRExprEngine.cpp; sourceTree = "<group>"; };
-		DE4121320D7F1C1C0080F80A /* ProgramPoint.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ProgramPoint.cpp; path = lib/Analysis/ProgramPoint.cpp; sourceTree = "<group>"; };
 		DE4264FB0C113592005A861D /* CGDecl.cpp */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CGDecl.cpp; path = lib/CodeGen/CGDecl.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		DE46BF270AE0A82D00CC047C /* TargetInfo.h */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.c.h; path = TargetInfo.h; sourceTree = "<group>"; tabWidth = 2; };
 		DE4772F90C10EAE5002239E8 /* CGStmt.cpp */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CGStmt.cpp; path = lib/CodeGen/CGStmt.cpp; sourceTree = "<group>"; tabWidth = 2; };
@@ -588,7 +586,6 @@
 				35862B110E3629850009F542 /* GRExprEngineInternalChecks.cpp */,
 				358F51510E529AA4007F2102 /* GRState.cpp */,
 				35EFEFB50DB67ED60020783D /* GRTransferFuncs.cpp */,
-				DE4121320D7F1C1C0080F80A /* ProgramPoint.cpp */,
 				DE41212E0D7F1C1C0080F80A /* RValues.cpp */,
 				DE4121270D7F1C1C0080F80A /* SymbolManager.cpp */,
 			);
@@ -1177,7 +1174,6 @@
 				DE41213C0D7F1C1C0080F80A /* GRSimpleVals.cpp in Sources */,
 				DE41213D0D7F1C1C0080F80A /* GRBlockCounter.cpp in Sources */,
 				DE41213E0D7F1C1C0080F80A /* GRExprEngine.cpp in Sources */,
-				DE41213F0D7F1C1C0080F80A /* ProgramPoint.cpp in Sources */,
 				35D55B270D81D8C60092E734 /* BasicValueFactory.cpp in Sources */,
 				35D55B280D81D8C60092E734 /* CFRefCount.cpp in Sources */,
 				DE85CD810D8380B10070E26E /* TokenLexer.cpp in Sources */,
