@@ -65,6 +65,7 @@ void ScheduleDAG::EmitCopyFromReg(SDNode *Node, unsigned ResNo,
   // If the node is only used by a CopyToReg and the dest reg is a vreg, use
   // the CopyToReg'd destination register instead of creating a new vreg.
   bool MatchReg = true;
+  const TargetRegisterClass *UseRC = NULL;
   for (SDNode::use_iterator UI = Node->use_begin(), E = Node->use_end();
        UI != E; ++UI) {
     SDNode *User = *UI;
@@ -84,8 +85,19 @@ void ScheduleDAG::EmitCopyFromReg(SDNode *Node, unsigned ResNo,
         if (Op.getNode() != Node || Op.getResNo() != ResNo)
           continue;
         MVT VT = Node->getValueType(Op.getResNo());
-        if (VT != MVT::Other && VT != MVT::Flag)
-          Match = false;
+        if (VT == MVT::Other || VT == MVT::Flag)
+          continue;
+        Match = false;
+        if (User->isMachineOpcode()) {
+          const TargetInstrDesc &II = TII->get(User->getMachineOpcode());
+          const TargetRegisterClass *RC =
+            getInstrOperandRegClass(TRI,TII,II,i+II.getNumDefs());
+          if (!UseRC)
+            UseRC = RC;
+          else if (RC)
+            assert(UseRC == RC &&
+                   "Multiple uses expecting different register classes!");
+        }
       }
     }
     MatchReg &= Match;
@@ -93,14 +105,18 @@ void ScheduleDAG::EmitCopyFromReg(SDNode *Node, unsigned ResNo,
       break;
   }
 
+  MVT VT = Node->getValueType(ResNo);
   const TargetRegisterClass *SrcRC = 0, *DstRC = 0;
-  SrcRC = TRI->getPhysicalRegisterRegClass(SrcReg, Node->getValueType(ResNo));
+  SrcRC = TRI->getPhysicalRegisterRegClass(SrcReg, VT);
   
   // Figure out the register class to create for the destreg.
   if (VRBase) {
     DstRC = MRI.getRegClass(VRBase);
+  } else if (UseRC) {
+    assert(UseRC->hasType(VT) && "Incompatible phys register def and uses!");
+    DstRC = UseRC;
   } else {
-    DstRC = TLI->getRegClassFor(Node->getValueType(ResNo));
+    DstRC = TLI->getRegClassFor(VT);
   }
     
   // If all uses are reading from the src physical register and copying the
@@ -110,7 +126,10 @@ void ScheduleDAG::EmitCopyFromReg(SDNode *Node, unsigned ResNo,
   } else {
     // Create the reg, emit the copy.
     VRBase = MRI.createVirtualRegister(DstRC);
-    TII->copyRegToReg(*BB, BB->end(), VRBase, SrcReg, DstRC, SrcRC);
+    bool Emitted =
+      TII->copyRegToReg(*BB, BB->end(), VRBase, SrcReg, DstRC, SrcRC);
+    Emitted = Emitted; // Silence compiler warning.
+    assert(Emitted && "Unable to issue a copy instruction!");
   }
 
   SDValue Op(Node, ResNo);
