@@ -464,8 +464,8 @@ VarDecl *Sema::MergeVarDecl(VarDecl *New, Decl *OldD) {
     Diag(Old->getLocation(), diag::err_previous_definition);
     return New;
   }
-  // File scoped variables are analyzed in FinalizeDeclaratorGroup.
-  if (!New->isFileVarDecl()) {
+  // Variables with external linkage are analyzed in FinalizeDeclaratorGroup.
+  if (New->getStorageClass() != VarDecl::Extern && !New->isFileVarDecl()) {
     Diag(New->getLocation(), diag::err_redefinition, New->getName());
     Diag(Old->getLocation(), diag::err_previous_definition);
   }

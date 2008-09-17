@@ -35,3 +35,9 @@ void func() {
   extern int i1; // expected-error{{previous definition is here}}
   static int i1; // expected-error{{static declaration of 'i1' follows non-static declaration}}
 }
+
+void func2(void)
+{
+  extern double *p;
+  extern double *p;
+}
