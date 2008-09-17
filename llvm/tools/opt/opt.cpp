@@ -99,11 +99,11 @@ OptLevelO3("O3",
 
 static cl::opt<bool>
 UnitAtATime("funit-at-a-time",
-            cl::desc("Enable IPO. This is same is llvm-gcc's -funit-at-a-time"));
+            cl::desc("Enable IPO. This is same as llvm-gcc's -funit-at-a-time"));
 
 static cl::opt<bool>
 DisableSimplifyLibCalls("disable-simplify-libcalls",
-                        cl::desc("Disable simplify libcalls"));
+                        cl::desc("Disable simplify-libcalls"));
 
 static cl::opt<bool>
 Quiet("q", cl::desc("Obsolete option"), cl::Hidden);
@@ -263,8 +263,6 @@ inline void addPass(PassManager &PM, Pass *P) {
 /// duplicates llvm-gcc behaviour.
 ///
 /// OptLevel - Optimization Level
-/// PruneEH - Add PruneEHPass, if set.
-/// UnrollLoop - Unroll loops, if set.
   void AddOptimizationPasses(PassManager &MPM, FunctionPassManager &FPM,
                              unsigned OptLevel) {
 
