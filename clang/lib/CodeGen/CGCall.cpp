@@ -170,11 +170,122 @@ public:
 
 /***/
 
+/// isEmptyStruct - Return true iff a structure has no non-empty
+/// members. Note that a structure with a flexible array member is not
+/// considered empty.
+static bool isEmptyStruct(QualType T) {
+  const RecordType *RT = T->getAsStructureType();
+  if (!RT)
+    return 0;
+  const RecordDecl *RD = RT->getDecl();
+  if (RD->hasFlexibleArrayMember())
+    return false;
+  for (RecordDecl::field_const_iterator i = RD->field_begin(), 
+         e = RD->field_end(); i != e; ++i) {
+    const FieldDecl *FD = *i;
+    if (!isEmptyStruct(FD->getType()))
+      return false;
+  }
+  return true;
+}
+
+/// isSingleElementStruct - Determine if a structure is a "single
+/// element struct", i.e. it has exactly one non-empty field or
+/// exactly one field which is itself a single element
+/// struct. Structures with flexible array members are never
+/// considered single element structs.
+///
+/// \return The field declaration for the single non-empty field, if
+/// it exists.
+static const FieldDecl *isSingleElementStruct(QualType T) {
+  const RecordType *RT = T->getAsStructureType();
+  if (!RT)
+    return 0;
+
+  const RecordDecl *RD = RT->getDecl();
+  if (RD->hasFlexibleArrayMember())
+    return 0;
+
+  const FieldDecl *Found = 0;
+  for (RecordDecl::field_const_iterator i = RD->field_begin(), 
+         e = RD->field_end(); i != e; ++i) {
+    const FieldDecl *FD = *i;
+    QualType FT = FD->getType();
+
+    if (isEmptyStruct(FT)) {
+      // Ignore
+    } else if (Found) {
+      return 0;
+    } else if (!CodeGenFunction::hasAggregateLLVMType(FT)) {
+      Found = FD;
+    } else {
+      Found = isSingleElementStruct(FT);
+      if (!Found)
+        return 0;
+    }
+  }
+
+  return Found;
+}
+
+static bool is32Or64BitBasicType(QualType Ty, ASTContext &Context) {
+  if (!Ty->getAsBuiltinType() && !Ty->isPointerType())
+    return false;
+
+  uint64_t Size = Context.getTypeSize(Ty);
+  return Size == 32 || Size == 64;
+}
+
+static bool areAllFields32Or64BitBasicType(const RecordDecl *RD,
+                                           ASTContext &Context) {
+  for (RecordDecl::field_const_iterator i = RD->field_begin(), 
+         e = RD->field_end(); i != e; ++i) {
+    const FieldDecl *FD = *i;
+
+    if (!is32Or64BitBasicType(FD->getType(), Context))
+      return false;
+    
+    // If this is a bit-field we need to make sure it is still a
+    // 32-bit or 64-bit type.
+    if (Expr *BW = FD->getBitWidth()) {
+      unsigned Width = BW->getIntegerConstantExprValue(Context).getZExtValue();
+      if (Width <= 16)
+        return false;
+    }
+  }
+  return true;
+}
+
 static ABIArgInfo classifyReturnType(QualType RetTy,
                                      ASTContext &Context) {
   assert(!RetTy->isArrayType() && 
          "Array types cannot be passed directly.");
   if (CodeGenFunction::hasAggregateLLVMType(RetTy)) {
+    // Classify "single element" structs as their element type.
+    const FieldDecl *SeltFD = isSingleElementStruct(RetTy);
+    if (SeltFD) {
+      QualType SeltTy = SeltFD->getType()->getDesugaredType();
+      if (const BuiltinType *BT = SeltTy->getAsBuiltinType()) {
+        // FIXME: This is gross, it would be nice if we could just
+        // pass back SeltTy and have clients deal with it. Is it worth
+        // supporting coerce to both LLVM and clang Types?
+        if (BT->isIntegerType()) {
+          uint64_t Size = Context.getTypeSize(SeltTy);
+          return ABIArgInfo::getCoerce(llvm::IntegerType::get((unsigned) Size));
+        } else if (BT->getKind() == BuiltinType::Float) {
+          return ABIArgInfo::getCoerce(llvm::Type::FloatTy);
+        } else if (BT->getKind() == BuiltinType::Double) {
+          return ABIArgInfo::getCoerce(llvm::Type::DoubleTy);
+        }
+      } else if (SeltTy->isPointerType()) {
+        // FIXME: It would be really nice if this could come out as
+        // the proper pointer type.
+        llvm::Type *PtrTy = 
+          llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+        return ABIArgInfo::getCoerce(PtrTy);
+      }
+    }
+
     uint64_t Size = Context.getTypeSize(RetTy);
     if (Size == 8) {
       return ABIArgInfo::getCoerce(llvm::Type::Int8Ty);
@@ -196,6 +307,25 @@ static ABIArgInfo classifyArgumentType(QualType Ty,
                                        ASTContext &Context) {
   assert(!Ty->isArrayType() && "Array types cannot be passed directly.");
   if (CodeGenFunction::hasAggregateLLVMType(Ty)) {
+    // Structures with flexible arrays are always byval.
+    if (const RecordType *RT = Ty->getAsStructureType())
+      if (RT->getDecl()->hasFlexibleArrayMember())
+        return ABIArgInfo::getByVal(0);
+
+    // Expand empty structs (i.e. ignore)
+    uint64_t Size = Context.getTypeSize(Ty);
+    if (Ty->isStructureType() && Size == 0)
+      return ABIArgInfo::getExpand();
+
+    // Expand structs with size <= 128-bits which consist only of
+    // basic types (int, long long, float, double, xxx*). This is
+    // non-recursive and does not ignore empty fields.
+    if (const RecordType *RT = Ty->getAsStructureType()) {
+      if (Context.getTypeSize(Ty) <= 4*32 &&
+          areAllFields32Or64BitBasicType(RT->getDecl(), Context))
+        return ABIArgInfo::getExpand();
+    }
+
     return ABIArgInfo::getByVal(0);
   } else {
     return ABIArgInfo::getDefault();
@@ -407,7 +537,8 @@ void CodeGenModule::ConstructParamAttrList(const Decl *TargetDecl,
 
   case ABIArgInfo::StructRet:
     PAL.push_back(llvm::ParamAttrsWithIndex::get(Index, 
-                                                 llvm::ParamAttr::StructRet));
+                                                 llvm::ParamAttr::StructRet|
+                                                 llvm::ParamAttr::NoAlias));
     ++Index;
     break;
 
