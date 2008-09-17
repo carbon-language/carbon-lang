@@ -1046,15 +1046,8 @@ static bool SpeculativelyExecuteBB(BranchInst *BI, BasicBlock *BB1) {
       return false;
   }
 
-  // If we get here, we can hoist the instruction. Try to place it before the
-  // icmp instruction preceeding the conditional branch.
-  BasicBlock::iterator InsertPos = BI;
-  if (InsertPos != BIParent->begin())
-    --InsertPos;
-  if (InsertPos == BrCond && !isa<PHINode>(BrCond))
-    BIParent->getInstList().splice(InsertPos, BB1->getInstList(), I);
-  else
-    BIParent->getInstList().splice(BI, BB1->getInstList(), I);
+  // If we get here, we can hoist the instruction. 
+  BIParent->getInstList().splice(BI, BB1->getInstList(), I);
 
   // Create a select whose true value is the speculatively executed value and
   // false value is the previously determined FalseV.
