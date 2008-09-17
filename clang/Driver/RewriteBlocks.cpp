@@ -94,7 +94,7 @@ public:
   void InsertBlockLiteralsWithinMethod(ObjCMethodDecl *MD);
   
   // Block specific rewrite rules.
-  void RewriteBlockStmtExpr(BlockStmtExpr *Exp);
+  void RewriteBlockExpr(BlockExpr *Exp);
   
   void RewriteBlockCall(CallExpr *Exp);
   void RewriteBlockPointerDecl(NamedDecl *VD);
@@ -349,7 +349,7 @@ std::string RewriteBlocks::SynthesizeBlockFunc(BlockExpr *CE, int i,
     // first add the implicit argument.
     S += Tag + " *__cself, ";
     std::string ParamStr;
-    for (BlockStmtExpr::arg_iterator AI = CE->arg_begin(),
+    for (BlockExpr::arg_iterator AI = CE->arg_begin(),
          E = CE->arg_end(); AI != E; ++AI) {
       if (AI != CE->arg_begin()) S += ", ";
       ParamStr = (*AI)->getName();
@@ -398,7 +398,7 @@ std::string RewriteBlocks::SynthesizeBlockFunc(BlockExpr *CE, int i,
       (*I)->getType().getAsStringInternal(Name);
     S += Name + " = __cself->" + (*I)->getName() + "; // bound by copy\n";
   }    
-  if (BlockStmtExpr *CBE = dyn_cast<BlockStmtExpr>(CE)) {
+  if (BlockExpr *CBE = dyn_cast<BlockExpr>(CE)) {
     std::string BodyBuf;
     
     SourceLocation BodyLocStart = CBE->getBody()->getLocStart();
@@ -635,10 +635,10 @@ Stmt *RewriteBlocks::RewriteFunctionBody(Stmt *S) {
   for (Stmt::child_iterator CI = S->child_begin(), E = S->child_end();
        CI != E; ++CI)
     if (*CI) {
-      if (BlockStmtExpr *CBE = dyn_cast<BlockStmtExpr>(*CI)) {
+      if (BlockExpr *CBE = dyn_cast<BlockExpr>(*CI)) {
         // We intentionally avoid rewritting the contents of a closure block
         // expr. InsertBlockLiteralsWithinFunction() will rewrite the body.
-        RewriteBlockStmtExpr(CBE);
+        RewriteBlockExpr(CBE);
       } else {
         Stmt *newStmt = RewriteFunctionBody(*CI);
         if (newStmt) 
@@ -831,7 +831,7 @@ void RewriteBlocks::RewriteBlockPointerDecl(NamedDecl *ND) {
   return;
 }
 
-void RewriteBlocks::RewriteBlockStmtExpr(BlockStmtExpr *Exp) {
+void RewriteBlocks::RewriteBlockExpr(BlockExpr *Exp) {
   Blocks.push_back(Exp);
   bool haveByRefDecls = false;
 

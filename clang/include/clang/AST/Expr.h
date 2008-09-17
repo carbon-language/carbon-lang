@@ -1486,21 +1486,29 @@ private:
 // Clang Extensions
 //===----------------------------------------------------------------------===//
 
-/// BlockExpr - Common base class between BlockStmtExpr and BlockExprExpr.
-/// FIXME: Combine with BlockStmtExpr...no more need for a common base.
+/// BlockExpr - Represent a block literal with a syntax:
+/// ^{ statement-body }   or   ^(int arg1, float arg2){ statement-body }
 class BlockExpr : public Expr {
   SourceLocation CaretLocation;
   llvm::SmallVector<ParmVarDecl*, 8> Args;
-protected:
-  BlockExpr(StmtClass SC, QualType ty, SourceLocation caretloc,
-              ParmVarDecl **args, unsigned numargs)
-    : Expr(SC, ty), CaretLocation(caretloc), Args(args, args+numargs) {}
+  CompoundStmt *Body;
 public:
+  BlockExpr(SourceLocation caretloc, QualType ty, ParmVarDecl **args, 
+            unsigned numargs, CompoundStmt *body) : Expr(BlockExprClass, ty), 
+            CaretLocation(caretloc), Args(args, args+numargs), Body(body) {}
+
   SourceLocation getCaretLocation() const { return CaretLocation; }
 
   /// getFunctionType - Return the underlying function type for this block.
   const FunctionType *getFunctionType() const;
-  
+
+  const CompoundStmt *getBody() const { return Body; }
+  CompoundStmt *getBody() { return Body; }
+
+  virtual SourceRange getSourceRange() const {
+    return SourceRange(getCaretLocation(), Body->getLocEnd());
+  }
+
   /// arg_iterator - Iterate over the ParmVarDecl's for the arguments to this
   /// block.
   typedef llvm::SmallVector<ParmVarDecl*, 8>::const_iterator arg_iterator;
@@ -1509,41 +1517,18 @@ public:
   arg_iterator arg_end() const { return Args.end(); }
   
   static bool classof(const Stmt *T) { 
-    return T->getStmtClass() == BlockStmtExprClass;
+    return T->getStmtClass() == BlockExprClass;
   }
   static bool classof(const BlockExpr *) { return true; }
-};
   
-/// BlockStmtExpr - Represent a block literal with a syntax:
-/// ^{ statement-body }   or   ^(int arg1, float arg2){ statement-body }
-class BlockStmtExpr : public BlockExpr {
-  CompoundStmt *Body;
-public:
-  BlockStmtExpr(SourceLocation CaretLoc, QualType Ty, ParmVarDecl **args, 
-                   unsigned numargs, CompoundStmt *body) : 
-    BlockExpr(BlockStmtExprClass, Ty, CaretLoc,
-                args, numargs), Body(body) {}
-    
-  const CompoundStmt *getBody() const { return Body; }
-  CompoundStmt *getBody() { return Body; }
-
-  virtual SourceRange getSourceRange() const {
-    return SourceRange(getCaretLocation(), Body->getLocEnd());
-  }
-  
-  static bool classof(const Stmt *T) { 
-    return T->getStmtClass() == BlockStmtExprClass; 
-  }
-  static bool classof(const BlockStmtExpr *) { return true; }
-
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
     
   virtual void EmitImpl(llvm::Serializer& S) const;
-  static BlockStmtExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
+  static BlockExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
-  
+    
 /// BlockDeclRefExpr - A reference to a declared variable, function,
 /// enum, etc.
 class BlockDeclRefExpr : public Expr {

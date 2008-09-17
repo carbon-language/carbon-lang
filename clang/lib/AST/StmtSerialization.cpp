@@ -1112,13 +1112,13 @@ ObjCStringLiteral* ObjCStringLiteral::CreateImpl(Deserializer& D, ASTContext& C)
 //   Serialization for Clang Extensions.
 //===----------------------------------------------------------------------===//
 
-void BlockStmtExpr::EmitImpl(Serializer& S) const {
+void BlockExpr::EmitImpl(Serializer& S) const {
   S.Emit(getType());
   S.Emit(getCaretLocation());
   S.EmitOwnedPtr(Body);
 }
 
-BlockStmtExpr* BlockStmtExpr::CreateImpl(Deserializer& D, ASTContext& C) {
+BlockExpr* BlockExpr::CreateImpl(Deserializer& D, ASTContext& C) {
   QualType Q = QualType::ReadVal(D);
   SourceLocation L = SourceLocation::ReadVal(D);
   /*CompoundStmt* BodyStmt = cast<CompoundStmt>(*/D.ReadOwnedPtr<Stmt>(C)/*)*/;

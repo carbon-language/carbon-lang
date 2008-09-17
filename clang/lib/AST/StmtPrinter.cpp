@@ -891,7 +891,7 @@ void StmtPrinter::VisitBlockExpr(BlockExpr *Node) {
     const FunctionTypeProto *FT = cast<FunctionTypeProto>(AFT);
     OS << '(';
     std::string ParamStr;
-    for (BlockStmtExpr::arg_iterator AI = Node->arg_begin(),
+    for (BlockExpr::arg_iterator AI = Node->arg_begin(),
          E = Node->arg_end(); AI != E; ++AI) {
       if (AI != Node->arg_begin()) OS << ", ";
       ParamStr = (*AI)->getName();
@@ -905,11 +905,6 @@ void StmtPrinter::VisitBlockExpr(BlockExpr *Node) {
     }
     OS << ')';
   }
-}
-
-void StmtPrinter::VisitBlockStmtExpr(BlockStmtExpr *Node) {
-  VisitBlockExpr(Node);
-  PrintRawCompoundStmt(Node->getBody());
 }
 
 void StmtPrinter::VisitBlockDeclRefExpr(BlockDeclRefExpr *Node) {

@@ -1448,10 +1448,10 @@ Stmt::child_iterator ObjCMessageExpr::child_end() {
 }
 
 // Blocks
-Stmt::child_iterator BlockStmtExpr::child_begin() {
+Stmt::child_iterator BlockExpr::child_begin() {
   return reinterpret_cast<Stmt**>(&Body);
 }
-Stmt::child_iterator BlockStmtExpr::child_end() {
+Stmt::child_iterator BlockExpr::child_end() {
   return reinterpret_cast<Stmt**>(&Body)+1;
 }
 
