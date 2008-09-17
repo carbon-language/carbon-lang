@@ -568,7 +568,9 @@ SimpleRegisterCoalescing::UpdateRegDefsUses(unsigned SrcReg, unsigned DstReg,
     unsigned CopySrcReg, CopyDstReg;
     if (TID.getNumDefs() == 1 && TID.getNumOperands() > 2 &&
         tii_->isMoveInstr(*UseMI, CopySrcReg, CopyDstReg) &&
-        CopySrcReg != CopyDstReg) {
+        CopySrcReg != CopyDstReg &&
+        (TargetRegisterInfo::isVirtualRegister(CopyDstReg) ||
+         allocatableRegs_[CopyDstReg])) {
       LiveInterval &LI = li_->getInterval(CopyDstReg);
       unsigned DefIdx = li_->getDefIndex(li_->getInstructionIndex(UseMI));
       const LiveRange *DLR = LI.getLiveRangeContaining(DefIdx);
