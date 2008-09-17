@@ -100,8 +100,6 @@ void CodeEmitterGen::run(std::ostream &o) {
     const CodeGenInstruction *CGI = *IN;
     Record *R = CGI->TheDef;
     
-    if (IN != NumberedInstructions.begin()) o << ",\n";
-    
     if (R->getName() == "PHI" ||
         R->getName() == "INLINEASM" ||
         R->getName() == "DBG_LABEL" ||
@@ -112,7 +110,7 @@ void CodeEmitterGen::run(std::ostream &o) {
         R->getName() == "INSERT_SUBREG" ||
         R->getName() == "IMPLICIT_DEF" ||
         R->getName() == "SUBREG_TO_REG") {
-      o << "    0U";
+      o << "    0U,\n";
       continue;
     }
     
@@ -125,9 +123,9 @@ void CodeEmitterGen::run(std::ostream &o) {
         Value |= B->getValue() << (e-i-1);
       }
     }
-    o << "    " << Value << "U";
+    o << "    " << Value << "U," << '\t' << "// " << R->getName() << "\n";
   }
-  o << "\n  };\n";
+  o << "    0U\n  };\n";
   
   // Map to accumulate all the cases.
   std::map<std::string, std::vector<std::string> > CaseMap;
