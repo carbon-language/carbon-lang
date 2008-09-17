@@ -100,3 +100,14 @@ int f9(int len) {
 
   return *p++; // no-warning
 }
+
+int f9b(int len) {
+  assert (len > 0);  // note use of '>'
+  int *p = 0;
+
+  for (int i = 0; i < len; ++i)
+   p = qux(i);
+
+  return *p++; // no-warning
+}
+
