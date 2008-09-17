@@ -75,6 +75,11 @@ namespace llvm {
   /// machine basic blocks.
   extern const PassInfo *const UnreachableMachineBlockElimID;
 
+  /// DeadMachineInstructionElim pass - This pass removes dead machine
+  /// instructions.
+  ///
+  FunctionPass *createDeadMachineInstructionElimPass();
+
   /// Creates a register allocator as the user specified on the command line.
   ///
   FunctionPass *createRegisterAllocator();
