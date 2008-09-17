@@ -196,7 +196,10 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
 
   // TRAP is legal.
   setOperationAction(ISD::TRAP, MVT::Other, Legal);
-    
+
+  // TRAMPOLINE is custom lowered.
+  setOperationAction(ISD::TRAMPOLINE, MVT::Other, Custom);
+
   // VASTART needs to be custom lowered to use the VarArgsFrameIndex
   setOperationAction(ISD::VASTART           , MVT::Other, Custom);
   
@@ -1220,12 +1223,50 @@ SDValue PPCTargetLowering::LowerVAARG(SDValue Op, SelectionDAG &DAG,
   return SDValue(); // Not reached
 }
 
+SDValue PPCTargetLowering::LowerTRAMPOLINE(SDValue Op, SelectionDAG &DAG) {
+  SDValue Chain = Op.getOperand(0);
+  SDValue Trmp = Op.getOperand(1); // trampoline
+  SDValue FPtr = Op.getOperand(2); // nested function
+  SDValue Nest = Op.getOperand(3); // 'nest' parameter value
+
+  MVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
+  bool isPPC64 = (PtrVT == MVT::i64);
+  const Type *IntPtrTy =
+    DAG.getTargetLoweringInfo().getTargetData()->getIntPtrType();
+
+  TargetLowering::ArgListTy Args; 
+  TargetLowering::ArgListEntry Entry;
+
+  Entry.Ty = IntPtrTy;
+  Entry.Node = Trmp; Args.push_back(Entry);
+
+  // TrampSize == (isPPC64 ? 48 : 40);
+  Entry.Node = DAG.getConstant(isPPC64 ? 48 : 40,
+                               isPPC64 ? MVT::i64 : MVT::i32);
+  Args.push_back(Entry);
+
+  Entry.Node = FPtr; Args.push_back(Entry);
+  Entry.Node = Nest; Args.push_back(Entry);
+  
+  // Lower to a call to __trampoline_setup(Trmp, TrampSize, FPtr, ctx_reg)
+  std::pair<SDValue, SDValue> CallResult =
+    LowerCallTo(Chain, Op.getValueType().getTypeForMVT(), false, false,
+                false, CallingConv::C, false,
+                DAG.getExternalSymbol("__trampoline_setup", PtrVT),
+                Args, DAG);
+
+  SDValue Ops[] =
+    { CallResult.first, CallResult.second };
+
+  return DAG.getMergeValues(Ops, 2, false);
+}
+
 SDValue PPCTargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG,
-                              int VarArgsFrameIndex,
-                              int VarArgsStackOffset,
-                              unsigned VarArgsNumGPR,
-                              unsigned VarArgsNumFPR,
-                              const PPCSubtarget &Subtarget) {
+                                        int VarArgsFrameIndex,
+                                        int VarArgsStackOffset,
+                                        unsigned VarArgsNumGPR,
+                                        unsigned VarArgsNumFPR,
+                                        const PPCSubtarget &Subtarget) {
 
   if (Subtarget.isMachoABI()) {
     // vastart just stores the address of the VarArgsFrameIndex slot into the
@@ -3414,7 +3455,7 @@ SDValue PPCTargetLowering::LowerBUILD_VECTOR(SDValue Op,
 static SDValue GeneratePerfectShuffle(unsigned PFEntry, SDValue LHS,
                                         SDValue RHS, SelectionDAG &DAG) {
   unsigned OpNum = (PFEntry >> 26) & 0x0F;
-  unsigned LHSID  = (PFEntry >> 13) & ((1 << 13)-1);
+  unsigned LHSID = (PFEntry >> 13) & ((1 << 13)-1);
   unsigned RHSID = (PFEntry >>  0) & ((1 << 13)-1);
   
   enum {
@@ -3807,6 +3848,7 @@ SDValue PPCTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   case ISD::GlobalTLSAddress:   return LowerGlobalTLSAddress(Op, DAG);
   case ISD::JumpTable:          return LowerJumpTable(Op, DAG);
   case ISD::SETCC:              return LowerSETCC(Op, DAG);
+  case ISD::TRAMPOLINE:         return LowerTRAMPOLINE(Op, DAG);
   case ISD::VASTART:            
     return LowerVASTART(Op, DAG, VarArgsFrameIndex, VarArgsStackOffset,
                         VarArgsNumGPR, VarArgsNumFPR, PPCSubTarget);

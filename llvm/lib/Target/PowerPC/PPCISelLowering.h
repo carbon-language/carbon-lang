@@ -343,6 +343,7 @@ namespace llvm {
     SDValue LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG);
     SDValue LowerJumpTable(SDValue Op, SelectionDAG &DAG);
     SDValue LowerSETCC(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerTRAMPOLINE(SDValue Op, SelectionDAG &DAG);
     SDValue LowerVASTART(SDValue Op, SelectionDAG &DAG,
                            int VarArgsFrameIndex, int VarArgsStackOffset,
                            unsigned VarArgsNumGPR, unsigned VarArgsNumFPR,
