@@ -1113,7 +1113,8 @@ SelectInlineAsmMemoryOperands(std::vector<SDValue> &Ops) {
   
   while (i != e) {
     unsigned Flags = cast<ConstantSDNode>(InOps[i])->getZExtValue();
-    if ((Flags & 7) != 4 /*MEM*/) {
+    if ((Flags & 7) != 4 /*MEM*/ &&
+        (Flags & 7) != 7 /*MEM OVERLAPS EARLYCLOBBER*/) {
       // Just skip over this operand, copying the operands verbatim.
       Ops.insert(Ops.end(), InOps.begin()+i, InOps.begin()+i+(Flags >> 3) + 1);
       i += (Flags >> 3) + 1;
@@ -1128,7 +1129,7 @@ SelectInlineAsmMemoryOperands(std::vector<SDValue> &Ops) {
       
       // Add this to the output node.
       MVT IntPtrTy = CurDAG->getTargetLoweringInfo().getPointerTy();
-      Ops.push_back(CurDAG->getTargetConstant(4/*MEM*/ | (SelOps.size() << 3),
+      Ops.push_back(CurDAG->getTargetConstant((Flags & 7) | (SelOps.size()<< 3),
                                               IntPtrTy));
       Ops.insert(Ops.end(), SelOps.begin(), SelOps.end());
       i += 2;

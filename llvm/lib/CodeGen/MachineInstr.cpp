@@ -109,6 +109,7 @@ void MachineOperand::ChangeToRegister(unsigned Reg, bool isDef, bool isImp,
   // register's use/def lists.
   if (isRegister()) {
     assert(!isEarlyClobber());
+    assert(!isEarlyClobber() && !overlapsEarlyClobber());
     setReg(Reg);
   } else {
     // Otherwise, change this to a register and set the reg#.
@@ -128,6 +129,7 @@ void MachineOperand::ChangeToRegister(unsigned Reg, bool isDef, bool isImp,
   IsKill = isKill;
   IsDead = isDead;
   IsEarlyClobber = false;
+  OverlapsEarlyClobber = false;
   SubReg = 0;
 }
 
@@ -183,13 +185,20 @@ void MachineOperand::print(std::ostream &OS, const TargetMachine *TM) const {
         OS << "%mreg" << getReg();
     }
       
-    if (isDef() || isKill() || isDead() || isImplicit() || isEarlyClobber()) {
+    if (isDef() || isKill() || isDead() || isImplicit() || isEarlyClobber() ||
+        overlapsEarlyClobber()) {
       OS << "<";
       bool NeedComma = false;
+      if (overlapsEarlyClobber()) {
+        NeedComma = true;
+        OS << "overlapsearly";
+      }
       if (isImplicit()) {
+        if (NeedComma) OS << ",";
         OS << (isDef() ? "imp-def" : "imp-use");
         NeedComma = true;
       } else if (isDef()) {
+        if (NeedComma) OS << ",";
         if (isEarlyClobber())
           OS << "earlyclobber,";
         OS << "def";

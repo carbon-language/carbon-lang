@@ -1050,7 +1050,8 @@ unsigned RALinScan::getFreePhysReg(LiveInterval *cur) {
   TargetRegisterClass::iterator E = RC->allocation_order_end(*mf_);
   assert(I != E && "No allocatable register in this register class!");
   for (; I != E; ++I)
-    if (prt_->isRegAvail(*I)) {
+    if (prt_->isRegAvail(*I) && 
+        li_->noEarlyclobberConflict(cur->reg, *vrm_, *I)) {
       FreeReg = *I;
       if (FreeReg < inactiveCounts.size())
         FreeRegInactiveCount = inactiveCounts[FreeReg];
@@ -1070,7 +1071,8 @@ unsigned RALinScan::getFreePhysReg(LiveInterval *cur) {
   for (; I != E; ++I) {
     unsigned Reg = *I;
     if (prt_->isRegAvail(Reg) && Reg < inactiveCounts.size() &&
-        FreeRegInactiveCount < inactiveCounts[Reg]) {
+        FreeRegInactiveCount < inactiveCounts[Reg] &&
+        li_->noEarlyclobberConflict(cur->reg, *vrm_, Reg)) {
       FreeReg = Reg;
       FreeRegInactiveCount = inactiveCounts[Reg];
       if (FreeRegInactiveCount == MaxInactiveCount)

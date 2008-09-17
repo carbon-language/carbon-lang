@@ -361,7 +361,8 @@ namespace llvm {
 
     void AddOperand(MachineInstr *MI, SDValue Op, unsigned IIOpNum,
                     const TargetInstrDesc *II,
-                    DenseMap<SDValue, unsigned> &VRBaseMap);
+                    DenseMap<SDValue, unsigned> &VRBaseMap,
+                    bool overlapsEarlyClobber = false);
 
     void AddMemOperand(MachineInstr *MI, const MachineMemOperand &MO);
 
