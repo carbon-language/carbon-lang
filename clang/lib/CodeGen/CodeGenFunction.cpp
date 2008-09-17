@@ -100,7 +100,10 @@ void CodeGenFunction::FinishFunction(SourceLocation EndLoc) {
   AllocaInsertPt = 0;
   
   // Verify that the function is well formed.
-  assert(!verifyFunction(*CurFn) && "Generated function is not well formed.");
+  if (verifyFunction(*CurFn, llvm::PrintMessageAction)) {
+    CurFn->dump();
+    assert(0 && "Function failed verification!");
+  }
 }
 
 void CodeGenFunction::StartFunction(const Decl *D, QualType RetTy, 
