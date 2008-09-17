@@ -151,13 +151,6 @@ class ABLI<bits<4> opcod, dag oops, dag iops, Format f, string asm,
   let Inst{24}    = 1; // L bit
   let Inst{25-27} = {1,0,1};
 }
-class ABLXI<bits<4> opcod, dag oops, dag iops, Format f, string asm,
-          list<dag> pattern>
-  : XI<opcod, oops, iops, AddrModeNone, Size4Bytes, IndexModeNone, f, asm,
-       "", pattern> {
-  let Inst{4-7}   = {1,1,0,0};
-  let Inst{20-27} = {0,1,0,0,1,0,0,0};
-}
 // FIXME: BX
 class AXIx2<bits<4> opcod, dag oops, dag iops, Format f, string asm,
             list<dag> pattern>

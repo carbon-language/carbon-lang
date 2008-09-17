@@ -260,8 +260,8 @@ unsigned ARMCodeEmitter::getAddrModeNoneInstrBinary(const MachineInstr &MI,
     break;
   }
   case ARMII::BranchMisc: {
-    // Set bit[19:8] to 0xFFF
-    Binary |= 0xfff << 8;
+    if (TID.Opcode == ARM::BX)
+      abort(); // FIXME
     if (TID.Opcode == ARM::BX_RET)
       Binary |= 0xe; // the return register is LR
     else 
