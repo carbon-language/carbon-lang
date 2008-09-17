@@ -193,15 +193,31 @@ static ABIArgInfo classifyReturnType(QualType RetTy,
 }
 
 static ABIArgInfo classifyArgumentType(QualType Ty,
-                                       ASTContext &Context,
-                                       CodeGenTypes &Types) {
+                                       ASTContext &Context) {
   assert(!Ty->isArrayType() && "Array types cannot be passed directly.");
-
-  if (!Types.ConvertType(Ty)->isSingleValueType()) {
+  if (CodeGenFunction::hasAggregateLLVMType(Ty)) {
     return ABIArgInfo::getByVal(0);
   } else {
     return ABIArgInfo::getDefault();
   }
+}
+
+static ABIArgInfo getABIReturnInfo(QualType Ty,
+                                   ASTContext &Context) {
+  ABIArgInfo Info = classifyReturnType(Ty, Context);
+  // Ensure default on aggregate types is StructRet.
+  if (Info.isDefault() && CodeGenFunction::hasAggregateLLVMType(Ty))
+    return ABIArgInfo::getStructRet();
+  return Info;
+}
+
+static ABIArgInfo getABIArgumentInfo(QualType Ty,
+                                     ASTContext &Context) {
+  ABIArgInfo Info = classifyArgumentType(Ty, Context);
+  // Ensure default on aggregate types is ByVal.
+  if (Info.isDefault() && CodeGenFunction::hasAggregateLLVMType(Ty))
+    return ABIArgInfo::getByVal(0);
+  return Info;  
 }
 
 /***/
@@ -304,7 +320,7 @@ CodeGenTypes::GetFunctionType(ArgTypeIterator begin, ArgTypeIterator end,
   const llvm::Type *ResultType = 0;
 
   QualType RetTy = *begin;
-  ABIArgInfo RetAI = classifyReturnType(RetTy, getContext());
+  ABIArgInfo RetAI = getABIReturnInfo(RetTy, getContext());
   switch (RetAI.getKind()) {
   case ABIArgInfo::ByVal:
   case ABIArgInfo::Expand:
@@ -331,7 +347,7 @@ CodeGenTypes::GetFunctionType(ArgTypeIterator begin, ArgTypeIterator end,
   }
   
   for (++begin; begin != end; ++begin) {
-    ABIArgInfo AI = classifyArgumentType(*begin, getContext(), *this);
+    ABIArgInfo AI = getABIArgumentInfo(*begin, getContext());
     const llvm::Type *Ty = ConvertType(*begin);
     
     switch (AI.getKind()) {
@@ -359,7 +375,7 @@ CodeGenTypes::GetFunctionType(ArgTypeIterator begin, ArgTypeIterator end,
 }
 
 bool CodeGenModule::ReturnTypeUsesSret(QualType RetTy) {
-  return classifyReturnType(RetTy, getContext()).isStructRet();
+  return getABIReturnInfo(RetTy, getContext()).isStructRet();
 }
 
 void CodeGenModule::ConstructParamAttrList(const Decl *TargetDecl,
@@ -377,7 +393,7 @@ void CodeGenModule::ConstructParamAttrList(const Decl *TargetDecl,
 
   QualType RetTy = *begin;
   unsigned Index = 1;
-  ABIArgInfo RetAI = classifyReturnType(RetTy, getContext());
+  ABIArgInfo RetAI = getABIReturnInfo(RetTy, getContext());
   switch (RetAI.getKind()) {
   case ABIArgInfo::Default:
     if (RetTy->isPromotableIntegerType()) {
@@ -408,7 +424,7 @@ void CodeGenModule::ConstructParamAttrList(const Decl *TargetDecl,
   for (++begin; begin != end; ++begin) {
     QualType ParamType = *begin;
     unsigned ParamAttrs = 0;
-    ABIArgInfo AI = classifyArgumentType(ParamType, getContext(), getTypes());
+    ABIArgInfo AI = getABIArgumentInfo(ParamType, getContext());
     
     switch (AI.getKind()) {
     case ABIArgInfo::StructRet:
@@ -463,7 +479,7 @@ void CodeGenFunction::EmitFunctionProlog(llvm::Function *Fn,
        i != e; ++i) {
     const VarDecl *Arg = i->first;
     QualType Ty = i->second;
-    ABIArgInfo ArgI = classifyArgumentType(Ty, getContext(), CGM.getTypes());
+    ABIArgInfo ArgI = getABIArgumentInfo(Ty, getContext());
 
     switch (ArgI.getKind()) {
     case ABIArgInfo::ByVal: 
@@ -514,7 +530,7 @@ void CodeGenFunction::EmitFunctionEpilog(QualType RetTy,
 
   // Functions with no result always return void.
   if (ReturnValue) { 
-    ABIArgInfo RetAI = classifyReturnType(RetTy, getContext());
+    ABIArgInfo RetAI = getABIReturnInfo(RetTy, getContext());
     
     switch (RetAI.getKind()) {
     case ABIArgInfo::StructRet:
@@ -552,7 +568,7 @@ RValue CodeGenFunction::EmitCall(llvm::Value *Callee,
 
   // Handle struct-return functions by passing a pointer to the
   // location that we would like to return into.
-  ABIArgInfo RetAI = classifyReturnType(RetTy, getContext());
+  ABIArgInfo RetAI = getABIReturnInfo(RetTy, getContext());
   switch (RetAI.getKind()) {
   case ABIArgInfo::StructRet:
     // Create a temporary alloca to hold the result of the call. :(
@@ -570,8 +586,7 @@ RValue CodeGenFunction::EmitCall(llvm::Value *Callee,
   
   for (CallArgList::const_iterator I = CallArgs.begin(), E = CallArgs.end(); 
        I != E; ++I) {
-    ABIArgInfo ArgInfo = classifyArgumentType(I->second, getContext(), 
-                                              CGM.getTypes());
+    ABIArgInfo ArgInfo = getABIArgumentInfo(I->second, getContext());
     RValue RV = I->first;
 
     switch (ArgInfo.getKind()) {
