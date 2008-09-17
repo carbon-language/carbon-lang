@@ -20,7 +20,6 @@ DONE = echo
 endif
 
 TESTS := $(addprefix Output/, $(addsuffix .testresults, $(shell find $(TESTDIRS) \( -name '*.c' -or -name '*.cpp' -or -name '*.m' -or -name '*.mm' \))))
-
 Output/%.testresults: %
 	@ $(PROGRESS)
 	@ PATH=$(ToolDir):$(LLVM_SRC_ROOT)/test/Scripts:$$PATH VG=$(VG) $(PROJ_SRC_DIR)/TestRunner.sh $< > $@ || $(REPORTFAIL)
@@ -31,7 +30,7 @@ all::
 	@ echo '--- Running clang tests ---'
 	@ $(MAKE) $(TESTS)
 	@ $(DONE)
-	@ cat $(TESTS) | grep -v 'XFAILED' | grep -v ' HAS NO RUN LINE! ****' | $(LLVM_SRC_ROOT)/test/Scripts/count 0 > /dev/null
+	@ !(cat $(TESTS) | grep -q " FAILED! ")
 
 report: $(TESTS)
 	@ cat $^
