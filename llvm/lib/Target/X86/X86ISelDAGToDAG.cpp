@@ -268,7 +268,7 @@ static SDNode *findFlagUse(SDNode *N) {
 /// non-immediate use of "Def". This function recursively traversing
 /// up the operand chain ignoring certain nodes.
 static void findNonImmUse(SDNode *Use, SDNode* Def, SDNode *ImmedUse,
-                          SDNode *Root, SDNode *Skip, bool &found,
+                          SDNode *Root, bool &found,
                           SmallPtrSet<SDNode*, 16> &Visited) {
   if (found ||
       Use->getNodeId() > Def->getNodeId() ||
@@ -277,26 +277,16 @@ static void findNonImmUse(SDNode *Use, SDNode* Def, SDNode *ImmedUse,
   
   for (unsigned i = 0, e = Use->getNumOperands(); !found && i != e; ++i) {
     SDNode *N = Use->getOperand(i).getNode();
-    if (N == Skip)
-      continue;
     if (N == Def) {
-      if (Use == ImmedUse)
+      if (Use == ImmedUse || Use == Root)
         continue;  // We are not looking for immediate use.
-      if (Use == Root) {
-        // Must be a chain reading node where it is possible to reach its own
-        // chain operand through a path started from another operand.
-        assert(Use->getOpcode() == ISD::STORE ||
-               Use->getOpcode() == X86ISD::CMP ||
-               Use->getOpcode() == ISD::INTRINSIC_W_CHAIN ||
-               Use->getOpcode() == ISD::INTRINSIC_VOID);
-        continue;
-      }
+      assert(N != Root);
       found = true;
       break;
     }
 
     // Traverse up the operand chain.
-    findNonImmUse(N, Def, ImmedUse, Root, Skip, found, Visited);
+    findNonImmUse(N, Def, ImmedUse, Root, found, Visited);
   }
 }
 
@@ -309,11 +299,10 @@ static void findNonImmUse(SDNode *Use, SDNode* Def, SDNode *ImmedUse,
 /// have one non-chain use, we only need to watch out for load/op/store
 /// and load/op/cmp case where the root (store / cmp) may reach the load via
 /// its chain operand.
-static inline bool isNonImmUse(SDNode *Root, SDNode *Def, SDNode *ImmedUse,
-                               SDNode *Skip = NULL) {
+static inline bool isNonImmUse(SDNode *Root, SDNode *Def, SDNode *ImmedUse) {
   SmallPtrSet<SDNode*, 16> Visited;
   bool found = false;
-  findNonImmUse(Root, Def, ImmedUse, Root, Skip, found, Visited);
+  findNonImmUse(Root, Def, ImmedUse, Root, found, Visited);
   return found;
 }
 
@@ -321,55 +310,58 @@ static inline bool isNonImmUse(SDNode *Root, SDNode *Def, SDNode *ImmedUse,
 bool X86DAGToDAGISel::CanBeFoldedBy(SDNode *N, SDNode *U, SDNode *Root) const {
   if (Fast) return false;
 
-  // If U use can somehow reach N through another path then U can't fold N or
-  // it will create a cycle. e.g. In the following diagram, U can reach N
-  // through X. If N is folded into into U, then X is both a predecessor and
-  // a successor of U.
+  // If Root use can somehow reach N through a path that that doesn't contain
+  // U then folding N would create a cycle. e.g. In the following
+  // diagram, Root can reach N through X. If N is folded into into Root, then
+  // X is both a predecessor and a successor of U.
   //
-  //         [ N ]
-  //         ^  ^
-  //         |  |
-  //        /   \---
-  //      /        [X]
-  //      |         ^
-  //     [U]--------|
+  //          [N*]           //
+  //         ^   ^           //
+  //        /     \          //
+  //      [U*]    [X]?       //
+  //        ^     ^          //
+  //         \   /           //
+  //          \ /            //
+  //         [Root*]         //
+  //
+  // * indicates nodes to be folded together.
+  //
+  // If Root produces a flag, then it gets (even more) interesting. Since it
+  // will be "glued" together with its flag use in the scheduler, we need to
+  // check if it might reach N.
+  //
+  //          [N*]           //
+  //         ^   ^           //
+  //        /     \          //
+  //      [U*]    [X]?       //
+  //        ^       ^        //
+  //         \       \       //
+  //          \      |       //
+  //         [Root*] |       //
+  //          ^      |       //
+  //          f      |       //
+  //          |      /       //
+  //         [Y]    /        //
+  //           ^   /         //
+  //           f  /          //
+  //           | /           //
+  //          [FU]           //
+  //
+  // If FU (flag use) indirectly reaches N (the load), and Root folds N
+  // (call it Fold), then X is a predecessor of FU and a successor of
+  // Fold. But since Fold and FU are flagged together, this will create
+  // a cycle in the scheduling graph.
 
-  if (isNonImmUse(Root, N, U))
-    return false;
-
-  // If U produces a flag, then it gets (even more) interesting. Since it
-  // would have been "glued" together with its flag use, we need to check if
-  // it might reach N:
-  //
-  //       [ N ]
-  //        ^ ^
-  //        | |
-  //       [U] \--
-  //        ^   [TF]
-  //        |    ^
-  //        |    |
-  //         \  /
-  //          [FU]
-  //
-  // If FU (flag use) indirectly reach N (the load), and U fold N (call it
-  // NU), then TF is a predecessor of FU and a successor of NU. But since
-  // NU and FU are flagged together, this effectively creates a cycle.
-  bool HasFlagUse = false;
   MVT VT = Root->getValueType(Root->getNumValues()-1);
-  while ((VT == MVT::Flag && !Root->use_empty())) {
+  while (VT == MVT::Flag) {
     SDNode *FU = findFlagUse(Root);
     if (FU == NULL)
       break;
-    else {
-      Root = FU;
-      HasFlagUse = true;
-    }
+    Root = FU;
     VT = Root->getValueType(Root->getNumValues()-1);
   }
 
-  if (HasFlagUse)
-    return !isNonImmUse(Root, N, Root, U);
-  return true;
+  return !isNonImmUse(Root, N, U);
 }
 
 /// MoveBelowTokenFactor - Replace TokenFactor operand with load's chain operand
