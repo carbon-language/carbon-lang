@@ -1,6 +1,5 @@
 ; Loop is elimianted. Save last value assignments, including induction variable.
-; RUN: llvm-as < %s | opt -loop-index-split -disable-output -stats |& \
-; RUN: grep "loop-index-split" | count 1
+; RUN: llvm-as < %s | opt -loop-index-split -disable-output -stats | not grep "loop-index-split"
 
 declare i32 @foo(i32)
 declare i32 @bar(i32, i32)

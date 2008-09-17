@@ -1,5 +1,4 @@
-; RUN: llvm-as < %s | opt -loop-index-split | llvm-dis | grep tmp8 | count 3
-; count 3 = increment + phi + store
+; RUN: llvm-as < %s | opt -loop-index-split -stats -disable-output | not grep "loop-index-split"
 ;PR2294
 @g_2 = external global i16		; <i16*> [#uses=4]
 @g_5 = external global i32		; <i32*> [#uses=1]

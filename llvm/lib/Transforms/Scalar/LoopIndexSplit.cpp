@@ -111,6 +111,10 @@ namespace {
     /// instruction then loop body is executed only for one iteration. In
     /// such case eliminate loop structure surrounding this loop body. For
     bool processOneIterationLoop(SplitInfo &SD);
+    
+    /// isOneIterationLoop - Return true if split condition is EQ and 
+    /// the IV is not used outside the loop.
+    bool isOneIterationLoop(ICmpInst *CI);
 
     void updateLoopBounds(ICmpInst *CI);
     /// updateLoopIterationSpace - Current loop body is covered by an AND
@@ -248,7 +252,7 @@ bool LoopIndexSplit::runOnLoop(Loop *IncomingLoop, LPPassManager &LPM_Ref) {
         SI = SplitData.erase(Delete_SI);
       }
     }
-    else if (CI && CI->getPredicate() == ICmpInst::ICMP_EQ) {
+    else if (isOneIterationLoop(CI)) {
       Changed = processOneIterationLoop(SD);
       if (Changed) {
         ++NumIndexSplit;
@@ -276,6 +280,22 @@ bool LoopIndexSplit::runOnLoop(Loop *IncomingLoop, LPPassManager &LPM_Ref) {
   return Changed;
 }
 
+/// isOneIterationLoop - Return true if split condition is EQ and 
+/// the IV is not used outside the loop.
+bool LoopIndexSplit::isOneIterationLoop(ICmpInst *CI) {
+  if (!CI)
+    return false;
+  if (CI->getPredicate() != ICmpInst::ICMP_EQ)
+    return false;
+
+  Value *Incr = IndVar->getIncomingValueForBlock(L->getLoopLatch());
+  for (Value::use_iterator UI = Incr->use_begin(), E = Incr->use_end(); 
+       UI != E; ++UI)
+    if (!L->contains(cast<Instruction>(*UI)->getParent()))
+      return false;
+
+  return true;
+}
 /// Return true if V is a induction variable or induction variable's
 /// increment for loop L.
 void LoopIndexSplit::findIndVar(Value *V, Loop *L) {
