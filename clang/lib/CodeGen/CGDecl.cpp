@@ -219,8 +219,9 @@ void CodeGenFunction::EmitParmDecl(const VarDecl &D, llvm::Value *Arg) {
     const llvm::Type *LTy = ConvertType(Ty);
     if (LTy->isSingleValueType()) {
       // TODO: Alignment
-      DeclPtr = new llvm::AllocaInst(LTy, 0, std::string(D.getName())+".addr",
-                                     AllocaInsertPt);
+      std::string Name(D.getName());
+      Name += ".addr";
+      DeclPtr = CreateTempAlloca(LTy, Name.c_str());
       
       // Store the initial value into the alloca.
       Builder.CreateStore(Arg, DeclPtr,Ty.isVolatileQualified());

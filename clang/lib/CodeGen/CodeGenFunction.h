@@ -441,6 +441,22 @@ private:
   /// EmitIndirectSwitches - Emit code for all of the switch
   /// instructions in IndirectSwitches.
   void EmitIndirectSwitches();
+
+  /// ExpandTypeFromArgs - Reconstruct a structure of type \arg Ty
+  /// from function arguments into \arg Dst. See ABIArgInfo::Expand.
+  ///
+  /// \param AI - The first function argument of the expansion.
+  /// \return The argument following the last expanded function
+  /// argument.
+  llvm::Function::arg_iterator 
+  ExpandTypeFromArgs(QualType Ty, LValue Dst,
+                     llvm::Function::arg_iterator AI);
+
+  /// ExpandTypeToArgs - Expand an RValue \arg Src, with the LLVM type
+  /// for \arg Ty, into individual arguments on the provided vector
+  /// \arg Args. See ABIArgInfo::Expand.
+  void ExpandTypeToArgs(QualType Ty, RValue Src, 
+                        llvm::SmallVector<llvm::Value*, 16> &Args);
 };
 }  // end namespace CodeGen
 }  // end namespace clang

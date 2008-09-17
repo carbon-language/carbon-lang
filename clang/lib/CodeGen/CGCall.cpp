@@ -18,6 +18,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/ParameterAttributes.h"
 using namespace clang;
 using namespace CodeGen;
@@ -102,8 +103,8 @@ public:
     Default,
     StructRet, /// Only valid for aggregate return types.
 
-    Coerce,    /// Only valid for aggregate types, the argument should
-               /// be accessed by coercion to a provided type.
+    Coerce,    /// Only valid for aggregate return types, the argument
+               /// should be accessed by coercion to a provided type.
 
     ByVal,     /// Only valid for aggregate argument types. The
                /// structure should be passed "byval" with the
@@ -112,7 +113,10 @@ public:
 
     Expand,    /// Only valid for aggregate argument types. The
                /// structure should be expanded into consecutive
-               /// arguments for its constituent fields.
+               /// arguments for its constituent fields. Currently
+               /// expand is only allowed on structures whose fields
+               /// are all scalar types or are themselves expandable
+               /// types.
 
     KindFirst=Default, KindLast=Expand
   };
@@ -140,12 +144,16 @@ public:
   static ABIArgInfo getByVal(unsigned Alignment) {
     return ABIArgInfo(ByVal, 0, Alignment);
   }
+  static ABIArgInfo getExpand() {
+    return ABIArgInfo(Expand);
+  }
 
   Kind getKind() const { return TheKind; }
   bool isDefault() const { return TheKind == Default; }
   bool isStructRet() const { return TheKind == StructRet; }
   bool isCoerce() const { return TheKind == Coerce; }
   bool isByVal() const { return TheKind == ByVal; }
+  bool isExpand() const { return TheKind == Expand; }
 
   // Coerce accessors
   const llvm::Type *getCoerceToType() const {
@@ -193,6 +201,86 @@ static ABIArgInfo classifyArgumentType(QualType Ty,
     return ABIArgInfo::getByVal(0);
   } else {
     return ABIArgInfo::getDefault();
+  }
+}
+
+/***/
+
+void CodeGenTypes::GetExpandedTypes(QualType Ty, 
+                                    std::vector<const llvm::Type*> &ArgTys) {
+  const RecordType *RT = Ty->getAsStructureType();
+  assert(RT && "Can only expand structure types.");
+  const RecordDecl *RD = RT->getDecl();
+  assert(!RD->hasFlexibleArrayMember() && 
+         "Cannot expand structure with flexible array.");
+  
+  for (RecordDecl::field_const_iterator i = RD->field_begin(), 
+         e = RD->field_end(); i != e; ++i) {
+    const FieldDecl *FD = *i;
+    assert(!FD->isBitField() && 
+           "Cannot expand structure with bit-field members.");
+    
+    QualType FT = FD->getType();
+    if (CodeGenFunction::hasAggregateLLVMType(FT)) {
+      GetExpandedTypes(FT, ArgTys);
+    } else {
+      ArgTys.push_back(ConvertType(FT));
+    }
+  }
+}
+
+llvm::Function::arg_iterator 
+CodeGenFunction::ExpandTypeFromArgs(QualType Ty, LValue LV,
+                                    llvm::Function::arg_iterator AI) {
+  const RecordType *RT = Ty->getAsStructureType();
+  assert(RT && "Can only expand structure types.");
+
+  RecordDecl *RD = RT->getDecl();
+  assert(LV.isSimple() && 
+         "Unexpected non-simple lvalue during struct expansion.");  
+  llvm::Value *Addr = LV.getAddress();
+  for (RecordDecl::field_iterator i = RD->field_begin(), 
+         e = RD->field_end(); i != e; ++i) {
+    FieldDecl *FD = *i;    
+    QualType FT = FD->getType();
+
+    // FIXME: What are the right qualifiers here?
+    LValue LV = EmitLValueForField(Addr, FD, false, 0);
+    if (CodeGenFunction::hasAggregateLLVMType(FT)) {
+      AI = ExpandTypeFromArgs(FT, LV, AI);
+    } else {
+      EmitStoreThroughLValue(RValue::get(AI), LV, FT);
+      ++AI;
+    }
+  }
+
+  return AI;
+}
+
+void 
+CodeGenFunction::ExpandTypeToArgs(QualType Ty, RValue RV, 
+                                  llvm::SmallVector<llvm::Value*, 16> &Args) {
+  const RecordType *RT = Ty->getAsStructureType();
+  assert(RT && "Can only expand structure types.");
+
+  RecordDecl *RD = RT->getDecl();
+  assert(RV.isAggregate() && "Unexpected rvalue during struct expansion");
+  llvm::Value *Addr = RV.getAggregateAddr();
+  for (RecordDecl::field_iterator i = RD->field_begin(), 
+         e = RD->field_end(); i != e; ++i) {
+    FieldDecl *FD = *i;    
+    QualType FT = FD->getType();
+    
+    // FIXME: What are the right qualifiers here?
+    LValue LV = EmitLValueForField(Addr, FD, false, 0);
+    if (CodeGenFunction::hasAggregateLLVMType(FT)) {
+      ExpandTypeToArgs(FT, RValue::getAggregate(LV.getAddress()), Args);
+    } else {
+      RValue RV = EmitLoadOfLValue(LV, FT);
+      assert(RV.isScalar() && 
+             "Unexpected non-scalar rvalue during struct expansion.");
+      Args.push_back(RV.getScalarVal());
+    }
   }
 }
 
@@ -247,6 +335,7 @@ CodeGenTypes::GetFunctionType(ArgTypeIterator begin, ArgTypeIterator end,
     const llvm::Type *Ty = ConvertType(*begin);
     
     switch (AI.getKind()) {
+    case ABIArgInfo::Coerce:
     case ABIArgInfo::StructRet:
       assert(0 && "Invalid ABI kind for non-return argument");
     
@@ -259,13 +348,9 @@ CodeGenTypes::GetFunctionType(ArgTypeIterator begin, ArgTypeIterator end,
     case ABIArgInfo::Default:
       ArgTys.push_back(Ty);
       break;
-
-    case ABIArgInfo::Coerce:
-      assert(0 && "FIXME: ABIArgInfo::Coerce unhandled for arguments");
-      break;
      
     case ABIArgInfo::Expand:
-      assert(0 && "FIXME: ABIArgInfo::Expand unhandled for arguments");
+      GetExpandedTypes(*begin, ArgTys);
       break;
     }
   }
@@ -320,13 +405,14 @@ void CodeGenModule::ConstructParamAttrList(const Decl *TargetDecl,
 
   if (FuncAttrs)
     PAL.push_back(llvm::ParamAttrsWithIndex::get(0, FuncAttrs));
-  for (++begin; begin != end; ++begin, ++Index) {
+  for (++begin; begin != end; ++begin) {
     QualType ParamType = *begin;
     unsigned ParamAttrs = 0;
     ABIArgInfo AI = classifyArgumentType(ParamType, getContext(), getTypes());
     
     switch (AI.getKind()) {
     case ABIArgInfo::StructRet:
+    case ABIArgInfo::Coerce:
       assert(0 && "Invalid ABI kind for non-return argument");
     
     case ABIArgInfo::ByVal:
@@ -343,18 +429,21 @@ void CodeGenModule::ConstructParamAttrList(const Decl *TargetDecl,
         }
       }
       break;
-
-    case ABIArgInfo::Coerce:
-      assert(0 && "FIXME: ABIArgInfo::Coerce unhandled for arguments");
-      break;
      
-    case ABIArgInfo::Expand:
-      assert(0 && "FIXME: ABIArgInfo::Expand unhandled for arguments");
-      break;
+    case ABIArgInfo::Expand: {
+      std::vector<const llvm::Type*> Tys;  
+      // FIXME: This is rather inefficient. Do we ever actually need
+      // to do anything here? The result should be just reconstructed
+      // on the other side, so extension should be a non-issue.
+      getTypes().GetExpandedTypes(ParamType, Tys);
+      Index += Tys.size();
+      continue;
+    }
     }
       
     if (ParamAttrs)
       PAL.push_back(llvm::ParamAttrsWithIndex::get(Index, ParamAttrs));
+    ++Index;
   }
 }
 
@@ -371,36 +460,50 @@ void CodeGenFunction::EmitFunctionProlog(llvm::Function *Fn,
   }
      
   for (FunctionArgList::const_iterator i = Args.begin(), e = Args.end();
-       i != e; ++i, ++AI) {
+       i != e; ++i) {
     const VarDecl *Arg = i->first;
-    QualType T = i->second;
-    ABIArgInfo ArgI = classifyArgumentType(T, getContext(), CGM.getTypes());
+    QualType Ty = i->second;
+    ABIArgInfo ArgI = classifyArgumentType(Ty, getContext(), CGM.getTypes());
 
     switch (ArgI.getKind()) {
     case ABIArgInfo::ByVal: 
     case ABIArgInfo::Default: {
       assert(AI != Fn->arg_end() && "Argument mismatch!");
       llvm::Value* V = AI;
-      if (!getContext().typesAreCompatible(T, Arg->getType())) {
+      if (!getContext().typesAreCompatible(Ty, Arg->getType())) {
         // This must be a promotion, for something like
         // "void a(x) short x; {..."
-        V = EmitScalarConversion(V, T, Arg->getType());
+        V = EmitScalarConversion(V, Ty, Arg->getType());
       }
       EmitParmDecl(*Arg, V);
       break;
     }
+      
+    case ABIArgInfo::Expand: {
+      // If this was structure was expand into multiple arguments then
+      // we need to create a temporary and reconstruct it from the
+      // arguments.
+      std::string Name(Arg->getName());
+      llvm::Value *Temp = CreateTempAlloca(ConvertType(Ty), 
+                                           (Name + ".addr").c_str());
+      // FIXME: What are the right qualifiers here?
+      llvm::Function::arg_iterator End = 
+        ExpandTypeFromArgs(Ty, LValue::MakeAddr(Temp,0), AI);      
+      EmitParmDecl(*Arg, Temp);
 
+      // Name the arguments used in expansion and increment AI.
+      unsigned Index = 0;
+      for (; AI != End; ++AI, ++Index)
+        AI->setName(Name + "." + llvm::utostr(Index));
+      continue;
+    }
+      
     case ABIArgInfo::Coerce:
-      assert(0 && "FIXME: ABIArgInfo::Coerce unhandled for arguments");
-      break;
-      
-    case ABIArgInfo::Expand:
-      assert(0 && "FIXME: ABIArgInfo::Expand unhandled for arguments");
-      break;
-      
     case ABIArgInfo::StructRet:
       assert(0 && "Invalid ABI kind for non-return argument");        
     }
+
+    ++AI;
   }
   assert(AI == Fn->arg_end() && "Argument mismatch!");
 }
@@ -445,9 +548,7 @@ void CodeGenFunction::EmitFunctionEpilog(QualType RetTy,
 RValue CodeGenFunction::EmitCall(llvm::Value *Callee, 
                                  QualType RetTy, 
                                  const CallArgList &CallArgs) {
-  // FIXME: Factor out code to load from args into locals into target.
   llvm::SmallVector<llvm::Value*, 16> Args;
-  llvm::Value *TempArg0 = 0;
 
   // Handle struct-return functions by passing a pointer to the
   // location that we would like to return into.
@@ -455,8 +556,7 @@ RValue CodeGenFunction::EmitCall(llvm::Value *Callee,
   switch (RetAI.getKind()) {
   case ABIArgInfo::StructRet:
     // Create a temporary alloca to hold the result of the call. :(
-    TempArg0 = CreateTempAlloca(ConvertType(RetTy));
-    Args.push_back(TempArg0);
+    Args.push_back(CreateTempAlloca(ConvertType(RetTy)));
     break;
     
   case ABIArgInfo::Default:
@@ -470,15 +570,32 @@ RValue CodeGenFunction::EmitCall(llvm::Value *Callee,
   
   for (CallArgList::const_iterator I = CallArgs.begin(), E = CallArgs.end(); 
        I != E; ++I) {
+    ABIArgInfo ArgInfo = classifyArgumentType(I->second, getContext(), 
+                                              CGM.getTypes());
     RValue RV = I->first;
-    if (RV.isScalar()) {
-      Args.push_back(RV.getScalarVal());
-    } else if (RV.isComplex()) {
-      // Make a temporary alloca to pass the argument.
-      Args.push_back(CreateTempAlloca(ConvertType(I->second)));
-      StoreComplexToAddr(RV.getComplexVal(), Args.back(), false); 
-    } else {
-      Args.push_back(RV.getAggregateAddr());
+
+    switch (ArgInfo.getKind()) {
+    case ABIArgInfo::ByVal: // Default is byval
+    case ABIArgInfo::Default:      
+      if (RV.isScalar()) {
+        Args.push_back(RV.getScalarVal());
+      } else if (RV.isComplex()) {
+        // Make a temporary alloca to pass the argument.
+        Args.push_back(CreateTempAlloca(ConvertType(I->second)));
+        StoreComplexToAddr(RV.getComplexVal(), Args.back(), false); 
+      } else {
+        Args.push_back(RV.getAggregateAddr());
+      }
+      break;
+     
+    case ABIArgInfo::StructRet:
+    case ABIArgInfo::Coerce:
+      assert(0 && "Invalid ABI kind for non-return argument");
+      break;
+
+    case ABIArgInfo::Expand:
+      ExpandTypeToArgs(I->second, RV, Args);
+      break;
     }
   }
   
@@ -501,10 +618,10 @@ RValue CodeGenFunction::EmitCall(llvm::Value *Callee,
   switch (RetAI.getKind()) {
   case ABIArgInfo::StructRet:
     if (RetTy->isAnyComplexType())
-      return RValue::getComplex(LoadComplexFromAddr(TempArg0, false));
+      return RValue::getComplex(LoadComplexFromAddr(Args[0], false));
     else 
       // Struct return.
-      return RValue::getAggregate(TempArg0);
+      return RValue::getAggregate(Args[0]);
 
   case ABIArgInfo::Default:
     return RValue::get(RetTy->isVoidType() ? 0 : CI);

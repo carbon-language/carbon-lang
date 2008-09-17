@@ -187,6 +187,11 @@ public:  // These are internal details of CGT that shouldn't be used externally.
   /// ConvertTagDeclType - Lay out a tagged decl type like struct or union or
   /// enum.
   const llvm::Type *ConvertTagDeclType(const TagDecl *TD);
+
+  /// GetExpandedTypes - Expand the type \arg Ty into the LLVM
+  /// argument types it would be passed as on the provided vector \arg
+  /// ArgTys. See ABIArgInfo::Expand.
+  void GetExpandedTypes(QualType Ty, std::vector<const llvm::Type*> &ArgTys);
 };
 
 }  // end namespace CodeGen
