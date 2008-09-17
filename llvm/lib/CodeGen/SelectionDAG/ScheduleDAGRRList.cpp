@@ -1709,6 +1709,8 @@ static bool canClobberPhysRegDefs(const SUnit *SuccSU, const SUnit *SU,
     MVT VT = N->getValueType(i);
     if (VT == MVT::Flag || VT == MVT::Other)
       continue;
+    if (!N->hasAnyUseOfValue(i))
+      continue;
     unsigned Reg = ImpDefs[i - NumDefs];
     for (;*SUImpDefs; ++SUImpDefs) {
       unsigned SUReg = *SUImpDefs;
