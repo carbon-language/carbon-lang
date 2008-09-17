@@ -748,15 +748,6 @@ bool X86FastISel::X86SelectCall(Instruction *I) {
       return false;
   }
 
-  // Materialize callee address in a register. FIXME: GV address can be
-  // handled with a CALLpcrel32 instead.
-  unsigned CalleeOp = getRegForValue(Callee);
-  if (CalleeOp == 0) {
-    if (!isa<Constant>(Callee) || !X86SelectConstAddr(Callee, CalleeOp, true))
-      // Unhandled operand. Halt "fast" selection and bail.
-      return false;    
-  }
-
   // Handle only C and fastcc calling conventions for now.
   CallSite CS(CI);
   unsigned CC = CS.getCallingConv();
@@ -774,8 +765,20 @@ bool X86FastISel::X86SelectCall(Instruction *I) {
   // Handle *simple* calls for now.
   const Type *RetTy = CS.getType();
   MVT RetVT;
-  if (!isTypeLegal(RetTy, TLI, RetVT, true))
+  if (RetTy == Type::VoidTy)
+    RetVT = MVT::isVoid;
+  else if (!isTypeLegal(RetTy, TLI, RetVT, true))
     return false;
+
+  // Materialize callee address in a register. FIXME: GV address can be
+  // handled with a CALLpcrel32 instead.
+  unsigned CalleeOp = 0;
+  if (!isa<Constant>(Callee) || !X86SelectConstAddr(Callee, CalleeOp, true)) {
+    CalleeOp = getRegForValue(Callee);
+    if (CalleeOp == 0)
+      // Unhandled operand. Halt "fast" selection and bail.
+      return false;    
+  }
 
   // Allow calls which produce i1 results.
   bool AndToI1 = false;
