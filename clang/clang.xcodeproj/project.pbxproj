@@ -65,6 +65,7 @@
 		84AF36A10CB17A3B00C820A5 /* DeclObjC.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 84AF36A00CB17A3B00C820A5 /* DeclObjC.h */; };
 		84D9A8880C1A57E100AC7ABC /* AttributeList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84D9A8870C1A57E100AC7ABC /* AttributeList.cpp */; };
 		84D9A88C0C1A581300AC7ABC /* AttributeList.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 84D9A88B0C1A581300AC7ABC /* AttributeList.h */; };
+		9030C10A0E807A9300941490 /* RewriteBlocks.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9030C1090E807A9300941490 /* RewriteBlocks.cpp */; };
 		DE01DA490B12ADA300AC22CE /* PPCallbacks.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE01DA480B12ADA300AC22CE /* PPCallbacks.h */; };
 		DE06756C0C051CFE00EBBFD8 /* ParseExprCXX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE06756B0C051CFE00EBBFD8 /* ParseExprCXX.cpp */; };
 		DE06B73E0A8307640050E87E /* LangOptions.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE06B73D0A8307640050E87E /* LangOptions.h */; };
@@ -366,6 +367,7 @@
 		84D9A8870C1A57E100AC7ABC /* AttributeList.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = AttributeList.cpp; path = lib/Parse/AttributeList.cpp; sourceTree = "<group>"; };
 		84D9A88B0C1A581300AC7ABC /* AttributeList.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = AttributeList.h; path = clang/Parse/AttributeList.h; sourceTree = "<group>"; };
 		8DD76F6C0486A84900D96B5E /* clang */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = clang; sourceTree = BUILT_PRODUCTS_DIR; };
+		9030C1090E807A9300941490 /* RewriteBlocks.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RewriteBlocks.cpp; path = Driver/RewriteBlocks.cpp; sourceTree = "<group>"; };
 		DE01DA480B12ADA300AC22CE /* PPCallbacks.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PPCallbacks.h; sourceTree = "<group>"; };
 		DE06756B0C051CFE00EBBFD8 /* ParseExprCXX.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = ParseExprCXX.cpp; path = lib/Parse/ParseExprCXX.cpp; sourceTree = "<group>"; };
 		DE06B73D0A8307640050E87E /* LangOptions.h */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.c.h; path = LangOptions.h; sourceTree = "<group>"; tabWidth = 2; };
@@ -846,6 +848,7 @@
 		DEAEECAE0A5AF0FA0045101B /* Driver */ = {
 			isa = PBXGroup;
 			children = (
+				9030C1090E807A9300941490 /* RewriteBlocks.cpp */,
 				DE5932CD0AD60FF400BC794C /* clang.cpp */,
 				DE5932CE0AD60FF400BC794C /* clang.h */,
 				359DBBE20E1ACD4700F43FA0 /* AnalysisConsumer.h */,
@@ -1221,6 +1224,7 @@
 				359763260E633C7500B68AB7 /* HTMLDiagnostics.cpp in Sources */,
 				358CFBB80E65AB04002A8E19 /* BasicConstraintManager.cpp in Sources */,
 				35475B200E79973F0000BFE4 /* CGCall.cpp in Sources */,
+				9030C10A0E807A9300941490 /* RewriteBlocks.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

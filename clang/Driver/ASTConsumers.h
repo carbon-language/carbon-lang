@@ -58,6 +58,9 @@ ASTConsumer *CreateASTSerializer(const std::string& InFile,
                                  const std::string& EmitDir,
                                  Diagnostic &Diags);
 
+ASTConsumer *CreateBlockRewriter(const std::string& InFile,
+                                 Diagnostic &Diags,
+                                 const LangOptions &LangOpts);
 } // end clang namespace
 
 #include "AnalysisConsumer.h"
