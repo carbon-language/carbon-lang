@@ -91,11 +91,11 @@ OptLevelO1("O1",
 
 static cl::opt<bool>
 OptLevelO2("O2",
-           cl::desc("Optimization level 1. Similar to llvm-gcc -O2"));
+           cl::desc("Optimization level 2. Similar to llvm-gcc -O2"));
 
 static cl::opt<bool>
 OptLevelO3("O3",
-           cl::desc("Optimization level 1. Similar to llvm-gcc -O3"));
+           cl::desc("Optimization level 3. Similar to llvm-gcc -O3"));
 
 static cl::opt<bool>
 UnitAtATime("funit-at-a-time",
