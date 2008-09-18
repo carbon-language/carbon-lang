@@ -1430,6 +1430,12 @@ bool LoopIndexSplit::splitLoop(SplitInfo &SD) {
   if (!safeSplitCondition(SD))
     return false;
 
+  // If split condition EQ is not handled.
+  if (ICmpInst *ICMP = dyn_cast<ICmpInst>(SD.SplitCondition)) {
+    if (ICMP->getPredicate() == ICmpInst::ICMP_EQ)
+      return false;
+  }
+  
   BasicBlock *SplitCondBlock = SD.SplitCondition->getParent();
   
   // Unable to handle triangle loops at the moment.
