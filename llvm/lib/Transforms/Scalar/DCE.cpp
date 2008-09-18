@@ -111,11 +111,12 @@ bool DCE::runOnFunction(Function &F) {
 
       // Remove the instruction from the worklist if it still exists in it.
       for (std::vector<Instruction*>::iterator WI = WorkList.begin();
-           WI != WorkList.end(); ++WI)
-        if (*WI == I) {
+           WI != WorkList.end(); ) {
+        if (*WI == I)
           WI = WorkList.erase(WI);
-          --WI;
-        }
+        else
+          ++WI;
+      }
 
       MadeChange = true;
       ++DCEEliminated;
