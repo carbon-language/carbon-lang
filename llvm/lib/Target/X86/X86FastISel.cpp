@@ -27,6 +27,7 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Support/CallSite.h"
+#include "llvm/Support/GetElementPtrTypeIterator.h"
 
 using namespace llvm;
 
@@ -330,31 +331,107 @@ bool X86FastISel::X86SelectConstAddr(Value *V, unsigned &Op0,
 /// X86SelectAddress - Attempt to fill in an address from the given value.
 ///
 bool X86FastISel::X86SelectAddress(Value *V, X86AddressMode &AM) {
-  // Look past bitcasts.
-  if (const BitCastInst *BC = dyn_cast<BitCastInst>(V))
-    return X86SelectAddress(BC->getOperand(0), AM);
+  User *U;
+  unsigned Opcode = Instruction::UserOp1;
+  if (Instruction *I = dyn_cast<Instruction>(V)) {
+    Opcode = I->getOpcode();
+    U = I;
+  } else if (ConstantExpr *C = dyn_cast<ConstantExpr>(V)) {
+    Opcode = C->getOpcode();
+    U = C;
+  }
 
-  if (const AllocaInst *A = dyn_cast<AllocaInst>(V)) {
+  switch (Opcode) {
+  default: break;
+  case Instruction::BitCast:
+    // Look past bitcasts.
+    return X86SelectAddress(U->getOperand(0), AM);
+
+  case Instruction::IntToPtr:
+    // Look past no-op inttoptrs.
+    if (TLI.getValueType(U->getOperand(0)->getType()) == TLI.getPointerTy())
+      return X86SelectAddress(U->getOperand(0), AM);
+
+  case Instruction::PtrToInt:
+    // Look past no-op ptrtoints.
+    if (TLI.getValueType(U->getType()) == TLI.getPointerTy())
+      return X86SelectAddress(U->getOperand(0), AM);
+
+  case Instruction::Alloca: {
+    // Do static allocas.
+    const AllocaInst *A = cast<AllocaInst>(V);
     DenseMap<const AllocaInst*, int>::iterator SI = StaticAllocaMap.find(A);
     if (SI == StaticAllocaMap.end())
       return false;
     AM.BaseType = X86AddressMode::FrameIndexBase;
     AM.Base.FrameIndex = SI->second;
-  } else if (unsigned Ptr = lookUpRegForValue(V)) {
-    AM.Base.Reg = Ptr;
-  } else {
-    // Handle constant address.
-    // FIXME: If load type is something we can't handle, this can result in
-    // a dead stub load instruction.
-    if (isa<Constant>(V) && X86SelectConstAddr(V, AM.Base.Reg)) {
-      if (AM.Base.Reg == 0)
-        AM.GV = cast<GlobalValue>(V);
-    } else {
-      AM.Base.Reg = getRegForValue(V);
-      if (AM.Base.Reg == 0)
-        // Unhandled operand. Halt "fast" selection and bail.
-        return false;
+    return true;
+  }
+
+  case Instruction::Add: {
+    // Adds of constants are common and easy enough.
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(U->getOperand(1))) {
+      AM.Disp += CI->getZExtValue();
+      return X86SelectAddress(U->getOperand(0), AM);
     }
+    break;
+  }
+
+  case Instruction::GetElementPtr: {
+    // Pattern-match simple GEPs.
+    uint64_t Disp = AM.Disp;
+    unsigned IndexReg = AM.IndexReg;
+    unsigned Scale = AM.Scale;
+    gep_type_iterator GTI = gep_type_begin(U);
+    // Look at all but the last index. Constants can be folded,
+    // and one dynamic index can be handled, if the scale is supported.
+    for (User::op_iterator i = U->op_begin() + 1, e = U->op_end();
+         i != e; ++i, ++GTI) {
+      Value *Op = *i;
+      if (const StructType *STy = dyn_cast<StructType>(*GTI)) {
+        const StructLayout *SL = TD.getStructLayout(STy);
+        unsigned Idx = cast<ConstantInt>(Op)->getZExtValue();
+        Disp += SL->getElementOffset(Idx);
+      } else {
+        uint64_t S = TD.getABITypeSize(GTI.getIndexedType());
+        if (ConstantInt *CI = dyn_cast<ConstantInt>(Op)) {
+          // Constant-offset addressing.
+          Disp += CI->getZExtValue() * S;
+        } else if (IndexReg == 0 &&
+                   (S == 1 || S == 2 || S == 4 || S == 8)) {
+          // Scaled-index addressing.
+          Scale = S;
+          IndexReg = getRegForValue(Op);
+          if (IndexReg == 0)
+            return false;
+        } else
+          // Unsupported.
+          goto unsupported_gep;
+      }
+    }
+    // Ok, the GEP indices were covered by constant-offset and scaled-index
+    // addressing. Update the address state and move on to examining the base.
+    AM.IndexReg = IndexReg;
+    AM.Scale = Scale;
+    AM.Disp = Disp;
+    return X86SelectAddress(U->getOperand(0), AM);
+  unsupported_gep:
+    // Ok, the GEP indices weren't all covered.
+    break;
+  }
+  }
+
+  // Handle constant address.
+  // FIXME: If load type is something we can't handle, this can result in
+  // a dead stub load instruction.
+  if (isa<Constant>(V) && X86SelectConstAddr(V, AM.Base.Reg)) {
+    if (AM.Base.Reg == 0)
+      AM.GV = cast<GlobalValue>(V);
+  } else {
+    AM.Base.Reg = getRegForValue(V);
+    if (AM.Base.Reg == 0)
+      // Unhandled operand. Halt "fast" selection and bail.
+      return false;
   }
 
   return true;
