@@ -37,15 +37,17 @@ using namespace llvm;
 ///
 namespace {
 class ARMDAGToDAGISel : public SelectionDAGISel {
-  ARMTargetLowering Lowering;
+  ARMTargetMachine &TM;
+
+  ARMTargetLowering ARMLowering;
 
   /// Subtarget - Keep a pointer to the ARMSubtarget around so that we can
   /// make the right decision when generating code for different targets.
   const ARMSubtarget *Subtarget;
 
 public:
-  explicit ARMDAGToDAGISel(ARMTargetMachine &TM)
-    : SelectionDAGISel(Lowering), Lowering(TM),
+  explicit ARMDAGToDAGISel(ARMTargetMachine &tm)
+    : SelectionDAGISel(ARMLowering), TM(tm), ARMLowering(tm),
     Subtarget(&TM.getSubtarget<ARMSubtarget>()) {
   }
 
