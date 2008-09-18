@@ -293,6 +293,13 @@ public:
   null_deref_iterator null_derefs_begin() { return ExplicitNullDeref.begin(); }
   null_deref_iterator null_derefs_end() { return ExplicitNullDeref.end(); }
   
+  null_deref_iterator implicit_null_derefs_begin() {
+    return ImplicitNullDeref.begin();
+  }
+  null_deref_iterator implicit_null_derefs_end() {
+    return ImplicitNullDeref.end();
+  }
+  
   typedef BadDerefTy::iterator undef_deref_iterator;
   undef_deref_iterator undef_derefs_begin() { return UndefDeref.begin(); }
   undef_deref_iterator undef_derefs_end() { return UndefDeref.end(); }

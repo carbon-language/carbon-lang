@@ -247,3 +247,8 @@ BasicValueFactory::getPersistentRValPair(const RVal& V1, const RVal& V2) {
   return P->getValue();
 }
 
+const RVal* BasicValueFactory::getPersistentRVal(RVal X) {
+  return &getPersistentRValWithData(X, 0).first;
+}  
+
+

@@ -43,12 +43,25 @@ namespace clang {
 
 class GRStateManager;
 class GRTransferFuncs;
+
+//===----------------------------------------------------------------------===//
+// GRStateTrait - Traits used by the Generic Data Map of a GRState.
+//===----------------------------------------------------------------------===//
   
+template <typename T> struct GRStatePartialTrait;
+
+template <typename T> struct GRStateTrait {
+  typedef typename T::data_type data_type;
+  static inline void* GDMIndex() { return &T::TagInt; }   
+  static inline void* MakeVoidPtr(data_type D) { return (void*) D; }
+  static inline data_type MakeData(void* const* P) {
+    return P ? (data_type) *P : (data_type) 0;
+  }
+};
+
 //===----------------------------------------------------------------------===//
 // GRState- An ImmutableMap type Stmt*/Decl*/Symbols to RVals.
 //===----------------------------------------------------------------------===//
-
-template<typename T> struct GRStateTrait;
   
 /// GRState - This class encapsulates the actual data values for
 ///  for a "state" in our symbolic value tracking.  It is intended to be
@@ -169,7 +182,13 @@ public:
   void print(std::ostream& Out, StoreManager& StoreMgr,
              ConstraintManager& ConstraintMgr,
              Printer **Beg = 0, Printer **End = 0,
-             const char* nl = "\n", const char *sep = "") const;  
+             const char* nl = "\n", const char *sep = "") const; 
+  
+  // Tags used for the Generic Data Map.
+  struct NullDerefTag {
+    static int TagInt;
+    typedef const RVal* data_type;
+  };
 };
   
 template<> struct GRTrait<GRState*> {
@@ -566,8 +585,7 @@ public:
   
   void printDOT(std::ostream& Out) const;
 };
-  
-  
+
 } // end clang namespace
 
 #endif

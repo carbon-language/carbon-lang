@@ -17,7 +17,7 @@
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/Expr.h"
 #include "llvm/ADT/StringExtras.h"
-#include <sstream>
+
 using namespace clang;
 
 bool QualType::isConstant(ASTContext& Ctx) const {

@@ -37,9 +37,16 @@ class VISIBILITY_HIDDEN NSErrorCheck : public BugTypeCacheLocation {
 
   bool CheckArgument(QualType ArgTy, IdentifierInfo* NSErrorII);
   
+  void CheckParamDeref(VarDecl* V, GRStateRef state, GRExprEngine& Eng,
+                       GRBugReporter& BR); 
+  
+  const char* desc;
 public:
+  NSErrorCheck() : desc(0) {}
+  
   void EmitWarnings(BugReporter& BR) { EmitGRWarnings(cast<GRBugReporter>(BR));}
   const char* getName() const { return "NSError** null dereference"; }
+  const char* getDescription() const { return desc; }
 };  
   
 } // end anonymous namespace
@@ -77,6 +84,14 @@ void NSErrorCheck::EmitGRWarnings(GRBugReporter& BR) {
               CodeDecl.getLocation());
     
   }
+  
+  // Scan the NSError** parameters for an implicit null dereference.
+  for (llvm::SmallVectorImpl<VarDecl*>::iterator I=Params.begin(),
+        E=Params.end(); I!=E; ++I)    
+    for (GRExprEngine::GraphTy::roots_iterator RI=G.roots_begin(),
+         RE=G.roots_end(); RI!=RE; ++RI)
+      CheckParamDeref(*I, GRStateRef((*RI)->getState(), Eng.getStateManager()),
+                      Eng, BR);
 }
 
 void NSErrorCheck::CheckSignature(ObjCMethodDecl& M, QualType& ResultTy,
@@ -103,4 +118,37 @@ bool NSErrorCheck::CheckArgument(QualType ArgTy, IdentifierInfo* NSErrorII) {
   
   if (!IT) return false;
   return IT->getDecl()->getIdentifier() == NSErrorII;
+}
+
+void NSErrorCheck::CheckParamDeref(VarDecl* Param, GRStateRef rootState,
+                                   GRExprEngine& Eng, GRBugReporter& BR) {
+  
+  RVal ParamRVal = rootState.GetRVal(lval::DeclVal(Param));
+
+  // FIXME: For now assume that ParamRVal is symbolic.  We need to generalize
+  // this later.
+  lval::SymbolVal* SV = dyn_cast<lval::SymbolVal>(&ParamRVal);
+  if (!SV) return;
+  
+  // Iterate over the implicit-null dereferences.
+  for (GRExprEngine::null_deref_iterator I=Eng.implicit_null_derefs_begin(),
+       E=Eng.implicit_null_derefs_end(); I!=E; ++I) {
+    
+    GRStateRef state = GRStateRef((*I)->getState(), Eng.getStateManager());
+    const RVal* X = state.get<GRState::NullDerefTag>();    
+    const lval::SymbolVal* SVX = dyn_cast_or_null<lval::SymbolVal>(X);
+    if (!SVX || SVX->getSymbol() != SV->getSymbol()) continue;
+
+    // Emit an error.
+    BugReport R(*this, *I);
+
+    std::string msg;
+    llvm::raw_string_ostream os(msg);
+    os << "Potential null dereference.  According to coding standards in "
+          "'Creating and Returning NSError Objects' the parameter '"
+        << Param->getName() << "' may be null.";    
+    desc = os.str().c_str();
+
+    BR.EmitWarning(R);    
+  }
 }

@@ -1010,9 +1010,14 @@ const GRState* GRExprEngine::EvalLocation(Expr* Ex, NodeTy* Pred,
   // "Assume" that the pointer is NULL.
   
   bool isFeasibleNull = false;
-  const GRState* StNull = Assume(St, LV, false, isFeasibleNull);
+  GRStateRef StNull = GRStateRef(Assume(St, LV, false, isFeasibleNull),
+                                 getStateManager());
   
   if (isFeasibleNull) {
+    
+    // Use the Generic Data Map to mark in the state what lval was null.
+    const RVal* PersistentLV = getBasicVals().getPersistentRVal(LV);
+    StNull = StNull.set<GRState::NullDerefTag>(PersistentLV);
     
     // We don't use "MakeNode" here because the node will be a sink
     // and we have no intention of processing it later.

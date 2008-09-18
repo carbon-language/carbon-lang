@@ -77,6 +77,8 @@ public:
   
   const std::pair<RVal, RVal>&
   getPersistentRValPair(const RVal& V1, const RVal& V2);  
+  
+  const RVal* getPersistentRVal(RVal X);
 };
 
 } // end clang namespace
