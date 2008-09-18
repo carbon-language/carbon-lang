@@ -559,5 +559,8 @@ void clang::RegisterAppleChecks(GRExprEngine& Eng) {
   Eng.AddCheck(CreateBasicObjCFoundationChecks(Ctx, VMgr),
                Stmt::ObjCMessageExprClass);
 
-  Eng.AddCheck(CreateAuditCFNumberCreate(Ctx, VMgr), Stmt::CallExprClass);
+  Eng.AddCheck(CreateAuditCFNumberCreate(Ctx, VMgr),
+               Stmt::CallExprClass);
+  
+  Eng.Register(CreateNSErrorCheck());
 }

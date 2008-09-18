@@ -29,14 +29,16 @@ namespace clang {
 class GRSimpleAPICheck;
 class ASTContext;
 class GRStateManager;  
+class BugType;
   
 GRSimpleAPICheck* CreateBasicObjCFoundationChecks(ASTContext& Ctx,
                                                   GRStateManager* VMgr);
   
 GRSimpleAPICheck* CreateAuditCFNumberCreate(ASTContext& Ctx,
                                             GRStateManager* VMgr);
-
-
+  
+BugType* CreateNSErrorCheck();
+  
 } // end clang namespace
 
 #endif

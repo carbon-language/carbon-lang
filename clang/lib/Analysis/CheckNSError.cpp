@@ -17,56 +17,90 @@
 
 #include "clang/Analysis/LocalCheckers.h"
 #include "clang/Analysis/PathSensitive/BugReporter.h"
+#include "clang/Analysis/PathSensitive/GRExprEngine.h"
+#include "BasicObjCFoundationChecks.h"
+#include "llvm/Support/Compiler.h"
 #include "clang/AST/DeclObjC.h"
-#include "clang/AST/Type.h"
-#include "clang/AST/ASTContext.h"
+#include "clang/AST/Decl.h"
+#include "llvm/ADT/SmallVector.h"
 
 using namespace clang;
 
-void clang::CheckNSError(ObjCImplementationDecl* ID, BugReporter& BR) {
-  // Look at the @interface for this class.
-  ObjCInterfaceDecl* D = ID->getClassInterface();
+namespace {
+class VISIBILITY_HIDDEN NSErrorCheck : public BugTypeCacheLocation {
+
+  void EmitGRWarnings(GRBugReporter& BR);
   
-  // Get the ASTContext.  Useful for querying type information.
+  void CheckSignature(ObjCMethodDecl& MD, QualType& ResultTy,
+                      llvm::SmallVectorImpl<VarDecl*>& Params,
+                      IdentifierInfo* NSErrorII);
+
+  bool CheckArgument(QualType ArgTy, IdentifierInfo* NSErrorII);
+  
+public:
+  void EmitWarnings(BugReporter& BR) { EmitGRWarnings(cast<GRBugReporter>(BR));}
+  const char* getName() const { return "NSError** null dereference"; }
+};  
+  
+} // end anonymous namespace
+
+BugType* clang::CreateNSErrorCheck() {
+  return new NSErrorCheck();
+}
+
+void NSErrorCheck::EmitGRWarnings(GRBugReporter& BR) {
+  // Get the analysis engine and the exploded analysis graph.
+  GRExprEngine& Eng = BR.getEngine();
+  GRExprEngine::GraphTy& G = Eng.getGraph();
+  
+  // Get the declaration of the method/function that was analyzed.
+  Decl& CodeDecl = G.getCodeDecl();
+  
+  ObjCMethodDecl* MD = dyn_cast<ObjCMethodDecl>(&CodeDecl);
+  if (!MD)
+    return;
+  
+  // Get the ASTContext, which is useful for querying type information.
   ASTContext &Ctx = BR.getContext();
+
+  QualType ResultTy;
+  llvm::SmallVector<VarDecl*, 5> Params;  
+  CheckSignature(*MD, ResultTy, Params, &Ctx.Idents.get("NSError"));
   
-  // Get the IdentifierInfo* for "NSError".
-  IdentifierInfo* NSErrorII = &Ctx.Idents.get("NSError");
-
-  // Scan the methods.  See if any of them have an argument of type NSError**.  
-  for (ObjCInterfaceDecl::instmeth_iterator I=D->instmeth_begin(),
-        E=D->instmeth_end(); I!=E; ++I) {
-
-    // Get the method declaration.
-    ObjCMethodDecl* M = *I;
+  if (Params.empty())
+    return;
+  
+  if (ResultTy == Ctx.VoidTy) {
+    BR.EmitBasicReport("Bad return type when passing NSError**",
+              "Method accepting NSError** argument should have "
+              "non-void return value to indicate that an error occurred.",
+              CodeDecl.getLocation());
     
-    // Check for a non-void return type.
-    if (M->getResultType() != Ctx.VoidTy)
-      continue;
-
-    for (ObjCMethodDecl::param_iterator PI=M->param_begin(), 
-         PE=M->param_end(); PI!=PE; ++PI) {
-      
-      const PointerType* PPT = (*PI)->getType()->getAsPointerType();
-      if (!PPT) continue;
-      
-      const PointerType* PT = PPT->getPointeeType()->getAsPointerType();
-      if (!PT) continue;
-      
-      const ObjCInterfaceType *IT =
-        PT->getPointeeType()->getAsObjCInterfaceType();
-      
-      if (!IT) continue;
-      
-      // Check if IT is "NSError".
-      if (IT->getDecl()->getIdentifier() == NSErrorII) {
-        // Documentation: "Creating and Returning NSError Objects"
-        BR.EmitBasicReport("Bad return type when passing NSError**",
-         "Method accepting NSError** argument should have "
-         "non-void return value to indicate that an error occurred.",
-         M->getLocStart());
-        break;
-      }
-    }
   }
+}
+
+void NSErrorCheck::CheckSignature(ObjCMethodDecl& M, QualType& ResultTy,
+                                  llvm::SmallVectorImpl<VarDecl*>& Params,
+                                  IdentifierInfo* NSErrorII) {
+
+  ResultTy = M.getResultType();
+  
+  for (ObjCMethodDecl::param_iterator I=M.param_begin(), 
+       E=M.param_end(); I!=E; ++I) 
+    if (CheckArgument((*I)->getType(), NSErrorII))
+      Params.push_back(*I);
+}
+
+bool NSErrorCheck::CheckArgument(QualType ArgTy, IdentifierInfo* NSErrorII) {
+  const PointerType* PPT = ArgTy->getAsPointerType();
+  if (!PPT) return false;
+  
+  const PointerType* PT = PPT->getPointeeType()->getAsPointerType();
+  if (!PT) return false;
+  
+  const ObjCInterfaceType *IT =
+  PT->getPointeeType()->getAsObjCInterfaceType();
+  
+  if (!IT) return false;
+  return IT->getDecl()->getIdentifier() == NSErrorII;
 }

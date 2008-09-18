@@ -216,6 +216,9 @@ public:
   const_bug_type_iterator bug_types_begin() const { return BugTypes.begin(); }
   const_bug_type_iterator bug_types_end() const { return BugTypes.end(); }
   
+  /// Register - Register a BugType with the analyzer engine.  A registered
+  ///  BugType object will have its 'EmitWarnings' method called when the
+  ///  the analyzer finishes analyzing a method or function.
   void Register(BugType* B) {
     BugTypes.push_back(B);
   }

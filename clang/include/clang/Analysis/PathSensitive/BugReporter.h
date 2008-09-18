@@ -223,12 +223,18 @@ public:
   
   virtual ~GRBugReporter();
   
+  /// getEngine - Return the analysis engine used to analyze a given
+  ///  function or method.
   GRExprEngine& getEngine() {
     return Eng;
   }
 
+  /// getGraph - Get the exploded graph created by the analysis engine
+  ///  for the analyzed method or function.
   ExplodedGraph<GRState>& getGraph();
   
+  /// getStateManager - Return the state manager used by the analysis
+  ///  engine.
   GRStateManager& getStateManager();
   
   virtual void GeneratePathDiagnostic(PathDiagnostic& PD, BugReport& R);
@@ -240,7 +246,8 @@ public:
   bool isNotable(SymbolID Sym) const {
     return (bool) NotableSymbols.count(Sym);
   }
-  
+    
+  /// classof - Used by isa<>, cast<>, and dyn_cast<>.
   static bool classof(const BugReporter* R) {
     return R->getKind() == GRBugReporterKind;
   }
