@@ -44,7 +44,7 @@ STATISTIC(EmittedInsts, "Number of machine instrs printed");
 namespace {
   struct VISIBILITY_HIDDEN ARMAsmPrinter : public AsmPrinter {
     ARMAsmPrinter(raw_ostream &O, TargetMachine &TM, const TargetAsmInfo *T)
-      : AsmPrinter(O, TM, T), DW(O, this, T), MMI(NULL), AFI(NULL), 
+      : AsmPrinter(O, TM, T), DW(O, this, T), MMI(NULL), AFI(NULL), MCP(NULL),
         InCPMode(false) {
       Subtarget = &TM.getSubtarget<ARMSubtarget>();
     }
@@ -57,8 +57,12 @@ namespace {
     const ARMSubtarget *Subtarget;
 
     /// AFI - Keep a pointer to ARMFunctionInfo for the current
-    /// MachineFunction
+    /// MachineFunction.
     ARMFunctionInfo *AFI;
+
+    /// MCP - Keep a pointer to constantpool entries of the current
+    /// MachineFunction.
+    const MachineConstantPool *MCP;
 
     /// We name each basic block in a Function with a unique number, so
     /// that we can consistently refer to them later. This is cleared
@@ -185,6 +189,7 @@ std::string ARMAsmPrinter::getSectionForFunction(const Function &F) const {
 ///
 bool ARMAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   AFI = MF.getInfo<ARMFunctionInfo>();
+  MCP = MF.getConstantPool();
 
   SetupMachineFunction(MF);
   O << "\n";
@@ -670,8 +675,7 @@ void ARMAsmPrinter::printCPInstOperand(const MachineInstr *MI, int OpNo,
     assert(!strcmp(Modifier, "cpentry") && "Unknown modifier for CPE");
     unsigned CPI = MI->getOperand(OpNo).getIndex();
 
-    const MachineConstantPoolEntry &MCPE =  // Chasing pointers is fun?
-      MI->getParent()->getParent()->getConstantPool()->getConstants()[CPI];
+    const MachineConstantPoolEntry &MCPE = MCP->getConstants()[CPI];
     
     if (MCPE.isMachineConstantPoolEntry()) {
       EmitMachineConstantPoolValue(MCPE.Val.MachineCPVal);
