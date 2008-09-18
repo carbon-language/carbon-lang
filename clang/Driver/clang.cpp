@@ -61,6 +61,7 @@ Stats("print-stats",
 
 enum ProgActions {
   RewriteObjC,                  // ObjC->C Rewriter.
+  RewriteBlocks,                // ObjC->C Rewriter for Blocks.
   RewriteMacros,                // Expand macros but not #includes.
   HTMLTest,                     // HTML displayer testing stuff.
   EmitLLVM,                     // Emit a .ll file.
@@ -116,6 +117,8 @@ ProgAction(llvm::cl::desc("Choose output type:"), llvm::cl::ZeroOrMore,
                         "Rewrite ObjC into C (code rewriter example)"),
              clEnumValN(RewriteMacros, "rewrite-macros",
                         "Expand macros without full preprocessing"),
+             clEnumValN(RewriteBlocks, "rewrite-blocks",
+                        "Rewrite Blocks to C"),
              clEnumValEnd));
 
 
@@ -989,6 +992,9 @@ static ASTConsumer* CreateASTConsumer(const std::string& InFile,
       
     case RewriteObjC:
       return CreateCodeRewriterTest(InFile, OutputFile, Diag, LangOpts);
+
+    case RewriteBlocks:
+      return CreateBlockRewriter(InFile, OutputFile, Diag, LangOpts);
       
     case RunAnalysis:
       assert (!AnalysisList.empty());

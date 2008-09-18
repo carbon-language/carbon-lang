@@ -55,17 +55,11 @@ class RewriteBlocks : public ASTConsumer {
   ObjCMethodDecl *CurMethodDef;
   
   bool IsHeader;
+  std::string InFileName;
+  std::string OutFileName;
 public:
-  RewriteBlocks(bool isHeader, Diagnostic &D, const LangOptions &LOpts) : 
-    Diags(D), LangOpts(LOpts) {
-    IsHeader = isHeader;
-    CurFunctionDef = 0;
-    CurMethodDef = 0;
-    RewriteFailedDiag = Diags.getCustomDiagID(Diagnostic::Warning, 
-                                              "rewriting failed");
-    NoNestedBlockCalls = Diags.getCustomDiagID(Diagnostic::Warning, 
-      "Rewrite support for closure calls nested within closure blocks is incomplete");
-  }
+  RewriteBlocks(std::string inFile, std::string outFile, Diagnostic &D, 
+                const LangOptions &LOpts);
   ~RewriteBlocks() {
     // Get the buffer corresponding to MainFileID.  
     // If we haven't changed it, then we are done.
@@ -155,10 +149,25 @@ static bool IsHeaderFile(const std::string &Filename) {
   return Ext == "h" || Ext == "hh" || Ext == "H";
 }    
 
+RewriteBlocks::RewriteBlocks(std::string inFile, std::string outFile, 
+                             Diagnostic &D, const LangOptions &LOpts) : 
+  Diags(D), LangOpts(LOpts) {
+  IsHeader = IsHeaderFile(inFile);
+  InFileName = inFile;
+  OutFileName = outFile;
+  CurFunctionDef = 0;
+  CurMethodDef = 0;
+  RewriteFailedDiag = Diags.getCustomDiagID(Diagnostic::Warning, 
+                                            "rewriting failed");
+  NoNestedBlockCalls = Diags.getCustomDiagID(Diagnostic::Warning, 
+    "Rewrite support for closure calls nested within closure blocks is incomplete");
+}
+
 ASTConsumer *clang::CreateBlockRewriter(const std::string& InFile,
+                                        const std::string& OutFile,
                                         Diagnostic &Diags,
                                         const LangOptions &LangOpts) {
-  return new RewriteBlocks(IsHeaderFile(InFile), Diags, LangOpts);
+  return new RewriteBlocks(InFile, OutFile, Diags, LangOpts);
 }
 
 void RewriteBlocks::Initialize(ASTContext &context) {
