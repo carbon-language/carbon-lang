@@ -1,4 +1,4 @@
-// RUN: clang -checker-cfref -verify %s
+// RUN: clang -checker-cfref -verify -triple x86_64-apple-darwin9 %s
 
 typedef signed long CFIndex;
 typedef const struct __CFAllocator * CFAllocatorRef;
@@ -25,4 +25,8 @@ CFNumberRef f1() {
 CFNumberRef f2() {
   uint16_t x = 1;
   return CFNumberCreate(0, kCFNumberSInt8Type, &x); // expected-warning{{A 16 bit integer is used to initialize a CFNumber object that represents an 8 bit integer. 8 bits of the input integer will be lost.}}
+}
+
+CFNumberRef f3(unsigned i) {
+  return CFNumberCreate(0, kCFNumberLongType, &i); // expected-warning{{A 32 bit integer is used to initialize a CFNumber object that represents a 64 bit integer.}}
 }
