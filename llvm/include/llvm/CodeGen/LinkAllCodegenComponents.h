@@ -44,6 +44,7 @@ namespace {
       (void) llvm::createBURRListDAGScheduler(NULL, NULL, NULL, false);
       (void) llvm::createTDRRListDAGScheduler(NULL, NULL, NULL, false);
       (void) llvm::createTDListDAGScheduler(NULL, NULL, NULL, false);
+      (void) llvm::createFastDAGScheduler(NULL, NULL, NULL, false);
       (void) llvm::createDefaultScheduler(NULL, NULL, NULL, false);
 
     }

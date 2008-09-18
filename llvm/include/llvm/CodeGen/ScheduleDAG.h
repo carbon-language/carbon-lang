@@ -414,6 +414,13 @@ namespace llvm {
                                         MachineBasicBlock *BB,
                                         bool Fast);
                                         
+  /// createFastDAGScheduler - This creates a "fast" scheduler.
+  ///
+  ScheduleDAG *createFastDAGScheduler(SelectionDAGISel *IS,
+                                      SelectionDAG *DAG,
+                                      MachineBasicBlock *BB,
+                                      bool Fast);
+
   /// createDefaultScheduler - This creates an instruction scheduler appropriate
   /// for the target.
   ScheduleDAG* createDefaultScheduler(SelectionDAGISel *IS,
