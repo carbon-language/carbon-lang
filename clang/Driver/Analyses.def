@@ -34,6 +34,10 @@ ANALYSIS(WarnObjCDealloc, "warn-objc-missing-dealloc",
  "Warn about Objective-C classes that lack a correct implementation of -dealloc",
  ObjCImplementation)
  
+ANALYSIS(WarnObjCNSError, "warn-objc-nserror-methods",
+  "Check coding rules for 'Creating and Returning NSError Objects'",
+  ObjCImplementation)
+ 
 ANALYSIS(WarnObjCUnusedIvars, "warn-objc-unused-ivars",
   "Warn about private ivars that are never used", ObjCImplementation)
 

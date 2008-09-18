@@ -431,6 +431,11 @@ static void ActionWarnObjCMethSigs(AnalysisManager& mgr) {
                              BR);
 }
 
+static void ActionWarnObjCNSError(AnalysisManager& mgr) {
+  BugReporter BR(mgr);
+  CheckNSError(cast<ObjCImplementationDecl>(mgr.getCodeDecl()), BR);
+}
+
 //===----------------------------------------------------------------------===//
 // AnalysisConsumer creation.
 //===----------------------------------------------------------------------===//
