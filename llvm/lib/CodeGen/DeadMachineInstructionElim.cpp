@@ -64,7 +64,8 @@ bool DeadMachineInstructionElim::runOnMachineFunction(MachineFunction &MF) {
           const MachineOperand &MO = MI->getOperand(i);
           if (MO.isRegister() && MO.isDef()) {
             unsigned Reg = MO.getReg();
-            if (TargetRegisterInfo::isPhysicalRegister(Reg) ||
+            if ((!MO.isImplicit() &&
+                 TargetRegisterInfo::isPhysicalRegister(Reg)) ||
                 !MRI.use_empty(Reg)) {
               // This def has a use. Don't delete the instruction!
               AllDefsDead = false;
