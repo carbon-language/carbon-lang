@@ -65,6 +65,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
     if (!memcmp(Str, "malloc", 6)) return AT_malloc;
     if (!memcmp(Str, "format", 6)) return AT_format;
     if (!memcmp(Str, "unused", 6)) return AT_unused;
+    if (!memcmp(Str, "blocks", 6)) return AT_blocks;
     break;
   case 7:
     if (!memcmp(Str, "aligned", 7)) return AT_aligned;

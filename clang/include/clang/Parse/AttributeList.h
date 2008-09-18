@@ -71,6 +71,7 @@ public:
     AT_warn_unused_result,
     AT_weak,
     AT_objc_gc,
+    AT_blocks,
     UnknownAttribute
   };
   

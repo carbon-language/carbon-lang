@@ -509,6 +509,34 @@ static void HandleObjCGCAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   d->addAttr(new ObjCGCAttr(type));
 }
 
+static void HandleBlocksAttr(Decl *d, const AttributeList &Attr, Sema &S) {
+  if (!Attr.getParameterName()) {    
+    S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_string,
+           "blocks", std::string("1"));
+    return;
+  }
+  
+  if (Attr.getNumArgs() != 0) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
+           std::string("1"));
+    return;
+  }
+  const char *TypeStr = Attr.getParameterName()->getName();
+  unsigned TypeLen = Attr.getParameterName()->getLength();
+  
+  BlocksAttr::BlocksAttrTypes type;
+  
+  if (TypeLen == 5 && !memcmp(TypeStr, "byref", 5))
+    type = BlocksAttr::ByRef;
+  else {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_type_not_supported,
+           "blocks", TypeStr);
+    return;
+  }
+  
+  d->addAttr(new BlocksAttr(type));
+}
+
 static void HandleWeakAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() != 0) {
@@ -968,6 +996,7 @@ static void ProcessDeclAttribute(Decl *D, const AttributeList &Attr, Sema &S) {
     HandleTransparentUnionAttr(D, Attr, S);
     break;
   case AttributeList::AT_objc_gc:     HandleObjCGCAttr    (D, Attr, S); break;
+  case AttributeList::AT_blocks:      HandleBlocksAttr    (D, Attr, S); break;
   default:
 #if 0
     // TODO: when we have the full set of attributes, warn about unknown ones.

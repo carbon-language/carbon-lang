@@ -46,7 +46,8 @@ public:
     TransparentUnion,
     Unused,    
     Visibility,
-    Weak
+    Weak,
+    Blocks
   };
     
 private:
@@ -360,6 +361,24 @@ public:
   // Implement isa/cast/dyncast/etc.
 
   static bool classof(const Attr *A) { return A->getKind() == ObjCGC; }
+  static bool classof(const ObjCGCAttr *A) { return true; }
+};
+
+class BlocksAttr : public Attr {
+public:
+  enum BlocksAttrTypes {
+    ByRef = 0
+  };
+private:
+  BlocksAttrTypes BlocksAttrType;
+public:
+  BlocksAttr(BlocksAttrTypes t) : Attr(Blocks), BlocksAttrType(t) {}
+
+  BlocksAttrTypes getType() const { return BlocksAttrType; }
+
+  // Implement isa/cast/dyncast/etc.
+
+  static bool classof(const Attr *A) { return A->getKind() == Blocks; }
   static bool classof(const ObjCGCAttr *A) { return true; }
 };
 
