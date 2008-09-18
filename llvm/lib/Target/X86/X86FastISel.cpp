@@ -629,7 +629,7 @@ bool X86FastISel::X86SelectShift(Instruction *I) {
 bool X86FastISel::X86SelectSelect(Instruction *I) {
   const Type *Ty = I->getType();
   if (isa<PointerType>(Ty))
-    Ty = TLI.getTargetData()->getIntPtrType();
+    Ty = TD.getIntPtrType();
 
   unsigned Opc = 0;
   const TargetRegisterClass *RC = NULL;
@@ -1063,11 +1063,10 @@ unsigned X86FastISel::TargetMaterializeConstant(Constant *C) {
   }
   
   // MachineConstantPool wants an explicit alignment.
-  unsigned Align =
-               TM.getTargetData()->getPreferredTypeAlignmentShift(C->getType());
+  unsigned Align = TD.getPreferredTypeAlignmentShift(C->getType());
   if (Align == 0) {
     // Alignment of vector types.  FIXME!
-    Align = TM.getTargetData()->getABITypeSize(C->getType());
+    Align = TD.getABITypeSize(C->getType());
     Align = Log2_64(Align);
   }
   
