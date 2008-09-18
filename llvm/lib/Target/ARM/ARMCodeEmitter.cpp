@@ -22,6 +22,7 @@
 #include "llvm/Function.h"
 #include "llvm/PassManager.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
+#include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/Passes.h"
@@ -34,19 +35,21 @@ STATISTIC(NumEmitted, "Number of machine instructions emitted");
 
 namespace {
   class VISIBILITY_HIDDEN ARMCodeEmitter : public MachineFunctionPass {
-    const ARMInstrInfo  *II;
-    const TargetData    *TD;
-    TargetMachine       &TM;
-    MachineCodeEmitter  &MCE;
+    ARMJITInfo                *JTI;
+    const ARMInstrInfo        *II;
+    const TargetData          *TD;
+    TargetMachine             &TM;
+    MachineCodeEmitter        &MCE;
+    const MachineConstantPool *MCP;
   public:
     static char ID;
     explicit ARMCodeEmitter(TargetMachine &tm, MachineCodeEmitter &mce)
-      : MachineFunctionPass(&ID), II(0), TD(0), TM(tm),
-      MCE(mce) {}
+      : MachineFunctionPass(&ID), JTI(0), II(0), TD(0), TM(tm),
+      MCE(mce), MCP(0) {}
     ARMCodeEmitter(TargetMachine &tm, MachineCodeEmitter &mce,
             const ARMInstrInfo &ii, const TargetData &td)
-      : MachineFunctionPass(&ID), II(&ii), TD(&td), TM(tm),
-      MCE(mce) {}
+      : MachineFunctionPass(&ID), JTI(0), II(&ii), TD(&td), TM(tm),
+      MCE(mce), MCP(0) {}
 
     bool runOnMachineFunction(MachineFunction &MF);
 
@@ -57,6 +60,11 @@ namespace {
     void emitInstruction(const MachineInstr &MI);
 
   private:
+
+    void emitConstPoolInstruction(const MachineInstr &MI);
+
+    void emitPseudoInstruction(const MachineInstr &MI);
+
     unsigned getAddrModeNoneInstrBinary(const MachineInstr &MI,
                                         const TargetInstrDesc &TID,
                                         unsigned Binary);
@@ -111,11 +119,12 @@ namespace {
 
     /// Routines that handle operands which add machine relocations which are
     /// fixed up by the JIT fixup stage.
-    void emitGlobalAddressForCall(GlobalValue *GV, bool DoesntNeedStub);
+    void emitGlobalAddress(GlobalValue *GV, unsigned Reloc,
+                           bool DoesntNeedStub);
     void emitExternalSymbolAddress(const char *ES, unsigned Reloc);
     void emitConstPoolAddress(unsigned CPI, unsigned Reloc,
                               int Disp = 0, unsigned PCAdj = 0 );
-    void emitJumpTableAddress(unsigned JTI, unsigned Reloc,
+    void emitJumpTableAddress(unsigned JTIndex, unsigned Reloc,
                               unsigned PCAdj = 0);
     void emitGlobalConstant(const Constant *CV);
     void emitMachineBasicBlock(MachineBasicBlock *BB);
@@ -136,6 +145,8 @@ bool ARMCodeEmitter::runOnMachineFunction(MachineFunction &MF) {
          "JIT relocation model must be set to static or default!");
   II = ((ARMTargetMachine&)MF.getTarget()).getInstrInfo();
   TD = ((ARMTargetMachine&)MF.getTarget()).getTargetData();
+  JTI = ((ARMTargetMachine&)MF.getTarget()).getJITInfo();
+  MCP = MF.getConstantPool();
 
   do {
     DOUT << "JITTing function '" << MF.getFunction()->getName() << "'\n";
@@ -175,7 +186,7 @@ unsigned ARMCodeEmitter::getMachineOpValue(const MachineInstr &MI,
   else if (MO.isImmediate())
     return static_cast<unsigned>(MO.getImm());
   else if (MO.isGlobalAddress())
-    emitGlobalAddressForCall(MO.getGlobal(), false);
+    emitGlobalAddress(MO.getGlobal(), ARM::reloc_arm_branch, false);
   else if (MO.isExternalSymbol())
     emitExternalSymbolAddress(MO.getSymbolName(), ARM::reloc_arm_relative);
   else if (MO.isConstantPoolIndex())
@@ -191,14 +202,12 @@ unsigned ARMCodeEmitter::getMachineOpValue(const MachineInstr &MI,
   return 0;
 }
 
-/// emitGlobalAddressForCall - Emit the specified address to the code stream
-/// assuming this is part of a function call, which is PC relative.
+/// emitGlobalAddress - Emit the specified address to the code stream.
 ///
-void ARMCodeEmitter::emitGlobalAddressForCall(GlobalValue *GV,
-                                              bool DoesntNeedStub) {
+void ARMCodeEmitter::emitGlobalAddress(GlobalValue *GV,
+                                       unsigned Reloc, bool DoesntNeedStub) {
   MCE.addRelocation(MachineRelocation::getGV(MCE.getCurrentPCOffset(),
-                                             ARM::reloc_arm_branch, GV, 0,
-                                             DoesntNeedStub));
+                                             Reloc, GV, 0, DoesntNeedStub));
 }
 
 /// emitExternalSymbolAddress - Arrange for the address of an external symbol to
@@ -222,10 +231,10 @@ void ARMCodeEmitter::emitConstPoolAddress(unsigned CPI, unsigned Reloc,
 /// emitJumpTableAddress - Arrange for the address of a jump table to
 /// be emitted to the current location in the function, and allow it to be PC
 /// relative.
-void ARMCodeEmitter::emitJumpTableAddress(unsigned JTI, unsigned Reloc,
+void ARMCodeEmitter::emitJumpTableAddress(unsigned JTIndex, unsigned Reloc,
                                           unsigned PCAdj /* = 0 */) {
   MCE.addRelocation(MachineRelocation::getJumpTable(MCE.getCurrentPCOffset(),
-                                                    Reloc, JTI, PCAdj));
+                                                    Reloc, JTIndex, PCAdj));
 }
 
 /// emitMachineBasicBlock - Emit the specified address basic block.
@@ -238,12 +247,18 @@ void ARMCodeEmitter::emitInstruction(const MachineInstr &MI) {
   DOUT << MI;
 
   NumEmitted++;  // Keep track of the # of mi's emitted
-  MCE.emitWordLE(getInstrBinary(MI));
+  if ((MI.getDesc().TSFlags & ARMII::FormMask) == ARMII::Pseudo)
+    emitPseudoInstruction(MI);
+  else
+    MCE.emitWordLE(getInstrBinary(MI));
 }
 
 unsigned ARMCodeEmitter::getAddrModeNoneInstrBinary(const MachineInstr &MI,
                                                     const TargetInstrDesc &TID,
                                                     unsigned Binary) {
+  // FIXME: Assume CC is AL for now.
+  Binary |= ARMCC::AL << 28;
+
   switch (TID.TSFlags & ARMII::FormMask) {
   default:
     assert(0 && "Unknown instruction subtype!");
@@ -342,12 +357,27 @@ unsigned ARMCodeEmitter::getAddrMode1SBit(const MachineInstr &MI,
   return 0;
 }
 
+void ARMCodeEmitter::emitConstPoolInstruction(const MachineInstr &MI) {
+  // FIXME
+}
+
+void ARMCodeEmitter::emitPseudoInstruction(const MachineInstr &MI) {
+  unsigned Opcode = MI.getDesc().Opcode;
+  switch (Opcode) {
+  default:
+    abort(); // FIXME:
+  case ARM::CONSTPOOL_ENTRY: {
+    emitConstPoolInstruction(MI);
+    break;
+  }
+  }
+}
+
 unsigned ARMCodeEmitter::getAddrMode1InstrBinary(const MachineInstr &MI,
                                                  const TargetInstrDesc &TID,
                                                  unsigned Binary) {
-  unsigned Format = TID.TSFlags & ARMII::FormMask;
-  if (Format == ARMII::Pseudo)
-    abort(); // FIXME
+  // FIXME: Assume CC is AL for now.
+  Binary |= ARMCC::AL << 28;
 
   // Encode S bit if MI modifies CPSR.
   Binary |= getAddrMode1SBit(MI, TID);
@@ -361,6 +391,7 @@ unsigned ARMCodeEmitter::getAddrMode1InstrBinary(const MachineInstr &MI,
   }
 
   // Encode first non-shifter register operand if ther is one.
+  unsigned Format = TID.TSFlags & ARMII::FormMask;
   bool isUnary = (Format == ARMII::DPRdMisc  ||
                   Format == ARMII::DPRdIm    ||
                   Format == ARMII::DPRdReg   ||
@@ -401,6 +432,9 @@ unsigned ARMCodeEmitter::getAddrMode1InstrBinary(const MachineInstr &MI,
 unsigned ARMCodeEmitter::getAddrMode2InstrBinary(const MachineInstr &MI,
                                                  const TargetInstrDesc &TID,
                                                  unsigned Binary) {
+  // FIXME: Assume CC is AL for now.
+  Binary |= ARMCC::AL << 28;
+
   // Set first operand
   Binary |= getMachineOpValue(MI, 0) << ARMII::RegRdShift;
 
@@ -439,6 +473,9 @@ unsigned ARMCodeEmitter::getAddrMode2InstrBinary(const MachineInstr &MI,
 unsigned ARMCodeEmitter::getAddrMode3InstrBinary(const MachineInstr &MI,
                                                  const TargetInstrDesc &TID,
                                                  unsigned Binary) {
+  // FIXME: Assume CC is AL for now.
+  Binary |= ARMCC::AL << 28;
+
   // Set first operand
   Binary |= getMachineOpValue(MI, 0) << ARMII::RegRdShift;
 
@@ -473,6 +510,9 @@ unsigned ARMCodeEmitter::getAddrMode3InstrBinary(const MachineInstr &MI,
 unsigned ARMCodeEmitter::getAddrMode4InstrBinary(const MachineInstr &MI,
                                                  const TargetInstrDesc &TID,
                                                  unsigned Binary) {
+  // FIXME: Assume CC is AL for now.
+  Binary |= ARMCC::AL << 28;
+
   // Set first operand
   Binary |= getMachineOpValue(MI, 0) << ARMII::RegRnShift;
 
