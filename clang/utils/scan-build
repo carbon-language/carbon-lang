@@ -111,7 +111,6 @@ my %AnalysesDefaultEnabled = (
   '-warn-objc-methodsigs' => 1,
   '-warn-objc-missing-dealloc' => 1,
   '-warn-objc-unused-ivars' => 1,
-  '-warn-objc-nserror-methods' => 1
 );
 
 ##----------------------------------------------------------------------------##
