@@ -69,6 +69,11 @@ namespace sys {
     /// that has been emitted it must invalidate the instruction cache on some
     /// platforms.
     static void InvalidateInstructionCache(const void *Addr, size_t Len);
+
+    /// SetRXPrivilege - Before the JIT can run a block of code, it has to be
+    /// given read and executable privilege. Return true if it is already r-x
+    /// or the system is able to change its previlege.
+    static bool SetRXPrivilege(const void *Addr, size_t Size);
   };
 }
 }

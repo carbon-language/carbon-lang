@@ -18,6 +18,10 @@
 #include <sys/mman.h>
 #endif
 
+#ifdef __APPLE__
+#include <mach/mach.h>
+#endif
+
 /// AllocateRWX - Allocate a slab of memory with read/write/execute
 /// permissions.  This is typically used for JIT applications where we want
 /// to emit code to the memory then jump to it.  Getting this type of memory
@@ -52,8 +56,13 @@ llvm::sys::Memory::AllocateRWX(unsigned NumBytes, const MemoryBlock* NearBlock,
   void* start = NearBlock ? (unsigned char*)NearBlock->base() + 
                             NearBlock->size() : 0;
 
+#if defined(__APPLE__) && defined(__arm__)
+  void *pa = ::mmap(start, pageSize*NumPages, PROT_READ|PROT_EXEC,
+                    flags, fd, 0);
+#else
   void *pa = ::mmap(start, pageSize*NumPages, PROT_READ|PROT_WRITE|PROT_EXEC,
                     flags, fd, 0);
+#endif
   if (pa == MAP_FAILED) {
     if (NearBlock) //Try again without a near hint
       return AllocateRWX(NumBytes, 0);
@@ -61,9 +70,29 @@ llvm::sys::Memory::AllocateRWX(unsigned NumBytes, const MemoryBlock* NearBlock,
     MakeErrMsg(ErrMsg, "Can't allocate RWX Memory");
     return MemoryBlock();
   }
+
+#if defined(__APPLE__) && defined(__arm__)
+  kern_return_t kr = vm_protect(mach_task_self(), (vm_address_t)pa,
+                                (vm_size_t)(pageSize*NumPages), 0,
+                                VM_PROT_READ | VM_PROT_EXECUTE | VM_PROT_COPY);
+  if (KERN_SUCCESS != kr) {
+    MakeErrMsg(ErrMsg, "vm_protect max RWX failed\n");
+    return sys::MemoryBlock();
+  }
+
+  kr = vm_protect(mach_task_self(), (vm_address_t)pa,
+                  (vm_size_t)(pageSize*NumPages), 0,
+                  VM_PROT_READ | VM_PROT_WRITE);
+  if (KERN_SUCCESS != kr) {
+    MakeErrMsg(ErrMsg, "vm_protect RW failed\n");
+    return sys::MemoryBlock();
+  }
+#endif
+
   MemoryBlock result;
   result.Address = pa;
   result.Size = NumPages*pageSize;
+
   return result;
 }
 

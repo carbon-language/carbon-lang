@@ -925,6 +925,9 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
        << Relocations.size() << " relocations\n";
   Relocations.clear();
 
+  // Mark code region readable and executable if it's not so already.
+  sys::Memory::SetRXPrivilege(FnStart, FnEnd-FnStart);
+
 #ifndef NDEBUG
   {
   DOUT << std::hex;

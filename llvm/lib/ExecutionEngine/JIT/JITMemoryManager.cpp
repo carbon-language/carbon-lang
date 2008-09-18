@@ -370,7 +370,11 @@ namespace {
 
 DefaultJITMemoryManager::DefaultJITMemoryManager() {
   // Allocate a 16M block of memory for functions.
+#if defined(__APPLE__) && defined(__arm__)
+  sys::MemoryBlock MemBlock = getNewMemoryBlock(4 << 20);
+#else
   sys::MemoryBlock MemBlock = getNewMemoryBlock(16 << 20);
+#endif
 
   unsigned char *MemBase = static_cast<unsigned char*>(MemBlock.base());
 
