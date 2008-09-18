@@ -149,6 +149,7 @@ void NSErrorCheck::CheckParamDeref(VarDecl* Param, GRStateRef rootState,
         << Param->getName() << "' may be null.";    
     desc = os.str().c_str();
 
+    BR.addNotableSymbol(SV->getSymbol());
     BR.EmitWarning(R);    
   }
 }
