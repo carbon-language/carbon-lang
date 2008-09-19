@@ -1435,7 +1435,7 @@ Parser::ExprResult Parser::ParseObjCMessageExpression() {
     return ParseObjCMessageExpressionBody(LBracLoc, ReceiverName, 0);
   }
 
-  ExprResult Res = ParseAssignmentExpression();
+  ExprResult Res = ParseExpression();
   if (Res.isInvalid) {
     SkipUntil(tok::r_square);
     return Res;
