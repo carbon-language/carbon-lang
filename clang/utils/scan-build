@@ -522,6 +522,7 @@ print OUT <<ENDTEXT;
   <td>Line</td>
   <td>Path Length</td>
   <td class="sorttable_nosort"></td>
+  <td class="sorttable_nosort"></td>
 </tr>
 ENDTEXT
 
@@ -566,6 +567,9 @@ ENDTEXT
 
       # Emit the "View" link.
       print OUT " <td class=\"View\"><a href=\"$ReportFile#EndPath\">View</a></td>\n";
+        
+      # Emit REPORTBUG markers.
+      print OUT " <td class=\"ReportBug\"><!-- REPORTBUG id=\"$ReportFile\" --></td>\n";
         
       # End the row.
       print OUT "</tr>\n";
