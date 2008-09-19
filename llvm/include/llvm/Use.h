@@ -66,11 +66,22 @@ inline T *transferTag(const T *From, const T *To) {
 // Use is here to make keeping the "use" list of a Value up-to-date really easy.
 //
 class Use {
-private:
+  class UseWaymark;
+  friend class UseWaymark;
+  Value *getValue() const;
+  /// nilUse - returns a 'token' that marks the end of the def/use chain
+  static Use *nilUse(const Value *V) {
+    return addTag((Use*)V, fullStopTagN);
+  }
+  static bool isNil(Use *U) { return extractTag<NextPtrTag, tagMaskN>(U) == fullStopTagN; }
+  void showWaymarks() const;
+  static bool isStop(Use *U) {
+    return isStopTag(extractTag<NextPtrTag, tagMaskN>(U));
+  }
+public:
   /// init - specify Value and User
   /// @deprecated in 2.4, will be removed soon
   inline void init(Value *V, User *U);
-public:
   /// swap - provide a fast substitute to std::swap<Use>
   /// that also works with less standard-compliant compilers
   void swap(Use &RHS);
@@ -81,7 +92,7 @@ private:
 
   /// Destructor - Only for zap()
   inline ~Use() {
-    if (Val) removeFromList();
+    if (Val1) removeFromList();
   }
 
   /// Default ctor - This leaves the Use completely uninitialized.  The only thing
@@ -91,11 +102,22 @@ private:
   enum PrevPtrTag { zeroDigitTag = noTag
                   , oneDigitTag = tagOne
                   , stopTag = tagTwo
-                  , fullStopTag = tagThree };
+                  , fullStopTag = tagThree
+                  , tagMask = tagThree };
 
+  enum NextPtrTag { zeroDigitTagN = tagTwo
+                  , oneDigitTagN = tagOne
+                  , stopTagN = noTag
+                  , fullStopTagN = tagThree
+                  , tagMaskN = tagThree };
+
+  static bool isStopTag(NextPtrTag T) {
+    bool P[] = { true, false, false, true };
+    return P[T];
+  }
 public:
-  operator Value*() const { return Val; }
-  Value *get() const { return Val; }
+  operator Value*() const { return get(); }
+  inline Value *get() const;
   User *getUser() const;
   const Use* getImpliedUser() const;
   static Use *initTags(Use *Start, Use *Stop, ptrdiff_t Done = 0);
@@ -108,31 +130,38 @@ public:
     return RHS;
   }
   const Use &operator=(const Use &RHS) {
-    set(RHS.Val);
+    set(RHS.Val1);
     return *this;
   }
 
-        Value *operator->()       { return Val; }
-  const Value *operator->() const { return Val; }
+        Value *operator->()       { return get(); }
+  const Value *operator->() const { return get(); }
 
-  Use *getNext() const { return Next; }
+  Use *getNext() const { return extractTag<NextPtrTag, tagMaskN>(Next) == fullStopTagN
+			   ? 0
+			   : stripTag<tagMaskN>(Next); }
 private:
-  Value *Val;
+  Value *Val1;
   Use *Next, **Prev;
 
   void setPrev(Use **NewPrev) {
-    Prev = transferTag<fullStopTag>(Prev, NewPrev);
+    Prev = transferTag<tagMask>(Prev, NewPrev);
   }
   void addToList(Use **List) {
     Next = *List;
-    if (Next) Next->setPrev(&Next);
+    Use *StrippedNext(getNext());
+    if (StrippedNext) StrippedNext->setPrev(&Next);
     setPrev(List);
     *List = this;
   }
   void removeFromList() {
-    Use **StrippedPrev = stripTag<fullStopTag>(Prev);
+    // __builtin_prefetch(Next);
+    Use **StrippedPrev = stripTag<tagMask>(Prev);
+    Use *StrippedNext(getNext());
+    if (isStop(Next))
+      assert((isStop(*StrippedPrev) || (StrippedNext ? isStop(StrippedNext->Next) : true)) && "joining digits?");
     *StrippedPrev = Next;
-    if (Next) Next->setPrev(StrippedPrev);
+    if (StrippedNext) StrippedNext->setPrev(StrippedPrev);
   }
 
   friend class Value;
@@ -161,7 +190,10 @@ class value_use_iterator : public forward_iterator<UserTy*, ptrdiff_t> {
   typedef value_use_iterator<UserTy> _Self;
 
   Use *U;
-  explicit value_use_iterator(Use *u) : U(u) {}
+  explicit value_use_iterator(Use *u) : U(extractTag<Use::NextPtrTag, Use::tagMaskN>(u)
+					  == Use::fullStopTagN
+					  ? 0
+					  : stripTag<Use::tagMaskN>(u)) {}
   friend class Value;
 public:
   typedef typename super::reference reference;
@@ -178,11 +210,11 @@ public:
   }
 
   /// atEnd - return true if this iterator is equal to use_end() on the value.
-  bool atEnd() const { return U == 0; }
+  bool atEnd() const { return !U; }
 
   // Iterator traversal: forward iteration only
   _Self &operator++() {          // Preincrement
-    assert(U && "Cannot increment end iterator!");
+    assert(!atEnd() && "Cannot increment end iterator!");
     U = U->getNext();
     return *this;
   }
@@ -190,9 +222,9 @@ public:
     _Self tmp = *this; ++*this; return tmp;
   }
 
-  // Retrieve a pointer to the current User.
+  // Retrieve a reference to the current User
   UserTy *operator*() const {
-    assert(U && "Cannot dereference end iterator!");
+    assert(!atEnd() && "Cannot dereference end iterator!");
     return U->getUser();
   }
 
@@ -206,6 +238,11 @@ public:
   unsigned getOperandNo() const;
 };
 
+Value *Use::get() const {
+  return fullStopTagN == extractTag<NextPtrTag, tagMaskN>(Next)
+    ? reinterpret_cast<Value*>(stripTag<tagMaskN>(Next))
+    : (Val1 == getValue() ? Val1 : 0); // should crash if not equal!
+}
 
 template<> struct simplify_type<value_use_iterator<User> > {
   typedef User* SimpleType;
