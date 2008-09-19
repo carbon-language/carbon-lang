@@ -2310,6 +2310,7 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
         if (isDead) {
           li_->RemoveMachineInstrFromMaps(mii);
           mii = mbbi->erase(mii);
+          continue;
         }
       }
 
