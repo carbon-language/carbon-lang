@@ -753,7 +753,7 @@ public:
   /// operands replaced with the specified values.  The specified operands must
   /// match count and type with the existing ones.
   Constant *getWithOperands(const std::vector<Constant*> &Ops) const {
-    return getWithOperands(&Ops[0], Ops.size());
+    return getWithOperands(&Ops[0], (unsigned)Ops.size());
   }
   Constant *getWithOperands(Constant* const *Ops, unsigned NumOps) const;
   
