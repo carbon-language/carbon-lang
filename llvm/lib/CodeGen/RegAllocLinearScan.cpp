@@ -174,6 +174,7 @@ namespace {
     void ComputeRelatedRegClasses();
 
     bool noEarlyClobberConflict(LiveInterval *cur, unsigned RegNo);
+    unsigned findPhysReg(MachineOperand &MO);
 
     template <typename ItTy>
     void printIntervals(const char* const str, ItTy i, ItTy e) const {
@@ -1003,6 +1004,19 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur)
     unhandled_.push(added[i]);
 }
 
+/// findPhysReg - get the physical register, if any, assigned to this operand.
+/// This may be an original physical register, or the physical register which
+/// has been assigned to a virtual register.
+unsigned RALinScan::findPhysReg(MachineOperand &MO) {
+  unsigned PhysReg = MO.getReg();
+  if (PhysReg && TargetRegisterInfo::isVirtualRegister(PhysReg)) {
+    if (!vrm_->hasPhys(PhysReg))
+      return 0;
+    PhysReg = vrm_->getPhys(PhysReg);
+  }
+  return PhysReg;
+}
+
 /// noEarlyClobberConflict - see whether LiveInternal cur has a conflict with
 /// hard reg HReg because of earlyclobbers.  
 ///
@@ -1032,11 +1046,13 @@ bool RALinScan::noEarlyClobberConflict(LiveInterval *cur, unsigned HReg) {
       if (MI->getOpcode()==TargetInstrInfo::INLINEASM) {
         for (int i = MI->getNumOperands()-1; i>=0; --i) {
           MachineOperand &MO = MI->getOperand(i);
-          if (MO.isRegister() && MO.getReg() && MO.isEarlyClobber() &&
-              HReg==MO.getReg()) {
-            DOUT << "  earlyclobber conflict: " << 
+          if (MO.isRegister() && MO.isEarlyClobber()) {
+            unsigned PhysReg = findPhysReg(MO);
+            if (HReg==PhysReg) {
+              DOUT << "  earlyclobber conflict: " << 
                   "%reg" << cur->reg << ", " << tri_->getName(HReg) << "\n\t";
-            return false;
+              return false;
+            }
           }
         }
       }
@@ -1051,10 +1067,12 @@ bool RALinScan::noEarlyClobberConflict(LiveInterval *cur, unsigned HReg) {
         bool earlyClobberFound = false, overlapFound = false;
         for (int i = MI->getNumOperands()-1; i>=0; --i) {
           MachineOperand &MO = MI->getOperand(i);
-          if (MO.isRegister() && MO.getReg()) {
-            if ((MO.overlapsEarlyClobber() || MO.isEarlyClobber()) && 
-                HReg==MO.getReg())
-              overlapFound = true;
+          if (MO.isRegister()) {
+            if ((MO.overlapsEarlyClobber() || MO.isEarlyClobber())) {
+              unsigned PhysReg = findPhysReg(MO);
+              if (HReg==PhysReg)
+                overlapFound = true;
+            }
             if (MO.isEarlyClobber() && cur->reg==MO.getReg())
               earlyClobberFound = true;
           }
