@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | llc -fast-isel -mtriple=i386-apple-darwin | \
-; RUN:   grep mov | grep lazy_ptr | count 2
+; RUN:   grep lazy_ptr, | count 2
 ; RUN: llvm-as < %s | llc -fast-isel -march=x86 -relocation-model=static | \
 ; RUN:   grep lea
 

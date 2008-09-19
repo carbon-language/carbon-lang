@@ -72,10 +72,7 @@ private:
   bool X86FastEmitExtend(ISD::NodeType Opc, MVT DstVT, unsigned Src, MVT SrcVT,
                          unsigned &ResultReg);
   
-  bool X86SelectConstAddr(Value *V, unsigned &Op0,
-                          bool isCall = false, bool inReg = false);
-
-  bool X86SelectAddress(Value *V, X86AddressMode &AM);
+  bool X86SelectAddress(Value *V, X86AddressMode &AM, bool isCall);
 
   bool X86SelectLoad(Instruction *I);
   
@@ -281,56 +278,9 @@ bool X86FastISel::X86FastEmitExtend(ISD::NodeType Opc, MVT DstVT,
     return false;
 }
 
-/// X86SelectConstAddr - Select and emit code to materialize constant address.
-/// 
-bool X86FastISel::X86SelectConstAddr(Value *V, unsigned &Op0,
-                                     bool isCall, bool inReg) {
-  // FIXME: Only GlobalAddress for now.
-  GlobalValue *GV = dyn_cast<GlobalValue>(V);
-  if (!GV)
-    return false;
-
-  if (Subtarget->GVRequiresExtraLoad(GV, TM, isCall)) {
-    // Issue load from stub if necessary.
-    unsigned Opc = 0;
-    const TargetRegisterClass *RC = NULL;
-    if (TLI.getPointerTy() == MVT::i32) {
-      Opc = X86::MOV32rm;
-      RC  = X86::GR32RegisterClass;
-    } else {
-      Opc = X86::MOV64rm;
-      RC  = X86::GR64RegisterClass;
-    }
-    Op0 = createResultReg(RC);
-    X86AddressMode AM;
-    AM.GV = GV;
-    addFullAddress(BuildMI(MBB, TII.get(Opc), Op0), AM);
-    // Prevent loading GV stub multiple times in same MBB.
-    LocalValueMap[V] = Op0;
-  } else if (inReg) {
-    unsigned Opc = 0;
-    const TargetRegisterClass *RC = NULL;
-    if (TLI.getPointerTy() == MVT::i32) {
-      Opc = X86::LEA32r;
-      RC  = X86::GR32RegisterClass;
-    } else {
-      Opc = X86::LEA64r;
-      RC  = X86::GR64RegisterClass;
-    }
-    Op0 = createResultReg(RC);
-    X86AddressMode AM;
-    AM.GV = GV;
-    addFullAddress(BuildMI(MBB, TII.get(Opc), Op0), AM);
-    // Prevent materializing GV address multiple times in same MBB.
-    LocalValueMap[V] = Op0;
-  }
-
-  return true;
-}
-
 /// X86SelectAddress - Attempt to fill in an address from the given value.
 ///
-bool X86FastISel::X86SelectAddress(Value *V, X86AddressMode &AM) {
+bool X86FastISel::X86SelectAddress(Value *V, X86AddressMode &AM, bool isCall) {
   User *U;
   unsigned Opcode = Instruction::UserOp1;
   if (Instruction *I = dyn_cast<Instruction>(V)) {
@@ -345,19 +295,20 @@ bool X86FastISel::X86SelectAddress(Value *V, X86AddressMode &AM) {
   default: break;
   case Instruction::BitCast:
     // Look past bitcasts.
-    return X86SelectAddress(U->getOperand(0), AM);
+    return X86SelectAddress(U->getOperand(0), AM, isCall);
 
   case Instruction::IntToPtr:
     // Look past no-op inttoptrs.
     if (TLI.getValueType(U->getOperand(0)->getType()) == TLI.getPointerTy())
-      return X86SelectAddress(U->getOperand(0), AM);
+      return X86SelectAddress(U->getOperand(0), AM, isCall);
 
   case Instruction::PtrToInt:
     // Look past no-op ptrtoints.
     if (TLI.getValueType(U->getType()) == TLI.getPointerTy())
-      return X86SelectAddress(U->getOperand(0), AM);
+      return X86SelectAddress(U->getOperand(0), AM, isCall);
 
   case Instruction::Alloca: {
+    if (isCall) break;
     // Do static allocas.
     const AllocaInst *A = cast<AllocaInst>(V);
     DenseMap<const AllocaInst*, int>::iterator SI = StaticAllocaMap.find(A);
@@ -369,15 +320,17 @@ bool X86FastISel::X86SelectAddress(Value *V, X86AddressMode &AM) {
   }
 
   case Instruction::Add: {
+    if (isCall) break;
     // Adds of constants are common and easy enough.
     if (ConstantInt *CI = dyn_cast<ConstantInt>(U->getOperand(1))) {
       AM.Disp += CI->getZExtValue();
-      return X86SelectAddress(U->getOperand(0), AM);
+      return X86SelectAddress(U->getOperand(0), AM, isCall);
     }
     break;
   }
 
   case Instruction::GetElementPtr: {
+    if (isCall) break;
     // Pattern-match simple GEPs.
     uint64_t Disp = AM.Disp;
     unsigned IndexReg = AM.IndexReg;
@@ -414,7 +367,7 @@ bool X86FastISel::X86SelectAddress(Value *V, X86AddressMode &AM) {
     AM.IndexReg = IndexReg;
     AM.Scale = Scale;
     AM.Disp = Disp;
-    return X86SelectAddress(U->getOperand(0), AM);
+    return X86SelectAddress(U->getOperand(0), AM, isCall);
   unsupported_gep:
     // Ok, the GEP indices weren't all covered.
     break;
@@ -422,19 +375,37 @@ bool X86FastISel::X86SelectAddress(Value *V, X86AddressMode &AM) {
   }
 
   // Handle constant address.
-  // FIXME: If load type is something we can't handle, this can result in
-  // a dead stub load instruction.
-  if (isa<Constant>(V) && X86SelectConstAddr(V, AM.Base.Reg)) {
-    if (AM.Base.Reg == 0)
-      AM.GV = cast<GlobalValue>(V);
-  } else {
-    AM.Base.Reg = getRegForValue(V);
-    if (AM.Base.Reg == 0)
-      // Unhandled operand. Halt "fast" selection and bail.
-      return false;
+  if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
+    if (Subtarget->GVRequiresExtraLoad(GV, TM, isCall)) {
+      // Check to see if we've already materialized this
+      // value in a register in this block.
+      if (unsigned Reg = LocalValueMap[V])
+        return Reg;
+      // Issue load from stub if necessary.
+      unsigned Opc = 0;
+      const TargetRegisterClass *RC = NULL;
+      if (TLI.getPointerTy() == MVT::i32) {
+        Opc = X86::MOV32rm;
+        RC  = X86::GR32RegisterClass;
+      } else {
+        Opc = X86::MOV64rm;
+        RC  = X86::GR64RegisterClass;
+      }
+      AM.Base.Reg = createResultReg(RC);
+      X86AddressMode LocalAM;
+      LocalAM.GV = GV;
+      addFullAddress(BuildMI(MBB, TII.get(Opc), AM.Base.Reg), LocalAM);
+      // Prevent loading GV stub multiple times in same MBB.
+      LocalValueMap[V] = AM.Base.Reg;
+    } else {
+      AM.GV = GV;
+    }
+    return true;
   }
 
-  return true;
+  // If all else fails, just materialize the value in a register.
+  AM.Base.Reg = getRegForValue(V);
+  return AM.Base.Reg != 0;
 }
 
 /// X86SelectStore - Select and emit code to implement store instructions.
@@ -448,7 +419,7 @@ bool X86FastISel::X86SelectStore(Instruction* I) {
     return false;    
 
   X86AddressMode AM;
-  if (!X86SelectAddress(I->getOperand(1), AM))
+  if (!X86SelectAddress(I->getOperand(1), AM, false))
     return false;
 
   return X86FastEmitStore(VT, Val, AM);
@@ -462,7 +433,7 @@ bool X86FastISel::X86SelectLoad(Instruction *I)  {
     return false;
 
   X86AddressMode AM;
-  if (!X86SelectAddress(I->getOperand(0), AM))
+  if (!X86SelectAddress(I->getOperand(0), AM, false))
     return false;
 
   unsigned ResultReg = 0;
@@ -849,13 +820,19 @@ bool X86FastISel::X86SelectCall(Instruction *I) {
 
   // Materialize callee address in a register. FIXME: GV address can be
   // handled with a CALLpcrel32 instead.
+  X86AddressMode CalleeAM;
+  if (!X86SelectAddress(Callee, CalleeAM, true))
+    return false;
   unsigned CalleeOp = 0;
-  if (!isa<Constant>(Callee) || !X86SelectConstAddr(Callee, CalleeOp, true)) {
-    CalleeOp = getRegForValue(Callee);
-    if (CalleeOp == 0)
-      // Unhandled operand. Halt "fast" selection and bail.
-      return false;    
-  }
+  GlobalValue *GV = 0;
+  if (CalleeAM.Base.Reg != 0) {
+    assert(CalleeAM.GV == 0);
+    CalleeOp = CalleeAM.Base.Reg;
+  } else if (CalleeAM.GV != 0) {
+    assert(CalleeAM.GV != 0);
+    GV = CalleeAM.GV;
+  } else
+    return false;
 
   // Allow calls which produce i1 results.
   bool AndToI1 = false;
@@ -976,7 +953,7 @@ bool X86FastISel::X86SelectCall(Instruction *I) {
     : (Subtarget->is64Bit() ? X86::CALL64pcrel32 : X86::CALLpcrel32);
   MachineInstrBuilder MIB = CalleeOp
     ? BuildMI(MBB, TII.get(CallOpc)).addReg(CalleeOp)
-    :BuildMI(MBB, TII.get(CallOpc)).addGlobalAddress(cast<GlobalValue>(Callee));
+    : BuildMI(MBB, TII.get(CallOpc)).addGlobalAddress(GV);
   // Add implicit physical register uses to the call.
   while (!RegArgs.empty()) {
     MIB.addReg(RegArgs.back());
@@ -1132,10 +1109,18 @@ unsigned X86FastISel::TargetMaterializeConstant(Constant *C) {
     break;
   }
   
-  unsigned ResultReg = createResultReg(RC);
+  // Materialize addresses with LEA instructions.
   if (isa<GlobalValue>(C)) {
-    if (X86SelectConstAddr(C, ResultReg, false, true))
+    X86AddressMode AM;
+    if (X86SelectAddress(C, AM, false)) {
+      if (TLI.getPointerTy() == MVT::i32)
+        Opc = X86::LEA32r;
+      else
+        Opc = X86::LEA64r;
+      unsigned ResultReg = createResultReg(RC);
+      addFullAddress(BuildMI(MBB, TII.get(Opc), ResultReg), AM);
       return ResultReg;
+    }
     return 0;
   }
   
@@ -1148,13 +1133,14 @@ unsigned X86FastISel::TargetMaterializeConstant(Constant *C) {
   }
   
   unsigned MCPOffset = MCP.getConstantPoolIndex(C, Align);
+  unsigned ResultReg = createResultReg(RC);
   addConstantPoolReference(BuildMI(MBB, TII.get(Opc), ResultReg), MCPOffset);
   return ResultReg;
 }
 
 unsigned X86FastISel::TargetMaterializeAlloca(AllocaInst *C) {
   X86AddressMode AM;
-  if (!X86SelectAddress(C, AM))
+  if (!X86SelectAddress(C, AM, false))
     return 0;
   unsigned Opc = Subtarget->is64Bit() ? X86::LEA64r : X86::LEA32r;
   TargetRegisterClass* RC = TLI.getRegClassFor(TLI.getPointerTy());
