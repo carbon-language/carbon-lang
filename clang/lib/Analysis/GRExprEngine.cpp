@@ -1432,6 +1432,15 @@ void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, NodeTy* Pred, NodeSet& Dst){
       MakeNode(Dst, CastE, N, SetRVal(St, CastE, V));
       continue;
     }
+    
+    // For const casts, just propagate the value.
+    ASTContext& C = getContext();
+    
+    if (C.getCanonicalType(T).getUnqualifiedType() == 
+        C.getCanonicalType(ExTy).getUnqualifiedType()) {
+      MakeNode(Dst, CastE, N, SetRVal(St, CastE, V));
+      continue;
+    }
   
     // Check for casts from pointers to integers.
     if (T->isIntegerType() && LVal::IsLValType(ExTy)) {
