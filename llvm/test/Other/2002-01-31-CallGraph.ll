@@ -1,6 +1,6 @@
 ;  Call graph construction crash: Not handling indirect calls right
 ;
-; RUN: llvm-as < %s | opt -analyze -callgraph
+; RUN: llvm-as < %s | opt -analyze -callgraph >& /dev/null
 ;
 
         %FunTy = type i32 (i32)

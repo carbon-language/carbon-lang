@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -analyze -callgraph -disable-output | grep {Calls function 'callee'} | count 2
+; RUN: llvm-as < %s | opt -callgraph -disable-output |& grep {Calls function 'callee'} | count 2
 
 define internal void @callee(...) {
 entry:

@@ -66,7 +66,7 @@ namespace {
   char ExternalFunctionsPassedConstants::ID = 0;
   RegisterPass<ExternalFunctionsPassedConstants>
   P1("externalfnconstants", "Print external fn callsites passed constants");
-  
+
   struct CallGraphPrinter : public ModulePass {
     static char ID; // Pass ID, replacement for typeid
     CallGraphPrinter() : ModulePass((intptr_t)&ID) {}
@@ -75,13 +75,12 @@ namespace {
       AU.setPreservesAll();
       AU.addRequiredTransitive<CallGraph>();
     }
-    virtual bool runOnModule(Module &M) { return false; }
-
-    virtual void print(std::ostream &OS, const Module *M) const {
-      getAnalysis<CallGraph>().print(OS, M);
+    virtual bool runOnModule(Module &M) {
+      getAnalysis<CallGraph>().print(std::cerr, &M);
+      return false;
     }
   };
-  
+
   char CallGraphPrinter::ID = 0;
   RegisterPass<CallGraphPrinter>
     P2("callgraph", "Print a call graph");
