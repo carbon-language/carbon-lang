@@ -139,12 +139,6 @@ LoopPass *createLoopIndexSplitPass();
 
 //===----------------------------------------------------------------------===//
 //
-// MarkModRef - This pass marks functions readnone/readonly.
-//
-FunctionPass *createMarkModRefPass();
-
-//===----------------------------------------------------------------------===//
-//
 // PromoteMemoryToRegister - This pass is used to promote memory references to
 // be register references. A simple example of the transformation performed by
 // this pass is:

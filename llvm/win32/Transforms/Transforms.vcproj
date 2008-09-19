@@ -500,10 +500,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Scalar\MarkModRef.cpp"
-					>
-				</File>
-				<File
 					RelativePath="..\..\lib\Transforms\Scalar\MemCpyOptimizer.cpp"
 					>
 				</File>
