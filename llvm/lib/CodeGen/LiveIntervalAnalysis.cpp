@@ -674,8 +674,6 @@ exit:
 /// live interval is an interval [i, j) where 1 <= i <= j < N for
 /// which a variable is live
 void LiveIntervals::computeIntervals() { 
-  AsmsThatEarlyClobber.clear();
-  AsmsWithEarlyClobberConflict.clear();
 
   DOUT << "********** COMPUTING LIVE INTERVALS **********\n"
        << "********** Function: "
@@ -716,13 +714,15 @@ void LiveIntervals::computeIntervals() {
         if (MO.isRegister() && MO.getReg() && MO.isDef()) {
           handleRegisterDef(MBB, MI, MIIndex, MO, i);
           if (MO.isEarlyClobber()) {
-            AsmsThatEarlyClobber.insert(std::make_pair(MO.getReg(), MI));
+            LiveInterval &interval =  getOrCreateInterval(MO.getReg());
+            interval.isEarlyClobber = true;
           }
         }
         if (MO.isRegister() && !MO.isDef() &&
             MO.getReg() && TargetRegisterInfo::isVirtualRegister(MO.getReg()) &&
             MO.overlapsEarlyClobber()) {
-          AsmsWithEarlyClobberConflict.insert(std::make_pair(MO.getReg(), MI));
+          LiveInterval &interval = getOrCreateInterval(MO.getReg());
+          interval.overlapsEarlyClobber = true;
         }
       }
       
@@ -750,73 +750,6 @@ bool LiveIntervals::findLiveInMBBs(const LiveRange &LR,
     ++I;
   }
   return ResVal;
-}
-
-/// noEarlyclobberConflict - see whether virtual reg VReg has a conflict with
-/// hard reg HReg because of earlyclobbers.  
-///
-/// Earlyclobber operands may not be assigned the same register as
-/// each other, or as earlyclobber-conflict operands (i.e. those that
-/// are non-earlyclobbered inputs to an asm that also has earlyclobbers).
-///
-/// Thus there are two cases to check for:
-/// 1.  VReg is an earlyclobber-conflict register and HReg is an earlyclobber
-/// register in some asm that also has VReg as an input.
-/// 2.  VReg is an earlyclobber register and HReg is an earlyclobber-conflict
-/// input elsewhere in some asm.
-/// In both cases HReg can be assigned by the user, or assigned early in
-/// register allocation.
-/// 
-/// Dropping the distinction between earlyclobber and earlyclobber-conflict,
-/// keeping only one multimap, looks promising, but two earlyclobber-conflict
-/// operands may be assigned the same register if they happen to contain the 
-/// same value, and that implementation would prevent this.
-///
-bool LiveIntervals::noEarlyclobberConflict(unsigned VReg, VirtRegMap &vrm,
-                                           unsigned HReg) {
-  typedef std::multimap<unsigned, MachineInstr*>::iterator It;
-
-  // Short circuit the most common case.
-  if (AsmsWithEarlyClobberConflict.size()!=0) {
-    std::pair<It, It> x = AsmsWithEarlyClobberConflict.equal_range(VReg);
-    for (It I = x.first; I!=x.second; I++) {
-      MachineInstr* MI = I->second;
-      for (int i = MI->getNumOperands() - 1; i >= 0; --i) {
-        MachineOperand &MO = MI->getOperand(i);
-        if (MO.isRegister() && MO.isEarlyClobber()) {
-          unsigned PhysReg = MO.getReg();
-          if (PhysReg && TargetRegisterInfo::isVirtualRegister(PhysReg)) {
-            if (!vrm.hasPhys(PhysReg))
-              continue;
-            PhysReg = vrm.getPhys(PhysReg);
-          }
-          if (PhysReg==HReg)
-            return false;
-        }
-      }
-    }
-  }
-  // Short circuit the most common case.
-  if (AsmsThatEarlyClobber.size()!=0) {
-    std::pair<It, It> x = AsmsThatEarlyClobber.equal_range(VReg);
-    for (It I = x.first; I!=x.second; I++) {
-      MachineInstr* MI = I->second;
-      for (int i = MI->getNumOperands() - 1; i >= 0; --i) {
-        MachineOperand &MO = MI->getOperand(i);
-        if (MO.isRegister() && MO.overlapsEarlyClobber()) {
-          unsigned PhysReg = MO.getReg();
-          if (PhysReg && TargetRegisterInfo::isVirtualRegister(PhysReg)) {
-            if (!vrm.hasPhys(PhysReg))
-              continue;
-            PhysReg = vrm.getPhys(PhysReg);
-          }
-          if (PhysReg==HReg)
-            return false;
-        }
-      }
-    }
-  }
-  return true;
 }
 
 LiveInterval* LiveIntervals::createInterval(unsigned reg) {

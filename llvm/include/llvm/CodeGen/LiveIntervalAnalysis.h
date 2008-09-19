@@ -65,22 +65,6 @@ namespace llvm {
     AliasAnalysis *aa_;
     LiveVariables* lv_;
 
-    /// AsmsWithEarlyClobber - maps a virtual register number to all the
-    /// inline asm's that have the register marked earlyclobber.
-    /// 
-    std::multimap<unsigned, MachineInstr*> AsmsThatEarlyClobber;
-
-    /// AsmsWithEarlyClobberConflict - maps a virtual register number
-    /// to all the inline asm's that have earlyclobber operands elsewhere
-    /// and use the register as a (non-earlyclobber) input.
-    ///
-    /// Note: earlyclobber operands may not be assigned the same register as
-    /// each other, or as earlyclobber-conflict operands.  However two
-    /// earlyclobber-conflict operands may be assigned the same register if
-    /// they happen to contain the same value.
-    /// 
-    std::multimap<unsigned, MachineInstr*> AsmsWithEarlyClobberConflict;
-
     /// Special pool allocator for VNInfo's (LiveInterval val#).
     ///
     BumpPtrAllocator VNInfoAllocator;
@@ -352,11 +336,6 @@ namespace llvm {
     /// specified interval that conflicts with the specified physical register.
     unsigned getNumConflictsWithPhysReg(const LiveInterval &li,
                                         unsigned PhysReg) const;
-
-    /// noEarlyclobberConflict - see whether virtual reg VReg has a conflict
-    /// with hard reg HReg because HReg is used as an earlyclobber register in
-    /// asm that also has VReg live into or across it.
-    bool noEarlyclobberConflict(unsigned VReg, VirtRegMap &vrm, unsigned HReg);
 
     /// computeNumbering - Compute the index numbering.
     void computeNumbering();

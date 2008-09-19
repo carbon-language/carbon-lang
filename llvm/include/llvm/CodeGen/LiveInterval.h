@@ -105,12 +105,17 @@ namespace llvm {
                          // if the top bits is set, it represents a stack slot.
     unsigned preference; // preferred register to allocate for this interval
     float weight;        // weight of this interval
+    bool isEarlyClobber;
+    bool overlapsEarlyClobber;
     Ranges ranges;       // the ranges in which this register is live
     VNInfoList valnos;   // value#'s
 
   public:
-    LiveInterval(unsigned Reg, float Weight, bool IsSS = false)
-      : reg(Reg), preference(0), weight(Weight) {
+    LiveInterval(unsigned Reg, float Weight, bool IsSS = false, 
+                 bool IsEarlyClobber = false, bool OverlapsEarlyClobber = false)
+      : reg(Reg), preference(0), weight(Weight), 
+        isEarlyClobber(IsEarlyClobber), 
+        overlapsEarlyClobber(OverlapsEarlyClobber) {
       if (IsSS)
         reg = reg | (1U << (sizeof(unsigned)*8-1));
     }

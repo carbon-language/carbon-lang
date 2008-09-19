@@ -173,6 +173,8 @@ namespace {
 
     void ComputeRelatedRegClasses();
 
+    bool noEarlyClobberConflict(LiveInterval *cur, unsigned RegNo);
+
     template <typename ItTy>
     void printIntervals(const char* const str, ItTy i, ItTy e) const {
       if (str) DOUT << str << " intervals:\n";
@@ -1001,6 +1003,73 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur)
     unhandled_.push(added[i]);
 }
 
+/// noEarlyClobberConflict - see whether LiveInternal cur has a conflict with
+/// hard reg HReg because of earlyclobbers.  
+///
+/// Earlyclobber operands may not be assigned the same register as
+/// each other, or as earlyclobber-conflict operands (i.e. those that
+/// are non-earlyclobbered inputs to an asm that also has earlyclobbers).
+///
+/// Thus there are two cases to check for:
+/// 1.  cur->reg is an earlyclobber-conflict register and HReg is an
+/// earlyclobber register in some asm that also has cur->reg as an input.
+/// 2.  cur->reg is an earlyclobber register and HReg is an 
+/// earlyclobber-conflict input, or a different earlyclobber register,
+/// elsewhere in some asm.
+/// In both cases HReg can be assigned by the user, or assigned early in
+/// register allocation.
+/// 
+/// Dropping the distinction between earlyclobber and earlyclobber-conflict,
+/// keeping only one bit, looks promising, but two earlyclobber-conflict
+/// operands may be assigned the same register if they happen to contain the 
+/// same value, and that implementation would prevent this.
+///
+bool RALinScan::noEarlyClobberConflict(LiveInterval *cur, unsigned HReg) {
+  if (cur->overlapsEarlyClobber) {
+    for (MachineRegisterInfo::use_iterator I = mri_->use_begin(cur->reg),
+          E = mri_->use_end(); I!=E; ++I) {
+      MachineInstr *MI = I.getOperand().getParent();
+      if (MI->getOpcode()==TargetInstrInfo::INLINEASM) {
+        for (int i = MI->getNumOperands()-1; i>=0; --i) {
+          MachineOperand &MO = MI->getOperand(i);
+          if (MO.isRegister() && MO.getReg() && MO.isEarlyClobber() &&
+              HReg==MO.getReg()) {
+            DOUT << "  earlyclobber conflict: " << 
+                  "%reg" << cur->reg << ", " << tri_->getName(HReg) << "\n\t";
+            return false;
+          }
+        }
+      }
+    }
+  }
+  if (cur->isEarlyClobber) {
+    for (MachineRegisterInfo::def_iterator I = mri_->def_begin(cur->reg),
+          E = mri_->def_end(); I!=E; ++I) {
+      MachineInstr *MI = I.getOperand().getParent();
+      if (MI->getOpcode()==TargetInstrInfo::INLINEASM) {
+        // make sure cur->reg is really clobbered in this instruction.
+        bool earlyClobberFound = false, overlapFound = false;
+        for (int i = MI->getNumOperands()-1; i>=0; --i) {
+          MachineOperand &MO = MI->getOperand(i);
+          if (MO.isRegister() && MO.getReg()) {
+            if ((MO.overlapsEarlyClobber() || MO.isEarlyClobber()) && 
+                HReg==MO.getReg())
+              overlapFound = true;
+            if (MO.isEarlyClobber() && cur->reg==MO.getReg())
+              earlyClobberFound = true;
+          }
+        }
+        if (earlyClobberFound && overlapFound) {
+          DOUT << "  earlyclobber conflict: " << 
+                  "%reg" << cur->reg << ", " << tri_->getName(HReg) << "\n\t";
+          return false;
+        }
+      }
+    }
+  }
+  return true;
+}
+
 /// getFreePhysReg - return a free physical register for this virtual register
 /// interval if we have one, otherwise return 0.
 unsigned RALinScan::getFreePhysReg(LiveInterval *cur) {
@@ -1049,7 +1118,7 @@ unsigned RALinScan::getFreePhysReg(LiveInterval *cur) {
   assert(I != E && "No allocatable register in this register class!");
   for (; I != E; ++I)
     if (prt_->isRegAvail(*I) && 
-        li_->noEarlyclobberConflict(cur->reg, *vrm_, *I)) {
+        noEarlyClobberConflict(cur, *I)) {
       FreeReg = *I;
       if (FreeReg < inactiveCounts.size())
         FreeRegInactiveCount = inactiveCounts[FreeReg];
@@ -1070,7 +1139,7 @@ unsigned RALinScan::getFreePhysReg(LiveInterval *cur) {
     unsigned Reg = *I;
     if (prt_->isRegAvail(Reg) && Reg < inactiveCounts.size() &&
         FreeRegInactiveCount < inactiveCounts[Reg] &&
-        li_->noEarlyclobberConflict(cur->reg, *vrm_, Reg)) {
+        noEarlyClobberConflict(cur, *I)) {
       FreeReg = Reg;
       FreeRegInactiveCount = inactiveCounts[Reg];
       if (FreeRegInactiveCount == MaxInactiveCount)
