@@ -188,6 +188,12 @@ ModulePass *createStripDeadPrototypesPass();
 ///
 ModulePass* createPartialSpecializationPass();
 
+//===----------------------------------------------------------------------===//
+/// createAddReadAttrsPass - This pass discovers functions that do not access
+/// memory, or only read memory, and gives them the readnone/readonly attribute.
+///
+Pass* createAddReadAttrsPass();
+
 } // End llvm namespace
 
 #endif

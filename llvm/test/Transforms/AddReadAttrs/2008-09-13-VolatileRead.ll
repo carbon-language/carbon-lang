@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -globalsmodref-aa -markmodref | llvm-dis | not grep read
+; RUN: llvm-as < %s | opt -addreadattrs | llvm-dis | not grep read
 ; PR2792
 
 @g = global i32 0		; <i32*> [#uses=1]

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -globalsmodref-aa -markmodref | llvm-dis | grep readonly | count 2
+; RUN: llvm-as < %s | opt -addreadattrs | llvm-dis | grep readonly | count 2
 
 define i32 @f() {
 entry:
