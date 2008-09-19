@@ -379,8 +379,10 @@ bool X86FastISel::X86SelectAddress(Value *V, X86AddressMode &AM, bool isCall) {
     if (Subtarget->GVRequiresExtraLoad(GV, TM, isCall)) {
       // Check to see if we've already materialized this
       // value in a register in this block.
-      if (unsigned Reg = LocalValueMap[V])
-        return Reg;
+      if (unsigned Reg = LocalValueMap[V]) {
+        AM.Base.Reg = Reg;
+        return true;
+      }
       // Issue load from stub if necessary.
       unsigned Opc = 0;
       const TargetRegisterClass *RC = NULL;
