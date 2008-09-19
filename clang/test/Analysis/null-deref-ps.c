@@ -91,21 +91,21 @@ int f8(int *p, int *q) {
 
 int* qux();
 
-int f9(int len) {
+int f9(unsigned len) {
   assert (len != 0);
   int *p = 0;
 
-  for (int i = 0; i < len; ++i)
+  for (unsigned i = 0; i < len; ++i)
    p = qux(i);
 
   return *p++; // no-warning
 }
 
-int f9b(int len) {
+int f9b(unsigned len) {
   assert (len > 0);  // note use of '>'
   int *p = 0;
 
-  for (int i = 0; i < len; ++i)
+  for (unsigned i = 0; i < len; ++i)
    p = qux(i);
 
   return *p++; // no-warning

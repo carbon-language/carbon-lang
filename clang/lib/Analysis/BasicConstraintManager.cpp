@@ -320,24 +320,9 @@ BasicConstraintManager::AssumeSymGE(const GRState* St, SymbolID sym,
     return St;
   }
 
-  // sym is not a constant, but it might be not-equal to a constant.
-  // Observe: V >= sym is the same as sym <= V.
-  //  check: is sym != V?
-  //  check: is sym > V?
-  // if both are true, the path is infeasible.
-  
-  if (isNotEqual(St, sym, V)) {
-    // Is sym > V?
-    //
-    //  We're not doing heavy range analysis yet, so all we can accurately
-    //  reason about are the edge cases.
-    //
-    //  If V == 0, since we know that sym != V, we also know that sym > V.    
-    isFeasible = V != 0;
-  }
-  else
-    isFeasible = true;
-
+  isFeasible = !isNotEqual(St, sym, V) || 
+               (V != llvm::APSInt::getMaxValue(V.getBitWidth(), V.isSigned()));
+                
   return St;
 }
 
@@ -352,8 +337,10 @@ BasicConstraintManager::AssumeSymLE(const GRState* St, SymbolID sym,
     isFeasible = *X <= V;
     return St;
   }
-
-  isFeasible = true;
+  
+  isFeasible = !isNotEqual(St, sym, V) || 
+               (V != llvm::APSInt::getMinValue(V.getBitWidth(), V.isSigned()));
+  
   return St;
 }
 
