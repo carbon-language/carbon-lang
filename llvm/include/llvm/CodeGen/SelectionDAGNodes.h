@@ -2417,7 +2417,7 @@ typedef LoadSDNode LargestSDNode;
 /// MostAlignedSDNode - The SDNode class with the greatest alignment
 /// requirement.
 ///
-typedef ConstantSDNode MostAlignedSDNode;
+typedef ARG_FLAGSSDNode MostAlignedSDNode;
 
 namespace ISD {
   /// isNormalLoad - Returns true if the specified node is a non-extending
