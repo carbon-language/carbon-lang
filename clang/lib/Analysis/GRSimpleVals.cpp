@@ -126,12 +126,13 @@ static unsigned char LNotOpMap[] = {
 RVal GRSimpleVals::DetermEvalBinOpNN(GRStateManager& StateMgr,
                                      BinaryOperator::Opcode Op,
                                      NonLVal L, NonLVal R)  {
-  
+
   BasicValueFactory& BasicVals = StateMgr.getBasicVals();
+  unsigned subkind = L.getSubKind();
   
   while (1) {
     
-    switch (L.getSubKind()) {
+    switch (subkind) {
       default:
         return UnknownVal();
         
@@ -169,18 +170,28 @@ RVal GRSimpleVals::DetermEvalBinOpNN(GRStateManager& StateMgr,
         
         if (isa<nonlval::ConcreteInt>(R)) {          
           const nonlval::ConcreteInt& L_CI = cast<nonlval::ConcreteInt>(L);
-          const nonlval::ConcreteInt& R_CI = cast<nonlval::ConcreteInt>(R);          
+          const nonlval::ConcreteInt& R_CI = cast<nonlval::ConcreteInt>(R);
           return L_CI.EvalBinOp(BasicVals, Op, R_CI);          
         }
         else {
+          subkind = R.getSubKind();
           NonLVal tmp = R;
           R = L;
           L = tmp;
+          
+          // Swap the operators.
+          switch (Op) {
+            case BinaryOperator::LT: Op = BinaryOperator::GT; break;
+            case BinaryOperator::GT: Op = BinaryOperator::LT; break;
+            case BinaryOperator::LE: Op = BinaryOperator::GE; break;
+            case BinaryOperator::GE: Op = BinaryOperator::LE; break;
+            default: break;
+          }
+          
           continue;
         }
         
-      case nonlval::SymbolValKind: {
-        
+      case nonlval::SymbolValKind:
         if (isa<nonlval::ConcreteInt>(R)) {
           const SymIntConstraint& C =
             BasicVals.getConstraint(cast<nonlval::SymbolVal>(L).getSymbol(), Op,
@@ -190,7 +201,6 @@ RVal GRSimpleVals::DetermEvalBinOpNN(GRStateManager& StateMgr,
         }
         else
           return UnknownVal();
-      }
     }
   }
 }
