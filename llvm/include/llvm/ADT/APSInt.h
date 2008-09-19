@@ -234,6 +234,20 @@ public:
     return APSInt(~static_cast<const APInt&>(*this), IsUnsigned);
   }
   
+  /// getMaxValue - Return the APSInt representing the maximum integer value
+  ///  with the given bit width and signedness.
+  static APSInt getMaxValue(uint32_t numBits, bool Signed) {
+    return APSInt(Signed ? APInt::getSignedMaxValue(numBits)
+                         : APInt::getMaxValue(numBits), Signed);
+  }
+  
+  /// getMinValue - Return the APSInt representing the minimum integer value
+  ///  with the given bit width and signedness.
+  static APSInt getMinValue(uint32_t numBits, bool Signed) {
+    return APSInt(Signed ? APInt::getSignedMinValue(numBits)
+                         : APInt::getMinValue(numBits), Signed);
+  }
+  
   /// Profile - Used to insert APSInt objects, or objects that contain APSInt
   ///  objects, into FoldingSets.
   void Profile(FoldingSetNodeID& ID) const;
