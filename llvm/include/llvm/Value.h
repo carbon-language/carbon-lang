@@ -138,7 +138,7 @@ public:
   typedef value_use_iterator<User>       use_iterator;
   typedef value_use_iterator<const User> use_const_iterator;
 
-  bool               use_empty() const { return Use::isNil(UseList); }
+  bool               use_empty() const { return UseList == 0; }
   use_iterator       use_begin()       { return use_iterator(UseList); }
   use_const_iterator use_begin() const { return use_const_iterator(UseList); }
   use_iterator       use_end()         { return use_iterator(0);   }
@@ -245,16 +245,14 @@ inline raw_ostream &operator<<(raw_ostream &OS, const Value &V) {
 }
   
 void Use::init(Value *V, User *) {
-  Val1 = V;
+  Val = V;
   if (V) V->addUse(*this);
-  else Next = nilUse(0);
 }
 
 void Use::set(Value *V) {
-  if (Val1) removeFromList();
-  Val1 = V;
+  if (Val) removeFromList();
+  Val = V;
   if (V) V->addUse(*this);
-  else Next = nilUse(0);
 }
 
 

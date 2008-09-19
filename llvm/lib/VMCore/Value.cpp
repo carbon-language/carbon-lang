@@ -34,7 +34,7 @@ static inline const Type *checkType(const Type *Ty) {
 
 Value::Value(const Type *ty, unsigned scid)
   : SubclassID(scid), SubclassData(0), VTy(checkType(ty)),
-    UseList(Use::nilUse(this)), Name(0) {
+    UseList(0), Name(0) {
   if (isa<CallInst>(this) || isa<InvokeInst>(this))
     assert((VTy->isFirstClassType() || VTy == Type::VoidTy ||
             isa<OpaqueType>(ty) || VTy->getTypeID() == Type::StructTyID) &&
@@ -298,7 +298,7 @@ void Value::takeName(Value *V) {
 //
 void Value::uncheckedReplaceAllUsesWith(Value *New) {
   while (!use_empty()) {
-    Use &U = *use_begin().U;
+    Use &U = *UseList;
     // Must handle Constants specially, we cannot call replaceUsesOfWith on a
     // constant because they are uniqued.
     if (Constant *C = dyn_cast<Constant>(U.getUser())) {
