@@ -100,6 +100,10 @@ namespace llvm {
     ///
     SmallPtrSet<MachineInstr*, 32> ReMatCopies;
 
+    /// ReMatDefs - Keep track of definition instructions which have
+    /// been remat'ed.
+    SmallPtrSet<MachineInstr*, 8> ReMatDefs;
+
   public:
     static char ID; // Pass identifcation, replacement for typeid
     SimpleRegisterCoalescing() : MachineFunctionPass(&ID) {}

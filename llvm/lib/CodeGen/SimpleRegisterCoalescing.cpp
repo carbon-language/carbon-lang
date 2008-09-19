@@ -479,6 +479,7 @@ bool SimpleRegisterCoalescing::ReMaterializeTrivialDef(LiveInterval &SrcInt,
   li_->ReplaceMachineInstrInMaps(CopyMI, NewMI);
   CopyMI->eraseFromParent();
   ReMatCopies.insert(CopyMI);
+  ReMatDefs.insert(DefMI);
   ++NumReMats;
   return true;
 }
@@ -2183,6 +2184,7 @@ void SimpleRegisterCoalescing::printRegName(unsigned reg) const {
 void SimpleRegisterCoalescing::releaseMemory() {
   JoinedCopies.clear();
   ReMatCopies.clear();
+  ReMatDefs.clear();
 }
 
 static bool isZeroLengthInterval(LiveInterval *li) {
@@ -2291,25 +2293,45 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
         continue;
       }
 
+      // Now check if this is a remat'ed def instruction which is now dead.
+      if (ReMatDefs.count(MI)) {
+        bool isDead = true;
+        for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+          const MachineOperand &MO = MI->getOperand(i);
+          if (!MO.isRegister() || MO.isDead())
+            continue;
+          unsigned Reg = MO.getReg();
+          if (TargetRegisterInfo::isPhysicalRegister(Reg) ||
+              !mri_->use_empty(Reg)) {
+            isDead = false;
+            break;
+          }
+        }
+        if (isDead) {
+          li_->RemoveMachineInstrFromMaps(mii);
+          mii = mbbi->erase(mii);
+        }
+      }
+
       // If the move will be an identity move delete it
-      bool isMove = tii_->isMoveInstr(*mii, SrcReg, DstReg);
+      bool isMove = tii_->isMoveInstr(*MI, SrcReg, DstReg);
       if (isMove && SrcReg == DstReg) {
         if (li_->hasInterval(SrcReg)) {
           LiveInterval &RegInt = li_->getInterval(SrcReg);
           // If def of this move instruction is dead, remove its live range
           // from the dstination register's live interval.
-          if (mii->registerDefIsDead(DstReg)) {
-            if (!ShortenDeadCopySrcLiveRange(RegInt, mii))
-              ShortenDeadCopyLiveRange(RegInt, mii);
+          if (MI->registerDefIsDead(DstReg)) {
+            if (!ShortenDeadCopySrcLiveRange(RegInt, MI))
+              ShortenDeadCopyLiveRange(RegInt, MI);
           }
         }
-        li_->RemoveMachineInstrFromMaps(mii);
+        li_->RemoveMachineInstrFromMaps(MI);
         mii = mbbi->erase(mii);
         ++numPeep;
       } else if (!isMove || !TurnCopyIntoImpDef(mii, mbb, DstReg, SrcReg)) {
         SmallSet<unsigned, 4> UniqueUses;
-        for (unsigned i = 0, e = mii->getNumOperands(); i != e; ++i) {
-          const MachineOperand &mop = mii->getOperand(i);
+        for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+          const MachineOperand &mop = MI->getOperand(i);
           if (mop.isRegister() && mop.getReg() &&
               TargetRegisterInfo::isVirtualRegister(mop.getReg())) {
             unsigned reg = mop.getReg();
