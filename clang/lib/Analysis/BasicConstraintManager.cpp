@@ -222,6 +222,12 @@ BasicConstraintManager::AssumeSymInt(const GRState* St, bool Assumption,
     else
       return AssumeSymEQ(St, C.getSymbol(), C.getInt(), isFeasible);
 
+  case BinaryOperator::GT:
+    if (Assumption)
+      return AssumeSymGT(St, C.getSymbol(), C.getInt(), isFeasible);
+    else
+      return AssumeSymLE(St, C.getSymbol(), C.getInt(), isFeasible);
+
   case BinaryOperator::GE:
     if (Assumption)
       return AssumeSymGE(St, C.getSymbol(), C.getInt(), isFeasible);
