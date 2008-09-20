@@ -392,8 +392,13 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
       if (GV->isDeclaration() || GV->isWeakForLinker()) {
         // Dynamically-resolved functions need a stub for the function.
         if (isCallOp && isa<Function>(GV)) {
-          FnStubs.insert(Name);
-          printSuffixedName(Name, "$stub");
+          // Function stubs are no longer needed for Mac OS X 10.5 and up.
+          if (Subtarget->isTargetDarwin() && Subtarget->getDarwinVers() >= 9) {
+            O << Name;
+          } else {
+            FnStubs.insert(Name);
+            printSuffixedName(Name, "$stub");
+          }
         } else {
           GVStubs.insert(Name);
           printSuffixedName(Name, "$non_lazy_ptr");
@@ -475,7 +480,9 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     bool needCloseParen = false;
     std::string Name(TAI->getGlobalPrefix());
     Name += MO.getSymbolName();
-    if (isCallOp && shouldPrintStub(TM, Subtarget)) {
+    // Print function stub suffix unless it's Mac OS X 10.5 and up.
+    if (isCallOp && shouldPrintStub(TM, Subtarget) && 
+        !(Subtarget->isTargetDarwin() && Subtarget->getDarwinVers() >= 9)) {
       FnStubs.insert(Name);
       printSuffixedName(Name, "$stub");
       return;
