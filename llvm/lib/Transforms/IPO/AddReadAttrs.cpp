@@ -54,7 +54,7 @@ bool AddReadAttrs::runOnSCC(const std::vector<CallGraphNode *> &SCC) {
     Function *F = SCC[i]->getFunction();
 
     if (F == 0)
-      // May write memory.
+      // External node - may write memory.
       return false;
 
     if (F->doesNotAccessMemory())
@@ -72,34 +72,19 @@ bool AddReadAttrs::runOnSCC(const std::vector<CallGraphNode *> &SCC) {
       continue;
     }
 
-    // Scan the function body for explicit loads and stores, or calls to
-    // functions that may read or write memory.
+    // Scan the function body for instructions that may read or write memory.
     for (inst_iterator II = inst_begin(F), E = inst_end(F); II != E; ++II) {
-      Instruction *I = &*II;
-      if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
-        if (LI->isVolatile())
-          // Volatile loads may have side-effects, so treat them as writing
-          // memory.
-          return false;
-        ReadsMemory = true;
-      } else if (isa<StoreInst>(I) || isa<MallocInst>(I) || isa<FreeInst>(I)) {
-        // Writes memory.
+      CallSite CS = CallSite::get(&*II);
+
+      // Ignore calls to functions in the same SCC.
+      if (CS.getInstruction() &&
+          std::find(SCC.begin(), SCC.end(), CG[CS.getCalledFunction()]) !=
+          SCC.end())
+        continue;
+
+      if (II->mayWriteToMemory())
         return false;
-      } else if (isa<CallInst>(I) || isa<InvokeInst>(I)) {
-        CallSite CS(I);
-
-        if (std::find(SCC.begin(), SCC.end(), CG[CS.getCalledFunction()]) !=
-            SCC.end())
-          // The callee is inside our current SCC - ignore it.
-          continue;
-
-        if (!CS.onlyReadsMemory())
-          // May write memory.
-          return false;
-
-        if (!CS.doesNotAccessMemory())
-          ReadsMemory = true;
-      }
+      ReadsMemory |= II->mayReadFromMemory();
     }
   }
 
