@@ -1122,9 +1122,12 @@ unsigned RALinScan::getFreePhysReg(LiveInterval *cur) {
   unsigned FreeRegInactiveCount = 0;
 
   // If copy coalescer has assigned a "preferred" register, check if it's
-  // available first.
+  // available first.  Coalescer can create new earlyclobber interferences,
+  // so we need to check that.
   if (cur->preference) {
-    if (prt_->isRegAvail(cur->preference) && RC->contains(cur->preference)) {
+    if (prt_->isRegAvail(cur->preference) && 
+        RC->contains(cur->preference) &&
+        noEarlyClobberConflict(cur, cur->preference)) {
       DOUT << "\t\tassigned the preferred register: "
            << tri_->getName(cur->preference) << "\n";
       return cur->preference;
