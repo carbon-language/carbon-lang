@@ -179,7 +179,8 @@ private:
 public:
   GRStmtNodeBuilder(GRStmtNodeBuilderImpl& nb, StateManagerTy& mgr) :
     NB(nb), Mgr(mgr), Auditor(0), PurgingDeadSymbols(false),
-    BuildSinks(false), HasGeneratedNode(false) {
+    BuildSinks(false), HasGeneratedNode(false),
+    PointKind(ProgramPoint::PostStmtKind) {
       
     CleanedState = getLastNode()->getState();
   }
@@ -192,23 +193,27 @@ public:
     return static_cast<NodeTy*>(NB.getLastNode());
   }
   
-  NodeTy*
-  generateNode(Stmt* S, const StateTy* St, NodeTy* Pred,
-               ProgramPoint::Kind K = ProgramPoint::PostStmtKind) {
-
+  NodeTy* generateNode(Stmt* S, const StateTy* St, NodeTy* Pred,
+                       ProgramPoint::Kind K) {
     HasGeneratedNode = true;
     if (PurgingDeadSymbols) K = ProgramPoint::PostPurgeDeadSymbolsKind;      
     return static_cast<NodeTy*>(NB.generateNodeImpl(S, St, Pred, K));
   }
   
-  NodeTy*
-  generateNode(Stmt* S, const StateTy* St,
-               ProgramPoint::Kind K = ProgramPoint::PostStmtKind) {
-      
+  NodeTy* generateNode(Stmt* S, const StateTy* St, NodeTy* Pred) {
+    return generateNode(S, St, Pred, PointKind);
+  }
+  
+  NodeTy* generateNode(Stmt* S, const StateTy* St, ProgramPoint::Kind K) {
     HasGeneratedNode = true;
     if (PurgingDeadSymbols) K = ProgramPoint::PostPurgeDeadSymbolsKind;      
     return static_cast<NodeTy*>(NB.generateNodeImpl(S, St, K));
   }
+  
+  NodeTy* generateNode(Stmt* S, const StateTy* St) {
+    return generateNode(S, St, PointKind);
+  }
+
   
   GRBlockCounter getBlockCounter() const {
     return NB.getBlockCounter();
@@ -269,6 +274,7 @@ public:
   bool PurgingDeadSymbols;
   bool BuildSinks;
   bool HasGeneratedNode;
+  ProgramPoint::Kind PointKind;
 };
   
 class GRBranchNodeBuilderImpl {

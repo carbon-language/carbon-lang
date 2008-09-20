@@ -26,8 +26,9 @@ namespace clang {
 class ProgramPoint {
 public:
   enum Kind { BlockEdgeKind=0, BlockEntranceKind, BlockExitKind, 
-              // Keep the following three together and in this order.
-              PostStmtKind, PostLoadKind, PostPurgeDeadSymbolsKind };
+              // Keep the following four together and in this order.
+              PostStmtKind, PostLoadKind, PostStoreKind,
+              PostPurgeDeadSymbolsKind };
 
 private:
   std::pair<uintptr_t,uintptr_t> Data;
@@ -150,6 +151,15 @@ public:
   
   static bool classof(const ProgramPoint* Location) {
     return Location->getKind() == PostLoadKind;
+  }
+};
+  
+class PostStore : public PostStmt {
+public:
+  PostStore(const Stmt* S) : PostStmt(S, PostLoadKind) {}
+  
+  static bool classof(const ProgramPoint* Location) {
+    return Location->getKind() == PostStoreKind;
   }
 };
   

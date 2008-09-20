@@ -928,9 +928,11 @@ void GRExprEngine::EvalStore(NodeSet& Dst, Expr* Ex, NodeTy* Pred,
   unsigned size = Dst.size();  
 
   SaveAndRestore<bool> OldSink(Builder->BuildSinks);
+  SaveAndRestore<ProgramPoint::Kind> OldSPointKind(Builder->PointKind);
   SaveOr OldHasGen(Builder->HasGeneratedNode);
 
   assert (!location.isUndef());
+  Builder->PointKind = ProgramPoint::PostStoreKind;
   
   getTF().EvalStore(Dst, *this, *Builder, Ex, Pred, St, location, Val);
   
@@ -971,6 +973,16 @@ void GRExprEngine::EvalLoad(NodeSet& Dst, Expr* Ex, NodeTy* Pred,
   else    
     MakeNode(Dst, Ex, Pred, SetRVal(St, Ex, GetRVal(St, cast<LVal>(location),
                                                     Ex->getType())), K);  
+}
+
+void GRExprEngine::EvalStore(NodeSet& Dst, Expr* Ex, Expr* StoreE, NodeTy* Pred,
+                             const GRState* St, RVal location, RVal Val) {
+ 
+  NodeSet TmpDst;
+  EvalStore(TmpDst, StoreE, Pred, St, location, Val);
+
+  for (NodeSet::iterator I=TmpDst.begin(), E=TmpDst.end(); I!=E; ++I)
+    MakeNode(Dst, Ex, *I, (*I)->getState());
 }
 
 const GRState* GRExprEngine::EvalLocation(Expr* Ex, NodeTy* Pred,
@@ -2001,7 +2013,7 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
           // Simulate the effects of a "store":  bind the value of the RHS
           // to the L-Value represented by the LHS.
           
-          EvalStore(Dst, B, *I2, SetRVal(St, B, RightV), LeftV, RightV);          
+          EvalStore(Dst, B, LHS, *I2, SetRVal(St, B, RightV), LeftV, RightV);          
           continue;
         }
           
@@ -2071,13 +2083,13 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
 
         // Propagate undefined values (left-side).          
         if (V.isUndef()) {
-          EvalStore(Dst, B, *I3, SetRVal(St, B, V), location, V);
+          EvalStore(Dst, B, LHS, *I3, SetRVal(St, B, V), location, V);
           continue;
         }
         
         // Propagate unknown values (left and right-side).
         if (RightV.isUnknown() || V.isUnknown()) {
-          EvalStore(Dst, B, *I3, SetRVal(St, B, UnknownVal()), location,
+          EvalStore(Dst, B, LHS, *I3, SetRVal(St, B, UnknownVal()), location,
                     UnknownVal());
           continue;
         }
@@ -2102,11 +2114,9 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
           if (CheckDivideZero(B, St, *I3, RightV))
             continue;
         }
-        else if (RightV.isUndef()) {
-            
-          // Propagate undefined values (right-side).
-          
-          EvalStore(Dst, B, *I3, SetRVal(St, B, RightV), location, RightV);
+        else if (RightV.isUndef()) {            
+          // Propagate undefined values (right-side).          
+          EvalStore(Dst, B, LHS, *I3, SetRVal(St, B, RightV), location, RightV);
           continue;
         }
       
@@ -2126,7 +2136,7 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
           continue;
         }
  
-        EvalStore(Dst, B, *I3, SetRVal(St, B, Result), location, Result);
+        EvalStore(Dst, B, LHS, *I3, SetRVal(St, B, Result), location, Result);
       }
     }
   }

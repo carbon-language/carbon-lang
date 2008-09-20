@@ -618,6 +618,9 @@ protected:
   void EvalStore(NodeSet& Dst, Expr* E, NodeTy* Pred, const GRState* St,
                  RVal TargetLV, RVal Val);
   
+  void EvalStore(NodeSet& Dst, Expr* E, Expr* StoreE, NodeTy* Pred,
+                 const GRState* St, RVal TargetLV, RVal Val);
+  
   // FIXME: The "CheckOnly" option exists only because Array and Field
   //  loads aren't fully implemented.  Eventually this option will go away.
   
