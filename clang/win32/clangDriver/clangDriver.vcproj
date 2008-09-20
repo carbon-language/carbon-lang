@@ -216,6 +216,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\Driver\RewriteBlocks.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\Driver\RewriteMacros.cpp"
 				>
 			</File>
