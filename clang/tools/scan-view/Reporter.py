@@ -2,7 +2,14 @@
 
 import subprocess, sys, os
 
-__all__ = ['BugReport', 'getReporters']
+__all__ = ['ReportFailure', 'BugReport', 'getReporters']
+
+#
+
+class ReportFailure(Exception):
+    """Generic exception for failures in bug reporting."""
+    def __init__(self, value):        
+        self.value = value
 
 # Collect information about a bug.
 
@@ -135,18 +142,29 @@ class RadarReporter:
        	    p = subprocess.Popen(args, 
                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE)
        	except:
-            print >>sys.stderr, '%s: SERVER: radar failed'%(sys.argv[0],)
-            sys.print_exc()
-            raise
+            raise ReportFailure("Unable to file radar (AppleScript failure).")
         data, err = p.communicate()
-#        print >>sys.stderr, '%s: SERVER: radar report: "%s" "%s"'%(sys.argv[0],data, err)
         res = p.wait()
-#        print >>sys.stderr, '%s: SERVER: radar report res: %d'%(sys.argv[0],res,)
 
         if res:
-            raise RuntimeError,'Radar submission failed.'
+            raise ReportFailure("Unable to file radar (AppleScript failure).")
 
-        return data.replace('\n','\n<br>')
+        try:
+            values = eval(data)
+        except:
+            raise ReportFailure("Unable to process radar results.")
+
+        # We expect (int: bugID, str: message)
+        if len(values) != 2 or not isinstance(values[0], int):
+            raise ReportFailure("Unable to process radar results.")
+
+        bugID,message = values
+        bugID = int(bugID)
+        
+        if not bugID:
+            raise ReportFailure(message)
+        
+        return "Filed: <a href=\"rdar://%d/\">%d</a>"%(bugID,bugID)
 
 ###
 

@@ -11,7 +11,7 @@ import threading
 import time
 import socket
 
-from Reporter import BugReport
+import Reporter
 
 # Keys replaced by server.
 
@@ -43,6 +43,13 @@ class ReporterThread(threading.Thread):
             time.sleep(3)
             if self.server.options.debug:
                 print >>sys.stderr, "%s: SERVER: submission complete."%(sys.argv[0],)
+        except Reporter.ReportFailure,e:
+            s = StringIO.StringIO()
+            print >>s,'Submission Failed<br><pre>'
+            print >>s,e.value
+            print >>s,'</pre>'
+            self.status = s.getvalue()
+            return            
         except Exception,e:
             s = StringIO.StringIO()
             import traceback
@@ -54,8 +61,8 @@ class ReporterThread(threading.Thread):
 
         s = StringIO.StringIO()
         print >>s, 'Submission Complete!'
-        print >>s, '<hr>'
         if result is not None:
+            print >>s, '<hr>'
             print >>s, result
         self.status = s.getvalue()
 
@@ -184,7 +191,7 @@ class ScanViewRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
         # Create the report.
         path = os.path.join(self.server.root, 'report-%s.html'%report)
         files = [path]
-        br = BugReport(title, description, files)
+        br = Reporter.BugReport(title, description, files)
 
         # Send back an initial response and wait for the report to
         # finish.
