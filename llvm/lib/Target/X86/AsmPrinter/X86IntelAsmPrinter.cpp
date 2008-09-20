@@ -508,10 +508,14 @@ bool X86IntelAsmPrinter::doFinalization(Module &M) {
     // Output linker support code for dllexported globals
   if (!DLLExportedGVs.empty() || !DLLExportedFns.empty()) {
     SwitchToDataSection("");
-    O << "; WARNING: The following code is valid only with MASM v8.x and (possible) higher\n"
-      << "; This version of MASM is usually shipped with Microsoft Visual Studio 2005\n"
-      << "; or (possible) further versions. Unfortunately, there is no way to support\n"
-      << "; dllexported symbols in the earlier versions of MASM in fully automatic way\n\n";
+    O << "; WARNING: The following code is valid only with MASM v8.x"
+      << "and (possible) higher\n"
+      << "; This version of MASM is usually shipped with Microsoft "
+      << "Visual Studio 2005\n"
+      << "; or (possible) further versions. Unfortunately, there is no "
+      << "way to support\n"
+      << "; dllexported symbols in the earlier versions of MASM in fully "
+      << "automatic way\n\n";
     O << "_drectve\t segment info alias('.drectve')\n";
   }
 
