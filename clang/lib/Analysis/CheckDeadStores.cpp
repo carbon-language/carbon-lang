@@ -59,19 +59,19 @@ public:
       case DeadIncrement:
         BugType = "dead increment";
       case Standard:
-        if (!BugType) BugType = "dead store";
+        if (!BugType) BugType = "dead assignment";
         msg = "Value stored to '" + name + "' is never read";
         break;
         
       case Enclosing:
-        BugType = "dead store";
+        BugType = "dead nested assignment";
         msg = "Although the value stored to '" + name +
           "' is used in the enclosing expression, the value is never actually"
           " read from '" + name + "'";
         break;
     }
       
-    BR.EmitBasicReport(BugType, msg.c_str(), L, R);      
+    BR.EmitBasicReport(BugType, "Dead Store", msg.c_str(), L, R);      
   }
   
   void CheckVarDecl(VarDecl* VD, Expr* Ex, Expr* Val,

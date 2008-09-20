@@ -77,18 +77,22 @@ class PathDiagnostic {
   std::list<PathDiagnosticPiece*> path;
   unsigned Size;
   std::string Desc;
+  std::string Category;
   std::vector<std::string> OtherDesc;
 
 public:  
   PathDiagnostic() : Size(0) {}
 
-  PathDiagnostic(const char* desc) : Size(0), Desc(desc) {}
+  PathDiagnostic(const char* desc, const char* category)
+    : Size(0), Desc(desc), Category(category) {}
   
-  PathDiagnostic(const std::string& desc) : Size(0), Desc(desc) {}
+  PathDiagnostic(const std::string& desc, const std::string& category)
+    : Size(0), Desc(desc), Category(category) {}
   
   ~PathDiagnostic();
 
   const std::string& getDescription() const { return Desc; }
+  const std::string& getCategory() const { return Category; }
   
   typedef std::vector<std::string>::const_iterator meta_iterator;
   meta_iterator meta_begin() const { return OtherDesc.begin(); }

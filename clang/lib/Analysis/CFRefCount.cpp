@@ -2020,6 +2020,10 @@ namespace {
     const CFRefCount& getTF() const { return TF; }
 
     virtual bool isLeak() const { return false; }
+
+    const char* getCategory() const { 
+      return "Memory (Core Foundation/Objective-C)";
+    }
   };
   
   class VISIBILITY_HIDDEN UseAfterRelease : public CFRefBug {
@@ -2027,7 +2031,7 @@ namespace {
     UseAfterRelease(CFRefCount& tf) : CFRefBug(tf) {}
     
     virtual const char* getName() const {
-      return "Use-After-Release";
+      return "use-after-release";
     }
     virtual const char* getDescription() const {
       return "Reference-counted object is used after it is released.";
@@ -2041,7 +2045,7 @@ namespace {
     BadRelease(CFRefCount& tf) : CFRefBug(tf) {}
     
     virtual const char* getName() const {
-      return "Bad Release";
+      return "bad release";
     }
     virtual const char* getDescription() const {
       return "Incorrect decrement of the reference count of a "
@@ -2059,13 +2063,13 @@ namespace {
     virtual const char* getName() const {
       
       if (getTF().isGCEnabled())
-        return "Memory Leak (GC)";
+        return "Leak (GC)";
       
       if (getTF().getLangOptions().getGCMode() == LangOptions::HybridGC)
-        return "Memory Leak (Hybrid MM, non-GC)";
+        return "leak (hybrid MM, non-GC)";
       
       assert (getTF().getLangOptions().getGCMode() == LangOptions::NonGC);
-      return "Memory Leak";
+      return "leak";
     }
     
     virtual const char* getDescription() const {

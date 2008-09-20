@@ -701,7 +701,8 @@ void BugReporter::EmitWarning(BugReport& R) {
   if (R.getBugType().isCached(R))
     return;
 
-  llvm::OwningPtr<PathDiagnostic> D(new PathDiagnostic(R.getName()));
+  llvm::OwningPtr<PathDiagnostic> D(new PathDiagnostic(R.getName(),
+                                                       R.getCategory()));
   GeneratePathDiagnostic(*D.get(), R);
   
   // Get the meta data.
@@ -764,12 +765,17 @@ void BugReporter::EmitWarning(BugReport& R) {
   }
 }
 
-void
-BugReporter::EmitBasicReport(const char* name, const char* str,
-                             SourceLocation Loc,
-                             SourceRange* RBeg, unsigned NumRanges) {
+void BugReporter::EmitBasicReport(const char* name, const char* str,
+                                  SourceLocation Loc,
+                                  SourceRange* RBeg, unsigned NumRanges) {
+  EmitBasicReport(name, "", str, Loc, RBeg, NumRanges);
+}
   
-  SimpleBugType BT(name);
+void BugReporter::EmitBasicReport(const char* name, const char* category,
+                                  const char* str, SourceLocation Loc,
+                                  SourceRange* RBeg, unsigned NumRanges) {
+  
+  SimpleBugType BT(name, category, 0);
   DiagCollector C(BT);
   Diagnostic& Diag = getDiagnostic();
   Diag.Report(&C, getContext().getFullLoc(Loc),

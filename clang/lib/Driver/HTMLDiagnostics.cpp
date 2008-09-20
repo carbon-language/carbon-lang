@@ -259,6 +259,15 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D) {
     R.InsertStrBefore(SourceLocation::getFileLoc(FileID, 0), os.str());
   }
   
+  const std::string& BugCategory = D.getCategory();
+  
+  if (!BugCategory.empty()) {
+    std::string s;
+    llvm::raw_string_ostream os(s);
+    os << "\n<!-- BUGCATEGORY " << BugCategory << " -->\n";
+    R.InsertStrBefore(SourceLocation::getFileLoc(FileID, 0), os.str());
+  }
+  
   {
     std::string s;
     llvm::raw_string_ostream os(s);

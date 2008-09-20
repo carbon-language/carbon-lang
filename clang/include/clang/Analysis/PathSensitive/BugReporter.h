@@ -45,6 +45,7 @@ public:
   
   virtual const char* getName() const = 0;
   virtual const char* getDescription() const { return getName(); }
+  virtual const char* getCategory() const { return ""; }
   
   virtual std::pair<const char**,const char**> getExtraDescriptiveText() {
     return std::pair<const char**, const char**>(0, 0);
@@ -85,6 +86,10 @@ public:
 
   virtual const char* getDescription() const {
     return getBugType().getDescription();
+  }
+  
+  virtual const char* getCategory() const {
+    return getBugType().getCategory();
   }
   
   virtual std::pair<const char**,const char**> getExtraDescriptiveText() {
@@ -200,6 +205,11 @@ public:
                        SourceLocation Loc,
                        SourceRange* RangeBeg, unsigned NumRanges);
 
+  void EmitBasicReport(const char* BugName, const char* BugCategory,
+                       const char* BugStr, SourceLocation Loc,
+                       SourceRange* RangeBeg, unsigned NumRanges);
+  
+  
   void EmitBasicReport(const char* BugName, const char* BugStr,
                        SourceLocation Loc) {
     EmitBasicReport(BugName, BugStr, Loc, 0, 0);
@@ -208,6 +218,11 @@ public:
   void EmitBasicReport(const char* BugName, const char* BugStr,
                        SourceLocation Loc, SourceRange R) {
     EmitBasicReport(BugName, BugStr, Loc, &R, 1);
+  }
+  
+  void EmitBasicReport(const char* BugName, const char* Category,
+                       const char* BugStr, SourceLocation Loc, SourceRange R) {
+    EmitBasicReport(BugName, Category, BugStr, Loc, &R, 1);
   }
   
   static bool classof(const BugReporter* R) { return true; }
@@ -315,13 +330,16 @@ public:
   
 class SimpleBugType : public BugTypeCacheLocation {
   const char* name;
+  const char* category;
   const char* desc;
 public:
-  SimpleBugType(const char* n) : name(n), desc(n) {}
-  SimpleBugType(const char* n, const char* d) : name(n), desc(d) {}
+  SimpleBugType(const char* n) : name(n), category(""), desc(0) {}
+  SimpleBugType(const char* n, const char* c, const char* d)
+    : name(n), category(c), desc(d) {}
   
   virtual const char* getName() const { return name; }
-  virtual const char* getDescription() const { return desc; }
+  virtual const char* getDescription() const { return desc ? desc : name; }
+  virtual const char* getCategory() const { return category; }
 };
   
 } // end clang namespace

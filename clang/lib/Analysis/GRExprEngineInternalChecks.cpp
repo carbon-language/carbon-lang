@@ -293,7 +293,7 @@ class VISIBILITY_HIDDEN CheckAttrNonNull : public GRSimpleAPICheck {
   
 public:
   CheckAttrNonNull() :
-  BT("'nonnull' argument passed null",
+  BT("'nonnull' argument passed null", "API",
      "Null pointer passed as an argument to a 'nonnull' parameter") {}
 
   virtual bool Audit(ExplodedNode<GRState>* N, GRStateManager& VMgr) {
