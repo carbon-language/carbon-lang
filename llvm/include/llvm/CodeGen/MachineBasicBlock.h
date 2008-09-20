@@ -24,7 +24,8 @@ class BasicBlock;
 class MachineFunction;
 
 template <>
-class ilist_traits<MachineInstr> : public ilist_default_traits<MachineInstr> {
+struct ilist_traits<MachineInstr> : public ilist_default_traits<MachineInstr> {
+private:
   mutable MachineInstr Sentinel;
 
   // this is only set by the MachineBasicBlock owning the LiveList
@@ -70,7 +71,7 @@ class MachineBasicBlock : public ilist_node<MachineBasicBlock> {
   bool IsLandingPad;
 
   // Intrusive list support
-  friend class ilist_sentinel_traits<MachineBasicBlock>;
+  friend struct ilist_sentinel_traits<MachineBasicBlock>;
   MachineBasicBlock() {}
 
   explicit MachineBasicBlock(MachineFunction &mf, const BasicBlock *bb);

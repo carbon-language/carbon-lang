@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8,00"
+	Version="8.00"
 	Name="Transforms"
 	ProjectGUID="{C59374C1-9FC0-4147-B836-327DFDC52D99}"
 	Keyword="Win32Proj"
@@ -335,6 +335,10 @@
 			<Filter
 				Name="IPO"
 				>
+				<File
+					RelativePath="..\..\lib\Transforms\IPO\AddReadAttrs.cpp"
+					>
+				</File>
 				<File
 					RelativePath="..\..\lib\Transforms\Ipo\ArgumentPromotion.cpp"
 					>

@@ -34,7 +34,7 @@ class MachineConstantPool;
 class MachineJumpTableInfo;
 
 template <>
-class ilist_traits<MachineBasicBlock>
+struct ilist_traits<MachineBasicBlock>
     : public ilist_default_traits<MachineBasicBlock> {
   mutable MachineBasicBlock Sentinel;
 public:

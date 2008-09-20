@@ -43,7 +43,7 @@ class SDNode;
 class CompileUnitDesc;
 template <typename T> struct DenseMapInfo;
 template <typename T> struct simplify_type;
-template <typename T> class ilist_traits;
+template <typename T> struct ilist_traits;
 
 /// SDVTList - This represents a list of ValueType's that has been intern'd by
 /// a SelectionDAG.  Instances of this simple value class are returned by
@@ -1315,7 +1315,7 @@ public:
 
 protected:
   friend class SelectionDAG;
-  friend class ilist_traits<SDNode>;
+  friend struct ilist_traits<SDNode>;
   
   /// getValueTypeList - Return a pointer to the specified value type.
   ///

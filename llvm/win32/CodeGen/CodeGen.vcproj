@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8,00"
+	Version="8.00"
 	Name="CodeGen"
 	ProjectGUID="{08CEB1BB-C2A4-4587-B9A9-AEDB8FB44897}"
 	Keyword="Win32Proj"
@@ -309,6 +309,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\lib\CodeGen\DeadMachineInstructionElim.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\CodeGen\ELFWriter.cpp"
 				>
 			</File>
@@ -537,6 +541,10 @@
 				</File>
 				<File
 					RelativePath="..\..\lib\CodeGen\SelectionDAG\ScheduleDAGEmit.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\CodeGen\SelectionDAG\ScheduleDAGFast.cpp"
 					>
 				</File>
 				<File

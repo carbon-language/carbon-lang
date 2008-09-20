@@ -36,7 +36,8 @@ class MachineFunction;
 class MachineConstantPoolValue;
 class FunctionLoweringInfo;
 
-template<> class ilist_traits<SDNode> : public ilist_default_traits<SDNode> {
+template<> struct ilist_traits<SDNode> : public ilist_default_traits<SDNode> {
+private:
   mutable SDNode Sentinel;
 public:
   ilist_traits() : Sentinel(ISD::DELETED_NODE, SDVTList()) {}
