@@ -17,7 +17,7 @@ other fast SSE modes.
 
 //===---------------------------------------------------------------------===//
 
-Think about doing i64 math in SSE regs.
+Think about doing i64 math in SSE regs on x86-32.
 
 //===---------------------------------------------------------------------===//
 
@@ -875,4 +875,35 @@ psllq		$32,			%xmm1	// 2^52
 orpd		%xmm1,		%xmm0	// 2^52 + x in double precision
 subsd		%xmm1,		%xmm0	// x in double precision
 cvtsd2ss	%xmm0,		%xmm0	// x in single precision
+
+//===---------------------------------------------------------------------===//
+rdar://5907648
+
+This function:
+
+float foo(unsigned char x) {
+  return x;
+}
+
+compiles to (x86-32):
+
+define float @foo(i8 zeroext  %x) nounwind  {
+	%tmp12 = uitofp i8 %x to float		; <float> [#uses=1]
+	ret float %tmp12
+}
+
+compiles to:
+
+_foo:
+	subl	$4, %esp
+	movzbl	8(%esp), %eax
+	cvtsi2ss	%eax, %xmm0
+	movss	%xmm0, (%esp)
+	flds	(%esp)
+	addl	$4, %esp
+	ret
+
+We should be able to use:
+  cvtsi2ss 8($esp), %xmm0
+since we know the stack slot is already zext'd.
 
