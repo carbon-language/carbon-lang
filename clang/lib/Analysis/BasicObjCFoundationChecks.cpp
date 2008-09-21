@@ -58,14 +58,21 @@ static const char* GetReceiverNameType(ObjCMessageExpr* ME) {
 }
 
 namespace {
+
+class VISIBILITY_HIDDEN APIMisuse : public BugTypeCacheLocation {
+public:  
+  const char* getCategory() const {
+    return "API Misuse (Apple)";
+  }
+};
   
-class VISIBILITY_HIDDEN NilArg : public BugTypeCacheLocation {
+class VISIBILITY_HIDDEN NilArg : public APIMisuse {
 public:
   virtual ~NilArg() {}
   
   virtual const char* getName() const {
     return "nil argument";
-  }
+  }  
   
   class Report : public BugReport {
     std::string Msg;
@@ -300,7 +307,7 @@ bool BasicObjCFoundationChecks::AuditNSString(NodeTy* N,
 
 namespace {
   
-class VISIBILITY_HIDDEN BadCFNumberCreate : public BugTypeCacheLocation {
+class VISIBILITY_HIDDEN BadCFNumberCreate : public APIMisuse{
 public:
   typedef std::vector<BugReport*> AllErrorsTy;
   AllErrorsTy AllErrors;
