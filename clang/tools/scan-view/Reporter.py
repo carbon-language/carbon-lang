@@ -172,6 +172,6 @@ def getReporters():
     reporters = []
     if RadarReporter.isAvailable():
         reporters.append(RadarReporter())
-    reporters.extend([EmailReporter(), BugzillaReporter()])
+    reporters.append(EmailReporter())
     return reporters
 
