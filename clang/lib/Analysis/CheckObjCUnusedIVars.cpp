@@ -103,7 +103,7 @@ void clang::CheckObjCUnusedIvar(ObjCImplementationDecl* D, BugReporter& BR) {
          << "' is never used by the methods in its @implementation "
             "(although it may be used by category methods).";
 
-      BR.EmitBasicReport("unused ivar",
+      BR.EmitBasicReport("unused ivar", "Optimization",
                          os.str().c_str(), I->first->getLocation());
     }
 }
