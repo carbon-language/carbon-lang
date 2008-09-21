@@ -16,7 +16,7 @@ import Reporter
 # Keys replaced by server.
 
 kReportBugRE = re.compile('<!-- REPORTBUG id="report-(.*)\\.html" -->')         
-kReportBugRepl = '<a class="ReportBugLink" href="report/\\1">Report Bug</a>'
+kReportBugRepl = '<td class="ReportBug"><a href="report/\\1">Report Bug</a></td>'
 kBugKeyValueRE = re.compile('<!-- BUG([^ ]*) (.*) -->')
 
 ###

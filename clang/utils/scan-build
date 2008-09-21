@@ -569,7 +569,7 @@ ENDTEXT
       print OUT " <td class=\"View\"><a href=\"$ReportFile#EndPath\">View</a></td>\n";
         
       # Emit REPORTBUG markers.
-      print OUT " <td class=\"ReportBug\"><!-- REPORTBUG id=\"$ReportFile\" --></td>\n";
+      print OUT "<!-- REPORTBUG id=\"$ReportFile\" -->\n";
         
       # End the row.
       print OUT "</tr>\n";
