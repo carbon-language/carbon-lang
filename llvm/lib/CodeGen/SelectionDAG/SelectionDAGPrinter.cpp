@@ -126,12 +126,13 @@ std::string DOTGraphTraits<SelectionDAG*>::getNodeLabel(const SDNode *Node,
     Op += ": " + ftostr(CSDN->getValueAPF());
   } else if (const GlobalAddressSDNode *GADN =
              dyn_cast<GlobalAddressSDNode>(Node)) {
-    int offset = GADN->getOffset();
     Op += ": " + GADN->getGlobal()->getName();
-    if (offset > 0)
-      Op += "+" + itostr(offset);
-    else
-      Op += itostr(offset);
+    if (int Offset = GADN->getOffset()) {
+      if (Offset > 0)
+        Op += "+" + itostr(Offset);
+      else
+        Op += itostr(Offset);
+    }
   } else if (const FrameIndexSDNode *FIDN = dyn_cast<FrameIndexSDNode>(Node)) {
     Op += " " + itostr(FIDN->getIndex());
   } else if (const JumpTableSDNode *JTDN = dyn_cast<JumpTableSDNode>(Node)) {
