@@ -60,6 +60,8 @@ public:
       BR.EmitWarning(R);
     }
   }
+  
+  virtual const char* getCategory() const { return "Logic Errors"; }
 };
   
 class VISIBILITY_HIDDEN NullDeref : public BuiltinBug {
@@ -74,7 +76,7 @@ public:
   
 class VISIBILITY_HIDDEN UndefinedDeref : public BuiltinBug {
 public:
-  UndefinedDeref() : BuiltinBug("bad dereference",
+  UndefinedDeref() : BuiltinBug("uninitialized pointer dereference",
                                 "Dereference of undefined value.") {}
   
   virtual void EmitBuiltinWarnings(BugReporter& BR, GRExprEngine& Eng) {
@@ -115,10 +117,10 @@ public:
 
 class VISIBILITY_HIDDEN BadArg : public BuiltinBug {
 public:
-  BadArg() : BuiltinBug("bad argument",  
+  BadArg() : BuiltinBug("uninitialized argument",  
     "Pass-by-value argument in function is undefined.") {}
 
-  BadArg(const char* d) : BuiltinBug("bad argument", d) {}
+  BadArg(const char* d) : BuiltinBug("uninitialized argument", d) {}
   
   virtual void EmitBuiltinWarnings(BugReporter& BR, GRExprEngine& Eng) {
     for (GRExprEngine::UndefArgsTy::iterator I = Eng.undef_arg_begin(),
@@ -156,7 +158,7 @@ public:
 class VISIBILITY_HIDDEN BadReceiver : public BuiltinBug {
 public:  
   BadReceiver()
-  : BuiltinBug("bad receiver",
+  : BuiltinBug("uninitialized receiver",
                "Receiver in message expression is an uninitialized value.") {}
   
   virtual void EmitBuiltinWarnings(BugReporter& BR, GRExprEngine& Eng) {
