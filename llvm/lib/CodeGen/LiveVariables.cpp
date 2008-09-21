@@ -177,6 +177,14 @@ void LiveVariables::HandleVirtRegUse(unsigned reg, MachineBasicBlock *MBB,
     MarkVirtRegAliveInBlock(VRInfo, MRI->getVRegDef(reg)->getParent(), *PI);
 }
 
+void LiveVariables::HandleVirtRegDef(unsigned Reg, MachineInstr *MI) {
+  VarInfo &VRInfo = getVarInfo(Reg);
+
+  if (VRInfo.AliveBlocks.none())
+    // If vr is not alive in any block, then defaults to dead.
+    VRInfo.Kills.push_back(MI);
+}
+
 /// FindLastPartialDef - Return the last partial def of the specified register.
 /// Also returns the sub-register that's defined.
 MachineInstr *LiveVariables::FindLastPartialDef(unsigned Reg,
@@ -552,8 +560,6 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
         const MachineOperand &MO = MI->getOperand(i);
         if (MO.isRegister() && MO.getReg()) {
           unsigned MOReg = MO.getReg();
-          if (!MOReg)
-            continue;
           if (MO.isUse())
             UseRegs.push_back(MOReg);
           if (MO.isDef())
@@ -566,24 +572,17 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
         unsigned MOReg = UseRegs[i];
         if (TargetRegisterInfo::isVirtualRegister(MOReg))
           HandleVirtRegUse(MOReg, MBB, MI);
-        else if (TargetRegisterInfo::isPhysicalRegister(MOReg) &&
-                 !ReservedRegisters[MOReg])
+        else if (!ReservedRegisters[MOReg])
           HandlePhysRegUse(MOReg, MI);
       }
 
       // Process all defs.
       for (unsigned i = 0, e = DefRegs.size(); i != e; ++i) {
         unsigned MOReg = DefRegs[i];
-        if (TargetRegisterInfo::isVirtualRegister(MOReg)) {
-          VarInfo &VRInfo = getVarInfo(MOReg);
-
-          if (VRInfo.AliveBlocks.none())
-            // If vr is not alive in any block, then defaults to dead.
-            VRInfo.Kills.push_back(MI);
-        } else if (TargetRegisterInfo::isPhysicalRegister(MOReg) &&
-                   !ReservedRegisters[MOReg]) {
+        if (TargetRegisterInfo::isVirtualRegister(MOReg))
+          HandleVirtRegDef(MOReg, MI);
+        else if (!ReservedRegisters[MOReg])
           HandlePhysRegDef(MOReg, MI);
-        }
       }
     }
 
