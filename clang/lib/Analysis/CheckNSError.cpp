@@ -47,6 +47,7 @@ public:
   void EmitWarnings(BugReporter& BR) { EmitGRWarnings(cast<GRBugReporter>(BR));}
   const char* getName() const { return "NSError** null dereference"; }
   const char* getDescription() const { return desc; }
+  const char* getCategory() const { return "Coding Conventions (Apple)"; }
 };  
   
 } // end anonymous namespace
@@ -79,6 +80,7 @@ void NSErrorCheck::EmitGRWarnings(GRBugReporter& BR) {
   
   if (ResultTy == Ctx.VoidTy) {
     BR.EmitBasicReport("Bad return type when passing NSError**",
+              getCategory(),
               "Method accepting NSError** argument should have "
               "non-void return value to indicate that an error occurred.",
               CodeDecl.getLocation());

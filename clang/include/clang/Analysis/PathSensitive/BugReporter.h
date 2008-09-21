@@ -215,6 +215,11 @@ public:
     EmitBasicReport(BugName, BugStr, Loc, 0, 0);
   }
   
+  void EmitBasicReport(const char* BugName, const char* BugCategory,
+                       const char* BugStr, SourceLocation Loc) {
+    EmitBasicReport(BugName, BugCategory, BugStr, Loc, 0, 0);
+  }
+  
   void EmitBasicReport(const char* BugName, const char* BugStr,
                        SourceLocation Loc, SourceRange R) {
     EmitBasicReport(BugName, BugStr, Loc, &R, 1);
