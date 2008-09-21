@@ -15,9 +15,14 @@ import Reporter
 
 # Keys replaced by server.
 
+kReportColRE = re.compile('<!-- REPORTBUGCOL -->')
+kReportColRepl = '<td></td>'
 kReportBugRE = re.compile('<!-- REPORTBUG id="report-(.*)\\.html" -->')         
 kReportBugRepl = '<td class="ReportBug"><a href="report/\\1">Report Bug</a></td>'
 kBugKeyValueRE = re.compile('<!-- BUG([^ ]*) (.*) -->')
+
+kReportReplacements = [(kReportColRE, kReportColRepl),
+                       (kReportBugRE, kReportBugRepl)]
 
 ###
 
@@ -88,6 +93,12 @@ class ScanViewServer(BaseHTTPServer.HTTPServer):
             except OSError,e:
                 print 'OSError',e.errno
 
+    def finish_request(self, request, client_address):
+        if self.options.autoReload:
+            import ScanView
+            self.RequestHandlerClass = reload(ScanView).ScanViewRequestHandler
+        BaseHTTPServer.HTTPServer.finish_request(self, request, client_address)
+
     def handle_error(self, request, client_address):
         # Ignore socket errors
         info = sys.exc_info()
@@ -95,7 +106,7 @@ class ScanViewServer(BaseHTTPServer.HTTPServer):
             if self.options.debug > 1:
                 print >>sys.stderr, "%s: SERVER: ignored socket error." % (sys.argv[0],)
             return
-        BaseHTTPServer.HTTPServer.handle_error(request, client_address)
+        BaseHTTPServer.HTTPServer.handle_error(self, request, client_address)
 
 # Borrowed from Quixote, with simplifications.
 def parse_query(qs, fields=None):
@@ -114,6 +125,7 @@ def parse_query(qs, fields=None):
 
 class ScanViewRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
     server_version = "ScanViewServer/" + __version__
+    dynamic_mtime = time.time()
 
     def do_HEAD(self):
         try:
@@ -382,8 +394,9 @@ Method: <select id="reporter" name="reporter" onChange="updateReporterOptions()"
             self.send_response(200)
             self.send_header("Content-type", ctype)
             self.send_header("Content-Length", str(len(s)))
-            if mtime:
-                self.send_header("Last-Modified", self.date_time_string(mtime))
+            if mtime is None:
+                mtime = self.dynamic_mtime
+            self.send_header("Last-Modified", self.date_time_string(mtime))
             self.end_headers()
         return StringIO.StringIO(s)
 
@@ -391,7 +404,8 @@ Method: <select id="reporter" name="reporter" onChange="updateReporterOptions()"
         f = open(path,'r')
         fs = os.fstat(f.fileno())
         data = f.read()
-        data = kReportBugRE.sub(kReportBugRepl, data)
+        for a,b in kReportReplacements:
+            data = a.sub(b, data)
         return self.send_string(data, ctype, mtime=fs.st_mtime)
 
 

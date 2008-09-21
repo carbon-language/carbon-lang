@@ -76,6 +76,9 @@ def  main():
     parser.add_option("--debug", dest="debug", default=0, 
                       action="count",
                       help="Print additional debugging information.")
+    parser.add_option("--auto-reload", dest="autoReload", default=False, 
+                      action="store_true",
+                      help="Automatically update module for each request.")
     parser.add_option("--no-browser", dest="startBrowser", default=True, 
                       action="store_false",
                       help="Don't open a webbrowser on startup.")
