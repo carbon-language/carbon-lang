@@ -24,6 +24,10 @@ kBugKeyValueRE = re.compile('<!-- BUG([^ ]*) (.*) -->')
 kReportReplacements = [(kReportColRE, kReportColRepl),
                        (kReportBugRE, kReportBugRepl)]
 
+# Other simple parameters
+
+kResources = posixpath.join(posixpath.dirname(__file__), 'Resources')
+
 ###
 
 __version__ = "0.1"
@@ -351,12 +355,27 @@ Method: <select id="reporter" name="reporter" onChange="updateReporterOptions()"
                     return self.send_report_submit()
                 else:
                     return self.send_404()
+            elif name=='favicon.ico':
+                if len(components)==1:
+                    return self.send_path(posixpath.join(kResources,'bugcatcher.ico'))
+                else:
+                    return self.send_404()
         
         # Match directory entries.
         if components[-1] == '':
             components[-1] = 'index.html'
-            
-        path = posixpath.join(self.server.root, '/'.join(components))
+
+        suffix = '/'.join(components)
+
+        # The summary may reference source files on disk using rooted
+        # paths. Make sure these resolve correctly for now.
+        # FIXME: This isn't a very good idea... we should probably
+        # mark rooted paths somehow.        
+        if os.path.exists(posixpath.join('/', suffix)):
+            path = posixpath.join('/', suffix)
+        else:
+            path = posixpath.join(self.server.root, suffix)
+
         if self.server.options.debug > 1:
             print >>sys.stderr, '%s: SERVER: sending path "%s"'%(sys.argv[0],
                                                                  path)
