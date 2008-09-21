@@ -618,43 +618,42 @@ bool X86FastISel::X86SelectBranch(Instruction *I) {
 }
 
 bool X86FastISel::X86SelectShift(Instruction *I) {
-  unsigned CReg = 0;
-  unsigned Opc = 0;
+  unsigned CReg = 0, OpReg = 0, OpImm = 0;
   const TargetRegisterClass *RC = NULL;
   if (I->getType() == Type::Int8Ty) {
     CReg = X86::CL;
     RC = &X86::GR8RegClass;
     switch (I->getOpcode()) {
-    case Instruction::LShr: Opc = X86::SHR8rCL; break;
-    case Instruction::AShr: Opc = X86::SAR8rCL; break;
-    case Instruction::Shl:  Opc = X86::SHL8rCL; break;
+    case Instruction::LShr: OpReg = X86::SHR8rCL; OpImm = X86::SHR8ri; break;
+    case Instruction::AShr: OpReg = X86::SAR8rCL; OpImm = X86::SAR8ri; break;
+    case Instruction::Shl:  OpReg = X86::SHL8rCL; OpImm = X86::SHL8ri; break;
     default: return false;
     }
   } else if (I->getType() == Type::Int16Ty) {
     CReg = X86::CX;
     RC = &X86::GR16RegClass;
     switch (I->getOpcode()) {
-    case Instruction::LShr: Opc = X86::SHR16rCL; break;
-    case Instruction::AShr: Opc = X86::SAR16rCL; break;
-    case Instruction::Shl:  Opc = X86::SHL16rCL; break;
+    case Instruction::LShr: OpReg = X86::SHR16rCL; OpImm = X86::SHR16ri; break;
+    case Instruction::AShr: OpReg = X86::SAR16rCL; OpImm = X86::SAR16ri; break;
+    case Instruction::Shl:  OpReg = X86::SHL16rCL; OpImm = X86::SHL16ri; break;
     default: return false;
     }
   } else if (I->getType() == Type::Int32Ty) {
     CReg = X86::ECX;
     RC = &X86::GR32RegClass;
     switch (I->getOpcode()) {
-    case Instruction::LShr: Opc = X86::SHR32rCL; break;
-    case Instruction::AShr: Opc = X86::SAR32rCL; break;
-    case Instruction::Shl:  Opc = X86::SHL32rCL; break;
+    case Instruction::LShr: OpReg = X86::SHR32rCL; OpImm = X86::SHR32ri; break;
+    case Instruction::AShr: OpReg = X86::SAR32rCL; OpImm = X86::SAR32ri; break;
+    case Instruction::Shl:  OpReg = X86::SHL32rCL; OpImm = X86::SHL32ri; break;
     default: return false;
     }
   } else if (I->getType() == Type::Int64Ty) {
     CReg = X86::RCX;
     RC = &X86::GR64RegClass;
     switch (I->getOpcode()) {
-    case Instruction::LShr: Opc = X86::SHR64rCL; break;
-    case Instruction::AShr: Opc = X86::SAR64rCL; break;
-    case Instruction::Shl:  Opc = X86::SHL64rCL; break;
+    case Instruction::LShr: OpReg = X86::SHR64rCL; OpImm = X86::SHR64ri; break;
+    case Instruction::AShr: OpReg = X86::SAR64rCL; OpImm = X86::SAR64ri; break;
+    case Instruction::Shl:  OpReg = X86::SHL64rCL; OpImm = X86::SHL64ri; break;
     default: return false;
     }
   } else {
@@ -667,11 +666,21 @@ bool X86FastISel::X86SelectShift(Instruction *I) {
 
   unsigned Op0Reg = getRegForValue(I->getOperand(0));
   if (Op0Reg == 0) return false;
+  
+  // Fold immediate in shl(x,3).
+  if (ConstantInt *CI = dyn_cast<ConstantInt>(I->getOperand(1))) {
+    unsigned ResultReg = createResultReg(RC);
+    BuildMI(MBB, TII.get(OpImm), 
+            ResultReg).addReg(Op0Reg).addImm(CI->getZExtValue());
+    UpdateValueMap(I, ResultReg);
+    return true;
+  }
+  
   unsigned Op1Reg = getRegForValue(I->getOperand(1));
   if (Op1Reg == 0) return false;
   TII.copyRegToReg(*MBB, MBB->end(), CReg, Op1Reg, RC, RC);
   unsigned ResultReg = createResultReg(RC);
-  BuildMI(MBB, TII.get(Opc), ResultReg).addReg(Op0Reg);
+  BuildMI(MBB, TII.get(OpReg), ResultReg).addReg(Op0Reg);
   UpdateValueMap(I, ResultReg);
   return true;
 }
