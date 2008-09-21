@@ -14,7 +14,7 @@
 
 use strict;
 use warnings;
-use Cwd;
+use Cwd qw/ abs_path /;
 use File::Temp qw/ tempfile /;
 use File::Path qw / mkpath /;
 
@@ -42,7 +42,7 @@ sub ProcessClangFailure {
   system $CC, @$Args, "-E", "-o", $PPFile;
   close ($PPH);
   open (OUT, ">", "$PPFile.info") or die "Cannot open $PPFile.info\n";
-  print OUT "$file\n";
+  print OUT abs_path($file), "\n";
   print OUT "$ErrorType\n";
   print OUT "@$Args\n";
   close OUT;
