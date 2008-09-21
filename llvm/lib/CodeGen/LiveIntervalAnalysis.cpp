@@ -678,12 +678,12 @@ void LiveIntervals::computeIntervals() {
   DOUT << "********** COMPUTING LIVE INTERVALS **********\n"
        << "********** Function: "
        << ((Value*)mf_->getFunction())->getName() << '\n';
-  // Track the index of the current machine instr.
-  unsigned MIIndex = 0;
   
   for (MachineFunction::iterator MBBI = mf_->begin(), E = mf_->end();
        MBBI != E; ++MBBI) {
     MachineBasicBlock *MBB = MBBI;
+    // Track the index of the current machine instr.
+    unsigned MIIndex = getMBBStartIdx(MBB);
     DOUT << ((Value*)MBB->getBasicBlock())->getName() << ":\n";
 
     MachineBasicBlock::iterator MI = MBB->begin(), miEnd = MBB->end();
