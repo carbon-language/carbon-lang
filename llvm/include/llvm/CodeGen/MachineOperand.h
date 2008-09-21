@@ -68,9 +68,9 @@ private:
   /// This is only valid on definitions of registers.
   bool IsDead : 1;
 
-  /// IsEarlyClobber - True if this MO_Register operand is marked earlyclobber
-  /// in an inline asm.  Flag is not valid for any other case.   See gcc doc
-  /// for description of earlyclobber.
+  /// IsEarlyClobber - True if this MO_Register 'def' operand is written to
+  /// by the MachineInstr before all input registers are read.  This is used to
+  /// model the GCC inline asm '&' constraint modifier.
   bool IsEarlyClobber : 1;
 
   /// OverlapsEarlyClobber - True if this MO_Register operand is used as an
