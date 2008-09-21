@@ -347,7 +347,6 @@ sub ScanFile {
 
     if (/<!-- BUGDESC (.*) -->$/) {
       $BugDesc = $1;
-      print "Desc in $BugDesc\n";
       ++$found;
     }
     elsif (/<!-- BUGFILE (.*) -->$/) {
