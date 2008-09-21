@@ -2063,7 +2063,7 @@ namespace {
     virtual const char* getName() const {
       
       if (getTF().isGCEnabled())
-        return "Leak (GC)";
+        return "leak (GC)";
       
       if (getTF().getLangOptions().getGCMode() == LangOptions::HybridGC)
         return "leak (hybrid MM, non-GC)";
