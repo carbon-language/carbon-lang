@@ -469,10 +469,21 @@ print OUT <<ENDTEXT;
  td.DESC { white-space:pre }
  td.Q { text-align:right }
  td { text-align:left }
- td.View a { white-space: nowrap; -webkit-appearance:square-button; padding-left:1em; padding-right:1em; padding-top:0.5ex; padding-bottom:0.5ex; text-decoration:none; color:black } 
  tbody.scrollContent { overflow:auto }
 }
 </style>
+<script language='javascript' type="text/javascript">
+if (document.styleSheets && RegExp(" AppleWebKit/").test(navigator.userAgent))
+{
+  var sheet = document.styleSheets[0];
+  if (sheet) {
+    var rules = sheet.cssRules;
+    if (rules) {
+      sheet.insertRule("td.View a { white-space: nowrap; -webkit-appearance:square-button; padding-left:1em; padding-right:1em; padding-top:0.5ex; padding-bottom:0.5ex; text-decoration:none; color:black }", rules.length);
+    }
+  }
+}
+</script>
 <script src="sorttable.js"></script>
 <script language='javascript' type="text/javascript">
 function SetDisplay(RowClass, DisplayVal)
