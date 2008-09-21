@@ -164,8 +164,8 @@ sub GetHTMLRunDir {
         $f = $1;
       }
 
+      
       my @x = split/-/, $f;
-
       next if (scalar(@x) != 4);
       next if ($x[0] != $year);
       next if ($x[1] != $month);
@@ -336,29 +336,47 @@ sub ScanFile {
 
   my $BugDesc = "";
   my $BugFile = "";
+  my $BugCategory;
   my $BugPathLength = 1;
   my $BugLine = 0;
-  
+  my $found = 0;
+
   while (<IN>) {
-    
+
+    last if ($found == 5);
+
     if (/<!-- BUGDESC (.*) -->$/) {
       $BugDesc = $1;
+      print "Desc in $BugDesc\n";
+      ++$found;
     }
     elsif (/<!-- BUGFILE (.*) -->$/) {
       $BugFile = $1;
       UpdatePrefix($BugFile);
+      ++$found;
     }
     elsif (/<!-- BUGPATHLENGTH (.*) -->$/) {
       $BugPathLength = $1;
+      ++$found;
     }
     elsif (/<!-- BUGLINE (.*) -->$/) {
       $BugLine = $1;    
+      ++$found;
+    }
+    elsif (/<!-- BUGCATEGORY (.*) -->$/) {
+      $BugCategory = $1;
+      ++$found;
     }
   }
 
   close(IN);
+  
+  if (!defined $BugCategory) {
+    $BugCategory = "Other";
+  }
     
-  push @$Index,[ $FName, $BugDesc, $BugFile, $BugLine, $BugPathLength ];
+  push @$Index,[ $FName, $BugCategory, $BugDesc, $BugFile, $BugLine,
+                 $BugPathLength ];
 }
 
 ##----------------------------------------------------------------------------##
@@ -436,21 +454,25 @@ print OUT <<ENDTEXT;
 <style type="text/css">
  body { color:#000000; background-color:#ffffff }
  body { font-family: Helvetica, sans-serif; font-size:9pt }
- h1 { font-size:12pt }
+ h3 { font-size:12pt }
+ table { font-size:9pt }
+ table { border-spacing: 0px; border: 1px solid black }
  table thead {
    background-color:#eee; color:#666666;
    font-weight: bold; cursor: default;
    text-align:center;
-   border-top: 2px solid #000000;
-   border-bottom: 2px solid #000000;
-   font-weight: bold; font-family: Verdana
+   font-weight: bold; font-family: Verdana;
+   white-space:nowrap;
  } 
- table { border: 1px #000000 solid }
- table { border-collapse: collapse; border-spacing: 0px }
- td { border-bottom: 1px #000000 dotted }
- td { padding:5px; padding-left:8px; padding-right:8px }
- td { text-align:left; font-size:9pt }
- td.View   { padding-left: 10px }
+ .W { font-size:0px }
+ th, td { padding:5px; padding-left:8px; text-align:left }
+ td.SUMM_DESC { padding-left:12px }
+ td.DESC { white-space:pre }
+ td.Q { text-align:right }
+ td { text-align:left }
+ td.View a { white-space: nowrap; -webkit-appearance:square-button; padding-left:1em; padding-right:1em; padding-top:0.5ex; padding-bottom:0.5ex; text-decoration:none; color:black } 
+ tbody.scrollContent { overflow:auto }
+}
 </style>
 <script src="sorttable.js"></script>
 <script language='javascript' type="text/javascript">
@@ -463,7 +485,7 @@ function SetDisplay(RowClass, DisplayVal)
     }
   }
 }
-  
+
 function ToggleDisplay(CheckButton, ClassName) {
   if (CheckButton.checked) {
     SetDisplay(ClassName, "");
@@ -480,13 +502,14 @@ ENDTEXT
   if (scalar(@files)) {
     # Print out the summary table.
     my %Totals;
-  
+
     for my $row ( @Index ) {
-      #my $bug_type = lc($row->[1]);
-      my $bug_type = ($row->[1]);
-    
-      if (!defined $Totals{$bug_type}) { $Totals{$bug_type} = 1; }
-      else { $Totals{$bug_type}++; }
+      my $bug_type = ($row->[2]);
+      my $bug_category = ($row->[1]);
+      my $key = "$bug_category:$bug_type";
+
+      if (!defined $Totals{$key}) { $Totals{$key} = [1,$bug_category,$bug_type]; }
+      else { $Totals{$key}->[0]++; }
     }
 
     print OUT "<h3>Bug Summary</h3>";
@@ -496,18 +519,34 @@ ENDTEXT
     }
   
 print OUT <<ENDTEXT;
-<table class="sortable">
-<tr>
-  <td>Bug Type</td>
-  <td>Quantity</td>
-  <td class="sorttable_nosort">Display?</td>
-</tr>
+<table>
+<thead><tr><td>Bug Type</td><td>Quantity</td><td class="sorttable_nosort">Display?</td></tr></thead>
 ENDTEXT
   
-    for my $key ( sort { $a cmp $b } keys %Totals ) {
-      my $x = lc($key);
-      $x =~ s/[ ,'"]+/_/g;
-      print OUT "<tr><td>$key</td><td>$Totals{$key}</td><td><input type=\"checkbox\" onClick=\"ToggleDisplay(this,'bt_$x');\" checked/></td></tr>\n";
+    my $last_category;
+
+    for my $key (
+      sort {
+        my $x = $Totals{$a};
+        my $y = $Totals{$b};
+        my $res = $x->[1] cmp $y->[1];
+        $res = $x->[2] cmp $y->[2] if ($res == 0);
+        $res
+      } keys %Totals ) 
+    {
+      my $val = $Totals{$key};
+      my $category = $val->[1];
+      if (!defined $last_category or $last_category ne $category) {
+        $last_category = $category;
+        print OUT "<tr><th>$category</th><th colspan=2></th></tr>\n";
+      }      
+      my $x = lc $key;
+      $x =~ s/[ ,'":\/()]+/_/g;
+      print OUT "<tr><td class=\"SUMM_DESC\">";
+      print OUT $val->[2];
+      print OUT "</td><td>";
+      print OUT $val->[0];
+      print OUT "</td><td><center><input type=\"checkbox\" onClick=\"ToggleDisplay(this,'bt_$x');\" checked/></center></td></tr>\n";
     }
 
   # Print out the table of errors.
@@ -515,15 +554,18 @@ ENDTEXT
 print OUT <<ENDTEXT;
 </table>
 <h3>Reports</h3>
-<table class="sortable">
-<tr>
-  <td class="sorttable_sorted">Bug Type<span id="sorttable_sortfwdind">&nbsp;&#x25BE;</span>
+
+<table class="sortable" style="table-layout:automatic">
+<thead><tr>
+  <td>Bug Group</td>
+  <td class="sorttable_sorted">Bug Type<span id="sorttable_sortfwdind">&nbsp;&#x25BE;</span></td>
   <td>File</td>
-  <td>Line</td>
-  <td>Path Length</td>
+  <td class="Q">Line</td>
+  <td class="Q">Path Length</td>
   <td class="sorttable_nosort"></td>
-  <td class="sorttable_nosort"></td>
-</tr>
+  <!-- REPORTBUGCOL -->
+</tr></thead>
+<tbody>
 ENDTEXT
 
     my $prefix = GetPrefix();
@@ -536,46 +578,77 @@ ENDTEXT
       $InFileRegex = qr/\Q$InFilePrefix$prefix\E/is;
     }    
 
-    for my $row ( sort { $a->[1] cmp $b->[1] } @Index ) {
+    for my $row ( sort { $a->[2] cmp $b->[2] } @Index ) {
+      my $x = "$row->[1]:$row->[2]";
+      $x = lc $x;
+      $x =~ s/[ ,'":\/()]+/_/g;
     
-      my $x = lc($row->[1]);
-      $x =~ s/[ ,'"]+/_/g;
-    
-      print OUT "<tr class=\"bt_$x\">\n";
-
       my $ReportFile = $row->[0];
-
-      print OUT " <td class=\"DESC\">";
-      #print OUT lc($row->[1]);
+          
+      print OUT "<tr class=\"bt_$x\">";
+      print OUT "<td class=\"DESC\">";
       print OUT $row->[1];
-      print OUT "</td>\n";
-    
-      # Update the file prefix.
-    
-      my $fname = $row->[2];
+      print OUT "</td>";
+      print OUT "<td class=\"DESC\">";
+      print OUT $row->[2];
+      print OUT "</td>";
+      
+      # Update the file prefix.      
+      my $fname = $row->[3];
+      my $full_fname = $fname;
+
       if (defined $regex) {
         $fname =~ s/$regex//;
         UpdateInFilePath("$Dir/$ReportFile", $InFileRegex, $InFilePrefix)
       }
-
-      print OUT "<td>$fname</td>\n";
-
+      
+      print OUT "<td>";
+      my $has_fname = 0;
+      if (-r $full_fname) {
+        $has_fname = 1;
+        print OUT "<a href=\"$full_fname\">"
+      }
+      
+      my @fname = split /\//,$fname;
+      if ($#fname > 0) {
+        while ($#fname >= 0) {
+          my $x = shift @fname;
+          print OUT $x;
+          if ($#fname >= 0) {
+            print OUT "<span class=\"W\"> </span>/";
+          }
+        }
+      }
+      else {
+        print OUT $fname;
+      }
+      
+      if ($has_fname) {
+        print OUT "</a>"
+      }
+      print OUT "</td>";
+      
+      # Print out the quantities.
+      for my $j ( 4 .. 5 ) {
+        print OUT "<td class=\"Q\">$row->[$j]</td>";        
+      }
+      
       # Print the rest of the columns.
-      for my $j ( 3 .. $#{$row} ) {
-        print OUT "<td>$row->[$j]</td>\n"
+      for (my $j = 6; $j <= $#{$row}; ++$j) {
+        print OUT "<td>$row->[$j]</td>"
       }
 
       # Emit the "View" link.
-      print OUT " <td class=\"View\"><a href=\"$ReportFile#EndPath\">View</a></td>\n";
+      print OUT "<td class=\"View\"><a href=\"$ReportFile#EndPath\">View Report</a></td>";
         
       # Emit REPORTBUG markers.
-      print OUT "<!-- REPORTBUG id=\"$ReportFile\" -->\n";
+      print OUT "\n<!-- REPORTBUG id=\"$ReportFile\" -->\n";
         
       # End the row.
       print OUT "</tr>\n";
     }
   
-    print OUT "</table>\n";
+    print OUT "</tbody>\n</table>\n\n";
   }
 
   if ($Crashes) {
