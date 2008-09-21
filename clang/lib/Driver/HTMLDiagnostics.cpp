@@ -378,42 +378,84 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R, unsigned BugFileID,
     PosNo += *c == '\t' ? 8 : 1;
   
   // Create the html for the message.
-  
-  std::string s;
-  llvm::raw_string_ostream os(s);
-  
-  os << "\n<tr><td class=\"num\"></td><td class=\"line\">"
-     << "<div id=\"";
-  
-  if (num == max)
-    os << "EndPath";
-  else
-    os << "Path" << num;
-  
-  os << "\" class=\"msg\" style=\"margin-left:"
-     << PosNo << "ex\">";
-  
-  if (max > 1)
-    os << "<span class=\"PathIndex\">[" << num << "]</span> ";
-  
-  os << html::EscapeText(P.getString()) << "</div></td></tr>";
-  
-  // Insert the new html.
-  
-  unsigned DisplayPos = 0;
-  
-  switch (P.getDisplayHint()) {
-    case PathDiagnosticPiece::Above:
-      DisplayPos = LineStart - FileStart;
-      break;
-    case PathDiagnosticPiece::Below:
-      DisplayPos = LineEnd - FileStart;
-      break;
-    default:
-      assert (false && "Unhandled hint.");
-  }
+  {
+    // Get the string and determining its maximum substring.
+    const std::string& Msg = P.getString();
+    unsigned max_token = 0;
+    unsigned cnt = 0;
+    unsigned len = Msg.size();
     
-  R.InsertStrBefore(SourceLocation::getFileLoc(FileID, DisplayPos), os.str());
+    for (std::string::const_iterator I=Msg.begin(), E=Msg.end(); I!=E; ++I)
+      switch (*I) {
+        default:
+          ++cnt;
+          continue;          
+        case ' ':
+        case '\t':
+        case '\n':
+          if (cnt > max_token) max_token = cnt;
+          cnt = 0;
+      }
+    
+    if (cnt > max_token) max_token = cnt;
+    
+    // Next, determine the approximate size of the message bubble in em.
+    unsigned em;
+    const unsigned max_line = 80;
+    
+    if (max_token >= max_line)
+      em = max_token / 2;
+    else {
+      unsigned characters = max_line;
+      unsigned lines = len / max_line;
+      
+      if (lines > 0) {
+        for (; characters > max_token; --characters)
+          if (len / characters > lines) {
+            ++characters;
+            break;
+          }
+      }
+      
+      em = characters / 2;
+    }
+    
+    // Now generate the message bubble.    
+    std::string s;
+    llvm::raw_string_ostream os(s);
+    
+    os << "\n<tr><td class=\"num\"></td><td class=\"line\"><div id=\"";
+    
+    if (num == max)
+      os << "EndPath";
+    else
+      os << "Path" << num;
+    
+    os << "\" class=\"msg\" style=\"margin-left:" << PosNo << "ex";
+    if (em < max_line/2) os << "; max-width:" << em << "em";
+    os << "\">";
+    
+    if (max > 1)
+      os << "<span class=\"PathIndex\">[" << num << "]</span> ";
+    
+    os << html::EscapeText(Msg) << "</div></td></tr>";
+
+    // Insert the new html.
+    unsigned DisplayPos = 0;
+    
+    switch (P.getDisplayHint()) {
+      case PathDiagnosticPiece::Above:
+        DisplayPos = LineStart - FileStart;
+        break;
+      case PathDiagnosticPiece::Below:
+        DisplayPos = LineEnd - FileStart;
+        break;
+      default:
+        assert (false && "Unhandled hint.");
+    }
+      
+    R.InsertStrBefore(SourceLocation::getFileLoc(FileID, DisplayPos), os.str());
+  }
   
   // Now highlight the ranges.
   
