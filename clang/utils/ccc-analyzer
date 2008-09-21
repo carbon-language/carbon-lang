@@ -14,7 +14,7 @@
 
 use strict;
 use warnings;
-use Cwd;
+use Cwd qw/ getcwd abs_path /;
 use File::Temp qw/ tempfile /;
 use File::Path qw / mkpath /;
 
