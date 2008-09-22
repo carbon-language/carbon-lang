@@ -223,7 +223,8 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D) {
     std::string s;
     llvm::raw_string_ostream os(s);
     
-    os << "<h3>Bug Summary</h3>\n<table class=\"simpletable\">\n"
+    os << "<!-- REPORTHEADER -->\n"
+       << "<h3>Bug Summary</h3>\n<table class=\"simpletable\">\n"
           "<tr><td class=\"rowname\">File:</td><td>"
        << html::EscapeText(DirName)
        << html::EscapeText(Entry->getName())
@@ -243,7 +244,8 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D) {
       os << "<tr><td></td><td>" << html::EscapeText(*I) << "</td></tr>\n";
     }
     
-    os << "</table>\n<h3>Annotated Source Code</h3>\n";    
+    os << "</table>\n<!-- REPORTSUMMARYEXTRA -->\n"
+          "<h3>Annotated Source Code</h3>\n";    
     
     R.InsertStrBefore(SourceLocation::getFileLoc(FileID, 0), os.str());
   }
