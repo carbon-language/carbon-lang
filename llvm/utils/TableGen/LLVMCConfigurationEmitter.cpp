@@ -1456,7 +1456,8 @@ void EmitPopulateLanguageMap (const RecordKeeper& Records, std::ostream& O)
     throw std::string("Error in the language map definition!");
 
   // Generate code
-  O << "void llvmc::PopulateLanguageMap(LanguageMap& langMap) {\n";
+  O << "namespace {\n\n";
+  O << "void PopulateLanguageMapLocal(LanguageMap& langMap) {\n";
 
   for (unsigned i = 0; i < LangsToSuffixesList->size(); ++i) {
     Record* LangToSuffixes = LangsToSuffixesList->getElementAsRecord(i);
@@ -1470,7 +1471,7 @@ void EmitPopulateLanguageMap (const RecordKeeper& Records, std::ostream& O)
         << "\"] = \"" << Lang << "\";\n";
   }
 
-  O << "}\n\n";
+  O << "}\n\n}\n\n";
 }
 
 /// FillInToolToLang - Fills in two tables that map tool names to
@@ -1593,7 +1594,8 @@ void EmitPopulateCompilationGraph (Record* CompilationGraph,
   ListInit* edges = CompilationGraph->getValueAsListInit("edges");
 
   // Generate code
-  O << "void llvmc::PopulateCompilationGraph(CompilationGraph& G) {\n";
+  O << "namespace {\n\n";
+  O << "void PopulateCompilationGraphLocal(CompilationGraph& G) {\n";
 
   // Insert vertices
 
@@ -1627,7 +1629,7 @@ void EmitPopulateCompilationGraph (Record* CompilationGraph,
     O << ");\n";
   }
 
-  O << "}\n\n";
+  O << "}\n\n}\n\n";
 }
 
 /// ExtractHookNames - Extract the hook names from all instances of
@@ -1704,6 +1706,38 @@ void EmitHookDeclarations(const ToolPropertiesList& ToolProps,
   O << "}\n\n";
 }
 
+/// EmitRegisterPlugin - Emit code to register this plugin.
+void EmitRegisterPlugin(std::ostream& O) {
+  O << "namespace {\n\n"
+    << "struct Plugin : public llvmc::BasePlugin {\n"
+    << Indent1 << "void PopulateLanguageMap(LanguageMap& langMap) const\n"
+    << Indent1 << "{ PopulateLanguageMapLocal(langMap); }\n\n"
+    << Indent1
+    << "void PopulateCompilationGraph(CompilationGraph& graph) const\n"
+    << Indent1 << "{ PopulateCompilationGraphLocal(graph); }\n"
+    << "};\n\n"
+
+    << "static llvmc::RegisterPlugin<Plugin> RP;\n\n}\n\n";
+}
+
+/// EmitInclude - Emit necessary #include directives.
+void EmitIncludes(std::ostream& O) {
+  O << "#include \"CompilationGraph.h\"\n"
+    << "#include \"Plugin.h\"\n"
+    << "#include \"Tool.h\"\n\n"
+
+    << "#include \"llvm/ADT/StringExtras.h\"\n"
+    << "#include \"llvm/Support/CommandLine.h\"\n\n"
+
+    << "#include <cstdlib>\n"
+    << "#include <stdexcept>\n\n"
+
+    << "using namespace llvm;\n"
+    << "using namespace llvmc;\n\n"
+
+    << "extern cl::opt<std::string> OutputFilename;\n\n";
+}
+
 // End of anonymous namespace
 }
 
@@ -1713,6 +1747,7 @@ void LLVMCConfigurationEmitter::run (std::ostream &O) {
 
   // Emit file header.
   EmitSourceFileHeader("LLVMC Configuration Library", O);
+  EmitIncludes(O);
 
   // Get a list of all defined Tools.
   RecordVector Tools = Records.getAllDerivedDefinitions("Tool");
@@ -1759,6 +1794,9 @@ void LLVMCConfigurationEmitter::run (std::ostream &O) {
 
   // Emit PopulateCompilationGraph() function.
   EmitPopulateCompilationGraph(CompilationGraphRecord, O);
+
+  // Emit code for plugin registration.
+  EmitRegisterPlugin(O);
 
   // EOF
   } catch (std::exception& Error) {

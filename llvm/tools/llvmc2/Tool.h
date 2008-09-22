@@ -25,6 +25,7 @@
 
 namespace llvmc {
 
+  class LanguageMap;
   typedef std::vector<llvm::sys::Path> PathVector;
   typedef llvm::StringSet<> InputLanguagesSet;
 

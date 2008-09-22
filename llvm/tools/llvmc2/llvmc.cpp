@@ -16,10 +16,11 @@
 
 #include "CompilationGraph.h"
 #include "Error.h"
-#include "Tool.h"
+#include "Plugin.h"
 
 #include "llvm/System/Path.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/PluginLoader.h"
 
 #include <iostream>
 #include <stdexcept>
