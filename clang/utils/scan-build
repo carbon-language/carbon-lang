@@ -392,10 +392,10 @@ sub ScanFile {
 }
 
 ##----------------------------------------------------------------------------##
-# CopyJS - Copy JavaScript code to target directory.
+# CopyFiles - Copy resource files to target directory.
 ##----------------------------------------------------------------------------##
 
-sub CopyJS {
+sub CopyFiles {
 
   my $Dir = shift;
   
@@ -406,6 +406,14 @@ sub CopyJS {
 
   DieDiag("Could not copy 'sorttable.js' to '$Dir'.\n")
     if (! -r "$Dir/sorttable.js");
+    
+  DieDiag("Cannot find 'scanview.css'.\n")
+    if (! -r "$RealBin/scanview.css");  
+
+  system ("cp", "$RealBin/scanview.css", "$Dir");
+
+  DieDiag("Could not copy 'scanview.css' to '$Dir'.\n")
+    if (! -r "$Dir/scanview.css");
 }
 
 ##----------------------------------------------------------------------------##
@@ -464,29 +472,7 @@ print OUT <<ENDTEXT;
 <html>
 <head>
 <title>${HtmlTitle}</title>
-<style type="text/css">
- body { color:#000000; background-color:#ffffff }
- body { font-family: Helvetica, sans-serif; font-size:9pt }
- h1 { font-size: 14pt; }
- h2 { font-size: 12pt; }
- table { font-size:9pt }
- table { border-spacing: 0px; border: 1px solid black }
- th, table thead {
-   background-color:#eee; color:#666666;
-   font-weight: bold; cursor: default;
-   text-align:center;
-   font-weight: bold; font-family: Verdana;
-   white-space:nowrap;
- } 
- .W { font-size:0px }
- th, td { padding:5px; padding-left:8px; text-align:left }
- td.SUMM_DESC { padding-left:12px }
- td.DESC { white-space:pre }
- td.Q { text-align:right }
- td { text-align:left }
- tbody.scrollContent { overflow:auto }
-}
-</style>
+<link type="text/css" rel="stylesheet" href="/scanview.css"/>
 <script language='javascript' type="text/javascript">
 if (document.styleSheets && RegExp(" AppleWebKit/").test(navigator.userAgent))
 {
@@ -494,7 +480,7 @@ if (document.styleSheets && RegExp(" AppleWebKit/").test(navigator.userAgent))
   if (sheet) {
     var rules = sheet.cssRules;
     if (rules) {
-      sheet.insertRule("td.View a { white-space: nowrap; -webkit-appearance:square-button; padding-left:1em; padding-right:1em; padding-top:0.5ex; padding-bottom:0.5ex; text-decoration:none; color:black }", rules.length);
+      sheet.insertRule("td.Button a { white-space: nowrap; -webkit-appearance:square-button; padding-left:1em; padding-right:1em; padding-top:0.5ex; padding-bottom:0.5ex; text-decoration:none; color:black }", rules.length);
     }
   }
 }
@@ -721,7 +707,7 @@ ENDTEXT
   
   print OUT "</body></html>\n";  
   close(OUT);
-  CopyJS($Dir);
+  CopyFiles($Dir);
 
   # Make sure $Dir and $BaseDir are world readable/executable.
   system("chmod", "755", $Dir);
