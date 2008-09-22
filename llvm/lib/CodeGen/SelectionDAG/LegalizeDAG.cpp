@@ -5438,6 +5438,7 @@ ExpandIntToFP(bool isSigned, MVT DestTy, SDValue Source) {
     SDValue CPIdx = DAG.getConstantPool(FudgeFactor, TLI.getPointerTy());
     unsigned Alignment = 1 << cast<ConstantPoolSDNode>(CPIdx)->getAlignment();
     CPIdx = DAG.getNode(ISD::ADD, TLI.getPointerTy(), CPIdx, CstOffset);
+    Alignment = std::min(Alignment, 4u);
     SDValue FudgeInReg;
     if (DestTy == MVT::f32)
       FudgeInReg = DAG.getLoad(MVT::f32, DAG.getEntryNode(), CPIdx,
@@ -5589,6 +5590,7 @@ SDValue SelectionDAGLegalize::ExpandLegalINT_TO_FP(bool isSigned,
   SDValue CPIdx = DAG.getConstantPool(FudgeFactor, TLI.getPointerTy());
   unsigned Alignment = 1 << cast<ConstantPoolSDNode>(CPIdx)->getAlignment();
   CPIdx = DAG.getNode(ISD::ADD, TLI.getPointerTy(), CPIdx, CstOffset);
+  Alignment = std::min(Alignment, 4u);
   SDValue FudgeInReg;
   if (DestVT == MVT::f32)
     FudgeInReg = DAG.getLoad(MVT::f32, DAG.getEntryNode(), CPIdx,

@@ -2042,12 +2042,16 @@ SDValue DAGTypeLegalizer::ExpandIntOp_UINT_TO_FP(SDNode *N) {
     if (TLI.isBigEndian()) std::swap(Zero, Four);
     SDValue Offset = DAG.getNode(ISD::SELECT, Zero.getValueType(), SignSet,
                                    Zero, Four);
+    unsigned Alignment =
+      1 << cast<ConstantPoolSDNode>(FudgePtr)->getAlignment();
     FudgePtr = DAG.getNode(ISD::ADD, TLI.getPointerTy(), FudgePtr, Offset);
+    Alignment = std::min(Alignment, 4u);
 
     // Load the value out, extending it from f32 to the destination float type.
     // FIXME: Avoid the extend by constructing the right constant pool?
     SDValue Fudge = DAG.getExtLoad(ISD::EXTLOAD, DstVT, DAG.getEntryNode(),
-                                     FudgePtr, NULL, 0, MVT::f32);
+                                   FudgePtr, NULL, 0, MVT::f32,
+                                   false, Alignment);
     return DAG.getNode(ISD::FADD, DstVT, SignedConv, Fudge);
   }
 
