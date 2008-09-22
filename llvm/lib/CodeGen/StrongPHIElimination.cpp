@@ -33,6 +33,7 @@
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/Debug.h"
 using namespace llvm;
 
 namespace {
@@ -546,6 +547,12 @@ void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
     }
     
     // Add the renaming set for this PHI node to our overall renaming information
+    for (std::map<unsigned, MachineBasicBlock*>::iterator QI = PHIUnion.begin(),
+         QE = PHIUnion.end(); QI != QE; ++QI) {
+      DOUT << "Adding Renaming: " << QI->first << " -> "
+           << P->getOperand(0).getReg() << "\n";
+    }
+    
     RenameSets.insert(std::make_pair(P->getOperand(0).getReg(), PHIUnion));
     
     // Remember which registers are already renamed, so that we don't try to 
@@ -762,10 +769,19 @@ void StrongPHIElimination::ScheduleCopies(MachineBasicBlock* MBB,
   std::set<unsigned> RegHandled;
   for (SmallVector<std::pair<unsigned, MachineInstr*>, 4>::iterator I =
        InsertedPHIDests.begin(), E = InsertedPHIDests.end(); I != E; ++I) {
-    if (RegHandled.insert(I->first).second &&
-        !LI.getOrCreateInterval(I->first).liveAt(
-                                      LI.getMBBEndIdx(I->second->getParent())))
-      LI.addLiveRangeToEndOfBlock(I->first, I->second);
+    if (RegHandled.insert(I->first).second) {
+      LiveInterval& Int = LI.getOrCreateInterval(I->first);
+      unsigned instrIdx = LI.getInstructionIndex(I->second);
+      if (Int.liveAt(LiveIntervals::getDefIndex(instrIdx)))
+        Int.removeRange(LiveIntervals::getDefIndex(instrIdx),
+                        LI.getMBBEndIdx(I->second->getParent())+1,
+                        true);
+      
+      LiveRange R = LI.addLiveRangeToEndOfBlock(I->first, I->second);
+      R.valno->copy = I->second;
+      R.valno->def =
+                  LiveIntervals::getDefIndex(LI.getInstructionIndex(I->second));
+    }
   }
 }
 
@@ -836,20 +852,39 @@ void StrongPHIElimination::mergeLiveIntervals(unsigned primary,
   LiveInterval& RHS = LI.getOrCreateInterval(secondary);
   
   LI.computeNumbering();
-                     
-  SmallVector<VNInfo*, 4> VNSet (RHS.vni_begin(), RHS.vni_end());
+  
   DenseMap<VNInfo*, VNInfo*> VNMap;
-  for (SmallVector<VNInfo*, 4>::iterator VI = VNSet.begin(),
-       VE = VNSet.end(); VI != VE; ++VI) {
-    VNInfo* NewVN = LHS.getNextValue((*VI)->def,
-                                     (*VI)->copy,
-                                     LI.getVNInfoAllocator());
-    LHS.MergeValueInAsValue(RHS, *VI, NewVN);
-    RHS.removeValNo(*VI);
+  for (LiveInterval::iterator I = RHS.begin(), E = RHS.end(); I != E; ++I) {
+    LiveRange R = *I;
+ 
+    unsigned Start = R.start;
+    unsigned End = R.end;
+    if (LHS.liveAt(Start))
+      LHS.removeRange(Start, End, true);
+    
+    if (const LiveRange* ER = LHS.getLiveRangeContaining(End))
+      End = ER->start;
+    
+    LiveInterval::iterator RI = std::upper_bound(LHS.begin(), LHS.end(), R);
+    if (RI != LHS.end() && RI->start < End)
+      End = RI->start;
+    
+    if (Start != End) {
+      VNInfo* OldVN = R.valno;
+      VNInfo*& NewVN = VNMap[OldVN];
+      if (!NewVN) {
+        NewVN = LHS.getNextValue(OldVN->def,
+                                 OldVN->copy,
+                                 LI.getVNInfoAllocator());
+        NewVN->kills = OldVN->kills;
+      }
+      
+      LiveRange LR (Start, End, NewVN);
+      LHS.addRange(LR);
+    }
   }
   
-  if (RHS.empty())
-    LI.removeInterval(RHS.reg);
+  LI.removeInterval(RHS.reg);
 }
 
 bool StrongPHIElimination::runOnMachineFunction(MachineFunction &Fn) {
@@ -881,6 +916,7 @@ bool StrongPHIElimination::runOnMachineFunction(MachineFunction &Fn) {
         unsigned reg = OI->first;
         ++OI;
         I->second.erase(reg);
+        DOUT << "Removing Renaming: " << reg << " -> " << I->first << "\n";
       }
     }
   }
@@ -896,6 +932,8 @@ bool StrongPHIElimination::runOnMachineFunction(MachineFunction &Fn) {
        I != E; ++I)
     while (I->second.size()) {
       std::map<unsigned, MachineBasicBlock*>::iterator SI = I->second.begin();
+      
+      DOUT << "Renaming: " << SI->first << " -> " << I->first << "\n";
       
       if (SI->first != I->first) {
         mergeLiveIntervals(I->first, SI->first);
