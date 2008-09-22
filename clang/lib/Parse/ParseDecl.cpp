@@ -445,9 +445,9 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
       
       DS.SetRangeEnd(EndProtoLoc);
 
-      // Do not allow any other declspecs after the protocol qualifier list
-      // "<foo,bar>short" is not allowed.
-      goto DoneWithDeclSpec;
+      // Need to support trailing type qualifiers (e.g. "id<p> const").
+      // If a type specifier follows, it will be diagnosed elsewhere.
+      continue;
     }
     // GNU attributes support.
     case tok::kw___attribute:
@@ -585,9 +585,9 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
 
         Diag(Loc, diag::warn_objc_protocol_qualifier_missing_id,
              SourceRange(Loc, EndProtoLoc));
-        // Do not allow any other declspecs after the protocol qualifier list
-        // "<foo,bar>short" is not allowed.
-        goto DoneWithDeclSpec;
+        // Need to support trailing type qualifiers (e.g. "id<p> const").
+        // If a type specifier follows, it will be diagnosed elsewhere.
+        continue;
       }
     }
     // If the specifier combination wasn't legal, issue a diagnostic.

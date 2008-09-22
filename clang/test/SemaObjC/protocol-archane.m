@@ -12,3 +12,13 @@ void foo(id x) {
   [(<SomeProtocol>)x bar];      // expected-warning {{protocol qualifiers without 'id' is archaic}}
 }
 
+@protocol MyProtocol
+- (void)doSomething;
+@end
+
+@interface MyClass
+- (void)m1:(id <MyProtocol> const)arg1;
+
+// FIXME: provide a better diagnostic (no typedef).
+- (void)m2:(id <MyProtocol> short)arg1; // expected-error {{'short typedef' is invalid}}
+@end
