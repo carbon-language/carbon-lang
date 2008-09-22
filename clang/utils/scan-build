@@ -506,6 +506,7 @@ function ToggleDisplay(CheckButton, ClassName) {
   }
 }
 </script>
+<!-- SUMMARYENDHEAD -->
 </head>
 <body>
 <h1>${HtmlTitle}</h1>
