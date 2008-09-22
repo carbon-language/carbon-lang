@@ -16,8 +16,9 @@ kMaxSleeps = 100
 
 # Default server parameters
 
-kDefaultHost = 'localhost'
+kDefaultHost = '127.0.0.1'
 kDefaultPort = 8181
+kMaxPortsToTry = 100
 
 ###
 
@@ -29,10 +30,10 @@ def url_is_up(url):
     o.close()
     return True
 
-def start_browser(options):
+def start_browser(port, options):
     import urllib, webbrowser
 
-    url = 'http://%s:%d'%(options.host, options.port)
+    url = 'http://%s:%d'%(options.host, port)
     
     # Wait for server to start...
     if options.debug:
@@ -52,19 +53,28 @@ def start_browser(options):
         print >>sys.stderr,'%s: Starting webbrowser...' % sys.argv[0]
     webbrowser.open(url)
 
-def run(options, root):
+def run(port, options, root):
     import ScanView
     try:
-        if options.debug:
-            print >>sys.stderr,'%s: SERVER: starting %s:%d'%(sys.argv[0],
-                                                             options.host,
-                                                             options.port)
-        httpd = ScanView.create_server(options, root)
+        print 'Starting scan-view at: http://%s:%d'%(options.host,
+                                                     port)
+        print '  Use Ctrl-C to exit.'
+        httpd = ScanView.create_server((options.host, port),
+                                       options, root)
         httpd.serve_forever()
     except KeyboardInterrupt:
         pass
 
-def  main():    
+def port_is_open(port):
+    import SocketServer
+    try:
+        t = SocketServer.TCPServer((kDefaultHost,port),None)
+    except:
+        return False
+    t.server_close()
+    return True
+
+def main():    
     from optparse import OptionParser
     parser = OptionParser('usage: %prog [options] <results directory>')
     parser.set_description(__doc__)
@@ -72,7 +82,7 @@ def  main():
         '--host', dest="host", default=kDefaultHost, type="string",
         help="Host interface to listen on. (default=%s)" % kDefaultHost)
     parser.add_option(
-        '--port', dest="port", default=kDefaultPort, type="int",
+        '--port', dest="port", default=None, type="int",
         help="Port to listen on. (default=%s)" % kDefaultPort)
     parser.add_option("--debug", dest="debug", default=0, 
                       action="count",
@@ -93,12 +103,26 @@ def  main():
     if not posixpath.exists(posixpath.join(root,'index.html')):
         parser.error('Invalid directory, analysis results not found!')
 
+    # Find an open port. We aren't particularly worried about race
+    # conditions here. Note that if the user specified a port we only
+    # use that one.
+    if options.port is not None:
+        port = options.port
+    else:    
+        for i in range(kMaxPortsToTry):
+            if port_is_open(kDefaultPort + i):
+                port = kDefaultPort + i
+                break
+        else:
+            parser.error('Unable to find usable port in [%d,%d)'%(kDefaultPort,
+                                                                  kDefaultPort+kMaxPortsToTry))
+
     # Kick off thread to wait for server and start web browser, if
     # requested.
     if options.startBrowser:
-        t = thread.start_new_thread(start_browser, (options,))
+        t = thread.start_new_thread(start_browser, (port,options))
 
-    run(options, root)
+    run(port, options, root)
 
 if __name__ == '__main__':
     main()

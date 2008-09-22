@@ -81,7 +81,7 @@ class ScanViewServer(BaseHTTPServer.HTTPServer):
 
         # Add defaults
         self.config.add_section('ScanView')
-        for r in Reporter.getReporters():
+        for r in self.reporters:
             self.config.add_section(r.getName())
             for p in r.getParameterNames():
                 self.config.set(r.getName(), p, '')
@@ -529,13 +529,12 @@ function updateReporterOptions() {
         return self.send_string(data, ctype, mtime=fs.st_mtime)
 
 
-def create_server(options, root):
+def create_server(address, options, root):
     import Reporter
 
     reporters = Reporter.getReporters()
 
-    return ScanViewServer((options.host, options.port),
-                          ScanViewRequestHandler,
+    return ScanViewServer(address, ScanViewRequestHandler,
                           root,
                           reporters,
                           options)
