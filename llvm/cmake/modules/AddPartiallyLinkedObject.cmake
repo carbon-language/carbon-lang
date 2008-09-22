@@ -8,7 +8,7 @@ macro(add_partially_linked_object lib)
     set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/temp_lib)
     add_library( ${lib} STATIC ${ARGN})
     add_custom_command(OUTPUT ${pll}
-      MESSAGE "Building ${lib}.o..."
+      COMMENT "Building ${lib}.o..."
       DEPENDS ${lib}
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/temp_lib
       COMMAND ar x ${CMAKE_STATIC_LIBRARY_PREFIX}${lib}${CMAKE_STATIC_LIBRARY_SUFFIX}
