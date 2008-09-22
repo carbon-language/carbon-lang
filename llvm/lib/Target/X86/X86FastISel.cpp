@@ -142,8 +142,6 @@ CCAssignFn *X86FastISel::CCAssignFnForCall(unsigned CC, bool isTaillCall) {
 
   if (CC == CallingConv::X86_FastCall)
     return CC_X86_32_FastCall;
-  else if (CC == CallingConv::Fast && isTaillCall)
-    return CC_X86_32_TailCall;
   else if (CC == CallingConv::Fast)
     return CC_X86_32_FastCC;
   else

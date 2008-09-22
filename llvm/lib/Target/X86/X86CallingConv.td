@@ -312,22 +312,6 @@ def CC_X86_32_C : CallingConv<[
   CCDelegateTo<CC_X86_32_Common>
 ]>;
 
-/// Same as C calling convention except for non-free ECX which is used for storing 
-/// a potential pointer to the tail called function.
-def CC_X86_32_TailCall : CallingConv<[
-  // Promote i8/i16 arguments to i32.
-  CCIfType<[i8, i16], CCPromoteToType<i32>>,
-
-  // Nested function trampolines are currently not supported by fastcc.
-  
-  // The first 3 integer arguments, if marked 'inreg' and if the call is not
-  // a vararg call, are passed in integer registers.
-  CCIfNotVarArg<CCIfInReg<CCIfType<[i32], CCAssignToReg<[EAX, EDX]>>>>,
-
-  // Otherwise, same as everything else.
-  CCDelegateTo<CC_X86_32_Common>
-]>;
-
 def CC_X86_32_FastCall : CallingConv<[
   // Promote i8/i16 arguments to i32.
   CCIfType<[i8, i16], CCPromoteToType<i32>>,
