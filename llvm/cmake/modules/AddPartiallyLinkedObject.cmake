@@ -1,4 +1,13 @@
 
+macro(target_name_of_partially_linked_object lib var)
+  if( MSVC )
+    set(${var} ${lib})
+  else( MSVC )
+    set(${var} ${lib}_pll)
+  endif( MSVC )
+endmacro(target_name_of_partially_linked_object lib var)
+
+
 macro(add_partially_linked_object lib)
   if( MSVC )
     add_llvm_library( ${lib} ${ARGN})
@@ -7,6 +16,9 @@ macro(add_partially_linked_object lib)
     set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/temp_lib)
     set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/temp_lib)
     add_library( ${lib} STATIC ${ARGN})
+    if( LLVM_COMMON_DEPENDS )
+      add_dependencies( ${lib} ${LLVM_COMMON_DEPENDS} )
+    endif( LLVM_COMMON_DEPENDS )
     add_custom_command(OUTPUT ${pll}
       COMMENT "Building ${lib}.o..."
       DEPENDS ${lib}
@@ -15,7 +27,9 @@ macro(add_partially_linked_object lib)
       COMMAND ld -r *${CMAKE_CXX_OUTPUT_EXTENSION} -o ${pll}
       COMMAND rm -f *${CMAKE_CXX_OUTPUT_EXTENSION}
       )
-    add_custom_target(${lib}_pll ALL DEPENDS ${pll})
+    target_name_of_partially_linked_object(${lib} tnplo)
+    add_custom_target(${tnplo} ALL DEPENDS ${pll})
     set( llvm_libs ${llvm_libs} ${pll} PARENT_SCOPE)
+    set( llvm_lib_targets ${llvm_lib_targets} ${tnplo} PARENT_SCOPE )
   endif( MSVC )
 endmacro(add_partially_linked_object lib)

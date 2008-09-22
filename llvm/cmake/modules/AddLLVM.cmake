@@ -3,6 +3,10 @@ include(LLVMConfig)
 macro(add_llvm_library name)
   add_library( ${name} ${ARGN} )
   set( llvm_libs ${llvm_libs} ${name} PARENT_SCOPE)
+  set( llvm_lib_targets ${llvm_lib_targets} ${name} PARENT_SCOPE )
+  if( LLVM_COMMON_DEPENDS )
+    add_dependencies( ${name} ${LLVM_COMMON_DEPENDS} )
+  endif( LLVM_COMMON_DEPENDS )
 endmacro(add_llvm_library name)
 
 

@@ -97,6 +97,10 @@ include(AddPartiallyLinkedObject)
 
 add_subdirectory(lib/Support)
 add_subdirectory(lib/System)
+
+# Everything else depends on Support and System:
+set(LLVM_COMMON_DEPENDS ${LLVM_COMMON_DEPENDS} ${LLVM_LIBS} )
+
 add_subdirectory(utils/TableGen)
 
 add_custom_command(OUTPUT ${llvm_builded_incs_dir}/Intrinsics.gen
@@ -106,6 +110,8 @@ add_custom_command(OUTPUT ${llvm_builded_incs_dir}/Intrinsics.gen
 
 add_custom_target(intrinsics_gen ALL
   DEPENDS ${llvm_builded_incs_dir}/Intrinsics.gen)
+
+set(LLVM_COMMON_DEPENDS ${LLVM_COMMON_DEPENDS} intrinsics_gen )
 
 add_subdirectory(lib/VMCore)
 add_subdirectory(lib/CodeGen)

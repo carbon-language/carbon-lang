@@ -20,7 +20,6 @@ x86tgen(X86GenSubtarget.inc -gen-subtarget)
 
 add_custom_target(X86Table_gen echo Tablegenning
   DEPENDS
-  ${llvm_builded_incs_dir}/Intrinsics.gen
   ${CMAKE_CURRENT_BINARY_DIR}/X86GenRegisterInfo.h.inc
   ${CMAKE_CURRENT_BINARY_DIR}/X86GenRegisterNames.inc
   ${CMAKE_CURRENT_BINARY_DIR}/X86GenRegisterInfo.inc
@@ -33,6 +32,8 @@ add_custom_target(X86Table_gen echo Tablegenning
   ${CMAKE_CURRENT_BINARY_DIR}/X86GenCallingConv.inc
   ${CMAKE_CURRENT_BINARY_DIR}/X86GenSubtarget.inc
   )
+
+add_dependencies(X86Table_gen ${LLVM_COMMON_DEPENDS})
 
 include_directories(BEFORE ${CMAKE_CURRENT_BINARY_DIR})
 

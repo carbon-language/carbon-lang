@@ -69,7 +69,6 @@ set(LLVM_CONFIG_IN ${CMAKE_CURRENT_BINARY_DIR}/llvm-config.in)
 
 add_custom_command(OUTPUT ${LIBDEPS_TMP}
   COMMAND ${PERL_EXECUTABLE} ${LLVM_MAIN_SRC_DIR}/utils/GenLibDeps.pl -flat ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY} > ${LIBDEPS_TMP}
-  DEPENDS ${llvm_libs}
   COMMENT "Regenerating ${LIBDEPS_TMP}")
 
 add_custom_command(OUTPUT ${LIBDEPS}
@@ -100,3 +99,5 @@ add_custom_command(OUTPUT ${LLVM_CONFIG}
 
 add_custom_target(llvm-config.target ALL
   DEPENDS ${LLVM_CONFIG})
+
+add_dependencies(llvm-config.target ${llvm_lib_targets})

@@ -5,3 +5,7 @@ add_llvm_library(LLVMX86AsmPrinter
   X86AsmPrinter.cpp
   X86IntelAsmPrinter.cpp
   )
+
+target_name_of_partially_linked_object(LLVMX86CodeGen n)
+
+add_dependencies(LLVMX86AsmPrinter ${n})
