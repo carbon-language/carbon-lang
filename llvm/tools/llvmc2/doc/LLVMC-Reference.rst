@@ -69,7 +69,7 @@ configuration files:
 * ``-v`` - Enable verbose mode, i.e. print out all executed commands.
 
 * ``--view-graph`` - Show a graphical representation of the compilation
-  graph. Requires that you have ``dot`` and ``gv`` commands
+  graph. Requires that you have ``dot`` and ``gv`` programs
   installed. Hidden option, useful for debugging.
 
 * ``--write-graph`` - Write a ``compilation-graph.dot`` file in the
@@ -414,9 +414,25 @@ located in the file ``Tools.td`` and looks like this::
          ...
         ]>;
 
+Debugging
+=========
+
+When writing LLVMC plugins, it can be useful to get a visual view of
+the resulting compilation graph. This can be achieved via the command
+line option ``--view-graph``. This command assumes that Graphviz [2]_ and
+Ghostview [3]_ are installed. There is also a ``--dump-graph`` option that
+creates a Graphviz source file(``compilation-graph.dot``) in the
+current directory.
+
 
 References
 ==========
 
 .. [1] TableGen Fundamentals
        http://llvm.cs.uiuc.edu/docs/TableGenFundamentals.html
+
+.. [2] Graphviz
+       http://www.graphviz.org/
+
+.. [3] Ghostview
+       http://pages.cs.wisc.edu/~ghost/
