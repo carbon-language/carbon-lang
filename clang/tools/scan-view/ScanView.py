@@ -212,7 +212,10 @@ class ScanViewRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
         # Send back an initial response and wait for the report to
         # finish.
         initial_response = """<html>
-<head><title>Filing Report</title></head>
+<head>
+  <title>Filing Report</title>
+  <link rel="stylesheet" type="text/css" href="/scanview.css" />
+</head>
 <body>
 <h1>Filing Report</h1>
 <b>Report</b>: %(report)s<br>
@@ -269,12 +272,25 @@ Line: %s
         
         for i,r in enumerate(self.server.reporters):
             reporterSelections.append('<option value="%d">%s</option>'%(i,r.getName()))
-            options = '\n'.join(['%s: <input type="text" name="%s_%s"><br>'%(o,r.getName(),o) for o in r.getParameterNames()])
+            options = '\n'.join(["""\
+<tr>
+  <td class="form_clabel">%s:</td>
+  <td class="form_value"><input type="text" name="%s_%s"></td>
+</tr>"""%(o,r.getName(),o) for o in r.getParameterNames()])
             if i==0:
-                display = 'inline'
+                display = ''
             else:
                 display = 'none'
-            reporterOptions.append('<div id="%sReporterOptions" style="display:%s">\n<h3>%s Options</h3>%s\n</div>'%(r.getName(),display,r.getName(),options))
+            reporterOptions.append("""\
+<tr id="%sReporterOptions" style="display:%s">
+  <td class="form_label">%s Options</td>
+  <td class="form_value">
+    <table class="form_inner_group">
+%s
+    </table>
+  </td>
+</tr>
+"""%(r.getName(),display,r.getName(),options))
         reporterSelections = '\n'.join(reporterSelections)
         reporterOptionsDivs = '\n'.join(reporterOptions)
         reportersArray = '[%s]'%(','.join([`r.getName()` for r in self.server.reporters]))
@@ -282,6 +298,7 @@ Line: %s
         result = """<html>
 <head>
   <title>File Report</title>
+  <link rel="stylesheet" type="text/css" href="/scanview.css" />
 </head>
 <script language="javascript" type="text/javascript">
 var reporters = %(reportersArray)s;
@@ -290,7 +307,7 @@ function updateReporterOptions() {
   for (var i=0; i < reporters.length; ++i) {
     o = document.getElementById(reporters[i] + "ReporterOptions");
     if (i == index) {
-      o.style.display = "inline";
+      o.style.display = "";
     } else {
       o.style.display = "none";
     }
@@ -299,24 +316,46 @@ function updateReporterOptions() {
 </script>
 <body>
 <h1>File Report</h1>
-<hr>
 <form name="form" action="/report_submit" method="post">
-Title:
-<input type="text" name="title" size="50" value="%(initialTitle)s"><br>
-Description:<br>
+<input type="hidden" name="report" value="%(report)s">
+
+<table class="form">
+<tr><td>
+<table class="form_group">
+<tr>
+  <td class="form_clabel">Title:</td>
+  <td class="form_value">
+    <input type="text" name="title" size="50" value="%(initialTitle)s">
+  </td>
+</tr>
+<tr>
+  <td class="form_label">Description:</td>
+  <td class="form_value">
 <textarea rows="10" cols="80" name="description">
 %(initialDescription)s
-</textarea><br>
-<hr>
-<input type="hidden" name="report" value="%(report)s">
-Method: <select id="reporter" name="reporter" onChange="updateReporterOptions()">
-%(reporterSelections)s
-</select><br>
-<hr>
+</textarea>
+  </td>
+</table>
+<br>
+<table class="form_group">
+<tr>
+  <td class="form_clabel">Method:</td>
+  <td class="form_value">
+    <select id="reporter" name="reporter" onChange="updateReporterOptions()">
+    %(reporterSelections)s
+    </select>
+  </td>
+</tr>
 %(reporterOptionsDivs)s
-<hr>
-<input type="submit" name="Submit" value="Submit">
+</table>
+<br>
+</td></tr>
+<tr><td class="form_submit">
+  <input align="right" type="submit" name="Submit" value="Submit">
+</td></tr>
+</table>
 </form>
+
 
 <iframe src="/report-%(report)s.html#EndPath" width="100%%" height="40%%"
         scrolling="auto" frameborder="1">
@@ -342,24 +381,19 @@ Method: <select id="reporter" name="reporter" onChange="updateReporterOptions()"
         # Special case some top-level entries.
         if components:
             name = components[0]
-            if name=='quit':
-                self.server.halt()
-                return self.send_string('Goodbye.', 'text/plain')
-            elif name=='report':
-                if len(components)==2:
+            if len(components)==2:
+                if name=='report':
                     return self.send_report(components[1])
-                else:
-                    return self.send_404()
-            elif name=='report_submit':
-                if len(components)==1:
+            elif len(components)==1:
+                if name=='quit':
+                    self.server.halt()
+                    return self.send_string('Goodbye.', 'text/plain')
+                elif name=='report_submit':
                     return self.send_report_submit()
-                else:
-                    return self.send_404()
-            elif name=='favicon.ico':
-                if len(components)==1:
+                elif name=='favicon.ico':
                     return self.send_path(posixpath.join(kResources,'bugcatcher.ico'))
-                else:
-                    return self.send_404()
+                elif name=='scanview.css':
+                    return self.send_path(posixpath.join(kResources,'scanview.css'))
         
         # Match directory entries.
         if components[-1] == '':
