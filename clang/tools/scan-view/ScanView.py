@@ -176,9 +176,6 @@ class ScanViewRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
             self.copyfile(f, self.wfile)
             f.close()        
     
-    def send_internal_error(self, message):
-        return self.send_string('ERROR: %s'%(message,), 'text/plain')
-
     def submit_bug(self):
         title = self.fields.get('title')
         description = self.fields.get('description')
@@ -278,7 +275,7 @@ class ScanViewRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
         try:
             keys = self.load_report(report)
         except IOError:
-            return self.send_internal_error('Invalid report.')
+            return self.send_error(400, 'Invalid report.')
 
         initialTitle = keys.get('DESC','')
         initialDescription = """\
@@ -338,7 +335,7 @@ function updateReporterOptions() {
   }
 }
 </script>
-<body>
+<body onLoad="updateReporterOptions()">
 <h1>File Report</h1>
 <form name="form" action="/report_submit" method="post">
 <input type="hidden" name="report" value="%(report)s">
@@ -478,7 +475,10 @@ function updateReporterOptions() {
         return StringIO.StringIO(s)
 
     def send_patched_file(self, path, ctype):
-        f = open(path,'r')
+        try:
+            f = open(path,'r')
+        except IOError:
+            return self.send_404()
         fs = os.fstat(f.fileno())
         data = f.read()
         for a,b in kReportReplacements:
