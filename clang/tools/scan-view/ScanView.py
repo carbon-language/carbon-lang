@@ -260,6 +260,7 @@ class ScanViewRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
         return (t.success, t.status)
 
     def send_report_submit(self):
+        report = self.fields.get('report')
         title = self.fields.get('title')
         description = self.fields.get('description')
 
@@ -274,11 +275,15 @@ class ScanViewRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
 
         result = """
 <head>
-  <title>Report Submission</title>
+  <title>Bug Submission</title>
   <link rel="stylesheet" type="text/css" href="/scanview.css" />
 </head>
 <body>
-<h1>Report Submission</h1>
+<h3>
+<a href="/">Summary</a> > 
+<a href="/report-%(report)s.html">Report %(report)s</a> > 
+<a href="/report/%(report)s">File Bug</a> > 
+Submit</h3>
 <form name="form" action="">
 <table class="form">
 <tr><td>
@@ -362,7 +367,7 @@ Line: %s
 
         result = """<html>
 <head>
-  <title>File Report</title>
+  <title>File Bug</title>
   <link rel="stylesheet" type="text/css" href="/scanview.css" />
 </head>
 <script language="javascript" type="text/javascript">
@@ -380,7 +385,10 @@ function updateReporterOptions() {
 }
 </script>
 <body onLoad="updateReporterOptions()">
-<h1>File Report</h1>
+<h3>
+<a href="/">Summary</a> > 
+<a href="/report-%(report)s.html">Report %(report)s</a> > 
+File Bug</h3>
 <form name="form" action="/report_submit" method="post">
 <input type="hidden" name="report" value="%(report)s">
 
@@ -421,7 +429,7 @@ function updateReporterOptions() {
 </table>
 </form>
 
-<iframe src="/report-%(report)s.html" width="100%%" height="70%%"
+<iframe src="/report-%(report)s.html" width="100%%" height="40%%"
         scrolling="auto" frameborder="1">
   <a href="/report-%(report)s.html">View Bug Report</a>
 </iframe>
