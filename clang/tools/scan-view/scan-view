@@ -4,6 +4,7 @@
 """
 
 import sys
+import posixpath
 import thread
 import time
 import urllib
@@ -85,8 +86,12 @@ def  main():
     (options, args) = parser.parse_args()
 
     if len(args) != 1:
-        parser.error('invalid number of arguments.')
+        parser.error('No results directory specified.')
     root, = args
+
+    # Make sure this directory is in a reasonable state to view.
+    if not posixpath.exists(posixpath.join(root,'index.html')):
+        parser.error('Invalid directory, analysis results not found!')
 
     # Kick off thread to wait for server and start web browser, if
     # requested.
