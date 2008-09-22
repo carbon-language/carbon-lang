@@ -1407,28 +1407,37 @@ void AssemblyWriter::printFunction(const Function *F) {
     Out << " align " << F->getAlignment();
   if (F->hasGC())
     Out << " gc \"" << F->getGC() << '"';
-  FunctionNotes FNotes = F->getNotes();
-  if (FNotes != FN_NOTE_None) {
-    Out << " notes(";
-    bool NeedComma = false;
-    if (FNotes & FN_NOTE_AlwaysInline) {
-      NeedComma = true;
-      Out << "inline=always";
-    }
-    else if (FNotes & FN_NOTE_NoInline) {
-      NeedComma = true;
-      Out << "inline=never";
-    }
-    if (FNotes & FN_NOTE_OptimizeForSize) {
-      if (NeedComma)
-        Out << ",";
-      Out << "opt_size";
-    }
-    Out << ")";
-  }
   if (F->isDeclaration()) {
     Out << "\n";
   } else {
+
+    bool insideNotes = false;
+    if (F->hasNote(FN_NOTE_AlwaysInline)) {
+      Out << "notes(";
+      insideNotes = true;
+      Out << "inline=always";
+    }
+    if (F->hasNote(FN_NOTE_NoInline)) {
+      if (insideNotes) 
+        Out << ",";
+      else {
+        Out << "notes(";
+        insideNotes = true;
+      }
+      Out << "inline=never";
+    }
+    if (F->hasNote(FN_NOTE_OptimizeForSize)) {
+      if (insideNotes) 
+        Out << ",";
+      else {
+        Out << "notes(";
+        insideNotes = true;
+      }
+      Out << "opt_size";
+    }
+    if (insideNotes)
+      Out << ")";
+    
     Out << " {";
 
     // Output all of its basic blocks... for the function

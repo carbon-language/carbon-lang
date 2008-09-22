@@ -430,7 +430,7 @@ bool LoopUnswitch::UnswitchIfProfitable(Value *LoopCond, Constant *Val){
   Function *F = loopHeader->getParent();
 
   // Do not unswitch if the function is optimized for size.
-  if (F->getNotes() & FN_NOTE_OptimizeForSize)
+  if (F->hasNote(FN_NOTE_OptimizeForSize))
     return false;
 
   // Check to see if it would be profitable to unswitch current loop.

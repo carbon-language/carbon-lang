@@ -159,6 +159,11 @@ public:
   ///
   const FunctionNotes &getNotes() const { return Notes; }
 
+  /// hasNote - Return true if this function has given note.
+  bool hasNote(FunctionNotes N) const {
+    return (!isDeclaration() && (Notes & N));
+  }
+
   /// setNotes - Set notes for this function
   ///
   void setNotes(const FunctionNotes P) { Notes = Notes | P;}
