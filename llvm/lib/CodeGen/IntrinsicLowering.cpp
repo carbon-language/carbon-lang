@@ -34,6 +34,25 @@ static void EnsureFunctionExists(Module &M, const char *Name,
   M.getOrInsertFunction(Name, FunctionType::get(RetTy, ParamTys, false));
 }
 
+static void EnsureFPIntrinsicsExist(Module &M, Module::iterator I,
+                                 const char *FName,
+                                 const char *DName, const char *LDName) {
+  // Insert definitions for all the floating point types.
+  switch((int)I->arg_begin()->getType()->getTypeID()) {
+  case Type::FloatTyID:
+    EnsureFunctionExists(M, FName, I->arg_begin(), I->arg_end(),
+                         Type::FloatTy);
+  case Type::DoubleTyID:
+    EnsureFunctionExists(M, DName, I->arg_begin(), I->arg_end(),
+                         Type::DoubleTy);
+  case Type::X86_FP80TyID:
+  case Type::FP128TyID:
+  case Type::PPC_FP128TyID:
+    EnsureFunctionExists(M, LDName, I->arg_begin(), I->arg_end(),
+                         I->arg_begin()->getType());
+  }
+}
+
 /// ReplaceCallWith - This function is used when we want to lower an intrinsic
 /// call to a call of an external function.  This handles hard cases such as
 /// when there was already a prototype for the external function, and if that
@@ -101,139 +120,31 @@ void IntrinsicLowering::AddPrototypes(Module &M) {
                               TD.getIntPtrType(), (Type *)0);
         break;
       case Intrinsic::sqrt:
-        switch((int)I->arg_begin()->getType()->getTypeID()) {
-        case Type::FloatTyID:
-          EnsureFunctionExists(M, "sqrtf", I->arg_begin(), I->arg_end(),
-                               Type::FloatTy);
-        case Type::DoubleTyID:
-          EnsureFunctionExists(M, "sqrt", I->arg_begin(), I->arg_end(),
-                               Type::DoubleTy);
-        case Type::X86_FP80TyID:
-        case Type::FP128TyID:
-        case Type::PPC_FP128TyID:
-          EnsureFunctionExists(M, "sqrtl", I->arg_begin(), I->arg_end(),
-                               I->arg_begin()->getType());
-        }
+        EnsureFPIntrinsicsExist(M, I, "sqrtf", "sqrt", "sqrtl");
         break;
       case Intrinsic::sin:
-        switch((int)I->arg_begin()->getType()->getTypeID()) {
-        case Type::FloatTyID:
-          EnsureFunctionExists(M, "sinf", I->arg_begin(), I->arg_end(),
-                               Type::FloatTy);
-        case Type::DoubleTyID:
-          EnsureFunctionExists(M, "sin", I->arg_begin(), I->arg_end(),
-                               Type::DoubleTy);
-        case Type::X86_FP80TyID:
-        case Type::FP128TyID:
-        case Type::PPC_FP128TyID:
-          EnsureFunctionExists(M, "sinl", I->arg_begin(), I->arg_end(),
-                               I->arg_begin()->getType());
-        }
+        EnsureFPIntrinsicsExist(M, I, "sinf", "sin", "sinl");
         break;
       case Intrinsic::cos:
-        switch((int)I->arg_begin()->getType()->getTypeID()) {
-        case Type::FloatTyID:
-          EnsureFunctionExists(M, "cosf", I->arg_begin(), I->arg_end(),
-                               Type::FloatTy);
-        case Type::DoubleTyID:
-          EnsureFunctionExists(M, "cos", I->arg_begin(), I->arg_end(),
-                               Type::DoubleTy);
-        case Type::X86_FP80TyID:
-        case Type::FP128TyID:
-        case Type::PPC_FP128TyID:
-          EnsureFunctionExists(M, "cosl", I->arg_begin(), I->arg_end(),
-                               I->arg_begin()->getType());
-        }
+        EnsureFPIntrinsicsExist(M, I, "cosf", "cos", "cosl");
         break;
       case Intrinsic::pow:
-        switch((int)I->arg_begin()->getType()->getTypeID()) {
-        case Type::FloatTyID:
-          EnsureFunctionExists(M, "powf", I->arg_begin(), I->arg_end(),
-                               Type::FloatTy);
-        case Type::DoubleTyID:
-          EnsureFunctionExists(M, "pow", I->arg_begin(), I->arg_end(),
-                               Type::DoubleTy);
-        case Type::X86_FP80TyID:
-        case Type::FP128TyID:
-        case Type::PPC_FP128TyID:
-          EnsureFunctionExists(M, "powl", I->arg_begin(), I->arg_end(),
-                               I->arg_begin()->getType());
-        }
+        EnsureFPIntrinsicsExist(M, I, "powf", "pow", "powl");
         break;
       case Intrinsic::log:
-        switch((int)I->arg_begin()->getType()->getTypeID()) {
-        case Type::FloatTyID:
-          EnsureFunctionExists(M, "logf", I->arg_begin(), I->arg_end(),
-                               Type::FloatTy);
-        case Type::DoubleTyID:
-          EnsureFunctionExists(M, "log", I->arg_begin(), I->arg_end(),
-                               Type::DoubleTy);
-        case Type::X86_FP80TyID:
-        case Type::FP128TyID:
-        case Type::PPC_FP128TyID:
-          EnsureFunctionExists(M, "logl", I->arg_begin(), I->arg_end(),
-                               I->arg_begin()->getType());
-        }
+        EnsureFPIntrinsicsExist(M, I, "logf", "log", "logl");
         break;
       case Intrinsic::log2:
-        switch((int)I->arg_begin()->getType()->getTypeID()) {
-        case Type::FloatTyID:
-          EnsureFunctionExists(M, "log2f", I->arg_begin(), I->arg_end(),
-                               Type::FloatTy);
-        case Type::DoubleTyID:
-          EnsureFunctionExists(M, "log2", I->arg_begin(), I->arg_end(),
-                               Type::DoubleTy);
-        case Type::X86_FP80TyID:
-        case Type::FP128TyID:
-        case Type::PPC_FP128TyID:
-          EnsureFunctionExists(M, "log2l", I->arg_begin(), I->arg_end(),
-                               I->arg_begin()->getType());
-        }
+        EnsureFPIntrinsicsExist(M, I, "log2f", "log2", "log2l");
         break;
       case Intrinsic::log10:
-        switch((int)I->arg_begin()->getType()->getTypeID()) {
-        case Type::FloatTyID:
-          EnsureFunctionExists(M, "log10f", I->arg_begin(), I->arg_end(),
-                               Type::FloatTy);
-        case Type::DoubleTyID:
-          EnsureFunctionExists(M, "log10", I->arg_begin(), I->arg_end(),
-                               Type::DoubleTy);
-        case Type::X86_FP80TyID:
-        case Type::FP128TyID:
-        case Type::PPC_FP128TyID:
-          EnsureFunctionExists(M, "log10l", I->arg_begin(), I->arg_end(),
-                               I->arg_begin()->getType());
-        }
+        EnsureFPIntrinsicsExist(M, I, "log10f", "log10", "log10l");
         break;
       case Intrinsic::exp:
-        switch((int)I->arg_begin()->getType()->getTypeID()) {
-        case Type::FloatTyID:
-          EnsureFunctionExists(M, "expf", I->arg_begin(), I->arg_end(),
-                               Type::FloatTy);
-        case Type::DoubleTyID:
-          EnsureFunctionExists(M, "exp", I->arg_begin(), I->arg_end(),
-                               Type::DoubleTy);
-        case Type::X86_FP80TyID:
-        case Type::FP128TyID:
-        case Type::PPC_FP128TyID:
-          EnsureFunctionExists(M, "expl", I->arg_begin(), I->arg_end(),
-                               I->arg_begin()->getType());
-        }
+        EnsureFPIntrinsicsExist(M, I, "expf", "exp", "expl");
         break;
       case Intrinsic::exp2:
-        switch((int)I->arg_begin()->getType()->getTypeID()) {
-        case Type::FloatTyID:
-          EnsureFunctionExists(M, "exp2f", I->arg_begin(), I->arg_end(),
-                               Type::FloatTy);
-        case Type::DoubleTyID:
-          EnsureFunctionExists(M, "exp2", I->arg_begin(), I->arg_end(),
-                               Type::DoubleTy);
-        case Type::X86_FP80TyID:
-        case Type::FP128TyID:
-        case Type::PPC_FP128TyID:
-          EnsureFunctionExists(M, "exp2l", I->arg_begin(), I->arg_end(),
-                               I->arg_begin()->getType());
-        }
+        EnsureFPIntrinsicsExist(M, I, "exp2f", "exp2", "exp2l");
         break;
       }
 }
