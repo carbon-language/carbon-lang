@@ -18,3 +18,45 @@ td.DESC { white-space:pre }
 td.Q { text-align:right }
 td { text-align:left }
 tbody.scrollContent { overflow:auto }
+
+table.form_group {
+    background-color: #ccc;
+    border: 1px solid #333; 
+    padding: 2px;
+}
+
+table.form_inner_group {
+    background-color: #ccc;
+    border: 1px solid #333;
+    padding: 0px;
+}
+
+table.form {
+    background-color: #999;
+    border: 1px solid #333; 
+    padding: 2px;
+}
+
+td.form_label {
+    text-align: right;
+    vertical-align: top;
+}
+/* For one line entires */
+td.form_clabel {
+    text-align: right;
+    vertical-align: center;
+}
+td.form_value {
+    text-align: left;
+    vertical-align: top;
+}
+td.form_submit {
+    text-align: right;
+    vertical-align: top;
+}
+
+h1.SubmitFail {
+    color: #f00;
+}
+h1.SubmitOk {
+}
