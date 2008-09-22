@@ -14,9 +14,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "CompilationGraph.h"
 #include "Error.h"
-#include "Plugin.h"
+
+#include "llvm/CompilerDriver/CompilationGraph.h"
+#include "llvm/CompilerDriver/Plugin.h"
 
 #include "llvm/System/Path.h"
 #include "llvm/Support/CommandLine.h"

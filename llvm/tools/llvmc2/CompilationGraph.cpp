@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Error.h"
-#include "CompilationGraph.h"
+#include "llvm/CompilerDriver/CompilationGraph.h"
 
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/CommandLine.h"

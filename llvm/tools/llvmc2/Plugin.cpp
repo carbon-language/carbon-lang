@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "Plugin.h"
+#include "llvm/CompilerDriver/Plugin.h"
 
 #include <vector>
 

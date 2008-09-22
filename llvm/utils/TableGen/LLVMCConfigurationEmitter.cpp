@@ -1722,9 +1722,9 @@ void EmitRegisterPlugin(std::ostream& O) {
 
 /// EmitInclude - Emit necessary #include directives.
 void EmitIncludes(std::ostream& O) {
-  O << "#include \"CompilationGraph.h\"\n"
-    << "#include \"Plugin.h\"\n"
-    << "#include \"Tool.h\"\n\n"
+  O << "#include \"llvm/CompilerDriver/CompilationGraph.h\"\n"
+    << "#include \"llvm/CompilerDriver/Plugin.h\"\n"
+    << "#include \"llvm/CompilerDriver/Tool.h\"\n\n"
 
     << "#include \"llvm/ADT/StringExtras.h\"\n"
     << "#include \"llvm/Support/CommandLine.h\"\n\n"

@@ -14,7 +14,7 @@
 #ifndef LLVM_TOOLS_LLVMC2_COMPILATION_GRAPH_H
 #define LLVM_TOOLS_LLVMC2_COMPILATION_GRAPH_H
 
-#include "Tool.h"
+#include "llvm/CompilerDriver/Tool.h"
 
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"

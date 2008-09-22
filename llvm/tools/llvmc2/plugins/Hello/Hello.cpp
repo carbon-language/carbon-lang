@@ -11,11 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-// TODO: Since llvmc2 has now gained support for plugins, its header
-// files should be probably moved into LLVM include dir.
-
-#include "../../CompilationGraph.h"
-#include "../../Plugin.h"
+#include "llvm/CompilerDriver/CompilationGraph.h"
+#include "llvm/CompilerDriver/Plugin.h"
 
 #include <iostream>
 

@@ -14,7 +14,7 @@
 #ifndef LLVM_TOOLS_LLVMC2_TOOL_H
 #define LLVM_TOOLS_LLVMC2_TOOL_H
 
-#include "Action.h"
+#include "llvm/CompilerDriver/Action.h"
 
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/StringSet.h"

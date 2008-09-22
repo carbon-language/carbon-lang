@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "Action.h"
+#include "llvm/CompilerDriver/Action.h"
 
 #include "llvm/Support/CommandLine.h"
 #include "llvm/System/Program.h"
