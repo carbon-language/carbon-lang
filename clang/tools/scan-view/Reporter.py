@@ -72,8 +72,10 @@ Title: %s
 Description: %s
 """%(report.title, report.description)
 
-        if not parameters.get('To') or not parameters.get('From'):
-            raise ValueError,'Invalid email parameters.'
+        if not parameters.get('To'):
+            raise ReportFailure('No "To" address specified.')
+        if not parameters.get('From'):
+            raise ReportFailure('No "From" address specified.')
 
         msg = MIMEMultipart()
         msg['Subject'] = 'BUG REPORT: %s'%(report.title)
@@ -85,11 +87,16 @@ Description: %s
         msg.attach(MIMEText(mainMsg, _subtype='text/plain'))
         for file in report.files:
             self.attachFile(msg, file)
-        
-        s = smtplib.SMTP(host=parameters.get('SMTP Server'),
-                         port=parameters.get('SMTP Port'))
-        s.sendmail(msg['From'], msg['To'], msg.as_string())
-        s.close()
+
+        try:
+            s = smtplib.SMTP(host=parameters.get('SMTP Server'),
+                             port=parameters.get('SMTP Port'))
+            s.sendmail(msg['From'], msg['To'], msg.as_string())
+            s.close()
+        except:
+            raise ReportFailure('Unable to send message via SMTP.')
+
+        return "Message sent!"
 
 class BugzillaReporter:
     def getName(self):

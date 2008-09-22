@@ -19,7 +19,6 @@ td.Q { text-align:right }
 td { text-align:left }
 td.View a { 
     white-space: nowrap; 
-    -webkit-appearance:square-button; 
     padding-left:1em; 
     padding-right:1em; 
     padding-top:0.5ex; 
@@ -43,7 +42,7 @@ table.form_inner_group {
 table.form {
     background-color: #999;
     border: 1px solid #333; 
-    padding: 5px auto;
+    padding: 2px;
 }
 
 td.form_label {
@@ -64,3 +63,8 @@ td.form_submit {
     vertical-align: top;
 }
 
+h1.SubmitFail {
+    color: #f00;
+}
+h1.SubmitOk {
+}

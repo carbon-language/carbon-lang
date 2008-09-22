@@ -18,7 +18,7 @@ import Reporter
 kReportColRE = re.compile('<!-- REPORTBUGCOL -->')
 kReportColRepl = '<td></td>'
 kReportBugRE = re.compile('<!-- REPORTBUG id="report-(.*)\\.html" -->')         
-kReportBugRepl = '<td class="ReportBug"><a href="report/\\1">Report Bug</a></td>'
+kReportBugRepl = '<td class="View"><a href="report/\\1">Report Bug</a></td>'
 kBugKeyValueRE = re.compile('<!-- BUG([^ ]*) (.*) -->')
 
 kReportReplacements = [(kReportColRE, kReportColRepl),
@@ -41,6 +41,7 @@ class ReporterThread(threading.Thread):
         self.server = server
         self.reporter = reporter
         self.parameters = parameters
+        self.success = False
         self.status = None
 
     def run(self):
@@ -48,32 +49,20 @@ class ReporterThread(threading.Thread):
         try:
             if self.server.options.debug:
                 print >>sys.stderr, "%s: SERVER: submitting bug."%(sys.argv[0],)
-            result = self.reporter.fileReport(self.report, self.parameters)
+            self.status = self.reporter.fileReport(self.report, self.parameters)
+            self.success = True
             time.sleep(3)
             if self.server.options.debug:
                 print >>sys.stderr, "%s: SERVER: submission complete."%(sys.argv[0],)
         except Reporter.ReportFailure,e:
-            s = StringIO.StringIO()
-            print >>s,'Submission Failed<br><pre>'
-            print >>s,e.value
-            print >>s,'</pre>'
-            self.status = s.getvalue()
-            return            
+            self.status = e.value
         except Exception,e:
             s = StringIO.StringIO()
             import traceback
-            print >>s,'Submission Failed<br><pre>'
+            print >>s,'<b>Unhandled Exception</b><br><pre>'
             traceback.print_exc(e,file=s)
             print >>s,'</pre>'
             self.status = s.getvalue()
-            return
-
-        s = StringIO.StringIO()
-        print >>s, 'Submission Complete!'
-        if result is not None:
-            print >>s, '<hr>'
-            print >>s, result
-        self.status = s.getvalue()
 
 class ScanViewServer(BaseHTTPServer.HTTPServer):
     def __init__(self, address, handler, root, reporters, options):
@@ -190,65 +179,100 @@ class ScanViewRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
     def send_internal_error(self, message):
         return self.send_string('ERROR: %s'%(message,), 'text/plain')
 
-    def send_report_submit(self):
-        s = StringIO.StringIO()
-        report = self.fields.get('report')
-        reporter = self.fields.get('reporter')
+    def submit_bug(self):
         title = self.fields.get('title')
         description = self.fields.get('description')
+        report = self.fields.get('report')
+        reporter = self.fields.get('reporter')
+
+        # Type check form parameters.
+        reportPath = posixpath.join(self.server.root,
+                                   'report-%s.html' % report)
+        if not posixpath.exists(reportPath):
+            return (False, "Invalid report ID.")
+        if not title:
+            return (False, "Missing title.")
+        if not description:
+            return (False, "Missing description.")
+        try:
+            reporter = int(reporter)
+        except:
+            return (False, "Invalid report method.")
         
         # Get the reporter and parameters.
-        reporter = self.server.reporters[int(reporter)]
+        reporter = self.server.reporters[reporter]
         parameters = {}
         for o in reporter.getParameterNames():
             name = '%s_%s'%(reporter.getName(),o)
-            parameters[o] = self.fields.get(name)
+            if name not in self.fields:
+                return (False, 
+                        'Missing field "%s" for %s report method.'%(name,
+                                                                    reporter.getName()))
+            parameters[o] = self.fields[name]
 
         # Create the report.
-        path = os.path.join(self.server.root, 'report-%s.html'%report)
-        files = [path]
-        br = Reporter.BugReport(title, description, files)
+        bug = Reporter.BugReport(title, description, [reportPath])
 
-        # Send back an initial response and wait for the report to
-        # finish.
-        initial_response = """<html>
-<head>
-  <title>Filing Report</title>
-  <link rel="stylesheet" type="text/css" href="/scanview.css" />
-</head>
-<body>
-<h1>Filing Report</h1>
-<b>Report</b>: %(report)s<br>
-<b>Title</b>: %(title)s<br>
-<b>Description</b>: %(description)s<br>
-<hr>
-Submission in progress."""%locals()
-
-        self.send_response(200)
-        self.send_header("Content-type", 'text/html')
-        self.end_headers()
-        self.wfile.write(initial_response)
-        self.wfile.flush()
-        
         # Kick off a reporting thread.
-        t = ReporterThread(br, reporter, parameters, self.server)
+        t = ReporterThread(bug, reporter, parameters, self.server)
         t.start()
 
         # Wait for thread to die...
         while t.isAlive():
-            self.wfile.write('.')
-            self.wfile.flush()
             time.sleep(.25)
         submitStatus = t.status
 
-        end_response = """<br>
-%(submitStatus)s
+        return (t.success, t.status)
+
+    def send_report_submit(self):
+        title = self.fields.get('title')
+        description = self.fields.get('description')
+
+        res,message = self.submit_bug()
+
+        if res:
+            statusClass = 'SubmitOk'
+            statusName = 'Succeeded'
+        else:
+            statusClass = 'SubmitFail'
+            statusName = 'Failed'
+
+        result = """
+<head>
+  <title>Report Submission</title>
+  <link rel="stylesheet" type="text/css" href="/scanview.css" />
+</head>
+<body>
+<h1>Report Submission</h1>
+<form name="form" action="">
+<table class="form">
+<tr><td>
+<table class="form_group">
+<tr>
+  <td class="form_clabel">Title:</td>
+  <td class="form_value">
+    <input type="text" name="title" size="50" value="%(title)s" disabled>
+  </td>
+</tr>
+<tr>
+  <td class="form_label">Description:</td>
+  <td class="form_value">
+<textarea rows="10" cols="80" name="description" disabled>
+%(description)s
+</textarea>
+  </td>
+</table>
+</td></tr>
+</table>
+</form>
+<h1 class="%(statusClass)s">Submission %(statusName)s</h1>
+%(message)s
+<p>
 <hr>
-<a href="/">Home</a>
+<a href="/">Return to Summary</a>
 </body>
-</html>
-"""%locals()
-        return self.send_string(end_response, headers=False)
+</html>"""%locals()
+        return self.send_string(result)
 
     def send_report(self, report):
         try:
