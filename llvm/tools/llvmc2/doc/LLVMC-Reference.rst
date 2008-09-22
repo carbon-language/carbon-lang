@@ -375,16 +375,16 @@ use TableGen inheritance instead.
 
   - ``input_languages_contain`` - Returns true if a given language
     belongs to the current input language set. Example:
-    ```(input_languages_contain "c++")``.
+    ``(input_languages_contain "c++")``.
 
   - ``in_language`` - Evaluates to true if the language of the input
-    file equals to the argument. Valid only when using ``case``
-    expression in a ``cmd_line`` tool property. Example:
-    ```(in_language "c++")``.
+    file equals to the argument. At the moment works only with
+    ``cmd_line`` property on non-join nodes. Example: ``(in_language
+    "c++")``.
 
   - ``not_empty`` - Returns true if a given option (which should be
     either a parameter or a parameter list) is set by the
-    user. Example: ```(not_empty "o")``.
+    user. Example: ``(not_empty "o")``.
 
   - ``default`` - Always evaluates to true. Should always be the last
     test in the ``case`` expression.

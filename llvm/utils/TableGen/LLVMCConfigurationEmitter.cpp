@@ -826,8 +826,10 @@ bool EmitCaseTest1Arg(const std::string& TestName,
     O << "InLangs.count(\"" << OptName << "\") != 0";
     return true;
   } else if (TestName == "in_language") {
-    // TODO: remove this restriction
-    // Works only for cmd_line!
+    // This works only for single-argument Tool::GenerateAction. Join
+    // tools can process several files in different languages simultaneously.
+
+    // TODO: make this work with Edge::Weight (if possible).
     O << "LangMap.GetLanguage(inFile) == \"" << OptName << '\"';
     return true;
   } else if (TestName == "not_empty") {
