@@ -430,6 +430,18 @@ TargetLowering::TargetLowering(TargetMachine &tm)
   setOperationAction(ISD::ConstantFP, MVT::f64, Expand);
   setOperationAction(ISD::ConstantFP, MVT::f80, Expand);
 
+  // These library functions default to expand.
+  setOperationAction(ISD::FLOG , MVT::f64, Expand);
+  setOperationAction(ISD::FLOG2, MVT::f64, Expand);
+  setOperationAction(ISD::FLOG10,MVT::f64, Expand);
+  setOperationAction(ISD::FEXP , MVT::f64, Expand);
+  setOperationAction(ISD::FEXP2, MVT::f64, Expand);
+  setOperationAction(ISD::FLOG , MVT::f32, Expand);
+  setOperationAction(ISD::FLOG2, MVT::f32, Expand);
+  setOperationAction(ISD::FLOG10,MVT::f32, Expand);
+  setOperationAction(ISD::FEXP , MVT::f32, Expand);
+  setOperationAction(ISD::FEXP2, MVT::f32, Expand);
+
   // Default ISD::TRAP to expand (which turns it into abort).
   setOperationAction(ISD::TRAP, MVT::Other, Expand);
     

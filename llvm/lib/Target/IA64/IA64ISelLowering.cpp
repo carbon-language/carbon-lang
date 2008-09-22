@@ -75,20 +75,10 @@ IA64TargetLowering::IA64TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::FCOS , MVT::f64, Expand);
   setOperationAction(ISD::FSQRT, MVT::f64, Expand);
   setOperationAction(ISD::FPOW , MVT::f64, Expand);
-  setOperationAction(ISD::FLOG , MVT::f64, Expand);
-  setOperationAction(ISD::FLOG2, MVT::f64, Expand);
-  setOperationAction(ISD::FLOG10,MVT::f64, Expand);
-  setOperationAction(ISD::FEXP , MVT::f64, Expand);
-  setOperationAction(ISD::FEXP2, MVT::f64, Expand);
   setOperationAction(ISD::FSIN , MVT::f32, Expand);
   setOperationAction(ISD::FCOS , MVT::f32, Expand);
   setOperationAction(ISD::FSQRT, MVT::f32, Expand);
   setOperationAction(ISD::FPOW , MVT::f32, Expand);
-  setOperationAction(ISD::FLOG , MVT::f32, Expand);
-  setOperationAction(ISD::FLOG2, MVT::f32, Expand);
-  setOperationAction(ISD::FLOG10,MVT::f32, Expand);
-  setOperationAction(ISD::FEXP , MVT::f32, Expand);
-  setOperationAction(ISD::FEXP2, MVT::f32, Expand);
 
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1   , Expand);
     

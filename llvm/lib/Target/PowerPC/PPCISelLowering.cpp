@@ -99,20 +99,10 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   setOperationAction(ISD::FCOS , MVT::f64, Expand);
   setOperationAction(ISD::FREM , MVT::f64, Expand);
   setOperationAction(ISD::FPOW , MVT::f64, Expand);
-  setOperationAction(ISD::FLOG , MVT::f64, Expand);
-  setOperationAction(ISD::FLOG2, MVT::f64, Expand);
-  setOperationAction(ISD::FLOG10,MVT::f64, Expand);
-  setOperationAction(ISD::FEXP  ,MVT::f64, Expand);
-  setOperationAction(ISD::FEXP2 ,MVT::f64, Expand);
   setOperationAction(ISD::FSIN , MVT::f32, Expand);
   setOperationAction(ISD::FCOS , MVT::f32, Expand);
   setOperationAction(ISD::FREM , MVT::f32, Expand);
   setOperationAction(ISD::FPOW , MVT::f32, Expand);
-  setOperationAction(ISD::FLOG , MVT::f32, Expand);
-  setOperationAction(ISD::FLOG2 ,MVT::f32, Expand);
-  setOperationAction(ISD::FLOG10,MVT::f32, Expand);
-  setOperationAction(ISD::FEXP  ,MVT::f32, Expand);
-  setOperationAction(ISD::FEXP2 ,MVT::f32, Expand);
 
   setOperationAction(ISD::FLT_ROUNDS_, MVT::i32, Custom);
   
