@@ -14,7 +14,10 @@ import socket
 import Reporter
 import ConfigParser
 
-# Keys replaced by server.
+###
+# Various patterns matched or replaced by server.
+
+kReportFileRE = re.compile('(.*/)?report-(.*)\\.html')
 
 kBugKeyValueRE = re.compile('<!-- BUG([^ ]*) (.*) -->')
 
@@ -44,6 +47,12 @@ kReportReplacements.append((re.compile('<!-- REPORTBUGCOL -->'),
 kReportReplacements.append((re.compile('<!-- REPORTBUG id="report-(.*)\\.html" -->'),
                             ('<td class="Button"><a href="report/\\1">Report Bug</a></td>' + 
                              '<td class="Button"><a href="javascript:load(\'open/\\1\')">Open File</a></td>')))
+
+kReportReplacements.append((re.compile('<!-- REPORTHEADER -->'),
+                                       '<h3><a href="/">Summary</a> > Report %(report)s</h3>'))
+
+kReportReplacements.append((re.compile('<!-- REPORTSUMMARYEXTRA -->'),
+                            '<td class="Button"><a href="report/%(report)s">Report Bug</a></td>'))
 
 ###
 # Other simple parameters
@@ -570,6 +579,13 @@ File Bug</h3>
         return StringIO.StringIO(s)
 
     def send_patched_file(self, path, ctype):
+        # Allow a very limited set of variables. This is pretty gross.
+        variables = {}
+        variables['report'] = ''
+        m = kReportFileRE.match(path)
+        if m:
+            variables['report'] = m.group(2)
+
         try:
             f = open(path,'r')
         except IOError:
@@ -577,7 +593,7 @@ File Bug</h3>
         fs = os.fstat(f.fileno())
         data = f.read()
         for a,b in kReportReplacements:
-            data = a.sub(b, data)
+            data = a.sub(b % variables, data)
         return self.send_string(data, ctype, mtime=fs.st_mtime)
 
 
