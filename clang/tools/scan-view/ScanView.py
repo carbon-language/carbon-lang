@@ -18,8 +18,11 @@ import ConfigParser
 
 kReportColRE = re.compile('<!-- REPORTBUGCOL -->')
 kReportColRepl = '<td></td>'
+#<td></td>'
 kReportBugRE = re.compile('<!-- REPORTBUG id="report-(.*)\\.html" -->')         
-kReportBugRepl = '<td class="View"><a href="report/\\1">Report Bug</a></td>'
+kReportBugRepl = '<td class="Button"><a href="report/\\1">Report Bug</a></td>'
+# + 
+#                  '<td class="Button"><a href="open/\\1">Open File</a></td>')
 kBugKeyValueRE = re.compile('<!-- BUG([^ ]*) (.*) -->')
 
 kReportReplacements = [(kReportColRE, kReportColRepl),
@@ -314,6 +317,29 @@ Submit</h3>
 </html>"""%locals()
         return self.send_string(result)
 
+    def send_open_report(self, report):
+        try:
+            keys = self.load_report(report)
+        except IOError:
+            return self.send_error(400, 'Invalid report.')
+
+        file = keys.get('FILE')
+        if not file or not posixpath.exists(file):
+            return self.send_error(400, 'File does not exist: "%s"' % file)
+
+        import startfile
+        if self.server.options.debug:
+            print >>sys.stderr, '%s: SERVER: opening "%s"'%(sys.argv[0],
+                                                            file)
+
+        status = startfile.open(file)
+        if status:
+            res = 'Opened: "%s"' % file
+        else:
+            res = 'Open failed: "%s"' % file
+
+        return self.send_string(res, 'text/plain')
+
     def send_report(self, report):
         try:
             keys = self.load_report(report)
@@ -456,6 +482,8 @@ File Bug</h3>
             if len(components)==2:
                 if name=='report':
                     return self.send_report(components[1])
+                elif name=='open':
+                    return self.send_open_report(components[1])
             elif len(components)==1:
                 if name=='quit':
                     self.server.halt()
@@ -464,8 +492,6 @@ File Bug</h3>
                     return self.send_report_submit()
                 elif name=='favicon.ico':
                     return self.send_path(posixpath.join(kResources,'bugcatcher.ico'))
-                elif name=='scanview.css':
-                    return self.send_path(posixpath.join(kResources,'scanview.css'))
         
         # Match directory entries.
         if components[-1] == '':
