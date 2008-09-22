@@ -31,6 +31,9 @@ namespace llvmc {
     /// PopulateCompilationGraph - The auto-generated function that
     /// populates the compilation graph with nodes and edges.
     virtual void PopulateCompilationGraph(CompilationGraph&) const = 0;
+
+    /// Needed to avoid a compiler warning.
+    virtual ~BasePlugin() {};
   };
 
   typedef llvm::Registry<BasePlugin> PluginRegistry;
