@@ -32,6 +32,14 @@ namespace llvmc {
 
   typedef llvm::StringSet<> InputLanguagesSet;
 
+  /// LanguageMap - Maps from extensions to language names.
+  class LanguageMap : public llvm::StringMap<std::string> {
+  public:
+
+    /// GetLanguage -  Find the language name corresponding to a given file.
+    const std::string& GetLanguage(const llvm::sys::Path&) const;
+  };
+
   /// Edge - Represents an edge of the compilation graph.
   class Edge : public llvm::RefCountedBaseVPTR<Edge> {
   public:
@@ -128,7 +136,7 @@ namespace llvmc {
 
     /// Build - Build target(s) from the input file set. Command-line
     /// options are passed implicitly as global variables.
-    int Build(llvm::sys::Path const& tempDir);
+    int Build(llvm::sys::Path const& TempDir, const LanguageMap& LangMap);
 
     /// getNode - Return a reference to the node correponding to the
     /// given tool name. Throws std::runtime_error.
@@ -161,16 +169,19 @@ namespace llvmc {
     /// starting at StartNode.
     void PassThroughGraph (const llvm::sys::Path& In, const Node* StartNode,
                            const InputLanguagesSet& InLangs,
-                           const llvm::sys::Path& TempDir) const;
+                           const llvm::sys::Path& TempDir,
+                           const LanguageMap& LangMap) const;
 
     /// FindToolChain - Find head of the toolchain corresponding to the given file.
     const Node* FindToolChain(const llvm::sys::Path& In,
-                              const std::string* forceLanguage,
-                              InputLanguagesSet& InLangs) const;
+                              const std::string* ForceLanguage,
+                              InputLanguagesSet& InLangs,
+                              const LanguageMap& LangMap) const;
 
     /// BuildInitial - Traverse the initial parts of the toolchains.
     void BuildInitial(InputLanguagesSet& InLangs,
-                      const llvm::sys::Path& TempDir);
+                      const llvm::sys::Path& TempDir,
+                      const LanguageMap& LangMap);
 
     /// TopologicalSort - Sort the nodes in topological order.
     void TopologicalSort(std::vector<const Node*>& Out);

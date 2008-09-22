@@ -20,12 +20,12 @@
 
 namespace llvmc {
 
-  typedef llvm::StringMap<std::string> LanguageMap;
+  class LanguageMap;
   class CompilationGraph;
 
   /// PopulateLanguageMap - The auto-generated function that fills in
   /// the language map (map from file extensions to language names).
-  void PopulateLanguageMap();
+  void PopulateLanguageMap(LanguageMap& langMap);
   /// PopulateCompilationGraph - The auto-generated function that
   /// populates the compilation graph with nodes and edges.
   void PopulateCompilationGraph(CompilationGraph& tools);

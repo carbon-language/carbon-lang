@@ -36,11 +36,13 @@ namespace llvmc {
 
     virtual Action GenerateAction (const PathVector& inFiles,
                                    const llvm::sys::Path& outFile,
-                                   const InputLanguagesSet& InLangs) const = 0;
+                                   const InputLanguagesSet& InLangs,
+                                   const LanguageMap& LangMap) const = 0;
 
     virtual Action GenerateAction (const llvm::sys::Path& inFile,
                                    const llvm::sys::Path& outFile,
-                                   const InputLanguagesSet& InLangs) const = 0;
+                                   const InputLanguagesSet& InLangs,
+                                   const LanguageMap& LangMap) const = 0;
 
     virtual const char*  Name() const = 0;
     virtual const char** InputLanguages() const = 0;
@@ -59,8 +61,9 @@ namespace llvmc {
     bool JoinListEmpty() const { return JoinList_.empty(); }
 
     Action GenerateAction(const llvm::sys::Path& outFile,
-                          const InputLanguagesSet& InLangs) const {
-      return GenerateAction(JoinList_, outFile, InLangs);
+                          const InputLanguagesSet& InLangs,
+                          const LanguageMap& LangMap) const {
+      return GenerateAction(JoinList_, outFile, InLangs, LangMap);
     }
     // We shouldn't shadow base class's version of GenerateAction.
     using Tool::GenerateAction;

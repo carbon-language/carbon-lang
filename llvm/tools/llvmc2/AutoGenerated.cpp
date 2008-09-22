@@ -24,11 +24,6 @@
 using namespace llvm;
 using namespace llvmc;
 
-namespace llvmc {
-  extern LanguageMap GlobalLanguageMap;
-  extern const std::string& GetLanguage(const sys::Path& File);
-}
-
 extern cl::opt<std::string> OutputFilename;
 
 // The auto-generated file

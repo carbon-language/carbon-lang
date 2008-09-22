@@ -55,14 +55,14 @@ cl::opt<bool> SaveTemps("save-temps",
 
 namespace {
   /// BuildTargets - A small wrapper for CompilationGraph::Build.
-  int BuildTargets(CompilationGraph& graph) {
+  int BuildTargets(CompilationGraph& graph, const LanguageMap& langMap) {
     int ret;
     const sys::Path& tempDir = SaveTemps
       ? sys::Path("")
       : sys::Path(sys::Path::GetTemporaryDirectory());
 
     try {
-      ret = graph.Build(tempDir);
+      ret = graph.Build(tempDir, langMap);
     }
     catch(...) {
       tempDir.eraseFromDisk(true);
@@ -77,10 +77,13 @@ namespace {
 
 int main(int argc, char** argv) {
   try {
+    LanguageMap langMap;
     CompilationGraph graph;
 
     cl::ParseCommandLineOptions
       (argc, argv, "LLVM Compiler Driver (Work In Progress)", true);
+
+    PopulateLanguageMap(langMap);
     PopulateCompilationGraph(graph);
 
     if (WriteGraph) {
@@ -98,7 +101,7 @@ int main(int argc, char** argv) {
       throw std::runtime_error("no input files");
     }
 
-    return BuildTargets(graph);
+    return BuildTargets(graph, langMap);
   }
   catch(llvmc::error_code& ec) {
     return ec.code();

@@ -33,13 +33,10 @@ extern cl::opt<std::string> OutputFilename;
 extern cl::list<std::string> Languages;
 
 namespace llvmc {
-  /// ExtsToLangs - Map from file extensions to language names.
-  LanguageMap GlobalLanguageMap;
 
-  /// GetLanguage -  Find the language name corresponding to the given file.
-  const std::string& GetLanguage(const sys::Path& File) {
-    LanguageMap::const_iterator Lang = GlobalLanguageMap.find(File.getSuffix());
-    if (Lang == GlobalLanguageMap.end())
+  const std::string& LanguageMap::GetLanguage(const sys::Path& File) const {
+    LanguageMap::const_iterator Lang = this->find(File.getSuffix());
+    if (Lang == this->end())
       throw std::runtime_error("Unknown suffix: " + File.getSuffix());
     return Lang->second;
   }
@@ -165,7 +162,8 @@ namespace {
 void CompilationGraph::PassThroughGraph (const sys::Path& InFile,
                                          const Node* StartNode,
                                          const InputLanguagesSet& InLangs,
-                                         const sys::Path& TempDir) const {
+                                         const sys::Path& TempDir,
+                                         const LanguageMap& LangMap) const {
   bool Last = false;
   sys::Path In = InFile;
   const Node* CurNode = StartNode;
@@ -196,7 +194,7 @@ void CompilationGraph::PassThroughGraph (const sys::Path& InFile,
       Out = MakeTempFile(TempDir, In.getBasename(), CurTool->OutputSuffix());
     }
 
-    if (int ret = CurTool->GenerateAction(In, Out, InLangs).Execute())
+    if (int ret = CurTool->GenerateAction(In, Out, InLangs, LangMap).Execute())
       throw error_code(ret);
 
     if (Last)
@@ -212,12 +210,12 @@ void CompilationGraph::PassThroughGraph (const sys::Path& InFile,
 // Find the head of the toolchain corresponding to the given file.
 // Also, insert an input language into InLangs.
 const Node* CompilationGraph::
-FindToolChain(const sys::Path& In, const std::string* forceLanguage,
-              InputLanguagesSet& InLangs) const {
+FindToolChain(const sys::Path& In, const std::string* ForceLanguage,
+              InputLanguagesSet& InLangs, const LanguageMap& LangMap) const {
 
   // Determine the input language.
   const std::string& InLanguage =
-    forceLanguage ? *forceLanguage : GetLanguage(In);
+    ForceLanguage ? *ForceLanguage : LangMap.GetLanguage(In);
 
   // Add the current input language to the input language set.
   InLangs.insert(InLanguage);
@@ -234,7 +232,8 @@ FindToolChain(const sys::Path& In, const std::string* forceLanguage,
 // Traverses initial portions of the toolchains (up to the first Join node).
 // This function is also responsible for handling the -x option.
 void CompilationGraph::BuildInitial (InputLanguagesSet& InLangs,
-                                     const sys::Path& TempDir) {
+                                     const sys::Path& TempDir,
+                                     const LanguageMap& LangMap) {
   // This is related to -x option handling.
   cl::list<std::string>::const_iterator xIter = Languages.begin(),
     xBegin = xIter, xEnd = Languages.end();
@@ -283,9 +282,9 @@ void CompilationGraph::BuildInitial (InputLanguagesSet& InLangs,
     }
 
     // Find the toolchain corresponding to this file.
-    const Node* N = FindToolChain(In, xLanguage, InLangs);
+    const Node* N = FindToolChain(In, xLanguage, InLangs, LangMap);
     // Pass file through the chain starting at head.
-    PassThroughGraph(In, N, InLangs, TempDir);
+    PassThroughGraph(In, N, InLangs, TempDir, LangMap);
   }
 }
 
@@ -324,12 +323,13 @@ TopologicalSortFilterJoinNodes(std::vector<const Node*>& Out) {
                       std::back_inserter(Out), NotJoinNode);
 }
 
-int CompilationGraph::Build (const sys::Path& TempDir) {
+int CompilationGraph::Build (const sys::Path& TempDir,
+                             const LanguageMap& LangMap) {
 
   InputLanguagesSet InLangs;
 
   // Traverse initial parts of the toolchains and fill in InLangs.
-  BuildInitial(InLangs, TempDir);
+  BuildInitial(InLangs, TempDir, LangMap);
 
   std::vector<const Node*> JTV;
   TopologicalSortFilterJoinNodes(JTV);
@@ -362,14 +362,14 @@ int CompilationGraph::Build (const sys::Path& TempDir) {
       Out = MakeTempFile(TempDir, "tmp", JT->OutputSuffix());
     }
 
-    if (int ret = JT->GenerateAction(Out, InLangs).Execute())
+    if (int ret = JT->GenerateAction(Out, InLangs, LangMap).Execute())
       throw error_code(ret);
 
     if (!IsLast) {
       const Node* NextNode =
         &getNode(ChooseEdge(CurNode->OutEdges, InLangs,
                             CurNode->Name())->ToolName());
-      PassThroughGraph(Out, NextNode, InLangs, TempDir);
+      PassThroughGraph(Out, NextNode, InLangs, TempDir, LangMap);
     }
   }
 

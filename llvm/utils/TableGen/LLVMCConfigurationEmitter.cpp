@@ -826,8 +826,9 @@ bool EmitCaseTest1Arg(const std::string& TestName,
     O << "InLangs.count(\"" << OptName << "\") != 0";
     return true;
   } else if (TestName == "in_language") {
+    // TODO: remove this restriction
     // Works only for cmd_line!
-    O << "GetLanguage(inFile) == \"" << OptName << '\"';
+    O << "LangMap.GetLanguage(inFile) == \"" << OptName << '\"';
     return true;
   } else if (TestName == "not_empty") {
     if (OptName == "o") {
@@ -1205,7 +1206,8 @@ void EmitGenerateActionMethod (const ToolProperties& P,
     O << Indent1 << "Action GenerateAction(const sys::Path& inFile,\n";
 
   O << Indent2 << "const sys::Path& outFile,\n"
-    << Indent2 << "const InputLanguagesSet& InLangs) const\n"
+    << Indent2 << "const InputLanguagesSet& InLangs,\n"
+    << Indent2 << "const LanguageMap& LangMap) const\n"
     << Indent1 << "{\n"
     << Indent2 << "const char* cmd;\n"
     << Indent2 << "std::vector<std::string> vec;\n";
@@ -1245,7 +1247,8 @@ void EmitGenerateActionMethods (const ToolProperties& P,
   if (!P.isJoin())
     O << Indent1 << "Action GenerateAction(const PathVector& inFiles,\n"
       << Indent2 << "const llvm::sys::Path& outFile,\n"
-      << Indent2 << "const InputLanguagesSet& InLangs) const\n"
+      << Indent2 << "const InputLanguagesSet& InLangs,\n"
+      << Indent2 << "const LanguageMap& LangMap) const\n"
       << Indent1 << "{\n"
       << Indent2 << "throw std::runtime_error(\"" << P.Name
       << " is not a Join tool!\");\n"
@@ -1451,7 +1454,7 @@ void EmitPopulateLanguageMap (const RecordKeeper& Records, std::ostream& O)
     throw std::string("Error in the language map definition!");
 
   // Generate code
-  O << "void llvmc::PopulateLanguageMap() {\n";
+  O << "void llvmc::PopulateLanguageMap(LanguageMap& langMap) {\n";
 
   for (unsigned i = 0; i < LangsToSuffixesList->size(); ++i) {
     Record* LangToSuffixes = LangsToSuffixesList->getElementAsRecord(i);
@@ -1460,7 +1463,7 @@ void EmitPopulateLanguageMap (const RecordKeeper& Records, std::ostream& O)
     const ListInit* Suffixes = LangToSuffixes->getValueAsListInit("suffixes");
 
     for (unsigned i = 0; i < Suffixes->size(); ++i)
-      O << Indent1 << "GlobalLanguageMap[\""
+      O << Indent1 << "langMap[\""
         << InitPtrToString(Suffixes->getElement(i))
         << "\"] = \"" << Lang << "\";\n";
   }
@@ -1588,8 +1591,7 @@ void EmitPopulateCompilationGraph (Record* CompilationGraph,
   ListInit* edges = CompilationGraph->getValueAsListInit("edges");
 
   // Generate code
-  O << "void llvmc::PopulateCompilationGraph(CompilationGraph& G) {\n"
-    << Indent1 << "PopulateLanguageMap();\n\n";
+  O << "void llvmc::PopulateCompilationGraph(CompilationGraph& G) {\n";
 
   // Insert vertices
 
