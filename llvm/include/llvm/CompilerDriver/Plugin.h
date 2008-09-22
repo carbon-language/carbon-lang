@@ -33,7 +33,7 @@ namespace llvmc {
     virtual void PopulateCompilationGraph(CompilationGraph&) const = 0;
 
     /// Needed to avoid a compiler warning.
-    virtual ~BasePlugin() {};
+    virtual ~BasePlugin() {}
   };
 
   typedef llvm::Registry<BasePlugin> PluginRegistry;
