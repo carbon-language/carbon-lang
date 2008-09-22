@@ -16,18 +16,36 @@ import ConfigParser
 
 # Keys replaced by server.
 
-kReportColRE = re.compile('<!-- REPORTBUGCOL -->')
-kReportColRepl = '<td></td>'
-#<td></td>'
-kReportBugRE = re.compile('<!-- REPORTBUG id="report-(.*)\\.html" -->')         
-kReportBugRepl = '<td class="Button"><a href="report/\\1">Report Bug</a></td>'
-# + 
-#                  '<td class="Button"><a href="open/\\1">Open File</a></td>')
 kBugKeyValueRE = re.compile('<!-- BUG([^ ]*) (.*) -->')
 
-kReportReplacements = [(kReportColRE, kReportColRepl),
-                       (kReportBugRE, kReportBugRepl)]
+kReportReplacements = []
 
+# Add custom javascript.
+kReportReplacements.append((re.compile('<!-- SUMMARYENDHEAD -->'), """\
+<script language="javascript" type="text/javascript">
+function load(url) {
+  if (window.XMLHttpRequest) {
+    req = new XMLHttpRequest();
+  } else if (window.ActiveXObject) {
+    req = new ActiveXObject("Microsoft.XMLHTTP");
+  }
+  if (req != undefined) {
+    req.open("GET", url, true);
+    req.send("");
+  }
+}
+</script>"""))
+
+# Insert additional columns.
+kReportReplacements.append((re.compile('<!-- REPORTBUGCOL -->'), 
+                            '<td></td><td></td>'))
+
+# Insert report bug and open file links.
+kReportReplacements.append((re.compile('<!-- REPORTBUG id="report-(.*)\\.html" -->'),
+                            ('<td class="Button"><a href="report/\\1">Report Bug</a></td>' + 
+                             '<td class="Button"><a href="javascript:load(\'open/\\1\')">Open File</a></td>')))
+
+###
 # Other simple parameters
 
 kResources = posixpath.join(posixpath.dirname(__file__), 'Resources')
