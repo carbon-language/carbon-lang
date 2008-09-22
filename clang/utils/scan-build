@@ -19,6 +19,9 @@ use Digest::MD5;
 use File::Basename;
 use Term::ANSIColor;
 use Term::ANSIColor qw(:constants);
+use Cwd;
+use Sys::Hostname;
+use File::Basename;
 
 my $Verbose = 0;       # Verbose output from this script.
 my $Prog = "scan-build";
@@ -29,6 +32,17 @@ my $CXX;  # Leave undefined initially.
 my $TERM = $ENV{'TERM'};
 my $UseColor = (defined $TERM and $TERM eq 'xterm-color' and -t STDOUT
                 and defined $ENV{'SCAN_BUILD_COLOR'});
+
+my $UserName = HtmlEscape(getpwuid($<) || 'unknown');
+my $HostName = HtmlEscape(hostname() || 'unknown');
+my $CurrentDir = HtmlEscape(getcwd());
+my $CurrentDirSuffix = basename($CurrentDir);
+
+my $CmdArgs;
+
+my $HtmlTitle;
+
+my $Date = localtime();
 
 ##----------------------------------------------------------------------------##
 # Diagnostics
@@ -450,13 +464,15 @@ sub Postprocess {
 print OUT <<ENDTEXT;
 <html>
 <head>
+<title>${HtmlTitle}</title>
 <style type="text/css">
  body { color:#000000; background-color:#ffffff }
  body { font-family: Helvetica, sans-serif; font-size:9pt }
- h3 { font-size:12pt }
+ h1 { font-size: 14pt; }
+ h2 { font-size: 12pt; }
  table { font-size:9pt }
  table { border-spacing: 0px; border: 1px solid black }
- table thead {
+ th, table thead {
    background-color:#eee; color:#666666;
    font-weight: bold; cursor: default;
    text-align:center;
@@ -507,6 +523,20 @@ function ToggleDisplay(CheckButton, ClassName) {
 </script>
 </head>
 <body>
+<h1>${HtmlTitle}</h1>
+
+<table>
+<tr><th>User:</th><td>${UserName}\@${HostName}</td></tr>
+<tr><th>Working Directory:</th><td>${CurrentDir}</td></tr>
+<tr><th>Command Line:</th><td>${CmdArgs}</td></tr>
+<tr><th>Date:</th><td>${Date}</td></tr>
+ENDTEXT
+
+print OUT "<tr><th>Version:</th><td>${BuildName} (${BuildDate})</td></tr>\n"
+  if (defined($BuildName) && defined($BuildDate));
+
+print OUT <<ENDTEXT;
+</table>
 ENDTEXT
 
   if (scalar(@files)) {
@@ -522,7 +552,7 @@ ENDTEXT
       else { $Totals{$key}->[0]++; }
     }
 
-    print OUT "<h3>Bug Summary</h3>";
+    print OUT "<h2>Bug Summary</h2>";
 
     if (defined $BuildName) {
       print OUT "\n<p>Results in this analysis run are based on analyzer build <b>$BuildName</b>.</p>\n"
@@ -563,7 +593,7 @@ ENDTEXT
 
 print OUT <<ENDTEXT;
 </table>
-<h3>Reports</h3>
+<h2>Reports</h2>
 
 <table class="sortable" style="table-layout:automatic">
 <thead><tr>
@@ -669,7 +699,7 @@ ENDTEXT
 
     if (scalar(@files)) {
       print OUT <<ENDTEXT;
-<h3>Analyzer Failures</h3>
+<h2>Analyzer Failures</h2>
 
 <p>The analyzer had problems processing the following files:</p>
 
@@ -819,6 +849,9 @@ OPTIONS:
                   This is a convenience option; one can specify this
                   behavior directly using build options.
 
+ --html-title [title]       - Specify the title used on generated HTML pages.
+ --html-title=[title]         If not specified, a default title will be used.
+
  --status-bugs  - By default, the exit status of $Prog is the same as the
                   executed build command.  Specifying this option causes the
                   exit status of $Prog to be 1 if it found potential bugs
@@ -876,6 +909,34 @@ ENDTEXT
 }
 
 ##----------------------------------------------------------------------------##
+# HtmlEscape - HTML entity encode characters that are special in HTML
+##----------------------------------------------------------------------------##
+
+sub HtmlEscape {
+  # copy argument to new variable so we don't clobber the original
+  my $arg = shift || '';
+  my $tmp = $arg;
+
+  $tmp =~ s/([\<\>\'\"])/sprintf("&#%02x;", chr($1))/ge;
+
+  return $tmp;
+}
+
+##----------------------------------------------------------------------------##
+# ShellEscape - backslash escape characters that are special to the shell
+##----------------------------------------------------------------------------##
+
+sub ShellEscape {
+  # copy argument to new variable so we don't clobber the original
+  my $arg = shift || '';
+  my $tmp = $arg;
+
+  $tmp =~ s/([\!\;\\\'\"\`\<\>\|\s\(\)\[\]\?\#\$\^\&\*\=])/\\$1/g;
+
+  return $tmp;
+}
+
+##----------------------------------------------------------------------------##
 # Process command-line arguments.
 ##----------------------------------------------------------------------------##
 
@@ -917,6 +978,22 @@ while (@ARGV) {
     $HtmlDir = shift @ARGV;
     next;
   }
+
+  if ($arg =~ /^--html-title(=(.+))?$/) {
+    shift @ARGV;
+
+    if ($2 eq '') {
+      if (!@ARGV) {
+        DieDiag("'--html-title' option requires a string.\n");
+      }
+
+      $HtmlTitle = shift @ARGV;
+    } else {
+      $HtmlTitle = $2;
+    }
+
+    next;
+  }
   
   if ($arg eq "-k" or $arg eq "--keep-going") {
     shift @ARGV;
@@ -942,7 +1019,7 @@ while (@ARGV) {
     next;
   }
   
-  if ($arg =~ /^--use-c[+][+](=(.+))?$/) {
+  if ($arg =~ /^--use-c\+\+(=(.+))?$/) {
     shift @ARGV;
     
     if ($2 eq "") {
@@ -986,7 +1063,9 @@ if (!@ARGV) {
   exit 1;
 }
 
-
+$CmdArgs = HtmlEscape(join(' ', map(ShellEscape($_), @ARGV)));
+$HtmlTitle = "${CurrentDirSuffix} - scan-build results"
+  unless (defined($HtmlTitle));
 
 # Determine the output directory for the HTML reports.
 my $BaseDir = $HtmlDir;
