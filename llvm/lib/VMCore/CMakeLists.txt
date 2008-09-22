@@ -1,0 +1,32 @@
+add_llvm_library(LLVMVMCore
+  AsmWriter.cpp
+  AutoUpgrade.cpp
+  BasicBlock.cpp
+  ConstantFold.cpp
+  Constants.cpp
+  Core.cpp
+  DebugInfoBuilder.cpp
+  Dominators.cpp
+  Function.cpp
+  Globals.cpp
+  InlineAsm.cpp
+  Instruction.cpp
+  Instructions.cpp
+  IntrinsicInst.cpp
+  LeakDetector.cpp
+  Mangler.cpp
+  Module.cpp
+  ModuleProvider.cpp
+  ParameterAttributes.cpp
+  Pass.cpp
+  PassManager.cpp
+  Type.cpp
+  TypeSymbolTable.cpp
+  Use.cpp
+  Value.cpp
+  ValueSymbolTable.cpp
+  ValueTypes.cpp
+  Verifier.cpp
+  )
+
+add_dependencies( LLVMVMCore ${llvm_builded_incs_dir}/Intrinsics.gen )
