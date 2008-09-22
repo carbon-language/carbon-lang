@@ -1,4 +1,4 @@
-//===- Graph.td - LLVMCC toolchain descriptions ------------*- tablegen -*-===//
+//===- Graph.td - LLVMC2 toolchain descriptions ------------*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains compilation graph description used by llvmcc.
+// This file contains compilation graph description used by llvmc2.
 //
 //===----------------------------------------------------------------------===//
 

@@ -1,4 +1,4 @@
-//===- Tools.td - Tools description for the LLVMCC  --------*- tablegen -*-===//
+//===- Tools.td - Tools description for LLVMC2 -------------*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,19 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains descriptions of the various build tools run by llvmcc.
+// This file contains descriptions of the various build tools run by llvmc2.
 //
 //===----------------------------------------------------------------------===//
-
-// TOTHINK: Open issue: should we use DAG lists in Tool specifications
-// or change to something like
-
-// def LLVMGccC : < Tool<
-// [ InLanguage<"c">,
-//   PrefixListOption<"Wl", [UnpackValues, PropertyName<Arg>, ...]>
-//  ...] ?
-
-// DAG lists look more aesthetically pleasing to me.
 
 def llvm_gcc_c : Tool<
 [(in_language "c"),
