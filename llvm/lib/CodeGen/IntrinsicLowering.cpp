@@ -629,6 +629,28 @@ static Instruction *LowerPartSet(CallInst *CI) {
   return CallInst::Create(F, Args, array_endof(Args), CI->getName(), CI);
 }
 
+static void ReplaceFPIntrinsicWithCall(CallInst *CI, Constant *FCache,
+                                       Constant *DCache, Constant *LDCache,
+                                       const char *Fname, const char *Dname,
+                                       const char *LDname) {
+  switch (CI->getOperand(1)->getType()->getTypeID()) {
+  default: assert(0 && "Invalid type in intrinsic"); abort();
+  case Type::FloatTyID:
+    ReplaceCallWith(Fname, CI, CI->op_begin()+1, CI->op_end(),
+                  Type::FloatTy, FCache);
+    break;
+  case Type::DoubleTyID:
+    ReplaceCallWith(Dname, CI, CI->op_begin()+1, CI->op_end(),
+                  Type::DoubleTy, DCache);
+    break;
+  case Type::X86_FP80TyID:
+  case Type::FP128TyID:
+  case Type::PPC_FP128TyID:
+    ReplaceCallWith(LDname, CI, CI->op_begin()+1, CI->op_end(),
+                  CI->getOperand(1)->getType(), LDCache);
+    break;
+  }
+}
 
 void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
   Function *Callee = CI->getCalledFunction();
@@ -821,164 +843,59 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
     break;
   }
   case Intrinsic::sqrt: {
-    static Constant *sqrtfFCache = 0;
     static Constant *sqrtFCache = 0;
+    static Constant *sqrtDCache = 0;
     static Constant *sqrtLDCache = 0;
-    switch (CI->getOperand(1)->getType()->getTypeID()) {
-    default: assert(0 && "Invalid type in sqrt"); abort();
-    case Type::FloatTyID:
-      ReplaceCallWith("sqrtf", CI, CI->op_begin()+1, CI->op_end(),
-                    Type::FloatTy, sqrtfFCache);
-      break;
-    case Type::DoubleTyID:
-      ReplaceCallWith("sqrt", CI, CI->op_begin()+1, CI->op_end(),
-                    Type::DoubleTy, sqrtFCache);
-      break;
-    case Type::X86_FP80TyID:
-    case Type::FP128TyID:
-    case Type::PPC_FP128TyID:
-      ReplaceCallWith("sqrtl", CI, CI->op_begin()+1, CI->op_end(),
-                    CI->getOperand(1)->getType(), sqrtLDCache);
-      break;
-    }
+    ReplaceFPIntrinsicWithCall(CI, sqrtFCache, sqrtDCache, sqrtLDCache,
+                               "sqrtf", "sqrt", "sqrtl");
     break;
   }
   case Intrinsic::log: {
-    static Constant *logfFCache = 0;
     static Constant *logFCache = 0;
+    static Constant *logDCache = 0;
     static Constant *logLDCache = 0;
-    switch (CI->getOperand(1)->getType()->getTypeID()) {
-    default: assert(0 && "Invalid type in log"); abort();
-    case Type::FloatTyID:
-      ReplaceCallWith("logf", CI, CI->op_begin()+1, CI->op_end(),
-                    Type::FloatTy, logfFCache);
-      break;
-    case Type::DoubleTyID:
-      ReplaceCallWith("log", CI, CI->op_begin()+1, CI->op_end(),
-                    Type::DoubleTy, logFCache);
-      break;
-    case Type::X86_FP80TyID:
-    case Type::FP128TyID:
-    case Type::PPC_FP128TyID:
-      ReplaceCallWith("logl", CI, CI->op_begin()+1, CI->op_end(),
-                    CI->getOperand(1)->getType(), logLDCache);
-      break;
-    }
+    ReplaceFPIntrinsicWithCall(CI, logFCache, logDCache, logLDCache,
+                               "logf", "log", "logl");
     break;
   }
   case Intrinsic::log2: {
-    static Constant *log2fFCache = 0;
     static Constant *log2FCache = 0;
+    static Constant *log2DCache = 0;
     static Constant *log2LDCache = 0;
-    switch (CI->getOperand(1)->getType()->getTypeID()) {
-    default: assert(0 && "Invalid type in log2"); abort();
-    case Type::FloatTyID:
-      ReplaceCallWith("log2f", CI, CI->op_begin()+1, CI->op_end(),
-                    Type::FloatTy, log2fFCache);
-      break;
-    case Type::DoubleTyID:
-      ReplaceCallWith("log2", CI, CI->op_begin()+1, CI->op_end(),
-                    Type::DoubleTy, log2FCache);
-      break;
-    case Type::X86_FP80TyID:
-    case Type::FP128TyID:
-    case Type::PPC_FP128TyID:
-      ReplaceCallWith("log2l", CI, CI->op_begin()+1, CI->op_end(),
-                    CI->getOperand(1)->getType(), log2LDCache);
-      break;
-    }
+    ReplaceFPIntrinsicWithCall(CI, log2FCache, log2DCache, log2LDCache,
+                               "log2f", "log2", "log2l");
     break;
   }
   case Intrinsic::log10: {
-    static Constant *log10fFCache = 0;
     static Constant *log10FCache = 0;
+    static Constant *log10DCache = 0;
     static Constant *log10LDCache = 0;
-    switch (CI->getOperand(1)->getType()->getTypeID()) {
-    default: assert(0 && "Invalid type in log10"); abort();
-    case Type::FloatTyID:
-      ReplaceCallWith("log10f", CI, CI->op_begin()+1, CI->op_end(),
-                    Type::FloatTy, log10fFCache);
-      break;
-    case Type::DoubleTyID:
-      ReplaceCallWith("log10", CI, CI->op_begin()+1, CI->op_end(),
-                    Type::DoubleTy, log10FCache);
-      break;
-    case Type::X86_FP80TyID:
-    case Type::FP128TyID:
-    case Type::PPC_FP128TyID:
-      ReplaceCallWith("log10l", CI, CI->op_begin()+1, CI->op_end(),
-                    CI->getOperand(1)->getType(), log10LDCache);
-      break;
-    }
+    ReplaceFPIntrinsicWithCall(CI, log10FCache, log10DCache, log10LDCache,
+                               "log10f", "log10", "log10l");
     break;
   }
   case Intrinsic::exp: {
-    static Constant *expfFCache = 0;
     static Constant *expFCache = 0;
+    static Constant *expDCache = 0;
     static Constant *expLDCache = 0;
-    switch (CI->getOperand(1)->getType()->getTypeID()) {
-    default: assert(0 && "Invalid type in exp"); abort();
-    case Type::FloatTyID:
-      ReplaceCallWith("expf", CI, CI->op_begin()+1, CI->op_end(),
-                    Type::FloatTy, expfFCache);
-      break;
-    case Type::DoubleTyID:
-      ReplaceCallWith("exp", CI, CI->op_begin()+1, CI->op_end(),
-                    Type::DoubleTy, expFCache);
-      break;
-    case Type::X86_FP80TyID:
-    case Type::FP128TyID:
-    case Type::PPC_FP128TyID:
-      ReplaceCallWith("expl", CI, CI->op_begin()+1, CI->op_end(),
-                    CI->getOperand(1)->getType(), expLDCache);
-      break;
-    }
+    ReplaceFPIntrinsicWithCall(CI, expFCache, expDCache, expLDCache,
+                               "expf", "exp", "expl");
     break;
   }
   case Intrinsic::exp2: {
-    static Constant *exp2fFCache = 0;
     static Constant *exp2FCache = 0;
+    static Constant *exp2DCache = 0;
     static Constant *exp2LDCache = 0;
-    switch (CI->getOperand(1)->getType()->getTypeID()) {
-    default: assert(0 && "Invalid type in exp2"); abort();
-    case Type::FloatTyID:
-      ReplaceCallWith("exp2f", CI, CI->op_begin()+1, CI->op_end(),
-                    Type::FloatTy, exp2fFCache);
-      break;
-    case Type::DoubleTyID:
-      ReplaceCallWith("exp2", CI, CI->op_begin()+1, CI->op_end(),
-                    Type::DoubleTy, exp2FCache);
-      break;
-    case Type::X86_FP80TyID:
-    case Type::FP128TyID:
-    case Type::PPC_FP128TyID:
-      ReplaceCallWith("exp2l", CI, CI->op_begin()+1, CI->op_end(),
-                    CI->getOperand(1)->getType(), exp2LDCache);
-      break;
-    }
+    ReplaceFPIntrinsicWithCall(CI, exp2FCache, exp2DCache, exp2LDCache,
+                               "exp2f", "exp2", "exp2l");
     break;
   }
   case Intrinsic::pow: {
-    static Constant *powfFCache = 0;
     static Constant *powFCache = 0;
+    static Constant *powDCache = 0;
     static Constant *powLDCache = 0;
-    switch (CI->getOperand(1)->getType()->getTypeID()) {
-    default: assert(0 && "Invalid type in pow"); abort();
-    case Type::FloatTyID:
-      ReplaceCallWith("powf", CI, CI->op_begin()+1, CI->op_end(),
-                    Type::FloatTy, powfFCache);
-      break;
-    case Type::DoubleTyID:
-      ReplaceCallWith("pow", CI, CI->op_begin()+1, CI->op_end(),
-                    Type::DoubleTy, powFCache);
-      break;
-    case Type::X86_FP80TyID:
-    case Type::FP128TyID:
-    case Type::PPC_FP128TyID:
-      ReplaceCallWith("powl", CI, CI->op_begin()+1, CI->op_end(),
-                    CI->getOperand(1)->getType(), powLDCache);
-      break;
-    }
+    ReplaceFPIntrinsicWithCall(CI, powFCache, powDCache, powLDCache,
+                               "powf", "pow", "powl");
     break;
   }
   case Intrinsic::flt_rounds:
