@@ -743,7 +743,7 @@ ENDTEXT
   my $Num = scalar(@Index);
   Diag("$Num bugs found.\n");
   if ($Num > 0 && -r "$Dir/index.html") {
-    Diag("Open '$Dir/index.html' to examine bug reports.\n");
+    Diag("Run 'scan-view $Dir' to examine bug reports.\n");
   }
   
   DiagCrashes($Dir) if ($Crashes);
@@ -1118,9 +1118,11 @@ my $ExitStatus = RunBuildCommand(\@ARGV, $IgnoreErrors, $Cmd);
 my $NumBugs = Postprocess($HtmlDir, $BaseDir);
 
 if ($ViewResults and -r "$HtmlDir/index.html") {
-  # Only works on Mac OS X (for now).
-  print "Viewing analysis results: '$HtmlDir/index.html'\n";
-  system("open", "$HtmlDir/index.html");
+  Diag 'analysis run complete.\n';
+  Diag "Viewing analysis results in '$HtmlDir' using scan-view.\n";
+  my $ScanView = "$RealBin/scan-view";
+  if (! -x $ScanView) { $ScanView = "scan-view"; }
+  exec $ScanView, "$HtmlDir";
 }
 
 if ($ExitStatusFoundBugs) {
