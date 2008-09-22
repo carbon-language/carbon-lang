@@ -633,20 +633,13 @@ ENDTEXT
       
       # Update the file prefix.      
       my $fname = $row->[3];
-      my $full_fname = $fname;
 
       if (defined $regex) {
         $fname =~ s/$regex//;
         UpdateInFilePath("$Dir/$ReportFile", $InFileRegex, $InFilePrefix)
       }
       
-      print OUT "<td>";
-      my $has_fname = 0;
-      if (-r $full_fname) {
-        $has_fname = 1;
-        print OUT "<a href=\"$full_fname\">"
-      }
-      
+      print OUT "<td>";      
       my @fname = split /\//,$fname;
       if ($#fname > 0) {
         while ($#fname >= 0) {
@@ -659,11 +652,7 @@ ENDTEXT
       }
       else {
         print OUT $fname;
-      }
-      
-      if ($has_fname) {
-        print OUT "</a>"
-      }
+      }      
       print OUT "</td>";
       
       # Print out the quantities.
