@@ -2013,6 +2013,11 @@ struct DebugLabelFolder : public MachineFunctionPass {
   static char ID;
   DebugLabelFolder() : MachineFunctionPass(&ID) {}
 
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    AU.setPreservesAll();
+    MachineFunctionPass::getAnalysisUsage(AU);
+  }
+
   virtual bool runOnMachineFunction(MachineFunction &MF);
   virtual const char *getPassName() const { return "Label Folder"; }
 };

@@ -30,6 +30,11 @@ namespace {
       return "Subregister lowering instruction pass";
     }
 
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.setPreservesAll();
+      MachineFunctionPass::getAnalysisUsage(AU);
+    }
+
     /// runOnMachineFunction - pass entry point
     bool runOnMachineFunction(MachineFunction&);
     

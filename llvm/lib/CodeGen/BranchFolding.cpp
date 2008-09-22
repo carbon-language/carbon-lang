@@ -48,12 +48,12 @@ namespace {
   struct VISIBILITY_HIDDEN BranchFolder : public MachineFunctionPass {
     static char ID;
     explicit BranchFolder(bool defaultEnableTailMerge) : 
-        MachineFunctionPass(&ID) {
-          switch (FlagEnableTailMerge) {
-          case cl::BOU_UNSET: EnableTailMerge = defaultEnableTailMerge; break;
-          case cl::BOU_TRUE: EnableTailMerge = true; break;
-          case cl::BOU_FALSE: EnableTailMerge = false; break;
-          }
+      MachineFunctionPass(&ID) {
+      switch (FlagEnableTailMerge) {
+        case cl::BOU_UNSET: EnableTailMerge = defaultEnableTailMerge; break;
+        case cl::BOU_TRUE: EnableTailMerge = true; break;
+        case cl::BOU_FALSE: EnableTailMerge = false; break;
+      }
     }
 
     virtual bool runOnMachineFunction(MachineFunction &MF);

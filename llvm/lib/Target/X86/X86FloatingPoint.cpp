@@ -55,6 +55,11 @@ namespace {
     static char ID;
     FPS() : MachineFunctionPass(&ID) {}
 
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.setPreservesAll();
+      MachineFunctionPass::getAnalysisUsage(AU);
+    }
+
     virtual bool runOnMachineFunction(MachineFunction &MF);
 
     virtual const char *getPassName() const { return "X86 FP Stackifier"; }

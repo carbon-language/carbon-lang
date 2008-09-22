@@ -41,6 +41,11 @@ namespace {
       return "Prolog/Epilog Insertion & Frame Finalization";
     }
 
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.setPreservesAll();
+      MachineFunctionPass::getAnalysisUsage(AU);
+    }
+
     /// runOnMachineFunction - Insert prolog/epilog code and replace abstract
     /// frame indexes with appropriate references.
     ///

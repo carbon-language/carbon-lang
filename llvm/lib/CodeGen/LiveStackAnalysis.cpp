@@ -26,6 +26,7 @@ static RegisterPass<LiveStacks> X("livestacks", "Live Stack Slot Analysis");
 
 void LiveStacks::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesAll();
+  MachineFunctionPass::getAnalysisUsage(AU);
 }
 
 void LiveStacks::releaseMemory() {
