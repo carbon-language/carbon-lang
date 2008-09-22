@@ -25,8 +25,7 @@ char LiveStacks::ID = 0;
 static RegisterPass<LiveStacks> X("livestacks", "Live Stack Slot Analysis");
 
 void LiveStacks::getAnalysisUsage(AnalysisUsage &AU) const {
-  AU.addPreservedID(MachineLoopInfoID);
-  AU.addPreservedID(MachineDominatorsID);
+  AU.setPreservesAll();
   MachineFunctionPass::getAnalysisUsage(AU);
 }
 
