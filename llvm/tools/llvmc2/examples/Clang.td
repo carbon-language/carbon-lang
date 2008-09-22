@@ -1,6 +1,6 @@
 // A (first stab at a) replacement for the Clang's ccc script.
 // To compile, use this command:
-//    make TOOLNAME=ccc GRAPH=examples/Clang.td
+//    make TOOLNAME=ccc2 GRAPH=examples/Clang.td
 
 include "Common.td"
 
