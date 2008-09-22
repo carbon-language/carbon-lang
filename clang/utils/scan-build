@@ -388,8 +388,7 @@ sub ScanFile {
     $BugCategory = "Other";
   }
     
-  push @$Index,[ $FName, $BugCategory, $BugDesc, $BugFile, $BugLine,
-                 $BugPathLength ];
+  push @$Index,[ $FName, $BugCategory, $BugDesc, $BugFile, $BugLine ];
 }
 
 ##----------------------------------------------------------------------------##
@@ -601,7 +600,6 @@ print OUT <<ENDTEXT;
   <td class="sorttable_sorted">Bug Type<span id="sorttable_sortfwdind">&nbsp;&#x25BE;</span></td>
   <td>File</td>
   <td class="Q">Line</td>
-  <td class="Q">Path Length</td>
   <td class="sorttable_nosort"></td>
   <!-- REPORTBUGCOL -->
 </tr></thead>
@@ -669,12 +667,12 @@ ENDTEXT
       print OUT "</td>";
       
       # Print out the quantities.
-      for my $j ( 4 .. 5 ) {
+      for my $j ( 4 .. 4 ) {
         print OUT "<td class=\"Q\">$row->[$j]</td>";        
       }
       
       # Print the rest of the columns.
-      for (my $j = 6; $j <= $#{$row}; ++$j) {
+      for (my $j = 5; $j <= $#{$row}; ++$j) {
         print OUT "<td>$row->[$j]</td>"
       }
 
@@ -1118,7 +1116,7 @@ my $ExitStatus = RunBuildCommand(\@ARGV, $IgnoreErrors, $Cmd);
 my $NumBugs = Postprocess($HtmlDir, $BaseDir);
 
 if ($ViewResults and -r "$HtmlDir/index.html") {
-  Diag 'analysis run complete.\n';
+  Diag "Analysis run complete.\n";
   Diag "Viewing analysis results in '$HtmlDir' using scan-view.\n";
   my $ScanView = "$RealBin/scan-view";
   if (! -x $ScanView) { $ScanView = "scan-view"; }
