@@ -436,11 +436,12 @@ Sema::ExprResult Sema::ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
   // If we are in a block and the variable is outside the current block,
   // bind the variable reference with a BlockDeclRefExpr.
   
-  // If the variable is in the byref set, bind it directly, otherwise it will be
-  // bound by-copy, thus we make it const within the closure.
-  if (!CurBlock->ByRefVars.count(VD))
-    VD->getType().addConst();
+  // The BlocksAttr indicates the variable is bound by-reference.
+  if (VD->getAttr<BlocksAttr>())
+    return new BlockDeclRefExpr(VD, VD->getType(), Loc, true);
     
+  // Variable will be bound by-copy, make it const within the closure.
+  VD->getType().addConst();
   return new BlockDeclRefExpr(VD, VD->getType(), Loc, false);
 }
 

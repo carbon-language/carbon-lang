@@ -1038,7 +1038,6 @@ public:
 /// about the block.  It is pointed to from Sema::CurBlock.
 struct BlockSemaInfo {
   llvm::SmallVector<ParmVarDecl*, 8> Params;
-  llvm::SmallPtrSet<Decl*, 4> ByRefVars;
   bool hasPrototype;
   bool isVariadic;
   
