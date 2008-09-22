@@ -12,6 +12,7 @@ import time
 import socket
 
 import Reporter
+import ConfigParser
 
 # Keys replaced by server.
 
@@ -27,6 +28,7 @@ kReportReplacements = [(kReportColRE, kReportColRepl),
 # Other simple parameters
 
 kResources = posixpath.join(posixpath.dirname(__file__), 'Resources')
+kConfigPath = os.path.expanduser('~/.scanview.cfg')
 
 ###
 
@@ -71,7 +73,38 @@ class ScanViewServer(BaseHTTPServer.HTTPServer):
         self.reporters = reporters
         self.options = options        
         self.halted = False
+        self.config = None
+        self.load_config()
 
+    def load_config(self):
+        self.config = ConfigParser.RawConfigParser()
+
+        # Add defaults
+        self.config.add_section('ScanView')
+        for r in Reporter.getReporters():
+            self.config.add_section(r.getName())
+            for p in r.getParameterNames():
+                self.config.set(r.getName(), p, '')
+
+        # Ignore parse errors
+        try:
+            self.config.read([kConfigPath])
+        except:
+            pass
+
+        # Save on exit
+        import atexit
+        atexit.register(lambda: self.save_config())
+        
+    def save_config(self):
+        # Ignore errors (only called on exit).
+        try:
+            f = open(kConfigPath,'w')
+            self.config.write(f)
+            f.close()
+        except:
+            pass
+        
     def halt(self):
         self.halted = True
         if self.options.debug:
@@ -180,7 +213,7 @@ class ScanViewRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
         title = self.fields.get('title')
         description = self.fields.get('description')
         report = self.fields.get('report')
-        reporter = self.fields.get('reporter')
+        reporterIndex = self.fields.get('reporter')
 
         # Type check form parameters.
         reportPath = posixpath.join(self.server.root,
@@ -192,12 +225,12 @@ class ScanViewRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
         if not description:
             return (False, "Missing description.")
         try:
-            reporter = int(reporter)
+            reporterIndex = int(reporterIndex)
         except:
             return (False, "Invalid report method.")
         
         # Get the reporter and parameters.
-        reporter = self.server.reporters[reporter]
+        reporter = self.server.reporters[reporterIndex]
         parameters = {}
         for o in reporter.getParameterNames():
             name = '%s_%s'%(reporter.getName(),o)
@@ -206,6 +239,11 @@ class ScanViewRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
                         'Missing field "%s" for %s report method.'%(name,
                                                                     reporter.getName()))
             parameters[o] = self.fields[name]
+
+        # Update config defaults.
+        self.server.config.set('ScanView', 'reporter', reporterIndex)
+        for o in reporter.getParameterNames():
+            self.server.config.set(reporter.getName(), o, parameters[o])
 
         # Create the report.
         bug = Reporter.BugReport(title, description, [reportPath])
@@ -291,17 +329,23 @@ Line: %s
         reporterSelections = []
         reporterOptions = []
         
+        try:
+            active = self.server.config.getint('ScanView','reporter')
+        except:
+            active = 0
         for i,r in enumerate(self.server.reporters):
-            reporterSelections.append('<option value="%d">%s</option>'%(i,r.getName()))
+            selected = (i == active)
+            if selected:
+                selectedStr = ' selected'
+            else:
+                selectedStr = ''
+            reporterSelections.append('<option value="%d"%s>%s</option>'%(i,selectedStr,r.getName()))
             options = '\n'.join(["""\
 <tr>
   <td class="form_clabel">%s:</td>
-  <td class="form_value"><input type="text" name="%s_%s"></td>
-</tr>"""%(o,r.getName(),o) for o in r.getParameterNames()])
-            if i==0:
-                display = ''
-            else:
-                display = 'none'
+  <td class="form_value"><input type="text" name="%s_%s" value="%s"></td>
+</tr>"""%(o,r.getName(),o,self.server.config.get(r.getName(), o)) for o in r.getParameterNames()])
+            display = ('none','')[selected]
             reporterOptions.append("""\
 <tr id="%sReporterOptions" style="display:%s">
   <td class="form_label">%s Options</td>
@@ -377,10 +421,9 @@ function updateReporterOptions() {
 </table>
 </form>
 
-
-<iframe src="/report-%(report)s.html#EndPath" width="100%%" height="40%%"
+<iframe src="/report-%(report)s.html" width="100%%" height="70%%"
         scrolling="auto" frameborder="1">
-  <a href="/report-%(report)s.html#EndPath">View Bug Report</a>
+  <a href="/report-%(report)s.html">View Bug Report</a>
 </iframe>
 
 </body>
