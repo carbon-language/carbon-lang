@@ -182,7 +182,8 @@ The complete list of the currently implemented tool properties follows:
 
 * Possible tool properties:
 
-  - ``in_language`` - input language name.
+  - ``in_language`` - input language name. Can be either a string or a
+    list, in case the tool supports multiple input languages.
 
   - ``out_language`` - output language name.
 

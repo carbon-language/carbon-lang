@@ -30,7 +30,7 @@ Using LLVMC to generate toolchain drivers
 At the time of writing LLVMC does not support on-the-fly reloading of
 configuration, so it will be necessary to recompile its source
 code. LLVMC uses TableGen [1]_ as its configuration language, so
-you'll need to familiar with it.
+you need to be familiar with it.
 
 Start by compiling ``examples/Simple.td``, which is a simple wrapper
 for ``gcc``::
@@ -66,11 +66,10 @@ As you can see, this file consists of three parts: tool descriptions,
 language map, and the compilation graph definition.
 
 At the heart of LLVMC is the idea of a transformation graph: vertices
-in this graph are tools, and edges signify that there is a
-transformation path between two tools (for example, assembly source
-produced by the compiler can be transformed into executable code by an
-assembler). A special node named ``root`` is used to mark the graph
-entry points.
+in this graph are tools, and edges represent a transformation path
+between two tools (for example, assembly source produced by the
+compiler can be transformed into executable code by an assembler). A
+special node named ``root`` is used to mark graph entry points.
 
 Tool descriptions are basically lists of properties: most properties
 in the example above should be self-explanatory; the ``sink`` property

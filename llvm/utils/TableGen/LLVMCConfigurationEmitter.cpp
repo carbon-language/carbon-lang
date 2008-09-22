@@ -796,7 +796,6 @@ bool EmitCaseTest1Arg(const std::string& TestName,
                       const DagInit& d,
                       const GlobalOptionDescriptions& OptDescs,
                       std::ostream& O) {
-  // TOFIX - Add a mechanism for OS detection.
   checkNumberOfArguments(&d, 1);
   const std::string& OptName = InitPtrToString(d.getArg(0));
   if (TestName == "switch_on") {
@@ -1462,8 +1461,8 @@ void FillInToolToLang (const ToolPropertiesList& TPList,
 // and multiple default edges in the graph (better error
 // reporting). Unfortunately, it is awkward to do right now because
 // our intermediate representation is not sufficiently
-// sofisticated. Algorithms like these should be run on a real graph
-// instead of AST.
+// sophisticated. Algorithms like these require a real graph instead of
+// an AST.
 void TypecheckGraph (Record* CompilationGraph,
                      const ToolPropertiesList& TPList) {
   StringMap<StringSet<> > ToolToInLang;
