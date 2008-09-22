@@ -867,22 +867,25 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
   }
   case BinaryOperatorClass: {
     const BinaryOperator *Exp = cast<BinaryOperator>(this);
+    llvm::APSInt LHS, RHS;
+
+    // Initialize result to have correct signedness and width.
+    Result = llvm::APSInt(static_cast<uint32_t>(Ctx.getTypeSize(getType())),
+                          !getType()->isSignedIntegerType());                          
     
     // The LHS of a constant expr is always evaluated and needed.
-    if (!Exp->getLHS()->isIntegerConstantExpr(Result, Ctx, Loc, isEvaluated))
+    if (!Exp->getLHS()->isIntegerConstantExpr(LHS, Ctx, Loc, isEvaluated))
       return false;
-    
-    llvm::APSInt RHS(Result);
     
     // The short-circuiting &&/|| operators don't necessarily evaluate their
     // RHS.  Make sure to pass isEvaluated down correctly.
     if (Exp->isLogicalOp()) {
       bool RHSEval;
       if (Exp->getOpcode() == BinaryOperator::LAnd)
-        RHSEval = Result != 0;
+        RHSEval = LHS != 0;
       else {
         assert(Exp->getOpcode() == BinaryOperator::LOr &&"Unexpected logical");
-        RHSEval = Result == 0;
+        RHSEval = LHS == 0;
       }
       
       if (!Exp->getRHS()->isIntegerConstantExpr(RHS, Ctx, Loc,
@@ -898,7 +901,7 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
       if (Loc) *Loc = getLocStart();
       return false;
     case BinaryOperator::Mul:
-      Result *= RHS;
+      Result = LHS * RHS;
       break;
     case BinaryOperator::Div:
       if (RHS == 0) {
@@ -906,7 +909,7 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
         if (Loc) *Loc = getLocStart();
         return false;
       }
-      Result /= RHS;
+      Result = LHS / RHS;
       break;
     case BinaryOperator::Rem:
       if (RHS == 0) {
@@ -914,32 +917,32 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
         if (Loc) *Loc = getLocStart();
         return false;
       }
-      Result %= RHS;
+      Result = LHS % RHS;
       break;
-    case BinaryOperator::Add: Result += RHS; break;
-    case BinaryOperator::Sub: Result -= RHS; break;
+    case BinaryOperator::Add: Result = LHS + RHS; break;
+    case BinaryOperator::Sub: Result = LHS - RHS; break;
     case BinaryOperator::Shl:
-      Result <<= 
-        static_cast<uint32_t>(RHS.getLimitedValue(Result.getBitWidth()-1));
-      break;
+      Result = LHS << 
+        static_cast<uint32_t>(RHS.getLimitedValue(LHS.getBitWidth()-1));
+    break;
     case BinaryOperator::Shr:
-      Result >>= 
-        static_cast<uint32_t>(RHS.getLimitedValue(Result.getBitWidth()-1));
+      Result = LHS >>
+        static_cast<uint32_t>(RHS.getLimitedValue(LHS.getBitWidth()-1));
       break;
-    case BinaryOperator::LT:  Result = Result < RHS; break;
-    case BinaryOperator::GT:  Result = Result > RHS; break;
-    case BinaryOperator::LE:  Result = Result <= RHS; break;
-    case BinaryOperator::GE:  Result = Result >= RHS; break;
-    case BinaryOperator::EQ:  Result = Result == RHS; break;
-    case BinaryOperator::NE:  Result = Result != RHS; break;
-    case BinaryOperator::And: Result &= RHS; break;
-    case BinaryOperator::Xor: Result ^= RHS; break;
-    case BinaryOperator::Or:  Result |= RHS; break;
+    case BinaryOperator::LT:  Result = LHS < RHS; break;
+    case BinaryOperator::GT:  Result = LHS > RHS; break;
+    case BinaryOperator::LE:  Result = LHS <= RHS; break;
+    case BinaryOperator::GE:  Result = LHS >= RHS; break;
+    case BinaryOperator::EQ:  Result = LHS == RHS; break;
+    case BinaryOperator::NE:  Result = LHS != RHS; break;
+    case BinaryOperator::And: Result = LHS & RHS; break;
+    case BinaryOperator::Xor: Result = LHS ^ RHS; break;
+    case BinaryOperator::Or:  Result = LHS | RHS; break;
     case BinaryOperator::LAnd:
-      Result = Result != 0 && RHS != 0;
+      Result = LHS != 0 && RHS != 0;
       break;
     case BinaryOperator::LOr:
-      Result = Result != 0 || RHS != 0;
+      Result = LHS != 0 || RHS != 0;
       break;
       
     case BinaryOperator::Comma:
