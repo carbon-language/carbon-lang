@@ -1,4 +1,4 @@
-//===- Common.td - Common definitions for LLVMCC  ----------*- tablegen -*-===//
+//===- Common.td - Common definitions for LLVMC2  ----------*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains common definitions used in llvmcc tool description files.
+// This file contains common definitions used in llvmc2 tool description files.
 //
 //===----------------------------------------------------------------------===//
 
@@ -41,6 +41,7 @@ def prefix_list_option;
 
 def append_cmd;
 def forward;
+def forward_as;
 def stop_compilation;
 def unpack_values;
 def help;
@@ -58,7 +59,6 @@ def parameter_equals;
 def element_in_list;
 def input_languages_contain;
 def not_empty;
-// TOTHINK: remove?
 def default;
 
 // Boolean operators.

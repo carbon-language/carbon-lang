@@ -250,8 +250,11 @@ currently implemented option types and properties are described below:
 
    - ``forward`` - forward this option unchanged.
 
+   - ``forward_as`` - Change the name of this option, but forward the
+     argument unchanged. Example: ``(forward_as "--disable-optimize")``.
+
    - ``output_suffix`` - modify the output suffix of this
-     tool. Example : ``(switch "E", (output_suffix "i")``.
+     tool. Example: ``(switch "E", (output_suffix "i")``.
 
    - ``stop_compilation`` - stop compilation after this phase.
 
