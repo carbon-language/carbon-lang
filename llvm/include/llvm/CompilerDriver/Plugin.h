@@ -14,6 +14,8 @@
 #ifndef LLVM_TOOLS_LLVMC2_PLUGIN_H
 #define LLVM_TOOLS_LLVMC2_PLUGIN_H
 
+#include "llvm/Support/Registry.h"
+
 namespace llvmc {
 
   class LanguageMap;
@@ -31,25 +33,38 @@ namespace llvmc {
     virtual void PopulateCompilationGraph(CompilationGraph&) const = 0;
   };
 
-  // Helper class for RegisterPlugin.
-  class RegisterPluginImpl {
-  protected:
-    RegisterPluginImpl(BasePlugin*);
+  typedef llvm::Registry<BasePlugin> PluginRegistry;
+
+  template <class P>
+  struct RegisterPlugin
+    : public PluginRegistry::Add<P> {
+    typedef PluginRegistry::Add<P> Base;
+
+    RegisterPlugin(const char* Name = "Nameless",
+                   const char* Desc = "Auto-generated plugin")
+      : Base(Name, Desc) {}
   };
 
-  /// RegisterPlugin<T> template - Used to register LLVMC plugins.
-  template <class T>
-  struct RegisterPlugin : RegisterPluginImpl {
-    RegisterPlugin() : RegisterPluginImpl (new T()) {}
+
+  /// PluginLoader - Helper class used by the main program for
+  /// lifetime management.
+  struct PluginLoader {
+    PluginLoader();
+    ~PluginLoader();
+
+    /// PopulateLanguageMap - Fills in the language map by calling
+    /// PopulateLanguageMap methods of all plugins.
+    void PopulateLanguageMap(LanguageMap& langMap);
+
+    /// PopulateCompilationGraph - Populates the compilation graph by
+    /// calling PopulateCompilationGraph methods of all plugins.
+    void PopulateCompilationGraph(CompilationGraph& tools);
+
+  private:
+    // noncopyable
+    PluginLoader(const PluginLoader& other);
+    const PluginLoader& operator=(const PluginLoader& other);
   };
-
-  /// PopulateLanguageMap - Fills in the language map by calling
-  /// PopulateLanguageMap methods of all plugins.
-  void PopulateLanguageMap(LanguageMap& langMap);
-
-  /// PopulateCompilationGraph - Populates the compilation graph by
-  /// calling PopulateCompilationGraph methods of all plugins.
-  void PopulateCompilationGraph(CompilationGraph& tools);
 
 }
 

@@ -25,7 +25,7 @@ struct MyPlugin : public llvmc::BasePlugin {
   {}
 };
 
-static llvmc::RegisterPlugin<MyPlugin> RP;
+static llvmc::RegisterPlugin<MyPlugin> RP("Hello", "Hello World plugin");
 
 }
 

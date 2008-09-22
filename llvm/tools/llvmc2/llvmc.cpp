@@ -85,8 +85,9 @@ int main(int argc, char** argv) {
     cl::ParseCommandLineOptions
       (argc, argv, "LLVM Compiler Driver (Work In Progress)", true);
 
-    PopulateLanguageMap(langMap);
-    PopulateCompilationGraph(graph);
+    PluginLoader Plugins;
+    Plugins.PopulateLanguageMap(langMap);
+    Plugins.PopulateCompilationGraph(graph);
 
     if (WriteGraph) {
       graph.writeGraph();
