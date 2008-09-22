@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <cstring>
 #include <memory>
+#include <cassert>
 
 #ifdef _MSC_VER
 namespace std {
@@ -116,10 +117,14 @@ public:
   const_reverse_iterator rend() const { return const_reverse_iterator(begin());}
   
   
+  /* These asserts could be "Begin + idx < End", but there are lots of places
+     in llvm where we use &v[v.size()] instead of v.end(). */
   reference operator[](unsigned idx) {
+    assert (Begin + idx <= End);
     return Begin[idx];
   }
   const_reference operator[](unsigned idx) const {
+    assert (Begin + idx <= End);
     return Begin[idx];
   }
   
