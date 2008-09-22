@@ -14,6 +14,7 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineLocation.h"
+#include "llvm/CodeGen/Passes.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
@@ -2014,7 +2015,8 @@ struct DebugLabelFolder : public MachineFunctionPass {
   DebugLabelFolder() : MachineFunctionPass(&ID) {}
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.setPreservesAll();
+    AU.addPreservedID(MachineLoopInfoID);
+    AU.addPreservedID(MachineDominatorsID);
     MachineFunctionPass::getAnalysisUsage(AU);
   }
 

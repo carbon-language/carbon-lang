@@ -66,7 +66,8 @@ namespace {
     
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<LiveStacks>();
-      AU.setPreservesAll();
+      AU.addPreservedID(MachineLoopInfoID);
+      AU.addPreservedID(MachineDominatorsID);
       MachineFunctionPass::getAnalysisUsage(AU);
     }
 

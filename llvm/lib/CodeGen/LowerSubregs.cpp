@@ -31,7 +31,8 @@ namespace {
     }
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.setPreservesAll();
+      AU.addPreservedID(MachineLoopInfoID);
+      AU.addPreservedID(MachineDominatorsID);
       MachineFunctionPass::getAnalysisUsage(AU);
     }
 

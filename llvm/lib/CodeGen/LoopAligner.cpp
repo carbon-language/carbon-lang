@@ -34,7 +34,7 @@ namespace {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<MachineLoopInfo>();
       AU.addPreserved<MachineLoopInfo>();
-      AU.setPreservesAll();
+      AU.addPreservedID(MachineDominatorsID);
       MachineFunctionPass::getAnalysisUsage(AU);
     }
   };
