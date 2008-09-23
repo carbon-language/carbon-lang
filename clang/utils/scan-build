@@ -472,7 +472,7 @@ print OUT <<ENDTEXT;
 <html>
 <head>
 <title>${HtmlTitle}</title>
-<link type="text/css" rel="stylesheet" href="/scanview.css"/>
+<link type="text/css" rel="stylesheet" href="scanview.css"/>
 <script src="sorttable.js"></script>
 <script language='javascript' type="text/javascript">
 function SetDisplay(RowClass, DisplayVal)
