@@ -142,7 +142,7 @@ namespace {
     void ScheduleCopies(MachineBasicBlock* MBB, std::set<unsigned>& pushed);
     void InsertCopies(MachineDomTreeNode* MBB,
                       SmallPtrSet<MachineBasicBlock*, 16>& v);
-    void mergeLiveIntervals(unsigned primary, unsigned secondary);
+    bool mergeLiveIntervals(unsigned primary, unsigned secondary);
   };
 }
 
@@ -844,7 +844,7 @@ void StrongPHIElimination::InsertCopies(MachineDomTreeNode* MDTN,
     Stacks[*I].pop_back();
 }
 
-void StrongPHIElimination::mergeLiveIntervals(unsigned primary,
+bool StrongPHIElimination::mergeLiveIntervals(unsigned primary,
                                               unsigned secondary) {
   
   LiveIntervals& LI = getAnalysis<LiveIntervals>();
@@ -859,32 +859,35 @@ void StrongPHIElimination::mergeLiveIntervals(unsigned primary,
  
     unsigned Start = R.start;
     unsigned End = R.end;
-    if (LHS.liveAt(Start))
-      LHS.removeRange(Start, End, true);
+    if (LHS.getLiveRangeContaining(Start))
+      return false;
     
-    if (const LiveRange* ER = LHS.getLiveRangeContaining(End))
-      End = ER->start;
+    if (LHS.getLiveRangeContaining(End))
+      return false;
     
     LiveInterval::iterator RI = std::upper_bound(LHS.begin(), LHS.end(), R);
     if (RI != LHS.end() && RI->start < End)
-      End = RI->start;
-    
-    if (Start != End) {
-      VNInfo* OldVN = R.valno;
-      VNInfo*& NewVN = VNMap[OldVN];
-      if (!NewVN) {
-        NewVN = LHS.getNextValue(OldVN->def,
-                                 OldVN->copy,
-                                 LI.getVNInfoAllocator());
-        NewVN->kills = OldVN->kills;
-      }
-      
-      LiveRange LR (Start, End, NewVN);
-      LHS.addRange(LR);
+      return false;
+  }
+  
+  for (LiveInterval::iterator I = RHS.begin(), E = RHS.end(); I != E; ++I) {
+    LiveRange R = *I;
+    VNInfo* OldVN = R.valno;
+    VNInfo*& NewVN = VNMap[OldVN];
+    if (!NewVN) {
+      NewVN = LHS.getNextValue(OldVN->def,
+                               OldVN->copy,
+                               LI.getVNInfoAllocator());
+      NewVN->kills = OldVN->kills;
     }
+    
+    LiveRange LR (R.start, R.end, NewVN);
+    LHS.addRange(LR);
   }
   
   LI.removeInterval(RHS.reg);
+  
+  return true;
 }
 
 bool StrongPHIElimination::runOnMachineFunction(MachineFunction &Fn) {
@@ -936,20 +939,42 @@ bool StrongPHIElimination::runOnMachineFunction(MachineFunction &Fn) {
       DOUT << "Renaming: " << SI->first << " -> " << I->first << "\n";
       
       if (SI->first != I->first) {
-        mergeLiveIntervals(I->first, SI->first);
-        Fn.getRegInfo().replaceRegWith(SI->first, I->first);
+        if (mergeLiveIntervals(I->first, SI->first)) {
+          Fn.getRegInfo().replaceRegWith(SI->first, I->first);
       
-        if (RenameSets.count(SI->first)) {
-          I->second.insert(RenameSets[SI->first].begin(),
-                           RenameSets[SI->first].end());
-          RenameSets.erase(SI->first);
+          if (RenameSets.count(SI->first)) {
+            I->second.insert(RenameSets[SI->first].begin(),
+                             RenameSets[SI->first].end());
+            RenameSets.erase(SI->first);
+          }
+        } else {
+          // Insert a last-minute copy if a conflict was detected.
+          const TargetInstrInfo *TII = Fn.getTarget().getInstrInfo();
+          const TargetRegisterClass *RC = Fn.getRegInfo().getRegClass(I->first);
+          TII->copyRegToReg(*SI->second, SI->second->getFirstTerminator(),
+                            I->first, SI->first, RC, RC);
+          
+          LI.computeNumbering();
+          
+          LiveInterval& Int = LI.getOrCreateInterval(I->first);
+          unsigned instrIdx =
+                     LI.getInstructionIndex(--SI->second->getFirstTerminator());
+          if (Int.liveAt(LiveIntervals::getDefIndex(instrIdx)))
+            Int.removeRange(LiveIntervals::getDefIndex(instrIdx),
+                            LI.getMBBEndIdx(SI->second)+1, true);
+
+          LiveRange R = LI.addLiveRangeToEndOfBlock(I->first,
+                                            --SI->second->getFirstTerminator());
+          R.valno->copy = --SI->second->getFirstTerminator();
+          R.valno->def = LiveIntervals::getDefIndex(instrIdx);
+          
+          DOUT << "Renaming failed: " << SI->first << " -> "
+               << I->first << "\n";
         }
       }
       
       I->second.erase(SI->first);
     }
-  
-  // FIXME: Insert last-minute copies
   
   // Remove PHIs
   std::vector<MachineInstr*> phis;
