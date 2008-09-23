@@ -131,6 +131,9 @@ public:
   void RewriteCategoryDecl(ObjCCategoryDecl *CatDecl);
   void RewriteProtocolDecl(ObjCProtocolDecl *PDecl);
   void RewriteMethodDecl(ObjCMethodDecl *MDecl);
+  
+  bool BlockPointerTypeTakesAnyBlockArguments(QualType QT);
+  void GetExtentOfArgList(const char *Name, char *&LParen, char *&RParen);
 };
   
 }
@@ -455,9 +458,9 @@ std::string RewriteBlocks::SynthesizeBlockFunc(BlockExpr *CE, int i,
     }
     if (haveByRefDecls) {
       // Remove |...|.
-      const char *firstBarPtr = strchr(BodyStartBuf, '|');
-      const char *secondBarPtr = strchr(firstBarPtr+1, '|');
-      BodyBuf.replace(firstBarPtr-BodyStartBuf, secondBarPtr-firstBarPtr+1, "");
+      //const char *firstBarPtr = strchr(BodyStartBuf, '|');
+      //const char *secondBarPtr = strchr(firstBarPtr+1, '|');
+      //BodyBuf.replace(firstBarPtr-BodyStartBuf, secondBarPtr-firstBarPtr+1, "");
     } 
     S += "  ";
     S += BodyBuf;
@@ -809,6 +812,40 @@ void RewriteBlocks::RewriteBlockPointerFunctionArgs(FunctionDecl *FD) {
   return;
 }
 
+bool RewriteBlocks::BlockPointerTypeTakesAnyBlockArguments(QualType QT) {
+  const BlockPointerType *BPT = QT->getAsBlockPointerType();
+  assert(BPT && "BlockPointerTypeTakeAnyBlockArguments(): not a block pointer type");
+  const FunctionTypeProto *FTP = BPT->getPointeeType()->getAsFunctionTypeProto();
+  if (FTP) {
+    for (FunctionTypeProto::arg_type_iterator I = FTP->arg_type_begin(), 
+         E = FTP->arg_type_end(); I != E; ++I)
+      if (isBlockPointerType(*I))
+        return true;
+  }
+  return false;
+}
+
+void RewriteBlocks::GetExtentOfArgList(const char *Name, 
+                                       char *&LParen, char *&RParen) {
+  char *argPtr = strchr(Name, '(');
+  assert((*argPtr == '(') && "Rewriter fuzzy parser confused");
+  
+  LParen = argPtr; // output the start.
+  argPtr++; // skip past the left paren.
+  unsigned parenCount = 1;
+  
+  while (*argPtr && parenCount) {
+    switch (*argPtr) {
+      case '(': parenCount++; break;
+      case ')': parenCount--; break;
+      default: break;
+    }
+    if (parenCount) argPtr++;
+  }
+  assert((*argPtr == ')') && "Rewriter fuzzy parser confused");
+  RParen = argPtr; // output the end
+}
+
 void RewriteBlocks::RewriteBlockPointerDecl(NamedDecl *ND) {
   SourceLocation DeclLoc = ND->getLocation();
   const char *startBuf, *endBuf;
@@ -820,6 +857,29 @@ void RewriteBlocks::RewriteBlockPointerDecl(NamedDecl *ND) {
     DeclLoc = VD->getLocation();
     startBuf = SM->getCharacterData(DeclLoc);
     endBuf = startBuf;
+    // scan backward (from the decl location) for the end of the previous decl.
+    while (*startBuf != '^' && *startBuf != ';' && startBuf != MainFileStart)
+      startBuf--;
+    assert((*startBuf == '^') && 
+           "RewriteBlockPointerDecl() scan error: no caret");
+    // Replace the '^' with '*', computing a negative offset.
+    DeclLoc = DeclLoc.getFileLocWithOffset(startBuf-endBuf);
+    ReplaceText(DeclLoc, 1, "*", 1);
+    
+    if (BlockPointerTypeTakesAnyBlockArguments(VD->getType())) {
+      // Replace the '^' with '*' for arguments.
+      DeclLoc = VD->getLocation();
+      startBuf = SM->getCharacterData(DeclLoc);
+      char *argListBegin, *argListEnd;
+      GetExtentOfArgList(startBuf, argListBegin, argListEnd);
+      while (argListBegin < argListEnd) {
+        if (*argListBegin == '^') {
+          SourceLocation CaretLoc = DeclLoc.getFileLocWithOffset(argListBegin-startBuf);
+          ReplaceText(CaretLoc, 1, "*", 1);
+        }
+        argListBegin++;
+      }
+    }
   } else if (TypedefDecl *TDD = dyn_cast<TypedefDecl>(ND)) {
     DeclLoc = TDD->getLocation();
     startBuf = SM->getCharacterData(DeclLoc);
@@ -828,15 +888,7 @@ void RewriteBlocks::RewriteBlockPointerDecl(NamedDecl *ND) {
       DeclLoc = DeclLoc.getFileLocWithOffset(8);
     }
     endBuf = startBuf;
-  }  
-  // FIXME: need to skip past the argument list...then check for ','.
-  while (*endBuf && *endBuf != '=' && *endBuf != ';')
-    endBuf++;
-  
-  SourceLocation DeclEndLoc = DeclLoc.getFileLocWithOffset(endBuf-startBuf);
-  
-  std::string Tag = "struct __closure_impl *" + std::string(ND->getName());
-  ReplaceText(DeclLoc, endBuf-startBuf, Tag.c_str(), Tag.size());
+  }
   return;
 }
 
