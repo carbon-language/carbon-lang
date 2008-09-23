@@ -394,8 +394,7 @@ typedef union YYSTYPE
 
   llvm::GlobalValue::LinkageTypes         Linkage;
   llvm::GlobalValue::VisibilityTypes      Visibility;
-  llvm::ParameterAttributes         ParamAttrs;
-  llvm::ParameterAttributes         FunctionNotes;
+  llvm::Attributes                  ParamAttrs;
   llvm::APInt                       *APIntVal;
   int64_t                           SInt64Val;
   uint64_t                          UInt64Val;
@@ -416,7 +415,7 @@ typedef union YYSTYPE
   llvm::FCmpInst::Predicate         FPredicate;
 }
 /* Line 1529 of yacc.c.  */
-#line 420 "llvmAsmParser.tab.h"
+#line 419 "llvmAsmParser.tab.h"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
