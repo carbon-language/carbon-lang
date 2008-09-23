@@ -757,6 +757,20 @@ public:
 } // end anonymous namespace
 
 namespace {
+// x86-64 Linux target
+class LinuxX86_64TargetInfo : public X86_64TargetInfo {
+public:
+  LinuxX86_64TargetInfo(const std::string& triple) : X86_64TargetInfo(triple) {
+  }
+  virtual void getTargetDefines(std::vector<char> &Defines) const {
+    X86_64TargetInfo::getTargetDefines(Defines);
+    getLinuxDefines(Defines);
+    Define(Defines, "__USER_LABEL_PREFIX__", "");
+  }
+};
+} // end anonymous namespace
+
+namespace {
 // x86-64 Darwin (OS X) target
 class DarwinX86_64TargetInfo : public X86_64TargetInfo {
 public:
@@ -985,6 +999,8 @@ TargetInfo* TargetInfo::CreateTargetInfo(const std::string &T) {
   if (T.find("x86_64-") == 0) {
     if (isDarwin)
       return new DarwinX86_64TargetInfo(T);
+    if (isLinux)
+      return new LinuxX86_64TargetInfo(T);
     return new X86_64TargetInfo(T);
   }
 
