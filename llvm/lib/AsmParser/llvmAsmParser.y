@@ -1282,6 +1282,7 @@ OptParamAttrs : /* empty */  { $$ = ParamAttr::None; }
 
 FuncAttr      : NORETURN { $$ = ParamAttr::NoReturn; }
               | NOUNWIND { $$ = ParamAttr::NoUnwind; }
+              | INREG    { $$ = ParamAttr::InReg;     }
               | ZEROEXT  { $$ = ParamAttr::ZExt;     }
               | SIGNEXT  { $$ = ParamAttr::SExt;     }
               | READNONE { $$ = ParamAttr::ReadNone; }

@@ -48,7 +48,7 @@ const Attributes Alignment = 0xffff<<16; ///< Alignment of parameter (16 bits)
                                     // 0 = unknown, else in clear (not log)
 
 /// @brief Attributes that only apply to function parameters.
-const Attributes ParameterOnly = ByVal | InReg | Nest | StructRet;
+const Attributes ParameterOnly = ByVal | Nest | StructRet;
 
 /// @brief Attributes that only apply to function return values.
 const Attributes ReturnOnly = NoReturn | NoUnwind | ReadNone | ReadOnly;
