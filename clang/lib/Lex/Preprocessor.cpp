@@ -477,9 +477,10 @@ static void InitializePredefinedMacros(Preprocessor &PP,
     DefineBuiltinMacro(Buf, "__declspec(X)=");
   }
   // Directly modeled after the attribute-based implementation in GCC. 
-  if (PP.getLangOptions().Blocks)
+  if (PP.getLangOptions().Blocks) {
      DefineBuiltinMacro(Buf, "__block=__attribute__((__blocks__(byref)))");
-  else
+     DefineBuiltinMacro(Buf, "__BLOCKS__=1");
+  } else
     // This allows "__block int unusedVar;" even when blocks are disabled.
     // This is modeled after GCC's handling of __strong/__weak.
     DefineBuiltinMacro(Buf, "__block=");
