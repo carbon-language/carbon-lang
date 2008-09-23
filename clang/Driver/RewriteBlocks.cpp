@@ -847,47 +847,44 @@ void RewriteBlocks::GetExtentOfArgList(const char *Name,
 }
 
 void RewriteBlocks::RewriteBlockPointerDecl(NamedDecl *ND) {
-  SourceLocation DeclLoc = ND->getLocation();
-  const char *startBuf, *endBuf;
-  
   if (FunctionDecl *FD = dyn_cast<FunctionDecl>(ND)) {
     RewriteBlockPointerFunctionArgs(FD);
     return;
-  } else if (VarDecl *VD = dyn_cast<VarDecl>(ND)) {
-    DeclLoc = VD->getLocation();
-    startBuf = SM->getCharacterData(DeclLoc);
-    endBuf = startBuf;
-    // scan backward (from the decl location) for the end of the previous decl.
-    while (*startBuf != '^' && *startBuf != ';' && startBuf != MainFileStart)
-      startBuf--;
-    assert((*startBuf == '^') && 
-           "RewriteBlockPointerDecl() scan error: no caret");
-    // Replace the '^' with '*', computing a negative offset.
-    DeclLoc = DeclLoc.getFileLocWithOffset(startBuf-endBuf);
-    ReplaceText(DeclLoc, 1, "*", 1);
+  } 
+  // Handle Variables and Typedefs.
+  SourceLocation DeclLoc = ND->getLocation();
+  QualType DeclT;
+  if (VarDecl *VD = dyn_cast<VarDecl>(ND))
+    DeclT = VD->getType();
+  else if (TypedefDecl *TDD = dyn_cast<TypedefDecl>(ND))
+    DeclT = TDD->getUnderlyingType();
+  else 
+    assert(0 && "RewriteBlockPointerDecl(): Decl type not yet handled");
     
-    if (BlockPointerTypeTakesAnyBlockArguments(VD->getType())) {
-      // Replace the '^' with '*' for arguments.
-      DeclLoc = VD->getLocation();
-      startBuf = SM->getCharacterData(DeclLoc);
-      char *argListBegin, *argListEnd;
-      GetExtentOfArgList(startBuf, argListBegin, argListEnd);
-      while (argListBegin < argListEnd) {
-        if (*argListBegin == '^') {
-          SourceLocation CaretLoc = DeclLoc.getFileLocWithOffset(argListBegin-startBuf);
-          ReplaceText(CaretLoc, 1, "*", 1);
-        }
-        argListBegin++;
-      }
-    }
-  } else if (TypedefDecl *TDD = dyn_cast<TypedefDecl>(ND)) {
-    DeclLoc = TDD->getLocation();
+  const char *startBuf = SM->getCharacterData(DeclLoc);
+  const char *endBuf = startBuf;
+  // scan backward (from the decl location) for the end of the previous decl.
+  while (*startBuf != '^' && *startBuf != ';' && startBuf != MainFileStart)
+    startBuf--;
+  assert((*startBuf == '^') && 
+         "RewriteBlockPointerDecl() scan error: no caret");
+  // Replace the '^' with '*', computing a negative offset.
+  DeclLoc = DeclLoc.getFileLocWithOffset(startBuf-endBuf);
+  ReplaceText(DeclLoc, 1, "*", 1);
+  
+  if (BlockPointerTypeTakesAnyBlockArguments(DeclT)) {
+    // Replace the '^' with '*' for arguments.
+    DeclLoc = ND->getLocation();
     startBuf = SM->getCharacterData(DeclLoc);
-    if (!strncmp("typedef ", startBuf, 8)) {
-      startBuf += 8; // skip the typedef...
-      DeclLoc = DeclLoc.getFileLocWithOffset(8);
+    char *argListBegin, *argListEnd;
+    GetExtentOfArgList(startBuf, argListBegin, argListEnd);
+    while (argListBegin < argListEnd) {
+      if (*argListBegin == '^') {
+        SourceLocation CaretLoc = DeclLoc.getFileLocWithOffset(argListBegin-startBuf);
+        ReplaceText(CaretLoc, 1, "*", 1);
+      }
+      argListBegin++;
     }
-    endBuf = startBuf;
   }
   return;
 }
