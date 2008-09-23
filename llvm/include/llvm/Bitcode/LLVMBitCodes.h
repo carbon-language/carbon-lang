@@ -207,7 +207,7 @@ namespace bitc {
     FUNC_CODE_INST_EXTRACTVAL  = 26, // EXTRACTVAL: [n x operands]
     FUNC_CODE_INST_INSERTVAL   = 27, // INSERTVAL:  [n x operands]
     // fcmp/icmp returning Int1TY or vector of Int1Ty, NOT for vicmp/vfcmp
-    FUNC_CODE_INST_CMP2        = 28, // VCMP:       [opty, opval, opval, pred]
+    FUNC_CODE_INST_CMP2        = 28, // CMP2:       [opty, opval, opval, pred]
     // new select on i1 or [N x i1]
     FUNC_CODE_INST_VSELECT     = 29  // VSELECT:    [ty,opval,opval,predty,pred]
   };
