@@ -152,7 +152,7 @@ public:
   /// hasNote - Return true if this function has given note.
   bool hasNote(Attributes N) const {
     // Notes are stored at ~0 index in parameter attribute list
-    return (!isDeclaration() && paramHasAttr(~0, N));
+    return (paramHasAttr(~0, N));
   }
 
   /// setNotes - Set notes for this function
