@@ -66,10 +66,10 @@ private:
   /// AvailableQueue - The priority queue to use for the available SUnits.
   SchedulingPriorityQueue *AvailableQueue;
 
-  /// LiveRegs / LiveRegDefs - A set of physical registers and their definition
+  /// LiveRegDefs - A set of physical registers and their definition
   /// that are "live". These nodes must be scheduled before any other nodes that
   /// modifies the registers can be scheduled.
-  SmallSet<unsigned, 4> LiveRegs;
+  unsigned NumLiveRegs;
   std::vector<SUnit*> LiveRegDefs;
   std::vector<unsigned> LiveRegCycles;
 
@@ -178,6 +178,7 @@ private:
 void ScheduleDAGRRList::Schedule() {
   DOUT << "********** List Scheduling **********\n";
 
+  NumLiveRegs = 0;
   LiveRegDefs.resize(TRI->getNumRegs(), NULL);  
   LiveRegCycles.resize(TRI->getNumRegs(), 0);
 
@@ -308,7 +309,8 @@ void ScheduleDAGRRList::ScheduleNodeBottomUp(SUnit *SU, unsigned CurCycle) {
       // expensive to copy the register. Make sure nothing that can 
       // clobber the register is scheduled between the predecessor and
       // this node.
-      if (LiveRegs.insert(I->Reg)) {
+      if (!LiveRegDefs[I->Reg]) {
+        ++NumLiveRegs;
         LiveRegDefs[I->Reg] = I->Dep;
         LiveRegCycles[I->Reg] = CurCycle;
       }
@@ -320,9 +322,10 @@ void ScheduleDAGRRList::ScheduleNodeBottomUp(SUnit *SU, unsigned CurCycle) {
        I != E; ++I) {
     if (I->Cost < 0)  {
       if (LiveRegCycles[I->Reg] == I->Dep->Cycle) {
-        LiveRegs.erase(I->Reg);
+        assert(NumLiveRegs > 0 && "NumLiveRegs is already zero!");
         assert(LiveRegDefs[I->Reg] == SU &&
                "Physical register dependency violated?");
+        --NumLiveRegs;
         LiveRegDefs[I->Reg] = NULL;
         LiveRegCycles[I->Reg] = 0;
       }
@@ -367,9 +370,10 @@ void ScheduleDAGRRList::UnscheduleNodeBottomUp(SUnit *SU) {
        I != E; ++I) {
     CapturePred(I->Dep, SU, I->isCtrl);
     if (I->Cost < 0 && SU->Cycle == LiveRegCycles[I->Reg])  {
-      LiveRegs.erase(I->Reg);
+      assert(NumLiveRegs > 0 && "NumLiveRegs is already zero!");
       assert(LiveRegDefs[I->Reg] == I->Dep &&
              "Physical register dependency violated?");
+      --NumLiveRegs;
       LiveRegDefs[I->Reg] = NULL;
       LiveRegCycles[I->Reg] = 0;
     }
@@ -378,10 +382,9 @@ void ScheduleDAGRRList::UnscheduleNodeBottomUp(SUnit *SU) {
   for (SUnit::succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
        I != E; ++I) {
     if (I->Cost < 0)  {
-      if (LiveRegs.insert(I->Reg)) {
-        assert(!LiveRegDefs[I->Reg] &&
-               "Physical register dependency violated?");
+      if (!LiveRegDefs[I->Reg]) {
         LiveRegDefs[I->Reg] = SU;
+        ++NumLiveRegs;
       }
       if (I->Dep->Cycle < LiveRegCycles[I->Reg])
         LiveRegCycles[I->Reg] = I->Dep->Cycle;
@@ -878,7 +881,7 @@ static MVT getPhysicalRegisterVT(SDNode *N, unsigned Reg,
 /// whatever is necessary (i.e. backtracking or cloning) to make it possible.
 bool ScheduleDAGRRList::DelayForLiveRegsBottomUp(SUnit *SU,
                                                  SmallVector<unsigned, 4> &LRegs){
-  if (LiveRegs.empty())
+  if (NumLiveRegs == 0)
     return false;
 
   SmallSet<unsigned, 4> RegAdded;
@@ -887,13 +890,13 @@ bool ScheduleDAGRRList::DelayForLiveRegsBottomUp(SUnit *SU,
        I != E; ++I) {
     if (I->Cost < 0)  {
       unsigned Reg = I->Reg;
-      if (LiveRegs.count(Reg) && LiveRegDefs[Reg] != I->Dep) {
+      if (LiveRegDefs[Reg] && LiveRegDefs[Reg] != I->Dep) {
         if (RegAdded.insert(Reg))
           LRegs.push_back(Reg);
       }
       for (const unsigned *Alias = TRI->getAliasSet(Reg);
            *Alias; ++Alias)
-        if (LiveRegs.count(*Alias) && LiveRegDefs[*Alias] != I->Dep) {
+        if (LiveRegDefs[*Alias] && LiveRegDefs[*Alias] != I->Dep) {
           if (RegAdded.insert(*Alias))
             LRegs.push_back(*Alias);
         }
@@ -908,13 +911,13 @@ bool ScheduleDAGRRList::DelayForLiveRegsBottomUp(SUnit *SU,
     if (!TID.ImplicitDefs)
       continue;
     for (const unsigned *Reg = TID.ImplicitDefs; *Reg; ++Reg) {
-      if (LiveRegs.count(*Reg) && LiveRegDefs[*Reg] != SU) {
+      if (LiveRegDefs[*Reg] && LiveRegDefs[*Reg] != SU) {
         if (RegAdded.insert(*Reg))
           LRegs.push_back(*Reg);
       }
       for (const unsigned *Alias = TRI->getAliasSet(*Reg);
            *Alias; ++Alias)
-        if (LiveRegs.count(*Alias) && LiveRegDefs[*Alias] != SU) {
+        if (LiveRegDefs[*Alias] && LiveRegDefs[*Alias] != SU) {
           if (RegAdded.insert(*Alias))
             LRegs.push_back(*Alias);
         }
