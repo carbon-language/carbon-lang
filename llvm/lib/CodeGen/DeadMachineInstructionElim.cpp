@@ -97,12 +97,6 @@ bool DeadMachineInstructionElim::runOnMachineFunction(MachineFunction &MF) {
 
         // If there are no defs with uses, the instruction is dead.
         if (AllDefsDead) {
-          // Clear out the operands to take the registers out of their
-          // use chains.
-          while (unsigned Num = MI->getNumOperands())
-            MI->RemoveOperand(Num-1);
-
-          // Delete the actual instruction.
           AnyChanges = true;
           MI->eraseFromParent();
           MIE = MBB->rend();
