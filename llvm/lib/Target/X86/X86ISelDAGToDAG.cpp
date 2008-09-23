@@ -1057,16 +1057,6 @@ bool X86DAGToDAGISel::SelectAddr(SDValue Op, SDValue N, SDValue &Base,
   return true;
 }
 
-/// isZeroNode - Returns true if Elt is a constant zero or a floating point
-/// constant +0.0.
-static inline bool isZeroNode(SDValue Elt) {
-  return ((isa<ConstantSDNode>(Elt) &&
-  cast<ConstantSDNode>(Elt)->getZExtValue() == 0) ||
-  (isa<ConstantFPSDNode>(Elt) &&
-  cast<ConstantFPSDNode>(Elt)->getValueAPF().isPosZero()));
-}
-
-
 /// SelectScalarSSELoad - Match a scalar SSE load.  In particular, we want to
 /// match a load whose top elements are either undef or zeros.  The load flavor
 /// is derived from the type of N, which is either v4f32 or v2f64.
