@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file defines a '-print-cfg' analysis pass, which emits the
+// This file defines a '-dot-cfg' analysis pass, which emits the
 // cfg.<fnname>.dot file for each function in the program, with a graph of the
 // CFG for that function.
 //
@@ -165,7 +165,7 @@ namespace {
 
 char CFGPrinter::ID = 0;
 static RegisterPass<CFGPrinter>
-P1("print-cfg", "Print CFG of function to 'dot' file", false, true);
+P1("dot-cfg", "Print CFG of function to 'dot' file", false, true);
 
 namespace {
   struct VISIBILITY_HIDDEN CFGOnlyPrinter : public CFGPrinter {
@@ -188,7 +188,7 @@ namespace {
 
 char CFGOnlyPrinter::ID = 0;
 static RegisterPass<CFGOnlyPrinter>
-P2("print-cfg-only",
+P2("dot-cfg-only",
    "Print CFG of function to 'dot' file (with no function bodies)", false, true);
 
 /// viewCFG - This function is meant for use from the debugger.  You can just

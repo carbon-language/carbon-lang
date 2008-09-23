@@ -14,12 +14,12 @@
 //
 // (1) As a reference for how to use the scc_iterator.
 // (2) To print out the SCCs for a CFG or a CallGraph:
-//       analyze -cfgscc            to print the SCCs in each CFG of a module.
-//       analyze -cfgscc -stats     to print the #SCCs and the maximum SCC size.
-//       analyze -cfgscc -debug > /dev/null to watch the algorithm in action.
+//       analyze -print-cfg-sccs            to print the SCCs in each CFG of a module.
+//       analyze -print-cfg-sccs -stats     to print the #SCCs and the maximum SCC size.
+//       analyze -print-cfg-sccs -debug > /dev/null to watch the algorithm in action.
 //
 //     and similarly:
-//       analyze -callscc [-stats] [-debug] to print SCCs in the CallGraph
+//       analyze -print-callgraph-sccs [-stats] [-debug] to print SCCs in the CallGraph
 //
 // (3) To test the scc_iterator.
 //
@@ -64,11 +64,11 @@ namespace {
 
   char CFGSCC::ID = 0;
   RegisterPass<CFGSCC>
-  Y("cfgscc", "Print SCCs of each function CFG");
+  Y("print-cfg-sccs", "Print SCCs of each function CFG");
 
   char CallGraphSCC::ID = 0;
   RegisterPass<CallGraphSCC>
-  Z("callscc", "Print SCCs of the Call Graph");
+  Z("print-callgraph-sccs", "Print SCCs of the Call Graph");
 }
 
 bool CFGSCC::runOnFunction(Function &F) {

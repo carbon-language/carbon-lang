@@ -79,7 +79,7 @@ namespace {
   };
 
   char CallGraphPrinter::ID = 0;
-  RegisterPass<CallGraphPrinter> P2("print-callgraph",
+  RegisterPass<CallGraphPrinter> P2("dot-callgraph",
                                     "Print Call Graph to 'dot' file");
 }
 

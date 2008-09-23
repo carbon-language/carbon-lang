@@ -79,15 +79,14 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
 <tr><td><a href="#basicaa">-basicaa</a></td><td>Basic Alias Analysis (default AA impl)</td></tr>
 <tr><td><a href="#basiccg">-basiccg</a></td><td>Basic CallGraph Construction</td></tr>
 <tr><td><a href="#basicvn">-basicvn</a></td><td>Basic Value Numbering (default GVN impl)</td></tr>
-<tr><td><a href="#callgraph">-callgraph</a></td><td>Print a call graph</td></tr>
-<tr><td><a href="#callscc">-callscc</a></td><td>Print SCCs of the Call Graph</td></tr>
-<tr><td><a href="#cfgscc">-cfgscc</a></td><td>Print SCCs of each function CFG</td></tr>
 <tr><td><a href="#codegenprepare">-codegenprepare</a></td><td>Optimize for code generation</td></tr>
 <tr><td><a href="#count-aa">-count-aa</a></td><td>Count Alias Analysis Query Responses</td></tr>
 <tr><td><a href="#debug-aa">-debug-aa</a></td><td>AA use debugger</td></tr>
 <tr><td><a href="#domfrontier">-domfrontier</a></td><td>Dominance Frontier Construction</td></tr>
 <tr><td><a href="#domtree">-domtree</a></td><td>Dominator Tree Construction</td></tr>
-<tr><td><a href="#externalfnconstants">-externalfnconstants</a></td><td>Print external fn callsites passed constants</td></tr>
+<tr><td><a href="#dot-callgraph">-dot-callgraph</a></td><td>Print Call Graph to 'dot' file</td></tr>
+<tr><td><a href="#dot-cfg">-dot-cfg</a></td><td>Print CFG of function to 'dot' file</td></tr>
+<tr><td><a href="#dot-cfg-only">-dot-cfg-only</a></td><td>Print CFG of function to 'dot' file (with no function bodies)</td></tr>
 <tr><td><a href="#globalsmodref-aa">-globalsmodref-aa</a></td><td>Simple mod/ref analysis for globals</td></tr>
 <tr><td><a href="#instcount">-instcount</a></td><td>Counts the various types of Instructions</td></tr>
 <tr><td><a href="#intervals">-intervals</a></td><td>Interval Partition Construction</td></tr>
@@ -98,13 +97,14 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
 <tr><td><a href="#no-profile">-no-profile</a></td><td>No Profile Information</td></tr>
 <tr><td><a href="#postdomfrontier">-postdomfrontier</a></td><td>Post-Dominance Frontier Construction</td></tr>
 <tr><td><a href="#postdomtree">-postdomtree</a></td><td>Post-Dominator Tree Construction</td></tr>
-<tr><td><a href="#print">-print</a></td><td>Print function to stderr</td></tr>
 <tr><td><a href="#print-alias-sets">-print-alias-sets</a></td><td>Alias Set Printer</td></tr>
-<tr><td><a href="#print-callgraph">-print-callgraph</a></td><td>Print Call Graph to 'dot' file</td></tr>
-<tr><td><a href="#print-cfg">-print-cfg</a></td><td>Print CFG of function to 'dot' file</td></tr>
-<tr><td><a href="#print-cfg-only">-print-cfg-only</a></td><td>Print CFG of function to 'dot' file (with no function bodies)</td></tr>
-<tr><td><a href="#printm">-printm</a></td><td>Print module to stderr</td></tr>
-<tr><td><a href="#printusedtypes">-printusedtypes</a></td><td>Find Used Types</td></tr>
+<tr><td><a href="#print-callgraph">-print-callgraph</a></td><td>Print a call graph</td></tr>
+<tr><td><a href="#print-callgraph-sccs">-print-callgraph-sccs</a></td><td>Print SCCs of the Call Graph</td></tr>
+<tr><td><a href="#print-cfg-sccs">-print-cfg-sccs</a></td><td>Print SCCs of each function CFG</td></tr>
+<tr><td><a href="#print-externalfnconstants">-print-externalfnconstants</a></td><td>Print external fn callsites passed constants</td></tr>
+<tr><td><a href="#print-function">-print-function</a></td><td>Print function to stderr</td></tr>
+<tr><td><a href="#print-module">-print-module</a></td><td>Print module to stderr</td></tr>
+<tr><td><a href="#print-used-types">-print-used-types</a></td><td>Find Used Types</td></tr>
 <tr><td><a href="#profile-loader">-profile-loader</a></td><td>Load profile information from llvmprof.out</td></tr>
 <tr><td><a href="#scalar-evolution">-scalar-evolution</a></td><td>Scalar Evolution Analysis</td></tr>
 <tr><td><a href="#targetdata">-targetdata</a></td><td>Target Data Layout</td></tr>
@@ -317,39 +317,6 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
 
 <!-------------------------------------------------------------------------- -->
 <div class="doc_subsection">
-  <a name="callgraph">Print a call graph</a>
-</div>
-<div class="doc_text">
-  <p>
-  This pass, only available in <code>opt</code>, prints the call graph to
-  standard output in a human-readable form.
-  </p>
-</div>
-
-<!-------------------------------------------------------------------------- -->
-<div class="doc_subsection">
-  <a name="callscc">Print SCCs of the Call Graph</a>
-</div>
-<div class="doc_text">
-  <p>
-  This pass, only available in <code>opt</code>, prints the SCCs of the call
-  graph to standard output in a human-readable form.
-  </p>
-</div>
-
-<!-------------------------------------------------------------------------- -->
-<div class="doc_subsection">
-  <a name="cfgscc">Print SCCs of each function CFG</a>
-</div>
-<div class="doc_text">
-  <p>
-  This pass, only available in <code>opt</code>, prints the SCCs of each
-  function CFG to standard output in a human-readable form.
-  </p>
-</div>
-
-<!-------------------------------------------------------------------------- -->
-<div class="doc_subsection">
   <a name="codegenprepare">Optimize for code generation</a>
 </div>
 <div class="doc_text">
@@ -412,14 +379,38 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
 
 <!-------------------------------------------------------------------------- -->
 <div class="doc_subsection">
-  <a name="externalfnconstants">Print external fn callsites passed constants</a>
+  <a name="dot-callgraph">Print Call Graph to 'dot' file</a>
 </div>
 <div class="doc_text">
   <p>
-  This pass, only available in <code>opt</code>, prints out call sites to
-  external functions that are called with constant arguments.  This can be
-  useful when looking for standard library functions we should constant fold
-  or handle in alias analyses.
+  This pass, only available in <code>opt</code>, prints the call graph into a
+  <code>.dot</code> graph.  This graph can then be processed with the "dot" tool
+  to convert it to postscript or some other suitable format.
+  </p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="dot-cfg">Print CFG of function to 'dot' file</a>
+</div>
+<div class="doc_text">
+  <p>
+  This pass, only available in <code>opt</code>, prints the control flow graph
+  into a <code>.dot</code> graph.  This graph can then be processed with the
+  "dot" tool to convert it to postscript or some other suitable format.
+  </p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="dot-cfg-only">Print CFG of function to 'dot' file (with no function bodies)</a>
+</div>
+<div class="doc_text">
+  <p>
+  This pass, only available in <code>opt</code>, prints the control flow graph
+  into a <code>.dot</code> graph, omitting the function bodies.  This graph can
+  then be processed with the "dot" tool to convert it to postscript or some
+  other suitable format.
   </p>
 </div>
 
@@ -557,7 +548,61 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
 
 <!-------------------------------------------------------------------------- -->
 <div class="doc_subsection">
-  <a name="print">Print function to stderr</a>
+  <a name="print-alias-sets">Alias Set Printer</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="print-callgraph">Print a call graph</a>
+</div>
+<div class="doc_text">
+  <p>
+  This pass, only available in <code>opt</code>, prints the call graph to
+  standard output in a human-readable form.
+  </p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="print-callgraph-sccs">Print SCCs of the Call Graph</a>
+</div>
+<div class="doc_text">
+  <p>
+  This pass, only available in <code>opt</code>, prints the SCCs of the call
+  graph to standard output in a human-readable form.
+  </p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="print-cfg-sccs">Print SCCs of each function CFG</a>
+</div>
+<div class="doc_text">
+  <p>
+  This pass, only available in <code>opt</code>, prints the SCCs of each
+  function CFG to standard output in a human-readable form.
+  </p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="print-externalfnconstants">Print external fn callsites passed constants</a>
+</div>
+<div class="doc_text">
+  <p>
+  This pass, only available in <code>opt</code>, prints out call sites to
+  external functions that are called with constant arguments.  This can be
+  useful when looking for standard library functions we should constant fold
+  or handle in alias analyses.
+  </p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="print-function">Print function to stderr</a>
 </div>
 <div class="doc_text">
   <p>
@@ -569,52 +614,7 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
 
 <!-------------------------------------------------------------------------- -->
 <div class="doc_subsection">
-  <a name="print-alias-sets">Alias Set Printer</a>
-</div>
-<div class="doc_text">
-  <p>Yet to be written.</p>
-</div>
-
-<!-------------------------------------------------------------------------- -->
-<div class="doc_subsection">
-  <a name="print-callgraph">Print Call Graph to 'dot' file</a>
-</div>
-<div class="doc_text">
-  <p>
-  This pass, only available in <code>opt</code>, prints the call graph into a
-  <code>.dot</code> graph.  This graph can then be processed with the "dot" tool
-  to convert it to postscript or some other suitable format.
-  </p>
-</div>
-
-<!-------------------------------------------------------------------------- -->
-<div class="doc_subsection">
-  <a name="print-cfg">Print CFG of function to 'dot' file</a>
-</div>
-<div class="doc_text">
-  <p>
-  This pass, only available in <code>opt</code>, prints the control flow graph
-  into a <code>.dot</code> graph.  This graph can then be processed with the
-  "dot" tool to convert it to postscript or some other suitable format.
-  </p>
-</div>
-
-<!-------------------------------------------------------------------------- -->
-<div class="doc_subsection">
-  <a name="print-cfg-only">Print CFG of function to 'dot' file (with no function bodies)</a>
-</div>
-<div class="doc_text">
-  <p>
-  This pass, only available in <code>opt</code>, prints the control flow graph
-  into a <code>.dot</code> graph, omitting the function bodies.  This graph can
-  then be processed with the "dot" tool to convert it to postscript or some
-  other suitable format.
-  </p>
-</div>
-
-<!-------------------------------------------------------------------------- -->
-<div class="doc_subsection">
-  <a name="printm">Print module to stderr</a>
+  <a name="print-module">Print module to stderr</a>
 </div>
 <div class="doc_text">
   <p>
@@ -624,7 +624,7 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
 
 <!-------------------------------------------------------------------------- -->
 <div class="doc_subsection">
-  <a name="printusedtypes">Find Used Types</a>
+  <a name="print-used-types">Find Used Types</a>
 </div>
 <div class="doc_text">
   <p>

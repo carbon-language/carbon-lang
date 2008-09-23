@@ -1,4 +1,5 @@
-; RUN: llvm-as < %s | opt -callgraph -disable-output |& grep {Calls function}
+; RUN: llvm-as < %s | opt -print-callgraph -disable-output |& \
+; RUN:   grep {Calls function}
 
 @a = global void ()* @f		; <void ()**> [#uses=0]
 

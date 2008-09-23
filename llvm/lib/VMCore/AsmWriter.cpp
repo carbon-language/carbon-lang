@@ -41,10 +41,10 @@ AssemblyAnnotationWriter::~AssemblyAnnotationWriter() {}
 
 char PrintModulePass::ID = 0;
 static RegisterPass<PrintModulePass>
-X("printm", "Print module to stderr");
+X("print-module", "Print module to stderr");
 char PrintFunctionPass::ID = 0;
 static RegisterPass<PrintFunctionPass>
-Y("print","Print function to stderr");
+Y("print-function","Print function to stderr");
 
 
 //===----------------------------------------------------------------------===//

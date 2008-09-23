@@ -65,7 +65,8 @@ namespace {
 
   char ExternalFunctionsPassedConstants::ID = 0;
   RegisterPass<ExternalFunctionsPassedConstants>
-  P1("externalfnconstants", "Print external fn callsites passed constants");
+  P1("print-externalfnconstants",
+     "Print external fn callsites passed constants");
 
   struct CallGraphPrinter : public ModulePass {
     static char ID; // Pass ID, replacement for typeid
@@ -83,5 +84,5 @@ namespace {
 
   char CallGraphPrinter::ID = 0;
   RegisterPass<CallGraphPrinter>
-    P2("callgraph", "Print a call graph");
+    P2("print-callgraph", "Print a call graph");
 }
