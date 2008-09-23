@@ -151,15 +151,15 @@ public:
 
   /// hasNote - Return true if this function has given note.
   bool hasNote(Attributes N) const {
-  	// Notes are stored at ~0 index in parameter attribute list
+    // Notes are stored at ~0 index in parameter attribute list
     return (!isDeclaration() && paramHasAttr(~0, N));
   }
 
   /// setNotes - Set notes for this function
   ///
   void setNotes(const Attributes N) { 
-  	// Notes are stored at ~0 index in parameter attribute list
-  	addParamAttr(~0, N);
+    // Notes are stored at ~0 index in parameter attribute list
+    addParamAttr(~0, N);
   }
 
   /// hasGC/getGC/setGC/clearGC - The name of the garbage collection algorithm
