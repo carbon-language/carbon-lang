@@ -421,6 +421,14 @@ DIAG(err_objc_expected_equal, ERROR,
      "setter/getter expects '=' followed by name")
 DIAG(err_objc_expected_property_attr, ERROR,
      "unknown property attribute detected")
+DIAG(err_objc_property_attr_mutually_exclusive, ERROR,
+     "property attributes '%0' and '%1' are mutually exclusive")
+DIAG(warn_objc_property_no_assignment_attribute, WARNING,
+     "no 'assign', 'retain', or 'copy' attribute is specified - 'assign' is assumed")
+DIAG(warn_objc_property_default_assign_on_object, WARNING,
+     "default property attribute 'assign' not appropriate for non-gc object")
+DIAG(err_objc_property_requires_object, ERROR,
+     "property with '%0' attribute must be of object type")
 DIAG(err_objc_protocol_required, ERROR,
      "@required may be specified in protocols only")
 DIAG(err_objc_protocol_optional, ERROR,

@@ -1038,6 +1038,68 @@ Sema::DeclTy *Sema::ActOnMethodDeclaration(
   return ObjCMethod;
 }
 
+void Sema::CheckObjCPropertyAttributes(QualType PropertyTy, 
+                                       SourceLocation Loc,
+                                       unsigned &Attributes) {
+  // FIXME: Improve the reported location.
+
+  // readonly and readwrite conflict.
+  if ((Attributes & ObjCDeclSpec::DQ_PR_readonly) &&
+      (Attributes & ObjCDeclSpec::DQ_PR_readwrite)) {
+    Diag(Loc, diag::err_objc_property_attr_mutually_exclusive,
+         "readonly", "readwrite");
+    Attributes ^= ObjCDeclSpec::DQ_PR_readonly;
+  }
+
+  // Check for copy or retain on non-object types.
+  if ((Attributes & (ObjCDeclSpec::DQ_PR_copy | ObjCDeclSpec::DQ_PR_retain)) &&
+      !Context.isObjCObjectPointerType(PropertyTy)) {
+    Diag(Loc, diag::err_objc_property_requires_object,
+         Attributes & ObjCDeclSpec::DQ_PR_copy ? "copy" : "retain");
+    Attributes &= ~(ObjCDeclSpec::DQ_PR_copy | ObjCDeclSpec::DQ_PR_retain);
+  }
+
+  // Check for more than one of { assign, copy, retain }.
+  if (Attributes & ObjCDeclSpec::DQ_PR_assign) {
+    if (Attributes & ObjCDeclSpec::DQ_PR_copy) {
+      Diag(Loc, diag::err_objc_property_attr_mutually_exclusive,
+           "assign", "copy");
+      Attributes ^= ObjCDeclSpec::DQ_PR_copy;
+    } 
+    if (Attributes & ObjCDeclSpec::DQ_PR_retain) {
+      Diag(Loc, diag::err_objc_property_attr_mutually_exclusive,
+           "assign", "retain");
+      Attributes ^= ObjCDeclSpec::DQ_PR_retain;
+    }
+  } else if (Attributes & ObjCDeclSpec::DQ_PR_copy) {
+    if (Attributes & ObjCDeclSpec::DQ_PR_retain) {
+      Diag(Loc, diag::err_objc_property_attr_mutually_exclusive,
+           "copy", "retain");
+      Attributes ^= ObjCDeclSpec::DQ_PR_retain;
+    }
+  }
+
+  // Warn if user supplied no assignment attribute, property is
+  // readwrite, and this is an object type.
+  if (!(Attributes & (ObjCDeclSpec::DQ_PR_assign | ObjCDeclSpec::DQ_PR_copy |
+                      ObjCDeclSpec::DQ_PR_retain)) &&
+      !(Attributes & ObjCDeclSpec::DQ_PR_readonly) &&
+      Context.isObjCObjectPointerType(PropertyTy)) {
+    // Skip this warning in gc-only mode.
+    if (getLangOptions().getGCMode() != LangOptions::GCOnly)    
+      Diag(Loc, diag::warn_objc_property_no_assignment_attribute);
+
+    // If non-gc code warn that this is likely inappropriate.
+    if (getLangOptions().getGCMode() == LangOptions::NonGC)
+      Diag(Loc, diag::warn_objc_property_default_assign_on_object);
+    
+    // FIXME: Implement warning dependent on NSCopying being
+    // implemented. See also:
+    // <rdar://5168496&4855821&5607453&5096644&4947311&5698469&4947014&5168496>
+    // (please trim this list while you are at it).
+  }
+}
+
 Sema::DeclTy *Sema::ActOnProperty(Scope *S, SourceLocation AtLoc, 
                                   FieldDeclarator &FD,
                                   ObjCDeclSpec &ODS,
@@ -1045,6 +1107,11 @@ Sema::DeclTy *Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
                                   Selector SetterSel,
                                   tok::ObjCKeywordKind MethodImplKind) {
   QualType T = GetTypeForDeclarator(FD.D, S);
+  unsigned Attributes = ODS.getPropertyAttributes();
+
+  // May modify Attributes.
+  CheckObjCPropertyAttributes(T, AtLoc, Attributes);
+
   ObjCPropertyDecl *PDecl = ObjCPropertyDecl::Create(Context, AtLoc, 
                                                      FD.D.getIdentifier(), T);
   // Regardless of setter/getter attribute, we save the default getter/setter
@@ -1052,28 +1119,28 @@ Sema::DeclTy *Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
   PDecl->setGetterName(GetterSel);
   PDecl->setSetterName(SetterSel);
   
-  if (ODS.getPropertyAttributes() & ObjCDeclSpec::DQ_PR_readonly)
+  if (Attributes & ObjCDeclSpec::DQ_PR_readonly)
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_readonly);
   
-  if (ODS.getPropertyAttributes() & ObjCDeclSpec::DQ_PR_getter)
+  if (Attributes & ObjCDeclSpec::DQ_PR_getter)
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_getter);
   
-  if (ODS.getPropertyAttributes() & ObjCDeclSpec::DQ_PR_setter)
+  if (Attributes & ObjCDeclSpec::DQ_PR_setter)
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_setter);
   
-  if (ODS.getPropertyAttributes() & ObjCDeclSpec::DQ_PR_assign)
+  if (Attributes & ObjCDeclSpec::DQ_PR_assign)
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_assign);
   
-  if (ODS.getPropertyAttributes() & ObjCDeclSpec::DQ_PR_readwrite)
+  if (Attributes & ObjCDeclSpec::DQ_PR_readwrite)
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_readwrite);
   
-  if (ODS.getPropertyAttributes() & ObjCDeclSpec::DQ_PR_retain)
+  if (Attributes & ObjCDeclSpec::DQ_PR_retain)
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_retain);
   
-  if (ODS.getPropertyAttributes() & ObjCDeclSpec::DQ_PR_copy)
+  if (Attributes & ObjCDeclSpec::DQ_PR_copy)
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_copy);
   
-  if (ODS.getPropertyAttributes() & ObjCDeclSpec::DQ_PR_nonatomic)
+  if (Attributes & ObjCDeclSpec::DQ_PR_nonatomic)
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_nonatomic);
   
   if (MethodImplKind == tok::objc_required)
@@ -1116,7 +1183,7 @@ Sema::DeclTy *Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
     // Look for this property declaration in the @implementation's @interface
     property = IDecl->FindPropertyDeclaration(PropertyId);
     if (!property) {
-       Diag(PropertyLoc, diag::error_bad_property_decl, IDecl->getName());
+      Diag(PropertyLoc, diag::error_bad_property_decl, IDecl->getName());
       return 0;
     }
   }

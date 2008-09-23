@@ -723,6 +723,12 @@ public:
                                        unsigned NumProtocols,
                                    llvm::SmallVectorImpl<DeclTy *> &Protocols);
   
+  /// Ensure attributes are consistent with type. 
+  /// \param [in, out] Attributes The attributes to check; they will
+  /// be modified to be consistent with \arg PropertyTy.
+  void CheckObjCPropertyAttributes(QualType PropertyTy, 
+                                   SourceLocation Loc,
+                                   unsigned &Attributes);
   void DiagnosePropertyMismatch(ObjCPropertyDecl *Property, 
                                 ObjCPropertyDecl *SuperProperty,
                                 const char *Name);
