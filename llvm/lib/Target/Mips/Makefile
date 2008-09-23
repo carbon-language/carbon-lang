@@ -12,10 +12,10 @@ TARGET = Mips
 
 # Make sure that tblgen is run, first thing.
 BUILT_SOURCES = MipsGenRegisterInfo.h.inc MipsGenRegisterNames.inc \
-								MipsGenRegisterInfo.inc MipsGenInstrNames.inc \
-								MipsGenInstrInfo.inc MipsGenAsmWriter.inc \
-								MipsGenDAGISel.inc MipsGenCallingConv.inc \
-								MipsGenSubtarget.inc
+                MipsGenRegisterInfo.inc MipsGenInstrNames.inc \
+                MipsGenInstrInfo.inc MipsGenAsmWriter.inc \
+                MipsGenDAGISel.inc MipsGenCallingConv.inc \
+                MipsGenSubtarget.inc
 
 include $(LEVEL)/Makefile.common
 
