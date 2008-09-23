@@ -186,6 +186,7 @@ const ParamAttrsWithIndex &PAListPtr::getSlot(unsigned Slot) const {
 
 /// getParamAttrs - The parameter attributes for the specified parameter are
 /// returned.  Parameters for the result are denoted with Idx = 0.
+/// Function notes are denoted with idx = ~0.
 ParameterAttributes PAListPtr::getParamAttrs(unsigned Idx) const {
   if (PAList == 0) return ParamAttr::None;
   

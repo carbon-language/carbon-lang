@@ -222,7 +222,7 @@ int InlineCostAnalyzer::getInlineCost(CallSite CS,
   if (CalleeFI.NeverInline)
     return 2000000000;
 
-  if (Callee->hasNote(FN_NOTE_AlwaysInline))
+  if (Callee->hasNote(ParamAttr::FN_NOTE_AlwaysInline))
     return -2000000000;
     
   // Add to the inline quality for properties that make the call valuable to

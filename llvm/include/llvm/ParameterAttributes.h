@@ -46,6 +46,13 @@ const Attributes ReadNone  = 1<<9;  ///< Function does not access memory
 const Attributes ReadOnly  = 1<<10; ///< Function only reads from memory
 const Attributes Alignment = 0xffff<<16; ///< Alignment of parameter (16 bits)
                                     // 0 = unknown, else in clear (not log)
+                                    
+/// Function notes are implemented as attributes stored at index ~0 in 
+/// parameter attribute list.
+const Attributes FN_NOTE_None            = 0;    
+const Attributes FN_NOTE_NoInline        = 1<<0; // inline=never 
+const Attributes FN_NOTE_AlwaysInline    = 1<<1; // inline=always
+const Attributes FN_NOTE_OptimizeForSize = 1<<2; // opt_size
 
 /// @brief Attributes that only apply to function parameters.
 const Attributes ParameterOnly = ByVal | Nest | StructRet;

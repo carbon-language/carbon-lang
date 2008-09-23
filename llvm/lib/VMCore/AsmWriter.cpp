@@ -1412,12 +1412,12 @@ void AssemblyWriter::printFunction(const Function *F) {
   } else {
 
     bool insideNotes = false;
-    if (F->hasNote(FN_NOTE_AlwaysInline)) {
+    if (F->hasNote(ParamAttr::FN_NOTE_AlwaysInline)) {
       Out << "notes(";
       insideNotes = true;
       Out << "inline=always";
     }
-    if (F->hasNote(FN_NOTE_NoInline)) {
+    if (F->hasNote(ParamAttr::FN_NOTE_NoInline)) {
       if (insideNotes) 
         Out << ",";
       else {
@@ -1426,7 +1426,7 @@ void AssemblyWriter::printFunction(const Function *F) {
       }
       Out << "inline=never";
     }
-    if (F->hasNote(FN_NOTE_OptimizeForSize)) {
+    if (F->hasNote(ParamAttr::FN_NOTE_OptimizeForSize)) {
       if (insideNotes) 
         Out << ",";
       else {

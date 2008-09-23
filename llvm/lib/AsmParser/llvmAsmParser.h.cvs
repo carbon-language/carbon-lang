@@ -366,7 +366,7 @@
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 970 "/Users/sabre/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 970 "/Volumes/Nanpura/mainline/llvm/lib/AsmParser/llvmAsmParser.y"
 {
   llvm::Module                           *ModuleVal;
   llvm::Function                         *FunctionVal;
@@ -395,7 +395,7 @@ typedef union YYSTYPE
   llvm::GlobalValue::LinkageTypes         Linkage;
   llvm::GlobalValue::VisibilityTypes      Visibility;
   llvm::ParameterAttributes         ParamAttrs;
-  llvm::FunctionNotes               FunctionNotes;
+  llvm::ParameterAttributes         FunctionNotes;
   llvm::APInt                       *APIntVal;
   int64_t                           SInt64Val;
   uint64_t                          UInt64Val;

@@ -477,6 +477,19 @@ void Verifier::VerifyFunctionAttrs(const FunctionType *FT,
   }
 }
 
+static bool VerifyAttributeCount(const PAListPtr &Attrs, unsigned Params) {
+  if (Attrs.isEmpty())
+    return true;
+    
+  unsigned LastSlot = Attrs.getNumSlots() - 1;
+  unsigned LastIndex = Attrs.getSlot(LastSlot).Index;
+  if (LastIndex <= Params
+      || (LastIndex == (unsigned)~0
+          && (LastSlot == 0 || Attrs.getSlot(LastSlot - 1).Index <= Params)))  
+    return true;
+    
+  return false;
+}
 // visitFunction - Verify that a function is ok.
 //
 void Verifier::visitFunction(Function &F) {
@@ -497,8 +510,7 @@ void Verifier::visitFunction(Function &F) {
 
   const PAListPtr &Attrs = F.getParamAttrs();
 
-  Assert1(Attrs.isEmpty() ||
-          Attrs.getSlot(Attrs.getNumSlots()-1).Index <= FT->getNumParams(),
+  Assert1(VerifyAttributeCount(Attrs, FT->getNumParams()),
           "Attributes after last parameter!", &F);
 
   // Check function attributes.
@@ -955,8 +967,7 @@ void Verifier::VerifyCallSite(CallSite CS) {
 
   const PAListPtr &Attrs = CS.getParamAttrs();
 
-  Assert1(Attrs.isEmpty() ||
-          Attrs.getSlot(Attrs.getNumSlots()-1).Index <= CS.arg_size(),
+  Assert1(VerifyAttributeCount(Attrs, CS.arg_size()),
           "Attributes after last parameter!", I);
 
   // Verify call attributes.

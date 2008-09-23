@@ -147,7 +147,7 @@ bool X86IntelAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   SwitchToTextSection(getSectionForFunction(*F).c_str(), F);
 
   unsigned FnAlign = OptimizeForSize ? 1 : 4;
-  if (F->hasNote(FN_NOTE_OptimizeForSize))
+  if (F->hasNote(ParamAttr::FN_NOTE_OptimizeForSize))
     FnAlign = 1;
   switch (F->getLinkage()) {
   default: assert(0 && "Unsupported linkage type!");

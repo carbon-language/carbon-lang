@@ -995,7 +995,7 @@ Module *llvm::RunVMAsmParser(llvm::MemoryBuffer *MB) {
   llvm::GlobalValue::LinkageTypes         Linkage;
   llvm::GlobalValue::VisibilityTypes      Visibility;
   llvm::ParameterAttributes         ParamAttrs;
-  llvm::FunctionNotes               FunctionNotes;
+  llvm::ParameterAttributes         FunctionNotes;
   llvm::APInt                       *APIntVal;
   int64_t                           SInt64Val;
   uint64_t                          UInt64Val;
@@ -1091,8 +1091,8 @@ Module *llvm::RunVMAsmParser(llvm::MemoryBuffer *MB) {
 %type <UIntVal> OptCallingConv LocalNumber
 %type <ParamAttrs> OptParamAttrs ParamAttr 
 %type <ParamAttrs> OptFuncAttrs  FuncAttr
-%type <FunctionNotes> OptFuncNotes FuncNote 
-%type <FunctionNotes> FuncNoteList
+%type <ParamAttrs> OptFuncNotes FuncNote 
+%type <ParamAttrs> FuncNoteList
 
 // Basic Block Terminating Operators
 %token <TermOpVal> RET BR SWITCH INVOKE UNWIND UNREACHABLE
@@ -1297,22 +1297,24 @@ OptFuncAttrs  : /* empty */ { $$ = ParamAttr::None; }
 
 FuncNoteList  : FuncNote { $$ = $1; }
               | FuncNoteList ',' FuncNote { 
-                FunctionNotes tmp = $1 | $3;
-                if ($3 == FN_NOTE_NoInline && ($1 & FN_NOTE_AlwaysInline))
+                unsigned tmp = $1 | $3;
+                if ($3 == ParamAttr::FN_NOTE_NoInline 
+                    && ($1 & ParamAttr::FN_NOTE_AlwaysInline))
                   GEN_ERROR("Function Notes may include only one inline notes!")
-                if ($3 == FN_NOTE_AlwaysInline && ($1 & FN_NOTE_NoInline))
+                    if ($3 == ParamAttr::FN_NOTE_AlwaysInline 
+                        && ($1 & ParamAttr::FN_NOTE_NoInline))
                   GEN_ERROR("Function Notes may include only one inline notes!")
                 $$ = tmp;
                 CHECK_FOR_ERROR 
               }
               ;
 
-FuncNote      : INLINE '=' NEVER { $$ = FN_NOTE_NoInline; }
-              | INLINE '=' ALWAYS { $$ = FN_NOTE_AlwaysInline; }
-              | OPTIMIZEFORSIZE { $$ = FN_NOTE_OptimizeForSize; }
+FuncNote      : INLINE '=' NEVER { $$ = ParamAttr::FN_NOTE_NoInline; }
+              | INLINE '=' ALWAYS { $$ = ParamAttr::FN_NOTE_AlwaysInline; }
+              | OPTIMIZEFORSIZE { $$ = ParamAttr::FN_NOTE_OptimizeForSize; }
               ;
 
-OptFuncNotes  : /* empty */ { $$ = FN_NOTE_None; }
+OptFuncNotes  : /* empty */ { $$ = ParamAttr::FN_NOTE_None; }
               | FNNOTE '(' FuncNoteList  ')' {
                 $$ =  $3;
               }

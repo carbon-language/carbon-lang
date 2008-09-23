@@ -51,12 +51,6 @@ template<> struct ilist_traits<Argument>
   static int getListOffset();
 };
 
-typedef unsigned FunctionNotes;
-const FunctionNotes FN_NOTE_None            = 0;   
-const FunctionNotes FN_NOTE_NoInline        = 1<<0;
-const FunctionNotes FN_NOTE_AlwaysInline    = 1<<1;
-const FunctionNotes FN_NOTE_OptimizeForSize = 1<<2;
-
 class Function : public GlobalValue, public Annotable,
                  public ilist_node<Function> {
 public:
@@ -76,7 +70,6 @@ private:
   mutable ArgumentListType ArgumentList;  ///< The formal arguments
   ValueSymbolTable *SymTab;               ///< Symbol table of args/instructions
   PAListPtr ParamAttrs;                   ///< Parameter attributes
-  FunctionNotes Notes;                    ///< Function properties
 
   // The Calling Convention is stored in Value::SubclassData.
   /*unsigned CallingConvention;*/
@@ -155,18 +148,19 @@ public:
   ///
   void setParamAttrs(const PAListPtr &attrs) { ParamAttrs = attrs; }
 
-  /// getNotes - Return function notes
-  ///
-  const FunctionNotes &getNotes() const { return Notes; }
 
   /// hasNote - Return true if this function has given note.
-  bool hasNote(FunctionNotes N) const {
-    return (!isDeclaration() && (Notes & N));
+  bool hasNote(ParameterAttributes N) const {
+  	// Notes are stored at ~0 index in parameter attribute list
+    return (!isDeclaration() && paramHasAttr(~0, N));
   }
 
   /// setNotes - Set notes for this function
   ///
-  void setNotes(const FunctionNotes P) { Notes = Notes | P;}
+  void setNotes(const ParameterAttributes N) { 
+  	// Notes are stored at ~0 index in parameter attribute list
+  	addParamAttr(~0, N);
+  }
 
   /// hasGC/getGC/setGC/clearGC - The name of the garbage collection algorithm
   ///                             to use during code generation.

@@ -412,7 +412,6 @@ static void WriteModuleInfo(const Module *M, const ValueEnumerator &VE,
     Vals.push_back(F->hasSection() ? SectionMap[F->getSection()] : 0);
     Vals.push_back(getEncodedVisibility(F));
     Vals.push_back(F->hasGC() ? GCMap[F->getGC()] : 0);
-    Vals.push_back(F->getNotes());
     
     unsigned AbbrevToUse = 0;
     Stream.EmitRecord(bitc::MODULE_CODE_FUNCTION, Vals, AbbrevToUse);
