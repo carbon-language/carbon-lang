@@ -593,7 +593,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
   const PAListPtr &PAL = F->getParamAttrs();
 
   // The existing function return attributes.
-  ParameterAttributes RAttrs = PAL.getParamAttrs(0);
+  Attributes RAttrs = PAL.getParamAttrs(0);
 
 
   // Find out the new return value.
@@ -678,7 +678,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
 
       // Get the original parameter attributes (skipping the first one, that is
       // for the return value.
-      if (ParameterAttributes Attrs = PAL.getParamAttrs(i + 1))
+      if (Attributes Attrs = PAL.getParamAttrs(i + 1))
         ParamAttrsVec.push_back(ParamAttrsWithIndex::get(Params.size(), Attrs));
     } else {
       ++NumArgumentsEliminated;
@@ -730,7 +730,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
     const PAListPtr &CallPAL = CS.getParamAttrs();
 
     // The call return attributes.
-    ParameterAttributes RAttrs = CallPAL.getParamAttrs(0);
+    Attributes RAttrs = CallPAL.getParamAttrs(0);
     // Adjust in case the function was changed to return void.
     RAttrs &= ~ParamAttr::typeIncompatible(NF->getReturnType());
     if (RAttrs)
@@ -746,7 +746,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
       if (ArgAlive[i]) {
         Args.push_back(*I);
         // Get original parameter attributes, but skip return attributes.
-        if (ParameterAttributes Attrs = CallPAL.getParamAttrs(i + 1))
+        if (Attributes Attrs = CallPAL.getParamAttrs(i + 1))
           ParamAttrsVec.push_back(ParamAttrsWithIndex::get(Args.size(), Attrs));
       }
 
@@ -756,7 +756,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
     // Push any varargs arguments on the list. Don't forget their attributes.
     for (CallSite::arg_iterator E = CS.arg_end(); I != E; ++I, ++i) {
       Args.push_back(*I);
-      if (ParameterAttributes Attrs = CallPAL.getParamAttrs(i + 1))
+      if (Attributes Attrs = CallPAL.getParamAttrs(i + 1))
         ParamAttrsVec.push_back(ParamAttrsWithIndex::get(Args.size(), Attrs));
     }
 

@@ -22,7 +22,7 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/Argument.h"
 #include "llvm/Support/Annotation.h"
-#include "llvm/ParameterAttributes.h"
+#include "llvm/Attributes.h"
 
 namespace llvm {
 
@@ -150,14 +150,14 @@ public:
 
 
   /// hasNote - Return true if this function has given note.
-  bool hasNote(ParameterAttributes N) const {
+  bool hasNote(Attributes N) const {
   	// Notes are stored at ~0 index in parameter attribute list
     return (!isDeclaration() && paramHasAttr(~0, N));
   }
 
   /// setNotes - Set notes for this function
   ///
-  void setNotes(const ParameterAttributes N) { 
+  void setNotes(const Attributes N) { 
   	// Notes are stored at ~0 index in parameter attribute list
   	addParamAttr(~0, N);
   }
@@ -170,15 +170,15 @@ public:
   void clearGC();
 
   /// @brief Determine whether the function has the given attribute.
-  bool paramHasAttr(unsigned i, ParameterAttributes attr) const {
+  bool paramHasAttr(unsigned i, Attributes attr) const {
     return ParamAttrs.paramHasAttr(i, attr);
   }
 
   /// addParamAttr - adds the attribute to the list of attributes.
-  void addParamAttr(unsigned i, ParameterAttributes attr);
+  void addParamAttr(unsigned i, Attributes attr);
   
   /// removeParamAttr - removes the attribute from the list of attributes.
-  void removeParamAttr(unsigned i, ParameterAttributes attr);
+  void removeParamAttr(unsigned i, Attributes attr);
 
   /// @brief Extract the alignment for a call or parameter (0=unknown).
   unsigned getParamAlignment(unsigned i) const {

@@ -27,7 +27,7 @@
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
-#include "llvm/ParameterAttributes.h"
+#include "llvm/Attributes.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Pass.h"

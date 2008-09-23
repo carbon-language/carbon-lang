@@ -20,7 +20,7 @@
 
 #include "llvm/InstrTypes.h"
 #include "llvm/DerivedTypes.h"
-#include "llvm/ParameterAttributes.h"
+#include "llvm/Attributes.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/ADT/SmallVector.h"
 
@@ -1081,10 +1081,10 @@ public:
   void setParamAttrs(const PAListPtr &Attrs) { ParamAttrs = Attrs; }
   
   /// addParamAttr - adds the attribute to the list of attributes.
-  void addParamAttr(unsigned i, ParameterAttributes attr);
+  void addParamAttr(unsigned i, Attributes attr);
 
   /// removeParamAttr - removes the attribute from the list of attributes.
-  void removeParamAttr(unsigned i, ParameterAttributes attr);
+  void removeParamAttr(unsigned i, Attributes attr);
 
   /// @brief Determine whether the call or the callee has the given attribute.
   bool paramHasAttr(unsigned i, unsigned attr) const;
@@ -2440,13 +2440,13 @@ public:
   void setParamAttrs(const PAListPtr &Attrs) { ParamAttrs = Attrs; }
 
   /// @brief Determine whether the call or the callee has the given attribute.
-  bool paramHasAttr(unsigned i, ParameterAttributes attr) const;
+  bool paramHasAttr(unsigned i, Attributes attr) const;
   
   /// addParamAttr - adds the attribute to the list of attributes.
-  void addParamAttr(unsigned i, ParameterAttributes attr);
+  void addParamAttr(unsigned i, Attributes attr);
 
   /// removeParamAttr - removes the attribute from the list of attributes.
-  void removeParamAttr(unsigned i, ParameterAttributes attr);
+  void removeParamAttr(unsigned i, Attributes attr);
 
   /// @brief Extract the alignment for a call or parameter (0=unknown).
   unsigned getParamAlignment(unsigned i) const {

@@ -18,7 +18,7 @@
 #include "llvm/Module.h"
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
-#include "llvm/ParameterAttributes.h"
+#include "llvm/Attributes.h"
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/ADT/SmallVector.h"

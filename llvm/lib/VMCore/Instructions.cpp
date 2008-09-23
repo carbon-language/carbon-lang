@@ -53,7 +53,7 @@ void CallSite::setParamAttrs(const PAListPtr &PAL) {
   else
     cast<InvokeInst>(I)->setParamAttrs(PAL);
 }
-bool CallSite::paramHasAttr(uint16_t i, ParameterAttributes attr) const {
+bool CallSite::paramHasAttr(uint16_t i, Attributes attr) const {
   if (CallInst *CI = dyn_cast<CallInst>(I))
     return CI->paramHasAttr(i, attr);
   else
@@ -402,19 +402,19 @@ CallInst::CallInst(const CallInst &CI)
     OL[i] = InOL[i];
 }
 
-void CallInst::addParamAttr(unsigned i, ParameterAttributes attr) {
+void CallInst::addParamAttr(unsigned i, Attributes attr) {
   PAListPtr PAL = getParamAttrs();
   PAL = PAL.addAttr(i, attr);
   setParamAttrs(PAL);
 }
 
-void CallInst::removeParamAttr(unsigned i, ParameterAttributes attr) {
+void CallInst::removeParamAttr(unsigned i, Attributes attr) {
   PAListPtr PAL = getParamAttrs();
   PAL = PAL.removeAttr(i, attr);
   setParamAttrs(PAL);
 }
 
-bool CallInst::paramHasAttr(unsigned i, ParameterAttributes attr) const {
+bool CallInst::paramHasAttr(unsigned i, Attributes attr) const {
   if (ParamAttrs.paramHasAttr(i, attr))
     return true;
   if (const Function *F = getCalledFunction())
@@ -473,7 +473,7 @@ void InvokeInst::setSuccessorV(unsigned idx, BasicBlock *B) {
   return setSuccessor(idx, B);
 }
 
-bool InvokeInst::paramHasAttr(unsigned i, ParameterAttributes attr) const {
+bool InvokeInst::paramHasAttr(unsigned i, Attributes attr) const {
   if (ParamAttrs.paramHasAttr(i, attr))
     return true;
   if (const Function *F = getCalledFunction())
@@ -481,13 +481,13 @@ bool InvokeInst::paramHasAttr(unsigned i, ParameterAttributes attr) const {
   return false;
 }
 
-void InvokeInst::addParamAttr(unsigned i, ParameterAttributes attr) {
+void InvokeInst::addParamAttr(unsigned i, Attributes attr) {
   PAListPtr PAL = getParamAttrs();
   PAL = PAL.addAttr(i, attr);
   setParamAttrs(PAL);
 }
 
-void InvokeInst::removeParamAttr(unsigned i, ParameterAttributes attr) {
+void InvokeInst::removeParamAttr(unsigned i, Attributes attr) {
   PAListPtr PAL = getParamAttrs();
   PAL = PAL.removeAttr(i, attr);
   setParamAttrs(PAL);

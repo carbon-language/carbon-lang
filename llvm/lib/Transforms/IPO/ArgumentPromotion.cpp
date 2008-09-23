@@ -508,7 +508,7 @@ Function *ArgPromotion::DoPromotion(Function *F,
   const PAListPtr &PAL = F->getParamAttrs();
 
   // Add any return attributes.
-  if (ParameterAttributes attrs = PAL.getParamAttrs(0))
+  if (Attributes attrs = PAL.getParamAttrs(0))
     ParamAttrsVec.push_back(ParamAttrsWithIndex::get(0, attrs));
 
   // First, determine the new argument list
@@ -525,7 +525,7 @@ Function *ArgPromotion::DoPromotion(Function *F,
     } else if (!ArgsToPromote.count(I)) {
       // Unchanged argument
       Params.push_back(I->getType());
-      if (ParameterAttributes attrs = PAL.getParamAttrs(ArgIndex))
+      if (Attributes attrs = PAL.getParamAttrs(ArgIndex))
         ParamAttrsVec.push_back(ParamAttrsWithIndex::get(Params.size(), attrs));
     } else if (I->use_empty()) {
       // Dead argument (which are always marked as promotable)
@@ -621,7 +621,7 @@ Function *ArgPromotion::DoPromotion(Function *F,
     const PAListPtr &CallPAL = CS.getParamAttrs();
 
     // Add any return attributes.
-    if (ParameterAttributes attrs = CallPAL.getParamAttrs(0))
+    if (Attributes attrs = CallPAL.getParamAttrs(0))
       ParamAttrsVec.push_back(ParamAttrsWithIndex::get(0, attrs));
 
     // Loop over the operands, inserting GEP and loads in the caller as
@@ -633,7 +633,7 @@ Function *ArgPromotion::DoPromotion(Function *F,
       if (!ArgsToPromote.count(I) && !ByValArgsToTransform.count(I)) {
         Args.push_back(*AI);          // Unmodified argument
 
-        if (ParameterAttributes Attrs = CallPAL.getParamAttrs(ArgIndex))
+        if (Attributes Attrs = CallPAL.getParamAttrs(ArgIndex))
           ParamAttrsVec.push_back(ParamAttrsWithIndex::get(Args.size(), Attrs));
 
       } else if (ByValArgsToTransform.count(I)) {
@@ -688,7 +688,7 @@ Function *ArgPromotion::DoPromotion(Function *F,
     // Push any varargs arguments on the list
     for (; AI != CS.arg_end(); ++AI, ++ArgIndex) {
       Args.push_back(*AI);
-      if (ParameterAttributes Attrs = CallPAL.getParamAttrs(ArgIndex))
+      if (Attributes Attrs = CallPAL.getParamAttrs(ArgIndex))
         ParamAttrsVec.push_back(ParamAttrsWithIndex::get(Args.size(), Attrs));
     }
 

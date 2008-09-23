@@ -17,7 +17,7 @@
 
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
-#include "llvm/ParameterAttributes.h"
+#include "llvm/Attributes.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
 #include "llvm/Assembly/Parser.h"
@@ -232,13 +232,13 @@ struct ValID {
 
 struct TypeWithAttrs {
   llvm::PATypeHolder *Ty;
-  ParameterAttributes Attrs;
+  Attributes Attrs;
 };
 
 typedef std::vector<TypeWithAttrs> TypeWithAttrsList;
 
 struct ArgListEntry {
-  ParameterAttributes Attrs;
+  Attributes Attrs;
   llvm::PATypeHolder *Ty;
   std::string *Name;
 };
@@ -247,7 +247,7 @@ typedef std::vector<struct ArgListEntry> ArgListType;
 
 struct ParamListEntry {
   Value *Val;
-  ParameterAttributes Attrs;
+  Attributes Attrs;
 };
 
 typedef std::vector<ParamListEntry> ParamList;

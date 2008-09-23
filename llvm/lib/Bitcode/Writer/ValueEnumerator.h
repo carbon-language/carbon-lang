@@ -15,7 +15,7 @@
 #define VALUE_ENUMERATOR_H
 
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ParameterAttributes.h"
+#include "llvm/Attributes.h"
 #include <vector>
 
 namespace llvm {

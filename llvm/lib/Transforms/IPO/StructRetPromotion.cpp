@@ -210,7 +210,7 @@ Function *SRETPromotion::cloneFunctionBody(Function *F,
   const PAListPtr &PAL = F->getParamAttrs();
 
   // Add any return attributes.
-  if (ParameterAttributes attrs = PAL.getParamAttrs(0))
+  if (Attributes attrs = PAL.getParamAttrs(0))
     ParamAttrsVec.push_back(ParamAttrsWithIndex::get(0, attrs));
 
   // Skip first argument.
@@ -221,7 +221,7 @@ Function *SRETPromotion::cloneFunctionBody(Function *F,
   unsigned ParamIndex = 2; 
   while (I != E) {
     Params.push_back(I->getType());
-    if (ParameterAttributes Attrs = PAL.getParamAttrs(ParamIndex))
+    if (Attributes Attrs = PAL.getParamAttrs(ParamIndex))
       ParamAttrsVec.push_back(ParamAttrsWithIndex::get(ParamIndex - 1, Attrs));
     ++I;
     ++ParamIndex;
@@ -264,7 +264,7 @@ void SRETPromotion::updateCallSites(Function *F, Function *NF) {
 
     const PAListPtr &PAL = F->getParamAttrs();
     // Add any return attributes.
-    if (ParameterAttributes attrs = PAL.getParamAttrs(0))
+    if (Attributes attrs = PAL.getParamAttrs(0))
       ArgAttrsVec.push_back(ParamAttrsWithIndex::get(0, attrs));
 
     // Copy arguments, however skip first one.
@@ -276,7 +276,7 @@ void SRETPromotion::updateCallSites(Function *F, Function *NF) {
     unsigned ParamIndex = 2; 
     while (AI != AE) {
       Args.push_back(*AI); 
-      if (ParameterAttributes Attrs = PAL.getParamAttrs(ParamIndex))
+      if (Attributes Attrs = PAL.getParamAttrs(ParamIndex))
         ArgAttrsVec.push_back(ParamAttrsWithIndex::get(ParamIndex - 1, Attrs));
       ++ParamIndex;
       ++AI;

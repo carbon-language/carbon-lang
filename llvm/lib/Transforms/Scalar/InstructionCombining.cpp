@@ -9127,7 +9127,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
       return false;   // Cannot transform this return value.
 
     if (!CallerPAL.isEmpty() && !Caller->use_empty()) {
-      ParameterAttributes RAttrs = CallerPAL.getParamAttrs(0);
+      Attributes RAttrs = CallerPAL.getParamAttrs(0);
       if (RAttrs & ParamAttr::typeIncompatible(NewRetTy))
         return false;   // Attribute not compatible with transformed value.
     }
@@ -9180,7 +9180,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
     for (unsigned i = CallerPAL.getNumSlots(); i; --i) {
       if (CallerPAL.getSlot(i - 1).Index <= FT->getNumParams())
         break;
-      ParameterAttributes PAttrs = CallerPAL.getSlot(i - 1).Attrs;
+      Attributes PAttrs = CallerPAL.getSlot(i - 1).Attrs;
       if (PAttrs & ParamAttr::VarArgsIncompatible)
         return false;
     }
@@ -9193,7 +9193,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
   attrVec.reserve(NumCommonArgs);
 
   // Get any return attributes.
-  ParameterAttributes RAttrs = CallerPAL.getParamAttrs(0);
+  Attributes RAttrs = CallerPAL.getParamAttrs(0);
 
   // If the return value is not being used, the type may not be compatible
   // with the existing attributes.  Wipe out any problematic attributes.
@@ -9216,7 +9216,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
     }
 
     // Add any parameter attributes.
-    if (ParameterAttributes PAttrs = CallerPAL.getParamAttrs(i + 1))
+    if (Attributes PAttrs = CallerPAL.getParamAttrs(i + 1))
       attrVec.push_back(ParamAttrsWithIndex::get(i + 1, PAttrs));
   }
 
@@ -9246,7 +9246,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
         }
 
         // Add any parameter attributes.
-        if (ParameterAttributes PAttrs = CallerPAL.getParamAttrs(i + 1))
+        if (Attributes PAttrs = CallerPAL.getParamAttrs(i + 1))
           attrVec.push_back(ParamAttrsWithIndex::get(i + 1, PAttrs));
       }
     }
@@ -9329,7 +9329,7 @@ Instruction *InstCombiner::transformCallThroughTrampoline(CallSite CS) {
   if (!NestAttrs.isEmpty()) {
     unsigned NestIdx = 1;
     const Type *NestTy = 0;
-    ParameterAttributes NestAttr = ParamAttr::None;
+    Attributes NestAttr = ParamAttr::None;
 
     // Look for a parameter marked with the 'nest' attribute.
     for (FunctionType::param_iterator I = NestFTy->param_begin(),
@@ -9353,7 +9353,7 @@ Instruction *InstCombiner::transformCallThroughTrampoline(CallSite CS) {
       // mean appending it.  Likewise for attributes.
 
       // Add any function result attributes.
-      if (ParameterAttributes Attr = Attrs.getParamAttrs(0))
+      if (Attributes Attr = Attrs.getParamAttrs(0))
         NewAttrs.push_back(ParamAttrsWithIndex::get(0, Attr));
 
       {
@@ -9374,7 +9374,7 @@ Instruction *InstCombiner::transformCallThroughTrampoline(CallSite CS) {
 
           // Add the original argument and attributes.
           NewArgs.push_back(*I);
-          if (ParameterAttributes Attr = Attrs.getParamAttrs(Idx))
+          if (Attributes Attr = Attrs.getParamAttrs(Idx))
             NewAttrs.push_back
               (ParamAttrsWithIndex::get(Idx + (Idx >= NestIdx), Attr));
 

@@ -112,12 +112,12 @@ bool Argument::hasStructRetAttr() const {
 }
 
 /// addAttr - Add a ParamAttr to an argument
-void Argument::addAttr(ParameterAttributes attr) {
+void Argument::addAttr(Attributes attr) {
   getParent()->addParamAttr(getArgNo() + 1, attr);
 }
 
 /// removeAttr - Remove a ParamAttr from an argument
-void Argument::removeAttr(ParameterAttributes attr) {
+void Argument::removeAttr(Attributes attr) {
   getParent()->removeParamAttr(getArgNo() + 1, attr);
 }
 
@@ -229,13 +229,13 @@ void Function::dropAllReferences() {
   BasicBlocks.clear();    // Delete all basic blocks...
 }
 
-void Function::addParamAttr(unsigned i, ParameterAttributes attr) {
+void Function::addParamAttr(unsigned i, Attributes attr) {
   PAListPtr PAL = getParamAttrs();
   PAL = PAL.addAttr(i, attr);
   setParamAttrs(PAL);
 }
 
-void Function::removeParamAttr(unsigned i, ParameterAttributes attr) {
+void Function::removeParamAttr(unsigned i, Attributes attr) {
   PAListPtr PAL = getParamAttrs();
   PAL = PAL.removeAttr(i, attr);
   setParamAttrs(PAL);
@@ -356,7 +356,7 @@ const FunctionType *Intrinsic::getType(ID id, const Type **Tys,
 }
 
 PAListPtr Intrinsic::getParamAttrs(ID id) {
-  ParameterAttributes Attr = ParamAttr::None;
+  Attributes Attr = ParamAttr::None;
 
 #define GET_INTRINSIC_ATTRIBUTES
 #include "llvm/Intrinsics.gen"

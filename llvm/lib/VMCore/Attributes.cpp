@@ -1,4 +1,4 @@
-//===-- ParameterAttributes.cpp - Implement ParamAttrsList ----------------===//
+//===-- Attributes.cpp - Implement ParamAttrsList ----------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/ParameterAttributes.h"
+#include "llvm/Attributes.h"
 #include "llvm/Type.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/FoldingSet.h"
@@ -23,7 +23,7 @@ using namespace llvm;
 // ParamAttr Function Definitions
 //===----------------------------------------------------------------------===//
 
-std::string ParamAttr::getAsString(ParameterAttributes Attrs) {
+std::string ParamAttr::getAsString(Attributes Attrs) {
   std::string Result;
   if (Attrs & ParamAttr::ZExt)
     Result += "zeroext ";
@@ -57,8 +57,8 @@ std::string ParamAttr::getAsString(ParameterAttributes Attrs) {
   return Result;
 }
 
-ParameterAttributes ParamAttr::typeIncompatible(const Type *Ty) {
-  ParameterAttributes Incompatible = None;
+Attributes ParamAttr::typeIncompatible(const Type *Ty) {
+  Attributes Incompatible = None;
   
   if (!Ty->isInteger())
     // Attributes that only apply to integers.
@@ -187,7 +187,7 @@ const ParamAttrsWithIndex &PAListPtr::getSlot(unsigned Slot) const {
 /// getParamAttrs - The parameter attributes for the specified parameter are
 /// returned.  Parameters for the result are denoted with Idx = 0.
 /// Function notes are denoted with idx = ~0.
-ParameterAttributes PAListPtr::getParamAttrs(unsigned Idx) const {
+Attributes PAListPtr::getParamAttrs(unsigned Idx) const {
   if (PAList == 0) return ParamAttr::None;
   
   const SmallVector<ParamAttrsWithIndex, 4> &Attrs = PAList->Attrs;
@@ -199,7 +199,7 @@ ParameterAttributes PAListPtr::getParamAttrs(unsigned Idx) const {
 
 /// hasAttrSomewhere - Return true if the specified attribute is set for at
 /// least one parameter or for the return value.
-bool PAListPtr::hasAttrSomewhere(ParameterAttributes Attr) const {
+bool PAListPtr::hasAttrSomewhere(Attributes Attr) const {
   if (PAList == 0) return false;
   
   const SmallVector<ParamAttrsWithIndex, 4> &Attrs = PAList->Attrs;
@@ -210,18 +210,18 @@ bool PAListPtr::hasAttrSomewhere(ParameterAttributes Attr) const {
 }
 
 
-PAListPtr PAListPtr::addAttr(unsigned Idx, ParameterAttributes Attrs) const {
-  ParameterAttributes OldAttrs = getParamAttrs(Idx);
+PAListPtr PAListPtr::addAttr(unsigned Idx, Attributes Attrs) const {
+  Attributes OldAttrs = getParamAttrs(Idx);
 #ifndef NDEBUG
   // FIXME it is not obvious how this should work for alignment.
   // For now, say we can't change a known alignment.
-  ParameterAttributes OldAlign = OldAttrs & ParamAttr::Alignment;
-  ParameterAttributes NewAlign = Attrs & ParamAttr::Alignment;
+  Attributes OldAlign = OldAttrs & ParamAttr::Alignment;
+  Attributes NewAlign = Attrs & ParamAttr::Alignment;
   assert((!OldAlign || !NewAlign || OldAlign == NewAlign) &&
          "Attempt to change alignment!");
 #endif
   
-  ParameterAttributes NewAttrs = OldAttrs | Attrs;
+  Attributes NewAttrs = OldAttrs | Attrs;
   if (NewAttrs == OldAttrs)
     return *this;
   
@@ -251,7 +251,7 @@ PAListPtr PAListPtr::addAttr(unsigned Idx, ParameterAttributes Attrs) const {
   return get(&NewAttrList[0], NewAttrList.size());
 }
 
-PAListPtr PAListPtr::removeAttr(unsigned Idx, ParameterAttributes Attrs) const {
+PAListPtr PAListPtr::removeAttr(unsigned Idx, Attributes Attrs) const {
 #ifndef NDEBUG
   // FIXME it is not obvious how this should work for alignment.
   // For now, say we can't pass in alignment, which no current use does.
@@ -259,8 +259,8 @@ PAListPtr PAListPtr::removeAttr(unsigned Idx, ParameterAttributes Attrs) const {
 #endif
   if (PAList == 0) return PAListPtr();
   
-  ParameterAttributes OldAttrs = getParamAttrs(Idx);
-  ParameterAttributes NewAttrs = OldAttrs & ~Attrs;
+  Attributes OldAttrs = getParamAttrs(Idx);
+  Attributes NewAttrs = OldAttrs & ~Attrs;
   if (NewAttrs == OldAttrs)
     return *this;
 

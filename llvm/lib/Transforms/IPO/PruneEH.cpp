@@ -125,7 +125,7 @@ bool PruneEH::runOnSCC(const std::vector<CallGraphNode *> &SCC) {
   // If the SCC doesn't unwind or doesn't throw, note this fact.
   if (!SCCMightUnwind || !SCCMightReturn)
     for (unsigned i = 0, e = SCC.size(); i != e; ++i) {
-      ParameterAttributes NewAttributes = ParamAttr::None;
+      Attributes NewAttributes = ParamAttr::None;
 
       if (!SCCMightUnwind)
         NewAttributes |= ParamAttr::NoUnwind;

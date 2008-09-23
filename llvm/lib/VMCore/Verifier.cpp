@@ -268,7 +268,7 @@ namespace {
     void VerifyCallSite(CallSite CS);
     void VerifyIntrinsicPrototype(Intrinsic::ID ID, Function *F,
                                   unsigned Count, ...);
-    void VerifyAttrs(ParameterAttributes Attrs, const Type *Ty,
+    void VerifyAttrs(Attributes Attrs, const Type *Ty,
                      bool isReturnValue, const Value *V);
     void VerifyFunctionAttrs(const FunctionType *FT, const PAListPtr &Attrs,
                              const Value *V);
@@ -406,33 +406,33 @@ void Verifier::verifyTypeSymbolTable(TypeSymbolTable &ST) {
 
 // VerifyAttrs - Check the given parameter attributes for an argument or return
 // value of the specified type.  The value V is printed in error messages.
-void Verifier::VerifyAttrs(ParameterAttributes Attrs, const Type *Ty, 
+void Verifier::VerifyAttrs(Attributes Attrs, const Type *Ty, 
                            bool isReturnValue, const Value *V) {
   if (Attrs == ParamAttr::None)
     return;
 
   if (isReturnValue) {
-    ParameterAttributes RetI = Attrs & ParamAttr::ParameterOnly;
+    Attributes RetI = Attrs & ParamAttr::ParameterOnly;
     Assert1(!RetI, "Attribute " + ParamAttr::getAsString(RetI) +
             " does not apply to return values!", V);
   } else {
-    ParameterAttributes ParmI = Attrs & ParamAttr::ReturnOnly;
+    Attributes ParmI = Attrs & ParamAttr::ReturnOnly;
     Assert1(!ParmI, "Attribute " + ParamAttr::getAsString(ParmI) +
             " only applies to return values!", V);
   }
 
   for (unsigned i = 0;
        i < array_lengthof(ParamAttr::MutuallyIncompatible); ++i) {
-    ParameterAttributes MutI = Attrs & ParamAttr::MutuallyIncompatible[i];
+    Attributes MutI = Attrs & ParamAttr::MutuallyIncompatible[i];
     Assert1(!(MutI & (MutI - 1)), "Attributes " +
             ParamAttr::getAsString(MutI) + " are incompatible!", V);
   }
 
-  ParameterAttributes TypeI = Attrs & ParamAttr::typeIncompatible(Ty);
+  Attributes TypeI = Attrs & ParamAttr::typeIncompatible(Ty);
   Assert1(!TypeI, "Wrong type for attribute " +
           ParamAttr::getAsString(TypeI), V);
 
-  ParameterAttributes ByValI = Attrs & ParamAttr::ByVal;
+  Attributes ByValI = Attrs & ParamAttr::ByVal;
   if (const PointerType *PTy = dyn_cast<PointerType>(Ty)) {
     Assert1(!ByValI || PTy->getElementType()->isSized(),
             "Attribute " + ParamAttr::getAsString(ByValI) +
@@ -976,11 +976,11 @@ void Verifier::VerifyCallSite(CallSite CS) {
   if (FTy->isVarArg())
     // Check attributes on the varargs part.
     for (unsigned Idx = 1 + FTy->getNumParams(); Idx <= CS.arg_size(); ++Idx) {
-      ParameterAttributes Attr = Attrs.getParamAttrs(Idx);
+      Attributes Attr = Attrs.getParamAttrs(Idx);
 
       VerifyAttrs(Attr, CS.getArgument(Idx-1)->getType(), false, I);
 
-      ParameterAttributes VArgI = Attr & ParamAttr::VarArgsIncompatible;
+      Attributes VArgI = Attr & ParamAttr::VarArgsIncompatible;
       Assert1(!VArgI, "Attribute " + ParamAttr::getAsString(VArgI) +
               " cannot be used for vararg call arguments!", I);
     }

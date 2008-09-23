@@ -15,7 +15,7 @@
 #define BITCODE_READER_H
 
 #include "llvm/ModuleProvider.h"
-#include "llvm/ParameterAttributes.h"
+#include "llvm/Attributes.h"
 #include "llvm/Type.h"
 #include "llvm/OperandTraits.h"
 #include "llvm/Bitcode/BitstreamReader.h"

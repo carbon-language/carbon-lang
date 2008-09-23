@@ -438,7 +438,7 @@ namespace {
       Out << "ParamAttrsWithIndex PAWI;"; nl(Out);
       for (unsigned i = 0; i < PAL.getNumSlots(); ++i) {
         uint16_t index = PAL.getSlot(i).Index;
-        ParameterAttributes attrs = PAL.getSlot(i).Attrs;
+        Attributes attrs = PAL.getSlot(i).Attrs;
         Out << "PAWI.Index = " << index << "; PAWI.Attrs = 0 ";
         if (attrs & ParamAttr::SExt)
           Out << " | ParamAttr::SExt";

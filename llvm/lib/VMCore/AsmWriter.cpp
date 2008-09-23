@@ -1006,7 +1006,7 @@ public:
   void write(const Type *Ty)          { printType(Ty);        }
 
   void writeOperand(const Value *Op, bool PrintType);
-  void writeParamOperand(const Value *Operand, ParameterAttributes Attrs);
+  void writeParamOperand(const Value *Operand, Attributes Attrs);
 
   const Module* getModule() { return TheModule; }
 
@@ -1016,7 +1016,7 @@ private:
   void printGlobal(const GlobalVariable *GV);
   void printAlias(const GlobalAlias *GV);
   void printFunction(const Function *F);
-  void printArgument(const Argument *FA, ParameterAttributes Attrs);
+  void printArgument(const Argument *FA, Attributes Attrs);
   void printBasicBlock(const BasicBlock *BB);
   void printInstruction(const Instruction &I);
 
@@ -1126,7 +1126,7 @@ void AssemblyWriter::writeOperand(const Value *Operand, bool PrintType) {
 }
 
 void AssemblyWriter::writeParamOperand(const Value *Operand, 
-                                       ParameterAttributes Attrs) {
+                                       Attributes Attrs) {
   if (Operand == 0) {
     Out << "<null operand!>";
   } else {
@@ -1386,7 +1386,7 @@ void AssemblyWriter::printFunction(const Function *F) {
       // Output type...
       printType(FT->getParamType(i));
       
-      ParameterAttributes ArgAttrs = Attrs.getParamAttrs(i+1);
+      Attributes ArgAttrs = Attrs.getParamAttrs(i+1);
       if (ArgAttrs != ParamAttr::None)
         Out << ' ' << ParamAttr::getAsString(ArgAttrs);
     }
@@ -1398,7 +1398,7 @@ void AssemblyWriter::printFunction(const Function *F) {
     Out << "...";  // Output varargs portion of signature!
   }
   Out << ')';
-  ParameterAttributes RetAttrs = Attrs.getParamAttrs(0);
+  Attributes RetAttrs = Attrs.getParamAttrs(0);
   if (RetAttrs != ParamAttr::None)
     Out << ' ' << ParamAttr::getAsString(Attrs.getParamAttrs(0));
   if (F->hasSection())
@@ -1454,7 +1454,7 @@ void AssemblyWriter::printFunction(const Function *F) {
 /// the function.  Simply print it out
 ///
 void AssemblyWriter::printArgument(const Argument *Arg, 
-                                   ParameterAttributes Attrs) {
+                                   Attributes Attrs) {
   // Output type...
   printType(Arg->getType());
 

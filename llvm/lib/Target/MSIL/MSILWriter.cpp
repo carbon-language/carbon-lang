@@ -16,7 +16,6 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/IntrinsicInst.h"
-#include "llvm/ParameterAttributes.h"
 #include "llvm/TypeSymbolTable.h"
 #include "llvm/Analysis/ConstantsScanner.h"
 #include "llvm/Support/CallSite.h"

@@ -15,7 +15,7 @@
 #define LLVM_ARGUMENT_H
 
 #include "llvm/Value.h"
-#include "llvm/ParameterAttributes.h"
+#include "llvm/Attributes.h"
 #include "llvm/ADT/ilist_node.h"
 
 namespace llvm {
@@ -61,10 +61,10 @@ public:
   bool hasStructRetAttr() const;
 
   /// addAttr - Add a ParamAttr to an argument
-  void addAttr(ParameterAttributes);
+  void addAttr(Attributes);
   
   /// removeAttr - Remove a ParamAttr from an argument
-  void removeAttr(ParameterAttributes);
+  void removeAttr(Attributes);
 
   /// classof - Methods for support type inquiry through isa, cast, and
   /// dyn_cast:

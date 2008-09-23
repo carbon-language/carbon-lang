@@ -22,7 +22,7 @@
 
 #include "llvm/Instruction.h"
 #include "llvm/BasicBlock.h"
-#include "llvm/ParameterAttributes.h"
+#include "llvm/Attributes.h"
 
 namespace llvm {
 
@@ -68,7 +68,7 @@ public:
   void setParamAttrs(const PAListPtr &PAL);
 
   /// paramHasAttr - whether the call or the callee has the given attribute.
-  bool paramHasAttr(uint16_t i, ParameterAttributes attr) const;
+  bool paramHasAttr(uint16_t i, Attributes attr) const;
 
   /// @brief Extract the alignment for a call or parameter (0=unknown).
   uint16_t getParamAlignment(uint16_t i) const;
