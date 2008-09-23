@@ -1,4 +1,4 @@
-//===-- llvm/Attributes.h - Container for ParamAttrs ---*- C++ -*-===//
+//===-- llvm/Attributes.h - Container for ParamAttrs ---*---------- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
