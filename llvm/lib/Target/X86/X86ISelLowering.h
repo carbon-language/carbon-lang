@@ -28,7 +28,7 @@ namespace llvm {
     // X86 Specific DAG Nodes
     enum NodeType {
       // Start the numbering where the builtin ops leave off.
-      FIRST_NUMBER = ISD::BUILTIN_OP_END+X86::INSTRUCTION_LIST_END,
+      FIRST_NUMBER = ISD::BUILTIN_OP_END,
 
       /// BSF - Bit scan forward.
       /// BSR - Bit scan reverse.

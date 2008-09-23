@@ -21,7 +21,7 @@
 namespace llvm {
   namespace SPISD {
     enum {
-      FIRST_NUMBER = ISD::BUILTIN_OP_END+SP::INSTRUCTION_LIST_END,
+      FIRST_NUMBER = ISD::BUILTIN_OP_END,
       CMPICC,      // Compare two GPR operands, set icc.
       CMPFCC,      // Compare two FP operands, set fcc.
       BRICC,       // Branch to dest on icc condition

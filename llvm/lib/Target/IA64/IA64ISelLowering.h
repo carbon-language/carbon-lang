@@ -23,7 +23,7 @@ namespace llvm {
   namespace IA64ISD {
     enum NodeType {
       // Start the numbering where the builting ops and target ops leave off.
-      FIRST_NUMBER = ISD::BUILTIN_OP_END+IA64::INSTRUCTION_LIST_END,
+      FIRST_NUMBER = ISD::BUILTIN_OP_END,
 
       /// GETFD - the getf.d instruction takes a floating point operand and
       /// returns its 64-bit memory representation as an i64

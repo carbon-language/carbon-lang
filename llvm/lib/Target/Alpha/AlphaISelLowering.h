@@ -25,7 +25,7 @@ namespace llvm {
   namespace AlphaISD {
     enum NodeType {
       // Start the numbering where the builting ops and target ops leave off.
-      FIRST_NUMBER = ISD::BUILTIN_OP_END+Alpha::INSTRUCTION_LIST_END,
+      FIRST_NUMBER = ISD::BUILTIN_OP_END,
       //These corrospond to the identical Instruction
       CVTQT_, CVTQS_, CVTTQ_,
 

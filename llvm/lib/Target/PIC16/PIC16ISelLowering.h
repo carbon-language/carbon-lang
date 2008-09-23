@@ -24,7 +24,7 @@ namespace llvm {
   namespace PIC16ISD {
     enum NodeType {
       // Start the numbering from where ISD NodeType finishes.
-      FIRST_NUMBER = ISD::BUILTIN_OP_END+PIC16::INSTRUCTION_LIST_END,
+      FIRST_NUMBER = ISD::BUILTIN_OP_END,
 
       // used for encapsulating the expanded nodes into one node.
       Package,

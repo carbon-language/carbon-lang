@@ -23,7 +23,7 @@ namespace llvm {
   namespace SPUISD {
     enum NodeType {
       // Start the numbering where the builting ops and target ops leave off.
-      FIRST_NUMBER = ISD::BUILTIN_OP_END+SPU::INSTRUCTION_LIST_END,
+      FIRST_NUMBER = ISD::BUILTIN_OP_END,
       
       // Pseudo instructions:
       RET_FLAG,                 ///< Return with flag, matched by bi instruction

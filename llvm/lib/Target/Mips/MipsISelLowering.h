@@ -24,7 +24,7 @@ namespace llvm {
   namespace MipsISD {
     enum NodeType {
       // Start the numbering from where ISD NodeType finishes.
-      FIRST_NUMBER = ISD::BUILTIN_OP_END+Mips::INSTRUCTION_LIST_END,
+      FIRST_NUMBER = ISD::BUILTIN_OP_END,
 
       // Jump and link (call)
       JmpLink,

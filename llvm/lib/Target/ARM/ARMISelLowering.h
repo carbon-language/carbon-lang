@@ -27,7 +27,7 @@ namespace llvm {
     // ARM Specific DAG Nodes
     enum NodeType {
       // Start the numbering where the builting ops and target ops leave off.
-      FIRST_NUMBER = ISD::BUILTIN_OP_END+ARM::INSTRUCTION_LIST_END,
+      FIRST_NUMBER = ISD::BUILTIN_OP_END,
 
       Wrapper,      // Wrapper - A wrapper node for TargetConstantPool,
                     // TargetExternalSymbol, and TargetGlobalAddress.

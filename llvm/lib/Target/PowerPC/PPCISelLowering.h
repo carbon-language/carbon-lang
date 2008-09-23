@@ -24,7 +24,7 @@ namespace llvm {
   namespace PPCISD {
     enum NodeType {
       // Start the numbering where the builtin ops and target ops leave off.
-      FIRST_NUMBER = ISD::BUILTIN_OP_END+PPC::INSTRUCTION_LIST_END,
+      FIRST_NUMBER = ISD::BUILTIN_OP_END,
 
       /// FSEL - Traditional three-operand fsel node.
       ///
