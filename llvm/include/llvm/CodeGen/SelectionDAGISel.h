@@ -28,6 +28,7 @@ namespace llvm {
   class MachineBasicBlock;
   class MachineFunction;
   class MachineInstr;
+  class MachineModuleInfo;
   class TargetLowering;
   class FunctionLoweringInfo;
   class HazardRecognizer;
@@ -106,7 +107,8 @@ protected:
                     int64_t DesiredMaskS) const;
   
 private:
-  void SelectAllBasicBlocks(Function &Fn, MachineFunction &MF);
+  void SelectAllBasicBlocks(Function &Fn, MachineFunction &MF,
+                            MachineModuleInfo *MMI);
   void FinishBasicBlock();
 
   void SelectBasicBlock(BasicBlock *LLVMBB,

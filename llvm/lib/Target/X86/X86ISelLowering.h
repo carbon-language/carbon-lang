@@ -472,6 +472,7 @@ namespace llvm {
     /// or null if the target does not support "fast" ISel.
     virtual FastISel *
     createFastISel(MachineFunction &mf,
+                   MachineModuleInfo *mmi,
                    DenseMap<const Value *, unsigned> &,
                    DenseMap<const BasicBlock *, MachineBasicBlock *> &,
                    DenseMap<const AllocaInst *, int> &);
@@ -604,6 +605,7 @@ namespace llvm {
 
   namespace X86 {
     FastISel *createFastISel(MachineFunction &mf,
+                           MachineModuleInfo *mmi,
                            DenseMap<const Value *, unsigned> &,
                            DenseMap<const BasicBlock *, MachineBasicBlock *> &,
                            DenseMap<const AllocaInst *, int> &);

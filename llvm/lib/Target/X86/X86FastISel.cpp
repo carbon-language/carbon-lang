@@ -49,10 +49,11 @@ class X86FastISel : public FastISel {
 
 public:
   explicit X86FastISel(MachineFunction &mf,
+                       MachineModuleInfo *mmi,
                        DenseMap<const Value *, unsigned> &vm,
                        DenseMap<const BasicBlock *, MachineBasicBlock *> &bm,
                        DenseMap<const AllocaInst *, int> &am)
-    : FastISel(mf, vm, bm, am) {
+    : FastISel(mf, mmi, vm, bm, am) {
     Subtarget = &TM.getSubtarget<X86Subtarget>();
     StackPtr = Subtarget->is64Bit() ? X86::RSP : X86::ESP;
     X86ScalarSSEf64 = Subtarget->hasSSE2();
@@ -1160,9 +1161,10 @@ unsigned X86FastISel::TargetMaterializeAlloca(AllocaInst *C) {
 
 namespace llvm {
   llvm::FastISel *X86::createFastISel(MachineFunction &mf,
+                        MachineModuleInfo *mmi,
                         DenseMap<const Value *, unsigned> &vm,
                         DenseMap<const BasicBlock *, MachineBasicBlock *> &bm,
                         DenseMap<const AllocaInst *, int> &am) {
-    return new X86FastISel(mf, vm, bm, am);
+    return new X86FastISel(mf, mmi, vm, bm, am);
   }
 }

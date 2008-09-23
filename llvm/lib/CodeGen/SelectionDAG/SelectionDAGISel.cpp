@@ -309,7 +309,8 @@ bool SelectionDAGISel::runOnFunction(Function &Fn) {
   DOUT << "\n\n\n=== " << Fn.getName() << "\n";
 
   FuncInfo->set(Fn, MF, EnableFastISel);
-  CurDAG->init(MF, getAnalysisToUpdate<MachineModuleInfo>());
+  MachineModuleInfo *MMI = getAnalysisToUpdate<MachineModuleInfo>();
+  CurDAG->init(MF, MMI);
   SDL->init(GFI, *AA);
 
   for (Function::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I)
@@ -317,7 +318,7 @@ bool SelectionDAGISel::runOnFunction(Function &Fn) {
       // Mark landing pad.
       FuncInfo->MBBMap[Invoke->getSuccessor(1)]->setIsLandingPad();
 
-  SelectAllBasicBlocks(Fn, MF);
+  SelectAllBasicBlocks(Fn, MF, MMI);
 
   // If the first basic block in the function has live ins that need to be
   // copied into vregs, emit the copies into the top of the block before
@@ -710,7 +711,8 @@ void SelectionDAGISel::CodeGenAndEmitDAG() {
   DEBUG(BB->dump());
 }  
 
-void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn, MachineFunction &MF) {
+void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn, MachineFunction &MF,
+                                            MachineModuleInfo *MMI) {
   for (Function::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I) {
     BasicBlock *LLVMBB = &*I;
     BB = FuncInfo->MBBMap[LLVMBB];
@@ -726,7 +728,8 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn, MachineFunction &MF) {
     // Before doing SelectionDAG ISel, see if FastISel has been requested.
     // FastISel doesn't support EH landing pads, which require special handling.
     if (EnableFastISel && !BB->isLandingPad()) {
-      if (FastISel *F = TLI.createFastISel(*FuncInfo->MF, FuncInfo->ValueMap,
+      if (FastISel *F = TLI.createFastISel(*FuncInfo->MF, MMI,
+                                           FuncInfo->ValueMap,
                                            FuncInfo->MBBMap,
                                            FuncInfo->StaticAllocaMap)) {
         // Emit code for any incoming arguments. This must happen before

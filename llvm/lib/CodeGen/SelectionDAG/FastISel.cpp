@@ -450,7 +450,7 @@ FastISel::SelectOperator(User *I, unsigned Opcode) {
     UpdateValueMap(I, Reg);
     return true;
   }
-  
+
   default:
     // Unhandled instruction. Halt "fast" selection and bail.
     return false;
@@ -458,6 +458,7 @@ FastISel::SelectOperator(User *I, unsigned Opcode) {
 }
 
 FastISel::FastISel(MachineFunction &mf,
+                   MachineModuleInfo *mmi,
                    DenseMap<const Value *, unsigned> &vm,
                    DenseMap<const BasicBlock *, MachineBasicBlock *> &bm,
                    DenseMap<const AllocaInst *, int> &am)
@@ -466,6 +467,7 @@ FastISel::FastISel(MachineFunction &mf,
     MBBMap(bm),
     StaticAllocaMap(am),
     MF(mf),
+    MMI(mmi),
     MRI(MF.getRegInfo()),
     MFI(*MF.getFrameInfo()),
     MCP(*MF.getConstantPool()),

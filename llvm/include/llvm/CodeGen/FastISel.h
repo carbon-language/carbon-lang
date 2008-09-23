@@ -26,6 +26,7 @@ class MachineBasicBlock;
 class MachineConstantPool;
 class MachineFunction;
 class MachineFrameInfo;
+class MachineModuleInfo;
 class MachineRegisterInfo;
 class TargetData;
 class TargetInstrInfo;
@@ -44,6 +45,7 @@ protected:
   DenseMap<const BasicBlock *, MachineBasicBlock *> &MBBMap;
   DenseMap<const AllocaInst *, int> &StaticAllocaMap;
   MachineFunction &MF;
+  MachineModuleInfo *MMI;
   MachineRegisterInfo &MRI;
   MachineFrameInfo &MFI;
   MachineConstantPool &MCP;
@@ -94,6 +96,7 @@ public:
 
 protected:
   FastISel(MachineFunction &mf,
+           MachineModuleInfo *mmi,
            DenseMap<const Value *, unsigned> &vm,
            DenseMap<const BasicBlock *, MachineBasicBlock *> &bm,
            DenseMap<const AllocaInst *, int> &am);

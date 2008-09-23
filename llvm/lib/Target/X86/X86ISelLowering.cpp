@@ -1866,12 +1866,13 @@ bool X86TargetLowering::IsEligibleForTailCallOptimization(CallSDNode *TheCall,
 
 FastISel *
 X86TargetLowering::createFastISel(MachineFunction &mf,
+                                  MachineModuleInfo *mmo,
                                   DenseMap<const Value *, unsigned> &vm,
                                   DenseMap<const BasicBlock *,
                                            MachineBasicBlock *> &bm,
                                   DenseMap<const AllocaInst *, int> &am) {
                                          
-  return X86::createFastISel(mf, vm, bm, am);
+  return X86::createFastISel(mf, mmo, vm, bm, am);
 }
 
 
