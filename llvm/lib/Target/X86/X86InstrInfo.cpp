@@ -2935,3 +2935,32 @@ unsigned X86InstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
   }
   return Size;
 }
+
+/// initializeGlobalBaseReg - Output the instructions required to put the
+/// base address to use for accessing globals into a register.
+///
+unsigned X86InstrInfo::initializeGlobalBaseReg(MachineFunction *MF) const {
+  // Insert the set of GlobalBaseReg into the first MBB of the function
+  MachineBasicBlock &FirstMBB = MF->front();
+  MachineBasicBlock::iterator MBBI = FirstMBB.begin();
+  MachineRegisterInfo &RegInfo = MF->getRegInfo();
+  unsigned PC = RegInfo.createVirtualRegister(X86::GR32RegisterClass);
+  
+  const TargetInstrInfo *TII = TM.getInstrInfo();
+  // Operand of MovePCtoStack is completely ignored by asm printer. It's
+  // only used in JIT code emission as displacement to pc.
+  BuildMI(FirstMBB, MBBI, TII->get(X86::MOVPC32r), PC).addImm(0);
+  
+  // If we're using vanilla 'GOT' PIC style, we should use relative addressing
+  // not to pc, but to _GLOBAL_ADDRESS_TABLE_ external
+  if (TM.getRelocationModel() == Reloc::PIC_ &&
+      TM.getSubtarget<X86Subtarget>().isPICStyleGOT()) {
+    unsigned GlobalBaseReg =
+      RegInfo.createVirtualRegister(X86::GR32RegisterClass);
+    BuildMI(FirstMBB, MBBI, TII->get(X86::ADD32ri), GlobalBaseReg)
+      .addReg(PC).addExternalSymbol("_GLOBAL_OFFSET_TABLE_");
+    return GlobalBaseReg;
+  }
+
+  return PC;
+}

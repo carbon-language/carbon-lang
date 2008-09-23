@@ -232,8 +232,10 @@ namespace {
       return CurDAG->getTargetConstant(Imm, MVT::i32);
     }
 
-    /// getGlobalBaseReg - insert code into the entry mbb to materialize the PIC
-    /// base register.  Return the virtual register that holds this value.
+    /// getGlobalBaseReg - Return an SDNode that returns the value of
+    /// the global base register. Output instructions required to
+    /// initialize the global base register, if necessary.
+    ///
     SDNode *getGlobalBaseReg();
 
     /// getTruncateTo8Bit - return an SDNode that implements a subreg based
@@ -1170,36 +1172,14 @@ bool X86DAGToDAGISel::TryFoldLoad(SDValue P, SDValue N,
   return false;
 }
 
-/// getGlobalBaseReg - Output the instructions required to put the
-/// base address to use for accessing globals into a register.
+/// getGlobalBaseReg - Return an SDNode that returns the value of
+/// the global base register. Output instructions required to
+/// initialize the global base register, if necessary.
 ///
 SDNode *X86DAGToDAGISel::getGlobalBaseReg() {
   assert(!Subtarget->is64Bit() && "X86-64 PIC uses RIP relative addressing");
-  if (!GlobalBaseReg) {
-    // Insert the set of GlobalBaseReg into the first MBB of the function
-    MachineFunction *MF = BB->getParent();
-    MachineBasicBlock &FirstMBB = MF->front();
-    MachineBasicBlock::iterator MBBI = FirstMBB.begin();
-    MachineRegisterInfo &RegInfo = MF->getRegInfo();
-    unsigned PC = RegInfo.createVirtualRegister(X86::GR32RegisterClass);
-    
-    const TargetInstrInfo *TII = TM.getInstrInfo();
-    // Operand of MovePCtoStack is completely ignored by asm printer. It's
-    // only used in JIT code emission as displacement to pc.
-    BuildMI(FirstMBB, MBBI, TII->get(X86::MOVPC32r), PC).addImm(0);
-    
-    // If we're using vanilla 'GOT' PIC style, we should use relative addressing
-    // not to pc, but to _GLOBAL_ADDRESS_TABLE_ external
-    if (TM.getRelocationModel() == Reloc::PIC_ &&
-        Subtarget->isPICStyleGOT()) {
-      GlobalBaseReg = RegInfo.createVirtualRegister(X86::GR32RegisterClass);
-      BuildMI(FirstMBB, MBBI, TII->get(X86::ADD32ri), GlobalBaseReg)
-        .addReg(PC).addExternalSymbol("_GLOBAL_OFFSET_TABLE_");
-    } else {
-      GlobalBaseReg = PC;
-    }
-    
-  }
+  if (!GlobalBaseReg)
+    GlobalBaseReg = TM.getInstrInfo()->initializeGlobalBaseReg(BB->getParent());
   return CurDAG->getRegister(GlobalBaseReg, TLI.getPointerTy()).getNode();
 }
 
