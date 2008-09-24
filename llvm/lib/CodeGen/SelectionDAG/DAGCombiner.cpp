@@ -960,7 +960,7 @@ SDValue DAGCombiner::visitADD(SDNode *N) {
     return N1;
   // fold (add c1, c2) -> c1+c2
   if (N0C && N1C)
-    return DAG.getConstant(N0C->getAPIntValue() + N1C->getAPIntValue(), VT);
+    return DAG.FoldConstantArithmetic(ISD::ADD, VT, N0C, N1C);
   // canonicalize constant to RHS
   if (N0C && !N1C)
     return DAG.getNode(ISD::ADD, VT, N1, N0);
@@ -1111,7 +1111,7 @@ SDValue DAGCombiner::visitSUB(SDNode *N) {
     return DAG.getConstant(0, N->getValueType(0));
   // fold (sub c1, c2) -> c1-c2
   if (N0C && N1C)
-    return DAG.getNode(ISD::SUB, VT, N0, N1);
+    return DAG.FoldConstantArithmetic(ISD::SUB, VT, N0C, N1C);
   // fold (sub x, c) -> (add x, -c)
   if (N1C)
     return DAG.getNode(ISD::ADD, VT, N0,
@@ -1154,7 +1154,7 @@ SDValue DAGCombiner::visitMUL(SDNode *N) {
     return DAG.getConstant(0, VT);
   // fold (mul c1, c2) -> c1*c2
   if (N0C && N1C)
-    return DAG.getNode(ISD::MUL, VT, N0, N1);
+    return DAG.FoldConstantArithmetic(ISD::MUL, VT, N0C, N1C);
   // canonicalize constant to RHS
   if (N0C && !N1C)
     return DAG.getNode(ISD::MUL, VT, N1, N0);
@@ -1236,7 +1236,7 @@ SDValue DAGCombiner::visitSDIV(SDNode *N) {
   
   // fold (sdiv c1, c2) -> c1/c2
   if (N0C && N1C && !N1C->isNullValue())
-    return DAG.getNode(ISD::SDIV, VT, N0, N1);
+    return DAG.FoldConstantArithmetic(ISD::SDIV, VT, N0C, N1C);
   // fold (sdiv X, 1) -> X
   if (N1C && N1C->getSignExtended() == 1LL)
     return N0;
@@ -1314,7 +1314,7 @@ SDValue DAGCombiner::visitUDIV(SDNode *N) {
   
   // fold (udiv c1, c2) -> c1/c2
   if (N0C && N1C && !N1C->isNullValue())
-    return DAG.getNode(ISD::UDIV, VT, N0, N1);
+    return DAG.FoldConstantArithmetic(ISD::UDIV, VT, N0C, N1C);
   // fold (udiv x, (1 << c)) -> x >>u c
   if (N1C && N1C->getAPIntValue().isPowerOf2())
     return DAG.getNode(ISD::SRL, VT, N0, 
@@ -1359,7 +1359,7 @@ SDValue DAGCombiner::visitSREM(SDNode *N) {
   
   // fold (srem c1, c2) -> c1%c2
   if (N0C && N1C && !N1C->isNullValue())
-    return DAG.getNode(ISD::SREM, VT, N0, N1);
+    return DAG.FoldConstantArithmetic(ISD::SREM, VT, N0C, N1C);
   // If we know the sign bits of both operands are zero, strength reduce to a
   // urem instead.  Handles (X & 0x0FFFFFFF) %s 16 -> X&15
   if (!VT.isVector()) {
@@ -1400,7 +1400,7 @@ SDValue DAGCombiner::visitUREM(SDNode *N) {
   
   // fold (urem c1, c2) -> c1%c2
   if (N0C && N1C && !N1C->isNullValue())
-    return DAG.getNode(ISD::UREM, VT, N0, N1);
+    return DAG.FoldConstantArithmetic(ISD::UREM, VT, N0C, N1C);
   // fold (urem x, pow2) -> (and x, pow2-1)
   if (N1C && !N1C->isNullValue() && N1C->getAPIntValue().isPowerOf2())
     return DAG.getNode(ISD::AND, VT, N0,
@@ -1625,7 +1625,7 @@ SDValue DAGCombiner::visitAND(SDNode *N) {
     return DAG.getConstant(0, VT);
   // fold (and c1, c2) -> c1&c2
   if (N0C && N1C)
-    return DAG.getNode(ISD::AND, VT, N0, N1);
+    return DAG.FoldConstantArithmetic(ISD::AND, VT, N0C, N1C);
   // canonicalize constant to RHS
   if (N0C && !N1C)
     return DAG.getNode(ISD::AND, VT, N1, N0);
@@ -1824,7 +1824,7 @@ SDValue DAGCombiner::visitOR(SDNode *N) {
     return DAG.getConstant(~0ULL, VT);
   // fold (or c1, c2) -> c1|c2
   if (N0C && N1C)
-    return DAG.getNode(ISD::OR, VT, N0, N1);
+    return DAG.FoldConstantArithmetic(ISD::OR, VT, N0C, N1C);
   // canonicalize constant to RHS
   if (N0C && !N1C)
     return DAG.getNode(ISD::OR, VT, N1, N0);
@@ -2117,7 +2117,7 @@ SDValue DAGCombiner::visitXOR(SDNode *N) {
     return N1;
   // fold (xor c1, c2) -> c1^c2
   if (N0C && N1C)
-    return DAG.getNode(ISD::XOR, VT, N0, N1);
+    return DAG.FoldConstantArithmetic(ISD::XOR, VT, N0C, N1C);
   // canonicalize constant to RHS
   if (N0C && !N1C)
     return DAG.getNode(ISD::XOR, VT, N1, N0);
@@ -2295,7 +2295,7 @@ SDValue DAGCombiner::visitSHL(SDNode *N) {
   
   // fold (shl c1, c2) -> c1<<c2
   if (N0C && N1C)
-    return DAG.getNode(ISD::SHL, VT, N0, N1);
+    return DAG.FoldConstantArithmetic(ISD::SHL, VT, N0C, N1C);
   // fold (shl 0, x) -> 0
   if (N0C && N0C->isNullValue())
     return N0;
@@ -2370,7 +2370,7 @@ SDValue DAGCombiner::visitSRA(SDNode *N) {
   
   // fold (sra c1, c2) -> c1>>c2
   if (N0C && N1C)
-    return DAG.getNode(ISD::SRA, VT, N0, N1);
+    return DAG.FoldConstantArithmetic(ISD::SRA, VT, N0C, N1C);
   // fold (sra 0, x) -> 0
   if (N0C && N0C->isNullValue())
     return N0;
@@ -2476,7 +2476,7 @@ SDValue DAGCombiner::visitSRL(SDNode *N) {
   
   // fold (srl c1, c2) -> c1 >>u c2
   if (N0C && N1C)
-    return DAG.getNode(ISD::SRL, VT, N0, N1);
+    return DAG.FoldConstantArithmetic(ISD::SRL, VT, N0C, N1C);
   // fold (srl 0, x) -> 0
   if (N0C && N0C->isNullValue())
     return N0;
