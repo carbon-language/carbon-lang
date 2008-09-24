@@ -114,6 +114,7 @@ namespace llvm {
     bool isNamed() const { return Flags & SectionFlags::Named; }
     unsigned getEntitySize() const { return (Flags >> 24) & 0xFF; }
     const std::string& getName() const { return Name; }
+    unsigned getFlags() const { return Flags; }
   };
 
   /// TargetAsmInfo - This class is intended to be used as a base class for asm

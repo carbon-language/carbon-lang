@@ -105,6 +105,26 @@ void AsmPrinter::SwitchToDataSection(const char *NewSection,
   IsInTextSection = false;
 }
 
+/// SwitchToSection - Switch to the specified section of the executable if we
+/// are not already in it!
+void AsmPrinter::SwitchToSection(const Section* NS) {
+  const std::string& NewSection = NS->getName();
+
+  // If we're already in this section, we're done.
+  if (CurrentSection == NewSection) return;
+
+  // Close the current section, if applicable.
+  if (TAI->getSectionEndDirectiveSuffix() && !CurrentSection.empty())
+    O << CurrentSection << TAI->getSectionEndDirectiveSuffix() << '\n';
+
+  // FIXME: Make CurrentSection a Section* in the future
+  CurrentSection = NewSection;
+
+  if (!CurrentSection.empty())
+    O << CurrentSection << TAI->getDataSectionStartSuffix() << '\n';
+
+  IsInTextSection = (NS->getFlags() & SectionFlags::Code);
+}
 
 void AsmPrinter::getAnalysisUsage(AnalysisUsage &AU) const {
   MachineFunctionPass::getAnalysisUsage(AU);

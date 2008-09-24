@@ -32,6 +32,7 @@ namespace llvm {
   class MachineConstantPoolValue;
   class MachineModuleInfo;
   class Mangler;
+  class Section;
   class TargetAsmInfo;
   class Type;
   class raw_ostream;
@@ -127,7 +128,11 @@ namespace llvm {
     /// are the same.
     ///
     void SwitchToDataSection(const char *NewSection, const GlobalValue *GV = NULL);
-    
+
+    /// SwitchToSection - Switch to the specified section of the executable if
+    /// we are not already in it!
+    void SwitchToSection(const Section* NS);
+
     /// getGlobalLinkName - Returns the asm/link name of of the specified
     /// global variable.  Should be overridden by each target asm printer to
     /// generate the appropriate value.
