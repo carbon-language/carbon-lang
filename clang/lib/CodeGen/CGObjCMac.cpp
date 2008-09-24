@@ -131,6 +131,7 @@ public:
   /// MethodListPtrTy - LLVM type for struct objc_method_list *.
   const llvm::Type *MethodListPtrTy;
 
+  llvm::Function *GetPropertyFn, *SetPropertyFn;
   llvm::Function *EnumerationMutationFn;
   
   /// ExceptionDataTy - LLVM type for struct _objc_exception_data.
@@ -394,6 +395,8 @@ public:
   virtual void GenerateProtocol(const ObjCProtocolDecl *PD);
 
   virtual llvm::Function *ModuleInitFunction();
+  virtual llvm::Function *GetPropertyGetFunction();
+  virtual llvm::Function *GetPropertySetFunction();
   virtual llvm::Function *EnumerationMutationFunction();
   
   virtual void EmitTryStmt(CodeGen::CodeGenFunction &CGF,
@@ -1367,6 +1370,14 @@ llvm::Function *CGObjCMac::ModuleInitFunction() {
   return NULL;
 }
 
+llvm::Function *CGObjCMac::GetPropertyGetFunction() {
+  return ObjCTypes.GetPropertyFn;
+}
+
+llvm::Function *CGObjCMac::GetPropertySetFunction() {
+  return ObjCTypes.SetPropertyFn;
+}
+
 llvm::Function *CGObjCMac::EnumerationMutationFunction()
 {
   return ObjCTypes.EnumerationMutationFn;
@@ -2087,7 +2098,7 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
                           NULL);
   CGM.getModule().addTypeName("struct._objc_module", ModuleTy);
 
-  // Message send functions
+  // Message send functions.
 
   std::vector<const llvm::Type*> Params;
   Params.push_back(ObjectPtrTy);
@@ -2134,8 +2145,37 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
                            "objc_msgSendSuper_stret",
                            &CGM.getModule());
   
+  // Property manipulation functions.
+
+  Params.clear();
+  Params.push_back(ObjectPtrTy);
+  Params.push_back(SelectorPtrTy);
+  Params.push_back(LongTy);
+  Params.push_back(Types.ConvertTypeForMem(Ctx.BoolTy));
+  GetPropertyFn =
+    llvm::Function::Create(llvm::FunctionType::get(ObjectPtrTy,
+                                                   Params,
+                                                   false),
+                           llvm::Function::ExternalLinkage,
+                           "objc_getProperty",
+                           &CGM.getModule());
+
+  Params.clear();
+  Params.push_back(ObjectPtrTy);
+  Params.push_back(SelectorPtrTy);
+  Params.push_back(LongTy);
+  Params.push_back(Types.ConvertTypeForMem(Ctx.BoolTy));
+  Params.push_back(Types.ConvertTypeForMem(Ctx.BoolTy));
+  SetPropertyFn =
+    llvm::Function::Create(llvm::FunctionType::get(ObjectPtrTy,
+                                                   Params,
+                                                   false),
+                           llvm::Function::ExternalLinkage,
+                           "objc_setProperty",
+                           &CGM.getModule());
+
   // Enumeration mutation.
-  
+
   Params.clear();
   Params.push_back(ObjectPtrTy);
   EnumerationMutationFn = 

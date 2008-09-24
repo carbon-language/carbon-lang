@@ -118,6 +118,12 @@ public:
   // parameters are passed.
   virtual llvm::Function *GenerateMethod(const ObjCMethodDecl *OMD) = 0;
 
+  /// Return the runtime function for getting properties.
+  virtual llvm::Function *GetPropertyGetFunction() = 0;
+  
+  /// Return the runtime function for setting properties.
+  virtual llvm::Function *GetPropertySetFunction() = 0;
+
   /// GetClass - Return a reference to the class for the given
   /// interface decl.
   virtual llvm::Value *GetClass(BuilderType &Builder, 

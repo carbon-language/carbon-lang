@@ -121,6 +121,8 @@ public:
                                            const ObjCProtocolDecl *PD);
   virtual void GenerateProtocol(const ObjCProtocolDecl *PD);
   virtual llvm::Function *ModuleInitFunction();
+  virtual llvm::Function *GetPropertyGetFunction();
+  virtual llvm::Function *GetPropertySetFunction();
   virtual llvm::Function *EnumerationMutationFunction();
   
   virtual void EmitTryStmt(CodeGen::CodeGenFunction &CGF,
@@ -940,22 +942,25 @@ llvm::Function *CGObjCGNU::GenerateMethod(const ObjCMethodDecl *OMD) {
   return Method;
 }
 
-llvm::Function *CGObjCGNU::EnumerationMutationFunction()
-{
-  assert(0 && "No enumeration mutation function in the GNU runtime!");
-  
+llvm::Function *CGObjCGNU::GetPropertyGetFunction() {
+  return 0;
+}
+
+llvm::Function *CGObjCGNU::GetPropertySetFunction() {
+  return 0;
+}
+
+llvm::Function *CGObjCGNU::EnumerationMutationFunction() {
   return 0;
 }
 
 void CGObjCGNU::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
-                            const ObjCAtTryStmt &S)
-{
+                            const ObjCAtTryStmt &S) {
   CGF.ErrorUnsupported(&S, "@try statement");
 }
 
 void CGObjCGNU::EmitThrowStmt(CodeGen::CodeGenFunction &CGF,
-                              const ObjCAtThrowStmt &S)
-{
+                              const ObjCAtThrowStmt &S) {
   CGF.ErrorUnsupported(&S, "@throw statement");
 }
 
