@@ -310,6 +310,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\lib\VMCore\Attributes.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\VMCore\AutoUpgrade.cpp"
 				>
 			</File>
