@@ -2164,10 +2164,11 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
   Params.push_back(ObjectPtrTy);
   Params.push_back(SelectorPtrTy);
   Params.push_back(LongTy);
+  Params.push_back(ObjectPtrTy);
   Params.push_back(Types.ConvertTypeForMem(Ctx.BoolTy));
   Params.push_back(Types.ConvertTypeForMem(Ctx.BoolTy));
   SetPropertyFn =
-    llvm::Function::Create(llvm::FunctionType::get(ObjectPtrTy,
+    llvm::Function::Create(llvm::FunctionType::get(llvm::Type::VoidTy,
                                                    Params,
                                                    false),
                            llvm::Function::ExternalLinkage,

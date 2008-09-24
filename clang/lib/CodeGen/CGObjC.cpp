@@ -206,6 +206,7 @@ void CodeGenFunction::GenerateObjCGetter(const ObjCPropertyImplDecl *PID) {
 /// function. The given Decl must be either an ObjCCategoryImplDecl
 /// or an ObjCImplementationDecl.
 void CodeGenFunction::GenerateObjCSetter(const ObjCPropertyImplDecl *PID) {
+  ObjCIvarDecl *Ivar = PID->getPropertyIvarDecl();
   const ObjCPropertyDecl *PD = PID->getPropertyDecl();
   ObjCMethodDecl *OMD = PD->getSetterMethodDecl();
   assert(OMD && "Invalid call to generate setter (empty method)");
@@ -213,29 +214,69 @@ void CodeGenFunction::GenerateObjCSetter(const ObjCPropertyImplDecl *PID) {
   // not have been created by Sema for us.  
   OMD->createImplicitParams(getContext());
   StartObjCMethod(OMD);
-  
-  switch (PD->getSetterKind()) {
-  case ObjCPropertyDecl::Assign: break;
-  case ObjCPropertyDecl::Copy:
-      CGM.ErrorUnsupported(PID, "Obj-C setter with 'copy'");
-      break;
-  case ObjCPropertyDecl::Retain:
-      CGM.ErrorUnsupported(PID, "Obj-C setter with 'retain'");
-      break;
-  }
 
-  // FIXME: What about nonatomic?
-  SourceLocation Loc = PD->getLocation();
-  ValueDecl *Self = OMD->getSelfDecl();
-  ObjCIvarDecl *Ivar = PID->getPropertyIvarDecl();
-  DeclRefExpr Base(Self, Self->getType(), Loc);
-  ParmVarDecl *ArgDecl = OMD->getParamDecl(0);
-  DeclRefExpr Arg(ArgDecl, ArgDecl->getType(), Loc);
-  ObjCIvarRefExpr IvarRef(Ivar, Ivar->getType(), Loc, &Base,
-                          true, true);
-  BinaryOperator Assign(&IvarRef, &Arg, BinaryOperator::Assign,
-                        Ivar->getType(), Loc);
-  EmitStmt(&Assign);
+  bool IsCopy = PD->getSetterKind() == ObjCPropertyDecl::Copy;
+  bool IsAtomic = 
+    !(PD->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_nonatomic);
+
+  // Determine if we should use an objc_setProperty call for
+  // this. Properties with 'copy' semantics always use it, as do
+  // non-atomic properties with 'release' semantics as long as we are
+  // not in gc-only mode.
+  if (IsCopy ||
+      (CGM.getLangOptions().getGCMode() != LangOptions::GCOnly &&
+       PD->getSetterKind() == ObjCPropertyDecl::Retain)) {
+    llvm::Value *SetPropertyFn = 
+      CGM.getObjCRuntime().GetPropertySetFunction();
+    
+    if (!SetPropertyFn) {
+      CGM.ErrorUnsupported(PID, "Obj-C getter requiring atomic copy");
+      FinishFunction();
+      return;
+    }
+    
+    // Emit objc_setProperty((id) self, _cmd, offset, arg, 
+    //                       <is-atomic>, <is-copy>).
+    // FIXME: Can't this be simpler? This might even be worse than the
+    // corresponding gcc code.
+    CodeGenTypes &Types = CGM.getTypes();
+    ValueDecl *Cmd = OMD->getCmdDecl();
+    llvm::Value *CmdVal = Builder.CreateLoad(LocalDeclMap[Cmd], "cmd");
+    QualType IdTy = getContext().getObjCIdType();
+    llvm::Value *SelfAsId = 
+      Builder.CreateBitCast(LoadObjCSelf(), Types.ConvertType(IdTy));
+    llvm::Value *Offset = EmitIvarOffset(OMD->getClassInterface(), Ivar);
+    llvm::Value *Arg = LocalDeclMap[OMD->getParamDecl(0)];
+    llvm::Value *ArgAsId = 
+      Builder.CreateBitCast(Builder.CreateLoad(Arg, "arg"),
+                            Types.ConvertType(IdTy));
+    llvm::Value *True =
+      llvm::ConstantInt::get(Types.ConvertTypeForMem(getContext().BoolTy), 1);
+    llvm::Value *False =
+      llvm::ConstantInt::get(Types.ConvertTypeForMem(getContext().BoolTy), 0);
+    CallArgList Args;
+    Args.push_back(std::make_pair(RValue::get(SelfAsId), IdTy));
+    Args.push_back(std::make_pair(RValue::get(CmdVal), Cmd->getType()));
+    Args.push_back(std::make_pair(RValue::get(Offset), getContext().LongTy));
+    Args.push_back(std::make_pair(RValue::get(ArgAsId), IdTy));
+    Args.push_back(std::make_pair(RValue::get(IsAtomic ? True : False), 
+                                  getContext().BoolTy));
+    Args.push_back(std::make_pair(RValue::get(IsCopy ? True : False), 
+                                  getContext().BoolTy));
+    EmitCall(SetPropertyFn, PD->getType(), Args);
+  } else {
+    SourceLocation Loc = PD->getLocation();
+    ValueDecl *Self = OMD->getSelfDecl();
+    ObjCIvarDecl *Ivar = PID->getPropertyIvarDecl();
+    DeclRefExpr Base(Self, Self->getType(), Loc);
+    ParmVarDecl *ArgDecl = OMD->getParamDecl(0);
+    DeclRefExpr Arg(ArgDecl, ArgDecl->getType(), Loc);
+    ObjCIvarRefExpr IvarRef(Ivar, Ivar->getType(), Loc, &Base,
+                            true, true);
+    BinaryOperator Assign(&IvarRef, &Arg, BinaryOperator::Assign,
+                          Ivar->getType(), Loc);
+    EmitStmt(&Assign);
+  }
 
   FinishFunction();
 }
