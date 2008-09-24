@@ -65,6 +65,7 @@ class ExecutionEngine {
   const TargetData *TD;
   ExecutionEngineState state;
   bool LazyCompilationDisabled;
+  bool GVCompilationDisabled;
   bool SymbolSearchingDisabled;
 
 protected:
@@ -254,6 +255,16 @@ public:
   bool isLazyCompilationDisabled() const {
     return LazyCompilationDisabled;
   }
+
+  /// DisableGVCompilation - If called, the JIT will abort if it's asked to allocate
+  /// space and populate a GlobalVariable.
+  void DisableGVCompilation(bool Disabled = true) {
+    GVCompilationDisabled = Disabled;
+  }
+  bool isGVCompilationDisabled() const {
+    return GVCompilationDisabled;
+  }
+
   /// DisableSymbolSearching - If called, the JIT will not try to lookup unknown
   /// symbols with dlsym.  A client can still use InstallLazyFunctionCreator to
   /// resolve symbols in a custom way.

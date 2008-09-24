@@ -552,6 +552,10 @@ void *JIT::getOrEmitGlobalVariable(const GlobalVariable *GV) {
     addGlobalMapping(GV, Ptr);
     }
   } else {
+    if (isGVCompilationDisabled()) {
+      cerr << "Compilation of GlobalVariable is disabled!\n";
+      abort();
+    }
     // If the global hasn't been emitted to memory yet, allocate space and
     // emit it into memory.  It goes in the same array as the generated
     // code, jump tables, etc.
