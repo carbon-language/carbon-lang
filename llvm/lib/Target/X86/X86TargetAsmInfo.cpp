@@ -434,7 +434,8 @@ X86WinTargetAsmInfo::X86WinTargetAsmInfo(const X86TargetMachine &TM):
   HasDotTypeDotSizeDirective = false;
 
   TextSection = getUnnamedSection("_text", SectionFlags::Code);
-  DataSection = "_data";
+  DataSection = getUnnamedSection("_data", SectionFlags::Writeable);
+
   JumpTableDataSection = NULL;
   SwitchToSectionDirective = "";
   TextSectionStartSuffix = "\tsegment 'CODE'";

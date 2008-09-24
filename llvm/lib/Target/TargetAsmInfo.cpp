@@ -27,8 +27,7 @@ using namespace llvm;
 
 TargetAsmInfo::TargetAsmInfo() :
   TextSection(0),
-  DataSection("\t.data"),
-  DataSection_(0),
+  DataSection(0),
   BSSSection("\t.bss"),
   BSSSection_(0),
   ReadOnlySection(0),
@@ -126,7 +125,7 @@ TargetAsmInfo::TargetAsmInfo() :
   DwarfExceptionSection(".gcc_except_table"),
   AsmTransCBE(0) {
   TextSection = getUnnamedSection("\t.text", SectionFlags::Code);
-  DataSection_ = getUnnamedSection(DataSection);
+  DataSection = getUnnamedSection("\t.data", SectionFlags::Writeable);
 }
 
 TargetAsmInfo::~TargetAsmInfo() {
@@ -306,14 +305,14 @@ TargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
       return getReadOnlySection_();
   }
 
-  return getDataSection_();
+  return getDataSection();
 }
 
 // Lame default implementation. Calculate the section name for machine const.
 const Section*
 TargetAsmInfo::SelectSectionForMachineConst(const Type *Ty) const {
   // FIXME: Support data.rel stuff someday
-  return getDataSection_();
+  return getDataSection();
 }
 
 std::string

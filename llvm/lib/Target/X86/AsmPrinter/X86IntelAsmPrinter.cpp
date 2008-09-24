@@ -481,7 +481,7 @@ bool X86IntelAsmPrinter::doFinalization(Module &M) {
       O << "\tpublic " << name << "\n";
       // FALL THROUGH
     case GlobalValue::InternalLinkage:
-      SwitchToDataSection(TAI->getDataSection(), I);
+      SwitchToSection(TAI->getDataSection());
       break;
     default:
       assert(0 && "Unknown linkage type!");

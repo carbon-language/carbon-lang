@@ -65,7 +65,7 @@ void OcamlGCMetadataPrinter::beginAssembly(raw_ostream &OS, AsmPrinter &AP,
   AP.SwitchToSection(TAI.getTextSection());
   EmitCamlGlobal(getModule(), OS, AP, TAI, "code_begin");
   
-  AP.SwitchToDataSection(TAI.getDataSection());
+  AP.SwitchToSection(TAI.getDataSection());
   EmitCamlGlobal(getModule(), OS, AP, TAI, "data_begin");
 }
 
@@ -100,13 +100,13 @@ void OcamlGCMetadataPrinter::finishAssembly(raw_ostream &OS, AsmPrinter &AP,
   AP.SwitchToSection(TAI.getTextSection());
   EmitCamlGlobal(getModule(), OS, AP, TAI, "code_end");
   
-  AP.SwitchToDataSection(TAI.getDataSection());
+  AP.SwitchToSection(TAI.getDataSection());
   EmitCamlGlobal(getModule(), OS, AP, TAI, "data_end");
   
   OS << AddressDirective << 0; // FIXME: Why does ocaml emit this??
   AP.EOL();
   
-  AP.SwitchToDataSection(TAI.getDataSection());
+  AP.SwitchToSection(TAI.getDataSection());
   EmitCamlGlobal(getModule(), OS, AP, TAI, "frametable");
   
   for (iterator I = begin(), IE = end(); I != IE; ++I) {

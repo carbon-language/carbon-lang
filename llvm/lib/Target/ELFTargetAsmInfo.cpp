@@ -27,7 +27,6 @@ using namespace llvm;
 ELFTargetAsmInfo::ELFTargetAsmInfo(const TargetMachine &TM) {
   ETM = &TM;
 
-  DataSection_ = getUnnamedSection("\t.data", SectionFlags::Writeable);
   BSSSection_  = getUnnamedSection("\t.bss",
                                    SectionFlags::Writeable | SectionFlags::BSS);
   ReadOnlySection_ = getNamedSection("\t.rodata", SectionFlags::None);
@@ -64,7 +63,7 @@ ELFTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
       switch (Kind) {
        case SectionKind::Data:
        case SectionKind::SmallData:
-        return getDataSection_();
+        return getDataSection();
        case SectionKind::BSS:
        case SectionKind::SmallBSS:
         // ELF targets usually have BSS sections

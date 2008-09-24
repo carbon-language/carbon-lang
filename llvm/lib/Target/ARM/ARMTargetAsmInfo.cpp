@@ -48,7 +48,6 @@ ARMTargetAsmInfo::ARMTargetAsmInfo(const ARMTargetMachine &TM) {
   AlignmentIsInBytes = false;
   Data64bitsDirective = 0;
   CommentString = "@";
-  DataSection = "\t.data";
   ConstantPoolSection = "\t.text\n";
   COMMDirectiveTakesAlignment = false;
   InlineAsmStart = "@ InlineAsm Start";

@@ -2064,7 +2064,7 @@ private:
 
     Asm->SwitchToSection(TAI->getTextSection());
     EmitLabel("text_begin", 0);
-    Asm->SwitchToDataSection(TAI->getDataSection());
+    Asm->SwitchToSection(TAI->getDataSection());
     EmitLabel("data_begin", 0);
   }
 
@@ -2750,7 +2750,7 @@ public:
     // Standard sections final addresses.
     Asm->SwitchToSection(TAI->getTextSection());
     EmitLabel("text_end", 0);
-    Asm->SwitchToDataSection(TAI->getDataSection());
+    Asm->SwitchToSection(TAI->getDataSection());
     EmitLabel("data_end", 0);
 
     // End text sections.
