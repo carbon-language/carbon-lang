@@ -308,6 +308,12 @@ ASTContext::getTypeInfo(QualType T) {
     Width = Target.getPointerWidth(0);
     Align = Target.getPointerAlign(0);
     break;
+  case Type::BlockPointer: {
+    unsigned AS = cast<BlockPointerType>(T)->getPointeeType().getAddressSpace();
+    Width = Target.getPointerWidth(AS);
+    Align = Target.getPointerAlign(AS);
+    break;
+  }
   case Type::Pointer: {
     unsigned AS = cast<PointerType>(T)->getPointeeType().getAddressSpace();
     Width = Target.getPointerWidth(AS);
@@ -1668,6 +1674,8 @@ void ASTContext::getObjCEncodingForType(QualType T, std::string& S,
     S += '}';
   } else if (T->isEnumeralType()) {
     S += 'i';
+  } else if (T->isBlockPointerType()) {
+    S += '^'; // This type string is the same as general pointers.
   } else
     assert(0 && "@encode for type not implemented!");
 }
