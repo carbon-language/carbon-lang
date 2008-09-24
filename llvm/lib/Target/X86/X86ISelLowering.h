@@ -403,9 +403,12 @@ namespace llvm {
     virtual const char *LowerXConstraint(MVT ConstraintVT) const;
 
     /// LowerAsmOperandForConstraint - Lower the specified operand into the Ops
-    /// vector.  If it is invalid, don't add anything to Ops.
+    /// vector.  If it is invalid, don't add anything to Ops. If hasMemory is
+    /// true it means one of the asm constraint of the inline asm instruction
+    /// being processed is 'm'.
     virtual void LowerAsmOperandForConstraint(SDValue Op,
                                               char ConstraintLetter,
+                                              bool hasMemory,
                                               std::vector<SDValue> &Ops,
                                               SelectionDAG &DAG) const;
     
@@ -529,6 +532,7 @@ namespace llvm {
     SDValue LowerINSERT_VECTOR_ELT_SSE4(SDValue Op, SelectionDAG &DAG);
     SDValue LowerSCALAR_TO_VECTOR(SDValue Op, SelectionDAG &DAG);
     SDValue LowerConstantPool(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerGlobalAddress(const GlobalValue *GV, SelectionDAG &DAG) const;
     SDValue LowerGlobalAddress(SDValue Op, SelectionDAG &DAG);
     SDValue LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG);
     SDValue LowerExternalSymbol(SDValue Op, SelectionDAG &DAG);

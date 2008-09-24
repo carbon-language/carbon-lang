@@ -131,6 +131,7 @@ namespace llvm {
                                    MVT VT) const;
 
     void LowerAsmOperandForConstraint(SDValue Op, char ConstraintLetter,
+                                      bool hasMemory, 
                                       std::vector<SDValue> &Ops,
                                       SelectionDAG &DAG) const;
 

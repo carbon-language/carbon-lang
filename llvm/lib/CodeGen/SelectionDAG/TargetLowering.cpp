@@ -1855,6 +1855,7 @@ const char *TargetLowering::LowerXConstraint(MVT ConstraintVT) const{
 /// vector.  If it is invalid, don't add anything to Ops.
 void TargetLowering::LowerAsmOperandForConstraint(SDValue Op,
                                                   char ConstraintLetter,
+                                                  bool hasMemory,
                                                   std::vector<SDValue> &Ops,
                                                   SelectionDAG &DAG) const {
   switch (ConstraintLetter) {
@@ -1997,7 +1998,7 @@ static unsigned getConstraintGenerality(TargetLowering::ConstraintType CT) {
 ///     'm' over 'r', for example.
 ///
 static void ChooseConstraint(TargetLowering::AsmOperandInfo &OpInfo,
-                             const TargetLowering &TLI,
+                             bool hasMemory,  const TargetLowering &TLI,
                              SDValue Op, SelectionDAG *DAG) {
   assert(OpInfo.Codes.size() > 1 && "Doesn't have multiple constraint options");
   unsigned BestIdx = 0;
@@ -2017,7 +2018,7 @@ static void ChooseConstraint(TargetLowering::AsmOperandInfo &OpInfo,
       assert(OpInfo.Codes[i].size() == 1 &&
              "Unhandled multi-letter 'other' constraint");
       std::vector<SDValue> ResultOps;
-      TLI.LowerAsmOperandForConstraint(Op, OpInfo.Codes[i][0],
+      TLI.LowerAsmOperandForConstraint(Op, OpInfo.Codes[i][0], hasMemory,
                                        ResultOps, *DAG);
       if (!ResultOps.empty()) {
         BestType = CType;
@@ -2044,6 +2045,7 @@ static void ChooseConstraint(TargetLowering::AsmOperandInfo &OpInfo,
 /// OpInfo.ConstraintCode and OpInfo.ConstraintType.
 void TargetLowering::ComputeConstraintToUse(AsmOperandInfo &OpInfo,
                                             SDValue Op, 
+                                            bool hasMemory,
                                             SelectionDAG *DAG) const {
   assert(!OpInfo.Codes.empty() && "Must have at least one constraint");
   
@@ -2052,7 +2054,7 @@ void TargetLowering::ComputeConstraintToUse(AsmOperandInfo &OpInfo,
     OpInfo.ConstraintCode = OpInfo.Codes[0];
     OpInfo.ConstraintType = getConstraintType(OpInfo.ConstraintCode);
   } else {
-    ChooseConstraint(OpInfo, *this, Op, DAG);
+    ChooseConstraint(OpInfo, hasMemory, *this, Op, DAG);
   }
   
   // 'X' matches anything.

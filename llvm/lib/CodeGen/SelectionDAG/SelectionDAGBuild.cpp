@@ -4629,6 +4629,22 @@ GetRegistersForValue(SDISelAsmOperandInfo &OpInfo, bool HasEarlyClobber,
   // Otherwise, we couldn't allocate enough registers for this.
 }
 
+/// hasInlineAsmMemConstraint - Return true if the inline asm instruction being
+/// processed uses a memory 'm' constraint.
+static bool
+hasInlineAsmMemConstraint(std::vector<InlineAsm::ConstraintInfo> &CInfos,
+                          TargetLowering &TLI) {
+  for (unsigned i = 0, e = CInfos.size(); i != e; ++i) {
+    InlineAsm::ConstraintInfo &CI = CInfos[i];
+    for (unsigned j = 0, ee = CI.Codes.size(); j != ee; ++j) {
+      TargetLowering::ConstraintType CType = TLI.getConstraintType(CI.Codes[j]);
+      if (CType == TargetLowering::C_Memory)
+        return true;
+    }
+  }
+
+  return false;
+}
 
 /// visitInlineAsm - Handle a call to an InlineAsm object.
 ///
@@ -4652,6 +4668,8 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
   // constraint.  If so, we can't let the register allocator allocate any input
   // registers, because it will not know to avoid the earlyclobbered output reg.
   bool SawEarlyClobber = false;
+
+  bool hasMemory = hasInlineAsmMemConstraint(ConstraintInfos, TLI);
   
   unsigned ArgNo = 0;   // ArgNo - The argument of the CallInst.
   unsigned ResNo = 0;   // ResNo - The result number of the next output.
@@ -4724,7 +4742,7 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
     OpInfo.ConstraintVT = OpVT;
     
     // Compute the constraint code and ConstraintType to use.
-    TLI.ComputeConstraintToUse(OpInfo, OpInfo.CallOperand, &DAG);
+    TLI.ComputeConstraintToUse(OpInfo, OpInfo.CallOperand, hasMemory, &DAG);
 
     // Keep track of whether we see an earlyclobber.
     SawEarlyClobber |= OpInfo.isEarlyClobber;
@@ -4927,7 +4945,7 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
         
         std::vector<SDValue> Ops;
         TLI.LowerAsmOperandForConstraint(InOperandVal, OpInfo.ConstraintCode[0],
-                                         Ops, DAG);
+                                         hasMemory, Ops, DAG);
         if (Ops.empty()) {
           cerr << "Invalid operand for inline asm constraint '"
                << OpInfo.ConstraintCode << "'!\n";

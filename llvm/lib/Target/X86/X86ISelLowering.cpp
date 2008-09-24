@@ -1593,7 +1593,7 @@ SDValue X86TargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
   if (CallRequiresFnAddressInReg(Is64Bit, IsTailCall)) {
     // Note: The actual moving to ecx is done further down.
     GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee);
-    if (G &&  !G->getGlobal()->hasHiddenVisibility() &&
+    if (G && !G->getGlobal()->hasHiddenVisibility() &&
         !G->getGlobal()->hasProtectedVisibility())
       Callee =  LowerGlobalAddress(Callee, DAG);
     else if (isa<ExternalSymbolSDNode>(Callee))
@@ -4300,8 +4300,8 @@ X86TargetLowering::LowerConstantPool(SDValue Op, SelectionDAG &DAG) {
 }
 
 SDValue
-X86TargetLowering::LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) {
-  GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
+X86TargetLowering::LowerGlobalAddress(const GlobalValue *GV,
+                                      SelectionDAG &DAG) const {
   SDValue Result = DAG.getTargetGlobalAddress(GV, getPointerTy());
   Result = DAG.getNode(X86ISD::Wrapper, getPointerTy(), Result);
   // With PIC, the address is actually $g + Offset.
@@ -4322,6 +4322,12 @@ X86TargetLowering::LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) {
                          PseudoSourceValue::getGOT(), 0);
 
   return Result;
+}
+
+SDValue
+X86TargetLowering::LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) {
+  const GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
+  return LowerGlobalAddress(GV, DAG);
 }
 
 // Lower ISD::GlobalTLSAddress using the "general dynamic" model, 32 bit
@@ -7067,6 +7073,7 @@ LowerXConstraint(MVT ConstraintVT) const {
 /// vector.  If it is invalid, don't add anything to Ops.
 void X86TargetLowering::LowerAsmOperandForConstraint(SDValue Op,
                                                      char Constraint,
+                                                     bool hasMemory,
                                                      std::vector<SDValue>&Ops,
                                                      SelectionDAG &DAG) const {
   SDValue Result(0, 0);
@@ -7128,14 +7135,11 @@ void X86TargetLowering::LowerAsmOperandForConstraint(SDValue Op,
     }
     
     if (GA) {
-      // If addressing this global requires a load (e.g. in PIC mode), we can't
-      // match.
-      if (Subtarget->GVRequiresExtraLoad(GA->getGlobal(), getTargetMachine(),
-                                         false))
-        return;
-
-      Op = DAG.getTargetGlobalAddress(GA->getGlobal(), GA->getValueType(0),
-                                      Offset);
+      if (hasMemory) 
+        Op = LowerGlobalAddress(GA->getGlobal(), DAG);
+      else
+        Op = DAG.getTargetGlobalAddress(GA->getGlobal(), GA->getValueType(0),
+                                        Offset);
       Result = Op;
       break;
     }
@@ -7149,7 +7153,8 @@ void X86TargetLowering::LowerAsmOperandForConstraint(SDValue Op,
     Ops.push_back(Result);
     return;
   }
-  return TargetLowering::LowerAsmOperandForConstraint(Op, Constraint, Ops, DAG);
+  return TargetLowering::LowerAsmOperandForConstraint(Op, Constraint, hasMemory,
+                                                      Ops, DAG);
 }
 
 std::vector<unsigned> X86TargetLowering::

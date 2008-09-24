@@ -767,7 +767,7 @@ void X86DAGToDAGISel::EmitFunctionEntryCode(Function &Fn, MachineFunction &MF) {
 /// addressing mode.
 bool X86DAGToDAGISel::MatchAddress(SDValue N, X86ISelAddressMode &AM,
                                    bool isRoot, unsigned Depth) {
-DOUT << "MatchAddress: "; DEBUG(AM.dump());
+  DOUT << "MatchAddress: "; DEBUG(AM.dump());
   // Limit recursion.
   if (Depth > 5)
     return MatchAddressBase(N, AM, isRoot, Depth);

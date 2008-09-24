@@ -3040,10 +3040,12 @@ SPUTargetLowering::computeMaskedBitsForTargetNode(const SDValue Op,
 void
 SPUTargetLowering::LowerAsmOperandForConstraint(SDValue Op,
                                                 char ConstraintLetter,
+                                                bool hasMemory,
                                                 std::vector<SDValue> &Ops,
                                                 SelectionDAG &DAG) const {
   // Default, for the time being, to the base class handler
-  TargetLowering::LowerAsmOperandForConstraint(Op, ConstraintLetter, Ops, DAG);
+  TargetLowering::LowerAsmOperandForConstraint(Op, ConstraintLetter, hasMemory,
+                                               Ops, DAG);
 }
 
 /// isLegalAddressImmediate - Return true if the integer value can be used
