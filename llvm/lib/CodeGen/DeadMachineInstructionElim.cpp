@@ -25,9 +25,17 @@ namespace {
         public MachineFunctionPass {
     virtual bool runOnMachineFunction(MachineFunction &MF);
     
+    const TargetRegisterInfo *TRI;
+    const MachineRegisterInfo *MRI;
+    const TargetInstrInfo *TII;
+    BitVector LivePhysRegs;
+
   public:
     static char ID; // Pass identification, replacement for typeid
     DeadMachineInstructionElim() : MachineFunctionPass(&ID) {}
+
+  private:
+    bool isDead(MachineInstr *MI) const;
   };
 }
 char DeadMachineInstructionElim::ID = 0;
@@ -40,16 +48,37 @@ FunctionPass *llvm::createDeadMachineInstructionElimPass() {
   return new DeadMachineInstructionElim();
 }
 
+bool DeadMachineInstructionElim::isDead(MachineInstr *MI) const {
+  // Don't delete instructions with side effects.
+  bool SawStore = false;
+  if (!MI->isSafeToMove(TII, SawStore))
+    return false;
+
+  // Examine each operand.
+  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+    const MachineOperand &MO = MI->getOperand(i);
+    if (MO.isRegister() && MO.isDef()) {
+      unsigned Reg = MO.getReg();
+      if (TargetRegisterInfo::isPhysicalRegister(Reg) ?
+          LivePhysRegs[Reg] : !MRI->use_empty(Reg)) {
+        // This def has a use. Don't delete the instruction!
+        return false;
+      }
+    }
+  }
+
+  // If there are no defs with uses, the instruction is dead.
+  return true;
+}
+
 bool DeadMachineInstructionElim::runOnMachineFunction(MachineFunction &MF) {
   bool AnyChanges = false;
-  const TargetRegisterInfo &TRI = *MF.getTarget().getRegisterInfo();
-  const MachineRegisterInfo &MRI = MF.getRegInfo();
-  const TargetInstrInfo &TII = *MF.getTarget().getInstrInfo();
-  BitVector LivePhysRegs;
-  bool SawStore;
+  MRI = &MF.getRegInfo();
+  TRI = MF.getTarget().getRegisterInfo();
+  TII = MF.getTarget().getInstrInfo();
 
   // Compute a bitvector to represent all non-allocatable physregs.
-  BitVector NonAllocatableRegs = TRI.getAllocatableSet(MF);
+  BitVector NonAllocatableRegs = TRI->getAllocatableSet(MF);
   NonAllocatableRegs.flip();
 
   // Loop over all instructions in all blocks, from bottom to top, so that it's
@@ -65,8 +94,8 @@ bool DeadMachineInstructionElim::runOnMachineFunction(MachineFunction &MF) {
 
     // Also add any explicit live-out physregs for this block.
     if (!MBB->empty() && MBB->back().getDesc().isReturn())
-      for (MachineRegisterInfo::liveout_iterator LOI = MRI.liveout_begin(),
-           LOE = MRI.liveout_end(); LOI != LOE; ++LOI) {
+      for (MachineRegisterInfo::liveout_iterator LOI = MRI->liveout_begin(),
+           LOE = MRI->liveout_end(); LOI != LOE; ++LOI) {
         unsigned Reg = *LOI;
         if (TargetRegisterInfo::isPhysicalRegister(Reg))
           LivePhysRegs.set(Reg);
@@ -78,33 +107,14 @@ bool DeadMachineInstructionElim::runOnMachineFunction(MachineFunction &MF) {
          MIE = MBB->rend(); MII != MIE; ) {
       MachineInstr *MI = &*MII;
 
-      // Don't delete instructions with side effects.
-      SawStore = false;
-      if (MI->isSafeToMove(&TII, SawStore)) {
-        // Examine each operand.
-        bool AllDefsDead = true;
-        for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-          const MachineOperand &MO = MI->getOperand(i);
-          if (MO.isRegister() && MO.isDef()) {
-            unsigned Reg = MO.getReg();
-            if (TargetRegisterInfo::isPhysicalRegister(Reg) ?
-                LivePhysRegs[Reg] : !MRI.use_empty(Reg)) {
-              // This def has a use. Don't delete the instruction!
-              AllDefsDead = false;
-              break;
-            }
-          }
-        }
-
-        // If there are no defs with uses, the instruction is dead.
-        if (AllDefsDead) {
-          AnyChanges = true;
-          MI->eraseFromParent();
-          MIE = MBB->rend();
-          // MII is now pointing to the next instruction to process,
-          // so don't increment it.
-          continue;
-        }
+      // If the instruction is dead, delete it!
+      if (isDead(MI)) {
+        AnyChanges = true;
+        MI->eraseFromParent();
+        MIE = MBB->rend();
+        // MII is now pointing to the next instruction to process,
+        // so don't increment it.
+        continue;
       }
 
       // Record the physreg defs.
@@ -114,7 +124,7 @@ bool DeadMachineInstructionElim::runOnMachineFunction(MachineFunction &MF) {
           unsigned Reg = MO.getReg();
           if (Reg != 0 && TargetRegisterInfo::isPhysicalRegister(Reg)) {
             LivePhysRegs.reset(Reg);
-            for (const unsigned *AliasSet = TRI.getAliasSet(Reg);
+            for (const unsigned *AliasSet = TRI->getAliasSet(Reg);
                  *AliasSet; ++AliasSet)
               LivePhysRegs.reset(*AliasSet);
           }
@@ -128,7 +138,7 @@ bool DeadMachineInstructionElim::runOnMachineFunction(MachineFunction &MF) {
           unsigned Reg = MO.getReg();
           if (Reg != 0 && TargetRegisterInfo::isPhysicalRegister(Reg)) {
             LivePhysRegs.set(Reg);
-            for (const unsigned *AliasSet = TRI.getAliasSet(Reg);
+            for (const unsigned *AliasSet = TRI->getAliasSet(Reg);
                  *AliasSet; ++AliasSet)
               LivePhysRegs.set(*AliasSet);
           }
@@ -141,5 +151,6 @@ bool DeadMachineInstructionElim::runOnMachineFunction(MachineFunction &MF) {
     }
   }
 
+  LivePhysRegs.clear();
   return AnyChanges;
 }
