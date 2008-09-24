@@ -149,7 +149,7 @@ bool AlphaAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   // Print out labels for the function.
   const Function *F = MF.getFunction();
-  SwitchToTextSection(getSectionForFunction(*F).c_str(), F);
+  SwitchToTextSection(TAI->SectionForGlobal(F).c_str(), F);
 
   EmitAlignment(4, F);
   switch (F->getLinkage()) {

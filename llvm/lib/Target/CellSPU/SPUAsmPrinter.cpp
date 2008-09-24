@@ -297,9 +297,6 @@ namespace {
       SPUAsmPrinter::getAnalysisUsage(AU);
     }
 
-    /// getSectionForFunction - Return the section that we should emit the
-    /// specified function body into.
-    virtual std::string getSectionForFunction(const Function &F) const;
   };
 } // end of anonymous namespace
 
@@ -406,19 +403,6 @@ void SPUAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
   printInstruction(MI);
 }
 
-
-
-std::string LinuxAsmPrinter::getSectionForFunction(const Function &F) const {
-  switch (F.getLinkage()) {
-  default: assert(0 && "Unknown linkage type!");
-  case Function::ExternalLinkage:
-  case Function::InternalLinkage: return TAI->getTextSection();
-  case Function::WeakLinkage:
-  case Function::LinkOnceLinkage:
-    return ""; // Print nothing for the time being...
-  }
-}
-
 /// runOnMachineFunction - This uses the printMachineInstruction()
 /// method to print assembly for each instruction.
 ///
@@ -434,7 +418,7 @@ LinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF)
   // Print out labels for the function.
   const Function *F = MF.getFunction();
 
-  SwitchToTextSection(getSectionForFunction(*F).c_str(), F);
+  SwitchToTextSection(TAI->SectionForGlobal(F).c_str(), F);
   EmitAlignment(3, F);
 
   switch (F->getLinkage()) {

@@ -59,7 +59,6 @@ namespace {
       return "Mips Assembly Printer";
     }
 
-    virtual std::string getSectionForFunction(const Function &F) const;
     bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo, 
                          unsigned AsmVariant, const char *ExtraCode);
     void printOperand(const MachineInstr *MI, int opNum);
@@ -218,11 +217,6 @@ emitCurrentABIString(void)
   assert(0 && "Unknown Mips ABI");
   return NULL;
 }  
-
-// Substitute old hook with new one temporary
-std::string MipsAsmPrinter::getSectionForFunction(const Function &F) const {
-  return TAI->SectionForGlobal(&F);
-}
 
 /// Emit the directives used by GAS on the start of functions
 void MipsAsmPrinter::

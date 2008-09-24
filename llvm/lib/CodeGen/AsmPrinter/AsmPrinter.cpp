@@ -47,11 +47,6 @@ AsmPrinter::~AsmPrinter() {
                     E = GCMetadataPrinters.end(); I != E; ++I)
     delete I->second;
 }
-    
-std::string AsmPrinter::getSectionForFunction(const Function &F) const {
-  return TAI->getTextSection();
-}
-
 
 /// SwitchToTextSection - Switch to the specified text section of the executable
 /// if we are not already in it!
@@ -331,7 +326,7 @@ void AsmPrinter::EmitJumpTableInfo(MachineJumpTableInfo *MJTI,
     // function body itself, otherwise the label differences won't make sense.
     // We should also do if the section name is NULL or function is declared in
     // discardable section.
-    SwitchToTextSection(getSectionForFunction(*F).c_str(), F);
+    SwitchToTextSection(TAI->SectionForGlobal(F).c_str(), F);
   } else {
     SwitchToDataSection(JumpTableDataSection);
   }

@@ -146,11 +146,6 @@ void X86ATTAsmPrinter::decorateName(std::string &Name,
   }
 }
 
-// Substitute old hook with new one temporary
-std::string X86ATTAsmPrinter::getSectionForFunction(const Function &F) const {
-  return TAI->SectionForGlobal(&F);
-}
-
 void X86ATTAsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
   const Function *F = MF.getFunction();
   std::string SectionName = TAI->SectionForGlobal(F);

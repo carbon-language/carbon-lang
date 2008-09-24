@@ -124,10 +124,6 @@ struct VISIBILITY_HIDDEN X86ATTAsmPrinter : public AsmPrinter {
 
   bool runOnMachineFunction(MachineFunction &F);
 
-  /// getSectionForFunction - Return the section that we should emit the
-  /// specified function body into.
-  virtual std::string getSectionForFunction(const Function &F) const;
-
   void emitFunctionHeader(const MachineFunction &MF);
 
   // Necessary for Darwin to print out the apprioriate types of linker stubs

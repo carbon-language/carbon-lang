@@ -315,9 +315,6 @@ namespace {
       PPCAsmPrinter::getAnalysisUsage(AU);
     }
 
-    /// getSectionForFunction - Return the section that we should emit the
-    /// specified function body into.
-    virtual std::string getSectionForFunction(const Function &F) const;
     void printModuleLevelGV(const GlobalVariable* GVar);
   };
 
@@ -347,9 +344,6 @@ namespace {
       PPCAsmPrinter::getAnalysisUsage(AU);
     }
 
-    /// getSectionForFunction - Return the section that we should emit the
-    /// specified function body into.
-    virtual std::string getSectionForFunction(const Function &F) const;
     void printModuleLevelGV(const GlobalVariable* GVar);
   };
 } // end of anonymous namespace
@@ -577,7 +571,7 @@ bool PPCLinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   // Print out labels for the function.
   const Function *F = MF.getFunction();
-  SwitchToTextSection(getSectionForFunction(*F).c_str(), F);
+  SwitchToTextSection(TAI->SectionForGlobal(F).c_str(), F);
 
   switch (F->getLinkage()) {
   default: assert(0 && "Unknown linkage type!");
@@ -753,14 +747,6 @@ bool PPCLinuxAsmPrinter::doFinalization(Module &M) {
   return AsmPrinter::doFinalization(M);
 }
 
-std::string PPCLinuxAsmPrinter::getSectionForFunction(const Function &F) const {
-  return TAI->SectionForGlobal(&F);
-}
-
-std::string PPCDarwinAsmPrinter::getSectionForFunction(const Function &F) const {
-  return TAI->SectionForGlobal(&F);
-}
-
 /// runOnMachineFunction - This uses the printMachineInstruction()
 /// method to print assembly for each instruction.
 ///
@@ -773,7 +759,7 @@ bool PPCDarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   // Print out labels for the function.
   const Function *F = MF.getFunction();
-  SwitchToTextSection(getSectionForFunction(*F).c_str(), F);
+  SwitchToTextSection(TAI->SectionForGlobal(F).c_str(), F);
 
   switch (F->getLinkage()) {
   default: assert(0 && "Unknown linkage type!");

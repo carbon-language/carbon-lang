@@ -130,10 +130,6 @@ namespace {
     bool doInitialization(Module &M);
     bool doFinalization(Module &M);
 
-    /// getSectionForFunction - Return the section that we should emit the
-    /// specified function body into.
-    virtual std::string getSectionForFunction(const Function &F) const;
-
     /// EmitMachineConstantPoolValue - Print a machine constantpool value to
     /// the .s file.
     virtual void EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV) {
@@ -178,11 +174,6 @@ namespace {
 } // end of anonymous namespace
 
 #include "ARMGenAsmWriter.inc"
-
-// Substitute old hook with new one temporary
-std::string ARMAsmPrinter::getSectionForFunction(const Function &F) const {
-  return TAI->SectionForGlobal(&F);
-}
 
 /// runOnMachineFunction - This uses the printInstruction()
 /// method to print assembly for each instruction.

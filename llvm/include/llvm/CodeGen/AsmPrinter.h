@@ -184,12 +184,6 @@ namespace llvm {
                                        unsigned AsmVariant, 
                                        const char *ExtraCode);
     
-    /// getSectionForFunction - Return the section that we should emit the
-    /// specified function body into.  This defaults to 'TextSection'.  This
-    /// should most likely be overridden by the target to put linkonce/weak
-    /// functions into special sections.
-    virtual std::string getSectionForFunction(const Function &F) const;
-    
     /// SetupMachineFunction - This should be called when a new MachineFunction
     /// is being processed from runOnMachineFunction.
     void SetupMachineFunction(MachineFunction &MF);

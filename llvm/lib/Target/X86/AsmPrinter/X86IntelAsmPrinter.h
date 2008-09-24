@@ -131,10 +131,6 @@ struct VISIBILITY_HIDDEN X86IntelAsmPrinter : public AsmPrinter {
 
   void decorateName(std::string& Name, const GlobalValue* GV);
 
-  /// getSectionForFunction - Return the section that we should emit the
-  /// specified function body into.
-  virtual std::string getSectionForFunction(const Function &F) const;
-
   virtual void EmitString(const ConstantArray *CVA) const;
 
   // Necessary for dllexport support

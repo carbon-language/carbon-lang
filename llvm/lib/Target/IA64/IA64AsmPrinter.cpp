@@ -106,8 +106,6 @@ namespace {
       printOp(MI->getOperand(OpNo), true); // this is a br.call instruction
     }
 
-    std::string getSectionForFunction(const Function &F) const;
-
     void printMachineInstruction(const MachineInstr *MI);
     void printOp(const MachineOperand &MO, bool isBRCALLinsn= false);
     void printModuleLevelGV(const GlobalVariable* GVar);
@@ -121,12 +119,6 @@ namespace {
 // Include the auto-generated portion of the assembly writer.
 #include "IA64GenAsmWriter.inc"
 
-
-// Substitute old hook with new one temporary
-std::string IA64AsmPrinter::getSectionForFunction(const Function &F) const {
-  return TAI->SectionForGlobal(&F);
-}
-
 /// runOnMachineFunction - This uses the printMachineInstruction()
 /// method to print assembly for each instruction.
 ///
@@ -138,7 +130,7 @@ bool IA64AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   EmitConstantPool(MF.getConstantPool());
 
   const Function *F = MF.getFunction();
-  SwitchToTextSection(getSectionForFunction(*F).c_str(), F);
+  SwitchToTextSection(TAI->SectionForGlobal(F).c_str(), F);
 
   // Print out labels for the function.
   EmitAlignment(5);

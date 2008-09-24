@@ -117,12 +117,6 @@ void X86IntelAsmPrinter::decorateName(std::string &Name,
   }
 }
 
-
-std::string X86IntelAsmPrinter::getSectionForFunction(const Function &F) const {
-  // Intel asm always emits functions to _text.
-  return "_text";
-}
-
 /// runOnMachineFunction - This uses the printMachineInstruction()
 /// method to print assembly for each instruction.
 ///
@@ -144,7 +138,7 @@ bool X86IntelAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   decorateName(CurrentFnName, F);
 
-  SwitchToTextSection(getSectionForFunction(*F).c_str(), F);
+  SwitchToTextSection("_text", F);
 
   unsigned FnAlign = OptimizeForSize ? 1 : 4;
   if (!F->isDeclaration() && F->hasNote(FnAttr::OptimizeForSize))
