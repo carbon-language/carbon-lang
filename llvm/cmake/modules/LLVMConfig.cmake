@@ -9,9 +9,7 @@ endmacro(llvm_config executable link_components)
 
 macro(msvc_llvm_config executable link_components)
   foreach(c ${link_components})
-    message(STATUS ${c})
     if( c STREQUAL "jit" )
-      message(STATUS "linking jit")
       set_target_properties(${executable}
 	PROPERTIES
 	LINK_FLAGS "/INCLUDE:_X86TargetMachineModule")
