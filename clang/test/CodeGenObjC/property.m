@@ -9,11 +9,17 @@
 
 @interface A : Root {
   int x;
+  id ob0, ob1, ob2, ob3, ob4;
 }
 @property int x;
 @property int y;
 @property int z;
 @property(readonly) int ro;
+@property(assign) id ob0;
+@property(retain) id ob1;
+@property(copy) id ob2;
+@property(retain, nonatomic) id ob3;
+@property(copy, nonatomic) id ob4;
 @end
 
 @implementation A
@@ -22,6 +28,11 @@
 @synthesize y = x;
 @synthesize z = x;
 @synthesize ro = x;
+@synthesize ob0;
+@synthesize ob1;
+@synthesize ob2;
+@synthesize ob3;
+@synthesize ob4;
 -(int) y {
   return x + 1;
 }
