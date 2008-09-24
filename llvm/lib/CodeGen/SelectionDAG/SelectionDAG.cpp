@@ -2271,6 +2271,42 @@ SDValue SelectionDAG::getNode(unsigned Opcode, MVT VT, SDValue Operand) {
   return SDValue(N, 0);
 }
 
+SDValue SelectionDAG::FoldConstantArithmetic(unsigned Opcode,
+                                             MVT VT,
+                                             ConstantSDNode *Cst1,
+                                             ConstantSDNode *Cst2) {
+  const APInt &C1 = Cst1->getAPIntValue(), &C2 = Cst2->getAPIntValue();
+
+  switch (Opcode) {
+  case ISD::ADD:  return getConstant(C1 + C2, VT);
+  case ISD::SUB:  return getConstant(C1 - C2, VT);
+  case ISD::MUL:  return getConstant(C1 * C2, VT);
+  case ISD::UDIV:
+    if (C2.getBoolValue()) return getConstant(C1.udiv(C2), VT);
+    break;
+  case ISD::UREM:
+    if (C2.getBoolValue()) return getConstant(C1.urem(C2), VT);
+    break;
+  case ISD::SDIV:
+    if (C2.getBoolValue()) return getConstant(C1.sdiv(C2), VT);
+    break;
+  case ISD::SREM:
+    if (C2.getBoolValue()) return getConstant(C1.srem(C2), VT);
+    break;
+  case ISD::AND:  return getConstant(C1 & C2, VT);
+  case ISD::OR:   return getConstant(C1 | C2, VT);
+  case ISD::XOR:  return getConstant(C1 ^ C2, VT);
+  case ISD::SHL:  return getConstant(C1 << C2, VT);
+  case ISD::SRL:  return getConstant(C1.lshr(C2), VT);
+  case ISD::SRA:  return getConstant(C1.ashr(C2), VT);
+  case ISD::ROTL: return getConstant(C1.rotl(C2), VT);
+  case ISD::ROTR: return getConstant(C1.rotr(C2), VT);
+  default: break;
+  }
+
+  return SDValue();
+}
+
 SDValue SelectionDAG::getNode(unsigned Opcode, MVT VT,
                               SDValue N1, SDValue N2) {
   ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1.getNode());
@@ -2457,33 +2493,8 @@ SDValue SelectionDAG::getNode(unsigned Opcode, MVT VT,
 
   if (N1C) {
     if (N2C) {
-      const APInt &C1 = N1C->getAPIntValue(), &C2 = N2C->getAPIntValue();
-      switch (Opcode) {
-      case ISD::ADD: return getConstant(C1 + C2, VT);
-      case ISD::SUB: return getConstant(C1 - C2, VT);
-      case ISD::MUL: return getConstant(C1 * C2, VT);
-      case ISD::UDIV:
-        if (C2.getBoolValue()) return getConstant(C1.udiv(C2), VT);
-        break;
-      case ISD::UREM :
-        if (C2.getBoolValue()) return getConstant(C1.urem(C2), VT);
-        break;
-      case ISD::SDIV :
-        if (C2.getBoolValue()) return getConstant(C1.sdiv(C2), VT);
-        break;
-      case ISD::SREM :
-        if (C2.getBoolValue()) return getConstant(C1.srem(C2), VT);
-        break;
-      case ISD::AND  : return getConstant(C1 & C2, VT);
-      case ISD::OR   : return getConstant(C1 | C2, VT);
-      case ISD::XOR  : return getConstant(C1 ^ C2, VT);
-      case ISD::SHL  : return getConstant(C1 << C2, VT);
-      case ISD::SRL  : return getConstant(C1.lshr(C2), VT);
-      case ISD::SRA  : return getConstant(C1.ashr(C2), VT);
-      case ISD::ROTL : return getConstant(C1.rotl(C2), VT);
-      case ISD::ROTR : return getConstant(C1.rotr(C2), VT);
-      default: break;
-      }
+      SDValue SV = FoldConstantArithmetic(Opcode, VT, N1C, N2C);
+      if (SV.getNode()) return SV;
     } else {      // Cannonicalize constant to RHS if commutative
       if (isCommutativeBinOp(Opcode)) {
         std::swap(N1C, N2C);
