@@ -105,14 +105,14 @@ struct ParamAttrsWithIndex {
 // PAListPtr Smart Pointer
 //===----------------------------------------------------------------------===//
 
-class ParamAttributeListImpl;
+class AttributeListImpl;
   
 /// PAListPtr - This class manages the ref count for the opaque 
-/// ParamAttributeListImpl object and provides accessors for it.
+/// AttributeListImpl object and provides accessors for it.
 class PAListPtr {
   /// PAList - The parameter attributes that we are managing.  This can be null
   /// to represent the empty parameter attributes list.
-  ParamAttributeListImpl *PAList;
+  AttributeListImpl *PAList;
 public:
   PAListPtr() : PAList(0) {}
   PAListPtr(const PAListPtr &P);
@@ -204,7 +204,7 @@ public:
   const ParamAttrsWithIndex &getSlot(unsigned Slot) const;
   
 private:
-  explicit PAListPtr(ParamAttributeListImpl *L);
+  explicit PAListPtr(AttributeListImpl *L);
 };
 
 } // End llvm namespace

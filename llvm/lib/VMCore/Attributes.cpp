@@ -72,21 +72,21 @@ Attributes ParamAttr::typeIncompatible(const Type *Ty) {
 }
 
 //===----------------------------------------------------------------------===//
-// ParamAttributeListImpl Definition
+// AttributeListImpl Definition
 //===----------------------------------------------------------------------===//
 
 namespace llvm {
-class ParamAttributeListImpl : public FoldingSetNode {
+class AttributeListImpl : public FoldingSetNode {
   unsigned RefCount;
   
   // ParamAttrsList is uniqued, these should not be publicly available.
-  void operator=(const ParamAttributeListImpl &); // Do not implement
-  ParamAttributeListImpl(const ParamAttributeListImpl &); // Do not implement
-  ~ParamAttributeListImpl();                        // Private implementation
+  void operator=(const AttributeListImpl &); // Do not implement
+  AttributeListImpl(const AttributeListImpl &); // Do not implement
+  ~AttributeListImpl();                        // Private implementation
 public:
   SmallVector<ParamAttrsWithIndex, 4> Attrs;
   
-  ParamAttributeListImpl(const ParamAttrsWithIndex *Attr, unsigned NumAttrs)
+  AttributeListImpl(const ParamAttrsWithIndex *Attr, unsigned NumAttrs)
     : Attrs(Attr, Attr+NumAttrs) {
     RefCount = 0;
   }
@@ -105,9 +105,9 @@ public:
 };
 }
 
-static ManagedStatic<FoldingSet<ParamAttributeListImpl> > ParamAttrsLists;
+static ManagedStatic<FoldingSet<AttributeListImpl> > ParamAttrsLists;
 
-ParamAttributeListImpl::~ParamAttributeListImpl() {
+AttributeListImpl::~AttributeListImpl() {
   ParamAttrsLists->RemoveNode(this);
 }
 
@@ -128,15 +128,15 @@ PAListPtr PAListPtr::get(const ParamAttrsWithIndex *Attrs, unsigned NumAttrs) {
   
   // Otherwise, build a key to look up the existing attributes.
   FoldingSetNodeID ID;
-  ParamAttributeListImpl::Profile(ID, Attrs, NumAttrs);
+  AttributeListImpl::Profile(ID, Attrs, NumAttrs);
   void *InsertPos;
-  ParamAttributeListImpl *PAL =
+  AttributeListImpl *PAL =
     ParamAttrsLists->FindNodeOrInsertPos(ID, InsertPos);
   
   // If we didn't find any existing attributes of the same shape then
   // create a new one and insert it.
   if (!PAL) {
-    PAL = new ParamAttributeListImpl(Attrs, NumAttrs);
+    PAL = new AttributeListImpl(Attrs, NumAttrs);
     ParamAttrsLists->InsertNode(PAL, InsertPos);
   }
   
@@ -149,7 +149,7 @@ PAListPtr PAListPtr::get(const ParamAttrsWithIndex *Attrs, unsigned NumAttrs) {
 // PAListPtr Method Implementations
 //===----------------------------------------------------------------------===//
 
-PAListPtr::PAListPtr(ParamAttributeListImpl *LI) : PAList(LI) {
+PAListPtr::PAListPtr(AttributeListImpl *LI) : PAList(LI) {
   if (LI) LI->AddRef();
 }
 
