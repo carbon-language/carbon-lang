@@ -72,8 +72,6 @@ ARMDarwinTargetAsmInfo::ARMDarwinTargetAsmInfo(const ARMTargetMachine &TM):
   ProtectedDirective = NULL;
   JumpTableDataSection = ".const";
   CStringSection = "\t.cstring";
-  FourByteConstantSection = "\t.literal4\n";
-  EightByteConstantSection = "\t.literal8\n";
   ReadOnlySection = "\t.const\n";
   HasDotTypeDotSizeDirective = false;
   NeedsIndirectEncoding = true;
@@ -115,9 +113,6 @@ ARMELFTargetAsmInfo::ARMELFTargetAsmInfo(const ARMTargetMachine &TM):
   AbsoluteDebugSectionOffsets = true;
   CStringSection = ".rodata.str";
   ReadOnlySection = "\t.section\t.rodata\n";
-  FourByteConstantSection = "\t.section\t.rodata.cst4,\"aM\",@progbits,4";
-  EightByteConstantSection = "\t.section\t.rodata.cst8,\"aM\",@progbits,8";
-  SixteenByteConstantSection = "\t.section\t.rodata.cst16,\"aM\",@progbits,16";
   PrivateGlobalPrefix = ".L";
   WeakRefDirective = "\t.weak\t";
   SetDirective = "\t.set\t";

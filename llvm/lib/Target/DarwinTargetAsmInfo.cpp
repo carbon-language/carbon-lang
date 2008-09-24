@@ -29,13 +29,14 @@ DarwinTargetAsmInfo::DarwinTargetAsmInfo(const TargetMachine &TM) {
 
   CStringSection_ = getUnnamedSection("\t.cstring",
                                 SectionFlags::Mergeable | SectionFlags::Strings);
-  FourByteConstantSection_ = getUnnamedSection("\t.literal4\n",
+  FourByteConstantSection = getUnnamedSection("\t.literal4\n",
+                                              SectionFlags::Mergeable);
+  EightByteConstantSection = getUnnamedSection("\t.literal8\n",
                                                SectionFlags::Mergeable);
-  EightByteConstantSection_ = getUnnamedSection("\t.literal8\n",
-                                                SectionFlags::Mergeable);
 
   // Note: 16-byte constant section is subtarget specific and should be provided
-  // there.
+  // there, if needed.
+  SixteenByteConstantSection = 0;
 
   ReadOnlySection_ = getUnnamedSection("\t.const\n", SectionFlags::None);
 
@@ -139,11 +140,11 @@ DarwinTargetAsmInfo::MergeableConstSection(const Type *Ty) const {
 
   unsigned Size = TD->getABITypeSize(Ty);
   if (Size == 4)
-    return FourByteConstantSection_;
+    return FourByteConstantSection;
   else if (Size == 8)
-    return EightByteConstantSection_;
-  else if (Size == 16 && SixteenByteConstantSection_)
-    return SixteenByteConstantSection_;
+    return EightByteConstantSection;
+  else if (Size == 16 && SixteenByteConstantSection)
+    return SixteenByteConstantSection;
 
   return getReadOnlySection_();
 }

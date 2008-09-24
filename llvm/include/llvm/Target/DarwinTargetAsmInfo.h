@@ -29,6 +29,9 @@ namespace llvm {
     const Section* ConstDataCoalSection;
     const Section* ConstDataSection;
     const Section* DataCoalSection;
+    const Section* FourByteConstantSection;
+    const Section* EightByteConstantSection;
+    const Section* SixteenByteConstantSection;
 
     explicit DarwinTargetAsmInfo(const TargetMachine &TM);
     virtual const Section* SelectSectionForGlobal(const GlobalValue *GV) const;

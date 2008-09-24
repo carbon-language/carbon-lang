@@ -145,13 +145,10 @@ X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const X86TargetMachine &TM):
     ConstantPoolSection = "\t.const\n";
   JumpTableDataSection = "\t.const\n";
   CStringSection = "\t.cstring";
-  FourByteConstantSection = "\t.literal4\n";
-  EightByteConstantSection = "\t.literal8\n";
   // FIXME: Why don't always use this section?
   if (is64Bit) {
-    SixteenByteConstantSection = "\t.literal16\n";
-    SixteenByteConstantSection_ = getUnnamedSection("\t.literal16\n",
-                                                    SectionFlags::Mergeable);
+    SixteenByteConstantSection = getUnnamedSection("\t.literal16\n",
+                                                   SectionFlags::Mergeable);
   }
   ReadOnlySection = "\t.const\n";
 
@@ -233,9 +230,6 @@ X86ELFTargetAsmInfo::X86ELFTargetAsmInfo(const X86TargetMachine &TM):
   X86TargetAsmInfo(TM), ELFTargetAsmInfo(TM) {
 
   ReadOnlySection = ".rodata";
-  FourByteConstantSection = "\t.section\t.rodata.cst4,\"aM\",@progbits,4";
-  EightByteConstantSection = "\t.section\t.rodata.cst8,\"aM\",@progbits,8";
-  SixteenByteConstantSection = "\t.section\t.rodata.cst16,\"aM\",@progbits,16";
   CStringSection = ".rodata.str";
   PrivateGlobalPrefix = ".L";
   WeakRefDirective = "\t.weak\t";

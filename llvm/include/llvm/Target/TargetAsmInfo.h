@@ -361,16 +361,6 @@ namespace llvm {
     /// Defaults to "\t.section .dtors,\"aw\",@progbits".
     const char *StaticDtorsSection;
 
-    /// FourByteConstantSection, EightByteConstantSection,
-    /// SixteenByteConstantSection - These are special sections where we place
-    /// 4-, 8-, and 16- byte constant literals.
-    const char *FourByteConstantSection;
-    const Section *FourByteConstantSection_;
-    const char *EightByteConstantSection;
-    const Section *EightByteConstantSection_;
-    const char *SixteenByteConstantSection;
-    const Section *SixteenByteConstantSection_;
-
     //===--- Global Variable Emission Directives --------------------------===//
     
     /// GlobalDirective - This is the directive used to declare a global entity.
@@ -756,24 +746,6 @@ namespace llvm {
     }
     const char *getStaticDtorsSection() const {
       return StaticDtorsSection;
-    }
-    const char *getFourByteConstantSection() const {
-      return FourByteConstantSection;
-    }
-    const Section *getFourByteConstantSection_() const {
-      return FourByteConstantSection_;
-    }
-    const char *getEightByteConstantSection() const {
-      return EightByteConstantSection;
-    }
-    const Section *getEightByteConstantSection_() const {
-      return EightByteConstantSection_;
-    }
-    const char *getSixteenByteConstantSection() const {
-      return SixteenByteConstantSection;
-    }
-    const Section *getSixteenByteConstantSection_() const {
-      return SixteenByteConstantSection_;
     }
     const char *getGlobalDirective() const {
       return GlobalDirective;

@@ -43,8 +43,6 @@ PPCDarwinTargetAsmInfo::PPCDarwinTargetAsmInfo(const PPCTargetMachine &TM):
   ConstantPoolSection = "\t.const\t";
   JumpTableDataSection = ".const";
   CStringSection = "\t.cstring";
-  FourByteConstantSection = "\t.literal4\n";
-  EightByteConstantSection = "\t.literal8\n";
   ReadOnlySection = "\t.const\n";
   if (TM.getRelocationModel() == Reloc::Static) {
     StaticCtorsSection = ".constructor";
@@ -140,9 +138,6 @@ PPCLinuxTargetAsmInfo::PPCLinuxTargetAsmInfo(const PPCTargetMachine &TM) :
   DwarfMacInfoSection = "\t.section\t.debug_macinfo,\"\",@progbits";
 
   ReadOnlySection = "\t.section\t.rodata";
-  FourByteConstantSection = "\t.section\t.rodata.cst4,\"aM\",@progbits,4";
-  EightByteConstantSection = "\t.section\t.rodata.cst8,\"aM\",@progbits,8";
-  SixteenByteConstantSection = "\t.section\t.rodata.cst16,\"aM\",@progbits,16";
   PCSymbol = ".";
 
   // Set up DWARF directives

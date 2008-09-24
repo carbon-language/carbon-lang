@@ -31,8 +31,6 @@ SPUTargetAsmInfo::SPUTargetAsmInfo(const SPUTargetMachine &TM) {
   CStringSection = "\t.cstring";
   StaticCtorsSection = ".mod_init_func";
   StaticDtorsSection = ".mod_term_func";
-  FourByteConstantSection = ".const";
-  SixteenByteConstantSection = "\t.section\t.rodata.cst16,\"aM\",@progbits,16";
   InlineAsmStart = "# InlineAsm Start";
   InlineAsmEnd = "# InlineAsm End";
   
