@@ -93,6 +93,9 @@ def main():
     parser.add_option("--no-browser", dest="startBrowser", default=True, 
                       action="store_false",
                       help="Don't open a webbrowser on startup.")
+    parser.add_option("--allow-all-hosts", dest="onlyServeLocal", default=True, 
+                      action="store_false",
+                      help='Allow connections from any host (access restricted to "127.0.0.1" by default)')
     (options, args) = parser.parse_args()
 
     if len(args) != 1:

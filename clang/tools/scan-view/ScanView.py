@@ -492,6 +492,10 @@ File Bug</h3>
         return self.send_string(result)
 
     def send_head(self, fields=None):
+        if (self.server.options.onlyServeLocal and
+            self.client_address[0] != '127.0.0.1'):
+            return self.send_error('401', 'Unauthorized host.')
+
         if fields is None:
             fields = {}
         self.fields = fields
