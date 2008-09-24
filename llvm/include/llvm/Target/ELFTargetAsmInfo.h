@@ -23,7 +23,7 @@ namespace llvm {
   class GlobalVariable;
   class Type;
 
-  struct ELFTargetAsmInfo: public virtual TargetAsmInfo {
+  struct ELFTargetAsmInfo: public TargetAsmInfo {
     explicit ELFTargetAsmInfo(const TargetMachine &TM);
 
     virtual const Section* SelectSectionForGlobal(const GlobalValue *GV) const;
