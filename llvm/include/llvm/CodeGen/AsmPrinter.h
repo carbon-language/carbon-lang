@@ -366,8 +366,6 @@ namespace llvm {
     const GlobalValue *findGlobalValue(const Constant* CV);
     void EmitLLVMUsedList(Constant *List);
     void EmitXXStructorList(Constant *List);
-    void EmitConstantPool(unsigned Alignment, const char *Section,
-                std::vector<std::pair<MachineConstantPoolEntry,unsigned> > &CP);
     GCMetadataPrinter *GetOrCreateGCPrinter(GCStrategy *C);
   };
 }

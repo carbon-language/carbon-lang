@@ -28,6 +28,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
@@ -255,60 +256,50 @@ void AsmPrinter::EmitConstantPool(MachineConstantPool *MCP) {
   const std::vector<MachineConstantPoolEntry> &CP = MCP->getConstants();
   if (CP.empty()) return;
 
-  // Some targets require 4-, 8-, and 16- byte constant literals to be placed
-  // in special sections.
-  std::vector<std::pair<MachineConstantPoolEntry,unsigned> > FourByteCPs;
-  std::vector<std::pair<MachineConstantPoolEntry,unsigned> > EightByteCPs;
-  std::vector<std::pair<MachineConstantPoolEntry,unsigned> > SixteenByteCPs;
-  std::vector<std::pair<MachineConstantPoolEntry,unsigned> > OtherCPs;
-  std::vector<std::pair<MachineConstantPoolEntry,unsigned> > TargetCPs;
+  // Calculate sections for constant pool entries. We collect entries to go into
+  // the same section together to reduce amount of section switch statements.
+  typedef
+    std::multimap<const Section*,
+                  std::pair<MachineConstantPoolEntry, unsigned> > CPMap;
+  CPMap  CPs;
+  DenseSet<const Section*> Sections;
+
   for (unsigned i = 0, e = CP.size(); i != e; ++i) {
     MachineConstantPoolEntry CPE = CP[i];
-    const Type *Ty = CPE.getType();
-    if (TAI->getFourByteConstantSection() &&
-        TM.getTargetData()->getABITypeSize(Ty) == 4)
-      FourByteCPs.push_back(std::make_pair(CPE, i));
-    else if (TAI->getEightByteConstantSection() &&
-             TM.getTargetData()->getABITypeSize(Ty) == 8)
-      EightByteCPs.push_back(std::make_pair(CPE, i));
-    else if (TAI->getSixteenByteConstantSection() &&
-             TM.getTargetData()->getABITypeSize(Ty) == 16)
-      SixteenByteCPs.push_back(std::make_pair(CPE, i));
-    else
-      OtherCPs.push_back(std::make_pair(CPE, i));
+    const Section* S = TAI->SelectSectionForMachineConst(CPE.getType());
+    CPs.insert(std::make_pair(S, std::make_pair(CPE, i)));
+    Sections.insert(S);
   }
 
-  unsigned Alignment = MCP->getConstantPoolAlignment();
-  EmitConstantPool(Alignment, TAI->getFourByteConstantSection(), FourByteCPs);
-  EmitConstantPool(Alignment, TAI->getEightByteConstantSection(), EightByteCPs);
-  EmitConstantPool(Alignment, TAI->getSixteenByteConstantSection(),
-                   SixteenByteCPs);
-  EmitConstantPool(Alignment, TAI->getConstantPoolSection(), OtherCPs);
-}
+  // Now print stuff into the calculated sections.
+  for (DenseSet<const Section*>::iterator IS = Sections.begin(),
+         ES = Sections.end(); IS != ES; ++IS) {
+    SwitchToSection(*IS);
+    EmitAlignment(MCP->getConstantPoolAlignment());
 
-void AsmPrinter::EmitConstantPool(unsigned Alignment, const char *Section,
-               std::vector<std::pair<MachineConstantPoolEntry,unsigned> > &CP) {
-  if (CP.empty()) return;
+    std::pair<CPMap::iterator, CPMap::iterator> II = CPs.equal_range(*IS);
+    for (CPMap::iterator I = II.first, E = II.second; I != E; ++I) {
+      CPMap::iterator J = next(I);
+      MachineConstantPoolEntry Entry = I->second.first;
+      unsigned index = I->second.second;
 
-  SwitchToDataSection(Section);
-  EmitAlignment(Alignment);
-  for (unsigned i = 0, e = CP.size(); i != e; ++i) {
-    O << TAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber() << '_'
-      << CP[i].second << ":\t\t\t\t\t";
+      O << TAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber() << '_'
+        << index << ":\t\t\t\t\t";
     // O << TAI->getCommentString() << ' ' << 
     //      WriteTypeSymbolic(O, CP[i].first.getType(), 0);
-    O << '\n';
-    if (CP[i].first.isMachineConstantPoolEntry())
-      EmitMachineConstantPoolValue(CP[i].first.Val.MachineCPVal);
-     else
-      EmitGlobalConstant(CP[i].first.Val.ConstVal);
-    if (i != e-1) {
-      const Type *Ty = CP[i].first.getType();
-      unsigned EntSize =
-        TM.getTargetData()->getABITypeSize(Ty);
-      unsigned ValEnd = CP[i].first.getOffset() + EntSize;
+      O << '\n';
+      if (Entry.isMachineConstantPoolEntry())
+        EmitMachineConstantPoolValue(Entry.Val.MachineCPVal);
+      else
+        EmitGlobalConstant(Entry.Val.ConstVal);
+
       // Emit inter-object padding for alignment.
-      EmitZeros(CP[i+1].first.getOffset()-ValEnd);
+      if (J != E) {
+        const Type *Ty = Entry.getType();
+        unsigned EntSize = TM.getTargetData()->getABITypeSize(Ty);
+        unsigned ValEnd = Entry.getOffset() + EntSize;
+        EmitZeros(J->second.first.getOffset()-ValEnd);
+      }
     }
   }
 }
