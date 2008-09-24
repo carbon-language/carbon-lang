@@ -2,6 +2,10 @@
 ; RUN: llvm-as < %s | llc -march=x86 | not grep "movl %edx, %edx"
 ; RUN: llvm-as < %s | llc -march=x86 | not grep "movl (%eax), %eax"
 ; RUN: llvm-as < %s | llc -march=x86 | not grep "movl (%edx), %edx"
+; RUN: llvm-as < %s | llc -march=x86 -regalloc=local | not grep "movl %eax, %eax"
+; RUN: llvm-as < %s | llc -march=x86 -regalloc=local | not grep "movl %edx, %edx"
+; RUN: llvm-as < %s | llc -march=x86 -regalloc=local | not grep "movl (%eax), %eax"
+; RUN: llvm-as < %s | llc -march=x86 -regalloc=local | not grep "movl (%edx), %edx"
 
 ; %0 must not be put in EAX or EDX.
 ; In the first asm, $0 and $2 must not be put in EAX.

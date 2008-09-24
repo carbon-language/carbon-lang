@@ -398,7 +398,7 @@ public:
     N = NewN;
   }
   
-  void GetRegistersForValue(SDISelAsmOperandInfo &OpInfo, bool HasEarlyClobber,
+  void GetRegistersForValue(SDISelAsmOperandInfo &OpInfo,
                             std::set<unsigned> &OutputRegs, 
                             std::set<unsigned> &InputRegs);
 

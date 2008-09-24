@@ -4465,12 +4465,10 @@ private:
 /// allocation.  This produces generally horrible, but correct, code.
 ///
 ///   OpInfo describes the operand.
-///   HasEarlyClobber is true if there are any early clobber constraints (=&r)
-///     or any explicitly clobbered registers.
 ///   Input and OutputRegs are the set of already allocated physical registers.
 ///
 void SelectionDAGLowering::
-GetRegistersForValue(SDISelAsmOperandInfo &OpInfo, bool HasEarlyClobber,
+GetRegistersForValue(SDISelAsmOperandInfo &OpInfo,
                      std::set<unsigned> &OutputRegs, 
                      std::set<unsigned> &InputRegs) {
   // Compute whether this value requires an input register, an output register,
@@ -4481,10 +4479,9 @@ GetRegistersForValue(SDISelAsmOperandInfo &OpInfo, bool HasEarlyClobber,
   case InlineAsm::isOutput:
     isOutReg = true;
     
-    // If this is an early-clobber output, or if there is an input
-    // constraint that matches this, we need to reserve the input register
-    // so no other inputs allocate to it.
-    isInReg = OpInfo.isEarlyClobber || OpInfo.hasMatchingInput;
+    // If there is an input constraint that matches this, we need to reserve 
+    // the input register so no other inputs allocate to it.
+    isInReg = OpInfo.hasMatchingInput;
     break;
   case InlineAsm::isInput:
     isInReg = true;
@@ -4551,16 +4548,11 @@ GetRegistersForValue(SDISelAsmOperandInfo &OpInfo, bool HasEarlyClobber,
   std::vector<unsigned> RegClassRegs;
   const TargetRegisterClass *RC = PhysReg.second;
   if (RC) {
-    // If this is an early clobber or tied register, our regalloc doesn't know
-    // how to maintain the constraint.  If it isn't, go ahead and create vreg
+    // If this is a tied register, our regalloc doesn't know how to maintain 
+    // the constraint.  If it isn't, go ahead and create vreg
     // and let the regalloc do the right thing.
-    if (!OpInfo.hasMatchingInput && !OpInfo.isEarlyClobber && 
-        // If there is some other early clobber and this is an input register,
-        // then we are forced to pre-allocate the input reg so it doesn't
-        // conflict with the earlyclobber.
-        !(OpInfo.Type == InlineAsm::isInput && HasEarlyClobber)) {
+    if (!OpInfo.hasMatchingInput) {
       RegVT = *PhysReg.second->vt_begin();
-      
       if (OpInfo.ConstraintVT == MVT::Other)
         ValueVT = RegVT;
 
@@ -4664,11 +4656,6 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
   std::vector<InlineAsm::ConstraintInfo>
     ConstraintInfos = IA->ParseConstraints();
 
-  // SawEarlyClobber - Keep track of whether we saw an earlyclobber output
-  // constraint.  If so, we can't let the register allocator allocate any input
-  // registers, because it will not know to avoid the earlyclobbered output reg.
-  bool SawEarlyClobber = false;
-
   bool hasMemory = hasInlineAsmMemConstraint(ConstraintInfos, TLI);
   
   unsigned ArgNo = 0;   // ArgNo - The argument of the CallInst.
@@ -4744,24 +4731,6 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
     // Compute the constraint code and ConstraintType to use.
     TLI.ComputeConstraintToUse(OpInfo, OpInfo.CallOperand, hasMemory, &DAG);
 
-    // Keep track of whether we see an earlyclobber.
-    SawEarlyClobber |= OpInfo.isEarlyClobber;
-    
-    // If we see a clobber of a register, it is an early clobber.
-    if (!SawEarlyClobber &&
-        OpInfo.Type == InlineAsm::isClobber &&
-        OpInfo.ConstraintType == TargetLowering::C_Register) {
-      // Note that we want to ignore things that we don't track here, like
-      // dirflag, fpsr, flags, etc.
-      std::pair<unsigned, const TargetRegisterClass*> PhysReg = 
-        TLI.getRegForInlineAsmConstraint(OpInfo.ConstraintCode,
-                                         OpInfo.ConstraintVT);
-      if (PhysReg.first || PhysReg.second) {
-        // This is a register we know of.
-        SawEarlyClobber = true;
-      }
-    }
-    
     // If this is a memory input, and if the operand is not indirect, do what we
     // need to to provide an address for the memory input.
     if (OpInfo.ConstraintType == TargetLowering::C_Memory &&
@@ -4802,7 +4771,7 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
     // If this constraint is for a specific register, allocate it before
     // anything else.
     if (OpInfo.ConstraintType == TargetLowering::C_Register)
-      GetRegistersForValue(OpInfo, SawEarlyClobber, OutputRegs, InputRegs);
+      GetRegistersForValue(OpInfo, OutputRegs, InputRegs);
   }
   ConstraintInfos.clear();
   
@@ -4815,7 +4784,7 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
     // C_Register operands have already been allocated, Other/Memory don't need
     // to be.
     if (OpInfo.ConstraintType == TargetLowering::C_RegisterClass)
-      GetRegistersForValue(OpInfo, SawEarlyClobber, OutputRegs, InputRegs);
+      GetRegistersForValue(OpInfo, OutputRegs, InputRegs);
   }    
   
   // AsmNodeOperands - The operands for the ISD::INLINEASM node.

@@ -722,6 +722,55 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
       }
     }
 
+    // If any physical regs are earlyclobber, spill any value they might
+    // have in them, then mark them unallocatable.
+    // If any virtual regs are earlyclobber, allocate them now (before
+    // freeing inputs that are killed).
+    if (MI->getOpcode()==TargetInstrInfo::INLINEASM) {
+      for (unsigned i = 0; i != MI->getNumOperands(); ++i) {
+        MachineOperand& MO = MI->getOperand(i);
+        if (MO.isRegister() && MO.isDef() && MO.isEarlyClobber() && 
+            MO.getReg()) {
+          if (TargetRegisterInfo::isVirtualRegister(MO.getReg())) {
+            unsigned DestVirtReg = MO.getReg();
+            unsigned DestPhysReg;
+
+            // If DestVirtReg already has a value, use it.
+            if (!(DestPhysReg = getVirt2PhysRegMapSlot(DestVirtReg)))
+              DestPhysReg = getReg(MBB, MI, DestVirtReg);
+            MF->getRegInfo().setPhysRegUsed(DestPhysReg);
+            markVirtRegModified(DestVirtReg);
+            getVirtRegLastUse(DestVirtReg) =
+                   std::make_pair((MachineInstr*)0, 0);
+            DOUT << "  Assigning " << TRI->getName(DestPhysReg)
+                 << " to %reg" << DestVirtReg << "\n";
+            MO.setReg(DestPhysReg);  // Assign the earlyclobber register
+          } else {
+            unsigned Reg = MO.getReg();
+            if (PhysRegsUsed[Reg] == -2) continue;  // Something like ESP.
+            // These are extra physical register defs when a sub-register
+            // is defined (def of a sub-register is a read/mod/write of the
+            // larger registers). Ignore.
+            if (isReadModWriteImplicitDef(MI, MO.getReg())) continue;
+
+            MF->getRegInfo().setPhysRegUsed(Reg);
+            spillPhysReg(MBB, MI, Reg, true); // Spill any existing value in reg
+            PhysRegsUsed[Reg] = 0;            // It is free and reserved now
+            AddToPhysRegsUseOrder(Reg); 
+
+            for (const unsigned *AliasSet = TRI->getSubRegisters(Reg);
+                 *AliasSet; ++AliasSet) {
+              if (PhysRegsUsed[*AliasSet] != -2) {
+                MF->getRegInfo().setPhysRegUsed(*AliasSet);
+                PhysRegsUsed[*AliasSet] = 0;  // It is free and reserved now
+                AddToPhysRegsUseOrder(*AliasSet); 
+              }
+            }
+          }
+        }
+      }
+    }
+
     // Get the used operands into registers.  This has the potential to spill
     // incoming values if we are out of registers.  Note that we completely
     // ignore physical register uses here.  We assume that if an explicit
@@ -778,6 +827,7 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
       MachineOperand& MO = MI->getOperand(i);
       if (MO.isRegister() && MO.isDef() && !MO.isImplicit() && MO.getReg() &&
+          !MO.isEarlyClobber() &&
           TargetRegisterInfo::isPhysicalRegister(MO.getReg())) {
         unsigned Reg = MO.getReg();
         if (PhysRegsUsed[Reg] == -2) continue;  // Something like ESP.
@@ -839,6 +889,7 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
       MachineOperand& MO = MI->getOperand(i);
       if (MO.isRegister() && MO.isDef() && MO.getReg() &&
+          !MO.isEarlyClobber() &&
           TargetRegisterInfo::isVirtualRegister(MO.getReg())) {
         unsigned DestVirtReg = MO.getReg();
         unsigned DestPhysReg;

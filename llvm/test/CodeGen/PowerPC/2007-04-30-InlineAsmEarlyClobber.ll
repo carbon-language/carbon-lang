@@ -1,5 +1,8 @@
-; RUN: llvm-as < %s | llc | grep {subfc r2,r5,r4}
-; RUN: llvm-as < %s | llc | grep {subfze r4,r3}
+; RUN: llvm-as < %s | llc | grep {subfc r3,r5,r4}
+; RUN: llvm-as < %s | llc | grep {subfze r4,r2}
+; RUN: llvm-as < %s | llc -regalloc=local | grep {subfc r5,r2,r4}
+; RUN: llvm-as < %s | llc -regalloc=local | grep {subfze r2,r3}
+; The first argument of subfc must not be the same as any other register.
 
 ; PR1357
 
