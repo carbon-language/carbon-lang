@@ -803,17 +803,46 @@ LValue CodeGenFunction::EmitObjCMessageExprLValue(const ObjCMessageExpr *E) {
                           E->getType().getCVRQualifiers());
 }
 
-LValue CodeGenFunction::EmitObjCIvarRefLValue(const ObjCIvarRefExpr *E) {
+llvm::Value *CodeGenFunction::EmitIvarOffset(ObjCInterfaceDecl *Interface,
+                                             const ObjCIvarDecl *Ivar) {
   // Objective-C objects are traditionally C structures with their layout
   // defined at compile-time.  In some implementations, their layout is not
   // defined until run time in order to allow instance variables to be added to
   // a class without recompiling all of the subclasses.  If this is the case
   // then the CGObjCRuntime subclass must return true to LateBoundIvars and
   // implement the lookup itself.
-  if (CGM.getObjCRuntime().LateBoundIVars()) {
-    return EmitUnsupportedLValue(E, "late-bound instance variables");
-  }
+  if (CGM.getObjCRuntime().LateBoundIVars())
+    assert(0 && "late-bound ivars are unsupported");
 
+  const llvm::Type *InterfaceLTy = 
+    CGM.getTypes().ConvertType(getContext().getObjCInterfaceType(Interface));
+  const llvm::StructLayout *Layout =
+    CGM.getTargetData().getStructLayout(cast<llvm::StructType>(InterfaceLTy));
+  uint64_t Offset = 
+    Layout->getElementOffset(CGM.getTypes().getLLVMFieldNo(Ivar));
+  
+  return llvm::ConstantInt::get(CGM.getTypes().ConvertType(getContext().LongTy),
+                                Offset);                                                             
+}
+
+LValue CodeGenFunction::EmitLValueForIvar(llvm::Value *BaseValue,
+                                          const ObjCIvarDecl *Ivar,
+                                          unsigned CVRQualifiers) {
+  // See comment in EmitIvarOffset.
+  if (CGM.getObjCRuntime().LateBoundIVars())
+    assert(0 && "late-bound ivars are unsupported");
+
+  if (Ivar->isBitField())
+    assert(0 && "ivar bitfields are unsupported");
+  
+  // TODO:  Add a special case for isa (index 0)
+  unsigned Index = CGM.getTypes().getLLVMFieldNo(Ivar);
+  
+  llvm::Value *V = Builder.CreateStructGEP(BaseValue, Index, "tmp");
+  return LValue::MakeAddr(V, Ivar->getType().getCVRQualifiers()|CVRQualifiers);
+}
+
+LValue CodeGenFunction::EmitObjCIvarRefLValue(const ObjCIvarRefExpr *E) {
   // FIXME: A lot of the code below could be shared with EmitMemberExpr.
   llvm::Value *BaseValue = 0;
   const Expr *BaseExpr = E->getBase();
@@ -829,17 +858,8 @@ LValue CodeGenFunction::EmitObjCIvarRefLValue(const ObjCIvarRefExpr *E) {
     BaseValue = BaseLV.getAddress();
     CVRQualifiers = BaseExpr->getType().getCVRQualifiers();
   }
-  
-  const ObjCIvarDecl *Field = E->getDecl();
-  if (Field->isBitField())
-    return EmitUnsupportedLValue(E, "ivar bitfields");
-   
-  // TODO:  Add a special case for isa (index 0)
-  unsigned Index = CGM.getTypes().getLLVMFieldNo(Field);
-  
-  llvm::Value *V = Builder.CreateStructGEP(BaseValue, Index, "tmp");
-  return LValue::MakeAddr(V,
-                          Field->getType().getCVRQualifiers()|CVRQualifiers);
+
+  return EmitLValueForIvar(BaseValue, E->getDecl(), CVRQualifiers);
 }
 
 LValue 

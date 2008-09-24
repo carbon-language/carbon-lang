@@ -40,6 +40,8 @@ namespace clang {
   class FunctionDecl;
   class FunctionTypeProto;
   class LabelStmt;
+  class ObjCInterfaceDecl;
+  class ObjCIvarDecl;
   class ObjCMethodDecl;
   class ObjCPropertyImplDecl;
   class TargetInfo;
@@ -334,9 +336,13 @@ public:
   LValue EmitMemberExpr(const MemberExpr *E);
   LValue EmitCompoundLiteralLValue(const CompoundLiteralExpr *E);
 
+  llvm::Value *EmitIvarOffset(ObjCInterfaceDecl *Interface,
+                              const ObjCIvarDecl *Ivar);
   LValue EmitLValueForField(llvm::Value* Base, FieldDecl* Field,
                             bool isUnion, unsigned CVRQualifiers);
-      
+  LValue EmitLValueForIvar(llvm::Value* Base, const ObjCIvarDecl *Ivar,
+                           unsigned CVRQualifiers);
+
   LValue EmitCXXConditionDeclLValue(const CXXConditionDeclExpr *E);
 
   LValue EmitObjCMessageExprLValue(const ObjCMessageExpr *E);
@@ -441,6 +447,8 @@ private:
   /// EmitIndirectSwitches - Emit code for all of the switch
   /// instructions in IndirectSwitches.
   void EmitIndirectSwitches();
+
+  void EmitReturnOfRValue(RValue RV, QualType Ty);
 
   /// ExpandTypeFromArgs - Reconstruct a structure of type \arg Ty
   /// from function arguments into \arg Dst. See ABIArgInfo::Expand.

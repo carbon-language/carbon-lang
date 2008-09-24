@@ -399,6 +399,21 @@ void CodeGenFunction::EmitForStmt(const ForStmt &S) {
   EmitBlock(AfterFor);
 }
 
+void CodeGenFunction::EmitReturnOfRValue(RValue RV, QualType Ty) {
+  if (RV.isScalar()) {
+    Builder.CreateStore(RV.getScalarVal(), ReturnValue);
+  } else if (RV.isAggregate()) {
+    EmitAggregateCopy(ReturnValue, RV.getAggregateAddr(), Ty);
+  } else {
+    StoreComplexToAddr(RV.getComplexVal(), ReturnValue, false);
+  }
+  Builder.CreateBr(ReturnBlock);
+
+  // Emit a block after the branch so that dead code after a return has some
+  // place to go.
+  EmitBlock(llvm::BasicBlock::Create());
+}
+
 /// EmitReturnStmt - Note that due to GCC extensions, this can have an operand
 /// if the function returns void, or may be missing one if the function returns
 /// non-void.  Fun stuff :).
