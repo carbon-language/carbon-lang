@@ -47,7 +47,7 @@ ELFTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
      case Function::InternalLinkage:
      case Function::DLLExportLinkage:
      case Function::ExternalLinkage:
-      return getTextSection();
+      return TextSection;
      case Function::WeakLinkage:
      case Function::LinkOnceLinkage:
       std::string Name = UniqueSectionForGlobal(GV, Kind);
@@ -63,7 +63,7 @@ ELFTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
       switch (Kind) {
        case SectionKind::Data:
        case SectionKind::SmallData:
-        return getDataSection();
+        return DataSection;
        case SectionKind::BSS:
        case SectionKind::SmallBSS:
         // ELF targets usually have BSS sections
