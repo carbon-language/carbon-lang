@@ -927,23 +927,6 @@ bool CodeGenPrepare::OptimizeLoadStoreInst(Instruction *LdStInst, Value *Addr,
   return true;
 }
 
-/// hasInlineAsmMemConstraint - Return true if the inline asm instruction being
-/// processed uses a memory 'm' constraint.
-static bool
-hasInlineAsmMemConstraint(std::vector<InlineAsm::ConstraintInfo> &CInfos,
-                          const TargetLowering *TLI) {
-  for (unsigned i = 0, e = CInfos.size(); i != e; ++i) {
-    InlineAsm::ConstraintInfo &CI = CInfos[i];
-    for (unsigned j = 0, ee = CI.Codes.size(); j != ee; ++j) {
-      TargetLowering::ConstraintType CType = TLI->getConstraintType(CI.Codes[j]);
-      if (CType == TargetLowering::C_Memory)
-        return true;
-    }
-  }
-
-  return false;
-}
-
 /// OptimizeInlineAsmInst - If there are any memory operands, use
 /// OptimizeLoadStoreInt to sink their address computing into the block when
 /// possible / profitable.
@@ -980,8 +963,8 @@ bool CodeGenPrepare::OptimizeInlineAsmInst(Instruction *I, CallSite CS,
     }
 
     // Compute the constraint code and ConstraintType to use.
-    bool hasMemory = hasInlineAsmMemConstraint(ConstraintInfos, TLI);
-    TLI->ComputeConstraintToUse(OpInfo, SDValue(), hasMemory);
+    TLI->ComputeConstraintToUse(OpInfo, SDValue(),
+                             OpInfo.ConstraintType == TargetLowering::C_Memory);
 
     if (OpInfo.ConstraintType == TargetLowering::C_Memory &&
         OpInfo.isIndirect) {
