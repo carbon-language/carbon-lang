@@ -679,8 +679,8 @@ Stmt *RewriteBlocks::RewriteFunctionBody(Stmt *S) {
 
 std::string RewriteBlocks::SynthesizeBlockCall(CallExpr *Exp) {
   // Navigate to relevant type information.
-  const char *closureName;
-  const BlockPointerType *CPT;
+  const char *closureName = 0;
+  const BlockPointerType *CPT = 0;
   
   if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(Exp->getCallee())) {
     closureName = DRE->getDecl()->getName();
