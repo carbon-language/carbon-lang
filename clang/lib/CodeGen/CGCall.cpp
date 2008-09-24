@@ -19,7 +19,7 @@
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"
 #include "llvm/ADT/StringExtras.h"
-#include "llvm/ParameterAttributes.h"
+#include "llvm/Attributes.h"
 using namespace clang;
 using namespace CodeGen;
 
@@ -536,7 +536,7 @@ void CodeGenModule::ConstructParamAttrList(const Decl *TargetDecl,
     break;
 
   case ABIArgInfo::StructRet:
-    PAL.push_back(llvm::ParamAttrsWithIndex::get(Index, 
+    PAL.push_back(llvm::FnAttributeWithIndex::get(Index, 
                                                  llvm::ParamAttr::StructRet|
                                                  llvm::ParamAttr::NoAlias));
     ++Index;
@@ -551,7 +551,7 @@ void CodeGenModule::ConstructParamAttrList(const Decl *TargetDecl,
   }
 
   if (FuncAttrs)
-    PAL.push_back(llvm::ParamAttrsWithIndex::get(0, FuncAttrs));
+    PAL.push_back(llvm::FnAttributeWithIndex::get(0, FuncAttrs));
   for (++begin; begin != end; ++begin) {
     QualType ParamType = *begin;
     unsigned ParamAttrs = 0;
@@ -589,7 +589,7 @@ void CodeGenModule::ConstructParamAttrList(const Decl *TargetDecl,
     }
       
     if (ParamAttrs)
-      PAL.push_back(llvm::ParamAttrsWithIndex::get(Index, ParamAttrs));
+      PAL.push_back(llvm::FnAttributeWithIndex::get(Index, ParamAttrs));
     ++Index;
   }
 }

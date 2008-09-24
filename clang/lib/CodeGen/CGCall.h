@@ -21,7 +21,7 @@
 
 namespace llvm {
   class Function;
-  struct ParamAttrsWithIndex;
+  struct FnAttributeWithIndex;
   class Value;
 
   template<typename T, unsigned> class SmallVector;
@@ -35,7 +35,7 @@ namespace clang {
   class VarDecl;
 
 namespace CodeGen {
-  typedef llvm::SmallVector<llvm::ParamAttrsWithIndex, 8> ParamAttrListType;
+  typedef llvm::SmallVector<llvm::FnAttributeWithIndex, 8> ParamAttrListType;
 
   /// CallArgList - Type for representing both the value and type of
   /// arguments in a call.
