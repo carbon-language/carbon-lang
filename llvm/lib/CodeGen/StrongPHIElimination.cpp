@@ -822,7 +822,7 @@ void StrongPHIElimination::InsertCopies(MachineDomTreeNode* MDTN,
                          LiveIntervals::getUseIndex(LI.getInstructionIndex(I)));
         
         LiveRange LR (LI.getMBBStartIdx(I->getParent()),
-                      LiveIntervals::getUseIndex(LI.getInstructionIndex(I)),
+                      LiveIntervals::getUseIndex(LI.getInstructionIndex(I))+1,
                       FirstVN);
         
         Int.addRange(LR);
