@@ -243,6 +243,16 @@ def loadi16 : PatFrag<(ops node:$ptr), (i16 (ld node:$ptr)), [{
   return false;
 }]>;
 
+def loadi16_anyext : PatFrag<(ops node:$ptr), (i32 (ld node:$ptr)), [{
+  LoadSDNode *LD = cast<LoadSDNode>(N);
+  if (LD->getAddressingMode() != ISD::UNINDEXED)
+    return false;
+  ISD::LoadExtType ExtType = LD->getExtensionType();
+  if (ExtType == ISD::EXTLOAD)
+    return LD->getAlignment() >= 2 && !LD->isVolatile();
+  return false;
+}]>;
+
 def loadi32 : PatFrag<(ops node:$ptr), (i32 (ld node:$ptr)), [{
   LoadSDNode *LD = cast<LoadSDNode>(N);
   if (LD->getAddressingMode() != ISD::UNINDEXED)

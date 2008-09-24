@@ -162,6 +162,17 @@ def bc_v8i16 : PatFrag<(ops node:$in), (v8i16 (bitconvert node:$in))>;
 def bc_v4i32 : PatFrag<(ops node:$in), (v4i32 (bitconvert node:$in))>;
 def bc_v2i64 : PatFrag<(ops node:$in), (v2i64 (bitconvert node:$in))>;
 
+def vzmovl_v2i64 : PatFrag<(ops node:$src),
+                           (bitconvert (v2i64 (X86vzmovl
+                             (v2i64 (scalar_to_vector (loadi64 node:$src))))))>;
+def vzmovl_v4i32 : PatFrag<(ops node:$src),
+                           (bitconvert (v4i32 (X86vzmovl
+                             (v4i32 (scalar_to_vector (loadi32 node:$src))))))>;
+
+def vzload_v2i64 : PatFrag<(ops node:$src),
+                           (bitconvert (v2i64 (X86vzload node:$src)))>;
+
+
 def fp32imm0 : PatLeaf<(f32 fpimm), [{
   return N->isExactlyValue(+0.0);
 }]>;
@@ -3368,8 +3379,9 @@ multiclass SS41I_binop_rm_int8<bits<8> opc, string OpcodeStr, Intrinsic IntId> {
 
   def rm : SS48I<opc, MRMSrcMem, (outs VR128:$dst), (ins i64mem:$src),
                  !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
-                 [(set VR128:$dst,
-                   (IntId (bitconvert (v4i32 (load addr:$src)))))]>, OpSize;
+       [(set VR128:$dst,
+         (IntId (bitconvert (v2i64 (scalar_to_vector (loadi64 addr:$src))))))]>,
+       OpSize;
 }
 
 defm PMOVSXBW   : SS41I_binop_rm_int8<0x20, "pmovsxbw", int_x86_sse41_pmovsxbw>;
@@ -3379,6 +3391,38 @@ defm PMOVZXBW   : SS41I_binop_rm_int8<0x30, "pmovzxbw", int_x86_sse41_pmovzxbw>;
 defm PMOVZXWD   : SS41I_binop_rm_int8<0x33, "pmovzxwd", int_x86_sse41_pmovzxwd>;
 defm PMOVZXDQ   : SS41I_binop_rm_int8<0x35, "pmovzxdq", int_x86_sse41_pmovzxdq>;
 
+// Common patterns involving scalar load.
+def : Pat<(int_x86_sse41_pmovsxbw (vzmovl_v2i64 addr:$src)),
+          (PMOVSXBWrm addr:$src)>, Requires<[HasSSE41]>;
+def : Pat<(int_x86_sse41_pmovsxbw (vzload_v2i64 addr:$src)),
+          (PMOVSXBWrm addr:$src)>, Requires<[HasSSE41]>;
+
+def : Pat<(int_x86_sse41_pmovsxwd (vzmovl_v2i64 addr:$src)),
+          (PMOVSXWDrm addr:$src)>, Requires<[HasSSE41]>;
+def : Pat<(int_x86_sse41_pmovsxwd (vzload_v2i64 addr:$src)),
+          (PMOVSXWDrm addr:$src)>, Requires<[HasSSE41]>;
+
+def : Pat<(int_x86_sse41_pmovsxdq (vzmovl_v2i64 addr:$src)),
+          (PMOVSXDQrm addr:$src)>, Requires<[HasSSE41]>;
+def : Pat<(int_x86_sse41_pmovsxdq (vzload_v2i64 addr:$src)),
+          (PMOVSXDQrm addr:$src)>, Requires<[HasSSE41]>;
+
+def : Pat<(int_x86_sse41_pmovzxbw (vzmovl_v2i64 addr:$src)),
+          (PMOVZXBWrm addr:$src)>, Requires<[HasSSE41]>;
+def : Pat<(int_x86_sse41_pmovzxbw (vzload_v2i64 addr:$src)),
+          (PMOVZXBWrm addr:$src)>, Requires<[HasSSE41]>;
+
+def : Pat<(int_x86_sse41_pmovzxwd (vzmovl_v2i64 addr:$src)),
+          (PMOVZXWDrm addr:$src)>, Requires<[HasSSE41]>;
+def : Pat<(int_x86_sse41_pmovzxwd (vzload_v2i64 addr:$src)),
+          (PMOVZXWDrm addr:$src)>, Requires<[HasSSE41]>;
+
+def : Pat<(int_x86_sse41_pmovzxdq (vzmovl_v2i64 addr:$src)),
+          (PMOVZXDQrm addr:$src)>, Requires<[HasSSE41]>;
+def : Pat<(int_x86_sse41_pmovzxdq (vzload_v2i64 addr:$src)),
+          (PMOVZXDQrm addr:$src)>, Requires<[HasSSE41]>;
+
+
 multiclass SS41I_binop_rm_int4<bits<8> opc, string OpcodeStr, Intrinsic IntId> {
   def rr : SS48I<opc, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                  !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
@@ -3386,8 +3430,9 @@ multiclass SS41I_binop_rm_int4<bits<8> opc, string OpcodeStr, Intrinsic IntId> {
 
   def rm : SS48I<opc, MRMSrcMem, (outs VR128:$dst), (ins i32mem:$src),
                  !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
-                 [(set VR128:$dst,
-                   (IntId (bitconvert (v4i32 (load addr:$src)))))]>, OpSize;
+       [(set VR128:$dst,
+         (IntId (bitconvert (v4i32 (scalar_to_vector (loadi32 addr:$src))))))]>,
+          OpSize;
 }
 
 defm PMOVSXBD   : SS41I_binop_rm_int4<0x21, "pmovsxbd", int_x86_sse41_pmovsxbd>;
@@ -3395,19 +3440,44 @@ defm PMOVSXWQ   : SS41I_binop_rm_int4<0x24, "pmovsxwq", int_x86_sse41_pmovsxwq>;
 defm PMOVZXBD   : SS41I_binop_rm_int4<0x31, "pmovzxbd", int_x86_sse41_pmovzxbd>;
 defm PMOVZXWQ   : SS41I_binop_rm_int4<0x34, "pmovzxwq", int_x86_sse41_pmovzxwq>;
 
+// Common patterns involving scalar load
+def : Pat<(int_x86_sse41_pmovsxbd (vzmovl_v4i32 addr:$src)),
+          (PMOVSXBDrm addr:$src)>;
+def : Pat<(int_x86_sse41_pmovsxwq (vzmovl_v4i32 addr:$src)),
+          (PMOVSXWQrm addr:$src)>;
+
+def : Pat<(int_x86_sse41_pmovzxbd (vzmovl_v4i32 addr:$src)),
+          (PMOVZXBDrm addr:$src)>;
+def : Pat<(int_x86_sse41_pmovzxwq (vzmovl_v4i32 addr:$src)),
+          (PMOVZXWQrm addr:$src)>;
+
+
 multiclass SS41I_binop_rm_int2<bits<8> opc, string OpcodeStr, Intrinsic IntId> {
   def rr : SS48I<opc, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                  !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
                  [(set VR128:$dst, (IntId VR128:$src))]>, OpSize;
 
+  // Expecting a i16 load any extended to i32 value.
   def rm : SS48I<opc, MRMSrcMem, (outs VR128:$dst), (ins i16mem:$src),
                  !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
-                 [(set VR128:$dst, 
-                   (IntId (bitconvert (v4i32 (load addr:$src)))))]>, OpSize;
+                 [(set VR128:$dst, (IntId (bitconvert
+                     (v4i32 (scalar_to_vector (loadi16_anyext addr:$src))))))]>,
+                 OpSize;
 }
 
 defm PMOVSXBQ   : SS41I_binop_rm_int2<0x22, "pmovsxbq", int_x86_sse41_pmovsxbq>;
 defm PMOVZXBQ   : SS41I_binop_rm_int2<0x32, "pmovsxbq", int_x86_sse41_pmovzxbq>;
+
+// Common patterns involving scalar load
+def : Pat<(int_x86_sse41_pmovsxbq
+            (bitconvert (v4i32 (X86vzmovl
+                             (v4i32 (scalar_to_vector (loadi32 addr:$src))))))),
+          (PMOVSXBQrm addr:$src)>;
+
+def : Pat<(int_x86_sse41_pmovzxbq
+            (bitconvert (v4i32 (X86vzmovl
+                             (v4i32 (scalar_to_vector (loadi32 addr:$src))))))),
+          (PMOVZXBQrm addr:$src)>;
 
 
 /// SS41I_binop_ext8 - SSE 4.1 extract 8 bits to 32 bit reg or 8 bit mem
