@@ -185,8 +185,11 @@ X86RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
   };
 
   static const unsigned CalleeSavedRegsWin64[] = {
-    X86::RBX, X86::RBP, X86::RDI, X86::RSI,
-    X86::R12, X86::R13, X86::R14, X86::R15, 0
+    X86::RBX,   X86::RBP,   X86::RDI,   X86::RSI,
+    X86::R12,   X86::R13,   X86::R14,   X86::R15,
+    X86::XMM6,  X86::XMM7,  X86::XMM8,  X86::XMM9,
+    X86::XMM10, X86::XMM11, X86::XMM12, X86::XMM13,
+    X86::XMM14, X86::XMM15, 0
   };
 
   if (Is64Bit) {
@@ -230,10 +233,15 @@ X86RegisterInfo::getCalleeSavedRegClasses(const MachineFunction *MF) const {
     &X86::GR64RegClass, &X86::GR64RegClass, 0
   };
   static const TargetRegisterClass * const CalleeSavedRegClassesWin64[] = {
-    &X86::GR64RegClass, &X86::GR64RegClass,
-    &X86::GR64RegClass, &X86::GR64RegClass,
-    &X86::GR64RegClass, &X86::GR64RegClass,
-    &X86::GR64RegClass, &X86::GR64RegClass, 0
+    &X86::GR64RegClass,  &X86::GR64RegClass,
+    &X86::GR64RegClass,  &X86::GR64RegClass,
+    &X86::GR64RegClass,  &X86::GR64RegClass,
+    &X86::GR64RegClass,  &X86::GR64RegClass,
+    &X86::VR128RegClass, &X86::VR128RegClass,
+    &X86::VR128RegClass, &X86::VR128RegClass,
+    &X86::VR128RegClass, &X86::VR128RegClass,
+    &X86::VR128RegClass, &X86::VR128RegClass,
+    &X86::VR128RegClass, &X86::VR128RegClass, 0
   };
 
   if (Is64Bit) {
