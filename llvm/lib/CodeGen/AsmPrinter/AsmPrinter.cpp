@@ -28,7 +28,6 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegisterInfo.h"
-#include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
@@ -262,7 +261,7 @@ void AsmPrinter::EmitConstantPool(MachineConstantPool *MCP) {
     std::multimap<const Section*,
                   std::pair<MachineConstantPoolEntry, unsigned> > CPMap;
   CPMap  CPs;
-  DenseSet<const Section*> Sections;
+  SmallPtrSet<const Section*, 5> Sections;
 
   for (unsigned i = 0, e = CP.size(); i != e; ++i) {
     MachineConstantPoolEntry CPE = CP[i];
@@ -272,7 +271,7 @@ void AsmPrinter::EmitConstantPool(MachineConstantPool *MCP) {
   }
 
   // Now print stuff into the calculated sections.
-  for (DenseSet<const Section*>::iterator IS = Sections.begin(),
+  for (SmallPtrSet<const Section*, 5>::iterator IS = Sections.begin(),
          ES = Sections.end(); IS != ES; ++IS) {
     SwitchToSection(*IS);
     EmitAlignment(MCP->getConstantPoolAlignment());
