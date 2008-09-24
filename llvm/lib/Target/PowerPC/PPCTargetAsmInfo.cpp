@@ -19,6 +19,8 @@
 using namespace llvm;
 using namespace llvm::dwarf;
 
+TEMPLATE_INSTANTIATION(class PPCTargetAsmInfo<TargetAsmInfo>);
+
 PPCDarwinTargetAsmInfo::PPCDarwinTargetAsmInfo(const PPCTargetMachine &TM):
   PPCTargetAsmInfo<DarwinTargetAsmInfo>(TM) {
   PCSymbol = ".";

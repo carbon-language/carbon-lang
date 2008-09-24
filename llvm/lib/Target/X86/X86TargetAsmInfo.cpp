@@ -37,6 +37,8 @@ const char *const llvm::x86_asm_table[] = {
   "{cc}", "cc",
   0,0};
 
+TEMPLATE_INSTANTIATION(class X86TargetAsmInfo<TargetAsmInfo>);
+
 template <class BaseTAI>
 bool X86TargetAsmInfo<BaseTAI>::LowerToBSwap(CallInst *CI) const {
   // FIXME: this should verify that we are targetting a 486 or better.  If not,

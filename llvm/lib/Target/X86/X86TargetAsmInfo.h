@@ -18,6 +18,7 @@
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/ELFTargetAsmInfo.h"
 #include "llvm/Target/DarwinTargetAsmInfo.h"
+#include "llvm/Support/Compiler.h"
 
 namespace llvm {
 
@@ -40,6 +41,8 @@ namespace llvm {
   };
 
   typedef X86TargetAsmInfo<TargetAsmInfo> X86GenericTargetAsmInfo;
+
+  EXTERN_TEMPLATE_INSTANTIATION(class X86TargetAsmInfo<TargetAsmInfo>);
 
   struct X86DarwinTargetAsmInfo : public X86TargetAsmInfo<DarwinTargetAsmInfo> {
     explicit X86DarwinTargetAsmInfo(const X86TargetMachine &TM);
