@@ -6,6 +6,13 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+//
+// This file defines a MachineFunction pass which runs after register
+// allocation that turns subreg insert/extract instructions into register
+// copies, as needed. This ensures correct codegen even if the coalescer
+// isn't able to remove all subreg instructions.
+//
+//===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "lowersubregs"
 #include "llvm/CodeGen/Passes.h"
