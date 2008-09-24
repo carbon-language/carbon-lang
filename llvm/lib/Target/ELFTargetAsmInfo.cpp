@@ -30,9 +30,9 @@ ELFTargetAsmInfo::ELFTargetAsmInfo(const TargetMachine &TM) {
   BSSSection_  = getUnnamedSection("\t.bss",
                                    SectionFlags::Writeable | SectionFlags::BSS);
   ReadOnlySection_ = getNamedSection("\t.rodata", SectionFlags::None);
-  TLSDataSection_ = getNamedSection("\t.tdata",
-                                    SectionFlags::Writeable | SectionFlags::TLS);
-  TLSBSSSection_ = getNamedSection("\t.tbss",
+  TLSDataSection = getNamedSection("\t.tdata",
+                                   SectionFlags::Writeable | SectionFlags::TLS);
+  TLSBSSSection = getNamedSection("\t.tbss",
                 SectionFlags::Writeable | SectionFlags::TLS | SectionFlags::BSS);
 
 }
@@ -77,9 +77,9 @@ ELFTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
         return MergeableConstSection(GVar);
        case SectionKind::ThreadData:
         // ELF targets usually support TLS stuff
-        return getTLSDataSection_();
+        return TLSDataSection;
        case SectionKind::ThreadBSS:
-        return getTLSBSSSection_();
+        return TLSBSSSection;
        default:
         assert(0 && "Unsuported section kind for global");
       }

@@ -141,8 +141,6 @@ ARMELFTargetAsmInfo::ARMELFTargetAsmInfo(const ARMTargetMachine &TM):
     StaticCtorsSection = "\t.section .ctors,\"aw\",%progbits";
     StaticDtorsSection = "\t.section .dtors,\"aw\",%progbits";
   }
-  TLSDataSection = "\t.section .tdata,\"awT\",%progbits";
-  TLSBSSSection = "\t.section .tbss,\"awT\",%nobits";
 }
 
 /// Count the number of comma-separated arguments.
