@@ -133,7 +133,7 @@ public:
   void RewriteMethodDecl(ObjCMethodDecl *MDecl);
   
   bool BlockPointerTypeTakesAnyBlockArguments(QualType QT);
-  void GetExtentOfArgList(const char *Name, char *&LParen, char *&RParen);
+  void GetExtentOfArgList(const char *Name, const char *&LParen, const char *&RParen);
 };
   
 }
@@ -826,8 +826,8 @@ bool RewriteBlocks::BlockPointerTypeTakesAnyBlockArguments(QualType QT) {
 }
 
 void RewriteBlocks::GetExtentOfArgList(const char *Name, 
-                                       char *&LParen, char *&RParen) {
-  char *argPtr = strchr(Name, '(');
+                                       const char *&LParen, const char *&RParen) {
+  const char *argPtr = strchr(Name, '(');
   assert((*argPtr == '(') && "Rewriter fuzzy parser confused");
   
   LParen = argPtr; // output the start.
@@ -876,7 +876,7 @@ void RewriteBlocks::RewriteBlockPointerDecl(NamedDecl *ND) {
     // Replace the '^' with '*' for arguments.
     DeclLoc = ND->getLocation();
     startBuf = SM->getCharacterData(DeclLoc);
-    char *argListBegin, *argListEnd;
+    const char *argListBegin, *argListEnd;
     GetExtentOfArgList(startBuf, argListBegin, argListEnd);
     while (argListBegin < argListEnd) {
       if (*argListBegin == '^') {
