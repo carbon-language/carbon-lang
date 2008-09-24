@@ -1,5 +1,6 @@
 add_llvm_library(LLVMVMCore
   AsmWriter.cpp
+  Attributes.cpp
   AutoUpgrade.cpp
   BasicBlock.cpp
   ConstantFold.cpp
@@ -17,7 +18,6 @@ add_llvm_library(LLVMVMCore
   Mangler.cpp
   Module.cpp
   ModuleProvider.cpp
-  ParameterAttributes.cpp
   Pass.cpp
   PassManager.cpp
   Type.cpp
@@ -28,5 +28,3 @@ add_llvm_library(LLVMVMCore
   ValueTypes.cpp
   Verifier.cpp
   )
-
-add_dependencies( LLVMVMCore ${llvm_builded_incs_dir}/Intrinsics.gen )
