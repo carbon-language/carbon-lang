@@ -322,7 +322,7 @@ bool BitcodeReader::ParseParamAttrBlock() {
   
   SmallVector<uint64_t, 64> Record;
   
-  SmallVector<ParamAttrsWithIndex, 8> Attrs;
+  SmallVector<FnAttributeWithIndex, 8> Attrs;
   
   // Read all the records.
   while (1) {
@@ -357,7 +357,7 @@ bool BitcodeReader::ParseParamAttrBlock() {
 
       for (unsigned i = 0, e = Record.size(); i != e; i += 2) {
         if (Record[i+1] != ParamAttr::None)
-          Attrs.push_back(ParamAttrsWithIndex::get(Record[i], Record[i+1]));
+          Attrs.push_back(FnAttributeWithIndex::get(Record[i], Record[i+1]));
       }
 
       ParamAttrs.push_back(PAListPtr::get(Attrs.begin(), Attrs.end()));

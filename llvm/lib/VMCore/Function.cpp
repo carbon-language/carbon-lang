@@ -365,7 +365,7 @@ PAListPtr Intrinsic::getParamAttrs(ID id) {
   // Intrinsics cannot throw exceptions.
   Attr |= ParamAttr::NoUnwind;
 
-  ParamAttrsWithIndex PAWI = ParamAttrsWithIndex::get(0, Attr);
+  FnAttributeWithIndex PAWI = FnAttributeWithIndex::get(0, Attr);
   return PAListPtr::get(&PAWI, 1);
 }
 

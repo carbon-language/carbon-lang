@@ -226,7 +226,7 @@ bool DAE::DeleteDeadVarargs(Function &Fn) {
     // Drop any attributes that were on the vararg arguments.
     PAListPtr PAL = CS.getParamAttrs();
     if (!PAL.isEmpty() && PAL.getSlot(PAL.getNumSlots() - 1).Index > NumArgs) {
-      SmallVector<ParamAttrsWithIndex, 8> ParamAttrsVec;
+      SmallVector<FnAttributeWithIndex, 8> ParamAttrsVec;
       for (unsigned i = 0; PAL.getSlot(i).Index <= NumArgs; ++i)
         ParamAttrsVec.push_back(PAL.getSlot(i));
       PAL = PAListPtr::get(ParamAttrsVec.begin(), ParamAttrsVec.end());
@@ -589,7 +589,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
   std::vector<const Type*> Params;
 
   // Set up to build a new list of parameter attributes.
-  SmallVector<ParamAttrsWithIndex, 8> ParamAttrsVec;
+  SmallVector<FnAttributeWithIndex, 8> ParamAttrsVec;
   const PAListPtr &PAL = F->getParamAttrs();
 
   // The existing function return attributes.
@@ -661,7 +661,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
            && "Return attributes no longer compatible?");
 
   if (RAttrs)
-    ParamAttrsVec.push_back(ParamAttrsWithIndex::get(0, RAttrs));
+    ParamAttrsVec.push_back(FnAttributeWithIndex::get(0, RAttrs));
 
   // Remember which arguments are still alive.
   SmallVector<bool, 10> ArgAlive(FTy->getNumParams(), false);
@@ -679,7 +679,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
       // Get the original parameter attributes (skipping the first one, that is
       // for the return value.
       if (Attributes Attrs = PAL.getParamAttrs(i + 1))
-        ParamAttrsVec.push_back(ParamAttrsWithIndex::get(Params.size(), Attrs));
+        ParamAttrsVec.push_back(FnAttributeWithIndex::get(Params.size(), Attrs));
     } else {
       ++NumArgumentsEliminated;
       DOUT << "DAE - Removing argument " << i << " (" << I->getNameStart()
@@ -734,7 +734,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
     // Adjust in case the function was changed to return void.
     RAttrs &= ~ParamAttr::typeIncompatible(NF->getReturnType());
     if (RAttrs)
-      ParamAttrsVec.push_back(ParamAttrsWithIndex::get(0, RAttrs));
+      ParamAttrsVec.push_back(FnAttributeWithIndex::get(0, RAttrs));
 
     // Declare these outside of the loops, so we can reuse them for the second
     // loop, which loops the varargs.
@@ -747,7 +747,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
         Args.push_back(*I);
         // Get original parameter attributes, but skip return attributes.
         if (Attributes Attrs = CallPAL.getParamAttrs(i + 1))
-          ParamAttrsVec.push_back(ParamAttrsWithIndex::get(Args.size(), Attrs));
+          ParamAttrsVec.push_back(FnAttributeWithIndex::get(Args.size(), Attrs));
       }
 
     if (ExtraArgHack)
@@ -757,7 +757,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
     for (CallSite::arg_iterator E = CS.arg_end(); I != E; ++I, ++i) {
       Args.push_back(*I);
       if (Attributes Attrs = CallPAL.getParamAttrs(i + 1))
-        ParamAttrsVec.push_back(ParamAttrsWithIndex::get(Args.size(), Attrs));
+        ParamAttrsVec.push_back(FnAttributeWithIndex::get(Args.size(), Attrs));
     }
 
     // Reconstruct the ParamAttrsList based on the vector we constructed.

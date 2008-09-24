@@ -119,7 +119,7 @@ static void WriteParamAttrTable(const ValueEnumerator &VE,
   for (unsigned i = 0, e = Attrs.size(); i != e; ++i) {
     const PAListPtr &A = Attrs[i];
     for (unsigned i = 0, e = A.getNumSlots(); i != e; ++i) {
-      const ParamAttrsWithIndex &PAWI = A.getSlot(i);
+      const FnAttributeWithIndex &PAWI = A.getSlot(i);
       Record.push_back(PAWI.Index);
       Record.push_back(PAWI.Attrs);
     }

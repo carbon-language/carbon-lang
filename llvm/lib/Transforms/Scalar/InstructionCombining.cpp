@@ -9189,7 +9189,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
   // inserting cast instructions as necessary...
   std::vector<Value*> Args;
   Args.reserve(NumActualArgs);
-  SmallVector<ParamAttrsWithIndex, 8> attrVec;
+  SmallVector<FnAttributeWithIndex, 8> attrVec;
   attrVec.reserve(NumCommonArgs);
 
   // Get any return attributes.
@@ -9201,7 +9201,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
 
   // Add the new return attributes.
   if (RAttrs)
-    attrVec.push_back(ParamAttrsWithIndex::get(0, RAttrs));
+    attrVec.push_back(FnAttributeWithIndex::get(0, RAttrs));
 
   AI = CS.arg_begin();
   for (unsigned i = 0; i != NumCommonArgs; ++i, ++AI) {
@@ -9217,7 +9217,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
 
     // Add any parameter attributes.
     if (Attributes PAttrs = CallerPAL.getParamAttrs(i + 1))
-      attrVec.push_back(ParamAttrsWithIndex::get(i + 1, PAttrs));
+      attrVec.push_back(FnAttributeWithIndex::get(i + 1, PAttrs));
   }
 
   // If the function takes more arguments than the call was taking, add them
@@ -9247,7 +9247,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
 
         // Add any parameter attributes.
         if (Attributes PAttrs = CallerPAL.getParamAttrs(i + 1))
-          attrVec.push_back(ParamAttrsWithIndex::get(i + 1, PAttrs));
+          attrVec.push_back(FnAttributeWithIndex::get(i + 1, PAttrs));
       }
     }
   }
@@ -9346,7 +9346,7 @@ Instruction *InstCombiner::transformCallThroughTrampoline(CallSite CS) {
       std::vector<Value*> NewArgs;
       NewArgs.reserve(unsigned(CS.arg_end()-CS.arg_begin())+1);
 
-      SmallVector<ParamAttrsWithIndex, 8> NewAttrs;
+      SmallVector<FnAttributeWithIndex, 8> NewAttrs;
       NewAttrs.reserve(Attrs.getNumSlots() + 1);
 
       // Insert the nest argument into the call argument list, which may
@@ -9354,7 +9354,7 @@ Instruction *InstCombiner::transformCallThroughTrampoline(CallSite CS) {
 
       // Add any function result attributes.
       if (Attributes Attr = Attrs.getParamAttrs(0))
-        NewAttrs.push_back(ParamAttrsWithIndex::get(0, Attr));
+        NewAttrs.push_back(FnAttributeWithIndex::get(0, Attr));
 
       {
         unsigned Idx = 1;
@@ -9366,7 +9366,7 @@ Instruction *InstCombiner::transformCallThroughTrampoline(CallSite CS) {
             if (NestVal->getType() != NestTy)
               NestVal = new BitCastInst(NestVal, NestTy, "nest", Caller);
             NewArgs.push_back(NestVal);
-            NewAttrs.push_back(ParamAttrsWithIndex::get(NestIdx, NestAttr));
+            NewAttrs.push_back(FnAttributeWithIndex::get(NestIdx, NestAttr));
           }
 
           if (I == E)
@@ -9376,7 +9376,7 @@ Instruction *InstCombiner::transformCallThroughTrampoline(CallSite CS) {
           NewArgs.push_back(*I);
           if (Attributes Attr = Attrs.getParamAttrs(Idx))
             NewAttrs.push_back
-              (ParamAttrsWithIndex::get(Idx + (Idx >= NestIdx), Attr));
+              (FnAttributeWithIndex::get(Idx + (Idx >= NestIdx), Attr));
 
           ++Idx, ++I;
         } while (1);

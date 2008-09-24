@@ -434,8 +434,8 @@ namespace {
     nl(Out);
     if (!PAL.isEmpty()) {
       Out << '{'; in(); nl(Out);
-      Out << "SmallVector<ParamAttrsWithIndex, 4> Attrs;"; nl(Out);
-      Out << "ParamAttrsWithIndex PAWI;"; nl(Out);
+      Out << "SmallVector<FnAttributeWithIndex, 4> Attrs;"; nl(Out);
+      Out << "FnAttributeWithIndex PAWI;"; nl(Out);
       for (unsigned i = 0; i < PAL.getNumSlots(); ++i) {
         uint16_t index = PAL.getSlot(i).Index;
         Attributes attrs = PAL.getSlot(i).Attrs;

@@ -89,12 +89,12 @@ const Attributes OptimizeForSize = 1<<2; // opt_size
 
 /// This is just a pair of values to associate a set of parameter attributes
 /// with a parameter index. 
-struct ParamAttrsWithIndex {
+struct FnAttributeWithIndex {
   Attributes Attrs; ///< The attributes that are set, or'd together.
   unsigned Index; ///< Index of the parameter for which the attributes apply.
   
-  static ParamAttrsWithIndex get(unsigned Idx, Attributes Attrs) {
-    ParamAttrsWithIndex P;
+  static FnAttributeWithIndex get(unsigned Idx, Attributes Attrs) {
+    FnAttributeWithIndex P;
     P.Index = Idx;
     P.Attrs = Attrs;
     return P;
@@ -124,7 +124,7 @@ public:
   //===--------------------------------------------------------------------===//
   
   /// get - Return a ParamAttrs list with the specified parameter in it.
-  static PAListPtr get(const ParamAttrsWithIndex *Attr, unsigned NumAttrs);
+  static PAListPtr get(const FnAttributeWithIndex *Attr, unsigned NumAttrs);
   
   /// get - Return a ParamAttr list with the parameters specified by the
   /// consecutive random access iterator range.
@@ -199,9 +199,9 @@ public:
   /// (including the function itself).
   unsigned getNumSlots() const;
   
-  /// getSlot - Return the ParamAttrsWithIndex at the specified slot.  This
+  /// getSlot - Return the FnAttributeWithIndex at the specified slot.  This
   /// holds a parameter number plus a set of attributes.
-  const ParamAttrsWithIndex &getSlot(unsigned Slot) const;
+  const FnAttributeWithIndex &getSlot(unsigned Slot) const;
   
 private:
   explicit PAListPtr(AttributeListImpl *L);

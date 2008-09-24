@@ -206,12 +206,12 @@ Function *SRETPromotion::cloneFunctionBody(Function *F,
   std::vector<const Type*> Params;
 
   // ParamAttrs - Keep track of the parameter attributes for the arguments.
-  SmallVector<ParamAttrsWithIndex, 8> ParamAttrsVec;
+  SmallVector<FnAttributeWithIndex, 8> ParamAttrsVec;
   const PAListPtr &PAL = F->getParamAttrs();
 
   // Add any return attributes.
   if (Attributes attrs = PAL.getParamAttrs(0))
-    ParamAttrsVec.push_back(ParamAttrsWithIndex::get(0, attrs));
+    ParamAttrsVec.push_back(FnAttributeWithIndex::get(0, attrs));
 
   // Skip first argument.
   Function::arg_iterator I = F->arg_begin(), E = F->arg_end();
@@ -222,7 +222,7 @@ Function *SRETPromotion::cloneFunctionBody(Function *F,
   while (I != E) {
     Params.push_back(I->getType());
     if (Attributes Attrs = PAL.getParamAttrs(ParamIndex))
-      ParamAttrsVec.push_back(ParamAttrsWithIndex::get(ParamIndex - 1, Attrs));
+      ParamAttrsVec.push_back(FnAttributeWithIndex::get(ParamIndex - 1, Attrs));
     ++I;
     ++ParamIndex;
   }
@@ -256,7 +256,7 @@ void SRETPromotion::updateCallSites(Function *F, Function *NF) {
   SmallVector<Value*, 16> Args;
 
   // ParamAttrs - Keep track of the parameter attributes for the arguments.
-  SmallVector<ParamAttrsWithIndex, 8> ArgAttrsVec;
+  SmallVector<FnAttributeWithIndex, 8> ArgAttrsVec;
 
   while (!F->use_empty()) {
     CallSite CS = CallSite::get(*F->use_begin());
@@ -265,7 +265,7 @@ void SRETPromotion::updateCallSites(Function *F, Function *NF) {
     const PAListPtr &PAL = F->getParamAttrs();
     // Add any return attributes.
     if (Attributes attrs = PAL.getParamAttrs(0))
-      ArgAttrsVec.push_back(ParamAttrsWithIndex::get(0, attrs));
+      ArgAttrsVec.push_back(FnAttributeWithIndex::get(0, attrs));
 
     // Copy arguments, however skip first one.
     CallSite::arg_iterator AI = CS.arg_begin(), AE = CS.arg_end();
@@ -277,7 +277,7 @@ void SRETPromotion::updateCallSites(Function *F, Function *NF) {
     while (AI != AE) {
       Args.push_back(*AI); 
       if (Attributes Attrs = PAL.getParamAttrs(ParamIndex))
-        ArgAttrsVec.push_back(ParamAttrsWithIndex::get(ParamIndex - 1, Attrs));
+        ArgAttrsVec.push_back(FnAttributeWithIndex::get(ParamIndex - 1, Attrs));
       ++ParamIndex;
       ++AI;
     }

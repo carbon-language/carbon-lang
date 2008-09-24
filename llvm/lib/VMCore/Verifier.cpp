@@ -455,7 +455,7 @@ void Verifier::VerifyFunctionAttrs(const FunctionType *FT,
   bool SawNest = false;
 
   for (unsigned i = 0, e = Attrs.getNumSlots(); i != e; ++i) {
-    const ParamAttrsWithIndex &Attr = Attrs.getSlot(i);
+    const FnAttributeWithIndex &Attr = Attrs.getSlot(i);
 
     const Type *Ty;
     if (Attr.Index == 0)

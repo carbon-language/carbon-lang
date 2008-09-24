@@ -84,9 +84,9 @@ class AttributeListImpl : public FoldingSetNode {
   AttributeListImpl(const AttributeListImpl &); // Do not implement
   ~AttributeListImpl();                        // Private implementation
 public:
-  SmallVector<ParamAttrsWithIndex, 4> Attrs;
+  SmallVector<FnAttributeWithIndex, 4> Attrs;
   
-  AttributeListImpl(const ParamAttrsWithIndex *Attr, unsigned NumAttrs)
+  AttributeListImpl(const FnAttributeWithIndex *Attr, unsigned NumAttrs)
     : Attrs(Attr, Attr+NumAttrs) {
     RefCount = 0;
   }
@@ -97,7 +97,7 @@ public:
   void Profile(FoldingSetNodeID &ID) const {
     Profile(ID, &Attrs[0], Attrs.size());
   }
-  static void Profile(FoldingSetNodeID &ID, const ParamAttrsWithIndex *Attr,
+  static void Profile(FoldingSetNodeID &ID, const FnAttributeWithIndex *Attr,
                       unsigned NumAttrs) {
     for (unsigned i = 0; i != NumAttrs; ++i)
       ID.AddInteger(uint64_t(Attr[i].Attrs) << 32 | unsigned(Attr[i].Index));
@@ -112,7 +112,7 @@ AttributeListImpl::~AttributeListImpl() {
 }
 
 
-PAListPtr PAListPtr::get(const ParamAttrsWithIndex *Attrs, unsigned NumAttrs) {
+PAListPtr PAListPtr::get(const FnAttributeWithIndex *Attrs, unsigned NumAttrs) {
   // If there are no attributes then return a null ParamAttrsList pointer.
   if (NumAttrs == 0)
     return PAListPtr();
@@ -176,9 +176,9 @@ unsigned PAListPtr::getNumSlots() const {
   return PAList ? PAList->Attrs.size() : 0;
 }
 
-/// getSlot - Return the ParamAttrsWithIndex at the specified slot.  This
+/// getSlot - Return the FnAttributeWithIndex at the specified slot.  This
 /// holds a parameter number plus a set of attributes.
-const ParamAttrsWithIndex &PAListPtr::getSlot(unsigned Slot) const {
+const FnAttributeWithIndex &PAListPtr::getSlot(unsigned Slot) const {
   assert(PAList && Slot < PAList->Attrs.size() && "Slot # out of range!");
   return PAList->Attrs[Slot];
 }
@@ -190,7 +190,7 @@ const ParamAttrsWithIndex &PAListPtr::getSlot(unsigned Slot) const {
 Attributes PAListPtr::getParamAttrs(unsigned Idx) const {
   if (PAList == 0) return ParamAttr::None;
   
-  const SmallVector<ParamAttrsWithIndex, 4> &Attrs = PAList->Attrs;
+  const SmallVector<FnAttributeWithIndex, 4> &Attrs = PAList->Attrs;
   for (unsigned i = 0, e = Attrs.size(); i != e && Attrs[i].Index <= Idx; ++i)
     if (Attrs[i].Index == Idx)
       return Attrs[i].Attrs;
@@ -202,7 +202,7 @@ Attributes PAListPtr::getParamAttrs(unsigned Idx) const {
 bool PAListPtr::hasAttrSomewhere(Attributes Attr) const {
   if (PAList == 0) return false;
   
-  const SmallVector<ParamAttrsWithIndex, 4> &Attrs = PAList->Attrs;
+  const SmallVector<FnAttributeWithIndex, 4> &Attrs = PAList->Attrs;
   for (unsigned i = 0, e = Attrs.size(); i != e; ++i)
     if (Attrs[i].Attrs & Attr)
       return true;
@@ -225,11 +225,11 @@ PAListPtr PAListPtr::addAttr(unsigned Idx, Attributes Attrs) const {
   if (NewAttrs == OldAttrs)
     return *this;
   
-  SmallVector<ParamAttrsWithIndex, 8> NewAttrList;
+  SmallVector<FnAttributeWithIndex, 8> NewAttrList;
   if (PAList == 0)
-    NewAttrList.push_back(ParamAttrsWithIndex::get(Idx, Attrs));
+    NewAttrList.push_back(FnAttributeWithIndex::get(Idx, Attrs));
   else {
-    const SmallVector<ParamAttrsWithIndex, 4> &OldAttrList = PAList->Attrs;
+    const SmallVector<FnAttributeWithIndex, 4> &OldAttrList = PAList->Attrs;
     unsigned i = 0, e = OldAttrList.size();
     // Copy attributes for arguments before this one.
     for (; i != e && OldAttrList[i].Index < Idx; ++i)
@@ -241,7 +241,7 @@ PAListPtr PAListPtr::addAttr(unsigned Idx, Attributes Attrs) const {
       ++i;
     }
     
-    NewAttrList.push_back(ParamAttrsWithIndex::get(Idx, Attrs));
+    NewAttrList.push_back(FnAttributeWithIndex::get(Idx, Attrs));
     
     // Copy attributes for arguments after this one.
     NewAttrList.insert(NewAttrList.end(), 
@@ -264,8 +264,8 @@ PAListPtr PAListPtr::removeAttr(unsigned Idx, Attributes Attrs) const {
   if (NewAttrs == OldAttrs)
     return *this;
 
-  SmallVector<ParamAttrsWithIndex, 8> NewAttrList;
-  const SmallVector<ParamAttrsWithIndex, 4> &OldAttrList = PAList->Attrs;
+  SmallVector<FnAttributeWithIndex, 8> NewAttrList;
+  const SmallVector<FnAttributeWithIndex, 4> &OldAttrList = PAList->Attrs;
   unsigned i = 0, e = OldAttrList.size();
   
   // Copy attributes for arguments before this one.
@@ -277,7 +277,7 @@ PAListPtr PAListPtr::removeAttr(unsigned Idx, Attributes Attrs) const {
   Attrs = OldAttrList[i].Attrs & ~Attrs;
   ++i;
   if (Attrs)  // If any attributes left for this parameter, add them.
-    NewAttrList.push_back(ParamAttrsWithIndex::get(Idx, Attrs));
+    NewAttrList.push_back(FnAttributeWithIndex::get(Idx, Attrs));
   
   // Copy attributes for arguments after this one.
   NewAttrList.insert(NewAttrList.end(), 
@@ -289,7 +289,7 @@ PAListPtr PAListPtr::removeAttr(unsigned Idx, Attributes Attrs) const {
 void PAListPtr::dump() const {
   cerr << "PAL[ ";
   for (unsigned i = 0; i < getNumSlots(); ++i) {
-    const ParamAttrsWithIndex &PAWI = getSlot(i);
+    const FnAttributeWithIndex &PAWI = getSlot(i);
     cerr << "{" << PAWI.Index << "," << PAWI.Attrs << "} ";
   }
   

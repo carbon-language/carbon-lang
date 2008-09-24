@@ -504,12 +504,12 @@ Function *ArgPromotion::DoPromotion(Function *F,
   // ParamAttrs - Keep track of the parameter attributes for the arguments
   // that we are *not* promoting. For the ones that we do promote, the parameter
   // attributes are lost
-  SmallVector<ParamAttrsWithIndex, 8> ParamAttrsVec;
+  SmallVector<FnAttributeWithIndex, 8> ParamAttrsVec;
   const PAListPtr &PAL = F->getParamAttrs();
 
   // Add any return attributes.
   if (Attributes attrs = PAL.getParamAttrs(0))
-    ParamAttrsVec.push_back(ParamAttrsWithIndex::get(0, attrs));
+    ParamAttrsVec.push_back(FnAttributeWithIndex::get(0, attrs));
 
   // First, determine the new argument list
   unsigned ArgIndex = 1;
@@ -526,7 +526,7 @@ Function *ArgPromotion::DoPromotion(Function *F,
       // Unchanged argument
       Params.push_back(I->getType());
       if (Attributes attrs = PAL.getParamAttrs(ArgIndex))
-        ParamAttrsVec.push_back(ParamAttrsWithIndex::get(Params.size(), attrs));
+        ParamAttrsVec.push_back(FnAttributeWithIndex::get(Params.size(), attrs));
     } else if (I->use_empty()) {
       // Dead argument (which are always marked as promotable)
       ++NumArgumentsDead;
@@ -622,7 +622,7 @@ Function *ArgPromotion::DoPromotion(Function *F,
 
     // Add any return attributes.
     if (Attributes attrs = CallPAL.getParamAttrs(0))
-      ParamAttrsVec.push_back(ParamAttrsWithIndex::get(0, attrs));
+      ParamAttrsVec.push_back(FnAttributeWithIndex::get(0, attrs));
 
     // Loop over the operands, inserting GEP and loads in the caller as
     // appropriate.
@@ -634,7 +634,7 @@ Function *ArgPromotion::DoPromotion(Function *F,
         Args.push_back(*AI);          // Unmodified argument
 
         if (Attributes Attrs = CallPAL.getParamAttrs(ArgIndex))
-          ParamAttrsVec.push_back(ParamAttrsWithIndex::get(Args.size(), Attrs));
+          ParamAttrsVec.push_back(FnAttributeWithIndex::get(Args.size(), Attrs));
 
       } else if (ByValArgsToTransform.count(I)) {
         // Emit a GEP and load for each element of the struct.
@@ -689,7 +689,7 @@ Function *ArgPromotion::DoPromotion(Function *F,
     for (; AI != CS.arg_end(); ++AI, ++ArgIndex) {
       Args.push_back(*AI);
       if (Attributes Attrs = CallPAL.getParamAttrs(ArgIndex))
-        ParamAttrsVec.push_back(ParamAttrsWithIndex::get(Args.size(), Attrs));
+        ParamAttrsVec.push_back(FnAttributeWithIndex::get(Args.size(), Attrs));
     }
 
     Instruction *New;
