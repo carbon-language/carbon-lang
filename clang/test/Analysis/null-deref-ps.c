@@ -1,4 +1,4 @@
-// RUN: clang -checker-simple -verify %s
+// RUN: clang -std=gnu99 -checker-simple -verify %s
 
 #include<stdint.h>
 #include <assert.h>
@@ -94,8 +94,9 @@ int* qux();
 int f9(unsigned len) {
   assert (len != 0);
   int *p = 0;
+  unsigned i;
 
-  for (unsigned i = 0; i < len; ++i)
+  for (i = 0; i < len; ++i)
    p = qux(i);
 
   return *p++; // no-warning
@@ -104,8 +105,9 @@ int f9(unsigned len) {
 int f9b(unsigned len) {
   assert (len > 0);  // note use of '>'
   int *p = 0;
+  unsigned i;
 
-  for (unsigned i = 0; i < len; ++i)
+  for (i = 0; i < len; ++i)
    p = qux(i);
 
   return *p++; // no-warning
