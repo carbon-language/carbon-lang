@@ -4554,7 +4554,7 @@ GetRegistersForValue(SDISelAsmOperandInfo &OpInfo, bool HasEarlyClobber,
     // If this is an early clobber or tied register, our regalloc doesn't know
     // how to maintain the constraint.  If it isn't, go ahead and create vreg
     // and let the regalloc do the right thing.
-    if (!OpInfo.hasMatchingInput && !OpInfo.isEarlyClobber &&
+    if (!OpInfo.hasMatchingInput && !OpInfo.isEarlyClobber && 
         // If there is some other early clobber and this is an input register,
         // then we are forced to pre-allocate the input reg so it doesn't
         // conflict with the earlyclobber.
@@ -4843,10 +4843,8 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
         assert(OpInfo.isIndirect && "Memory output must be indirect operand");
 
         // Add information to the INLINEASM node to know about this output.
-        unsigned ResOpType = SawEarlyClobber ? 
-                                  7 /* MEM OVERLAPS EARLYCLOBBER */ :
-                                  4/*MEM*/;
-        AsmNodeOperands.push_back(DAG.getTargetConstant(ResOpType | (1<<3), 
+        unsigned ResOpType = 4/*MEM*/ | (1<<3);
+        AsmNodeOperands.push_back(DAG.getTargetConstant(ResOpType,
                                                         TLI.getPointerTy()));
         AsmNodeOperands.push_back(OpInfo.CallOperand);
         break;
@@ -4899,8 +4897,7 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
             cast<ConstantSDNode>(AsmNodeOperands[CurOp])->getZExtValue();
           assert(((NumOps & 7) == 2 /*REGDEF*/ ||
                   (NumOps & 7) == 6 /*EARLYCLOBBER REGDEF*/ ||
-                  (NumOps & 7) == 4 /*MEM*/ ||
-                  (NumOps & 7) == 7 /*MEM OVERLAPS EARLYCLOBBER*/) &&
+                  (NumOps & 7) == 4 /*MEM*/) &&
                  "Skipped past definitions?");
           CurOp += (NumOps>>3)+1;
         }
@@ -4922,14 +4919,10 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
         
           // Use the produced MatchedRegs object to 
           MatchedRegs.getCopyToRegs(InOperandVal, DAG, Chain, &Flag);
-          MatchedRegs.AddInlineAsmOperands(SawEarlyClobber ? 
-                                           1 /*REGUSE*/ :
-                                           5 /*REGUSE OVERLAPS EARLYCLOBBER*/, 
-                                           DAG, AsmNodeOperands);
+          MatchedRegs.AddInlineAsmOperands(1 /*REGUSE*/, DAG, AsmNodeOperands);
           break;
         } else {
-          assert(((NumOps & 7) == 7/*MEM OVERLAPS EARLYCLOBBER */ ||
-                  (NumOps & 7) == 4) && "Unknown matching constraint!");
+          assert(((NumOps & 7) == 4) && "Unknown matching constraint!");
           assert((NumOps >> 3) == 1 && "Unexpected number of operands"); 
           // Add information to the INLINEASM node to know about this input.
           AsmNodeOperands.push_back(DAG.getTargetConstant(NumOps,
@@ -4964,10 +4957,8 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
                "Memory operands expect pointer values");
                
         // Add information to the INLINEASM node to know about this input.
-        unsigned ResOpType = SawEarlyClobber ? 
-                                7 /* MEM OVERLAPS EARLYCLOBBER */ : 
-                                4/*MEM*/;
-        AsmNodeOperands.push_back(DAG.getTargetConstant(ResOpType | (1<<3),
+        unsigned ResOpType = 4/*MEM*/ | (1<<3);
+        AsmNodeOperands.push_back(DAG.getTargetConstant(ResOpType,
                                                         TLI.getPointerTy()));
         AsmNodeOperands.push_back(InOperandVal);
         break;
@@ -4985,10 +4976,8 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
 
       OpInfo.AssignedRegs.getCopyToRegs(InOperandVal, DAG, Chain, &Flag);
       
-      OpInfo.AssignedRegs.AddInlineAsmOperands(SawEarlyClobber ?
-                                           5 /*REGUSE OVERLAPS EARLYCLOBBER*/:
-                                           1/*REGUSE*/,
-                                           DAG, AsmNodeOperands);
+      OpInfo.AssignedRegs.AddInlineAsmOperands(1/*REGUSE*/,
+                                               DAG, AsmNodeOperands);
       break;
     }
     case InlineAsm::isClobber: {

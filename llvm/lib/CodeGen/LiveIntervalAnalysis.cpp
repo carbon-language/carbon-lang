@@ -348,6 +348,9 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
   if (interval.empty()) {
     // Get the Idx of the defining instructions.
     unsigned defIndex = getDefIndex(MIIdx);
+    // Earlyclobbers move back one.
+    if (MO.isEarlyClobber())
+      defIndex = getUseIndex(MIIdx);
     VNInfo *ValNo;
     MachineInstr *CopyMI = NULL;
     unsigned SrcReg, DstReg;
@@ -431,6 +434,9 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       assert(interval.containsOneValue());
       unsigned DefIndex = getDefIndex(interval.getValNumInfo(0)->def);
       unsigned RedefIndex = getDefIndex(MIIdx);
+      // Earlyclobbers move back one.
+      if (MO.isEarlyClobber())
+        RedefIndex = getUseIndex(MIIdx);
 
       const LiveRange *OldLR = interval.getLiveRangeContaining(RedefIndex-1);
       VNInfo *OldValNo = OldLR->valno;
@@ -498,6 +504,9 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       // live until the end of the block.  We've already taken care of the
       // rest of the live range.
       unsigned defIndex = getDefIndex(MIIdx);
+      // Earlyclobbers move back one.
+      if (MO.isEarlyClobber())
+        defIndex = getUseIndex(MIIdx);
       
       VNInfo *ValNo;
       MachineInstr *CopyMI = NULL;
@@ -532,6 +541,9 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock *MBB,
 
   unsigned baseIndex = MIIdx;
   unsigned start = getDefIndex(baseIndex);
+  // Earlyclobbers move back one.
+  if (MO.isEarlyClobber())
+    start = getUseIndex(MIIdx);
   unsigned end = start;
 
   // If it is not used after definition, it is considered dead at
@@ -539,7 +551,7 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock *MBB,
   // [defSlot(def), defSlot(def)+1)
   if (MO.isDead()) {
     DOUT << " dead";
-    end = getDefIndex(start) + 1;
+    end = start + 1;
     goto exit;
   }
 
@@ -561,7 +573,7 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock *MBB,
       // it. Hence its interval is:
       // [defSlot(def), defSlot(def)+1)
       DOUT << " dead";
-      end = getDefIndex(start) + 1;
+      end = start + 1;
       goto exit;
     }
     
@@ -572,7 +584,7 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock *MBB,
   // instruction where we know it's dead is if it is live-in to the function
   // and never used.
   assert(!CopyMI && "physreg was not killed in defining block!");
-  end = getDefIndex(start) + 1;  // It's dead.
+  end = start + 1;
 
 exit:
   assert(start < end && "did not find end of interval?");
@@ -713,16 +725,6 @@ void LiveIntervals::computeIntervals() {
         // handle register defs - build intervals
         if (MO.isRegister() && MO.getReg() && MO.isDef()) {
           handleRegisterDef(MBB, MI, MIIndex, MO, i);
-          if (MO.isEarlyClobber()) {
-            LiveInterval &interval =  getOrCreateInterval(MO.getReg());
-            interval.isEarlyClobber = true;
-          }
-        }
-        if (MO.isRegister() && !MO.isDef() &&
-            MO.getReg() && TargetRegisterInfo::isVirtualRegister(MO.getReg()) &&
-            MO.overlapsEarlyClobber()) {
-          LiveInterval &interval = getOrCreateInterval(MO.getReg());
-          interval.overlapsEarlyClobber = true;
         }
       }
       

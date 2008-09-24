@@ -686,10 +686,6 @@ void LiveInterval::print(std::ostream &OS,
     OS << "%reg" << reg;
 
   OS << ',' << weight;
-  if (isEarlyClobber)
-    OS << ",earlyclobber";
-  if (overlapsEarlyClobber)
-    OS << ",overlapsearly";
 
   if (empty())
     OS << " EMPTY";

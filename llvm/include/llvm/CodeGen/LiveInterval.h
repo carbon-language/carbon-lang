@@ -104,19 +104,13 @@ namespace llvm {
     unsigned reg;        // the register or stack slot of this interval
                          // if the top bits is set, it represents a stack slot.
     float weight;        // weight of this interval
-    // The next 3 fields pack into a single word (on most hosts).
-    // Logically the first two could be bitfields, but that's slower.
-    bool isEarlyClobber;  // marked earlyclobber in some asm
-    bool overlapsEarlyClobber; // input to asm that has an earlyclobber
     unsigned short preference; // preferred register for this interval
     Ranges ranges;       // the ranges in which this register is live
     VNInfoList valnos;   // value#'s
 
   public:
-    LiveInterval(unsigned Reg, float Weight, bool IsSS = false, 
-                 bool IsEarlyClobber = false, bool OverlapsEarlyClobber = false)
-      : reg(Reg), weight(Weight), isEarlyClobber(IsEarlyClobber), 
-        overlapsEarlyClobber(OverlapsEarlyClobber), preference(0)  {
+    LiveInterval(unsigned Reg, float Weight, bool IsSS = false)
+      : reg(Reg), weight(Weight), preference(0)  {
       if (IsSS)
         reg = reg | (1U << (sizeof(unsigned)*8-1));
     }

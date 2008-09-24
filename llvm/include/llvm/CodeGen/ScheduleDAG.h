@@ -361,9 +361,7 @@ namespace llvm {
 
     void AddOperand(MachineInstr *MI, SDValue Op, unsigned IIOpNum,
                     const TargetInstrDesc *II,
-                    DenseMap<SDValue, unsigned> &VRBaseMap,
-                    bool overlapsEarlyClobber = false);
-
+                    DenseMap<SDValue, unsigned> &VRBaseMap);
     void AddMemOperand(MachineInstr *MI, const MachineMemOperand &MO);
 
     void EmitCrossRCCopy(SUnit *SU, DenseMap<SUnit*, unsigned> &VRBaseMap);

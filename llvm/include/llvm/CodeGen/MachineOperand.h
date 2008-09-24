@@ -73,12 +73,6 @@ private:
   /// model the GCC inline asm '&' constraint modifier.
   bool IsEarlyClobber : 1;
 
-  /// OverlapsEarlyClobber - True if this MO_Register operand is used as an
-  /// input to an inline asm that has the earlyclobber bit set on some other
-  /// operand.  Flag is not valid for any other case.   See gcc doc
-  /// for description of earlyclobber.
-  bool OverlapsEarlyClobber : 1;
-
   /// SubReg - Subregister number, only valid for MO_Register.  A value of 0
   /// indicates the MO_Register has no subReg.
   unsigned char SubReg;
@@ -188,11 +182,6 @@ public:
     return IsEarlyClobber;
   }
 
-  bool overlapsEarlyClobber() const {
-    assert(isRegister() && "Wrong MachineOperand accessor");
-    return OverlapsEarlyClobber;
-  }
-
   /// getNextOperandForReg - Return the next MachineOperand in the function that
   /// uses or defines this register.
   MachineOperand *getNextOperandForReg() const {
@@ -241,11 +230,6 @@ public:
   void setIsEarlyClobber(bool Val = true) {
     assert(isRegister() && IsDef && "Wrong MachineOperand accessor");
     IsEarlyClobber = Val;
-  }
-
-  void setOverlapsEarlyClobber(bool Val = true) {
-    assert(isRegister() && "Wrong MachineOperand accessor");
-    OverlapsEarlyClobber = Val;
   }
 
   //===--------------------------------------------------------------------===//
@@ -353,15 +337,13 @@ public:
   static MachineOperand CreateReg(unsigned Reg, bool isDef, bool isImp = false,
                                   bool isKill = false, bool isDead = false,
                                   unsigned SubReg = 0,
-                                  bool isEarlyClobber = false,
-                                  bool overlapsEarlyClobber = false) {
+                                  bool isEarlyClobber = false) {
     MachineOperand Op(MachineOperand::MO_Register);
     Op.IsDef = isDef;
     Op.IsImp = isImp;
     Op.IsKill = isKill;
     Op.IsDead = isDead;
     Op.IsEarlyClobber = isEarlyClobber;
-    Op.OverlapsEarlyClobber = overlapsEarlyClobber;
     Op.Contents.Reg.RegNo = Reg;
     Op.Contents.Reg.Prev = 0;
     Op.Contents.Reg.Next = 0;
@@ -408,7 +390,6 @@ public:
     IsKill   = MO.IsKill;
     IsDead   = MO.IsDead;
     IsEarlyClobber = MO.IsEarlyClobber;
-    OverlapsEarlyClobber = MO.OverlapsEarlyClobber;
     SubReg   = MO.SubReg;
     ParentMI = MO.ParentMI;
     Contents = MO.Contents;

@@ -231,8 +231,7 @@ unsigned ScheduleDAG::getVR(SDValue Op,
 void ScheduleDAG::AddOperand(MachineInstr *MI, SDValue Op,
                              unsigned IIOpNum,
                              const TargetInstrDesc *II,
-                             DenseMap<SDValue, unsigned> &VRBaseMap,
-                             bool overlapsEarlyClobber) {
+                             DenseMap<SDValue, unsigned> &VRBaseMap) {
   if (Op.isMachineOpcode()) {
     // Note that this case is redundant with the final else block, but we
     // include it because it is the most common and it makes the logic
@@ -245,9 +244,7 @@ void ScheduleDAG::AddOperand(MachineInstr *MI, SDValue Op,
     const TargetInstrDesc &TID = MI->getDesc();
     bool isOptDef = IIOpNum < TID.getNumOperands() &&
       TID.OpInfo[IIOpNum].isOptionalDef();
-    MI->addOperand(MachineOperand::CreateReg(VReg, isOptDef, false, false,
-                                             false, 0, false,
-                                             overlapsEarlyClobber));
+    MI->addOperand(MachineOperand::CreateReg(VReg, isOptDef));
     
     // Verify that it is right.
     assert(TargetRegisterInfo::isVirtualRegister(VReg) && "Not a vreg?");
@@ -281,9 +278,7 @@ void ScheduleDAG::AddOperand(MachineInstr *MI, SDValue Op,
     const ConstantFP *CFP = F->getConstantFPValue();
     MI->addOperand(MachineOperand::CreateFPImm(CFP));
   } else if (RegisterSDNode *R = dyn_cast<RegisterSDNode>(Op)) {
-    MI->addOperand(MachineOperand::CreateReg(R->getReg(), false, false,
-                                             false, false, 0, false,
-                                             overlapsEarlyClobber));
+    MI->addOperand(MachineOperand::CreateReg(R->getReg(), false));
   } else if (GlobalAddressSDNode *TGA = dyn_cast<GlobalAddressSDNode>(Op)) {
     MI->addOperand(MachineOperand::CreateGA(TGA->getGlobal(),TGA->getOffset()));
   } else if (BasicBlockSDNode *BB = dyn_cast<BasicBlockSDNode>(Op)) {
@@ -319,9 +314,7 @@ void ScheduleDAG::AddOperand(MachineInstr *MI, SDValue Op,
            Op.getValueType() != MVT::Flag &&
            "Chain and flag operands should occur at end of operand list!");
     unsigned VReg = getVR(Op, VRBaseMap);
-    MI->addOperand(MachineOperand::CreateReg(VReg, false, false,
-                                             false, false, 0, false,
-                                             overlapsEarlyClobber));
+    MI->addOperand(MachineOperand::CreateReg(VReg, false));
     
     // Verify that it is right.  Note that the reg class of the physreg and the
     // vreg don't necessarily need to match, but the target copy insertion has
@@ -603,7 +596,6 @@ void ScheduleDAG::EmitNode(SDNode *Node, bool IsClone,
       
     // Add all of the operand registers to the instruction.
     for (unsigned i = 2; i != NumOps;) {
-      bool overlapsEarlyClobber = false;
       unsigned Flags =
         cast<ConstantSDNode>(Node->getOperand(i))->getZExtValue();
       unsigned NumVals = Flags >> 3;
@@ -626,18 +618,13 @@ void ScheduleDAG::EmitNode(SDNode *Node, bool IsClone,
                                                    false, 0, true));
         }
         break;
-      case 7:  // Addressing mode overlapping earlyclobber.
-      case 5:  // Use of register overlapping earlyclobber.
-        overlapsEarlyClobber = true;
-        // fall through
       case 1:  // Use of register.
       case 3:  // Immediate.
       case 4:  // Addressing mode.
         // The addressing mode has been selected, just add all of the
         // operands to the machine instruction.
         for (; NumVals; --NumVals, ++i)
-          AddOperand(MI, Node->getOperand(i), 0, 0, VRBaseMap, 
-                     overlapsEarlyClobber);
+          AddOperand(MI, Node->getOperand(i), 0, 0, VRBaseMap);
         break;
       }
     }

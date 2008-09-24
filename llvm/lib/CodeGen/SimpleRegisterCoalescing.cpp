@@ -1206,14 +1206,6 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
   DOUT << " and "; DstInt.print(DOUT, tri_);
   DOUT << ": ";
 
-  // If one interval is earlyclobber and the other is overlaps-earlyclobber,
-  // we cannot coalesce them.
-  if ((SrcInt.isEarlyClobber && DstInt.overlapsEarlyClobber) ||
-      (DstInt.isEarlyClobber && SrcInt.overlapsEarlyClobber)) {
-    DOUT << "\t\tCannot join due to earlyclobber.";
-    return false;
-  }
-
   // Check if it is necessary to propagate "isDead" property.
   if (!isExtSubReg && !isInsSubReg) {
     MachineOperand *mopd = CopyMI->findRegisterDefOperand(DstReg, false);
@@ -1373,10 +1365,6 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
   RemoveUnnecessaryKills(SrcReg, *ResDstInt);
   if (TargetRegisterInfo::isVirtualRegister(DstReg))
     RemoveUnnecessaryKills(DstReg, *ResDstInt);
-
-  // Merge the earlyclobber bits.
-  ResDstInt->isEarlyClobber |= ResSrcInt->isEarlyClobber;
-  ResDstInt->overlapsEarlyClobber |= ResSrcInt->overlapsEarlyClobber;
 
   if (isInsSubReg)
     // Avoid:

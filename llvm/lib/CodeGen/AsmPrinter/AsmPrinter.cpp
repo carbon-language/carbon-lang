@@ -1325,8 +1325,7 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
                                  false, false, false);
           else {
             AsmPrinter *AP = const_cast<AsmPrinter*>(this);
-            if ((OpFlags & 7) == 4 /*ADDR MODE*/ ||
-                (OpFlags & 7) == 7) /*ADDR MODE OVERLAPS EARLYCLOBBER*/ {
+            if ((OpFlags & 7) == 4) {
               Error = AP->PrintAsmMemoryOperand(MI, OpNo, AsmPrinterVariant,
                                                 Modifier[0] ? Modifier : 0);
             } else {
