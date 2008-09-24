@@ -711,16 +711,11 @@ bool MachineInstr::isSafeToMove(const TargetInstrInfo *TII, bool &SawStore) {
   // destination. The check for isInvariantLoad gives the targe the chance to
   // classify the load as always returning a constant, e.g. a constant pool
   // load.
-  if (TID->mayLoad() && !TII->isInvariantLoad(this)) {
+  if (TID->mayLoad() && !TII->isInvariantLoad(this))
     // Otherwise, this is a real load.  If there is a store between the load and
-    // end of block, we can't sink the load.
-    //
-    // FIXME: we can't do this transformation until we know that the load is
-    // not volatile, and machineinstrs don't keep this info. :(
-    //
-    //if (SawStore) 
-    return false;
-  }
+    // end of block, or if the laod is volatile, we can't move it.
+    return SawStore || hasVolatileMemoryRef();
+
   return true;
 }
 
@@ -747,6 +742,32 @@ bool MachineInstr::isSafeToReMat(const TargetInstrInfo *TII, unsigned DstReg) {
       return false;
   }
   return true;
+}
+
+/// hasVolatileMemoryRef - Return true if this instruction may have a
+/// volatile memory reference, or if the information describing the
+/// memory reference is not available. Return false if it is known to
+/// have no volatile memory references.
+bool MachineInstr::hasVolatileMemoryRef() const {
+  // An instruction known never to access memory won't have a volatile access.
+  if (!TID->mayStore() &&
+      !TID->mayLoad() &&
+      !TID->isCall() &&
+      !TID->hasUnmodeledSideEffects())
+    return false;
+
+  // Otherwise, if the instruction has no memory reference information,
+  // conservatively assume it wasn't preserved.
+  if (memoperands_empty())
+    return true;
+  
+  // Check the memory reference information for volatile references.
+  for (std::list<MachineMemOperand>::const_iterator I = memoperands_begin(),
+       E = memoperands_end(); I != E; ++I)
+    if (I->isVolatile())
+      return true;
+
+  return false;
 }
 
 void MachineInstr::dump() const {

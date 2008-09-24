@@ -250,7 +250,15 @@ public:
   /// the instruction's location and its intended destination.
   bool isSafeToMove(const TargetInstrInfo *TII, bool &SawStore);
 
+  /// isSafeToReMat - Return true if it's safe to rematerialize the specified
+  /// instruction which defined the specified register instead of copying it.
   bool isSafeToReMat(const TargetInstrInfo *TII, unsigned DstReg);
+
+  /// hasVolatileMemoryRef - Return true if this instruction may have a
+  /// volatile memory reference, or if the information describing the
+  /// memory reference is not available. Return false if it is known to
+  /// have no volatile memory references.
+  bool hasVolatileMemoryRef() const;
 
   //
   // Debugging support
