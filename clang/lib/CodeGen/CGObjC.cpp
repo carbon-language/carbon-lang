@@ -18,6 +18,7 @@
 #include "clang/AST/DeclObjC.h"
 #include "clang/Basic/Diagnostic.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/Target/TargetData.h"
 
 using namespace clang;
 using namespace CodeGen;
@@ -143,6 +144,7 @@ void CodeGenFunction::GenerateObjCMethod(const ObjCMethodDecl *OMD) {
 /// function. The given Decl must be either an ObjCCategoryImplDecl
 /// or an ObjCImplementationDecl.
 void CodeGenFunction::GenerateObjCGetter(const ObjCPropertyImplDecl *PID) {
+  ObjCIvarDecl *Ivar = PID->getPropertyIvarDecl();
   const ObjCPropertyDecl *PD = PID->getPropertyDecl();
   ObjCMethodDecl *OMD = PD->getGetterMethodDecl();
   assert(OMD && "Invalid call to generate getter (empty method)");
@@ -151,15 +153,51 @@ void CodeGenFunction::GenerateObjCGetter(const ObjCPropertyImplDecl *PID) {
   OMD->createImplicitParams(getContext());
   StartObjCMethod(OMD);
 
-  // FIXME: What about nonatomic?
-  SourceLocation Loc = PD->getLocation();
-  ValueDecl *Self = OMD->getSelfDecl();
-  ObjCIvarDecl *Ivar = PID->getPropertyIvarDecl();
-  DeclRefExpr Base(Self, Self->getType(), Loc);
-  ObjCIvarRefExpr IvarRef(Ivar, Ivar->getType(), Loc, &Base,
-                          true, true);
-  ReturnStmt Return(Loc, &IvarRef);
-  EmitStmt(&Return);
+  // Determine if we should use an objc_getProperty call for
+  // this. Non-atomic and properties with assign semantics are
+  // directly evaluated, and in gc-only mode we don't need it at all.
+  if (CGM.getLangOptions().getGCMode() != LangOptions::GCOnly &&
+      PD->getSetterKind() != ObjCPropertyDecl::Assign &&
+      !(PD->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_nonatomic)) {
+    llvm::Value *GetPropertyFn = 
+      CGM.getObjCRuntime().GetPropertyGetFunction();
+    
+    if (!GetPropertyFn) {
+      CGM.ErrorUnsupported(PID, "Obj-C getter requiring atomic copy");
+      FinishFunction();
+      return;
+    }
+
+    // Return (ivar-type) objc_getProperty((id) self, _cmd, offset, true).
+    // FIXME: Can't this be simpler? This might even be worse than the
+    // corresponding gcc code.
+    CodeGenTypes &Types = CGM.getTypes();
+    ValueDecl *Cmd = OMD->getCmdDecl();
+    llvm::Value *CmdVal = Builder.CreateLoad(LocalDeclMap[Cmd], "cmd");
+    QualType IdTy = getContext().getObjCIdType();
+    llvm::Value *SelfAsId = 
+      Builder.CreateBitCast(LoadObjCSelf(), Types.ConvertType(IdTy));
+    llvm::Value *Offset = EmitIvarOffset(OMD->getClassInterface(), Ivar);
+    llvm::Value *True =
+      llvm::ConstantInt::get(Types.ConvertTypeForMem(getContext().BoolTy), 1);
+    CallArgList Args;
+    Args.push_back(std::make_pair(RValue::get(SelfAsId), IdTy));
+    Args.push_back(std::make_pair(RValue::get(CmdVal), Cmd->getType()));
+    Args.push_back(std::make_pair(RValue::get(Offset), getContext().LongTy));
+    Args.push_back(std::make_pair(RValue::get(True), getContext().BoolTy));
+    RValue RV = EmitCall(GetPropertyFn, PD->getType(), Args);
+    // We need to fix the type here. Ivars with copy & retain are
+    // always objects so we don't need to worry about complex or
+    // aggregates.
+    RV = RValue::get(Builder.CreateBitCast(RV.getScalarVal(), 
+                                           Types.ConvertType(PD->getType())));
+    EmitReturnOfRValue(RV, PD->getType());
+  } else {
+    EmitReturnOfRValue(EmitLoadOfLValue(EmitLValueForIvar(LoadObjCSelf(), 
+                                                          Ivar, 0), 
+                                        Ivar->getType()), 
+                       PD->getType());
+  }
 
   FinishFunction();
 }
@@ -202,7 +240,7 @@ void CodeGenFunction::GenerateObjCSetter(const ObjCPropertyImplDecl *PID) {
   FinishFunction();
 }
 
-llvm::Value *CodeGenFunction::LoadObjCSelf(void) {
+llvm::Value *CodeGenFunction::LoadObjCSelf() {
   const ObjCMethodDecl *OMD = cast<ObjCMethodDecl>(CurFuncDecl);
   return Builder.CreateLoad(LocalDeclMap[OMD->getSelfDecl()], "self");
 }
@@ -251,9 +289,16 @@ void CodeGenFunction::EmitObjCPropertySet(const ObjCPropertyRefExpr *E,
 
 void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S)
 {
+  llvm::Function *EnumerationMutationFn = 
+    CGM.getObjCRuntime().EnumerationMutationFunction();
   llvm::Value *DeclAddress;
   QualType ElementTy;
   
+  if (!EnumerationMutationFn) {
+    CGM.ErrorUnsupported(&S, "Obj-C fast enumeration for this runtime");
+    return;
+  }
+
   if (const DeclStmt *SD = dyn_cast<DeclStmt>(S.getElement())) {
     EmitStmt(SD);
     
@@ -365,8 +410,7 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S)
     Builder.CreateBitCast(Collection, 
                           ConvertType(getContext().getObjCIdType()),
                           "tmp");
-  Builder.CreateCall(CGM.getObjCRuntime().EnumerationMutationFunction(),
-                     V);
+  Builder.CreateCall(EnumerationMutationFn, V);
   
   EmitBlock(WasNotMutated);
   
