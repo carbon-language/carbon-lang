@@ -537,8 +537,8 @@ void CodeGenModule::ConstructParamAttrList(const Decl *TargetDecl,
 
   case ABIArgInfo::StructRet:
     PAL.push_back(llvm::FnAttributeWithIndex::get(Index, 
-                                                 llvm::ParamAttr::StructRet|
-                                                 llvm::ParamAttr::NoAlias));
+                                                  llvm::ParamAttr::StructRet|
+                                                  llvm::ParamAttr::NoAlias));
     ++Index;
     break;
 
