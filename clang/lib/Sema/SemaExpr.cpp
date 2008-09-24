@@ -3055,7 +3055,7 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
     DiagKind = diag::err_int_to_block_pointer;
     break;
   case IncompatibleBlockPointer:
-    DiagKind = diag::err_typecheck_convert_incompatible_block_pointer;
+    DiagKind = diag::ext_typecheck_convert_incompatible_block_pointer;
     break;
   case BlockVoidPointer:
     DiagKind = diag::ext_typecheck_convert_pointer_void_block;

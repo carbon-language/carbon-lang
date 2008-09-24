@@ -7,13 +7,13 @@ int main() {
   int (*FPL) (int) = FP; // C doesn't consider this an error.
   
   // For Blocks, the ASTContext::typesAreBlockCompatible() makes sure this is an error.
-	int (^PFR) (int) = IFP;	// expected-error {{incompatible block pointer types initializing 'int (^)()', expected 'int (^)(int)'}}
+	int (^PFR) (int) = IFP;	// expected-warning {{incompatible block pointer types initializing 'int (^)()', expected 'int (^)(int)'}}
 	PFR = II;	// OK
 
-	int (^IFP) () = PFR;	// expected-error {{incompatible block pointer types initializing 'int (^)(int)', expected 'int (^)()'}}
+	int (^IFP) () = PFR;	// expected-warning {{incompatible block pointer types initializing 'int (^)(int)', expected 'int (^)()'}}
 
 
-	const int (^CIC) () = IFP; // expected-error {{incompatible block pointer types initializing 'int (^)()', expected 'int const (^)()'}}
+	const int (^CIC) () = IFP; // expected-warning {{incompatible block pointer types initializing 'int (^)()', expected 'int const (^)()'}}
 
 
 	const int (^CICC) () = CIC;
@@ -22,9 +22,9 @@ int main() {
 
 	int * const (^IPCC1) () = IPCC; 
 
-	int * (^IPCC2) () = IPCC;	// expected-error {{incompatible block pointer types initializing 'int *const (^)()', expected 'int *(^)()'}}
+	int * (^IPCC2) () = IPCC;	// expected-warning {{incompatible block pointer types initializing 'int *const (^)()', expected 'int *(^)()'}}
 
-	int (^IPCC3) (const int) = PFR;	// expected-error {{incompatible block pointer types initializing 'int (^)(int)', expected 'int (^)(int const)'}}
+	int (^IPCC3) (const int) = PFR;	// expected-warning {{incompatible block pointer types initializing 'int (^)(int)', expected 'int (^)(int const)'}}
 
 
 	int (^IPCC4) (int, char (^CArg) (double));
@@ -32,7 +32,7 @@ int main() {
 
 	int (^IPCC5) (int, char (^CArg) (double)) = IPCC4;
 
-	int (^IPCC6) (int, char (^CArg) (float))  = IPCC4; // expected-error {{incompatible block pointer types initializing 'int (^)(int, char (^)(double))', expected 'int (^)(int, char (^)(float))'}}
+	int (^IPCC6) (int, char (^CArg) (float))  = IPCC4; // expected-warning {{incompatible block pointer types initializing 'int (^)(int, char (^)(double))', expected 'int (^)(int, char (^)(float))'}}
 
 	IPCC2 = 0;
 	IPCC2 = 1; // expected-error {{invalid conversion assigning integer 'int', expected block pointer 'int *(^)()'}}

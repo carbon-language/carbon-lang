@@ -6,7 +6,7 @@ CL foo() {
 
 	short y;
 
-  short (^add1)(void) = ^{ return y+1; }; // expected-error {{incompatible block pointer types initializing 'int (^)(void)', expected 'short (^)(void)'}}
+  short (^add1)(void) = ^{ return y+1; }; // expected-warning {{incompatible block pointer types initializing 'int (^)(void)', expected 'short (^)(void)'}}
 
 	CL X = ^{ 
     if (2) 
@@ -27,7 +27,7 @@ CL foo() {
       return (char*)0;
   };
 
-  double (^A)(void) = ^ { // expected-error {{incompatible block pointer types initializing 'float (^)(void)', expected 'double (^)(void)'}}
+  double (^A)(void) = ^ { // expected-warning {{incompatible block pointer types initializing 'float (^)(void)', expected 'double (^)(void)'}}
     if (1)	
       return (float)1.0; 
     else
@@ -42,7 +42,7 @@ CL foo() {
     else
       return 2; // expected-error {{incompatible type returning 'int', expected 'char *'}}
   };
-  return ^{ return 1; }; // expected-error {{incompatible block pointer types returning 'int (^)(void)', expected 'CL'}} expected-error {{returning block that lives on the local stack}}
+  return ^{ return 1; }; // expected-warning {{incompatible block pointer types returning 'int (^)(void)', expected 'CL'}} expected-error {{returning block that lives on the local stack}}
 }
 
 typedef int (^CL2)(void);
@@ -69,4 +69,12 @@ int foo3() {
     cb.isEqual = ^(const CFBasicHash *table, uintptr_t stack_value_or_key1, uintptr_t stack_value_or_key2, Boolean is_key) {
     	return (Boolean)(uintptr_t)INVOKE_CALLBACK2(value_equal, (uintptr_t)stack_value_or_key1, (uintptr_t)stack_value_or_key2);
     };
+}
+
+static int funk(char *s) {
+  return 1;
+}
+void foo4() {
+  int (^xx)(const char *s) = ^(char *s) { return 1; }; // expected-warning {{incompatible block pointer types initializing 'int (^)(char *)', expected 'int (^)(char const *)'}}
+  int (*yy)(const char *s) = funk; // expected-warning {{incompatible pointer types initializing 'int (char *)', expected 'int (*)(char const *)'}}
 }

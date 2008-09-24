@@ -1020,7 +1020,7 @@ DIAG(err_int_to_block_pointer, ERROR,
      "invalid conversion %2 integer '%1', expected block pointer '%0'")
 DIAG(err_typecheck_comparison_of_distinct_blocks, ERROR,
      "comparison of distinct block types ('%0' and '%1')")
-DIAG(err_typecheck_convert_incompatible_block_pointer, ERROR,
+DIAG(ext_typecheck_convert_incompatible_block_pointer, EXTWARN,
      "incompatible block pointer types %2 '%1', expected '%0'")
 DIAG(ext_typecheck_convert_pointer_void_block, EXTENSION,
      "%2 '%1' converts between void* and block pointer, expected '%0'")
