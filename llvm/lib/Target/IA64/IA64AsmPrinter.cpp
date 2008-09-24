@@ -130,7 +130,7 @@ bool IA64AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   EmitConstantPool(MF.getConstantPool());
 
   const Function *F = MF.getFunction();
-  SwitchToTextSection(TAI->SectionForGlobal(F).c_str(), F);
+  SwitchToSection(TAI->SectionForGlobal(F));
 
   // Print out labels for the function.
   EmitAlignment(5);
@@ -264,7 +264,6 @@ void IA64AsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
     return;
 
   O << "\n\n";
-  std::string SectionName = TAI->SectionForGlobal(GVar);
   std::string name = Mang->getValueName(GVar);
   Constant *C = GVar->getInitializer();
   unsigned Size = TD->getABITypeSize(C->getType());
@@ -272,7 +271,7 @@ void IA64AsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
 
   printVisibility(name, GVar->getVisibility());
 
-  SwitchToDataSection(SectionName.c_str());
+  SwitchToSection(TAI->SectionForGlobal(GVar));
 
   if (C->isNullValue() && !GVar->hasSection()) {
     if (!GVar->isThreadLocal() &&

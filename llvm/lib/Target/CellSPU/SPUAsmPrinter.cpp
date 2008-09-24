@@ -418,7 +418,7 @@ LinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF)
   // Print out labels for the function.
   const Function *F = MF.getFunction();
 
-  SwitchToTextSection(TAI->SectionForGlobal(F).c_str(), F);
+  SwitchToSection(TAI->SectionForGlobal(F));
   EmitAlignment(3, F);
 
   switch (F->getLinkage()) {

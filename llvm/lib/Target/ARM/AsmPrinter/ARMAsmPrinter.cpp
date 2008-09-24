@@ -846,7 +846,6 @@ void ARMAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
     return;
   }
 
-  std::string SectionName = TAI->SectionForGlobal(GVar);
   std::string name = Mang->getValueName(GVar);
   Constant *C = GVar->getInitializer();
   const Type *Type = C->getType();
@@ -858,7 +857,7 @@ void ARMAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
   if (Subtarget->isTargetELF())
     O << "\t.type " << name << ",%object\n";
 
-  SwitchToDataSection(SectionName.c_str());
+  SwitchToSection(TAI->SectionForGlobal(GVar));
 
   if (C->isNullValue() && !GVar->hasSection() && !GVar->isThreadLocal()) {
     // FIXME: This seems to be pretty darwin-specific

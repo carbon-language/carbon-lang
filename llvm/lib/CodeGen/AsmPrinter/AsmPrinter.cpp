@@ -115,8 +115,18 @@ void AsmPrinter::SwitchToSection(const Section* NS) {
   // FIXME: Make CurrentSection a Section* in the future
   CurrentSection = NewSection;
 
-  if (!CurrentSection.empty())
-    O << CurrentSection << TAI->getDataSectionStartSuffix() << '\n';
+  if (!CurrentSection.empty()) {
+    // If section is named we need to switch into it via special '.section'
+    // directive and also append funky flags. Otherwise - section name is just
+    // some magic assembler directive.
+    if (NS->isNamed())
+      O << TAI->getSwitchToSectionDirective()
+        << CurrentSection
+        << TAI->getSectionFlags(NS->getFlags());
+    else
+      O << CurrentSection;
+    O << TAI->getDataSectionStartSuffix() << '\n';
+  }
 
   IsInTextSection = (NS->getFlags() & SectionFlags::Code);
 }
@@ -326,7 +336,7 @@ void AsmPrinter::EmitJumpTableInfo(MachineJumpTableInfo *MJTI,
     // function body itself, otherwise the label differences won't make sense.
     // We should also do if the section name is NULL or function is declared in
     // discardable section.
-    SwitchToTextSection(TAI->SectionForGlobal(F).c_str(), F);
+    SwitchToSection(TAI->SectionForGlobal(F));
   } else {
     SwitchToDataSection(JumpTableDataSection);
   }

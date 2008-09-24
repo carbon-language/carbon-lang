@@ -149,7 +149,7 @@ bool AlphaAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   // Print out labels for the function.
   const Function *F = MF.getFunction();
-  SwitchToTextSection(TAI->SectionForGlobal(F).c_str(), F);
+  SwitchToSection(TAI->SectionForGlobal(F));
 
   EmitAlignment(4, F);
   switch (F->getLinkage()) {
@@ -214,14 +214,13 @@ void AlphaAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
   if (EmitSpecialLLVMGlobal(GVar))
     return;
 
-  std::string SectionName = TAI->SectionForGlobal(GVar);
   std::string name = Mang->getValueName(GVar);
   Constant *C = GVar->getInitializer();
   unsigned Size = TD->getABITypeSize(C->getType());
   unsigned Align = TD->getPreferredAlignmentLog(GVar);
 
   // 0: Switch to section
-  SwitchToDataSection(SectionName.c_str());
+  SwitchToSection(TAI->SectionForGlobal(GVar));
 
   // 1: Check visibility
   printVisibility(name, GVar->getVisibility());

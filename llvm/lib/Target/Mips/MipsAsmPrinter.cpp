@@ -224,7 +224,7 @@ emitFunctionStart(MachineFunction &MF)
 {
   // Print out the label for the function.
   const Function *F = MF.getFunction();
-  SwitchToTextSection(TAI->SectionForGlobal(F).c_str());
+  SwitchToSection(TAI->SectionForGlobal(F));
 
   // 2 bits aligned
   EmitAlignment(2, F);
@@ -479,7 +479,6 @@ printModuleLevelGV(const GlobalVariable* GVar) {
     return;
 
   O << "\n\n";
-  std::string SectionName = TAI->SectionForGlobal(GVar);
   std::string name = Mang->getValueName(GVar);
   Constant *C = GVar->getInitializer();
   const Type *CTy = C->getType();
@@ -501,7 +500,7 @@ printModuleLevelGV(const GlobalVariable* GVar) {
 
   printVisibility(name, GVar->getVisibility());
 
-  SwitchToDataSection(SectionName.c_str());
+  SwitchToSection(TAI->SectionForGlobal(GVar));
 
   if (C->isNullValue() && !GVar->hasSection()) {
     if (!GVar->isThreadLocal() &&

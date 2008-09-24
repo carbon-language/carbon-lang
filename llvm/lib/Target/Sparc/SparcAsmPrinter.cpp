@@ -99,7 +99,7 @@ bool SparcAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   // Print out the label for the function.
   const Function *F = MF.getFunction();
-  SwitchToTextSection(TAI->SectionForGlobal(F).c_str(), F);
+  SwitchToSection(TAI->SectionForGlobal(F));
   EmitAlignment(4, F);
   O << "\t.globl\t" << CurrentFnName << '\n';
 
@@ -242,7 +242,6 @@ void SparcAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
     return;
 
   O << "\n\n";
-  std::string SectionName = TAI->SectionForGlobal(GVar);
   std::string name = Mang->getValueName(GVar);
   Constant *C = GVar->getInitializer();
   unsigned Size = TD->getABITypeSize(C->getType());
@@ -250,7 +249,7 @@ void SparcAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
 
   printVisibility(name, GVar->getVisibility());
 
-  SwitchToDataSection(SectionName.c_str());
+  SwitchToSection(TAI->SectionForGlobal(GVar));
 
   if (C->isNullValue() && !GVar->hasSection()) {
     if (!GVar->isThreadLocal() &&

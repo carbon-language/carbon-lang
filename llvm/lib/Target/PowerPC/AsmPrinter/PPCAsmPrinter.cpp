@@ -571,7 +571,7 @@ bool PPCLinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   // Print out labels for the function.
   const Function *F = MF.getFunction();
-  SwitchToTextSection(TAI->SectionForGlobal(F).c_str(), F);
+  SwitchToSection(TAI->SectionForGlobal(F));
 
   switch (F->getLinkage()) {
   default: assert(0 && "Unknown linkage type!");
@@ -662,7 +662,6 @@ void PPCLinuxAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
     return;
 
   std::string name = Mang->getValueName(GVar);
-  std::string SectionName = TAI->SectionForGlobal(GVar);
 
   printVisibility(name, GVar->getVisibility());
 
@@ -671,7 +670,7 @@ void PPCLinuxAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
   unsigned Size = TD->getABITypeSize(Type);
   unsigned Align = TD->getPreferredAlignmentLog(GVar);
 
-  SwitchToDataSection(SectionName.c_str());
+  SwitchToSection(TAI->SectionForGlobal(GVar));
 
   if (C->isNullValue() && /* FIXME: Verify correct */
       !GVar->hasSection() &&
@@ -759,7 +758,7 @@ bool PPCDarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   // Print out labels for the function.
   const Function *F = MF.getFunction();
-  SwitchToTextSection(TAI->SectionForGlobal(F).c_str(), F);
+  SwitchToSection(TAI->SectionForGlobal(F));
 
   switch (F->getLinkage()) {
   default: assert(0 && "Unknown linkage type!");
@@ -888,7 +887,6 @@ void PPCDarwinAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
   }
 
   std::string name = Mang->getValueName(GVar);
-  std::string SectionName = TAI->SectionForGlobal(GVar);
 
   printVisibility(name, GVar->getVisibility());
 
@@ -897,7 +895,7 @@ void PPCDarwinAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
   unsigned Size = TD->getABITypeSize(Type);
   unsigned Align = TD->getPreferredAlignmentLog(GVar);
 
-  SwitchToDataSection(SectionName.c_str());
+  SwitchToSection(TAI->SectionForGlobal(GVar));
 
   if (C->isNullValue() && /* FIXME: Verify correct */
       !GVar->hasSection() &&

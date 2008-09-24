@@ -148,11 +148,10 @@ void X86ATTAsmPrinter::decorateName(std::string &Name,
 
 void X86ATTAsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
   const Function *F = MF.getFunction();
-  std::string SectionName = TAI->SectionForGlobal(F);
 
   decorateName(CurrentFnName, F);
 
-  SwitchToTextSection(SectionName.c_str());
+  SwitchToSection(TAI->SectionForGlobal(F));
 
   unsigned FnAlign = OptimizeForSize ? 1 : 4;
   if (!F->isDeclaration() && F->hasNote(FnAttr::OptimizeForSize))
@@ -766,7 +765,6 @@ void X86ATTAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
     return;
   }
 
-  std::string SectionName = TAI->SectionForGlobal(GVar);
   std::string name = Mang->getValueName(GVar);
   Constant *C = GVar->getInitializer();
   const Type *Type = C->getType();
@@ -778,7 +776,7 @@ void X86ATTAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
   if (Subtarget->isTargetELF())
     O << "\t.type\t" << name << ",@object\n";
 
-  SwitchToDataSection(SectionName.c_str());
+  SwitchToSection(TAI->SectionForGlobal(GVar));
 
   if (C->isNullValue() && !GVar->hasSection()) {
     // FIXME: This seems to be pretty darwin-specific
