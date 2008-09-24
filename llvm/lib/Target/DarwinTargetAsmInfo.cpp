@@ -40,16 +40,14 @@ DarwinTargetAsmInfo::DarwinTargetAsmInfo(const TargetMachine &TM) {
 
   ReadOnlySection_ = getUnnamedSection("\t.const\n", SectionFlags::None);
 
-  // FIXME: These should be named sections, really.
   TextCoalSection =
-  getUnnamedSection(".section __TEXT,__textcoal_nt,coalesced,pure_instructions",
+    getNamedSection("\t__TEXT,__textcoal_nt,coalesced,pure_instructions",
                     SectionFlags::Code);
-  ConstDataCoalSection =
-    getUnnamedSection(".section __DATA,__const_coal,coalesced",
-                      SectionFlags::None);
+  ConstDataCoalSection = getBamedSection("\t__DATA,__const_coal,coalesced",
+                                         SectionFlags::None);
   ConstDataSection = getUnnamedSection(".const_data", SectionFlags::None);
-  DataCoalSection = getUnnamedSection(".section __DATA,__datacoal_nt,coalesced",
-                                      SectionFlags::Writeable);
+  DataCoalSection = getNamedSection("\t__DATA,__datacoal_nt,coalesced",
+                                    SectionFlags::Writeable);
 }
 
 /// emitUsedDirectiveFor - On Darwin, internally linked data beginning with
