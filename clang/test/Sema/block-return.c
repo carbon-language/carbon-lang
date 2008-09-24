@@ -50,3 +50,23 @@ typedef int (^CL2)(void);
 CL2 foo2() {
   return ^{ return 1; }; // expected-error {{returning block that lives on the local stack}}
 }
+
+typedef unsigned int * uintptr_t;
+typedef char Boolean;
+typedef int CFBasicHash;
+
+#define INVOKE_CALLBACK2(P, A, B) (P)(A, B)
+
+typedef struct {
+    Boolean (^isEqual)(const CFBasicHash *, uintptr_t stack_value_or_key1, uintptr_t stack_value_or_key2, Boolean is_key);
+} CFBasicHashCallbacks;
+
+int foo3() {
+    CFBasicHashCallbacks cb;
+    
+    Boolean (*value_equal)(uintptr_t, uintptr_t) = 0;
+            
+    cb.isEqual = ^(const CFBasicHash *table, uintptr_t stack_value_or_key1, uintptr_t stack_value_or_key2, Boolean is_key) {
+    	return (Boolean)(uintptr_t)INVOKE_CALLBACK2(value_equal, (uintptr_t)stack_value_or_key1, (uintptr_t)stack_value_or_key2);
+    };
+}

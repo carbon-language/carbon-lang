@@ -679,7 +679,9 @@ Sema::ActOnBlockReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
   // the block from it.
   if (CurBlock->ReturnType == 0) {
     if (RetValExp) {
-      UsualUnaryConversions(RetValExp);
+      // Don't call UsualUnaryConversions(), since we don't want to do
+      // integer promotions here.
+      DefaultFunctionArrayConversion(RetValExp);
       CurBlock->ReturnType = RetValExp->getType().getTypePtr();
     } else
       CurBlock->ReturnType = Context.VoidTy.getTypePtr();
