@@ -96,7 +96,7 @@ ELFTargetAsmInfo::SelectSectionForMachineConst(const Type *Ty) const {
 
 const Section*
 ELFTargetAsmInfo::MergeableConstSection(const GlobalVariable *GV) const {
-  Constant *C = cast<GlobalVariable>(GV)->getInitializer();
+  Constant *C = GV->getInitializer();
   return MergeableConstSection(C->getType());
 }
 

@@ -128,7 +128,7 @@ DarwinTargetAsmInfo::MergeableStringSection(const GlobalVariable *GV) const {
 
 const Section*
 DarwinTargetAsmInfo::MergeableConstSection(const GlobalVariable *GV) const {
-  Constant *C = cast<GlobalVariable>(GV)->getInitializer();
+  Constant *C = GV->getInitializer();
 
   return MergeableConstSection(C->getType());
 }
