@@ -65,7 +65,7 @@ bool SimpleInliner::doInitialization(CallGraph &CG) {
   
   for (Module::iterator I = M.begin(), E = M.end();
        I != E; ++I)
-    if (!I->isDeclaration() && I->hasNote(FN_NOTE_NoInline))
+    if (!I->isDeclaration() && I->hasNote(FnAttr::NoInline))
       NeverInline.insert(I);
 
   // Get llvm.noinline

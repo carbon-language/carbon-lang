@@ -160,7 +160,7 @@ void X86ATTAsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
   SwitchToTextSection(SectionName.c_str());
 
   unsigned FnAlign = OptimizeForSize ? 1 : 4;
-  if (!F->isDeclaration() && F->hasNote(FN_NOTE_OptimizeForSize))
+  if (!F->isDeclaration() && F->hasNote(FnAttr::OptimizeForSize))
     FnAlign = 1;
   switch (F->getLinkage()) {
   default: assert(0 && "Unknown linkage type!");

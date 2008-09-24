@@ -141,7 +141,7 @@ bool Inliner::runOnSCC(const std::vector<CallGraphNode*> &SCC) {
         
         int CurrentThreshold = InlineThreshold;
         Function *Fn = CS.getCaller();
-        if (Fn && !Fn->isDeclaration() && Fn->hasNote(FN_NOTE_OptimizeForSize)
+        if (Fn && !Fn->isDeclaration() && Fn->hasNote(FnAttr::OptimizeForSize)
             && InlineThreshold != 50) {
           CurrentThreshold = 50;
         }

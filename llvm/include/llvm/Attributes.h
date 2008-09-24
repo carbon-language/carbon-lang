@@ -78,12 +78,14 @@ inline Attributes constructAlignmentFromInt(unsigned i) {
 std::string getAsString(Attributes Attrs);
 } // end namespace ParamAttr
 
+namespace FnAttr {
 /// Function notes are implemented as attributes stored at index ~0 in 
 /// parameter attribute list.
-const Attributes FN_NOTE_None            = 0;    
-const Attributes FN_NOTE_NoInline        = 1<<0; // inline=never 
-const Attributes FN_NOTE_AlwaysInline    = 1<<1; // inline=always
-const Attributes FN_NOTE_OptimizeForSize = 1<<2; // opt_size
+const Attributes None            = 0;    
+const Attributes NoInline        = 1<<0; // inline=never 
+const Attributes AlwaysInline    = 1<<1; // inline=always
+const Attributes OptimizeForSize = 1<<2; // opt_size
+} // end namespace FnAttr
 
 /// This is just a pair of values to associate a set of parameter attributes
 /// with a parameter index. 
