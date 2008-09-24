@@ -85,6 +85,8 @@ if( MSVC )
   add_definitions( -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS )
   add_definitions( -D_SCL_SECURE_NO_WARNINGS -DCRT_NONSTDC_NO_WARNINGS )
   add_definitions( -D_SCL_SECURE_NO_DEPRECATE )
+  add_definitions( -wd4146 -wd4503 -wd4996 -wd4800 -wd4244 -wd4624 )
+  add_definitions( -wd4355 -wd4715 )
 endif( MSVC )
 
 include_directories( ${LLVM_BINARY_DIR}/include ${llvm_include_path})
