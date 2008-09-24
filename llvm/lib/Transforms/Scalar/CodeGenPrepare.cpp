@@ -35,7 +35,7 @@
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 using namespace llvm;
 
-namespace {  
+namespace {
   class VISIBILITY_HIDDEN CodeGenPrepare : public FunctionPass {
     /// TLI - Keep a pointer of a TargetLowering to consult for determining
     /// transformation profitability.
@@ -45,7 +45,7 @@ namespace {
     explicit CodeGenPrepare(const TargetLowering *tli = 0)
       : FunctionPass(&ID), TLI(tli) {}
     bool runOnFunction(Function &F);
-    
+
   private:
     bool EliminateMostlyEmptyBlocks(Function &F);
     bool CanMergeBlocks(const BasicBlock *BB, const BasicBlock *DestBB) const;
@@ -71,11 +71,11 @@ FunctionPass *llvm::createCodeGenPreparePass(const TargetLowering *TLI) {
 
 bool CodeGenPrepare::runOnFunction(Function &F) {
   bool EverMadeChange = false;
-  
+
   // First pass, eliminate blocks that contain only PHI nodes and an
   // unconditional branch.
   EverMadeChange |= EliminateMostlyEmptyBlocks(F);
-  
+
   bool MadeChange = true;
   while (MadeChange) {
     MadeChange = false;
@@ -87,7 +87,7 @@ bool CodeGenPrepare::runOnFunction(Function &F) {
 }
 
 /// EliminateMostlyEmptyBlocks - eliminate blocks that contain only PHI nodes
-/// and an unconditional branch.  Passes before isel (e.g. LSR/loopsimplify) 
+/// and an unconditional branch.  Passes before isel (e.g. LSR/loopsimplify)
 /// often split edges in ways that are non-optimal for isel.  Start by
 /// eliminating these blocks so we can split them the way we want them.
 bool CodeGenPrepare::EliminateMostlyEmptyBlocks(Function &F) {
@@ -100,7 +100,7 @@ bool CodeGenPrepare::EliminateMostlyEmptyBlocks(Function &F) {
     BranchInst *BI = dyn_cast<BranchInst>(BB->getTerminator());
     if (!BI || !BI->isUnconditional())
       continue;
-    
+
     // If the instruction before the branch isn't a phi node, then other stuff
     // is happening here.
     BasicBlock::iterator BBI = BI;
@@ -108,15 +108,15 @@ bool CodeGenPrepare::EliminateMostlyEmptyBlocks(Function &F) {
       --BBI;
       if (!isa<PHINode>(BBI)) continue;
     }
-    
+
     // Do not break infinite loops.
     BasicBlock *DestBB = BI->getSuccessor(0);
     if (DestBB == BB)
       continue;
-    
+
     if (!CanMergeBlocks(BB, DestBB))
       continue;
-    
+
     EliminateMostlyEmptyBlock(BB);
     MadeChange = true;
   }
@@ -138,8 +138,8 @@ bool CodeGenPrepare::CanMergeBlocks(const BasicBlock *BB,
       const Instruction *User = cast<Instruction>(*UI);
       if (User->getParent() != DestBB || !isa<PHINode>(User))
         return false;
-      // If User is inside DestBB block and it is a PHINode then check 
-      // incoming value. If incoming value is not from BB then this is 
+      // If User is inside DestBB block and it is a PHINode then check
+      // incoming value. If incoming value is not from BB then this is
       // a complex condition (e.g. preheaders) we want to avoid here.
       if (User->getParent() == DestBB) {
         if (const PHINode *UPN = dyn_cast<PHINode>(User))
@@ -152,13 +152,13 @@ bool CodeGenPrepare::CanMergeBlocks(const BasicBlock *BB,
       }
     }
   }
-  
+
   // If BB and DestBB contain any common predecessors, then the phi nodes in BB
   // and DestBB may have conflicting incoming values for the block.  If so, we
   // can't merge the block.
   const PHINode *DestBBPN = dyn_cast<PHINode>(DestBB->begin());
   if (!DestBBPN) return true;  // no conflict.
-  
+
   // Collect the preds of BB.
   SmallPtrSet<const BasicBlock*, 16> BBPreds;
   if (const PHINode *BBPN = dyn_cast<PHINode>(BB->begin())) {
@@ -168,7 +168,7 @@ bool CodeGenPrepare::CanMergeBlocks(const BasicBlock *BB,
   } else {
     BBPreds.insert(pred_begin(BB), pred_end(BB));
   }
-  
+
   // Walk the preds of DestBB.
   for (unsigned i = 0, e = DestBBPN->getNumIncomingValues(); i != e; ++i) {
     BasicBlock *Pred = DestBBPN->getIncomingBlock(i);
@@ -177,12 +177,12 @@ bool CodeGenPrepare::CanMergeBlocks(const BasicBlock *BB,
       while (const PHINode *PN = dyn_cast<PHINode>(BBI++)) {
         const Value *V1 = PN->getIncomingValueForBlock(Pred);
         const Value *V2 = PN->getIncomingValueForBlock(BB);
-        
+
         // If V2 is a phi node in BB, look up what the mapped value will be.
         if (const PHINode *V2PN = dyn_cast<PHINode>(V2))
           if (V2PN->getParent() == BB)
             V2 = V2PN->getIncomingValueForBlock(Pred);
-        
+
         // If there is a conflict, bail out.
         if (V1 != V2) return false;
       }
@@ -198,9 +198,9 @@ bool CodeGenPrepare::CanMergeBlocks(const BasicBlock *BB,
 void CodeGenPrepare::EliminateMostlyEmptyBlock(BasicBlock *BB) {
   BranchInst *BI = cast<BranchInst>(BB->getTerminator());
   BasicBlock *DestBB = BI->getSuccessor(0);
-  
+
   DOUT << "MERGING MOSTLY EMPTY BLOCKS - BEFORE:\n" << *BB << *DestBB;
-  
+
   // If the destination block has a single pred, then this is a trivial edge,
   // just collapse it.
   if (DestBB->getSinglePredecessor()) {
@@ -209,21 +209,21 @@ void CodeGenPrepare::EliminateMostlyEmptyBlock(BasicBlock *BB) {
       PN->replaceAllUsesWith(PN->getIncomingValue(0));
       PN->eraseFromParent();
     }
-    
+
     // Splice all the PHI nodes from BB over to DestBB.
     DestBB->getInstList().splice(DestBB->begin(), BB->getInstList(),
                                  BB->begin(), BI);
-    
+
     // Anything that branched to BB now branches to DestBB.
     BB->replaceAllUsesWith(DestBB);
-    
+
     // Nuke BB.
     BB->eraseFromParent();
-    
+
     DOUT << "AFTER:\n" << *DestBB << "\n\n\n";
     return;
   }
-  
+
   // Otherwise, we have multiple predecessors of BB.  Update the PHIs in DestBB
   // to handle the new incoming edges it is about to have.
   PHINode *PN;
@@ -231,7 +231,7 @@ void CodeGenPrepare::EliminateMostlyEmptyBlock(BasicBlock *BB) {
        (PN = dyn_cast<PHINode>(BBI)); ++BBI) {
     // Remove the incoming value for BB, and remember it.
     Value *InVal = PN->removeIncomingValue(BB, false);
-    
+
     // Two options: either the InVal is a phi node defined in BB or it is some
     // value that dominates BB.
     PHINode *InValPhi = dyn_cast<PHINode>(InVal);
@@ -252,12 +252,12 @@ void CodeGenPrepare::EliminateMostlyEmptyBlock(BasicBlock *BB) {
       }
     }
   }
-  
+
   // The PHIs are now updated, change everything that refers to BB to use
   // DestBB and remove BB.
   BB->replaceAllUsesWith(DestBB);
   BB->eraseFromParent();
-  
+
   DOUT << "AFTER:\n" << *DestBB << "\n\n\n";
 }
 
@@ -272,17 +272,17 @@ static void SplitEdgeNicely(TerminatorInst *TI, unsigned SuccNum, Pass *P) {
   BasicBlock *Dest = TI->getSuccessor(SuccNum);
   assert(isa<PHINode>(Dest->begin()) &&
          "This should only be called if Dest has a PHI!");
-  
+
   // As a hack, never split backedges of loops.  Even though the copy for any
   // PHIs inserted on the backedge would be dead for exits from the loop, we
   // assume that the cost of *splitting* the backedge would be too high.
   if (Dest == TIBB)
     return;
-  
+
   /// TIPHIValues - This array is lazily computed to determine the values of
   /// PHIs in Dest that TI would provide.
   SmallVector<Value*, 32> TIPHIValues;
-  
+
   // Check to see if Dest has any blocks that can be used as a split edge for
   // this terminator.
   for (pred_iterator PI = pred_begin(Dest), E = pred_end(Dest); PI != E; ++PI) {
@@ -295,7 +295,7 @@ static void SplitEdgeNicely(TerminatorInst *TI, unsigned SuccNum, Pass *P) {
         // Cannot be the entry block; its label does not get emitted.
         Pred == &(Dest->getParent()->getEntryBlock()))
       continue;
-    
+
     // Finally, since we know that Dest has phi nodes in it, we have to make
     // sure that jumping to Pred will have the same affect as going to Dest in
     // terms of PHI values.
@@ -306,14 +306,14 @@ static void SplitEdgeNicely(TerminatorInst *TI, unsigned SuccNum, Pass *P) {
          (PN = dyn_cast<PHINode>(I)); ++I, ++PHINo) {
       if (PHINo == TIPHIValues.size())
         TIPHIValues.push_back(PN->getIncomingValueForBlock(TIBB));
-      
+
       // If the PHI entry doesn't work, we can't use this pred.
       if (TIPHIValues[PHINo] != PN->getIncomingValueForBlock(Pred)) {
         FoundMatch = false;
         break;
       }
     }
-    
+
     // If we found a workable predecessor, change TI to branch to Succ.
     if (FoundMatch) {
       Dest->removePredecessor(TIBB);
@@ -321,8 +321,8 @@ static void SplitEdgeNicely(TerminatorInst *TI, unsigned SuccNum, Pass *P) {
       return;
     }
   }
-  
-  SplitCriticalEdge(TI, SuccNum, P, true);  
+
+  SplitCriticalEdge(TI, SuccNum, P, true);
 }
 
 /// OptimizeNoopCopyExpression - If the specified cast instruction is a noop
@@ -332,10 +332,10 @@ static void SplitEdgeNicely(TerminatorInst *TI, unsigned SuccNum, Pass *P) {
 ///
 /// Return true if any changes are made.
 static bool OptimizeNoopCopyExpression(CastInst *CI, const TargetLowering &TLI){
-  // If this is a noop copy, 
+  // If this is a noop copy,
   MVT SrcVT = TLI.getValueType(CI->getOperand(0)->getType());
   MVT DstVT = TLI.getValueType(CI->getType());
-  
+
   // This is an fp<->int conversion?
   if (SrcVT.isInteger() != DstVT.isInteger())
     return false;
@@ -343,7 +343,7 @@ static bool OptimizeNoopCopyExpression(CastInst *CI, const TargetLowering &TLI){
   // If this is an extension, it will be a zero or sign extension, which
   // isn't a noop.
   if (SrcVT.bitsLT(DstVT)) return false;
-  
+
   // If these values will be promoted, find out what they will be promoted
   // to.  This helps us consider truncates on PPC as noop copies when they
   // are.
@@ -351,22 +351,22 @@ static bool OptimizeNoopCopyExpression(CastInst *CI, const TargetLowering &TLI){
     SrcVT = TLI.getTypeToTransformTo(SrcVT);
   if (TLI.getTypeAction(DstVT) == TargetLowering::Promote)
     DstVT = TLI.getTypeToTransformTo(DstVT);
-  
+
   // If, after promotion, these are the same types, this is a noop copy.
   if (SrcVT != DstVT)
     return false;
-  
+
   BasicBlock *DefBB = CI->getParent();
-  
+
   /// InsertedCasts - Only insert a cast in each block once.
   DenseMap<BasicBlock*, CastInst*> InsertedCasts;
-  
+
   bool MadeChange = false;
-  for (Value::use_iterator UI = CI->use_begin(), E = CI->use_end(); 
+  for (Value::use_iterator UI = CI->use_begin(), E = CI->use_end();
        UI != E; ) {
     Use &TheUse = UI.getUse();
     Instruction *User = cast<Instruction>(*UI);
-    
+
     // Figure out which BB this cast is used in.  For PHI's this is the
     // appropriate predecessor block.
     BasicBlock *UserBB = User->getParent();
@@ -374,39 +374,39 @@ static bool OptimizeNoopCopyExpression(CastInst *CI, const TargetLowering &TLI){
       unsigned OpVal = UI.getOperandNo()/2;
       UserBB = PN->getIncomingBlock(OpVal);
     }
-    
+
     // Preincrement use iterator so we don't invalidate it.
     ++UI;
-    
+
     // If this user is in the same block as the cast, don't change the cast.
     if (UserBB == DefBB) continue;
-    
+
     // If we have already inserted a cast into this block, use it.
     CastInst *&InsertedCast = InsertedCasts[UserBB];
 
     if (!InsertedCast) {
       BasicBlock::iterator InsertPt = UserBB->getFirstNonPHI();
-      
-      InsertedCast = 
-        CastInst::Create(CI->getOpcode(), CI->getOperand(0), CI->getType(), "", 
+
+      InsertedCast =
+        CastInst::Create(CI->getOpcode(), CI->getOperand(0), CI->getType(), "",
                          InsertPt);
       MadeChange = true;
     }
-    
+
     // Replace a use of the cast with a use of the new cast.
     TheUse = InsertedCast;
   }
-  
+
   // If we removed all uses, nuke the cast.
   if (CI->use_empty()) {
     CI->eraseFromParent();
     MadeChange = true;
   }
-  
+
   return MadeChange;
 }
 
-/// OptimizeCmpExpression - sink the given CmpInst into user blocks to reduce 
+/// OptimizeCmpExpression - sink the given CmpInst into user blocks to reduce
 /// the number of virtual registers that must be created and coalesced.  This is
 /// a clear win except on targets with multiple condition code registers
 ///  (PowerPC), where it might lose; some adjustment may be wanted there.
@@ -415,49 +415,49 @@ static bool OptimizeNoopCopyExpression(CastInst *CI, const TargetLowering &TLI){
 static bool OptimizeCmpExpression(CmpInst *CI){
 
   BasicBlock *DefBB = CI->getParent();
-  
+
   /// InsertedCmp - Only insert a cmp in each block once.
   DenseMap<BasicBlock*, CmpInst*> InsertedCmps;
-  
+
   bool MadeChange = false;
-  for (Value::use_iterator UI = CI->use_begin(), E = CI->use_end(); 
+  for (Value::use_iterator UI = CI->use_begin(), E = CI->use_end();
        UI != E; ) {
     Use &TheUse = UI.getUse();
     Instruction *User = cast<Instruction>(*UI);
-    
+
     // Preincrement use iterator so we don't invalidate it.
     ++UI;
-    
+
     // Don't bother for PHI nodes.
     if (isa<PHINode>(User))
       continue;
 
     // Figure out which BB this cmp is used in.
     BasicBlock *UserBB = User->getParent();
-    
+
     // If this user is in the same block as the cmp, don't change the cmp.
     if (UserBB == DefBB) continue;
-    
+
     // If we have already inserted a cmp into this block, use it.
     CmpInst *&InsertedCmp = InsertedCmps[UserBB];
 
     if (!InsertedCmp) {
       BasicBlock::iterator InsertPt = UserBB->getFirstNonPHI();
-      
-      InsertedCmp = 
-        CmpInst::Create(CI->getOpcode(), CI->getPredicate(), CI->getOperand(0), 
+
+      InsertedCmp =
+        CmpInst::Create(CI->getOpcode(), CI->getPredicate(), CI->getOperand(0),
                         CI->getOperand(1), "", InsertPt);
       MadeChange = true;
     }
-    
+
     // Replace a use of the cmp with a use of the new cmp.
     TheUse = InsertedCmp;
   }
-  
+
   // If we removed all uses, nuke the cmp.
   if (CI->use_empty())
     CI->eraseFromParent();
-  
+
   return MadeChange;
 }
 
@@ -465,10 +465,10 @@ static bool OptimizeCmpExpression(CmpInst *CI){
 static void EraseDeadInstructions(Value *V) {
   Instruction *I = dyn_cast<Instruction>(V);
   if (!I || !I->use_empty()) return;
-  
+
   SmallPtrSet<Instruction*, 16> Insts;
   Insts.insert(I);
-  
+
   while (!Insts.empty()) {
     I = *Insts.begin();
     Insts.erase(I);
@@ -498,17 +498,17 @@ static std::ostream &operator<<(std::ostream &OS, const ExtAddrMode &AM) {
   if (AM.BaseGV)
     OS << (NeedPlus ? " + " : "")
        << "GV:%" << AM.BaseGV->getName(), NeedPlus = true;
-  
+
   if (AM.BaseOffs)
     OS << (NeedPlus ? " + " : "") << AM.BaseOffs, NeedPlus = true;
-  
+
   if (AM.BaseReg)
     OS << (NeedPlus ? " + " : "")
        << "Base:%" << AM.BaseReg->getName(), NeedPlus = true;
   if (AM.Scale)
     OS << (NeedPlus ? " + " : "")
        << AM.Scale << "*%" << AM.ScaledReg->getName(), NeedPlus = true;
-  
+
   return OS << "]";
 }
 
@@ -522,7 +522,7 @@ static bool TryMatchingScaledValue(Value *ScaleReg, int64_t Scale,
                                    const Type *AccessTy, ExtAddrMode &AddrMode,
                                    SmallVector<Instruction*, 16> &AddrModeInsts,
                                    const TargetLowering &TLI, unsigned Depth);
-  
+
 /// FindMaximalLegalAddressingMode - If we can, try to merge the computation of
 /// Addr into the specified addressing mode.  If Addr can't be added to AddrMode
 /// this returns false.  This assumes that Addr is either a pointer type or
@@ -532,7 +532,7 @@ static bool FindMaximalLegalAddressingMode(Value *Addr, const Type *AccessTy,
                                    SmallVector<Instruction*, 16> &AddrModeInsts,
                                            const TargetLowering &TLI,
                                            unsigned Depth) {
-  
+
   // If this is a global variable, fold it into the addressing mode if possible.
   if (GlobalValue *GV = dyn_cast<GlobalValue>(Addr)) {
     if (AddrMode.BaseGV == 0) {
@@ -549,7 +549,7 @@ static bool FindMaximalLegalAddressingMode(Value *Addr, const Type *AccessTy,
   } else if (isa<ConstantPointerNull>(Addr)) {
     return true;
   }
-  
+
   // Look through constant exprs and instructions.
   unsigned Opcode = ~0U;
   User *AddrInst = 0;
@@ -598,18 +598,18 @@ static bool FindMaximalLegalAddressingMode(Value *Addr, const Type *AccessTy,
     // Restore the old addr mode info.
     AddrMode = BackupAddrMode;
     AddrModeInsts.resize(OldSize);
-    
+
     // Otherwise this was over-aggressive.  Try merging in the LHS then the RHS.
     if (FindMaximalLegalAddressingMode(AddrInst->getOperand(0), AccessTy,
                                        AddrMode, AddrModeInsts, TLI, Depth+1) &&
         FindMaximalLegalAddressingMode(AddrInst->getOperand(1), AccessTy,
                                        AddrMode, AddrModeInsts, TLI, Depth+1))
       return true;
-    
+
     // Otherwise we definitely can't merge the ADD in.
     AddrMode = BackupAddrMode;
     AddrModeInsts.resize(OldSize);
-    break;    
+    break;
   }
   case Instruction::Or: {
     ConstantInt *RHS = dyn_cast<ConstantInt>(AddrInst->getOperand(1));
@@ -626,7 +626,7 @@ static bool FindMaximalLegalAddressingMode(Value *Addr, const Type *AccessTy,
     int64_t Scale = RHS->getSExtValue();
     if (Opcode == Instruction::Shl)
       Scale = 1 << Scale;
-    
+
     if (TryMatchingScaledValue(AddrInst->getOperand(0), Scale, AccessTy,
                                AddrMode, AddrModeInsts, TLI, Depth))
       return true;
@@ -637,7 +637,7 @@ static bool FindMaximalLegalAddressingMode(Value *Addr, const Type *AccessTy,
     // one variable offset.
     int VariableOperand = -1;
     unsigned VariableScale = 0;
-    
+
     int64_t ConstantOffset = 0;
     const TargetData *TD = TLI.getTargetData();
     gep_type_iterator GTI = gep_type_begin(AddrInst);
@@ -657,7 +657,7 @@ static bool FindMaximalLegalAddressingMode(Value *Addr, const Type *AccessTy,
             VariableOperand = -2;
             break;
           }
-          
+
           // Remember the variable index.
           VariableOperand = i;
           VariableScale = TypeSize;
@@ -693,11 +693,11 @@ static bool FindMaximalLegalAddressingMode(Value *Addr, const Type *AccessTy,
         AddrMode.BaseReg = AddrInst->getOperand(0);
         SetBaseReg = true;
       }
-      
+
       // See if the scale amount is valid for this target.
       AddrMode.BaseOffs += ConstantOffset;
       if (TryMatchingScaledValue(AddrInst->getOperand(VariableOperand),
-                                 VariableScale, AccessTy, AddrMode, 
+                                 VariableScale, AccessTy, AddrMode,
                                  AddrModeInsts, TLI, Depth)) {
         if (!SetBaseReg) return true;
 
@@ -710,27 +710,27 @@ static bool FindMaximalLegalAddressingMode(Value *Addr, const Type *AccessTy,
                                            Depth+1))
           return true;
         // Strange, shouldn't happen.  Restore the base reg and succeed the easy
-        // way.        
+        // way.
         AddrMode.HasBaseReg = true;
         AddrMode.BaseReg = AddrInst->getOperand(0);
         return true;
       }
-      
+
       AddrMode.BaseOffs -= ConstantOffset;
       if (SetBaseReg) {
         AddrMode.HasBaseReg = false;
         AddrMode.BaseReg = 0;
       }
     }
-    break;    
+    break;
   }
   }
-  
+
   if (Instruction *I = dyn_cast_or_null<Instruction>(AddrInst)) {
     assert(AddrModeInsts.back() == I && "Stack imbalance"); I = I;
     AddrModeInsts.pop_back();
   }
-  
+
   // Worse case, the target should support [reg] addressing modes. :)
   if (!AddrMode.HasBaseReg) {
     AddrMode.HasBaseReg = true;
@@ -741,7 +741,7 @@ static bool FindMaximalLegalAddressingMode(Value *Addr, const Type *AccessTy,
     }
     AddrMode.HasBaseReg = false;
   }
-  
+
   // If the base register is already taken, see if we can do [r+r].
   if (AddrMode.Scale == 0) {
     AddrMode.Scale = 1;
@@ -766,14 +766,14 @@ static bool TryMatchingScaledValue(Value *ScaleReg, int64_t Scale,
   // need an available scale field.
   if (AddrMode.Scale != 0 && AddrMode.ScaledReg != ScaleReg)
     return false;
-  
+
   ExtAddrMode InputAddrMode = AddrMode;
-  
+
   // Add scale to turn X*4+X*3 -> X*7.  This could also do things like
   // [A+B + A*7] -> [B+A*8].
   AddrMode.Scale += Scale;
   AddrMode.ScaledReg = ScaleReg;
-  
+
   if (TLI.isLegalAddressingMode(AddrMode, AccessTy)) {
     // Okay, we decided that we can add ScaleReg+Scale to AddrMode.  Check now
     // to see if ScaleReg is actually X+C.  If so, we can turn this into adding
@@ -781,10 +781,10 @@ static bool TryMatchingScaledValue(Value *ScaleReg, int64_t Scale,
     BinaryOperator *BinOp = dyn_cast<BinaryOperator>(ScaleReg);
     if (BinOp && BinOp->getOpcode() == Instruction::Add &&
         isa<ConstantInt>(BinOp->getOperand(1)) && InputAddrMode.ScaledReg ==0) {
-      
+
       InputAddrMode.Scale = Scale;
       InputAddrMode.ScaledReg = BinOp->getOperand(0);
-      InputAddrMode.BaseOffs += 
+      InputAddrMode.BaseOffs +=
         cast<ConstantInt>(BinOp->getOperand(1))->getSExtValue()*Scale;
       if (TLI.isLegalAddressingMode(InputAddrMode, AccessTy)) {
         AddrModeInsts.push_back(BinOp);
@@ -796,11 +796,11 @@ static bool TryMatchingScaledValue(Value *ScaleReg, int64_t Scale,
     // Otherwise, not (x+c)*scale, just return what we have.
     return true;
   }
-  
+
   // Otherwise, back this attempt out.
   AddrMode.Scale -= Scale;
   if (AddrMode.Scale == 0) AddrMode.ScaledReg = 0;
-  
+
   return false;
 }
 
@@ -828,7 +828,7 @@ bool CodeGenPrepare::OptimizeLoadStoreInst(Instruction *LdStInst, Value *Addr,
   bool Success = FindMaximalLegalAddressingMode(Addr, AccessTy, AddrMode,
                                                 AddrModeInsts, *TLI, 0);
   Success = Success; assert(Success && "Couldn't select *anything*?");
-  
+
   // Check to see if any of the instructions supersumed by this addr mode are
   // non-local to I's BB.
   bool AnyNonLocal = false;
@@ -838,18 +838,18 @@ bool CodeGenPrepare::OptimizeLoadStoreInst(Instruction *LdStInst, Value *Addr,
       break;
     }
   }
-  
+
   // If all the instructions matched are already in this BB, don't do anything.
   if (!AnyNonLocal) {
     DEBUG(cerr << "CGP: Found      local addrmode: " << AddrMode << "\n");
     return false;
   }
-  
+
   // Insert this computation right after this user.  Since our caller is
   // scanning from the top of the BB to the bottom, reuse of the expr are
   // guaranteed to happen later.
   BasicBlock::iterator InsertPt = LdStInst;
-  
+
   // Now that we determined the addressing expression we want to use and know
   // that we have to sink it into this block.  Check to see if we have already
   // done this for some other load/store instr in this block.  If so, reuse the
@@ -862,7 +862,7 @@ bool CodeGenPrepare::OptimizeLoadStoreInst(Instruction *LdStInst, Value *Addr,
   } else {
     DEBUG(cerr << "CGP: SINKING nonlocal addrmode: " << AddrMode << "\n");
     const Type *IntPtrTy = TLI->getTargetData()->getIntPtrType();
-    
+
     Value *Result = 0;
     // Start with the scale value.
     if (AddrMode.Scale) {
@@ -894,7 +894,7 @@ bool CodeGenPrepare::OptimizeLoadStoreInst(Instruction *LdStInst, Value *Addr,
       else
         Result = V;
     }
-    
+
     // Add in the BaseGV if present.
     if (AddrMode.BaseGV) {
       Value *V = new PtrToIntInst(AddrMode.BaseGV, IntPtrTy, "sunkaddr",
@@ -904,7 +904,7 @@ bool CodeGenPrepare::OptimizeLoadStoreInst(Instruction *LdStInst, Value *Addr,
       else
         Result = V;
     }
-    
+
     // Add in the Base Offset if present.
     if (AddrMode.BaseOffs) {
       Value *V = ConstantInt::get(IntPtrTy, AddrMode.BaseOffs);
@@ -919,12 +919,29 @@ bool CodeGenPrepare::OptimizeLoadStoreInst(Instruction *LdStInst, Value *Addr,
     else
       SunkAddr = new IntToPtrInst(Result, Addr->getType(), "sunkaddr",InsertPt);
   }
-  
+
   LdStInst->replaceUsesOfWith(Addr, SunkAddr);
-  
+
   if (Addr->use_empty())
     EraseDeadInstructions(Addr);
   return true;
+}
+
+/// hasInlineAsmMemConstraint - Return true if the inline asm instruction being
+/// processed uses a memory 'm' constraint.
+static bool
+hasInlineAsmMemConstraint(std::vector<InlineAsm::ConstraintInfo> &CInfos,
+                          const TargetLowering *TLI) {
+  for (unsigned i = 0, e = CInfos.size(); i != e; ++i) {
+    InlineAsm::ConstraintInfo &CI = CInfos[i];
+    for (unsigned j = 0, ee = CI.Codes.size(); j != ee; ++j) {
+      TargetLowering::ConstraintType CType = TLI->getConstraintType(CI.Codes[j]);
+      if (CType == TargetLowering::C_Memory)
+        return true;
+    }
+  }
+
+  return false;
 }
 
 /// OptimizeInlineAsmInst - If there are any memory operands, use
@@ -963,7 +980,8 @@ bool CodeGenPrepare::OptimizeInlineAsmInst(Instruction *I, CallSite CS,
     }
 
     // Compute the constraint code and ConstraintType to use.
-    TLI->ComputeConstraintToUse(OpInfo, SDValue());
+    bool hasMemory = hasInlineAsmMemConstraint(ConstraintInfos, TLI);
+    TLI->ComputeConstraintToUse(OpInfo, SDValue(), hasMemory);
 
     if (OpInfo.ConstraintType == TargetLowering::C_Memory &&
         OpInfo.isIndirect) {
@@ -995,7 +1013,7 @@ bool CodeGenPrepare::OptimizeExtUses(Instruction *I) {
     return false;
 
   bool DefIsLiveOut = false;
-  for (Value::use_iterator UI = I->use_begin(), E = I->use_end(); 
+  for (Value::use_iterator UI = I->use_begin(), E = I->use_end();
        UI != E; ++UI) {
     Instruction *User = cast<Instruction>(*UI);
 
@@ -1009,7 +1027,7 @@ bool CodeGenPrepare::OptimizeExtUses(Instruction *I) {
     return false;
 
   // Make sure non of the uses are PHI nodes.
-  for (Value::use_iterator UI = Src->use_begin(), E = Src->use_end(); 
+  for (Value::use_iterator UI = Src->use_begin(), E = Src->use_end();
        UI != E; ++UI) {
     Instruction *User = cast<Instruction>(*UI);
     BasicBlock *UserBB = User->getParent();
@@ -1024,7 +1042,7 @@ bool CodeGenPrepare::OptimizeExtUses(Instruction *I) {
   DenseMap<BasicBlock*, Instruction*> InsertedTruncs;
 
   bool MadeChange = false;
-  for (Value::use_iterator UI = Src->use_begin(), E = Src->use_end(); 
+  for (Value::use_iterator UI = Src->use_begin(), E = Src->use_end();
        UI != E; ++UI) {
     Use &TheUse = UI.getUse();
     Instruction *User = cast<Instruction>(*UI);
@@ -1038,7 +1056,7 @@ bool CodeGenPrepare::OptimizeExtUses(Instruction *I) {
 
     if (!InsertedTrunc) {
       BasicBlock::iterator InsertPt = UserBB->getFirstNonPHI();
-      
+
       InsertedTrunc = new TruncInst(I, Src->getType(), "", InsertPt);
     }
 
@@ -1056,7 +1074,7 @@ bool CodeGenPrepare::OptimizeExtUses(Instruction *I) {
 // selection.
 bool CodeGenPrepare::OptimizeBlock(BasicBlock &BB) {
   bool MadeChange = false;
-  
+
   // Split all critical edges where the dest block has a PHI and where the phi
   // has shared immediate operands.
   TerminatorInst *BBTI = BB.getTerminator();
@@ -1066,16 +1084,16 @@ bool CodeGenPrepare::OptimizeBlock(BasicBlock &BB) {
           isCriticalEdge(BBTI, i, true))
         SplitEdgeNicely(BBTI, i, this);
   }
-  
-  
+
+
   // Keep track of non-local addresses that have been sunk into this block.
   // This allows us to avoid inserting duplicate code for blocks with multiple
   // load/stores of the same address.
   DenseMap<Value*, Value*> SunkAddrs;
-  
+
   for (BasicBlock::iterator BBI = BB.begin(), E = BB.end(); BBI != E; ) {
     Instruction *I = BBI++;
-    
+
     if (CastInst *CI = dyn_cast<CastInst>(I)) {
       // If the source of the cast is a constant, then this should have
       // already been constant folded.  The only reason NOT to constant fold
@@ -1085,7 +1103,7 @@ bool CodeGenPrepare::OptimizeBlock(BasicBlock &BB) {
       // want to forward-subst the cast.
       if (isa<Constant>(CI->getOperand(0)))
         continue;
-      
+
       bool Change = false;
       if (TLI) {
         Change = OptimizeNoopCopyExpression(CI, *TLI);
@@ -1108,7 +1126,7 @@ bool CodeGenPrepare::OptimizeBlock(BasicBlock &BB) {
     } else if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(I)) {
       if (GEPI->hasAllZeroIndices()) {
         /// The GEP operand must be a pointer, so must its result -> BitCast
-        Instruction *NC = new BitCastInst(GEPI->getOperand(0), GEPI->getType(), 
+        Instruction *NC = new BitCastInst(GEPI->getOperand(0), GEPI->getType(),
                                           GEPI->getName(), GEPI);
         GEPI->replaceAllUsesWith(NC);
         GEPI->eraseFromParent();
@@ -1119,7 +1137,7 @@ bool CodeGenPrepare::OptimizeBlock(BasicBlock &BB) {
       // If we found an inline asm expession, and if the target knows how to
       // lower it to normal LLVM code, do so now.
       if (TLI && isa<InlineAsm>(CI->getCalledValue()))
-        if (const TargetAsmInfo *TAI = 
+        if (const TargetAsmInfo *TAI =
             TLI->getTargetMachine().getTargetAsmInfo()) {
           if (TAI->ExpandInlineAsm(CI))
             BBI = BB.begin();
@@ -1129,7 +1147,6 @@ bool CodeGenPrepare::OptimizeBlock(BasicBlock &BB) {
         }
     }
   }
-    
+
   return MadeChange;
 }
-
