@@ -416,10 +416,7 @@ bool PIC16AsmPrinter::doFinalization(Module &M)
           (I->hasInternalLinkage() || I->hasWeakLinkage() ||
            I->hasLinkOnceLinkage() || I->hasCommonLinkage())) {
         if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
-        if (!NoZerosInBSS && TAI->getBSSSection())
-          SwitchToDataSection(M.getModuleIdentifier().c_str(), I);
-        else
-          SwitchToDataSection(TAI->getDataSection(), I);
+        SwitchToDataSection(M.getModuleIdentifier().c_str(), I);
         if (TAI->getLCOMMDirective() != NULL) {
           if (I->hasInternalLinkage()) {
             O << TAI->getLCOMMDirective() << name << "," << Size;
@@ -450,13 +447,6 @@ bool PIC16AsmPrinter::doFinalization(Module &M)
       // FALL THROUGH
 
     case GlobalValue::InternalLinkage: 
-      if (I->isConstant()) {
-        const ConstantArray *CVA = dyn_cast<ConstantArray>(C);
-        if (TAI->getCStringSection() && CVA && CVA->isCString()) {
-          SwitchToDataSection(TAI->getCStringSection(), I);
-          break;
-        }
-      }
       break;
 
     default:
