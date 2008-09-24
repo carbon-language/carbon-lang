@@ -114,6 +114,7 @@ void AsmPrinter::SwitchToSection(const Section* NS) {
 
   // FIXME: Make CurrentSection a Section* in the future
   CurrentSection = NewSection;
+  CurrentSection_ = NS;
 
   if (!CurrentSection.empty()) {
     // If section is named we need to switch into it via special '.section'
@@ -174,7 +175,7 @@ bool AsmPrinter::doFinalization(Module &M) {
 
   if (TAI->getSetDirective()) {
     if (!M.alias_empty())
-      SwitchToTextSection(TAI->getTextSection());
+      SwitchToSection(TAI->getTextSection());
 
     O << '\n';
     for (Module::const_alias_iterator I = M.alias_begin(), E = M.alias_end();

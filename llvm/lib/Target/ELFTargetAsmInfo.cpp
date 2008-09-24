@@ -27,7 +27,6 @@ using namespace llvm;
 ELFTargetAsmInfo::ELFTargetAsmInfo(const TargetMachine &TM) {
   ETM = &TM;
 
-  TextSection_ = getUnnamedSection("\t.text", SectionFlags::Code);
   DataSection_ = getUnnamedSection("\t.data", SectionFlags::Writeable);
   BSSSection_  = getUnnamedSection("\t.bss",
                                    SectionFlags::Writeable | SectionFlags::BSS);
@@ -49,7 +48,7 @@ ELFTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
      case Function::InternalLinkage:
      case Function::DLLExportLinkage:
      case Function::ExternalLinkage:
-      return getTextSection_();
+      return getTextSection();
      case Function::WeakLinkage:
      case Function::LinkOnceLinkage:
       std::string Name = UniqueSectionForGlobal(GV, Kind);

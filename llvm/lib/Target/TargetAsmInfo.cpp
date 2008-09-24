@@ -26,8 +26,7 @@
 using namespace llvm;
 
 TargetAsmInfo::TargetAsmInfo() :
-  TextSection("\t.text"),
-  TextSection_(0),
+  TextSection(0),
   DataSection("\t.data"),
   DataSection_(0),
   BSSSection("\t.bss"),
@@ -126,7 +125,7 @@ TargetAsmInfo::TargetAsmInfo() :
   DwarfEHFrameSection(".eh_frame"),
   DwarfExceptionSection(".gcc_except_table"),
   AsmTransCBE(0) {
-  TextSection_ = getUnnamedSection(TextSection);
+  TextSection = getUnnamedSection("\t.text", SectionFlags::Code);
   DataSection_ = getUnnamedSection(DataSection);
 }
 
@@ -300,7 +299,7 @@ TargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
     return getNamedSection(Name.c_str(), Flags);
   } else {
     if (Kind == SectionKind::Text)
-      return getTextSection_();
+      return getTextSection();
     else if (isBSS(Kind) && getBSSSection_())
       return getBSSSection_();
     else if (getReadOnlySection_() && SectionKind::isReadOnly(Kind))

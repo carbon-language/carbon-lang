@@ -131,8 +131,7 @@ namespace llvm {
 
     /// TextSection - Section directive for standard text.
     ///
-    const char *TextSection;              // Defaults to ".text".
-    const Section *TextSection_;
+    const Section *TextSection;              // Defaults to ".text".
 
     /// DataSection - Section directive for standard data.
     ///
@@ -599,11 +598,8 @@ namespace llvm {
 
     // Accessors.
     //
-    const char *getTextSection() const {
+    const Section *getTextSection() const {
       return TextSection;
-    }
-    const Section *getTextSection_() const {
-      return TextSection_;
     }
     const char *getDataSection() const {
       return DataSection;

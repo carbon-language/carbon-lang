@@ -1152,7 +1152,7 @@ private:
 
   /// SectionMap - Provides a unique id per text section.
   ///
-  UniqueVector<std::string> SectionMap;
+  UniqueVector<const Section*> SectionMap;
 
   /// SectionSourceLines - Tracks line numbers per text section.
   ///
@@ -2062,7 +2062,7 @@ private:
     Asm->SwitchToDataSection(TAI->getDwarfRangesSection());
     EmitLabel("section_ranges", 0);
 
-    Asm->SwitchToTextSection(TAI->getTextSection());
+    Asm->SwitchToSection(TAI->getTextSection());
     EmitLabel("text_begin", 0);
     Asm->SwitchToDataSection(TAI->getDataSection());
     EmitLabel("data_begin", 0);
@@ -2353,9 +2353,10 @@ private:
       // Isolate current sections line info.
       const std::vector<SourceLineInfo> &LineInfos = SectionSourceLines[j];
 
-      if (VerboseAsm)
-        Asm->EOL(std::string("Section ") + SectionMap[j + 1]);
-      else
+      if (VerboseAsm) {
+        const Section* S = SectionMap[j + 1];
+        Asm->EOL(std::string("Section ") + S->getName());
+      } else
         Asm->EOL();
 
       // Dwarf assumes we start with first line of first source file.
@@ -2747,14 +2748,14 @@ public:
     if (!ShouldEmitDwarf()) return;
 
     // Standard sections final addresses.
-    Asm->SwitchToTextSection(TAI->getTextSection());
+    Asm->SwitchToSection(TAI->getTextSection());
     EmitLabel("text_end", 0);
     Asm->SwitchToDataSection(TAI->getDataSection());
     EmitLabel("data_end", 0);
 
     // End text sections.
     for (unsigned i = 1, N = SectionMap.size(); i <= N; ++i) {
-      Asm->SwitchToTextSection(SectionMap[i].c_str());
+      Asm->SwitchToSection(SectionMap[i]);
       EmitLabel("section_end", i);
     }
 
@@ -2832,7 +2833,7 @@ public:
 
     if (!LineInfos.empty()) {
       // Get section line info.
-      unsigned ID = SectionMap.insert(Asm->CurrentSection);
+      unsigned ID = SectionMap.insert(Asm->CurrentSection_);
       if (SectionSourceLines.size() < ID) SectionSourceLines.resize(ID);
       std::vector<SourceLineInfo> &SectionLineInfos = SectionSourceLines[ID-1];
       // Append the function info to section info.

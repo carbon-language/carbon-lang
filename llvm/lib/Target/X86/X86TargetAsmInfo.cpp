@@ -433,7 +433,7 @@ X86WinTargetAsmInfo::X86WinTargetAsmInfo(const X86TargetMachine &TM):
   Data64bitsDirective = "\tdq\t";
   HasDotTypeDotSizeDirective = false;
 
-  TextSection = "_text";
+  TextSection = getUnnamedSection("_text", SectionFlags::Code);
   DataSection = "_data";
   JumpTableDataSection = NULL;
   SwitchToSectionDirective = "";

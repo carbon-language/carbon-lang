@@ -92,6 +92,7 @@ namespace llvm {
     /// CurrentSection - The current section we are emitting to.  This is
     /// controlled and used by the SwitchSection method.
     std::string CurrentSection;
+    const Section* CurrentSection_;
 
     /// IsInTextSection - True if the current section we are emitting to is a
     /// text section.

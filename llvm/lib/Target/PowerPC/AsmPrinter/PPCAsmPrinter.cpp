@@ -637,7 +637,7 @@ bool PPCLinuxAsmPrinter::doInitialization(Module &M) {
   // GNU as handles section names wrapped in quotes
   Mang->setUseQuotes(true);
 
-  SwitchToTextSection(TAI->getTextSection());
+  SwitchToSection(TAI->getTextSection());
 
   return Result;
 }
@@ -864,7 +864,7 @@ bool PPCDarwinAsmPrinter::doInitialization(Module &M) {
     SwitchToTextSection("\t.section __TEXT,__symbol_stub1,symbol_stubs,"
                         "pure_instructions,16");
   }
-  SwitchToTextSection(TAI->getTextSection());
+  SwitchToSection(TAI->getTextSection());
 
   return Result;
 }

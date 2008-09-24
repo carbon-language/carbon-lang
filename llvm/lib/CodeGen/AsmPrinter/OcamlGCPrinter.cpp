@@ -62,7 +62,7 @@ static void EmitCamlGlobal(const Module &M, raw_ostream &OS, AsmPrinter &AP,
 
 void OcamlGCMetadataPrinter::beginAssembly(raw_ostream &OS, AsmPrinter &AP,
                                            const TargetAsmInfo &TAI) {
-  AP.SwitchToTextSection(TAI.getTextSection());
+  AP.SwitchToSection(TAI.getTextSection());
   EmitCamlGlobal(getModule(), OS, AP, TAI, "code_begin");
   
   AP.SwitchToDataSection(TAI.getDataSection());
@@ -97,7 +97,7 @@ void OcamlGCMetadataPrinter::finishAssembly(raw_ostream &OS, AsmPrinter &AP,
     AddressAlignLog = 3;
   }
 
-  AP.SwitchToTextSection(TAI.getTextSection());
+  AP.SwitchToSection(TAI.getTextSection());
   EmitCamlGlobal(getModule(), OS, AP, TAI, "code_end");
   
   AP.SwitchToDataSection(TAI.getDataSection());
