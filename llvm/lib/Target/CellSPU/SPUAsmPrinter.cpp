@@ -486,7 +486,7 @@ LinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF)
 
 bool LinuxAsmPrinter::doInitialization(Module &M) {
   bool Result = AsmPrinter::doInitialization(M);
-  SwitchToTextSection(TAI->getTextSection());
+  SwitchToTextSection("\t.text");
   // Emit initial debug information.
   DW.BeginModule(&M);
   MMI = getAnalysisToUpdate<MachineModuleInfo>();
@@ -556,7 +556,7 @@ bool LinuxAsmPrinter::doFinalization(Module &M) {
         if (I->isConstant()) {
           const ConstantArray *CVA = dyn_cast<ConstantArray>(C);
           if (TAI->getCStringSection() && CVA && CVA->isCString()) {
-            SwitchToDataSection(TAI->getCStringSection(), I);
+            SwitchToDataSection("\t.cstring", I);
             break;
           }
         }
