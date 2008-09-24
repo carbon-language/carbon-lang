@@ -5784,7 +5784,7 @@ SDValue X86TargetLowering::LowerFLT_ROUNDS_(SDValue Op, SelectionDAG &DAG) {
   SDValue StackSlot = DAG.getFrameIndex(SSFI, getPointerTy());
 
   SDValue Chain = DAG.getNode(X86ISD::FNSTCW16m, MVT::Other,
-                                DAG.getEntryNode(), StackSlot);
+                              DAG.getEntryNode(), StackSlot);
 
   // Load FP Control Word from stack slot
   SDValue CWD = DAG.getLoad(MVT::i16, Chain, StackSlot, NULL, 0);
@@ -5893,10 +5893,10 @@ SDValue X86TargetLowering::LowerCMP_SWAP(SDValue Op, SelectionDAG &DAG) {
   SDValue cpIn = DAG.getCopyToReg(Op.getOperand(0), Reg,
                                     Op.getOperand(2), SDValue());
   SDValue Ops[] = { cpIn.getValue(0),
-                      Op.getOperand(1),
-                      Op.getOperand(3),
-                      DAG.getTargetConstant(size, MVT::i8),
-                      cpIn.getValue(1) };
+                    Op.getOperand(1),
+                    Op.getOperand(3),
+                    DAG.getTargetConstant(size, MVT::i8),
+                    cpIn.getValue(1) };
   SDVTList Tys = DAG.getVTList(MVT::Other, MVT::Flag);
   SDValue Result = DAG.getNode(X86ISD::LCMPXCHG_DAG, Tys, Ops, 5);
   SDValue cpOut = 
@@ -5927,8 +5927,8 @@ SDNode* X86TargetLowering::ExpandATOMIC_CMP_SWAP(SDNode* Op,
   swapInH = DAG.getCopyToReg(swapInL.getValue(0), X86::ECX,
                              swapInH, swapInL.getValue(1));
   SDValue Ops[] = { swapInH.getValue(0),
-                      Op->getOperand(1),
-                      swapInH.getValue(1)};
+                    Op->getOperand(1),
+                    swapInH.getValue(1) };
   SDVTList Tys = DAG.getVTList(MVT::Other, MVT::Flag);
   SDValue Result = DAG.getNode(X86ISD::LCMPXCHG8_DAG, Tys, Ops, 3);
   SDValue cpOutL = DAG.getCopyFromReg(Result.getValue(0), X86::EAX, MVT::i32, 
@@ -6775,8 +6775,8 @@ static SDValue PerformShuffleCombine(SDNode *N, SelectionDAG &DAG,
 
 /// PerformBuildVectorCombine - build_vector 0,(load i64 / f64) -> movq / movsd.
 static SDValue PerformBuildVectorCombine(SDNode *N, SelectionDAG &DAG,
-                                           const X86Subtarget *Subtarget,
-                                           const TargetLowering &TLI) {
+                                         const X86Subtarget *Subtarget,
+                                         const TargetLowering &TLI) {
   unsigned NumOps = N->getNumOperands();
 
   // Ignore single operand BUILD_VECTOR.
@@ -6812,7 +6812,11 @@ static SDValue PerformBuildVectorCombine(SDNode *N, SelectionDAG &DAG,
   if (LD->getExtensionType() != ISD::NON_EXTLOAD)
     return SDValue();
   
-  return DAG.getNode(X86ISD::VZEXT_LOAD, VT, LD->getChain(), LD->getBasePtr());
+  SDVTList Tys = DAG.getVTList(VT, MVT::Other);
+  SDValue Ops[] = { LD->getChain(), LD->getBasePtr() };
+  SDValue ResNode = DAG.getNode(X86ISD::VZEXT_LOAD, Tys, Ops, 2);
+  DAG.ReplaceAllUsesOfValueWith(SDValue(Base, 1), ResNode.getValue(1));
+  return ResNode;
 }                                           
 
 /// PerformSELECTCombine - Do target-specific dag combines on SELECT nodes.
