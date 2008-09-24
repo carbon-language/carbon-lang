@@ -146,8 +146,7 @@ namespace llvm {
     /// ReadOnlySection - This is the directive that is emitted to switch to a
     /// read-only section for constant data (e.g. data declared const,
     /// jump tables).
-    const char *ReadOnlySection;          // Defaults to NULL
-    const Section *ReadOnlySection_;
+    const Section *ReadOnlySection;       // Defaults to NULL
 
     /// SmallDataSection - This is the directive that is emitted to switch to a
     /// small data section.
@@ -597,11 +596,8 @@ namespace llvm {
     const Section *getBSSSection_() const {
       return BSSSection_;
     }
-    const char *getReadOnlySection() const {
+    const Section *getReadOnlySection() const {
       return ReadOnlySection;
-    }
-    const Section *getReadOnlySection_() const {
-      return ReadOnlySection_;
     }
     const Section *getSmallDataSection() const {
       return SmallDataSection;

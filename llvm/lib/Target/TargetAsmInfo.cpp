@@ -31,7 +31,6 @@ TargetAsmInfo::TargetAsmInfo() :
   BSSSection("\t.bss"),
   BSSSection_(0),
   ReadOnlySection(0),
-  ReadOnlySection_(0),
   SmallDataSection(0),
   SmallBSSSection(0),
   SmallRODataSection(0),
@@ -293,8 +292,8 @@ TargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
       return getTextSection();
     else if (isBSS(Kind) && getBSSSection_())
       return getBSSSection_();
-    else if (getReadOnlySection_() && SectionKind::isReadOnly(Kind))
-      return getReadOnlySection_();
+    else if (getReadOnlySection() && SectionKind::isReadOnly(Kind))
+      return getReadOnlySection();
   }
 
   return getDataSection();

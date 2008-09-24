@@ -38,12 +38,12 @@ DarwinTargetAsmInfo::DarwinTargetAsmInfo(const TargetMachine &TM) {
   // there, if needed.
   SixteenByteConstantSection = 0;
 
-  ReadOnlySection_ = getUnnamedSection("\t.const\n", SectionFlags::None);
+  ReadOnlySection = getUnnamedSection("\t.const\n", SectionFlags::None);
 
   TextCoalSection =
     getNamedSection("\t__TEXT,__textcoal_nt,coalesced,pure_instructions",
                     SectionFlags::Code);
-  ConstDataCoalSection = getBamedSection("\t__DATA,__const_coal,coalesced",
+  ConstDataCoalSection = getNamedSection("\t__DATA,__const_coal,coalesced",
                                          SectionFlags::None);
   ConstDataSection = getUnnamedSection(".const_data", SectionFlags::None);
   DataCoalSection = getNamedSection("\t__DATA,__datacoal_nt,coalesced",
@@ -92,7 +92,7 @@ DarwinTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
       return (isWeak ? DataCoalSection : DataSection);
    case SectionKind::ROData:
     return (isWeak ? ConstDataCoalSection :
-            (isNonStatic ? ConstDataSection : getReadOnlySection_()));
+            (isNonStatic ? ConstDataSection : getReadOnlySection()));
    case SectionKind::RODataMergeStr:
     return (isWeak ?
             ConstDataCoalSection :
@@ -122,7 +122,7 @@ DarwinTargetAsmInfo::MergeableStringSection(const GlobalVariable *GV) const {
       return getCStringSection_();
   }
 
-  return getReadOnlySection_();
+  return getReadOnlySection();
 }
 
 const Section*
@@ -144,7 +144,7 @@ DarwinTargetAsmInfo::MergeableConstSection(const Type *Ty) const {
   else if (Size == 16 && SixteenByteConstantSection)
     return SixteenByteConstantSection;
 
-  return getReadOnlySection_();
+  return getReadOnlySection();
 }
 
 const Section*
@@ -152,7 +152,7 @@ DarwinTargetAsmInfo::SelectSectionForMachineConst(const Type *Ty) const {
   const Section* S = MergeableConstSection(Ty);
 
   // Handle weird special case, when compiling PIC stuff.
-  if (S == getReadOnlySection_() &&
+  if (S == getReadOnlySection() &&
       DTM->getRelocationModel() != Reloc::Static)
     return ConstDataSection;
 

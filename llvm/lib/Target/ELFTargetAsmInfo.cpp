@@ -29,7 +29,7 @@ ELFTargetAsmInfo::ELFTargetAsmInfo(const TargetMachine &TM) {
 
   BSSSection_  = getUnnamedSection("\t.bss",
                                    SectionFlags::Writeable | SectionFlags::BSS);
-  ReadOnlySection_ = getNamedSection("\t.rodata", SectionFlags::None);
+  ReadOnlySection = getNamedSection("\t.rodata", SectionFlags::None);
   TLSDataSection = getNamedSection("\t.tdata",
                                    SectionFlags::Writeable | SectionFlags::TLS);
   TLSBSSSection = getNamedSection("\t.tbss",
@@ -70,7 +70,7 @@ ELFTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
         return getBSSSection_();
        case SectionKind::ROData:
        case SectionKind::SmallROData:
-        return getReadOnlySection_();
+        return getReadOnlySection();
        case SectionKind::RODataMergeStr:
         return MergeableStringSection(GVar);
        case SectionKind::RODataMergeConst:
@@ -116,7 +116,7 @@ ELFTargetAsmInfo::MergeableConstSection(const Type *Ty) const {
                                                        Size));
   }
 
-  return getReadOnlySection_();
+  return getReadOnlySection();
 }
 
 const Section*
@@ -143,7 +143,7 @@ ELFTargetAsmInfo::MergeableStringSection(const GlobalVariable *GV) const {
     return getNamedSection(Name.c_str(), Flags);
   }
 
-  return getReadOnlySection_();
+  return getReadOnlySection();
 }
 
 std::string ELFTargetAsmInfo::printSectionFlags(unsigned flags) const {

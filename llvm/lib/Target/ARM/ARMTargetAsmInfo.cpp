@@ -72,7 +72,6 @@ ARMDarwinTargetAsmInfo::ARMDarwinTargetAsmInfo(const ARMTargetMachine &TM):
   ProtectedDirective = NULL;
   JumpTableDataSection = ".const";
   CStringSection = "\t.cstring";
-  ReadOnlySection = "\t.const\n";
   HasDotTypeDotSizeDirective = false;
   NeedsIndirectEncoding = true;
   if (TM.getRelocationModel() == Reloc::Static) {
@@ -112,7 +111,6 @@ ARMELFTargetAsmInfo::ARMELFTargetAsmInfo(const ARMTargetMachine &TM):
   HasLEB128 = true;
   AbsoluteDebugSectionOffsets = true;
   CStringSection = ".rodata.str";
-  ReadOnlySection = "\t.section\t.rodata\n";
   PrivateGlobalPrefix = ".L";
   WeakRefDirective = "\t.weak\t";
   SetDirective = "\t.set\t";

@@ -150,8 +150,6 @@ X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const X86TargetMachine &TM):
     SixteenByteConstantSection = getUnnamedSection("\t.literal16\n",
                                                    SectionFlags::Mergeable);
   }
-  ReadOnlySection = "\t.const\n";
-
   LCOMMDirective = "\t.lcomm\t";
   SwitchToSectionDirective = "\t.section ";
   StringConstantPrefix = "\1LC";
@@ -229,7 +227,6 @@ X86DarwinTargetAsmInfo::PreferredEHDataFormat(DwarfEncoding::Target Reason,
 X86ELFTargetAsmInfo::X86ELFTargetAsmInfo(const X86TargetMachine &TM):
   X86TargetAsmInfo(TM), ELFTargetAsmInfo(TM) {
 
-  ReadOnlySection = ".rodata";
   CStringSection = ".rodata.str";
   PrivateGlobalPrefix = ".L";
   WeakRefDirective = "\t.weak\t";

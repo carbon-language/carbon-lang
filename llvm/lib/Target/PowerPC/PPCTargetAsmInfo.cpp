@@ -43,7 +43,6 @@ PPCDarwinTargetAsmInfo::PPCDarwinTargetAsmInfo(const PPCTargetMachine &TM):
   ConstantPoolSection = "\t.const\t";
   JumpTableDataSection = ".const";
   CStringSection = "\t.cstring";
-  ReadOnlySection = "\t.const\n";
   if (TM.getRelocationModel() == Reloc::Static) {
     StaticCtorsSection = ".constructor";
     StaticDtorsSection = ".destructor";
@@ -137,7 +136,6 @@ PPCLinuxTargetAsmInfo::PPCLinuxTargetAsmInfo(const PPCTargetMachine &TM) :
   DwarfRangesSection =  "\t.section\t.debug_ranges,\"\",@progbits";
   DwarfMacInfoSection = "\t.section\t.debug_macinfo,\"\",@progbits";
 
-  ReadOnlySection = "\t.section\t.rodata";
   PCSymbol = ".";
 
   // Set up DWARF directives

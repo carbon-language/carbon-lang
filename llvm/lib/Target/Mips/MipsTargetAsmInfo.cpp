@@ -30,7 +30,6 @@ MipsTargetAsmInfo::MipsTargetAsmInfo(const MipsTargetMachine &TM):
   PrivateGlobalPrefix         = "$";
   JumpTableDataSection        = "\t.rdata";
   CommentString               = "#";
-  ReadOnlySection             = "\t.rdata";
   ZeroDirective               = "\t.space\t";
   BSSSection                  = "\t.section\t.bss";
   CStringSection              = ".rodata.str";
@@ -38,9 +37,10 @@ MipsTargetAsmInfo::MipsTargetAsmInfo(const MipsTargetMachine &TM):
   if (!Subtarget->hasABICall()) {
     JumpTableDirective = "\t.word\t";
     SmallDataSection = getNamedSection("\t.sdata", SectionFlags::Writeable);
-    SmallBSSSection = getNamedSection("\t.sbss", SectionFlags::Writeable | 
+    SmallBSSSection = getNamedSection("\t.sbss",
+                                      SectionFlags::Writeable |
                                       SectionFlags::BSS);
-  } else 
+  } else
     JumpTableDirective = "\t.gpword\t";
 
 }
