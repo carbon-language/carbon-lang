@@ -46,7 +46,7 @@ bool DeadMachineInstructionElim::runOnMachineFunction(MachineFunction &MF) {
   const MachineRegisterInfo &MRI = MF.getRegInfo();
   const TargetInstrInfo &TII = *MF.getTarget().getInstrInfo();
   BitVector LivePhysRegs;
-  bool SawStore = true;
+  bool SawStore;
 
   // Compute a bitvector to represent all non-allocatable physregs.
   BitVector NonAllocatableRegs = TRI.getAllocatableSet(MF);
@@ -79,6 +79,7 @@ bool DeadMachineInstructionElim::runOnMachineFunction(MachineFunction &MF) {
       MachineInstr *MI = &*MII;
 
       // Don't delete instructions with side effects.
+      SawStore = false;
       if (MI->isSafeToMove(&TII, SawStore)) {
         // Examine each operand.
         bool AllDefsDead = true;
