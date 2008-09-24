@@ -25,98 +25,106 @@
 
 using namespace llvm;
 
-TargetAsmInfo::TargetAsmInfo() :
-  TextSection(0),
-  DataSection(0),
-  BSSSection("\t.bss"),
-  BSSSection_(0),
-  ReadOnlySection(0),
-  SmallDataSection(0),
-  SmallBSSSection(0),
-  SmallRODataSection(0),
-  TLSDataSection(0),
-  TLSBSSSection(0),
-  ZeroFillDirective(0),
-  NonexecutableStackDirective(0),
-  NeedsSet(false),
-  MaxInstLength(4),
-  PCSymbol("$"),
-  SeparatorChar(';'),
-  CommentString("#"),
-  GlobalPrefix(""),
-  PrivateGlobalPrefix("."),
-  LessPrivateGlobalPrefix(""),
-  JumpTableSpecialLabelPrefix(0),
-  GlobalVarAddrPrefix(""),
-  GlobalVarAddrSuffix(""),
-  FunctionAddrPrefix(""),
-  FunctionAddrSuffix(""),
-  PersonalityPrefix(""),
-  PersonalitySuffix(""),
-  NeedsIndirectEncoding(false),
-  InlineAsmStart("#APP"),
-  InlineAsmEnd("#NO_APP"),
-  AssemblerDialect(0),
-  StringConstantPrefix(".str"),
-  ZeroDirective("\t.zero\t"),
-  ZeroDirectiveSuffix(0),
-  AsciiDirective("\t.ascii\t"),
-  AscizDirective("\t.asciz\t"),
-  Data8bitsDirective("\t.byte\t"),
-  Data16bitsDirective("\t.short\t"),
-  Data32bitsDirective("\t.long\t"),
-  Data64bitsDirective("\t.quad\t"),
-  AlignDirective("\t.align\t"),
-  AlignmentIsInBytes(true),
-  TextAlignFillValue(0),
-  SwitchToSectionDirective("\t.section\t"),
-  TextSectionStartSuffix(""),
-  DataSectionStartSuffix(""),
-  SectionEndDirectiveSuffix(0),
-  ConstantPoolSection("\t.section .rodata"),
-  JumpTableDataSection("\t.section .rodata"),
-  JumpTableDirective(0),
-  CStringSection(0),
-  CStringSection_(0),
-  StaticCtorsSection("\t.section .ctors,\"aw\",@progbits"),
-  StaticDtorsSection("\t.section .dtors,\"aw\",@progbits"),
-  GlobalDirective("\t.globl\t"),
-  SetDirective(0),
-  LCOMMDirective(0),
-  COMMDirective("\t.comm\t"),
-  COMMDirectiveTakesAlignment(true),
-  HasDotTypeDotSizeDirective(true),
-  UsedDirective(0),
-  WeakRefDirective(0),
-  WeakDefDirective(0),
-  HiddenDirective("\t.hidden\t"),
-  ProtectedDirective("\t.protected\t"),
-  AbsoluteDebugSectionOffsets(false),
-  AbsoluteEHSectionOffsets(false),
-  HasLEB128(false),
-  HasDotLocAndDotFile(false),
-  SupportsDebugInformation(false),
-  SupportsExceptionHandling(false),
-  DwarfRequiresFrameSection(true),
-  GlobalEHDirective(0),
-  SupportsWeakOmittedEHFrame(true),
-  DwarfSectionOffsetDirective(0),
-  DwarfAbbrevSection(".debug_abbrev"),
-  DwarfInfoSection(".debug_info"),
-  DwarfLineSection(".debug_line"),
-  DwarfFrameSection(".debug_frame"),
-  DwarfPubNamesSection(".debug_pubnames"),
-  DwarfPubTypesSection(".debug_pubtypes"),
-  DwarfStrSection(".debug_str"),
-  DwarfLocSection(".debug_loc"),
-  DwarfARangesSection(".debug_aranges"),
-  DwarfRangesSection(".debug_ranges"),
-  DwarfMacInfoSection(".debug_macinfo"),
-  DwarfEHFrameSection(".eh_frame"),
-  DwarfExceptionSection(".gcc_except_table"),
-  AsmTransCBE(0) {
+void TargetAsmInfo::fillDefaultValues() {
+  BSSSection = "\t.bss";
+  BSSSection_ = 0;
+  ReadOnlySection = 0;
+  SmallDataSection = 0;
+  SmallBSSSection = 0;
+  SmallRODataSection = 0;
+  TLSDataSection = 0;
+  TLSBSSSection = 0;
+  ZeroFillDirective = 0;
+  NonexecutableStackDirective = 0;
+  NeedsSet = false;
+  MaxInstLength = 4;
+  PCSymbol = "$";
+  SeparatorChar = ';';
+  CommentString = "#";
+  GlobalPrefix = "";
+  PrivateGlobalPrefix = ".";
+  LessPrivateGlobalPrefix = "";
+  JumpTableSpecialLabelPrefix = 0;
+  GlobalVarAddrPrefix = "";
+  GlobalVarAddrSuffix = "";
+  FunctionAddrPrefix = "";
+  FunctionAddrSuffix = "";
+  PersonalityPrefix = "";
+  PersonalitySuffix = "";
+  NeedsIndirectEncoding = false;
+  InlineAsmStart = "#APP";
+  InlineAsmEnd = "#NO_APP";
+  AssemblerDialect = 0;
+  StringConstantPrefix = ".str";
+  ZeroDirective = "\t.zero\t";
+  ZeroDirectiveSuffix = 0;
+  AsciiDirective = "\t.ascii\t";
+  AscizDirective = "\t.asciz\t";
+  Data8bitsDirective = "\t.byte\t";
+  Data16bitsDirective = "\t.short\t";
+  Data32bitsDirective = "\t.long\t";
+  Data64bitsDirective = "\t.quad\t";
+  AlignDirective = "\t.align\t";
+  AlignmentIsInBytes = true;
+  TextAlignFillValue = 0;
+  SwitchToSectionDirective = "\t.section\t";
+  TextSectionStartSuffix = "";
+  DataSectionStartSuffix = "";
+  SectionEndDirectiveSuffix = 0;
+  ConstantPoolSection = "\t.section .rodata";
+  JumpTableDataSection = "\t.section .rodata";
+  JumpTableDirective = 0;
+  CStringSection = 0;
+  CStringSection_ = 0;
+  // FIXME: Flags are ELFish - replace with normal section stuff.
+  StaticCtorsSection = "\t.section .ctors,\"aw\",@progbits";
+  StaticDtorsSection = "\t.section .dtors,\"aw\",@progbits";
+  GlobalDirective = "\t.globl\t";
+  SetDirective = 0;
+  LCOMMDirective = 0;
+  COMMDirective = "\t.comm\t";
+  COMMDirectiveTakesAlignment = true;
+  HasDotTypeDotSizeDirective = true;
+  UsedDirective = 0;
+  WeakRefDirective = 0;
+  WeakDefDirective = 0;
+  // FIXME: These are ELFish - move to ELFTAI.
+  HiddenDirective = "\t.hidden\t";
+  ProtectedDirective = "\t.protected\t";
+  AbsoluteDebugSectionOffsets = false;
+  AbsoluteEHSectionOffsets = false;
+  HasLEB128 = false;
+  HasDotLocAndDotFile = false;
+  SupportsDebugInformation = false;
+  SupportsExceptionHandling = false;
+  DwarfRequiresFrameSection = true;
+  GlobalEHDirective = 0;
+  SupportsWeakOmittedEHFrame = true;
+  DwarfSectionOffsetDirective = 0;
+  DwarfAbbrevSection = ".debug_abbrev";
+  DwarfInfoSection = ".debug_info";
+  DwarfLineSection = ".debug_line";
+  DwarfFrameSection = ".debug_frame";
+  DwarfPubNamesSection = ".debug_pubnames";
+  DwarfPubTypesSection = ".debug_pubtypes";
+  DwarfStrSection = ".debug_str";
+  DwarfLocSection = ".debug_loc";
+  DwarfARangesSection = ".debug_aranges";
+  DwarfRangesSection = ".debug_ranges";
+  DwarfMacInfoSection = ".debug_macinfo";
+  DwarfEHFrameSection = ".eh_frame";
+  DwarfExceptionSection = ".gcc_except_table";
+  AsmTransCBE = 0;
   TextSection = getUnnamedSection("\t.text", SectionFlags::Code);
   DataSection = getUnnamedSection("\t.data", SectionFlags::Writeable);
+}
+
+TargetAsmInfo::TargetAsmInfo() {
+  fillDefaultValues();
+}
+
+TargetAsmInfo::TargetAsmInfo(const TargetMachine &TM) {
+  fillDefaultValues();
 }
 
 TargetAsmInfo::~TargetAsmInfo() {

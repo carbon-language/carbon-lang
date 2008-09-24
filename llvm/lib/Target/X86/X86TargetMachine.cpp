@@ -54,7 +54,7 @@ const TargetAsmInfo *X86TargetMachine::createTargetAsmInfo() const {
      case X86Subtarget::isWindows:
       return new X86WinTargetAsmInfo(*this);
      default:
-      return new X86TargetAsmInfo(*this);
+      return new X86GenericTargetAsmInfo(*this);
     }
 }
 

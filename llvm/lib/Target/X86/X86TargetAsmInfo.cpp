@@ -25,27 +25,20 @@
 using namespace llvm;
 using namespace llvm::dwarf;
 
-static const char *const x86_asm_table[] = {
-                                      "{si}", "S",
-                                      "{di}", "D",
-                                      "{ax}", "a",
-                                      "{cx}", "c",
-                                      "{memory}", "memory",
-                                      "{flags}", "",
-                                      "{dirflag}", "",
-                                      "{fpsr}", "",
-                                      "{cc}", "cc",
-                                      0,0};
+const char *const llvm::x86_asm_table[] = {
+  "{si}", "S",
+  "{di}", "D",
+  "{ax}", "a",
+  "{cx}", "c",
+  "{memory}", "memory",
+  "{flags}", "",
+  "{dirflag}", "",
+  "{fpsr}", "",
+  "{cc}", "cc",
+  0,0};
 
-X86TargetAsmInfo::X86TargetAsmInfo(const X86TargetMachine &TM) {
-  const X86Subtarget *Subtarget = &TM.getSubtarget<X86Subtarget>();
-
-  AsmTransCBE = x86_asm_table;
-
-  AssemblerDialect = Subtarget->getAsmFlavor();
-}
-
-bool X86TargetAsmInfo::LowerToBSwap(CallInst *CI) const {
+template <class BaseTAI>
+bool X86TargetAsmInfo<BaseTAI>::LowerToBSwap(CallInst *CI) const {
   // FIXME: this should verify that we are targetting a 486 or better.  If not,
   // we will turn this bswap into something that will be lowered to logical ops
   // instead of emitting the bswap asm.  For now, we don't support 486 or lower
@@ -74,7 +67,8 @@ bool X86TargetAsmInfo::LowerToBSwap(CallInst *CI) const {
   return true;
 }
 
-bool X86TargetAsmInfo::ExpandInlineAsm(CallInst *CI) const {
+template <class BaseTAI>
+bool X86TargetAsmInfo<BaseTAI>::ExpandInlineAsm(CallInst *CI) const {
   InlineAsm *IA = cast<InlineAsm>(CI->getCalledValue());
   std::vector<InlineAsm::ConstraintInfo> Constraints = IA->ParseConstraints();
 
@@ -125,7 +119,7 @@ bool X86TargetAsmInfo::ExpandInlineAsm(CallInst *CI) const {
 }
 
 X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const X86TargetMachine &TM):
-  X86TargetAsmInfo(TM), DarwinTargetAsmInfo(TM) {
+  X86TargetAsmInfo<DarwinTargetAsmInfo>(TM) {
   const X86Subtarget* Subtarget = &DTM->getSubtarget<X86Subtarget>();
   bool is64Bit = Subtarget->is64Bit();
 
@@ -225,7 +219,7 @@ X86DarwinTargetAsmInfo::PreferredEHDataFormat(DwarfEncoding::Target Reason,
 }
 
 X86ELFTargetAsmInfo::X86ELFTargetAsmInfo(const X86TargetMachine &TM):
-  X86TargetAsmInfo(TM), ELFTargetAsmInfo(TM) {
+  X86TargetAsmInfo<ELFTargetAsmInfo>(TM) {
 
   CStringSection = ".rodata.str";
   PrivateGlobalPrefix = ".L";
@@ -302,7 +296,7 @@ X86ELFTargetAsmInfo::PreferredEHDataFormat(DwarfEncoding::Target Reason,
 }
 
 X86COFFTargetAsmInfo::X86COFFTargetAsmInfo(const X86TargetMachine &TM):
-  X86TargetAsmInfo(TM) {
+  X86GenericTargetAsmInfo(TM) {
   X86TM = &TM;
 
   GlobalPrefix = "_";
@@ -408,7 +402,7 @@ std::string X86COFFTargetAsmInfo::printSectionFlags(unsigned flags) const {
 }
 
 X86WinTargetAsmInfo::X86WinTargetAsmInfo(const X86TargetMachine &TM):
-  X86TargetAsmInfo(TM) {
+  X86GenericTargetAsmInfo(TM) {
   GlobalPrefix = "_";
   CommentString = ";";
 
