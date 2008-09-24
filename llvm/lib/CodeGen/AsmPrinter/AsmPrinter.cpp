@@ -185,7 +185,7 @@ bool AsmPrinter::doFinalization(Module &M) {
 
       const GlobalValue *GV = cast<GlobalValue>(I->getAliasedGlobal());
       Target = Mang->getValueName(GV);
-      
+
       if (I->hasExternalLinkage() || !TAI->getWeakRefDirective())
         O << "\t.globl\t" << Name << '\n';
       else if (I->hasWeakLinkage())
@@ -193,13 +193,7 @@ bool AsmPrinter::doFinalization(Module &M) {
       else if (!I->hasInternalLinkage())
         assert(0 && "Invalid alias linkage");
 
-      if (I->hasHiddenVisibility()) {
-        if (const char *Directive = TAI->getHiddenDirective())
-          O << Directive << Name << '\n';
-      } else if (I->hasProtectedVisibility()) {
-        if (const char *Directive = TAI->getProtectedDirective())
-          O << Directive << Name << '\n';
-      }
+      printVisibility(Name, I->getVisibility());
 
       O << TAI->getSetDirective() << ' ' << Name << ", " << Target << '\n';
 
