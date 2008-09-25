@@ -4940,8 +4940,11 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
              "Don't know how to handle indirect register inputs yet!");
 
       // Copy the input into the appropriate registers.
-      assert(!OpInfo.AssignedRegs.Regs.empty() &&
-             "Couldn't allocate input reg!");
+      if (OpInfo.AssignedRegs.Regs.empty()) {
+        cerr << "Couldn't allocate output reg for constraint '"
+             << OpInfo.ConstraintCode << "'!\n";
+        exit(1);
+      }
 
       OpInfo.AssignedRegs.getCopyToRegs(InOperandVal, DAG, Chain, &Flag);
       
