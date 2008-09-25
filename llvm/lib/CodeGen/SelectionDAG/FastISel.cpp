@@ -75,16 +75,17 @@ unsigned FastISel::getRegForValue(Value *V) {
   } else if (isa<UndefValue>(V)) {
     Reg = createResultReg(TLI.getRegClassFor(VT));
     BuildMI(MBB, TII.get(TargetInstrInfo::IMPLICIT_DEF), Reg);
-  } else {
-    return 0;
   }
   
+  // If target-independent code couldn't handle the value, give target-specific
+  // code a try.
   if (!Reg && isa<Constant>(V))
     Reg = TargetMaterializeConstant(cast<Constant>(V));
   
   // Don't cache constant materializations in the general ValueMap.
   // To do so would require tracking what uses they dominate.
-  LocalValueMap[V] = Reg;
+  if (Reg != 0)
+    LocalValueMap[V] = Reg;
   return Reg;
 }
 
