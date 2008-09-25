@@ -239,7 +239,13 @@ public:
 ///
 class LLVMTargetMachine : public TargetMachine {
 protected: // Can only create subclasses.
-    LLVMTargetMachine() { }
+  LLVMTargetMachine() { }
+
+  /// addCommonCodeGenPasses - Add standard LLVM codegen passes used for
+  /// both emitting to assembly files or machine code output.
+  ///
+  bool addCommonCodeGenPasses(PassManagerBase &, bool /*Fast*/);
+
 public:
   
   /// addPassesToEmitFile - Add passes to the specified pass manager to get the
