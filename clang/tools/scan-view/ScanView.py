@@ -62,9 +62,13 @@ kReportReplacements.append((re.compile('<!-- REPORTSUMMARYEXTRA -->'),
 
 # Insert report crashes link.
 
-kReportReplacements.append((re.compile('<!-- REPORTCRASHES -->'),
-                            '<br>These files will automatically be attached to ' +
-                            'reports filed here: <a href="report_crashes">Report Crashes</a>.'))
+# Disabled for the time being until we decide exactly when this should
+# be enabled. Also the radar reporter needs to be fixed to report
+# multiple files.
+
+#kReportReplacements.append((re.compile('<!-- REPORTCRASHES -->'),
+#                            '<br>These files will automatically be attached to ' +
+#                            'reports filed here: <a href="report_crashes">Report Crashes</a>.'))
 
 ###
 # Other simple parameters
