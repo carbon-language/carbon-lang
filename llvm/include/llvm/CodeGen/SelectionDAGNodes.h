@@ -480,8 +480,8 @@ namespace ISD {
     
     // RET - Return from function.  The first operand is the chain,
     // and any subsequent operands are pairs of return value and return value
-    // signness for the function.  This operation can have variable number of
-    // operands.
+    // attributes (see CALL for description of attributes) for the function.
+    // This operation can have variable number of operands.
     RET,
 
     // INLINEASM - Represents an inline asm block.  This node always has two

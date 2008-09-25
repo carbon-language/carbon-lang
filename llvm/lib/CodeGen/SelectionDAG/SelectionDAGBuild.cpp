@@ -913,7 +913,8 @@ void SelectionDAGLowering::visitRet(ReturnInst &I) {
       MVT VT = ValueVTs[j];
 
       // FIXME: C calling convention requires the return type to be promoted to
-      // at least 32-bit. But this is not necessary for non-C calling conventions.
+      // at least 32-bit. But this is not necessary for non-C calling
+      // conventions.
       if (VT.isInteger()) {
         MVT MinVT = TLI.getRegisterType(MVT::i32);
         if (VT.bitsLT(MinVT))
@@ -934,9 +935,13 @@ void SelectionDAGLowering::visitRet(ReturnInst &I) {
       getCopyToParts(DAG, SDValue(RetOp.getNode(), RetOp.getResNo() + j),
                      &Parts[0], NumParts, PartVT, ExtendKind);
 
+      // 'inreg' on function refers to return value
+      ISD::ArgFlagsTy Flags = ISD::ArgFlagsTy();
+      if (F->paramHasAttr(0, ParamAttr::InReg))
+        Flags.setInReg();
       for (unsigned i = 0; i < NumParts; ++i) {
         NewValues.push_back(Parts[i]);
-        NewValues.push_back(DAG.getArgFlags(ISD::ArgFlagsTy()));
+        NewValues.push_back(DAG.getArgFlags(Flags));
       }
     }
   }

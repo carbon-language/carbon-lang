@@ -845,9 +845,11 @@ declare i32 @atoi(i8*) nounwind readonly
     a call to this function.</dd>
 
     <dt><tt>inreg</tt></dt>
-    <dd>This indicates that the parameter should be placed in register (if
-    possible) during assembling function call. Support for this attribute is
-    target-specific</dd>
+    <dd>This indicates that this parameter or return value should be treated
+    in a special target-dependent fashion during while emitting code for a
+    function call or return (usually, by putting it in a register as opposed 
+    to memory; in some places it is used to distinguish between two different
+    kinds of registers).  Use of this attribute is target-specific</dd>
 
     <dt><tt>byval</tt></dt>
     <dd>This indicates that the pointer parameter should really be passed by

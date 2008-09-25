@@ -43,10 +43,14 @@ def RetCC_X86Common : CallingConv<[
 
 // X86-32 C return-value convention.
 def RetCC_X86_32_C : CallingConv<[
-  // The X86-32 calling convention returns FP values in ST0, otherwise it is the
-  // same as the common X86 calling conv.
-  CCIfType<[f32], CCAssignToReg<[ST0, ST1]>>,
-  CCIfType<[f64], CCAssignToReg<[ST0, ST1]>>,
+  // The X86-32 calling convention returns FP values in ST0, unless marked
+  // with "inreg" (used here to distinguish one kind of reg from another,
+  // weirdly; this is really the sse-regparm calling convention) in which
+  // case they use XMM0, otherwise it is the same as the common X86 calling
+  // conv.
+  CCIfInReg<CCIfSubtarget<"hasSSE2()", 
+    CCIfType<[f32, f64], CCAssignToReg<[XMM0,XMM1,XMM2]>>>>,
+  CCIfType<[f32,f64], CCAssignToReg<[ST0, ST1]>>,
   CCDelegateTo<RetCC_X86Common>
 ]>;
 
