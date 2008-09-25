@@ -452,7 +452,7 @@ sub Postprocess {
   # to update the common prefix directory.
   if (-d "$Dir/crashes") {
     opendir(DIR, "$Dir/crashes");
-    my @files = grep { /[.]info$/; } readdir(DIR);
+    my @files = grep { /[.]info.txt$/; } readdir(DIR);
     closedir(DIR);
     foreach my $file (@files) {
       open IN, "$Dir/crashes/$file" or DieDiag("cannot open $file\n");
@@ -656,7 +656,7 @@ ENDTEXT
   if ($Crashes) {
     # Read the crash directory for files.
     opendir(DIR, "$Dir/crashes");
-    my @files = grep { /[.]info$/ } readdir(DIR);
+    my @files = grep { /[.]info.txt$/ } readdir(DIR);
     closedir(DIR);
 
     if (scalar(@files)) {
@@ -670,7 +670,7 @@ ENDTEXT
 ENDTEXT
   
       foreach my $file (sort @files) {
-        $file =~ /(.+).info$/;
+        $file =~ /(.+).info.txt$/;
         # Get the preprocessed file.
         my $ppfile = $1;
         # Open the info file and get the name of the source file.

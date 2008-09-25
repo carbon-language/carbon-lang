@@ -41,13 +41,13 @@ sub ProcessClangFailure {
 
   system $CC, @$Args, "-E", "-o", $PPFile;
   close ($PPH);
-  open (OUT, ">", "$PPFile.info") or die "Cannot open $PPFile.info\n";
+  open (OUT, ">", "$PPFile.info.txt") or die "Cannot open $PPFile.info.txt\n";
   print OUT abs_path($file), "\n";
   print OUT "$ErrorType\n";
   print OUT "@$Args\n";
   close OUT;
-  `uname -a >> $PPFile.info 2>&1`;
-  `$CC -v >> $PPFile.info 2>&1`;
+  `uname -a >> $PPFile.info.txt 2>&1`;
+  `$CC -v >> $PPFile.info.txt 2>&1`;
   system 'mv',$ofile,"$PPFile.stderr.txt";
 }
 
