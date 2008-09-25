@@ -40,6 +40,10 @@ class X86FastISel : public FastISel {
   ///
   unsigned StackPtr;
 
+  /// GlobalBaseReg - keeps track of the virtual register mapped onto global
+  /// base register.
+  unsigned GlobalBaseReg;
+
   /// X86ScalarSSEf32, X86ScalarSSEf64 - Select between SSE or x87 
   /// floating point ops.
   /// When SSE is available, use it for f32 operations.
@@ -56,6 +60,7 @@ public:
     : FastISel(mf, mmi, vm, bm, am) {
     Subtarget = &TM.getSubtarget<X86Subtarget>();
     StackPtr = Subtarget->is64Bit() ? X86::RSP : X86::ESP;
+    GlobalBaseReg = 0;
     X86ScalarSSEf64 = Subtarget->hasSSE2();
     X86ScalarSSEf32 = Subtarget->hasSSE1();
   }
@@ -98,6 +103,12 @@ private:
 
   CCAssignFn *CCAssignFnForCall(unsigned CC, bool isTailCall = false);
 
+  unsigned getGlobalBaseReg();
+
+  const X86InstrInfo *getInstrInfo() const {
+    return static_cast<const X86InstrInfo *>(TM.getInstrInfo());
+  }
+
   unsigned TargetMaterializeConstant(Constant *C);
 
   unsigned TargetMaterializeAlloca(AllocaInst *C);
@@ -125,6 +136,16 @@ static bool isTypeLegal(const Type *Ty, const TargetLowering &TLI, MVT &VT,
   // under the assumption that i64 won't be used if the target doesn't
   // support it.
   return (AllowI1 && VT == MVT::i1) || TLI.isTypeLegal(VT);
+}
+
+/// getGlobalBaseReg - Return the the global base register. Output
+/// instructions required to initialize the global base register, if necessary.
+///
+unsigned X86FastISel::getGlobalBaseReg() {
+  assert(!Subtarget->is64Bit() && "X86-64 PIC uses RIP relative addressing");
+  if (!GlobalBaseReg)
+    GlobalBaseReg = getInstrInfo()->initializeGlobalBaseReg(MBB->getParent());
+  return GlobalBaseReg;
 }
 
 #include "X86GenCallingConv.inc"
@@ -375,11 +396,25 @@ bool X86FastISel::X86SelectAddress(Value *V, X86AddressMode &AM, bool isCall) {
 
   // Handle constant address.
   if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
+    // Can't handle alternate code models yet.
+    if (TM.getCodeModel() != CodeModel::Default &&
+        TM.getCodeModel() != CodeModel::Small)
+      return false;
+
+    // Set up the basic address.
+    AM.GV = GV;
+    if (!isCall &&
+        TM.getRelocationModel() == Reloc::PIC_ &&
+        !Subtarget->is64Bit())
+      AM.Base.Reg = getGlobalBaseReg();
+
+    // Emit an extra load if the ABI requires it.
     if (Subtarget->GVRequiresExtraLoad(GV, TM, isCall)) {
       // Check to see if we've already materialized this
       // value in a register in this block.
       if (unsigned Reg = LocalValueMap[V]) {
         AM.Base.Reg = Reg;
+        AM.GV = 0;
         return true;
       }
       // Issue load from stub if necessary.
@@ -392,14 +427,12 @@ bool X86FastISel::X86SelectAddress(Value *V, X86AddressMode &AM, bool isCall) {
         Opc = X86::MOV64rm;
         RC  = X86::GR64RegisterClass;
       }
-      AM.Base.Reg = createResultReg(RC);
-      X86AddressMode LocalAM;
-      LocalAM.GV = GV;
-      addFullAddress(BuildMI(MBB, TII.get(Opc), AM.Base.Reg), LocalAM);
+      unsigned ResultReg = createResultReg(RC);
+      addFullAddress(BuildMI(MBB, TII.get(Opc), ResultReg), AM);
+      AM.Base.Reg = ResultReg;
+      AM.GV = 0;
       // Prevent loading GV stub multiple times in same MBB.
       LocalValueMap[V] = AM.Base.Reg;
-    } else {
-      AM.GV = GV;
     }
     return true;
   }
@@ -957,6 +990,17 @@ bool X86FastISel::X86SelectCall(Instruction *I) {
     }
   }
 
+  // ELF / PIC requires GOT in the EBX register before function calls via PLT
+  // GOT pointer.  
+  if (!Subtarget->is64Bit() &&
+      TM.getRelocationModel() == Reloc::PIC_ &&
+      Subtarget->isPICStyleGOT()) {
+    TargetRegisterClass *RC = X86::GR32RegisterClass;
+    unsigned Base = getGlobalBaseReg();
+    bool Emitted = TII.copyRegToReg(*MBB, MBB->end(), X86::EBX, Base, RC, RC);
+    assert(Emitted && "Failed to emit a copy instruction!");
+  }
+
   // Issue the call.
   unsigned CallOpc = CalleeOp
     ? (Subtarget->is64Bit() ? X86::CALL64r       : X86::CALL32r)
@@ -964,6 +1008,13 @@ bool X86FastISel::X86SelectCall(Instruction *I) {
   MachineInstrBuilder MIB = CalleeOp
     ? BuildMI(MBB, TII.get(CallOpc)).addReg(CalleeOp)
     : BuildMI(MBB, TII.get(CallOpc)).addGlobalAddress(GV);
+
+  // Add an implicit use GOT pointer in EBX.
+  if (!Subtarget->is64Bit() &&
+      TM.getRelocationModel() == Reloc::PIC_ &&
+      Subtarget->isPICStyleGOT())
+    MIB.addReg(X86::EBX);
+
   // Add implicit physical register uses to the call.
   while (!RegArgs.empty()) {
     MIB.addReg(RegArgs.back());
@@ -1065,10 +1116,6 @@ X86FastISel::TargetSelectInstruction(Instruction *I)  {
 }
 
 unsigned X86FastISel::TargetMaterializeConstant(Constant *C) {
-  // Can't handle PIC-mode yet.
-  if (TM.getRelocationModel() == Reloc::PIC_)
-    return 0;
-  
   MVT VT;
   if (!isTypeLegal(C->getType(), TLI, VT))
     return false;
