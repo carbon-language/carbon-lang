@@ -2481,7 +2481,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
           ExpandOp(ST->getValue(), Lo, Hi);
           IncrementSize = Hi.getNode() ? Hi.getValueType().getSizeInBits()/8 : 0;
 
-          if (TLI.isBigEndian())
+          if (Hi.getNode() && TLI.isBigEndian())
             std::swap(Lo, Hi);
         }
 
