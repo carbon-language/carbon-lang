@@ -3442,14 +3442,14 @@ defm PMOVZXWQ   : SS41I_binop_rm_int4<0x34, "pmovzxwq", int_x86_sse41_pmovzxwq>;
 
 // Common patterns involving scalar load
 def : Pat<(int_x86_sse41_pmovsxbd (vzmovl_v4i32 addr:$src)),
-          (PMOVSXBDrm addr:$src)>;
+          (PMOVSXBDrm addr:$src)>, Requires<[HasSSE41]>;
 def : Pat<(int_x86_sse41_pmovsxwq (vzmovl_v4i32 addr:$src)),
-          (PMOVSXWQrm addr:$src)>;
+          (PMOVSXWQrm addr:$src)>, Requires<[HasSSE41]>;
 
 def : Pat<(int_x86_sse41_pmovzxbd (vzmovl_v4i32 addr:$src)),
-          (PMOVZXBDrm addr:$src)>;
+          (PMOVZXBDrm addr:$src)>, Requires<[HasSSE41]>;
 def : Pat<(int_x86_sse41_pmovzxwq (vzmovl_v4i32 addr:$src)),
-          (PMOVZXWQrm addr:$src)>;
+          (PMOVZXWQrm addr:$src)>, Requires<[HasSSE41]>;
 
 
 multiclass SS41I_binop_rm_int2<bits<8> opc, string OpcodeStr, Intrinsic IntId> {
@@ -3472,12 +3472,12 @@ defm PMOVZXBQ   : SS41I_binop_rm_int2<0x32, "pmovsxbq", int_x86_sse41_pmovzxbq>;
 def : Pat<(int_x86_sse41_pmovsxbq
             (bitconvert (v4i32 (X86vzmovl
                              (v4i32 (scalar_to_vector (loadi32 addr:$src))))))),
-          (PMOVSXBQrm addr:$src)>;
+          (PMOVSXBQrm addr:$src)>, Requires<[HasSSE41]>;
 
 def : Pat<(int_x86_sse41_pmovzxbq
             (bitconvert (v4i32 (X86vzmovl
                              (v4i32 (scalar_to_vector (loadi32 addr:$src))))))),
-          (PMOVZXBQrm addr:$src)>;
+          (PMOVZXBQrm addr:$src)>, Requires<[HasSSE41]>;
 
 
 /// SS41I_binop_ext8 - SSE 4.1 extract 8 bits to 32 bit reg or 8 bit mem
