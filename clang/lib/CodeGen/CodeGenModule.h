@@ -217,7 +217,7 @@ public:
   void SetMethodAttributes(const ObjCMethodDecl *MD,
                            llvm::Function *F);
 
-  void SetFunctionParamAttrs(const Decl *D,
+  void SetFunctionAttributes(const Decl *D,
                              const CGFunctionInfo &Info, 
                              llvm::Function *F);
 
@@ -225,10 +225,10 @@ public:
   /// when used as a return type.
   bool ReturnTypeUsesSret(QualType RetTy);
 
-  void ConstructParamAttrList(const Decl *TargetDecl,
+  void ConstructAttributeList(const Decl *TargetDecl,
                               const ArgTypeIterator begin,
                               const ArgTypeIterator end,
-                              ParamAttrListType &PAL);
+                              AttributeListType &PAL);
 
 private:
   /// SetFunctionAttributesForDefinition - Set function attributes

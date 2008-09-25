@@ -508,17 +508,17 @@ bool CodeGenModule::ReturnTypeUsesSret(QualType RetTy) {
   return getABIReturnInfo(RetTy, getContext()).isStructRet();
 }
 
-void CodeGenModule::ConstructParamAttrList(const Decl *TargetDecl,
+void CodeGenModule::ConstructAttributeList(const Decl *TargetDecl,
                                            ArgTypeIterator begin,
                                            ArgTypeIterator end,
-                                           ParamAttrListType &PAL) {
+                                           AttributeListType &PAL) {
   unsigned FuncAttrs = 0;
 
   if (TargetDecl) {
     if (TargetDecl->getAttr<NoThrowAttr>())
-      FuncAttrs |= llvm::ParamAttr::NoUnwind;
+      FuncAttrs |= llvm::Attribute::NoUnwind;
     if (TargetDecl->getAttr<NoReturnAttr>())
-      FuncAttrs |= llvm::ParamAttr::NoReturn;
+      FuncAttrs |= llvm::Attribute::NoReturn;
   }
 
   QualType RetTy = *begin;
@@ -528,17 +528,17 @@ void CodeGenModule::ConstructParamAttrList(const Decl *TargetDecl,
   case ABIArgInfo::Default:
     if (RetTy->isPromotableIntegerType()) {
       if (RetTy->isSignedIntegerType()) {
-        FuncAttrs |= llvm::ParamAttr::SExt;
+        FuncAttrs |= llvm::Attribute::SExt;
       } else if (RetTy->isUnsignedIntegerType()) {
-        FuncAttrs |= llvm::ParamAttr::ZExt;
+        FuncAttrs |= llvm::Attribute::ZExt;
       }
     }
     break;
 
   case ABIArgInfo::StructRet:
-    PAL.push_back(llvm::FnAttributeWithIndex::get(Index, 
-                                                  llvm::ParamAttr::StructRet|
-                                                  llvm::ParamAttr::NoAlias));
+    PAL.push_back(llvm::AttributeWithIndex::get(Index, 
+                                                  llvm::Attribute::StructRet|
+                                                  llvm::Attribute::NoAlias));
     ++Index;
     break;
 
@@ -551,10 +551,10 @@ void CodeGenModule::ConstructParamAttrList(const Decl *TargetDecl,
   }
 
   if (FuncAttrs)
-    PAL.push_back(llvm::FnAttributeWithIndex::get(0, FuncAttrs));
+    PAL.push_back(llvm::AttributeWithIndex::get(0, FuncAttrs));
   for (++begin; begin != end; ++begin) {
     QualType ParamType = *begin;
-    unsigned ParamAttrs = 0;
+    unsigned Attributes = 0;
     ABIArgInfo AI = getABIArgumentInfo(ParamType, getContext());
     
     switch (AI.getKind()) {
@@ -563,16 +563,16 @@ void CodeGenModule::ConstructParamAttrList(const Decl *TargetDecl,
       assert(0 && "Invalid ABI kind for non-return argument");
     
     case ABIArgInfo::ByVal:
-      ParamAttrs |= llvm::ParamAttr::ByVal;
+      Attributes |= llvm::Attribute::ByVal;
       assert(AI.getByValAlignment() == 0 && "FIXME: alignment unhandled");
       break;
       
     case ABIArgInfo::Default:
       if (ParamType->isPromotableIntegerType()) {
         if (ParamType->isSignedIntegerType()) {
-          ParamAttrs |= llvm::ParamAttr::SExt;
+          Attributes |= llvm::Attribute::SExt;
         } else if (ParamType->isUnsignedIntegerType()) {
-          ParamAttrs |= llvm::ParamAttr::ZExt;
+          Attributes |= llvm::Attribute::ZExt;
         }
       }
       break;
@@ -588,8 +588,8 @@ void CodeGenModule::ConstructParamAttrList(const Decl *TargetDecl,
     }
     }
       
-    if (ParamAttrs)
-      PAL.push_back(llvm::FnAttributeWithIndex::get(Index, ParamAttrs));
+    if (Attributes)
+      PAL.push_back(llvm::AttributeWithIndex::get(Index, Attributes));
     ++Index;
   }
 }
@@ -749,12 +749,12 @@ RValue CodeGenFunction::EmitCall(llvm::Value *Callee,
   CGCallInfo CallInfo(RetTy, CallArgs);
 
   // FIXME: Provide TargetDecl so nounwind, noreturn, etc, etc get set.
-  CodeGen::ParamAttrListType ParamAttrList;
-  CGM.ConstructParamAttrList(0, 
+  CodeGen::AttributeListType AttributeList;
+  CGM.ConstructAttributeList(0, 
                              CallInfo.argtypes_begin(), CallInfo.argtypes_end(),
-                             ParamAttrList);
-  CI->setParamAttrs(llvm::PAListPtr::get(ParamAttrList.begin(), 
-                                         ParamAttrList.size()));  
+                             AttributeList);
+  CI->setAttributes(llvm::AttrListPtr::get(AttributeList.begin(), 
+                                         AttributeList.size()));  
 
   if (const llvm::Function *F = dyn_cast<llvm::Function>(Callee))
     CI->setCallingConv(F->getCallingConv());
