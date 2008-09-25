@@ -427,10 +427,18 @@ bool X86FastISel::X86SelectAddress(Value *V, X86AddressMode &AM, bool isCall) {
         Opc = X86::MOV64rm;
         RC  = X86::GR64RegisterClass;
       }
+
+      X86AddressMode StubAM;
+      StubAM.Base.Reg = AM.Base.Reg;
+      StubAM.GV = AM.GV;
       unsigned ResultReg = createResultReg(RC);
-      addFullAddress(BuildMI(MBB, TII.get(Opc), ResultReg), AM);
+      addFullAddress(BuildMI(MBB, TII.get(Opc), ResultReg), StubAM);
+
+      // Now construct the final address. Note that the Disp, Scale,
+      // and Index values may already be set here.
       AM.Base.Reg = ResultReg;
       AM.GV = 0;
+
       // Prevent loading GV stub multiple times in same MBB.
       LocalValueMap[V] = AM.Base.Reg;
     }
