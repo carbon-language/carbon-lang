@@ -729,7 +729,8 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn, MachineFunction &MF,
         for (Function::arg_iterator I = Fn.arg_begin(), E = Fn.arg_end();
              I != E; ++I, ++j)
           if (Fn.paramHasAttr(j, ParamAttr::ByVal)) {
-            cerr << "FastISel skips entry block due to byval argument\n";
+            if (EnableFastISelVerbose || EnableFastISelAbort)
+              cerr << "FastISel skips entry block due to byval argument\n";
             SuppressFastISel = true;
             break;
           }
@@ -776,8 +777,10 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn, MachineFunction &MF,
 
           // Then handle certain instructions as single-LLVM-Instruction blocks.
           if (isa<CallInst>(BI)) {
-            cerr << "FastISel missed call: ";
-            BI->dump();
+            if (EnableFastISelVerbose || EnableFastISelAbort) {
+              cerr << "FastISel missed call: ";
+              BI->dump();
+            }
 
             if (BI->getType() != Type::VoidTy) {
               unsigned &R = FuncInfo->ValueMap[BI];
