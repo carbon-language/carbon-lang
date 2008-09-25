@@ -95,7 +95,7 @@ bool Value::hasNUsesOrMore(unsigned N) const {
 
 /// isUsedInBasicBlock - Return true if this value is used in the specified
 /// basic block.
-bool Value::isUsedInBasicBlock(BasicBlock *BB) const {
+bool Value::isUsedInBasicBlock(const BasicBlock *BB) const {
   for (use_const_iterator I = use_begin(), E = use_end(); I != E; ++I) {
     const Instruction *User = dyn_cast<Instruction>(*I);
     if (User && User->getParent() == BB)
