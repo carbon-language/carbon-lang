@@ -11,9 +11,13 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Function.h"
+#include "llvm/GlobalVariable.h"
 #include "llvm/Instructions.h"
+#include "llvm/IntrinsicInst.h"
 #include "llvm/CodeGen/FastISel.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetInstrInfo.h"
@@ -260,6 +264,93 @@ bool FastISel::SelectGetElementPtr(User *I) {
   return true;
 }
 
+bool FastISel::SelectCall(User *I) {
+  Function *F = cast<CallInst>(I)->getCalledFunction();
+  if (!F) return false;
+
+  unsigned IID = F->getIntrinsicID();
+  switch (IID) {
+  default: break;
+  case Intrinsic::dbg_stoppoint: {
+    DbgStopPointInst *SPI = cast<DbgStopPointInst>(I);
+    if (MMI && SPI->getContext() && MMI->Verify(SPI->getContext())) {
+      DebugInfoDesc *DD = MMI->getDescFor(SPI->getContext());
+      assert(DD && "Not a debug information descriptor");
+      const CompileUnitDesc *CompileUnit = cast<CompileUnitDesc>(DD);
+      unsigned SrcFile = MMI->RecordSource(CompileUnit);
+      unsigned Line = SPI->getLine();
+      unsigned Col = SPI->getColumn();
+      unsigned ID = MMI->RecordSourceLine(Line, Col, SrcFile);
+      const TargetInstrDesc &II = TII.get(TargetInstrInfo::DBG_LABEL);
+      BuildMI(MBB, II).addImm(ID);
+    }
+    return true;
+  }
+  case Intrinsic::dbg_region_start: {
+    DbgRegionStartInst *RSI = cast<DbgRegionStartInst>(I);
+    if (MMI && RSI->getContext() && MMI->Verify(RSI->getContext())) {
+      unsigned ID = MMI->RecordRegionStart(RSI->getContext());
+      const TargetInstrDesc &II = TII.get(TargetInstrInfo::DBG_LABEL);
+      BuildMI(MBB, II).addImm(ID);
+    }
+    return true;
+  }
+  case Intrinsic::dbg_region_end: {
+    DbgRegionEndInst *REI = cast<DbgRegionEndInst>(I);
+    if (MMI && REI->getContext() && MMI->Verify(REI->getContext())) {
+      unsigned ID = MMI->RecordRegionEnd(REI->getContext());
+      const TargetInstrDesc &II = TII.get(TargetInstrInfo::DBG_LABEL);
+      BuildMI(MBB, II).addImm(ID);
+    }
+    return true;
+  }
+  case Intrinsic::dbg_func_start: {
+    if (!MMI) return true;
+    DbgFuncStartInst *FSI = cast<DbgFuncStartInst>(I);
+    Value *SP = FSI->getSubprogram();
+    if (SP && MMI->Verify(SP)) {
+      // llvm.dbg.func.start implicitly defines a dbg_stoppoint which is
+      // what (most?) gdb expects.
+      DebugInfoDesc *DD = MMI->getDescFor(SP);
+      assert(DD && "Not a debug information descriptor");
+      SubprogramDesc *Subprogram = cast<SubprogramDesc>(DD);
+      const CompileUnitDesc *CompileUnit = Subprogram->getFile();
+      unsigned SrcFile = MMI->RecordSource(CompileUnit);
+      // Record the source line but does create a label. It will be emitted
+      // at asm emission time.
+      MMI->RecordSourceLine(Subprogram->getLine(), 0, SrcFile);
+    }
+    return true;
+  }
+  case Intrinsic::dbg_declare: {
+    DbgDeclareInst *DI = cast<DbgDeclareInst>(I);
+    Value *Variable = DI->getVariable();
+    if (MMI && Variable && MMI->Verify(Variable)) {
+      // Determine the address of the declared object.
+      Value *Address = DI->getAddress();
+      if (BitCastInst *BCI = dyn_cast<BitCastInst>(Address))
+        Address = BCI->getOperand(0);
+      AllocaInst *AI = dyn_cast<AllocaInst>(Address);
+      // Don't handle byval struct arguments, for example.
+      if (!AI) break;
+      DenseMap<const AllocaInst*, int>::iterator SI =
+        StaticAllocaMap.find(AI);
+      assert(SI != StaticAllocaMap.end() && "Invalid dbg.declare!");
+      int FI = SI->second;
+
+      // Determine the debug globalvariable.
+      GlobalValue *GV = cast<GlobalVariable>(Variable);
+
+      // Build the DECLARE instruction.
+      const TargetInstrDesc &II = TII.get(TargetInstrInfo::DECLARE);
+      BuildMI(MBB, II).addFrameIndex(FI).addGlobalAddress(GV);
+    }
+    return true;
+  }
+  }
+  return false;
+}
+
 bool FastISel::SelectCast(User *I, ISD::NodeType Opcode) {
   MVT SrcVT = TLI.getValueType(I->getOperand(0)->getType());
   MVT DstVT = TLI.getValueType(I->getType());
@@ -424,6 +515,9 @@ FastISel::SelectOperator(User *I, unsigned Opcode) {
     // Dynamic-sized alloca is not handled yet.
     return false;
     
+  case Instruction::Call:
+    return SelectCall(I);
+  
   case Instruction::BitCast:
     return SelectBitCast(I);
 

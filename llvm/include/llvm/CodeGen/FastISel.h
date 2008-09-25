@@ -258,6 +258,8 @@ private:
 
   bool SelectGetElementPtr(User *I);
 
+  bool SelectCall(User *I);
+
   bool SelectBitCast(User *I);
   
   bool SelectCast(User *I, ISD::NodeType Opcode);

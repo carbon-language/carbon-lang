@@ -246,7 +246,9 @@ static bool isUsedOutsideOfDefiningBlock(Instruction *I) {
 static bool isOnlyUsedInEntryBlock(Argument *A, bool EnableFastISel) {
   // With FastISel active, we may be splitting blocks, so force creation
   // of virtual registers for all non-dead arguments.
-  if (EnableFastISel)
+  // Don't force virtual registers for byval arguments though, because
+  // fast-isel can't handle those in all cases.
+  if (EnableFastISel && !A->hasByValAttr())
     return A->use_empty();
 
   BasicBlock *Entry = A->getParent()->begin();

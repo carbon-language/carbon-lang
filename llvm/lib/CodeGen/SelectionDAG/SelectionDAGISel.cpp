@@ -718,12 +718,27 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn, MachineFunction &MF,
     BasicBlock::iterator BI = Begin;
 
     // Lower any arguments needed in this block if this is the entry block.
-    if (LLVMBB == &Fn.getEntryBlock())
+    bool SuppressFastISel = false;
+    if (LLVMBB == &Fn.getEntryBlock()) {
       LowerArguments(LLVMBB);
+
+      // If any of the arguments has the byval attribute, forgo
+      // fast-isel in the entry block.
+      if (EnableFastISel) {
+        unsigned j = 1;
+        for (Function::arg_iterator I = Fn.arg_begin(), E = Fn.arg_end();
+             I != E; ++I, ++j)
+          if (Fn.paramHasAttr(j, ParamAttr::ByVal)) {
+            cerr << "FastISel skips entry block due to byval argument";
+            SuppressFastISel = true;
+            break;
+          }
+      }
+    }
 
     // Before doing SelectionDAG ISel, see if FastISel has been requested.
     // FastISel doesn't support EH landing pads, which require special handling.
-    if (EnableFastISel && !BB->isLandingPad()) {
+    if (EnableFastISel && !SuppressFastISel && !BB->isLandingPad()) {
       if (FastISel *F = TLI.createFastISel(*FuncInfo->MF, MMI,
                                            FuncInfo->ValueMap,
                                            FuncInfo->MBBMap,
@@ -761,6 +776,9 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn, MachineFunction &MF,
 
           // Then handle certain instructions as single-LLVM-Instruction blocks.
           if (isa<CallInst>(BI)) {
+            cerr << "FastISel missed call: ";
+            BI->dump();
+
             if (BI->getType() != Type::VoidTy) {
               unsigned &R = FuncInfo->ValueMap[BI];
               if (!R)
