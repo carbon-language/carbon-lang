@@ -16,6 +16,7 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 using namespace llvm;
@@ -109,6 +110,7 @@ bool DeadMachineInstructionElim::runOnMachineFunction(MachineFunction &MF) {
 
       // If the instruction is dead, delete it!
       if (isDead(MI)) {
+        DOUT << "DeadMachineInstructionElim: DELETING: " << *MI;
         AnyChanges = true;
         MI->eraseFromParent();
         MIE = MBB->rend();
