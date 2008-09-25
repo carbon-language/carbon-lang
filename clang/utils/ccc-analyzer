@@ -246,6 +246,7 @@ if (!defined $Clang) { $Clang = 'clang'; }
 # Get the HTML output directory.
 my $HtmlDir = $ENV{'CCC_ANALYZER_HTML'};
 
+my %ArchsSeen;
 
 # Process the arguments.
 foreach (my $i = 0; $i < scalar(@ARGV); ++$i) {
@@ -255,7 +256,15 @@ foreach (my $i = 0; $i < scalar(@ARGV); ++$i) {
   if ($Arg eq '-E') { $Action = 'preprocess'; }
   elsif ($Arg eq '-c') { $Action = 'compile'; }
   elsif ($Arg =~ /^-print-prog-name/) { exit 0; }
-    
+
+  # Specially handle duplicate cases of -arch
+  if ($Arg eq "-arch") {
+    my $arch = $ARGV[$i+1];
+    $ArchsSeen{$arch} = 1;
+    ++$i;
+    next;
+  }
+
   # Options with possible arguments that should pass through to compiler.
   if (defined $CompileOptionMap{$Arg}) {
     my $Cnt = $CompileOptionMap{$Arg};
@@ -390,11 +399,23 @@ if ($Action eq 'compile' or $Action eq 'link') {
     push @AnalyzeArgs,@CompileOpts;
     push @AnalyzeArgs,$file;
     
-    Analyze($Clang, \@AnalyzeArgs, $FileLang, $Output,
-            $Verbose, $HtmlDir, $file, $Analyses);
+    my @Archs = keys %ArchsSeen;
+    if (scalar @Archs) {
+      foreach my $arch (@Archs) {
+        my @NewArgs;
+        push @NewArgs, '-arch';
+        push @NewArgs, $arch;
+        push @NewArgs, @AnalyzeArgs;
+        Analyze($Clang, \@NewArgs, $FileLang, $Output,
+                $Verbose, $HtmlDir, $file, $Analyses);
+      }
+    }
+    else {
+      Analyze($Clang, \@AnalyzeArgs, $FileLang, $Output,
+              $Verbose, $HtmlDir, $file, $Analyses);
+    }
   }
 }
 
 exit($Status >> 8);
-
 
