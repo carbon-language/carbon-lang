@@ -14,19 +14,31 @@
 #ifndef ARMTARGETASMINFO_H
 #define ARMTARGETASMINFO_H
 
+#include "ARMTargetMachine.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/ELFTargetAsmInfo.h"
 #include "llvm/Target/DarwinTargetAsmInfo.h"
-
-#include "ARMSubtarget.h"
+#include "llvm/Support/Compiler.h"
 
 namespace llvm {
 
-  // Forward declaration.
-  class ARMTargetMachine;
+  extern const char *const arm_asm_table[];
 
-  struct ARMTargetAsmInfo : public virtual TargetAsmInfo {
-    explicit ARMTargetAsmInfo(const ARMTargetMachine &TM);
+  template <class BaseTAI>
+  struct ARMTargetAsmInfo : public BaseTAI {
+    explicit ARMTargetAsmInfo(const ARMTargetMachine &TM):
+      BaseTAI(TM) {
+      BaseTAI::AsmTransCBE = arm_asm_table;
+
+      BaseTAI::AlignmentIsInBytes = false;
+      BaseTAI::Data64bitsDirective = 0;
+      BaseTAI::CommentString = "@";
+      BaseTAI::ConstantPoolSection = "\t.text\n";
+      BaseTAI::COMMDirectiveTakesAlignment = false;
+      BaseTAI::InlineAsmStart = "@ InlineAsm Start";
+      BaseTAI::InlineAsmEnd = "@ InlineAsm End";
+      BaseTAI::LCOMMDirective = "\t.lcomm\t";
+    }
 
     const ARMSubtarget *Subtarget;
 
@@ -35,13 +47,15 @@ namespace llvm {
     unsigned countString(const char *p) const;
   };
 
-  struct ARMDarwinTargetAsmInfo : public virtual ARMTargetAsmInfo,
-                                  public virtual DarwinTargetAsmInfo {
+  typedef ARMTargetAsmInfo<TargetAsmInfo> ARMGenericTargetAsmInfo;
+
+  EXTERN_TEMPLATE_INSTANTIATION(class ARMTargetAsmInfo<TargetAsmInfo>);
+
+  struct ARMDarwinTargetAsmInfo : public ARMTargetAsmInfo<DarwinTargetAsmInfo> {
     explicit ARMDarwinTargetAsmInfo(const ARMTargetMachine &TM);
   };
 
-  struct ARMELFTargetAsmInfo : public virtual ARMTargetAsmInfo,
-                               public virtual ELFTargetAsmInfo {
+  struct ARMELFTargetAsmInfo : public ARMTargetAsmInfo<ELFTargetAsmInfo> {
     explicit ARMELFTargetAsmInfo(const ARMTargetMachine &TM);
   };
 

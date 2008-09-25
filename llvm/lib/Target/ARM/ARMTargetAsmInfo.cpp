@@ -17,7 +17,7 @@
 #include <cctype>
 using namespace llvm;
 
-static const char *const arm_asm_table[] = {
+const char *const llvm::arm_asm_table[] = {
                                       "{r0}", "r0",
                                       "{r1}", "r1",
                                       "{r2}", "r2",
@@ -42,21 +42,17 @@ static const char *const arm_asm_table[] = {
                                       "{cc}", "cc",
                                       0,0};
 
-ARMTargetAsmInfo::ARMTargetAsmInfo(const ARMTargetMachine &TM) {
-  AsmTransCBE = arm_asm_table;
-
-  AlignmentIsInBytes = false;
-  Data64bitsDirective = 0;
-  CommentString = "@";
-  ConstantPoolSection = "\t.text\n";
-  COMMDirectiveTakesAlignment = false;
-  InlineAsmStart = "@ InlineAsm Start";
-  InlineAsmEnd = "@ InlineAsm End";
-  LCOMMDirective = "\t.lcomm\t";
-}
+// Instantiate 'common' cases.
+TEMPLATE_INSTANTIATION(class ARMTargetAsmInfo<TargetAsmInfo>);
+TEMPLATE_INSTANTIATION(
+unsigned ARMTargetAsmInfo<TargetAsmInfo>::getInlineAsmLength(const char*) const);
+TEMPLATE_INSTANTIATION(
+  unsigned ARMTargetAsmInfo<TargetAsmInfo>::countArguments(const char*) const);
+TEMPLATE_INSTANTIATION(
+  unsigned ARMTargetAsmInfo<TargetAsmInfo>::countString(const char*) const);
 
 ARMDarwinTargetAsmInfo::ARMDarwinTargetAsmInfo(const ARMTargetMachine &TM):
-  ARMTargetAsmInfo(TM), DarwinTargetAsmInfo(TM) {
+  ARMTargetAsmInfo<DarwinTargetAsmInfo>(TM) {
   Subtarget = &DTM->getSubtarget<ARMSubtarget>();
 
   GlobalPrefix = "_";
@@ -104,7 +100,7 @@ ARMDarwinTargetAsmInfo::ARMDarwinTargetAsmInfo(const ARMTargetMachine &TM):
 }
 
 ARMELFTargetAsmInfo::ARMELFTargetAsmInfo(const ARMTargetMachine &TM):
-  ARMTargetAsmInfo(TM), ELFTargetAsmInfo(TM) {
+  ARMTargetAsmInfo<ELFTargetAsmInfo>(TM) {
   Subtarget = &ETM->getSubtarget<ARMSubtarget>();
 
   NeedsSet = false;
@@ -138,13 +134,15 @@ ARMELFTargetAsmInfo::ARMELFTargetAsmInfo(const ARMTargetMachine &TM):
 
 /// Count the number of comma-separated arguments.
 /// Do not try to detect errors.
-unsigned ARMTargetAsmInfo::countArguments(const char* p) const {
+template <class BaseTAI>
+unsigned ARMTargetAsmInfo<BaseTAI>::countArguments(const char* p) const {
   unsigned count = 0;
   while (*p && isspace(*p) && *p != '\n')
     p++;
   count++;
-  while (*p && *p!='\n' && 
-         strncmp(p, CommentString, strlen(CommentString))!=0) {
+  while (*p && *p!='\n' &&
+         strncmp(p, BaseTAI::CommentString,
+                 strlen(BaseTAI::CommentString))!=0) {
     if (*p==',')
       count++;
     p++;
@@ -154,7 +152,8 @@ unsigned ARMTargetAsmInfo::countArguments(const char* p) const {
 
 /// Count the length of a string enclosed in quote characters.
 /// Do not try to detect errors.
-unsigned ARMTargetAsmInfo::countString(const char* p) const {
+template <class BaseTAI>
+unsigned ARMTargetAsmInfo<BaseTAI>::countString(const char* p) const {
   unsigned count = 0;
   while (*p && isspace(*p) && *p!='\n')
     p++;
@@ -166,7 +165,8 @@ unsigned ARMTargetAsmInfo::countString(const char* p) const {
 }
 
 /// ARM-specific version of TargetAsmInfo::getInlineAsmLength.
-unsigned ARMTargetAsmInfo::getInlineAsmLength(const char *s) const {
+template <class BaseTAI>
+unsigned ARMTargetAsmInfo<BaseTAI>::getInlineAsmLength(const char *s) const {
   // Make a lowercase-folded version of s for counting purposes.
   char *q, *s_copy = (char *)malloc(strlen(s) + 1);
   strcpy(s_copy, s);
@@ -192,7 +192,7 @@ unsigned ARMTargetAsmInfo::getInlineAsmLength(const char *s) const {
           break;
         }
       // Ignore everything from comment char(s) to EOL
-      if (strncmp(Str, CommentString, strlen(CommentString))==-0)
+      if (strncmp(Str, BaseTAI::CommentString, strlen(BaseTAI::CommentString))==-0)
         atInsnStart = false;
       // FIXME do something like the following for non-Darwin
       else if (*Str == '.' && Subtarget->isTargetDarwin()) {
@@ -282,7 +282,7 @@ unsigned ARMTargetAsmInfo::getInlineAsmLength(const char *s) const {
           Length += 4;    // ARM
       }
     }
-    if (*Str == '\n' || *Str == SeparatorChar)
+    if (*Str == '\n' || *Str == BaseTAI::SeparatorChar)
       atInsnStart = true;
   }
   free(s_copy);
