@@ -532,11 +532,12 @@ static void calcTypeName(const Type *Ty,
     Result += "{ ";
     for (StructType::element_iterator I = STy->element_begin(),
            E = STy->element_end(); I != E; ++I) {
-      if (I != STy->element_begin())
-        Result += ", ";
       calcTypeName(*I, TypeStack, TypeNames, Result);
+      if (next(I) != STy->element_end())
+        Result += ',';
+      Result += ' ';
     }
-    Result += " }";
+    Result += '}';
     if (STy->isPacked())
       Result += '>';
     break;
