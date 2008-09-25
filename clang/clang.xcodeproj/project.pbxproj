@@ -38,6 +38,7 @@
 		35862B0D0E3628CB0009F542 /* CheckDeadStores.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35862B0C0E3628CB0009F542 /* CheckDeadStores.cpp */; };
 		35862B120E3629850009F542 /* GRExprEngineInternalChecks.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35862B110E3629850009F542 /* GRExprEngineInternalChecks.cpp */; };
 		358CFBB80E65AB04002A8E19 /* BasicConstraintManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 358CFBB70E65AB04002A8E19 /* BasicConstraintManager.cpp */; };
+		358D230B0E8BEB9D0003DDCC /* DeclGroup.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 358D230A0E8BEB9D0003DDCC /* DeclGroup.cpp */; };
 		358F51520E529AA4007F2102 /* GRState.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 358F51510E529AA4007F2102 /* GRState.cpp */; };
 		3593790A0DA48ABA0043B19C /* BugReporter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 359379090DA48ABA0043B19C /* BugReporter.cpp */; };
 		3595AFB80E1C8D62004CDF09 /* CheckObjCDealloc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3595AFB70E1C8D62004CDF09 /* CheckObjCDealloc.cpp */; };
@@ -314,6 +315,8 @@
 		35862B0C0E3628CB0009F542 /* CheckDeadStores.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CheckDeadStores.cpp; path = lib/Analysis/CheckDeadStores.cpp; sourceTree = "<group>"; };
 		35862B110E3629850009F542 /* GRExprEngineInternalChecks.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GRExprEngineInternalChecks.cpp; path = lib/Analysis/GRExprEngineInternalChecks.cpp; sourceTree = "<group>"; };
 		358CFBB70E65AB04002A8E19 /* BasicConstraintManager.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = BasicConstraintManager.cpp; path = lib/Analysis/BasicConstraintManager.cpp; sourceTree = "<group>"; };
+		358D23090E8BEB850003DDCC /* DeclGroup.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DeclGroup.h; path = clang/AST/DeclGroup.h; sourceTree = "<group>"; };
+		358D230A0E8BEB9D0003DDCC /* DeclGroup.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = DeclGroup.cpp; path = lib/AST/DeclGroup.cpp; sourceTree = "<group>"; };
 		358F514F0E529A87007F2102 /* GRState.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GRState.h; path = clang/Analysis/PathSensitive/GRState.h; sourceTree = "<group>"; };
 		358F51510E529AA4007F2102 /* GRState.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GRState.cpp; path = lib/Analysis/GRState.cpp; sourceTree = "<group>"; };
 		359378FF0DA486490043B19C /* BugReporter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BugReporter.h; path = clang/Analysis/PathSensitive/BugReporter.h; sourceTree = "<group>"; };
@@ -873,6 +876,7 @@
 		DEC8D98B0A9433BC00353FCA /* AST */ = {
 			isa = PBXGroup;
 			children = (
+				358D23090E8BEB850003DDCC /* DeclGroup.h */,
 				DE613EF30E0E148D00B05B79 /* APValue.h */,
 				DEC8D9A30A94346E00353FCA /* AST.h */,
 				35BFBD2B0C9EDE1E006CB644 /* ASTConsumer.h */,
@@ -908,6 +912,7 @@
 		DEC8D9920A9433F400353FCA /* AST */ = {
 			isa = PBXGroup;
 			children = (
+				358D230A0E8BEB9D0003DDCC /* DeclGroup.cpp */,
 				35BB2D7E0D19954000944DB5 /* ASTConsumer.cpp */,
 				DE1732FF0B068B700080B521 /* ASTContext.cpp */,
 				DED677C80B6C854100AAD4A3 /* Builtins.cpp */,
@@ -1229,6 +1234,7 @@
 				35475B200E79973F0000BFE4 /* CGCall.cpp in Sources */,
 				9030C10A0E807A9300941490 /* RewriteBlocks.cpp in Sources */,
 				35BAC1E80E82C5B7003FB76F /* CheckNSError.cpp in Sources */,
+				358D230B0E8BEB9D0003DDCC /* DeclGroup.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
