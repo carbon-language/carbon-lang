@@ -685,11 +685,14 @@ ENDTEXT
         my $prefix = GetPrefix();
         if (defined $prefix) { $srcfile =~ s/^\Q$prefix//; }
         print OUT "<tr><td>$problem</td><td>$srcfile</td><td><a href=\"crashes/$ppfile\">$ppfile</a></td><td><a href=\"crashes/$ppfile.stderr.txt\">$ppfile.stderr.txt</a></td></tr>\n";
+        my $ppfile_clang = $ppfile;
+        $ppfile_clang =~ s/[.](.+)$/.clang.$1/;
+        print OUT "  <!-- REPORTPROBLEM file=\"crashes/$ppfile\" clangfile=\"crashes/$ppfile_clang\" stderr=\"crashes/$ppfile.stderr.txt\" info=\"crashes/$ppfile.info\" -->\n";
       }
 
       print OUT <<ENDTEXT;
 </table>
-<p>Please consider submitting preprocessed files as <a href="http://clang.llvm.org/StaticAnalysisUsage.html#filingbugs">bug reports</a>.</p>
+<p>Please consider submitting preprocessed files as <a href="http://clang.llvm.org/StaticAnalysisUsage.html#filingbugs">bug reports</a>. <!-- REPORTCRASHES --> </p>
 ENDTEXT
     }
   }
