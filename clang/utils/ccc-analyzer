@@ -32,15 +32,24 @@ sub GetPPExt {
 }
 
 sub ProcessClangFailure {
-  my ($Lang, $file, $Args, $HtmlDir, $ErrorType, $ofile) = @_;
+  my ($Clang, $Lang, $file, $Args, $HtmlDir, $ErrorType, $ofile) = @_;
   my $Dir = "$HtmlDir/crashes";
   mkpath $Dir;
+
+  # Generate the preprocessed file with cc (i.e., gcc).
   my ($PPH, $PPFile) = tempfile("clang_crash_XXXXXX",
                                   SUFFIX => GetPPExt($Lang),
                                   DIR => $Dir);
 
   system $CC, @$Args, "-E", "-o", $PPFile;
   close ($PPH);
+
+  # Generate the preprocessed file with clang.
+  my $PPFile_Clang = $PPFile;
+  $PPFile_Clang =~ s/[.](.+)$/.clang.$1/;  
+  system $Clang, @$Args, "-E", "-o", "$PPFile_Clang";
+  
+  # Create the info file.
   open (OUT, ">", "$PPFile.info.txt") or die "Cannot open $PPFile.info.txt\n";
   print OUT abs_path($file), "\n";
   print OUT "$ErrorType\n";
@@ -139,11 +148,11 @@ sub Analyze {
 
   # Did the command die because of a signal?
   if ($Result & 127 and $Cmd eq $Clang and defined $HtmlDir) {
-    ProcessClangFailure($Lang, $file, \@CmdArgsSansAnalyses, $HtmlDir,
+    ProcessClangFailure($Clang, $Lang, $file, \@CmdArgsSansAnalyses, $HtmlDir,
                         "Crash", $ofile);
   }
   elsif ($Result) {
-    ProcessClangFailure($Lang, $file, \@CmdArgsSansAnalyses, $HtmlDir,
+    ProcessClangFailure($Clang, $Lang, $file, \@CmdArgsSansAnalyses, $HtmlDir,
                         "Parser Rejects", $ofile);
   }
   
