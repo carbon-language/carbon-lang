@@ -3942,16 +3942,16 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
   else if (isIdentityMask(PermMask.getNode(), true))
     return V2;
 
+  // Canonicalize movddup shuffles.
+  if (V2IsUndef && Subtarget->hasSSE2() &&
+      X86::isMOVDDUPMask(PermMask.getNode()))
+    return CanonicalizeMovddup(Op, V1, PermMask, DAG, Subtarget->hasSSE3());
+
   if (isSplatMask(PermMask.getNode())) {
     if (isMMX || NumElems < 4) return Op;
     // Promote it to a v4{if}32 splat.
     return PromoteSplat(Op, DAG, Subtarget->hasSSE2());
   }
-
-  // Canonicalize movddup shuffles.
-  if (V2IsUndef && Subtarget->hasSSE2() &&
-      X86::isMOVDDUPMask(PermMask.getNode()))
-    return CanonicalizeMovddup(Op, V1, PermMask, DAG, Subtarget->hasSSE3());
 
   // If the shuffle can be profitably rewritten as a narrower shuffle, then
   // do it!
