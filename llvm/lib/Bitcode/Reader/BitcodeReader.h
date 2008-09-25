@@ -136,10 +136,10 @@ class BitcodeReader : public ModuleProvider {
   std::vector<std::pair<GlobalVariable*, unsigned> > GlobalInits;
   std::vector<std::pair<GlobalAlias*, unsigned> > AliasInits;
   
-  /// ParamAttrs - The set of parameter attributes by index.  Index zero in the
+  /// Attributes - The set of parameter attributes by index.  Index zero in the
   /// file is for null, and is thus not represented here.  As such all indices
   /// are off by one.
-  std::vector<PAListPtr> ParamAttrs;
+  std::vector<AttrListPtr> Attributes;
   
   /// FunctionBBs - While parsing a function body, this is a list of the basic
   /// blocks for the function.
@@ -203,10 +203,10 @@ private:
     if (ID >= FunctionBBs.size()) return 0; // Invalid ID
     return FunctionBBs[ID];
   }
-  PAListPtr getParamAttrs(unsigned i) const {
-    if (i-1 < ParamAttrs.size())
-      return ParamAttrs[i-1];
-    return PAListPtr();
+  AttrListPtr getAttributes(unsigned i) const {
+    if (i-1 < Attributes.size())
+      return Attributes[i-1];
+    return AttrListPtr();
   }
   
   /// getValueTypePair - Read a value/type pair out of the specified record from
@@ -239,7 +239,7 @@ private:
 
   
   bool ParseModule(const std::string &ModuleID);
-  bool ParseParamAttrBlock();
+  bool ParseAttributeBlock();
   bool ParseTypeTable();
   bool ParseTypeSymbolTable();
   bool ParseValueSymbolTable();

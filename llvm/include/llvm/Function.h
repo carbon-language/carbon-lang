@@ -69,7 +69,7 @@ private:
   BasicBlockListType  BasicBlocks;        ///< The basic blocks
   mutable ArgumentListType ArgumentList;  ///< The formal arguments
   ValueSymbolTable *SymTab;               ///< Symbol table of args/instructions
-  PAListPtr ParamAttrs;                   ///< Parameter attributes
+  AttrListPtr AttributeList;                   ///< Parameter attributes
 
   // The Calling Convention is stored in Value::SubclassData.
   /*unsigned CallingConvention;*/
@@ -140,13 +140,13 @@ public:
     SubclassData = (SubclassData & 1) | (CC << 1);
   }
   
-  /// getParamAttrs - Return the parameter attributes for this Function.
+  /// getAttributes - Return the parameter attributes for this Function.
   ///
-  const PAListPtr &getParamAttrs() const { return ParamAttrs; }
+  const AttrListPtr &getAttributes() const { return AttributeList; }
 
-  /// setParamAttrs - Set the parameter attributes for this Function.
+  /// setAttributes - Set the parameter attributes for this Function.
   ///
-  void setParamAttrs(const PAListPtr &attrs) { ParamAttrs = attrs; }
+  void setAttributes(const AttrListPtr &attrs) { AttributeList = attrs; }
 
 
   /// hasNote - Return true if this function has given note.
@@ -159,7 +159,7 @@ public:
   ///
   void setNotes(const Attributes N) { 
     // Notes are stored at ~0 index in parameter attribute list
-    addParamAttr(~0, N);
+    addAttribute(~0, N);
   }
 
   /// hasGC/getGC/setGC/clearGC - The name of the garbage collection algorithm
@@ -171,60 +171,60 @@ public:
 
   /// @brief Determine whether the function has the given attribute.
   bool paramHasAttr(unsigned i, Attributes attr) const {
-    return ParamAttrs.paramHasAttr(i, attr);
+    return AttributeList.paramHasAttr(i, attr);
   }
 
-  /// addParamAttr - adds the attribute to the list of attributes.
-  void addParamAttr(unsigned i, Attributes attr);
+  /// addAttribute - adds the attribute to the list of attributes.
+  void addAttribute(unsigned i, Attributes attr);
   
-  /// removeParamAttr - removes the attribute from the list of attributes.
-  void removeParamAttr(unsigned i, Attributes attr);
+  /// removeAttribute - removes the attribute from the list of attributes.
+  void removeAttribute(unsigned i, Attributes attr);
 
   /// @brief Extract the alignment for a call or parameter (0=unknown).
   unsigned getParamAlignment(unsigned i) const {
-    return ParamAttrs.getParamAlignment(i);
+    return AttributeList.getParamAlignment(i);
   }
 
   /// @brief Determine if the function does not access memory.
   bool doesNotAccessMemory() const {
-    return paramHasAttr(0, ParamAttr::ReadNone);
+    return paramHasAttr(0, Attribute::ReadNone);
   }
   void setDoesNotAccessMemory(bool DoesNotAccessMemory = true) {
-    if (DoesNotAccessMemory) addParamAttr(0, ParamAttr::ReadNone);
-    else removeParamAttr(0, ParamAttr::ReadNone);
+    if (DoesNotAccessMemory) addAttribute(0, Attribute::ReadNone);
+    else removeAttribute(0, Attribute::ReadNone);
   }
 
   /// @brief Determine if the function does not access or only reads memory.
   bool onlyReadsMemory() const {
-    return doesNotAccessMemory() || paramHasAttr(0, ParamAttr::ReadOnly);
+    return doesNotAccessMemory() || paramHasAttr(0, Attribute::ReadOnly);
   }
   void setOnlyReadsMemory(bool OnlyReadsMemory = true) {
-    if (OnlyReadsMemory) addParamAttr(0, ParamAttr::ReadOnly);
-    else removeParamAttr(0, ParamAttr::ReadOnly | ParamAttr::ReadNone);
+    if (OnlyReadsMemory) addAttribute(0, Attribute::ReadOnly);
+    else removeAttribute(0, Attribute::ReadOnly | Attribute::ReadNone);
   }
 
   /// @brief Determine if the function cannot return.
   bool doesNotReturn() const {
-    return paramHasAttr(0, ParamAttr::NoReturn);
+    return paramHasAttr(0, Attribute::NoReturn);
   }
   void setDoesNotReturn(bool DoesNotReturn = true) {
-    if (DoesNotReturn) addParamAttr(0, ParamAttr::NoReturn);
-    else removeParamAttr(0, ParamAttr::NoReturn);
+    if (DoesNotReturn) addAttribute(0, Attribute::NoReturn);
+    else removeAttribute(0, Attribute::NoReturn);
   }
 
   /// @brief Determine if the function cannot unwind.
   bool doesNotThrow() const {
-    return paramHasAttr(0, ParamAttr::NoUnwind);
+    return paramHasAttr(0, Attribute::NoUnwind);
   }
   void setDoesNotThrow(bool DoesNotThrow = true) {
-    if (DoesNotThrow) addParamAttr(0, ParamAttr::NoUnwind);
-    else removeParamAttr(0, ParamAttr::NoUnwind);
+    if (DoesNotThrow) addAttribute(0, Attribute::NoUnwind);
+    else removeAttribute(0, Attribute::NoUnwind);
   }
 
   /// @brief Determine if the function returns a structure through first 
   /// pointer argument.
   bool hasStructRetAttr() const {
-    return paramHasAttr(1, ParamAttr::StructRet);
+    return paramHasAttr(1, Attribute::StructRet);
   }
 
   /// copyAttributesFrom - copy all additional attributes (those not needed to

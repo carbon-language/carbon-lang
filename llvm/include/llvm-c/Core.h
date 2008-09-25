@@ -83,18 +83,18 @@ typedef struct LLVMOpaqueMemoryBuffer *LLVMMemoryBufferRef;
 typedef struct LLVMOpaquePassManager *LLVMPassManagerRef;
 
 typedef enum {
-    LLVMZExtParamAttr       = 1<<0,
-    LLVMSExtParamAttr       = 1<<1,
-    LLVMNoReturnParamAttr   = 1<<2,
-    LLVMInRegParamAttr      = 1<<3,
-    LLVMStructRetParamAttr  = 1<<4,
-    LLVMNoUnwindParamAttr   = 1<<5,
-    LLVMNoAliasParamAttr    = 1<<6,
-    LLVMByValParamAttr      = 1<<7,
-    LLVMNestParamAttr       = 1<<8,
-    LLVMReadNoneParamAttr   = 1<<9,
-    LLVMReadOnlyParamAttr   = 1<<10
-} LLVMParamAttr;
+    LLVMZExtAttribute       = 1<<0,
+    LLVMSExtAttribute       = 1<<1,
+    LLVMNoReturnAttribute   = 1<<2,
+    LLVMInRegAttribute      = 1<<3,
+    LLVMStructRetAttribute  = 1<<4,
+    LLVMNoUnwindAttribute   = 1<<5,
+    LLVMNoAliasAttribute    = 1<<6,
+    LLVMByValAttribute      = 1<<7,
+    LLVMNestAttribute       = 1<<8,
+    LLVMReadNoneAttribute   = 1<<9,
+    LLVMReadOnlyAttribute   = 1<<10
+} LLVMAttribute;
 
 typedef enum {
   LLVMVoidTypeKind,        /**< type with no size */
@@ -423,8 +423,8 @@ LLVMValueRef LLVMGetFirstParam(LLVMValueRef Fn);
 LLVMValueRef LLVMGetLastParam(LLVMValueRef Fn);
 LLVMValueRef LLVMGetNextParam(LLVMValueRef Arg);
 LLVMValueRef LLVMGetPreviousParam(LLVMValueRef Arg);
-void LLVMAddParamAttr(LLVMValueRef Arg, LLVMParamAttr PA);
-void LLVMRemoveParamAttr(LLVMValueRef Arg, LLVMParamAttr PA);
+void LLVMAddAttribute(LLVMValueRef Arg, LLVMAttribute PA);
+void LLVMRemoveAttribute(LLVMValueRef Arg, LLVMAttribute PA);
 void LLVMSetParamAlignment(LLVMValueRef Arg, unsigned align);
 
 /* Operations on basic blocks */
@@ -454,9 +454,9 @@ LLVMValueRef LLVMGetPreviousInstruction(LLVMValueRef Inst);
 /* Operations on call sites */
 void LLVMSetInstructionCallConv(LLVMValueRef Instr, unsigned CC);
 unsigned LLVMGetInstructionCallConv(LLVMValueRef Instr);
-void LLVMAddInstrParamAttr(LLVMValueRef Instr, unsigned index, LLVMParamAttr);
-void LLVMRemoveInstrParamAttr(LLVMValueRef Instr, unsigned index, 
-                              LLVMParamAttr);
+void LLVMAddInstrAttribute(LLVMValueRef Instr, unsigned index, LLVMAttribute);
+void LLVMRemoveInstrAttribute(LLVMValueRef Instr, unsigned index, 
+                              LLVMAttribute);
 void LLVMSetInstrParamAlignment(LLVMValueRef Instr, unsigned index, 
                                 unsigned align);
 

@@ -205,13 +205,13 @@ Function *SRETPromotion::cloneFunctionBody(Function *F,
   const FunctionType *FTy = F->getFunctionType();
   std::vector<const Type*> Params;
 
-  // ParamAttrs - Keep track of the parameter attributes for the arguments.
-  SmallVector<FnAttributeWithIndex, 8> ParamAttrsVec;
-  const PAListPtr &PAL = F->getParamAttrs();
+  // Attributes - Keep track of the parameter attributes for the arguments.
+  SmallVector<AttributeWithIndex, 8> AttributesVec;
+  const AttrListPtr &PAL = F->getAttributes();
 
   // Add any return attributes.
-  if (Attributes attrs = PAL.getParamAttrs(0))
-    ParamAttrsVec.push_back(FnAttributeWithIndex::get(0, attrs));
+  if (Attributes attrs = PAL.getAttributes(0))
+    AttributesVec.push_back(AttributeWithIndex::get(0, attrs));
 
   // Skip first argument.
   Function::arg_iterator I = F->arg_begin(), E = F->arg_end();
@@ -221,8 +221,8 @@ Function *SRETPromotion::cloneFunctionBody(Function *F,
   unsigned ParamIndex = 2; 
   while (I != E) {
     Params.push_back(I->getType());
-    if (Attributes Attrs = PAL.getParamAttrs(ParamIndex))
-      ParamAttrsVec.push_back(FnAttributeWithIndex::get(ParamIndex - 1, Attrs));
+    if (Attributes Attrs = PAL.getAttributes(ParamIndex))
+      AttributesVec.push_back(AttributeWithIndex::get(ParamIndex - 1, Attrs));
     ++I;
     ++ParamIndex;
   }
@@ -231,7 +231,7 @@ Function *SRETPromotion::cloneFunctionBody(Function *F,
   Function *NF = Function::Create(NFTy, F->getLinkage());
   NF->takeName(F);
   NF->copyAttributesFrom(F);
-  NF->setParamAttrs(PAListPtr::get(ParamAttrsVec.begin(), ParamAttrsVec.end()));
+  NF->setAttributes(AttrListPtr::get(AttributesVec.begin(), AttributesVec.end()));
   F->getParent()->getFunctionList().insert(F, NF);
   NF->getBasicBlockList().splice(NF->begin(), F->getBasicBlockList());
 
@@ -255,17 +255,17 @@ void SRETPromotion::updateCallSites(Function *F, Function *NF) {
   CallGraph &CG = getAnalysis<CallGraph>();
   SmallVector<Value*, 16> Args;
 
-  // ParamAttrs - Keep track of the parameter attributes for the arguments.
-  SmallVector<FnAttributeWithIndex, 8> ArgAttrsVec;
+  // Attributes - Keep track of the parameter attributes for the arguments.
+  SmallVector<AttributeWithIndex, 8> ArgAttrsVec;
 
   while (!F->use_empty()) {
     CallSite CS = CallSite::get(*F->use_begin());
     Instruction *Call = CS.getInstruction();
 
-    const PAListPtr &PAL = F->getParamAttrs();
+    const AttrListPtr &PAL = F->getAttributes();
     // Add any return attributes.
-    if (Attributes attrs = PAL.getParamAttrs(0))
-      ArgAttrsVec.push_back(FnAttributeWithIndex::get(0, attrs));
+    if (Attributes attrs = PAL.getAttributes(0))
+      ArgAttrsVec.push_back(AttributeWithIndex::get(0, attrs));
 
     // Copy arguments, however skip first one.
     CallSite::arg_iterator AI = CS.arg_begin(), AE = CS.arg_end();
@@ -276,14 +276,14 @@ void SRETPromotion::updateCallSites(Function *F, Function *NF) {
     unsigned ParamIndex = 2; 
     while (AI != AE) {
       Args.push_back(*AI); 
-      if (Attributes Attrs = PAL.getParamAttrs(ParamIndex))
-        ArgAttrsVec.push_back(FnAttributeWithIndex::get(ParamIndex - 1, Attrs));
+      if (Attributes Attrs = PAL.getAttributes(ParamIndex))
+        ArgAttrsVec.push_back(AttributeWithIndex::get(ParamIndex - 1, Attrs));
       ++ParamIndex;
       ++AI;
     }
 
     
-    PAListPtr NewPAL = PAListPtr::get(ArgAttrsVec.begin(), ArgAttrsVec.end());
+    AttrListPtr NewPAL = AttrListPtr::get(ArgAttrsVec.begin(), ArgAttrsVec.end());
     
     // Build new call instruction.
     Instruction *New;
@@ -291,11 +291,11 @@ void SRETPromotion::updateCallSites(Function *F, Function *NF) {
       New = InvokeInst::Create(NF, II->getNormalDest(), II->getUnwindDest(),
                                Args.begin(), Args.end(), "", Call);
       cast<InvokeInst>(New)->setCallingConv(CS.getCallingConv());
-      cast<InvokeInst>(New)->setParamAttrs(NewPAL);
+      cast<InvokeInst>(New)->setAttributes(NewPAL);
     } else {
       New = CallInst::Create(NF, Args.begin(), Args.end(), "", Call);
       cast<CallInst>(New)->setCallingConv(CS.getCallingConv());
-      cast<CallInst>(New)->setParamAttrs(NewPAL);
+      cast<CallInst>(New)->setAttributes(NewPAL);
       if (cast<CallInst>(Call)->isTailCall())
         cast<CallInst>(New)->setTailCall();
     }

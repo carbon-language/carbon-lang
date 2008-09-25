@@ -474,7 +474,7 @@ void LowerSetJmp::visitCallInst(CallInst& CI)
     InvokeInst::Create(CI.getCalledValue(), NewBB, PrelimBBMap[Func],
                        Params.begin(), Params.end(), CI.getName(), Term);
   II->setCallingConv(CI.getCallingConv());
-  II->setParamAttrs(CI.getParamAttrs());
+  II->setAttributes(CI.getAttributes());
 
   // Replace the old call inst with the invoke inst and remove the call.
   CI.replaceAllUsesWith(II);

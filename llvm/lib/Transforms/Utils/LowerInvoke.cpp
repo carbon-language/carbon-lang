@@ -227,7 +227,7 @@ bool LowerInvoke::insertCheapEHSupport(Function &F) {
                                            CallArgs.begin(), CallArgs.end(), "",II);
       NewCall->takeName(II);
       NewCall->setCallingConv(II->getCallingConv());
-      NewCall->setParamAttrs(II->getParamAttrs());
+      NewCall->setAttributes(II->getAttributes());
       II->replaceAllUsesWith(NewCall);
 
       // Insert an unconditional branch to the normal destination.
@@ -296,7 +296,7 @@ void LowerInvoke::rewriteExpensiveInvoke(InvokeInst *II, unsigned InvokeNo,
                                        II);
   NewCall->takeName(II);
   NewCall->setCallingConv(II->getCallingConv());
-  NewCall->setParamAttrs(II->getParamAttrs());
+  NewCall->setAttributes(II->getAttributes());
   II->replaceAllUsesWith(NewCall);
   
   // Replace the invoke with an uncond branch.

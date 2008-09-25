@@ -909,9 +909,9 @@ void Interpreter::visitCallSite(CallSite CS) {
     // according to the parameter attributes
     const Type *Ty = V->getType();
     if (Ty->isInteger() && (ArgVals.back().IntVal.getBitWidth() < 32)) {
-      if (CS.paramHasAttr(pNum, ParamAttr::ZExt))
+      if (CS.paramHasAttr(pNum, Attribute::ZExt))
         ArgVals.back().IntVal = ArgVals.back().IntVal.zext(32);
-      else if (CS.paramHasAttr(pNum, ParamAttr::SExt))
+      else if (CS.paramHasAttr(pNum, Attribute::SExt))
         ArgVals.back().IntVal = ArgVals.back().IntVal.sext(32);
     }
   }

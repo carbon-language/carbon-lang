@@ -131,12 +131,12 @@ namespace {
                             bool isSigned = false,
                             const std::string &VariableName = "",
                             bool IgnoreName = false,
-                            const PAListPtr &PAL = PAListPtr());
+                            const AttrListPtr &PAL = AttrListPtr());
     std::ostream &printType(std::ostream &Out, const Type *Ty, 
                            bool isSigned = false,
                            const std::string &VariableName = "",
                            bool IgnoreName = false,
-                           const PAListPtr &PAL = PAListPtr());
+                           const AttrListPtr &PAL = AttrListPtr());
     raw_ostream &printSimpleType(raw_ostream &Out, const Type *Ty, 
                                   bool isSigned, 
                                   const std::string &NameSoFar = "");
@@ -145,7 +145,7 @@ namespace {
                                  const std::string &NameSoFar = "");
 
     void printStructReturnPointerFunctionType(raw_ostream &Out,
-                                              const PAListPtr &PAL,
+                                              const AttrListPtr &PAL,
                                               const PointerType *Ty);
 
     /// writeOperandDeref - Print the result of dereferencing the specified
@@ -408,7 +408,7 @@ bool CBackendNameAllUsedStructsAndMergeFunctions::runOnModule(Module &M) {
 /// return type, except, instead of printing the type as void (*)(Struct*, ...)
 /// print it as "Struct (*)(...)", for struct return functions.
 void CWriter::printStructReturnPointerFunctionType(raw_ostream &Out,
-                                                   const PAListPtr &PAL,
+                                                   const AttrListPtr &PAL,
                                                    const PointerType *TheTy) {
   const FunctionType *FTy = cast<FunctionType>(TheTy->getElementType());
   std::stringstream FunctionInnards;
@@ -422,12 +422,12 @@ void CWriter::printStructReturnPointerFunctionType(raw_ostream &Out,
     if (PrintedType)
       FunctionInnards << ", ";
     const Type *ArgTy = *I;
-    if (PAL.paramHasAttr(Idx, ParamAttr::ByVal)) {
+    if (PAL.paramHasAttr(Idx, Attribute::ByVal)) {
       assert(isa<PointerType>(ArgTy));
       ArgTy = cast<PointerType>(ArgTy)->getElementType();
     }
     printType(FunctionInnards, ArgTy,
-        /*isSigned=*/PAL.paramHasAttr(Idx, ParamAttr::SExt), "");
+        /*isSigned=*/PAL.paramHasAttr(Idx, Attribute::SExt), "");
     PrintedType = true;
   }
   if (FTy->isVarArg()) {
@@ -439,7 +439,7 @@ void CWriter::printStructReturnPointerFunctionType(raw_ostream &Out,
   FunctionInnards << ')';
   std::string tstr = FunctionInnards.str();
   printType(Out, RetTy, 
-      /*isSigned=*/PAL.paramHasAttr(0, ParamAttr::SExt), tstr);
+      /*isSigned=*/PAL.paramHasAttr(0, Attribute::SExt), tstr);
 }
 
 raw_ostream &
@@ -537,7 +537,7 @@ CWriter::printSimpleType(std::ostream &Out, const Type *Ty, bool isSigned,
 //
 raw_ostream &CWriter::printType(raw_ostream &Out, const Type *Ty,
                                  bool isSigned, const std::string &NameSoFar,
-                                 bool IgnoreName, const PAListPtr &PAL) {
+                                 bool IgnoreName, const AttrListPtr &PAL) {
   if (Ty->isPrimitiveType() || Ty->isInteger() || isa<VectorType>(Ty)) {
     printSimpleType(Out, Ty, isSigned, NameSoFar);
     return Out;
@@ -558,14 +558,14 @@ raw_ostream &CWriter::printType(raw_ostream &Out, const Type *Ty,
     for (FunctionType::param_iterator I = FTy->param_begin(),
            E = FTy->param_end(); I != E; ++I) {
       const Type *ArgTy = *I;
-      if (PAL.paramHasAttr(Idx, ParamAttr::ByVal)) {
+      if (PAL.paramHasAttr(Idx, Attribute::ByVal)) {
         assert(isa<PointerType>(ArgTy));
         ArgTy = cast<PointerType>(ArgTy)->getElementType();
       }
       if (I != FTy->param_begin())
         FunctionInnards << ", ";
       printType(FunctionInnards, ArgTy,
-        /*isSigned=*/PAL.paramHasAttr(Idx, ParamAttr::SExt), "");
+        /*isSigned=*/PAL.paramHasAttr(Idx, Attribute::SExt), "");
       ++Idx;
     }
     if (FTy->isVarArg()) {
@@ -577,7 +577,7 @@ raw_ostream &CWriter::printType(raw_ostream &Out, const Type *Ty,
     FunctionInnards << ')';
     std::string tstr = FunctionInnards.str();
     printType(Out, FTy->getReturnType(), 
-      /*isSigned=*/PAL.paramHasAttr(0, ParamAttr::SExt), tstr);
+      /*isSigned=*/PAL.paramHasAttr(0, Attribute::SExt), tstr);
     return Out;
   }
   case Type::StructTyID: {
@@ -642,7 +642,7 @@ raw_ostream &CWriter::printType(raw_ostream &Out, const Type *Ty,
 //
 std::ostream &CWriter::printType(std::ostream &Out, const Type *Ty,
                                  bool isSigned, const std::string &NameSoFar,
-                                 bool IgnoreName, const PAListPtr &PAL) {
+                                 bool IgnoreName, const AttrListPtr &PAL) {
   if (Ty->isPrimitiveType() || Ty->isInteger() || isa<VectorType>(Ty)) {
     printSimpleType(Out, Ty, isSigned, NameSoFar);
     return Out;
@@ -663,14 +663,14 @@ std::ostream &CWriter::printType(std::ostream &Out, const Type *Ty,
     for (FunctionType::param_iterator I = FTy->param_begin(),
            E = FTy->param_end(); I != E; ++I) {
       const Type *ArgTy = *I;
-      if (PAL.paramHasAttr(Idx, ParamAttr::ByVal)) {
+      if (PAL.paramHasAttr(Idx, Attribute::ByVal)) {
         assert(isa<PointerType>(ArgTy));
         ArgTy = cast<PointerType>(ArgTy)->getElementType();
       }
       if (I != FTy->param_begin())
         FunctionInnards << ", ";
       printType(FunctionInnards, ArgTy,
-        /*isSigned=*/PAL.paramHasAttr(Idx, ParamAttr::SExt), "");
+        /*isSigned=*/PAL.paramHasAttr(Idx, Attribute::SExt), "");
       ++Idx;
     }
     if (FTy->isVarArg()) {
@@ -682,7 +682,7 @@ std::ostream &CWriter::printType(std::ostream &Out, const Type *Ty,
     FunctionInnards << ')';
     std::string tstr = FunctionInnards.str();
     printType(Out, FTy->getReturnType(), 
-      /*isSigned=*/PAL.paramHasAttr(0, ParamAttr::SExt), tstr);
+      /*isSigned=*/PAL.paramHasAttr(0, Attribute::SExt), tstr);
     return Out;
   }
   case Type::StructTyID: {
@@ -2162,7 +2162,7 @@ void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
   
   // Loop over the arguments, printing them...
   const FunctionType *FT = cast<FunctionType>(F->getFunctionType());
-  const PAListPtr &PAL = F->getParamAttrs();
+  const AttrListPtr &PAL = F->getAttributes();
 
   std::stringstream FunctionInnards;
 
@@ -2191,12 +2191,12 @@ void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
         else
           ArgName = "";
         const Type *ArgTy = I->getType();
-        if (PAL.paramHasAttr(Idx, ParamAttr::ByVal)) {
+        if (PAL.paramHasAttr(Idx, Attribute::ByVal)) {
           ArgTy = cast<PointerType>(ArgTy)->getElementType();
           ByValParams.insert(I);
         }
         printType(FunctionInnards, ArgTy,
-            /*isSigned=*/PAL.paramHasAttr(Idx, ParamAttr::SExt),
+            /*isSigned=*/PAL.paramHasAttr(Idx, Attribute::SExt),
             ArgName);
         PrintedArg = true;
         ++Idx;
@@ -2218,12 +2218,12 @@ void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
     for (; I != E; ++I) {
       if (PrintedArg) FunctionInnards << ", ";
       const Type *ArgTy = *I;
-      if (PAL.paramHasAttr(Idx, ParamAttr::ByVal)) {
+      if (PAL.paramHasAttr(Idx, Attribute::ByVal)) {
         assert(isa<PointerType>(ArgTy));
         ArgTy = cast<PointerType>(ArgTy)->getElementType();
       }
       printType(FunctionInnards, ArgTy,
-             /*isSigned=*/PAL.paramHasAttr(Idx, ParamAttr::SExt));
+             /*isSigned=*/PAL.paramHasAttr(Idx, Attribute::SExt));
       PrintedArg = true;
       ++Idx;
     }
@@ -2251,7 +2251,7 @@ void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
     
   // Print out the return type and the signature built above.
   printType(Out, RetTy, 
-            /*isSigned=*/PAL.paramHasAttr(0, ParamAttr::SExt),
+            /*isSigned=*/PAL.paramHasAttr(0, Attribute::SExt),
             FunctionInnards.str());
 }
 
@@ -2844,7 +2844,7 @@ void CWriter::visitCallInst(CallInst &I) {
 
   // If this is a call to a struct-return function, assign to the first
   // parameter instead of passing it to the call.
-  const PAListPtr &PAL = I.getParamAttrs();
+  const AttrListPtr &PAL = I.getAttributes();
   bool hasByVal = I.hasByValArgument();
   bool isStructRet = I.hasStructRetAttr();
   if (isStructRet) {
@@ -2912,11 +2912,11 @@ void CWriter::visitCallInst(CallInst &I) {
         (*AI)->getType() != FTy->getParamType(ArgNo)) {
       Out << '(';
       printType(Out, FTy->getParamType(ArgNo), 
-            /*isSigned=*/PAL.paramHasAttr(ArgNo+1, ParamAttr::SExt));
+            /*isSigned=*/PAL.paramHasAttr(ArgNo+1, Attribute::SExt));
       Out << ')';
     }
     // Check if the argument is expected to be passed by value.
-    if (I.paramHasAttr(ArgNo+1, ParamAttr::ByVal))
+    if (I.paramHasAttr(ArgNo+1, Attribute::ByVal))
       writeOperandDeref(*AI);
     else
       writeOperand(*AI);

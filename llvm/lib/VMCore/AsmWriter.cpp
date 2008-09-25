@@ -1134,8 +1134,8 @@ void AssemblyWriter::writeParamOperand(const Value *Operand,
     // Print the type
     printType(Operand->getType());
     // Print parameter attributes list
-    if (Attrs != ParamAttr::None)
-      Out << ' ' << ParamAttr::getAsString(Attrs);
+    if (Attrs != Attribute::None)
+      Out << ' ' << Attribute::getAsString(Attrs);
     Out << ' ';
     // Print the operand
     WriteAsOperandInternal(Out, Operand, TypeNames, &Machine);
@@ -1356,7 +1356,7 @@ void AssemblyWriter::printFunction(const Function *F) {
   }
 
   const FunctionType *FT = F->getFunctionType();
-  const PAListPtr &Attrs = F->getParamAttrs();
+  const AttrListPtr &Attrs = F->getAttributes();
   printType(F->getReturnType());
   Out << ' ';
   if (F->hasName())
@@ -1375,7 +1375,7 @@ void AssemblyWriter::printFunction(const Function *F) {
          I != E; ++I) {
       // Insert commas as we go... the first arg doesn't get a comma
       if (I != F->arg_begin()) Out << ", ";
-      printArgument(I, Attrs.getParamAttrs(Idx));
+      printArgument(I, Attrs.getAttributes(Idx));
       Idx++;
     }
   } else {
@@ -1387,9 +1387,9 @@ void AssemblyWriter::printFunction(const Function *F) {
       // Output type...
       printType(FT->getParamType(i));
       
-      Attributes ArgAttrs = Attrs.getParamAttrs(i+1);
-      if (ArgAttrs != ParamAttr::None)
-        Out << ' ' << ParamAttr::getAsString(ArgAttrs);
+      Attributes ArgAttrs = Attrs.getAttributes(i+1);
+      if (ArgAttrs != Attribute::None)
+        Out << ' ' << Attribute::getAsString(ArgAttrs);
     }
   }
 
@@ -1399,9 +1399,9 @@ void AssemblyWriter::printFunction(const Function *F) {
     Out << "...";  // Output varargs portion of signature!
   }
   Out << ')';
-  Attributes RetAttrs = Attrs.getParamAttrs(0);
-  if (RetAttrs != ParamAttr::None)
-    Out << ' ' << ParamAttr::getAsString(Attrs.getParamAttrs(0));
+  Attributes RetAttrs = Attrs.getAttributes(0);
+  if (RetAttrs != Attribute::None)
+    Out << ' ' << Attribute::getAsString(Attrs.getAttributes(0));
   if (F->hasSection())
     Out << " section \"" << F->getSection() << '"';
   if (F->getAlignment())
@@ -1413,12 +1413,12 @@ void AssemblyWriter::printFunction(const Function *F) {
   } else {
 
     bool insideNotes = false;
-    if (F->hasNote(FnAttr::AlwaysInline)) {
+    if (F->hasNote(Attribute::AlwaysInline)) {
       Out << "notes(";
       insideNotes = true;
       Out << "inline=always";
     }
-    if (F->hasNote(FnAttr::NoInline)) {
+    if (F->hasNote(Attribute::NoInline)) {
       if (insideNotes) 
         Out << ",";
       else {
@@ -1427,7 +1427,7 @@ void AssemblyWriter::printFunction(const Function *F) {
       }
       Out << "inline=never";
     }
-    if (F->hasNote(FnAttr::OptimizeForSize)) {
+    if (F->hasNote(Attribute::OptimizeForSize)) {
       if (insideNotes) 
         Out << ",";
       else {
@@ -1460,8 +1460,8 @@ void AssemblyWriter::printArgument(const Argument *Arg,
   printType(Arg->getType());
 
   // Output parameter attributes list
-  if (Attrs != ParamAttr::None)
-    Out << ' ' << ParamAttr::getAsString(Attrs);
+  if (Attrs != Attribute::None)
+    Out << ' ' << Attribute::getAsString(Attrs);
 
   // Output name, if available...
   if (Arg->hasName()) {
@@ -1642,7 +1642,7 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     const PointerType    *PTy = cast<PointerType>(Operand->getType());
     const FunctionType   *FTy = cast<FunctionType>(PTy->getElementType());
     const Type         *RetTy = FTy->getReturnType();
-    const PAListPtr &PAL = CI->getParamAttrs();
+    const AttrListPtr &PAL = CI->getAttributes();
 
     // If possible, print out the short form of the call instruction.  We can
     // only do this if the first argument is a pointer to a nonvararg function,
@@ -1662,16 +1662,16 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     for (unsigned op = 1, Eop = I.getNumOperands(); op < Eop; ++op) {
       if (op > 1)
         Out << ", ";
-      writeParamOperand(I.getOperand(op), PAL.getParamAttrs(op));
+      writeParamOperand(I.getOperand(op), PAL.getAttributes(op));
     }
     Out << ')';
-    if (PAL.getParamAttrs(0) != ParamAttr::None)
-      Out << ' ' << ParamAttr::getAsString(PAL.getParamAttrs(0));
+    if (PAL.getAttributes(0) != Attribute::None)
+      Out << ' ' << Attribute::getAsString(PAL.getAttributes(0));
   } else if (const InvokeInst *II = dyn_cast<InvokeInst>(&I)) {
     const PointerType    *PTy = cast<PointerType>(Operand->getType());
     const FunctionType   *FTy = cast<FunctionType>(PTy->getElementType());
     const Type         *RetTy = FTy->getReturnType();
-    const PAListPtr &PAL = II->getParamAttrs();
+    const AttrListPtr &PAL = II->getAttributes();
 
     // Print the calling convention being used.
     switch (II->getCallingConv()) {
@@ -1702,12 +1702,12 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     for (unsigned op = 3, Eop = I.getNumOperands(); op < Eop; ++op) {
       if (op > 3)
         Out << ", ";
-      writeParamOperand(I.getOperand(op), PAL.getParamAttrs(op-2));
+      writeParamOperand(I.getOperand(op), PAL.getAttributes(op-2));
     }
 
     Out << ')';
-    if (PAL.getParamAttrs(0) != ParamAttr::None)
-      Out << ' ' << ParamAttr::getAsString(PAL.getParamAttrs(0));
+    if (PAL.getAttributes(0) != Attribute::None)
+      Out << ' ' << Attribute::getAsString(PAL.getAttributes(0));
     Out << "\n\t\t\tto ";
     writeOperand(II->getNormalDest(), true);
     Out << " unwind ";

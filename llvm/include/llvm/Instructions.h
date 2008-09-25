@@ -973,7 +973,7 @@ public:
 ///
 
 class CallInst : public Instruction {
-  PAListPtr ParamAttrs; ///< parameter attributes for call
+  AttrListPtr AttributeList; ///< parameter attributes for call
   CallInst(const CallInst &CI);
   void init(Value *Func, Value* const *Params, unsigned NumParams);
   void init(Value *Func, Value *Actual1, Value *Actual2);
@@ -1073,73 +1073,73 @@ public:
     SubclassData = (SubclassData & 1) | (CC << 1);
   }
 
-  /// getParamAttrs - Return the parameter attributes for this call.
+  /// getAttributes - Return the parameter attributes for this call.
   ///
-  const PAListPtr &getParamAttrs() const { return ParamAttrs; }
+  const AttrListPtr &getAttributes() const { return AttributeList; }
 
-  /// setParamAttrs - Sets the parameter attributes for this call.
-  void setParamAttrs(const PAListPtr &Attrs) { ParamAttrs = Attrs; }
+  /// setAttributes - Sets the parameter attributes for this call.
+  void setAttributes(const AttrListPtr &Attrs) { AttributeList = Attrs; }
   
-  /// addParamAttr - adds the attribute to the list of attributes.
-  void addParamAttr(unsigned i, Attributes attr);
+  /// addAttribute - adds the attribute to the list of attributes.
+  void addAttribute(unsigned i, Attributes attr);
 
-  /// removeParamAttr - removes the attribute from the list of attributes.
-  void removeParamAttr(unsigned i, Attributes attr);
+  /// removeAttribute - removes the attribute from the list of attributes.
+  void removeAttribute(unsigned i, Attributes attr);
 
   /// @brief Determine whether the call or the callee has the given attribute.
   bool paramHasAttr(unsigned i, unsigned attr) const;
 
   /// @brief Extract the alignment for a call or parameter (0=unknown).
   unsigned getParamAlignment(unsigned i) const {
-    return ParamAttrs.getParamAlignment(i);
+    return AttributeList.getParamAlignment(i);
   }
 
   /// @brief Determine if the call does not access memory.
   bool doesNotAccessMemory() const {
-    return paramHasAttr(0, ParamAttr::ReadNone);
+    return paramHasAttr(0, Attribute::ReadNone);
   }
   void setDoesNotAccessMemory(bool NotAccessMemory = true) {
-    if (NotAccessMemory) addParamAttr(0, ParamAttr::ReadNone);
-    else removeParamAttr(0, ParamAttr::ReadNone);
+    if (NotAccessMemory) addAttribute(0, Attribute::ReadNone);
+    else removeAttribute(0, Attribute::ReadNone);
   }
 
   /// @brief Determine if the call does not access or only reads memory.
   bool onlyReadsMemory() const {
-    return doesNotAccessMemory() || paramHasAttr(0, ParamAttr::ReadOnly);
+    return doesNotAccessMemory() || paramHasAttr(0, Attribute::ReadOnly);
   }
   void setOnlyReadsMemory(bool OnlyReadsMemory = true) {
-    if (OnlyReadsMemory) addParamAttr(0, ParamAttr::ReadOnly);
-    else removeParamAttr(0, ParamAttr::ReadOnly | ParamAttr::ReadNone);
+    if (OnlyReadsMemory) addAttribute(0, Attribute::ReadOnly);
+    else removeAttribute(0, Attribute::ReadOnly | Attribute::ReadNone);
   }
 
   /// @brief Determine if the call cannot return.
   bool doesNotReturn() const {
-    return paramHasAttr(0, ParamAttr::NoReturn);
+    return paramHasAttr(0, Attribute::NoReturn);
   }
   void setDoesNotReturn(bool DoesNotReturn = true) {
-    if (DoesNotReturn) addParamAttr(0, ParamAttr::NoReturn);
-    else removeParamAttr(0, ParamAttr::NoReturn);
+    if (DoesNotReturn) addAttribute(0, Attribute::NoReturn);
+    else removeAttribute(0, Attribute::NoReturn);
   }
 
   /// @brief Determine if the call cannot unwind.
   bool doesNotThrow() const {
-    return paramHasAttr(0, ParamAttr::NoUnwind);
+    return paramHasAttr(0, Attribute::NoUnwind);
   }
   void setDoesNotThrow(bool DoesNotThrow = true) {
-    if (DoesNotThrow) addParamAttr(0, ParamAttr::NoUnwind);
-    else removeParamAttr(0, ParamAttr::NoUnwind);
+    if (DoesNotThrow) addAttribute(0, Attribute::NoUnwind);
+    else removeAttribute(0, Attribute::NoUnwind);
   }
 
   /// @brief Determine if the call returns a structure through first 
   /// pointer argument.
   bool hasStructRetAttr() const {
     // Be friendly and also check the callee.
-    return paramHasAttr(1, ParamAttr::StructRet);
+    return paramHasAttr(1, Attribute::StructRet);
   }
 
   /// @brief Determine if any call argument is an aggregate passed by value.
   bool hasByValArgument() const {
-    return ParamAttrs.hasAttrSomewhere(ParamAttr::ByVal);
+    return AttributeList.hasAttrSomewhere(Attribute::ByVal);
   }
 
   /// getCalledFunction - Return the function being called by this instruction
@@ -2353,7 +2353,7 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(SwitchInst, Value)
 /// calling convention of the call.
 ///
 class InvokeInst : public TerminatorInst {
-  PAListPtr ParamAttrs;
+  AttrListPtr AttributeList;
   InvokeInst(const InvokeInst &BI);
   void init(Value *Fn, BasicBlock *IfNormal, BasicBlock *IfException,
             Value* const *Args, unsigned NumArgs);
@@ -2431,69 +2431,69 @@ public:
     SubclassData = CC;
   }
 
-  /// getParamAttrs - Return the parameter attributes for this invoke.
+  /// getAttributes - Return the parameter attributes for this invoke.
   ///
-  const PAListPtr &getParamAttrs() const { return ParamAttrs; }
+  const AttrListPtr &getAttributes() const { return AttributeList; }
 
-  /// setParamAttrs - Set the parameter attributes for this invoke.
+  /// setAttributes - Set the parameter attributes for this invoke.
   ///
-  void setParamAttrs(const PAListPtr &Attrs) { ParamAttrs = Attrs; }
+  void setAttributes(const AttrListPtr &Attrs) { AttributeList = Attrs; }
 
   /// @brief Determine whether the call or the callee has the given attribute.
   bool paramHasAttr(unsigned i, Attributes attr) const;
   
-  /// addParamAttr - adds the attribute to the list of attributes.
-  void addParamAttr(unsigned i, Attributes attr);
+  /// addAttribute - adds the attribute to the list of attributes.
+  void addAttribute(unsigned i, Attributes attr);
 
-  /// removeParamAttr - removes the attribute from the list of attributes.
-  void removeParamAttr(unsigned i, Attributes attr);
+  /// removeAttribute - removes the attribute from the list of attributes.
+  void removeAttribute(unsigned i, Attributes attr);
 
   /// @brief Extract the alignment for a call or parameter (0=unknown).
   unsigned getParamAlignment(unsigned i) const {
-    return ParamAttrs.getParamAlignment(i);
+    return AttributeList.getParamAlignment(i);
   }
 
   /// @brief Determine if the call does not access memory.
   bool doesNotAccessMemory() const {
-    return paramHasAttr(0, ParamAttr::ReadNone);
+    return paramHasAttr(0, Attribute::ReadNone);
   }
   void setDoesNotAccessMemory(bool NotAccessMemory = true) {
-    if (NotAccessMemory) addParamAttr(0, ParamAttr::ReadNone);
-    else removeParamAttr(0, ParamAttr::ReadNone);
+    if (NotAccessMemory) addAttribute(0, Attribute::ReadNone);
+    else removeAttribute(0, Attribute::ReadNone);
   }
 
   /// @brief Determine if the call does not access or only reads memory.
   bool onlyReadsMemory() const {
-    return doesNotAccessMemory() || paramHasAttr(0, ParamAttr::ReadOnly);
+    return doesNotAccessMemory() || paramHasAttr(0, Attribute::ReadOnly);
   }
   void setOnlyReadsMemory(bool OnlyReadsMemory = true) {
-    if (OnlyReadsMemory) addParamAttr(0, ParamAttr::ReadOnly);
-    else removeParamAttr(0, ParamAttr::ReadOnly | ParamAttr::ReadNone);
+    if (OnlyReadsMemory) addAttribute(0, Attribute::ReadOnly);
+    else removeAttribute(0, Attribute::ReadOnly | Attribute::ReadNone);
   }
 
   /// @brief Determine if the call cannot return.
   bool doesNotReturn() const {
-    return paramHasAttr(0, ParamAttr::NoReturn);
+    return paramHasAttr(0, Attribute::NoReturn);
   }
   void setDoesNotReturn(bool DoesNotReturn = true) {
-    if (DoesNotReturn) addParamAttr(0, ParamAttr::NoReturn);
-    else removeParamAttr(0, ParamAttr::NoReturn);
+    if (DoesNotReturn) addAttribute(0, Attribute::NoReturn);
+    else removeAttribute(0, Attribute::NoReturn);
   }
 
   /// @brief Determine if the call cannot unwind.
   bool doesNotThrow() const {
-    return paramHasAttr(0, ParamAttr::NoUnwind);
+    return paramHasAttr(0, Attribute::NoUnwind);
   }
   void setDoesNotThrow(bool DoesNotThrow = true) {
-    if (DoesNotThrow) addParamAttr(0, ParamAttr::NoUnwind);
-    else removeParamAttr(0, ParamAttr::NoUnwind);
+    if (DoesNotThrow) addAttribute(0, Attribute::NoUnwind);
+    else removeAttribute(0, Attribute::NoUnwind);
   }
 
   /// @brief Determine if the call returns a structure through first 
   /// pointer argument.
   bool hasStructRetAttr() const {
     // Be friendly and also check the callee.
-    return paramHasAttr(1, ParamAttr::StructRet);
+    return paramHasAttr(1, Attribute::StructRet);
   }
 
   /// getCalledFunction - Return the function called, or null if this is an

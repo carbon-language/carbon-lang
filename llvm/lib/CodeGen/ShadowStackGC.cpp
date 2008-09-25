@@ -162,7 +162,7 @@ namespace {
                                               Args.begin(), Args.end(),
                                               CI->getName(), CallBB);
           II->setCallingConv(CI->getCallingConv());
-          II->setParamAttrs(CI->getParamAttrs());
+          II->setAttributes(CI->getAttributes());
           CI->replaceAllUsesWith(II);
           delete CI;
         }

@@ -5757,7 +5757,7 @@ SDValue X86TargetLowering::LowerTRAMPOLINE(SDValue Op,
 
       // Check that ECX wasn't needed by an 'inreg' parameter.
       const FunctionType *FTy = Func->getFunctionType();
-      const PAListPtr &Attrs = Func->getParamAttrs();
+      const AttrListPtr &Attrs = Func->getAttributes();
 
       if (!Attrs.isEmpty() && !Func->isVarArg()) {
         unsigned InRegCount = 0;
@@ -5765,7 +5765,7 @@ SDValue X86TargetLowering::LowerTRAMPOLINE(SDValue Op,
 
         for (FunctionType::param_iterator I = FTy->param_begin(),
              E = FTy->param_end(); I != E; ++I, ++Idx)
-          if (Attrs.paramHasAttr(Idx, ParamAttr::InReg))
+          if (Attrs.paramHasAttr(Idx, Attribute::InReg))
             // FIXME: should only count parameters that are lowered to integers.
             InRegCount += (TD->getTypeSizeInBits(*I) + 31) / 32;
 

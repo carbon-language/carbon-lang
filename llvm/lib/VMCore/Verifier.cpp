@@ -270,7 +270,7 @@ namespace {
                                   unsigned Count, ...);
     void VerifyAttrs(Attributes Attrs, const Type *Ty,
                      bool isReturnValue, const Value *V);
-    void VerifyFunctionAttrs(const FunctionType *FT, const PAListPtr &Attrs,
+    void VerifyFunctionAttrs(const FunctionType *FT, const AttrListPtr &Attrs,
                              const Value *V);
 
     void WriteValue(const Value *V) {
@@ -408,38 +408,38 @@ void Verifier::verifyTypeSymbolTable(TypeSymbolTable &ST) {
 // value of the specified type.  The value V is printed in error messages.
 void Verifier::VerifyAttrs(Attributes Attrs, const Type *Ty, 
                            bool isReturnValue, const Value *V) {
-  if (Attrs == ParamAttr::None)
+  if (Attrs == Attribute::None)
     return;
 
   if (isReturnValue) {
-    Attributes RetI = Attrs & ParamAttr::ParameterOnly;
-    Assert1(!RetI, "Attribute " + ParamAttr::getAsString(RetI) +
+    Attributes RetI = Attrs & Attribute::ParameterOnly;
+    Assert1(!RetI, "Attribute " + Attribute::getAsString(RetI) +
             " does not apply to return values!", V);
   } else {
-    Attributes ParmI = Attrs & ParamAttr::ReturnOnly;
-    Assert1(!ParmI, "Attribute " + ParamAttr::getAsString(ParmI) +
+    Attributes ParmI = Attrs & Attribute::ReturnOnly;
+    Assert1(!ParmI, "Attribute " + Attribute::getAsString(ParmI) +
             " only applies to return values!", V);
   }
 
   for (unsigned i = 0;
-       i < array_lengthof(ParamAttr::MutuallyIncompatible); ++i) {
-    Attributes MutI = Attrs & ParamAttr::MutuallyIncompatible[i];
+       i < array_lengthof(Attribute::MutuallyIncompatible); ++i) {
+    Attributes MutI = Attrs & Attribute::MutuallyIncompatible[i];
     Assert1(!(MutI & (MutI - 1)), "Attributes " +
-            ParamAttr::getAsString(MutI) + " are incompatible!", V);
+            Attribute::getAsString(MutI) + " are incompatible!", V);
   }
 
-  Attributes TypeI = Attrs & ParamAttr::typeIncompatible(Ty);
+  Attributes TypeI = Attrs & Attribute::typeIncompatible(Ty);
   Assert1(!TypeI, "Wrong type for attribute " +
-          ParamAttr::getAsString(TypeI), V);
+          Attribute::getAsString(TypeI), V);
 
-  Attributes ByValI = Attrs & ParamAttr::ByVal;
+  Attributes ByValI = Attrs & Attribute::ByVal;
   if (const PointerType *PTy = dyn_cast<PointerType>(Ty)) {
     Assert1(!ByValI || PTy->getElementType()->isSized(),
-            "Attribute " + ParamAttr::getAsString(ByValI) +
+            "Attribute " + Attribute::getAsString(ByValI) +
             " does not support unsized types!", V);
   } else {
     Assert1(!ByValI,
-            "Attribute " + ParamAttr::getAsString(ByValI) +
+            "Attribute " + Attribute::getAsString(ByValI) +
             " only applies to parameters with pointer type!", V);
   }
 }
@@ -447,7 +447,7 @@ void Verifier::VerifyAttrs(Attributes Attrs, const Type *Ty,
 // VerifyFunctionAttrs - Check parameter attributes against a function type.
 // The value V is printed in error messages.
 void Verifier::VerifyFunctionAttrs(const FunctionType *FT,
-                                   const PAListPtr &Attrs,
+                                   const AttrListPtr &Attrs,
                                    const Value *V) {
   if (Attrs.isEmpty())
     return;
@@ -455,7 +455,7 @@ void Verifier::VerifyFunctionAttrs(const FunctionType *FT,
   bool SawNest = false;
 
   for (unsigned i = 0, e = Attrs.getNumSlots(); i != e; ++i) {
-    const FnAttributeWithIndex &Attr = Attrs.getSlot(i);
+    const AttributeWithIndex &Attr = Attrs.getSlot(i);
 
     const Type *Ty;
     if (Attr.Index == 0)
@@ -467,17 +467,17 @@ void Verifier::VerifyFunctionAttrs(const FunctionType *FT,
     
     VerifyAttrs(Attr.Attrs, Ty, Attr.Index == 0, V);
 
-    if (Attr.Attrs & ParamAttr::Nest) {
+    if (Attr.Attrs & Attribute::Nest) {
       Assert1(!SawNest, "More than one parameter has attribute nest!", V);
       SawNest = true;
     }
 
-    if (Attr.Attrs & ParamAttr::StructRet)
+    if (Attr.Attrs & Attribute::StructRet)
       Assert1(Attr.Index == 1, "Attribute sret not on first parameter!", V);
   }
 }
 
-static bool VerifyAttributeCount(const PAListPtr &Attrs, unsigned Params) {
+static bool VerifyAttributeCount(const AttrListPtr &Attrs, unsigned Params) {
   if (Attrs.isEmpty())
     return true;
     
@@ -508,7 +508,7 @@ void Verifier::visitFunction(Function &F) {
   Assert1(!F.hasStructRetAttr() || F.getReturnType() == Type::VoidTy,
           "Invalid struct return type!", &F);
 
-  const PAListPtr &Attrs = F.getParamAttrs();
+  const AttrListPtr &Attrs = F.getAttributes();
 
   Assert1(VerifyAttributeCount(Attrs, FT->getNumParams()),
           "Attributes after last parameter!", &F);
@@ -965,7 +965,7 @@ void Verifier::VerifyCallSite(CallSite CS) {
             "Call parameter type does not match function signature!",
             CS.getArgument(i), FTy->getParamType(i), I);
 
-  const PAListPtr &Attrs = CS.getParamAttrs();
+  const AttrListPtr &Attrs = CS.getAttributes();
 
   Assert1(VerifyAttributeCount(Attrs, CS.arg_size()),
           "Attributes after last parameter!", I);
@@ -976,12 +976,12 @@ void Verifier::VerifyCallSite(CallSite CS) {
   if (FTy->isVarArg())
     // Check attributes on the varargs part.
     for (unsigned Idx = 1 + FTy->getNumParams(); Idx <= CS.arg_size(); ++Idx) {
-      Attributes Attr = Attrs.getParamAttrs(Idx);
+      Attributes Attr = Attrs.getAttributes(Idx);
 
       VerifyAttrs(Attr, CS.getArgument(Idx-1)->getType(), false, I);
 
-      Attributes VArgI = Attr & ParamAttr::VarArgsIncompatible;
-      Assert1(!VArgI, "Attribute " + ParamAttr::getAsString(VArgI) +
+      Attributes VArgI = Attr & Attribute::VarArgsIncompatible;
+      Assert1(!VArgI, "Attribute " + Attribute::getAsString(VArgI) +
               " cannot be used for vararg call arguments!", I);
     }
 
@@ -1523,7 +1523,7 @@ void Verifier::VerifyIntrinsicPrototype(Intrinsic::ID ID,
   }
 
   // Check parameter attributes.
-  Assert1(F->getParamAttrs() == Intrinsic::getParamAttrs(ID),
+  Assert1(F->getAttributes() == Intrinsic::getAttributes(ID),
           "Intrinsic has wrong parameter attributes!", F);
 }
 

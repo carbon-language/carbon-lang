@@ -47,7 +47,7 @@ ValueEnumerator::ValueEnumerator(const Module *M) {
   // Enumerate the functions.
   for (Module::const_iterator I = M->begin(), E = M->end(); I != E; ++I) {
     EnumerateValue(I);
-    EnumerateParamAttrs(cast<Function>(I)->getParamAttrs());
+    EnumerateAttributes(cast<Function>(I)->getAttributes());
   }
 
   // Enumerate the aliases.
@@ -90,9 +90,9 @@ ValueEnumerator::ValueEnumerator(const Module *M) {
           EnumerateOperandType(*OI);
         EnumerateType(I->getType());
         if (const CallInst *CI = dyn_cast<CallInst>(I))
-          EnumerateParamAttrs(CI->getParamAttrs());
+          EnumerateAttributes(CI->getAttributes());
         else if (const InvokeInst *II = dyn_cast<InvokeInst>(I))
-          EnumerateParamAttrs(II->getParamAttrs());
+          EnumerateAttributes(II->getAttributes());
       }
   }
   
@@ -247,14 +247,14 @@ void ValueEnumerator::EnumerateOperandType(const Value *V) {
   }
 }
 
-void ValueEnumerator::EnumerateParamAttrs(const PAListPtr &PAL) {
+void ValueEnumerator::EnumerateAttributes(const AttrListPtr &PAL) {
   if (PAL.isEmpty()) return;  // null is always 0.
   // Do a lookup.
-  unsigned &Entry = ParamAttrMap[PAL.getRawPointer()];
+  unsigned &Entry = AttributeMap[PAL.getRawPointer()];
   if (Entry == 0) {
     // Never saw this before, add it.
-    ParamAttrs.push_back(PAL);
-    Entry = ParamAttrs.size();
+    Attributes.push_back(PAL);
+    Entry = Attributes.size();
   }
 }
 
@@ -303,7 +303,7 @@ void ValueEnumerator::incorporateFunction(const Function &F) {
   
   // Add the function's parameter attributes so they are available for use in
   // the function's instruction.
-  EnumerateParamAttrs(F.getParamAttrs());
+  EnumerateAttributes(F.getAttributes());
 
   FirstInstID = Values.size();
   

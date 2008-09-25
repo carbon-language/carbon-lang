@@ -1,4 +1,4 @@
-//===-- Attributes.cpp - Implement ParamAttrsList -------------------------===//
+//===-- Attributes.cpp - Implement AttributesList -------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the ParamAttrsList class and ParamAttr utilities.
+// This file implements the AttributesList class and Attribute utilities.
 //
 //===----------------------------------------------------------------------===//
 
@@ -20,36 +20,36 @@
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
-// ParamAttr Function Definitions
+// Attribute Function Definitions
 //===----------------------------------------------------------------------===//
 
-std::string ParamAttr::getAsString(Attributes Attrs) {
+std::string Attribute::getAsString(Attributes Attrs) {
   std::string Result;
-  if (Attrs & ParamAttr::ZExt)
+  if (Attrs & Attribute::ZExt)
     Result += "zeroext ";
-  if (Attrs & ParamAttr::SExt)
+  if (Attrs & Attribute::SExt)
     Result += "signext ";
-  if (Attrs & ParamAttr::NoReturn)
+  if (Attrs & Attribute::NoReturn)
     Result += "noreturn ";
-  if (Attrs & ParamAttr::NoUnwind)
+  if (Attrs & Attribute::NoUnwind)
     Result += "nounwind ";
-  if (Attrs & ParamAttr::InReg)
+  if (Attrs & Attribute::InReg)
     Result += "inreg ";
-  if (Attrs & ParamAttr::NoAlias)
+  if (Attrs & Attribute::NoAlias)
     Result += "noalias ";
-  if (Attrs & ParamAttr::StructRet)
+  if (Attrs & Attribute::StructRet)
     Result += "sret ";  
-  if (Attrs & ParamAttr::ByVal)
+  if (Attrs & Attribute::ByVal)
     Result += "byval ";
-  if (Attrs & ParamAttr::Nest)
+  if (Attrs & Attribute::Nest)
     Result += "nest ";
-  if (Attrs & ParamAttr::ReadNone)
+  if (Attrs & Attribute::ReadNone)
     Result += "readnone ";
-  if (Attrs & ParamAttr::ReadOnly)
+  if (Attrs & Attribute::ReadOnly)
     Result += "readonly ";
-  if (Attrs & ParamAttr::Alignment) {
+  if (Attrs & Attribute::Alignment) {
     Result += "align ";
-    Result += utostr((Attrs & ParamAttr::Alignment) >> 16);
+    Result += utostr((Attrs & Attribute::Alignment) >> 16);
     Result += " ";
   }
   // Trim the trailing space.
@@ -57,7 +57,7 @@ std::string ParamAttr::getAsString(Attributes Attrs) {
   return Result;
 }
 
-Attributes ParamAttr::typeIncompatible(const Type *Ty) {
+Attributes Attribute::typeIncompatible(const Type *Ty) {
   Attributes Incompatible = None;
   
   if (!Ty->isInteger())
@@ -79,14 +79,14 @@ namespace llvm {
 class AttributeListImpl : public FoldingSetNode {
   unsigned RefCount;
   
-  // ParamAttrsList is uniqued, these should not be publicly available.
+  // AttributesList is uniqued, these should not be publicly available.
   void operator=(const AttributeListImpl &); // Do not implement
   AttributeListImpl(const AttributeListImpl &); // Do not implement
   ~AttributeListImpl();                        // Private implementation
 public:
-  SmallVector<FnAttributeWithIndex, 4> Attrs;
+  SmallVector<AttributeWithIndex, 4> Attrs;
   
-  AttributeListImpl(const FnAttributeWithIndex *Attr, unsigned NumAttrs)
+  AttributeListImpl(const AttributeWithIndex *Attr, unsigned NumAttrs)
     : Attrs(Attr, Attr+NumAttrs) {
     RefCount = 0;
   }
@@ -97,7 +97,7 @@ public:
   void Profile(FoldingSetNodeID &ID) const {
     Profile(ID, &Attrs[0], Attrs.size());
   }
-  static void Profile(FoldingSetNodeID &ID, const FnAttributeWithIndex *Attr,
+  static void Profile(FoldingSetNodeID &ID, const AttributeWithIndex *Attr,
                       unsigned NumAttrs) {
     for (unsigned i = 0; i != NumAttrs; ++i)
       ID.AddInteger(uint64_t(Attr[i].Attrs) << 32 | unsigned(Attr[i].Index));
@@ -105,24 +105,24 @@ public:
 };
 }
 
-static ManagedStatic<FoldingSet<AttributeListImpl> > ParamAttrsLists;
+static ManagedStatic<FoldingSet<AttributeListImpl> > AttributesLists;
 
 AttributeListImpl::~AttributeListImpl() {
-  ParamAttrsLists->RemoveNode(this);
+  AttributesLists->RemoveNode(this);
 }
 
 
-PAListPtr PAListPtr::get(const FnAttributeWithIndex *Attrs, unsigned NumAttrs) {
-  // If there are no attributes then return a null ParamAttrsList pointer.
+AttrListPtr AttrListPtr::get(const AttributeWithIndex *Attrs, unsigned NumAttrs) {
+  // If there are no attributes then return a null AttributesList pointer.
   if (NumAttrs == 0)
-    return PAListPtr();
+    return AttrListPtr();
   
 #ifndef NDEBUG
   for (unsigned i = 0; i != NumAttrs; ++i) {
-    assert(Attrs[i].Attrs != ParamAttr::None && 
-           "Pointless parameter attribute!");
+    assert(Attrs[i].Attrs != Attribute::None && 
+           "Pointless attribute!");
     assert((!i || Attrs[i-1].Index < Attrs[i].Index) &&
-           "Misordered ParamAttrsList!");
+           "Misordered AttributesList!");
   }
 #endif
   
@@ -131,78 +131,78 @@ PAListPtr PAListPtr::get(const FnAttributeWithIndex *Attrs, unsigned NumAttrs) {
   AttributeListImpl::Profile(ID, Attrs, NumAttrs);
   void *InsertPos;
   AttributeListImpl *PAL =
-    ParamAttrsLists->FindNodeOrInsertPos(ID, InsertPos);
+    AttributesLists->FindNodeOrInsertPos(ID, InsertPos);
   
   // If we didn't find any existing attributes of the same shape then
   // create a new one and insert it.
   if (!PAL) {
     PAL = new AttributeListImpl(Attrs, NumAttrs);
-    ParamAttrsLists->InsertNode(PAL, InsertPos);
+    AttributesLists->InsertNode(PAL, InsertPos);
   }
   
-  // Return the ParamAttrsList that we found or created.
-  return PAListPtr(PAL);
+  // Return the AttributesList that we found or created.
+  return AttrListPtr(PAL);
 }
 
 
 //===----------------------------------------------------------------------===//
-// PAListPtr Method Implementations
+// AttrListPtr Method Implementations
 //===----------------------------------------------------------------------===//
 
-PAListPtr::PAListPtr(AttributeListImpl *LI) : PAList(LI) {
+AttrListPtr::AttrListPtr(AttributeListImpl *LI) : AttrList(LI) {
   if (LI) LI->AddRef();
 }
 
-PAListPtr::PAListPtr(const PAListPtr &P) : PAList(P.PAList) {
-  if (PAList) PAList->AddRef();  
+AttrListPtr::AttrListPtr(const AttrListPtr &P) : AttrList(P.AttrList) {
+  if (AttrList) AttrList->AddRef();  
 }
 
-const PAListPtr &PAListPtr::operator=(const PAListPtr &RHS) {
-  if (PAList == RHS.PAList) return *this;
-  if (PAList) PAList->DropRef();
-  PAList = RHS.PAList;
-  if (PAList) PAList->AddRef();
+const AttrListPtr &AttrListPtr::operator=(const AttrListPtr &RHS) {
+  if (AttrList == RHS.AttrList) return *this;
+  if (AttrList) AttrList->DropRef();
+  AttrList = RHS.AttrList;
+  if (AttrList) AttrList->AddRef();
   return *this;
 }
 
-PAListPtr::~PAListPtr() {
-  if (PAList) PAList->DropRef();
+AttrListPtr::~AttrListPtr() {
+  if (AttrList) AttrList->DropRef();
 }
 
 /// getNumSlots - Return the number of slots used in this attribute list. 
 /// This is the number of arguments that have an attribute set on them
 /// (including the function itself).
-unsigned PAListPtr::getNumSlots() const {
-  return PAList ? PAList->Attrs.size() : 0;
+unsigned AttrListPtr::getNumSlots() const {
+  return AttrList ? AttrList->Attrs.size() : 0;
 }
 
-/// getSlot - Return the FnAttributeWithIndex at the specified slot.  This
-/// holds a parameter number plus a set of attributes.
-const FnAttributeWithIndex &PAListPtr::getSlot(unsigned Slot) const {
-  assert(PAList && Slot < PAList->Attrs.size() && "Slot # out of range!");
-  return PAList->Attrs[Slot];
+/// getSlot - Return the AttributeWithIndex at the specified slot.  This
+/// holds a number plus a set of attributes.
+const AttributeWithIndex &AttrListPtr::getSlot(unsigned Slot) const {
+  assert(AttrList && Slot < AttrList->Attrs.size() && "Slot # out of range!");
+  return AttrList->Attrs[Slot];
 }
 
 
-/// getParamAttrs - The parameter attributes for the specified parameter are
-/// returned.  Parameters for the result are denoted with Idx = 0.
+/// getAttributes - The attributes for the specified index are
+/// returned.  Attributes for the result are denoted with Idx = 0.
 /// Function notes are denoted with idx = ~0.
-Attributes PAListPtr::getParamAttrs(unsigned Idx) const {
-  if (PAList == 0) return ParamAttr::None;
+Attributes AttrListPtr::getAttributes(unsigned Idx) const {
+  if (AttrList == 0) return Attribute::None;
   
-  const SmallVector<FnAttributeWithIndex, 4> &Attrs = PAList->Attrs;
+  const SmallVector<AttributeWithIndex, 4> &Attrs = AttrList->Attrs;
   for (unsigned i = 0, e = Attrs.size(); i != e && Attrs[i].Index <= Idx; ++i)
     if (Attrs[i].Index == Idx)
       return Attrs[i].Attrs;
-  return ParamAttr::None;
+  return Attribute::None;
 }
 
 /// hasAttrSomewhere - Return true if the specified attribute is set for at
 /// least one parameter or for the return value.
-bool PAListPtr::hasAttrSomewhere(Attributes Attr) const {
-  if (PAList == 0) return false;
+bool AttrListPtr::hasAttrSomewhere(Attributes Attr) const {
+  if (AttrList == 0) return false;
   
-  const SmallVector<FnAttributeWithIndex, 4> &Attrs = PAList->Attrs;
+  const SmallVector<AttributeWithIndex, 4> &Attrs = AttrList->Attrs;
   for (unsigned i = 0, e = Attrs.size(); i != e; ++i)
     if (Attrs[i].Attrs & Attr)
       return true;
@@ -210,13 +210,13 @@ bool PAListPtr::hasAttrSomewhere(Attributes Attr) const {
 }
 
 
-PAListPtr PAListPtr::addAttr(unsigned Idx, Attributes Attrs) const {
-  Attributes OldAttrs = getParamAttrs(Idx);
+AttrListPtr AttrListPtr::addAttr(unsigned Idx, Attributes Attrs) const {
+  Attributes OldAttrs = getAttributes(Idx);
 #ifndef NDEBUG
   // FIXME it is not obvious how this should work for alignment.
   // For now, say we can't change a known alignment.
-  Attributes OldAlign = OldAttrs & ParamAttr::Alignment;
-  Attributes NewAlign = Attrs & ParamAttr::Alignment;
+  Attributes OldAlign = OldAttrs & Attribute::Alignment;
+  Attributes NewAlign = Attrs & Attribute::Alignment;
   assert((!OldAlign || !NewAlign || OldAlign == NewAlign) &&
          "Attempt to change alignment!");
 #endif
@@ -225,11 +225,11 @@ PAListPtr PAListPtr::addAttr(unsigned Idx, Attributes Attrs) const {
   if (NewAttrs == OldAttrs)
     return *this;
   
-  SmallVector<FnAttributeWithIndex, 8> NewAttrList;
-  if (PAList == 0)
-    NewAttrList.push_back(FnAttributeWithIndex::get(Idx, Attrs));
+  SmallVector<AttributeWithIndex, 8> NewAttrList;
+  if (AttrList == 0)
+    NewAttrList.push_back(AttributeWithIndex::get(Idx, Attrs));
   else {
-    const SmallVector<FnAttributeWithIndex, 4> &OldAttrList = PAList->Attrs;
+    const SmallVector<AttributeWithIndex, 4> &OldAttrList = AttrList->Attrs;
     unsigned i = 0, e = OldAttrList.size();
     // Copy attributes for arguments before this one.
     for (; i != e && OldAttrList[i].Index < Idx; ++i)
@@ -241,7 +241,7 @@ PAListPtr PAListPtr::addAttr(unsigned Idx, Attributes Attrs) const {
       ++i;
     }
     
-    NewAttrList.push_back(FnAttributeWithIndex::get(Idx, Attrs));
+    NewAttrList.push_back(AttributeWithIndex::get(Idx, Attrs));
     
     // Copy attributes for arguments after this one.
     NewAttrList.insert(NewAttrList.end(), 
@@ -251,21 +251,21 @@ PAListPtr PAListPtr::addAttr(unsigned Idx, Attributes Attrs) const {
   return get(&NewAttrList[0], NewAttrList.size());
 }
 
-PAListPtr PAListPtr::removeAttr(unsigned Idx, Attributes Attrs) const {
+AttrListPtr AttrListPtr::removeAttr(unsigned Idx, Attributes Attrs) const {
 #ifndef NDEBUG
   // FIXME it is not obvious how this should work for alignment.
   // For now, say we can't pass in alignment, which no current use does.
-  assert(!(Attrs & ParamAttr::Alignment) && "Attempt to exclude alignment!");
+  assert(!(Attrs & Attribute::Alignment) && "Attempt to exclude alignment!");
 #endif
-  if (PAList == 0) return PAListPtr();
+  if (AttrList == 0) return AttrListPtr();
   
-  Attributes OldAttrs = getParamAttrs(Idx);
+  Attributes OldAttrs = getAttributes(Idx);
   Attributes NewAttrs = OldAttrs & ~Attrs;
   if (NewAttrs == OldAttrs)
     return *this;
 
-  SmallVector<FnAttributeWithIndex, 8> NewAttrList;
-  const SmallVector<FnAttributeWithIndex, 4> &OldAttrList = PAList->Attrs;
+  SmallVector<AttributeWithIndex, 8> NewAttrList;
+  const SmallVector<AttributeWithIndex, 4> &OldAttrList = AttrList->Attrs;
   unsigned i = 0, e = OldAttrList.size();
   
   // Copy attributes for arguments before this one.
@@ -277,7 +277,7 @@ PAListPtr PAListPtr::removeAttr(unsigned Idx, Attributes Attrs) const {
   Attrs = OldAttrList[i].Attrs & ~Attrs;
   ++i;
   if (Attrs)  // If any attributes left for this parameter, add them.
-    NewAttrList.push_back(FnAttributeWithIndex::get(Idx, Attrs));
+    NewAttrList.push_back(AttributeWithIndex::get(Idx, Attrs));
   
   // Copy attributes for arguments after this one.
   NewAttrList.insert(NewAttrList.end(), 
@@ -286,10 +286,10 @@ PAListPtr PAListPtr::removeAttr(unsigned Idx, Attributes Attrs) const {
   return get(&NewAttrList[0], NewAttrList.size());
 }
 
-void PAListPtr::dump() const {
+void AttrListPtr::dump() const {
   cerr << "PAL[ ";
   for (unsigned i = 0; i < getNumSlots(); ++i) {
-    const FnAttributeWithIndex &PAWI = getSlot(i);
+    const AttributeWithIndex &PAWI = getSlot(i);
     cerr << "{" << PAWI.Index << "," << PAWI.Attrs << "} ";
   }
   

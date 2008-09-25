@@ -24,7 +24,7 @@ class Type;
 class FunctionType;
 class Function;
 class Module;
-class PAListPtr;
+class AttrListPtr;
 
 /// Intrinsic Namespace - This namespace contains an enum with a value for
 /// every intrinsic/builtin function known by LLVM.  These enum values are
@@ -49,9 +49,9 @@ namespace Intrinsic {
   ///
   const FunctionType *getType(ID id, const Type **Tys = 0, unsigned numTys = 0);
 
-  /// Intrinsic::getParamAttrs(ID) - Return the attributes for an intrinsic.
+  /// Intrinsic::getAttributes(ID) - Return the attributes for an intrinsic.
   ///
-  PAListPtr getParamAttrs(ID id);
+  AttrListPtr getAttributes(ID id);
 
   /// Intrinsic::getDeclaration(M, ID) - Create or insert an LLVM Function
   /// declaration for an intrinsic, and return it.

@@ -927,9 +927,9 @@ void SelectionDAGLowering::visitRet(ReturnInst &I) {
       ISD::NodeType ExtendKind = ISD::ANY_EXTEND;
   
       const Function *F = I.getParent()->getParent();
-      if (F->paramHasAttr(0, ParamAttr::SExt))
+      if (F->paramHasAttr(0, Attribute::SExt))
         ExtendKind = ISD::SIGN_EXTEND;
-      else if (F->paramHasAttr(0, ParamAttr::ZExt))
+      else if (F->paramHasAttr(0, Attribute::ZExt))
         ExtendKind = ISD::ZERO_EXTEND;
 
       getCopyToParts(DAG, SDValue(RetOp.getNode(), RetOp.getResNo() + j),
@@ -937,7 +937,7 @@ void SelectionDAGLowering::visitRet(ReturnInst &I) {
 
       // 'inreg' on function refers to return value
       ISD::ArgFlagsTy Flags = ISD::ArgFlagsTy();
-      if (F->paramHasAttr(0, ParamAttr::InReg))
+      if (F->paramHasAttr(0, Attribute::InReg))
         Flags.setInReg();
       for (unsigned i = 0; i < NumParts; ++i) {
         NewValues.push_back(Parts[i]);
@@ -4100,12 +4100,12 @@ void SelectionDAGLowering::LowerCallTo(CallSite CS, SDValue Callee,
     Entry.Node = ArgNode; Entry.Ty = (*i)->getType();
 
     unsigned attrInd = i - CS.arg_begin() + 1;
-    Entry.isSExt  = CS.paramHasAttr(attrInd, ParamAttr::SExt);
-    Entry.isZExt  = CS.paramHasAttr(attrInd, ParamAttr::ZExt);
-    Entry.isInReg = CS.paramHasAttr(attrInd, ParamAttr::InReg);
-    Entry.isSRet  = CS.paramHasAttr(attrInd, ParamAttr::StructRet);
-    Entry.isNest  = CS.paramHasAttr(attrInd, ParamAttr::Nest);
-    Entry.isByVal = CS.paramHasAttr(attrInd, ParamAttr::ByVal);
+    Entry.isSExt  = CS.paramHasAttr(attrInd, Attribute::SExt);
+    Entry.isZExt  = CS.paramHasAttr(attrInd, Attribute::ZExt);
+    Entry.isInReg = CS.paramHasAttr(attrInd, Attribute::InReg);
+    Entry.isSRet  = CS.paramHasAttr(attrInd, Attribute::StructRet);
+    Entry.isNest  = CS.paramHasAttr(attrInd, Attribute::Nest);
+    Entry.isByVal = CS.paramHasAttr(attrInd, Attribute::ByVal);
     Entry.Alignment = CS.getParamAlignment(attrInd);
     Args.push_back(Entry);
   }
@@ -4122,8 +4122,8 @@ void SelectionDAGLowering::LowerCallTo(CallSite CS, SDValue Callee,
 
   std::pair<SDValue,SDValue> Result =
     TLI.LowerCallTo(getRoot(), CS.getType(),
-                    CS.paramHasAttr(0, ParamAttr::SExt),
-                    CS.paramHasAttr(0, ParamAttr::ZExt),
+                    CS.paramHasAttr(0, Attribute::SExt),
+                    CS.paramHasAttr(0, Attribute::ZExt),
                     FTy->isVarArg(), CS.getCallingConv(),
                     IsTailCall && PerformTailCallOpt,
                     Callee, Args, DAG);
@@ -5126,15 +5126,15 @@ void TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG,
       unsigned OriginalAlignment =
         getTargetData()->getABITypeAlignment(ArgTy);
 
-      if (F.paramHasAttr(j, ParamAttr::ZExt))
+      if (F.paramHasAttr(j, Attribute::ZExt))
         Flags.setZExt();
-      if (F.paramHasAttr(j, ParamAttr::SExt))
+      if (F.paramHasAttr(j, Attribute::SExt))
         Flags.setSExt();
-      if (F.paramHasAttr(j, ParamAttr::InReg))
+      if (F.paramHasAttr(j, Attribute::InReg))
         Flags.setInReg();
-      if (F.paramHasAttr(j, ParamAttr::StructRet))
+      if (F.paramHasAttr(j, Attribute::StructRet))
         Flags.setSRet();
-      if (F.paramHasAttr(j, ParamAttr::ByVal)) {
+      if (F.paramHasAttr(j, Attribute::ByVal)) {
         Flags.setByVal();
         const PointerType *Ty = cast<PointerType>(I->getType());
         const Type *ElementTy = Ty->getElementType();
@@ -5147,7 +5147,7 @@ void TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG,
         Flags.setByValAlign(FrameAlign);
         Flags.setByValSize(FrameSize);
       }
-      if (F.paramHasAttr(j, ParamAttr::Nest))
+      if (F.paramHasAttr(j, Attribute::Nest))
         Flags.setNest();
       Flags.setOrigAlign(OriginalAlignment);
 
@@ -5214,9 +5214,9 @@ void TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG,
         Parts[j] = SDValue(Result, i++);
 
       ISD::NodeType AssertOp = ISD::DELETED_NODE;
-      if (F.paramHasAttr(Idx, ParamAttr::SExt))
+      if (F.paramHasAttr(Idx, Attribute::SExt))
         AssertOp = ISD::AssertSext;
-      else if (F.paramHasAttr(Idx, ParamAttr::ZExt))
+      else if (F.paramHasAttr(Idx, Attribute::ZExt))
         AssertOp = ISD::AssertZext;
 
       ArgValues.push_back(getCopyFromParts(DAG, &Parts[0], NumParts, PartVT, VT,

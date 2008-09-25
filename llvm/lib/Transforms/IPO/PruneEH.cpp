@@ -125,18 +125,18 @@ bool PruneEH::runOnSCC(const std::vector<CallGraphNode *> &SCC) {
   // If the SCC doesn't unwind or doesn't throw, note this fact.
   if (!SCCMightUnwind || !SCCMightReturn)
     for (unsigned i = 0, e = SCC.size(); i != e; ++i) {
-      Attributes NewAttributes = ParamAttr::None;
+      Attributes NewAttributes = Attribute::None;
 
       if (!SCCMightUnwind)
-        NewAttributes |= ParamAttr::NoUnwind;
+        NewAttributes |= Attribute::NoUnwind;
       if (!SCCMightReturn)
-        NewAttributes |= ParamAttr::NoReturn;
+        NewAttributes |= Attribute::NoReturn;
 
-      const PAListPtr &PAL = SCC[i]->getFunction()->getParamAttrs();
-      const PAListPtr &NPAL = PAL.addAttr(0, NewAttributes);
+      const AttrListPtr &PAL = SCC[i]->getFunction()->getAttributes();
+      const AttrListPtr &NPAL = PAL.addAttr(0, NewAttributes);
       if (PAL != NPAL) {
         MadeChange = true;
-        SCC[i]->getFunction()->setParamAttrs(NPAL);
+        SCC[i]->getFunction()->setAttributes(NPAL);
       }
     }
 
@@ -169,7 +169,7 @@ bool PruneEH::SimplifyFunction(Function *F) {
                                           Args.begin(), Args.end(), "", II);
         Call->takeName(II);
         Call->setCallingConv(II->getCallingConv());
-        Call->setParamAttrs(II->getParamAttrs());
+        Call->setAttributes(II->getAttributes());
 
         // Anything that used the value produced by the invoke instruction
         // now uses the value produced by the call instruction.

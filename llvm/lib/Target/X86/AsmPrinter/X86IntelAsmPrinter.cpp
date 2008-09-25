@@ -54,7 +54,7 @@ static X86MachineFunctionInfo calculateFunctionInfo(const Function *F,
     const Type* Ty = AI->getType();
 
     // 'Dereference' type in case of byval parameter attribute
-    if (F->paramHasAttr(argNum, ParamAttr::ByVal))
+    if (F->paramHasAttr(argNum, Attribute::ByVal))
       Ty = cast<PointerType>(Ty)->getElementType();
 
     // Size should be aligned to DWORD boundary
@@ -141,7 +141,7 @@ bool X86IntelAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   SwitchToTextSection("_text", F);
 
   unsigned FnAlign = OptimizeForSize ? 1 : 4;
-  if (!F->isDeclaration() && F->hasNote(FnAttr::OptimizeForSize))
+  if (!F->isDeclaration() && F->hasNote(Attribute::OptimizeForSize))
     FnAlign = 1;
   switch (F->getLinkage()) {
   default: assert(0 && "Unsupported linkage type!");

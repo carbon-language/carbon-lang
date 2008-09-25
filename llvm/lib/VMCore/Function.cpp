@@ -92,14 +92,14 @@ unsigned Argument::getArgNo() const {
 /// in its containing function.
 bool Argument::hasByValAttr() const {
   if (!isa<PointerType>(getType())) return false;
-  return getParent()->paramHasAttr(getArgNo()+1, ParamAttr::ByVal);
+  return getParent()->paramHasAttr(getArgNo()+1, Attribute::ByVal);
 }
 
 /// hasNoAliasAttr - Return true if this argument has the noalias attribute on
 /// it in its containing function.
 bool Argument::hasNoAliasAttr() const {
   if (!isa<PointerType>(getType())) return false;
-  return getParent()->paramHasAttr(getArgNo()+1, ParamAttr::NoAlias);
+  return getParent()->paramHasAttr(getArgNo()+1, Attribute::NoAlias);
 }
 
 /// hasSRetAttr - Return true if this argument has the sret attribute on
@@ -108,17 +108,17 @@ bool Argument::hasStructRetAttr() const {
   if (!isa<PointerType>(getType())) return false;
   if (this != getParent()->arg_begin())
     return false; // StructRet param must be first param
-  return getParent()->paramHasAttr(1, ParamAttr::StructRet);
+  return getParent()->paramHasAttr(1, Attribute::StructRet);
 }
 
-/// addAttr - Add a ParamAttr to an argument
+/// addAttr - Add a Attribute to an argument
 void Argument::addAttr(Attributes attr) {
-  getParent()->addParamAttr(getArgNo() + 1, attr);
+  getParent()->addAttribute(getArgNo() + 1, attr);
 }
 
-/// removeAttr - Remove a ParamAttr from an argument
+/// removeAttr - Remove a Attribute from an argument
 void Argument::removeAttr(Attributes attr) {
-  getParent()->removeParamAttr(getArgNo() + 1, attr);
+  getParent()->removeAttribute(getArgNo() + 1, attr);
 }
 
 
@@ -172,7 +172,7 @@ Function::Function(const FunctionType *Ty, LinkageTypes Linkage,
 
   // Ensure intrinsics have the right parameter attributes.
   if (unsigned IID = getIntrinsicID(true))
-    setParamAttrs(Intrinsic::getParamAttrs(Intrinsic::ID(IID)));
+    setAttributes(Intrinsic::getAttributes(Intrinsic::ID(IID)));
 
 }
 
@@ -229,16 +229,16 @@ void Function::dropAllReferences() {
   BasicBlocks.clear();    // Delete all basic blocks...
 }
 
-void Function::addParamAttr(unsigned i, Attributes attr) {
-  PAListPtr PAL = getParamAttrs();
+void Function::addAttribute(unsigned i, Attributes attr) {
+  AttrListPtr PAL = getAttributes();
   PAL = PAL.addAttr(i, attr);
-  setParamAttrs(PAL);
+  setAttributes(PAL);
 }
 
-void Function::removeParamAttr(unsigned i, Attributes attr) {
-  PAListPtr PAL = getParamAttrs();
+void Function::removeAttribute(unsigned i, Attributes attr) {
+  AttrListPtr PAL = getAttributes();
   PAL = PAL.removeAttr(i, attr);
-  setParamAttrs(PAL);
+  setAttributes(PAL);
 }
 
 // Maintain the GC name for each function in an on-the-side table. This saves
@@ -286,7 +286,7 @@ void Function::copyAttributesFrom(const GlobalValue *Src) {
   GlobalValue::copyAttributesFrom(Src);
   const Function *SrcF = cast<Function>(Src);
   setCallingConv(SrcF->getCallingConv());
-  setParamAttrs(SrcF->getParamAttrs());
+  setAttributes(SrcF->getAttributes());
   if (SrcF->hasGC())
     setGC(SrcF->getGC());
   else
@@ -355,18 +355,18 @@ const FunctionType *Intrinsic::getType(ID id, const Type **Tys,
   return FunctionType::get(ResultTy, ArgTys, IsVarArg); 
 }
 
-PAListPtr Intrinsic::getParamAttrs(ID id) {
-  Attributes Attr = ParamAttr::None;
+AttrListPtr Intrinsic::getAttributes(ID id) {
+  Attributes Attr = Attribute::None;
 
 #define GET_INTRINSIC_ATTRIBUTES
 #include "llvm/Intrinsics.gen"
 #undef GET_INTRINSIC_ATTRIBUTES
 
   // Intrinsics cannot throw exceptions.
-  Attr |= ParamAttr::NoUnwind;
+  Attr |= Attribute::NoUnwind;
 
-  FnAttributeWithIndex PAWI = FnAttributeWithIndex::get(0, Attr);
-  return PAListPtr::get(&PAWI, 1);
+  AttributeWithIndex PAWI = AttributeWithIndex::get(0, Attr);
+  return AttrListPtr::get(&PAWI, 1);
 }
 
 Function *Intrinsic::getDeclaration(Module *M, ID id, const Type **Tys, 

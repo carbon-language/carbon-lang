@@ -898,16 +898,16 @@ bool X86FastISel::X86SelectCall(Instruction *I) {
       return false;
     ISD::ArgFlagsTy Flags;
     unsigned AttrInd = i - CS.arg_begin() + 1;
-    if (CS.paramHasAttr(AttrInd, ParamAttr::SExt))
+    if (CS.paramHasAttr(AttrInd, Attribute::SExt))
       Flags.setSExt();
-    if (CS.paramHasAttr(AttrInd, ParamAttr::ZExt))
+    if (CS.paramHasAttr(AttrInd, Attribute::ZExt))
       Flags.setZExt();
 
     // FIXME: Only handle *easy* calls for now.
-    if (CS.paramHasAttr(AttrInd, ParamAttr::InReg) ||
-        CS.paramHasAttr(AttrInd, ParamAttr::StructRet) ||
-        CS.paramHasAttr(AttrInd, ParamAttr::Nest) ||
-        CS.paramHasAttr(AttrInd, ParamAttr::ByVal))
+    if (CS.paramHasAttr(AttrInd, Attribute::InReg) ||
+        CS.paramHasAttr(AttrInd, Attribute::StructRet) ||
+        CS.paramHasAttr(AttrInd, Attribute::Nest) ||
+        CS.paramHasAttr(AttrInd, Attribute::ByVal))
       return false;
 
     const Type *ArgTy = (*i)->getType();

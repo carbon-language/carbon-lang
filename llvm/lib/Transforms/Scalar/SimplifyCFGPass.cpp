@@ -83,7 +83,7 @@ static void ChangeToCall(InvokeInst *II) {
                                        Args.end(), "", II);
   NewCall->takeName(II);
   NewCall->setCallingConv(II->getCallingConv());
-  NewCall->setParamAttrs(II->getParamAttrs());
+  NewCall->setAttributes(II->getAttributes());
   II->replaceAllUsesWith(NewCall);
 
   // Follow the call by a branch to the normal destination.

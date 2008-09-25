@@ -994,7 +994,7 @@ Module *llvm::RunVMAsmParser(llvm::MemoryBuffer *MB) {
 
   llvm::GlobalValue::LinkageTypes         Linkage;
   llvm::GlobalValue::VisibilityTypes      Visibility;
-  llvm::Attributes                  ParamAttrs;
+  llvm::Attributes                  Attributes;
   llvm::APInt                       *APIntVal;
   int64_t                           SInt64Val;
   uint64_t                          UInt64Val;
@@ -1088,10 +1088,10 @@ Module *llvm::RunVMAsmParser(llvm::MemoryBuffer *MB) {
 %token X86_SSECALLCC_TOK
 %token DATALAYOUT
 %type <UIntVal> OptCallingConv LocalNumber
-%type <ParamAttrs> OptParamAttrs ParamAttr
-%type <ParamAttrs> OptFuncAttrs  FuncAttr
-%type <ParamAttrs> OptFuncNotes FuncNote
-%type <ParamAttrs> FuncNoteList
+%type <Attributes> OptAttributes Attribute
+%type <Attributes> OptFuncAttrs  FuncAttr
+%type <Attributes> OptFuncNotes FuncNote
+%type <Attributes> FuncNoteList
 
 // Basic Block Terminating Operators
 %token <TermOpVal> RET BR SWITCH INVOKE UNWIND UNREACHABLE
@@ -1260,35 +1260,35 @@ OptCallingConv : /*empty*/          { $$ = CallingConv::C; } |
                   CHECK_FOR_ERROR
                  };
 
-ParamAttr     : ZEROEXT { $$ = ParamAttr::ZExt;      }
-              | ZEXT    { $$ = ParamAttr::ZExt;      }
-              | SIGNEXT { $$ = ParamAttr::SExt;      }
-              | SEXT    { $$ = ParamAttr::SExt;      }
-              | INREG   { $$ = ParamAttr::InReg;     }
-              | SRET    { $$ = ParamAttr::StructRet; }
-              | NOALIAS { $$ = ParamAttr::NoAlias;   }
-              | BYVAL   { $$ = ParamAttr::ByVal;     }
-              | NEST    { $$ = ParamAttr::Nest;      }
+Attribute     : ZEROEXT { $$ = Attribute::ZExt;      }
+              | ZEXT    { $$ = Attribute::ZExt;      }
+              | SIGNEXT { $$ = Attribute::SExt;      }
+              | SEXT    { $$ = Attribute::SExt;      }
+              | INREG   { $$ = Attribute::InReg;     }
+              | SRET    { $$ = Attribute::StructRet; }
+              | NOALIAS { $$ = Attribute::NoAlias;   }
+              | BYVAL   { $$ = Attribute::ByVal;     }
+              | NEST    { $$ = Attribute::Nest;      }
               | ALIGN EUINT64VAL { $$ =
-                          ParamAttr::constructAlignmentFromInt($2);    }
+                          Attribute::constructAlignmentFromInt($2);    }
               ;
 
-OptParamAttrs : /* empty */  { $$ = ParamAttr::None; }
-              | OptParamAttrs ParamAttr {
+OptAttributes : /* empty */  { $$ = Attribute::None; }
+              | OptAttributes Attribute {
                 $$ = $1 | $2;
               }
               ;
 
-FuncAttr      : NORETURN { $$ = ParamAttr::NoReturn; }
-              | NOUNWIND { $$ = ParamAttr::NoUnwind; }
-              | INREG    { $$ = ParamAttr::InReg;     }
-              | ZEROEXT  { $$ = ParamAttr::ZExt;     }
-              | SIGNEXT  { $$ = ParamAttr::SExt;     }
-              | READNONE { $$ = ParamAttr::ReadNone; }
-              | READONLY { $$ = ParamAttr::ReadOnly; }
+FuncAttr      : NORETURN { $$ = Attribute::NoReturn; }
+              | NOUNWIND { $$ = Attribute::NoUnwind; }
+              | INREG    { $$ = Attribute::InReg;     }
+              | ZEROEXT  { $$ = Attribute::ZExt;     }
+              | SIGNEXT  { $$ = Attribute::SExt;     }
+              | READNONE { $$ = Attribute::ReadNone; }
+              | READONLY { $$ = Attribute::ReadOnly; }
               ;
 
-OptFuncAttrs  : /* empty */ { $$ = ParamAttr::None; }
+OptFuncAttrs  : /* empty */ { $$ = Attribute::None; }
               | OptFuncAttrs FuncAttr {
                 $$ = $1 | $2;
               }
@@ -1297,23 +1297,23 @@ OptFuncAttrs  : /* empty */ { $$ = ParamAttr::None; }
 FuncNoteList  : FuncNote { $$ = $1; }
               | FuncNoteList ',' FuncNote {
                 unsigned tmp = $1 | $3;
-                if ($3 == FnAttr::NoInline
-                    && ($1 & FnAttr::AlwaysInline))
+                if ($3 == Attribute::NoInline
+                    && ($1 & Attribute::AlwaysInline))
                   GEN_ERROR("Function Notes may include only one inline notes!")
-                    if ($3 == FnAttr::AlwaysInline
-                        && ($1 & FnAttr::NoInline))
+                    if ($3 == Attribute::AlwaysInline
+                        && ($1 & Attribute::NoInline))
                   GEN_ERROR("Function Notes may include only one inline notes!")
                 $$ = tmp;
                 CHECK_FOR_ERROR
               }
               ;
 
-FuncNote      : INLINE '=' NEVER { $$ = FnAttr::NoInline; }
-              | INLINE '=' ALWAYS { $$ = FnAttr::AlwaysInline; }
-              | OPTIMIZEFORSIZE { $$ = FnAttr::OptimizeForSize; }
+FuncNote      : INLINE '=' NEVER { $$ = Attribute::NoInline; }
+              | INLINE '=' ALWAYS { $$ = Attribute::AlwaysInline; }
+              | OPTIMIZEFORSIZE { $$ = Attribute::OptimizeForSize; }
               ;
 
-OptFuncNotes  : /* empty */ { $$ = FnAttr::None; }
+OptFuncNotes  : /* empty */ { $$ = Attribute::None; }
               | FNNOTE '(' FuncNoteList  ')' {
                 $$ =  $3;
               }
@@ -1509,11 +1509,11 @@ Types
   ;
 
 ArgType
-  : Types OptParamAttrs {
+  : Types OptAttributes {
     // Allow but ignore attributes on function types; this permits auto-upgrade.
     // FIXME: remove in LLVM 3.0.
     $$.Ty = $1;
-    $$.Attrs = ParamAttr::None;
+    $$.Attrs = Attribute::None;
   }
   ;
 
@@ -1545,14 +1545,14 @@ ArgTypeListI
   : ArgTypeList
   | ArgTypeList ',' DOTDOTDOT {
     $$=$1;
-    TypeWithAttrs TWA; TWA.Attrs = ParamAttr::None;
+    TypeWithAttrs TWA; TWA.Attrs = Attribute::None;
     TWA.Ty = new PATypeHolder(Type::VoidTy);
     $$->push_back(TWA);
     CHECK_FOR_ERROR
   }
   | DOTDOTDOT {
     $$ = new TypeWithAttrsList;
-    TypeWithAttrs TWA; TWA.Attrs = ParamAttr::None;
+    TypeWithAttrs TWA; TWA.Attrs = Attribute::None;
     TWA.Ty = new PATypeHolder(Type::VoidTy);
     $$->push_back(TWA);
     CHECK_FOR_ERROR
@@ -2285,7 +2285,7 @@ LibList : LibList ',' STRINGCONSTANT {
 //                       Rules to match Function Headers
 //===----------------------------------------------------------------------===//
 
-ArgListH : ArgListH ',' Types OptParamAttrs OptLocalName {
+ArgListH : ArgListH ',' Types OptAttributes OptLocalName {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*$3)->getDescription());
     if (!(*$3)->isFirstClassType())
@@ -2295,7 +2295,7 @@ ArgListH : ArgListH ',' Types OptParamAttrs OptLocalName {
     $1->push_back(E);
     CHECK_FOR_ERROR
   }
-  | Types OptParamAttrs OptLocalName {
+  | Types OptAttributes OptLocalName {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*$1)->getDescription());
     if (!(*$1)->isFirstClassType())
@@ -2315,7 +2315,7 @@ ArgList : ArgListH {
     struct ArgListEntry E;
     E.Ty = new PATypeHolder(Type::VoidTy);
     E.Name = 0;
-    E.Attrs = ParamAttr::None;
+    E.Attrs = Attribute::None;
     $$->push_back(E);
     CHECK_FOR_ERROR
   }
@@ -2324,7 +2324,7 @@ ArgList : ArgListH {
     struct ArgListEntry E;
     E.Ty = new PATypeHolder(Type::VoidTy);
     E.Name = 0;
-    E.Attrs = ParamAttr::None;
+    E.Attrs = Attribute::None;
     $$->push_back(E);
     CHECK_FOR_ERROR
   }
@@ -2347,9 +2347,9 @@ FunctionHeaderH : OptCallingConv ResultTypes GlobalName '(' ArgList ')'
     GEN_ERROR("Invalid result type for LLVM function");
 
   std::vector<const Type*> ParamTypeList;
-  SmallVector<FnAttributeWithIndex, 8> Attrs;
-  if ($7 != ParamAttr::None)
-    Attrs.push_back(FnAttributeWithIndex::get(0, $7));
+  SmallVector<AttributeWithIndex, 8> Attrs;
+  if ($7 != Attribute::None)
+    Attrs.push_back(AttributeWithIndex::get(0, $7));
   if ($5) {   // If there are arguments...
     unsigned index = 1;
     for (ArgListType::iterator I = $5->begin(); I != $5->end(); ++I, ++index) {
@@ -2357,17 +2357,17 @@ FunctionHeaderH : OptCallingConv ResultTypes GlobalName '(' ArgList ')'
       if (!CurFun.isDeclare && CurModule.TypeIsUnresolved(I->Ty))
         GEN_ERROR("Reference to abstract argument: " + Ty->getDescription());
       ParamTypeList.push_back(Ty);
-      if (Ty != Type::VoidTy && I->Attrs != ParamAttr::None)
-        Attrs.push_back(FnAttributeWithIndex::get(index, I->Attrs));
+      if (Ty != Type::VoidTy && I->Attrs != Attribute::None)
+        Attrs.push_back(AttributeWithIndex::get(index, I->Attrs));
     }
   }
 
   bool isVarArg = ParamTypeList.size() && ParamTypeList.back() == Type::VoidTy;
   if (isVarArg) ParamTypeList.pop_back();
 
-  PAListPtr PAL;
+  AttrListPtr PAL;
   if (!Attrs.empty())
-    PAL = PAListPtr::get(Attrs.begin(), Attrs.end());
+    PAL = AttrListPtr::get(Attrs.begin(), Attrs.end());
 
   FunctionType *FT = FunctionType::get(*$2, ParamTypeList, isVarArg);
   const PointerType *PFT = PointerType::getUnqual(FT);
@@ -2386,7 +2386,7 @@ FunctionHeaderH : OptCallingConv ResultTypes GlobalName '(' ArgList ')'
     // Move the function to the end of the list, from whereever it was
     // previously inserted.
     Fn = cast<Function>(FWRef);
-    assert(Fn->getParamAttrs().isEmpty() &&
+    assert(Fn->getAttributes().isEmpty() &&
            "Forward reference has parameter attributes!");
     CurModule.CurrentModule->getFunctionList().remove(Fn);
     CurModule.CurrentModule->getFunctionList().push_back(Fn);
@@ -2396,7 +2396,7 @@ FunctionHeaderH : OptCallingConv ResultTypes GlobalName '(' ArgList ')'
       // The existing function doesn't have the same type. This is an overload
       // error.
       GEN_ERROR("Overload of function '" + FunctionName + "' not permitted.");
-    } else if (Fn->getParamAttrs() != PAL) {
+    } else if (Fn->getAttributes() != PAL) {
       // The existing function doesn't have the same parameter attributes.
       // This is an overload error.
       GEN_ERROR("Overload of function '" + FunctionName + "' not permitted.");
@@ -2426,7 +2426,7 @@ FunctionHeaderH : OptCallingConv ResultTypes GlobalName '(' ArgList ')'
     Fn->setVisibility(CurFun.Visibility);
   }
   Fn->setCallingConv($1);
-  Fn->setParamAttrs(PAL);
+  Fn->setAttributes(PAL);
   Fn->setAlignment($9);
   if ($8) {
     Fn->setSection(*$8);
@@ -2861,9 +2861,9 @@ BBTerminatorInst :
     BasicBlock *Except = getBBVal($14);
     CHECK_FOR_ERROR
 
-    SmallVector<FnAttributeWithIndex, 8> Attrs;
-    if ($8 != ParamAttr::None)
-      Attrs.push_back(FnAttributeWithIndex::get(0, $8));
+    SmallVector<AttributeWithIndex, 8> Attrs;
+    if ($8 != Attribute::None)
+      Attrs.push_back(AttributeWithIndex::get(0, $8));
 
     // Check the arguments
     ValueList Args;
@@ -2885,30 +2885,30 @@ BBTerminatorInst :
           GEN_ERROR("Parameter " + ArgI->Val->getName()+ " is not of type '" +
                          (*I)->getDescription() + "'");
         Args.push_back(ArgI->Val);
-        if (ArgI->Attrs != ParamAttr::None)
-          Attrs.push_back(FnAttributeWithIndex::get(index, ArgI->Attrs));
+        if (ArgI->Attrs != Attribute::None)
+          Attrs.push_back(AttributeWithIndex::get(index, ArgI->Attrs));
       }
 
       if (Ty->isVarArg()) {
         if (I == E)
           for (; ArgI != ArgE; ++ArgI, ++index) {
             Args.push_back(ArgI->Val); // push the remaining varargs
-            if (ArgI->Attrs != ParamAttr::None)
-              Attrs.push_back(FnAttributeWithIndex::get(index, ArgI->Attrs));
+            if (ArgI->Attrs != Attribute::None)
+              Attrs.push_back(AttributeWithIndex::get(index, ArgI->Attrs));
           }
       } else if (I != E || ArgI != ArgE)
         GEN_ERROR("Invalid number of parameters detected");
     }
 
-    PAListPtr PAL;
+    AttrListPtr PAL;
     if (!Attrs.empty())
-      PAL = PAListPtr::get(Attrs.begin(), Attrs.end());
+      PAL = AttrListPtr::get(Attrs.begin(), Attrs.end());
 
     // Create the InvokeInst
     InvokeInst *II = InvokeInst::Create(V, Normal, Except,
                                         Args.begin(), Args.end());
     II->setCallingConv($2);
-    II->setParamAttrs(PAL);
+    II->setAttributes(PAL);
     $$ = II;
     delete $6;
     CHECK_FOR_ERROR
@@ -2991,8 +2991,8 @@ PHIList : Types '[' ValueRef ',' ValueRef ']' {    // Used for PHI nodes
   };
 
 
-ParamList : Types OptParamAttrs ValueRef OptParamAttrs {
-    // FIXME: Remove trailing OptParamAttrs in LLVM 3.0, it was a mistake in 2.0
+ParamList : Types OptAttributes ValueRef OptAttributes {
+    // FIXME: Remove trailing OptAttributes in LLVM 3.0, it was a mistake in 2.0
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*$1)->getDescription());
     // Used for call and invoke instructions
@@ -3002,16 +3002,16 @@ ParamList : Types OptParamAttrs ValueRef OptParamAttrs {
     delete $1;
     CHECK_FOR_ERROR
   }
-  | LABEL OptParamAttrs ValueRef OptParamAttrs {
-    // FIXME: Remove trailing OptParamAttrs in LLVM 3.0, it was a mistake in 2.0
+  | LABEL OptAttributes ValueRef OptAttributes {
+    // FIXME: Remove trailing OptAttributes in LLVM 3.0, it was a mistake in 2.0
     // Labels are only valid in ASMs
     $$ = new ParamList();
     ParamListEntry E; E.Attrs = $2 | $4; E.Val = getBBVal($3);
     $$->push_back(E);
     CHECK_FOR_ERROR
   }
-  | ParamList ',' Types OptParamAttrs ValueRef OptParamAttrs {
-    // FIXME: Remove trailing OptParamAttrs in LLVM 3.0, it was a mistake in 2.0
+  | ParamList ',' Types OptAttributes ValueRef OptAttributes {
+    // FIXME: Remove trailing OptAttributes in LLVM 3.0, it was a mistake in 2.0
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*$3)->getDescription());
     $$ = $1;
@@ -3020,8 +3020,8 @@ ParamList : Types OptParamAttrs ValueRef OptParamAttrs {
     delete $3;
     CHECK_FOR_ERROR
   }
-  | ParamList ',' LABEL OptParamAttrs ValueRef OptParamAttrs {
-    // FIXME: Remove trailing OptParamAttrs in LLVM 3.0, it was a mistake in 2.0
+  | ParamList ',' LABEL OptAttributes ValueRef OptAttributes {
+    // FIXME: Remove trailing OptAttributes in LLVM 3.0, it was a mistake in 2.0
     $$ = $1;
     ParamListEntry E; E.Attrs = $4 | $6; E.Val = getBBVal($5);
     $$->push_back(E);
@@ -3258,10 +3258,10 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
                   theF->getName() + "'");
     }
 
-    // Set up the ParamAttrs for the function
-    SmallVector<FnAttributeWithIndex, 8> Attrs;
-    if ($8 != ParamAttr::None)
-      Attrs.push_back(FnAttributeWithIndex::get(0, $8));
+    // Set up the Attributes for the function
+    SmallVector<AttributeWithIndex, 8> Attrs;
+    if ($8 != Attribute::None)
+      Attrs.push_back(AttributeWithIndex::get(0, $8));
     // Check the arguments
     ValueList Args;
     if ($6->empty()) {                                   // Has no arguments?
@@ -3282,30 +3282,30 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
           GEN_ERROR("Parameter " + ArgI->Val->getName()+ " is not of type '" +
                          (*I)->getDescription() + "'");
         Args.push_back(ArgI->Val);
-        if (ArgI->Attrs != ParamAttr::None)
-          Attrs.push_back(FnAttributeWithIndex::get(index, ArgI->Attrs));
+        if (ArgI->Attrs != Attribute::None)
+          Attrs.push_back(AttributeWithIndex::get(index, ArgI->Attrs));
       }
       if (Ty->isVarArg()) {
         if (I == E)
           for (; ArgI != ArgE; ++ArgI, ++index) {
             Args.push_back(ArgI->Val); // push the remaining varargs
-            if (ArgI->Attrs != ParamAttr::None)
-              Attrs.push_back(FnAttributeWithIndex::get(index, ArgI->Attrs));
+            if (ArgI->Attrs != Attribute::None)
+              Attrs.push_back(AttributeWithIndex::get(index, ArgI->Attrs));
           }
       } else if (I != E || ArgI != ArgE)
         GEN_ERROR("Invalid number of parameters detected");
     }
 
-    // Finish off the ParamAttrs and check them
-    PAListPtr PAL;
+    // Finish off the Attributes and check them
+    AttrListPtr PAL;
     if (!Attrs.empty())
-      PAL = PAListPtr::get(Attrs.begin(), Attrs.end());
+      PAL = AttrListPtr::get(Attrs.begin(), Attrs.end());
 
     // Create the call node
     CallInst *CI = CallInst::Create(V, Args.begin(), Args.end());
     CI->setTailCall($1);
     CI->setCallingConv($2);
-    CI->setParamAttrs(PAL);
+    CI->setAttributes(PAL);
     $$ = CI;
     delete $6;
     delete $3;

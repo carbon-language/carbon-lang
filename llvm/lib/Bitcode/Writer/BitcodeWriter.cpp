@@ -108,18 +108,18 @@ static void WriteStringRecord(unsigned Code, const std::string &Str,
 }
 
 // Emit information about parameter attributes.
-static void WriteParamAttrTable(const ValueEnumerator &VE, 
+static void WriteAttributeTable(const ValueEnumerator &VE, 
                                 BitstreamWriter &Stream) {
-  const std::vector<PAListPtr> &Attrs = VE.getParamAttrs();
+  const std::vector<AttrListPtr> &Attrs = VE.getAttributes();
   if (Attrs.empty()) return;
   
   Stream.EnterSubblock(bitc::PARAMATTR_BLOCK_ID, 3);
 
   SmallVector<uint64_t, 64> Record;
   for (unsigned i = 0, e = Attrs.size(); i != e; ++i) {
-    const PAListPtr &A = Attrs[i];
+    const AttrListPtr &A = Attrs[i];
     for (unsigned i = 0, e = A.getNumSlots(); i != e; ++i) {
-      const FnAttributeWithIndex &PAWI = A.getSlot(i);
+      const AttributeWithIndex &PAWI = A.getSlot(i);
       Record.push_back(PAWI.Index);
       Record.push_back(PAWI.Attrs);
     }
@@ -407,7 +407,7 @@ static void WriteModuleInfo(const Module *M, const ValueEnumerator &VE,
     Vals.push_back(F->getCallingConv());
     Vals.push_back(F->isDeclaration());
     Vals.push_back(getEncodedLinkage(F));
-    Vals.push_back(VE.getParamAttrID(F->getParamAttrs()));
+    Vals.push_back(VE.getAttributeID(F->getAttributes()));
     Vals.push_back(Log2_32(F->getAlignment())+1);
     Vals.push_back(F->hasSection() ? SectionMap[F->getSection()] : 0);
     Vals.push_back(getEncodedVisibility(F));
@@ -818,7 +818,7 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
     Code = bitc::FUNC_CODE_INST_INVOKE;
     
     const InvokeInst *II = cast<InvokeInst>(&I);
-    Vals.push_back(VE.getParamAttrID(II->getParamAttrs()));
+    Vals.push_back(VE.getAttributeID(II->getAttributes()));
     Vals.push_back(II->getCallingConv());
     Vals.push_back(VE.getValueID(I.getOperand(1)));      // normal dest
     Vals.push_back(VE.getValueID(I.getOperand(2)));      // unwind dest
@@ -892,7 +892,7 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
     Code = bitc::FUNC_CODE_INST_CALL;
     
     const CallInst *CI = cast<CallInst>(&I);
-    Vals.push_back(VE.getParamAttrID(CI->getParamAttrs()));
+    Vals.push_back(VE.getAttributeID(CI->getAttributes()));
     Vals.push_back((CI->getCallingConv() << 1) | unsigned(CI->isTailCall()));
     PushValueAndType(CI->getOperand(0), InstID, Vals, VE);  // Callee
     
@@ -1226,7 +1226,7 @@ static void WriteModule(const Module *M, BitstreamWriter &Stream) {
   WriteBlockInfo(VE, Stream);
   
   // Emit information about parameter attributes.
-  WriteParamAttrTable(VE, Stream);
+  WriteAttributeTable(VE, Stream);
   
   // Emit information describing all of the types in the module.
   WriteTypeTable(VE, Stream);

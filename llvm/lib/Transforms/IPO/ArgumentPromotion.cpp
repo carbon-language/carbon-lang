@@ -144,7 +144,7 @@ bool ArgPromotion::PromoteArguments(CallGraphNode *CGN) {
   SmallPtrSet<Argument*, 8> ArgsToPromote;
   SmallPtrSet<Argument*, 8> ByValArgsToTransform;
   for (unsigned i = 0; i != PointerArgs.size(); ++i) {
-    bool isByVal = F->paramHasAttr(PointerArgs[i].second+1, ParamAttr::ByVal);
+    bool isByVal = F->paramHasAttr(PointerArgs[i].second+1, Attribute::ByVal);
 
     // If this is a byval argument, and if the aggregate type is small, just
     // pass the elements, which is always safe.
@@ -501,15 +501,15 @@ Function *ArgPromotion::DoPromotion(Function *F,
   // what the new GEP/Load instructions we are inserting look like.
   std::map<IndicesVector, LoadInst*> OriginalLoads;
 
-  // ParamAttrs - Keep track of the parameter attributes for the arguments
+  // Attributes - Keep track of the parameter attributes for the arguments
   // that we are *not* promoting. For the ones that we do promote, the parameter
   // attributes are lost
-  SmallVector<FnAttributeWithIndex, 8> ParamAttrsVec;
-  const PAListPtr &PAL = F->getParamAttrs();
+  SmallVector<AttributeWithIndex, 8> AttributesVec;
+  const AttrListPtr &PAL = F->getAttributes();
 
   // Add any return attributes.
-  if (Attributes attrs = PAL.getParamAttrs(0))
-    ParamAttrsVec.push_back(FnAttributeWithIndex::get(0, attrs));
+  if (Attributes attrs = PAL.getAttributes(0))
+    AttributesVec.push_back(AttributeWithIndex::get(0, attrs));
 
   // First, determine the new argument list
   unsigned ArgIndex = 1;
@@ -525,8 +525,8 @@ Function *ArgPromotion::DoPromotion(Function *F,
     } else if (!ArgsToPromote.count(I)) {
       // Unchanged argument
       Params.push_back(I->getType());
-      if (Attributes attrs = PAL.getParamAttrs(ArgIndex))
-        ParamAttrsVec.push_back(FnAttributeWithIndex::get(Params.size(), attrs));
+      if (Attributes attrs = PAL.getAttributes(ArgIndex))
+        AttributesVec.push_back(AttributeWithIndex::get(Params.size(), attrs));
     } else if (I->use_empty()) {
       // Dead argument (which are always marked as promotable)
       ++NumArgumentsDead;
@@ -597,8 +597,8 @@ Function *ArgPromotion::DoPromotion(Function *F,
 
   // Recompute the parameter attributes list based on the new arguments for
   // the function.
-  NF->setParamAttrs(PAListPtr::get(ParamAttrsVec.begin(), ParamAttrsVec.end()));
-  ParamAttrsVec.clear();
+  NF->setAttributes(AttrListPtr::get(AttributesVec.begin(), AttributesVec.end()));
+  AttributesVec.clear();
 
   F->getParent()->getFunctionList().insert(F, NF);
   NF->takeName(F);
@@ -618,11 +618,11 @@ Function *ArgPromotion::DoPromotion(Function *F,
   while (!F->use_empty()) {
     CallSite CS = CallSite::get(F->use_back());
     Instruction *Call = CS.getInstruction();
-    const PAListPtr &CallPAL = CS.getParamAttrs();
+    const AttrListPtr &CallPAL = CS.getAttributes();
 
     // Add any return attributes.
-    if (Attributes attrs = CallPAL.getParamAttrs(0))
-      ParamAttrsVec.push_back(FnAttributeWithIndex::get(0, attrs));
+    if (Attributes attrs = CallPAL.getAttributes(0))
+      AttributesVec.push_back(AttributeWithIndex::get(0, attrs));
 
     // Loop over the operands, inserting GEP and loads in the caller as
     // appropriate.
@@ -633,8 +633,8 @@ Function *ArgPromotion::DoPromotion(Function *F,
       if (!ArgsToPromote.count(I) && !ByValArgsToTransform.count(I)) {
         Args.push_back(*AI);          // Unmodified argument
 
-        if (Attributes Attrs = CallPAL.getParamAttrs(ArgIndex))
-          ParamAttrsVec.push_back(FnAttributeWithIndex::get(Args.size(), Attrs));
+        if (Attributes Attrs = CallPAL.getAttributes(ArgIndex))
+          AttributesVec.push_back(AttributeWithIndex::get(Args.size(), Attrs));
 
       } else if (ByValArgsToTransform.count(I)) {
         // Emit a GEP and load for each element of the struct.
@@ -688,8 +688,8 @@ Function *ArgPromotion::DoPromotion(Function *F,
     // Push any varargs arguments on the list
     for (; AI != CS.arg_end(); ++AI, ++ArgIndex) {
       Args.push_back(*AI);
-      if (Attributes Attrs = CallPAL.getParamAttrs(ArgIndex))
-        ParamAttrsVec.push_back(FnAttributeWithIndex::get(Args.size(), Attrs));
+      if (Attributes Attrs = CallPAL.getAttributes(ArgIndex))
+        AttributesVec.push_back(AttributeWithIndex::get(Args.size(), Attrs));
     }
 
     Instruction *New;
@@ -697,18 +697,18 @@ Function *ArgPromotion::DoPromotion(Function *F,
       New = InvokeInst::Create(NF, II->getNormalDest(), II->getUnwindDest(),
                                Args.begin(), Args.end(), "", Call);
       cast<InvokeInst>(New)->setCallingConv(CS.getCallingConv());
-      cast<InvokeInst>(New)->setParamAttrs(PAListPtr::get(ParamAttrsVec.begin(),
-                                                          ParamAttrsVec.end()));
+      cast<InvokeInst>(New)->setAttributes(AttrListPtr::get(AttributesVec.begin(),
+                                                          AttributesVec.end()));
     } else {
       New = CallInst::Create(NF, Args.begin(), Args.end(), "", Call);
       cast<CallInst>(New)->setCallingConv(CS.getCallingConv());
-      cast<CallInst>(New)->setParamAttrs(PAListPtr::get(ParamAttrsVec.begin(),
-                                                        ParamAttrsVec.end()));
+      cast<CallInst>(New)->setAttributes(AttrListPtr::get(AttributesVec.begin(),
+                                                        AttributesVec.end()));
       if (cast<CallInst>(Call)->isTailCall())
         cast<CallInst>(New)->setTailCall();
     }
     Args.clear();
-    ParamAttrsVec.clear();
+    AttributesVec.clear();
 
     // Update the alias analysis implementation to know that we are replacing
     // the old call with a new one.

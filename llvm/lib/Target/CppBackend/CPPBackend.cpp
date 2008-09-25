@@ -133,7 +133,7 @@ namespace {
     std::string getCppName(const Value* val);
     inline void printCppName(const Value* val);
 
-    void printParamAttrs(const PAListPtr &PAL, const std::string &name);
+    void printAttributes(const AttrListPtr &PAL, const std::string &name);
     bool printTypeInternal(const Type* Ty);
     inline void printType(const Type* Ty);
     void printTypes(const Module* M);
@@ -428,46 +428,46 @@ namespace {
     printEscapedString(getCppName(val));
   }
 
-  void CppWriter::printParamAttrs(const PAListPtr &PAL,
+  void CppWriter::printAttributes(const AttrListPtr &PAL,
                                   const std::string &name) {
-    Out << "PAListPtr " << name << "_PAL;";
+    Out << "AttrListPtr " << name << "_PAL;";
     nl(Out);
     if (!PAL.isEmpty()) {
       Out << '{'; in(); nl(Out);
-      Out << "SmallVector<FnAttributeWithIndex, 4> Attrs;"; nl(Out);
-      Out << "FnAttributeWithIndex PAWI;"; nl(Out);
+      Out << "SmallVector<AttributeWithIndex, 4> Attrs;"; nl(Out);
+      Out << "AttributeWithIndex PAWI;"; nl(Out);
       for (unsigned i = 0; i < PAL.getNumSlots(); ++i) {
         uint16_t index = PAL.getSlot(i).Index;
         Attributes attrs = PAL.getSlot(i).Attrs;
         Out << "PAWI.Index = " << index << "; PAWI.Attrs = 0 ";
-        if (attrs & ParamAttr::SExt)
-          Out << " | ParamAttr::SExt";
-        if (attrs & ParamAttr::ZExt)
-          Out << " | ParamAttr::ZExt";
-        if (attrs & ParamAttr::StructRet)
-          Out << " | ParamAttr::StructRet";
-        if (attrs & ParamAttr::InReg)
-          Out << " | ParamAttr::InReg";
-        if (attrs & ParamAttr::NoReturn)
-          Out << " | ParamAttr::NoReturn";
-        if (attrs & ParamAttr::NoUnwind)
-          Out << " | ParamAttr::NoUnwind";
-        if (attrs & ParamAttr::ByVal)
-          Out << " | ParamAttr::ByVal";
-        if (attrs & ParamAttr::NoAlias)
-          Out << " | ParamAttr::NoAlias";
-        if (attrs & ParamAttr::Nest)
-          Out << " | ParamAttr::Nest";
-        if (attrs & ParamAttr::ReadNone)
-          Out << " | ParamAttr::ReadNone";
-        if (attrs & ParamAttr::ReadOnly)
-          Out << " | ParamAttr::ReadOnly";
+        if (attrs & Attribute::SExt)
+          Out << " | Attribute::SExt";
+        if (attrs & Attribute::ZExt)
+          Out << " | Attribute::ZExt";
+        if (attrs & Attribute::StructRet)
+          Out << " | Attribute::StructRet";
+        if (attrs & Attribute::InReg)
+          Out << " | Attribute::InReg";
+        if (attrs & Attribute::NoReturn)
+          Out << " | Attribute::NoReturn";
+        if (attrs & Attribute::NoUnwind)
+          Out << " | Attribute::NoUnwind";
+        if (attrs & Attribute::ByVal)
+          Out << " | Attribute::ByVal";
+        if (attrs & Attribute::NoAlias)
+          Out << " | Attribute::NoAlias";
+        if (attrs & Attribute::Nest)
+          Out << " | Attribute::Nest";
+        if (attrs & Attribute::ReadNone)
+          Out << " | Attribute::ReadNone";
+        if (attrs & Attribute::ReadOnly)
+          Out << " | Attribute::ReadOnly";
         Out << ";";
         nl(Out);
         Out << "Attrs.push_back(PAWI);";
         nl(Out);
       }
-      Out << name << "_PAL = PAListPtr::get(Attrs.begin(), Attrs.end());";
+      Out << name << "_PAL = AttrListPtr::get(Attrs.begin(), Attrs.end());";
       nl(Out);
       out(); nl(Out);
       Out << '}'; nl(Out);
@@ -1127,8 +1127,8 @@ namespace {
       nl(Out) << iName << "->setCallingConv(";
       printCallingConv(inv->getCallingConv());
       Out << ");";
-      printParamAttrs(inv->getParamAttrs(), iName);
-      Out << iName << "->setParamAttrs(" << iName << "_PAL);";
+      printAttributes(inv->getAttributes(), iName);
+      Out << iName << "->setAttributes(" << iName << "_PAL);";
       nl(Out);
       break;
     }
@@ -1390,8 +1390,8 @@ namespace {
       nl(Out) << iName << "->setTailCall("
           << (call->isTailCall() ? "true":"false");
       Out << ");";
-      printParamAttrs(call->getParamAttrs(), iName);
-      Out << iName << "->setParamAttrs(" << iName << "_PAL);";
+      printAttributes(call->getAttributes(), iName);
+      Out << iName << "->setAttributes(" << iName << "_PAL);";
       nl(Out);
       break;
     }
@@ -1614,9 +1614,9 @@ namespace {
       Out << "}";
       nl(Out);
     }
-    printParamAttrs(F->getParamAttrs(), getCppName(F));
+    printAttributes(F->getAttributes(), getCppName(F));
     printCppName(F);
-    Out << "->setParamAttrs(" << getCppName(F) << "_PAL);";
+    Out << "->setAttributes(" << getCppName(F) << "_PAL);";
     nl(Out);
   }
 

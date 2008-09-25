@@ -32,7 +32,7 @@ void BitcodeReader::FreeState() {
   std::vector<PATypeHolder>().swap(TypeList);
   ValueList.clear();
   
-  std::vector<PAListPtr>().swap(ParamAttrs);
+  std::vector<AttrListPtr>().swap(Attributes);
   std::vector<BasicBlock*>().swap(FunctionBBs);
   std::vector<Function*>().swap(FunctionsWithBodies);
   DeferredFunctionInfo.clear();
@@ -313,16 +313,16 @@ const Type *BitcodeReader::getTypeByID(unsigned ID, bool isTypeTable) {
 //  Functions for parsing blocks from the bitcode file
 //===----------------------------------------------------------------------===//
 
-bool BitcodeReader::ParseParamAttrBlock() {
+bool BitcodeReader::ParseAttributeBlock() {
   if (Stream.EnterSubBlock(bitc::PARAMATTR_BLOCK_ID))
     return Error("Malformed block record");
   
-  if (!ParamAttrs.empty())
+  if (!Attributes.empty())
     return Error("Multiple PARAMATTR blocks found!");
   
   SmallVector<uint64_t, 64> Record;
   
-  SmallVector<FnAttributeWithIndex, 8> Attrs;
+  SmallVector<AttributeWithIndex, 8> Attrs;
   
   // Read all the records.
   while (1) {
@@ -356,11 +356,11 @@ bool BitcodeReader::ParseParamAttrBlock() {
         return Error("Invalid ENTRY record");
 
       for (unsigned i = 0, e = Record.size(); i != e; i += 2) {
-        if (Record[i+1] != ParamAttr::None)
-          Attrs.push_back(FnAttributeWithIndex::get(Record[i], Record[i+1]));
+        if (Record[i+1] != Attribute::None)
+          Attrs.push_back(AttributeWithIndex::get(Record[i], Record[i+1]));
       }
 
-      ParamAttrs.push_back(PAListPtr::get(Attrs.begin(), Attrs.end()));
+      Attributes.push_back(AttrListPtr::get(Attrs.begin(), Attrs.end()));
       Attrs.clear();
       break;
     }
@@ -1030,7 +1030,7 @@ bool BitcodeReader::ParseModule(const std::string &ModuleID) {
           return Error("Malformed BlockInfoBlock");
         break;
       case bitc::PARAMATTR_BLOCK_ID:
-        if (ParseParamAttrBlock())
+        if (ParseAttributeBlock())
           return true;
         break;
       case bitc::TYPE_BLOCK_ID:
@@ -1183,7 +1183,7 @@ bool BitcodeReader::ParseModule(const std::string &ModuleID) {
       Func->setCallingConv(Record[1]);
       bool isProto = Record[2];
       Func->setLinkage(GetDecodedLinkage(Record[3]));
-      Func->setParamAttrs(getParamAttrs(Record[4]));
+      Func->setAttributes(getAttributes(Record[4]));
       
       Func->setAlignment((1 << Record[5]) >> 1);
       if (Record[6]) {
@@ -1695,7 +1695,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
     case bitc::FUNC_CODE_INST_INVOKE: {
       // INVOKE: [attrs, cc, normBB, unwindBB, fnty, op0,op1,op2, ...]
       if (Record.size() < 4) return Error("Invalid INVOKE record");
-      PAListPtr PAL = getParamAttrs(Record[0]);
+      AttrListPtr PAL = getAttributes(Record[0]);
       unsigned CCInfo = Record[1];
       BasicBlock *NormalBB = getBasicBlock(Record[2]);
       BasicBlock *UnwindBB = getBasicBlock(Record[3]);
@@ -1736,7 +1736,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       I = InvokeInst::Create(Callee, NormalBB, UnwindBB,
                              Ops.begin(), Ops.end());
       cast<InvokeInst>(I)->setCallingConv(CCInfo);
-      cast<InvokeInst>(I)->setParamAttrs(PAL);
+      cast<InvokeInst>(I)->setAttributes(PAL);
       break;
     }
     case bitc::FUNC_CODE_INST_UNWIND: // UNWIND
@@ -1834,7 +1834,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       if (Record.size() < 3)
         return Error("Invalid CALL record");
       
-      PAListPtr PAL = getParamAttrs(Record[0]);
+      AttrListPtr PAL = getAttributes(Record[0]);
       unsigned CCInfo = Record[1];
       
       unsigned OpNum = 2;
@@ -1874,7 +1874,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       I = CallInst::Create(Callee, Args.begin(), Args.end());
       cast<CallInst>(I)->setCallingConv(CCInfo>>1);
       cast<CallInst>(I)->setTailCall(CCInfo & 1);
-      cast<CallInst>(I)->setParamAttrs(PAL);
+      cast<CallInst>(I)->setAttributes(PAL);
       break;
     }
     case bitc::FUNC_CODE_INST_VAARG: { // VAARG: [valistty, valist, instty]

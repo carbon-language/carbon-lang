@@ -8999,7 +8999,7 @@ static bool isSafeToEliminateVarargsCast(const CallSite CS,
   // The size of ByVal arguments is derived from the type, so we
   // can't change to a type with a different size.  If the size were
   // passed explicitly we could avoid this check.
-  if (!CS.paramHasAttr(ix, ParamAttr::ByVal))
+  if (!CS.paramHasAttr(ix, Attribute::ByVal))
     return true;
 
   const Type* SrcTy = 
@@ -9099,7 +9099,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
     return false;
   Function *Callee = cast<Function>(CE->getOperand(0));
   Instruction *Caller = CS.getInstruction();
-  const PAListPtr &CallerPAL = CS.getParamAttrs();
+  const AttrListPtr &CallerPAL = CS.getAttributes();
 
   // Okay, this is a cast from a function to a different type.  Unless doing so
   // would cause a type conversion of one of our arguments, change this call to
@@ -9127,8 +9127,8 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
       return false;   // Cannot transform this return value.
 
     if (!CallerPAL.isEmpty() && !Caller->use_empty()) {
-      Attributes RAttrs = CallerPAL.getParamAttrs(0);
-      if (RAttrs & ParamAttr::typeIncompatible(NewRetTy))
+      Attributes RAttrs = CallerPAL.getAttributes(0);
+      if (RAttrs & Attribute::typeIncompatible(NewRetTy))
         return false;   // Attribute not compatible with transformed value.
     }
 
@@ -9157,7 +9157,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
     if (!CastInst::isCastable(ActTy, ParamTy))
       return false;   // Cannot transform this parameter value.
 
-    if (CallerPAL.getParamAttrs(i + 1) & ParamAttr::typeIncompatible(ParamTy))
+    if (CallerPAL.getAttributes(i + 1) & Attribute::typeIncompatible(ParamTy))
       return false;   // Attribute not compatible with transformed value.
 
     // Converting from one pointer type to another or between a pointer and an
@@ -9181,7 +9181,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
       if (CallerPAL.getSlot(i - 1).Index <= FT->getNumParams())
         break;
       Attributes PAttrs = CallerPAL.getSlot(i - 1).Attrs;
-      if (PAttrs & ParamAttr::VarArgsIncompatible)
+      if (PAttrs & Attribute::VarArgsIncompatible)
         return false;
     }
 
@@ -9189,19 +9189,19 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
   // inserting cast instructions as necessary...
   std::vector<Value*> Args;
   Args.reserve(NumActualArgs);
-  SmallVector<FnAttributeWithIndex, 8> attrVec;
+  SmallVector<AttributeWithIndex, 8> attrVec;
   attrVec.reserve(NumCommonArgs);
 
   // Get any return attributes.
-  Attributes RAttrs = CallerPAL.getParamAttrs(0);
+  Attributes RAttrs = CallerPAL.getAttributes(0);
 
   // If the return value is not being used, the type may not be compatible
   // with the existing attributes.  Wipe out any problematic attributes.
-  RAttrs &= ~ParamAttr::typeIncompatible(NewRetTy);
+  RAttrs &= ~Attribute::typeIncompatible(NewRetTy);
 
   // Add the new return attributes.
   if (RAttrs)
-    attrVec.push_back(FnAttributeWithIndex::get(0, RAttrs));
+    attrVec.push_back(AttributeWithIndex::get(0, RAttrs));
 
   AI = CS.arg_begin();
   for (unsigned i = 0; i != NumCommonArgs; ++i, ++AI) {
@@ -9216,8 +9216,8 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
     }
 
     // Add any parameter attributes.
-    if (Attributes PAttrs = CallerPAL.getParamAttrs(i + 1))
-      attrVec.push_back(FnAttributeWithIndex::get(i + 1, PAttrs));
+    if (Attributes PAttrs = CallerPAL.getAttributes(i + 1))
+      attrVec.push_back(AttributeWithIndex::get(i + 1, PAttrs));
   }
 
   // If the function takes more arguments than the call was taking, add them
@@ -9246,8 +9246,8 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
         }
 
         // Add any parameter attributes.
-        if (Attributes PAttrs = CallerPAL.getParamAttrs(i + 1))
-          attrVec.push_back(FnAttributeWithIndex::get(i + 1, PAttrs));
+        if (Attributes PAttrs = CallerPAL.getAttributes(i + 1))
+          attrVec.push_back(AttributeWithIndex::get(i + 1, PAttrs));
       }
     }
   }
@@ -9255,7 +9255,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
   if (NewRetTy == Type::VoidTy)
     Caller->setName("");   // Void type should not have a name.
 
-  const PAListPtr &NewCallerPAL = PAListPtr::get(attrVec.begin(),attrVec.end());
+  const AttrListPtr &NewCallerPAL = AttrListPtr::get(attrVec.begin(),attrVec.end());
 
   Instruction *NC;
   if (InvokeInst *II = dyn_cast<InvokeInst>(Caller)) {
@@ -9263,7 +9263,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
                             Args.begin(), Args.end(),
                             Caller->getName(), Caller);
     cast<InvokeInst>(NC)->setCallingConv(II->getCallingConv());
-    cast<InvokeInst>(NC)->setParamAttrs(NewCallerPAL);
+    cast<InvokeInst>(NC)->setAttributes(NewCallerPAL);
   } else {
     NC = CallInst::Create(Callee, Args.begin(), Args.end(),
                           Caller->getName(), Caller);
@@ -9271,7 +9271,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
     if (CI->isTailCall())
       cast<CallInst>(NC)->setTailCall();
     cast<CallInst>(NC)->setCallingConv(CI->getCallingConv());
-    cast<CallInst>(NC)->setParamAttrs(NewCallerPAL);
+    cast<CallInst>(NC)->setAttributes(NewCallerPAL);
   }
 
   // Insert a cast of the return type as necessary.
@@ -9311,11 +9311,11 @@ Instruction *InstCombiner::transformCallThroughTrampoline(CallSite CS) {
   Value *Callee = CS.getCalledValue();
   const PointerType *PTy = cast<PointerType>(Callee->getType());
   const FunctionType *FTy = cast<FunctionType>(PTy->getElementType());
-  const PAListPtr &Attrs = CS.getParamAttrs();
+  const AttrListPtr &Attrs = CS.getAttributes();
 
   // If the call already has the 'nest' attribute somewhere then give up -
   // otherwise 'nest' would occur twice after splicing in the chain.
-  if (Attrs.hasAttrSomewhere(ParamAttr::Nest))
+  if (Attrs.hasAttrSomewhere(Attribute::Nest))
     return 0;
 
   IntrinsicInst *Tramp =
@@ -9325,19 +9325,19 @@ Instruction *InstCombiner::transformCallThroughTrampoline(CallSite CS) {
   const PointerType *NestFPTy = cast<PointerType>(NestF->getType());
   const FunctionType *NestFTy = cast<FunctionType>(NestFPTy->getElementType());
 
-  const PAListPtr &NestAttrs = NestF->getParamAttrs();
+  const AttrListPtr &NestAttrs = NestF->getAttributes();
   if (!NestAttrs.isEmpty()) {
     unsigned NestIdx = 1;
     const Type *NestTy = 0;
-    Attributes NestAttr = ParamAttr::None;
+    Attributes NestAttr = Attribute::None;
 
     // Look for a parameter marked with the 'nest' attribute.
     for (FunctionType::param_iterator I = NestFTy->param_begin(),
          E = NestFTy->param_end(); I != E; ++NestIdx, ++I)
-      if (NestAttrs.paramHasAttr(NestIdx, ParamAttr::Nest)) {
+      if (NestAttrs.paramHasAttr(NestIdx, Attribute::Nest)) {
         // Record the parameter type and any other attributes.
         NestTy = *I;
-        NestAttr = NestAttrs.getParamAttrs(NestIdx);
+        NestAttr = NestAttrs.getAttributes(NestIdx);
         break;
       }
 
@@ -9346,15 +9346,15 @@ Instruction *InstCombiner::transformCallThroughTrampoline(CallSite CS) {
       std::vector<Value*> NewArgs;
       NewArgs.reserve(unsigned(CS.arg_end()-CS.arg_begin())+1);
 
-      SmallVector<FnAttributeWithIndex, 8> NewAttrs;
+      SmallVector<AttributeWithIndex, 8> NewAttrs;
       NewAttrs.reserve(Attrs.getNumSlots() + 1);
 
       // Insert the nest argument into the call argument list, which may
       // mean appending it.  Likewise for attributes.
 
       // Add any function result attributes.
-      if (Attributes Attr = Attrs.getParamAttrs(0))
-        NewAttrs.push_back(FnAttributeWithIndex::get(0, Attr));
+      if (Attributes Attr = Attrs.getAttributes(0))
+        NewAttrs.push_back(AttributeWithIndex::get(0, Attr));
 
       {
         unsigned Idx = 1;
@@ -9366,7 +9366,7 @@ Instruction *InstCombiner::transformCallThroughTrampoline(CallSite CS) {
             if (NestVal->getType() != NestTy)
               NestVal = new BitCastInst(NestVal, NestTy, "nest", Caller);
             NewArgs.push_back(NestVal);
-            NewAttrs.push_back(FnAttributeWithIndex::get(NestIdx, NestAttr));
+            NewAttrs.push_back(AttributeWithIndex::get(NestIdx, NestAttr));
           }
 
           if (I == E)
@@ -9374,9 +9374,9 @@ Instruction *InstCombiner::transformCallThroughTrampoline(CallSite CS) {
 
           // Add the original argument and attributes.
           NewArgs.push_back(*I);
-          if (Attributes Attr = Attrs.getParamAttrs(Idx))
+          if (Attributes Attr = Attrs.getAttributes(Idx))
             NewAttrs.push_back
-              (FnAttributeWithIndex::get(Idx + (Idx >= NestIdx), Attr));
+              (AttributeWithIndex::get(Idx + (Idx >= NestIdx), Attr));
 
           ++Idx, ++I;
         } while (1);
@@ -9417,7 +9417,7 @@ Instruction *InstCombiner::transformCallThroughTrampoline(CallSite CS) {
         FunctionType::get(FTy->getReturnType(), NewTypes, FTy->isVarArg());
       Constant *NewCallee = NestF->getType() == PointerType::getUnqual(NewFTy) ?
         NestF : ConstantExpr::getBitCast(NestF, PointerType::getUnqual(NewFTy));
-      const PAListPtr &NewPAL = PAListPtr::get(NewAttrs.begin(),NewAttrs.end());
+      const AttrListPtr &NewPAL = AttrListPtr::get(NewAttrs.begin(),NewAttrs.end());
 
       Instruction *NewCaller;
       if (InvokeInst *II = dyn_cast<InvokeInst>(Caller)) {
@@ -9426,7 +9426,7 @@ Instruction *InstCombiner::transformCallThroughTrampoline(CallSite CS) {
                                        NewArgs.begin(), NewArgs.end(),
                                        Caller->getName(), Caller);
         cast<InvokeInst>(NewCaller)->setCallingConv(II->getCallingConv());
-        cast<InvokeInst>(NewCaller)->setParamAttrs(NewPAL);
+        cast<InvokeInst>(NewCaller)->setAttributes(NewPAL);
       } else {
         NewCaller = CallInst::Create(NewCallee, NewArgs.begin(), NewArgs.end(),
                                      Caller->getName(), Caller);
@@ -9434,7 +9434,7 @@ Instruction *InstCombiner::transformCallThroughTrampoline(CallSite CS) {
           cast<CallInst>(NewCaller)->setTailCall();
         cast<CallInst>(NewCaller)->
           setCallingConv(cast<CallInst>(Caller)->getCallingConv());
-        cast<CallInst>(NewCaller)->setParamAttrs(NewPAL);
+        cast<CallInst>(NewCaller)->setAttributes(NewPAL);
       }
       if (Caller->getType() != Type::VoidTy && !Caller->use_empty())
         Caller->replaceAllUsesWith(NewCaller);

@@ -64,7 +64,7 @@ namespace bitc {
   };
   
   /// PARAMATTR blocks have code for defining a parameter attribute set.
-  enum ParamAttrCodes {
+  enum AttributeCodes {
     PARAMATTR_CODE_ENTRY = 1   // ENTRY: [paramidx0, attr0, paramidx1, attr1...]
   };
   

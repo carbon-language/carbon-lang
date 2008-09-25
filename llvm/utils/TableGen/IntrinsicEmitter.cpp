@@ -314,7 +314,7 @@ EmitAttributes(const std::vector<CodeGenIntrinsic> &Ints, std::ostream &OS) {
       break;
     }
   }
-  OS << "    Attr |= ParamAttr::ReadNone; // These do not access memory.\n";
+  OS << "    Attr |= Attribute::ReadNone; // These do not access memory.\n";
   OS << "    break;\n";
   for (unsigned i = 0, e = Ints.size(); i != e; ++i) {
     switch (Ints[i].ModRef) {
@@ -325,7 +325,7 @@ EmitAttributes(const std::vector<CodeGenIntrinsic> &Ints, std::ostream &OS) {
       break;
     }
   }
-  OS << "    Attr |= ParamAttr::ReadOnly; // These do not write memory.\n";
+  OS << "    Attr |= Attribute::ReadOnly; // These do not write memory.\n";
   OS << "    break;\n";
   OS << "  }\n";
   OS << "#endif\n\n";

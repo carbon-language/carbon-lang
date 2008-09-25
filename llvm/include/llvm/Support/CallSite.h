@@ -62,10 +62,10 @@ public:
   unsigned getCallingConv() const;
   void setCallingConv(unsigned CC);
 
-  /// getParamAttrs/setParamAttrs - get or set the parameter attributes of
+  /// getAttributes/setAttributes - get or set the parameter attributes of
   /// the call.
-  const PAListPtr &getParamAttrs() const;
-  void setParamAttrs(const PAListPtr &PAL);
+  const AttrListPtr &getAttributes() const;
+  void setAttributes(const AttrListPtr &PAL);
 
   /// paramHasAttr - whether the call or the callee has the given attribute.
   bool paramHasAttr(uint16_t i, Attributes attr) const;

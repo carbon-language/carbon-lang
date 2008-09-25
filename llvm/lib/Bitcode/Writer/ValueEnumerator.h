@@ -25,7 +25,7 @@ class Value;
 class BasicBlock;
 class Function;
 class Module;
-class PAListPtr;
+class AttrListPtr;
 class TypeSymbolTable;
 class ValueSymbolTable;
 
@@ -45,9 +45,9 @@ private:
   ValueMapType ValueMap;
   ValueList Values;
   
-  typedef DenseMap<void*, unsigned> ParamAttrMapType;
-  ParamAttrMapType ParamAttrMap;
-  std::vector<PAListPtr> ParamAttrs;
+  typedef DenseMap<void*, unsigned> AttributeMapType;
+  AttributeMapType AttributeMap;
+  std::vector<AttrListPtr> Attributes;
   
   /// BasicBlocks - This contains all the basic blocks for the currently
   /// incorporated function.  Their reverse mapping is stored in ValueMap.
@@ -76,10 +76,10 @@ public:
     return I->second-1;
   }
   
-  unsigned getParamAttrID(const PAListPtr &PAL) const {
+  unsigned getAttributeID(const AttrListPtr &PAL) const {
     if (PAL.isEmpty()) return 0;  // Null maps to zero.
-    ParamAttrMapType::const_iterator I = ParamAttrMap.find(PAL.getRawPointer());
-    assert(I != ParamAttrMap.end() && "ParamAttr not in ValueEnumerator!");
+    AttributeMapType::const_iterator I = AttributeMap.find(PAL.getRawPointer());
+    assert(I != AttributeMap.end() && "Attribute not in ValueEnumerator!");
     return I->second;
   }
 
@@ -95,8 +95,8 @@ public:
   const std::vector<const BasicBlock*> &getBasicBlocks() const {
     return BasicBlocks; 
   }
-  const std::vector<PAListPtr> &getParamAttrs() const {
-    return ParamAttrs;
+  const std::vector<AttrListPtr> &getAttributes() const {
+    return Attributes;
   }
 
   /// PurgeAggregateValues - If there are any aggregate values at the end of the
@@ -116,7 +116,7 @@ private:
   void EnumerateValue(const Value *V);
   void EnumerateType(const Type *T);
   void EnumerateOperandType(const Value *V);
-  void EnumerateParamAttrs(const PAListPtr &PAL);
+  void EnumerateAttributes(const AttrListPtr &PAL);
   
   void EnumerateTypeSymbolTable(const TypeSymbolTable &ST);
   void EnumerateValueSymbolTable(const ValueSymbolTable &ST);

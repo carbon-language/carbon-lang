@@ -88,7 +88,7 @@ static void HandleInlinedInvoke(InvokeInst *II, BasicBlock *FirstNewBlock,
                                InvokeArgs.begin(), InvokeArgs.end(),
                                CI->getName(), BB->getTerminator());
           II->setCallingConv(CI->getCallingConv());
-          II->setParamAttrs(CI->getParamAttrs());
+          II->setAttributes(CI->getAttributes());
 
           // Make sure that anything using the call now uses the invoke!
           CI->replaceAllUsesWith(II);
@@ -246,7 +246,7 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
       // by them explicit.  However, we don't do this if the callee is readonly
       // or readnone, because the copy would be unneeded: the callee doesn't
       // modify the struct.
-      if (CalledFunc->paramHasAttr(ArgNo+1, ParamAttr::ByVal) &&
+      if (CalledFunc->paramHasAttr(ArgNo+1, Attribute::ByVal) &&
           !CalledFunc->onlyReadsMemory()) {
         const Type *AggTy = cast<PointerType>(I->getType())->getElementType();
         const Type *VoidPtrTy = PointerType::getUnqual(Type::Int8Ty);

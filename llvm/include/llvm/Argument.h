@@ -60,10 +60,10 @@ public:
   /// its containing function.
   bool hasStructRetAttr() const;
 
-  /// addAttr - Add a ParamAttr to an argument
+  /// addAttr - Add a Attribute to an argument
   void addAttr(Attributes);
   
-  /// removeAttr - Remove a ParamAttr from an argument
+  /// removeAttr - Remove a Attribute from an argument
   void removeAttr(Attributes);
 
   /// classof - Methods for support type inquiry through isa, cast, and

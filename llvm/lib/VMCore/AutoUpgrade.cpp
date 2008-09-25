@@ -218,7 +218,7 @@ bool llvm::UpgradeIntrinsicFunction(Function *F, Function *&NewFn) {
   if (NewFn)
     F = NewFn;
   if (unsigned id = F->getIntrinsicID(true))
-    F->setParamAttrs(Intrinsic::getParamAttrs((Intrinsic::ID)id));
+    F->setAttributes(Intrinsic::getAttributes((Intrinsic::ID)id));
   return Upgraded;
 }
 
@@ -383,8 +383,8 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
     //  Handle any uses of the old CallInst.
     if (!CI->use_empty()) {
       //  Check for sign extend parameter attributes on the return values.
-      bool SrcSExt = NewFn->getParamAttrs().paramHasAttr(0, ParamAttr::SExt);
-      bool DestSExt = F->getParamAttrs().paramHasAttr(0, ParamAttr::SExt);
+      bool SrcSExt = NewFn->getAttributes().paramHasAttr(0, Attribute::SExt);
+      bool DestSExt = F->getAttributes().paramHasAttr(0, Attribute::SExt);
       
       //  Construct an appropriate cast from the new return type to the old.
       CastInst *RetCast = CastInst::Create(

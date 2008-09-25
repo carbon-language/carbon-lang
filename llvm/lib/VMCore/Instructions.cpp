@@ -41,17 +41,17 @@ void CallSite::setCallingConv(unsigned CC) {
   else
     cast<InvokeInst>(I)->setCallingConv(CC);
 }
-const PAListPtr &CallSite::getParamAttrs() const {
+const AttrListPtr &CallSite::getAttributes() const {
   if (CallInst *CI = dyn_cast<CallInst>(I))
-    return CI->getParamAttrs();
+    return CI->getAttributes();
   else
-    return cast<InvokeInst>(I)->getParamAttrs();
+    return cast<InvokeInst>(I)->getAttributes();
 }
-void CallSite::setParamAttrs(const PAListPtr &PAL) {
+void CallSite::setAttributes(const AttrListPtr &PAL) {
   if (CallInst *CI = dyn_cast<CallInst>(I))
-    CI->setParamAttrs(PAL);
+    CI->setAttributes(PAL);
   else
-    cast<InvokeInst>(I)->setParamAttrs(PAL);
+    cast<InvokeInst>(I)->setAttributes(PAL);
 }
 bool CallSite::paramHasAttr(uint16_t i, Attributes attr) const {
   if (CallInst *CI = dyn_cast<CallInst>(I))
@@ -394,7 +394,7 @@ CallInst::CallInst(const CallInst &CI)
   : Instruction(CI.getType(), Instruction::Call,
                 OperandTraits<CallInst>::op_end(this) - CI.getNumOperands(),
                 CI.getNumOperands()) {
-  setParamAttrs(CI.getParamAttrs());
+  setAttributes(CI.getAttributes());
   SubclassData = CI.SubclassData;
   Use *OL = OperandList;
   Use *InOL = CI.OperandList;
@@ -402,20 +402,20 @@ CallInst::CallInst(const CallInst &CI)
     OL[i] = InOL[i];
 }
 
-void CallInst::addParamAttr(unsigned i, Attributes attr) {
-  PAListPtr PAL = getParamAttrs();
+void CallInst::addAttribute(unsigned i, Attributes attr) {
+  AttrListPtr PAL = getAttributes();
   PAL = PAL.addAttr(i, attr);
-  setParamAttrs(PAL);
+  setAttributes(PAL);
 }
 
-void CallInst::removeParamAttr(unsigned i, Attributes attr) {
-  PAListPtr PAL = getParamAttrs();
+void CallInst::removeAttribute(unsigned i, Attributes attr) {
+  AttrListPtr PAL = getAttributes();
   PAL = PAL.removeAttr(i, attr);
-  setParamAttrs(PAL);
+  setAttributes(PAL);
 }
 
 bool CallInst::paramHasAttr(unsigned i, Attributes attr) const {
-  if (ParamAttrs.paramHasAttr(i, attr))
+  if (AttributeList.paramHasAttr(i, attr))
     return true;
   if (const Function *F = getCalledFunction())
     return F->paramHasAttr(i, attr);
@@ -456,7 +456,7 @@ InvokeInst::InvokeInst(const InvokeInst &II)
                    OperandTraits<InvokeInst>::op_end(this)
                    - II.getNumOperands(),
                    II.getNumOperands()) {
-  setParamAttrs(II.getParamAttrs());
+  setAttributes(II.getAttributes());
   SubclassData = II.SubclassData;
   Use *OL = OperandList, *InOL = II.OperandList;
   for (unsigned i = 0, e = II.getNumOperands(); i != e; ++i)
@@ -474,23 +474,23 @@ void InvokeInst::setSuccessorV(unsigned idx, BasicBlock *B) {
 }
 
 bool InvokeInst::paramHasAttr(unsigned i, Attributes attr) const {
-  if (ParamAttrs.paramHasAttr(i, attr))
+  if (AttributeList.paramHasAttr(i, attr))
     return true;
   if (const Function *F = getCalledFunction())
     return F->paramHasAttr(i, attr);
   return false;
 }
 
-void InvokeInst::addParamAttr(unsigned i, Attributes attr) {
-  PAListPtr PAL = getParamAttrs();
+void InvokeInst::addAttribute(unsigned i, Attributes attr) {
+  AttrListPtr PAL = getAttributes();
   PAL = PAL.addAttr(i, attr);
-  setParamAttrs(PAL);
+  setAttributes(PAL);
 }
 
-void InvokeInst::removeParamAttr(unsigned i, Attributes attr) {
-  PAListPtr PAL = getParamAttrs();
+void InvokeInst::removeAttribute(unsigned i, Attributes attr) {
+  AttrListPtr PAL = getAttributes();
   PAL = PAL.removeAttr(i, attr);
-  setParamAttrs(PAL);
+  setAttributes(PAL);
 }
 
 

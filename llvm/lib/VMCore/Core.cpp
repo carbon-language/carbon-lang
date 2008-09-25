@@ -790,17 +790,17 @@ LLVMValueRef LLVMGetPreviousParam(LLVMValueRef Arg) {
   return wrap(--I);
 }
 
-void LLVMAddParamAttr(LLVMValueRef Arg, LLVMParamAttr PA) {
+void LLVMAddAttribute(LLVMValueRef Arg, LLVMAttribute PA) {
   unwrap<Argument>(Arg)->addAttr(PA);
 }
 
-void LLVMRemoveParamAttr(LLVMValueRef Arg, LLVMParamAttr PA) {
+void LLVMRemoveAttribute(LLVMValueRef Arg, LLVMAttribute PA) {
   unwrap<Argument>(Arg)->removeAttr(PA);
 }
 
 void LLVMSetParamAlignment(LLVMValueRef Arg, unsigned align) {
   unwrap<Argument>(Arg)->addAttr(
-          ParamAttr::constructAlignmentFromInt(align));
+          Attribute::constructAlignmentFromInt(align));
 }
 
 /*--.. Operations on basic blocks ..........................................--*/
@@ -941,26 +941,26 @@ void LLVMSetInstructionCallConv(LLVMValueRef Instr, unsigned CC) {
   assert(0 && "LLVMSetInstructionCallConv applies only to call and invoke!");
 }
 
-void LLVMAddInstrParamAttr(LLVMValueRef Instr, unsigned index, 
-                           LLVMParamAttr PA) {
+void LLVMAddInstrAttribute(LLVMValueRef Instr, unsigned index, 
+                           LLVMAttribute PA) {
   CallSite Call = CallSite(unwrap<Instruction>(Instr));
-  Call.setParamAttrs(
-    Call.getParamAttrs().addAttr(index, PA));
+  Call.setAttributes(
+    Call.getAttributes().addAttr(index, PA));
 }
 
-void LLVMRemoveInstrParamAttr(LLVMValueRef Instr, unsigned index, 
-                              LLVMParamAttr PA) {
+void LLVMRemoveInstrAttribute(LLVMValueRef Instr, unsigned index, 
+                              LLVMAttribute PA) {
   CallSite Call = CallSite(unwrap<Instruction>(Instr));
-  Call.setParamAttrs(
-    Call.getParamAttrs().removeAttr(index, PA));
+  Call.setAttributes(
+    Call.getAttributes().removeAttr(index, PA));
 }
 
 void LLVMSetInstrParamAlignment(LLVMValueRef Instr, unsigned index, 
                                 unsigned align) {
   CallSite Call = CallSite(unwrap<Instruction>(Instr));
-  Call.setParamAttrs(
-    Call.getParamAttrs().addAttr(index, 
-        ParamAttr::constructAlignmentFromInt(align)));
+  Call.setAttributes(
+    Call.getAttributes().addAttr(index, 
+        Attribute::constructAlignmentFromInt(align)));
 }
 
 /*--.. Operations on call instructions (only) ..............................--*/

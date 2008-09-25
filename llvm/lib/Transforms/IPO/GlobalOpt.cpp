@@ -1627,23 +1627,23 @@ static void ChangeCalleesToFastCall(Function *F) {
   }
 }
 
-static PAListPtr StripNest(const PAListPtr &Attrs) {
+static AttrListPtr StripNest(const AttrListPtr &Attrs) {
   for (unsigned i = 0, e = Attrs.getNumSlots(); i != e; ++i) {
-    if ((Attrs.getSlot(i).Attrs & ParamAttr::Nest) == 0)
+    if ((Attrs.getSlot(i).Attrs & Attribute::Nest) == 0)
       continue;
 
     // There can be only one.
-    return Attrs.removeAttr(Attrs.getSlot(i).Index, ParamAttr::Nest);
+    return Attrs.removeAttr(Attrs.getSlot(i).Index, Attribute::Nest);
   }
 
   return Attrs;
 }
 
 static void RemoveNestAttribute(Function *F) {
-  F->setParamAttrs(StripNest(F->getParamAttrs()));
+  F->setAttributes(StripNest(F->getAttributes()));
   for (Value::use_iterator UI = F->use_begin(), E = F->use_end(); UI != E;++UI){
     CallSite User(cast<Instruction>(*UI));
-    User.setParamAttrs(StripNest(User.getParamAttrs()));
+    User.setAttributes(StripNest(User.getAttributes()));
   }
 }
 
@@ -1670,7 +1670,7 @@ bool GlobalOpt::OptimizeFunctions(Module &M) {
         Changed = true;
       }
 
-      if (F->getParamAttrs().hasAttrSomewhere(ParamAttr::Nest) &&
+      if (F->getAttributes().hasAttrSomewhere(Attribute::Nest) &&
           OnlyCalledDirectly(F)) {
         // The function is not used by a trampoline intrinsic, so it is safe
         // to remove the 'nest' attribute.

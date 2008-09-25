@@ -1845,7 +1845,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
                                           Args.begin(), Args.end(),
                                           II->getName(), BI);
           CI->setCallingConv(II->getCallingConv());
-          CI->setParamAttrs(II->getParamAttrs());
+          CI->setAttributes(II->getAttributes());
           // If the invoke produced a value, the Call now does instead
           II->replaceAllUsesWith(CI);
           delete II;
@@ -2019,7 +2019,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
                                             Args.begin(), Args.end(),
                                             II->getName(), BI);
             CI->setCallingConv(II->getCallingConv());
-            CI->setParamAttrs(II->getParamAttrs());
+            CI->setAttributes(II->getAttributes());
             // If the invoke produced a value, the Call does now instead.
             II->replaceAllUsesWith(CI);
             delete II;
