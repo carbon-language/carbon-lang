@@ -25,6 +25,10 @@
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
+namespace llvm {
+  bool EnableFastISel;
+}
+
 static cl::opt<bool> PrintLSR("print-lsr-output", cl::Hidden,
     cl::desc("Print LLVM IR produced by the loop-reduce pass"));
 static cl::opt<bool> PrintISelInput("print-isel-input", cl::Hidden,
@@ -48,6 +52,11 @@ static cl::opt<bool>
 DisablePostRAScheduler("disable-post-RA-scheduler",
                        cl::desc("Disable scheduling after register allocation"),
                        cl::init(true));
+
+static cl::opt<bool, true>
+FastISelOption("fast-isel", cl::Hidden,
+               cl::desc("Enable the experimental \"fast\" instruction selector"),
+               cl::location(EnableFastISel));
 
 FileModel::Model
 LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
@@ -167,6 +176,10 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM, bool Fast) {
   // Print the instruction selected machine code...
   if (PrintMachineCode)
     PM.add(createMachineFunctionPrinterPass(cerr));
+
+  // If we're using Fast-ISel, clean up the mess.
+  if (EnableFastISel)
+    PM.add(createDeadMachineInstructionElimPass());
 
   if (EnableLICM)
     PM.add(createMachineLICMPass());

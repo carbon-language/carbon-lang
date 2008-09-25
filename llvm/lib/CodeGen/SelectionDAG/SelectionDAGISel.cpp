@@ -56,9 +56,6 @@ EnableValueProp("enable-value-prop", cl::Hidden);
 static cl::opt<bool>
 EnableLegalizeTypes("enable-legalize-types", cl::Hidden);
 static cl::opt<bool>
-EnableFastISel("fast-isel", cl::Hidden,
-          cl::desc("Enable the experimental \"fast\" instruction selector"));
-static cl::opt<bool>
 EnableFastISelVerbose("fast-isel-verbose", cl::Hidden,
           cl::desc("Enable verbose messages in the experimental \"fast\" "
                    "instruction selector"));
