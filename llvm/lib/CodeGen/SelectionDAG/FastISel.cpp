@@ -135,10 +135,11 @@ bool FastISel::SelectBinaryOp(User *I, ISD::NodeType ISDOpcode) {
   // under the assumption that i64 won't be used if the target doesn't
   // support it.
   if (!TLI.isTypeLegal(VT)) {
-    // MVT::i1 is special. Allow AND and OR (but not XOR) because they
+    // MVT::i1 is special. Allow AND, OR, or XOR because they
     // don't require additional zeroing, which makes them easy.
     if (VT == MVT::i1 &&
-        (ISDOpcode == ISD::AND || ISDOpcode == ISD::OR))
+        (ISDOpcode == ISD::AND || ISDOpcode == ISD::OR ||
+         ISDOpcode == ISD::XOR))
       VT = TLI.getTypeToTransformTo(VT);
     else
       return false;
