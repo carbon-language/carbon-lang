@@ -295,6 +295,10 @@ namespace llvm {
     /// specifies a splat of zero element.
     bool isSplatLoMask(SDNode *N);
 
+    /// isMOVDDUPMask - Return true if the specified VECTOR_SHUFFLE operand
+    /// specifies a shuffle of elements that is suitable for input to MOVDDUP.
+    bool isMOVDDUPMask(SDNode *N);
+
     /// getShuffleSHUFImmediate - Return the appropriate immediate to shuffle
     /// the specified isShuffleMask VECTOR_SHUFFLE mask with PSHUF* and SHUFP*
     /// instructions.

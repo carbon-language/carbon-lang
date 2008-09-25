@@ -2516,6 +2516,21 @@ bool X86::isSplatLoMask(SDNode *N) {
   return true;
 }
 
+/// isMOVDDUPMask - Return true if the specified VECTOR_SHUFFLE operand
+/// specifies a shuffle of elements that is suitable for input to MOVDDUP.
+bool X86::isMOVDDUPMask(SDNode *N) {
+  assert(N->getOpcode() == ISD::BUILD_VECTOR);
+
+  unsigned e = N->getNumOperands() / 2;
+  for (unsigned i = 0; i < e; ++i)
+    if (!isUndefOrEqual(N->getOperand(i), i))
+      return false;
+  for (unsigned i = 0; i < e; ++i)
+    if (!isUndefOrEqual(N->getOperand(e+i), i))
+      return false;
+  return true;
+}
+
 /// getShuffleSHUFImmediate - Return the appropriate immediate to shuffle
 /// the specified isShuffleMask VECTOR_SHUFFLE mask with PSHUF* and SHUFP*
 /// instructions.
@@ -2683,15 +2698,14 @@ static bool ShouldXformToMOVHLPS(SDNode *Mask) {
 /// is promoted to a vector. It also returns the LoadSDNode by reference if
 /// required.
 static bool isScalarLoadToVector(SDNode *N, LoadSDNode **LD = NULL) {
-  if (N->getOpcode() == ISD::SCALAR_TO_VECTOR) {
-    N = N->getOperand(0).getNode();
-    if (ISD::isNON_EXTLoad(N)) {
-      if (LD)
-        *LD = cast<LoadSDNode>(N);
-      return true;
-    }
-  }
-  return false;
+  if (N->getOpcode() != ISD::SCALAR_TO_VECTOR)
+    return false;
+  N = N->getOperand(0).getNode();
+  if (!ISD::isNON_EXTLoad(N))
+    return false;
+  if (LD)
+    *LD = cast<LoadSDNode>(N);
+  return true;
 }
 
 /// ShouldXformToMOVLP{S|D} - Return true if the node should be transformed to
@@ -2940,6 +2954,46 @@ static SDValue PromoteSplat(SDValue Op, SelectionDAG &DAG, bool HasSSE2) {
   V1 = DAG.getNode(ISD::BIT_CONVERT, PVT, V1);
   SDValue Shuffle = DAG.getNode(ISD::VECTOR_SHUFFLE, PVT, V1,
                                   DAG.getNode(ISD::UNDEF, PVT), Mask);
+  return DAG.getNode(ISD::BIT_CONVERT, VT, Shuffle);
+}
+
+/// isVectorLoad - Returns true if the node is a vector load, a scalar
+/// load that's promoted to vector, or a load bitcasted.
+static bool isVectorLoad(SDValue Op) {
+  assert(Op.getValueType().isVector() && "Expected a vector type");
+  if (Op.getOpcode() == ISD::SCALAR_TO_VECTOR ||
+      Op.getOpcode() == ISD::BIT_CONVERT) {
+    return isa<LoadSDNode>(Op.getOperand(0));
+  }
+  return isa<LoadSDNode>(Op);
+}
+
+
+/// CanonicalizeMovddup - Cannonicalize movddup shuffle to v2f64.
+///
+static SDValue CanonicalizeMovddup(SDValue Op, SDValue V1, SDValue Mask,
+                                   SelectionDAG &DAG, bool HasSSE3) {
+  // If we have sse3 and shuffle has more than one use or input is a load, then
+  // use movddup. Otherwise, use movlhps.
+  bool UseMovddup = HasSSE3 && (!Op.hasOneUse() || isVectorLoad(V1));
+  MVT PVT = UseMovddup ? MVT::v2f64 : MVT::v4f32;
+  MVT VT = Op.getValueType();
+  if (VT == PVT)
+    return Op;
+  unsigned NumElems = PVT.getVectorNumElements();
+  if (NumElems == 2) {
+    SDValue Cst = DAG.getTargetConstant(0, MVT::i32);
+    Mask = DAG.getNode(ISD::BUILD_VECTOR, MVT::v2i32, Cst, Cst);
+  } else {
+    assert(NumElems == 4);
+    SDValue Cst0 = DAG.getTargetConstant(0, MVT::i32);
+    SDValue Cst1 = DAG.getTargetConstant(1, MVT::i32);
+    Mask = DAG.getNode(ISD::BUILD_VECTOR, MVT::v4i32, Cst0, Cst1, Cst0, Cst1);
+  }
+
+  V1 = DAG.getNode(ISD::BIT_CONVERT, PVT, V1);
+  SDValue Shuffle = DAG.getNode(ISD::VECTOR_SHUFFLE, PVT, V1,
+                                DAG.getNode(ISD::UNDEF, PVT), Mask);
   return DAG.getNode(ISD::BIT_CONVERT, VT, Shuffle);
 }
 
@@ -3893,6 +3947,11 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
     // Promote it to a v4{if}32 splat.
     return PromoteSplat(Op, DAG, Subtarget->hasSSE2());
   }
+
+  // Canonicalize movddup shuffles.
+  if (V2IsUndef && Subtarget->hasSSE2() &&
+      X86::isMOVDDUPMask(PermMask.getNode()))
+    return CanonicalizeMovddup(Op, V1, PermMask, DAG, Subtarget->hasSSE3());
 
   // If the shuffle can be profitably rewritten as a narrower shuffle, then
   // do it!

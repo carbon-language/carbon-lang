@@ -208,6 +208,10 @@ def SSE_splat_lo_mask : PatLeaf<(build_vector), [{
   return X86::isSplatLoMask(N);
 }]>;
 
+def MOVDDUP_shuffle_mask : PatLeaf<(build_vector), [{
+  return X86::isMOVDDUPMask(N);
+}]>;
+
 def MOVHLPS_shuffle_mask : PatLeaf<(build_vector), [{
   return X86::isMOVHLPSMask(N);
 }]>;
@@ -754,6 +758,11 @@ def MOVHLPSrr : PSI<0x12, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src1, VR128:
                               MOVHLPS_shuffle_mask)))]>;
 } // AddedComplexity
 } // Constraints = "$src1 = $dst"
+
+let AddedComplexity = 15 in
+def : Pat<(v4f32 (vector_shuffle VR128:$src, (undef), MOVDDUP_shuffle_mask)),
+          (MOVLHPSrr VR128:$src, VR128:$src)>, Requires<[HasSSE1]>;
+
 
 
 
@@ -2452,16 +2461,24 @@ def MOVSLDUPrm : S3SI<0x12, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
 
 def MOVDDUPrr  : S3DI<0x12, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                       "movddup\t{$src, $dst|$dst, $src}",
-                      [(set VR128:$dst, (v2f64 (vector_shuffle
-                                                VR128:$src, (undef),
-                                                SSE_splat_lo_mask)))]>;
+                      [(set VR128:$dst,
+                         (v2f64 (vector_shuffle VR128:$src, (undef),
+                                                MOVDDUP_shuffle_mask)))]>;
 def MOVDDUPrm  : S3DI<0x12, MRMSrcMem, (outs VR128:$dst), (ins f64mem:$src),
                       "movddup\t{$src, $dst|$dst, $src}",
-                      [(set VR128:$dst,
-                        (v2f64 (vector_shuffle
-                                (scalar_to_vector (loadf64 addr:$src)),
-                                (undef),
-                                SSE_splat_lo_mask)))]>;
+                    [(set VR128:$dst,
+                      (v2f64 (vector_shuffle
+                              (scalar_to_vector (loadf64 addr:$src)),
+                              (undef), MOVDDUP_shuffle_mask)))]>;
+
+def : Pat<(vector_shuffle
+             (bc_v2f64 (v2i64 (scalar_to_vector (loadi64 addr:$src)))),
+             (undef), MOVDDUP_shuffle_mask),
+          (MOVDDUPrm addr:$src)>, Requires<[HasSSE3]>;
+def : Pat<(vector_shuffle
+            (memopv2f64 addr:$src), (undef), MOVDDUP_shuffle_mask),
+          (MOVDDUPrm addr:$src)>, Requires<[HasSSE3]>;
+
 
 // Arithmetic
 let Constraints = "$src1 = $dst" in {
