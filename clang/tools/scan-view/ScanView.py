@@ -10,6 +10,7 @@ import shutil
 import threading
 import time
 import socket
+import itertools
 
 import Reporter
 import ConfigParser
@@ -20,6 +21,11 @@ import ConfigParser
 kReportFileRE = re.compile('(.*/)?report-(.*)\\.html')
 
 kBugKeyValueRE = re.compile('<!-- BUG([^ ]*) (.*) -->')
+
+#  <!-- REPORTPROBLEM file="crashes/clang_crash_ndSGF9.mi" stderr="crashes/clang_crash_ndSGF9.mi.stderr.txt" info="crashes/clang_crash_ndSGF9.mi.info" -->
+
+kReportCrashEntryRE = re.compile('<!-- REPORTPROBLEM (.*?)-->')
+kReportCrashEntryKeyValueRE = re.compile(' ?([^=]+)="(.*?)"')
 
 kReportReplacements = []
 
@@ -53,6 +59,12 @@ kReportReplacements.append((re.compile('<!-- REPORTHEADER -->'),
 
 kReportReplacements.append((re.compile('<!-- REPORTSUMMARYEXTRA -->'),
                             '<td class="Button"><a href="report/%(report)s">Report Bug</a></td>'))
+
+# Insert report crashes link.
+
+kReportReplacements.append((re.compile('<!-- REPORTCRASHES -->'),
+                            '<br>These files will automatically be attached to ' +
+                            'reports filed here: <a href="report_crashes">Report Crashes</a>.'))
 
 ###
 # Other simple parameters
@@ -176,7 +188,11 @@ def parse_query(qs, fields=None):
             name, value = chunk.split('=', 1)
         name = urllib.unquote(name.replace('+', ' '))
         value = urllib.unquote(value.replace('+', ' '))
-        fields[name] = value
+        item = fields.get(name)
+        if item is None:
+            fields[name] = [value]
+        else:
+            item.append(value)
     return fields
 
 class ScanViewRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
@@ -229,6 +245,17 @@ class ScanViewRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
             keys[k] = v
         return keys
 
+    def load_crashes(self):
+        path = posixpath.join(self.server.root, 'index.html')
+        data = open(path).read()
+        problems = []
+        for item in kReportCrashEntryRE.finditer(data):
+            fieldData = item.group(1)
+            fields = dict([i.groups() for i in 
+                           kReportCrashEntryKeyValueRE.finditer(fieldData)])
+            problems.append(fields)
+        return problems
+
     def handle_exception(self, exc):
         import traceback
         s = StringIO.StringIO()
@@ -238,18 +265,29 @@ class ScanViewRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
         if f:
             self.copyfile(f, self.wfile)
             f.close()        
-    
-    def submit_bug(self):
-        title = self.fields.get('title')
-        description = self.fields.get('description')
-        report = self.fields.get('report')
-        reporterIndex = self.fields.get('reporter')
+            
+    def get_scalar_field(self, name):
+        if name in self.fields:
+            return self.fields[name][0]
+        else:
+            return None
 
-        # Type check form parameters.
-        reportPath = posixpath.join(self.server.root,
-                                   'report-%s.html' % report)
-        if not posixpath.exists(reportPath):
-            return (False, "Invalid report ID.")
+    def submit_bug(self, c):
+        title = self.get_scalar_field('title')
+        description = self.get_scalar_field('description')
+        report = self.get_scalar_field('report')
+        reporterIndex = self.get_scalar_field('reporter')
+        files = []
+        for fileID in self.fields.get('files',[]):
+            try:
+                i = int(fileID)
+            except:
+                i = None
+            if i is None or i<0 or i>=len(c.files):
+                return (False, 'Invalid file ID')
+            files.append(c.files[i])
+        print files
+        
         if not title:
             return (False, "Missing title.")
         if not description:
@@ -268,15 +306,16 @@ class ScanViewRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
                 return (False, 
                         'Missing field "%s" for %s report method.'%(name,
                                                                     reporter.getName()))
-            parameters[o] = self.fields[name]
+            parameters[o] = self.get_scalar_field(name)
 
         # Update config defaults.
-        self.server.config.set('ScanView', 'reporter', reporterIndex)
-        for o in reporter.getParameterNames():
-            self.server.config.set(reporter.getName(), o, parameters[o])
+        if report != 'None':
+            self.server.config.set('ScanView', 'reporter', reporterIndex)
+            for o in reporter.getParameterNames():
+                self.server.config.set(reporter.getName(), o, parameters[o])
 
         # Create the report.
-        bug = Reporter.BugReport(title, description, [reportPath])
+        bug = Reporter.BugReport(title, description, files)
 
         # Kick off a reporting thread.
         t = ReporterThread(bug, reporter, parameters, self.server)
@@ -290,11 +329,21 @@ class ScanViewRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
         return (t.success, t.status)
 
     def send_report_submit(self):
-        report = self.fields.get('report')
-        title = self.fields.get('title')
-        description = self.fields.get('description')
+        print self.fields
+        report = self.get_scalar_field('report')
+        c = self.get_report_context(report)
+        if c.reportSource is None:
+            reportingFor = "Report Crashes > "
+            fileBug = """\
+<a href="/report_crashes">File Bug</a> > """%locals()
+        else:
+            reportingFor = '<a href="/%s">Report %s</a> > ' % (c.reportSource, 
+                                                                   report)
+            fileBug = '<a href="/report/%s">File Bug</a> > ' % report
+        title = self.get_scalar_field('title')
+        description = self.get_scalar_field('description')
 
-        res,message = self.submit_bug()
+        res,message = self.submit_bug(c)
 
         if res:
             statusClass = 'SubmitOk'
@@ -311,8 +360,8 @@ class ScanViewRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
 <body>
 <h3>
 <a href="/">Summary</a> > 
-<a href="/report-%(report)s.html">Report %(report)s</a> > 
-<a href="/report/%(report)s">File Bug</a> > 
+%(reportingFor)s
+%(fileBug)s
 Submit</h3>
 <form name="form" action="">
 <table class="form">
@@ -367,28 +416,106 @@ Submit</h3>
 
         return self.send_string(res, 'text/plain')
 
-    def send_report(self, report):
-        try:
-            keys = self.load_report(report)
-        except IOError:
-            return self.send_error(400, 'Invalid report.')
+    def get_report_context(self, report):
+        class Context:
+            pass
+        if report is None or report == 'None':
+            data = self.load_crashes()
+            # Don't allow empty reports.
+            if not data:
+                raise ValueError, 'No crashes detected!'
+            c = Context()
+            c.title = 'clang static analyzer failures'
 
-        initialTitle = keys.get('DESC','')
-        initialDescription = """\
-Bug generated by the clang static analyzer.
+            stderrSummary = ""
+            for item in data:
+                if 'stderr' in item:
+                    path = posixpath.join(self.server.root, item['stderr'])
+                    if os.path.exists(path):
+                        lns = itertools.islice(open(path), 0, 10)
+                        stderrSummary += '%s\n--\n%s' % (item.get('src', 
+                                                                  '<unknown>'),
+                                                         ''.join(lns))
+
+            c.description = """\
+The clang static analyzer failed on these inputs:
+%s
+
+STDERR Summary
+--------------
+%s
+""" % ('\n'.join([item.get('src','<unknown>') for item in data]),
+       stderrSummary)
+            c.reportSource = None
+            c.navMarkup = "Report Crashes > "
+            c.files = []
+            for item in data:                
+                c.files.append(item.get('src',''))
+                c.files.append(posixpath.join(self.server.root,
+                                              item.get('file','')))
+                c.files.append(posixpath.join(self.server.root,
+                                              item.get('clangfile','')))
+                c.files.append(posixpath.join(self.server.root,
+                                              item.get('stderr','')))
+                c.files.append(posixpath.join(self.server.root,
+                                              item.get('info','')))
+            # Just in case something failed, ignore files which don't
+            # exist.
+            c.files = [f for f in c.files
+                       if os.path.exists(f) and os.path.isfile(f)]
+        else:
+            # Check that this is a valid report.            
+            path = posixpath.join(self.server.root, 'report-%s.html' % report)
+            if not posixpath.exists(path):
+                raise ValueError, 'Invalid report ID'
+            keys = self.load_report(report)
+            c = Context()
+            c.title = keys.get('DESC','clang error (unrecognized')
+            c.description = """\
+Bug reported by the clang static analyzer.
 
 Description: %s
 File: %s
 Line: %s
-"""%(initialTitle,
-     keys.get('FILE','<unknown>'),
-     keys.get('LINE','<unknown>'))
+"""%(c.title, keys.get('FILE','<unknown>'), keys.get('LINE', '<unknown>'))
+            c.reportSource = 'report-%s.html' % report
+            c.navMarkup = """<a href="/%s">Report %s</a> > """ % (c.reportSource,
+                                                                  report)
+
+            c.files = [path]
+        return c
+
+    def send_report(self, report, configOverrides=None):
+        def getConfigOption(section, field):            
+            if (configOverrides is not None and
+                section in configOverrides and
+                field in configOverrides[section]):
+                return configOverrides[section][field]
+            return self.server.config.get(section, field)
+
+        # report is None is used for crashes
+        try:
+            c = self.get_report_context(report)
+        except ValueError, e:
+            return self.send_error(400, e.message)
+
+        title = c.title
+        description= c.description
+        reportingFor = c.navMarkup
+        if c.reportSource is None:
+            extraIFrame = ""
+        else:
+            extraIFrame = """\
+<iframe src="/%s" width="100%%" height="40%%"
+        scrolling="auto" frameborder="1">
+  <a href="/%s">View Bug Report</a>
+</iframe>""" % (c.reportSource, c.reportSource)
 
         reporterSelections = []
         reporterOptions = []
-        
+
         try:
-            active = self.server.config.getint('ScanView','reporter')
+            active = int(getConfigOption('ScanView','reporter'))
         except:
             active = 0
         for i,r in enumerate(self.server.reporters):
@@ -402,7 +529,7 @@ Line: %s
 <tr>
   <td class="form_clabel">%s:</td>
   <td class="form_value"><input type="text" name="%s_%s" value="%s"></td>
-</tr>"""%(o,r.getName(),o,self.server.config.get(r.getName(), o)) for o in r.getParameterNames()])
+</tr>"""%(o,r.getName(),o,getConfigOption(r.getName(),o)) for o in r.getParameterNames()])
             display = ('none','')[selected]
             reporterOptions.append("""\
 <tr id="%sReporterOptions" style="display:%s">
@@ -417,6 +544,23 @@ Line: %s
         reporterSelections = '\n'.join(reporterSelections)
         reporterOptionsDivs = '\n'.join(reporterOptions)
         reportersArray = '[%s]'%(','.join([`r.getName()` for r in self.server.reporters]))
+
+        if c.files:
+            fieldSize = min(5, len(c.files))
+            attachFileOptions = '\n'.join(["""\
+<option value="%d" selected>%s</option>""" % (i,v) for i,v in enumerate(c.files)])
+            attachFileRow = """\
+<tr>
+  <td class="form_label">Attach:</td>
+  <td class="form_value">
+<select style="width:100%%" name="files" multiple size=%d>
+%s
+</select>
+  </td>
+</tr>
+""" % (min(5, len(c.files)), attachFileOptions)
+        else:
+            attachFileRow = ""
 
         result = """<html>
 <head>
@@ -440,7 +584,7 @@ function updateReporterOptions() {
 <body onLoad="updateReporterOptions()">
 <h3>
 <a href="/">Summary</a> > 
-<a href="/report-%(report)s.html">Report %(report)s</a> > 
+%(reportingFor)s
 File Bug</h3>
 <form name="form" action="/report_submit" method="post">
 <input type="hidden" name="report" value="%(report)s">
@@ -451,16 +595,20 @@ File Bug</h3>
 <tr>
   <td class="form_clabel">Title:</td>
   <td class="form_value">
-    <input type="text" name="title" size="50" value="%(initialTitle)s">
+    <input type="text" name="title" size="50" value="%(title)s">
   </td>
 </tr>
 <tr>
   <td class="form_label">Description:</td>
   <td class="form_value">
 <textarea rows="10" cols="80" name="description">
-%(initialDescription)s
+%(description)s
 </textarea>
   </td>
+</tr>
+
+%(attachFileRow)s
+
 </table>
 <br>
 <table class="form_group">
@@ -482,13 +630,11 @@ File Bug</h3>
 </table>
 </form>
 
-<iframe src="/report-%(report)s.html" width="100%%" height="40%%"
-        scrolling="auto" frameborder="1">
-  <a href="/report-%(report)s.html">View Bug Report</a>
-</iframe>
+%(extraIFrame)s
 
 </body>
 </html>"""%locals()
+
         return self.send_string(result)
 
     def send_head(self, fields=None):
@@ -521,6 +667,17 @@ File Bug</h3>
                     return self.send_string('Goodbye.', 'text/plain')
                 elif name=='report_submit':
                     return self.send_report_submit()
+                elif name=='report_crashes':
+                    overrides = { 'ScanView' : {},
+                                  'Radar' : {},
+                                  'Email' : {} }
+                    for i,r in enumerate(self.server.reporters):
+                        if r.getName() == 'Radar':
+                            overrides['ScanView']['reporter'] = i
+                            break
+                    overrides['Radar']['Component'] = 'llvm - checker'
+                    overrides['Radar']['Component Version'] = 'X'
+                    return self.send_report(None, overrides)
                 elif name=='favicon.ico':
                     return self.send_path(posixpath.join(kResources,'bugcatcher.ico'))
         

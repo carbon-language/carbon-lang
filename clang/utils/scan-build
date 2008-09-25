@@ -687,7 +687,7 @@ ENDTEXT
         print OUT "<tr><td>$problem</td><td>$srcfile</td><td><a href=\"crashes/$ppfile\">$ppfile</a></td><td><a href=\"crashes/$ppfile.stderr.txt\">$ppfile.stderr.txt</a></td></tr>\n";
         my $ppfile_clang = $ppfile;
         $ppfile_clang =~ s/[.](.+)$/.clang.$1/;
-        print OUT "  <!-- REPORTPROBLEM file=\"crashes/$ppfile\" clangfile=\"crashes/$ppfile_clang\" stderr=\"crashes/$ppfile.stderr.txt\" info=\"crashes/$ppfile.info\" -->\n";
+        print OUT "  <!-- REPORTPROBLEM src=\"$srcfile\" file=\"crashes/$ppfile\" clangfile=\"crashes/$ppfile_clang\" stderr=\"crashes/$ppfile.stderr.txt\" info=\"crashes/$ppfile.info.txt\" -->\n";
       }
 
       print OUT <<ENDTEXT;
