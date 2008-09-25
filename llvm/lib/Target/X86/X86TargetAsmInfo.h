@@ -14,25 +14,17 @@
 #ifndef X86TARGETASMINFO_H
 #define X86TARGETASMINFO_H
 
-#include "X86TargetMachine.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/ELFTargetAsmInfo.h"
 #include "llvm/Target/DarwinTargetAsmInfo.h"
-#include "llvm/Support/Compiler.h"
 
 namespace llvm {
 
-  extern const char *const x86_asm_table[];
+  // Forward declaration.
+  class X86TargetMachine;
 
-  template <class BaseTAI>
-  struct X86TargetAsmInfo : public BaseTAI {
-    explicit X86TargetAsmInfo(const X86TargetMachine &TM):
-      BaseTAI(TM) {
-      const X86Subtarget *Subtarget = &TM.getSubtarget<X86Subtarget>();
-
-      BaseTAI::AsmTransCBE = x86_asm_table;
-      BaseTAI::AssemblerDialect = Subtarget->getAsmFlavor();
-    }
+  struct X86TargetAsmInfo : public virtual TargetAsmInfo {
+    explicit X86TargetAsmInfo(const X86TargetMachine &TM);
 
     virtual bool ExpandInlineAsm(CallInst *CI) const;
 
@@ -40,23 +32,21 @@ namespace llvm {
     bool LowerToBSwap(CallInst *CI) const;
   };
 
-  typedef X86TargetAsmInfo<TargetAsmInfo> X86GenericTargetAsmInfo;
-
-  EXTERN_TEMPLATE_INSTANTIATION(class X86TargetAsmInfo<TargetAsmInfo>);
-
-  struct X86DarwinTargetAsmInfo : public X86TargetAsmInfo<DarwinTargetAsmInfo> {
+  struct X86DarwinTargetAsmInfo : public X86TargetAsmInfo,
+                                  public DarwinTargetAsmInfo {
     explicit X86DarwinTargetAsmInfo(const X86TargetMachine &TM);
     virtual unsigned PreferredEHDataFormat(DwarfEncoding::Target Reason,
                                            bool Global) const;
   };
 
-  struct X86ELFTargetAsmInfo : public X86TargetAsmInfo<ELFTargetAsmInfo> {
+  struct X86ELFTargetAsmInfo : public X86TargetAsmInfo,
+                               public ELFTargetAsmInfo {
     explicit X86ELFTargetAsmInfo(const X86TargetMachine &TM);
     virtual unsigned PreferredEHDataFormat(DwarfEncoding::Target Reason,
                                            bool Global) const;
   };
 
-  struct X86COFFTargetAsmInfo : public X86GenericTargetAsmInfo {
+  struct X86COFFTargetAsmInfo : public X86TargetAsmInfo {
     explicit X86COFFTargetAsmInfo(const X86TargetMachine &TM);
     virtual unsigned PreferredEHDataFormat(DwarfEncoding::Target Reason,
                                            bool Global) const;
@@ -67,11 +57,9 @@ namespace llvm {
     const X86TargetMachine *X86TM;
   };
 
-  struct X86WinTargetAsmInfo : public X86GenericTargetAsmInfo {
+  struct X86WinTargetAsmInfo : public X86TargetAsmInfo {
     explicit X86WinTargetAsmInfo(const X86TargetMachine &TM);
   };
-
 } // namespace llvm
 
 #endif
-

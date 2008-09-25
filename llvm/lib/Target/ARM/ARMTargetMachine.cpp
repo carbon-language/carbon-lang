@@ -120,7 +120,7 @@ const TargetAsmInfo *ARMTargetMachine::createTargetAsmInfo() const {
    case ARMSubtarget::isELF:
     return new ARMELFTargetAsmInfo(*this);
    default:
-    return new ARMGenericTargetAsmInfo(*this);
+    return new ARMTargetAsmInfo(*this);
   }
 }
 

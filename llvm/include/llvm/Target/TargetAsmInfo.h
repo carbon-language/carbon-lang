@@ -124,7 +124,6 @@ namespace llvm {
   private:
     mutable StringMap<Section> Sections;
     mutable SectionFlags::FlagsStringsMapType FlagsStrings;
-    void fillDefaultValues();
   protected:
     //===------------------------------------------------------------------===//
     // Properties to be set by the target writer, used to configure asm printer.
@@ -511,7 +510,6 @@ namespace llvm {
 
   public:
     TargetAsmInfo();
-    TargetAsmInfo(const TargetMachine &TM);
     virtual ~TargetAsmInfo();
 
     const Section* getNamedSection(const char *Name,

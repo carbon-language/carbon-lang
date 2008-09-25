@@ -19,10 +19,21 @@
 using namespace llvm;
 using namespace llvm::dwarf;
 
-TEMPLATE_INSTANTIATION(class PPCTargetAsmInfo<TargetAsmInfo>);
+PPCTargetAsmInfo::PPCTargetAsmInfo(const PPCTargetMachine &TM) {
+  bool isPPC64 = TM.getSubtargetImpl()->isPPC64();
+
+  ZeroDirective = "\t.space\t";
+  SetDirective = "\t.set";
+  Data64bitsDirective = isPPC64 ? "\t.quad\t" : 0;  
+  AlignmentIsInBytes = false;
+  LCOMMDirective = "\t.lcomm\t";
+  InlineAsmStart = "# InlineAsm Start";
+  InlineAsmEnd = "# InlineAsm End";
+  AssemblerDialect = TM.getSubtargetImpl()->getAsmFlavor();
+}
 
 PPCDarwinTargetAsmInfo::PPCDarwinTargetAsmInfo(const PPCTargetMachine &TM):
-  PPCTargetAsmInfo<DarwinTargetAsmInfo>(TM) {
+  PPCTargetAsmInfo(TM), DarwinTargetAsmInfo(TM) {
   PCSymbol = ".";
   CommentString = ";";
   GlobalPrefix = "_";
@@ -92,7 +103,7 @@ PPCDarwinTargetAsmInfo::PreferredEHDataFormat(DwarfEncoding::Target Reason,
 
 
 PPCLinuxTargetAsmInfo::PPCLinuxTargetAsmInfo(const PPCTargetMachine &TM) :
-  PPCTargetAsmInfo<ELFTargetAsmInfo>(TM) {
+  PPCTargetAsmInfo(TM), ELFTargetAsmInfo(TM) {
   CommentString = "#";
   GlobalPrefix = "";
   PrivateGlobalPrefix = "";
