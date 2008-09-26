@@ -100,7 +100,7 @@ int f13(void)
 }
 
 // Filed with PR 2763.
-int f41(int count) {
+int f14(int count) {
   int index, nextLineIndex;
   for (index = 0; index < count; index = nextLineIndex+1) {
     nextLineIndex = index+1;  // no-warning
@@ -108,3 +108,10 @@ int f41(int count) {
   }
   return index;
 }
+
+// Test case for <rdar://problem/6248086>
+void f15(unsigned x, unsigned y) {
+  int count = x * y;   // no-warning
+  int z[count];
+}
+
