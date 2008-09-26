@@ -1492,7 +1492,7 @@ private:
 class BlockExpr : public Expr {
   SourceLocation CaretLocation;
   llvm::SmallVector<ParmVarDecl*, 8> Args;
-  CompoundStmt *Body;
+  Stmt *Body;
 public:
   BlockExpr(SourceLocation caretloc, QualType ty, ParmVarDecl **args, 
             unsigned numargs, CompoundStmt *body) : Expr(BlockExprClass, ty), 
@@ -1503,8 +1503,8 @@ public:
   /// getFunctionType - Return the underlying function type for this block.
   const FunctionType *getFunctionType() const;
 
-  const CompoundStmt *getBody() const { return Body; }
-  CompoundStmt *getBody() { return Body; }
+  const CompoundStmt *getBody() const { return cast<CompoundStmt>(Body); }
+  CompoundStmt *getBody() { return cast<CompoundStmt>(Body); }
 
   virtual SourceRange getSourceRange() const {
     return SourceRange(getCaretLocation(), Body->getLocEnd());

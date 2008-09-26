@@ -1460,13 +1460,8 @@ Stmt::child_iterator ObjCMessageExpr::child_end() {
 }
 
 // Blocks
-Stmt::child_iterator BlockExpr::child_begin() {
-  return reinterpret_cast<Stmt**>(&Body);
-}
-Stmt::child_iterator BlockExpr::child_end() {
-  return reinterpret_cast<Stmt**>(&Body)+1;
-}
+Stmt::child_iterator BlockExpr::child_begin() { return &Body; }
+Stmt::child_iterator BlockExpr::child_end() { return &Body+1; }
 
-Stmt::child_iterator BlockDeclRefExpr::child_begin(){return child_iterator();}
-Stmt::child_iterator BlockDeclRefExpr::child_end() { return child_iterator();}
-
+Stmt::child_iterator BlockDeclRefExpr::child_begin() { return child_iterator();}
+Stmt::child_iterator BlockDeclRefExpr::child_end() { return child_iterator(); }
