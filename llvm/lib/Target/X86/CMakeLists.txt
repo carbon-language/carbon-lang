@@ -1,43 +1,18 @@
-macro(x86tgen ofn)
-  add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${ofn}
-    COMMAND tblgen ${ARGN} -I ${CMAKE_CURRENT_SOURCE_DIR} -I ${CMAKE_SOURCE_DIR}/lib/Target -I ${llvm_include_path} ${CMAKE_CURRENT_SOURCE_DIR}/X86.td -o ${ofn}
-    DEPENDS tblgen ${CMAKE_CURRENT_SOURCE_DIR}/X86.td
-    COMMENT "Building ${ofn}..."
-    )
-endmacro(x86tgen)
+set(LLVM_TARGET_DEFINITIONS X86.td)
 
-x86tgen(X86GenRegisterInfo.h.inc -gen-register-desc-header)
-x86tgen(X86GenRegisterNames.inc -gen-register-enums)
-x86tgen(X86GenRegisterInfo.inc -gen-register-desc)
-x86tgen(X86GenInstrNames.inc -gen-instr-enums)
-x86tgen(X86GenInstrInfo.inc -gen-instr-desc)
-x86tgen(X86GenAsmWriter.inc -gen-asm-writer)
-x86tgen(X86GenAsmWriter1.inc -gen-asm-writer -asmwriternum=1)
-x86tgen(X86GenDAGISel.inc -gen-dag-isel)
-x86tgen(X86GenFastISel.inc -gen-fast-isel)
-x86tgen(X86GenCallingConv.inc -gen-callingconv)
-x86tgen(X86GenSubtarget.inc -gen-subtarget)
+tablegen(X86GenRegisterInfo.h.inc -gen-register-desc-header)
+tablegen(X86GenRegisterNames.inc -gen-register-enums)
+tablegen(X86GenRegisterInfo.inc -gen-register-desc)
+tablegen(X86GenInstrNames.inc -gen-instr-enums)
+tablegen(X86GenInstrInfo.inc -gen-instr-desc)
+tablegen(X86GenAsmWriter.inc -gen-asm-writer)
+tablegen(X86GenAsmWriter1.inc -gen-asm-writer -asmwriternum=1)
+tablegen(X86GenDAGISel.inc -gen-dag-isel)
+tablegen(X86GenFastISel.inc -gen-fast-isel)
+tablegen(X86GenCallingConv.inc -gen-callingconv)
+tablegen(X86GenSubtarget.inc -gen-subtarget)
 
-add_custom_target(X86Table_gen echo Tablegenning
-  DEPENDS
-  ${CMAKE_CURRENT_BINARY_DIR}/X86GenRegisterInfo.h.inc
-  ${CMAKE_CURRENT_BINARY_DIR}/X86GenRegisterNames.inc
-  ${CMAKE_CURRENT_BINARY_DIR}/X86GenRegisterInfo.inc
-  ${CMAKE_CURRENT_BINARY_DIR}/X86GenInstrNames.inc
-  ${CMAKE_CURRENT_BINARY_DIR}/X86GenInstrInfo.inc
-  ${CMAKE_CURRENT_BINARY_DIR}/X86GenAsmWriter.inc
-  ${CMAKE_CURRENT_BINARY_DIR}/X86GenAsmWriter1.inc
-  ${CMAKE_CURRENT_BINARY_DIR}/X86GenDAGISel.inc
-  ${CMAKE_CURRENT_BINARY_DIR}/X86GenFastISel.inc
-  ${CMAKE_CURRENT_BINARY_DIR}/X86GenCallingConv.inc
-  ${CMAKE_CURRENT_BINARY_DIR}/X86GenSubtarget.inc
-  )
-
-add_dependencies(X86Table_gen ${LLVM_COMMON_DEPENDS})
-
-include_directories(BEFORE ${CMAKE_CURRENT_BINARY_DIR})
-
-add_partially_linked_object(LLVMX86CodeGen
+add_llvm_target(X86CodeGen
   X86CodeEmitter.cpp
   X86ELFWriterInfo.cpp
   X86FloatingPoint.cpp
@@ -51,7 +26,3 @@ add_partially_linked_object(LLVMX86CodeGen
   X86TargetMachine.cpp
   X86FastISel.cpp
   )
-
-add_dependencies(LLVMX86CodeGen
-  X86Table_gen
-)

@@ -40,7 +40,10 @@ if( NOT TT_RV EQUAL 0 )
   message(FATAL_ERROR "Failed to execute ${config_guess}")
 endif( NOT TT_RV EQUAL 0 )
 set(target ${LLVM_TARGET_TRIPLET})
-set(TARGETS_TO_BUILD "X86")  # TODO
+foreach(c ${LLVM_TARGETS_TO_BUILD})
+  set(TARGETS_BUILT "${TARGETS_BUILT} ${c}")
+endforeach(c)
+set(TARGETS_TO_BUILD ${TARGETS_BUILT})
 set(TARGET_HAS_JIT "1")  # TODO
 
 # Avoids replacement at config-time:

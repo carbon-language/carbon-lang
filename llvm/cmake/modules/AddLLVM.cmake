@@ -41,3 +41,17 @@ macro(add_llvm_example name)
 #  set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${LLVM_EXAMPLES_BINARY_DIR})
   add_llvm_executable(${name} ${ARGN})
 endmacro(add_llvm_example name)
+
+
+macro(add_llvm_target target_name)
+  if( TABLEGEN_OUTPUT )
+    add_custom_target(${target_name}Table_gen
+      DEPENDS ${TABLEGEN_OUTPUT})
+    add_dependencies(${target_name}Table_gen ${LLVM_COMMON_DEPENDS})
+  endif( TABLEGEN_OUTPUT )
+  include_directories(BEFORE ${CMAKE_CURRENT_BINARY_DIR})
+  add_partially_linked_object(LLVM${target_name} ${ARGN})
+  if( TABLEGEN_OUTPUT )
+    add_dependencies(LLVM${target_name} ${target_name}Table_gen)
+  endif( TABLEGEN_OUTPUT )
+endmacro(add_llvm_target)

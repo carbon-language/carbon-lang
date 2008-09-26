@@ -13,8 +13,14 @@ set(LLVM_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 set(LLVM_TOOLS_BINARY_DIR ${LLVM_BINARY_DIR}/bin)
 set(LLVM_EXAMPLES_BINARY_DIR ${LLVM_BINARY_DIR}/examples)
 
-# TODO: Support user-specified targets:
-set(LLVM_TARGETS_TO_BUILD X86)
+if( MSVC )
+  set(LLVM_TARGETS_TO_BUILD X86
+    CACHE STRING "Semicolon-separated list of targets to build")
+else( MSVC )
+  set(LLVM_TARGETS_TO_BUILD
+    Alpha ARM CBackend CellSPU CppBackend IA64 Mips MSIL PIC16 PowerPC Sparc X86
+    CACHE STRING "Semicolon-separated list of targets to build")
+endif( MSVC )
 
 if( NOT MSVC )
   set(CMAKE_CXX_LINK_EXECUTABLE "sh -c \"${CMAKE_CXX_LINK_EXECUTABLE}\"")
@@ -96,6 +102,7 @@ include_directories( ${LLVM_BINARY_DIR}/include ${llvm_include_path})
 
 include(AddLLVM)
 include(AddPartiallyLinkedObject)
+include(TableGen)
 
 add_subdirectory(lib/Support)
 add_subdirectory(lib/System)
@@ -129,15 +136,21 @@ add_subdirectory(lib/Transforms/Hello)
 add_subdirectory(lib/Linker)
 add_subdirectory(lib/Analysis)
 add_subdirectory(lib/Analysis/IPA)
-add_subdirectory(lib/Target/X86)
-add_subdirectory(lib/Target/X86/AsmPrinter)
+
+foreach(t ${LLVM_TARGETS_TO_BUILD})
+  message(STATUS "Targeting ${t}")
+  add_subdirectory(lib/Target/${t})
+  if( EXISTS ${CMAKE_SOURCE_DIR}/lib/Target/${t}/AsmPrinter/CMakeLists.txt )
+    add_subdirectory(lib/Target/${t}/AsmPrinter)
+  endif( EXISTS ${CMAKE_SOURCE_DIR}/lib/Target/${t}/AsmPrinter/CMakeLists.txt )
+endforeach(t)
+
 add_subdirectory(lib/ExecutionEngine)
 add_subdirectory(lib/ExecutionEngine/Interpreter)
 add_subdirectory(lib/ExecutionEngine/JIT)
 add_subdirectory(lib/Target)
 add_subdirectory(lib/AsmParser)
 add_subdirectory(lib/Debugger)
-# TODO: lib/Target/CBackEnd
 add_subdirectory(lib/Archive)
 
 add_subdirectory(tools)
