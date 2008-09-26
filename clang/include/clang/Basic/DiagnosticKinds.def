@@ -1036,6 +1036,8 @@ DIAG(err_typecheck_incomplete_type_not_modifiable_lvalue, ERROR,
 
 DIAG(err_typecheck_duplicate_vector_components_not_mlvalue, ERROR,
      "vector is not assignable (contains duplicate components)")
+DIAG(err_block_decl_ref_not_modifiable_lvalue, ERROR,
+     "variable is not assignable (missing __block type specifier)")
 DIAG(err_typecheck_call_not_function, ERROR,
      "called object is not a function or function pointer")
 DIAG(err_typecheck_call_too_few_args, ERROR,

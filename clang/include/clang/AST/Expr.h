@@ -87,7 +87,8 @@ public:
     MLV_InvalidExpression,
     MLV_IncompleteType,
     MLV_ConstQualified,
-    MLV_ArrayType
+    MLV_ArrayType,
+    MLV_NotBlockQualified
   };
   isModifiableLvalueResult isModifiableLvalue(ASTContext &Ctx) const;
   

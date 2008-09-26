@@ -2181,6 +2181,10 @@ inline QualType Sema::CheckAssignmentOperands( // C99 6.5.16.1
     Diag(loc, diag::err_typecheck_duplicate_vector_components_not_mlvalue,
          lex->getSourceRange());
     return QualType();
+  case Expr::MLV_NotBlockQualified:
+    Diag(loc, diag::err_block_decl_ref_not_modifiable_lvalue,
+         lex->getSourceRange());
+    return QualType();
   }
 
   AssignConvertType ConvTy;

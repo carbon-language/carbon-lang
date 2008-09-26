@@ -39,7 +39,9 @@ void test2() {
 	}
 
 foo:
-	takeclosure(^{ x = 4; });  // expected-error {{expression is not assignable}}
+	takeclosure(^{ x = 4; });  // expected-error {{variable is not assignable (missing __block type specifier)}}
+  __block y = 7;
+  takeclosure(^{ y = 8; });
 }
 
 
@@ -50,6 +52,19 @@ void (^test3())(void) {
 void test4() {
   void (^noop)(void) = ^{};
   void (*noop2)() = 0;
+}
+
+void myfunc(int (^block)(int)) {}
+
+void myfunc3(int *x);
+
+void test5() {
+    int a;
+
+    myfunc(^(int abcd) {
+        myfunc3(&a);
+        return 1;
+    });
 }
 
 void *X;

@@ -425,7 +425,7 @@ Expr::isLvalueResult Expr::isLvalue(ASTContext &Ctx) const {
   }
   case BlockDeclRefExprClass: {
     const BlockDeclRefExpr *BDR = cast<BlockDeclRefExpr>(this);
-    if (BDR->isByRef() && isa<VarDecl>(BDR->getDecl()))
+    if (isa<VarDecl>(BDR->getDecl()))
       return LV_Valid;
     break;
   }
@@ -496,6 +496,15 @@ Expr::isModifiableLvalueResult Expr::isModifiableLvalue(ASTContext &Ctx) const {
   if (const RecordType *r = CT->getAsRecordType()) {
     if (r->hasConstFields()) 
       return MLV_ConstQualified;
+  }
+  // The following is illegal:
+  //   void takeclosure(void (^C)(void));
+  //   void func() { int x = 1; takeclosure(^{ x = 7 }); }
+  //
+  if (getStmtClass() == BlockDeclRefExprClass) {
+    const BlockDeclRefExpr *BDR = cast<BlockDeclRefExpr>(this);
+    if (!BDR->isByRef() && isa<VarDecl>(BDR->getDecl()))
+      return MLV_NotBlockQualified;
   }
   return MLV_Valid;    
 }
