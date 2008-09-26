@@ -1413,7 +1413,7 @@ void AssemblyWriter::printFunction(const Function *F) {
 
     bool insideNotes = false;
     if (F->hasNote(Attribute::AlwaysInline)) {
-      Out << "notes(";
+      Out << " notes(";
       insideNotes = true;
       Out << "inline=always";
     }
@@ -1421,7 +1421,7 @@ void AssemblyWriter::printFunction(const Function *F) {
       if (insideNotes) 
         Out << ",";
       else {
-        Out << "notes(";
+        Out << " notes(";
         insideNotes = true;
       }
       Out << "inline=never";
@@ -1430,7 +1430,7 @@ void AssemblyWriter::printFunction(const Function *F) {
       if (insideNotes) 
         Out << ",";
       else {
-        Out << "notes(";
+        Out << " notes(";
         insideNotes = true;
       }
       Out << "opt_size";
