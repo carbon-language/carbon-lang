@@ -1253,7 +1253,9 @@ Parser::StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
   }
   StmtResult CatchStmts;
   StmtResult FinallyStmt;
+  EnterScope(Scope::DeclScope);
   StmtResult TryBody = ParseCompoundStatementBody();
+  ExitScope();
   if (TryBody.isInvalid)
     TryBody = Actions.ActOnNullStmt(Tok.getLocation());
   

@@ -9,3 +9,19 @@ void f0() {
     int i = 0;
   }
 }
+
+void f1() {
+  int i;
+  @try { 
+    int i =0;
+  } @finally {
+  }
+}
+
+void f2() {
+  int i;
+  @try { 
+  } @catch(id e) {
+    int i = 0;
+  }
+}
