@@ -496,11 +496,9 @@ int LLLexer::LexIdentifier() {
   KEYWORD("readnone", READNONE);
   KEYWORD("readonly", READONLY);
 
-  KEYWORD("notes",  FNNOTE);
-  KEYWORD("inline", INLINE);
-  KEYWORD("always", ALWAYS);
-  KEYWORD("never", NEVER);
-  KEYWORD("opt_size", OPTIMIZEFORSIZE);
+  KEYWORD("noinline", NOINLINE);
+  KEYWORD("alwaysinline", ALWAYSINLINE);
+  KEYWORD("optsize", OPTSIZE);
 
   KEYWORD("type", TYPE);
   KEYWORD("opaque", OPAQUE);

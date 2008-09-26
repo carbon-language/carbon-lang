@@ -26,8 +26,8 @@
       <li><a href="#functionstructure">Functions</a></li>
       <li><a href="#aliasstructure">Aliases</a>
       <li><a href="#paramattrs">Parameter Attributes</a></li>
+      <li><a href="#fnattrs">Function Attributes</a></li>
       <li><a href="#gc">Garbage Collector Names</a></li>
-      <li><a href="#notes">Function Notes</a></li>
       <li><a href="#moduleasm">Module-Level Inline Assembly</a></li>
       <li><a href="#datalayout">Data Layout</a></li>
     </ol>
@@ -826,8 +826,8 @@ a power of 2.</p>
 
 <div class="doc_code">
 <pre>
-declare i32 @printf(i8* noalias , ...) nounwind
-declare i32 @atoi(i8*) nounwind readonly
+declare i32 @printf(i8* noalias , ...)
+declare i32 @atoi(i8 zeroext*)
 </pre>
 </div>
 
@@ -870,29 +870,9 @@ declare i32 @atoi(i8*) nounwind readonly
     parameter.  The caller is responsible for ensuring that this is the case,
     usually by placing the value in a stack allocation.</dd>
 
-    <dt><tt>noreturn</tt></dt>
-    <dd>This function attribute indicates that the function never returns. This
-    indicates to LLVM that every call to this function should be treated as if
-    an <tt>unreachable</tt> instruction immediately followed the call.</dd> 
-
-    <dt><tt>nounwind</tt></dt>
-    <dd>This function attribute indicates that no exceptions unwind out of the
-    function.  Usually this is because the function makes no use of exceptions,
-    but it may also be that the function catches any exceptions thrown when
-    executing it.</dd>
-
     <dt><tt>nest</tt></dt>
     <dd>This indicates that the pointer parameter can be excised using the
     <a href="#int_trampoline">trampoline intrinsics</a>.</dd>
-    <dt><tt>readonly</tt></dt>
-    <dd>This function attribute indicates that the function has no side-effects
-    except for producing a return value or throwing an exception.  The value
-    returned must only depend on the function arguments and/or global variables.
-    It may use values obtained by dereferencing pointers.</dd>
-    <dt><tt>readnone</tt></dt>
-    <dd>A <tt>readnone</tt> function has the same restrictions as a <tt>readonly</tt>
-    function, but in addition it is not allowed to dereference any pointer arguments
-    or global variables.
   </dl>
 
 </div>
@@ -916,38 +896,65 @@ the named garbage collection algorithm.</p>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
-  <a name="notes">Function Notes</a>
+  <a name="fnattrs">Function Attributes</a>
 </div>
 
 <div class="doc_text">
-<p>The function definition may list function notes which are used by
-various passes.</p>
+
+<p>Function attributes are set to communicate additional information about 
+  a function. Function attributes are considered to be part of the function,
+  not of the function type, so functions with different parameter attributes
+  can have the same function type.</p>
+
+  <p>Function attributes are simple keywords that follow the type specified. If
+  multiple attributes are needed, they are space separated. For 
+  example:</p>
 
 <div class="doc_code">
 <pre>
-define void @f() notes(inline=Always) { ... }
-define void @f() notes(inline=Always,opt-size) { ... }
-define void @f() notes(inline=Never,opt-size) { ... }
-define void @f() notes(opt-size) { ... }
+define void @f() noinline { ... }
+define void @f() alwaysinline { ... }
+define void @f() alwaysinline optsize { ... }
+define void @f() optsize
 </pre>
 </div>
 
 <dl>
-<dt><tt>inline=Always</tt></dt>
-<dd>This note requests inliner to inline this function irrespective of inlining
-size threshold for this function.</dd>
+<dt><tt>alwaysinline</tt></dt>
+<dd>This attribute requests inliner to inline this function irrespective of 
+inlining size threshold for this function.</dd>
 
-<dt><tt>inline=Never</tt></dt>
-<dd>This note requests inliner to never inline this function in any situation.
-This note may not be used together with <tt>inline=Always</tt> note.</dd>
+<dt><tt>noinline</tt></dt>
+<dd>This attributes requests inliner to never inline this function in any 
+situation. This attribute may not be used together with <tt>alwaysinline</tt>
+ attribute.</dd>
 
-<dt><tt>opt-size</tt></dt>
-<dd>This note suggests optimization passes and code generator passes to make 
-choices that help reduce code size.</dd>
+<dt><tt>optsize</tt></dt>
+<dd>This attribute suggests optimization passes and code generator passes to 
+make choices that help reduce code size.</dd>
 
+<dt><tt>noreturn</tt></dt>
+<dd>This function attribute indicates that the function never returns. This
+  indicates to LLVM that every call to this function should be treated as if
+  an <tt>unreachable</tt> instruction immediately followed the call.</dd> 
+
+<dt><tt>nounwind</tt></dt>
+<dd>This function attribute indicates that no exceptions unwind out of the
+  function.  Usually this is because the function makes no use of exceptions,
+  but it may also be that the function catches any exceptions thrown when
+  executing it.</dd>
+
+<dt><tt>readonly</tt></dt>
+<dd>This function attribute indicates that the function has no side-effects
+  except for producing a return value or throwing an exception.  The value
+  returned must only depend on the function arguments and/or global variables.
+  It may use values obtained by dereferencing pointers.</dd>
+<dt><tt>readnone</tt></dt>
+<dd>A <tt>readnone</tt> function has the same restrictions as a <tt>readonly</tt>
+  function, but in addition it is not allowed to dereference any pointer arguments
+  or global variables.
 </dl>
 
-<p>Any notes that are not documented here are considered invalid notes.</p>
 </div>
 
 <!-- ======================================================================= -->

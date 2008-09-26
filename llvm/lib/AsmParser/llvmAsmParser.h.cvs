@@ -189,14 +189,12 @@
      READNONE = 405,
      READONLY = 406,
      GC = 407,
-     FNNOTE = 408,
-     INLINE = 409,
-     ALWAYS = 410,
-     NEVER = 411,
-     OPTIMIZEFORSIZE = 412,
-     DEFAULT = 413,
-     HIDDEN = 414,
-     PROTECTED = 415
+     OPTSIZE = 408,
+     NOINLINE = 409,
+     ALWAYSINLINE = 410,
+     DEFAULT = 411,
+     HIDDEN = 412,
+     PROTECTED = 413
    };
 #endif
 /* Tokens.  */
@@ -350,21 +348,19 @@
 #define READNONE 405
 #define READONLY 406
 #define GC 407
-#define FNNOTE 408
-#define INLINE 409
-#define ALWAYS 410
-#define NEVER 411
-#define OPTIMIZEFORSIZE 412
-#define DEFAULT 413
-#define HIDDEN 414
-#define PROTECTED 415
+#define OPTSIZE 408
+#define NOINLINE 409
+#define ALWAYSINLINE 410
+#define DEFAULT 411
+#define HIDDEN 412
+#define PROTECTED 413
 
 
 
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 970 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 970 "/Volumes/Nanpura/mainline/llvm/lib/AsmParser/llvmAsmParser.y"
 {
   llvm::Module                           *ModuleVal;
   llvm::Function                         *FunctionVal;
@@ -413,7 +409,7 @@ typedef union YYSTYPE
   llvm::FCmpInst::Predicate         FPredicate;
 }
 /* Line 1529 of yacc.c.  */
-#line 417 "llvmAsmParser.tab.h"
+#line 413 "llvmAsmParser.tab.h"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1

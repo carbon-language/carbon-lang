@@ -63,7 +63,7 @@ bool AlwaysInliner::doInitialization(CallGraph &CG) {
   
   for (Module::iterator I = M.begin(), E = M.end();
        I != E; ++I)
-    if (!I->isDeclaration() && !I->hasNote(Attribute::AlwaysInline))
+    if (!I->isDeclaration() && !I->hasFnAttr(Attribute::AlwaysInline))
       NeverInline.insert(I);
 
   return false;

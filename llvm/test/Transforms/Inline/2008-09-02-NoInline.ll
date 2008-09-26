@@ -1,6 +1,6 @@
 ; RUN: llvm-as < %s | opt -inline | llvm-dis | grep call | count 1
 
-define i32 @fn2() notes(inline=never) {
+define i32 @fn2() noinline {
   ret i32 1
 }
 

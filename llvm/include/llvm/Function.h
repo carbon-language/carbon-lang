@@ -149,16 +149,16 @@ public:
   void setAttributes(const AttrListPtr &attrs) { AttributeList = attrs; }
 
 
-  /// hasNote - Return true if this function has given note.
-  bool hasNote(Attributes N) const {
-    // Notes are stored at ~0 index in parameter attribute list
-    return (paramHasAttr(~0, N));
+  /// hasFnAttr - Return true if this function has given attribute.
+  bool hasFnAttr(Attributes N) const {
+    // Function Attributes are stored at ~0 index 
+    return AttributeList.paramHasAttr(~0U, N);
   }
 
-  /// setNotes - Set notes for this function
+  /// addFnAttr - Add function attributes
   ///
-  void setNotes(const Attributes N) { 
-    // Notes are stored at ~0 index in parameter attribute list
+  void addFnAttr(const Attributes N) { 
+    // Function Attributes are stored at ~0 index 
     addAttribute(~0, N);
   }
 

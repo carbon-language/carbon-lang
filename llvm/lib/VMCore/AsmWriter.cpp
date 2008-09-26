@@ -1413,34 +1413,6 @@ void AssemblyWriter::printFunction(const Function *F) {
   if (F->isDeclaration()) {
     Out << "\n";
   } else {
-
-    bool insideNotes = false;
-    if (F->hasNote(Attribute::AlwaysInline)) {
-      Out << " notes(";
-      insideNotes = true;
-      Out << "inline=always";
-    }
-    if (F->hasNote(Attribute::NoInline)) {
-      if (insideNotes) 
-        Out << ",";
-      else {
-        Out << " notes(";
-        insideNotes = true;
-      }
-      Out << "inline=never";
-    }
-    if (F->hasNote(Attribute::OptimizeForSize)) {
-      if (insideNotes) 
-        Out << ",";
-      else {
-        Out << " notes(";
-        insideNotes = true;
-      }
-      Out << "opt_size";
-    }
-    if (insideNotes)
-      Out << ")";
-    
     Out << " {";
 
     // Output all of its basic blocks... for the function

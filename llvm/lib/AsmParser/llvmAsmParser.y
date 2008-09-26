@@ -1089,8 +1089,6 @@ Module *llvm::RunVMAsmParser(llvm::MemoryBuffer *MB) {
 %type <UIntVal> OptCallingConv LocalNumber
 %type <Attributes> OptAttributes Attribute
 %type <Attributes> OptFuncAttrs  FuncAttr
-%type <Attributes> OptFuncNotes FuncNote
-%type <Attributes> FuncNoteList
 
 // Basic Block Terminating Operators
 %token <TermOpVal> RET BR SWITCH INVOKE UNWIND UNREACHABLE
@@ -1122,10 +1120,7 @@ Module *llvm::RunVMAsmParser(llvm::MemoryBuffer *MB) {
 
 // Function Attributes
 %token SIGNEXT ZEROEXT NORETURN INREG SRET NOUNWIND NOALIAS BYVAL NEST
-%token READNONE READONLY GC
-
-// Function Notes
-%token FNNOTE INLINE ALWAYS NEVER OPTIMIZEFORSIZE
+%token READNONE READONLY GC OPTSIZE NOINLINE ALWAYSINLINE
 
 // Visibility Styles
 %token DEFAULT HIDDEN PROTECTED
@@ -1284,36 +1279,14 @@ FuncAttr      : NORETURN { $$ = Attribute::NoReturn; }
               | SIGNEXT  { $$ = Attribute::SExt;     }
               | READNONE { $$ = Attribute::ReadNone; }
               | READONLY { $$ = Attribute::ReadOnly; }
+              | NOINLINE { $$ = Attribute::NoInline }
+              | ALWAYSINLINE { $$ = Attribute::AlwaysInline }
+              | OPTSIZE { $$ = Attribute::OptimizeForSize }
               ;
 
 OptFuncAttrs  : /* empty */ { $$ = Attribute::None; }
               | OptFuncAttrs FuncAttr {
                 $$ = $1 | $2;
-              }
-              ;
-
-FuncNoteList  : FuncNote { $$ = $1; }
-              | FuncNoteList ',' FuncNote {
-                unsigned tmp = $1 | $3;
-                if ($3 == Attribute::NoInline
-                    && ($1 & Attribute::AlwaysInline))
-                  GEN_ERROR("Function Notes may include only one inline notes!")
-                    if ($3 == Attribute::AlwaysInline
-                        && ($1 & Attribute::NoInline))
-                  GEN_ERROR("Function Notes may include only one inline notes!")
-                $$ = tmp;
-                CHECK_FOR_ERROR
-              }
-              ;
-
-FuncNote      : INLINE '=' NEVER { $$ = Attribute::NoInline; }
-              | INLINE '=' ALWAYS { $$ = Attribute::AlwaysInline; }
-              | OPTIMIZEFORSIZE { $$ = Attribute::OptimizeForSize; }
-              ;
-
-OptFuncNotes  : /* empty */ { $$ = Attribute::None; }
-              | FNNOTE '(' FuncNoteList  ')' {
-                $$ =  $3;
               }
               ;
 
@@ -2332,7 +2305,7 @@ ArgList : ArgListH {
   };
 
 FunctionHeaderH : OptCallingConv ResultTypes GlobalName '(' ArgList ')'
-                  OptFuncAttrs OptSection OptAlign OptGC OptFuncNotes {
+                  OptFuncAttrs OptSection OptAlign OptGC {
   std::string FunctionName(*$3);
   delete $3;  // Free strdup'd memory!
 
@@ -2452,9 +2425,6 @@ FunctionHeaderH : OptCallingConv ResultTypes GlobalName '(' ArgList ')'
   if ($10) {
     Fn->setGC($10->c_str());
     delete $10;
-  }
-  if ($11) {
-    Fn->setNotes($11);
   }
 
   // Add all of the arguments we parsed to the function...
