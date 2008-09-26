@@ -1374,7 +1374,7 @@ void AssemblyWriter::printFunction(const Function *F) {
          I != E; ++I) {
       // Insert commas as we go... the first arg doesn't get a comma
       if (I != F->arg_begin()) Out << ", ";
-      printArgument(I, Attrs.getAttributes(Idx));
+      printArgument(I, Attrs.getParamAttributes(Idx));
       Idx++;
     }
   } else {
@@ -1386,7 +1386,7 @@ void AssemblyWriter::printFunction(const Function *F) {
       // Output type...
       printType(FT->getParamType(i));
       
-      Attributes ArgAttrs = Attrs.getAttributes(i+1);
+      Attributes ArgAttrs = Attrs.getParamAttributes(i+1);
       if (ArgAttrs != Attribute::None)
         Out << ' ' << Attribute::getAsString(ArgAttrs);
     }
@@ -1398,9 +1398,12 @@ void AssemblyWriter::printFunction(const Function *F) {
     Out << "...";  // Output varargs portion of signature!
   }
   Out << ')';
-  Attributes RetAttrs = Attrs.getAttributes(0);
+  Attributes RetAttrs = Attrs.getRetAttributes();
   if (RetAttrs != Attribute::None)
-    Out << ' ' << Attribute::getAsString(Attrs.getAttributes(0));
+    Out << ' ' << Attribute::getAsString(Attrs.getRetAttributes());
+  Attributes FnAttrs = Attrs.getFnAttributes();
+  if (FnAttrs != Attribute::None)
+    Out << ' ' << Attribute::getAsString(Attrs.getFnAttributes());
   if (F->hasSection())
     Out << " section \"" << F->getSection() << '"';
   if (F->getAlignment())
@@ -1660,11 +1663,13 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     for (unsigned op = 1, Eop = I.getNumOperands(); op < Eop; ++op) {
       if (op > 1)
         Out << ", ";
-      writeParamOperand(I.getOperand(op), PAL.getAttributes(op));
+      writeParamOperand(I.getOperand(op), PAL.getParamAttributes(op));
     }
     Out << ')';
-    if (PAL.getAttributes(0) != Attribute::None)
-      Out << ' ' << Attribute::getAsString(PAL.getAttributes(0));
+    if (PAL.getRetAttributes() != Attribute::None)
+      Out << ' ' << Attribute::getAsString(PAL.getRetAttributes());
+    if (PAL.getFnAttributes() != Attribute::None)
+      Out << ' ' << Attribute::getAsString(PAL.getFnAttributes());
   } else if (const InvokeInst *II = dyn_cast<InvokeInst>(&I)) {
     const PointerType    *PTy = cast<PointerType>(Operand->getType());
     const FunctionType   *FTy = cast<FunctionType>(PTy->getElementType());
@@ -1699,12 +1704,15 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     for (unsigned op = 3, Eop = I.getNumOperands(); op < Eop; ++op) {
       if (op > 3)
         Out << ", ";
-      writeParamOperand(I.getOperand(op), PAL.getAttributes(op-2));
+      writeParamOperand(I.getOperand(op), PAL.getParamAttributes(op-2));
     }
 
     Out << ')';
-    if (PAL.getAttributes(0) != Attribute::None)
-      Out << ' ' << Attribute::getAsString(PAL.getAttributes(0));
+    if (PAL.getRetAttributes() != Attribute::None)
+      Out << ' ' << Attribute::getAsString(PAL.getRetAttributes());
+    if (PAL.getFnAttributes() != Attribute::None)
+      Out << ' ' << Attribute::getAsString(PAL.getFnAttributes());
+
     Out << "\n\t\t\tto ";
     writeOperand(II->getNormalDest(), true);
     Out << " unwind ";

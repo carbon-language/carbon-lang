@@ -187,38 +187,38 @@ public:
 
   /// @brief Determine if the function does not access memory.
   bool doesNotAccessMemory() const {
-    return paramHasAttr(0, Attribute::ReadNone);
+    return paramHasAttr(~0, Attribute::ReadNone);
   }
   void setDoesNotAccessMemory(bool DoesNotAccessMemory = true) {
-    if (DoesNotAccessMemory) addAttribute(0, Attribute::ReadNone);
-    else removeAttribute(0, Attribute::ReadNone);
+    if (DoesNotAccessMemory) addAttribute(~0, Attribute::ReadNone);
+    else removeAttribute(~0, Attribute::ReadNone);
   }
 
   /// @brief Determine if the function does not access or only reads memory.
   bool onlyReadsMemory() const {
-    return doesNotAccessMemory() || paramHasAttr(0, Attribute::ReadOnly);
+    return doesNotAccessMemory() || paramHasAttr(~0, Attribute::ReadOnly);
   }
   void setOnlyReadsMemory(bool OnlyReadsMemory = true) {
-    if (OnlyReadsMemory) addAttribute(0, Attribute::ReadOnly);
-    else removeAttribute(0, Attribute::ReadOnly | Attribute::ReadNone);
+    if (OnlyReadsMemory) addAttribute(~0, Attribute::ReadOnly);
+    else removeAttribute(~0, Attribute::ReadOnly | Attribute::ReadNone);
   }
 
   /// @brief Determine if the function cannot return.
   bool doesNotReturn() const {
-    return paramHasAttr(0, Attribute::NoReturn);
+    return paramHasAttr(~0, Attribute::NoReturn);
   }
   void setDoesNotReturn(bool DoesNotReturn = true) {
-    if (DoesNotReturn) addAttribute(0, Attribute::NoReturn);
-    else removeAttribute(0, Attribute::NoReturn);
+    if (DoesNotReturn) addAttribute(~0, Attribute::NoReturn);
+    else removeAttribute(~0, Attribute::NoReturn);
   }
 
   /// @brief Determine if the function cannot unwind.
   bool doesNotThrow() const {
-    return paramHasAttr(0, Attribute::NoUnwind);
+    return paramHasAttr(~0, Attribute::NoUnwind);
   }
   void setDoesNotThrow(bool DoesNotThrow = true) {
-    if (DoesNotThrow) addAttribute(0, Attribute::NoUnwind);
-    else removeAttribute(0, Attribute::NoUnwind);
+    if (DoesNotThrow) addAttribute(~0, Attribute::NoUnwind);
+    else removeAttribute(~0, Attribute::NoUnwind);
   }
 
   /// @brief Determine if the function returns a structure through first 

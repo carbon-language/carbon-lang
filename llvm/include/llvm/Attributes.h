@@ -146,10 +146,23 @@ public:
   //===--------------------------------------------------------------------===//
   // Attribute List Accessors
   //===--------------------------------------------------------------------===//
-  
-  /// getAttributes - The attributes for the specified index are
-  /// returned.  Attributes for the result are denoted with Idx = 0.
-  Attributes getAttributes(unsigned Idx) const;
+  /// getParamAttributes - The attributes for the specified index are
+  /// returned. 
+  Attributes getParamAttributes(unsigned Idx) const {
+    assert (Idx && Idx != ~0U && "Invalid parameter index!");
+    return getAttributes(Idx);
+  }
+
+  /// getRetAttributes - The attributes for the ret value are
+  /// returned. 
+  Attributes getRetAttributes() const {
+    return getAttributes(0);
+  }
+
+  /// getFnAttributes - The function attributes are  returned. 
+  Attributes getFnAttributes() const {
+    return getAttributes(~0);
+  }
   
   /// paramHasAttr - Return true if the specified parameter index has the
   /// specified attribute set.
@@ -204,6 +217,11 @@ public:
   
 private:
   explicit AttrListPtr(AttributeListImpl *L);
+
+  /// getAttributes - The attributes for the specified index are
+  /// returned.  Attributes for the result are denoted with Idx = 0.
+  Attributes getAttributes(unsigned Idx) const;
+
 };
 
 } // End llvm namespace

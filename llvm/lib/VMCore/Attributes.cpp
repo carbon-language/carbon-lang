@@ -47,6 +47,12 @@ std::string Attribute::getAsString(Attributes Attrs) {
     Result += "readnone ";
   if (Attrs & Attribute::ReadOnly)
     Result += "readonly ";
+  if (Attrs & Attribute::OptimizeForSize)
+    Result += "optsize ";
+  if (Attrs & Attribute::NoInline)
+    Result += "noinline ";
+  if (Attrs & Attribute::AlwaysInline)
+    Result += "alwaysinline ";
   if (Attrs & Attribute::Alignment) {
     Result += "align ";
     Result += utostr((Attrs & Attribute::Alignment) >> 16);

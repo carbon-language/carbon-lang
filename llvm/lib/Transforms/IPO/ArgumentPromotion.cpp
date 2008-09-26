@@ -508,7 +508,7 @@ Function *ArgPromotion::DoPromotion(Function *F,
   const AttrListPtr &PAL = F->getAttributes();
 
   // Add any return attributes.
-  if (Attributes attrs = PAL.getAttributes(0))
+  if (Attributes attrs = PAL.getRetAttributes())
     AttributesVec.push_back(AttributeWithIndex::get(0, attrs));
 
   // First, determine the new argument list
@@ -525,7 +525,7 @@ Function *ArgPromotion::DoPromotion(Function *F,
     } else if (!ArgsToPromote.count(I)) {
       // Unchanged argument
       Params.push_back(I->getType());
-      if (Attributes attrs = PAL.getAttributes(ArgIndex))
+      if (Attributes attrs = PAL.getParamAttributes(ArgIndex))
         AttributesVec.push_back(AttributeWithIndex::get(Params.size(), attrs));
     } else if (I->use_empty()) {
       // Dead argument (which are always marked as promotable)
@@ -578,6 +578,10 @@ Function *ArgPromotion::DoPromotion(Function *F,
     }
   }
 
+  // Add any function attributes.
+  if (Attributes attrs = PAL.getFnAttributes())
+    AttributesVec.push_back(AttributeWithIndex::get(~0, attrs));
+
   const Type *RetTy = FTy->getReturnType();
 
   // Work around LLVM bug PR56: the CWriter cannot emit varargs functions which
@@ -621,7 +625,7 @@ Function *ArgPromotion::DoPromotion(Function *F,
     const AttrListPtr &CallPAL = CS.getAttributes();
 
     // Add any return attributes.
-    if (Attributes attrs = CallPAL.getAttributes(0))
+    if (Attributes attrs = CallPAL.getRetAttributes())
       AttributesVec.push_back(AttributeWithIndex::get(0, attrs));
 
     // Loop over the operands, inserting GEP and loads in the caller as
@@ -633,7 +637,7 @@ Function *ArgPromotion::DoPromotion(Function *F,
       if (!ArgsToPromote.count(I) && !ByValArgsToTransform.count(I)) {
         Args.push_back(*AI);          // Unmodified argument
 
-        if (Attributes Attrs = CallPAL.getAttributes(ArgIndex))
+        if (Attributes Attrs = CallPAL.getParamAttributes(ArgIndex))
           AttributesVec.push_back(AttributeWithIndex::get(Args.size(), Attrs));
 
       } else if (ByValArgsToTransform.count(I)) {
@@ -688,9 +692,13 @@ Function *ArgPromotion::DoPromotion(Function *F,
     // Push any varargs arguments on the list
     for (; AI != CS.arg_end(); ++AI, ++ArgIndex) {
       Args.push_back(*AI);
-      if (Attributes Attrs = CallPAL.getAttributes(ArgIndex))
+      if (Attributes Attrs = CallPAL.getParamAttributes(ArgIndex))
         AttributesVec.push_back(AttributeWithIndex::get(Args.size(), Attrs));
     }
+
+    // Add any function attributes.
+    if (Attributes attrs = CallPAL.getFnAttributes())
+      AttributesVec.push_back(AttributeWithIndex::get(~0, attrs));
 
     Instruction *New;
     if (InvokeInst *II = dyn_cast<InvokeInst>(Call)) {

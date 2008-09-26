@@ -133,7 +133,7 @@ bool PruneEH::runOnSCC(const std::vector<CallGraphNode *> &SCC) {
         NewAttributes |= Attribute::NoReturn;
 
       const AttrListPtr &PAL = SCC[i]->getFunction()->getAttributes();
-      const AttrListPtr &NPAL = PAL.addAttr(0, NewAttributes);
+      const AttrListPtr &NPAL = PAL.addAttr(~0, NewAttributes);
       if (PAL != NPAL) {
         MadeChange = true;
         SCC[i]->getFunction()->setAttributes(NPAL);

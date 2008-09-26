@@ -2346,8 +2346,25 @@ FunctionHeaderH : OptCallingConv ResultTypes GlobalName '(' ArgList ')'
 
   std::vector<const Type*> ParamTypeList;
   SmallVector<AttributeWithIndex, 8> Attrs;
-  if ($7 != Attribute::None)
-    Attrs.push_back(AttributeWithIndex::get(0, $7));
+  //FIXME : In 3.0, stop accepting zext, sext and inreg as optional function 
+  //attributes.
+  Attributes RetAttrs = 0;
+  if ($7 != Attribute::None) {
+    if ($7 & Attribute::ZExt) {
+      RetAttrs = RetAttrs | Attribute::ZExt;
+      $7 = $7 ^ Attribute::ZExt;
+    }
+    if ($7 & Attribute::SExt) {
+      RetAttrs = RetAttrs | Attribute::SExt;
+      $7 = $7 ^ Attribute::SExt;
+    }
+    if ($7 & Attribute::InReg) {
+      RetAttrs = RetAttrs | Attribute::InReg;
+      $7 = $7 ^ Attribute::InReg;
+    }
+    if (RetAttrs != Attribute::None)
+      Attrs.push_back(AttributeWithIndex::get(0, RetAttrs));
+  }
   if ($5) {   // If there are arguments...
     unsigned index = 1;
     for (ArgListType::iterator I = $5->begin(); I != $5->end(); ++I, ++index) {
@@ -2359,6 +2376,8 @@ FunctionHeaderH : OptCallingConv ResultTypes GlobalName '(' ArgList ')'
         Attrs.push_back(AttributeWithIndex::get(index, I->Attrs));
     }
   }
+  if ($7 != Attribute::None)
+    Attrs.push_back(AttributeWithIndex::get(~0, $7));
 
   bool isVarArg = ParamTypeList.size() && ParamTypeList.back() == Type::VoidTy;
   if (isVarArg) ParamTypeList.pop_back();
@@ -2860,9 +2879,26 @@ BBTerminatorInst :
     CHECK_FOR_ERROR
 
     SmallVector<AttributeWithIndex, 8> Attrs;
-    if ($8 != Attribute::None)
-      Attrs.push_back(AttributeWithIndex::get(0, $8));
-
+    //FIXME : In 3.0, stop accepting zext, sext and inreg as optional function 
+    //attributes.
+    Attributes RetAttrs = 0;
+    if ($8 != Attribute::None) {
+      if ($8 & Attribute::ZExt) {
+        RetAttrs = RetAttrs | Attribute::ZExt;
+        $8 = $8 ^ Attribute::ZExt;
+      }
+      if ($8 & Attribute::SExt) {
+        RetAttrs = RetAttrs | Attribute::SExt;
+        $8 = $8 ^ Attribute::SExt;
+      }
+      if ($8 & Attribute::InReg) {
+        RetAttrs = RetAttrs | Attribute::InReg;
+        $8 = $8 ^ Attribute::InReg;
+      }
+      if (RetAttrs != Attribute::None)
+        Attrs.push_back(AttributeWithIndex::get(0, RetAttrs));
+    }
+    
     // Check the arguments
     ValueList Args;
     if ($6->empty()) {                                   // Has no arguments?
@@ -2897,7 +2933,8 @@ BBTerminatorInst :
       } else if (I != E || ArgI != ArgE)
         GEN_ERROR("Invalid number of parameters detected");
     }
-
+    if ($8 != Attribute::None)
+      Attrs.push_back(AttributeWithIndex::get(~0, $8));
     AttrListPtr PAL;
     if (!Attrs.empty())
       PAL = AttrListPtr::get(Attrs.begin(), Attrs.end());
@@ -3258,8 +3295,27 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
 
     // Set up the Attributes for the function
     SmallVector<AttributeWithIndex, 8> Attrs;
-    if ($8 != Attribute::None)
-      Attrs.push_back(AttributeWithIndex::get(0, $8));
+    //FIXME : In 3.0, stop accepting zext, sext and inreg as optional function 
+    //attributes.
+    Attributes RetAttrs = 0;
+    Attributes TmpAttr = $8;
+    if ($8 != Attribute::None) {
+      if ($8 & Attribute::ZExt) {
+        RetAttrs = RetAttrs | Attribute::ZExt;
+        $8 = $8 ^ Attribute::ZExt;
+      }
+      if ($8 & Attribute::SExt) {
+        RetAttrs = RetAttrs | Attribute::SExt;
+        $8 = $8 ^ Attribute::SExt;
+      }
+      if ($8 & Attribute::InReg) {
+        RetAttrs = RetAttrs | Attribute::InReg;
+        $8 = $8 ^ Attribute::InReg;
+      }
+      if (RetAttrs != Attribute::None)
+        Attrs.push_back(AttributeWithIndex::get(0, RetAttrs));
+    }
+    
     // Check the arguments
     ValueList Args;
     if ($6->empty()) {                                   // Has no arguments?
@@ -3293,6 +3349,8 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
       } else if (I != E || ArgI != ArgE)
         GEN_ERROR("Invalid number of parameters detected");
     }
+    if ($8 != Attribute::None)
+      Attrs.push_back(AttributeWithIndex::get(~0, $8));
 
     // Finish off the Attributes and check them
     AttrListPtr PAL;

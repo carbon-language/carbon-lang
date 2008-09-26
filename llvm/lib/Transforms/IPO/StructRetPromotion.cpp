@@ -210,7 +210,7 @@ Function *SRETPromotion::cloneFunctionBody(Function *F,
   const AttrListPtr &PAL = F->getAttributes();
 
   // Add any return attributes.
-  if (Attributes attrs = PAL.getAttributes(0))
+  if (Attributes attrs = PAL.getRetAttributes())
     AttributesVec.push_back(AttributeWithIndex::get(0, attrs));
 
   // Skip first argument.
@@ -221,11 +221,16 @@ Function *SRETPromotion::cloneFunctionBody(Function *F,
   unsigned ParamIndex = 2; 
   while (I != E) {
     Params.push_back(I->getType());
-    if (Attributes Attrs = PAL.getAttributes(ParamIndex))
+    if (Attributes Attrs = PAL.getParamAttributes(ParamIndex))
       AttributesVec.push_back(AttributeWithIndex::get(ParamIndex - 1, Attrs));
     ++I;
     ++ParamIndex;
   }
+
+  // Add any fn attributes.
+  if (Attributes attrs = PAL.getFnAttributes())
+    AttributesVec.push_back(AttributeWithIndex::get(~0, attrs));
+
 
   FunctionType *NFTy = FunctionType::get(STy, Params, FTy->isVarArg());
   Function *NF = Function::Create(NFTy, F->getLinkage());
@@ -264,7 +269,7 @@ void SRETPromotion::updateCallSites(Function *F, Function *NF) {
 
     const AttrListPtr &PAL = F->getAttributes();
     // Add any return attributes.
-    if (Attributes attrs = PAL.getAttributes(0))
+    if (Attributes attrs = PAL.getRetAttributes())
       ArgAttrsVec.push_back(AttributeWithIndex::get(0, attrs));
 
     // Copy arguments, however skip first one.
@@ -276,12 +281,15 @@ void SRETPromotion::updateCallSites(Function *F, Function *NF) {
     unsigned ParamIndex = 2; 
     while (AI != AE) {
       Args.push_back(*AI); 
-      if (Attributes Attrs = PAL.getAttributes(ParamIndex))
+      if (Attributes Attrs = PAL.getParamAttributes(ParamIndex))
         ArgAttrsVec.push_back(AttributeWithIndex::get(ParamIndex - 1, Attrs));
       ++ParamIndex;
       ++AI;
     }
 
+    // Add any function attributes.
+    if (Attributes attrs = PAL.getFnAttributes())
+      ArgAttrsVec.push_back(AttributeWithIndex::get(~0, attrs));
     
     AttrListPtr NewPAL = AttrListPtr::get(ArgAttrsVec.begin(), ArgAttrsVec.end());
     

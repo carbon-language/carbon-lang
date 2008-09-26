@@ -136,10 +136,10 @@ class BitcodeReader : public ModuleProvider {
   std::vector<std::pair<GlobalVariable*, unsigned> > GlobalInits;
   std::vector<std::pair<GlobalAlias*, unsigned> > AliasInits;
   
-  /// Attributes - The set of parameter attributes by index.  Index zero in the
+  /// MAttributes - The set of attributes by index.  Index zero in the
   /// file is for null, and is thus not represented here.  As such all indices
   /// are off by one.
-  std::vector<AttrListPtr> Attributes;
+  std::vector<AttrListPtr> MAttributes;
   
   /// FunctionBBs - While parsing a function body, this is a list of the basic
   /// blocks for the function.
@@ -204,8 +204,8 @@ private:
     return FunctionBBs[ID];
   }
   AttrListPtr getAttributes(unsigned i) const {
-    if (i-1 < Attributes.size())
-      return Attributes[i-1];
+    if (i-1 < MAttributes.size())
+      return MAttributes[i-1];
     return AttrListPtr();
   }
   

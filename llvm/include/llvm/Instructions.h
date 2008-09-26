@@ -1097,38 +1097,38 @@ public:
 
   /// @brief Determine if the call does not access memory.
   bool doesNotAccessMemory() const {
-    return paramHasAttr(0, Attribute::ReadNone);
+    return paramHasAttr(~0, Attribute::ReadNone);
   }
   void setDoesNotAccessMemory(bool NotAccessMemory = true) {
-    if (NotAccessMemory) addAttribute(0, Attribute::ReadNone);
-    else removeAttribute(0, Attribute::ReadNone);
+    if (NotAccessMemory) addAttribute(~0, Attribute::ReadNone);
+    else removeAttribute(~0, Attribute::ReadNone);
   }
 
   /// @brief Determine if the call does not access or only reads memory.
   bool onlyReadsMemory() const {
-    return doesNotAccessMemory() || paramHasAttr(0, Attribute::ReadOnly);
+    return doesNotAccessMemory() || paramHasAttr(~0, Attribute::ReadOnly);
   }
   void setOnlyReadsMemory(bool OnlyReadsMemory = true) {
-    if (OnlyReadsMemory) addAttribute(0, Attribute::ReadOnly);
-    else removeAttribute(0, Attribute::ReadOnly | Attribute::ReadNone);
+    if (OnlyReadsMemory) addAttribute(~0, Attribute::ReadOnly);
+    else removeAttribute(~0, Attribute::ReadOnly | Attribute::ReadNone);
   }
 
   /// @brief Determine if the call cannot return.
   bool doesNotReturn() const {
-    return paramHasAttr(0, Attribute::NoReturn);
+    return paramHasAttr(~0, Attribute::NoReturn);
   }
   void setDoesNotReturn(bool DoesNotReturn = true) {
-    if (DoesNotReturn) addAttribute(0, Attribute::NoReturn);
-    else removeAttribute(0, Attribute::NoReturn);
+    if (DoesNotReturn) addAttribute(~0, Attribute::NoReturn);
+    else removeAttribute(~0, Attribute::NoReturn);
   }
 
   /// @brief Determine if the call cannot unwind.
   bool doesNotThrow() const {
-    return paramHasAttr(0, Attribute::NoUnwind);
+    return paramHasAttr(~0, Attribute::NoUnwind);
   }
   void setDoesNotThrow(bool DoesNotThrow = true) {
-    if (DoesNotThrow) addAttribute(0, Attribute::NoUnwind);
-    else removeAttribute(0, Attribute::NoUnwind);
+    if (DoesNotThrow) addAttribute(~0, Attribute::NoUnwind);
+    else removeAttribute(~0, Attribute::NoUnwind);
   }
 
   /// @brief Determine if the call returns a structure through first 
@@ -2459,35 +2459,35 @@ public:
     return paramHasAttr(0, Attribute::ReadNone);
   }
   void setDoesNotAccessMemory(bool NotAccessMemory = true) {
-    if (NotAccessMemory) addAttribute(0, Attribute::ReadNone);
-    else removeAttribute(0, Attribute::ReadNone);
+    if (NotAccessMemory) addAttribute(~0, Attribute::ReadNone);
+    else removeAttribute(~0, Attribute::ReadNone);
   }
 
   /// @brief Determine if the call does not access or only reads memory.
   bool onlyReadsMemory() const {
-    return doesNotAccessMemory() || paramHasAttr(0, Attribute::ReadOnly);
+    return doesNotAccessMemory() || paramHasAttr(~0, Attribute::ReadOnly);
   }
   void setOnlyReadsMemory(bool OnlyReadsMemory = true) {
-    if (OnlyReadsMemory) addAttribute(0, Attribute::ReadOnly);
-    else removeAttribute(0, Attribute::ReadOnly | Attribute::ReadNone);
+    if (OnlyReadsMemory) addAttribute(~0, Attribute::ReadOnly);
+    else removeAttribute(~0, Attribute::ReadOnly | Attribute::ReadNone);
   }
 
   /// @brief Determine if the call cannot return.
   bool doesNotReturn() const {
-    return paramHasAttr(0, Attribute::NoReturn);
+    return paramHasAttr(~0, Attribute::NoReturn);
   }
   void setDoesNotReturn(bool DoesNotReturn = true) {
-    if (DoesNotReturn) addAttribute(0, Attribute::NoReturn);
-    else removeAttribute(0, Attribute::NoReturn);
+    if (DoesNotReturn) addAttribute(~0, Attribute::NoReturn);
+    else removeAttribute(~0, Attribute::NoReturn);
   }
 
   /// @brief Determine if the call cannot unwind.
   bool doesNotThrow() const {
-    return paramHasAttr(0, Attribute::NoUnwind);
+    return paramHasAttr(~0, Attribute::NoUnwind);
   }
   void setDoesNotThrow(bool DoesNotThrow = true) {
-    if (DoesNotThrow) addAttribute(0, Attribute::NoUnwind);
-    else removeAttribute(0, Attribute::NoUnwind);
+    if (DoesNotThrow) addAttribute(~0, Attribute::NoUnwind);
+    else removeAttribute(~0, Attribute::NoUnwind);
   }
 
   /// @brief Determine if the call returns a structure through first 

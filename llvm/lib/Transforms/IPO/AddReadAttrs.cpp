@@ -105,10 +105,10 @@ bool AddReadAttrs::runOnSCC(const std::vector<CallGraphNode *> &SCC) {
     MadeChange = true;
 
     // Clear out any existing attributes.
-    F->removeAttribute(0, Attribute::ReadOnly | Attribute::ReadNone);
+    F->removeAttribute(~0, Attribute::ReadOnly | Attribute::ReadNone);
 
     // Add in the new attribute.
-    F->addAttribute(0, ReadsMemory ? Attribute::ReadOnly : Attribute::ReadNone);
+    F->addAttribute(~0, ReadsMemory ? Attribute::ReadOnly : Attribute::ReadNone);
 
     if (ReadsMemory)
       NumReadOnly++;

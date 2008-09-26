@@ -365,7 +365,7 @@ AttrListPtr Intrinsic::getAttributes(ID id) {
   // Intrinsics cannot throw exceptions.
   Attr |= Attribute::NoUnwind;
 
-  AttributeWithIndex PAWI = AttributeWithIndex::get(0, Attr);
+  AttributeWithIndex PAWI = AttributeWithIndex::get(~0, Attr);
   return AttrListPtr::get(&PAWI, 1);
 }
 

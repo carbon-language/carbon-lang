@@ -975,7 +975,7 @@ void Verifier::VerifyCallSite(CallSite CS) {
   if (FTy->isVarArg())
     // Check attributes on the varargs part.
     for (unsigned Idx = 1 + FTy->getNumParams(); Idx <= CS.arg_size(); ++Idx) {
-      Attributes Attr = Attrs.getAttributes(Idx);
+      Attributes Attr = Attrs.getParamAttributes(Idx);
 
       VerifyAttrs(Attr, CS.getArgument(Idx-1)->getType(), false, I);
 

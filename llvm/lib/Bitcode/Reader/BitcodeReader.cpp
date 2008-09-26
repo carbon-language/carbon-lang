@@ -32,7 +32,7 @@ void BitcodeReader::FreeState() {
   std::vector<PATypeHolder>().swap(TypeList);
   ValueList.clear();
   
-  std::vector<AttrListPtr>().swap(Attributes);
+  std::vector<AttrListPtr>().swap(MAttributes);
   std::vector<BasicBlock*>().swap(FunctionBBs);
   std::vector<Function*>().swap(FunctionsWithBodies);
   DeferredFunctionInfo.clear();
@@ -317,7 +317,7 @@ bool BitcodeReader::ParseAttributeBlock() {
   if (Stream.EnterSubBlock(bitc::PARAMATTR_BLOCK_ID))
     return Error("Malformed block record");
   
-  if (!Attributes.empty())
+  if (!MAttributes.empty())
     return Error("Multiple PARAMATTR blocks found!");
   
   SmallVector<uint64_t, 64> Record;
@@ -355,12 +355,53 @@ bool BitcodeReader::ParseAttributeBlock() {
       if (Record.size() & 1)
         return Error("Invalid ENTRY record");
 
+      // FIXME : Remove this backword compatibility one day.
+      // If Function attributes are using index 0 then transfer them
+      // to index ~0. Index 0 is strictly used for return value 
+      // attributes.
+      Attributes RetAttribute = Attribute::None;
+      Attributes FnAttribute = Attribute::None;
       for (unsigned i = 0, e = Record.size(); i != e; i += 2) {
-        if (Record[i+1] != Attribute::None)
-          Attrs.push_back(AttributeWithIndex::get(Record[i], Record[i+1]));
+        if (Record[i] == 0)
+          RetAttribute = Record[i+1];
+        else if (Record[i] == ~0U)
+          FnAttribute = Record[i+1];
+      }
+      bool useUpdatedAttrs = false;
+      if (FnAttribute == Attribute::None && RetAttribute != Attribute::None) {
+        if (RetAttribute & Attribute::NoUnwind) {
+          FnAttribute = FnAttribute | Attribute::NoUnwind;
+          RetAttribute = RetAttribute ^ Attribute::NoUnwind;
+          useUpdatedAttrs = true;
+        }
+        if (RetAttribute & Attribute::NoReturn) {
+          FnAttribute = FnAttribute | Attribute::NoReturn;
+          RetAttribute = RetAttribute ^ Attribute::NoReturn;
+          useUpdatedAttrs = true;
+        }
+        if (RetAttribute & Attribute::ReadOnly) {
+          FnAttribute = FnAttribute | Attribute::ReadOnly;
+          RetAttribute = RetAttribute ^ Attribute::ReadOnly;
+          useUpdatedAttrs = true;
+        }
+        if (RetAttribute & Attribute::ReadNone) {
+          FnAttribute = FnAttribute | Attribute::ReadNone;
+          RetAttribute = RetAttribute ^ Attribute::ReadNone;
+          useUpdatedAttrs = true;
+        }
       }
 
-      Attributes.push_back(AttrListPtr::get(Attrs.begin(), Attrs.end()));
+      for (unsigned i = 0, e = Record.size(); i != e; i += 2) {
+        if (useUpdatedAttrs && Record[i] == 0 
+            && RetAttribute != Attribute::None)
+          Attrs.push_back(AttributeWithIndex::get(0, RetAttribute));
+        else if (Record[i+1] != Attribute::None)
+          Attrs.push_back(AttributeWithIndex::get(Record[i], Record[i+1]));
+      }
+      if (useUpdatedAttrs && FnAttribute != Attribute::None)
+        Attrs.push_back(AttributeWithIndex::get(~0, FnAttribute));
+
+      MAttributes.push_back(AttrListPtr::get(Attrs.begin(), Attrs.end()));
       Attrs.clear();
       break;
     }
