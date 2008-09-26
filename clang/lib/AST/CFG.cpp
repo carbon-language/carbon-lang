@@ -165,6 +165,10 @@ public:
     return NYS();
   }
   
+  // Blocks.
+  CFGBlock* VisitBlockExpr(BlockExpr* E) { return NYS(); }
+  CFGBlock* VisitBlockDeclRefExpr(BlockDeclRefExpr* E) { return NYS(); }  
+  
 private:
   CFGBlock* createBlock(bool add_successor = true);
   CFGBlock* addStmt(Stmt* Terminator);
@@ -455,6 +459,11 @@ CFGBlock* CFGBuilder::WalkAST(Stmt* Terminator, bool AlwaysAddStmt = false) {
       
       break;
     }
+    
+    // Blocks: No support for blocks ... yet
+    case Stmt::BlockExprClass:
+    case Stmt::BlockDeclRefExprClass:
+      return NYS();
       
     case Stmt::ParenExprClass:
       return WalkAST(cast<ParenExpr>(Terminator)->getSubExpr(), AlwaysAddStmt);
