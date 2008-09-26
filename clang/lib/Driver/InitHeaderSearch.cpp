@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Driver/InitHeaderSearch.h"
-
 #include "clang/Lex/HeaderSearch.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/LangOptions.h"
@@ -20,7 +19,6 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/System/Path.h"
 #include "llvm/Config/config.h"
-
 #include <vector>
 
 using namespace clang;
@@ -92,7 +90,7 @@ void InitHeaderSearch::AddEnvVarPaths(const char *Name) {
       AddPath(".", Angled, false, true, false);
     else
       AddPath(std::string(at, std::string::size_type(delim-at)), Angled, false,
-            true, false);
+              true, false);
     at = delim + 1;
     delim = strchr(at, llvm::sys::PathSeparator);
   }
@@ -255,14 +253,46 @@ static void RemoveDuplicates(std::vector<DirectoryLookup> &SearchList,
   llvm::SmallPtrSet<const DirectoryEntry *, 8> SeenFrameworkDirs;
   llvm::SmallPtrSet<const HeaderMap *, 8> SeenHeaderMaps;
   for (unsigned i = 0; i != SearchList.size(); ++i) {
+    unsigned DirToRemove = i;
+    
     if (SearchList[i].isNormalDir()) {
       // If this isn't the first time we've seen this dir, remove it.
       if (SeenDirs.insert(SearchList[i].getDir()))
         continue;
       
-      if (Verbose)
+      // If we have a normal #include dir that is shadowed later in the chain
+      // by a system include dir, we actually want to ignore the user's request
+      // and drop the user dir... keeping the system dir.  This is weird, but
+      // required to emulate GCC's search path correctly.
+      //
+      // Since dupes of system dirs are rare, just rescan to find the original
+      // that we're nuking instead of using a DenseMap.
+      if (SearchList[i].getDirCharacteristic() == 
+            DirectoryLookup::SystemHeaderDir ||
+          SearchList[i].getDirCharacteristic() == 
+            DirectoryLookup::ExternCSystemHeaderDir) {
+        // Find the dir that this is the same of.
+        unsigned FirstDir;
+        for (FirstDir = 0; ; ++FirstDir) {
+          assert(FirstDir != i && "Didn't find dupe?");
+          if (SearchList[FirstDir].getDir() == SearchList[i].getDir())
+            break;
+        }
+        
+        // If the first dir in the search path is a non-system dir, zap it
+        // instead of the system one.
+        if (SearchList[FirstDir].getDirCharacteristic() == 
+              DirectoryLookup::NormalHeaderDir)
+          DirToRemove = FirstDir;
+      }
+      
+      if (Verbose) {
         fprintf(stderr, "ignoring duplicate directory \"%s\"\n",
                 SearchList[i].getDir()->getName());
+        if (DirToRemove != i)
+          fprintf(stderr, "  as it is a non-system directory that duplicates"
+                  " a system directory\n");
+      }
     } else if (SearchList[i].isFramework()) {
       // If this isn't the first time we've seen this framework dir, remove it.
       if (SeenFrameworkDirs.insert(SearchList[i].getFrameworkDir()))
@@ -283,8 +313,9 @@ static void RemoveDuplicates(std::vector<DirectoryLookup> &SearchList,
                 SearchList[i].getDir()->getName());
     }
     
-    // This is reached if the current entry is a duplicate.
-    SearchList.erase(SearchList.begin()+i);
+    // This is reached if the current entry is a duplicate.  Remove the
+    // DirToRemove (usually the current dir).
+    SearchList.erase(SearchList.begin()+DirToRemove);
     --i;
   }
 }
