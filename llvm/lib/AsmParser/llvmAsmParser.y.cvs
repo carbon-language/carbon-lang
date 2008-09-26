@@ -3298,7 +3298,6 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     //FIXME : In 3.0, stop accepting zext, sext and inreg as optional function 
     //attributes.
     Attributes RetAttrs = 0;
-    Attributes TmpAttr = $8;
     if ($8 != Attribute::None) {
       if ($8 & Attribute::ZExt) {
         RetAttrs = RetAttrs | Attribute::ZExt;
