@@ -106,7 +106,10 @@ private:
   unsigned getGlobalBaseReg();
 
   const X86InstrInfo *getInstrInfo() const {
-    return static_cast<const X86InstrInfo *>(TM.getInstrInfo());
+    return getTargetMachine()->getInstrInfo();
+  }
+  const X86TargetMachine *getTargetMachine() const {
+    return static_cast<const X86TargetMachine *>(&TM);
   }
 
   unsigned TargetMaterializeConstant(Constant *C);
@@ -330,11 +333,12 @@ bool X86FastISel::X86SelectAddress(Value *V, X86AddressMode &AM, bool isCall) {
     // Do static allocas.
     const AllocaInst *A = cast<AllocaInst>(V);
     DenseMap<const AllocaInst*, int>::iterator SI = StaticAllocaMap.find(A);
-    if (SI == StaticAllocaMap.end())
-      return false;
-    AM.BaseType = X86AddressMode::FrameIndexBase;
-    AM.Base.FrameIndex = SI->second;
-    return true;
+    if (SI != StaticAllocaMap.end()) {
+      AM.BaseType = X86AddressMode::FrameIndexBase;
+      AM.Base.FrameIndex = SI->second;
+      return true;
+    }
+    break;
   }
 
   case Instruction::Add: {
@@ -369,6 +373,8 @@ bool X86FastISel::X86SelectAddress(Value *V, X86AddressMode &AM, bool isCall) {
           // Constant-offset addressing.
           Disp += CI->getZExtValue() * S;
         } else if (IndexReg == 0 &&
+                   (!AM.GV ||
+                    !getTargetMachine()->symbolicAddressesAreRIPRel()) &&
                    (S == 1 || S == 2 || S == 4 || S == 8)) {
           // Scaled-index addressing.
           Scale = S;
@@ -397,6 +403,11 @@ bool X86FastISel::X86SelectAddress(Value *V, X86AddressMode &AM, bool isCall) {
     // Can't handle alternate code models yet.
     if (TM.getCodeModel() != CodeModel::Default &&
         TM.getCodeModel() != CodeModel::Small)
+      return false;
+
+    // RIP-relative addresses can't have additional register operands.
+    if (getTargetMachine()->symbolicAddressesAreRIPRel() &&
+        (AM.Base.Reg != 0 || AM.IndexReg != 0))
       return false;
 
     // Set up the basic address.
@@ -443,9 +454,20 @@ bool X86FastISel::X86SelectAddress(Value *V, X86AddressMode &AM, bool isCall) {
     return true;
   }
 
-  // If all else fails, just materialize the value in a register.
-  AM.Base.Reg = getRegForValue(V);
-  return AM.Base.Reg != 0;
+  // If all else fails, try to materialize the value in a register.
+  if (!AM.GV && getTargetMachine()->symbolicAddressesAreRIPRel()) {
+    if (AM.Base.Reg == 0) {
+      AM.Base.Reg = getRegForValue(V);
+      return AM.Base.Reg != 0;
+    }
+    if (AM.IndexReg == 0) {
+      assert(AM.Scale == 1 && "Scale with no index!");
+      AM.IndexReg = getRegForValue(V);
+      return AM.IndexReg != 0;
+    }
+  }
+
+  return false;
 }
 
 /// X86SelectStore - Select and emit code to implement store instructions.

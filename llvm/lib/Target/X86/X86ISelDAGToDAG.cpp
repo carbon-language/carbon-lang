@@ -819,25 +819,21 @@ DOUT << "AlreadySelected " << AlreadySelected << "\n";
         GlobalValue *GV = G->getGlobal();
         AM.GV = GV;
         AM.Disp += G->getOffset();
-        AM.isRIPRel = TM.getRelocationModel() != Reloc::Static &&
-          Subtarget->isPICStyleRIPRel();
+        AM.isRIPRel = TM.symbolicAddressesAreRIPRel();
         return false;
       } else if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(N0)) {
         AM.CP = CP->getConstVal();
         AM.Align = CP->getAlignment();
         AM.Disp += CP->getOffset();
-        AM.isRIPRel = TM.getRelocationModel() != Reloc::Static &&
-          Subtarget->isPICStyleRIPRel();
+        AM.isRIPRel = TM.symbolicAddressesAreRIPRel();
         return false;
       } else if (ExternalSymbolSDNode *S =dyn_cast<ExternalSymbolSDNode>(N0)) {
         AM.ES = S->getSymbol();
-        AM.isRIPRel = TM.getRelocationModel() != Reloc::Static &&
-          Subtarget->isPICStyleRIPRel();
+        AM.isRIPRel = TM.symbolicAddressesAreRIPRel();
         return false;
       } else if (JumpTableSDNode *J = dyn_cast<JumpTableSDNode>(N0)) {
         AM.JT = J->getIndex();
-        AM.isRIPRel = TM.getRelocationModel() != Reloc::Static &&
-          Subtarget->isPICStyleRIPRel();
+        AM.isRIPRel = TM.symbolicAddressesAreRIPRel();
         return false;
       }
     }
