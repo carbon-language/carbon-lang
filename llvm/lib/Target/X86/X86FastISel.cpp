@@ -345,8 +345,12 @@ bool X86FastISel::X86SelectAddress(Value *V, X86AddressMode &AM, bool isCall) {
     if (isCall) break;
     // Adds of constants are common and easy enough.
     if (ConstantInt *CI = dyn_cast<ConstantInt>(U->getOperand(1))) {
-      AM.Disp += CI->getZExtValue();
-      return X86SelectAddress(U->getOperand(0), AM, isCall);
+      uint64_t Disp = (int32_t)AM.Disp + (uint64_t)CI->getSExtValue();
+      // They have to fit in the 32-bit signed displacement field though.
+      if (isInt32(Disp)) {
+        AM.Disp = (uint32_t)Disp;
+        return X86SelectAddress(U->getOperand(0), AM, isCall);
+      }
     }
     break;
   }
@@ -354,7 +358,7 @@ bool X86FastISel::X86SelectAddress(Value *V, X86AddressMode &AM, bool isCall) {
   case Instruction::GetElementPtr: {
     if (isCall) break;
     // Pattern-match simple GEPs.
-    uint64_t Disp = AM.Disp;
+    uint64_t Disp = (int32_t)AM.Disp;
     unsigned IndexReg = AM.IndexReg;
     unsigned Scale = AM.Scale;
     gep_type_iterator GTI = gep_type_begin(U);
@@ -371,7 +375,7 @@ bool X86FastISel::X86SelectAddress(Value *V, X86AddressMode &AM, bool isCall) {
         uint64_t S = TD.getABITypeSize(GTI.getIndexedType());
         if (ConstantInt *CI = dyn_cast<ConstantInt>(Op)) {
           // Constant-offset addressing.
-          Disp += CI->getZExtValue() * S;
+          Disp += CI->getSExtValue() * S;
         } else if (IndexReg == 0 &&
                    (!AM.GV ||
                     !getTargetMachine()->symbolicAddressesAreRIPRel()) &&
@@ -386,11 +390,14 @@ bool X86FastISel::X86SelectAddress(Value *V, X86AddressMode &AM, bool isCall) {
           goto unsupported_gep;
       }
     }
+    // Check for displacement overflow.
+    if (!isInt32(Disp))
+      break;
     // Ok, the GEP indices were covered by constant-offset and scaled-index
     // addressing. Update the address state and move on to examining the base.
     AM.IndexReg = IndexReg;
     AM.Scale = Scale;
-    AM.Disp = Disp;
+    AM.Disp = (uint32_t)Disp;
     return X86SelectAddress(U->getOperand(0), AM, isCall);
   unsupported_gep:
     // Ok, the GEP indices weren't all covered.
