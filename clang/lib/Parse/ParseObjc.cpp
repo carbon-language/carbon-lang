@@ -1311,6 +1311,8 @@ Parser::StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
     } else {
       assert(Tok.isObjCAtKeyword(tok::objc_finally) && "Lookahead confused?");
       ConsumeToken(); // consume finally
+      EnterScope(Scope::DeclScope);
+
       
       StmtResult FinallyBody(true);
       if (Tok.is(tok::l_brace))
@@ -1322,6 +1324,7 @@ Parser::StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
       FinallyStmt = Actions.ActOnObjCAtFinallyStmt(AtCatchFinallyLoc, 
                                                    FinallyBody.Val);
       catch_or_finally_seen = true;
+      ExitScope();
       break;
     }
   }
