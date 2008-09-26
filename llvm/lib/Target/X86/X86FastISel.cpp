@@ -216,9 +216,8 @@ bool X86FastISel::X86FastEmitLoad(MVT VT, const X86AddressMode &AM,
     }
     break;
   case MVT::f80:
-    Opc = X86::LD_Fp80m;
-    RC  = X86::RFP80RegisterClass;
-    break;
+    // No f80 support yet.
+    return false;
   }
 
   ResultReg = createResultReg(RC);
@@ -274,9 +273,8 @@ X86FastISel::X86FastEmitStore(MVT VT, unsigned Val,
     }
     break;
   case MVT::f80:
-    Opc = X86::ST_FP80m;
-    RC  = X86::RFP80RegisterClass;
-    break;
+    // No f80 support yet.
+    return false;
   }
 
   addFullAddress(BuildMI(MBB, TII.get(Opc)), AM).addReg(Val);
@@ -1169,9 +1167,8 @@ unsigned X86FastISel::TargetMaterializeConstant(Constant *C) {
     }
     break;
   case MVT::f80:
-    Opc = X86::LD_Fp80m;
-    RC  = X86::RFP80RegisterClass;
-    break;
+    // No f80 support yet.
+    return false;
   }
   
   // Materialize addresses with LEA instructions.
