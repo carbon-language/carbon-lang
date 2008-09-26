@@ -427,9 +427,10 @@ void X86RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   // FrameIndex with base register with EBP.  Add an offset to the offset.
   MI.getOperand(i).ChangeToRegister(BasePtr, false);
 
-  // Now add the frame object offset to the offset from EBP.
-  int64_t Offset = getFrameIndexOffset(MF, FrameIndex) +
-                   MI.getOperand(i+3).getImm();
+  // Now add the frame object offset to the offset from EBP. Offset is a
+  // 32-bit integer.
+  int Offset = getFrameIndexOffset(MF, FrameIndex) +
+    (int)(MI.getOperand(i+3).getImm());
 
   MI.getOperand(i+3).ChangeToImmediate(Offset);
 }
