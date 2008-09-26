@@ -393,17 +393,22 @@ Parser::DeclTy *Parser::ParseDeclarationOrFunctionDefinition() {
     return Actions.ParsedFreeStandingDeclSpec(CurScope, DS);
   }
 
-  // ObjC2 allows prefix attributes on class interfaces.
+  // ObjC2 allows prefix attributes on class interfaces and protocols.
+  // FIXME: This still needs better diagnostics. We should only accept
+  // attributes here, no types, etc.
   if (getLang().ObjC2 && Tok.is(tok::at)) {
     SourceLocation AtLoc = ConsumeToken(); // the "@"
-    if (!Tok.isObjCAtKeyword(tok::objc_interface)) {
-      Diag(Tok, diag::err_objc_expected_property_attr);//FIXME:better diagnostic
+    if (!Tok.isObjCAtKeyword(tok::objc_interface) && 
+        !Tok.isObjCAtKeyword(tok::objc_protocol)) {
+      Diag(Tok, diag::err_objc_unexpected_attr);
       SkipUntil(tok::semi); // FIXME: better skip?
       return 0;
     }
     const char *PrevSpec = 0;
     if (DS.SetTypeSpecType(DeclSpec::TST_unspecified, AtLoc, PrevSpec))
       Diag(AtLoc, diag::err_invalid_decl_spec_combination, PrevSpec);
+    if (Tok.isObjCAtKeyword(tok::objc_protocol))
+      return ParseObjCAtProtocolDeclaration(AtLoc, DS.getAttributes());
     return ParseObjCAtInterfaceDeclaration(AtLoc, DS.getAttributes());
   }
 

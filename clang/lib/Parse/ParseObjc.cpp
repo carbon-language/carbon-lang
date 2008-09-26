@@ -920,7 +920,8 @@ void Parser::ParseObjCClassInstanceVariables(DeclTy *interfaceDecl,
 ///   "@protocol identifier ;" should be resolved as "@protocol
 ///   identifier-list ;": objc-interface-decl-list may not start with a
 ///   semicolon in the first alternative if objc-protocol-refs are omitted.
-Parser::DeclTy *Parser::ParseObjCAtProtocolDeclaration(SourceLocation AtLoc) {
+Parser::DeclTy *Parser::ParseObjCAtProtocolDeclaration(SourceLocation AtLoc,
+                                               AttributeList *attrList) {
   assert(Tok.isObjCAtKeyword(tok::objc_protocol) &&
          "ParseObjCAtProtocolDeclaration(): Expected @protocol");
   ConsumeToken(); // the "protocol" identifier
@@ -978,7 +979,7 @@ Parser::DeclTy *Parser::ParseObjCAtProtocolDeclaration(SourceLocation AtLoc) {
   DeclTy *ProtoType =
     Actions.ActOnStartProtocolInterface(AtLoc, protocolName, nameLoc,
                                         &ProtocolRefs[0], ProtocolRefs.size(),
-                                        EndProtoLoc);
+                                        EndProtoLoc, attrList);
   ParseObjCInterfaceDeclList(ProtoType, tok::objc_protocol);
 
   // The @ sign was already consumed by ParseObjCInterfaceDeclList().

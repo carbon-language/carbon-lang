@@ -331,7 +331,8 @@ private:
                                    SourceLocation &EndProtoLoc);
   void ParseObjCInterfaceDeclList(DeclTy *interfaceDecl,
                                   tok::ObjCKeywordKind contextKey);
-  DeclTy *ParseObjCAtProtocolDeclaration(SourceLocation atLoc);
+  DeclTy *ParseObjCAtProtocolDeclaration(SourceLocation atLoc,
+                                         AttributeList *prefixAttrs = 0);
   
   DeclTy *ObjCImpDecl;
 

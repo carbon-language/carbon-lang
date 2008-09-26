@@ -421,6 +421,8 @@ DIAG(err_objc_expected_equal, ERROR,
      "setter/getter expects '=' followed by name")
 DIAG(err_objc_expected_property_attr, ERROR,
      "unknown property attribute detected")
+DIAG(err_objc_unexpected_attr, ERROR,
+     "prefix attribute must be followed by an interface or protocol")
 DIAG(err_objc_property_attr_mutually_exclusive, ERROR,
      "property attributes '%0' and '%1' are mutually exclusive")
 DIAG(warn_objc_property_no_assignment_attribute, WARNING,

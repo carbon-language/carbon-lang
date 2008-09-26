@@ -694,7 +694,8 @@ public:
                                               SourceLocation ProtocolLoc,
                                               DeclTy * const *ProtoRefs,
                                               unsigned NumProtoRefs,
-                                              SourceLocation EndProtoLoc) {
+                                              SourceLocation EndProtoLoc,
+                                              AttributeList *AttrList) {
     return 0;
   }
   // ActOnStartCategoryInterface - this action is called immdiately after

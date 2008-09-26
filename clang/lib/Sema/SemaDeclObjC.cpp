@@ -173,7 +173,9 @@ Sema::ActOnStartProtocolInterface(SourceLocation AtProtoInterfaceLoc,
                                   SourceLocation ProtocolLoc,
                                   DeclTy * const *ProtoRefs,
                                   unsigned NumProtoRefs,
-                                  SourceLocation EndProtoLoc) {
+                                  SourceLocation EndProtoLoc,
+                                  AttributeList *AttrList) {
+  // FIXME: Deal with AttrList.
   assert(ProtocolName && "Missing protocol identifier");
   ObjCProtocolDecl *PDecl = ObjCProtocols[ProtocolName];
   if (PDecl) {

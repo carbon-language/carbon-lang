@@ -686,7 +686,8 @@ public:
                     SourceLocation AtProtoInterfaceLoc,
                     IdentifierInfo *ProtocolName, SourceLocation ProtocolLoc,
                     DeclTy * const *ProtoRefNames, unsigned NumProtoRefs,
-                    SourceLocation EndProtoLoc);
+                    SourceLocation EndProtoLoc,
+                    AttributeList *AttrList);
   
   virtual DeclTy *ActOnStartCategoryInterface(SourceLocation AtInterfaceLoc,
                                               IdentifierInfo *ClassName,
