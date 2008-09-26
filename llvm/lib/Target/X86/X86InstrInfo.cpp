@@ -1832,39 +1832,49 @@ void X86InstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
 }
 
 bool X86InstrInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
-                                                MachineBasicBlock::iterator MI,
+                                             MachineBasicBlock::iterator MI,
                                 const std::vector<CalleeSavedInfo> &CSI) const {
   if (CSI.empty())
     return false;
 
-  bool is64Bit = TM.getSubtarget<X86Subtarget>().is64Bit();
-  unsigned SlotSize = is64Bit ? 8 : 4;
-
   MachineFunction &MF = *MBB.getParent();
-  X86MachineFunctionInfo *X86FI = MF.getInfo<X86MachineFunctionInfo>();
-  X86FI->setCalleeSavedFrameSize(CSI.size() * SlotSize);
-  
+  bool is64Bit = TM.getSubtarget<X86Subtarget>().is64Bit();
+  unsigned FrameReg = is64Bit ? X86::RBP : X86::EBP;
   unsigned Opc = is64Bit ? X86::PUSH64r : X86::PUSH32r;
+  unsigned CSSize = 0;
   for (unsigned i = CSI.size(); i != 0; --i) {
     unsigned Reg = CSI[i-1].getReg();
+    if (Reg == FrameReg && RI.hasFP(MF))
+      // It will be saved as part of the prologue.
+      continue;
     // Add the callee-saved register as live-in. It's killed at the spill.
     MBB.addLiveIn(Reg);
     BuildMI(MBB, MI, get(Opc)).addReg(Reg);
+    ++CSSize;
   }
+
+  X86MachineFunctionInfo *X86FI = MF.getInfo<X86MachineFunctionInfo>();
+  unsigned SlotSize = is64Bit ? 8 : 4;
+  X86FI->setCalleeSavedFrameSize(CSSize * SlotSize);
   return true;
 }
 
 bool X86InstrInfo::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
-                                                 MachineBasicBlock::iterator MI,
+                                               MachineBasicBlock::iterator MI,
                                 const std::vector<CalleeSavedInfo> &CSI) const {
   if (CSI.empty())
     return false;
     
+  MachineFunction &MF = *MBB.getParent();
   bool is64Bit = TM.getSubtarget<X86Subtarget>().is64Bit();
+  unsigned FrameReg = is64Bit ? X86::RBP : X86::EBP;
 
   unsigned Opc = is64Bit ? X86::POP64r : X86::POP32r;
   for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
     unsigned Reg = CSI[i].getReg();
+    if (Reg == FrameReg && RI.hasFP(MF))
+      // It will be restored as part of the epilogue.
+      continue;
     BuildMI(MBB, MI, get(Opc), Reg);
   }
   return true;
