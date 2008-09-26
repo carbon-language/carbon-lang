@@ -43,17 +43,17 @@ void DeclGroup::Destroy(ASTContext& C) {
 }
 
 DeclGroupOwningRef::~DeclGroupOwningRef() {
-  assert (ThePtr == 0 && "Destroy method not called.");
+  assert (Raw == 0 && "Destroy method not called.");
 }
 
 void DeclGroupOwningRef::Destroy(ASTContext& C) {
-  if (!ThePtr)
+  if (!Raw)
     return;
   
   if (getKind() == DeclKind)
-    reinterpret_cast<Decl*>(ThePtr)->Destroy(C);
+    reinterpret_cast<Decl*>(Raw)->Destroy(C);
   else
-    reinterpret_cast<DeclGroup*>(ThePtr & ~Mask)->Destroy(C);
+    reinterpret_cast<DeclGroup*>(Raw & ~Mask)->Destroy(C);
   
-  ThePtr = 0;
+  Raw = 0;
 }
