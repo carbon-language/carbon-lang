@@ -854,7 +854,6 @@
 		DEAEECAE0A5AF0FA0045101B /* Driver */ = {
 			isa = PBXGroup;
 			children = (
-				9030C1090E807A9300941490 /* RewriteBlocks.cpp */,
 				DE5932CD0AD60FF400BC794C /* clang.cpp */,
 				DE5932CE0AD60FF400BC794C /* clang.h */,
 				359DBBE20E1ACD4700F43FA0 /* AnalysisConsumer.h */,
@@ -867,6 +866,7 @@
 				DE5932D00AD60FF400BC794C /* PrintPreprocessedOutput.cpp */,
 				352981080CC58344008B5E84 /* SerializationTest.cpp */,
 				72D16C210D9975EA00E6DA4A /* HTMLPrint.cpp */,
+				9030C1090E807A9300941490 /* RewriteBlocks.cpp */,
 				DEA0EBD90DD2D3C8007A02A9 /* RewriteMacros.cpp */,
 				035611E10DB40C8100D2EF2A /* RewriteObjC.cpp */,
 			);
