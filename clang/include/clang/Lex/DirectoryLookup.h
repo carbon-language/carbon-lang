@@ -14,6 +14,8 @@
 #ifndef LLVM_CLANG_LEX_DIRECTORYLOOKUP_H
 #define LLVM_CLANG_LEX_DIRECTORYLOOKUP_H
 
+#include "clang/Basic/SourceManager.h"
+
 namespace clang {
 class HeaderMap;
 class DirectoryEntry;
@@ -26,12 +28,6 @@ class HeaderSearch;
 ///
 class DirectoryLookup {
 public:
-  enum DirType {
-    NormalHeaderDir,
-    SystemHeaderDir,
-    ExternCSystemHeaderDir
-  };
-  
   enum LookupType_t {
     LT_NormalDir,
     LT_Framework,
@@ -48,9 +44,8 @@ private:
     const HeaderMap *Map;
   } u;
   
-  // NOTE: VC++ treats enums as signed, avoid using the DirType enum
-  /// DirCharacteristic - The type of directory this is, one of the DirType enum
-  /// values.
+  /// DirCharacteristic - The type of directory this is: this is an instance of
+  /// SrcMgr::Characteristic_t.
   unsigned DirCharacteristic : 2;
   
   /// UserSupplied - True if this is a user-supplied directory.
@@ -63,8 +58,8 @@ private:
 public:
   /// DirectoryLookup ctor - Note that this ctor *does not take ownership* of
   /// 'dir'.
-  DirectoryLookup(const DirectoryEntry *dir, DirType DT, bool isUser,
-                  bool isFramework)
+  DirectoryLookup(const DirectoryEntry *dir, SrcMgr::Characteristic_t DT,
+                  bool isUser, bool isFramework)
     : DirCharacteristic(DT), UserSupplied(isUser),
      LookupType(isFramework ? LT_Framework : LT_NormalDir) {
     u.Dir = dir; 
@@ -72,7 +67,8 @@ public:
   
   /// DirectoryLookup ctor - Note that this ctor *does not take ownership* of
   /// 'map'.
-  DirectoryLookup(const HeaderMap *map, DirType DT, bool isUser)
+  DirectoryLookup(const HeaderMap *map, SrcMgr::Characteristic_t DT,
+                  bool isUser)
     : DirCharacteristic(DT), UserSupplied(isUser), LookupType(LT_HeaderMap) {
     u.Map = map; 
   }
@@ -111,7 +107,9 @@ public:
   
   /// DirCharacteristic - The type of directory this is, one of the DirType enum
   /// values.
-  DirType getDirCharacteristic() const { return DirType(DirCharacteristic); }
+  SrcMgr::Characteristic_t getDirCharacteristic() const {
+    return (SrcMgr::Characteristic_t)DirCharacteristic;
+  }
   
   /// isUserSupplied - True if this is a user-supplied directory.
   ///

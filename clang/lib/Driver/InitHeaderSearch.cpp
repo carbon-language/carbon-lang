@@ -43,13 +43,13 @@ void InitHeaderSearch::AddPath(const std::string &Path, IncludeDirGroup Group,
   MappedPath.append(Path.begin(), Path.end());
 
   // Compute the DirectoryLookup type.
-  DirectoryLookup::DirType Type;
+  SrcMgr::Characteristic_t Type;
   if (Group == Quoted || Group == Angled)
-    Type = DirectoryLookup::NormalHeaderDir;
+    Type = SrcMgr::C_User;
   else if (isCXXAware)
-    Type = DirectoryLookup::SystemHeaderDir;
+    Type = SrcMgr::C_System;
   else
-    Type = DirectoryLookup::ExternCSystemHeaderDir;
+    Type = SrcMgr::C_ExternCSystem;
   
   
   // If the directory exists, add it.
@@ -267,10 +267,7 @@ static void RemoveDuplicates(std::vector<DirectoryLookup> &SearchList,
       //
       // Since dupes of system dirs are rare, just rescan to find the original
       // that we're nuking instead of using a DenseMap.
-      if (SearchList[i].getDirCharacteristic() == 
-            DirectoryLookup::SystemHeaderDir ||
-          SearchList[i].getDirCharacteristic() == 
-            DirectoryLookup::ExternCSystemHeaderDir) {
+      if (SearchList[i].getDirCharacteristic() != SrcMgr::C_User) {
         // Find the dir that this is the same of.
         unsigned FirstDir;
         for (FirstDir = 0; ; ++FirstDir) {
@@ -281,8 +278,7 @@ static void RemoveDuplicates(std::vector<DirectoryLookup> &SearchList,
         
         // If the first dir in the search path is a non-system dir, zap it
         // instead of the system one.
-        if (SearchList[FirstDir].getDirCharacteristic() == 
-              DirectoryLookup::NormalHeaderDir)
+        if (SearchList[FirstDir].getDirCharacteristic() == SrcMgr::C_User)
           DirToRemove = FirstDir;
       }
       

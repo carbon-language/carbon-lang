@@ -239,8 +239,7 @@ void Preprocessor::HandlePragmaSystemHeader(Token &SysHeaderTok) {
   // Notify the client, if desired, that we are in a new source file.
   if (Callbacks)
     Callbacks->FileChanged(TheLexer->getSourceLocation(TheLexer->BufferPtr),
-                           PPCallbacks::SystemHeaderPragma,
-                           DirectoryLookup::SystemHeaderDir);
+                           PPCallbacks::SystemHeaderPragma, SrcMgr::C_System);
 }
 
 /// HandlePragmaDependency - Handle #pragma GCC dependency "foo" blah.

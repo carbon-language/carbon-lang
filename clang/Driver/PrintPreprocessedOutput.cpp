@@ -48,7 +48,7 @@ public:
 private:
   unsigned CurLine;
   bool EmittedTokensOnThisLine;
-  DirectoryLookup::DirType FileType;
+  SrcMgr::Characteristic_t FileType;
   llvm::SmallString<512> CurFilename;
   bool Initialized;
 public:
@@ -57,7 +57,7 @@ public:
     CurLine = 0;
     CurFilename += "<uninit>";
     EmittedTokensOnThisLine = false;
-    FileType = DirectoryLookup::NormalHeaderDir;
+    FileType = SrcMgr::C_User;
     Initialized = false;
   }
   
@@ -65,7 +65,7 @@ public:
   bool hasEmittedTokensOnThisLine() const { return EmittedTokensOnThisLine; }
   
   virtual void FileChanged(SourceLocation Loc, FileChangeReason Reason,
-                           DirectoryLookup::DirType FileType);
+                           SrcMgr::Characteristic_t FileType);
   virtual void Ident(SourceLocation Loc, const std::string &str);
   
 
@@ -91,9 +91,9 @@ void PrintPPOutputPPCallbacks::WriteLineInfo(unsigned LineNo,
   if (ExtraLen)
     OS.write(Extra, ExtraLen);
 
-  if (FileType == DirectoryLookup::SystemHeaderDir)
+  if (FileType == SrcMgr::C_System)
     OS.write(" 3", 2);
-  else if (FileType == DirectoryLookup::ExternCSystemHeaderDir)
+  else if (FileType == SrcMgr::C_ExternCSystem)
     OS.write(" 3 4", 4);
   OS << '\n';
 }
@@ -143,7 +143,7 @@ bool PrintPPOutputPPCallbacks::MoveToLine(SourceLocation Loc) {
 /// position.
 void PrintPPOutputPPCallbacks::FileChanged(SourceLocation Loc,
                                            FileChangeReason Reason,
-                                         DirectoryLookup::DirType NewFileType) {
+                                         SrcMgr::Characteristic_t NewFileType) {
   // Unless we are exiting a #include, make sure to skip ahead to the line the
   // #include directive was at.
   SourceManager &SourceMgr = PP.getSourceManager();

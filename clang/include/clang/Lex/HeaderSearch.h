@@ -45,10 +45,10 @@ class HeaderSearch {
     /// isImport - True if this is a #import'd or #pragma once file.
     bool isImport : 1;
     
-    // NOTE: VC++ treats enums as signed, avoid using DirectoryLookup::DirType
     /// DirInfo - Keep track of whether this is a system header, and if so,
     /// whether it is C++ clean or not.  This can be set by the include paths or
-    /// by #pragma gcc system_header.
+    /// by #pragma gcc system_header.  This is an instance of
+    /// SrcMgr::Characteristic_t.
     unsigned DirInfo : 2;
     
     /// NumIncludes - This is the number of times the file has been included
@@ -60,7 +60,7 @@ class HeaderSearch {
     /// for the macro that controls whether or not it has any effect.
     const IdentifierInfo *ControllingMacro;
     
-    PerFileInfo() : isImport(false), DirInfo(DirectoryLookup::NormalHeaderDir),
+    PerFileInfo() : isImport(false), DirInfo(SrcMgr::C_User),
       NumIncludes(0), ControllingMacro(0) {}
   };
   
@@ -155,8 +155,8 @@ public:
   
   /// getFileDirFlavor - Return whether the specified file is a normal header,
   /// a system header, or a C++ friendly system header.
-  DirectoryLookup::DirType getFileDirFlavor(const FileEntry *File) {
-    return DirectoryLookup::DirType(getFileInfo(File).DirInfo);
+  SrcMgr::Characteristic_t getFileDirFlavor(const FileEntry *File) {
+    return (SrcMgr::Characteristic_t)getFileInfo(File).DirInfo;
   }
     
   /// MarkFileIncludeOnce - Mark the specified file as a "once only" file, e.g.
@@ -168,7 +168,7 @@ public:
   /// MarkFileSystemHeader - Mark the specified file as a system header, e.g.
   /// due to #pragma GCC system_header.
   void MarkFileSystemHeader(const FileEntry *File) {
-    getFileInfo(File).DirInfo = DirectoryLookup::SystemHeaderDir;
+    getFileInfo(File).DirInfo = SrcMgr::C_System;
   }
   
   /// IncrementIncludeCount - Increment the count for the number of times the

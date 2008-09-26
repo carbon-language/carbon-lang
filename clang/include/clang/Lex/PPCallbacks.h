@@ -38,7 +38,7 @@ public:
   /// #include'd file (when true) or whether we're exiting one because we ran
   /// off the end (when false).
   virtual void FileChanged(SourceLocation Loc, FileChangeReason Reason,
-                           DirectoryLookup::DirType FileType) {
+                           SrcMgr::Characteristic_t FileType) {
   }
   
   /// Ident - This callback is invoked when a #ident or #sccs directive is read.

@@ -675,10 +675,9 @@ void Preprocessor::HandleIncludeDirective(Token &IncludeTok,
   // The #included file will be considered to be a system header if either it is
   // in a system include directory, or if the #includer is a system include
   // header.
-  unsigned FileCharacter = 
-  // FIXME: Casts
-    std::max((unsigned)HeaderInfo.getFileDirFlavor(File),
-          SourceMgr.getDirCharacteristic(getCurrentFileLexer()->getFileLoc()));
+  SrcMgr::Characteristic_t FileCharacter = 
+    std::max(HeaderInfo.getFileDirFlavor(File),
+          SourceMgr.getFileCharacteristic(getCurrentFileLexer()->getFileLoc()));
   
   // Look up the file, create a File ID for it.
   unsigned FileID = SourceMgr.createFileID(File, FilenameTok.getLocation(),

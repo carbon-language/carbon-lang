@@ -32,9 +32,20 @@ class FileManager;
 class FileEntry;
 class IdentifierTokenInfo;
 
-/// SrcMgr - Private classes that are part of the SourceManager implementation.
+/// SrcMgr - Public enums and private classes that are part of the
+/// SourceManager implementation.
 ///
 namespace SrcMgr {
+  /// Characteristic_t - This is used to represent whether a file or directory
+  /// holds normal user code, system code, or system code which is implicitly
+  /// 'extern "C"' in C++ mode.  Entire directories can be tagged with this
+  /// (this is maintained by DirectoryLookup and friends) as can specific
+  /// FileIDInfos when a #pragma system_header is seen or various other cases.
+  ///
+  enum Characteristic_t {
+    C_User, C_System, C_ExternCSystem
+  };
+  
   /// ContentCache - Once instance of this struct is kept for every file
   ///  loaded or used.  This object owns the MemoryBuffer object.
   struct ContentCache {
@@ -114,9 +125,9 @@ namespace SrcMgr {
     /// chunk number of this FileID.
     unsigned ChunkNo : 30;
     
-    /// DirCharacteristic - This is an instance of DirectoryLookup::DirType,
+    /// FileCharacteristic - This is an instance of Characteristic_t,
     /// indicating whether this is a system header dir or not.
-    unsigned DirCharacteristic : 2;
+    unsigned FileCharacteristic : 2;
     
     /// Content - Information about the source buffer itself.
     const ContentCache* Content;
@@ -124,12 +135,13 @@ namespace SrcMgr {
   public:
     /// get - Return a FileIDInfo object.
     static FileIDInfo get(SourceLocation IL, unsigned CN, 
-                          const ContentCache *Con, unsigned DirCharacter) {
+                          const ContentCache *Con,
+                          Characteristic_t FileCharacter) {
       FileIDInfo X;
       X.IncludeLoc = IL;
       X.ChunkNo = CN;
       X.Content = Con;
-      X.DirCharacteristic = DirCharacter;
+      X.FileCharacteristic = FileCharacter;
       return X;
     }
     
@@ -137,9 +149,10 @@ namespace SrcMgr {
     unsigned getChunkNo() const { return ChunkNo; }
     const ContentCache* getContentCache() const { return Content; }
 
-    /// getDirCharacteristic - Return whether this is a system header or not.
-    /// FIXME: rename from dir to file?
-    unsigned getDirCharacteristic() const { return DirCharacteristic; }
+    /// getCharacteristic - Return whether this is a system header or not.
+    Characteristic_t getFileCharacteristic() const { 
+      return (Characteristic_t)FileCharacteristic;
+    }
     
     /// Emit - Emit this FileIDInfo to Bitcode.
     void Emit(llvm::Serializer& S) const;
@@ -254,10 +267,10 @@ public:
   /// being #included from the specified IncludePosition.  This returns 0 on
   /// error and translates NULL into standard input.
   unsigned createFileID(const FileEntry *SourceFile, SourceLocation IncludePos,
-                        unsigned DirCharacter) {
+                        SrcMgr::Characteristic_t FileCharacter) {
     const SrcMgr::ContentCache *IR = getContentCache(SourceFile);
     if (IR == 0) return 0;    // Error opening file?
-    return createFileID(IR, IncludePos, DirCharacter);
+    return createFileID(IR, IncludePos, FileCharacter);
   }
   
   /// createMainFileID - Create the FileID for the main source file.
@@ -265,7 +278,7 @@ public:
                             SourceLocation IncludePos) {
     
     assert (MainFileID == 0 && "MainFileID already set!");
-    MainFileID = createFileID(SourceFile, IncludePos, 0);
+    MainFileID = createFileID(SourceFile, IncludePos, SrcMgr::C_User);
     return MainFileID;
   }
   
@@ -274,8 +287,7 @@ public:
   /// ownership of the MemoryBuffer, so only pass a MemoryBuffer to this once.
   unsigned createFileIDForMemBuffer(const llvm::MemoryBuffer *Buffer) {
     return createFileID(createMemBufferContentCache(Buffer), SourceLocation(),
-                        // FIXME: USE ENUM
-                        0/*normal header*/);
+                        SrcMgr::C_User);
   }
   
   /// createMainFileIDForMembuffer - Create the FileID for a memory buffer
@@ -436,11 +448,10 @@ public:
 
   /// isInSystemHeader - Returns if a SourceLocation is in a system header.
   bool isInSystemHeader(SourceLocation Loc) const {
-    // FIXME: Use proper enum here!
-    return getDirCharacteristic(Loc) != 0;
+    return getFileCharacteristic(Loc) != SrcMgr::C_User;
   }
-  unsigned getDirCharacteristic(SourceLocation Loc) const {
-    return getFIDInfo(getPhysicalLoc(Loc).getFileID())->getDirCharacteristic();
+  SrcMgr::Characteristic_t getFileCharacteristic(SourceLocation Loc) const {
+    return getFIDInfo(getPhysicalLoc(Loc).getFileID())->getFileCharacteristic();
   }
 
   
@@ -462,7 +473,8 @@ private:
   ///  include position.  This works regardless of whether the ContentCache
   ///  corresponds to a file or some other input source.
   unsigned createFileID(const SrcMgr::ContentCache* File,
-                        SourceLocation IncludePos, unsigned DirCharacter);
+                        SourceLocation IncludePos,
+                        SrcMgr::Characteristic_t DirCharacter);
     
   /// getContentCache - Create or return a cached ContentCache for the specified
   ///  file.  This returns null on failure.
