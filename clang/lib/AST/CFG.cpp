@@ -467,6 +467,18 @@ CFGBlock* CFGBuilder::WalkAST(Stmt* Terminator, bool AlwaysAddStmt = false) {
   return WalkAST_VisitChildren(Terminator);
 }
 
+static VariableArrayType* FindVA(Type* t) {
+  while (ArrayType* vt = dyn_cast<ArrayType>(t)) {
+    if (VariableArrayType* vat = dyn_cast<VariableArrayType>(vt))
+      if (vat->getSizeExpr())
+        return vat;
+    
+    t = vt->getElementType().getTypePtr();
+  }
+  
+  return 0;
+}
+  
 /// WalkAST_VisitDeclSubExpr - Utility method to add block-level expressions
 ///  for initializers in Decls.
 CFGBlock* CFGBuilder::WalkAST_VisitDeclSubExpr(ScopedDecl* D) {
@@ -477,18 +489,22 @@ CFGBlock* CFGBuilder::WalkAST_VisitDeclSubExpr(ScopedDecl* D) {
   
   Expr* Init = VD->getInit();
   
-  if (!Init)
-    return Block;
-
-  // Optimization: Don't create separate block-level statements for literals.  
-  switch (Init->getStmtClass()) {
-    case Stmt::IntegerLiteralClass:
-    case Stmt::CharacterLiteralClass:
-    case Stmt::StringLiteralClass:
-      break;
-    default:
-      Block = addStmt(Init);
+  if (Init) {
+    // Optimization: Don't create separate block-level statements for literals.  
+    switch (Init->getStmtClass()) {
+      case Stmt::IntegerLiteralClass:
+      case Stmt::CharacterLiteralClass:
+      case Stmt::StringLiteralClass:
+        break;
+      default:
+        Block = addStmt(Init);
+    }
   }
+    
+  // If the type of VD is a VLA, then we must process its size expressions.
+  for (VariableArrayType* VA = FindVA(VD->getType().getTypePtr()); VA != 0;
+       VA = FindVA(VA->getElementType().getTypePtr()))
+    Block = addStmt(VA->getSizeExpr());  
   
   return Block;
 }

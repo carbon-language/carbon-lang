@@ -226,18 +226,6 @@ void TransferFuncs::VisitAssign(BinaryOperator* B) {
   Visit(B->getRHS());
 }
 
-static VariableArrayType* FindVA(Type* t) {
-  while (ArrayType* vt = dyn_cast<ArrayType>(t)) {
-    if (VariableArrayType* vat = dyn_cast<VariableArrayType>(vt))
-      if (vat->getSizeExpr())
-        return vat;
-    
-    t = vt->getElementType().getTypePtr();
-  }
-  
-  return NULL;
-}
-  
 void TransferFuncs::VisitDeclStmt(DeclStmt* DS) {
   // Declarations effectively "kill" a variable since they cannot
   // possibly be live before they are declared.
@@ -253,14 +241,6 @@ void TransferFuncs::VisitDeclStmt(DeclStmt* DS) {
       // Update liveness information by killing the VarDecl.
       unsigned bit = AD.getIdx(VD);
       LiveState.getDeclBit(bit) = Dead | AD.AlwaysLive.getDeclBit(bit);
-
-      // If the type of VD is a VLA, then we must process its size expressions.
-      // These expressions are evaluated before the variable comes into scope,
-      // so in a reverse dataflow analysis we evaluate them last.
-      for (VariableArrayType* VA = FindVA(VD->getType().getTypePtr()); VA != 0;
-           VA = FindVA(VA->getElementType().getTypePtr()))
-        Visit(VA->getSizeExpr());
-
     }
 }
   
