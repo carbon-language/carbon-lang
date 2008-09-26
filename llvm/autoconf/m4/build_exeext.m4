@@ -25,7 +25,7 @@ else
   if AC_TRY_EVAL(ac_build_link); then
     for file in conftest.*; do
       case $file in
-      *.c | *.o | *.obj) ;;
+      *.c | *.o | *.obj | *.dSYM) ;;
       *) ac_cv_build_exeext=`echo $file | sed -e s/conftest//` ;;
       esac
     done

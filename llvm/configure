@@ -4545,7 +4545,7 @@ echo "$as_me: error: no acceptable cc found in \$PATH" >&2;}
   (exit $ac_status); }; then
     for file in conftest.*; do
       case $file in
-      *.c | *.o | *.obj) ;;
+      *.c | *.o | *.obj | *.dSYM) ;;
       *) ac_cv_build_exeext=`echo $file | sed -e s/conftest//` ;;
       esac
     done
