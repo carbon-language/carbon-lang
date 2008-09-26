@@ -299,7 +299,6 @@ bool X86RegisterInfo::hasFP(const MachineFunction &MF) const {
   return (NoFramePointerElim ||
           needsStackRealignment(MF) ||
           MFI->hasVarSizedObjects() ||
-          MFI->isFrameAddressTaken() ||
           MF.getInfo<X86MachineFunctionInfo>()->getForceFramePointer() ||
           (MMI && MMI->callsUnwindInit()));
 }

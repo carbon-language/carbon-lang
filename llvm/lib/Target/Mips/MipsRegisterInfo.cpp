@@ -324,9 +324,7 @@ void MipsRegisterInfo::adjustMipsStackFrame(MachineFunction &MF) const
 // if frame pointer elimination is disabled.
 bool MipsRegisterInfo::
 hasFP(const MachineFunction &MF) const {
-  const MachineFrameInfo *MFI = MF.getFrameInfo();
-  return NoFramePointerElim || MFI->hasVarSizedObjects() ||
-    MFI->isFrameAddressTaken();
+  return (NoFramePointerElim || MF.getFrameInfo()->hasVarSizedObjects());
 }
 
 // This function eliminate ADJCALLSTACKDOWN, 

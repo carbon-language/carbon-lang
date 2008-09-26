@@ -1,4 +1,5 @@
 ; RUN: llvm-as < %s | llc -march=x86 | grep mov | count 3
+; XFAIL: *
 
 define i8* @t() nounwind {
 entry:
