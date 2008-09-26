@@ -57,11 +57,7 @@ namespace CallingConv {
     /// X86_FastCall - 'fast' analog of X86_StdCall. Passes first two arguments
     /// in ECX:EDX registers, others - via stack. Callee is responsible for
     /// stack cleaning.
-    X86_FastCall = 65,
-
-    /// X86_SSEreg - The standard convention except that float and double
-    /// values are returned in XMM0 if SSE support is available.
-    X86_SSECall = 66
+    X86_FastCall = 65
   };
 } // End CallingConv namespace
 

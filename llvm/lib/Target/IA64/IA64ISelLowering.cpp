@@ -304,8 +304,8 @@ void IA64TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG,
 
 std::pair<SDValue, SDValue>
 IA64TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
-                                bool RetSExt, bool RetZExt,
-                                bool isVarArg, unsigned CallingConv, 
+                                bool RetSExt, bool RetZExt, bool isVarArg,
+                                bool isInreg, unsigned CallingConv, 
                                 bool isTailCall, SDValue Callee, 
                                 ArgListTy &Args, SelectionDAG &DAG) {
 

@@ -3979,7 +3979,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       TargetLowering::ArgListTy Args;
       std::pair<SDValue,SDValue> CallResult =
         TLI.LowerCallTo(Tmp1, Type::VoidTy,
-                        false, false, false, CallingConv::C, false,
+                        false, false, false, false, CallingConv::C, false,
                         DAG.getExternalSymbol("abort", TLI.getPointerTy()),
                         Args, DAG);
       Result = CallResult.second;
@@ -5302,8 +5302,8 @@ SDValue SelectionDAGLegalize::ExpandLibCall(RTLIB::Libcall LC, SDNode *Node,
   // Splice the libcall in wherever FindInputOutputChains tells us to.
   const Type *RetTy = Node->getValueType(0).getTypeForMVT();
   std::pair<SDValue,SDValue> CallInfo =
-    TLI.LowerCallTo(InChain, RetTy, isSigned, !isSigned, false, CallingConv::C,
-                    false, Callee, Args, DAG);
+    TLI.LowerCallTo(InChain, RetTy, isSigned, !isSigned, false, false,
+                    CallingConv::C, false, Callee, Args, DAG);
 
   // Legalize the call sequence, starting with the chain.  This will advance
   // the LastCALLSEQ_END to the legalized version of the CALLSEQ_END node that

@@ -1240,7 +1240,7 @@ SDValue PPCTargetLowering::LowerTRAMPOLINE(SDValue Op, SelectionDAG &DAG) {
   // Lower to a call to __trampoline_setup(Trmp, TrampSize, FPtr, ctx_reg)
   std::pair<SDValue, SDValue> CallResult =
     LowerCallTo(Chain, Op.getValueType().getTypeForMVT(), false, false,
-                false, CallingConv::C, false,
+                false, false, CallingConv::C, false,
                 DAG.getExternalSymbol("__trampoline_setup", PtrVT),
                 Args, DAG);
 

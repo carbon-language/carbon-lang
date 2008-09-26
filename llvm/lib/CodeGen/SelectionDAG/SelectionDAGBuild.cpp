@@ -4123,8 +4123,9 @@ void SelectionDAGLowering::LowerCallTo(CallSite CS, SDValue Callee,
   std::pair<SDValue,SDValue> Result =
     TLI.LowerCallTo(getRoot(), CS.getType(),
                     CS.paramHasAttr(0, Attribute::SExt),
-                    CS.paramHasAttr(0, Attribute::ZExt),
-                    FTy->isVarArg(), CS.getCallingConv(),
+                    CS.paramHasAttr(0, Attribute::ZExt), FTy->isVarArg(),
+                    CS.paramHasAttr(0, Attribute::InReg),
+                    CS.getCallingConv(),
                     IsTailCall && PerformTailCallOpt,
                     Callee, Args, DAG);
   if (CS.getType() != Type::VoidTy)
@@ -5050,8 +5051,9 @@ void SelectionDAGLowering::visitMalloc(MallocInst &I) {
   Args.push_back(Entry);
 
   std::pair<SDValue,SDValue> Result =
-    TLI.LowerCallTo(getRoot(), I.getType(), false, false, false, CallingConv::C,
-                    PerformTailCallOpt, DAG.getExternalSymbol("malloc", IntPtr),
+    TLI.LowerCallTo(getRoot(), I.getType(), false, false, false, false,
+                    CallingConv::C, PerformTailCallOpt, 
+                    DAG.getExternalSymbol("malloc", IntPtr),
                     Args, DAG);
   setValue(&I, Result.first);  // Pointers always fit in registers
   DAG.setRoot(Result.second);
@@ -5065,7 +5067,7 @@ void SelectionDAGLowering::visitFree(FreeInst &I) {
   Args.push_back(Entry);
   MVT IntPtr = TLI.getPointerTy();
   std::pair<SDValue,SDValue> Result =
-    TLI.LowerCallTo(getRoot(), Type::VoidTy, false, false, false,
+    TLI.LowerCallTo(getRoot(), Type::VoidTy, false, false, false, false,
                     CallingConv::C, PerformTailCallOpt,
                     DAG.getExternalSymbol("free", IntPtr), Args, DAG);
   DAG.setRoot(Result.second);
@@ -5234,6 +5236,7 @@ void TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG,
 std::pair<SDValue, SDValue>
 TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
                             bool RetSExt, bool RetZExt, bool isVarArg,
+                            bool isInreg,
                             unsigned CallingConv, bool isTailCall,
                             SDValue Callee,
                             ArgListTy &Args, SelectionDAG &DAG) {
@@ -5326,10 +5329,11 @@ TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
   LoweredRetTys.push_back(MVT::Other);  // Always has a chain.
   
   // Create the CALL node.
-  SDValue Res = DAG.getCall(CallingConv, isVarArg, isTailCall,
+  SDValue Res = DAG.getCall(CallingConv, isVarArg, isTailCall, isInreg,
                             DAG.getVTList(&LoweredRetTys[0],
                                           LoweredRetTys.size()),
-                            &Ops[0], Ops.size());
+                            &Ops[0], Ops.size()
+                            );
   Chain = Res.getValue(LoweredRetTys.size() - 1);
 
   // Gather up the call result into a single value.

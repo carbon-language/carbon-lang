@@ -126,7 +126,10 @@ void CCState::AnalyzeCallOperands(SmallVectorImpl<MVT> &ArgVTs,
 void CCState::AnalyzeCallResult(CallSDNode *TheCall, CCAssignFn Fn) {
   for (unsigned i = 0, e = TheCall->getNumRetVals(); i != e; ++i) {
     MVT VT = TheCall->getRetValType(i);
-    if (Fn(i, VT, VT, CCValAssign::Full, ISD::ArgFlagsTy(), *this)) {
+    ISD::ArgFlagsTy Flags = ISD::ArgFlagsTy();
+    if (TheCall->isInreg())
+      Flags.setInReg();
+    if (Fn(i, VT, VT, CCValAssign::Full, Flags, *this)) {
       cerr << "Call result #" << i << " has unhandled type "
            << VT.getMVTString() << "\n";
       abort();

@@ -318,9 +318,9 @@ static SDValue LowerRET(SDValue Op, SelectionDAG &DAG) {
 std::pair<SDValue, SDValue>
 AlphaTargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy, 
                                  bool RetSExt, bool RetZExt, bool isVarArg,
-                                 unsigned CallingConv, bool isTailCall,
-                                 SDValue Callee, ArgListTy &Args,
-                                 SelectionDAG &DAG) {
+                                 bool isInreg, unsigned CallingConv, 
+                                 bool isTailCall, SDValue Callee, 
+                                 ArgListTy &Args, SelectionDAG &DAG) {
   int NumBytes = 0;
   if (Args.size() > 6)
     NumBytes = (Args.size() - 6) * 8;

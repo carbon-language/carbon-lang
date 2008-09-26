@@ -1351,7 +1351,6 @@ void AssemblyWriter::printFunction(const Function *F) {
   case CallingConv::Cold:         Out << "coldcc "; break;
   case CallingConv::X86_StdCall:  Out << "x86_stdcallcc "; break;
   case CallingConv::X86_FastCall: Out << "x86_fastcallcc "; break; 
-  case CallingConv::X86_SSECall:  Out << "x86_ssecallcc "; break;
   default: Out << "cc" << F->getCallingConv() << " "; break;
   }
 
@@ -1635,7 +1634,6 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     case CallingConv::Cold:  Out << " coldcc"; break;
     case CallingConv::X86_StdCall:  Out << " x86_stdcallcc"; break;
     case CallingConv::X86_FastCall: Out << " x86_fastcallcc"; break; 
-    case CallingConv::X86_SSECall: Out << " x86_ssecallcc"; break; 
     default: Out << " cc" << CI->getCallingConv(); break;
     }
 
@@ -1680,7 +1678,6 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     case CallingConv::Cold:  Out << " coldcc"; break;
     case CallingConv::X86_StdCall:  Out << " x86_stdcallcc"; break;
     case CallingConv::X86_FastCall: Out << " x86_fastcallcc"; break;
-    case CallingConv::X86_SSECall: Out << " x86_ssecallcc"; break;
     default: Out << " cc" << II->getCallingConv(); break;
     }
 

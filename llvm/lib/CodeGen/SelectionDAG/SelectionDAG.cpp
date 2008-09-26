@@ -3114,7 +3114,7 @@ SDValue SelectionDAG::getMemcpy(SDValue Chain, SDValue Dst,
   Entry.Node = Size; Args.push_back(Entry);
   std::pair<SDValue,SDValue> CallResult =
     TLI.LowerCallTo(Chain, Type::VoidTy,
-                    false, false, false, CallingConv::C, false,
+                    false, false, false, false, CallingConv::C, false,
                     getExternalSymbol("memcpy", TLI.getPointerTy()),
                     Args, *this);
   return CallResult.second;
@@ -3159,7 +3159,7 @@ SDValue SelectionDAG::getMemmove(SDValue Chain, SDValue Dst,
   Entry.Node = Size; Args.push_back(Entry);
   std::pair<SDValue,SDValue> CallResult =
     TLI.LowerCallTo(Chain, Type::VoidTy,
-                    false, false, false, CallingConv::C, false,
+                    false, false, false, false, CallingConv::C, false,
                     getExternalSymbol("memmove", TLI.getPointerTy()),
                     Args, *this);
   return CallResult.second;
@@ -3210,7 +3210,7 @@ SDValue SelectionDAG::getMemset(SDValue Chain, SDValue Dst,
   Args.push_back(Entry);
   std::pair<SDValue,SDValue> CallResult =
     TLI.LowerCallTo(Chain, Type::VoidTy,
-                    false, false, false, CallingConv::C, false,
+                    false, false, false, false, CallingConv::C, false,
                     getExternalSymbol("memset", TLI.getPointerTy()),
                     Args, *this);
   return CallResult.second;
@@ -3329,7 +3329,7 @@ SDValue SelectionDAG::getMergeValues(const SDValue *Ops, unsigned NumOps,
 
 SDValue
 SelectionDAG::getCall(unsigned CallingConv, bool IsVarArgs, bool IsTailCall,
-                      SDVTList VTs,
+                      bool IsInreg, SDVTList VTs,
                       const SDValue *Operands, unsigned NumOperands) {
   // Do not include isTailCall in the folding set profile.
   FoldingSetNodeID ID;
@@ -3345,7 +3345,7 @@ SelectionDAG::getCall(unsigned CallingConv, bool IsVarArgs, bool IsTailCall,
     return SDValue(E, 0);
   }
   SDNode *N = NodeAllocator.Allocate<CallSDNode>();
-  new (N) CallSDNode(CallingConv, IsVarArgs, IsTailCall,
+  new (N) CallSDNode(CallingConv, IsVarArgs, IsTailCall, IsInreg,
                      VTs, Operands, NumOperands);
   CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);

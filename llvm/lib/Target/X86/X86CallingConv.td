@@ -65,15 +65,6 @@ def RetCC_X86_32_Fast : CallingConv<[
   CCDelegateTo<RetCC_X86Common>
 ]>;
 
-// X86-32 SSEregparm return-value convention.
-def RetCC_X86_32_SSE : CallingConv<[
-  // The X86-32 sseregparm calling convention returns FP values in XMM0 if the
-  // target has SSE2, otherwise it is the C calling convention.
-  CCIfType<[f32], CCIfSubtarget<"hasSSE2()", CCAssignToReg<[XMM0, XMM1]>>>,
-  CCIfType<[f64], CCIfSubtarget<"hasSSE2()", CCAssignToReg<[XMM0, XMM1]>>>,
-  CCDelegateTo<RetCC_X86Common>
-]>;
-
 // X86-64 C return-value convention.
 def RetCC_X86_64_C : CallingConv<[
   // The X86-64 calling convention always returns FP values in XMM0.
@@ -103,8 +94,6 @@ def RetCC_X86_Win64_C : CallingConv<[
 def RetCC_X86_32 : CallingConv<[
   // If FastCC, use RetCC_X86_32_Fast.
   CCIfCC<"CallingConv::Fast", CCDelegateTo<RetCC_X86_32_Fast>>,
-  // If SSECC, use RetCC_X86_32_SSE.
-  CCIfCC<"CallingConv::X86_SSECall", CCDelegateTo<RetCC_X86_32_SSE>>,
   // Otherwise, use RetCC_X86_32_C.
   CCDelegateTo<RetCC_X86_32_C>
 ]>;

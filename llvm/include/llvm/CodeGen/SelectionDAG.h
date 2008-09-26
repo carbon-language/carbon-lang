@@ -467,7 +467,8 @@ public:
   /// getCall - Create a CALL node from the given information.
   ///
   SDValue getCall(unsigned CallingConv, bool IsVarArgs, bool IsTailCall,
-                  SDVTList VTs, const SDValue *Operands, unsigned NumOperands);
+                  bool isInreg, SDVTList VTs, const SDValue *Operands, 
+                  unsigned NumOperands);
 
   /// getLoad - Loads are not normal binary operators: their result type is not
   /// determined by their operands, and they produce a value AND a token chain.

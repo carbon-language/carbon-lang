@@ -2191,17 +2191,23 @@ class CallSDNode : public SDNode {
   unsigned CallingConv;
   bool IsVarArg;
   bool IsTailCall;
+  // We might eventually want a full-blown Attributes for the result; that
+  // will expand the size of the representation.  At the moment we only
+  // need Inreg.
+  bool Inreg;
   virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
 protected:
   friend class SelectionDAG;
-  CallSDNode(unsigned cc, bool isvararg, bool istailcall,
+  CallSDNode(unsigned cc, bool isvararg, bool istailcall, bool isinreg,
              SDVTList VTs, const SDValue *Operands, unsigned numOperands)
     : SDNode(ISD::CALL, VTs, Operands, numOperands),
-      CallingConv(cc), IsVarArg(isvararg), IsTailCall(istailcall) {}
+      CallingConv(cc), IsVarArg(isvararg), IsTailCall(istailcall),
+      Inreg(isinreg) {}
 public:
   unsigned getCallingConv() const { return CallingConv; }
   unsigned isVarArg() const { return IsVarArg; }
   unsigned isTailCall() const { return IsTailCall; }
+  unsigned isInreg() const { return Inreg; }
 
   /// Set this call to not be marked as a tail call. Normally setter
   /// methods in SDNodes are unsafe because it breaks the CSE map,

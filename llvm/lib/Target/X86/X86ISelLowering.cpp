@@ -5157,9 +5157,9 @@ X86TargetLowering::EmitTargetCodeForMemset(SelectionDAG &DAG,
       Entry.Node = Size;
       Args.push_back(Entry);
       std::pair<SDValue,SDValue> CallResult =
-        LowerCallTo(Chain, Type::VoidTy, false, false, false, CallingConv::C,
-                    false, DAG.getExternalSymbol(bzeroEntry, IntPtr),
-                    Args, DAG);
+        LowerCallTo(Chain, Type::VoidTy, false, false, false, false, 
+                    CallingConv::C, false, 
+                    DAG.getExternalSymbol(bzeroEntry, IntPtr), Args, DAG);
       return CallResult.second;
     }
 

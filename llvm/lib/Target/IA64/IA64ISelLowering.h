@@ -60,7 +60,7 @@ namespace llvm {
     /// actual call.
     virtual std::pair<SDValue, SDValue>
       LowerCallTo(SDValue Chain, const Type *RetTy,
-                  bool RetSExt, bool RetZExt, bool isVarArg,
+                  bool RetSExt, bool RetZExt, bool isVarArg, bool isInreg,
                   unsigned CC, bool isTailCall, 
                   SDValue Callee, ArgListTy &Args, SelectionDAG &DAG);
 
