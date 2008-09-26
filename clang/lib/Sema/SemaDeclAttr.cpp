@@ -45,6 +45,40 @@ static const FunctionTypeProto *getFunctionProto(Decl *d) {
   return 0;
 }
 
+// FIXME: We should provide an abstraction around a method or function
+// to provide the following bits of information.
+
+/// isFunctionOrMethod - Return true if the given decl is a (non-K&R)
+/// function or an Objective-C method.
+static bool isFunctionOrMethod(Decl *d) {
+  return getFunctionProto(d) || isa<ObjCMethodDecl>(d);
+
+}
+
+static unsigned getFunctionOrMethodNumArgs(Decl *d) {
+  if (const FunctionTypeProto *proto = getFunctionProto(d)) {
+    return proto->getNumArgs();
+  } else {
+    return cast<ObjCMethodDecl>(d)->getNumParams();
+  }
+}
+
+static QualType getFunctionOrMethodArgType(Decl *d, unsigned Idx) {
+  if (const FunctionTypeProto *proto = getFunctionProto(d)) {
+    return proto->getArgType(Idx);
+  } else {
+    return cast<ObjCMethodDecl>(d)->getParamDecl(Idx)->getType();
+  }
+}
+
+static bool isFunctionOrMethodVariadic(Decl *d) {
+  if (const FunctionTypeProto *proto = getFunctionProto(d)) {
+    return proto->isVariadic();
+  } else {
+    return cast<ObjCMethodDecl>(d)->isVariadic();
+  }
+}
+
 static inline bool isNSStringType(QualType T, ASTContext &Ctx) {
   const PointerType *PT = T->getAsPointerType();
   if (!PT)
@@ -360,8 +394,7 @@ static void HandleNoReturnAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }
   
-  FunctionDecl *Fn = dyn_cast<FunctionDecl>(d);
-  if (!Fn) {
+  if (!isa<FunctionDecl>(d) && !isa<ObjCMethodDecl>(d)) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type,
            "noreturn", "function");
     return;
@@ -637,9 +670,7 @@ static void HandleFormatAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 
   // GCC ignores the format attribute on K&R style function
   // prototypes, so we ignore it as well
-  const FunctionTypeProto *proto = getFunctionProto(d);
-
-  if (!proto) {
+  if (!isFunctionOrMethod(d)) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type,
            "format", "function");
     return;
@@ -648,7 +679,7 @@ static void HandleFormatAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // FIXME: in C++ the implicit 'this' function parameter also counts.
   // this is needed in order to be compatible with GCC
   // the index must start in 1 and the limit is numargs+1
-  unsigned NumArgs  = proto->getNumArgs();
+  unsigned NumArgs  = getFunctionOrMethodNumArgs(d);
   unsigned FirstIdx = 1;
 
   const char *Format = Attr.getParameterName()->getName();
@@ -703,7 +734,7 @@ static void HandleFormatAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   unsigned ArgIdx = Idx.getZExtValue() - 1;
   
   // make sure the format string is really a string
-  QualType Ty = proto->getArgType(ArgIdx);
+  QualType Ty = getFunctionOrMethodArgType(d, ArgIdx);
 
   if (is_CFString) {
     if (!isCFStringType(Ty, S.Context)) {
@@ -741,7 +772,7 @@ static void HandleFormatAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 
   // check if the function is variadic if the 3rd argument non-zero
   if (FirstArg != 0) {
-    if (proto->isVariadic()) {
+    if (isFunctionOrMethodVariadic(d)) {
       ++NumArgs; // +1 for ...
     } else {
       S.Diag(d->getLocation(), diag::err_format_attribute_requires_variadic);

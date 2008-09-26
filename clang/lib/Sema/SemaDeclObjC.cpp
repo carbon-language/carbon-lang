@@ -978,8 +978,6 @@ Sema::DeclTy *Sema::ActOnMethodDeclaration(
                            MethodDeclKind == tok::objc_optional ? 
                            ObjCMethodDecl::Optional : 
                            ObjCMethodDecl::Required);
-  if (AttrList)
-    ProcessDeclAttributeList(ObjCMethod, AttrList);
   
   llvm::SmallVector<ParmVarDecl*, 16> Params;
   
@@ -1004,6 +1002,9 @@ Sema::DeclTy *Sema::ActOnMethodDeclaration(
   ObjCMethod->setObjCDeclQualifier(
     CvtQTToAstBitMask(ReturnQT.getObjCDeclQualifier()));
   const ObjCMethodDecl *PrevMethod = 0;
+
+  if (AttrList)
+    ProcessDeclAttributeList(ObjCMethod, AttrList);
  
   // For implementations (which can be very "coarse grain"), we add the 
   // method now. This allows the AST to implement lookup methods that work 
