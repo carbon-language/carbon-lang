@@ -26,6 +26,9 @@ typedef float CGFloat;
 @interface NSConstantString : NSSimpleCString @end
 extern void *_NSConstantStringClassReference;
 
+typedef const struct __CFString * CFStringRef;
+extern void CFStringCreateWithFormat(CFStringRef format, ...) __attribute__((format(CFString, 1, 2)));
+
 //===----------------------------------------------------------------------===//
 // Test cases.
 //===----------------------------------------------------------------------===//
@@ -34,3 +37,7 @@ void check_nslog(unsigned k) {
   NSLog(@"%d%%", k); // no-warning
   NSLog(@"%s%lb%d", "unix", 10,20); // expected-warning {{lid conversion '%lb'}}
 }
+
+// Check type validation
+extern void NSLog2(int format, ...) __attribute__((format(__NSString__, 1, 2))); // expected-error {{format argument not an NSString}}
+extern void CFStringCreateWithFormat2(int *format, ...) __attribute__((format(CFString, 1, 2))); // expected-error {{format argument not a CFString}}

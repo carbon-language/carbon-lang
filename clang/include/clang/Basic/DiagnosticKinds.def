@@ -658,10 +658,8 @@ DIAG(err_format_strftime_third_parameter, ERROR,
      "strftime format attribute requires 3rd parameter to be 0")
 DIAG(err_format_attribute_requires_variadic, ERROR,
      "format attribute requires variadic function")
-DIAG(err_format_attribute_not_string, ERROR,
-     "format argument not a string type")
-DIAG(err_format_attribute_not_NSString, ERROR,
-    "format argument is not an NSString")
+DIAG(err_format_attribute_not, ERROR,
+     "format argument not %0")
 DIAG(err_attribute_invalid_size, ERROR,
      "vector size not an integral multiple of component size")
 DIAG(err_attribute_zero_size, ERROR,

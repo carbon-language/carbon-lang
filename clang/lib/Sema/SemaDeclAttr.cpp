@@ -61,6 +61,22 @@ static inline bool isNSStringType(QualType T, ASTContext &Ctx) {
          ClsName == &Ctx.Idents.get("NSMutableString");
 }
 
+static inline bool isCFStringType(QualType T, ASTContext &Ctx) {
+  const PointerType *PT = T->getAsPointerType();
+  if (!PT)
+    return false;
+
+  const RecordType *RT = PT->getPointeeType()->getAsRecordType();
+  if (!RT)
+    return false;
+  
+  const RecordDecl *RD = RT->getDecl();
+  if (RD->getTagKind() != TagDecl::TK_struct)
+    return false;
+
+  return RD->getIdentifier() == &Ctx.Idents.get("__CFString");
+}
+
 //===----------------------------------------------------------------------===//
 // Attribute Implementations
 //===----------------------------------------------------------------------===//
@@ -648,6 +664,7 @@ static void HandleFormatAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   bool Supported = false;
   bool is_NSString = false;
   bool is_strftime = false;
+  bool is_CFString = false;
   
   switch (FormatLen) {
   default: break;
@@ -655,8 +672,9 @@ static void HandleFormatAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   case 6: Supported = !memcmp(Format, "printf", 6); break;
   case 7: Supported = !memcmp(Format, "strfmon", 7); break;
   case 8:
-    Supported = (is_strftime = !memcmp(Format, "strftime", 8)) || 
-                (is_NSString = !memcmp(Format, "NSString", 8));
+    Supported = (is_strftime = !memcmp(Format, "strftime", 8)) ||
+                (is_NSString = !memcmp(Format, "NSString", 8)) ||
+                (is_CFString = !memcmp(Format, "CFString", 8));
     break;
   }
       
@@ -687,22 +705,28 @@ static void HandleFormatAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // make sure the format string is really a string
   QualType Ty = proto->getArgType(ArgIdx);
 
-  if (is_NSString) {
+  if (is_CFString) {
+    if (!isCFStringType(Ty, S.Context)) {
+      S.Diag(Attr.getLoc(), diag::err_format_attribute_not,
+             "a CFString", IdxExpr->getSourceRange());
+      return;
+    }
+  } else if (is_NSString) {
     // FIXME: do we need to check if the type is NSString*?  What are
     //  the semantics?
     if (!isNSStringType(Ty, S.Context)) {
       // FIXME: Should highlight the actual expression that has the
       // wrong type.
-      S.Diag(Attr.getLoc(), diag::err_format_attribute_not_NSString,
-             IdxExpr->getSourceRange());
+      S.Diag(Attr.getLoc(), diag::err_format_attribute_not,
+             "an NSString", IdxExpr->getSourceRange());
       return;
     }    
   } else if (!Ty->isPointerType() ||
              !Ty->getAsPointerType()->getPointeeType()->isCharType()) {
     // FIXME: Should highlight the actual expression that has the
     // wrong type.
-    S.Diag(Attr.getLoc(), diag::err_format_attribute_not_string,
-           IdxExpr->getSourceRange());
+    S.Diag(Attr.getLoc(), diag::err_format_attribute_not,
+           "a string type", IdxExpr->getSourceRange());
     return;
   }
 
