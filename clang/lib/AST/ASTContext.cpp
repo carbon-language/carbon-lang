@@ -54,7 +54,7 @@ void ASTContext::PrintStats() const {
   fprintf(stderr, "*** AST Context Stats:\n");
   fprintf(stderr, "  %d types total.\n", (int)Types.size());
   unsigned NumBuiltin = 0, NumPointer = 0, NumArray = 0, NumFunctionP = 0;
-  unsigned NumVector = 0, NumComplex = 0;
+  unsigned NumVector = 0, NumComplex = 0, NumBlockPointer = 0;
   unsigned NumFunctionNP = 0, NumTypeName = 0, NumTagged = 0, NumReference = 0;
   
   unsigned NumTagStruct = 0, NumTagUnion = 0, NumTagEnum = 0, NumTagClass = 0;
@@ -68,6 +68,8 @@ void ASTContext::PrintStats() const {
       ++NumBuiltin;
     else if (isa<PointerType>(T))
       ++NumPointer;
+    else if (isa<BlockPointerType>(T))
+      ++NumBlockPointer;
     else if (isa<ReferenceType>(T))
       ++NumReference;
     else if (isa<ComplexType>(T))
@@ -109,6 +111,7 @@ void ASTContext::PrintStats() const {
 
   fprintf(stderr, "    %d builtin types\n", NumBuiltin);
   fprintf(stderr, "    %d pointer types\n", NumPointer);
+  fprintf(stderr, "    %d block pointer types\n", NumBlockPointer);
   fprintf(stderr, "    %d reference types\n", NumReference);
   fprintf(stderr, "    %d complex types\n", NumComplex);
   fprintf(stderr, "    %d array types\n", NumArray);
