@@ -165,7 +165,7 @@ public:
     getFileInfo(File).isImport = true;
   }
 
-  /// MarkFileSystemHeader - Mark the specified fiel as a system header, e.g.
+  /// MarkFileSystemHeader - Mark the specified file as a system header, e.g.
   /// due to #pragma GCC system_header.
   void MarkFileSystemHeader(const FileEntry *File) {
     getFileInfo(File).DirInfo = DirectoryLookup::SystemHeaderDir;
