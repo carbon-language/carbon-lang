@@ -32,6 +32,7 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetOptions.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
@@ -130,12 +131,17 @@ namespace {
     ///
     MachineBasicBlock *CurBB;
 
+    /// OptForSize - If true, selector should try to optimize for code size
+    /// instead of performance.
+    bool OptForSize;
+
   public:
     X86DAGToDAGISel(X86TargetMachine &tm, bool fast)
       : SelectionDAGISel(X86Lowering, fast),
         ContainsFPCode(false), TM(tm),
         X86Lowering(*TM.getTargetLowering()),
-        Subtarget(&TM.getSubtarget<X86Subtarget>()) {}
+        Subtarget(&TM.getSubtarget<X86Subtarget>()),
+        OptForSize(OptimizeForSize) {}
 
     virtual bool runOnFunction(Function &Fn) {
       // Make sure we re-emit a set of the global base reg if necessary
@@ -650,6 +656,10 @@ void X86DAGToDAGISel::PreprocessForFPConvert() {
 /// when it has created a SelectionDAG for us to codegen.
 void X86DAGToDAGISel::InstructionSelect() {
   CurBB = BB;  // BB can change as result of isel.
+  if (!OptForSize) {
+    const Function *F = CurDAG->getMachineFunction().getFunction();
+    OptForSize = !F->isDeclaration() && F->hasNote(Attribute::OptimizeForSize);
+  }
 
   DEBUG(BB->dump());
   if (!Fast)

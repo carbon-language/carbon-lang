@@ -186,6 +186,7 @@ def In64BitMode  : Predicate<"Subtarget->is64Bit()">;
 def SmallCode    : Predicate<"TM.getCodeModel() == CodeModel::Small">;
 def NotSmallCode : Predicate<"TM.getCodeModel() != CodeModel::Small">;
 def IsStatic     : Predicate<"TM.getRelocationModel() == Reloc::Static">;
+def OptForSpeed  : Predicate<"!OptForSize">;
 
 //===----------------------------------------------------------------------===//
 // X86 Instruction Format Definitions.
