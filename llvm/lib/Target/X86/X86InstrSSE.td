@@ -2945,7 +2945,7 @@ def : Pat<(v2i64 (vector_shuffle VR128:$src1, (undef),
 let AddedComplexity = 10 in {
 def : Pat<(v4f32 (vector_shuffle VR128:$src, (undef),
                   UNPCKL_v_undef_shuffle_mask)),
-          (UNPCKLPSrr VR128:$src, VR128:$src)>, Requires<[HasSSE2]>;
+          (UNPCKLPSrr VR128:$src, VR128:$src)>, Requires<[HasSSE1]>;
 def : Pat<(v16i8 (vector_shuffle VR128:$src, (undef),
                   UNPCKL_v_undef_shuffle_mask)),
           (PUNPCKLBWrr VR128:$src, VR128:$src)>, Requires<[HasSSE2]>;
@@ -2954,14 +2954,14 @@ def : Pat<(v8i16 (vector_shuffle VR128:$src, (undef),
           (PUNPCKLWDrr VR128:$src, VR128:$src)>, Requires<[HasSSE2]>;
 def : Pat<(v4i32 (vector_shuffle VR128:$src, (undef),
                   UNPCKL_v_undef_shuffle_mask)),
-          (PUNPCKLDQrr VR128:$src, VR128:$src)>, Requires<[HasSSE1]>;
+          (PUNPCKLDQrr VR128:$src, VR128:$src)>, Requires<[HasSSE2]>;
 }
 
 // vector_shuffle v1, <undef>, <2, 2, 3, 3, ...>
 let AddedComplexity = 10 in {
 def : Pat<(v4f32 (vector_shuffle VR128:$src, (undef),
                   UNPCKH_v_undef_shuffle_mask)),
-          (UNPCKHPSrr VR128:$src, VR128:$src)>, Requires<[HasSSE2]>;
+          (UNPCKHPSrr VR128:$src, VR128:$src)>, Requires<[HasSSE1]>;
 def : Pat<(v16i8 (vector_shuffle VR128:$src, (undef),
                   UNPCKH_v_undef_shuffle_mask)),
           (PUNPCKHBWrr VR128:$src, VR128:$src)>, Requires<[HasSSE2]>;
@@ -2970,7 +2970,7 @@ def : Pat<(v8i16 (vector_shuffle VR128:$src, (undef),
           (PUNPCKHWDrr VR128:$src, VR128:$src)>, Requires<[HasSSE2]>;
 def : Pat<(v4i32 (vector_shuffle VR128:$src, (undef),
                   UNPCKH_v_undef_shuffle_mask)),
-          (PUNPCKHDQrr VR128:$src, VR128:$src)>, Requires<[HasSSE1]>;
+          (PUNPCKHDQrr VR128:$src, VR128:$src)>, Requires<[HasSSE2]>;
 }
 
 let AddedComplexity = 15 in {
