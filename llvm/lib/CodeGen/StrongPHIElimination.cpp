@@ -419,7 +419,6 @@ void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
   MachineBasicBlock::iterator P = MBB->begin();
   while (P != MBB->end() && P->getOpcode() == TargetInstrInfo::PHI) {
     unsigned DestReg = P->getOperand(0).getReg();
-
     
     // Don't both doing PHI elimination for dead PHI's.
     if (P->registerDefIsDead(DestReg)) {
@@ -448,6 +447,11 @@ void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
         ProcessedNames.insert(SrcReg);
         continue;
       }
+      
+      // We don't need to insert copies for implicit_defs.
+      MachineInstr* DefMI = MRI.getVRegDef(SrcReg);
+      if (DefMI->getOpcode() == TargetInstrInfo::IMPLICIT_DEF)
+        ProcessedNames.insert(SrcReg);
     
       // Check for trivial interferences via liveness information, allowing us
       // to avoid extra work later.  Any registers that interfere cannot both
