@@ -74,7 +74,7 @@ public:
   
   /// EndFunction - Gather and emit post-function debug information.
   ///
-  void EndFunction();
+  void EndFunction(MachineFunction *MF);
 };
 
 

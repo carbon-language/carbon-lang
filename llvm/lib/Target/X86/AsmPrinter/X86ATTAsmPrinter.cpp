@@ -260,7 +260,7 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   // Emit post-function debug information.
   if (TAI->doesSupportDebugInformation())
-    DW.EndFunction();
+    DW.EndFunction(&MF);
 
   // Print out jump tables referenced by the function.
   EmitJumpTableInfo(MF.getJumpTableInfo(), MF);

@@ -2031,6 +2031,39 @@ private:
     ConstructScope(RootScope, 0, 0, SPDie, Unit);
   }
 
+  /// ConstructDefaultScope - Construct a default scope for the subprogram.
+  ///
+  void ConstructDefaultScope(MachineFunction *MF) {
+    // Find the correct subprogram descriptor.
+    std::vector<SubprogramDesc *> Subprograms;
+    MMI->getAnchoredDescriptors<SubprogramDesc>(*M, Subprograms);
+
+    for (unsigned i = 0, N = Subprograms.size(); i < N; ++i) {
+      SubprogramDesc *SPD = Subprograms[i];
+
+      if (SPD->getName() == MF->getFunction()->getName()) {
+        // Get the compile unit context.
+        CompileUnit *Unit = GetBaseCompileUnit();
+
+        // Get the subprogram die.
+        DIE *SPDie = Unit->getDieMapSlotFor(SPD);
+        assert(SPDie && "Missing subprogram descriptor");
+
+        // Add the function bounds.
+        AddLabel(SPDie, DW_AT_low_pc, DW_FORM_addr,
+                 DWLabel("func_begin", SubprogramCount));
+        AddLabel(SPDie, DW_AT_high_pc, DW_FORM_addr,
+                 DWLabel("func_end", SubprogramCount));
+
+        MachineLocation Location(RI->getFrameRegister(*MF));
+        AddAddress(SPDie, DW_AT_frame_base, Location);
+        return;
+      }
+    }
+
+    assert(0 && "Couldn't find DIE for machine function!");
+  }
+
   /// EmitInitial - Emit initial Dwarf declarations.  This is necessary for cc
   /// tools to recognize the object file contains Dwarf information.
   void EmitInitial() {
@@ -2588,7 +2621,7 @@ private:
     Asm->SwitchToDataSection(TAI->getDwarfARangesSection());
 
     // FIXME - Mock up
-  #if 0
+#if 0
     CompileUnit *Unit = GetBaseCompileUnit();
 
     // Don't include size of length
@@ -2612,7 +2645,7 @@ private:
 
     Asm->EmitInt32(0); Asm->EOL("EOM (1)");
     Asm->EmitInt32(0); Asm->EOL("EOM (2)");
-  #endif
+#endif
 
     Asm->EOL();
   }
@@ -2822,7 +2855,7 @@ public:
 
   /// EndFunction - Gather and emit post-function debug information.
   ///
-  void EndFunction() {
+  void EndFunction(MachineFunction *MF) {
     if (!ShouldEmitDwarf()) return;
 
     // Define end label for subprogram.
@@ -2842,7 +2875,18 @@ public:
     }
 
     // Construct scopes for subprogram.
-    ConstructRootScope(MMI->getRootScope());
+    if (MMI->getRootScope())
+      ConstructRootScope(MMI->getRootScope());
+    else
+      // FIXME: This is wrong. We are essentially getting past a problem with
+      // debug information not being able to handle unreachable blocks that have
+      // debug information in them. In particular, those unreachable blocks that
+      // have "region end" info in them. That situation results in the "root
+      // scope" not being created. If that's the case, then emit a "default"
+      // scope, i.e., one that encompasses the whole function. This isn't
+      // desirable. And a better way of handling this (and all of the debugging
+      // information) needs to be explored.
+      ConstructDefaultScope(MF);
 
     DebugFrames.push_back(FunctionDebugFrameInfo(SubprogramCount,
                                                  MMI->getFrameMoves()));
@@ -3922,8 +3966,8 @@ void DwarfWriter::BeginFunction(MachineFunction *MF) {
 
 /// EndFunction - Gather and emit post-function debug information.
 ///
-void DwarfWriter::EndFunction() {
-  DD->EndFunction();
+void DwarfWriter::EndFunction(MachineFunction *MF) {
+  DD->EndFunction(MF);
   DE->EndFunction();
 
   if (MachineModuleInfo *MMI = DD->getMMI() ? DD->getMMI() : DE->getMMI())

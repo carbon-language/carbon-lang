@@ -617,7 +617,7 @@ bool PPCLinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   EmitJumpTableInfo(MF.getJumpTableInfo(), MF);
 
   // Emit post-function debug information.
-  DW.EndFunction();
+  DW.EndFunction(&MF);
 
   // We didn't modify anything.
   return false;
@@ -809,7 +809,7 @@ bool PPCDarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   EmitJumpTableInfo(MF.getJumpTableInfo(), MF);
 
   // Emit post-function debug information.
-  DW.EndFunction();
+  DW.EndFunction(&MF);
 
   // We didn't modify anything.
   return false;
