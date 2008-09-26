@@ -513,6 +513,7 @@ void CodeGenModule::ConstructAttributeList(const Decl *TargetDecl,
                                            ArgTypeIterator end,
                                            AttributeListType &PAL) {
   unsigned FuncAttrs = 0;
+  unsigned RetAttrs = 0;
 
   if (TargetDecl) {
     if (TargetDecl->getAttr<NoThrowAttr>())
@@ -528,9 +529,9 @@ void CodeGenModule::ConstructAttributeList(const Decl *TargetDecl,
   case ABIArgInfo::Default:
     if (RetTy->isPromotableIntegerType()) {
       if (RetTy->isSignedIntegerType()) {
-        FuncAttrs |= llvm::Attribute::SExt;
+        RetAttrs |= llvm::Attribute::SExt;
       } else if (RetTy->isUnsignedIntegerType()) {
-        FuncAttrs |= llvm::Attribute::ZExt;
+        RetAttrs |= llvm::Attribute::ZExt;
       }
     }
     break;
@@ -550,8 +551,8 @@ void CodeGenModule::ConstructAttributeList(const Decl *TargetDecl,
     assert(0 && "Invalid ABI kind for return argument");    
   }
 
-  if (FuncAttrs)
-    PAL.push_back(llvm::AttributeWithIndex::get(0, FuncAttrs));
+  if (RetAttrs)
+    PAL.push_back(llvm::AttributeWithIndex::get(0, RetAttrs));
   for (++begin; begin != end; ++begin) {
     QualType ParamType = *begin;
     unsigned Attributes = 0;
@@ -592,6 +593,9 @@ void CodeGenModule::ConstructAttributeList(const Decl *TargetDecl,
       PAL.push_back(llvm::AttributeWithIndex::get(Index, Attributes));
     ++Index;
   }
+  if (FuncAttrs)
+    PAL.push_back(llvm::AttributeWithIndex::get(~0, FuncAttrs));
+
 }
 
 void CodeGenFunction::EmitFunctionProlog(llvm::Function *Fn,
