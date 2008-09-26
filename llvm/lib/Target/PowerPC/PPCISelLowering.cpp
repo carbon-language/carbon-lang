@@ -664,7 +664,7 @@ SDValue PPC::get_VSPLTI_elt(SDNode *N, unsigned ByteSize, SelectionDAG &DAG) {
     if (LeadingOnes) {
       if (UniquedVals[Multiple-1].getNode() == 0)
         return DAG.getTargetConstant(~0U, MVT::i32);  // -1,-1,-1,undef
-      int Val =cast<ConstantSDNode>(UniquedVals[Multiple-1])->getSignExtended();
+      int Val =cast<ConstantSDNode>(UniquedVals[Multiple-1])->getSExtValue();
       if (Val >= -16)                            // -1,-1,-1,-2 -> vspltisw(-2)
         return DAG.getTargetConstant(Val, MVT::i32);
     }

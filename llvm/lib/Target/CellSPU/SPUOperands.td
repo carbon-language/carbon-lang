@@ -65,7 +65,7 @@ def HI16_vec : SDNodeXForm<scalar_to_vector, [{
 // simm7 predicate - True if the immediate fits in an 7-bit signed
 // field.
 def simm7: PatLeaf<(imm), [{
-  int sextVal = int(N->getSignExtended());
+  int sextVal = int(N->getSExtValue());
   return (sextVal >= -64 && sextVal <= 63);
 }]>;
 
@@ -78,7 +78,7 @@ def uimm7: PatLeaf<(imm), [{
 // immSExt8 predicate - True if the immediate fits in an 8-bit sign extended
 // field.
 def immSExt8  : PatLeaf<(imm), [{
-  int Value = int(N->getSignExtended());
+  int Value = int(N->getSExtValue());
   return (Value >= -(1 << 8) && Value <= (1 << 8) - 1);
 }]>;
 

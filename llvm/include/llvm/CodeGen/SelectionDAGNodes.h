@@ -1721,11 +1721,7 @@ public:
   const ConstantInt *getConstantIntValue() const { return Value; }
   const APInt &getAPIntValue() const { return Value->getValue(); }
   uint64_t getZExtValue() const { return Value->getZExtValue(); }
-
-  int64_t getSignExtended() const {
-    unsigned Bits = getValueType(0).getSizeInBits();
-    return ((int64_t)getZExtValue() << (64-Bits)) >> (64-Bits);
-  }
+  int64_t getSExtValue() const { return Value->getSExtValue(); }
 
   bool isNullValue() const { return Value->isNullValue(); }
   bool isAllOnesValue() const { return Value->isAllOnesValue(); }

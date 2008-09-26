@@ -775,7 +775,7 @@ bool X86DAGToDAGISel::MatchAddress(SDValue N, X86ISelAddressMode &AM,
   // RIP relative addressing: %rip + 32-bit displacement!
   if (AM.isRIPRel) {
     if (!AM.ES && AM.JT != -1 && N.getOpcode() == ISD::Constant) {
-      int64_t Val = cast<ConstantSDNode>(N)->getSignExtended();
+      int64_t Val = cast<ConstantSDNode>(N)->getSExtValue();
       if (isInt32(AM.Disp + Val)) {
         AM.Disp += Val;
         return false;
@@ -790,7 +790,7 @@ bool X86DAGToDAGISel::MatchAddress(SDValue N, X86ISelAddressMode &AM,
   switch (N.getOpcode()) {
   default: break;
   case ISD::Constant: {
-    int64_t Val = cast<ConstantSDNode>(N)->getSignExtended();
+    int64_t Val = cast<ConstantSDNode>(N)->getSExtValue();
     if (isInt32(AM.Disp + Val)) {
       AM.Disp += Val;
       return false;
@@ -952,7 +952,7 @@ DOUT << "AlreadySelected " << AlreadySelected << "\n";
           // Address could not have picked a GV address for the displacement.
           AM.GV == NULL &&
           // On x86-64, the resultant disp must fit in 32-bits.
-          isInt32(AM.Disp + CN->getSignExtended()) &&
+          isInt32(AM.Disp + CN->getSExtValue()) &&
           // Check to see if the LHS & C is zero.
           CurDAG->MaskedValueIsZero(N.getOperand(0), CN->getAPIntValue())) {
         AM.Disp += CN->getZExtValue();

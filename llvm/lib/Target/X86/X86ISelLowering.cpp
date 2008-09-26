@@ -5019,7 +5019,7 @@ SDValue X86TargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) {
     bool IllegalFPCMov = false;
     if (VT.isFloatingPoint() && !VT.isVector() &&
         !isScalarFPTypeInSSEReg(VT))  // FPStack?
-      IllegalFPCMov = !hasFPCMov(cast<ConstantSDNode>(CC)->getSignExtended());
+      IllegalFPCMov = !hasFPCMov(cast<ConstantSDNode>(CC)->getSExtValue());
     
     if ((Opc == X86ISD::CMP ||
          Opc == X86ISD::COMI ||

@@ -1170,12 +1170,12 @@ SDValue DAGCombiner::visitMUL(SDNode *N) {
                        DAG.getConstant(N1C->getAPIntValue().logBase2(),
                                        TLI.getShiftAmountTy()));
   // fold (mul x, -(1 << c)) -> -(x << c) or (-x) << c
-  if (N1C && isPowerOf2_64(-N1C->getSignExtended())) {
+  if (N1C && isPowerOf2_64(-N1C->getSExtValue())) {
     // FIXME: If the input is something that is easily negated (e.g. a 
     // single-use add), we should put the negate there.
     return DAG.getNode(ISD::SUB, VT, DAG.getConstant(0, VT),
                        DAG.getNode(ISD::SHL, VT, N0,
-                            DAG.getConstant(Log2_64(-N1C->getSignExtended()),
+                            DAG.getConstant(Log2_64(-N1C->getSExtValue()),
                                             TLI.getShiftAmountTy())));
   }
 
@@ -1238,7 +1238,7 @@ SDValue DAGCombiner::visitSDIV(SDNode *N) {
   if (N0C && N1C && !N1C->isNullValue())
     return DAG.FoldConstantArithmetic(ISD::SDIV, VT, N0C, N1C);
   // fold (sdiv X, 1) -> X
-  if (N1C && N1C->getSignExtended() == 1LL)
+  if (N1C && N1C->getSExtValue() == 1LL)
     return N0;
   // fold (sdiv X, -1) -> 0-X
   if (N1C && N1C->isAllOnesValue())
@@ -1251,13 +1251,13 @@ SDValue DAGCombiner::visitSDIV(SDNode *N) {
   }
   // fold (sdiv X, pow2) -> simple ops after legalize
   if (N1C && !N1C->isNullValue() && !TLI.isIntDivCheap() &&
-      (isPowerOf2_64(N1C->getSignExtended()) || 
-       isPowerOf2_64(-N1C->getSignExtended()))) {
+      (isPowerOf2_64(N1C->getSExtValue()) || 
+       isPowerOf2_64(-N1C->getSExtValue()))) {
     // If dividing by powers of two is cheap, then don't perform the following
     // fold.
     if (TLI.isPow2DivCheap())
       return SDValue();
-    int64_t pow2 = N1C->getSignExtended();
+    int64_t pow2 = N1C->getSExtValue();
     int64_t abs2 = pow2 > 0 ? pow2 : -pow2;
     unsigned lg2 = Log2_64(abs2);
     // Splat the sign bit into the register
@@ -1283,7 +1283,7 @@ SDValue DAGCombiner::visitSDIV(SDNode *N) {
   }
   // if integer divide is expensive and we satisfy the requirements, emit an
   // alternate sequence.
-  if (N1C && (N1C->getSignExtended() < -1 || N1C->getSignExtended() > 1) && 
+  if (N1C && (N1C->getSExtValue() < -1 || N1C->getSExtValue() > 1) && 
       !TLI.isIntDivCheap()) {
     SDValue Op = BuildSDIV(N);
     if (Op.getNode()) return Op;

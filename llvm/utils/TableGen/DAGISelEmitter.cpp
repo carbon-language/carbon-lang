@@ -437,7 +437,7 @@ public:
     if (N->isLeaf()) {
       if (IntInit *II = dynamic_cast<IntInit*>(N->getLeafValue())) {
         emitCheck("cast<ConstantSDNode>(" + RootName +
-                  ")->getSignExtended() == " + itostr(II->getValue()));
+                  ")->getSExtValue() == " + itostr(II->getValue()));
         return;
       } else if (!NodeIsComplexPattern(N)) {
         assert(0 && "Cannot match this as a leaf value!");
@@ -726,7 +726,7 @@ public:
         emitCheck("isa<ConstantSDNode>(" + RootName + ")");
         unsigned CTmp = TmpNo++;
         emitCode("int64_t CN"+utostr(CTmp)+" = cast<ConstantSDNode>("+
-                 RootName + ")->getSignExtended();");
+                 RootName + ")->getSExtValue();");
         
         emitCheck("CN" + utostr(CTmp) + " == " +itostr(II->getValue()));
       } else {

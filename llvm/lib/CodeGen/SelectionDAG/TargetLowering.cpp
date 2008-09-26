@@ -1744,13 +1744,13 @@ bool TargetLowering::isGAPlusOffset(SDNode *N, GlobalValue* &GA,
     if (isGAPlusOffset(N1.getNode(), GA, Offset)) {
       ConstantSDNode *V = dyn_cast<ConstantSDNode>(N2);
       if (V) {
-        Offset += V->getSignExtended();
+        Offset += V->getSExtValue();
         return true;
       }
     } else if (isGAPlusOffset(N2.getNode(), GA, Offset)) {
       ConstantSDNode *V = dyn_cast<ConstantSDNode>(N1);
       if (V) {
-        Offset += V->getSignExtended();
+        Offset += V->getSExtValue();
         return true;
       }
     }
@@ -2298,7 +2298,7 @@ SDValue TargetLowering::BuildSDIV(SDNode *N, SelectionDAG &DAG,
   if (!isTypeLegal(VT) || (VT != MVT::i32 && VT != MVT::i64))
     return SDValue();       // BuildSDIV only operates on i32 or i64
   
-  int64_t d = cast<ConstantSDNode>(N->getOperand(1))->getSignExtended();
+  int64_t d = cast<ConstantSDNode>(N->getOperand(1))->getSExtValue();
   ms magics = (VT == MVT::i32) ? magic32(d) : magic64(d);
   
   // Multiply the numerator (operand 0) by the magic value

@@ -41,14 +41,14 @@ namespace {
   bool
   isI64IntS10Immediate(ConstantSDNode *CN)
   {
-    return isS10Constant(CN->getSignExtended());
+    return isS10Constant(CN->getSExtValue());
   }
 
   //! ConstantSDNode predicate for i32 sign-extended, 10-bit immediates
   bool
   isI32IntS10Immediate(ConstantSDNode *CN)
   {
-    return isS10Constant(CN->getSignExtended());
+    return isS10Constant(CN->getSExtValue());
   }
 
 #if 0
@@ -65,14 +65,14 @@ namespace {
   bool
   isI32IntU10Immediate(ConstantSDNode *CN)
   {
-    return isU10Constant(CN->getSignExtended());
+    return isU10Constant(CN->getSExtValue());
   }
 
   //! ConstantSDNode predicate for i16 sign-extended, 10-bit immediate values
   bool
   isI16IntS10Immediate(ConstantSDNode *CN)
   {
-    return isS10Constant(CN->getSignExtended());
+    return isS10Constant(CN->getSExtValue());
   }
 
   //! SDNode predicate for i16 sign-extended, 10-bit immediate values
@@ -468,7 +468,7 @@ SPUDAGToDAGISel::DFormAddressPredicate(SDValue Op, SDValue N, SDValue &Base,
     } else if (Op1.getOpcode() == ISD::Constant
                || Op1.getOpcode() == ISD::TargetConstant) {
       ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Op1);
-      int32_t offset = int32_t(CN->getSignExtended());
+      int32_t offset = int32_t(CN->getSExtValue());
 
       if (Op0.getOpcode() == ISD::FrameIndex) {
         FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(Op0);
@@ -489,7 +489,7 @@ SPUDAGToDAGISel::DFormAddressPredicate(SDValue Op, SDValue N, SDValue &Base,
     } else if (Op0.getOpcode() == ISD::Constant
                || Op0.getOpcode() == ISD::TargetConstant) {
       ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Op0);
-      int32_t offset = int32_t(CN->getSignExtended());
+      int32_t offset = int32_t(CN->getSExtValue());
 
       if (Op1.getOpcode() == ISD::FrameIndex) {
         FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(Op1);
@@ -525,11 +525,11 @@ SPUDAGToDAGISel::DFormAddressPredicate(SDValue Op, SDValue N, SDValue &Base,
 
       if (isa<ConstantSDNode>(Op1)) {
         ConstantSDNode *CN = cast<ConstantSDNode>(Op1);
-        offset = int32_t(CN->getSignExtended());
+        offset = int32_t(CN->getSExtValue());
         idxOp = Op0;
       } else if (isa<ConstantSDNode>(Op0)) {
         ConstantSDNode *CN = cast<ConstantSDNode>(Op0);
-        offset = int32_t(CN->getSignExtended());
+        offset = int32_t(CN->getSExtValue());
         idxOp = Op1;
       } 
 

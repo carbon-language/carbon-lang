@@ -1392,7 +1392,7 @@ SDValue SPU::get_vec_u18imm(SDNode *N, SelectionDAG &DAG,
 SDValue SPU::get_vec_i16imm(SDNode *N, SelectionDAG &DAG,
                               MVT ValueType) {
   if (ConstantSDNode *CN = getVecImm(N)) {
-    int64_t Value = CN->getSignExtended();
+    int64_t Value = CN->getSExtValue();
     if (ValueType == MVT::i64) {
       uint64_t UValue = CN->getZExtValue();
       uint32_t upper = uint32_t(UValue >> 32);
@@ -1415,7 +1415,7 @@ SDValue SPU::get_vec_i16imm(SDNode *N, SelectionDAG &DAG,
 SDValue SPU::get_vec_i10imm(SDNode *N, SelectionDAG &DAG,
                               MVT ValueType) {
   if (ConstantSDNode *CN = getVecImm(N)) {
-    int64_t Value = CN->getSignExtended();
+    int64_t Value = CN->getSExtValue();
     if (ValueType == MVT::i64) {
       uint64_t UValue = CN->getZExtValue();
       uint32_t upper = uint32_t(UValue >> 32);
