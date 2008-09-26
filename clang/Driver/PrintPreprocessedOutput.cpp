@@ -120,7 +120,7 @@ bool PrintPPOutputPPCallbacks::MoveToLine(SourceLocation Loc) {
 
   // If this line is "close enough" to the original line, just print newlines,
   // otherwise print a #line directive.
-  if (LineNo-CurLine < 8) {
+  if (LineNo-CurLine <= 8) {
     if (LineNo-CurLine == 1)
       OS << '\n';
     else if (LineNo == CurLine)
