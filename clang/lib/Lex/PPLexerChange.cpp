@@ -78,7 +78,7 @@ void Preprocessor::EnterSourceFile(unsigned FileID,
   Lexer *TheLexer = new Lexer(SourceLocation::getFileLoc(FileID, 0), *this);
   EnterSourceFileWithLexer(TheLexer, CurDir);
 }  
-  
+
 /// EnterSourceFile - Add a source file to the top of the include stack and
 /// start lexing tokens from it instead of the current buffer.
 void Preprocessor::EnterSourceFileWithLexer(Lexer *TheLexer, 
@@ -95,12 +95,10 @@ void Preprocessor::EnterSourceFileWithLexer(Lexer *TheLexer,
   
   // Notify the client, if desired, that we are in a new source file.
   if (Callbacks && !CurLexer->Is_PragmaLexer) {
-    DirectoryLookup::DirType FileType = DirectoryLookup::NormalHeaderDir;
-    
-    // Get the file entry for the current file.
-    if (const FileEntry *FE = 
-           SourceMgr.getFileEntryForLoc(CurLexer->getFileLoc()))
-      FileType = HeaderInfo.getFileDirFlavor(FE);
+    DirectoryLookup::DirType FileType =
+     // FIXME:
+      (DirectoryLookup::DirType)
+       SourceMgr.getDirCharacteristic(CurLexer->getFileLoc());
     
     Callbacks->FileChanged(CurLexer->getFileLoc(),
                            PPCallbacks::EnterFile, FileType);
@@ -182,13 +180,11 @@ bool Preprocessor::HandleEndOfFile(Token &Result, bool isEndOfMacro) {
 
     // Notify the client, if desired, that we are in a new source file.
     if (Callbacks && !isEndOfMacro && CurLexer) {
-      DirectoryLookup::DirType FileType = DirectoryLookup::NormalHeaderDir;
+      DirectoryLookup::DirType FileType =
+        // FIXME:
+        (DirectoryLookup::DirType)
+        SourceMgr.getDirCharacteristic(CurLexer->getFileLoc());
       
-      // Get the file entry for the current file.
-      if (const FileEntry *FE = 
-            SourceMgr.getFileEntryForLoc(CurLexer->getFileLoc()))
-        FileType = HeaderInfo.getFileDirFlavor(FE);
-
       Callbacks->FileChanged(CurLexer->getSourceLocation(CurLexer->BufferPtr),
                              PPCallbacks::ExitFile, FileType);
     }

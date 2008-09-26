@@ -600,7 +600,8 @@ static bool ConcatenateIncludeName(llvm::SmallVector<char, 128> &FilenameBuffer,
 /// HandleIncludeDirective - The "#include" tokens have just been read, read the
 /// file to be included from the lexer, then include it!  This is a common
 /// routine with functionality shared between #include, #include_next and
-/// #import.
+/// #import.  LookupFrom is set when this is a #include_next directive, it
+/// specifies the file to start searching from. 
 void Preprocessor::HandleIncludeDirective(Token &IncludeTok,
                                           const DirectoryLookup *LookupFrom,
                                           bool isImport) {
@@ -666,15 +667,22 @@ void Preprocessor::HandleIncludeDirective(Token &IncludeTok,
     return Diag(FilenameTok, diag::err_pp_file_not_found,
                 std::string(FilenameStart, FilenameEnd));
   
-  // Ask HeaderInfo if we should enter this #include file.
-  if (!HeaderInfo.ShouldEnterIncludeFile(File, isImport)) {
-    // If it returns true, #including this file will have no effect.
+  // Ask HeaderInfo if we should enter this #include file.  If not, #including
+  // this file will have no effect.
+  if (!HeaderInfo.ShouldEnterIncludeFile(File, isImport))
     return;
-  }
-
+  
+  // The #included file will be considered to be a system header if either it is
+  // in a system include directory, or if the #includer is a system include
+  // header.
+  unsigned FileCharacter = 
+  // FIXME: Casts
+    std::max((unsigned)HeaderInfo.getFileDirFlavor(File),
+          SourceMgr.getDirCharacteristic(getCurrentFileLexer()->getFileLoc()));
+  
   // Look up the file, create a File ID for it.
   unsigned FileID = SourceMgr.createFileID(File, FilenameTok.getLocation(),
-                                           isSystemHeader(File));
+                                           FileCharacter);
   if (FileID == 0)
     return Diag(FilenameTok, diag::err_pp_file_not_found,
                 std::string(FilenameStart, FilenameEnd));

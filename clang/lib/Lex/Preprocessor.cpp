@@ -117,17 +117,6 @@ Preprocessor::~Preprocessor() {
   delete Callbacks;
 }
 
-bool Preprocessor::isSystemHeader(const FileEntry* F) const {
-  if (F) {
-    DirectoryLookup::DirType DirInfo = HeaderInfo.getFileDirFlavor(F);
-    if (DirInfo == DirectoryLookup::SystemHeaderDir ||
-        DirInfo == DirectoryLookup::ExternCSystemHeaderDir)
-      return true;
-  }
-  return false;
-}
-
-
 /// Diag - Forwarding function for diagnostics.  This emits a diagnostic at
 /// the specified Token's location, translating the token's start
 /// position in the current buffer into a SourcePosition object for rendering.

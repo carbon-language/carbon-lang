@@ -112,10 +112,11 @@ namespace SrcMgr {
     /// ChunkNo - Really large buffers are broken up into chunks that are
     /// each (1 << SourceLocation::FilePosBits) in size.  This specifies the
     /// chunk number of this FileID.
-    unsigned ChunkNo:30;
+    unsigned ChunkNo : 30;
     
-    /// isSystemHeader - Set for system header files.
-    bool isSysHeader:1;
+    /// DirCharacteristic - This is an instance of DirectoryLookup::DirType,
+    /// indicating whether this is a system header dir or not.
+    unsigned DirCharacteristic : 2;
     
     /// Content - Information about the source buffer itself.
     const ContentCache* Content;
@@ -123,19 +124,22 @@ namespace SrcMgr {
   public:
     /// get - Return a FileIDInfo object.
     static FileIDInfo get(SourceLocation IL, unsigned CN, 
-                          const ContentCache *Con, bool SysHeader) {
+                          const ContentCache *Con, unsigned DirCharacter) {
       FileIDInfo X;
       X.IncludeLoc = IL;
       X.ChunkNo = CN;
       X.Content = Con;
-      X.isSysHeader = SysHeader;
+      X.DirCharacteristic = DirCharacter;
       return X;
     }
     
     SourceLocation getIncludeLoc() const { return IncludeLoc; }
     unsigned getChunkNo() const { return ChunkNo; }
     const ContentCache* getContentCache() const { return Content; }
-    bool isSystemHeader() const { return isSysHeader; }
+
+    /// getDirCharacteristic - Return whether this is a system header or not.
+    /// FIXME: rename from dir to file?
+    unsigned getDirCharacteristic() const { return DirCharacteristic; }
     
     /// Emit - Emit this FileIDInfo to Bitcode.
     void Emit(llvm::Serializer& S) const;
@@ -250,10 +254,10 @@ public:
   /// being #included from the specified IncludePosition.  This returns 0 on
   /// error and translates NULL into standard input.
   unsigned createFileID(const FileEntry *SourceFile, SourceLocation IncludePos,
-                        bool isSysHeader = false) {
+                        unsigned DirCharacter) {
     const SrcMgr::ContentCache *IR = getContentCache(SourceFile);
     if (IR == 0) return 0;    // Error opening file?
-    return createFileID(IR, IncludePos, isSysHeader);
+    return createFileID(IR, IncludePos, DirCharacter);
   }
   
   /// createMainFileID - Create the FileID for the main source file.
@@ -261,17 +265,17 @@ public:
                             SourceLocation IncludePos) {
     
     assert (MainFileID == 0 && "MainFileID already set!");
-    MainFileID = createFileID(SourceFile,IncludePos);
+    MainFileID = createFileID(SourceFile, IncludePos, 0);
     return MainFileID;
   }
   
   /// createFileIDForMemBuffer - Create a new FileID that represents the
   /// specified memory buffer.  This does no caching of the buffer and takes
   /// ownership of the MemoryBuffer, so only pass a MemoryBuffer to this once.
-  unsigned createFileIDForMemBuffer(const llvm::MemoryBuffer *Buffer,
-                                    bool isSysHeader = false) {
+  unsigned createFileIDForMemBuffer(const llvm::MemoryBuffer *Buffer) {
     return createFileID(createMemBufferContentCache(Buffer), SourceLocation(),
-                        isSysHeader);
+                        // FIXME: USE ENUM
+                        0/*normal header*/);
   }
   
   /// createMainFileIDForMembuffer - Create the FileID for a memory buffer
@@ -432,8 +436,13 @@ public:
 
   /// isInSystemHeader - Returns if a SourceLocation is in a system header.
   bool isInSystemHeader(SourceLocation Loc) const {
-    return getFIDInfo(getPhysicalLoc(Loc).getFileID())->isSystemHeader();
+    // FIXME: Use proper enum here!
+    return getDirCharacteristic(Loc) != 0;
   }
+  unsigned getDirCharacteristic(SourceLocation Loc) const {
+    return getFIDInfo(getPhysicalLoc(Loc).getFileID())->getDirCharacteristic();
+  }
+
   
   /// PrintStats - Print statistics to stderr.
   ///
@@ -453,7 +462,7 @@ private:
   ///  include position.  This works regardless of whether the ContentCache
   ///  corresponds to a file or some other input source.
   unsigned createFileID(const SrcMgr::ContentCache* File,
-                        SourceLocation IncludePos, bool isSysHeader = false);
+                        SourceLocation IncludePos, unsigned DirCharacter);
     
   /// getContentCache - Create or return a cached ContentCache for the specified
   ///  file.  This returns null on failure.

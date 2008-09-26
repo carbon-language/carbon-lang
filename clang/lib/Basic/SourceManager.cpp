@@ -76,14 +76,14 @@ SourceManager::createMemBufferContentCache(const MemoryBuffer *Buffer) {
 /// corresponds to a file or some other input source.
 unsigned SourceManager::createFileID(const ContentCache *File,
                                      SourceLocation IncludePos,
-                                     bool isSysHeader) {
+                                     unsigned DirCharacter) {
   // If FileEnt is really large (e.g. it's a large .i file), we may not be able
   // to fit an arbitrary position in the file in the FilePos field.  To handle
   // this, we create one FileID for each chunk of the file that fits in a
   // FilePos field.
   unsigned FileSize = File->Buffer->getBufferSize();
   if (FileSize+1 < (1 << SourceLocation::FilePosBits)) {
-    FileIDs.push_back(FileIDInfo::get(IncludePos, 0, File, isSysHeader));
+    FileIDs.push_back(FileIDInfo::get(IncludePos, 0, File, DirCharacter));
     assert(FileIDs.size() < (1 << SourceLocation::FileIDBits) &&
            "Ran out of file ID's!");
     return FileIDs.size();
@@ -95,7 +95,7 @@ unsigned SourceManager::createFileID(const ContentCache *File,
   unsigned ChunkNo = 0;
   while (1) {
     FileIDs.push_back(FileIDInfo::get(IncludePos, ChunkNo++, File,
-                                      isSysHeader));
+                                      DirCharacter));
 
     if (FileSize+1 < (1 << SourceLocation::FilePosBits)) break;
     FileSize -= (1 << SourceLocation::FilePosBits);
