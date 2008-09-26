@@ -521,7 +521,6 @@ void Verifier::visitFunction(Function &F) {
   default:
     break;
   case CallingConv::C:
-  case CallingConv::X86_SSECall:
     break;
   case CallingConv::Fast:
   case CallingConv::Cold:
