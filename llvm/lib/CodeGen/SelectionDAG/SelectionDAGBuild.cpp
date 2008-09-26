@@ -3483,10 +3483,13 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     setValue(&I, DAG.getNode(ISD::RETURNADDR, TLI.getPointerTy(),
                              getValue(I.getOperand(1))));
     return 0;
-  case Intrinsic::frameaddress:
+  case Intrinsic::frameaddress: {
+    MachineFrameInfo *MFI = CurMBB->getParent()->getFrameInfo();
+    MFI->setFrameAddressIsTaken(true);
     setValue(&I, DAG.getNode(ISD::FRAMEADDR, TLI.getPointerTy(),
                              getValue(I.getOperand(1))));
     return 0;
+  }
   case Intrinsic::setjmp:
     return "_setjmp"+!TLI.usesUnderscoreSetJmp();
     break;

@@ -104,7 +104,7 @@ BitVector AlphaRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
 //
 bool AlphaRegisterInfo::hasFP(const MachineFunction &MF) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
-  return MFI->hasVarSizedObjects();
+  return MFI->hasVarSizedObjects() || MFI->isFrameAddressTaken();
 }
 
 void AlphaRegisterInfo::

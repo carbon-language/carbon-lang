@@ -75,7 +75,9 @@ BitVector IA64RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
 // if frame pointer elimination is disabled.
 //
 bool IA64RegisterInfo::hasFP(const MachineFunction &MF) const {
-  return NoFramePointerElim || MF.getFrameInfo()->hasVarSizedObjects();
+  const MachineFrameInfo *MFI = MF.getFrameInfo();
+  return NoFramePointerElim || MFI->hasVarSizedObjects() ||
+    MFI->isFrameAddressTaken();
 }
 
 void IA64RegisterInfo::

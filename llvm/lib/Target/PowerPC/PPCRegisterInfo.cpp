@@ -333,6 +333,7 @@ PPCRegisterInfo::getCalleeSavedRegClasses(const MachineFunction *MF) const {
 static bool needsFP(const MachineFunction &MF) {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   return NoFramePointerElim || MFI->hasVarSizedObjects() ||
+    MFI->isFrameAddressTaken() ||
     (PerformTailCallOpt && MF.getInfo<PPCFunctionInfo>()->hasFastCall());
 }
 
