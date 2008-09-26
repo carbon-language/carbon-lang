@@ -180,6 +180,18 @@ private:
   
   bool badCFG;
 };
+  
+static VariableArrayType* FindVA(Type* t) {
+  while (ArrayType* vt = dyn_cast<ArrayType>(t)) {
+    if (VariableArrayType* vat = dyn_cast<VariableArrayType>(vt))
+      if (vat->getSizeExpr())
+        return vat;
+    
+    t = vt->getElementType().getTypePtr();
+  }
+  
+  return 0;
+}
     
 /// BuildCFG - Constructs a CFG from an AST (a Stmt*).  The AST can
 ///  represent an arbitrary statement.  Examples include a single expression
@@ -405,6 +417,17 @@ CFGBlock* CFGBuilder::WalkAST(Stmt* Terminator, bool AlwaysAddStmt = false) {
     case Stmt::StmtExprClass:
       return WalkAST_VisitStmtExpr(cast<StmtExpr>(Terminator));
 
+    case Stmt::SizeOfAlignOfTypeExprClass: {
+      SizeOfAlignOfTypeExpr* E = cast<SizeOfAlignOfTypeExpr>(Terminator);
+
+      // VLA types have expressions that must be evaluated.
+      for (VariableArrayType* VA = FindVA(E->getArgumentType().getTypePtr());
+           VA != 0; VA = FindVA(VA->getElementType().getTypePtr()))
+        addStmt(VA->getSizeExpr());
+
+      return Block;
+    }
+      
     case Stmt::UnaryOperatorClass: {
       UnaryOperator* U = cast<UnaryOperator>(Terminator);
       
@@ -474,18 +497,6 @@ CFGBlock* CFGBuilder::WalkAST(Stmt* Terminator, bool AlwaysAddStmt = false) {
       
   if (AlwaysAddStmt) Block->appendStmt(Terminator);
   return WalkAST_VisitChildren(Terminator);
-}
-
-static VariableArrayType* FindVA(Type* t) {
-  while (ArrayType* vt = dyn_cast<ArrayType>(t)) {
-    if (VariableArrayType* vat = dyn_cast<VariableArrayType>(vt))
-      if (vat->getSizeExpr())
-        return vat;
-    
-    t = vt->getElementType().getTypePtr();
-  }
-  
-  return 0;
 }
   
 /// WalkAST_VisitDeclSubExpr - Utility method to add block-level expressions

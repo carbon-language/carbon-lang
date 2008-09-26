@@ -66,7 +66,6 @@ int f9() {
   return 1;
 }
 
-
 int f10() {
   int x = 4;
   x = 10 + x; // expected-warning{{never read}}
@@ -113,5 +112,11 @@ int f14(int count) {
 void f15(unsigned x, unsigned y) {
   int count = x * y;   // no-warning
   int z[count];
+}
+
+int f16(int x) {
+  x = x * 2;
+  x = sizeof(int [x = (x || x + 1) * 2]);  // expected-warning{{Although the value stored to 'x' is used}}
+  return x;
 }
 
