@@ -1056,16 +1056,16 @@ public:
 
   ~CallInst();
 
-  virtual CallInst *clone() const;
-
-  /// Provide fast operand accessors
-  DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
-  
   bool isTailCall() const           { return SubclassData & 1; }
   void setTailCall(bool isTC = true) {
     SubclassData = (SubclassData & ~1) | unsigned(isTC);
   }
 
+  virtual CallInst *clone() const;
+
+  /// Provide fast operand accessors
+  DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
+  
   /// getCallingConv/setCallingConv - Get or set the calling convention of this
   /// function call.
   unsigned getCallingConv() const { return SubclassData >> 1; }
@@ -1077,7 +1077,8 @@ public:
   ///
   const AttrListPtr &getAttributes() const { return AttributeList; }
 
-  /// setAttributes - Sets the parameter attributes for this call.
+  /// setAttributes - Set the parameter attributes for this call.
+  ///
   void setAttributes(const AttrListPtr &Attrs) { AttributeList = Attrs; }
   
   /// addAttribute - adds the attribute to the list of attributes.
@@ -1087,7 +1088,7 @@ public:
   void removeAttribute(unsigned i, Attributes attr);
 
   /// @brief Determine whether the call or the callee has the given attribute.
-  bool paramHasAttr(unsigned i, unsigned attr) const;
+  bool paramHasAttr(unsigned i, Attributes attr) const;
 
   /// @brief Extract the alignment for a call or parameter (0=unknown).
   unsigned getParamAlignment(unsigned i) const {
@@ -1142,9 +1143,9 @@ public:
     return AttributeList.hasAttrSomewhere(Attribute::ByVal);
   }
 
-  /// getCalledFunction - Return the function being called by this instruction
-  /// if it is a direct call.  If it is a call through a function pointer,
-  /// return null.
+  /// getCalledFunction - Return the function called, or null if this is an
+  /// indirect function invocation.
+  ///
   Function *getCalledFunction() const {
     return dyn_cast<Function>(getOperand(0));
   }
@@ -2439,15 +2440,15 @@ public:
   ///
   void setAttributes(const AttrListPtr &Attrs) { AttributeList = Attrs; }
 
-  /// @brief Determine whether the call or the callee has the given attribute.
-  bool paramHasAttr(unsigned i, Attributes attr) const;
-  
   /// addAttribute - adds the attribute to the list of attributes.
   void addAttribute(unsigned i, Attributes attr);
 
   /// removeAttribute - removes the attribute from the list of attributes.
   void removeAttribute(unsigned i, Attributes attr);
 
+  /// @brief Determine whether the call or the callee has the given attribute.
+  bool paramHasAttr(unsigned i, Attributes attr) const;
+  
   /// @brief Extract the alignment for a call or parameter (0=unknown).
   unsigned getParamAlignment(unsigned i) const {
     return AttributeList.getParamAlignment(i);
@@ -2496,6 +2497,11 @@ public:
     return paramHasAttr(1, Attribute::StructRet);
   }
 
+  /// @brief Determine if any call argument is an aggregate passed by value.
+  bool hasByValArgument() const {
+    return AttributeList.hasAttrSomewhere(Attribute::ByVal);
+  }
+
   /// getCalledFunction - Return the function called, or null if this is an
   /// indirect function invocation.
   ///
@@ -2503,8 +2509,10 @@ public:
     return dyn_cast<Function>(getOperand(0));
   }
 
-  // getCalledValue - Get a pointer to a function that is invoked by this inst.
-  Value *getCalledValue() const { return getOperand(0); }
+  /// getCalledValue - Get a pointer to the function that is invoked by this 
+  /// instruction
+  const Value *getCalledValue() const { return getOperand(0); }
+        Value *getCalledValue()       { return getOperand(0); }
 
   // get*Dest - Return the destination basic blocks...
   BasicBlock *getNormalDest() const {
