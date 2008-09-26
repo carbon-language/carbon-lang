@@ -819,11 +819,12 @@ X86InstrInfo::isReallyTriviallyReMaterializable(const MachineInstr *MI) const {
  
      case X86::LEA32r:
      case X86::LEA64r: {
-       if (MI->getOperand(1).isRegister() &&
-           MI->getOperand(2).isImmediate() &&
+       if (MI->getOperand(2).isImmediate() &&
            MI->getOperand(3).isRegister() && MI->getOperand(3).getReg() == 0 &&
            !MI->getOperand(4).isRegister()) {
          // lea fi#, lea GV, etc. are all rematerializable.
+         if (!MI->getOperand(1).isRegister())
+           return true;
          unsigned BaseReg = MI->getOperand(1).getReg();
          if (BaseReg == 0)
            return true;
