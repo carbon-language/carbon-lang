@@ -143,7 +143,7 @@ bool PrintPPOutputPPCallbacks::MoveToLine(SourceLocation Loc) {
 /// position.
 void PrintPPOutputPPCallbacks::FileChanged(SourceLocation Loc,
                                            FileChangeReason Reason,
-                                           DirectoryLookup::DirType NewFileType) {
+                                         DirectoryLookup::DirType NewFileType) {
   // Unless we are exiting a #include, make sure to skip ahead to the line the
   // #include directive was at.
   SourceManager &SourceMgr = PP.getSourceManager();
