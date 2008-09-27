@@ -240,7 +240,7 @@ void CodeGenModule::SetFunctionAttributesForDefinition(const Decl *D,
   }
                              
   if (!Features.Exceptions)
-    F->addAttribute(~0, llvm::Attribute::NoUnwind);  
+    F->addFnAttr(llvm::Attribute::NoUnwind);  
 }
 
 void CodeGenModule::SetMethodAttributes(const ObjCMethodDecl *MD,
