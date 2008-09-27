@@ -1408,13 +1408,10 @@ void CGObjCMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
   llvm::BasicBlock *FinallyNoExit = llvm::BasicBlock::Create("finally.noexit");
   
   llvm::BasicBlock *TryBlock = llvm::BasicBlock::Create("try");
-  llvm::BasicBlock *ExceptionInTryBlock = 
-    llvm::BasicBlock::Create("exceptionintry");
+  llvm::BasicBlock *TryHandler = llvm::BasicBlock::Create("try.handler");
 
-  // If setjmp returns 1, there was an exception in the @try block.
-  llvm::Value *Zero = llvm::Constant::getNullValue(llvm::Type::Int32Ty);
-  llvm::Value *IsZero = CGF.Builder.CreateICmpEQ(SetJmpResult, Zero, "iszero");
-  CGF.Builder.CreateCondBr(IsZero, TryBlock, ExceptionInTryBlock);
+  CGF.Builder.CreateCondBr(CGF.Builder.CreateIsNonNull(SetJmpResult, "threw"), 
+                           TryHandler, TryBlock);
 
   // Emit the @try block.
   CGF.EmitBlock(TryBlock);
@@ -1422,7 +1419,7 @@ void CGObjCMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
   CGF.Builder.CreateBr(FinallyBlock);
   
   // Emit the "exception in @try" block.
-  CGF.EmitBlock(ExceptionInTryBlock);
+  CGF.EmitBlock(TryHandler);
 
   // Retrieve the exception object.  We may emit multiple blocks but
   // nothing can cross this so the value is already in SSA form.
@@ -1436,16 +1433,11 @@ void CGObjCMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
         
     llvm::Value *SetJmpResult = CGF.Builder.CreateCall(ObjCTypes.SetJmpFn,
                                                        JmpBufPtr, "result");
-    
-    
-    llvm::Value *Zero = llvm::Constant::getNullValue(llvm::Type::Int32Ty);
-    llvm::Value *IsZero = CGF.Builder.CreateICmpEQ(SetJmpResult, Zero, 
-                                                   "iszero");
+    llvm::Value *Threw = CGF.Builder.CreateIsNonNull(SetJmpResult, "threw");
 
     llvm::BasicBlock *CatchBlock = llvm::BasicBlock::Create("catch");
-    llvm::BasicBlock *ExceptionInCatchBlock = 
-      llvm::BasicBlock::Create("exceptionincatch");
-    CGF.Builder.CreateCondBr(IsZero, CatchBlock, ExceptionInCatchBlock);
+    llvm::BasicBlock *CatchHandler = llvm::BasicBlock::Create("catch.handler");
+    CGF.Builder.CreateCondBr(Threw, CatchHandler, CatchBlock);
     
     CGF.EmitBlock(CatchBlock);
         
@@ -1497,12 +1489,11 @@ void CGObjCMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
       
       llvm::Value *Match = CGF.Builder.CreateCall2(ObjCTypes.ExceptionMatchFn,
                                                    Class, Caught, "match");
-                                                   
-      llvm::Value *DidMatch = CGF.Builder.CreateICmpNE(Match, Zero, "iszero");
       
       llvm::BasicBlock *MatchedBlock = llvm::BasicBlock::Create("matched");
       
-      CGF.Builder.CreateCondBr(DidMatch, MatchedBlock, NextCatchBlock);
+      CGF.Builder.CreateCondBr(CGF.Builder.CreateIsNonNull(Match, "matched"), 
+                               MatchedBlock, NextCatchBlock);
       
       // Emit the @catch block.
       CGF.EmitBlock(MatchedBlock);
@@ -1529,7 +1520,7 @@ void CGObjCMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
     }
     
     // Emit the exception handler for the @catch blocks.
-    CGF.EmitBlock(ExceptionInCatchBlock);    
+    CGF.EmitBlock(CatchHandler);    
     CGF.Builder.CreateStore(CGF.Builder.CreateCall(ObjCTypes.ExceptionExtractFn,
                                                    ExceptionData), 
                             RethrowPtr);
@@ -1549,16 +1540,17 @@ void CGObjCMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
     CGF.EmitStmt(FinallyStmt->getFinallyBody());
 
   llvm::Value *Rethrow = CGF.Builder.CreateLoad(RethrowPtr);
-  llvm::Value *ZeroPtr = llvm::Constant::getNullValue(ObjCTypes.ObjectPtrTy);
-  llvm::Value *RethrowIsNotZero = CGF.Builder.CreateICmpNE(Rethrow, ZeroPtr);
   
   llvm::BasicBlock *RethrowBlock = llvm::BasicBlock::Create("rethrow");  
-  llvm::BasicBlock *FinallyEndBlock = llvm::BasicBlock::Create("finallyend");
+  llvm::BasicBlock *FinallyEndBlock = llvm::BasicBlock::Create("finally.end");
 
   // If necessary, rethrow the exception.
-  CGF.Builder.CreateCondBr(RethrowIsNotZero, RethrowBlock, FinallyEndBlock);
+  CGF.Builder.CreateCondBr(CGF.Builder.CreateIsNonNull(Rethrow, "rethrow.test"), 
+                           RethrowBlock, FinallyEndBlock);
   CGF.EmitBlock(RethrowBlock);
   CGF.Builder.CreateCall(ObjCTypes.ExceptionThrowFn, Rethrow);
+  CGF.Builder.CreateUnreachable();
+
   CGF.EmitBlock(FinallyEndBlock);
 }
 
