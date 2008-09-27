@@ -1832,20 +1832,15 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
       // If the last pattern has predicates (which could fail) emit code to
       // catch the case where nothing handles a pattern.
       if (mightNotMatch) {
-        OS << "  cerr << \"Cannot yet select: \";\n";
+        OS << "\n";
         if (OpName != "ISD::INTRINSIC_W_CHAIN" &&
             OpName != "ISD::INTRINSIC_WO_CHAIN" &&
-            OpName != "ISD::INTRINSIC_VOID") {
-          OS << "  N.getNode()->dump(CurDAG);\n";
-        } else {
-          OS << "  unsigned iid = cast<ConstantSDNode>(N.getOperand("
-            "N.getOperand(0).getValueType() == MVT::Other))->getZExtValue();\n"
-             << "  cerr << \"intrinsic %\"<< "
-            "Intrinsic::getName((Intrinsic::ID)iid);\n";
-        }
-        OS << "  cerr << '\\n';\n"
-           << "  abort();\n"
-           << "  return NULL;\n";
+            OpName != "ISD::INTRINSIC_VOID")
+          OS << "  CannotYetSelect(N);\n";
+        else
+          OS << "  CannotYetSelectIntrinsic(N);\n";
+
+        OS << "  return NULL;\n";
       }
       OS << "}\n\n";
     }
@@ -1896,9 +1891,7 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "  SDValue N1 = N.getOperand(1);\n"
      << "  SDValue N2 = N.getOperand(2);\n"
      << "  if (!isa<FrameIndexSDNode>(N1) || !isa<GlobalAddressSDNode>(N2)) {\n"
-     << "    cerr << \"Cannot yet select llvm.dbg.declare: \";\n"
-     << "    N.getNode()->dump(CurDAG);\n"
-     << "    abort();\n"
+     << "    CannotYetSelect(N);\n"
      << "  }\n"
      << "  int FI = cast<FrameIndexSDNode>(N1)->getIndex();\n"
      << "  GlobalValue *GV = cast<GlobalAddressSDNode>(N2)->getGlobal();\n"
@@ -1976,7 +1969,6 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "  case ISD::INSERT_SUBREG: return Select_INSERT_SUBREG(N);\n"
      << "  case ISD::UNDEF: return Select_UNDEF(N);\n";
 
-    
   // Loop over all of the case statements, emiting a call to each method we
   // emitted above.
   for (std::map<std::string, std::vector<const PatternToMatch*> >::iterator
@@ -2029,22 +2021,32 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
   }
 
   OS << "  } // end of big switch.\n\n"
-     << "  cerr << \"Cannot yet select: \";\n"
      << "  if (N.getOpcode() != ISD::INTRINSIC_W_CHAIN &&\n"
      << "      N.getOpcode() != ISD::INTRINSIC_WO_CHAIN &&\n"
      << "      N.getOpcode() != ISD::INTRINSIC_VOID) {\n"
-     << "    N.getNode()->dump(CurDAG);\n"
+     << "    CannotYetSelect(N);\n"
      << "  } else {\n"
-     << "    unsigned iid = cast<ConstantSDNode>(N.getOperand("
-               "N.getOperand(0).getValueType() == "
-               "MVT::Other))->getZExtValue();\n"
-     << "    cerr << \"intrinsic %\"<< "
-               "Intrinsic::getName((Intrinsic::ID)iid);\n"
+     << "    CannotYetSelectIntrinsic(N);\n"
      << "  }\n"
+     << "  return NULL;\n"
+     << "}\n\n";
+
+  OS << "void CannotYetSelect(SDValue N) DISABLE_INLINE {\n"
+     << "  cerr << \"Cannot yet select: \";\n"
+     << "  N.getNode()->dump(CurDAG);\n"
      << "  cerr << '\\n';\n"
      << "  abort();\n"
-     << "  return NULL;\n"
-     << "}\n";
+     << "}\n\n";
+
+  OS << "void CannotYetSelectIntrinsic(SDValue N) DISABLE_INLINE {\n"
+     << "  cerr << \"Cannot yet select: \";\n"
+     << "  unsigned iid = cast<ConstantSDNode>(N.getOperand("
+     << "N.getOperand(0).getValueType() == MVT::Other))->getZExtValue();\n"
+     << "  cerr << \"intrinsic %\"<< "
+     << "Intrinsic::getName((Intrinsic::ID)iid);\n"
+     << "  cerr << '\\n';\n"
+     << "  abort();\n"
+     << "}\n\n";
 }
 
 void DAGISelEmitter::run(std::ostream &OS) {
