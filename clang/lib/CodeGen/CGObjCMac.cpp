@@ -1405,6 +1405,7 @@ void CGObjCMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
   
   
   llvm::BasicBlock *FinallyBlock = llvm::BasicBlock::Create("finally");
+  llvm::BasicBlock *FinallyNoExit = llvm::BasicBlock::Create("finally.noexit");
   
   llvm::BasicBlock *TryBlock = llvm::BasicBlock::Create("try");
   llvm::BasicBlock *ExceptionInTryBlock = 
@@ -1455,19 +1456,19 @@ void CGObjCMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
     for (; CatchStmt; CatchStmt = CatchStmt->getNextCatchStmt()) {
       llvm::BasicBlock *NextCatchBlock = llvm::BasicBlock::Create("nextcatch");
 
-      QualType T;
       const DeclStmt *CatchParam = 
         cast_or_null<DeclStmt>(CatchStmt->getCatchParamStmt());
-      const ValueDecl *VD = 0;
-      
+      const VarDecl *VD = 0;
+      const PointerType *PT = 0;
+
       // catch(...) always matches.
       if (!CatchParam) {
         AllMatched = true;
       } else {
-        VD = cast<ValueDecl>(CatchParam->getDecl());
+        VD = cast<VarDecl>(CatchParam->getDecl());
+        PT = VD->getType()->getAsPointerType();
         
         // catch(id e) always matches.
-        const PointerType *PT = VD->getType()->getAsPointerType();
         if (PT && CGF.getContext().isObjCIdType(PT->getPointeeType()))
           AllMatched = true;
       }
@@ -1475,12 +1476,7 @@ void CGObjCMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
       if (AllMatched) {   
         if (CatchParam) {
           CGF.EmitStmt(CatchParam);
-          
-          const VarDecl *VD = cast<VarDecl>(CatchParam->getDecl());
-          
-          llvm::Value *V = CGF.GetAddrOfLocalVar(VD);
-          
-          CGF.Builder.CreateStore(Caught, V);
+          CGF.Builder.CreateStore(Caught, CGF.GetAddrOfLocalVar(VD));
         }
         
         CGF.EmitStmt(CatchStmt->getCatchBody());
@@ -1488,6 +1484,8 @@ void CGObjCMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
         break;
       }
       
+      assert(PT && "Unexpected non-pointer type in @catch");
+      QualType T = PT->getPointeeType();
       const ObjCInterfaceType *ObjCType = T->getAsObjCInterfaceType();
       assert(ObjCType && "Catch parameter must have Objective-C type!");
 
@@ -1508,8 +1506,6 @@ void CGObjCMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
       if (CatchParam) {
         CGF.EmitStmt(CatchParam);
         
-        const VarDecl *VD = cast<VarDecl>(CatchParam->getDecl());
-        
         llvm::Value *Tmp = 
           CGF.Builder.CreateBitCast(Caught, CGF.ConvertType(VD->getType()), 
                                     "tmp");
@@ -1526,7 +1522,6 @@ void CGObjCMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
       // None of the handlers caught the exception, so store it to be
       // rethrown at the end of the @finally block.
       CGF.Builder.CreateStore(Caught, RethrowPtr);
-      CGF.Builder.CreateCall(ObjCTypes.ExceptionTryExitFn, ExceptionData);
       CGF.Builder.CreateBr(FinallyBlock);
     }
     
@@ -1535,30 +1530,23 @@ void CGObjCMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
     CGF.Builder.CreateStore(CGF.Builder.CreateCall(ObjCTypes.ExceptionExtractFn,
                                                    ExceptionData), 
                             RethrowPtr);
+    CGF.Builder.CreateBr(FinallyNoExit);
   } else {
     CGF.Builder.CreateStore(Caught, RethrowPtr);
+    CGF.Builder.CreateBr(FinallyNoExit);
   }
   
   // Emit the @finally block.
   CGF.EmitBlock(FinallyBlock);
-
-  llvm::Value *Rethrow = CGF.Builder.CreateLoad(RethrowPtr);
-  llvm::Value *ZeroPtr = llvm::Constant::getNullValue(ObjCTypes.ObjectPtrTy);
-
-  llvm::Value *RethrowIsZero = CGF.Builder.CreateICmpEQ(Rethrow, ZeroPtr);
-  
-  llvm::BasicBlock *TryExitBlock = llvm::BasicBlock::Create("tryexit");
-  llvm::BasicBlock *AfterTryExitBlock = 
-    llvm::BasicBlock::Create("aftertryexit");
-  
-  CGF.Builder.CreateCondBr(RethrowIsZero, TryExitBlock, AfterTryExitBlock);
-  CGF.EmitBlock(TryExitBlock);  
   CGF.Builder.CreateCall(ObjCTypes.ExceptionTryExitFn, ExceptionData);
-  CGF.EmitBlock(AfterTryExitBlock);
-  
+
+  CGF.EmitBlock(FinallyNoExit);
+
   if (const ObjCAtFinallyStmt* FinallyStmt = S.getFinallyStmt())
     CGF.EmitStmt(FinallyStmt->getFinallyBody());
 
+  llvm::Value *Rethrow = CGF.Builder.CreateLoad(RethrowPtr);
+  llvm::Value *ZeroPtr = llvm::Constant::getNullValue(ObjCTypes.ObjectPtrTy);
   llvm::Value *RethrowIsNotZero = CGF.Builder.CreateICmpNE(Rethrow, ZeroPtr);
   
   llvm::BasicBlock *RethrowBlock = llvm::BasicBlock::Create("rethrow");  
