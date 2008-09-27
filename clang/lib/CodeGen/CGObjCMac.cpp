@@ -1468,8 +1468,11 @@ void CGObjCMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
         VD = cast<VarDecl>(CatchParam->getDecl());
         PT = VD->getType()->getAsPointerType();
         
-        // catch(id e) always matches.
-        if (PT && CGF.getContext().isObjCIdType(PT->getPointeeType()))
+        // catch(id e) always matches. 
+        // FIXME: For the time being we also match id<X>; this should
+        // be rejected by Sema instead.
+        if ((PT && CGF.getContext().isObjCIdType(PT->getPointeeType())) ||
+            VD->getType()->isObjCQualifiedIdType())
           AllMatched = true;
       }
       
