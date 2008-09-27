@@ -15,6 +15,7 @@
 #ifndef LLVM_ATTRIBUTES_H
 #define LLVM_ATTRIBUTES_H
 
+#include <cassert>
 #include <string>
 
 namespace llvm {
