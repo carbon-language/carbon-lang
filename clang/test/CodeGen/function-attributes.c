@@ -1,8 +1,12 @@
-// RUN: clang -emit-llvm -o %t.clang.ll %s &&
-// RUN: %llvmgcc -c --emit-llvm -o - %s | llvm-dis -f -o %t.gcc.ll &&
-// RUN: grep "define" %t.clang.ll | sort > %t.clang.defs &&
-// RUN: grep "define" %t.gcc.ll | sort > %t.gcc.defs &&
-// RUN: diff %t.clang.defs %t.gcc.defs
+// RUN: clang -emit-llvm -o %t %s &&
+// RUN: grep 'define i8 @f0(i32 %x) signext nounwind' %t &&
+// RUN: grep 'define i8 @f1(i32 %x) zeroext nounwind' %t &&
+// RUN: grep 'define void @f2(i8 signext %x) nounwind' %t &&
+// RUN: grep 'define void @f3(i8 zeroext %x) nounwind' %t &&
+// RUN: grep 'define i16 @f4(i32 %x) signext nounwind' %t &&
+// RUN: grep 'define i16 @f5(i32 %x) zeroext nounwind' %t &&
+// RUN: grep 'define void @f6(i16 signext %x) nounwind' %t &&
+// RUN: grep 'define void @f7(i16 zeroext %x) nounwind' %t
 
 signed char f0(int x) { return x; }
 
