@@ -79,20 +79,12 @@ void CodeGenFunction::FinishFunction(SourceLocation EndLoc) {
     DI->EmitRegionEnd(CurFn, Builder);
   }
  
-  // Emit a return for code that falls off the end. If insert point
-  // is a dummy block with no predecessors then remove the block itself.
-  llvm::BasicBlock *BB = Builder.GetInsertBlock();
-  if (isDummyBlock(BB)) {
-    BB->eraseFromParent();
-  } else {
-    // Just transfer to return
-    Builder.CreateBr(ReturnBlock);
-  }
   assert(BreakContinueStack.empty() &&
          "mismatched push/pop in break/continue stack!");
 
-  // Emit function epilog (to return).
-  Builder.SetInsertPoint(ReturnBlock);
+  // Emit function epilog (to return). This has the nice side effect
+  // of also automatically handling code that falls off the end.
+  EmitBlock(ReturnBlock);
   EmitFunctionEpilog(FnRetTy, ReturnValue);
 
   // Remove the AllocaInsertPt instruction, which is just a convenience for us.
@@ -123,7 +115,7 @@ void CodeGenFunction::StartFunction(const Decl *D, QualType RetTy,
   AllocaInsertPt = new llvm::BitCastInst(Undef, llvm::Type::Int32Ty, "allocapt",
                                          EntryBB);
 
-  ReturnBlock = llvm::BasicBlock::Create("return", CurFn);
+  ReturnBlock = llvm::BasicBlock::Create("return");
   ReturnValue = 0;
   if (!RetTy->isVoidType())
     ReturnValue = CreateTempAlloca(ConvertType(RetTy), "retval");
