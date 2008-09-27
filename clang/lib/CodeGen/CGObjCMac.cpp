@@ -2193,7 +2193,7 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
  
   // Exceptions
   const llvm::Type *StackPtrTy = 
-    llvm::PointerType::getUnqual(llvm::ArrayType::get(llvm::Type::Int8Ty, 4));
+    llvm::ArrayType::get(llvm::PointerType::getUnqual(llvm::Type::Int8Ty), 4);
                            
   ExceptionDataTy = 
     llvm::StructType::get(llvm::ArrayType::get(llvm::Type::Int32Ty, 
