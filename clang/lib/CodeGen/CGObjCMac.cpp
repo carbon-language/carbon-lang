@@ -1422,19 +1422,17 @@ void CGObjCMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
   
   // Emit the "exception in @try" block.
   CGF.EmitBlock(ExceptionInTryBlock);
-  
-  if (const ObjCAtCatchStmt* CatchStmt = S.getCatchStmts()) {
-    // Allocate memory for the caught exception and extract it from the 
-    // exception data.
-    llvm::Value *CaughtPtr = CGF.CreateTempAlloca(ObjCTypes.ObjectPtrTy);
-    llvm::Value *Extract = CGF.Builder.CreateCall(ObjCTypes.ExceptionExtractFn,
-                                                  ExceptionData);
-    CGF.Builder.CreateStore(Extract, CaughtPtr);
-    
-    // Enter a new exception try block 
-    // (in case a @catch block throws an exception).
+
+  // Retrieve the exception object.  We may emit multiple blocks but
+  // nothing can cross this so the value is already in SSA form.
+  llvm::Value *Caught = CGF.Builder.CreateCall(ObjCTypes.ExceptionExtractFn,
+                                               ExceptionData,
+                                               "caught");
+  if (const ObjCAtCatchStmt* CatchStmt = S.getCatchStmts()) {    
+    // Enter a new exception try block (in case a @catch block throws
+    // an exception).
     CGF.Builder.CreateCall(ObjCTypes.ExceptionTryEnterFn, ExceptionData);
-    
+        
     llvm::Value *SetJmpResult = CGF.Builder.CreateCall(ObjCTypes.SetJmpFn,
                                                        JmpBufPtr, "result");
     
@@ -1450,29 +1448,31 @@ void CGObjCMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
     
     CGF.EmitBlock(CatchBlock);
         
-    // Handle catch list
+    // Handle catch list. As a special case we check if everything is
+    // matched and avoid generating code for falling off the end if
+    // so.
+    bool AllMatched = false;
     for (; CatchStmt; CatchStmt = CatchStmt->getNextCatchStmt()) {
       llvm::BasicBlock *NextCatchBlock = llvm::BasicBlock::Create("nextcatch");
-      llvm::Value *Caught = CGF.Builder.CreateLoad(CaughtPtr, "caught");
 
       QualType T;
-      bool MatchesAll = false;
       const DeclStmt *CatchParam = 
         cast_or_null<DeclStmt>(CatchStmt->getCatchParamStmt());
-
+      const ValueDecl *VD = 0;
+      
       // catch(...) always matches.
-      if (!CatchParam)
-        MatchesAll = true;
-      else {
-        QualType PT = cast<ValueDecl>(CatchParam->getDecl())->getType();
-        T = PT->getAsPointerType()->getPointeeType();
+      if (!CatchParam) {
+        AllMatched = true;
+      } else {
+        VD = cast<ValueDecl>(CatchParam->getDecl());
         
         // catch(id e) always matches.
-        if (CGF.getContext().isObjCIdType(T))
-          MatchesAll = true;
+        const PointerType *PT = VD->getType()->getAsPointerType();
+        if (PT && CGF.getContext().isObjCIdType(PT->getPointeeType()))
+          AllMatched = true;
       }
       
-      if (MatchesAll) {   
+      if (AllMatched) {   
         if (CatchParam) {
           CGF.EmitStmt(CatchParam);
           
@@ -1485,7 +1485,6 @@ void CGObjCMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
         
         CGF.EmitStmt(CatchStmt->getCatchBody());
         CGF.Builder.CreateBr(FinallyBlock);
-        CGF.EmitBlock(NextCatchBlock);        
         break;
       }
       
@@ -1523,20 +1522,21 @@ void CGObjCMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
       CGF.EmitBlock(NextCatchBlock);
     }
 
-    // None of the handlers caught the exception, so store it and rethrow
-    // it later.
-    llvm::Value *Caught = CGF.Builder.CreateLoad(CaughtPtr, "caught");
+    if (!AllMatched) {
+      // None of the handlers caught the exception, so store it to be
+      // rethrown at the end of the @finally block.
+      CGF.Builder.CreateStore(Caught, RethrowPtr);
+      CGF.Builder.CreateCall(ObjCTypes.ExceptionTryExitFn, ExceptionData);
+      CGF.Builder.CreateBr(FinallyBlock);
+    }
+    
+    // Emit the exception handler for the @catch blocks.
+    CGF.EmitBlock(ExceptionInCatchBlock);    
+    CGF.Builder.CreateStore(CGF.Builder.CreateCall(ObjCTypes.ExceptionExtractFn,
+                                                   ExceptionData), 
+                            RethrowPtr);
+  } else {
     CGF.Builder.CreateStore(Caught, RethrowPtr);
-    CGF.Builder.CreateCall(ObjCTypes.ExceptionTryExitFn,
-                           ExceptionData);
-    
-    CGF.Builder.CreateBr(FinallyBlock);
-    
-    CGF.EmitBlock(ExceptionInCatchBlock);
-    
-    Extract = CGF.Builder.CreateCall(ObjCTypes.ExceptionExtractFn,
-                                     ExceptionData);
-    CGF.Builder.CreateStore(Extract, RethrowPtr);
   }
   
   // Emit the @finally block.
