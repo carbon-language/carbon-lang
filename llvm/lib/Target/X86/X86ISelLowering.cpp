@@ -5645,13 +5645,15 @@ SDValue X86TargetLowering::LowerRETURNADDR(SDValue Op, SelectionDAG &DAG) {
 }
 
 SDValue X86TargetLowering::LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG) {
-  // Depths > 0 not supported yet!
-  if (cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue() > 0)
-    return SDValue();
-
-  SDValue RetAddrFI = getReturnAddressFrameIndex(DAG);
-  return DAG.getNode(ISD::SUB, getPointerTy(), RetAddrFI,
-                     DAG.getIntPtrConstant(TD->getPointerSize()));
+  MachineFrameInfo *MFI = DAG.getMachineFunction().getFrameInfo();
+  MFI->setFrameAddressIsTaken(true);
+  MVT VT = Op.getValueType();
+  unsigned Depth = cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue();
+  unsigned FrameReg = Subtarget->is64Bit() ? X86::RBP : X86::EBP;
+  SDValue FrameAddr = DAG.getCopyFromReg(DAG.getEntryNode(), FrameReg, VT);
+  while (Depth--)
+    FrameAddr = DAG.getLoad(VT, DAG.getEntryNode(), FrameAddr, NULL, 0);
+  return FrameAddr;
 }
 
 SDValue X86TargetLowering::LowerFRAME_TO_ARGS_OFFSET(SDValue Op,

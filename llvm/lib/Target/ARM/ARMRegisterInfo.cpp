@@ -209,7 +209,8 @@ ARMRegisterInfo::requiresRegisterScavenging(const MachineFunction &MF) const {
 /// or if frame pointer elimination is disabled.
 ///
 bool ARMRegisterInfo::hasFP(const MachineFunction &MF) const {
-  return NoFramePointerElim || MF.getFrameInfo()->hasVarSizedObjects();
+  const MachineFrameInfo *MFI = MF.getFrameInfo();
+  return NoFramePointerElim || MFI->hasVarSizedObjects();
 }
 
 // hasReservedCallFrame - Under normal circumstances, when a frame pointer is
