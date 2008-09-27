@@ -21,7 +21,7 @@ using namespace clang;
 DeclGroup* DeclGroup::Create(ASTContext& C, unsigned numdecls, Decl** decls) {
   unsigned size = sizeof(DeclGroup) + sizeof(Decl*) * numdecls;
   unsigned alignment = llvm::AlignOf<DeclGroup>::Alignment;  
-  void* mem = C.getAllocator().Allocate(size, alignment);                                                   
+  void* mem = C.getAllocator().Allocate(size, alignment);
   new (mem) DeclGroup(numdecls, decls);
   return static_cast<DeclGroup*>(mem);
 }
