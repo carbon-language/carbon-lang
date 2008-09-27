@@ -1,11 +1,11 @@
 ; Test function notes
 ; RUN: llvm-as < %s | llvm-dis | grep inline | count 2
 
-define void @fn1() notes(inline=always) {
+define void @fn1() alwaysinline {
   ret void
 }
 
-define void @fn2() notes(inline=never) {
+define void @fn2() noinline {
   ret void
 }
 
