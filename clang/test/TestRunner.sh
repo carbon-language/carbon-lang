@@ -8,8 +8,6 @@
 #
 #     %s - Replaced with the input name of the program, or the program to
 #          execute, as appropriate.
-#     %llvmgcc - llvm-gcc command
-#     %llvmgxx - llvm-g++ command
 #     %prcontext - prcontext.tcl script
 #     %t - temporary file name (derived from testcase name)
 #
@@ -56,8 +54,6 @@ grep 'RUN:' $FILENAME | \
   sed -e "s|^.*RUN:\(.*\)$|\1|g" \
       -e "s|clang|$CLANG|g" \
       -e "s|%s|$SUBST|g" \
-      -e "s|%llvmgcc|llvm-gcc -emit-llvm|g" \
-      -e "s|%llvmgxx|llvm-g++ -emit-llvm|g" \
       -e "s|%prcontext|prcontext.tcl|g" \
       -e "s|%t|$TEMPOUTPUT|g" > $SCRIPT
 
@@ -66,20 +62,6 @@ if (grep -q XFAIL $FILENAME); then
     IS_XFAIL=1
     printf "XFAILED '$TESTNAME': "
     grep XFAIL $FILENAME
-fi
-
-if (grep -q "%llvmgcc" $FILENAME); then
-  if [ -z "$(llvm-gcc --version 2> /dev/null)" ]; then
-    IS_XFAIL=1
-    echo "llvm-gcc not found"
-  fi
-fi
-
-if (grep -q "%llvmgxx" $FILENAME); then
-  if [ -z "$(llvm-g++ --version 2> /dev/null)" ]; then
-    IS_XFAIL=1
-    echo "llvm-g++ not found"
-  fi
 fi
 
 /bin/sh $SCRIPT > $OUTPUT 2>&1
