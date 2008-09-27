@@ -630,6 +630,23 @@ public:
                                             IdxBegin, IdxEnd - IdxBegin);
     return Insert(InsertValueInst::Create(Agg, Val, IdxBegin, IdxEnd), Name);
   }
+
+  //===--------------------------------------------------------------------===//
+  // Utility creation methods
+  //===--------------------------------------------------------------------===//
+
+  /// CreateIsNull - Return an i1 value testing if \arg Arg is null.
+  Value *CreateIsNull(Value *Arg, const char *Name = "") {
+    return CreateICmpEQ(Arg, llvm::Constant::getNullValue(Arg->getType()), 
+                        Name);
+  }
+
+  /// CreateIsNonNull - Return an i1 value testing if \arg Arg is not null.
+  Value *CreateIsNonNull(Value *Arg, const char *Name = "") {
+    return CreateICmpNE(Arg, llvm::Constant::getNullValue(Arg->getType()), 
+                        Name);
+  }
+  
 };
 
 }
