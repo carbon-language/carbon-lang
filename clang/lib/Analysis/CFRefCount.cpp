@@ -2022,7 +2022,7 @@ namespace {
     virtual bool isLeak() const { return false; }
 
     const char* getCategory() const { 
-      return "Memory (Core Foundation/Objective-C)";
+      return "Correctness";
     }
   };
   
@@ -2074,6 +2074,10 @@ namespace {
     
     virtual const char* getDescription() const {
       return "Object leaked";
+    }
+    
+    const char* getCategory() const { 
+      return "Performance";
     }
     
     virtual void EmitWarnings(BugReporter& BR);
