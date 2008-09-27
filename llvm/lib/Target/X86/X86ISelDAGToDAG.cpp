@@ -658,7 +658,8 @@ void X86DAGToDAGISel::InstructionSelect() {
   CurBB = BB;  // BB can change as result of isel.
   if (!OptForSize) {
     const Function *F = CurDAG->getMachineFunction().getFunction();
-    OptForSize = !F->isDeclaration() && F->hasNote(Attribute::OptimizeForSize);
+    OptForSize = !F->isDeclaration() && 
+                 F->hasFnAttr(Attribute::OptimizeForSize);
   }
 
   DEBUG(BB->dump());
