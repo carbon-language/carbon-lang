@@ -385,12 +385,11 @@ void CodeGenFunction::EmitForStmt(const ForStmt &S) {
 
   BreakContinueStack.pop_back();
   
-  if (S.getInc())
-    EmitBlock(ContinueBlock);
-  
   // If there is an increment, emit it next.
-  if (S.getInc())
+  if (S.getInc()) {
+    EmitBlock(ContinueBlock);
     EmitStmt(S.getInc());
+  }
       
   // Finally, branch back up to the condition for the next iteration.
   Builder.CreateBr(CondBlock);
@@ -471,7 +470,6 @@ void CodeGenFunction::EmitContinueStmt() {
 /// add multiple cases to switch instruction, one for each value within
 /// the range. If range is too big then emit "if" condition check.
 void CodeGenFunction::EmitCaseStmtRange(const CaseStmt &S) {
-  // FIXME: kill me with param - ddunbar
   assert(S.getRHS() && "Expected RHS value in CaseStmt");
 
   llvm::APSInt LHS = S.getLHS()->getIntegerConstantExprValue(getContext());
