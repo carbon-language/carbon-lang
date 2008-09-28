@@ -78,6 +78,12 @@ public:
     return strchr(GetRecord(ID).Attributes, 'F') != 0;
   }
   
+  /// hasVAListUse - Return true of the specified builtin uses __builtin_va_list
+  /// as an operand or return type.
+  bool hasVAListUse(unsigned ID) const {
+    return strchr(GetRecord(ID).Type, 'a') != 0;
+  }
+  
   /// GetBuiltinType - Return the type for the specified builtin.
   QualType GetBuiltinType(unsigned ID, ASTContext &Context) const;
 private:
