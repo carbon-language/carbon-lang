@@ -77,4 +77,6 @@ static int funk(char *s) {
 void foo4() {
   int (^xx)(const char *s) = ^(char *s) { return 1; }; // expected-warning {{incompatible block pointer types initializing 'int (^)(char *)', expected 'int (^)(char const *)'}}
   int (*yy)(const char *s) = funk; // expected-warning {{incompatible pointer types initializing 'int (char *)', expected 'int (*)(char const *)'}}
+  
+  int (^nested)(char *s) = ^(char *str) { void (^nest)(void) = ^(void) { printf("%s\n", str); }; next(); return 1; };
 }

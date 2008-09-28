@@ -366,9 +366,14 @@ Sema::ExprResult Sema::ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
   }
   // If we are parsing a block, check the block parameter list.
   if (CurBlock) {
-    for (unsigned i = 0, e = CurBlock->Params.size(); i != e; ++i)
-      if (CurBlock->Params[i]->getIdentifier() == &II)
-        D = CurBlock->Params[i];
+    BlockSemaInfo *BLK = CurBlock;
+    do {
+      for (unsigned i = 0, e = BLK->Params.size(); i != e && D == 0; ++i)
+        if (BLK->Params[i]->getIdentifier() == &II)
+          D = BLK->Params[i];
+      if (D) 
+        break; // Found!
+    } while ((BLK = BLK->PrevBlockInfo));  // Look through any enclosing blocks.
   }
   if (D == 0) {
     // Otherwise, this could be an implicitly declared function reference (legal
