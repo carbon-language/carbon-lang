@@ -233,6 +233,14 @@ Sema::ExprResult Sema::ActOnClassMessage(
     if (ObjCImplementationDecl *ImpDecl = 
         ObjCImplementations[ClassDecl->getIdentifier()])
       Method = ImpDecl->getClassMethod(Sel);
+      
+    // Look through local category implementations associated with the class.
+    if (!Method) {
+      for (unsigned i = 0; i < ObjCCategoryImpls.size() && !Method; i++) {
+        if (ObjCCategoryImpls[i]->getClassInterface() == ClassDecl)
+          Method = ObjCCategoryImpls[i]->getClassMethod(Sel);
+      }
+    }
   }
   // Before we give up, check if the selector is an instance method.
   if (!Method)

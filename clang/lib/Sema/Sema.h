@@ -92,9 +92,13 @@ public:
   /// This is only necessary for issuing pretty diagnostics.
   llvm::SmallVector<TypedefDecl*, 24> ExtVectorDecls;
 
-  /// ObjCImplementations - Keep track of all of the classes with
-  /// @implementation's, so that we can emit errors on duplicates.
+  /// ObjCImplementations - Keep track of all class @implementations
+  /// so we can emit errors on duplicates.
   llvm::DenseMap<IdentifierInfo*, ObjCImplementationDecl*> ObjCImplementations;
+  
+  /// ObjCCategoryImpls - Maintain a list of category implementations so 
+  /// we can check for duplicates and find local method declarations.
+  llvm::SmallVector<ObjCCategoryImplDecl*, 8> ObjCCategoryImpls;
   
   /// ObjCProtocols - Keep track of all protocol declarations declared
   /// with @protocol keyword, so that we can emit errors on duplicates and

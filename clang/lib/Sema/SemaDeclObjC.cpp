@@ -429,6 +429,7 @@ Sema::DeclTy *Sema::ActOnStartCategoryImplementation(
 
   /// TODO: Check that CatName, category name, is not used in another
   // implementation.
+  ObjCCategoryImpls.push_back(CDecl);
   return CDecl;
 }
 
