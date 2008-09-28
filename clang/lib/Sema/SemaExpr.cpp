@@ -436,7 +436,7 @@ Sema::ExprResult Sema::ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
   // things like "integer constant expression" tests.
   //
   if (!CurBlock || DeclDefinedWithinScope(VD, CurBlock->TheScope, S) ||
-      isa<EnumConstantDecl>(VD))
+      isa<EnumConstantDecl>(VD) || isa<ParmVarDecl>(VD))
     return new DeclRefExpr(VD, VD->getType(), Loc);
   
   // If we are in a block and the variable is outside the current block,

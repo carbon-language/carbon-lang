@@ -22,3 +22,8 @@ void test() {
   ^(int x, ...){return 5;}(arg, arg);   // Explicit varargs, ok.
 }
 
+int main(int argc) {
+  ^(int argCount) {
+    argCount = 3;
+  }(argc);
+}
