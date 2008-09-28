@@ -1,4 +1,5 @@
 // RUN: clang -fsyntax-only -verify %s
+// RUN: clang -fsyntax-only -triple x86_64-apple-darwin9 -verify %s
 
 int a[10];
 
@@ -17,3 +18,11 @@ int f2() {
 int f3() {
   return __builtin_object_size(&a, 4); // expected-error {{argument should be a value from 0 to 3}}
 }
+
+
+// rdar://6252231 - cannot call vsnprintf with va_list on x86_64
+void f4(const char *fmt, ...) {
+ __builtin_va_list args;
+ __builtin___vsnprintf_chk (0, 42, 0, 11, fmt, args);
+}
+

@@ -137,6 +137,9 @@ static QualType DecodeTypeFromStr(const char *&Str, ASTContext &Context,
   case 'a':
     Type = Context.getBuiltinVaListType();
     assert(!Type.isNull() && "builtin va list type not initialized!");
+    // Do array -> pointer decay.  The builtin should use the decayed type.
+    if (Type->isArrayType())
+      Type = Context.getArrayDecayedType(Type);
     break;
   case 'V': {
     char *End;
