@@ -388,7 +388,8 @@ sub ScanFile {
     $BugCategory = "Other";
   }
     
-  push @$Index,[ $FName, $BugCategory, $BugDesc, $BugFile, $BugLine ];
+  push @$Index,[ $FName, $BugCategory, $BugDesc, $BugFile, $BugLine,
+                 $BugPathLength ];
 }
 
 ##----------------------------------------------------------------------------##
@@ -575,6 +576,7 @@ print OUT <<ENDTEXT;
   <td class="sorttable_sorted">Bug Type<span id="sorttable_sortfwdind">&nbsp;&#x25BE;</span></td>
   <td>File</td>
   <td class="Q">Line</td>
+  <td class="Q">Path Length</td>
   <td class="sorttable_nosort"></td>
   <!-- REPORTBUGCOL -->
 </tr></thead>
@@ -631,12 +633,12 @@ ENDTEXT
       print OUT "</td>";
       
       # Print out the quantities.
-      for my $j ( 4 .. 4 ) {
+      for my $j ( 4 .. 5 ) {
         print OUT "<td class=\"Q\">$row->[$j]</td>";        
       }
       
       # Print the rest of the columns.
-      for (my $j = 5; $j <= $#{$row}; ++$j) {
+      for (my $j = 6; $j <= $#{$row}; ++$j) {
         print OUT "<td>$row->[$j]</td>"
       }
 
