@@ -312,8 +312,17 @@ Sema::ActOnStringLiteral(const Token *StringToks, unsigned NumStringToks) {
 /// DeclDefinedWithinScope - Return true if the specified decl is defined at or
 /// within the 'Within' scope.  The current Scope is CurScope.
 ///
-/// NOTE: This method is extremely inefficient (linear scan), this should not be
-/// used in common cases.
+/// FIXME: This method is extremely inefficient (linear scan), this should not
+/// be used in common cases. Replace with the more modern DeclContext. We need
+/// to make sure both assignments below produce an error.
+///
+/// int main(int argc) {
+///   int xx;
+///   ^(int X) {
+///     xx = 4; // error (variable is not assignable)
+///     argc = 3; // no error.
+///   };
+/// }
 ///
 static bool DeclDefinedWithinScope(ScopedDecl *D, Scope *Within,
                                    Scope *CurScope) {
