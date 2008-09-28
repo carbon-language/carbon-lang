@@ -432,10 +432,11 @@ Sema::ExprResult Sema::ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
   // within the block, create a normal DeclRefExpr.
   //
   // FIXME: This will create BlockDeclRefExprs for global variables,
-  // function references, enums constants, etc which is suboptimal :) and breaks
+  // function references, etc which is suboptimal :) and breaks
   // things like "integer constant expression" tests.
   //
-  if (!CurBlock || DeclDefinedWithinScope(VD, CurBlock->TheScope, S))
+  if (!CurBlock || DeclDefinedWithinScope(VD, CurBlock->TheScope, S) ||
+      isa<EnumConstantDecl>(VD))
     return new DeclRefExpr(VD, VD->getType(), Loc);
   
   // If we are in a block and the variable is outside the current block,

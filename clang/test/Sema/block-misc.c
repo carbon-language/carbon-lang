@@ -48,3 +48,17 @@ int test3() {
 	char *^ y; // expected-error {{block pointer to non-function type is invalid}}
 }
 
+
+
+enum {NSBIRLazilyAllocated = 0};
+
+int test4(int argc) {  // rdar://6251437
+  ^{
+    switch (argc) {
+      case NSBIRLazilyAllocated:  // is an integer constant expression.
+      default:
+        break;
+    }
+  }();
+  return 0;
+}
