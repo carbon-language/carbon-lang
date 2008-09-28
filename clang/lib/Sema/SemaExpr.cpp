@@ -2034,6 +2034,17 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation loc,
     ImpCastExprToType(rex, lType); // promote the pointer to pointer
     return Context.IntTy;
   }
+  // Allow block pointers to be compared with null pointer constants.
+  if ((lType->isBlockPointerType() && rType->isPointerType()) ||
+      (lType->isPointerType() && rType->isBlockPointerType())) {
+    if (!LHSIsNull && !RHSIsNull) {
+      Diag(loc, diag::err_typecheck_comparison_of_distinct_blocks,
+           lType.getAsString(), rType.getAsString(),
+           lex->getSourceRange(), rex->getSourceRange());
+    }
+    ImpCastExprToType(rex, lType); // promote the pointer to pointer
+    return Context.IntTy;
+  }
 
   if ((lType->isObjCQualifiedIdType() || rType->isObjCQualifiedIdType())) {
     if (ObjCQualifiedIdTypesAreCompatible(lType, rType, true)) {
