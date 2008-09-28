@@ -1383,6 +1383,75 @@ llvm::Function *CGObjCMac::EnumerationMutationFunction()
   return ObjCTypes.EnumerationMutationFn;
 }
 
+/* 
+
+Objective-C setjmp-longjmp (sjlj) Exception Handling
+--
+
+The basic framework for a @try-catch-finally is as follows:
+{
+  objc_exception_data d;
+  id _rethrow = null;
+
+  objc_exception_try_enter(&d);
+  if (!setjmp(d.jmp_buf)) {
+    ... try body ... 
+  } else {
+    // exception path
+    id _caught = objc_exception_extract(&d);
+    
+    // enter new try scope for handlers
+    if (!setjmp(d.jmp_buf)) {
+      ... match exception and execute catch blocks ...
+      
+      // fell off end, rethrow.
+      _rethrow = _caught;
+    } else {
+      // exception in catch block
+      _rethrow = objc_exception_extract(&d);
+      goto finally_no_exit;
+    }
+  }
+
+finally:
+  // match either the initial try_enter or the catch try_enter,
+  // depending on the path followed.
+  objc_exception_try_exit(&d);
+finally_no_exit:
+  ... finally block ....
+  if (_rethrow)
+    objc_exception_throw(_rethrow);
+}
+
+This framework differs slightly from the one gcc uses, in that gcc
+uses _rethrow to determine if objc_exception_try_exit should be
+called. This breaks in the face of throwing nil and introduces an
+unnecessary branch. Note that our framework still does not properly
+handle throwing nil, as a nil object will not be rethrown.
+
+FIXME: Determine if _rethrow should be integrated into the other
+architecture for selecting paths out of the finally block.
+
+We specialize this framework for a few particular circumstances:
+
+ - If there are no catch blocks, then we avoid emitting the second
+   exception handling context.
+
+ - If there is a catch-all catch block (i.e. @catch(...) or @catch(id
+   e)) we avoid emitting the code to rethrow an uncaught exception.
+
+ - FIXME: If there is no @finally block we can do a few more
+   simplifications.
+
+Rethrows and Jumps-Through-Finally
+--
+
+Support for implicit rethrows and jumping through the finally block is
+handled by storing the current exception-handling context in
+ObjCEHStack.
+
+*/
+
 void CGObjCMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
                             const ObjCAtTryStmt &S)
 {
@@ -1413,6 +1482,10 @@ void CGObjCMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
   CGF.Builder.CreateCondBr(CGF.Builder.CreateIsNonNull(SetJmpResult, "threw"), 
                            TryHandler, TryBlock);
 
+  // Push an EH context entry for use by rethrow and
+  // jumps-through-finally.
+  CGF.ObjCEHStack.push_back(CodeGenFunction::ObjCEHEntry(FinallyBlock));
+
   // Emit the @try block.
   CGF.EmitBlock(TryBlock);
   CGF.EmitStmt(S.getTryBody());
@@ -1426,6 +1499,7 @@ void CGObjCMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
   llvm::Value *Caught = CGF.Builder.CreateCall(ObjCTypes.ExceptionExtractFn,
                                                ExceptionData,
                                                "caught");
+  CGF.ObjCEHStack.back().Exception = Caught;
   if (const ObjCAtCatchStmt* CatchStmt = S.getCatchStmts()) {    
     // Enter a new exception try block (in case a @catch block throws
     // an exception).
@@ -1497,14 +1571,12 @@ void CGObjCMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
       
       // Emit the @catch block.
       CGF.EmitBlock(MatchedBlock);
-      if (CatchParam) {
-        CGF.EmitStmt(CatchParam);
-        
-        llvm::Value *Tmp = 
-          CGF.Builder.CreateBitCast(Caught, CGF.ConvertType(VD->getType()), 
-                                    "tmp");
-        CGF.Builder.CreateStore(Tmp, CGF.GetAddrOfLocalVar(VD));
-      }
+      CGF.EmitStmt(CatchParam);
+
+      llvm::Value *Tmp = 
+        CGF.Builder.CreateBitCast(Caught, CGF.ConvertType(VD->getType()), 
+                                  "tmp");
+      CGF.Builder.CreateStore(Tmp, CGF.GetAddrOfLocalVar(VD));
       
       CGF.EmitStmt(CatchStmt->getCatchBody());
       CGF.Builder.CreateBr(FinallyBlock);
@@ -1551,6 +1623,8 @@ void CGObjCMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
   CGF.Builder.CreateCall(ObjCTypes.ExceptionThrowFn, Rethrow);
   CGF.Builder.CreateUnreachable();
 
+  CGF.ObjCEHStack.pop_back();
+
   CGF.EmitBlock(FinallyEndBlock);
 }
 
@@ -1564,7 +1638,9 @@ void CGObjCMac::EmitThrowStmt(CodeGen::CodeGenFunction &CGF,
     ExceptionAsObject = 
       CGF.Builder.CreateBitCast(Exception, ObjCTypes.ObjectPtrTy, "tmp");
   } else {
-    assert(0 && "FIXME: rethrows not supported!");
+    assert((!CGF.ObjCEHStack.empty() && CGF.ObjCEHStack.back().Exception) && 
+           "Unexpected rethrow outside @catch block.");
+    ExceptionAsObject = CGF.ObjCEHStack.back().Exception;
   }
   
   CGF.Builder.CreateCall(ObjCTypes.ExceptionThrowFn, ExceptionAsObject);

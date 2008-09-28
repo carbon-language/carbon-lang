@@ -79,6 +79,22 @@ public:
 
   const llvm::Type *LLVMIntTy;
   uint32_t LLVMPointerWidth;
+
+public:
+  // FIXME: The following should be private once EH code is moved out
+  // of NeXT runtime.
+
+  // ObjCEHStack - This keeps track of which object to rethrow from
+  // inside @catch blocks and which @finally block exits from an EH
+  // scope should be chained through.
+  struct ObjCEHEntry {
+    ObjCEHEntry(llvm::BasicBlock *fb)
+      : Exception(0), FinallyBlock(fb) {}
+
+    llvm::Value *Exception;
+    llvm::BasicBlock *FinallyBlock;
+  };
+  llvm::SmallVector<ObjCEHEntry, 8> ObjCEHStack;
   
 private:
   /// LabelIDs - Track arbitrary ids assigned to labels for use in
@@ -108,7 +124,7 @@ private:
     llvm::BasicBlock *ContinueBlock;
   }; 
   llvm::SmallVector<BreakContinue, 8> BreakContinueStack;
-  
+
   /// SwitchInsn - This is nearest current switch instruction. It is null if
   /// if current context is not in a switch.
   llvm::SwitchInst *SwitchInsn;
