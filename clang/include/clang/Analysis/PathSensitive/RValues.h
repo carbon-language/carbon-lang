@@ -161,7 +161,8 @@ public:
   }
   
   static inline bool IsLValType(QualType T) {
-    return T->isPointerType() || T->isObjCQualifiedIdType();
+    return T->isPointerType() || T->isObjCQualifiedIdType() 
+      || T->isBlockPointerType();
   }
 };
   
