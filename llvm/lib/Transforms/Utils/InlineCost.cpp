@@ -174,17 +174,21 @@ int InlineCostAnalyzer::getInlineCost(CallSite CS,
   Instruction *TheCall = CS.getInstruction();
   Function *Callee = CS.getCalledFunction();
   const Function *Caller = TheCall->getParent()->getParent();
-  
+
   // Don't inline a directly recursive call.
   if (Caller == Callee ||
       // Don't inline functions which can be redefined at link-time to mean
-      // something else.  link-once linkage is ok though.
-      Callee->hasWeakLinkage() ||
-      
+      // something else.
+      // FIXME: We allow link-once linkage since in practice all versions of
+      // the function have the same body (C++ ODR) - but the LLVM definition
+      // of LinkOnceLinkage doesn't require this.
+      (Callee->mayBeOverridden() && !Callee->hasLinkOnceLinkage()
+       ) ||
+
       // Don't inline functions marked noinline.
       NeverInline.count(Callee))
     return 2000000000;
-  
+
   // InlineCost - This value measures how good of an inline candidate this call
   // site is to inline.  A lower inline cost make is more likely for the call to
   // be inlined.  This value may go negative.

@@ -85,7 +85,7 @@ SelectSectionForGlobal(const GlobalValue *GV) const {
   SectionKind::Kind K = SectionKindForGlobal(GV);
   const GlobalVariable *GVA = dyn_cast<GlobalVariable>(GV);
 
-  if (GVA && (!GVA->isWeakForLinker()))
+  if (GVA && (!GVA->mayBeOverridden()))
     switch (K) {
       case SectionKind::SmallData:
         return getSmallDataSection();

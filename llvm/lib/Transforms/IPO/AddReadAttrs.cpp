@@ -63,7 +63,7 @@ bool AddReadAttrs::runOnSCC(const std::vector<CallGraphNode *> &SCC) {
 
     // Definitions with weak linkage may be overridden at linktime with
     // something that writes memory, so treat them like declarations.
-    if (F->isDeclaration() || F->hasWeakLinkage()) {
+    if (F->isDeclaration() || F->mayBeOverridden()) {
       if (!F->onlyReadsMemory())
         // May write memory.
         return false;

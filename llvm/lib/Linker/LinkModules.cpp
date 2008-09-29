@@ -477,7 +477,7 @@ static bool GetLinkageResult(GlobalValue *Dest, const GlobalValue *Src,
             "': can only link appending global with another appending global!");
     LinkFromSrc = true; // Special cased.
     LT = Src->getLinkage();
-  } else if (Src->isWeakForLinker()) {
+  } else if (Src->mayBeOverridden()) {
     // At this point we know that Dest has LinkOnce, External*, Weak, Common,
     // or DLL* linkage.
     if ((Dest->hasLinkOnceLinkage() &&
@@ -489,7 +489,7 @@ static bool GetLinkageResult(GlobalValue *Dest, const GlobalValue *Src,
       LinkFromSrc = false;
       LT = Dest->getLinkage();
     }
-  } else if (Dest->isWeakForLinker()) {
+  } else if (Dest->mayBeOverridden()) {
     // At this point we know that Src has External* or DLL* linkage.
     if (Src->hasExternalWeakLinkage()) {
       LinkFromSrc = false;
@@ -757,7 +757,7 @@ static bool LinkAlias(Module *Dest, const Module *Src,
     } else if (GlobalVariable *DGVar = dyn_cast_or_null<GlobalVariable>(DGV)) {
       // The only allowed way is to link alias with external declaration or weak
       // symbol..
-      if (DGVar->isDeclaration() || DGVar->isWeakForLinker()) {
+      if (DGVar->isDeclaration() || DGVar->mayBeOverridden()) {
         // But only if aliasee is global too...
         if (!isa<GlobalVariable>(DAliasee))
           return Error(Err, "Global-Alias Collision on '" + SGA->getName() +
@@ -786,7 +786,7 @@ static bool LinkAlias(Module *Dest, const Module *Src,
     } else if (Function *DF = dyn_cast_or_null<Function>(DGV)) {
       // The only allowed way is to link alias with external declaration or weak
       // symbol...
-      if (DF->isDeclaration() || DF->isWeakForLinker()) {
+      if (DF->isDeclaration() || DF->mayBeOverridden()) {
         // But only if aliasee is function too...
         if (!isa<Function>(DAliasee))
           return Error(Err, "Function-Alias Collision on '" + SGA->getName() +
@@ -862,10 +862,10 @@ static bool LinkGlobalInits(Module *Dest, const Module *Src,
           if (DGV->getInitializer() != SInit)
             return Error(Err, "Global Variable Collision on '" + SGV->getName() +
                          "': global variables have different initializers");
-        } else if (DGV->isWeakForLinker()) {
+        } else if (DGV->mayBeOverridden()) {
           // Nothing is required, mapped values will take the new global
           // automatically.
-        } else if (SGV->isWeakForLinker()) {
+        } else if (SGV->mayBeOverridden()) {
           // Nothing is required, mapped values will take the new global
           // automatically.
         } else if (DGV->hasAppendingLinkage()) {

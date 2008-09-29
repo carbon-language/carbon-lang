@@ -275,7 +275,7 @@ void IA64AsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
 
   if (C->isNullValue() && !GVar->hasSection()) {
     if (!GVar->isThreadLocal() &&
-        (GVar->hasInternalLinkage() || GVar->isWeakForLinker())) {
+        (GVar->hasInternalLinkage() || GVar->mayBeOverridden())) {
       if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
 
       if (GVar->hasInternalLinkage()) {

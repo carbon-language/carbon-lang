@@ -55,7 +55,7 @@ ELFTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
       return getNamedSection(Name.c_str(), Flags);
     }
   } else if (const GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV)) {
-    if (GVar->isWeakForLinker()) {
+    if (GVar->mayBeOverridden()) {
       std::string Name = UniqueSectionForGlobal(GVar, Kind);
       unsigned Flags = SectionFlagsForGlobal(GVar, Name.c_str());
       return getNamedSection(Name.c_str(), Flags);

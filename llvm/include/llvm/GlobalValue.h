@@ -111,9 +111,10 @@ public:
   void setLinkage(LinkageTypes LT) { Linkage = LT; }
   LinkageTypes getLinkage() const { return Linkage; }
 
-  /// isWeakForLinker - Determines if symbol is weak for linker having weak or
-  /// linkonce or common or extweak LLVM linkage.
-  bool isWeakForLinker() const {
+  /// mayBeOverridden - Whether the definition of this global may be replaced
+  /// at link time.  For example, if a function has weak linkage then the code
+  /// defining it may be replaced by different code.
+  bool mayBeOverridden() const {
     return (Linkage == WeakLinkage ||
             Linkage == LinkOnceLinkage ||
             Linkage == CommonLinkage ||

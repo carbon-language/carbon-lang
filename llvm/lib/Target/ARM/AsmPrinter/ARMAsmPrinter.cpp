@@ -871,7 +871,7 @@ void ARMAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
       }
     }
 
-    if (GVar->hasInternalLinkage() || GVar->isWeakForLinker()) {
+    if (GVar->hasInternalLinkage() || GVar->mayBeOverridden()) {
       if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
 
       if (TAI->getLCOMMDirective() != NULL) {

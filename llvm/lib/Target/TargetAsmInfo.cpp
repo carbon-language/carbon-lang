@@ -240,7 +240,7 @@ TargetAsmInfo::SectionFlagsForGlobal(const GlobalValue *GV,
       assert(0 && "Unexpected section kind!");
     }
 
-    if (GV->isWeakForLinker())
+    if (GV->mayBeOverridden())
       Flags |= SectionFlags::Linkonce;
   }
 
@@ -291,7 +291,7 @@ const Section*
 TargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
   SectionKind::Kind Kind = SectionKindForGlobal(GV);
 
-  if (GV->isWeakForLinker()) {
+  if (GV->mayBeOverridden()) {
     std::string Name = UniqueSectionForGlobal(GV, Kind);
     unsigned Flags = SectionFlagsForGlobal(GV, Name.c_str());
     return getNamedSection(Name.c_str(), Flags);

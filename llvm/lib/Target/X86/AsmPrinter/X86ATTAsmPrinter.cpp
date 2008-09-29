@@ -383,7 +383,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     if (shouldPrintStub(TM, Subtarget)) {
       // Link-once, declaration, or Weakly-linked global variables need
       // non-lazily-resolved stubs
-      if (GV->isDeclaration() || GV->isWeakForLinker()) {
+      if (GV->isDeclaration() || GV->mayBeOverridden()) {
         // Dynamically-resolved functions need a stub for the function.
         if (isCallOp && isa<Function>(GV)) {
           // Function stubs are no longer needed for Mac OS X 10.5 and up.
@@ -790,7 +790,7 @@ void X86ATTAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
     }
 
     if (!GVar->isThreadLocal() &&
-        (GVar->hasInternalLinkage() || GVar->isWeakForLinker())) {
+        (GVar->hasInternalLinkage() || GVar->mayBeOverridden())) {
       if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
 
       if (TAI->getLCOMMDirective() != NULL) {
