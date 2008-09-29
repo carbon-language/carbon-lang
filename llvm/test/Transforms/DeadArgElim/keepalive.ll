@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | opt -deadargelim | llvm-dis > %t
-; RUN: cat %t | grep {define internal i32 @test1() zeroext nounwind}
+; RUN: cat %t | grep {define internal zeroext i32 @test1() nounwind}
 ; RUN: cat %t | grep {define internal \<\{ i32, i32 \}\> @test}
 
 ; Check if the pass doesn't modify anything that doesn't need changing. We feed
@@ -7,7 +7,7 @@
 ; the function and then changing too much.
 
 ; This checks if the return value attributes are not removed
-define internal i32 @test1(i32 %DEADARG1) nounwind zeroext{
+define internal zeroext i32 @test1(i32 %DEADARG1) nounwind {
         ret i32 1
 }
 

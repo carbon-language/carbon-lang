@@ -1356,6 +1356,9 @@ void AssemblyWriter::printFunction(const Function *F) {
 
   const FunctionType *FT = F->getFunctionType();
   const AttrListPtr &Attrs = F->getAttributes();
+  Attributes RetAttrs = Attrs.getRetAttributes();
+  if (RetAttrs != Attribute::None)
+    Out <<  Attribute::getAsString(Attrs.getRetAttributes()) << ' ';
   printType(F->getReturnType());
   Out << ' ';
   if (F->hasName())
@@ -1398,9 +1401,6 @@ void AssemblyWriter::printFunction(const Function *F) {
     Out << "...";  // Output varargs portion of signature!
   }
   Out << ')';
-  Attributes RetAttrs = Attrs.getRetAttributes();
-  if (RetAttrs != Attribute::None)
-    Out << ' ' << Attribute::getAsString(Attrs.getRetAttributes());
   Attributes FnAttrs = Attrs.getFnAttributes();
   if (FnAttrs != Attribute::None)
     Out << ' ' << Attribute::getAsString(Attrs.getFnAttributes());
@@ -1617,6 +1617,9 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     const Type         *RetTy = FTy->getReturnType();
     const AttrListPtr &PAL = CI->getAttributes();
 
+    if (PAL.getRetAttributes() != Attribute::None)
+      Out << ' ' << Attribute::getAsString(PAL.getRetAttributes());
+
     // If possible, print out the short form of the call instruction.  We can
     // only do this if the first argument is a pointer to a nonvararg function,
     // and if the return type is not a pointer to a function.
@@ -1638,8 +1641,6 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
       writeParamOperand(I.getOperand(op), PAL.getParamAttributes(op));
     }
     Out << ')';
-    if (PAL.getRetAttributes() != Attribute::None)
-      Out << ' ' << Attribute::getAsString(PAL.getRetAttributes());
     if (PAL.getFnAttributes() != Attribute::None)
       Out << ' ' << Attribute::getAsString(PAL.getFnAttributes());
   } else if (const InvokeInst *II = dyn_cast<InvokeInst>(&I)) {
@@ -1657,6 +1658,9 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     case CallingConv::X86_FastCall: Out << " x86_fastcallcc"; break;
     default: Out << " cc" << II->getCallingConv(); break;
     }
+
+    if (PAL.getRetAttributes() != Attribute::None)
+      Out << ' ' << Attribute::getAsString(PAL.getRetAttributes());
 
     // If possible, print out the short form of the invoke instruction. We can
     // only do this if the first argument is a pointer to a nonvararg function,
@@ -1680,8 +1684,6 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     }
 
     Out << ')';
-    if (PAL.getRetAttributes() != Attribute::None)
-      Out << ' ' << Attribute::getAsString(PAL.getRetAttributes());
     if (PAL.getFnAttributes() != Attribute::None)
       Out << ' ' << Attribute::getAsString(PAL.getFnAttributes());
 

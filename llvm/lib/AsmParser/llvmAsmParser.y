@@ -1089,6 +1089,7 @@ Module *llvm::RunVMAsmParser(llvm::MemoryBuffer *MB) {
 %type <UIntVal> OptCallingConv LocalNumber
 %type <Attributes> OptAttributes Attribute
 %type <Attributes> OptFuncAttrs  FuncAttr
+%type <Attributes> OptRetAttrs  RetAttr
 
 // Basic Block Terminating Operators
 %token <TermOpVal> RET BR SWITCH INVOKE UNWIND UNREACHABLE
@@ -1272,6 +1273,18 @@ OptAttributes : /* empty */  { $$ = Attribute::None; }
               }
               ;
 
+RetAttr       : INREG    { $$ = Attribute::InReg;     }
+              | ZEROEXT  { $$ = Attribute::ZExt;     }
+              | SIGNEXT  { $$ = Attribute::SExt;     }
+              ;
+
+OptRetAttrs  : /* empty */ { $$ = Attribute::None; }
+             | OptRetAttrs RetAttr {
+               $$ = $1 | $2;
+             }
+             ;
+
+
 FuncAttr      : NORETURN { $$ = Attribute::NoReturn; }
               | NOUNWIND { $$ = Attribute::NoUnwind; }
               | INREG    { $$ = Attribute::InReg;     }
@@ -1289,6 +1302,7 @@ OptFuncAttrs  : /* empty */ { $$ = Attribute::None; }
                 $$ = $1 | $2;
               }
               ;
+
 
 OptGC         : /* empty */ { $$ = 0; }
               | GC STRINGCONSTANT {
@@ -2304,43 +2318,43 @@ ArgList : ArgListH {
     CHECK_FOR_ERROR
   };
 
-FunctionHeaderH : OptCallingConv ResultTypes GlobalName '(' ArgList ')'
+FunctionHeaderH : OptCallingConv OptRetAttrs ResultTypes GlobalName '(' ArgList ')'
                   OptFuncAttrs OptSection OptAlign OptGC {
-  std::string FunctionName(*$3);
-  delete $3;  // Free strdup'd memory!
+  std::string FunctionName(*$4);
+  delete $4;  // Free strdup'd memory!
 
   // Check the function result for abstractness if this is a define. We should
   // have no abstract types at this point
-  if (!CurFun.isDeclare && CurModule.TypeIsUnresolved($2))
-    GEN_ERROR("Reference to abstract result: "+ $2->get()->getDescription());
+  if (!CurFun.isDeclare && CurModule.TypeIsUnresolved($3))
+    GEN_ERROR("Reference to abstract result: "+ $3->get()->getDescription());
 
-  if (!FunctionType::isValidReturnType(*$2))
+  if (!FunctionType::isValidReturnType(*$3))
     GEN_ERROR("Invalid result type for LLVM function");
 
   std::vector<const Type*> ParamTypeList;
   SmallVector<AttributeWithIndex, 8> Attrs;
   //FIXME : In 3.0, stop accepting zext, sext and inreg as optional function 
   //attributes.
-  Attributes RetAttrs = 0;
-  if ($7 != Attribute::None) {
-    if ($7 & Attribute::ZExt) {
+  Attributes RetAttrs = $2;
+  if ($8 != Attribute::None) {
+    if ($8 & Attribute::ZExt) {
       RetAttrs = RetAttrs | Attribute::ZExt;
-      $7 = $7 ^ Attribute::ZExt;
+      $8 = $8 ^ Attribute::ZExt;
     }
-    if ($7 & Attribute::SExt) {
+    if ($8 & Attribute::SExt) {
       RetAttrs = RetAttrs | Attribute::SExt;
-      $7 = $7 ^ Attribute::SExt;
+      $8 = $8 ^ Attribute::SExt;
     }
-    if ($7 & Attribute::InReg) {
+    if ($8 & Attribute::InReg) {
       RetAttrs = RetAttrs | Attribute::InReg;
-      $7 = $7 ^ Attribute::InReg;
+      $8 = $8 ^ Attribute::InReg;
     }
-    if (RetAttrs != Attribute::None)
-      Attrs.push_back(AttributeWithIndex::get(0, RetAttrs));
   }
-  if ($5) {   // If there are arguments...
+  if (RetAttrs != Attribute::None)
+    Attrs.push_back(AttributeWithIndex::get(0, RetAttrs));
+  if ($6) {   // If there are arguments...
     unsigned index = 1;
-    for (ArgListType::iterator I = $5->begin(); I != $5->end(); ++I, ++index) {
+    for (ArgListType::iterator I = $6->begin(); I != $6->end(); ++I, ++index) {
       const Type* Ty = I->Ty->get();
       if (!CurFun.isDeclare && CurModule.TypeIsUnresolved(I->Ty))
         GEN_ERROR("Reference to abstract argument: " + Ty->getDescription());
@@ -2349,8 +2363,8 @@ FunctionHeaderH : OptCallingConv ResultTypes GlobalName '(' ArgList ')'
         Attrs.push_back(AttributeWithIndex::get(index, I->Attrs));
     }
   }
-  if ($7 != Attribute::None)
-    Attrs.push_back(AttributeWithIndex::get(~0, $7));
+  if ($8 != Attribute::None)
+    Attrs.push_back(AttributeWithIndex::get(~0, $8));
 
   bool isVarArg = ParamTypeList.size() && ParamTypeList.back() == Type::VoidTy;
   if (isVarArg) ParamTypeList.pop_back();
@@ -2359,9 +2373,9 @@ FunctionHeaderH : OptCallingConv ResultTypes GlobalName '(' ArgList ')'
   if (!Attrs.empty())
     PAL = AttrListPtr::get(Attrs.begin(), Attrs.end());
 
-  FunctionType *FT = FunctionType::get(*$2, ParamTypeList, isVarArg);
+  FunctionType *FT = FunctionType::get(*$3, ParamTypeList, isVarArg);
   const PointerType *PFT = PointerType::getUnqual(FT);
-  delete $2;
+  delete $3;
 
   ValID ID;
   if (!FunctionName.empty()) {
@@ -2417,29 +2431,29 @@ FunctionHeaderH : OptCallingConv ResultTypes GlobalName '(' ArgList ')'
   }
   Fn->setCallingConv($1);
   Fn->setAttributes(PAL);
-  Fn->setAlignment($9);
-  if ($8) {
-    Fn->setSection(*$8);
-    delete $8;
+  Fn->setAlignment($10);
+  if ($9) {
+    Fn->setSection(*$9);
+    delete $9;
   }
-  if ($10) {
-    Fn->setGC($10->c_str());
-    delete $10;
+  if ($11) {
+    Fn->setGC($11->c_str());
+    delete $11;
   }
 
   // Add all of the arguments we parsed to the function...
-  if ($5) {                     // Is null if empty...
+  if ($6) {                     // Is null if empty...
     if (isVarArg) {  // Nuke the last entry
-      assert($5->back().Ty->get() == Type::VoidTy && $5->back().Name == 0 &&
+      assert($6->back().Ty->get() == Type::VoidTy && $6->back().Name == 0 &&
              "Not a varargs marker!");
-      delete $5->back().Ty;
-      $5->pop_back();  // Delete the last entry
+      delete $6->back().Ty;
+      $6->pop_back();  // Delete the last entry
     }
     Function::arg_iterator ArgIt = Fn->arg_begin();
     Function::arg_iterator ArgEnd = Fn->arg_end();
     unsigned Idx = 1;
-    for (ArgListType::iterator I = $5->begin();
-         I != $5->end() && ArgIt != ArgEnd; ++I, ++ArgIt) {
+    for (ArgListType::iterator I = $6->begin();
+         I != $6->end() && ArgIt != ArgEnd; ++I, ++ArgIt) {
       delete I->Ty;                          // Delete the typeholder...
       setValueName(ArgIt, I->Name);       // Insert arg into symtab...
       CHECK_FOR_ERROR
@@ -2447,7 +2461,7 @@ FunctionHeaderH : OptCallingConv ResultTypes GlobalName '(' ArgList ')'
       Idx++;
     }
 
-    delete $5;                     // We're now done with the argument list
+    delete $6;                     // We're now done with the argument list
   }
   CHECK_FOR_ERROR
 };
@@ -2814,17 +2828,17 @@ BBTerminatorInst :
     $$ = S;
     CHECK_FOR_ERROR
   }
-  | INVOKE OptCallingConv ResultTypes ValueRef '(' ParamList ')' OptFuncAttrs
-    TO LABEL ValueRef UNWIND LABEL ValueRef {
+  | INVOKE OptCallingConv OptRetAttrs ResultTypes ValueRef '(' ParamList ')' 
+    OptFuncAttrs TO LABEL ValueRef UNWIND LABEL ValueRef {
 
     // Handle the short syntax
     const PointerType *PFTy = 0;
     const FunctionType *Ty = 0;
-    if (!(PFTy = dyn_cast<PointerType>($3->get())) ||
+    if (!(PFTy = dyn_cast<PointerType>($4->get())) ||
         !(Ty = dyn_cast<FunctionType>(PFTy->getElementType()))) {
       // Pull out the types of all of the arguments...
       std::vector<const Type*> ParamTypes;
-      ParamList::iterator I = $6->begin(), E = $6->end();
+      ParamList::iterator I = $7->begin(), E = $7->end();
       for (; I != E; ++I) {
         const Type *Ty = I->Val->getType();
         if (Ty == Type::VoidTy)
@@ -2832,46 +2846,46 @@ BBTerminatorInst :
         ParamTypes.push_back(Ty);
       }
 
-      if (!FunctionType::isValidReturnType(*$3))
+      if (!FunctionType::isValidReturnType(*$4))
         GEN_ERROR("Invalid result type for LLVM function");
 
-      Ty = FunctionType::get($3->get(), ParamTypes, false);
+      Ty = FunctionType::get($4->get(), ParamTypes, false);
       PFTy = PointerType::getUnqual(Ty);
     }
 
-    delete $3;
+    delete $4;
 
-    Value *V = getVal(PFTy, $4);   // Get the function we're calling...
+    Value *V = getVal(PFTy, $5);   // Get the function we're calling...
     CHECK_FOR_ERROR
-    BasicBlock *Normal = getBBVal($11);
+    BasicBlock *Normal = getBBVal($12);
     CHECK_FOR_ERROR
-    BasicBlock *Except = getBBVal($14);
+    BasicBlock *Except = getBBVal($15);
     CHECK_FOR_ERROR
 
     SmallVector<AttributeWithIndex, 8> Attrs;
     //FIXME : In 3.0, stop accepting zext, sext and inreg as optional function 
     //attributes.
-    Attributes RetAttrs = 0;
-    if ($8 != Attribute::None) {
-      if ($8 & Attribute::ZExt) {
+    Attributes RetAttrs = $3;
+    if ($9 != Attribute::None) {
+      if ($9 & Attribute::ZExt) {
         RetAttrs = RetAttrs | Attribute::ZExt;
-        $8 = $8 ^ Attribute::ZExt;
+        $9 = $9 ^ Attribute::ZExt;
       }
-      if ($8 & Attribute::SExt) {
+      if ($9 & Attribute::SExt) {
         RetAttrs = RetAttrs | Attribute::SExt;
-        $8 = $8 ^ Attribute::SExt;
+        $9 = $9 ^ Attribute::SExt;
       }
-      if ($8 & Attribute::InReg) {
+      if ($9 & Attribute::InReg) {
         RetAttrs = RetAttrs | Attribute::InReg;
-        $8 = $8 ^ Attribute::InReg;
+        $9 = $9 ^ Attribute::InReg;
       }
-      if (RetAttrs != Attribute::None)
-        Attrs.push_back(AttributeWithIndex::get(0, RetAttrs));
     }
+    if (RetAttrs != Attribute::None)
+      Attrs.push_back(AttributeWithIndex::get(0, RetAttrs));
     
     // Check the arguments
     ValueList Args;
-    if ($6->empty()) {                                   // Has no arguments?
+    if ($7->empty()) {                                   // Has no arguments?
       // Make sure no arguments is a good thing!
       if (Ty->getNumParams() != 0)
         GEN_ERROR("No arguments passed to a function that "
@@ -2881,7 +2895,7 @@ BBTerminatorInst :
       // correctly!
       FunctionType::param_iterator I = Ty->param_begin();
       FunctionType::param_iterator E = Ty->param_end();
-      ParamList::iterator ArgI = $6->begin(), ArgE = $6->end();
+      ParamList::iterator ArgI = $7->begin(), ArgE = $7->end();
       unsigned index = 1;
 
       for (; ArgI != ArgE && I != E; ++ArgI, ++I, ++index) {
@@ -2903,8 +2917,8 @@ BBTerminatorInst :
       } else if (I != E || ArgI != ArgE)
         GEN_ERROR("Invalid number of parameters detected");
     }
-    if ($8 != Attribute::None)
-      Attrs.push_back(AttributeWithIndex::get(~0, $8));
+    if ($9 != Attribute::None)
+      Attrs.push_back(AttributeWithIndex::get(~0, $9));
     AttrListPtr PAL;
     if (!Attrs.empty())
       PAL = AttrListPtr::get(Attrs.begin(), Attrs.end());
@@ -2915,7 +2929,7 @@ BBTerminatorInst :
     II->setCallingConv($2);
     II->setAttributes(PAL);
     $$ = II;
-    delete $6;
+    delete $7;
     CHECK_FOR_ERROR
   }
   | UNWIND {
@@ -3226,17 +3240,17 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     delete $2;  // Free the list...
     CHECK_FOR_ERROR
   }
-  | OptTailCall OptCallingConv ResultTypes ValueRef '(' ParamList ')'
+  | OptTailCall OptCallingConv OptRetAttrs ResultTypes ValueRef '(' ParamList ')'
     OptFuncAttrs {
 
     // Handle the short syntax
     const PointerType *PFTy = 0;
     const FunctionType *Ty = 0;
-    if (!(PFTy = dyn_cast<PointerType>($3->get())) ||
+    if (!(PFTy = dyn_cast<PointerType>($4->get())) ||
         !(Ty = dyn_cast<FunctionType>(PFTy->getElementType()))) {
       // Pull out the types of all of the arguments...
       std::vector<const Type*> ParamTypes;
-      ParamList::iterator I = $6->begin(), E = $6->end();
+      ParamList::iterator I = $7->begin(), E = $7->end();
       for (; I != E; ++I) {
         const Type *Ty = I->Val->getType();
         if (Ty == Type::VoidTy)
@@ -3244,14 +3258,14 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
         ParamTypes.push_back(Ty);
       }
 
-      if (!FunctionType::isValidReturnType(*$3))
+      if (!FunctionType::isValidReturnType(*$4))
         GEN_ERROR("Invalid result type for LLVM function");
 
-      Ty = FunctionType::get($3->get(), ParamTypes, false);
+      Ty = FunctionType::get($4->get(), ParamTypes, false);
       PFTy = PointerType::getUnqual(Ty);
     }
 
-    Value *V = getVal(PFTy, $4);   // Get the function we're calling...
+    Value *V = getVal(PFTy, $5);   // Get the function we're calling...
     CHECK_FOR_ERROR
 
     // Check for call to invalid intrinsic to avoid crashing later.
@@ -3267,27 +3281,27 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     SmallVector<AttributeWithIndex, 8> Attrs;
     //FIXME : In 3.0, stop accepting zext, sext and inreg as optional function 
     //attributes.
-    Attributes RetAttrs = 0;
-    if ($8 != Attribute::None) {
-      if ($8 & Attribute::ZExt) {
+    Attributes RetAttrs = $3;
+    if ($9 != Attribute::None) {
+      if ($9 & Attribute::ZExt) {
         RetAttrs = RetAttrs | Attribute::ZExt;
-        $8 = $8 ^ Attribute::ZExt;
+        $9 = $9 ^ Attribute::ZExt;
       }
-      if ($8 & Attribute::SExt) {
+      if ($9 & Attribute::SExt) {
         RetAttrs = RetAttrs | Attribute::SExt;
-        $8 = $8 ^ Attribute::SExt;
+        $9 = $9 ^ Attribute::SExt;
       }
-      if ($8 & Attribute::InReg) {
+      if ($9 & Attribute::InReg) {
         RetAttrs = RetAttrs | Attribute::InReg;
-        $8 = $8 ^ Attribute::InReg;
+        $9 = $9 ^ Attribute::InReg;
       }
-      if (RetAttrs != Attribute::None)
-        Attrs.push_back(AttributeWithIndex::get(0, RetAttrs));
     }
+    if (RetAttrs != Attribute::None)
+      Attrs.push_back(AttributeWithIndex::get(0, RetAttrs));
     
     // Check the arguments
     ValueList Args;
-    if ($6->empty()) {                                   // Has no arguments?
+    if ($7->empty()) {                                   // Has no arguments?
       // Make sure no arguments is a good thing!
       if (Ty->getNumParams() != 0)
         GEN_ERROR("No arguments passed to a function that "
@@ -3297,7 +3311,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
       // correctly.  Also, gather any parameter attributes.
       FunctionType::param_iterator I = Ty->param_begin();
       FunctionType::param_iterator E = Ty->param_end();
-      ParamList::iterator ArgI = $6->begin(), ArgE = $6->end();
+      ParamList::iterator ArgI = $7->begin(), ArgE = $7->end();
       unsigned index = 1;
 
       for (; ArgI != ArgE && I != E; ++ArgI, ++I, ++index) {
@@ -3318,8 +3332,8 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
       } else if (I != E || ArgI != ArgE)
         GEN_ERROR("Invalid number of parameters detected");
     }
-    if ($8 != Attribute::None)
-      Attrs.push_back(AttributeWithIndex::get(~0, $8));
+    if ($9 != Attribute::None)
+      Attrs.push_back(AttributeWithIndex::get(~0, $9));
 
     // Finish off the Attributes and check them
     AttrListPtr PAL;
@@ -3332,8 +3346,8 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     CI->setCallingConv($2);
     CI->setAttributes(PAL);
     $$ = CI;
-    delete $6;
-    delete $3;
+    delete $7;
+    delete $4;
     CHECK_FOR_ERROR
   }
   | MemoryInst {

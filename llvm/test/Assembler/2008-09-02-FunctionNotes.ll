@@ -1,4 +1,4 @@
-; Test function notes
+; Test function attributes
 ; RUN: llvm-as < %s | llvm-dis | grep inline | count 2
 
 define void @fn1() alwaysinline {
