@@ -215,6 +215,10 @@ my %LangMap = (
   'mi'  => 'objective-c-cpp-output'
 );
 
+my %UniqueOptions = (
+  '-isysroot' => 0  
+);
+
 ##----------------------------------------------------------------------------##
 #  Main Logic.
 ##----------------------------------------------------------------------------##
@@ -225,6 +229,7 @@ my @LinkOpts;
 my @Files;
 my $Lang;
 my $Output;
+my %Uniqued;
 
 # Forward arguments to gcc.
 my $Status = system($CC,@ARGV);
@@ -287,6 +292,17 @@ foreach (my $i = 0; $i < scalar(@ARGV); ++$i) {
     my $Cnt = $CompilerLinkerOptionMap{$Arg};
     push @CompileOpts,$Arg;    
     push @LinkOpts,$Arg;
+
+    # Check if this is an option that should have a unique value, and if so
+    # determine if the value was checked before.
+    if ($UniqueOptions{$Arg}) {
+      if (defined $Uniqued{$Arg}) {
+        $i += $Cnt;
+        next;
+      }
+      $Uniqued{$Arg} = 1;
+    }
+    
     while ($Cnt > 0) {
       ++$i; --$Cnt;
       push @CompileOpts, $ARGV[$i];
