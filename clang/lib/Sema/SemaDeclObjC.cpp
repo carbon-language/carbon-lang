@@ -874,6 +874,9 @@ void Sema::ActOnAtEnd(SourceLocation AtEndLoc, DeclTy *classDecl,
       }
     }
   }
+  // Save the size so we can detect if we've added any property methods.
+  unsigned int insMethodsSizePriorToPropAdds = insMethods.size();
+  unsigned int clsMethodsSizePriorToPropAdds = clsMethods.size();
   
   if (ObjCInterfaceDecl *I = dyn_cast<ObjCInterfaceDecl>(ClassDecl)) {
     // Compares properties declared in this class to those of its 
@@ -925,6 +928,24 @@ void Sema::ActOnAtEnd(SourceLocation AtEndLoc, DeclTy *classDecl,
       }
     }
   }
+  // Add any synthesized methods to the global pool. This allows us to 
+  // handle the following, which is supported by GCC (and part of the design).
+  //
+  // @interface Foo
+  // @property double bar;
+  // @end
+  //
+  // void thisIsUnfortunate() {
+  //   id foo;
+  //   double bar = [foo bar];
+  // }
+  //
+  if (insMethodsSizePriorToPropAdds < insMethods.size())
+    for (unsigned i = insMethodsSizePriorToPropAdds; i < insMethods.size(); i++)
+      AddInstanceMethodToGlobalPool(insMethods[i]);     
+  if (clsMethodsSizePriorToPropAdds < clsMethods.size())
+    for (unsigned i = clsMethodsSizePriorToPropAdds; i < clsMethods.size(); i++)
+      AddFactoryMethodToGlobalPool(clsMethods[i]);     
 }
 
 

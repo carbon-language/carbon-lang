@@ -35,5 +35,13 @@
 @dynamic d;		// expected-error {{property implementation in a category with no category declaration}}
 @end
 
+@interface Foo
+@property double bar;
+@end
 
+int main() {
+   id foo;
+   double bar = [foo bar];
+   return 0;
+}
 
