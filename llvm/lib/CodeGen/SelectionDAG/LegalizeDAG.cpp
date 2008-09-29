@@ -1261,9 +1261,6 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     case TargetLowering::Custom:
       Result = TLI.LowerOperation(Result, DAG);
       break;
-    case TargetLowering::Expand:
-      Result = SDValue(TLI.ReplaceNodeResults(Op.getNode(), DAG),0);
-      break;
     case TargetLowering::Legal:
       break;
     }

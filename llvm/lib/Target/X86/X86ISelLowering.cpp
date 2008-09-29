@@ -297,10 +297,10 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   setOperationAction(ISD::ATOMIC_CMP_SWAP_32, MVT::i32, Custom);
   setOperationAction(ISD::ATOMIC_CMP_SWAP_64, MVT::i64, Custom);
 
-  setOperationAction(ISD::ATOMIC_LOAD_SUB_8, MVT::i8, Expand);
-  setOperationAction(ISD::ATOMIC_LOAD_SUB_16, MVT::i16, Expand);
-  setOperationAction(ISD::ATOMIC_LOAD_SUB_32, MVT::i32, Expand);
-  setOperationAction(ISD::ATOMIC_LOAD_SUB_64, MVT::i64, Expand);
+  setOperationAction(ISD::ATOMIC_LOAD_SUB_8 , MVT::i8, Custom);
+  setOperationAction(ISD::ATOMIC_LOAD_SUB_16, MVT::i16, Custom);
+  setOperationAction(ISD::ATOMIC_LOAD_SUB_32, MVT::i32, Custom);
+  setOperationAction(ISD::ATOMIC_LOAD_SUB_64, MVT::i64, Custom);
 
   // Use the default ISD::DBG_STOPPOINT, ISD::DECLARE expansion.
   setOperationAction(ISD::DBG_STOPPOINT, MVT::Other, Expand);
@@ -6002,18 +6002,22 @@ SDNode* X86TargetLowering::ExpandATOMIC_CMP_SWAP(SDNode* Op,
   return DAG.getMergeValues(Vals, 2).getNode();
 }
 
-SDNode* X86TargetLowering::ExpandATOMIC_LOAD_SUB(SDNode* Op,
-                                                 SelectionDAG &DAG) {
-  MVT T = Op->getValueType(0);
+SDValue X86TargetLowering::LowerLOAD_SUB(SDValue Op, SelectionDAG &DAG) {
+  SDNode *Node = Op.getNode();
+  MVT T = Node->getValueType(0);
   SDValue negOp = DAG.getNode(ISD::SUB, T,
-                                DAG.getConstant(0, T), Op->getOperand(2));
-  return DAG.getAtomic((T==MVT::i8 ? ISD::ATOMIC_LOAD_ADD_8:
-                        T==MVT::i16 ? ISD::ATOMIC_LOAD_ADD_16:
-                        T==MVT::i32 ? ISD::ATOMIC_LOAD_ADD_32:
-                        T==MVT::i64 ? ISD::ATOMIC_LOAD_ADD_64: 0),
-                       Op->getOperand(0), Op->getOperand(1), negOp,
-                       cast<AtomicSDNode>(Op)->getSrcValue(),
-                       cast<AtomicSDNode>(Op)->getAlignment()).getNode();
+                                DAG.getConstant(0, T), Node->getOperand(2));
+  return DAG.getAtomic((Op.getOpcode()==ISD::ATOMIC_LOAD_SUB_8 ? 
+                                        ISD::ATOMIC_LOAD_ADD_8 :
+                        Op.getOpcode()==ISD::ATOMIC_LOAD_SUB_16 ? 
+                                        ISD::ATOMIC_LOAD_ADD_16 :
+                        Op.getOpcode()==ISD::ATOMIC_LOAD_SUB_32 ? 
+                                        ISD::ATOMIC_LOAD_ADD_32 :
+                                        ISD::ATOMIC_LOAD_ADD_64),
+                       Node->getOperand(0),
+                       Node->getOperand(1), negOp,
+                       cast<AtomicSDNode>(Node)->getSrcValue(),
+                       cast<AtomicSDNode>(Node)->getAlignment());
 }
 
 /// LowerOperation - Provide custom lowering hooks for some operations.
@@ -6025,6 +6029,10 @@ SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   case ISD::ATOMIC_CMP_SWAP_16: return LowerCMP_SWAP(Op,DAG);
   case ISD::ATOMIC_CMP_SWAP_32: return LowerCMP_SWAP(Op,DAG);
   case ISD::ATOMIC_CMP_SWAP_64: return LowerCMP_SWAP(Op,DAG);
+  case ISD::ATOMIC_LOAD_SUB_8:  return LowerLOAD_SUB(Op,DAG);
+  case ISD::ATOMIC_LOAD_SUB_16: return LowerLOAD_SUB(Op,DAG);
+  case ISD::ATOMIC_LOAD_SUB_32: return LowerLOAD_SUB(Op,DAG);
+  case ISD::ATOMIC_LOAD_SUB_64: return LowerLOAD_SUB(Op,DAG);
   case ISD::BUILD_VECTOR:       return LowerBUILD_VECTOR(Op, DAG);
   case ISD::VECTOR_SHUFFLE:     return LowerVECTOR_SHUFFLE(Op, DAG);
   case ISD::EXTRACT_VECTOR_ELT: return LowerEXTRACT_VECTOR_ELT(Op, DAG);
@@ -6079,10 +6087,6 @@ SDNode *X86TargetLowering::ReplaceNodeResults(SDNode *N, SelectionDAG &DAG) {
   case ISD::FP_TO_SINT:         return ExpandFP_TO_SINT(N, DAG);
   case ISD::READCYCLECOUNTER:   return ExpandREADCYCLECOUNTER(N, DAG);
   case ISD::ATOMIC_CMP_SWAP_64: return ExpandATOMIC_CMP_SWAP(N, DAG);
-  case ISD::ATOMIC_LOAD_SUB_8:  return ExpandATOMIC_LOAD_SUB(N,DAG);
-  case ISD::ATOMIC_LOAD_SUB_16: return ExpandATOMIC_LOAD_SUB(N,DAG);
-  case ISD::ATOMIC_LOAD_SUB_32: return ExpandATOMIC_LOAD_SUB(N,DAG);
-  case ISD::ATOMIC_LOAD_SUB_64: return ExpandATOMIC_LOAD_SUB(N,DAG);
   }
 }
 

@@ -569,10 +569,10 @@ namespace llvm {
     SDValue LowerCTLZ(SDValue Op, SelectionDAG &DAG);
     SDValue LowerCTTZ(SDValue Op, SelectionDAG &DAG);
     SDValue LowerCMP_SWAP(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerLOAD_SUB(SDValue Op, SelectionDAG &DAG);
     SDNode *ExpandFP_TO_SINT(SDNode *N, SelectionDAG &DAG);
     SDNode *ExpandREADCYCLECOUNTER(SDNode *N, SelectionDAG &DAG);
     SDNode *ExpandATOMIC_CMP_SWAP(SDNode *N, SelectionDAG &DAG);
-    SDNode *ExpandATOMIC_LOAD_SUB(SDNode *N, SelectionDAG &DAG);
     
     SDValue EmitTargetCodeForMemset(SelectionDAG &DAG,
                                       SDValue Chain,
