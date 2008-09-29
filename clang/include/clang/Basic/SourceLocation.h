@@ -87,7 +87,7 @@ public:
   static bool isValidMacroPhysOffs(int Val) {
     if (Val >= 0)
       return Val < (1 << (MacroPhysOffsBits-1));
-    return -Val < (1 << (MacroPhysOffsBits-1));
+    return -Val <= (1 << (MacroPhysOffsBits-1));
   }
   
   static SourceLocation getMacroLoc(unsigned MacroID, int PhysOffs){
@@ -231,14 +231,18 @@ public:
     return *SrcMgr;
   }
   
-  FullSourceLoc getLogicalLoc();
-  FullSourceLoc getIncludeLoc();
+  FullSourceLoc getLogicalLoc() const;
+  FullSourceLoc getPhysicalLoc() const;
+  FullSourceLoc getIncludeLoc() const;
 
   unsigned getLineNumber() const;
   unsigned getColumnNumber() const;
   
   unsigned getLogicalLineNumber() const;
   unsigned getLogicalColumnNumber() const;
+
+  unsigned getPhysicalLineNumber() const;
+  unsigned getPhysicalColumnNumber() const;
 
   const char *getCharacterData() const;
   
@@ -260,6 +264,10 @@ public:
   bool operator!=(const FullSourceLoc& RHS) const {
     return SrcMgr != RHS.SrcMgr || Loc != RHS.Loc;
   }    
+
+  /// Prints information about this FullSourceLoc to stderr. Useful for
+  ///  debugging.
+  void dump() const;
 };
 
 }  // end namespace clang

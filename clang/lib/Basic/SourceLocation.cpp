@@ -16,7 +16,6 @@
 #include "clang/Basic/SourceManager.h"
 #include "llvm/Bitcode/Serialize.h"
 #include "llvm/Bitcode/Deserialize.h"
-
 using namespace clang;
 
 void SourceLocation::Emit(llvm::Serializer& S) const {
@@ -38,14 +37,19 @@ SourceRange SourceRange::ReadVal(llvm::Deserializer& D) {
   return SourceRange(A,B);
 }
 
-FullSourceLoc FullSourceLoc::getLogicalLoc() {
+FullSourceLoc FullSourceLoc::getLogicalLoc() const {
   assert (isValid());
-  return FullSourceLoc(SrcMgr->getLogicalLoc(Loc),*SrcMgr);
+  return FullSourceLoc(SrcMgr->getLogicalLoc(Loc), *SrcMgr);
 }
 
-FullSourceLoc FullSourceLoc::getIncludeLoc() {
+FullSourceLoc FullSourceLoc::getPhysicalLoc() const {
   assert (isValid());
-  return FullSourceLoc(SrcMgr->getIncludeLoc(Loc),*SrcMgr);
+  return FullSourceLoc(SrcMgr->getPhysicalLoc(Loc), *SrcMgr);
+}
+
+FullSourceLoc FullSourceLoc::getIncludeLoc() const {
+  assert (isValid());
+  return FullSourceLoc(SrcMgr->getIncludeLoc(Loc), *SrcMgr);
 }
 
 unsigned FullSourceLoc::getLineNumber() const {
@@ -67,6 +71,16 @@ unsigned FullSourceLoc::getLogicalLineNumber() const {
 unsigned FullSourceLoc::getLogicalColumnNumber() const {
   assert (isValid());
   return SrcMgr->getLogicalColumnNumber(Loc);
+}
+
+unsigned FullSourceLoc::getPhysicalLineNumber() const {
+  assert (isValid());
+  return SrcMgr->getPhysicalLineNumber(Loc);
+}
+
+unsigned FullSourceLoc::getPhysicalColumnNumber() const {
+  assert (isValid());
+  return SrcMgr->getPhysicalColumnNumber(Loc);
 }
 
 const char* FullSourceLoc::getSourceName() const {
@@ -97,4 +111,24 @@ const llvm::MemoryBuffer* FullSourceLoc::getBuffer() const {
 
 unsigned FullSourceLoc::getCanonicalFileID() const {
   return SrcMgr->getCanonicalFileID(Loc);
+}
+
+void FullSourceLoc::dump() const {
+  if (!isValid()) {
+    fprintf(stderr, "Invalid Loc\n");
+    return;
+  }
+  
+  if (isFileID()) {
+    // The logical and physical pos is identical for file locs.
+    fprintf(stderr, "File Loc from '%s': %d: %d\n",
+            getSourceName(), getLogicalLineNumber(),
+            getLogicalColumnNumber());
+  } else {
+    fprintf(stderr, "Macro Loc (\n  Physical: ");
+    getPhysicalLoc().dump();
+    fprintf(stderr, "  Logical: ");
+    getLogicalLoc().dump();
+    fprintf(stderr, ")\n");
+  }
 }
