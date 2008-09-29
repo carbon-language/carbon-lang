@@ -445,12 +445,15 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
   Tok.clearFlag(Token::NeedsCleaning);
   
   if (II == Ident__LINE__) {
-    // __LINE__ expands to a simple numeric value.
-    sprintf(TmpBuffer, "%u", SourceMgr.getLogicalLineNumber(Tok.getLocation()));
-    unsigned Length = strlen(TmpBuffer);
+    // __LINE__ expands to a simple numeric value.  Add a space after it so that
+    // it will tokenize as a number (and not run into stuff after it in the temp
+    // buffer).
+    sprintf(TmpBuffer, "%u ",
+            SourceMgr.getLogicalLineNumber(Tok.getLocation()));
+    unsigned Length = strlen(TmpBuffer)-1;
     Tok.setKind(tok::numeric_constant);
     Tok.setLength(Length);
-    Tok.setLocation(CreateString(TmpBuffer, Length, Tok.getLocation()));
+    Tok.setLocation(CreateString(TmpBuffer, Length+1, Tok.getLocation()));
   } else if (II == Ident__FILE__ || II == Ident__BASE_FILE__) {
     SourceLocation Loc = Tok.getLocation();
     if (II == Ident__BASE_FILE__) {
@@ -489,9 +492,11 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
     for (; Loc.isValid(); ++Depth)
       Loc = SourceMgr.getIncludeLoc(Loc);
     
-    // __INCLUDE_LEVEL__ expands to a simple numeric value.
-    sprintf(TmpBuffer, "%u", Depth);
-    unsigned Length = strlen(TmpBuffer);
+    // __INCLUDE_LEVEL__ expands to a simple numeric value.  Add a space after
+    // it so that it will tokenize as a number (and not run into stuff after it
+    // in the temp buffer).
+    sprintf(TmpBuffer, "%u ", Depth);
+    unsigned Length = strlen(TmpBuffer)-1;
     Tok.setKind(tok::numeric_constant);
     Tok.setLength(Length);
     Tok.setLocation(CreateString(TmpBuffer, Length, Tok.getLocation()));
@@ -523,7 +528,7 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
     TmpBuffer[Len-1] = '"';  // Replace the newline with a quote.
     Tok.setKind(tok::string_literal);
     Tok.setLength(Len);
-    Tok.setLocation(CreateString(TmpBuffer, Len, Tok.getLocation()));
+    Tok.setLocation(CreateString(TmpBuffer, Len+1, Tok.getLocation()));
   } else {
     assert(0 && "Unknown identifier!");
   }

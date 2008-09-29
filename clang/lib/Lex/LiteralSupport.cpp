@@ -224,7 +224,7 @@ NumericLiteralParser(const char *begin, const char *end,
       saw_period = true;
       s = SkipDigits(s);
     } 
-    if (s != ThisTokEnd && (*s == 'e' || *s == 'E')) { // exponent
+    if ((*s == 'e' || *s == 'E')) { // exponent
       const char *Exponent = s;
       s++;
       saw_exponent = true;
