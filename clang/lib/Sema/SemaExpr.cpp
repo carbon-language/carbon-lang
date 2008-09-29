@@ -1653,10 +1653,15 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
     if (isa<PointerType>(rhsType))
       return CheckPointerTypesForAssignment(lhsType, rhsType);
       
-    if (rhsType->getAsBlockPointerType())
+    if (rhsType->getAsBlockPointerType()) {
       if (lhsType->getAsPointerType()->getPointeeType()->isVoidType())
         return BlockVoidPointer;
-      
+
+      // Treat block pointers as objects.
+      if (getLangOptions().ObjC1 &&
+          lhsType == Context.getCanonicalType(Context.getObjCIdType()))
+        return Compatible;
+    }
     return Incompatible;
   }
 
@@ -1664,6 +1669,11 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
     if (rhsType->isIntegerType())
       return IntToPointer;
     
+    // Treat block pointers as objects.
+    if (getLangOptions().ObjC1 &&
+        rhsType == Context.getCanonicalType(Context.getObjCIdType()))
+      return Compatible;
+
     if (rhsType->isBlockPointerType())
       return CheckBlockPointerTypesForAssignment(lhsType, rhsType);
       

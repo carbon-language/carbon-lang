@@ -10,3 +10,11 @@ void foo(MyBlock b) {
     id bar = [b copy];
 }
 
+void foo2(id b) {
+}
+
+void foo3(void (^block)(void)) {
+    foo2(block);
+    id x;
+    foo(x);
+}
