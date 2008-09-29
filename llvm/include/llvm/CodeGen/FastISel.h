@@ -60,6 +60,7 @@ public:
   ///
   void setCurrentBlock(MachineBasicBlock *mbb) {
     MBB = mbb;
+    LocalValueMap.clear();
   }
 
   /// SelectInstruction - Do "fast" instruction selection for the given
