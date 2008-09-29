@@ -183,7 +183,8 @@ my %LinkerOptionMap = (
 my %CompilerLinkerOptionMap = (
   '-isysroot' => 1,
   '-arch' => 1,
-  '-v' => 0
+  '-v' => 0,
+  '-fpascal-strings' => 0
 );
 
 my %IgnoredOptionMap = (
