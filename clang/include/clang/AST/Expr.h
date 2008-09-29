@@ -761,50 +761,6 @@ public:
   static MemberExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
-/// ExtVectorElementExpr - This represents access to specific elements of a
-/// vector, and may occur on the left hand side or right hand side.  For example
-/// the following is legal:  "V.xy = V.zw" if V is a 4 element extended vector.
-///
-class ExtVectorElementExpr : public Expr {
-  Stmt *Base;
-  IdentifierInfo &Accessor;
-  SourceLocation AccessorLoc;
-public:
-  ExtVectorElementExpr(QualType ty, Expr *base, IdentifierInfo &accessor,
-                       SourceLocation loc)
-    : Expr(ExtVectorElementExprClass, ty), 
-      Base(base), Accessor(accessor), AccessorLoc(loc) {}
-                     
-  const Expr *getBase() const { return cast<Expr>(Base); }
-  Expr *getBase() { return cast<Expr>(Base); }
-  
-  IdentifierInfo &getAccessor() const { return Accessor; }
-  
-  /// getNumElements - Get the number of components being selected.
-  unsigned getNumElements() const;
-  
-  /// containsDuplicateElements - Return true if any element access is
-  /// repeated.
-  bool containsDuplicateElements() const;
-  
-  /// getEncodedElementAccess - Encode the elements accessed into an llvm
-  /// aggregate Constant of ConstantInt(s).
-  void getEncodedElementAccess(llvm::SmallVectorImpl<unsigned> &Elts) const;
-  
-  virtual SourceRange getSourceRange() const {
-    return SourceRange(getBase()->getLocStart(), AccessorLoc);
-  }
-  
-  static bool classof(const Stmt *T) { 
-    return T->getStmtClass() == ExtVectorElementExprClass; 
-  }
-  static bool classof(const ExtVectorElementExpr *) { return true; }
-  
-  // Iterators
-  virtual child_iterator child_begin();
-  virtual child_iterator child_end();
-};
-
 /// CompoundLiteralExpr - [C99 6.5.2.5] 
 ///
 class CompoundLiteralExpr : public Expr {
@@ -815,8 +771,10 @@ class CompoundLiteralExpr : public Expr {
   Stmt *Init;
   bool FileScope;
 public:
-  CompoundLiteralExpr(SourceLocation lparenloc, QualType ty, Expr *init, bool fileScope) : 
-    Expr(CompoundLiteralExprClass, ty), LParenLoc(lparenloc), Init(init), FileScope(fileScope) {}
+  CompoundLiteralExpr(SourceLocation lparenloc, QualType ty, Expr *init,
+                      bool fileScope)
+    : Expr(CompoundLiteralExprClass, ty), LParenLoc(lparenloc), Init(init),
+      FileScope(fileScope) {}
   
   const Expr *getInitializer() const { return cast<Expr>(Init); }
   Expr *getInitializer() { return cast<Expr>(Init); }
@@ -1486,6 +1444,52 @@ private:
 //===----------------------------------------------------------------------===//
 // Clang Extensions
 //===----------------------------------------------------------------------===//
+
+
+/// ExtVectorElementExpr - This represents access to specific elements of a
+/// vector, and may occur on the left hand side or right hand side.  For example
+/// the following is legal:  "V.xy = V.zw" if V is a 4 element extended vector.
+///
+class ExtVectorElementExpr : public Expr {
+  Stmt *Base;
+  IdentifierInfo &Accessor;
+  SourceLocation AccessorLoc;
+public:
+  ExtVectorElementExpr(QualType ty, Expr *base, IdentifierInfo &accessor,
+                       SourceLocation loc)
+    : Expr(ExtVectorElementExprClass, ty), 
+      Base(base), Accessor(accessor), AccessorLoc(loc) {}
+                     
+  const Expr *getBase() const { return cast<Expr>(Base); }
+  Expr *getBase() { return cast<Expr>(Base); }
+  
+  IdentifierInfo &getAccessor() const { return Accessor; }
+  
+  /// getNumElements - Get the number of components being selected.
+  unsigned getNumElements() const;
+  
+  /// containsDuplicateElements - Return true if any element access is
+  /// repeated.
+  bool containsDuplicateElements() const;
+  
+  /// getEncodedElementAccess - Encode the elements accessed into an llvm
+  /// aggregate Constant of ConstantInt(s).
+  void getEncodedElementAccess(llvm::SmallVectorImpl<unsigned> &Elts) const;
+  
+  virtual SourceRange getSourceRange() const {
+    return SourceRange(getBase()->getLocStart(), AccessorLoc);
+  }
+  
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == ExtVectorElementExprClass; 
+  }
+  static bool classof(const ExtVectorElementExpr *) { return true; }
+  
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
+};
+
 
 /// BlockExpr - Represent a block literal with a syntax:
 /// ^{ statement-body }   or   ^(int arg1, float arg2){ statement-body }
