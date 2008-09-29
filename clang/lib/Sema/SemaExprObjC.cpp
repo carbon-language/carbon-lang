@@ -281,7 +281,8 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
     Context.getCanonicalType(RExpr->getType()).getUnqualifiedType();
   
   // Handle messages to id.
-  if (ReceiverCType == Context.getCanonicalType(Context.getObjCIdType())) {
+  if (ReceiverCType == Context.getCanonicalType(Context.getObjCIdType()) ||
+      ReceiverCType->getAsBlockPointerType()) {
     ObjCMethodDecl *Method = InstanceMethodPool[Sel].Method;
     if (!Method)
       Method = FactoryMethodPool[Sel].Method;
