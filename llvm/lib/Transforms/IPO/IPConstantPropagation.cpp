@@ -155,7 +155,7 @@ bool IPCP::PropagateConstantReturn(Function &F) {
 
   // If this function could be overridden later in the link stage, we can't
   // propagate information about its results into callers.
-  if (F.hasLinkOnceLinkage() || F.mayBeOverridden())
+  if (F.mayBeOverridden())
     return false;
   
   // Check to see if this function returns a constant.
