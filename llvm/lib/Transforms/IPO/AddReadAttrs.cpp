@@ -19,6 +19,7 @@
 #include "llvm/CallGraphSCCPass.h"
 #include "llvm/Instructions.h"
 #include "llvm/Analysis/CallGraph.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/InstIterator.h"
@@ -45,7 +46,13 @@ Pass *llvm::createAddReadAttrsPass() { return new AddReadAttrs(); }
 
 
 bool AddReadAttrs::runOnSCC(const std::vector<CallGraphNode *> &SCC) {
+  SmallPtrSet<CallGraphNode *, 8> SCCNodes;
   CallGraph &CG = getAnalysis<CallGraph>();
+
+  // Fill SCCNodes with the elements of the SCC.  Used for quickly
+  // looking up whether a given CallGraphNode is in this SCC.
+  for (unsigned i = 0, e = SCC.size(); i != e; ++i)
+    SCCNodes.insert(SCC[i]);
 
   // Check if any of the functions in the SCC read or write memory.  If they
   // write memory then they can't be marked readnone or readonly.
@@ -77,9 +84,7 @@ bool AddReadAttrs::runOnSCC(const std::vector<CallGraphNode *> &SCC) {
       CallSite CS = CallSite::get(&*II);
 
       // Ignore calls to functions in the same SCC.
-      if (CS.getInstruction() &&
-          std::find(SCC.begin(), SCC.end(), CG[CS.getCalledFunction()]) !=
-          SCC.end())
+      if (CS.getInstruction() && SCCNodes.count(CG[CS.getCalledFunction()]))
         continue;
 
       if (II->mayWriteToMemory())

@@ -21,6 +21,7 @@
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
 #include "llvm/Analysis/CallGraph.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/CFG.h"
@@ -53,8 +54,14 @@ Pass *llvm::createPruneEHPass() { return new PruneEH(); }
 
 
 bool PruneEH::runOnSCC(const std::vector<CallGraphNode *> &SCC) {
+  SmallPtrSet<CallGraphNode *, 8> SCCNodes;
   CallGraph &CG = getAnalysis<CallGraph>();
   bool MadeChange = false;
+
+  // Fill SCCNodes with the elements of the SCC.  Used for quickly
+  // looking up whether a given CallGraphNode is in this SCC.
+  for (unsigned i = 0, e = SCC.size(); i != e; ++i)
+    SCCNodes.insert(SCC[i]);
 
   // First pass, scan all of the functions in the SCC, simplifying them
   // according to what we know.
@@ -107,7 +114,7 @@ bool PruneEH::runOnSCC(const std::vector<CallGraphNode *> &SCC) {
                 CallGraphNode *CalleeNode = CG[Callee];
                 // If the callee is outside our current SCC then we may
                 // throw because it might.
-                if (std::find(SCC.begin(), SCC.end(), CalleeNode) == SCC.end()){
+                if (!SCCNodes.count(CalleeNode)) {
                   SCCMightUnwind = true;
                   break;
                 }
