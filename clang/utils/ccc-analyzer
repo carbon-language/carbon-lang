@@ -291,9 +291,7 @@ foreach (my $i = 0; $i < scalar(@ARGV); ++$i) {
   # and the linker.
   if (defined $CompilerLinkerOptionMap{$Arg}) {
     my $Cnt = $CompilerLinkerOptionMap{$Arg};
-    push @CompileOpts,$Arg;    
-    push @LinkOpts,$Arg;
-
+    
     # Check if this is an option that should have a unique value, and if so
     # determine if the value was checked before.
     if ($UniqueOptions{$Arg}) {
@@ -304,6 +302,9 @@ foreach (my $i = 0; $i < scalar(@ARGV); ++$i) {
       $Uniqued{$Arg} = 1;
     }
     
+    push @CompileOpts,$Arg;    
+    push @LinkOpts,$Arg;
+
     while ($Cnt > 0) {
       ++$i; --$Cnt;
       push @CompileOpts, $ARGV[$i];
