@@ -149,7 +149,7 @@ public:
   void setAttributes(const AttrListPtr &attrs) { AttributeList = attrs; }
 
 
-  /// hasFnAttr - Return true if this function has given attribute.
+  /// hasFnAttr - Return true if this function has the given attribute.
   bool hasFnAttr(Attributes N) const {
     // Function Attributes are stored at ~0 index 
     return AttributeList.paramHasAttr(~0U, N);
