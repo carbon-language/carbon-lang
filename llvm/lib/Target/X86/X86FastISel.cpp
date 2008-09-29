@@ -462,7 +462,7 @@ bool X86FastISel::X86SelectAddress(Value *V, X86AddressMode &AM, bool isCall) {
   }
 
   // If all else fails, try to materialize the value in a register.
-  if (!AM.GV && getTargetMachine()->symbolicAddressesAreRIPRel()) {
+  if (!AM.GV || !getTargetMachine()->symbolicAddressesAreRIPRel()) {
     if (AM.Base.Reg == 0) {
       AM.Base.Reg = getRegForValue(V);
       return AM.Base.Reg != 0;
