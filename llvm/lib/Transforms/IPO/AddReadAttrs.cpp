@@ -47,14 +47,14 @@ Pass *llvm::createAddReadAttrsPass() { return new AddReadAttrs(); }
 bool AddReadAttrs::runOnSCC(const std::vector<CallGraphNode *> &SCC) {
   CallGraph &CG = getAnalysis<CallGraph>();
 
-  // Check if any of the functions in the SCC read or write memory.
-  // If they write memory then just give up.
+  // Check if any of the functions in the SCC read or write memory.  If they
+  // write memory then they can't be marked readnone or readonly.
   bool ReadsMemory = false;
   for (unsigned i = 0, e = SCC.size(); i != e; ++i) {
     Function *F = SCC[i]->getFunction();
 
     if (F == 0)
-      // External node - may write memory.
+      // External node - may write memory.  Just give up.
       return false;
 
     if (F->doesNotAccessMemory())
@@ -65,7 +65,7 @@ bool AddReadAttrs::runOnSCC(const std::vector<CallGraphNode *> &SCC) {
     // something that writes memory, so treat them like declarations.
     if (F->isDeclaration() || F->mayBeOverridden()) {
       if (!F->onlyReadsMemory())
-        // May write memory.
+        // May write memory.  Just give up.
         return false;
 
       ReadsMemory = true;
@@ -83,7 +83,9 @@ bool AddReadAttrs::runOnSCC(const std::vector<CallGraphNode *> &SCC) {
         continue;
 
       if (II->mayWriteToMemory())
+        // Writes memory.  Just give up.
         return false;
+
       ReadsMemory |= II->mayReadFromMemory();
     }
   }
