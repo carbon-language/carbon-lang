@@ -71,7 +71,7 @@ SourceManager::createMemBufferContentCache(const MemoryBuffer *Buffer) {
 }
 
 
-/// createFileID - Create a new fileID for the specified ContentCache and 
+/// createFileID - Create a new fileID for the specified ContentCache and
 /// include position.  This works regardless of whether the ContentCache
 /// corresponds to a file or some other input source.
 unsigned SourceManager::createFileID(const ContentCache *File,
@@ -399,14 +399,14 @@ void ContentCache::ReadToSourceManager(llvm::Deserializer& D,
     //  is absolutely needed.
     if (!E)
       D.RegisterPtr(PtrID,NULL);
-    else    
+    else
       // Get the ContextCache object and register it with the deserializer.
       D.RegisterPtr(PtrID,SMgr.getContentCache(E));
   }
   else {
     // Register the ContextCache object with the deserializer.
     SMgr.MemBufferInfos.push_back(ContentCache());
-    ContentCache& Entry = const_cast<ContentCache&>(SMgr.MemBufferInfos.back());    
+    ContentCache& Entry = const_cast<ContentCache&>(SMgr.MemBufferInfos.back());
     D.RegisterPtr(&Entry);
     
     // Create the buffer.
@@ -467,7 +467,7 @@ void SourceManager::Emit(llvm::Serializer& S) const {
   
   S.ExitBlock();
   
-  // Emit: FileIDs  
+  // Emit: FileIDs
   S.EmitInt(FileIDs.size());  
   std::for_each(FileIDs.begin(), FileIDs.end(), S.MakeEmitter<FileIDInfo>());
   

@@ -334,7 +334,7 @@ void TokenLexer::Lex(Token &Tok) {
 
 /// PasteTokens - Tok is the LHS of a ## operator, and CurToken is the ##
 /// operator.  Read the ## and RHS, and paste the LHS/RHS together.  If there
-/// are is another ## after it, chomp it iteratively.  Return the result as Tok.
+/// are more ## after it, chomp them iteratively.  Return the result as Tok.
 /// If this returns true, the caller should immediately return the token.
 bool TokenLexer::PasteTokens(Token &Tok) {
   llvm::SmallVector<char, 128> Buffer;
