@@ -137,9 +137,6 @@ static QualType DecodeTypeFromStr(const char *&Str, ASTContext &Context,
   case 'a':
     Type = Context.getBuiltinVaListType();
     assert(!Type.isNull() && "builtin va list type not initialized!");
-    // Do array -> pointer decay.  The builtin should use the decayed type.
-    if (Type->isArrayType())
-      Type = Context.getArrayDecayedType(Type);
     break;
   case 'V': {
     char *End;
@@ -185,8 +182,15 @@ QualType Builtin::Context::GetBuiltinType(unsigned id,
   llvm::SmallVector<QualType, 8> ArgTypes;
   
   QualType ResType = DecodeTypeFromStr(TypeStr, Context);
-  while (TypeStr[0] && TypeStr[0] != '.')
-    ArgTypes.push_back(DecodeTypeFromStr(TypeStr, Context)); 
+  while (TypeStr[0] && TypeStr[0] != '.') {
+    QualType Ty = DecodeTypeFromStr(TypeStr, Context);
+    
+    // Do array -> pointer decay.  The builtin should use the decayed type.
+    if (Ty->isArrayType())
+      Ty = Context.getArrayDecayedType(Ty);
+   
+    ArgTypes.push_back(Ty);
+  }
 
   assert((TypeStr[0] != '.' || TypeStr[1] == 0) &&
          "'.' should only occur at end of builtin type list!");
