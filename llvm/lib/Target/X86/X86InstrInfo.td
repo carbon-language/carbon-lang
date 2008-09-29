@@ -266,6 +266,20 @@ def loadi32 : PatFrag<(ops node:$ptr), (i32 (ld node:$ptr)), [{
   return false;
 }]>;
 
+def nvloadi32 : PatFrag<(ops node:$ptr), (i32 (ld node:$ptr)), [{
+  LoadSDNode *LD = cast<LoadSDNode>(N);
+  if (LD->isVolatile())
+    return false;
+  if (LD->getAddressingMode() != ISD::UNINDEXED)
+    return false;
+  ISD::LoadExtType ExtType = LD->getExtensionType();
+  if (ExtType == ISD::NON_EXTLOAD)
+    return true;
+  if (ExtType == ISD::EXTLOAD)
+    return LD->getAlignment() >= 4;
+  return false;
+}]>;
+
 def loadi8  : PatFrag<(ops node:$ptr), (i8  (load node:$ptr))>;
 def loadi64 : PatFrag<(ops node:$ptr), (i64 (load node:$ptr))>;
 
@@ -2812,8 +2826,10 @@ def : Pat<(i32 (anyext GR16:$src)),
           (INSERT_SUBREG (i32 (IMPLICIT_DEF)), GR16:$src, x86_subreg_16bit)>;
 
 // (and (i32 load), 255) -> (zextload i8)
-def : Pat<(i32 (and (loadi32 addr:$src), (i32 255))), (MOVZX32rm8 addr:$src)>;
-def : Pat<(i32 (and (loadi32 addr:$src), (i32 65535))),(MOVZX32rm16 addr:$src)>;
+def : Pat<(i32 (and (nvloadi32 addr:$src), (i32 255))),
+          (MOVZX32rm8 addr:$src)>;
+def : Pat<(i32 (and (nvloadi32 addr:$src), (i32 65535))),
+          (MOVZX32rm16 addr:$src)>;
 
 //===----------------------------------------------------------------------===//
 // Some peepholes
