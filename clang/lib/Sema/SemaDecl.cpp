@@ -562,6 +562,7 @@ bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType) {
     if (StringLiteral *strLiteral = IsStringLiteralInit(Init, DeclType))
       return CheckStringLiteralInit(strLiteral, DeclType);
 
+    // C99 6.7.8p16.
     if (DeclType->isArrayType())
       return Diag(Init->getLocStart(),
                   diag::err_array_init_list_required, 
