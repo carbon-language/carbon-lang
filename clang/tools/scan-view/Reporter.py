@@ -113,10 +113,10 @@ class RadarReporter:
     def isAvailable():
         # FIXME: Find this .scpt better
         path = os.path.join(os.path.dirname(__file__),'Resources/GetRadarVersion.scpt')
-	try:
-       	    p = subprocess.Popen(['osascript',path], 
-                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-       	except:
+        try:
+          p = subprocess.Popen(['osascript',path], 
+          stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        except:
             return False
         data,err = p.communicate()
         res = p.wait()
