@@ -42,7 +42,7 @@
 using namespace llvm;
 
 static cl::opt<bool>
-NoBuiltin("no-builtin",
+NoBuiltin("no-builtin", cl::init(false),
            cl::desc("Don't recognize built-in functions that do not begin "
                     "with `__builtin_' as prefix"));
 
