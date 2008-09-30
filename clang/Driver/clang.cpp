@@ -524,7 +524,7 @@ ErrorOnExtensions("pedantic-errors",
 
 static llvm::cl::opt<bool>
 SuppressSystemWarnings("suppress-system-warnings",
-                     llvm::cl::desc("Issue an error on uses of GCC extensions"),
+                       llvm::cl::desc("Suppress warnings issued in system headers"),
                        llvm::cl::init(true));
 
 static llvm::cl::opt<bool>
