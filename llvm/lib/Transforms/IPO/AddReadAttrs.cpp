@@ -35,6 +35,11 @@ namespace {
 
     // runOnSCC - Analyze the SCC, performing the transformation if possible.
     bool runOnSCC(const std::vector<CallGraphNode *> &SCC);
+
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.setPreservesCFG();
+      CallGraphSCCPass::getAnalysisUsage(AU);
+    }
   };
 }
 
