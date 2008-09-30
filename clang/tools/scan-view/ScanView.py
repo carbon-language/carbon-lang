@@ -291,7 +291,6 @@ class ScanViewRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
             if i is None or i<0 or i>=len(c.files):
                 return (False, 'Invalid file ID')
             files.append(c.files[i])
-        print files
         
         if not title:
             return (False, "Missing title.")
@@ -336,7 +335,6 @@ class ScanViewRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
         return (t.success, t.status)
 
     def send_report_submit(self):
-        print self.fields
         report = self.get_scalar_field('report')
         c = self.get_report_context(report)
         if c.reportSource is None:
