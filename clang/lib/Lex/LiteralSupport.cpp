@@ -86,7 +86,8 @@ static unsigned ProcessCharEscape(const char *&ThisTokBuf,
     for (; ThisTokBuf != ThisTokEnd; ++ThisTokBuf) {
       int CharVal = HexDigitValue(ThisTokBuf[0]);
       if (CharVal == -1) break;
-      Overflow |= (ResultChar & 0xF0000000) ? true : false;  // About to shift out a digit?
+      // About to shift out a digit?
+      Overflow |= (ResultChar & 0xF0000000) ? true : false;
       ResultChar <<= 4;
       ResultChar |= CharVal;
     }
@@ -196,6 +197,14 @@ NumericLiteralParser::
 NumericLiteralParser(const char *begin, const char *end,
                      SourceLocation TokLoc, Preprocessor &pp)
   : PP(pp), ThisTokBegin(begin), ThisTokEnd(end) {
+    
+  // This routine assumes that the range begin/end matches the regex for integer
+  // and FP constants (specifically, the 'pp-number' regex), and assumes that
+  // the byte at "*end" is both valid and not part of the regex.  Because of
+  // this, it doesn't have to check for 'overscan' in various places.
+  assert(!isalnum(*end) && *end != '.' && *end != '_' &&
+         "Lexer didn't maximally munch?");
+    
   s = DigitsBegin = begin;
   saw_exponent = false;
   saw_period = false;
