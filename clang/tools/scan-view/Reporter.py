@@ -146,7 +146,18 @@ class BugzillaReporter:
 
     def fileReport(self, report, parameters):
         raise NotImplementedError
-    
+ 
+
+class RadarClassificationParameter(SelectionParameter):
+  def __init__(self):
+    SelectionParameter.__init__(self,"Classification",
+            [['1', 'Security'], ['2', 'Crash/Hang/Data Loss'],
+             ['3', 'Performance'], ['4', 'UI/Usability'], 
+             ['6', 'Serious Bug'], ['7', 'Other']])
+
+  def saveConfigValue(self):
+    return False
+
 class RadarReporter:
     @staticmethod
     def isAvailable():
@@ -167,10 +178,7 @@ class RadarReporter:
 
     def getParameters(self):
         return [ TextParameter('Component'), TextParameter('Component Version'),
-                 SelectionParameter('Classification',
-                  [ ['1', 'Security'], ['2', 'Crash/Hang/Data Loss'],
-                    ['3', 'Performance'], ['4', 'UI/Usability'],
-                    ['6', 'Serious Bug'], ['7', 'Other'] ]) ]
+                 RadarClassificationParameter() ]
 
     def fileReport(self, report, parameters):
         component = parameters.get('Component', '')
