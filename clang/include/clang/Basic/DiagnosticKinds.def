@@ -678,6 +678,8 @@ DIAG(err_typecheck_ext_vector_not_typedef, ERROR,
      "ext_vector_type only applies to types, not variables")
 DIAG(err_ext_vector_component_exceeds_length, ERROR,
      "vector component access exceeds type '%0'")
+DIAG(err_ext_vector_component_requires_even, ERROR,
+     "vector component access invalid for odd-sized type '%0'")
 DIAG(err_ext_vector_component_name_illegal, ERROR,
      "illegal vector component name '%0'")
 DIAG(err_ext_vector_component_access, ERROR,

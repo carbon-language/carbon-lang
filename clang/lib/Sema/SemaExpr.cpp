@@ -846,6 +846,8 @@ CheckExtVectorComponent(QualType baseType, SourceLocation OpLoc,
   // is an even number, since all special component names return exactly half
   // the elements.
   if (SpecialComponent && (vecType->getNumElements() & 1U)) {
+    Diag(OpLoc, diag::err_ext_vector_component_requires_even, 
+         baseType.getAsString(), SourceRange(CompLoc));
     return QualType();
   }
   
