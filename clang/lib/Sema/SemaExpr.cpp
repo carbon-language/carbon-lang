@@ -523,6 +523,13 @@ Action::ExprResult Sema::ActOnNumericConstant(const Token &Tok) {
   
   // Get the spelling of the token, which eliminates trigraphs, etc.
   unsigned ActualLength = PP.getSpelling(Tok, ThisTokBegin);
+  
+  // Add padding so that NumericLiteralParser can overread by one character.
+  if (!IntegerBuffer.empty()) {
+    IntegerBuffer.push_back(' ');
+    ThisTokBegin = &IntegerBuffer[0];
+  }
+  
   NumericLiteralParser Literal(ThisTokBegin, ThisTokBegin+ActualLength, 
                                Tok.getLocation(), PP);
   if (Literal.hadError)
