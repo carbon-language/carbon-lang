@@ -123,10 +123,12 @@ private:
       (VT == MVT::f32 && X86ScalarSSEf32);   // f32 is when SSE1
   }
 
+  bool isTypeLegal(const Type *Ty, const TargetLowering &TLI, MVT &VT,
+                   bool AllowI1 = false);
 };
 
-static bool isTypeLegal(const Type *Ty, const TargetLowering &TLI, MVT &VT,
-                        bool AllowI1 = false) {
+bool X86FastISel::isTypeLegal(const Type *Ty, const TargetLowering &TLI,
+                              MVT &VT, bool AllowI1) {
   VT = MVT::getMVT(Ty, /*HandleUnknown=*/true);
   if (VT == MVT::Other || !VT.isSimple())
     // Unhandled type. Halt "fast" selection and bail.
@@ -134,6 +136,15 @@ static bool isTypeLegal(const Type *Ty, const TargetLowering &TLI, MVT &VT,
   if (VT == MVT::iPTR)
     // Use pointer type.
     VT = TLI.getPointerTy();
+  // For now, require SSE/SSE2 for performing floating-point operations,
+  // since x87 requires additional work.
+  if (VT == MVT::f64 && !X86ScalarSSEf64)
+     return false;
+  if (VT == MVT::f32 && !X86ScalarSSEf32)
+     return false;
+  // Similarly, no f80 support yet.
+  if (VT == MVT::f80)
+    return false;
   // We only handle legal types. For example, on x86-32 the instruction
   // selector contains all of the 64-bit instructions from x86-64,
   // under the assumption that i64 won't be used if the target doesn't
@@ -516,8 +527,8 @@ bool X86FastISel::X86SelectLoad(Instruction *I)  {
 bool X86FastISel::X86SelectCmp(Instruction *I) {
   CmpInst *CI = cast<CmpInst>(I);
 
-  MVT VT = TLI.getValueType(I->getOperand(0)->getType());
-  if (!TLI.isTypeLegal(VT))
+  MVT VT;
+  if (!isTypeLegal(I->getOperand(0)->getType(), TLI, VT))
     return false;
 
   unsigned Op0Reg = getRegForValue(CI->getOperand(0));
@@ -728,7 +739,7 @@ bool X86FastISel::X86SelectShift(Instruction *I) {
   }
 
   MVT VT = MVT::getMVT(I->getType(), /*HandleUnknown=*/true);
-  if (VT == MVT::Other || !TLI.isTypeLegal(VT))
+  if (VT == MVT::Other || !isTypeLegal(I->getType(), TLI, VT))
     return false;
 
   unsigned Op0Reg = getRegForValue(I->getOperand(0));
@@ -773,7 +784,7 @@ bool X86FastISel::X86SelectSelect(Instruction *I) {
   }
 
   MVT VT = MVT::getMVT(Ty, /*HandleUnknown=*/true);
-  if (VT == MVT::Other || !TLI.isTypeLegal(VT))
+  if (VT == MVT::Other || !isTypeLegal(Ty, TLI, VT))
     return false;
 
   unsigned Op0Reg = getRegForValue(I->getOperand(0));
