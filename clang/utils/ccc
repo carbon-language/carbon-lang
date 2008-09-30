@@ -195,6 +195,11 @@ def main(args):
     while i < len(args):
         arg = args[i]
 
+        if '=' in arg:
+            argkey,argvalue = arg.split('=',1)
+        else:
+            argkey,argvalue = arg,None
+
         # Modes ccc supports
         if arg == '-save-temps':
             save_temps = 1
@@ -225,21 +230,23 @@ def main(args):
             compile_opts.append(arg)
 
         # Options with one argument that should pass through to compiler
-        if arg in [ '-include', '-idirafter', '-iprefix',
-                    '-iquote', '-isystem', '-iwithprefix',
-                    '-iwithprefixbefore']:
+        if argkey in [ '-include', '-idirafter', '-iprefix',
+                       '-iquote', '-isystem', '-iwithprefix',
+                       '-iwithprefixbefore', '-mmacosx-version-min']:
             compile_opts.append(arg)
             compile_opts.append(args[i+1])
             i += 1
 
         # Options with no arguments that should pass through
-        if arg in ('-dynamiclib','-bundle'):
+        if arg in ('-dynamiclib', '-bundle', '-headerpad_max_install_names'):
             link_opts.append(arg)
 
         # Options with one argument that should pass through
         if arg in ('-framework', '-multiply_defined', '-bundle_loader',
-                   '-e', '-unexported_symbols_list', '-install_name',
-                   '-compatibility_version', '-current_version'):
+                   '-e', '-install_name',
+                   '-unexported_symbols_list', '-exported_symbols_list', 
+                   '-compatibility_version', '-current_version', '-init',
+                   '-seg1addr', '-dylib_file'):
             link_opts.append(arg)
             link_opts.append(args[i+1])
             i += 1
