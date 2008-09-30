@@ -7,32 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This tablegen backend emits a "fast" instruction selector.
+// This tablegen backend emits code for use by the "fast" instruction
+// selection algorithm. See the comments at the top of
+// lib/CodeGen/SelectionDAG/FastISel.cpp for background.
 //
-// This instruction selection method is designed to emit very poor code
-// quickly. Also, it is not designed to do much lowering, so most illegal
-// types (e.g. i64 on 32-bit targets) and operations (e.g. calls) are not
-// supported and cannot easily be added. Blocks containing operations
-// that are not supported need to be handled by a more capable selector,
-// such as the SelectionDAG selector.
+// This file scans through the target's tablegen instruction-info files
+// and extracts instructions with obvious-looking patterns, and it emits
+// code to look up these instructions by type and operator.
 //
-// The intended use for "fast" instruction selection is "-O0" mode
-// compilation, where the quality of the generated code is irrelevant when
-// weighed against the speed at which the code can be generated.
-//
-// If compile time is so important, you might wonder why we don't just
-// skip codegen all-together, emit LLVM bytecode files, and execute them
-// with an interpreter. The answer is that it would complicate linking and
-// debugging, and also because that isn't how a compiler is expected to
-// work in some circles.
-//
-// If you need better generated code or more lowering than what this
-// instruction selector provides, use the SelectionDAG (DAGISel) instruction
-// selector instead. If you're looking here because SelectionDAG isn't fast
-// enough, consider looking into improving the SelectionDAG infastructure
-// instead. At the time of this writing there remain several major
-// opportunities for improvement.
-// 
 //===----------------------------------------------------------------------===//
 
 #include "FastISelEmitter.h"
