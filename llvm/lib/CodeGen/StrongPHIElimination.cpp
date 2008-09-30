@@ -977,6 +977,11 @@ bool StrongPHIElimination::runOnMachineFunction(MachineFunction &Fn) {
         }
       }
       
+      LiveInterval& Int = LI.getOrCreateInterval(I->first);
+      const LiveRange* LR =
+                       Int.getLiveRangeContaining(LI.getMBBEndIdx(SI->second));
+      LR->valno->hasPHIKill = true;
+      
       I->second.erase(SI->first);
     }
   
