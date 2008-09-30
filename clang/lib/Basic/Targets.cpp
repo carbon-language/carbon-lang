@@ -39,10 +39,24 @@ static void getSolarisDefines(std::vector<char> &Defs) {
   Define(Defs, "__SOLARIS__");
 }
 
-static void getDarwinDefines(std::vector<char> &Defs) {
+static void getDarwinDefines(std::vector<char> &Defs, const char *Triple) {
   Define(Defs, "__APPLE__");
   Define(Defs, "__MACH__");
-  Define(Defs, "__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__", "1050");
+  
+  // Figure out which "darwin number" the target triple is.  "darwin9" -> 10.5.
+  const char *Darwin = strstr(Triple, "-darwin");
+  if (Darwin) {
+    Darwin += strlen("-darwin");
+    if (Darwin[0] >= '1' && Darwin[0] <= '9') {
+      unsigned DarwinNo = atoi(Darwin);
+      if (DarwinNo > 4) {
+        char DarwinStr[] = "10x0";
+        // darwin7 -> 1030, darwin8 -> 1040, darwin9 -> 1050, etc.
+        DarwinStr[2] = '0' + DarwinNo-4;
+        Define(Defs, "__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__",DarwinStr);
+      }
+    }
+  }
 }
 
 static void getDragonFlyDefines(std::vector<char> &Defs) {
@@ -509,7 +523,7 @@ public:
   DarwinPPCTargetInfo(const std::string& triple) : PPC32TargetInfo(triple) {}
   virtual void getTargetDefines(std::vector<char> &Defines) const {
     PPC32TargetInfo::getTargetDefines(Defines);
-    getDarwinDefines(Defines);
+    getDarwinDefines(Defines, getTargetTriple());
   }
 
   virtual bool useNeXTRuntimeAsDefault() const { return true; }
@@ -522,7 +536,7 @@ public:
   DarwinPPC64TargetInfo(const std::string& triple) : PPC64TargetInfo(triple) {}
   virtual void getTargetDefines(std::vector<char> &Defines) const {
     PPC64TargetInfo::getTargetDefines(Defines);
-    getDarwinDefines(Defines);
+    getDarwinDefines(Defines, getTargetTriple());
   }
 
   virtual bool useNeXTRuntimeAsDefault() const { return true; }
@@ -668,7 +682,7 @@ public:
   }
   virtual void getTargetDefines(std::vector<char> &Defines) const {
     X86_32TargetInfo::getTargetDefines(Defines);
-    getDarwinDefines(Defines);
+    getDarwinDefines(Defines, getTargetTriple());
   }
   virtual bool useNeXTRuntimeAsDefault() const { return true; }
 };
@@ -777,7 +791,7 @@ public:
 
   virtual void getTargetDefines(std::vector<char> &Defines) const {
     X86_64TargetInfo::getTargetDefines(Defines);
-    getDarwinDefines(Defines);
+    getDarwinDefines(Defines, getTargetTriple());
   }
 
   virtual bool useNeXTRuntimeAsDefault() const { return true; }
@@ -848,7 +862,7 @@ public:
 
   virtual void getTargetDefines(std::vector<char> &Defines) const {
     ARMTargetInfo::getTargetDefines(Defines);
-    getDarwinDefines(Defines);
+    getDarwinDefines(Defines, getTargetTriple());
   }
 };
 } // end anonymous namespace.
