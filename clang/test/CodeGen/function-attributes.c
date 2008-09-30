@@ -1,10 +1,10 @@
 // RUN: clang -emit-llvm -o %t %s &&
-// RUN: grep 'define i8 @f0(i32 %x) signext nounwind' %t &&
-// RUN: grep 'define i8 @f1(i32 %x) zeroext nounwind' %t &&
+// RUN: grep 'define signext i8 @f0(i32 %x) nounwind' %t &&
+// RUN: grep 'define zeroext i8 @f1(i32 %x) nounwind' %t &&
 // RUN: grep 'define void @f2(i8 signext %x) nounwind' %t &&
 // RUN: grep 'define void @f3(i8 zeroext %x) nounwind' %t &&
-// RUN: grep 'define i16 @f4(i32 %x) signext nounwind' %t &&
-// RUN: grep 'define i16 @f5(i32 %x) zeroext nounwind' %t &&
+// RUN: grep 'define signext i16 @f4(i32 %x) nounwind' %t &&
+// RUN: grep 'define zeroext i16 @f5(i32 %x) nounwind' %t &&
 // RUN: grep 'define void @f6(i16 signext %x) nounwind' %t &&
 // RUN: grep 'define void @f7(i16 zeroext %x) nounwind' %t
 
