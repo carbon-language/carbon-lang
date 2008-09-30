@@ -213,7 +213,7 @@ void LiveIntervals::computeNumbering() {
           
           unsigned index = (vni->kills[i]-1) / InstrSlots::NUM;
           unsigned offset = vni->kills[i] % InstrSlots::NUM;
-          if (offset == InstrSlots::STORE) {
+          if (offset == InstrSlots::LOAD) {
             std::vector<IdxMBBPair>::const_iterator I =
              std::lower_bound(OldI2MBB.begin(), OldI2MBB.end(), vni->kills[i]);
             --I;
