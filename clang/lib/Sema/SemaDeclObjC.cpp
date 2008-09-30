@@ -1254,13 +1254,18 @@ Sema::DeclTy *Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
            PropertyId->getName());
       return 0;
     }
+    QualType PropType = Context.getCanonicalType(property->getType());
+    QualType IvarType = Context.getCanonicalType(Ivar->getType());
+    
     // Check that type of property and its ivar are type compatible.
-    // A property is allowed to be a sub-class of the instance variable type.
-    if (CheckAssignmentConstraints(property->getType(), 
-                                   Ivar->getType()) != Compatible) {
-      Diag(PropertyLoc, diag::error_property_ivar_type, property->getName(),
-           Ivar->getName());
-      return 0;
+    if (PropType != IvarType) {
+      // A readonly property is allowed to be a sub-class of the ivar type.
+      if (!property->isReadOnly() ||
+          CheckAssignmentConstraints(PropType, IvarType) != Compatible) {
+        Diag(PropertyLoc, diag::error_property_ivar_type, property->getName(),
+            Ivar->getName());
+        return 0;
+      }
     }
   } else if (PropertyIvar) {
     // @dynamic
