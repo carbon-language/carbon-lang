@@ -280,11 +280,10 @@ void SelectionDAGLegalize::LegalizeDAG() {
   // practice however, this causes us to run out of stack space on large basic
   // blocks.  To avoid this problem, compute an ordering of the nodes where each
   // node is only legalized after all of its operands are legalized.
-  std::vector<SDNode *> TopOrder;
-  unsigned N = DAG.AssignTopologicalOrder(TopOrder);
-  for (unsigned i = N; i != 0; --i)
-    HandleOp(SDValue(TopOrder[i-1], 0));
-  TopOrder.clear();
+  DAG.AssignTopologicalOrder();
+  for (SelectionDAG::allnodes_iterator I = DAG.allnodes_begin(),
+       E = prior(DAG.allnodes_end()); I != next(E); ++I)
+    HandleOp(SDValue(I, 0));
 
   // Finally, it's possible the root changed.  Get the new root.
   SDValue OldRoot = DAG.getRoot();

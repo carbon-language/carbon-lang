@@ -48,7 +48,6 @@ public:
   AliasAnalysis *AA;
   GCFunctionInfo *GFI;
   bool Fast;
-  std::vector<SDNode*> TopOrder;
   static char ID;
 
   explicit SelectionDAGISel(TargetLowering &tli, bool fast = false);
@@ -67,7 +66,7 @@ public:
   virtual void InstructionSelectPostProcessing() {}
   
   void SelectRootInit() {
-    DAGSize = CurDAG->AssignTopologicalOrder(TopOrder);
+    DAGSize = CurDAG->AssignTopologicalOrder();
   }
 
   /// SelectInlineAsmMemoryOperand - Select the specified address as a target

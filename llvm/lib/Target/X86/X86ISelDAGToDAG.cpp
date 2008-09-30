@@ -269,7 +269,7 @@ static void findNonImmUse(SDNode *Use, SDNode* Def, SDNode *ImmedUse,
                           SDNode *Root, bool &found,
                           SmallPtrSet<SDNode*, 16> &Visited) {
   if (found ||
-      Use->getNodeId() > Def->getNodeId() ||
+      Use->getNodeId() < Def->getNodeId() ||
       !Visited.insert(Use))
     return;
   

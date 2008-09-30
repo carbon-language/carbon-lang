@@ -18,7 +18,7 @@
 #define LLVM_CODEGEN_DAGISEL_HEADER_H
 
 /// ISelQueue - Instruction selector priority queue sorted 
-/// in the order of increasing NodeId() values.
+/// in the order of decreasing NodeId() values.
 std::vector<SDNode*> ISelQueue;
 
 /// Keep track of nodes which have already been added to queue.
@@ -43,10 +43,10 @@ static bool IsChainCompatible(SDNode *Chain, SDNode *Op) {
 }
 
 /// isel_sort - Sorting functions for the selection queue in the
-/// increasing NodeId order.
+/// decreasing NodeId order.
 struct isel_sort : public std::binary_function<SDNode*, SDNode*, bool> {
   bool operator()(const SDNode* left, const SDNode* right) const {
-    return (left->getNodeId() > right->getNodeId());
+    return left->getNodeId() < right->getNodeId();
   }
 };
 
@@ -108,7 +108,7 @@ class VISIBILITY_HIDDEN ISelQueueUpdater :
   };
 
 /// UpdateQueue - update the instruction selction queue to maintain 
-/// the increasing NodeId() ordering property.
+/// the decreasing NodeId() ordering property.
 inline void UpdateQueue(const ISelQueueUpdater &ISQU) {
   if (ISQU.hadDelete())
     std::make_heap(ISelQueue.begin(), ISelQueue.end(),isel_sort());

@@ -663,10 +663,10 @@ public:
                                   unsigned Num,
                                   DAGUpdateListener *UpdateListener = 0);
 
-  /// AssignTopologicalOrder - Assign a unique node id for each node in the DAG
-  /// based on their topological order. It returns the maximum id and a vector
-  /// of the SDNodes* in assigned order by reference.
-  unsigned AssignTopologicalOrder(std::vector<SDNode*> &TopOrder);
+  /// AssignTopologicalOrder - Topological-sort the AllNodes list and a
+  /// assign a unique node id for each node in the DAG based on their
+  /// topological order. Returns the number of nodes.
+  unsigned AssignTopologicalOrder();
 
   /// isCommutativeBinOp - Returns true if the opcode is a commutative binary
   /// operation.
