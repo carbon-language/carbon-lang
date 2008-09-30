@@ -40,10 +40,6 @@ class X86FastISel : public FastISel {
   ///
   unsigned StackPtr;
 
-  /// GlobalBaseReg - keeps track of the virtual register mapped onto global
-  /// base register.
-  unsigned GlobalBaseReg;
-
   /// X86ScalarSSEf32, X86ScalarSSEf64 - Select between SSE or x87 
   /// floating point ops.
   /// When SSE is available, use it for f32 operations.
@@ -60,7 +56,6 @@ public:
     : FastISel(mf, mmi, vm, bm, am) {
     Subtarget = &TM.getSubtarget<X86Subtarget>();
     StackPtr = Subtarget->is64Bit() ? X86::RSP : X86::ESP;
-    GlobalBaseReg = 0;
     X86ScalarSSEf64 = Subtarget->hasSSE2();
     X86ScalarSSEf32 = Subtarget->hasSSE1();
   }
@@ -102,8 +97,6 @@ private:
   bool X86SelectCall(Instruction *I);
 
   CCAssignFn *CCAssignFnForCall(unsigned CC, bool isTailCall = false);
-
-  unsigned getGlobalBaseReg();
 
   const X86InstrInfo *getInstrInfo() const {
     return getTargetMachine()->getInstrInfo();
@@ -150,16 +143,6 @@ bool X86FastISel::isTypeLegal(const Type *Ty, const TargetLowering &TLI,
   // under the assumption that i64 won't be used if the target doesn't
   // support it.
   return (AllowI1 && VT == MVT::i1) || TLI.isTypeLegal(VT);
-}
-
-/// getGlobalBaseReg - Return the the global base register. Output
-/// instructions required to initialize the global base register, if necessary.
-///
-unsigned X86FastISel::getGlobalBaseReg() {
-  assert(!Subtarget->is64Bit() && "X86-64 PIC uses RIP relative addressing");
-  if (!GlobalBaseReg)
-    GlobalBaseReg = getInstrInfo()->initializeGlobalBaseReg(MBB->getParent());
-  return GlobalBaseReg;
 }
 
 #include "X86GenCallingConv.inc"
@@ -433,7 +416,7 @@ bool X86FastISel::X86SelectAddress(Value *V, X86AddressMode &AM, bool isCall) {
     if (!isCall &&
         TM.getRelocationModel() == Reloc::PIC_ &&
         !Subtarget->is64Bit())
-      AM.Base.Reg = getGlobalBaseReg();
+      AM.Base.Reg = getInstrInfo()->getGlobalBaseReg(&MF);
 
     // Emit an extra load if the ABI requires it.
     if (Subtarget->GVRequiresExtraLoad(GV, TM, isCall)) {
@@ -1042,7 +1025,7 @@ bool X86FastISel::X86SelectCall(Instruction *I) {
       TM.getRelocationModel() == Reloc::PIC_ &&
       Subtarget->isPICStyleGOT()) {
     TargetRegisterClass *RC = X86::GR32RegisterClass;
-    unsigned Base = getGlobalBaseReg();
+    unsigned Base = getInstrInfo()->getGlobalBaseReg(&MF);
     bool Emitted = TII.copyRegToReg(*MBB, MBB->end(), X86::EBX, Base, RC, RC);
     assert(Emitted && "Failed to emit a copy instruction!");
   }

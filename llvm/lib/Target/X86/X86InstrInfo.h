@@ -414,10 +414,11 @@ public:
   ///
   virtual unsigned GetInstSizeInBytes(const MachineInstr *MI) const;
 
-  /// initializeGlobalBaseReg - Output the instructions required to put the
-  /// base address to use for accessing globals into a register.
+  /// getGlobalBaseReg - Return a virtual register initialized with the
+  /// the global base register value. Output instructions required to
+  /// initialize the register in the function entry block, if necessary.
   ///
-  unsigned initializeGlobalBaseReg(MachineFunction *MF) const;
+  unsigned getGlobalBaseReg(MachineFunction *MF) const;
 
 private:
   MachineInstr* foldMemoryOperand(MachineFunction &MF,

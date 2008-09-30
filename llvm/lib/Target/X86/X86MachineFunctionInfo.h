@@ -58,6 +58,10 @@ class X86MachineFunctionInfo : public MachineFunctionInfo {
   /// holds the virtual register into which the sret argument is passed.
   unsigned SRetReturnReg;
 
+  /// GlobalBaseReg - keeps track of the virtual register mapped onto global
+  /// base register.
+  unsigned GlobalBaseReg;
+
 public:
   X86MachineFunctionInfo() : ForceFramePointer(false),
                              CalleeSavedFrameSize(0),
@@ -65,7 +69,8 @@ public:
                              DecorationStyle(None),
                              ReturnAddrIndex(0),
                              TailCallReturnAddrDelta(0),
-                             SRetReturnReg(0) {}
+                             SRetReturnReg(0),
+                             GlobalBaseReg(0) {}
   
   X86MachineFunctionInfo(MachineFunction &MF) : ForceFramePointer(false),
                                                 CalleeSavedFrameSize(0),
@@ -73,7 +78,8 @@ public:
                                                 DecorationStyle(None),
                                                 ReturnAddrIndex(0),
                                                 TailCallReturnAddrDelta(0),
-                                                SRetReturnReg(0) {}
+                                                SRetReturnReg(0),
+                                                GlobalBaseReg(0) {}
   
   bool getForceFramePointer() const { return ForceFramePointer;} 
   void setForceFramePointer(bool forceFP) { ForceFramePointer = forceFP; }
@@ -95,6 +101,9 @@ public:
 
   unsigned getSRetReturnReg() const { return SRetReturnReg; }
   void setSRetReturnReg(unsigned Reg) { SRetReturnReg = Reg; }
+
+  unsigned getGlobalBaseReg() const { return GlobalBaseReg; }
+  void setGlobalBaseReg(unsigned Reg) { GlobalBaseReg = Reg; }
 };
 } // End llvm namespace
 

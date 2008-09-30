@@ -123,10 +123,6 @@ namespace {
     /// make the right decision when generating code for different targets.
     const X86Subtarget *Subtarget;
 
-    /// GlobalBaseReg - keeps track of the virtual register mapped onto global
-    /// base register.
-    unsigned GlobalBaseReg;
-
     /// CurBB - Current BB being isel'd.
     ///
     MachineBasicBlock *CurBB;
@@ -143,12 +139,6 @@ namespace {
         Subtarget(&TM.getSubtarget<X86Subtarget>()),
         OptForSize(OptimizeForSize) {}
 
-    virtual bool runOnFunction(Function &Fn) {
-      // Make sure we re-emit a set of the global base reg if necessary
-      GlobalBaseReg = 0;
-      return SelectionDAGISel::runOnFunction(Fn);
-    }
-   
     virtual const char *getPassName() const {
       return "X86 DAG->DAG Instruction Selection";
     }
@@ -1174,9 +1164,8 @@ bool X86DAGToDAGISel::TryFoldLoad(SDValue P, SDValue N,
 /// initialize the global base register, if necessary.
 ///
 SDNode *X86DAGToDAGISel::getGlobalBaseReg() {
-  assert(!Subtarget->is64Bit() && "X86-64 PIC uses RIP relative addressing");
-  if (!GlobalBaseReg)
-    GlobalBaseReg = TM.getInstrInfo()->initializeGlobalBaseReg(BB->getParent());
+  MachineFunction *MF = CurBB->getParent();
+  unsigned GlobalBaseReg = TM.getInstrInfo()->getGlobalBaseReg(MF);
   return CurDAG->getRegister(GlobalBaseReg, TLI.getPointerTy()).getNode();
 }
 
