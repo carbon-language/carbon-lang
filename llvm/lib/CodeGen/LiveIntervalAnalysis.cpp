@@ -819,6 +819,7 @@ bool LiveIntervals::isValNoAvailableAt(const LiveInterval &li, MachineInstr *MI,
 /// val# of the specified interval is re-materializable.
 bool LiveIntervals::isReMaterializable(const LiveInterval &li,
                                        const VNInfo *ValNo, MachineInstr *MI,
+                                       SmallVectorImpl<LiveInterval*> &SpillIs,
                                        bool &isLoad) {
   if (DisableReMat)
     return false;
@@ -855,8 +856,8 @@ bool LiveIntervals::isReMaterializable(const LiveInterval &li,
 
     // If the instruction accesses memory and the memory could be non-constant,
     // assume the instruction is not rematerializable.
-    for (std::list<MachineMemOperand>::const_iterator I = MI->memoperands_begin(),
-         E = MI->memoperands_end(); I != E; ++I) {
+    for (std::list<MachineMemOperand>::const_iterator
+           I = MI->memoperands_begin(), E = MI->memoperands_end(); I != E; ++I){
       const MachineMemOperand &MMO = *I;
       if (MMO.isVolatile() || MMO.isStore())
         return false;
@@ -924,13 +925,21 @@ bool LiveIntervals::isReMaterializable(const LiveInterval &li,
       if (!isValNoAvailableAt(ImpLi, MI, UseIdx))
         return false;
     }
+
+    // If a register operand of the re-materialized instruction is going to
+    // be spilled next, then it's not legal to re-materialize this instruction.
+    for (unsigned i = 0, e = SpillIs.size(); i != e; ++i)
+      if (ImpUse == SpillIs[i]->reg)
+        return false;
   }
   return true;
 }
 
 /// isReMaterializable - Returns true if every definition of MI of every
 /// val# of the specified interval is re-materializable.
-bool LiveIntervals::isReMaterializable(const LiveInterval &li, bool &isLoad) {
+bool LiveIntervals::isReMaterializable(const LiveInterval &li,
+                                       SmallVectorImpl<LiveInterval*> &SpillIs,
+                                       bool &isLoad) {
   isLoad = false;
   for (LiveInterval::const_vni_iterator i = li.vni_begin(), e = li.vni_end();
        i != e; ++i) {
@@ -944,7 +953,7 @@ bool LiveIntervals::isReMaterializable(const LiveInterval &li, bool &isLoad) {
     MachineInstr *ReMatDefMI = getInstructionFromIndex(DefIdx);
     bool DefIsLoad = false;
     if (!ReMatDefMI ||
-        !isReMaterializable(li, VNI, ReMatDefMI, DefIsLoad))
+        !isReMaterializable(li, VNI, ReMatDefMI, SpillIs, DefIsLoad))
       return false;
     isLoad |= DefIsLoad;
   }
@@ -1728,6 +1737,7 @@ addIntervalsForSpillsFast(const LiveInterval &li,
 
 std::vector<LiveInterval*> LiveIntervals::
 addIntervalsForSpills(const LiveInterval &li,
+                      SmallVectorImpl<LiveInterval*> &SpillIs,
                       const MachineLoopInfo *loopInfo, VirtRegMap &vrm,
                       float &SSWeight) {
   
@@ -1831,7 +1841,7 @@ addIntervalsForSpills(const LiveInterval &li,
     MachineInstr *ReMatDefMI = (DefIdx == ~0u)
       ? 0 : getInstructionFromIndex(DefIdx);
     bool dummy;
-    if (ReMatDefMI && isReMaterializable(li, VNI, ReMatDefMI, dummy)) {
+    if (ReMatDefMI && isReMaterializable(li, VNI, ReMatDefMI, SpillIs, dummy)) {
       // Remember how to remat the def of this val#.
       ReMatOrigDefs[VN] = ReMatDefMI;
       // Original def may be modified so we have to make a copy here.

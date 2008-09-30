@@ -308,6 +308,7 @@ namespace llvm {
     /// (if any is created) by reference. This is temporary.
     std::vector<LiveInterval*>
     addIntervalsForSpills(const LiveInterval& i,
+                          SmallVectorImpl<LiveInterval*> &SpillIs,
                           const MachineLoopInfo *loopInfo, VirtRegMap& vrm,
                           float &SSWeight);
     
@@ -326,7 +327,9 @@ namespace llvm {
     /// isReMaterializable - Returns true if every definition of MI of every
     /// val# of the specified interval is re-materializable. Also returns true
     /// by reference if all of the defs are load instructions.
-    bool isReMaterializable(const LiveInterval &li, bool &isLoad);
+    bool isReMaterializable(const LiveInterval &li,
+                            SmallVectorImpl<LiveInterval*> &SpillIs,
+                            bool &isLoad);
 
     /// getRepresentativeReg - Find the largest super register of the specified
     /// physical register.
@@ -387,7 +390,9 @@ namespace llvm {
     /// val# of the specified interval is re-materializable. Also returns true
     /// by reference if the def is a load.
     bool isReMaterializable(const LiveInterval &li, const VNInfo *ValNo,
-                            MachineInstr *MI, bool &isLoad);
+                            MachineInstr *MI,
+                            SmallVectorImpl<LiveInterval*> &SpillIs,
+                            bool &isLoad);
 
     /// tryFoldMemoryOperand - Attempts to fold either a spill / restore from
     /// slot / to reg or any rematerialized load into ith operand of specified
