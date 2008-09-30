@@ -58,12 +58,15 @@ class SelectionParameter (ReporterParameter):
     self.values = values
     
   def getHTML(self,r,bugtype,getConfigOption):
+    default = self.getValue(r,bugtype,getConfigOption)
     return """\
 <tr>
 <td class="form_clabel">%s:</td><td class="form_value"><select name="%s_%s">
 %s
 </select></td>"""%(self.getName(),r.getName(),self.getName(),'\n'.join(["""\
-<option value="%s">%s</option>"""%(o[0],o[1]) for o in self.values]))
+<option value="%s"%s>%s</option>"""%(o[0],
+                                     o[0] == default and ' selected="selected"' or '',
+                                     o[1]) for o in self.values]))
 
 #===------------------------------------------------------------------------===#
 # Reporters
@@ -157,6 +160,12 @@ class RadarClassificationParameter(SelectionParameter):
 
   def saveConfigValue(self):
     return False
+    
+  def getValue(self,r,bugtype,getConfigOption):
+    if bugtype.startswith("leak"):
+      return '3'
+    else:
+      return '7'
 
 class RadarReporter:
     @staticmethod
