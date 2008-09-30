@@ -1406,12 +1406,14 @@ The basic framework for a @try-catch-finally is as follows:
       
       // fell off end, rethrow.
       _rethrow = _caught;
+      ... jump-through-finally to finally_rethrow ...
     } else {
       // exception in catch block
       _rethrow = objc_exception_extract(&d);
-      goto finally_no_exit;
+      ... jump-through-finally_no_exit to finally_rethrow ...
     }
   }
+  ... jump-through-finally to finally_end ...
 
 finally:
   // match either the initial try_enter or the catch try_enter,
@@ -1419,18 +1421,18 @@ finally:
   objc_exception_try_exit(&d);
 finally_no_exit:
   ... finally block ....
-  if (_rethrow)
-    objc_exception_throw(_rethrow);
+  ... dispatch to finally destination ...
+
+finally_rethrow:
+  objc_exception_throw(_rethrow);
+
+finally_end:
 }
 
 This framework differs slightly from the one gcc uses, in that gcc
-uses _rethrow to determine if objc_exception_try_exit should be
-called. This breaks in the face of throwing nil and introduces an
-unnecessary branch. Note that our framework still does not properly
-handle throwing nil, as a nil object will not be rethrown.
-
-FIXME: Determine if _rethrow should be integrated into the other
-architecture for selecting paths out of the finally block.
+uses _rethrow to determine if objc_exception_try_exit should be called
+and if the object should be rethrown. This breaks in the face of
+throwing nil and introduces unnecessary branches.
 
 We specialize this framework for a few particular circumstances:
 
@@ -1450,19 +1452,47 @@ Support for implicit rethrows and jumping through the finally block is
 handled by storing the current exception-handling context in
 ObjCEHStack.
 
+In order to implement proper @finally semantics, we support one basic
+mechanism for jumping through the finally block to an arbitrary
+destination. Constructs which generate exits from a @try or @catch
+block use this mechanism to implement the proper semantics by chaining
+jumps, as necessary.
+
+This mechanism works like the one used for indirect goto: we
+arbitrarily assign an ID to each destination and store the ID for the
+destination in a variable prior to entering the finally block. At the
+end of the finally block we simply create a switch to the proper
+destination.
+
 */
 
 void CGObjCMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
-                            const ObjCAtTryStmt &S)
-{
-  // Allocate exception data.
+                            const ObjCAtTryStmt &S) {
+  // Create various blocks we refer to for handling @finally.
+  llvm::BasicBlock *FinallyBlock = llvm::BasicBlock::Create("finally");
+  llvm::BasicBlock *FinallyNoExit = llvm::BasicBlock::Create("finally.noexit");
+  llvm::BasicBlock *FinallyRethrow = llvm::BasicBlock::Create("finally.throw");
+  llvm::BasicBlock *FinallyEnd = llvm::BasicBlock::Create("finally.end");
+  llvm::Value *DestCode = 
+    CGF.CreateTempAlloca(llvm::Type::Int32Ty, "finally.dst");
+
+  // Generate jump code. Done here so we can directly add things to
+  // the switch instruction.
+  llvm::BasicBlock *FinallyJump = llvm::BasicBlock::Create("finally.jump");
+  llvm::SwitchInst *FinallySwitch = 
+    llvm::SwitchInst::Create(new llvm::LoadInst(DestCode, "", FinallyJump), 
+                             FinallyEnd, 10, FinallyJump);
+
+  // Push an EH context entry, used for handling rethrows and jumps
+  // through finally.
+  CodeGenFunction::ObjCEHEntry EHEntry(FinallyBlock, FinallyNoExit,
+                                       FinallySwitch, DestCode);
+  CGF.ObjCEHStack.push_back(&EHEntry);
+
+  // Allocate memory for the exception data and rethrow pointer.
   llvm::Value *ExceptionData = CGF.CreateTempAlloca(ObjCTypes.ExceptionDataTy,
                                                     "exceptiondata.ptr");
-  
-  // Allocate memory for the rethrow pointer.
-  llvm::Value *RethrowPtr = CGF.CreateTempAlloca(ObjCTypes.ObjectPtrTy);
-  CGF.Builder.CreateStore(llvm::Constant::getNullValue(ObjCTypes.ObjectPtrTy),
-                          RethrowPtr);
+  llvm::Value *RethrowPtr = CGF.CreateTempAlloca(ObjCTypes.ObjectPtrTy, "_rethrow");
   
   // Enter a new try block and call setjmp.
   CGF.Builder.CreateCall(ObjCTypes.ExceptionTryEnterFn, ExceptionData);
@@ -1471,25 +1501,16 @@ void CGObjCMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
   JmpBufPtr = CGF.Builder.CreateStructGEP(JmpBufPtr, 0, "tmp");
   llvm::Value *SetJmpResult = CGF.Builder.CreateCall(ObjCTypes.SetJmpFn,
                                                      JmpBufPtr, "result");
-  
-  
-  llvm::BasicBlock *FinallyBlock = llvm::BasicBlock::Create("finally");
-  llvm::BasicBlock *FinallyNoExit = llvm::BasicBlock::Create("finally.noexit");
-  
+
   llvm::BasicBlock *TryBlock = llvm::BasicBlock::Create("try");
   llvm::BasicBlock *TryHandler = llvm::BasicBlock::Create("try.handler");
-
   CGF.Builder.CreateCondBr(CGF.Builder.CreateIsNonNull(SetJmpResult, "threw"), 
                            TryHandler, TryBlock);
-
-  // Push an EH context entry for use by rethrow and
-  // jumps-through-finally.
-  CGF.ObjCEHStack.push_back(CodeGenFunction::ObjCEHEntry(FinallyBlock));
 
   // Emit the @try block.
   CGF.EmitBlock(TryBlock);
   CGF.EmitStmt(S.getTryBody());
-  CGF.Builder.CreateBr(FinallyBlock);
+  CGF.EmitJumpThroughFinally(&EHEntry, FinallyEnd);
   
   // Emit the "exception in @try" block.
   CGF.EmitBlock(TryHandler);
@@ -1499,7 +1520,7 @@ void CGObjCMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
   llvm::Value *Caught = CGF.Builder.CreateCall(ObjCTypes.ExceptionExtractFn,
                                                ExceptionData,
                                                "caught");
-  CGF.ObjCEHStack.back().Exception = Caught;
+  EHEntry.Exception = Caught;
   if (const ObjCAtCatchStmt* CatchStmt = S.getCatchStmts()) {    
     // Enter a new exception try block (in case a @catch block throws
     // an exception).
@@ -1520,7 +1541,7 @@ void CGObjCMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
     // so.
     bool AllMatched = false;
     for (; CatchStmt; CatchStmt = CatchStmt->getNextCatchStmt()) {
-      llvm::BasicBlock *NextCatchBlock = llvm::BasicBlock::Create("nextcatch");
+      llvm::BasicBlock *NextCatchBlock = llvm::BasicBlock::Create("catch");
 
       const DeclStmt *CatchParam = 
         cast_or_null<DeclStmt>(CatchStmt->getCatchParamStmt());
@@ -1549,7 +1570,7 @@ void CGObjCMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
         }
         
         CGF.EmitStmt(CatchStmt->getCatchBody());
-        CGF.Builder.CreateBr(FinallyBlock);
+        CGF.EmitJumpThroughFinally(&EHEntry, FinallyEnd);
         break;
       }
       
@@ -1579,7 +1600,7 @@ void CGObjCMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
       CGF.Builder.CreateStore(Tmp, CGF.GetAddrOfLocalVar(VD));
       
       CGF.EmitStmt(CatchStmt->getCatchBody());
-      CGF.Builder.CreateBr(FinallyBlock);
+      CGF.EmitJumpThroughFinally(&EHEntry, FinallyEnd);
       
       CGF.EmitBlock(NextCatchBlock);
     }
@@ -1588,7 +1609,7 @@ void CGObjCMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
       // None of the handlers caught the exception, so store it to be
       // rethrown at the end of the @finally block.
       CGF.Builder.CreateStore(Caught, RethrowPtr);
-      CGF.Builder.CreateBr(FinallyBlock);
+      CGF.EmitJumpThroughFinally(&EHEntry, FinallyRethrow);
     }
     
     // Emit the exception handler for the @catch blocks.
@@ -1596,41 +1617,37 @@ void CGObjCMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
     CGF.Builder.CreateStore(CGF.Builder.CreateCall(ObjCTypes.ExceptionExtractFn,
                                                    ExceptionData), 
                             RethrowPtr);
-    CGF.Builder.CreateBr(FinallyNoExit);
+    CGF.EmitJumpThroughFinally(&EHEntry, FinallyRethrow, false);
   } else {
     CGF.Builder.CreateStore(Caught, RethrowPtr);
-    CGF.Builder.CreateBr(FinallyNoExit);
+    CGF.EmitJumpThroughFinally(&EHEntry, FinallyRethrow, false);    
   }
   
+  // Pop the exception-handling stack entry. It is important to do
+  // this now, because the code in the @finally block is not in this
+  // context.
+  CGF.ObjCEHStack.pop_back();
+
   // Emit the @finally block.
   CGF.EmitBlock(FinallyBlock);
   CGF.Builder.CreateCall(ObjCTypes.ExceptionTryExitFn, ExceptionData);
 
   CGF.EmitBlock(FinallyNoExit);
-
   if (const ObjCAtFinallyStmt* FinallyStmt = S.getFinallyStmt())
     CGF.EmitStmt(FinallyStmt->getFinallyBody());
 
-  llvm::Value *Rethrow = CGF.Builder.CreateLoad(RethrowPtr);
-  
-  llvm::BasicBlock *RethrowBlock = llvm::BasicBlock::Create("rethrow");  
-  llvm::BasicBlock *FinallyEndBlock = llvm::BasicBlock::Create("finally.end");
-
-  // If necessary, rethrow the exception.
-  CGF.Builder.CreateCondBr(CGF.Builder.CreateIsNonNull(Rethrow, "rethrow.test"), 
-                           RethrowBlock, FinallyEndBlock);
-  CGF.EmitBlock(RethrowBlock);
-  CGF.Builder.CreateCall(ObjCTypes.ExceptionThrowFn, Rethrow);
+  CGF.EmitBlock(FinallyJump);
+ 
+  CGF.EmitBlock(FinallyRethrow);
+  CGF.Builder.CreateCall(ObjCTypes.ExceptionThrowFn, 
+                         CGF.Builder.CreateLoad(RethrowPtr));
   CGF.Builder.CreateUnreachable();
-
-  CGF.ObjCEHStack.pop_back();
-
-  CGF.EmitBlock(FinallyEndBlock);
+  
+  CGF.EmitBlock(FinallyEnd);
 }
 
 void CGObjCMac::EmitThrowStmt(CodeGen::CodeGenFunction &CGF,
-                              const ObjCAtThrowStmt &S)
-{
+                              const ObjCAtThrowStmt &S) {
   llvm::Value *ExceptionAsObject;
   
   if (const Expr *ThrowExpr = S.getThrowExpr()) {
@@ -1638,14 +1655,43 @@ void CGObjCMac::EmitThrowStmt(CodeGen::CodeGenFunction &CGF,
     ExceptionAsObject = 
       CGF.Builder.CreateBitCast(Exception, ObjCTypes.ObjectPtrTy, "tmp");
   } else {
-    assert((!CGF.ObjCEHStack.empty() && CGF.ObjCEHStack.back().Exception) && 
+    assert((!CGF.ObjCEHStack.empty() && CGF.ObjCEHStack.back()->Exception) && 
            "Unexpected rethrow outside @catch block.");
-    ExceptionAsObject = CGF.ObjCEHStack.back().Exception;
+    ExceptionAsObject = CGF.ObjCEHStack.back()->Exception;
   }
   
   CGF.Builder.CreateCall(ObjCTypes.ExceptionThrowFn, ExceptionAsObject);
   CGF.Builder.CreateUnreachable();
   CGF.EmitBlock(llvm::BasicBlock::Create("bb"));
+}
+
+void CodeGenFunction::EmitJumpThroughFinally(ObjCEHEntry *E,
+                                             llvm::BasicBlock *Dst,
+                                             bool ExecuteTryExit) {
+  llvm::BasicBlock *Src = Builder.GetInsertBlock();
+    
+  if (isDummyBlock(Src))
+    return;
+  
+  // Find the destination code for this block. We always use 0 for the
+  // fallthrough block (default destination).
+  llvm::SwitchInst *SI = E->FinallySwitch;
+  llvm::ConstantInt *ID;
+  if (Dst == SI->getDefaultDest()) {
+    ID = llvm::ConstantInt::get(llvm::Type::Int32Ty, 0);
+  } else {
+    ID = SI->findCaseDest(Dst);
+    if (!ID) {
+      // No code found, get a new unique one by just using the number
+      // of switch successors.
+      ID = llvm::ConstantInt::get(llvm::Type::Int32Ty, SI->getNumSuccessors());
+      SI->addCase(ID, Dst);
+    }
+  }
+
+  // Set the destination code and branch.
+  Builder.CreateStore(ID, E->DestCode);
+  Builder.CreateBr(ExecuteTryExit ? E->FinallyBlock : E->FinallyNoExit);
 }
 
 /* *** Private Interface *** */

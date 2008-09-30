@@ -437,6 +437,15 @@ void CodeGenFunction::EmitReturnStmt(const ReturnStmt &S) {
     EmitAggExpr(RV, ReturnValue, false);
   }
 
+  if (!ObjCEHStack.empty()) {
+    for (ObjCEHStackType::reverse_iterator i = ObjCEHStack.rbegin(), 
+           e = ObjCEHStack.rend(); i != e; ++i) {
+      llvm::BasicBlock *ReturnPad = llvm::BasicBlock::Create("return.pad");
+      EmitJumpThroughFinally(*i, ReturnPad);
+      EmitBlock(ReturnPad);
+    }
+  } 
+
   Builder.CreateBr(ReturnBlock);
   
   // Emit a block after the branch so that dead code after a return has some

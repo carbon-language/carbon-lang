@@ -31,6 +31,7 @@
 namespace llvm {
   class BasicBlock;
   class Module;
+  class SwitchInst;
 }
 
 namespace clang {
@@ -88,13 +89,42 @@ public:
   // inside @catch blocks and which @finally block exits from an EH
   // scope should be chained through.
   struct ObjCEHEntry {
-    ObjCEHEntry(llvm::BasicBlock *fb)
-      : Exception(0), FinallyBlock(fb) {}
+    ObjCEHEntry(llvm::BasicBlock *fb, llvm::BasicBlock *fne, 
+                llvm::SwitchInst *fs, llvm::Value *dc)
+      : FinallyBlock(fb), FinallyNoExit(fne), FinallySwitch(fs), 
+        DestCode(dc), Exception(0) {}
 
-    llvm::Value *Exception;
-    llvm::BasicBlock *FinallyBlock;
+    /// Entry point to the finally block.
+    llvm::BasicBlock *FinallyBlock; 
+
+    /// Entry point to the finally block which skips execution of the
+    /// try_exit runtime function.
+    llvm::BasicBlock *FinallyNoExit; 
+
+    /// Switch instruction which runs at the end of the finally block
+    /// to forward jumps through the finally block.
+    llvm::SwitchInst *FinallySwitch; 
+
+    /// Variable holding the code for the destination of a jump
+    /// through the @finally block.
+    llvm::Value *DestCode;
+
+    /// The exception object being handled, during IR generation for a
+    /// @catch block.
+    llvm::Value *Exception; 
   };
-  llvm::SmallVector<ObjCEHEntry, 8> ObjCEHStack;
+
+  typedef llvm::SmallVector<ObjCEHEntry*, 8> ObjCEHStackType;
+  ObjCEHStackType ObjCEHStack;
+
+  /// EmitJumpThroughFinally - Emit a branch from the current insert
+  /// point through the finally handling code for \arg Entry and then
+  /// on to \arg Dest.
+  ///
+  /// \param ExecuteTryExit - When true, the try_exit runtime function
+  /// should be called prior to executing the finally code.
+  void EmitJumpThroughFinally(ObjCEHEntry *Entry, llvm::BasicBlock *Dest,
+                              bool ExecuteTryExit=true);
   
 private:
   /// LabelIDs - Track arbitrary ids assigned to labels for use in
