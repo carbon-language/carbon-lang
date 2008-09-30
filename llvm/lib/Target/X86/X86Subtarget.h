@@ -184,7 +184,7 @@ public:
   /// the current subtarget and it is considered prefereable over
   /// memset with zero passed as the second argument. Otherwise it
   /// returns null.
-  const char *getBZeroEntry(bool NoBuiltin) const;
+  const char *getBZeroEntry() const;
 };
 
 namespace X86 {
