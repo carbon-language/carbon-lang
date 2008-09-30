@@ -171,8 +171,18 @@ def inferlanguage(extension):
     else:
         return ""
 
+def inferaction(args):
+    if '-E' in args:
+        return 'preprocess'
+    if '-c' in args:
+        return 'compile'
+    for arg in args:
+        if arg.startswith('-print-prog-name'):
+            return 'pring-prog-name'
+    return 'link'
+
 def main(args):
-    action = 'link'
+    action = inferaction(args)
     output = ''
     compile_opts = []
     link_opts = []
@@ -186,12 +196,6 @@ def main(args):
         arg = args[i]
 
         # Modes ccc supports
-        if arg == '-E':
-            action = 'preprocess'
-        if arg == '-c':
-            action = 'compile'
-        if arg.startswith('-print-prog-name'):
-            action = 'print-prog-name'
         if arg == '-save-temps':
             save_temps = 1
         if arg == '-emit-llvm' or arg == '--emit-llvm':
@@ -229,7 +233,7 @@ def main(args):
             i += 1
 
         # Options with no arguments that should pass through
-        if arg in ('-dynamiclib',):
+        if arg in ('-dynamiclib','-bundle'):
             link_opts.append(arg)
 
         # Options with one argument that should pass through
@@ -280,7 +284,7 @@ def main(args):
             i += 1
 
         i += 1
-
+    
     if action == 'print-prog-name':
         # assume we can handle everything
         print sys.argv[0]
