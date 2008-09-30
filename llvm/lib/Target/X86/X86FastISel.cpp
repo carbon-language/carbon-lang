@@ -1217,9 +1217,18 @@ unsigned X86FastISel::TargetMaterializeConstant(Constant *C) {
     Align = Log2_64(Align);
   }
   
+  // x86-32 PIC requires a PIC base register for constant pools.
+  unsigned PICBase = 0;
+  if (TM.getRelocationModel() == Reloc::PIC_ &&
+      !Subtarget->is64Bit())
+    PICBase = getInstrInfo()->getGlobalBaseReg(&MF);
+
+  // Create the load from the constant pool.
   unsigned MCPOffset = MCP.getConstantPoolIndex(C, Align);
   unsigned ResultReg = createResultReg(RC);
-  addConstantPoolReference(BuildMI(MBB, TII.get(Opc), ResultReg), MCPOffset);
+  addConstantPoolReference(BuildMI(MBB, TII.get(Opc), ResultReg), MCPOffset,
+                           PICBase);
+
   return ResultReg;
 }
 

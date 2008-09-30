@@ -114,13 +114,15 @@ addFrameReference(const MachineInstrBuilder &MIB, int FI, int Offset = 0) {
 
 /// addConstantPoolReference - This function is used to add a reference to the
 /// base of a constant value spilled to the per-function constant pool.  The
-/// reference has base register ConstantPoolIndex offset which is retained until
-/// either machine code emission or assembly output.  This allows an optional
-/// offset to be added as well.
+/// reference uses the abstract ConstantPoolIndex which is retained until
+/// either machine code emission or assembly output. In PIC mode on x86-32,
+/// the GlobalBaseReg parameter can be used to make this a
+/// GlobalBaseReg-relative reference.
 ///
 inline const MachineInstrBuilder &
-addConstantPoolReference(const MachineInstrBuilder &MIB, unsigned CPI) {
-  return MIB.addReg(0).addImm(1).addReg(0).addConstantPoolIndex(CPI);
+addConstantPoolReference(const MachineInstrBuilder &MIB, unsigned CPI,
+                         unsigned GlobalBaseReg = 0) {
+  return MIB.addReg(GlobalBaseReg).addImm(1).addReg(0).addConstantPoolIndex(CPI);
 }
 
 } // End llvm namespace
