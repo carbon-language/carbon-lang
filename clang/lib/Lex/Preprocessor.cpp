@@ -414,6 +414,10 @@ static void InitializePredefinedMacros(Preprocessor &PP,
   if (PP.getLangOptions().ObjC2)
     DefineBuiltinMacro(Buf, "OBJC_NEW_PROPERTIES");
 
+  if (PP.getLangOptions().PascalStrings)
+    DefineBuiltinMacro(Buf, "__PASCAL_STRINGS__");
+
+  
   // Add __builtin_va_list typedef.
   {
     const char *VAList = PP.getTargetInfo().getVAListDeclaration();
