@@ -879,8 +879,9 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur)
   if (cur->weight != HUGE_VALF && cur->weight <= minWeight) {
     DOUT << "\t\t\tspilling(c): " << *cur << '\n';
     float SSWeight;
+    SmallVector<LiveInterval*, 8> spillIs;
     std::vector<LiveInterval*> added =
-      li_->addIntervalsForSpills(*cur, loopInfo, *vrm_, SSWeight);
+      li_->addIntervalsForSpills(*cur, spillIs, loopInfo, *vrm_, SSWeight);
     addStackInterval(cur, ls_, li_, SSWeight, *vrm_);
     if (added.empty())
       return;  // Early exit if all spills were folded.
@@ -931,7 +932,7 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur)
     earliestStart = std::min(earliestStart, sli->beginNumber());
     float SSWeight;
     std::vector<LiveInterval*> newIs =
-      li_->addIntervalsForSpills(*sli, loopInfo, *vrm_, SSWeight);
+      li_->addIntervalsForSpills(*sli, spillIs, loopInfo, *vrm_, SSWeight);
     addStackInterval(sli, ls_, li_, SSWeight, *vrm_);
     std::copy(newIs.begin(), newIs.end(), std::back_inserter(added));
     spilled.insert(sli->reg);
