@@ -230,43 +230,51 @@ static void *CreateArgv(ExecutionEngine *EE,
 
 
 /// runStaticConstructorsDestructors - This method is used to execute all of
-/// the static constructors or destructors for a program, depending on the
+/// the static constructors or destructors for a module, depending on the
 /// value of isDtors.
-void ExecutionEngine::runStaticConstructorsDestructors(bool isDtors) {
+void ExecutionEngine::runStaticConstructorsDestructors(Module *module, bool isDtors) {
   const char *Name = isDtors ? "llvm.global_dtors" : "llvm.global_ctors";
   
   // Execute global ctors/dtors for each module in the program.
-  for (unsigned m = 0, e = Modules.size(); m != e; ++m) {
-    GlobalVariable *GV = Modules[m]->getModule()->getNamedGlobal(Name);
-
-    // If this global has internal linkage, or if it has a use, then it must be
-    // an old-style (llvmgcc3) static ctor with __main linked in and in use.  If
-    // this is the case, don't execute any of the global ctors, __main will do
-    // it.
-    if (!GV || GV->isDeclaration() || GV->hasInternalLinkage()) continue;
   
-    // Should be an array of '{ int, void ()* }' structs.  The first value is
-    // the init priority, which we ignore.
-    ConstantArray *InitList = dyn_cast<ConstantArray>(GV->getInitializer());
-    if (!InitList) continue;
-    for (unsigned i = 0, e = InitList->getNumOperands(); i != e; ++i)
-      if (ConstantStruct *CS = 
-          dyn_cast<ConstantStruct>(InitList->getOperand(i))) {
-        if (CS->getNumOperands() != 2) break; // Not array of 2-element structs.
-      
-        Constant *FP = CS->getOperand(1);
-        if (FP->isNullValue())
-          break;  // Found a null terminator, exit.
-      
-        if (ConstantExpr *CE = dyn_cast<ConstantExpr>(FP))
-          if (CE->isCast())
-            FP = CE->getOperand(0);
-        if (Function *F = dyn_cast<Function>(FP)) {
-          // Execute the ctor/dtor function!
-          runFunction(F, std::vector<GenericValue>());
-        }
-      }
-  }
+ GlobalVariable *GV = module->getNamedGlobal(Name);
+
+ // If this global has internal linkage, or if it has a use, then it must be
+ // an old-style (llvmgcc3) static ctor with __main linked in and in use.  If
+ // this is the case, don't execute any of the global ctors, __main will do
+ // it.
+ if (!GV || GV->isDeclaration() || GV->hasInternalLinkage()) return;
+ 
+ // Should be an array of '{ int, void ()* }' structs.  The first value is
+ // the init priority, which we ignore.
+ ConstantArray *InitList = dyn_cast<ConstantArray>(GV->getInitializer());
+ if (!InitList) return;
+ for (unsigned i = 0, e = InitList->getNumOperands(); i != e; ++i)
+   if (ConstantStruct *CS = 
+       dyn_cast<ConstantStruct>(InitList->getOperand(i))) {
+     if (CS->getNumOperands() != 2) return; // Not array of 2-element structs.
+   
+     Constant *FP = CS->getOperand(1);
+     if (FP->isNullValue())
+       break;  // Found a null terminator, exit.
+   
+     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(FP))
+       if (CE->isCast())
+         FP = CE->getOperand(0);
+     if (Function *F = dyn_cast<Function>(FP)) {
+       // Execute the ctor/dtor function!
+       runFunction(F, std::vector<GenericValue>());
+     }
+   }
+}
+
+/// runStaticConstructorsDestructors - This method is used to execute all of
+/// the static constructors or destructors for a program, depending on the
+/// value of isDtors.
+void ExecutionEngine::runStaticConstructorsDestructors(bool isDtors) {
+  // Execute global ctors/dtors for each module in the program.
+  for (unsigned m = 0, e = Modules.size(); m != e; ++m)
+    runStaticConstructorsDestructors(Modules[m]->getModule(), isDtors);
 }
 
 #ifndef NDEBUG

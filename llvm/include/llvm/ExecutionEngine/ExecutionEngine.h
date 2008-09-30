@@ -157,9 +157,13 @@ public:
                                 const std::vector<GenericValue> &ArgValues) = 0;
 
   /// runStaticConstructorsDestructors - This method is used to execute all of
-  /// the static constructors or destructors for a module, depending on the
+  /// the static constructors or destructors for a program, depending on the
   /// value of isDtors.
   void runStaticConstructorsDestructors(bool isDtors);
+  /// runStaticConstructorsDestructors - This method is used to execute all of
+  /// the static constructors or destructors for a module, depending on the
+  /// value of isDtors.
+  void runStaticConstructorsDestructors(Module *module, bool isDtors);
   
   
   /// runFunctionAsMain - This is a helper function which wraps runFunction to
