@@ -59,16 +59,14 @@ bool X86Subtarget::GVRequiresExtraLoad(const GlobalValue* GV,
   return false;
 }
 
-/// This function returns the name of a function which has an interface
-/// like the non-standard bzero function, if such a function exists on
-/// the current subtarget and it is considered prefereable over
-/// memset with zero passed as the second argument. Otherwise it
-/// returns null.
-const char *X86Subtarget::getBZeroEntry() const {
-
+/// getBZeroEntry - This function returns the name of a function which has an
+/// interface like the non-standard bzero function, if such a function exists on
+/// the current subtarget and it is considered prefereable over memset with zero
+/// passed as the second argument. Otherwise it returns null.
+const char *X86Subtarget::getBZeroEntry(bool NoBuiltin) const {
   // Darwin 10 has a __bzero entry point for this purpose.
   if (getDarwinVers() >= 10)
-    return "__bzero";
+    return NoBuiltin ? "_bzero" : "__bzero";
 
   return 0;
 }

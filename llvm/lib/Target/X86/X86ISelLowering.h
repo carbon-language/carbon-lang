@@ -575,17 +575,18 @@ namespace llvm {
     SDNode *ExpandATOMIC_CMP_SWAP(SDNode *N, SelectionDAG &DAG);
     
     SDValue EmitTargetCodeForMemset(SelectionDAG &DAG,
-                                      SDValue Chain,
-                                      SDValue Dst, SDValue Src,
-                                      SDValue Size, unsigned Align,
-                                      const Value *DstSV, uint64_t DstSVOff);
+                                    SDValue Chain,
+                                    SDValue Dst, SDValue Src,
+                                    SDValue Size, unsigned Align,
+                                    const Value *DstSV, uint64_t DstSVOff,
+                                    bool NoBuiltin);
     SDValue EmitTargetCodeForMemcpy(SelectionDAG &DAG,
-                                      SDValue Chain,
-                                      SDValue Dst, SDValue Src,
-                                      SDValue Size, unsigned Align,
-                                      bool AlwaysInline,
-                                      const Value *DstSV, uint64_t DstSVOff,
-                                      const Value *SrcSV, uint64_t SrcSVOff);
+                                    SDValue Chain,
+                                    SDValue Dst, SDValue Src,
+                                    SDValue Size, unsigned Align,
+                                    bool AlwaysInline,
+                                    const Value *DstSV, uint64_t DstSVOff,
+                                    const Value *SrcSV, uint64_t SrcSVOff);
     
     /// Utility function to emit atomic bitwise operations (and, or, xor).
     // It takes the bitwise instruction to expand, the associated machine basic

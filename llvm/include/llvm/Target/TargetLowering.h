@@ -1049,7 +1049,8 @@ public:
                           SDValue Chain,
                           SDValue Op1, SDValue Op2,
                           SDValue Op3, unsigned Align,
-                          const Value *DstSV, uint64_t DstOff) {
+                          const Value *DstSV, uint64_t DstOff,
+                          bool NoBuiltin = false) {
     return SDValue();
   }
 

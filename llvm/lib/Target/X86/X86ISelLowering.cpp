@@ -5128,15 +5128,17 @@ X86TargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op,
 
 SDValue
 X86TargetLowering::EmitTargetCodeForMemset(SelectionDAG &DAG,
-                                        SDValue Chain,
-                                        SDValue Dst, SDValue Src,
-                                        SDValue Size, unsigned Align,
-                                        const Value *DstSV, uint64_t DstSVOff) {
+                                           SDValue Chain,
+                                           SDValue Dst, SDValue Src,
+                                           SDValue Size, unsigned Align,
+                                           const Value *DstSV,
+                                           uint64_t DstSVOff,
+                                           bool NoBuiltin) {
   ConstantSDNode *ConstantSize = dyn_cast<ConstantSDNode>(Size);
 
-  /// If not DWORD aligned or size is more than the threshold, call the library.
-  /// The libc version is likely to be faster for these cases. It can use the
-  /// address value and run time information about the CPU.
+  // If not DWORD aligned or size is more than the threshold, call the library.
+  // The libc version is likely to be faster for these cases. It can use the
+  // address value and run time information about the CPU.
   if ((Align & 3) != 0 ||
       !ConstantSize ||
       ConstantSize->getZExtValue() >
@@ -5145,8 +5147,9 @@ X86TargetLowering::EmitTargetCodeForMemset(SelectionDAG &DAG,
 
     // Check to see if there is a specialized entry-point for memory zeroing.
     ConstantSDNode *V = dyn_cast<ConstantSDNode>(Src);
-    if (const char *bzeroEntry = 
-          V && V->isNullValue() ? Subtarget->getBZeroEntry() : 0) {
+
+    if (const char *bzeroEntry =  V &&
+        V->isNullValue() ? Subtarget->getBZeroEntry(NoBuiltin) : 0) {
       MVT IntPtr = getPointerTy();
       const Type *IntPtrTy = TD->getIntPtrType();
       TargetLowering::ArgListTy Args; 

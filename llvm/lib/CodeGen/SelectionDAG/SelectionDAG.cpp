@@ -29,6 +29,7 @@
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/SetVector.h"
@@ -39,6 +40,11 @@
 #include <algorithm>
 #include <cmath>
 using namespace llvm;
+
+static cl::opt<bool>
+NoBuiltin("no-builtin",
+           cl::desc("Don't recognize built-in functions that do not begin "
+                    "with `__builtin_' as prefix"));
 
 /// makeVTList - Return an instance of the SDVTList struct initialized with the
 /// specified members.
@@ -3189,7 +3195,7 @@ SDValue SelectionDAG::getMemset(SDValue Chain, SDValue Dst,
   // code. If the target chooses to do this, this is the next best.
   SDValue Result =
     TLI.EmitTargetCodeForMemset(*this, Chain, Dst, Src, Size, Align,
-                                DstSV, DstSVOff);
+                                DstSV, DstSVOff, NoBuiltin);
   if (Result.getNode())
     return Result;
 
