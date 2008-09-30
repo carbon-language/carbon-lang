@@ -613,6 +613,10 @@ TargetTriple("triple",
 static llvm::cl::opt<std::string>
 Arch("arch", llvm::cl::desc("Specify target architecture (e.g. i686)"));
 
+static llvm::cl::opt<std::string>
+MacOSVersionMin("mmacosx-version-min", 
+                llvm::cl::desc("Specify target Mac OS/X version (e.g. 10.5)"));
+
 static std::string CreateTargetTriple() {
   // Initialize base triple.  If a -triple option has been specified, use
   // that triple.  Otherwise, default to the host triple.
@@ -621,20 +625,46 @@ static std::string CreateTargetTriple() {
   
   // If -arch foo was specified, remove the architecture from the triple we have
   // so far and replace it with the specified one.
-  if (Arch.empty())
-    return Triple;
+  if (!Arch.empty()) {
+    // Decompose the base triple into "arch" and suffix.
+    std::string::size_type FirstDashIdx = Triple.find('-');
     
-  // Decompose the base triple into "arch" and suffix.
-  std::string::size_type FirstDashIdx = Triple.find("-");
+    if (FirstDashIdx == std::string::npos) {
+      fprintf(stderr, 
+              "Malformed target triple: \"%s\" ('-' could not be found).\n",
+              Triple.c_str());
+      exit(1);
+    }
   
-  if (FirstDashIdx == std::string::npos) {
-    fprintf(stderr, 
-            "Malformed target triple: \"%s\" ('-' could not be found).\n",
-            Triple.c_str());
-    exit(1);
+    Triple = Arch + std::string(Triple.begin()+FirstDashIdx, Triple.end());
+  }
+
+  // If -mmacosx-version-min=10.3.9 is specified, change the triple from being
+  // something like powerpc-apple-darwin9 to powerpc-apple-darwin7
+  if (!MacOSVersionMin.empty()) {
+    std::string::size_type DarwinDashIdx = Triple.find("-darwin");
+    if (DarwinDashIdx == std::string::npos) {
+      fprintf(stderr, 
+            "-mmacosx-version-min only valid for darwin (Mac OS/X) targets\n");
+      exit(1);
+    }
+    DarwinDashIdx += strlen("-darwin");
+    
+    // Validate that there is a number after the "-darwin" and nothing else.
+    bool IsValidDarwinNumber = Triple.size() != DarwinDashIdx;
+    for (unsigned i = 0; i != DarwinDashIdx; ++i)
+      if (Triple[DarwinDashIdx] < '0' || Triple[DarwinDashIdx] > '9')
+        IsValidDarwinNumber = false;
+    if (IsValidDarwinNumber) {
+      fprintf(stderr, "invalid darwin target triple '%s' expected number\n", 
+              Triple.c_str());
+      exit(1);
+    }
+    
+    // TODO: Turn MacOSVersionMin into darwin number: 10.3.9 -> 7.
   }
   
-  return Arch + std::string(Triple.begin()+FirstDashIdx, Triple.end());
+  return Triple;
 }
 
 //===----------------------------------------------------------------------===//
