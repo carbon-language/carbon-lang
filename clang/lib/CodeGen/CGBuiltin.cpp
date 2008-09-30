@@ -892,6 +892,13 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     Ops[0] = Builder.CreateInsertElement(Ops[0], Ops[1], Idx, "loadps");
     return Builder.CreateBitCast(Ops[0], OrigTy, "loadps");
   }
+  case X86::BI__builtin_ia32_loadlpd:
+  case X86::BI__builtin_ia32_loadhpd: {
+    Ops[1] = Builder.CreateLoad(Ops[1], "tmp");
+    unsigned Index = BuiltinID == X86::BI__builtin_ia32_loadlpd ? 0 : 1;
+    llvm::Value *Idx = llvm::ConstantInt::get(llvm::Type::Int32Ty, Index);
+    return Builder.CreateInsertElement(Ops[0], Ops[1], Idx, "loadpd");
+  }
   case X86::BI__builtin_ia32_storehps:
   case X86::BI__builtin_ia32_storelps: {
     const llvm::Type *EltTy = llvm::Type::Int64Ty;
