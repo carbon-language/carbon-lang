@@ -30,12 +30,41 @@ from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
+#===------------------------------------------------------------------------===#
+# ReporterParameter
+#===------------------------------------------------------------------------===#
+
+class ReporterParameter:
+  def __init__(self, n):
+    self.name = n
+    
+  def getName(self):
+    return self.name
+
+  def saveConfigValue(self):
+    return True
+
+class TextParameter (ReporterParameter):
+  def getValue(self,r,bugtype,getConfigOption):
+     return getConfigOption(r.getName(),self.getName())
+
+  def getHTML(self,r,bugtype,getConfigOption):
+    return """\
+<tr>
+  <td class="form_clabel">%s:</td>
+  <td class="form_value"><input type="text" name="%s_%s" value="%s"></td>
+</tr>"""%(self.getName(),r.getName(),self.getName(),self.getValue(r,bugtype,getConfigOption))
+
+#===------------------------------------------------------------------------===#
+# Reporters
+#===------------------------------------------------------------------------===#
+
 class EmailReporter:
     def getName(self):
         return 'Email'
 
-    def getParameterNames(self):
-        return ['To', 'From', 'SMTP Server', 'SMTP Port']
+    def getParameters(self):
+        return map(lambda x:TextParameter(x),['To', 'From', 'SMTP Server', 'SMTP Port'])
 
     # Lifted from python email module examples.
     def attachFile(self, outer, path):
@@ -102,8 +131,8 @@ class BugzillaReporter:
     def getName(self):
         return 'Bugzilla'
     
-    def getParameterNames(self):
-        return ['URL', 'Product']
+    def getParameters(self):
+        return map(lambda x:TextParameter(x),['URL','Product'])
 
     def fileReport(self, report, parameters):
         raise NotImplementedError
@@ -126,8 +155,8 @@ class RadarReporter:
     def getName(self):
         return 'Radar'
 
-    def getParameterNames(self):
-        return ['Component', 'Component Version']
+    def getParameters(self):
+        return map(lambda x:TextParameter(x),['Component', 'Component Version'])
 
     def fileReport(self, report, parameters):
         component = parameters.get('Component', '')

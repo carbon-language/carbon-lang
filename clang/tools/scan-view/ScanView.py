@@ -129,8 +129,8 @@ class ScanViewServer(BaseHTTPServer.HTTPServer):
         self.config.add_section('ScanView')
         for r in self.reporters:
             self.config.add_section(r.getName())
-            for p in r.getParameterNames():
-                self.config.set(r.getName(), p, '')
+            for p in r.getParameters():
+                self.config.set(r.getName(), p.getName(), '')
 
         # Ignore parse errors
         try:
@@ -304,19 +304,20 @@ class ScanViewRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
         # Get the reporter and parameters.
         reporter = self.server.reporters[reporterIndex]
         parameters = {}
-        for o in reporter.getParameterNames():
-            name = '%s_%s'%(reporter.getName(),o)
+        for o in reporter.getParameters():
+            name = '%s_%s'%(reporter.getName(),o.getName())
             if name not in self.fields:
                 return (False, 
                         'Missing field "%s" for %s report method.'%(name,
                                                                     reporter.getName()))
-            parameters[o] = self.get_scalar_field(name)
+            parameters[o.getName()] = self.get_scalar_field(name)
 
         # Update config defaults.
         if report != 'None':
             self.server.config.set('ScanView', 'reporter', reporterIndex)
-            for o in reporter.getParameterNames():
-                self.server.config.set(reporter.getName(), o, parameters[o])
+            for o in reporter.getParameters():
+                name = o.getName()
+                self.server.config.set(reporter.getName(), name, parameters[name])
 
         # Create the report.
         bug = Reporter.BugReport(title, description, files)
@@ -529,11 +530,7 @@ Line: %s
             else:
                 selectedStr = ''
             reporterSelections.append('<option value="%d"%s>%s</option>'%(i,selectedStr,r.getName()))
-            options = '\n'.join(["""\
-<tr>
-  <td class="form_clabel">%s:</td>
-  <td class="form_value"><input type="text" name="%s_%s" value="%s"></td>
-</tr>"""%(o,r.getName(),o,getConfigOption(r.getName(),o)) for o in r.getParameterNames()])
+            options = '\n'.join([ o.getHTML(r,title,getConfigOption) for o in r.getParameters()])
             display = ('none','')[selected]
             reporterOptions.append("""\
 <tr id="%sReporterOptions" style="display:%s">
