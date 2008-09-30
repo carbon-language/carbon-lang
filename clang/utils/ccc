@@ -169,7 +169,7 @@ def inferlanguage(extension):
     elif extension == "S":
         return "assembler-with-cpp"
     else:
-        return "unknown"
+        return ""
 
 def main(args):
     action = 'link'
@@ -228,9 +228,14 @@ def main(args):
             compile_opts.append(args[i+1])
             i += 1
 
+        # Options with no arguments that should pass through
+        if arg in ('-dynamiclib',):
+            link_opts.append(arg)
+
         # Options with one argument that should pass through
         if arg in ('-framework', '-multiply_defined', '-bundle_loader',
-                   '-e'):
+                   '-e', '-unexported_symbols_list', '-install_name',
+                   '-compatibility_version', '-current_version'):
             link_opts.append(arg)
             link_opts.append(args[i+1])
             i += 1
@@ -299,10 +304,13 @@ def main(args):
                 files[i] = poutput
             else:
                 poutput = output
+            args = []
+            if language:
+                args.extend(['-x', language])
             if poutput:
-                args = ['-x', language, '-o', poutput, file] + compile_opts
+                args += ['-o', poutput, file] + compile_opts
             else:
-                args = ['-x', language, file] + compile_opts
+                args += [file] + compile_opts
             preprocess(args)
             # Discard the explicit language after used once
             language = ''
@@ -319,7 +327,10 @@ def main(args):
                 coutput = changeextension(file, "o")
             else:
                 coutput = output
-            args = ['-x', language, '-o', coutput, file] + compile_opts
+            args = []
+            if language:
+                args.extend(['-x', language])
+            args += ['-o', coutput, file] + compile_opts
             checked_compile(args, native, language, save_temps)
             language = ''
 
@@ -330,7 +341,10 @@ def main(args):
             ext = extension(file)
             if ext != "o" and ext != "a" and ext != "so":
                 out = changeextension(file, "o")
-                args = ['-x', language, '-o', out, file] + compile_opts
+                args = []
+                if language:
+                    args.extend(['-x', language])
+                args = ['-o', out, file] + compile_opts
                 checked_compile(args, native, language, save_temps)
                 language = ''
                 files[i] = out
