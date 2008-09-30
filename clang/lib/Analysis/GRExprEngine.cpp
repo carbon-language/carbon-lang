@@ -1682,7 +1682,12 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, NodeTy* Pred,
       
       for (NodeSet::iterator I=Tmp.begin(), E=Tmp.end(); I!=E; ++I) {        
         const GRState* St = GetState(*I);
+        
+        // Get the value of the subexpression.
         RVal V = GetRVal(St, Ex);
+
+        // Perform promotions.
+        V = EvalCast(V, U->getType()); 
         
         if (V.isUnknownOrUndef()) {
           MakeNode(Dst, U, *I, SetRVal(St, U, V));
