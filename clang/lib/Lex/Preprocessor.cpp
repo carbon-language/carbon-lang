@@ -428,8 +428,8 @@ static void InitializePredefinedMacros(Preprocessor &PP,
   DefineBuiltinMacro(Buf, "__clang__=1");  // Clang Frontend
   
   // Compiler set macros.
+  // Claim to be GCC 4.2.1-5621
   DefineBuiltinMacro(Buf, "__APPLE_CC__=5621");
-  DefineBuiltinMacro(Buf, "__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__=1050");
   DefineBuiltinMacro(Buf, "__GNUC_MINOR__=2");
   DefineBuiltinMacro(Buf, "__GNUC_PATCHLEVEL__=1");
   DefineBuiltinMacro(Buf, "__GNUC__=4");

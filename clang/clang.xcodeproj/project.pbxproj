@@ -862,13 +862,13 @@
 				DE3985780CB8ADC800223765 /* ASTConsumers.h */,
 				DE39857A0CB8ADCB00223765 /* ASTConsumers.cpp */,
 				DE38CF150D8C9DE000A273B6 /* DiagChecker.cpp */,
+				72D16C210D9975EA00E6DA4A /* HTMLPrint.cpp */,
 				DE5932CF0AD60FF400BC794C /* PrintParserCallbacks.cpp */,
 				DE5932D00AD60FF400BC794C /* PrintPreprocessedOutput.cpp */,
-				352981080CC58344008B5E84 /* SerializationTest.cpp */,
-				72D16C210D9975EA00E6DA4A /* HTMLPrint.cpp */,
 				9030C1090E807A9300941490 /* RewriteBlocks.cpp */,
 				DEA0EBD90DD2D3C8007A02A9 /* RewriteMacros.cpp */,
 				035611E10DB40C8100D2EF2A /* RewriteObjC.cpp */,
+				352981080CC58344008B5E84 /* SerializationTest.cpp */,
 			);
 			name = Driver;
 			sourceTree = "<group>";

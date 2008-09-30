@@ -42,7 +42,8 @@ static void getSolarisDefines(std::vector<char> &Defs) {
 static void getDarwinDefines(std::vector<char> &Defs) {
   Define(Defs, "__APPLE__");
   Define(Defs, "__MACH__");
-
+  Define(Defs, "__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__=1050");
+  
   if (0)  // darwin_pascal_strings
     Define(Defs, "__PASCAL_STRINGS__");
 }
