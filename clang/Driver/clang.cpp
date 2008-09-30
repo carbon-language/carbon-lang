@@ -654,21 +654,16 @@ static void HandleMacOSVersionMin(std::string &Triple) {
     char *End = 0;
     VersionNum = (int)strtol(Start, &End, 10);
 
+    // The version number must be in the range 0-9.
+    MacOSVersionMinIsInvalid = (unsigned)VersionNum > 9;
+    
     // Turn MacOSVersionMin into a darwin number: e.g. 10.3.9 is 3 -> 7.
     Triple += llvm::itostr(VersionNum+4);
     
-    if (End[0] == '.') {   // 10.4.17 is ok.
-      // Add the period piece (.17) to the end of the triple.  This gives us
-      // something like ...-darwin8.17
+    if (End[0] == '.' && isdigit(End[1]) && End[2] == '\0') {   // 10.4.7 is ok.
+      // Add the period piece (.7) to the end of the triple.  This gives us
+      // something like ...-darwin8.7
       Triple += End;
-      
-      // Verify that the rest after the number are all digits.
-      for (++End; isdigit(*End); ++End)
-        /*skip digits*/;
-      
-      // If there were any non-digits after the number, reject it.
-      MacOSVersionMinIsInvalid = *End != '\0';
-      
     } else if (End[0] != '\0') { // "10.4" is ok.  10.4x is not.
       MacOSVersionMinIsInvalid = true;
     }

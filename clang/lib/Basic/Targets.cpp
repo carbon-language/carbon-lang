@@ -17,8 +17,6 @@
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/APFloat.h"
-#include <cstdlib>
-
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -47,16 +45,30 @@ static void getDarwinDefines(std::vector<char> &Defs, const char *Triple) {
   // Figure out which "darwin number" the target triple is.  "darwin9" -> 10.5.
   const char *Darwin = strstr(Triple, "-darwin");
   if (Darwin) {
+    char DarwinStr[] = "1000";
     Darwin += strlen("-darwin");
-    if (Darwin[0] >= '1' && Darwin[0] <= '9') {
-      unsigned DarwinNo = atoi(Darwin);
-      if (DarwinNo > 4) {
-        char DarwinStr[] = "10x0";
+    if (Darwin[0] >= '0' && Darwin[0] <= '9') {
+      unsigned DarwinNo = Darwin[0]-'0';
+      ++Darwin;
+      
+      // Handle "darwin11".
+      if (DarwinNo == 1 && Darwin[0] >= '0' && Darwin[0] <= '9') {
+        DarwinNo = 10+Darwin[0]-'0';
+        ++Darwin;
+      }
+      
+      if (DarwinNo >= 4 && DarwinNo <= 13) { // 10.0-10.9
         // darwin7 -> 1030, darwin8 -> 1040, darwin9 -> 1050, etc.
         DarwinStr[2] = '0' + DarwinNo-4;
-        Define(Defs, "__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__",DarwinStr);
       }
+      
+      // Handle minor version: 10.4.9 -> darwin8.9 -> "1049"
+      if (Darwin[0] == '.' && Darwin[1] >= '0' && Darwin[1] <= '9' &&
+          Darwin[2] == '\0')
+        DarwinStr[3] = Darwin[1];
+      
     }
+    Define(Defs, "__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__", DarwinStr);
   }
 }
 
