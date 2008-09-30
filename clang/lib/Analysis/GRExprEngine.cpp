@@ -1687,7 +1687,9 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, NodeTy* Pred,
         RVal V = GetRVal(St, Ex);
 
         // Perform promotions.
-        V = EvalCast(V, U->getType()); 
+        // FIXME: This is the right thing to do, but it currently breaks
+        //  a bunch of tests.
+        // V = EvalCast(V, U->getType()); 
         
         if (V.isUnknownOrUndef()) {
           MakeNode(Dst, U, *I, SetRVal(St, U, V));
