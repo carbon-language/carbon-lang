@@ -14,6 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "internalize"
+#include "llvm/Analysis/CallGraph.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Pass.h"
 #include "llvm/Module.h"
@@ -52,6 +53,11 @@ namespace {
     explicit InternalizePass(const std::vector <const char *>& exportList);
     void LoadFile(const char *Filename);
     virtual bool runOnModule(Module &M);
+
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.setPreservesCFG();
+      AU.addPreserved<CallGraph>();
+    }
   };
 } // end anonymous namespace
 
