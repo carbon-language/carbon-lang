@@ -39,14 +39,14 @@
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/StringExtras.h"
+#include "llvm/Config/config.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/System/Signals.h"
-#include "llvm/Config/config.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/System/Path.h"
-
+#include "llvm/System/Signals.h"
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -617,6 +617,73 @@ static llvm::cl::opt<std::string>
 MacOSVersionMin("mmacosx-version-min", 
                 llvm::cl::desc("Specify target Mac OS/X version (e.g. 10.5)"));
 
+// If -mmacosx-version-min=10.3.9 is specified, change the triple from being
+// something like powerpc-apple-darwin9 to powerpc-apple-darwin7
+static void HandleMacOSVersionMin(std::string &Triple) {
+  std::string::size_type DarwinDashIdx = Triple.find("-darwin");
+  if (DarwinDashIdx == std::string::npos) {
+    fprintf(stderr, 
+            "-mmacosx-version-min only valid for darwin (Mac OS/X) targets\n");
+    exit(1);
+  }
+  unsigned DarwinNumIdx = DarwinDashIdx + strlen("-darwin");
+  
+  // Validate that there is a number after the "-darwin" and nothing else.
+  bool IsValidDarwinNumber = Triple.size() != DarwinNumIdx;
+  for (unsigned i = DarwinNumIdx; i != Triple.size(); ++i)
+    if ((Triple[i] < '0' || Triple[i] > '9') && Triple[i] != '.')
+      IsValidDarwinNumber = false;
+  if (!IsValidDarwinNumber) {
+    fprintf(stderr, "invalid darwin target triple '%s' expected number\n", 
+            Triple.c_str());
+    exit(1);
+  }
+  
+  // Remove the number.
+  Triple.resize(DarwinNumIdx);
+
+  // Validate that MacOSVersionMin is a 'version number', starting with 10.[3-9]
+  bool MacOSVersionMinIsInvalid = false;
+  int VersionNum = 0;
+  if (MacOSVersionMin.size() < 4 ||
+      MacOSVersionMin.substr(0, 3) != "10." ||
+      !isdigit(MacOSVersionMin[3])) {
+    MacOSVersionMinIsInvalid = true;
+  } else {
+    const char *Start = MacOSVersionMin.c_str()+3;
+    char *End = 0;
+    VersionNum = (int)strtol(Start, &End, 10);
+
+    // Turn MacOSVersionMin into a darwin number: e.g. 10.3.9 is 3 -> 7.
+    Triple += llvm::itostr(VersionNum+4);
+    
+    if (End[0] == '.') {   // 10.4.17 is ok.
+      // Add the period piece (.17) to the end of the triple.  This gives us
+      // something like ...-darwin8.17
+      Triple += End;
+      
+      // Verify that the rest after the number are all digits.
+      for (++End; isdigit(*End); ++End)
+        /*skip digits*/;
+      
+      // If there were any non-digits after the number, reject it.
+      MacOSVersionMinIsInvalid = *End != '\0';
+      
+    } else if (End[0] != '\0') { // "10.4" is ok.  10.4x is not.
+      MacOSVersionMinIsInvalid = true;
+    }
+  }
+  
+  if (MacOSVersionMinIsInvalid) {
+    fprintf(stderr, 
+        "-mmacosx-version-min=%s is invalid, expected something like '10.4'.\n", 
+            MacOSVersionMin.c_str());
+    exit(1);
+  }
+}
+
+/// CreateTargetTriple - Process the various options that affect the target
+/// triple and build a final aggregate triple that we are compiling for.
 static std::string CreateTargetTriple() {
   // Initialize base triple.  If a -triple option has been specified, use
   // that triple.  Otherwise, default to the host triple.
@@ -641,28 +708,8 @@ static std::string CreateTargetTriple() {
 
   // If -mmacosx-version-min=10.3.9 is specified, change the triple from being
   // something like powerpc-apple-darwin9 to powerpc-apple-darwin7
-  if (!MacOSVersionMin.empty()) {
-    std::string::size_type DarwinDashIdx = Triple.find("-darwin");
-    if (DarwinDashIdx == std::string::npos) {
-      fprintf(stderr, 
-            "-mmacosx-version-min only valid for darwin (Mac OS/X) targets\n");
-      exit(1);
-    }
-    DarwinDashIdx += strlen("-darwin");
-    
-    // Validate that there is a number after the "-darwin" and nothing else.
-    bool IsValidDarwinNumber = Triple.size() != DarwinDashIdx;
-    for (unsigned i = 0; i != DarwinDashIdx; ++i)
-      if (Triple[DarwinDashIdx] < '0' || Triple[DarwinDashIdx] > '9')
-        IsValidDarwinNumber = false;
-    if (IsValidDarwinNumber) {
-      fprintf(stderr, "invalid darwin target triple '%s' expected number\n", 
-              Triple.c_str());
-      exit(1);
-    }
-    
-    // TODO: Turn MacOSVersionMin into darwin number: 10.3.9 -> 7.
-  }
+  if (!MacOSVersionMin.empty())
+    HandleMacOSVersionMin(Triple);
   
   return Triple;
 }
