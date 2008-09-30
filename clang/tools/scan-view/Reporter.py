@@ -37,23 +37,33 @@ from email.mime.text import MIMEText
 class ReporterParameter:
   def __init__(self, n):
     self.name = n
-    
   def getName(self):
     return self.name
-
+  def getValue(self,r,bugtype,getConfigOption):
+     return getConfigOption(r.getName(),self.getName())
   def saveConfigValue(self):
     return True
 
 class TextParameter (ReporterParameter):
-  def getValue(self,r,bugtype,getConfigOption):
-     return getConfigOption(r.getName(),self.getName())
-
   def getHTML(self,r,bugtype,getConfigOption):
     return """\
 <tr>
-  <td class="form_clabel">%s:</td>
-  <td class="form_value"><input type="text" name="%s_%s" value="%s"></td>
+<td class="form_clabel">%s:</td>
+<td class="form_value"><input type="text" name="%s_%s" value="%s"></td>
 </tr>"""%(self.getName(),r.getName(),self.getName(),self.getValue(r,bugtype,getConfigOption))
+
+class SelectionParameter (ReporterParameter):
+  def __init__(self, n, values):
+    ReporterParameter.__init__(self,n)
+    self.values = values
+    
+  def getHTML(self,r,bugtype,getConfigOption):
+    return """\
+<tr>
+<td class="form_clabel">%s:</td><td class="form_value"><select name="%s_%s">
+%s
+</select></td>"""%(self.getName(),r.getName(),self.getName(),'\n'.join(["""\
+<option value="%s">%s</option>"""%(o[0],o[1]) for o in self.values]))
 
 #===------------------------------------------------------------------------===#
 # Reporters
@@ -156,11 +166,16 @@ class RadarReporter:
         return 'Radar'
 
     def getParameters(self):
-        return map(lambda x:TextParameter(x),['Component', 'Component Version'])
+        return [ TextParameter('Component'), TextParameter('Component Version'),
+                 SelectionParameter('Classification',
+                  [ ['1', 'Security'], ['2', 'Crash/Hang/Data Loss'],
+                    ['3', 'Performance'], ['4', 'UI/Usability'],
+                    ['6', 'Serious Bug'], ['7', 'Other'] ]) ]
 
     def fileReport(self, report, parameters):
         component = parameters.get('Component', '')
         componentVersion = parameters.get('Component Version', '')
+        classification = parameters.get('Classification', '')
         personID = ""
         diagnosis = ""
         config = ""
@@ -171,13 +186,12 @@ class RadarReporter:
             componentVersion = 'X'
 
         script = os.path.join(os.path.dirname(__file__),'Resources/FileRadar.scpt')
-        args = ['osascript', script, component, componentVersion, personID, report.title,
+        args = ['osascript', script, component, componentVersion, classification, personID, report.title,
                 report.description, diagnosis, config] + map(os.path.abspath, report.files)
 #        print >>sys.stderr, args
-	try:
-       	    p = subprocess.Popen(args, 
-                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-       	except:
+        try:
+          p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        except:
             raise ReportFailure("Unable to file radar (AppleScript failure).")
         data, err = p.communicate()
         res = p.wait()
