@@ -130,6 +130,7 @@ class ScanViewServer(BaseHTTPServer.HTTPServer):
         for r in self.reporters:
             self.config.add_section(r.getName())
             for p in r.getParameters():
+              if p.saveConfigValue():
                 self.config.set(r.getName(), p.getName(), '')
 
         # Ignore parse errors
@@ -316,6 +317,7 @@ class ScanViewRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
         if report != 'None':
             self.server.config.set('ScanView', 'reporter', reporterIndex)
             for o in reporter.getParameters():
+              if o.saveConfigValue():
                 name = o.getName()
                 self.server.config.set(reporter.getName(), name, parameters[name])
 
