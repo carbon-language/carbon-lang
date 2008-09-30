@@ -3023,7 +3023,7 @@ Instruction *InstCombiner::visitSRem(BinaryOperator &I) {
       I.setOperand(1, RHSNeg);
       return &I;
     }
- 
+
   // If the sign bits of both operands are zero (i.e. we can prove they are
   // unsigned inputs), turn this into a urem.
   if (I.getType()->isInteger()) {
@@ -4205,7 +4205,8 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
           // Ensure that the larger constant is on the RHS.
           ICmpInst *LHS = cast<ICmpInst>(Op0);
           bool NeedsSwap;
-          if (ICmpInst::isSignedPredicate(LHSCC))
+          if (ICmpInst::isEquality(LHSCC) ? ICmpInst::isSignedPredicate(RHSCC)
+                                          : ICmpInst::isSignedPredicate(LHSCC))
             NeedsSwap = LHSCst->getValue().sgt(RHSCst->getValue());
           else
             NeedsSwap = LHSCst->getValue().ugt(RHSCst->getValue());
