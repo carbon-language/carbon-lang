@@ -1254,14 +1254,14 @@ Sema::DeclTy *Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
            PropertyId->getName());
       return 0;
     }
-    // Check that type of property and its ivar match. 
-    if (Context.getCanonicalType(Ivar->getType()) !=
-        Context.getCanonicalType(property->getType())) {
+    // Check that type of property and its ivar are type compatible.
+    // A property is allowed to be a sub-class of the instance variable type.
+    if (CheckAssignmentConstraints(property->getType(), 
+                                   Ivar->getType()) != Compatible) {
       Diag(PropertyLoc, diag::error_property_ivar_type, property->getName(),
            Ivar->getName());
       return 0;
     }
-      
   } else if (PropertyIvar) {
     // @dynamic
     Diag(PropertyLoc, diag::error_dynamic_property_ivar_decl);
