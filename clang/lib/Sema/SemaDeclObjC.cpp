@@ -776,6 +776,21 @@ void Sema::AddInstanceMethodToGlobalPool(ObjCMethodDecl *Method) {
   }
 }
 
+ObjCMethodDecl *Sema::LookupInstanceMethodInGlobalPool(Selector Sel, 
+                                                       SourceRange R) {
+  ObjCMethodList &MethList = InstanceMethodPool[Sel];
+  
+  if (MethList.Method && MethList.Next) {
+    Diag(R.getBegin(), diag::warn_multiple_method_decl, Sel.getName(), R);
+    Diag(MethList.Method->getLocStart(), diag::warn_using_decl, 
+         MethList.Method->getSourceRange());
+    for (ObjCMethodList *Next = MethList.Next; Next; Next = Next->Next)
+      Diag(Next->Method->getLocStart(), diag::warn_also_found_decl, 
+           Next->Method->getSourceRange());
+  }
+  return MethList.Method;
+}
+
 void Sema::AddFactoryMethodToGlobalPool(ObjCMethodDecl *Method) {
   ObjCMethodList &FirstMethod = FactoryMethodPool[Method->getSelector()];
   if (!FirstMethod.Method) {

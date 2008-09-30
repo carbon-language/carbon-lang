@@ -467,6 +467,12 @@ DIAG(warn_undef_method_impl, WARNING,
      "method definition for '%0' not found")
 DIAG(warn_incomplete_impl, WARNING,
      "incomplete implementation")
+DIAG(warn_multiple_method_decl, WARNING,
+     "multiple methods named '%0' found")
+DIAG(warn_using_decl, WARNING,
+     "using")
+DIAG(warn_also_found_decl, WARNING,
+     "also found")
 DIAG(error_duplicate_method_decl, ERROR,
      "duplicate declaration of method '%0'")
 DIAG(err_previous_declaration, ERROR,

@@ -283,7 +283,8 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
   // Handle messages to id.
   if (ReceiverCType == Context.getCanonicalType(Context.getObjCIdType()) ||
       ReceiverCType->getAsBlockPointerType()) {
-    ObjCMethodDecl *Method = InstanceMethodPool[Sel].Method;
+    ObjCMethodDecl *Method = LookupInstanceMethodInGlobalPool(
+                               Sel, SourceRange(lbrac,rbrac));
     if (!Method)
       Method = FactoryMethodPool[Sel].Method;
     if (CheckMessageArgumentTypes(ArgExprs, NumArgs, Sel, Method, "-", 
@@ -306,7 +307,8 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
     if (!Method)
       Method = FactoryMethodPool[Sel].Method;
     if (!Method)
-      Method = InstanceMethodPool[Sel].Method;
+      Method = LookupInstanceMethodInGlobalPool(
+                               Sel, SourceRange(lbrac,rbrac));
     if (CheckMessageArgumentTypes(ArgExprs, NumArgs, Sel, Method, "-", 
                                   lbrac, rbrac, returnType))
       return true;
@@ -335,9 +337,9 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
     // We allow sending a message to a pointer to an interface (an object).
     
     ClassDecl = OCIReceiver->getDecl();
-    // FIXME: consider using InstanceMethodPool, since it will be faster
-    // than the following method (which can do *many* linear searches). The
-    // idea is to add class info to InstanceMethodPool.
+    // FIXME: consider using LookupInstanceMethodInGlobalPool, since it will be
+    // faster than the following method (which can do *many* linear searches). 
+    // The idea is to add class info to InstanceMethodPool.
     Method = ClassDecl->lookupInstanceMethod(Sel);
     
     if (!Method) {
@@ -369,7 +371,8 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
         // behavior isn't very desirable, however we need it for GCC
         // compatibility.
         if (!Method)
-          Method = InstanceMethodPool[Sel].Method;
+          Method = LookupInstanceMethodInGlobalPool(
+                               Sel, SourceRange(lbrac,rbrac));
   }
   if (CheckMessageArgumentTypes(ArgExprs, NumArgs, Sel, Method, "-", 
                                 lbrac, rbrac, returnType))

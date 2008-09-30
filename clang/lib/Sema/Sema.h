@@ -379,6 +379,10 @@ private:
   /// messages sent to "id" (where the class of the object is unknown).
   void AddInstanceMethodToGlobalPool(ObjCMethodDecl *Method);
   
+  /// LookupInstanceMethodInGlobalPool - Returns the method and warns if
+  /// there are multiple signatures.
+  ObjCMethodDecl *LookupInstanceMethodInGlobalPool(Selector Sel, SourceRange R);
+  
   /// AddFactoryMethodToGlobalPool - Same as above, but for factory methods.
   void AddFactoryMethodToGlobalPool(ObjCMethodDecl *Method);
   //===--------------------------------------------------------------------===//
