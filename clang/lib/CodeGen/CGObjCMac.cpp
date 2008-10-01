@@ -2208,47 +2208,40 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
   std::vector<const llvm::Type*> Params;
   Params.push_back(ObjectPtrTy);
   Params.push_back(SelectorPtrTy);
-  MessageSendFn = llvm::Function::Create(llvm::FunctionType::get(ObjectPtrTy,
-                                                                 Params,
-                                                                 true),
-                                         llvm::Function::ExternalLinkage,
-                                         "objc_msgSend",
-                                         &CGM.getModule());
+  MessageSendFn = 
+    CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
+                                                      Params,
+                                                      true),
+                              "objc_msgSend");
   
   Params.clear();
   Params.push_back(Int8PtrTy);
   Params.push_back(ObjectPtrTy);
   Params.push_back(SelectorPtrTy);
   MessageSendStretFn = 
-    llvm::Function::Create(llvm::FunctionType::get(llvm::Type::VoidTy,
-                                                   Params,
-                                                   true),
-                             llvm::Function::ExternalLinkage,
-                             "objc_msgSend_stret",
-                             &CGM.getModule());
+    CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::VoidTy,
+                                                      Params,
+                                                      true),
+                              "objc_msgSend_stret");
   
   Params.clear();
   Params.push_back(SuperPtrTy);
   Params.push_back(SelectorPtrTy);
   MessageSendSuperFn = 
-    llvm::Function::Create(llvm::FunctionType::get(ObjectPtrTy,
-                                                   Params,
-                                                   true),
-                           llvm::Function::ExternalLinkage,
-                           "objc_msgSendSuper",
-                           &CGM.getModule());
+    CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
+                                                      Params,
+                                                      true),
+                              "objc_msgSendSuper");
 
   Params.clear();
   Params.push_back(Int8PtrTy);
   Params.push_back(SuperPtrTy);
   Params.push_back(SelectorPtrTy);
   MessageSendSuperStretFn = 
-    llvm::Function::Create(llvm::FunctionType::get(llvm::Type::VoidTy,
-                                                   Params,
-                                                   true),
-                           llvm::Function::ExternalLinkage,
-                           "objc_msgSendSuper_stret",
-                           &CGM.getModule());
+    CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::VoidTy,
+                                                      Params,
+                                                      true),
+                              "objc_msgSendSuper_stret");
   
   // Property manipulation functions.
 
@@ -2258,13 +2251,11 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
   Params.push_back(LongTy);
   Params.push_back(Types.ConvertTypeForMem(Ctx.BoolTy));
   GetPropertyFn =
-    llvm::Function::Create(llvm::FunctionType::get(ObjectPtrTy,
-                                                   Params,
-                                                   false),
-                           llvm::Function::ExternalLinkage,
-                           "objc_getProperty",
-                           &CGM.getModule());
-
+    CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
+                                                      Params,
+                                                      false),
+                              "objc_getProperty");
+  
   Params.clear();
   Params.push_back(ObjectPtrTy);
   Params.push_back(SelectorPtrTy);
@@ -2273,24 +2264,20 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
   Params.push_back(Types.ConvertTypeForMem(Ctx.BoolTy));
   Params.push_back(Types.ConvertTypeForMem(Ctx.BoolTy));
   SetPropertyFn =
-    llvm::Function::Create(llvm::FunctionType::get(llvm::Type::VoidTy,
-                                                   Params,
-                                                   false),
-                           llvm::Function::ExternalLinkage,
-                           "objc_setProperty",
-                           &CGM.getModule());
+    CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::VoidTy,
+                                                      Params,
+                                                      false),
+                              "objc_setProperty");
 
   // Enumeration mutation.
 
   Params.clear();
   Params.push_back(ObjectPtrTy);
   EnumerationMutationFn = 
-    llvm::Function::Create(llvm::FunctionType::get(llvm::Type::VoidTy,
-                                                   Params,
-                                                   false),
-                           llvm::Function::ExternalLinkage,
-                           "objc_enumerationMutation",
-                           &CGM.getModule());
+    CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::VoidTy,
+                                                      Params,
+                                                      false),
+                              "objc_enumerationMutation");
   
   // FIXME: This is the size of the setjmp buffer and should be 
   // target specific. 18 is what's used on 32-bit X86.
@@ -2310,58 +2297,45 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
   Params.clear();
   Params.push_back(ObjectPtrTy);
   ExceptionThrowFn =
-   llvm::Function::Create(llvm::FunctionType::get(llvm::Type::VoidTy,
-                                                   Params,
-                                                   false),
-                           llvm::Function::ExternalLinkage,
-                           "objc_exception_throw",
-                           &CGM.getModule());
+    CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::VoidTy,
+                                                      Params,
+                                                      false),
+                              "objc_exception_throw");
   
   Params.clear();
   Params.push_back(llvm::PointerType::getUnqual(ExceptionDataTy));
   ExceptionTryEnterFn = 
-   llvm::Function::Create(llvm::FunctionType::get(llvm::Type::VoidTy,
-                                                   Params,
-                                                   false),
-                           llvm::Function::ExternalLinkage,
-                           "objc_exception_try_enter",
-                           &CGM.getModule());
+    CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::VoidTy,
+                                                      Params,
+                                                      false),
+                              "objc_exception_try_enter");
   ExceptionTryExitFn = 
-    llvm::Function::Create(llvm::FunctionType::get(llvm::Type::VoidTy,
-                                                   Params,
-                                                   false),
-                           llvm::Function::ExternalLinkage,
-                           "objc_exception_try_exit",
-                           &CGM.getModule());
+    CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::VoidTy,
+                                                      Params,
+                                                      false),
+                              "objc_exception_try_exit");
   ExceptionExtractFn =
-    llvm::Function::Create(llvm::FunctionType::get(ObjectPtrTy,
-                                                   Params,
-                                                   false),
-                           llvm::Function::ExternalLinkage,
-                           "objc_exception_extract",
-                           &CGM.getModule());
+    CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
+                                                      Params,
+                                                      false),
+                              "objc_exception_extract");
   
   Params.clear();
   Params.push_back(ClassPtrTy);
   Params.push_back(ObjectPtrTy);
   ExceptionMatchFn = 
-    llvm::Function::Create(llvm::FunctionType::get(llvm::Type::Int32Ty,
-                                                   Params,
-                                                   false),
-                           llvm::Function::ExternalLinkage,
-                           "objc_exception_match",
-                           &CGM.getModule());
+    CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::Int32Ty,
+                                                      Params,
+                                                      false),
+                              "objc_exception_match");
 
   Params.clear();
   Params.push_back(llvm::PointerType::getUnqual(llvm::Type::Int32Ty));
   SetJmpFn =
-    llvm::Function::Create(llvm::FunctionType::get(llvm::Type::Int32Ty,
-                                                   Params,
-                                                   false),
-                           llvm::Function::ExternalLinkage,
-                           "_setjmp",
-                           &CGM.getModule());                          
-
+    CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::Int32Ty,
+                                                      Params,
+                                                      false),
+                              "_setjmp");
 }
 
 ObjCTypesHelper::~ObjCTypesHelper() {
