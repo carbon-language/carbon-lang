@@ -3,7 +3,8 @@
 ; RUN: llvm-as < %s | llc -march=x86    -mattr=sse41 | grep pmovsxbd
 ; RUN: llvm-as < %s | llc -march=x86    -mattr=sse41 | grep pmovsxwd
 ; RUN: llvm-as < %s | llc -march=x86    -mattr=sse41 | grep pmovsxbq
-; RUN: llvm-as < %s | llc -march=x86-64 -mattr=sse41 | grep movq | count 1
+; RUN: llvm-as < %s | llc -march=x86-64 -mattr=sse41 -mtriple=x86_64-apple-darwin | grep movq | count 1
+; RUN: llvm-as < %s | llc -march=x86-64 -mattr=sse41 -mtriple=x86_64-unknown-linux-gnu | not grep movq
 
 define <2 x i64> @t1(i32* %p) nounwind {
 entry:
