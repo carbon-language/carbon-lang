@@ -60,10 +60,11 @@ const Attributes ReturnOnly = NoReturn | NoUnwind | ReadNone | ReadOnly;
 const Attributes VarArgsIncompatible = StructRet;
 
 /// @brief Attributes that are mutually incompatible.
-const Attributes MutuallyIncompatible[3] = {
+const Attributes MutuallyIncompatible[4] = {
   ByVal | InReg | Nest  | StructRet,
   ZExt  | SExt,
-  ReadNone | ReadOnly
+  ReadNone | ReadOnly,
+  NoInline | AlwaysInline
 };
 
 /// @brief Which attributes cannot be applied to a type.
