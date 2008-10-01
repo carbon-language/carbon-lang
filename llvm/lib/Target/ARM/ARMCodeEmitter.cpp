@@ -390,7 +390,7 @@ unsigned ARMCodeEmitter::getAddrMode1InstrBinary(const MachineInstr &MI,
     ++OpIdx;
   }
 
-  // Encode first non-shifter register operand if ther is one.
+  // Encode first non-shifter register operand if there is one.
   unsigned Format = TID.TSFlags & ARMII::FormMask;
   bool isUnary = (Format == ARMII::DPRdMisc  ||
                   Format == ARMII::DPRdIm    ||
