@@ -250,7 +250,7 @@ RVal RVal::GetSymbolValue(SymbolManager& SymMgr, VarDecl* D) {
 
   QualType T = D->getType();
   
-  if (T->isPointerLikeType() || T->isObjCQualifiedIdType())
+  if (LVal::IsLValType(T))
     return lval::SymbolVal(SymMgr.getSymbol(D));
   
   return nonlval::SymbolVal(SymMgr.getSymbol(D));
