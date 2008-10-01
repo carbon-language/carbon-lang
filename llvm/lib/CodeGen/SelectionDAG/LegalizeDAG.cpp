@@ -163,7 +163,7 @@ private:
 
   /// ExpandOp - Expand the specified SDValue into its two component pieces
   /// Lo&Hi.  Note that the Op MUST be an expanded type.  As a result of this,
-  /// the LegalizeNodes map is filled in for any results that are not expanded,
+  /// the LegalizedNodes map is filled in for any results that are not expanded,
   /// the ExpandedNodes map is filled in for any results that are expanded, and
   /// the Lo/Hi values are returned.   This applies to integer types and Vector
   /// types.
@@ -5836,7 +5836,7 @@ SDValue SelectionDAGLegalize::ExpandBitCount(unsigned Opc, SDValue Op) {
 
 /// ExpandOp - Expand the specified SDValue into its two component pieces
 /// Lo&Hi.  Note that the Op MUST be an expanded type.  As a result of this, the
-/// LegalizeNodes map is filled in for any results that are not expanded, the
+/// LegalizedNodes map is filled in for any results that are not expanded, the
 /// ExpandedNodes map is filled in for any results that are expanded, and the
 /// Lo/Hi values are returned.
 void SelectionDAGLegalize::ExpandOp(SDValue Op, SDValue &Lo, SDValue &Hi){
