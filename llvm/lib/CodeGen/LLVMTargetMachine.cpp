@@ -53,10 +53,15 @@ DisablePostRAScheduler("disable-post-RA-scheduler",
                        cl::desc("Disable scheduling after register allocation"),
                        cl::init(true));
 
-static cl::opt<bool, true>
-FastISelOption("fast-isel", cl::Hidden,
-               cl::desc("Enable the experimental \"fast\" instruction selector"),
-               cl::location(EnableFastISel));
+// Enable or disable FastISel. Both options are needed, because
+// FastISel is enabled by default with -fast, and we wish to be
+// able to enable or disable fast-isel independently from -fast.
+static cl::opt<bool>
+EnableFastISelOption("fast-isel", cl::Hidden,
+  cl::desc("Enable the experimental \"fast\" instruction selector"));
+static cl::opt<bool>
+DisableFastISelOption("disable-fast-isel", cl::Hidden,
+  cl::desc("Disable the experimental \"fast\" instruction selector"));
 
 FileModel::Model
 LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
@@ -168,6 +173,13 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM, bool Fast) {
                                  &cerr));
 
   // Standard Lower-Level Passes.
+
+  // Enable FastISel with -fast, but allow that to be overridden.
+  assert((!EnableFastISelOption || !DisableFastISelOption) &&
+         "Both -fast-isel and -disable-fast-isel given!");
+  if (EnableFastISelOption ||
+      (Fast && !DisableFastISelOption))
+    EnableFastISel = true;
 
   // Ask the target for an isel.
   if (addInstSelector(PM, Fast))
