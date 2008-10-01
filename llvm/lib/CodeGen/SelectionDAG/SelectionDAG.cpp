@@ -2320,6 +2320,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, MVT VT,
     // Fold trivial token factors.
     if (N1.getOpcode() == ISD::EntryToken) return N2;
     if (N2.getOpcode() == ISD::EntryToken) return N1;
+    if (N1 == N2) return N1;
     break;
   case ISD::CONCAT_VECTORS:
     // A CONCAT_VECTOR with all operands BUILD_VECTOR can be simplified to
