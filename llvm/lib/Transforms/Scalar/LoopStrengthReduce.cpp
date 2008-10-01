@@ -1803,15 +1803,15 @@ ICmpInst *LoopStrengthReduce::OptimizeSMax(Loop *L, ICmpInst *Cond,
                  Cond->getOperand(0), NewRHS, "scmp", Cond);
 
   // Delete the max calculation instructions.
+  SE->deleteValueFromRecords(Cond);
   Cond->replaceAllUsesWith(NewCond);
   Cond->eraseFromParent();
-  SE->deleteValueFromRecords(Cond);
   Instruction *Cmp = cast<Instruction>(Sel->getOperand(0));
-  Sel->eraseFromParent();
   SE->deleteValueFromRecords(Sel);
+  Sel->eraseFromParent();
   if (Cmp->use_empty()) {
-    Cmp->eraseFromParent();
     SE->deleteValueFromRecords(Cmp);
+    Cmp->eraseFromParent();
   }
   CondUse->User = NewCond;
   return NewCond;
