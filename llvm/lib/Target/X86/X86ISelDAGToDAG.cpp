@@ -137,7 +137,7 @@ namespace {
         ContainsFPCode(false), TM(tm),
         X86Lowering(*TM.getTargetLowering()),
         Subtarget(&TM.getSubtarget<X86Subtarget>()),
-        OptForSize(OptimizeForSize) {}
+        OptForSize(false) {}
 
     virtual const char *getPassName() const {
       return "X86 DAG->DAG Instruction Selection";

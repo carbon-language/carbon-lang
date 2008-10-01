@@ -58,6 +58,10 @@ bool LoopAligner::runOnMachineFunction(MachineFunction &MF) {
   if (!Align)
     return false;  // Don't care about loop alignment.
 
+  const Function *F = MF.getFunction();
+  if (!F->isDeclaration() && F->hasFnAttr(Attribute::OptimizeForSize))
+    return false;
+
   for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I) {
     MachineBasicBlock *MBB = I;
     if (MLI->isLoopHeader(MBB))

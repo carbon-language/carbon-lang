@@ -776,7 +776,7 @@ bool PPCDarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   printVisibility(CurrentFnName, F->getVisibility());
 
-  EmitAlignment(OptimizeForSize ? 2 : 4, F);
+  EmitAlignment(F->hasFnAttr(Attribute::OptimizeForSize) ? 2 : 4, F);
   O << CurrentFnName << ":\n";
 
   // Emit pre-function debug information.

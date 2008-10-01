@@ -81,7 +81,7 @@ LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
   if (addPreEmitPass(PM, Fast) && PrintMachineCode)
     PM.add(createMachineFunctionPrinterPass(cerr));
 
-  if (!Fast && !OptimizeForSize)
+  if (!Fast)
     PM.add(createLoopAlignerPass());
 
   switch (FileType) {

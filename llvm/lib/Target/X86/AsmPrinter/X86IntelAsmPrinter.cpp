@@ -140,7 +140,7 @@ bool X86IntelAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   SwitchToTextSection("_text", F);
 
-  unsigned FnAlign = OptimizeForSize ? 1 : 4;
+  unsigned FnAlign = 4;
   if (!F->isDeclaration() && F->hasFnAttr(Attribute::OptimizeForSize))
     FnAlign = 1;
   switch (F->getLinkage()) {

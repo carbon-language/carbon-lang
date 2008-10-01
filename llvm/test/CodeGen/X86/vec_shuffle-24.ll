@@ -1,7 +1,6 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2                | not grep punpck
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2                |     grep pshufd
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2  |     grep punpck
 
-define i32 @t() nounwind {
+define i32 @t() nounwind optsize {
 entry:
 	%a = alloca <4 x i32>		; <<4 x i32>*> [#uses=2]
 	%b = alloca <4 x i32>		; <<4 x i32>*> [#uses=5]

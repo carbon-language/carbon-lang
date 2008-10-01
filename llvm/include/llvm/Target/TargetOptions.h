@@ -83,10 +83,6 @@ namespace llvm {
   /// optimization (pop the caller's stack) providing it supports it.
   extern bool PerformTailCallOpt;
 
-  /// OptimizeForSize - When this flag is set, the code generator avoids 
-  /// optimizations that increase size.
-  extern bool OptimizeForSize;
-
   /// StackAlignment - Override default stack alignment for target.
   extern unsigned StackAlignment;
 
