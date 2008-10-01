@@ -1834,6 +1834,14 @@ void Value::dump() const { print(errs()); errs() << '\n'; errs().flush(); }
 // Type::dump - allow easy printing of Types from the debugger.
 void Type::dump() const { print(errs()); errs() << '\n'; errs().flush(); }
 
+// Type::dump - allow easy printing of Types from the debugger.
+// This one uses type names from the given context module
+void Type::dump(const Module *Context) const {
+  WriteTypeSymbolic(errs(), this, Context);
+  errs() << '\n';
+  errs().flush();
+}
+
 // Module::dump() - Allow printing of Modules from the debugger.
 void Module::dump() const { print(errs(), 0); errs().flush(); }
 

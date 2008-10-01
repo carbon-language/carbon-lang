@@ -26,6 +26,7 @@ class PointerType;
 class IntegerType;
 class TypeMapBase;
 class raw_ostream;
+class Module;
 
 /// This file contains the declaration of the Type class.  For more "Type" type
 /// stuff, look in DerivedTypes.h.
@@ -161,6 +162,10 @@ public:
 
   /// @brief Debugging support: print to stderr
   void dump() const;
+
+  /// @brief Debugging support: print to stderr (use type names from context
+  /// module).
+  void dump(const Module *Context) const;
 
   //===--------------------------------------------------------------------===//
   // Property accessors for dealing with types... Some of these virtual methods
