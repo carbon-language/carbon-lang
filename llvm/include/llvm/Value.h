@@ -228,10 +228,19 @@ public:
 
   /// stripPointerCasts - This method strips off any unneeded pointer
   /// casts from the specified value, returning the original uncasted value.
-  /// Note that the returned value is guaranteed to have pointer type.
+  /// Note that the returned value has pointer type if the specified value does.
   Value *stripPointerCasts();
   const Value *stripPointerCasts() const {
     return const_cast<Value*>(this)->stripPointerCasts();
+  }
+
+  /// getUnderlyingObject - This method strips off any GEP address adjustments
+  /// and pointer casts from the specified value, returning the original object
+  /// being addressed.  Note that the returned value has pointer type if the
+  /// specified value does.
+  Value *getUnderlyingObject();
+  const Value *getUnderlyingObject() const {
+    return const_cast<Value*>(this)->getUnderlyingObject();
   }
 };
 

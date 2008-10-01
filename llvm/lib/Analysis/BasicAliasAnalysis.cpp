@@ -76,30 +76,6 @@ static bool AddressMightEscape(const Value *V) {
   return false;
 }
 
-/// getUnderlyingObject - This traverses the use chain to figure out what object
-/// the specified value points to.  If the value points to, or is derived from,
-/// a unique object or an argument, return it.  This returns:
-///    Arguments, GlobalVariables, Functions, Allocas, Mallocs.
-static const Value *getUnderlyingObject(const Value *V) {
-  if (!isa<PointerType>(V->getType())) return V;
-
-  // If we are at some type of object, return it. GlobalValues and Allocations
-  // have unique addresses. 
-  if (isa<GlobalValue>(V) || isa<AllocationInst>(V) || isa<Argument>(V))
-    return V;
-
-  // Traverse through different addressing mechanisms...
-  if (const Instruction *I = dyn_cast<Instruction>(V)) {
-    if (isa<BitCastInst>(I) || isa<GetElementPtrInst>(I))
-      return getUnderlyingObject(I->getOperand(0));
-  } else if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
-    if (CE->getOpcode() == Instruction::BitCast || 
-        CE->getOpcode() == Instruction::GetElementPtr)
-      return getUnderlyingObject(CE->getOperand(0));
-  }
-  return V;
-}
-
 static const User *isGEP(const Value *V) {
   if (isa<GetElementPtrInst>(V) ||
       (isa<ConstantExpr>(V) &&
@@ -314,7 +290,7 @@ ImmutablePass *llvm::createBasicAliasAnalysisPass() {
 /// global) or not.
 bool BasicAliasAnalysis::pointsToConstantMemory(const Value *P) {
   if (const GlobalVariable *GV = 
-        dyn_cast<GlobalVariable>(getUnderlyingObject(P)))
+        dyn_cast<GlobalVariable>(P->getUnderlyingObject()))
     return GV->isConstant();
   return false;
 }
@@ -327,7 +303,7 @@ bool BasicAliasAnalysis::pointsToConstantMemory(const Value *P) {
 AliasAnalysis::ModRefResult
 BasicAliasAnalysis::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
   if (!isa<Constant>(P)) {
-    const Value *Object = getUnderlyingObject(P);
+    const Value *Object = P->getUnderlyingObject();
     
     // If this is a tail call and P points to a stack location, we know that
     // the tail call cannot access or modify the local stack.
@@ -390,8 +366,8 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
     return alias(V1, V1Size, I->getOperand(0), V2Size);
 
   // Figure out what objects these things are pointing to if we can...
-  const Value *O1 = getUnderlyingObject(V1);
-  const Value *O2 = getUnderlyingObject(V2);
+  const Value *O1 = V1->getUnderlyingObject();
+  const Value *O2 = V2->getUnderlyingObject();
 
   if (O1 != O2) {
     // If V1/V2 point to two different objects we know that we have no alias.

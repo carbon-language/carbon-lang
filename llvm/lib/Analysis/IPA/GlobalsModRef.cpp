@@ -157,29 +157,6 @@ static RegisterAnalysisGroup<AliasAnalysis> Y(X);
 
 Pass *llvm::createGlobalsModRefPass() { return new GlobalsModRef(); }
 
-/// getUnderlyingObject - This traverses the use chain to figure out what object
-/// the specified value points to.  If the value points to, or is derived from,
-/// a global object, return it.
-static Value *getUnderlyingObject(Value *V) {
-  if (!isa<PointerType>(V->getType())) return V;
-
-  // If we are at some type of object... return it.
-  if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) return GV;
-
-  // Traverse through different addressing mechanisms.
-  if (Instruction *I = dyn_cast<Instruction>(V)) {
-    if (isa<BitCastInst>(I) || isa<GetElementPtrInst>(I))
-      return getUnderlyingObject(I->getOperand(0));
-  } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
-    if (CE->getOpcode() == Instruction::BitCast ||
-        CE->getOpcode() == Instruction::GetElementPtr)
-      return getUnderlyingObject(CE->getOperand(0));
-  }
-
-  // Otherwise, we don't know what this is, return it as the base pointer.
-  return V;
-}
-
 /// AnalyzeGlobals - Scan through the users of all of the internal
 /// GlobalValue's in the program.  If none of them have their "address taken"
 /// (really, their address passed to something nontrivial), record this fact,
@@ -304,7 +281,7 @@ bool GlobalsModRef::AnalyzeIndirectGlobalMemory(GlobalValue *GV) {
         continue;
 
       // Check the value being stored.
-      Value *Ptr = getUnderlyingObject(SI->getOperand(0));
+      Value *Ptr = SI->getOperand(0)->getUnderlyingObject();
 
       if (isa<MallocInst>(Ptr)) {
         // Okay, easy case.
@@ -468,8 +445,8 @@ AliasAnalysis::AliasResult
 GlobalsModRef::alias(const Value *V1, unsigned V1Size,
                      const Value *V2, unsigned V2Size) {
   // Get the base object these pointers point to.
-  Value *UV1 = getUnderlyingObject(const_cast<Value*>(V1));
-  Value *UV2 = getUnderlyingObject(const_cast<Value*>(V2));
+  Value *UV1 = const_cast<Value*>(V1->getUnderlyingObject());
+  Value *UV2 = const_cast<Value*>(V2->getUnderlyingObject());
 
   // If either of the underlying values is a global, they may be non-addr-taken
   // globals, which we can answer queries about.
@@ -526,7 +503,7 @@ GlobalsModRef::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
 
   // If we are asking for mod/ref info of a direct call with a pointer to a
   // global we are tracking, return information if we have it.
-  if (GlobalValue *GV = dyn_cast<GlobalValue>(getUnderlyingObject(P)))
+  if (GlobalValue *GV = dyn_cast<GlobalValue>(P->getUnderlyingObject()))
     if (GV->hasInternalLinkage())
       if (Function *F = CS.getCalledFunction())
         if (NonAddressTakenGlobals.count(GV))

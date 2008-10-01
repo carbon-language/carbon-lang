@@ -992,16 +992,7 @@ bool GVN::processLoad(LoadInst *L, DenseMap<Value*, LoadInst*> &lastLoad,
       isa<AllocationInst>(dep)) {
     // Check that this load is actually from the
     // allocation we found
-    Value* v = L->getOperand(0);
-    while (true) {
-      if (BitCastInst *BC = dyn_cast<BitCastInst>(v))
-        v = BC->getOperand(0);
-      else if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(v))
-        v = GEP->getOperand(0);
-      else
-        break;
-    }
-    if (v == dep) {
+    if (L->getOperand(0)->getUnderlyingObject() == dep) {
       // If this load depends directly on an allocation, there isn't
       // anything stored there; therefore, we can optimize this load
       // to undef.

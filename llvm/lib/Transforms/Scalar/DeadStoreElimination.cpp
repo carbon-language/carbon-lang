@@ -59,28 +59,7 @@ namespace {
                               SetVector<Instruction*>& possiblyDead);
     void DeleteDeadInstructionChains(Instruction *I,
                                      SetVector<Instruction*> &DeadInsts);
-    
-    /// Find the base pointer that a pointer came from
-    /// Because this is used to find pointers that originate
-    /// from allocas, it is safe to ignore GEP indices, since
-    /// either the store will be in the alloca, and thus dead,
-    /// or beyond the end of the alloca, and thus undefined.
-    void TranslatePointerBitCasts(Value*& v, bool zeroGepsOnly = false) {
-      assert(isa<PointerType>(v->getType()) &&
-             "Translating a non-pointer type?");
-      while (true) {
-        if (BitCastInst* C = dyn_cast<BitCastInst>(v))
-          v = C->getOperand(0);
-        else if (GetElementPtrInst* G = dyn_cast<GetElementPtrInst>(v))
-          if (!zeroGepsOnly || G->hasAllZeroIndices()) {
-            v = G->getOperand(0);
-          } else {
-            break;
-          }
-        else
-          break;
-      }
-    }
+
 
     // getAnalysisUsage - We require post dominance frontiers (aka Control
     // Dependence Graph)
@@ -119,20 +98,20 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
     // If we find a store or a free...
     if (!isa<StoreInst>(BBI) && !isa<FreeInst>(BBI))
       continue;
-      
+
     Value* pointer = 0;
     if (StoreInst* S = dyn_cast<StoreInst>(BBI)) {
-      if (!S->isVolatile())
-        pointer = S->getPointerOperand();
-      else
+      if (S->isVolatile())
         continue;
-    } else
+      pointer = S->getPointerOperand();
+    } else {
       pointer = cast<FreeInst>(BBI)->getPointerOperand();
-      
-    TranslatePointerBitCasts(pointer, true);
+    }
+
+    pointer = pointer->stripPointerCasts();
     StoreInst*& last = lastStore[pointer];
     bool deletedStore = false;
-      
+
     // ... to a pointer that has been stored to before...
     if (last) {
       Instruction* dep = MD.getDependency(BBI);
@@ -302,10 +281,9 @@ bool DSE::handleEndBlock(BasicBlock& BB,
     // If we find a store whose pointer is dead...
     if (StoreInst* S = dyn_cast<StoreInst>(BBI)) {
       if (!S->isVolatile()) {
-        Value* pointerOperand = S->getPointerOperand();
         // See through pointer-to-pointer bitcasts
-        TranslatePointerBitCasts(pointerOperand);
-      
+        Value* pointerOperand = S->getPointerOperand()->getUnderlyingObject();
+
         // Alloca'd pointers or byval arguments (which are functionally like
         // alloca's) are valid candidates for removal.
         if (deadPointers.count(pointerOperand)) {
@@ -330,9 +308,8 @@ bool DSE::handleEndBlock(BasicBlock& BB,
     
     // We can also remove memcpy's to local variables at the end of a function
     } else if (MemCpyInst* M = dyn_cast<MemCpyInst>(BBI)) {
-      Value* dest = M->getDest();
-      TranslatePointerBitCasts(dest);
-      
+      Value* dest = M->getDest()->getUnderlyingObject();
+
       if (deadPointers.count(dest)) {
         MD.removeInstruction(M);
         
@@ -480,9 +457,9 @@ bool DSE::handleEndBlock(BasicBlock& BB,
     
     if (!killPointer)
       continue;
-    
-    TranslatePointerBitCasts(killPointer);
-    
+
+    killPointer = killPointer->getUnderlyingObject();
+
     // Deal with undead pointers
     MadeChange |= RemoveUndeadPointers(killPointer, killPointerSize, BBI,
                                        deadPointers, possiblyDead);
