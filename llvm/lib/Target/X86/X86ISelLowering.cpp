@@ -5132,8 +5132,7 @@ X86TargetLowering::EmitTargetCodeForMemset(SelectionDAG &DAG,
                                            SDValue Dst, SDValue Src,
                                            SDValue Size, unsigned Align,
                                            const Value *DstSV,
-                                           uint64_t DstSVOff,
-                                           bool NoBuiltin) {
+                                           uint64_t DstSVOff) {
   ConstantSDNode *ConstantSize = dyn_cast<ConstantSDNode>(Size);
 
   // If not DWORD aligned or size is more than the threshold, call the library.
@@ -5148,24 +5147,22 @@ X86TargetLowering::EmitTargetCodeForMemset(SelectionDAG &DAG,
     // Check to see if there is a specialized entry-point for memory zeroing.
     ConstantSDNode *V = dyn_cast<ConstantSDNode>(Src);
 
-    if (!NoBuiltin) {
-      if (const char *bzeroEntry =  V &&
-          V->isNullValue() ? Subtarget->getBZeroEntry() : 0) {
-        MVT IntPtr = getPointerTy();
-        const Type *IntPtrTy = TD->getIntPtrType();
-        TargetLowering::ArgListTy Args; 
-        TargetLowering::ArgListEntry Entry;
-        Entry.Node = Dst;
-        Entry.Ty = IntPtrTy;
-        Args.push_back(Entry);
-        Entry.Node = Size;
-        Args.push_back(Entry);
-        std::pair<SDValue,SDValue> CallResult =
-          LowerCallTo(Chain, Type::VoidTy, false, false, false, false, 
-                      CallingConv::C, false, 
-                      DAG.getExternalSymbol(bzeroEntry, IntPtr), Args, DAG);
-        return CallResult.second;
-      }
+    if (const char *bzeroEntry =  V &&
+        V->isNullValue() ? Subtarget->getBZeroEntry() : 0) {
+      MVT IntPtr = getPointerTy();
+      const Type *IntPtrTy = TD->getIntPtrType();
+      TargetLowering::ArgListTy Args; 
+      TargetLowering::ArgListEntry Entry;
+      Entry.Node = Dst;
+      Entry.Ty = IntPtrTy;
+      Args.push_back(Entry);
+      Entry.Node = Size;
+      Args.push_back(Entry);
+      std::pair<SDValue,SDValue> CallResult =
+        LowerCallTo(Chain, Type::VoidTy, false, false, false, false, 
+                    CallingConv::C, false, 
+                    DAG.getExternalSymbol(bzeroEntry, IntPtr), Args, DAG);
+      return CallResult.second;
     }
 
     // Otherwise have the target-independent code call memset.

@@ -578,8 +578,7 @@ namespace llvm {
                                     SDValue Chain,
                                     SDValue Dst, SDValue Src,
                                     SDValue Size, unsigned Align,
-                                    const Value *DstSV, uint64_t DstSVOff,
-                                    bool NoBuiltin);
+                                    const Value *DstSV, uint64_t DstSVOff);
     SDValue EmitTargetCodeForMemcpy(SelectionDAG &DAG,
                                     SDValue Chain,
                                     SDValue Dst, SDValue Src,
