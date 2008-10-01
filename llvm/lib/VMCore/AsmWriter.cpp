@@ -385,7 +385,7 @@ int SlotTracker::getGlobalSlot(const GlobalValue *V) {
   
   // Find the type plane in the module map
   ValueMap::iterator MI = mMap.find(V);
-  return MI == mMap.end() ? -1 : MI->second;
+  return MI == mMap.end() ? -1 : (int)MI->second;
 }
 
 
@@ -397,7 +397,7 @@ int SlotTracker::getLocalSlot(const Value *V) {
   initialize();
   
   ValueMap::iterator FI = fMap.find(V);
-  return FI == fMap.end() ? -1 : FI->second;
+  return FI == fMap.end() ? -1 : (int)FI->second;
 }
 
 

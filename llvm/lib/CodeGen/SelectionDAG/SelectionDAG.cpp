@@ -2927,7 +2927,7 @@ static SDValue getMemcpyLoadsAndStores(SelectionDAG &DAG,
   // Expand memcpy to a series of load and store ops if the size operand falls
   // below a certain threshold.
   std::vector<MVT> MemOps;
-  uint64_t Limit = -1;
+  uint64_t Limit = uint64_t(-1);
   if (!AlwaysInline)
     Limit = TLI.getMaxStoresPerMemcpy();
   unsigned DstAlign = Align;  // Destination alignment can change.
@@ -2985,7 +2985,7 @@ static SDValue getMemmoveLoadsAndStores(SelectionDAG &DAG,
   // Expand memmove to a series of load and store ops if the size operand falls
   // below a certain threshold.
   std::vector<MVT> MemOps;
-  uint64_t Limit = -1;
+  uint64_t Limit = uint64_t(-1);
   if (!AlwaysInline)
     Limit = TLI.getMaxStoresPerMemmove();
   unsigned DstAlign = Align;  // Destination alignment can change.
