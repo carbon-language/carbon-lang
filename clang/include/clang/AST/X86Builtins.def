@@ -416,6 +416,13 @@ BUILTIN(__builtin_ia32_movqv4si, "V4iV4i", "")
 BUILTIN(__builtin_ia32_loadlv4si, "V4iV2i*", "")
 BUILTIN(__builtin_ia32_storelv4si, "vV2i*V2LLi", "")
 
+BUILTIN(__builtin_ia32_pblendvb128, "V16cV16cV16cV16c", "")
+BUILTIN(__builtin_ia32_pblendw128, "V8sV8sV8si", "")
+BUILTIN(__builtin_ia32_blendpd, "V2dV2dV2di", "")
+BUILTIN(__builtin_ia32_blendps, "V4fV4fV4fi", "")
+BUILTIN(__builtin_ia32_blendvpd, "V2dV2dV2dV2d", "")
+BUILTIN(__builtin_ia32_blendvps, "V4fV4fV4fV4f", "")
+
 BUILTIN(__builtin_ia32_packusdw128, "V8sV4iV4i", "")
 BUILTIN(__builtin_ia32_pmaxsb128, "V16cV16cV16c", "")
 BUILTIN(__builtin_ia32_pmaxsd128, "V4iV4iV4i", "")
