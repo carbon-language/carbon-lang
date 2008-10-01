@@ -23,9 +23,18 @@ def checkenv(name, alternate=None):
         return v.strip()
     return alternate
 
-CCC_ECHO = checkenv('CCC_ECHO','1')
-CCC_NATIVE = checkenv('CCC_NATIVE')
-CCC_FALLBACK = checkenv('CCC_FALLBACK')
+def checkbool(name, default=False):
+    v = os.getenv(name)
+    if v:
+        try:
+            return bool(int(v))
+        except:
+            pass
+    return default
+
+CCC_ECHO = checkbool('CCC_ECHO')
+CCC_NATIVE = checkbool('CCC_NATIVE','1')
+CCC_FALLBACK = checkbool('CCC_FALLBACK')
 CCC_LANGUAGES = checkenv('CCC_LANGUAGES','c,c++,c-cpp-output,objective-c,objective-c++,objective-c-cpp-output')
 if CCC_LANGUAGES:
     CCC_LANGUAGES = set([s.strip() for s in CCC_LANGUAGES.split(',')])
@@ -238,7 +247,8 @@ def main(args):
             i += 1
 
         # Options with no arguments that should pass through
-        if arg in ('-dynamiclib', '-bundle', '-headerpad_max_install_names'):
+        if (arg in ('-dynamiclib', '-bundle', '-headerpad_max_install_names') or
+            arg.startswith('-Wl,')):
             link_opts.append(arg)
 
         # Options with one argument that should pass through
