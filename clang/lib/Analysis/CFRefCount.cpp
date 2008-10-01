@@ -1515,7 +1515,9 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
 
         // Set the value of the variable to be a conjured symbol.
         unsigned Count = Builder.getCurrentBlockCount();
-        SymbolID NewSym = Eng.getSymbolManager().getConjuredSymbol(*I, Count);
+        SymbolID NewSym =
+          Eng.getSymbolManager().getConjuredSymbol(*I, DV->getDecl()->getType(),
+                                                   Count);
 
         state = state.SetRVal(*DV,
                               LVal::IsLValType(DV->getDecl()->getType())

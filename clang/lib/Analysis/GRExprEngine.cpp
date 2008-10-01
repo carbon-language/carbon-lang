@@ -1702,10 +1702,12 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, NodeTy* Pred,
             break;
             
           case UnaryOperator::Not:
+            // FIXME: Do we need to handle promotions?
             St = SetRVal(St, U, EvalComplement(cast<NonLVal>(V)));
             break;            
             
           case UnaryOperator::Minus:
+            // FIXME: Do we need to handle promotions?
             St = SetRVal(St, U, EvalMinus(U, cast<NonLVal>(V)));
             break;   
             

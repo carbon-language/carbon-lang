@@ -73,10 +73,10 @@ SymbolID SymbolManager::getContentsOfSymbol(SymbolID sym) {
   return SymbolCounter++;
 }
   
-SymbolID SymbolManager::getConjuredSymbol(Expr* E, unsigned Count) {
+SymbolID SymbolManager::getConjuredSymbol(Expr* E, QualType T, unsigned Count) {
   
   llvm::FoldingSetNodeID profile;
-  SymbolConjured::Profile(profile, E, Count);
+  SymbolConjured::Profile(profile, E, T, Count);
   void* InsertPos;
   
   SymbolData* SD = DataSet.FindNodeOrInsertPos(profile, InsertPos);
@@ -85,7 +85,7 @@ SymbolID SymbolManager::getConjuredSymbol(Expr* E, unsigned Count) {
     return SD->getSymbol();
   
   SD = (SymbolData*) BPAlloc.Allocate<SymbolConjured>();
-  new (SD) SymbolConjured(SymbolCounter, E, Count);
+  new (SD) SymbolConjured(SymbolCounter, E, T, Count);
   
   DataSet.InsertNode(SD, InsertPos);  
   DataMap[SymbolCounter] = SD;
@@ -118,7 +118,7 @@ QualType SymbolData::getType(const SymbolManager& SymMgr) const {
     }
       
     case ConjuredKind:
-      return cast<SymbolConjured>(this)->getExpr()->getType();
+      return cast<SymbolConjured>(this)->getType();
   }
 }
 
