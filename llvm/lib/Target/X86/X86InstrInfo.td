@@ -334,7 +334,7 @@ let neverHasSideEffects = 1 in
   def NOOP : I<0x90, RawFrm, (outs), (ins), "nop", []>;
 
 // PIC base
-let neverHasSideEffects = 1, isNotDuplicable = 1 in
+let neverHasSideEffects = 1, isNotDuplicable = 1, Uses = [ESP] in
   def MOVPC32r : Ii32<0xE8, Pseudo, (outs GR32:$reg), (ins piclabel:$label),
                       "call\t$label\n\tpop{l}\t$reg", []>;
 
@@ -414,7 +414,8 @@ let isCall = 1 in
   // All calls clobber the non-callee saved registers...
   let Defs = [EAX, ECX, EDX, FP0, FP1, FP2, FP3, FP4, FP5, FP6, ST0,
               MM0, MM1, MM2, MM3, MM4, MM5, MM6, MM7,
-              XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7, EFLAGS] in {
+              XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7, EFLAGS],
+      Uses = [ESP] in {
     def CALLpcrel32 : Ii32<0xE8, RawFrm, (outs), (ins i32imm:$dst,variable_ops),
                            "call\t${dst:call}", []>;
     def CALL32r     : I<0xFF, MRM2r, (outs), (ins GR32:$dst, variable_ops),
