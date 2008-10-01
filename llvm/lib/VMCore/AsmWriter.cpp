@@ -1809,7 +1809,7 @@ void Value::print(raw_ostream &OS, AssemblyAnnotationWriter *AAW) const {
     AssemblyWriter W(OS, SlotTable, GV->getParent(), 0);
     W.write(GV);
   } else if (const Constant *C = dyn_cast<Constant>(this)) {
-    OS << ' ' << C->getType()->getDescription() << ' ';
+    OS << C->getType()->getDescription() << ' ';
     std::map<const Type *, std::string> TypeTable;
     WriteConstantInt(OS, C, TypeTable, 0);
   } else if (const Argument *A = dyn_cast<Argument>(this)) {
