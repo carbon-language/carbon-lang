@@ -960,7 +960,8 @@ bool X86FastISel::X86SelectCall(Instruction *I) {
   unsigned NumBytes = CCInfo.getNextStackOffset();
 
   // Issue CALLSEQ_START
-  BuildMI(MBB, TII.get(X86::ADJCALLSTACKDOWN)).addImm(NumBytes);
+  unsigned AdjStackDown = TM.getRegisterInfo()->getCallFrameSetupOpcode();
+  BuildMI(MBB, TII.get(AdjStackDown)).addImm(NumBytes);
 
   // Process argumenet: walk the register/memloc assignments, inserting
   // copies / loads.
@@ -1051,7 +1052,8 @@ bool X86FastISel::X86SelectCall(Instruction *I) {
   }
 
   // Issue CALLSEQ_END
-  BuildMI(MBB, TII.get(X86::ADJCALLSTACKUP)).addImm(NumBytes).addImm(0);
+  unsigned AdjStackUp = TM.getRegisterInfo()->getCallFrameDestroyOpcode();
+  BuildMI(MBB, TII.get(AdjStackUp)).addImm(NumBytes).addImm(0);
 
   // Now handle call return value (if any).
   if (RetVT.getSimpleVT() != MVT::isVoid) {

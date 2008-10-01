@@ -42,7 +42,12 @@ using namespace llvm;
 
 X86RegisterInfo::X86RegisterInfo(X86TargetMachine &tm,
                                  const TargetInstrInfo &tii)
-  : X86GenRegisterInfo(X86::ADJCALLSTACKDOWN, X86::ADJCALLSTACKUP),
+  : X86GenRegisterInfo(tm.getSubtarget<X86Subtarget>().is64Bit() ?
+                         X86::ADJCALLSTACKDOWN64 :
+                         X86::ADJCALLSTACKDOWN32,
+                       tm.getSubtarget<X86Subtarget>().is64Bit() ?
+                         X86::ADJCALLSTACKUP64 :
+                         X86::ADJCALLSTACKUP32),
     TM(tm), TII(tii) {
   // Cache some information.
   const X86Subtarget *Subtarget = &TM.getSubtarget<X86Subtarget>();
@@ -367,11 +372,11 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
       Amount = (Amount+StackAlign-1)/StackAlign*StackAlign;
 
       MachineInstr *New = 0;
-      if (Old->getOpcode() == X86::ADJCALLSTACKDOWN) {
+      if (Old->getOpcode() == getCallFrameSetupOpcode()) {
         New = BuildMI(MF, TII.get(Is64Bit ? X86::SUB64ri32 : X86::SUB32ri),
                       StackPtr).addReg(StackPtr).addImm(Amount);
       } else {
-        assert(Old->getOpcode() == X86::ADJCALLSTACKUP);
+        assert(Old->getOpcode() == getCallFrameDestroyOpcode());
         // factor out the amount the callee already popped.
         uint64_t CalleeAmt = Old->getOperand(1).getImm();
         Amount -= CalleeAmt;
@@ -387,7 +392,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
       // Replace the pseudo instruction with a new instruction...
       if (New) MBB.insert(I, New);
     }
-  } else if (I->getOpcode() == X86::ADJCALLSTACKUP) {
+  } else if (I->getOpcode() == getCallFrameDestroyOpcode()) {
     // If we are performing frame pointer elimination and if the callee pops
     // something off the stack pointer, add it back.  We do this until we have
     // more advanced stack pointer tracking ability.

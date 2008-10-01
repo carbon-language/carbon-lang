@@ -321,12 +321,14 @@ def and_su : PatFrag<(ops node:$lhs, node:$rhs), (and node:$lhs, node:$rhs), [{
 // Pessimistically assume ADJCALLSTACKDOWN / ADJCALLSTACKUP will become
 // sub / add which can clobber EFLAGS.
 let Defs = [ESP, EFLAGS], Uses = [ESP] in {
-def ADJCALLSTACKDOWN : I<0, Pseudo, (outs), (ins i32imm:$amt),
-                         "#ADJCALLSTACKDOWN",
-                         [(X86callseq_start imm:$amt)]>;
-def ADJCALLSTACKUP   : I<0, Pseudo, (outs), (ins i32imm:$amt1, i32imm:$amt2),
-                         "#ADJCALLSTACKUP",
-                         [(X86callseq_end imm:$amt1, imm:$amt2)]>;
+def ADJCALLSTACKDOWN32 : I<0, Pseudo, (outs), (ins i32imm:$amt),
+                           "#ADJCALLSTACKDOWN",
+                           [(X86callseq_start imm:$amt)]>,
+                          Requires<[In32BitMode]>;
+def ADJCALLSTACKUP32   : I<0, Pseudo, (outs), (ins i32imm:$amt1, i32imm:$amt2),
+                           "#ADJCALLSTACKUP",
+                           [(X86callseq_end imm:$amt1, imm:$amt2)]>,
+                          Requires<[In32BitMode]>;
 }
 
 // Nop
@@ -411,7 +413,10 @@ def JNO : IBr<0x81, (ins brtarget:$dst), "jno\t$dst",
 //  Call Instructions...
 //
 let isCall = 1 in
-  // All calls clobber the non-callee saved registers...
+  // All calls clobber the non-callee saved registers. ESP is marked as
+  // a use to prevent stack-pointer assignments that appear immediately
+  // before calls from potentially appearing dead. Uses for argument
+  // registers are added manually.
   let Defs = [EAX, ECX, EDX, FP0, FP1, FP2, FP3, FP4, FP5, FP6, ST0,
               MM0, MM1, MM2, MM3, MM4, MM5, MM6, MM7,
               XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7, EFLAGS],
