@@ -32,20 +32,32 @@ class VISIBILITY_HIDDEN NSErrorCheck : public BugTypeCacheLocation {
   void EmitGRWarnings(GRBugReporter& BR);
   
   void CheckSignature(ObjCMethodDecl& MD, QualType& ResultTy,
-                      llvm::SmallVectorImpl<VarDecl*>& Params,
-                      IdentifierInfo* NSErrorII);
+                      llvm::SmallVectorImpl<VarDecl*>& NSErrorParams,
+                      llvm::SmallVectorImpl<VarDecl*>& CFErrorParams,
+                      IdentifierInfo* NSErrorII,
+                      IdentifierInfo* CFErrorII);
+  
+  void CheckSignature(FunctionDecl& MD, QualType& ResultTy,
+                      llvm::SmallVectorImpl<VarDecl*>& NSErrorParams,
+                      llvm::SmallVectorImpl<VarDecl*>& CFErrorParams,
+                      IdentifierInfo* NSErrorII,
+                      IdentifierInfo* CFErrorII);
 
-  bool CheckArgument(QualType ArgTy, IdentifierInfo* NSErrorII);
+  bool CheckNSErrorArgument(QualType ArgTy, IdentifierInfo* NSErrorII);
+  bool CheckCFErrorArgument(QualType ArgTy, IdentifierInfo* CFErrorII);
   
   void CheckParamDeref(VarDecl* V, GRStateRef state, GRExprEngine& Eng,
-                       GRBugReporter& BR); 
+                       GRBugReporter& BR, bool isNErrorWarning); 
+  
+  void EmitRetTyWarning(BugReporter& BR, Decl& CodeDecl, bool isNSErrorWarning);
   
   const char* desc;
+  const char* name;
 public:
   NSErrorCheck() : desc(0) {}
   
   void EmitWarnings(BugReporter& BR) { EmitGRWarnings(cast<GRBugReporter>(BR));}
-  const char* getName() const { return "NSError** null dereference"; }
+  const char* getName() const { return name; }
   const char* getDescription() const { return desc; }
   const char* getCategory() const { return "Coding Conventions (Apple)"; }
 };  
@@ -63,52 +75,118 @@ void NSErrorCheck::EmitGRWarnings(GRBugReporter& BR) {
   
   // Get the declaration of the method/function that was analyzed.
   Decl& CodeDecl = G.getCodeDecl();
-  
-  ObjCMethodDecl* MD = dyn_cast<ObjCMethodDecl>(&CodeDecl);
-  if (!MD)
-    return;
-  
+    
   // Get the ASTContext, which is useful for querying type information.
   ASTContext &Ctx = BR.getContext();
 
   QualType ResultTy;
-  llvm::SmallVector<VarDecl*, 5> Params;  
-  CheckSignature(*MD, ResultTy, Params, &Ctx.Idents.get("NSError"));
-  
-  if (Params.empty())
+  llvm::SmallVector<VarDecl*, 5> NSErrorParams;
+  llvm::SmallVector<VarDecl*, 5> CFErrorParams;
+
+  if (ObjCMethodDecl* MD = dyn_cast<ObjCMethodDecl>(&CodeDecl))
+    CheckSignature(*MD, ResultTy, NSErrorParams, CFErrorParams,
+                   &Ctx.Idents.get("NSError"), &Ctx.Idents.get("CFErrorRef"));
+  else if (FunctionDecl* FD = dyn_cast<FunctionDecl>(&CodeDecl))
+    CheckSignature(*FD, ResultTy, NSErrorParams, CFErrorParams,
+                   &Ctx.Idents.get("NSError"), &Ctx.Idents.get("CFErrorRef"));
+  else
     return;
   
-  if (ResultTy == Ctx.VoidTy) {
-    BR.EmitBasicReport("Bad return type when passing NSError**",
-              getCategory(),
-              "Method accepting NSError** argument should have "
-              "non-void return value to indicate that an error occurred.",
-              CodeDecl.getLocation());
-    
+  if (NSErrorParams.empty() && CFErrorParams.empty())
+    return;
+  
+  if (ResultTy == Ctx.VoidTy) {    
+    if (!NSErrorParams.empty())
+      EmitRetTyWarning(BR, CodeDecl, true);
+    if (!CFErrorParams.empty())
+      EmitRetTyWarning(BR, CodeDecl, false);
   }
   
-  // Scan the NSError** parameters for an implicit null dereference.
-  for (llvm::SmallVectorImpl<VarDecl*>::iterator I=Params.begin(),
-        E=Params.end(); I!=E; ++I)    
-    for (GRExprEngine::GraphTy::roots_iterator RI=G.roots_begin(),
-         RE=G.roots_end(); RI!=RE; ++RI)
+  for (GRExprEngine::GraphTy::roots_iterator RI=G.roots_begin(),
+       RE=G.roots_end(); RI!=RE; ++RI) {
+
+    // Scan the NSError** parameters for an implicit null dereference.
+    for (llvm::SmallVectorImpl<VarDecl*>::iterator I=NSErrorParams.begin(),
+          E=NSErrorParams.end(); I!=E; ++I)    
+        CheckParamDeref(*I, GRStateRef((*RI)->getState(), Eng.getStateManager()),
+                        Eng, BR, true);
+
+    // Scan the CFErrorRef* parameters for an implicit null dereference.
+    for (llvm::SmallVectorImpl<VarDecl*>::iterator I=CFErrorParams.begin(),
+         E=CFErrorParams.end(); I!=E; ++I)    
       CheckParamDeref(*I, GRStateRef((*RI)->getState(), Eng.getStateManager()),
-                      Eng, BR);
+                      Eng, BR, false);
+  }
 }
 
-void NSErrorCheck::CheckSignature(ObjCMethodDecl& M, QualType& ResultTy,
-                                  llvm::SmallVectorImpl<VarDecl*>& Params,
-                                  IdentifierInfo* NSErrorII) {
+void NSErrorCheck::EmitRetTyWarning(BugReporter& BR, Decl& CodeDecl,
+                                    bool isNSErrorWarning) {
+
+  std::string msg;
+  llvm::raw_string_ostream os(msg);
+  
+  if (isa<ObjCMethodDecl>(CodeDecl))
+    os << "Method";
+  else
+    os << "Function";      
+  
+  os << " accepting ";
+  os << (isNSErrorWarning ? "NSError**" : "CFErrorRef*");
+  os << " should have a non-void return value to indicate whether or not an "
+        "error occured.";
+  
+  BR.EmitBasicReport(isNSErrorWarning
+                     ? "Bad return type when passing NSError**"
+                     : "Bad return type when passing CFError*",
+                     getCategory(), os.str().c_str(), CodeDecl.getLocation());
+}
+
+void
+NSErrorCheck::CheckSignature(ObjCMethodDecl& M, QualType& ResultTy,
+                             llvm::SmallVectorImpl<VarDecl*>& NSErrorParams,
+                             llvm::SmallVectorImpl<VarDecl*>& CFErrorParams,
+                             IdentifierInfo* NSErrorII,
+                             IdentifierInfo* CFErrorII) {
 
   ResultTy = M.getResultType();
   
   for (ObjCMethodDecl::param_iterator I=M.param_begin(), 
-       E=M.param_end(); I!=E; ++I) 
-    if (CheckArgument((*I)->getType(), NSErrorII))
-      Params.push_back(*I);
+       E=M.param_end(); I!=E; ++I)  {
+
+    QualType T = (*I)->getType();    
+
+    if (CheckNSErrorArgument(T, NSErrorII))
+      NSErrorParams.push_back(*I);
+    else if (CheckCFErrorArgument(T, CFErrorII))
+      CFErrorParams.push_back(*I);
+  }
 }
 
-bool NSErrorCheck::CheckArgument(QualType ArgTy, IdentifierInfo* NSErrorII) {
+void
+NSErrorCheck::CheckSignature(FunctionDecl& F, QualType& ResultTy,
+                             llvm::SmallVectorImpl<VarDecl*>& NSErrorParams,
+                             llvm::SmallVectorImpl<VarDecl*>& CFErrorParams,
+                             IdentifierInfo* NSErrorII,
+                             IdentifierInfo* CFErrorII) {
+  
+  ResultTy = F.getResultType();
+  
+  for (FunctionDecl::param_iterator I=F.param_begin(), 
+       E=F.param_end(); I!=E; ++I)  {
+    
+    QualType T = (*I)->getType();    
+
+    if (CheckNSErrorArgument(T, NSErrorII))
+      NSErrorParams.push_back(*I);
+    else if (CheckCFErrorArgument(T, CFErrorII))
+      CFErrorParams.push_back(*I);
+  }
+}
+
+
+bool NSErrorCheck::CheckNSErrorArgument(QualType ArgTy,
+                                        IdentifierInfo* NSErrorII) {
+  
   const PointerType* PPT = ArgTy->getAsPointerType();
   if (!PPT) return false;
   
@@ -122,8 +200,21 @@ bool NSErrorCheck::CheckArgument(QualType ArgTy, IdentifierInfo* NSErrorII) {
   return IT->getDecl()->getIdentifier() == NSErrorII;
 }
 
+bool NSErrorCheck::CheckCFErrorArgument(QualType ArgTy,
+                                        IdentifierInfo* CFErrorII) {
+  
+  const PointerType* PPT = ArgTy->getAsPointerType();
+  if (!PPT) return false;
+  
+  const TypedefType* TT = PPT->getPointeeType()->getAsTypedefType();
+  if (!TT) return false;
+
+  return TT->getDecl()->getIdentifier() == CFErrorII;
+}
+
 void NSErrorCheck::CheckParamDeref(VarDecl* Param, GRStateRef rootState,
-                                   GRExprEngine& Eng, GRBugReporter& BR) {
+                                   GRExprEngine& Eng, GRBugReporter& BR,
+                                   bool isNSErrorWarning) {
   
   RVal ParamRVal = rootState.GetRVal(lval::DeclVal(Param));
 
@@ -143,15 +234,23 @@ void NSErrorCheck::CheckParamDeref(VarDecl* Param, GRStateRef rootState,
 
     // Emit an error.
     BugReport R(*this, *I);
+    
+    name = isNSErrorWarning ? "NSError** null dereference" 
+                            : "CFErrorRef* null dereference";
 
     std::string msg;
     llvm::raw_string_ostream os(msg);
-    os << "Potential null dereference.  According to coding standards in "
-          "'Creating and Returning NSError Objects' the parameter '"
-        << Param->getName() << "' may be null.";    
+      os << "Potential null dereference.  According to coding standards ";
+    
+    if (isNSErrorWarning)
+      os << "in 'Creating and Returning NSError Objects' the parameter '";
+    else
+      os << "documented in CoreFoundation/CFError.h the parameter '";
+    
+    os << Param->getName() << "' may be null.";
     desc = os.str().c_str();
 
     BR.addNotableSymbol(SV->getSymbol());
-    BR.EmitWarning(R);    
+    BR.EmitWarning(R);
   }
 }
