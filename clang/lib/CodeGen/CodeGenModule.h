@@ -73,6 +73,12 @@ class CodeGenModule {
   llvm::Function *MemMoveFn;
   llvm::Function *MemSetFn;
 
+  /// RuntimeFunctions - List of runtime functions whose names must be
+  /// protected from introducing conflicts. These functions should be
+  /// created unnamed, we will name them and patch up conflicts when
+  /// we release the module.
+  std::vector< std::pair<llvm::Function*, std::string> > RuntimeFunctions;
+
   /// GlobalDeclMap - Mapping of decl names global variables we have
   /// already emitted. Note that the entries in this map are the
   /// actual globals and therefore may not be of the same type as the
@@ -195,6 +201,11 @@ public:
 
   void AddAnnotation(llvm::Constant *C) { Annotations.push_back(C); }
 
+  /// CreateRuntimeFunction - Create a new runtime function whose name
+  /// must be protected from collisions.
+  llvm::Function *CreateRuntimeFunction(const llvm::FunctionType *Ty, 
+                                        const std::string &Name);
+
   void UpdateCompletedType(const TagDecl *D);
   llvm::Constant *EmitConstantExpr(const Expr *E, CodeGenFunction *CGF = 0);
   llvm::Constant *EmitAnnotateAttr(llvm::GlobalValue *GV,
@@ -263,6 +274,8 @@ private:
   void EmitAliases(void);
   void EmitAnnotations(void);
   void EmitStatics(void);
+
+  void BindRuntimeFunctions();
 };
 }  // end namespace CodeGen
 }  // end namespace clang

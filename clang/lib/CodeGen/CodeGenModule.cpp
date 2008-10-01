@@ -63,10 +63,43 @@ void CodeGenModule::Release() {
   EmitCtorList(GlobalCtors, "llvm.global_ctors");
   EmitCtorList(GlobalDtors, "llvm.global_dtors");
   EmitAnnotations();
+  BindRuntimeFunctions();
   // Run the verifier to check that the generated code is consistent.
   if (verifyModule(TheModule, llvm::PrintMessageAction)) {
     TheModule.dump();
     assert(0 && "Module failed verification!");
+  }
+}
+
+void CodeGenModule::BindRuntimeFunctions() {
+  // Deal with protecting runtime function names.
+  for (unsigned i = 0, e = RuntimeFunctions.size(); i < e; ++i) {
+    llvm::Function *Fn = RuntimeFunctions[i].first;
+    const std::string &Name = RuntimeFunctions[i].second;
+    
+    // See if there is a conflict against a function.
+    llvm::Function *Conflict = TheModule.getFunction(Name);
+    if (Conflict) {
+      // Decide which version to take. If the conflict is a definition
+      // we are forced to take that, otherwise assume the runtime
+      // knows best.
+      if (!Conflict->isDeclaration()) {
+        llvm::Value *Casted = 
+          llvm::ConstantExpr::getBitCast(Conflict, Fn->getType());
+        Fn->replaceAllUsesWith(Casted);
+        Fn->eraseFromParent();
+      } else {
+        Fn->takeName(Conflict);
+        llvm::Value *Casted = 
+          llvm::ConstantExpr::getBitCast(Fn, Conflict->getType());
+        Conflict->replaceAllUsesWith(Casted);
+        Conflict->eraseFromParent();
+      }
+    } else {
+      // FIXME: There still may be conflicts with aliases and
+      // variables. 
+      Fn->setName(Name);
+    }
   }
 }
 
@@ -653,6 +686,16 @@ void CodeGenModule::EmitGlobalFunctionDefinition(const FunctionDecl *D) {
   } else if (const DestructorAttr *DA = D->getAttr<DestructorAttr>()) {
     AddGlobalDtor(Fn, DA->getPriority());
   }
+}
+
+llvm::Function *
+CodeGenModule::CreateRuntimeFunction(const llvm::FunctionType *FTy,
+                                     const std::string &Name) {
+  llvm::Function *Fn = llvm::Function::Create(FTy, 
+                                              llvm::Function::ExternalLinkage,
+                                              "", &TheModule);
+  RuntimeFunctions.push_back(std::make_pair(Fn, Name));
+  return Fn;
 }
 
 void CodeGenModule::UpdateCompletedType(const TagDecl *TD) {
