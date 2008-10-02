@@ -242,6 +242,14 @@ dnl Check for build platform executable suffix if we're crosscompiling
 if test "$cross_compiling" = yes; then
   AC_SUBST(LLVM_CROSS_COMPILING, [1])
   AC_BUILD_EXEEXT
+  ac_build_prefix=${build_alias}-
+  AC_CHECK_PROG(BUILD_CXX, ${ac_build_prefix}g++, ${ac_build_prefix}g++)
+  if test -z "$BUILD_CXX"; then
+     AC_CHECK_PROG(BUILD_CXX, g++, g++)
+     if test -z "$BUILD_CXX"; then
+       AC_CHECK_PROG(BUILD_CXX, c++, c++, , , /usr/ucb/c++)
+     fi
+  fi
 else
   AC_SUBST(LLVM_CROSS_COMPILING, [0])
 fi

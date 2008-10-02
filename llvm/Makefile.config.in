@@ -102,6 +102,11 @@ LLVM_CROSS_COMPILING=@LLVM_CROSS_COMPILING@
 # tablegen call if we're cross-compiling).
 BUILD_EXEEXT=@BUILD_EXEEXT@
 
+# Compilers for the build platflorm (mainly for tablegen
+# call if we're cross-compiling).
+BUILD_CC=@BUILD_CC@
+BUILD_CXX=@BUILD_CXX@
+
 # Target triple (cpu-vendor-os) for which we should generate code
 TARGET_TRIPLE=@target@
 

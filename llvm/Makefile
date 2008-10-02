@@ -25,6 +25,12 @@ EXTRA_DIST := test llvm.spec include win32 Xcode
 
 include $(LEVEL)/Makefile.config 
 
+# When cross-compiling, there are some things (tablegen) that need to
+# be build for the build system.
+ifeq ($(LLVM_CROSS_COMPILING),1)
+  BUILD_TARGET_DIRS := lib/System lib/Support utils
+endif
+
 # llvm-gcc4 doesn't need runtime libs.  llvm-gcc4 is the only supported one.
 # FIXME: Remove runtime entirely once we have an understanding of where
 # libprofile etc should go.
