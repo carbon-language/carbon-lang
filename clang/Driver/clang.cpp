@@ -45,6 +45,7 @@
 #include "llvm/Config/config.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/System/Host.h"
 #include "llvm/System/Path.h"
 #include "llvm/System/Signals.h"
 using namespace clang;
@@ -672,7 +673,18 @@ static std::string CreateTargetTriple() {
   // Initialize base triple.  If a -triple option has been specified, use
   // that triple.  Otherwise, default to the host triple.
   std::string Triple = TargetTriple;
-  if (Triple.empty()) Triple = LLVM_HOSTTRIPLE;
+  if (Triple.empty()) {
+    Triple = LLVM_HOSTTRIPLE;
+
+    // On darwin, we want to update the version to match that of the
+    // host.    
+    std::string::size_type DarwinDashIdx = Triple.find("-darwin");
+    if (DarwinDashIdx != std::string::npos) {
+      Triple.resize(DarwinDashIdx + strlen("-darwin"));
+
+      Triple += llvm::sys::osVersion();
+    }
+  }
   
   // If -arch foo was specified, remove the architecture from the triple we have
   // so far and replace it with the specified one.
