@@ -237,11 +237,13 @@ def main(args):
             compile_opts.append(arg)
         if arg[:5] in ['-std=']:
             compile_opts.append(arg)
+        if argkey in ('-std', '-mmacosx-version-min'):
+            compile_opts.append(arg)
 
         # Options with one argument that should pass through to compiler
-        if argkey in [ '-include', '-idirafter', '-iprefix',
+        if arg in [ '-include', '-idirafter', '-iprefix',
                        '-iquote', '-isystem', '-iwithprefix',
-                       '-iwithprefixbefore', '-mmacosx-version-min']:
+                       '-iwithprefixbefore']:
             compile_opts.append(arg)
             compile_opts.append(args[i+1])
             i += 1
