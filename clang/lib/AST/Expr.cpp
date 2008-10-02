@@ -139,7 +139,7 @@ void CallExpr::setNumArgs(unsigned NumArgs) {
   this->NumArgs = NumArgs;
 }
 
-bool CallExpr::isBuiltinConstantExpr() const {
+bool CallExpr::isBuiltinConstantExpr(ASTContext &Ctx) const {
   // All simple function calls (e.g. func()) are implicitly cast to pointer to
   // function. As a result, we try and obtain the DeclRefExpr from the 
   // ImplicitCastExpr.
@@ -159,10 +159,7 @@ bool CallExpr::isBuiltinConstantExpr() const {
   if (!builtinID)
     return false;
 
-  // We have a builtin that is a constant expression
-  return builtinID == Builtin::BI__builtin___CFStringMakeConstantString ||
-         builtinID == Builtin::BI__builtin_classify_type ||
-         builtinID == Builtin::BI__builtin_huge_valf;
+  return Ctx.BuiltinInfo.isConstantExpr(builtinID);
 }
 
 bool CallExpr::isBuiltinClassifyType(llvm::APSInt &Result) const {
@@ -585,7 +582,7 @@ bool Expr::isConstantExpr(ASTContext &Ctx, SourceLocation *Loc) const {
     return true;
   case CallExprClass: {
     const CallExpr *CE = cast<CallExpr>(this);
-    if (CE->isBuiltinConstantExpr())
+    if (CE->isBuiltinConstantExpr(Ctx))
       return true;
     if (Loc) *Loc = getLocStart();
     return false;

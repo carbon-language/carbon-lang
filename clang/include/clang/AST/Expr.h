@@ -704,7 +704,7 @@ public:
   bool isBuiltinClassifyType(llvm::APSInt &Result) const;
 
   /// isBuiltinConstantExpr - Return true if this built-in call is constant.
-  bool isBuiltinConstantExpr() const;
+  bool isBuiltinConstantExpr(ASTContext &Ctx) const;
   
   SourceLocation getRParenLoc() const { return RParenLoc; }
 

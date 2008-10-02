@@ -878,7 +878,7 @@ bool Sema::CheckAddressConstantExpression(const Expr* Init) {
     return false;
   case Expr::CallExprClass: {
     const CallExpr *CE = cast<CallExpr>(Init);
-    if (CE->isBuiltinConstantExpr())
+    if (CE->isBuiltinConstantExpr(Context))
       return false;
     Diag(Init->getExprLoc(),
          diag::err_init_element_not_constant, Init->getSourceRange());
@@ -1077,7 +1077,7 @@ bool Sema::CheckArithmeticConstantExpression(const Expr* Init) {
     return false;
   case Expr::CallExprClass: {
     const CallExpr *CE = cast<CallExpr>(Init);
-    if (CE->isBuiltinConstantExpr())
+    if (CE->isBuiltinConstantExpr(Context))
       return false;
     Diag(Init->getExprLoc(),
          diag::err_init_element_not_constant, Init->getSourceRange());

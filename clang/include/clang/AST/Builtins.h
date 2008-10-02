@@ -73,9 +73,15 @@ public:
   }
   
   /// isLibFunction - Return true if this is a builtin for a libc/libm function,
-  /// with a "__builtin_" prefix (e.g. __builtin_inf).
+  /// with a "__builtin_" prefix (e.g. __builtin_abs).
   bool isLibFunction(unsigned ID) const {
     return strchr(GetRecord(ID).Attributes, 'F') != 0;
+  }
+  
+  /// isConstantExpr - Return true if this builtin can be used where a
+  /// constant expression is required.
+  bool isConstantExpr(unsigned ID) const {
+    return strchr(GetRecord(ID).Attributes, 'C') != 0;
   }
   
   /// hasVAListUse - Return true of the specified builtin uses __builtin_va_list
