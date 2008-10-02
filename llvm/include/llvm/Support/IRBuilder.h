@@ -641,8 +641,8 @@ public:
                         Name);
   }
 
-  /// CreateIsNonNull - Return an i1 value testing if \arg Arg is not null.
-  Value *CreateIsNonNull(Value *Arg, const char *Name = "") {
+  /// CreateIsNotNull - Return an i1 value testing if \arg Arg is not null.
+  Value *CreateIsNotNull(Value *Arg, const char *Name = "") {
     return CreateICmpNE(Arg, llvm::Constant::getNullValue(Arg->getType()), 
                         Name);
   }
