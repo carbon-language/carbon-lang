@@ -254,6 +254,11 @@ bool MachineBasicBlock::isSuccessor(MachineBasicBlock *MBB) const {
   return I != Successors.end();
 }
 
+bool MachineBasicBlock::isLayoutSuccessor(MachineBasicBlock *MBB) const {
+  MachineFunction::const_iterator I(this);
+  return next(I) == MachineFunction::const_iterator(MBB);
+}
+
 /// removeFromParent - This method unlinks 'this' from the containing function,
 /// and returns it, but does not delete it.
 MachineBasicBlock *MachineBasicBlock::removeFromParent() {

@@ -234,6 +234,13 @@ public:
   /// block.
   bool isSuccessor(MachineBasicBlock *MBB) const;
 
+  /// isLayoutSuccessor - Return true if the specified MBB will be emitted
+  /// immediately after this block, such that if this block exits by
+  /// falling through, control will transfer to the specified MBB. Note
+  /// that MBB need not be a successor at all, for example if this block
+  /// ends with an unconditional branch to some other block.
+  bool isLayoutSuccessor(MachineBasicBlock *MBB) const;
+
   /// getFirstTerminator - returns an iterator to the first terminator
   /// instruction of this basic block. If a terminator does not exist,
   /// it returns end()
