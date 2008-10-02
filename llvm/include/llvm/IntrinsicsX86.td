@@ -371,6 +371,12 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_sse2_psrl_dq : GCCBuiltin<"__builtin_ia32_psrldqi128">,
               Intrinsic<[llvm_v2i64_ty, llvm_v2i64_ty,
                          llvm_i32_ty], [IntrNoMem]>;
+  def int_x86_sse2_psll_dq_bs : GCCBuiltin<"__builtin_ia32_pslldqi128_byteshift">,
+              Intrinsic<[llvm_v2i64_ty, llvm_v2i64_ty,
+                         llvm_i32_ty], [IntrNoMem]>;
+  def int_x86_sse2_psrl_dq_bs : GCCBuiltin<"__builtin_ia32_psrldqi128_byteshift">,
+              Intrinsic<[llvm_v2i64_ty, llvm_v2i64_ty,
+                         llvm_i32_ty], [IntrNoMem]>;
 }
 
 // Integer comparison ops
