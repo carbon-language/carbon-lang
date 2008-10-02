@@ -1,11 +1,11 @@
 // A (first stab at a) replacement for the Clang's ccc script.
 // To compile, use this command:
-//    make TOOLNAME=ccc2 GRAPH=examples/Clang.td
+//    cd $LLVMC2_DIR
+//    make TOOLNAME=ccc2 BUILTIN_PLUGINS=Clang
 
-include "Common.td"
+include "llvm/CompilerDriver/Common.td"
 
 
-// TOFIX: Add an explicit option list for aliases and things like this.
 def Options : OptionList<[
 (switch_option "E",
     (help "Stop after the preprocessing stage, do not run the compiler"))

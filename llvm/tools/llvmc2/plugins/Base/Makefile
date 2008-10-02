@@ -1,4 +1,4 @@
-##===- tools/llvmc2/plugins/Hello/Makefile -----------------*- Makefile -*-===##
+##===- tools/llvmc2/plugins/Base/Makefile ------------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -7,6 +7,6 @@
 #
 ##===----------------------------------------------------------------------===##
 
-LLVMC_PLUGIN = Hello
+LLVMC_PLUGIN = Base
 
 include ../Makefile.common

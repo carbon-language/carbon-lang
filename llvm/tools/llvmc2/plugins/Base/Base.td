@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-include "Common.td"
-include "Tools.td"
+include "llvm/CompilerDriver/Common.td"
+include "llvm/CompilerDriver/Tools.td"
 
 // Toolchains
 
