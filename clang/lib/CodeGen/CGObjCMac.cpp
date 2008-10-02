@@ -1504,7 +1504,7 @@ void CGObjCMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
 
   llvm::BasicBlock *TryBlock = llvm::BasicBlock::Create("try");
   llvm::BasicBlock *TryHandler = llvm::BasicBlock::Create("try.handler");
-  CGF.Builder.CreateCondBr(CGF.Builder.CreateIsNonNull(SetJmpResult, "threw"), 
+  CGF.Builder.CreateCondBr(CGF.Builder.CreateIsNotNull(SetJmpResult, "threw"), 
                            TryHandler, TryBlock);
 
   // Emit the @try block.
@@ -1528,7 +1528,7 @@ void CGObjCMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
         
     llvm::Value *SetJmpResult = CGF.Builder.CreateCall(ObjCTypes.SetJmpFn,
                                                        JmpBufPtr, "result");
-    llvm::Value *Threw = CGF.Builder.CreateIsNonNull(SetJmpResult, "threw");
+    llvm::Value *Threw = CGF.Builder.CreateIsNotNull(SetJmpResult, "threw");
 
     llvm::BasicBlock *CatchBlock = llvm::BasicBlock::Create("catch");
     llvm::BasicBlock *CatchHandler = llvm::BasicBlock::Create("catch.handler");
@@ -1587,7 +1587,7 @@ void CGObjCMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
       
       llvm::BasicBlock *MatchedBlock = llvm::BasicBlock::Create("matched");
       
-      CGF.Builder.CreateCondBr(CGF.Builder.CreateIsNonNull(Match, "matched"), 
+      CGF.Builder.CreateCondBr(CGF.Builder.CreateIsNotNull(Match, "matched"), 
                                MatchedBlock, NextCatchBlock);
       
       // Emit the @catch block.
