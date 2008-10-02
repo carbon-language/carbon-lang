@@ -70,8 +70,24 @@ void CodeGenFunction::EmitStmt(const Stmt *S) {
   case Stmt::ReturnStmtClass:   EmitReturnStmt(cast<ReturnStmt>(*S));     break;
   case Stmt::DeclStmtClass:     EmitDeclStmt(cast<DeclStmt>(*S));         break;
       
-  case Stmt::BreakStmtClass:    EmitBreakStmt();                          break;
-  case Stmt::ContinueStmtClass: EmitContinueStmt();                       break;
+  case Stmt::BreakStmtClass:    
+    // FIXME: Implement break in @try or @catch blocks.
+    if (!ObjCEHStack.empty()) {
+      CGM.ErrorUnsupported(S, "continue inside an Obj-C exception block");
+      return;
+    }
+    EmitBreakStmt();                          
+    break;
+
+  case Stmt::ContinueStmtClass: 
+    // FIXME: Implement continue in @try or @catch blocks.
+    if (!ObjCEHStack.empty()) {
+      CGM.ErrorUnsupported(S, "continue inside an Obj-C exception block");
+      return;
+    }
+    EmitContinueStmt();                       
+    break;
+
   case Stmt::SwitchStmtClass:   EmitSwitchStmt(cast<SwitchStmt>(*S));     break;
   case Stmt::DefaultStmtClass:  EmitDefaultStmt(cast<DefaultStmt>(*S));   break;
   case Stmt::CaseStmtClass:     EmitCaseStmt(cast<CaseStmt>(*S));         break;
@@ -168,6 +184,12 @@ void CodeGenFunction::EmitLabelStmt(const LabelStmt &S) {
 }
 
 void CodeGenFunction::EmitGotoStmt(const GotoStmt &S) {
+  // FIXME: Implement goto out in @try or @catch blocks.
+  if (!ObjCEHStack.empty()) {
+    CGM.ErrorUnsupported(&S, "goto inside an Obj-C exception block");
+    return;
+  }
+
   Builder.CreateBr(getBasicBlockForLabel(S.getLabel()));
   
   // Emit a block after the branch so that dead code after a goto has some place
@@ -176,6 +198,12 @@ void CodeGenFunction::EmitGotoStmt(const GotoStmt &S) {
 }
 
 void CodeGenFunction::EmitIndirectGotoStmt(const IndirectGotoStmt &S) {
+  // FIXME: Implement indirect goto in @try or @catch blocks.
+  if (!ObjCEHStack.empty()) {
+    CGM.ErrorUnsupported(&S, "goto inside an Obj-C exception block");
+    return;
+  }
+
   // Emit initial switch which will be patched up later by
   // EmitIndirectSwitches(). We need a default dest, so we use the
   // current BB, but this is overwritten.
