@@ -483,15 +483,6 @@ void Verifier::VerifyFunctionAttrs(const FunctionType *FT,
     Assert1(!(MutI & (MutI - 1)), "Attributes " +
             Attribute::getAsString(MutI) + " are incompatible!", V);
   }
-
-  Attributes RAttrs = Attrs.getRetAttributes();
-  for (unsigned i = 0;
-       i < array_lengthof(Attribute::MutuallyIncompatible); ++i) {
-    Attributes MutI = RAttrs & Attribute::MutuallyIncompatible[i];
-    Assert1(!(MutI & (MutI - 1)), "Attributes " +
-            Attribute::getAsString(MutI) + " are incompatible!", V);
-  }
-
 }
 
 static bool VerifyAttributeCount(const AttrListPtr &Attrs, unsigned Params) {
