@@ -22,9 +22,13 @@ void check_string_literal( FILE* fp, const char* s, char *buf, ... ) {
   vasprintf(&b,s,ap); // no-warning
   sprintf(buf,s); // expected-warning {{format string is not a string literal}}
   snprintf(buf,2,s); // expected-warning {{format string is not a string lit}}
+  __builtin___sprintf_chk(buf,0,-1,s); // expected-warning {{format string is not a string literal}}
+  __builtin___snprintf_chk(buf,2,0,-1,s); // expected-warning {{format string is not a string lit}}
   vsprintf(buf,s,ap); // no-warning
   vsnprintf(buf,2,s,ap); // no-warning
   vsnprintf(buf,2,global_fmt,ap); // expected-warning {{format string is not a string literal}}
+  __builtin___vsnprintf_chk(buf,2,0,-1,s,ap); // no-warning
+  __builtin___vsnprintf_chk(buf,2,0,-1,global_fmt,ap); // expected-warning {{format string is not a string literal}}
 }
 
 void check_writeback_specifier()

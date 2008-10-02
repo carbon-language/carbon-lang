@@ -88,17 +88,22 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer)
   // do extra checking.  
   IdentifierTable &IT = PP.getIdentifierTable();  
 
-  KnownFunctionIDs[id_printf]    = &IT.get("printf");
-  KnownFunctionIDs[id_fprintf]   = &IT.get("fprintf");
-  KnownFunctionIDs[id_sprintf]   = &IT.get("sprintf");
-  KnownFunctionIDs[id_snprintf]  = &IT.get("snprintf");
-  KnownFunctionIDs[id_asprintf]  = &IT.get("asprintf");
-  KnownFunctionIDs[id_NSLog]     = &IT.get("NSLog");
-  KnownFunctionIDs[id_vsnprintf] = &IT.get("vsnprintf");
-  KnownFunctionIDs[id_vasprintf] = &IT.get("vasprintf");
-  KnownFunctionIDs[id_vfprintf]  = &IT.get("vfprintf");
-  KnownFunctionIDs[id_vsprintf]  = &IT.get("vsprintf");
-  KnownFunctionIDs[id_vprintf]   = &IT.get("vprintf");
+  KnownFunctionIDs[id_printf]        = &IT.get("printf");
+  KnownFunctionIDs[id_fprintf]       = &IT.get("fprintf");
+  KnownFunctionIDs[id_sprintf]       = &IT.get("sprintf");
+  KnownFunctionIDs[id_sprintf_chk]   = &IT.get("__builtin___sprintf_chk");
+  KnownFunctionIDs[id_snprintf]      = &IT.get("snprintf");
+  KnownFunctionIDs[id_snprintf_chk]  = &IT.get("__builtin___snprintf_chk");
+  KnownFunctionIDs[id_asprintf]      = &IT.get("asprintf");
+  KnownFunctionIDs[id_NSLog]         = &IT.get("NSLog");
+  KnownFunctionIDs[id_vsnprintf]     = &IT.get("vsnprintf");
+  KnownFunctionIDs[id_vasprintf]     = &IT.get("vasprintf");
+  KnownFunctionIDs[id_vfprintf]      = &IT.get("vfprintf");
+  KnownFunctionIDs[id_vsprintf]      = &IT.get("vsprintf");
+  KnownFunctionIDs[id_vsprintf_chk]  = &IT.get("__builtin___vsprintf_chk");
+  KnownFunctionIDs[id_vsnprintf]     = &IT.get("vsnprintf");
+  KnownFunctionIDs[id_vsnprintf_chk] = &IT.get("__builtin___vsnprintf_chk");
+  KnownFunctionIDs[id_vprintf]       = &IT.get("vprintf");
 
   SuperID = &IT.get("super");
 

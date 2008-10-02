@@ -66,7 +66,11 @@ Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCallRaw) {
     if (SemaBuiltinObjectSize(TheCall.get()))
       return true;
   }
-  
+
+  // FIXME: This mechanism should be abstracted to be less fragile and
+  // more efficient. For example, just map function ids to custom
+  // handlers.
+
   // Search the KnownFunctionIDs for the identifier.
   unsigned i = 0, e = id_num_known_functions;
   for (; i != e; ++i) { if (KnownFunctionIDs[i] == FnInfo) break; }
@@ -81,17 +85,21 @@ Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCallRaw) {
     
     switch (i) {
     default: assert(false && "No format string argument index.");
-    case id_printf:    format_idx = 0; break;
-    case id_fprintf:   format_idx = 1; break;
-    case id_sprintf:   format_idx = 1; break;
-    case id_snprintf:  format_idx = 2; break;
-    case id_asprintf:  format_idx = 1; break;
-    case id_NSLog:     format_idx = 0; break;
-    case id_vsnprintf: format_idx = 2; HasVAListArg = true; break;
-    case id_vasprintf: format_idx = 1; HasVAListArg = true; break;
-    case id_vfprintf:  format_idx = 1; HasVAListArg = true; break;
-    case id_vsprintf:  format_idx = 1; HasVAListArg = true; break;
-    case id_vprintf:   format_idx = 0; HasVAListArg = true; break;
+    case id_NSLog:         format_idx = 0; break;
+    case id_asprintf:      format_idx = 1; break;
+    case id_fprintf:       format_idx = 1; break;
+    case id_printf:        format_idx = 0; break;
+    case id_snprintf:      format_idx = 2; break;
+    case id_snprintf_chk:  format_idx = 4; break;
+    case id_sprintf:       format_idx = 1; break;
+    case id_sprintf_chk:   format_idx = 3; break;
+    case id_vasprintf:     format_idx = 1; HasVAListArg = true; break;
+    case id_vfprintf:      format_idx = 1; HasVAListArg = true; break;
+    case id_vsnprintf:     format_idx = 2; HasVAListArg = true; break;
+    case id_vsnprintf_chk: format_idx = 4; HasVAListArg = true; break;
+    case id_vsprintf:      format_idx = 1; HasVAListArg = true; break;
+    case id_vsprintf_chk:  format_idx = 3; HasVAListArg = true; break;
+    case id_vprintf:       format_idx = 0; HasVAListArg = true; break;
     }
     
     CheckPrintfArguments(TheCall.get(), HasVAListArg, format_idx);       
