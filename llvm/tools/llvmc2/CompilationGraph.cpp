@@ -55,10 +55,10 @@ namespace {
 
     for (typename C::const_iterator B = EdgesContainer.begin(),
            E = EdgesContainer.end(); B != E; ++B) {
-      const Edge* E = B->getPtr();
-      unsigned EW = E->Weight(InLangs);
+      const Edge* e = B->getPtr();
+      unsigned EW = e->Weight(InLangs);
       if (EW > MaxWeight) {
-        MaxEdge = E;
+        MaxEdge = e;
         MaxWeight = EW;
         SingleMax = true;
       } else if (EW == MaxWeight) {
