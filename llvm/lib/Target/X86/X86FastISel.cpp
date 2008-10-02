@@ -741,7 +741,11 @@ bool X86FastISel::X86SelectShift(Instruction *I) {
   if (Op1Reg == 0) return false;
   TII.copyRegToReg(*MBB, MBB->end(), CReg, Op1Reg, RC, RC);
   unsigned ResultReg = createResultReg(RC);
-  BuildMI(MBB, TII.get(OpReg), ResultReg).addReg(Op0Reg);
+  BuildMI(MBB, TII.get(OpReg), ResultReg).addReg(Op0Reg)
+    // FIXME: The "Local" register allocator's physreg liveness doesn't
+    // recognize subregs. Adding the superreg of CL that's actually defined
+    // prevents it from being re-allocated for this instruction.
+    .addReg(CReg, false, true);
   UpdateValueMap(I, ResultReg);
   return true;
 }
