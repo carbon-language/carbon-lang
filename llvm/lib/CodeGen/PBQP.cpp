@@ -15,6 +15,7 @@
 
 #include <limits>
 #include <cassert>
+#include <cstring>
 
 #include "PBQP.h"
 
