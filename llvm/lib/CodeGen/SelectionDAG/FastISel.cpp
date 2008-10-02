@@ -461,6 +461,23 @@ FastISel::SelectInstruction(Instruction *I) {
   return SelectOperator(I, I->getOpcode());
 }
 
+/// FastEmitBranch - Emit an unconditional branch to the given block,
+/// unless it is the immediate (fall-through) successor, and update
+/// the CFG.
+void
+FastISel::FastEmitBranch(MachineBasicBlock *MSucc) {
+  MachineFunction::iterator NextMBB =
+     next(MachineFunction::iterator(MBB));
+
+  if (MBB->isLayoutSuccessor(MSucc)) {
+    // The unconditional fall-through case, which needs no instructions.
+  } else {
+    // The unconditional branch case.
+    TII.InsertBranch(*MBB, MSucc, NULL, SmallVector<MachineOperand, 0>());
+  }
+  MBB->addSuccessor(MSucc);
+}
+
 bool
 FastISel::SelectOperator(User *I, unsigned Opcode) {
   switch (Opcode) {
@@ -508,18 +525,9 @@ FastISel::SelectOperator(User *I, unsigned Opcode) {
     BranchInst *BI = cast<BranchInst>(I);
 
     if (BI->isUnconditional()) {
-      MachineFunction::iterator NextMBB =
-         next(MachineFunction::iterator(MBB));
       BasicBlock *LLVMSucc = BI->getSuccessor(0);
       MachineBasicBlock *MSucc = MBBMap[LLVMSucc];
-
-      if (NextMBB != MF.end() && MSucc == NextMBB) {
-        // The unconditional fall-through case, which needs no instructions.
-      } else {
-        // The unconditional branch case.
-        TII.InsertBranch(*MBB, MSucc, NULL, SmallVector<MachineOperand, 0>());
-      }
-      MBB->addSuccessor(MSucc);
+      FastEmitBranch(MSucc);
       return true;
     }
 

@@ -238,6 +238,11 @@ protected:
   /// from a specified index of a superregister.
   unsigned FastEmitInst_extractsubreg(unsigned Op0, uint32_t Idx);
 
+  /// FastEmitBranch - Emit an unconditional branch to the given block,
+  /// unless it is the immediate (fall-through) successor, and update
+  /// the CFG.
+  void FastEmitBranch(MachineBasicBlock *MBB);
+
   void UpdateValueMap(Value* I, unsigned Reg);
 
   unsigned createResultReg(const TargetRegisterClass *RC);

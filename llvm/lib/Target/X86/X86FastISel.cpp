@@ -90,6 +90,8 @@ private:
   bool X86SelectSelect(Instruction *I);
 
   bool X86SelectTrunc(Instruction *I);
+ 
+  unsigned X86ChooseCmpOpcode(MVT VT);
 
   bool X86SelectFPExt(Instruction *I);
   bool X86SelectFPTrunc(Instruction *I);
@@ -507,6 +509,19 @@ bool X86FastISel::X86SelectLoad(Instruction *I)  {
   return false;
 }
 
+unsigned X86FastISel::X86ChooseCmpOpcode(MVT VT) {
+  switch (VT.getSimpleVT()) {
+  case MVT::i8: return X86::CMP8rr;
+  case MVT::i16: return X86::CMP16rr;
+  case MVT::i32: return X86::CMP32rr;
+  case MVT::i64: return X86::CMP64rr;
+  case MVT::f32: return X86::UCOMISSrr;
+  case MVT::f64: return X86::UCOMISDrr;
+  default: break;
+  }
+  return 0;
+}
+
 bool X86FastISel::X86SelectCmp(Instruction *I) {
   CmpInst *CI = cast<CmpInst>(I);
 
@@ -519,16 +534,7 @@ bool X86FastISel::X86SelectCmp(Instruction *I) {
   unsigned Op1Reg = getRegForValue(CI->getOperand(1));
   if (Op1Reg == 0) return false;
 
-  unsigned Opc;
-  switch (VT.getSimpleVT()) {
-  case MVT::i8: Opc = X86::CMP8rr; break;
-  case MVT::i16: Opc = X86::CMP16rr; break;
-  case MVT::i32: Opc = X86::CMP32rr; break;
-  case MVT::i64: Opc = X86::CMP64rr; break;
-  case MVT::f32: Opc = X86::UCOMISSrr; break;
-  case MVT::f64: Opc = X86::UCOMISDrr; break;
-  default: return false;
-  }
+  unsigned Opc = X86ChooseCmpOpcode(VT);
 
   unsigned ResultReg = createResultReg(&X86::GR8RegClass);
   switch (CI->getPredicate()) {
@@ -661,19 +667,139 @@ bool X86FastISel::X86SelectZExt(Instruction *I) {
 }
 
 bool X86FastISel::X86SelectBranch(Instruction *I) {
-  BranchInst *BI = cast<BranchInst>(I);
   // Unconditional branches are selected by tablegen-generated code.
-  unsigned OpReg = getRegForValue(BI->getCondition());
-  if (OpReg == 0) return false;
+  // Handle a conditional branch.
+  BranchInst *BI = cast<BranchInst>(I);
   MachineBasicBlock *TrueMBB = MBBMap[BI->getSuccessor(0)];
   MachineBasicBlock *FalseMBB = MBBMap[BI->getSuccessor(1)];
 
-  BuildMI(MBB, TII.get(X86::TEST8rr)).addReg(OpReg).addReg(OpReg);
-  BuildMI(MBB, TII.get(X86::JNE)).addMBB(TrueMBB);
-  BuildMI(MBB, TII.get(X86::JMP)).addMBB(FalseMBB);
+  // Fold the common case of a conditional branch with a comparison.
+  if (CmpInst *CI = dyn_cast<CmpInst>(BI->getCondition())) {
+    if (CI->hasOneUse()) {
+      MVT VT = TLI.getValueType(CI->getOperand(0)->getType());
+      unsigned Opc = X86ChooseCmpOpcode(VT);
+      if (Opc == 0) return false;
 
+      // Try to take advantage of fallthrough opportunities.
+      CmpInst::Predicate Predicate = CI->getPredicate();
+      if (MBB->isLayoutSuccessor(TrueMBB)) {
+        std::swap(TrueMBB, FalseMBB);
+        Predicate = CmpInst::getInversePredicate(Predicate);
+      }
+
+      unsigned Op0Reg = getRegForValue(CI->getOperand(0));
+      if (Op0Reg == 0) return false;
+      unsigned Op1Reg = getRegForValue(CI->getOperand(1));
+      if (Op1Reg == 0) return false;
+      
+      switch (Predicate) {
+      case CmpInst::FCMP_OGT:
+        BuildMI(MBB, TII.get(Opc)).addReg(Op0Reg).addReg(Op1Reg);
+        BuildMI(MBB, TII.get(X86::JA)).addMBB(TrueMBB);
+        break;
+      case CmpInst::FCMP_OGE:
+        BuildMI(MBB, TII.get(Opc)).addReg(Op0Reg).addReg(Op1Reg);
+        BuildMI(MBB, TII.get(X86::JAE)).addMBB(TrueMBB);
+        break;
+      case CmpInst::FCMP_OLT:
+        BuildMI(MBB, TII.get(Opc)).addReg(Op1Reg).addReg(Op0Reg);
+        BuildMI(MBB, TII.get(X86::JA)).addMBB(TrueMBB);
+        break;
+      case CmpInst::FCMP_OLE:
+        BuildMI(MBB, TII.get(Opc)).addReg(Op1Reg).addReg(Op0Reg);
+        BuildMI(MBB, TII.get(X86::JAE)).addMBB(TrueMBB);
+        break;
+      case CmpInst::FCMP_ONE:
+        BuildMI(MBB, TII.get(Opc)).addReg(Op0Reg).addReg(Op1Reg);
+        BuildMI(MBB, TII.get(X86::JNE)).addMBB(TrueMBB);
+        break;
+      case CmpInst::FCMP_ORD:
+        BuildMI(MBB, TII.get(Opc)).addReg(Op0Reg).addReg(Op1Reg);
+        BuildMI(MBB, TII.get(X86::JNP)).addMBB(TrueMBB);
+        break;
+      case CmpInst::FCMP_UNO:
+        BuildMI(MBB, TII.get(Opc)).addReg(Op0Reg).addReg(Op1Reg);
+        BuildMI(MBB, TII.get(X86::JP)).addMBB(TrueMBB);
+        break;
+      case CmpInst::FCMP_UEQ:
+        BuildMI(MBB, TII.get(Opc)).addReg(Op0Reg).addReg(Op1Reg);
+        BuildMI(MBB, TII.get(X86::JE)).addMBB(TrueMBB);
+        break;
+      case CmpInst::FCMP_UGT:
+        BuildMI(MBB, TII.get(Opc)).addReg(Op1Reg).addReg(Op0Reg);
+        BuildMI(MBB, TII.get(X86::JB)).addMBB(TrueMBB);
+        break;
+      case CmpInst::FCMP_UGE:
+        BuildMI(MBB, TII.get(Opc)).addReg(Op1Reg).addReg(Op0Reg);
+        BuildMI(MBB, TII.get(X86::JBE)).addMBB(TrueMBB);
+        break;
+      case CmpInst::FCMP_ULT:
+        BuildMI(MBB, TII.get(Opc)).addReg(Op0Reg).addReg(Op1Reg);
+        BuildMI(MBB, TII.get(X86::JB)).addMBB(TrueMBB);
+        break;
+      case CmpInst::FCMP_ULE:
+        BuildMI(MBB, TII.get(Opc)).addReg(Op0Reg).addReg(Op1Reg);
+        BuildMI(MBB, TII.get(X86::JBE)).addMBB(TrueMBB);
+        break;
+      case CmpInst::ICMP_EQ:
+        BuildMI(MBB, TII.get(Opc)).addReg(Op0Reg).addReg(Op1Reg);
+        BuildMI(MBB, TII.get(X86::JE)).addMBB(TrueMBB);
+        break;
+      case CmpInst::ICMP_NE:
+        BuildMI(MBB, TII.get(Opc)).addReg(Op0Reg).addReg(Op1Reg);
+        BuildMI(MBB, TII.get(X86::JNE)).addMBB(TrueMBB);
+        break;
+      case CmpInst::ICMP_UGT:
+        BuildMI(MBB, TII.get(Opc)).addReg(Op0Reg).addReg(Op1Reg);
+        BuildMI(MBB, TII.get(X86::JA)).addMBB(TrueMBB);
+        break;
+      case CmpInst::ICMP_UGE:
+        BuildMI(MBB, TII.get(Opc)).addReg(Op0Reg).addReg(Op1Reg);
+        BuildMI(MBB, TII.get(X86::JAE)).addMBB(TrueMBB);
+        break;
+      case CmpInst::ICMP_ULT:
+        BuildMI(MBB, TII.get(Opc)).addReg(Op0Reg).addReg(Op1Reg);
+        BuildMI(MBB, TII.get(X86::JB)).addMBB(TrueMBB);
+        break;
+      case CmpInst::ICMP_ULE:
+        BuildMI(MBB, TII.get(Opc)).addReg(Op0Reg).addReg(Op1Reg);
+        BuildMI(MBB, TII.get(X86::JBE)).addMBB(TrueMBB);
+        break;
+      case CmpInst::ICMP_SGT:
+        BuildMI(MBB, TII.get(Opc)).addReg(Op0Reg).addReg(Op1Reg);
+        BuildMI(MBB, TII.get(X86::JG)).addMBB(TrueMBB);
+        break;
+      case CmpInst::ICMP_SGE:
+        BuildMI(MBB, TII.get(Opc)).addReg(Op0Reg).addReg(Op1Reg);
+        BuildMI(MBB, TII.get(X86::JGE)).addMBB(TrueMBB);
+        break;
+      case CmpInst::ICMP_SLT:
+        BuildMI(MBB, TII.get(Opc)).addReg(Op0Reg).addReg(Op1Reg);
+        BuildMI(MBB, TII.get(X86::JL)).addMBB(TrueMBB);
+        break;
+      case CmpInst::ICMP_SLE:
+        BuildMI(MBB, TII.get(Opc)).addReg(Op0Reg).addReg(Op1Reg);
+        BuildMI(MBB, TII.get(X86::JLE)).addMBB(TrueMBB);
+        break;
+      default:
+        return false;
+      }
+      MBB->addSuccessor(TrueMBB);
+      FastEmitBranch(FalseMBB);
+      return true;
+    }
+  }
+
+  // Otherwise do a clumsy setcc and re-test it.
+  unsigned OpReg = getRegForValue(BI->getCondition());
+  if (OpReg == 0) return false;
+
+  BuildMI(MBB, TII.get(X86::TEST8rr)).addReg(OpReg).addReg(OpReg);
+
+  BuildMI(MBB, TII.get(X86::JNE)).addMBB(TrueMBB);
   MBB->addSuccessor(TrueMBB);
-  MBB->addSuccessor(FalseMBB);
+
+  FastEmitBranch(FalseMBB);
 
   return true;
 }
