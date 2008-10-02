@@ -302,6 +302,16 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   setOperationAction(ISD::ATOMIC_LOAD_SUB_32, MVT::i32, Custom);
   setOperationAction(ISD::ATOMIC_LOAD_SUB_64, MVT::i64, Custom);
 
+  if (!Subtarget->is64Bit()) {
+    setOperationAction(ISD::ATOMIC_LOAD_ADD_64, MVT::i64, Custom);
+    setOperationAction(ISD::ATOMIC_LOAD_SUB_64, MVT::i64, Custom);
+    setOperationAction(ISD::ATOMIC_LOAD_AND_64, MVT::i64, Custom);
+    setOperationAction(ISD::ATOMIC_LOAD_OR_64, MVT::i64, Custom);
+    setOperationAction(ISD::ATOMIC_LOAD_XOR_64, MVT::i64, Custom);
+    setOperationAction(ISD::ATOMIC_LOAD_NAND_64, MVT::i64, Custom);
+    setOperationAction(ISD::ATOMIC_SWAP_64, MVT::i64, Custom);
+  }
+
   // Use the default ISD::DBG_STOPPOINT, ISD::DECLARE expansion.
   setOperationAction(ISD::DBG_STOPPOINT, MVT::Other, Expand);
   // FIXME - use subtarget debug flags
@@ -6004,6 +6014,27 @@ SDNode* X86TargetLowering::ExpandATOMIC_CMP_SWAP(SDNode* Op,
   return DAG.getMergeValues(Vals, 2).getNode();
 }
 
+SDValue X86TargetLowering::LowerATOMIC_BINARY_64(SDValue Op,
+                                                 SelectionDAG &DAG,
+                                                 unsigned NewOp) {
+  SDNode *Node = Op.getNode();
+  MVT T = Node->getValueType(0);
+  assert (T == MVT::i64 && "Only know how to expand i64 atomics");
+  
+  SDValue Chain = Node->getOperand(0);
+  SDValue In1 = Node->getOperand(1);
+  assert(Node->getOperand(2).getNode()->getOpcode()==ISD::BUILD_PAIR);
+  SDValue In2L = Node->getOperand(2).getNode()->getOperand(0);
+  SDValue In2H = Node->getOperand(2).getNode()->getOperand(1);
+  SDValue Ops[] = { Chain, In1, In2L, In2H };
+  SDVTList Tys = DAG.getVTList(MVT::i32, MVT::i32, MVT::Other);
+  SDValue Result = DAG.getNode(NewOp, Tys, Ops, 4);
+  SDValue OpsF[] = { Result.getValue(0), Result.getValue(1)};
+  SDValue ResultVal = DAG.getNode(ISD::BUILD_PAIR, MVT::i64, OpsF, 2);
+  SDValue Vals[2] = { ResultVal, Result.getValue(2) };
+  return SDValue(DAG.getMergeValues(Vals, 2).getNode(), 0);
+}
+
 SDValue X86TargetLowering::LowerLOAD_SUB(SDValue Op, SelectionDAG &DAG) {
   SDNode *Node = Op.getNode();
   MVT T = Node->getValueType(0);
@@ -6027,14 +6058,27 @@ SDValue X86TargetLowering::LowerLOAD_SUB(SDValue Op, SelectionDAG &DAG) {
 SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   switch (Op.getOpcode()) {
   default: assert(0 && "Should not custom lower this!");
-  case ISD::ATOMIC_CMP_SWAP_8:  return LowerCMP_SWAP(Op,DAG);
-  case ISD::ATOMIC_CMP_SWAP_16: return LowerCMP_SWAP(Op,DAG);
-  case ISD::ATOMIC_CMP_SWAP_32: return LowerCMP_SWAP(Op,DAG);
+  case ISD::ATOMIC_CMP_SWAP_8:  
+  case ISD::ATOMIC_CMP_SWAP_16: 
+  case ISD::ATOMIC_CMP_SWAP_32: 
   case ISD::ATOMIC_CMP_SWAP_64: return LowerCMP_SWAP(Op,DAG);
-  case ISD::ATOMIC_LOAD_SUB_8:  return LowerLOAD_SUB(Op,DAG);
-  case ISD::ATOMIC_LOAD_SUB_16: return LowerLOAD_SUB(Op,DAG);
+  case ISD::ATOMIC_LOAD_SUB_8:  
+  case ISD::ATOMIC_LOAD_SUB_16: 
   case ISD::ATOMIC_LOAD_SUB_32: return LowerLOAD_SUB(Op,DAG);
-  case ISD::ATOMIC_LOAD_SUB_64: return LowerLOAD_SUB(Op,DAG);
+  case ISD::ATOMIC_LOAD_SUB_64: return (Subtarget->is64Bit()) ?
+                                  LowerLOAD_SUB(Op,DAG) :
+                                  LowerATOMIC_BINARY_64(Op,DAG,
+                                        X86ISD::ATOMSUB64_DAG);
+  case ISD::ATOMIC_LOAD_AND_64: return LowerATOMIC_BINARY_64(Op,DAG,
+                                        X86ISD::ATOMAND64_DAG);
+  case ISD::ATOMIC_LOAD_OR_64: return LowerATOMIC_BINARY_64(Op, DAG,
+                                        X86ISD::ATOMOR64_DAG);
+  case ISD::ATOMIC_LOAD_XOR_64: return LowerATOMIC_BINARY_64(Op,DAG,
+                                        X86ISD::ATOMXOR64_DAG);
+  case ISD::ATOMIC_LOAD_NAND_64: return LowerATOMIC_BINARY_64(Op,DAG,
+                                        X86ISD::ATOMNAND64_DAG);
+  case ISD::ATOMIC_LOAD_ADD_64: return LowerATOMIC_BINARY_64(Op,DAG,
+                                        X86ISD::ATOMADD64_DAG);
   case ISD::BUILD_VECTOR:       return LowerBUILD_VECTOR(Op, DAG);
   case ISD::VECTOR_SHUFFLE:     return LowerVECTOR_SHUFFLE(Op, DAG);
   case ISD::EXTRACT_VECTOR_ELT: return LowerEXTRACT_VECTOR_ELT(Op, DAG);
@@ -6140,6 +6184,12 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::FNSTCW16m:          return "X86ISD::FNSTCW16m";
   case X86ISD::LCMPXCHG_DAG:       return "X86ISD::LCMPXCHG_DAG";
   case X86ISD::LCMPXCHG8_DAG:      return "X86ISD::LCMPXCHG8_DAG";
+  case X86ISD::ATOMADD64_DAG:      return "X86ISD::ATOMADD64_DAG";
+  case X86ISD::ATOMSUB64_DAG:      return "X86ISD::ATOMSUB64_DAG";
+  case X86ISD::ATOMOR64_DAG:       return "X86ISD::ATOMOR64_DAG";
+  case X86ISD::ATOMXOR64_DAG:      return "X86ISD::ATOMXOR64_DAG";
+  case X86ISD::ATOMAND64_DAG:      return "X86ISD::ATOMAND64_DAG";
+  case X86ISD::ATOMNAND64_DAG:     return "X86ISD::ATOMNAND64_DAG";
   case X86ISD::VZEXT_MOVL:         return "X86ISD::VZEXT_MOVL";
   case X86ISD::VZEXT_LOAD:         return "X86ISD::VZEXT_LOAD";
   case X86ISD::VSHL:               return "X86ISD::VSHL";
@@ -6357,6 +6407,146 @@ X86TargetLowering::EmitAtomicBitwiseWithCustomInserter(MachineInstr *bInstr,
 
   MIB = BuildMI(newMBB, TII->get(copyOpc), destOper.getReg());
   MIB.addReg(EAXreg);
+  
+  // insert branch
+  BuildMI(newMBB, TII->get(X86::JNE)).addMBB(newMBB);
+
+  F->DeleteMachineInstr(bInstr);   // The pseudo instruction is gone now.
+  return nextMBB;
+}
+
+// private utility function
+MachineBasicBlock *
+X86TargetLowering::EmitAtomicBit6432WithCustomInserter(MachineInstr *bInstr,
+                                                       MachineBasicBlock *MBB,
+                                                       unsigned regOpcL,
+                                                       unsigned regOpcH,
+                                                       unsigned immOpcL,
+                                                       unsigned immOpcH,
+                                                       bool invSrc) {
+  // For the atomic bitwise operator, we generate
+  //   thisMBB (instructions are in pairs, except cmpxchg8b)
+  //     ld t1,t2 = [bitinstr.addr]
+  //   newMBB:
+  //     out1, out2 = phi (thisMBB, t1/t2) (newMBB, t3/t4)
+  //     op  t5, t6 <- out1, out2, [bitinstr.val]
+  //     mov ECX, EBX <- t5, t6
+  //     mov EAX, EDX <- t1, t2
+  //     cmpxchg8b [bitinstr.addr]  [EAX, EDX, EBX, ECX implicit]
+  //     mov t3, t4 <- EAX, EDX
+  //     bz  newMBB
+  //     result in out1, out2
+  //     fallthrough -->nextMBB
+
+  const TargetRegisterClass *RC = X86::GR32RegisterClass;
+  const unsigned LoadOpc = X86::MOV32rm;
+  const unsigned copyOpc = X86::MOV32rr;
+  const unsigned NotOpc = X86::NOT32r;
+  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
+  const BasicBlock *LLVM_BB = MBB->getBasicBlock();
+  MachineFunction::iterator MBBIter = MBB;
+  ++MBBIter;
+  
+  /// First build the CFG
+  MachineFunction *F = MBB->getParent();
+  MachineBasicBlock *thisMBB = MBB;
+  MachineBasicBlock *newMBB = F->CreateMachineBasicBlock(LLVM_BB);
+  MachineBasicBlock *nextMBB = F->CreateMachineBasicBlock(LLVM_BB);
+  F->insert(MBBIter, newMBB);
+  F->insert(MBBIter, nextMBB);
+  
+  // Move all successors to thisMBB to nextMBB
+  nextMBB->transferSuccessors(thisMBB);
+    
+  // Update thisMBB to fall through to newMBB
+  thisMBB->addSuccessor(newMBB);
+  
+  // newMBB jumps to itself and fall through to nextMBB
+  newMBB->addSuccessor(nextMBB);
+  newMBB->addSuccessor(newMBB);
+  
+  // Insert instructions into newMBB based on incoming instruction
+  // There are 8 "real" operands plus 9 implicit def/uses, ignored here.
+  assert(bInstr->getNumOperands() < 18 && "unexpected number of operands");
+  MachineOperand& dest1Oper = bInstr->getOperand(0);
+  MachineOperand& dest2Oper = bInstr->getOperand(1);
+  MachineOperand* argOpers[6];
+  for (int i=0; i < 6; ++i)
+    argOpers[i] = &bInstr->getOperand(i+2);
+
+  // x86 address has 4 operands: base, index, scale, and displacement
+  int lastAddrIndx = 3; // [0,3]
+  
+  unsigned t1 = F->getRegInfo().createVirtualRegister(RC);
+  MachineInstrBuilder MIB = BuildMI(thisMBB, TII->get(LoadOpc), t1);
+  for (int i=0; i <= lastAddrIndx; ++i)
+    (*MIB).addOperand(*argOpers[i]);
+  unsigned t2 = F->getRegInfo().createVirtualRegister(RC);
+  MIB = BuildMI(thisMBB, TII->get(LoadOpc), t2);
+  // add 4 to displacement.  getImm verifies it's immediate.
+  for (int i=0; i <= lastAddrIndx-1; ++i)
+    (*MIB).addOperand(*argOpers[i]);
+  MachineOperand newOp3 = MachineOperand::CreateImm(argOpers[3]->getImm()+4);
+  (*MIB).addOperand(newOp3);
+
+  // t3/4 are defined later, at the bottom of the loop
+  unsigned t3 = F->getRegInfo().createVirtualRegister(RC);
+  unsigned t4 = F->getRegInfo().createVirtualRegister(RC);
+  BuildMI(newMBB, TII->get(X86::PHI), dest1Oper.getReg())
+    .addReg(t1).addMBB(thisMBB).addReg(t3).addMBB(newMBB);
+  BuildMI(newMBB, TII->get(X86::PHI), dest2Oper.getReg())
+    .addReg(t2).addMBB(thisMBB).addReg(t4).addMBB(newMBB);
+
+  unsigned tt1 = F->getRegInfo().createVirtualRegister(RC);
+  unsigned tt2 = F->getRegInfo().createVirtualRegister(RC);
+  if (invSrc) {  
+    MIB = BuildMI(newMBB, TII->get(NotOpc), tt1).addReg(t1);
+    MIB = BuildMI(newMBB, TII->get(NotOpc), tt2).addReg(t2);
+  } else {
+    tt1 = t1;
+    tt2 = t2;
+  }
+
+  assert((argOpers[4]->isRegister() || argOpers[4]->isImmediate()) &&
+         "invalid operand");
+  unsigned t5 = F->getRegInfo().createVirtualRegister(RC);
+  unsigned t6 = F->getRegInfo().createVirtualRegister(RC);
+  if (argOpers[4]->isRegister())
+    MIB = BuildMI(newMBB, TII->get(regOpcL), t5);
+  else
+    MIB = BuildMI(newMBB, TII->get(immOpcL), t5);
+  MIB.addReg(tt1);
+  (*MIB).addOperand(*argOpers[4]);
+  assert(argOpers[5]->isRegister() == argOpers[4]->isRegister());
+  assert(argOpers[5]->isImmediate() == argOpers[4]->isImmediate());
+  if (argOpers[5]->isRegister())
+    MIB = BuildMI(newMBB, TII->get(regOpcH), t6);
+  else
+    MIB = BuildMI(newMBB, TII->get(immOpcH), t6);
+  MIB.addReg(tt2);
+  (*MIB).addOperand(*argOpers[5]);
+
+  MIB = BuildMI(newMBB, TII->get(copyOpc), X86::EAX);
+  MIB.addReg(t1);
+  MIB = BuildMI(newMBB, TII->get(copyOpc), X86::EDX);
+  MIB.addReg(t2);
+
+  MIB = BuildMI(newMBB, TII->get(copyOpc), X86::EBX);
+  MIB.addReg(t5);
+  MIB = BuildMI(newMBB, TII->get(copyOpc), X86::ECX);
+  MIB.addReg(t6);
+  
+  MIB = BuildMI(newMBB, TII->get(X86::LCMPXCHG8B));
+  for (int i=0; i <= lastAddrIndx; ++i)
+    (*MIB).addOperand(*argOpers[i]);
+
+  assert(bInstr->hasOneMemOperand() && "Unexpected number of memoperand");
+  (*MIB).addMemOperand(*F, *bInstr->memoperands_begin());
+
+  MIB = BuildMI(newMBB, TII->get(copyOpc), t3);
+  MIB.addReg(X86::EAX);
+  MIB = BuildMI(newMBB, TII->get(copyOpc), t4);
+  MIB.addReg(X86::EDX);
   
   // insert branch
   BuildMI(newMBB, TII->get(X86::JNE)).addMBB(newMBB);
@@ -6695,6 +6885,7 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
                                                X86::NOT8r, X86::AL,
                                                X86::GR8RegisterClass, true);
   // FIXME: There are no CMOV8 instructions; MIN/MAX need some other way.
+  // This group is for 64-bit host.
   case X86::ATOMAND64:
     return EmitAtomicBitwiseWithCustomInserter(MI, BB, X86::AND64rr,
                                                X86::AND64ri32, X86::MOV64rm, 
@@ -6727,6 +6918,40 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     return EmitAtomicMinMaxWithCustomInserter(MI, BB, X86::CMOVB64rr);
   case X86::ATOMUMAX64:
     return EmitAtomicMinMaxWithCustomInserter(MI, BB, X86::CMOVA64rr);
+
+  // This group does 64-bit operations on a 32-bit host.
+  case X86::ATOMAND6432:
+    return EmitAtomicBit6432WithCustomInserter(MI, BB, 
+                                               X86::AND32rr, X86::AND32rr,
+                                               X86::AND32ri, X86::AND32ri,
+                                               false);
+  case X86::ATOMOR6432:
+    return EmitAtomicBit6432WithCustomInserter(MI, BB, 
+                                               X86::OR32rr, X86::OR32rr,
+                                               X86::OR32ri, X86::OR32ri,
+                                               false);
+  case X86::ATOMXOR6432:
+    return EmitAtomicBit6432WithCustomInserter(MI, BB, 
+                                               X86::XOR32rr, X86::XOR32rr,
+                                               X86::XOR32ri, X86::XOR32ri,
+                                               false);
+  case X86::ATOMNAND6432:
+    return EmitAtomicBit6432WithCustomInserter(MI, BB, 
+                                               X86::AND32rr, X86::AND32rr,
+                                               X86::AND32ri, X86::AND32ri,
+                                               true);
+  // FIXME carry
+  case X86::ATOMADD6432:
+    return EmitAtomicBit6432WithCustomInserter(MI, BB, 
+                                               X86::ADD32rr, X86::ADC32rr,
+                                               X86::ADD32ri, X86::ADC32ri,
+                                               false);
+  // FIXME carry
+  case X86::ATOMSUB6432:
+    return EmitAtomicBit6432WithCustomInserter(MI, BB, 
+                                               X86::SUB32rr, X86::SBB32rr,
+                                               X86::SUB32ri, X86::SBB32ri,
+                                               false);
   }
 }
 

@@ -199,6 +199,15 @@ namespace llvm {
       LCMPXCHG_DAG,
       LCMPXCHG8_DAG,
 
+      // ATOMADD64_DAG, ATOMSUB64_DAG, ATOMOR64_DAG, ATOMAND64_DAG, 
+      // ATOMXOR64_DAG, ATOMNAND64_DAG - Atomic 64-bit binary operations.
+      ATOMADD64_DAG,
+      ATOMSUB64_DAG,
+      ATOMOR64_DAG,
+      ATOMXOR64_DAG,
+      ATOMAND64_DAG,
+      ATOMNAND64_DAG,
+
       // FNSTCW16m - Store FP control world into i16 memory.
       FNSTCW16m,
 
@@ -570,6 +579,8 @@ namespace llvm {
     SDValue LowerCTTZ(SDValue Op, SelectionDAG &DAG);
     SDValue LowerCMP_SWAP(SDValue Op, SelectionDAG &DAG);
     SDValue LowerLOAD_SUB(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerATOMIC_BINARY_64(SDValue Op, SelectionDAG &DAG, 
+                                  unsigned NewOp);
     SDNode *ExpandFP_TO_SINT(SDNode *N, SelectionDAG &DAG);
     SDNode *ExpandREADCYCLECOUNTER(SDNode *N, SelectionDAG &DAG);
     SDNode *ExpandATOMIC_CMP_SWAP(SDNode *N, SelectionDAG &DAG);
@@ -601,6 +612,15 @@ namespace llvm {
                                                     unsigned notOpc,
                                                     unsigned EAXreg,
                                                     TargetRegisterClass *RC,
+                                                    bool invSrc = false);
+
+    MachineBasicBlock *EmitAtomicBit6432WithCustomInserter(
+                                                    MachineInstr *BInstr,
+                                                    MachineBasicBlock *BB,
+                                                    unsigned regOpcL,
+                                                    unsigned regOpcH,
+                                                    unsigned immOpcL,
+                                                    unsigned immOpcH,
                                                     bool invSrc = false);
     
     /// Utility function to emit atomic min and max.  It takes the min/max

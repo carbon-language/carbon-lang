@@ -160,6 +160,7 @@ namespace {
 
   private:
     SDNode *Select(SDValue N);
+    SDNode *SelectAtomic64(SDNode *Node, unsigned Opc);
 
     bool MatchAddress(SDValue N, X86ISelAddressMode &AM,
                       bool isRoot = true, unsigned Depth = 0);
@@ -1205,6 +1206,25 @@ SDNode *X86DAGToDAGISel::getTruncateTo8Bit(SDValue N0) {
                                MVT::i8, N0, SRIdx, N0.getValue(1));
 }
 
+SDNode *X86DAGToDAGISel::SelectAtomic64(SDNode *Node, unsigned Opc) {
+  SDValue Chain = Node->getOperand(0);
+  SDValue In1 = Node->getOperand(1);
+  SDValue In2L = Node->getOperand(2);
+  SDValue In2H = Node->getOperand(3);
+  SDValue Tmp0, Tmp1, Tmp2, Tmp3;
+  if (!SelectAddr(In1, In1, Tmp0, Tmp1, Tmp2, Tmp3))
+    return NULL;
+  AddToISelQueue(Tmp0);
+  AddToISelQueue(Tmp1);
+  AddToISelQueue(Tmp2);
+  AddToISelQueue(Tmp3);
+  AddToISelQueue(In2L);
+  AddToISelQueue(In2H);
+  AddToISelQueue(Chain);
+  SDValue LSI = CurDAG->getMemOperand(cast<MemSDNode>(In1)->getMemOperand());
+  const SDValue Ops[] = { Tmp0, Tmp1, Tmp2, Tmp3, In2L, In2H, LSI, Chain };
+  return CurDAG->getTargetNode(Opc, MVT::i32, MVT::i32, MVT::Other, Ops, 8);
+}
 
 SDNode *X86DAGToDAGISel::Select(SDValue N) {
   SDNode *Node = N.getNode();
@@ -1276,6 +1296,19 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
       // Other cases are handled by auto-generated code.
       break;
     }
+
+    case X86ISD::ATOMOR64_DAG:
+      return SelectAtomic64(Node, X86::ATOMOR6432);
+    case X86ISD::ATOMXOR64_DAG:
+      return SelectAtomic64(Node, X86::ATOMXOR6432);
+    case X86ISD::ATOMADD64_DAG:
+      return SelectAtomic64(Node, X86::ATOMADD6432);
+    case X86ISD::ATOMSUB64_DAG:
+      return SelectAtomic64(Node, X86::ATOMSUB6432);
+    case X86ISD::ATOMNAND64_DAG:
+      return SelectAtomic64(Node, X86::ATOMNAND6432);
+    case X86ISD::ATOMAND64_DAG:
+      return SelectAtomic64(Node, X86::ATOMAND6432);
 
     case ISD::SMUL_LOHI:
     case ISD::UMUL_LOHI: {

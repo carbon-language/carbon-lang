@@ -39,6 +39,8 @@ def SDTX86cas : SDTypeProfile<0, 3, [SDTCisPtrTy<0>, SDTCisInt<1>,
                                      SDTCisVT<2, i8>]>;
 def SDTX86cas8 : SDTypeProfile<0, 1, [SDTCisPtrTy<0>]>;
 
+def SDTX86atomicBinary : SDTypeProfile<2, 3, [SDTCisInt<0>, SDTCisInt<1>,
+                                SDTCisPtrTy<2>, SDTCisInt<3>,SDTCisInt<4>]>;
 def SDTX86Ret     : SDTypeProfile<0, -1, [SDTCisVT<0, i16>]>;
 
 def SDT_X86CallSeqStart : SDCallSeqStart<[ SDTCisVT<0, i32> ]>;
@@ -79,7 +81,24 @@ def X86cas : SDNode<"X86ISD::LCMPXCHG_DAG", SDTX86cas,
 def X86cas8 : SDNode<"X86ISD::LCMPXCHG8_DAG", SDTX86cas8,
                         [SDNPHasChain, SDNPInFlag, SDNPOutFlag, SDNPMayStore,
                          SDNPMayLoad]>;
-
+def X86AtomAdd64 : SDNode<"X86ISD::ATOMADD64_DAG", SDTX86atomicBinary,
+                        [SDNPHasChain, SDNPMayStore, 
+                         SDNPMayLoad, SDNPMemOperand]>;
+def X86AtomSub64 : SDNode<"X86ISD::ATOMSUB64_DAG", SDTX86atomicBinary,
+                        [SDNPHasChain, SDNPMayStore, 
+                         SDNPMayLoad, SDNPMemOperand]>;
+def X86AtomOr64 : SDNode<"X86ISD::ATOMOR64_DAG", SDTX86atomicBinary,
+                        [SDNPHasChain, SDNPMayStore, 
+                         SDNPMayLoad, SDNPMemOperand]>;
+def X86AtomXor64 : SDNode<"X86ISD::ATOMXOR64_DAG", SDTX86atomicBinary,
+                        [SDNPHasChain, SDNPMayStore, 
+                         SDNPMayLoad, SDNPMemOperand]>;
+def X86AtomAnd64 : SDNode<"X86ISD::ATOMAND64_DAG", SDTX86atomicBinary,
+                        [SDNPHasChain, SDNPMayStore, 
+                         SDNPMayLoad, SDNPMemOperand]>;
+def X86AtomNand64 : SDNode<"X86ISD::ATOMNAND64_DAG", SDTX86atomicBinary,
+                        [SDNPHasChain, SDNPMayStore, 
+                         SDNPMayLoad, SDNPMemOperand]>;
 def X86retflag : SDNode<"X86ISD::RET_FLAG", SDTX86Ret,
                         [SDNPHasChain, SDNPOptInFlag]>;
 
@@ -2630,7 +2649,7 @@ def LCMPXCHG32 : I<0xB1, MRMDestMem, (outs), (ins i32mem:$ptr, GR32:$swap),
                "lock\n\tcmpxchg{l}\t{$swap, $ptr|$ptr, $swap}",
                [(X86cas addr:$ptr, GR32:$swap, 4)]>, TB, LOCK;
 }
-let Defs = [EAX, EBX, ECX, EDX, EFLAGS], Uses = [EAX, EBX, ECX, EDX] in {
+let Defs = [EAX, EDX, EFLAGS], Uses = [EAX, EBX, ECX, EDX] in {
 def LCMPXCHG8B : I<0xC7, MRM1m, (outs), (ins i32mem:$ptr),
                "lock\n\tcmpxchg8b\t$ptr",
                [(X86cas8 addr:$ptr)]>, TB, LOCK;
@@ -2728,6 +2747,30 @@ def ATOMXOR8 : I<0, Pseudo,(outs GR8:$dst),(ins i8mem:$ptr, GR8:$val),
 def ATOMNAND8 : I<0, Pseudo,(outs GR8:$dst),(ins i8mem:$ptr, GR8:$val),
                "#ATOMNAND8 PSUEDO!", 
                [(set GR8:$dst, (atomic_load_nand_8 addr:$ptr, GR8:$val))]>;
+}
+
+let Constraints = "$val1 = $dst1, $val2 = $dst2", 
+                  Defs = [EFLAGS, EAX, EBX, ECX, EDX],
+                  Uses = [EAX, EBX, ECX, EDX],
+                  usesCustomDAGSchedInserter = 1 in {
+def ATOMAND6432 : I<0, Pseudo, (outs GR32:$dst1, GR32:$dst2),
+                               (ins i64mem:$ptr, GR32:$val1, GR32:$val2),
+               "#ATOMAND6432 PSUEDO!", []>;
+def ATOMOR6432 : I<0, Pseudo, (outs GR32:$dst1, GR32:$dst2),
+                               (ins i64mem:$ptr, GR32:$val1, GR32:$val2),
+               "#ATOMOR6432 PSUEDO!", []>;
+def ATOMXOR6432 : I<0, Pseudo, (outs GR32:$dst1, GR32:$dst2),
+                               (ins i64mem:$ptr, GR32:$val1, GR32:$val2),
+               "#ATOMXOR6432 PSUEDO!", []>;
+def ATOMNAND6432 : I<0, Pseudo, (outs GR32:$dst1, GR32:$dst2),
+                               (ins i64mem:$ptr, GR32:$val1, GR32:$val2),
+               "#ATOMNAND6432 PSUEDO!", []>;
+def ATOMADD6432 : I<0, Pseudo, (outs GR32:$dst1, GR32:$dst2),
+                               (ins i64mem:$ptr, GR32:$val1, GR32:$val2),
+               "#ATOMADD6432 PSUEDO!", []>;
+def ATOMSUB6432 : I<0, Pseudo, (outs GR32:$dst1, GR32:$dst2),
+                               (ins i64mem:$ptr, GR32:$val1, GR32:$val2),
+               "#ATOMSUB6432 PSUEDO!", []>;
 }
 
 //===----------------------------------------------------------------------===//

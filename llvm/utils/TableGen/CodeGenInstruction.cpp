@@ -21,7 +21,8 @@ static void ParseConstraint(const std::string &CStr, CodeGenInstruction *I) {
   // FIXME: Only supports TIED_TO for now.
   std::string::size_type pos = CStr.find_first_of('=');
   assert(pos != std::string::npos && "Unrecognized constraint");
-  std::string Name = CStr.substr(0, pos);
+  std::string::size_type start = CStr.find_first_not_of(" \t");
+  std::string Name = CStr.substr(start, pos);
   
   // TIED_TO: $src1 = $dst
   std::string::size_type wpos = Name.find_first_of(" \t");
