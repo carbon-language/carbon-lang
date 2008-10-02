@@ -44,7 +44,7 @@ namespace {
     // Waiting stores, for each MBB, the set of copies that need to
     // be inserted into that MBB
     DenseMap<MachineBasicBlock*,
-             std::map<unsigned, unsigned> > Waiting;
+             std::multimap<unsigned, unsigned> > Waiting;
     
     // Stacks holds the renaming stack for each register
     std::map<unsigned, std::vector<unsigned> > Stacks;
@@ -647,9 +647,9 @@ void StrongPHIElimination::processPHIUnion(MachineInstr* Inst,
 void StrongPHIElimination::ScheduleCopies(MachineBasicBlock* MBB,
                                           std::set<unsigned>& pushed) {
   // FIXME: This function needs to update LiveIntervals
-  std::map<unsigned, unsigned>& copy_set= Waiting[MBB];
+  std::multimap<unsigned, unsigned>& copy_set= Waiting[MBB];
   
-  std::map<unsigned, unsigned> worklist;
+  std::multimap<unsigned, unsigned> worklist;
   std::map<unsigned, unsigned> map;
   
   // Setup worklist of initial copies
@@ -662,9 +662,9 @@ void StrongPHIElimination::ScheduleCopies(MachineBasicBlock* MBB,
       worklist.insert(*I);
       
       // Avoid iterator invalidation
-      unsigned first = I->first;
+      std::multimap<unsigned, unsigned>::iterator OI = I;
       ++I;
-      copy_set.erase(first);
+      copy_set.erase(OI);
     } else {
       ++I;
     }
@@ -680,8 +680,9 @@ void StrongPHIElimination::ScheduleCopies(MachineBasicBlock* MBB,
   // Iterate over the worklist, inserting copies
   while (!worklist.empty() || !copy_set.empty()) {
     while (!worklist.empty()) {
-      std::pair<unsigned, unsigned> curr = *worklist.begin();
-      worklist.erase(curr.first);
+      std::multimap<unsigned, unsigned>::iterator WI = worklist.begin();
+      std::pair<unsigned, unsigned> curr = *WI;
+      worklist.erase(WI);
       
       const TargetRegisterClass *RC = MF->getRegInfo().getRegClass(curr.first);
       
@@ -694,6 +695,8 @@ void StrongPHIElimination::ScheduleCopies(MachineBasicBlock* MBB,
         MachineBasicBlock::iterator PI = MRI.getVRegDef(curr.second);
         TII->copyRegToReg(*PI->getParent(), PI, t,
                           curr.second, RC, RC);
+        
+        DOUT << "Inserted copy from " << curr.second << " to " << t << "\n";
         
         // Push temporary on Stacks
         Stacks[curr.second].push_back(t);
@@ -709,6 +712,8 @@ void StrongPHIElimination::ScheduleCopies(MachineBasicBlock* MBB,
       TII->copyRegToReg(*MBB, MBB->getFirstTerminator(), curr.second,
                         map[curr.first], RC, RC);
       map[curr.first] = curr.second;
+      DOUT << "Inserted copy from " << curr.first << " to "
+           << curr.second << "\n";
       
       // Push this copy onto InsertedPHICopies so we can
       // update LiveIntervals with it.
@@ -716,15 +721,16 @@ void StrongPHIElimination::ScheduleCopies(MachineBasicBlock* MBB,
       InsertedPHIDests.push_back(std::make_pair(curr.second, --MI));
       
       // If curr.first is a destination in copy_set...
-      for (std::map<unsigned, unsigned>::iterator I = copy_set.begin(),
+      for (std::multimap<unsigned, unsigned>::iterator I = copy_set.begin(),
            E = copy_set.end(); I != E; )
         if (curr.first == I->second) {
           std::pair<unsigned, unsigned> temp = *I;
+          worklist.insert(temp);
           
           // Avoid iterator invalidation
+          std::multimap<unsigned, unsigned>::iterator OI = I;
           ++I;
-          copy_set.erase(temp.first);
-          worklist.insert(temp);
+          copy_set.erase(OI);
           
           break;
         } else {
@@ -733,9 +739,10 @@ void StrongPHIElimination::ScheduleCopies(MachineBasicBlock* MBB,
     }
     
     if (!copy_set.empty()) {
-      std::pair<unsigned, unsigned> curr = *copy_set.begin();
-      copy_set.erase(curr.first);
+      std::multimap<unsigned, unsigned>::iterator CI = copy_set.begin();
+      std::pair<unsigned, unsigned> curr = *CI;
       worklist.insert(curr);
+      copy_set.erase(CI);
       
       LiveInterval& I = LI.getInterval(curr.second);
       MachineBasicBlock::iterator term = MBB->getFirstTerminator();
