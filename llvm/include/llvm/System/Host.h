@@ -14,6 +14,8 @@
 #ifndef LLVM_SYSTEM_HOST_H
 #define LLVM_SYSTEM_HOST_H
 
+#include <string>
+
 namespace llvm {
 namespace sys {
 
@@ -30,6 +32,13 @@ namespace sys {
     return !littleEndianHost();
   }
 
+  /// osName() - Return the name of the host operating system or "" if
+  /// unknown.
+  std::string osName();
+
+  /// osVersion() - Return the operating system version as a string or
+  /// "" if unknown.
+  std::string osVersion();
 }
 }
 
