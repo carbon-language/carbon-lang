@@ -78,6 +78,9 @@ void test_arguments() {
   (1 ? c : c)('x');
 }
 
+static int global_x = 10;
+void (^global_block)(void) = ^{ printf("global x is %d\n", global_x); };
+
 #if 0
 // Old syntax. FIXME: convert/test.
 void test_byref() {

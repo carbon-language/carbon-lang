@@ -186,18 +186,18 @@ void RewriteBlocks::Initialize(ASTContext &context) {
   Rewrite.setSourceMgr(Context->getSourceManager());
   
   const char *s = "#pragma once\n"
-  "#ifndef CLOSURE_IMPL\n"
-  "struct __closure_impl {\n"
-  "  long Reserved;\n"
+  "#ifndef BLOCK_IMPL\n"
+  "struct __block_impl {\n"
+  "  void *isa;\n"
   "  int Flags;\n"
   "  int Size;\n"
-  "  void *Invoke;\n"
+  "  void *FuncPtr;\n"
   "};\n"
   "enum {\n"
-  "  HAS_NONPOD = (1<<25),\n"
-  "  HAS_BYREF = (1<<26)\n"
+  "  BLOCK_HAS_COPY_DISPOSE = (1<<25),\n"
+  "  BLOCK_IS_GLOBAL = (1<<28)\n"
   "};\n"
-  "#define CLOSURE_IMPL\n"
+  "#define BLOCK_IMPL\n"
   "#endif\n";
   if (IsHeader) {
     // insert the whole string when rewriting a header file
@@ -243,7 +243,7 @@ void RewriteBlocks::RewriteMethodDecl(ObjCMethodDecl *Method) {
   const char *endBuf = SM->getCharacterData(LocEnd);
 
   const char *methodPtr = startBuf;
-  std::string Tag = "struct __closure_impl *";
+  std::string Tag = "struct __block_impl *";
   
   while (*methodPtr++ && (methodPtr != endBuf)) {
     switch (*methodPtr) {
@@ -405,7 +405,7 @@ std::string RewriteBlocks::SynthesizeBlockFunc(BlockExpr *CE, int i,
     //   };
     //
     if (isBlockPointerType((*I)->getType()))
-      S += "struct __closure_impl *";
+      S += "struct __block_impl *";
     else
       (*I)->getType().getAsStringInternal(Name);
     S += Name + " = __cself->" + (*I)->getName() + "; // bound by copy\n";
@@ -471,7 +471,7 @@ std::string RewriteBlocks::SynthesizeBlockFunc(BlockExpr *CE, int i,
 
 std::string RewriteBlocks::SynthesizeBlockImpl(BlockExpr *CE, 
                                                    std::string Tag) {
-  std::string S = Tag + " {\n  struct __closure_impl impl;\n";
+  std::string S = Tag + " {\n  struct __block_impl impl;\n";
   
   GetBlockDeclRefExprs(CE);
   if (BlockDeclRefs.size()) {
@@ -500,7 +500,7 @@ std::string RewriteBlocks::SynthesizeBlockImpl(BlockExpr *CE,
       //   };
       //
       if (isBlockPointerType((*I)->getType()))
-        S += "struct __closure_impl *";
+        S += "struct __block_impl *";
       else 
         (*I)->getType().getAsStringInternal(Name);
       S += Name + ";\n";
@@ -511,7 +511,7 @@ std::string RewriteBlocks::SynthesizeBlockImpl(BlockExpr *CE,
       S += "  ";
       std::string Name = (*I)->getName();
       if (isBlockPointerType((*I)->getType()))
-        S += "struct __closure_impl *";
+        S += "struct __block_impl *";
       else 
         Context->getPointerType((*I)->getType()).getAsStringInternal(Name);
       S += Name + "; // by ref\n";
@@ -702,7 +702,7 @@ std::string RewriteBlocks::SynthesizeBlockCall(CallExpr *Exp) {
 
   // Synthesize the cast.  
   BlockCall += "(" + Exp->getType().getAsString() + "(*)";
-  BlockCall += "(struct __closure_impl *";
+  BlockCall += "(struct __block_impl *";
   if (FTP) {
     for (FunctionTypeProto::arg_type_iterator I = FTP->arg_type_begin(), 
          E = FTP->arg_type_end(); I && (I != E); ++I)
@@ -755,7 +755,7 @@ void RewriteBlocks::RewriteBlockPointerFunctionArgs(FunctionDecl *FD) {
   const char *topLevelCommaCursor = 0;
   const char *argPtr = startArgList;
   bool scannedBlockDecl = false;
-  std::string Tag = "struct __closure_impl *";
+  std::string Tag = "struct __block_impl *";
   
   while (*argPtr++ && parenCount) {
     switch (*argPtr) {
@@ -925,7 +925,7 @@ void RewriteBlocks::RewriteBlockExpr(BlockExpr *Exp) {
   
   // Rewrite the closure block with a compound literal. The first cast is
   // to prevent warnings from the C compiler.
-  std::string Init = "(struct __closure_impl *)&(" + Tag + "){{0,";
+  std::string Init = "(struct __block_impl *)&(" + Tag + "){{0,";
   
   // Initialize the Flags, Size, and Invoke fields.
   Init += (haveByRefDecls ? "HAS_BYREF," : "0,");

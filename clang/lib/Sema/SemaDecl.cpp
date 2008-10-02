@@ -1286,6 +1286,10 @@ bool Sema::CheckForConstantInitializer(Expr *Init, QualType DclT) {
   if (Init->getType()->isFunctionType())
     return false;
 
+  // Allow block exprs at top level.
+  if (Init->getType()->isBlockPointerType())
+    return false;
+    
   Diag(Init->getExprLoc(), diag::err_init_element_not_constant,
        Init->getSourceRange());
   return true;
