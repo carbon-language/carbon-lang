@@ -57,6 +57,8 @@ class RewriteBlocks : public ASTConsumer {
   bool IsHeader;
   std::string InFileName;
   std::string OutFileName;
+  
+  std::string Preamble;
 public:
   RewriteBlocks(std::string inFile, std::string outFile, Diagnostic &D, 
                 const LangOptions &LOpts);
@@ -185,29 +187,35 @@ void RewriteBlocks::Initialize(ASTContext &context) {
   
   Rewrite.setSourceMgr(Context->getSourceManager());
   
-  const char *s = "#pragma once\n"
-  "#ifndef BLOCK_IMPL\n"
-  "struct __block_impl {\n"
-  "  void *isa;\n"
-  "  int Flags;\n"
-  "  int Size;\n"
-  "  void *FuncPtr;\n"
-  "};\n"
-  "enum {\n"
-  "  BLOCK_HAS_COPY_DISPOSE = (1<<25),\n"
-  "  BLOCK_IS_GLOBAL = (1<<28)\n"
-  "};\n"
-  "#define BLOCK_IMPL\n"
-  "#endif\n";
-  if (IsHeader) {
-    // insert the whole string when rewriting a header file
-    InsertText(SourceLocation::getFileLoc(MainFileID, 0), s, strlen(s));
-  }
-  else {
-    // Not rewriting header, exclude the #pragma once pragma
-    const char *p = s + strlen("#pragma once\n");
-    InsertText(SourceLocation::getFileLoc(MainFileID, 0), p, strlen(p));
-  }
+  if (IsHeader)
+    Preamble = "#pragma once\n";
+  Preamble += "#ifndef BLOCK_IMPL\n";
+  Preamble += "#define BLOCK_IMPL\n";
+  Preamble += "struct __block_impl {\n";
+  Preamble += "  void *isa;\n";
+  Preamble += "  int Flags;\n";
+  Preamble += "  int Size;\n";
+  Preamble += "  void *FuncPtr;\n";
+  Preamble += "};\n";
+  Preamble += "enum {\n";
+  Preamble += "  BLOCK_HAS_COPY_DISPOSE = (1<<25),\n";
+  Preamble += "  BLOCK_IS_GLOBAL = (1<<28)\n";
+  Preamble += "};\n";
+  if (LangOpts.Microsoft) 
+    Preamble += "#define __OBJC_RW_EXTERN extern \"C\" __declspec(dllimport)\n";
+  else
+    Preamble += "#define __OBJC_RW_EXTERN extern\n";
+  Preamble += "// Runtime copy/destroy helper functions\n";
+  Preamble += "__OBJC_RW_EXTERN void _Block_copy_assign(void *, void *);\n";
+  Preamble += "__OBJC_RW_EXTERN void _Block_byref_assign_copy(void *, void *);\n";
+  Preamble += "__OBJC_RW_EXTERN void _Block_destroy(void *);\n";
+  Preamble += "__OBJC_RW_EXTERN void _Block_byref_release(void *);\n";
+  Preamble += "__OBJC_RW_EXTERN void _NSConcreteGlobalBlock;\n";
+  Preamble += "__OBJC_RW_EXTERN void _NSConcreteStackBlock;\n";
+  Preamble += "#endif\n";
+  
+  InsertText(SourceLocation::getFileLoc(MainFileID, 0), 
+             Preamble.c_str(), Preamble.size());
 }
 
 void RewriteBlocks::InsertText(SourceLocation Loc, const char *StrData, 
@@ -348,7 +356,7 @@ std::string RewriteBlocks::SynthesizeBlockFunc(BlockExpr *CE, int i,
   const FunctionType *AFT = CE->getFunctionType();
   QualType RT = AFT->getResultType();
   std::string S = "static " + RT.getAsString() + " __" +
-                  funcName + "_" + "closure_" + utostr(i);
+                  funcName + "_" + "block_func_" + utostr(i);
 
   if (isa<FunctionTypeNoProto>(AFT)) {
     S += "()";
@@ -527,7 +535,7 @@ void RewriteBlocks::SynthesizeBlockLiterals(SourceLocation FunLocStart,
   for (unsigned i = 0; i < Blocks.size(); i++) {
   
     std::string Tag = "struct __" + std::string(FunName) + 
-                      "_closure_impl_" + utostr(i);
+                      "_block_impl_" + utostr(i);
                       
     std::string CI = SynthesizeBlockImpl(Blocks[i], Tag);
 
@@ -920,8 +928,8 @@ void RewriteBlocks::RewriteBlockExpr(BlockExpr *Exp) {
   }
   std::string BlockNumber = utostr(Blocks.size()-1);
   
-  std::string Tag = "struct __" + FuncName + "_closure_impl_" + BlockNumber;
-  std::string Func = "__" + FuncName + "_" + "closure_" + BlockNumber;
+  std::string Tag = "struct __" + FuncName + "_block_impl_" + BlockNumber;
+  std::string Func = "__" + FuncName + "_block_func_" + BlockNumber;
   
   // Rewrite the closure block with a compound literal. The first cast is
   // to prevent warnings from the C compiler.
