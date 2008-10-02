@@ -628,17 +628,6 @@ static void HandleMacOSVersionMin(std::string &Triple) {
   }
   unsigned DarwinNumIdx = DarwinDashIdx + strlen("-darwin");
   
-  // Validate that there is a number after the "-darwin" and nothing else.
-  bool IsValidDarwinNumber = Triple.size() != DarwinNumIdx;
-  for (unsigned i = DarwinNumIdx; i != Triple.size(); ++i)
-    if ((Triple[i] < '0' || Triple[i] > '9') && Triple[i] != '.')
-      IsValidDarwinNumber = false;
-  if (!IsValidDarwinNumber) {
-    fprintf(stderr, "invalid darwin target triple '%s' expected number\n", 
-            Triple.c_str());
-    exit(1);
-  }
-  
   // Remove the number.
   Triple.resize(DarwinNumIdx);
 
