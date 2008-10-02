@@ -45,14 +45,14 @@ class IdentifierInfo {
   // Note: DON'T make TokenID a 'tok::TokenKind'; MSVC will treat it as a
   //       signed char and TokenKinds > 127 won't be handled correctly.
   unsigned TokenID            : 8; // Front-end token ID or tok::identifier. 
-  unsigned BuiltinID          : 9; // ID if this is a builtin (__builtin_inf).
+  unsigned BuiltinID          :10; // ID if this is a builtin (__builtin_inf).
   // NOTE: VC++ treats enums as signed, avoid using tok::ObjCKeywordKind enum
   unsigned ObjCID             : 5; // ID for objc @ keyword like @'protocol'.
   bool HasMacro               : 1; // True if there is a #define for this.
   bool IsExtension            : 1; // True if identifier is a lang extension.
   bool IsPoisoned             : 1; // True if identifier is poisoned.
   bool IsCPPOperatorKeyword   : 1; // True if ident is a C++ operator keyword.
-  // 6 bits left in 32-bit word.
+  // 5 bits left in 32-bit word.
   void *FETokenInfo;               // Managed by the language front-end.
   IdentifierInfo(const IdentifierInfo&);  // NONCOPYABLE.
   void operator=(const IdentifierInfo&);  // NONASSIGNABLE.
