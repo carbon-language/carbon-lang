@@ -707,6 +707,7 @@ static void ResolveTypeTo(std::string *Name, const Type *ToTy) {
     ((DerivedType*)I->second.get())->refineAbstractTypeTo(ToTy);
     CurModule.LateResolveTypes.erase(I);
   }
+  D.destroy();
 }
 
 // setValueName - Set the specified value to the name given.  The name may be
@@ -782,8 +783,11 @@ ParseGlobalVariable(std::string *NameStr,
     GV->setConstant(isConstantGlobal);
     GV->setThreadLocal(IsThreadLocal);
     InsertValue(GV, CurModule.Values);
+    ID.destroy();
     return GV;
   }
+
+  ID.destroy();
 
   // If this global has a name
   if (!Name.empty()) {
