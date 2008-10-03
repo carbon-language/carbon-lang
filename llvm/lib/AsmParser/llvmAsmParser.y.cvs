@@ -2420,6 +2420,7 @@ FunctionHeaderH : OptCallingConv OptRetAttrs ResultTypes GlobalName '(' ArgList 
     InsertValue(Fn, CurModule.Values);
   }
 
+  ID.destroy();
   CurFun.FunctionStart(Fn);
 
   if (CurFun.isDeclare) {
