@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 // Developed by:                   Bernhard Scholz
-//                             The Univesity of Sydney
+//                             The University of Sydney
 //                         http://www.it.usyd.edu.au/~scholz
 //===----------------------------------------------------------------------===//
 

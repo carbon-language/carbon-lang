@@ -120,7 +120,7 @@ namespace {
     PBQPVector* buildCostVector(const Container &allowed,
                                 PBQPNum spillCost) const;
 
-    //! \brief Builds a PBQP interfernce matrix.
+    //! \brief Builds a PBQP interference matrix.
     //!
     //! @return Either a pointer to a non-zero PBQP matrix representing the
     //!         allocation option costs, or a null pointer for a zero matrix.
@@ -142,7 +142,7 @@ namespace {
                                       const Container &allowed2,
                                       PBQPNum cBenefit) const;
 
-    //! \brief Helper functior for constructInitialPBQPProblem().
+    //! \brief Helper function for constructInitialPBQPProblem().
     //!
     //! This function iterates over the Function we are about to allocate for
     //! and computes spill costs.
@@ -281,8 +281,8 @@ void PBQPRegAlloc::calcSpillCosts() {
         assert ((mo.isUse() || mo.isDef()) &&
                 "Not a use, not a def, what is it?");
 
-	//... Just the virtual registers. We treat loads and stores as equal.
-	li->getInterval(moReg).weight += powf(10.0f, loopDepth);
+        //... Just the virtual registers. We treat loads and stores as equal.
+        li->getInterval(moReg).weight += powf(10.0f, loopDepth);
       }
 
     }

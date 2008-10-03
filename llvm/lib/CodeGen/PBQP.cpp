@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 // Developed by:                   Bernhard Scholz
-//                             The Univesity of Sydney
+//                             The University of Sydney
 //                         http://www.it.usyd.edu.au/~scholz
 //===----------------------------------------------------------------------===//
 
@@ -56,13 +56,13 @@ struct pbqp {
 
                              /* node fields */
   PBQPVector **node_costs;   /* cost vectors of nodes */
-  int *node_deg;	     /* node degree of nodes */
-  int *solution;	     /* solution for node */
+  int *node_deg;             /* node degree of nodes */
+  int *solution;             /* solution for node */
   adjnode **adj_list;        /* adj. list */
   bucketnode **bucket_ptr;   /* bucket pointer of a node */
 
                              /* node stack */
-  int *stack;	             /* stack of nodes */
+  int *stack;                /* stack of nodes */
   int stack_ptr;             /* stack pointer */
 
                              /* bucket fields */
@@ -161,8 +161,8 @@ void free_pbqp(pbqp *this_)
     for(adj_ptr = this_->adj_list[u]; adj_ptr != NULL; adj_ptr = adj_next) {
       adj_next = adj_ptr -> succ;
       if (u < adj_ptr->adj) {
-	assert(adj_ptr != NULL);
-	delete adj_ptr->costs;
+        assert(adj_ptr != NULL);
+        delete adj_ptr->costs;
       }
       if (adj_ptr -> tc_safe_regs != NULL) {
            free(adj_ptr -> tc_safe_regs);
@@ -814,7 +814,7 @@ void eliminate_independent_edges(pbqp *this_)
       v = adj_ptr -> adj;
       assert(v >= 0 && v < this_->num_nodes);
       if (u < v) {
-	simplify_edge(this_,u,v);
+        simplify_edge(this_,u,v);
       } 
     }
   }
@@ -1328,9 +1328,9 @@ void check_pbqp(pbqp *this_)
       v = adj_ptr -> adj;
       assert( v>= 0 && v < this_->num_nodes);
       if (u < v ) {
-	costs = adj_ptr -> costs;
-	assert( costs->getRows() == this_->node_costs[u]->getLength() &&
-		costs->getCols() == this_->node_costs[v]->getLength());
+        costs = adj_ptr -> costs;
+        assert( costs->getRows() == this_->node_costs[u]->getLength() &&
+                costs->getCols() == this_->node_costs[v]->getLength());
       }           
     }
   }
