@@ -318,7 +318,14 @@ ifeq ($(LLVM_CROSS_COMPILING),1)
 endif
 
 ObjRootDir  := $(PROJ_OBJ_DIR)/$(BuildMode)
-ObjDir      := $(ObjRootDir)/$(TargetMode)
+# It is very important that ObjDir not have an extra trailing
+# slash. This ends up changing the rules so that dependency file (.d)
+# information is not used at all!
+ifeq ($(TargetMode),)
+  ObjDir      := $(ObjRootDir)
+else
+  ObjDir      := $(ObjRootDir)/$(TargetMode)
+endif
 LibDir      := $(PROJ_OBJ_ROOT)/$(BuildMode)/$(TargetMode)/lib
 ToolDir     := $(PROJ_OBJ_ROOT)/$(BuildMode)/$(TargetMode)/bin
 ExmplDir    := $(PROJ_OBJ_ROOT)/$(BuildMode)/$(TargetMode)/examples
