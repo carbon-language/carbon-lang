@@ -14,6 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "internalize"
+#include "llvm/Analysis/CallGraph.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Pass.h"
 #include "llvm/Module.h"
@@ -55,6 +56,7 @@ namespace {
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesCFG();
+      AU.addPreserved<CallGraph>();
     }
   };
 } // end anonymous namespace
@@ -96,6 +98,9 @@ void InternalizePass::LoadFile(const char *Filename) {
 }
 
 bool InternalizePass::runOnModule(Module &M) {
+  CallGraph *CG = getAnalysisToUpdate<CallGraph>();
+  CallGraphNode *ExternalNode = CG ? CG->getExternalCallingNode() : 0;
+
   if (ExternalNames.empty()) {
     // Return if we're not in 'all but main' mode and have no external api
     if (!AllButMain)
@@ -120,6 +125,8 @@ bool InternalizePass::runOnModule(Module &M) {
         !I->hasInternalLinkage() &&  // Can't already have internal linkage
         !ExternalNames.count(I->getName())) {// Not marked to keep external?
       I->setLinkage(GlobalValue::InternalLinkage);
+      // Remove a callgraph edge from the external node to this function.
+      if (ExternalNode) ExternalNode->removeOneAbstractEdgeTo((*CG)[I]);
       Changed = true;
       ++NumFunctions;
       DOUT << "Internalizing func " << I->getName() << "\n";

@@ -225,10 +225,14 @@ public:
   /// should be used sparingly.
   void removeCallEdgeFor(CallSite CS);
 
-  /// removeAnyCallEdgeTo - This method removes any call edges from this node to
-  /// the specified callee function.  This takes more time to execute than
+  /// removeAnyCallEdgeTo - This method removes all call edges from this node
+  /// to the specified callee function.  This takes more time to execute than
   /// removeCallEdgeTo, so it should not be used unless necessary.
   void removeAnyCallEdgeTo(CallGraphNode *Callee);
+
+  /// removeOneAbstractEdgeTo - Remove one edge associated with a null callsite
+  /// from this node to the specified callee function.
+  void removeOneAbstractEdgeTo(CallGraphNode *Callee);
 
   /// replaceCallSite - Make the edge in the node for Old CallSite be for
   /// New CallSite instead.  Note that this method takes linear time, so it

@@ -282,6 +282,19 @@ void CallGraphNode::removeAnyCallEdgeTo(CallGraphNode *Callee) {
     }
 }
 
+/// removeOneAbstractEdgeTo - Remove one edge associated with a null callsite
+/// from this node to the specified callee function.
+void CallGraphNode::removeOneAbstractEdgeTo(CallGraphNode *Callee) {
+  for (unsigned i = CalledFunctions.size(); ; --i) {
+    assert(i && "Cannot find callee to remove!");
+    CallRecord &CR = CalledFunctions[i-1];
+    if (CR.second == Callee && !CR.first.getInstruction()) {
+      CalledFunctions.erase(CalledFunctions.begin()+i-1);
+      return;
+    }
+  }
+}
+
 /// replaceCallSite - Make the edge in the node for Old CallSite be for
 /// New CallSite instead.  Note that this method takes linear time, so it
 /// should be used sparingly.
