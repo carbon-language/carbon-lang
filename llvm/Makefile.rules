@@ -195,6 +195,11 @@ install-bytecode:: install-bytecode-local
 # VARIABLES: Set up various variables based on configuration data
 ###############################################################################
 
+# Variable for if this make is for a "cleaning" target
+ifneq ($(strip $(filter clean clean-local dist-clean,$(MAKECMDGOALS))),)
+  IS_CLEANING_TARGET=1
+endif
+
 #--------------------------------------------------------------------
 # Variables derived from configuration we are building
 #--------------------------------------------------------------------
@@ -739,7 +744,7 @@ LLVMUsedLibs    := $(patsubst %.a.o, lib%.a, $(addsuffix .o, $(LLVMLIBS)))
 LLVMLibsPaths   := $(addprefix $(LLVMLibDir)/,$(LLVMUsedLibs))
 endif
 
-ifeq ($(strip $(filter clean clean-local dist-clean,$(MAKECMDGOALS))),)
+ifndef IS_CLEANING_TARGET
 ifdef LINK_COMPONENTS
 
 # If LLVM_CONFIG doesn't exist, build it.  This can happen if you do a make
@@ -1507,7 +1512,7 @@ clean-all-local::
 ifndef DISABLE_AUTO_DEPENDENCIES
 
 # If its not one of the cleaning targets
-ifneq ($(strip $(filter-out clean clean-local dist-clean,$(MAKECMDGOALS))),)
+ifndef IS_CLEANING_TARGET
 
 # Get the list of dependency files
 DependFiles := $(basename $(filter %.cpp %.c %.cc, $(Sources)))
