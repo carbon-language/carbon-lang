@@ -472,12 +472,6 @@ std::string RewriteBlocks::SynthesizeBlockFunc(BlockExpr *CE, int i,
         }
       }
     }
-    if (haveByRefDecls) {
-      // Remove |...|.
-      //const char *firstBarPtr = strchr(BodyStartBuf, '|');
-      //const char *secondBarPtr = strchr(firstBarPtr+1, '|');
-      //BodyBuf.replace(firstBarPtr-BodyStartBuf, secondBarPtr-firstBarPtr+1, "");
-    } 
     S += "  ";
     S += BodyBuf;
   }
