@@ -1305,6 +1305,8 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
       return SelectAtomic64(Node, X86::ATOMNAND6432);
     case X86ISD::ATOMAND64_DAG:
       return SelectAtomic64(Node, X86::ATOMAND6432);
+    case X86ISD::ATOMSWAP64_DAG:
+      return SelectAtomic64(Node, X86::ATOMSWAP6432);
 
     case ISD::SMUL_LOHI:
     case ISD::UMUL_LOHI: {

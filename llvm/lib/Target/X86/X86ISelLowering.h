@@ -200,13 +200,15 @@ namespace llvm {
       LCMPXCHG8_DAG,
 
       // ATOMADD64_DAG, ATOMSUB64_DAG, ATOMOR64_DAG, ATOMAND64_DAG, 
-      // ATOMXOR64_DAG, ATOMNAND64_DAG - Atomic 64-bit binary operations.
+      // ATOMXOR64_DAG, ATOMNAND64_DAG, ATOMSWAP64_DAG - 
+      // Atomic 64-bit binary operations.
       ATOMADD64_DAG,
       ATOMSUB64_DAG,
       ATOMOR64_DAG,
       ATOMXOR64_DAG,
       ATOMAND64_DAG,
       ATOMNAND64_DAG,
+      ATOMSWAP64_DAG,
 
       // FNSTCW16m - Store FP control world into i16 memory.
       FNSTCW16m,

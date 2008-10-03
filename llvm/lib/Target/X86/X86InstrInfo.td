@@ -99,6 +99,9 @@ def X86AtomAnd64 : SDNode<"X86ISD::ATOMAND64_DAG", SDTX86atomicBinary,
 def X86AtomNand64 : SDNode<"X86ISD::ATOMNAND64_DAG", SDTX86atomicBinary,
                         [SDNPHasChain, SDNPMayStore, 
                          SDNPMayLoad, SDNPMemOperand]>;
+def X86AtomSwap64 : SDNode<"X86ISD::ATOMSWAP64_DAG", SDTX86atomicBinary,
+                        [SDNPHasChain, SDNPMayStore, 
+                         SDNPMayLoad, SDNPMemOperand]>;
 def X86retflag : SDNode<"X86ISD::RET_FLAG", SDTX86Ret,
                         [SDNPHasChain, SDNPOptInFlag]>;
 
@@ -2772,6 +2775,9 @@ def ATOMADD6432 : I<0, Pseudo, (outs GR32:$dst1, GR32:$dst2),
 def ATOMSUB6432 : I<0, Pseudo, (outs GR32:$dst1, GR32:$dst2),
                                (ins i64mem:$ptr, GR32:$val1, GR32:$val2),
                "#ATOMSUB6432 PSUEDO!", []>;
+def ATOMSWAP6432 : I<0, Pseudo, (outs GR32:$dst1, GR32:$dst2),
+                               (ins i64mem:$ptr, GR32:$val1, GR32:$val2),
+               "#ATOMSWAP6432 PSUEDO!", []>;
 }
 
 //===----------------------------------------------------------------------===//

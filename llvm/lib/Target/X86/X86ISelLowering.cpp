@@ -6069,19 +6069,21 @@ SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   case ISD::ATOMIC_LOAD_SUB_16: 
   case ISD::ATOMIC_LOAD_SUB_32: return LowerLOAD_SUB(Op,DAG);
   case ISD::ATOMIC_LOAD_SUB_64: return (Subtarget->is64Bit()) ?
-                                  LowerLOAD_SUB(Op,DAG) :
-                                  LowerATOMIC_BINARY_64(Op,DAG,
+                                        LowerLOAD_SUB(Op,DAG) :
+                                        LowerATOMIC_BINARY_64(Op,DAG,
                                         X86ISD::ATOMSUB64_DAG);
   case ISD::ATOMIC_LOAD_AND_64: return LowerATOMIC_BINARY_64(Op,DAG,
                                         X86ISD::ATOMAND64_DAG);
-  case ISD::ATOMIC_LOAD_OR_64: return LowerATOMIC_BINARY_64(Op, DAG,
+  case ISD::ATOMIC_LOAD_OR_64:  return LowerATOMIC_BINARY_64(Op, DAG,
                                         X86ISD::ATOMOR64_DAG);
   case ISD::ATOMIC_LOAD_XOR_64: return LowerATOMIC_BINARY_64(Op,DAG,
                                         X86ISD::ATOMXOR64_DAG);
-  case ISD::ATOMIC_LOAD_NAND_64: return LowerATOMIC_BINARY_64(Op,DAG,
+  case ISD::ATOMIC_LOAD_NAND_64:return LowerATOMIC_BINARY_64(Op,DAG,
                                         X86ISD::ATOMNAND64_DAG);
   case ISD::ATOMIC_LOAD_ADD_64: return LowerATOMIC_BINARY_64(Op,DAG,
                                         X86ISD::ATOMADD64_DAG);
+  case ISD::ATOMIC_SWAP_64:     return LowerATOMIC_BINARY_64(Op,DAG,
+                                        X86ISD::ATOMSWAP64_DAG);
   case ISD::BUILD_VECTOR:       return LowerBUILD_VECTOR(Op, DAG);
   case ISD::VECTOR_SHUFFLE:     return LowerVECTOR_SHUFFLE(Op, DAG);
   case ISD::EXTRACT_VECTOR_ELT: return LowerEXTRACT_VECTOR_ELT(Op, DAG);
@@ -6433,6 +6435,7 @@ X86TargetLowering::EmitAtomicBit6432WithCustomInserter(MachineInstr *bInstr,
   //   newMBB:
   //     out1, out2 = phi (thisMBB, t1/t2) (newMBB, t3/t4)
   //     op  t5, t6 <- out1, out2, [bitinstr.val]
+  //      (for SWAP, substitute:  mov t5, t6 <- [bitinstr.val])
   //     mov ECX, EBX <- t5, t6
   //     mov EAX, EDX <- t1, t2
   //     cmpxchg8b [bitinstr.addr]  [EAX, EDX, EBX, ECX implicit]
@@ -6486,10 +6489,14 @@ X86TargetLowering::EmitAtomicBit6432WithCustomInserter(MachineInstr *bInstr,
     (*MIB).addOperand(*argOpers[i]);
   unsigned t2 = F->getRegInfo().createVirtualRegister(RC);
   MIB = BuildMI(thisMBB, TII->get(LoadOpc), t2);
-  // add 4 to displacement.  getImm verifies it's immediate.
+  // add 4 to displacement.
   for (int i=0; i <= lastAddrIndx-1; ++i)
     (*MIB).addOperand(*argOpers[i]);
-  MachineOperand newOp3 = MachineOperand::CreateImm(argOpers[3]->getImm()+4);
+  MachineOperand newOp3 = *(argOpers[3]);
+  if (newOp3.isImm())
+    newOp3.setImm(newOp3.getImm()+4);
+  else
+    newOp3.setOffset(newOp3.getOffset()+4);
   (*MIB).addOperand(newOp3);
 
   // t3/4 are defined later, at the bottom of the loop
@@ -6518,7 +6525,8 @@ X86TargetLowering::EmitAtomicBit6432WithCustomInserter(MachineInstr *bInstr,
     MIB = BuildMI(newMBB, TII->get(regOpcL), t5);
   else
     MIB = BuildMI(newMBB, TII->get(immOpcL), t5);
-  MIB.addReg(tt1);
+  if (regOpcL != X86::MOV32rr)
+    MIB.addReg(tt1);
   (*MIB).addOperand(*argOpers[4]);
   assert(argOpers[5]->isReg() == argOpers[4]->isReg());
   assert(argOpers[5]->isImm() == argOpers[4]->isImm());
@@ -6526,7 +6534,8 @@ X86TargetLowering::EmitAtomicBit6432WithCustomInserter(MachineInstr *bInstr,
     MIB = BuildMI(newMBB, TII->get(regOpcH), t6);
   else
     MIB = BuildMI(newMBB, TII->get(immOpcH), t6);
-  MIB.addReg(tt2);
+  if (regOpcH != X86::MOV32rr)
+    MIB.addReg(tt2);
   (*MIB).addOperand(*argOpers[5]);
 
   MIB = BuildMI(newMBB, TII->get(copyOpc), X86::EAX);
@@ -6943,17 +6952,20 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
                                                X86::AND32rr, X86::AND32rr,
                                                X86::AND32ri, X86::AND32ri,
                                                true);
-  // FIXME carry
   case X86::ATOMADD6432:
     return EmitAtomicBit6432WithCustomInserter(MI, BB, 
                                                X86::ADD32rr, X86::ADC32rr,
                                                X86::ADD32ri, X86::ADC32ri,
                                                false);
-  // FIXME carry
   case X86::ATOMSUB6432:
     return EmitAtomicBit6432WithCustomInserter(MI, BB, 
                                                X86::SUB32rr, X86::SBB32rr,
                                                X86::SUB32ri, X86::SBB32ri,
+                                               false);
+  case X86::ATOMSWAP6432:
+    return EmitAtomicBit6432WithCustomInserter(MI, BB, 
+                                               X86::MOV32rr, X86::MOV32rr,
+                                               X86::MOV32ri, X86::MOV32ri,
                                                false);
   }
 }
