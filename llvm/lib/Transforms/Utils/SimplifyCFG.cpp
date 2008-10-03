@@ -1051,7 +1051,7 @@ static bool SpeculativelyExecuteBB(BranchInst *BI, BasicBlock *BB1) {
   BasicBlock::iterator InsertPos = BI;
   if (InsertPos != BIParent->begin()) 
     --InsertPos;
-  if (InsertPos == BrCond) {
+  if (InsertPos == BrCond && !isa<PHINode>(BrCond)) {
     SmallPtrSet<Instruction *, 4> BB1Insns;
     for(BasicBlock::iterator BB1I = BB1->begin(), BB1E = BB1->end(); 
         BB1I != BB1E; ++BB1I) 
