@@ -554,7 +554,7 @@ void RewriteBlocks::SynthesizeBlockLiterals(SourceLocation FunLocStart,
 }
 
 void RewriteBlocks::InsertBlockLiteralsWithinFunction(FunctionDecl *FD) {
-  SourceLocation FunLocStart = FD->getLocation();
+  SourceLocation FunLocStart = FD->getTypeSpecStartLoc();
   const char *FuncName = FD->getName();
   
   SynthesizeBlockLiterals(FunLocStart, FuncName);
