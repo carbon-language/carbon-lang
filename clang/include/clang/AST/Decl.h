@@ -230,19 +230,25 @@ private:
   unsigned SClass : 3;
   bool ThreadSpecified : 1;
   
+  // Move to DeclGroup when it is implemented.
+  SourceLocation TypeSpecStartLoc;
   friend class StmtIteratorBase;
 protected:
   VarDecl(Kind DK, DeclContext *DC, SourceLocation L, IdentifierInfo *Id,
-          QualType T, StorageClass SC, ScopedDecl *PrevDecl)
+          QualType T, StorageClass SC, ScopedDecl *PrevDecl, 
+          SourceLocation TSSL = SourceLocation())
     : ValueDecl(DK, DC, L, Id, T, PrevDecl), Init(0),
-          ThreadSpecified(false) { SClass = SC; }
+          ThreadSpecified(false), TypeSpecStartLoc(TSSL) { SClass = SC; }
 public:
   static VarDecl *Create(ASTContext &C, DeclContext *DC,
                          SourceLocation L, IdentifierInfo *Id,
-                         QualType T, StorageClass S, ScopedDecl *PrevDecl);
+                         QualType T, StorageClass S, ScopedDecl *PrevDecl,
+                         SourceLocation TypeSpecStartLoc = SourceLocation());
   
   StorageClass getStorageClass() const { return (StorageClass)SClass; }
 
+  SourceLocation getTypeSpecStartLoc() const { return TypeSpecStartLoc; }
+  
   const Expr *getInit() const { return (const Expr*) Init; }
   Expr *getInit() { return (Expr*) Init; }
   void setInit(Expr *I) { Init = (Stmt*) I; }
@@ -416,14 +422,17 @@ private:
   bool IsInline : 1;
   bool IsImplicit : 1;
 
+  // Move to DeclGroup when it is implemented.
+  SourceLocation TypeSpecStartLoc;
 protected:
   FunctionDecl(Kind DK, DeclContext *DC, SourceLocation L,
                IdentifierInfo *Id, QualType T,
-               StorageClass S, bool isInline, ScopedDecl *PrevDecl)
+               StorageClass S, bool isInline, ScopedDecl *PrevDecl,
+               SourceLocation TSSL = SourceLocation())
     : ValueDecl(DK, DC, L, Id, T, PrevDecl), 
       DeclContext(DK),
       ParamInfo(0), Body(0), PreviousDeclaration(0),
-      SClass(S), IsInline(isInline), IsImplicit(0) {}
+      SClass(S), IsInline(isInline), IsImplicit(0), TypeSpecStartLoc(TSSL) {}
 
   virtual ~FunctionDecl();
   virtual void Destroy(ASTContext& C);
@@ -432,8 +441,11 @@ public:
   static FunctionDecl *Create(ASTContext &C, DeclContext *DC, SourceLocation L,
                               IdentifierInfo *Id, QualType T, 
                               StorageClass S = None, bool isInline = false, 
-                              ScopedDecl *PrevDecl = 0);  
+                              ScopedDecl *PrevDecl = 0,
+                              SourceLocation TSStartLoc = SourceLocation());  
   
+  SourceLocation getTypeSpecStartLoc() const { return TypeSpecStartLoc; }
+
   /// getBody - Retrieve the body (definition) of the function. The
   /// function body might be in any of the (re-)declarations of this
   /// function. The variant that accepts a FunctionDecl pointer will

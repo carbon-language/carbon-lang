@@ -51,9 +51,10 @@ ImplicitParamDecl *ImplicitParamDecl::Create(ASTContext &C, DeclContext *DC,
 VarDecl *VarDecl::Create(ASTContext &C, DeclContext *DC,
                          SourceLocation L,
                          IdentifierInfo *Id, QualType T,
-                         StorageClass S, ScopedDecl *PrevDecl) {
+                         StorageClass S, ScopedDecl *PrevDecl,
+                         SourceLocation TypeSpecStartLoc) {
   void *Mem = C.getAllocator().Allocate<VarDecl>();
-  return new (Mem) VarDecl(Var, DC, L, Id, T, S, PrevDecl);
+  return new (Mem) VarDecl(Var, DC, L, Id, T, S, PrevDecl, TypeSpecStartLoc);
 }
 
 ParmVarDecl *ParmVarDecl::Create(ASTContext &C, DeclContext *DC,
@@ -68,9 +69,11 @@ FunctionDecl *FunctionDecl::Create(ASTContext &C, DeclContext *DC,
                                    SourceLocation L, 
                                    IdentifierInfo *Id, QualType T, 
                                    StorageClass S, bool isInline, 
-                                   ScopedDecl *PrevDecl) {
+                                   ScopedDecl *PrevDecl,
+                                   SourceLocation TypeSpecStartLoc) {
   void *Mem = C.getAllocator().Allocate<FunctionDecl>();
-  return new (Mem) FunctionDecl(Function, DC, L, Id, T, S, isInline, PrevDecl);
+  return new (Mem) FunctionDecl(Function, DC, L, Id, T, S, isInline, PrevDecl,
+                                TypeSpecStartLoc);
 }
 
 FieldDecl *FieldDecl::Create(ASTContext &C, SourceLocation L,

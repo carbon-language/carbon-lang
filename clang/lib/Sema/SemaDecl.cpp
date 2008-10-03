@@ -661,8 +661,9 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
     } else {
       NewFD = FunctionDecl::Create(Context, CurContext,
                                    D.getIdentifierLoc(),
-                                   II, R, SC, isInline,
-                                   LastDeclarator);
+                                   II, R, SC, isInline, LastDeclarator,
+                                   // FIXME: Move to DeclGroup...
+                                   D.getDeclSpec().getSourceRange().getBegin());
     }
     // Handle attributes.
     ProcessDeclAttributes(NewFD, D);
@@ -766,7 +767,9 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
         }
       }
         NewVD = VarDecl::Create(Context, CurContext, D.getIdentifierLoc(), 
-                                II, R, SC, LastDeclarator);
+                                II, R, SC, LastDeclarator,
+                                // FIXME: Move to DeclGroup...
+                                D.getDeclSpec().getSourceRange().getBegin());
         NewVD->setThreadSpecified(ThreadSpecified);
     }
     // Handle attributes prior to checking for duplicates in MergeVarDecl
