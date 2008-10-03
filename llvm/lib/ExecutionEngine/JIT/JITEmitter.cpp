@@ -233,16 +233,25 @@ unsigned JITResolver::getGOTIndexForAddr(void* addr) {
 /// it if necessary, then returns the resultant function pointer.
 void *JITResolver::JITCompilerFn(void *Stub) {
   JITResolver &JR = *TheJITResolver;
+  
+  Function* F = 0;
+  void* ActualPtr = 0;
 
-  MutexGuard locked(TheJIT->lock);
+  {
+    // Only lock for getting the Function. The call getPointerToFunction made
+    // in this function might trigger function materializing, which requires
+    // JIT lock to be unlocked.
+    MutexGuard locked(TheJIT->lock);
 
-  // The address given to us for the stub may not be exactly right, it might be
-  // a little bit after the stub.  As such, use upper_bound to find it.
-  std::map<void*, Function*>::iterator I =
-    JR.state.getStubToFunctionMap(locked).upper_bound(Stub);
-  assert(I != JR.state.getStubToFunctionMap(locked).begin() &&
-         "This is not a known stub!");
-  Function *F = (--I)->second;
+    // The address given to us for the stub may not be exactly right, it might be
+    // a little bit after the stub.  As such, use upper_bound to find it.
+    std::map<void*, Function*>::iterator I =
+      JR.state.getStubToFunctionMap(locked).upper_bound(Stub);
+    assert(I != JR.state.getStubToFunctionMap(locked).begin() &&
+           "This is not a known stub!");
+    F = (--I)->second;
+    ActualPtr = I->first;
+  }
 
   // If we have already code generated the function, just return the address.
   void *Result = TheJIT->getPointerToGlobalIfAvailable(F);
@@ -266,10 +275,13 @@ void *JITResolver::JITCompilerFn(void *Stub) {
 
     DOUT << "JIT: Lazily resolving function '" << F->getName()
          << "' In stub ptr = " << Stub << " actual ptr = "
-         << I->first << "\n";
+         << ActualPtr << "\n";
 
     Result = TheJIT->getPointerToFunction(F);
   }
+  
+  // Reacquire the lock to erase the stub in the map.
+  MutexGuard locked(TheJIT->lock);
 
   // We don't need to reuse this stub in the future, as F is now compiled.
   JR.state.getFunctionToStubMap(locked).erase(F);
