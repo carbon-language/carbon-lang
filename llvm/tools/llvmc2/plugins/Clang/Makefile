@@ -9,5 +9,5 @@
 
 LLVMC_PLUGIN = Clang
 
-include ../Makefile.plugins
+include ../Makefile
 

@@ -9,4 +9,4 @@
 
 LLVMC_PLUGIN = Base
 
-include ../Makefile.plugins
+include ../Makefile

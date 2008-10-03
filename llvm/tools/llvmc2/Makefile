@@ -11,10 +11,9 @@ LEVEL = ../..
 
 BUILTIN_PLUGINS = Base
 DRIVER_NAME = llvmc2
-DIRS = $(patsubst %,plugins/%,$(BUILTIN_PLUGINS)) src
+DIRS = plugins src
 
 export BUILTIN_PLUGINS
 export DRIVER_NAME
-export BUILTIN_LLVMC_PLUGIN=1
 
 include $(LEVEL)/Makefile.common
