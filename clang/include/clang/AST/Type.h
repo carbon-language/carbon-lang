@@ -92,6 +92,13 @@ public:
     ThePtr |= Quals;
   }
 
+  QualType(const Type *Ptr, unsigned Quals) {
+    assert((Quals & ~CVRFlags) == 0 && "Invalid type qualifiers!");
+    ThePtr = reinterpret_cast<uintptr_t>(Ptr);
+    assert((ThePtr & CVRFlags) == 0 && "Type pointer not 8-byte aligned?");
+    ThePtr |= Quals;
+  }
+
   static QualType getFromOpaquePtr(void *Ptr) {
     QualType T;
     T.ThePtr = reinterpret_cast<uintptr_t>(Ptr);

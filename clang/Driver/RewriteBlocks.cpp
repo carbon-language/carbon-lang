@@ -540,7 +540,7 @@ std::string RewriteBlocks::SynthesizeBlockImpl(BlockExpr *CE, std::string Tag) {
     // Finish writing the constructor.
     // FIXME: handle NSConcreteGlobalBlock.
     Constructor += ", int flags=0) {\n";
-    Constructor += "    impl.isa = &_NSConcreteStackBlock;\n    impl.Size = sizeof(";
+    Constructor += "    impl.isa = 0/*&_NSConcreteStackBlock*/;\n    impl.Size = sizeof(";
     Constructor += Tag + ");\n    impl.Flags = flags;\n    impl.FuncPtr = fp;\n";
     
     // Initialize all "by copy" arguments.
@@ -559,10 +559,16 @@ std::string RewriteBlocks::SynthesizeBlockImpl(BlockExpr *CE, std::string Tag) {
       Constructor += Name + " = _";
       Constructor += Name + ";\n";
     }
-    Constructor += "  ";
-    Constructor += "}\n";
-    S += Constructor;
+  } else {
+    // Finish writing the constructor.
+    // FIXME: handle NSConcreteGlobalBlock.
+    Constructor += ", int flags=0) {\n";
+    Constructor += "    impl.isa = 0/*&_NSConcreteStackBlock*/;\n    impl.Size = sizeof(";
+    Constructor += Tag + ");\n    impl.Flags = flags;\n    impl.FuncPtr = fp;\n";
   }
+  Constructor += "  ";
+  Constructor += "}\n";
+  S += Constructor;
   S += "};\n";
   return S;
 }
@@ -654,6 +660,17 @@ void RewriteBlocks::HandleDeclInMainFile(Decl *D) {
       RewriteBlockPointerDecl(TD);
     return;
   }
+  if (RecordDecl *RD = dyn_cast<RecordDecl>(D)) {
+    if (RD->isDefinition()) {
+      for (RecordDecl::field_const_iterator i = RD->field_begin(), 
+             e = RD->field_end(); i != e; ++i) {
+        FieldDecl *FD = *i;
+        if (isBlockPointerType(FD->getType()))
+          RewriteBlockPointerDecl(FD);
+      }
+    }
+    return;
+  }
 }
 
 void RewriteBlocks::GetBlockDeclRefExprs(Stmt *S) {
@@ -733,6 +750,9 @@ std::string RewriteBlocks::SynthesizeBlockCall(CallExpr *Exp) {
   } else if (BlockDeclRefExpr *CDRE = dyn_cast<BlockDeclRefExpr>(Exp->getCallee())) {
     closureName = CDRE->getDecl()->getName();
     CPT = CDRE->getType()->getAsBlockPointerType();
+  } else if (MemberExpr *MExpr = dyn_cast<MemberExpr>(Exp->getCallee())) {
+    closureName = MExpr->getMemberDecl()->getName();
+    CPT = MExpr->getType()->getAsBlockPointerType();
   } else {
     assert(1 && "RewriteBlockClass: Bad type");
   }
@@ -755,12 +775,17 @@ std::string RewriteBlocks::SynthesizeBlockCall(CallExpr *Exp) {
   }
   BlockCall += "))"; // close the argument list and paren expression.
   
-  // Invoke the closure.
-  BlockCall += closureName;
-  BlockCall += "->Invoke)";
+  // Invoke the closure. We need to cast it since the declaration type is
+  // bogus (it's a function pointer type)
+  BlockCall += "((struct __block_impl *)";
+  std::string closureExprBufStr;
+  llvm::raw_string_ostream closureExprBuf(closureExprBufStr);
+  Exp->getCallee()->printPretty(closureExprBuf);
+  BlockCall += closureExprBuf.str();
+  BlockCall += ")->FuncPtr)";
   
   // Add the arguments.
-  BlockCall += "(";
+  BlockCall += "((struct __block_impl *)";
   BlockCall += closureName;
   for (CallExpr::arg_iterator I = Exp->arg_begin(), 
        E = Exp->arg_end(); I != E; ++I) {
@@ -903,6 +928,8 @@ void RewriteBlocks::RewriteBlockPointerDecl(NamedDecl *ND) {
     DeclT = VD->getType();
   else if (TypedefDecl *TDD = dyn_cast<TypedefDecl>(ND))
     DeclT = TDD->getUnderlyingType();
+  else if (FieldDecl *FD = dyn_cast<FieldDecl>(ND))
+    DeclT = FD->getType();
   else 
     assert(0 && "RewriteBlockPointerDecl(): Decl type not yet handled");
     
@@ -965,16 +992,22 @@ void RewriteBlocks::RewriteBlockExpr(BlockExpr *Exp) {
   }
   std::string BlockNumber = utostr(Blocks.size()-1);
   
-  std::string Tag = "struct __" + FuncName + "_block_impl_" + BlockNumber;
+  std::string Tag = "__" + FuncName + "_block_impl_" + BlockNumber;
   std::string Func = "__" + FuncName + "_block_func_" + BlockNumber;
+  
+  std::string FunkTypeStr;
+  
+  // Get a pointer to the function type so we can cast appropriately.
+  Context->getPointerType(QualType(Exp->getFunctionType(),0)).getAsStringInternal(FunkTypeStr);
   
   // Rewrite the closure block with a compound literal. The first cast is
   // to prevent warnings from the C compiler.
-  std::string Init = "(struct __block_impl *)&(" + Tag + "){{0,";
+  std::string Init = "(" + FunkTypeStr;
   
-  // Initialize the Flags, Size, and Invoke fields.
-  Init += (haveByRefDecls ? "HAS_BYREF," : "0,");
-  Init += "sizeof(" + Tag + ")," + Func + "}";
+  Init += ")&" + Tag;
+  
+  // Initialize the block function.
+  Init += "((void*)" + Func;
   
   // Add initializers for any closure decl refs.
   if (BlockDeclRefs.size()) {
@@ -997,7 +1030,7 @@ void RewriteBlocks::RewriteBlockExpr(BlockExpr *Exp) {
       Init += (*I)->getName();
     }
   }
-  Init += "}";
+  Init += ")";
   BlockDeclRefs.clear();
   BlockByRefDecls.clear();
   BlockByCopyDecls.clear();
