@@ -365,10 +365,14 @@ SDValue DAGTypeLegalizer::PromoteIntRes_SELECT_CC(SDNode *N) {
 }
 
 SDValue DAGTypeLegalizer::PromoteIntRes_SETCC(SDNode *N) {
-  assert(isTypeLegal(TLI.getSetCCResultType(N->getOperand(0)))
-         && "SetCC type is not legal??");
-  return DAG.getNode(ISD::SETCC, TLI.getSetCCResultType(N->getOperand(0)),
-                     N->getOperand(0), N->getOperand(1), N->getOperand(2));
+  MVT NVT = TLI.getTypeToTransformTo(N->getValueType(0));
+  MVT SVT = TLI.getSetCCResultType(N->getOperand(0));
+  assert(isTypeLegal(SVT) && "SetCC type not legal??");
+  assert(NVT.getSizeInBits() <= SVT.getSizeInBits() &&
+         "Integer type overpromoted?");
+  return DAG.getNode(ISD::TRUNCATE, NVT,
+                     DAG.getNode(ISD::SETCC, SVT, N->getOperand(0),
+                                 N->getOperand(1), N->getOperand(2)));
 }
 
 SDValue DAGTypeLegalizer::PromoteIntRes_SHL(SDNode *N) {
