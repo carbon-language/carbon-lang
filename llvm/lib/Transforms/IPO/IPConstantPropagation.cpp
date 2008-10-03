@@ -170,10 +170,6 @@ bool IPCP::PropagateConstantReturn(Function &F) {
   unsigned NumNonConstant = 0;
   for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
     if (ReturnInst *RI = dyn_cast<ReturnInst>(BB->getTerminator())) {
-      // Return type does not match operand type, this is an old style multiple
-      // return
-      bool OldReturn = (F.getReturnType() != RI->getOperand(0)->getType());
-
       for (unsigned i = 0, e = RetVals.size(); i != e; ++i) {
         // Already found conflicting return values?
         Value *RV = RetVals[i];
@@ -182,7 +178,7 @@ bool IPCP::PropagateConstantReturn(Function &F) {
 
         // Find the returned value
         Value *V;
-        if (!STy || OldReturn)
+        if (!STy)
           V = RI->getOperand(i);
         else
           V = FindInsertedValue(RI->getOperand(0), i);
