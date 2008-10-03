@@ -51,14 +51,10 @@ class VISIBILITY_HIDDEN PIC16DAGToDAGISel : public SelectionDAGISel {
   /// TM - Keep a reference to PIC16TargetMachine.
   PIC16TargetMachine &TM;
 
-  /// PIC16Lowering - This object fully describes how to lower LLVM code to an
-  /// PIC16-specific SelectionDAG.
-  PIC16TargetLowering PIC16Lowering;
-
 public:
   explicit PIC16DAGToDAGISel(PIC16TargetMachine &tm) : 
-        SelectionDAGISel(PIC16Lowering),
-        TM(tm), PIC16Lowering(*TM.getTargetLowering()) {}
+        SelectionDAGISel(*tm.getTargetLowering()),
+        TM(tm) {}
   
   virtual void InstructionSelect();
 

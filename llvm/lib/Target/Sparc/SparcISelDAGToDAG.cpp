@@ -29,14 +29,12 @@ using namespace llvm;
 ///
 namespace {
 class SparcDAGToDAGISel : public SelectionDAGISel {
-  SparcTargetLowering Lowering;
-
   /// Subtarget - Keep a pointer to the Sparc Subtarget around so that we can
   /// make the right decision when generating code for different targets.
   const SparcSubtarget &Subtarget;
 public:
-  explicit SparcDAGToDAGISel(TargetMachine &TM)
-    : SelectionDAGISel(Lowering), Lowering(TM),
+  explicit SparcDAGToDAGISel(SparcTargetMachine &TM)
+    : SelectionDAGISel(*TM.getTargetLowering()),
       Subtarget(TM.getSubtarget<SparcSubtarget>()) {
   }
 
@@ -189,6 +187,6 @@ SDNode *SparcDAGToDAGISel::Select(SDValue Op) {
 /// createSparcISelDag - This pass converts a legalized DAG into a 
 /// SPARC-specific DAG, ready for instruction scheduling.
 ///
-FunctionPass *llvm::createSparcISelDag(TargetMachine &TM) {
+FunctionPass *llvm::createSparcISelDag(SparcTargetMachine &TM) {
   return new SparcDAGToDAGISel(TM);
 }

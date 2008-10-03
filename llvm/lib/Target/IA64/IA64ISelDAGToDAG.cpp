@@ -37,11 +37,10 @@ namespace {
   /// instructions for SelectionDAG operations.
   ///
   class IA64DAGToDAGISel : public SelectionDAGISel {
-    IA64TargetLowering IA64Lowering;
     unsigned GlobalBaseReg;
   public:
     explicit IA64DAGToDAGISel(IA64TargetMachine &TM)
-      : SelectionDAGISel(IA64Lowering), IA64Lowering(*TM.getTargetLowering()) {}
+      : SelectionDAGISel(*TM.getTargetLowering()) {}
     
     virtual bool runOnFunction(Function &Fn) {
       // Make sure we re-emit a set of the global base reg if necessary

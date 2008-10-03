@@ -113,7 +113,7 @@ namespace {
 
     /// X86Lowering - This object fully describes how to lower LLVM code to an
     /// X86-specific SelectionDAG.
-    X86TargetLowering X86Lowering;
+    X86TargetLowering &X86Lowering;
 
     /// Subtarget - Keep a pointer to the X86Subtarget around so that we can
     /// make the right decision when generating code for different targets.
@@ -129,7 +129,7 @@ namespace {
 
   public:
     X86DAGToDAGISel(X86TargetMachine &tm, bool fast)
-      : SelectionDAGISel(X86Lowering, fast),
+      : SelectionDAGISel(*tm.getTargetLowering(), fast),
         TM(tm), X86Lowering(*TM.getTargetLowering()),
         Subtarget(&TM.getSubtarget<X86Subtarget>()),
         OptForSize(false) {}

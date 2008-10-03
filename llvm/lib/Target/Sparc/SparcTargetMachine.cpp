@@ -30,7 +30,7 @@ const TargetAsmInfo *SparcTargetMachine::createTargetAsmInfo() const {
 ///
 SparcTargetMachine::SparcTargetMachine(const Module &M, const std::string &FS)
   : DataLayout("E-p:32:32-f128:128:128"),
-    Subtarget(M, FS), InstrInfo(Subtarget),
+    Subtarget(M, FS), TLInfo(*this), InstrInfo(Subtarget),
     FrameInfo(TargetFrameInfo::StackGrowsDown, 8, 0) {
 }
 

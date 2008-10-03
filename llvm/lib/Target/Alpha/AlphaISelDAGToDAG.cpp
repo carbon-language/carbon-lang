@@ -40,8 +40,6 @@ namespace {
   /// AlphaDAGToDAGISel - Alpha specific code to select Alpha machine
   /// instructions for SelectionDAG operations.
   class AlphaDAGToDAGISel : public SelectionDAGISel {
-    AlphaTargetLowering AlphaLowering;
-
     static const int64_t IMM_LOW  = -32768;
     static const int64_t IMM_HIGH = 32767;
     static const int64_t IMM_MULT = 65536;
@@ -147,8 +145,7 @@ namespace {
 
   public:
     explicit AlphaDAGToDAGISel(AlphaTargetMachine &TM)
-      : SelectionDAGISel(AlphaLowering), 
-        AlphaLowering(*TM.getTargetLowering())
+      : SelectionDAGISel(*TM.getTargetLowering())
     {}
 
     /// getI64Imm - Return a target constant with the specified value, of type

@@ -41,12 +41,12 @@ namespace {
   ///
   class VISIBILITY_HIDDEN PPCDAGToDAGISel : public SelectionDAGISel {
     PPCTargetMachine &TM;
-    PPCTargetLowering PPCLowering;
+    PPCTargetLowering &PPCLowering;
     const PPCSubtarget &PPCSubTarget;
     unsigned GlobalBaseReg;
   public:
     explicit PPCDAGToDAGISel(PPCTargetMachine &tm)
-      : SelectionDAGISel(PPCLowering), TM(tm),
+      : SelectionDAGISel(*tm.getTargetLowering()), TM(tm),
         PPCLowering(*TM.getTargetLowering()),
         PPCSubTarget(*TM.getSubtargetImpl()) {}
     

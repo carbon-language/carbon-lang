@@ -52,19 +52,14 @@ class VISIBILITY_HIDDEN MipsDAGToDAGISel : public SelectionDAGISel {
   /// TM - Keep a reference to MipsTargetMachine.
   MipsTargetMachine &TM;
 
-  /// MipsLowering - This object fully describes how to lower LLVM code to an
-  /// Mips-specific SelectionDAG.
-  MipsTargetLowering MipsLowering;
-
   /// Subtarget - Keep a pointer to the MipsSubtarget around so that we can
   /// make the right decision when generating code for different targets.
   const MipsSubtarget &Subtarget;
  
 public:
   explicit MipsDAGToDAGISel(MipsTargetMachine &tm) :
-  SelectionDAGISel(MipsLowering),
-  TM(tm), MipsLowering(*TM.getTargetLowering()), 
-  Subtarget(tm.getSubtarget<MipsSubtarget>()) {}
+  SelectionDAGISel(*tm.getTargetLowering()),
+  TM(tm), Subtarget(tm.getSubtarget<MipsSubtarget>()) {}
   
   virtual void InstructionSelect();
 
