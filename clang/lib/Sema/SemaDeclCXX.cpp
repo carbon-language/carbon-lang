@@ -461,7 +461,7 @@ void Sema::ActOnFinishCXXMemberSpecification(Scope* S, SourceLocation RLoc,
                                              SourceLocation RBrac) {
   ActOnFields(S, RLoc, TagDecl,
               (DeclTy**)FieldCollector->getCurFields(),
-              FieldCollector->getCurNumFields(), LBrac, RBrac);
+              FieldCollector->getCurNumFields(), LBrac, RBrac, 0);
 }
 
 void Sema::ActOnFinishCXXClassDef(DeclTy *D) {

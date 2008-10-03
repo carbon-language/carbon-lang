@@ -492,6 +492,8 @@ ASTContext::getASTObjCInterfaceLayout(const ObjCInterfaceDecl *D) {
 /// specified record (struct/union/class), which indicates its size and field
 /// position information.
 const ASTRecordLayout &ASTContext::getASTRecordLayout(const RecordDecl *D) {
+  fprintf(stderr, "%p\n", D->getAttr<PackedAttr>());
+
   D = D->getDefinition(*this);
   assert(D && "Cannot get layout of forward declarations!");
 

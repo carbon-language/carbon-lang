@@ -205,7 +205,8 @@ namespace {
   
     virtual void ActOnFields(Scope* S, SourceLocation RecLoc, DeclTy *TagDecl,
                              DeclTy **Fields, unsigned NumFields, 
-                             SourceLocation LBrac, SourceLocation RBrac) {
+                             SourceLocation LBrac, SourceLocation RBrac,
+                             AttributeList *AttrList) {
       llvm::cout << __FUNCTION__ << "\n";
     }
   

@@ -900,7 +900,7 @@ void Parser::ParseObjCClassInstanceVariables(DeclTy *interfaceDecl,
   // for code rewriting tools that need to be aware of the empty list.
   Actions.ActOnFields(CurScope, atLoc, interfaceDecl,
                       &AllIvarDecls[0], AllIvarDecls.size(),
-                      LBraceLoc, RBraceLoc);
+                      LBraceLoc, RBraceLoc, 0);
   return;
 }
 
