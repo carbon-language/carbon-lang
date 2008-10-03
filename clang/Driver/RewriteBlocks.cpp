@@ -210,8 +210,8 @@ void RewriteBlocks::Initialize(ASTContext &context) {
   Preamble += "__OBJC_RW_EXTERN void _Block_byref_assign_copy(void *, void *);\n";
   Preamble += "__OBJC_RW_EXTERN void _Block_destroy(void *);\n";
   Preamble += "__OBJC_RW_EXTERN void _Block_byref_release(void *);\n";
-  Preamble += "__OBJC_RW_EXTERN void _NSConcreteGlobalBlock;\n";
-  Preamble += "__OBJC_RW_EXTERN void _NSConcreteStackBlock;\n";
+  Preamble += "__OBJC_RW_EXTERN void *_NSConcreteGlobalBlock;\n";
+  Preamble += "__OBJC_RW_EXTERN void *_NSConcreteStackBlock;\n";
   Preamble += "#endif\n";
   
   InsertText(SourceLocation::getFileLoc(MainFileID, 0), 
@@ -355,19 +355,20 @@ std::string RewriteBlocks::SynthesizeBlockFunc(BlockExpr *CE, int i,
                                                    std::string Tag) {
   const FunctionType *AFT = CE->getFunctionType();
   QualType RT = AFT->getResultType();
+  std::string StructRef = "struct " + Tag;
   std::string S = "static " + RT.getAsString() + " __" +
                   funcName + "_" + "block_func_" + utostr(i);
 
   if (isa<FunctionTypeNoProto>(AFT)) {
     S += "()";
   } else if (CE->arg_empty()) {
-    S += "(" + Tag + " *__cself)";
+    S += "(" + StructRef + " *__cself)";
   } else {
     const FunctionTypeProto *FT = cast<FunctionTypeProto>(AFT);
     assert(FT && "SynthesizeBlockFunc: No function proto");
     S += '(';
     // first add the implicit argument.
-    S += Tag + " *__cself, ";
+    S += StructRef + " *__cself, ";
     std::string ParamStr;
     for (BlockExpr::arg_iterator AI = CE->arg_begin(),
          E = CE->arg_end(); AI != E; ++AI) {
@@ -477,9 +478,12 @@ std::string RewriteBlocks::SynthesizeBlockFunc(BlockExpr *CE, int i,
   return S;
 }
 
-std::string RewriteBlocks::SynthesizeBlockImpl(BlockExpr *CE, 
-                                                   std::string Tag) {
-  std::string S = Tag + " {\n  struct __block_impl impl;\n";
+std::string RewriteBlocks::SynthesizeBlockImpl(BlockExpr *CE, std::string Tag) {
+  std::string S = "struct " + Tag;
+  std::string Constructor = "  " + Tag;
+  
+  S += " {\n  struct __block_impl impl;\n";
+  Constructor += "(void *fp";
   
   GetBlockDeclRefExprs(CE);
   if (BlockDeclRefs.size()) {
@@ -497,6 +501,7 @@ std::string RewriteBlocks::SynthesizeBlockImpl(BlockExpr *CE,
          E = BlockByCopyDecls.end(); I != E; ++I) {
       S += "  ";
       std::string Name = (*I)->getName();
+      std::string ArgName = "_" + Name;
       // Handle nested closure invocation. For example:
       //
       //   void (^myImportedBlock)(void);
@@ -509,8 +514,11 @@ std::string RewriteBlocks::SynthesizeBlockImpl(BlockExpr *CE,
       //
       if (isBlockPointerType((*I)->getType()))
         S += "struct __block_impl *";
-      else 
+      else {
         (*I)->getType().getAsStringInternal(Name);
+        (*I)->getType().getAsStringInternal(ArgName);
+      }
+      Constructor += ", " + ArgName;
       S += Name + ";\n";
     }
     // Output all "by ref" declarations.
@@ -518,12 +526,42 @@ std::string RewriteBlocks::SynthesizeBlockImpl(BlockExpr *CE,
          E = BlockByRefDecls.end(); I != E; ++I) {
       S += "  ";
       std::string Name = (*I)->getName();
+      std::string ArgName = "_" + Name;
+      
       if (isBlockPointerType((*I)->getType()))
         S += "struct __block_impl *";
-      else 
+      else {
         Context->getPointerType((*I)->getType()).getAsStringInternal(Name);
+        Context->getPointerType((*I)->getType()).getAsStringInternal(ArgName);
+      }
+      Constructor += ", " + ArgName;
       S += Name + "; // by ref\n";
-    }    
+    }
+    // Finish writing the constructor.
+    // FIXME: handle NSConcreteGlobalBlock.
+    Constructor += ", int flags=0) {\n";
+    Constructor += "    impl.isa = &_NSConcreteStackBlock;\n    impl.Size = sizeof(";
+    Constructor += Tag + ");\n    impl.Flags = flags;\n    impl.FuncPtr = fp;\n";
+    
+    // Initialize all "by copy" arguments.
+    for (llvm::SmallPtrSet<ValueDecl*,8>::iterator I = BlockByCopyDecls.begin(), 
+         E = BlockByCopyDecls.end(); I != E; ++I) {
+      std::string Name = (*I)->getName();
+      Constructor += "    ";
+      Constructor += Name + " = _";
+      Constructor += Name + ";\n";
+    }
+    // Initialize all "by ref" arguments.
+    for (llvm::SmallPtrSet<ValueDecl*,8>::iterator I = BlockByRefDecls.begin(), 
+         E = BlockByRefDecls.end(); I != E; ++I) {
+      std::string Name = (*I)->getName();
+      Constructor += "    ";
+      Constructor += Name + " = _";
+      Constructor += Name + ";\n";
+    }
+    Constructor += "  ";
+    Constructor += "}\n";
+    S += Constructor;
   }
   S += "};\n";
   return S;
@@ -534,8 +572,7 @@ void RewriteBlocks::SynthesizeBlockLiterals(SourceLocation FunLocStart,
   // Insert closures that were part of the function.
   for (unsigned i = 0; i < Blocks.size(); i++) {
   
-    std::string Tag = "struct __" + std::string(FunName) + 
-                      "_block_impl_" + utostr(i);
+    std::string Tag = "__" + std::string(FunName) + "_block_impl_" + utostr(i);
                       
     std::string CI = SynthesizeBlockImpl(Blocks[i], Tag);
 
