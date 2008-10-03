@@ -1,4 +1,4 @@
-##===- tools/llvmc2/Makefile -------------------------------*- Makefile -*-===##
+##===- tools/llvmc2/src/Makefile ---------------------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -7,14 +7,13 @@
 #
 ##===----------------------------------------------------------------------===##
 
-LEVEL = ../..
+LEVEL = ../../..
+TOOLNAME = $(DRIVER_NAME)
+LINK_COMPONENTS = support system
+REQUIRES_EH := 1
 
-BUILTIN_PLUGINS = Base
-DRIVER_NAME = llvmc2
-DIRS = $(patsubst %,plugins/%,$(BUILTIN_PLUGINS)) src
-
-export BUILTIN_PLUGINS
-export DRIVER_NAME
-export BUILTIN_LLVMC_PLUGIN=1
+ifneq ($(BUILTIN_PLUGINS),)
+USEDLIBS = $(patsubst %,LLVMC%,$(BUILTIN_PLUGINS))
+endif
 
 include $(LEVEL)/Makefile.common

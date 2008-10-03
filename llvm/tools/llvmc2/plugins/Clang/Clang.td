@@ -1,7 +1,7 @@
 // A (first stab at a) replacement for the Clang's ccc script.
 // To compile, use this command:
 //    cd $LLVMC2_DIR
-//    make TOOLNAME=ccc2 BUILTIN_PLUGINS=Clang
+//    make DRIVER_NAME=ccc2 BUILTIN_PLUGINS=Clang
 
 include "llvm/CompilerDriver/Common.td"
 
