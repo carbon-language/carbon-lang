@@ -416,7 +416,7 @@ void Verifier::VerifyAttrs(Attributes Attrs, const Type *Ty,
     Assert1(!RetI, "Attribute " + Attribute::getAsString(RetI) +
             " does not apply to return values!", V);
   } else {
-    Attributes ParmI = Attrs & Attribute::ReturnOnly;
+    Attributes ParmI = Attrs & Attribute::FunctionOnly;
     Assert1(!ParmI, "Attribute " + Attribute::getAsString(ParmI) +
             " only applies to return values!", V);
   }
@@ -477,6 +477,10 @@ void Verifier::VerifyFunctionAttrs(const FunctionType *FT,
   }
 
   Attributes FAttrs = Attrs.getFnAttributes();
+  Assert1(!(FAttrs & (!Attribute::FunctionOnly)),
+          "Attribute " + Attribute::getAsString(FAttrs) +
+          " does not apply to function!", V);
+      
   for (unsigned i = 0;
        i < array_lengthof(Attribute::MutuallyIncompatible); ++i) {
     Attributes MutI = FAttrs & Attribute::MutuallyIncompatible[i];
