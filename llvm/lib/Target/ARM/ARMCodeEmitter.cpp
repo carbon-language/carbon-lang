@@ -120,7 +120,7 @@ namespace {
     /// Routines that handle operands which add machine relocations which are
     /// fixed up by the JIT fixup stage.
     void emitGlobalAddress(GlobalValue *GV, unsigned Reloc,
-                           bool DoesntNeedStub);
+                           bool NeedStub);
     void emitExternalSymbolAddress(const char *ES, unsigned Reloc);
     void emitConstPoolAddress(unsigned CPI, unsigned Reloc,
                               int Disp = 0, unsigned PCAdj = 0 );
@@ -186,7 +186,7 @@ unsigned ARMCodeEmitter::getMachineOpValue(const MachineInstr &MI,
   else if (MO.isImm())
     return static_cast<unsigned>(MO.getImm());
   else if (MO.isGlobal())
-    emitGlobalAddress(MO.getGlobal(), ARM::reloc_arm_branch, false);
+    emitGlobalAddress(MO.getGlobal(), ARM::reloc_arm_branch, true);
   else if (MO.isSymbol())
     emitExternalSymbolAddress(MO.getSymbolName(), ARM::reloc_arm_relative);
   else if (MO.isCPI())
@@ -205,9 +205,9 @@ unsigned ARMCodeEmitter::getMachineOpValue(const MachineInstr &MI,
 /// emitGlobalAddress - Emit the specified address to the code stream.
 ///
 void ARMCodeEmitter::emitGlobalAddress(GlobalValue *GV,
-                                       unsigned Reloc, bool DoesntNeedStub) {
+                                       unsigned Reloc, bool NeedStub) {
   MCE.addRelocation(MachineRelocation::getGV(MCE.getCurrentPCOffset(),
-                                             Reloc, GV, 0, DoesntNeedStub));
+                                             Reloc, GV, 0, NeedStub));
 }
 
 /// emitExternalSymbolAddress - Arrange for the address of an external symbol to
