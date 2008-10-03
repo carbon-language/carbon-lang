@@ -90,7 +90,7 @@ public:
   void InsertBlockLiteralsWithinMethod(ObjCMethodDecl *MD);
   
   // Block specific rewrite rules.
-  void RewriteBlockExpr(BlockExpr *Exp);
+  void RewriteBlockExpr(BlockExpr *Exp, VarDecl *VD=0);
   
   void RewriteBlockCall(CallExpr *Exp);
   void RewriteBlockPointerDecl(NamedDecl *VD);
@@ -650,9 +650,16 @@ void RewriteBlocks::HandleDeclInMainFile(Decl *D) {
       CurMethodDef = 0;
     }
   }
-  if (ValueDecl *ND = dyn_cast<ValueDecl>(D)) {
-    if (isBlockPointerType(ND->getType()))
-      RewriteBlockPointerDecl(ND);
+  if (VarDecl *VD = dyn_cast<VarDecl>(D)) {
+    if (isBlockPointerType(VD->getType())) {
+      RewriteBlockPointerDecl(VD);
+      if (VD->getInit()) {
+        if (BlockExpr *BExp = dyn_cast<BlockExpr>(VD->getInit())) {
+          RewriteBlockExpr(BExp, VD);
+          SynthesizeBlockLiterals(VD->getTypeSpecStartLoc(), VD->getName());
+        }
+      }
+    }
     return;
   }
   if (TypedefDecl *TD = dyn_cast<TypedefDecl>(D)) {
@@ -961,7 +968,7 @@ void RewriteBlocks::RewriteBlockPointerDecl(NamedDecl *ND) {
   return;
 }
 
-void RewriteBlocks::RewriteBlockExpr(BlockExpr *Exp) {
+void RewriteBlocks::RewriteBlockExpr(BlockExpr *Exp, VarDecl *VD) {
   Blocks.push_back(Exp);
   bool haveByRefDecls = false;
 
@@ -989,7 +996,9 @@ void RewriteBlocks::RewriteBlockExpr(BlockExpr *Exp) {
     std::string::size_type loc = 0;
     while ((loc = FuncName.find(":", loc)) != std::string::npos)
       FuncName.replace(loc, 1, "_");
-  }
+  } else if (VD)
+    FuncName = std::string(VD->getName());
+    
   std::string BlockNumber = utostr(Blocks.size()-1);
   
   std::string Tag = "__" + FuncName + "_block_impl_" + BlockNumber;
