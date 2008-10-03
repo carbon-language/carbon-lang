@@ -894,7 +894,7 @@ input by the <tt>SelectionDAGLowering</tt> class in the
 <tt>lib/CodeGen/SelectionDAG/SelectionDAGISel.cpp</tt> file.  The intent of this
 pass is to expose as much low-level, target-specific details to the SelectionDAG
 as possible.  This pass is mostly hard-coded (e.g. an LLVM <tt>add</tt> turns
-into an <tt>SDNode add</tt> while a <tt>geteelementptr</tt> is expanded into the
+into an <tt>SDNode add</tt> while a <tt>getelementptr</tt> is expanded into the
 obvious arithmetic). This pass requires target-specific hooks to lower calls,
 returns, varargs, etc.  For these features, the
 <tt><a href="#targetlowering">TargetLowering</a></tt> interface is used.</p>
