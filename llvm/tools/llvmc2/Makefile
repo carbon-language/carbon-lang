@@ -8,7 +8,8 @@
 ##===----------------------------------------------------------------------===##
 
 # Compiled-in plugins
-BUILTIN_PLUGINS = Base
+##### FIXME: This breaks the build.
+#####BUILTIN_PLUGINS = Base
 
 LEVEL = ../..
 TOOLNAME = llvmc2
