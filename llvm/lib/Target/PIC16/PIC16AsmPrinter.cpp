@@ -288,7 +288,7 @@ printSOImm(raw_ostream &O, int64_t V, const TargetAsmInfo *TAI)
 void PIC16AsmPrinter::printSOImmOperand(const MachineInstr *MI, int OpNum) 
 {
   const MachineOperand &MO = MI->getOperand(OpNum);
-  assert(MO.isImmediate() && "Not a valid so_imm value!");
+  assert(MO.isImm() && "Not a valid so_imm value!");
   printSOImm(O, MO.getImm(), TAI);
 }
 
@@ -298,19 +298,19 @@ void PIC16AsmPrinter::printAddrModeOperand(const MachineInstr *MI, int Op)
   const MachineOperand &MO1 = MI->getOperand(Op);
   const MachineOperand &MO2 = MI->getOperand(Op+1);
 
-  if (MO2.isFrameIndex ()) {
+  if (MO2.isFI()) {
     printOperand(MI, Op+1);
     return;
   }
 
-  if (!MO1.isRegister()) {   
+  if (!MO1.isReg()) {
     // FIXME: This is for CP entries, but isn't right.
     printOperand(MI, Op);
     return;
   }
 
   // If this is Stack Slot
-  if (MO1.isRegister()) {  
+  if (MO1.isReg()) {
     if (strcmp(TM.getRegisterInfo()->get(MO1.getReg()).Name, "SP") == 0) {
       O << CurrentFnName <<"_"<< MO2.getImm();
       return;

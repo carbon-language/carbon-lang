@@ -182,7 +182,7 @@ void VirtRegMap::virtFolded(unsigned VirtReg, MachineInstr *MI, ModRef MRInfo) {
 void VirtRegMap::RemoveMachineInstrFromMaps(MachineInstr *MI) {
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI->getOperand(i);
-    if (!MO.isFrameIndex())
+    if (!MO.isFI())
       continue;
     int FI = MO.getIndex();
     if (MF.getFrameInfo()->isFixedObjectIndex(FI))
@@ -259,7 +259,7 @@ bool SimpleSpiller::runOnMachineFunction(MachineFunction &MF, VirtRegMap &VRM) {
       MachineInstr &MI = *MII;
       for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
         MachineOperand &MO = MI.getOperand(i);
-        if (MO.isRegister() && MO.getReg()) {
+        if (MO.isReg() && MO.getReg()) {
           if (TargetRegisterInfo::isVirtualRegister(MO.getReg())) {
             unsigned VirtReg = MO.getReg();
             unsigned SubIdx = MO.getSubReg();
@@ -560,7 +560,7 @@ static void InvalidateKills(MachineInstr &MI, BitVector &RegKills,
                             SmallVector<unsigned, 2> *KillRegs = NULL) {
   for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI.getOperand(i);
-    if (!MO.isRegister() || !MO.isUse() || !MO.isKill())
+    if (!MO.isReg() || !MO.isUse() || !MO.isKill())
       continue;
     unsigned Reg = MO.getReg();
     if (TargetRegisterInfo::isVirtualRegister(Reg))
@@ -599,7 +599,7 @@ static bool InvalidateRegDef(MachineBasicBlock::iterator I,
   MachineOperand *DefOp = NULL;
   for (unsigned i = 0, e = DefMI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = DefMI->getOperand(i);
-    if (MO.isRegister() && MO.isDef()) {
+    if (MO.isReg() && MO.isDef()) {
       if (MO.getReg() == Reg)
         DefOp = &MO;
       else if (!MO.isDead())
@@ -616,7 +616,7 @@ static bool InvalidateRegDef(MachineBasicBlock::iterator I,
     MachineInstr *NMI = I;
     for (unsigned j = 0, ee = NMI->getNumOperands(); j != ee; ++j) {
       MachineOperand &MO = NMI->getOperand(j);
-      if (!MO.isRegister() || MO.getReg() != Reg)
+      if (!MO.isReg() || MO.getReg() != Reg)
         continue;
       if (MO.isUse())
         FoundUse = true;
@@ -639,7 +639,7 @@ static void UpdateKills(MachineInstr &MI, BitVector &RegKills,
   const TargetInstrDesc &TID = MI.getDesc();
   for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI.getOperand(i);
-    if (!MO.isRegister() || !MO.isUse())
+    if (!MO.isReg() || !MO.isUse())
       continue;
     unsigned Reg = MO.getReg();
     if (Reg == 0)
@@ -664,7 +664,7 @@ static void UpdateKills(MachineInstr &MI, BitVector &RegKills,
 
   for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI.getOperand(i);
-    if (!MO.isRegister() || !MO.isDef())
+    if (!MO.isReg() || !MO.isDef())
       continue;
     unsigned Reg = MO.getReg();
     RegKills.reset(Reg);
@@ -684,7 +684,7 @@ static void ReMaterialize(MachineBasicBlock &MBB,
   MachineInstr *NewMI = prior(MII);
   for (unsigned i = 0, e = NewMI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = NewMI->getOperand(i);
-    if (!MO.isRegister() || MO.getReg() == 0)
+    if (!MO.isReg() || MO.getReg() == 0)
       continue;
     unsigned VirtReg = MO.getReg();
     if (TargetRegisterInfo::isPhysicalRegister(VirtReg))
@@ -933,7 +933,7 @@ bool LocalSpiller::PrepForUnfoldOpti(MachineBasicBlock &MBB,
 
   for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI.getOperand(i);
-    if (!MO.isRegister() || MO.getReg() == 0 || !MO.isUse())
+    if (!MO.isReg() || MO.getReg() == 0 || !MO.isUse())
       continue;
     unsigned VirtReg = MO.getReg();
     if (TargetRegisterInfo::isPhysicalRegister(VirtReg) || MO.getSubReg())
@@ -1033,7 +1033,7 @@ bool LocalSpiller::CommuteToFoldReload(MachineBasicBlock &MBB,
     int DefIdx = TID.getOperandConstraint(UseIdx, TOI::TIED_TO);
     if (DefIdx == -1)
       return false;
-    assert(DefMI->getOperand(DefIdx).isRegister() &&
+    assert(DefMI->getOperand(DefIdx).isReg() &&
            DefMI->getOperand(DefIdx).getReg() == SrcReg);
 
     // Now commute def instruction.
@@ -1176,7 +1176,7 @@ void LocalSpiller::TransferDeadness(MachineBasicBlock *MBB, unsigned CurDist,
     MachineOperand *LastUD = NULL;
     for (unsigned i = 0, e = LastUDMI->getNumOperands(); i != e; ++i) {
       MachineOperand &MO = LastUDMI->getOperand(i);
-      if (!MO.isRegister() || MO.getReg() != Reg)
+      if (!MO.isReg() || MO.getReg() != Reg)
         continue;
       if (!LastUD || (LastUD->isUse() && MO.isDef()))
         LastUD = &MO;
@@ -1315,7 +1315,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
     SmallVector<unsigned, 4> VirtUseOps;
     for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
       MachineOperand &MO = MI.getOperand(i);
-      if (!MO.isRegister() || MO.getReg() == 0)
+      if (!MO.isReg() || MO.getReg() == 0)
         continue;   // Ignore non-register operands.
       
       unsigned VirtReg = MO.getReg();
@@ -1395,7 +1395,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
         bool CanReuse = true;
         int ti = TID.getOperandConstraint(i, TOI::TIED_TO);
         if (ti != -1 &&
-            MI.getOperand(ti).isRegister() && 
+            MI.getOperand(ti).isReg() &&
             MI.getOperand(ti).getReg() == VirtReg) {
           // Okay, we have a two address operand.  We can reuse this physreg as
           // long as we are allowed to clobber the value and there isn't an
@@ -1725,7 +1725,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
     // Process all of the spilled defs.
     for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
       MachineOperand &MO = MI.getOperand(i);
-      if (!(MO.isRegister() && MO.getReg() && MO.isDef()))
+      if (!(MO.isReg() && MO.getReg() && MO.isDef()))
         continue;
 
       unsigned VirtReg = MO.getReg();

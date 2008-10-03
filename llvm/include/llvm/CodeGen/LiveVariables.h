@@ -203,7 +203,7 @@ public:
     bool Removed = false;
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
       MachineOperand &MO = MI->getOperand(i);
-      if (MO.isRegister() && MO.isKill() && MO.getReg() == reg) {
+      if (MO.isReg() && MO.isKill() && MO.getReg() == reg) {
         MO.setIsKill(false);
         Removed = true;
         break;
@@ -238,7 +238,7 @@ public:
     bool Removed = false;
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
       MachineOperand &MO = MI->getOperand(i);
-      if (MO.isRegister() && MO.isDef() && MO.getReg() == reg) {
+      if (MO.isReg() && MO.isDef() && MO.getReg() == reg) {
         MO.setIsDead(false);
         Removed = true;
         break;

@@ -27,7 +27,7 @@ PIC16InstrInfo::PIC16InstrInfo(PIC16TargetMachine &tm)
     TM(tm), RI(*this) {}
 
 static bool isZeroImm(const MachineOperand &op) {
-  return op.isImmediate() && op.getImm() == 0;
+  return op.isImm() && op.getImm() == 0;
 }
 
 
@@ -40,8 +40,8 @@ unsigned PIC16InstrInfo::
 isLoadFromStackSlot(MachineInstr *MI, int &FrameIndex) const 
 {
   if (MI->getOpcode() == PIC16::MOVF) {
-    if ((MI->getOperand(2).isFrameIndex()) && // is a stack slot
-        (MI->getOperand(1).isImmediate()) &&  // the imm is zero
+    if ((MI->getOperand(2).isFI()) && // is a stack slot
+        (MI->getOperand(1).isImm()) &&  // the imm is zero
         (isZeroImm(MI->getOperand(1)))) {
       FrameIndex = MI->getOperand(2).getIndex();
       return MI->getOperand(0).getReg();
@@ -60,8 +60,8 @@ unsigned PIC16InstrInfo::
 isStoreToStackSlot(MachineInstr *MI, int &FrameIndex) const 
 {
   if (MI->getOpcode() == PIC16::MOVWF) {
-    if ((MI->getOperand(0).isFrameIndex()) && // is a stack slot
-        (MI->getOperand(1).isImmediate()) &&  // the imm is zero
+    if ((MI->getOperand(0).isFI()) && // is a stack slot
+        (MI->getOperand(1).isImm()) &&  // the imm is zero
         (isZeroImm(MI->getOperand(1)))) {
       FrameIndex = MI->getOperand(0).getIndex();
       return MI->getOperand(2).getReg();

@@ -25,7 +25,7 @@ SparcInstrInfo::SparcInstrInfo(SparcSubtarget &ST)
 }
 
 static bool isZeroImm(const MachineOperand &op) {
-  return op.isImmediate() && op.getImm() == 0;
+  return op.isImm() && op.getImm() == 0;
 }
 
 /// Return true if the instruction is a register to register move and
@@ -48,7 +48,7 @@ bool SparcInstrInfo::isMoveInstr(const MachineInstr &MI,
       return true;
     }
   } else if ((MI.getOpcode() == SP::ORri || MI.getOpcode() == SP::ADDri) &&
-             isZeroImm(MI.getOperand(2)) && MI.getOperand(1).isRegister()) {
+             isZeroImm(MI.getOperand(2)) && MI.getOperand(1).isReg()) {
     DstReg = MI.getOperand(0).getReg();
     SrcReg = MI.getOperand(1).getReg();
     return true;
@@ -71,7 +71,7 @@ unsigned SparcInstrInfo::isLoadFromStackSlot(MachineInstr *MI,
   if (MI->getOpcode() == SP::LDri ||
       MI->getOpcode() == SP::LDFri ||
       MI->getOpcode() == SP::LDDFri) {
-    if (MI->getOperand(1).isFrameIndex() && MI->getOperand(2).isImmediate() &&
+    if (MI->getOperand(1).isFI() && MI->getOperand(2).isImm() &&
         MI->getOperand(2).getImm() == 0) {
       FrameIndex = MI->getOperand(1).getIndex();
       return MI->getOperand(0).getReg();
@@ -90,7 +90,7 @@ unsigned SparcInstrInfo::isStoreToStackSlot(MachineInstr *MI,
   if (MI->getOpcode() == SP::STri ||
       MI->getOpcode() == SP::STFri ||
       MI->getOpcode() == SP::STDFri) {
-    if (MI->getOperand(0).isFrameIndex() && MI->getOperand(1).isImmediate() &&
+    if (MI->getOperand(0).isFI() && MI->getOperand(1).isImm() &&
         MI->getOperand(1).getImm() == 0) {
       FrameIndex = MI->getOperand(0).getIndex();
       return MI->getOperand(2).getReg();
@@ -168,12 +168,12 @@ void SparcInstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
   MachineInstrBuilder MIB = BuildMI(MF, get(Opc));
   for (unsigned i = 0, e = Addr.size(); i != e; ++i) {
     MachineOperand &MO = Addr[i];
-    if (MO.isRegister())
+    if (MO.isReg())
       MIB.addReg(MO.getReg());
-    else if (MO.isImmediate())
+    else if (MO.isImm())
       MIB.addImm(MO.getImm());
     else {
-      assert(MO.isFrameIndex());
+      assert(MO.isFI());
       MIB.addFrameIndex(MO.getIndex());
     }
   }
@@ -212,12 +212,12 @@ void SparcInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
   MachineInstrBuilder MIB = BuildMI(MF, get(Opc), DestReg);
   for (unsigned i = 0, e = Addr.size(); i != e; ++i) {
     MachineOperand &MO = Addr[i];
-    if (MO.isRegister())
+    if (MO.isReg())
       MIB.addReg(MO.getReg());
-    else if (MO.isImmediate())
+    else if (MO.isImm())
       MIB.addImm(MO.getImm());
     else {
-      assert(MO.isFrameIndex());
+      assert(MO.isFI());
       MIB.addFrameIndex(MO.getIndex());
     }
   }
@@ -236,8 +236,8 @@ MachineInstr *SparcInstrInfo::foldMemoryOperand(MachineFunction &MF,
   MachineInstr *NewMI = NULL;
   switch (MI->getOpcode()) {
   case SP::ORrr:
-    if (MI->getOperand(1).isRegister() && MI->getOperand(1).getReg() == SP::G0&&
-        MI->getOperand(0).isRegister() && MI->getOperand(2).isRegister()) {
+    if (MI->getOperand(1).isReg() && MI->getOperand(1).getReg() == SP::G0&&
+        MI->getOperand(0).isReg() && MI->getOperand(2).isReg()) {
       if (OpNum == 0)    // COPY -> STORE
         NewMI = BuildMI(MF, get(SP::STri)).addFrameIndex(FI).addImm(0)
                                    .addReg(MI->getOperand(2).getReg());

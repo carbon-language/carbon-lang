@@ -560,7 +560,7 @@ void RABigBlock::FillVRegReadTable(MachineBasicBlock &MBB) {
     for (unsigned i = 0; i != MI->getNumOperands(); ++i) {
       MachineOperand& MO = MI->getOperand(i);
       // look for vreg reads..
-      if (MO.isRegister() && !MO.isDef() && MO.getReg() &&
+      if (MO.isReg() && !MO.isDef() && MO.getReg() &&
           TargetRegisterInfo::isVirtualRegister(MO.getReg())) {
           // ..and add them to the read table.
           VRegTimes* &Times = VRegReadTable[MO.getReg()];
@@ -589,7 +589,7 @@ void RABigBlock::FillVRegReadTable(MachineBasicBlock &MBB) {
 static bool isReadModWriteImplicitKill(MachineInstr *MI, unsigned Reg) {
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     MachineOperand& MO = MI->getOperand(i);
-    if (MO.isRegister() && MO.getReg() == Reg && MO.isImplicit() &&
+    if (MO.isReg() && MO.getReg() == Reg && MO.isImplicit() &&
         MO.isDef() && !MO.isDead())
       return true;
   }
@@ -601,7 +601,7 @@ static bool isReadModWriteImplicitKill(MachineInstr *MI, unsigned Reg) {
 static bool isReadModWriteImplicitDef(MachineInstr *MI, unsigned Reg) {
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     MachineOperand& MO = MI->getOperand(i);
-    if (MO.isRegister() && MO.getReg() == Reg && MO.isImplicit() &&
+    if (MO.isReg() && MO.getReg() == Reg && MO.isImplicit() &&
         !MO.isDef() && MO.isKill())
       return true;
   }
@@ -653,7 +653,7 @@ void RABigBlock::AllocateBasicBlock(MachineBasicBlock &MBB) {
     SmallVector<unsigned, 8> Kills;
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
       MachineOperand& MO = MI->getOperand(i);
-      if (MO.isRegister() && MO.isKill()) {
+      if (MO.isReg() && MO.isKill()) {
         if (!MO.isImplicit())
           Kills.push_back(MO.getReg());
         else if (!isReadModWriteImplicitKill(MI, MO.getReg()))
@@ -673,7 +673,7 @@ void RABigBlock::AllocateBasicBlock(MachineBasicBlock &MBB) {
     for (unsigned i = 0; i != MI->getNumOperands(); ++i) {
       MachineOperand& MO = MI->getOperand(i);
       // here we are looking for only used operands (never def&use)
-      if (MO.isRegister() && !MO.isDef() && MO.getReg() && !MO.isImplicit() &&
+      if (MO.isReg() && !MO.isDef() && MO.getReg() && !MO.isImplicit() &&
           TargetRegisterInfo::isVirtualRegister(MO.getReg()))
         MI = reloadVirtReg(MBB, MI, i);
     }
@@ -719,7 +719,7 @@ void RABigBlock::AllocateBasicBlock(MachineBasicBlock &MBB) {
     // are defined, and marking explicit destinations in the PhysRegsUsed map.
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
       MachineOperand& MO = MI->getOperand(i);
-      if (MO.isRegister() && MO.isDef() && !MO.isImplicit() && MO.getReg() &&
+      if (MO.isReg() && MO.isDef() && !MO.isImplicit() && MO.getReg() &&
           TargetRegisterInfo::isPhysicalRegister(MO.getReg())) {
         unsigned Reg = MO.getReg();
         if (PhysRegsUsed[Reg] == -2) continue;  // Something like ESP.
@@ -764,7 +764,7 @@ void RABigBlock::AllocateBasicBlock(MachineBasicBlock &MBB) {
     SmallVector<unsigned, 8> DeadDefs;
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
       MachineOperand& MO = MI->getOperand(i);
-      if (MO.isRegister() && MO.isDead())
+      if (MO.isReg() && MO.isDead())
         DeadDefs.push_back(MO.getReg());
     }
 
@@ -775,7 +775,7 @@ void RABigBlock::AllocateBasicBlock(MachineBasicBlock &MBB) {
     //
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
       MachineOperand& MO = MI->getOperand(i);
-      if (MO.isRegister() && MO.isDef() && MO.getReg() &&
+      if (MO.isReg() && MO.isDef() && MO.getReg() &&
           TargetRegisterInfo::isVirtualRegister(MO.getReg())) {
         unsigned DestVirtReg = MO.getReg();
         unsigned DestPhysReg;

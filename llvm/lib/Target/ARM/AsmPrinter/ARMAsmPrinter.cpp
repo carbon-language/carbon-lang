@@ -359,7 +359,7 @@ static void printSOImm(raw_ostream &O, int64_t V, const TargetAsmInfo *TAI) {
 /// immediate in bits 0-7.
 void ARMAsmPrinter::printSOImmOperand(const MachineInstr *MI, int OpNum) {
   const MachineOperand &MO = MI->getOperand(OpNum);
-  assert(MO.isImmediate() && "Not a valid so_imm value!");
+  assert(MO.isImm() && "Not a valid so_imm value!");
   printSOImm(O, MO.getImm(), TAI);
 }
 
@@ -367,7 +367,7 @@ void ARMAsmPrinter::printSOImmOperand(const MachineInstr *MI, int OpNum) {
 /// followed by a or to materialize.
 void ARMAsmPrinter::printSOImm2PartOperand(const MachineInstr *MI, int OpNum) {
   const MachineOperand &MO = MI->getOperand(OpNum);
-  assert(MO.isImmediate() && "Not a valid so_imm value!");
+  assert(MO.isImm() && "Not a valid so_imm value!");
   unsigned V1 = ARM_AM::getSOImmTwoPartFirst(MO.getImm());
   unsigned V2 = ARM_AM::getSOImmTwoPartSecond(MO.getImm());
   printSOImm(O, ARM_AM::getSOImmVal(V1), TAI);
@@ -413,7 +413,7 @@ void ARMAsmPrinter::printAddrMode2Operand(const MachineInstr *MI, int Op) {
   const MachineOperand &MO2 = MI->getOperand(Op+1);
   const MachineOperand &MO3 = MI->getOperand(Op+2);
 
-  if (!MO1.isRegister()) {   // FIXME: This is for CP entries, but isn't right.
+  if (!MO1.isReg()) {   // FIXME: This is for CP entries, but isn't right.
     printOperand(MI, Op);
     return;
   }
@@ -526,7 +526,7 @@ void ARMAsmPrinter::printAddrMode5Operand(const MachineInstr *MI, int Op,
   const MachineOperand &MO1 = MI->getOperand(Op);
   const MachineOperand &MO2 = MI->getOperand(Op+1);
 
-  if (!MO1.isRegister()) {   // FIXME: This is for CP entries, but isn't right.
+  if (!MO1.isReg()) {   // FIXME: This is for CP entries, but isn't right.
     printOperand(MI, Op);
     return;
   }
@@ -587,7 +587,7 @@ ARMAsmPrinter::printThumbAddrModeRI5Operand(const MachineInstr *MI, int Op,
   const MachineOperand &MO2 = MI->getOperand(Op+1);
   const MachineOperand &MO3 = MI->getOperand(Op+2);
 
-  if (!MO1.isRegister()) {   // FIXME: This is for CP entries, but isn't right.
+  if (!MO1.isReg()) {   // FIXME: This is for CP entries, but isn't right.
     printOperand(MI, Op);
     return;
   }
@@ -749,9 +749,9 @@ bool ARMAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
       // Fallthrough
     case 'H': // Write second word of DI / DF reference.  
       // Verify that this operand has two consecutive registers.
-      if (!MI->getOperand(OpNo).isRegister() ||
+      if (!MI->getOperand(OpNo).isReg() ||
           OpNo+1 == MI->getNumOperands() ||
-          !MI->getOperand(OpNo+1).isRegister())
+          !MI->getOperand(OpNo+1).isReg())
         return true;
       ++OpNo;   // Return the high-part.
     }

@@ -220,7 +220,7 @@ bool StackSlotColoring::ColorSlots(MachineFunction &MF) {
       MachineInstr &MI = *MII;
       for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
         MachineOperand &MO = MI.getOperand(i);
-        if (!MO.isFrameIndex())
+        if (!MO.isFI())
           continue;
         int FI = MO.getIndex();
         if (FI < 0)

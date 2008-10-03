@@ -123,9 +123,9 @@ namespace {
 
     void printOperand(const MachineInstr *MI, unsigned OpNo) {
       const MachineOperand &MO = MI->getOperand(OpNo);
-      if (MO.isRegister()) {
+      if (MO.isReg()) {
         printRegister(MO, false);
-      } else if (MO.isImmediate()) {
+      } else if (MO.isImm()) {
         O << MO.getImm();
       } else {
         printOp(MO);
@@ -160,7 +160,7 @@ namespace {
       O << (unsigned short)MI->getOperand(OpNo).getImm();
     }
     void printS16X4ImmOperand(const MachineInstr *MI, unsigned OpNo) {
-      if (MI->getOperand(OpNo).isImmediate()) {
+      if (MI->getOperand(OpNo).isImm()) {
         O << (short)(MI->getOperand(OpNo).getImm()*4);
       } else {
         O << "lo16(";
@@ -174,7 +174,7 @@ namespace {
     void printBranchOperand(const MachineInstr *MI, unsigned OpNo) {
       // Branches can take an immediate operand.  This is used by the branch
       // selection pass to print $+8, an eight byte displacement from the PC.
-      if (MI->getOperand(OpNo).isImmediate()) {
+      if (MI->getOperand(OpNo).isImm()) {
         O << "$+" << MI->getOperand(OpNo).getImm()*4;
       } else {
         printOp(MI->getOperand(OpNo));
@@ -214,7 +214,7 @@ namespace {
       O << "\"L" << getFunctionNumber() << "$pb\":";
     }
     void printSymbolHi(const MachineInstr *MI, unsigned OpNo) {
-      if (MI->getOperand(OpNo).isImmediate()) {
+      if (MI->getOperand(OpNo).isImm()) {
         printS16ImmOperand(MI, OpNo);
       } else {
         if (Subtarget.isDarwin()) O << "ha16(";
@@ -228,7 +228,7 @@ namespace {
       }
     }
     void printSymbolLo(const MachineInstr *MI, unsigned OpNo) {
-      if (MI->getOperand(OpNo).isImmediate()) {
+      if (MI->getOperand(OpNo).isImm()) {
         printS16ImmOperand(MI, OpNo);
       } else {
         if (Subtarget.isDarwin()) O << "lo16(";
@@ -250,7 +250,7 @@ namespace {
     void printMemRegImm(const MachineInstr *MI, unsigned OpNo) {
       printSymbolLo(MI, OpNo);
       O << '(';
-      if (MI->getOperand(OpNo+1).isRegister() &&
+      if (MI->getOperand(OpNo+1).isReg() &&
           MI->getOperand(OpNo+1).getReg() == PPC::R0)
         O << "0";
       else
@@ -258,12 +258,12 @@ namespace {
       O << ')';
     }
     void printMemRegImmShifted(const MachineInstr *MI, unsigned OpNo) {
-      if (MI->getOperand(OpNo).isImmediate())
+      if (MI->getOperand(OpNo).isImm())
         printS16X4ImmOperand(MI, OpNo);
       else
         printSymbolLo(MI, OpNo);
       O << '(';
-      if (MI->getOperand(OpNo+1).isRegister() &&
+      if (MI->getOperand(OpNo+1).isReg() &&
           MI->getOperand(OpNo+1).getReg() == PPC::R0)
         O << "0";
       else
@@ -443,16 +443,16 @@ bool PPCAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
       return false;
     case 'L': // Write second word of DImode reference.
       // Verify that this operand has two consecutive registers.
-      if (!MI->getOperand(OpNo).isRegister() ||
+      if (!MI->getOperand(OpNo).isReg() ||
           OpNo+1 == MI->getNumOperands() ||
-          !MI->getOperand(OpNo+1).isRegister())
+          !MI->getOperand(OpNo+1).isReg())
         return true;
       ++OpNo;   // Return the high-part.
       break;
     case 'I':
       // Write 'i' if an integer constant, otherwise nothing.  Used to print
       // addi vs add, etc.
-      if (MI->getOperand(OpNo).isImmediate())
+      if (MI->getOperand(OpNo).isImm())
         O << "i";
       return false;
     }
@@ -467,7 +467,7 @@ bool PPCAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
                                           const char *ExtraCode) {
   if (ExtraCode && ExtraCode[0])
     return true; // Unknown modifier.
-  if (MI->getOperand(OpNo).isRegister())
+  if (MI->getOperand(OpNo).isReg())
     printMemRegReg(MI, OpNo);
   else
     printMemRegImm(MI, OpNo);

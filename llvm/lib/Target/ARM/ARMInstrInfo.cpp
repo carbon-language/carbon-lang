@@ -64,8 +64,8 @@ bool ARMInstrInfo::isMoveInstr(const MachineInstr &MI,
   case ARM::MOVr:
   case ARM::tMOVr:
     assert(MI.getDesc().getNumOperands() >= 2 &&
-           MI.getOperand(0).isRegister() &&
-           MI.getOperand(1).isRegister() &&
+           MI.getOperand(0).isReg() &&
+           MI.getOperand(1).isReg() &&
            "Invalid ARM MOV instruction");
     SrcReg = MI.getOperand(1).getReg();
     DstReg = MI.getOperand(0).getReg();
@@ -77,9 +77,9 @@ unsigned ARMInstrInfo::isLoadFromStackSlot(MachineInstr *MI, int &FrameIndex) co
   switch (MI->getOpcode()) {
   default: break;
   case ARM::LDR:
-    if (MI->getOperand(1).isFrameIndex() &&
-        MI->getOperand(2).isRegister() &&
-        MI->getOperand(3).isImmediate() && 
+    if (MI->getOperand(1).isFI() &&
+        MI->getOperand(2).isReg() &&
+        MI->getOperand(3).isImm() &&
         MI->getOperand(2).getReg() == 0 &&
         MI->getOperand(3).getImm() == 0) {
       FrameIndex = MI->getOperand(1).getIndex();
@@ -88,16 +88,16 @@ unsigned ARMInstrInfo::isLoadFromStackSlot(MachineInstr *MI, int &FrameIndex) co
     break;
   case ARM::FLDD:
   case ARM::FLDS:
-    if (MI->getOperand(1).isFrameIndex() &&
-        MI->getOperand(2).isImmediate() && 
+    if (MI->getOperand(1).isFI() &&
+        MI->getOperand(2).isImm() &&
         MI->getOperand(2).getImm() == 0) {
       FrameIndex = MI->getOperand(1).getIndex();
       return MI->getOperand(0).getReg();
     }
     break;
   case ARM::tRestore:
-    if (MI->getOperand(1).isFrameIndex() &&
-        MI->getOperand(2).isImmediate() && 
+    if (MI->getOperand(1).isFI() &&
+        MI->getOperand(2).isImm() &&
         MI->getOperand(2).getImm() == 0) {
       FrameIndex = MI->getOperand(1).getIndex();
       return MI->getOperand(0).getReg();
@@ -111,9 +111,9 @@ unsigned ARMInstrInfo::isStoreToStackSlot(MachineInstr *MI, int &FrameIndex) con
   switch (MI->getOpcode()) {
   default: break;
   case ARM::STR:
-    if (MI->getOperand(1).isFrameIndex() &&
-        MI->getOperand(2).isRegister() &&
-        MI->getOperand(3).isImmediate() && 
+    if (MI->getOperand(1).isFI() &&
+        MI->getOperand(2).isReg() &&
+        MI->getOperand(3).isImm() &&
         MI->getOperand(2).getReg() == 0 &&
         MI->getOperand(3).getImm() == 0) {
       FrameIndex = MI->getOperand(1).getIndex();
@@ -122,16 +122,16 @@ unsigned ARMInstrInfo::isStoreToStackSlot(MachineInstr *MI, int &FrameIndex) con
     break;
   case ARM::FSTD:
   case ARM::FSTS:
-    if (MI->getOperand(1).isFrameIndex() &&
-        MI->getOperand(2).isImmediate() && 
+    if (MI->getOperand(1).isFI() &&
+        MI->getOperand(2).isImm() &&
         MI->getOperand(2).getImm() == 0) {
       FrameIndex = MI->getOperand(1).getIndex();
       return MI->getOperand(0).getReg();
     }
     break;
   case ARM::tSpill:
-    if (MI->getOperand(1).isFrameIndex() &&
-        MI->getOperand(2).isImmediate() && 
+    if (MI->getOperand(1).isFI() &&
+        MI->getOperand(2).isImm() &&
         MI->getOperand(2).getImm() == 0) {
       FrameIndex = MI->getOperand(1).getIndex();
       return MI->getOperand(0).getReg();
@@ -298,7 +298,7 @@ ARMInstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
   // Transfer LiveVariables states, kill / dead info.
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI->getOperand(i);
-    if (MO.isRegister() && MO.getReg() &&
+    if (MO.isReg() && MO.getReg() &&
         TargetRegisterInfo::isVirtualRegister(MO.getReg())) {
       unsigned Reg = MO.getReg();
       
@@ -491,11 +491,11 @@ bool ARMInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
 
 static const MachineInstrBuilder &ARMInstrAddOperand(MachineInstrBuilder &MIB,
                                                      MachineOperand &MO) {
-  if (MO.isRegister())
+  if (MO.isReg())
     MIB = MIB.addReg(MO.getReg(), MO.isDef(), MO.isImplicit());
-  else if (MO.isImmediate())
+  else if (MO.isImm())
     MIB = MIB.addImm(MO.getImm());
-  else if (MO.isFrameIndex())
+  else if (MO.isFI())
     MIB = MIB.addFrameIndex(MO.getIndex());
   else
     assert(0 && "Unknown operand for ARMInstrAddOperand!");
@@ -538,7 +538,7 @@ void ARMInstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
   if (RC == ARM::GPRRegisterClass) {
     ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
     if (AFI->isThumbFunction()) {
-      Opc = Addr[0].isFrameIndex() ? ARM::tSpill : ARM::tSTR;
+      Opc = Addr[0].isFI() ? ARM::tSpill : ARM::tSTR;
       MachineInstrBuilder MIB = 
         BuildMI(MF, get(Opc)).addReg(SrcReg, false, false, isKill);
       for (unsigned i = 0, e = Addr.size(); i != e; ++i)
@@ -594,7 +594,7 @@ void ARMInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
   if (RC == ARM::GPRRegisterClass) {
     ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
     if (AFI->isThumbFunction()) {
-      Opc = Addr[0].isFrameIndex() ? ARM::tRestore : ARM::tLDR;
+      Opc = Addr[0].isFI() ? ARM::tRestore : ARM::tLDR;
       MachineInstrBuilder MIB = BuildMI(MF, get(Opc), DestReg);
       for (unsigned i = 0, e = Addr.size(); i != e; ++i)
         MIB = ARMInstrAddOperand(MIB, Addr[i]);
@@ -868,7 +868,7 @@ bool ARMInstrInfo::DefinesPredicate(MachineInstr *MI,
   bool Found = false;
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
-    if (MO.isRegister() && MO.getReg() == ARM::CPSR) {
+    if (MO.isReg() && MO.getReg() == ARM::CPSR) {
       Pred.push_back(MO);
       Found = true;
     }

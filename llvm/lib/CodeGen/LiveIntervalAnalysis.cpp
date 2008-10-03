@@ -302,7 +302,7 @@ bool LiveIntervals::conflictsWithPhysRegDef(const LiveInterval &li,
           continue;
       for (unsigned i = 0; i != MI->getNumOperands(); ++i) {
         MachineOperand& mop = MI->getOperand(i);
-        if (!mop.isRegister())
+        if (!mop.isReg())
           continue;
         unsigned PhysReg = mop.getReg();
         if (PhysReg == 0 || PhysReg == li.reg)
@@ -723,7 +723,7 @@ void LiveIntervals::computeIntervals() {
       for (int i = MI->getNumOperands() - 1; i >= 0; --i) {
         MachineOperand &MO = MI->getOperand(i);
         // handle register defs - build intervals
-        if (MO.isRegister() && MO.getReg() && MO.isDef()) {
+        if (MO.isReg() && MO.getReg() && MO.isDef()) {
           handleRegisterDef(MBB, MI, MIIndex, MO, i);
         }
       }
@@ -789,7 +789,7 @@ unsigned LiveIntervals::getReMatImplicitUse(const LiveInterval &li,
   unsigned RegOp = 0;
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI->getOperand(i);
-    if (!MO.isRegister() || !MO.isUse())
+    if (!MO.isReg() || !MO.isUse())
       continue;
     unsigned Reg = MO.getReg();
     if (Reg == 0 || Reg == li.reg)
@@ -876,7 +876,7 @@ bool LiveIntervals::isReMaterializable(const LiveInterval &li,
     unsigned ImpUse = 0;
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
       const MachineOperand &MO = MI->getOperand(i);
-      if (MO.isRegister()) {
+      if (MO.isReg()) {
         unsigned Reg = MO.getReg();
         if (Reg == 0)
           continue;
@@ -1093,7 +1093,7 @@ void LiveIntervals::rewriteImplicitOps(const LiveInterval &li,
   // use operand. Make sure we rewrite that as well.
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI->getOperand(i);
-    if (!MO.isRegister())
+    if (!MO.isReg())
       continue;
     unsigned Reg = MO.getReg();
     if (Reg == 0 || TargetRegisterInfo::isPhysicalRegister(Reg))
@@ -1128,7 +1128,7 @@ rewriteInstructionForSpills(const LiveInterval &li, const VNInfo *VNI,
  RestartInstruction:
   for (unsigned i = 0; i != MI->getNumOperands(); ++i) {
     MachineOperand& mop = MI->getOperand(i);
-    if (!mop.isRegister())
+    if (!mop.isReg())
       continue;
     unsigned Reg = mop.getReg();
     unsigned RegI = Reg;
@@ -1180,7 +1180,7 @@ rewriteInstructionForSpills(const LiveInterval &li, const VNInfo *VNI,
     Ops.push_back(i);
     for (unsigned j = i+1, e = MI->getNumOperands(); j != e; ++j) {
       const MachineOperand &MOj = MI->getOperand(j);
-      if (!MOj.isRegister())
+      if (!MOj.isReg())
         continue;
       unsigned RegJ = MOj.getReg();
       if (RegJ == 0 || TargetRegisterInfo::isPhysicalRegister(RegJ))
@@ -1618,7 +1618,7 @@ LiveIntervals::handleSpilledImpDefs(const LiveInterval &li, VirtRegMap &vrm,
       NewLIs.push_back(&getOrCreateInterval(NewVReg));
       for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
         MachineOperand &MO = MI->getOperand(i);
-        if (MO.isRegister() && MO.getReg() == li.reg)
+        if (MO.isReg() && MO.getReg() == li.reg)
           MO.setReg(NewVReg);
       }
     }
@@ -1662,7 +1662,7 @@ addIntervalsForSpillsFast(const LiveInterval &li,
     
     for (unsigned i = 0; i != MI->getNumOperands(); ++i) {
       MachineOperand& mop = MI->getOperand(i);
-      if (!mop.isRegister() || mop.getReg() != li.reg) continue;
+      if (!mop.isReg() || mop.getReg() != li.reg) continue;
       
       HasUse |= MI->getOperand(i).isUse();
       HasDef |= MI->getOperand(i).isDef();
@@ -1916,7 +1916,7 @@ addIntervalsForSpills(const LiveInterval &li,
           CanFold = true;
           for (unsigned j = 0, ee = MI->getNumOperands(); j != ee; ++j) {
             MachineOperand &MO = MI->getOperand(j);
-            if (!MO.isRegister() || MO.getReg() != VReg)
+            if (!MO.isReg() || MO.getReg() != VReg)
               continue;
 
             Ops.push_back(j);
@@ -1987,7 +1987,7 @@ addIntervalsForSpills(const LiveInterval &li,
         CanFold = true;
         for (unsigned j = 0, ee = MI->getNumOperands(); j != ee; ++j) {
           MachineOperand &MO = MI->getOperand(j);
-          if (!MO.isRegister() || MO.getReg() != VReg)
+          if (!MO.isReg() || MO.getReg() != VReg)
             continue;
 
           if (MO.isDef()) {

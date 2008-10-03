@@ -1050,15 +1050,15 @@ public:
       }
 
       // If advancing cfa.
-      if (Dst.isRegister() && Dst.getRegister() == MachineLocation::VirtualFP) {
-        if (!Src.isRegister()) {
-          if (Src.getRegister() == MachineLocation::VirtualFP) {
+      if (Dst.isReg() && Dst.getReg() == MachineLocation::VirtualFP) {
+        if (!Src.isReg()) {
+          if (Src.getReg() == MachineLocation::VirtualFP) {
             Asm->EmitInt8(DW_CFA_def_cfa_offset);
             Asm->EOL("DW_CFA_def_cfa_offset");
           } else {
             Asm->EmitInt8(DW_CFA_def_cfa);
             Asm->EOL("DW_CFA_def_cfa");
-            Asm->EmitULEB128Bytes(RI->getDwarfRegNum(Src.getRegister(), isEH));
+            Asm->EmitULEB128Bytes(RI->getDwarfRegNum(Src.getReg(), isEH));
             Asm->EOL("Register");
           }
 
@@ -1069,18 +1069,18 @@ public:
         } else {
           assert(0 && "Machine move no supported yet.");
         }
-      } else if (Src.isRegister() &&
-        Src.getRegister() == MachineLocation::VirtualFP) {
-        if (Dst.isRegister()) {
+      } else if (Src.isReg() &&
+        Src.getReg() == MachineLocation::VirtualFP) {
+        if (Dst.isReg()) {
           Asm->EmitInt8(DW_CFA_def_cfa_register);
           Asm->EOL("DW_CFA_def_cfa_register");
-          Asm->EmitULEB128Bytes(RI->getDwarfRegNum(Dst.getRegister(), isEH));
+          Asm->EmitULEB128Bytes(RI->getDwarfRegNum(Dst.getReg(), isEH));
           Asm->EOL("Register");
         } else {
           assert(0 && "Machine move no supported yet.");
         }
       } else {
-        unsigned Reg = RI->getDwarfRegNum(Src.getRegister(), isEH);
+        unsigned Reg = RI->getDwarfRegNum(Src.getReg(), isEH);
         int Offset = Dst.getOffset() / stackGrowth;
 
         if (Offset < 0) {
@@ -1409,10 +1409,10 @@ private:
   /// provided.
   void AddAddress(DIE *Die, unsigned Attribute,
                             const MachineLocation &Location) {
-    unsigned Reg = RI->getDwarfRegNum(Location.getRegister(), false);
+    unsigned Reg = RI->getDwarfRegNum(Location.getReg(), false);
     DIEBlock *Block = new DIEBlock();
 
-    if (Location.isRegister()) {
+    if (Location.isReg()) {
       if (Reg < 32) {
         AddUInt(Block, 0, DW_FORM_data1, DW_OP_reg0 + Reg);
       } else {

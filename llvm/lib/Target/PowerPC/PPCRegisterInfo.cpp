@@ -629,7 +629,7 @@ void PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
 
   // Find out which operand is the frame index.
   unsigned FIOperandNo = 0;
-  while (!MI.getOperand(FIOperandNo).isFrameIndex()) {
+  while (!MI.getOperand(FIOperandNo).isFI()) {
     ++FIOperandNo;
     assert(FIOperandNo != MI.getNumOperands() &&
            "Instr doesn't have FrameIndex operand!");
@@ -1242,7 +1242,7 @@ void PPCRegisterInfo::emitEpilogue(MachineFunction &MF,
   if (UsesTCRet) {
     int MaxTCRetDelta = FI->getTailCallSPDelta();
     MachineOperand &StackAdjust = MBBI->getOperand(1);
-    assert( StackAdjust.isImmediate() && "Expecting immediate value.");
+    assert(StackAdjust.isImm() && "Expecting immediate value.");
     // Adjust stack pointer.
     int StackAdj = StackAdjust.getImm();
     int Delta = StackAdj - MaxTCRetDelta;
@@ -1368,7 +1368,7 @@ void PPCRegisterInfo::emitEpilogue(MachineFunction &MF,
   } else if (RetOpcode == PPC::TCRETURNri) {
     MBBI = prior(MBB.end());
     MachineOperand &JumpTarget = MBBI->getOperand(0);
-    assert(JumpTarget.isRegister() && "Expecting register operand.");
+    assert(JumpTarget.isReg() && "Expecting register operand.");
     BuildMI(MBB, MBBI, TII.get(PPC::TAILBCTR));
   } else if (RetOpcode == PPC::TCRETURNai) {
     MBBI = prior(MBB.end());
@@ -1382,7 +1382,7 @@ void PPCRegisterInfo::emitEpilogue(MachineFunction &MF,
   } else if (RetOpcode == PPC::TCRETURNri8) {
     MBBI = prior(MBB.end());
     MachineOperand &JumpTarget = MBBI->getOperand(0);
-    assert(JumpTarget.isRegister() && "Expecting register operand.");
+    assert(JumpTarget.isReg() && "Expecting register operand.");
     BuildMI(MBB, MBBI, TII.get(PPC::TAILBCTR8));
   } else if (RetOpcode == PPC::TCRETURNai8) {
     MBBI = prior(MBB.end());

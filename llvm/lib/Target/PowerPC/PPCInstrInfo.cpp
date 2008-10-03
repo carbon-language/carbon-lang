@@ -47,9 +47,9 @@ bool PPCInstrInfo::isMoveInstr(const MachineInstr& MI,
   if (oc == PPC::OR || oc == PPC::OR8 || oc == PPC::VOR ||
       oc == PPC::OR4To8 || oc == PPC::OR8To4) {                // or r1, r2, r2
     assert(MI.getNumOperands() >= 3 &&
-           MI.getOperand(0).isRegister() &&
-           MI.getOperand(1).isRegister() &&
-           MI.getOperand(2).isRegister() &&
+           MI.getOperand(0).isReg() &&
+           MI.getOperand(1).isReg() &&
+           MI.getOperand(2).isReg() &&
            "invalid PPC OR instruction!");
     if (MI.getOperand(1).getReg() == MI.getOperand(2).getReg()) {
       sourceReg = MI.getOperand(1).getReg();
@@ -58,19 +58,19 @@ bool PPCInstrInfo::isMoveInstr(const MachineInstr& MI,
     }
   } else if (oc == PPC::ADDI) {             // addi r1, r2, 0
     assert(MI.getNumOperands() >= 3 &&
-           MI.getOperand(0).isRegister() &&
-           MI.getOperand(2).isImmediate() &&
+           MI.getOperand(0).isReg() &&
+           MI.getOperand(2).isImm() &&
            "invalid PPC ADDI instruction!");
-    if (MI.getOperand(1).isRegister() && MI.getOperand(2).getImm() == 0) {
+    if (MI.getOperand(1).isReg() && MI.getOperand(2).getImm() == 0) {
       sourceReg = MI.getOperand(1).getReg();
       destReg = MI.getOperand(0).getReg();
       return true;
     }
   } else if (oc == PPC::ORI) {             // ori r1, r2, 0
     assert(MI.getNumOperands() >= 3 &&
-           MI.getOperand(0).isRegister() &&
-           MI.getOperand(1).isRegister() &&
-           MI.getOperand(2).isImmediate() &&
+           MI.getOperand(0).isReg() &&
+           MI.getOperand(1).isReg() &&
+           MI.getOperand(2).isImm() &&
            "invalid PPC ORI instruction!");
     if (MI.getOperand(2).getImm() == 0) {
       sourceReg = MI.getOperand(1).getReg();
@@ -80,16 +80,16 @@ bool PPCInstrInfo::isMoveInstr(const MachineInstr& MI,
   } else if (oc == PPC::FMRS || oc == PPC::FMRD ||
              oc == PPC::FMRSD) {      // fmr r1, r2
     assert(MI.getNumOperands() >= 2 &&
-           MI.getOperand(0).isRegister() &&
-           MI.getOperand(1).isRegister() &&
+           MI.getOperand(0).isReg() &&
+           MI.getOperand(1).isReg() &&
            "invalid PPC FMR instruction");
     sourceReg = MI.getOperand(1).getReg();
     destReg = MI.getOperand(0).getReg();
     return true;
   } else if (oc == PPC::MCRF) {             // mcrf cr1, cr2
     assert(MI.getNumOperands() >= 2 &&
-           MI.getOperand(0).isRegister() &&
-           MI.getOperand(1).isRegister() &&
+           MI.getOperand(0).isReg() &&
+           MI.getOperand(1).isReg() &&
            "invalid PPC MCRF instruction");
     sourceReg = MI.getOperand(1).getReg();
     destReg = MI.getOperand(0).getReg();
@@ -106,8 +106,8 @@ unsigned PPCInstrInfo::isLoadFromStackSlot(MachineInstr *MI,
   case PPC::LWZ:
   case PPC::LFS:
   case PPC::LFD:
-    if (MI->getOperand(1).isImmediate() && !MI->getOperand(1).getImm() &&
-        MI->getOperand(2).isFrameIndex()) {
+    if (MI->getOperand(1).isImm() && !MI->getOperand(1).getImm() &&
+        MI->getOperand(2).isFI()) {
       FrameIndex = MI->getOperand(2).getIndex();
       return MI->getOperand(0).getReg();
     }
@@ -124,8 +124,8 @@ unsigned PPCInstrInfo::isStoreToStackSlot(MachineInstr *MI,
   case PPC::STW:
   case PPC::STFS:
   case PPC::STFD:
-    if (MI->getOperand(1).isImmediate() && !MI->getOperand(1).getImm() &&
-        MI->getOperand(2).isFrameIndex()) {
+    if (MI->getOperand(1).isImm() && !MI->getOperand(1).getImm() &&
+        MI->getOperand(2).isFI()) {
       FrameIndex = MI->getOperand(2).getIndex();
       return MI->getOperand(0).getReg();
     }
@@ -478,7 +478,7 @@ void PPCInstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
                                   SmallVectorImpl<MachineOperand> &Addr,
                                   const TargetRegisterClass *RC,
                                   SmallVectorImpl<MachineInstr*> &NewMIs) const{
-  if (Addr[0].isFrameIndex()) {
+  if (Addr[0].isFI()) {
     if (StoreRegToStackSlot(MF, SrcReg, isKill,
                             Addr[0].getIndex(), RC, NewMIs)) {
       PPCFunctionInfo *FuncInfo = MF.getInfo<PPCFunctionInfo>();
@@ -507,9 +507,9 @@ void PPCInstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
     .addReg(SrcReg, false, false, isKill);
   for (unsigned i = 0, e = Addr.size(); i != e; ++i) {
     MachineOperand &MO = Addr[i];
-    if (MO.isRegister())
+    if (MO.isReg())
       MIB.addReg(MO.getReg());
-    else if (MO.isImmediate())
+    else if (MO.isImm())
       MIB.addImm(MO.getImm());
     else
       MIB.addFrameIndex(MO.getIndex());
@@ -617,7 +617,7 @@ void PPCInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
                                    SmallVectorImpl<MachineOperand> &Addr,
                                    const TargetRegisterClass *RC,
                                    SmallVectorImpl<MachineInstr*> &NewMIs)const{
-  if (Addr[0].isFrameIndex()) {
+  if (Addr[0].isFI()) {
     LoadRegFromStackSlot(MF, DestReg, Addr[0].getIndex(), RC, NewMIs);
     return;
   }
@@ -642,9 +642,9 @@ void PPCInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
   MachineInstrBuilder MIB = BuildMI(MF, get(Opc), DestReg);
   for (unsigned i = 0, e = Addr.size(); i != e; ++i) {
     MachineOperand &MO = Addr[i];
-    if (MO.isRegister())
+    if (MO.isReg())
       MIB.addReg(MO.getReg());
-    else if (MO.isImmediate())
+    else if (MO.isImm())
       MIB.addImm(MO.getImm());
     else
       MIB.addFrameIndex(MO.getIndex());

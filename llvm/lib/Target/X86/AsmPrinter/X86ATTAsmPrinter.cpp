@@ -546,9 +546,9 @@ void X86ATTAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op,
   const MachineOperand &DispSpec = MI->getOperand(Op+3);
 
   bool NotRIPRel = IndexReg.getReg() || BaseReg.getReg();
-  if (DispSpec.isGlobalAddress() ||
-      DispSpec.isConstantPoolIndex() ||
-      DispSpec.isJumpTableIndex()) {
+  if (DispSpec.isGlobal() ||
+      DispSpec.isCPI() ||
+      DispSpec.isJTI()) {
     printOperand(MI, Op+3, "mem", NotRIPRel);
   } else {
     int DispVal = DispSpec.getImm();
@@ -675,7 +675,7 @@ bool X86ATTAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
     case 'w': // Print HImode register
     case 'k': // Print SImode register
     case 'q': // Print DImode register
-      if (MI->getOperand(OpNo).isRegister())
+      if (MI->getOperand(OpNo).isReg())
         return printAsmMRegister(MI->getOperand(OpNo), ExtraCode[0]);
       printOperand(MI, OpNo);
       return false;

@@ -812,7 +812,7 @@ void StrongPHIElimination::InsertCopies(MachineDomTreeNode* MDTN,
       continue;
     
     for (unsigned i = 0; i < I->getNumOperands(); ++i)
-      if (I->getOperand(i).isRegister() &&
+      if (I->getOperand(i).isReg() &&
           Stacks[I->getOperand(i).getReg()].size()) {
         // Remove the live range for the old vreg.
         LiveInterval& OldInt = LI.getInterval(I->getOperand(i).getReg());

@@ -58,8 +58,9 @@ class X86MachineFunctionInfo : public MachineFunctionInfo {
   /// holds the virtual register into which the sret argument is passed.
   unsigned SRetReturnReg;
 
-  /// GlobalBaseReg - keeps track of the virtual register mapped onto global
-  /// base register.
+  /// GlobalBaseReg - keeps track of the virtual register initialized for
+  /// use as the global base register. This is used for PIC in some PIC
+  /// relocation models.
   unsigned GlobalBaseReg;
 
 public:

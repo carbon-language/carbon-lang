@@ -703,10 +703,10 @@ void X86DAGToDAGISel::InstructionSelectPostProcessing() {
     bool ContainsFPCode = false;
     for (MachineBasicBlock::iterator I = MBB->begin(), E = MBB->end();
          !ContainsFPCode && I != E; ++I) {
-      if (I->getNumOperands() != 0 && I->getOperand(0).isRegister()) {
+      if (I->getNumOperands() != 0 && I->getOperand(0).isReg()) {
         const TargetRegisterClass *clas;
         for (unsigned op = 0, e = I->getNumOperands(); op != e; ++op) {
-          if (I->getOperand(op).isRegister() && I->getOperand(op).isDef() &&
+          if (I->getOperand(op).isReg() && I->getOperand(op).isDef() &&
             TargetRegisterInfo::isVirtualRegister(I->getOperand(op).getReg()) &&
               ((clas = RegInfo->getRegClass(I->getOperand(0).getReg())) == 
                  X86::RFP32RegisterClass ||

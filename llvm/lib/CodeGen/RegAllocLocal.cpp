@@ -521,7 +521,7 @@ MachineInstr *RALocal::reloadVirtReg(MachineBasicBlock &MBB, MachineInstr *MI,
 static bool isReadModWriteImplicitKill(MachineInstr *MI, unsigned Reg) {
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     MachineOperand& MO = MI->getOperand(i);
-    if (MO.isRegister() && MO.getReg() == Reg && MO.isImplicit() &&
+    if (MO.isReg() && MO.getReg() == Reg && MO.isImplicit() &&
         MO.isDef() && !MO.isDead())
       return true;
   }
@@ -533,7 +533,7 @@ static bool isReadModWriteImplicitKill(MachineInstr *MI, unsigned Reg) {
 static bool isReadModWriteImplicitDef(MachineInstr *MI, unsigned Reg) {
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     MachineOperand& MO = MI->getOperand(i);
-    if (MO.isRegister() && MO.getReg() == Reg && MO.isImplicit() &&
+    if (MO.isReg() && MO.getReg() == Reg && MO.isImplicit() &&
         !MO.isDef() && MO.isKill())
       return true;
   }
@@ -575,7 +575,7 @@ void RALocal::ComputeLocalLiveness(MachineBasicBlock& MBB) {
       // them for later.  Also, we have to process these
       // _before_ processing the defs, since an instr
       // uses regs before it defs them.
-      if (MO.isRegister() && MO.getReg() && MO.isUse())
+      if (MO.isReg() && MO.getReg() && MO.isUse())
         LastUseDef[MO.getReg()] = std::make_pair(I, i);
     }
     
@@ -584,7 +584,7 @@ void RALocal::ComputeLocalLiveness(MachineBasicBlock& MBB) {
       // Defs others than 2-addr redefs _do_ trigger flag changes:
       //   - A def followed by a def is dead
       //   - A use followed by a def is a kill
-      if (MO.isRegister() && MO.getReg() && MO.isDef()) {
+      if (MO.isReg() && MO.getReg() && MO.isDef()) {
         DenseMap<unsigned, std::pair<MachineInstr*, unsigned> >::iterator
           last = LastUseDef.find(MO.getReg());
         if (last != LastUseDef.end()) {
@@ -711,7 +711,7 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
     SmallVector<unsigned, 8> Kills;
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
       MachineOperand& MO = MI->getOperand(i);
-      if (MO.isRegister() && MO.isKill()) {
+      if (MO.isReg() && MO.isKill()) {
         if (!MO.isImplicit())
           Kills.push_back(MO.getReg());
         else if (!isReadModWriteImplicitKill(MI, MO.getReg()))
@@ -729,7 +729,7 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
     if (MI->getOpcode()==TargetInstrInfo::INLINEASM) {
       for (unsigned i = 0; i != MI->getNumOperands(); ++i) {
         MachineOperand& MO = MI->getOperand(i);
-        if (MO.isRegister() && MO.isDef() && MO.isEarlyClobber() && 
+        if (MO.isReg() && MO.isDef() && MO.isEarlyClobber() &&
             MO.getReg()) {
           if (TargetRegisterInfo::isVirtualRegister(MO.getReg())) {
             unsigned DestVirtReg = MO.getReg();
@@ -780,7 +780,7 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
     for (unsigned i = 0; i != MI->getNumOperands(); ++i) {
       MachineOperand& MO = MI->getOperand(i);
       // here we are looking for only used operands (never def&use)
-      if (MO.isRegister() && !MO.isDef() && MO.getReg() && !MO.isImplicit() &&
+      if (MO.isReg() && !MO.isDef() && MO.getReg() && !MO.isImplicit() &&
           TargetRegisterInfo::isVirtualRegister(MO.getReg()))
         MI = reloadVirtReg(MBB, MI, i);
     }
@@ -826,7 +826,7 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
     // are defined, and marking explicit destinations in the PhysRegsUsed map.
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
       MachineOperand& MO = MI->getOperand(i);
-      if (MO.isRegister() && MO.isDef() && !MO.isImplicit() && MO.getReg() &&
+      if (MO.isReg() && MO.isDef() && !MO.isImplicit() && MO.getReg() &&
           !MO.isEarlyClobber() &&
           TargetRegisterInfo::isPhysicalRegister(MO.getReg())) {
         unsigned Reg = MO.getReg();
@@ -877,7 +877,7 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
     SmallVector<unsigned, 8> DeadDefs;
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
       MachineOperand& MO = MI->getOperand(i);
-      if (MO.isRegister() && MO.isDead())
+      if (MO.isReg() && MO.isDead())
         DeadDefs.push_back(MO.getReg());
     }
 
@@ -888,7 +888,7 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
     //
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
       MachineOperand& MO = MI->getOperand(i);
-      if (MO.isRegister() && MO.isDef() && MO.getReg() &&
+      if (MO.isReg() && MO.isDef() && MO.getReg() &&
           !MO.isEarlyClobber() &&
           TargetRegisterInfo::isVirtualRegister(MO.getReg())) {
         unsigned DestVirtReg = MO.getReg();

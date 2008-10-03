@@ -64,9 +64,9 @@ bool LowerSubregsInstructionPass::LowerExtract(MachineInstr *MI) {
    const TargetRegisterInfo &TRI = *MF.getTarget().getRegisterInfo();
    const TargetInstrInfo &TII = *MF.getTarget().getInstrInfo();
    
-   assert(MI->getOperand(0).isRegister() && MI->getOperand(0).isDef() &&
-          MI->getOperand(1).isRegister() && MI->getOperand(1).isUse() &&
-          MI->getOperand(2).isImmediate() && "Malformed extract_subreg");
+   assert(MI->getOperand(0).isReg() && MI->getOperand(0).isDef() &&
+          MI->getOperand(1).isReg() && MI->getOperand(1).isUse() &&
+          MI->getOperand(2).isImm() && "Malformed extract_subreg");
 
    unsigned DstReg   = MI->getOperand(0).getReg();
    unsigned SuperReg = MI->getOperand(1).getReg();
@@ -102,10 +102,10 @@ bool LowerSubregsInstructionPass::LowerSubregToReg(MachineInstr *MI) {
   MachineFunction &MF = *MBB->getParent();
   const TargetRegisterInfo &TRI = *MF.getTarget().getRegisterInfo(); 
   const TargetInstrInfo &TII = *MF.getTarget().getInstrInfo();
-  assert((MI->getOperand(0).isRegister() && MI->getOperand(0).isDef()) &&
-         MI->getOperand(1).isImmediate() &&
-         (MI->getOperand(2).isRegister() && MI->getOperand(2).isUse()) &&
-          MI->getOperand(3).isImmediate() && "Invalid subreg_to_reg");
+  assert((MI->getOperand(0).isReg() && MI->getOperand(0).isDef()) &&
+         MI->getOperand(1).isImm() &&
+         (MI->getOperand(2).isReg() && MI->getOperand(2).isUse()) &&
+          MI->getOperand(3).isImm() && "Invalid subreg_to_reg");
           
   unsigned DstReg  = MI->getOperand(0).getReg();
   unsigned InsReg  = MI->getOperand(2).getReg();
@@ -146,10 +146,10 @@ bool LowerSubregsInstructionPass::LowerInsert(MachineInstr *MI) {
   MachineFunction &MF = *MBB->getParent();
   const TargetRegisterInfo &TRI = *MF.getTarget().getRegisterInfo(); 
   const TargetInstrInfo &TII = *MF.getTarget().getInstrInfo();
-  assert((MI->getOperand(0).isRegister() && MI->getOperand(0).isDef()) &&
-         (MI->getOperand(1).isRegister() && MI->getOperand(1).isUse()) &&
-         (MI->getOperand(2).isRegister() && MI->getOperand(2).isUse()) &&
-          MI->getOperand(3).isImmediate() && "Invalid insert_subreg");
+  assert((MI->getOperand(0).isReg() && MI->getOperand(0).isDef()) &&
+         (MI->getOperand(1).isReg() && MI->getOperand(1).isUse()) &&
+         (MI->getOperand(2).isReg() && MI->getOperand(2).isUse()) &&
+          MI->getOperand(3).isImm() && "Invalid insert_subreg");
           
   unsigned DstReg = MI->getOperand(0).getReg();
   unsigned SrcReg = MI->getOperand(1).getReg();

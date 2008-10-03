@@ -44,7 +44,7 @@ struct VISIBILITY_HIDDEN X86IntelAsmPrinter : public AsmPrinter {
   void printOperand(const MachineInstr *MI, unsigned OpNo,
                     const char *Modifier = 0) {
     const MachineOperand &MO = MI->getOperand(OpNo);
-    if (MO.isRegister()) {
+    if (MO.isReg()) {
       assert(TargetRegisterInfo::isPhysicalRegister(MO.getReg()) &&
              "Not physreg??");
       O << TM.getRegisterInfo()->get(MO.getReg()).Name;  // Capitalized names

@@ -181,19 +181,19 @@ unsigned ARMCodeEmitter::getShiftOp(const MachineOperand &MO) const {
 /// operand requires relocation, record the relocation and return zero.
 unsigned ARMCodeEmitter::getMachineOpValue(const MachineInstr &MI,
                                            const MachineOperand &MO) {
-  if (MO.isRegister())
+  if (MO.isReg())
     return ARMRegisterInfo::getRegisterNumbering(MO.getReg());
-  else if (MO.isImmediate())
+  else if (MO.isImm())
     return static_cast<unsigned>(MO.getImm());
-  else if (MO.isGlobalAddress())
+  else if (MO.isGlobal())
     emitGlobalAddress(MO.getGlobal(), ARM::reloc_arm_branch, false);
-  else if (MO.isExternalSymbol())
+  else if (MO.isSymbol())
     emitExternalSymbolAddress(MO.getSymbolName(), ARM::reloc_arm_relative);
-  else if (MO.isConstantPoolIndex())
+  else if (MO.isCPI())
     emitConstPoolAddress(MO.getIndex(), ARM::reloc_arm_relative);
-  else if (MO.isJumpTableIndex())
+  else if (MO.isJTI())
     emitJumpTableAddress(MO.getIndex(), ARM::reloc_arm_relative);
-  else if (MO.isMachineBasicBlock())
+  else if (MO.isMBB())
     emitMachineBasicBlock(MO.getMBB());
   else {
     cerr << "ERROR: Unknown type of MachineOperand: " << MO << "\n";
@@ -351,7 +351,7 @@ unsigned ARMCodeEmitter::getAddrMode1SBit(const MachineInstr &MI,
                                           const TargetInstrDesc &TID) const {
   for (unsigned i = MI.getNumOperands(), e = TID.getNumOperands(); i != e; --i){
     const MachineOperand &MO = MI.getOperand(i-1);
-    if (MO.isRegister() && MO.isDef() && MO.getReg() == ARM::CPSR)
+    if (MO.isReg() && MO.isDef() && MO.getReg() == ARM::CPSR)
       return 1 << ARMII::S_BitShift;
   }
   return 0;
@@ -414,7 +414,7 @@ unsigned ARMCodeEmitter::getAddrMode1InstrBinary(const MachineInstr &MI,
     return Binary | getMachineSoRegOpValue(MI, TID, OpIdx);
 
   const MachineOperand &MO = MI.getOperand(OpIdx);
-  if (MO.isRegister())
+  if (MO.isReg())
     // Encode register Rm.
     return Binary | getMachineOpValue(MI, NumDefs + 1);
 
@@ -538,7 +538,7 @@ unsigned ARMCodeEmitter::getAddrMode4InstrBinary(const MachineInstr &MI,
   // Set registers
   for (unsigned i = 4, e = MI.getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI.getOperand(i);
-    if (MO.isRegister() && MO.isImplicit())
+    if (MO.isReg() && MO.isImplicit())
       continue;
     unsigned RegNum = ARMRegisterInfo::getRegisterNumbering(MO.getReg());
     assert(TargetRegisterInfo::isPhysicalRegister(MO.getReg()) &&

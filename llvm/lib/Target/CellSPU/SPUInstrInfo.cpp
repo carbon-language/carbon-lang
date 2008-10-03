@@ -60,9 +60,9 @@ SPUInstrInfo::isMoveInstr(const MachineInstr& MI,
   case SPU::AHIr16:
   case SPU::AIvec:
     assert(MI.getNumOperands() == 3 &&
-           MI.getOperand(0).isRegister() &&
-           MI.getOperand(1).isRegister() &&
-           MI.getOperand(2).isImmediate() &&
+           MI.getOperand(0).isReg() &&
+           MI.getOperand(1).isReg() &&
+           MI.getOperand(2).isImm() &&
            "invalid SPU ORI/ORHI/ORBI/AHI/AI/SFI/SFHI instruction!");
     if (MI.getOperand(2).getImm() == 0) {
       sourceReg = MI.getOperand(1).getReg();
@@ -73,10 +73,10 @@ SPUInstrInfo::isMoveInstr(const MachineInstr& MI,
   case SPU::AIr32:
     assert(MI.getNumOperands() == 3 &&
            "wrong number of operands to AIr32");
-    if (MI.getOperand(0).isRegister() &&
-        (MI.getOperand(1).isRegister() ||
-         MI.getOperand(1).isFrameIndex()) &&
-        (MI.getOperand(2).isImmediate() &&
+    if (MI.getOperand(0).isReg() &&
+        (MI.getOperand(1).isReg() ||
+         MI.getOperand(1).isFI()) &&
+        (MI.getOperand(2).isImm() &&
          MI.getOperand(2).getImm() == 0)) {
       sourceReg = MI.getOperand(1).getReg();
       destReg = MI.getOperand(0).getReg();
@@ -103,9 +103,9 @@ SPUInstrInfo::isMoveInstr(const MachineInstr& MI,
   case SPU::ORf32:
   case SPU::ORf64:
     assert(MI.getNumOperands() == 3 &&
-           MI.getOperand(0).isRegister() &&
-           MI.getOperand(1).isRegister() &&
-           MI.getOperand(2).isRegister() &&
+           MI.getOperand(0).isReg() &&
+           MI.getOperand(1).isReg() &&
+           MI.getOperand(2).isReg() &&
            "invalid SPU OR(vec|r32|r64|gprc) instruction!");
     if (MI.getOperand(1).getReg() == MI.getOperand(2).getReg()) {
       sourceReg = MI.getOperand(1).getReg();
@@ -136,8 +136,8 @@ SPUInstrInfo::isLoadFromStackSlot(MachineInstr *MI, int &FrameIndex) const {
   case SPU::LQXr64:
   case SPU::LQXr32:
   case SPU::LQXr16:
-    if (MI->getOperand(1).isImmediate() && !MI->getOperand(1).getImm() &&
-        MI->getOperand(2).isFrameIndex()) {
+    if (MI->getOperand(1).isImm() && !MI->getOperand(1).getImm() &&
+        MI->getOperand(2).isFI()) {
       FrameIndex = MI->getOperand(2).getIndex();
       return MI->getOperand(0).getReg();
     }
@@ -170,8 +170,8 @@ SPUInstrInfo::isStoreToStackSlot(MachineInstr *MI, int &FrameIndex) const {
   case SPU::STQXr32:
   case SPU::STQXr16:
     // case SPU::STQXr8:
-    if (MI->getOperand(1).isImmediate() && !MI->getOperand(1).getImm() &&
-        MI->getOperand(2).isFrameIndex()) {
+    if (MI->getOperand(1).isImm() && !MI->getOperand(1).getImm() &&
+        MI->getOperand(2).isFI()) {
       FrameIndex = MI->getOperand(2).getIndex();
       return MI->getOperand(0).getReg();
     }
@@ -273,7 +273,7 @@ void SPUInstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
   cerr << "storeRegToAddr() invoked!\n";
   abort();
 
-  if (Addr[0].isFrameIndex()) {
+  if (Addr[0].isFI()) {
     /* do what storeRegToStackSlot does here */
   } else {
     unsigned Opc = 0;
@@ -297,9 +297,9 @@ void SPUInstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
       .addReg(SrcReg, false, false, isKill);
     for (unsigned i = 0, e = Addr.size(); i != e; ++i) {
       MachineOperand &MO = Addr[i];
-      if (MO.isRegister())
+      if (MO.isReg())
         MIB.addReg(MO.getReg());
-      else if (MO.isImmediate())
+      else if (MO.isImm())
         MIB.addImm(MO.getImm());
       else
         MIB.addFrameIndex(MO.getIndex());
@@ -358,7 +358,7 @@ void SPUInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
   cerr << "loadRegToAddr() invoked!\n";
   abort();
 
-  if (Addr[0].isFrameIndex()) {
+  if (Addr[0].isFI()) {
     /* do what loadRegFromStackSlot does here... */
   } else {
     unsigned Opc = 0;
@@ -383,9 +383,9 @@ void SPUInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
     MachineInstrBuilder MIB = BuildMI(MF, get(Opc), DestReg);
     for (unsigned i = 0, e = Addr.size(); i != e; ++i) {
       MachineOperand &MO = Addr[i];
-      if (MO.isRegister())
+      if (MO.isReg())
         MIB.addReg(MO.getReg());
-      else if (MO.isImmediate())
+      else if (MO.isImm())
         MIB.addImm(MO.getImm());
       else
         MIB.addFrameIndex(MO.getIndex());

@@ -22,7 +22,7 @@ using namespace llvm;
 // operand 1 and 2.
 MachineInstr *TargetInstrInfoImpl::commuteInstruction(MachineInstr *MI,
                                                       bool NewMI) const {
-  assert(MI->getOperand(1).isRegister() && MI->getOperand(2).isRegister() &&
+  assert(MI->getOperand(1).isReg() && MI->getOperand(2).isReg() &&
          "This only knows how to commute register operands so far");
   unsigned Reg1 = MI->getOperand(1).getReg();
   unsigned Reg2 = MI->getOperand(2).getReg();
@@ -64,7 +64,7 @@ MachineInstr *TargetInstrInfoImpl::commuteInstruction(MachineInstr *MI,
 /// two-address instruction.
 bool TargetInstrInfoImpl::CommuteChangesDestination(MachineInstr *MI,
                                                     unsigned &OpIdx) const{
-  assert(MI->getOperand(1).isRegister() && MI->getOperand(2).isRegister() &&
+  assert(MI->getOperand(1).isReg() && MI->getOperand(2).isReg() &&
          "This only knows how to commute register operands so far");
   if (MI->getOperand(0).getReg() == MI->getOperand(1).getReg()) {
     // Must be two address instruction!
@@ -87,13 +87,13 @@ bool TargetInstrInfoImpl::PredicateInstruction(MachineInstr *MI,
   for (unsigned j = 0, i = 0, e = MI->getNumOperands(); i != e; ++i) {
     if (TID.OpInfo[i].isPredicate()) {
       MachineOperand &MO = MI->getOperand(i);
-      if (MO.isRegister()) {
+      if (MO.isReg()) {
         MO.setReg(Pred[j].getReg());
         MadeChange = true;
-      } else if (MO.isImmediate()) {
+      } else if (MO.isImm()) {
         MO.setImm(Pred[j].getImm());
         MadeChange = true;
-      } else if (MO.isMachineBasicBlock()) {
+      } else if (MO.isMBB()) {
         MO.setMBB(Pred[j].getMBB());
         MadeChange = true;
       }

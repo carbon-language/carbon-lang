@@ -248,7 +248,7 @@ bool MachineLICM::IsLoopInvariantInst(MachineInstr &I) {
   for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = I.getOperand(i);
 
-    if (!MO.isRegister())
+    if (!MO.isReg())
       continue;
 
     if (MO.isDef() && TargetRegisterInfo::isPhysicalRegister(MO.getReg()))

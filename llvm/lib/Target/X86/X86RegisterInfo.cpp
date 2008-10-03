@@ -416,7 +416,7 @@ void X86RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   unsigned i = 0;
   MachineInstr &MI = *II;
   MachineFunction &MF = *MI.getParent()->getParent();
-  while (!MI.getOperand(i).isFrameIndex()) {
+  while (!MI.getOperand(i).isFI()) {
     ++i;
     assert(i < MI.getNumOperands() && "Instr doesn't have FrameIndex operand!");
   }
@@ -895,7 +895,7 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
   if (RetOpcode == X86::EH_RETURN || RetOpcode == X86::EH_RETURN64) {
     MBBI = prior(MBB.end());
     MachineOperand &DestAddr  = MBBI->getOperand(0);
-    assert(DestAddr.isRegister() && "Offset should be in register!");
+    assert(DestAddr.isReg() && "Offset should be in register!");
     BuildMI(MBB, MBBI,
             TII.get(Is64Bit ? X86::MOV64rr : X86::MOV32rr),
             StackPtr).addReg(DestAddr.getReg());
@@ -905,7 +905,7 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
     MBBI = prior(MBB.end());
     MachineOperand &JumpTarget = MBBI->getOperand(0);
     MachineOperand &StackAdjust = MBBI->getOperand(1);
-    assert( StackAdjust.isImmediate() && "Expecting immediate value.");
+    assert(StackAdjust.isImm() && "Expecting immediate value.");
 
     // Adjust stack pointer.
     int StackAdj = StackAdjust.getImm();

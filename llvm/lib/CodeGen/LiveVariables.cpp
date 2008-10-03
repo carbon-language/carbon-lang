@@ -558,7 +558,7 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
       SmallVector<unsigned, 4> DefRegs;
       for (unsigned i = 0; i != NumOperandsToProcess; ++i) {
         const MachineOperand &MO = MI->getOperand(i);
-        if (MO.isRegister() && MO.getReg()) {
+        if (MO.isReg() && MO.getReg()) {
           unsigned MOReg = MO.getReg();
           if (MO.isUse())
             UseRegs.push_back(MOReg);
@@ -672,7 +672,7 @@ void LiveVariables::replaceKillInstruction(unsigned Reg, MachineInstr *OldMI,
 void LiveVariables::removeVirtualRegistersKilled(MachineInstr *MI) {
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI->getOperand(i);
-    if (MO.isRegister() && MO.isKill()) {
+    if (MO.isReg() && MO.isKill()) {
       MO.setIsKill(false);
       unsigned Reg = MO.getReg();
       if (TargetRegisterInfo::isVirtualRegister(Reg)) {

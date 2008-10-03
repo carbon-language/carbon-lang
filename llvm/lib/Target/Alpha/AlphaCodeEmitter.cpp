@@ -148,12 +148,11 @@ unsigned AlphaCodeEmitter::getMachineOpValue(const MachineInstr &MI,
   unsigned rv = 0; // Return value; defaults to 0 for unhandled cases
                    // or things that get fixed up later by the JIT.
 
-  if (MO.isRegister()) {
+  if (MO.isReg()) {
     rv = getAlphaRegNumber(MO.getReg());
-  } else if (MO.isImmediate()) {
+  } else if (MO.isImm()) {
     rv = MO.getImm();
-  } else if (MO.isGlobalAddress() || MO.isExternalSymbol()
-             || MO.isConstantPoolIndex()) {
+  } else if (MO.isGlobal() || MO.isSymbol() || MO.isCPI()) {
     DOUT << MO << " is a relocated op for " << MI << "\n";
     unsigned Reloc = 0;
     int Offset = 0;
@@ -193,19 +192,19 @@ unsigned AlphaCodeEmitter::getMachineOpValue(const MachineInstr &MI,
       assert(0 && "unknown relocatable instruction");
       abort();
     }
-    if (MO.isGlobalAddress())
+    if (MO.isGlobal())
       MCE.addRelocation(MachineRelocation::getGV(MCE.getCurrentPCOffset(),
                                                  Reloc, MO.getGlobal(), Offset,
                                                  isa<Function>(MO.getGlobal()),
                                                  useGOT));
-    else if (MO.isExternalSymbol())
+    else if (MO.isSymbol())
       MCE.addRelocation(MachineRelocation::getExtSym(MCE.getCurrentPCOffset(),
                                                      Reloc, MO.getSymbolName(),
                                                      Offset, true));
     else
      MCE.addRelocation(MachineRelocation::getConstPool(MCE.getCurrentPCOffset(),
                                           Reloc, MO.getIndex(), Offset));
-  } else if (MO.isMachineBasicBlock()) {
+  } else if (MO.isMBB()) {
     MCE.addRelocation(MachineRelocation::getBB(MCE.getCurrentPCOffset(),
                                                Alpha::reloc_bsr, MO.getMBB()));
   }else {

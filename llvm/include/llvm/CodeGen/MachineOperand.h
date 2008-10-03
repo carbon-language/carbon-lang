@@ -125,17 +125,28 @@ public:
   void print(std::ostream &os, const TargetMachine *TM = 0) const;
   void print(raw_ostream &os, const TargetMachine *TM = 0) const;
 
-  /// Accessors that tell you what kind of MachineOperand you're looking at.
-  ///
-  bool isRegister() const { return OpKind == MO_Register; }
-  bool isImmediate() const { return OpKind == MO_Immediate; }
-  bool isFPImmediate() const { return OpKind == MO_FPImmediate; }
-  bool isMachineBasicBlock() const { return OpKind == MO_MachineBasicBlock; }
-  bool isFrameIndex() const { return OpKind == MO_FrameIndex; }
-  bool isConstantPoolIndex() const { return OpKind == MO_ConstantPoolIndex; }
-  bool isJumpTableIndex() const { return OpKind == MO_JumpTableIndex; }
-  bool isGlobalAddress() const { return OpKind == MO_GlobalAddress; }
-  bool isExternalSymbol() const { return OpKind == MO_ExternalSymbol; }
+  //===--------------------------------------------------------------------===//
+  // Accessors that tell you what kind of MachineOperand you're looking at.
+  //===--------------------------------------------------------------------===//
+
+  /// isReg - Tests if this is a MO_Register operand.
+  bool isReg() const { return OpKind == MO_Register; }
+  /// isImm - Tests if this is a MO_Immediate operand.
+  bool isImm() const { return OpKind == MO_Immediate; }
+  /// isFPImm - Tests if this is a MO_FPImmediate operand.
+  bool isFPImm() const { return OpKind == MO_FPImmediate; }
+  /// isMBB - Tests if this is a MO_MachineBasicBlock operand.
+  bool isMBB() const { return OpKind == MO_MachineBasicBlock; }
+  /// isFI - Tests if this is a MO_FrameIndex operand.
+  bool isFI() const { return OpKind == MO_FrameIndex; }
+  /// isCPI - Tests if this is a MO_ConstantPoolIndex operand.
+  bool isCPI() const { return OpKind == MO_ConstantPoolIndex; }
+  /// isJTI - Tests if this is a MO_JumpTableIndex operand.
+  bool isJTI() const { return OpKind == MO_JumpTableIndex; }
+  /// isGlobal - Tests if this is a MO_GlobalAddress operand.
+  bool isGlobal() const { return OpKind == MO_GlobalAddress; }
+  /// isSymbol - Tests if this is a MO_ExternalSymbol operand.
+  bool isSymbol() const { return OpKind == MO_ExternalSymbol; }
 
   //===--------------------------------------------------------------------===//
   // Accessors for Register Operands
@@ -143,49 +154,49 @@ public:
 
   /// getReg - Returns the register number.
   unsigned getReg() const {
-    assert(isRegister() && "This is not a register operand!");
+    assert(isReg() && "This is not a register operand!");
     return Contents.Reg.RegNo;
   }
   
   unsigned getSubReg() const {
-    assert(isRegister() && "Wrong MachineOperand accessor");
+    assert(isReg() && "Wrong MachineOperand accessor");
     return (unsigned)SubReg;
   }
   
   bool isUse() const { 
-    assert(isRegister() && "Wrong MachineOperand accessor");
+    assert(isReg() && "Wrong MachineOperand accessor");
     return !IsDef;
   }
   
   bool isDef() const {
-    assert(isRegister() && "Wrong MachineOperand accessor");
+    assert(isReg() && "Wrong MachineOperand accessor");
     return IsDef;
   }
   
   bool isImplicit() const { 
-    assert(isRegister() && "Wrong MachineOperand accessor");
+    assert(isReg() && "Wrong MachineOperand accessor");
     return IsImp;
   }
   
   bool isDead() const {
-    assert(isRegister() && "Wrong MachineOperand accessor");
+    assert(isReg() && "Wrong MachineOperand accessor");
     return IsDead;
   }
   
   bool isKill() const {
-    assert(isRegister() && "Wrong MachineOperand accessor");
+    assert(isReg() && "Wrong MachineOperand accessor");
     return IsKill;
   }
   
   bool isEarlyClobber() const {
-    assert(isRegister() && "Wrong MachineOperand accessor");
+    assert(isReg() && "Wrong MachineOperand accessor");
     return IsEarlyClobber;
   }
 
   /// getNextOperandForReg - Return the next MachineOperand in the function that
   /// uses or defines this register.
   MachineOperand *getNextOperandForReg() const {
-    assert(isRegister() && "This is not a register operand!");
+    assert(isReg() && "This is not a register operand!");
     return Contents.Reg.Next;
   }
 
@@ -198,37 +209,37 @@ public:
   void setReg(unsigned Reg);
   
   void setSubReg(unsigned subReg) {
-    assert(isRegister() && "Wrong MachineOperand accessor");
+    assert(isReg() && "Wrong MachineOperand accessor");
     SubReg = (unsigned char)subReg;
   }
   
   void setIsUse(bool Val = true) {
-    assert(isRegister() && "Wrong MachineOperand accessor");
+    assert(isReg() && "Wrong MachineOperand accessor");
     IsDef = !Val;
   }
   
   void setIsDef(bool Val = true) {
-    assert(isRegister() && "Wrong MachineOperand accessor");
+    assert(isReg() && "Wrong MachineOperand accessor");
     IsDef = Val;
   }
 
   void setImplicit(bool Val = true) { 
-    assert(isRegister() && "Wrong MachineOperand accessor");
+    assert(isReg() && "Wrong MachineOperand accessor");
     IsImp = Val;
   }
 
   void setIsKill(bool Val = true) {
-    assert(isRegister() && !IsDef && "Wrong MachineOperand accessor");
+    assert(isReg() && !IsDef && "Wrong MachineOperand accessor");
     IsKill = Val;
   }
   
   void setIsDead(bool Val = true) {
-    assert(isRegister() && IsDef && "Wrong MachineOperand accessor");
+    assert(isReg() && IsDef && "Wrong MachineOperand accessor");
     IsDead = Val;
   }
 
   void setIsEarlyClobber(bool Val = true) {
-    assert(isRegister() && IsDef && "Wrong MachineOperand accessor");
+    assert(isReg() && IsDef && "Wrong MachineOperand accessor");
     IsEarlyClobber = Val;
   }
 
@@ -237,39 +248,39 @@ public:
   //===--------------------------------------------------------------------===//
   
   int64_t getImm() const {
-    assert(isImmediate() && "Wrong MachineOperand accessor");
+    assert(isImm() && "Wrong MachineOperand accessor");
     return Contents.ImmVal;
   }
   
   const ConstantFP *getFPImm() const {
-    assert(isFPImmediate() && "Wrong MachineOperand accessor");
+    assert(isFPImm() && "Wrong MachineOperand accessor");
     return Contents.CFP;
   }
   
   MachineBasicBlock *getMBB() const {
-    assert(isMachineBasicBlock() && "Wrong MachineOperand accessor");
+    assert(isMBB() && "Wrong MachineOperand accessor");
     return Contents.MBB;
   }
 
   int getIndex() const {
-    assert((isFrameIndex() || isConstantPoolIndex() || isJumpTableIndex()) &&
+    assert((isFI() || isCPI() || isJTI()) &&
            "Wrong MachineOperand accessor");
     return Contents.OffsetedInfo.Val.Index;
   }
   
   GlobalValue *getGlobal() const {
-    assert(isGlobalAddress() && "Wrong MachineOperand accessor");
+    assert(isGlobal() && "Wrong MachineOperand accessor");
     return Contents.OffsetedInfo.Val.GV;
   }
   
   int getOffset() const {
-    assert((isGlobalAddress() || isExternalSymbol() || isConstantPoolIndex()) &&
+    assert((isGlobal() || isSymbol() || isCPI()) &&
            "Wrong MachineOperand accessor");
     return Contents.OffsetedInfo.Offset;
   }
   
   const char *getSymbolName() const {
-    assert(isExternalSymbol() && "Wrong MachineOperand accessor");
+    assert(isSymbol() && "Wrong MachineOperand accessor");
     return Contents.OffsetedInfo.Val.SymbolName;
   }
   
@@ -278,24 +289,24 @@ public:
   //===--------------------------------------------------------------------===//
   
   void setImm(int64_t immVal) {
-    assert(isImmediate() && "Wrong MachineOperand mutator");
+    assert(isImm() && "Wrong MachineOperand mutator");
     Contents.ImmVal = immVal;
   }
 
   void setOffset(int Offset) {
-    assert((isGlobalAddress() || isExternalSymbol() || isConstantPoolIndex()) &&
+    assert((isGlobal() || isSymbol() || isCPI()) &&
         "Wrong MachineOperand accessor");
     Contents.OffsetedInfo.Offset = Offset;
   }
   
   void setIndex(int Idx) {
-    assert((isFrameIndex() || isConstantPoolIndex() || isJumpTableIndex()) &&
+    assert((isFI() || isCPI() || isJTI()) &&
            "Wrong MachineOperand accessor");
     Contents.OffsetedInfo.Val.Index = Idx;
   }
   
   void setMBB(MachineBasicBlock *MBB) {
-    assert(isMachineBasicBlock() && "Wrong MachineOperand accessor");
+    assert(isMBB() && "Wrong MachineOperand accessor");
     Contents.MBB = MBB;
   }
   
@@ -407,7 +418,7 @@ private:
   /// or false if not.  This can only be called for register operands that are
   /// part of a machine instruction.
   bool isOnRegUseList() const {
-    assert(isRegister() && "Can only add reg operand to use lists");
+    assert(isReg() && "Can only add reg operand to use lists");
     return Contents.Reg.Prev != 0;
   }
   

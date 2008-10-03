@@ -265,7 +265,7 @@ void PBQPRegAlloc::calcSpillCosts() {
         const MachineOperand &mo = instr->getOperand(opNo);
 
         // We're not interested in non-registers...
-        if (!mo.isRegister())
+        if (!mo.isReg())
           continue;
  
         unsigned moReg = mo.getReg();

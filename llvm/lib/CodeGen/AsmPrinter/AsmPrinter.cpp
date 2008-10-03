@@ -1179,11 +1179,11 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
   
   // Count the number of register definitions.
   unsigned NumDefs = 0;
-  for (; MI->getOperand(NumDefs).isRegister() && MI->getOperand(NumDefs).isDef();
+  for (; MI->getOperand(NumDefs).isReg() && MI->getOperand(NumDefs).isDef();
        ++NumDefs)
     assert(NumDefs != NumOperands-1 && "No asm string?");
   
-  assert(MI->getOperand(NumDefs).isExternalSymbol() && "No asm string?");
+  assert(MI->getOperand(NumDefs).isSymbol() && "No asm string?");
 
   // Disassemble the AsmStr, printing out the literal pieces, the operands, etc.
   const char *AsmStr = MI->getOperand(NumDefs).getSymbolName();

@@ -58,7 +58,7 @@ bool DeadMachineInstructionElim::isDead(MachineInstr *MI) const {
   // Examine each operand.
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
-    if (MO.isRegister() && MO.isDef()) {
+    if (MO.isReg() && MO.isDef()) {
       unsigned Reg = MO.getReg();
       if (TargetRegisterInfo::isPhysicalRegister(Reg) ?
           LivePhysRegs[Reg] : !MRI->use_empty(Reg)) {
@@ -122,7 +122,7 @@ bool DeadMachineInstructionElim::runOnMachineFunction(MachineFunction &MF) {
       // Record the physreg defs.
       for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
         const MachineOperand &MO = MI->getOperand(i);
-        if (MO.isRegister() && MO.isDef()) {
+        if (MO.isReg() && MO.isDef()) {
           unsigned Reg = MO.getReg();
           if (Reg != 0 && TargetRegisterInfo::isPhysicalRegister(Reg)) {
             LivePhysRegs.reset(Reg);
@@ -136,7 +136,7 @@ bool DeadMachineInstructionElim::runOnMachineFunction(MachineFunction &MF) {
       // both defined and used in the same instruction.
       for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
         const MachineOperand &MO = MI->getOperand(i);
-        if (MO.isRegister() && MO.isUse()) {
+        if (MO.isReg() && MO.isUse()) {
           unsigned Reg = MO.getReg();
           if (Reg != 0 && TargetRegisterInfo::isPhysicalRegister(Reg)) {
             LivePhysRegs.set(Reg);

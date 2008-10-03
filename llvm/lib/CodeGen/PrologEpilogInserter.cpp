@@ -560,7 +560,7 @@ void PEI::replaceFrameIndices(MachineFunction &Fn) {
       bool DoIncr = true;
 
       for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i)
-        if (MI->getOperand(i).isFrameIndex()) {
+        if (MI->getOperand(i).isFI()) {
           // Some instructions (e.g. inline asm instructions) can have
           // multiple frame indices and/or cause eliminateFrameIndex
           // to insert more than one instruction. We need the register

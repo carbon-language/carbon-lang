@@ -31,11 +31,11 @@ bool IA64InstrInfo::isMoveInstr(const MachineInstr& MI,
   if (oc == IA64::MOV || oc == IA64::FMOV) {
   // TODO: this doesn't detect predicate moves
      assert(MI.getNumOperands() >= 2 &&
-             /* MI.getOperand(0).isRegister() &&
-             MI.getOperand(1).isRegister() && */
+             /* MI.getOperand(0).isReg() &&
+             MI.getOperand(1).isReg() && */
              "invalid register-register move instruction");
-     if( MI.getOperand(0).isRegister() &&
-         MI.getOperand(1).isRegister() ) {
+     if (MI.getOperand(0).isReg() &&
+         MI.getOperand(1).isReg()) {
        // if both operands of the MOV/FMOV are registers, then
        // yes, this is a move instruction
        sourceReg = MI.getOperand(1).getReg();
@@ -122,9 +122,9 @@ void IA64InstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
   MachineInstrBuilder MIB = BuildMI(MF, get(Opc));
   for (unsigned i = 0, e = Addr.size(); i != e; ++i) {
     MachineOperand &MO = Addr[i];
-    if (MO.isRegister())
+    if (MO.isReg())
       MIB.addReg(MO.getReg());
-    else if (MO.isImmediate())
+    else if (MO.isImm())
       MIB.addImm(MO.getImm());
     else
       MIB.addFrameIndex(MO.getIndex());
@@ -174,9 +174,9 @@ void IA64InstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
   MachineInstrBuilder MIB = BuildMI(MF, get(Opc), DestReg);
   for (unsigned i = 0, e = Addr.size(); i != e; ++i) {
     MachineOperand &MO = Addr[i];
-    if (MO.isRegister())
+    if (MO.isReg())
       MIB.addReg(MO.getReg());
-    else if (MO.isImmediate())
+    else if (MO.isImm())
       MIB.addImm(MO.getImm());
     else
       MIB.addFrameIndex(MO.getIndex());

@@ -416,7 +416,7 @@ void ARMConstantIslands::InitialFunctionScan(MachineFunction &Fn,
 
       // Scan the instructions for constant pool operands.
       for (unsigned op = 0, e = I->getNumOperands(); op != e; ++op)
-        if (I->getOperand(op).isConstantPoolIndex()) {
+        if (I->getOperand(op).isCPI()) {
           // We found one.  The addressing mode tells us the max displacement
           // from the PC that this instruction permits.
           
@@ -818,7 +818,7 @@ int ARMConstantIslands::LookForExistingCPEntry(CPUser& U, unsigned UserOffset)
       U.CPEMI = CPEs[i].CPEMI;
       // Change the CPI in the instruction operand to refer to the clone.
       for (unsigned j = 0, e = UserMI->getNumOperands(); j != e; ++j)
-        if (UserMI->getOperand(j).isConstantPoolIndex()) {
+        if (UserMI->getOperand(j).isCPI()) {
           UserMI->getOperand(j).setIndex(CPEs[i].CPI);
           break;
         }
@@ -1058,7 +1058,7 @@ bool ARMConstantIslands::HandleConstantPoolUser(MachineFunction &Fn,
   
   // Finally, change the CPI in the instruction operand to be ID.
   for (unsigned i = 0, e = UserMI->getNumOperands(); i != e; ++i)
-    if (UserMI->getOperand(i).isConstantPoolIndex()) {
+    if (UserMI->getOperand(i).isCPI()) {
       UserMI->getOperand(i).setIndex(ID);
       break;
     }

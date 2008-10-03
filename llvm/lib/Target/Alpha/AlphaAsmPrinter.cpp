@@ -80,7 +80,7 @@ void AlphaAsmPrinter::printOperand(const MachineInstr *MI, int opNum)
     assert(TargetRegisterInfo::isPhysicalRegister(MO.getReg()) &&
            "Not physreg??");
     O << TM.getRegisterInfo()->get(MO.getReg()).AsmName;
-  } else if (MO.isImmediate()) {
+  } else if (MO.isImm()) {
     O << MO.getImm();
     assert(MO.getImm() < (1 << 30));
   } else {

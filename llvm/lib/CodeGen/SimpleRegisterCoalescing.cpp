@@ -466,7 +466,7 @@ bool SimpleRegisterCoalescing::ReMaterializeTrivialDef(LiveInterval &SrcInt,
   for (unsigned i = CopyMI->getDesc().getNumOperands(),
          e = CopyMI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = CopyMI->getOperand(i);
-    if (MO.isRegister() && MO.isImplicit())
+    if (MO.isReg() && MO.isImplicit())
       NewMI->addOperand(MO);
     if (MO.isDef() && li_->hasInterval(MO.getReg())) {
       unsigned Reg = MO.getReg();
@@ -875,7 +875,7 @@ void SimpleRegisterCoalescing::RemoveCopiesFromValNo(LiveInterval &li,
       // Each use MI may have multiple uses of this register. Change them all.
       for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
         MachineOperand &MO = MI->getOperand(i);
-        if (MO.isRegister() && MO.getReg() == li.reg)
+        if (MO.isReg() && MO.getReg() == li.reg)
           MO.setReg(DstReg);
       }
       JoinedCopies.insert(MI);
@@ -2160,7 +2160,7 @@ SimpleRegisterCoalescing::lastRegisterUse(unsigned Start, unsigned End,
     if (!(tii_->isMoveInstr(*MI, SrcReg, DstReg) && SrcReg == DstReg))
       for (unsigned i = 0, NumOps = MI->getNumOperands(); i != NumOps; ++i) {
         MachineOperand &Use = MI->getOperand(i);
-        if (Use.isRegister() && Use.isUse() && Use.getReg() &&
+        if (Use.isReg() && Use.isUse() && Use.getReg() &&
             tri_->regsOverlap(Use.getReg(), Reg)) {
           UseIdx = e;
           return &Use;
@@ -2298,7 +2298,7 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
         bool isDead = true;
         for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
           const MachineOperand &MO = MI->getOperand(i);
-          if (!MO.isRegister() || MO.isDead())
+          if (!MO.isReg() || MO.isDead())
             continue;
           unsigned Reg = MO.getReg();
           if (TargetRegisterInfo::isPhysicalRegister(Reg) ||
@@ -2333,7 +2333,7 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
         SmallSet<unsigned, 4> UniqueUses;
         for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
           const MachineOperand &mop = MI->getOperand(i);
-          if (mop.isRegister() && mop.getReg() &&
+          if (mop.isReg() && mop.getReg() &&
               TargetRegisterInfo::isVirtualRegister(mop.getReg())) {
             unsigned reg = mop.getReg();
             // Multiple uses of reg by the same instruction. It should not

@@ -159,7 +159,7 @@ void AlphaRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   MachineFunction &MF = *MBB.getParent();
   bool FP = hasFP(MF);
 
-  while (!MI.getOperand(i).isFrameIndex()) {
+  while (!MI.getOperand(i).isFI()) {
     ++i;
     assert(i < MI.getNumOperands() && "Instr doesn't have FrameIndex operand!");
   }

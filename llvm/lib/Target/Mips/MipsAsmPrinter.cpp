@@ -336,26 +336,24 @@ printOperand(const MachineInstr *MI, int opNum)
   // using PIC_. %call16 is used to load direct call targets
   // on PIC_ and small code size. %call_lo and %call_hi load 
   // direct call targets on PIC_ and large code size.
-  if (MI->getOpcode() == Mips::LUi && !MO.isRegister() 
-      && !MO.isImmediate()) {
+  if (MI->getOpcode() == Mips::LUi && !MO.isReg() && !MO.isImm()) {
     if ((isPIC) && (isCodeLarge))
       O << "%call_hi(";
     else
       O << "%hi(";
     closeP = true;
-  } else if ((MI->getOpcode() == Mips::ADDiu) && !MO.isRegister() 
-             && !MO.isImmediate()) {
+  } else if ((MI->getOpcode() == Mips::ADDiu) && !MO.isReg() && !MO.isImm()) {
     const MachineOperand &firstMO = MI->getOperand(opNum-1);
     if (firstMO.getReg() == Mips::GP)
       O << "%gp_rel(";
     else
       O << "%lo(";
     closeP = true;
-  } else if ((isPIC) && (MI->getOpcode() == Mips::LW)
-             && (!MO.isRegister()) && (!MO.isImmediate())) {
+  } else if ((isPIC) && (MI->getOpcode() == Mips::LW) &&
+             (!MO.isReg()) && (!MO.isImm())) {
     const MachineOperand &firstMO = MI->getOperand(opNum-1);
     const MachineOperand &lastMO  = MI->getOperand(opNum+1);
-    if ((firstMO.isRegister()) && (lastMO.isRegister())) {
+    if ((firstMO.isReg()) && (lastMO.isReg())) {
       if ((firstMO.getReg() == Mips::T9) && (lastMO.getReg() == Mips::GP) 
           && (!isCodeLarge))
         O << "%call16(";

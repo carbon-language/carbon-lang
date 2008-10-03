@@ -80,7 +80,7 @@ void SparcRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
 
   unsigned i = 0;
   MachineInstr &MI = *II;
-  while (!MI.getOperand(i).isFrameIndex()) {
+  while (!MI.getOperand(i).isFI()) {
     ++i;
     assert(i < MI.getNumOperands() && "Instr doesn't have FrameIndex operand!");
   }

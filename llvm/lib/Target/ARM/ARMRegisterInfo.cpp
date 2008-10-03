@@ -540,7 +540,7 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
   bool isThumb = AFI->isThumbFunction();
 
-  while (!MI.getOperand(i).isFrameIndex()) {
+  while (!MI.getOperand(i).isFI()) {
     ++i;
     assert(i < MI.getNumOperands() && "Instr doesn't have FrameIndex operand!");
   }
@@ -1020,7 +1020,7 @@ ARMRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
       for (MachineFunction::iterator BB = MF.begin(),E = MF.end();BB != E; ++BB)
         for (MachineBasicBlock::iterator I= BB->begin(); I != BB->end(); ++I) {
           for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
-            if (I->getOperand(i).isFrameIndex()) {
+            if (I->getOperand(i).isFI()) {
               unsigned Opcode = I->getOpcode();
               const TargetInstrDesc &Desc = TII.get(Opcode);
               unsigned AddrMode = (Desc.TSFlags & ARMII::AddrModeMask);
@@ -1086,7 +1086,7 @@ static void movePastCSLoadStoreOps(MachineBasicBlock &MBB,
                                    int Opc, unsigned Area,
                                    const ARMSubtarget &STI) {
   while (MBBI != MBB.end() &&
-         MBBI->getOpcode() == Opc && MBBI->getOperand(1).isFrameIndex()) {
+         MBBI->getOpcode() == Opc && MBBI->getOperand(1).isFI()) {
     if (Area != 0) {
       bool Done = false;
       unsigned Category = 0;
@@ -1250,7 +1250,7 @@ static bool isCSRestore(MachineInstr *MI, const unsigned *CSRegs) {
   return ((MI->getOpcode() == ARM::FLDD ||
            MI->getOpcode() == ARM::LDR  ||
            MI->getOpcode() == ARM::tRestore) &&
-          MI->getOperand(1).isFrameIndex() &&
+          MI->getOperand(1).isFI() &&
           isCalleeSavedRegister(MI->getOperand(0).getReg(), CSRegs));
 }
 

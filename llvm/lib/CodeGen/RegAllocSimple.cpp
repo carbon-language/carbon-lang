@@ -190,7 +190,7 @@ void RegAllocSimple::AllocateBasicBlock(MachineBasicBlock &MBB) {
     for (int i = MI->getNumOperands() - 1; i >= 0; --i) {
       MachineOperand &MO = MI->getOperand(i);
 
-      if (MO.isRegister() && MO.getReg() &&
+      if (MO.isReg() && MO.getReg() &&
           TargetRegisterInfo::isVirtualRegister(MO.getReg())) {
         unsigned virtualReg = (unsigned) MO.getReg();
         DOUT << "op: " << MO << "\n";
@@ -209,7 +209,7 @@ void RegAllocSimple::AllocateBasicBlock(MachineBasicBlock &MBB) {
               // must be same register number as the source operand that is 
               // tied to. This maps a = b + c into b = b + c, and saves b into
               // a's spot.
-              assert(MI->getOperand(TiedOp).isRegister()  &&
+              assert(MI->getOperand(TiedOp).isReg()  &&
                      MI->getOperand(TiedOp).getReg() &&
                      MI->getOperand(TiedOp).isUse() &&
                      "Two address instruction invalid!");

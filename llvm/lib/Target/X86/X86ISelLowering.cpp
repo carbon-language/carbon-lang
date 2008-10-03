@@ -6385,10 +6385,10 @@ X86TargetLowering::EmitAtomicBitwiseWithCustomInserter(MachineInstr *bInstr,
     tt = t1;
 
   unsigned t2 = F->getRegInfo().createVirtualRegister(RC);
-  assert((argOpers[valArgIndx]->isRegister() ||
-          argOpers[valArgIndx]->isImmediate()) &&
+  assert((argOpers[valArgIndx]->isReg() ||
+          argOpers[valArgIndx]->isImm()) &&
          "invalid operand");
-  if (argOpers[valArgIndx]->isRegister())
+  if (argOpers[valArgIndx]->isReg())
     MIB = BuildMI(newMBB, TII->get(regOpc), t2);
   else
     MIB = BuildMI(newMBB, TII->get(immOpc), t2);
@@ -6507,19 +6507,19 @@ X86TargetLowering::EmitAtomicBit6432WithCustomInserter(MachineInstr *bInstr,
     tt2 = t2;
   }
 
-  assert((argOpers[4]->isRegister() || argOpers[4]->isImmediate()) &&
+  assert((argOpers[4]->isReg() || argOpers[4]->isImm()) &&
          "invalid operand");
   unsigned t5 = F->getRegInfo().createVirtualRegister(RC);
   unsigned t6 = F->getRegInfo().createVirtualRegister(RC);
-  if (argOpers[4]->isRegister())
+  if (argOpers[4]->isReg())
     MIB = BuildMI(newMBB, TII->get(regOpcL), t5);
   else
     MIB = BuildMI(newMBB, TII->get(immOpcL), t5);
   MIB.addReg(tt1);
   (*MIB).addOperand(*argOpers[4]);
-  assert(argOpers[5]->isRegister() == argOpers[4]->isRegister());
-  assert(argOpers[5]->isImmediate() == argOpers[4]->isImmediate());
-  if (argOpers[5]->isRegister())
+  assert(argOpers[5]->isReg() == argOpers[4]->isReg());
+  assert(argOpers[5]->isImm() == argOpers[4]->isImm());
+  if (argOpers[5]->isReg())
     MIB = BuildMI(newMBB, TII->get(regOpcH), t6);
   else
     MIB = BuildMI(newMBB, TII->get(immOpcH), t6);
@@ -6613,12 +6613,12 @@ X86TargetLowering::EmitAtomicMinMaxWithCustomInserter(MachineInstr *mInstr,
     (*MIB).addOperand(*argOpers[i]);
 
   // We only support register and immediate values
-  assert((argOpers[valArgIndx]->isRegister() ||
-          argOpers[valArgIndx]->isImmediate()) &&
+  assert((argOpers[valArgIndx]->isReg() ||
+          argOpers[valArgIndx]->isImm()) &&
          "invalid operand");
   
   unsigned t2 = F->getRegInfo().createVirtualRegister(X86::GR32RegisterClass);  
-  if (argOpers[valArgIndx]->isRegister())
+  if (argOpers[valArgIndx]->isReg())
     MIB = BuildMI(newMBB, TII->get(X86::MOV32rr), t2);
   else 
     MIB = BuildMI(newMBB, TII->get(X86::MOV32rr), t2);
@@ -6766,7 +6766,7 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
 
     X86AddressMode AM;
     MachineOperand &Op = MI->getOperand(0);
-    if (Op.isRegister()) {
+    if (Op.isReg()) {
       AM.BaseType = X86AddressMode::RegBase;
       AM.Base.Reg = Op.getReg();
     } else {
@@ -6774,13 +6774,13 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
       AM.Base.FrameIndex = Op.getIndex();
     }
     Op = MI->getOperand(1);
-    if (Op.isImmediate())
+    if (Op.isImm())
       AM.Scale = Op.getImm();
     Op = MI->getOperand(2);
-    if (Op.isImmediate())
+    if (Op.isImm())
       AM.IndexReg = Op.getImm();
     Op = MI->getOperand(3);
-    if (Op.isGlobalAddress()) {
+    if (Op.isGlobal()) {
       AM.GV = Op.getGlobal();
     } else {
       AM.Disp = Op.getImm();

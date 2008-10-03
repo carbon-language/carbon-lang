@@ -84,7 +84,7 @@ bool IA64BundlingPass::runOnMachineBasicBlock(MachineBasicBlock &MBB) {
 
     for(unsigned i=0; i < CurrentInsn->getNumOperands(); i++) {
       MachineOperand &MO=CurrentInsn->getOperand(i);
-      if(MO.isRegister()) {
+      if (MO.isReg()) {
         if(MO.isUse()) { // TODO: exclude p0
           CurrentReads.insert(MO.getReg());
         }

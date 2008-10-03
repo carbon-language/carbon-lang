@@ -544,13 +544,13 @@ static bool isMemoryOp(MachineInstr *MI) {
   default: break;
   case ARM::LDR:
   case ARM::STR:
-    return MI->getOperand(1).isRegister() && MI->getOperand(2).getReg() == 0;
+    return MI->getOperand(1).isReg() && MI->getOperand(2).getReg() == 0;
   case ARM::FLDS:
   case ARM::FSTS:
-    return MI->getOperand(1).isRegister();
+    return MI->getOperand(1).isReg();
   case ARM::FLDD:
   case ARM::FSTD:
-    return MI->getOperand(1).isRegister();
+    return MI->getOperand(1).isReg();
   }
   return false;
 }

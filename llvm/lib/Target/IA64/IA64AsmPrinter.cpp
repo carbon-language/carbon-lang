@@ -91,7 +91,7 @@ namespace {
 // pool entries aren't immediates at this stage, so we check here.
 // If it's an immediate, print it the old fashioned way. If it's
 // not, we print it as a constant pool index.
-      if(MI->getOperand(OpNo).isImmediate()) {
+      if (MI->getOperand(OpNo).isImm()) {
         O << (int64_t)MI->getOperand(OpNo).getImm();
       } else { // this is a constant pool reference: FIXME: assert this
         printOp(MI->getOperand(OpNo));

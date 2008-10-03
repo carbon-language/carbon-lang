@@ -108,7 +108,7 @@ bool TwoAddressInstructionPass::Sink3AddrInstruction(MachineBasicBlock *MBB,
 
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
-    if (!MO.isRegister())
+    if (!MO.isReg())
       continue;
     unsigned MOReg = MO.getReg();
     if (!MOReg)
@@ -158,7 +158,7 @@ bool TwoAddressInstructionPass::Sink3AddrInstruction(MachineBasicBlock *MBB,
     ++NumVisited;
     for (unsigned i = 0, e = OtherMI->getNumOperands(); i != e; ++i) {
       MachineOperand &MO = OtherMI->getOperand(i);
-      if (!MO.isRegister())
+      if (!MO.isReg())
         continue;
       unsigned MOReg = MO.getReg();
       if (!MOReg)
@@ -200,7 +200,7 @@ static bool isTwoAddrUse(MachineInstr *UseMI, unsigned Reg) {
   const TargetInstrDesc &TID = UseMI->getDesc();
   for (unsigned i = 0, e = TID.getNumOperands(); i != e; ++i) {
     MachineOperand &MO = UseMI->getOperand(i);
-    if (MO.isRegister() && MO.getReg() == Reg &&
+    if (MO.isReg() && MO.getReg() == Reg &&
         (MO.isDef() || TID.getOperandConstraint(i, TOI::TIED_TO) != -1))
       // Earlier use is a two-address one.
       return true;
@@ -292,7 +292,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
 
         FirstTied = false;
 
-        assert(mi->getOperand(si).isRegister() && mi->getOperand(si).getReg() &&
+        assert(mi->getOperand(si).isReg() && mi->getOperand(si).getReg() &&
                mi->getOperand(si).isUse() && "two address instruction invalid");
 
         // If the two operands are the same we just remove the use
@@ -316,7 +316,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
           // should never occur because we are in SSA form.
           for (unsigned i = 0; i != mi->getNumOperands(); ++i)
             assert((int)i == ti ||
-                   !mi->getOperand(i).isRegister() ||
+                   !mi->getOperand(i).isReg() ||
                    mi->getOperand(i).getReg() != regA);
 #endif
 
@@ -330,7 +330,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
             // and C joinable.
             // FIXME: This code also works for A := B op C instructions.
             if (TID.isCommutable() && mi->getNumOperands() >= 3) {
-              assert(mi->getOperand(3-si).isRegister() &&
+              assert(mi->getOperand(3-si).isReg() &&
                      "Not a proper commutative instruction!");
               unsigned regC = mi->getOperand(3-si).getReg();
 
@@ -433,7 +433,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
           
           // Replace all occurences of regB with regA.
           for (unsigned i = 0, e = mi->getNumOperands(); i != e; ++i) {
-            if (mi->getOperand(i).isRegister() &&
+            if (mi->getOperand(i).isReg() &&
                 mi->getOperand(i).getReg() == regB)
               mi->getOperand(i).setReg(regA);
           }

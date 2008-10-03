@@ -155,7 +155,7 @@ bool MachineSinking::SinkInstruction(MachineInstr *MI, bool &SawStore) {
   
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
-    if (!MO.isRegister()) continue;  // Ignore non-register operands.
+    if (!MO.isReg()) continue;  // Ignore non-register operands.
     
     unsigned Reg = MO.getReg();
     if (Reg == 0) continue;

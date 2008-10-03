@@ -161,7 +161,7 @@ bool BranchFolder::OptimizeImpDefsBlock(MachineBasicBlock *MBB) {
     // See if it uses any of the implicitly defined registers.
     for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) {
       MachineOperand &MO = I->getOperand(i);
-      if (!MO.isRegister() || !MO.isUse())
+      if (!MO.isReg() || !MO.isUse())
         continue;
       unsigned Reg = MO.getReg();
       if (ImpDefRegs.count(Reg))
@@ -235,7 +235,7 @@ bool BranchFolder::runOnMachineFunction(MachineFunction &MF) {
            I != E; ++I)
         for (unsigned op = 0, e = I->getNumOperands(); op != e; ++op) {
           MachineOperand &Op = I->getOperand(op);
-          if (!Op.isJumpTableIndex()) continue;
+          if (!Op.isJTI()) continue;
           unsigned NewIdx = JTMapping[Op.getIndex()];
           Op.setIndex(NewIdx);
 

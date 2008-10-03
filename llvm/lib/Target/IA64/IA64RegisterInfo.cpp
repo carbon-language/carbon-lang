@@ -121,7 +121,7 @@ void IA64RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
 
   bool FP = hasFP(MF);
 
-  while (!MI.getOperand(i).isFrameIndex()) {
+  while (!MI.getOperand(i).isFI()) {
     ++i;
     assert(i < MI.getNumOperands() && "Instr doesn't have FrameIndex operand!");
   }

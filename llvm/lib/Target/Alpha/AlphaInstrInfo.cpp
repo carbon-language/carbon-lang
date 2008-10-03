@@ -35,9 +35,9 @@ bool AlphaInstrInfo::isMoveInstr(const MachineInstr& MI,
     // or r1, r2, r2 
     // cpys(s|t) r1 r2 r2
     assert(MI.getNumOperands() >= 3 &&
-           MI.getOperand(0).isRegister() &&
-           MI.getOperand(1).isRegister() &&
-           MI.getOperand(2).isRegister() &&
+           MI.getOperand(0).isReg() &&
+           MI.getOperand(1).isReg() &&
+           MI.getOperand(2).isReg() &&
            "invalid Alpha BIS instruction!");
     if (MI.getOperand(1).getReg() == MI.getOperand(2).getReg()) {
       sourceReg = MI.getOperand(1).getReg();
@@ -57,7 +57,7 @@ AlphaInstrInfo::isLoadFromStackSlot(MachineInstr *MI, int &FrameIndex) const {
   case Alpha::LDWU:
   case Alpha::LDS:
   case Alpha::LDT:
-    if (MI->getOperand(1).isFrameIndex()) {
+    if (MI->getOperand(1).isFI()) {
       FrameIndex = MI->getOperand(1).getIndex();
       return MI->getOperand(0).getReg();
     }
@@ -75,7 +75,7 @@ AlphaInstrInfo::isStoreToStackSlot(MachineInstr *MI, int &FrameIndex) const {
   case Alpha::STW:
   case Alpha::STS:
   case Alpha::STT:
-    if (MI->getOperand(1).isFrameIndex()) {
+    if (MI->getOperand(1).isFI()) {
       FrameIndex = MI->getOperand(1).getIndex();
       return MI->getOperand(0).getReg();
     }
@@ -200,7 +200,7 @@ void AlphaInstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
     BuildMI(MF, get(Opc)).addReg(SrcReg, false, false, isKill);
   for (unsigned i = 0, e = Addr.size(); i != e; ++i) {
     MachineOperand &MO = Addr[i];
-    if (MO.isRegister())
+    if (MO.isReg())
       MIB.addReg(MO.getReg(), MO.isDef(), MO.isImplicit());
     else
       MIB.addImm(MO.getImm());
@@ -245,7 +245,7 @@ void AlphaInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
     BuildMI(MF, get(Opc), DestReg);
   for (unsigned i = 0, e = Addr.size(); i != e; ++i) {
     MachineOperand &MO = Addr[i];
-    if (MO.isRegister())
+    if (MO.isReg())
       MIB.addReg(MO.getReg(), MO.isDef(), MO.isImplicit());
     else
       MIB.addImm(MO.getImm());

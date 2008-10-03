@@ -24,7 +24,7 @@ MipsInstrInfo::MipsInstrInfo(MipsTargetMachine &tm)
     TM(tm), RI(*TM.getSubtargetImpl(), *this) {}
 
 static bool isZeroImm(const MachineOperand &op) {
-  return op.isImmediate() && op.getImm() == 0;
+  return op.isImm() && op.getImm() == 0;
 }
 
 /// Return true if the instruction is a register to register move and
@@ -60,7 +60,7 @@ isMoveInstr(const MachineInstr &MI, unsigned &SrcReg, unsigned &DstReg) const
 
   //  addiu $dst, $src, 0
   if (MI.getOpcode() == Mips::ADDiu) {
-    if ((MI.getOperand(1).isRegister()) && (isZeroImm(MI.getOperand(2)))) {
+    if ((MI.getOperand(1).isReg()) && (isZeroImm(MI.getOperand(2)))) {
       DstReg = MI.getOperand(0).getReg();
       SrcReg = MI.getOperand(1).getReg();
       return true;
@@ -79,8 +79,8 @@ isLoadFromStackSlot(MachineInstr *MI, int &FrameIndex) const
 {
   if ((MI->getOpcode() == Mips::LW) || (MI->getOpcode() == Mips::LWC1) ||
       (MI->getOpcode() == Mips::LWC1A) || (MI->getOpcode() == Mips::LDC1)) {
-    if ((MI->getOperand(2).isFrameIndex()) && // is a stack slot
-        (MI->getOperand(1).isImmediate()) &&  // the imm is zero
+    if ((MI->getOperand(2).isFI()) && // is a stack slot
+        (MI->getOperand(1).isImm()) &&  // the imm is zero
         (isZeroImm(MI->getOperand(1)))) {
       FrameIndex = MI->getOperand(2).getIndex();
       return MI->getOperand(0).getReg();
@@ -100,8 +100,8 @@ isStoreToStackSlot(MachineInstr *MI, int &FrameIndex) const
 {
   if ((MI->getOpcode() == Mips::SW) || (MI->getOpcode() == Mips::SWC1) ||
       (MI->getOpcode() == Mips::SWC1A) || (MI->getOpcode() == Mips::SDC1)) {
-    if ((MI->getOperand(2).isFrameIndex()) && // is a stack slot
-        (MI->getOperand(1).isImmediate()) &&  // the imm is zero
+    if ((MI->getOperand(2).isFI()) && // is a stack slot
+        (MI->getOperand(1).isImm()) &&  // the imm is zero
         (isZeroImm(MI->getOperand(1)))) {
       FrameIndex = MI->getOperand(2).getIndex();
       return MI->getOperand(0).getReg();
@@ -217,9 +217,9 @@ void MipsInstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
     .addReg(SrcReg, false, false, isKill);
   for (unsigned i = 0, e = Addr.size(); i != e; ++i) {
     MachineOperand &MO = Addr[i];
-    if (MO.isRegister())
+    if (MO.isReg())
       MIB.addReg(MO.getReg());
-    else if (MO.isImmediate())
+    else if (MO.isImm())
       MIB.addImm(MO.getImm());
     else
       MIB.addFrameIndex(MO.getIndex());
@@ -267,9 +267,9 @@ void MipsInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
   MachineInstrBuilder MIB = BuildMI(MF, get(Opc), DestReg);
   for (unsigned i = 0, e = Addr.size(); i != e; ++i) {
     MachineOperand &MO = Addr[i];
-    if (MO.isRegister())
+    if (MO.isReg())
       MIB.addReg(MO.getReg());
-    else if (MO.isImmediate())
+    else if (MO.isImm())
       MIB.addImm(MO.getImm());
     else
       MIB.addFrameIndex(MO.getIndex());
@@ -289,10 +289,10 @@ foldMemoryOperand(MachineFunction &MF,
 
   switch (MI->getOpcode()) {
   case Mips::ADDu:
-    if ((MI->getOperand(0).isRegister()) &&
-        (MI->getOperand(1).isRegister()) && 
+    if ((MI->getOperand(0).isReg()) &&
+        (MI->getOperand(1).isReg()) &&
         (MI->getOperand(1).getReg() == Mips::ZERO) &&
-        (MI->getOperand(2).isRegister())) {
+        (MI->getOperand(2).isReg())) {
       if (Ops[0] == 0) {    // COPY -> STORE
         unsigned SrcReg = MI->getOperand(2).getReg();
         bool isKill = MI->getOperand(2).isKill();
@@ -310,8 +310,8 @@ foldMemoryOperand(MachineFunction &MF,
   case Mips::FMOV_SO32:
   case Mips::FMOV_AS32:
   case Mips::FMOV_D32:
-    if ((MI->getOperand(0).isRegister()) &&
-        (MI->getOperand(1).isRegister())) {
+    if ((MI->getOperand(0).isReg()) &&
+        (MI->getOperand(1).isReg())) {
       const TargetRegisterClass 
         *RC = RI.getRegClass(MI->getOperand(0).getReg());
       unsigned StoreOpc, LoadOpc;

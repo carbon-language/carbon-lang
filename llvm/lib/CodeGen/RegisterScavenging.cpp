@@ -35,7 +35,7 @@ static bool RedefinesSuperRegPart(const MachineInstr *MI, unsigned SubReg,
   bool SeenSuperDef = false;
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
-    if (!MO.isRegister())
+    if (!MO.isReg())
       continue;
     if (TRI->isSuperRegister(SubReg, MO.getReg())) {
       if (MO.isUse())
@@ -51,7 +51,7 @@ static bool RedefinesSuperRegPart(const MachineInstr *MI, unsigned SubReg,
 static bool RedefinesSuperRegPart(const MachineInstr *MI,
                                   const MachineOperand &MO,
                                   const TargetRegisterInfo *TRI) {
-  assert(MO.isRegister() && MO.isDef() && "Not a register def!");
+  assert(MO.isReg() && MO.isDef() && "Not a register def!");
   return RedefinesSuperRegPart(MI, MO.getReg(), TRI);
 }
 
@@ -194,7 +194,7 @@ void RegScavenger::forward() {
   BitVector ChangedRegs(NumPhysRegs);
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
-    if (!MO.isRegister() || !MO.isUse())
+    if (!MO.isReg() || !MO.isUse())
       continue;
 
     unsigned Reg = MO.getReg();
@@ -228,7 +228,7 @@ void RegScavenger::forward() {
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
 
-    if (!MO.isRegister() || !MO.isDef())
+    if (!MO.isReg() || !MO.isDef())
       continue;
 
     unsigned Reg = MO.getReg();
@@ -270,7 +270,7 @@ void RegScavenger::backward() {
   const TargetInstrDesc &TID = MI->getDesc();
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
-    if (!MO.isRegister() || !MO.isDef())
+    if (!MO.isReg() || !MO.isDef())
       continue;
     // Skip two-address destination operand.
     if (TID.findTiedToSrcOperand(i) != -1)
@@ -285,7 +285,7 @@ void RegScavenger::backward() {
   BitVector ChangedRegs(NumPhysRegs);
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
-    if (!MO.isRegister() || !MO.isUse())
+    if (!MO.isReg() || !MO.isUse())
       continue;
     unsigned Reg = MO.getReg();
     if (Reg == 0)
@@ -378,7 +378,7 @@ unsigned RegScavenger::scavengeRegister(const TargetRegisterClass *RC,
   // Exclude all the registers being used by the instruction.
   for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = I->getOperand(i);
-    if (MO.isRegister())
+    if (MO.isReg())
       Candidates.reset(MO.getReg());
   }
 

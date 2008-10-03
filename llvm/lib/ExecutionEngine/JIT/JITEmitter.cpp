@@ -756,7 +756,7 @@ unsigned JITEmitter::GetSizeOfGlobalsInBytes(MachineFunction &MF) {
       unsigned NumOps = Desc.getNumOperands();
       for (unsigned CurOp = 0; CurOp < NumOps; CurOp++) {
         const MachineOperand &MO = MI.getOperand(CurOp);
-        if (MO.isGlobalAddress()) {
+        if (MO.isGlobal()) {
           GlobalValue* V = MO.getGlobal();
           const GlobalVariable *GV = dyn_cast<const GlobalVariable>(V);
           if (!GV)

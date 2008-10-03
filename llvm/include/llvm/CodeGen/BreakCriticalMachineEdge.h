@@ -57,8 +57,7 @@ MachineBasicBlock* SplitCriticalMachineEdge(MachineBasicBlock* src,
     // crit_mbb.
     for (unsigned i = 0, e = mii->getNumOperands(); i != e; ++i) {
       MachineOperand & mo = mii->getOperand(i);
-      if (mo.isMachineBasicBlock() &&
-          mo.getMBB() == dst) {
+      if (mo.isMBB() && mo.getMBB() == dst) {
         found_branch = true;
         mo.setMBB(crit_mbb);
       }
@@ -84,7 +83,7 @@ MachineBasicBlock* SplitCriticalMachineEdge(MachineBasicBlock* src,
     std::vector<unsigned> toRemove;
     unsigned reg = 0;
     for (unsigned u = 0; u != mii->getNumOperands(); ++u)
-      if (mii->getOperand(u).isMachineBasicBlock() &&
+      if (mii->getOperand(u).isMBB() &&
           mii->getOperand(u).getMBB() == src) {
         reg = mii->getOperand(u-1).getReg();
         toRemove.push_back(u-1);

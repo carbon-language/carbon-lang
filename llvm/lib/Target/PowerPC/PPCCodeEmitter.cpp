@@ -126,7 +126,7 @@ unsigned PPCCodeEmitter::getMachineOpValue(const MachineInstr &MI,
 
   unsigned rv = 0; // Return value; defaults to 0 for unhandled cases
                    // or things that get fixed up later by the JIT.
-  if (MO.isRegister()) {
+  if (MO.isReg()) {
     rv = PPCRegisterInfo::getRegisterNumbering(MO.getReg());
 
     // Special encoding for MTCRF and MFOCRF, which uses a bit mask for the
@@ -135,10 +135,10 @@ unsigned PPCCodeEmitter::getMachineOpValue(const MachineInstr &MI,
         (MO.getReg() >= PPC::CR0 && MO.getReg() <= PPC::CR7)) {
       rv = 0x80 >> rv;
     }
-  } else if (MO.isImmediate()) {
+  } else if (MO.isImm()) {
     rv = MO.getImm();
-  } else if (MO.isGlobalAddress() || MO.isExternalSymbol() ||
-             MO.isConstantPoolIndex() || MO.isJumpTableIndex()) {
+  } else if (MO.isGlobal() || MO.isSymbol() ||
+             MO.isCPI() || MO.isJTI()) {
     unsigned Reloc = 0;
     if (MI.getOpcode() == PPC::BL_Macho || MI.getOpcode() == PPC::BL8_Macho ||
         MI.getOpcode() == PPC::BL_ELF || MI.getOpcode() == PPC::BL8_ELF ||
@@ -193,18 +193,18 @@ unsigned PPCCodeEmitter::getMachineOpValue(const MachineInstr &MI,
     }
     
     MachineRelocation R;
-    if (MO.isGlobalAddress()) {
+    if (MO.isGlobal()) {
       R = MachineRelocation::getGV(MCE.getCurrentPCOffset(), Reloc,
                                    MO.getGlobal(), 0,
                                    isa<Function>(MO.getGlobal()));
-    } else if (MO.isExternalSymbol()) {
+    } else if (MO.isSymbol()) {
       R = MachineRelocation::getExtSym(MCE.getCurrentPCOffset(),
                                        Reloc, MO.getSymbolName(), 0);
-    } else if (MO.isConstantPoolIndex()) {
+    } else if (MO.isCPI()) {
       R = MachineRelocation::getConstPool(MCE.getCurrentPCOffset(),
                                           Reloc, MO.getIndex(), 0);
     } else {
-      assert(MO.isJumpTableIndex());
+      assert(MO.isJTI());
       R = MachineRelocation::getJumpTable(MCE.getCurrentPCOffset(),
                                           Reloc, MO.getIndex(), 0);
     }
@@ -220,7 +220,7 @@ unsigned PPCCodeEmitter::getMachineOpValue(const MachineInstr &MI,
     }
     MCE.addRelocation(R);
     
-  } else if (MO.isMachineBasicBlock()) {
+  } else if (MO.isMBB()) {
     unsigned Reloc = 0;
     unsigned Opcode = MI.getOpcode();
     if (Opcode == PPC::B || Opcode == PPC::BL_Macho ||

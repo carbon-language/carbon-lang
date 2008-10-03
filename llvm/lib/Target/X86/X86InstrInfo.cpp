@@ -679,8 +679,8 @@ bool X86InstrInfo::isMoveInstr(const MachineInstr& MI,
   case X86::MMX_MOVD64rr:
   case X86::MMX_MOVQ64rr:
     assert(MI.getNumOperands() >= 2 &&
-           MI.getOperand(0).isRegister() &&
-           MI.getOperand(1).isRegister() &&
+           MI.getOperand(0).isReg() &&
+           MI.getOperand(1).isReg() &&
            "invalid register-register move instruction");
     sourceReg = MI.getOperand(1).getReg();
     destReg = MI.getOperand(0).getReg();
@@ -705,8 +705,8 @@ unsigned X86InstrInfo::isLoadFromStackSlot(MachineInstr *MI,
   case X86::MOVAPDrm:
   case X86::MMX_MOVD64rm:
   case X86::MMX_MOVQ64rm:
-    if (MI->getOperand(1).isFrameIndex() && MI->getOperand(2).isImmediate() &&
-        MI->getOperand(3).isRegister() && MI->getOperand(4).isImmediate() &&
+    if (MI->getOperand(1).isFI() && MI->getOperand(2).isImm() &&
+        MI->getOperand(3).isReg() && MI->getOperand(4).isImm() &&
         MI->getOperand(2).getImm() == 1 &&
         MI->getOperand(3).getReg() == 0 &&
         MI->getOperand(4).getImm() == 0) {
@@ -736,8 +736,8 @@ unsigned X86InstrInfo::isStoreToStackSlot(MachineInstr *MI,
   case X86::MMX_MOVD64mr:
   case X86::MMX_MOVQ64mr:
   case X86::MMX_MOVNTQmr:
-    if (MI->getOperand(0).isFrameIndex() && MI->getOperand(1).isImmediate() &&
-        MI->getOperand(2).isRegister() && MI->getOperand(3).isImmediate() &&
+    if (MI->getOperand(0).isFI() && MI->getOperand(1).isImm() &&
+        MI->getOperand(2).isReg() && MI->getOperand(3).isImm() &&
         MI->getOperand(1).getImm() == 1 &&
         MI->getOperand(2).getReg() == 0 &&
         MI->getOperand(3).getImm() == 0) {
@@ -789,17 +789,17 @@ X86InstrInfo::isReallyTriviallyReMaterializable(const MachineInstr *MI) const {
     case X86::MMX_MOVD64rm:
     case X86::MMX_MOVQ64rm: {
       // Loads from constant pools are trivially rematerializable.
-      if (MI->getOperand(1).isRegister() &&
-          MI->getOperand(2).isImmediate() &&
-          MI->getOperand(3).isRegister() && MI->getOperand(3).getReg() == 0 &&
-          (MI->getOperand(4).isConstantPoolIndex() ||
-           (MI->getOperand(4).isGlobalAddress() &&
+      if (MI->getOperand(1).isReg() &&
+          MI->getOperand(2).isImm() &&
+          MI->getOperand(3).isReg() && MI->getOperand(3).getReg() == 0 &&
+          (MI->getOperand(4).isCPI() ||
+           (MI->getOperand(4).isGlobal() &&
             isGVStub(MI->getOperand(4).getGlobal(), TM)))) {
         unsigned BaseReg = MI->getOperand(1).getReg();
         if (BaseReg == 0)
           return true;
         // Allow re-materialization of PIC load.
-        if (!ReMatPICStubLoad && MI->getOperand(4).isGlobalAddress())
+        if (!ReMatPICStubLoad && MI->getOperand(4).isGlobal())
           return false;
         const MachineFunction &MF = *MI->getParent()->getParent();
         const MachineRegisterInfo &MRI = MF.getRegInfo();
@@ -819,11 +819,11 @@ X86InstrInfo::isReallyTriviallyReMaterializable(const MachineInstr *MI) const {
  
      case X86::LEA32r:
      case X86::LEA64r: {
-       if (MI->getOperand(2).isImmediate() &&
-           MI->getOperand(3).isRegister() && MI->getOperand(3).getReg() == 0 &&
-           !MI->getOperand(4).isRegister()) {
+       if (MI->getOperand(2).isImm() &&
+           MI->getOperand(3).isReg() && MI->getOperand(3).getReg() == 0 &&
+           !MI->getOperand(4).isReg()) {
          // lea fi#, lea GV, etc. are all rematerializable.
-         if (!MI->getOperand(1).isRegister())
+         if (!MI->getOperand(1).isReg())
            return true;
          unsigned BaseReg = MI->getOperand(1).getReg();
          if (BaseReg == 0)
@@ -857,7 +857,7 @@ static bool isSafeToClobberEFLAGS(MachineBasicBlock &MBB,
     bool SeenDef = false;
     for (unsigned j = 0, e = I->getNumOperands(); j != e; ++j) {
       MachineOperand &MO = I->getOperand(j);
-      if (!MO.isRegister())
+      if (!MO.isReg())
         continue;
       if (MO.getReg() == X86::EFLAGS) {
         if (MO.isUse())
@@ -880,7 +880,7 @@ void X86InstrInfo::reMaterialize(MachineBasicBlock &MBB,
                                  MachineBasicBlock::iterator I,
                                  unsigned DestReg,
                                  const MachineInstr *Orig) const {
-  unsigned SubIdx = Orig->getOperand(0).isRegister()
+  unsigned SubIdx = Orig->getOperand(0).isReg()
     ? Orig->getOperand(0).getSubReg() : 0;
   bool ChangeSubIdx = SubIdx != 0;
   if (SubIdx && TargetRegisterInfo::isPhysicalRegister(DestReg)) {
@@ -942,14 +942,14 @@ bool X86InstrInfo::isInvariantLoad(MachineInstr *MI) const {
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
     // Loads from constant pools are trivially invariant.
-    if (MO.isConstantPoolIndex())
+    if (MO.isCPI())
       return true;
 
-    if (MO.isGlobalAddress())
+    if (MO.isGlobal())
       return isGVStub(MO.getGlobal(), TM);
 
     // If this is a load from an invariant stack slot, the load is a constant.
-    if (MO.isFrameIndex()) {
+    if (MO.isFI()) {
       const MachineFrameInfo &MFI =
         *MI->getParent()->getParent()->getFrameInfo();
       int Idx = MO.getIndex();
@@ -967,7 +967,7 @@ bool X86InstrInfo::isInvariantLoad(MachineInstr *MI) const {
 static bool hasLiveCondCodeDef(MachineInstr *MI) {
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI->getOperand(i);
-    if (MO.isRegister() && MO.isDef() &&
+    if (MO.isReg() && MO.isDef() &&
         MO.getReg() == X86::EFLAGS && !MO.isDead()) {
       return true;
     }
@@ -1162,7 +1162,7 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
     case X86::ADD64ri32:
     case X86::ADD64ri8:
       assert(MI->getNumOperands() >= 3 && "Unknown add instruction!");
-      if (MI->getOperand(2).isImmediate())
+      if (MI->getOperand(2).isImm())
         NewMI = addRegOffset(BuildMI(MF, get(X86::LEA64r))
                              .addReg(Dest, true, false, false, isDead),
                              Src, isKill, MI->getOperand(2).getImm());
@@ -1170,7 +1170,7 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
     case X86::ADD32ri:
     case X86::ADD32ri8:
       assert(MI->getNumOperands() >= 3 && "Unknown add instruction!");
-      if (MI->getOperand(2).isImmediate()) {
+      if (MI->getOperand(2).isImm()) {
         unsigned Opc = is64Bit ? X86::LEA64_32r : X86::LEA32r;
         NewMI = addRegOffset(BuildMI(MF, get(Opc))
                              .addReg(Dest, true, false, false, isDead),
@@ -1181,7 +1181,7 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
     case X86::ADD16ri8:
       if (DisableLEA16) return 0;
       assert(MI->getNumOperands() >= 3 && "Unknown add instruction!");
-      if (MI->getOperand(2).isImmediate())
+      if (MI->getOperand(2).isImm())
         NewMI = addRegOffset(BuildMI(MF, get(X86::LEA16r))
                              .addReg(Dest, true, false, false, isDead),
                              Src, isKill, MI->getOperand(2).getImm());
@@ -1190,7 +1190,7 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
       if (DisableLEA16) return 0;
     case X86::SHL32ri:
     case X86::SHL64ri: {
-      assert(MI->getNumOperands() >= 3 && MI->getOperand(2).isImmediate() &&
+      assert(MI->getNumOperands() >= 3 && MI->getOperand(2).isImm() &&
              "Unknown shl instruction!");
       unsigned ShAmt = MI->getOperand(2).getImm();
       if (ShAmt == 1 || ShAmt == 2 || ShAmt == 3) {
@@ -1544,20 +1544,20 @@ unsigned X86InstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
 
 static const MachineInstrBuilder &X86InstrAddOperand(MachineInstrBuilder &MIB,
                                                      MachineOperand &MO) {
-  if (MO.isRegister())
+  if (MO.isReg())
     MIB = MIB.addReg(MO.getReg(), MO.isDef(), MO.isImplicit(),
                      MO.isKill(), MO.isDead(), MO.getSubReg());
-  else if (MO.isImmediate())
+  else if (MO.isImm())
     MIB = MIB.addImm(MO.getImm());
-  else if (MO.isFrameIndex())
+  else if (MO.isFI())
     MIB = MIB.addFrameIndex(MO.getIndex());
-  else if (MO.isGlobalAddress())
+  else if (MO.isGlobal())
     MIB = MIB.addGlobalAddress(MO.getGlobal(), MO.getOffset());
-  else if (MO.isConstantPoolIndex())
+  else if (MO.isCPI())
     MIB = MIB.addConstantPoolIndex(MO.getIndex(), MO.getOffset());
-  else if (MO.isJumpTableIndex())
+  else if (MO.isJTI())
     MIB = MIB.addJumpTableIndex(MO.getIndex());
-  else if (MO.isExternalSymbol())
+  else if (MO.isSymbol())
     MIB = MIB.addExternalSymbol(MO.getSymbolName());
   else
     assert(0 && "Unknown operand for X86InstrAddOperand!");
@@ -1916,7 +1916,7 @@ static MachineInstr *FuseInst(MachineFunction &MF,
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI->getOperand(i);
     if (i == OpNo) {
-      assert(MO.isRegister() && "Expected to fold into reg operand!");
+      assert(MO.isReg() && "Expected to fold into reg operand!");
       unsigned NumAddrOps = MOs.size();
       for (unsigned i = 0; i != NumAddrOps; ++i)
         MIB = X86InstrAddOperand(MIB, MOs[i]);
@@ -1958,8 +1958,8 @@ X86InstrInfo::foldMemoryOperand(MachineFunction &MF,
   // instruction is different than folding it other places.  It requires
   // replacing the *two* registers with the memory location.
   if (isTwoAddr && NumOps >= 2 && i < 2 &&
-      MI->getOperand(0).isRegister() && 
-      MI->getOperand(1).isRegister() &&
+      MI->getOperand(0).isReg() &&
+      MI->getOperand(1).isReg() &&
       MI->getOperand(0).getReg() == MI->getOperand(1).getReg()) { 
     OpcodeTablePtr = &RegOp2MemOpTable2Addr;
     isTwoAddrFold = true;
@@ -2190,7 +2190,7 @@ bool X86InstrInfo::unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
     MachineOperand &Op = MI->getOperand(i);
     if (i >= Index && i < Index+4)
       AddrOps.push_back(Op);
-    else if (Op.isRegister() && Op.isImplicit())
+    else if (Op.isReg() && Op.isImplicit())
       ImpOps.push_back(Op);
     else if (i < Index)
       BeforeOps.push_back(Op);
@@ -2205,7 +2205,7 @@ bool X86InstrInfo::unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
       // Address operands cannot be marked isKill.
       for (unsigned i = 1; i != 5; ++i) {
         MachineOperand &MO = NewMIs[0]->getOperand(i);
-        if (MO.isRegister())
+        if (MO.isReg())
           MO.setIsKill(false);
       }
     }
@@ -2411,7 +2411,7 @@ unsigned X86InstrInfo::sizeOfImm(const TargetInstrDesc *Desc) {
 /// isX86_64ExtendedReg - Is the MachineOperand a x86-64 extended register?
 /// e.g. r8, xmm8, etc.
 bool X86InstrInfo::isX86_64ExtendedReg(const MachineOperand &MO) {
-  if (!MO.isRegister()) return false;
+  if (!MO.isReg()) return false;
   switch (MO.getReg()) {
   default: break;
   case X86::R8:    case X86::R9:    case X86::R10:   case X86::R11:
@@ -2452,7 +2452,7 @@ unsigned X86InstrInfo::determineREX(const MachineInstr &MI) {
     unsigned i = isTwoAddr ? 1 : 0;
     for (unsigned e = NumOps; i != e; ++i) {
       const MachineOperand& MO = MI.getOperand(i);
-      if (MO.isRegister()) {
+      if (MO.isReg()) {
         unsigned Reg = MO.getReg();
         if (isX86_64NonExtLowByteReg(Reg))
           REX |= 0x40;
@@ -2482,7 +2482,7 @@ unsigned X86InstrInfo::determineREX(const MachineInstr &MI) {
       i = isTwoAddr ? 2 : 1;
       for (; i != NumOps; ++i) {
         const MachineOperand& MO = MI.getOperand(i);
-        if (MO.isRegister()) {
+        if (MO.isReg()) {
           if (isX86_64ExtendedReg(MO))
             REX |= 1 << Bit;
           Bit++;
@@ -2502,7 +2502,7 @@ unsigned X86InstrInfo::determineREX(const MachineInstr &MI) {
       unsigned Bit = 0;
       for (; i != e; ++i) {
         const MachineOperand& MO = MI.getOperand(i);
-        if (MO.isRegister()) {
+        if (MO.isReg()) {
           if (isX86_64ExtendedReg(MO))
             REX |= 1 << Bit;
           Bit++;
@@ -2581,11 +2581,11 @@ static unsigned getDisplacementFieldSize(const MachineOperand *RelocOp) {
   }
   
   // Otherwise, this is something that requires a relocation.
-  if (RelocOp->isGlobalAddress()) {
+  if (RelocOp->isGlobal()) {
     FinalSize += sizeGlobalAddress(false);
-  } else if (RelocOp->isConstantPoolIndex()) {
+  } else if (RelocOp->isCPI()) {
     FinalSize += sizeConstPoolAddress(false);
-  } else if (RelocOp->isJumpTableIndex()) {
+  } else if (RelocOp->isJTI()) {
     FinalSize += sizeJumpTableAddress(false);
   } else {
     assert(0 && "Unknown value to relocate!");
@@ -2601,15 +2601,15 @@ static unsigned getMemModRMByteSize(const MachineInstr &MI, unsigned Op,
   unsigned FinalSize = 0;
   
   // Figure out what sort of displacement we have to handle here.
-  if (Op3.isGlobalAddress()) {
+  if (Op3.isGlobal()) {
     DispForReloc = &Op3;
-  } else if (Op3.isConstantPoolIndex()) {
+  } else if (Op3.isCPI()) {
     if (Is64BitMode || IsPIC) {
       DispForReloc = &Op3;
     } else {
       DispVal = 1;
     }
-  } else if (Op3.isJumpTableIndex()) {
+  } else if (Op3.isJTI()) {
     if (Is64BitMode || IsPIC) {
       DispForReloc = &Op3;
     } else {
@@ -2774,13 +2774,13 @@ static unsigned GetInstSizeWithDesc(const MachineInstr &MI,
 
     if (CurOp != NumOps) {
       const MachineOperand &MO = MI.getOperand(CurOp++);
-      if (MO.isMachineBasicBlock()) {
+      if (MO.isMBB()) {
         FinalSize += sizePCRelativeBlockAddress();
-      } else if (MO.isGlobalAddress()) {
+      } else if (MO.isGlobal()) {
         FinalSize += sizeGlobalAddress(false);
-      } else if (MO.isExternalSymbol()) {
+      } else if (MO.isSymbol()) {
         FinalSize += sizeExternalSymbolAddress(false);
-      } else if (MO.isImmediate()) {
+      } else if (MO.isImm()) {
         FinalSize += sizeConstant(X86InstrInfo::sizeOfImm(Desc));
       } else {
         assert(0 && "Unknown RawFrm operand!");
@@ -2795,19 +2795,19 @@ static unsigned GetInstSizeWithDesc(const MachineInstr &MI,
     if (CurOp != NumOps) {
       const MachineOperand &MO1 = MI.getOperand(CurOp++);
       unsigned Size = X86InstrInfo::sizeOfImm(Desc);
-      if (MO1.isImmediate())
+      if (MO1.isImm())
         FinalSize += sizeConstant(Size);
       else {
         bool dword = false;
         if (Opcode == X86::MOV64ri)
           dword = true; 
-        if (MO1.isGlobalAddress()) {
+        if (MO1.isGlobal()) {
           FinalSize += sizeGlobalAddress(dword);
-        } else if (MO1.isExternalSymbol())
+        } else if (MO1.isSymbol())
           FinalSize += sizeExternalSymbolAddress(dword);
-        else if (MO1.isConstantPoolIndex())
+        else if (MO1.isCPI())
           FinalSize += sizeConstPoolAddress(dword);
-        else if (MO1.isJumpTableIndex())
+        else if (MO1.isJTI())
           FinalSize += sizeJumpTableAddress(dword);
       }
     }
@@ -2867,19 +2867,19 @@ static unsigned GetInstSizeWithDesc(const MachineInstr &MI,
     if (CurOp != NumOps) {
       const MachineOperand &MO1 = MI.getOperand(CurOp++);
       unsigned Size = X86InstrInfo::sizeOfImm(Desc);
-      if (MO1.isImmediate())
+      if (MO1.isImm())
         FinalSize += sizeConstant(Size);
       else {
         bool dword = false;
         if (Opcode == X86::MOV64ri32)
           dword = true;
-        if (MO1.isGlobalAddress()) {
+        if (MO1.isGlobal()) {
           FinalSize += sizeGlobalAddress(dword);
-        } else if (MO1.isExternalSymbol())
+        } else if (MO1.isSymbol())
           FinalSize += sizeExternalSymbolAddress(dword);
-        else if (MO1.isConstantPoolIndex())
+        else if (MO1.isCPI())
           FinalSize += sizeConstPoolAddress(dword);
-        else if (MO1.isJumpTableIndex())
+        else if (MO1.isJTI())
           FinalSize += sizeJumpTableAddress(dword);
       }
     }
@@ -2897,19 +2897,19 @@ static unsigned GetInstSizeWithDesc(const MachineInstr &MI,
     if (CurOp != NumOps) {
       const MachineOperand &MO = MI.getOperand(CurOp++);
       unsigned Size = X86InstrInfo::sizeOfImm(Desc);
-      if (MO.isImmediate())
+      if (MO.isImm())
         FinalSize += sizeConstant(Size);
       else {
         bool dword = false;
         if (Opcode == X86::MOV64mi32)
           dword = true;
-        if (MO.isGlobalAddress()) {
+        if (MO.isGlobal()) {
           FinalSize += sizeGlobalAddress(dword);
-        } else if (MO.isExternalSymbol())
+        } else if (MO.isSymbol())
           FinalSize += sizeExternalSymbolAddress(dword);
-        else if (MO.isConstantPoolIndex())
+        else if (MO.isCPI())
           FinalSize += sizeConstPoolAddress(dword);
-        else if (MO.isJumpTableIndex())
+        else if (MO.isJTI())
           FinalSize += sizeJumpTableAddress(dword);
       }
     }

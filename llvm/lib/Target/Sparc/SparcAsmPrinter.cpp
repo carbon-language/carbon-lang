@@ -141,11 +141,11 @@ void SparcAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
   const MachineOperand &MO = MI->getOperand (opNum);
   const TargetRegisterInfo &RI = *TM.getRegisterInfo();
   bool CloseParen = false;
-  if (MI->getOpcode() == SP::SETHIi && !MO.isRegister() && !MO.isImmediate()) {
+  if (MI->getOpcode() == SP::SETHIi && !MO.isReg() && !MO.isImm()) {
     O << "%hi(";
     CloseParen = true;
-  } else if ((MI->getOpcode() == SP::ORri || MI->getOpcode() == SP::ADDri)
-             && !MO.isRegister() && !MO.isImmediate()) {
+  } else if ((MI->getOpcode() == SP::ORri || MI->getOpcode() == SP::ADDri) &&
+             !MO.isReg() && !MO.isImm()) {
     O << "%lo(";
     CloseParen = true;
   }
@@ -190,16 +190,16 @@ void SparcAsmPrinter::printMemOperand(const MachineInstr *MI, int opNum,
     return;
   }
 
-  if (MI->getOperand(opNum+1).isRegister() &&
+  if (MI->getOperand(opNum+1).isReg() &&
       MI->getOperand(opNum+1).getReg() == SP::G0)
     return;   // don't print "+%g0"
-  if (MI->getOperand(opNum+1).isImmediate() &&
+  if (MI->getOperand(opNum+1).isImm() &&
       MI->getOperand(opNum+1).getImm() == 0)
     return;   // don't print "+0"
 
   O << "+";
-  if (MI->getOperand(opNum+1).isGlobalAddress() ||
-      MI->getOperand(opNum+1).isConstantPoolIndex()) {
+  if (MI->getOperand(opNum+1).isGlobal() ||
+      MI->getOperand(opNum+1).isCPI()) {
     O << "%lo(";
     printOperand(MI, opNum+1);
     O << ")";

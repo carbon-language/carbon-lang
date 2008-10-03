@@ -168,7 +168,7 @@ FunctionPass *llvm::createX86FloatingPointStackifierPass() { return new FPS(); }
 /// getFPReg - Return the X86::FPx register number for the specified operand.
 /// For example, this returns 3 for X86::FP3.
 static unsigned getFPReg(const MachineOperand &MO) {
-  assert(MO.isRegister() && "Expected an FP register!");
+  assert(MO.isReg() && "Expected an FP register!");
   unsigned Reg = MO.getReg();
   assert(Reg >= X86::FP0 && Reg <= X86::FP6 && "Expected FP register!");
   return Reg - X86::FP0;
@@ -240,7 +240,7 @@ bool FPS::processBasicBlock(MachineFunction &MF, MachineBasicBlock &BB) {
     SmallVector<unsigned, 8> DeadRegs;
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
       const MachineOperand &MO = MI->getOperand(i);
-      if (MO.isRegister() && MO.isDead())
+      if (MO.isReg() && MO.isDead())
         DeadRegs.push_back(MO.getReg());
     }
 
@@ -1021,7 +1021,7 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {
     unsigned NumKills = 0;
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
       MachineOperand &Op = MI->getOperand(i);
-      if (!Op.isRegister() || Op.getReg() < X86::FP0 || Op.getReg() > X86::FP6)
+      if (!Op.isReg() || Op.getReg() < X86::FP0 || Op.getReg() > X86::FP6)
         continue;
       assert(Op.isUse() && "Only handle inline asm uses right now");
       
@@ -1061,7 +1061,7 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {
     
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
       MachineOperand &Op = MI->getOperand(i);
-      if (!Op.isRegister() || Op.getReg() < X86::FP0 || Op.getReg() > X86::FP6)
+      if (!Op.isReg() || Op.getReg() < X86::FP0 || Op.getReg() > X86::FP6)
         continue;
       // FP Register uses must be kills unless there are two uses of the same
       // register, in which case only one will be a kill.

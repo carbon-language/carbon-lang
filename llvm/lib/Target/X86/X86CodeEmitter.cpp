@@ -268,7 +268,7 @@ void Emitter::emitDisplacementField(const MachineOperand *RelocOp,
   
   // Otherwise, this is something that requires a relocation.  Emit it as such
   // now.
-  if (RelocOp->isGlobalAddress()) {
+  if (RelocOp->isGlobal()) {
     // In 64-bit static small code model, we could potentially emit absolute.
     // But it's probably not beneficial.
     //  89 05 00 00 00 00     mov    %eax,0(%rip)  # PC-relative
@@ -279,11 +279,11 @@ void Emitter::emitDisplacementField(const MachineOperand *RelocOp,
     bool isLazy = gvNeedsLazyPtr(RelocOp->getGlobal());
     emitGlobalAddress(RelocOp->getGlobal(), rt, RelocOp->getOffset(),
                       PCAdj, NeedStub, isLazy);
-  } else if (RelocOp->isConstantPoolIndex()) {
+  } else if (RelocOp->isCPI()) {
     unsigned rt = Is64BitMode ? X86::reloc_pcrel_word : X86::reloc_picrel_word;
     emitConstPoolAddress(RelocOp->getIndex(), rt,
                          RelocOp->getOffset(), PCAdj);
-  } else if (RelocOp->isJumpTableIndex()) {
+  } else if (RelocOp->isJTI()) {
     unsigned rt = Is64BitMode ? X86::reloc_pcrel_word : X86::reloc_picrel_word;
     emitJumpTableAddress(RelocOp->getIndex(), rt, PCAdj);
   } else {
@@ -299,16 +299,16 @@ void Emitter::emitMemModRMByte(const MachineInstr &MI,
   const MachineOperand *DispForReloc = 0;
   
   // Figure out what sort of displacement we have to handle here.
-  if (Op3.isGlobalAddress()) {
+  if (Op3.isGlobal()) {
     DispForReloc = &Op3;
-  } else if (Op3.isConstantPoolIndex()) {
+  } else if (Op3.isCPI()) {
     if (Is64BitMode || IsPIC) {
       DispForReloc = &Op3;
     } else {
       DispVal += MCE.getConstantPoolEntryAddress(Op3.getIndex());
       DispVal += Op3.getOffset();
     }
-  } else if (Op3.isJumpTableIndex()) {
+  } else if (Op3.isJTI()) {
     if (Is64BitMode || IsPIC) {
       DispForReloc = &Op3;
     } else {
@@ -522,14 +522,14 @@ void Emitter::emitInstruction(const MachineInstr &MI,
       const MachineOperand &MO = MI.getOperand(CurOp++);
 
       DOUT << "RawFrm CurOp " << CurOp << "\n";
-      DOUT << "isMachineBasicBlock " << MO.isMachineBasicBlock() << "\n";
-      DOUT << "isGlobalAddress " << MO.isGlobalAddress() << "\n";
-      DOUT << "isExternalSymbol " << MO.isExternalSymbol() << "\n";
-      DOUT << "isImmediate " << MO.isImmediate() << "\n";
+      DOUT << "isMBB " << MO.isMBB() << "\n";
+      DOUT << "isGlobal " << MO.isGlobal() << "\n";
+      DOUT << "isSymbol " << MO.isSymbol() << "\n";
+      DOUT << "isImm " << MO.isImm() << "\n";
 
-      if (MO.isMachineBasicBlock()) {
+      if (MO.isMBB()) {
         emitPCRelativeBlockAddress(MO.getMBB());
-      } else if (MO.isGlobalAddress()) {
+      } else if (MO.isGlobal()) {
         // Assume undefined functions may be outside the Small codespace.
         bool NeedStub = 
           (Is64BitMode && 
@@ -538,9 +538,9 @@ void Emitter::emitInstruction(const MachineInstr &MI,
           Opcode == X86::TAILJMPd;
         emitGlobalAddress(MO.getGlobal(), X86::reloc_pcrel_word,
                           0, 0, NeedStub);
-      } else if (MO.isExternalSymbol()) {
+      } else if (MO.isSymbol()) {
         emitExternalSymbolAddress(MO.getSymbolName(), X86::reloc_pcrel_word);
-      } else if (MO.isImmediate()) {
+      } else if (MO.isImm()) {
         emitConstant(MO.getImm(), X86InstrInfo::sizeOfImm(Desc));
       } else {
         assert(0 && "Unknown RawFrm operand!");
@@ -554,7 +554,7 @@ void Emitter::emitInstruction(const MachineInstr &MI,
     if (CurOp != NumOps) {
       const MachineOperand &MO1 = MI.getOperand(CurOp++);
       unsigned Size = X86InstrInfo::sizeOfImm(Desc);
-      if (MO1.isImmediate())
+      if (MO1.isImm())
         emitConstant(MO1.getImm(), Size);
       else {
         unsigned rt = Is64BitMode ? X86::reloc_pcrel_word
@@ -562,16 +562,16 @@ void Emitter::emitInstruction(const MachineInstr &MI,
         // This should not occur on Darwin for relocatable objects.
         if (Opcode == X86::MOV64ri)
           rt = X86::reloc_absolute_dword;  // FIXME: add X86II flag?
-        if (MO1.isGlobalAddress()) {
+        if (MO1.isGlobal()) {
           bool NeedStub = isa<Function>(MO1.getGlobal());
           bool isLazy = gvNeedsLazyPtr(MO1.getGlobal());
           emitGlobalAddress(MO1.getGlobal(), rt, MO1.getOffset(), 0,
                             NeedStub, isLazy);
-        } else if (MO1.isExternalSymbol())
+        } else if (MO1.isSymbol())
           emitExternalSymbolAddress(MO1.getSymbolName(), rt);
-        else if (MO1.isConstantPoolIndex())
+        else if (MO1.isCPI())
           emitConstPoolAddress(MO1.getIndex(), rt);
-        else if (MO1.isJumpTableIndex())
+        else if (MO1.isJTI())
           emitJumpTableAddress(MO1.getIndex(), rt);
       }
     }
@@ -627,23 +627,23 @@ void Emitter::emitInstruction(const MachineInstr &MI,
     if (CurOp != NumOps) {
       const MachineOperand &MO1 = MI.getOperand(CurOp++);
       unsigned Size = X86InstrInfo::sizeOfImm(Desc);
-      if (MO1.isImmediate())
+      if (MO1.isImm())
         emitConstant(MO1.getImm(), Size);
       else {
         unsigned rt = Is64BitMode ? X86::reloc_pcrel_word
           : (IsPIC ? X86::reloc_picrel_word : X86::reloc_absolute_word);
         if (Opcode == X86::MOV64ri32)
           rt = X86::reloc_absolute_word;  // FIXME: add X86II flag?
-        if (MO1.isGlobalAddress()) {
+        if (MO1.isGlobal()) {
           bool NeedStub = isa<Function>(MO1.getGlobal());
           bool isLazy = gvNeedsLazyPtr(MO1.getGlobal());
           emitGlobalAddress(MO1.getGlobal(), rt, MO1.getOffset(), 0,
                             NeedStub, isLazy);
-        } else if (MO1.isExternalSymbol())
+        } else if (MO1.isSymbol())
           emitExternalSymbolAddress(MO1.getSymbolName(), rt);
-        else if (MO1.isConstantPoolIndex())
+        else if (MO1.isCPI())
           emitConstPoolAddress(MO1.getIndex(), rt);
-        else if (MO1.isJumpTableIndex())
+        else if (MO1.isJTI())
           emitJumpTableAddress(MO1.getIndex(), rt);
       }
     }
@@ -654,7 +654,7 @@ void Emitter::emitInstruction(const MachineInstr &MI,
   case X86II::MRM4m: case X86II::MRM5m:
   case X86II::MRM6m: case X86II::MRM7m: {
     intptr_t PCAdj = (CurOp+4 != NumOps) ?
-      (MI.getOperand(CurOp+4).isImmediate() ? X86InstrInfo::sizeOfImm(Desc) : 4) : 0;
+      (MI.getOperand(CurOp+4).isImm() ? X86InstrInfo::sizeOfImm(Desc) : 4) : 0;
 
     MCE.emitByte(BaseOpcode);
     emitMemModRMByte(MI, CurOp, (Desc->TSFlags & X86II::FormMask)-X86II::MRM0m,
@@ -664,23 +664,23 @@ void Emitter::emitInstruction(const MachineInstr &MI,
     if (CurOp != NumOps) {
       const MachineOperand &MO = MI.getOperand(CurOp++);
       unsigned Size = X86InstrInfo::sizeOfImm(Desc);
-      if (MO.isImmediate())
+      if (MO.isImm())
         emitConstant(MO.getImm(), Size);
       else {
         unsigned rt = Is64BitMode ? X86::reloc_pcrel_word
           : (IsPIC ? X86::reloc_picrel_word : X86::reloc_absolute_word);
         if (Opcode == X86::MOV64mi32)
           rt = X86::reloc_absolute_word;  // FIXME: add X86II flag?
-        if (MO.isGlobalAddress()) {
+        if (MO.isGlobal()) {
           bool NeedStub = isa<Function>(MO.getGlobal());
           bool isLazy = gvNeedsLazyPtr(MO.getGlobal());
           emitGlobalAddress(MO.getGlobal(), rt, MO.getOffset(), 0,
                             NeedStub, isLazy);
-        } else if (MO.isExternalSymbol())
+        } else if (MO.isSymbol())
           emitExternalSymbolAddress(MO.getSymbolName(), rt);
-        else if (MO.isConstantPoolIndex())
+        else if (MO.isCPI())
           emitConstPoolAddress(MO.getIndex(), rt);
-        else if (MO.isJumpTableIndex())
+        else if (MO.isJTI())
           emitJumpTableAddress(MO.getIndex(), rt);
       }
     }

@@ -81,10 +81,10 @@ namespace {
 
     void printOperand(const MachineInstr *MI, unsigned OpNo) {
       const MachineOperand &MO = MI->getOperand(OpNo);
-      if (MO.isRegister()) {
+      if (MO.isReg()) {
         assert(TargetRegisterInfo::isPhysicalRegister(MO.getReg())&&"Not physreg??");
         O << TM.getRegisterInfo()->get(MO.getReg()).AsmName;
-      } else if (MO.isImmediate()) {
+      } else if (MO.isImm()) {
         O << MO.getImm();
       } else {
         printOp(MO);
@@ -186,8 +186,8 @@ namespace {
     printMemRegImmS10(const MachineInstr *MI, unsigned OpNo)
     {
       const MachineOperand &MO = MI->getOperand(OpNo);
-      assert(MO.isImmediate()
-             && "printMemRegImmS10 first operand is not immedate");
+      assert(MO.isImm() &&
+             "printMemRegImmS10 first operand is not immedate");
       printS10ImmOperand(MI, OpNo);
       O << "(";
       printOperand(MI, OpNo+1);
@@ -198,11 +198,11 @@ namespace {
     printAddr256K(const MachineInstr *MI, unsigned OpNo)
     {
       /* Note: operand 1 is an offset or symbol name. */
-      if (MI->getOperand(OpNo).isImmediate()) {
+      if (MI->getOperand(OpNo).isImm()) {
         printS16ImmOperand(MI, OpNo);
       } else {
         printOp(MI->getOperand(OpNo));
-        if (MI->getOperand(OpNo+1).isImmediate()) {
+        if (MI->getOperand(OpNo+1).isImm()) {
           int displ = int(MI->getOperand(OpNo+1).getImm());
           if (displ > 0)
             O << "+" << displ;
@@ -222,7 +222,7 @@ namespace {
     }
 
     void printSymbolHi(const MachineInstr *MI, unsigned OpNo) {
-      if (MI->getOperand(OpNo).isImmediate()) {
+      if (MI->getOperand(OpNo).isImm()) {
         printS16ImmOperand(MI, OpNo);
       } else {
         printOp(MI->getOperand(OpNo));
@@ -231,7 +231,7 @@ namespace {
     }
 
     void printSymbolLo(const MachineInstr *MI, unsigned OpNo) {
-      if (MI->getOperand(OpNo).isImmediate()) {
+      if (MI->getOperand(OpNo).isImm()) {
         printS16ImmOperand(MI, OpNo);
       } else {
         printOp(MI->getOperand(OpNo));
@@ -245,7 +245,7 @@ namespace {
     }
 
     void printROTHNeg7Imm(const MachineInstr *MI, unsigned OpNo) {
-      if (MI->getOperand(OpNo).isImmediate()) {
+      if (MI->getOperand(OpNo).isImm()) {
         int value = (int) MI->getOperand(OpNo).getImm();
         assert((value >= 0 && value < 16)
                && "Invalid negated immediate rotate 7-bit argument");
@@ -256,7 +256,7 @@ namespace {
     }
 
     void printROTNeg7Imm(const MachineInstr *MI, unsigned OpNo) {
-      if (MI->getOperand(OpNo).isImmediate()) {
+      if (MI->getOperand(OpNo).isImm()) {
         int value = (int) MI->getOperand(OpNo).getImm();
         assert((value >= 0 && value < 32)
                && "Invalid negated immediate rotate 7-bit argument");
@@ -372,9 +372,9 @@ bool SPUAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
     default: return true;  // Unknown modifier.
     case 'L': // Write second word of DImode reference.  
       // Verify that this operand has two consecutive registers.
-      if (!MI->getOperand(OpNo).isRegister() ||
+      if (!MI->getOperand(OpNo).isReg() ||
           OpNo+1 == MI->getNumOperands() ||
-          !MI->getOperand(OpNo+1).isRegister())
+          !MI->getOperand(OpNo+1).isReg())
         return true;
       ++OpNo;   // Return the high-part.
       break;

@@ -52,8 +52,8 @@ public:
   {}
   
   // Accessors
-  bool isRegister()      const { return IsRegister; }
-  unsigned getRegister() const { return Register; }
+  bool isReg()           const { return IsRegister; }
+  unsigned getReg()      const { return Register; }
   int getOffset()        const { return Offset; }
   void setIsRegister(bool Is)  { IsRegister = Is; }
   void setRegister(unsigned R) { Register = R; }
