@@ -54,7 +54,8 @@ const Attributes Alignment = 0xffff<<16; ///< Alignment of parameter (16 bits)
 const Attributes ParameterOnly = ByVal | Nest | StructRet;
 
 /// @brief Attributes that only apply to function.
-const Attributes FunctionOnly = NoReturn | NoUnwind | ReadNone | ReadOnly;
+const Attributes FunctionOnly = NoReturn | NoUnwind | ReadNone | ReadOnly | 
+  NoInline | AlwaysInline | OptimizeForSize;
 
 /// @brief Parameter attributes that do not apply to vararg call arguments.
 const Attributes VarArgsIncompatible = StructRet;
