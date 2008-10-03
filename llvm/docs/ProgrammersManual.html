@@ -1956,7 +1956,7 @@ AllocaInst* instToReplace = ...;
 BasicBlock::iterator ii(instToReplace);
 
 ReplaceInstWithValue(instToReplace-&gt;getParent()-&gt;getInstList(), ii,
-                     Constant::getNullValue(PointerType::get(Type::Int32Ty)));
+                     Constant::getNullValue(PointerType::getUnqual(Type::Int32Ty)));
 </pre></div></li>
 
   <li><tt>ReplaceInstWithInst</tt> 
@@ -2091,7 +2091,7 @@ To build this, use the following LLVM APIs:
 // <i>Create the initial outer struct</i>
 <a href="#PATypeHolder">PATypeHolder</a> StructTy = OpaqueType::get();
 std::vector&lt;const Type*&gt; Elts;
-Elts.push_back(PointerType::get(StructTy));
+Elts.push_back(PointerType::getUnqual(StructTy));
 Elts.push_back(Type::Int32Ty);
 StructType *NewSTy = StructType::get(Elts);
 
