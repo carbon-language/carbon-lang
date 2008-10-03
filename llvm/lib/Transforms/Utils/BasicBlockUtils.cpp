@@ -240,16 +240,15 @@ BasicBlock *llvm::SplitEdge(BasicBlock *BB, BasicBlock *Succ, Pass *P) {
 /// the loop info is updated.
 ///
 BasicBlock *llvm::SplitBlock(BasicBlock *Old, Instruction *SplitPt, Pass *P) {
-
-  LoopInfo &LI = P->getAnalysis<LoopInfo>();
   BasicBlock::iterator SplitIt = SplitPt;
   while (isa<PHINode>(SplitIt))
     ++SplitIt;
   BasicBlock *New = Old->splitBasicBlock(SplitIt, Old->getName()+".split");
 
   // The new block lives in whichever loop the old one did.
-  if (Loop *L = LI.getLoopFor(Old))
-    L->addBasicBlockToLoop(New, LI.getBase());
+  if (LoopInfo* LI = P->getAnalysisToUpdate<LoopInfo>())
+    if (Loop *L = LI->getLoopFor(Old))
+      L->addBasicBlockToLoop(New, LI->getBase());
 
   if (DominatorTree *DT = P->getAnalysisToUpdate<DominatorTree>()) 
     {
