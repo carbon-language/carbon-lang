@@ -89,3 +89,15 @@ union au6 {char c; __attribute__((packed, aligned(2))) int x;};
 extern int k1[sizeof(union au6) == 4 ? 1 : -1];
 extern int k2[__alignof(union au6) == 2 ? 1 : -1];
 
+// Check postfix attributes
+union au7 {char c; int x;} __attribute__((packed));
+extern int l1[sizeof(union au7) == 4 ? 1 : -1];
+extern int l2[__alignof(union au7) == 1 ? 1 : -1];
+
+struct packed_fas2 {
+    char a;
+    int b[];
+} __attribute__((packed));
+
+extern int m1[sizeof(struct packed_fas2) == 1 ? 1 : -1];
+extern int m2[__alignof(struct packed_fas2) == 1 ? 1 : -1];

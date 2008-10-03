@@ -2112,7 +2112,7 @@ void Sema::ActOnFields(Scope* S,
                        SourceLocation RecLoc, DeclTy *RecDecl,
                        DeclTy **Fields, unsigned NumFields,
                        SourceLocation LBrac, SourceLocation RBrac,
-                       AttributeList *Attrs) {
+                       AttributeList *Attr) {
   Decl *EnclosingDecl = static_cast<Decl*>(RecDecl);
   assert(EnclosingDecl && "missing record or interface decl");
   RecordDecl *Record = dyn_cast<RecordDecl>(EnclosingDecl);
@@ -2257,6 +2257,9 @@ void Sema::ActOnFields(Scope* S,
       CheckImplementationIvars(IMPDecl, ClsFields, RecFields.size(), RBrac);
     }
   }
+
+  if (Attr)
+    ProcessDeclAttributeList(Record, Attr);
 }
 
 Sema::DeclTy *Sema::ActOnEnumConstant(Scope *S, DeclTy *theEnumDecl,
