@@ -767,7 +767,7 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
   AttributeList *AttrList = 0;
   // If attributes exist after struct contents, parse them.
   if (Tok.is(tok::kw___attribute))
-    AttrList = ParseAttributes(); // FIXME: where should I put them?
+    AttrList = ParseAttributes();
 
   Actions.ActOnFields(CurScope,
                       RecordLoc,TagDecl,&FieldDecls[0],FieldDecls.size(),
