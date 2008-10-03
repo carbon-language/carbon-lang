@@ -35,6 +35,14 @@ public:
   /// JIT Memory Manager if the client does not provide one to the JIT.
   static JITMemoryManager *CreateDefaultMemManager();
   
+  /// setMemoryWritable - When code generation is in progress,
+  /// the code pages may need permissions changed.
+  virtual void setMemoryWritable(void) = 0;
+
+  /// setMemoryExecutable - When code generation is done and we're ready to
+  /// start execution, the code pages may need permissions changed.
+  virtual void setMemoryExecutable(void) = 0;
+
   //===--------------------------------------------------------------------===//
   // Global Offset Table Management
   //===--------------------------------------------------------------------===//

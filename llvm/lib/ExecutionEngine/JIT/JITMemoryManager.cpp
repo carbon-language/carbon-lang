@@ -365,6 +365,21 @@ namespace {
       // Finally, remove this entry from TableBlocks.
       TableBlocks.erase(I);
     }
+
+    /// setMemoryWritable - When code generation is in progress,
+    /// the code pages may need permissions changed.
+    void setMemoryWritable(void)
+    {
+      for (unsigned i = 0, e = Blocks.size(); i != e; ++i)
+        sys::Memory::setWritable(Blocks[i]);
+    }
+    /// setMemoryExecutable - When code generation is done and we're ready to
+    /// start execution, the code pages may need permissions changed.
+    void setMemoryExecutable(void)
+    {
+      for (unsigned i = 0, e = Blocks.size(); i != e; ++i)
+        sys::Memory::setExecutable(Blocks[i]);
+    }
   };
 }
 

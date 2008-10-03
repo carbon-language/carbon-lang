@@ -560,6 +560,10 @@ namespace {
       if (ExceptionHandling) DE->setModuleInfo(Info);
     }
 
+    void setMemoryExecutable(void) {
+      MemMgr->setMemoryExecutable();
+    }
+
   private:
     void *getPointerToGlobal(GlobalValue *GV, void *Reference, bool NoNeedStub);
     void *getPointerToGVLazyPtr(GlobalValue *V, void *Reference,
@@ -791,6 +795,8 @@ unsigned JITEmitter::GetSizeOfGlobalsInBytes(MachineFunction &MF) {
 
 void JITEmitter::startFunction(MachineFunction &F) {
   uintptr_t ActualSize = 0;
+  // Set the memory writable, if it's not already
+  MemMgr->setMemoryWritable();
   if (MemMgr->NeedsExactSize()) {
     DOUT << "ExactSize\n";
     const TargetInstrInfo* TII = F.getTarget().getInstrInfo();
@@ -938,7 +944,7 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
   Relocations.clear();
 
   // Mark code region readable and executable if it's not so already.
-  sys::Memory::SetRXPrivilege(FnStart, FnEnd-FnStart);
+  MemMgr->setMemoryExecutable();
 
 #ifndef NDEBUG
   {
@@ -1086,6 +1092,10 @@ void JITEmitter::startFunctionStub(const GlobalValue* F, unsigned StubSize,
 
 void *JITEmitter::finishFunctionStub(const GlobalValue* F) {
   NumBytes += getCurrentPCOffset();
+
+  // Invalidate the icache if necessary.
+  sys::Memory::InvalidateInstructionCache(BufferBegin, NumBytes);
+
   std::swap(SavedBufferBegin, BufferBegin);
   BufferEnd = SavedBufferEnd;
   CurBufferPtr = SavedCurBufferPtr;

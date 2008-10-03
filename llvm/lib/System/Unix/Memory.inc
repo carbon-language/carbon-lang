@@ -76,7 +76,7 @@ llvm::sys::Memory::AllocateRWX(unsigned NumBytes, const MemoryBlock* NearBlock,
                                 (vm_size_t)(pageSize*NumPages), 0,
                                 VM_PROT_READ | VM_PROT_EXECUTE | VM_PROT_COPY);
   if (KERN_SUCCESS != kr) {
-    MakeErrMsg(ErrMsg, "vm_protect max RWX failed\n");
+    MakeErrMsg(ErrMsg, "vm_protect max RX failed\n");
     return sys::MemoryBlock();
   }
 
@@ -101,5 +101,29 @@ bool llvm::sys::Memory::ReleaseRWX(MemoryBlock &M, std::string *ErrMsg) {
   if (0 != ::munmap(M.Address, M.Size))
     return MakeErrMsg(ErrMsg, "Can't release RWX Memory");
   return false;
+}
+
+bool llvm::sys::Memory::setWritable (MemoryBlock &M, std::string *ErrMsg) {
+#if defined(__APPLE__) && defined(__arm__)
+  if (M.Address == 0 || M.Size == 0) return false;
+  sys::Memory::InvalidateInstructionCache(M.Address, M.Size);
+  kern_return_t kr = vm_protect(mach_task_self(), (vm_address_t)M.Address,
+    (vm_size_t)M.Size, 0, VM_PROT_READ | VM_PROT_WRITE);
+  return KERN_SUCCESS == kr;
+#else
+  return true;
+#endif
+}
+
+bool llvm::sys::Memory::setExecutable (MemoryBlock &M, std::string *ErrMsg) {
+#if defined(__APPLE__) && defined(__arm__)
+  if (M.Address == 0 || M.Size == 0) return false;
+  sys::Memory::InvalidateInstructionCache(M.Address, M.Size);
+  kern_return_t kr = vm_protect(mach_task_self(), (vm_address_t)M.Address,
+    (vm_size_t)M.Size, 0, VM_PROT_READ | VM_PROT_EXECUTE | VM_PROT_COPY);
+  return KERN_SUCCESS == kr;
+#else
+  return false;
+#endif
 }
 

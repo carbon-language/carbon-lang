@@ -70,10 +70,15 @@ namespace sys {
     /// platforms.
     static void InvalidateInstructionCache(const void *Addr, size_t Len);
 
-    /// SetRXPrivilege - Before the JIT can run a block of code, it has to be
+    /// setExecutable - Before the JIT can run a block of code, it has to be
     /// given read and executable privilege. Return true if it is already r-x
     /// or the system is able to change its previlege.
-    static bool SetRXPrivilege(const void *Addr, size_t Size);
+    static bool setExecutable (MemoryBlock &M, std::string *ErrMsg = 0);
+
+    /// setWritable - When adding to a block of code, the JIT may need
+    /// to mark a block of code as RW since the protections are on page
+    /// boundaries, and the JIT internal allocations are not page aligned.
+    static bool setWritable (MemoryBlock &M, std::string *ErrMsg = 0);
   };
 }
 }
