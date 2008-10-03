@@ -235,8 +235,6 @@ def main(args):
                 arg += args[i+1]
                 i += 1
             compile_opts.append(arg)
-        if arg[:5] in ['-std=']:
-            compile_opts.append(arg)
         if argkey in ('-std', '-mmacosx-version-min'):
             compile_opts.append(arg)
 
