@@ -11,7 +11,7 @@ LEVEL = ../..
 
 BUILTIN_PLUGINS = Base
 DRIVER_NAME = llvmc2
-DIRS = plugins src
+DIRS = plugins core
 
 export BUILTIN_PLUGINS
 export DRIVER_NAME
