@@ -1365,6 +1365,16 @@ unsigned X86FastISel::TargetMaterializeConstant(Constant *C) {
 }
 
 unsigned X86FastISel::TargetMaterializeAlloca(AllocaInst *C) {
+  // Fail on dynamic allocas. At this point, getRegForValue has already
+  // checked its CSE maps, so if we're here trying to handle a dynamic
+  // alloca, we're not going to succeed. X86SelectAddress has a
+  // check for dynamic allocas, because it's called directly from
+  // various places, but TargetMaterializeAlloca also needs a check
+  // in order to avoid recursion between getRegForValue,
+  // X86SelectAddrss, and TargetMaterializeAlloca.
+  if (!StaticAllocaMap.count(C))
+    return 0;
+
   X86AddressMode AM;
   if (!X86SelectAddress(C, AM, false))
     return 0;
