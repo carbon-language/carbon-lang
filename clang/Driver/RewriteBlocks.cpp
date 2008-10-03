@@ -49,6 +49,7 @@ class RewriteBlocks : public ASTConsumer {
   // Block related declarations.
   llvm::SmallPtrSet<ValueDecl *, 8> BlockByCopyDecls;
   llvm::SmallPtrSet<ValueDecl *, 8> BlockByRefDecls;
+  llvm::SmallPtrSet<ValueDecl *, 8> ImportedBlockDecls;
   
   // The function/method we are rewriting.
   FunctionDecl *CurFunctionDef;
@@ -96,6 +97,8 @@ public:
   void RewriteBlockPointerDecl(NamedDecl *VD);
   void RewriteBlockPointerFunctionArgs(FunctionDecl *FD);
   
+  std::string SynthesizeBlockHelperFuncs(BlockExpr *CE, int i, 
+                                    const char *funcName, std::string Tag);
   std::string SynthesizeBlockFunc(BlockExpr *CE, int i, 
                                     const char *funcName, std::string Tag);
   std::string SynthesizeBlockImpl(BlockExpr *CE, std::string Tag);
@@ -429,6 +432,7 @@ std::string RewriteBlocks::SynthesizeBlockFunc(BlockExpr *CE, int i,
     
     BodyBuf.append(BodyStartBuf, BodyEndBuf-BodyStartBuf+1);
     
+    //fprintf(stderr, "BodyBuf=>%s\n", BodyBuf.c_str());
     if (BlockDeclRefs.size()) {
       unsigned int nCharsAdded = 0;
       for (unsigned i = 0; i < BlockDeclRefs.size(); i++) {
@@ -449,17 +453,20 @@ std::string RewriteBlocks::SynthesizeBlockFunc(BlockExpr *CE, int i,
           Diags.Report(NoNestedBlockCalls);
 
           GetBlockCallExprs(CE);
+          ImportedBlockDecls.insert(BlockDeclRefs[i]->getDecl());
           
           // Rewrite the closure in place.
           // The character based equivalent of RewriteBlockCall().
           // Need to get the CallExpr associated with this BlockDeclRef.
           std::string BlockCall = SynthesizeBlockCall(BlockCallExprs[BlockDeclRefs[i]]);
           
+          // FIXME: this is still incomplete.
           SourceLocation CallLocStart = BlockCallExprs[BlockDeclRefs[i]]->getLocStart();
           SourceLocation CallLocEnd = BlockCallExprs[BlockDeclRefs[i]]->getLocEnd();
-          const char *CallStart = SM->getCharacterData(CallLocStart);
+          const char *CallStart = SM->getCharacterData(CallLocStart) + nCharsAdded;
           const char *CallEnd = SM->getCharacterData(CallLocEnd);
           unsigned CallBytes = CallEnd-CallStart;
+          //fprintf(stderr, "BlockCall=>%s CallStart=%d\n", BlockCall.c_str(),CallStart);
           BodyBuf.replace(CallStart-BodyStartBuf, CallBytes, BlockCall.c_str());
           nCharsAdded += CallBytes;
         }
@@ -475,6 +482,40 @@ std::string RewriteBlocks::SynthesizeBlockFunc(BlockExpr *CE, int i,
     S += BodyBuf;
   }
   S += "\n}\n";
+  return S;
+}
+
+std::string RewriteBlocks::SynthesizeBlockHelperFuncs(BlockExpr *CE, int i,
+                                                   const char *funcName,
+                                                   std::string Tag) {
+  std::string StructRef = "struct " + Tag;
+  std::string S = "static void __";
+  
+  S += funcName;
+  S += "_block_copy_" + utostr(i);
+  S += "(" + StructRef;
+  S += "*dst, " + StructRef;
+  S += "*src) {";
+  for (llvm::SmallPtrSet<ValueDecl*,8>::iterator I = ImportedBlockDecls.begin(), 
+      E = ImportedBlockDecls.end(); I != E; ++I) {
+    S += "_Block_copy_assign(&dst->";
+    S += (*I)->getName();
+    S += ", src->";
+    S += (*I)->getName();
+    S += ");}";
+  }
+  S += "\nstatic void __";
+  S += funcName;
+  S += "_block_dispose_" + utostr(i);
+  S += "(" + StructRef;
+  S += "*src) {";
+  for (llvm::SmallPtrSet<ValueDecl*,8>::iterator I = ImportedBlockDecls.begin(), 
+      E = ImportedBlockDecls.end(); I != E; ++I) {
+    S += "_Block_destroy(src->";
+    S += (*I)->getName();
+    S += ");";
+  }
+  S += "}\n";  
   return S;
 }
 
@@ -500,8 +541,8 @@ std::string RewriteBlocks::SynthesizeBlockImpl(BlockExpr *CE, std::string Tag) {
     for (llvm::SmallPtrSet<ValueDecl*,8>::iterator I = BlockByCopyDecls.begin(), 
          E = BlockByCopyDecls.end(); I != E; ++I) {
       S += "  ";
-      std::string Name = (*I)->getName();
-      std::string ArgName = "_" + Name;
+      std::string FieldName = (*I)->getName();
+      std::string ArgName = "_" + FieldName;
       // Handle nested closure invocation. For example:
       //
       //   void (^myImportedBlock)(void);
@@ -512,30 +553,41 @@ std::string RewriteBlocks::SynthesizeBlockImpl(BlockExpr *CE, std::string Tag) {
       //     myImportedBlock(); // import and invoke the closure
       //   };
       //
-      if (isBlockPointerType((*I)->getType()))
+      if (isBlockPointerType((*I)->getType())) {
         S += "struct __block_impl *";
-      else {
-        (*I)->getType().getAsStringInternal(Name);
+        Constructor += ", void *" + ArgName;
+      } else {
+        (*I)->getType().getAsStringInternal(FieldName);
         (*I)->getType().getAsStringInternal(ArgName);
+        Constructor += ", " + ArgName;
       }
-      Constructor += ", " + ArgName;
-      S += Name + ";\n";
+      S += FieldName + ";\n";
     }
     // Output all "by ref" declarations.
     for (llvm::SmallPtrSet<ValueDecl*,8>::iterator I = BlockByRefDecls.begin(), 
          E = BlockByRefDecls.end(); I != E; ++I) {
       S += "  ";
-      std::string Name = (*I)->getName();
-      std::string ArgName = "_" + Name;
-      
-      if (isBlockPointerType((*I)->getType()))
+      std::string FieldName = (*I)->getName();
+      std::string ArgName = "_" + FieldName;
+      // Handle nested closure invocation. For example:
+      //
+      //   void (^myImportedBlock)(void);
+      //   myImportedBlock  = ^(void) { setGlobalInt(x + y); };
+      // 
+      //   void (^anotherBlock)(void);
+      //   anotherBlock = ^(void) {
+      //     myImportedBlock(); // import and invoke the closure
+      //   };
+      //
+      if (isBlockPointerType((*I)->getType())) {
         S += "struct __block_impl *";
-      else {
-        Context->getPointerType((*I)->getType()).getAsStringInternal(Name);
+        Constructor += ", void *" + ArgName;
+      } else {
+        Context->getPointerType((*I)->getType()).getAsStringInternal(FieldName);
         Context->getPointerType((*I)->getType()).getAsStringInternal(ArgName);
+        Constructor += ", " + ArgName;
       }
-      Constructor += ", " + ArgName;
-      S += Name + "; // by ref\n";
+      S += FieldName + "; // by ref\n";
     }
     // Finish writing the constructor.
     // FIXME: handle NSConcreteGlobalBlock.
@@ -548,7 +600,10 @@ std::string RewriteBlocks::SynthesizeBlockImpl(BlockExpr *CE, std::string Tag) {
          E = BlockByCopyDecls.end(); I != E; ++I) {
       std::string Name = (*I)->getName();
       Constructor += "    ";
-      Constructor += Name + " = _";
+      if (isBlockPointerType((*I)->getType()))
+        Constructor += Name + " = (struct __block_impl *)_";
+      else
+        Constructor += Name + " = _";
       Constructor += Name + ";\n";
     }
     // Initialize all "by ref" arguments.
@@ -556,7 +611,10 @@ std::string RewriteBlocks::SynthesizeBlockImpl(BlockExpr *CE, std::string Tag) {
          E = BlockByRefDecls.end(); I != E; ++I) {
       std::string Name = (*I)->getName();
       Constructor += "    ";
-      Constructor += Name + " = _";
+      if (isBlockPointerType((*I)->getType()))
+        Constructor += Name + " = (struct __block_impl *)_";
+      else
+        Constructor += Name + " = _";
       Constructor += Name + ";\n";
     }
   } else {
@@ -583,15 +641,21 @@ void RewriteBlocks::SynthesizeBlockLiterals(SourceLocation FunLocStart,
     std::string CI = SynthesizeBlockImpl(Blocks[i], Tag);
 
     InsertText(FunLocStart, CI.c_str(), CI.size());
-    
+
     std::string CF = SynthesizeBlockFunc(Blocks[i], i, FunName, Tag);
     
     InsertText(FunLocStart, CF.c_str(), CF.size());
 
+    if (ImportedBlockDecls.size()) {
+      std::string HF = SynthesizeBlockHelperFuncs(Blocks[i], i, FunName, Tag);
+      InsertText(FunLocStart, HF.c_str(), HF.size());
+    }
+    
     BlockDeclRefs.clear();
     BlockByRefDecls.clear();
     BlockByCopyDecls.clear();
     BlockCallExprs.clear();
+    ImportedBlockDecls.clear();
   }
   Blocks.clear();
 }
@@ -701,8 +765,9 @@ void RewriteBlocks::GetBlockCallExprs(Stmt *S) {
       GetBlockCallExprs(*CI);
       
   if (CallExpr *CE = dyn_cast<CallExpr>(S)) {
-    if (CE->getCallee()->getType()->isBlockPointerType())
+    if (CE->getCallee()->getType()->isBlockPointerType()) {
       BlockCallExprs[dyn_cast<BlockDeclRefExpr>(CE->getCallee())] = CE;
+    }
   }
   return;
 }
@@ -1028,6 +1093,9 @@ void RewriteBlocks::RewriteBlockExpr(BlockExpr *Exp, VarDecl *VD) {
         Init += "[[";
         Init += (*I)->getName();
         Init += " retain] autorelease]";
+      } else if (isBlockPointerType((*I)->getType())) {
+        Init += "(void *)";
+        Init += (*I)->getName();
       } else {
         Init += (*I)->getName();
       }
@@ -1043,7 +1111,8 @@ void RewriteBlocks::RewriteBlockExpr(BlockExpr *Exp, VarDecl *VD) {
   BlockDeclRefs.clear();
   BlockByRefDecls.clear();
   BlockByCopyDecls.clear();
-  
+  ImportedBlockDecls.clear();
+
   // Do the rewrite.
   const char *startBuf = SM->getCharacterData(Exp->getLocStart());
   const char *endBuf = SM->getCharacterData(Exp->getLocEnd());
