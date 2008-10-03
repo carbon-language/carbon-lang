@@ -101,13 +101,13 @@ JITDwarfEmitter::EmitFrameMoves(intptr_t BaseLabelPtr,
     }
     
     // If advancing cfa.
-    if (Dst.isRegister() && Dst.getRegister() == MachineLocation::VirtualFP) {
-      if (!Src.isRegister()) {
-        if (Src.getRegister() == MachineLocation::VirtualFP) {
+    if (Dst.isReg() && Dst.getReg() == MachineLocation::VirtualFP) {
+      if (!Src.isReg()) {
+        if (Src.getReg() == MachineLocation::VirtualFP) {
           MCE->emitByte(dwarf::DW_CFA_def_cfa_offset);
         } else {
           MCE->emitByte(dwarf::DW_CFA_def_cfa);
-          MCE->emitULEB128Bytes(RI->getDwarfRegNum(Src.getRegister(), true));
+          MCE->emitULEB128Bytes(RI->getDwarfRegNum(Src.getReg(), true));
         }
         
         int Offset = -Src.getOffset();
@@ -116,16 +116,16 @@ JITDwarfEmitter::EmitFrameMoves(intptr_t BaseLabelPtr,
       } else {
         assert(0 && "Machine move no supported yet.");
       }
-    } else if (Src.isRegister() &&
-      Src.getRegister() == MachineLocation::VirtualFP) {
-      if (Dst.isRegister()) {
+    } else if (Src.isReg() &&
+      Src.getReg() == MachineLocation::VirtualFP) {
+      if (Dst.isReg()) {
         MCE->emitByte(dwarf::DW_CFA_def_cfa_register);
-        MCE->emitULEB128Bytes(RI->getDwarfRegNum(Dst.getRegister(), true));
+        MCE->emitULEB128Bytes(RI->getDwarfRegNum(Dst.getReg(), true));
       } else {
         assert(0 && "Machine move no supported yet.");
       }
     } else {
-      unsigned Reg = RI->getDwarfRegNum(Src.getRegister(), true);
+      unsigned Reg = RI->getDwarfRegNum(Src.getReg(), true);
       int Offset = Dst.getOffset() / stackGrowth;
       
       if (Offset < 0) {
@@ -775,13 +775,13 @@ JITDwarfEmitter::GetFrameMovesSizeInBytes(intptr_t BaseLabelPtr,
     }
     
     // If advancing cfa.
-    if (Dst.isRegister() && Dst.getRegister() == MachineLocation::VirtualFP) {
-      if (!Src.isRegister()) {
-        if (Src.getRegister() == MachineLocation::VirtualFP) {
+    if (Dst.isReg() && Dst.getReg() == MachineLocation::VirtualFP) {
+      if (!Src.isReg()) {
+        if (Src.getReg() == MachineLocation::VirtualFP) {
           ++FinalSize;
         } else {
           ++FinalSize;
-          unsigned RegNum = RI->getDwarfRegNum(Src.getRegister(), true);
+          unsigned RegNum = RI->getDwarfRegNum(Src.getReg(), true);
           FinalSize += TargetAsmInfo::getULEB128Size(RegNum);
         }
         
@@ -791,17 +791,17 @@ JITDwarfEmitter::GetFrameMovesSizeInBytes(intptr_t BaseLabelPtr,
       } else {
         assert(0 && "Machine move no supported yet.");
       }
-    } else if (Src.isRegister() &&
-      Src.getRegister() == MachineLocation::VirtualFP) {
-      if (Dst.isRegister()) {
+    } else if (Src.isReg() &&
+      Src.getReg() == MachineLocation::VirtualFP) {
+      if (Dst.isReg()) {
         ++FinalSize;
-        unsigned RegNum = RI->getDwarfRegNum(Dst.getRegister(), true);
+        unsigned RegNum = RI->getDwarfRegNum(Dst.getReg(), true);
         FinalSize += TargetAsmInfo::getULEB128Size(RegNum);
       } else {
         assert(0 && "Machine move no supported yet.");
       }
     } else {
-      unsigned Reg = RI->getDwarfRegNum(Src.getRegister(), true);
+      unsigned Reg = RI->getDwarfRegNum(Src.getReg(), true);
       int Offset = Dst.getOffset() / stackGrowth;
       
       if (Offset < 0) {
