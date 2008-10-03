@@ -386,9 +386,20 @@ bool FastISel::SelectCast(User *I, ISD::NodeType Opcode) {
     
   if (SrcVT == MVT::Other || !SrcVT.isSimple() ||
       DstVT == MVT::Other || !DstVT.isSimple() ||
-      !TLI.isTypeLegal(SrcVT) || !TLI.isTypeLegal(DstVT))
+      !TLI.isTypeLegal(DstVT))
     // Unhandled type. Halt "fast" selection and bail.
     return false;
+    
+  // Check if the source operand is legal. Or as a special case,
+  // it may be i1 if we're doing zero-extension because that's
+  // trivially easy and somewhat common.
+  if (!TLI.isTypeLegal(SrcVT)) {
+    if (SrcVT == MVT::i1 && Opcode == ISD::ZERO_EXTEND)
+      SrcVT = TLI.getTypeToTransformTo(SrcVT);
+    else
+      // Unhandled type. Halt "fast" selection and bail.
+      return false;
+  }
     
   unsigned InputReg = getRegForValue(I->getOperand(0));
   if (!InputReg)
