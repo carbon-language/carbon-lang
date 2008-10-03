@@ -416,7 +416,7 @@ unsigned ARMCodeEmitter::getAddrMode1InstrBinary(const MachineInstr &MI,
   const MachineOperand &MO = MI.getOperand(OpIdx);
   if (MO.isReg())
     // Encode register Rm.
-    return Binary | getMachineOpValue(MI, NumDefs + 1);
+    return Binary | getMachineOpValue(MI, NumDefs);
 
   // Encode so_imm.
   // Set bit I(25) to identify this is the immediate form of <shifter_op>
