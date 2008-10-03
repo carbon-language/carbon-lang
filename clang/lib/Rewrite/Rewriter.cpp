@@ -97,6 +97,55 @@ int Rewriter::getRangeSize(SourceRange Range) const {
   return EndOff-StartOff;
 }
 
+/// getRewritenText - Return the rewritten form of the text in the specified
+/// range.  If the start or end of the range was unrewritable or if they are
+/// in different buffers, this returns an empty string. 
+///
+/// Note that this method is not particularly efficient.
+///
+std::string Rewriter::getRewritenText(SourceRange Range) const {
+  if (!isRewritable(Range.getBegin()) ||
+      !isRewritable(Range.getEnd()))
+    return "";
+  
+  unsigned StartOff, StartFileID;
+  unsigned EndOff  , EndFileID;
+  StartOff = getLocationOffsetAndFileID(Range.getBegin(), StartFileID);
+  EndOff   = getLocationOffsetAndFileID(Range.getEnd(), EndFileID);
+  
+  if (StartFileID != EndFileID)
+    return ""; // Start and end in different buffers.
+  
+  // If edits have been made to this buffer, the delta between the range may
+  // have changed.
+  std::map<unsigned, RewriteBuffer>::const_iterator I =
+    RewriteBuffers.find(StartFileID);
+  if (I == RewriteBuffers.end()) {
+    // If the buffer hasn't been rewritten, just return the text from the input.
+    const char *Ptr = SourceMgr->getCharacterData(Range.getBegin());
+    
+    // Adjust the end offset to the end of the last token, instead of being the
+    // start of the last token.
+    EndOff += Lexer::MeasureTokenLength(Range.getEnd(), *SourceMgr);
+    return std::string(Ptr, Ptr+EndOff-StartOff);
+  }
+  
+  const RewriteBuffer &RB = I->second;
+  EndOff = RB.getMappedOffset(EndOff, true);
+  StartOff = RB.getMappedOffset(StartOff);
+  
+  // Adjust the end offset to the end of the last token, instead of being the
+  // start of the last token.
+  EndOff += Lexer::MeasureTokenLength(Range.getEnd(), *SourceMgr);
+
+  // Advance the iterators to the right spot, yay for linear time algorithms.
+  RewriteBuffer::iterator Start = RB.begin();
+  std::advance(Start, StartOff);
+  RewriteBuffer::iterator End = Start;
+  std::advance(End, EndOff-StartOff);
+  
+  return std::string(Start, End);
+}
 
 unsigned Rewriter::getLocationOffsetAndFileID(SourceLocation Loc,
                                               unsigned &FileID) const {
