@@ -107,10 +107,6 @@ namespace {
   /// SelectionDAG operations.
   ///
   class VISIBILITY_HIDDEN X86DAGToDAGISel : public SelectionDAGISel {
-    /// ContainsFPCode - Every instruction we select that uses or defines a FP
-    /// register should set this to true.
-    bool ContainsFPCode;
-
     /// TM - Keep a reference to X86TargetMachine.
     ///
     X86TargetMachine &TM;
@@ -134,8 +130,7 @@ namespace {
   public:
     X86DAGToDAGISel(X86TargetMachine &tm, bool fast)
       : SelectionDAGISel(X86Lowering, fast),
-        ContainsFPCode(false), TM(tm),
-        X86Lowering(*TM.getTargetLowering()),
+        TM(tm), X86Lowering(*TM.getTargetLowering()),
         Subtarget(&TM.getSubtarget<X86Subtarget>()),
         OptForSize(false) {}
 
