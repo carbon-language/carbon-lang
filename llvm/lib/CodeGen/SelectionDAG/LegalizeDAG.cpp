@@ -6212,20 +6212,33 @@ void SelectionDAGLegalize::ExpandOp(SDValue Op, SDValue &Lo, SDValue &Hi){
     break;
   }
 
+  case ISD::ATOMIC_CMP_SWAP_64: {
+    // This operation does not need a loop.
+    SDValue Tmp = TLI.LowerOperation(Op, DAG);
+    assert(Tmp.getNode() && "Node must be custom expanded!");
+    ExpandOp(Tmp.getValue(0), Lo, Hi);
+    AddLegalizedOperand(SDValue(Node, 1), // Remember we legalized the chain.
+                        LegalizeOp(Tmp.getValue(1)));
+    break;
+  }
+
   case ISD::ATOMIC_LOAD_ADD_64:
   case ISD::ATOMIC_LOAD_SUB_64:
   case ISD::ATOMIC_LOAD_AND_64:
   case ISD::ATOMIC_LOAD_OR_64:
   case ISD::ATOMIC_LOAD_XOR_64:
   case ISD::ATOMIC_LOAD_NAND_64:
-  case ISD::ATOMIC_SWAP_64:
-  case ISD::ATOMIC_CMP_SWAP_64: {
+  case ISD::ATOMIC_SWAP_64: {
+    // These operations require a loop to be generated.  We can't do that yet,
+    // so substitute a target-dependent pseudo and expand that later.
     SDValue In2Lo, In2Hi, In2;
     ExpandOp(Op.getOperand(2), In2Lo, In2Hi);
     In2 = DAG.getNode(ISD::BUILD_PAIR, VT, In2Lo, In2Hi);
-    SDValue Result = TLI.LowerOperation(
-      DAG.getNode(Op.getOpcode(), VT, Op.getOperand(0), Op.getOperand(1), In2),
-      DAG);
+    AtomicSDNode* Anode = cast<AtomicSDNode>(Node);
+    SDValue Replace = 
+      DAG.getAtomic(Op.getOpcode(), Op.getOperand(0), Op.getOperand(1), In2,
+                    Anode->getSrcValue(), Anode->getAlignment());
+    SDValue Result = TLI.LowerOperation(Replace, DAG);
     ExpandOp(Result.getValue(0), Lo, Hi);
     // Remember that we legalized the chain.
     AddLegalizedOperand(SDValue(Node,1), LegalizeOp(Result.getValue(1)));

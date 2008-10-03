@@ -2752,6 +2752,7 @@ def ATOMNAND8 : I<0, Pseudo,(outs GR8:$dst),(ins i8mem:$ptr, GR8:$val),
 let Constraints = "$val1 = $dst1, $val2 = $dst2", 
                   Defs = [EFLAGS, EAX, EBX, ECX, EDX],
                   Uses = [EAX, EBX, ECX, EDX],
+                  mayLoad = 1, mayStore = 1,
                   usesCustomDAGSchedInserter = 1 in {
 def ATOMAND6432 : I<0, Pseudo, (outs GR32:$dst1, GR32:$dst2),
                                (ins i64mem:$ptr, GR32:$val1, GR32:$val2),

@@ -1209,14 +1209,15 @@ SDNode *X86DAGToDAGISel::SelectAtomic64(SDNode *Node, unsigned Opc) {
   SDValue Tmp0, Tmp1, Tmp2, Tmp3;
   if (!SelectAddr(In1, In1, Tmp0, Tmp1, Tmp2, Tmp3))
     return NULL;
+  SDValue LSI = Node->getOperand(4);    // MemOperand
   AddToISelQueue(Tmp0);
   AddToISelQueue(Tmp1);
   AddToISelQueue(Tmp2);
   AddToISelQueue(Tmp3);
   AddToISelQueue(In2L);
   AddToISelQueue(In2H);
+  // For now, don't select the MemOperand object, we don't know how.
   AddToISelQueue(Chain);
-  SDValue LSI = CurDAG->getMemOperand(cast<MemSDNode>(In1)->getMemOperand());
   const SDValue Ops[] = { Tmp0, Tmp1, Tmp2, Tmp3, In2L, In2H, LSI, Chain };
   return CurDAG->getTargetNode(Opc, MVT::i32, MVT::i32, MVT::Other, Ops, 8);
 }

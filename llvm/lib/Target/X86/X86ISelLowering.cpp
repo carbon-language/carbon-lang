@@ -6026,9 +6026,12 @@ SDValue X86TargetLowering::LowerATOMIC_BINARY_64(SDValue Op,
   assert(Node->getOperand(2).getNode()->getOpcode()==ISD::BUILD_PAIR);
   SDValue In2L = Node->getOperand(2).getNode()->getOperand(0);
   SDValue In2H = Node->getOperand(2).getNode()->getOperand(1);
-  SDValue Ops[] = { Chain, In1, In2L, In2H };
+  // This is a generalized SDNode, not an AtomicSDNode, so it doesn't
+  // have a MemOperand.  Pass the info through as a normal operand.
+  SDValue LSI = DAG.getMemOperand(cast<MemSDNode>(Node)->getMemOperand());
+  SDValue Ops[] = { Chain, In1, In2L, In2H, LSI };
   SDVTList Tys = DAG.getVTList(MVT::i32, MVT::i32, MVT::Other);
-  SDValue Result = DAG.getNode(NewOp, Tys, Ops, 4);
+  SDValue Result = DAG.getNode(NewOp, Tys, Ops, 5);
   SDValue OpsF[] = { Result.getValue(0), Result.getValue(1)};
   SDValue ResultVal = DAG.getNode(ISD::BUILD_PAIR, MVT::i64, OpsF, 2);
   SDValue Vals[2] = { ResultVal, Result.getValue(2) };
@@ -6415,7 +6418,7 @@ X86TargetLowering::EmitAtomicBitwiseWithCustomInserter(MachineInstr *bInstr,
   return nextMBB;
 }
 
-// private utility function
+// private utility function:  64 bit atomics on 32 bit host.
 MachineBasicBlock *
 X86TargetLowering::EmitAtomicBit6432WithCustomInserter(MachineInstr *bInstr,
                                                        MachineBasicBlock *MBB,
