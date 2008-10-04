@@ -54,6 +54,8 @@ using namespace clang;
 // Global options.
 //===----------------------------------------------------------------------===//
 
+bool HadErrors = false;
+
 static llvm::cl::opt<bool>
 Verbose("v", llvm::cl::desc("Enable verbose output"));
 static llvm::cl::opt<bool>
@@ -1096,6 +1098,7 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
     
     if (!Consumer) {      
       fprintf(stderr, "Unexpected program action!\n");
+      HadErrors = true;
       return;
     }
 
@@ -1359,5 +1362,5 @@ int main(int argc, char **argv) {
     fprintf(stderr, "\n");
   }
   
-  return Diags.getNumErrors() != 0;
+  return HadErrors || (Diags.getNumErrors() != 0);
 }
