@@ -458,6 +458,7 @@ CFGBlock* CFGBuilder::WalkAST(Stmt* Terminator, bool AlwaysAddStmt = false) {
         Succ = ConfluenceBlock;
         Block = NULL;
         CFGBlock* RHSBlock = Visit(B->getRHS());
+        FinishBlock(RHSBlock);
 
         // Now link the LHSBlock with RHSBlock.
         if (B->getOpcode() == BinaryOperator::LOr) {
