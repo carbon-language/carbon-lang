@@ -483,7 +483,14 @@ std::string RewriteBlocks::SynthesizeBlockImpl(BlockExpr *CE, std::string Tag) {
     for (unsigned i = 0; i < BlockDeclRefs.size(); i++)
       if (BlockDeclRefs[i]->isByRef())
         BlockByRefDecls.insert(BlockDeclRefs[i]->getDecl());
-        
+ 
+    // Find any imported blocks...they will need special attention.
+    for (unsigned i = 0; i < BlockDeclRefs.size(); i++)
+      if (isBlockPointerType(BlockDeclRefs[i]->getType())) {
+        GetBlockCallExprs(CE);
+        ImportedBlockDecls.insert(BlockDeclRefs[i]->getDecl());
+      }
+      
     // Output all "by copy" declarations.
     for (llvm::SmallPtrSet<ValueDecl*,8>::iterator I = BlockByCopyDecls.begin(), 
          E = BlockByCopyDecls.end(); I != E; ++I) {
