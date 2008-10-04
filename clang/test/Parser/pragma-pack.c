@@ -1,5 +1,4 @@
 // RUN: clang -fsyntax-only -verify %s
-// XFAIL
 
 // Note that this puts the expected lines before the directives to work around
 // limitations in the -verify mode.
@@ -19,10 +18,10 @@
 #pragma pack(push,i)
 /* expected-warning {{malformed '#pragma pack', expected}}*/ #pragma pack(push,i, 
 /* expected-warning {{malformed '#pragma pack', expected}}*/ #pragma pack(push,i,) 
+/* expected-warning {{malformed '#pragma pack', expected}}*/ #pragma pack(push,i,help) 
 
 #pragma pack(push,8)
-/* expected-warning {{malformed '#pragma pack', expected}}*/ #pragma pack(push,8, 
-/* expected-warning {{malformed '#pragma pack', expected}}*/ #pragma pack(push,8,help) 
+/* expected-warning {{missing ')' after '#pragma pack'}}*/ #pragma pack(push,8, 
 /* expected-warning {{missing ')' after '#pragma pack'}}*/ #pragma pack(push,8,) 
 /* expected-warning {{missing ')' after '#pragma pack'}}*/ #pragma pack(push,i,8 
 #pragma pack(push,i,8)
