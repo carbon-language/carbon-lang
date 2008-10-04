@@ -857,6 +857,25 @@ public:
                                                  SourceLocation RParenLoc) {
     return 0;
   } 
+
+  //===---------------------------- Pragmas -------------------------------===//
+
+  enum PragmaPackKind {
+    PPK_Default, // #pragma pack([n]) 
+    PPK_Show,    // #pragma pack(show), only supported by MSVC.
+    PPK_Push,    // #pragma pack(push, [identifier], [n])
+    PPK_Pop      // #pragma pack(pop, [identifier], [n])
+  };
+  
+  /// ActOnPragmaPack - Called on well formed #pragma pack(...).
+  virtual void ActOnPragmaPack(PragmaPackKind Kind,
+                               IdentifierInfo *Name,
+                               ExprTy *Alignment,
+                               SourceLocation PragmaLoc, 
+                               SourceLocation LParenLoc,
+                               SourceLocation RParenLoc) {
+    return;
+  }
 };
 
 /// MinimalAction - Minimal actions are used by light-weight clients of the

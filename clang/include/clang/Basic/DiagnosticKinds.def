@@ -556,6 +556,20 @@ DIAG(err_expected_lparen_after_type, ERROR,
 DIAG(err_expected_equal_after_declarator, ERROR,
      "expected '=' after declarator")
 
+// Language specific pragmas
+
+// #pragma pack
+DIAG(warn_pragma_pack_expected_lparen, WARNING,
+     "missing '(' after '#pragma pack' - ignoring")
+DIAG(warn_pragma_pack_expected_rparen, WARNING,
+     "missing ')' after '#pragma pack' - ignoring")
+DIAG(warn_pragma_pack_invalid_action, WARNING,
+     "unknown action for '#pragma pack' - ignored")
+DIAG(warn_pragma_pack_invalid_constant, WARNING,
+     "invalid constant for '#pragma pack', expected %0 - ignored")
+DIAG(warn_pragma_pack_malformed, WARNING,
+     "malformed '#pragma pack', expected '#pragma pack(%0 [, id] [, n])' - ignored")
+
 //===----------------------------------------------------------------------===//
 // Semantic Analysis
 //===----------------------------------------------------------------------===//

@@ -19,11 +19,12 @@
 #include <stack>
 
 namespace clang {
+  class AttributeList;
   class DeclSpec;
-  class ObjCDeclSpec;
   class Declarator;
   class FieldDeclarator;
-  class AttributeList;
+  class ObjCDeclSpec;
+  class PragmaHandler;
   class Scope;
 
 /// Parser - This implements a parser for the C family of languages.  After
@@ -55,6 +56,8 @@ class Parser {
   /// Ident_super - IdentifierInfo for "super", to support fast
   /// comparison.
   IdentifierInfo *Ident_super;
+
+  PragmaHandler *PackHandler;
 
 public:
   Parser(Preprocessor &PP, Action &Actions);

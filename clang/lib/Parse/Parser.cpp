@@ -15,6 +15,7 @@
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Parse/DeclSpec.h"
 #include "clang/Parse/Scope.h"
+#include "ParsePragma.h"
 using namespace clang;
 
 Parser::Parser(Preprocessor &pp, Action &actions)
@@ -24,6 +25,13 @@ Parser::Parser(Preprocessor &pp, Action &actions)
   NumCachedScopes = 0;
   ParenCount = BracketCount = BraceCount = 0;
   ObjCImpDecl = 0;
+
+  // Add #pragma handlers. These are removed and destroyed in the
+  // destructor.
+  PackHandler =
+    new PragmaPackHandler(&PP.getIdentifierTable().get("pack"), actions);
+  PP.AddPragmaHandler(0, PackHandler);
+
   // Instantiate a LexedMethodsForTopClass for all the non-nested classes.
   PushTopClassStack();
 }
@@ -233,6 +241,10 @@ Parser::~Parser() {
   // Free the scope cache.
   for (unsigned i = 0, e = NumCachedScopes; i != e; ++i)
     delete ScopeCache[i];
+
+  // Remove the pragma handlers we installed.
+  PP.RemovePragmaHandler(0, PackHandler);
+  delete PackHandler;
 }
 
 /// Initialize - Warm up the parser.
