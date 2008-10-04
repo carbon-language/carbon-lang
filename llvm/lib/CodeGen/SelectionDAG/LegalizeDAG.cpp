@@ -3007,22 +3007,26 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       }
       if (Node->getOpcode() == ISD::MULHS &&
           TLI.isOperationLegal(ISD::SMUL_LOHI, VT)) {
-        Result = SDValue(DAG.getNode(ISD::SMUL_LOHI, VTs, Tmp1, Tmp2).getNode(), 1);
+        Result = SDValue(DAG.getNode(ISD::SMUL_LOHI, VTs, Tmp1, Tmp2).getNode(),
+                         1);
         break;
       }
       if (Node->getOpcode() == ISD::MULHU && 
           TLI.isOperationLegal(ISD::UMUL_LOHI, VT)) {
-        Result = SDValue(DAG.getNode(ISD::UMUL_LOHI, VTs, Tmp1, Tmp2).getNode(), 1);
+        Result = SDValue(DAG.getNode(ISD::UMUL_LOHI, VTs, Tmp1, Tmp2).getNode(),
+                         1);
         break;
       }
       if (Node->getOpcode() == ISD::SDIV &&
           TLI.isOperationLegal(ISD::SDIVREM, VT)) {
-        Result = SDValue(DAG.getNode(ISD::SDIVREM, VTs, Tmp1, Tmp2).getNode(), 0);
+        Result = SDValue(DAG.getNode(ISD::SDIVREM, VTs, Tmp1, Tmp2).getNode(),
+                         0);
         break;
       }
       if (Node->getOpcode() == ISD::UDIV &&
           TLI.isOperationLegal(ISD::UDIVREM, VT)) {
-        Result = SDValue(DAG.getNode(ISD::UDIVREM, VTs, Tmp1, Tmp2).getNode(), 0);
+        Result = SDValue(DAG.getNode(ISD::UDIVREM, VTs, Tmp1, Tmp2).getNode(),
+                         0);
         break;
       }
 
@@ -3037,6 +3041,10 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
             ? RTLIB::UDIV_I32 : RTLIB::SDIV_I32;
           isSigned = Node->getOpcode() == ISD::SDIV;
         }
+        break;
+      case ISD::MUL:
+        if (VT == MVT::i32)
+          LC = RTLIB::MUL_I32;
         break;
       case ISD::FPOW:
         LC = GetFPLibCall(VT, RTLIB::POW_F32, RTLIB::POW_F64, RTLIB::POW_F80,
