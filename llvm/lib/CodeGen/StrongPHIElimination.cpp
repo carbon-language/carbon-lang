@@ -653,7 +653,7 @@ void StrongPHIElimination::ScheduleCopies(MachineBasicBlock* MBB,
   std::map<unsigned, unsigned> map;
   
   // Setup worklist of initial copies
-  for (std::map<unsigned, unsigned>::iterator I = copy_set.begin(),
+  for (std::multimap<unsigned, unsigned>::iterator I = copy_set.begin(),
        E = copy_set.end(); I != E; ) {
     map.insert(std::make_pair(I->first, I->first));
     map.insert(std::make_pair(I->second, I->second));
