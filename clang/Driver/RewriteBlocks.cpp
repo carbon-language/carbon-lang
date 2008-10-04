@@ -702,7 +702,7 @@ std::string RewriteBlocks::SynthesizeBlockCall(CallExpr *Exp) {
   
   // Add the arguments.
   BlockCall += "((struct __block_impl *)";
-  BlockCall += closureName;
+  BlockCall += closureExprBuf.str();
   for (CallExpr::arg_iterator I = Exp->arg_begin(), 
        E = Exp->arg_end(); I != E; ++I) {
     std::string syncExprBufS;
