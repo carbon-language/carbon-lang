@@ -242,6 +242,12 @@ public:
   /// pragma line before the pragma string starts, e.g. "STDC" or "GCC".
   void AddPragmaHandler(const char *Namespace, PragmaHandler *Handler);
 
+  /// RemovePragmaHandler - Remove the specific pragma handler from
+  /// the preprocessor. If \arg Namespace is non-null, then it should
+  /// be the namespace that \arg Handler was added to. It is an error
+  /// to remove a handler that has not been registered.
+  void RemovePragmaHandler(const char *Namespace, PragmaHandler *Handler);
+
   /// EnterMainSourceFile - Enter the specified FileID as the main source file,
   /// which implicitly adds the builtin defines etc.
   void EnterMainSourceFile();  

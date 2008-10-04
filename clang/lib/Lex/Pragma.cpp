@@ -51,6 +51,17 @@ PragmaHandler *PragmaNamespace::FindHandler(const IdentifierInfo *Name,
   return IgnoreNull ? 0 : NullHandler;
 }
 
+void PragmaNamespace::RemovePragmaHandler(PragmaHandler *Handler) {
+  for (unsigned i = 0, e = Handlers.size(); i != e; ++i) {
+    if (Handlers[i] == Handler) {
+      Handlers[i] = Handlers.back();
+      Handlers.pop_back();
+      return;
+    }
+  }
+  assert(0 && "Handler not registered in this namespace");
+}
+
 void PragmaNamespace::HandlePragma(Preprocessor &PP, Token &Tok) {
   // Read the 'namespace' that the directive is in, e.g. STDC.  Do not macro
   // expand it, the user can have a STDC #define, that should not affect this.
@@ -323,6 +334,32 @@ void Preprocessor::AddPragmaHandler(const char *Namespace,
   assert(!InsertNS->FindHandler(Handler->getName()) &&
          "Pragma handler already exists for this identifier!");
   InsertNS->AddPragma(Handler);
+}
+
+/// RemovePragmaHandler - Remove the specific pragma handler from the
+/// preprocessor. If \arg Namespace is non-null, then it should be the
+/// namespace that \arg Handler was added to. It is an error to remove
+/// a handler that has not been registered.
+void Preprocessor::RemovePragmaHandler(const char *Namespace,
+                                       PragmaHandler *Handler) {
+  PragmaNamespace *NS = PragmaHandlers;
+  
+  // If this is specified to be in a namespace, step down into it.
+  if (Namespace) {
+    IdentifierInfo *NSID = getIdentifierInfo(Namespace);
+    PragmaHandler *Existing = PragmaHandlers->FindHandler(NSID);
+    assert(Existing && "Namespace containing handler does not exist!");
+
+    NS = Existing->getIfNamespace();
+    assert(NS && "Invalid namespace, registered as a regular pragma handler!");
+  }
+
+  NS->RemovePragmaHandler(Handler);
+  
+  // If this is a non-default namespace and it is now empty, remove
+  // it.
+  if (NS != PragmaHandlers && NS->IsEmpty())
+    PragmaHandlers->RemovePragmaHandler(NS);
 }
 
 namespace {

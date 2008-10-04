@@ -71,6 +71,14 @@ public:
     Handlers.push_back(Handler);
   }
 
+  /// RemovePragmaHandler - Remove the given handler from the
+  /// namespace.
+  void RemovePragmaHandler(PragmaHandler *Handler);
+
+  bool IsEmpty() { 
+    return Handlers.empty(); 
+  }
+
   virtual void HandlePragma(Preprocessor &PP, Token &FirstToken);
   
   virtual PragmaNamespace *getIfNamespace() { return this; }
