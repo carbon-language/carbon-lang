@@ -97,6 +97,7 @@ public:
   
   void RewriteBlockCall(CallExpr *Exp);
   void RewriteBlockPointerDecl(NamedDecl *VD);
+  void RewriteBlockDeclRefExpr(BlockDeclRefExpr *VD);
   void RewriteBlockPointerFunctionArgs(FunctionDecl *FD);
   
   std::string SynthesizeBlockHelperFuncs(BlockExpr *CE, int i, 
@@ -730,6 +731,11 @@ void RewriteBlocks::RewriteBlockCall(CallExpr *Exp) {
               BlockCall.c_str(), BlockCall.size());
 }
 
+void RewriteBlocks::RewriteBlockDeclRefExpr(BlockDeclRefExpr *BDRE) {
+  // FIXME: Add more elaborate code generation required by the ABI.
+  InsertText(BDRE->getLocStart(), "*", 1);
+}
+
 void RewriteBlocks::RewriteBlockPointerFunctionArgs(FunctionDecl *FD) {
   SourceLocation DeclLoc = FD->getLocation();
   unsigned parenCount = 0, nArgs = 0;
@@ -1009,6 +1015,11 @@ Stmt *RewriteBlocks::RewriteFunctionBody(Stmt *S) {
       if (isBlockPointerType(TD->getUnderlyingType()))
         RewriteBlockPointerDecl(TD);
     }
+  }
+  // Handle specific things.
+  if (BlockDeclRefExpr *BDRE = dyn_cast<BlockDeclRefExpr>(S)) {
+    if (BDRE->isByRef())
+      RewriteBlockDeclRefExpr(BDRE);
   }
   // Return this stmt unmodified.
   return S;
