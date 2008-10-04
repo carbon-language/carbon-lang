@@ -756,7 +756,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn, MachineFunction &MF,
         CodeGenAndEmitDAG();
         SDL->clear();
       }
-      FastIS->setCurrentBlock(BB);
+      FastIS->startNewBlock(BB);
       // Do FastISel on as many instructions as possible.
       for (; BI != End; ++BI) {
         // Just before the terminator instruction, insert instructions to
@@ -794,6 +794,9 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn, MachineFunction &MF,
           }
 
           SelectBasicBlock(LLVMBB, BI, next(BI));
+          // If the instruction was codegen'd with multiple blocks,
+          // inform the FastISel object where to resume inserting.
+          FastIS->setCurrentBlock(BB);
           continue;
         }
 

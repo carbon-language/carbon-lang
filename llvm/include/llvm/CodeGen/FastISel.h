@@ -55,12 +55,20 @@ protected:
   const TargetLowering &TLI;
 
 public:
+  /// startNewBlock - Set the current block, to which generated
+  /// machine instructions will be appended, and clear the local
+  /// CSE map.
+  ///
+  void startNewBlock(MachineBasicBlock *mbb) {
+    setCurrentBlock(mbb);
+    LocalValueMap.clear();
+  }
+
   /// setCurrentBlock - Set the current block, to which generated
   /// machine instructions will be appended.
   ///
   void setCurrentBlock(MachineBasicBlock *mbb) {
     MBB = mbb;
-    LocalValueMap.clear();
   }
 
   /// SelectInstruction - Do "fast" instruction selection for the given
