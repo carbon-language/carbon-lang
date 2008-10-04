@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Analysis/PathSensitive/RValues.h"
+#include "clang/Analysis/PathSensitive/GRState.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "llvm/Support/Streams.h"
 
@@ -163,9 +163,9 @@ NonLVal LVal::EQ(BasicValueFactory& BasicVals, const LVal& R) const {
         break;
       }
       
-      case lval::DeclValKind:
-      if (isa<lval::DeclVal>(R)) {        
-        bool b = cast<lval::DeclVal>(*this) == cast<lval::DeclVal>(R);
+      case lval::MemRegionKind:
+      if (isa<lval::MemRegionVal>(R)) {        
+        bool b = cast<lval::MemRegionVal>(*this) == cast<lval::MemRegionVal>(R);
         return NonLVal::MakeIntTruthVal(BasicVals, b);
       }
       
@@ -216,9 +216,9 @@ NonLVal LVal::NE(BasicValueFactory& BasicVals, const LVal& R) const {
         break;
       }
       
-      case lval::DeclValKind:
-        if (isa<lval::DeclVal>(R)) {        
-          bool b = cast<lval::DeclVal>(*this) == cast<lval::DeclVal>(R);
+      case lval::MemRegionKind:
+        if (isa<lval::MemRegionVal>(R)) {        
+          bool b = cast<lval::MemRegionVal>(*this)==cast<lval::MemRegionVal>(R);
           return NonLVal::MakeIntTruthVal(BasicVals, b);
         }
       
@@ -270,12 +270,12 @@ LVal LVal::MakeVal(StringLiteral* S) {
 // Utility methods for constructing RVals (both NonLVals and LVals).
 //===----------------------------------------------------------------------===//
 
-RVal RVal::MakeVal(BasicValueFactory& BasicVals, DeclRefExpr* E) {
+RVal RVal::MakeVal(GRStateManager& SMgr, DeclRefExpr* E) {
   
   ValueDecl* D = cast<DeclRefExpr>(E)->getDecl();
   
   if (VarDecl* VD = dyn_cast<VarDecl>(D)) {
-    return lval::DeclVal(VD);
+    return SMgr.getLVal(VD);
   }
   else if (EnumConstantDecl* ED = dyn_cast<EnumConstantDecl>(D)) {
     
@@ -283,7 +283,7 @@ RVal RVal::MakeVal(BasicValueFactory& BasicVals, DeclRefExpr* E) {
     // already has persistent storage?  We do this because we
     // are comparing states using pointer equality.  Perhaps there is
     // a better way, since APInts are fairly lightweight.
-    
+    BasicValueFactory& BasicVals = SMgr.getBasicVals();
     return nonlval::ConcreteInt(BasicVals.getValue(ED->getInitVal()));          
   }
   else if (FunctionDecl* FD = dyn_cast<FunctionDecl>(D)) {
@@ -408,9 +408,8 @@ void LVal::print(std::ostream& Out) const {
           << cast<lval::GotoLabel>(this)->getLabel()->getID()->getName();
       break;
 
-    case lval::DeclValKind:
-      Out << '&' 
-          << cast<lval::DeclVal>(this)->getDecl()->getIdentifier()->getName();
+    case lval::MemRegionKind:
+      Out << '&' << cast<lval::MemRegionVal>(this)->getRegion()->getString();
       break;
       
     case lval::FuncValKind:

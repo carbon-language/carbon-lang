@@ -24,6 +24,9 @@
 
 namespace clang {
   
+class MemRegion;
+class GRStateManager;
+  
 class RVal {
 public:
   enum BaseKind { UndefinedKind, UnknownKind, LValKind, NonLValKind };
@@ -92,7 +95,7 @@ public:
   symbol_iterator symbol_begin() const;
   symbol_iterator symbol_end() const;  
   
-  static RVal MakeVal(BasicValueFactory& BasicVals, DeclRefExpr* E);
+  static RVal MakeVal(GRStateManager& SMgr, DeclRefExpr* E);
   
   // Implement isa<T> support.
   static inline bool classof(const RVal*) { return true; }
@@ -285,7 +288,7 @@ public:
 
 namespace lval {
   
-enum Kind { SymbolValKind, GotoLabelKind, DeclValKind, FuncValKind,
+enum Kind { SymbolValKind, GotoLabelKind, MemRegionKind, FuncValKind,
             ConcreteIntKind, StringLiteralValKind, FieldOffsetKind,
             ArrayOffsetKind };
 
@@ -327,30 +330,30 @@ public:
 };
   
 
-class DeclVal : public LVal {
+class MemRegionVal : public LVal {
 public:
-  DeclVal(const VarDecl* vd) : LVal(DeclValKind, vd) {}
-  
-  VarDecl* getDecl() const {
-    return static_cast<VarDecl*>(Data);
+  MemRegionVal(const MemRegion* r) : LVal(MemRegionKind, r) {}
+
+  MemRegion* getRegion() const {
+    return static_cast<MemRegion*>(Data);
   }
   
-  inline bool operator==(const DeclVal& R) const {
-    return getDecl() == R.getDecl();
+  inline bool operator==(const MemRegionVal& R) const {
+    return getRegion() == R.getRegion();
   }
   
-  inline bool operator!=(const DeclVal& R) const {
-    return getDecl() != R.getDecl();
+  inline bool operator!=(const MemRegionVal& R) const {
+    return getRegion() != R.getRegion();
   }
   
   // Implement isa<T> support.
   static inline bool classof(const RVal* V) {
     return V->getBaseKind() == LValKind &&
-           V->getSubKind() == DeclValKind;
+           V->getSubKind() == MemRegionKind;
   }
   
   static inline bool classof(const LVal* V) {
-    return V->getSubKind() == DeclValKind;
+    return V->getSubKind() == MemRegionKind;
   }    
 };
 

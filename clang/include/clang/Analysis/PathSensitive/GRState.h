@@ -19,6 +19,7 @@
 #include "clang/Analysis/PathSensitive/Environment.h"
 #include "clang/Analysis/PathSensitive/Store.h"
 #include "clang/Analysis/PathSensitive/ConstraintManager.h"
+#include "clang/Analysis/PathSensitive/MemRegion.h"
 #include "clang/Analysis/PathSensitive/RValues.h"
 #include "clang/Analysis/PathSensitive/GRCoreEngine.h"
 #include "clang/AST/Expr.h"
@@ -133,20 +134,6 @@ public:
   }
   
   // Iterators.
-
-  // FIXME: We'll be removing the VarBindings iterator very soon.  Right now
-  //  it assumes that Store is a VarBindingsTy.
-  typedef llvm::ImmutableMap<VarDecl*,RVal> VarBindingsTy;
-  typedef VarBindingsTy::iterator vb_iterator;
-  vb_iterator vb_begin() const {
-    VarBindingsTy B(static_cast<const VarBindingsTy::TreeTy*>(St));
-    return B.begin();
-  }
-  vb_iterator vb_end() const {
-    VarBindingsTy B(static_cast<const VarBindingsTy::TreeTy*>(St));
-    return B.end();
-  }
-    
   typedef Environment::seb_iterator seb_iterator;
   seb_iterator seb_begin() const { return Env.seb_begin(); }
   seb_iterator seb_end() const { return Env.beb_end(); }
@@ -249,6 +236,7 @@ private:
   EnvironmentManager                   EnvMgr;
   llvm::OwningPtr<StoreManager>        StMgr;
   llvm::OwningPtr<ConstraintManager>   ConstraintMgr;
+  MemRegionManager                     MRMgr;
   GRState::IntSetTy::Factory           ISetFactory;
   
   GRState::GenericDataMap::Factory     GDMFactory;
@@ -273,10 +261,6 @@ private:
   /// Alloc - A BumpPtrAllocator to allocate states.
   llvm::BumpPtrAllocator& Alloc;
   
-  /// DRoots - A vector to hold of worklist used by RemoveDeadSymbols.
-  ///  This vector is persistent because it is reused over and over.
-  StoreManager::DeclRootsTy DRoots;
-  
   /// CurrentStmt - The block-level statement currently being visited.  This
   ///  is set by GRExprEngine.
   Stmt* CurrentStmt;
@@ -297,10 +281,10 @@ private:
   Environment RemoveBlkExpr(const Environment& Env, Expr* E) {
     return EnvMgr.RemoveBlkExpr(Env, E);
   }
-   
+  
   // FIXME: Remove when we do lazy initializaton of variable bindings.
   const GRState* BindVar(const GRState* St, VarDecl* D, RVal V) {
-    return SetRVal(St, lval::DeclVal(D), V);
+    return SetRVal(St, getLVal(D), V);
   }
     
 public:
@@ -313,7 +297,8 @@ public:
                  ConstraintManagerCreator CreateConstraintManager,
                  llvm::BumpPtrAllocator& alloc, CFG& c, LiveVariables& L) 
   : EnvMgr(alloc),
-    ISetFactory(alloc), 
+    MRMgr(alloc),
+    ISetFactory(alloc),
     GDMFactory(alloc),
     BasicVals(Ctx, alloc),
     SymMgr(alloc),
@@ -334,6 +319,7 @@ public:
   SymbolManager& getSymbolManager() { return SymMgr; }
   LiveVariables& getLiveVariables() { return Liveness; }
   llvm::BumpPtrAllocator& getAllocator() { return Alloc; }
+  MemRegionManager& getRegionManager() { return MRMgr; }
 
   typedef StoreManager::DeadSymbolsTy DeadSymbolsTy;
 
@@ -350,6 +336,17 @@ public:
     return getPersistentState(NewSt);
   }
 
+  
+  // Utility methods for getting regions.
+  
+  VarRegion* getRegion(const VarDecl* D) {
+    return MRMgr.getVarRegion(D);
+  }
+  
+  lval::MemRegionVal getLVal(const VarDecl* D) {
+    return lval::MemRegionVal(getRegion(D));
+  }
+  
   // Methods that query & manipulate the Environment.
   
   RVal GetRVal(const GRState* St, Expr* Ex) {
@@ -394,19 +391,17 @@ public:
   // Methods that manipulate the GDM.
   const GRState* addGDM(const GRState* St, void* Key, void* Data);
   
+  // Methods that query or create regions.
+  bool hasStackStorage(const MemRegion* R) {
+    return getRegionManager().hasStackStorage(R);
+  }
+  
   // Methods that query & manipulate the Store.
-  
-  /// getBindings - Returns all store bindings in the specified state that bind
-  ///  to the specified symbolic value.
-  void getBindings(llvm::SmallVectorImpl<store::Binding>& bindings,
-                   const GRState* St, SymbolID Sym) {
-    StMgr->getBindings(bindings, St->getStore(), Sym);    
+
+  void iterBindings(const GRState* state, StoreManager::BindingsHandler& F) {
+    StMgr->iterBindings(state->getStore(), F);
   }
-  
-  /// BindingAsString - Returns a string representing the given store binding.
-  std::string BindingAsString(store::Binding binding) {
-    return StMgr->BindingAsString(binding);
-  }
+    
   
   RVal GetRVal(const GRState* St, LVal LV, QualType T = QualType()) {
     return StMgr->GetRVal(St->getStore(), LV, T);

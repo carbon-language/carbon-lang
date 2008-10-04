@@ -1489,7 +1489,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
       // Nuke all arguments passed by reference.
       StateMgr.Unbind(StVals, cast<LVal>(V));
 #else
-      if (lval::DeclVal* DV = dyn_cast<lval::DeclVal>(&V)) {
+      if (lval::MemRegionVal* MR = dyn_cast<lval::MemRegionVal>(&V)) {
 
         if (GetArgE(Summ, idx) == DoNothingByRef)
           continue;
@@ -1506,23 +1506,28 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
         //  disambiguate conjured symbols. 
 
         // Is the invalidated variable something that we were tracking?
-        RVal X = state.GetRVal(*DV);
+        RVal X = state.GetRVal(*MR);
         
         if (isa<lval::SymbolVal>(X)) {
           SymbolID Sym = cast<lval::SymbolVal>(X).getSymbol();
           state = state.remove<RefBindings>(Sym);
         }
-
-        // Set the value of the variable to be a conjured symbol.
-        unsigned Count = Builder.getCurrentBlockCount();
-        SymbolID NewSym =
-          Eng.getSymbolManager().getConjuredSymbol(*I, DV->getDecl()->getType(),
-                                                   Count);
-
-        state = state.SetRVal(*DV,
-                              LVal::IsLValType(DV->getDecl()->getType())
-                              ? cast<RVal>(lval::SymbolVal(NewSym))
-                              : cast<RVal>(nonlval::SymbolVal(NewSym)));
+        
+        TypedRegion* R = dyn_cast<TypedRegion>(MR->getRegion());
+        if (R) {
+          // Set the value of the variable to be a conjured symbol.
+          unsigned Count = Builder.getCurrentBlockCount();
+          QualType T = R->getType();
+          SymbolID NewSym =
+            Eng.getSymbolManager().getConjuredSymbol(*I, T, Count);
+          
+          state = state.SetRVal(*MR,
+                                LVal::IsLValType(T)
+                                ? cast<RVal>(lval::SymbolVal(NewSym))
+                                : cast<RVal>(nonlval::SymbolVal(NewSym)));
+        }
+        else
+          state = state.SetRVal(*MR, UnknownVal());
       }
       else {
         // Nuke all other arguments passed by reference.
@@ -1709,10 +1714,12 @@ void CFRefCount::EvalStore(ExplodedNodeSet<GRState>& Dst,
   
   bool escapes = false;
   
-  if (!isa<lval::DeclVal>(TargetLV))
+  if (!isa<lval::MemRegionVal>(TargetLV))
     escapes = true;
-  else
-    escapes = cast<lval::DeclVal>(TargetLV).getDecl()->hasGlobalStorage();
+  else {
+    MemRegion* R = cast<lval::MemRegionVal>(TargetLV).getRegion();
+    escapes = !Eng.getStateManager().hasStackStorage(R);
+  }
   
   if (!escapes)
     return;
@@ -2307,14 +2314,51 @@ PathDiagnosticPiece* CFRefReport::VisitNode(ExplodedNode<GRState>* N,
   return P;
 }
 
-static std::pair<ExplodedNode<GRState>*,store::Binding>
+namespace {
+class VISIBILITY_HIDDEN FindUniqueBinding :
+  public StoreManager::BindingsHandler {
+    SymbolID Sym;
+    MemRegion* Binding;
+    bool First;
+    
+  public:
+    FindUniqueBinding(SymbolID sym) : Sym(sym), Binding(0), First(true) {}
+    
+  bool HandleBinding(StoreManager& SMgr, Store store, MemRegion* R, RVal val) {
+    if (const lval::SymbolVal* SV = dyn_cast<lval::SymbolVal>(&val)) {
+      if (SV->getSymbol() != Sym) 
+        return true;
+    }
+    else if (const nonlval::SymbolVal* SV=dyn_cast<nonlval::SymbolVal>(&val)) {
+      if (SV->getSymbol() != Sym)
+        return true;
+    }
+    else
+      return true;
+
+    if (Binding) {
+      First = false;
+      return false;
+    }
+    else
+      Binding = R;
+    
+    return true;    
+  }
+    
+  operator bool() { return First && Binding; }
+  MemRegion* getRegion() { return Binding; }
+};  
+}
+
+static std::pair<ExplodedNode<GRState>*,MemRegion*>
 GetAllocationSite(GRStateManager* StateMgr, ExplodedNode<GRState>* N,
                   SymbolID Sym) {
 
   // Find both first node that referred to the tracked symbol and the
   // memory location that value was store to.
   ExplodedNode<GRState>* Last = N;
-  store::Binding FirstBinding;  
+  MemRegion* FirstBinding = 0;  
   
   while (N) {
     const GRState* St = N->getState();
@@ -2324,11 +2368,9 @@ GetAllocationSite(GRStateManager* StateMgr, ExplodedNode<GRState>* N,
       break;
 
     if (StateMgr) {
-      llvm::SmallVector<store::Binding, 5> Bindings;
-      StateMgr->getBindings(Bindings, St, Sym);
-
-      if (Bindings.size() == 1)
-        FirstBinding = Bindings[0];
+      FindUniqueBinding FB(Sym);
+      StateMgr->iterBindings(St, FB);      
+      if (FB) FirstBinding = FB.getRegion();      
     }
     
     Last = N;
@@ -2357,7 +2399,7 @@ PathDiagnosticPiece* CFRefReport::getEndPath(BugReporter& br,
   // symbol appeared, and also get the first VarDecl that tracked object
   // is stored to.
   ExplodedNode<GRState>* AllocNode = 0;
-  store::Binding FirstBinding;
+  MemRegion* FirstBinding = 0;
 
   llvm::tie(AllocNode, FirstBinding) =
     GetAllocationSite(&BR.getStateManager(), EndN, Sym);
@@ -2413,8 +2455,8 @@ PathDiagnosticPiece* CFRefReport::getEndPath(BugReporter& br,
   os << "Object allocated on line " << AllocLine;
   
   if (FirstBinding)
-    os << " and stored into '" 
-       << BR.getStateManager().BindingAsString(FirstBinding) << '\'';    
+    os << " and stored into '" << FirstBinding->getString() << '\'';  
+  
   os << " is no longer referenced after this point and has a retain count of +"
      << RetCount << " (object leaked).";
   

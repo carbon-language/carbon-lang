@@ -42,19 +42,18 @@ GRStateManager::RemoveDeadBindings(const GRState* St, Stmt* Loc,
   // tells us are live.  We then see what Decls they may reference, and keep
   // those around.  This code more than likely can be made faster, and the
   // frequency of which this method is called should be experimented with
-  // for optimum performance.  
-  DRoots.clear();
+  // for optimum performance.
+  llvm::SmallVector<const MemRegion*, 10> RegionRoots;
   StoreManager::LiveSymbolsTy LSymbols;
-  
   GRState NewSt = *St;
 
-  NewSt.Env = EnvMgr.RemoveDeadBindings(NewSt.Env, Loc, Liveness, 
-                                        DRoots, LSymbols);
+  NewSt.Env =
+    EnvMgr.RemoveDeadBindings(NewSt.Env, Loc, Liveness, RegionRoots, LSymbols);
 
   // Clean up the store.
   DSymbols.clear();
-  NewSt.St = StMgr->RemoveDeadBindings(St->getStore(), Loc, Liveness, DRoots,
-                                       LSymbols, DSymbols);
+  NewSt.St = StMgr->RemoveDeadBindings(St->getStore(), Loc, Liveness,
+                                       RegionRoots, LSymbols, DSymbols);
 
   return ConstraintMgr->RemoveDeadBindings(getPersistentState(NewSt), 
                                            LSymbols, DSymbols);

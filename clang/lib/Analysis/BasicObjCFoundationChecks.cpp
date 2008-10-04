@@ -20,6 +20,7 @@
 #include "clang/Analysis/PathSensitive/GRExprEngine.h"
 #include "clang/Analysis/PathSensitive/GRState.h"
 #include "clang/Analysis/PathSensitive/BugReporter.h"
+#include "clang/Analysis/PathSensitive/MemRegion.h"
 #include "clang/Analysis/PathDiagnostic.h"
 #include "clang/Analysis/LocalCheckers.h"
 
@@ -366,7 +367,7 @@ public:
   
 private:
   
-  void AddError(VarDecl* V, Expr* Ex, ExplodedNode<GRState> *N,
+  void AddError(TypedRegion* R, Expr* Ex, ExplodedNode<GRState> *N,
                 uint64_t SourceSize, uint64_t TargetSize, uint64_t NumberKind);  
 };
 } // end anonymous namespace
@@ -497,12 +498,17 @@ bool AuditCFNumberCreate::Audit(ExplodedNode<GRState>* N,GRStateManager&){
   
   // FIXME: Eventually we should handle arbitrary locations.  We can do this
   //  by having an enhanced memory model that does low-level typing.
-  lval::DeclVal* LV = dyn_cast<lval::DeclVal>(&TheValueExpr);
+  lval::MemRegionVal* LV = dyn_cast<lval::MemRegionVal>(&TheValueExpr);
 
   if (!LV)
     return false;
   
-  QualType T = Ctx.getCanonicalType(LV->getDecl()->getType());
+  TypedRegion* R = dyn_cast<TypedRegion>(LV->getRegion());
+  if (!R)
+    return false;
+  
+  
+  QualType T = Ctx.getCanonicalType(R->getType());
   
   // FIXME: If the pointee isn't an integer type, should we flag a warning?
   //  People can do weird stuff with pointers.
@@ -517,14 +523,14 @@ bool AuditCFNumberCreate::Audit(ExplodedNode<GRState>* N,GRStateManager&){
   if (SourceSize == TargetSize)
     return false;
     
-  AddError(LV->getDecl(), CE->getArg(2), N, SourceSize, TargetSize, NumberKind);
+  AddError(R, CE->getArg(2), N, SourceSize, TargetSize, NumberKind);
   
   // FIXME: We can actually create an abstract "CFNumber" object that has
   //  the bits initialized to the provided values.
   return SourceSize < TargetSize;
 }
 
-void AuditCFNumberCreate::AddError(VarDecl* V, Expr* Ex,
+void AuditCFNumberCreate::AddError(TypedRegion* R, Expr* Ex,
                                    ExplodedNode<GRState> *N,
                                    uint64_t SourceSize, uint64_t TargetSize,
                                    uint64_t NumberKind) {

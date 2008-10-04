@@ -19,6 +19,7 @@
 #include "clang/Analysis/PathSensitive/Store.h"
 
 #include "llvm/ADT/ImmutableMap.h"
+#include "llvm/ADT/SmallVector.h"
 #include "clang/Analysis/PathSensitive/RValues.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/ADT/FoldingSet.h"
@@ -138,11 +139,10 @@ public:
   Environment SetRVal(const Environment& Env, Expr* E, RVal V,
                       bool isBlkExpr, bool Invalidate);
 
-  Environment RemoveDeadBindings(Environment Env, 
-                                 Stmt* Loc,
-                                 const LiveVariables& Liveness,
-                                 StoreManager::DeclRootsTy& DRoots,
-                                 StoreManager::LiveSymbolsTy& LSymbols);
+  Environment RemoveDeadBindings(Environment Env, Stmt* Loc,
+                              const LiveVariables& Liveness,
+                              llvm::SmallVectorImpl<const MemRegion*>& DRoots,
+                              StoreManager::LiveSymbolsTy& LSymbols);
 };
   
 } // end clang namespace

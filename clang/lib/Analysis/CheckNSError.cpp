@@ -216,7 +216,7 @@ void NSErrorCheck::CheckParamDeref(VarDecl* Param, GRStateRef rootState,
                                    GRExprEngine& Eng, GRBugReporter& BR,
                                    bool isNSErrorWarning) {
   
-  RVal ParamRVal = rootState.GetRVal(lval::DeclVal(Param));
+  RVal ParamRVal = rootState.GetRVal(Eng.getLVal(Param));
 
   // FIXME: For now assume that ParamRVal is symbolic.  We need to generalize
   // this later.

@@ -287,7 +287,7 @@ RVal GRSimpleVals::EvalEQ(GRExprEngine& Eng, LVal L, LVal R) {
     case lval::FieldOffsetKind:
       // Fall-through.
       
-    case lval::DeclValKind:
+    case lval::MemRegionKind:
     case lval::FuncValKind:
     case lval::GotoLabelKind:
     case lval::StringLiteralValKind:
@@ -351,7 +351,7 @@ RVal GRSimpleVals::EvalNE(GRExprEngine& Eng, LVal L, LVal R) {
     case lval::FieldOffsetKind:
       // Fall-through.
       
-    case lval::DeclValKind:
+    case lval::MemRegionKind:
     case lval::FuncValKind:
     case lval::GotoLabelKind:
     case lval::StringLiteralValKind:

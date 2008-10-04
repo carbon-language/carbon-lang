@@ -410,6 +410,10 @@ public:
     return SetRVal(St, const_cast<Expr*>(Ex), V);
   }
   
+  LVal getLVal(VarDecl* V) {
+    return getStateManager().getLVal(V);
+  }    
+  
 protected:
  
   const GRState* SetBlkExprRVal(const GRState* St, Expr* Ex, RVal V) {

@@ -322,6 +322,90 @@ static VarDecl* GetMostRecentVarDeclBinding(ExplodedNode<GRState>* N,
   return 0;
 }
 
+namespace {
+class VISIBILITY_HIDDEN NotableSymbolHandler 
+  : public StoreManager::BindingsHandler {
+    
+  SymbolID Sym;
+  const GRState* PrevSt;
+  Stmt* S;
+  GRStateManager& VMgr;
+  ExplodedNode<GRState>* Pred;
+  PathDiagnostic& PD; 
+  BugReporter& BR;
+    
+public:
+  
+  NotableSymbolHandler(SymbolID sym, const GRState* prevst, Stmt* s,
+                       GRStateManager& vmgr, ExplodedNode<GRState>* pred,
+                       PathDiagnostic& pd, BugReporter& br)
+    : Sym(sym), PrevSt(prevst), S(s), VMgr(vmgr), Pred(pred), PD(pd), BR(br) {}
+                        
+  bool HandleBinding(StoreManager& SMgr, Store store, MemRegion* R, RVal V) {
+
+    SymbolID ScanSym;
+    
+    if (lval::SymbolVal* SV = dyn_cast<lval::SymbolVal>(&V))
+      ScanSym = SV->getSymbol();
+    else if (nonlval::SymbolVal* SV = dyn_cast<nonlval::SymbolVal>(&V))
+      ScanSym = SV->getSymbol();
+    else
+      return true;
+    
+    if (ScanSym != Sym)
+      return true;
+    
+    // Check if the previous state has this binding.    
+    RVal X = VMgr.GetRVal(PrevSt, lval::MemRegionVal(R));
+    
+    if (X == V) // Same binding?
+      return true;
+    
+    // Different binding.  Only handle assignments for now.  We don't pull
+    // this check out of the loop because we will eventually handle other 
+    // cases.
+    
+    VarDecl *VD = 0;
+    
+    if (BinaryOperator* B = dyn_cast<BinaryOperator>(S)) {
+      if (!B->isAssignmentOp())
+        return true;
+      
+      // What variable did we assign to?
+      DeclRefExpr* DR = dyn_cast<DeclRefExpr>(B->getLHS()->IgnoreParenCasts());
+      
+      if (!DR)
+        return true;
+      
+      VD = dyn_cast<VarDecl>(DR->getDecl());
+    }
+    else if (DeclStmt* DS = dyn_cast<DeclStmt>(S))
+      VD = dyn_cast<VarDecl>(DS->getDecl());
+    
+    if (!VD)
+      return true;
+    
+    // What is the most recently referenced variable with this binding?
+    VarDecl* MostRecent = GetMostRecentVarDeclBinding(Pred, VMgr, V);
+    
+    if (!MostRecent)
+      return true;
+    
+    // Create the diagnostic.
+    
+    FullSourceLoc L(S->getLocStart(), BR.getSourceManager());
+    
+    if (VD->getType()->isPointerLikeType()) {
+      std::string msg = "'" + std::string(VD->getName()) +
+      "' now aliases '" + MostRecent->getName() + "'";
+      
+      PD.push_front(new PathDiagnosticPiece(L, msg));
+    }
+    
+    return true;
+  }  
+};
+}
 
 static void HandleNotableSymbol(ExplodedNode<GRState>* N, Stmt* S,
                                 SymbolID Sym, BugReporter& BR,
@@ -333,82 +417,53 @@ static void HandleNotableSymbol(ExplodedNode<GRState>* N, Stmt* S,
   if (!PrevSt)
     return;
   
-  // Look at the variable bindings of the current state that map to the
-  // specified symbol.  Are any of them not in the previous state.
-  
-  const GRState* St = N->getState();
+  // Look at the region bindings of the current state that map to the
+  // specified symbol.  Are any of them not in the previous state?
   GRStateManager& VMgr = cast<GRBugReporter>(BR).getStateManager();
-  
-  // FIXME: Later generalize for a broader memory model.
+  NotableSymbolHandler H(Sym, PrevSt, S, VMgr, Pred, PD, BR);
+  cast<GRBugReporter>(BR).getStateManager().iterBindings(N->getState(), H);
+}
 
-  // FIXME: This is quadratic, since its nested in another loop.  Probably
-  //   doesn't matter, but keep an eye out for performance issues.  It's
-  //   also a bunch of copy-paste.  Bad.  Cleanup later.
+namespace {
+class VISIBILITY_HIDDEN ScanNotableSymbols
+  : public StoreManager::BindingsHandler {
+    
+  llvm::SmallSet<SymbolID, 10> AlreadyProcessed;
+  ExplodedNode<GRState>* N;
+  Stmt* S;
+  GRBugReporter& BR;
+  PathDiagnostic& PD;
+    
+public:
+  ScanNotableSymbols(ExplodedNode<GRState>* n, Stmt* s, GRBugReporter& br,
+                     PathDiagnostic& pd)
+    : N(n), S(s), BR(br), PD(pd) {}
   
-  for (GRState::vb_iterator I=St->vb_begin(), E=St->vb_end(); I!=E; ++I){
-    
-    RVal V = I.getData();
+  bool HandleBinding(StoreManager& SMgr, Store store, MemRegion* R, RVal V) {
     SymbolID ScanSym;
-    
+  
     if (lval::SymbolVal* SV = dyn_cast<lval::SymbolVal>(&V))
       ScanSym = SV->getSymbol();
     else if (nonlval::SymbolVal* SV = dyn_cast<nonlval::SymbolVal>(&V))
       ScanSym = SV->getSymbol();
     else
-      continue;
-    
-    if (ScanSym != Sym)
-      continue;
-    
-    // Check if the previous state has this binding.
-    
-    RVal X = VMgr.GetRVal(PrevSt, lval::DeclVal(I.getKey()));
-    
-    if (X == V) // Same binding?
-      continue;
-
-    // Different binding.  Only handle assignments for now.  We don't pull
-    // this check out of the loop because we will eventually handle other 
-    // cases.
-    
-    VarDecl *VD = 0;
-    
-    if (BinaryOperator* B = dyn_cast<BinaryOperator>(S)) {
-      if (!B->isAssignmentOp())
-        continue;
-      
-      // What variable did we assign to?
-      DeclRefExpr* DR = dyn_cast<DeclRefExpr>(B->getLHS()->IgnoreParenCasts());
-      
-      if (!DR)
-        continue;
-      
-      VD = dyn_cast<VarDecl>(DR->getDecl());
-    }
-    else if (DeclStmt* DS = dyn_cast<DeclStmt>(S))
-      VD = dyn_cast<VarDecl>(DS->getDecl());
-      
-    if (!VD)
-      continue;
-      
-    // What is the most recently referenced variable with this binding?
-    VarDecl* MostRecent = GetMostRecentVarDeclBinding(Pred, VMgr, V);
-        
-    if (!MostRecent)
-      continue;
-
-    // Create the diagnostic.
-    
-    FullSourceLoc L(S->getLocStart(), BR.getSourceManager());
-      
-    if (VD->getType()->isPointerLikeType()) {
-      std::string msg = "'" + std::string(VD->getName()) +
-                        "' now aliases '" + MostRecent->getName() + "'";
-      
-      PD.push_front(new PathDiagnosticPiece(L, msg));
-    }
+      return true;
+  
+    assert (ScanSym.isInitialized());
+  
+    if (!BR.isNotable(ScanSym))
+      return true;
+  
+    if (AlreadyProcessed.count(ScanSym))
+      return true;
+  
+    AlreadyProcessed.insert(ScanSym);
+  
+    HandleNotableSymbol(N, S, ScanSym, BR, PD);
+    return true;
   }
-}
+};
+} // end anonymous namespace
 
 void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
                                            BugReport& R) {
@@ -633,42 +688,11 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
     if (PathDiagnosticPiece* p = R.VisitNode(N, NextNode, *ReportGraph, *this))
       PD.push_front(p);
     
-    if (const PostStmt* PS = dyn_cast<PostStmt>(&P)) {
-      
-      const GRState* St = N->getState();
-      
-      // Scan the lval bindings, and see if a "notable" symbol has a new
+    if (const PostStmt* PS = dyn_cast<PostStmt>(&P)) {      
+      // Scan the region bindings, and see if a "notable" symbol has a new
       // lval binding.
-      
-      // FIXME: In the future, when we generalize the memory model, we'll
-      //  need a way to iterate over binded locations.
-      
-      llvm::SmallSet<SymbolID, 10> AlreadyProcessed;
-      
-      for (GRState::vb_iterator I=St->vb_begin(), E=St->vb_end(); I!=E; ++I){
-        
-        RVal V = I.getData();
-        SymbolID ScanSym;
-        
-        if (lval::SymbolVal* SV = dyn_cast<lval::SymbolVal>(&V))
-          ScanSym = SV->getSymbol();
-        else if (nonlval::SymbolVal* SV = dyn_cast<nonlval::SymbolVal>(&V))
-          ScanSym = SV->getSymbol();
-        else
-          continue;
-        
-        assert (ScanSym.isInitialized());
-        
-        if (!isNotable(ScanSym))
-          continue;
-        
-        if (AlreadyProcessed.count(ScanSym))
-          continue;
-        
-        AlreadyProcessed.insert(ScanSym);
-        
-        HandleNotableSymbol(N, PS->getStmt(), ScanSym, *this, PD);        
-      }
+      ScanNotableSymbols SNS(N, PS->getStmt(), *this, PD);
+      getStateManager().iterBindings(N->getState(), SNS);
     }
   }
 }

@@ -792,12 +792,12 @@ void GRExprEngine::VisitDeclRefExpr(DeclRefExpr* D, NodeTy* Pred, NodeSet& Dst,
                                     bool asLVal) {
   
   const GRState* St = GetState(Pred);
-  RVal X = RVal::MakeVal(getBasicVals(), D);
+  RVal X = RVal::MakeVal(getStateManager(), D);
   
   if (asLVal)
     MakeNode(Dst, D, Pred, SetRVal(St, D, cast<LVal>(X)));
   else {
-    RVal V = isa<lval::DeclVal>(X) ? GetRVal(St, cast<LVal>(X)) : X;
+    RVal V = isa<lval::MemRegionVal>(X) ? GetRVal(St, cast<LVal>(X)) : X;
     MakeNode(Dst, D, Pred, SetRVal(St, D, V));
   }
 }
@@ -1900,9 +1900,12 @@ void GRExprEngine::VisitReturnStmt(ReturnStmt* S, NodeTy* Pred, NodeSet& Dst) {
     for (NodeSet::iterator I=Tmp.begin(), E=Tmp.end(); I!=E; ++I) {
       RVal X = GetRVal((*I)->getState(), R);
 
-      if (isa<lval::DeclVal>(X)) {
+      if (isa<lval::MemRegionVal>(X)) {
         
-        if (cast<lval::DeclVal>(X).getDecl()->hasLocalStorage()) {
+        // Determine if the value is on the stack.
+        const MemRegion* R = cast<lval::MemRegionVal>(&X)->getRegion();
+
+        if (R && getStateManager().hasStackStorage(R)) {
         
           // Create a special node representing the v
           

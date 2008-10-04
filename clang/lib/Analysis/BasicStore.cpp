@@ -18,10 +18,8 @@
 #include "llvm/Support/Streams.h"
 
 using namespace clang;
-using store::Region;
-using store::RegionExtent;
 
-typedef llvm::ImmutableMap<VarDecl*,RVal> VarBindingsTy;  
+typedef llvm::ImmutableMap<const VarDecl*,RVal> VarBindingsTy;  
 
 namespace {
   
@@ -40,10 +38,10 @@ public:
 
   virtual Store getInitialStore(GRStateManager& StateMgr);
   
-  virtual Store RemoveDeadBindings(Store store, Stmt* Loc,
-                                   const LiveVariables& Live,
-                                   DeclRootsTy& DRoots, LiveSymbolsTy& LSymbols,
-                                   DeadSymbolsTy& DSymbols);
+  virtual Store
+  RemoveDeadBindings(Store store, Stmt* Loc, const LiveVariables& Live,
+                     llvm::SmallVectorImpl<const MemRegion*>& RegionRoots,
+                     LiveSymbolsTy& LSymbols, DeadSymbolsTy& DSymbols);
 
   virtual void iterBindings(Store store, BindingsHandler& f);
 
@@ -57,64 +55,15 @@ public:
 
   virtual void print(Store store, std::ostream& Out,
                      const char* nl, const char *sep);
-  
-  virtual RegionExtent getExtent(Region R);
-  
-  /// BindingAsString - Returns a string representing the given binding.
-  virtual std::string BindingAsString(store::Binding binding);
-  
-  /// getRVal - Returns the bound RVal for a given binding.
-  virtual RVal getRVal(Store store, store::Binding binding);
-};
-  
-class VISIBILITY_HIDDEN VarRegion : public store::Region {
-public:
-  VarRegion(VarDecl* VD) : Region(VD) {}  
-  VarDecl* getDecl() const { return (VarDecl*) Data; }    
-  static bool classof(const store::Region*) { return true; }
-};
-
-class VISIBILITY_HIDDEN VarBinding : public store::Binding {
-public:
-  VarBinding(VarBindingsTy::value_type* T) : store::Binding(T) {}
-  
-  const VarBindingsTy::value_type_ref getValue() const {
-    return *static_cast<const VarBindingsTy::value_type*>(first);
-  }
     
-  std::string getName() const {
-    return getValue().first->getName();
-  }
-  
-  RVal getRVal() const {
-    return getValue().second;
-  }
-  
-  static inline bool classof(const store::Binding*) { return true; }
 };
-  
+    
 } // end anonymous namespace
 
 
 StoreManager* clang::CreateBasicStoreManager(GRStateManager& StMgr) {
   return new BasicStoreManager(StMgr);
 }
-
-RegionExtent BasicStoreManager::getExtent(Region R) {
-  QualType T = cast<VarRegion>(&R)->getDecl()->getType();
-  
-  // FIXME: Add support for VLAs.  This may require passing in additional
-  //  information, or tracking a different region type.
-  if (!T.getTypePtr()->isConstantSizeType())
-    return store::UnknownExtent();
-  
-  ASTContext& C = StMgr.getContext();
-  assert (!T->isObjCInterfaceType()); // @interface not a possible VarDecl type.
-  assert (T != C.VoidTy); // void not a possible VarDecl type.  
-  return store::FixedExtent(StMgr.getBasicVals().getValue(C.getTypeSize(T),
-                                                          C.VoidPtrTy));
-}
-
 
 RVal BasicStoreManager::GetRVal(Store St, LVal LV, QualType T) {
   
@@ -125,9 +74,15 @@ RVal BasicStoreManager::GetRVal(Store St, LVal LV, QualType T) {
   
   switch (LV.getSubKind()) {
 
-    case lval::DeclValKind: {      
+    case lval::MemRegionKind: {
+      VarRegion* R =
+        dyn_cast<VarRegion>(cast<lval::MemRegionVal>(LV).getRegion());
+      
+      if (!R)
+        return UnknownVal();
+        
       VarBindingsTy B(static_cast<const VarBindingsTy::TreeTy*>(St));      
-      VarBindingsTy::data_type* T = B.lookup(cast<lval::DeclVal>(LV).getDecl());      
+      VarBindingsTy::data_type* T = B.lookup(R->getDecl());      
       return T ? *T : UnknownVal();
     }
       
@@ -161,11 +116,17 @@ RVal BasicStoreManager::GetRVal(Store St, LVal LV, QualType T) {
 
 Store BasicStoreManager::SetRVal(Store store, LVal LV, RVal V) {    
   switch (LV.getSubKind()) {      
-    case lval::DeclValKind: {
+    case lval::MemRegionKind: {
+      VarRegion* R =
+        dyn_cast<VarRegion>(cast<lval::MemRegionVal>(LV).getRegion());
+      
+      if (!R)
+        return store;
+      
       VarBindingsTy B = GetVarBindings(store);
       return V.isUnknown()
-        ? VBFactory.Remove(B,cast<lval::DeclVal>(LV).getDecl()).getRoot()
-        : VBFactory.Add(B, cast<lval::DeclVal>(LV).getDecl(), V).getRoot();
+        ? VBFactory.Remove(B, R->getDecl()).getRoot()
+        : VBFactory.Add(B, R->getDecl(), V).getRoot();
     }
     default:
       assert ("SetRVal for given LVal type not yet implemented.");
@@ -175,9 +136,15 @@ Store BasicStoreManager::SetRVal(Store store, LVal LV, RVal V) {
 
 Store BasicStoreManager::Remove(Store store, LVal LV) {
   switch (LV.getSubKind()) {
-    case lval::DeclValKind: {
+    case lval::MemRegionKind: {
+      VarRegion* R =
+      dyn_cast<VarRegion>(cast<lval::MemRegionVal>(LV).getRegion());
+      
+      if (!R)
+        return store;
+      
       VarBindingsTy B = GetVarBindings(store);
-      return VBFactory.Remove(B,cast<lval::DeclVal>(LV).getDecl()).getRoot();
+      return VBFactory.Remove(B,R->getDecl()).getRoot();
     }
     default:
       assert ("Remove for given LVal type not yet implemented.");
@@ -185,12 +152,11 @@ Store BasicStoreManager::Remove(Store store, LVal LV) {
   }
 }
 
-Store BasicStoreManager::RemoveDeadBindings(Store store,
-                                            Stmt* Loc,
-                                            const LiveVariables& Liveness,
-                                            DeclRootsTy& DRoots,
-                                            LiveSymbolsTy& LSymbols,
-                                            DeadSymbolsTy& DSymbols) {
+Store
+BasicStoreManager::RemoveDeadBindings(Store store, Stmt* Loc,
+                          const LiveVariables& Liveness,
+                          llvm::SmallVectorImpl<const MemRegion*>& RegionRoots,
+                          LiveSymbolsTy& LSymbols, DeadSymbolsTy& DSymbols) {
   
   VarBindingsTy B = GetVarBindings(store);
   typedef RVal::symbol_iterator symbol_iterator;
@@ -198,7 +164,7 @@ Store BasicStoreManager::RemoveDeadBindings(Store store,
   // Iterate over the variable bindings.
   for (VarBindingsTy::iterator I=B.begin(), E=B.end(); I!=E ; ++I)
     if (Liveness.isLive(Loc, I.getKey())) {
-      DRoots.push_back(I.getKey());      
+      RegionRoots.push_back(StMgr.getRegion(I.getKey()));      
       RVal X = I.getData();
       
       for (symbol_iterator SI=X.symbol_begin(), SE=X.symbol_end(); SI!=SE; ++SI)
@@ -206,39 +172,43 @@ Store BasicStoreManager::RemoveDeadBindings(Store store,
     }
   
   // Scan for live variables and live symbols.
-  llvm::SmallPtrSet<ValueDecl*, 10> Marked;
+  llvm::SmallPtrSet<const VarRegion*, 10> Marked;
   
-  while (!DRoots.empty()) {
-    ValueDecl* V = DRoots.back();
-    DRoots.pop_back();
+  while (!RegionRoots.empty()) {
+    const VarRegion* R = cast<VarRegion>(RegionRoots.back());
+    RegionRoots.pop_back();
     
-    if (Marked.count(V))
+    if (Marked.count(R))
       continue;
     
-    Marked.insert(V);
-    
-    RVal X = GetRVal(store, lval::DeclVal(cast<VarDecl>(V)), QualType());      
+    Marked.insert(R);    
+    // FIXME: Do we need the QualType here, since regions are partially
+    // typed?
+    RVal X = GetRVal(store, lval::MemRegionVal(R), QualType());      
     
     for (symbol_iterator SI=X.symbol_begin(), SE=X.symbol_end(); SI!=SE; ++SI)
       LSymbols.insert(*SI);
     
-    if (!isa<lval::DeclVal>(X))
+    if (!isa<lval::MemRegionVal>(X))
       continue;
     
-    const lval::DeclVal& LVD = cast<lval::DeclVal>(X);
-    DRoots.push_back(LVD.getDecl());
+    const lval::MemRegionVal& LVD = cast<lval::MemRegionVal>(X);
+    RegionRoots.push_back(cast<VarRegion>(LVD.getRegion()));
   }
   
   // Remove dead variable bindings.  
-  for (VarBindingsTy::iterator I=B.begin(), E=B.end(); I!=E ; ++I)
-    if (!Marked.count(I.getKey())) {
-      store = Remove(store, lval::DeclVal(I.getKey()));
+  for (VarBindingsTy::iterator I=B.begin(), E=B.end(); I!=E ; ++I) {
+    const VarRegion* R = cast<VarRegion>(StMgr.getRegion(I.getKey()));
+    
+    if (!Marked.count(R)) {
+      store = Remove(store, lval::MemRegionVal(R));
       RVal X = I.getData();
       
       for (symbol_iterator SI=X.symbol_begin(), SE=X.symbol_end(); SI!=SE; ++SI)
         if (!LSymbols.count(*SI)) DSymbols.insert(*SI);
     }
-
+  }
+  
   return store;
 }
 
@@ -270,7 +240,7 @@ Store BasicStoreManager::getInitialStore(GRStateManager& StateMgr) {
                  ? RVal::GetSymbolValue(StateMgr.getSymbolManager(), VD)
                  : UndefinedVal();
 
-        St = SetRVal(St, lval::DeclVal(VD), X);
+        St = SetRVal(St, StMgr.getLVal(VD), X);
       }
     }
   }
@@ -310,16 +280,16 @@ Store BasicStoreManager::AddDecl(Store store, GRStateManager& StateMgr,
       if (!Ex) {
         QualType T = VD->getType();
         if (LVal::IsLValType(T))
-          store = SetRVal(store, lval::DeclVal(VD),
+          store = SetRVal(store, StMgr.getLVal(VD),
                           lval::ConcreteInt(BasicVals.getValue(0, T)));
         else if (T->isIntegerType())
-          store = SetRVal(store, lval::DeclVal(VD),
+          store = SetRVal(store, StMgr.getLVal(VD),
                           nonlval::ConcreteInt(BasicVals.getValue(0, T)));
         else {
           // assert(0 && "ignore other types of variables");
         }
       } else {
-        store = SetRVal(store, lval::DeclVal(VD), InitVal);
+        store = SetRVal(store, StMgr.getLVal(VD), InitVal);
       }
     }
   } else {
@@ -337,7 +307,7 @@ Store BasicStoreManager::AddDecl(Store store, GRStateManager& StateMgr,
           : cast<RVal>(nonlval::SymbolVal(Sym));
       }
 
-      store = SetRVal(store, lval::DeclVal(VD), V);
+      store = SetRVal(store, StMgr.getLVal(VD), V);
     }
   }
 
@@ -366,57 +336,9 @@ void BasicStoreManager::iterBindings(Store store, BindingsHandler& f) {
   VarBindingsTy B = GetVarBindings(store);
   
   for (VarBindingsTy::iterator I=B.begin(), E=B.end(); I != E; ++I) {
-    VarBinding binding(&(*I));
-    f.HandleBinding(*this, store, binding);
+
+    f.HandleBinding(*this, store, StMgr.getRegion(I.getKey()),I.getData());
   }
-}
-
-
-std::string BasicStoreManager::BindingAsString(store::Binding binding) {
-  return cast<VarBinding>(binding).getName();
-}
-
-RVal BasicStoreManager::getRVal(Store store, store::Binding binding) {
-  return cast<VarBinding>(binding).getRVal();
-}
-
-//==------------------------------------------------------------------------==//
-// Generic store operations.
-//==------------------------------------------------------------------------==//
-
-namespace {
-class VISIBILITY_HIDDEN GetBindingsIterator : public StoreManager::BindingsHandler {
-  SymbolID Sym;
-  llvm::SmallVectorImpl<store::Binding>& bindings;
-public:
-  GetBindingsIterator(SymbolID s, llvm::SmallVectorImpl<store::Binding>& b)
-  : Sym(s), bindings(b) {}
-  
-  virtual bool HandleBinding(StoreManager& SMgr, Store store,
-                             store::Binding binding) {
-    
-    RVal V = SMgr.getRVal(store, binding);
-    
-    if (const lval::SymbolVal* SV=dyn_cast<lval::SymbolVal>(&V)) {
-      if (SV->getSymbol() == Sym) 
-        bindings.push_back(binding);      
-    }    
-    else if (const nonlval::SymbolVal* SV=dyn_cast<nonlval::SymbolVal>(&V)){
-      if (SV->getSymbol() == Sym) 
-        bindings.push_back(binding);
-    }
-    
-    return true;
-  }
-}; 
-} // end anonymous namespace
-
-void StoreManager::getBindings(llvm::SmallVectorImpl<store::Binding>& bindings,
-                               Store store, SymbolID Sym) {
-  
-  GetBindingsIterator BI(Sym, bindings);
-  iterBindings(store, BI);
 }
 
 StoreManager::BindingsHandler::~BindingsHandler() {}
-

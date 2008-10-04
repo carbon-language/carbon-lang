@@ -129,7 +129,7 @@ const GRState* BasicConstraintManager::AssumeAux(const GRState* St, LVal Cond,
       return AssumeSymEQ(St, cast<lval::SymbolVal>(Cond).getSymbol(),
                          BasicVals.getZeroWithPtrWidth(), isFeasible);
 
-  case lval::DeclValKind:
+  case lval::MemRegionKind:
   case lval::FuncValKind:
   case lval::GotoLabelKind:
   case lval::StringLiteralValKind:

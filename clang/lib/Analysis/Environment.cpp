@@ -107,11 +107,11 @@ Environment EnvironmentManager::SetRVal(const Environment& Env, Expr* E, RVal V,
 }
 
 Environment 
-EnvironmentManager::RemoveDeadBindings(Environment Env, 
-                                       Stmt* Loc,
-                                       const LiveVariables& Liveness,
-                                       StoreManager::DeclRootsTy& DRoots,
-                                       StoreManager::LiveSymbolsTy& LSymbols) {
+EnvironmentManager::RemoveDeadBindings(Environment Env, Stmt* Loc,
+                                const LiveVariables& Liveness,
+                                llvm::SmallVectorImpl<const MemRegion*>& DRoots,
+                                StoreManager::LiveSymbolsTy& LSymbols) {
+  
   // Drop bindings for subexpressions.
   Env = RemoveSubExprBindings(Env);
 
@@ -123,12 +123,10 @@ EnvironmentManager::RemoveDeadBindings(Environment Env,
     if (Liveness.isLive(Loc, BlkExpr)) {
       RVal X = I.getData();
 
-      // If the block expr's value is the address of some Decl, then mark that
-      // Decl.
-      if (isa<lval::DeclVal>(X)) {
-        lval::DeclVal LV = cast<lval::DeclVal>(X);
-        DRoots.push_back(LV.getDecl());
-      }
+      // If the block expr's value is a memory region, then mark that region.
+      if (isa<lval::MemRegionVal>(X))
+        DRoots.push_back(cast<lval::MemRegionVal>(X).getRegion());
+
 
       // Mark all symbols in the block expr's value.
       for (RVal::symbol_iterator SI = X.symbol_begin(), SE = X.symbol_end();

@@ -194,13 +194,14 @@ public:
       assert (E && "Return expression cannot be NULL");
       
       // Get the value associated with E.
-      lval::DeclVal V =
-        cast<lval::DeclVal>(Eng.getStateManager().GetRVal(N->getState(), E));
+      lval::MemRegionVal V =
+        cast<lval::MemRegionVal>(Eng.getStateManager().GetRVal(N->getState(),
+                                                               E));
       
       // Generate a report for this bug.
       std::ostringstream os;
       os << "Address of stack memory associated with local variable '"
-         << V.getDecl()->getName() << "' returned.";
+         << V.getRegion()->getString() << "' returned.";
       
       std::string s = os.str();
       
