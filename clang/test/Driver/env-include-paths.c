@@ -1,6 +1,7 @@
 // RUN: clang -fsyntax-only -verify -DAS_SOURCE %s &&
 // RUN: env CPATH="" clang -fsyntax-only -verify -DAS_SOURCE %s &&
 // RUN: env CPATH="xyz:xyz" clang -fsyntax-only -verify -DAS_SOURCE %s &&
+// RUN: cd $(dirname %s) &&
 // RUN: env CPATH="xyz::xyz" clang -fsyntax-only -verify -DSHOULD_FIND -DAS_SOURCE %s &&
 // RUN: env CPATH="../Driver" clang -fsyntax-only -verify -DSHOULD_FIND -DAS_SOURCE %s
 
