@@ -920,38 +920,44 @@ define void @f() optsize
 
 <dl>
 <dt><tt>alwaysinline</tt></dt>
-<dd>This attribute requests inliner to inline this function irrespective of 
-inlining size threshold for this function.</dd>
+<dd>This attribute indicates that the inliner should attempt to inline this
+function into callers whenever possible, ignoring any active inlining size
+threshold for this caller.</dd>
 
 <dt><tt>noinline</tt></dt>
-<dd>This attributes requests inliner to never inline this function in any 
-situation. This attribute may not be used together with <tt>alwaysinline</tt>
- attribute.</dd>
+<dd>This attribute indicates that the inliner should never inline this function
+in any situation. This attribute may not be used together with 
+<tt>alwaysinline</tt> attribute.</dd>
 
 <dt><tt>optsize</tt></dt>
 <dd>This attribute suggests that optimization passes and code generator passes
-make choices that help reduce code size.</dd>
+make choices that keep the code size of this function low, and otherwise do
+optimizations specifically to reduce code size.</dd>
 
 <dt><tt>noreturn</tt></dt>
-<dd>This function attribute indicates that the function never returns. This
-  tells LLVM that every call to this function should be treated as if
-  an <tt>unreachable</tt> instruction immediately followed the call.</dd> 
+<dd>This function attribute indicates that the function never returns normally.
+This produces undefined behavior at runtime if the function ever does
+dynamically return.</dd> 
 
 <dt><tt>nounwind</tt></dt>
-<dd>This function attribute indicates that no exceptions unwind out of the
-  function.  Usually this is because the function makes no use of exceptions,
-  but it may also be that the function catches any exceptions thrown when
-  executing it.</dd>
+<dd>This function attribute indicates that the function never returns with an
+unwind or exceptional control flow.  If the function does unwind, its runtime
+behavior is undefined.</dd>
+
+<dt><tt>readnone</tt></dt>
+<dd>This attribute indicates that the function computes its result (or its
+thrown exception) based strictly on its arguments.  It does not read any global
+mutable state (e.g. memory, control registers, etc) visible to caller functions.
+Furthermore, <tt>readnone</tt> functions never change any state visible to their
+caller.
 
 <dt><tt>readonly</tt></dt>
-<dd>This function attribute indicates that the function has no side-effects
-  except for producing a return value or throwing an exception.  The value
-  returned must only depend on the function arguments and/or global variables.
-  It may use values obtained by dereferencing pointers.</dd>
-<dt><tt>readnone</tt></dt>
-<dd>A <tt>readnone</tt> function has the same restrictions as a <tt>readonly</tt>
-  function, but in addition it is not allowed to dereference any pointer arguments
-  or global variables.
+<dd>This function attribute indicates that the function has no side-effects on
+the calling function, but that it depends on state (memory state, control
+register state, etc) that may be set in the caller.  A readonly function always
+returns the same value (or throws the same exception) whenever it is called with
+a particular set of arguments and global state.</dd>
+
 </dl>
 
 </div>
