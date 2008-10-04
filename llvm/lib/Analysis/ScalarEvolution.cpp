@@ -676,6 +676,9 @@ SCEVHandle ScalarEvolution::getTruncateExpr(const SCEVHandle &Op, const Type *Ty
       return getAddRecExpr(Operands, AddRec->getLoop());
   }
 
+  if (isa<SCEVCouldNotCompute>(Op))
+    return new SCEVCouldNotCompute();
+
   SCEVTruncateExpr *&Result = (*SCEVTruncates)[std::make_pair(Op, Ty)];
   if (Result == 0) Result = new SCEVTruncateExpr(Op, Ty);
   return Result;
@@ -691,6 +694,9 @@ SCEVHandle ScalarEvolution::getZeroExtendExpr(const SCEVHandle &Op, const Type *
   // operands (often constants).  This would allow analysis of something like
   // this:  for (unsigned char X = 0; X < 100; ++X) { int Y = X; }
 
+  if (isa<SCEVCouldNotCompute>(Op))
+    return new SCEVCouldNotCompute();
+
   SCEVZeroExtendExpr *&Result = (*SCEVZeroExtends)[std::make_pair(Op, Ty)];
   if (Result == 0) Result = new SCEVZeroExtendExpr(Op, Ty);
   return Result;
@@ -705,6 +711,9 @@ SCEVHandle ScalarEvolution::getSignExtendExpr(const SCEVHandle &Op, const Type *
   // did not overflow the old, smaller, value, we can sign extend all of the
   // operands (often constants).  This would allow analysis of something like
   // this:  for (signed char X = 0; X < 100; ++X) { int Y = X; }
+
+  if (isa<SCEVCouldNotCompute>(Op))
+    return new SCEVCouldNotCompute();
 
   SCEVSignExtendExpr *&Result = (*SCEVSignExtends)[std::make_pair(Op, Ty)];
   if (Result == 0) Result = new SCEVSignExtendExpr(Op, Ty);
@@ -733,6 +742,10 @@ SCEVHandle ScalarEvolution::getAddExpr(std::vector<SCEVHandle> &Ops) {
 
   // Sort by complexity, this groups all similar expression types together.
   GroupByComplexity(Ops);
+
+  // Could not compute plus anything equals could not compute.
+  if (isa<SCEVCouldNotCompute>(Ops.back()))
+    return new SCEVCouldNotCompute();
 
   // If there are any constants, fold them together.
   unsigned Idx = 0;
@@ -959,6 +972,21 @@ SCEVHandle ScalarEvolution::getMulExpr(std::vector<SCEVHandle> &Ops) {
   // Sort by complexity, this groups all similar expression types together.
   GroupByComplexity(Ops);
 
+  if (isa<SCEVCouldNotCompute>(Ops.back())) {
+    // CNC * 0 = 0
+    for (unsigned i = 0, e = Ops.size() - 1; i != e; ++i) {
+      if (Ops[i]->getSCEVType() != scConstant)
+        break;
+
+      SCEVConstant *SC = cast<SCEVConstant>(Ops[i]);
+      if (SC->getValue()->isMinValue(false))
+        return SC;
+    }
+
+    // Otherwise, we can't compute it.
+    return new SCEVCouldNotCompute();
+  }
+
   // If there are any constants, fold them together.
   unsigned Idx = 0;
   if (SCEVConstant *LHSC = dyn_cast<SCEVConstant>(Ops[0])) {
@@ -1124,6 +1152,9 @@ SCEVHandle ScalarEvolution::getUDivExpr(const SCEVHandle &LHS, const SCEVHandle 
 
   // FIXME: implement folding of (X*4)/4 when we know X*4 doesn't overflow.
 
+  if (isa<SCEVCouldNotCompute>(LHS) || isa<SCEVCouldNotCompute>(RHS))
+    return new SCEVCouldNotCompute();
+
   SCEVUDivExpr *&Result = (*SCEVUDivs)[std::make_pair(LHS, RHS)];
   if (Result == 0) Result = new SCEVUDivExpr(LHS, RHS);
   return Result;
@@ -1171,6 +1202,12 @@ SCEVHandle ScalarEvolution::getAddRecExpr(std::vector<SCEVHandle> &Operands,
     }
   }
 
+  // Refuse to build an AddRec out of SCEVCouldNotCompute.
+  for (unsigned i = 0, e = Operands.size(); i != e; ++i) {
+    if (isa<SCEVCouldNotCompute>(Operands[i]))
+      return new SCEVCouldNotCompute();
+  }
+
   SCEVAddRecExpr *&Result =
     (*SCEVAddRecExprs)[std::make_pair(L, std::vector<SCEV*>(Operands.begin(),
                                                             Operands.end()))];
@@ -1192,6 +1229,21 @@ SCEVHandle ScalarEvolution::getSMaxExpr(std::vector<SCEVHandle> Ops) {
 
   // Sort by complexity, this groups all similar expression types together.
   GroupByComplexity(Ops);
+
+  if (isa<SCEVCouldNotCompute>(Ops.back())) {
+    // CNC smax +inf = +inf.
+    for (unsigned i = 0, e = Ops.size() - 1; i != e; ++i) {
+      if (Ops[i]->getSCEVType() != scConstant)
+        break;
+
+      SCEVConstant *SC = cast<SCEVConstant>(Ops[i]);
+      if (SC->getValue()->isMaxValue(true))
+        return SC;
+    }
+
+    // Otherwise, we can't compute it.
+    return new SCEVCouldNotCompute();
+  }
 
   // If there are any constants, fold them together.
   unsigned Idx = 0;
@@ -1272,6 +1324,21 @@ SCEVHandle ScalarEvolution::getUMaxExpr(std::vector<SCEVHandle> Ops) {
 
   // Sort by complexity, this groups all similar expression types together.
   GroupByComplexity(Ops);
+
+  if (isa<SCEVCouldNotCompute>(Ops[0])) {
+    // CNC umax inf = inf.
+    for (unsigned i = 0, e = Ops.size() - 1; i != e; ++i) {
+      if (Ops[i]->getSCEVType() != scConstant)
+        break;
+
+      SCEVConstant *SC = cast<SCEVConstant>(Ops[i]);
+      if (SC->getValue()->isMaxValue(false))
+        return SC;
+    }
+
+    // Otherwise, we can't compute it.
+    return new SCEVCouldNotCompute();
+  }
 
   // If there are any constants, fold them together.
   unsigned Idx = 0;
