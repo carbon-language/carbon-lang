@@ -247,6 +247,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\lib\Analysis\MemRegion.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\Analysis\PathDiagnostic.cpp"
 				>
 			</File>
