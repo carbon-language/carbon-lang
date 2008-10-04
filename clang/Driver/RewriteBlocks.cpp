@@ -605,6 +605,7 @@ void RewriteBlocks::SynthesizeBlockLiterals(SourceLocation FunLocStart,
     ImportedBlockDecls.clear();
   }
   Blocks.clear();
+  RewrittenBlockExprs.clear();
 }
 
 void RewriteBlocks::InsertBlockLiteralsWithinFunction(FunctionDecl *FD) {
