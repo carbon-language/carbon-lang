@@ -104,13 +104,14 @@ public:
                                     const char *funcName, std::string Tag);
   std::string SynthesizeBlockFunc(BlockExpr *CE, int i, 
                                     const char *funcName, std::string Tag);
-  std::string SynthesizeBlockImpl(BlockExpr *CE, std::string Tag);
+  std::string SynthesizeBlockImpl(BlockExpr *CE, std::string Tag, 
+                                  bool hasCopyDisposeHelpers);
   std::string SynthesizeBlockCall(CallExpr *Exp);
   void SynthesizeBlockLiterals(SourceLocation FunLocStart,
                                  const char *FunName);
   
-  void GetBlockDeclRefExprs(Stmt *S);
   void GetBlockCallExprs(Stmt *S);
+  void GetBlockDeclRefExprs(Stmt *S);
   
   // We avoid calling Type::isBlockPointerType(), since it operates on the
   // canonical type. We only care if the top-level type is a closure pointer.
@@ -467,31 +468,22 @@ std::string RewriteBlocks::SynthesizeBlockHelperFuncs(BlockExpr *CE, int i,
   return S;
 }
 
-std::string RewriteBlocks::SynthesizeBlockImpl(BlockExpr *CE, std::string Tag) {
+std::string RewriteBlocks::SynthesizeBlockImpl(BlockExpr *CE, std::string Tag,
+                                               bool hasCopyDisposeHelpers) {
   std::string S = "struct " + Tag;
   std::string Constructor = "  " + Tag;
   
   S += " {\n  struct __block_impl impl;\n";
+  
+  if (hasCopyDisposeHelpers)
+    S += "  void *copy;\n  void *dispose;\n";
+    
   Constructor += "(void *fp";
   
-  GetBlockDeclRefExprs(CE);
+  if (hasCopyDisposeHelpers)
+    Constructor += ", void *copyHelp, void *disposeHelp";
+    
   if (BlockDeclRefs.size()) {
-    // Unique all "by copy" declarations.
-    for (unsigned i = 0; i < BlockDeclRefs.size(); i++)
-      if (!BlockDeclRefs[i]->isByRef())
-        BlockByCopyDecls.insert(BlockDeclRefs[i]->getDecl());
-    // Unique all "by ref" declarations.
-    for (unsigned i = 0; i < BlockDeclRefs.size(); i++)
-      if (BlockDeclRefs[i]->isByRef())
-        BlockByRefDecls.insert(BlockDeclRefs[i]->getDecl());
- 
-    // Find any imported blocks...they will need special attention.
-    for (unsigned i = 0; i < BlockDeclRefs.size(); i++)
-      if (isBlockPointerType(BlockDeclRefs[i]->getType())) {
-        GetBlockCallExprs(CE);
-        ImportedBlockDecls.insert(BlockDeclRefs[i]->getDecl());
-      }
-      
     // Output all "by copy" declarations.
     for (llvm::SmallPtrSet<ValueDecl*,8>::iterator I = BlockByCopyDecls.begin(), 
          E = BlockByCopyDecls.end(); I != E; ++I) {
@@ -550,6 +542,9 @@ std::string RewriteBlocks::SynthesizeBlockImpl(BlockExpr *CE, std::string Tag) {
     Constructor += "    impl.isa = 0/*&_NSConcreteStackBlock*/;\n    impl.Size = sizeof(";
     Constructor += Tag + ");\n    impl.Flags = flags;\n    impl.FuncPtr = fp;\n";
     
+    if (hasCopyDisposeHelpers)
+      Constructor += "    copy = copyHelp;\n    dispose = disposeHelp;\n";
+      
     // Initialize all "by copy" arguments.
     for (llvm::SmallPtrSet<ValueDecl*,8>::iterator I = BlockByCopyDecls.begin(), 
          E = BlockByCopyDecls.end(); I != E; ++I) {
@@ -578,6 +573,8 @@ std::string RewriteBlocks::SynthesizeBlockImpl(BlockExpr *CE, std::string Tag) {
     Constructor += ", int flags=0) {\n";
     Constructor += "    impl.isa = 0/*&_NSConcreteStackBlock*/;\n    impl.Size = sizeof(";
     Constructor += Tag + ");\n    impl.Flags = flags;\n    impl.FuncPtr = fp;\n";
+    if (hasCopyDisposeHelpers)
+      Constructor += "    copy = copyHelp;\n    dispose = disposeHelp;\n";
   }
   Constructor += "  ";
   Constructor += "}\n";
@@ -590,10 +587,29 @@ void RewriteBlocks::SynthesizeBlockLiterals(SourceLocation FunLocStart,
                                                 const char *FunName) {
   // Insert closures that were part of the function.
   for (unsigned i = 0; i < Blocks.size(); i++) {
-  
+
+    GetBlockDeclRefExprs(Blocks[i]);
+    if (BlockDeclRefs.size()) {
+      // Unique all "by copy" declarations.
+      for (unsigned i = 0; i < BlockDeclRefs.size(); i++)
+        if (!BlockDeclRefs[i]->isByRef())
+          BlockByCopyDecls.insert(BlockDeclRefs[i]->getDecl());
+      // Unique all "by ref" declarations.
+      for (unsigned i = 0; i < BlockDeclRefs.size(); i++)
+        if (BlockDeclRefs[i]->isByRef())
+          BlockByRefDecls.insert(BlockDeclRefs[i]->getDecl());
+   
+      // Find any imported blocks...they will need special attention.
+      for (unsigned i = 0; i < BlockDeclRefs.size(); i++)
+        if (isBlockPointerType(BlockDeclRefs[i]->getType())) {
+          GetBlockCallExprs(Blocks[i]);
+          ImportedBlockDecls.insert(BlockDeclRefs[i]->getDecl());
+        }
+    }
     std::string Tag = "__" + std::string(FunName) + "_block_impl_" + utostr(i);
                       
-    std::string CI = SynthesizeBlockImpl(Blocks[i], Tag);
+    std::string CI = SynthesizeBlockImpl(Blocks[i], Tag, 
+                                         ImportedBlockDecls.size() > 0);
 
     InsertText(FunLocStart, CI.c_str(), CI.size());
 
@@ -907,6 +923,12 @@ std::string RewriteBlocks::SynthesizeBlockInitExpr(BlockExpr *Exp, VarDecl *VD) 
         haveByRefDecls = true;
         BlockByRefDecls.insert(BlockDeclRefs[i]->getDecl());
       }
+    // Find any imported blocks...they will need special attention.
+    for (unsigned i = 0; i < BlockDeclRefs.size(); i++)
+      if (isBlockPointerType(BlockDeclRefs[i]->getType())) {
+        GetBlockCallExprs(Blocks[i]);
+        ImportedBlockDecls.insert(BlockDeclRefs[i]->getDecl());
+      }
   }
   std::string FuncName;
   
@@ -940,6 +962,12 @@ std::string RewriteBlocks::SynthesizeBlockInitExpr(BlockExpr *Exp, VarDecl *VD) 
   // Initialize the block function.
   Init += "((void*)" + Func;
   
+  if (ImportedBlockDecls.size()) {
+    std::string Buf = "__" + FuncName + "_block_copy_" + BlockNumber;
+    Init += ",(void*)" + Buf;
+    Buf = "__" + FuncName + "_block_dispose_" + BlockNumber;
+    Init += ",(void*)" + Buf;
+  }
   // Add initializers for any closure decl refs.
   if (BlockDeclRefs.size()) {
     // Output all "by copy" declarations.
