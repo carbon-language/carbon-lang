@@ -26,6 +26,7 @@ add_llvm_library(LLVMCodeGen
   MachineRegisterInfo.cpp
   MachineSink.cpp
   OcamlGC.cpp
+  PBQP.cpp
   PHIElimination.cpp
   Passes.cpp
   PostRASchedulerList.cpp
@@ -34,6 +35,7 @@ add_llvm_library(LLVMCodeGen
   RegAllocBigBlock.cpp
   RegAllocLinearScan.cpp
   RegAllocLocal.cpp
+  RegAllocPBQP.cpp
   RegAllocSimple.cpp
   RegisterCoalescer.cpp
   RegisterScavenging.cpp
