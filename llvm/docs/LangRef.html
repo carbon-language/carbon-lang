@@ -826,7 +826,8 @@ a power of 2.</p>
 <div class="doc_code">
 <pre>
 declare i32 @printf(i8* noalias , ...)
-declare i32 @atoi(i8 zeroext*)
+declare i32 @atoi(i8 zeroext)
+declare signext i8 @returns_signed_char()
 </pre>
 </div>
 
@@ -836,19 +837,21 @@ declare i32 @atoi(i8 zeroext*)
   <p>Currently, only the following parameter attributes are defined:</p>
   <dl>
     <dt><tt>zeroext</tt></dt>
-    <dd>This indicates that the parameter should be zero extended just before
-    a call to this function.</dd>
+    <dd>This indicates to the code generator that the parameter or return value
+    should be zero-extended to a 32-bit value by the caller (for a parameter)
+    or the callee (for a return value).</dd>
 
     <dt><tt>signext</tt></dt>
-    <dd>This indicates that the parameter should be sign extended just before
-    a call to this function.</dd>
+    <dd>This indicates to the code generator that the parameter or return value
+    should be sign-extended to a 32-bit value by the caller (for a parameter)
+    or the callee (for a return value).</dd>
 
     <dt><tt>inreg</tt></dt>
     <dd>This indicates that this parameter or return value should be treated
     in a special target-dependent fashion during while emitting code for a
     function call or return (usually, by putting it in a register as opposed 
-    to memory; in some places it is used to distinguish between two different
-    kinds of registers).  Use of this attribute is target-specific</dd>
+    to memory, though some targets use it to distinguish between two different
+    kinds of registers).  Use of this attribute is target-specific.</dd>
 
     <dt><tt>byval</tt></dt>
     <dd>This indicates that the pointer parameter should really be passed by
@@ -856,13 +859,14 @@ declare i32 @atoi(i8 zeroext*)
     pointee is made between the caller and the callee, so the callee is unable
     to modify the value in the callee.  This attribute is only valid on LLVM
     pointer arguments.  It is generally used to pass structs and arrays by
-    value, but is also valid on scalars (even though this is silly).</dd>
+    value, but is also valid on pointers to scalars.</dd>
 
     <dt><tt>sret</tt></dt>
     <dd>This indicates that the pointer parameter specifies the address of a
     structure that is the return value of the function in the source program.
-    Loads and stores to the structure are assumed not to trap.
-    May only be applied to the first parameter.</dd>
+    This pointer must be guaranteed by the caller to be valid: loads and stores
+    to the structure may be assumed by the callee to not to trap.  This may only
+    be applied to the first parameter.</dd>
 
     <dt><tt>noalias</tt></dt>
     <dd>This indicates that the parameter does not alias any global or any other
