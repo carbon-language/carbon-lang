@@ -114,6 +114,32 @@ sub gen_one_entry {
     }
   }
   close UNDEFS;
+  unless(keys %DepLibs) {
+    # above failed
+    open UNDEFS, "$nmPath -g -u $Directory/$lib |";
+    while (<UNDEFS>) {
+      # to bypass non-working sed
+      if ('  ' eq substr($_,0,2) and index($_,'U ')) {
+        $_ = substr($_,index($_,'U ')+2)
+      };
+      $_ = substr($_,index($_,'  *U ')+5) if -1!=index($_,'  *U ');
+
+      chomp;
+      my $lib_printed = 0;
+      if (defined($libdefs{$_}) && $libdefs{$_} ne $lib) {
+        $DepLibs{$libdefs{$_}} = [] unless exists $DepLibs{$libdefs{$_}};
+        push(@{$DepLibs{$libdefs{$_}}}, $_);
+      } elsif (defined($objdefs{$_}) && $objdefs{$_} ne $lib) {
+        my $libroot = $lib;
+        $libroot =~ s/lib(.*).a/$1/;
+        if ($objdefs{$_} ne "$libroot.o") {
+          $DepLibs{$objdefs{$_}} = [] unless exists $DepLibs{$objdefs{$_}};
+          push(@{$DepLibs{$objdefs{$_}}}, $_);
+        }
+      }
+    }
+  }
+
   for my $key (sort keys %DepLibs) {
     if ($FLAT) {
       print " $key";
