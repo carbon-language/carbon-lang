@@ -69,7 +69,7 @@ private:
   BasicBlockListType  BasicBlocks;        ///< The basic blocks
   mutable ArgumentListType ArgumentList;  ///< The formal arguments
   ValueSymbolTable *SymTab;               ///< Symbol table of args/instructions
-  AttrListPtr AttributeList;                   ///< Parameter attributes
+  AttrListPtr AttributeList;              ///< Parameter attributes
 
   // The Calling Convention is stored in Value::SubclassData.
   /*unsigned CallingConvention;*/
@@ -140,14 +140,13 @@ public:
     SubclassData = (SubclassData & 1) | (CC << 1);
   }
   
-  /// getAttributes - Return the parameter attributes for this Function.
+  /// getAttributes - Return the attribute list for this Function.
   ///
   const AttrListPtr &getAttributes() const { return AttributeList; }
 
-  /// setAttributes - Set the parameter attributes for this Function.
+  /// setAttributes - Set the attribute list for this Function.
   ///
   void setAttributes(const AttrListPtr &attrs) { AttributeList = attrs; }
-
 
   /// hasFnAttr - Return true if this function has the given attribute.
   bool hasFnAttr(Attributes N) const {
@@ -155,9 +154,9 @@ public:
     return AttributeList.paramHasAttr(~0U, N);
   }
 
-  /// addFnAttr - Add function attributes
+  /// addFnAttr - Add function attributes to this function.
   ///
-  void addFnAttr(const Attributes N) { 
+  void addFnAttr(Attributes N) { 
     // Function Attributes are stored at ~0 index 
     addAttribute(~0, N);
   }
