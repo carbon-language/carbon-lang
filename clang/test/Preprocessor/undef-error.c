@@ -1,5 +1,5 @@
-// RUN: not clang %s -pedantic-errors -E
+// RUN: clang %s -pedantic-errors -verify 
 // PR2045
 
 #define b
-#undef a b
+/* expected-error {{extra tokens at end of #undef directive}} */ #undef a b
