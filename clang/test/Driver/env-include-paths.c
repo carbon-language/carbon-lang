@@ -3,7 +3,6 @@
 // RUN: env CPATH="xyz:xyz" clang -fsyntax-only -verify -DAS_SOURCE %s &&
 // RUN: env CPATH="xyz::xyz" clang -fsyntax-only -verify -DSHOULD_FIND -DAS_SOURCE %s &&
 // RUN: env CPATH="../Driver" clang -fsyntax-only -verify -DSHOULD_FIND -DAS_SOURCE %s
-// XFAIL
 
 #ifdef AS_SOURCE
 #undef AS_SOURCE

@@ -81,7 +81,7 @@ void InitHeaderSearch::AddPath(const std::string &Path, IncludeDirGroup Group,
 
 void InitHeaderSearch::AddEnvVarPaths(const char *Name) {
   const char* at = getenv(Name);
-  if (!at)
+  if (!at || *at == 0) // Empty string should not add '.' path.
     return;
 
   const char* delim = strchr(at, llvm::sys::PathSeparator);
