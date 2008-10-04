@@ -86,17 +86,34 @@ bool AddReadAttrs::runOnSCC(const std::vector<CallGraphNode *> &SCC) {
 
     // Scan the function body for instructions that may read or write memory.
     for (inst_iterator II = inst_begin(F), E = inst_end(F); II != E; ++II) {
-      CallSite CS = CallSite::get(&*II);
+      Instruction *I = &*II;
 
-      // Ignore calls to functions in the same SCC.
-      if (CS.getInstruction() && SCCNodes.count(CG[CS.getCalledFunction()]))
-        continue;
+      // Some instructions can be ignored even if they read or write memory.
+      // Detect these now, skipping to the next instruction if one is found.
+      CallSite CS = CallSite::get(I);
+      if (CS.getInstruction()) {
+        // Ignore calls to functions in the same SCC.
+        if (SCCNodes.count(CG[CS.getCalledFunction()]))
+          continue;
+      } else if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
+        Value *Target = LI->getPointerOperand()->getUnderlyingObject();
+        // Ignore loads from local memory.
+        if (isa<AllocaInst>(Target))
+          continue;
+      } else if (StoreInst *SI = dyn_cast<StoreInst>(I)) {
+        Value *Target = SI->getPointerOperand()->getUnderlyingObject();
+        // Ignore stores to local memory.
+        if (isa<AllocaInst>(Target))
+          continue;
+      }
 
-      if (II->mayWriteToMemory())
+      // Any remaining instructions need to be taken seriously!  Check if they
+      // read or write memory.
+      if (I->mayWriteToMemory())
         // Writes memory.  Just give up.
         return false;
-
-      ReadsMemory |= II->mayReadFromMemory();
+      // If this instruction may read memory, remember that.
+      ReadsMemory |= I->mayReadFromMemory();
     }
   }
 
