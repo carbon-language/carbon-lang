@@ -717,6 +717,28 @@ static void HandleNothrowAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   d->addAttr(new NoThrowAttr());
 }
 
+static void HandleConstAttr(Decl *d, const AttributeList &Attr, Sema &S) {
+  // check the attribute arguments.
+  if (Attr.getNumArgs() != 0) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
+           std::string("0"));
+    return;
+  }
+  
+  d->addAttr(new ConstAttr());
+}
+
+static void HandlePureAttr(Decl *d, const AttributeList &Attr, Sema &S) {
+  // check the attribute arguments.
+  if (Attr.getNumArgs() != 0) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
+           std::string("0"));
+    return;
+  }
+  
+  d->addAttr(new PureAttr());
+}
+
 /// Handle __attribute__((format(type,idx,firstarg))) attributes
 /// based on http://gcc.gnu.org/onlinedocs/gcc/Function-Attributes.html
 static void HandleFormatAttr(Decl *d, const AttributeList &Attr, Sema &S) {
@@ -1118,6 +1140,8 @@ static void ProcessDeclAttribute(Decl *D, const AttributeList &Attr, Sema &S) {
   case AttributeList::AT_objc_gc:     HandleObjCGCAttr    (D, Attr, S); break;
   case AttributeList::AT_blocks:      HandleBlocksAttr    (D, Attr, S); break;
   case AttributeList::AT_sentinel:    HandleSentinelAttr  (D, Attr, S); break;
+  case AttributeList::AT_const:       HandleConstAttr     (D, Attr, S); break;
+  case AttributeList::AT_pure:        HandlePureAttr      (D, Attr, S); break;
   default:
 #if 0
     // TODO: when we have the full set of attributes, warn about unknown ones.

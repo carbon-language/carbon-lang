@@ -47,7 +47,9 @@ public:
     Unused,    
     Visibility,
     Weak,
-    Blocks
+    Blocks,
+    Const,
+    Pure
   };
     
 private:
@@ -228,7 +230,27 @@ public:
   static bool classof(const Attr *A) { return A->getKind() == NoThrow; }
   static bool classof(const NoThrowAttr *A) { return true; }
 };
-  
+
+class ConstAttr : public Attr {
+public:
+  ConstAttr() : Attr(Const) {}
+
+  // Implement isa/cast/dyncast/etc.
+
+  static bool classof(const Attr *A) { return A->getKind() == Const; }
+  static bool classof(const ConstAttr *A) { return true; }
+};
+
+class PureAttr : public Attr {
+public:
+  PureAttr() : Attr(Pure) {}
+
+  // Implement isa/cast/dyncast/etc.
+
+  static bool classof(const Attr *A) { return A->getKind() == Pure; }
+  static bool classof(const PureAttr *A) { return true; }
+};
+
 class NonNullAttr : public Attr {
   unsigned* ArgNums;
   unsigned Size;

@@ -520,6 +520,10 @@ void CodeGenModule::ConstructAttributeList(const Decl *TargetDecl,
       FuncAttrs |= llvm::Attribute::NoUnwind;
     if (TargetDecl->getAttr<NoReturnAttr>())
       FuncAttrs |= llvm::Attribute::NoReturn;
+    if (TargetDecl->getAttr<PureAttr>())
+      FuncAttrs |= llvm::Attribute::ReadOnly;
+    if (TargetDecl->getAttr<ConstAttr>())
+      FuncAttrs |= llvm::Attribute::ReadNone;
   }
 
   QualType RetTy = *begin;

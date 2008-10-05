@@ -73,6 +73,7 @@ public:
     AT_objc_gc,
     AT_blocks,
     AT_sentinel,
+    AT_const,
     UnknownAttribute
   };
   
