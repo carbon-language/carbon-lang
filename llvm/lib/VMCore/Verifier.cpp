@@ -418,7 +418,7 @@ void Verifier::VerifyAttrs(Attributes Attrs, const Type *Ty,
   }
   Attributes FnCheckAttr = Attrs & Attribute::FunctionOnly;
   Assert1(!FnCheckAttr, "Attribute " + Attribute::getAsString(FnCheckAttr) +
-          " only applies to return values!", V);
+          " only applies to functions!", V);
   
   for (unsigned i = 0;
        i < array_lengthof(Attribute::MutuallyIncompatible); ++i) {
