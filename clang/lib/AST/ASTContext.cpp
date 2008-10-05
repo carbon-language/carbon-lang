@@ -27,7 +27,8 @@ enum FloatingRank {
   FloatRank, DoubleRank, LongDoubleRank
 };
 
-ASTContext::ASTContext(const LangOptions& LOpts, SourceManager &SM, TargetInfo &t,
+ASTContext::ASTContext(const LangOptions& LOpts, SourceManager &SM,
+                       TargetInfo &t,
                        IdentifierTable &idents, SelectorTable &sels,
                        unsigned size_reserve) : 
   CFConstantStringTypeDecl(0), ObjCFastEnumerationStateTypeDecl(0),
@@ -441,8 +442,8 @@ void ASTRecordLayout::LayoutField(const FieldDecl *FD, unsigned FieldNo,
 }
 
 
-/// getASTObjcInterfaceLayout - Get or compute information about the layout of the
-/// specified Objective C, which indicates its size and ivar
+/// getASTObjcInterfaceLayout - Get or compute information about the layout of
+/// the specified Objective C, which indicates its size and ivar
 /// position information.
 const ASTRecordLayout &
 ASTContext::getASTObjCInterfaceLayout(const ObjCInterfaceDecl *D) {
@@ -461,7 +462,8 @@ ASTContext::getASTObjCInterfaceLayout(const ObjCInterfaceDecl *D) {
     uint64_t Size = SL.getSize();
     NewEntry = new ASTRecordLayout(Size, Alignment);
     NewEntry->InitializeLayout(FieldCount);
-    NewEntry->SetFieldOffset(0, 0); // Super class is at the beginning of the layout.
+    // Super class is at the beginning of the layout.
+    NewEntry->SetFieldOffset(0, 0);
   } else {
     NewEntry = new ASTRecordLayout();
     NewEntry->InitializeLayout(FieldCount);
@@ -858,7 +860,7 @@ QualType ASTContext::getFunctionTypeNoProto(QualType ResultTy) {
 
 /// getFunctionType - Return a normal function type with a typed argument
 /// list.  isVariadic indicates whether the argument list includes '...'.
-QualType ASTContext::getFunctionType(QualType ResultTy, const QualType *ArgArray,
+QualType ASTContext::getFunctionType(QualType ResultTy,const QualType *ArgArray,
                                      unsigned NumArgs, bool isVariadic) {
   // Unique functions, to guarantee there is only one function of a particular
   // structure.
@@ -1514,7 +1516,7 @@ void ASTContext::getObjCEncodingForPropertyDecl(const ObjCPropertyDecl *PD,
         }
       }
     } else {
-      const ObjCImplementationDecl *OID = cast<ObjCImplementationDecl>(Container);
+      const ObjCImplementationDecl *OID=cast<ObjCImplementationDecl>(Container);
       for (ObjCCategoryImplDecl::propimpl_iterator
              i = OID->propimpl_begin(), e = OID->propimpl_end(); i != e; ++i) {
         ObjCPropertyImplDecl *PID = *i;
@@ -1808,7 +1810,7 @@ static bool areCompatVectorTypes(const VectorType *LHS,
                                  const VectorType *RHS) {
   assert(LHS->isCanonical() && RHS->isCanonical());
   return LHS->getElementType() == RHS->getElementType() &&
-  LHS->getNumElements() == RHS->getNumElements();
+         LHS->getNumElements() == RHS->getNumElements();
 }
 
 /// canAssignObjCInterfaces - Return true if the two interface types are
@@ -1883,8 +1885,10 @@ QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs) {
   // Check return type
   QualType retType = mergeTypes(lbase->getResultType(), rbase->getResultType());
   if (retType.isNull()) return QualType();
-  if (getCanonicalType(retType) != getCanonicalType(lbase->getResultType())) allLTypes = false;
-  if (getCanonicalType(retType) != getCanonicalType(rbase->getResultType())) allRTypes = false;
+  if (getCanonicalType(retType) != getCanonicalType(lbase->getResultType()))
+    allLTypes = false;
+  if (getCanonicalType(retType) != getCanonicalType(rbase->getResultType()))
+    allRTypes = false;
 
   if (lproto && rproto) { // two C99 style function prototypes
     unsigned lproto_nargs = lproto->getNumArgs();
@@ -1906,8 +1910,10 @@ QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs) {
       QualType argtype = mergeTypes(largtype, rargtype);
       if (argtype.isNull()) return QualType();
       types.push_back(argtype);
-      if (getCanonicalType(argtype) != getCanonicalType(largtype)) allLTypes = false;
-      if (getCanonicalType(argtype) != getCanonicalType(rargtype)) allRTypes = false;
+      if (getCanonicalType(argtype) != getCanonicalType(largtype))
+        allLTypes = false;
+      if (getCanonicalType(argtype) != getCanonicalType(rargtype))
+        allRTypes = false;
     }
     if (allLTypes) return lhs;
     if (allRTypes) return rhs;
@@ -2028,8 +2034,10 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
     QualType RHSPointee = RHS->getAsPointerType()->getPointeeType();
     QualType ResultType = mergeTypes(LHSPointee, RHSPointee);
     if (ResultType.isNull()) return QualType();
-    if (getCanonicalType(LHSPointee) == getCanonicalType(ResultType)) return LHS;
-    if (getCanonicalType(RHSPointee) == getCanonicalType(ResultType)) return RHS;
+    if (getCanonicalType(LHSPointee) == getCanonicalType(ResultType))
+      return LHS;
+    if (getCanonicalType(RHSPointee) == getCanonicalType(ResultType))
+      return RHS;
     return getPointerType(ResultType);
   }
   case Type::ConstantArray:
@@ -2043,16 +2051,20 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
     QualType RHSElem = getAsArrayType(RHS)->getElementType();
     QualType ResultType = mergeTypes(LHSElem, RHSElem);
     if (ResultType.isNull()) return QualType();
-    if (LCAT && getCanonicalType(LHSElem) == getCanonicalType(ResultType)) return LHS;
-    if (RCAT && getCanonicalType(RHSElem) == getCanonicalType(ResultType)) return RHS;
+    if (LCAT && getCanonicalType(LHSElem) == getCanonicalType(ResultType))
+      return LHS;
+    if (RCAT && getCanonicalType(RHSElem) == getCanonicalType(ResultType))
+      return RHS;
     if (LCAT) return getConstantArrayType(ResultType, LCAT->getSize(),
                                           ArrayType::ArraySizeModifier(), 0);
     if (RCAT) return getConstantArrayType(ResultType, RCAT->getSize(),
                                           ArrayType::ArraySizeModifier(), 0);
     const VariableArrayType* LVAT = getAsVariableArrayType(LHS);
     const VariableArrayType* RVAT = getAsVariableArrayType(RHS);
-    if (LVAT && getCanonicalType(LHSElem) == getCanonicalType(ResultType)) return LHS;
-    if (RVAT && getCanonicalType(RHSElem) == getCanonicalType(ResultType)) return RHS;
+    if (LVAT && getCanonicalType(LHSElem) == getCanonicalType(ResultType))
+      return LHS;
+    if (RVAT && getCanonicalType(RHSElem) == getCanonicalType(ResultType))
+      return RHS;
     if (LVAT) {
       // FIXME: This isn't correct! But tricky to implement because
       // the array's size has to be the size of LHS, but the type
@@ -2067,29 +2079,26 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
     }
     if (getCanonicalType(LHSElem) == getCanonicalType(ResultType)) return LHS;
     if (getCanonicalType(RHSElem) == getCanonicalType(ResultType)) return RHS;
-    return getIncompleteArrayType(ResultType, ArrayType::ArraySizeModifier(), 0);
+    return getIncompleteArrayType(ResultType, ArrayType::ArraySizeModifier(),0);
   }
   case Type::FunctionNoProto:
     return mergeFunctionTypes(LHS, RHS);
   case Type::Tagged:
-  {
     // FIXME: Why are these compatible?
     if (isObjCIdType(LHS) && isObjCClassType(RHS)) return LHS;
     if (isObjCClassType(LHS) && isObjCIdType(RHS)) return LHS;
     return QualType();
-  }
   case Type::Builtin:
     // Only exactly equal builtin types are compatible, which is tested above.
     return QualType();
   case Type::Vector:
     if (areCompatVectorTypes(LHS->getAsVectorType(), RHS->getAsVectorType()))
       return LHS;
+    return QualType();
   case Type::ObjCInterface:
-  {
     // Distinct ObjC interfaces are not compatible; see canAssignObjCInterfaces
     // for checking assignment/comparison safety
     return QualType();
-  }
   default:
     assert(0 && "unexpected type");
     return QualType();
