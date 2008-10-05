@@ -17,6 +17,7 @@
 #include <cctype>
 using namespace llvm;
 
+
 const char *const llvm::arm_asm_table[] = {
                                       "{r0}", "r0",
                                       "{r1}", "r1",
@@ -41,15 +42,6 @@ const char *const llvm::arm_asm_table[] = {
                                       "{memory}", "memory",
                                       "{cc}", "cc",
                                       0,0};
-
-// Instantiate 'common' cases.
-TEMPLATE_INSTANTIATION(class ARMTargetAsmInfo<TargetAsmInfo>);
-TEMPLATE_INSTANTIATION(
-unsigned ARMTargetAsmInfo<TargetAsmInfo>::getInlineAsmLength(const char*) const);
-TEMPLATE_INSTANTIATION(
-  unsigned ARMTargetAsmInfo<TargetAsmInfo>::countArguments(const char*) const);
-TEMPLATE_INSTANTIATION(
-  unsigned ARMTargetAsmInfo<TargetAsmInfo>::countString(const char*) const);
 
 ARMDarwinTargetAsmInfo::ARMDarwinTargetAsmInfo(const ARMTargetMachine &TM):
   ARMTargetAsmInfo<DarwinTargetAsmInfo>(TM) {
@@ -288,3 +280,6 @@ unsigned ARMTargetAsmInfo<BaseTAI>::getInlineAsmLength(const char *s) const {
   free(s_copy);
   return Length;
 }
+
+// Instantiate default implementation.
+TEMPLATE_INSTANTIATION(class ARMTargetAsmInfo<TargetAsmInfo>);

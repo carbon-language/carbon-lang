@@ -37,93 +37,6 @@ const char *const llvm::x86_asm_table[] = {
   "{cc}", "cc",
   0,0};
 
-TEMPLATE_INSTANTIATION(class X86TargetAsmInfo<TargetAsmInfo>);
-TEMPLATE_INSTANTIATION(
-  bool X86TargetAsmInfo<TargetAsmInfo>::ExpandInlineAsm(CallInst*) const);
-TEMPLATE_INSTANTIATION(
-  bool X86TargetAsmInfo<TargetAsmInfo>::LowerToBSwap(CallInst*) const);
-
-template <class BaseTAI>
-bool X86TargetAsmInfo<BaseTAI>::LowerToBSwap(CallInst *CI) const {
-  // FIXME: this should verify that we are targetting a 486 or better.  If not,
-  // we will turn this bswap into something that will be lowered to logical ops
-  // instead of emitting the bswap asm.  For now, we don't support 486 or lower
-  // so don't worry about this.
-
-  // Verify this is a simple bswap.
-  if (CI->getNumOperands() != 2 ||
-      CI->getType() != CI->getOperand(1)->getType() ||
-      !CI->getType()->isInteger())
-    return false;
-
-  const IntegerType *Ty = dyn_cast<IntegerType>(CI->getType());
-  if (!Ty || Ty->getBitWidth() % 16 != 0)
-    return false;
-
-  // Okay, we can do this xform, do so now.
-  const Type *Tys[] = { Ty };
-  Module *M = CI->getParent()->getParent()->getParent();
-  Constant *Int = Intrinsic::getDeclaration(M, Intrinsic::bswap, Tys, 1);
-
-  Value *Op = CI->getOperand(1);
-  Op = CallInst::Create(Int, Op, CI->getName(), CI);
-
-  CI->replaceAllUsesWith(Op);
-  CI->eraseFromParent();
-  return true;
-}
-
-template <class BaseTAI>
-bool X86TargetAsmInfo<BaseTAI>::ExpandInlineAsm(CallInst *CI) const {
-  InlineAsm *IA = cast<InlineAsm>(CI->getCalledValue());
-  std::vector<InlineAsm::ConstraintInfo> Constraints = IA->ParseConstraints();
-
-  std::string AsmStr = IA->getAsmString();
-
-  // TODO: should remove alternatives from the asmstring: "foo {a|b}" -> "foo a"
-  std::vector<std::string> AsmPieces;
-  SplitString(AsmStr, AsmPieces, "\n");  // ; as separator?
-
-  switch (AsmPieces.size()) {
-  default: return false;
-  case 1:
-    AsmStr = AsmPieces[0];
-    AsmPieces.clear();
-    SplitString(AsmStr, AsmPieces, " \t");  // Split with whitespace.
-
-    // bswap $0
-    if (AsmPieces.size() == 2 &&
-        AsmPieces[0] == "bswap" && AsmPieces[1] == "$0") {
-      // No need to check constraints, nothing other than the equivalent of
-      // "=r,0" would be valid here.
-      return LowerToBSwap(CI);
-    }
-    break;
-  case 3:
-    if (CI->getType() == Type::Int64Ty && Constraints.size() >= 2 &&
-        Constraints[0].Codes.size() == 1 && Constraints[0].Codes[0] == "A" &&
-        Constraints[1].Codes.size() == 1 && Constraints[1].Codes[0] == "0") {
-      // bswap %eax / bswap %edx / xchgl %eax, %edx  -> llvm.bswap.i64
-      std::vector<std::string> Words;
-      SplitString(AsmPieces[0], Words, " \t");
-      if (Words.size() == 2 && Words[0] == "bswap" && Words[1] == "%eax") {
-        Words.clear();
-        SplitString(AsmPieces[1], Words, " \t");
-        if (Words.size() == 2 && Words[0] == "bswap" && Words[1] == "%edx") {
-          Words.clear();
-          SplitString(AsmPieces[2], Words, " \t,");
-          if (Words.size() == 3 && Words[0] == "xchgl" && Words[1] == "%eax" &&
-              Words[2] == "%edx") {
-            return LowerToBSwap(CI);
-          }
-        }
-      }
-    }
-    break;
-  }
-  return false;
-}
-
 X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const X86TargetMachine &TM):
   X86TargetAsmInfo<DarwinTargetAsmInfo>(TM) {
   const X86Subtarget* Subtarget = &DTM->getSubtarget<X86Subtarget>();
@@ -433,3 +346,87 @@ X86WinTargetAsmInfo::X86WinTargetAsmInfo(const X86TargetMachine &TM):
   DataSectionStartSuffix = "\tsegment 'DATA'";
   SectionEndDirectiveSuffix = "\tends\n";
 }
+
+template <class BaseTAI>
+bool X86TargetAsmInfo<BaseTAI>::LowerToBSwap(CallInst *CI) const {
+  // FIXME: this should verify that we are targetting a 486 or better.  If not,
+  // we will turn this bswap into something that will be lowered to logical ops
+  // instead of emitting the bswap asm.  For now, we don't support 486 or lower
+  // so don't worry about this.
+
+  // Verify this is a simple bswap.
+  if (CI->getNumOperands() != 2 ||
+      CI->getType() != CI->getOperand(1)->getType() ||
+      !CI->getType()->isInteger())
+    return false;
+
+  const IntegerType *Ty = dyn_cast<IntegerType>(CI->getType());
+  if (!Ty || Ty->getBitWidth() % 16 != 0)
+    return false;
+
+  // Okay, we can do this xform, do so now.
+  const Type *Tys[] = { Ty };
+  Module *M = CI->getParent()->getParent()->getParent();
+  Constant *Int = Intrinsic::getDeclaration(M, Intrinsic::bswap, Tys, 1);
+
+  Value *Op = CI->getOperand(1);
+  Op = CallInst::Create(Int, Op, CI->getName(), CI);
+
+  CI->replaceAllUsesWith(Op);
+  CI->eraseFromParent();
+  return true;
+}
+
+template <class BaseTAI>
+bool X86TargetAsmInfo<BaseTAI>::ExpandInlineAsm(CallInst *CI) const {
+  InlineAsm *IA = cast<InlineAsm>(CI->getCalledValue());
+  std::vector<InlineAsm::ConstraintInfo> Constraints = IA->ParseConstraints();
+
+  std::string AsmStr = IA->getAsmString();
+
+  // TODO: should remove alternatives from the asmstring: "foo {a|b}" -> "foo a"
+  std::vector<std::string> AsmPieces;
+  SplitString(AsmStr, AsmPieces, "\n");  // ; as separator?
+
+  switch (AsmPieces.size()) {
+  default: return false;
+  case 1:
+    AsmStr = AsmPieces[0];
+    AsmPieces.clear();
+    SplitString(AsmStr, AsmPieces, " \t");  // Split with whitespace.
+
+    // bswap $0
+    if (AsmPieces.size() == 2 &&
+        AsmPieces[0] == "bswap" && AsmPieces[1] == "$0") {
+      // No need to check constraints, nothing other than the equivalent of
+      // "=r,0" would be valid here.
+      return LowerToBSwap(CI);
+    }
+    break;
+  case 3:
+    if (CI->getType() == Type::Int64Ty && Constraints.size() >= 2 &&
+        Constraints[0].Codes.size() == 1 && Constraints[0].Codes[0] == "A" &&
+        Constraints[1].Codes.size() == 1 && Constraints[1].Codes[0] == "0") {
+      // bswap %eax / bswap %edx / xchgl %eax, %edx  -> llvm.bswap.i64
+      std::vector<std::string> Words;
+      SplitString(AsmPieces[0], Words, " \t");
+      if (Words.size() == 2 && Words[0] == "bswap" && Words[1] == "%eax") {
+        Words.clear();
+        SplitString(AsmPieces[1], Words, " \t");
+        if (Words.size() == 2 && Words[0] == "bswap" && Words[1] == "%edx") {
+          Words.clear();
+          SplitString(AsmPieces[2], Words, " \t,");
+          if (Words.size() == 3 && Words[0] == "xchgl" && Words[1] == "%eax" &&
+              Words[2] == "%edx") {
+            return LowerToBSwap(CI);
+          }
+        }
+      }
+    }
+    break;
+  }
+  return false;
+}
+
+// Instantiate default implementation.
+TEMPLATE_INSTANTIATION(class X86TargetAsmInfo<TargetAsmInfo>);

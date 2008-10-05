@@ -19,8 +19,6 @@
 using namespace llvm;
 using namespace llvm::dwarf;
 
-TEMPLATE_INSTANTIATION(class PPCTargetAsmInfo<TargetAsmInfo>);
-
 PPCDarwinTargetAsmInfo::PPCDarwinTargetAsmInfo(const PPCTargetMachine &TM):
   PPCTargetAsmInfo<DarwinTargetAsmInfo>(TM) {
   PCSymbol = ".";
@@ -148,3 +146,6 @@ PPCLinuxTargetAsmInfo::PreferredEHDataFormat(DwarfEncoding::Target Reason,
   // We really need to write something here.
   return TargetAsmInfo::PreferredEHDataFormat(Reason, Global);
 }
+
+// Instantiate default implementation.
+TEMPLATE_INSTANTIATION(class PPCTargetAsmInfo<TargetAsmInfo>);
