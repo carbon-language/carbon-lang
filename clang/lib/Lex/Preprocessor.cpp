@@ -477,10 +477,59 @@ static void InitializePredefinedMacros(Preprocessor &PP,
   DefineBuiltinMacro(Buf, "__CHAR_BIT__=8");
   DefineBuiltinMacro(Buf, "__SHRT_MAX__=32767");
   
+  if (TI.getIntWidth() == 32)
+    DefineBuiltinMacro(Buf, "__INT_MAX__=2147483647");
+  else if (TI.getIntWidth() == 16)
+    DefineBuiltinMacro(Buf, "__INT_MAX__=32767");
+  else
+    assert(0 && "Unknown integer size");
   
   assert(TI.getLongLongWidth() == 64 && "Only support 64-bit long long so far");
   DefineBuiltinMacro(Buf, "__LONG_LONG_MAX__=9223372036854775807LL");
 
+  if (TI.getLongWidth() == 32)
+    DefineBuiltinMacro(Buf, "__LONG_MAX__=2147483647L");
+  else if (TI.getLongWidth() == 64)
+    DefineBuiltinMacro(Buf, "__LONG_MAX__=9223372036854775807L");
+  else if (TI.getLongWidth() == 16)
+    DefineBuiltinMacro(Buf, "__LONG_MAX__=32767L");
+  else
+    assert(0 && "Unknown long size");
+  
+  // For "32-bit" targets, GCC generally defines intmax to be 'long long' and
+  // ptrdiff_t to be 'int'.  On "64-bit" targets, it defines intmax to be long,
+  // and ptrdiff_t to be 'long int'.  This sort of stuff shouldn't matter in
+  // theory, but can affect C++ overloading, stringizing, etc.
+  if (TI.getPointerWidth(0) == TI.getLongLongWidth()) {
+    // If sizeof(void*) == sizeof(long long) assume we have an LP64 target,
+    // because we assume sizeof(long) always is sizeof(void*) currently.
+    assert(TI.getPointerWidth(0) == TI.getLongWidth() && 
+           TI.getLongWidth() == 64 && 
+           TI.getIntWidth() == 32 && "Not I32 LP64?");
+    DefineBuiltinMacro(Buf, "__INTMAX_MAX__=9223372036854775807L");
+    DefineBuiltinMacro(Buf, "__INTMAX_TYPE__=long int");
+    DefineBuiltinMacro(Buf, "__PTRDIFF_TYPE__=long int");
+    DefineBuiltinMacro(Buf, "__UINTMAX_TYPE__=long unsigned int");
+  } else {
+    // Otherwise we know that the pointer is smaller than long long. We continue
+    // to assume that sizeof(void*) == sizeof(long).
+    assert(TI.getPointerWidth(0) < TI.getLongLongWidth() &&
+           TI.getPointerWidth(0) == TI.getLongWidth() &&
+           "Unexpected target sizes");
+    // We currently only support targets where long is 32-bit.  This can be
+    // easily generalized in the future.
+    DefineBuiltinMacro(Buf, "__INTMAX_MAX__=9223372036854775807LL");
+    DefineBuiltinMacro(Buf, "__INTMAX_TYPE__=long long int");
+    DefineBuiltinMacro(Buf, "__PTRDIFF_TYPE__=int");
+    DefineBuiltinMacro(Buf, "__UINTMAX_TYPE__=long long unsigned int");
+  }
+  
+  // All of our current targets have sizeof(long) == sizeof(void*).
+  assert(TI.getPointerWidth(0) == TI.getLongWidth());
+  DefineBuiltinMacro(Buf, "__SIZE_TYPE__=long unsigned int");
+
+  
+  
   
   // Add __builtin_va_list typedef.
   {

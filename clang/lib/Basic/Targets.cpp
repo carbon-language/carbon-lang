@@ -115,22 +115,6 @@ static void getPowerPCDefines(std::vector<char> &Defs, bool is64Bit) {
   Define(Defs, "_BIG_ENDIAN");
   Define(Defs, "__BIG_ENDIAN__");
 
-  if (is64Bit) {
-    Define(Defs, "__INTMAX_MAX__", "9223372036854775807L");
-    Define(Defs, "__INTMAX_TYPE__", "long int");
-    Define(Defs, "__LONG_MAX__", "9223372036854775807L");
-    Define(Defs, "__PTRDIFF_TYPE__", "long int");
-    Define(Defs, "__UINTMAX_TYPE__", "long unsigned int");
-  } else {
-    Define(Defs, "__INTMAX_MAX__", "9223372036854775807LL");
-    Define(Defs, "__INTMAX_TYPE__", "long long int");
-    Define(Defs, "__LONG_MAX__", "2147483647L");
-    Define(Defs, "__PTRDIFF_TYPE__", "int");
-    Define(Defs, "__UINTMAX_TYPE__", "long long unsigned int");
-  }
-  Define(Defs, "__INT_MAX__", "2147483647");
-  Define(Defs, "__SIZE_TYPE__", "long unsigned int");
-  
   // Subtarget options.
   Define(Defs, "__NATURAL_ALIGNMENT__");
   Define(Defs, "__REGISTER_PREFIX__", "");
@@ -210,22 +194,6 @@ static void getX86Defines(std::vector<char> &Defs, bool is64Bit) {
   // Target properties.
   Define(Defs, "__LITTLE_ENDIAN__");
   
-  if (is64Bit) {
-    Define(Defs, "__INTMAX_MAX__", "9223372036854775807L");
-    Define(Defs, "__INTMAX_TYPE__", "long int");
-    Define(Defs, "__LONG_MAX__", "9223372036854775807L");
-    Define(Defs, "__PTRDIFF_TYPE__", "long int");
-    Define(Defs, "__UINTMAX_TYPE__", "long unsigned int");
-  } else {
-    Define(Defs, "__INTMAX_MAX__", "9223372036854775807LL");
-    Define(Defs, "__INTMAX_TYPE__", "long long int");
-    Define(Defs, "__LONG_MAX__", "2147483647L");
-    Define(Defs, "__PTRDIFF_TYPE__", "int");
-    Define(Defs, "__UINTMAX_TYPE__", "long long unsigned int");
-  }
-  Define(Defs, "__SIZE_TYPE__", "long unsigned int");
-  Define(Defs, "__INT_MAX__", "2147483647");
-  
   // Subtarget options.
   Define(Defs, "__nocona");
   Define(Defs, "__nocona__");
@@ -296,15 +264,6 @@ static void getARMDefines(std::vector<char> &Defs) {
   
   // Target properties.
   Define(Defs, "__LITTLE_ENDIAN__");
-  
-  Define(Defs, "__INTMAX_MAX__", "9223372036854775807LL");
-  Define(Defs, "__INTMAX_TYPE__", "long long int");
-  Define(Defs, "__LONG_MAX__", "2147483647L");
-  Define(Defs, "__PTRDIFF_TYPE__", "int");
-  Define(Defs, "__UINTMAX_TYPE__", "long long unsigned int");
-  Define(Defs, "__SIZE_TYPE__", "long unsigned int");
-  
-  Define(Defs, "__INT_MAX__", "2147483647");
   
   // Subtarget options.  [hard coded to v6 for now]
   Define(Defs, "__ARM_ARCH_6K__");
@@ -936,6 +895,7 @@ namespace {
       // FIXME: Is IntAlign really supposed to be 16?  There seems
       // little point on a platform with 8-bit loads.
       IntWidth = IntAlign = LongAlign = LongLongAlign = PointerWidth = 16;
+      LongWidth = 16;
       PointerAlign = 8;
       DescriptionString = "e-p:16:8:8-i8:8:8-i16:8:8-i32:8:8";
     }

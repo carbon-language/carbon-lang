@@ -72,12 +72,6 @@ public:
   uint64_t getPointerAlign(unsigned AddrSpace) const {
     return AddrSpace == 0 ? PointerAlign : getPointerAlignV(AddrSpace);
   }
-  virtual uint64_t getPointerWidthV(unsigned AddrSpace) const {
-    return PointerWidth;
-  }
-  virtual uint64_t getPointerAlignV(unsigned AddrSpace) const {
-    return PointerAlign;
-  }
   
   /// getBoolWidth/Align - Return the size of '_Bool' and C++ 'bool' for this
   /// target, in bits.
@@ -219,6 +213,13 @@ public:
   virtual bool useNeXTRuntimeAsDefault() const { return false; }
 
 protected:
+  virtual uint64_t getPointerWidthV(unsigned AddrSpace) const {
+    return PointerWidth;
+  }
+  virtual uint64_t getPointerAlignV(unsigned AddrSpace) const {
+    return PointerAlign;
+  }
+  
   virtual void getGCCRegNames(const char * const *&Names, 
                               unsigned &NumNames) const = 0;
   virtual void getGCCRegAliases(const GCCRegAlias *&Aliases, 
