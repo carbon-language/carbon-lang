@@ -395,13 +395,51 @@ static T PickFP(const llvm::fltSemantics *Sem, T IEEESingleVal,
 
 static void DefineFloatMacros(std::vector<char> &Buf, const char *Prefix,
                               const llvm::fltSemantics *Sem) {
-  const char *DenormMin = PickFP(Sem, "1.40129846e-45F",
-                                 "4.9406564584124654e-324", 
-                                 "3.64519953188247460253e-4951L",
-                                 "4.94065645841246544176568792868221e-324L");
+  const char *DenormMin, *Epsilon, *Max, *Min;
+  DenormMin = PickFP(Sem, "1.40129846e-45F", "4.9406564584124654e-324", 
+                     "3.64519953188247460253e-4951L",
+                     "4.94065645841246544176568792868221e-324L");
+  int Digits = PickFP(Sem, 6, 15, 18, 31);
+  Epsilon = PickFP(Sem, "1.19209290e-7F", "2.2204460492503131e-16",
+                   "1.08420217248550443401e-19L",
+                   "4.94065645841246544176568792868221e-324L");
+  int HasInifinity = 1, HasQuietNaN = 1;
+  int MantissaDigits = PickFP(Sem, 24, 53, 64, 106);
+  int Min10Exp = PickFP(Sem, -37, -307, -4931, -291);
+  int Max10Exp = PickFP(Sem, 38, 308, 4932, 308);
+  int MinExp = PickFP(Sem, -125, -1021, -16381, -968);
+  int MaxExp = PickFP(Sem, 128, 1024, 16384, 1024);
+  Min = PickFP(Sem, "1.17549435e-38F", "2.2250738585072014e-308",
+               "3.36210314311209350626e-4932L",
+               "2.00416836000897277799610805135016e-292L");
+  Max = PickFP(Sem, "3.40282347e+38F", "1.7976931348623157e+308",
+               "1.18973149535723176502e+4932L",
+               "1.79769313486231580793728971405301e+308L");
   
   char MacroBuf[60];
   sprintf(MacroBuf, "__%s_DENORM_MIN__=%s", Prefix, DenormMin);
+  DefineBuiltinMacro(Buf, MacroBuf);
+  sprintf(MacroBuf, "__%s_DIG__=%d", Prefix, Digits);
+  DefineBuiltinMacro(Buf, MacroBuf);
+  sprintf(MacroBuf, "__%s_EPSILON__=%s", Prefix, Epsilon);
+  DefineBuiltinMacro(Buf, MacroBuf);
+  sprintf(MacroBuf, "__%s_HAS_INFINITY__=%d", Prefix, HasInifinity);
+  DefineBuiltinMacro(Buf, MacroBuf);
+  sprintf(MacroBuf, "__%s_HAS_QUIET_NAN__=%d", Prefix, HasQuietNaN);
+  DefineBuiltinMacro(Buf, MacroBuf);
+  sprintf(MacroBuf, "__%s_MANT_DIG__=%d", Prefix, MantissaDigits);
+  DefineBuiltinMacro(Buf, MacroBuf);
+  sprintf(MacroBuf, "__%s_MAX_10_EXP__=%d", Prefix, Max10Exp);
+  DefineBuiltinMacro(Buf, MacroBuf);
+  sprintf(MacroBuf, "__%s_MAX_EXP__=%d", Prefix, MaxExp);
+  DefineBuiltinMacro(Buf, MacroBuf);
+  sprintf(MacroBuf, "__%s_MAX__=%s", Prefix, Max);
+  DefineBuiltinMacro(Buf, MacroBuf);
+  sprintf(MacroBuf, "__%s_MIN_10_EXP__=(%d)", Prefix, Min10Exp);
+  DefineBuiltinMacro(Buf, MacroBuf);
+  sprintf(MacroBuf, "__%s_MIN_EXP__=(%d)", Prefix, MinExp);
+  DefineBuiltinMacro(Buf, MacroBuf);
+  sprintf(MacroBuf, "__%s_MIN__=%s", Prefix, Min);
   DefineBuiltinMacro(Buf, MacroBuf);
 }
 
