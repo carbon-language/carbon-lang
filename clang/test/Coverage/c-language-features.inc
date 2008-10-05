@@ -100,5 +100,40 @@ void f4(int a0, int a1, int a2, va_list ap) {
   char t10 = 'x';
   int t11 = __builtin_offsetof(ipair, first);
   int t12 = __builtin_types_compatible_p(ipair, int);  
+  int t12_0 = __builtin_classify_type(t0);
+  int t12_1 = __builtin_classify_type(t1);
+  int t12_2 = __builtin_classify_type(t2);
   int t13 = va_arg(ap, int);
+  va_list t13_0;
+  va_copy(t13_0, ap);
+  int t14 = __extension__(t13);
+  int t15 = +t13;
+  unsigned t16 = t14 ^ t15;
+  int t17 = t14 % t15;
+  int t17_0 = t16 % t16;
+  float t18;
+  int t19 = t18 ? 0 : 1;
+  char *t20; ++t20; --t20;
+  float t21; ++t21; --t21;
+  double t22; ++t22; --t22;
+  long double t23; ++t23; --t23;
+  int t24 = !t19;
+  int t25 = __real t24;
+  int t26 = __imag t24;
+  const char *t27 = t9;
+  t27 += (unsigned char) 0xFF;
+  t27 += (signed char) 0xFF;
+  
+  struct { char f0[10]; } *t28;
+  int t29 = t28 - t28;
+}
+
+// Extended vectors
+
+typedef __attribute__((ext_vector_type(4))) float float4;
+
+void f5() {
+  float4 t0 = (float4) { 0, 1, 2, 3 };
+  float4 t1 = t0;
+  t0.lo.e = t1.hi.x;
 }
