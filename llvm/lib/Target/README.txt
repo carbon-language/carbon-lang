@@ -271,15 +271,7 @@ alas...
 
 //===---------------------------------------------------------------------===//
 
-This isn't recognized as bswap by instcombine:
-
-unsigned int swap_32(unsigned int v) {
-  v = ((v & 0x00ff00ffU) << 8)  | ((v & 0xff00ff00U) >> 8);
-  v = ((v & 0x0000ffffU) << 16) | ((v & 0xffff0000U) >> 16);
-  return v;
-}
-
-Nor is this (yes, it really is bswap):
+This isn't recognized as bswap by instcombine (yes, it really is bswap):
 
 unsigned long reverse(unsigned v) {
     unsigned t;
