@@ -1899,26 +1899,26 @@ static const yytype_uint16 yyrline[] =
     1298,  1299,  1300,  1301,  1304,  1305,  1311,  1312,  1319,  1320,
     1326,  1327,  1336,  1344,  1345,  1350,  1351,  1352,  1357,  1370,
     1370,  1370,  1370,  1370,  1370,  1370,  1373,  1377,  1381,  1388,
-    1393,  1401,  1430,  1455,  1460,  1470,  1480,  1484,  1494,  1501,
-    1510,  1517,  1522,  1527,  1534,  1535,  1542,  1549,  1557,  1563,
-    1575,  1603,  1619,  1646,  1674,  1700,  1720,  1746,  1766,  1778,
-    1785,  1851,  1861,  1871,  1877,  1887,  1893,  1903,  1909,  1915,
-    1928,  1940,  1961,  1969,  1975,  1986,  1991,  1996,  2001,  2006,
-    2012,  2018,  2024,  2032,  2043,  2047,  2055,  2055,  2058,  2058,
-    2061,  2073,  2094,  2099,  2107,  2108,  2112,  2112,  2116,  2116,
-    2119,  2122,  2146,  2158,  2157,  2169,  2168,  2178,  2177,  2188,
-    2228,  2231,  2237,  2247,  2251,  2256,  2258,  2263,  2268,  2277,
-    2287,  2298,  2302,  2311,  2320,  2325,  2474,  2474,  2476,  2485,
-    2485,  2487,  2492,  2504,  2508,  2513,  2517,  2521,  2526,  2531,
-    2535,  2539,  2543,  2547,  2551,  2555,  2577,  2599,  2605,  2618,
-    2630,  2635,  2647,  2653,  2657,  2667,  2671,  2675,  2680,  2687,
-    2687,  2693,  2702,  2707,  2712,  2716,  2725,  2734,  2747,  2756,
-    2760,  2768,  2788,  2792,  2797,  2808,  2827,  2836,  2940,  2944,
-    2951,  2962,  2975,  2984,  2997,  3008,  3018,  3029,  3037,  3047,
-    3054,  3057,  3058,  3066,  3072,  3081,  3085,  3090,  3106,  3123,
-    3135,  3147,  3161,  3175,  3187,  3208,  3215,  3221,  3227,  3233,
-    3248,  3358,  3363,  3367,  3374,  3381,  3391,  3398,  3408,  3416,
-    3430,  3447,  3461,  3476,  3491
+    1393,  1401,  1436,  1467,  1472,  1482,  1492,  1496,  1506,  1513,
+    1522,  1529,  1534,  1539,  1546,  1547,  1554,  1561,  1569,  1575,
+    1587,  1615,  1631,  1658,  1686,  1712,  1732,  1758,  1778,  1790,
+    1797,  1863,  1873,  1883,  1889,  1899,  1905,  1915,  1921,  1927,
+    1940,  1952,  1973,  1981,  1987,  1998,  2003,  2008,  2013,  2018,
+    2024,  2030,  2036,  2044,  2055,  2059,  2067,  2067,  2070,  2070,
+    2073,  2085,  2106,  2111,  2119,  2120,  2124,  2124,  2128,  2128,
+    2131,  2134,  2158,  2170,  2169,  2181,  2180,  2190,  2189,  2200,
+    2240,  2243,  2249,  2259,  2263,  2268,  2270,  2275,  2280,  2289,
+    2299,  2310,  2314,  2323,  2332,  2337,  2486,  2486,  2488,  2497,
+    2497,  2499,  2504,  2516,  2520,  2525,  2529,  2533,  2538,  2543,
+    2547,  2551,  2555,  2559,  2563,  2567,  2589,  2611,  2617,  2630,
+    2642,  2647,  2659,  2665,  2669,  2679,  2683,  2687,  2692,  2699,
+    2699,  2705,  2714,  2719,  2724,  2728,  2737,  2746,  2759,  2768,
+    2772,  2780,  2800,  2804,  2809,  2820,  2839,  2848,  2952,  2956,
+    2963,  2974,  2987,  2996,  3009,  3020,  3030,  3041,  3049,  3059,
+    3066,  3069,  3070,  3078,  3084,  3093,  3097,  3102,  3118,  3135,
+    3147,  3159,  3173,  3187,  3199,  3220,  3227,  3233,  3239,  3245,
+    3260,  3370,  3375,  3379,  3386,  3393,  3403,  3410,  3420,  3428,
+    3442,  3459,  3473,  3488,  3503
 };
 #endif
 
@@ -4323,15 +4323,21 @@ yyreduce:
     CHECK_FOR_ERROR
 
     FunctionType *FT = FunctionType::get(RetTy, Params, isVarArg);
-    delete (yyvsp[(3) - (5)].TypeWithAttrsList);   // Delete the argument list
     delete (yyvsp[(1) - (5)].TypeVal);   // Delete the return type handle
     (yyval.TypeVal) = new PATypeHolder(HandleUpRefs(FT));
+
+    // Delete the argument list
+    for (I = (yyvsp[(3) - (5)].TypeWithAttrsList)->begin() ; I != E; ++I ) {
+      delete I->Ty;
+    }
+    delete (yyvsp[(3) - (5)].TypeWithAttrsList);
+
     CHECK_FOR_ERROR
   ;}
     break;
 
   case 162:
-#line 1430 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1436 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     // Allow but ignore attributes on function types; this permits auto-upgrade.
     // FIXME: remove in LLVM 3.0.
@@ -4352,14 +4358,20 @@ yyreduce:
     CHECK_FOR_ERROR
 
     FunctionType *FT = FunctionType::get((yyvsp[(1) - (5)].PrimType), Params, isVarArg);
-    delete (yyvsp[(3) - (5)].TypeWithAttrsList);      // Delete the argument list
     (yyval.TypeVal) = new PATypeHolder(HandleUpRefs(FT));
+
+    // Delete the argument list
+    for (I = (yyvsp[(3) - (5)].TypeWithAttrsList)->begin() ; I != E; ++I ) {
+      delete I->Ty;
+    }
+    delete (yyvsp[(3) - (5)].TypeWithAttrsList);
+
     CHECK_FOR_ERROR
   ;}
     break;
 
   case 163:
-#line 1455 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1467 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {          // Sized array type?
     (yyval.TypeVal) = new PATypeHolder(HandleUpRefs(ArrayType::get(*(yyvsp[(4) - (5)].TypeVal), (yyvsp[(2) - (5)].UInt64Val))));
     delete (yyvsp[(4) - (5)].TypeVal);
@@ -4368,7 +4380,7 @@ yyreduce:
     break;
 
   case 164:
-#line 1460 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1472 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {          // Vector type?
      const llvm::Type* ElemTy = (yyvsp[(4) - (5)].TypeVal)->get();
      if ((unsigned)(yyvsp[(2) - (5)].UInt64Val) != (yyvsp[(2) - (5)].UInt64Val))
@@ -4382,7 +4394,7 @@ yyreduce:
     break;
 
   case 165:
-#line 1470 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1482 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {                        // Structure type?
     std::vector<const Type*> Elements;
     for (std::list<llvm::PATypeHolder>::iterator I = (yyvsp[(2) - (3)].TypeList)->begin(),
@@ -4396,7 +4408,7 @@ yyreduce:
     break;
 
   case 166:
-#line 1480 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1492 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {                                  // Empty structure type?
     (yyval.TypeVal) = new PATypeHolder(StructType::get(std::vector<const Type*>()));
     CHECK_FOR_ERROR
@@ -4404,7 +4416,7 @@ yyreduce:
     break;
 
   case 167:
-#line 1484 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1496 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     std::vector<const Type*> Elements;
     for (std::list<llvm::PATypeHolder>::iterator I = (yyvsp[(3) - (5)].TypeList)->begin(),
@@ -4418,7 +4430,7 @@ yyreduce:
     break;
 
   case 168:
-#line 1494 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1506 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {                         // Empty structure type?
     (yyval.TypeVal) = new PATypeHolder(StructType::get(std::vector<const Type*>(), true));
     CHECK_FOR_ERROR
@@ -4426,7 +4438,7 @@ yyreduce:
     break;
 
   case 169:
-#line 1501 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1513 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     // Allow but ignore attributes on function types; this permits auto-upgrade.
     // FIXME: remove in LLVM 3.0.
@@ -4436,7 +4448,7 @@ yyreduce:
     break;
 
   case 170:
-#line 1510 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1522 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(1) - (1)].TypeVal))->getDescription());
@@ -4447,14 +4459,14 @@ yyreduce:
     break;
 
   case 171:
-#line 1517 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1529 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.TypeVal) = new PATypeHolder(Type::VoidTy);
   ;}
     break;
 
   case 172:
-#line 1522 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1534 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.TypeWithAttrsList) = new TypeWithAttrsList();
     (yyval.TypeWithAttrsList)->push_back((yyvsp[(1) - (1)].TypeWithAttrs));
@@ -4463,7 +4475,7 @@ yyreduce:
     break;
 
   case 173:
-#line 1527 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1539 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     ((yyval.TypeWithAttrsList)=(yyvsp[(1) - (3)].TypeWithAttrsList))->push_back((yyvsp[(3) - (3)].TypeWithAttrs));
     CHECK_FOR_ERROR
@@ -4471,7 +4483,7 @@ yyreduce:
     break;
 
   case 175:
-#line 1535 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1547 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.TypeWithAttrsList)=(yyvsp[(1) - (3)].TypeWithAttrsList);
     TypeWithAttrs TWA; TWA.Attrs = Attribute::None;
@@ -4482,7 +4494,7 @@ yyreduce:
     break;
 
   case 176:
-#line 1542 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1554 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.TypeWithAttrsList) = new TypeWithAttrsList;
     TypeWithAttrs TWA; TWA.Attrs = Attribute::None;
@@ -4493,7 +4505,7 @@ yyreduce:
     break;
 
   case 177:
-#line 1549 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1561 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.TypeWithAttrsList) = new TypeWithAttrsList();
     CHECK_FOR_ERROR
@@ -4501,7 +4513,7 @@ yyreduce:
     break;
 
   case 178:
-#line 1557 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1569 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.TypeList) = new std::list<PATypeHolder>();
     (yyval.TypeList)->push_back(*(yyvsp[(1) - (1)].TypeVal));
@@ -4511,7 +4523,7 @@ yyreduce:
     break;
 
   case 179:
-#line 1563 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1575 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     ((yyval.TypeList)=(yyvsp[(1) - (3)].TypeList))->push_back(*(yyvsp[(3) - (3)].TypeVal));
     delete (yyvsp[(3) - (3)].TypeVal);
@@ -4520,7 +4532,7 @@ yyreduce:
     break;
 
   case 180:
-#line 1575 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1587 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     { // Nonempty unsized arr
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(1) - (4)].TypeVal))->getDescription());
@@ -4552,7 +4564,7 @@ yyreduce:
     break;
 
   case 181:
-#line 1603 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1615 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(1) - (3)].TypeVal))->getDescription());
@@ -4572,7 +4584,7 @@ yyreduce:
     break;
 
   case 182:
-#line 1619 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1631 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(1) - (3)].TypeVal))->getDescription());
@@ -4603,7 +4615,7 @@ yyreduce:
     break;
 
   case 183:
-#line 1646 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1658 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     { // Nonempty unsized arr
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(1) - (4)].TypeVal))->getDescription());
@@ -4635,7 +4647,7 @@ yyreduce:
     break;
 
   case 184:
-#line 1674 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1686 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     const StructType *STy = dyn_cast<StructType>((yyvsp[(1) - (4)].TypeVal)->get());
     if (STy == 0)
@@ -4665,7 +4677,7 @@ yyreduce:
     break;
 
   case 185:
-#line 1700 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1712 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(1) - (3)].TypeVal))->getDescription());
@@ -4689,7 +4701,7 @@ yyreduce:
     break;
 
   case 186:
-#line 1720 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1732 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     const StructType *STy = dyn_cast<StructType>((yyvsp[(1) - (6)].TypeVal)->get());
     if (STy == 0)
@@ -4719,7 +4731,7 @@ yyreduce:
     break;
 
   case 187:
-#line 1746 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1758 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(1) - (5)].TypeVal))->getDescription());
@@ -4743,7 +4755,7 @@ yyreduce:
     break;
 
   case 188:
-#line 1766 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1778 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(1) - (2)].TypeVal))->getDescription());
@@ -4759,7 +4771,7 @@ yyreduce:
     break;
 
   case 189:
-#line 1778 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1790 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(1) - (2)].TypeVal))->getDescription());
@@ -4770,7 +4782,7 @@ yyreduce:
     break;
 
   case 190:
-#line 1785 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1797 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(1) - (2)].TypeVal))->getDescription());
@@ -4840,7 +4852,7 @@ yyreduce:
     break;
 
   case 191:
-#line 1851 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1863 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(1) - (2)].TypeVal))->getDescription());
@@ -4854,7 +4866,7 @@ yyreduce:
     break;
 
   case 192:
-#line 1861 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1873 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(1) - (2)].TypeVal))->getDescription());
@@ -4868,7 +4880,7 @@ yyreduce:
     break;
 
   case 193:
-#line 1871 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1883 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {      // integral constants
     if (!ConstantInt::isValueValidForType((yyvsp[(1) - (2)].PrimType), (yyvsp[(2) - (2)].SInt64Val)))
       GEN_ERROR("Constant value doesn't fit in type");
@@ -4878,7 +4890,7 @@ yyreduce:
     break;
 
   case 194:
-#line 1877 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1889 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {      // arbitrary precision integer constants
     uint32_t BitWidth = cast<IntegerType>((yyvsp[(1) - (2)].PrimType))->getBitWidth();
     if ((yyvsp[(2) - (2)].APIntVal)->getBitWidth() > BitWidth) {
@@ -4892,7 +4904,7 @@ yyreduce:
     break;
 
   case 195:
-#line 1887 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1899 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {      // integral constants
     if (!ConstantInt::isValueValidForType((yyvsp[(1) - (2)].PrimType), (yyvsp[(2) - (2)].UInt64Val)))
       GEN_ERROR("Constant value doesn't fit in type");
@@ -4902,7 +4914,7 @@ yyreduce:
     break;
 
   case 196:
-#line 1893 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1905 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {      // arbitrary precision integer constants
     uint32_t BitWidth = cast<IntegerType>((yyvsp[(1) - (2)].PrimType))->getBitWidth();
     if ((yyvsp[(2) - (2)].APIntVal)->getBitWidth() > BitWidth) {
@@ -4916,7 +4928,7 @@ yyreduce:
     break;
 
   case 197:
-#line 1903 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1915 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {                      // Boolean constants
     if (cast<IntegerType>((yyvsp[(1) - (2)].PrimType))->getBitWidth() != 1)
       GEN_ERROR("Constant true must have type i1");
@@ -4926,7 +4938,7 @@ yyreduce:
     break;
 
   case 198:
-#line 1909 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1921 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {                     // Boolean constants
     if (cast<IntegerType>((yyvsp[(1) - (2)].PrimType))->getBitWidth() != 1)
       GEN_ERROR("Constant false must have type i1");
@@ -4936,7 +4948,7 @@ yyreduce:
     break;
 
   case 199:
-#line 1915 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1927 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {                   // Floating point constants
     if (!ConstantFP::isValueValidForType((yyvsp[(1) - (2)].PrimType), *(yyvsp[(2) - (2)].FPVal)))
       GEN_ERROR("Floating point constant invalid for type");
@@ -4951,7 +4963,7 @@ yyreduce:
     break;
 
   case 200:
-#line 1928 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1940 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(5) - (6)].TypeVal))->getDescription());
@@ -4967,7 +4979,7 @@ yyreduce:
     break;
 
   case 201:
-#line 1940 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1952 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!isa<PointerType>((yyvsp[(3) - (5)].ConstVal)->getType()))
       GEN_ERROR("GetElementPtr requires a pointer operand");
@@ -4992,7 +5004,7 @@ yyreduce:
     break;
 
   case 202:
-#line 1961 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1973 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if ((yyvsp[(3) - (8)].ConstVal)->getType() != Type::Int1Ty)
       GEN_ERROR("Select condition must be of boolean type");
@@ -5004,7 +5016,7 @@ yyreduce:
     break;
 
   case 203:
-#line 1969 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1981 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if ((yyvsp[(3) - (6)].ConstVal)->getType() != (yyvsp[(5) - (6)].ConstVal)->getType())
       GEN_ERROR("Binary operator types must match");
@@ -5014,7 +5026,7 @@ yyreduce:
     break;
 
   case 204:
-#line 1975 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1987 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if ((yyvsp[(3) - (6)].ConstVal)->getType() != (yyvsp[(5) - (6)].ConstVal)->getType())
       GEN_ERROR("Logical operator types must match");
@@ -5029,7 +5041,7 @@ yyreduce:
     break;
 
   case 205:
-#line 1986 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1998 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if ((yyvsp[(4) - (7)].ConstVal)->getType() != (yyvsp[(6) - (7)].ConstVal)->getType())
       GEN_ERROR("icmp operand types must match");
@@ -5038,7 +5050,7 @@ yyreduce:
     break;
 
   case 206:
-#line 1991 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2003 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if ((yyvsp[(4) - (7)].ConstVal)->getType() != (yyvsp[(6) - (7)].ConstVal)->getType())
       GEN_ERROR("fcmp operand types must match");
@@ -5047,7 +5059,7 @@ yyreduce:
     break;
 
   case 207:
-#line 1996 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2008 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if ((yyvsp[(4) - (7)].ConstVal)->getType() != (yyvsp[(6) - (7)].ConstVal)->getType())
       GEN_ERROR("vicmp operand types must match");
@@ -5056,7 +5068,7 @@ yyreduce:
     break;
 
   case 208:
-#line 2001 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2013 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if ((yyvsp[(4) - (7)].ConstVal)->getType() != (yyvsp[(6) - (7)].ConstVal)->getType())
       GEN_ERROR("vfcmp operand types must match");
@@ -5065,7 +5077,7 @@ yyreduce:
     break;
 
   case 209:
-#line 2006 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2018 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!ExtractElementInst::isValidOperands((yyvsp[(3) - (6)].ConstVal), (yyvsp[(5) - (6)].ConstVal)))
       GEN_ERROR("Invalid extractelement operands");
@@ -5075,7 +5087,7 @@ yyreduce:
     break;
 
   case 210:
-#line 2012 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2024 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!InsertElementInst::isValidOperands((yyvsp[(3) - (8)].ConstVal), (yyvsp[(5) - (8)].ConstVal), (yyvsp[(7) - (8)].ConstVal)))
       GEN_ERROR("Invalid insertelement operands");
@@ -5085,7 +5097,7 @@ yyreduce:
     break;
 
   case 211:
-#line 2018 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2030 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!ShuffleVectorInst::isValidOperands((yyvsp[(3) - (8)].ConstVal), (yyvsp[(5) - (8)].ConstVal), (yyvsp[(7) - (8)].ConstVal)))
       GEN_ERROR("Invalid shufflevector operands");
@@ -5095,7 +5107,7 @@ yyreduce:
     break;
 
   case 212:
-#line 2024 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2036 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!isa<StructType>((yyvsp[(3) - (5)].ConstVal)->getType()) && !isa<ArrayType>((yyvsp[(3) - (5)].ConstVal)->getType()))
       GEN_ERROR("ExtractValue requires an aggregate operand");
@@ -5107,7 +5119,7 @@ yyreduce:
     break;
 
   case 213:
-#line 2032 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2044 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!isa<StructType>((yyvsp[(3) - (7)].ConstVal)->getType()) && !isa<ArrayType>((yyvsp[(3) - (7)].ConstVal)->getType()))
       GEN_ERROR("InsertValue requires an aggregate operand");
@@ -5119,7 +5131,7 @@ yyreduce:
     break;
 
   case 214:
-#line 2043 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2055 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     ((yyval.ConstVector) = (yyvsp[(1) - (3)].ConstVector))->push_back((yyvsp[(3) - (3)].ConstVal));
     CHECK_FOR_ERROR
@@ -5127,7 +5139,7 @@ yyreduce:
     break;
 
   case 215:
-#line 2047 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2059 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.ConstVector) = new std::vector<Constant*>();
     (yyval.ConstVector)->push_back((yyvsp[(1) - (1)].ConstVal));
@@ -5136,27 +5148,27 @@ yyreduce:
     break;
 
   case 216:
-#line 2055 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2067 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.BoolVal) = false; ;}
     break;
 
   case 217:
-#line 2055 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2067 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.BoolVal) = true; ;}
     break;
 
   case 218:
-#line 2058 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2070 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.BoolVal) = true; ;}
     break;
 
   case 219:
-#line 2058 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2070 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.BoolVal) = false; ;}
     break;
 
   case 220:
-#line 2061 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2073 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     const Type* VTy = (yyvsp[(1) - (2)].TypeVal)->get();
     Value *V = getVal(VTy, (yyvsp[(2) - (2)].ValIDVal));
@@ -5172,7 +5184,7 @@ yyreduce:
     break;
 
   case 221:
-#line 2073 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2085 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     Constant *Val = (yyvsp[(3) - (6)].ConstVal);
     const Type *DestTy = (yyvsp[(5) - (6)].TypeVal)->get();
@@ -5188,7 +5200,7 @@ yyreduce:
     break;
 
   case 222:
-#line 2094 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2106 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.ModuleVal) = ParserResult = CurModule.CurrentModule;
     CurModule.ModuleDone();
@@ -5197,7 +5209,7 @@ yyreduce:
     break;
 
   case 223:
-#line 2099 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2111 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.ModuleVal) = ParserResult = CurModule.CurrentModule;
     CurModule.ModuleDone();
@@ -5206,12 +5218,12 @@ yyreduce:
     break;
 
   case 226:
-#line 2112 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2124 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     { CurFun.isDeclare = false; ;}
     break;
 
   case 227:
-#line 2112 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2124 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     CurFun.FunctionDone();
     CHECK_FOR_ERROR
@@ -5219,26 +5231,26 @@ yyreduce:
     break;
 
   case 228:
-#line 2116 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2128 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     { CurFun.isDeclare = true; ;}
     break;
 
   case 229:
-#line 2116 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2128 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     CHECK_FOR_ERROR
   ;}
     break;
 
   case 230:
-#line 2119 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2131 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     CHECK_FOR_ERROR
   ;}
     break;
 
   case 231:
-#line 2122 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2134 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(3) - (3)].TypeVal))->getDescription());
@@ -5266,7 +5278,7 @@ yyreduce:
     break;
 
   case 232:
-#line 2146 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2158 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     ResolveTypeTo((yyvsp[(1) - (3)].StrVal), (yyvsp[(3) - (3)].PrimType));
 
@@ -5281,7 +5293,7 @@ yyreduce:
     break;
 
   case 233:
-#line 2158 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2170 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     /* "Externally Visible" Linkage */
     if ((yyvsp[(5) - (6)].ConstVal) == 0)
@@ -5293,14 +5305,14 @@ yyreduce:
     break;
 
   case 234:
-#line 2165 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2177 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     CurGV = 0;
   ;}
     break;
 
   case 235:
-#line 2169 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2181 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if ((yyvsp[(6) - (7)].ConstVal) == 0)
       GEN_ERROR("Global value initializer is not a constant");
@@ -5310,14 +5322,14 @@ yyreduce:
     break;
 
   case 236:
-#line 2174 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2186 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     CurGV = 0;
   ;}
     break;
 
   case 237:
-#line 2178 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2190 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(6) - (7)].TypeVal))->getDescription());
@@ -5328,7 +5340,7 @@ yyreduce:
     break;
 
   case 238:
-#line 2184 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2196 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     CurGV = 0;
     CHECK_FOR_ERROR
@@ -5336,7 +5348,7 @@ yyreduce:
     break;
 
   case 239:
-#line 2188 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2200 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     std::string Name;
     if ((yyvsp[(1) - (5)].StrVal)) {
@@ -5380,21 +5392,21 @@ yyreduce:
     break;
 
   case 240:
-#line 2228 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2240 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     CHECK_FOR_ERROR
   ;}
     break;
 
   case 241:
-#line 2231 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2243 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     CHECK_FOR_ERROR
   ;}
     break;
 
   case 242:
-#line 2237 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2249 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
   const std::string &AsmSoFar = CurModule.CurrentModule->getModuleInlineAsm();
   if (AsmSoFar.empty())
@@ -5407,7 +5419,7 @@ yyreduce:
     break;
 
   case 243:
-#line 2247 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2259 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     CurModule.CurrentModule->setTargetTriple(*(yyvsp[(3) - (3)].StrVal));
     delete (yyvsp[(3) - (3)].StrVal);
@@ -5415,7 +5427,7 @@ yyreduce:
     break;
 
   case 244:
-#line 2251 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2263 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     CurModule.CurrentModule->setDataLayout(*(yyvsp[(3) - (3)].StrVal));
     delete (yyvsp[(3) - (3)].StrVal);
@@ -5423,7 +5435,7 @@ yyreduce:
     break;
 
   case 246:
-#line 2258 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2270 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
           CurModule.CurrentModule->addLibrary(*(yyvsp[(3) - (3)].StrVal));
           delete (yyvsp[(3) - (3)].StrVal);
@@ -5432,7 +5444,7 @@ yyreduce:
     break;
 
   case 247:
-#line 2263 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2275 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
           CurModule.CurrentModule->addLibrary(*(yyvsp[(1) - (1)].StrVal));
           delete (yyvsp[(1) - (1)].StrVal);
@@ -5441,14 +5453,14 @@ yyreduce:
     break;
 
   case 248:
-#line 2268 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2280 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
           CHECK_FOR_ERROR
         ;}
     break;
 
   case 249:
-#line 2277 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2289 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(3) - (5)].TypeVal))->getDescription());
@@ -5462,7 +5474,7 @@ yyreduce:
     break;
 
   case 250:
-#line 2287 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2299 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(1) - (3)].TypeVal))->getDescription());
@@ -5476,7 +5488,7 @@ yyreduce:
     break;
 
   case 251:
-#line 2298 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2310 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.ArgList) = (yyvsp[(1) - (1)].ArgList);
     CHECK_FOR_ERROR
@@ -5484,7 +5496,7 @@ yyreduce:
     break;
 
   case 252:
-#line 2302 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2314 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.ArgList) = (yyvsp[(1) - (3)].ArgList);
     struct ArgListEntry E;
@@ -5497,7 +5509,7 @@ yyreduce:
     break;
 
   case 253:
-#line 2311 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2323 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.ArgList) = new ArgListType;
     struct ArgListEntry E;
@@ -5510,7 +5522,7 @@ yyreduce:
     break;
 
   case 254:
-#line 2320 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2332 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.ArgList) = 0;
     CHECK_FOR_ERROR
@@ -5518,7 +5530,7 @@ yyreduce:
     break;
 
   case 255:
-#line 2326 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2338 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
   std::string FunctionName(*(yyvsp[(4) - (11)].StrVal));
   delete (yyvsp[(4) - (11)].StrVal);  // Free strdup'd memory!
@@ -5669,7 +5681,7 @@ yyreduce:
     break;
 
   case 258:
-#line 2476 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2488 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
   (yyval.FunctionVal) = CurFun.CurrentFunction;
 
@@ -5681,7 +5693,7 @@ yyreduce:
     break;
 
   case 261:
-#line 2487 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2499 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
   (yyval.FunctionVal) = (yyvsp[(1) - (2)].FunctionVal);
   CHECK_FOR_ERROR
@@ -5689,7 +5701,7 @@ yyreduce:
     break;
 
   case 262:
-#line 2492 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2504 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     CurFun.CurrentFunction->setLinkage((yyvsp[(1) - (3)].Linkage));
     CurFun.CurrentFunction->setVisibility((yyvsp[(2) - (3)].Visibility));
@@ -5700,7 +5712,7 @@ yyreduce:
     break;
 
   case 263:
-#line 2504 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2516 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.BoolVal) = false;
     CHECK_FOR_ERROR
@@ -5708,7 +5720,7 @@ yyreduce:
     break;
 
   case 264:
-#line 2508 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2520 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.BoolVal) = true;
     CHECK_FOR_ERROR
@@ -5716,7 +5728,7 @@ yyreduce:
     break;
 
   case 265:
-#line 2513 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2525 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {    // A reference to a direct constant
     (yyval.ValIDVal) = ValID::create((yyvsp[(1) - (1)].SInt64Val));
     CHECK_FOR_ERROR
@@ -5724,7 +5736,7 @@ yyreduce:
     break;
 
   case 266:
-#line 2517 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2529 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.ValIDVal) = ValID::create((yyvsp[(1) - (1)].UInt64Val));
     CHECK_FOR_ERROR
@@ -5732,7 +5744,7 @@ yyreduce:
     break;
 
   case 267:
-#line 2521 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2533 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {      // arbitrary precision integer constants
     (yyval.ValIDVal) = ValID::create(*(yyvsp[(1) - (1)].APIntVal), true);
     delete (yyvsp[(1) - (1)].APIntVal);
@@ -5741,7 +5753,7 @@ yyreduce:
     break;
 
   case 268:
-#line 2526 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2538 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {      // arbitrary precision integer constants
     (yyval.ValIDVal) = ValID::create(*(yyvsp[(1) - (1)].APIntVal), false);
     delete (yyvsp[(1) - (1)].APIntVal);
@@ -5750,7 +5762,7 @@ yyreduce:
     break;
 
   case 269:
-#line 2531 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2543 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {                     // Perhaps it's an FP constant?
     (yyval.ValIDVal) = ValID::create((yyvsp[(1) - (1)].FPVal));
     CHECK_FOR_ERROR
@@ -5758,7 +5770,7 @@ yyreduce:
     break;
 
   case 270:
-#line 2535 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2547 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.ValIDVal) = ValID::create(ConstantInt::getTrue());
     CHECK_FOR_ERROR
@@ -5766,7 +5778,7 @@ yyreduce:
     break;
 
   case 271:
-#line 2539 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2551 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.ValIDVal) = ValID::create(ConstantInt::getFalse());
     CHECK_FOR_ERROR
@@ -5774,7 +5786,7 @@ yyreduce:
     break;
 
   case 272:
-#line 2543 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2555 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.ValIDVal) = ValID::createNull();
     CHECK_FOR_ERROR
@@ -5782,7 +5794,7 @@ yyreduce:
     break;
 
   case 273:
-#line 2547 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2559 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.ValIDVal) = ValID::createUndef();
     CHECK_FOR_ERROR
@@ -5790,7 +5802,7 @@ yyreduce:
     break;
 
   case 274:
-#line 2551 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2563 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {     // A vector zero constant.
     (yyval.ValIDVal) = ValID::createZeroInit();
     CHECK_FOR_ERROR
@@ -5798,7 +5810,7 @@ yyreduce:
     break;
 
   case 275:
-#line 2555 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2567 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     { // Nonempty unsized packed vector
     const Type *ETy = (*(yyvsp[(2) - (3)].ConstVector))[0]->getType();
     unsigned NumElements = (yyvsp[(2) - (3)].ConstVector)->size();
@@ -5824,7 +5836,7 @@ yyreduce:
     break;
 
   case 276:
-#line 2577 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2589 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     { // Nonempty unsized arr
     const Type *ETy = (*(yyvsp[(2) - (3)].ConstVector))[0]->getType();
     uint64_t NumElements = (yyvsp[(2) - (3)].ConstVector)->size();
@@ -5850,7 +5862,7 @@ yyreduce:
     break;
 
   case 277:
-#line 2599 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2611 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     // Use undef instead of an array because it's inconvenient to determine
     // the element type at this point, there being no elements to examine.
@@ -5860,7 +5872,7 @@ yyreduce:
     break;
 
   case 278:
-#line 2605 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2617 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     uint64_t NumElements = (yyvsp[(2) - (2)].StrVal)->length();
     const Type *ETy = Type::Int8Ty;
@@ -5877,7 +5889,7 @@ yyreduce:
     break;
 
   case 279:
-#line 2618 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2630 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     std::vector<const Type*> Elements((yyvsp[(2) - (3)].ConstVector)->size());
     for (unsigned i = 0, e = (yyvsp[(2) - (3)].ConstVector)->size(); i != e; ++i)
@@ -5893,7 +5905,7 @@ yyreduce:
     break;
 
   case 280:
-#line 2630 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2642 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     const StructType *STy = StructType::get(std::vector<const Type*>());
     (yyval.ValIDVal) = ValID::create(ConstantStruct::get(STy, std::vector<Constant*>()));
@@ -5902,7 +5914,7 @@ yyreduce:
     break;
 
   case 281:
-#line 2635 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2647 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     std::vector<const Type*> Elements((yyvsp[(3) - (5)].ConstVector)->size());
     for (unsigned i = 0, e = (yyvsp[(3) - (5)].ConstVector)->size(); i != e; ++i)
@@ -5918,7 +5930,7 @@ yyreduce:
     break;
 
   case 282:
-#line 2647 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2659 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     const StructType *STy = StructType::get(std::vector<const Type*>(),
                                             /*isPacked=*/true);
@@ -5928,7 +5940,7 @@ yyreduce:
     break;
 
   case 283:
-#line 2653 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2665 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.ValIDVal) = ValID::create((yyvsp[(1) - (1)].ConstVal));
     CHECK_FOR_ERROR
@@ -5936,7 +5948,7 @@ yyreduce:
     break;
 
   case 284:
-#line 2657 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2669 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.ValIDVal) = ValID::createInlineAsm(*(yyvsp[(3) - (5)].StrVal), *(yyvsp[(5) - (5)].StrVal), (yyvsp[(2) - (5)].BoolVal));
     delete (yyvsp[(3) - (5)].StrVal);
@@ -5946,7 +5958,7 @@ yyreduce:
     break;
 
   case 285:
-#line 2667 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2679 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {  // Is it an integer reference...?
     (yyval.ValIDVal) = ValID::createLocalID((yyvsp[(1) - (1)].UIntVal));
     CHECK_FOR_ERROR
@@ -5954,7 +5966,7 @@ yyreduce:
     break;
 
   case 286:
-#line 2671 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2683 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.ValIDVal) = ValID::createGlobalID((yyvsp[(1) - (1)].UIntVal));
     CHECK_FOR_ERROR
@@ -5962,7 +5974,7 @@ yyreduce:
     break;
 
   case 287:
-#line 2675 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2687 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {                   // Is it a named reference...?
     (yyval.ValIDVal) = ValID::createLocalName(*(yyvsp[(1) - (1)].StrVal));
     delete (yyvsp[(1) - (1)].StrVal);
@@ -5971,7 +5983,7 @@ yyreduce:
     break;
 
   case 288:
-#line 2680 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2692 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {                   // Is it a named reference...?
     (yyval.ValIDVal) = ValID::createGlobalName(*(yyvsp[(1) - (1)].StrVal));
     delete (yyvsp[(1) - (1)].StrVal);
@@ -5980,7 +5992,7 @@ yyreduce:
     break;
 
   case 291:
-#line 2693 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2705 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(1) - (2)].TypeVal))->getDescription());
@@ -5991,7 +6003,7 @@ yyreduce:
     break;
 
   case 292:
-#line 2702 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2714 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.ValueList) = new std::vector<Value *>();
     (yyval.ValueList)->push_back((yyvsp[(1) - (1)].ValueVal));
@@ -6000,7 +6012,7 @@ yyreduce:
     break;
 
   case 293:
-#line 2707 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2719 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     ((yyval.ValueList)=(yyvsp[(1) - (3)].ValueList))->push_back((yyvsp[(3) - (3)].ValueVal));
     CHECK_FOR_ERROR
@@ -6008,7 +6020,7 @@ yyreduce:
     break;
 
   case 294:
-#line 2712 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2724 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.FunctionVal) = (yyvsp[(1) - (2)].FunctionVal);
     CHECK_FOR_ERROR
@@ -6016,7 +6028,7 @@ yyreduce:
     break;
 
   case 295:
-#line 2716 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2728 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     { // Do not allow functions with 0 basic blocks
     (yyval.FunctionVal) = (yyvsp[(1) - (2)].FunctionVal);
     CHECK_FOR_ERROR
@@ -6024,7 +6036,7 @@ yyreduce:
     break;
 
   case 296:
-#line 2725 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2737 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     setValueName((yyvsp[(3) - (3)].TermInstVal), (yyvsp[(2) - (3)].StrVal));
     CHECK_FOR_ERROR
@@ -6036,7 +6048,7 @@ yyreduce:
     break;
 
   case 297:
-#line 2734 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2746 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
   CHECK_FOR_ERROR
   int ValNum = InsertValue((yyvsp[(3) - (3)].TermInstVal));
@@ -6051,7 +6063,7 @@ yyreduce:
     break;
 
   case 298:
-#line 2747 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2759 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (CastInst *CI1 = dyn_cast<CastInst>((yyvsp[(2) - (2)].InstVal)))
       if (CastInst *CI2 = dyn_cast<CastInst>(CI1->getOperand(0)))
@@ -6064,7 +6076,7 @@ yyreduce:
     break;
 
   case 299:
-#line 2756 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2768 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {          // Empty space between instruction lists
     (yyval.BasicBlockVal) = defineBBVal(ValID::createLocalID(CurFun.NextValNum));
     CHECK_FOR_ERROR
@@ -6072,7 +6084,7 @@ yyreduce:
     break;
 
   case 300:
-#line 2760 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2772 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {             // Labelled (named) basic block
     (yyval.BasicBlockVal) = defineBBVal(ValID::createLocalName(*(yyvsp[(1) - (1)].StrVal)));
     delete (yyvsp[(1) - (1)].StrVal);
@@ -6082,7 +6094,7 @@ yyreduce:
     break;
 
   case 301:
-#line 2768 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2780 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     { // Return with a result...
     ValueList &VL = *(yyvsp[(2) - (2)].ValueList);
     assert(!VL.empty() && "Invalid ret operands!");
@@ -6106,7 +6118,7 @@ yyreduce:
     break;
 
   case 302:
-#line 2788 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2800 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {                                    // Return with no result...
     (yyval.TermInstVal) = ReturnInst::Create();
     CHECK_FOR_ERROR
@@ -6114,7 +6126,7 @@ yyreduce:
     break;
 
   case 303:
-#line 2792 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2804 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {                           // Unconditional Branch...
     BasicBlock* tmpBB = getBBVal((yyvsp[(3) - (3)].ValIDVal));
     CHECK_FOR_ERROR
@@ -6123,7 +6135,7 @@ yyreduce:
     break;
 
   case 304:
-#line 2797 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2809 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (cast<IntegerType>((yyvsp[(2) - (9)].PrimType))->getBitWidth() != 1)
       GEN_ERROR("Branch condition must have type i1");
@@ -6138,7 +6150,7 @@ yyreduce:
     break;
 
   case 305:
-#line 2808 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2820 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     Value* tmpVal = getVal((yyvsp[(2) - (9)].PrimType), (yyvsp[(3) - (9)].ValIDVal));
     CHECK_FOR_ERROR
@@ -6161,7 +6173,7 @@ yyreduce:
     break;
 
   case 306:
-#line 2827 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2839 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     Value* tmpVal = getVal((yyvsp[(2) - (8)].PrimType), (yyvsp[(3) - (8)].ValIDVal));
     CHECK_FOR_ERROR
@@ -6174,7 +6186,7 @@ yyreduce:
     break;
 
   case 307:
-#line 2837 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2849 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
 
     // Handle the short syntax
@@ -6281,7 +6293,7 @@ yyreduce:
     break;
 
   case 308:
-#line 2940 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2952 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.TermInstVal) = new UnwindInst();
     CHECK_FOR_ERROR
@@ -6289,7 +6301,7 @@ yyreduce:
     break;
 
   case 309:
-#line 2944 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2956 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.TermInstVal) = new UnreachableInst();
     CHECK_FOR_ERROR
@@ -6297,7 +6309,7 @@ yyreduce:
     break;
 
   case 310:
-#line 2951 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2963 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.JumpTable) = (yyvsp[(1) - (6)].JumpTable);
     Constant *V = cast<Constant>(getExistingVal((yyvsp[(2) - (6)].PrimType), (yyvsp[(3) - (6)].ValIDVal)));
@@ -6312,7 +6324,7 @@ yyreduce:
     break;
 
   case 311:
-#line 2962 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2974 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.JumpTable) = new std::vector<std::pair<Constant*, BasicBlock*> >();
     Constant *V = cast<Constant>(getExistingVal((yyvsp[(1) - (5)].PrimType), (yyvsp[(2) - (5)].ValIDVal)));
@@ -6328,7 +6340,7 @@ yyreduce:
     break;
 
   case 312:
-#line 2975 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2987 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     // Is this definition named?? if so, assign the name...
     setValueName((yyvsp[(2) - (2)].InstVal), (yyvsp[(1) - (2)].StrVal));
@@ -6340,7 +6352,7 @@ yyreduce:
     break;
 
   case 313:
-#line 2984 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2996 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     CHECK_FOR_ERROR
     int ValNum = InsertValue((yyvsp[(2) - (2)].InstVal));
@@ -6355,7 +6367,7 @@ yyreduce:
     break;
 
   case 314:
-#line 2997 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 3009 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {    // Used for PHI nodes
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(1) - (6)].TypeVal))->getDescription());
@@ -6370,7 +6382,7 @@ yyreduce:
     break;
 
   case 315:
-#line 3008 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 3020 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.PHIList) = (yyvsp[(1) - (7)].PHIList);
     Value* tmpVal = getVal((yyvsp[(1) - (7)].PHIList)->front().first->getType(), (yyvsp[(4) - (7)].ValIDVal));
@@ -6382,7 +6394,7 @@ yyreduce:
     break;
 
   case 316:
-#line 3018 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 3030 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     // FIXME: Remove trailing OptAttributes in LLVM 3.0, it was a mistake in 2.0
     if (!UpRefs.empty())
@@ -6397,7 +6409,7 @@ yyreduce:
     break;
 
   case 317:
-#line 3029 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 3041 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     // FIXME: Remove trailing OptAttributes in LLVM 3.0, it was a mistake in 2.0
     // Labels are only valid in ASMs
@@ -6409,7 +6421,7 @@ yyreduce:
     break;
 
   case 318:
-#line 3037 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 3049 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     // FIXME: Remove trailing OptAttributes in LLVM 3.0, it was a mistake in 2.0
     if (!UpRefs.empty())
@@ -6423,7 +6435,7 @@ yyreduce:
     break;
 
   case 319:
-#line 3047 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 3059 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     // FIXME: Remove trailing OptAttributes in LLVM 3.0, it was a mistake in 2.0
     (yyval.ParamList) = (yyvsp[(1) - (6)].ParamList);
@@ -6434,17 +6446,17 @@ yyreduce:
     break;
 
   case 320:
-#line 3054 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 3066 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.ParamList) = new ParamList(); ;}
     break;
 
   case 321:
-#line 3057 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 3069 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.ValueList) = new std::vector<Value*>(); ;}
     break;
 
   case 322:
-#line 3058 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 3070 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.ValueList) = (yyvsp[(1) - (3)].ValueList);
     (yyval.ValueList)->push_back((yyvsp[(3) - (3)].ValueVal));
@@ -6453,7 +6465,7 @@ yyreduce:
     break;
 
   case 323:
-#line 3066 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 3078 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.ConstantList) = new std::vector<unsigned>();
     if ((unsigned)(yyvsp[(2) - (2)].UInt64Val) != (yyvsp[(2) - (2)].UInt64Val))
@@ -6463,7 +6475,7 @@ yyreduce:
     break;
 
   case 324:
-#line 3072 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 3084 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.ConstantList) = (yyvsp[(1) - (3)].ConstantList);
     if ((unsigned)(yyvsp[(3) - (3)].UInt64Val) != (yyvsp[(3) - (3)].UInt64Val))
@@ -6474,7 +6486,7 @@ yyreduce:
     break;
 
   case 325:
-#line 3081 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 3093 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.BoolVal) = true;
     CHECK_FOR_ERROR
@@ -6482,7 +6494,7 @@ yyreduce:
     break;
 
   case 326:
-#line 3085 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 3097 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.BoolVal) = false;
     CHECK_FOR_ERROR
@@ -6490,7 +6502,7 @@ yyreduce:
     break;
 
   case 327:
-#line 3090 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 3102 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(2) - (5)].TypeVal))->getDescription());
@@ -6510,7 +6522,7 @@ yyreduce:
     break;
 
   case 328:
-#line 3106 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 3118 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(2) - (5)].TypeVal))->getDescription());
@@ -6531,7 +6543,7 @@ yyreduce:
     break;
 
   case 329:
-#line 3123 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 3135 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(3) - (6)].TypeVal))->getDescription());
@@ -6547,7 +6559,7 @@ yyreduce:
     break;
 
   case 330:
-#line 3135 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 3147 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(3) - (6)].TypeVal))->getDescription());
@@ -6563,7 +6575,7 @@ yyreduce:
     break;
 
   case 331:
-#line 3147 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 3159 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(3) - (6)].TypeVal))->getDescription());
@@ -6581,7 +6593,7 @@ yyreduce:
     break;
 
   case 332:
-#line 3161 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 3173 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(3) - (6)].TypeVal))->getDescription());
@@ -6599,7 +6611,7 @@ yyreduce:
     break;
 
   case 333:
-#line 3175 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 3187 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(4) - (4)].TypeVal))->getDescription());
@@ -6615,7 +6627,7 @@ yyreduce:
     break;
 
   case 334:
-#line 3187 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 3199 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (isa<VectorType>((yyvsp[(2) - (6)].ValueVal)->getType())) {
       // vector select
@@ -6640,7 +6652,7 @@ yyreduce:
     break;
 
   case 335:
-#line 3208 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 3220 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(4) - (4)].TypeVal))->getDescription());
@@ -6651,7 +6663,7 @@ yyreduce:
     break;
 
   case 336:
-#line 3215 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 3227 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!ExtractElementInst::isValidOperands((yyvsp[(2) - (4)].ValueVal), (yyvsp[(4) - (4)].ValueVal)))
       GEN_ERROR("Invalid extractelement operands");
@@ -6661,7 +6673,7 @@ yyreduce:
     break;
 
   case 337:
-#line 3221 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 3233 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!InsertElementInst::isValidOperands((yyvsp[(2) - (6)].ValueVal), (yyvsp[(4) - (6)].ValueVal), (yyvsp[(6) - (6)].ValueVal)))
       GEN_ERROR("Invalid insertelement operands");
@@ -6671,7 +6683,7 @@ yyreduce:
     break;
 
   case 338:
-#line 3227 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 3239 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!ShuffleVectorInst::isValidOperands((yyvsp[(2) - (6)].ValueVal), (yyvsp[(4) - (6)].ValueVal), (yyvsp[(6) - (6)].ValueVal)))
       GEN_ERROR("Invalid shufflevector operands");
@@ -6681,7 +6693,7 @@ yyreduce:
     break;
 
   case 339:
-#line 3233 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 3245 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     const Type *Ty = (yyvsp[(2) - (2)].PHIList)->front().first->getType();
     if (!Ty->isFirstClassType())
@@ -6700,7 +6712,7 @@ yyreduce:
     break;
 
   case 340:
-#line 3249 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 3261 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
 
     // Handle the short syntax
@@ -6813,7 +6825,7 @@ yyreduce:
     break;
 
   case 341:
-#line 3358 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 3370 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.InstVal) = (yyvsp[(1) - (1)].InstVal);
     CHECK_FOR_ERROR
@@ -6821,7 +6833,7 @@ yyreduce:
     break;
 
   case 342:
-#line 3363 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 3375 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.BoolVal) = true;
     CHECK_FOR_ERROR
@@ -6829,7 +6841,7 @@ yyreduce:
     break;
 
   case 343:
-#line 3367 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 3379 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.BoolVal) = false;
     CHECK_FOR_ERROR
@@ -6837,7 +6849,7 @@ yyreduce:
     break;
 
   case 344:
-#line 3374 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 3386 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(2) - (3)].TypeVal))->getDescription());
@@ -6848,7 +6860,7 @@ yyreduce:
     break;
 
   case 345:
-#line 3381 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 3393 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(2) - (6)].TypeVal))->getDescription());
@@ -6862,7 +6874,7 @@ yyreduce:
     break;
 
   case 346:
-#line 3391 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 3403 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(2) - (3)].TypeVal))->getDescription());
@@ -6873,7 +6885,7 @@ yyreduce:
     break;
 
   case 347:
-#line 3398 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 3410 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(2) - (6)].TypeVal))->getDescription());
@@ -6887,7 +6899,7 @@ yyreduce:
     break;
 
   case 348:
-#line 3408 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 3420 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!isa<PointerType>((yyvsp[(2) - (2)].ValueVal)->getType()))
       GEN_ERROR("Trying to free nonpointer type " +
@@ -6898,7 +6910,7 @@ yyreduce:
     break;
 
   case 349:
-#line 3416 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 3428 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(3) - (5)].TypeVal))->getDescription());
@@ -6916,7 +6928,7 @@ yyreduce:
     break;
 
   case 350:
-#line 3430 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 3442 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(5) - (7)].TypeVal))->getDescription());
@@ -6937,7 +6949,7 @@ yyreduce:
     break;
 
   case 351:
-#line 3447 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 3459 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(2) - (5)].TypeVal))->getDescription());
@@ -6955,7 +6967,7 @@ yyreduce:
     break;
 
   case 352:
-#line 3461 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 3473 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(2) - (4)].TypeVal))->getDescription());
@@ -6974,7 +6986,7 @@ yyreduce:
     break;
 
   case 353:
-#line 3476 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 3488 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(2) - (4)].TypeVal))->getDescription());
@@ -6993,7 +7005,7 @@ yyreduce:
     break;
 
   case 354:
-#line 3491 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 3503 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(2) - (7)].TypeVal))->getDescription());
@@ -7015,7 +7027,7 @@ yyreduce:
 
 
 /* Line 1267 of yacc.c.  */
-#line 7019 "llvmAsmParser.tab.c"
+#line 7031 "llvmAsmParser.tab.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -7229,7 +7241,7 @@ yyreturn:
 }
 
 
-#line 3510 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 3522 "/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 
 
 // common code from the two 'RunVMAsmParser' functions
