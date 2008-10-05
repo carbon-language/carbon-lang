@@ -191,7 +191,7 @@ void CodeEmitterGen::run(std::ostream &o) {
               gotOp = true;
             }
             
-            unsigned opMask = (1 << N) - 1;
+            unsigned opMask = ~0U >> (32-N);
             int opShift = beginVarBit - N + 1;
             opMask <<= opShift;
             opShift = beginInstBit - beginVarBit;
