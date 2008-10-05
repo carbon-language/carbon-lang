@@ -119,12 +119,7 @@ static void getPowerPCDefines(std::vector<char> &Defs, bool is64Bit) {
   Define(Defs, "__NATURAL_ALIGNMENT__");
   Define(Defs, "__REGISTER_PREFIX__", "");
 
-  Define(Defs, "__FLT_EVAL_METHOD__", "0");
-  Define(Defs, "__FLT_RADIX__", "2");
-  Define(Defs, "__DECIMAL_DIG__", "33");
-
-  Define(Defs, "__LDBL_MIN_10_EXP__", "(-291)");
-  
+  // FIXME: Should be controlled by command line option.
   Define(Defs, "__LONG_DOUBLE_128__");
 }
 
@@ -158,10 +153,6 @@ static void getX86Defines(std::vector<char> &Defs, bool is64Bit) {
   Define(Defs, "__SSE__");
   Define(Defs, "__MMX__");
   Define(Defs, "__REGISTER_PREFIX__", "");
-
-  Define(Defs, "__FLT_EVAL_METHOD__", "0");
-  Define(Defs, "__FLT_RADIX__", "2");
-  Define(Defs, "__DECIMAL_DIG__", "21");
 }
 
 /// getARMDefines - Return a set of the ARM-specific #defines that are
@@ -178,10 +169,6 @@ static void getARMDefines(std::vector<char> &Defs) {
   Define(Defs, "__ARM_ARCH_6K__");
   Define(Defs, "__ARMEL__");
   Define(Defs, "__ENVIRONMENT_IPHONE_OS_VERSION_MIN_REQUIRED__", "20000");
-  
-  Define(Defs, "__FLT_EVAL_METHOD__", "0");
-  Define(Defs, "__FLT_RADIX__", "2");
-  Define(Defs, "__DECIMAL_DIG__", "17");
 }
 
 //===----------------------------------------------------------------------===//

@@ -612,11 +612,10 @@ static void InitializePredefinedMacros(Preprocessor &PP,
     Buf.push_back('\n');
   }
   
+  char MacroBuf[60];
   if (const char *Prefix = TI.getUserLabelPrefix()) {
-    llvm::SmallString<20> TmpStr;
-    TmpStr += "__USER_LABEL_PREFIX__=";
-    TmpStr += Prefix;
-    DefineBuiltinMacro(Buf, TmpStr.c_str());
+    sprintf(MacroBuf, "__USER_LABEL_PREFIX__=%s", Prefix);
+    DefineBuiltinMacro(Buf, MacroBuf);
   }
   
   // Build configuration options.  FIXME: these should be controlled by
@@ -626,6 +625,13 @@ static void InitializePredefinedMacros(Preprocessor &PP,
   DefineBuiltinMacro(Buf, "__NO_INLINE__=1");
   DefineBuiltinMacro(Buf, "__PIC__=1");
 
+  // Macros to control C99 numerics and <float.h>
+  DefineBuiltinMacro(Buf, "__FLT_EVAL_METHOD__=0");
+  DefineBuiltinMacro(Buf, "__FLT_RADIX__=2");
+  sprintf(MacroBuf, "__DECIMAL_DIG__=%d",
+          PickFP(&TI.getLongDoubleFormat(), -1/*FIXME*/, 17, 21, 33));
+  DefineBuiltinMacro(Buf, MacroBuf);
+  
   // Get other target #defines.
   TI.getTargetDefines(Buf);
   
