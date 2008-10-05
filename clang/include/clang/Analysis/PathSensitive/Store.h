@@ -39,14 +39,14 @@ public:
   virtual RVal GetRVal(Store St, LVal LV, QualType T = QualType()) = 0;
   virtual Store SetRVal(Store St, LVal LV, RVal V) = 0;
   virtual Store Remove(Store St, LVal LV) = 0;
-  virtual Store getInitialStore(GRStateManager& StateMgr) = 0;
+  virtual Store getInitialStore() = 0;
   
   virtual Store
   RemoveDeadBindings(Store store, Stmt* Loc, const LiveVariables& Live,
                      llvm::SmallVectorImpl<const MemRegion*>& RegionRoots,
                      LiveSymbolsTy& LSymbols, DeadSymbolsTy& DSymbols) = 0;
 
-  virtual Store AddDecl(Store store, GRStateManager& StMgr,
+  virtual Store AddDecl(Store store,
                         const VarDecl* VD, Expr* Ex, 
                         RVal InitVal = UndefinedVal(), unsigned Count = 0) = 0;
 

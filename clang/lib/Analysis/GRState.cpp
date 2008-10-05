@@ -79,10 +79,10 @@ const GRState* GRStateManager::AddDecl(const GRState* St, const VarDecl* VD,
   Store NewStore;
 
   if (Ex)
-    NewStore = StMgr->AddDecl(OldStore, *this, VD, Ex, 
+    NewStore = StMgr->AddDecl(OldStore, VD, Ex, 
                               GetRVal(St, Ex), Count);
   else
-    NewStore = StMgr->AddDecl(OldStore, *this, VD, Ex);
+    NewStore = StMgr->AddDecl(OldStore, VD, Ex);
                               
   if (NewStore == OldStore)
     return St;
@@ -107,7 +107,7 @@ const GRState* GRStateManager::Unbind(const GRState* St, LVal LV) {
 const GRState* GRStateManager::getInitialState() {
 
   GRState StateImpl(EnvMgr.getInitialEnvironment(), 
-                    StMgr->getInitialStore(*this),
+                    StMgr->getInitialStore(),
                     GDMFactory.GetEmptyMap());
 
   return getPersistentState(StateImpl);
