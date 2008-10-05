@@ -282,6 +282,58 @@ bool Parser::isCXXConditionDeclaration() {
   return TPR == TPResult::True();
 }
 
+/// isCXXTypeIdInParens - Assumes that a '(' was parsed and now we want to
+/// know whether the parens contain an expression or a type-id.
+/// Returns true for a type-id and false for an expression.
+/// If during the disambiguation process a parsing error is encountered,
+/// the function returns true to let the declaration parsing code handle it.
+///
+/// type-id:
+///   type-specifier-seq abstract-declarator[opt]
+///
+bool Parser::isCXXTypeIdInParens() {
+  TPResult TPR = isCXXDeclarationSpecifier();
+  if (TPR != TPResult::Ambiguous())
+    return TPR != TPResult::False(); // Returns true for TPResult::True() or
+                                     // TPResult::Error().
+
+  // FIXME: Add statistics about the number of ambiguous statements encountered
+  // and how they were resolved (number of declarations+number of expressions).
+
+  // Ok, we have a simple-type-specifier/typename-specifier followed by a '('.
+  // We need tentative parsing...
+
+  TentativeParsingAction PA(*this);
+
+  // type-specifier-seq
+  if (Tok.is(tok::kw_typeof))
+    TryParseTypeofSpecifier();
+  else
+    ConsumeToken();
+  assert(Tok.is(tok::l_paren) && "Expected '('");
+
+  // declarator
+  TPR = TryParseDeclarator(true/*mayBeAbstract*/, false/*mayHaveIdentifier*/);
+
+  // In case of an error, let the declaration parsing code handle it.
+  if (TPR == TPResult::Error())
+    TPR = TPResult::True();
+
+  if (TPR == TPResult::Ambiguous()) {
+    // We are supposed to be inside parens, so if after the abstract declarator
+    // we encounter a ')' this is a type-id, otherwise it's an expression.
+    if (Tok.is(tok::r_paren))
+      TPR = TPResult::True();
+    else
+      TPR = TPResult::False();
+  }
+
+  PA.Revert();
+
+  assert(TPR == TPResult::True() || TPR == TPResult::False());
+  return TPR == TPResult::True();
+}
+
 ///         declarator:
 ///           direct-declarator
 ///           ptr-operator declarator
@@ -332,7 +384,8 @@ bool Parser::isCXXConditionDeclaration() {
 ///           '~' class-name                                              [TODO]
 ///           template-id                                                 [TODO]
 ///
-Parser::TPResult Parser::TryParseDeclarator(bool mayBeAbstract) {
+Parser::TPResult Parser::TryParseDeclarator(bool mayBeAbstract,
+                                            bool mayHaveIdentifier) {
   // declarator:
   //   direct-declarator
   //   ptr-operator declarator
@@ -353,7 +406,7 @@ Parser::TPResult Parser::TryParseDeclarator(bool mayBeAbstract) {
   // direct-declarator:
   // direct-abstract-declarator:
 
-  if (Tok.is(tok::identifier)) {
+  if (Tok.is(tok::identifier) && mayHaveIdentifier) {
     // declarator-id
     ConsumeToken();
   } else if (Tok.is(tok::l_paren)) {
@@ -370,7 +423,7 @@ Parser::TPResult Parser::TryParseDeclarator(bool mayBeAbstract) {
       ConsumeParen();
       if (Tok.is(tok::kw___attribute))
         return TPResult::True(); // attributes indicate declaration
-      TPResult TPR = TryParseDeclarator(mayBeAbstract);
+      TPResult TPR = TryParseDeclarator(mayBeAbstract, mayHaveIdentifier);
       if (TPR != TPResult::Ambiguous())
         return TPR;
       if (Tok.isNot(tok::r_paren))

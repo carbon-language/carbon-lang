@@ -591,6 +591,15 @@ private:
     return isDeclarationSpecifier();
   }
 
+  /// isTypeIdInParens - Assumes that a '(' was parsed and now we want to know
+  /// whether the parens contain an expression or a type-id.
+  /// Returns true for a type-id and false for an expression.
+  bool isTypeIdInParens() {
+    if (getLang().CPlusPlus)
+      return isCXXTypeIdInParens();
+    return isTypeSpecifierQualifier();
+  }
+
   /// isCXXDeclarationStatement - C++-specialized function that disambiguates
   /// between a declaration or an expression statement, when parsing function
   /// bodies. Returns true for declaration, false for expression.
@@ -616,6 +625,13 @@ private:
   /// If during the disambiguation process a parsing error is encountered,
   /// the function returns true to let the declaration parsing code handle it.
   bool isCXXConditionDeclaration();
+
+  /// isCXXTypeIdInParens - Assumes that a '(' was parsed and now we want to
+  /// know whether the parens contain an expression or a type-id.
+  /// Returns true for a type-id and false for an expression.
+  /// If during the disambiguation process a parsing error is encountered,
+  /// the function returns true to let the declaration parsing code handle it.
+  bool isCXXTypeIdInParens();
 
   /// TPResult - Used as the result value for functions whose purpose is to
   /// disambiguate C++ constructs by "tentatively parsing" them.
@@ -659,7 +675,7 @@ private:
   TPResult TryParseSimpleDeclaration();
   TPResult TryParseTypeofSpecifier();
   TPResult TryParseInitDeclaratorList();
-  TPResult TryParseDeclarator(bool mayBeAbstract);
+  TPResult TryParseDeclarator(bool mayBeAbstract, bool mayHaveIdentifier=true);
   TPResult TryParseParameterDeclarationClause();
   TPResult TryParseFunctionDeclarator();
   TPResult TryParseBracketDeclarator();

@@ -13,6 +13,8 @@ void f() {
   void(a), ++a; // expected-warning {{statement was disambiguated as expression}} expected-warning {{expression result unused}}
   if (int(a)+1) {}
   for (int(a)+1;;) {}
+  a = sizeof(int()+1);
+  typeof(int()+1) a2;
 
   // Declarations.
   T(*d)(int(p)); // expected-warning {{statement was disambiguated as declaration}} expected-error {{previous definition is here}}

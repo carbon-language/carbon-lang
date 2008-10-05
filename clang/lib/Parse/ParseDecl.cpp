@@ -1581,7 +1581,7 @@ void Parser::ParseTypeofSpecifier(DeclSpec &DS) {
 
   SourceLocation LParenLoc = ConsumeParen(), RParenLoc;
   
-  if (isTypeSpecifierQualifier()) {
+  if (isTypeIdInParens()) {
     TypeTy *Ty = ParseTypeName();
 
     assert(Ty && "Parser::ParseTypeofSpecifier(): missing type");

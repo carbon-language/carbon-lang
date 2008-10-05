@@ -981,7 +981,7 @@ Parser::ExprResult Parser::ParseParenExpression(ParenParseOption &ExprType,
     if (!Stmt.isInvalid && Tok.is(tok::r_paren))
       Result = Actions.ActOnStmtExpr(OpenLoc, Stmt.Val, Tok.getLocation());
     
-  } else if (ExprType >= CompoundLiteral && isTypeSpecifierQualifier()) {
+  } else if (ExprType >= CompoundLiteral && isTypeIdInParens()) {
     // Otherwise, this is a compound literal expression or cast expression.
     TypeTy *Ty = ParseTypeName();
 
