@@ -123,16 +123,8 @@ static void getPowerPCDefines(std::vector<char> &Defs, bool is64Bit) {
   Define(Defs, "__FLT_RADIX__", "2");
   Define(Defs, "__DECIMAL_DIG__", "33");
 
-  // Float macros.
-  Define(Defs, "__FLT_MIN__", "1.17549435e-38F");
-  
-  // double macros.
-  Define(Defs, "__DBL_MIN__", "2.2250738585072014e-308");
-  
-  // 128-bit long double macros.
   Define(Defs, "__LDBL_MIN_10_EXP__", "(-291)");
-  Define(Defs, "__LDBL_MIN__",
-         "2.00416836000897277799610805135016e-292L");
+  
   Define(Defs, "__LONG_DOUBLE_128__");
 }
 
@@ -170,15 +162,6 @@ static void getX86Defines(std::vector<char> &Defs, bool is64Bit) {
   Define(Defs, "__FLT_EVAL_METHOD__", "0");
   Define(Defs, "__FLT_RADIX__", "2");
   Define(Defs, "__DECIMAL_DIG__", "21");
-  
-  // Float macros.
-  Define(Defs, "__FLT_MIN__", "1.17549435e-38F");
-  
-  // Double macros.
-  Define(Defs, "__DBL_MIN__", "2.2250738585072014e-308");
-  
-  // 80-bit Long double macros.
-  Define(Defs, "__LDBL_MIN__", "3.36210314311209350626e-4932L");
 }
 
 /// getARMDefines - Return a set of the ARM-specific #defines that are
@@ -199,15 +182,6 @@ static void getARMDefines(std::vector<char> &Defs) {
   Define(Defs, "__FLT_EVAL_METHOD__", "0");
   Define(Defs, "__FLT_RADIX__", "2");
   Define(Defs, "__DECIMAL_DIG__", "17");
-
-  // Float macros.
-  Define(Defs, "__FLT_MIN__", "1.17549435e-38F");
-  
-  // Double macros.
-  Define(Defs, "__DBL_MIN__", "2.2250738585072014e-308");
-  
-  // 64-bit Long double macros (same as double).
-  Define(Defs, "__LDBL_MIN__", "2.2250738585072014e-308");
 }
 
 //===----------------------------------------------------------------------===//
