@@ -212,6 +212,44 @@ private:
   const Token &NextToken() {
     return PP.LookAhead(0);
   }
+
+  /// TentativeParsingAction - An object that is used as a kind of "tentative
+  /// parsing transaction". It gets instantiated to mark the token position and
+  /// after the token consumption is done, Commit() or Revert() is called to
+  /// either "commit the consumed tokens" or revert to the previously marked
+  /// token position. Example:
+  ///
+  ///   TentativeParsingAction TPA;
+  ///   ConsumeToken();
+  ///   ....
+  ///   TPA.Revert();
+  ///
+  class TentativeParsingAction {
+    Parser &P;
+    Token PrevTok;
+    bool isActive;
+
+  public:
+    explicit TentativeParsingAction(Parser& p) : P(p) {
+      PrevTok = P.Tok;
+      P.PP.EnableBacktrackAtThisPos();
+      isActive = true;
+    }
+    void Commit() {
+      assert(isActive && "Parsing action was finished!");
+      P.PP.CommitBacktrackedTokens();
+      isActive = false;
+    }
+    void Revert() {
+      assert(isActive && "Parsing action was finished!");
+      P.PP.Backtrack();
+      P.Tok = PrevTok;
+      isActive = false;
+    }
+    ~TentativeParsingAction() {
+      assert(!isActive && "Forgot to call Commit or Revert!");
+    }
+  };
   
   
   /// MatchRHSPunctuation - For punctuation with a LHS and RHS (e.g. '['/']'),
@@ -533,6 +571,68 @@ private:
   bool isDeclarationSpecifier() const;
   bool isTypeSpecifierQualifier() const;
   bool isTypeQualifier() const;
+
+  /// TentativeParsingResult - Used as the result value for functions whose
+  /// purpose is to disambiguate C++ constructs by "tentatively parsing" them.
+  enum TentativeParsingResult {
+    TPR_true,
+    TPR_false,
+    TPR_ambiguous,
+    TPR_error
+  };
+
+  /// isDeclarationStatement - Disambiguates between a declaration or an
+  /// expression statement, when parsing function bodies.
+  /// Returns true for declaration, false for expression.
+  bool isDeclarationStatement() {
+    if (getLang().CPlusPlus)
+      return isCXXDeclarationStatement();
+    return isDeclarationSpecifier();
+  }
+
+  /// isCXXDeclarationStatement - C++-specialized function that disambiguates
+  /// between a declaration or an expression statement, when parsing function
+  /// bodies. Returns true for declaration, false for expression.
+  bool isCXXDeclarationStatement();
+
+  /// isCXXSimpleDeclaration - C++-specialized function that disambiguates
+  /// between a simple-declaration or an expression-statement.
+  /// If during the disambiguation process a parsing error is encountered,
+  /// the function returns true to let the declaration parsing code handle it.
+  /// Returns false if the statement is disambiguated as expression.
+  bool isCXXSimpleDeclaration();
+
+  /// isCXXFunctionDeclarator - Disambiguates between a function declarator or
+  /// a constructor-style initializer, when parsing declaration statements.
+  /// Returns true for function declarator and false for constructor-style
+  /// initializer.
+  /// If during the disambiguation process a parsing error is encountered,
+  /// the function returns true to let the declaration parsing code handle it.
+  bool isCXXFunctionDeclarator();
+
+  /// isCXXDeclarationSpecifier - Returns TPR_true if it is a declaration
+  /// specifier, TPR_false if it is not, TPR_ambiguous if it could be either
+  /// a decl-specifier or a function-style cast, and TPR_error if a parsing
+  /// error was encountered.
+  /// Doesn't consume tokens.
+  TentativeParsingResult isCXXDeclarationSpecifier();
+
+  // "Tentative parsing" functions, used for disambiguation. If a parsing error
+  // is encountered they will return TPR_error.
+  // Returning TPR_true/false indicates that the ambiguity was resolved and
+  // tentative parsing may stop. TPR_ambiguous indicates that more tentative
+  // parsing is necessary for disambiguation.
+  // They all consume tokens, so backtracking should be used after calling them.
+
+  TentativeParsingResult TryParseDeclarationSpecifier();
+  TentativeParsingResult TryParseSimpleDeclaration();
+  TentativeParsingResult TryParseTypeofSpecifier();
+  TentativeParsingResult TryParseInitDeclaratorList();
+  TentativeParsingResult TryParseDeclarator(bool mayBeAbstract);
+  TentativeParsingResult TryParseParameterDeclarationClause();
+  TentativeParsingResult TryParseFunctionDeclarator();
+  TentativeParsingResult TryParseBracketDeclarator();
+
 
   TypeTy *ParseTypeName();
   AttributeList *ParseAttributes();

@@ -94,7 +94,7 @@ Parser::StmtResult Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
     // PASS THROUGH.
 
   default:
-    if ((getLang().CPlusPlus || !OnlyStatement) && isDeclarationSpecifier()) {
+    if ((getLang().CPlusPlus || !OnlyStatement) && isDeclarationStatement()) {
       SourceLocation DeclStart = Tok.getLocation();
       DeclTy *Res = ParseDeclaration(Declarator::BlockContext);
       // FIXME: Pass in the right location for the end of the declstmt.
@@ -368,7 +368,7 @@ Parser::StmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
       Diags.setWarnOnExtensions(false);
       
       // If this is the start of a declaration, parse it as such.
-      if (isDeclarationSpecifier()) {
+      if (isDeclarationStatement()) {
         // FIXME: Save the __extension__ on the decl as a node somehow.
         SourceLocation DeclStart = Tok.getLocation();
         DeclTy *Res = ParseDeclaration(Declarator::BlockContext);
