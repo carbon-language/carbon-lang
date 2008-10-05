@@ -38,14 +38,25 @@ int main() {
   //  P(fpclassify, (FP_NAN, FP_INFINITE, FP_NORMAL, FP_SUBNORMAL, FP_ZERO, 1.0));
   //  P(isinf_sign, (1.0));
 
-  // FIXME:
-  // XXX I don't know what the string arg is for
-  Q(nan, ("0x12"));
-  Q(nanf, ("0x12"));
-  Q(nanl, ("0x12"));
-  Q(nans, ("0x12"));
+  Q(nan, (""));
+  Q(nanf, (""));
+  Q(nanl, (""));
+  Q(nans, (""));
+  Q(nan, ("10"));
+  Q(nanf, ("10"));
+  Q(nanl, ("10"));
+  Q(nans, ("10"));
+
+  P(isgreater, (1., 2.));
+  P(isgreaterequal, (1., 2.));
+  P(isless, (1., 2.));
+  P(islessequal, (1., 2.));
+  P(islessgreater, (1., 2.));
+  P(isunordered, (1., 2.));
 
   // Bitwise & Numeric Functions
+
+  P(abs, (N));
 
   P(clz, (N));
   P(clzl, (N));
