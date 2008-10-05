@@ -39,13 +39,11 @@
 @implementation C : A
 @end
 
-#if 0
 @interface A (Cat)
 @end
 
 @implementation A (Cat)
 @end
-#endif
 
 int f0(id x) {
   @synchronized(x) {
