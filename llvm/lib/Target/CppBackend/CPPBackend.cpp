@@ -722,16 +722,12 @@ namespace {
 
     std::string constName(getCppName(CV));
     std::string typeName(getCppName(CV->getType()));
-    if (CV->isNullValue()) {
-      Out << "Constant* " << constName << " = Constant::getNullValue("
-          << typeName << ");";
-      nl(Out);
-      return;
-    }
+
     if (isa<GlobalValue>(CV)) {
       // Skip variables and functions, we emit them elsewhere
       return;
     }
+
     if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
       std::string constValue = CI->getValue().toString(10, true);
       Out << "ConstantInt* " << constName << " = ConstantInt::get(APInt("
@@ -742,7 +738,7 @@ namespace {
           << " = ConstantAggregateZero::get(" << typeName << ");";
     } else if (isa<ConstantPointerNull>(CV)) {
       Out << "ConstantPointerNull* " << constName
-          << " = ConstanPointerNull::get(" << typeName << ");";
+          << " = ConstantPointerNull::get(" << typeName << ");";
     } else if (const ConstantFP *CFP = dyn_cast<ConstantFP>(CV)) {
       Out << "ConstantFP* " << constName << " = ";
       printCFP(CFP);
