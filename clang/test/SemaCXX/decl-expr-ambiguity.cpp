@@ -21,4 +21,5 @@ void f() {
   void(b)(int);
   int(d2) __attribute__(()); // expected-warning {{statement was disambiguated as declaration}}
   if (int(a)=1) {}
+  int(d3(int())); // expected-warning {{statement was disambiguated as declaration}}
 }

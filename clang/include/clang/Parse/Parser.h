@@ -617,37 +617,52 @@ private:
   /// the function returns true to let the declaration parsing code handle it.
   bool isCXXConditionDeclaration();
 
-  /// TentativeParsingResult - Used as the result value for functions whose
-  /// purpose is to disambiguate C++ constructs by "tentatively parsing" them.
-  enum TentativeParsingResult {
-    TPR_true,
-    TPR_false,
-    TPR_ambiguous,
-    TPR_error
+  /// TPResult - Used as the result value for functions whose purpose is to
+  /// disambiguate C++ constructs by "tentatively parsing" them.
+  /// This is a class instead of a simple enum because the implicit enum-to-bool
+  /// conversions may cause subtle bugs.
+  class TPResult {
+    enum Result {
+      TPR_true,
+      TPR_false,
+      TPR_ambiguous,
+      TPR_error
+    };
+    Result Res;
+    TPResult(Result result) : Res(result) {}
+  public:
+    static TPResult True() { return TPR_true; }
+    static TPResult False() { return TPR_false; }
+    static TPResult Ambiguous() { return TPR_ambiguous; }
+    static TPResult Error() { return TPR_error; }
+
+    bool operator==(const TPResult &RHS) const { return Res == RHS.Res; }
+    bool operator!=(const TPResult &RHS) const { return Res != RHS.Res; }
   };
 
-  /// isCXXDeclarationSpecifier - Returns TPR_true if it is a declaration
-  /// specifier, TPR_false if it is not, TPR_ambiguous if it could be either
-  /// a decl-specifier or a function-style cast, and TPR_error if a parsing
-  /// error was encountered.
+  /// isCXXDeclarationSpecifier - Returns TPResult::True() if it is a
+  /// declaration specifier, TPResult::False() if it is not,
+  /// TPResult::Ambiguous() if it could be either a decl-specifier or a
+  /// function-style cast, and TPResult::Error() if a parsing error was
+  /// encountered.
   /// Doesn't consume tokens.
-  TentativeParsingResult isCXXDeclarationSpecifier();
+  TPResult isCXXDeclarationSpecifier();
 
   // "Tentative parsing" functions, used for disambiguation. If a parsing error
-  // is encountered they will return TPR_error.
-  // Returning TPR_true/false indicates that the ambiguity was resolved and
-  // tentative parsing may stop. TPR_ambiguous indicates that more tentative
-  // parsing is necessary for disambiguation.
+  // is encountered they will return TPResult::Error().
+  // Returning TPResult::True()/False() indicates that the ambiguity was
+  // resolved and tentative parsing may stop. TPResult::Ambiguous() indicates
+  // that more tentative parsing is necessary for disambiguation.
   // They all consume tokens, so backtracking should be used after calling them.
 
-  TentativeParsingResult TryParseDeclarationSpecifier();
-  TentativeParsingResult TryParseSimpleDeclaration();
-  TentativeParsingResult TryParseTypeofSpecifier();
-  TentativeParsingResult TryParseInitDeclaratorList();
-  TentativeParsingResult TryParseDeclarator(bool mayBeAbstract);
-  TentativeParsingResult TryParseParameterDeclarationClause();
-  TentativeParsingResult TryParseFunctionDeclarator();
-  TentativeParsingResult TryParseBracketDeclarator();
+  TPResult TryParseDeclarationSpecifier();
+  TPResult TryParseSimpleDeclaration();
+  TPResult TryParseTypeofSpecifier();
+  TPResult TryParseInitDeclaratorList();
+  TPResult TryParseDeclarator(bool mayBeAbstract);
+  TPResult TryParseParameterDeclarationClause();
+  TPResult TryParseFunctionDeclarator();
+  TPResult TryParseBracketDeclarator();
 
 
   TypeTy *ParseTypeName();
