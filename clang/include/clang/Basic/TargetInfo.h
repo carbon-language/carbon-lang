@@ -44,7 +44,7 @@ protected:
   unsigned char LongWidth, LongAlign;
   unsigned char LongLongWidth, LongLongAlign;
   const char *DescriptionString;
-  
+  const char *UserLabelPrefix;
   const llvm::fltSemantics *FloatFormat, *DoubleFormat, *LongDoubleFormat;
 
   // TargetInfo Constructor.  Default initializes all fields.
@@ -139,6 +139,14 @@ public:
   unsigned getIntMaxTWidth() const {
     // FIXME: implement correctly.
     return 64;
+  }
+  
+  /// getUserLabelPrefix - This returns the default value of the
+  /// __USER_LABEL_PREFIX__ macro, which is the prefix given to user symbols by
+  /// default.  On most platforms this is "_", but it is "" on some, and "." on
+  /// others.
+  const char *getUserLabelPrefix() const {
+    return UserLabelPrefix;
   }
   
   ///===---- Other target property query methods --------------------------===//

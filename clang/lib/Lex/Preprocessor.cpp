@@ -425,6 +425,13 @@ static void InitializePredefinedMacros(Preprocessor &PP,
     Buf.push_back('\n');
   }
   
+  if (const char *Prefix = PP.getTargetInfo().getUserLabelPrefix()) {
+    llvm::SmallString<20> TmpStr;
+    TmpStr += "__USER_LABEL_PREFIX__=";
+    TmpStr += Prefix;
+    DefineBuiltinMacro(Buf, TmpStr.c_str());
+  }
+  
   // Get the target #defines.
   PP.getTargetInfo().getTargetDefines(Buf);
 
