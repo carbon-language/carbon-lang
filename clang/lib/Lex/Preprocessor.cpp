@@ -380,6 +380,22 @@ static void DefineBuiltinMacro(std::vector<char> &Buf, const char *Macro,
 
 static void InitializePredefinedMacros(Preprocessor &PP, 
                                        std::vector<char> &Buf) {
+  // Compiler version introspection macros.
+  DefineBuiltinMacro(Buf, "__llvm__=1");   // LLVM Backend
+  DefineBuiltinMacro(Buf, "__clang__=1");  // Clang Frontend
+  
+  // Currently claim to be compatible with GCC 4.2.1-5621.
+  DefineBuiltinMacro(Buf, "__APPLE_CC__=5621");
+  DefineBuiltinMacro(Buf, "__GNUC_MINOR__=2");
+  DefineBuiltinMacro(Buf, "__GNUC_PATCHLEVEL__=1");
+  DefineBuiltinMacro(Buf, "__GNUC__=4");
+  DefineBuiltinMacro(Buf, "__GXX_ABI_VERSION=1002");
+  DefineBuiltinMacro(Buf, "__VERSION__=\"4.2.1 (Apple Computer, Inc. "
+                     "build 5621) (dot 3)\"");
+  
+  
+  // Initialize language-specific preprocessor defines.
+  
   // FIXME: Implement magic like cpp_init_builtins for things like __STDC__
   // and __DATE__ etc.
   // These should all be defined in the preprocessor according to the
@@ -417,6 +433,41 @@ static void InitializePredefinedMacros(Preprocessor &PP,
   if (PP.getLangOptions().PascalStrings)
     DefineBuiltinMacro(Buf, "__PASCAL_STRINGS__");
 
+  if (PP.getLangOptions().Blocks) {
+    DefineBuiltinMacro(Buf, "__block=__attribute__((__blocks__(byref)))");
+    DefineBuiltinMacro(Buf, "__BLOCKS__=1");
+  } else 
+    // This allows "__block int unusedVar;" even when blocks are disabled.
+    // This is modeled after GCC's handling of __strong/__weak.
+    DefineBuiltinMacro(Buf, "__block=");
+  
+  if (PP.getLangOptions().CPlusPlus) {
+    DefineBuiltinMacro(Buf, "__DEPRECATED=1");
+    DefineBuiltinMacro(Buf, "__EXCEPTIONS=1");
+    DefineBuiltinMacro(Buf, "__GNUG__=4");
+    DefineBuiltinMacro(Buf, "__GXX_WEAK__=1");
+    DefineBuiltinMacro(Buf, "__cplusplus=1");
+    DefineBuiltinMacro(Buf, "__private_extern__=extern");
+  }
+  
+  // Filter out some microsoft extensions when trying to parse in ms-compat
+  // mode. 
+  if (PP.getLangOptions().Microsoft) {
+    DefineBuiltinMacro(Buf, "__stdcall=");
+    DefineBuiltinMacro(Buf, "__cdecl=");
+    DefineBuiltinMacro(Buf, "_cdecl=");
+    DefineBuiltinMacro(Buf, "__ptr64=");
+    DefineBuiltinMacro(Buf, "__w64=");
+    DefineBuiltinMacro(Buf, "__forceinline=");
+    DefineBuiltinMacro(Buf, "__int8=char");
+    DefineBuiltinMacro(Buf, "__int16=short");
+    DefineBuiltinMacro(Buf, "__int32=int");
+    DefineBuiltinMacro(Buf, "__int64=long long");
+    DefineBuiltinMacro(Buf, "__declspec(X)=");
+  }
+  
+  
+  // Initialize target-specific preprocessor defines.
   
   // Add __builtin_va_list typedef.
   {
@@ -435,56 +486,12 @@ static void InitializePredefinedMacros(Preprocessor &PP,
   // Get the target #defines.
   PP.getTargetInfo().getTargetDefines(Buf);
 
-  DefineBuiltinMacro(Buf, "__llvm__=1");   // LLVM Backend
-  DefineBuiltinMacro(Buf, "__clang__=1");  // Clang Frontend
-  
-  // Compiler set macros.
-  // Claim to be GCC 4.2.1-5621
-  DefineBuiltinMacro(Buf, "__APPLE_CC__=5621");
-  DefineBuiltinMacro(Buf, "__GNUC_MINOR__=2");
-  DefineBuiltinMacro(Buf, "__GNUC_PATCHLEVEL__=1");
-  DefineBuiltinMacro(Buf, "__GNUC__=4");
-  DefineBuiltinMacro(Buf, "__GXX_ABI_VERSION=1002");
-  DefineBuiltinMacro(Buf, "__VERSION__=\"4.2.1 (Apple Computer, Inc. "
-                     "build 5621) (dot 3)\"");
-  
   // Build configuration options.
   DefineBuiltinMacro(Buf, "__DYNAMIC__=1");
   DefineBuiltinMacro(Buf, "__FINITE_MATH_ONLY__=0");
   DefineBuiltinMacro(Buf, "__NO_INLINE__=1");
   DefineBuiltinMacro(Buf, "__PIC__=1");
   
-  
-  if (PP.getLangOptions().CPlusPlus) {
-    DefineBuiltinMacro(Buf, "__DEPRECATED=1");
-    DefineBuiltinMacro(Buf, "__EXCEPTIONS=1");
-    DefineBuiltinMacro(Buf, "__GNUG__=4");
-    DefineBuiltinMacro(Buf, "__GXX_WEAK__=1");
-    DefineBuiltinMacro(Buf, "__cplusplus=1");
-    DefineBuiltinMacro(Buf, "__private_extern__=extern");
-  }
-  if (PP.getLangOptions().Microsoft) {
-    DefineBuiltinMacro(Buf, "__stdcall=");
-    DefineBuiltinMacro(Buf, "__cdecl=");
-    DefineBuiltinMacro(Buf, "_cdecl=");
-    DefineBuiltinMacro(Buf, "__ptr64=");
-    DefineBuiltinMacro(Buf, "__w64=");
-    DefineBuiltinMacro(Buf, "__forceinline=");
-    DefineBuiltinMacro(Buf, "__int8=char");
-    DefineBuiltinMacro(Buf, "__int16=short");
-    DefineBuiltinMacro(Buf, "__int32=int");
-    DefineBuiltinMacro(Buf, "__int64=long long");
-    DefineBuiltinMacro(Buf, "__declspec(X)=");
-  }
-  // Directly modeled after the attribute-based implementation in GCC. 
-  if (PP.getLangOptions().Blocks) {
-     DefineBuiltinMacro(Buf, "__block=__attribute__((__blocks__(byref)))");
-     DefineBuiltinMacro(Buf, "__BLOCKS__=1");
-  } else
-    // This allows "__block int unusedVar;" even when blocks are disabled.
-    // This is modeled after GCC's handling of __strong/__weak.
-    DefineBuiltinMacro(Buf, "__block=");
-
   // FIXME: Should emit a #line directive here.
 }
 
