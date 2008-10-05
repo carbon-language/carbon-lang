@@ -355,10 +355,10 @@ bool BitcodeReader::ParseAttributeBlock() {
       if (Record.size() & 1)
         return Error("Invalid ENTRY record");
 
-      // FIXME : Remove this backword compatibility one day.
+      // FIXME : Remove this autoupgrade code in LLVM 3.0.
       // If Function attributes are using index 0 then transfer them
-      // to index ~0. Index 0 is strictly used for return value 
-      // attributes.
+      // to index ~0. Index 0 is used for return value attributes but used to be
+      // used for function attributes.
       Attributes RetAttribute = Attribute::None;
       Attributes FnAttribute = Attribute::None;
       for (unsigned i = 0, e = Record.size(); i != e; i += 2) {
@@ -367,39 +367,31 @@ bool BitcodeReader::ParseAttributeBlock() {
         else if (Record[i] == ~0U)
           FnAttribute = Record[i+1];
       }
-      bool useUpdatedAttrs = false;
-      if (FnAttribute == Attribute::None && RetAttribute != Attribute::None) {
-        if (RetAttribute & Attribute::NoUnwind) {
-          FnAttribute = FnAttribute | Attribute::NoUnwind;
-          RetAttribute = RetAttribute ^ Attribute::NoUnwind;
-          useUpdatedAttrs = true;
+
+      unsigned OldRetAttrs = (Attribute::NoUnwind|Attribute::NoReturn|
+                              Attribute::ReadOnly|Attribute::ReadNone);
+      
+      if (FnAttribute == Attribute::None && RetAttribute != Attribute::None &&
+          (RetAttribute & OldRetAttrs) != 0) {
+        if (FnAttribute == Attribute::None) { // add a slot so they get added.
+          Record.push_back(~0U);
+          Record.push_back(0);
         }
-        if (RetAttribute & Attribute::NoReturn) {
-          FnAttribute = FnAttribute | Attribute::NoReturn;
-          RetAttribute = RetAttribute ^ Attribute::NoReturn;
-          useUpdatedAttrs = true;
-        }
-        if (RetAttribute & Attribute::ReadOnly) {
-          FnAttribute = FnAttribute | Attribute::ReadOnly;
-          RetAttribute = RetAttribute ^ Attribute::ReadOnly;
-          useUpdatedAttrs = true;
-        }
-        if (RetAttribute & Attribute::ReadNone) {
-          FnAttribute = FnAttribute | Attribute::ReadNone;
-          RetAttribute = RetAttribute ^ Attribute::ReadNone;
-          useUpdatedAttrs = true;
-        }
+        
+        FnAttribute  |= RetAttribute & OldRetAttrs;
+        RetAttribute &= ~OldRetAttrs;
       }
 
       for (unsigned i = 0, e = Record.size(); i != e; i += 2) {
-        if (useUpdatedAttrs && Record[i] == 0 
-            && RetAttribute != Attribute::None)
-          Attrs.push_back(AttributeWithIndex::get(0, RetAttribute));
-        else if (Record[i+1] != Attribute::None)
+        if (Record[i] == 0) {
+          if (RetAttribute != Attribute::None)
+            Attrs.push_back(AttributeWithIndex::get(0, RetAttribute));
+        } else if (Record[i] == ~0U) {
+          if (FnAttribute != Attribute::None)
+            Attrs.push_back(AttributeWithIndex::get(~0U, FnAttribute));
+        } else if (Record[i+1] != Attribute::None)
           Attrs.push_back(AttributeWithIndex::get(Record[i], Record[i+1]));
       }
-      if (useUpdatedAttrs && FnAttribute != Attribute::None)
-        Attrs.push_back(AttributeWithIndex::get(~0, FnAttribute));
 
       MAttributes.push_back(AttrListPtr::get(Attrs.begin(), Attrs.end()));
       Attrs.clear();
