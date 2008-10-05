@@ -1422,9 +1422,15 @@ Types
     CHECK_FOR_ERROR
 
     FunctionType *FT = FunctionType::get(RetTy, Params, isVarArg);
-    delete $3;   // Delete the argument list
     delete $1;   // Delete the return type handle
     $$ = new PATypeHolder(HandleUpRefs(FT));
+
+    // Delete the argument list
+    for (I = $3->begin() ; I != E; ++I ) {
+      delete I->Ty;
+    }
+    delete $3;
+
     CHECK_FOR_ERROR
   }
   | VOID '(' ArgTypeListI ')' OptFuncAttrs {
@@ -1447,8 +1453,14 @@ Types
     CHECK_FOR_ERROR
 
     FunctionType *FT = FunctionType::get($1, Params, isVarArg);
-    delete $3;      // Delete the argument list
     $$ = new PATypeHolder(HandleUpRefs(FT));
+
+    // Delete the argument list
+    for (I = $3->begin() ; I != E; ++I ) {
+      delete I->Ty;
+    }
+    delete $3;
+
     CHECK_FOR_ERROR
   }
 
