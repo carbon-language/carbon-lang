@@ -921,11 +921,11 @@ void VariableArrayType::getAsStringInternal(std::string &S) const {
 }
 
 void VectorType::getAsStringInternal(std::string &S) const {
+  // FIXME: We prefer to print the size directly here, but have no way
+  // to get the size of the type.
   S += " __attribute__((__vector_size__(";
-  // FIXME: should multiply by element size somehow.
-  S += llvm::utostr_32(NumElements*4); // convert back to bytes.
-  S += ")))";
-  ElementType.getAsStringInternal(S);
+  S += llvm::utostr_32(NumElements); // convert back to bytes.
+  S += " * sizeof(" + ElementType.getAsString() + "))))";
 }
 
 void ExtVectorType::getAsStringInternal(std::string &S) const {
