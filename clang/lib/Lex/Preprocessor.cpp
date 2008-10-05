@@ -436,10 +436,7 @@ static void InitializePredefinedMacros(Preprocessor &PP,
   if (PP.getLangOptions().Blocks) {
     DefineBuiltinMacro(Buf, "__block=__attribute__((__blocks__(byref)))");
     DefineBuiltinMacro(Buf, "__BLOCKS__=1");
-  } else 
-    // This allows "__block int unusedVar;" even when blocks are disabled.
-    // This is modeled after GCC's handling of __strong/__weak.
-    DefineBuiltinMacro(Buf, "__block=");
+  }
   
   if (PP.getLangOptions().CPlusPlus) {
     DefineBuiltinMacro(Buf, "__DEPRECATED=1");
