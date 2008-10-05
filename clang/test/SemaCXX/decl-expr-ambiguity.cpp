@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only -verify %s 
+// RUN: clang -fsyntax-only -verify -pedantic-errors %s 
 
 void f() {
   int a;
@@ -14,7 +14,12 @@ void f() {
   if (int(a)+1) {}
   for (int(a)+1;;) {}
   a = sizeof(int()+1);
+  a = sizeof(int(1));
   typeof(int()+1) a2;
+  (int(1)); // expected-warning {{expression result unused}}
+
+  // type-id
+  (int())1; // expected-error {{used type 'int ()' where arithmetic or pointer type is required}}
 
   // Declarations.
   T(*d)(int(p)); // expected-warning {{statement was disambiguated as declaration}} expected-error {{previous definition is here}}
@@ -24,4 +29,14 @@ void f() {
   int(d2) __attribute__(()); // expected-warning {{statement was disambiguated as declaration}}
   if (int(a)=1) {}
   int(d3(int())); // expected-warning {{statement was disambiguated as declaration}}
+}
+
+class C { };
+void fn(int(C)) { } // void fn(int(*fp)(C c)) { }
+                    // not: void fn(int C);
+int g(C);
+
+void foo() {
+  fn(1); // expected-error {{incompatible integer to pointer conversion passing 'int', expected 'int (*)(class C)'}}
+  fn(g); // OK
 }

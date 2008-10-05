@@ -292,6 +292,14 @@ bool Parser::isCXXConditionDeclaration() {
 ///   type-specifier-seq abstract-declarator[opt]
 ///
 bool Parser::isCXXTypeIdInParens() {
+
+  // C++ 8.2p2:
+  // The ambiguity arising from the similarity between a function-style cast and
+  // a type-id can occur in different contexts. The ambiguity appears as a
+  // choice between a function-style cast expression and a declaration of a
+  // type. The resolution is that any construct that could possibly be a type-id
+  // in its syntactic context shall be considered a type-id.
+
   TPResult TPR = isCXXDeclarationSpecifier();
   if (TPR != TPResult::Ambiguous())
     return TPR != TPResult::False(); // Returns true for TPResult::True() or
@@ -706,6 +714,16 @@ Parser::TPResult Parser::TryParseDeclarationSpecifier() {
 ///         exception-specification[opt]
 ///
 bool Parser::isCXXFunctionDeclarator() {
+
+  // C++ 8.2p1:
+  // The ambiguity arising from the similarity between a function-style cast and
+  // a declaration mentioned in 6.8 can also occur in the context of a
+  // declaration. In that context, the choice is between a function declaration
+  // with a redundant set of parentheses around a parameter name and an object
+  // declaration with a function-style cast as the initializer. Just as for the
+  // ambiguities mentioned in 6.8, the resolution is to consider any construct
+  // that could possibly be a declaration a declaration.
+
   TentativeParsingAction PA(*this);
 
   ConsumeParen();
