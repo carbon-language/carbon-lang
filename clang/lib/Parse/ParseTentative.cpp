@@ -225,6 +225,60 @@ Parser::TentativeParsingResult Parser::TryParseInitDeclaratorList() {
   return TPR_ambiguous;
 }
 
+/// isCXXConditionDeclaration - Disambiguates between a declaration or an
+/// expression for a condition of a if/switch/while/for statement.
+/// If during the disambiguation process a parsing error is encountered,
+/// the function returns true to let the declaration parsing code handle it.
+///
+///       condition:
+///         expression
+///         type-specifier-seq declarator '=' assignment-expression
+/// [GNU]   type-specifier-seq declarator simple-asm-expr[opt] attributes[opt]
+///             '=' assignment-expression
+///
+bool Parser::isCXXConditionDeclaration() {
+  TentativeParsingResult TPR = isCXXDeclarationSpecifier();
+  if (TPR != TPR_ambiguous)
+    return TPR != TPR_false; // Returns true for TPR_true or TPR_error.
+
+  // FIXME: Add statistics about the number of ambiguous statements encountered
+  // and how they were resolved (number of declarations+number of expressions).
+
+  // Ok, we have a simple-type-specifier/typename-specifier followed by a '('.
+  // We need tentative parsing...
+
+  TentativeParsingAction PA(*this);
+
+  // type-specifier-seq
+  if (Tok.is(tok::kw_typeof))
+    TryParseTypeofSpecifier();
+  else
+    ConsumeToken();
+  assert(Tok.is(tok::l_paren) && "Expected '('");
+
+  // declarator
+  TPR = TryParseDeclarator(false/*mayBeAbstract*/);
+
+  PA.Revert();
+
+  // In case of an error, let the declaration parsing code handle it.
+  if (TPR == TPR_error)
+    return true;
+
+  if (TPR == TPR_ambiguous) {
+    // '='
+    // [GNU] simple-asm-expr[opt] attributes[opt]
+    if (Tok.is(tok::equal)  ||
+        Tok.is(tok::kw_asm) || Tok.is(tok::kw___attribute))
+      TPR = TPR_true;
+    else
+      TPR = TPR_false;
+  }
+
+  assert(TPR == TPR_true || TPR == TPR_false);
+  return TPR == TPR_true;
+}
+
 ///         declarator:
 ///           direct-declarator
 ///           ptr-operator declarator

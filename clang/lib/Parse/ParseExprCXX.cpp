@@ -162,7 +162,7 @@ Parser::ExprResult Parser::ParseCXXTypeConstructExpression(const DeclSpec &DS) {
 ///             '=' assignment-expression
 ///
 Parser::ExprResult Parser::ParseCXXCondition() {
-  if (!isDeclarationSpecifier())
+  if (!isCXXConditionDeclaration())
     return ParseExpression(); // expression
 
   SourceLocation StartLoc = Tok.getLocation();

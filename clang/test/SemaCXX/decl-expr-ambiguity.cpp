@@ -11,6 +11,7 @@ void f() {
   __extension__ int(a)++; // expected-error {{invalid lvalue in increment/decrement expression}}
   typeof(int)(a,5)<<a; // expected-error {{function-style cast to a builtin type can only take one argument}}
   void(a), ++a; // expected-warning {{statement was disambiguated as expression}} expected-warning {{expression result unused}}
+  if (int(a)+1) {}
 
   // Declarations.
   T(*d)(int(p)); // expected-warning {{statement was disambiguated as declaration}} expected-error {{previous definition is here}}

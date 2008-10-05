@@ -610,6 +610,12 @@ private:
   /// the function returns true to let the declaration parsing code handle it.
   bool isCXXFunctionDeclarator();
 
+  /// isCXXConditionDeclaration - Disambiguates between a declaration or an
+  /// expression for a condition of a if/switch/while/for statement.
+  /// If during the disambiguation process a parsing error is encountered,
+  /// the function returns true to let the declaration parsing code handle it.
+  bool isCXXConditionDeclaration();
+
   /// isCXXDeclarationSpecifier - Returns TPR_true if it is a declaration
   /// specifier, TPR_false if it is not, TPR_ambiguous if it could be either
   /// a decl-specifier or a function-style cast, and TPR_error if a parsing
