@@ -426,10 +426,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\lib\VMCore\ParameterAttributes.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\lib\VMCore\Pass.cpp"
 				>
 			</File>

@@ -314,6 +314,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\lib\System\Host.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\System\IncludeFile.cpp"
 				>
 			</File>
