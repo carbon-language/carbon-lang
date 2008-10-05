@@ -195,11 +195,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\lib\Parse\ParsePragma.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\Parse\Parser.cpp"
 				>
 			</File>
 			<File
 				RelativePath="..\..\lib\Parse\ParseStmt.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\lib\Parse\ParseTentative.cpp"
 				>
 			</File>
 		</Filter>
