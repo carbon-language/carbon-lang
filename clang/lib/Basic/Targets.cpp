@@ -33,9 +33,36 @@ static void Define(std::vector<char> &Buf, const char *Macro,
   Buf.push_back('\n');
 }
 
+//===----------------------------------------------------------------------===//
+// Defines specific to certain operating systems.
+//===----------------------------------------------------------------------===//
+
 static void getSolarisDefines(std::vector<char> &Defs) {
   Define(Defs, "__SUN__");
   Define(Defs, "__SOLARIS__");
+}
+
+static void getDragonFlyDefines(std::vector<char> &Defs) {
+  // DragonFly defines; list based off of gcc output
+  Define(Defs, "__DragonFly__");
+  Define(Defs, "__DragonFly_cc_version", "100001");
+  Define(Defs, "__ELF__");
+  Define(Defs, "__KPRINTF_ATTRIBUTE__");
+  Define(Defs, "__tune_i386__");
+  Define(Defs, "unix");
+  Define(Defs, "__unix");
+  Define(Defs, "__unix__");
+}
+
+static void getLinuxDefines(std::vector<char> &Defs) {
+  // Linux defines; list based off of gcc output
+  Define(Defs, "__unix__");
+  Define(Defs, "__unix");
+  Define(Defs, "unix");
+  Define(Defs, "__linux__");
+  Define(Defs, "__linux");
+  Define(Defs, "linux");
+  Define(Defs, "__gnu_linux__");
 }
 
 static void getDarwinDefines(std::vector<char> &Defs, const char *Triple) {
@@ -72,28 +99,9 @@ static void getDarwinDefines(std::vector<char> &Defs, const char *Triple) {
   }
 }
 
-static void getDragonFlyDefines(std::vector<char> &Defs) {
-  // DragonFly defines; list based off of gcc output
-  Define(Defs, "__DragonFly__");
-  Define(Defs, "__DragonFly_cc_version", "100001");
-  Define(Defs, "__ELF__");
-  Define(Defs, "__KPRINTF_ATTRIBUTE__");
-  Define(Defs, "__tune_i386__");
-  Define(Defs, "unix");
-  Define(Defs, "__unix");
-  Define(Defs, "__unix__");
-}
-
-static void getLinuxDefines(std::vector<char> &Defs) {
-  // Linux defines; list based off of gcc output
-  Define(Defs, "__unix__");
-  Define(Defs, "__unix");
-  Define(Defs, "unix");
-  Define(Defs, "__linux__");
-  Define(Defs, "__linux");
-  Define(Defs, "linux");
-  Define(Defs, "__gnu_linux__");
-}
+//===----------------------------------------------------------------------===//
+// Defines specific to certain architectures.
+//===----------------------------------------------------------------------===//
 
 /// getPowerPCDefines - Return a set of the PowerPC-specific #defines that are
 /// not tied to a specific subtarget.
