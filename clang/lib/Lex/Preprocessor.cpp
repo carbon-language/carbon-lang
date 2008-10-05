@@ -33,6 +33,7 @@
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
+#include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Streams.h"
@@ -377,6 +378,33 @@ static void DefineBuiltinMacro(std::vector<char> &Buf, const char *Macro,
   Buf.push_back('\n');
 }
 
+/// PickFP - This is used to pick a value based on the FP semantics of the
+/// specified FP model.
+template <typename T>
+static T PickFP(const llvm::fltSemantics *Sem, T IEEESingleVal,
+                T IEEEDoubleVal, T X87DoubleExtendedVal, T PPCDoubleDoubleVal) {
+  if (Sem == &llvm::APFloat::IEEEsingle)
+    return IEEESingleVal;
+  if (Sem == &llvm::APFloat::IEEEdouble)
+    return IEEEDoubleVal;
+  if (Sem == &llvm::APFloat::x87DoubleExtended)
+    return X87DoubleExtendedVal;
+  assert(Sem == &llvm::APFloat::PPCDoubleDouble);
+  return PPCDoubleDoubleVal;
+}
+
+static void DefineFloatMacros(std::vector<char> &Buf, const char *Prefix,
+                              const llvm::fltSemantics *Sem) {
+  const char *DenormMin = PickFP(Sem, "1.40129846e-45F",
+                                 "4.9406564584124654e-324", 
+                                 "3.64519953188247460253e-4951L",
+                                 "4.94065645841246544176568792868221e-324L");
+  
+  char MacroBuf[60];
+  sprintf(MacroBuf, "__%s_DENORM_MIN__=%s", Prefix, DenormMin);
+  DefineBuiltinMacro(Buf, MacroBuf);
+}
+
 
 static void InitializePredefinedMacros(Preprocessor &PP, 
                                        std::vector<char> &Buf) {
@@ -472,9 +500,13 @@ static void InitializePredefinedMacros(Preprocessor &PP,
   assert(TI.getCharWidth() == 8 && "Only support 8-bit char so far");
   DefineBuiltinMacro(Buf, "__CHAR_BIT__=8");
   DefineBuiltinMacro(Buf, "__SCHAR_MAX__=127");
+
+  assert(TI.getWCharWidth() == 32 && "Only support 32-bit wchar so far");
+  DefineBuiltinMacro(Buf, "__WCHAR_MAX__=2147483647");
+  DefineBuiltinMacro(Buf, "__WCHAR_TYPE__=int");
+  DefineBuiltinMacro(Buf, "__WINT_TYPE__=int");
   
   assert(TI.getShortWidth() == 16 && "Only support 16-bit short so far");
-  DefineBuiltinMacro(Buf, "__CHAR_BIT__=8");
   DefineBuiltinMacro(Buf, "__SHRT_MAX__=32767");
   
   if (TI.getIntWidth() == 32)
@@ -506,6 +538,7 @@ static void InitializePredefinedMacros(Preprocessor &PP,
     assert(TI.getPointerWidth(0) == TI.getLongWidth() && 
            TI.getLongWidth() == 64 && 
            TI.getIntWidth() == 32 && "Not I32 LP64?");
+    assert(TI.getIntMaxTWidth() == 64);
     DefineBuiltinMacro(Buf, "__INTMAX_MAX__=9223372036854775807L");
     DefineBuiltinMacro(Buf, "__INTMAX_TYPE__=long int");
     DefineBuiltinMacro(Buf, "__PTRDIFF_TYPE__=long int");
@@ -518,6 +551,7 @@ static void InitializePredefinedMacros(Preprocessor &PP,
            "Unexpected target sizes");
     // We currently only support targets where long is 32-bit.  This can be
     // easily generalized in the future.
+    assert(TI.getIntMaxTWidth() == 64);
     DefineBuiltinMacro(Buf, "__INTMAX_MAX__=9223372036854775807LL");
     DefineBuiltinMacro(Buf, "__INTMAX_TYPE__=long long int");
     DefineBuiltinMacro(Buf, "__PTRDIFF_TYPE__=int");
@@ -528,7 +562,9 @@ static void InitializePredefinedMacros(Preprocessor &PP,
   assert(TI.getPointerWidth(0) == TI.getLongWidth());
   DefineBuiltinMacro(Buf, "__SIZE_TYPE__=long unsigned int");
 
-  
+  DefineFloatMacros(Buf, "FLT", &TI.getFloatFormat());
+  DefineFloatMacros(Buf, "DBL", &TI.getDoubleFormat());
+  DefineFloatMacros(Buf, "LDBL", &TI.getLongDoubleFormat());
   
   
   // Add __builtin_va_list typedef.

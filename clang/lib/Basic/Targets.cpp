@@ -119,12 +119,7 @@ static void getPowerPCDefines(std::vector<char> &Defs, bool is64Bit) {
   Define(Defs, "__NATURAL_ALIGNMENT__");
   Define(Defs, "__REGISTER_PREFIX__", "");
 
-  Define(Defs, "__WCHAR_MAX__", "2147483647");
-  Define(Defs, "__WCHAR_TYPE__", "int");
-  Define(Defs, "__WINT_TYPE__", "int");
-  
   // Float macros.
-  Define(Defs, "__FLT_DENORM_MIN__", "1.40129846e-45F");
   Define(Defs, "__FLT_DIG__", "6");
   Define(Defs, "__FLT_EPSILON__", "1.19209290e-7F");
   Define(Defs, "__FLT_EVAL_METHOD__", "0");
@@ -140,7 +135,6 @@ static void getPowerPCDefines(std::vector<char> &Defs, bool is64Bit) {
   Define(Defs, "__FLT_RADIX__", "2");
   
   // double macros.
-  Define(Defs, "__DBL_DENORM_MIN__", "4.9406564584124654e-324");
   Define(Defs, "__DBL_DIG__", "15");
   Define(Defs, "__DBL_EPSILON__", "2.2204460492503131e-16");
   Define(Defs, "__DBL_HAS_INFINITY__");
@@ -155,8 +149,6 @@ static void getPowerPCDefines(std::vector<char> &Defs, bool is64Bit) {
   Define(Defs, "__DECIMAL_DIG__", "33");
   
   // 128-bit long double macros.
-  Define(Defs, "__LDBL_DENORM_MIN__",
-         "4.94065645841246544176568792868221e-324L");
   Define(Defs, "__LDBL_DIG__", "31");
   Define(Defs, "__LDBL_EPSILON__",
          "4.94065645841246544176568792868221e-324L");
@@ -205,12 +197,8 @@ static void getX86Defines(std::vector<char> &Defs, bool is64Bit) {
   Define(Defs, "__MMX__");
   Define(Defs, "__REGISTER_PREFIX__", "");
 
-  Define(Defs, "__WCHAR_MAX__", "2147483647");
-  Define(Defs, "__WCHAR_TYPE__", "int");
-  Define(Defs, "__WINT_TYPE__", "int");
   
   // Float macros.
-  Define(Defs, "__FLT_DENORM_MIN__", "1.40129846e-45F");
   Define(Defs, "__FLT_DIG__", "6");
   Define(Defs, "__FLT_EPSILON__", "1.19209290e-7F");
   Define(Defs, "__FLT_EVAL_METHOD__", "0");
@@ -226,7 +214,6 @@ static void getX86Defines(std::vector<char> &Defs, bool is64Bit) {
   Define(Defs, "__FLT_RADIX__", "2");
   
   // Double macros.
-  Define(Defs, "__DBL_DENORM_MIN__", "4.9406564584124654e-324");
   Define(Defs, "__DBL_DIG__", "15");
   Define(Defs, "__DBL_EPSILON__", "2.2204460492503131e-16");
   Define(Defs, "__DBL_HAS_INFINITY__");
@@ -241,7 +228,6 @@ static void getX86Defines(std::vector<char> &Defs, bool is64Bit) {
   Define(Defs, "__DECIMAL_DIG__", "21");
   
   // 80-bit Long double macros.
-  Define(Defs, "__LDBL_DENORM_MIN__", "3.64519953188247460253e-4951L");
   Define(Defs, "__LDBL_DIG__", "18");
   Define(Defs, "__LDBL_EPSILON__", "1.08420217248550443401e-19L");
   Define(Defs, "__LDBL_HAS_INFINITY__");
@@ -270,14 +256,10 @@ static void getARMDefines(std::vector<char> &Defs) {
   Define(Defs, "__ARMEL__");
   Define(Defs, "__ENVIRONMENT_IPHONE_OS_VERSION_MIN_REQUIRED__", "20000");
   
-  Define(Defs, "__WCHAR_MAX__", "2147483647");
-  Define(Defs, "__WCHAR_TYPE__", "int");
-  Define(Defs, "__WINT_TYPE__", "int");
   Define(Defs, "__DECIMAL_DIG__", "17");
   Define(Defs, "__FLT_RADIX__", "2");
 
   // Float macros.
-  Define(Defs, "__FLT_DENORM_MIN__", "1.40129846e-45F");
   Define(Defs, "__FLT_DIG__", "6");
   Define(Defs, "__FLT_EPSILON__", "1.19209290e-7F");
   Define(Defs, "__FLT_EVAL_METHOD__", "0");
@@ -292,7 +274,6 @@ static void getARMDefines(std::vector<char> &Defs) {
   Define(Defs, "__FLT_MIN__", "1.17549435e-38F");
   
   // Double macros.
-  Define(Defs, "__DBL_DENORM_MIN__", "4.9406564584124654e-324");
   Define(Defs, "__DBL_DIG__", "15");
   Define(Defs, "__DBL_EPSILON__", "2.2204460492503131e-16");
   Define(Defs, "__DBL_HAS_INFINITY__");
@@ -306,7 +287,6 @@ static void getARMDefines(std::vector<char> &Defs) {
   Define(Defs, "__DBL_MIN__", "2.2250738585072014e-308");
   
   // 64-bit Long double macros (same as double).
-  Define(Defs, "__LDBL_DENORM_MIN__", "4.9406564584124654e-324");
   Define(Defs, "__LDBL_DIG__", "15");
   Define(Defs, "__LDBL_EPSILON__", "2.2204460492503131e-16");
   Define(Defs, "__LDBL_HAS_INFINITY__");
