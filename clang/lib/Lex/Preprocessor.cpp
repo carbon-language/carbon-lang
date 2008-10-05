@@ -427,6 +427,7 @@ static void InitializePredefinedMacros(Preprocessor &PP,
     // on other things like the runtime I believe.
     DefineBuiltinMacro(Buf, "__CONSTANT_CFSTRINGS__=1");
   }
+  
   if (PP.getLangOptions().ObjC2)
     DefineBuiltinMacro(Buf, "OBJC_NEW_PROPERTIES");
 
@@ -465,29 +466,45 @@ static void InitializePredefinedMacros(Preprocessor &PP,
   
   
   // Initialize target-specific preprocessor defines.
+  const TargetInfo &TI = PP.getTargetInfo();
+  
+  // Define type sizing macros based on the target properties.
+  assert(TI.getCharWidth() == 8 && "Only support 8-bit char so far");
+  DefineBuiltinMacro(Buf, "__CHAR_BIT__=8");
+  DefineBuiltinMacro(Buf, "__SCHAR_MAX__=127");
+  
+  assert(TI.getShortWidth() == 16 && "Only support 16-bit short so far");
+  DefineBuiltinMacro(Buf, "__CHAR_BIT__=8");
+  DefineBuiltinMacro(Buf, "__SHRT_MAX__=32767");
+  
+  
+  assert(TI.getLongLongWidth() == 64 && "Only support 64-bit long long so far");
+  DefineBuiltinMacro(Buf, "__LONG_LONG_MAX__=9223372036854775807LL");
+
   
   // Add __builtin_va_list typedef.
   {
-    const char *VAList = PP.getTargetInfo().getVAListDeclaration();
+    const char *VAList = TI.getVAListDeclaration();
     Buf.insert(Buf.end(), VAList, VAList+strlen(VAList));
     Buf.push_back('\n');
   }
   
-  if (const char *Prefix = PP.getTargetInfo().getUserLabelPrefix()) {
+  if (const char *Prefix = TI.getUserLabelPrefix()) {
     llvm::SmallString<20> TmpStr;
     TmpStr += "__USER_LABEL_PREFIX__=";
     TmpStr += Prefix;
     DefineBuiltinMacro(Buf, TmpStr.c_str());
   }
   
-  // Get the target #defines.
-  PP.getTargetInfo().getTargetDefines(Buf);
-
-  // Build configuration options.
+  // Build configuration options.  FIXME: these should be controlled by
+  // command line options or something.
   DefineBuiltinMacro(Buf, "__DYNAMIC__=1");
   DefineBuiltinMacro(Buf, "__FINITE_MATH_ONLY__=0");
   DefineBuiltinMacro(Buf, "__NO_INLINE__=1");
   DefineBuiltinMacro(Buf, "__PIC__=1");
+
+  // Get other target #defines.
+  TI.getTargetDefines(Buf);
   
   // FIXME: Should emit a #line directive here.
 }
