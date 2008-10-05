@@ -110,6 +110,7 @@ public:
   void SynthesizeBlockLiterals(SourceLocation FunLocStart,
                                  const char *FunName);
   
+  void CollectBlockDeclRefInfo(BlockExpr *Exp);
   void GetBlockCallExprs(Stmt *S);
   void GetBlockDeclRefExprs(Stmt *S);
   
@@ -392,14 +393,10 @@ std::string RewriteBlocks::SynthesizeBlockFunc(BlockExpr *CE, int i,
   }
   S += " {\n";
   
-  bool haveByRefDecls = false;
-  
   // Create local declarations to avoid rewriting all closure decl ref exprs.
   // First, emit a declaration for all "by ref" decls.
   for (llvm::SmallPtrSet<ValueDecl*,8>::iterator I = BlockByRefDecls.begin(), 
        E = BlockByRefDecls.end(); I != E; ++I) {
-    // Note: It is not possible to have "by ref" closure pointer decls.
-    haveByRefDecls = true;
     S += "  ";
     std::string Name = (*I)->getName();
     Context->getPointerType((*I)->getType()).getAsStringInternal(Name);
@@ -588,24 +585,8 @@ void RewriteBlocks::SynthesizeBlockLiterals(SourceLocation FunLocStart,
   // Insert closures that were part of the function.
   for (unsigned i = 0; i < Blocks.size(); i++) {
 
-    GetBlockDeclRefExprs(Blocks[i]);
-    if (BlockDeclRefs.size()) {
-      // Unique all "by copy" declarations.
-      for (unsigned i = 0; i < BlockDeclRefs.size(); i++)
-        if (!BlockDeclRefs[i]->isByRef())
-          BlockByCopyDecls.insert(BlockDeclRefs[i]->getDecl());
-      // Unique all "by ref" declarations.
-      for (unsigned i = 0; i < BlockDeclRefs.size(); i++)
-        if (BlockDeclRefs[i]->isByRef())
-          BlockByRefDecls.insert(BlockDeclRefs[i]->getDecl());
-   
-      // Find any imported blocks...they will need special attention.
-      for (unsigned i = 0; i < BlockDeclRefs.size(); i++)
-        if (isBlockPointerType(BlockDeclRefs[i]->getType())) {
-          GetBlockCallExprs(Blocks[i]);
-          ImportedBlockDecls.insert(BlockDeclRefs[i]->getDecl());
-        }
-    }
+    CollectBlockDeclRefInfo(Blocks[i]);
+
     std::string Tag = "__" + std::string(FunName) + "_block_impl_" + utostr(i);
                       
     std::string CI = SynthesizeBlockImpl(Blocks[i], Tag, 
@@ -906,10 +887,7 @@ void RewriteBlocks::RewriteBlockPointerDecl(NamedDecl *ND) {
   return;
 }
 
-std::string RewriteBlocks::SynthesizeBlockInitExpr(BlockExpr *Exp, VarDecl *VD) {
-  Blocks.push_back(Exp);
-  bool haveByRefDecls = false;
-
+void RewriteBlocks::CollectBlockDeclRefInfo(BlockExpr *Exp) {  
   // Add initializers for any closure decl refs.
   GetBlockDeclRefExprs(Exp);
   if (BlockDeclRefs.size()) {
@@ -920,7 +898,6 @@ std::string RewriteBlocks::SynthesizeBlockInitExpr(BlockExpr *Exp, VarDecl *VD) 
     // Unique all "by ref" declarations.
     for (unsigned i = 0; i < BlockDeclRefs.size(); i++)
       if (BlockDeclRefs[i]->isByRef()) {
-        haveByRefDecls = true;
         BlockByRefDecls.insert(BlockDeclRefs[i]->getDecl());
       }
     // Find any imported blocks...they will need special attention.
@@ -930,6 +907,12 @@ std::string RewriteBlocks::SynthesizeBlockInitExpr(BlockExpr *Exp, VarDecl *VD) 
         ImportedBlockDecls.insert(BlockDeclRefs[i]->getDecl());
       }
   }
+}
+
+std::string RewriteBlocks::SynthesizeBlockInitExpr(BlockExpr *Exp, VarDecl *VD) {
+  Blocks.push_back(Exp);
+
+  CollectBlockDeclRefInfo(Exp);
   std::string FuncName;
   
   if (CurFunctionDef)
