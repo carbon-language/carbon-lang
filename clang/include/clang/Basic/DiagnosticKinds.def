@@ -733,6 +733,12 @@ DIAG(warn_attribute_nonnull_no_pointers, WARNING,
 DIAG(warn_transparent_union_nonpointer, WARNING,
   "'transparent_union' attribute support incomplete; only supported for"
   "pointer unions")
+DIAG(warn_attribute_sentinel_not_variadic, WARNING,
+  "'sentinel' attribute only supported for variadic functions")
+DIAG(err_attribute_sentinel_less_than_zero, ERROR,
+  "'sentinel' parameter 1 less than zero")
+DIAG(err_attribute_sentinel_not_zero_or_one, ERROR,
+  "'sentinel' parameter 2 not 0 or 1")
   
 // Clang-Specific Attributes
 DIAG(err_attribute_iboutlet_non_ivar, ERROR,

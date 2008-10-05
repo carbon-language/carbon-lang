@@ -586,6 +586,71 @@ static void HandleBlocksAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   d->addAttr(new BlocksAttr(type));
 }
 
+static void HandleSentinelAttr(Decl *d, const AttributeList &Attr, Sema &S) {
+  // check the attribute arguments.
+  if (Attr.getNumArgs() > 2) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments, "0, 1 or 2");
+    return;
+  } 
+  
+  int sentinel = 0;
+  if (Attr.getNumArgs() > 0) {
+    Expr *E = static_cast<Expr *>(Attr.getArg(0));
+    llvm::APSInt Idx(32);
+    if (!E->isIntegerConstantExpr(Idx, S.Context)) {
+      S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_int,
+             "sentinel", "1", E->getSourceRange());
+      return;
+    }
+    sentinel = Idx.getZExtValue();
+    
+    if (sentinel < 0) {
+      S.Diag(Attr.getLoc(), diag::err_attribute_sentinel_less_than_zero,
+             E->getSourceRange());
+      return;
+    }
+  }
+
+  int nullPos = 0;
+  if (Attr.getNumArgs() > 1) {
+    Expr *E = static_cast<Expr *>(Attr.getArg(1));
+    llvm::APSInt Idx(32);
+    if (!E->isIntegerConstantExpr(Idx, S.Context)) {
+      S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_int,
+             "sentinel", "2", E->getSourceRange());
+      return;
+    }
+    nullPos = Idx.getZExtValue();
+    
+    if (nullPos > 1 || nullPos < 0) {
+      // FIXME: This error message could be improved, it would be nice
+      // to say what the bounds actually are.
+      S.Diag(Attr.getLoc(), diag::err_attribute_sentinel_not_zero_or_one, 
+             E->getSourceRange());
+      return;
+    }
+  }
+
+  if (FunctionDecl *FD = dyn_cast<FunctionDecl>(d)) {
+    QualType FT = FD->getType();
+    if (!FT->getAsFunctionTypeProto()->isVariadic()) {
+      S.Diag(Attr.getLoc(), diag::warn_attribute_sentinel_not_variadic);
+      return;
+    }    
+  } else if (ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(d)) {
+    if (!MD->isVariadic()) {
+      S.Diag(Attr.getLoc(), diag::warn_attribute_sentinel_not_variadic);
+      return;
+    }    
+  } else {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type,
+           "sentinel", "function or method");
+    return;
+  }
+  
+  // FIXME: Actually create the attribute.
+}
+
 static void HandleWeakAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() != 0) {
@@ -1052,6 +1117,7 @@ static void ProcessDeclAttribute(Decl *D, const AttributeList &Attr, Sema &S) {
     break;
   case AttributeList::AT_objc_gc:     HandleObjCGCAttr    (D, Attr, S); break;
   case AttributeList::AT_blocks:      HandleBlocksAttr    (D, Attr, S); break;
+  case AttributeList::AT_sentinel:    HandleSentinelAttr  (D, Attr, S); break;
   default:
 #if 0
     // TODO: when we have the full set of attributes, warn about unknown ones.

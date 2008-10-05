@@ -72,6 +72,7 @@ public:
     AT_weak,
     AT_objc_gc,
     AT_blocks,
+    AT_sentinel,
     UnknownAttribute
   };
   

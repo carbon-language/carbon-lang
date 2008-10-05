@@ -80,6 +80,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
     if (!memcmp(Str, "noinline", 8)) return AT_noinline;
     if (!memcmp(Str, "fastcall", 8)) return AT_fastcall;
     if (!memcmp(Str, "iboutlet", 8)) return AT_IBOutlet;
+    if (!memcmp(Str, "sentinel", 8)) return AT_sentinel;
     break;
   case 9:
     if (!memcmp(Str, "dllimport", 9)) return AT_dllimport;
