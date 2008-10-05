@@ -572,15 +572,6 @@ private:
   bool isTypeSpecifierQualifier() const;
   bool isTypeQualifier() const;
 
-  /// TentativeParsingResult - Used as the result value for functions whose
-  /// purpose is to disambiguate C++ constructs by "tentatively parsing" them.
-  enum TentativeParsingResult {
-    TPR_true,
-    TPR_false,
-    TPR_ambiguous,
-    TPR_error
-  };
-
   /// isDeclarationStatement - Disambiguates between a declaration or an
   /// expression statement, when parsing function bodies.
   /// Returns true for declaration, false for expression.
@@ -625,6 +616,15 @@ private:
   /// If during the disambiguation process a parsing error is encountered,
   /// the function returns true to let the declaration parsing code handle it.
   bool isCXXConditionDeclaration();
+
+  /// TentativeParsingResult - Used as the result value for functions whose
+  /// purpose is to disambiguate C++ constructs by "tentatively parsing" them.
+  enum TentativeParsingResult {
+    TPR_true,
+    TPR_false,
+    TPR_ambiguous,
+    TPR_error
+  };
 
   /// isCXXDeclarationSpecifier - Returns TPR_true if it is a declaration
   /// specifier, TPR_false if it is not, TPR_ambiguous if it could be either
