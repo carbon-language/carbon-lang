@@ -3912,9 +3912,12 @@ static bool CollectBSwapParts(Value *V, SmallVector<Value*, 8> &ByteValues) {
     if (I->getOpcode() == Instruction::Shl) {
       // X << 24 defines the top byte with the lowest of the input bytes.
       DestNo = ByteValues.size()-1;
-    } else {
+    } else if (I->getOpcode() == Instruction::LShr) {
       // X >>u 24 defines the low byte with the highest of the input bytes.
       DestNo = 0;
+    } else {
+      // Arithmetic shift right may have the top bits set.
+      return true;
     }
     
     // If the destination byte value is already defined, the values are or'd
