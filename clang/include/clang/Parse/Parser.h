@@ -590,6 +590,16 @@ private:
     return isDeclarationSpecifier();
   }
 
+  /// isSimpleDeclaration - Disambiguates between a declaration or an
+  /// expression, mainly used for the C 'clause-1' or the C++
+  // 'for-init-statement' part of a 'for' statement.
+  /// Returns true for declaration, false for expression.
+  bool isSimpleDeclaration() {
+    if (getLang().CPlusPlus)
+      return isCXXSimpleDeclaration();
+    return isDeclarationSpecifier();
+  }
+
   /// isCXXDeclarationStatement - C++-specialized function that disambiguates
   /// between a declaration or an expression statement, when parsing function
   /// bodies. Returns true for declaration, false for expression.

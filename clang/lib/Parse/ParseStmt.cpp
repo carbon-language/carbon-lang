@@ -813,7 +813,7 @@ Parser::StmtResult Parser::ParseForStatement() {
   if (Tok.is(tok::semi)) {  // for (;
     // no first part, eat the ';'.
     ConsumeToken();
-  } else if (isDeclarationSpecifier()) {  // for (int X = 4;
+  } else if (isSimpleDeclaration()) {  // for (int X = 4;
     // Parse declaration, which eats the ';'.
     if (!C99orCXX)   // Use of C99-style for loops in C90 mode?
       Diag(Tok, diag::ext_c99_variable_decl_in_for_loop);
