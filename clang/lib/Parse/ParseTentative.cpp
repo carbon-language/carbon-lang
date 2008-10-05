@@ -418,7 +418,11 @@ Parser::TPResult Parser::TryParseDeclarator(bool mayBeAbstract,
     // declarator-id
     ConsumeToken();
   } else if (Tok.is(tok::l_paren)) {
-    if (mayBeAbstract && isCXXFunctionDeclarator()) {
+    ConsumeParen();
+    if (mayBeAbstract &&
+        (Tok.is(tok::r_paren) ||       // 'int()' is a function.
+         Tok.is(tok::ellipsis) ||      // 'int(...)' is a function.
+         isDeclarationSpecifier())) {   // 'int(int)' is a function.
       // '(' parameter-declaration-clause ')' cv-qualifier-seq[opt]
       //        exception-specification[opt]
       TPResult TPR = TryParseFunctionDeclarator();
@@ -428,7 +432,6 @@ Parser::TPResult Parser::TryParseDeclarator(bool mayBeAbstract,
       // '(' declarator ')'
       // '(' attributes declarator ')'
       // '(' abstract-declarator ')'
-      ConsumeParen();
       if (Tok.is(tok::kw___attribute))
         return TPResult::True(); // attributes indicate declaration
       TPResult TPR = TryParseDeclarator(mayBeAbstract, mayHaveIdentifier);
@@ -446,10 +449,16 @@ Parser::TPResult Parser::TryParseDeclarator(bool mayBeAbstract,
     TPResult TPR(TPResult::Ambiguous());
 
     if (Tok.is(tok::l_paren)) {
+      // Check whether we have a function declarator or a possible ctor-style
+      // initializer that follows the declarator. Note that ctor-style
+      // initializers are not possible in contexts where abstract declarators
+      // are allowed.
+      if (!mayBeAbstract && !isCXXFunctionDeclarator())
+        break;
+
       // direct-declarator '(' parameter-declaration-clause ')'
       //        cv-qualifier-seq[opt] exception-specification[opt]
-      if (!isCXXFunctionDeclarator())
-        break;
+      ConsumeParen();
       TPR = TryParseFunctionDeclarator();
     } else if (Tok.is(tok::l_square)) {
       // direct-declarator '[' constant-expression[opt] ']'
@@ -809,9 +818,11 @@ Parser::TPResult Parser::TryParseParameterDeclarationClause() {
   return TPResult::Ambiguous();
 }
 
-/// TryParseFunctionDeclarator - We previously determined (using
-/// isCXXFunctionDeclarator) that we are at a function declarator. Now parse
-/// through it.
+/// TryParseFunctionDeclarator - We parsed a '(' and we want to try to continue
+/// parsing as a function declarator.
+/// If TryParseFunctionDeclarator fully parsed the function declarator, it will
+/// return TPResult::Ambiguous(), otherwise it will return either False() or
+/// Error().
 /// 
 /// '(' parameter-declaration-clause ')' cv-qualifier-seq[opt]
 ///         exception-specification[opt]
@@ -820,9 +831,17 @@ Parser::TPResult Parser::TryParseParameterDeclarationClause() {
 ///   'throw' '(' type-id-list[opt] ')'
 ///
 Parser::TPResult Parser::TryParseFunctionDeclarator() {
-  assert(Tok.is(tok::l_paren));
+
+  // The '(' is already parsed.
+
+  TPResult TPR = TryParseParameterDeclarationClause();
+  if (TPR == TPResult::Ambiguous() && Tok.isNot(tok::r_paren))
+    TPR = TPResult::False();
+
+  if (TPR == TPResult::False() || TPR == TPResult::Error())
+    return TPR;
+
   // Parse through the parens.
-  ConsumeParen();
   if (!SkipUntil(tok::r_paren))
     return TPResult::Error();
 
