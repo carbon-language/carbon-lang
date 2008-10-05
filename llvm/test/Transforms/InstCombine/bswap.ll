@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis | \
-; RUN:    grep {call.*llvm.bswap} | count 5
+; RUN:    grep {call.*llvm.bswap} | count 6
 
 define i32 @test1(i32 %i) {
 	%tmp1 = lshr i32 %i, 24		; <i32> [#uses=1]
@@ -55,3 +55,18 @@ define i16 @test5(i16 %a) {
 	%retval = trunc i32 %tmp6.upgrd.4 to i16		; <i16> [#uses=1]
 	ret i16 %retval
 }
+
+; PR2842
+define i32 @test6(i32 %x) nounwind readnone {
+	%tmp = shl i32 %x, 16		; <i32> [#uses=1]
+	%x.mask = and i32 %x, 65280		; <i32> [#uses=1]
+	%tmp1 = lshr i32 %x, 16		; <i32> [#uses=1]
+	%tmp2 = and i32 %tmp1, 255		; <i32> [#uses=1]
+	%tmp3 = or i32 %x.mask, %tmp		; <i32> [#uses=1]
+	%tmp4 = or i32 %tmp3, %tmp2		; <i32> [#uses=1]
+	%tmp5 = shl i32 %tmp4, 8		; <i32> [#uses=1]
+	%tmp6 = lshr i32 %x, 24		; <i32> [#uses=1]
+	%tmp7 = or i32 %tmp5, %tmp6		; <i32> [#uses=1]
+	ret i32 %tmp7
+}
+
