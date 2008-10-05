@@ -410,7 +410,7 @@ BUILTIN(__builtin_ia32_vec_ext_v8hi, "UsV8si", "")
 BUILTIN(__builtin_ia32_vec_ext_v4hi, "sV4si", "")
 BUILTIN(__builtin_ia32_vec_ext_v2si, "iV2ii", "")
 BUILTIN(__builtin_ia32_vec_set_v8hi, "V8sV8ssi", "")
-BUILTIN(__builtin_ia32_vec_set_v4hi, "V4sv4ssi", "")
+BUILTIN(__builtin_ia32_vec_set_v4hi, "V4sV4ssi", "")
 
 BUILTIN(__builtin_ia32_movqv4si, "V4iV4i", "")
 BUILTIN(__builtin_ia32_loadlv4si, "V4iV2i*", "")
