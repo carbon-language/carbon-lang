@@ -293,7 +293,12 @@ BUILTIN(__builtin_ia32_storelps, "vV2i*V4f", "")
 BUILTIN(__builtin_ia32_movmskps, "iV4f", "")
 BUILTIN(__builtin_ia32_pmovmskb, "iV8c", "")
 BUILTIN(__builtin_ia32_movntps, "vf*V4f", "")
-BUILTIN(__builtin_ia32_movntq, "vV1LLi*V1LLi", "")
+// FIXME: the prototype for __builtin_ia32_movntq changed across different
+// versions of GCC.  Until we can replace GCC's xmmintrin.h, this is hacked to
+// be a vararg builtin instead of taking V1LLi like it should.  This loses some
+// type checking but makes us compatible with old version of GCC's xmmintrin.h
+// file.
+BUILTIN(__builtin_ia32_movntq, "vV1LLi*.", "")
 BUILTIN(__builtin_ia32_sfence, "v", "")
 BUILTIN(__builtin_ia32_psadbw, "V4sV8cV8c", "")
 BUILTIN(__builtin_ia32_rcpps, "V4fV4f", "")
