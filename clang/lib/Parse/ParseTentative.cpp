@@ -259,11 +259,9 @@ bool Parser::isCXXConditionDeclaration() {
   // declarator
   TPR = TryParseDeclarator(false/*mayBeAbstract*/);
 
-  PA.Revert();
-
   // In case of an error, let the declaration parsing code handle it.
   if (TPR == TPR_error)
-    return true;
+    TPR = TPR_true;
 
   if (TPR == TPR_ambiguous) {
     // '='
@@ -274,6 +272,8 @@ bool Parser::isCXXConditionDeclaration() {
     else
       TPR = TPR_false;
   }
+
+  PA.Revert();
 
   assert(TPR == TPR_true || TPR == TPR_false);
   return TPR == TPR_true;

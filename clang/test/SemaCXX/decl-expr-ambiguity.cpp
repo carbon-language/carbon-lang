@@ -19,4 +19,5 @@ void f() {
   typeof(int[])(f) = { 1, 2 }; // expected-warning {{statement was disambiguated as declaration}}
   void(b)(int);
   int(d2) __attribute__(()); // expected-warning {{statement was disambiguated as declaration}}
+  if (int(a)=1) {}
 }
