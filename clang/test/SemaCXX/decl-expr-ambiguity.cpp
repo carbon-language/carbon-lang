@@ -17,4 +17,5 @@ void f() {
   T(d)[5]; // expected-warning {{statement was disambiguated as declaration}} expected-error {{redefinition of 'd'}}
   typeof(int[])(f) = { 1, 2 }; // expected-warning {{statement was disambiguated as declaration}}
   void(b)(int);
+  int(d2) __attribute__(()); // expected-warning {{statement was disambiguated as declaration}}
 }

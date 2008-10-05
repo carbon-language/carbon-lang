@@ -164,12 +164,13 @@ Parser::TentativeParsingResult Parser::TryParseSimpleDeclaration() {
   return TPR_ambiguous;
 }
 
-/// init-declarator-list:
-///   init-declarator
-///   init-declarator-list ',' init-declarator
+///       init-declarator-list:
+///         init-declarator
+///         init-declarator-list ',' init-declarator
 ///
-/// init-declarator:
-///   declarator initializer[opt]
+///       init-declarator:
+///         declarator initializer[opt]
+/// [GNU]   declarator simple-asm-expr[opt] attributes[opt] initializer[opt]
 ///
 /// initializer:
 ///   '=' initializer-clause
@@ -194,6 +195,10 @@ Parser::TentativeParsingResult Parser::TryParseInitDeclaratorList() {
     TentativeParsingResult TPR = TryParseDeclarator(false/*mayBeAbstract*/);
     if (TPR != TPR_ambiguous)
       return TPR;
+
+    // [GNU] simple-asm-expr[opt] attributes[opt]
+    if (Tok.is(tok::kw_asm) || Tok.is(tok::kw___attribute))
+      return TPR_true;
 
     // initializer[opt]
     if (Tok.is(tok::l_paren)) {
@@ -230,6 +235,7 @@ Parser::TentativeParsingResult Parser::TryParseInitDeclaratorList() {
 ///                 cv-qualifier-seq[opt] exception-specification[opt]
 ///           direct-declarator '[' constant-expression[opt] ']'
 ///           '(' declarator ')'
+/// [GNU]     '(' attributes declarator ')'
 ///
 ///         abstract-declarator:
 ///           ptr-operator abstract-declarator[opt]
@@ -302,8 +308,11 @@ Parser::TentativeParsingResult Parser::TryParseDeclarator(bool mayBeAbstract) {
         return TPR;
     } else {
       // '(' declarator ')'
+      // '(' attributes declarator ')'
       // '(' abstract-declarator ')'
-     ConsumeParen();
+      ConsumeParen();
+      if (Tok.is(tok::kw___attribute))
+        return TPR_true; // attributes indicate declaration
       TentativeParsingResult TPR = TryParseDeclarator(mayBeAbstract);
       if (TPR != TPR_ambiguous)
         return TPR;
