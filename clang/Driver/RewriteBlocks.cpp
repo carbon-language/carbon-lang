@@ -34,7 +34,6 @@ class RewriteBlocks : public ASTConsumer {
   Diagnostic &Diags;
   const LangOptions &LangOpts;
   unsigned RewriteFailedDiag;
-  unsigned NoNestedBlockCalls;
 
   ASTContext *Context;
   SourceManager *SM;
@@ -172,8 +171,6 @@ RewriteBlocks::RewriteBlocks(std::string inFile, std::string outFile,
   CurMethodDef = 0;
   RewriteFailedDiag = Diags.getCustomDiagID(Diagnostic::Warning, 
                                             "rewriting failed");
-  NoNestedBlockCalls = Diags.getCustomDiagID(Diagnostic::Warning, 
-    "Rewrite support for closure calls nested within closure blocks is incomplete");
 }
 
 ASTConsumer *clang::CreateBlockRewriter(const std::string& InFile,
