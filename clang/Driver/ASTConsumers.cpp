@@ -489,6 +489,8 @@ namespace {
         }
       } else if (isa<ObjCImplementationDecl>(D)) {
         Out << "Read objc implementation decl\n";
+      } else if (isa<ObjCCategoryImplDecl>(D)) {
+        Out << "Read objc category implementation decl\n";
       }
       else {
         assert(0 && "Unknown decl type!");
