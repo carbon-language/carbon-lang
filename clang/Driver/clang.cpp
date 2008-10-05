@@ -1020,9 +1020,6 @@ static void ParseFile(Preprocessor &PP, MinimalAction *PA) {
   // Parsing the specified input file.
   P.ParseTranslationUnit();
   delete PA;
-
-  if (VerifyDiagnostics)
-    exit(CheckDiagnostics(PP));
 }
 
 //===----------------------------------------------------------------------===//
@@ -1157,6 +1154,9 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
       exit(CheckASTConsumer(PP, Consumer.get()));
     
     ParseAST(PP, Consumer.get(), Stats);
+  } else {
+    if (VerifyDiagnostics)
+      exit(CheckDiagnostics(PP));
   }
 
   if (Stats) {
