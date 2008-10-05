@@ -20,6 +20,11 @@
 // FIXME: In GCC, these builtins are defined depending on whether support for
 // MMX/SSE/etc is turned on. We should do this too.
 
+// FIXME: Ideally we would be able to pull this information from what
+// LLVM already knows about X86 builtins. We need to match the LLVM
+// definition anyway, since code generation will lower to the
+// intrinsic if one exists.
+
 BUILTIN(__builtin_ia32_emms  , "v", "")
 
 // FIXME: Are these nothrow/const?
@@ -397,8 +402,8 @@ BUILTIN(__builtin_ia32_mwait, "vUiUi", "")
 BUILTIN(__builtin_ia32_movshdup, "V4fV4f", "")
 BUILTIN(__builtin_ia32_movsldup, "V4fV4f", "")
 BUILTIN(__builtin_ia32_lddqu, "V16ccC*", "")
-BUILTIN(__builtin_ia32_palignr128, "V2LLiV2LLii", "")
-BUILTIN(__builtin_ia32_palignr, "V1LLiV1LLii", "")
+BUILTIN(__builtin_ia32_palignr128, "V2LLiV2LLiV2LLii", "")
+BUILTIN(__builtin_ia32_palignr, "V1LLiV1LLiV1LLis", "")
 BUILTIN(__builtin_ia32_vec_init_v2si, "V2iii", "")
 BUILTIN(__builtin_ia32_vec_init_v4hi, "V4sssss", "")
 BUILTIN(__builtin_ia32_vec_init_v8qi, "V8ccccccccc", "")
