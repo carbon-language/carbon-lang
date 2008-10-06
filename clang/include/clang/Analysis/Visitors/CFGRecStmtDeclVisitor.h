@@ -42,7 +42,9 @@ public:
   }
   
   void VisitDeclStmt(DeclStmt* DS) {
-    for (ScopedDecl* D = DS->getDecl(); D != NULL; D = D->getNextDeclarator()) {
+    for (DeclStmt::decl_iterator DI = DS->decl_begin(), DE = DS->decl_end();
+        DI != DE; ++DI) {
+      ScopedDecl* D = *DI;
       static_cast<ImplClass*>(this)->VisitScopedDecl(D); 
       // Visit the initializer.
       if (VarDecl* VD = dyn_cast<VarDecl>(D))
