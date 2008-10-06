@@ -530,7 +530,8 @@ void SROA::isSafeUseOfAllocation(Instruction *User, AllocationInst *AI,
       return MarkUnsafe(Info);
     }
   }
-  
+ 
+  bool hasVector = false;
   
   // Walk through the GEP type indices, checking the types that this indexes
   // into.
@@ -539,22 +540,30 @@ void SROA::isSafeUseOfAllocation(Instruction *User, AllocationInst *AI,
     if (isa<StructType>(*I))
       continue;
     
-    // Don't SROA pointers into vectors.
-    if (isa<VectorType>(*I))
-      return MarkUnsafe(Info);
-    
-    // Otherwise, we must have an index into an array type.  Verify that this is
-    // an in-range constant integer.  Specifically, consider A[0][i].  We
-    // cannot know that the user isn't doing invalid things like allowing i to
-    // index an out-of-range subscript that accesses A[1].  Because of this, we
-    // have to reject SROA of any accesses into structs where any of the
-    // components are variables.
     ConstantInt *IdxVal = dyn_cast<ConstantInt>(I.getOperand());
     if (!IdxVal) return MarkUnsafe(Info);
-    if (IdxVal->getZExtValue() >= cast<ArrayType>(*I)->getNumElements())
-      return MarkUnsafe(Info);
-    
+
+    // Are all indices still zero?
     IsAllZeroIndices &= IdxVal->isZero();
+    
+    if (const ArrayType *AT = dyn_cast<ArrayType>(*I)) {
+      // This GEP indexes an array.  Verify that this is an in-range constant
+      // integer. Specifically, consider A[0][i]. We cannot know that the user
+      // isn't doing invalid things like allowing i to index an out-of-range
+      // subscript that accesses A[1].  Because of this, we have to reject SROA
+      // of any accesses into structs where any of the components are variables.
+      if (IdxVal->getZExtValue() >= AT->getNumElements())
+        return MarkUnsafe(Info);
+    }
+  
+    // Note if we've seen a vector type yet
+    hasVector |= isa<VectorType>(*I);
+    
+    // Don't SROA pointers into vectors, unless all indices are zero. When all
+    // indices are zero, we only consider this GEP as a bitcast, but will still
+    // not consider breaking up the vector.
+    if (hasVector && !IsAllZeroIndices)
+      return MarkUnsafe(Info);
   }
   
   // If there are any non-simple uses of this getelementptr, make sure to reject
@@ -661,6 +670,11 @@ void SROA::RewriteBitCastUserOfAlloca(Instruction *BCInst, AllocationInst *AI,
       // It is likely that OtherPtr is a bitcast, if so, remove it.
       if (BitCastInst *BC = dyn_cast<BitCastInst>(OtherPtr))
         OtherPtr = BC->getOperand(0);
+      // All zero GEPs are effectively casts
+      if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(OtherPtr))
+        if (GEP->hasAllZeroIndices())
+          OtherPtr = GEP->getOperand(0);
+        
       if (ConstantExpr *BCE = dyn_cast<ConstantExpr>(OtherPtr))
         if (BCE->getOpcode() == Instruction::BitCast)
           OtherPtr = BCE->getOperand(0);
