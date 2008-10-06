@@ -1422,7 +1422,7 @@ Stmt *RewriteObjC::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
       Rewrite.ReplaceText(startLoc, bodyBuf-startBuf+1, 
                           buf.c_str(), buf.size());      
     } else if (DeclStmt *declStmt = dyn_cast<DeclStmt>(catchStmt)) {
-      QualType t = dyn_cast<ValueDecl>(declStmt->getDecl())->getType();
+      QualType t = dyn_cast<ValueDecl>(declStmt->getSolitaryDecl())->getType();
       if (t == Context->getObjCIdType()) {
         buf += "1) { ";
         ReplaceText(startLoc, lParenLoc-startBuf+1, buf.c_str(), buf.size());
