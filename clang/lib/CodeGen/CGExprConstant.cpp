@@ -14,6 +14,7 @@
 #include "CodeGenFunction.h"
 #include "CodeGenModule.h"
 #include "CGObjCRuntime.h"
+#include "clang/AST/APValue.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/StmtVisitor.h"
 #include "llvm/Constants.h"
@@ -608,14 +609,13 @@ public:
   }
 
   llvm::Constant *VisitCallExpr(const CallExpr *E) {
-    if (const ImplicitCastExpr *IcExpr = 
-        dyn_cast<const ImplicitCastExpr>(E->getCallee()))
-      if (const DeclRefExpr *DRExpr = 
-          dyn_cast<const DeclRefExpr>(IcExpr->getSubExpr()))
-        if (const FunctionDecl *FDecl = 
-            dyn_cast<const FunctionDecl>(DRExpr->getDecl()))
-          if (unsigned builtinID = FDecl->getIdentifier()->getBuiltinID())
-            return EmitBuiltinExpr(builtinID, E);
+    APValue Result;
+    if (E->tryEvaluate(Result, CGM.getContext())) {
+      if (Result.isInt())
+        return llvm::ConstantInt::get(Result.getInt());
+      if (Result.isFloat())
+        return llvm::ConstantFP::get(Result.getFloat());
+    }
 
     CGM.ErrorUnsupported(E, "constant call expression");
     return llvm::Constant::getNullValue(ConvertType(E->getType()));
@@ -818,21 +818,6 @@ public:
     llvm::Type *Ty = llvm::PointerType::getUnqual(ConvertType(E->getType()));
     return llvm::UndefValue::get(Ty);
   }
-
-  llvm::Constant *EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E)
-  {
-    switch (BuiltinID) {
-    default:
-      CGM.ErrorUnsupported(E, "constant builtin function");
-      return 0;
-    case Builtin::BI__builtin_huge_valf: {
-      const llvm::fltSemantics &Sem =
-      CGM.getContext().getFloatTypeSemantics(E->getType());
-      return llvm::ConstantFP::get(llvm::APFloat::getInf(Sem));
-    }        
-    }
-  }
-    
 };
   
 }  // end anonymous namespace.
