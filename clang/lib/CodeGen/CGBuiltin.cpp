@@ -37,30 +37,17 @@ static RValue EmitBinaryAtomic(CodeGenFunction& CFG,
 }
 
 RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
-  switch (BuiltinID) {
-  default: break;  // Handle intrinsics and libm functions below.
-      
-  case Builtin::BI__builtin_huge_val:
-  case Builtin::BI__builtin_huge_valf:
-  case Builtin::BI__builtin_huge_vall:
-  case Builtin::BI__builtin_inf:
-  case Builtin::BI__builtin_inff:
-  case Builtin::BI__builtin_infl:
-  case Builtin::BI__builtin_nan:
-  case Builtin::BI__builtin_nanf:
-  case Builtin::BI__builtin_nanl:
-  case Builtin::BI__builtin_classify_type:
-  case Builtin::BI__builtin_constant_p: {
-    APValue Result;
-    if (!E->tryEvaluate(Result, CGM.getContext()))
-      break;  // Not a constant, expand below.
-    
+  // See if we can constant fold this builtin.  If so, don't emit it at all.
+  APValue Result;
+  if (E->tryEvaluate(Result, CGM.getContext())) {
     if (Result.isInt())
       return RValue::get(llvm::ConstantInt::get(Result.getInt()));
     assert(Result.isFloat() && "Unsupported constant type");
     return RValue::get(llvm::ConstantFP::get(Result.getFloat()));
   }
       
+  switch (BuiltinID) {
+  default: break;  // Handle intrinsics and libm functions below.
   case Builtin::BI__builtin___CFStringMakeConstantString: {
     const Expr *Arg = E->getArg(0);
     
