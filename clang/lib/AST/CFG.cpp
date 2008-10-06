@@ -69,11 +69,10 @@ public:
     return Ex ? &Ex + 1 : 0;
   }  
   virtual decl_iterator decl_begin() {
-    return getDecl();
+    return TheDecl;
   }  
   virtual decl_iterator decl_end() {
-    ScopedDecl* D = getDecl();
-    return D ? D->getNextDeclarator() : 0;
+    return TheDecl ? TheDecl->getNextDeclarator() : 0;
   }
 };
   
@@ -379,17 +378,22 @@ CFGBlock* CFGBuilder::WalkAST(Stmt* Terminator, bool AlwaysAddStmt = false) {
     }
 
     case Stmt::DeclStmtClass: {
-      ScopedDecl* D = cast<DeclStmt>(Terminator)->getDecl();
-      
-      if (!D->getNextDeclarator()) {      
+      DeclStmt *DS = cast<DeclStmt>(Terminator);      
+      if (DS->hasSolitaryDecl()) {      
         Block->appendStmt(Terminator);
-        return WalkAST_VisitDeclSubExpr(D);
+        return WalkAST_VisitDeclSubExpr(DS->getSolitaryDecl());
       }
       else {
         typedef llvm::SmallVector<ScopedDecl*,10> BufTy;
         BufTy Buf;        
         CFGBlock* B = 0;
-        do { Buf.push_back(D); D = D->getNextDeclarator(); } while (D);
+
+        // FIXME: Add a reverse iterator for DeclStmt to avoid this
+        // extra copy.
+        for (DeclStmt::decl_iterator DI=DS->decl_begin(), DE=DS->decl_end();
+             DI != DE; ++DI)
+          Buf.push_back(*DI);
+        
         for (BufTy::reverse_iterator I=Buf.rbegin(), E=Buf.rend(); I!=E; ++I) {
           // Get the alignment of UnaryDeclStmt, padding out to >=8 bytes.
           unsigned A = llvm::AlignOf<UnaryDeclStmt>::Alignment < 8
