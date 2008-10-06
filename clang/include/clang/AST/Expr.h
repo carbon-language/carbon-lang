@@ -701,6 +701,11 @@ public:
   /// this function call.
   unsigned getNumCommas() const { return NumArgs ? NumArgs - 1 : 0; }
 
+  /// isBuiltinCall - If this is a call to a builtin, return the builtin ID.  If
+  /// not, return 0.
+  unsigned isBuiltinCall() const;
+  
+  
   bool isBuiltinClassifyType(llvm::APSInt &Result) const;
 
   /// isBuiltinConstantExpr - Return true if this built-in call is constant.

@@ -139,30 +139,38 @@ void CallExpr::setNumArgs(unsigned NumArgs) {
   this->NumArgs = NumArgs;
 }
 
-bool CallExpr::isBuiltinConstantExpr(ASTContext &Ctx) const {
+/// isBuiltinCall - If this is a call to a builtin, return the builtin ID.  If
+/// not, return 0.
+unsigned CallExpr::isBuiltinCall() const {
   // All simple function calls (e.g. func()) are implicitly cast to pointer to
   // function. As a result, we try and obtain the DeclRefExpr from the 
   // ImplicitCastExpr.
   const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(getCallee());
   if (!ICE) // FIXME: deal with more complex calls (e.g. (func)(), (*func)()).
-    return false;
-    
+    return 0;
+  
   const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(ICE->getSubExpr());
   if (!DRE)
-    return false;
-
+    return 0;
+  
   const FunctionDecl *FDecl = dyn_cast<FunctionDecl>(DRE->getDecl());
   if (!FDecl)
-    return false;
-    
-  unsigned builtinID = FDecl->getIdentifier()->getBuiltinID();
-  if (!builtinID)
-    return false;
+    return 0;
+  
+  return FDecl->getIdentifier()->getBuiltinID();
+}
 
-  return Ctx.BuiltinInfo.isConstantExpr(builtinID);
+
+bool CallExpr::isBuiltinConstantExpr(ASTContext &Ctx) const {
+  unsigned BID = isBuiltinCall();
+  if (!BID) return false;
+  return Ctx.BuiltinInfo.isConstantExpr(BID);
 }
 
 bool CallExpr::isBuiltinClassifyType(llvm::APSInt &Result) const {
+  if (isBuiltinCall() != Builtin::BI__builtin_classify_type)
+    return false;
+  
   // The following enum mimics gcc's internal "typeclass.h" file.
   enum gcc_type_class {
     no_type_class = -1,
@@ -177,59 +185,44 @@ bool CallExpr::isBuiltinClassifyType(llvm::APSInt &Result) const {
   };
   Result.setIsSigned(true);
   
-  // All simple function calls (e.g. func()) are implicitly cast to pointer to
-  // function. As a result, we try and obtain the DeclRefExpr from the 
-  // ImplicitCastExpr.
-  const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(getCallee());
-  if (!ICE) // FIXME: deal with more complex calls (e.g. (func)(), (*func)()).
-    return false;
-  const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(ICE->getSubExpr());
-  if (!DRE)
-    return false;
-
-  // We have a DeclRefExpr.
-  if (DRE->getDecl()->getIdentifier()->getBuiltinID() ==
-         Builtin::BI__builtin_classify_type) {
-    // If no argument was supplied, default to "no_type_class". This isn't 
-    // ideal, however it's what gcc does.
-    Result = static_cast<uint64_t>(no_type_class);
-    if (NumArgs >= 1) {
-      QualType argType = getArg(0)->getType();
-      
-      if (argType->isVoidType())
-        Result = void_type_class;
-      else if (argType->isEnumeralType())
-        Result = enumeral_type_class;
-      else if (argType->isBooleanType())
-        Result = boolean_type_class;
-      else if (argType->isCharType())
-        Result = string_type_class; // gcc doesn't appear to use char_type_class
-      else if (argType->isIntegerType())
-        Result = integer_type_class;
-      else if (argType->isPointerType())
-        Result = pointer_type_class;
-      else if (argType->isReferenceType())
-        Result = reference_type_class;
-      else if (argType->isRealType())
-        Result = real_type_class;
-      else if (argType->isComplexType())
-        Result = complex_type_class;
-      else if (argType->isFunctionType())
-        Result = function_type_class;
-      else if (argType->isStructureType())
-        Result = record_type_class;
-      else if (argType->isUnionType())
-        Result = union_type_class;
-      else if (argType->isArrayType())
-        Result = array_type_class;
-      else if (argType->isUnionType())
-        Result = union_type_class;
-      else  // FIXME: offset_type_class, method_type_class, & lang_type_class?
-        assert(0 && "CallExpr::isBuiltinClassifyType(): unimplemented type");
-    }
+  // If no argument was supplied, default to "no_type_class". This isn't 
+  // ideal, however it's what gcc does.
+  Result = static_cast<uint64_t>(no_type_class);
+  if (NumArgs == 0)
     return true;
-  }
-  return false;
+  
+  QualType argType = getArg(0)->getType();
+  if (argType->isVoidType())
+    Result = void_type_class;
+  else if (argType->isEnumeralType())
+    Result = enumeral_type_class;
+  else if (argType->isBooleanType())
+    Result = boolean_type_class;
+  else if (argType->isCharType())
+    Result = string_type_class; // gcc doesn't appear to use char_type_class
+  else if (argType->isIntegerType())
+    Result = integer_type_class;
+  else if (argType->isPointerType())
+    Result = pointer_type_class;
+  else if (argType->isReferenceType())
+    Result = reference_type_class;
+  else if (argType->isRealType())
+    Result = real_type_class;
+  else if (argType->isComplexType())
+    Result = complex_type_class;
+  else if (argType->isFunctionType())
+    Result = function_type_class;
+  else if (argType->isStructureType())
+    Result = record_type_class;
+  else if (argType->isUnionType())
+    Result = union_type_class;
+  else if (argType->isArrayType())
+    Result = array_type_class;
+  else if (argType->isUnionType())
+    Result = union_type_class;
+  else  // FIXME: offset_type_class, method_type_class, & lang_type_class?
+    assert(0 && "CallExpr::isBuiltinClassifyType(): unimplemented type");
+  return true;
 }
 
 /// getOpcodeStr - Turn an Opcode enum value into the punctuation char it
