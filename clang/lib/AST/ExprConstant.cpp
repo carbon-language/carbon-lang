@@ -693,3 +693,10 @@ bool Expr::tryEvaluate(APValue &Result, ASTContext &Ctx) const {
       
   return false;
 }
+
+/// isEvaluatable - Call tryEvaluate to see if this expression can be constant
+/// folded, but discard the result.
+bool Expr::isEvaluatable(ASTContext &Ctx) const {
+  APValue V;
+  return tryEvaluate(V, Ctx);
+}

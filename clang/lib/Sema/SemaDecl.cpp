@@ -879,14 +879,6 @@ bool Sema::CheckAddressConstantExpression(const Expr* Init) {
   case Expr::StringLiteralClass:
   case Expr::ObjCStringLiteralClass:
     return false;
-  case Expr::CallExprClass: {
-    const CallExpr *CE = cast<CallExpr>(Init);
-    if (CE->isBuiltinConstantExpr(Context))
-      return false;
-    Diag(Init->getExprLoc(),
-         diag::err_init_element_not_constant, Init->getSourceRange());
-    return true;
-  }
   case Expr::UnaryOperatorClass: {
     const UnaryOperator *Exp = cast<UnaryOperator>(Init);
 
@@ -1080,8 +1072,11 @@ bool Sema::CheckArithmeticConstantExpression(const Expr* Init) {
     return false;
   case Expr::CallExprClass: {
     const CallExpr *CE = cast<CallExpr>(Init);
-    if (CE->isBuiltinConstantExpr(Context))
+
+    // Allow any constant foldable calls to builtins.
+    if (CE->isBuiltinCall() && CE->isEvaluatable(Context))
       return false;
+    
     Diag(Init->getExprLoc(),
          diag::err_init_element_not_constant, Init->getSourceRange());
     return true;
@@ -1226,7 +1221,7 @@ bool Sema::CheckArithmeticConstantExpression(const Expr* Init) {
     // Okay, the evaluated side evaluates to a constant, so we accept this.
     // Check to see if the other side is obviously not a constant.  If so, 
     // emit a warning that this is a GNU extension.
-    if (FalseSide && !FalseSide->tryEvaluate(Val, Context))
+    if (FalseSide && !FalseSide->isEvaluatable(Context))
       Diag(Init->getExprLoc(), 
            diag::ext_typecheck_expression_not_constant_but_accepted,
            FalseSide->getSourceRange());

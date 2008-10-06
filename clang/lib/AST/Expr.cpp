@@ -162,12 +162,6 @@ unsigned CallExpr::isBuiltinCall() const {
 }
 
 
-bool CallExpr::isBuiltinConstantExpr(ASTContext &Ctx) const {
-  unsigned BID = isBuiltinCall();
-  if (!BID) return false;
-  return Ctx.BuiltinInfo.isConstantExpr(BID);
-}
-
 /// getOpcodeStr - Turn an Opcode enum value into the punctuation char it
 /// corresponds to, e.g. "<<=".
 const char *BinaryOperator::getOpcodeStr(Opcode Op) {
@@ -519,8 +513,11 @@ bool Expr::isConstantExpr(ASTContext &Ctx, SourceLocation *Loc) const {
     return true;
   case CallExprClass: {
     const CallExpr *CE = cast<CallExpr>(this);
-    if (CE->isBuiltinConstantExpr(Ctx))
+
+    // Allow any constant foldable calls to builtins.
+    if (CE->isBuiltinCall() && CE->isEvaluatable(Ctx))
       return true;
+    
     if (Loc) *Loc = getLocStart();
     return false;
   }

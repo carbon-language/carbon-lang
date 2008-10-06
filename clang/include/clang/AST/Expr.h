@@ -124,6 +124,10 @@ public:
   /// we want to.  If this function returns true, it returns the folded constant
   /// in Result.
   bool tryEvaluate(APValue& Result, ASTContext &Ctx) const;
+  
+  /// isEvaluatable - Call tryEvaluate to see if this expression can be constant
+  /// folded, but discard the result.
+  bool isEvaluatable(ASTContext &Ctx) const;
 
   /// hasGlobalStorage - Return true if this expression has static storage
   /// duration.  This means that the address of this expression is a link-time
@@ -708,10 +712,6 @@ public:
   /// isBuiltinCall - If this is a call to a builtin, return the builtin ID.  If
   /// not, return 0.
   unsigned isBuiltinCall() const;
-  
-  
-  /// isBuiltinConstantExpr - Return true if this built-in call is constant.
-  bool isBuiltinConstantExpr(ASTContext &Ctx) const;
   
   SourceLocation getRParenLoc() const { return RParenLoc; }
 
