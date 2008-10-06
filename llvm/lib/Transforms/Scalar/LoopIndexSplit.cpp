@@ -940,8 +940,8 @@ bool LoopIndexSplit::updateLoopIterationSpace(SplitInfo &SD) {
 
   if (Op0->getPredicate() == ICmpInst::ICMP_EQ 
       || Op0->getPredicate() == ICmpInst::ICMP_NE
-      || Op0->getPredicate() == ICmpInst::ICMP_EQ 
-      || Op0->getPredicate() == ICmpInst::ICMP_NE)
+      || Op1->getPredicate() == ICmpInst::ICMP_EQ 
+      || Op1->getPredicate() == ICmpInst::ICMP_NE)
     return false;
 
   // Check if SplitCondition dominates entire loop body
