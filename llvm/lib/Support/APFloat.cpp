@@ -1727,11 +1727,12 @@ APFloat::convert(const fltSemantics &toSemantics,
       APInt::tcShiftLeft(significandParts(), newPartCount, shift);
     else if (shift < 0)
       APInt::tcShiftRight(significandParts(), newPartCount, -shift);
+    // If the new size is shorter, we lost information.
+    fs = (shift < 0) ? opInexact : opOK;
     // gcc forces the Quiet bit on, which means (float)(double)(float_sNan)
     // does not give you back the same bits.  This is dubious, and we
     // don't currently do it.  You're really supposed to get
     // an invalid operation signal at runtime, but nobody does that.
-    fs = opOK;
   } else {
     semantics = &toSemantics;
     fs = opOK;
@@ -2633,11 +2634,13 @@ APFloat::convertToDouble() const
   return api.bitsToDouble();
 }
 
-/// Integer bit is explicit in this format.  Current Intel book does not
-/// define meaning of:
-///  exponent = all 1's, integer bit not set.
-///  exponent = 0, integer bit set. (formerly "psuedodenormals")
-///  exponent!=0 nor all 1's, integer bit not set. (formerly "unnormals")
+/// Integer bit is explicit in this format.  Intel hardware (387 and later)
+/// does not support these bit patterns:
+///  exponent = all 1's, integer bit 0, significand 0 ("pseudoinfinity")
+///  exponent = all 1's, integer bit 0, significand nonzero ("pseudoNaN")
+///  exponent = 0, integer bit 1 ("pseudodenormal")
+///  exponent!=0 nor all 1's, integer bit 0 ("unnormal")
+/// At the moment, the first two are treated as NaNs, the second two as Normal.
 void
 APFloat::initFromF80LongDoubleAPInt(const APInt &api)
 {
