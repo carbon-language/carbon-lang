@@ -1721,17 +1721,32 @@ APFloat::convert(const fltSemantics &toSemantics,
   } else if (category == fcNaN) {
     int shift = toSemantics.precision - semantics->precision;
     // Do this now so significandParts gets the right answer
+    const fltSemantics *oldSemantics = semantics;
     semantics = &toSemantics;
+    fs = opOK;
     // No normalization here, just truncate
     if (shift>0)
       APInt::tcShiftLeft(significandParts(), newPartCount, shift);
-    else if (shift < 0)
-      APInt::tcShiftRight(significandParts(), newPartCount, -shift);
+    else if (shift < 0) {
+      unsigned ushift = -shift;
+      // We mark this as Inexact if we are losing information.  This happens
+      // if are shifting out something other than 0s, or if the x87 long
+      // double input did not have its integer bit set (pseudo-NaN), or if the
+      // x87 long double input did not have its QNan bit set (because the x87
+      // hardware sets this bit when converting a lower-precision NaN to
+      // x87 long double).
+      if (APInt::tcLSB(significandParts(), newPartCount) < ushift)
+        fs = opInexact;
+      if (oldSemantics == &APFloat::x87DoubleExtended && 
+          (!(*significandParts() & 0x8000000000000000ULL) ||
+           !(*significandParts() & 0x4000000000000000ULL)))
+        fs = opInexact;
+      APInt::tcShiftRight(significandParts(), newPartCount, ushift);
+    }
     // gcc forces the Quiet bit on, which means (float)(double)(float_sNan)
     // does not give you back the same bits.  This is dubious, and we
     // don't currently do it.  You're really supposed to get
     // an invalid operation signal at runtime, but nobody does that.
-    fs = opOK;
   } else {
     semantics = &toSemantics;
     fs = opOK;
