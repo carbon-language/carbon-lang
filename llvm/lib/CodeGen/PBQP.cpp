@@ -18,6 +18,7 @@
 #include <cstring>
 
 #include "PBQP.h"
+#include "llvm/Config/alloca.h"
 
 namespace llvm {
 
