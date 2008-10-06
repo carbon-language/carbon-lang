@@ -1014,14 +1014,18 @@ Stmt *RewriteBlocks::RewriteFunctionBody(Stmt *S) {
       RewriteBlockCall(CE);
   }
   if (DeclStmt *DS = dyn_cast<DeclStmt>(S)) {
-    ScopedDecl *SD = DS->getDecl();
-    if (ValueDecl *ND = dyn_cast<ValueDecl>(SD)) {
-      if (isBlockPointerType(ND->getType()))
-        RewriteBlockPointerDecl(ND);
-    }
-    if (TypedefDecl *TD = dyn_cast<TypedefDecl>(SD)) {
-      if (isBlockPointerType(TD->getUnderlyingType()))
-        RewriteBlockPointerDecl(TD);
+    for (DeclStmt::decl_iterator DI = DS->decl_begin(), DE = DS->decl_end();
+         DI != DE; ++DI) {
+      
+      ScopedDecl *SD = *DI;
+      if (ValueDecl *ND = dyn_cast<ValueDecl>(SD)) {
+        if (isBlockPointerType(ND->getType()))
+          RewriteBlockPointerDecl(ND);
+      }
+      if (TypedefDecl *TD = dyn_cast<TypedefDecl>(SD)) {
+        if (isBlockPointerType(TD->getUnderlyingType()))
+          RewriteBlockPointerDecl(TD);
+      }
     }
   }
   // Handle specific things.
