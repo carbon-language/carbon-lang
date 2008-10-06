@@ -571,6 +571,17 @@ public:
                                          SourceLocation EqualLoc,
                                          ExprTy *defarg) {
   }
+
+  /// AddCXXDirectInitializerToDecl - This action is called immediately after 
+  /// ActOnDeclarator, when a C++ direct initializer is present.
+  /// e.g: "int x(1);"
+  virtual void AddCXXDirectInitializerToDecl(DeclTy *Dcl,
+                                             SourceLocation LParenLoc,
+                                             ExprTy **Exprs, unsigned NumExprs,
+                                             SourceLocation *CommaLocs,
+                                             SourceLocation RParenLoc) {
+    return;
+  }
   
   //===------------------------- C++ Expressions --------------------------===//
   

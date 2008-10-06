@@ -593,6 +593,15 @@ public:
                                         SourceLocation LBrace);
   virtual void ActOnFinishNamespaceDef(DeclTy *Dcl, SourceLocation RBrace);
 
+  /// AddCXXDirectInitializerToDecl - This action is called immediately after 
+  /// ActOnDeclarator, when a C++ direct initializer is present.
+  /// e.g: "int x(1);"
+  virtual void AddCXXDirectInitializerToDecl(DeclTy *Dcl,
+                                             SourceLocation LParenLoc,
+                                             ExprTy **Exprs, unsigned NumExprs,
+                                             SourceLocation *CommaLocs,
+                                             SourceLocation RParenLoc);
+
   /// ActOnCXXCasts - Parse {dynamic,static,reinterpret,const}_cast's.
   virtual ExprResult ActOnCXXCasts(SourceLocation OpLoc, tok::TokenKind Kind,
                                    SourceLocation LAngleBracketLoc, TypeTy *Ty,

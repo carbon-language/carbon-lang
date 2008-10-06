@@ -449,7 +449,9 @@ Parser::DeclTy *Parser::ParseDeclarationOrFunctionDefinition() {
       Tok.is(tok::comma) ||           // int X(),  -> not a function def
       Tok.is(tok::semi)  ||           // int X();  -> not a function def
       Tok.is(tok::kw_asm) ||          // int X() __asm__ -> not a function def
-      Tok.is(tok::kw___attribute)) {  // int X() __attr__ -> not a function def
+      Tok.is(tok::kw___attribute) ||  // int X() __attr__ -> not a function def
+      (getLang().CPlusPlus &&
+       Tok.is(tok::l_paren)) ) {      // int X(0) -> not a function def [C++]
     // FALL THROUGH.
   } else if (DeclaratorInfo.isFunctionDeclarator() &&
              (Tok.is(tok::l_brace) ||             // int X() {}

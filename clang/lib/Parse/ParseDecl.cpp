@@ -245,6 +245,11 @@ Parser::DeclTy *Parser::ParseSimpleDeclaration(unsigned Context) {
 ///         declarator '=' initializer
 /// [GNU]   declarator simple-asm-expr[opt] attributes[opt]
 /// [GNU]   declarator simple-asm-expr[opt] attributes[opt] '=' initializer
+/// [C++]   declarator initializer[opt]
+///
+/// [C++] initializer:
+/// [C++]   '=' initializer-clause
+/// [C++]   '(' expression-list ')'
 ///
 Parser::DeclTy *Parser::
 ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
@@ -284,6 +289,27 @@ ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
         return 0;
       }
       Actions.AddInitializerToDecl(LastDeclInGroup, Init.Val);
+    } else if (Tok.is(tok::l_paren)) {
+      // Parse C++ direct initializer: '(' expression-list ')'
+      SourceLocation LParenLoc = ConsumeParen();
+      ExprListTy Exprs;
+      CommaLocsTy CommaLocs;
+
+      bool InvalidExpr = false;
+      if (ParseExpressionList(Exprs, CommaLocs)) {
+        SkipUntil(tok::r_paren);
+        InvalidExpr = true;
+      }
+      // Match the ')'.
+      SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
+
+      if (!InvalidExpr) {
+        assert(!Exprs.empty() && Exprs.size()-1 == CommaLocs.size() &&
+               "Unexpected number of commas!");
+        Actions.AddCXXDirectInitializerToDecl(LastDeclInGroup, LParenLoc,
+                                              &Exprs[0], Exprs.size(),
+                                              &CommaLocs[0], RParenLoc);
+      }
     }
     
     // If we don't have a comma, it is either the end of the list (a ';') or an
@@ -1200,6 +1226,12 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
   
   while (1) {
     if (Tok.is(tok::l_paren)) {
+      // The paren may be part of a C++ direct initializer, eg. "int x(1);".
+      // In such a case, check if we actually have a function declarator; if it
+      // is not, the declarator has been fully parsed.
+      if (getLang().CPlusPlus && D.mayBeFollowedByCXXDirectInit() &&
+          !isCXXFunctionDeclarator())
+        break;
       ParseFunctionDeclarator(ConsumeParen(), D);
     } else if (Tok.is(tok::l_square)) {
       ParseBracketDeclarator(D);
@@ -1247,6 +1279,8 @@ void Parser::ParseParenDeclarator(Declarator &D) {
   // direct-declarator: '(' declarator ')'
   // direct-declarator: '(' attributes declarator ')'
   if (isGrouping) {
+    D.setGroupingParens(true);
+
     if (Tok.is(tok::kw___attribute))
       D.AddAttributes(ParseAttributes());
     

@@ -595,7 +595,10 @@ private:
   llvm::SmallVector<DeclaratorChunk, 8> DeclTypeInfo;
 
   // InvalidType - Set by Sema::GetTypeForDeclarator().
-  bool InvalidType;
+  bool InvalidType : 1;
+
+  /// GroupingParens - Set by Parser::ParseParenDeclarator().
+  bool GroupingParens : 1;
 
   /// AttrList - Attributes.
   AttributeList *AttrList;
@@ -605,8 +608,8 @@ private:
   
 public:
   Declarator(const DeclSpec &ds, TheContext C)
-    : DS(ds), Identifier(0), Context(C), InvalidType(false), AttrList(0),
-      AsmLabel(0) {
+    : DS(ds), Identifier(0), Context(C), InvalidType(false),
+      GroupingParens(false), AttrList(0), AsmLabel(0) {
   }
   
   ~Declarator() {
@@ -665,6 +668,15 @@ public:
   /// typenames.
   bool mayHaveIdentifier() const {
     return Context != TypeNameContext;
+  }
+
+  /// mayBeFollowedByCXXDirectInit - Return true if the declarator can be
+  /// followed by a C++ direct initializer, e.g. "int x(1);".
+  bool mayBeFollowedByCXXDirectInit() const {
+    return !hasGroupingParens() &&
+           (Context == FileContext  ||
+            Context == BlockContext ||
+            Context == ForContext     );
   }
   
   /// isPastIdentifier - Return true if we have parsed beyond the point where
@@ -725,6 +737,9 @@ public:
 
   void setInvalidType(bool flag) { InvalidType = flag; }
   bool getInvalidType() const { return InvalidType; }
+
+  void setGroupingParens(bool flag) { GroupingParens = flag; }
+  bool hasGroupingParens() const { return GroupingParens; }
 };
 
 /// FieldDeclarator - This little struct is used to capture information about

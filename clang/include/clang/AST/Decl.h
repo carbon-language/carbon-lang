@@ -229,6 +229,7 @@ private:
   // FIXME: This can be packed into the bitfields in Decl.
   unsigned SClass : 3;
   bool ThreadSpecified : 1;
+  bool HasCXXDirectInit : 1; 
   
   // Move to DeclGroup when it is implemented.
   SourceLocation TypeSpecStartLoc;
@@ -238,7 +239,8 @@ protected:
           QualType T, StorageClass SC, ScopedDecl *PrevDecl, 
           SourceLocation TSSL = SourceLocation())
     : ValueDecl(DK, DC, L, Id, T, PrevDecl), Init(0),
-          ThreadSpecified(false), TypeSpecStartLoc(TSSL) { SClass = SC; }
+          ThreadSpecified(false), HasCXXDirectInit(false),
+          TypeSpecStartLoc(TSSL) { SClass = SC; }
 public:
   static VarDecl *Create(ASTContext &C, DeclContext *DC,
                          SourceLocation L, IdentifierInfo *Id,
@@ -256,6 +258,24 @@ public:
   void setThreadSpecified(bool T) { ThreadSpecified = T; }
   bool isThreadSpecified() const {
     return ThreadSpecified;
+  }
+
+  void setCXXDirectInitializer(bool T) { HasCXXDirectInit = T; }
+
+  /// hasCXXDirectInitializer - If true, the initializer was a direct
+  /// initializer, e.g: "int x(1);". The Init expression will be an expression
+  /// that constructs the type with functional notation, e.g. for:
+  ///
+  ///     int x(1);
+  ///
+  /// hasCXXDirectInitializer will be true,
+  /// Init expression will be a "int(1)" functional-cast expression.
+  ///
+  /// Clients can distinguish between "int x(1);" and "int x = int(1);" by
+  /// checking hasCXXDirectInitializer.
+  ///
+  bool hasCXXDirectInitializer() const {
+    return HasCXXDirectInit;
   }
   
   /// hasLocalStorage - Returns true if a variable with function scope

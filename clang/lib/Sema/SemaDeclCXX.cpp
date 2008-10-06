@@ -548,3 +548,83 @@ void Sema::ActOnFinishNamespaceDef(DeclTy *D, SourceLocation RBrace) {
   Namespc->setRBracLoc(RBrace);
   PopDeclContext();
 }
+
+
+/// AddCXXDirectInitializerToDecl - This action is called immediately after 
+/// ActOnDeclarator, when a C++ direct initializer is present.
+/// e.g: "int x(1);"
+void Sema::AddCXXDirectInitializerToDecl(DeclTy *Dcl, SourceLocation LParenLoc,
+                                         ExprTy **ExprTys, unsigned NumExprs,
+                                         SourceLocation *CommaLocs,
+                                         SourceLocation RParenLoc) {
+  Decl *RealDecl = static_cast<Decl *>(Dcl);
+  assert(NumExprs != 0 && ExprTys && "missing expressions");
+
+  // If there is no declaration, there was an error parsing it.  Just ignore
+  // the initializer.
+  if (RealDecl == 0) {
+    for (int i=0; i != NumExprs; ++i)
+      delete static_cast<Expr *>(ExprTys[i]);
+    return;
+  }
+  
+  VarDecl *VDecl = dyn_cast<VarDecl>(RealDecl);
+  if (!VDecl) {
+    Diag(RealDecl->getLocation(), diag::err_illegal_initializer);
+    RealDecl->setInvalidDecl();
+    return;
+  }
+
+  // We will treat direct-initialization as a copy-initialization with a
+  // type-construction expression of the variable's type. In plain english:
+  // We will treat:
+  //    int x(1);  -as-> int x = int(1);
+  // and for class types:
+  //    ClassType x(a,b,c); -as-> ClassType x = ClassType(a,b,c);
+  //
+  // Clients that want to distinguish between the two forms, can check for
+  // direct initializer using VarDecl::hasCXXDirectInitializer().
+  // A major benefit is that clients that don't particularly care about which
+  // exactly form was it (like the CodeGen) can handle both cases without
+  // special case code.
+  //
+  // According to the C++ standard, there shouldn't be semantic differences
+  // between a direct-initialization and a copy-initialization where the
+  // destination type is the same as the source type:
+  //
+  // C++ 8.5p11:
+  // The form of initialization (using parentheses or '=') is generally
+  // insignificant, but does matter when the entity being initialized has a
+  // class type; see below.
+  // C++ 8.5p15:
+  // [...]
+  // If the initialization is direct-initialization, or if it is
+  // copy-initialization where the cv-unqualified version of the source type is
+  // the same class as, or a derived class of, the class of the destination,
+  // constructors are considered. The applicable constructors are enumerated
+  // (13.3.1.3), and the best one is chosen through overload resolution (13.3).
+  // The constructor so selected is called to initialize the object, with the
+  // initializer expression(s) as its argument(s). If no constructor applies, or
+  // the overload resolution is ambiguous, the initialization is ill-formed.
+  // [...]
+  //
+  // Note that according to C++ 8.5p15, the same semantic process is applied
+  // to both the direct-initialization and copy-initialization,
+  // if destination type == source type.
+
+  // Get an expression for constructing the type of the variable, using the
+  // expression list of the initializer.
+  ExprResult Res = ActOnCXXTypeConstructExpr(VDecl->getLocation(),
+                                             VDecl->getType().getAsOpaquePtr(),
+                                             LParenLoc, ExprTys, NumExprs,
+                                             CommaLocs, RParenLoc);
+  if (Res.isInvalid) {
+    RealDecl->setInvalidDecl();
+    return;
+  }
+
+  // Performs additional semantic checks.
+  AddInitializerToDecl(Dcl, Res.Val);
+  // Let clients know that initialization was done with a direct initializer.
+  VDecl->setCXXDirectInitializer(true);
+}
