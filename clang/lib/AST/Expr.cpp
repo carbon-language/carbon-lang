@@ -171,7 +171,7 @@ bool CallExpr::isBuiltinClassifyType(llvm::APSInt &Result) const {
   if (isBuiltinCall() != Builtin::BI__builtin_classify_type)
     return false;
   
-  // The following enum mimics gcc's internal "typeclass.h" file.
+  // The following enum mimics the values returned by GCC.
   enum gcc_type_class {
     no_type_class = -1,
     void_type_class, integer_type_class, char_type_class,

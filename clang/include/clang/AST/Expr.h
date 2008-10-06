@@ -119,6 +119,10 @@ public:
   /// isConstantExpr - Return true if this expression is a valid constant expr.
   bool isConstantExpr(ASTContext &Ctx, SourceLocation *Loc) const;
   
+  /// tryEvaluate - Return true if this is a constant which we can fold using
+  /// any crazy technique (that has nothing to do with language standards) that
+  /// we want to.  If this function returns true, it returns the folded constant
+  /// in Result.
   bool tryEvaluate(APValue& Result, ASTContext &Ctx) const;
 
   /// hasGlobalStorage - Return true if this expression has static storage

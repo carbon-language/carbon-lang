@@ -245,14 +245,25 @@ bool IntExprEvaluator::VisitDeclRefExpr(const DeclRefExpr *E) {
   return Error(E->getLocStart(), diag::err_expr_not_constant);
 }
 
-
 bool IntExprEvaluator::VisitCallExpr(const CallExpr *E) {
   Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
-  // __builtin_type_compatible_p is a constant.
-  if (E->isBuiltinClassifyType(Result))
-    return true;
   
-  return Error(E->getLocStart(), diag::err_expr_not_constant);
+  switch (E->isBuiltinCall()) {
+  default:
+    return Error(E->getLocStart(), diag::err_expr_not_constant);
+  case Builtin::BI__builtin_classify_type:
+    // __builtin_type_compatible_p is a constant.  Return its value.
+    E->isBuiltinClassifyType(Result);
+    return true;
+    
+  case Builtin::BI__builtin_constant_p: {
+    // __builtin_constant_p always has one operand: it returns true if that
+    // operand can be folded, false otherwise.
+    APValue Res;
+    Result = E->getArg(0)->tryEvaluate(Res, Info.Ctx);
+    return true;
+  }
+  }
 }
 
 bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
@@ -520,6 +531,7 @@ public:
   }
 
   bool VisitParenExpr(ParenExpr *E) { return Visit(E->getSubExpr()); }
+  bool VisitCallExpr(const CallExpr *E);
 
   bool VisitBinaryOperator(const BinaryOperator *E);
   bool VisitFloatingLiteral(const FloatingLiteral *E);
@@ -529,6 +541,22 @@ public:
 static bool EvaluateFloat(const Expr* E, APFloat& Result, EvalInfo &Info) {
   return FloatExprEvaluator(Info, Result).Visit(const_cast<Expr*>(E));
 }
+
+bool FloatExprEvaluator::VisitCallExpr(const CallExpr *E) {
+  //Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
+  
+  switch (E->isBuiltinCall()) {
+  case Builtin::BI__builtin_huge_val:
+  case Builtin::BI__builtin_huge_valf:
+  case Builtin::BI__builtin_huge_vall:
+  case Builtin::BI__builtin_inf:
+  case Builtin::BI__builtin_inff:
+  case Builtin::BI__builtin_infl:
+    // FIXME: Implement me.
+  default: return false;
+  }
+}
+
 
 bool FloatExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
   // FIXME: Diagnostics?  I really don't understand how the warnings
@@ -568,6 +596,10 @@ bool FloatExprEvaluator::VisitFloatingLiteral(const FloatingLiteral *E) {
 // Top level TryEvaluate.
 //===----------------------------------------------------------------------===//
 
+/// tryEvaluate - Return true if this is a constant which we can fold using
+/// any crazy technique (that has nothing to do with language standards) that
+/// we want to.  If this function returns true, it returns the folded constant
+/// in Result.
 bool Expr::tryEvaluate(APValue &Result, ASTContext &Ctx) const {
   EvalInfo Info(Ctx);
   if (getType()->isIntegerType()) {
