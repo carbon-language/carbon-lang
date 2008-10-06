@@ -488,11 +488,11 @@ static void InitializePredefinedMacros(Preprocessor &PP,
 
     if (PP.getLangOptions().NeXTRuntime)
       DefineBuiltinMacro(Buf, "__NEXT_RUNTIME__=1");
-
-    // darwin_constant_cfstrings controls this. This is also dependent
-    // on other things like the runtime I believe.
-    DefineBuiltinMacro(Buf, "__CONSTANT_CFSTRINGS__=1");
   }
+  
+  // darwin_constant_cfstrings controls this. This is also dependent
+  // on other things like the runtime I believe.  This is set even for C code.
+  DefineBuiltinMacro(Buf, "__CONSTANT_CFSTRINGS__=1");
   
   if (PP.getLangOptions().ObjC2)
     DefineBuiltinMacro(Buf, "OBJC_NEW_PROPERTIES");
