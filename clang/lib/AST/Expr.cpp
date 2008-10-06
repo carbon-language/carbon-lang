@@ -12,8 +12,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/AST/Expr.h"
-#include "clang/AST/DeclObjC.h"
+#include "clang/AST/APValue.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/DeclObjC.h"
 #include "clang/AST/RecordLayout.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/Basic/TargetInfo.h"
@@ -165,64 +166,6 @@ bool CallExpr::isBuiltinConstantExpr(ASTContext &Ctx) const {
   unsigned BID = isBuiltinCall();
   if (!BID) return false;
   return Ctx.BuiltinInfo.isConstantExpr(BID);
-}
-
-bool CallExpr::isBuiltinClassifyType(llvm::APSInt &Result) const {
-  if (isBuiltinCall() != Builtin::BI__builtin_classify_type)
-    return false;
-  
-  // The following enum mimics the values returned by GCC.
-  enum gcc_type_class {
-    no_type_class = -1,
-    void_type_class, integer_type_class, char_type_class,
-    enumeral_type_class, boolean_type_class,
-    pointer_type_class, reference_type_class, offset_type_class,
-    real_type_class, complex_type_class,
-    function_type_class, method_type_class,
-    record_type_class, union_type_class,
-    array_type_class, string_type_class,
-    lang_type_class
-  };
-  Result.setIsSigned(true);
-  
-  // If no argument was supplied, default to "no_type_class". This isn't 
-  // ideal, however it's what gcc does.
-  Result = static_cast<uint64_t>(no_type_class);
-  if (NumArgs == 0)
-    return true;
-  
-  QualType argType = getArg(0)->getType();
-  if (argType->isVoidType())
-    Result = void_type_class;
-  else if (argType->isEnumeralType())
-    Result = enumeral_type_class;
-  else if (argType->isBooleanType())
-    Result = boolean_type_class;
-  else if (argType->isCharType())
-    Result = string_type_class; // gcc doesn't appear to use char_type_class
-  else if (argType->isIntegerType())
-    Result = integer_type_class;
-  else if (argType->isPointerType())
-    Result = pointer_type_class;
-  else if (argType->isReferenceType())
-    Result = reference_type_class;
-  else if (argType->isRealType())
-    Result = real_type_class;
-  else if (argType->isComplexType())
-    Result = complex_type_class;
-  else if (argType->isFunctionType())
-    Result = function_type_class;
-  else if (argType->isStructureType())
-    Result = record_type_class;
-  else if (argType->isUnionType())
-    Result = union_type_class;
-  else if (argType->isArrayType())
-    Result = array_type_class;
-  else if (argType->isUnionType())
-    Result = union_type_class;
-  else  // FIXME: offset_type_class, method_type_class, & lang_type_class?
-    assert(0 && "CallExpr::isBuiltinClassifyType(): unimplemented type");
-  return true;
 }
 
 /// getOpcodeStr - Turn an Opcode enum value into the punctuation char it
@@ -755,8 +698,17 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
   case CallExprClass: {
     const CallExpr *CE = cast<CallExpr>(this);
     Result.zextOrTrunc(static_cast<uint32_t>(Ctx.getTypeSize(getType())));
-    if (CE->isBuiltinClassifyType(Result))
-      break;
+    
+    // If this is a call to a builtin function, constant fold it otherwise
+    // reject it.
+    if (CE->isBuiltinCall()) {
+      APValue ResultAP;
+      if (CE->tryEvaluate(ResultAP, Ctx)) {
+        Result = ResultAP.getInt();
+        break;  // It is a constant, expand it.
+      }
+    }
+    
     if (Loc) *Loc = getLocStart();
     return false;
   }

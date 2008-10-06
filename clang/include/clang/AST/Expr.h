@@ -710,8 +710,6 @@ public:
   unsigned isBuiltinCall() const;
   
   
-  bool isBuiltinClassifyType(llvm::APSInt &Result) const;
-
   /// isBuiltinConstantExpr - Return true if this built-in call is constant.
   bool isBuiltinConstantExpr(ASTContext &Ctx) const;
   

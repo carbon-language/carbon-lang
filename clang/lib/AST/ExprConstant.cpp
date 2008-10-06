@@ -245,6 +245,61 @@ bool IntExprEvaluator::VisitDeclRefExpr(const DeclRefExpr *E) {
   return Error(E->getLocStart(), diag::err_expr_not_constant);
 }
 
+/// EvaluateBuiltinClassifyType - Evaluate __builtin_classify_type the same way
+/// as GCC.
+static int EvaluateBuiltinClassifyType(const CallExpr *E) {
+  // The following enum mimics the values returned by GCC.
+  enum gcc_type_class {
+    no_type_class = -1,
+    void_type_class, integer_type_class, char_type_class,
+    enumeral_type_class, boolean_type_class,
+    pointer_type_class, reference_type_class, offset_type_class,
+    real_type_class, complex_type_class,
+    function_type_class, method_type_class,
+    record_type_class, union_type_class,
+    array_type_class, string_type_class,
+    lang_type_class
+  };
+  
+  // If no argument was supplied, default to "no_type_class". This isn't 
+  // ideal, however it is what gcc does.
+  if (E->getNumArgs() == 0)
+    return no_type_class;
+  
+  QualType ArgTy = E->getArg(0)->getType();
+  if (ArgTy->isVoidType())
+    return void_type_class;
+  else if (ArgTy->isEnumeralType())
+    return enumeral_type_class;
+  else if (ArgTy->isBooleanType())
+    return boolean_type_class;
+  else if (ArgTy->isCharType())
+    return string_type_class; // gcc doesn't appear to use char_type_class
+  else if (ArgTy->isIntegerType())
+    return integer_type_class;
+  else if (ArgTy->isPointerType())
+    return pointer_type_class;
+  else if (ArgTy->isReferenceType())
+    return reference_type_class;
+  else if (ArgTy->isRealType())
+    return real_type_class;
+  else if (ArgTy->isComplexType())
+    return complex_type_class;
+  else if (ArgTy->isFunctionType())
+    return function_type_class;
+  else if (ArgTy->isStructureType())
+    return record_type_class;
+  else if (ArgTy->isUnionType())
+    return union_type_class;
+  else if (ArgTy->isArrayType())
+    return array_type_class;
+  else if (ArgTy->isUnionType())
+    return union_type_class;
+  else  // FIXME: offset_type_class, method_type_class, & lang_type_class?
+    assert(0 && "CallExpr::isBuiltinClassifyType(): unimplemented type");
+  return -1;
+}
+
 bool IntExprEvaluator::VisitCallExpr(const CallExpr *E) {
   Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
   
@@ -252,8 +307,8 @@ bool IntExprEvaluator::VisitCallExpr(const CallExpr *E) {
   default:
     return Error(E->getLocStart(), diag::err_expr_not_constant);
   case Builtin::BI__builtin_classify_type:
-    // __builtin_type_compatible_p is a constant.  Return its value.
-    E->isBuiltinClassifyType(Result);
+    Result.setIsSigned(true);
+    Result = EvaluateBuiltinClassifyType(E);
     return true;
     
   case Builtin::BI__builtin_constant_p: {
