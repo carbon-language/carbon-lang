@@ -1022,9 +1022,6 @@ DIAG(err_builtin_direct_init_more_than_one_arg, ERROR,
      "initializer of a builtin type can only take one argument")
 DIAG(err_value_init_for_array_type, ERROR,
      "array types cannot be value-initialized")
-// Temporary
-DIAG(err_unsupported_class_constructor, ERROR,
-     "class constructors are not supported yet")
 DIAG(err_invalid_use_of_function_type, ERROR,
      "a function type is not allowed here")
 DIAG(err_invalid_use_of_array_type, ERROR,

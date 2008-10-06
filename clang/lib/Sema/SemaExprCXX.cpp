@@ -15,6 +15,7 @@
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/Parse/DeclSpec.h"
+#include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/Diagnostic.h"
 using namespace clang;
 
@@ -95,8 +96,9 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
       return Diag(TyBeginLoc, diag::err_invalid_incomplete_type_use,
                   Ty.getAsString(), FullRange);
 
-    // "class constructors are not supported yet"
-    return Diag(TyBeginLoc, diag::err_unsupported_class_constructor, FullRange);
+    unsigned DiagID = PP.getDiagnostics().getCustomDiagID(Diagnostic::Error,
+                                    "class constructors are not supported yet");
+    return Diag(TyBeginLoc, DiagID);
   }
 
   // C++ 5.2.3p1:
