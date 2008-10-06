@@ -15,6 +15,7 @@
 #define LLVM_CLANG_AST_DECLGROUP_H
 
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Bitcode/SerializationFwd.h"
 #include <cassert>
 
 namespace clang {
@@ -29,6 +30,7 @@ class DeclGroup {
   unsigned NumDecls;
   
 private:
+  DeclGroup() : NumDecls(0) {}
   DeclGroup(unsigned numdecls, Decl** decls);
 
 public:
@@ -40,8 +42,18 @@ public:
     assert (i < NumDecls && "Out-of-bounds access.");
     return *((Decl**) (this+1));
   }
-};
   
+  const Decl*& operator[](unsigned i) const { 
+    assert (i < NumDecls && "Out-of-bounds access.");
+    return *((const Decl**) (this+1));
+  }
+  
+  /// Emit - Serialize a DeclGroup to Bitcode.
+  void Emit(llvm::Serializer& S) const;
+  
+  /// Read - Deserialize a DeclGroup from Bitcode.
+  static DeclGroup* Create(llvm::Deserializer& D, ASTContext& C);
+};
     
 class DeclGroupRef {
 protected:
@@ -57,7 +69,7 @@ public:
   
   explicit DeclGroupRef(Decl* d) : D(d) {}
   explicit DeclGroupRef(DeclGroup* dg)
-    : D((Decl*) (reinterpret_cast<uintptr_t>(D) | DeclGroupKind)) {}
+    : D((Decl*) (reinterpret_cast<uintptr_t>(dg) | DeclGroupKind)) {}
   
   typedef Decl** iterator;
 
@@ -71,22 +83,37 @@ public:
     if (getKind() == DeclKind) return D ? &D + 1 : 0;
     DeclGroup& G = *((DeclGroup*) (reinterpret_cast<uintptr_t>(D) & ~Mask));
     return &G[0] + G.size();
-  }  
+  }
+
+  /// Emit - Serialize a DeclGroupRef to Bitcode.
+  void Emit(llvm::Serializer& S) const;
+  
+  /// Read - Deserialize a DeclGroupRef from Bitcode.
+  static DeclGroupRef ReadVal(llvm::Deserializer& D);
 };
   
 class DeclGroupOwningRef : public DeclGroupRef {
 public:
+  explicit DeclGroupOwningRef(Decl* d) : DeclGroupRef(d) {}
+  explicit DeclGroupOwningRef(DeclGroup* dg) : DeclGroupRef(dg) {}
+
   ~DeclGroupOwningRef();  
   void Destroy(ASTContext& C);
   
-  explicit DeclGroupOwningRef(DeclGroupOwningRef& R)
+  DeclGroupOwningRef(DeclGroupOwningRef& R)
     : DeclGroupRef(R) { R.D = 0; }
-
+  
   DeclGroupOwningRef& operator=(DeclGroupOwningRef& R) {
     D = R.D;
     R.D = 0;
     return *this;
   }
+  
+  /// Emit - Serialize a DeclGroupOwningRef to Bitcode.
+  void Emit(llvm::Serializer& S) const;
+  
+  /// Read - Deserialize a DeclGroupOwningRef from Bitcode.
+  static DeclGroupOwningRef ReadVal(llvm::Deserializer& D, ASTContext& C);
 };
 
 } // end clang namespace
