@@ -63,7 +63,7 @@ Sema::ActOnCompoundStmt(SourceLocation L, SourceLocation R,
       /*empty*/;
     
     if (i != NumElts) {
-      ScopedDecl *D = cast<DeclStmt>(Elts[i])->getDecl();
+      ScopedDecl *D = *cast<DeclStmt>(Elts[i])->decl_begin();
       Diag(D->getLocation(), diag::ext_mixed_decls_code);
     }
   }
