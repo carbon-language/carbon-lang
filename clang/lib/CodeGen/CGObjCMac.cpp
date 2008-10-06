@@ -1552,7 +1552,7 @@ void CGObjCMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
       if (!CatchParam) {
         AllMatched = true;
       } else {
-        VD = cast<VarDecl>(CatchParam->getDecl());
+        VD = cast<VarDecl>(CatchParam->getSolitaryDecl());
         PT = VD->getType()->getAsPointerType();
         
         // catch(id e) always matches. 
