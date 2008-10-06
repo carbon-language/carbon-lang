@@ -1026,9 +1026,15 @@ Stmt *RewriteObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
       dyn_cast<ContinueStmt>(S))
     return RewriteContinueStmt(StmtContinueStmt);
 	
-  // Need to check for protocol refs (id <P>, Foo <P> *) in variable decls and cast exprs.
-  if (DeclStmt *DS = dyn_cast<DeclStmt>(S))
-    RewriteObjCQualifiedInterfaceTypes(DS->getDecl());
+  // Need to check for protocol refs (id <P>, Foo <P> *) in variable decls 
+  // and cast exprs.
+  if (DeclStmt *DS = dyn_cast<DeclStmt>(S)) {
+    // FIXME: What we're doing here is modifying the type-specifier that
+    // precedes the first Decl.  In the future the DeclGroup should have
+    // a separate type-specifier that we can rewrite.    
+    RewriteObjCQualifiedInterfaceTypes(*DS->decl_begin());
+  }
+  
   if (ExplicitCastExpr *CE = dyn_cast<ExplicitCastExpr>(S))
     RewriteObjCQualifiedInterfaceTypes(CE);
   
