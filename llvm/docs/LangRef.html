@@ -852,13 +852,16 @@ declare signext i8 @returns_signed_char()
     to memory, though some targets use it to distinguish between two different
     kinds of registers).  Use of this attribute is target-specific.</dd>
 
-    <dt><tt>byval</tt></dt>
+    <dt><tt><a name="byval">byval</a></tt></dt>
     <dd>This indicates that the pointer parameter should really be passed by
     value to the function.  The attribute implies that a hidden copy of the
     pointee is made between the caller and the callee, so the callee is unable
     to modify the value in the callee.  This attribute is only valid on LLVM
     pointer arguments.  It is generally used to pass structs and arrays by
-    value, but is also valid on pointers to scalars.</dd>
+    value, but is also valid on pointers to scalars.  The copy is considered to
+    belong to the caller not the callee (for example,
+    <tt><a href="#readonly">readonly</a></tt> functions should not write to
+    <tt>byval</tt> parameters).</dd>
 
     <dt><tt>sret</tt></dt>
     <dd>This indicates that the pointer parameter specifies the address of a
@@ -948,19 +951,21 @@ unwind or exceptional control flow.  If the function does unwind, its runtime
 behavior is undefined.</dd>
 
 <dt><tt>readnone</tt></dt>
-<dd>This attribute indicates that the function computes its result (or its
-thrown exception) based strictly on its arguments.  It does not read any global
-mutable state (e.g. memory, control registers, etc) visible to caller functions.
-Furthermore, <tt>readnone</tt> functions never change any state visible to their
-caller.
+<dd>This attribute indicates that the function computes its result (or the
+exception it throws) based strictly on its arguments, without dereferencing any
+pointer arguments or otherwise accessing any mutable state (e.g. memory, control
+registers, etc) visible to caller functions.  It does not write through any
+pointer arguments (including <tt><a href="#byval">byval</a></tt> arguments) and
+never changes any state visible to callers.</dd>
 
-<dt><tt>readonly</tt></dt>
-<dd>This function attribute indicates that the function has no side-effects on
-the calling function, but that it depends on state (memory state, control
-register state, etc) that may be set in the caller.  A readonly function always
-returns the same value (or throws the same exception) whenever it is called with
-a particular set of arguments and global state.</dd>
-
+<dt><tt><a name="readonly">readonly</a></tt></dt>
+<dd>This attribute indicates that the function does not write through any
+pointer arguments (including <tt><a href="#byval">byval</a></tt> arguments)
+or otherwise modify any state (e.g. memory, control registers, etc) visible to
+caller functions.  It may dereference pointer arguments and read state that may
+be set in the caller.  A readonly function always returns the same value (or
+throws the same exception) when called with the same set of arguments and global
+state.</dd>
 </dl>
 
 </div>
