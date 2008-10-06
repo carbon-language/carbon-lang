@@ -14,6 +14,7 @@
 #include "CodeGenFunction.h"
 #include "CodeGenModule.h"
 #include "clang/Basic/TargetInfo.h"
+#include "clang/AST/APValue.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/TargetBuiltins.h"
@@ -38,6 +39,24 @@ static RValue EmitBinaryAtomic(CodeGenFunction& CFG,
 RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
   switch (BuiltinID) {
   default: break;  // Handle intrinsics and libm functions below.
+      
+  case Builtin::BI__builtin_huge_val:
+  case Builtin::BI__builtin_huge_valf:
+  case Builtin::BI__builtin_huge_vall:
+  case Builtin::BI__builtin_inf:
+  case Builtin::BI__builtin_inff:
+  case Builtin::BI__builtin_infl:
+  case Builtin::BI__builtin_classify_type:
+  case Builtin::BI__builtin_constant_p: {
+    APValue Result;
+    bool IsCst = E->tryEvaluate(Result, CGM.getContext());
+    assert(IsCst && "These must all be constants!");
+    
+    if (Result.isInt())
+      return RValue::get(llvm::ConstantInt::get(Result.getInt()));
+    assert(Result.isFloat() && "Unsupported constant type");
+    return RValue::get(llvm::ConstantFP::get(Result.getFloat()));
+  }
       
   case Builtin::BI__builtin___CFStringMakeConstantString: {
     const Expr *Arg = E->getArg(0);
@@ -86,18 +105,6 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
     SrcPtr = Builder.CreateBitCast(SrcPtr, Type);
     return RValue::get(Builder.CreateCall2(CGM.getIntrinsic(Intrinsic::vacopy), 
                                            DstPtr, SrcPtr));
-  }
-  case Builtin::BI__builtin_classify_type: {
-    APSInt Result(32);
-    if (!E->isBuiltinClassifyType(Result))
-      assert(0 && "Expr not __builtin_classify_type!");
-    return RValue::get(ConstantInt::get(Result));
-  }
-  case Builtin::BI__builtin_constant_p: {
-    APSInt Result(32);
-    // FIXME: Analyze the parameter and check if it is a constant.
-    Result = 0;
-    return RValue::get(ConstantInt::get(Result));
   }
   case Builtin::BI__builtin_abs: {
     Value *ArgValue = EmitScalarExpr(E->getArg(0));   
@@ -224,16 +231,6 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
     return RValue::get(Builder.CreateCall(F));
   }
 
-  case Builtin::BI__builtin_huge_val:
-  case Builtin::BI__builtin_huge_valf:
-  case Builtin::BI__builtin_huge_vall:
-  case Builtin::BI__builtin_inf:
-  case Builtin::BI__builtin_inff:
-  case Builtin::BI__builtin_infl: {
-    const llvm::fltSemantics &Sem =
-      CGM.getContext().getFloatTypeSemantics(E->getType());
-    return RValue::get(ConstantFP::get(APFloat::getInf(Sem)));
-  }
   case Builtin::BI__builtin_nan:
   case Builtin::BI__builtin_nanf:
   case Builtin::BI__builtin_nanl: {
