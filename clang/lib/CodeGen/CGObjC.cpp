@@ -342,9 +342,9 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S)
 
   if (const DeclStmt *SD = dyn_cast<DeclStmt>(S.getElement())) {
     EmitStmt(SD);
-    
-    ElementTy = cast<ValueDecl>(SD->getDecl())->getType();
-    DeclAddress = LocalDeclMap[SD->getDecl()];    
+    const ScopedDecl* D = SD->getSolitaryDecl();
+    ElementTy = cast<ValueDecl>(D)->getType();
+    DeclAddress = LocalDeclMap[D];    
   } else {
     ElementTy = cast<Expr>(S.getElement())->getType();
     DeclAddress = 0;
