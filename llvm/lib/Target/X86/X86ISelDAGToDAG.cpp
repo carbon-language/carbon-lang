@@ -642,11 +642,8 @@ void X86DAGToDAGISel::PreprocessForFPConvert() {
 /// when it has created a SelectionDAG for us to codegen.
 void X86DAGToDAGISel::InstructionSelect() {
   CurBB = BB;  // BB can change as result of isel.
-  if (!OptForSize) {
-    const Function *F = CurDAG->getMachineFunction().getFunction();
-    OptForSize = !F->isDeclaration() && 
-                 F->hasFnAttr(Attribute::OptimizeForSize);
-  }
+  const Function *F = CurDAG->getMachineFunction().getFunction();
+  OptForSize = F->hasFnAttr(Attribute::OptimizeForSize);
 
   DEBUG(BB->dump());
   if (!Fast)
