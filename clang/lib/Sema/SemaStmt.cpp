@@ -589,15 +589,17 @@ Sema::ActOnObjCForCollectionStmt(SourceLocation ForLoc,
   if (First) {
     QualType FirstType;
     if (DeclStmt *DS = dyn_cast<DeclStmt>(First)) {
-      FirstType = cast<ValueDecl>(DS->getDecl())->getType();
+      if (!DS->hasSolitaryDecl())
+        return Diag((*DS->decl_begin())->getLocation(),
+                    diag::err_toomany_element_decls);
+      
+      ScopedDecl *D = DS->getSolitaryDecl();
+      FirstType = cast<ValueDecl>(D)->getType();
       // C99 6.8.5p3: The declaration part of a 'for' statement shall only declare
       // identifiers for objects having storage class 'auto' or 'register'.
-      ScopedDecl *D = DS->getDecl();
       VarDecl *VD = cast<VarDecl>(D);
       if (VD->isBlockVarDecl() && !VD->hasLocalStorage())
         return Diag(VD->getLocation(), diag::err_non_variable_decl_in_for);
-      if (D->getNextDeclarator())
-        return Diag(D->getLocation(), diag::err_toomany_element_decls);
     } else {
       Expr::isLvalueResult lval = cast<Expr>(First)->isLvalue(Context);
       
