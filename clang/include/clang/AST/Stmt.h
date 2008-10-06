@@ -152,10 +152,7 @@ public:
   // hasSolitaryDecl - This method returns true if this DeclStmt refers
   // to a single Decl.
   bool hasSolitaryDecl() const;
-  
-  const ScopedDecl *getDecl() const { return TheDecl; }
-  ScopedDecl *getDecl() { return TheDecl; }
-  
+ 
   const ScopedDecl* getSolitaryDecl() const {
     assert (hasSolitaryDecl() &&
             "Caller assumes this DeclStmt points to one Decl*");
