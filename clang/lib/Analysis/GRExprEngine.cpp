@@ -1484,10 +1484,8 @@ void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, NodeTy* Pred, NodeSet& Dst){
 
 void GRExprEngine::VisitDeclStmt(DeclStmt* DS, NodeTy* Pred, NodeSet& Dst) {  
 
-  // The CFG has one DeclStmt per Decl, so we don't need to walk the 
-  // Decl chain.
-  
-  ScopedDecl* D = DS->getDecl();
+  // The CFG has one DeclStmt per Decl.  
+  ScopedDecl* D = *DS->decl_begin();
   
   if (!D || !isa<VarDecl>(D))
     return;
