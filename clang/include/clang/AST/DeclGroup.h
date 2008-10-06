@@ -42,31 +42,35 @@ public:
   }
 };
   
+    
 class DeclGroupRef {
 protected:
-  enum Kind { DeclKind=0x0, DeclGroupKind=0x1, Mask=0x1 };
-  union { Decl* D; uintptr_t Raw; };
-  Kind getKind() const { return (Kind) (Raw & Mask); }  
+  enum Kind { DeclKind=0x0, DeclGroupKind=0x1, Mask=0x1 };  
+  Decl* D;
+
+  Kind getKind() const {
+    return (Kind) (reinterpret_cast<uintptr_t>(D) & Mask);
+  }  
   
 public:    
-  DeclGroupRef() : Raw(0) {}
+  DeclGroupRef() : D(0) {}
   
   explicit DeclGroupRef(Decl* d) : D(d) {}
   explicit DeclGroupRef(DeclGroup* dg)
-    : Raw(reinterpret_cast<uintptr_t>(dg) | DeclGroupKind) {}
+    : D((Decl*) (reinterpret_cast<uintptr_t>(D) | DeclGroupKind)) {}
   
   typedef Decl** iterator;
 
   iterator begin() {
-    if (getKind() == DeclKind) return Raw ? &D : 0;
-    DeclGroup* G = reinterpret_cast<DeclGroup*>(Raw & ~Mask);
-    return &(*G)[0];
+    if (getKind() == DeclKind) return D ? &D : 0;
+    DeclGroup& G = *((DeclGroup*) (reinterpret_cast<uintptr_t>(D) & ~Mask));
+    return &G[0];
   }
 
   iterator end() {
-    if (getKind() == DeclKind) return Raw ? &D + 1 : 0;    
-    DeclGroup* G = reinterpret_cast<DeclGroup*>(Raw & ~Mask);
-    return &(*G)[0] + G->size();
+    if (getKind() == DeclKind) return D ? &D + 1 : 0;
+    DeclGroup& G = *((DeclGroup*) (reinterpret_cast<uintptr_t>(D) & ~Mask));
+    return &G[0] + G.size();
   }  
 };
   
@@ -76,11 +80,11 @@ public:
   void Destroy(ASTContext& C);
   
   explicit DeclGroupOwningRef(DeclGroupOwningRef& R)
-    : DeclGroupRef(R) { R.Raw = 0; }
+    : DeclGroupRef(R) { R.D = 0; }
 
   DeclGroupOwningRef& operator=(DeclGroupOwningRef& R) {
-    Raw = R.Raw;
-    R.Raw = 0;
+    D = R.D;
+    R.D = 0;
     return *this;
   }
 };
