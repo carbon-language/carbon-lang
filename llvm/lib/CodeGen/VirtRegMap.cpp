@@ -143,7 +143,7 @@ int VirtRegMap::getEmergencySpillSlot(const TargetRegisterClass *RC) {
     LowSpillSlot = SS;
   if (HighSpillSlot == NO_STACK_SLOT || SS > HighSpillSlot)
     HighSpillSlot = SS;
-  I->second = SS;
+  EmergencySpillSlots[RC] = SS;
   return SS;
 }
 
