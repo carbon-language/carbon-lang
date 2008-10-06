@@ -3954,6 +3954,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
 
   // Canonicalize movddup shuffles.
   if (V2IsUndef && Subtarget->hasSSE2() &&
+      VT.getSizeInBits() == 128 &&
       X86::isMOVDDUPMask(PermMask.getNode()))
     return CanonicalizeMovddup(Op, V1, PermMask, DAG, Subtarget->hasSSE3());
 
