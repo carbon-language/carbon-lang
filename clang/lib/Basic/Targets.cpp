@@ -437,6 +437,7 @@ X86TargetInfo::validateAsmConstraint(char c,
   case 't': // top of floating point stack.
   case 'u': // second from top of floating point stack.
   case 'q': // Any register accessible as [r]l: a, b, c, and d.
+  case 'y': // Any MMX register.
   case 'Q': // Any register accessible as [r]h: a, b, c, and d.
   case 'Z': // 32-bit integer constant for use with zero-extending x86_64
             // instructions.
