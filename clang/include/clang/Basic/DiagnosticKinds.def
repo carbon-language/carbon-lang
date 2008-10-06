@@ -1096,6 +1096,8 @@ DIAG(warn_typecheck_cond_incompatible_pointers, WARNING,
      "pointer type mismatch ('%0' and '%1')")
 DIAG(err_typecheck_choose_expr_requires_constant, ERROR,
      "'__builtin_choose_expr' requires a constant expression")
+DIAG(ext_typecheck_expression_not_constant_but_accepted, EXTENSION,
+     "expression is not a constant, but is accepted as one by GNU extensions")
 DIAG(warn_unused_expr, WARNING,
      "expression result unused")
 DIAG(err_pascal_string_too_long, ERROR,

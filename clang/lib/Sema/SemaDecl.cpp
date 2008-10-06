@@ -1190,12 +1190,47 @@ bool Sema::CheckArithmeticConstantExpression(const Expr* Init) {
   }
   case Expr::ConditionalOperatorClass: {
     const ConditionalOperator *Exp = cast<ConditionalOperator>(Init);
-    if (CheckArithmeticConstantExpression(Exp->getCond()))
+    
+    // If GNU extensions are disabled, we require all operands to be arithmetic
+    // constant expressions.
+    if (getLangOptions().NoExtensions) {
+      return CheckArithmeticConstantExpression(Exp->getCond()) ||
+          (Exp->getLHS() && CheckArithmeticConstantExpression(Exp->getLHS())) ||
+             CheckArithmeticConstantExpression(Exp->getRHS());
+    }
+
+    // Otherwise, we have to emulate some of the behavior of fold here.
+    // Basically GCC treats things like "4 ? 1 : somefunc()" as a constant
+    // because it can constant fold things away.  To retain compatibility with
+    // GCC code, we see if we can fold the condition to a constant (which we
+    // should always be able to do in theory).  If so, we only require the
+    // specified arm of the conditional to be a constant.  This is a horrible
+    // hack, but is require by real world code that uses __builtin_constant_p.
+    APValue Val;
+    if (!Exp->getCond()->tryEvaluate(Val, Context)) {
+      // If the tryEvaluate couldn't fold it, CheckArithmeticConstantExpression
+      // won't be able to either.  Use it to emit the diagnostic though.
+      bool Res = CheckArithmeticConstantExpression(Exp->getCond());
+      assert(Res && "tryEvaluate couldn't evaluate this constant?");
+      return Res;
+    }
+    
+    // Verify that the side following the condition is also a constant.
+    const Expr *TrueSide = Exp->getLHS(), *FalseSide = Exp->getRHS();
+    if (Val.getInt() == 0) 
+      std::swap(TrueSide, FalseSide);
+    
+    if (TrueSide && CheckArithmeticConstantExpression(TrueSide))
       return true;
-    if (Exp->getLHS() &&
-        CheckArithmeticConstantExpression(Exp->getLHS()))
-      return true;
-    return CheckArithmeticConstantExpression(Exp->getRHS());
+      
+    // Okay, the evaluated side evaluates to a constant, so we accept this.
+    // Check to see if the other side is obviously not a constant.  If so, 
+    // emit a warning that this is a GNU extension.
+    if (FalseSide && !FalseSide->tryEvaluate(Val, Context))
+      Diag(Init->getExprLoc(), 
+           diag::ext_typecheck_expression_not_constant_but_accepted,
+           FalseSide->getSourceRange());
+    return false;
   }
   }
 }
@@ -1211,20 +1246,8 @@ bool Sema::CheckForConstantInitializer(Expr *Init, QualType DclT) {
     return CheckForConstantInitializer(e->getInitializer(), DclT);
 
   if (Init->getType()->isReferenceType()) {
-    // FIXME: Work out how the heck reference types work
+    // FIXME: Work out how the heck references work.
     return false;
-#if 0
-    // A reference is constant if the address of the expression
-    // is constant
-    // We look through initlists here to simplify
-    // CheckAddressConstantExpressionLValue.
-    if (InitListExpr *Exp = dyn_cast<InitListExpr>(Init)) {
-      assert(Exp->getNumInits() > 0 &&
-             "Refernce initializer cannot be empty");
-      Init = Exp->getInit(0);
-    }
-    return CheckAddressConstantExpressionLValue(Init);
-#endif
   }
 
   if (InitListExpr *Exp = dyn_cast<InitListExpr>(Init)) {
