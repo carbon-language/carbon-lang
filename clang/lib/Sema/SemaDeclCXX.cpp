@@ -564,7 +564,7 @@ void Sema::AddCXXDirectInitializerToDecl(DeclTy *Dcl, SourceLocation LParenLoc,
   // If there is no declaration, there was an error parsing it.  Just ignore
   // the initializer.
   if (RealDecl == 0) {
-    for (int i=0; i != NumExprs; ++i)
+    for (unsigned i = 0; i != NumExprs; ++i)
       delete static_cast<Expr *>(ExprTys[i]);
     return;
   }
