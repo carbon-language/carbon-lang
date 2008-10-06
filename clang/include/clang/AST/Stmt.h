@@ -180,6 +180,29 @@ public:
   virtual decl_iterator decl_begin() { return TheDecl; }
   virtual decl_iterator decl_end() { return 0; }
   
+  class const_decl_iterator {
+    decl_iterator Impl;
+  public:
+    const_decl_iterator(const ScopedDecl *d)
+      : Impl(const_cast<ScopedDecl*>(d)) {}
+    
+    bool operator==(const const_decl_iterator& I) const {
+      return Impl == I.Impl;
+    }
+    bool operator!=(const const_decl_iterator& I) const {
+      return Impl != I.Impl;
+    }
+    const ScopedDecl* operator*() const {
+      return *Impl;
+    }
+    const_decl_iterator& operator++() {
+      ++Impl; return *this;
+    }
+  };
+  
+  const_decl_iterator decl_begin() const { return TheDecl; }
+  const_decl_iterator decl_end() const { return 0; }
+  
   // Serialization.  
   virtual void EmitImpl(llvm::Serializer& S) const;
   static DeclStmt* CreateImpl(llvm::Deserializer& D, ASTContext& C);
