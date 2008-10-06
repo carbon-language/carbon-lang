@@ -26,6 +26,9 @@
 		3534A01D0E129849002709B2 /* ParseCXXInlineMethods.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3534A01C0E129849002709B2 /* ParseCXXInlineMethods.cpp */; };
 		3536456B0E23EBF7009C6509 /* Environment.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3536456A0E23EBF7009C6509 /* Environment.cpp */; };
 		35475B200E79973F0000BFE4 /* CGCall.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35475B1F0E79973F0000BFE4 /* CGCall.cpp */; };
+		355106860E9A8507006A4E44 /* MemRegion.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 355106850E9A8507006A4E44 /* MemRegion.cpp */; };
+		3551068C0E9A8546006A4E44 /* ParsePragma.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3551068A0E9A8546006A4E44 /* ParsePragma.cpp */; };
+		3551068D0E9A8546006A4E44 /* ParseTentative.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3551068B0E9A8546006A4E44 /* ParseTentative.cpp */; };
 		3552E7550E520D80003A8CA5 /* PPCaching.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3552E7540E520D80003A8CA5 /* PPCaching.cpp */; };
 		3552E7590E520DD7003A8CA5 /* CGObjCMac.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3552E7580E520DD7003A8CA5 /* CGObjCMac.cpp */; };
 		3558F76D0E267C8300A5B0DF /* BasicStore.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3558F76C0E267C8300A5B0DF /* BasicStore.cpp */; };
@@ -298,6 +301,12 @@
 		35475B1F0E79973F0000BFE4 /* CGCall.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CGCall.cpp; path = lib/CodeGen/CGCall.cpp; sourceTree = "<group>"; };
 		35475B220E7997680000BFE4 /* CGCall.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CGCall.h; path = lib/CodeGen/CGCall.h; sourceTree = "<group>"; };
 		35475B230E7997680000BFE4 /* CGValue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CGValue.h; path = lib/CodeGen/CGValue.h; sourceTree = "<group>"; };
+		355106850E9A8507006A4E44 /* MemRegion.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MemRegion.cpp; path = lib/Analysis/MemRegion.cpp; sourceTree = "<group>"; };
+		355106880E9A851B006A4E44 /* MemRegion.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MemRegion.h; path = clang/Analysis/PathSensitive/MemRegion.h; sourceTree = "<group>"; };
+		3551068A0E9A8546006A4E44 /* ParsePragma.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ParsePragma.cpp; path = lib/Parse/ParsePragma.cpp; sourceTree = "<group>"; };
+		3551068B0E9A8546006A4E44 /* ParseTentative.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ParseTentative.cpp; path = lib/Parse/ParseTentative.cpp; sourceTree = "<group>"; };
+		3551068E0E9A855F006A4E44 /* AccessSpecifier.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AccessSpecifier.h; path = clang/Parse/AccessSpecifier.h; sourceTree = "<group>"; };
+		3551068F0E9A857C006A4E44 /* ParsePragma.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ParsePragma.h; path = lib/Parse/ParsePragma.h; sourceTree = "<group>"; };
 		3552E7540E520D80003A8CA5 /* PPCaching.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PPCaching.cpp; sourceTree = "<group>"; };
 		3552E7580E520DD7003A8CA5 /* CGObjCMac.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CGObjCMac.cpp; path = lib/CodeGen/CGObjCMac.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		3553EB9A0E5F7089007D7359 /* GRStateTrait.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GRStateTrait.h; path = clang/Analysis/PathSensitive/GRStateTrait.h; sourceTree = "<group>"; };
@@ -583,6 +592,7 @@
 		3507E4C60E27FE5500FB7B57 /* Path-Sensitive Core */ = {
 			isa = PBXGroup;
 			children = (
+				355106850E9A8507006A4E44 /* MemRegion.cpp */,
 				358CFBB70E65AB04002A8E19 /* BasicConstraintManager.cpp */,
 				3558F76C0E267C8300A5B0DF /* BasicStore.cpp */,
 				35D55B240D81D8C60092E734 /* BasicValueFactory.cpp */,
@@ -727,6 +737,7 @@
 		DE1F21F20A7D84E800FBF588 /* Parse */ = {
 			isa = PBXGroup;
 			children = (
+				3551068E0E9A855F006A4E44 /* AccessSpecifier.h */,
 				84D9A88B0C1A581300AC7ABC /* AttributeList.h */,
 				DE06E8130A8FF9330050E87E /* Action.h */,
 				DE17336F0B068DC60080B521 /* DeclSpec.h */,
@@ -739,6 +750,9 @@
 		DE1F22600A7D8C9B00FBF588 /* Parse */ = {
 			isa = PBXGroup;
 			children = (
+				3551068F0E9A857C006A4E44 /* ParsePragma.h */,
+				3551068A0E9A8546006A4E44 /* ParsePragma.cpp */,
+				3551068B0E9A8546006A4E44 /* ParseTentative.cpp */,
 				84D9A8870C1A57E100AC7ABC /* AttributeList.cpp */,
 				DE17336D0B068DC20080B521 /* DeclSpec.cpp */,
 				DE3461260AFE68BE00DBC861 /* MinimalAction.cpp */,
@@ -758,6 +772,7 @@
 		DE4121130D7F1B980080F80A /* PathSensitive */ = {
 			isa = PBXGroup;
 			children = (
+				355106880E9A851B006A4E44 /* MemRegion.h */,
 				35F1ACE60E66166C001F4532 /* ConstraintManager.h */,
 				3553EB9A0E5F7089007D7359 /* GRStateTrait.h */,
 				3558F76F0E267C9A00A5B0DF /* Store.h */,
@@ -1235,6 +1250,9 @@
 				9030C10A0E807A9300941490 /* RewriteBlocks.cpp in Sources */,
 				35BAC1E80E82C5B7003FB76F /* CheckNSError.cpp in Sources */,
 				358D230B0E8BEB9D0003DDCC /* DeclGroup.cpp in Sources */,
+				355106860E9A8507006A4E44 /* MemRegion.cpp in Sources */,
+				3551068C0E9A8546006A4E44 /* ParsePragma.cpp in Sources */,
+				3551068D0E9A8546006A4E44 /* ParseTentative.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
