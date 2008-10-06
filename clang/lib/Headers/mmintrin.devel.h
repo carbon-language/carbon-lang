@@ -210,12 +210,12 @@ inline __m64 __attribute__((__always_inline__)) _mm_slli_pi32(__m64 __m, int __c
     return (__m64)__builtin_ia32_pslldi((__v2si)__m, __count);
 }
 
-inline __m64 __attribute__((__always_inline__)) _mm_sll_pi64(__m64 __m, __m64 __count)
+inline __m64 __attribute__((__always_inline__)) _mm_sll_si64(__m64 __m, __m64 __count)
 {
     return __builtin_ia32_psllq(__m, __count);
 }
 
-inline __m64 __attribute__((__always_inline__)) _mm_slli_pi64(__m64 __m, int __count)
+inline __m64 __attribute__((__always_inline__)) _mm_slli_si64(__m64 __m, int __count)
 {
     return __builtin_ia32_psllqi(__m, __count);    
 }
@@ -260,12 +260,12 @@ inline __m64 __attribute__((__always_inline__)) _mm_srli_pi32(__m64 __m, int __c
     return (__m64)__builtin_ia32_psrldi((__v2si)__m, __count);
 }
 
-inline __m64 __attribute__((__always_inline__)) _mm_srl_pi64(__m64 __m, __m64 __count)
+inline __m64 __attribute__((__always_inline__)) _mm_srl_si64(__m64 __m, __m64 __count)
 {
     return (__m64)__builtin_ia32_psrlq(__m, __count);    
 }
 
-inline __m64 __attribute__((__always_inline__)) _mm_srli_pi64(__m64 __m, int __count)
+inline __m64 __attribute__((__always_inline__)) _mm_srli_si64(__m64 __m, int __count)
 {
     return __builtin_ia32_psrlqi(__m, __count);    
 }
