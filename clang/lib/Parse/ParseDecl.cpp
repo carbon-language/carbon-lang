@@ -1233,6 +1233,7 @@ void Parser::ParseParenDeclarator(Declarator &D) {
     // paren, because we haven't seen the identifier yet.
     isGrouping = true;
   } else if (Tok.is(tok::r_paren) ||           // 'int()' is a function.
+             (getLang().CPlusPlus && Tok.is(tok::ellipsis)) || // C++ int(...)
              isDeclarationSpecifier()) {       // 'int(int)' is a function.
     // This handles C99 6.7.5.3p11: in "typedef int X; void foo(X)", X is
     // considered to be a type, not a K&R identifier-list.
@@ -1326,7 +1327,7 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D) {
       IsVariadic = true;
       
       // Check to see if this is "void(...)" which is not allowed.
-      if (ParamInfo.empty()) {
+      if (!getLang().CPlusPlus && ParamInfo.empty()) {
         // Otherwise, parse parameter type list.  If it starts with an
         // ellipsis,  diagnose the malformed function.
         Diag(Tok, diag::err_ellipsis_first_arg);
