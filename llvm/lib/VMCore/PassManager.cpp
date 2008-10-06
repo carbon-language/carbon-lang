@@ -779,13 +779,23 @@ void PMDataManager::removeDeadPasses(Pass *P, const char *Msg,
     if (TheTimeInfo) TheTimeInfo->passStarted(*I);
     (*I)->releaseMemory();
     if (TheTimeInfo) TheTimeInfo->passEnded(*I);
+    if (const PassInfo *PI = (*I)->getPassInfo()) {
+      std::map<AnalysisID, Pass*>::iterator Pos =
+        AvailableAnalysis.find(PI);
 
-    std::map<AnalysisID, Pass*>::iterator Pos = 
-      AvailableAnalysis.find((*I)->getPassInfo());
-    
-    // It is possible that pass is already removed from the AvailableAnalysis
-    if (Pos != AvailableAnalysis.end())
-      AvailableAnalysis.erase(Pos);
+      // It is possible that pass is already removed from the AvailableAnalysis
+      if (Pos != AvailableAnalysis.end())
+        AvailableAnalysis.erase(Pos);
+
+      // Remove all interfaces this pass implements, for which it is also
+      // listed as the available implementation.
+      const std::vector<const PassInfo*> &II = PI->getInterfacesImplemented();
+      for (unsigned i = 0, e = II.size(); i != e; ++i) {
+        Pos = AvailableAnalysis.find(II[i]);
+        if (Pos != AvailableAnalysis.end() && Pos->second == *I)
+          AvailableAnalysis.erase(Pos);
+      }
+    }
   }
 }
 
