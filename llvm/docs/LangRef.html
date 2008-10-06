@@ -749,8 +749,9 @@ an optional <a href="#linkage">linkage type</a>, an optional
 <a href="#callingconv">calling convention</a>, a return type, an optional
 <a href="#paramattrs">parameter attribute</a> for the return type, a function 
 name, a (possibly empty) argument list (each with optional 
-<a href="#paramattrs">parameter attributes</a>), an optional section, an
-optional alignment, an optional <a href="#gc">garbage collector name</a>, 
+<a href="#paramattrs">parameter attributes</a>), optional 
+<a href="#fnattrs">function attributes</a>, an optional section, 
+an optional alignment, an optional <a href="#gc">garbage collector name</a>, 
 an opening curly brace, a list of basic blocks, and a closing curly brace.
 
 LLVM function declarations consist of the "<tt>declare</tt>" keyword, an
@@ -861,23 +862,27 @@ declare signext i8 @returns_signed_char()
     value, but is also valid on pointers to scalars.  The copy is considered to
     belong to the caller not the callee (for example,
     <tt><a href="#readonly">readonly</a></tt> functions should not write to
-    <tt>byval</tt> parameters).</dd>
+    <tt>byval</tt> parameters). This is not a valid attribute for return
+    values. </dd>
 
     <dt><tt>sret</tt></dt>
     <dd>This indicates that the pointer parameter specifies the address of a
     structure that is the return value of the function in the source program.
     This pointer must be guaranteed by the caller to be valid: loads and stores
     to the structure may be assumed by the callee to not to trap.  This may only
-    be applied to the first parameter.</dd>
+    be applied to the first parameter. This is not a valid attribute for
+    return values. </dd>
 
     <dt><tt>noalias</tt></dt>
     <dd>This indicates that the parameter does not alias any global or any other
     parameter.  The caller is responsible for ensuring that this is the case,
-    usually by placing the value in a stack allocation.</dd>
+    usually by placing the value in a stack allocation. This is not a valid
+    attribute for return values.</dd>
 
     <dt><tt>nest</tt></dt>
     <dd>This indicates that the pointer parameter can be excised using the
-    <a href="#int_trampoline">trampoline intrinsics</a>.</dd>
+    <a href="#int_trampoline">trampoline intrinsics</a>. This is not a valid
+    attribute for return values.</dd>
   </dl>
 
 </div>
@@ -2041,7 +2046,8 @@ branches or with a lookup table.</p>
 <h5>Syntax:</h5>
 
 <pre>
-  &lt;result&gt; = invoke [<a href="#callingconv">cconv</a>] &lt;ptr to function ty&gt; &lt;function ptr val&gt;(&lt;function args&gt;) 
+  &lt;result&gt; = invoke [<a href="#callingconv">cconv</a>] [<a href="#pa\
+ramattrs">RetAttrs</a>] &lt;ptr to function ty&gt; &lt;function ptr val&gt;(&lt;function args&gt;) 
                 to label &lt;normal label&gt; unwind label &lt;exception label&gt;
 </pre>
 
@@ -2066,6 +2072,11 @@ continued at the dynamically nearest "exception" label.
     convention</a> the call should use.  If none is specified, the call defaults
     to using C calling conventions.
   </li>
+
+  <li>The optional <a href="#paramattrs">Parameter Attributes</a> list for
+   return values. Only '<tt>zeroext</tt>', '<tt>signext</tt>', 
+   and '<tt>inreg</tt>' attributes are valid here.</li>
+
   <li>'<tt>ptr to function ty</tt>': shall be the signature of the pointer to
   function value being invoked.  In most cases, this is a direct function
   invocation, but indirect <tt>invoke</tt>s are just as possible, branching off
@@ -2086,6 +2097,9 @@ continued at the dynamically nearest "exception" label.
   <li>'<tt>exception label</tt>': the label reached when a callee returns with
   the <a href="#i_unwind"><tt>unwind</tt></a> instruction. </li>
 
+  <li>The optional <a href="fnattrs">function attributes</a> list. Only
+  '<tt>noreturn</tt>', '<tt>nounwind</tt>', '<tt>readonly</tt>' and
+  '<tt>readnone</tt>' attributes are valid here.</li>
 </ol>
 
 <h5>Semantics:</h5>
@@ -4235,7 +4249,7 @@ by element.
 
 <h5>Syntax:</h5>
 <pre>
-  &lt;result&gt; = [tail] call [<a href="#callingconv">cconv</a>] &lt;ty&gt; [&lt;fnty&gt;*] &lt;fnptrval&gt;(&lt;param list&gt;)
+  &lt;result&gt; = [tail] call [<a href="#callingconv">cconv</a>] [<a href="#paramattrs">RetAttrs</a>] &lt;ty&gt; [&lt;fnty&gt;*] &lt;fnptrval&gt;(&lt;param list&gt;)
 </pre>
 
 <h5>Overview:</h5>
@@ -4259,6 +4273,13 @@ by element.
     convention</a> the call should use.  If none is specified, the call defaults
     to using C calling conventions.
   </li>
+
+  <li>
+    <p>The optional <a href="#paramattrs">Parameter Attributes</a> list for
+    return values. Only '<tt>zeroext</tt>', '<tt>signext</tt>', 
+    and '<tt>inreg</tt>' attributes are valid here.</p>
+  </li>
+
   <li>
     <p>'<tt>ty</tt>': the type of the call instruction itself which is also
     the type of the return value.  Functions that return no value are marked
@@ -4283,6 +4304,11 @@ by element.
     indicates the function accepts a variable number of arguments, the extra 
     arguments can be specified.</p>
   </li>
+  <li> 
+  <p>The optional <a href="fnattrs">function attributes</a> list. Only
+  '<tt>noreturn</tt>', '<tt>nounwind</tt>', '<tt>readonly</tt>' and
+  '<tt>readnone</tt>' attributes are valid here.</p>
+  </li>
 </ol>
 
 <h5>Semantics:</h5>
@@ -4304,9 +4330,11 @@ function is bound to the result argument.
   call void %foo(i8 97 signext)
 
   %struct.A = type { i32, i8 }
-  %r = call %struct.A @foo()                     <i>; yields { 32, i8 }</i>
+  %r = call %struct.A @foo()                        <i>; yields { 32, i8 }</i>
   %gr = extractvalue %struct.A %r, 0                <i>; yields i32</i>
   %gr1 = extractvalue %struct.A %r, 1               <i>; yields i8</i>
+  %Z = call void @foo() noreturn                    <i>; indicates that foo never returns nomrally
+  %ZZ = call zeroext i32 @bar()                     <i>; Return value is zero extended
 </pre>
 
 </div>
