@@ -15,6 +15,7 @@
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/StmtVisitor.h"
+#include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Parse/DeclSpec.h"
 #include "llvm/Support/Compiler.h"
@@ -587,30 +588,21 @@ void Sema::AddCXXDirectInitializerToDecl(DeclTy *Dcl, SourceLocation LParenLoc,
   // A major benefit is that clients that don't particularly care about which
   // exactly form was it (like the CodeGen) can handle both cases without
   // special case code.
-  //
-  // According to the C++ standard, there shouldn't be semantic differences
-  // between a direct-initialization and a copy-initialization where the
-  // destination type is the same as the source type:
-  //
+
   // C++ 8.5p11:
   // The form of initialization (using parentheses or '=') is generally
   // insignificant, but does matter when the entity being initialized has a
-  // class type; see below.
-  // C++ 8.5p15:
-  // [...]
-  // If the initialization is direct-initialization, or if it is
-  // copy-initialization where the cv-unqualified version of the source type is
-  // the same class as, or a derived class of, the class of the destination,
-  // constructors are considered. The applicable constructors are enumerated
-  // (13.3.1.3), and the best one is chosen through overload resolution (13.3).
-  // The constructor so selected is called to initialize the object, with the
-  // initializer expression(s) as its argument(s). If no constructor applies, or
-  // the overload resolution is ambiguous, the initialization is ill-formed.
-  // [...]
-  //
-  // Note that according to C++ 8.5p15, the same semantic process is applied
-  // to both the direct-initialization and copy-initialization,
-  // if destination type == source type.
+  // class type.
+
+  // FIXME: When constructors for class types are supported, determine how 
+  // exactly semantic checking will be done for direct initializers.
+  if (VDecl->getType()->isRecordType()) {
+    unsigned DiagID = PP.getDiagnostics().getCustomDiagID(Diagnostic::Error,
+                           "initialization for class types is not handled yet");
+    Diag(VDecl->getLocation(), DiagID);
+    RealDecl->setInvalidDecl();
+    return;
+  }
 
   // Get an expression for constructing the type of the variable, using the
   // expression list of the initializer.
