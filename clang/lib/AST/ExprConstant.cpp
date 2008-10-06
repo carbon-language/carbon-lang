@@ -543,17 +543,19 @@ static bool EvaluateFloat(const Expr* E, APFloat& Result, EvalInfo &Info) {
 }
 
 bool FloatExprEvaluator::VisitCallExpr(const CallExpr *E) {
-  //Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
+  const llvm::fltSemantics &Sem =
+    Info.Ctx.getFloatTypeSemantics(E->getType());
   
   switch (E->isBuiltinCall()) {
+  default: return false;
   case Builtin::BI__builtin_huge_val:
   case Builtin::BI__builtin_huge_valf:
   case Builtin::BI__builtin_huge_vall:
   case Builtin::BI__builtin_inf:
   case Builtin::BI__builtin_inff:
   case Builtin::BI__builtin_infl:
-    // FIXME: Implement me.
-  default: return false;
+    Result = llvm::APFloat::getInf(Sem);
+    return true;
   }
 }
 
