@@ -1161,11 +1161,12 @@ Stmt *RewriteObjC::RewriteObjCForCollectionStmt(ObjCForCollectionStmt *S,
   buf = "\n{\n\t";
   if (DeclStmt *DS = dyn_cast<DeclStmt>(S->getElement())) {
     // type elem;
-    QualType ElementType = cast<ValueDecl>(DS->getDecl())->getType();
+    ScopedDecl* D = DS->getSolitaryDecl();
+    QualType ElementType = cast<ValueDecl>(D)->getType();
     elementTypeAsString = ElementType.getAsString();
     buf += elementTypeAsString;
     buf += " ";
-    elementName = DS->getDecl()->getName();
+    elementName = D->getName();
     buf += elementName;
     buf += ";\n\t";
   }
