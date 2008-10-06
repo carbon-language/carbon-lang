@@ -478,7 +478,7 @@ ContinueStmt* ContinueStmt::CreateImpl(Deserializer& D, ASTContext& C) {
 void DeclStmt::EmitImpl(Serializer& S) const {
   S.Emit(StartLoc);
   S.Emit(EndLoc);
-  S.EmitOwnedPtr(getDecl());
+  S.EmitOwnedPtr(TheDecl);
 }
     
 DeclStmt* DeclStmt::CreateImpl(Deserializer& D, ASTContext& C) {
