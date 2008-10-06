@@ -379,8 +379,12 @@ public:
       
       VD = dyn_cast<VarDecl>(DR->getDecl());
     }
-    else if (DeclStmt* DS = dyn_cast<DeclStmt>(S))
-      VD = dyn_cast<VarDecl>(DS->getDecl());
+    else if (DeclStmt* DS = dyn_cast<DeclStmt>(S)) {
+      // FIXME: Eventually CFGs won't have DeclStmts.  Right now we
+      //  assume that each DeclStmt has a single Decl.  This invariant
+      //  holds by contruction in the CFG.
+      VD = dyn_cast<VarDecl>(*DS->decl_begin());
+    }
     
     if (!VD)
       return true;
