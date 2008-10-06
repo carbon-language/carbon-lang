@@ -7,7 +7,7 @@ void f() {
   CFSTR("Hello, World!");
 }
 
-// rdar://6248329
+// rdar://6151192
 void *G = CFSTR("yo joe");
 
 #endif
