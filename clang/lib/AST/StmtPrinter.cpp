@@ -50,6 +50,7 @@ namespace  {
     
     void PrintRawCompoundStmt(CompoundStmt *S);
     void PrintRawDecl(Decl *D);
+    void PrintRawDeclStmt(DeclStmt *S);
     void PrintRawIfStmt(IfStmt *If);
     
     void PrintExpr(Expr *E) {
@@ -144,15 +145,28 @@ void StmtPrinter::PrintRawDecl(Decl *D) {
   }
 }
 
+void StmtPrinter::PrintRawDeclStmt(DeclStmt *S) {
+  bool isFirst = false;
+  
+  for (DeclStmt::decl_iterator I = S->decl_begin(), E = S->decl_end();
+       I != E; ++I) {
+    
+    if (!isFirst) OS << ", ";
+    else isFirst = false;
+    
+    PrintRawDecl(*I);
+  }
+}
 
 void StmtPrinter::VisitNullStmt(NullStmt *Node) {
   Indent() << ";\n";
 }
 
 void StmtPrinter::VisitDeclStmt(DeclStmt *Node) {
-  for (ScopedDecl *D = Node->getDecl(); D; D = D->getNextDeclarator()) {
+  for (DeclStmt::decl_iterator I = Node->decl_begin(), E = Node->decl_end();
+       I!=E; ++I) {    
     Indent();
-    PrintRawDecl(D);
+    PrintRawDecl(*I);
     OS << ";\n";
   }
 }
@@ -268,7 +282,7 @@ void StmtPrinter::VisitForStmt(ForStmt *Node) {
   Indent() << "for (";
   if (Node->getInit()) {
     if (DeclStmt *DS = dyn_cast<DeclStmt>(Node->getInit()))
-      PrintRawDecl(DS->getDecl());
+      PrintRawDeclStmt(DS);
     else
       PrintExpr(cast<Expr>(Node->getInit()));
   }
@@ -296,7 +310,7 @@ void StmtPrinter::VisitForStmt(ForStmt *Node) {
 void StmtPrinter::VisitObjCForCollectionStmt(ObjCForCollectionStmt *Node) {
   Indent() << "for (";
   if (DeclStmt *DS = dyn_cast<DeclStmt>(Node->getElement()))
-    PrintRawDecl(DS->getDecl());
+    PrintRawDeclStmt(DS);
   else
     PrintExpr(cast<Expr>(Node->getElement()));
   OS << " in ";
@@ -418,7 +432,7 @@ void StmtPrinter::VisitObjCAtTryStmt(ObjCAtTryStmt *Node) {
     Indent() << "@catch(";
     if (catchStmt->getCatchParamStmt()) {
       if (DeclStmt *DS = dyn_cast<DeclStmt>(catchStmt->getCatchParamStmt()))
-        PrintRawDecl(DS->getDecl());
+        PrintRawDeclStmt(DS);
     }
     OS << ")";
     if (CompoundStmt *CS = dyn_cast<CompoundStmt>(catchStmt->getCatchBody())) 
