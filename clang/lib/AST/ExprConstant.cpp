@@ -79,9 +79,6 @@ public:
   PointerExprEvaluator(EvalInfo &info) : Info(info) {}
 
   APValue VisitStmt(Stmt *S) {
-    // FIXME: Remove this when we support more expressions.
-    printf("Unhandled pointer statement\n");
-    S->dump();  
     return APValue();
   }
 
