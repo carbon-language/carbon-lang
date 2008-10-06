@@ -138,8 +138,8 @@ ObjCIvarRegion* MemRegionManager::getObjCIvarRegion(const ObjCIvarDecl* d,
   ObjCIvarRegion* R = cast_or_null<ObjCIvarRegion>(data);
   
   if (!R) {
-    R = (ObjCIvarRegion*) A.Allocate<FieldRegion>();
-    new (R) FieldRegion(d, superRegion);
+    R = (ObjCIvarRegion*) A.Allocate<ObjCIvarRegion>();
+    new (R) ObjCIvarRegion(d, superRegion);
     Regions.InsertNode(R, InsertPos);
   }
   
