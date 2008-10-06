@@ -188,7 +188,8 @@ bool CallExpr::isBuiltinClassifyType(llvm::APSInt &Result) const {
     return false;
 
   // We have a DeclRefExpr.
-  if (strcmp(DRE->getDecl()->getName(), "__builtin_classify_type") == 0) {
+  if (DRE->getDecl()->getIdentifier()->getBuiltinID() ==
+         Builtin::BI__builtin_classify_type) {
     // If no argument was supplied, default to "no_type_class". This isn't 
     // ideal, however it's what gcc does.
     Result = static_cast<uint64_t>(no_type_class);
