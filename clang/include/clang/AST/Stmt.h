@@ -140,6 +140,7 @@ public:
 /// the first statement can be an expression or a declaration.
 ///
 class DeclStmt : public Stmt {
+protected:
   ScopedDecl *TheDecl;
   SourceLocation StartLoc, EndLoc;
 public:
@@ -148,8 +149,24 @@ public:
   
   virtual void Destroy(ASTContext& Ctx);
 
+  // hasSolitaryDecl - This method returns true if this DeclStmt refers
+  // to a single Decl.
+  bool hasSolitaryDecl() const;
+  
   const ScopedDecl *getDecl() const { return TheDecl; }
   ScopedDecl *getDecl() { return TheDecl; }
+  
+  const ScopedDecl* getSolitaryDecl() const {
+    assert (hasSolitaryDecl() &&
+            "Caller assumes this DeclStmt points to one Decl*");
+    return TheDecl;
+  }
+  
+  ScopedDecl* getSolitaryDecl() {
+    assert (hasSolitaryDecl() &&
+            "Caller assumes this DeclStmt points to one Decl*");
+    return TheDecl;
+  }  
 
   SourceLocation getStartLoc() const { return StartLoc; }
   SourceLocation getEndLoc() const { return EndLoc; }

@@ -188,12 +188,16 @@ ObjCAtCatchStmt::ObjCAtCatchStmt(SourceLocation atCatchLoc,
 //===----------------------------------------------------------------------===//
 
 // DeclStmt
-Stmt::child_iterator DeclStmt::child_begin() { return getDecl(); }
+Stmt::child_iterator DeclStmt::child_begin() { return TheDecl; }
 Stmt::child_iterator DeclStmt::child_end() { return child_iterator(); }
 
 DeclStmt::decl_iterator& DeclStmt::decl_iterator::operator++() {
   D = D->getNextDeclarator();
   return *this;
+}
+
+bool DeclStmt::hasSolitaryDecl() const {
+  return TheDecl->getNextDeclarator() == 0;
 }
 
 // NullStmt
