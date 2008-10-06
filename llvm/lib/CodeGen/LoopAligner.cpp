@@ -59,7 +59,7 @@ bool LoopAligner::runOnMachineFunction(MachineFunction &MF) {
     return false;  // Don't care about loop alignment.
 
   const Function *F = MF.getFunction();
-  if (!F->isDeclaration() && F->hasFnAttr(Attribute::OptimizeForSize))
+  if (F->hasFnAttr(Attribute::OptimizeForSize))
     return false;
 
   for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I) {

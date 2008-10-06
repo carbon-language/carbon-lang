@@ -154,7 +154,7 @@ void X86ATTAsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
   SwitchToSection(TAI->SectionForGlobal(F));
 
   unsigned FnAlign = 4;
-  if (!F->isDeclaration() && F->hasFnAttr(Attribute::OptimizeForSize))
+  if (F->hasFnAttr(Attribute::OptimizeForSize))
     FnAlign = 1;
   switch (F->getLinkage()) {
   default: assert(0 && "Unknown linkage type!");
