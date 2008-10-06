@@ -872,13 +872,21 @@ bool Sema::CheckAddressConstantExpression(const Expr* Init) {
     Diag(Init->getExprLoc(),
          diag::err_init_element_not_constant, Init->getSourceRange());
     return true;
-  case Expr::ParenExprClass: {
-    const ParenExpr* PE = cast<ParenExpr>(Init);
-    return CheckAddressConstantExpression(PE->getSubExpr());
-  }
+  case Expr::ParenExprClass:
+    return CheckAddressConstantExpression(cast<ParenExpr>(Init)->getSubExpr());
   case Expr::StringLiteralClass:
   case Expr::ObjCStringLiteralClass:
     return false;
+  case Expr::CallExprClass:
+    // __builtin___CFStringMakeConstantString is a valid constant l-value.
+    if (cast<CallExpr>(Init)->isBuiltinCall() == 
+           Builtin::BI__builtin___CFStringMakeConstantString)
+      return false;
+      
+    Diag(Init->getExprLoc(),
+         diag::err_init_element_not_constant, Init->getSourceRange());
+    return true;
+      
   case Expr::UnaryOperatorClass: {
     const UnaryOperator *Exp = cast<UnaryOperator>(Init);
 

@@ -48,23 +48,8 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
       
   switch (BuiltinID) {
   default: break;  // Handle intrinsics and libm functions below.
-  case Builtin::BI__builtin___CFStringMakeConstantString: {
-    const Expr *Arg = E->getArg(0);
-    
-    while (1) {
-      if (const ParenExpr *PE = dyn_cast<ParenExpr>(Arg))
-        Arg = PE->getSubExpr();
-      else if (const ImplicitCastExpr *CE = dyn_cast<ImplicitCastExpr>(Arg))
-        Arg = CE->getSubExpr();
-      else
-        break;
-    }
-    
-    const StringLiteral *Literal = cast<StringLiteral>(Arg);
-    std::string S(Literal->getStrData(), Literal->getByteLength());
-    
-    return RValue::get(CGM.GetAddrOfConstantCFString(S));
-  }
+  case Builtin::BI__builtin___CFStringMakeConstantString:
+    return RValue::get(CGM.EmitConstantExpr(E, 0));
   case Builtin::BI__builtin_stdarg_start:
   case Builtin::BI__builtin_va_start:
   case Builtin::BI__builtin_va_end: {

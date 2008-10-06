@@ -617,6 +617,24 @@ public:
         return llvm::ConstantFP::get(Result.getFloat());
     }
 
+    // Handle __builtin___CFStringMakeConstantString.
+    if (E->isBuiltinCall() ==Builtin::BI__builtin___CFStringMakeConstantString){
+      const Expr *Arg = E->getArg(0);
+      
+      while (1) {
+        if (const ParenExpr *PE = dyn_cast<ParenExpr>(Arg))
+          Arg = PE->getSubExpr();
+        else if (const ImplicitCastExpr *CE = dyn_cast<ImplicitCastExpr>(Arg))
+          Arg = CE->getSubExpr();
+        else
+          break;
+      }
+      
+      const StringLiteral *Literal = cast<StringLiteral>(Arg);
+      std::string S(Literal->getStrData(), Literal->getByteLength());
+      return CGM.GetAddrOfConstantCFString(S);
+    }
+    
     CGM.ErrorUnsupported(E, "constant call expression");
     return llvm::Constant::getNullValue(ConvertType(E->getType()));
   }
