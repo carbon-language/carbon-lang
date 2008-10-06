@@ -1727,12 +1727,11 @@ APFloat::convert(const fltSemantics &toSemantics,
       APInt::tcShiftLeft(significandParts(), newPartCount, shift);
     else if (shift < 0)
       APInt::tcShiftRight(significandParts(), newPartCount, -shift);
-    // If the new size is shorter, we lost information.
-    fs = (shift < 0) ? opInexact : opOK;
     // gcc forces the Quiet bit on, which means (float)(double)(float_sNan)
     // does not give you back the same bits.  This is dubious, and we
     // don't currently do it.  You're really supposed to get
     // an invalid operation signal at runtime, but nobody does that.
+    fs = opOK;
   } else {
     semantics = &toSemantics;
     fs = opOK;
