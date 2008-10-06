@@ -243,7 +243,9 @@ void StmtDumper::DumpDeclarator(Decl *D) {
 void StmtDumper::VisitDeclStmt(DeclStmt *Node) {
   DumpStmt(Node);
   fprintf(F,"\n");
-  for (ScopedDecl *D = Node->getDecl(); D; D = D->getNextDeclarator()) {
+  for (DeclStmt::decl_iterator DI = Node->decl_begin(), DE = Node->decl_end();
+       DI != DE; ++DI) {
+    ScopedDecl* D = *DI;
     ++IndentLevel;
     Indent();
     fprintf(F, "%p ", (void*) D);
