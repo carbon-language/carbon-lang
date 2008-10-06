@@ -556,6 +556,20 @@ bool FloatExprEvaluator::VisitCallExpr(const CallExpr *E) {
   case Builtin::BI__builtin_infl:
     Result = llvm::APFloat::getInf(Sem);
     return true;
+      
+  case Builtin::BI__builtin_nan:
+  case Builtin::BI__builtin_nanf:
+  case Builtin::BI__builtin_nanl:
+    // If this is __builtin_nan("") turn this into a simple nan, otherwise we
+    // can't constant fold it.
+    if (const StringLiteral *S = 
+        dyn_cast<StringLiteral>(E->getArg(0)->IgnoreParenCasts())) {
+      if (!S->isWide() && S->getByteLength() == 0) { // empty string.
+        Result = llvm::APFloat::getNaN(Sem);
+        return true;
+      }
+    }
+    return false;
   }
 }
 

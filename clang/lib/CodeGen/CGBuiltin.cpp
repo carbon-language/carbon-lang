@@ -46,11 +46,14 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
   case Builtin::BI__builtin_inf:
   case Builtin::BI__builtin_inff:
   case Builtin::BI__builtin_infl:
+  case Builtin::BI__builtin_nan:
+  case Builtin::BI__builtin_nanf:
+  case Builtin::BI__builtin_nanl:
   case Builtin::BI__builtin_classify_type:
   case Builtin::BI__builtin_constant_p: {
     APValue Result;
-    bool IsCst = E->tryEvaluate(Result, CGM.getContext());
-    assert(IsCst && "These must all be constants!");
+    if (!E->tryEvaluate(Result, CGM.getContext()))
+      break;  // Not a constant, expand below.
     
     if (Result.isInt())
       return RValue::get(llvm::ConstantInt::get(Result.getInt()));
@@ -231,22 +234,6 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
     return RValue::get(Builder.CreateCall(F));
   }
 
-  case Builtin::BI__builtin_nan:
-  case Builtin::BI__builtin_nanf:
-  case Builtin::BI__builtin_nanl: {
-    // If this is __builtin_nan("") turn this into a simple nan, otherwise just
-    // call libm nan.
-    if (const StringLiteral *S = 
-          dyn_cast<StringLiteral>(E->getArg(0)->IgnoreParenCasts())) {
-      if (!S->isWide() && S->getByteLength() == 0) { // empty string.
-        const llvm::fltSemantics &Sem = 
-          CGM.getContext().getFloatTypeSemantics(E->getType());
-        return RValue::get(ConstantFP::get(APFloat::getNaN(Sem)));
-      }
-    }
-    // Otherwise, call libm 'nan'.
-    break;
-  }
   case Builtin::BI__builtin_powi:
   case Builtin::BI__builtin_powif:
   case Builtin::BI__builtin_powil: {
