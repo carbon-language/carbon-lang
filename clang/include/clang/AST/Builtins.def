@@ -52,16 +52,15 @@
 //  n -> nothrow
 //  c -> const
 //  F -> this is a libc/libm function with a '__builtin_' prefix added.
-//  C -> this builtin can be used as a "constant expression"
 //  FIXME: gcc has nonnull
 
 // Standard libc/libm functions:
-BUILTIN(__builtin_huge_val, "d", "ncC")
-BUILTIN(__builtin_huge_valf, "f", "ncC")
-BUILTIN(__builtin_huge_vall, "Ld", "ncC")
-BUILTIN(__builtin_inf  , "d"   , "ncC")
-BUILTIN(__builtin_inff , "f"   , "ncC")
-BUILTIN(__builtin_infl , "Ld"  , "ncC")
+BUILTIN(__builtin_huge_val, "d", "nc")
+BUILTIN(__builtin_huge_valf, "f", "nc")
+BUILTIN(__builtin_huge_vall, "Ld", "nc")
+BUILTIN(__builtin_inf  , "d"   , "nc")
+BUILTIN(__builtin_inff , "f"   , "nc")
+BUILTIN(__builtin_infl , "Ld"  , "nc")
 BUILTIN(__builtin_nan,  "dcC*" , "ncF")
 BUILTIN(__builtin_nanf, "fcC*" , "ncF")
 BUILTIN(__builtin_nanl, "LdcC*", "ncF")
@@ -112,9 +111,9 @@ BUILTIN(__builtin_bswap32, "UiUi", "nc")
 BUILTIN(__builtin_bswap64, "ULLiULLi", "nc")
 
 // Random GCC builtins
-BUILTIN(__builtin_constant_p, "UsUs", "ncC")
-BUILTIN(__builtin_classify_type, "i.", "ncC")
-BUILTIN(__builtin___CFStringMakeConstantString, "FC*cC*", "ncC")
+BUILTIN(__builtin_constant_p, "UsUs", "nc")
+BUILTIN(__builtin_classify_type, "i.", "nc")
+BUILTIN(__builtin___CFStringMakeConstantString, "FC*cC*", "nc")
 BUILTIN(__builtin_va_start, "va&.", "n")
 BUILTIN(__builtin_va_end, "va&", "n")
 BUILTIN(__builtin_va_copy, "va&a", "n")
