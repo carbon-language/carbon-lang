@@ -558,8 +558,8 @@ void Sema::AddCXXDirectInitializerToDecl(DeclTy *Dcl, SourceLocation LParenLoc,
                                          ExprTy **ExprTys, unsigned NumExprs,
                                          SourceLocation *CommaLocs,
                                          SourceLocation RParenLoc) {
-  Decl *RealDecl = static_cast<Decl *>(Dcl);
   assert(NumExprs != 0 && ExprTys && "missing expressions");
+  Decl *RealDecl = static_cast<Decl *>(Dcl);
 
   // If there is no declaration, there was an error parsing it.  Just ignore
   // the initializer.
@@ -576,11 +576,8 @@ void Sema::AddCXXDirectInitializerToDecl(DeclTy *Dcl, SourceLocation LParenLoc,
     return;
   }
 
-  // We will treat direct-initialization as a copy-initialization with a
-  // type-construction expression of the variable's type. In plain english:
-  // We will treat:
-  //    int x(1);  -as-> int x = int(1);
-  // and for class types:
+  // We will treat direct-initialization as a copy-initialization:
+  //    int x(1);  -as-> int x = 1;
   //    ClassType x(a,b,c); -as-> ClassType x = ClassType(a,b,c);
   //
   // Clients that want to distinguish between the two forms, can check for
@@ -594,9 +591,9 @@ void Sema::AddCXXDirectInitializerToDecl(DeclTy *Dcl, SourceLocation LParenLoc,
   // insignificant, but does matter when the entity being initialized has a
   // class type.
 
-  // FIXME: When constructors for class types are supported, determine how 
-  // exactly semantic checking will be done for direct initializers.
   if (VDecl->getType()->isRecordType()) {
+    // FIXME: When constructors for class types are supported, determine how 
+    // exactly semantic checking will be done for direct initializers.
     unsigned DiagID = PP.getDiagnostics().getCustomDiagID(Diagnostic::Error,
                            "initialization for class types is not handled yet");
     Diag(VDecl->getLocation(), DiagID);
@@ -604,19 +601,17 @@ void Sema::AddCXXDirectInitializerToDecl(DeclTy *Dcl, SourceLocation LParenLoc,
     return;
   }
 
-  // Get an expression for constructing the type of the variable, using the
-  // expression list of the initializer.
-  ExprResult Res = ActOnCXXTypeConstructExpr(VDecl->getLocation(),
-                                             VDecl->getType().getAsOpaquePtr(),
-                                             LParenLoc, ExprTys, NumExprs,
-                                             CommaLocs, RParenLoc);
-  if (Res.isInvalid) {
+  if (NumExprs > 1) {
+    Diag(CommaLocs[0], diag::err_builtin_direct_init_more_than_one_arg,
+         SourceRange(VDecl->getLocation(), RParenLoc));
     RealDecl->setInvalidDecl();
     return;
   }
 
-  // Performs additional semantic checks.
-  AddInitializerToDecl(Dcl, Res.Val);
   // Let clients know that initialization was done with a direct initializer.
   VDecl->setCXXDirectInitializer(true);
+
+  assert(NumExprs == 1 && "Expected 1 expression");
+  // Set the init expression, handles conversions.
+  AddInitializerToDecl(Dcl, ExprTys[0]);
 }

@@ -263,16 +263,10 @@ public:
   void setCXXDirectInitializer(bool T) { HasCXXDirectInit = T; }
 
   /// hasCXXDirectInitializer - If true, the initializer was a direct
-  /// initializer, e.g: "int x(1);". The Init expression will be an expression
-  /// that constructs the type with functional notation, e.g. for:
-  ///
-  ///     int x(1);
-  ///
-  /// hasCXXDirectInitializer will be true,
-  /// Init expression will be a "int(1)" functional-cast expression.
-  ///
-  /// Clients can distinguish between "int x(1);" and "int x = int(1);" by
-  /// checking hasCXXDirectInitializer.
+  /// initializer, e.g: "int x(1);". The Init expression will be the expression
+  /// inside the parens or a "ClassType(a,b,c)" class constructor expression for
+  /// class types. Clients can distinguish between "int x(1);" and "int x=1;"
+  /// by checking hasCXXDirectInitializer.
   ///
   bool hasCXXDirectInitializer() const {
     return HasCXXDirectInit;
