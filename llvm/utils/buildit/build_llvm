@@ -157,7 +157,8 @@ rm -rf * || exit 1
 cd $DIR/obj-llvm || exit 1
 
 # Install the tree into the destination directory.
-make $LOCAL_MAKEFLAGS $OPTIMIZE_OPTS UNIVERSAL=1 OPTIMIZE_OPTION='-O2' install
+make $LOCAL_MAKEFLAGS $OPTIMIZE_OPTS UNIVERSAL=1 UNIVERSAL_ARCH="$TARGETS" \
+    OPTIMIZE_OPTION='-O2' install
 
 if ! test $? == 0 ; then
     echo "error: LLVM 'make install' failed!"
