@@ -12,13 +12,11 @@
 //                         http://www.it.usyd.edu.au/~scholz
 //===----------------------------------------------------------------------===//
 
-
+#include "PBQP.h"
+#include "llvm/Config/alloca.h"
 #include <limits>
 #include <cassert>
 #include <cstring>
-
-#include "PBQP.h"
-#include "llvm/Config/alloca.h"
 
 namespace llvm {
 
