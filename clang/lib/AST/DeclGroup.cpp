@@ -21,6 +21,7 @@
 using namespace clang;
 
 DeclGroup* DeclGroup::Create(ASTContext& C, unsigned numdecls, Decl** decls) {
+  assert (numdecls > 0);
   unsigned size = sizeof(DeclGroup) + sizeof(Decl*) * numdecls;
   unsigned alignment = llvm::AlignOf<DeclGroup>::Alignment;  
   void* mem = C.getAllocator().Allocate(size, alignment);
@@ -46,7 +47,7 @@ DeclGroup* DeclGroup::Create(llvm::Deserializer& D, ASTContext& C) {
   return DG;
 }
   
-DeclGroup::DeclGroup(unsigned numdecls, Decl** decls) {
+DeclGroup::DeclGroup(unsigned numdecls, Decl** decls) : NumDecls(numdecls) {
   assert (numdecls > 0);
   assert (decls);
   memcpy(this+1, decls, numdecls * sizeof(*decls));
@@ -110,13 +111,15 @@ void DeclGroupOwningRef::Emit(llvm::Serializer& S) const {
   }
 }
 
-DeclGroupOwningRef DeclGroupOwningRef::ReadVal(llvm::Deserializer& D,
-                                               ASTContext& C) {
-  if (D.ReadBool()) {
-    DeclGroupOwningRef DG(D.ReadOwnedPtr<Decl>(C));
-    return DG;
+DeclGroupOwningRef& DeclGroupOwningRef::Read(llvm::Deserializer& Dezr, 
+                                             ASTContext& C) {
+  
+  if (!Dezr.ReadBool())
+    D = Dezr.ReadOwnedPtr<Decl>(C);
+  else {
+    uintptr_t x = reinterpret_cast<uintptr_t>(Dezr.ReadOwnedPtr<DeclGroup>(C));
+    D = reinterpret_cast<Decl*>(x | DeclGroupKind);
   }
-
-  DeclGroupOwningRef DG(D.ReadOwnedPtr<DeclGroup>(C));
-  return DG;
+  
+  return *this;
 }

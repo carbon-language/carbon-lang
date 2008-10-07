@@ -38,14 +38,15 @@ public:
   void Destroy(ASTContext& C);
 
   unsigned size() const { return NumDecls; }
+
   Decl*& operator[](unsigned i) { 
     assert (i < NumDecls && "Out-of-bounds access.");
     return *((Decl**) (this+1));
   }
   
-  const Decl*& operator[](unsigned i) const { 
+  Decl* const& operator[](unsigned i) const { 
     assert (i < NumDecls && "Out-of-bounds access.");
-    return *((const Decl**) (this+1));
+    return *((Decl* const*) (this+1));
   }
   
   /// Emit - Serialize a DeclGroup to Bitcode.
@@ -72,6 +73,11 @@ public:
     : D((Decl*) (reinterpret_cast<uintptr_t>(dg) | DeclGroupKind)) {}
   
   typedef Decl** iterator;
+  typedef Decl* const * const_iterator;
+  
+  bool hasSolitaryDecl() const {
+    return getKind() == DeclKind;
+  }
 
   iterator begin() {
     if (getKind() == DeclKind) return D ? &D : 0;
@@ -80,6 +86,18 @@ public:
   }
 
   iterator end() {
+    if (getKind() == DeclKind) return D ? &D + 1 : 0;
+    DeclGroup& G = *((DeclGroup*) (reinterpret_cast<uintptr_t>(D) & ~Mask));
+    return &G[0] + G.size();
+  }
+  
+  const_iterator begin() const {
+    if (getKind() == DeclKind) return D ? &D : 0;
+    DeclGroup& G = *((DeclGroup*) (reinterpret_cast<uintptr_t>(D) & ~Mask));
+    return &G[0];
+  }
+  
+  const_iterator end() const {
     if (getKind() == DeclKind) return D ? &D + 1 : 0;
     DeclGroup& G = *((DeclGroup*) (reinterpret_cast<uintptr_t>(D) & ~Mask));
     return &G[0] + G.size();
@@ -94,6 +112,7 @@ public:
   
 class DeclGroupOwningRef : public DeclGroupRef {
 public:
+  explicit DeclGroupOwningRef() : DeclGroupRef((Decl*)0) {}
   explicit DeclGroupOwningRef(Decl* d) : DeclGroupRef(d) {}
   explicit DeclGroupOwningRef(DeclGroup* dg) : DeclGroupRef(dg) {}
 
@@ -113,7 +132,7 @@ public:
   void Emit(llvm::Serializer& S) const;
   
   /// Read - Deserialize a DeclGroupOwningRef from Bitcode.
-  static DeclGroupOwningRef ReadVal(llvm::Deserializer& D, ASTContext& C);
+  DeclGroupOwningRef& Read(llvm::Deserializer& D, ASTContext& C);
 };
 
 } // end clang namespace
