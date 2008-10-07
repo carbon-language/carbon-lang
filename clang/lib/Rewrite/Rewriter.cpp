@@ -14,6 +14,7 @@
 
 #include "clang/Rewrite/Rewriter.h"
 #include "clang/AST/Stmt.h"
+#include "clang/AST/Decl.h"
 #include "clang/Lex/Lexer.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/Support/raw_ostream.h"
