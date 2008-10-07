@@ -392,14 +392,11 @@ unsigned ARMCodeEmitter::getAddrMode1InstrBinary(const MachineInstr &MI,
 
   // Encode first non-shifter register operand if there is one.
   unsigned Format = TID.TSFlags & ARMII::FormMask;
-  bool isUnary = (Format == ARMII::DPRdMisc  ||
-                  Format == ARMII::DPRdIm    ||
-                  Format == ARMII::DPRdReg   ||
-                  Format == ARMII::DPRdSoReg ||
-                  Format == ARMII::DPRnIm    ||
-                  Format == ARMII::DPRnReg   ||
-                  Format == ARMII::DPRnSoReg);
-  if (!isUnary) {
+  bool hasRnOperand= !(Format == ARMII::DPRdMisc  ||
+                       Format == ARMII::DPRdIm    ||
+                       Format == ARMII::DPRdReg   ||
+                       Format == ARMII::DPRdSoReg);
+  if (hasRnOperand) {
     Binary |= getMachineOpValue(MI, OpIdx) << ARMII::RegRnShift;
     ++OpIdx;
   }
