@@ -21,21 +21,32 @@ namespace clang {
 
 class Stmt;
 class ScopedDecl;
+class Decl;
 class VariableArrayType;
   
 class StmtIteratorBase {
 protected:
-  enum { DeclMode = 0x1, SizeOfTypeVAMode = 0x2, Flags = 0x3 };
+  enum { DeclMode = 0x1, SizeOfTypeVAMode = 0x2, DeclGroupMode = 0x3,
+         Flags = 0x3 };
   
-  union { Stmt** stmt; ScopedDecl* decl; };
-  uintptr_t RawVAPtr;
+  union { Stmt** stmt; ScopedDecl* decl; Decl** DGI; };
+  uintptr_t RawVAPtr;  
+  Decl** DGE;
 
   bool inDecl() const {
-    return RawVAPtr & DeclMode ? true : false;
+    return (RawVAPtr & Flags) == DeclMode;
+  }
+  
+  bool inDeclGroup() const {
+    return (RawVAPtr & Flags) == DeclGroupMode;
   }
   
   bool inSizeOfTypeVA() const { 
-    return RawVAPtr & SizeOfTypeVAMode ? true : false;
+    return (RawVAPtr & Flags) == SizeOfTypeVAMode;
+  }
+  
+  bool inStmt() const {
+    return (RawVAPtr & Flags) == 0;
   }
     
   VariableArrayType* getVAPtr() const {
@@ -43,11 +54,12 @@ protected:
   }
   
   void setVAPtr(VariableArrayType* P) {
-    assert (inDecl() || inSizeOfTypeVA());    
+    assert (inDecl() || inDeclGroup() || inSizeOfTypeVA());    
     RawVAPtr = reinterpret_cast<uintptr_t>(P) | (RawVAPtr & Flags);
   }
   
   void NextDecl(bool ImmediateAdvance = true);
+  bool HandleDecl(Decl* D);
   void NextVA();
   
   Stmt*& GetDeclExpr() const;
@@ -55,6 +67,7 @@ protected:
   StmtIteratorBase(Stmt** s) : stmt(s), RawVAPtr(0) {}
   StmtIteratorBase(ScopedDecl* d);
   StmtIteratorBase(VariableArrayType* t);
+  StmtIteratorBase(Decl** dgi, Decl** dge);
   StmtIteratorBase() : stmt(NULL), RawVAPtr(0) {}
 };
   
@@ -69,16 +82,17 @@ protected:
 public:
   StmtIteratorImpl() {}                                                
   StmtIteratorImpl(Stmt** s) : StmtIteratorBase(s) {}
+  StmtIteratorImpl(Decl** dgi, Decl** dge) : StmtIteratorBase(dgi, dge) {}
   StmtIteratorImpl(ScopedDecl* d) : StmtIteratorBase(d) {}
   StmtIteratorImpl(VariableArrayType* t) : StmtIteratorBase(t) {}
   
   DERIVED& operator++() {
-    if (inDecl()) {
+    if (inDecl() || inDeclGroup()) {
       if (getVAPtr()) NextVA();
       else NextDecl();
     }
     else if (inSizeOfTypeVA())
-      NextVA();            
+      NextVA();
     else
       ++stmt;
       
@@ -100,7 +114,7 @@ public:
   }
   
   REFERENCE operator*() const { 
-    return (REFERENCE) (inDecl() || inSizeOfTypeVA() ? GetDeclExpr() : *stmt);
+    return (REFERENCE) (inStmt() ? *stmt : GetDeclExpr());
   }
   
   REFERENCE operator->() const { return operator*(); }   
@@ -110,7 +124,9 @@ struct StmtIterator : public StmtIteratorImpl<StmtIterator,Stmt*&> {
   explicit StmtIterator() : StmtIteratorImpl<StmtIterator,Stmt*&>() {}
 
   StmtIterator(Stmt** S) : StmtIteratorImpl<StmtIterator,Stmt*&>(S) {}
-  
+  StmtIterator(Decl** dgi, Decl** dge) 
+   : StmtIteratorImpl<StmtIterator,Stmt*&>(dgi, dge) {}
+
   StmtIterator(VariableArrayType* t):StmtIteratorImpl<StmtIterator,Stmt*&>(t) {}
   StmtIterator(ScopedDecl* D) : StmtIteratorImpl<StmtIterator,Stmt*&>(D) {}
 };
