@@ -49,11 +49,14 @@ proc substitute { line test tmpFile } {
   global srcroot objroot srcdir objdir subdir target_triplet prcontext 
   global llvmgcc llvmgxx llvmgcc_version llvmgccmajvers ocamlc
   global gccpath gxxpath compile_c compile_cxx link shlibext llvmlibsdir
+  global valgrind
   set path [file join $srcdir $subdir]
 
   # Substitute all Tcl variables.
   set new_line [subst $line ]
 
+  #replace %% with _#MARKER#_ to make the replacement of %% more predictable
+  regsub -all {%%} $new_line {_#MARKER#_} new_line
   #replace %prcontext with prcontext.tcl (Must replace before %p)
   regsub -all {%prcontext} $new_line $prcontext new_line
   #replace %llvmgcc with actual path to llvmgcc
@@ -78,8 +81,28 @@ proc substitute { line test tmpFile } {
   regsub -all {%s} $new_line $test new_line
   #replace %t with temp filenames
   regsub -all {%t} $new_line $tmpFile new_line
-  #replace %% with %
-  regsub -all {%%} $new_line % new_line
+  #replace _#MARKER#_ with %
+  regsub -all {_#MARKER#_} $new_line % new_line
+
+  #valgind related stuff
+# regsub -all {bugpoint } $new_line "$valgrind bugpoint " new_line
+  regsub -all {llc } $new_line "$valgrind llc " new_line
+  regsub -all {lli } $new_line "$valgrind lli " new_line
+  regsub -all {llvm-ar } $new_line "$valgrind llvm-ar " new_line
+  regsub -all {llvm-as } $new_line "$valgrind llvm-as " new_line
+  regsub -all {llvm-bcanalyzer } $new_line "$valgrind llvm-bcanalyzer " new_line
+  regsub -all {llvm-dis } $new_line "$valgrind llvm-dis " new_line
+  regsub -all {llvm-extract } $new_line "$valgrind llvm-extract " new_line
+  regsub -all {llvm-ld } $new_line "$valgrind llvm-ld " new_line
+  regsub -all {llvm-link } $new_line "$valgrind llvm-link " new_line
+  regsub -all {llvm-nm } $new_line "$valgrind llvm-nm " new_line
+  regsub -all {llvm-prof } $new_line "$valgrind llvm-prof " new_line
+  regsub -all {llvm-ranlib } $new_line "$valgrind llvm-ranlib " new_line
+  regsub -all {([^a-zA-Z_-])opt } $new_line "\\1$valgrind opt " new_line
+  regsub -all {^opt } $new_line "$valgrind opt " new_line
+  regsub -all {tblgen } $new_line "$valgrind tblgen " new_line
+  regsub -all "not $valgrind " $new_line "$valgrind not " new_line
+
   return $new_line
 }
 
