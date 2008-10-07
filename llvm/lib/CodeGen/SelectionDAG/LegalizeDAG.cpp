@@ -6441,22 +6441,18 @@ void SelectionDAGLegalize::ExpandOp(SDValue Op, SDValue &Lo, SDValue &Hi){
     LoOps[1] = RHSL;
     HiOps[0] = LHSH;
     HiOps[1] = RHSH;
+
     //cascaded check to see if any smaller size has a a carry flag.
     unsigned OpV = Node->getOpcode() == ISD::ADD ? ISD::ADDC : ISD::SUBC;
     bool hasCarry = false;
-    if (NVT == MVT::i64)
-      hasCarry = TLI.isOperationLegal(OpV, MVT::i64)
-        | TLI.isOperationLegal(OpV, MVT::i32)
-        | TLI.isOperationLegal(OpV, MVT::i16)
-        | TLI.isOperationLegal(OpV, MVT::i8);
-    if (NVT == MVT::i32)
-      hasCarry = TLI.isOperationLegal(OpV, MVT::i32)
-        | TLI.isOperationLegal(OpV, MVT::i16)
-        | TLI.isOperationLegal(OpV, MVT::i8);
-    if (NVT == MVT::i16)
-      hasCarry = TLI.isOperationLegal(OpV, MVT::i16)
-        | TLI.isOperationLegal(OpV, MVT::i8);
-      
+    for (unsigned BitSize = NVT.getSizeInBits(); BitSize != 0; BitSize /= 2) {
+      MVT AVT = MVT::getIntegerVT(BitSize);
+      if (TLI.isOperationLegal(OpV, AVT)) {
+        hasCarry = true;
+        break;
+      }
+    }
+
     if(hasCarry) {
       if (Node->getOpcode() == ISD::ADD) {
         Lo = DAG.getNode(ISD::ADDC, VTList, LoOps, 2);
