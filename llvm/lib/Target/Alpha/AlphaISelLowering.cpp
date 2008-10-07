@@ -22,6 +22,7 @@
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
 #include "llvm/Module.h"
+#include "llvm/Intrinsics.h"
 #include "llvm/Support/CommandLine.h"
 using namespace llvm;
 
@@ -47,7 +48,10 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM) : TargetLowering(TM)
   addRegisterClass(MVT::i64, Alpha::GPRCRegisterClass);
   addRegisterClass(MVT::f64, Alpha::F8RCRegisterClass);
   addRegisterClass(MVT::f32, Alpha::F4RCRegisterClass);
-  
+
+  // We want to custom lower some of our intrinsics.
+  setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::Other, Custom);
+
   setLoadXAction(ISD::EXTLOAD, MVT::i1,  Promote);
   setLoadXAction(ISD::EXTLOAD, MVT::f32, Expand);
   
@@ -86,6 +90,12 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM) : TargetLowering(TM)
   setOperationAction(ISD::UREM     , MVT::i64, Custom);
   setOperationAction(ISD::SDIV     , MVT::i64, Custom);
   setOperationAction(ISD::UDIV     , MVT::i64, Custom);
+
+  setOperationAction(ISD::ADDC     , MVT::i64, Expand);
+  setOperationAction(ISD::ADDE     , MVT::i64, Expand);
+  setOperationAction(ISD::SUBC     , MVT::i64, Expand);
+  setOperationAction(ISD::SUBE     , MVT::i64, Expand);
+
 
   // We don't support sin/cos/sqrt/pow
   setOperationAction(ISD::FSIN , MVT::f64, Expand);
@@ -311,6 +321,29 @@ static SDValue LowerRET(SDValue Op, SelectionDAG &DAG) {
       DAG.getMachineFunction().getRegInfo().addLiveOut(ArgReg);
     break;
   }
+  case 5: {
+    MVT ArgVT = Op.getOperand(1).getValueType();
+    unsigned ArgReg1, ArgReg2;
+    if (ArgVT.isInteger()) {
+      ArgReg1 = Alpha::R0;
+      ArgReg2 = Alpha::R1;
+    } else {
+      assert(ArgVT.isFloatingPoint());
+      ArgReg1 = Alpha::F0;
+      ArgReg2 = Alpha::F1;
+    }
+    Copy = DAG.getCopyToReg(Copy, ArgReg1, Op.getOperand(1), Copy.getValue(1));
+    if (std::find(DAG.getMachineFunction().getRegInfo().liveout_begin(), 
+                  DAG.getMachineFunction().getRegInfo().liveout_end(), ArgReg1)
+        == DAG.getMachineFunction().getRegInfo().liveout_end())
+      DAG.getMachineFunction().getRegInfo().addLiveOut(ArgReg1);
+    Copy = DAG.getCopyToReg(Copy, ArgReg2, Op.getOperand(3), Copy.getValue(1));
+    if (std::find(DAG.getMachineFunction().getRegInfo().liveout_begin(), 
+                   DAG.getMachineFunction().getRegInfo().liveout_end(), ArgReg2)
+        == DAG.getMachineFunction().getRegInfo().liveout_end())
+      DAG.getMachineFunction().getRegInfo().addLiveOut(ArgReg2);
+    break;
+  }
   }
   return DAG.getNode(AlphaISD::RET_FLAG, MVT::Other, Copy, Copy.getValue(1));
 }
@@ -431,6 +464,15 @@ SDValue AlphaTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
 
   case ISD::RET: return LowerRET(Op,DAG);
   case ISD::JumpTable: return LowerJumpTable(Op, DAG);
+
+  case ISD::INTRINSIC_WO_CHAIN: {
+    unsigned IntNo = cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue();
+    switch (IntNo) {
+    default: break;    // Don't custom lower most intrinsics.
+    case Intrinsic::alpha_umulh:
+      return DAG.getNode(ISD::MULHU, MVT::i64, Op.getOperand(1), Op.getOperand(2));
+    }
+  }
 
   case ISD::SINT_TO_FP: {
     assert(Op.getOperand(0).getValueType() == MVT::i64 &&

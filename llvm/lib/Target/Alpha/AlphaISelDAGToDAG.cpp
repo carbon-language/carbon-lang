@@ -323,7 +323,8 @@ SDNode *AlphaDAGToDAGISel::Select(SDValue Op) {
     return CurDAG->SelectNodeTo(N, Alpha::LDQr, MVT::i64, MVT::Other, 
                                 CPI, SDValue(Tmp, 0), CurDAG->getEntryNode());
   }
-  case ISD::TargetConstantFP: {
+  case ISD::TargetConstantFP:
+  case ISD::ConstantFP: {
     ConstantFPSDNode *CN = cast<ConstantFPSDNode>(N);
     bool isDouble = N->getValueType(0) == MVT::f64;
     MVT T = isDouble ? MVT::f64 : MVT::f32;
