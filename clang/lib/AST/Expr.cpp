@@ -1264,10 +1264,10 @@ Stmt::child_iterator SizeOfAlignOfTypeExpr::child_begin() {
   if (VariableArrayType* T = dyn_cast<VariableArrayType>(Ty.getTypePtr()))
     return child_iterator(T);
   else
-    return child_iterator(); 
+    return child_iterator((VariableArrayType*)0); 
 }
 Stmt::child_iterator SizeOfAlignOfTypeExpr::child_end() {
-  return child_iterator(); 
+  return child_iterator((VariableArrayType*)0); 
 }
 
 // ArraySubscriptExpr
