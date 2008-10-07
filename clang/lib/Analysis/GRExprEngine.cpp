@@ -1131,6 +1131,12 @@ void GRExprEngine::VisitCall(CallExpr* CE, NodeTy* Pred,
 
           case 5:
             if (!memcmp(s, "panic", 5)) Builder->BuildSinks = true;
+            else if (!memcmp(s, "error", 5)) {
+              Expr* Arg = *CE->arg_begin();
+              if (IntegerLiteral* IL = dyn_cast<IntegerLiteral>(Arg))
+                if (IL->getValue() != 0)
+                  Builder->BuildSinks = true;
+            }
             break;
           
           case 6:
