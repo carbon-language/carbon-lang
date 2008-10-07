@@ -1279,6 +1279,7 @@ void Parser::ParseParenDeclarator(Declarator &D) {
   // direct-declarator: '(' declarator ')'
   // direct-declarator: '(' attributes declarator ')'
   if (isGrouping) {
+    bool hadGroupingParens = D.hasGroupingParens();
     D.setGroupingParens(true);
 
     if (Tok.is(tok::kw___attribute))
@@ -1287,6 +1288,8 @@ void Parser::ParseParenDeclarator(Declarator &D) {
     ParseDeclaratorInternal(D);
     // Match the ')'.
     MatchRHSPunctuation(tok::r_paren, StartLoc);
+
+    D.setGroupingParens(hadGroupingParens);
     return;
   }
   
