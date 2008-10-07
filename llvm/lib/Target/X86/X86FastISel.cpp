@@ -866,12 +866,16 @@ bool X86FastISel::X86SelectShift(Instruction *I) {
   unsigned Op1Reg = getRegForValue(I->getOperand(1));
   if (Op1Reg == 0) return false;
   TII.copyRegToReg(*MBB, MBB->end(), CReg, Op1Reg, RC, RC);
+
+  // The shift instruction uses X86::CL. If we defined a super-register
+  // of X86::CL, emit an EXTRACT_SUBREG to precisely describe what
+  // we're doing here.
+  if (CReg != X86::CL)
+    BuildMI(MBB, TII.get(TargetInstrInfo::EXTRACT_SUBREG), X86::CL)
+      .addReg(CReg).addImm(X86::SUBREG_8BIT);
+
   unsigned ResultReg = createResultReg(RC);
-  BuildMI(MBB, TII.get(OpReg), ResultReg).addReg(Op0Reg)
-    // FIXME: The "Local" register allocator's physreg liveness doesn't
-    // recognize subregs. Adding the superreg of CL that's actually defined
-    // prevents it from being re-allocated for this instruction.
-    .addReg(CReg, false, true);
+  BuildMI(MBB, TII.get(OpReg), ResultReg).addReg(Op0Reg);
   UpdateValueMap(I, ResultReg);
   return true;
 }
@@ -976,7 +980,7 @@ bool X86FastISel::X86SelectTrunc(Instruction *I) {
   BuildMI(MBB, TII.get(CopyOpc), CopyReg).addReg(InputReg);
 
   // Then issue an extract_subreg.
-  unsigned ResultReg = FastEmitInst_extractsubreg(CopyReg,1); // x86_subreg_8bit
+  unsigned ResultReg = FastEmitInst_extractsubreg(CopyReg, X86::SUBREG_8BIT);
   if (!ResultReg)
     return false;
 
