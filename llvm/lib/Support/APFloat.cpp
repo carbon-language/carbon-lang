@@ -1784,7 +1784,8 @@ APFloat::convertToSignExtendedInteger(integerPart *parts, unsigned int width,
 
   if(category == fcZero) {
     APInt::tcSet(parts, 0, dstPartsCount);
-    return opOK;
+    // Negative zero can't be represented as an int.
+    return sign ? opInexact : opOK;
   }
 
   src = significandParts();
