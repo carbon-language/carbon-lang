@@ -6445,14 +6445,17 @@ void SelectionDAGLegalize::ExpandOp(SDValue Op, SDValue &Lo, SDValue &Hi){
     unsigned OpV = Node->getOpcode() == ISD::ADD ? ISD::ADDC : ISD::SUBC;
     bool hasCarry = false;
     if (NVT == MVT::i64)
-      hasCarry |= TLI.isOperationLegal(OpV, MVT::i32)
+      hasCarry |= TLI.isOperationLegal(OpV, MVT::i64)
+        | TLI.isOperationLegal(OpV, MVT::i32)
         | TLI.isOperationLegal(OpV, MVT::i16)
         | TLI.isOperationLegal(OpV, MVT::i8);
     if (NVT == MVT::i32)
-      hasCarry |= TLI.isOperationLegal(OpV, MVT::i16)
+      hasCarry |= TLI.isOperationLegal(OpV, MVT::i32)
+        | TLI.isOperationLegal(OpV, MVT::i16)
         | TLI.isOperationLegal(OpV, MVT::i8);
     if (NVT == MVT::i16)
-      hasCarry |= TLI.isOperationLegal(OpV, MVT::i8);
+      hasCarry |= TLI.isOperationLegal(OpV, MVT::i16)
+        | TLI.isOperationLegal(OpV, MVT::i8);
       
     if(hasCarry) {
       if (Node->getOpcode() == ISD::ADD) {
