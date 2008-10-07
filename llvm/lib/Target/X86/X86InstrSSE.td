@@ -2891,11 +2891,11 @@ let AddedComplexity = 15 in {
 def : Pat<(v2f64 (X86vzmovl (v2f64 (scalar_to_vector FR64:$src)))),
           (MOVLSD2PDrr (V_SET0), FR64:$src)>, Requires<[HasSSE2]>;
 def : Pat<(v4f32 (X86vzmovl (v4f32 (scalar_to_vector FR32:$src)))),
-          (MOVLSS2PSrr (V_SET0), FR32:$src)>, Requires<[HasSSE2]>;
+          (MOVLSS2PSrr (V_SET0), FR32:$src)>, Requires<[HasSSE1]>;
 def : Pat<(v4f32 (X86vzmovl (v4f32 VR128:$src))),
-          (MOVLPSrr (V_SET0), VR128:$src)>, Requires<[HasSSE2]>;
+          (MOVLPSrr (V_SET0), VR128:$src)>, Requires<[HasSSE1]>;
 def : Pat<(v4i32 (X86vzmovl (v4i32 VR128:$src))),
-          (MOVLPSrr (V_SET0), VR128:$src)>, Requires<[HasSSE2]>;
+          (MOVLPSrr (V_SET0), VR128:$src)>, Requires<[HasSSE1]>;
 }
 
 // Splat v2f64 / v2i64
