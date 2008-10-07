@@ -784,6 +784,14 @@ to whatever it feels convenient.  If an explicit alignment is specified, the
 function is forced to have at least that much alignment.  All alignments must be
 a power of 2.</p>
 
+  <h5>Syntax:</h5>
+
+<div class="doc_code">
+<pre>
+define [<a href="#linkage">linkage</a>] [<a href="#visibility">visibility</a>] [<a href="#callingconv">cconv</a>] [<a href="#paramattrs">ret attrs</a>] &lt;ResultType&gt; @&lt;FunctionName&gt; ([argument list]) [<a href="#fnattrs">fn Attrs</a>] [section "name"] [align N] [<a href="#gc">gc</a>] { ... }
+</pre>
+</div>
+
 </div>
 
 
@@ -2046,8 +2054,7 @@ branches or with a lookup table.</p>
 <h5>Syntax:</h5>
 
 <pre>
-  &lt;result&gt; = invoke [<a href="#callingconv">cconv</a>] [<a href="#pa\
-ramattrs">RetAttrs</a>] &lt;ptr to function ty&gt; &lt;function ptr val&gt;(&lt;function args&gt;) 
+  &lt;result&gt; = invoke [<a href="#callingconv">cconv</a>] [<a href="#paramattrs">ret attrs</a>] &lt;ptr to function ty&gt; &lt;function ptr val&gt;(&lt;function args&gt;) [<a href="#fnattrs">fn attrs</a>]
                 to label &lt;normal label&gt; unwind label &lt;exception label&gt;
 </pre>
 
@@ -2097,7 +2104,7 @@ continued at the dynamically nearest "exception" label.
   <li>'<tt>exception label</tt>': the label reached when a callee returns with
   the <a href="#i_unwind"><tt>unwind</tt></a> instruction. </li>
 
-  <li>The optional <a href="fnattrs">function attributes</a> list. Only
+  <li>The optional <a href="#fnattrs">function attributes</a> list. Only
   '<tt>noreturn</tt>', '<tt>nounwind</tt>', '<tt>readonly</tt>' and
   '<tt>readnone</tt>' attributes are valid here.</li>
 </ol>
@@ -4249,7 +4256,7 @@ by element.
 
 <h5>Syntax:</h5>
 <pre>
-  &lt;result&gt; = [tail] call [<a href="#callingconv">cconv</a>] [<a href="#paramattrs">RetAttrs</a>] &lt;ty&gt; [&lt;fnty&gt;*] &lt;fnptrval&gt;(&lt;param list&gt;)
+  &lt;result&gt; = [tail] call [<a href="#callingconv">cconv</a>] [<a href="#paramattrs">ret attrs</a>] &lt;ty&gt; [&lt;fnty&gt;*] &lt;fnptrval&gt;(&lt;function args&gt;) [<a href="#fnattrs">fn attrs</a>]
 </pre>
 
 <h5>Overview:</h5>
@@ -4305,7 +4312,7 @@ by element.
     arguments can be specified.</p>
   </li>
   <li> 
-  <p>The optional <a href="fnattrs">function attributes</a> list. Only
+  <p>The optional <a href="#fnattrs">function attributes</a> list. Only
   '<tt>noreturn</tt>', '<tt>nounwind</tt>', '<tt>readonly</tt>' and
   '<tt>readnone</tt>' attributes are valid here.</p>
   </li>
