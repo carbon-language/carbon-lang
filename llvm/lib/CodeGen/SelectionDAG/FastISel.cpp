@@ -81,7 +81,9 @@ unsigned FastISel::getRegForValue(Value *V) {
   } else if (isa<AllocaInst>(V)) {
     Reg = TargetMaterializeAlloca(cast<AllocaInst>(V));
   } else if (isa<ConstantPointerNull>(V)) {
-    Reg = FastEmit_i(VT, VT, ISD::Constant, 0);
+    // Translate this as an integer zero so that it can be
+    // local-CSE'd with actual integer zeros.
+    Reg = getRegForValue(Constant::getNullValue(TD.getIntPtrType()));
   } else if (ConstantFP *CF = dyn_cast<ConstantFP>(V)) {
     Reg = FastEmit_f(VT, VT, ISD::ConstantFP, CF);
 
@@ -95,8 +97,7 @@ unsigned FastISel::getRegForValue(Value *V) {
                                 APFloat::rmTowardZero) != APFloat::opOK) {
         APInt IntVal(IntBitWidth, 2, x);
 
-        unsigned IntegerReg = FastEmit_i(IntVT.getSimpleVT(), IntVT.getSimpleVT(),
-                                         ISD::Constant, IntVal.getZExtValue());
+        unsigned IntegerReg = getRegForValue(ConstantInt::get(IntVal));
         if (IntegerReg != 0)
           Reg = FastEmit_r(IntVT.getSimpleVT(), VT, ISD::SINT_TO_FP, IntegerReg);
       }
