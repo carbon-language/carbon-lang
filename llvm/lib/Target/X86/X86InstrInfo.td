@@ -728,7 +728,7 @@ def IMUL32m : I<0xF7, MRM5m, (outs), (ins i32mem:$src),
 }
 
 // unsigned division/remainder
-let Defs = [AX,EFLAGS], Uses = [AL,AH] in
+let Defs = [AL,AH,EFLAGS], Uses = [AX] in
 def DIV8r  : I<0xF6, MRM6r, (outs),  (ins GR8:$src),          // AX/r8 = AL,AH
                "div{b}\t$src", []>;
 let Defs = [AX,DX,EFLAGS], Uses = [AX,DX] in
@@ -738,7 +738,7 @@ let Defs = [EAX,EDX,EFLAGS], Uses = [EAX,EDX] in
 def DIV32r : I<0xF7, MRM6r, (outs),  (ins GR32:$src),         // EDX:EAX/r32 = EAX,EDX
                "div{l}\t$src", []>;
 let mayLoad = 1 in {
-let Defs = [AX,EFLAGS], Uses = [AL,AH] in
+let Defs = [AL,AH,EFLAGS], Uses = [AX] in
 def DIV8m  : I<0xF6, MRM6m, (outs), (ins i8mem:$src),       // AX/[mem8] = AL,AH
                "div{b}\t$src", []>;
 let Defs = [AX,DX,EFLAGS], Uses = [AX,DX] in
@@ -750,7 +750,7 @@ def DIV32m : I<0xF7, MRM6m, (outs), (ins i32mem:$src),      // EDX:EAX/[mem32] =
 }
 
 // Signed division/remainder.
-let Defs = [AX,EFLAGS], Uses = [AL,AH] in
+let Defs = [AL,AH,EFLAGS], Uses = [AX] in
 def IDIV8r : I<0xF6, MRM7r, (outs),  (ins GR8:$src),          // AX/r8 = AL,AH
                "idiv{b}\t$src", []>;
 let Defs = [AX,DX,EFLAGS], Uses = [AX,DX] in
@@ -760,7 +760,7 @@ let Defs = [EAX,EDX,EFLAGS], Uses = [EAX,EDX] in
 def IDIV32r: I<0xF7, MRM7r, (outs),  (ins GR32:$src),         // EDX:EAX/r32 = EAX,EDX
                "idiv{l}\t$src", []>;
 let mayLoad = 1, mayLoad = 1 in {
-let Defs = [AX,EFLAGS], Uses = [AL,AH] in
+let Defs = [AL,AH,EFLAGS], Uses = [AX] in
 def IDIV8m : I<0xF6, MRM7m, (outs), (ins i8mem:$src),      // AX/[mem8] = AL,AH
                "idiv{b}\t$src", []>;
 let Defs = [AX,DX,EFLAGS], Uses = [AX,DX] in
