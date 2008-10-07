@@ -5337,7 +5337,7 @@ TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
   Chain = Res.getValue(LoweredRetTys.size() - 1);
 
   // Gather up the call result into a single value.
-  if (RetTy != Type::VoidTy) {
+  if (RetTy != Type::VoidTy && !RetTys.empty()) {
     ISD::NodeType AssertOp = ISD::DELETED_NODE;
 
     if (RetSExt)
