@@ -256,8 +256,8 @@ void ARMCodeEmitter::emitInstruction(const MachineInstr &MI) {
 unsigned ARMCodeEmitter::getAddrModeNoneInstrBinary(const MachineInstr &MI,
                                                     const TargetInstrDesc &TID,
                                                     unsigned Binary) {
-  // FIXME: Assume CC is AL for now.
-  Binary |= ARMCC::AL << 28;
+  // Set the conditional execution predicate
+  Binary |= II->getPredicate(&MI) << 28;
 
   switch (TID.TSFlags & ARMII::FormMask) {
   default:
@@ -376,8 +376,8 @@ void ARMCodeEmitter::emitPseudoInstruction(const MachineInstr &MI) {
 unsigned ARMCodeEmitter::getAddrMode1InstrBinary(const MachineInstr &MI,
                                                  const TargetInstrDesc &TID,
                                                  unsigned Binary) {
-  // FIXME: Assume CC is AL for now.
-  Binary |= ARMCC::AL << 28;
+  // Set the conditional execution predicate
+  Binary |= II->getPredicate(&MI) << 28;
 
   // Encode S bit if MI modifies CPSR.
   Binary |= getAddrMode1SBit(MI, TID);
@@ -429,8 +429,8 @@ unsigned ARMCodeEmitter::getAddrMode1InstrBinary(const MachineInstr &MI,
 unsigned ARMCodeEmitter::getAddrMode2InstrBinary(const MachineInstr &MI,
                                                  const TargetInstrDesc &TID,
                                                  unsigned Binary) {
-  // FIXME: Assume CC is AL for now.
-  Binary |= ARMCC::AL << 28;
+  // Set the conditional execution predicate
+  Binary |= II->getPredicate(&MI) << 28;
 
   // Set first operand
   Binary |= getMachineOpValue(MI, 0) << ARMII::RegRdShift;
@@ -470,8 +470,8 @@ unsigned ARMCodeEmitter::getAddrMode2InstrBinary(const MachineInstr &MI,
 unsigned ARMCodeEmitter::getAddrMode3InstrBinary(const MachineInstr &MI,
                                                  const TargetInstrDesc &TID,
                                                  unsigned Binary) {
-  // FIXME: Assume CC is AL for now.
-  Binary |= ARMCC::AL << 28;
+  // Set the conditional execution predicate
+  Binary |= II->getPredicate(&MI) << 28;
 
   // Set first operand
   Binary |= getMachineOpValue(MI, 0) << ARMII::RegRdShift;
@@ -507,8 +507,8 @@ unsigned ARMCodeEmitter::getAddrMode3InstrBinary(const MachineInstr &MI,
 unsigned ARMCodeEmitter::getAddrMode4InstrBinary(const MachineInstr &MI,
                                                  const TargetInstrDesc &TID,
                                                  unsigned Binary) {
-  // FIXME: Assume CC is AL for now.
-  Binary |= ARMCC::AL << 28;
+  // Set the conditional execution predicate
+  Binary |= II->getPredicate(&MI) << 28;
 
   // Set first operand
   Binary |= getMachineOpValue(MI, 0) << ARMII::RegRnShift;

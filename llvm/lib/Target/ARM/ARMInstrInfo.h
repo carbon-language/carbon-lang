@@ -217,6 +217,12 @@ public:
   // Predication support.
   virtual bool isPredicated(const MachineInstr *MI) const;
 
+  ARMCC::CondCodes getPredicate(const MachineInstr *MI) const {
+    int PIdx = MI->findFirstPredOperandIdx();
+    return PIdx != -1 ? (ARMCC::CondCodes)MI->getOperand(PIdx).getImm() 
+                      : ARMCC::AL;
+  }
+
   virtual
   bool PredicateInstruction(MachineInstr *MI,
                             const SmallVectorImpl<MachineOperand> &Pred) const;
