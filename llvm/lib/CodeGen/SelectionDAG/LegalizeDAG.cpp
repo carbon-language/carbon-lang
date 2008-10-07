@@ -6441,7 +6441,20 @@ void SelectionDAGLegalize::ExpandOp(SDValue Op, SDValue &Lo, SDValue &Hi){
     LoOps[1] = RHSL;
     HiOps[0] = LHSH;
     HiOps[1] = RHSH;
-    if(TLI.isOperationLegal(ISD::ADDC, NVT)) {
+    //cascaded check to see if any smaller size has a a carry flag.
+    unsigned OpV = Node->getOpcode() == ISD::ADD ? ISD::ADDC : ISD::SUBC;
+    bool hasCarry = false;
+    if (NVT == MVT::i64)
+      hasCarry |= TLI.isOperationLegal(OpV, MVT::i32)
+        | TLI.isOperationLegal(OpV, MVT::i16)
+        | TLI.isOperationLegal(OpV, MVT::i8);
+    if (NVT == MVT::i32)
+      hasCarry |= TLI.isOperationLegal(OpV, MVT::i16)
+        | TLI.isOperationLegal(OpV, MVT::i8);
+    if (NVT == MVT::i16)
+      hasCarry |= TLI.isOperationLegal(OpV, MVT::i8);
+      
+    if(hasCarry) {
       if (Node->getOpcode() == ISD::ADD) {
         Lo = DAG.getNode(ISD::ADDC, VTList, LoOps, 2);
         HiOps[2] = Lo.getValue(1);
@@ -6456,11 +6469,13 @@ void SelectionDAGLegalize::ExpandOp(SDValue Op, SDValue &Lo, SDValue &Hi){
       if (Node->getOpcode() == ISD::ADD) {
         Lo = DAG.getNode(ISD::ADD, VTList, LoOps, 2);
         Hi = DAG.getNode(ISD::ADD, VTList, HiOps, 2);
-        SDValue Cmp1 = DAG.getSetCC(NVT, Lo, LoOps[0], ISD::SETULT);
+        SDValue Cmp1 = DAG.getSetCC(TLI.getSetCCResultType(Lo),
+                                    Lo, LoOps[0], ISD::SETULT);
         SDValue Carry1 = DAG.getNode(ISD::SELECT, NVT, Cmp1,
                                      DAG.getConstant(1, NVT), 
                                      DAG.getConstant(0, NVT));
-        SDValue Cmp2 = DAG.getSetCC(NVT, Lo, LoOps[1], ISD::SETULT);
+        SDValue Cmp2 = DAG.getSetCC(TLI.getSetCCResultType(Lo),
+                                    Lo, LoOps[1], ISD::SETULT);
         SDValue Carry2 = DAG.getNode(ISD::SELECT, NVT, Cmp2,
                                     DAG.getConstant(1, NVT), 
                                     Carry1);
