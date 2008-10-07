@@ -1099,9 +1099,9 @@ def : ARMV6Pat<(or (and GPR:$src1, 0xFFFF0000),
 //  Comparison Instructions...
 //
 
-defm CMP  : AI1_cmp_irs<0xA, "cmp",
+defm CMP  : AI1_cmp_irs<{0,1,0,1}, "cmp",
                         BinOpFrag<(ARMcmp node:$LHS, node:$RHS)>>;
-defm CMN  : AI1_cmp_irs<0xB, "cmn",
+defm CMN  : AI1_cmp_irs<{1,1,0,1}, "cmn",
                         BinOpFrag<(ARMcmp node:$LHS,(ineg node:$RHS))>>;
 
 // Note that TST/TEQ don't set all the same flags that CMP does!
@@ -1110,9 +1110,9 @@ defm TST  : AI1_cmp_irs<0x8, "tst",
 defm TEQ  : AI1_cmp_irs<0x9, "teq",
                         BinOpFrag<(ARMcmpNZ (xor node:$LHS, node:$RHS), 0)>>;
 
-defm CMPnz : AI1_cmp_irs<0xA, "cmp",
+defm CMPnz : AI1_cmp_irs<{0,1,0,1}, "cmp",
                          BinOpFrag<(ARMcmpNZ node:$LHS, node:$RHS)>>;
-defm CMNnz : AI1_cmp_irs<0xA, "cmn",
+defm CMNnz : AI1_cmp_irs<{1,1,0,1}, "cmn",
                          BinOpFrag<(ARMcmpNZ node:$LHS,(ineg node:$RHS))>>;
 
 def : ARMPat<(ARMcmp GPR:$src, so_imm_neg:$imm),
