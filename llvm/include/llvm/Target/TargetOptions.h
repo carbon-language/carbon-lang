@@ -102,6 +102,10 @@ namespace llvm {
   /// which trades away generated code quality in favor of reducing
   /// compile time.
   extern bool EnableFastISel;
+  
+  /// StrongPHIElim - This flag enables more aggressive PHI elimination
+  /// wth earlier copy coalescing.
+  extern bool StrongPHIElim;
 
 } // End llvm namespace
 

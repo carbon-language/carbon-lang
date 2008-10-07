@@ -39,6 +39,7 @@ namespace llvm {
   bool RealignStack;
   bool VerboseAsm;
   bool DisableJumpTables;
+  bool StrongPHIElim;
 }
 
 static cl::opt<bool, true> PrintCode("print-machineinstrs",
@@ -155,6 +156,12 @@ static cl::opt<bool, true>
 DisableSwitchTables(cl::Hidden, "disable-jump-tables", 
            cl::desc("Do not generate jump tables."),
            cl::location(DisableJumpTables),
+           cl::init(false));
+
+static cl::opt<bool, true>
+EnableStrongPHIElim(cl::Hidden, "strong-phi-elim",
+           cl::desc("Use strong PHI elimination."),
+           cl::location(StrongPHIElim),
            cl::init(false));
 
 //---------------------------------------------------------------------------

@@ -30,6 +30,7 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetOptions.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/Statistic.h"
@@ -67,8 +68,12 @@ void LiveIntervals::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<LiveVariables>();
   AU.addPreservedID(MachineLoopInfoID);
   AU.addPreservedID(MachineDominatorsID);
-  AU.addPreservedID(PHIEliminationID);
-  AU.addRequiredID(PHIEliminationID);
+  
+  if (!StrongPHIElim) {
+    AU.addPreservedID(PHIEliminationID);
+    AU.addRequiredID(PHIEliminationID);
+  }
+  
   AU.addRequiredID(TwoAddressInstructionPassID);
   MachineFunctionPass::getAnalysisUsage(AU);
 }
