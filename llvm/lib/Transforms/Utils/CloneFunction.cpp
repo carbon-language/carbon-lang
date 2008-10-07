@@ -81,7 +81,23 @@ void llvm::CloneFunctionInto(Function *NewFunc, const Function *OldFunc,
 #endif
 
   // Clone any attributes.
-  NewFunc->copyAttributesFrom(OldFunc);
+  if (NewFunc->arg_size() == OldFunc->arg_size())
+    NewFunc->copyAttributesFrom(OldFunc);
+  else {
+    //Some arguments were deleted with the ValueMap. Copy arguments one by one
+    for (Function::const_arg_iterator I = OldFunc->arg_begin(), 
+           E = OldFunc->arg_end(); I != E; ++I)
+      if (Argument* Anew = dyn_cast<Argument>(ValueMap[I]))
+        Anew->addAttr( OldFunc->getAttributes()
+                       .getParamAttributes(I->getArgNo() + 1));
+    NewFunc->setAttributes(NewFunc->getAttributes()
+                           .addAttr(0, OldFunc->getAttributes()
+                                     .getRetAttributes()));
+    NewFunc->setAttributes(NewFunc->getAttributes()
+                           .addAttr(~0, OldFunc->getAttributes()
+                                     .getFnAttributes()));
+
+  }
 
   // Loop over all of the basic blocks in the function, cloning them as
   // appropriate.  Note that we save BE this way in order to handle cloning of
