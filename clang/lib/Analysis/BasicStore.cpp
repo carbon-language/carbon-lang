@@ -26,9 +26,11 @@ namespace {
 class VISIBILITY_HIDDEN BasicStoreManager : public StoreManager {
   VarBindingsTy::Factory VBFactory;
   GRStateManager& StateMgr;
+  MemRegionManager MRMgr;
   
 public:
-  BasicStoreManager(GRStateManager& mgr) : StateMgr(mgr) {}
+  BasicStoreManager(GRStateManager& mgr)
+    : StateMgr(mgr), MRMgr(StateMgr.getAllocator()) {}
   
   virtual ~BasicStoreManager() {}
 
@@ -37,6 +39,12 @@ public:
   virtual Store Remove(Store St, LVal LV);
 
   virtual Store getInitialStore();
+
+  virtual MemRegionManager& getRegionManager() { return MRMgr; }
+
+  virtual LVal getLVal(const VarDecl* VD) {
+    return lval::MemRegionVal(MRMgr.getVarRegion(VD));
+  }
   
   virtual Store
   RemoveDeadBindings(Store store, Stmt* Loc, const LiveVariables& Live,
@@ -55,7 +63,7 @@ public:
 
   virtual void print(Store store, std::ostream& Out,
                      const char* nl, const char *sep);
-    
+
 };
     
 } // end anonymous namespace
@@ -164,7 +172,7 @@ BasicStoreManager::RemoveDeadBindings(Store store, Stmt* Loc,
   // Iterate over the variable bindings.
   for (VarBindingsTy::iterator I=B.begin(), E=B.end(); I!=E ; ++I)
     if (Liveness.isLive(Loc, I.getKey())) {
-      RegionRoots.push_back(StateMgr.getRegion(I.getKey()));      
+      RegionRoots.push_back(MRMgr.getVarRegion(I.getKey()));      
       RVal X = I.getData();
       
       for (symbol_iterator SI=X.symbol_begin(), SE=X.symbol_end(); SI!=SE; ++SI)
@@ -198,7 +206,7 @@ BasicStoreManager::RemoveDeadBindings(Store store, Stmt* Loc,
   
   // Remove dead variable bindings.  
   for (VarBindingsTy::iterator I=B.begin(), E=B.end(); I!=E ; ++I) {
-    const VarRegion* R = cast<VarRegion>(StateMgr.getRegion(I.getKey()));
+    const VarRegion* R = cast<VarRegion>(MRMgr.getVarRegion(I.getKey()));
     
     if (!Marked.count(R)) {
       store = Remove(store, lval::MemRegionVal(R));
@@ -240,7 +248,7 @@ Store BasicStoreManager::getInitialStore() {
                  ? RVal::GetSymbolValue(StateMgr.getSymbolManager(), VD)
                  : UndefinedVal();
 
-        St = SetRVal(St, StateMgr.getLVal(VD), X);
+        St = SetRVal(St, lval::MemRegionVal(MRMgr.getVarRegion(VD)), X);
       }
     }
   }
@@ -280,16 +288,16 @@ Store BasicStoreManager::AddDecl(Store store,
       if (!Ex) {
         QualType T = VD->getType();
         if (LVal::IsLValType(T))
-          store = SetRVal(store, StateMgr.getLVal(VD),
+          store = SetRVal(store, getLVal(VD),
                           lval::ConcreteInt(BasicVals.getValue(0, T)));
         else if (T->isIntegerType())
-          store = SetRVal(store, StateMgr.getLVal(VD),
+          store = SetRVal(store, getLVal(VD),
                           nonlval::ConcreteInt(BasicVals.getValue(0, T)));
         else {
           // assert(0 && "ignore other types of variables");
         }
       } else {
-        store = SetRVal(store, StateMgr.getLVal(VD), InitVal);
+        store = SetRVal(store, getLVal(VD), InitVal);
       }
     }
   } else {
@@ -307,7 +315,7 @@ Store BasicStoreManager::AddDecl(Store store,
           : cast<RVal>(nonlval::SymbolVal(Sym));
       }
 
-      store = SetRVal(store, StateMgr.getLVal(VD), V);
+      store = SetRVal(store, getLVal(VD), V);
     }
   }
 
@@ -337,7 +345,7 @@ void BasicStoreManager::iterBindings(Store store, BindingsHandler& f) {
   
   for (VarBindingsTy::iterator I=B.begin(), E=B.end(); I != E; ++I) {
 
-    f.HandleBinding(*this, store, StateMgr.getRegion(I.getKey()),I.getData());
+    f.HandleBinding(*this, store, MRMgr.getVarRegion(I.getKey()),I.getData());
   }
 }
 

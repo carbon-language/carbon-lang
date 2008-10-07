@@ -236,7 +236,6 @@ private:
   EnvironmentManager                   EnvMgr;
   llvm::OwningPtr<StoreManager>        StMgr;
   llvm::OwningPtr<ConstraintManager>   ConstraintMgr;
-  MemRegionManager                     MRMgr;
   GRState::IntSetTy::Factory           ISetFactory;
   
   GRState::GenericDataMap::Factory     GDMFactory;
@@ -283,9 +282,9 @@ private:
   }
   
   // FIXME: Remove when we do lazy initializaton of variable bindings.
-  const GRState* BindVar(const GRState* St, VarDecl* D, RVal V) {
-    return SetRVal(St, getLVal(D), V);
-  }
+//   const GRState* BindVar(const GRState* St, VarDecl* D, RVal V) {
+//     return SetRVal(St, getLVal(D), V);
+//   }
     
 public:
   
@@ -297,7 +296,6 @@ public:
                  ConstraintManagerCreator CreateConstraintManager,
                  llvm::BumpPtrAllocator& alloc, CFG& c, LiveVariables& L) 
   : EnvMgr(alloc),
-    MRMgr(alloc),
     ISetFactory(alloc),
     GDMFactory(alloc),
     BasicVals(Ctx, alloc),
@@ -319,7 +317,7 @@ public:
   SymbolManager& getSymbolManager() { return SymMgr; }
   LiveVariables& getLiveVariables() { return Liveness; }
   llvm::BumpPtrAllocator& getAllocator() { return Alloc; }
-  MemRegionManager& getRegionManager() { return MRMgr; }
+  MemRegionManager& getRegionManager() { return StMgr->getRegionManager(); }
 
   typedef StoreManager::DeadSymbolsTy DeadSymbolsTy;
 
@@ -340,11 +338,11 @@ public:
   // Utility methods for getting regions.
   
   VarRegion* getRegion(const VarDecl* D) {
-    return MRMgr.getVarRegion(D);
+    return getRegionManager().getVarRegion(D);
   }
   
-  lval::MemRegionVal getLVal(const VarDecl* D) {
-    return lval::MemRegionVal(getRegion(D));
+  LVal getLVal(const VarDecl* D) {
+    return StMgr->getLVal(D);
   }
   
   // Methods that query & manipulate the Environment.

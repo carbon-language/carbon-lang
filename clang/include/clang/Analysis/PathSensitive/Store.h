@@ -29,7 +29,8 @@ class GRStateManager;
 class LiveVariables;
 class Stmt;
 class MemRegion;
-  
+class MemRegionManager;
+
 class StoreManager {
 public:
   typedef llvm::SmallSet<SymbolID, 20>      LiveSymbolsTy;
@@ -40,7 +41,8 @@ public:
   virtual Store SetRVal(Store St, LVal LV, RVal V) = 0;
   virtual Store Remove(Store St, LVal LV) = 0;
   virtual Store getInitialStore() = 0;
-  
+  virtual MemRegionManager& getRegionManager() = 0;
+  virtual LVal getLVal(const VarDecl* VD) = 0;  
   virtual Store
   RemoveDeadBindings(Store store, Stmt* Loc, const LiveVariables& Live,
                      llvm::SmallVectorImpl<const MemRegion*>& RegionRoots,
