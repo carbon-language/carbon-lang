@@ -35,22 +35,25 @@ void StmtIteratorBase::NextVA() {
   p = FindVA(p->getElementType().getTypePtr());
   setVAPtr(p);
 
-  if (!p) {
-    if (inDecl()) {
-      if (VarDecl* VD = dyn_cast<VarDecl>(decl)) 
-        if (VD->Init)
-          return;
-      
-      NextDecl();
-    }
-    else if (inDeclGroup()) {
-      if (VarDecl* VD = dyn_cast<VarDecl>(*DGI)) 
-        if (VD->Init)
-          return;
-      
-      NextDecl();  
-    }
-  } else if (inSizeOfTypeVA()) {
+  if (p)
+    return;
+  
+  if (inDecl()) {
+    if (VarDecl* VD = dyn_cast<VarDecl>(decl)) 
+      if (VD->Init)
+        return;
+    
+    NextDecl();
+  }
+  else if (inDeclGroup()) {
+    if (VarDecl* VD = dyn_cast<VarDecl>(*DGI)) 
+      if (VD->Init)
+        return;
+    
+    NextDecl();  
+  }
+  else {
+    assert (inSizeOfTypeVA());
     assert(!decl);
     RawVAPtr = 0;
   }
