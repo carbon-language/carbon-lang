@@ -567,7 +567,7 @@ let isBranch = 1, isTerminator = 1 in {
   // B is "predicable" since it can be xformed into a Bcc.
   let isBarrier = 1 in {
     let isPredicable = 1 in
-    def B : AXI<0xA, (outs), (ins brtarget:$target), Branch, "b $target",
+    def B : ABI<{0,1,0,1}, (outs), (ins brtarget:$target), Branch, "b $target",
                 [(br bb:$target)]>;
 
   let isNotDuplicable = 1, isIndirectBranch = 1 in {
