@@ -55,7 +55,7 @@ void Stmt::Destroy(ASTContext& C) {
 }
 
 void DeclStmt::Destroy(ASTContext& C) {
-  TheDecl->Destroy(C);
+  DG.Destroy(C);
   delete this;
 }
 
@@ -188,16 +188,12 @@ ObjCAtCatchStmt::ObjCAtCatchStmt(SourceLocation atCatchLoc,
 //===----------------------------------------------------------------------===//
 
 // DeclStmt
-Stmt::child_iterator DeclStmt::child_begin() { return TheDecl; }
-Stmt::child_iterator DeclStmt::child_end() { return child_iterator(); }
-
-DeclStmt::decl_iterator& DeclStmt::decl_iterator::operator++() {
-  D = D->getNextDeclarator();
-  return *this;
+Stmt::child_iterator DeclStmt::child_begin() {
+  return StmtIterator(DG.begin(), DG.end());
 }
 
-bool DeclStmt::hasSolitaryDecl() const {
-  return TheDecl->getNextDeclarator() == 0;
+Stmt::child_iterator DeclStmt::child_end() {
+  return StmtIterator(DG.end(), DG.end());
 }
 
 // NullStmt

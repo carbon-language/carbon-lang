@@ -42,7 +42,28 @@ Sema::StmtResult Sema::ActOnDeclStmt(DeclTy *decl, SourceLocation StartLoc,
     return true;
   
   ScopedDecl *SD = cast<ScopedDecl>(static_cast<Decl *>(decl));
-  return new DeclStmt(SD, StartLoc, EndLoc);
+  
+  
+  // This is a temporary hack until we are always passing around
+  // DeclGroupRefs.
+  llvm::SmallVector<Decl*, 10> decls;
+  while (SD) { 
+    ScopedDecl* d = SD;
+    SD = SD->getNextDeclarator();
+    d->setNextDeclarator(0);
+    decls.push_back(d);
+  }
+
+  assert (!decls.empty());
+    
+  if (decls.size() == 1) {
+    DeclGroupOwningRef DG(*decls.begin());                      
+    return new DeclStmt(DG, StartLoc, EndLoc);
+  }
+  else {
+    DeclGroupOwningRef DG(DeclGroup::Create(Context, decls.size(), &decls[0]));                      
+    return new DeclStmt(DG, StartLoc, EndLoc);
+  }
 }
 
 Action::StmtResult 

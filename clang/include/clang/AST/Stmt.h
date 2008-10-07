@@ -18,6 +18,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "clang/Basic/SourceLocation.h"
 #include "clang/AST/StmtIterator.h"
+#include "clang/AST/DeclGroup.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/iterator.h"
 #include "llvm/Bitcode/SerializationFwd.h"
@@ -141,33 +142,37 @@ public:
 ///
 class DeclStmt : public Stmt {
 protected:
-  ScopedDecl *TheDecl;
+  DeclGroupOwningRef DG;
   SourceLocation StartLoc, EndLoc;
 public:
-  DeclStmt(ScopedDecl *D, SourceLocation startLoc, SourceLocation endLoc)
-    : Stmt(DeclStmtClass), TheDecl(D), StartLoc(startLoc), EndLoc(endLoc) {}
+  DeclStmt(DeclGroupOwningRef& dg, SourceLocation startLoc, 
+           SourceLocation endLoc) : Stmt(DeclStmtClass), DG(dg),
+                                    StartLoc(startLoc), EndLoc(endLoc) {}
   
   virtual void Destroy(ASTContext& Ctx);
 
   // hasSolitaryDecl - This method returns true if this DeclStmt refers
   // to a single Decl.
-  bool hasSolitaryDecl() const;
+  bool hasSolitaryDecl() const {
+    return DG.hasSolitaryDecl();
+  }
  
   const ScopedDecl* getSolitaryDecl() const {
     assert (hasSolitaryDecl() &&
             "Caller assumes this DeclStmt points to one Decl*");
-    return TheDecl;
+    return llvm::cast<ScopedDecl>(*DG.begin());
   }
   
   ScopedDecl* getSolitaryDecl() {
     assert (hasSolitaryDecl() &&
             "Caller assumes this DeclStmt points to one Decl*");
-    return TheDecl;
+    return llvm::cast<ScopedDecl>(*DG.begin());
   }  
 
   SourceLocation getStartLoc() const { return StartLoc; }
   SourceLocation getEndLoc() const { return EndLoc; }
-  virtual SourceRange getSourceRange() const {
+  
+  SourceRange getSourceRange() const {
     return SourceRange(StartLoc, EndLoc);
   }
   
@@ -180,42 +185,42 @@ public:
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
   
-  // Iterators over the decls.
   class decl_iterator {
-    ScopedDecl* D;
+    DeclGroupRef::iterator I;
   public:
-    decl_iterator(ScopedDecl *d) : D(d) {}    
-    bool operator==(const decl_iterator& I) const { return D == I.D; }
-    bool operator!=(const decl_iterator& I) const { return D != I.D; }
-    ScopedDecl* operator*() const { return D; }
-    decl_iterator& operator++();
+    decl_iterator(DeclGroupRef::iterator i) : I(i) {}
+    decl_iterator& operator++() { ++I; return *this; }
+    bool operator==(const decl_iterator& R) const {
+      return R.I == I;
+    }
+    bool operator!=(const decl_iterator& R) const {
+      return R.I != I;
+    }
+    ScopedDecl* operator*() const {
+      return llvm::cast<ScopedDecl>(*I);
+    }
   };
-  
-  virtual decl_iterator decl_begin() { return TheDecl; }
-  virtual decl_iterator decl_end() { return 0; }
-  
-  class const_decl_iterator {
-    decl_iterator Impl;
-  public:
-    const_decl_iterator(const ScopedDecl *d)
-      : Impl(const_cast<ScopedDecl*>(d)) {}
     
-    bool operator==(const const_decl_iterator& I) const {
-      return Impl == I.Impl;
+  class const_decl_iterator {
+    DeclGroupRef::const_iterator I;
+  public:
+    const_decl_iterator(DeclGroupRef::const_iterator i) : I(i) {}
+    const_decl_iterator& operator++() { ++I; return *this; }
+    bool operator==(const const_decl_iterator& R) const {
+      return R.I == I;
     }
-    bool operator!=(const const_decl_iterator& I) const {
-      return Impl != I.Impl;
+    bool operator!=(const const_decl_iterator& R) const {
+      return R.I != I;
     }
-    const ScopedDecl* operator*() const {
-      return *Impl;
-    }
-    const_decl_iterator& operator++() {
-      ++Impl; return *this;
+    ScopedDecl* operator*() const {
+      return llvm::cast<ScopedDecl>(*I);
     }
   };
   
-  const_decl_iterator decl_begin() const { return TheDecl; }
-  const_decl_iterator decl_end() const { return 0; }
+  decl_iterator decl_begin() { return DG.begin(); }
+  decl_iterator decl_end() { return DG.end(); }
+  const_decl_iterator decl_begin() const { return DG.begin(); }
+  const_decl_iterator decl_end() const { return DG.end(); }
   
   // Serialization.  
   virtual void EmitImpl(llvm::Serializer& S) const;

@@ -478,14 +478,14 @@ ContinueStmt* ContinueStmt::CreateImpl(Deserializer& D, ASTContext& C) {
 void DeclStmt::EmitImpl(Serializer& S) const {
   S.Emit(StartLoc);
   S.Emit(EndLoc);
-  S.EmitOwnedPtr(TheDecl);
+  S.Emit(DG);
 }
     
 DeclStmt* DeclStmt::CreateImpl(Deserializer& D, ASTContext& C) {
   SourceLocation StartLoc = SourceLocation::ReadVal(D);
-  SourceLocation EndLoc = SourceLocation::ReadVal(D);  
-  ScopedDecl* decl = cast<ScopedDecl>(D.ReadOwnedPtr<Decl>(C));  
-  return new DeclStmt(decl, StartLoc, EndLoc);
+  SourceLocation EndLoc = SourceLocation::ReadVal(D); 
+  DeclGroupOwningRef DG;
+  return new DeclStmt(DG.Read(D, C), StartLoc, EndLoc);
 }
 
 void DeclRefExpr::EmitImpl(Serializer& S) const {

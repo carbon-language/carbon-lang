@@ -50,32 +50,6 @@ static SourceLocation GetEndLoc(ScopedDecl* D) {
   return D->getLocation();  
 }
   
-class VISIBILITY_HIDDEN UnaryDeclStmt : public DeclStmt {
-  Stmt* Ex;
-public:
-  UnaryDeclStmt(ScopedDecl* D)
-  : DeclStmt(D, D->getLocation(), GetEndLoc(D)), Ex(0) {
-    if (VarDecl* VD = dyn_cast<VarDecl>(D))
-      Ex = VD->getInit();
-  }
-  
-  virtual ~UnaryDeclStmt() {}
-  virtual void Destroy(ASTContext& Ctx) { assert(false && "Do not call"); }
-  
-  virtual child_iterator child_begin() {
-    return Ex ? &Ex : 0;
-  }  
-  virtual child_iterator child_end() {
-    return Ex ? &Ex + 1 : 0;
-  }  
-  virtual decl_iterator decl_begin() {
-    return TheDecl;
-  }  
-  virtual decl_iterator decl_end() {
-    return TheDecl ? TheDecl->getNextDeclarator() : 0;
-  }
-};
-  
 /// CFGBuilder - This class implements CFG construction from an AST.
 ///   The builder is stateful: an instance of the builder should be used to only
 ///   construct a single CFG.
@@ -395,16 +369,25 @@ CFGBlock* CFGBuilder::WalkAST(Stmt* Terminator, bool AlwaysAddStmt = false) {
           Buf.push_back(*DI);
         
         for (BufTy::reverse_iterator I=Buf.rbegin(), E=Buf.rend(); I!=E; ++I) {
-          // Get the alignment of UnaryDeclStmt, padding out to >=8 bytes.
-          unsigned A = llvm::AlignOf<UnaryDeclStmt>::Alignment < 8
-                       ? 8 : llvm::AlignOf<UnaryDeclStmt>::Alignment;
+          // Get the alignment of the new DeclStmt, padding out to >=8 bytes.
+          unsigned A = llvm::AlignOf<DeclStmt>::Alignment < 8
+                       ? 8 : llvm::AlignOf<DeclStmt>::Alignment;
           
-          // Allocate the UnaryDeclStmt using the BumpPtrAllocator.  It will
-          // get automatically freed with the CFG.
-          void* Mem = cfg->getAllocator().Allocate(sizeof(UnaryDeclStmt), A);
+          // Allocate the DeclStmt using the BumpPtrAllocator.  It will
+          // get automatically freed with the CFG.  Note that even though
+          // we are using a DeclGroupOwningRef that wraps a singe Decl*,
+          // that Decl* will not get deallocated because the destroy method
+          // of DG is never called.
+          DeclGroupOwningRef DG(*I);
+          ScopedDecl* D = *I;
+          void* Mem = cfg->getAllocator().Allocate(sizeof(DeclStmt), A);
+          
+          DeclStmt* DS = new (Mem) DeclStmt(DG, D->getLocation(),
+                                            GetEndLoc(D));
+          
           // Append the fake DeclStmt to block.
-          Block->appendStmt(new (Mem) UnaryDeclStmt(*I));
-          B = WalkAST_VisitDeclSubExpr(*I);
+          Block->appendStmt(DS);
+          B = WalkAST_VisitDeclSubExpr(D);
         }
         return B;
       }
