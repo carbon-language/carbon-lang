@@ -784,8 +784,8 @@ bool X86FastISel::X86SelectBranch(Instruction *I) {
       default:
         return false;
       }
-      MBB->addSuccessor(TrueMBB);
       FastEmitBranch(FalseMBB);
+      MBB->addSuccessor(TrueMBB);
       return true;
     }
   }
@@ -797,9 +797,8 @@ bool X86FastISel::X86SelectBranch(Instruction *I) {
   BuildMI(MBB, TII.get(X86::TEST8rr)).addReg(OpReg).addReg(OpReg);
 
   BuildMI(MBB, TII.get(X86::JNE)).addMBB(TrueMBB);
-  MBB->addSuccessor(TrueMBB);
-
   FastEmitBranch(FalseMBB);
+  MBB->addSuccessor(TrueMBB);
 
   return true;
 }
@@ -1180,10 +1179,8 @@ bool X86FastISel::X86SelectCall(Instruction *I) {
     MIB.addReg(X86::EBX);
 
   // Add implicit physical register uses to the call.
-  while (!RegArgs.empty()) {
-    MIB.addReg(RegArgs.back());
-    RegArgs.pop_back();
-  }
+  for (unsigned i = 0, e = RegArgs.size(); i != e; ++i)
+    MIB.addReg(RegArgs[i]);
 
   // Issue CALLSEQ_END
   unsigned AdjStackUp = TM.getRegisterInfo()->getCallFrameDestroyOpcode();
