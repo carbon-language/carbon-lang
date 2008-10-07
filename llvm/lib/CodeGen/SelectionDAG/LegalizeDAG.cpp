@@ -6431,7 +6431,6 @@ void SelectionDAGLegalize::ExpandOp(SDValue Op, SDValue &Lo, SDValue &Hi){
         break;
       }
     }
-    
     // Expand the subcomponents.
     SDValue LHSL, LHSH, RHSL, RHSH;
     ExpandOp(Node->getOperand(0), LHSL, LHSH);
@@ -6442,16 +6441,41 @@ void SelectionDAGLegalize::ExpandOp(SDValue Op, SDValue &Lo, SDValue &Hi){
     LoOps[1] = RHSL;
     HiOps[0] = LHSH;
     HiOps[1] = RHSH;
-    if (Node->getOpcode() == ISD::ADD) {
-      Lo = DAG.getNode(ISD::ADDC, VTList, LoOps, 2);
-      HiOps[2] = Lo.getValue(1);
-      Hi = DAG.getNode(ISD::ADDE, VTList, HiOps, 3);
+    if(TLI.isOperationLegal(ISD::ADDC, NVT)) {
+      if (Node->getOpcode() == ISD::ADD) {
+        Lo = DAG.getNode(ISD::ADDC, VTList, LoOps, 2);
+        HiOps[2] = Lo.getValue(1);
+        Hi = DAG.getNode(ISD::ADDE, VTList, HiOps, 3);
+      } else {
+        Lo = DAG.getNode(ISD::SUBC, VTList, LoOps, 2);
+        HiOps[2] = Lo.getValue(1);
+        Hi = DAG.getNode(ISD::SUBE, VTList, HiOps, 3);
+      }
+      break;
     } else {
-      Lo = DAG.getNode(ISD::SUBC, VTList, LoOps, 2);
-      HiOps[2] = Lo.getValue(1);
-      Hi = DAG.getNode(ISD::SUBE, VTList, HiOps, 3);
+      if (Node->getOpcode() == ISD::ADD) {
+        Lo = DAG.getNode(ISD::ADD, VTList, LoOps, 2);
+        Hi = DAG.getNode(ISD::ADD, VTList, HiOps, 2);
+        SDValue Cmp1 = DAG.getSetCC(NVT, Lo, LoOps[0], ISD::SETULT);
+        SDValue Carry1 = DAG.getNode(ISD::SELECT, NVT, Cmp1,
+                                     DAG.getConstant(1, NVT), 
+                                     DAG.getConstant(0, NVT));
+        SDValue Cmp2 = DAG.getSetCC(NVT, Lo, LoOps[1], ISD::SETULT);
+        SDValue Carry2 = DAG.getNode(ISD::SELECT, NVT, Cmp2,
+                                    DAG.getConstant(1, NVT), 
+                                    Carry1);
+        Hi = DAG.getNode(ISD::ADD, NVT, Hi, Carry2);
+      } else {
+        Lo = DAG.getNode(ISD::SUB, VTList, LoOps, 2);
+        Hi = DAG.getNode(ISD::SUB, VTList, HiOps, 2);
+        SDValue Cmp = DAG.getSetCC(NVT, LoOps[0], LoOps[1], ISD::SETULT);
+        SDValue Borrow = DAG.getNode(ISD::SELECT, NVT, Cmp,
+                                     DAG.getConstant(1, NVT), 
+                                     DAG.getConstant(0, NVT));
+        Hi = DAG.getNode(ISD::SUB, NVT, Hi, Borrow);
+      }
+      break;
     }
-    break;
   }
     
   case ISD::ADDC:
