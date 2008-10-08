@@ -1070,6 +1070,8 @@ struct BlockSemaInfo {
   bool hasPrototype;
   bool isVariadic;
   
+  BlockDecl *TheDecl;
+  
   /// TheScope - This is the scope for the block itself, which contains
   /// arguments etc.
   Scope *TheScope;

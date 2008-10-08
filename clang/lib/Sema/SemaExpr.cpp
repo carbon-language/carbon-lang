@@ -2889,6 +2889,8 @@ void Sema::ActOnBlockStart(SourceLocation CaretLoc, Scope *BlockScope,
       BSI->Params.push_back((ParmVarDecl *)FTI.ArgInfo[i].Param);
     BSI->isVariadic = FTI.isVariadic;
   }
+  BSI->TheDecl = BlockDecl::Create(Context, CurContext, CaretLoc,
+                                   &BSI->Params[0], BSI->Params.size());
 }
 
 /// ActOnBlockError - If there is an error parsing a block, this callback
@@ -2932,10 +2934,8 @@ Sema::ExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc, StmtTy *body,
   
   BlockTy = Context.getBlockPointerType(BlockTy);
   
-  BlockDecl *NewBD = BlockDecl::Create(Context, CurContext, CaretLoc,
-                                       &BSI->Params[0], BSI->Params.size(),
-                                       Body.take());
-  return new BlockExpr(NewBD, BlockTy);
+  BSI->TheDecl->setBody(Body.take());
+  return new BlockExpr(BSI->TheDecl, BlockTy);
 }
 
 /// ExprsMatchFnType - return true if the Exprs in array Args have

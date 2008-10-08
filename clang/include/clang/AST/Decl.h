@@ -992,21 +992,21 @@ class BlockDecl : public Decl, public DeclContext {
   Stmt *Body;
 protected:
   BlockDecl(DeclContext *DC, SourceLocation CaretLoc,
-            ParmVarDecl **args, unsigned numargs, Stmt *body)
+            ParmVarDecl **args, unsigned numargs)
     : Decl(Block, CaretLoc), DeclContext(Block), 
-      Args(args, args+numargs), Body(body) {}
+      Args(args, args+numargs), Body(0) {}
 
   virtual ~BlockDecl();
   virtual void Destroy(ASTContext& C);
 
 public:
   static BlockDecl *Create(ASTContext &C, DeclContext *DC, SourceLocation L,
-                           ParmVarDecl **args, unsigned numargs, 
-                           CompoundStmt *body);
+                           ParmVarDecl **args, unsigned numargs);
 
   SourceLocation getCaretLocation() const { return getLocation(); }
 
   Stmt *getBody() const { return Body; }
+  void setBody(Stmt *B) { Body = B; }
 
   /// arg_iterator - Iterate over the ParmVarDecl's for this block.
   typedef llvm::SmallVector<ParmVarDecl*, 8>::const_iterator param_iterator;
