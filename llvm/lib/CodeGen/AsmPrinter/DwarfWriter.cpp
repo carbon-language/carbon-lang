@@ -3430,8 +3430,8 @@ private:
 
     // Begin the exception table.
     Asm->SwitchToDataSection(TAI->getDwarfExceptionSection());
-    O << "GCC_except_table" << SubprogramCount << ":\n";
     Asm->EmitAlignment(2, 0, 0, false);
+    O << "GCC_except_table" << SubprogramCount << ":\n";
     for (unsigned i = 0; i != SizeAlign; ++i) {
       Asm->EmitInt8(0);
       Asm->EOL("Padding");
