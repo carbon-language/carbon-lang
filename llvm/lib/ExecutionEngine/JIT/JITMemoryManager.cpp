@@ -18,6 +18,7 @@
 #include <map>
 #include <vector>
 #include <cassert>
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 using namespace llvm;

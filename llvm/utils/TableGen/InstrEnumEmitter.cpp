@@ -15,6 +15,7 @@
 #include "InstrEnumEmitter.h"
 #include "CodeGenTarget.h"
 #include "Record.h"
+#include <cstdio>
 using namespace llvm;
 
 // runEnums - Print out enum values for all of the instructions.

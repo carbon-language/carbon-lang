@@ -27,6 +27,7 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/ManagedStatic.h"
 #include <csignal>
+#include <cstdio>
 #include <map>
 #include <cmath>
 #include <cstring>

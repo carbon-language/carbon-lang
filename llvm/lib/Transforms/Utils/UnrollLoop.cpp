@@ -27,6 +27,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/Local.h"
+#include <cstdio>
 
 using namespace llvm;
 

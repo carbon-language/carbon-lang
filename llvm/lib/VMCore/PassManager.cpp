@@ -22,6 +22,7 @@
 #include "llvm/Analysis/Dominators.h"
 #include "llvm-c/Core.h"
 #include <algorithm>
+#include <cstdio>
 #include <vector>
 #include <map>
 using namespace llvm;

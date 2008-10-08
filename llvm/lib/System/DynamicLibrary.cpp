@@ -13,6 +13,7 @@
 
 #include "llvm/System/DynamicLibrary.h"
 #include "llvm/Config/config.h"
+#include <cstdio>
 #include <cstring>
 #include <map>
 

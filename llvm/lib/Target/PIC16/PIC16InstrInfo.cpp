@@ -18,6 +18,7 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "PIC16GenInstrInfo.inc"
+#include <cstdio>
 
 using namespace llvm;
 

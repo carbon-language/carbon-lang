@@ -17,6 +17,7 @@
 #include <ostream>
 #include "llvm/Config/config.h"
 #include <cctype>
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 using namespace llvm;

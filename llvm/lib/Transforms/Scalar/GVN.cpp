@@ -36,6 +36,7 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
+#include <cstdio>
 using namespace llvm;
 
 STATISTIC(NumGVNInstr, "Number of instructions deleted");
