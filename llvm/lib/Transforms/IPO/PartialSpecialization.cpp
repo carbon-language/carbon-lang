@@ -108,7 +108,7 @@ bool PartSpec::runOnModule(Module &M) {
   bool Changed = false;
   for (Module::iterator I = M.begin(); I != M.end(); ++I) {
     Function &F = *I;
-    if (F.isDeclaration()) continue;
+    if (F.isDeclaration() || F.mayBeOverridden()) continue;
     SmallVector<int, 6> interestingArgs;
     scanForInterest(F, interestingArgs);
 
