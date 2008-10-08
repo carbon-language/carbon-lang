@@ -27,6 +27,8 @@ class raw_ostream;
 
 // Enums corresponding to ARM condition codes
 namespace ARMCC {
+  // The CondCodes constants map directly to the 4-bit encoding of the 
+  // condition field for predicated instructions. 
   enum CondCodes {
     EQ,
     NE,
