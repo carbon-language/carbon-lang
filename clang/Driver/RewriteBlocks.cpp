@@ -630,13 +630,15 @@ void RewriteBlocks::InsertBlockLiteralsWithinMethod(ObjCMethodDecl *MD) {
   SynthesizeBlockLiterals(FunLocStart, FuncName.c_str());
 }
 
-
 void RewriteBlocks::GetBlockDeclRefExprs(Stmt *S) {
   for (Stmt::child_iterator CI = S->child_begin(), E = S->child_end();
        CI != E; ++CI)
-    if (*CI) 
-      GetBlockDeclRefExprs(*CI);
-      
+    if (*CI) {
+      if (BlockExpr *CBE = dyn_cast<BlockExpr>(*CI))
+        GetBlockDeclRefExprs(CBE->getBody());
+      else
+        GetBlockDeclRefExprs(*CI);
+    }
   // Handle specific things.
   if (BlockDeclRefExpr *CDRE = dyn_cast<BlockDeclRefExpr>(S))
     // FIXME: Handle enums.
@@ -648,8 +650,12 @@ void RewriteBlocks::GetBlockDeclRefExprs(Stmt *S) {
 void RewriteBlocks::GetBlockCallExprs(Stmt *S) {
   for (Stmt::child_iterator CI = S->child_begin(), E = S->child_end();
        CI != E; ++CI)
-    if (*CI) 
-      GetBlockCallExprs(*CI);
+    if (*CI) {
+      if (BlockExpr *CBE = dyn_cast<BlockExpr>(*CI))
+        GetBlockCallExprs(CBE->getBody());
+      else
+        GetBlockCallExprs(*CI);
+    }
       
   if (CallExpr *CE = dyn_cast<CallExpr>(S)) {
     if (CE->getCallee()->getType()->isBlockPointerType()) {
@@ -888,7 +894,7 @@ void RewriteBlocks::RewriteBlockPointerDecl(NamedDecl *ND) {
 
 void RewriteBlocks::CollectBlockDeclRefInfo(BlockExpr *Exp) {  
   // Add initializers for any closure decl refs.
-  GetBlockDeclRefExprs(Exp);
+  GetBlockDeclRefExprs(Exp->getBody());
   if (BlockDeclRefs.size()) {
     // Unique all "by copy" declarations.
     for (unsigned i = 0; i < BlockDeclRefs.size(); i++)
@@ -993,7 +999,7 @@ Stmt *RewriteBlocks::RewriteFunctionBody(Stmt *S) {
        CI != E; ++CI)
     if (*CI) {
       if (BlockExpr *CBE = dyn_cast<BlockExpr>(*CI)) {
-        Stmt *newStmt = RewriteFunctionBody(*CI);
+        Stmt *newStmt = RewriteFunctionBody(CBE->getBody());
         if (newStmt) 
           *CI = newStmt;
           
@@ -1082,7 +1088,7 @@ void RewriteBlocks::HandleDeclInMainFile(Decl *D) {
       RewriteBlockPointerDecl(VD);
       if (VD->getInit()) {
         if (BlockExpr *CBE = dyn_cast<BlockExpr>(VD->getInit())) {
-          RewriteFunctionBody(VD->getInit());
+          RewriteFunctionBody(CBE->getBody());
 
           // We've just rewritten the block body in place.
           // Now we snarf the rewritten text and stash it away for later use.
