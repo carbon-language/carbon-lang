@@ -352,15 +352,19 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
       D.getMutableDeclSpec().ClearStorageClassSpecs();
   }
 
-  QualType T = GetTypeForDeclarator(D, S);
+  bool isFunc = D.isFunctionDeclarator();
+  if (!isFunc && D.getDeclSpec().getTypeSpecType() == DeclSpec::TST_typedef) {
+    // Check also for this case:
+    //
+    // typedef int f();
+    // f a;
+    //
+    Decl *TD = static_cast<Decl *>(DS.getTypeRep());
+    isFunc = Context.getTypeDeclType(cast<TypeDecl>(TD))->isFunctionType();
+  }
 
-  // T->isFunctionType() is used instead of D.isFunctionDeclarator() to cover
-  // this case:
-  //
-  // typedef int f();
-  // f a;
   bool isInstField = (DS.getStorageClassSpec() == DeclSpec::SCS_unspecified &&
-                      !T->isFunctionType());
+                      !isFunc);
 
   Decl *Member;
   bool InvalidDecl = false;
@@ -391,14 +395,20 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
            II->getName(), BitWidth->getSourceRange());
       InvalidDecl = true;
 
-    } else if (isInstField || isa<FunctionDecl>(Member)) {
-      // An instance field or a function typedef ("typedef int f(); f a;").
+    } else if (isInstField) {
       // C++ 9.6p3: A bit-field shall have integral or enumeration type.
-      if (!T->isIntegralType()) {
+      if (!cast<FieldDecl>(Member)->getType()->isIntegralType()) {
         Diag(Loc, diag::err_not_integral_type_bitfield,
              II->getName(), BitWidth->getSourceRange());
         InvalidDecl = true;
       }
+
+    } else if (isa<FunctionDecl>(Member)) {
+      // A function typedef ("typedef int f(); f a;").
+      // C++ 9.6p3: A bit-field shall have integral or enumeration type.
+      Diag(Loc, diag::err_not_integral_type_bitfield,
+           II->getName(), BitWidth->getSourceRange());
+      InvalidDecl = true;
 
     } else if (isa<TypedefDecl>(Member)) {
       // "cannot declare 'A' to be a bit-field type"

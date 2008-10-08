@@ -55,6 +55,9 @@ public:
 private:
   int x,y;
   static int sx;
+
+  static const int number = 50;
+  static int arr[number];
 };
 
 class C2 {
