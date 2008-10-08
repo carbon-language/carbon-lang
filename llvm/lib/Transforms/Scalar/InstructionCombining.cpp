@@ -3939,7 +3939,7 @@ static bool CollectBSwapParts(Value *V, int OverallLeftShift, uint32_t ByteMask,
         // X >>u 2 -> collect(X, -2)
         OverallLeftShift -= ByteShift;
         ByteMask <<= ByteShift;
-        ByteMask &= (~0U >> 32-ByteValues.size());
+        ByteMask &= (~0U >> (32-ByteValues.size()));
       }
 
       if (OverallLeftShift >= (int)ByteValues.size()) return true;
