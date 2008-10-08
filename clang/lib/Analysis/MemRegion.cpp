@@ -32,6 +32,15 @@ void AnonTypedRegion::ProfileRegion(llvm::FoldingSetNodeID& ID, QualType T,
   ID.AddPointer(superRegion);
 }
 
+void AnonPointeeRegion::ProfileRegion(llvm::FoldingSetNodeID& ID, 
+                                      const VarDecl* VD, QualType T,
+                                      const MemRegion* superRegion) {
+  ID.AddInteger((unsigned) AnonPointeeRegionKind);
+  ID.Add(T);
+  ID.AddPointer(VD);
+  ID.AddPointer(superRegion);
+}
+
 void AnonTypedRegion::Profile(llvm::FoldingSetNodeID& ID) const {
   AnonTypedRegion::ProfileRegion(ID, T, superRegion);
 }
@@ -92,6 +101,10 @@ MemSpaceRegion* MemRegionManager::getHeapRegion() {
   return LazyAllocate(heap);
 }
 
+MemSpaceRegion* MemRegionManager::getUnknownRegion() {
+  return LazyAllocate(unknown);
+}
+
 VarRegion* MemRegionManager::getVarRegion(const VarDecl* d,
                                           MemRegion* superRegion) {
   llvm::FoldingSetNodeID ID;
@@ -143,6 +156,27 @@ ObjCIvarRegion* MemRegionManager::getObjCIvarRegion(const ObjCIvarDecl* d,
     Regions.InsertNode(R, InsertPos);
   }
   
+  return R;
+}
+
+AnonPointeeRegion* MemRegionManager::getAnonPointeeRegion(const VarDecl* d) {
+  llvm::FoldingSetNodeID ID;
+  QualType T = d->getType();
+  QualType PointeeType = cast<PointerType>(T.getTypePtr())->getPointeeType();
+  MemRegion* superRegion = getUnknownRegion();
+
+  AnonPointeeRegion::ProfileRegion(ID, d, PointeeType, superRegion);
+
+  void* InsertPos;
+  MemRegion* data = Regions.FindNodeOrInsertPos(ID, InsertPos);
+  AnonPointeeRegion* R = cast_or_null<AnonPointeeRegion>(data);
+
+  if (!R) {
+    R = (AnonPointeeRegion*) A.Allocate<AnonPointeeRegion>();
+    new (R) AnonPointeeRegion(d, PointeeType, superRegion);
+    Regions.InsertNode(R, InsertPos);
+  }
+
   return R;
 }
 

@@ -37,7 +37,7 @@ public:
               // Typed regions.
               BEG_TYPED_REGIONS,
               VarRegionKind, FieldRegionKind, ObjCIvarRegionKind,
-              AnonTypedRegionKind,
+              AnonTypedRegionKind, AnonPointeeRegionKind,
               END_TYPED_REGIONS };  
 private:
   const Kind kind;
@@ -104,6 +104,7 @@ public:
 /// AnonTypedRegion - An "anonymous" region that simply types a chunk
 ///  of memory.
 class AnonTypedRegion : public TypedRegion {
+protected:
   QualType T;
 
   friend class MemRegionManager;
@@ -112,8 +113,8 @@ class AnonTypedRegion : public TypedRegion {
     : TypedRegion(sreg, AnonTypedRegionKind), T(t) {}
 
   static void ProfileRegion(llvm::FoldingSetNodeID& ID, QualType T,
-                      const MemRegion* superRegion);
-  
+                            const MemRegion* superRegion);
+
 public:
   QualType getType() const { return T; }
   
@@ -123,6 +124,28 @@ public:
   static bool classof(const MemRegion* R) {
     return R->getKind() == AnonTypedRegionKind;
   }
+};
+
+/// AnonPointeeRegion - anonymous regions pointed-at by pointer function
+///  parameters or pointer globals. In RegionStoreManager, we assume pointer
+///  parameters or globals point at some anonymous region initially. Such
+///  regions are not the regions associated with the pointers themselves, but
+///  are identified with the VarDecl of the parameters or globals.
+class AnonPointeeRegion : public AnonTypedRegion {
+  friend class MemRegionManager;
+  // VD - the pointer variable that points at this region.
+  const VarDecl* VD;
+
+  AnonPointeeRegion(const VarDecl* d, QualType t, MemRegion* sreg)
+    : AnonTypedRegion(t, sreg), VD(d) {}
+
+public:
+  static void ProfileRegion(llvm::FoldingSetNodeID& ID, const VarDecl* PVD,
+                            QualType T, const MemRegion* superRegion);
+};
+
+/// AnonHeapRegion - anonymous region created by malloc().
+class AnonHeapRegion : public AnonTypedRegion {
 };
 
 class DeclRegion : public TypedRegion {
@@ -213,6 +236,7 @@ class MemRegionManager {
   MemSpaceRegion* globals;
   MemSpaceRegion* stack;
   MemSpaceRegion* heap;
+  MemSpaceRegion* unknown;
   
 public:
   MemRegionManager(llvm::BumpPtrAllocator& a)
@@ -231,6 +255,10 @@ public:
   /// getHeapRegion - Retrieve the memory region associated with the
   ///  generic "heap".
   MemSpaceRegion* getHeapRegion();
+
+  /// getUnknownRegion - Retrieve the memory region associated with unknown
+  /// memory space.
+  MemSpaceRegion* getUnknownRegion();
   
   /// getVarRegion - Retrieve or create the memory region associated with
   ///  a specified VarDecl.  'superRegion' corresponds to the containing
@@ -254,7 +282,9 @@ public:
   ///   object).
   ObjCIvarRegion* getObjCIvarRegion(const ObjCIvarDecl* ivd,
                                     MemRegion* superRegion);
-  
+
+  AnonPointeeRegion* getAnonPointeeRegion(const VarDecl* d);
+
   bool hasStackStorage(const MemRegion* R);
   
 private:
