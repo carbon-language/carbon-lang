@@ -43,6 +43,8 @@ DarwinTargetAsmInfo::DarwinTargetAsmInfo(const TargetMachine &TM) {
   TextCoalSection =
     getNamedSection("\t__TEXT,__textcoal_nt,coalesced,pure_instructions",
                     SectionFlags::Code);
+  ConstTextCoalSection = getNamedSection("\t__TEXT,__const_coal,coalesced",
+                                         SectionFlags::None);
   ConstDataCoalSection = getNamedSection("\t__DATA,__const_coal,coalesced",
                                          SectionFlags::None);
   ConstDataSection = getUnnamedSection(".const_data", SectionFlags::None);
@@ -95,7 +97,7 @@ DarwinTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
             (isNonStatic ? ConstDataSection : getReadOnlySection()));
    case SectionKind::RODataMergeStr:
     return (isWeak ?
-            ConstDataCoalSection :
+            ConstTextCoalSection :
             MergeableStringSection(cast<GlobalVariable>(GV)));
    case SectionKind::RODataMergeConst:
     return (isWeak ?

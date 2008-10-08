@@ -26,6 +26,7 @@ namespace llvm {
 
   struct DarwinTargetAsmInfo: public TargetAsmInfo {
     const Section* TextCoalSection;
+    const Section* ConstTextCoalSection;
     const Section* ConstDataCoalSection;
     const Section* ConstDataSection;
     const Section* DataCoalSection;
