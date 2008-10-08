@@ -28,6 +28,7 @@ namespace clang {
   class IdentifierInfo;
   class ParmVarDecl;
   class ValueDecl;
+  class BlockDecl;
     
 /// Expr - This represents one expression.  Note that Expr's are subclasses of
 /// Stmt.  This allows an expression to be transparently used any place a Stmt
@@ -1498,36 +1499,29 @@ public:
 };
 
 
-/// BlockExpr - Represent a block literal with a syntax:
+/// BlockExpr - Adaptor class for mixing a BlockDecl with expressions.
 /// ^{ statement-body }   or   ^(int arg1, float arg2){ statement-body }
 class BlockExpr : public Expr {
-  SourceLocation CaretLocation;
-  llvm::SmallVector<ParmVarDecl*, 8> Args;
-  Stmt *Body;
+protected:
+  BlockDecl *TheBlock;
 public:
-  BlockExpr(SourceLocation caretloc, QualType ty, ParmVarDecl **args, 
-            unsigned numargs, CompoundStmt *body) : Expr(BlockExprClass, ty), 
-            CaretLocation(caretloc), Args(args, args+numargs), Body(body) {}
+  BlockExpr(BlockDecl *BD, QualType ty) : Expr(BlockExprClass, ty), 
+            TheBlock(BD) {}
 
-  SourceLocation getCaretLocation() const { return CaretLocation; }
+  BlockDecl *getBlockDecl() { return TheBlock; }
+  
+  // Convenience functions for probing the underlying BlockDecl.
+  SourceLocation getCaretLocation() const;
+  const Stmt *getBody() const;
+  Stmt *getBody();
+
+  virtual SourceRange getSourceRange() const {
+    return SourceRange(getCaretLocation(), getBody()->getLocEnd());
+  }
 
   /// getFunctionType - Return the underlying function type for this block.
   const FunctionType *getFunctionType() const;
 
-  const CompoundStmt *getBody() const { return cast<CompoundStmt>(Body); }
-  CompoundStmt *getBody() { return cast<CompoundStmt>(Body); }
-
-  virtual SourceRange getSourceRange() const {
-    return SourceRange(getCaretLocation(), Body->getLocEnd());
-  }
-
-  /// arg_iterator - Iterate over the ParmVarDecl's for the arguments to this
-  /// block.
-  typedef llvm::SmallVector<ParmVarDecl*, 8>::const_iterator arg_iterator;
-  bool arg_empty() const { return Args.empty(); }
-  arg_iterator arg_begin() const { return Args.begin(); }
-  arg_iterator arg_end() const { return Args.end(); }
-  
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == BlockExprClass;
   }
@@ -1536,7 +1530,7 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-    
+
   virtual void EmitImpl(llvm::Serializer& S) const;
   static BlockExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };

@@ -217,6 +217,13 @@ const FunctionType *BlockExpr::getFunctionType() const {
                     getPointeeType()->getAsFunctionType();
 }
 
+SourceLocation BlockExpr::getCaretLocation() const { 
+  return TheBlock->getCaretLocation(); 
+}
+const Stmt *BlockExpr::getBody() const { return TheBlock->getBody(); }
+Stmt *BlockExpr::getBody() { return TheBlock->getBody(); }
+
+
 //===----------------------------------------------------------------------===//
 // Generic Expression Routines
 //===----------------------------------------------------------------------===//
@@ -1400,8 +1407,8 @@ Stmt::child_iterator ObjCMessageExpr::child_end() {
 }
 
 // Blocks
-Stmt::child_iterator BlockExpr::child_begin() { return &Body; }
-Stmt::child_iterator BlockExpr::child_end() { return &Body+1; }
+Stmt::child_iterator BlockExpr::child_begin() { return child_iterator(); }
+Stmt::child_iterator BlockExpr::child_end() { return child_iterator(); }
 
 Stmt::child_iterator BlockDeclRefExpr::child_begin() { return child_iterator();}
 Stmt::child_iterator BlockDeclRefExpr::child_end() { return child_iterator(); }

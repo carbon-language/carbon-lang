@@ -441,6 +441,22 @@ FunctionDecl* FunctionDecl::CreateImpl(Deserializer& D, ASTContext& C) {
   return decl;
 }
 
+void BlockDecl::EmitImpl(Serializer& S) const {
+  // FIXME: what about arguments?
+  S.Emit(getCaretLocation());
+  S.EmitOwnedPtr(Body);
+}
+
+BlockDecl* BlockDecl::CreateImpl(Deserializer& D, ASTContext& C) {
+  QualType Q = QualType::ReadVal(D);
+  SourceLocation L = SourceLocation::ReadVal(D);
+  /*CompoundStmt* BodyStmt = cast<CompoundStmt>(*/D.ReadOwnedPtr<Stmt>(C)/*)*/;
+  assert(0 && "Cannot deserialize BlockBlockExpr yet");
+  // FIXME: need to handle parameters.
+  //return new BlockBlockExpr(L, Q, BodyStmt);
+  return 0;
+}
+
 //===----------------------------------------------------------------------===//
 //      RecordDecl Serialization.
 //===----------------------------------------------------------------------===//

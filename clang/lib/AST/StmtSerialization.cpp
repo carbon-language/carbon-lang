@@ -1114,18 +1114,12 @@ ObjCStringLiteral* ObjCStringLiteral::CreateImpl(Deserializer& D, ASTContext& C)
 
 void BlockExpr::EmitImpl(Serializer& S) const {
   S.Emit(getType());
-  S.Emit(getCaretLocation());
-  S.EmitOwnedPtr(Body);
+  S.EmitOwnedPtr(TheBlock);
 }
 
 BlockExpr* BlockExpr::CreateImpl(Deserializer& D, ASTContext& C) {
-  QualType Q = QualType::ReadVal(D);
-  SourceLocation L = SourceLocation::ReadVal(D);
-  /*CompoundStmt* BodyStmt = cast<CompoundStmt>(*/D.ReadOwnedPtr<Stmt>(C)/*)*/;
-  assert(0 && "Cannot deserialize BlockBlockExpr yet");
-  // FIXME: need to handle parameters.
-  //return new BlockBlockExpr(L, Q, BodyStmt);
-  return 0;
+  QualType T = QualType::ReadVal(D);
+  return new BlockExpr(cast<BlockDecl>(D.ReadOwnedPtr<Decl>(C)),T);
 }
 
 void BlockDeclRefExpr::EmitImpl(Serializer& S) const {

@@ -49,6 +49,7 @@ static unsigned nObjCPropertyDecl = 0;
 static unsigned nObjCPropertyImplDecl = 0;
 static unsigned nLinkageSpecDecl = 0;
 static unsigned nFileScopeAsmDecl = 0;
+static unsigned nBlockDecls = 0;
 
 static bool StatSwitch = false;
 
@@ -77,6 +78,7 @@ const char *Decl::getDeclKindName() const {
   case Union:               return "Union";
   case Class:               return "Class";
   case Enum:                return "Enum";
+  case Block:               return "Block";
   }
 }
 
@@ -221,6 +223,7 @@ void Decl::addDeclKind(Kind k) {
   case ObjCPropertyImpl:    nObjCPropertyImplDecl++; break;
   case LinkageSpec:         nLinkageSpecDecl++; break;
   case FileScopeAsm:        nFileScopeAsmDecl++; break;
+  case Block:               nBlockDecls++; break;
   case ImplicitParam:
   case TranslationUnit:     break;
 

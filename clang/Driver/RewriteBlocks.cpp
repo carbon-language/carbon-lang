@@ -364,9 +364,11 @@ std::string RewriteBlocks::SynthesizeBlockFunc(BlockExpr *CE, int i,
   std::string S = "static " + RT.getAsString() + " __" +
                   funcName + "_" + "block_func_" + utostr(i);
 
+  BlockDecl *BD = CE->getBlockDecl();
+  
   if (isa<FunctionTypeNoProto>(AFT)) {
     S += "()";
-  } else if (CE->arg_empty()) {
+  } else if (BD->param_empty()) {
     S += "(" + StructRef + " *__cself)";
   } else {
     const FunctionTypeProto *FT = cast<FunctionTypeProto>(AFT);
@@ -375,15 +377,15 @@ std::string RewriteBlocks::SynthesizeBlockFunc(BlockExpr *CE, int i,
     // first add the implicit argument.
     S += StructRef + " *__cself, ";
     std::string ParamStr;
-    for (BlockExpr::arg_iterator AI = CE->arg_begin(),
-         E = CE->arg_end(); AI != E; ++AI) {
-      if (AI != CE->arg_begin()) S += ", ";
+    for (BlockDecl::param_iterator AI = BD->param_begin(),
+         E = BD->param_end(); AI != E; ++AI) {
+      if (AI != BD->param_begin()) S += ", ";
       ParamStr = (*AI)->getName();
       (*AI)->getType().getAsStringInternal(ParamStr);
       S += ParamStr;
     }
     if (FT->isVariadic()) {
-      if (!CE->arg_empty()) S += ", ";
+      if (!BD->param_empty()) S += ", ";
       S += "...";
     }
     S += ')';

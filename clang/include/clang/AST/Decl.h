@@ -16,10 +16,12 @@
 
 #include "clang/AST/DeclBase.h"
 #include "clang/Parse/AccessSpecifier.h"
+#include "llvm/ADT/SmallVector.h"
 
 namespace clang {
 class Expr;
 class Stmt;
+class CompoundStmt;
 class StringLiteral;
 class IdentifierInfo;
 
@@ -981,6 +983,51 @@ protected:
   void ReadInRec(llvm::Deserializer& D, ASTContext& C);
 };
 
-}  // end namespace clang
+/// BlockDecl - This represents a block literal declaration, which is like an
+/// unnamed FunctionDecl.  For example:
+/// ^{ statement-body }   or   ^(int arg1, float arg2){ statement-body }
+///
+class BlockDecl : public Decl, public DeclContext {
+  llvm::SmallVector<ParmVarDecl*, 8> Args;
+  Stmt *Body;
+protected:
+  BlockDecl(DeclContext *DC, SourceLocation CaretLoc,
+            ParmVarDecl **args, unsigned numargs, Stmt *body)
+    : Decl(Block, CaretLoc), DeclContext(Block), 
+      Args(args, args+numargs), Body(body) {}
 
+  virtual ~BlockDecl();
+  virtual void Destroy(ASTContext& C);
+
+public:
+  static BlockDecl *Create(ASTContext &C, DeclContext *DC, SourceLocation L,
+                           ParmVarDecl **args, unsigned numargs, 
+                           CompoundStmt *body);
+
+  SourceLocation getCaretLocation() const { return getLocation(); }
+
+  Stmt *getBody() const { return Body; }
+
+  /// arg_iterator - Iterate over the ParmVarDecl's for this block.
+  typedef llvm::SmallVector<ParmVarDecl*, 8>::const_iterator param_iterator;
+  bool param_empty() const { return Args.empty(); }
+  param_iterator param_begin() const { return Args.begin(); }
+  param_iterator param_end() const { return Args.end(); }
+    
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Decl *D) { return D->getKind() == Block; }
+  static bool classof(const TranslationUnitDecl *D) { return true; }  
+
+protected:
+  /// EmitImpl - Serialize this BlockDecl. Called by Decl::Emit.
+  virtual void EmitImpl(llvm::Serializer& S) const;
+
+  /// CreateImpl - Deserialize a BlockDecl.  Called by Decl::Create.
+  static BlockDecl* CreateImpl(llvm::Deserializer& D, ASTContext& C);
+
+  friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);
+};
+
+}  // end namespace clang
+	
 #endif

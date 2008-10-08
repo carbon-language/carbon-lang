@@ -895,26 +895,27 @@ void StmtPrinter::VisitObjCMessageExpr(ObjCMessageExpr *Mess) {
 }
 
 void StmtPrinter::VisitBlockExpr(BlockExpr *Node) {
+  BlockDecl *BD = Node->getBlockDecl();
   OS << "^";
   
   const FunctionType *AFT = Node->getFunctionType();
   
   if (isa<FunctionTypeNoProto>(AFT)) {
     OS << "()";
-  } else if (!Node->arg_empty() || cast<FunctionTypeProto>(AFT)->isVariadic()) {
-    const FunctionTypeProto *FT = cast<FunctionTypeProto>(AFT);
+  } else if (!BD->param_empty() || cast<FunctionTypeProto>(AFT)->isVariadic()) {
     OS << '(';
     std::string ParamStr;
-    for (BlockExpr::arg_iterator AI = Node->arg_begin(),
-         E = Node->arg_end(); AI != E; ++AI) {
-      if (AI != Node->arg_begin()) OS << ", ";
+    for (BlockDecl::param_iterator AI = BD->param_begin(),
+         E = BD->param_end(); AI != E; ++AI) {
+      if (AI != BD->param_begin()) OS << ", ";
       ParamStr = (*AI)->getName();
       (*AI)->getType().getAsStringInternal(ParamStr);
       OS << ParamStr;
     }
     
+    const FunctionTypeProto *FT = cast<FunctionTypeProto>(AFT);
     if (FT->isVariadic()) {
-      if (!Node->arg_empty()) OS << ", ";
+      if (!BD->param_empty()) OS << ", ";
       OS << "...";
     }
     OS << ')';

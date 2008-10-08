@@ -2931,8 +2931,11 @@ Sema::ExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc, StmtTy *body,
                                       BSI->isVariadic);
   
   BlockTy = Context.getBlockPointerType(BlockTy);
-  return new BlockExpr(CaretLoc, BlockTy, &BSI->Params[0], BSI->Params.size(), 
-                       Body.take());
+  
+  BlockDecl *NewBD = BlockDecl::Create(Context, CurContext, CaretLoc,
+                                       &BSI->Params[0], BSI->Params.size(),
+                                       Body.take());
+  return new BlockExpr(NewBD, BlockTy);
 }
 
 /// ExprsMatchFnType - return true if the Exprs in array Args have

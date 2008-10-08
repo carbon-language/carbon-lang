@@ -76,6 +76,13 @@ FunctionDecl *FunctionDecl::Create(ASTContext &C, DeclContext *DC,
                                 TypeSpecStartLoc);
 }
 
+BlockDecl *BlockDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L, 
+                             ParmVarDecl **args, unsigned numargs, 
+                             CompoundStmt *body) {
+  void *Mem = C.getAllocator().Allocate<BlockDecl>();
+  return new (Mem) BlockDecl(DC, L, args, numargs, body);
+}
+
 FieldDecl *FieldDecl::Create(ASTContext &C, SourceLocation L,
                              IdentifierInfo *Id, QualType T, Expr *BW) {
   void *Mem = C.getAllocator().Allocate<FieldDecl>();
@@ -284,4 +291,21 @@ FieldDecl *RecordDecl::getMember(IdentifierInfo *II) {
     if (Members[i]->getIdentifier() == II)
       return Members[i];
   return 0;
+}
+
+//===----------------------------------------------------------------------===//
+// BlockDecl Implementation
+//===----------------------------------------------------------------------===//
+
+BlockDecl::~BlockDecl() {
+}
+
+void BlockDecl::Destroy(ASTContext& C) {
+  if (Body)
+    Body->Destroy(C);
+
+  for (param_iterator I=param_begin(), E=param_end(); I!=E; ++I)
+    (*I)->Destroy(C);
+    
+  Decl::Destroy(C);
 }

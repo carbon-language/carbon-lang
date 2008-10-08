@@ -27,6 +27,7 @@ class CXXRecordDecl;
 class EnumDecl;
 class ObjCMethodDecl;
 class ObjCInterfaceDecl;
+class BlockDecl;
 
 /// Decl - This represents one declaration (or definition), e.g. a variable, 
 /// typedef, function, struct, etc.  
@@ -81,6 +82,7 @@ public:
            ObjCPropertyImpl,
          LinkageSpec,
          FileScopeAsm,
+	     Block, // [DeclContext]
   
     // For each non-leaf class, we now define a mapping to the first/last member
     // of the class, to allow efficient classof.
@@ -243,6 +245,7 @@ protected:
 ///   EnumDecl
 ///   ObjCMethodDecl
 ///   ObjCInterfaceDecl
+///   BlockDecl
 ///
 class DeclContext {
   /// DeclKind - This indicates which class this is.
@@ -295,6 +298,7 @@ public:
 
   bool isFunctionOrMethod() const {
     switch (DeclKind) {
+      case Decl::Block:
       case Decl::Function:
       case Decl::CXXMethod:
       case Decl::ObjCMethod:
@@ -320,6 +324,7 @@ public:
       case Decl::Enum:
       case Decl::ObjCMethod:
       case Decl::ObjCInterface:
+      case Decl::Block:
         return true;
       default:
         if (D->getKind() >= Decl::FunctionFirst &&
@@ -339,6 +344,7 @@ public:
   static bool classof(const EnumDecl *D) { return true; }
   static bool classof(const ObjCMethodDecl *D) { return true; }
   static bool classof(const ObjCInterfaceDecl *D) { return true; }
+  static bool classof(const BlockDecl *D) { return true; }
 
 private:
   void EmitOutRec(llvm::Serializer& S) const;
