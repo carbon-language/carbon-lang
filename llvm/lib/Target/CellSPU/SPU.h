@@ -15,6 +15,7 @@
 #ifndef LLVM_TARGET_IBMCELLSPU_H
 #define LLVM_TARGET_IBMCELLSPU_H
 
+#include "llvm/Support/DataTypes.h"
 #include <iosfwd>
 
 namespace llvm {
@@ -33,25 +34,33 @@ namespace llvm {
     This predicate tests for a signed 10-bit value, returning the 10-bit value
     as a short if true.
    */
-  inline bool isS10Constant(short Value) {
+  template<typename T>
+  inline bool isS10Constant(T Value);
+
+  template<>
+  inline bool isS10Constant<short>(short Value) {
     int SExtValue = ((int) Value << (32 - 10)) >> (32 - 10);
     return ((Value > 0 && Value <= (1 << 9) - 1)
             || (Value < 0 && (short) SExtValue == Value));
   }
 
-  inline bool isS10Constant(int Value) {
+  template<>
+  inline bool isS10Constant<int>(int Value) {
     return (Value >= -(1 << 9) && Value <= (1 << 9) - 1);
   }
 
-  inline bool isS10Constant(uint32_t Value) {
+  template<>
+  inline bool isS10Constant<uint32_t>(uint32_t Value) {
     return (Value <= ((1 << 9) - 1));
   }
 
-  inline bool isS10Constant(int64_t Value) {
+  template<>
+  inline bool isS10Constant<int64_t>(int64_t Value) {
     return (Value >= -(1 << 9) && Value <= (1 << 9) - 1);
   }
 
-  inline bool isS10Constant(uint64_t Value) {
+  template<>
+  inline bool isS10Constant<uint64_t>(uint64_t Value) {
     return (Value <= ((1 << 9) - 1));
   }
 
