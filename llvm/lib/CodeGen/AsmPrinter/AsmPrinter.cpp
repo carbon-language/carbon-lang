@@ -969,7 +969,7 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV) {
     // precision...
     if (CFP->getType() == Type::DoubleTy) {
       double Val = CFP->getValueAPF().convertToDouble();  // for comment only
-      uint64_t i = CFP->getValueAPF().convertToAPInt().getZExtValue();
+      uint64_t i = CFP->getValueAPF().bitcastToAPInt().getZExtValue();
       if (TAI->getData64bitsDirective())
         O << TAI->getData64bitsDirective() << i << '\t'
           << TAI->getCommentString() << " double value: " << Val << '\n';
@@ -992,13 +992,13 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV) {
     } else if (CFP->getType() == Type::FloatTy) {
       float Val = CFP->getValueAPF().convertToFloat();  // for comment only
       O << TAI->getData32bitsDirective()
-        << CFP->getValueAPF().convertToAPInt().getZExtValue()
+        << CFP->getValueAPF().bitcastToAPInt().getZExtValue()
         << '\t' << TAI->getCommentString() << " float " << Val << '\n';
       return;
     } else if (CFP->getType() == Type::X86_FP80Ty) {
       // all long double variants are printed as hex
       // api needed to prevent premature destruction
-      APInt api = CFP->getValueAPF().convertToAPInt();
+      APInt api = CFP->getValueAPF().bitcastToAPInt();
       const uint64_t *p = api.getRawData();
       APFloat DoubleVal = CFP->getValueAPF();
       DoubleVal.convert(APFloat::IEEEdouble, APFloat::rmNearestTiesToEven);
@@ -1042,7 +1042,7 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV) {
     } else if (CFP->getType() == Type::PPC_FP128Ty) {
       // all long double variants are printed as hex
       // api needed to prevent premature destruction
-      APInt api = CFP->getValueAPF().convertToAPInt();
+      APInt api = CFP->getValueAPF().bitcastToAPInt();
       const uint64_t *p = api.getRawData();
       if (TD->isBigEndian()) {
         O << TAI->getData32bitsDirective() << uint32_t(p[0] >> 32)

@@ -738,7 +738,7 @@ static void WriteConstantInt(raw_ostream &Out, const Constant *CV,
     else
       assert(0 && "Unsupported floating point type");
     // api needed to prevent premature destruction
-    APInt api = CFP->getValueAPF().convertToAPInt();
+    APInt api = CFP->getValueAPF().bitcastToAPInt();
     const uint64_t* p = api.getRawData();
     uint64_t word = *p;
     int shiftcount=60;

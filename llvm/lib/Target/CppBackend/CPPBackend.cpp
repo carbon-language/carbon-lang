@@ -254,11 +254,12 @@ namespace {
           Out << StrVal << "f";
       } else if (CFP->getType() == Type::DoubleTy)
         Out << "BitsToDouble(0x"
-            << utohexstr(CFP->getValueAPF().convertToAPInt().getZExtValue())
+            << utohexstr(CFP->getValueAPF().bitcastToAPInt().getZExtValue())
             << "ULL) /* " << StrVal << " */";
       else
         Out << "BitsToFloat(0x"
-      << utohexstr((uint32_t)CFP->getValueAPF().convertToAPInt().getZExtValue())
+            << utohexstr((uint32_t)CFP->getValueAPF().
+                                        bitcastToAPInt().getZExtValue())
             << "U) /* " << StrVal << " */";
       Out << ")";
 #if HAVE_PRINTF_A

@@ -4630,7 +4630,7 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
         if ((!AfterLegalize && !ST->isVolatile()) ||
             TLI.isOperationLegal(ISD::STORE, MVT::i32)) {
           Tmp = DAG.getConstant((uint32_t)CFP->getValueAPF().
-                              convertToAPInt().getZExtValue(), MVT::i32);
+                              bitcastToAPInt().getZExtValue(), MVT::i32);
           return DAG.getStore(Chain, Tmp, Ptr, ST->getSrcValue(),
                               ST->getSrcValueOffset(), ST->isVolatile(),
                               ST->getAlignment());
@@ -4639,7 +4639,7 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
       case MVT::f64:
         if ((!AfterLegalize && !ST->isVolatile()) ||
             TLI.isOperationLegal(ISD::STORE, MVT::i64)) {
-          Tmp = DAG.getConstant(CFP->getValueAPF().convertToAPInt().
+          Tmp = DAG.getConstant(CFP->getValueAPF().bitcastToAPInt().
                                   getZExtValue(), MVT::i64);
           return DAG.getStore(Chain, Tmp, Ptr, ST->getSrcValue(),
                               ST->getSrcValueOffset(), ST->isVolatile(),
@@ -4649,7 +4649,7 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
           // Many FP stores are not made apparent until after legalize, e.g. for
           // argument passing.  Since this is so common, custom legalize the
           // 64-bit integer store into two 32-bit stores.
-          uint64_t Val = CFP->getValueAPF().convertToAPInt().getZExtValue();
+          uint64_t Val = CFP->getValueAPF().bitcastToAPInt().getZExtValue();
           SDValue Lo = DAG.getConstant(Val & 0xFFFFFFFF, MVT::i32);
           SDValue Hi = DAG.getConstant(Val >> 32, MVT::i32);
           if (TLI.isBigEndian()) std::swap(Lo, Hi);

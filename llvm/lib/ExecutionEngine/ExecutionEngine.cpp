@@ -467,7 +467,7 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
         (void)apf.convertFromAPInt(GV.IntVal, 
                                    false,
                                    APFloat::rmNearestTiesToEven);
-        GV.IntVal = apf.convertToAPInt();
+        GV.IntVal = apf.bitcastToAPInt();
       }
       return GV;
     }
@@ -483,7 +483,7 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
         (void)apf.convertFromAPInt(GV.IntVal, 
                                    true,
                                    APFloat::rmNearestTiesToEven);
-        GV.IntVal = apf.convertToAPInt();
+        GV.IntVal = apf.bitcastToAPInt();
       }
       return GV;
     }
@@ -614,23 +614,23 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
           default: assert(0 && "Invalid long double opcode"); abort();
           case Instruction::Add:  
             apfLHS.add(APFloat(RHS.IntVal), APFloat::rmNearestTiesToEven);
-            GV.IntVal = apfLHS.convertToAPInt();
+            GV.IntVal = apfLHS.bitcastToAPInt();
             break;
           case Instruction::Sub:  
             apfLHS.subtract(APFloat(RHS.IntVal), APFloat::rmNearestTiesToEven);
-            GV.IntVal = apfLHS.convertToAPInt();
+            GV.IntVal = apfLHS.bitcastToAPInt();
             break;
           case Instruction::Mul:  
             apfLHS.multiply(APFloat(RHS.IntVal), APFloat::rmNearestTiesToEven);
-            GV.IntVal = apfLHS.convertToAPInt();
+            GV.IntVal = apfLHS.bitcastToAPInt();
             break;
           case Instruction::FDiv: 
             apfLHS.divide(APFloat(RHS.IntVal), APFloat::rmNearestTiesToEven);
-            GV.IntVal = apfLHS.convertToAPInt();
+            GV.IntVal = apfLHS.bitcastToAPInt();
             break;
           case Instruction::FRem: 
             apfLHS.mod(APFloat(RHS.IntVal), APFloat::rmNearestTiesToEven);
-            GV.IntVal = apfLHS.convertToAPInt();
+            GV.IntVal = apfLHS.bitcastToAPInt();
             break;
           }
         }
@@ -656,7 +656,7 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
   case Type::X86_FP80TyID:
   case Type::FP128TyID:
   case Type::PPC_FP128TyID:
-    Result.IntVal = cast <ConstantFP>(C)->getValueAPF().convertToAPInt();
+    Result.IntVal = cast <ConstantFP>(C)->getValueAPF().bitcastToAPInt();
     break;
   case Type::IntegerTyID:
     Result.IntVal = cast<ConstantInt>(C)->getValue();

@@ -542,15 +542,15 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
       Code = bitc::CST_CODE_FLOAT;
       const Type *Ty = CFP->getType();
       if (Ty == Type::FloatTy || Ty == Type::DoubleTy) {
-        Record.push_back(CFP->getValueAPF().convertToAPInt().getZExtValue());
+        Record.push_back(CFP->getValueAPF().bitcastToAPInt().getZExtValue());
       } else if (Ty == Type::X86_FP80Ty) {
         // api needed to prevent premature destruction
-        APInt api = CFP->getValueAPF().convertToAPInt();
+        APInt api = CFP->getValueAPF().bitcastToAPInt();
         const uint64_t *p = api.getRawData();
         Record.push_back(p[0]);
         Record.push_back((uint16_t)p[1]);
       } else if (Ty == Type::FP128Ty || Ty == Type::PPC_FP128Ty) {
-        APInt api = CFP->getValueAPF().convertToAPInt();
+        APInt api = CFP->getValueAPF().bitcastToAPInt();
         const uint64_t *p = api.getRawData();
         Record.push_back(p[0]);
         Record.push_back(p[1]);

@@ -695,7 +695,7 @@ APFloat::~APFloat()
 
 // Profile - This method 'profiles' an APFloat for use with FoldingSet.
 void APFloat::Profile(FoldingSetNodeID& ID) const {
-  ID.Add(convertToAPInt());
+  ID.Add(bitcastToAPInt());
 }
 
 unsigned int
@@ -2617,7 +2617,7 @@ APFloat::convertFloatAPFloatToAPInt() const
 // and treating the result as a normal integer is unlikely to be useful.
 
 APInt
-APFloat::convertToAPInt() const
+APFloat::bitcastToAPInt() const
 {
   if (semantics == (const llvm::fltSemantics*)&IEEEsingle)
     return convertFloatAPFloatToAPInt();
@@ -2637,7 +2637,7 @@ float
 APFloat::convertToFloat() const
 {
   assert(semantics == (const llvm::fltSemantics*)&IEEEsingle);
-  APInt api = convertToAPInt();
+  APInt api = bitcastToAPInt();
   return api.bitsToFloat();
 }
 
@@ -2645,7 +2645,7 @@ double
 APFloat::convertToDouble() const
 {
   assert(semantics == (const llvm::fltSemantics*)&IEEEdouble);
-  APInt api = convertToAPInt();
+  APInt api = bitcastToAPInt();
   return api.bitsToDouble();
 }
 

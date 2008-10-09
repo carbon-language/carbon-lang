@@ -93,7 +93,7 @@ SDValue DAGTypeLegalizer::SoftenFloatRes_BUILD_PAIR(SDNode *N) {
 }
 
 SDValue DAGTypeLegalizer::SoftenFloatRes_ConstantFP(ConstantFPSDNode *N) {
-  return DAG.getConstant(N->getValueAPF().convertToAPInt(),
+  return DAG.getConstant(N->getValueAPF().bitcastToAPInt(),
                          TLI.getTypeToTransformTo(N->getValueType(0)));
 }
 
@@ -586,7 +586,7 @@ void DAGTypeLegalizer::ExpandFloatRes_ConstantFP(SDNode *N, SDValue &Lo,
   MVT NVT = TLI.getTypeToTransformTo(N->getValueType(0));
   assert(NVT.getSizeInBits() == integerPartWidth &&
          "Do not know how to expand this float constant!");
-  APInt C = cast<ConstantFPSDNode>(N)->getValueAPF().convertToAPInt();
+  APInt C = cast<ConstantFPSDNode>(N)->getValueAPF().bitcastToAPInt();
   Lo = DAG.getConstantFP(APFloat(APInt(integerPartWidth, 1,
                                        &C.getRawData()[1])), NVT);
   Hi = DAG.getConstantFP(APFloat(APInt(integerPartWidth, 1,

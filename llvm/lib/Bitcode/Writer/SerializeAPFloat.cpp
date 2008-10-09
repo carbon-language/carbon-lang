@@ -17,5 +17,5 @@
 using namespace llvm;
 
 void APFloat::Emit(Serializer& S) const {
-  S.Emit(convertToAPInt());
+  S.Emit(bitcastToAPInt());
 }

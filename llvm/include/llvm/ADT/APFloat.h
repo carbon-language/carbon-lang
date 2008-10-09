@@ -129,7 +129,7 @@ namespace llvm {
     static const fltSemantics IEEEquad;
     static const fltSemantics PPCDoubleDouble;
     static const fltSemantics x87DoubleExtended;
-    /* And this psuedo, used to construct APFloats that cannot
+    /* And this pseudo, used to construct APFloats that cannot
        conflict with anything real. */
     static const fltSemantics Bogus;
 
@@ -226,7 +226,7 @@ namespace llvm {
     opStatus convertFromZeroExtendedInteger(const integerPart *, unsigned int,
                                             bool, roundingMode);
     opStatus convertFromString(const char *, roundingMode);
-    APInt convertToAPInt() const;
+    APInt bitcastToAPInt() const;
     double convertToDouble() const;
     float convertToFloat() const;
 
@@ -239,15 +239,15 @@ namespace llvm {
        compare unordered, 0==-0). */
     cmpResult compare(const APFloat &) const;
 
+    /* Bitwise comparison for equality (QNaNs compare equal, 0!=-0). */
+    bool bitwiseIsEqual(const APFloat &) const;
+
     /* Write out a hexadecimal representation of the floating point
        value to DST, which must be of sufficient size, in the C99 form
        [-]0xh.hhhhp[+-]d.  Return the number of characters written,
        excluding the terminating NUL.  */
     unsigned int convertToHexString(char *dst, unsigned int hexDigits,
                                     bool upperCase, roundingMode) const;
-
-    /* Bitwise comparison for equality (QNaNs compare equal, 0!=-0). */
-    bool bitwiseIsEqual(const APFloat &) const;
 
     /* Simple queries.  */
     fltCategory getCategory() const { return category; }
