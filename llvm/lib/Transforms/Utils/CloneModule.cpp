@@ -55,10 +55,14 @@ Module *llvm::CloneModule(const Module *M,
   // don't worry about attributes or initializers, they will come later.
   //
   for (Module::const_global_iterator I = M->global_begin(), E = M->global_end();
-       I != E; ++I)
-    ValueMap[I] = new GlobalVariable(I->getType()->getElementType(), false,
-                                     GlobalValue::ExternalLinkage, 0,
-                                     I->getName(), New);
+       I != E; ++I) {
+    GlobalVariable *GV = new GlobalVariable(I->getType()->getElementType(),
+                                            false,
+                                            GlobalValue::ExternalLinkage, 0,
+                                            I->getName(), New);
+    GV->setAlignment(I->getAlignment());
+    ValueMap[I] = GV;
+  }
 
   // Loop over the functions in the module, making external functions as before
   for (Module::const_iterator I = M->begin(), E = M->end(); I != E; ++I) {
@@ -66,7 +70,7 @@ Module *llvm::CloneModule(const Module *M,
       Function::Create(cast<FunctionType>(I->getType()->getElementType()),
                        GlobalValue::ExternalLinkage, I->getName(), New);
     NF->copyAttributesFrom(I);
-    ValueMap[I]= NF;
+    ValueMap[I] = NF;
   }
 
   // Loop over the aliases in the module
