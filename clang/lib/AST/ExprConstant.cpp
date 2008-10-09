@@ -557,9 +557,10 @@ bool IntExprEvaluator::HandleCast(SourceLocation CastLoc,
   bool DestSigned = DestType->isSignedIntegerType();
   
   // FIXME: Warning for overflow.
-  uint64_t Space[4]; 
+  uint64_t Space[4];
+  bool ignored;
   (void)F.convertToInteger(Space, DestWidth, DestSigned,
-                           llvm::APFloat::rmTowardZero);
+                           llvm::APFloat::rmTowardZero, &ignored);
   Result = llvm::APInt(DestWidth, 4, Space);
   Result.setIsUnsigned(!DestSigned);
   return true;

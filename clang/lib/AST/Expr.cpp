@@ -29,7 +29,9 @@ using namespace clang;
 /// debugging dumps, etc.
 double FloatingLiteral::getValueAsApproximateDouble() const {
   llvm::APFloat V = getValue();
-  V.convert(llvm::APFloat::IEEEdouble, llvm::APFloat::rmNearestTiesToEven);
+  bool ignored;
+  V.convert(llvm::APFloat::IEEEdouble, llvm::APFloat::rmNearestTiesToEven,
+            &ignored);
   return V.convertToDouble();
 }
 
@@ -977,9 +979,11 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
 
     // TODO: Warn on overflow, but probably not here: isIntegerConstantExpr can
     // be called multiple times per AST.
-    uint64_t Space[4]; 
+    uint64_t Space[4];
+    bool ignored;
     (void)FL->getValue().convertToInteger(Space, DestWidth, DestSigned,
-                                          llvm::APFloat::rmTowardZero);
+                                          llvm::APFloat::rmTowardZero,
+                                          &ignored);
     Result = llvm::APInt(DestWidth, 4, Space);
     break;
   }
