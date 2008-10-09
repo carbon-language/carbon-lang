@@ -1132,10 +1132,14 @@ void GRExprEngine::VisitCall(CallExpr* CE, NodeTy* Pred,
           case 5:
             if (!memcmp(s, "panic", 5)) Builder->BuildSinks = true;
             else if (!memcmp(s, "error", 5)) {
-              Expr* Arg = *CE->arg_begin();
-              if (IntegerLiteral* IL = dyn_cast<IntegerLiteral>(Arg))
-                if (IL->getValue() != 0)
+              if (CE->getNumArgs() > 0) {
+                RVal X = GetRVal(St, *CE->arg_begin());
+                // FIXME: use Assume to inspect the possible symbolic value of
+                // X. Also check the specific signature of error().
+                nonlval::ConcreteInt* CI = dyn_cast<nonlval::ConcreteInt>(&X);
+                if (CI && CI->getValue() != 0)
                   Builder->BuildSinks = true;
+              }
             }
             break;
           
