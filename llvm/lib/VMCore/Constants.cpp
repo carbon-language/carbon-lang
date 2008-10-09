@@ -373,7 +373,8 @@ ConstantFP *ConstantFP::get(const APFloat &V) {
 /// 2.0/1.0 etc, that are known-valid both as double and as the target format.
 ConstantFP *ConstantFP::get(const Type *Ty, double V) {
   APFloat FV(V);
-  FV.convert(*TypeToFloatSemantics(Ty), APFloat::rmNearestTiesToEven);
+  bool ignored;
+  FV.convert(*TypeToFloatSemantics(Ty), APFloat::rmNearestTiesToEven, &ignored);
   return get(FV);
 }
 
@@ -955,20 +956,25 @@ bool ConstantInt::isValueValidForType(const Type *Ty, int64_t Val) {
 bool ConstantFP::isValueValidForType(const Type *Ty, const APFloat& Val) {
   // convert modifies in place, so make a copy.
   APFloat Val2 = APFloat(Val);
+  bool losesInfo;
   switch (Ty->getTypeID()) {
   default:
     return false;         // These can't be represented as floating point!
 
   // FIXME rounding mode needs to be more flexible
-  case Type::FloatTyID:
-    return &Val2.getSemantics() == &APFloat::IEEEsingle ||
-           Val2.convert(APFloat::IEEEsingle, APFloat::rmNearestTiesToEven) == 
-              APFloat::opOK;
-  case Type::DoubleTyID:
-    return &Val2.getSemantics() == &APFloat::IEEEsingle || 
-           &Val2.getSemantics() == &APFloat::IEEEdouble ||
-           Val2.convert(APFloat::IEEEdouble, APFloat::rmNearestTiesToEven) == 
-             APFloat::opOK;
+  case Type::FloatTyID: {
+    if (&Val2.getSemantics() == &APFloat::IEEEsingle)
+      return true;
+    Val2.convert(APFloat::IEEEsingle, APFloat::rmNearestTiesToEven, &losesInfo);
+    return !losesInfo;
+  }
+  case Type::DoubleTyID: {
+    if (&Val2.getSemantics() == &APFloat::IEEEsingle ||
+        &Val2.getSemantics() == &APFloat::IEEEdouble)
+      return true;
+    Val2.convert(APFloat::IEEEdouble, APFloat::rmNearestTiesToEven, &losesInfo);
+    return !losesInfo;
+  }
   case Type::X86_FP80TyID:
     return &Val2.getSemantics() == &APFloat::IEEEsingle || 
            &Val2.getSemantics() == &APFloat::IEEEdouble ||

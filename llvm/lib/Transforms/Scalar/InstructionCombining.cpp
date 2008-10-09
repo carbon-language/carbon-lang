@@ -7856,8 +7856,10 @@ Instruction *InstCombiner::visitSExt(SExtInst &CI) {
 /// FitsInFPType - Return a Constant* for the specified FP constant if it fits
 /// in the specified FP type without changing its value.
 static Constant *FitsInFPType(ConstantFP *CFP, const fltSemantics &Sem) {
+  bool losesInfo;
   APFloat F = CFP->getValueAPF();
-  if (F.convert(Sem, APFloat::rmNearestTiesToEven) == APFloat::opOK)
+  (void)F.convert(Sem, APFloat::rmNearestTiesToEven, &losesInfo);
+  if (!losesInfo)
     return ConstantFP::get(F);
   return 0;
 }

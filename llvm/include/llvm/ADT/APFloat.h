@@ -216,9 +216,9 @@ namespace llvm {
     void copySign(const APFloat &);
 
     /* Conversions.  */
-    opStatus convert(const fltSemantics &, roundingMode);
+    opStatus convert(const fltSemantics &, roundingMode, bool *);
     opStatus convertToInteger(integerPart *, unsigned int, bool,
-                              roundingMode) const;
+                              roundingMode, bool *) const;
     opStatus convertFromAPInt(const APInt &,
                               bool, roundingMode);
     opStatus convertFromSignExtendedInteger(const integerPart *, unsigned int,
@@ -299,7 +299,7 @@ namespace llvm {
     opStatus handleOverflow(roundingMode);
     bool roundAwayFromZero(roundingMode, lostFraction, unsigned int) const;
     opStatus convertToSignExtendedInteger(integerPart *, unsigned int, bool,
-                                          roundingMode) const;
+                                          roundingMode, bool *) const;
     opStatus convertFromUnsignedParts(const integerPart *, unsigned int,
                                       roundingMode);
     opStatus convertFromHexadecimalString(const char *, roundingMode);

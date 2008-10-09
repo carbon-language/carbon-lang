@@ -832,12 +832,13 @@ void CWriter::printConstantVector(ConstantVector *CP, bool Static) {
 // only deal in IEEE FP).
 //
 static bool isFPCSafeToPrint(const ConstantFP *CFP) {
+  bool ignored;
   // Do long doubles in hex for now.
   if (CFP->getType()!=Type::FloatTy && CFP->getType()!=Type::DoubleTy)
     return false;
   APFloat APF = APFloat(CFP->getValueAPF());  // copy
   if (CFP->getType()==Type::FloatTy)
-    APF.convert(APFloat::IEEEdouble, APFloat::rmNearestTiesToEven);
+    APF.convert(APFloat::IEEEdouble, APFloat::rmNearestTiesToEven, &ignored);
 #if HAVE_PRINTF_A && ENABLE_CBE_PRINTF_A
   char Buffer[100];
   sprintf(Buffer, "%a", APF.convertToDouble());

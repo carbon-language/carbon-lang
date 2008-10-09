@@ -1000,8 +1000,11 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV) {
       // api needed to prevent premature destruction
       APInt api = CFP->getValueAPF().bitcastToAPInt();
       const uint64_t *p = api.getRawData();
+      // Convert to double so we can print the approximate val as a comment.
       APFloat DoubleVal = CFP->getValueAPF();
-      DoubleVal.convert(APFloat::IEEEdouble, APFloat::rmNearestTiesToEven);
+      bool ignored;
+      DoubleVal.convert(APFloat::IEEEdouble, APFloat::rmNearestTiesToEven,
+                        &ignored);
       if (TD->isBigEndian()) {
         O << TAI->getData16bitsDirective() << uint16_t(p[0] >> 48)
           << '\t' << TAI->getCommentString()

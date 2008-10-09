@@ -788,6 +788,7 @@ APFloat::multiplySignificand(const APFloat &rhs, const APFloat *addend)
   integerPart scratch[4];
   integerPart *fullSignificand;
   lostFraction lost_fraction;
+  bool ignored;
 
   assert(semantics == rhs.semantics);
 
@@ -836,7 +837,7 @@ APFloat::multiplySignificand(const APFloat &rhs, const APFloat *addend)
     semantics = &extendedSemantics;
 
     APFloat extendedAddend(*addend);
-    status = extendedAddend.convert(extendedSemantics, rmTowardZero);
+    status = extendedAddend.convert(extendedSemantics, rmTowardZero, &ignored);
     assert(status == opOK);
     lost_fraction = addOrSubtractSignificand(extendedAddend, false);
 
@@ -1528,8 +1529,9 @@ APFloat::mod(const APFloat &rhs, roundingMode rounding_mode)
 
   int parts = partCount();
   integerPart *x = new integerPart[parts];
+  bool ignored;
   fs = V.convertToInteger(x, parts * integerPartWidth, true,
-                          rmNearestTiesToEven);
+                          rmNearestTiesToEven, &ignored);
   if (fs==opInvalidOp)
     return fs;
 
@@ -1670,9 +1672,16 @@ APFloat::compare(const APFloat &rhs) const
   return result;
 }
 
+/// APFloat::convert - convert a value of one floating point type to another.
+/// The return value corresponds to the IEEE754 exceptions.  *losesInfo
+/// records whether the transformation lost information, i.e. whether
+/// converting the result back to the original type will produce the
+/// original value (this is almost the same as return value==fsOK, but there
+/// are edge cases where this is not so).
+
 APFloat::opStatus
 APFloat::convert(const fltSemantics &toSemantics,
-                 roundingMode rounding_mode)
+                 roundingMode rounding_mode, bool *losesInfo)
 {
   lostFraction lostFraction;
   unsigned int newPartCount, oldPartCount;
@@ -1718,38 +1727,41 @@ APFloat::convert(const fltSemantics &toSemantics,
     exponent += toSemantics.precision - semantics->precision;
     semantics = &toSemantics;
     fs = normalize(rounding_mode, lostFraction);
+    *losesInfo = (fs != opOK);
   } else if (category == fcNaN) {
     int shift = toSemantics.precision - semantics->precision;
     // Do this now so significandParts gets the right answer
     const fltSemantics *oldSemantics = semantics;
     semantics = &toSemantics;
-    fs = opOK;
+    *losesInfo = false;
     // No normalization here, just truncate
     if (shift>0)
       APInt::tcShiftLeft(significandParts(), newPartCount, shift);
     else if (shift < 0) {
       unsigned ushift = -shift;
-      // We mark this as Inexact if we are losing information.  This happens
+      // Figure out if we are losing information.  This happens
       // if are shifting out something other than 0s, or if the x87 long
       // double input did not have its integer bit set (pseudo-NaN), or if the
       // x87 long double input did not have its QNan bit set (because the x87
       // hardware sets this bit when converting a lower-precision NaN to
       // x87 long double).
       if (APInt::tcLSB(significandParts(), newPartCount) < ushift)
-        fs = opInexact;
+        *losesInfo = true;
       if (oldSemantics == &APFloat::x87DoubleExtended && 
           (!(*significandParts() & 0x8000000000000000ULL) ||
            !(*significandParts() & 0x4000000000000000ULL)))
-        fs = opInexact;
+        *losesInfo = true;
       APInt::tcShiftRight(significandParts(), newPartCount, ushift);
     }
     // gcc forces the Quiet bit on, which means (float)(double)(float_sNan)
     // does not give you back the same bits.  This is dubious, and we
     // don't currently do it.  You're really supposed to get
     // an invalid operation signal at runtime, but nobody does that.
+    fs = opOK;
   } else {
     semantics = &toSemantics;
     fs = opOK;
+    *losesInfo = false;
   }
 
   return fs;
@@ -1768,13 +1780,16 @@ APFloat::convert(const fltSemantics &toSemantics,
 APFloat::opStatus
 APFloat::convertToSignExtendedInteger(integerPart *parts, unsigned int width,
                                       bool isSigned,
-                                      roundingMode rounding_mode) const
+                                      roundingMode rounding_mode,
+                                      bool *isExact) const
 {
   lostFraction lost_fraction;
   const integerPart *src;
   unsigned int dstPartsCount, truncatedBits;
 
   assertArithmeticOK(*semantics);
+
+  *isExact = false;
 
   /* Handle the three special cases first.  */
   if(category == fcInfinity || category == fcNaN)
@@ -1785,7 +1800,8 @@ APFloat::convertToSignExtendedInteger(integerPart *parts, unsigned int width,
   if(category == fcZero) {
     APInt::tcSet(parts, 0, dstPartsCount);
     // Negative zero can't be represented as an int.
-    return sign ? opInexact : opOK;
+    *isExact = !sign;
+    return opOK;
   }
 
   src = significandParts();
@@ -1857,24 +1873,31 @@ APFloat::convertToSignExtendedInteger(integerPart *parts, unsigned int width,
       return opInvalidOp;
   }
 
-  if (lost_fraction == lfExactlyZero)
+  if (lost_fraction == lfExactlyZero) {
+    *isExact = true;
     return opOK;
-  else
+  } else
     return opInexact;
 }
 
 /* Same as convertToSignExtendedInteger, except we provide
    deterministic values in case of an invalid operation exception,
    namely zero for NaNs and the minimal or maximal value respectively
-   for underflow or overflow.  */
+   for underflow or overflow.
+   The *isExact output tells whether the result is exact, in the sense
+   that converting it back to the original floating point type produces
+   the original value.  This is almost equivalent to result==opOK,
+   except for negative zeroes.
+*/
 APFloat::opStatus
 APFloat::convertToInteger(integerPart *parts, unsigned int width,
                           bool isSigned,
-                          roundingMode rounding_mode) const
+                          roundingMode rounding_mode, bool *isExact) const
 {
   opStatus fs;
 
-  fs = convertToSignExtendedInteger(parts, width, isSigned, rounding_mode);
+  fs = convertToSignExtendedInteger(parts, width, isSigned, rounding_mode, 
+                                    isExact);
 
   if (fs == opInvalidOp) {
     unsigned int bits, dstPartsCount;

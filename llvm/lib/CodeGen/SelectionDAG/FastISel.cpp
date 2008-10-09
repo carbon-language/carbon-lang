@@ -93,8 +93,10 @@ unsigned FastISel::getRegForValue(Value *V) {
 
       uint64_t x[2];
       uint32_t IntBitWidth = IntVT.getSizeInBits();
-      if (!Flt.convertToInteger(x, IntBitWidth, /*isSigned=*/true,
-                                APFloat::rmTowardZero) != APFloat::opOK) {
+      bool isExact;
+      (void) Flt.convertToInteger(x, IntBitWidth, /*isSigned=*/true,
+                                APFloat::rmTowardZero, &isExact);
+      if (isExact) {
         APInt IntVal(IntBitWidth, 2, x);
 
         unsigned IntegerReg = getRegForValue(ConstantInt::get(IntVal));
@@ -711,8 +713,10 @@ unsigned FastISel::FastEmit_rf_(MVT::SimpleValueType VT, ISD::NodeType Opcode,
 
     uint64_t x[2];
     uint32_t IntBitWidth = IntVT.getSizeInBits();
-    if (Flt.convertToInteger(x, IntBitWidth, /*isSigned=*/true,
-                             APFloat::rmTowardZero) != APFloat::opOK)
+    bool isExact;
+    (void) Flt.convertToInteger(x, IntBitWidth, /*isSigned=*/true,
+                             APFloat::rmTowardZero, &isExact);
+    if (!isExact)
       return 0;
     APInt IntVal(IntBitWidth, 2, x);
 

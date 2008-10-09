@@ -84,8 +84,10 @@ bool ConstantFPSDNode::isValueValidForType(MVT VT,
   
   // convert modifies in place, so make a copy.
   APFloat Val2 = APFloat(Val);
-  return Val2.convert(*MVTToAPFloatSemantics(VT),
-                      APFloat::rmNearestTiesToEven) == APFloat::opOK;
+  bool losesInfo;
+  (void) Val2.convert(*MVTToAPFloatSemantics(VT), APFloat::rmNearestTiesToEven,
+                      &losesInfo);
+  return !losesInfo;
 }
 
 //===----------------------------------------------------------------------===//
@@ -118,7 +120,7 @@ bool ISD::isBuildVectorAllOnes(const SDNode *N) {
       return false;
   } else if (isa<ConstantFPSDNode>(NotZero)) {
     if (!cast<ConstantFPSDNode>(NotZero)->getValueAPF().
-                convertToAPInt().isAllOnesValue())
+                bitcastToAPInt().isAllOnesValue())
       return false;
   } else
     return false;
@@ -2124,29 +2126,32 @@ SDValue SelectionDAG::getNode(unsigned Opcode, MVT VT, SDValue Operand) {
         V.clearSign();
         return getConstantFP(V, VT);
       case ISD::FP_ROUND:
-      case ISD::FP_EXTEND:
+      case ISD::FP_EXTEND: {
+        bool ignored;
         // This can return overflow, underflow, or inexact; we don't care.
         // FIXME need to be more flexible about rounding mode.
         (void)V.convert(*MVTToAPFloatSemantics(VT),
-                        APFloat::rmNearestTiesToEven);
+                        APFloat::rmNearestTiesToEven, &ignored);
         return getConstantFP(V, VT);
+      }
       case ISD::FP_TO_SINT:
       case ISD::FP_TO_UINT: {
         integerPart x;
+        bool ignored;
         assert(integerPartWidth >= 64);
         // FIXME need to be more flexible about rounding mode.
         APFloat::opStatus s = V.convertToInteger(&x, 64U,
                               Opcode==ISD::FP_TO_SINT,
-                              APFloat::rmTowardZero);
+                              APFloat::rmTowardZero, &ignored);
         if (s==APFloat::opInvalidOp)     // inexact is OK, in fact usual
           break;
         return getConstant(x, VT);
       }
       case ISD::BIT_CONVERT:
         if (VT == MVT::i32 && C->getValueType(0) == MVT::f32)
-          return getConstant((uint32_t)V.convertToAPInt().getZExtValue(), VT);
+          return getConstant((uint32_t)V.bitcastToAPInt().getZExtValue(), VT);
         else if (VT == MVT::i64 && C->getValueType(0) == MVT::f64)
-          return getConstant(V.convertToAPInt().getZExtValue(), VT);
+          return getConstant(V.bitcastToAPInt().getZExtValue(), VT);
         break;
       }
     }
@@ -5245,7 +5250,7 @@ void SDNode::print(raw_ostream &OS, const SelectionDAG *G) const {
       OS << '<' << CSDN->getValueAPF().convertToDouble() << '>';
     else {
       OS << "<APFloat(";
-      CSDN->getValueAPF().convertToAPInt().dump();
+      CSDN->getValueAPF().bitcastToAPInt().dump();
       OS << ")>";
     }
   } else if (const GlobalAddressSDNode *GADN =

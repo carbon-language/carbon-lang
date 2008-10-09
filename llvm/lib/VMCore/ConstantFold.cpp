@@ -213,13 +213,14 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
   case Instruction::FPTrunc:
   case Instruction::FPExt:
     if (const ConstantFP *FPC = dyn_cast<ConstantFP>(V)) {
+      bool ignored;
       APFloat Val = FPC->getValueAPF();
       Val.convert(DestTy == Type::FloatTy ? APFloat::IEEEsingle :
                   DestTy == Type::DoubleTy ? APFloat::IEEEdouble :
                   DestTy == Type::X86_FP80Ty ? APFloat::x87DoubleExtended :
                   DestTy == Type::FP128Ty ? APFloat::IEEEquad :
                   APFloat::Bogus,
-                  APFloat::rmNearestTiesToEven);
+                  APFloat::rmNearestTiesToEven, &ignored);
       return ConstantFP::get(Val);
     }
     return 0; // Can't fold.
@@ -227,10 +228,11 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
   case Instruction::FPToSI:
     if (const ConstantFP *FPC = dyn_cast<ConstantFP>(V)) {
       const APFloat &V = FPC->getValueAPF();
+      bool ignored;
       uint64_t x[2]; 
       uint32_t DestBitWidth = cast<IntegerType>(DestTy)->getBitWidth();
       (void) V.convertToInteger(x, DestBitWidth, opc==Instruction::FPToSI,
-                                APFloat::rmTowardZero);
+                                APFloat::rmTowardZero, &ignored);
       APInt Val(DestBitWidth, 2, x);
       return ConstantInt::get(Val);
     }

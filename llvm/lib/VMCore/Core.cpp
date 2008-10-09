@@ -302,7 +302,9 @@ static const fltSemantics &SemanticsForType(Type *Ty) {
 
 LLVMValueRef LLVMConstReal(LLVMTypeRef RealTy, double N) {
   APFloat APN(N);
-  APN.convert(SemanticsForType(unwrap(RealTy)), APFloat::rmNearestTiesToEven);
+  bool ignored;
+  APN.convert(SemanticsForType(unwrap(RealTy)), APFloat::rmNearestTiesToEven,
+              &ignored);
   return wrap(ConstantFP::get(APN));
 }
 

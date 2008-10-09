@@ -498,9 +498,10 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
       else if (Op0->getType() == Type::X86_FP80Ty) {
         APFloat apf = APFloat(GV.IntVal);
         uint64_t v;
+        bool ignored;
         (void)apf.convertToInteger(&v, BitWidth,
                                    CE->getOpcode()==Instruction::FPToSI, 
-                                   APFloat::rmTowardZero);
+                                   APFloat::rmTowardZero, &ignored);
         GV.IntVal = v; // endian?
       }
       return GV;

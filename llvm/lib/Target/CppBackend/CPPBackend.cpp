@@ -218,9 +218,10 @@ namespace {
   // This makes sure that conversion to/from floating yields the same binary
   // result so that we don't lose precision.
   void CppWriter::printCFP(const ConstantFP *CFP) {
+    bool ignored;
     APFloat APF = APFloat(CFP->getValueAPF());  // copy
     if (CFP->getType() == Type::FloatTy)
-      APF.convert(APFloat::IEEEdouble, APFloat::rmNearestTiesToEven);
+      APF.convert(APFloat::IEEEdouble, APFloat::rmNearestTiesToEven, &ignored);
     Out << "ConstantFP::get(";
     Out << "APFloat(";
 #if HAVE_PRINTF_A

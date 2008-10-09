@@ -1756,12 +1756,13 @@ public:
   /// convenient to write "2.0" and the like.  Without this function we'd 
   /// have to duplicate its logic everywhere it's called.
   bool isExactlyValue(double V) const {
+    bool ignored;
     // convert is not supported on this type
     if (&Value->getValueAPF().getSemantics() == &APFloat::PPCDoubleDouble)
       return false;
     APFloat Tmp(V);
     Tmp.convert(Value->getValueAPF().getSemantics(),
-                APFloat::rmNearestTiesToEven);
+                APFloat::rmNearestTiesToEven, &ignored);
     return isExactlyValue(Tmp);
   }
   bool isExactlyValue(const APFloat& V) const;
