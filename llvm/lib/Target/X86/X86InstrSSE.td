@@ -3169,29 +3169,11 @@ def : Pat<(store (v16i8 VR128:$src), addr:$dst),
 // SSE4.1 Instructions
 //===----------------------------------------------------------------------===//
 
-multiclass sse41_fp_unop_rm<bits<8> opcss, bits<8> opcps, 
-                            bits<8> opcsd, bits<8> opcpd, 
+multiclass sse41_fp_unop_rm<bits<8> opcps, bits<8> opcpd,
                             string OpcodeStr,
-                            Intrinsic F32Int,
                             Intrinsic V4F32Int,
-                            Intrinsic F64Int,
                             Intrinsic V2F64Int> {
   // Intrinsic operation, reg.
-  def SSr_Int : SS4AIi8<opcss, MRMSrcReg,
-                    (outs VR128:$dst), (ins VR128:$src1, i32i8imm:$src2),
-                    !strconcat(OpcodeStr,
-                    "ss\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                    [(set VR128:$dst, (F32Int VR128:$src1, imm:$src2))]>,
-                    OpSize;
-
-  // Intrinsic operation, mem.
-  def SSm_Int : SS4AIi8<opcss, MRMSrcMem, 
-                    (outs VR128:$dst), (ins ssmem:$src1, i32i8imm:$src2),
-                    !strconcat(OpcodeStr, 
-                    "ss\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                    [(set VR128:$dst, (F32Int sse_load_f32:$src1, imm:$src2))]>,
-                    OpSize;
-
   // Vector intrinsic operation, reg
   def PSr_Int : SS4AIi8<opcps, MRMSrcReg, 
                     (outs VR128:$dst), (ins VR128:$src1, i32i8imm:$src2),
@@ -3207,22 +3189,6 @@ multiclass sse41_fp_unop_rm<bits<8> opcss, bits<8> opcps,
                     "ps\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                     [(set VR128:$dst,
                           (V4F32Int (memopv4f32 addr:$src1),imm:$src2))]>,
-                    OpSize;
-
-  // Intrinsic operation, reg.
-  def SDr_Int : SS4AIi8<opcsd, MRMSrcReg,
-                    (outs VR128:$dst), (ins VR128:$src1, i32i8imm:$src2),
-                    !strconcat(OpcodeStr,
-                    "sd\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                    [(set VR128:$dst, (F64Int VR128:$src1, imm:$src2))]>,
-                    OpSize;
-
-  // Intrinsic operation, mem.
-  def SDm_Int : SS4AIi8<opcsd, MRMSrcMem,
-                    (outs VR128:$dst), (ins sdmem:$src1, i32i8imm:$src2),
-                    !strconcat(OpcodeStr,
-                    "sd\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                    [(set VR128:$dst, (F64Int sse_load_f64:$src1, imm:$src2))]>,
                     OpSize;
 
   // Vector intrinsic operation, reg
@@ -3243,10 +3209,58 @@ multiclass sse41_fp_unop_rm<bits<8> opcss, bits<8> opcps,
                     OpSize;
 }
 
+let Constraints = "$src1 = $dst" in {
+multiclass sse41_fp_binop_rm<bits<8> opcss, bits<8> opcsd,
+                            string OpcodeStr,
+                            Intrinsic F32Int,
+                            Intrinsic F64Int> {
+  // Intrinsic operation, reg.
+  def SSr_Int : SS4AIi8<opcss, MRMSrcReg,
+                    (outs VR128:$dst), 
+                                 (ins VR128:$src1, VR128:$src2, i32i8imm:$src3),
+                    !strconcat(OpcodeStr,
+                    "ss\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
+                    [(set VR128:$dst, 
+                            (F32Int VR128:$src1, VR128:$src2, imm:$src3))]>,
+                    OpSize;
+
+  // Intrinsic operation, mem.
+  def SSm_Int : SS4AIi8<opcss, MRMSrcMem, 
+                    (outs VR128:$dst), 
+                                (ins VR128:$src1, ssmem:$src2, i32i8imm:$src3),
+                    !strconcat(OpcodeStr, 
+                    "ss\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
+                    [(set VR128:$dst, 
+                         (F32Int VR128:$src1, sse_load_f32:$src2, imm:$src3))]>,
+                    OpSize;
+
+  // Intrinsic operation, reg.
+  def SDr_Int : SS4AIi8<opcsd, MRMSrcReg,
+                    (outs VR128:$dst), 
+                            (ins VR128:$src1, VR128:$src2, i32i8imm:$src3),
+                    !strconcat(OpcodeStr,
+                    "sd\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
+                    [(set VR128:$dst, 
+                            (F64Int VR128:$src1, VR128:$src2, imm:$src3))]>,
+                    OpSize;
+
+  // Intrinsic operation, mem.
+  def SDm_Int : SS4AIi8<opcsd, MRMSrcMem,
+                    (outs VR128:$dst), 
+                            (ins VR128:$src1, sdmem:$src2, i32i8imm:$src3),
+                    !strconcat(OpcodeStr,
+                    "sd\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
+                    [(set VR128:$dst, 
+                        (F64Int VR128:$src1, sse_load_f64:$src2, imm:$src3))]>,
+                    OpSize;
+}
+}
+
 // FP round - roundss, roundps, roundsd, roundpd
-defm ROUND  : sse41_fp_unop_rm<0x0A, 0x08, 0x0B, 0x09, "round",
-                               int_x86_sse41_round_ss, int_x86_sse41_round_ps,
-                               int_x86_sse41_round_sd, int_x86_sse41_round_pd>;
+defm ROUND  : sse41_fp_unop_rm<0x08, 0x09, "round",
+                               int_x86_sse41_round_ps, int_x86_sse41_round_pd>;
+defm ROUND  : sse41_fp_binop_rm<0x0A, 0x0B, "round",
+                               int_x86_sse41_round_ss, int_x86_sse41_round_sd>;
 
 // SS41I_unop_rm_int_v16 - SSE 4.1 unary operator whose type is v8i16.
 multiclass SS41I_unop_rm_int_v16<bits<8> opc, string OpcodeStr,

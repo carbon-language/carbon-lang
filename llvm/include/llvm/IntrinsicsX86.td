@@ -685,13 +685,13 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
 // FP rounding ops
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_sse41_round_ss        : GCCBuiltin<"__builtin_ia32_roundss">,
-              Intrinsic<[llvm_v4f32_ty, llvm_v4f32_ty,
+              Intrinsic<[llvm_v4f32_ty, llvm_v4f32_ty, llvm_v4f32_ty,
                          llvm_i32_ty], [IntrNoMem]>;
   def int_x86_sse41_round_ps        : GCCBuiltin<"__builtin_ia32_roundps">,
               Intrinsic<[llvm_v4f32_ty, llvm_v4f32_ty,
                          llvm_i32_ty], [IntrNoMem]>;
   def int_x86_sse41_round_sd        : GCCBuiltin<"__builtin_ia32_roundsd">,
-              Intrinsic<[llvm_v2f64_ty, llvm_v2f64_ty,
+              Intrinsic<[llvm_v2f64_ty, llvm_v2f64_ty, llvm_v2f64_ty,
                          llvm_i32_ty], [IntrNoMem]>;
   def int_x86_sse41_round_pd        : GCCBuiltin<"__builtin_ia32_roundpd">,
               Intrinsic<[llvm_v2f64_ty, llvm_v2f64_ty,
