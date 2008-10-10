@@ -487,6 +487,9 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
   } else {
     Options.NeXTRuntime = Target->useNeXTRuntimeAsDefault();
   }
+
+  if (Options.CPlusPlus)
+    Options.Blocks = 0;   
 }
 
 static llvm::cl::opt<bool>
