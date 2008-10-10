@@ -489,6 +489,8 @@ void *JIT::getPointerToFunction(Function *F) {
   if (void *Addr = getPointerToGlobalIfAvailable(F))
     return Addr;   // Check if function already code gen'd
 
+  MutexGuard locked(lock);
+
   // Make sure we read in the function if it exists in this Module.
   if (F->hasNotBeenReadFromBitcode()) {
     // Determine the module provider this function is provided by.
@@ -509,13 +511,11 @@ void *JIT::getPointerToFunction(Function *F) {
       abort();
     }
   }
-  
+
   if (void *Addr = getPointerToGlobalIfAvailable(F)) {
     return Addr;
   }
 
-  MutexGuard locked(lock);
-  
   if (F->isDeclaration()) {
     void *Addr = getPointerToNamedFunction(F->getName());
     addGlobalMapping(F, Addr);
