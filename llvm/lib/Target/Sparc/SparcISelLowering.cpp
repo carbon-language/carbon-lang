@@ -21,6 +21,7 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SelectionDAG.h"
+#include "llvm/ADT/VectorExtras.h"
 using namespace llvm;
 
 
@@ -943,4 +944,55 @@ SparcTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
 
   F->DeleteMachineInstr(MI);   // The pseudo instruction is gone now.
   return BB;
+}
+
+//===----------------------------------------------------------------------===//
+//                         Sparc Inline Assembly Support
+//===----------------------------------------------------------------------===//
+
+/// getConstraintType - Given a constraint letter, return the type of
+/// constraint it is for this target.
+SparcTargetLowering::ConstraintType
+SparcTargetLowering::getConstraintType(const std::string &Constraint) const {
+  if (Constraint.size() == 1) {
+    switch (Constraint[0]) {
+    default:  break;
+    case 'r': return C_RegisterClass;
+    }
+  }
+
+  return TargetLowering::getConstraintType(Constraint);
+}
+
+std::pair<unsigned, const TargetRegisterClass*>
+SparcTargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
+                                                  MVT VT) const {
+  if (Constraint.size() == 1) {
+    switch (Constraint[0]) {
+    case 'r':
+      return std::make_pair(0U, SP::IntRegsRegisterClass);
+    }
+  }
+
+  return TargetLowering::getRegForInlineAsmConstraint(Constraint, VT);
+}
+
+std::vector<unsigned> SparcTargetLowering::
+getRegClassForInlineAsmConstraint(const std::string &Constraint,
+                                  MVT VT) const {
+  if (Constraint.size() != 1)
+    return std::vector<unsigned>();
+
+  switch (Constraint[0]) {
+  default: break;
+  case 'r':
+    return make_vector<unsigned>(SP::L0, SP::L1, SP::L2, SP::L3,
+                                 SP::L4, SP::L5, SP::L6, SP::L7,
+                                 SP::I0, SP::I1, SP::I2, SP::I3,
+                                 SP::I4, SP::I5,
+                                 SP::O0, SP::O1, SP::O2, SP::O3,
+                                 SP::O4, SP::O5, SP::O7, 0);
+  }
+
+  return std::vector<unsigned>();
 }
