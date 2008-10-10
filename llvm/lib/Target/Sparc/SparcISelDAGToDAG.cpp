@@ -45,6 +45,12 @@ public:
   bool SelectADDRri(SDValue Op, SDValue N, SDValue &Base,
                     SDValue &Offset);
 
+  /// SelectInlineAsmMemoryOperand - Implement addressing mode selection for
+  /// inline asm expressions.
+  virtual bool SelectInlineAsmMemoryOperand(const SDValue &Op,
+                                            char ConstraintCode,
+                                            std::vector<SDValue> &OutOps);
+
   /// InstructionSelect - This callback is invoked by
   /// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
   virtual void InstructionSelect();
@@ -183,6 +189,26 @@ SDNode *SparcDAGToDAGISel::Select(SDValue Op) {
   return SelectCode(Op);
 }
 
+
+/// SelectInlineAsmMemoryOperand - Implement addressing mode selection for
+/// inline asm expressions.
+bool
+SparcDAGToDAGISel::SelectInlineAsmMemoryOperand(const SDValue &Op,
+                                                char ConstraintCode,
+                                                std::vector<SDValue> &OutOps) {
+  SDValue Op0, Op1;
+  switch (ConstraintCode) {
+  default: return true;
+  case 'm':   // memory
+   if (!SelectADDRrr(Op, Op, Op0, Op1))
+     SelectADDRri(Op, Op, Op0, Op1);
+   break;
+  }
+
+  OutOps.push_back(Op0);
+  OutOps.push_back(Op1);
+  return false;
+}
 
 /// createSparcISelDag - This pass converts a legalized DAG into a
 /// SPARC-specific DAG, ready for instruction scheduling.
