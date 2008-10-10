@@ -267,6 +267,8 @@ class DeclContext {
   static To *CastTo(const From *D) {
     Decl::Kind DK = KindTrait<From>::getKind(D);
     switch(DK) {
+      case Decl::Block:
+        return static_cast<BlockDecl*>(const_cast<From*>(D));
       case Decl::TranslationUnit:
         return static_cast<TranslationUnitDecl*>(const_cast<From*>(D));
       case Decl::Namespace:

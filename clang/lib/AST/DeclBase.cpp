@@ -339,6 +339,8 @@ void Decl::Destroy(ASTContext& C) {
 DeclContext *DeclContext::getParent() const {
   if (ScopedDecl *SD = dyn_cast<ScopedDecl>(this))
     return SD->getDeclContext();
+  else if (BlockDecl *BD = dyn_cast<BlockDecl>(this))
+    return BD->getParentContext();
   else
     return NULL;
 }

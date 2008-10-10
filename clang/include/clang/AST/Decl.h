@@ -990,24 +990,30 @@ protected:
 class BlockDecl : public Decl, public DeclContext {
   llvm::SmallVector<ParmVarDecl*, 8> Args;
   Stmt *Body;
+  
+  // Since BlockDecl's aren't named/scoped, we need to store the context.
+  DeclContext *ParentContext;
 protected:
-  BlockDecl(DeclContext *DC, SourceLocation CaretLoc,
-            ParmVarDecl **args, unsigned numargs)
-    : Decl(Block, CaretLoc), DeclContext(Block), 
-      Args(args, args+numargs), Body(0) {}
+  BlockDecl(DeclContext *DC, SourceLocation CaretLoc)
+    : Decl(Block, CaretLoc), DeclContext(Block), Body(0), ParentContext(DC) {}
 
   virtual ~BlockDecl();
   virtual void Destroy(ASTContext& C);
 
 public:
-  static BlockDecl *Create(ASTContext &C, DeclContext *DC, SourceLocation L,
-                           ParmVarDecl **args, unsigned numargs);
+  static BlockDecl *Create(ASTContext &C, DeclContext *DC, SourceLocation L);
 
   SourceLocation getCaretLocation() const { return getLocation(); }
 
   Stmt *getBody() const { return Body; }
   void setBody(Stmt *B) { Body = B; }
 
+  void setArgs(ParmVarDecl **args, unsigned numargs) {
+    Args.clear(); 
+    Args.insert(Args.begin(), args, args+numargs);
+  }
+  DeclContext *getParentContext() { return ParentContext; }
+  
   /// arg_iterator - Iterate over the ParmVarDecl's for this block.
   typedef llvm::SmallVector<ParmVarDecl*, 8>::const_iterator param_iterator;
   bool param_empty() const { return Args.empty(); }
@@ -1016,7 +1022,7 @@ public:
     
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == Block; }
-  static bool classof(const TranslationUnitDecl *D) { return true; }  
+  static bool classof(const BlockDecl *D) { return true; }  
 
 protected:
   /// EmitImpl - Serialize this BlockDecl. Called by Decl::Emit.

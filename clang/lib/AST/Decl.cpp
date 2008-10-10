@@ -76,10 +76,9 @@ FunctionDecl *FunctionDecl::Create(ASTContext &C, DeclContext *DC,
                                 TypeSpecStartLoc);
 }
 
-BlockDecl *BlockDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L, 
-                             ParmVarDecl **args, unsigned numargs) {
+BlockDecl *BlockDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L) {
   void *Mem = C.getAllocator().Allocate<BlockDecl>();
-  return new (Mem) BlockDecl(DC, L, args, numargs);
+  return new (Mem) BlockDecl(DC, L);
 }
 
 FieldDecl *FieldDecl::Create(ASTContext &C, SourceLocation L,

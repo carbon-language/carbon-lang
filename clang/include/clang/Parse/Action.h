@@ -538,8 +538,11 @@ public:
 
   /// ActOnBlockStart - This callback is invoked when a block literal is
   /// started.  The result pointer is passed into the block finalizers.
-  virtual void ActOnBlockStart(SourceLocation CaretLoc, Scope *CurScope,
-                               Declarator &ParamInfo) {}
+  virtual void ActOnBlockStart(SourceLocation CaretLoc, Scope *CurScope) {}
+
+  /// ActOnBlockArguments - This callback allows processing of block arguments.
+  /// If there are no arguments, this is still invoked.
+  virtual void ActOnBlockArguments(Declarator &ParamInfo) {}
   
   /// ActOnBlockError - If there is an error parsing a block, this callback
   /// is invoked to pop the information about the block from the action impl.

@@ -1094,6 +1094,9 @@ Parser::ExprResult Parser::ParseBlockLiteralExpression() {
   // within or outside of the block.
   EnterScope(Scope::BlockScope|Scope::FnScope|Scope::BreakScope|
              Scope::ContinueScope|Scope::DeclScope);
+
+  // Inform sema that we are starting a block.
+  Actions.ActOnBlockStart(CaretLoc, CurScope);
   
   // Parse the return type if present.
   DeclSpec DS;
@@ -1119,7 +1122,7 @@ Parser::ExprResult Parser::ParseBlockLiteralExpression() {
   }
 
   // Inform sema that we are starting a block.
-  Actions.ActOnBlockStart(CaretLoc, CurScope, ParamInfo);
+  Actions.ActOnBlockArguments(ParamInfo);
   
   ExprResult Result = true;
   if (Tok.is(tok::l_brace)) {

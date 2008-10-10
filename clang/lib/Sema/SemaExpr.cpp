@@ -309,34 +309,6 @@ Sema::ActOnStringLiteral(const Token *StringToks, unsigned NumStringToks) {
                            StringToks[NumStringToks-1].getLocation());
 }
 
-/// DeclDefinedWithinScope - Return true if the specified decl is defined at or
-/// within the 'Within' scope.  The current Scope is CurScope.
-///
-/// FIXME: This method is extremely inefficient (linear scan), this should not
-/// be used in common cases. Replace with the more modern DeclContext. We need
-/// to make sure both assignments below produce an error.
-///
-/// int main(int argc) {
-///   int xx;
-///   ^(int X) {
-///     xx = 4; // error (variable is not assignable)
-///     argc = 3; // no error.
-///   };
-/// }
-///
-static bool DeclDefinedWithinScope(ScopedDecl *D, Scope *Within,
-                                   Scope *CurScope) {
-  while (1) {
-    assert(CurScope && "CurScope not nested within 'Within'?");
-
-    // Check this scope for the decl.
-    if (CurScope->isDeclScope(D)) return true;
-    
-    if (CurScope == Within) return false;
-    CurScope = CurScope->getParent();
-  }
-}
-
 /// ActOnIdentifierExpr - The parser read an identifier in expression context,
 /// validate it per-C99 6.5.1.  HasTrailingLParen indicates whether this
 /// identifier is used in a function call context.
@@ -372,17 +344,6 @@ Sema::ExprResult Sema::ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
                      getCurMethodDecl()->getClassInterface()));
       return new PredefinedExpr(Loc, T, PredefinedExpr::ObjCSuper);
     }
-  }
-  // If we are parsing a block, check the block parameter list.
-  if (CurBlock) {
-    BlockSemaInfo *BLK = CurBlock;
-    do {
-      for (unsigned i = 0, e = BLK->Params.size(); i != e && D == 0; ++i)
-        if (BLK->Params[i]->getIdentifier() == &II)
-          D = BLK->Params[i];
-      if (D) 
-        break; // Found!
-    } while ((BLK = BLK->PrevBlockInfo));  // Look through any enclosing blocks.
   }
   if (D == 0) {
     // Otherwise, this could be an implicitly declared function reference (legal
@@ -437,27 +398,26 @@ Sema::ExprResult Sema::ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
   if (VD->isInvalidDecl())
     return true;
     
-  // If this reference is not in a block or if the referenced variable is
-  // within the block, create a normal DeclRefExpr.
-  //
   // FIXME: This will create BlockDeclRefExprs for global variables,
   // function references, etc which is suboptimal :) and breaks
   // things like "integer constant expression" tests.
   //
-  if (!CurBlock || DeclDefinedWithinScope(VD, CurBlock->TheScope, S) ||
-      isa<EnumConstantDecl>(VD) || isa<ParmVarDecl>(VD))
-    return new DeclRefExpr(VD, VD->getType(), Loc);
-  
-  // If we are in a block and the variable is outside the current block,
-  // bind the variable reference with a BlockDeclRefExpr.
-  
-  // The BlocksAttr indicates the variable is bound by-reference.
-  if (VD->getAttr<BlocksAttr>())
-    return new BlockDeclRefExpr(VD, VD->getType(), Loc, true);
+  if (CurBlock && (CurBlock->TheDecl != VD->getDeclContext()) &&
+      !isa<EnumConstantDecl>(VD)) {
+    // If we are in a block and the variable is outside the current block,
+    // bind the variable reference with a BlockDeclRefExpr.
     
-  // Variable will be bound by-copy, make it const within the closure.
-  VD->getType().addConst();
-  return new BlockDeclRefExpr(VD, VD->getType(), Loc, false);
+    // The BlocksAttr indicates the variable is bound by-reference.
+    if (VD->getAttr<BlocksAttr>())
+      return new BlockDeclRefExpr(VD, VD->getType(), Loc, true);
+      
+    // Variable will be bound by-copy, make it const within the closure.
+    VD->getType().addConst();
+    return new BlockDeclRefExpr(VD, VD->getType(), Loc, false);
+  }
+  // If this reference is not in a block or if the referenced variable is
+  // within the block, create a normal DeclRefExpr.
+  return new DeclRefExpr(VD, VD->getType(), Loc);
 }
 
 Sema::ExprResult Sema::ActOnPredefinedExpr(SourceLocation Loc,
@@ -2856,8 +2816,7 @@ Sema::ExprResult Sema::ActOnChooseExpr(SourceLocation BuiltinLoc, ExprTy *cond,
 //===----------------------------------------------------------------------===//
 
 /// ActOnBlockStart - This callback is invoked when a block literal is started.
-void Sema::ActOnBlockStart(SourceLocation CaretLoc, Scope *BlockScope,
-                           Declarator &ParamInfo) {
+void Sema::ActOnBlockStart(SourceLocation CaretLoc, Scope *BlockScope) {
   // Analyze block parameters.
   BlockSemaInfo *BSI = new BlockSemaInfo();
   
@@ -2868,13 +2827,18 @@ void Sema::ActOnBlockStart(SourceLocation CaretLoc, Scope *BlockScope,
   BSI->ReturnType = 0;
   BSI->TheScope = BlockScope;
   
+  BSI->TheDecl = BlockDecl::Create(Context, CurContext, CaretLoc);
+  PushDeclContext(BSI->TheDecl);
+}
+
+void Sema::ActOnBlockArguments(Declarator &ParamInfo) {
   // Analyze arguments to block.
   assert(ParamInfo.getTypeObject(0).Kind == DeclaratorChunk::Function &&
          "Not a function declarator!");
   DeclaratorChunk::FunctionTypeInfo &FTI = ParamInfo.getTypeObject(0).Fun;
   
-  BSI->hasPrototype = FTI.hasPrototype;
-  BSI->isVariadic = true;
+  CurBlock->hasPrototype = FTI.hasPrototype;
+  CurBlock->isVariadic = true;
   
   // Check for C99 6.7.5.3p10 - foo(void) is a non-varargs function that takes
   // no arguments, not a function that takes a single void argument.
@@ -2883,14 +2847,19 @@ void Sema::ActOnBlockStart(SourceLocation CaretLoc, Scope *BlockScope,
       (!((ParmVarDecl *)FTI.ArgInfo[0].Param)->getType().getCVRQualifiers() &&
         ((ParmVarDecl *)FTI.ArgInfo[0].Param)->getType()->isVoidType())) {
     // empty arg list, don't push any params.
-    BSI->isVariadic = false;
+    CurBlock->isVariadic = false;
   } else if (FTI.hasPrototype) {
     for (unsigned i = 0, e = FTI.NumArgs; i != e; ++i)
-      BSI->Params.push_back((ParmVarDecl *)FTI.ArgInfo[i].Param);
-    BSI->isVariadic = FTI.isVariadic;
+      CurBlock->Params.push_back((ParmVarDecl *)FTI.ArgInfo[i].Param);
+    CurBlock->isVariadic = FTI.isVariadic;
   }
-  BSI->TheDecl = BlockDecl::Create(Context, CurContext, CaretLoc,
-                                   &BSI->Params[0], BSI->Params.size());
+  CurBlock->TheDecl->setArgs(&CurBlock->Params[0], CurBlock->Params.size());
+  
+  for (BlockDecl::param_iterator AI = CurBlock->TheDecl->param_begin(),
+       E = CurBlock->TheDecl->param_end(); AI != E; ++AI)
+    // If this has an identifier, add it to the scope stack.
+    if ((*AI)->getIdentifier())
+      PushOnScopeChains(*AI, CurBlock->TheScope);
 }
 
 /// ActOnBlockError - If there is an error parsing a block, this callback
@@ -2913,6 +2882,8 @@ Sema::ExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc, StmtTy *body,
   // Ensure that CurBlock is deleted.
   llvm::OwningPtr<BlockSemaInfo> BSI(CurBlock);
   llvm::OwningPtr<CompoundStmt> Body(static_cast<CompoundStmt*>(body));
+
+  PopDeclContext();
 
   // Pop off CurBlock, handle nested blocks.
   CurBlock = CurBlock->PrevBlockInfo;
