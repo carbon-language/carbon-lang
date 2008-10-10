@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_ANALYSIS_LOOPVR_H
-#define LLVM_ANALYSIS_LOOPVR_H
+#ifndef LLVM_ANALYSIS_ESCAPEANALYSIS_H
+#define LLVM_ANALYSIS_ESCAPEANALYSIS_H
 
 #include "llvm/Pass.h"
 #include "llvm/Instructions.h"
