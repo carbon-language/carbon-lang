@@ -382,14 +382,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
   }
   
   // See if we have a target specific builtin that needs to be lowered.
-  Value *V = 0;
-  
-  if (strcmp(TargetPrefix, "x86") == 0)
-    V = EmitX86BuiltinExpr(BuiltinID, E);
-  else if (strcmp(TargetPrefix, "ppc") == 0)
-    V = EmitPPCBuiltinExpr(BuiltinID, E);
-  
-  if (V)
+  if (Value *V = EmitTargetBuiltinExpr(BuiltinID, E))
     return RValue::get(V);
   
   ErrorUnsupported(E, "builtin function");
@@ -399,6 +392,16 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
     return RValue::getAggregate(CreateTempAlloca(ConvertType(E->getType())));
   return RValue::get(UndefValue::get(ConvertType(E->getType())));
 }    
+
+Value *CodeGenFunction::EmitTargetBuiltinExpr(unsigned BuiltinID,
+                                              const CallExpr *E) {
+  const char *TargetPrefix = Target.getTargetPrefix();
+  if (strcmp(TargetPrefix, "x86") == 0)
+    return EmitX86BuiltinExpr(BuiltinID, E);
+  else if (strcmp(TargetPrefix, "ppc") == 0)
+    return EmitPPCBuiltinExpr(BuiltinID, E);
+  return 0;
+}
 
 Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID, 
                                            const CallExpr *E) {
