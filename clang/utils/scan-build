@@ -93,7 +93,7 @@ my %AvailableAnalyses;
 
 # Query clang for analysis options.
 open(PIPE, "-|", $Clang, "--help") or
-  DieDiag("Cannot execute '$Clang'");
+  DieDiag("Cannot execute '$Clang'\n");
 
 my $FoundAnalysis = 0;
 
@@ -199,7 +199,7 @@ sub GetHTMLRunDir {
     }
 
     if ($TmpMode) {
-      DieDiag("The directory '/tmp' does not exist or cannot be accessed.");
+      DieDiag("The directory '/tmp' does not exist or cannot be accessed.\n");
     }
 
     # $Dir does not exist.  It will be automatically created by the 
