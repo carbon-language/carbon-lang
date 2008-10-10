@@ -183,6 +183,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\lib\AST\DeclGroup.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\AST\DeclObjC.cpp"
 				>
 			</File>
