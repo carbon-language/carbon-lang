@@ -1,6 +1,4 @@
 ; RUN: llvm-as < %s | llc
-; XFAIL: sparc-sun-solaris2
-; PR1557
 
         %struct..0anon = type { [100 x i32] }
 
