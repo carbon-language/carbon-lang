@@ -1246,21 +1246,17 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
         break;
       case '|':
         ++LastEmitted;  // consume '|' character.
-        if (CurVariant == -1) {
-          cerr << "Found '|' character outside of variant in inline asm "
-               << "string: '" << AsmStr << "'\n";
-          exit(1);
-        }
-        ++CurVariant;   // We're in the next variant.
+        if (CurVariant == -1)
+          O << '|';       // this is gcc's behavior for | outside a variant
+        else
+          ++CurVariant;   // We're in the next variant.
         break;
       case ')':         // $) -> same as GCC's } char.
         ++LastEmitted;  // consume ')' character.
-        if (CurVariant == -1) {
-          cerr << "Found '}' character outside of variant in inline asm "
-               << "string: '" << AsmStr << "'\n";
-          exit(1);
-        }
-        CurVariant = -1;
+        if (CurVariant == -1)
+          O << '}';     // this is gcc's behavior for } outside a variant
+        else 
+          CurVariant = -1;
         break;
       }
       if (Done) break;
