@@ -740,7 +740,7 @@ void RewriteBlocks::RewriteBlockDeclRefExpr(BlockDeclRefExpr *BDRE) {
 
 void RewriteBlocks::RewriteBlockPointerFunctionArgs(FunctionDecl *FD) {
   SourceLocation DeclLoc = FD->getLocation();
-  unsigned parenCount = 0, nArgs = 0;
+  unsigned parenCount = 0;
   
   // We have 1 or more arguments that have closure pointers.
   const char *startBuf = SM->getCharacterData(DeclLoc);
@@ -750,63 +750,23 @@ void RewriteBlocks::RewriteBlockPointerFunctionArgs(FunctionDecl *FD) {
   
   parenCount++;
   // advance the location to startArgList.
-  DeclLoc = DeclLoc.getFileLocWithOffset(startArgList-startBuf+1);
+  DeclLoc = DeclLoc.getFileLocWithOffset(startArgList-startBuf);
   assert((DeclLoc.isValid()) && "Invalid DeclLoc");
   
-  const char *topLevelCommaCursor = 0;
   const char *argPtr = startArgList;
-  bool scannedBlockDecl = false;
-  std::string Tag = "struct __block_impl *";
   
   while (*argPtr++ && parenCount) {
     switch (*argPtr) {
       case '^': 
-        scannedBlockDecl = true; 
+        // Replace the '^' with '*'.
+        DeclLoc = DeclLoc.getFileLocWithOffset(argPtr-startArgList);
+        ReplaceText(DeclLoc, 1, "*", 1);
         break;
       case '(': 
         parenCount++; 
         break;
       case ')': 
         parenCount--;
-        if (parenCount == 0) {
-          if (scannedBlockDecl) {
-            // If we are rewriting a definition, don't forget the arg name.
-            if (FD->getBody())
-              Tag += FD->getParamDecl(nArgs)->getName();
-            // The last argument is a closure pointer decl, rewrite it!
-            if (topLevelCommaCursor)
-              ReplaceText(DeclLoc, argPtr-topLevelCommaCursor-2, Tag.c_str(), Tag.size());
-            else
-              ReplaceText(DeclLoc, argPtr-startArgList-1, Tag.c_str(), Tag.size());
-            scannedBlockDecl = false; // reset.
-          }
-          nArgs++;
-        }
-        break;
-      case ',':
-        if (parenCount == 1) {
-          // Make sure the function takes more than one argument.
-          assert((FD->getNumParams() > 1) && "Rewriter fuzzy parser confused");
-          if (scannedBlockDecl) {
-            // If we are rewriting a definition, don't forget the arg name.
-            if (FD->getBody())
-              Tag += FD->getParamDecl(nArgs)->getName();
-            // The current argument is a closure pointer decl, rewrite it!
-            if (topLevelCommaCursor)
-              ReplaceText(DeclLoc, argPtr-topLevelCommaCursor-1, Tag.c_str(), Tag.size());
-            else
-              ReplaceText(DeclLoc, argPtr-startArgList-1, Tag.c_str(), Tag.size());
-            scannedBlockDecl = false;
-          }
-          nArgs++;
-          // advance the location to topLevelCommaCursor.
-          if (topLevelCommaCursor)
-            DeclLoc = DeclLoc.getFileLocWithOffset(argPtr-topLevelCommaCursor);
-          else
-            DeclLoc = DeclLoc.getFileLocWithOffset(argPtr-startArgList+1);
-          topLevelCommaCursor = argPtr;
-          assert((DeclLoc.isValid()) && "Invalid DeclLoc");
-        }
         break;
     }
   }
