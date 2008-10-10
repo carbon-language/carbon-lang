@@ -24,6 +24,7 @@
 #include "llvm/Target/TargetMachineRegistry.h"
 #include "llvm/Support/SystemUtils.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Config/config.h"
 #include <fstream>
@@ -189,7 +190,13 @@ bool LTOBugPoint::assembleBitcode(llvm::Module *M, const char *AsmFileName) {
   CGPasses->add(new TargetData(*Target->getTargetData()));
   MachineCodeEmitter* mce = NULL;
 
-  std::ofstream *Out = new std::ofstream(AsmFileName, std::ios::out);
+  std::string error;
+  raw_ostream *Out = new raw_fd_ostream(AsmFileName, error);
+  if (!error.empty()) {
+    std::cerr << error << '\n';
+    delete Out;
+    return false;
+  }
 
   switch (Target->addPassesToEmitFile(*CGPasses, *Out,
                                       TargetMachine::AssemblyFile, true)) {
