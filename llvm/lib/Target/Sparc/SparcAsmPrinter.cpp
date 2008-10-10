@@ -315,8 +315,15 @@ void SparcAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
 bool SparcAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
                                       unsigned AsmVariant,
                                       const char *ExtraCode) {
-  if (ExtraCode && ExtraCode[0])
-    return true;  // Unknown modifier
+  if (ExtraCode && ExtraCode[0]) {
+    if (ExtraCode[1] != 0) return true; // Unknown modifier.
+
+    switch (ExtraCode[0]) {
+    default: return true;  // Unknown modifier.
+    case 'r':
+     break;
+    }
+  }
 
   printOperand(MI, OpNo);
 
