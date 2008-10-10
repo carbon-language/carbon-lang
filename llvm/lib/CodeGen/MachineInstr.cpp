@@ -164,6 +164,11 @@ bool MachineOperand::isIdenticalTo(const MachineOperand &Other) const {
 /// print - Print the specified machine operand.
 ///
 void MachineOperand::print(std::ostream &OS, const TargetMachine *TM) const {
+  raw_os_ostream RawOS(OS);
+  print(RawOS, TM);
+}
+
+void MachineOperand::print(raw_ostream &OS, const TargetMachine *TM) const {
   switch (getType()) {
   case MachineOperand::MO_Register:
     if (getReg() == 0 || TargetRegisterInfo::isVirtualRegister(getReg())) {
@@ -768,6 +773,11 @@ void MachineInstr::dump() const {
 }
 
 void MachineInstr::print(std::ostream &OS, const TargetMachine *TM) const {
+  raw_os_ostream RawOS(OS);
+  print(RawOS, TM);
+}
+
+void MachineInstr::print(raw_ostream &OS, const TargetMachine *TM) const {
   // Specialize printing if op#0 is definition
   unsigned StartOp = 0;
   if (getNumOperands() && getOperand(0).isReg() && getOperand(0).isDef()) {
@@ -810,8 +820,7 @@ void MachineInstr::print(std::ostream &OS, const TargetMachine *TM) const {
       else if (!V->getName().empty())
         OS << V->getName();
       else if (const PseudoSourceValue *PSV = dyn_cast<PseudoSourceValue>(V)) {
-        raw_os_ostream OSS(OS);
-        PSV->print(OSS);
+        PSV->print(OS);
       } else
         OS << V;
 
