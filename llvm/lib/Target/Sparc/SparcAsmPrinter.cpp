@@ -65,6 +65,10 @@ namespace {
     bool runOnMachineFunction(MachineFunction &F);
     bool doInitialization(Module &M);
     bool doFinalization(Module &M);
+    bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
+                       unsigned AsmVariant, const char *ExtraCode);
+    bool PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
+                             unsigned AsmVariant, const char *ExtraCode);
   };
 } // end of anonymous namespace
 
@@ -213,8 +217,6 @@ void SparcAsmPrinter::printCCOperand(const MachineInstr *MI, int opNum) {
   O << SPARCCondCodeToString((SPCC::CondCodes)CC);
 }
 
-
-
 bool SparcAsmPrinter::doInitialization(Module &M) {
   Mang = new Mangler(M);
   return false; // success
@@ -306,4 +308,31 @@ void SparcAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
 
   O << name << ":\n";
   EmitGlobalConstant(C);
+}
+
+/// PrintAsmOperand - Print out an operand for an inline asm expression.
+///
+bool SparcAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
+                                      unsigned AsmVariant,
+                                      const char *ExtraCode) {
+  if (ExtraCode && ExtraCode[0])
+    return true;  // Unknown modifier
+
+  printOperand(MI, OpNo);
+
+  return false;
+}
+
+bool SparcAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
+                                            unsigned OpNo,
+                                            unsigned AsmVariant,
+                                            const char *ExtraCode) {
+  if (ExtraCode && ExtraCode[0])
+    return true;  // Unknown modifier
+
+  O << '[';
+  printMemOperand(MI, OpNo);
+  O << ']';
+
+  return false;
 }
