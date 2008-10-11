@@ -85,6 +85,11 @@ It includes a large number of features and refinements from LLVM 2.3.</p>
 
 <ul>
 <li>....</li>
+
+<li>... Attributes changes ... </li>
+
+<li>The <tt>DbgStopPointInst</tt> methods <tt>getDirectory</tt> and <tt>getFileName</tt> now return <tt>Value*</tt> instead of strings. These can be converted to strings using <tt>llvm::GetConstantStringInfo</tt> defined via "llvm/Analysis/ValueTracking.h".
+
 </ul>
 </div>
 
