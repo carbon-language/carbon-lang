@@ -458,7 +458,6 @@ public:
   /// @param numBits the bitwidth of the result
   /// @param loBitsSet the number of low-order bits set in the result.
   /// @brief Get a value with low bits set
-  // XXX why isn't this inlining?
   static APInt getLowBitsSet(uint32_t numBits, uint32_t loBitsSet) {
     assert(loBitsSet <= numBits && "Too many bits to set!");
     // Handle a degenerate case, to avoid shifting by word size
@@ -466,7 +465,7 @@ public:
       return APInt(numBits, 0);
     if (loBitsSet == APINT_BITS_PER_WORD)
       return APInt(numBits, -1ULL);
-    // For small values, return quickly
+    // For small values, return quickly.
     if (numBits < APINT_BITS_PER_WORD)
       return APInt(numBits, (1ULL << loBitsSet) - 1);
     return (~APInt(numBits, 0)).lshr(numBits - loBitsSet);
