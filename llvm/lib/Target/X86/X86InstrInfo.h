@@ -221,7 +221,14 @@ namespace X86II {
     LOCKShift = 19,
     LOCK = 1 << LOCKShift,
 
-    // Bits 20 -> 23 are unused
+    // Segment override prefixes. Currently we just need ability to address
+    // stuff in gs and fs segments.
+    SegOvrShift = 20,
+    SegOvrMask  = 3 << SegOvrShift,
+    FS          = 1 << SegOvrShift,
+    GS          = 2 << SegOvrShift,
+
+    // Bits 22 -> 23 are unused
     OpcodeShift   = 24,
     OpcodeMask    = 0xFF << OpcodeShift
   };

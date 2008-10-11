@@ -412,6 +412,16 @@ void Emitter::emitInstruction(const MachineInstr &MI,
   // Emit the lock opcode prefix as needed.
   if (Desc->TSFlags & X86II::LOCK) MCE.emitByte(0xF0);
 
+  // Emit segment overrid opcode prefix as needed.
+  switch (Desc->TSFlags & X86II::SegOvrMask) {
+  case X86II::FS:
+    MCE.emitByte(0x64);
+    break;
+  case X86II::GS:
+    MCE.emitByte(0x65);
+    break;
+  }
+
   // Emit the repeat opcode prefix as needed.
   if ((Desc->TSFlags & X86II::Op0Mask) == X86II::REP) MCE.emitByte(0xF3);
 

@@ -116,6 +116,7 @@ def X86InstrInfo : InstrInfo {
                        "ImmTypeBits",
                        "FPFormBits",
                        "hasLockPrefix",
+                       "SegOvrBits",
                        "Opcode"];
   let TSFlagsShifts = [0,
                        6,
@@ -125,6 +126,7 @@ def X86InstrInfo : InstrInfo {
                        13,
                        16,
                        19,
+                       20,
                        24];
 }
 
