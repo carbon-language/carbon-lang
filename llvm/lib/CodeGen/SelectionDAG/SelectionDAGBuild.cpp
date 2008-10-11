@@ -1014,7 +1014,7 @@ void SelectionDAGLowering::FindMergedConditions(Value *Cond,
     
     // If the leaf of the tree is a comparison, merge the condition into 
     // the caseblock.
-    if ((isa<ICmpInst>(Cond) || isa<FCmpInst>(Cond)) &&
+    if (isa<CmpInst>(Cond) &&
         // The operands of the cmp have to be in this block.  We don't know
         // how to export them from some other block.  If this is the first block
         // of the sequence, no exporting is needed.
