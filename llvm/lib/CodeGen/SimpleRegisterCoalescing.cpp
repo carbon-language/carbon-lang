@@ -465,7 +465,7 @@ bool SimpleRegisterCoalescing::ReMaterializeTrivialDef(LiveInterval &SrcInt,
   MachineBasicBlock *MBB = CopyMI->getParent();
   tii_->reMaterialize(*MBB, MII, DstReg, DefMI);
   MachineInstr *NewMI = prior(MII);
-  // CopyMI may have implicit instructions, transfer them over to the newly
+  // CopyMI may have implicit operands, transfer them over to the newly
   // rematerialized instruction. And update implicit def interval valnos.
   for (unsigned i = CopyMI->getDesc().getNumOperands(),
          e = CopyMI->getNumOperands(); i != e; ++i) {
