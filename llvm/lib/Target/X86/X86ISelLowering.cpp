@@ -1501,7 +1501,7 @@ SDValue X86TargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
       MF.getInfo<X86MachineFunctionInfo>()->setTCReturnAddrDelta(FPDiff);
   }
 
-  Chain = DAG.getCALLSEQ_START(Chain, DAG.getIntPtrConstant(NumBytes));
+  Chain = DAG.getCALLSEQ_START(Chain, DAG.getIntPtrConstant(NumBytes, true));
 
   SDValue RetAddrFrIdx;
   // Load return adress for tail calls.
@@ -1717,8 +1717,8 @@ SDValue X86TargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
 
   if (IsTailCall) {
     Ops.push_back(Chain);
-    Ops.push_back(DAG.getIntPtrConstant(NumBytes));
-    Ops.push_back(DAG.getIntPtrConstant(0));
+    Ops.push_back(DAG.getIntPtrConstant(NumBytes, true));
+    Ops.push_back(DAG.getIntPtrConstant(0, true));
     if (InFlag.getNode())
       Ops.push_back(InFlag);
     Chain = DAG.getNode(ISD::CALLSEQ_END, NodeTys, &Ops[0], Ops.size());
@@ -1780,8 +1780,9 @@ SDValue X86TargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
   
   // Returns a flag for retval copy to use.
   Chain = DAG.getCALLSEQ_END(Chain,
-                             DAG.getIntPtrConstant(NumBytes),
-                             DAG.getIntPtrConstant(NumBytesForCalleeToPush),
+                             DAG.getIntPtrConstant(NumBytes, true),
+                             DAG.getIntPtrConstant(NumBytesForCalleeToPush,
+                                                   true),
                              InFlag);
   InFlag = Chain.getValue(1);
 
@@ -5115,7 +5116,7 @@ X86TargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op,
   MVT IntPtr = getPointerTy();
   MVT SPTy = Subtarget->is64Bit() ? MVT::i64 : MVT::i32;
 
-  Chain = DAG.getCALLSEQ_START(Chain, DAG.getIntPtrConstant(0));
+  Chain = DAG.getCALLSEQ_START(Chain, DAG.getIntPtrConstant(0, true));
 
   Chain = DAG.getCopyToReg(Chain, X86::EAX, Size, Flag);
   Flag = Chain.getValue(1);
@@ -5130,8 +5131,8 @@ X86TargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op,
   Flag = Chain.getValue(1);
 
   Chain = DAG.getCALLSEQ_END(Chain,
-                             DAG.getIntPtrConstant(0),
-                             DAG.getIntPtrConstant(0),
+                             DAG.getIntPtrConstant(0, true),
+                             DAG.getIntPtrConstant(0, true),
                              Flag);
 
   Chain = DAG.getCopyFromReg(Chain, X86StackPtr, SPTy).getValue(1);
