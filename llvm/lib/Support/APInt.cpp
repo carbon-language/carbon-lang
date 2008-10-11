@@ -50,6 +50,12 @@ void APInt::initSlowCase(uint32_t numBits, uint64_t val, bool isSigned) {
       pVal[i] = -1ULL;
 }
 
+void APInt::initSlowCase(const APInt& that) {
+  pVal = getMemory(getNumWords());
+  memcpy(pVal, that.pVal, getNumWords() * APINT_WORD_SIZE);
+}
+
+
 APInt::APInt(uint32_t numBits, uint32_t numWords, const uint64_t bigVal[])
   : BitWidth(numBits), VAL(0) {
   assert(BitWidth && "bitwidth too small");
@@ -73,12 +79,6 @@ APInt::APInt(uint32_t numbits, const char StrStart[], uint32_t slen,
   : BitWidth(numbits), VAL(0) {
   assert(BitWidth && "bitwidth too small");
   fromString(numbits, StrStart, slen, radix);
-}
-
-void APInt::initSlowCase(const APInt& that)
-{
-  pVal = getMemory(getNumWords());
-  memcpy(pVal, that.pVal, getNumWords() * APINT_WORD_SIZE);
 }
 
 APInt& APInt::AssignSlowCase(const APInt& RHS) {
