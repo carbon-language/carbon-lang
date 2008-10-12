@@ -113,6 +113,8 @@ Lexer::Lexer(SourceLocation fileloc, const LangOptions &features,
   Is_PragmaLexer = false;
   InitCharacterInfo();
   
+  // If a MemoryBuffer was specified, use its start as BufferStart. This affects
+  // the source location objects produced by this lexer.
   BufferStart = FromFile ? FromFile->getBufferStart() : BufStart;
   BufferPtr = BufStart;
   BufferEnd = BufEnd;
