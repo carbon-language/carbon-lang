@@ -98,18 +98,22 @@ bool EscapeAnalysis::runOnFunction(Function& F) {
 /// escape point.
 /// FIXME: Once we've discovered a path, it would be a good idea to memoize it,
 /// and all of its subpaths, to amortize the cost of future queries.
-bool EscapeAnalysis::escapes(AllocationInst* A) {
-  std::vector<Instruction*> worklist;
+bool EscapeAnalysis::escapes(Value* A) {
+  assert(isa<PointerType>(A->getType()) && 
+         "Can't do escape analysis on non-pointer types!");
+  
+  std::vector<Value*> worklist;
   worklist.push_back(A);
   
-  SmallPtrSet<Instruction*, 8> visited;
+  SmallPtrSet<Value*, 8> visited;
   visited.insert(A);
   while (!worklist.empty()) {
-    Instruction* curr = worklist.back();
+    Value* curr = worklist.back();
     worklist.pop_back();
     
-    if (EscapePoints.count(curr))
-      return true;
+    if (Instruction* I = dyn_cast<Instruction>(curr))
+      if (EscapePoints.count(I))
+        return true;
     
     if (StoreInst* S = dyn_cast<StoreInst>(curr)) {
       // We know this must be an instruction, because constant gep's would

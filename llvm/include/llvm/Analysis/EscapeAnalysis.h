@@ -50,8 +50,9 @@ public:
   //===---------------------------------------------------------------------
   // Client API
 
-  /// escapes - returns true if the AllocationInst can escape.
-  bool escapes(AllocationInst* A);
+  /// escapes - returns true if the value, which must have a pointer type,
+  /// can escape.
+  bool escapes(Value* A);
 };
 
 } // end llvm namespace
