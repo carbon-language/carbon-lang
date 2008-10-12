@@ -100,7 +100,8 @@ Lexer::Lexer(SourceLocation fileloc, Preprocessor &pp,
   LexingRawMode = false;
   
   // Default to keeping comments if requested.
-  KeepCommentMode = PP->getCommentRetentionState();
+  KeepCommentMode = false;
+  SetCommentRetentionState(PP->getCommentRetentionState());
 }
 
 /// Lexer constructor - Create a new raw lexer object.  This object is only
@@ -1117,7 +1118,7 @@ bool Lexer::LexEndOfFile(Token &Result, const char *CurPtr) {
     FormTokenWithChars(Result, CurPtr);
     
     // Restore comment saving mode, in case it was disabled for directive.
-    KeepCommentMode = PP->getCommentRetentionState();
+    SetCommentRetentionState(PP->getCommentRetentionState());
     return true;  // Have a token.
   }        
 
@@ -1236,7 +1237,7 @@ LexNextToken:
       ParsingPreprocessorDirective = false;
       
       // Restore comment saving mode, in case it was disabled for directive.
-      KeepCommentMode = PP->getCommentRetentionState();
+      SetCommentRetentionState(PP->getCommentRetentionState());
       
       // Since we consumed a newline, we are back at the start of a line.
       IsAtStartOfLine = true;
