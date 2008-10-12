@@ -761,7 +761,7 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
     TargetInfo::ConstraintInfo Info;
     bool result = Target.validateOutputConstraint(OutputConstraint.c_str(), 
                                                   Info);
-    assert(result && "Failed to parse output constraint");
+    assert(result && "Failed to parse output constraint"); result=result;
     
     // Simplify the output constraint.
     OutputConstraint = SimplifyConstraint(OutputConstraint.c_str() + 1, Target);
@@ -821,9 +821,8 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
     
     TargetInfo::ConstraintInfo Info;
     bool result = Target.validateInputConstraint(InputConstraint.c_str(),
-                                                 NumConstraints, 
-                                                 Info);
-    assert(result && "Failed to parse input constraint");
+                                                 NumConstraints,  Info);
+    assert(result && "Failed to parse input constraint"); result=result;
     
     if (i != 0 || S.getNumOutputs() > 0)
       Constraints += ',';

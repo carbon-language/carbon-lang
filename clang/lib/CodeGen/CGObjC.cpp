@@ -72,9 +72,9 @@ RValue CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E) {
     }
     
     isClassMessage = true;
-  } else if (const PredefinedExpr *PDE =
-               dyn_cast<PredefinedExpr>(E->getReceiver())) {
-    assert(PDE->getIdentType() == PredefinedExpr::ObjCSuper);
+  } else if (isa<PredefinedExpr>(E->getReceiver())) {
+    assert(cast<PredefinedExpr>(E->getReceiver())->getIdentType() == 
+             PredefinedExpr::ObjCSuper);
     isSuperMessage = true;
     Receiver = LoadObjCSelf();
   } else {

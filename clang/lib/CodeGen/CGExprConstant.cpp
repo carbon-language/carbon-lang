@@ -695,8 +695,8 @@ public:
     
     // A scalar source can be splatted to a vector of the same element type
     if (isa<llvm::VectorType>(DstTy) && !isa<VectorType>(SrcType)) {
-      const llvm::VectorType *VT = cast<llvm::VectorType>(DstTy);
-      assert((VT->getElementType() == Src->getType()) &&
+      assert((cast<llvm::VectorType>(DstTy)->getElementType()
+              == Src->getType()) &&
              "Vector element type must match scalar type to splat.");
       unsigned NumElements = DstType->getAsVectorType()->getNumElements();
       llvm::SmallVector<llvm::Constant*, 16> Elements;

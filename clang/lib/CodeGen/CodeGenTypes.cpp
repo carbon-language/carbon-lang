@@ -405,6 +405,7 @@ const llvm::Type *CodeGenTypes::ConvertTagDeclType(const TagDecl *TD) {
     }
   } else {
     assert(0 && "FIXME: Unknown tag decl kind!");
+    abort();
   }
   
   // Refine our Opaque type to ResultType.  This can invalidate ResultType, so
@@ -487,8 +488,9 @@ void RecordOrganizer::layoutStructFields(const ASTRecordLayout &RL) {
       llvm::APSInt FieldSize(32);
       bool isBitField =
         BitWidth->isIntegerConstantExpr(FieldSize, CGT.getContext());
-      assert (isBitField  && "Invalid BitField size expression");
-      uint64_t BitFieldSize =  FieldSize.getZExtValue();
+      assert(isBitField && "Invalid BitField size expression");
+      isBitField=isBitField; // silence warning.
+      uint64_t BitFieldSize = FieldSize.getZExtValue();
 
       // Bitfield field info is different from other field info;
       // it actually ignores the underlying LLVM struct because
