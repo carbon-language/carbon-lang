@@ -48,6 +48,7 @@ bool EscapeAnalysis::runOnFunction(Function& F) {
       bool inserted = false;
       for (Function::arg_iterator AI = F.arg_begin(), AE = F.arg_end();
            AI != AE; ++AI) {
+        if (!isa<PointerType>(AI->getType())) continue;
         AliasAnalysis::AliasResult R = AA.alias(Pointer, StoreSize, AI, ~0UL);
         if (R != AliasAnalysis::NoAlias) {
           EscapePoints.insert(S);
@@ -102,26 +103,27 @@ bool EscapeAnalysis::escapes(AllocationInst* A) {
   worklist.push_back(A);
   
   SmallPtrSet<Instruction*, 8> visited;
+  visited.insert(A);
   while (!worklist.empty()) {
     Instruction* curr = worklist.back();
     worklist.pop_back();
     
-    visited.insert(curr);
-    
     if (EscapePoints.count(curr))
       return true;
     
-    for (Instruction::use_iterator UI = curr->use_begin(), UE = curr->use_end();
-         UI != UE; ++UI)
-      if (Instruction* U = dyn_cast<Instruction>(UI))
-        if (!visited.count(U))
-          if (StoreInst* S = dyn_cast<StoreInst>(U)) {
-            // We know this must be an instruction, because constant gep's would
-            // have been found to alias a global, so stores to them would have
-            // been in EscapePoints.
-            worklist.push_back(cast<Instruction>(S->getPointerOperand()));
-          } else
+    if (StoreInst* S = dyn_cast<StoreInst>(curr)) {
+      // We know this must be an instruction, because constant gep's would
+      // have been found to alias a global, so stores to them would have
+      // been in EscapePoints.
+      if (visited.insert(cast<Instruction>(S->getPointerOperand())))
+        worklist.push_back(cast<Instruction>(S->getPointerOperand()));
+    } else {
+      for (Instruction::use_iterator UI = curr->use_begin(),
+           UE = curr->use_end(); UI != UE; ++UI)
+        if (Instruction* U = dyn_cast<Instruction>(UI))
+          if (visited.insert(U))
             worklist.push_back(U);
+    }
   }
   
   return false;
