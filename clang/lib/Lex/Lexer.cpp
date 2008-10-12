@@ -813,7 +813,8 @@ bool Lexer::SkipBCPLComment(Token &Result, const char *CurPtr) {
   }
   
   // Otherwise, eat the \n character.  We don't care if this is a \n\r or
-  // \r\n sequence.
+  // \r\n sequence.  This is an efficiency hack (because we know the \n can't
+  // contribute to another token), it isn't needed for correctness.
   ++CurPtr;
     
   // The next returned token is at the start of the line.
