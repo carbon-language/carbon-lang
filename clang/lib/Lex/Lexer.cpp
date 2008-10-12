@@ -956,7 +956,17 @@ bool Lexer::SkipBlockComment(Token &Result, const char *CurPtr) {
   if (C == 0 && CurPtr == BufferEnd+1) {
     if (!LexingRawMode)
       Diag(BufferPtr, diag::err_unterminated_block_comment);
-    BufferPtr = CurPtr-1;
+    --CurPtr;
+    
+    // KeepWhitespaceMode should return this broken comment as a token.  Since
+    // it isn't a well formed comment, just return it as an 'unknown' token.
+    if (isKeepWhitespaceMode()) {
+      Result.setKind(tok::unknown);
+      FormTokenWithChars(Result, CurPtr);
+      return true;
+    }
+    
+    BufferPtr = CurPtr;
     return false;
   }
   
@@ -1031,7 +1041,17 @@ bool Lexer::SkipBlockComment(Token &Result, const char *CurPtr) {
       // Note: the user probably forgot a */.  We could continue immediately
       // after the /*, but this would involve lexing a lot of what really is the
       // comment, which surely would confuse the parser.
-      BufferPtr = CurPtr-1;
+      --CurPtr;
+      
+      // KeepWhitespaceMode should return this broken comment as a token.  Since
+      // it isn't a well formed comment, just return it as an 'unknown' token.
+      if (isKeepWhitespaceMode()) {
+        Result.setKind(tok::unknown);
+        FormTokenWithChars(Result, CurPtr);
+        return true;
+      }
+      
+      BufferPtr = CurPtr;
       return false;
     }
     C = *CurPtr++;
