@@ -105,8 +105,7 @@ Lexer::Lexer(SourceLocation fileloc, Preprocessor &pp,
 
 /// Lexer constructor - Create a new raw lexer object.  This object is only
 /// suitable for calls to 'LexRawToken'.  This lexer assumes that the
-/// associated file buffer will outlive it, so it doesn't take ownership of
-/// either of them.
+/// associated file buffer will outlive it, so it doesn't take ownership of it.
 Lexer::Lexer(SourceLocation fileloc, const LangOptions &features,
              const char *BufStart, const char *BufEnd)
   : FileLoc(fileloc), PP(0), Features(features) {

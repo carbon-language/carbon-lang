@@ -42,7 +42,6 @@ Decl* Decl::Create(Deserializer& D, ASTContext& C) {
   switch (k) {
     default:
       assert (false && "Not implemented.");
-      break;
 
     case TranslationUnit:
       Dcl = TranslationUnitDecl::CreateImpl(D, C);

@@ -2067,11 +2067,11 @@ Sema::DeclTy *Sema::ActOnField(Scope *S,
 static ObjCIvarDecl::AccessControl
 TranslateIvarVisibility(tok::ObjCKeywordKind ivarVisibility) {
   switch (ivarVisibility) {
-    case tok::objc_private: return ObjCIvarDecl::Private;
-    case tok::objc_public: return ObjCIvarDecl::Public;
-    case tok::objc_protected: return ObjCIvarDecl::Protected;
-    case tok::objc_package: return ObjCIvarDecl::Package;
-    default: assert(false && "Unknown visitibility kind");
+  default: assert(0 && "Unknown visitibility kind");
+  case tok::objc_private: return ObjCIvarDecl::Private;
+  case tok::objc_public: return ObjCIvarDecl::Public;
+  case tok::objc_protected: return ObjCIvarDecl::Protected;
+  case tok::objc_package: return ObjCIvarDecl::Package;
   }
 }
 
@@ -2249,8 +2249,8 @@ void Sema::ActOnFields(Scope* S,
         Diag(FD->getLocation(), diag::err_duplicate_member, II->getName());
         // Find the previous decl.
         SourceLocation PrevLoc;
-        for (unsigned i = 0, e = RecFields.size(); ; ++i) {
-          assert(i != e && "Didn't find previous def!");
+        for (unsigned i = 0; ; ++i) {
+          assert(i != RecFields.size() && "Didn't find previous def!");
           if (RecFields[i]->getIdentifier() == II) {
             PrevLoc = RecFields[i]->getLocation();
             break;
