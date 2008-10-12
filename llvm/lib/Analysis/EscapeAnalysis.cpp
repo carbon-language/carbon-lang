@@ -13,6 +13,7 @@
 
 #define DEBUG_TYPE "escape-analysis"
 #include "llvm/Analysis/EscapeAnalysis.h"
+#include "llvm/Constants.h"
 #include "llvm/Module.h"
 #include "llvm/Support/InstIterator.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -112,8 +113,21 @@ bool EscapeAnalysis::escapes(Value* A) {
     worklist.pop_back();
     
     if (Instruction* I = dyn_cast<Instruction>(curr))
-      if (EscapePoints.count(I))
-        return true;
+      if (EscapePoints.count(I)) {
+        BranchInst* B = dyn_cast<BranchInst>(I);
+        if (!B) return true;
+        Value* condition = B->getCondition();
+        ICmpInst* C = dyn_cast<ICmpInst>(condition);
+        if (!C) return true;
+        Value* O1 = C->getOperand(0);
+        Value* O2 = C->getOperand(1);
+        if (isa<MallocInst>(O1->stripPointerCasts())) {
+          if (!isa<ConstantPointerNull>(O2)) return true;
+        } else if(isa<MallocInst>(O2->stripPointerCasts())) {
+          if (!isa<ConstantPointerNull>(O1)) return true;
+        } else
+          return true;
+      }
     
     if (StoreInst* S = dyn_cast<StoreInst>(curr)) {
       // We know this must be an instruction, because constant gep's would
