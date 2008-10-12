@@ -80,7 +80,8 @@ enum ProgActions {
   ParseNoop,                    // Parse with noop callbacks.
   RunPreprocessorOnly,          // Just lex, no output.
   PrintPreprocessedInput,       // -E mode.
-  DumpTokens,                   // Token dump mode.
+  DumpTokens,                   // Dump out preprocessed tokens.
+  DumpRawTokens,                // Dump out raw tokens.
   RunAnalysis                   // Run one or more source code analyses. 
 };
 
@@ -92,7 +93,9 @@ ProgAction(llvm::cl::desc("Choose output type:"), llvm::cl::ZeroOrMore,
                         "Just run preprocessor, no output (for timings)"),
              clEnumValN(PrintPreprocessedInput, "E",
                         "Run preprocessor, emit preprocessed file"),
-             clEnumValN(DumpTokens, "dumptokens",
+             clEnumValN(DumpRawTokens, "dump-raw-tokens",
+                        "Lex file in raw mode and dump raw tokens"),
+             clEnumValN(DumpTokens, "dump-tokens",
                         "Run preprocessor, dump internal rep of tokens"),
              clEnumValN(ParseNoop, "parse-noop",
                         "Run parser with noop callbacks (for timings)"),
@@ -1104,9 +1107,29 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
 
     break;
       
+  case DumpRawTokens: {
+    SourceManager &SM = PP.getSourceManager();
+    std::pair<const char*,const char*> File =
+      SM.getBufferData(SM.getMainFileID());
+    // Start lexing the specified input file.
+    Lexer RawLex(SourceLocation::getFileLoc(SM.getMainFileID(), 0),
+                 PP.getLangOptions(), File.first, File.second);
+    RawLex.SetKeepWhitespaceMode(true);
+
+    Token RawTok;
+
+    RawLex.LexFromRawLexer(RawTok);
+    while (RawTok.isNot(tok::eof)) {
+      PP.DumpToken(RawTok, true);
+      fprintf(stderr, "\n");
+      RawLex.LexFromRawLexer(RawTok);
+    }
+    ClearSourceMgr = true;
+    break;
+  }
   case DumpTokens: {                 // Token dump mode.
     Token Tok;
-    // Start parsing the specified input file.
+    // Start preprocessing the specified input file.
     PP.EnterMainSourceFile();
     do {
       PP.Lex(Tok);
