@@ -21,6 +21,12 @@ void clang::DoRewriteTest(Preprocessor &PP, const std::string &InFileName,
   SourceManager &SM = PP.getSourceManager();
   const LangOptions &LangOpts = PP.getLangOptions();
 
+  TokenRewriter Rewriter(SM.getMainFileID(), SM, LangOpts);
+  
+  
+  
+  
+  
   std::pair<const char*,const char*> File =SM.getBufferData(SM.getMainFileID());
   
   // Create a lexer to lex all the tokens of the main file in raw mode.  Even
@@ -37,5 +43,7 @@ void clang::DoRewriteTest(Preprocessor &PP, const std::string &InFileName,
     RawLex.LexFromRawLexer(RawTok);
   }
   
-  
+  for (TokenRewriter::token_iterator I = Rewriter.token_begin(),
+       E = Rewriter.token_end(); I != E; ++I)
+    std::cout << PP.getSpelling(*I);
 }
