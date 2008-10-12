@@ -420,6 +420,8 @@ void Emitter::emitInstruction(const MachineInstr &MI,
   case X86II::GS:
     MCE.emitByte(0x65);
     break;
+  default: assert(0 && "Invalid segment!");
+  case 0: break;  // No segment override!
   }
 
   // Emit the repeat opcode prefix as needed.

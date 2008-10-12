@@ -2668,6 +2668,16 @@ static unsigned GetInstSizeWithDesc(const MachineInstr &MI,
   // Emit the lock opcode prefix as needed.
   if (Desc->TSFlags & X86II::LOCK) ++FinalSize;
 
+  // Emit segment overrid opcode prefix as needed.
+  switch (Desc->TSFlags & X86II::SegOvrMask) {
+  case X86II::FS:
+  case X86II::GS:
+   ++FinalSize;
+   break;
+  default: assert(0 && "Invalid segment!");
+  case 0: break;  // No segment override!
+  }
+
   // Emit the repeat opcode prefix as needed.
   if ((Desc->TSFlags & X86II::Op0Mask) == X86II::REP) ++FinalSize;
 
