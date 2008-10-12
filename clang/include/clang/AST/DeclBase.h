@@ -316,7 +316,8 @@ public:
     }
   }
 
-  ScopedDecl *getDeclChain() const { return DeclChain; }
+  const ScopedDecl *getDeclChain() const { return DeclChain; }
+  ScopedDecl *getDeclChain() { return DeclChain; }
   void setDeclChain(ScopedDecl *D) { DeclChain = D; }
 
   static bool classof(const Decl *D) {
