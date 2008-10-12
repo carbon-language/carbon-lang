@@ -377,11 +377,7 @@ bool TokenLexer::PasteTokens(Token &Tok) {
     // Lex the resultant pasted token into Result.
     Token Result;
     
-    // Avoid testing /*, as the lexer would think it is the start of a comment
-    // and emit an error that it is unterminated.
-    if (Tok.is(tok::slash) && RHS.is(tok::star)) {
-      isInvalid = true;
-    } else if (Tok.is(tok::identifier) && RHS.is(tok::identifier)) {
+    if (Tok.is(tok::identifier) && RHS.is(tok::identifier)) {
       // Common paste case: identifier+identifier = identifier.  Avoid creating
       // a lexer and other overhead.
       PP.IncrementPasteCounter(true);

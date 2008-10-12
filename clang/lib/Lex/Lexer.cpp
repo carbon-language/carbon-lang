@@ -931,7 +931,8 @@ bool Lexer::SkipBlockComment(Token &Result, const char *CurPtr) {
   unsigned char C = getCharAndSize(CurPtr, CharSize);
   CurPtr += CharSize;
   if (C == 0 && CurPtr == BufferEnd+1) {
-    Diag(BufferPtr, diag::err_unterminated_block_comment);
+    if (!LexingRawMode)
+      Diag(BufferPtr, diag::err_unterminated_block_comment);
     BufferPtr = CurPtr-1;
     return true;
   }
@@ -1000,10 +1001,10 @@ bool Lexer::SkipBlockComment(Token &Result, const char *CurPtr) {
         // If this is a /* inside of the comment, emit a warning.  Don't do this
         // if this is a /*/, which will end the comment.  This misses cases with
         // embedded escaped newlines, but oh well.
-        Diag(CurPtr-1, diag::nested_block_comment);
+        Diag(CurPtr-1, diag::warn_nested_block_comment);
       }
     } else if (C == 0 && CurPtr == BufferEnd+1) {
-      Diag(BufferPtr, diag::err_unterminated_block_comment);
+      if (!LexingRawMode) Diag(BufferPtr, diag::err_unterminated_block_comment);
       // Note: the user probably forgot a */.  We could continue immediately
       // after the /*, but this would involve lexing a lot of what really is the
       // comment, which surely would confuse the parser.

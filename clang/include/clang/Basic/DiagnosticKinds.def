@@ -32,7 +32,7 @@ DIAG(null_in_char  , WARNING,
      "null character(s) preserved in character literal")
 DIAG(null_in_file  , WARNING,
      "null character ignored")
-DIAG(nested_block_comment, WARNING,
+DIAG(warn_nested_block_comment, WARNING,
      "\"/*\" within block comment")
 DIAG(escaped_newline_block_comment_end, WARNING,
      "escaped newline between */ characters at block comment end")

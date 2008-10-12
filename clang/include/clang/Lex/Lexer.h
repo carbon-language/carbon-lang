@@ -60,9 +60,8 @@ class Lexer {
   ///     effect of this, implicit macro expansion is naturally disabled.
   ///  3. "#" tokens at the start of a line are treated as normal tokens, not
   ///     implicitly transformed by the lexer.
-  ///  4. All diagnostic messages are disabled, except for unterminated /*.
-  ///  5. The only callback made into the preprocessor is to report a hard error
-  ///     on an unterminated '/*' comment.
+  ///  4. All diagnostic messages are disabled.
+  ///  5. No callbacks are made into the preprocessor.
   ///
   /// Note that in raw mode that the PP pointer may be null.
   bool LexingRawMode;
