@@ -295,7 +295,7 @@ static bool isLiveIn(unsigned r, MachineBasicBlock* MBB,
                      LiveIntervals& LI) {
   LiveInterval& I = LI.getOrCreateInterval(r);
   unsigned idx = LI.getMBBStartIdx(MBB);
-  return I.liveBeforeAndAt(idx);
+  return I.liveAt(idx);
 }
 
 /// isLiveOut - help method that determines, from a regno, if a register is
