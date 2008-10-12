@@ -99,7 +99,8 @@ protected:
     : NamedDecl(DK, L, Id), NextDeclarator(PrevDecl), Next(0), DeclCtx(DC) {}
   
 public:
-  DeclContext *getDeclContext() const { return DeclCtx; }
+  const DeclContext *getDeclContext() const { return DeclCtx; }
+  DeclContext *getDeclContext() { return DeclCtx; }
 
   ScopedDecl *getNext() const { return Next; }
   void setNext(ScopedDecl *N) { Next = N; }
@@ -311,7 +312,7 @@ public:
   bool isBlockVarDecl() const {
     if (getKind() != Decl::Var)
       return false;
-    if (DeclContext *DC = getDeclContext())
+    if (const DeclContext *DC = getDeclContext())
       return DC->isFunctionOrMethod();
     return false;
   }
@@ -1036,7 +1037,8 @@ public:
     Args.clear(); 
     Args.insert(Args.begin(), args, args+numargs);
   }
-  DeclContext *getParentContext() const { return ParentContext; }
+  const DeclContext *getParentContext() const { return ParentContext; }
+  DeclContext *getParentContext() { return ParentContext; }
   
   /// arg_iterator - Iterate over the ParmVarDecl's for this block.
   typedef llvm::SmallVector<ParmVarDecl*, 8>::const_iterator param_iterator;

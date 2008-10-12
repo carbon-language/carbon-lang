@@ -299,7 +299,10 @@ protected:
 public:
   /// getParent - Returns the containing DeclContext if this is a ScopedDecl,
   /// else returns NULL.
-  DeclContext *getParent() const;
+  DeclContext *getParent();
+  const DeclContext *getParent() const {
+    return const_cast<DeclContext*>(this)->getParent();
+  }
 
   bool isFunctionOrMethod() const {
     switch (DeclKind) {
