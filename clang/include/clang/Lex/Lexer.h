@@ -66,9 +66,14 @@ class Lexer {
   /// Note that in raw mode that the PP pointer may be null.
   bool LexingRawMode;
   
-  /// KeepCommentMode - The lexer can optionally keep C & BCPL-style comments,
-  /// and return them as tokens.  This is used for -C and -CC modes.
-  bool KeepCommentMode;
+  /// ExtendedTokenMode - The lexer can optionally keep comments and whitespace
+  /// and return them as tokens.  This is used for -C and -CC modes, and
+  /// whitespace preservation can be useful for some clients that want to lex
+  /// the file in raw mode and get every character from the file.
+  ///
+  /// When this is set to 2 it returns comments and whitespace.  When set to 1
+  /// it returns comments, when it is set to 0 it returns normal tokens only.
+  unsigned char ExtendedTokenMode;
   
   //===--------------------------------------------------------------------===//
   // Context that changes as the file is lexed.
@@ -150,18 +155,36 @@ public:
     // lexer when in raw mode.
     return BufferPtr == BufferEnd; 
   }
+
+  /// isKeepWhitespaceMode - Return true if the lexer should return tokens for
+  /// every character in the file, including whitespace and comments.  This
+  /// should only be used in raw mode, as the preprocessor is not prepared to
+  /// deal with the excess tokens.
+  bool isKeepWhitespaceMode() const {
+    return ExtendedTokenMode > 1;
+  }
+
+  /// SetKeepWhitespaceMode - This method lets clients enable or disable
+  /// whitespace retention mode.
+  void SetKeepWhitespaceMode(bool Val) {
+    assert((!Val || LexingRawMode) &&
+           "Can only enable whitespace retention in raw mode");
+    ExtendedTokenMode = Val ? 2 : 0;
+  }
+
+  /// inKeepCommentMode - Return true if the lexer should return comments as
+  /// tokens.
+  bool inKeepCommentMode() const {
+    return ExtendedTokenMode > 0;
+  }
   
   /// SetCommentRetentionMode - Change the comment retention mode of the lexer
   /// to the specified mode.  This is really only useful when lexing in raw
   /// mode, because otherwise the lexer needs to manage this.
   void SetCommentRetentionState(bool Mode) { 
-    KeepCommentMode = Mode;
-  }
-  
-  /// inKeepCommentMode - Return true if the lexer should return comments as
-  /// tokens.
-  bool inKeepCommentMode() const {
-    return KeepCommentMode;
+    assert(!isKeepWhitespaceMode() &&
+           "Can't play with comment retention state when retaining whitespace");
+    ExtendedTokenMode = Mode ? 1 : 0;
   }
   
   
@@ -370,7 +393,7 @@ private:
   void LexCharConstant       (Token &Result, const char *CurPtr);
   bool LexEndOfFile          (Token &Result, const char *CurPtr);
   
-  void SkipWhitespace        (Token &Result, const char *CurPtr);
+  bool SkipWhitespace        (Token &Result, const char *CurPtr);
   bool SkipBCPLComment       (Token &Result, const char *CurPtr);
   bool SkipBlockComment      (Token &Result, const char *CurPtr);
   bool SaveBCPLComment       (Token &Result, const char *CurPtr);

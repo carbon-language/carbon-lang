@@ -99,8 +99,8 @@ Lexer::Lexer(SourceLocation fileloc, Preprocessor &pp,
   // or otherwise skipping over tokens.
   LexingRawMode = false;
   
-  // Default to keeping comments if requested.
-  KeepCommentMode = false;
+  // Default to keeping comments if the preprocessor wants them.
+  ExtendedTokenMode = 0;
   SetCommentRetentionState(PP->getCommentRetentionState());
 }
 
@@ -137,7 +137,7 @@ Lexer::Lexer(SourceLocation fileloc, const LangOptions &features,
   LexingRawMode = true;
   
   // Default to not keeping comments in raw mode.
-  KeepCommentMode = false;
+  ExtendedTokenMode = 0;
 }
 
 
@@ -591,7 +591,7 @@ void Lexer::LexNumericConstant(Token &Result, const char *CurPtr) {
 
 /// LexStringLiteral - Lex the remainder of a string literal, after having lexed
 /// either " or L".
-void Lexer::LexStringLiteral(Token &Result, const char *CurPtr, bool Wide){
+void Lexer::LexStringLiteral(Token &Result, const char *CurPtr, bool Wide) {
   const char *NulCharacter = 0; // Does this string contain the \0 character?
   
   char C = getAndAdvanceChar(CurPtr, Result);
@@ -704,7 +704,10 @@ void Lexer::LexCharConstant(Token &Result, const char *CurPtr) {
 
 /// SkipWhitespace - Efficiently skip over a series of whitespace characters.
 /// Update BufferPtr to point to the next non-whitespace character and return.
-void Lexer::SkipWhitespace(Token &Result, const char *CurPtr) {
+///
+/// This method forms a token and returns true if KeepWhitespaceMode is enabled.
+///
+bool Lexer::SkipWhitespace(Token &Result, const char *CurPtr) {
   // Whitespace - Skip it, then return the token after the whitespace.
   unsigned char Char = *CurPtr;  // Skip consequtive spaces efficiently.
   while (1) {
@@ -719,7 +722,7 @@ void Lexer::SkipWhitespace(Token &Result, const char *CurPtr) {
     if (ParsingPreprocessorDirective) {
       // End of preprocessor directive line, let LexTokenInternal handle this.
       BufferPtr = CurPtr;
-      return;
+      return false;
     }
     
     // ok, but handle newline.
@@ -735,7 +738,15 @@ void Lexer::SkipWhitespace(Token &Result, const char *CurPtr) {
   if (PrevChar != '\n' && PrevChar != '\r')
     Result.setFlag(Token::LeadingSpace);
 
+  // If the client wants us to return whitespace, return it now.
+  if (isKeepWhitespaceMode()) {
+    Result.setKind(tok::unknown);
+    FormTokenWithChars(Result, CurPtr);
+    return true;
+  }
+  
   BufferPtr = CurPtr;
+  return false;
 }
 
 // SkipBCPLComment - We have just read the // characters from input.  Skip until
@@ -817,7 +828,9 @@ bool Lexer::SkipBCPLComment(Token &Result, const char *CurPtr) {
   
   // Otherwise, eat the \n character.  We don't care if this is a \n\r or
   // \r\n sequence.  This is an efficiency hack (because we know the \n can't
-  // contribute to another token), it isn't needed for correctness.
+  // contribute to another token), it isn't needed for correctness.  Note that
+  // this is ok even in KeepWhitespaceMode, because we would have returned the
+  /// comment above in that mode.
   ++CurPtr;
     
   // The next returned token is at the start of the line.
@@ -832,11 +845,16 @@ bool Lexer::SkipBCPLComment(Token &Result, const char *CurPtr) {
 /// an appropriate way and return it.
 bool Lexer::SaveBCPLComment(Token &Result, const char *CurPtr) {
   Result.setKind(tok::comment);
-  FormTokenWithChars(Result, CurPtr);
   
-  // If this BCPL-style comment is in a macro definition, transmogrify it into
-  // a C-style block comment.
-  if (ParsingPreprocessorDirective) {
+  if (!ParsingPreprocessorDirective) {
+    // If we're not in a preprocessor directive, just return the // comment
+    // directly.
+    FormTokenWithChars(Result, CurPtr);
+  } else {
+    // If this BCPL-style comment is in a macro definition, transmogrify it into
+    // a C-style block comment.
+    BufferPtr = CurPtr;
+
     std::string Spelling = PP->getSpelling(Result);
     assert(Spelling[0] == '/' && Spelling[1] == '/' && "Not bcpl comment?");
     Spelling[1] = '*';   // Change prefix to "/*".
@@ -1024,7 +1042,8 @@ bool Lexer::SkipBlockComment(Token &Result, const char *CurPtr) {
 
   // It is common for the tokens immediately after a /**/ comment to be
   // whitespace.  Instead of going through the big switch, handle it
-  // efficiently now.
+  // efficiently now.  This is safe even in KeepWhitespaceMode because we would
+  // have already returned above with the comment as a token.
   if (isHorizontalWhitespace(*CurPtr)) {
     Result.setFlag(Token::LeadingSpace);
     SkipWhitespace(Result, CurPtr+1);
@@ -1203,6 +1222,16 @@ LexNextToken:
     ++CurPtr;
     while ((*CurPtr == ' ') || (*CurPtr == '\t'))
       ++CurPtr;
+    
+    // If we are keeping whitespace and other tokens, just return what we just
+    // skipped.  The next lexer invocation will return the token after the
+    // whitespace.
+    if (isKeepWhitespaceMode()) {
+      Result.setKind(tok::unknown);
+      FormTokenWithChars(Result, CurPtr);
+      return;
+    }
+    
     BufferPtr = CurPtr;
     Result.setFlag(Token::LeadingSpace);
   }
@@ -1226,7 +1255,9 @@ LexNextToken:
     
     Diag(CurPtr-1, diag::null_in_file);
     Result.setFlag(Token::LeadingSpace);
-    SkipWhitespace(Result, CurPtr);
+    if (SkipWhitespace(Result, CurPtr))
+      return; // KeepWhitespaceMode
+      
     goto LexNextToken;   // GCC isn't tail call eliminating.
   case '\n':
   case '\r':
@@ -1249,7 +1280,9 @@ LexNextToken:
     Result.setFlag(Token::StartOfLine);
     // No leading whitespace seen so far.
     Result.clearFlag(Token::LeadingSpace);
-    SkipWhitespace(Result, CurPtr);
+      
+    if (SkipWhitespace(Result, CurPtr))
+      return; // KeepWhitespaceMode
     goto LexNextToken;   // GCC isn't tail call eliminating.
   case ' ':
   case '\t':
@@ -1257,7 +1290,8 @@ LexNextToken:
   case '\v':
   SkipHorizontalWhitespace:
     Result.setFlag(Token::LeadingSpace);
-    SkipWhitespace(Result, CurPtr);
+    if (SkipWhitespace(Result, CurPtr))
+      return; // KeepWhitespaceMode
 
   SkipIgnoredUnits:
     CurPtr = BufferPtr;
