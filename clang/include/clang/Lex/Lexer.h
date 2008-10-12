@@ -105,11 +105,11 @@ public:
         const char *BufStart = 0, const char *BufEnd = 0);
   
   /// Lexer constructor - Create a new raw lexer object.  This object is only
-  /// suitable for calls to 'LexRawToken'.  This lexer assumes that the
-  /// associated file buffer will outlive it, so it doesn't take ownership of
-  /// either of them.
+  /// suitable for calls to 'LexRawToken'.  This lexer assumes that the text
+  /// range will outlive it, so it doesn't take ownership of it.
   Lexer(SourceLocation FileLoc, const LangOptions &Features,
-        const char *BufStart, const char *BufEnd);
+        const char *BufStart, const char *BufEnd,
+        const llvm::MemoryBuffer *FromFile = 0);
   
   /// getFeatures - Return the language features currently enabled.  NOTE: this
   /// lexer modifies features as a file is parsed!
@@ -141,14 +141,12 @@ public:
     LexTokenInternal(Result);
   }
   
-  /// LexRawToken - Switch the lexer to raw mode, lex a token into Result and
-  /// switch it back.  Return true if the 'next character to read' pointer
-  /// points and the end of the lexer buffer, false otherwise.
-  bool LexRawToken(Token &Result) {
-    assert(!(PP && LexingRawMode) && "Already in raw mode!");
-    LexingRawMode = true;
+  /// LexFromRawLexer - Lex a token from a designated raw lexer (one with no
+  /// associated preprocessor object.  Return true if the 'next character to
+  /// read' pointer points and the end of the lexer buffer, false otherwise.
+  bool LexFromRawLexer(Token &Result) {
+    assert(LexingRawMode && "Not already in raw mode!");
     Lex(Result);
-    LexingRawMode = PP == 0;
     // Note that lexing to the end of the buffer doesn't implicitly delete the
     // lexer when in raw mode.
     return BufferPtr == BufferEnd; 

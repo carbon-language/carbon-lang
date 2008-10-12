@@ -357,7 +357,7 @@ void html::SyntaxHighlight(Rewriter &R, unsigned FileID, Preprocessor &PP) {
   // Lex all the tokens in raw mode, to avoid entering #includes or expanding
   // macros.
   Token Tok;
-  L.LexRawToken(Tok);
+  L.LexFromRawLexer(Tok);
   
   while (Tok.isNot(tok::eof)) {
     // Since we are lexing unexpanded tokens, all tokens are from the main
@@ -398,10 +398,10 @@ void html::SyntaxHighlight(Rewriter &R, unsigned FileID, Preprocessor &PP) {
       // Eat all of the tokens until we get to the next one at the start of
       // line.
       unsigned TokEnd = TokOffs+TokLen;
-      L.LexRawToken(Tok);
+      L.LexFromRawLexer(Tok);
       while (!Tok.isAtStartOfLine() && Tok.isNot(tok::eof)) {
         TokEnd = SourceMgr.getFullFilePos(Tok.getLocation())+Tok.getLength();
-        L.LexRawToken(Tok);
+        L.LexFromRawLexer(Tok);
       }
       
       // Find end of line.  This is a hack.
@@ -413,7 +413,7 @@ void html::SyntaxHighlight(Rewriter &R, unsigned FileID, Preprocessor &PP) {
     }
     }
     
-    L.LexRawToken(Tok);
+    L.LexFromRawLexer(Tok);
   }
 }
 

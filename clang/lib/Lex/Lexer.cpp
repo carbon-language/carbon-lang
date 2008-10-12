@@ -104,15 +104,16 @@ Lexer::Lexer(SourceLocation fileloc, Preprocessor &pp,
 }
 
 /// Lexer constructor - Create a new raw lexer object.  This object is only
-/// suitable for calls to 'LexRawToken'.  This lexer assumes that the
-/// associated file buffer will outlive it, so it doesn't take ownership of it.
+/// suitable for calls to 'LexRawToken'.  This lexer assumes that the text
+/// range will outlive it, so it doesn't take ownership of it.
 Lexer::Lexer(SourceLocation fileloc, const LangOptions &features,
-             const char *BufStart, const char *BufEnd)
+             const char *BufStart, const char *BufEnd,
+             const llvm::MemoryBuffer *FromFile)
   : FileLoc(fileloc), PP(0), Features(features) {
   Is_PragmaLexer = false;
   InitCharacterInfo();
   
-  BufferStart = BufStart;
+  BufferStart = FromFile ? FromFile->getBufferStart() : BufStart;
   BufferPtr = BufStart;
   BufferEnd = BufEnd;
   
@@ -192,7 +193,7 @@ unsigned Lexer::MeasureTokenLength(SourceLocation Loc,
   // Create a lexer starting at the beginning of this token.
   Lexer TheLexer(Loc, LangOpts, StrData, BufEnd);
   Token TheTok;
-  TheLexer.LexRawToken(TheTok);
+  TheLexer.LexFromRawLexer(TheTok);
   return TheTok.getLength();
 }
 

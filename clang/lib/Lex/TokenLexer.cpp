@@ -396,23 +396,23 @@ bool TokenLexer::PasteTokens(Token &Tok) {
       SourceManager &SourceMgr = PP.getSourceManager();
       const char *ResultStrData = SourceMgr.getCharacterData(ResultTokLoc);
       
+      const llvm::MemoryBuffer *Buffer = 
+        SourceMgr.getBuffer(ResultTokLoc.getFileID());
+      
       // Make a lexer object so that we lex and expand the paste result.
-      Lexer *TL = new Lexer(ResultTokLoc, PP, ResultStrData, 
-                            ResultStrData+LHSLen+RHSLen /*don't include null*/);
+      Lexer TL(ResultTokLoc, PP.getLangOptions(), ResultStrData, 
+               ResultStrData+LHSLen+RHSLen /*don't include null*/, Buffer);
       
       // Lex a token in raw mode.  This way it won't look up identifiers
       // automatically, lexing off the end will return an eof token, and
       // warnings are disabled.  This returns true if the result token is the
       // entire buffer.
-      bool IsComplete = TL->LexRawToken(Result);
+      bool IsComplete = TL.LexFromRawLexer(Result);
       
       // If we got an EOF token, we didn't form even ONE token.  For example, we
       // did "/ ## /" to get "//".
       IsComplete &= Result.isNot(tok::eof);
       isInvalid = !IsComplete;
-      
-      // We're now done with the temporary lexer.
-      delete TL;
     }
     
     // If pasting the two tokens didn't form a full new token, this is an error.

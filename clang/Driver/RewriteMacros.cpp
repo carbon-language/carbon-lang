@@ -73,7 +73,7 @@ static void LexRawTokensFromMainFile(Preprocessor &PP,
   
   Token RawTok;
   do {
-    RawLex.LexRawToken(RawTok);
+    RawLex.LexFromRawLexer(RawTok);
     
     // If we have an identifier with no identifier info for our raw token, look
     // up the indentifier info.  This is important for equality comparison of
