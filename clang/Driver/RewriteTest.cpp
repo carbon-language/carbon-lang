@@ -11,9 +11,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Rewrite/TokenRewriter.h"
 #include "clang.h"
 #include "clang/Lex/Preprocessor.h"
+#include "clang/Rewrite/TokenRewriter.h"
 #include <iostream>
 
 void clang::DoRewriteTest(Preprocessor &PP, const std::string &InFileName,
@@ -22,27 +22,18 @@ void clang::DoRewriteTest(Preprocessor &PP, const std::string &InFileName,
   const LangOptions &LangOpts = PP.getLangOptions();
 
   TokenRewriter Rewriter(SM.getMainFileID(), SM, LangOpts);
-  
-  
-  
-  
-  
-  std::pair<const char*,const char*> File =SM.getBufferData(SM.getMainFileID());
-  
-  // Create a lexer to lex all the tokens of the main file in raw mode.  Even
-  // though it is in raw mode, it will not return comments.
-  Lexer RawLex(SourceLocation::getFileLoc(SM.getMainFileID(), 0),
-               LangOpts, File.first, File.second);
-  
-  RawLex.SetKeepWhitespaceMode(true);
-  
-  Token RawTok;
-  RawLex.LexFromRawLexer(RawTok);
-  while (RawTok.isNot(tok::eof)) {
-    std::cout << PP.getSpelling(RawTok);
-    RawLex.LexFromRawLexer(RawTok);
+
+  // Throw <i> </i> tags around comments.
+  for (TokenRewriter::token_iterator I = Rewriter.token_begin(),
+       E = Rewriter.token_end(); I != E; ++I) {
+    if (I->isNot(tok::comment)) continue;
+
+    Rewriter.AddTokenBefore(I, "<i>");
+    Rewriter.AddTokenAfter(I, "</i>");
   }
   
+  
+  // Print out the output.
   for (TokenRewriter::token_iterator I = Rewriter.token_begin(),
        E = Rewriter.token_end(); I != E; ++I)
     std::cout << PP.getSpelling(*I);

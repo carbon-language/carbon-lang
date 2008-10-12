@@ -16,12 +16,14 @@
 #define LLVM_CLANG_TOKENREWRITER_H
 
 #include "clang/Basic/SourceLocation.h"
+#include "llvm/ADT/OwningPtr.h"
 #include <list>
 #include <map>
 
 namespace clang {
   class Token;
   class LangOptions;
+  class ScratchBuffer;
   
   class TokenRewriter {
     /// TokenList - This is the list of raw tokens that make up this file.  Each
@@ -37,20 +39,37 @@ namespace clang {
     /// backwards.
     std::map<SourceLocation, TokenRefTy> TokenAtLoc;
     
+    /// ScratchBuf - This is the buffer that we create scratch tokens from.
+    ///
+    llvm::OwningPtr<ScratchBuffer> ScratchBuf;
+    
+    TokenRewriter(const TokenRewriter&);  // DO NOT IMPLEMENT
+    void operator=(const TokenRewriter&); // DO NOT IMPLEMENT.
   public:
     /// TokenRewriter - This creates a TokenRewriter for the file with the
     /// specified FileID.
     TokenRewriter(unsigned FileID, SourceManager &SM, const LangOptions &LO);
-    
+    ~TokenRewriter();
     
     typedef std::list<Token>::const_iterator token_iterator;
     token_iterator token_begin() const { return TokenList.begin(); }
     token_iterator token_end() const { return TokenList.end(); }
     
+    
+    token_iterator AddTokenBefore(token_iterator I, const char *Val);
+    token_iterator AddTokenAfter(token_iterator I, const char *Val) {
+      assert(I != token_end() && "Cannot insert after token_end()!");
+      return AddTokenBefore(++I, Val);
+    }
+    
   private:
+    /// RemapIterator - Convert from token_iterator (a const iterator) to
+    /// TokenRefTy (a non-const iterator).
+    TokenRefTy RemapIterator(token_iterator I);
+    
     /// AddToken - Add the specified token into the Rewriter before the other
     /// position.
-    void AddToken(const Token &T, TokenRefTy Where);
+    TokenRefTy AddToken(const Token &T, TokenRefTy Where);
   };
   
   
