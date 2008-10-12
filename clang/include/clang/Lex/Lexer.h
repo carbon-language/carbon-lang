@@ -158,6 +158,13 @@ public:
     KeepCommentMode = Mode;
   }
   
+  /// inKeepCommentMode - Return true if the lexer should return comments as
+  /// tokens.
+  bool inKeepCommentMode() const {
+    return KeepCommentMode;
+  }
+  
+  
   /// ReadToEndOfLine - Read the rest of the current preprocessor line as an
   /// uninterpreted string.  This switches the lexer out of directive mode.
   std::string ReadToEndOfLine();

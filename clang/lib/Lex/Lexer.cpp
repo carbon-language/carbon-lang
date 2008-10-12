@@ -804,7 +804,7 @@ bool Lexer::SkipBCPLComment(Token &Result, const char *CurPtr) {
   // Found but did not consume the newline.
     
   // If we are returning comments as tokens, return this comment as a token.
-  if (KeepCommentMode)
+  if (inKeepCommentMode())
     return SaveBCPLComment(Result, CurPtr);
 
   // If we are inside a preprocessor directive and we see the end of line,
@@ -1015,7 +1015,7 @@ bool Lexer::SkipBlockComment(Token &Result, const char *CurPtr) {
   }
   
   // If we are returning comments as tokens, return this comment as a token.
-  if (KeepCommentMode) {
+  if (inKeepCommentMode()) {
     Result.setKind(tok::comment);
     FormTokenWithChars(Result, CurPtr);
     return false;
@@ -1263,10 +1263,10 @@ LexNextToken:
     
     // If the next token is obviously a // or /* */ comment, skip it efficiently
     // too (without going through the big switch stmt).
-    if (CurPtr[0] == '/' && CurPtr[1] == '/' && !KeepCommentMode) {
+    if (CurPtr[0] == '/' && CurPtr[1] == '/' && !inKeepCommentMode()) {
       SkipBCPLComment(Result, CurPtr+2);
       goto SkipIgnoredUnits;
-    } else if (CurPtr[0] == '/' && CurPtr[1] == '*' && !KeepCommentMode) {
+    } else if (CurPtr[0] == '/' && CurPtr[1] == '*' && !inKeepCommentMode()) {
       SkipBlockComment(Result, CurPtr+2);
       goto SkipIgnoredUnits;
     } else if (isHorizontalWhitespace(*CurPtr)) {
