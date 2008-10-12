@@ -751,7 +751,8 @@ bool Lexer::SkipWhitespace(Token &Result, const char *CurPtr) {
 
 // SkipBCPLComment - We have just read the // characters from input.  Skip until
 // we find the newline character thats terminate the comment.  Then update
-/// BufferPtr and return.
+/// BufferPtr and return.  If we're in KeepCommentMode, this will form the token
+/// and return true.
 bool Lexer::SkipBCPLComment(Token &Result, const char *CurPtr) {
   // If BCPL comments aren't explicitly enabled for this language, emit an
   // extension warning.
@@ -823,7 +824,7 @@ bool Lexer::SkipBCPLComment(Token &Result, const char *CurPtr) {
   // return immediately, so that the lexer can return this as an EOM token.
   if (ParsingPreprocessorDirective || CurPtr == BufferEnd) {
     BufferPtr = CurPtr;
-    return true;
+    return false;
   }
   
   // Otherwise, eat the \n character.  We don't care if this is a \n\r or
@@ -838,7 +839,7 @@ bool Lexer::SkipBCPLComment(Token &Result, const char *CurPtr) {
   // No leading whitespace seen so far.
   Result.clearFlag(Token::LeadingSpace);
   BufferPtr = CurPtr;
-  return true;
+  return false;
 }
 
 /// SaveBCPLComment - If in save-comment mode, package up this BCPL comment in
@@ -864,7 +865,7 @@ bool Lexer::SaveBCPLComment(Token &Result, const char *CurPtr) {
                                         Result.getLocation()));
     Result.setLength(Spelling.size());
   }
-  return false;
+  return true;
 }
 
 /// isBlockCommentEndOfEscapedNewLine - Return true if the specified newline
@@ -937,6 +938,9 @@ static bool isEndOfBlockCommentWithEscapedNewLine(const char *CurPtr,
 /// because they cannot cause the comment to end.  The only thing that can
 /// happen is the comment could end with an escaped newline between the */ end
 /// of comment.
+///
+/// If KeepCommentMode is enabled, this forms a token from the comment and
+/// returns true.
 bool Lexer::SkipBlockComment(Token &Result, const char *CurPtr) {
   // Scan one character past where we should, looking for a '/' character.  Once
   // we find it, check to see if it was preceeded by a *.  This common
@@ -953,7 +957,7 @@ bool Lexer::SkipBlockComment(Token &Result, const char *CurPtr) {
     if (!LexingRawMode)
       Diag(BufferPtr, diag::err_unterminated_block_comment);
     BufferPtr = CurPtr-1;
-    return true;
+    return false;
   }
   
   // Check to see if the first character after the '/*' is another /.  If so,
@@ -1028,7 +1032,7 @@ bool Lexer::SkipBlockComment(Token &Result, const char *CurPtr) {
       // after the /*, but this would involve lexing a lot of what really is the
       // comment, which surely would confuse the parser.
       BufferPtr = CurPtr-1;
-      return true;
+      return false;
     }
     C = *CurPtr++;
   }
@@ -1037,7 +1041,7 @@ bool Lexer::SkipBlockComment(Token &Result, const char *CurPtr) {
   if (inKeepCommentMode()) {
     Result.setKind(tok::comment);
     FormTokenWithChars(Result, CurPtr);
-    return false;
+    return true;
   }
 
   // It is common for the tokens immediately after a /**/ comment to be
@@ -1047,13 +1051,13 @@ bool Lexer::SkipBlockComment(Token &Result, const char *CurPtr) {
   if (isHorizontalWhitespace(*CurPtr)) {
     Result.setFlag(Token::LeadingSpace);
     SkipWhitespace(Result, CurPtr+1);
-    return true;
+    return false;
   }
 
   // Otherwise, just return so that the next character will be lexed as a token.
   BufferPtr = CurPtr;
   Result.setFlag(Token::LeadingSpace);
-  return true;
+  return false;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1477,17 +1481,17 @@ LexNextToken:
     // 6.4.9: Comments
     Char = getCharAndSize(CurPtr, SizeTmp);
     if (Char == '/') {         // BCPL comment.
-      if (SkipBCPLComment(Result, ConsumeChar(CurPtr, SizeTmp, Result))) {
-        // It is common for the tokens immediately after a // comment to be
-        // whitespace (indentation for the next line).  Instead of going through
-        // the big switch, handle it efficiently now.
-        goto SkipIgnoredUnits;
-      }        
-      return; // KeepCommentMode
+      if (SkipBCPLComment(Result, ConsumeChar(CurPtr, SizeTmp, Result)))
+        return; // KeepCommentMode
+      
+      // It is common for the tokens immediately after a // comment to be
+      // whitespace (indentation for the next line).  Instead of going through
+      // the big switch, handle it efficiently now.
+      goto SkipIgnoredUnits;
     } else if (Char == '*') {  // /**/ comment.
       if (SkipBlockComment(Result, ConsumeChar(CurPtr, SizeTmp, Result)))
-        goto LexNextToken;   // GCC isn't tail call eliminating.
-      return; // KeepCommentMode
+        return; // KeepCommentMode
+      goto LexNextToken;   // GCC isn't tail call eliminating.
     } else if (Char == '=') {
       Result.setKind(tok::slashequal);
       CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
