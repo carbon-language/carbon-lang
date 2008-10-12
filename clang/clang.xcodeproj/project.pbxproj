@@ -122,6 +122,7 @@
 		DE4772FA0C10EAE5002239E8 /* CGStmt.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE4772F90C10EAE5002239E8 /* CGStmt.cpp */; };
 		DE4772FC0C10EAEC002239E8 /* CGExpr.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE4772FB0C10EAEC002239E8 /* CGExpr.cpp */; };
 		DE47999C0D2EBE1A00706D2D /* SemaExprObjC.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE47999B0D2EBE1A00706D2D /* SemaExprObjC.cpp */; };
+		DE4DC79E0EA1C09E00069E5A /* RewriteTest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE4DC79D0EA1C09E00069E5A /* RewriteTest.cpp */; };
 		DE5932D10AD60FF400BC794C /* clang.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE5932CD0AD60FF400BC794C /* clang.cpp */; };
 		DE5932D20AD60FF400BC794C /* clang.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE5932CE0AD60FF400BC794C /* clang.h */; };
 		DE5932D30AD60FF400BC794C /* PrintParserCallbacks.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE5932CF0AD60FF400BC794C /* PrintParserCallbacks.cpp */; };
@@ -443,6 +444,8 @@
 		DE4772F90C10EAE5002239E8 /* CGStmt.cpp */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CGStmt.cpp; path = lib/CodeGen/CGStmt.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		DE4772FB0C10EAEC002239E8 /* CGExpr.cpp */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CGExpr.cpp; path = lib/CodeGen/CGExpr.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		DE47999B0D2EBE1A00706D2D /* SemaExprObjC.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = SemaExprObjC.cpp; path = lib/Sema/SemaExprObjC.cpp; sourceTree = "<group>"; tabWidth = 2; };
+		DE4DC7980EA1BE4400069E5A /* TokenRewriter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TokenRewriter.h; path = clang/Rewrite/TokenRewriter.h; sourceTree = "<group>"; };
+		DE4DC79D0EA1C09E00069E5A /* RewriteTest.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RewriteTest.cpp; path = Driver/RewriteTest.cpp; sourceTree = "<group>"; };
 		DE53370B0CE2D96F00D9A028 /* RewriteRope.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RewriteRope.h; path = clang/Rewrite/RewriteRope.h; sourceTree = "<group>"; };
 		DE5932CD0AD60FF400BC794C /* clang.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = clang.cpp; path = Driver/clang.cpp; sourceTree = "<group>"; };
 		DE5932CE0AD60FF400BC794C /* clang.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = clang.h; path = Driver/clang.h; sourceTree = "<group>"; };
@@ -883,6 +886,7 @@
 				9030C1090E807A9300941490 /* RewriteBlocks.cpp */,
 				DEA0EBD90DD2D3C8007A02A9 /* RewriteMacros.cpp */,
 				035611E10DB40C8100D2EF2A /* RewriteObjC.cpp */,
+				DE4DC79D0EA1C09E00069E5A /* RewriteTest.cpp */,
 				352981080CC58344008B5E84 /* SerializationTest.cpp */,
 			);
 			name = Driver;
@@ -1057,6 +1061,7 @@
 				35F2BE7B0DAC2963006E7668 /* HTMLRewrite.h */,
 				DEF7D9F60C9C8B1A0001F598 /* Rewriter.h */,
 				DE53370B0CE2D96F00D9A028 /* RewriteRope.h */,
+				DE4DC7980EA1BE4400069E5A /* TokenRewriter.h */,
 			);
 			name = Rewrite;
 			sourceTree = "<group>";
@@ -1253,6 +1258,7 @@
 				355106860E9A8507006A4E44 /* MemRegion.cpp in Sources */,
 				3551068C0E9A8546006A4E44 /* ParsePragma.cpp in Sources */,
 				3551068D0E9A8546006A4E44 /* ParseTentative.cpp in Sources */,
+				DE4DC79E0EA1C09E00069E5A /* RewriteTest.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

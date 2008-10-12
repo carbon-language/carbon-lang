@@ -66,6 +66,7 @@ enum ProgActions {
   RewriteObjC,                  // ObjC->C Rewriter.
   RewriteBlocks,                // ObjC->C Rewriter for Blocks.
   RewriteMacros,                // Expand macros but not #includes.
+  RewriteTest,                  // Rewriter playground
   HTMLTest,                     // HTML displayer testing stuff.
   EmitLLVM,                     // Emit a .ll file.
   EmitBC,                       // Emit a .bc file.
@@ -119,6 +120,8 @@ ProgAction(llvm::cl::desc("Choose output type:"), llvm::cl::ZeroOrMore,
                         "Build ASTs then convert to LLVM, emit .bc file"),
              clEnumValN(SerializeAST, "serialize",
                         "Build ASTs and emit .ast file"),
+             clEnumValN(RewriteTest, "rewrite-test",
+                        "Rewriter playground"),
              clEnumValN(RewriteObjC, "rewrite-objc",
                         "Rewrite ObjC into C (code rewriter example)"),
              clEnumValN(RewriteMacros, "rewrite-macros",
@@ -1171,6 +1174,11 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
       
   case RewriteMacros:
     RewriteMacrosInInput(PP, InFile, OutputFile);
+    ClearSourceMgr = true;
+    break;
+      
+  case RewriteTest:
+    DoRewriteTest(PP, InFile, OutputFile);
     ClearSourceMgr = true;
     break;
   }
