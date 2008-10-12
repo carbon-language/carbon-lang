@@ -332,23 +332,23 @@ void Decl::Destroy(ASTContext& C) {
   C.getAllocator().Deallocate((void *)this);
 }
 
+Decl *Decl::castFromDeclContext (const DeclContext *D) {
+  return DeclContext::CastTo<Decl>(D);
+}
+
+DeclContext *Decl::castToDeclContext(const Decl *D) {
+  return DeclContext::CastTo<DeclContext>(D);
+}
+
 //===----------------------------------------------------------------------===//
 // DeclContext Implementation
 //===----------------------------------------------------------------------===//
 
 DeclContext *DeclContext::getParent() const {
-  if (ScopedDecl *SD = dyn_cast<ScopedDecl>(this))
+  if (const ScopedDecl *SD = dyn_cast<ScopedDecl>(this))
     return SD->getDeclContext();
-  else if (BlockDecl *BD = dyn_cast<BlockDecl>(this))
+  else if (const BlockDecl *BD = dyn_cast<BlockDecl>(this))
     return BD->getParentContext();
   else
     return NULL;
-}
-
-Decl *DeclContext::ToDecl (const DeclContext *D) {
-  return CastTo<Decl>(D);
-}
-
-DeclContext *DeclContext::FromDecl (const Decl *D) {
-  return CastTo<DeclContext>(D);
 }

@@ -38,6 +38,12 @@ public:
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == TranslationUnit; }
   static bool classof(const TranslationUnitDecl *D) { return true; }  
+  static DeclContext *castToDeclContext(const TranslationUnitDecl *D) {
+    return static_cast<DeclContext *>(const_cast<TranslationUnitDecl*>(D));
+  }
+  static TranslationUnitDecl *castFromDeclContext(const DeclContext *DC) {
+    return static_cast<TranslationUnitDecl *>(const_cast<DeclContext*>(DC));
+  }
 
 protected:
   /// EmitImpl - Serialize this TranslationUnitDecl. Called by Decl::Emit.
@@ -183,6 +189,12 @@ public:
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == Namespace; }
   static bool classof(const NamespaceDecl *D) { return true; }
+  static DeclContext *castToDeclContext(const NamespaceDecl *D) {
+    return static_cast<DeclContext *>(const_cast<NamespaceDecl*>(D));
+  }
+  static NamespaceDecl *castFromDeclContext(const DeclContext *DC) {
+    return static_cast<NamespaceDecl *>(const_cast<DeclContext*>(DC));
+  }
   
 protected:
   /// EmitImpl - Serialize this NamespaceDecl. Called by Decl::Emit.
@@ -547,6 +559,12 @@ public:
     return D->getKind() >= FunctionFirst && D->getKind() <= FunctionLast;
   }
   static bool classof(const FunctionDecl *D) { return true; }
+  static DeclContext *castToDeclContext(const FunctionDecl *D) {
+    return static_cast<DeclContext *>(const_cast<FunctionDecl*>(D));
+  }
+  static FunctionDecl *castFromDeclContext(const DeclContext *DC) {
+    return static_cast<FunctionDecl *>(const_cast<DeclContext*>(DC));
+  }
 
 protected:
   /// EmitImpl - Serialize this FunctionDecl.  Called by Decl::Emit.
@@ -817,6 +835,12 @@ public:
   
   static bool classof(const Decl *D) { return D->getKind() == Enum; }
   static bool classof(const EnumDecl *D) { return true; }
+  static DeclContext *castToDeclContext(const EnumDecl *D) {
+    return static_cast<DeclContext *>(const_cast<EnumDecl*>(D));
+  }
+  static EnumDecl *castFromDeclContext(const DeclContext *DC) {
+    return static_cast<EnumDecl *>(const_cast<DeclContext*>(DC));
+  }
   
 protected:
   /// EmitImpl - Serialize this EnumDecl.  Called by Decl::Emit.
@@ -1012,7 +1036,7 @@ public:
     Args.clear(); 
     Args.insert(Args.begin(), args, args+numargs);
   }
-  DeclContext *getParentContext() { return ParentContext; }
+  DeclContext *getParentContext() const { return ParentContext; }
   
   /// arg_iterator - Iterate over the ParmVarDecl's for this block.
   typedef llvm::SmallVector<ParmVarDecl*, 8>::const_iterator param_iterator;
@@ -1023,6 +1047,12 @@ public:
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == Block; }
   static bool classof(const BlockDecl *D) { return true; }  
+  static DeclContext *castToDeclContext(const BlockDecl *D) {
+    return static_cast<DeclContext *>(const_cast<BlockDecl*>(D));
+  }
+  static BlockDecl *castFromDeclContext(const DeclContext *DC) {
+    return static_cast<BlockDecl *>(const_cast<DeclContext*>(DC));
+  }
 
 protected:
   /// EmitImpl - Serialize this BlockDecl. Called by Decl::Emit.

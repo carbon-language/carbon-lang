@@ -242,6 +242,12 @@ public:
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == ObjCMethod; }
   static bool classof(const ObjCMethodDecl *D) { return true; }
+  static DeclContext *castToDeclContext(const ObjCMethodDecl *D) {
+    return static_cast<DeclContext *>(const_cast<ObjCMethodDecl*>(D));
+  }
+  static ObjCMethodDecl *castFromDeclContext(const DeclContext *DC) {
+    return static_cast<ObjCMethodDecl *>(const_cast<DeclContext*>(DC));
+  }
 };
   
 /// ObjCInterfaceDecl - Represents an ObjC class declaration. For example:
@@ -467,6 +473,12 @@ public:
   
   static bool classof(const Decl *D) { return D->getKind() == ObjCInterface; }
   static bool classof(const ObjCInterfaceDecl *D) { return true; }
+  static DeclContext *castToDeclContext(const ObjCInterfaceDecl *D) {
+    return static_cast<DeclContext *>(const_cast<ObjCInterfaceDecl*>(D));
+  }
+  static ObjCInterfaceDecl *castFromDeclContext(const DeclContext *DC) {
+    return static_cast<ObjCInterfaceDecl *>(const_cast<DeclContext*>(DC));
+  }
 };
 
 /// ObjCIvarDecl - Represents an ObjC instance variable. In general, ObjC

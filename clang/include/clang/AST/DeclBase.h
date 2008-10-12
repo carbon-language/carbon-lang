@@ -19,6 +19,7 @@
 #include "clang/Basic/SourceLocation.h"
 
 namespace clang {
+class DeclContext;
 class TranslationUnitDecl;
 class NamespaceDecl;
 class ScopedDecl;
@@ -213,6 +214,8 @@ public:
     
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *) { return true; }
+  static DeclContext *castToDeclContext(const Decl *);
+  static Decl *castFromDeclContext(const DeclContext *);
   
   /// Emit - Serialize this Decl to Bitcode.
   void Emit(llvm::Serializer& S) const;
@@ -313,12 +316,6 @@ public:
   ScopedDecl *getDeclChain() const { return DeclChain; }
   void setDeclChain(ScopedDecl *D) { DeclChain = D; }
 
-  /// ToDecl and FromDecl make Decl <-> DeclContext castings.
-  /// They are intended to be used by the simplify_type and cast_convert_val
-  /// templates.
-  static Decl        *ToDecl   (const DeclContext *D);
-  static DeclContext *FromDecl (const Decl *D);
-
   static bool classof(const Decl *D) {
     switch (D->getKind()) {
       case Decl::TranslationUnit:
@@ -362,49 +359,60 @@ template<> struct DeclContext::KindTrait<DeclContext> {
 } // end clang.
 
 namespace llvm {
-/// Implement simplify_type for DeclContext, so that we can dyn_cast from 
-/// DeclContext to a specific Decl class.
-  template<> struct simplify_type<const ::clang::DeclContext*> {
-  typedef ::clang::Decl* SimpleType;
-  static SimpleType getSimplifiedValue(const ::clang::DeclContext *Val) {
-    return ::clang::DeclContext::ToDecl(Val);
+
+/// Implement a isa_impl_wrap specialization to check whether a DeclContext is
+/// a specific Decl.
+template<class ToTy>
+struct isa_impl_wrap<ToTy,
+                     const ::clang::DeclContext,const ::clang::DeclContext> {
+  static bool doit(const ::clang::DeclContext &Val) {
+    return ToTy::classof(::clang::Decl::castFromDeclContext(&Val));
   }
 };
-template<> struct simplify_type< ::clang::DeclContext*>
-  : public simplify_type<const ::clang::DeclContext*> {};
+template<class ToTy>
+struct isa_impl_wrap<ToTy, ::clang::DeclContext, ::clang::DeclContext>
+  : public isa_impl_wrap<ToTy,
+                      const ::clang::DeclContext,const ::clang::DeclContext> {};
 
-template<> struct simplify_type<const ::clang::DeclContext> {
-  typedef ::clang::Decl SimpleType;
-  static SimpleType &getSimplifiedValue(const ::clang::DeclContext &Val) {
-    return *::clang::DeclContext::ToDecl(&Val);
-  }
-};
-template<> struct simplify_type< ::clang::DeclContext>
-  : public simplify_type<const ::clang::DeclContext> {};
-
-/// Implement cast_convert_val for DeclContext, so that we can dyn_cast from 
-/// a Decl class to DeclContext.
+/// Implement cast_convert_val for Decl -> DeclContext conversions.
 template<class FromTy>
-struct cast_convert_val< ::clang::DeclContext,const FromTy,const FromTy> {
+struct cast_convert_val< ::clang::DeclContext, FromTy, FromTy> {
   static ::clang::DeclContext &doit(const FromTy &Val) {
-    return *::clang::DeclContext::FromDecl(&Val);
+    return *FromTy::castToDeclContext(&Val);
   }
 };
-template<class FromTy>
-struct cast_convert_val< ::clang::DeclContext,FromTy,FromTy>
-  : public cast_convert_val< ::clang::DeclContext,const FromTy,const FromTy>
-    {};
 
 template<class FromTy>
-struct cast_convert_val< ::clang::DeclContext,const FromTy*,const FromTy*> {
+struct cast_convert_val< ::clang::DeclContext, FromTy*, FromTy*> {
   static ::clang::DeclContext *doit(const FromTy *Val) {
-    return ::clang::DeclContext::FromDecl(Val);
+    return FromTy::castToDeclContext(Val);
   }
 };
-template<class FromTy>
-struct cast_convert_val< ::clang::DeclContext,FromTy*,FromTy*> 
-  : public cast_convert_val< ::clang::DeclContext,const FromTy*,const FromTy*>
-    {};
+
+/// Implement cast_convert_val for DeclContext -> Decl conversions.
+template<class ToTy>
+struct cast_convert_val<ToTy,
+                        const ::clang::DeclContext,const ::clang::DeclContext> {
+  static ToTy &doit(const ::clang::DeclContext &Val) {
+    return *reinterpret_cast<ToTy*>(ToTy::castFromDeclContext(&Val));
+  }
+};
+template<class ToTy>
+struct cast_convert_val<ToTy, ::clang::DeclContext, ::clang::DeclContext>
+  : public cast_convert_val<ToTy,
+                      const ::clang::DeclContext,const ::clang::DeclContext> {};
+
+template<class ToTy>
+struct cast_convert_val<ToTy,
+                     const ::clang::DeclContext*, const ::clang::DeclContext*> {
+  static ToTy *doit(const ::clang::DeclContext *Val) {
+    return reinterpret_cast<ToTy*>(ToTy::castFromDeclContext(Val));
+  }
+};
+template<class ToTy>
+struct cast_convert_val<ToTy, ::clang::DeclContext*, ::clang::DeclContext*>
+  : public cast_convert_val<ToTy,
+                    const ::clang::DeclContext*,const ::clang::DeclContext*> {};
 
 } // end namespace llvm
 

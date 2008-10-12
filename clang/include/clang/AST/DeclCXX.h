@@ -69,6 +69,12 @@ public:
     return D->getKind() >= CXXRecordFirst && D->getKind() <= CXXRecordLast;
   }
   static bool classof(const CXXRecordDecl *D) { return true; }
+  static DeclContext *castToDeclContext(const CXXRecordDecl *D) {
+    return static_cast<DeclContext *>(const_cast<CXXRecordDecl*>(D));
+  }
+  static CXXRecordDecl *castFromDeclContext(const DeclContext *DC) {
+    return static_cast<CXXRecordDecl *>(const_cast<DeclContext*>(DC));
+  }
 
 protected:
   /// EmitImpl - Serialize this CXXRecordDecl.  Called by Decl::Emit.
