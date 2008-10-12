@@ -88,8 +88,12 @@ It includes a large number of features and refinements from LLVM 2.3.</p>
 
 <li>... Attributes changes ... </li>
 
-<li>The <tt>DbgStopPointInst</tt> methods <tt>getDirectory</tt> and <tt>getFileName</tt> now return <tt>Value*</tt> instead of strings. These can be converted to strings using <tt>llvm::GetConstantStringInfo</tt> defined via "llvm/Analysis/ValueTracking.h".
+<li>The <tt>DbgStopPointInst</tt> methods <tt>getDirectory</tt> and
+<tt>getFileName</tt> now return <tt>Value*</tt> instead of strings. These can be
+converted to strings using <tt>llvm::GetConstantStringInfo</tt> defined via
+"llvm/Analysis/ValueTracking.h".</li>
 
+<li>API change: BinaryOperator::create -> Create (CmpInst, CastInst too)</li>
 </ul>
 </div>
 
@@ -174,12 +178,18 @@ this section.
 
 <ul>
 <li>
- <p>MRVs got generalized to FCAs.</p>
+ <p>MRVs got generalized to FCAs.  getresult is gone, ret with multiple values
+ is gone.</p>
  </li>
 
 <li><p>fast isel, -O0 compile times</p></li>
     
 <li><p>Attrs changes?</p></li>
+
+
+<li><p>Initial PIC16 port</p></li>
+
+<li><p> builtin sync_compare_and_swap builtins + intrinsics</p></li>
 
 <li><p>...</p></li>
 
@@ -217,6 +227,10 @@ for the C, C++, Objective-C, Ada, and Fortran front-ends.</p>
 </p>
 
 <ul>
+<li>use diet patch landed: saved 15% IR memory footprint</li>
+<li>LLVM IR now directly represents "common" linkage, instead of
+    representing it as a form of weak linkage.</li>
+
 <li>...</li>
 </ul>
   
@@ -234,8 +248,16 @@ LLVM 2.4 optimizers support a few major enhancements:</p>
 
 <ul>
 
-<li>.</li>
-  
+<li>Old-ADCE used control dependence and deleted output-free infinite loops.
+Added a new Loop deletion pass (for deleting output free provably-finite loops)
+and rewrote ADCE to be simpler faster, and not need control dependence.</li>
+
+<li>SparsePropagation framework for lattice-based dataflow solvers.</li>
+
+<li>LoadVN and GCSE finally bit the dust?</li>
+
+<li>Tail duplication was is removed from the standard optimizer sequence.</li>
+
 </ul>
 
 </div>
