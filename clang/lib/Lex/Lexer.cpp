@@ -135,7 +135,7 @@ Lexer::Lexer(SourceLocation fileloc, const LangOptions &features,
   // We *are* in raw mode.
   LexingRawMode = true;
   
-  // Never keep comments in raw mode.
+  // Default to not keeping comments in raw mode.
   KeepCommentMode = false;
 }
 
