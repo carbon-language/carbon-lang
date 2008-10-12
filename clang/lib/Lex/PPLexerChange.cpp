@@ -207,8 +207,7 @@ bool Preprocessor::HandleEndOfFile(Token &Result, bool isEndOfMacro) {
   
   Result.startToken();
   CurLexer->BufferPtr = EndPos;
-  CurLexer->FormTokenWithChars(Result, EndPos);
-  Result.setKind(tok::eof);
+  CurLexer->FormTokenWithChars(Result, EndPos, tok::eof);
   
   // We're done with the #included file.
   delete CurLexer;

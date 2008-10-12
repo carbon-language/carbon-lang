@@ -234,9 +234,11 @@ private:
   /// takes that range and assigns it to the token as its location and size.  In
   /// addition, since tokens cannot overlap, this also updates BufferPtr to be
   /// TokEnd.
-  void FormTokenWithChars(Token &Result, const char *TokEnd) {
+  void FormTokenWithChars(Token &Result, const char *TokEnd, 
+                          tok::TokenKind Kind) {
     Result.setLocation(getSourceLocation(BufferPtr));
     Result.setLength(TokEnd-BufferPtr);
+    Result.setKind(Kind);
     BufferPtr = TokEnd;
   }
   
