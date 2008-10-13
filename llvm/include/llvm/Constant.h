@@ -33,7 +33,7 @@ namespace llvm {
 /// Note that Constants are immutable (once created they never change) 
 /// and are fully shared by structural equivalence.  This means that two 
 /// structurally equivalent constants will always have the same address.  
-/// Constant's are created on demand as needed and never deleted: thus clients 
+/// Constants are created on demand as needed and never deleted: thus clients 
 /// don't have to worry about the lifetime of the objects.
 /// @brief LLVM Constant Representation
 class Constant : public User {
@@ -66,7 +66,7 @@ public:
   /// relocations which cannot be resolved at compile time.
   bool ContainsRelocations() const;
 
-  // Specialize get/setOperand for Constant's as their operands are always
+  // Specialize get/setOperand for Constants as their operands are always
   // constants as well.
   Constant *getOperand(unsigned i) {
     return static_cast<Constant*>(User::getOperand(i));
