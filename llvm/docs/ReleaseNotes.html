@@ -9,7 +9,7 @@
 <body>
 
 <div class="doc_title">LLVM 2.4 Release Notes</div>
- 
+
 <ol>
   <li><a href="#intro">Introduction</a></li>
   <li><a href="#changes">Major Changes and Sub-project Status</a></li>
@@ -44,7 +44,7 @@ web site</a>.  If you have questions or comments, the <a
 href="http://mail.cs.uiuc.edu/mailman/listinfo/llvmdev">LLVM developer's mailing
 list</a> is a good place to send them.</p>
 
-<p>Note that if you are reading this file from a Subversion checkout or the 
+<p>Note that if you are reading this file from a Subversion checkout or the
 main LLVM web page, this document applies to the <i>next</i> release, not the
 current one.  To see the release notes for a specific releases, please see the
 <a href="http://llvm.org/releases/">releases page</a>.</p>
@@ -59,7 +59,7 @@ current one.  To see the release notes for a specific releases, please see the
 
 <div class="doc_text">
 
-<p>This is the fifteenth public release of the LLVM Compiler Infrastructure. 
+<p>This is the fifteenth public release of the LLVM Compiler Infrastructure.
 It includes a large number of features and refinements from LLVM 2.3.</p>
 
 </div>
@@ -71,7 +71,7 @@ It includes a large number of features and refinements from LLVM 2.3.</p>
   llc -enable-value-prop, propagation of value info (sign/zero ext info) from
        one MBB to another
  -->
- 
+
  <!-- for announcement email:
     mention dev mtg
     Xcode 3.1 and 3.1.1.
@@ -105,7 +105,7 @@ converted to strings using <tt>llvm::GetConstantStringInfo</tt> defined via
 <li>API change: BinaryOperator::create -> Create (CmpInst, CastInst too)</li>
 <li>Various header files like "llvm/ADT/iterator" were given a .h suffix.
     Change your code to #include "llvm/ADT/iterator.h" instead.</li>
-    
+
 </ul>
 
 </div>
@@ -122,7 +122,7 @@ repository (which roughly contains the LLVM optimizer, code generators and
 supporting tools) and the llvm-gcc repository.  In addition to this code, the
 LLVM Project includes other sub-projects that are in development.  The two which
 are the most actively developed are the <a href="#clang">Clang Project</a> and
-<a href="#vmkit">vmkit Project</a>. 
+<a href="#vmkit">vmkit Project</a>.
 </p>
 </div>
 
@@ -196,7 +196,7 @@ this section.
  </li>
 
 <li><p>-O0 compile times overall much faster</p></li>
-    
+
 <li><p>Attrs changes?</p></li>
 
 
@@ -248,7 +248,7 @@ for the C, C++, Objective-C, Ada, and Fortran front-ends.</p>
 <li>.ll printing format change: %3 = add i32 4, 2</li>
 <li>...</li>
 </ul>
-  
+
 </div>
 
 <!--=========================================================================-->
@@ -258,7 +258,7 @@ for the C, C++, Objective-C, Ada, and Fortran front-ends.</p>
 
 <div class="doc_text">
 
-<p>In addition to a huge array of bug fixes and minor performance tweaks, the 
+<p>In addition to a huge array of bug fixes and minor performance tweaks, the
 LLVM 2.4 optimizers support a few major enhancements:</p>
 
 <ul>
@@ -330,7 +330,7 @@ faster:</p>
 <li>...</li>
 
 </ul>
-  
+
 </div>
 
 <!--=========================================================================-->
@@ -346,9 +346,8 @@ faster:</p>
 <li>MIPS floating point support?</li>
 <li>....</li>
 </ul>
-  
-</div>
 
+</div>
 
 
 <!--=========================================================================-->
@@ -361,11 +360,14 @@ faster:</p>
 </p>
 
 <ul>
+<li><tt>llvmc2</tt>(the generic compiler driver) gained plugin
+  support. It is now easier to experiment with <tt>llvmc2</tt> and
+  build your own tools based on it. </li>
 <li>raw_ostream + formatting</li>
 <li>Recycler + pool allocation stuff?</li>
 <li>...</li>
 </ul>
-  
+
 </div>
 
 <!-- *********************************************************************** -->
@@ -379,7 +381,7 @@ faster:</p>
 <p>LLVM is known to work on the following platforms:</p>
 
 <ul>
-<li>Intel and AMD machines (IA32) running Red Hat Linux, Fedora Core and FreeBSD 
+<li>Intel and AMD machines (IA32) running Red Hat Linux, Fedora Core and FreeBSD
       (and probably other unix-like systems).</li>
 <li>PowerPC and X86-based Mac OS X systems, running 10.3 and above in 32-bit and
     64-bit modes.</li>
