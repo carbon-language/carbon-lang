@@ -249,7 +249,9 @@ and rewrote ADCE to be simpler faster, and not need control dependence.</li>
 pulled out of instcombine and put into a new ValueTracking.h file, where they
 can be reused by other passes.</li>
 
-<li>MarkModRef etc</li>
+<li>The new AddReadAttrs pass works out which functions are read-only or
+read-none (these correspond to 'pure' and 'const' in C) and marks them
+with the appropriate attribute.</li>
 </ul>
 
 </div>
