@@ -157,7 +157,7 @@ in this section.
 
 <ul>
 <li><p>The most visible end-user change in LLVM 2.4 is that it includes many
-optimizations and changes ot make -O0 compile times much faster.  You should see
+optimizations and changes to make -O0 compile times much faster.  You should see
 improvements on the order of 30% or more faster than LLVM 2.3.  There are many
 pieces to this change, described in more detail below.  The speedups and new
 components can also be used for JIT compilers that want fast compilation as
@@ -195,8 +195,9 @@ includes support for the C, C++, Objective-C, Ada, and Fortran front-ends.</p>
 <ul>
 <li>LLVM 2.4 supports the full set of atomic <tt>__sync_*</tt> builtins.  LLVM
 2.3 only supported those used by OpenMP, but 2.4 supports them all.  While
-llvm-gcc supports all of these builtins, note that not all targets do.  X86 and
-PowerPC are known to support them all in both 32-bit and 64-bit mode.</li>
+llvm-gcc supports all of these builtins, note that not all targets do.  X86 
+support them all in both 32-bit and 64-bit mode and PowerPC supports them all
+except for the 64-bit operations when in 32-bit mode.</li>
 
 <li>llvm-gcc now supports an <tt>-flimited-precision</tt> option, which tells
 the compiler that it is ok to use low-precision approximations of certain libm
@@ -274,30 +275,40 @@ function should be optimized for code size.</li>
 
 <div class="doc_text">
 
-<p>In addition to a huge array of bug fixes and minor performance tweaks, the
-LLVM 2.4 optimizers support a few major enhancements:</p>
+<p>In addition to a huge array of bug fixes and minor performance tweaks, this
+release includes a few major enhancements and additions to the optimizers:</p>
 
 <ul>
 
-<li>GVN now does local PRE?</li>
+<li>The Global Value Numbering (GVN) pass now does local Partial Redundancy
+Elimination (PRE) to eliminate some partially redundant expressions in cases
+where doing so won't grow code size.</li>
 
-<li>Matthijs' Dead argument elimination rewrite</li>
-
-<li>Old-ADCE used control dependence and deleted output-free infinite loops.
-Added a new Loop deletion pass (for deleting output free provably-finite loops)
-and rewrote ADCE to be simpler faster, and not need control dependence.</li>
-
-<li>SparsePropagation framework for lattice-based dataflow solvers.</li>
-
-<li>Tail duplication was removed from the standard optimizer sequence.</li>
-
-<li>Various helper functions (ComputeMaskedBits, ComputeNumSignBits, etc) were
-pulled out of instcombine and put into a new ValueTracking.h file, where they
-can be reused by other passes.</li>
+<li>LLVM 2.4 includes a new loop deletion pass (which removes output-free
+provably-finite loops) and a rewritten Aggressive Dead Code Elimination (ADCE)
+pass that no longer uses control dependence information.  These changes speed up
+the optimizer and also prevents it from deleting output-free infinite
+loops.</li>
 
 <li>The new AddReadAttrs pass works out which functions are read-only or
 read-none (these correspond to 'pure' and 'const' in C) and marks them
 with the appropriate attribute.</li>
+
+<li>LLVM 2.4 now includes a new SparsePropagation framework, which makes it
+trivial to build lattice-based dataflow solvers that operate over LLVM IR. Using
+this interface means that you just define objects to represent your lattice
+values and the transfer functions that operate on them.  It handles the
+mechanics of worklist processing, liveness tracking, handling PHI nodes,
+etc.</li>
+
+<li>Various helper functions (ComputeMaskedBits, ComputeNumSignBits, etc) were
+pulled out of the Instruction Combining pass and put into a new 
+<tt>ValueTracking.h</tt> header, where they can be reused by other passes.</li>
+
+<li>The tail duplication pass has been removed from the standard optimizer
+sequence used by llvm-gcc.  This pass still exists, but the benefits it once
+provided are now achieved by other passes.</li>
+
 </ul>
 
 </div>
@@ -314,21 +325,41 @@ which allows us to implement more aggressive algorithms and make it run
 faster:</p>
 
 <ul>
-<li>asm writers split out to their own library to avoid JITs having to link
- them in.</li>
-<li>Big asm writer refactoring + TargetAsmInfo</li>
-<li>2-addr pass and coalescer can now remat trivial insts to avoid a copy.</li>
-<li>spiller to commute instructions in order to fold a reload</li>
-<li>Stack slot coloring?</li>
-<li>Live intervals renumbering?  Is this useful to external people?</li>
-<li>'is as cheap as a move' instruction flag</li>
-<li>Improvements to selection dag viewing</li>
-<li>fast isel</li>
-<li>Selection dag speedups</li>
-<li>asmwriter + raw_ostream -> fastah</li>
-<li>Partitioned Boolean Quadratic Programming (PBQP) based register 
-allocator.</li>
-<li>...</li>
+<li>The target-independent code generator supports (and the X86 backend
+    currently implements) a new interface for "fast" instruction selection. This
+    interface is optimized to produce code as quickly as possible, sacrificing
+    code quality to do it.  This is used by default at -O0 or when using
+    "llc -fast" on X86.  It is straight-forward to add support for
+    other targets if faster -O0 compilation is desired.</li>
+
+<li>In addition to the new 'fast' instruction selection path, many existing
+    pieces of the code generator have been optimized in significant ways.
+    SelectionDAG's are now pool allocated and use better algorithms in many
+    places, the ".s" file printers now use raw_ostream to emit text much faster,
+    etc.  The end result of these improvements is that the compiler also takes
+    substantially less time to generate code that is just as good (and often
+    better) than before.</li>
+
+<li>Each target has been split to separate the .s file printing logic from the
+    rest of the target.  This enables JIT compilers that don't link in the
+    (somewhat large) code and data tables used for printing a .s file.</li>
+
+<li>The code generator now includes a "stack slot coloring" pass, which packs
+    together individual spilled values into common stack slots.  This reduces
+    the size of stack frames with many spills, which tends to increase L1 cache
+    effectiveness.</li>
+
+<li>Various pieces of the register allocator (e.g. the coalescer and two-address
+    operation elimination pass) now know how to rematerialize trivial operations
+    to avoid copies and include several other optimizations.</li>
+
+<li>The <a href="CodeGenerator.html#selectiondag_process">graphs</a> produced by
+    the <tt>llc -view-*-dags</tt> options are now significantly prettier and
+    easier to read.</li>
+
+<li>LLVM 2.4 includes a new register allocator based on Partitioned Boolean
+    Quadratic Programming (PBQP).  This register allocator is still in
+    development, but is very simple and clean.</li>
 
 </ul>
 
