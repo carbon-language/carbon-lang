@@ -473,7 +473,8 @@ TargetLowering::TargetLowering(TargetMachine &tm)
   InitCmpLibcallCCs(CmpLibcallCCs);
 
   // Tell Legalize whether the assembler supports DEBUG_LOC.
-  if (!TM.getTargetAsmInfo()->hasDotLocAndDotFile())
+  const TargetAsmInfo *TASM = TM.getTargetAsmInfo();
+  if (!TASM || !TASM->hasDotLocAndDotFile())
     setOperationAction(ISD::DEBUG_LOC, MVT::Other, Expand);
 }
 
