@@ -64,7 +64,8 @@ namespace {
 
 CodeGenTypes::CodeGenTypes(ASTContext &Ctx, llvm::Module& M,
                            const llvm::TargetData &TD)
-  : Context(Ctx), Target(Ctx.Target), TheModule(M), TheTargetData(TD) {
+  : Context(Ctx), Target(Ctx.Target), TheModule(M), TheTargetData(TD),
+    TheABIInfo(0) {
 }
 
 CodeGenTypes::~CodeGenTypes() {

@@ -30,6 +30,7 @@ namespace llvm {
 }
 
 namespace clang {
+  class ABIInfo;
   class ASTContext;
   class FieldDecl;
   class FunctionTypeProto;
@@ -82,8 +83,8 @@ class CodeGenTypes {
   TargetInfo &Target;
   llvm::Module& TheModule;
   const llvm::TargetData& TheTargetData;
+  mutable const ABIInfo* TheABIInfo;
   
-
   llvm::SmallVector<std::pair<const PointerLikeType *,
                               llvm::OpaqueType *>, 8>  PointersToResolve;
 
@@ -131,6 +132,7 @@ public:
   const llvm::TargetData &getTargetData() const { return TheTargetData; }
   TargetInfo &getTarget() const { return Target; }
   ASTContext &getContext() const { return Context; }
+  const ABIInfo &getABIInfo() const;
 
   /// ConvertType - Convert type T into a llvm::Type.  
   const llvm::Type *ConvertType(QualType T);
