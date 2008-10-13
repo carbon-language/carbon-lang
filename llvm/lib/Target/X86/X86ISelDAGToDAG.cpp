@@ -989,8 +989,11 @@ DOUT << "AlreadySelected " << AlreadySelected << "\n";
                                            SDValue(C2, 0), SDValue(C1, 0));
     SDValue NewAND = CurDAG->getNode(ISD::AND, N.getValueType(),
                                        Shift.getOperand(0), NewANDMask);
+    SDValue NewSHIFT = CurDAG->getNode(ISD::SHL, N.getValueType(),
+                                       NewAND, SDValue(C1, 0));
     NewANDMask.getNode()->setNodeId(Shift.getNode()->getNodeId());
     NewAND.getNode()->setNodeId(N.getNode()->getNodeId());
+    CurDAG->ReplaceAllUsesWith(N, NewSHIFT);
     
     AM.Scale = 1 << ShiftCst;
     AM.IndexReg = NewAND;
