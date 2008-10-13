@@ -220,7 +220,9 @@ public:
     return 0;
   }
   
-  /// copyRegToReg - Add a copy between a pair of registers
+  /// copyRegToReg - Emit instructions to copy between a pair of registers. It
+  /// returns false if the target does not how to copy between the specified
+  /// registers.
   virtual bool copyRegToReg(MachineBasicBlock &MBB,
                             MachineBasicBlock::iterator MI,
                             unsigned DestReg, unsigned SrcReg,
