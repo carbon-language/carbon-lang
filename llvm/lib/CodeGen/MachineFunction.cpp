@@ -110,8 +110,11 @@ void ilist_traits<MachineBasicBlock>::deleteNode(MachineBasicBlock *MBB) {
 MachineFunction::MachineFunction(const Function *F,
                                  const TargetMachine &TM)
   : Annotation(MF_AID), Fn(F), Target(TM) {
-  RegInfo = new (Allocator.Allocate<MachineRegisterInfo>())
-                MachineRegisterInfo(*TM.getRegisterInfo());
+  if (TM.getRegisterInfo())
+    RegInfo = new (Allocator.Allocate<MachineRegisterInfo>())
+                  MachineRegisterInfo(*TM.getRegisterInfo());
+  else
+    RegInfo = 0;
   MFInfo = 0;
   FrameInfo = new (Allocator.Allocate<MachineFrameInfo>())
                   MachineFrameInfo(*TM.getFrameInfo());
@@ -132,7 +135,8 @@ MachineFunction::~MachineFunction() {
   BasicBlocks.clear();
   InstructionRecycler.clear(Allocator);
   BasicBlockRecycler.clear(Allocator);
-  RegInfo->~MachineRegisterInfo();        Allocator.Deallocate(RegInfo);
+  if (RegInfo)
+    RegInfo->~MachineRegisterInfo();        Allocator.Deallocate(RegInfo);
   if (MFInfo) {
     MFInfo->~MachineFunctionInfo();       Allocator.Deallocate(MFInfo);
   }
@@ -255,7 +259,7 @@ void MachineFunction::print(std::ostream &OS) const {
   
   const TargetRegisterInfo *TRI = getTarget().getRegisterInfo();
   
-  if (!RegInfo->livein_empty()) {
+  if (RegInfo && !RegInfo->livein_empty()) {
     OS << "Live Ins:";
     for (MachineRegisterInfo::livein_iterator
          I = RegInfo->livein_begin(), E = RegInfo->livein_end(); I != E; ++I) {
@@ -269,7 +273,7 @@ void MachineFunction::print(std::ostream &OS) const {
     }
     OS << "\n";
   }
-  if (!RegInfo->liveout_empty()) {
+  if (RegInfo && !RegInfo->liveout_empty()) {
     OS << "Live Outs:";
     for (MachineRegisterInfo::liveout_iterator
          I = RegInfo->liveout_begin(), E = RegInfo->liveout_end(); I != E; ++I)
