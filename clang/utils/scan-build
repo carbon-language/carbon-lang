@@ -21,7 +21,6 @@ use Term::ANSIColor;
 use Term::ANSIColor qw(:constants);
 use Cwd;
 use Sys::Hostname;
-use File::Basename;
 
 my $Verbose = 0;       # Verbose output from this script.
 my $Prog = "scan-build";
@@ -82,7 +81,7 @@ sub DieDiag {
 # Some initial preprocessing of Clang options.
 ##----------------------------------------------------------------------------##
 
-my $ClangSB = "$RealBin/clang";
+my $ClangSB = Cwd::realpath("$RealBin/clang");
 my $Clang = $ClangSB;
 
 if (! -x $ClangSB) {
@@ -399,22 +398,26 @@ sub ScanFile {
 sub CopyFiles {
 
   my $Dir = shift;
+
+  my $JS = Cwd::realpath("$RealBin/sorttable.js");
   
   DieDiag("Cannot find 'sorttable.js'.\n")
-    if (! -r "$RealBin/sorttable.js");  
+    if (! -r $JS);  
 
-  system ("cp", "$RealBin/sorttable.js", "$Dir");
+  system ("cp", $JS, "$Dir");
 
   DieDiag("Could not copy 'sorttable.js' to '$Dir'.\n")
     if (! -r "$Dir/sorttable.js");
     
+  my $CSS = Cwd::realpath("$RealBin/scanview.css");
+  
   DieDiag("Cannot find 'scanview.css'.\n")
-    if (! -r "$RealBin/scanview.css");  
+    if (! -r $CSS);
 
-  system ("cp", "$RealBin/scanview.css", "$Dir");
+  system ("cp", $CSS, "$Dir");
 
   DieDiag("Could not copy 'scanview.css' to '$Dir'.\n")
-    if (! -r "$Dir/scanview.css");
+    if (! -r $CSS);
 }
 
 ##----------------------------------------------------------------------------##
@@ -803,6 +806,8 @@ ENDTEXT
 print <<ENDTEXT;
 OPTIONS:
 
+ -analyze-headers - Also analyze functions in #included files.
+
  -o             - Target directory for HTML report files.  Subdirectories
                   will be created as needed to represent separate "runs" of
                   the analyzer.  If this option is not specified, a directory
@@ -907,6 +912,7 @@ sub ShellEscape {
 # Process command-line arguments.
 ##----------------------------------------------------------------------------##
 
+my $AnalyzeHeaders = 0;
 my $HtmlDir;           # Parent directory to store HTML files.
 my $IgnoreErrors = 0;  # Ignore build errors.
 my $ViewResults  = 0;  # View results when the build terminates.
@@ -927,6 +933,12 @@ while (@ARGV) {
   if ($arg eq "-h" or $arg eq "--help") {
     DisplayHelp();
     exit 0;
+  }
+  
+  if ($arg eq '-analyze-headers') {
+    shift @ARGV;    
+    $AnalyzeHeaders = 1;
+    next;
   }
   
   if (defined $AvailableAnalyses{$arg}) {
@@ -1041,7 +1053,7 @@ $HtmlDir = GetHTMLRunDir($HtmlDir);
 # Set the appropriate environment variables.
 SetHtmlEnv(\@ARGV, $HtmlDir);
 
-my $Cmd = "$RealBin/ccc-analyzer";
+my $Cmd = Cwd::realpath("$RealBin/ccc-analyzer");
 
 DieDiag("Executable 'ccc-analyzer' does not exist at '$Cmd'\n")
   if (! -x $Cmd);
@@ -1076,6 +1088,10 @@ if (scalar(@AnalysesToRun) == 0) {
   }
 }
 
+if ($AnalyzeHeaders) {
+  push @AnalysesToRun,"-analyzer-opt-analyze-headers";  
+}
+
 $ENV{'CCC_ANALYZER_ANALYSIS'} = join ' ',@AnalysesToRun;
 
 # Run the build.
@@ -1087,7 +1103,7 @@ my $NumBugs = Postprocess($HtmlDir, $BaseDir);
 if ($ViewResults and -r "$HtmlDir/index.html") {
   Diag "Analysis run complete.\n";
   Diag "Viewing analysis results in '$HtmlDir' using scan-view.\n";
-  my $ScanView = "$RealBin/scan-view";
+  my $ScanView = Cwd::realpath("$RealBin/scan-view");
   if (! -x $ScanView) { $ScanView = "scan-view"; }
   exec $ScanView, "$HtmlDir";
 }
