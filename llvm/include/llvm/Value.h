@@ -253,11 +253,6 @@ inline raw_ostream &operator<<(raw_ostream &OS, const Value &V) {
   return OS;
 }
   
-void Use::init(Value *V, User *) {
-  Val = V;
-  if (V) V->addUse(*this);
-}
-
 void Use::set(Value *V) {
   if (Val) removeFromList();
   Val = V;
