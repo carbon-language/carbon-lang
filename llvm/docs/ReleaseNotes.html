@@ -620,11 +620,10 @@ however it <a href="http://llvm.org/PR2006">also fails to build on X86-64</a>
 which does support trampolines.</li>
 <li>The Ada front-end <a href="http://llvm.org/PR2007">fails to bootstrap</a>.
 Workaround: configure with --disable-bootstrap.</li>
-<li>The c380004 and <a href="http://llvm.org/PR2010">c393010</a> ACATS tests
-fail (c380004 also fails with gcc-4.2 mainline).  When built at -O3, the
-<a href="http://llvm.org/PR2421">cxg2021</a> ACATS test also fails.</li>
-<li>Some gcc specific Ada tests continue to crash the compiler.  The testsuite
-reports most tests as having failed even though they pass.</li>
+<li>The c380004, <a href="http://llvm.org/PR2010">c393010</a>
+and <a href="http://llvm.org/PR2421">cxg2021</a> ACATS tests fail
+(c380004 also fails with gcc-4.2 mainline).</li>
+<li>Some gcc specific Ada tests continue to crash the compiler.</li>
 <li>The -E binder option (exception backtraces)
 <a href="http://llvm.org/PR1982">does not work</a> and will result in programs
 crashing if an exception is raised.  Workaround: do not use -E.</li>
