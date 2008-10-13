@@ -4671,6 +4671,8 @@ void SelectionDAGLegalize::LegalizeSetCCOperands(SDValue &LHS,
                            DAG.getValueType(VT));
         Tmp2 = DAG.getNode(ISD::SIGN_EXTEND_INREG, NVT, Tmp2,
                            DAG.getValueType(VT));
+        Tmp1 = LegalizeOp(Tmp1); // Relegalize new nodes.
+        Tmp2 = LegalizeOp(Tmp2); // Relegalize new nodes.
         break;
       }
     }
@@ -5403,7 +5405,8 @@ ExpandIntToFP(bool isSigned, MVT DestTy, SDValue Source) {
                                        DestTy.getVectorNumElements() / 2);
     SDValue LoResult = LegalizeINT_TO_FP(SDValue(), isSigned, SplitDestTy, Lo);
     SDValue HiResult = LegalizeINT_TO_FP(SDValue(), isSigned, SplitDestTy, Hi);
-    return LegalizeOp(DAG.getNode(ISD::CONCAT_VECTORS, DestTy, LoResult, HiResult));
+    return LegalizeOp(DAG.getNode(ISD::CONCAT_VECTORS, DestTy, LoResult,
+                                  HiResult));
   }
 
   // Special case for i32 source to take advantage of UINTTOFP_I32_F32, etc.
