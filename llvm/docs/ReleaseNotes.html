@@ -156,21 +156,25 @@ in this section.
 <p>LLVM 2.4 includes several major new capabilities:</p>
 
 <ul>
-<li>
- <p>MRVs got generalized to FCAs.  getresult is gone, ret with multiple values
- is gone.</p>
- </li>
+<li><p>The most visible end-user change in LLVM 2.4 is that it includes many
+optimizations and changes ot make -O0 compile times much faster.  You should see
+improvements on the order of 30% or more faster than LLVM 2.3.  There are many
+pieces to this change, described in more detail below.  The speedups and new
+components can also be used for JIT compilers that want fast compilation as
+well.</p></li>
 
-<li><p>-O0 compile times overall much faster</p></li>
+<li><p>The biggest change to the LLVM IR is that Multiple Return Values (which
+were introduced in LLVM 2.3) have been generalized to full support for "First
+Class Aggregate" values in LLVM 2.4.  This means that LLVM IR supports using
+structs and arrays as values in a function.  This capability is mostly useful
+for front-end authors, who prefer to treat things like complex numbers, simple
+tuples, dope vectors, etc as Value*'s instead of as a tuple of Value*'s or as
+memory values.</p></li>
 
-<li><p>Attrs changes?</p></li>
-
-
-<li><p>Initial PIC16 port</p></li>
-
-<li><p> Support the rest of the atomic __sync builtins</p></li>
-
-<li><p>...</p></li>
+<li><p>LLVM 2.4 also includes an initial port for the PIC16 microprocessor. This
+is the LLVM targer that only has support for 8 bit registers, and a number of
+other crazy constraints.  While the port is still in early development stages,
+it shows some interesting things you can do with LLVM.</p></li>
 
 </ul>
 
@@ -184,16 +188,32 @@ in this section.
 
 <div class="doc_text">
 
-<p>LLVM 2.4 fully supports the llvm-gcc 4.2 front-end, and includes support
-for the C, C++, Objective-C, Ada, and Fortran front-ends.</p>
+<p>LLVM fully supports the llvm-gcc 4.2 front-end, which marries the GCC
+front-ends and driver with the LLVM optimizer and code generator.  It currently
+includes support for the C, C++, Objective-C, Ada, and Fortran front-ends.</p>
 
-<p>
 <ul>
-<li>block-pointers<li>
-<li>alpha?<li>
-<li>-flimited-precision</li>
-<li>-flto</li>
+<li>LLVM 2.4 supports the full set of atomic __sync builtins.  LLVM 2.3 only
+supported those used by OpenMP, but 2.4 supports them all.  Not all targets
+support all builtins, but X86 and PowerPC do.</li>
 
+<li>llvm-gcc now supports an -flimited-precision option, which tells the
+compiler that it is ok to use low-precision approximations of certain libm
+functions (like tan, log, etc).  This allows you to get high performance if you
+only need (say) 14-bits of precision.</li>
+
+<li>llvm-gcc now supports a C language extension known as "<a 
+href="http://lists.cs.uiuc.edu/pipermail/cfe-dev/2008-August/002670.html">Blocks
+</a>.  This feature is similar to nested functions and closures, but does not
+require stack trampolines (with most ABIs) and supports returning closures 
+from functions that define them.  Note that actually <em>using</em> Blocks
+requires a small runtime that is not included with llvm-gcc.</li>
+
+<li>llvm-gcc now supports a new <tt>-flto</tt> option.  On systems that support
+transparent Link Time Optimization (currently Darwin systems with Xcode 3.1 and
+later) this allows the use of LTO with other optimization levels like -Os.
+Previously, LTO could only be used with -O4, which implied optimizations in
+-O3 that can increase code size.</li>
 </ul>
 
 </div>
@@ -216,6 +236,7 @@ for the C, C++, Objective-C, Ada, and Fortran front-ends.</p>
 <li>DebugInfoBuilder</li>
 <li>.ll printing format change: %3 = add i32 4, 2</li>
 <li>opt-size, noinline, alwaysinline function attributes</li>
+<li>Attrs: function, return, param.</p></li>
 <li>...</li>
 </ul>
 
