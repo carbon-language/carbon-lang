@@ -787,9 +787,13 @@ a power of 2.</p>
   <h5>Syntax:</h5>
 
 <div class="doc_code">
-<pre>
-define [<a href="#linkage">linkage</a>] [<a href="#visibility">visibility</a>] [<a href="#callingconv">cconv</a>] [<a href="#paramattrs">ret attrs</a>] &lt;ResultType&gt; @&lt;FunctionName&gt; ([argument list]) [<a href="#fnattrs">fn Attrs</a>] [section "name"] [align N] [<a href="#gc">gc</a>] { ... }
-</pre>
+<tt>
+define [<a href="#linkage">linkage</a>] [<a href="#visibility">visibility</a>]
+      [<a href="#callingconv">cconv</a>] [<a href="#paramattrs">ret attrs</a>]
+      &lt;ResultType&gt; @&lt;FunctionName&gt; ([argument list])
+      [<a href="#fnattrs">fn Attrs</a>] [section "name"] [align N]
+      [<a href="#gc">gc</a>] { ... }
+</tt>
 </div>
 
 </div>
@@ -4153,8 +4157,11 @@ condition codes are evaluated identically to the
 
 <h5>Example:</h5>
 <pre>
-  &lt;result&gt; = vfcmp oeq &lt;2 x float&gt; &lt; float 4, float 0 &gt;, &lt; float 5, float 0 &gt;       <i>; yields: result=&lt;2 x i32&gt; &lt; i32 0, i32 -1 &gt;</i>
-  &lt;result&gt; = vfcmp ult &lt;2 x double&gt; &lt; double 1, double 2 &gt;, &lt; double 2, double 2&gt;   <i>; yields: result=&lt;2 x i64&gt; &lt; i64 -1, i64 0 &gt;</i>
+  <i>; yields: result=&lt;2 x i32&gt; &lt; i32 0, i32 -1 &gt;</i>
+  &lt;result&gt; = vfcmp oeq &lt;2 x float&gt; &lt; float 4, float 0 &gt;, &lt; float 5, float 0 &gt;
+  
+  <i>; yields: result=&lt;2 x i64&gt; &lt; i64 -1, i64 0 &gt;</i>
+  &lt;result&gt; = vfcmp ult &lt;2 x double&gt; &lt; double 1, double 2 &gt;, &lt; double 2, double 2&gt;
 </pre>
 </div>
 
