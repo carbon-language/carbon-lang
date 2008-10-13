@@ -193,12 +193,13 @@ front-ends and driver with the LLVM optimizer and code generator.  It currently
 includes support for the C, C++, Objective-C, Ada, and Fortran front-ends.</p>
 
 <ul>
-<li>LLVM 2.4 supports the full set of atomic __sync builtins.  LLVM 2.3 only
-supported those used by OpenMP, but 2.4 supports them all.  Not all targets
-support all builtins, but X86 and PowerPC do.</li>
+<li>LLVM 2.4 supports the full set of atomic <tt>__sync_*</tt> builtins.  LLVM
+2.3 only supported those used by OpenMP, but 2.4 supports them all.  While
+llvm-gcc supports all of these builtins, note that not all targets do.  X86 and
+PowerPC are known to support them all in both 32-bit and 64-bit mode.</li>
 
-<li>llvm-gcc now supports an -flimited-precision option, which tells the
-compiler that it is ok to use low-precision approximations of certain libm
+<li>llvm-gcc now supports an <tt>-flimited-precision</tt> option, which tells
+the compiler that it is ok to use low-precision approximations of certain libm
 functions (like tan, log, etc).  This allows you to get high performance if you
 only need (say) 14-bits of precision.</li>
 
@@ -229,15 +230,39 @@ Previously, LTO could only be used with -O4, which implied optimizations in
 </p>
 
 <ul>
-<li>vector shifts in the IR: no codegen support yet</li>
-<li>use diet patch landed: saved 15% IR memory footprint</li>
+<li>A major change to the "Use" class landed, which shrank it by 25%.  Since
+this is a pervasive part of the LLVM, it ended up reducing the memory use of
+LLVM IR in general by 15% for most programs.</li>
+
+<li>Values with no names are now pretty printed by <tt>llvm-dis</tt> more
+nicely.  They now print as "<tt>%3 = add i32 %A, 4</tt>" instead of
+"<tt>add i32 %A, 4   ; &lt;i32&gt;:3</tt>", which makes it much easier to read.
+</li>
+
+<li>LLVM 2.4 includes some changes for better vector support.  First, the shift
+operations (<tt>shl</tt>, <tt>ashr</tt>, <tt>lshr</tt>) now all support vectors
+and do an element-by-element shift (shifts of the whole vector can be
+accomplished by bitcasting the vector to &lt;1 x i128&gt; for example).  Second,
+there is support in development for vector comparisons.  LLVM 2.4 actually
+supports two ways to do vector comparisons: the vicmp/vfcmp instructions and the
+icmp/fcmp instructions.  The vicmp/vfcmp instructions are temporary and will be
+removed (do not use them).  The icmp/fcmp instructions compare two vectors and
+return a vector of i1's for each result.  Note that there is very little codegen
+support available for any of these IR features though.</li>
+
+<li>A new <tt>DebugInfoBuilder</tt> class is available, which makes it much
+easier for front-ends to create debug info descriptors, similar to the way that
+IRBuilder makes it easier to create LLVM IR.</li>
+
+<li>LLVM now supports "function attributes", which allows us to seperate return
+value attributes from function attributes.  LLVM now supports attributes on a
+function itself, a return value, and its parameters.  New supported function
+attributes include noinline/alwaysinline and the "opt-size" flag which says the
+function should be optimized for code size.</li>
+
 <li>LLVM IR now directly represents "common" linkage, instead of
     representing it as a form of weak linkage.</li>
-<li>DebugInfoBuilder</li>
-<li>.ll printing format change: %3 = add i32 4, 2</li>
-<li>opt-size, noinline, alwaysinline function attributes</li>
-<li>Attrs: function, return, param.</p></li>
-<li>...</li>
+    
 </ul>
 
 </div>
