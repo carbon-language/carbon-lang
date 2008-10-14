@@ -82,7 +82,7 @@ void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
 
 Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer)
   : PP(pp), Context(ctxt), Consumer(consumer), CurContext(0), CurBlock(0),
-    IdResolver(pp.getLangOptions()) {
+    PackContext(0), IdResolver(pp.getLangOptions()) {
   
   // Get IdentifierInfo objects for known functions for which we
   // do extra checking.  

@@ -571,6 +571,16 @@ DIAG(warn_pragma_pack_invalid_constant, WARNING,
      "invalid constant for '#pragma pack', expected %0 - ignored")
 DIAG(warn_pragma_pack_malformed, WARNING,
      "malformed '#pragma pack', expected '#pragma pack(%0 [, id] [, n])' - ignored")
+// Follow the MSVC implementation.
+DIAG(warn_pragma_pack_show, WARNING,
+     "value of #pragma pack(show) == %0")
+// FIXME: Dehardcode.
+DIAG(warn_pragma_pack_invalid_alignment, WARNING,
+     "expected #pragma pack parameter to be '1', '2', '4', '8', or '16'")
+DIAG(warn_pragma_pack_pop_identifer_and_alignment, WARNING,
+     "specifying both a name and alignment to pragma pack(pop, ...) is undefined")
+DIAG(warn_pragma_pack_pop_failed, WARNING,
+     "#pragma pack(pop, ...) failed: %0")
 
 //===----------------------------------------------------------------------===//
 // Semantic Analysis
