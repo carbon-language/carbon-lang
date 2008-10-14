@@ -68,58 +68,11 @@ static const Module *getModuleFromVal(const Value *V) {
   return 0;
 }
 
-
-/// NameNeedsQuotes - Return true if the specified llvm name should be wrapped
-/// with ""'s.
-static std::string QuoteNameIfNeeded(const std::string &Name) {
-  std::string result;
-  bool needsQuotes = Name[0] >= '0' && Name[0] <= '9';
-  // Scan the name to see if it needs quotes and to replace funky chars with
-  // their octal equivalent.
-  for (unsigned i = 0, e = Name.size(); i != e; ++i) {
-    char C = Name[i];
-    assert(C != '"' && "Illegal character in LLVM value name!");
-    if (isalnum(C) || C == '-' || C == '.' || C == '_')
-      result += C;
-    else if (C == '\\')  {
-      needsQuotes = true;
-      result += "\\\\";
-    } else if (isprint(C)) {
-      needsQuotes = true;
-      result += C;
-    } else {
-      needsQuotes = true;
-      result += "\\";
-      char hex1 = (C >> 4) & 0x0F;
-      if (hex1 < 10)
-        result += hex1 + '0';
-      else 
-        result += hex1 - 10 + 'A';
-      char hex2 = C & 0x0F;
-      if (hex2 < 10)
-        result += hex2 + '0';
-      else 
-        result += hex2 - 10 + 'A';
-    }
-  }
-  if (needsQuotes) {
-    result.insert(0,"\"");
-    result += '"';
-  }
-  return result;
-}
-
-/// getLLVMName - Turn the specified string into an 'LLVM name', which is
-/// surrounded with ""'s and escaped if it has special chars in it.
-static std::string getLLVMName(const std::string &Name) {
-  assert(!Name.empty() && "Cannot get empty name!");
-  return QuoteNameIfNeeded(Name);
-}
-
 enum PrefixType {
   GlobalPrefix,
   LabelPrefix,
-  LocalPrefix
+  LocalPrefix,
+  NoPrefix
 };
 
 /// PrintLLVMName - Turn the specified name into an 'LLVM name', which is either
@@ -130,6 +83,7 @@ static void PrintLLVMName(raw_ostream &OS, const char *NameStr,
   assert(NameStr && "Cannot get empty name!");
   switch (Prefix) {
   default: assert(0 && "Bad prefix!");
+  case NoPrefix: break;
   case GlobalPrefix: OS << '@'; break;
   case LabelPrefix:  break;
   case LocalPrefix:  OS << '%'; break;
@@ -165,19 +119,21 @@ static void PrintLLVMName(raw_ostream &OS, const char *NameStr,
       OS << C;
     } else {
       OS << '\\';
-      char hex1 = (C >> 4) & 0x0F;
-      if (hex1 < 10)
-        OS << (char)(hex1 + '0');
-      else 
-        OS << (char)(hex1 - 10 + 'A');
-      char hex2 = C & 0x0F;
-      if (hex2 < 10)
-        OS << (char)(hex2 + '0');
-      else 
-        OS << (char)(hex2 - 10 + 'A');
+      OS << hexdigit((C >> 4) & 0x0F);
+      OS << hexdigit((C >> 0) & 0x0F);
     }
   }
   OS << '"';
+}
+
+/// getLLVMName - Turn the specified string into an 'LLVM name', which is
+/// surrounded with ""'s and escaped if it has special chars in it.
+static std::string getLLVMName(const std::string &Name) {
+  assert(!Name.empty() && "Cannot get empty name!");
+  std::string result;
+  raw_string_ostream OS(result);
+  PrintLLVMName(OS, Name.c_str(), Name.length(), NoPrefix);
+  return OS.str();
 }
 
 /// PrintLLVMName - Turn the specified name into an 'LLVM name', which is either
