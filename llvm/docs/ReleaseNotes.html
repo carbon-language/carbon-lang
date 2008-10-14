@@ -490,7 +490,23 @@ API changes are:</p>
 
 <ul>
 
-<li>Attributes changes [DEVANG] </li>
+<li>Now, function attributes and return value attributes are managed 
+sepearately. Interface exported by <tt>ParameterAttributes.h</tt> header is now
+experted by <tt>Attributes.h</tt> header. The new attributes interface changes are:
+<ul>
+<li><tt>getParamAttrs</tt> method is now replaced by 
+<tt>getParamAttributes</tt>, <tt>getRetAttributes</tt> and 
+<tt>getFnAttributes</tt> methods.</li>
+<li> Return value attributes are stored at index 0. Function attributes are 
+stored at index ~0U. Parameter attributes are stored at index that matches 
+parameter number.</li>
+<li> <tt>ParamAttr</tt> namespace is now renamed as <tt>Attribute</tt>.</li>
+<li> The name of the class</tt> that manages reference count of opaque 
+attributes is changed from <tt>PAListPtr</tt> to <tt>AttrListPtr</tt>.</li>
+<li> <tt>ParamAttrsWithIndex</tt> is now renamed as <tt>AttributeWithIndex</tt>. 
+</li>
+</ul>
+</li>
 
 <li>The <tt>DbgStopPointInst</tt> methods <tt>getDirectory</tt> and
 <tt>getFileName</tt> now return <tt>Value*</tt> instead of strings. These can be
