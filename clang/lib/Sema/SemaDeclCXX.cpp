@@ -510,7 +510,7 @@ Sema::DeclTy *Sema::ActOnStartNamespaceDef(Scope *NamespcScope,
     // in that declarative region, it is treated as an original-namespace-name.
 
     Decl *PrevDecl =
-        LookupDecl(II, Decl::IDNS_Tag | Decl::IDNS_Ordinary, DeclRegionScope, 0,
+        LookupDecl(II, Decl::IDNS_Tag | Decl::IDNS_Ordinary, DeclRegionScope,
                    /*enableLazyBuiltinCreation=*/false);
 
     if (PrevDecl && isDeclInScope(PrevDecl, CurContext, DeclRegionScope)) {
