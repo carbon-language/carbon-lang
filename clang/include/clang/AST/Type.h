@@ -426,7 +426,10 @@ protected:
   
   /// EmitImpl - Subclasses must implement this method in order to
   ///  be serialized.
-  virtual void EmitImpl(llvm::Serializer& S) const;  
+  // FIXME: Make this abstract once implemented.
+  virtual void EmitImpl(llvm::Serializer& S) const {
+    assert (false && "Serializization for type not supported.");
+  }
 };
 
 /// ASQualType - TR18037 (C embedded extensions) 6.2.5p26 

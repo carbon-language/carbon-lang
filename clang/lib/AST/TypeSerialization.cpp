@@ -53,10 +53,6 @@ void Type::Emit(Serializer& S) const {
     EmitImpl(S);
 }
 
-void Type::EmitImpl(Serializer& S) const {
-  assert (false && "Serializization for type not supported.");
-}
-
 void Type::Create(ASTContext& Context, unsigned i, Deserializer& D) {
   Type::TypeClass K = static_cast<Type::TypeClass>(D.ReadInt());
   SerializedPtrID PtrID = D.ReadPtrID();  
