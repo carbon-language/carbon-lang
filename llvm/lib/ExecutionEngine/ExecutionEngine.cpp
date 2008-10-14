@@ -963,7 +963,7 @@ void ExecutionEngine::emitGlobals() {
           LinkedGlobalsMap[std::make_pair(GV->getName(), GV->getType())];
         void *Ptr = getPointerToGlobalIfAvailable(CGV);
         assert(Ptr && "Canonical global wasn't codegen'd!");
-        addGlobalMapping(GV, getPointerToGlobalIfAvailable(CGV));
+        addGlobalMapping(GV, Ptr);
       }
     }
     
