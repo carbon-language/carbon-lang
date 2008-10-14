@@ -596,9 +596,6 @@ static bool EvaluateFloat(const Expr* E, APFloat& Result, EvalInfo &Info) {
 }
 
 bool FloatExprEvaluator::VisitCallExpr(const CallExpr *E) {
-  const llvm::fltSemantics &Sem =
-    Info.Ctx.getFloatTypeSemantics(E->getType());
-  
   switch (E->isBuiltinCall()) {
   default: return false;
   case Builtin::BI__builtin_huge_val:
@@ -606,9 +603,12 @@ bool FloatExprEvaluator::VisitCallExpr(const CallExpr *E) {
   case Builtin::BI__builtin_huge_vall:
   case Builtin::BI__builtin_inf:
   case Builtin::BI__builtin_inff:
-  case Builtin::BI__builtin_infl:
+  case Builtin::BI__builtin_infl: {
+    const llvm::fltSemantics &Sem =
+      Info.Ctx.getFloatTypeSemantics(E->getType());
     Result = llvm::APFloat::getInf(Sem);
     return true;
+  }
       
   case Builtin::BI__builtin_nan:
   case Builtin::BI__builtin_nanf:
@@ -618,6 +618,8 @@ bool FloatExprEvaluator::VisitCallExpr(const CallExpr *E) {
     if (const StringLiteral *S = 
         dyn_cast<StringLiteral>(E->getArg(0)->IgnoreParenCasts())) {
       if (!S->isWide() && S->getByteLength() == 0) { // empty string.
+        const llvm::fltSemantics &Sem =
+          Info.Ctx.getFloatTypeSemantics(E->getType());
         Result = llvm::APFloat::getNaN(Sem);
         return true;
       }
