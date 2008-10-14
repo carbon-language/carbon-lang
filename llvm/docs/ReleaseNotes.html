@@ -432,13 +432,13 @@ faster:</p>
     build your own tools based on it.</li>
 
 <li>LLVM 2.4 includes a number of new generic algorithms and data structures,
-    include a scoped hash table, 'immutable' data structures, and a 
-    <tt>raw_ostream</tt> class.  The <tt>raw_ostream</tt> class and
+    include a scoped hash table, 'immutable' data structures, a simple
+    free-list manager, and a <tt>raw_ostream</tt> class.
+    The <tt>raw_ostream</tt> class and
     <tt>format</tt> allow for efficient file output, and various pieces of LLVM
     have switched over to use it.   The eventual goal is to eliminate
     std::ostream in favor of it.</li>
 
-<li>Recycler + pool allocation stuff? [DAN]</li>
 </ul>
 
 </div>
