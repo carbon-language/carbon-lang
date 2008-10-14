@@ -98,8 +98,7 @@ generation support is far enough along to build many C applications.  While not
 yet production quality, it is progressing very nicely.  In addition, C++
 front-end work has started to make significant progress.</p>
 
-<p>Codegen progress/state
-</p>
+<p>Codegen progress/state [DANIEL]</p>
 
 </div>
 
@@ -112,6 +111,8 @@ front-end work has started to make significant progress.</p>
 
 <p>The 
 <a href="http://clang.llvm.org/StaticAnalysis.html">static analysis tool</a>
+
+[TED]
 .</p>
 
 </div>
@@ -127,7 +128,7 @@ The <a href="http://vmkit.llvm.org/">vmkit project</a> is an implementation of
 a JVM and a CLI Virtual Machines (Microsoft .NET is an
 implementation of the CLI) using the Just-In-Time compiler of LLVM.</p>
 
-<p>...</p>
+<p>[NICOLAS]</p>
 
 </div>
 
@@ -244,12 +245,11 @@ nicely.  They now print as "<tt>%3 = add i32 %A, 4</tt>" instead of
 operations (<tt>shl</tt>, <tt>ashr</tt>, <tt>lshr</tt>) now all support vectors
 and do an element-by-element shift (shifts of the whole vector can be
 accomplished by bitcasting the vector to &lt;1 x i128&gt; for example).  Second,
-there is support in development for vector comparisons.  LLVM 2.4 actually
-supports two ways to do vector comparisons: the vicmp/vfcmp instructions and the
-icmp/fcmp instructions.  The vicmp/vfcmp instructions are temporary and will be
-removed (do not use them).  The icmp/fcmp instructions compare two vectors and
-return a vector of i1's for each result.  Note that there is very little codegen
-support available for any of these IR features though.</li>
+there is initial support in development for vector comparisons with the 
+<a href="LangRef.html#i_fcmp">fcmp</a>/<a href="LangRef.html#i_icmp">icmp</a>
+instructions.  These instructions compare two vectors and return a vector of
+i1's for each result.  Note that there is very little codegen support available
+for any of these IR features though.</li>
 
 <li>A new <tt>DebugInfoBuilder</tt> class is available, which makes it much
 easier for front-ends to create debug info descriptors, similar to the way that
