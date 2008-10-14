@@ -3124,14 +3124,16 @@ static unsigned getFCmpCode(FCmpInst::Predicate CC, bool &isOrdered) {
   switch (CC) {
   case FCmpInst::FCMP_ORD: isOrdered = true; return 0;  // 000
   case FCmpInst::FCMP_UNO:                   return 0;  // 000
-  case FCmpInst::FCMP_OEQ: isOrdered = true; return 1;  // 001
-  case FCmpInst::FCMP_UEQ:                   return 1;  // 001
-  case FCmpInst::FCMP_OGT: isOrdered = true; return 2;  // 010
-  case FCmpInst::FCMP_UGT:                   return 2;  // 010
+  case FCmpInst::FCMP_OGT: isOrdered = true; return 1;  // 001
+  case FCmpInst::FCMP_UGT:                   return 1;  // 001
+  case FCmpInst::FCMP_OEQ: isOrdered = true; return 2;  // 010
+  case FCmpInst::FCMP_UEQ:                   return 2;  // 010
   case FCmpInst::FCMP_OGE: isOrdered = true; return 3;  // 011
   case FCmpInst::FCMP_UGE:                   return 3;  // 011
   case FCmpInst::FCMP_OLT: isOrdered = true; return 4;  // 100
   case FCmpInst::FCMP_ULT:                   return 4;  // 100
+  case FCmpInst::FCMP_ONE: isOrdered = true; return 5;  // 101
+  case FCmpInst::FCMP_UNE:                   return 5;  // 101
   case FCmpInst::FCMP_OLE: isOrdered = true; return 6;  // 110
   case FCmpInst::FCMP_ULE:                   return 6;  // 110
   default:
@@ -3181,7 +3183,7 @@ static Value *getICmpValue(bool sign, unsigned code, Value *LHS, Value *RHS) {
 static Value *getFCmpValue(bool isordered, unsigned code,
                            Value *LHS, Value *RHS) {
   switch (code) {
-  default: assert(0 && "Illegal ICmp code!");
+  default: assert(0 && "Illegal FCmp code!");
   case  0:
     if (isordered)
       return new FCmpInst(FCmpInst::FCMP_ORD, LHS, RHS);
@@ -3189,14 +3191,14 @@ static Value *getFCmpValue(bool isordered, unsigned code,
       return new FCmpInst(FCmpInst::FCMP_UNO, LHS, RHS);
   case  1: 
     if (isordered)
-      return new FCmpInst(FCmpInst::FCMP_OEQ, LHS, RHS);
-    else
-      return new FCmpInst(FCmpInst::FCMP_UEQ, LHS, RHS);
-  case  2: 
-    if (isordered)
       return new FCmpInst(FCmpInst::FCMP_OGT, LHS, RHS);
     else
       return new FCmpInst(FCmpInst::FCMP_UGT, LHS, RHS);
+  case  2: 
+    if (isordered)
+      return new FCmpInst(FCmpInst::FCMP_OEQ, LHS, RHS);
+    else
+      return new FCmpInst(FCmpInst::FCMP_UEQ, LHS, RHS);
   case  3: 
     if (isordered)
       return new FCmpInst(FCmpInst::FCMP_OGE, LHS, RHS);
@@ -3208,6 +3210,11 @@ static Value *getFCmpValue(bool isordered, unsigned code,
     else
       return new FCmpInst(FCmpInst::FCMP_ULT, LHS, RHS);
   case  5: 
+    if (isordered)
+      return new FCmpInst(FCmpInst::FCMP_ONE, LHS, RHS);
+    else
+      return new FCmpInst(FCmpInst::FCMP_UNE, LHS, RHS);
+  case  6: 
     if (isordered)
       return new FCmpInst(FCmpInst::FCMP_OLE, LHS, RHS);
     else
@@ -3973,6 +3980,11 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
         FCmpInst::Predicate Op0CC, Op1CC;
         if (match(Op0, m_FCmp(Op0CC, m_Value(Op0LHS), m_Value(Op0RHS))) &&
             match(Op1, m_FCmp(Op1CC, m_Value(Op1LHS), m_Value(Op1RHS)))) {
+          if (Op0LHS == Op1RHS && Op0RHS == Op1LHS) {
+            // Swap RHS operands to match LHS.
+            Op1CC = FCmpInst::getSwappedPredicate(Op1CC);
+            std::swap(Op1LHS, Op1RHS);
+          }
           if (Op0LHS == Op1LHS && Op0RHS == Op1RHS) {
             // Simplify (fcmp cc0 x, y) & (fcmp cc1 x, y).
             if (Op0CC == Op1CC)
