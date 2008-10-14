@@ -46,7 +46,7 @@ List</a> is a good place to send them.</p>
 
 <p>Note that if you are reading this file from a Subversion checkout or the
 main LLVM web page, this document applies to the <i>next</i> release, not the
-current one.  To see the release notes for a specific releases, please see the
+current one.  To see the release notes for a specific release, please see the
 <a href="http://llvm.org/releases/">releases page</a>.</p>
 
 </div>
@@ -177,7 +177,7 @@ in this section.
 <ul>
 <li><p>The most visible end-user change in LLVM 2.4 is that it includes many
 optimizations and changes to make -O0 compile times much faster.  You should see
-improvements on the order of 30% or more faster than LLVM 2.3.  There are many
+improvements on the order of 30% (or more) faster than LLVM 2.3.  There are many
 pieces to this change, described in more detail below.  The speedups and new
 components can also be used for JIT compilers that want fast compilation as
 well.</p></li>
@@ -188,7 +188,8 @@ Class Aggregate" values in LLVM 2.4.  This means that LLVM IR supports using
 structs and arrays as values in a function.  This capability is mostly useful
 for front-end authors, who prefer to treat things like complex numbers, simple
 tuples, dope vectors, etc as Value*'s instead of as a tuple of Value*'s or as
-memory values.</p></li>
+memory values.  Bitcode files from LLVM 2.3 will automatically migrate to the
+general representation.</p></li>
 
 <li><p>LLVM 2.4 also includes an initial port for the PIC16 microprocessor. This
 is the LLVM target that only has support for 8 bit registers, and a number of
@@ -225,7 +226,7 @@ only need (say) 14-bits of precision.</li>
 
 <li>llvm-gcc now supports a C language extension known as "<a 
 href="http://lists.cs.uiuc.edu/pipermail/cfe-dev/2008-August/002670.html">Blocks
-</a>.  This feature is similar to nested functions and closures, but does not
+</a>".  This feature is similar to nested functions and closures, but does not
 require stack trampolines (with most ABIs) and supports returning closures 
 from functions that define them.  Note that actually <em>using</em> Blocks
 requires a small runtime that is not included with llvm-gcc.</li>
@@ -250,7 +251,7 @@ Previously, LTO could only be used with -O4, which implied optimizations in
 </p>
 
 <ul>
-<li>A major change to the "Use" class landed, which shrank it by 25%.  Since
+<li>A major change to the <tt>Use</tt> class landed, which shrank it by 25%.  Since
 this is a pervasive part of the LLVM, it ended up reducing the memory use of
 LLVM IR in general by 15% for most programs.</li>
 
@@ -274,9 +275,9 @@ easier for front-ends to create debug info descriptors, similar to the way that
 IRBuilder makes it easier to create LLVM IR.</li>
 
 <li>The <tt>IRBuilder</tt> class is now parametrized by a class responsible
-for constant folding.  The default ConstantFolder class does target independent
-constant folding.  The NoFolder class does no constant folding at all, which is
-useful when learning how LLVM works.  The TargetFolder class folds the most,
+for constant folding.  The default <tt>ConstantFolder</tt> class does target independent
+constant folding.  The <tt>NoFolder</tt> class does no constant folding at all, which is
+useful when learning how LLVM works.  The <tt>TargetFolder</tt> class folds the most,
 doing target dependent constant folding.</li>
 
 <li>LLVM now supports "function attributes", which allows us to separate return
