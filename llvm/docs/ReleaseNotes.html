@@ -98,7 +98,29 @@ generation support is far enough along to build many C applications.  While not
 yet production quality, it is progressing very nicely.  In addition, C++
 front-end work has started to make significant progress.</p>
 
-<p>Codegen progress/state [DANIEL]</p>
+Clang, in conjunction with the <tt>ccc</tt> driver, is now usable as a 
+replacement for gcc for building some small- to medium-sized  C applications. 
+Additionally, Clang now has code generation support for Objective-C on Mac OS X
+platform. Major highlights include:
+<ul>
+	<li> Clang/ccc pass almost all of the LLVM test suite on Mac OS X and Linux 
+on the 32-bit x86 architecture. This includes significant C 
+applications such as <a href="http://www.sqlite.org">sqlite3</a>, 
+<a href="http://www.lua.org">lua</a>, and 
+<a href="http://www.clamav.net">Clam AntiVirus</a>. 
+
+	<li> Clang can build the majority of Objective-C examples shipped with the 
+Mac OS X Developer Tools.
+</ul>
+
+Clang code generation still needs considerable testing and development, however. 
+Some areas under active development include:
+<ul>
+	<li> Improved support for C and Objective-C features, for example 
+	variable-length arries, va_arg, exception handling (Obj-C), and garbage 
+	collection (Obj-C).
+	<li> ABI compatibility, especially for platforms other than 32-bit x86.
+</ul>
 
 </div>
 
