@@ -1035,7 +1035,6 @@
 		DE66F3F308ABF35D00323D32 /* Projects.html */ = {isa = PBXFileReference; explicitFileType = text.html.documentation; fileEncoding = 30; path = Projects.html; sourceTree = "<group>"; };
 		DE66F3F408ABF35D00323D32 /* ReleaseNotes.html */ = {isa = PBXFileReference; explicitFileType = text.html.documentation; fileEncoding = 30; path = ReleaseNotes.html; sourceTree = "<group>"; };
 		DE66F3F508ABF35D00323D32 /* SourceLevelDebugging.html */ = {isa = PBXFileReference; explicitFileType = text.html.documentation; fileEncoding = 30; path = SourceLevelDebugging.html; sourceTree = "<group>"; };
-		DE66F3F608ABF35D00323D32 /* Stacker.html */ = {isa = PBXFileReference; explicitFileType = text.html.documentation; fileEncoding = 30; path = Stacker.html; sourceTree = "<group>"; };
 		DE66F3F708ABF35D00323D32 /* SystemLibrary.html */ = {isa = PBXFileReference; explicitFileType = text.html.documentation; fileEncoding = 30; path = SystemLibrary.html; sourceTree = "<group>"; };
 		DE66F3F808ABF35D00323D32 /* TableGenFundamentals.html */ = {isa = PBXFileReference; explicitFileType = text.html.documentation; fileEncoding = 30; path = TableGenFundamentals.html; sourceTree = "<group>"; };
 		DE66F3F908ABF35D00323D32 /* TestingGuide.html */ = {isa = PBXFileReference; explicitFileType = text.html.documentation; fileEncoding = 30; path = TestingGuide.html; sourceTree = "<group>"; };
@@ -2688,7 +2687,6 @@
 				DE66F3F308ABF35D00323D32 /* Projects.html */,
 				DE66F3F408ABF35D00323D32 /* ReleaseNotes.html */,
 				DE66F3F508ABF35D00323D32 /* SourceLevelDebugging.html */,
-				DE66F3F608ABF35D00323D32 /* Stacker.html */,
 				DE66F3F708ABF35D00323D32 /* SystemLibrary.html */,
 				DE66F3F808ABF35D00323D32 /* TableGenFundamentals.html */,
 				DE66F3F908ABF35D00323D32 /* TestingGuide.html */,
