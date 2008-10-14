@@ -492,7 +492,10 @@ converted to strings using <tt>llvm::GetConstantStringInfo</tt> defined via
     <tt>SDOperand</tt> was renamed to <tt>SDValue</tt> (and the "<tt>Val</tt>"
     member was changed to be the <tt>getNode()</tt> accessor), and the
     <tt>MVT::ValueType</tt> enum has been replaced with an "<tt>MVT</tt>"
-    struct.</li>
+    struct. The <tt>getSignExtended</tt> and <tt>getValue</tt> methods in the
+    ConstantSDNode class were renamed to <tt>getSExtValue</tt> and
+    <tt>getZExtValue</tt> respectively, to be more consistent with
+    the <tt>ConstantInt</tt> class.</li>
 </ul>
 
 </div>
