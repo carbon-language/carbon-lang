@@ -24,7 +24,7 @@
       <li><a href="#callingconv">Calling Conventions</a></li>
       <li><a href="#globalvars">Global Variables</a></li>
       <li><a href="#functionstructure">Functions</a></li>
-      <li><a href="#aliasstructure">Aliases</a>
+      <li><a href="#aliasstructure">Aliases</a></li>
       <li><a href="#paramattrs">Parameter Attributes</a></li>
       <li><a href="#fnattrs">Function Attributes</a></li>
       <li><a href="#gc">Garbage Collector Names</a></li>
@@ -58,16 +58,16 @@
   </li>
   <li><a href="#constants">Constants</a>
     <ol>
-      <li><a href="#simpleconstants">Simple Constants</a>
-      <li><a href="#aggregateconstants">Aggregate Constants</a>
-      <li><a href="#globalconstants">Global Variable and Function Addresses</a>
-      <li><a href="#undefvalues">Undefined Values</a>
-      <li><a href="#constantexprs">Constant Expressions</a>
+      <li><a href="#simpleconstants">Simple Constants</a></li>
+      <li><a href="#aggregateconstants">Aggregate Constants</a></li>
+      <li><a href="#globalconstants">Global Variable and Function Addresses</a></li>
+      <li><a href="#undefvalues">Undefined Values</a></li>
+      <li><a href="#constantexprs">Constant Expressions</a></li>
     </ol>
   </li>
   <li><a href="#othervalues">Other Values</a>
     <ol>
-      <li><a href="#inlineasm">Inline Assembler Expressions</a>
+      <li><a href="#inlineasm">Inline Assembler Expressions</a></li>
     </ol>
   </li>
   <li><a href="#instref">Instruction Reference</a>
@@ -143,6 +143,7 @@
           <li><a href="#i_inttoptr">'<tt>inttoptr .. to</tt>' Instruction</a></li>
           <li><a href="#i_bitcast">'<tt>bitcast .. to</tt>' Instruction</a></li>
         </ol>
+      </li>
       <li><a href="#otherops">Other Operations</a>
         <ol>
           <li><a href="#i_icmp">'<tt>icmp</tt>' Instruction</a></li>
@@ -327,7 +328,7 @@ the parser.</p>
   <p>LLVM identifiers come in two basic types: global and local. Global
   identifiers (functions, global variables) begin with the @ character. Local
   identifiers (register names, types) begin with the % character. Additionally,
-  there are three different formats for identifiers, for different purposes:
+  there are three different formats for identifiers, for different purposes:</p>
 
 <ol>
   <li>Named values are represented as a string of characters with their prefix.
@@ -571,7 +572,7 @@ outside of the current module.</p>
 to have any linkage type other than "externally visible", <tt>dllimport</tt>,
 or <tt>extern_weak</tt>.</p>
 <p>Aliases can have only <tt>external</tt>, <tt>internal</tt> and <tt>weak</tt>
-linkages.
+linkages.</p>
 </div>
 
 <!-- ======================================================================= -->
@@ -1077,7 +1078,7 @@ are given in this list:</p>
   <li><tt>a0:0:1</tt> - aggregates are 8-bit aligned</li>
 </ul>
 <p>When LLVM is determining the alignment for a given type, it uses the 
-following rules:
+following rules:</p>
 <ol>
   <li>If the type sought is an exact match for one of the specifications, that
   specification is used.</li>
@@ -1089,8 +1090,8 @@ following rules:
   i65 and i256 will use the alignment of i64 (largest specified).</li>
   <li>If no match is found, and the type sought is a vector type, then the
   largest vector type that is smaller than the sought vector type will be used
-  as a fall back.  This happens because <128 x double> can be implemented in 
-  terms of 64 <2 x double>, for example.</li>
+  as a fall back.  This happens because &lt;128 x double&gt; can be implemented
+  in terms of 64 &lt;2 x double&gt;, for example.</li>
 </ol>
 </div>
 
@@ -1800,7 +1801,7 @@ following is the syntax for constant expressions:</p>
   <dt><b><tt>extractelement ( VAL, IDX )</tt></b></dt>
 
   <dd>Perform the <a href="#i_extractelement">extractelement
-  operation</a> on constants.
+  operation</a> on constants.</dd>
 
   <dt><b><tt>insertelement ( VAL, ELT, IDX )</tt></b></dt>
 
@@ -1955,7 +1956,7 @@ the instruction after the call.  If the caller was an "<a
  href="#i_invoke"><tt>invoke</tt></a>" instruction, execution continues
 at the beginning of the "normal" destination block.  If the instruction
 returns a value, that value shall set the call or invoke instruction's
-return value.
+return value.</p>
 
 <h5>Example:</h5>
 
@@ -2072,7 +2073,7 @@ function, with the possibility of control flow transfer to either the
 "<tt><a href="#i_ret">ret</a></tt>" instruction, control flow will return to the
 "normal" label.  If the callee (or any indirect callees) returns with the "<a
 href="#i_unwind"><tt>unwind</tt></a>" instruction, control is interrupted and
-continued at the dynamically nearest "exception" label.
+continued at the dynamically nearest "exception" label.</p>
 
 <h5>Arguments:</h5>
 
@@ -3066,6 +3067,7 @@ indices in a
 '<tt><a href="#i_getelementptr">getelementptr</a></tt>' instruction.
 The value to insert must have the same type as the value identified
 by the indices.
+</p>
 
 <h5>Semantics:</h5>
 
@@ -3430,7 +3432,7 @@ FAQ</a>.</p>
     <i>; yields [12 x i8]*:aptr</i>
     %aptr = getelementptr {i32, [12 x i8]}* %saptr, i64 0, i32 1
     <i>; yields i8*:vptr</i>
-    %vptr = getelementptr {i32, <2 x i8>}* %svptr, i64 0, i32 1, i32 1
+    %vptr = getelementptr {i32, &lt;2 x i8&gt;}* %svptr, i64 0, i32 1, i32 1
     <i>; yields i8*:eptr</i>
     %eptr = getelementptr [12 x i8]* %aptr, i64 0, i32 1
 </pre>
@@ -3734,7 +3736,7 @@ the value cannot fit in the floating point value, the results are undefined.</p>
 <h5>Example:</h5>
 <pre>
   %X = uitofp i32 257 to float         <i>; yields float:257.0</i>
-  %Y = uitofp i8  -1 to double         <i>; yields double:255.0</i>
+  %Y = uitofp i8 -1 to double          <i>; yields double:255.0</i>
 </pre>
 </div>
 
@@ -3768,7 +3770,7 @@ the value cannot fit in the floating point value, the results are undefined.</p>
 <h5>Example:</h5>
 <pre>
   %X = sitofp i32 257 to float         <i>; yields float:257.0</i>
-  %Y = sitofp i8  -1 to double         <i>; yields double:-1.0</i>
+  %Y = sitofp i8 -1 to double          <i>; yields double:-1.0</i>
 </pre>
 </div>
 
@@ -3790,7 +3792,7 @@ the integer type <tt>ty2</tt>.</p>
 <h5>Arguments:</h5>
 <p>The '<tt>ptrtoint</tt>' instruction takes a <tt>value</tt> to cast, which 
 must be a <a href="#t_pointer">pointer</a> value, and a type to cast it to
-<tt>ty2</tt>, which must be an <a href="#t_integer">integer</a> type. 
+<tt>ty2</tt>, which must be an <a href="#t_integer">integer</a> type.</p>
 
 <h5>Semantics:</h5>
 <p>The '<tt>ptrtoint</tt>' instruction converts <tt>value</tt> to integer type
@@ -3826,7 +3828,7 @@ a pointer type, <tt>ty2</tt>.</p>
 <h5>Arguments:</h5>
 <p>The '<tt>inttoptr</tt>' instruction takes an <a href="#t_integer">integer</a>
 value to cast, and a type to cast it to, which must be a 
-<a href="#t_pointer">pointer</a> type.
+<a href="#t_pointer">pointer</a> type.</p>
 
 <h5>Semantics:</h5>
 <p>The '<tt>inttoptr</tt>' instruction converts <tt>value</tt> to type
@@ -3884,7 +3886,7 @@ other types, use the <a href="#i_inttoptr">inttoptr</a> or
 <pre>
   %X = bitcast i8 255 to i8              <i>; yields i8 :-1</i>
   %Y = bitcast i32* %x to sint*          <i>; yields sint*:%x</i>
-  %Z = bitcast <2xint> %V to i64;        <i>; yields i64: %V</i>   
+  %Z = bitcast &lt;2 x int&gt; %V to i64;      <i>; yields i64: %V</i>   
 </pre>
 </div>
 
@@ -3900,7 +3902,7 @@ instructions, which defy better classification.</p>
 </div>
 <div class="doc_text">
 <h5>Syntax:</h5>
-<pre>  &lt;result&gt; = icmp &lt;cond&gt; &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;   <i>; yields {i1} or {&lt;N x i1&gt}:result</i>
+<pre>  &lt;result&gt; = icmp &lt;cond&gt; &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;   <i>; yields {i1} or {&lt;N x i1&gt;}:result</i>
 </pre>
 <h5>Overview:</h5>
 <p>The '<tt>icmp</tt>' instruction returns a boolean value or
@@ -3910,6 +3912,7 @@ of its two integer, integer vector, or pointer operands.</p>
 <p>The '<tt>icmp</tt>' instruction takes three operands. The first operand is
 the condition code indicating the kind of comparison to perform. It is not
 a value, just a keyword. The possible condition code are:
+</p>
 <ol>
   <li><tt>eq</tt>: equal</li>
   <li><tt>ne</tt>: not equal </li>
@@ -3930,12 +3933,13 @@ They must also be identical types.</p>
 <p>The '<tt>icmp</tt>' compares <tt>op1</tt> and <tt>op2</tt> according to 
 the condition code given as <tt>cond</tt>. The comparison performed always
 yields either an <a href="#t_primitive"><tt>i1</tt></a> or vector of <tt>i1</tt> result, as follows: 
+</p>
 <ol>
   <li><tt>eq</tt>: yields <tt>true</tt> if the operands are equal, 
   <tt>false</tt> otherwise. No sign interpretation is necessary or performed.
   </li>
   <li><tt>ne</tt>: yields <tt>true</tt> if the operands are unequal, 
-  <tt>false</tt> otherwise. No sign interpretation is necessary or performed.
+  <tt>false</tt> otherwise. No sign interpretation is necessary or performed.</li>
   <li><tt>ugt</tt>: interprets the operands as unsigned values and yields
   <tt>true</tt> if <tt>op1</tt> is greater than <tt>op2</tt>.</li>
   <li><tt>uge</tt>: interprets the operands as unsigned values and yields
@@ -3976,12 +3980,12 @@ Otherwise, the result is an <tt>i1</tt>.
 </div>
 <div class="doc_text">
 <h5>Syntax:</h5>
-<pre>  &lt;result&gt; = fcmp &lt;cond&gt; &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;     <i>; yields {i1} or {&lt;N x i1&gt}:result</i>
+<pre>  &lt;result&gt; = fcmp &lt;cond&gt; &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;     <i>; yields {i1} or {&lt;N x i1&gt;}:result</i>
 </pre>
 <h5>Overview:</h5>
 <p>The '<tt>fcmp</tt>' instruction returns a boolean value
 or vector of boolean values based on comparison
-of its operands.
+of its operands.</p>
 <p>
 If the operands are floating point scalars, then the result
 type is a boolean (<a href="#t_primitive"><tt>i1</tt></a>).
@@ -3992,7 +3996,7 @@ operands being compared.</p>
 <h5>Arguments:</h5>
 <p>The '<tt>fcmp</tt>' instruction takes three operands. The first operand is
 the condition code indicating the kind of comparison to perform. It is not
-a value, just a keyword. The possible condition code are:
+a value, just a keyword. The possible condition code are:</p>
 <ol>
   <li><tt>false</tt>: no comparison, always returns false</li>
   <li><tt>oeq</tt>: ordered and equal</li>
@@ -4023,7 +4027,7 @@ according to the condition code given as <tt>cond</tt>.
 If the operands are vectors, then the vectors are compared
 element by element.
 Each comparison performed 
-always yields an <a href="#t_primitive">i1</a> result, as follows: 
+always yields an <a href="#t_primitive">i1</a> result, as follows:</p>
 <ol>
   <li><tt>false</tt>: always yields <tt>false</tt>, regardless of operands.</li>
   <li><tt>oeq</tt>: yields <tt>true</tt> if both operands are not a QNAN and 
@@ -4077,7 +4081,7 @@ element-wise comparison of its two integer vector operands.</p>
 <h5>Arguments:</h5>
 <p>The '<tt>vicmp</tt>' instruction takes three operands. The first operand is
 the condition code indicating the kind of comparison to perform. It is not
-a value, just a keyword. The possible condition code are:
+a value, just a keyword. The possible condition code are:</p>
 <ol>
   <li><tt>eq</tt>: equal</li>
   <li><tt>ne</tt>: not equal </li>
@@ -4100,7 +4104,7 @@ identical type as the values being compared.  The most significant bit in each
 element is 1 if the element-wise comparison evaluates to true, and is 0
 otherwise.  All other bits of the result are undefined.  The condition codes
 are evaluated identically to the <a href="#i_icmp">'<tt>icmp</tt>'
-instruction</a>.
+instruction</a>.</p>
 
 <h5>Example:</h5>
 <pre>
@@ -4123,7 +4127,7 @@ elements have the same width as the input elements.</p>
 <h5>Arguments:</h5>
 <p>The '<tt>vfcmp</tt>' instruction takes three operands. The first operand is
 the condition code indicating the kind of comparison to perform. It is not
-a value, just a keyword. The possible condition code are:
+a value, just a keyword. The possible condition code are:</p>
 <ol>
   <li><tt>false</tt>: no comparison, always returns false</li>
   <li><tt>oeq</tt>: ordered and equal</li>
@@ -4154,7 +4158,7 @@ having identical with to the width of the floating point elements. The most
 significant bit in each element is 1 if the element-wise comparison evaluates to
 true, and is 0 otherwise.  All other bits of the result are undefined.  The
 condition codes are evaluated identically to the 
-<a href="#i_fcmp">'<tt>fcmp</tt>' instruction</a>.
+<a href="#i_fcmp">'<tt>fcmp</tt>' instruction</a>.</p>
 
 <h5>Example:</h5>
 <pre>
@@ -4219,7 +4223,7 @@ Loop:       ; Infinite loop that counts from 0 on up...
 <pre>
   &lt;result&gt; = select <i>selty</i> &lt;cond&gt;, &lt;ty&gt; &lt;val1&gt;, &lt;ty&gt; &lt;val2&gt;             <i>; yields ty</i>
 
-  <i>selty</i> is either i1 or {&lt;N x i1&gt}
+  <i>selty</i> is either i1 or {&lt;N x i1&gt;}
 </pre>
 
 <h5>Overview:</h5>
@@ -4287,12 +4291,12 @@ by element.
     any allocas or varargs in the caller.  If the "tail" marker is present, the
     function call is eligible for tail call optimization.  Note that calls may
     be marked "tail" even if they do not occur before a <a
-    href="#i_ret"><tt>ret</tt></a> instruction.
+    href="#i_ret"><tt>ret</tt></a> instruction.</p>
   </li>
   <li>
     <p>The optional "cconv" marker indicates which <a href="#callingconv">calling
     convention</a> the call should use.  If none is specified, the call defaults
-    to using C calling conventions.
+    to using C calling conventions.</p>
   </li>
 
   <li>
@@ -4339,7 +4343,7 @@ transfer to a specified function, with its incoming arguments bound to
 the specified values. Upon a '<tt><a href="#i_ret">ret</a></tt>'
 instruction in the called function, control flow continues with the
 instruction after the function call, and the return value of the
-function is bound to the result argument.
+function is bound to the result argument.</p>
 
 <h5>Example:</h5>
 
@@ -4519,17 +4523,17 @@ declare void @llvm.va_end(i8*)
 <h5>Syntax:</h5>
 <pre>  declare void %llvm.va_start(i8* &lt;arglist&gt;)<br></pre>
 <h5>Overview:</h5>
-<P>The '<tt>llvm.va_start</tt>' intrinsic initializes
+<p>The '<tt>llvm.va_start</tt>' intrinsic initializes
 <tt>*&lt;arglist&gt;</tt> for subsequent use by <tt><a
 href="#i_va_arg">va_arg</a></tt>.</p>
 
 <h5>Arguments:</h5>
 
-<P>The argument is a pointer to a <tt>va_list</tt> element to initialize.</p>
+<p>The argument is a pointer to a <tt>va_list</tt> element to initialize.</p>
 
 <h5>Semantics:</h5>
 
-<P>The '<tt>llvm.va_start</tt>' intrinsic works just like the <tt>va_start</tt>
+<p>The '<tt>llvm.va_start</tt>' intrinsic works just like the <tt>va_start</tt>
 macro available in C.  In a target-dependent way, it initializes the
 <tt>va_list</tt> element to which the argument points, so that the next call to
 <tt>va_arg</tt> will produce the first variable argument passed to the function.
@@ -5209,7 +5213,7 @@ this can be specified as the fourth argument, otherwise it should be set to 0 or
 <h5>Syntax:</h5>
 <p>This is an overloaded intrinsic. You can use <tt>llvm.sqrt</tt> on any 
 floating point or vector of floating point type. Not all targets support all
-types however.
+types however.</p>
 <pre>
   declare float     @llvm.sqrt.f32(float %Val)
   declare double    @llvm.sqrt.f64(double %Val)
@@ -5253,7 +5257,7 @@ floating point number.
 <h5>Syntax:</h5>
 <p>This is an overloaded intrinsic. You can use <tt>llvm.powi</tt> on any 
 floating point or vector of floating point type. Not all targets support all
-types however.
+types however.</p>
 <pre>
   declare float     @llvm.powi.f32(float  %Val, i32 %power)
   declare double    @llvm.powi.f64(double %Val, i32 %power)
@@ -5295,7 +5299,7 @@ unspecified sequence of rounding operations.</p>
 <h5>Syntax:</h5>
 <p>This is an overloaded intrinsic. You can use <tt>llvm.sin</tt> on any 
 floating point or vector of floating point type. Not all targets support all
-types however.
+types however.</p>
 <pre>
   declare float     @llvm.sin.f32(float  %Val)
   declare double    @llvm.sin.f64(double %Val)
@@ -5334,7 +5338,7 @@ conditions in the same way.</p>
 <h5>Syntax:</h5>
 <p>This is an overloaded intrinsic. You can use <tt>llvm.cos</tt> on any 
 floating point or vector of floating point type. Not all targets support all
-types however.
+types however.</p>
 <pre>
   declare float     @llvm.cos.f32(float  %Val)
   declare double    @llvm.cos.f64(double %Val)
@@ -5373,7 +5377,7 @@ conditions in the same way.</p>
 <h5>Syntax:</h5>
 <p>This is an overloaded intrinsic. You can use <tt>llvm.pow</tt> on any 
 floating point or vector of floating point type. Not all targets support all
-types however.
+types however.</p>
 <pre>
   declare float     @llvm.pow.f32(float  %Val, float %Power)
   declare double    @llvm.pow.f64(double %Val, double %Power)
@@ -5428,7 +5432,7 @@ These allow efficient code generation for some algorithms.
 
 <h5>Syntax:</h5>
 <p>This is an overloaded intrinsic function. You can use bswap on any integer
-type that is an even number of bytes (i.e. BitWidth % 16 == 0).
+type that is an even number of bytes (i.e. BitWidth % 16 == 0).</p>
 <pre>
   declare i16 @llvm.bswap.i16(i16 &lt;id&gt;)
   declare i32 @llvm.bswap.i32(i32 &lt;id&gt;)
@@ -5467,7 +5471,7 @@ additional even-byte lengths (6 bytes, 8 bytes and more, respectively).
 
 <h5>Syntax:</h5>
 <p>This is an overloaded intrinsic. You can use llvm.ctpop on any integer bit
-width. Not all targets support all bit widths however.
+width. Not all targets support all bit widths however.</p>
 <pre>
   declare i8 @llvm.ctpop.i8 (i8  &lt;src&gt;)
   declare i16 @llvm.ctpop.i16(i16 &lt;src&gt;)
@@ -5506,7 +5510,7 @@ The '<tt>llvm.ctpop</tt>' intrinsic counts the 1's in a variable.
 
 <h5>Syntax:</h5>
 <p>This is an overloaded intrinsic. You can use <tt>llvm.ctlz</tt> on any 
-integer bit width. Not all targets support all bit widths however.
+integer bit width. Not all targets support all bit widths however.</p>
 <pre>
   declare i8 @llvm.ctlz.i8 (i8  &lt;src&gt;)
   declare i16 @llvm.ctlz.i16(i16 &lt;src&gt;)
@@ -5549,7 +5553,7 @@ of src. For example, <tt>llvm.ctlz(i32 2) = 30</tt>.
 
 <h5>Syntax:</h5>
 <p>This is an overloaded intrinsic. You can use <tt>llvm.cttz</tt> on any 
-integer bit width. Not all targets support all bit widths however.
+integer bit width. Not all targets support all bit widths however.</p>
 <pre>
   declare i8 @llvm.cttz.i8 (i8  &lt;src&gt;)
   declare i16 @llvm.cttz.i16(i16 &lt;src&gt;)
@@ -5590,7 +5594,7 @@ of src.  For example, <tt>llvm.cttz(2) = 1</tt>.
 
 <h5>Syntax:</h5>
 <p>This is an overloaded intrinsic. You can use <tt>llvm.part.select</tt> 
-on any integer bit width.
+on any integer bit width.</p>
 <pre>
   declare i17 @llvm.part.select.i17 (i17 %val, i32 %loBit, i32 %hiBit)
   declare i29 @llvm.part.select.i29 (i29 %val, i32 %loBit, i32 %hiBit)
@@ -5620,7 +5624,7 @@ only the <tt>%hiBit - %loBit</tt> bits set, as follows:</p>
   <li>The <tt>%loBits</tt> value is subtracted from the <tt>%hiBits</tt> value
   to determine the number of bits to retain.</li>
   <li>A mask of the retained bits is created by shifting a -1 value.</li>
-  <li>The mask is ANDed with <tt>%val</tt> to produce the result.
+  <li>The mask is ANDed with <tt>%val</tt> to produce the result.</li>
 </ol>
 <p>In reverse mode, a similar computation is made except that the bits are
 returned in the reverse order. So, for example, if <tt>X</tt> has the value
@@ -5637,7 +5641,7 @@ returned in the reverse order. So, for example, if <tt>X</tt> has the value
 
 <h5>Syntax:</h5>
 <p>This is an overloaded intrinsic. You can use <tt>llvm.part.set</tt> 
-on any integer bit width.
+on any integer bit width.</p>
 <pre>
   declare i17 @llvm.part.set.i17.i9 (i17 %val, i9 %repl, i32 %lo, i32 %hi)
   declare i29 @llvm.part.set.i29.i9 (i29 %val, i9 %repl, i32 %lo, i32 %hi)
@@ -5666,10 +5670,10 @@ up to that size.</p>
 <p>In forward mode, the bits between <tt>%lo</tt> and <tt>%hi</tt> (inclusive)
 are replaced with corresponding bits from <tt>%repl</tt>. That is the 0th bit
 in <tt>%repl</tt> replaces the <tt>%lo</tt>th bit in <tt>%val</tt> and etc. up
-to the <tt>%hi</tt>th bit. 
+to the <tt>%hi</tt>th bit.</p>
 <p>In reverse mode, a similar computation is made except that the bits are
 reversed.  That is, the <tt>0</tt>th bit in <tt>%repl</tt> replaces the 
-<tt>%hi</tt> bit in <tt>%val</tt> and etc. down to the <tt>%lo</tt>th bit.
+<tt>%hi</tt> bit in <tt>%val</tt> and etc. down to the <tt>%lo</tt>th bit.</p>
 <h5>Examples:</h5>
 <pre>
   llvm.part.set(0xFFFF, 0, 4, 7) -&gt; 0xFF0F
@@ -5836,7 +5840,7 @@ i1 &lt;device&gt; )
     <li><tt>ls</tt>: load-store barrier</li>
     <li><tt>sl</tt>: store-load barrier</li>
     <li><tt>ss</tt>: store-store barrier</li>
-    <li><tt>device</tt>: barrier applies to device and uncached memory also.
+    <li><tt>device</tt>: barrier applies to device and uncached memory also.</li>
   </ul>
 <h5>Semantics:</h5>
 <p>
@@ -6360,6 +6364,7 @@ This intrinsic allows annotations to be put on arbitrary expressions
 with arbitrary strings.  This can be useful for special purpose optimizations 
 that want to look for these annotations.  These have no other defined use, they 
 are ignored by code generation and optimization.
+</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
