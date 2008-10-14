@@ -191,7 +191,7 @@ tuples, dope vectors, etc as Value*'s instead of as a tuple of Value*'s or as
 memory values.</p></li>
 
 <li><p>LLVM 2.4 also includes an initial port for the PIC16 microprocessor. This
-is the LLVM targer that only has support for 8 bit registers, and a number of
+is the LLVM target that only has support for 8 bit registers, and a number of
 other crazy constraints.  While the port is still in early development stages,
 it shows some interesting things you can do with LLVM.</p></li>
 
@@ -273,7 +273,13 @@ for any of these IR features though.</li>
 easier for front-ends to create debug info descriptors, similar to the way that
 IRBuilder makes it easier to create LLVM IR.</li>
 
-<li>LLVM now supports "function attributes", which allows us to seperate return
+<li>The <tt>IRBuilder</tt> class is now parametrized by a class responsible
+for constant folding.  The default ConstantFolder class does target independent
+constant folding.  The NoFolder class does no constant folding at all, which is
+useful when learning how LLVM works.  The TargetFolder class folds the most,
+doing target dependent constant folding.</li>
+
+<li>LLVM now supports "function attributes", which allows us to separate return
 value attributes from function attributes.  LLVM now supports attributes on a
 function itself, a return value, and its parameters.  New supported function
 attributes include noinline/alwaysinline and the "opt-size" flag which says the
