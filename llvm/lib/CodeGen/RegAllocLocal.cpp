@@ -37,7 +37,7 @@ STATISTIC(NumStores, "Number of stores added");
 STATISTIC(NumLoads , "Number of loads added");
 
 static RegisterRegAlloc
-  localRegAlloc("local", "  local register allocator",
+  localRegAlloc("local", "local register allocator",
                 createLocalRegisterAllocator);
 
 namespace {

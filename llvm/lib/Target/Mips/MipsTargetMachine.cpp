@@ -20,8 +20,8 @@
 using namespace llvm;
 
 // Register the target.
-static RegisterTarget<MipsTargetMachine>    X("mips", "  Mips");
-static RegisterTarget<MipselTargetMachine>  Y("mipsel", "  Mipsel");
+static RegisterTarget<MipsTargetMachine>    X("mips", "Mips");
+static RegisterTarget<MipselTargetMachine>  Y("mipsel", "Mipsel");
 
 const TargetAsmInfo *MipsTargetMachine::
 createTargetAsmInfo() const 

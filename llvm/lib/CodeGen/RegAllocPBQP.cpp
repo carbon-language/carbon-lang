@@ -60,7 +60,7 @@
 using namespace llvm;
 
 static RegisterRegAlloc
-registerPBQPRepAlloc("pbqp", "  PBQP register allocator",
+registerPBQPRepAlloc("pbqp", "PBQP register allocator",
                      createPBQPRegisterAllocator);
 
 

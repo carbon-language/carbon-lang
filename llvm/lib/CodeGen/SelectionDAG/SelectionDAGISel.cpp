@@ -119,7 +119,7 @@ ISHeuristic("pre-RA-sched",
                      " allocation):"));
 
 static RegisterScheduler
-defaultListDAGScheduler("default", "  Best scheduler for the target",
+defaultListDAGScheduler("default", "Best scheduler for the target",
                         createDefaultScheduler);
 
 namespace llvm {

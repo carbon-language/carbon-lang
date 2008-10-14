@@ -32,9 +32,9 @@ int X86TargetMachineModule = 0;
 
 // Register the target.
 static RegisterTarget<X86_32TargetMachine>
-X("x86",    "  32-bit X86: Pentium-Pro and above");
+X("x86",    "32-bit X86: Pentium-Pro and above");
 static RegisterTarget<X86_64TargetMachine>
-Y("x86-64", "  64-bit X86: EM64T and AMD64");
+Y("x86-64", "64-bit X86: EM64T and AMD64");
 
 // No assembler printer by default
 X86TargetMachine::AsmPrinterCtorFn X86TargetMachine::AsmPrinterCtor = 0;

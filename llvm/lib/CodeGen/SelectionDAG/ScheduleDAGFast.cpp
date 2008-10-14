@@ -31,7 +31,7 @@ STATISTIC(NumDups,       "Number of duplicated nodes");
 STATISTIC(NumCCCopies,   "Number of cross class copies");
 
 static RegisterScheduler
-  fastDAGScheduler("fast", "  Fast suboptimal list scheduling",
+  fastDAGScheduler("fast", "Fast suboptimal list scheduling",
                    createFastDAGScheduler);
 
 namespace {

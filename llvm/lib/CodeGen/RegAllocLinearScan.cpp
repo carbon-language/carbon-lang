@@ -50,7 +50,7 @@ NewHeuristic("new-spilling-heuristic",
              cl::init(false), cl::Hidden);
 
 static RegisterRegAlloc
-linearscanRegAlloc("linearscan", "  linear scan register allocator",
+linearscanRegAlloc("linearscan", "linear scan register allocator",
                    createLinearScanRegisterAllocator);
 
 namespace {

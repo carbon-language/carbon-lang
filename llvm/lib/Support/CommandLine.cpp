@@ -953,7 +953,7 @@ void generic_parser_base::printOptionInfo(const Option &O,
     for (unsigned i = 0, e = getNumOptions(); i != e; ++i) {
       size_t NumSpaces = GlobalWidth-strlen(getOption(i))-8;
       cout << "    =" << getOption(i) << std::string(NumSpaces, ' ')
-           << " - " << getDescription(i) << "\n";
+           << " -   " << getDescription(i) << "\n";
     }
   } else {
     if (O.HelpStr[0])

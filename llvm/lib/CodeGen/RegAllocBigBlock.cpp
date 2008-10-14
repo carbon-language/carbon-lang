@@ -53,7 +53,7 @@ STATISTIC(NumLoads , "Number of loads added");
 STATISTIC(NumFolded, "Number of loads/stores folded into instructions");
 
 static RegisterRegAlloc
-  bigBlockRegAlloc("bigblock", "  Big-block register allocator",
+  bigBlockRegAlloc("bigblock", "Big-block register allocator",
                 createBigBlockRegisterAllocator);
 
 namespace {

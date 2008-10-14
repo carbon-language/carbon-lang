@@ -72,7 +72,7 @@ static cl::opt<std::string> NameToGenerate("cppfor", cl::Optional,
   cl::init("!bad!"));
 
 // Register the target.
-static RegisterTarget<CPPTargetMachine> X("cpp", "  C++ backend");
+static RegisterTarget<CPPTargetMachine> X("cpp", "C++ backend");
 
 namespace {
   typedef std::vector<const Type*> TypeList;

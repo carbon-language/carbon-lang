@@ -23,8 +23,8 @@ static cl::opt<X86Subtarget::AsmWriterFlavorTy>
 AsmWriterFlavor("x86-asm-syntax", cl::init(X86Subtarget::Unset),
   cl::desc("Choose style of code to emit from X86 backend:"),
   cl::values(
-    clEnumValN(X86Subtarget::ATT,   "att",   "  Emit AT&T-style assembly"),
-    clEnumValN(X86Subtarget::Intel, "intel", "  Emit Intel-style assembly"),
+    clEnumValN(X86Subtarget::ATT,   "att",   "Emit AT&T-style assembly"),
+    clEnumValN(X86Subtarget::Intel, "intel", "Emit Intel-style assembly"),
     clEnumValEnd));
 
 

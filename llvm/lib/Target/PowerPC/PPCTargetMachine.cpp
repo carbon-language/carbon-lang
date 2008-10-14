@@ -23,9 +23,9 @@ using namespace llvm;
 
 // Register the targets
 static RegisterTarget<PPC32TargetMachine>
-X("ppc32", "  PowerPC 32");
+X("ppc32", "PowerPC 32");
 static RegisterTarget<PPC64TargetMachine>
-Y("ppc64", "  PowerPC 64");
+Y("ppc64", "PowerPC 64");
 
 // No assembler printer by default
 PPCTargetMachine::AsmPrinterCtorFn PPCTargetMachine::AsmPrinterCtor = 0;

@@ -37,7 +37,7 @@ STATISTIC(NumNoops , "Number of noops inserted");
 STATISTIC(NumStalls, "Number of pipeline stalls");
 
 static RegisterScheduler
-  tdListDAGScheduler("list-td", "  Top-down list scheduler",
+  tdListDAGScheduler("list-td", "Top-down list scheduler",
                      createTDListDAGScheduler);
    
 namespace {

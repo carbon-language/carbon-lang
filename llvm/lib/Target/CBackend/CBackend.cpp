@@ -49,7 +49,7 @@
 using namespace llvm;
 
 // Register the target.
-static RegisterTarget<CTargetMachine> X("c", "  C backend");
+static RegisterTarget<CTargetMachine> X("c", "C backend");
 
 namespace {
   /// CBackendNameAllUsedStructsAndMergeFunctions - This pass inserts names for

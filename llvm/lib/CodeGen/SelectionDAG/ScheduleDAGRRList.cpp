@@ -41,11 +41,11 @@ STATISTIC(NumCCCopies,   "Number of cross class copies");
 
 static RegisterScheduler
   burrListDAGScheduler("list-burr",
-                       "  Bottom-up register reduction list scheduling",
+                       "Bottom-up register reduction list scheduling",
                        createBURRListDAGScheduler);
 static RegisterScheduler
   tdrListrDAGScheduler("list-tdrr",
-                       "  Top-down register reduction list scheduling",
+                       "Top-down register reduction list scheduling",
                        createTDRRListDAGScheduler);
 
 namespace {

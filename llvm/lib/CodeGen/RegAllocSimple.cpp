@@ -35,7 +35,7 @@ STATISTIC(NumLoads , "Number of loads added");
 
 namespace {
   static RegisterRegAlloc
-    simpleRegAlloc("simple", "  simple register allocator",
+    simpleRegAlloc("simple", "simple register allocator",
                    createSimpleRegisterAllocator);
 
   class VISIBILITY_HIDDEN RegAllocSimple : public MachineFunctionPass {

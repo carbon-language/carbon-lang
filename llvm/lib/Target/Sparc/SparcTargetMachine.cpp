@@ -19,7 +19,7 @@
 using namespace llvm;
 
 // Register the target.
-static RegisterTarget<SparcTargetMachine> X("sparc", "  SPARC");
+static RegisterTarget<SparcTargetMachine> X("sparc", "SPARC");
 
 const TargetAsmInfo *SparcTargetMachine::createTargetAsmInfo() const {
   // FIXME: Handle Solaris subtarget someday :)

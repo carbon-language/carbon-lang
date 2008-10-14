@@ -56,8 +56,8 @@ static cl::opt<SpillerName>
 SpillerOpt("spiller",
            cl::desc("Spiller to use: (default: local)"),
            cl::Prefix,
-           cl::values(clEnumVal(simple, "  simple spiller"),
-                      clEnumVal(local,  "  local spiller"),
+           cl::values(clEnumVal(simple, "simple spiller"),
+                      clEnumVal(local,  "local spiller"),
                       clEnumValEnd),
            cl::init(local));
 
