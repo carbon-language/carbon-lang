@@ -112,10 +112,9 @@ static void PrintLLVMName(raw_ostream &OS, const char *NameStr,
   OS << '"';
   for (unsigned i = 0; i != NameLen; ++i) {
     char C = NameStr[i];
-    assert(C != '"' && "Illegal character in LLVM value name!");
     if (C == '\\') {
       OS << "\\\\";
-    } else if (isprint(C)) {
+    } else if (C != '"' && isprint(C)) {
       OS << C;
     } else {
       OS << '\\';

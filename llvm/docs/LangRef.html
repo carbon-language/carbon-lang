@@ -335,8 +335,9 @@ the parser.</p>
   For example, %foo, @DivisionByZero, %a.really.long.identifier.  The actual
   regular expression used is '<tt>[%@][a-zA-Z$._][a-zA-Z$._0-9]*</tt>'.
   Identifiers which require other characters in their names can be surrounded
-  with quotes.  In this way, anything except a <tt>&quot;</tt> character can 
-  be used in a named value.</li>
+  with quotes. Special characters may be escaped using "\xx" where xx is the 
+  ASCII code for the character in hexadecimal.  In this way, any character can 
+  be used in a name value, even quotes themselves.
 
   <li>Unnamed values are represented as an unsigned numeric value with their
   prefix.  For example, %12, @2, %44.</li>
