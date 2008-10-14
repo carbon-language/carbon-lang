@@ -23,6 +23,12 @@
 
 namespace llvm {
 
+/// hexdigit - Return the (uppercase) hexadecimal character for the
+/// given number \arg X (which should be less than 16).
+static inline char hexdigit(unsigned X) {
+  return X < 10 ? '0' + X : 'A' + X - 10;
+}
+
 static inline std::string utohexstr(uint64_t X) {
   char Buffer[40];
   char *BufPtr = Buffer+39;
@@ -32,10 +38,7 @@ static inline std::string utohexstr(uint64_t X) {
 
   while (X) {
     unsigned char Mod = static_cast<unsigned char>(X) & 15;
-    if (Mod < 10)
-      *--BufPtr = '0' + Mod;
-    else
-      *--BufPtr = 'A' + Mod-10;
+    *--BufPtr = hexdigit(Mod);
     X >>= 4;
   }
   return std::string(BufPtr);
