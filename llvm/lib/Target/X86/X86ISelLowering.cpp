@@ -84,7 +84,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   if (Subtarget->is64Bit())
     addRegisterClass(MVT::i64, X86::GR64RegisterClass);
 
-  setLoadXAction(ISD::SEXTLOAD, MVT::i1, Promote);
+  setLoadExtAction(ISD::SEXTLOAD, MVT::i1, Promote);
 
   // We don't accept any truncstore of integer registers.  
   setTruncStoreAction(MVT::i64, MVT::i32, Expand);

@@ -82,9 +82,9 @@ MipsTargetLowering(MipsTargetMachine &TM): TargetLowering(TM)
   addLegalFPImmediate(APFloat(+0.0f));
 
   // Load extented operations for i1 types must be promoted 
-  setLoadXAction(ISD::EXTLOAD,  MVT::i1,  Promote);
-  setLoadXAction(ISD::ZEXTLOAD, MVT::i1,  Promote);
-  setLoadXAction(ISD::SEXTLOAD, MVT::i1,  Promote);
+  setLoadExtAction(ISD::EXTLOAD,  MVT::i1,  Promote);
+  setLoadExtAction(ISD::ZEXTLOAD, MVT::i1,  Promote);
+  setLoadExtAction(ISD::SEXTLOAD, MVT::i1,  Promote);
 
   // Used by legalize types to correctly generate the setcc result. 
   // Without this, every float setcc comes with a AND/OR with the result, 

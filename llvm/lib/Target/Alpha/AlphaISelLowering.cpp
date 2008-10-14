@@ -52,15 +52,15 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM) : TargetLowering(TM)
   // We want to custom lower some of our intrinsics.
   setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::Other, Custom);
 
-  setLoadXAction(ISD::EXTLOAD, MVT::i1,  Promote);
-  setLoadXAction(ISD::EXTLOAD, MVT::f32, Expand);
+  setLoadExtAction(ISD::EXTLOAD, MVT::i1,  Promote);
+  setLoadExtAction(ISD::EXTLOAD, MVT::f32, Expand);
   
-  setLoadXAction(ISD::ZEXTLOAD, MVT::i1,  Promote);
-  setLoadXAction(ISD::ZEXTLOAD, MVT::i32, Expand);
+  setLoadExtAction(ISD::ZEXTLOAD, MVT::i1,  Promote);
+  setLoadExtAction(ISD::ZEXTLOAD, MVT::i32, Expand);
   
-  setLoadXAction(ISD::SEXTLOAD, MVT::i1,  Promote);
-  setLoadXAction(ISD::SEXTLOAD, MVT::i8,  Expand);
-  setLoadXAction(ISD::SEXTLOAD, MVT::i16, Expand);
+  setLoadExtAction(ISD::SEXTLOAD, MVT::i1,  Promote);
+  setLoadExtAction(ISD::SEXTLOAD, MVT::i8,  Expand);
+  setLoadExtAction(ISD::SEXTLOAD, MVT::i16, Expand);
 
   //  setOperationAction(ISD::BRIND,        MVT::Other,   Expand);
   setOperationAction(ISD::BR_JT,        MVT::Other, Expand);

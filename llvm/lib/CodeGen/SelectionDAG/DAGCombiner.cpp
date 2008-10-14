@@ -1724,7 +1724,7 @@ SDValue DAGCombiner::visitAND(SDNode *N) {
     if (DAG.MaskedValueIsZero(N1, APInt::getHighBitsSet(BitWidth,
                                      BitWidth - EVT.getSizeInBits())) &&
         ((!AfterLegalize && !LN0->isVolatile()) ||
-         TLI.isLoadXLegal(ISD::ZEXTLOAD, EVT))) {
+         TLI.isLoadExtLegal(ISD::ZEXTLOAD, EVT))) {
       SDValue ExtLoad = DAG.getExtLoad(ISD::ZEXTLOAD, VT, LN0->getChain(),
                                          LN0->getBasePtr(), LN0->getSrcValue(),
                                          LN0->getSrcValueOffset(), EVT,
@@ -1746,7 +1746,7 @@ SDValue DAGCombiner::visitAND(SDNode *N) {
     if (DAG.MaskedValueIsZero(N1, APInt::getHighBitsSet(BitWidth,
                                      BitWidth - EVT.getSizeInBits())) &&
         ((!AfterLegalize && !LN0->isVolatile()) ||
-         TLI.isLoadXLegal(ISD::ZEXTLOAD, EVT))) {
+         TLI.isLoadExtLegal(ISD::ZEXTLOAD, EVT))) {
       SDValue ExtLoad = DAG.getExtLoad(ISD::ZEXTLOAD, VT, LN0->getChain(),
                                          LN0->getBasePtr(), LN0->getSrcValue(),
                                          LN0->getSrcValueOffset(), EVT,
@@ -1775,7 +1775,7 @@ SDValue DAGCombiner::visitAND(SDNode *N) {
       // Do not generate loads of non-round integer types since these can
       // be expensive (and would be wrong if the type is not byte sized).
       if (EVT != MVT::Other && LoadedVT.bitsGT(EVT) && EVT.isRound() &&
-          (!AfterLegalize || TLI.isLoadXLegal(ISD::ZEXTLOAD, EVT))) {
+          (!AfterLegalize || TLI.isLoadExtLegal(ISD::ZEXTLOAD, EVT))) {
         MVT PtrType = N0.getOperand(1).getValueType();
         // For big endian targets, we need to add an offset to the pointer to
         // load the correct bytes.  For little endian systems, we merely need to
@@ -2858,7 +2858,7 @@ SDValue DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
   // fold (sext (load x)) -> (sext (truncate (sextload x)))
   if (ISD::isNON_EXTLoad(N0.getNode()) &&
       ((!AfterLegalize && !cast<LoadSDNode>(N0)->isVolatile()) ||
-       TLI.isLoadXLegal(ISD::SEXTLOAD, N0.getValueType()))) {
+       TLI.isLoadExtLegal(ISD::SEXTLOAD, N0.getValueType()))) {
     bool DoXform = true;
     SmallVector<SDNode*, 4> SetCCs;
     if (!N0.hasOneUse())
@@ -2900,7 +2900,7 @@ SDValue DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
     LoadSDNode *LN0 = cast<LoadSDNode>(N0);
     MVT EVT = LN0->getMemoryVT();
     if ((!AfterLegalize && !LN0->isVolatile()) ||
-        TLI.isLoadXLegal(ISD::SEXTLOAD, EVT)) {
+        TLI.isLoadExtLegal(ISD::SEXTLOAD, EVT)) {
       SDValue ExtLoad = DAG.getExtLoad(ISD::SEXTLOAD, VT, LN0->getChain(),
                                          LN0->getBasePtr(), LN0->getSrcValue(),
                                          LN0->getSrcValueOffset(), EVT,
@@ -2984,7 +2984,7 @@ SDValue DAGCombiner::visitZERO_EXTEND(SDNode *N) {
   // fold (zext (load x)) -> (zext (truncate (zextload x)))
   if (ISD::isNON_EXTLoad(N0.getNode()) &&
       ((!AfterLegalize && !cast<LoadSDNode>(N0)->isVolatile()) ||
-       TLI.isLoadXLegal(ISD::ZEXTLOAD, N0.getValueType()))) {
+       TLI.isLoadExtLegal(ISD::ZEXTLOAD, N0.getValueType()))) {
     bool DoXform = true;
     SmallVector<SDNode*, 4> SetCCs;
     if (!N0.hasOneUse())
@@ -3026,7 +3026,7 @@ SDValue DAGCombiner::visitZERO_EXTEND(SDNode *N) {
     LoadSDNode *LN0 = cast<LoadSDNode>(N0);
     MVT EVT = LN0->getMemoryVT();
     if ((!AfterLegalize && !LN0->isVolatile()) ||
-        TLI.isLoadXLegal(ISD::ZEXTLOAD, EVT)) {
+        TLI.isLoadExtLegal(ISD::ZEXTLOAD, EVT)) {
       SDValue ExtLoad = DAG.getExtLoad(ISD::ZEXTLOAD, VT, LN0->getChain(),
                                          LN0->getBasePtr(), LN0->getSrcValue(),
                                          LN0->getSrcValueOffset(), EVT,
@@ -3106,7 +3106,7 @@ SDValue DAGCombiner::visitANY_EXTEND(SDNode *N) {
   // fold (aext (load x)) -> (aext (truncate (extload x)))
   if (ISD::isNON_EXTLoad(N0.getNode()) && N0.hasOneUse() &&
       ((!AfterLegalize && !cast<LoadSDNode>(N0)->isVolatile()) ||
-       TLI.isLoadXLegal(ISD::EXTLOAD, N0.getValueType()))) {
+       TLI.isLoadExtLegal(ISD::EXTLOAD, N0.getValueType()))) {
     LoadSDNode *LN0 = cast<LoadSDNode>(N0);
     SDValue ExtLoad = DAG.getExtLoad(ISD::EXTLOAD, VT, LN0->getChain(),
                                        LN0->getBasePtr(), LN0->getSrcValue(),
@@ -3212,7 +3212,7 @@ SDValue DAGCombiner::ReduceLoadWidth(SDNode *N) {
   if (Opc == ISD::SIGN_EXTEND_INREG) {
     ExtType = ISD::SEXTLOAD;
     EVT = cast<VTSDNode>(N->getOperand(1))->getVT();
-    if (AfterLegalize && !TLI.isLoadXLegal(ISD::SEXTLOAD, EVT))
+    if (AfterLegalize && !TLI.isLoadExtLegal(ISD::SEXTLOAD, EVT))
       return SDValue();
   }
 
@@ -3345,7 +3345,7 @@ SDValue DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
       ISD::isUNINDEXEDLoad(N0.getNode()) &&
       EVT == cast<LoadSDNode>(N0)->getMemoryVT() &&
       ((!AfterLegalize && !cast<LoadSDNode>(N0)->isVolatile()) ||
-       TLI.isLoadXLegal(ISD::SEXTLOAD, EVT))) {
+       TLI.isLoadExtLegal(ISD::SEXTLOAD, EVT))) {
     LoadSDNode *LN0 = cast<LoadSDNode>(N0);
     SDValue ExtLoad = DAG.getExtLoad(ISD::SEXTLOAD, VT, LN0->getChain(),
                                        LN0->getBasePtr(), LN0->getSrcValue(),
@@ -3361,7 +3361,7 @@ SDValue DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
       N0.hasOneUse() &&
       EVT == cast<LoadSDNode>(N0)->getMemoryVT() &&
       ((!AfterLegalize && !cast<LoadSDNode>(N0)->isVolatile()) ||
-       TLI.isLoadXLegal(ISD::SEXTLOAD, EVT))) {
+       TLI.isLoadExtLegal(ISD::SEXTLOAD, EVT))) {
     LoadSDNode *LN0 = cast<LoadSDNode>(N0);
     SDValue ExtLoad = DAG.getExtLoad(ISD::SEXTLOAD, VT, LN0->getChain(),
                                        LN0->getBasePtr(), LN0->getSrcValue(),
@@ -4043,7 +4043,7 @@ SDValue DAGCombiner::visitFP_EXTEND(SDNode *N) {
   // fold (fpext (load x)) -> (fpext (fptrunc (extload x)))
   if (ISD::isNON_EXTLoad(N0.getNode()) && N0.hasOneUse() &&
       ((!AfterLegalize && !cast<LoadSDNode>(N0)->isVolatile()) ||
-       TLI.isLoadXLegal(ISD::EXTLOAD, N0.getValueType()))) {
+       TLI.isLoadExtLegal(ISD::EXTLOAD, N0.getValueType()))) {
     LoadSDNode *LN0 = cast<LoadSDNode>(N0);
     SDValue ExtLoad = DAG.getExtLoad(ISD::EXTLOAD, VT, LN0->getChain(),
                                        LN0->getBasePtr(), LN0->getSrcValue(),

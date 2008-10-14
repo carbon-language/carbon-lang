@@ -131,27 +131,27 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   addRegisterClass(MVT::i128, SPU::GPRCRegisterClass);
 
   // SPU has no sign or zero extended loads for i1, i8, i16:
-  setLoadXAction(ISD::EXTLOAD,  MVT::i1, Promote);
-  setLoadXAction(ISD::SEXTLOAD, MVT::i1, Promote);
-  setLoadXAction(ISD::ZEXTLOAD, MVT::i1, Promote);
+  setLoadExtAction(ISD::EXTLOAD,  MVT::i1, Promote);
+  setLoadExtAction(ISD::SEXTLOAD, MVT::i1, Promote);
+  setLoadExtAction(ISD::ZEXTLOAD, MVT::i1, Promote);
   setTruncStoreAction(MVT::i8, MVT::i1, Custom);
   setTruncStoreAction(MVT::i16, MVT::i1, Custom);
   setTruncStoreAction(MVT::i32, MVT::i1, Custom);
   setTruncStoreAction(MVT::i64, MVT::i1, Custom);
   setTruncStoreAction(MVT::i128, MVT::i1, Custom);
 
-  setLoadXAction(ISD::EXTLOAD,  MVT::i8, Custom);
-  setLoadXAction(ISD::SEXTLOAD, MVT::i8, Custom);
-  setLoadXAction(ISD::ZEXTLOAD, MVT::i8, Custom);
+  setLoadExtAction(ISD::EXTLOAD,  MVT::i8, Custom);
+  setLoadExtAction(ISD::SEXTLOAD, MVT::i8, Custom);
+  setLoadExtAction(ISD::ZEXTLOAD, MVT::i8, Custom);
   setTruncStoreAction(MVT::i8  , MVT::i8, Custom);
   setTruncStoreAction(MVT::i16 , MVT::i8, Custom);
   setTruncStoreAction(MVT::i32 , MVT::i8, Custom);
   setTruncStoreAction(MVT::i64 , MVT::i8, Custom);
   setTruncStoreAction(MVT::i128, MVT::i8, Custom);
 
-  setLoadXAction(ISD::EXTLOAD,  MVT::i16, Custom);
-  setLoadXAction(ISD::SEXTLOAD, MVT::i16, Custom);
-  setLoadXAction(ISD::ZEXTLOAD, MVT::i16, Custom);
+  setLoadExtAction(ISD::EXTLOAD,  MVT::i16, Custom);
+  setLoadExtAction(ISD::SEXTLOAD, MVT::i16, Custom);
+  setLoadExtAction(ISD::ZEXTLOAD, MVT::i16, Custom);
 
   // SPU constant load actions are custom lowered:
   setOperationAction(ISD::Constant,   MVT::i64, Custom);

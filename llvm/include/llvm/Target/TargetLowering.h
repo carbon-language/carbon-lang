@@ -305,23 +305,23 @@ public:
        getOperationAction(Op, VT) == Custom);
   }
 
-  /// getLoadXAction - Return how this load with extension should be treated:
+  /// getLoadExtAction - Return how this load with extension should be treated:
   /// either it is legal, needs to be promoted to a larger size, needs to be
   /// expanded to some other code sequence, or the target has a custom expander
   /// for it.
-  LegalizeAction getLoadXAction(unsigned LType, MVT VT) const {
-    assert(LType < array_lengthof(LoadXActions) &&
-           (unsigned)VT.getSimpleVT() < sizeof(LoadXActions[0])*4 &&
+  LegalizeAction getLoadExtAction(unsigned LType, MVT VT) const {
+    assert(LType < array_lengthof(LoadExtActions) &&
+           (unsigned)VT.getSimpleVT() < sizeof(LoadExtActions[0])*4 &&
            "Table isn't big enough!");
-    return (LegalizeAction)((LoadXActions[LType] >> (2*VT.getSimpleVT())) & 3);
+    return (LegalizeAction)((LoadExtActions[LType] >> (2*VT.getSimpleVT())) & 3);
   }
 
-  /// isLoadXLegal - Return true if the specified load with extension is legal
+  /// isLoadExtLegal - Return true if the specified load with extension is legal
   /// on this target.
-  bool isLoadXLegal(unsigned LType, MVT VT) const {
+  bool isLoadExtLegal(unsigned LType, MVT VT) const {
     return VT.isSimple() &&
-      (getLoadXAction(LType, VT) == Legal ||
-       getLoadXAction(LType, VT) == Custom);
+      (getLoadExtAction(LType, VT) == Legal ||
+       getLoadExtAction(LType, VT) == Custom);
   }
 
   /// getTruncStoreAction - Return how this store with truncation should be
@@ -839,15 +839,15 @@ protected:
     OpActions[Op] |= (uint64_t)Action << VT.getSimpleVT()*2;
   }
   
-  /// setLoadXAction - Indicate that the specified load with extension does not
-  /// work with the with specified type and indicate what to do about it.
-  void setLoadXAction(unsigned ExtType, MVT VT,
+  /// setLoadExtAction - Indicate that the specified load with extension does
+  /// not work with the with specified type and indicate what to do about it.
+  void setLoadExtAction(unsigned ExtType, MVT VT,
                       LegalizeAction Action) {
-    assert((unsigned)VT.getSimpleVT() < sizeof(LoadXActions[0])*4 &&
-           ExtType < array_lengthof(LoadXActions) &&
+    assert((unsigned)VT.getSimpleVT() < sizeof(LoadExtActions[0])*4 &&
+           ExtType < array_lengthof(LoadExtActions) &&
            "Table isn't big enough!");
-    LoadXActions[ExtType] &= ~(uint64_t(3UL) << VT.getSimpleVT()*2);
-    LoadXActions[ExtType] |= (uint64_t)Action << VT.getSimpleVT()*2;
+    LoadExtActions[ExtType] &= ~(uint64_t(3UL) << VT.getSimpleVT()*2);
+    LoadExtActions[ExtType] |= (uint64_t)Action << VT.getSimpleVT()*2;
   }
   
   /// setTruncStoreAction - Indicate that the specified truncating store does
@@ -1411,10 +1411,10 @@ private:
   /// non-legal value types are not described here.
   uint64_t OpActions[OpActionsCapacity];
   
-  /// LoadXActions - For each load of load extension type and each value type,
+  /// LoadExtActions - For each load of load extension type and each value type,
   /// keep a LegalizeAction that indicates how instruction selection should deal
   /// with the load.
-  uint64_t LoadXActions[ISD::LAST_LOADX_TYPE];
+  uint64_t LoadExtActions[ISD::LAST_LOADEXT_TYPE];
   
   /// TruncStoreActions - For each truncating store, keep a LegalizeAction that
   /// indicates how instruction selection should deal with the store.

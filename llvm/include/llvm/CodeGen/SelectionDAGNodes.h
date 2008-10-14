@@ -734,7 +734,7 @@ namespace ISD {
     EXTLOAD,
     SEXTLOAD,
     ZEXTLOAD,
-    LAST_LOADX_TYPE
+    LAST_LOADEXT_TYPE
   };
 
   //===--------------------------------------------------------------------===//

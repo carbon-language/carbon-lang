@@ -456,7 +456,7 @@ static SDValue ExpandConstantFP(ConstantFPSDNode *CFP, bool UseCP,
     if (CFP->isValueValidForType(SVT, CFP->getValueAPF()) &&
         // Only do this if the target has a native EXTLOAD instruction from
         // smaller type.
-        TLI.isLoadXLegal(ISD::EXTLOAD, SVT) &&
+        TLI.isLoadExtLegal(ISD::EXTLOAD, SVT) &&
         TLI.ShouldShrinkFPConstant(OrigVT)) {
       const Type *SType = SVT.getTypeForMVT();
       LLVMC = cast<ConstantFP>(ConstantExpr::getFPTrunc(LLVMC, SType));
@@ -1981,7 +1981,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
           // nice to have an effective generic way of getting these benefits...
           // Until such a way is found, don't insist on promoting i1 here.
           (SrcVT != MVT::i1 ||
-           TLI.getLoadXAction(ExtType, MVT::i1) == TargetLowering::Promote)) {
+           TLI.getLoadExtAction(ExtType, MVT::i1) == TargetLowering::Promote)) {
         // Promote to a byte-sized load if not loading an integral number of
         // bytes.  For example, promote EXTLOAD:i20 -> EXTLOAD:i24.
         unsigned NewWidth = SrcVT.getStoreSizeInBits();
@@ -2086,7 +2086,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
         Tmp1 = LegalizeOp(Result);
         Tmp2 = LegalizeOp(Ch);
       } else {
-        switch (TLI.getLoadXAction(ExtType, SrcVT)) {
+        switch (TLI.getLoadExtAction(ExtType, SrcVT)) {
         default: assert(0 && "This action is not supported yet!");
         case TargetLowering::Custom:
           isCustom = true;

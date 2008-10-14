@@ -60,9 +60,9 @@ PIC16TargetLowering(PIC16TargetMachine &TM): TargetLowering(TM)
   addRegisterClass(MVT::i16, PIC16::PTRRegsRegisterClass);
 
   // Load extented operations for i1 types must be promoted .
-  setLoadXAction(ISD::EXTLOAD, MVT::i1,  Promote);
-  setLoadXAction(ISD::ZEXTLOAD, MVT::i1,  Promote);
-  setLoadXAction(ISD::SEXTLOAD, MVT::i1,  Promote);
+  setLoadExtAction(ISD::EXTLOAD, MVT::i1,  Promote);
+  setLoadExtAction(ISD::ZEXTLOAD, MVT::i1,  Promote);
+  setLoadExtAction(ISD::SEXTLOAD, MVT::i1,  Promote);
 
   setOperationAction(ISD::ADD, MVT::i1, Promote);
   setOperationAction(ISD::ADD, MVT::i8, Legal);

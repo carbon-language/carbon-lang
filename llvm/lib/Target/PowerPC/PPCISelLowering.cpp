@@ -53,8 +53,8 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   addRegisterClass(MVT::f64, PPC::F8RCRegisterClass);
   
   // PowerPC has an i16 but no i8 (or i1) SEXTLOAD
-  setLoadXAction(ISD::SEXTLOAD, MVT::i1, Promote);
-  setLoadXAction(ISD::SEXTLOAD, MVT::i8, Expand);
+  setLoadExtAction(ISD::SEXTLOAD, MVT::i1, Promote);
+  setLoadExtAction(ISD::SEXTLOAD, MVT::i8, Expand);
 
   setTruncStoreAction(MVT::f64, MVT::f32, Expand);
     

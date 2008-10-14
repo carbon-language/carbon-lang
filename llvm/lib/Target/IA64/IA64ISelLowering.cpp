@@ -35,14 +35,14 @@ IA64TargetLowering::IA64TargetLowering(TargetMachine &TM)
   // register class for predicate registers
   addRegisterClass(MVT::i1, IA64::PRRegisterClass);
 
-  setLoadXAction(ISD::EXTLOAD          , MVT::i1   , Promote);
+  setLoadExtAction(ISD::EXTLOAD          , MVT::i1   , Promote);
 
-  setLoadXAction(ISD::ZEXTLOAD         , MVT::i1   , Promote);
+  setLoadExtAction(ISD::ZEXTLOAD         , MVT::i1   , Promote);
 
-  setLoadXAction(ISD::SEXTLOAD         , MVT::i1   , Promote);
-  setLoadXAction(ISD::SEXTLOAD         , MVT::i8   , Expand);
-  setLoadXAction(ISD::SEXTLOAD         , MVT::i16  , Expand);
-  setLoadXAction(ISD::SEXTLOAD         , MVT::i32  , Expand);
+  setLoadExtAction(ISD::SEXTLOAD         , MVT::i1   , Promote);
+  setLoadExtAction(ISD::SEXTLOAD         , MVT::i8   , Expand);
+  setLoadExtAction(ISD::SEXTLOAD         , MVT::i16  , Expand);
+  setLoadExtAction(ISD::SEXTLOAD         , MVT::i32  , Expand);
 
   setOperationAction(ISD::BRIND            , MVT::Other, Expand);
   setOperationAction(ISD::BR_JT            , MVT::Other, Expand);
