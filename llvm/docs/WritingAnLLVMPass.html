@@ -1662,7 +1662,7 @@ MachinePassRegistry RegisterMyPasses::Registry;
 
 <div class="doc_code"><pre>
   cl::opt&lt;RegisterMyPasses::FunctionPassCtor, false,
-          RegisterPassParser&lt;RegisterMyPasses&gt &gt
+          RegisterPassParser&lt;RegisterMyPasses&gt; &gt;
   MyPassOpt("mypass",
             cl::init(&amp;createDefaultMyPass),
             cl::desc("my pass option help")); 

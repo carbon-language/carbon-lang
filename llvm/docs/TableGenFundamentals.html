@@ -707,12 +707,12 @@ examples:</p>
   <b>let</b> Defs = [EAX, ECX, EDX, FP0, FP1, FP2, FP3, FP4, FP5, FP6, ST0,
               MM0, MM1, MM2, MM3, MM4, MM5, MM6, MM7,
               XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7, EFLAGS] <b>in</b> {
-    <b>def</b> CALLpcrel32 : Ii32<0xE8, RawFrm, (outs), (ins i32imm:$dst,variable_ops),
-                           "call\t${dst:call}", []>;
-    <b>def</b> CALL32r     : I<0xFF, MRM2r, (outs), (ins GR32:$dst, variable_ops),
-                        "call\t{*}$dst", [(X86call GR32:$dst)]>;
-    <b>def</b> CALL32m     : I<0xFF, MRM2m, (outs), (ins i32mem:$dst, variable_ops),
-                        "call\t{*}$dst", []>;
+    <b>def</b> CALLpcrel32 : Ii32&lt;0xE8, RawFrm, (outs), (ins i32imm:$dst,variable_ops),
+                           "call\t${dst:call}", []&gt;;
+    <b>def</b> CALL32r     : I&lt;0xFF, MRM2r, (outs), (ins GR32:$dst, variable_ops),
+                        "call\t{*}$dst", [(X86call GR32:$dst)]&gt;;
+    <b>def</b> CALL32m     : I&lt;0xFF, MRM2m, (outs), (ins i32mem:$dst, variable_ops),
+                        "call\t{*}$dst", []&gt;;
   }
 </pre>
 </div>
