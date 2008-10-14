@@ -804,6 +804,80 @@ StmtExpr* StmtExpr::CreateImpl(Deserializer& D, ASTContext& C) {
   return new StmtExpr(SubStmt,t,L,R);
 }
 
+void TypesCompatibleExpr::EmitImpl(llvm::Serializer& S) const {
+  S.Emit(getType());
+  S.Emit(BuiltinLoc);
+  S.Emit(RParenLoc);
+  S.Emit(Type1);
+  S.Emit(Type2);
+}
+
+TypesCompatibleExpr* TypesCompatibleExpr::CreateImpl(llvm::Deserializer& D, 
+                                                     ASTContext& C) {
+  QualType RT = QualType::ReadVal(D);
+  SourceLocation BL = SourceLocation::ReadVal(D);
+  SourceLocation RP = SourceLocation::ReadVal(D);
+  QualType T1 = QualType::ReadVal(D);
+  QualType T2 = QualType::ReadVal(D);
+  return new TypesCompatibleExpr(RT, BL, T1, T2, RP);
+}
+
+void ShuffleVectorExpr::EmitImpl(llvm::Serializer& S) const {
+  S.Emit(getType());
+  S.Emit(BuiltinLoc);
+  S.Emit(RParenLoc);
+  S.EmitInt(NumExprs);
+  for (unsigned i = 0; i < NumExprs; ++i)
+    S.EmitOwnedPtr(getExpr(i));
+}
+
+ShuffleVectorExpr* ShuffleVectorExpr::CreateImpl(llvm::Deserializer& D, 
+                                                 ASTContext& C) {
+  QualType T = QualType::ReadVal(D);
+  SourceLocation BL = SourceLocation::ReadVal(D);
+  SourceLocation RP = SourceLocation::ReadVal(D);
+  unsigned NumExprs = D.ReadInt();
+  llvm::SmallVector<Expr*, 4> Exprs(NumExprs);
+  for (unsigned i = 0; i < NumExprs; ++i)
+    Exprs[i] = D.ReadOwnedPtr<Expr>(C);
+
+  return new ShuffleVectorExpr(Exprs.begin(), NumExprs, T, BL, RP);
+}
+
+void ChooseExpr::EmitImpl(llvm::Serializer& S) const {
+  S.Emit(getType());
+  S.Emit(BuiltinLoc);
+  S.Emit(RParenLoc);
+  S.EmitOwnedPtr(getCond());
+  S.EmitOwnedPtr(getLHS());
+  S.EmitOwnedPtr(getRHS());
+}
+
+ChooseExpr* ChooseExpr::CreateImpl(llvm::Deserializer& D, ASTContext& C) {
+  QualType T = QualType::ReadVal(D);
+  SourceLocation BL = SourceLocation::ReadVal(D);
+  SourceLocation RP = SourceLocation::ReadVal(D);
+  Expr *Cond = D.ReadOwnedPtr<Expr>(C);
+  Expr *LHS = D.ReadOwnedPtr<Expr>(C);
+  Expr *RHS = D.ReadOwnedPtr<Expr>(C);
+  return new ChooseExpr(BL, Cond, LHS, RHS, T, RP);
+}
+
+void VAArgExpr::EmitImpl(llvm::Serializer& S) const {
+  S.Emit(getType());
+  S.Emit(BuiltinLoc);
+  S.Emit(RParenLoc);
+  S.EmitOwnedPtr(getSubExpr());
+}
+
+VAArgExpr* VAArgExpr::CreateImpl(llvm::Deserializer& D, ASTContext& C) {
+  QualType T = QualType::ReadVal(D);
+  SourceLocation BL = SourceLocation::ReadVal(D);
+  SourceLocation RP = SourceLocation::ReadVal(D);
+  Expr *E = D.ReadOwnedPtr<Expr>(C);
+  return new VAArgExpr(BL, E, T, RP);
+}
+
 void StringLiteral::EmitImpl(Serializer& S) const {
   S.Emit(getType());
   S.Emit(firstTokLoc);
@@ -981,6 +1055,22 @@ ObjCForCollectionStmt* ObjCForCollectionStmt::CreateImpl(Deserializer& D, ASTCon
   return new ObjCForCollectionStmt(Element,Collection,Body,ForLoc, RParenLoc);
 }
 
+void ObjCProtocolExpr::EmitImpl(llvm::Serializer& S) const {
+  S.Emit(getType());
+  S.EmitPtr(Protocol);
+  S.Emit(AtLoc);
+  S.Emit(RParenLoc);
+}
+
+ObjCProtocolExpr* ObjCProtocolExpr::CreateImpl(llvm::Deserializer& D, 
+                                               ASTContext& C) {
+  QualType T = QualType::ReadVal(D);
+  ObjCProtocolDecl *PD = D.ReadPtr<ObjCProtocolDecl>();
+  SourceLocation AL = SourceLocation::ReadVal(D);
+  SourceLocation RP = SourceLocation::ReadVal(D);
+  return new ObjCProtocolExpr(T, PD, AL, RP);
+}
+
 void ObjCIvarRefExpr::EmitImpl(Serializer& S) const {
   S.Emit(Loc);
   S.Emit(getType());
@@ -1111,6 +1201,21 @@ ObjCStringLiteral* ObjCStringLiteral::CreateImpl(Deserializer& D, ASTContext& C)
 //===----------------------------------------------------------------------===//
 //   Serialization for Clang Extensions.
 //===----------------------------------------------------------------------===//
+
+void ExtVectorElementExpr::EmitImpl(llvm::Serializer& S) const {
+  S.Emit(getType());
+  S.EmitOwnedPtr(getBase());
+  S.EmitPtr(&Accessor);
+  S.Emit(AccessorLoc);
+}
+
+ExtVectorElementExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C) {
+  QualType T = QualType::ReadVal(D);
+  Expr *B = D.ReadOwnedPtr<Expr>(C);
+  IdentifierInfo *A = D.ReadPtr<IdentifierInfo>();
+  SourceLocation AL = SourceLocation::ReadVal(D);
+  return new ExtVectorElementExpr(T, B, *A, AL);
+}
 
 void BlockExpr::EmitImpl(Serializer& S) const {
   S.Emit(getType());

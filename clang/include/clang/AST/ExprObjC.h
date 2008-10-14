@@ -148,6 +148,9 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
+
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static ObjCProtocolExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// ObjCIvarRefExpr - A reference to an ObjC instance variable.

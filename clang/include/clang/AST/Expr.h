@@ -1150,6 +1150,9 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
+
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static TypesCompatibleExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// ShuffleVectorExpr - clang-specific builtin-in function
@@ -1215,6 +1218,9 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
+
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static ShuffleVectorExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// ChooseExpr - GNU builtin-in function __builtin_choose_expr.
@@ -1256,6 +1262,9 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
+
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static ChooseExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// OverloadExpr - Clang builtin function __builtin_overload.
@@ -1370,6 +1379,9 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();  
+
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static VAArgExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
   
 /// InitListExpr - used for struct and array initializers, such as:
@@ -1496,6 +1508,9 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
+
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static ExtVectorElementExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 
