@@ -1,4 +1,4 @@
-// RUN: clang -m -triple i686-apple-darwin9 -fsyntax-only -verify %s
+// RUN: clang -triple i686-apple-darwin9 -fsyntax-only -verify %s
 
 /* expected-warning {{value of #pragma pack(show) == 8}} */ #pragma pack(show)
 /* expected-warning {{expected #pragma pack parameter to be}} */ #pragma pack(3)
