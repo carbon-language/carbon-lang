@@ -924,6 +924,11 @@ private:
     /// void*, we accept for now.
     BlockVoidPointer,
     
+    /// IncompatibleObjCQualifiedId - The assignment is between a qualified
+    /// id type and something else (that is incompatible with it). For example,
+    /// "id <XXX>" = "Foo *", where "Foo *" doesn't implement the XXX protocol.
+    IncompatibleObjCQualifiedId,
+    
     /// Incompatible - We reject this conversion outright, it is invalid to
     /// represent it in the AST.
     Incompatible

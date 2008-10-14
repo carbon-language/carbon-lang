@@ -38,3 +38,38 @@ extern NSString * const XCActiveSelectionLevel;
     [[[XCActionManager defaultActionManager] selectionAtLevel:XCActiveSelectionLevel] source];
 }
 @end
+
+@protocol NSTextStorageDelegate;
+@class NSNotification;
+
+@interface NSTextStorage : NSObject
+
+- (void)setDelegate:(id <NSTextStorageDelegate>)delegate;
+- (id <NSTextStorageDelegate>)delegate;
+
+@end
+
+@protocol NSTextStorageDelegate <NSObject>
+@optional
+
+- (void)textStorageWillProcessEditing:(NSNotification *)notification;
+- (void)textStorageDidProcessEditing:(NSNotification *)notification;
+
+@end
+
+@interface SKTText : NSObject {
+    @private
+
+
+    NSTextStorage *_contents;
+}
+@end
+
+@implementation SKTText
+
+
+- (NSTextStorage *)contents {
+ [_contents setDelegate:self]; // expected-warning {{incompatible type sending 'SKTText *', expected 'id<NSTextStorageDelegate>'}}
+}
+
+@end

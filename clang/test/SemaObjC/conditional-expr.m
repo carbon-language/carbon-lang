@@ -28,7 +28,7 @@
 - (id)initWithNextOutputStream:(id <DTOutputStreams>) outputStream {
   id <DTOutputStreams> nextOutputStream = [self nextOutputStream];
   // GCC warns about both of these.
-  self = nextOutputStream; // expected-error {{incompatible type assigning 'id<DTOutputStreams>', expected 'DTFilterOutputStream2 *'}}
+  self = nextOutputStream; // expected-warning {{incompatible type assigning 'id<DTOutputStreams>', expected 'DTFilterOutputStream2 *'}}
   return nextOutputStream ? nextOutputStream : self;
 }
 @end
@@ -38,7 +38,7 @@
 - (id)initWithNextOutputStream:(id <DTOutputStreams>) outputStream {
   id <DTOutputStreams> nextOutputStream = [self nextOutputStream];
   // GCC warns about both of these as well (no errors).
-  self = nextOutputStream; // expected-error {{incompatible type assigning 'id<DTOutputStreams>', expected 'DTFilterOutputStream3 *'}}
+  self = nextOutputStream; // expected-warning {{incompatible type assigning 'id<DTOutputStreams>', expected 'DTFilterOutputStream3 *'}}
   return nextOutputStream ? nextOutputStream : self;
 }
 @end

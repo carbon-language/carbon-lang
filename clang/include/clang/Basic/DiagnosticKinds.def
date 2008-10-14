@@ -1045,6 +1045,10 @@ DIAG(err_typecheck_bool_condition, ERROR,
 // assignment related diagnostics (also for argument passing, returning, etc).
 DIAG(err_typecheck_convert_incompatible, ERROR,
      "incompatible type %2 '%1', expected '%0'")
+DIAG(warn_incompatible_qualified_id, WARNING,
+     "incompatible type %2 '%1', expected '%0'")
+DIAG(warn_incompatible_qualified_id_operands, WARNING,
+     "invalid operands to binary expression ('%0' and '%1')")
 DIAG(ext_typecheck_convert_pointer_int, EXTWARN,
      "incompatible pointer to integer conversion %2 '%1', expected '%0'")
 DIAG(ext_typecheck_convert_int_pointer, EXTWARN,

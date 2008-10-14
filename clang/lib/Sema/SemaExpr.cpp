@@ -1587,7 +1587,7 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
       return IntToPointer;
     if (lhsType->isIntegerType())
       return PointerToInt;
-    return Incompatible;
+    return IncompatibleObjCQualifiedId;
   }
 
   if (lhsType->isVectorType() || rhsType->isVectorType()) {
@@ -2034,6 +2034,13 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation loc,
     if (ObjCQualifiedIdTypesAreCompatible(lType, rType, true)) {
       ImpCastExprToType(rex, lType);
       return Context.IntTy;
+    } else {
+      if ((lType->isObjCQualifiedIdType() && rType->isObjCQualifiedIdType())) {
+        Diag(loc, diag::warn_incompatible_qualified_id_operands, 
+             lex->getType().getAsString(), rex->getType().getAsString(),
+             lex->getSourceRange(), rex->getSourceRange());
+        return QualType();
+      }
     }
   }
   if ((lType->isPointerType() || lType->isObjCQualifiedIdType()) && 
@@ -3077,6 +3084,11 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
     break;
   case BlockVoidPointer:
     DiagKind = diag::ext_typecheck_convert_pointer_void_block;
+    break;
+  case IncompatibleObjCQualifiedId:
+    // FIXME: Diagnose the problem in ObjCQualifiedIdTypesAreCompatible, since 
+    // it can give a more specific diagnostic.
+    DiagKind = diag::warn_incompatible_qualified_id;
     break;
   case Incompatible:
     DiagKind = diag::err_typecheck_convert_incompatible;

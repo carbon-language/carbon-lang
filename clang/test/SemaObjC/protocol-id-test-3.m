@@ -29,15 +29,15 @@ id<MyProto1> Func(INTF <MyProto1, MyProto2> *p2)
 
 id<MyProto1, MyProto2> Gunc2(id <MyProto1>p2)
 {
-	Func(p2);	// expected-error {{incompatible type passing 'id<MyProto1>', expected 'INTF<MyProto1,MyProto2> *'}}
-	return p2;	// expected-error {{incompatible type returning 'id<MyProto1>', expected 'id<MyProto1,MyProto2>'}}
+	Func(p2);	// expected-warning {{incompatible type passing 'id<MyProto1>', expected 'INTF<MyProto1,MyProto2> *'}}
+	return p2;	// expected-warning {{incompatible type returning 'id<MyProto1>', expected 'id<MyProto1,MyProto2>'}}
 }
 
 
 
 id<MyProto1> Gunc3(id <MyProto2>p2)
 {
-	return p2;	 // expected-error {{incompatible type returning 'id<MyProto2>', expected 'id<MyProto1>'}}
+	return p2;	 // expected-warning {{incompatible type returning 'id<MyProto2>', expected 'id<MyProto1>'}}
 }
 
 
@@ -61,13 +61,13 @@ INTF<MyProto1> * Hunc1(id <MyProto1, MyProto2>p2)
 
 INTF<MyProto1, MyProto2> * Hunc2(id <MyProto1>p2)
 {
-	Func(p2);	// expected-error {{incompatible type passing 'id<MyProto1>', expected 'INTF<MyProto1,MyProto2> *'}}
-	return p2;	// expected-error {{incompatible type returning 'id<MyProto1>', expected 'INTF<MyProto1,MyProto2> *'}}
+	Func(p2);	// expected-warning {{incompatible type passing 'id<MyProto1>', expected 'INTF<MyProto1,MyProto2> *'}}
+	return p2;	// expected-warning {{incompatible type returning 'id<MyProto1>', expected 'INTF<MyProto1,MyProto2> *'}}
 }
 
 INTF<MyProto1> * Hunc3(id <MyProto2>p2)
 {
-	return p2;	 // expected-error {{incompatible type returning 'id<MyProto2>', expected 'INTF<MyProto1> *'}}
+	return p2;	 // expected-warning {{incompatible type returning 'id<MyProto2>', expected 'INTF<MyProto1> *'}}
 }
 
 
