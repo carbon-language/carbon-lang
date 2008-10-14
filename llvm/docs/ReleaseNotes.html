@@ -480,6 +480,12 @@ converted to strings using <tt>llvm::GetConstantStringInfo</tt> defined via
 <li>Various header files like "llvm/ADT/iterator" were given a .h suffix.
     Change your code to #include "llvm/ADT/iterator.h" instead.</li>
 
+<li>In the code generator, many MachineOperand predicates were renamed to be
+    shorter (e.g. <tt>isFrameIndex()</tt> -&gt; <tt>isFI()</tt>),
+    <tt>SDOperand</tt> was renamed to <tt>SDValue</tt> (and the "<tt>Val</tt>"
+    member was changed to be the <tt>getNode()</tt> accessor), and the
+    <tt>MVT::ValueType</tt> enum has been replaced with an "<tt>MVT</tt>"
+    struct.</li>
 </ul>
 
 </div>
