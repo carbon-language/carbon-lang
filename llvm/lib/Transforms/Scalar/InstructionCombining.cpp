@@ -3116,10 +3116,35 @@ static unsigned getICmpCode(const ICmpInst *ICI) {
   }
 }
 
+/// getFCmpCode - Similar to getICmpCode but for FCmpInst. This encodes a fcmp
+/// predicate into a three bit mask. It also returns whether it is an ordered
+/// predicate by reference.
+static unsigned getFCmpCode(FCmpInst::Predicate CC, bool &isOrdered) {
+  isOrdered = false;
+  switch (CC) {
+  case FCmpInst::FCMP_ORD: isOrdered = true; return 0;  // 000
+  case FCmpInst::FCMP_UNO:                   return 0;  // 000
+  case FCmpInst::FCMP_OEQ: isOrdered = true; return 1;  // 001
+  case FCmpInst::FCMP_UEQ:                   return 1;  // 001
+  case FCmpInst::FCMP_OGT: isOrdered = true; return 2;  // 010
+  case FCmpInst::FCMP_UGT:                   return 2;  // 010
+  case FCmpInst::FCMP_OGE: isOrdered = true; return 3;  // 011
+  case FCmpInst::FCMP_UGE:                   return 3;  // 011
+  case FCmpInst::FCMP_OLT: isOrdered = true; return 4;  // 100
+  case FCmpInst::FCMP_ULT:                   return 4;  // 100
+  case FCmpInst::FCMP_OLE: isOrdered = true; return 6;  // 110
+  case FCmpInst::FCMP_ULE:                   return 6;  // 110
+  default:
+    // Not expecting FCMP_FALSE and FCMP_TRUE;
+    assert(0 && "Unexpected FCmp predicate!");
+    return 0;
+  }
+}
+
 /// getICmpValue - This is the complement of getICmpCode, which turns an
 /// opcode and two operands into either a constant true or false, or a brand 
 /// new ICmp instruction. The sign is passed in to determine which kind
-/// of predicate to use in new icmp instructions.
+/// of predicate to use in the new icmp instruction.
 static Value *getICmpValue(bool sign, unsigned code, Value *LHS, Value *RHS) {
   switch (code) {
   default: assert(0 && "Illegal ICmp code!");
@@ -3149,6 +3174,47 @@ static Value *getICmpValue(bool sign, unsigned code, Value *LHS, Value *RHS) {
   case  7: return ConstantInt::getTrue();
   }
 }
+
+/// getFCmpValue - This is the complement of getFCmpCode, which turns an
+/// opcode and two operands into either a FCmp instruction. isordered is passed
+/// in to determine which kind of predicate to use in the new fcmp instruction.
+static Value *getFCmpValue(bool isordered, unsigned code,
+                           Value *LHS, Value *RHS) {
+  switch (code) {
+  default: assert(0 && "Illegal ICmp code!");
+  case  0:
+    if (isordered)
+      return new FCmpInst(FCmpInst::FCMP_ORD, LHS, RHS);
+    else
+      return new FCmpInst(FCmpInst::FCMP_UNO, LHS, RHS);
+  case  1: 
+    if (isordered)
+      return new FCmpInst(FCmpInst::FCMP_OEQ, LHS, RHS);
+    else
+      return new FCmpInst(FCmpInst::FCMP_UEQ, LHS, RHS);
+  case  2: 
+    if (isordered)
+      return new FCmpInst(FCmpInst::FCMP_OGT, LHS, RHS);
+    else
+      return new FCmpInst(FCmpInst::FCMP_UGT, LHS, RHS);
+  case  3: 
+    if (isordered)
+      return new FCmpInst(FCmpInst::FCMP_OGE, LHS, RHS);
+    else
+      return new FCmpInst(FCmpInst::FCMP_UGE, LHS, RHS);
+  case  4: 
+    if (isordered)
+      return new FCmpInst(FCmpInst::FCMP_OLT, LHS, RHS);
+    else
+      return new FCmpInst(FCmpInst::FCMP_ULT, LHS, RHS);
+  case  5: 
+    if (isordered)
+      return new FCmpInst(FCmpInst::FCMP_OLE, LHS, RHS);
+    else
+      return new FCmpInst(FCmpInst::FCMP_ULE, LHS, RHS);
+  }
+}
+
 
 static bool PredicatesFoldable(ICmpInst::Predicate p1, ICmpInst::Predicate p2) {
   return (ICmpInst::isSignedPredicate(p1) == ICmpInst::isSignedPredicate(p2)) ||
@@ -3887,11 +3953,12 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
       }
   }
 
-  // (fcmp ord x, c) & (fcmp ord y, c)  -> (fcmp ord x, y)
+  // If and'ing two fcmp, try combine them into one.
   if (FCmpInst *LHS = dyn_cast<FCmpInst>(I.getOperand(0))) {
     if (FCmpInst *RHS = dyn_cast<FCmpInst>(I.getOperand(1))) {
       if (LHS->getPredicate() == FCmpInst::FCMP_ORD &&
-          RHS->getPredicate() == FCmpInst::FCMP_ORD)
+          RHS->getPredicate() == FCmpInst::FCMP_ORD) {
+        // (fcmp ord x, c) & (fcmp ord y, c)  -> (fcmp ord x, y)
         if (ConstantFP *LHSC = dyn_cast<ConstantFP>(LHS->getOperand(1)))
           if (ConstantFP *RHSC = dyn_cast<ConstantFP>(RHS->getOperand(1))) {
             // If either of the constants are nans, then the whole thing returns
@@ -3901,6 +3968,47 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
             return new FCmpInst(FCmpInst::FCMP_ORD, LHS->getOperand(0),
                                 RHS->getOperand(0));
           }
+      } else {
+        Value *Op0LHS, *Op0RHS, *Op1LHS, *Op1RHS;
+        FCmpInst::Predicate Op0CC, Op1CC;
+        if (match(Op0, m_FCmp(Op0CC, m_Value(Op0LHS), m_Value(Op0RHS))) &&
+            match(Op1, m_FCmp(Op1CC, m_Value(Op1LHS), m_Value(Op1RHS)))) {
+          if (Op0LHS == Op1LHS && Op0RHS == Op1RHS) {
+            // Simplify (fcmp cc0 x, y) & (fcmp cc1 x, y).
+            if (Op0CC == Op1CC)
+              return new FCmpInst((FCmpInst::Predicate)Op0CC, Op0LHS, Op0RHS);
+            else if (Op0CC == FCmpInst::FCMP_FALSE ||
+                     Op1CC == FCmpInst::FCMP_FALSE)
+              return ReplaceInstUsesWith(I, ConstantInt::getFalse());
+            else if (Op0CC == FCmpInst::FCMP_TRUE)
+              return ReplaceInstUsesWith(I, Op1);
+            else if (Op1CC == FCmpInst::FCMP_TRUE)
+              return ReplaceInstUsesWith(I, Op0);
+            bool Op0Ordered;
+            bool Op1Ordered;
+            unsigned Op0Pred = getFCmpCode(Op0CC, Op0Ordered);
+            unsigned Op1Pred = getFCmpCode(Op1CC, Op1Ordered);
+            if (Op1Pred == 0) {
+              std::swap(Op0, Op1);
+              std::swap(Op0Pred, Op1Pred);
+              std::swap(Op0Ordered, Op1Ordered);
+            }
+            if (Op0Pred == 0) {
+              // uno && ueq -> uno && (uno || eq) -> ueq
+              // ord && olt -> ord && (ord && lt) -> olt
+              if (Op0Ordered == Op1Ordered)
+                return ReplaceInstUsesWith(I, Op1);
+              // uno && oeq -> uno && (ord && eq) -> false
+              // uno && ord -> false
+              if (!Op0Ordered)
+                return ReplaceInstUsesWith(I, ConstantInt::getFalse());
+              // ord && ueq -> ord && (uno || eq) -> oeq
+              return cast<Instruction>(getFCmpValue(true, Op1Pred,
+                                                    Op0LHS, Op0RHS));
+            }
+          }
+        }
+      }
     }
   }
 
