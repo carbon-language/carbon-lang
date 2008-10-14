@@ -3136,6 +3136,7 @@ static unsigned getFCmpCode(FCmpInst::Predicate CC, bool &isOrdered) {
   case FCmpInst::FCMP_UNE:                   return 5;  // 101
   case FCmpInst::FCMP_OLE: isOrdered = true; return 6;  // 110
   case FCmpInst::FCMP_ULE:                   return 6;  // 110
+    // True -> 7
   default:
     // Not expecting FCMP_FALSE and FCMP_TRUE;
     assert(0 && "Unexpected FCmp predicate!");
@@ -3219,6 +3220,7 @@ static Value *getFCmpValue(bool isordered, unsigned code,
       return new FCmpInst(FCmpInst::FCMP_OLE, LHS, RHS);
     else
       return new FCmpInst(FCmpInst::FCMP_ULE, LHS, RHS);
+  case  7: return ConstantInt::getTrue();
   }
 }
 
@@ -4555,7 +4557,7 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
     if (FCmpInst *RHS = dyn_cast<FCmpInst>(I.getOperand(1))) {
       if (LHS->getPredicate() == FCmpInst::FCMP_UNO &&
           RHS->getPredicate() == FCmpInst::FCMP_UNO && 
-          LHS->getOperand(0)->getType() == RHS->getOperand(0)->getType())
+          LHS->getOperand(0)->getType() == RHS->getOperand(0)->getType()) {
         if (ConstantFP *LHSC = dyn_cast<ConstantFP>(LHS->getOperand(1)))
           if (ConstantFP *RHSC = dyn_cast<ConstantFP>(RHS->getOperand(1))) {
             // If either of the constants are nans, then the whole thing returns
@@ -4568,6 +4570,44 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
             return new FCmpInst(FCmpInst::FCMP_UNO, LHS->getOperand(0),
                                 RHS->getOperand(0));
           }
+      } else {
+        Value *Op0LHS, *Op0RHS, *Op1LHS, *Op1RHS;
+        FCmpInst::Predicate Op0CC, Op1CC;
+        if (match(Op0, m_FCmp(Op0CC, m_Value(Op0LHS), m_Value(Op0RHS))) &&
+            match(Op1, m_FCmp(Op1CC, m_Value(Op1LHS), m_Value(Op1RHS)))) {
+          if (Op0LHS == Op1RHS && Op0RHS == Op1LHS) {
+            // Swap RHS operands to match LHS.
+            Op1CC = FCmpInst::getSwappedPredicate(Op1CC);
+            std::swap(Op1LHS, Op1RHS);
+          }
+          if (Op0LHS == Op1LHS && Op0RHS == Op1RHS) {
+            // Simplify (fcmp cc0 x, y) | (fcmp cc1 x, y).
+            if (Op0CC == Op1CC)
+              return new FCmpInst((FCmpInst::Predicate)Op0CC, Op0LHS, Op0RHS);
+            else if (Op0CC == FCmpInst::FCMP_TRUE ||
+                     Op1CC == FCmpInst::FCMP_TRUE)
+              return ReplaceInstUsesWith(I, ConstantInt::getTrue());
+            else if (Op0CC == FCmpInst::FCMP_FALSE)
+              return ReplaceInstUsesWith(I, Op1);
+            else if (Op1CC == FCmpInst::FCMP_FALSE)
+              return ReplaceInstUsesWith(I, Op0);
+            bool Op0Ordered;
+            bool Op1Ordered;
+            unsigned Op0Pred = getFCmpCode(Op0CC, Op0Ordered);
+            unsigned Op1Pred = getFCmpCode(Op1CC, Op1Ordered);
+            if (Op0Ordered == Op1Ordered) {
+              // If both are ordered or unordered, return a new fcmp with
+              // or'ed predicates.
+              Value *RV = getFCmpValue(Op0Ordered, Op0Pred|Op1Pred,
+                                       Op0LHS, Op0RHS);
+              if (Instruction *I = dyn_cast<Instruction>(RV))
+                return I;
+              // Otherwise, it's a constant boolean value...
+              return ReplaceInstUsesWith(I, RV);
+            }
+          }
+        }
+      }
     }
   }
 
