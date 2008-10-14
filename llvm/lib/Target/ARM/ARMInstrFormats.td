@@ -141,15 +141,13 @@ class ABLpredI<bits<4> opcod, dag oops, dag iops, Format f, string opc,
          string asm, list<dag> pattern>
   : I<opcod, oops, iops, AddrModeNone, Size4Bytes, IndexModeNone, f, opc,
       asm,"",pattern> {
-  let Inst{24}    = 1; // L bit
-  let Inst{25-27} = {1,0,1};
+  let Inst{27-24} = opcod;
 }
 class ABLI<bits<4> opcod, dag oops, dag iops, Format f, string asm,
           list<dag> pattern>
   : XI<opcod, oops, iops, AddrModeNone, Size4Bytes, IndexModeNone, f, asm,
        "", pattern> {
-  let Inst{24}    = 1; // L bit
-  let Inst{25-27} = {1,0,1};
+  let Inst{27-24} = opcod;
 }
 // FIXME: BX
 class AXIx2<bits<4> opcod, dag oops, dag iops, Format f, string asm,
@@ -160,15 +158,13 @@ class ABI<bits<4> opcod, dag oops, dag iops, Format f, string asm,
           list<dag> pattern>
   : XI<opcod, oops, iops, AddrModeNone, Size4Bytes, IndexModeNone, f, asm,
        "", pattern> {
-  let Inst{24}    = 0; // L bit
-  let Inst{25-27} = {1,0,1};
+  let Inst{27-24} = opcod;
 }
 class ABccI<bits<4> opcod, dag oops, dag iops, Format f, string opc,
          string asm, list<dag> pattern>
   : I<opcod, oops, iops, AddrModeNone, Size4Bytes, IndexModeNone, f, opc,
       asm,"",pattern> {
-  let Inst{24}    = 0; // L bit
-  let Inst{25-27} = {1,0,1};
+  let Inst{27-24} = opcod;
 }
 
 // BR_JT instructions
@@ -177,16 +173,16 @@ class JTI<bits<4> opcod, dag oops, dag iops, string asm, list<dag> pattern>
   : XI<opcod, oops, iops, AddrModeNone, SizeSpecial, IndexModeNone, BranchMisc,
        asm, "", pattern> {
   let Inst{20}    = 0; // S Bit
-  let Inst{21-24} = {1,0,1,1};
-  let Inst{26-27} = {0,0};
+  let Inst{24-21} = opcod;
+  let Inst{27-26} = {0,0};
 }
 // == add pc
 class JTI1<bits<4> opcod, dag oops, dag iops, string asm, list<dag> pattern>
   : XI<opcod, oops, iops, AddrMode1, SizeSpecial, IndexModeNone, BranchMisc,
        asm, "", pattern> {
   let Inst{20}    = 0; // S bit
-  let Inst{21-24} = {0,0,1,0};
-  let Inst{26-27} = {0,0};
+  let Inst{24-21} = opcod;
+  let Inst{27-26} = {0,0};
 }
 // == ldr pc
 class JTI2<bits<4> opcod, dag oops, dag iops, string asm, list<dag> pattern>
@@ -196,7 +192,7 @@ class JTI2<bits<4> opcod, dag oops, dag iops, string asm, list<dag> pattern>
   let Inst{21}    = 0; // W bit
   let Inst{22}    = 0; // B bit
   let Inst{24}    = 1; // P bit
-  let Inst{26-27} = {0,0};
+  let Inst{27-26} = {0,1};
 }
 
 
@@ -205,22 +201,22 @@ class AI1<bits<4> opcod, dag oops, dag iops, Format f, string opc,
           string asm, list<dag> pattern>
   : I<opcod, oops, iops, AddrMode1, Size4Bytes, IndexModeNone, f, opc,
       asm, "", pattern> {
-  let Inst{21-24} = opcod;
-  let Inst{26-27} = {0,0};
+  let Inst{24-21} = opcod;
+  let Inst{27-26} = {0,0};
 }
 class AsI1<bits<4> opcod, dag oops, dag iops, Format f, string opc,
            string asm, list<dag> pattern>
   : sI<opcod, oops, iops, AddrMode1, Size4Bytes, IndexModeNone, f, opc,
        asm, "", pattern> {
-  let Inst{21-24} = opcod;
-  let Inst{26-27} = {0,0};
+  let Inst{24-21} = opcod;
+  let Inst{27-26} = {0,0};
 }
 class AXI1<bits<4> opcod, dag oops, dag iops, Format f, string asm,
            list<dag> pattern>
   : XI<opcod, oops, iops, AddrMode1, Size4Bytes, IndexModeNone, f, asm,
        "", pattern> {
-  let Inst{21-24} = opcod;
-  let Inst{26-27} = {0,0};
+  let Inst{24-21} = opcod;
+  let Inst{27-26} = {0,0};
 }
 class AI1x2<bits<4> opcod, dag oops, dag iops, Format f, string opc,
             string asm, list<dag> pattern>
@@ -233,7 +229,7 @@ class AI2<bits<4> opcod, dag oops, dag iops, Format f, string opc,
           string asm, list<dag> pattern>
   : I<opcod, oops, iops, AddrMode2, Size4Bytes, IndexModeNone, f, opc,
       asm, "", pattern> {
-  let Inst{26-27} = {1,0};
+  let Inst{27-26} = {0,1};
 }
 class AXI2<bits<4> opcod, dag oops, dag iops, Format f, string asm,
            list<dag> pattern>
@@ -644,7 +640,7 @@ class AXI4ld<bits<4> opcod, dag oops, dag iops, Format f, string asm,
        "", pattern> {
   let Inst{20}    = 1; // L bit
   let Inst{22}    = 0; // S bit
-  let Inst{25-27} = {0,0,1};
+  let Inst{27-25} = 0b100;
 }
 class AXI4ldpc<bits<4> opcod, dag oops, dag iops, Format f, string asm,
            list<dag> pattern>
@@ -652,7 +648,7 @@ class AXI4ldpc<bits<4> opcod, dag oops, dag iops, Format f, string asm,
        "", pattern> {
   let Inst{20}    = 1; // L bit
   let Inst{22}    = 1; // S bit
-  let Inst{25-27} = {0,0,1};
+  let Inst{27-25} = 0b100;
 }
 class AXI4st<bits<4> opcod, dag oops, dag iops, Format f, string asm,
            list<dag> pattern>
@@ -660,7 +656,7 @@ class AXI4st<bits<4> opcod, dag oops, dag iops, Format f, string asm,
        "", pattern> {
   let Inst{20}    = 0; // L bit
   let Inst{22}    = 0; // S bit
-  let Inst{25-27} = {0,0,1};
+  let Inst{27-25} = 0b100;
 }
 
 

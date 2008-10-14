@@ -521,9 +521,9 @@ def PICSTRB : AXI2stb<0x0, (outs), (ins GPR:$src, addrmodepc:$addr, pred:$p),
 
 let isReturn = 1, isTerminator = 1 in
   def BX_RET : AI<0x0, (outs), (ins), BranchMisc, "bx", " lr", [(ARMretflag)]> {
-  let Inst{4-7}   = {1,0,0,0};
-  let Inst{8-19}  = {1,1,1,1,1,1,1,1,1,1,1,1};
-  let Inst{20-27} = {0,1,0,0,1,0,0,0};
+  let Inst{7-4}   = 0b0001;
+  let Inst{19-8}  = 0b111111111111;
+  let Inst{27-20} = 0b00010010;
 }
 
 // FIXME: remove when we have a way to marking a MI with these properties.
@@ -550,9 +550,9 @@ let isCall = 1,
   def BLX : AXI<0x0, (outs), (ins GPR:$func, variable_ops), BranchMisc,
                 "blx $func",
                 [(ARMcall GPR:$func)]>, Requires<[IsARM, HasV5T]> {
-    let Inst{4-7}   = {1,1,0,0};
-    let Inst{8-19}  = {1,1,1,1,1,1,1,1,1,1,1,1};
-    let Inst{20-27} = {0,1,0,0,1,0,0,0};
+    let Inst{7-4}   = 0b0011;
+    let Inst{19-8}  = 0b111111111111;
+    let Inst{27-20} = 0b00010010;
   }
 
   let Uses = [LR] in {
@@ -567,18 +567,18 @@ let isBranch = 1, isTerminator = 1 in {
   // B is "predicable" since it can be xformed into a Bcc.
   let isBarrier = 1 in {
     let isPredicable = 1 in
-    def B : ABI<{0,1,0,1}, (outs), (ins brtarget:$target), Branch, "b $target",
+    def B : ABI<0xA, (outs), (ins brtarget:$target), Branch, "b $target",
                 [(br bb:$target)]>;
 
   let isNotDuplicable = 1, isIndirectBranch = 1 in {
-  def BR_JTr : JTI<0x0, (outs), (ins GPR:$target, jtblock_operand:$jt, i32imm:$id),
+  def BR_JTr : JTI<0b1101, (outs), (ins GPR:$target, jtblock_operand:$jt, i32imm:$id),
                     "mov pc, $target \n$jt",
                     [(ARMbrjt GPR:$target, tjumptable:$jt, imm:$id)]>;
   def BR_JTm : JTI2<0x0, (outs), (ins addrmode2:$target, jtblock_operand:$jt, i32imm:$id),
                      "ldr pc, $target \n$jt",
                      [(ARMbrjt (i32 (load addrmode2:$target)), tjumptable:$jt,
                        imm:$id)]>;
-  def BR_JTadd : JTI1<0x0, (outs), (ins GPR:$target, GPR:$idx, jtblock_operand:$jt,
+  def BR_JTadd : JTI1<0b0100, (outs), (ins GPR:$target, GPR:$idx, jtblock_operand:$jt,
                        i32imm:$id),
                        "add pc, $target, $idx \n$jt",
                        [(ARMbrjt (add GPR:$target, GPR:$idx), tjumptable:$jt,
@@ -752,16 +752,16 @@ def STM : AXI4st<0x0, (outs),
 //  Move Instructions.
 //
 
-def MOVr : AsI1<{1,0,1,1}, (outs GPR:$dst), (ins GPR:$src), DPRdReg,
+def MOVr : AsI1<0b1101, (outs GPR:$dst), (ins GPR:$src), DPRdReg,
                  "mov", " $dst, $src", []>;
-def MOVs : AsI1<{1,0,1,1}, (outs GPR:$dst), (ins so_reg:$src), DPRdSoReg,
+def MOVs : AsI1<0b1101, (outs GPR:$dst), (ins so_reg:$src), DPRdSoReg,
                  "mov", " $dst, $src", [(set GPR:$dst, so_reg:$src)]>;
 
 let isReMaterializable = 1 in
-def MOVi : AsI1<{1,0,1,1}, (outs GPR:$dst), (ins so_imm:$src), DPRdIm,
+def MOVi : AsI1<0b1101, (outs GPR:$dst), (ins so_imm:$src), DPRdIm,
                  "mov", " $dst, $src", [(set GPR:$dst, so_imm:$src)]>;
 
-def MOVrx : AsI1<{1,0,1,1}, (outs GPR:$dst), (ins GPR:$src), DPRdMisc,
+def MOVrx : AsI1<0b1101, (outs GPR:$dst), (ins GPR:$src), DPRdMisc,
                  "mov", " $dst, $src, rrx",
                  [(set GPR:$dst, (ARMrrx GPR:$src))]>;
 
@@ -769,10 +769,10 @@ def MOVrx : AsI1<{1,0,1,1}, (outs GPR:$dst), (ins GPR:$src), DPRdMisc,
 // due to flag operands.
 
 let Defs = [CPSR] in {
-def MOVsrl_flag : AI1<{1,0,1,1}, (outs GPR:$dst), (ins GPR:$src), DPRdMisc,
+def MOVsrl_flag : AI1<0b1101, (outs GPR:$dst), (ins GPR:$src), DPRdMisc,
                       "mov", "s $dst, $src, lsr #1",
                       [(set GPR:$dst, (ARMsrl_flag GPR:$src))]>;
-def MOVsra_flag : AI1<{1,0,1,1}, (outs GPR:$dst), (ins GPR:$src), DPRdMisc,
+def MOVsra_flag : AI1<0b1101, (outs GPR:$dst), (ins GPR:$src), DPRdMisc,
                       "mov", "s $dst, $src, asr #1",
                       [(set GPR:$dst, (ARMsra_flag GPR:$src))]>;
 }
@@ -820,48 +820,48 @@ defm UXTAH : AI_bin_rrot<0x0, "uxtah",
 //  Arithmetic Instructions.
 //
 
-defm ADD  : AsI1_bin_irs<{0,0,1,0}, "add",
+defm ADD  : AsI1_bin_irs<0b0100, "add",
                          BinOpFrag<(add  node:$LHS, node:$RHS)>>;
-defm SUB  : AsI1_bin_irs<{0,1,0,0}, "sub",
+defm SUB  : AsI1_bin_irs<0b0010, "sub",
                          BinOpFrag<(sub  node:$LHS, node:$RHS)>>;
 
 // ADD and SUB with 's' bit set.
-defm ADDS : ASI1_bin_s_irs<{0,0,1,0}, "add",
+defm ADDS : ASI1_bin_s_irs<0b0100, "add",
                            BinOpFrag<(addc node:$LHS, node:$RHS)>>;
-defm SUBS : ASI1_bin_s_irs<{0,1,0,0}, "sub",
+defm SUBS : ASI1_bin_s_irs<0b0010, "sub",
                            BinOpFrag<(subc node:$LHS, node:$RHS)>>;
 
 // FIXME: Do not allow ADC / SBC to be predicated for now.
-defm ADC  : AsXI1_bin_c_irs<{1,0,1,0}, "adc",
+defm ADC  : AsXI1_bin_c_irs<0b0101, "adc",
                             BinOpFrag<(adde node:$LHS, node:$RHS)>>;
-defm SBC  : AsXI1_bin_c_irs<{0,1,1,0}, "sbc",
+defm SBC  : AsXI1_bin_c_irs<0b0110, "sbc",
                             BinOpFrag<(sube node:$LHS, node:$RHS)>>;
 
 // These don't define reg/reg forms, because they are handled above.
-def RSBri : AsI1<{1,1,0,0}, (outs GPR:$dst), (ins GPR:$a, so_imm:$b), DPRIm,
+def RSBri : AsI1<0b0011, (outs GPR:$dst), (ins GPR:$a, so_imm:$b), DPRIm,
                   "rsb", " $dst, $a, $b",
                   [(set GPR:$dst, (sub so_imm:$b, GPR:$a))]>;
 
-def RSBrs : AsI1<{1,1,0,0}, (outs GPR:$dst), (ins GPR:$a, so_reg:$b), DPRSoReg,
+def RSBrs : AsI1<0b0011, (outs GPR:$dst), (ins GPR:$a, so_reg:$b), DPRSoReg,
                   "rsb", " $dst, $a, $b",
                   [(set GPR:$dst, (sub so_reg:$b, GPR:$a))]>;
 
 // RSB with 's' bit set.
 let Defs = [CPSR] in {
-def RSBSri : AI1<{1,1,0,0}, (outs GPR:$dst), (ins GPR:$a, so_imm:$b), DPRIm,
+def RSBSri : AI1<0b0011, (outs GPR:$dst), (ins GPR:$a, so_imm:$b), DPRIm,
                  "rsb", "s $dst, $a, $b",
                  [(set GPR:$dst, (subc so_imm:$b, GPR:$a))]>;
-def RSBSrs : AI1<{1,1,0,0}, (outs GPR:$dst), (ins GPR:$a, so_reg:$b), DPRSoReg,
+def RSBSrs : AI1<0b0011, (outs GPR:$dst), (ins GPR:$a, so_reg:$b), DPRSoReg,
                  "rsb", "s $dst, $a, $b",
                  [(set GPR:$dst, (subc so_reg:$b, GPR:$a))]>;
 }
 
 // FIXME: Do not allow RSC to be predicated for now. But they can set CPSR.
 let Uses = [CPSR] in {
-def RSCri : AXI1<{1,1,1,0}, (outs GPR:$dst), (ins GPR:$a, so_imm:$b, cc_out:$s),
+def RSCri : AXI1<0b0111, (outs GPR:$dst), (ins GPR:$a, so_imm:$b, cc_out:$s),
                  DPRIm, "rsc${s} $dst, $a, $b",
                  [(set GPR:$dst, (sube so_imm:$b, GPR:$a))]>;
-def RSCrs : AXI1<{1,1,1,0}, (outs GPR:$dst), (ins GPR:$a, so_reg:$b, cc_out:$s),
+def RSCrs : AXI1<0b0111, (outs GPR:$dst), (ins GPR:$a, so_reg:$b, cc_out:$s),
                  DPRSoReg, "rsc${s} $dst, $a, $b",
                  [(set GPR:$dst, (sube so_reg:$b, GPR:$a))]>;
 }
@@ -886,21 +886,21 @@ def : ARMPat<(add    GPR:$src, so_imm_neg:$imm),
 //  Bitwise Instructions.
 //
 
-defm AND   : AsI1_bin_irs<{0,0,0,0}, "and",
+defm AND   : AsI1_bin_irs<0b0000, "and",
                           BinOpFrag<(and node:$LHS, node:$RHS)>>;
-defm ORR   : AsI1_bin_irs<{0,0,1,1}, "orr",
+defm ORR   : AsI1_bin_irs<0b1100, "orr",
                           BinOpFrag<(or  node:$LHS, node:$RHS)>>;
-defm EOR   : AsI1_bin_irs<{1,0,0,0}, "eor",
+defm EOR   : AsI1_bin_irs<0b0001, "eor",
                           BinOpFrag<(xor node:$LHS, node:$RHS)>>;
-defm BIC   : AsI1_bin_irs<{0,1,1,1}, "bic",
+defm BIC   : AsI1_bin_irs<0b1110, "bic",
                           BinOpFrag<(and node:$LHS, (not node:$RHS))>>;
 
-def  MVNr  : AsI1<{1,1,1,1}, (outs GPR:$dst), (ins GPR:$src), DPRdReg,
+def  MVNr  : AsI1<0b1111, (outs GPR:$dst), (ins GPR:$src), DPRdReg,
                   "mvn", " $dst, $src", [(set GPR:$dst, (not GPR:$src))]>;
-def  MVNs  : AsI1<{1,1,1,1}, (outs GPR:$dst), (ins so_reg:$src), DPRdSoReg,
+def  MVNs  : AsI1<0b1111, (outs GPR:$dst), (ins so_reg:$src), DPRdSoReg,
                   "mvn", " $dst, $src", [(set GPR:$dst, (not so_reg:$src))]>;
 let isReMaterializable = 1 in
-def  MVNi  : AsI1<{1,1,1,1}, (outs GPR:$dst), (ins so_imm:$imm), DPRdIm,
+def  MVNi  : AsI1<0b1111, (outs GPR:$dst), (ins so_imm:$imm), DPRdIm,
                   "mvn", " $dst, $imm", [(set GPR:$dst, so_imm_not:$imm)]>;
 
 def : ARMPat<(and   GPR:$src, so_imm_not:$imm),
@@ -1099,9 +1099,9 @@ def : ARMV6Pat<(or (and GPR:$src1, 0xFFFF0000),
 //  Comparison Instructions...
 //
 
-defm CMP  : AI1_cmp_irs<{0,1,0,1}, "cmp",
+defm CMP  : AI1_cmp_irs<0b1010, "cmp",
                         BinOpFrag<(ARMcmp node:$LHS, node:$RHS)>>;
-defm CMN  : AI1_cmp_irs<{1,1,0,1}, "cmn",
+defm CMN  : AI1_cmp_irs<0b1011, "cmn",
                         BinOpFrag<(ARMcmp node:$LHS,(ineg node:$RHS))>>;
 
 // Note that TST/TEQ don't set all the same flags that CMP does!
@@ -1110,9 +1110,9 @@ defm TST  : AI1_cmp_irs<0x8, "tst",
 defm TEQ  : AI1_cmp_irs<0x9, "teq",
                         BinOpFrag<(ARMcmpNZ (xor node:$LHS, node:$RHS), 0)>>;
 
-defm CMPnz : AI1_cmp_irs<{0,1,0,1}, "cmp",
+defm CMPnz : AI1_cmp_irs<0b1010, "cmp",
                          BinOpFrag<(ARMcmpNZ node:$LHS, node:$RHS)>>;
-defm CMNnz : AI1_cmp_irs<{1,1,0,1}, "cmn",
+defm CMNnz : AI1_cmp_irs<0b1011, "cmn",
                          BinOpFrag<(ARMcmpNZ node:$LHS,(ineg node:$RHS))>>;
 
 def : ARMPat<(ARMcmp GPR:$src, so_imm_neg:$imm),
