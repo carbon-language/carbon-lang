@@ -272,7 +272,7 @@ for any of these IR features though.</li>
 
 <li>A new <tt>DebugInfoBuilder</tt> class is available, which makes it much
 easier for front-ends to create debug info descriptors, similar to the way that
-IRBuilder makes it easier to create LLVM IR.</li>
+<tt>IRBuilder</tt> makes it easier to create LLVM IR.</li>
 
 <li>The <tt>IRBuilder</tt> class is now parametrized by a class responsible
 for constant folding.  The default <tt>ConstantFolder</tt> class does target independent
@@ -312,11 +312,11 @@ where doing so won't grow code size.</li>
 <li>LLVM 2.4 includes a new loop deletion pass (which removes output-free
 provably-finite loops) and a rewritten Aggressive Dead Code Elimination (ADCE)
 pass that no longer uses control dependence information.  These changes speed up
-the optimizer and also prevents it from deleting output-free infinite
+the optimizer and also prevent it from deleting output-free infinite
 loops.</li>
 
 <li>The new AddReadAttrs pass works out which functions are read-only or
-read-none (these correspond to 'pure' and 'const' in C) and marks them
+read-none (these correspond to 'pure' and 'const' in GCC) and marks them
 with the appropriate attribute.</li>
 
 <li>LLVM 2.4 now includes a new SparsePropagation framework, which makes it
@@ -350,7 +350,7 @@ provided are now achieved by other passes.</li>
 
 <div class="doc_text">
 
-<p>We put a significant amount of work into the code generator infrastructure,
+<p>We have put a significant amount of work into the code generator infrastructure,
 which allows us to implement more aggressive algorithms and make it run
 faster:</p>
 
@@ -365,14 +365,14 @@ faster:</p>
 <li>In addition to the new 'fast' instruction selection path, many existing
     pieces of the code generator have been optimized in significant ways.
     SelectionDAG's are now pool allocated and use better algorithms in many
-    places, the ".s" file printers now use raw_ostream to emit text much faster,
+    places, the ".s" file printers now use <tt>raw_ostream</tt> to emit text much faster,
     etc.  The end result of these improvements is that the compiler also takes
     substantially less time to generate code that is just as good (and often
     better) than before.</li>
 
-<li>Each target has been split to separate the .s file printing logic from the
+<li>Each target has been split to separate the ".s" file printing logic from the
     rest of the target.  This enables JIT compilers that don't link in the
-    (somewhat large) code and data tables used for printing a .s file.</li>
+    (somewhat large) code and data tables used for printing a ".s" file.</li>
 
 <li>The code generator now includes a "stack slot coloring" pass, which packs
     together individual spilled values into common stack slots.  This reduces
@@ -477,17 +477,17 @@ API changes are:</p>
 <li>The <tt>DbgStopPointInst</tt> methods <tt>getDirectory</tt> and
 <tt>getFileName</tt> now return <tt>Value*</tt> instead of strings. These can be
 converted to strings using <tt>llvm::GetConstantStringInfo</tt> defined via
-"llvm/Analysis/ValueTracking.h".</li>
+"<tt>llvm/Analysis/ValueTracking.h</tt>".</li>
 
 <li>The APIs to create various instructions have changed from lower case
    "create" methods to upper case "Create" methods (e.g. 
    <tt>BinaryOperator::create</tt>).  LLVM 2.4 includes both cases, but the
    lower case ones are removed in mainline, please migrate.</li>
 
-<li>Various header files like "llvm/ADT/iterator" were given a .h suffix.
-    Change your code to #include "llvm/ADT/iterator.h" instead.</li>
+<li>Various header files like "<tt>llvm/ADT/iterator</tt>" were given a ".h" suffix.
+    Change your code to #include "<tt>llvm/ADT/iterator.h</tt>" instead.</li>
 
-<li>In the code generator, many MachineOperand predicates were renamed to be
+<li>In the code generator, many <tt>MachineOperand</tt> predicates were renamed to be
     shorter (e.g. <tt>isFrameIndex()</tt> -&gt; <tt>isFI()</tt>),
     <tt>SDOperand</tt> was renamed to <tt>SDValue</tt> (and the "<tt>Val</tt>"
     member was changed to be the <tt>getNode()</tt> accessor), and the
@@ -560,7 +560,7 @@ components, please contact us on the <a
 href="http://lists.cs.uiuc.edu/mailman/listinfo/llvmdev">LLVMdev list</a>.</p>
 
 <ul>
-<li>The MSIL, IA64, Alpha, SPU, and MIPS backends are experimental.</li>
+<li>The MSIL, IA64, Alpha, SPU, MIPS, and PIC16 backends are experimental.</li>
 <li>The llc "<tt>-filetype=asm</tt>" (the default) is the only supported
     value for this option.</li>
 </ul>
