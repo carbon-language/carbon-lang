@@ -282,7 +282,7 @@ public:
     return AL;
   }
   
-  typedef Action::DeclTy *const * const ProtocolQualifierListTy;
+  typedef const Action::DeclTy * const * ProtocolQualifierListTy;
   ProtocolQualifierListTy getProtocolQualifiers() const {
     return ProtocolQualifiers;
   }
