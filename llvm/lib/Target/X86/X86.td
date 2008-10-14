@@ -59,6 +59,7 @@ class Proc<string Name, list<SubtargetFeature> Features>
 def : Proc<"generic",         []>;
 def : Proc<"i386",            []>;
 def : Proc<"i486",            []>;
+def : Proc<"i586",            []>;
 def : Proc<"pentium",         []>;
 def : Proc<"pentium-mmx",     [FeatureMMX]>;
 def : Proc<"i686",            []>;
