@@ -77,7 +77,7 @@ repository (which roughly includes the LLVM optimizers, code generators and
 supporting tools) and the llvm-gcc repository.  In addition to this code, the
 LLVM Project includes other sub-projects that are in development.  The two which
 are the most actively developed are the <a href="#clang">Clang Project</a> and
-the <a href="#vmkit">vmkit Project</a>.
+the <a href="#vmkit">VMKit Project</a>.
 </p>
 
 </div>
@@ -137,17 +137,35 @@ this project is encouraged to get involved!</p>
 
 <!--=========================================================================-->
 <div class="doc_subsection">
-<a name="vmkit">vmkit: JVM/CLI Virtual Machine Implementation</a>
+<a name="vmkit">VMKit: JVM/CLI Virtual Machine Implementation</a>
 </div>
 
 <div class="doc_text">
 <p>
-The <a href="http://vmkit.llvm.org/">vmkit project</a> is an implementation of
+The <a href="http://vmkit.llvm.org/">VMKit project</a> is an implementation of
 a JVM and a CLI Virtual Machines (Microsoft .NET is an
 implementation of the CLI) using the Just-In-Time compiler of LLVM.</p>
 
-<p>[NICOLAS]</p>
+<p>Following LLVM 2.4, VMKit has its first release 0.24 that you can find on
+the <a href="http://llvm.org/releases/">release page</a>. The release includes
+bug fixes, cleanup and new features. The major changes include:</p>
 
+<ul>
+
+<li><p>Support for generics in the .Net virtual machine. This was implemented
+by Tilmann Scheller during his Google Summer of Code project.</li></p>
+<li><p>Initial support for the Mono class libraries.</p></li>
+<li><p>Support for MacOSX/x86, following LLVM's support for exceptions in
+JIT on MacOSX/x86.
+<li><p>A new vmkit driver: a program to run java or .net applications. The
+driver supports llvm command line arguments including the new "-fast" option.
+</p></li>
+<li><p>A new memory allocation scheme in the JVM that makes unloading a
+class loader very fast.</p></li>
+<li><p>VMKit now follows the LLVM Makefile machinery.</p></li>
+
+
+</ul>
 </div>
 
 
