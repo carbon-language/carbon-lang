@@ -986,9 +986,9 @@ DOUT << "AlreadySelected " << AlreadySelected << "\n";
     
     // Get the new AND mask, this folds to a constant.
     SDValue NewANDMask = CurDAG->getNode(ISD::SRL, N.getValueType(),
-                                           SDValue(C2, 0), SDValue(C1, 0));
+                                         SDValue(C2, 0), SDValue(C1, 0));
     SDValue NewAND = CurDAG->getNode(ISD::AND, N.getValueType(),
-                                       Shift.getOperand(0), NewANDMask);
+                                     Shift.getOperand(0), NewANDMask);
     SDValue NewSHIFT = CurDAG->getNode(ISD::SHL, N.getValueType(),
                                        NewAND, SDValue(C1, 0));
     NewANDMask.getNode()->setNodeId(Shift.getNode()->getNodeId());
