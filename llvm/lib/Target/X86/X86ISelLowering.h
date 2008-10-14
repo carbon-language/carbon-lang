@@ -493,7 +493,11 @@ namespace llvm {
                    MachineModuleInfo *mmi,
                    DenseMap<const Value *, unsigned> &,
                    DenseMap<const BasicBlock *, MachineBasicBlock *> &,
-                   DenseMap<const AllocaInst *, int> &);
+                   DenseMap<const AllocaInst *, int> &
+#ifndef NDEBUG
+                   , SmallSet<Instruction*, 8> &
+#endif
+                   );
     
   private:
     /// Subtarget - Keep a pointer to the X86Subtarget around so that we can
@@ -638,7 +642,11 @@ namespace llvm {
                            MachineModuleInfo *mmi,
                            DenseMap<const Value *, unsigned> &,
                            DenseMap<const BasicBlock *, MachineBasicBlock *> &,
-                           DenseMap<const AllocaInst *, int> &);
+                           DenseMap<const AllocaInst *, int> &
+#ifndef NDEBUG
+                           , SmallSet<Instruction*, 8> &
+#endif
+                           );
   }
 }
 

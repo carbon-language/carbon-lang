@@ -52,8 +52,16 @@ public:
                        MachineModuleInfo *mmi,
                        DenseMap<const Value *, unsigned> &vm,
                        DenseMap<const BasicBlock *, MachineBasicBlock *> &bm,
-                       DenseMap<const AllocaInst *, int> &am)
-    : FastISel(mf, mmi, vm, bm, am) {
+                       DenseMap<const AllocaInst *, int> &am
+#ifndef NDEBUG
+                       , SmallSet<Instruction*, 8> &cil
+#endif
+                       )
+    : FastISel(mf, mmi, vm, bm, am
+#ifndef NDEBUG
+               , cil
+#endif
+               ) {
     Subtarget = &TM.getSubtarget<X86Subtarget>();
     StackPtr = Subtarget->is64Bit() ? X86::RSP : X86::ESP;
     X86ScalarSSEf64 = Subtarget->hasSSE2();
@@ -1391,7 +1399,15 @@ namespace llvm {
                         MachineModuleInfo *mmi,
                         DenseMap<const Value *, unsigned> &vm,
                         DenseMap<const BasicBlock *, MachineBasicBlock *> &bm,
-                        DenseMap<const AllocaInst *, int> &am) {
-    return new X86FastISel(mf, mmi, vm, bm, am);
+                        DenseMap<const AllocaInst *, int> &am
+#ifndef NDEBUG
+                        , SmallSet<Instruction*, 8> &cil
+#endif
+                        ) {
+    return new X86FastISel(mf, mmi, vm, bm, am
+#ifndef NDEBUG
+                           , cil
+#endif
+                           );
   }
 }

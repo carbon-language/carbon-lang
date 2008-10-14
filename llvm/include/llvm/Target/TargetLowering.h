@@ -28,6 +28,7 @@
 #include "llvm/CodeGen/RuntimeLibcalls.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/STLExtras.h"
 #include <map>
 #include <vector>
@@ -1124,7 +1125,11 @@ public:
                  MachineModuleInfo *,
                  DenseMap<const Value *, unsigned> &,
                  DenseMap<const BasicBlock *, MachineBasicBlock *> &,
-                 DenseMap<const AllocaInst *, int> &) {
+                 DenseMap<const AllocaInst *, int> &
+#ifndef NDEBUG
+                 , SmallSet<Instruction*, 8> &CatchInfoLost
+#endif
+                 ) {
     return 0;
   }
 

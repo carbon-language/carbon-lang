@@ -1884,9 +1884,16 @@ X86TargetLowering::createFastISel(MachineFunction &mf,
                                   DenseMap<const Value *, unsigned> &vm,
                                   DenseMap<const BasicBlock *,
                                            MachineBasicBlock *> &bm,
-                                  DenseMap<const AllocaInst *, int> &am) {
-                                         
-  return X86::createFastISel(mf, mmo, vm, bm, am);
+                                  DenseMap<const AllocaInst *, int> &am
+#ifndef NDEBUG
+                                  , SmallSet<Instruction*, 8> &cil
+#endif
+                                  ) {
+  return X86::createFastISel(mf, mmo, vm, bm, am
+#ifndef NDEBUG
+                             , cil
+#endif
+                             );
 }
 
 

@@ -51,6 +51,7 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetMachine.h"
+#include "SelectionDAGBuild.h"
 using namespace llvm;
 
 unsigned FastISel::getRegForValue(Value *V) {
@@ -379,6 +380,66 @@ bool FastISel::SelectCall(User *I) {
     }
     return true;
   }
+  case Intrinsic::eh_exception: {
+    MVT VT = TLI.getValueType(I->getType());
+    switch (TLI.getOperationAction(ISD::EXCEPTIONADDR, VT)) {
+    default: break;
+    case TargetLowering::Expand: {
+      if (!MBB->isLandingPad()) {
+        // FIXME: Mark exception register as live in.  Hack for PR1508.
+        unsigned Reg = TLI.getExceptionAddressRegister();
+        if (Reg) MBB->addLiveIn(Reg);
+      }
+      unsigned Reg = TLI.getExceptionAddressRegister();
+      const TargetRegisterClass *RC = TLI.getRegClassFor(VT);
+      unsigned ResultReg = createResultReg(RC);
+      bool InsertedCopy = TII.copyRegToReg(*MBB, MBB->end(), ResultReg,
+                                           Reg, RC, RC);
+      assert(InsertedCopy && "Can't copy address registers!");
+      UpdateValueMap(I, ResultReg);
+      return true;
+    }
+    }
+    break;
+  }
+  case Intrinsic::eh_selector_i32:
+  case Intrinsic::eh_selector_i64: {
+    MVT VT = TLI.getValueType(I->getType());
+    switch (TLI.getOperationAction(ISD::EHSELECTION, VT)) {
+    default: break;
+    case TargetLowering::Expand: {
+      MVT VT = (IID == Intrinsic::eh_selector_i32 ?
+                           MVT::i32 : MVT::i64);
+
+      if (MMI) {
+        if (MBB->isLandingPad())
+          AddCatchInfo(*cast<CallInst>(I), MMI, MBB);
+        else {
+#ifndef NDEBUG
+          CatchInfoLost.insert(cast<CallInst>(I));
+#endif
+          // FIXME: Mark exception selector register as live in.  Hack for PR1508.
+          unsigned Reg = TLI.getExceptionSelectorRegister();
+          if (Reg) MBB->addLiveIn(Reg);
+        }
+
+        unsigned Reg = TLI.getExceptionSelectorRegister();
+        const TargetRegisterClass *RC = TLI.getRegClassFor(VT);
+        unsigned ResultReg = createResultReg(RC);
+        bool InsertedCopy = TII.copyRegToReg(*MBB, MBB->end(), ResultReg,
+                                             Reg, RC, RC);
+        assert(InsertedCopy && "Can't copy address registers!");
+        UpdateValueMap(I, ResultReg);
+      } else {
+        unsigned ResultReg =
+          getRegForValue(Constant::getNullValue(I->getType()));
+        UpdateValueMap(I, ResultReg);
+      }
+      return true;
+    }
+    }
+    break;
+  }
   }
   return false;
 }
@@ -607,11 +668,18 @@ FastISel::FastISel(MachineFunction &mf,
                    MachineModuleInfo *mmi,
                    DenseMap<const Value *, unsigned> &vm,
                    DenseMap<const BasicBlock *, MachineBasicBlock *> &bm,
-                   DenseMap<const AllocaInst *, int> &am)
+                   DenseMap<const AllocaInst *, int> &am
+#ifndef NDEBUG
+                   , SmallSet<Instruction*, 8> &cil
+#endif
+                   )
   : MBB(0),
     ValueMap(vm),
     MBBMap(bm),
     StaticAllocaMap(am),
+#ifndef NDEBUG
+    CatchInfoLost(cil),
+#endif
     MF(mf),
     MMI(mmi),
     MRI(MF.getRegInfo()),
