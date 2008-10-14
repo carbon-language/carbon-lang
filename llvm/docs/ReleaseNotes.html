@@ -274,7 +274,7 @@ for any of these IR features though.</li>
 easier for front-ends to create debug info descriptors, similar to the way that
 <tt>IRBuilder</tt> makes it easier to create LLVM IR.</li>
 
-<li>The <tt>IRBuilder</tt> class is now parametrized by a class responsible
+<li>The <tt>IRBuilder</tt> class is now parameterized by a class responsible
 for constant folding.  The default <tt>ConstantFolder</tt> class does target independent
 constant folding.  The <tt>NoFolder</tt> class does no constant folding at all, which is
 useful when learning how LLVM works.  The <tt>TargetFolder</tt> class folds the most,
