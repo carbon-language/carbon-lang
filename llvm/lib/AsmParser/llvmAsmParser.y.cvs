@@ -140,6 +140,7 @@ static struct PerModuleInfo {
     GlobalValue *Ret = 0;
     if (I != GlobalRefs.end()) {
       Ret = I->second;
+      I->first.second.destroy();
       GlobalRefs.erase(I);
     }
     return Ret;
