@@ -360,7 +360,7 @@
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 977 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 977 "/Users/sabre/llvm/lib/AsmParser/llvmAsmParser.y"
 {
   llvm::Module                           *ModuleVal;
   llvm::Function                         *FunctionVal;

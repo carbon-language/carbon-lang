@@ -1071,7 +1071,7 @@ Module *llvm::RunVMAsmParser(llvm::MemoryBuffer *MB) {
 
 // Built in types...
 %type  <TypeVal> Types ResultTypes
-%type  <PrimType> IntType FPType PrimType           // Classifications
+%type  <PrimType> FPType PrimType           // Classifications
 %token <PrimType> VOID INTTYPE
 %token <PrimType> FLOAT DOUBLE X86_FP80 FP128 PPC_FP128 LABEL
 %token TYPE
@@ -1167,7 +1167,6 @@ FPredicates
 
 // These are some types that allow classification if we only want a particular
 // thing... for example, only a signed, unsigned, or integral type.
-IntType :  INTTYPE;
 FPType   : FLOAT | DOUBLE | PPC_FP128 | FP128 | X86_FP80;
 
 LocalName : LOCALVAR | STRINGCONSTANT | PCTSTRINGCONSTANT ;
@@ -1883,13 +1882,13 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
     delete $1;
     CHECK_FOR_ERROR
   }
-  | IntType ESINT64VAL {      // integral constants
+  | INTTYPE ESINT64VAL {      // integral constants
     if (!ConstantInt::isValueValidForType($1, $2))
       GEN_ERROR("Constant value doesn't fit in type");
     $$ = ConstantInt::get($1, $2, true);
     CHECK_FOR_ERROR
   }
-  | IntType ESAPINTVAL {      // arbitrary precision integer constants
+  | INTTYPE ESAPINTVAL {      // arbitrary precision integer constants
     uint32_t BitWidth = cast<IntegerType>($1)->getBitWidth();
     if ($2->getBitWidth() > BitWidth) {
       GEN_ERROR("Constant value does not fit in type");
@@ -1899,13 +1898,13 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
     delete $2;
     CHECK_FOR_ERROR
   }
-  | IntType EUINT64VAL {      // integral constants
+  | INTTYPE EUINT64VAL {      // integral constants
     if (!ConstantInt::isValueValidForType($1, $2))
       GEN_ERROR("Constant value doesn't fit in type");
     $$ = ConstantInt::get($1, $2, false);
     CHECK_FOR_ERROR
   }
-  | IntType EUAPINTVAL {      // arbitrary precision integer constants
+  | INTTYPE EUAPINTVAL {      // arbitrary precision integer constants
     uint32_t BitWidth = cast<IntegerType>($1)->getBitWidth();
     if ($2->getBitWidth() > BitWidth) {
       GEN_ERROR("Constant value does not fit in type");
@@ -2823,7 +2822,7 @@ BBTerminatorInst :
     CHECK_FOR_ERROR
     $$ = BranchInst::Create(tmpBBA, tmpBBB, tmpVal);
   }
-  | SWITCH IntType ValueRef ',' LABEL ValueRef '[' JumpTable ']' {
+  | SWITCH INTTYPE ValueRef ',' LABEL ValueRef '[' JumpTable ']' {
     Value* tmpVal = getVal($2, $3);
     CHECK_FOR_ERROR
     BasicBlock* tmpBB = getBBVal($6);
@@ -2842,7 +2841,7 @@ BBTerminatorInst :
     delete $8;
     CHECK_FOR_ERROR
   }
-  | SWITCH IntType ValueRef ',' LABEL ValueRef '[' ']' {
+  | SWITCH INTTYPE ValueRef ',' LABEL ValueRef '[' ']' {
     Value* tmpVal = getVal($2, $3);
     CHECK_FOR_ERROR
     BasicBlock* tmpBB = getBBVal($6);
@@ -2966,7 +2965,7 @@ BBTerminatorInst :
 
 
 
-JumpTable : JumpTable IntType ConstValueRef ',' LABEL ValueRef {
+JumpTable : JumpTable INTTYPE ConstValueRef ',' LABEL ValueRef {
     $$ = $1;
     Constant *V = cast<Constant>(getExistingVal($2, $3));
     CHECK_FOR_ERROR
@@ -2977,7 +2976,7 @@ JumpTable : JumpTable IntType ConstValueRef ',' LABEL ValueRef {
     CHECK_FOR_ERROR
     $$->push_back(std::make_pair(V, tmpBB));
   }
-  | IntType ConstValueRef ',' LABEL ValueRef {
+  | INTTYPE ConstValueRef ',' LABEL ValueRef {
     $$ = new std::vector<std::pair<Constant*, BasicBlock*> >();
     Constant *V = cast<Constant>(getExistingVal($1, $2));
     CHECK_FOR_ERROR
