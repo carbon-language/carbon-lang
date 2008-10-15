@@ -708,6 +708,7 @@ static void ResolveTypeTo(std::string *Name, const Type *ToTy) {
     CurModule.LateResolveTypes.find(D);
   if (I != CurModule.LateResolveTypes.end()) {
     ((DerivedType*)I->second.get())->refineAbstractTypeTo(ToTy);
+    I->first.destroy();
     CurModule.LateResolveTypes.erase(I);
   }
   D.destroy();
