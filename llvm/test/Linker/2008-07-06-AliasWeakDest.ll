@@ -9,6 +9,9 @@ target triple = "i386-pc-linux-gnu"
 
 @sched_clock = alias i64 ()* @native_sched_clock
 
+@foo = alias i32* @realfoo
+@realfoo = global i32 0
+
 define i64 @native_sched_clock() nounwind  {
 entry:
         ret i64 0
