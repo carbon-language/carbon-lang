@@ -117,7 +117,7 @@ Clang code generation still needs considerable testing and development, however.
 Some areas under active development include:
 <ul>
 	<li> Improved support for C and Objective-C features, for example 
-	variable-length arries, va_arg, exception handling (Obj-C), and garbage 
+	variable-length arrays, va_arg, exception handling (Obj-C), and garbage 
 	collection (Obj-C).
 	<li> ABI compatibility, especially for platforms other than 32-bit x86.
 </ul>
@@ -174,18 +174,16 @@ bug fixes, cleanup and new features. The major changes include:</p>
 
 <ul>
 
-<li><p>Support for generics in the .Net virtual machine. This was implemented
-by Tilmann Scheller during his Google Summer of Code project.</li></p>
-<li><p>Initial support for the Mono class libraries.</p></li>
-<li><p>Support for MacOSX/x86, following LLVM's support for exceptions in
+<li> Support for generics in the .Net virtual machine. This was implemented
+by Tilmann Scheller during his Google Summer of Code project.
+<li> Initial support for the Mono class libraries.
+<li> Support for MacOSX/x86, following LLVM's support for exceptions in
 JIT on MacOSX/x86.
-<li><p>A new vmkit driver: a program to run java or .net applications. The
+<li> A new vmkit driver: a program to run java or .net applications. The
 driver supports llvm command line arguments including the new "-fast" option.
-</p></li>
-<li><p>A new memory allocation scheme in the JVM that makes unloading a
-class loader very fast.</p></li>
-<li><p>VMKit now follows the LLVM Makefile machinery.</p></li>
-
+<li> A new memory allocation scheme in the JVM that makes unloading a
+class loader very fast.
+<li> VMKit now follows the LLVM Makefile machinery.
 
 </ul>
 </div>
@@ -523,7 +521,7 @@ experted by <tt>Attributes.h</tt> header. The new attributes interface changes a
 stored at index ~0U. Parameter attributes are stored at index that matches 
 parameter number.</li>
 <li> <tt>ParamAttr</tt> namespace is now renamed as <tt>Attribute</tt>.</li>
-<li> The name of the class</tt> that manages reference count of opaque 
+<li> The name of the class that manages reference count of opaque 
 attributes is changed from <tt>PAListPtr</tt> to <tt>AttrListPtr</tt>.</li>
 <li> <tt>ParamAttrsWithIndex</tt> is now renamed as <tt>AttributeWithIndex</tt>. 
 </li>
