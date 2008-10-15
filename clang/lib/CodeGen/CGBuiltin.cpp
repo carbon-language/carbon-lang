@@ -902,6 +902,10 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
   case X86::BI__builtin_ia32_vec_set_v4hi:
   case X86::BI__builtin_ia32_vec_set_v8hi:
     return Builder.CreateInsertElement(Ops[0], Ops[1], Ops[2], "pinsrw");
+  case X86::BI__builtin_ia32_vec_set_v4si:
+    return Builder.CreateInsertElement(Ops[0], Ops[1], Ops[2], "pinsrd");
+  case X86::BI__builtin_ia32_vec_set_v2di:
+    return Builder.CreateInsertElement(Ops[0], Ops[1], Ops[2], "pinsrq");
   case X86::BI__builtin_ia32_andps:
   case X86::BI__builtin_ia32_andpd:
   case X86::BI__builtin_ia32_andnps:
