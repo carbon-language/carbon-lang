@@ -954,3 +954,20 @@ should remove it, but it doesn't apply to memory objects.
 
 //===---------------------------------------------------------------------===//
 
+Better mod/ref analysis for scanf would allow us to eliminate the vtable and a
+bunch of other stuff from this example (see PR1604): 
+
+#include <cstdio>
+struct test {
+    int val;
+    virtual ~test() {}
+};
+
+int main() {
+    test t;
+    std::scanf("%d", &t.val);
+    std::printf("%d\n", t.val);
+}
+
+//===---------------------------------------------------------------------===//
+
