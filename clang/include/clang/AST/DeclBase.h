@@ -59,14 +59,8 @@ public:
                Typedef,
     //         TagDecl
                  Enum,  // [DeclContext]
-    //           RecordDecl
-                   Struct,
-                   Union,
-                   Class,
-    //             CXXRecordDecl  [DeclContext]
-                     CXXStruct,
-                     CXXUnion,
-                     CXXClass,
+                 Record,
+                   CXXRecord,  // [DeclContext]
     //       ValueDecl
                EnumConstant,
                Function,  // [DeclContext]
@@ -90,10 +84,9 @@ public:
     NamedFirst     = Field        , NamedLast     = ParmVar,
     FieldFirst     = Field        , FieldLast     = ObjCAtDefsField,
     ScopedFirst    = Namespace    , ScopedLast    = ParmVar,
-    TypeFirst      = Typedef      , TypeLast      = CXXClass,
-    TagFirst       = Enum         , TagLast       = CXXClass,
-    RecordFirst    = Struct       , RecordLast    = CXXClass,
-    CXXRecordFirst = CXXStruct    , CXXRecordLast = CXXClass,
+    TypeFirst      = Typedef      , TypeLast      = CXXRecord,
+    TagFirst       = Enum         , TagLast       = CXXRecord,
+    RecordFirst    = Record       , RecordLast    = CXXRecord,
     ValueFirst     = EnumConstant , ValueLast     = ParmVar,
     FunctionFirst  = Function     , FunctionLast  = CXXMethod,
     VarFirst       = Var          , VarLast       = ParmVar
@@ -189,12 +182,8 @@ public:
     case CXXMethod:
     case CXXClassVar:
       return IDNS_Ordinary;
-    case Struct:
-    case Union:
-    case Class:
-    case CXXStruct:
-    case CXXUnion:
-    case CXXClass:
+    case Record:
+    case CXXRecord:
     case Enum:
       return IDNS_Tag;
     case Namespace:
@@ -278,6 +267,8 @@ class DeclContext {
         return static_cast<NamespaceDecl*>(const_cast<From*>(D));
       case Decl::Enum:
         return static_cast<EnumDecl*>(const_cast<From*>(D));
+      case Decl::CXXRecord:
+        return static_cast<CXXRecordDecl*>(const_cast<From*>(D));
       case Decl::ObjCMethod:
         return static_cast<ObjCMethodDecl*>(const_cast<From*>(D));
       case Decl::ObjCInterface:
@@ -285,8 +276,6 @@ class DeclContext {
       default:
         if (DK >= Decl::FunctionFirst && DK <= Decl::FunctionLast)
           return static_cast<FunctionDecl*>(const_cast<From*>(D));
-        if (DK >= Decl::CXXRecordFirst && DK <= Decl::CXXRecordLast)
-          return static_cast<CXXRecordDecl*>(const_cast<From*>(D));
 
         assert(false && "a decl that inherits DeclContext isn't handled");
         return 0;
@@ -325,6 +314,7 @@ public:
       case Decl::TranslationUnit:
       case Decl::Namespace:
       case Decl::Enum:
+      case Decl::CXXRecord:
       case Decl::ObjCMethod:
       case Decl::ObjCInterface:
       case Decl::Block:
@@ -332,9 +322,6 @@ public:
       default:
         if (D->getKind() >= Decl::FunctionFirst &&
             D->getKind() <= Decl::FunctionLast)
-          return true;
-        if (D->getKind() >= Decl::CXXRecordFirst &&
-            D->getKind() <= Decl::CXXRecordLast)
           return true;
         return false;
     }

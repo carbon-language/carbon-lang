@@ -29,16 +29,8 @@ CXXFieldDecl *CXXFieldDecl::Create(ASTContext &C, CXXRecordDecl *RD,
 CXXRecordDecl *CXXRecordDecl::Create(ASTContext &C, TagKind TK, DeclContext *DC,
                                      SourceLocation L, IdentifierInfo *Id,
                                      CXXRecordDecl* PrevDecl) {
-  Kind DK;
-  switch (TK) {
-    default: assert(0 && "Invalid TagKind!");
-    case TK_enum:   assert(0 && "Enum TagKind passed for Record!");
-    case TK_struct: DK = CXXStruct; break;
-    case TK_union:  DK = CXXUnion;  break;
-    case TK_class:  DK = CXXClass;  break;
-  }
   void *Mem = C.getAllocator().Allocate<CXXRecordDecl>();
-  CXXRecordDecl* R = new (Mem) CXXRecordDecl(DK, DC, L, Id);
+  CXXRecordDecl* R = new (Mem) CXXRecordDecl(TK, DC, L, Id);
   C.getTypeDeclType(R, PrevDecl);  
   return R;
 }

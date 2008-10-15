@@ -728,13 +728,18 @@ public:
   };
 
 private:
+  /// TagDeclKind - The TagKind enum.
+  unsigned TagDeclKind : 2;
+
   /// IsDefinition - True if this is a definition ("struct foo {};"), false if
   /// it is a declaration ("struct foo;").
   bool IsDefinition : 1;
 protected:
-  TagDecl(Kind DK, DeclContext *DC, SourceLocation L,
+  TagDecl(Kind DK, TagKind TK, DeclContext *DC, SourceLocation L,
           IdentifierInfo *Id, ScopedDecl *PrevDecl)
     : TypeDecl(DK, DC, L, Id, PrevDecl) {
+    assert((DK != Enum || TK == TK_enum) &&"EnumDecl not matched with TK_enum");
+    TagDeclKind = TK;
     IsDefinition = false;
   }
 public:
@@ -764,19 +769,13 @@ public:
   }
 
   TagKind getTagKind() const {
-    switch (getKind()) {
-    default: assert(0 && "Unknown TagDecl!");
-    case Struct: case CXXStruct: return TK_struct;
-    case Union:  case CXXUnion:  return TK_union;
-    case Class:  case CXXClass:  return TK_class;
-    case Enum:                   return TK_enum;
-    }
+    return TagKind(TagDeclKind);
   }
 
-  bool isStruct() const { return getKind() == Struct || getKind() == CXXStruct;}
-  bool isClass()  const { return getKind() == Class  || getKind() == CXXClass; }
-  bool isUnion()  const { return getKind() == Union  || getKind() == CXXUnion; }
-  bool isEnum()   const { return getKind() == Enum; }
+  bool isStruct() const { return getTagKind() == TK_struct; }
+  bool isClass()  const { return getTagKind() == TK_class; }
+  bool isUnion()  const { return getTagKind() == TK_union; }
+  bool isEnum()   const { return getTagKind() == TK_enum; }
   
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {
@@ -800,7 +799,7 @@ class EnumDecl : public TagDecl, public DeclContext {
   
   EnumDecl(DeclContext *DC, SourceLocation L,
            IdentifierInfo *Id, ScopedDecl *PrevDecl)
-    : TagDecl(Enum, DC, L, Id, PrevDecl), DeclContext(Enum) {
+    : TagDecl(Enum, TK_enum, DC, L, Id, PrevDecl), DeclContext(Enum) {
       IntegerType = QualType();
     }
 public:
@@ -870,7 +869,8 @@ class RecordDecl : public TagDecl {
   int NumMembers;   // -1 if not defined.
 
 protected:
-  RecordDecl(Kind DK, DeclContext *DC, SourceLocation L, IdentifierInfo *Id);
+  RecordDecl(Kind DK, TagKind TK, DeclContext *DC,
+             SourceLocation L, IdentifierInfo *Id);
   virtual ~RecordDecl();
 
 public:
@@ -941,7 +941,7 @@ protected:
   virtual void EmitImpl(llvm::Serializer& S) const;
   
   /// CreateImpl - Deserialize a RecordDecl.  Called by Decl::Create.
-  static RecordDecl* CreateImpl(Kind DK, llvm::Deserializer& D, ASTContext& C);
+  static RecordDecl* CreateImpl(llvm::Deserializer& D, ASTContext& C);
   
   friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);
 };

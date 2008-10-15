@@ -74,9 +74,8 @@ const char *Decl::getDeclKindName() const {
   case ObjCMethod:          return "ObjCMethod";
   case ObjCProtocol:        return "ObjCProtocol";
   case ObjCForwardProtocol: return "ObjCForwardProtocol"; 
-  case Struct:              return "Struct";
-  case Union:               return "Union";
-  case Class:               return "Class";
+  case Record:              return "Record";
+  case CXXRecord:           return "CXXRecord";
   case Enum:                return "Enum";
   case Block:               return "Block";
   }
@@ -206,7 +205,7 @@ void Decl::addDeclKind(Kind k) {
   case ParmVar:             nParmVars++; break;
   case EnumConstant:        nEnumConst++; break;
   case Field:               nFieldDecls++; break;
-  case Struct: case Union: case Class: nSUC++; break;
+  case Record:              nSUC++; break;
   case Enum:                nEnumDecls++; break;
   case ObjCInterface:       nInterfaceDecls++; break;
   case ObjCClass:           nClassDecls++; break;
@@ -228,7 +227,7 @@ void Decl::addDeclKind(Kind k) {
   case TranslationUnit:     break;
 
   case CXXField:            nCXXFieldDecls++; break;
-  case CXXStruct: case CXXUnion: case CXXClass: nCXXSUC++; break;
+  case CXXRecord:           nCXXSUC++; break;
   // FIXME: Statistics for C++ decls.
   case CXXMethod:
   case CXXClassVar:

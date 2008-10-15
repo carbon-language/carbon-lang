@@ -61,9 +61,7 @@ public:
         DISPATCH_CASE(ImplicitParam,ImplicitParamDecl)
         DISPATCH_CASE(EnumConstant,EnumConstantDecl)
         DISPATCH_CASE(Typedef,TypedefDecl)
-        DISPATCH_CASE(Struct,RecordDecl)    // FIXME: Refine.  VisitStructDecl?
-        DISPATCH_CASE(Union,RecordDecl)     // FIXME: Refine.
-        DISPATCH_CASE(Class,RecordDecl)     // FIXME: Refine. 
+        DISPATCH_CASE(Record,RecordDecl)    // FIXME: Refine.  VisitStructDecl?
         DISPATCH_CASE(Enum,EnumDecl)
       default:
         assert(false && "Subtype of ScopedDecl not handled.");

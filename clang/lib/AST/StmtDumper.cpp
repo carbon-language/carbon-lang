@@ -284,13 +284,9 @@ void StmtDumper::VisitDeclRefExpr(DeclRefExpr *Node) {
     case Decl::ParmVar: fprintf(F,"ParmVar"); break;
     case Decl::EnumConstant: fprintf(F,"EnumConstant"); break;
     case Decl::Typedef: fprintf(F,"Typedef"); break;
-    case Decl::Struct: fprintf(F,"Struct"); break;
-    case Decl::Union: fprintf(F,"Union"); break;
-    case Decl::Class: fprintf(F,"Class"); break;
+    case Decl::Record: fprintf(F,"Record"); break;
     case Decl::Enum: fprintf(F,"Enum"); break;
-    case Decl::CXXStruct: fprintf(F,"CXXStruct"); break;
-    case Decl::CXXUnion: fprintf(F,"CXXUnion"); break;
-    case Decl::CXXClass: fprintf(F,"CXXClass"); break;
+    case Decl::CXXRecord: fprintf(F,"CXXRecord"); break;
     case Decl::ObjCInterface: fprintf(F,"ObjCInterface"); break;
     case Decl::ObjCClass: fprintf(F,"ObjCClass"); break;
     default: fprintf(F,"Decl"); break;

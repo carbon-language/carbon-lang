@@ -221,9 +221,9 @@ TagDecl* TagDecl::getDefinition(ASTContext& C) const {
 // RecordDecl Implementation
 //===----------------------------------------------------------------------===//
 
-RecordDecl::RecordDecl(Kind DK, DeclContext *DC, SourceLocation L,
+RecordDecl::RecordDecl(Kind DK, TagKind TK, DeclContext *DC, SourceLocation L,
                        IdentifierInfo *Id)
-: TagDecl(DK, DC, L, Id, 0) {
+: TagDecl(DK, TK, DC, L, Id, 0) {
   
   HasFlexibleArrayMember = false;
   assert(classof(static_cast<Decl*>(this)) && "Invalid Kind!");
@@ -236,16 +236,7 @@ RecordDecl *RecordDecl::Create(ASTContext &C, TagKind TK, DeclContext *DC,
                                RecordDecl* PrevDecl) {
   
   void *Mem = C.getAllocator().Allocate<RecordDecl>();
-  Kind DK;
-  switch (TK) {
-    default: assert(0 && "Invalid TagKind!");
-    case TK_enum: assert(0 && "Enum TagKind passed for Record!");
-    case TK_struct: DK = Struct; break;
-    case TK_union:  DK = Union;  break;
-    case TK_class:  DK = Class;  break;
-  }
-  
-  RecordDecl* R = new (Mem) RecordDecl(DK, DC, L, Id);
+  RecordDecl* R = new (Mem) RecordDecl(Record, TK, DC, L, Id);
   C.getTypeDeclType(R, PrevDecl);
   return R;
 }

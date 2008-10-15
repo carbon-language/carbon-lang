@@ -75,10 +75,8 @@ Decl* Decl::Create(Deserializer& D, ASTContext& C) {
       Dcl = FunctionDecl::CreateImpl(D, C);
       break;
     
-    case Class:
-    case Union:
-    case Struct:
-      Dcl = RecordDecl::CreateImpl(k, D, C);
+    case Record:
+      Dcl = RecordDecl::CreateImpl(D, C);
       break;
       
     case Typedef:
@@ -461,6 +459,8 @@ BlockDecl* BlockDecl::CreateImpl(Deserializer& D, ASTContext& C) {
 //===----------------------------------------------------------------------===//
 
 void RecordDecl::EmitImpl(Serializer& S) const {
+  S.EmitInt(getTagKind());
+
   ScopedDecl::EmitInRec(S);
   S.EmitBool(isDefinition());
   S.EmitBool(hasFlexibleArrayMember());
@@ -473,11 +473,11 @@ void RecordDecl::EmitImpl(Serializer& S) const {
     ScopedDecl::EmitOutRec(S);
 }
 
-RecordDecl* RecordDecl::CreateImpl(Decl::Kind DK, Deserializer& D,
-                                   ASTContext& C) {
+RecordDecl* RecordDecl::CreateImpl(Deserializer& D, ASTContext& C) {
+  TagKind TK = TagKind(D.ReadInt());
 
   void *Mem = C.getAllocator().Allocate<RecordDecl>();
-  RecordDecl* decl = new (Mem) RecordDecl(DK, 0, SourceLocation(), NULL);
+  RecordDecl* decl = new (Mem) RecordDecl(Record, TK, 0, SourceLocation(), NULL);
     
   decl->ScopedDecl::ReadInRec(D, C);
   decl->setDefinition(D.ReadBool());

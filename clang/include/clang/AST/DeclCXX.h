@@ -42,11 +42,9 @@ public:
 /// CXXRecordDecl - Represents a C++ struct/union/class.
 /// The only difference with RecordDecl is that CXXRecordDecl is a DeclContext.
 class CXXRecordDecl : public RecordDecl, public DeclContext {
-protected:
-  CXXRecordDecl(Kind DK, DeclContext *DC, SourceLocation L, IdentifierInfo *Id) 
-    : RecordDecl(DK, DC, L, Id), DeclContext(DK) {
-    assert(classof(static_cast<Decl*>(this)) && "Invalid Kind!");
-  }
+  CXXRecordDecl(TagKind TK, DeclContext *DC,
+                SourceLocation L, IdentifierInfo *Id) 
+    : RecordDecl(CXXRecord, TK, DC, L, Id), DeclContext(CXXRecord) {}
 public:
   static CXXRecordDecl *Create(ASTContext &C, TagKind TK, DeclContext *DC,
                                SourceLocation L, IdentifierInfo *Id,
@@ -65,9 +63,7 @@ public:
     return cast_or_null<CXXFieldDecl>(RecordDecl::getMember(name));
   }
 
-  static bool classof(const Decl *D) {
-    return D->getKind() >= CXXRecordFirst && D->getKind() <= CXXRecordLast;
-  }
+  static bool classof(const Decl *D) { return D->getKind() == CXXRecord; }
   static bool classof(const CXXRecordDecl *D) { return true; }
   static DeclContext *castToDeclContext(const CXXRecordDecl *D) {
     return static_cast<DeclContext *>(const_cast<CXXRecordDecl*>(D));
