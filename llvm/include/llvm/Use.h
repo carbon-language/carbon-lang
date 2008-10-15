@@ -63,8 +63,8 @@ inline T *transferTag(const T *From, const T *To) {
 //                                  Use Class
 //===----------------------------------------------------------------------===//
 
-// Use is here to make keeping the "use" list of a Value up-to-date really easy.
-//
+/// Use is here to make keeping the "use" list of a Value up-to-date really
+/// easy.
 class Use {
 public:
   /// swap - provide a fast substitute to std::swap<Use>
@@ -80,9 +80,8 @@ private:
     if (Val) removeFromList();
   }
 
-  /// Default ctor - This leaves the Use completely uninitialized.  The only thing
-  /// that is valid to do with this use is to call the "init" method.
-
+  /// Default ctor - This leaves the Use completely uninitialized.  The only
+  /// thing that is valid to do with this use is to call the "init" method.
   inline Use() {}
   enum PrevPtrTag { zeroDigitTag = noTag
                   , oneDigitTag = tagOne
@@ -90,12 +89,16 @@ private:
                   , fullStopTag = tagThree };
 
 public:
+  /// Normally Use will just implicitly convert to a Value* that it holds.
   operator Value*() const { return Val; }
+  
+  /// If implicit conversion to Value* doesn't work, the get() method returns
+  /// the Value*.
   Value *get() const { return Val; }
+  
+  /// getUser - This returns the User that contains this Use.  For an
+  /// instruction operand, for example, this will return the instruction.
   User *getUser() const;
-  const Use* getImpliedUser() const;
-  static Use *initTags(Use *Start, Use *Stop, ptrdiff_t Done = 0);
-  static void zap(Use *Start, const Use *Stop, bool del = false);
 
   inline void set(Value *Val);
 
@@ -112,7 +115,16 @@ public:
   const Value *operator->() const { return Val; }
 
   Use *getNext() const { return Next; }
+
+  
+  /// zap - This is used to destroy Use operands when the number of operands of
+  /// a User changes.
+  static void zap(Use *Start, const Use *Stop, bool del = false);
+
 private:
+  const Use* getImpliedUser() const;
+  static Use *initTags(Use *Start, Use *Stop, ptrdiff_t Done = 0);
+  
   Value *Val;
   Use *Next, **Prev;
 
@@ -132,6 +144,7 @@ private:
   }
 
   friend class Value;
+  friend class User;
 };
 
 // simplify_type - Allow clients to treat uses just like values when using
