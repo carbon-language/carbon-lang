@@ -519,36 +519,35 @@ bool X86FastISel::X86SelectLoad(Instruction *I)  {
 
 static unsigned X86ChooseCmpOpcode(MVT VT) {
   switch (VT.getSimpleVT()) {
-  case MVT::i8: return X86::CMP8rr;
+  default:       return 0;
+  case MVT::i8:  return X86::CMP8rr;
   case MVT::i16: return X86::CMP16rr;
   case MVT::i32: return X86::CMP32rr;
   case MVT::i64: return X86::CMP64rr;
   case MVT::f32: return X86::UCOMISSrr;
   case MVT::f64: return X86::UCOMISDrr;
-  default: break;
   }
-  return 0;
+  
 }
 
 /// X86ChooseCmpImmediateOpcode - If we have a comparison with RHS as the RHS
 /// of the comparison, return an opcode that works for the compare (e.g.
 /// CMP32ri) otherwise return 0.
-static unsigned X86ChooseCmpImmediateOpcode(ConstantInt *RHSC) {
-  if (RHSC->getType() == Type::Int8Ty)
-    return X86::CMP8ri;
-  if (RHSC->getType() == Type::Int16Ty)
-    return X86::CMP16ri;
-  if (RHSC->getType() == Type::Int32Ty)
-    return X86::CMP32ri;
-  
-  // 64-bit comparisons are only valid if the immediate fits in a 32-bit sext
-  // field.
-  if (RHSC->getType() == Type::Int64Ty &&
-      (int)RHSC->getSExtValue() == RHSC->getSExtValue())
-    return X86::CMP64ri32;
-  
+static unsigned X86ChooseCmpImmediateOpcode(MVT VT, ConstantInt *RHSC) {
+  switch (VT.getSimpleVT()) {
   // Otherwise, we can't fold the immediate into this comparison.
-  return 0;
+  default: return 0;
+  case MVT::i8: return X86::CMP8ri;
+  case MVT::i16: return X86::CMP16ri;
+  case MVT::i32: return X86::CMP32ri;
+  case MVT::i64:
+    // 64-bit comparisons are only valid if the immediate fits in a 32-bit sext
+    // field.
+    if (RHSC->getType() == Type::Int64Ty &&
+        (int)RHSC->getSExtValue() == RHSC->getSExtValue())
+      return X86::CMP64ri32;
+    return 0;
+  }
 }
 
 bool X86FastISel::X86FastEmitCompare(Value *Op0, Value *Op1, MVT VT) {
@@ -559,7 +558,7 @@ bool X86FastISel::X86FastEmitCompare(Value *Op0, Value *Op1, MVT VT) {
   // the compare is an immediate that we can fold into this compare, use
   // CMPri, otherwise use CMPrr.
   if (ConstantInt *Op1C = dyn_cast<ConstantInt>(Op1)) {
-    if (unsigned CompareImmOpc = X86ChooseCmpImmediateOpcode(Op1C)) {
+    if (unsigned CompareImmOpc = X86ChooseCmpImmediateOpcode(VT, Op1C)) {
       BuildMI(MBB, TII.get(CompareImmOpc)).addReg(Op0Reg)
                                           .addImm(Op1C->getSExtValue());
       return true;
