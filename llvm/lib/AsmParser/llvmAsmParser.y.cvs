@@ -307,8 +307,10 @@ static const Type *getTypeVal(const ValID &D, bool DoNotImprovise = false) {
   }
 
   std::map<ValID, PATypeHolder>::iterator I =CurModule.LateResolveTypes.find(D);
-  if (I != CurModule.LateResolveTypes.end())
+  if (I != CurModule.LateResolveTypes.end()) {
+    D.destroy();
     return I->second;
+  }
 
   Type *Typ = OpaqueType::get();
   CurModule.LateResolveTypes.insert(std::make_pair(D, Typ));
