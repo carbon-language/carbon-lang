@@ -74,8 +74,14 @@ int f10() {
 
 int f11() {
   int x = 4;
-  return ++x; // expected-warning{{never read}}
+  return x++; // expected-warning{{never read}}
 }
+
+int f11b() {
+  int x = 4;
+  return ++x; // no-warning
+}
+
 
 int f12a(int y) {
   int x = y;  // expected-warning{{never read}}

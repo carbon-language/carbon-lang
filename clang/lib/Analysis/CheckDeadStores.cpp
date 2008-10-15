@@ -149,6 +149,13 @@ public:
     else if (UnaryOperator* U = dyn_cast<UnaryOperator>(S)) {
       if (!U->isIncrementOp())
         return;
+      
+      // Handle: ++x within a subexpression.  The solution is not warn
+      //  about preincrements to dead variables when the preincrement occurs
+      //  as a subexpression.  This can lead to false negatives, e.g. "(++x);"
+      //  A generalized dead code checker should find such issues.
+      if (U->isPrefix() && Parents.isSubExpr(U))
+        return;
 
       Expr *Ex = U->getSubExpr()->IgnoreParenCasts();
       
