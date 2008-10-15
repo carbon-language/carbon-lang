@@ -283,6 +283,39 @@ unsigned long reverse(unsigned v) {
 
 //===---------------------------------------------------------------------===//
 
+These idioms should be recognized as popcount (see PR1488):
+
+unsigned countbits_slow(unsigned v) {
+  unsigned c;
+  for (c = 0; v; v >>= 1)
+    c += v & 1;
+  return c;
+}
+unsigned countbits_fast(unsigned v){
+  unsigned c;
+  for (c = 0; v; c++)
+    v &= v - 1; // clear the least significant bit set
+  return c;
+}
+
+BITBOARD = unsigned long long
+int PopCnt(register BITBOARD a) {
+  register int c=0;
+  while(a) {
+    c++;
+    a &= a - 1;
+  }
+  return c;
+}
+unsigned int popcount(unsigned int input) {
+  unsigned int count = 0;
+  for (unsigned int i =  0; i < 4 * 8; i++)
+    count += (input >> i) & i;
+  return count;
+}
+
+//===---------------------------------------------------------------------===//
+
 These should turn into single 16-bit (unaligned?) loads on little/big endian
 processors.
 
