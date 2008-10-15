@@ -76,7 +76,7 @@ static unsigned getPatternSize(TreePatternNode *P, CodeGenDAGPatterns &CGP) {
 
   // If this node has some predicate function that must match, it adds to the
   // complexity of this node.
-  if (!P->getPredicateFn().empty())
+  if (!P->getPredicateFns().empty())
     ++Size;
   
   // Count children in the count if they are also nodes.
@@ -89,7 +89,7 @@ static unsigned getPatternSize(TreePatternNode *P, CodeGenDAGPatterns &CGP) {
         Size += 5;  // Matches a ConstantSDNode (+3) and a specific value (+2).
       else if (NodeIsComplexPattern(Child))
         Size += getPatternSize(Child, CGP);
-      else if (!Child->getPredicateFn().empty())
+      else if (!Child->getPredicateFns().empty())
         ++Size;
     }
   }
@@ -140,8 +140,15 @@ struct PatternSortingPredicate {
   PatternSortingPredicate(CodeGenDAGPatterns &cgp) : CGP(cgp) {}
   CodeGenDAGPatterns &CGP;
 
-  bool operator()(const PatternToMatch *LHS,
-                  const PatternToMatch *RHS) {
+  typedef std::pair<unsigned, std::string> CodeLine;
+  typedef std::vector<CodeLine> CodeList;
+  typedef std::vector<std::pair<const PatternToMatch*, CodeList> > PatternList;
+
+  bool operator()(const std::pair<const PatternToMatch*, CodeList> &LHSPair,
+                  const std::pair<const PatternToMatch*, CodeList> &RHSPair) {
+    const PatternToMatch *LHS = LHSPair.first;
+    const PatternToMatch *RHS = RHSPair.first;
+
     unsigned LHSSize = getPatternSize(LHS->getSrcPattern(), CGP);
     unsigned RHSSize = getPatternSize(RHS->getSrcPattern(), CGP);
     LHSSize += LHS->getAddedComplexity();
@@ -541,11 +548,10 @@ public:
       }
     }
 
-    // If there is a node predicate for this, emit the call.
-    if (!N->getPredicateFn().empty())
-      emitCheck(N->getPredicateFn() + "(" + RootName + ".getNode())");
+    // If there are node predicates for this, emit the calls.
+    for (unsigned i = 0, e = N->getPredicateFns().size(); i != e; ++i)
+      emitCheck(N->getPredicateFns()[i] + "(" + RootName + ".getNode())");
 
-    
     // If this is an 'and R, 1234' where the operation is AND/OR and the RHS is
     // a constant without a predicate fn that has more that one bit set, handle
     // this as a special case.  This is usually for targets that have special
@@ -560,7 +566,7 @@ public:
         (N->getOperator()->getName() == "and" || 
          N->getOperator()->getName() == "or") &&
         N->getChild(1)->isLeaf() &&
-        N->getChild(1)->getPredicateFn().empty()) {
+        N->getChild(1)->getPredicateFns().empty()) {
       if (IntInit *II = dynamic_cast<IntInit*>(N->getChild(1)->getLeafValue())) {
         if (!isPowerOf2_32(II->getValue())) {  // Don't bother with single bits.
           emitInit("SDValue " + RootName + "0" + " = " +
@@ -717,9 +723,9 @@ public:
           assert(0 && "Unknown leaf type!");
         }
         
-        // If there is a node predicate for this, emit the call.
-        if (!Child->getPredicateFn().empty())
-          emitCheck(Child->getPredicateFn() + "(" + RootName +
+        // If there are node predicates for this, emit the calls.
+        for (unsigned i = 0, e = Child->getPredicateFns().size(); i != e; ++i)
+          emitCheck(Child->getPredicateFns()[i] + "(" + RootName +
                     ".getNode())");
       } else if (IntInit *II =
                  dynamic_cast<IntInit*>(Child->getLeafValue())) {
@@ -1265,7 +1271,8 @@ public:
         emitCode(After[i]);
 
       return NodeOps;
-    } else if (Op->isSubClassOf("SDNodeXForm")) {
+    }
+    if (Op->isSubClassOf("SDNodeXForm")) {
       assert(N->getNumChildren() == 1 && "node xform should have one child!");
       // PatLeaf node - the operand may or may not be a leaf node. But it should
       // behave like one.
@@ -1279,11 +1286,11 @@ public:
       if (isRoot)
         emitCode("return Tmp" + utostr(ResNo) + ".getNode();");
       return NodeOps;
-    } else {
-      N->dump();
-      cerr << "\n";
-      throw std::string("Unknown node in result pattern!");
     }
+
+    N->dump();
+    cerr << "\n";
+    throw std::string("Unknown node in result pattern!");
   }
 
   /// InsertOneTypeCheck - Insert a type-check for an unresolved type in 'Pat'
@@ -1641,12 +1648,6 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
     std::vector<const PatternToMatch*> &PatternsOfOp = PBOI->second;
     assert(!PatternsOfOp.empty() && "No patterns but map has entry?");
 
-    // We want to emit all of the matching code now.  However, we want to emit
-    // the matches in order of minimal cost.  Sort the patterns so the least
-    // cost one is at the start.
-    std::stable_sort(PatternsOfOp.begin(), PatternsOfOp.end(),
-                     PatternSortingPredicate(CGP));
-
     // Split them into groups by type.
     std::map<MVT::SimpleValueType,
              std::vector<const PatternToMatch*> > PatternsByType;
@@ -1662,8 +1663,9 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
          ++II) {
       MVT::SimpleValueType OpVT = II->first;
       std::vector<const PatternToMatch*> &Patterns = II->second;
-      typedef std::vector<std::pair<unsigned,std::string> > CodeList;
-      typedef std::vector<std::pair<unsigned,std::string> >::iterator CodeListI;
+      typedef std::pair<unsigned, std::string> CodeLine;
+      typedef std::vector<CodeLine> CodeList;
+      typedef CodeList::iterator CodeListI;
     
       std::vector<std::pair<const PatternToMatch*, CodeList> > CodeForPatterns;
       std::vector<std::vector<std::string> > PatternOpcodes;
@@ -1689,30 +1691,6 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
         NumInputRootOpsCounts.push_back(NumInputRootOps);
       }
     
-      // Scan the code to see if all of the patterns are reachable and if it is
-      // possible that the last one might not match.
-      bool mightNotMatch = true;
-      for (unsigned i = 0, e = CodeForPatterns.size(); i != e; ++i) {
-        CodeList &GeneratedCode = CodeForPatterns[i].second;
-        mightNotMatch = false;
-
-        for (unsigned j = 0, e = GeneratedCode.size(); j != e; ++j) {
-          if (GeneratedCode[j].first == 1) { // predicate.
-            mightNotMatch = true;
-            break;
-          }
-        }
-      
-        // If this pattern definitely matches, and if it isn't the last one, the
-        // patterns after it CANNOT ever match.  Error out.
-        if (mightNotMatch == false && i != CodeForPatterns.size()-1) {
-          cerr << "Pattern '";
-          CodeForPatterns[i].first->getSrcPattern()->print(*cerr.stream());
-          cerr << "' is impossible to select!\n";
-          exit(1);
-        }
-      }
-
       // Factor target node emission code (emitted by EmitResultCode) into
       // separate functions. Uniquing and share them among all instruction
       // selection routines.
@@ -1814,6 +1792,36 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
 
       OS << "SDNode *Select_" << getLegalCName(OpName)
          << OpVTStr << "(const SDValue &N) {\n";    
+
+      // We want to emit all of the matching code now.  However, we want to emit
+      // the matches in order of minimal cost.  Sort the patterns so the least
+      // cost one is at the start.
+      std::stable_sort(CodeForPatterns.begin(), CodeForPatterns.end(),
+                       PatternSortingPredicate(CGP));
+
+      // Scan the code to see if all of the patterns are reachable and if it is
+      // possible that the last one might not match.
+      bool mightNotMatch = true;
+      for (unsigned i = 0, e = CodeForPatterns.size(); i != e; ++i) {
+        CodeList &GeneratedCode = CodeForPatterns[i].second;
+        mightNotMatch = false;
+
+        for (unsigned j = 0, e = GeneratedCode.size(); j != e; ++j) {
+          if (GeneratedCode[j].first == 1) { // predicate.
+            mightNotMatch = true;
+            break;
+          }
+        }
+      
+        // If this pattern definitely matches, and if it isn't the last one, the
+        // patterns after it CANNOT ever match.  Error out.
+        if (mightNotMatch == false && i != CodeForPatterns.size()-1) {
+          cerr << "Pattern '";
+          CodeForPatterns[i].first->getSrcPattern()->print(*cerr.stream());
+          cerr << "' is impossible to select!\n";
+          exit(1);
+        }
+      }
 
       // Loop through and reverse all of the CodeList vectors, as we will be
       // accessing them from their logical front, but accessing the end of a

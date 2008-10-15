@@ -16,6 +16,8 @@
 #define CODEGEN_DAGPATTERNS_H
 
 #include <set>
+#include <algorithm>
+#include <vector>
 
 #include "CodeGenTarget.h"
 #include "CodeGenIntrinsics.h"
@@ -158,9 +160,9 @@ class TreePatternNode {
   ///
   std::string Name;
   
-  /// PredicateFn - The predicate function to execute on this node to check
-  /// for a match.  If this string is empty, no predicate is involved.
-  std::string PredicateFn;
+  /// PredicateFns - The predicate functions to execute on this node to check
+  /// for a match.  If this list is empty, no predicate is involved.
+  std::vector<std::string> PredicateFns;
   
   /// TransformFn - The transformation function to execute on this node before
   /// it can be substituted into the resulting instruction on a pattern match.
@@ -213,8 +215,18 @@ public:
     Children[i] = N;
   }
 
-  const std::string &getPredicateFn() const { return PredicateFn; }
-  void setPredicateFn(const std::string &Fn) { PredicateFn = Fn; }
+  const std::vector<std::string> &getPredicateFns() const { return PredicateFns; }
+  void clearPredicateFns() { PredicateFns.clear(); }
+  void setPredicateFns(const std::vector<std::string> &Fns) {
+    assert(PredicateFns.empty() && "Overwriting non-empty predicate list!");
+    PredicateFns = Fns;
+  }
+  void addPredicateFn(const std::string &Fn) { 
+    assert(!Fn.empty() && "Empty predicate string!");
+    if (std::find(PredicateFns.begin(), PredicateFns.end(), Fn) ==
+          PredicateFns.end())
+      PredicateFns.push_back(Fn);
+  }
 
   Record *getTransformFn() const { return TransformFn; }
   void setTransformFn(Record *Fn) { TransformFn = Fn; }
