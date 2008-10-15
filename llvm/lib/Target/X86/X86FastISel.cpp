@@ -77,6 +77,8 @@ private:
   
   bool X86FastEmitLoad(MVT VT, const X86AddressMode &AM, unsigned &RR);
 
+  bool X86FastEmitStore(MVT VT, Value *Val,
+                        const X86AddressMode &AM);
   bool X86FastEmitStore(MVT VT, unsigned Val,
                         const X86AddressMode &AM);
 
@@ -237,52 +239,71 @@ X86FastISel::X86FastEmitStore(MVT VT, unsigned Val,
                               const X86AddressMode &AM) {
   // Get opcode and regclass of the output for the given store instruction.
   unsigned Opc = 0;
-  const TargetRegisterClass *RC = NULL;
   switch (VT.getSimpleVT()) {
   default: return false;
   case MVT::i8:
     Opc = X86::MOV8mr;
-    RC  = X86::GR8RegisterClass;
     break;
   case MVT::i16:
     Opc = X86::MOV16mr;
-    RC  = X86::GR16RegisterClass;
     break;
   case MVT::i32:
     Opc = X86::MOV32mr;
-    RC  = X86::GR32RegisterClass;
     break;
   case MVT::i64:
-    // Must be in x86-64 mode.
-    Opc = X86::MOV64mr;
-    RC  = X86::GR64RegisterClass;
+    Opc = X86::MOV64mr; // Must be in x86-64 mode.
     break;
   case MVT::f32:
-    if (Subtarget->hasSSE1()) {
-      Opc = X86::MOVSSmr;
-      RC  = X86::FR32RegisterClass;
-    } else {
-      Opc = X86::ST_Fp32m;
-      RC  = X86::RFP32RegisterClass;
-    }
+    Opc = Subtarget->hasSSE1() ? X86::MOVSSmr : X86::ST_Fp32m;
     break;
   case MVT::f64:
-    if (Subtarget->hasSSE2()) {
-      Opc = X86::MOVSDmr;
-      RC  = X86::FR64RegisterClass;
-    } else {
-      Opc = X86::ST_Fp64m;
-      RC  = X86::RFP64RegisterClass;
-    }
+    Opc = Subtarget->hasSSE2() ? X86::MOVSDmr : X86::ST_Fp64m;
     break;
   case MVT::f80:
     // No f80 support yet.
     return false;
   }
-
+  
   addFullAddress(BuildMI(MBB, TII.get(Opc)), AM).addReg(Val);
   return true;
 }
+
+bool X86FastISel::X86FastEmitStore(MVT VT, Value *Val,
+                                   const X86AddressMode &AM) {
+  // Handle 'null' like i32/i64 0.
+  if (isa<ConstantPointerNull>(Val))
+    Val = Constant::getNullValue(TD.getIntPtrType());
+  
+  // If this is a store of a simple constant, fold the constant into the store.
+  if (ConstantInt *CI = dyn_cast<ConstantInt>(Val)) {
+    unsigned Opc = 0;
+    switch (VT.getSimpleVT()) {
+    default: break;
+    case MVT::i8:  Opc = X86::MOV8mi;  break;
+    case MVT::i16: Opc = X86::MOV16mi; break;
+    case MVT::i32: Opc = X86::MOV32mi; break;
+    case MVT::i64:
+      // Must be a 32-bit sign extended value.
+      if ((int)CI->getSExtValue() == CI->getSExtValue())
+        Opc = X86::MOV64mi32;
+      break;
+    }
+    
+    if (Opc) {
+      addFullAddress(BuildMI(MBB, TII.get(Opc)), AM).addImm(CI->getSExtValue());
+      return true;
+    }
+  }
+  
+  unsigned ValReg = getRegForValue(Val);
+  if (ValReg == 0)
+    // Unhandled operand. Halt "fast" selection and bail.
+    return false;    
+ 
+  return X86FastEmitStore(VT, ValReg, AM);
+}
+
+
 
 /// X86FastEmitExtend - Emit a machine instruction to extend a value Src of
 /// type SrcVT to type DstVT using the specified extension opcode Opc (e.g.
@@ -482,16 +503,12 @@ bool X86FastISel::X86SelectStore(Instruction* I) {
   MVT VT;
   if (!isTypeLegal(I->getOperand(0)->getType(), VT))
     return false;
-  unsigned Val = getRegForValue(I->getOperand(0));
-  if (Val == 0)
-    // Unhandled operand. Halt "fast" selection and bail.
-    return false;    
 
   X86AddressMode AM;
   if (!X86SelectAddress(I->getOperand(1), AM, false))
     return false;
 
-  return X86FastEmitStore(VT, Val, AM);
+  return X86FastEmitStore(VT, I->getOperand(0), AM);
 }
 
 /// X86SelectLoad - Select and emit code to implement load instructions.
@@ -538,8 +555,7 @@ static unsigned X86ChooseCmpImmediateOpcode(MVT VT, ConstantInt *RHSC) {
   case MVT::i64:
     // 64-bit comparisons are only valid if the immediate fits in a 32-bit sext
     // field.
-    if (RHSC->getType() == Type::Int64Ty &&
-        (int)RHSC->getSExtValue() == RHSC->getSExtValue())
+    if ((int)RHSC->getSExtValue() == RHSC->getSExtValue())
       return X86::CMP64ri32;
     return 0;
   }
@@ -1028,7 +1044,7 @@ bool X86FastISel::X86SelectCall(Instruction *I) {
   unsigned AdjStackDown = TM.getRegisterInfo()->getCallFrameSetupOpcode();
   BuildMI(MBB, TII.get(AdjStackDown)).addImm(NumBytes);
 
-  // Process argumenet: walk the register/memloc assignments, inserting
+  // Process argument: walk the register/memloc assignments, inserting
   // copies / loads.
   SmallVector<unsigned, 4> RegArgs;
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
