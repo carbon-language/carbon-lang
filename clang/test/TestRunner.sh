@@ -101,4 +101,3 @@ if [ $SCRIPT_STATUS -ne 0 -o $VG_STATUS -ne 0 ]; then
   echo "******************** TEST '$TESTNAME' FAILED! ********************"
   exit 1
 fi
-
