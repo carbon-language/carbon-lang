@@ -179,7 +179,7 @@ int StackSlotColoring::ColorSlot(LiveInterval *li) {
   // Record the assignment.
   Assignments[Color].push_back(li);
   int FI = li->getStackSlotIndex();
-  DOUT << "Assigning fi #" << FI << " to fi #" << Color << "\n";
+  DOUT << "Assigning fi#" << FI << " to fi#" << Color << "\n";
 
   // Change size and alignment of the allocated slot. If there are multiple
   // objects sharing the same slot, then make sure the size and alignment
@@ -235,7 +235,7 @@ bool StackSlotColoring::ColorSlots(MachineFunction &MF) {
 
   // Delete unused stack slots.
   while (NextColor != -1) {
-    DOUT << "Removing unused stack object fi #" << NextColor << "\n";
+    DOUT << "Removing unused stack object fi#" << NextColor << "\n";
     MFI->RemoveStackObject(NextColor);
     NextColor = AllColors.find_next(NextColor);
   }

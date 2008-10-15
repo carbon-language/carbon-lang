@@ -400,7 +400,7 @@ void MachineFrameInfo::print(const MachineFunction &MF, std::ostream &OS) const{
 
   for (unsigned i = 0, e = Objects.size(); i != e; ++i) {
     const StackObject &SO = Objects[i];
-    OS << "  <fi #" << (int)(i-NumFixedObjects) << ">: ";
+    OS << "  <fi#" << (int)(i-NumFixedObjects) << ">: ";
     if (SO.Size == ~0ULL) {
       OS << "dead\n";
       continue;
@@ -458,7 +458,7 @@ void MachineJumpTableInfo::print(std::ostream &OS) const {
   // FIXME: this is lame, maybe we could print out the MBB numbers or something
   // like {1, 2, 4, 5, 3, 0}
   for (unsigned i = 0, e = JumpTables.size(); i != e; ++i) {
-    OS << "  <jt #" << i << "> has " << JumpTables[i].MBBs.size() 
+    OS << "  <jt#" << i << "> has " << JumpTables[i].MBBs.size() 
        << " entries\n";
   }
 }
@@ -536,7 +536,7 @@ unsigned MachineConstantPool::getConstantPoolIndex(MachineConstantPoolValue *V,
 
 void MachineConstantPool::print(raw_ostream &OS) const {
   for (unsigned i = 0, e = Constants.size(); i != e; ++i) {
-    OS << "  <cp #" << i << "> is";
+    OS << "  <cp#" << i << "> is";
     if (Constants[i].isMachineConstantPoolEntry())
       Constants[i].Val.MachineCPVal->print(OS);
     else
