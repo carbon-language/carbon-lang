@@ -645,99 +645,40 @@ bool X86FastISel::X86SelectBranch(Instruction *I) {
       unsigned Op1Reg = getRegForValue(CI->getOperand(1));
       if (Op1Reg == 0) return false;
       
-      unsigned BranchOpc;
+      bool SwapArgs;  // false -> compare Op0, Op1.  true -> compare Op1, Op0.
+      unsigned BranchOpc; // Opcode to jump on, e.g. "X86::JA"
+
       switch (Predicate) {
-      case CmpInst::FCMP_OGT:
-        BuildMI(MBB, TII.get(Opc)).addReg(Op0Reg).addReg(Op1Reg);
-        BranchOpc = X86::JA;
-        break;
-      case CmpInst::FCMP_OGE:
-        BuildMI(MBB, TII.get(Opc)).addReg(Op0Reg).addReg(Op1Reg);
-        BranchOpc = X86::JAE;
-        break;
-      case CmpInst::FCMP_OLT:
-        BuildMI(MBB, TII.get(Opc)).addReg(Op1Reg).addReg(Op0Reg);
-        BranchOpc = X86::JA;
-        break;
-      case CmpInst::FCMP_OLE:
-        BuildMI(MBB, TII.get(Opc)).addReg(Op1Reg).addReg(Op0Reg);
-        BranchOpc = X86::JAE;
-        break;
-      case CmpInst::FCMP_ONE:
-        BuildMI(MBB, TII.get(Opc)).addReg(Op0Reg).addReg(Op1Reg);
-        BranchOpc = X86::JNE;
-        break;
-      case CmpInst::FCMP_ORD:
-        BuildMI(MBB, TII.get(Opc)).addReg(Op0Reg).addReg(Op1Reg);
-        BranchOpc = X86::JNP;
-        break;
-      case CmpInst::FCMP_UNO:
-        BuildMI(MBB, TII.get(Opc)).addReg(Op0Reg).addReg(Op1Reg);
-        BranchOpc = X86::JP;
-        break;
-      case CmpInst::FCMP_UEQ:
-        BuildMI(MBB, TII.get(Opc)).addReg(Op0Reg).addReg(Op1Reg);
-        BranchOpc = X86::JE;
-        break;
-      case CmpInst::FCMP_UGT:
-        BuildMI(MBB, TII.get(Opc)).addReg(Op1Reg).addReg(Op0Reg);
-        BranchOpc = X86::JB;
-        break;
-      case CmpInst::FCMP_UGE:
-        BuildMI(MBB, TII.get(Opc)).addReg(Op1Reg).addReg(Op0Reg);
-        BranchOpc = X86::JBE;
-        break;
-      case CmpInst::FCMP_ULT:
-        BuildMI(MBB, TII.get(Opc)).addReg(Op0Reg).addReg(Op1Reg);
-        BranchOpc = X86::JB;
-        break;
-      case CmpInst::FCMP_ULE:
-        BuildMI(MBB, TII.get(Opc)).addReg(Op0Reg).addReg(Op1Reg);
-        BranchOpc = X86::JBE;
-        break;
-      case CmpInst::ICMP_EQ:
-        BuildMI(MBB, TII.get(Opc)).addReg(Op0Reg).addReg(Op1Reg);
-        BranchOpc = X86::JE;
-        break;
-      case CmpInst::ICMP_NE:
-        BuildMI(MBB, TII.get(Opc)).addReg(Op0Reg).addReg(Op1Reg);
-        BranchOpc = X86::JNE;
-        break;
-      case CmpInst::ICMP_UGT:
-        BuildMI(MBB, TII.get(Opc)).addReg(Op0Reg).addReg(Op1Reg);
-        BranchOpc = X86::JA;
-        break;
-      case CmpInst::ICMP_UGE:
-        BuildMI(MBB, TII.get(Opc)).addReg(Op0Reg).addReg(Op1Reg);
-        BranchOpc = X86::JAE;
-        break;
-      case CmpInst::ICMP_ULT:
-        BuildMI(MBB, TII.get(Opc)).addReg(Op0Reg).addReg(Op1Reg);
-        BranchOpc = X86::JB;
-        break;
-      case CmpInst::ICMP_ULE:
-        BuildMI(MBB, TII.get(Opc)).addReg(Op0Reg).addReg(Op1Reg);
-        BranchOpc = X86::JBE;
-        break;
-      case CmpInst::ICMP_SGT:
-        BuildMI(MBB, TII.get(Opc)).addReg(Op0Reg).addReg(Op1Reg);
-        BranchOpc = X86::JG;
-        break;
-      case CmpInst::ICMP_SGE:
-        BuildMI(MBB, TII.get(Opc)).addReg(Op0Reg).addReg(Op1Reg);
-        BranchOpc = X86::JGE;
-        break;
-      case CmpInst::ICMP_SLT:
-        BuildMI(MBB, TII.get(Opc)).addReg(Op0Reg).addReg(Op1Reg);
-        BranchOpc = X86::JL;
-        break;
-      case CmpInst::ICMP_SLE:
-        BuildMI(MBB, TII.get(Opc)).addReg(Op0Reg).addReg(Op1Reg);
-        BranchOpc = X86::JLE;
-        break;
+      case CmpInst::FCMP_OGT: SwapArgs = false; BranchOpc = X86::JA;  break;
+      case CmpInst::FCMP_OGE: SwapArgs = false; BranchOpc = X86::JAE; break;
+      case CmpInst::FCMP_OLT: SwapArgs = true;  BranchOpc = X86::JA;  break;
+      case CmpInst::FCMP_OLE: SwapArgs = true;  BranchOpc = X86::JAE; break;
+      case CmpInst::FCMP_ONE: SwapArgs = false; BranchOpc = X86::JNE; break;
+      case CmpInst::FCMP_ORD: SwapArgs = false; BranchOpc = X86::JNP; break;
+      case CmpInst::FCMP_UNO: SwapArgs = false; BranchOpc = X86::JP;  break;
+      case CmpInst::FCMP_UEQ: SwapArgs = false; BranchOpc = X86::JE;  break;
+      case CmpInst::FCMP_UGT: SwapArgs = true;  BranchOpc = X86::JB;  break;
+      case CmpInst::FCMP_UGE: SwapArgs = true;  BranchOpc = X86::JBE; break;
+      case CmpInst::FCMP_ULT: SwapArgs = false; BranchOpc = X86::JB;  break;
+      case CmpInst::FCMP_ULE: SwapArgs = false; BranchOpc = X86::JBE; break;
+      case CmpInst::ICMP_EQ:  SwapArgs = false; BranchOpc = X86::JE;  break;
+      case CmpInst::ICMP_NE:  SwapArgs = false; BranchOpc = X86::JNE; break;
+      case CmpInst::ICMP_UGT: SwapArgs = false; BranchOpc = X86::JA;  break;
+      case CmpInst::ICMP_UGE: SwapArgs = false; BranchOpc = X86::JAE; break;
+      case CmpInst::ICMP_ULT: SwapArgs = false; BranchOpc = X86::JB;  break;
+      case CmpInst::ICMP_ULE: SwapArgs = false; BranchOpc = X86::JBE; break;
+      case CmpInst::ICMP_SGT: SwapArgs = false; BranchOpc = X86::JG;  break;
+      case CmpInst::ICMP_SGE: SwapArgs = false; BranchOpc = X86::JGE; break;
+      case CmpInst::ICMP_SLT: SwapArgs = false; BranchOpc = X86::JL;  break;
+      case CmpInst::ICMP_SLE: SwapArgs = false; BranchOpc = X86::JLE; break;
       default:
         return false;
       }
+
+      if (SwapArgs)
+        BuildMI(MBB, TII.get(Opc)).addReg(Op1Reg).addReg(Op0Reg);
+      else
+        BuildMI(MBB, TII.get(Opc)).addReg(Op0Reg).addReg(Op1Reg);
       
       BuildMI(MBB, TII.get(BranchOpc)).addMBB(TrueMBB);
       FastEmitBranch(FalseMBB);
