@@ -353,7 +353,9 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
   }
 
   bool isFunc = D.isFunctionDeclarator();
-  if (!isFunc && D.getDeclSpec().getTypeSpecType() == DeclSpec::TST_typedef) {
+  if (!isFunc &&
+      D.getDeclSpec().getTypeSpecType() == DeclSpec::TST_typedef &&
+      D.getNumTypeObjects() == 0) {
     // Check also for this case:
     //
     // typedef int f();

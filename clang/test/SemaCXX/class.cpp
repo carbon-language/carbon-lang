@@ -26,6 +26,7 @@ public:
 
   typedef int func();
   func tm;
+  func *ptm;
   func btm : 1; // expected-error {{error: bit-field 'btm' with non-integral type}}
   NestedC bc : 1; // expected-error {{error: bit-field 'bc' with non-integral type}}
 
