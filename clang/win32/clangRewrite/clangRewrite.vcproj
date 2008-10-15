@@ -166,6 +166,10 @@
 				RelativePath="..\..\lib\Rewrite\RewriteRope.cpp"
 				>
 			</File>
+			<File
+				RelativePath="..\..\lib\Rewrite\TokenRewriter.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
