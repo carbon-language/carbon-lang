@@ -68,3 +68,11 @@ C:		; preds = %F, %T
 	%V = load i32* %P		; <i32> [#uses=1]
 	ret i32 %V
 }
+
+define double @test11(double* %p) {
+  %t0 = getelementptr double* %p, i32 1
+  store double 2.0, double* %t0
+  %t1 = getelementptr double* %p, i32 1
+  %x = load double* %t1
+  ret double %x
+}

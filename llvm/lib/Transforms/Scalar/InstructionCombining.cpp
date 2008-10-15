@@ -10601,6 +10601,31 @@ static bool isSafeToLoadUnconditionally(Value *V, Instruction *ScanFrom) {
   return false;
 }
 
+/// equivalentAddressValues - Test if A and B will obviously have the same
+/// value. This includes recognizing that %t0 and %t1 will have the same
+/// value in code like this:
+///   %t0 = getelementptr @a, 0, 3
+///   store i32 0, i32* %t0
+///   %t1 = getelementptr @a, 0, 3
+///   %t2 = load i32* %t1
+///
+static bool equivalentAddressValues(Value *A, Value *B) {
+  // Test if the values are trivially equivalent.
+  if (A == B) return true;
+
+  // Test if the values come form identical arithmetic instructions.
+  if (isa<BinaryOperator>(A) ||
+      isa<CastInst>(A) ||
+      isa<PHINode>(A) ||
+      isa<GetElementPtrInst>(A))
+    if (Instruction *BI = dyn_cast<Instruction>(B))
+      if (cast<Instruction>(A)->isIdenticalTo(BI))
+        return true;
+
+  // Otherwise they may not be equivalent.
+  return false;
+}
+
 Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
   Value *Op = LI.getOperand(0);
 
@@ -10619,16 +10644,25 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
   // None of the following transforms are legal for volatile loads.
   if (LI.isVolatile()) return 0;
   
-  if (&LI.getParent()->front() != &LI) {
-    BasicBlock::iterator BBI = &LI; --BBI;
-    // If the instruction immediately before this is a store to the same
-    // address, do a simple form of store->load forwarding.
-    if (StoreInst *SI = dyn_cast<StoreInst>(BBI))
-      if (SI->getOperand(1) == LI.getOperand(0))
+  // Do really simple store-to-load forwarding and load CSE, to catch cases
+  // where there are several consequtive memory accesses to the same location,
+  // separated by a few arithmetic operations.
+  BasicBlock::iterator BBI = &LI;
+  for (unsigned ScanInsts = 6; BBI != LI.getParent()->begin() && ScanInsts;
+       --ScanInsts) {
+    --BBI;
+    
+    if (StoreInst *SI = dyn_cast<StoreInst>(BBI)) {
+      if (equivalentAddressValues(SI->getOperand(1), LI.getOperand(0)))
         return ReplaceInstUsesWith(LI, SI->getOperand(0));
-    if (LoadInst *LIB = dyn_cast<LoadInst>(BBI))
-      if (LIB->getOperand(0) == LI.getOperand(0))
+    } else if (LoadInst *LIB = dyn_cast<LoadInst>(BBI)) {
+      if (equivalentAddressValues(LIB->getOperand(0), LI.getOperand(0)))
         return ReplaceInstUsesWith(LI, LIB);
+    }
+
+    // Don't skip over things that can modify memory.
+    if (BBI->mayWriteToMemory())
+      break;
   }
 
   if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(Op)) {
@@ -10841,7 +10875,8 @@ Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
     
     if (StoreInst *PrevSI = dyn_cast<StoreInst>(BBI)) {
       // Prev store isn't volatile, and stores to the same location?
-      if (!PrevSI->isVolatile() && PrevSI->getOperand(1) == SI.getOperand(1)) {
+      if (!PrevSI->isVolatile() && equivalentAddressValues(PrevSI->getOperand(1),
+          SI.getOperand(1))) {
         ++NumDeadStore;
         ++BBI;
         EraseInstFromFunction(*PrevSI);
@@ -10854,7 +10889,8 @@ Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
     // the pointer we're loading and is producing the pointer we're storing,
     // then *this* store is dead (X = load P; store X -> P).
     if (LoadInst *LI = dyn_cast<LoadInst>(BBI)) {
-      if (LI == Val && LI->getOperand(0) == Ptr && !SI.isVolatile()) {
+      if (LI == Val && equivalentAddressValues(LI->getOperand(0), Ptr) &&
+          !SI.isVolatile()) {
         EraseInstFromFunction(SI);
         ++NumCombined;
         return 0;
