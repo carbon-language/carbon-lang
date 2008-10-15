@@ -301,7 +301,7 @@ bool Instruction::isCommutative(unsigned op) {
   }
 }
 
-/// isTrappingInstruction - Return true if the instruction may trap.
+/// isTrapping - Return true if the instruction may trap.
 ///
 bool Instruction::isTrapping(unsigned op) {
   switch(op) {
