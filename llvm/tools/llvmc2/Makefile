@@ -9,7 +9,9 @@
 
 LEVEL = ../..
 
-BUILTIN_PLUGINS = Base
+##### FIXME: Does not work when objdir != srcdir
+#####BUILTIN_PLUGINS = Base
+
 DRIVER_NAME = llvmc2
 DIRS = plugins driver 
 
