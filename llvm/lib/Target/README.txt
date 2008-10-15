@@ -891,3 +891,33 @@ vec2d foo () {
 }
 
 //===---------------------------------------------------------------------===//
+
+This C++ file:
+void g(); struct A { int n; int m; A& operator++(void) { ++n; if (n == m) g(); 
+return *this; }    A() : n(0), m(0) { } friend bool operator!=(A const& a1, 
+A const& a2) { return a1.n != a2.n; } }; void testfunction(A& iter) { A const 
+end; while (iter != end) ++iter; }
+
+Compiles down to:
+
+bb:		; preds = %bb3.backedge, %bb.nph
+	%.rle = phi i32 [ %1, %bb.nph ], [ %7, %bb3.backedge ]		; <i32> [#uses=1]
+	%4 = add i32 %.rle, 1		; <i32> [#uses=2]
+	store i32 %4, i32* %0, align 4
+	%5 = load i32* %3, align 4		; <i32> [#uses=1]
+	%6 = icmp eq i32 %4, %5		; <i1> [#uses=1]
+	br i1 %6, label %bb1, label %bb3.backedge
+
+bb1:		; preds = %bb
+	tail call void @_Z1gv()
+	br label %bb3.backedge
+
+bb3.backedge:		; preds = %bb, %bb1
+	%7 = load i32* %0, align 4		; <i32> [#uses=2]
+
+
+The %7 load is partially redundant with the store of %4 to %0, GVN's PRE 
+should remove it, but it doesn't apply to memory objects.
+
+//===---------------------------------------------------------------------===//
+
