@@ -92,7 +92,15 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   setTruncStoreAction(MVT::i64, MVT::i8 , Expand);
   setTruncStoreAction(MVT::i32, MVT::i16, Expand);
   setTruncStoreAction(MVT::i32, MVT::i8 , Expand);
-  setTruncStoreAction(MVT::i16, MVT::i8, Expand);
+  setTruncStoreAction(MVT::i16, MVT::i8,  Expand);
+
+  // SETOEQ and SETUNE require checking two conditions.
+  setCondCodeAction(ISD::SETOEQ, MVT::f32, Expand);
+  setCondCodeAction(ISD::SETOEQ, MVT::f64, Expand);
+  setCondCodeAction(ISD::SETOEQ, MVT::f80, Expand);
+  setCondCodeAction(ISD::SETUNE, MVT::f32, Expand);
+  setCondCodeAction(ISD::SETUNE, MVT::f64, Expand);
+  setCondCodeAction(ISD::SETUNE, MVT::f80, Expand);
 
   // Promote all UINT_TO_FP to larger SINT_TO_FP's, as X86 doesn't have this
   // operation.
@@ -4883,26 +4891,8 @@ SDValue X86TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) {
                        DAG.getConstant(X86CC, MVT::i8), Cond);
   }
 
-  assert(isFP && "Illegal integer SetCC!");
-
-  Cond = DAG.getNode(X86ISD::CMP, MVT::i32, Op0, Op1);
-  switch (SetCCOpcode) {
-  default: assert(false && "Illegal floating point SetCC!");
-  case ISD::SETOEQ: {  // !PF & ZF
-    SDValue Tmp1 = DAG.getNode(X86ISD::SETCC, MVT::i8,
-                                 DAG.getConstant(X86::COND_NP, MVT::i8), Cond);
-    SDValue Tmp2 = DAG.getNode(X86ISD::SETCC, MVT::i8,
-                                 DAG.getConstant(X86::COND_E, MVT::i8), Cond);
-    return DAG.getNode(ISD::AND, MVT::i8, Tmp1, Tmp2);
-  }
-  case ISD::SETUNE: {  // PF | !ZF
-    SDValue Tmp1 = DAG.getNode(X86ISD::SETCC, MVT::i8,
-                                 DAG.getConstant(X86::COND_P, MVT::i8), Cond);
-    SDValue Tmp2 = DAG.getNode(X86ISD::SETCC, MVT::i8,
-                                 DAG.getConstant(X86::COND_NE, MVT::i8), Cond);
-    return DAG.getNode(ISD::OR, MVT::i8, Tmp1, Tmp2);
-  }
-  }
+  assert(0 && "Illegal SetCC!");
+  return SDValue();
 }
 
 SDValue X86TargetLowering::LowerVSETCC(SDValue Op, SelectionDAG &DAG) {

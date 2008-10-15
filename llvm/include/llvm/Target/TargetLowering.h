@@ -409,6 +409,28 @@ public:
        getConvertAction(FromVT, ToVT) == Custom);
   }
 
+  /// getCondCodeAction - Return how the condition code should be treated:
+  /// either it is legal, needs to be expanded to some other code sequence,
+  /// or the target has a custom expander for it.
+  LegalizeAction
+  getCondCodeAction(ISD::CondCode CC, MVT VT) const {
+    assert((unsigned)CC < array_lengthof(CondCodeActions) &&
+           (unsigned)VT.getSimpleVT() < sizeof(CondCodeActions[0])*4 &&
+           "Table isn't big enough!");
+    LegalizeAction Action = (LegalizeAction)
+      ((CondCodeActions[CC] >> (2*VT.getSimpleVT())) & 3);
+    assert(Action != Promote && "Can't promote condition code!");
+    return Action;
+  }
+
+  /// isCondCodeLegal - Return true if the specified condition code is legal
+  /// on this target.
+  bool isCondCodeLegal(ISD::CondCode CC, MVT VT) const {
+    return getCondCodeAction(CC, VT) == Legal ||
+           getCondCodeAction(CC, VT) == Custom;
+  }
+
+
   /// getTypeToPromoteTo - If the action for this operation is to promote, this
   /// method returns the ValueType to promote to.
   MVT getTypeToPromoteTo(unsigned Op, MVT VT) const {
@@ -901,6 +923,16 @@ protected:
                                               ToVT.getSimpleVT()*2);
     ConvertActions[FromVT.getSimpleVT()] |= (uint64_t)Action <<
       ToVT.getSimpleVT()*2;
+  }
+
+  /// setCondCodeAction - Indicate that the specified condition code is or isn't
+  /// supported on the target and indicate what to do about it.
+  void setCondCodeAction(ISD::CondCode CC, MVT VT, LegalizeAction Action) {
+    assert((unsigned)VT.getSimpleVT() < sizeof(CondCodeActions[0])*4 &&
+           (unsigned)CC < array_lengthof(CondCodeActions) &&
+           "Table isn't big enough!");
+    CondCodeActions[(unsigned)CC] &= ~(uint64_t(3UL) << VT.getSimpleVT()*2);
+    CondCodeActions[(unsigned)CC] |= (uint64_t)Action << VT.getSimpleVT()*2;
   }
 
   /// AddPromotedToType - If Opc/OrigVT is specified as being promoted, the
@@ -1436,6 +1468,11 @@ private:
   /// Currently, this is used only for floating->floating conversions
   /// (FP_EXTEND and FP_ROUND).
   uint64_t ConvertActions[MVT::LAST_VALUETYPE];
+
+  /// CondCodeActions - For each condition code (ISD::CondCode) keep a
+  /// LegalizeAction that indicates how instruction selection should
+  /// deal with the condition code.
+  uint64_t CondCodeActions[ISD::SETCC_INVALID];
 
   ValueTypeActionImpl ValueTypeActions;
 
