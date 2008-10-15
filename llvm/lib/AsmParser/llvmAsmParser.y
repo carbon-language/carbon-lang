@@ -1071,7 +1071,7 @@ Module *llvm::RunVMAsmParser(llvm::MemoryBuffer *MB) {
 
 // Built in types...
 %type  <TypeVal> Types ResultTypes
-%type  <PrimType> FPType PrimType           // Classifications
+%type  <PrimType> PrimType           // Classifications
 %token <PrimType> VOID INTTYPE
 %token <PrimType> FLOAT DOUBLE X86_FP80 FP128 PPC_FP128 LABEL
 %token TYPE
@@ -1164,10 +1164,6 @@ FPredicates
   | TRUETOK { $$ = FCmpInst::FCMP_TRUE; }
   | FALSETOK { $$ = FCmpInst::FCMP_FALSE; }
   ;
-
-// These are some types that allow classification if we only want a particular
-// thing... for example, only a signed, unsigned, or integral type.
-FPType   : FLOAT | DOUBLE | PPC_FP128 | FP128 | X86_FP80;
 
 LocalName : LOCALVAR | STRINGCONSTANT | PCTSTRINGCONSTANT ;
 OptLocalName : LocalName | /*empty*/ { $$ = 0; };
@@ -1882,61 +1878,82 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
     delete $1;
     CHECK_FOR_ERROR
   }
-  | INTTYPE ESINT64VAL {      // integral constants
-    if (!ConstantInt::isValueValidForType($1, $2))
-      GEN_ERROR("Constant value doesn't fit in type");
-    $$ = ConstantInt::get($1, $2, true);
+  | Types ESINT64VAL {      // integral constants
+    if (IntegerType *IT = dyn_cast<IntegerType>($1->get())) {
+      if (!ConstantInt::isValueValidForType(IT, $2))
+        GEN_ERROR("Constant value doesn't fit in type");
+      $$ = ConstantInt::get(IT, $2, true);
+    } else {
+      GEN_ERROR("integer constant must have integer type");
+    }
+    delete $1;
     CHECK_FOR_ERROR
   }
-  | INTTYPE ESAPINTVAL {      // arbitrary precision integer constants
-    uint32_t BitWidth = cast<IntegerType>($1)->getBitWidth();
-    if ($2->getBitWidth() > BitWidth) {
-      GEN_ERROR("Constant value does not fit in type");
+  | Types ESAPINTVAL {      // arbitrary precision integer constants
+    if (IntegerType *IT = dyn_cast<IntegerType>($1->get())) {
+      if ($2->getBitWidth() > IT->getBitWidth())
+        GEN_ERROR("Constant value does not fit in type");
+      $2->sextOrTrunc(IT->getBitWidth());
+      $$ = ConstantInt::get(*$2);
+    } else {
+      GEN_ERROR("integer constant must have integer type");
     }
-    $2->sextOrTrunc(BitWidth);
-    $$ = ConstantInt::get(*$2);
+    delete $1;
     delete $2;
     CHECK_FOR_ERROR
   }
-  | INTTYPE EUINT64VAL {      // integral constants
-    if (!ConstantInt::isValueValidForType($1, $2))
-      GEN_ERROR("Constant value doesn't fit in type");
-    $$ = ConstantInt::get($1, $2, false);
-    CHECK_FOR_ERROR
-  }
-  | INTTYPE EUAPINTVAL {      // arbitrary precision integer constants
-    uint32_t BitWidth = cast<IntegerType>($1)->getBitWidth();
-    if ($2->getBitWidth() > BitWidth) {
-      GEN_ERROR("Constant value does not fit in type");
+  | Types EUINT64VAL {      // integral constants
+    if (IntegerType *IT = dyn_cast<IntegerType>($1->get())) {
+      if (!ConstantInt::isValueValidForType(IT, $2))
+        GEN_ERROR("Constant value doesn't fit in type");
+      $$ = ConstantInt::get(IT, $2, false);
+    } else {
+      GEN_ERROR("integer constant must have integer type");
     }
-    $2->zextOrTrunc(BitWidth);
-    $$ = ConstantInt::get(*$2);
-    delete $2;
+    delete $1;
     CHECK_FOR_ERROR
   }
-  | INTTYPE TRUETOK {                      // Boolean constants
-    if (cast<IntegerType>($1)->getBitWidth() != 1)
+  | Types EUAPINTVAL {      // arbitrary precision integer constants
+    if (IntegerType *IT = dyn_cast<IntegerType>($1->get())) {
+      if ($2->getBitWidth() > IT->getBitWidth())
+        GEN_ERROR("Constant value does not fit in type");
+      $2->zextOrTrunc(IT->getBitWidth());
+      $$ = ConstantInt::get(*$2);
+    } else {
+      GEN_ERROR("integer constant must have integer type");
+    }
+
+    delete $2;
+    delete $1;
+    CHECK_FOR_ERROR
+  }
+  | Types TRUETOK {                      // Boolean constants
+    if ($1->get() != Type::Int1Ty)
       GEN_ERROR("Constant true must have type i1");
     $$ = ConstantInt::getTrue();
+    delete $1;
     CHECK_FOR_ERROR
   }
-  | INTTYPE FALSETOK {                     // Boolean constants
-    if (cast<IntegerType>($1)->getBitWidth() != 1)
+  | Types FALSETOK {                     // Boolean constants
+    if ($1->get() != Type::Int1Ty)
       GEN_ERROR("Constant false must have type i1");
     $$ = ConstantInt::getFalse();
+    delete $1;
     CHECK_FOR_ERROR
   }
-  | FPType FPVAL {                   // Floating point constants
-    if (!ConstantFP::isValueValidForType($1, *$2))
+  | Types FPVAL {                   // Floating point constants
+    if (!ConstantFP::isValueValidForType($1->get(), *$2))
       GEN_ERROR("Floating point constant invalid for type");
+      
     // Lexer has no type info, so builds all float and double FP constants
     // as double.  Fix this here.  Long double is done right.
-    if (&$2->getSemantics()==&APFloat::IEEEdouble && $1==Type::FloatTy) {
+    if (&$2->getSemantics()==&APFloat::IEEEdouble && $1->get()==Type::FloatTy) {
       bool ignored;
       $2->convert(APFloat::IEEEsingle, APFloat::rmNearestTiesToEven,
                   &ignored);
     }
     $$ = ConstantFP::get(*$2);
+    delete $1;
     delete $2;
     CHECK_FOR_ERROR
   };
