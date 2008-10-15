@@ -242,53 +242,6 @@ public:
   static inline bool classof(const Value *V) {
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
   }
-
-  /// Backward-compatible interfaces
-  /// @deprecated in 2.4, do not use, will disappear soon
-  static BinaryOperator *create(BinaryOps Op, Value *S1, Value *S2,
-                                const std::string &Name = "",
-                                Instruction *InsertBefore = 0) {
-    return Create(Op, S1, S2, Name, InsertBefore);
-  }
-  static BinaryOperator *create(BinaryOps Op, Value *S1, Value *S2,
-                                const std::string &Name,
-                                BasicBlock *InsertAtEnd) {
-    return Create(Op, S1, S2, Name, InsertAtEnd);
-  }
-#define HANDLE_BINARY_INST(N, OPC, CLASS) \
-  static BinaryOperator *create##OPC(Value *V1, Value *V2, \
-                                     const std::string &Name = "") {\
-    return Create(Instruction::OPC, V1, V2, Name);\
-  }
-#include "llvm/Instruction.def"
-#define HANDLE_BINARY_INST(N, OPC, CLASS) \
-  static BinaryOperator *create##OPC(Value *V1, Value *V2, \
-                                     const std::string &Name, BasicBlock *BB) {\
-    return Create(Instruction::OPC, V1, V2, Name, BB);\
-  }
-#include "llvm/Instruction.def"
-#define HANDLE_BINARY_INST(N, OPC, CLASS) \
-  static BinaryOperator *create##OPC(Value *V1, Value *V2, \
-                                     const std::string &Name, Instruction *I) {\
-    return Create(Instruction::OPC, V1, V2, Name, I);\
-  }
-#include "llvm/Instruction.def"
-  static BinaryOperator *createNeg(Value *Op, const std::string &Name = "",
-                                   Instruction *InsertBefore = 0) {
-    return CreateNeg(Op, Name, InsertBefore);
-  }
-  static BinaryOperator *createNeg(Value *Op, const std::string &Name,
-                                   BasicBlock *InsertAtEnd) {
-    return CreateNeg(Op, Name, InsertAtEnd);
-  }
-  static BinaryOperator *createNot(Value *Op, const std::string &Name = "",
-                                   Instruction *InsertBefore = 0) {
-    return CreateNot(Op, Name, InsertBefore);
-  }
-  static BinaryOperator *createNot(Value *Op, const std::string &Name,
-                                   BasicBlock *InsertAtEnd) {
-    return CreateNot(Op, Name, InsertAtEnd);
-  }
 };
 
 template <>
@@ -535,40 +488,6 @@ public:
   static inline bool classof(const Value *V) {
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
   }
-  /// Backward-compatible interfaces
-  /// @deprecated in 2.4, do not use, will disappear soon
-  static CastInst *create(Instruction::CastOps Op,Value *S,const Type *Ty,
-    const std::string &Name = "",Instruction *InsertBefore = 0) {
-    return Create(Op,S,Ty,Name,InsertBefore);
-  }
-  static CastInst *create(Instruction::CastOps Op,Value *S,const Type *Ty,
-    const std::string &Name,BasicBlock *InsertAtEnd) {
-    return Create(Op,S,Ty,Name,InsertAtEnd);
-  }
-
-#define DEFINE_CASTINST_DEPRECATED(OP)                                  \
-  static CastInst *create ## OP ## Cast(Value *S, const Type *Ty,       \
-    const std::string &Name = "", Instruction *InsertBefore = 0) {      \
-    return Create ## OP ## Cast(S, Ty, Name, InsertBefore);             \
-  }                                                                     \
-  static CastInst *create ## OP ## Cast(Value *S, const Type *Ty,       \
-    const std::string &Name, BasicBlock *InsertAtEnd) {                 \
-    return Create ## OP ## Cast(S, Ty, Name, InsertAtEnd);              \
-  }
-  DEFINE_CASTINST_DEPRECATED(ZExtOrBit)
-  DEFINE_CASTINST_DEPRECATED(SExtOrBit)
-  DEFINE_CASTINST_DEPRECATED(Pointer)
-  DEFINE_CASTINST_DEPRECATED(FP)
-  DEFINE_CASTINST_DEPRECATED(TruncOrBit)
-#undef DEFINE_CASTINST_DEPRECATED
-  static CastInst *createIntegerCast(Value *S, const Type *Ty, bool isSigned,
-    const std::string &Name = "", Instruction *InsertBefore = 0) {
-    return CreateIntegerCast(S, Ty, isSigned, Name, InsertBefore);
-  }
-  static CastInst *createIntegerCast(Value *S, const Type *Ty, bool isSigned,
-    const std::string &Name, BasicBlock *InsertAtEnd) {
-    return CreateIntegerCast(S, Ty, isSigned, Name, InsertAtEnd);
-  }
 };
 
 //===----------------------------------------------------------------------===//
@@ -739,18 +658,6 @@ public:
       return VectorType::get(Type::Int1Ty, vt->getNumElements());
     }
     return Type::Int1Ty;
-  }
-  /// Backward-compatible interfaces
-  /// @deprecated in 2.4, do not use, will disappear soon
-  static CmpInst *create(OtherOps Op, unsigned short predicate, Value *S1, 
-                         Value *S2, const std::string &Name = "",
-                         Instruction *InsertBefore = 0) {
-    return Create(Op, predicate, S1, S2, Name, InsertBefore);
-  }
-  static CmpInst *create(OtherOps Op, unsigned short predicate, Value *S1, 
-                         Value *S2, const std::string &Name, 
-                         BasicBlock *InsertAtEnd) {
-    return Create(Op, predicate, S1, S2, Name, InsertAtEnd);
   }
 };
 
