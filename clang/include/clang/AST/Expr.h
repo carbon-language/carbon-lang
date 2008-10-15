@@ -1353,6 +1353,9 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
+
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static OverloadExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// VAArgExpr, used for the builtin function __builtin_va_start.

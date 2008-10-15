@@ -827,8 +827,7 @@ void ShuffleVectorExpr::EmitImpl(llvm::Serializer& S) const {
   S.Emit(BuiltinLoc);
   S.Emit(RParenLoc);
   S.EmitInt(NumExprs);
-  for (unsigned i = 0; i < NumExprs; ++i)
-    S.EmitOwnedPtr(getExpr(i));
+  S.BatchEmitOwnedPtrs(NumExprs, &SubExprs[0]);
 }
 
 ShuffleVectorExpr* ShuffleVectorExpr::CreateImpl(llvm::Deserializer& D, 
@@ -837,10 +836,9 @@ ShuffleVectorExpr* ShuffleVectorExpr::CreateImpl(llvm::Deserializer& D,
   SourceLocation BL = SourceLocation::ReadVal(D);
   SourceLocation RP = SourceLocation::ReadVal(D);
   unsigned NumExprs = D.ReadInt();
+  // FIXME: Avoid extra allocation.
   llvm::SmallVector<Expr*, 4> Exprs(NumExprs);
-  for (unsigned i = 0; i < NumExprs; ++i)
-    Exprs[i] = D.ReadOwnedPtr<Expr>(C);
-
+  D.BatchReadOwnedPtrs(NumExprs, Exprs.begin(), C);
   return new ShuffleVectorExpr(Exprs.begin(), NumExprs, T, BL, RP);
 }
 
@@ -848,19 +846,37 @@ void ChooseExpr::EmitImpl(llvm::Serializer& S) const {
   S.Emit(getType());
   S.Emit(BuiltinLoc);
   S.Emit(RParenLoc);
-  S.EmitOwnedPtr(getCond());
-  S.EmitOwnedPtr(getLHS());
-  S.EmitOwnedPtr(getRHS());
+  S.BatchEmitOwnedPtrs((unsigned) END_EXPR, &SubExprs[0]);
 }
 
 ChooseExpr* ChooseExpr::CreateImpl(llvm::Deserializer& D, ASTContext& C) {
   QualType T = QualType::ReadVal(D);
   SourceLocation BL = SourceLocation::ReadVal(D);
   SourceLocation RP = SourceLocation::ReadVal(D);
-  Expr *Cond = D.ReadOwnedPtr<Expr>(C);
-  Expr *LHS = D.ReadOwnedPtr<Expr>(C);
-  Expr *RHS = D.ReadOwnedPtr<Expr>(C);
-  return new ChooseExpr(BL, Cond, LHS, RHS, T, RP);
+  ChooseExpr *CE = new ChooseExpr(BL, 0, 0, 0, T, RP);
+  D.BatchReadOwnedPtrs((unsigned) END_EXPR, &CE->SubExprs[0], C);
+  return CE;
+}
+
+void OverloadExpr::EmitImpl(llvm::Serializer& S) const {
+  S.Emit(getType());
+  S.Emit(BuiltinLoc);
+  S.Emit(RParenLoc);
+  S.EmitInt(FnIndex);
+  S.EmitInt(NumExprs);
+  S.BatchEmitOwnedPtrs(NumExprs, &SubExprs[0]);
+}
+
+OverloadExpr* OverloadExpr::CreateImpl(llvm::Deserializer& D, ASTContext& C) {
+  QualType T = QualType::ReadVal(D);
+  SourceLocation BL = SourceLocation::ReadVal(D);
+  SourceLocation RP = SourceLocation::ReadVal(D);
+  unsigned FnIndex = D.ReadInt();
+  unsigned NumExprs = D.ReadInt();
+  // FIXME: Avoid extra allocation.
+  llvm::SmallVector<Expr*, 4> Exprs(NumExprs);
+  D.BatchReadOwnedPtrs(NumExprs, Exprs.begin(), C);
+  return new OverloadExpr(Exprs.begin(), NumExprs, FnIndex, T, BL, RP);
 }
 
 void VAArgExpr::EmitImpl(llvm::Serializer& S) const {
