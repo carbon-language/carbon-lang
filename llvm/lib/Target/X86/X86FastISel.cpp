@@ -73,6 +73,8 @@ public:
 #include "X86GenFastISel.inc"
 
 private:
+  bool X86FastEmitCompare(Value *LHS, Value *RHS, MVT VT);
+  
   bool X86FastEmitLoad(MVT VT, const X86AddressMode &AM, unsigned &RR);
 
   bool X86FastEmitStore(MVT VT, unsigned Val,
@@ -534,8 +536,6 @@ unsigned X86FastISel::X86ChooseCmpOpcode(MVT VT) {
 /// of the comparison, return an opcode that works for the compare (e.g.
 /// CMP32ri) otherwise return 0.
 static unsigned X86ChooseCmpImmediateOpcode(ConstantInt *RHSC) {
-  if (RHSC == 0) return 0;
-  
   if (RHSC->getType() == Type::Int8Ty)
     return X86::CMP8ri;
   if (RHSC->getType() == Type::Int16Ty)
@@ -553,6 +553,31 @@ static unsigned X86ChooseCmpImmediateOpcode(ConstantInt *RHSC) {
   return 0;
 }
 
+bool X86FastISel::X86FastEmitCompare(Value *Op0, Value *Op1, MVT VT) {
+  unsigned Op0Reg = getRegForValue(Op0);
+  if (Op0Reg == 0) return false;
+  
+  // We have two options: compare with register or immediate.  If the RHS of
+  // the compare is an immediate that we can fold into this compare, use
+  // CMPri, otherwise use CMPrr.
+  if (ConstantInt *Op1C = dyn_cast<ConstantInt>(Op1)) {
+    if (unsigned CompareImmOpc = X86ChooseCmpImmediateOpcode(Op1C)) {
+      BuildMI(MBB, TII.get(CompareImmOpc)).addReg(Op0Reg)
+                                          .addImm(Op1C->getSExtValue());
+      return true;
+    }
+  }
+  
+  unsigned CompareOpc = X86ChooseCmpOpcode(VT);
+  if (CompareOpc == 0) return false;
+    
+  unsigned Op1Reg = getRegForValue(Op1);
+  if (Op1Reg == 0) return false;
+  BuildMI(MBB, TII.get(CompareOpc)).addReg(Op0Reg).addReg(Op1Reg);
+  
+  return true;
+}
+
 bool X86FastISel::X86SelectCmp(Instruction *I) {
   CmpInst *CI = cast<CmpInst>(I);
 
@@ -560,18 +585,17 @@ bool X86FastISel::X86SelectCmp(Instruction *I) {
   if (!isTypeLegal(I->getOperand(0)->getType(), TLI, VT))
     return false;
 
-  unsigned Op0Reg = getRegForValue(CI->getOperand(0));
-  if (Op0Reg == 0) return false;
-  unsigned Op1Reg = getRegForValue(CI->getOperand(1));
-  if (Op1Reg == 0) return false;
-
-  unsigned Opc = X86ChooseCmpOpcode(VT);
-
   unsigned ResultReg = createResultReg(&X86::GR8RegClass);
   unsigned SetCCOpc;
   bool SwapArgs;  // false -> compare Op0, Op1.  true -> compare Op1, Op0.
   switch (CI->getPredicate()) {
   case CmpInst::FCMP_OEQ: {
+    unsigned Op0Reg = getRegForValue(CI->getOperand(0));
+    if (Op0Reg == 0) return false;
+    unsigned Op1Reg = getRegForValue(CI->getOperand(1));
+    if (Op1Reg == 0) return false;
+    unsigned Opc = X86ChooseCmpOpcode(VT);
+    
     unsigned EReg = createResultReg(&X86::GR8RegClass);
     unsigned NPReg = createResultReg(&X86::GR8RegClass);
     BuildMI(MBB, TII.get(Opc)).addReg(Op0Reg).addReg(Op1Reg);
@@ -582,6 +606,12 @@ bool X86FastISel::X86SelectCmp(Instruction *I) {
     return true;
   }
   case CmpInst::FCMP_UNE: {
+    unsigned Op0Reg = getRegForValue(CI->getOperand(0));
+    if (Op0Reg == 0) return false;
+    unsigned Op1Reg = getRegForValue(CI->getOperand(1));
+    if (Op1Reg == 0) return false;
+    unsigned Opc = X86ChooseCmpOpcode(VT);
+    
     unsigned NEReg = createResultReg(&X86::GR8RegClass);
     unsigned PReg = createResultReg(&X86::GR8RegClass);
     BuildMI(MBB, TII.get(Opc)).addReg(Op0Reg).addReg(Op1Reg);
@@ -618,11 +648,13 @@ bool X86FastISel::X86SelectCmp(Instruction *I) {
     return false;
   }
 
+  Value *Op0 = CI->getOperand(0), *Op1 = CI->getOperand(1);
   if (SwapArgs)
-    BuildMI(MBB, TII.get(Opc)).addReg(Op1Reg).addReg(Op0Reg);
-  else
-    BuildMI(MBB, TII.get(Opc)).addReg(Op0Reg).addReg(Op1Reg);
+    std::swap(Op0, Op1);
 
+  // Emit a compare of Op0/Op1.
+  X86FastEmitCompare(Op0, Op1, VT);
+  
   BuildMI(MBB, TII.get(SetCCOpc), ResultReg);
   UpdateValueMap(I, ResultReg);
   return true;
@@ -641,6 +673,7 @@ bool X86FastISel::X86SelectZExt(Instruction *I) {
 
   return false;
 }
+
 
 bool X86FastISel::X86SelectBranch(Instruction *I) {
   // Unconditional branches are selected by tablegen-generated code.
@@ -677,6 +710,7 @@ bool X86FastISel::X86SelectBranch(Instruction *I) {
       case CmpInst::FCMP_UGE: SwapArgs = true;  BranchOpc = X86::JBE; break;
       case CmpInst::FCMP_ULT: SwapArgs = false; BranchOpc = X86::JB;  break;
       case CmpInst::FCMP_ULE: SwapArgs = false; BranchOpc = X86::JBE; break;
+          
       case CmpInst::ICMP_EQ:  SwapArgs = false; BranchOpc = X86::JE;  break;
       case CmpInst::ICMP_NE:  SwapArgs = false; BranchOpc = X86::JNE; break;
       case CmpInst::ICMP_UGT: SwapArgs = false; BranchOpc = X86::JA;  break;
@@ -695,23 +729,9 @@ bool X86FastISel::X86SelectBranch(Instruction *I) {
       if (SwapArgs)
         std::swap(Op0, Op1);
 
-      unsigned CompareOpc = X86ChooseCmpOpcode(VT);
-      if (CompareOpc == 0) return false;
-      unsigned Op0Reg = getRegForValue(Op0);
-      if (Op0Reg == 0) return false;
-      
-      // We have two options: compare with register or immediate.  If the RHS of
-      // the compare is an immediate that we can fold into this compare, use
-      // CMPri, otherwise use CMPrr.
-      ConstantInt *Op1C = dyn_cast<ConstantInt>(Op1);
-      if (unsigned CompareImmOpc = X86ChooseCmpImmediateOpcode(Op1C)) {
-        BuildMI(MBB, TII.get(CompareOpc)).addReg(Op0Reg)
-                                         .addImm(Op1C->getSExtValue());
-      } else {
-        unsigned Op1Reg = getRegForValue(Op1);
-        if (Op1Reg == 0) return false;
-        BuildMI(MBB, TII.get(CompareOpc)).addReg(Op0Reg).addReg(Op1Reg);
-      }
+      // Emit a compare of the LHS and RHS, setting the flags.
+      if (!X86FastEmitCompare(Op0, Op1, VT))
+        return false;
       
       BuildMI(MBB, TII.get(BranchOpc)).addMBB(TrueMBB);
       FastEmitBranch(FalseMBB);
