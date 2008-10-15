@@ -159,7 +159,7 @@ public:
     return getAttributes(0);
   }
 
-  /// getFnAttributes - The function attributes are  returned. 
+  /// getFnAttributes - The function attributes are returned.
   Attributes getFnAttributes() const {
     return getAttributes(~0);
   }
