@@ -4,8 +4,10 @@ Tutorial - Using LLVMC
 
 LLVMC is a generic compiler driver, which plays the same role for LLVM
 as the ``gcc`` program does for GCC - the difference being that LLVMC
-is designed to be more adaptable and easier to customize. This
-tutorial describes the basic usage and configuration of LLVMC.
+is designed to be more adaptable and easier to customize. Most of
+LLVMC functionality is implemented via plugins, which can be loaded
+dynamically or compiled in. This tutorial describes the basic usage
+and configuration of LLVMC.
 
 
 .. contents::
@@ -27,20 +29,24 @@ For further help on command-line LLVMC usage, refer to the ``llvmc
 Using LLVMC to generate toolchain drivers
 =========================================
 
-At the time of writing LLVMC does not support on-the-fly reloading of
-configuration, so it will be necessary to recompile its source
-code. LLVMC uses TableGen [1]_ as its configuration language, so
-you need to be familiar with it.
+LLVMC plugins are written mostly using TableGen [1]_, so you need to
+be familiar with it to get anything done.
 
-Start by compiling ``examples/Simple.td``, which is a simple wrapper
-for ``gcc``::
+Start by compiling ``plugins/Simple/Simple.td``, which is a primitive
+wrapper for ``gcc``::
 
     $ cd $LLVM_DIR/tools/llvmc2
-    $ make TOOLNAME=mygcc GRAPH=examples/Simple.td
-    $ edit hello.c
+    $ make DRIVER_NAME=mygcc BUILTIN_PLUGINS=Simple
+    $ cat > hello.c
+    [...]
     $ mygcc hello.c
     $ ./hello.out
     Hello
+
+Here we link our plugin with the LLVMC core statically to form an
+executable file called ``mygcc``. It is also possible to build our
+plugin as a standalone dynamic library; this is described in the
+reference manual.
 
 Contents of the file ``Simple.td`` look like this::
 
@@ -65,23 +71,24 @@ Contents of the file ``Simple.td`` look like this::
 As you can see, this file consists of three parts: tool descriptions,
 language map, and the compilation graph definition.
 
-At the heart of LLVMC is the idea of a transformation graph: vertices
-in this graph are tools, and edges represent a transformation path
+At the heart of LLVMC is the idea of a compilation graph: vertices in
+this graph are tools, and edges represent a transformation path
 between two tools (for example, assembly source produced by the
-compiler can be transformed into executable code by an assembler). A
-special node named ``root`` is used to mark graph entry points.
+compiler can be transformed into executable code by an assembler). The
+compilation graph is basically a list of edges; a special node named
+``root`` is used to mark graph entry points.
 
-Tool descriptions are basically lists of properties: most properties
+Tool descriptions are represented as property lists: most properties
 in the example above should be self-explanatory; the ``sink`` property
 means that all options lacking an explicit description should be
 forwarded to this tool.
 
-``LanguageMap`` associates a language name with a list of suffixes and
-is used for deciding which toolchain corresponds to a given input
+The ``LanguageMap`` associates a language name with a list of suffixes
+and is used for deciding which toolchain corresponds to a given input
 file.
 
 To learn more about LLVMC customization, refer to the reference
-manual and sample configuration files in the ``examples`` directory.
+manual and plugin source code in the ``plugins`` directory.
 
 References
 ==========

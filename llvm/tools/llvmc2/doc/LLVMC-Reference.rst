@@ -10,8 +10,10 @@ options. What makes LLVMC different is that these transformation rules
 are completely customizable - in fact, LLVMC knows nothing about the
 specifics of transformation (even the command-line options are mostly
 not hard-coded) and regards the transformation structure as an
-abstract graph. This makes it possible to adapt LLVMC for other
-purposes - for example, as a build tool for game resources.
+abstract graph. The structure of this graph is completely determined
+by plugins, which can be either statically or dynamically linked. This
+makes it possible to easily adapt LLVMC for other purposes - for
+example, as a build tool for game resources.
 
 Because LLVMC employs TableGen [1]_ as its configuration language, you
 need to be familiar with it to customize LLVMC.
@@ -55,6 +57,7 @@ impossible for LLVMC to choose the right linker in that case::
     $ ./a.out
     hello
 
+
 Predefined options
 ==================
 
@@ -65,6 +68,9 @@ configuration files:
 
 * ``-x LANGUAGE`` - Specify the language of the following input files
   until the next -x option.
+
+* ``-load PLUGIN_NAME`` - Load the specified plugin DLL. Example:
+  ``-load $LLVM_DIR/Release/lib/LLVMCSimple.so``.
 
 * ``-v`` - Enable verbose mode, i.e. print out all executed commands.
 
@@ -83,26 +89,76 @@ configuration files:
   their standard meaning.
 
 
+Compiling LLVMC plugins
+=======================
+
+It's easiest to start working on your own LLVMC plugin by copying the
+skeleton project which lives under ``$LLVMC_DIR/plugins/Simple``::
+
+   $ cd $LLVMC_DIR/plugins
+   $ cp -r Simple MyPlugin
+   $ cd MyPlugin
+   $ ls
+   Makefile PluginMain.cpp Simple.td
+
+As you can see, our basic plugin consists of only two files (not
+counting the build script). ``Simple.td`` contains TableGen
+description of the compilation graph; its format is documented in the
+following sections. ``PluginMain.cpp`` is just a helper file used to
+compile the auto-generated C++ code produced from TableGen source. It
+can also contain hook definitions (see `below`__).
+
+__ hooks_
+
+The first thing that you should do is to change the ``LLVMC_PLUGIN``
+variable in the ``Makefile`` to avoid conflicts (since this variable
+is used to name the resulting library)::
+
+   LLVMC_PLUGIN=MyPlugin
+
+It is also a good idea to rename ``Simple.td`` to something less
+generic::
+
+   $ mv Simple.td MyPlugin.td
+
+Note that the plugin source directory should be placed into
+``$LLVMC_DIR/plugins`` to make use of the existing build
+infrastructure. To build a version of the LLVMC executable called
+``mydriver`` with your plugin compiled in, use the following command::
+
+   $ cd $LLVMC_DIR
+   $ make BUILTIN_PLUGINS=MyPlugin DRIVER_NAME=mydriver
+
+When linking plugins dynamically, you'll usually want a 'bare-bones'
+version of LLVMC that has no built-in plugins. It can be compiled with
+the following command::
+
+    $ cd $LLVMC_DIR
+    $ make BUILTIN_PLUGINS=""
+
+To build your plugin as a dynamic library, just ``cd`` to its source
+directory and run ``make``. The resulting file will be called
+``LLVMC$(LLVMC_PLUGIN).$(DLL_EXTENSION)`` (in our case,
+``LLVMCMyPlugin.so``). This library can be then loaded in with the
+``-load`` option. Example::
+
+    $ cd $LLVMC_DIR/plugins/Simple
+    $ make
+    $ llvmc2 -load $LLVM_DIR/Release/lib/LLVMCSimple.so
+
+In the future LLVMC will be able to load TableGen files directly.
+
+
 Customizing LLVMC: the compilation graph
 ========================================
 
-At the time of writing LLVMC does not support on-the-fly reloading of
-configuration, so to customize LLVMC you'll have to recompile the
-source code (which lives under ``$LLVM_DIR/tools/llvmc2``). The
-default configuration files are ``Common.td`` (contains common
-definitions, don't forget to ``include`` it in your configuration
-files), ``Tools.td`` (tool descriptions) and ``Graph.td`` (compilation
-graph definition).
+Each TableGen configuration file should include the common
+definitions::
 
-To compile LLVMC with your own configuration file (say,``MyGraph.td``),
-run ``make`` like this::
-
-    $ cd $LLVM_DIR/tools/llvmc2
-    $ make GRAPH=MyGraph.td TOOLNAME=my_llvmc
-
-This will build an executable named ``my_llvmc``. There are also
-several sample configuration files in the ``llvmc2/examples``
-subdirectory that should help to get you started.
+   include "llvm/CompilerDriver/Common.td"
+   // And optionally:
+   // include "llvm/CompilerDriver/Tools.td"
+   // which contains tool definitions.
 
 Internally, LLVMC stores information about possible source
 transformations in form of a graph. Nodes in this graph represent
@@ -111,8 +167,8 @@ special "root" node is used to mark entry points for the
 transformations. LLVMC also assigns a weight to each edge (more on
 this later) to choose between several alternative edges.
 
-The definition of the compilation graph (see file ``Graph.td``) is
-just a list of edges::
+The definition of the compilation graph (see file
+``plugins/Base/Base.td`` for an example) is just a list of edges::
 
     def CompilationGraph : CompilationGraph<[
         Edge<root, llvm_gcc_c>,
@@ -136,8 +192,8 @@ just a list of edges::
         ]>;
 
 As you can see, the edges can be either default or optional, where
-optional edges are differentiated by sporting a ``case`` expression
-used to calculate the edge's weight.
+optional edges are differentiated by an additional ``case`` expression
+used to calculate the weight of this edge.
 
 The default edges are assigned a weight of 1, and optional edges get a
 weight of 0 + 2*N where N is the number of tests that evaluated to
@@ -162,7 +218,7 @@ Writing a tool description
 
 As was said earlier, nodes in the compilation graph represent tools,
 which are described separately. A tool definition looks like this
-(taken from the ``Tools.td`` file)::
+(taken from the ``include/llvm/CompilerDriver/Tools.td`` file)::
 
   def llvm_gcc_cpp : Tool<[
       (in_language "c++"),
@@ -289,7 +345,9 @@ no meaning in the context of ``OptionList``, so the only properties
 allowed there are ``help`` and ``required``.
 
 Option lists are used at the file scope. See file
-``examples/Clang.td`` for an example of ``OptionList`` usage.
+``plugins/Clang/Clang.td`` for an example of ``OptionList`` usage.
+
+.. _hooks:
 
 Using hooks and environment variables in the ``cmd_line`` property
 ==================================================================
@@ -297,8 +355,9 @@ Using hooks and environment variables in the ``cmd_line`` property
 Normally, LLVMC executes programs from the system ``PATH``. Sometimes,
 this is not sufficient: for example, we may want to specify tool names
 in the configuration file. This can be achieved via the mechanism of
-hooks - to compile LLVMC with your hooks, just drop a .cpp file into
-``tools/llvmc2`` directory. Hooks should live in the ``hooks``
+hooks - to write your own hooks, just add their definitions to the
+``PluginMain.cpp`` or drop a ``.cpp`` file into the
+``$LLVMC_DIR/driver`` directory. Hooks should live in the ``hooks``
 namespace and have the signature ``std::string hooks::MyHookName
 (void)``. They can be used from the ``cmd_line`` tool property::
 
