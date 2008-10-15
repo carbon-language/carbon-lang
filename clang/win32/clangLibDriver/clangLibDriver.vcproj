@@ -157,6 +157,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\Driver\RewriteTest.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\Driver\TextDiagnosticBuffer.cpp"
 				>
 			</File>
