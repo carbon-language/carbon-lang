@@ -971,3 +971,17 @@ int main() {
 
 //===---------------------------------------------------------------------===//
 
+Instcombine will merge comparisons like (x >= 10) && (x < 20) by producing (x -
+10) u< 10, but only when the comparisons have matching sign.
+
+This could be converted with a similiar technique. (PR1941)
+
+define i1 @test(i8 %x) {
+  %A = icmp uge i8 %x, 5
+  %B = icmp slt i8 %x, 20
+  %C = and i1 %A, %B
+  ret i1 %C
+}
+
+//===---------------------------------------------------------------------===//
+
