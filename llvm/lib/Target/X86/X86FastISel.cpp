@@ -240,28 +240,18 @@ X86FastISel::X86FastEmitStore(MVT VT, unsigned Val,
   // Get opcode and regclass of the output for the given store instruction.
   unsigned Opc = 0;
   switch (VT.getSimpleVT()) {
+  case MVT::f80: // No f80 support yet.
   default: return false;
-  case MVT::i8:
-    Opc = X86::MOV8mr;
-    break;
-  case MVT::i16:
-    Opc = X86::MOV16mr;
-    break;
-  case MVT::i32:
-    Opc = X86::MOV32mr;
-    break;
-  case MVT::i64:
-    Opc = X86::MOV64mr; // Must be in x86-64 mode.
-    break;
+  case MVT::i8:  Opc = X86::MOV8mr;  break;
+  case MVT::i16: Opc = X86::MOV16mr; break;
+  case MVT::i32: Opc = X86::MOV32mr; break;
+  case MVT::i64: Opc = X86::MOV64mr; break; // Must be in x86-64 mode.
   case MVT::f32:
     Opc = Subtarget->hasSSE1() ? X86::MOVSSmr : X86::ST_Fp32m;
     break;
   case MVT::f64:
     Opc = Subtarget->hasSSE2() ? X86::MOVSDmr : X86::ST_Fp64m;
     break;
-  case MVT::f80:
-    // No f80 support yet.
-    return false;
   }
   
   addFullAddress(BuildMI(MBB, TII.get(Opc)), AM).addReg(Val);
@@ -297,7 +287,6 @@ bool X86FastISel::X86FastEmitStore(MVT VT, Value *Val,
   
   unsigned ValReg = getRegForValue(Val);
   if (ValReg == 0)
-    // Unhandled operand. Halt "fast" selection and bail.
     return false;    
  
   return X86FastEmitStore(VT, ValReg, AM);
@@ -995,10 +984,12 @@ bool X86FastISel::X86SelectCall(Instruction *I) {
   }
 
   // Deal with call operands first.
-  SmallVector<unsigned, 4> Args;
-  SmallVector<MVT, 4> ArgVTs;
-  SmallVector<ISD::ArgFlagsTy, 4> ArgFlags;
+  SmallVector<Value*, 8> ArgVals;
+  SmallVector<unsigned, 8> Args;
+  SmallVector<MVT, 8> ArgVTs;
+  SmallVector<ISD::ArgFlagsTy, 8> ArgFlags;
   Args.reserve(CS.arg_size());
+  ArgVals.reserve(CS.arg_size());
   ArgVTs.reserve(CS.arg_size());
   ArgFlags.reserve(CS.arg_size());
   for (CallSite::arg_iterator i = CS.arg_begin(), e = CS.arg_end();
@@ -1028,6 +1019,7 @@ bool X86FastISel::X86SelectCall(Instruction *I) {
     Flags.setOrigAlign(OriginalAlignment);
 
     Args.push_back(Arg);
+    ArgVals.push_back(*i);
     ArgVTs.push_back(ArgVT);
     ArgFlags.push_back(Flags);
   }
@@ -1097,7 +1089,15 @@ bool X86FastISel::X86SelectCall(Instruction *I) {
       X86AddressMode AM;
       AM.Base.Reg = StackPtr;
       AM.Disp = LocMemOffset;
-      X86FastEmitStore(ArgVT, Arg, AM);
+      Value *ArgVal = ArgVals[VA.getValNo()];
+      
+      // If this is a really simple value, emit this with the Value* version of
+      // X86FastEmitStore.  If it isn't simple, we don't want to do this, as it
+      // can cause us to reevaluate the argument.
+      if (isa<ConstantInt>(ArgVal) || isa<ConstantPointerNull>(ArgVal))
+        X86FastEmitStore(ArgVT, ArgVal, AM);
+      else
+        X86FastEmitStore(ArgVT, Arg, AM);
     }
   }
 
