@@ -817,12 +817,6 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_sse41_pinsrb         : GCCBuiltin<"__builtin_ia32_vec_set_v16qi">,
           Intrinsic<[llvm_v16i8_ty, llvm_v16i8_ty, llvm_i32_ty, llvm_i32_ty],
                     [IntrNoMem]>;
-  def int_x86_sse41_pinsrd         : GCCBuiltin<"__builtin_ia32_vec_set_v4si">,
-          Intrinsic<[llvm_v4i32_ty, llvm_v4i32_ty, llvm_i32_ty, llvm_i32_ty],
-                    [IntrNoMem]>;
-  def int_x86_sse41_pinsrq         : GCCBuiltin<"__builtin_ia32_vec_set_v2di">,
-          Intrinsic<[llvm_v2i64_ty, llvm_v2i64_ty, llvm_i64_ty, llvm_i32_ty],
-                    [IntrNoMem]>;
   def int_x86_sse41_insertps       : GCCBuiltin<"__builtin_ia32_insertps128">,
           Intrinsic<[llvm_v4f32_ty, llvm_v4f32_ty, llvm_v4f32_ty, llvm_i32_ty],
                     [IntrNoMem]>;
