@@ -530,6 +530,29 @@ unsigned X86FastISel::X86ChooseCmpOpcode(MVT VT) {
   return 0;
 }
 
+/// X86ChooseCmpImmediateOpcode - If we have a comparison with RHS as the RHS
+/// of the comparison, return an opcode that works for the compare (e.g.
+/// CMP32ri) otherwise return 0.
+static unsigned X86ChooseCmpImmediateOpcode(ConstantInt *RHSC) {
+  if (RHSC == 0) return 0;
+  
+  if (RHSC->getType() == Type::Int8Ty)
+    return X86::CMP8ri;
+  if (RHSC->getType() == Type::Int16Ty)
+    return X86::CMP16ri;
+  if (RHSC->getType() == Type::Int32Ty)
+    return X86::CMP32ri;
+  
+  // 64-bit comparisons are only valid if the immediate fits in a 32-bit sext
+  // field.
+  if (RHSC->getType() == Type::Int64Ty &&
+      (int)RHSC->getSExtValue() == RHSC->getSExtValue())
+    return X86::CMP64ri32;
+  
+  // Otherwise, we can't fold the immediate into this comparison.
+  return 0;
+}
+
 bool X86FastISel::X86SelectCmp(Instruction *I) {
   CmpInst *CI = cast<CmpInst>(I);
 
@@ -676,10 +699,20 @@ bool X86FastISel::X86SelectBranch(Instruction *I) {
       if (CompareOpc == 0) return false;
       unsigned Op0Reg = getRegForValue(Op0);
       if (Op0Reg == 0) return false;
-      unsigned Op1Reg = getRegForValue(Op1);
-      if (Op1Reg == 0) return false;
       
-      BuildMI(MBB, TII.get(CompareOpc)).addReg(Op0Reg).addReg(Op1Reg);
+      // We have two options: compare with register or immediate.  If the RHS of
+      // the compare is an immediate that we can fold into this compare, use
+      // CMPri, otherwise use CMPrr.
+      ConstantInt *Op1C = dyn_cast<ConstantInt>(Op1);
+      if (unsigned CompareImmOpc = X86ChooseCmpImmediateOpcode(Op1C)) {
+        BuildMI(MBB, TII.get(CompareOpc)).addReg(Op0Reg)
+                                         .addImm(Op1C->getSExtValue());
+      } else {
+        unsigned Op1Reg = getRegForValue(Op1);
+        if (Op1Reg == 0) return false;
+        BuildMI(MBB, TII.get(CompareOpc)).addReg(Op0Reg).addReg(Op1Reg);
+      }
+      
       BuildMI(MBB, TII.get(BranchOpc)).addMBB(TrueMBB);
       FastEmitBranch(FalseMBB);
       MBB->addSuccessor(TrueMBB);
