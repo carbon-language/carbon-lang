@@ -126,19 +126,15 @@ private:
       (VT == MVT::f32 && X86ScalarSSEf32);   // f32 is when SSE1
   }
 
-  bool isTypeLegal(const Type *Ty, const TargetLowering &TLI, MVT &VT,
-                   bool AllowI1 = false);
+  bool isTypeLegal(const Type *Ty, MVT &VT, bool AllowI1 = false);
 };
 
-bool X86FastISel::isTypeLegal(const Type *Ty, const TargetLowering &TLI,
-                              MVT &VT, bool AllowI1) {
-  VT = MVT::getMVT(Ty, /*HandleUnknown=*/true);
+bool X86FastISel::isTypeLegal(const Type *Ty, MVT &VT, bool AllowI1) {
+  VT = TLI.getValueType(Ty, /*HandleUnknown=*/true);
   if (VT == MVT::Other || !VT.isSimple())
     // Unhandled type. Halt "fast" selection and bail.
     return false;
-  if (VT == MVT::iPTR)
-    // Use pointer type.
-    VT = TLI.getPointerTy();
+  
   // For now, require SSE/SSE2 for performing floating-point operations,
   // since x87 requires additional work.
   if (VT == MVT::f64 && !X86ScalarSSEf64)
@@ -484,7 +480,7 @@ bool X86FastISel::X86SelectAddress(Value *V, X86AddressMode &AM, bool isCall) {
 /// X86SelectStore - Select and emit code to implement store instructions.
 bool X86FastISel::X86SelectStore(Instruction* I) {
   MVT VT;
-  if (!isTypeLegal(I->getOperand(0)->getType(), TLI, VT))
+  if (!isTypeLegal(I->getOperand(0)->getType(), VT))
     return false;
   unsigned Val = getRegForValue(I->getOperand(0));
   if (Val == 0)
@@ -502,7 +498,7 @@ bool X86FastISel::X86SelectStore(Instruction* I) {
 ///
 bool X86FastISel::X86SelectLoad(Instruction *I)  {
   MVT VT;
-  if (!isTypeLegal(I->getType(), TLI, VT))
+  if (!isTypeLegal(I->getType(), VT))
     return false;
 
   X86AddressMode AM;
@@ -527,7 +523,6 @@ static unsigned X86ChooseCmpOpcode(MVT VT) {
   case MVT::f32: return X86::UCOMISSrr;
   case MVT::f64: return X86::UCOMISDrr;
   }
-  
 }
 
 /// X86ChooseCmpImmediateOpcode - If we have a comparison with RHS as the RHS
@@ -579,7 +574,7 @@ bool X86FastISel::X86SelectCmp(Instruction *I) {
   CmpInst *CI = cast<CmpInst>(I);
 
   MVT VT;
-  if (!isTypeLegal(I->getOperand(0)->getType(), TLI, VT))
+  if (!isTypeLegal(I->getOperand(0)->getType(), VT))
     return false;
 
   unsigned ResultReg = createResultReg(&X86::GR8RegClass);
@@ -784,8 +779,8 @@ bool X86FastISel::X86SelectShift(Instruction *I) {
     return false;
   }
 
-  MVT VT = MVT::getMVT(I->getType(), /*HandleUnknown=*/true);
-  if (VT == MVT::Other || !isTypeLegal(I->getType(), TLI, VT))
+  MVT VT = TLI.getValueType(I->getType(), /*HandleUnknown=*/true);
+  if (VT == MVT::Other || !isTypeLegal(I->getType(), VT))
     return false;
 
   unsigned Op0Reg = getRegForValue(I->getOperand(0));
@@ -818,28 +813,24 @@ bool X86FastISel::X86SelectShift(Instruction *I) {
 }
 
 bool X86FastISel::X86SelectSelect(Instruction *I) {
-  const Type *Ty = I->getType();
-  if (isa<PointerType>(Ty))
-    Ty = TD.getIntPtrType();
-
+  MVT VT = TLI.getValueType(I->getType(), /*HandleUnknown=*/true);
+  if (VT == MVT::Other || !isTypeLegal(I->getType(), VT))
+    return false;
+  
   unsigned Opc = 0;
   const TargetRegisterClass *RC = NULL;
-  if (Ty == Type::Int16Ty) {
+  if (VT.getSimpleVT() == MVT::i16) {
     Opc = X86::CMOVE16rr;
     RC = &X86::GR16RegClass;
-  } else if (Ty == Type::Int32Ty) {
+  } else if (VT.getSimpleVT() == MVT::i32) {
     Opc = X86::CMOVE32rr;
     RC = &X86::GR32RegClass;
-  } else if (Ty == Type::Int64Ty) {
+  } else if (VT.getSimpleVT() == MVT::i64) {
     Opc = X86::CMOVE64rr;
     RC = &X86::GR64RegClass;
   } else {
     return false; 
   }
-
-  MVT VT = MVT::getMVT(Ty, /*HandleUnknown=*/true);
-  if (VT == MVT::Other || !isTypeLegal(Ty, TLI, VT))
-    return false;
 
   unsigned Op0Reg = getRegForValue(I->getOperand(0));
   if (Op0Reg == 0) return false;
@@ -856,17 +847,16 @@ bool X86FastISel::X86SelectSelect(Instruction *I) {
 }
 
 bool X86FastISel::X86SelectFPExt(Instruction *I) {
-  if (Subtarget->hasSSE2()) {
-    if (I->getType() == Type::DoubleTy) {
-      Value *V = I->getOperand(0);
-      if (V->getType() == Type::FloatTy) {
-        unsigned OpReg = getRegForValue(V);
-        if (OpReg == 0) return false;
-        unsigned ResultReg = createResultReg(X86::FR64RegisterClass);
-        BuildMI(MBB, TII.get(X86::CVTSS2SDrr), ResultReg).addReg(OpReg);
-        UpdateValueMap(I, ResultReg);
-        return true;
-      }
+  // fpext from float to double.
+  if (Subtarget->hasSSE2() && I->getType() == Type::DoubleTy) {
+    Value *V = I->getOperand(0);
+    if (V->getType() == Type::FloatTy) {
+      unsigned OpReg = getRegForValue(V);
+      if (OpReg == 0) return false;
+      unsigned ResultReg = createResultReg(X86::FR64RegisterClass);
+      BuildMI(MBB, TII.get(X86::CVTSS2SDrr), ResultReg).addReg(OpReg);
+      UpdateValueMap(I, ResultReg);
+      return true;
     }
   }
 
@@ -958,7 +948,7 @@ bool X86FastISel::X86SelectCall(Instruction *I) {
   MVT RetVT;
   if (RetTy == Type::VoidTy)
     RetVT = MVT::isVoid;
-  else if (!isTypeLegal(RetTy, TLI, RetVT, true))
+  else if (!isTypeLegal(RetTy, RetVT, true))
     return false;
 
   // Materialize callee address in a register. FIXME: GV address can be
@@ -1012,7 +1002,7 @@ bool X86FastISel::X86SelectCall(Instruction *I) {
 
     const Type *ArgTy = (*i)->getType();
     MVT ArgVT;
-    if (!isTypeLegal(ArgTy, TLI, ArgVT))
+    if (!isTypeLegal(ArgTy, ArgVT))
       return false;
     unsigned OriginalAlignment = TD.getABITypeAlignment(ArgTy);
     Flags.setOrigAlign(OriginalAlignment);
@@ -1065,7 +1055,7 @@ bool X86FastISel::X86SelectCall(Instruction *I) {
                                        Arg, ArgVT, Arg);
       if (!Emitted)
         Emitted = X86FastEmitExtend(ISD::ZERO_EXTEND, VA.getLocVT(),
-                                         Arg, ArgVT, Arg);
+                                    Arg, ArgVT, Arg);
       if (!Emitted)
         Emitted = X86FastEmitExtend(ISD::SIGN_EXTEND, VA.getLocVT(),
                                     Arg, ArgVT, Arg);
@@ -1217,7 +1207,7 @@ X86FastISel::TargetSelectInstruction(Instruction *I)  {
 
 unsigned X86FastISel::TargetMaterializeConstant(Constant *C) {
   MVT VT;
-  if (!isTypeLegal(C->getType(), TLI, VT))
+  if (!isTypeLegal(C->getType(), VT))
     return false;
   
   // Get opcode and regclass of the output for the given load instruction.
