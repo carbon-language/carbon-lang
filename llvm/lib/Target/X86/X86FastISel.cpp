@@ -549,6 +549,10 @@ bool X86FastISel::X86FastEmitCompare(Value *Op0, Value *Op1, MVT VT) {
   unsigned Op0Reg = getRegForValue(Op0);
   if (Op0Reg == 0) return false;
   
+  // Handle 'null' like i32/i64 0.
+  if (isa<ConstantPointerNull>(Op1))
+    Op1 = Constant::getNullValue(TD.getIntPtrType());
+  
   // We have two options: compare with register or immediate.  If the RHS of
   // the compare is an immediate that we can fold into this compare, use
   // CMPri, otherwise use CMPrr.
