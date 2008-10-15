@@ -22,7 +22,8 @@ void f() {
   (int())1; // expected-error {{used type 'int ()' where arithmetic or pointer type is required}}
 
   // Declarations.
-  T(*d)(int(p)); // expected-warning {{statement was disambiguated as declaration}} expected-error {{previous definition is here}}
+  int fd(T(a)); // expected-warning {{parentheses were disambiguated as a function declarator}}
+  T(*d)(int(p)); // expected-warning {{parentheses were disambiguated as a function declarator}} expected-warning {{statement was disambiguated as declaration}} expected-error {{previous definition is here}}
   T(d)[5]; // expected-warning {{statement was disambiguated as declaration}} expected-error {{redefinition of 'd'}}
   typeof(int[])(f) = { 1, 2 }; // expected-warning {{statement was disambiguated as declaration}}
   void(b)(int);

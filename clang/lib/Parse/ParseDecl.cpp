@@ -1226,11 +1226,14 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
   
   while (1) {
     if (Tok.is(tok::l_paren)) {
+      // When not in file scope, warn for ambiguous function declarators, just
+      // in case the author intended it as a variable definition.
+      bool diagIfAmbiguous = D.getContext() != Declarator::FileContext;
       // The paren may be part of a C++ direct initializer, eg. "int x(1);".
       // In such a case, check if we actually have a function declarator; if it
       // is not, the declarator has been fully parsed.
       if (getLang().CPlusPlus && D.mayBeFollowedByCXXDirectInit() &&
-          !isCXXFunctionDeclarator())
+          !isCXXFunctionDeclarator(diagIfAmbiguous))
         break;
       ParseFunctionDeclarator(ConsumeParen(), D);
     } else if (Tok.is(tok::l_square)) {

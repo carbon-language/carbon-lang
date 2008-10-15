@@ -615,10 +615,11 @@ private:
   /// isCXXFunctionDeclarator - Disambiguates between a function declarator or
   /// a constructor-style initializer, when parsing declaration statements.
   /// Returns true for function declarator and false for constructor-style
-  /// initializer.
+  /// initializer. If 'diagIfAmbiguous' is true a warning will be emitted to
+  /// indicate that the parens were disambiguated as function declarator.
   /// If during the disambiguation process a parsing error is encountered,
   /// the function returns true to let the declaration parsing code handle it.
-  bool isCXXFunctionDeclarator();
+  bool isCXXFunctionDeclarator(bool diagIfAmbiguous);
 
   /// isCXXConditionDeclaration - Disambiguates between a declaration or an
   /// expression for a condition of a if/switch/while/for statement.

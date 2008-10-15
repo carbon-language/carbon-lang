@@ -453,7 +453,7 @@ Parser::TPResult Parser::TryParseDeclarator(bool mayBeAbstract,
       // initializer that follows the declarator. Note that ctor-style
       // initializers are not possible in contexts where abstract declarators
       // are allowed.
-      if (!mayBeAbstract && !isCXXFunctionDeclarator())
+      if (!mayBeAbstract && !isCXXFunctionDeclarator(false/*diagIfAmbiguous*/))
         break;
 
       // direct-declarator '(' parameter-declaration-clause ')'
@@ -722,7 +722,7 @@ Parser::TPResult Parser::TryParseDeclarationSpecifier() {
 /// '(' parameter-declaration-clause ')' cv-qualifier-seq[opt]
 ///         exception-specification[opt]
 ///
-bool Parser::isCXXFunctionDeclarator() {
+bool Parser::isCXXFunctionDeclarator(bool diagIfAmbiguous) {
 
   // C++ 8.2p1:
   // The ambiguity arising from the similarity between a function-style cast and
@@ -740,15 +740,21 @@ bool Parser::isCXXFunctionDeclarator() {
   if (TPR == TPResult::Ambiguous() && Tok.isNot(tok::r_paren))
     TPR = TPResult::False();
 
+  SourceLocation TPLoc = Tok.getLocation();
   PA.Revert();
 
   // In case of an error, let the declaration parsing code handle it.
   if (TPR == TPResult::Error())
     return true;
 
-  // Function declarator has precedence over constructor-style initializer.
-  if (TPR == TPResult::Ambiguous())
+  if (TPR == TPResult::Ambiguous()) {
+    // Function declarator has precedence over constructor-style initializer.
+    // Emit a warning just in case the author intended a variable definition.
+    if (diagIfAmbiguous)
+      Diag(Tok.getLocation(), diag::warn_parens_disambiguated_as_function_decl,
+           SourceRange(Tok.getLocation(), TPLoc));
     return true;
+  }
 
   return TPR == TPResult::True();
 }
