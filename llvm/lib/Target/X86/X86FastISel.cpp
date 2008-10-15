@@ -101,8 +101,6 @@ private:
 
   bool X86SelectTrunc(Instruction *I);
  
-  unsigned X86ChooseCmpOpcode(MVT VT);
-
   bool X86SelectFPExt(Instruction *I);
   bool X86SelectFPTrunc(Instruction *I);
 
@@ -519,7 +517,7 @@ bool X86FastISel::X86SelectLoad(Instruction *I)  {
   return false;
 }
 
-unsigned X86FastISel::X86ChooseCmpOpcode(MVT VT) {
+static unsigned X86ChooseCmpOpcode(MVT VT) {
   switch (VT.getSimpleVT()) {
   case MVT::i8: return X86::CMP8rr;
   case MVT::i16: return X86::CMP16rr;
@@ -590,15 +588,11 @@ bool X86FastISel::X86SelectCmp(Instruction *I) {
   bool SwapArgs;  // false -> compare Op0, Op1.  true -> compare Op1, Op0.
   switch (CI->getPredicate()) {
   case CmpInst::FCMP_OEQ: {
-    unsigned Op0Reg = getRegForValue(CI->getOperand(0));
-    if (Op0Reg == 0) return false;
-    unsigned Op1Reg = getRegForValue(CI->getOperand(1));
-    if (Op1Reg == 0) return false;
-    unsigned Opc = X86ChooseCmpOpcode(VT);
+    if (!X86FastEmitCompare(CI->getOperand(0), CI->getOperand(1), VT))
+      return false;
     
     unsigned EReg = createResultReg(&X86::GR8RegClass);
     unsigned NPReg = createResultReg(&X86::GR8RegClass);
-    BuildMI(MBB, TII.get(Opc)).addReg(Op0Reg).addReg(Op1Reg);
     BuildMI(MBB, TII.get(X86::SETEr), EReg);
     BuildMI(MBB, TII.get(X86::SETNPr), NPReg);
     BuildMI(MBB, TII.get(X86::AND8rr), ResultReg).addReg(NPReg).addReg(EReg);
@@ -606,15 +600,11 @@ bool X86FastISel::X86SelectCmp(Instruction *I) {
     return true;
   }
   case CmpInst::FCMP_UNE: {
-    unsigned Op0Reg = getRegForValue(CI->getOperand(0));
-    if (Op0Reg == 0) return false;
-    unsigned Op1Reg = getRegForValue(CI->getOperand(1));
-    if (Op1Reg == 0) return false;
-    unsigned Opc = X86ChooseCmpOpcode(VT);
-    
+    if (!X86FastEmitCompare(CI->getOperand(0), CI->getOperand(1), VT))
+      return false;
+
     unsigned NEReg = createResultReg(&X86::GR8RegClass);
     unsigned PReg = createResultReg(&X86::GR8RegClass);
-    BuildMI(MBB, TII.get(Opc)).addReg(Op0Reg).addReg(Op1Reg);
     BuildMI(MBB, TII.get(X86::SETNEr), NEReg);
     BuildMI(MBB, TII.get(X86::SETPr), PReg);
     BuildMI(MBB, TII.get(X86::OR8rr), ResultReg).addReg(PReg).addReg(NEReg);
@@ -653,7 +643,8 @@ bool X86FastISel::X86SelectCmp(Instruction *I) {
     std::swap(Op0, Op1);
 
   // Emit a compare of Op0/Op1.
-  X86FastEmitCompare(Op0, Op1, VT);
+  if (!X86FastEmitCompare(Op0, Op1, VT))
+    return false;
   
   BuildMI(MBB, TII.get(SetCCOpc), ResultReg);
   UpdateValueMap(I, ResultReg);
