@@ -630,8 +630,6 @@ bool X86FastISel::X86SelectBranch(Instruction *I) {
   if (CmpInst *CI = dyn_cast<CmpInst>(BI->getCondition())) {
     if (CI->hasOneUse()) {
       MVT VT = TLI.getValueType(CI->getOperand(0)->getType());
-      unsigned Opc = X86ChooseCmpOpcode(VT);
-      if (Opc == 0) return false;
 
       // Try to take advantage of fallthrough opportunities.
       CmpInst::Predicate Predicate = CI->getPredicate();
@@ -640,11 +638,6 @@ bool X86FastISel::X86SelectBranch(Instruction *I) {
         Predicate = CmpInst::getInversePredicate(Predicate);
       }
 
-      unsigned Op0Reg = getRegForValue(CI->getOperand(0));
-      if (Op0Reg == 0) return false;
-      unsigned Op1Reg = getRegForValue(CI->getOperand(1));
-      if (Op1Reg == 0) return false;
-      
       bool SwapArgs;  // false -> compare Op0, Op1.  true -> compare Op1, Op0.
       unsigned BranchOpc; // Opcode to jump on, e.g. "X86::JA"
 
@@ -674,12 +667,19 @@ bool X86FastISel::X86SelectBranch(Instruction *I) {
       default:
         return false;
       }
-
-      if (SwapArgs)
-        BuildMI(MBB, TII.get(Opc)).addReg(Op1Reg).addReg(Op0Reg);
-      else
-        BuildMI(MBB, TII.get(Opc)).addReg(Op0Reg).addReg(Op1Reg);
       
+      Value *Op0 = CI->getOperand(0), *Op1 = CI->getOperand(1);
+      if (SwapArgs)
+        std::swap(Op0, Op1);
+
+      unsigned CompareOpc = X86ChooseCmpOpcode(VT);
+      if (CompareOpc == 0) return false;
+      unsigned Op0Reg = getRegForValue(Op0);
+      if (Op0Reg == 0) return false;
+      unsigned Op1Reg = getRegForValue(Op1);
+      if (Op1Reg == 0) return false;
+      
+      BuildMI(MBB, TII.get(CompareOpc)).addReg(Op0Reg).addReg(Op1Reg);
       BuildMI(MBB, TII.get(BranchOpc)).addMBB(TrueMBB);
       FastEmitBranch(FalseMBB);
       MBB->addSuccessor(TrueMBB);
@@ -692,11 +692,9 @@ bool X86FastISel::X86SelectBranch(Instruction *I) {
   if (OpReg == 0) return false;
 
   BuildMI(MBB, TII.get(X86::TEST8rr)).addReg(OpReg).addReg(OpReg);
-
   BuildMI(MBB, TII.get(X86::JNE)).addMBB(TrueMBB);
   FastEmitBranch(FalseMBB);
   MBB->addSuccessor(TrueMBB);
-
   return true;
 }
 
