@@ -32,6 +32,7 @@ def checkbool(name, default=False):
             pass
     return default
 
+CCC_LOG = checkenv('CCC_LOG')
 CCC_ECHO = checkbool('CCC_ECHO')
 CCC_NATIVE = checkbool('CCC_NATIVE','1')
 CCC_FALLBACK = checkbool('CCC_FALLBACK')
@@ -99,6 +100,10 @@ def preprocess(args):
     command = [CLANG,'-E']
     run(command + args)
 
+def syntaxonly(args):
+    command = [CLANG,'-fsyntax-only']
+    run(command + args)
+    
 def compile_fallback(args):
     command = [CC,'-c']
     run(command + args)
@@ -130,12 +135,14 @@ def compile(args, native, save_temps=False):
 
 def checked_compile(args, native, language, save_temps):
     if CCC_LANGUAGES and language and language not in CCC_LANGUAGES:
+        log('fallback', args)
         print >>sys.stderr, 'NOTE: ccc: Using fallback compiler for: %s'%(' '.join(map(quote, args)),)
         compile_fallback(args)
     elif CCC_FALLBACK:
         try:
             compile(args, native, save_temps)
         except:
+            log('fallback-on-fail', args)
             print >>sys.stderr, 'WARNING: ccc: Using fallback compiler for: %s'%(' '.join(map(quote, args)),)
             compile_fallback(args)
     else:
@@ -180,9 +187,17 @@ def inferlanguage(extension):
     else:
         return ""
 
+def log(name, item):
+    if CCC_LOG:
+        f = open(CCC_LOG,'a')
+        print >>f, (name, item)
+        f.close()
+
 def inferaction(args):
     if '-E' in args:
         return 'preprocess'
+    if '-fsyntax-only' in args:
+        return 'syntax-only'
     if '-c' in args:
         return 'compile'
     for arg in args:
@@ -191,6 +206,8 @@ def inferaction(args):
     return 'link'
 
 def main(args):
+    log('invoke', args)
+
     action = inferaction(args)
     output = ''
     compile_opts = []
@@ -247,7 +264,8 @@ def main(args):
             i += 1
 
         # Options with no arguments that should pass through
-        if (arg in ('-dynamiclib', '-bundle', '-headerpad_max_install_names') or
+        if (arg in ('-dynamiclib', '-bundle', '-headerpad_max_install_names',
+                    '-nostdlib', '-static', '-dynamic', '-r') or
             arg.startswith('-Wl,')):
             link_opts.append(arg)
 
@@ -334,6 +352,17 @@ def main(args):
                 args += [file] + compile_opts
             preprocess(args)
             # Discard the explicit language after used once
+            language = ''
+
+    if action == 'syntax-only':
+        for i, file in enumerate(files):
+            if not language:
+                language = inferlanguage(extension(file))
+            args = []
+            if language:
+                args.extend(['-x', language])
+            args += [file] + compile_opts
+            syntaxonly(args)
             language = ''
 
     if action == 'compile' or save_temps:
