@@ -98,19 +98,13 @@ def loadv2i64    : PatFrag<(ops node:$ptr), (v2i64 (load node:$ptr))>;
 
 // Like 'store', but always requires vector alignment.
 def alignedstore : PatFrag<(ops node:$val, node:$ptr),
-                           (st node:$val, node:$ptr), [{
-  StoreSDNode *ST = cast<StoreSDNode>(N);
-  return !ST->isTruncatingStore() &&
-         ST->getAddressingMode() == ISD::UNINDEXED &&
-         ST->getAlignment() >= 16;
+                           (store node:$val, node:$ptr), [{
+  return cast<StoreSDNode>(N)->getAlignment() >= 16;
 }]>;
 
 // Like 'load', but always requires vector alignment.
-def alignedload : PatFrag<(ops node:$ptr), (ld node:$ptr), [{
-  LoadSDNode *LD = cast<LoadSDNode>(N);
-  return LD->getExtensionType() == ISD::NON_EXTLOAD &&
-         LD->getAddressingMode() == ISD::UNINDEXED &&
-         LD->getAlignment() >= 16;
+def alignedload : PatFrag<(ops node:$ptr), (load node:$ptr), [{
+  return cast<LoadSDNode>(N)->getAlignment() >= 16;
 }]>;
 
 def alignedloadfsf32 : PatFrag<(ops node:$ptr), (f32   (alignedload node:$ptr))>;
@@ -125,11 +119,8 @@ def alignedloadv2i64 : PatFrag<(ops node:$ptr), (v2i64 (alignedload node:$ptr))>
 // be naturally aligned on some targets but not on others.
 // FIXME: Actually implement support for targets that don't require the
 //        alignment. This probably wants a subtarget predicate.
-def memop : PatFrag<(ops node:$ptr), (ld node:$ptr), [{
-  LoadSDNode *LD = cast<LoadSDNode>(N);
-  return LD->getExtensionType() == ISD::NON_EXTLOAD &&
-         LD->getAddressingMode() == ISD::UNINDEXED &&
-         LD->getAlignment() >= 16;
+def memop : PatFrag<(ops node:$ptr), (load node:$ptr), [{
+  return cast<LoadSDNode>(N)->getAlignment() >= 16;
 }]>;
 
 def memopfsf32 : PatFrag<(ops node:$ptr), (f32   (memop node:$ptr))>;
@@ -143,11 +134,8 @@ def memopv16i8 : PatFrag<(ops node:$ptr), (v16i8 (memop node:$ptr))>;
 // SSSE3 uses MMX registers for some instructions. They aren't aligned on a
 // 16-byte boundary.
 // FIXME: 8 byte alignment for mmx reads is not required
-def memop64 : PatFrag<(ops node:$ptr), (ld node:$ptr), [{
-  LoadSDNode *LD = cast<LoadSDNode>(N);
-  return LD->getExtensionType() == ISD::NON_EXTLOAD &&
-         LD->getAddressingMode() == ISD::UNINDEXED &&
-         LD->getAlignment() >= 8;
+def memop64 : PatFrag<(ops node:$ptr), (unindexedload node:$ptr), [{
+  return cast<LoadSDNode>(N)->getAlignment() >= 8;
 }]>;
 
 def memopv8i8  : PatFrag<(ops node:$ptr), (v8i8  (memop64 node:$ptr))>;
