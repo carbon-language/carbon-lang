@@ -27,7 +27,7 @@ namespace bitc {
   enum StandardWidths {
     BlockIDWidth = 8,  // We use VBR-8 for block IDs.
     CodeLenWidth = 4,  // Codelen are VBR-4.
-    BlockSizeWidth = 32  // BlockSize up to 2^32 32-bit words = 32GB per block.
+    BlockSizeWidth = 32  // BlockSize up to 2^32 32-bit words = 16GB per block.
   };
   
   // The standard abbrev namespace always has a way to exit a block, enter a
