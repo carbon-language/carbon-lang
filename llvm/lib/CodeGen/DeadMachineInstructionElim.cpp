@@ -129,9 +129,9 @@ bool DeadMachineInstructionElim::runOnMachineFunction(MachineFunction &MF) {
             // Check the subreg set, not the alias set, because a def
             // of a super-register may still be partially live after
             // this def.
-            for (const unsigned *AliasSet = TRI->getSubRegisters(Reg);
-                 *AliasSet; ++AliasSet)
-              LivePhysRegs.reset(*AliasSet);
+            for (const unsigned *SubRegs = TRI->getSubRegisters(Reg);
+                 *SubRegs; ++SubRegs)
+              LivePhysRegs.reset(*SubRegs);
           }
         }
       }
