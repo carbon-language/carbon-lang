@@ -127,7 +127,7 @@ void Use::zap(Use *Start, const Use *Stop, bool del) {
 //===----------------------------------------------------------------------===//
 
 struct AugmentedUse : Use {
-  User *ref;
+  volatile User *ref;
   AugmentedUse(); // not implemented
 };
 
@@ -138,12 +138,10 @@ struct AugmentedUse : Use {
 
 User *Use::getUser() const {
   const Use *End = getImpliedUser();
-  User *She = static_cast<const AugmentedUse*>(End - 1)->ref;
-  She = extractTag<Tag, tagOne>(She)
+  volatile User *She = static_cast<const AugmentedUse*>(End - 1)->ref;
+  return extractTag<Tag, tagOne>(She)
       ? llvm::stripTag<tagOne>(She)
       : reinterpret_cast<User*>(const_cast<Use*>(End));
-
-  return She;
 }
 
 //===----------------------------------------------------------------------===//

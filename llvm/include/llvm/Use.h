@@ -34,27 +34,27 @@ enum Tag { noTag, tagOne, tagTwo, tagThree };
 
 /// addTag - insert tag bits into an (untagged) pointer
 template <typename T, typename TAG>
-inline T *addTag(const T *P, TAG Tag) {
+inline volatile T *addTag(const T *P, TAG Tag) {
     return reinterpret_cast<T*>(ptrdiff_t(P) | Tag);
 }
 
 /// stripTag - remove tag bits from a pointer,
 /// making it dereferencable
 template <ptrdiff_t MASK, typename T>
-inline T *stripTag(const T *P) {
+inline T *stripTag(const volatile T *P) {
   return reinterpret_cast<T*>(ptrdiff_t(P) & ~MASK);
 }
 
 /// extractTag - extract tag bits from a pointer
 template <typename TAG, TAG MASK, typename T>
-inline TAG extractTag(const T *P) {
+inline TAG extractTag(const volatile T *P) {
   return TAG(ptrdiff_t(P) & MASK);
 }
 
 /// transferTag - transfer tag bits from a pointer,
 /// to an untagged pointer
 template <ptrdiff_t MASK, typename T>
-inline T *transferTag(const T *From, const T *To) {
+inline volatile T *transferTag(const volatile T *From, const T *To) {
   return reinterpret_cast<T*>((ptrdiff_t(From) & MASK) | ptrdiff_t(To));
 }
 
@@ -126,7 +126,7 @@ private:
   static Use *initTags(Use *Start, Use *Stop, ptrdiff_t Done = 0);
   
   Value *Val;
-  Use *Next, **Prev;
+  Use *Next, *volatile*Prev;
 
   void setPrev(Use **NewPrev) {
     Prev = transferTag<fullStopTag>(Prev, NewPrev);
