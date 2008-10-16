@@ -91,6 +91,7 @@ public:
   }
   
   typedef size_t size_type;
+  typedef ptrdiff_t difference_type;
   typedef T value_type;
   typedef T* iterator;
   typedef const T* const_iterator;
@@ -100,9 +101,12 @@ public:
   
   typedef T& reference;
   typedef const T& const_reference;
+  typedef T* pointer;
+  typedef const T* const_pointer;
 
   bool empty() const { return Begin == End; }
   size_type size() const { return End-Begin; }
+  size_type max_size() const { return size_type(-1) / sizeof(T); }
 
   // forward iterator creation methods.
   iterator begin() { return Begin; }
@@ -208,6 +212,18 @@ public:
     End += NumInputs;
   }
   
+  /// append - Add the specified range to the end of the SmallVector.
+  ///
+  void append(size_type NumInputs, const T &Elt) {
+    // Grow allocated space if needed.
+    if (End+NumInputs > Capacity)
+      grow(size()+NumInputs);
+
+    // Copy the new elements over.
+    std::uninitialized_fill_n(End, NumInputs, Elt);
+    End += NumInputs;
+  }
+  
   void assign(unsigned NumElts, const T &Elt) {
     clear();
     if (unsigned(Capacity-Begin) < NumElts)
@@ -254,6 +270,52 @@ public:
     grow();
     I = Begin+EltNo;
     goto Retry;
+  }
+
+  iterator insert(iterator I, size_type NumToInsert, const T &Elt) {
+    if (I == End) {  // Important special case for empty vector.
+      append(NumToInsert, Elt);
+      return end()-1;
+    }
+    
+    // Convert iterator to elt# to avoid invalidating iterator when we reserve()
+    size_t InsertElt = I-begin();
+    
+    // Ensure there is enough space.
+    reserve(static_cast<unsigned>(size() + NumToInsert));
+    
+    // Uninvalidate the iterator.
+    I = begin()+InsertElt;
+    
+    // If we already have this many elements in the collection, append the
+    // dest elements at the end, then copy over the appropriate elements.  Since
+    // we already reserved space, we know that this won't reallocate the vector.
+    if (size() >= NumToInsert) {
+      T *OldEnd = End;
+      append(End-NumToInsert, End);
+      
+      // Copy the existing elements that get replaced.
+      std::copy(I, OldEnd-NumToInsert, I+NumToInsert);
+      
+      std::fill_n(I, NumToInsert, Elt);
+      return I;
+    }
+
+    // Otherwise, we're inserting more elements than exist already, and we're
+    // not inserting at the end.
+    
+    // Copy over the elements that we're about to overwrite.
+    T *OldEnd = End;
+    End += NumToInsert;
+    size_t NumOverwritten = OldEnd-I;
+    std::uninitialized_copy(I, OldEnd, End-NumOverwritten);
+    
+    // Replace the overwritten part.
+    std::fill_n(I, NumOverwritten, Elt);
+    
+    // Insert the non-overwritten middle part.
+    std::uninitialized_fill_n(OldEnd, NumToInsert-NumOverwritten, Elt);
+    return I;
   }
   
   template<typename ItTy>
