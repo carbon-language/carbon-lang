@@ -4880,7 +4880,6 @@ SDValue X86TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) {
   SDValue Op0 = Op.getOperand(0);
   SDValue Op1 = Op.getOperand(1);
   SDValue CC = Op.getOperand(2);
-  ISD::CondCode SetCCOpcode = cast<CondCodeSDNode>(CC)->get();
   bool isFP = Op.getOperand(1).getValueType().isFloatingPoint();
   unsigned X86CC;
 
