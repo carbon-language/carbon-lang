@@ -121,7 +121,7 @@ generic::
 
    $ mv Simple.td MyPlugin.td
 
-Note that the plugin source directory should be placed into
+Note that the plugin source directory should be placed under
 ``$LLVMC_DIR/plugins`` to make use of the existing build
 infrastructure. To build a version of the LLVMC executable called
 ``mydriver`` with your plugin compiled in, use the following command::
