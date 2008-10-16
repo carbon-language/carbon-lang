@@ -23,7 +23,7 @@ using namespace llvm;
 
 namespace {
   // Register the targets
-  RegisterTarget<PIC16TargetMachine> X("pic16", "PIC16 14-bit");
+  RegisterTarget<PIC16TargetMachine> X("pic16", "PIC16 14-bit [experimental]");
 }
 
 PIC16TargetMachine::

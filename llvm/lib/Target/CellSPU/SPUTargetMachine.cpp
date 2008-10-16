@@ -24,7 +24,7 @@ using namespace llvm;
 namespace {
   // Register the targets
   RegisterTarget<SPUTargetMachine>
-  CELLSPU("cellspu", "STI CBEA Cell SPU");
+  CELLSPU("cellspu", "STI CBEA Cell SPU [experimental]");
 }
 
 const std::pair<unsigned, int> *

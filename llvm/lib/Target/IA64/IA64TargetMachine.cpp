@@ -26,7 +26,8 @@ using namespace llvm;
 extern "C" int IA64TargetMachineModule;
 int IA64TargetMachineModule = 0;
 
-static RegisterTarget<IA64TargetMachine> X("ia64", "IA-64 (Itanium)");
+static RegisterTarget<IA64TargetMachine> X("ia64", 
+                                           "IA-64 (Itanium) [experimental]");
 
 const TargetAsmInfo *IA64TargetMachine::createTargetAsmInfo() const {
   return new IA64TargetAsmInfo(*this);
