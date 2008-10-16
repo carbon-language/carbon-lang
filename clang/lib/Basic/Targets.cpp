@@ -42,6 +42,26 @@ static void getSolarisDefines(std::vector<char> &Defs) {
   Define(Defs, "__SOLARIS__");
 }
 
+static void getFreeBSDDefines(std::vector<char> &Defs, bool is64Bit, const char *Triple) {
+  // FreeBSD defines; list based off of gcc output
+
+  const char *FreeBSD = strstr(Triple, "-freebsd");
+  FreeBSD += strlen("-freebsd");
+  char release[] = "X";
+  release[0] = FreeBSD[0];
+  char version[] = "X00001";
+  version[0] = FreeBSD[0];
+
+  Define(Defs, "__FreeBSD__", release);
+  Define(Defs, "__FreeBSD_cc_version", version);
+  Define(Defs, "__KPRINTF_ATTRIBUTE__");
+  Define(Defs, "unix");
+  Define(Defs, "bsd");
+  if (is64Bit) {
+    Define(Defs, "__LP64__");
+  }
+}
+
 static void getDragonFlyDefines(std::vector<char> &Defs) {
   // DragonFly defines; list based off of gcc output
   Define(Defs, "__DragonFly__");
@@ -509,6 +529,19 @@ public:
 } // end anonymous namespace
 
 namespace {
+// x86-32 FreeBSD target
+class FreeBSDX86_32TargetInfo : public X86_32TargetInfo {
+public:
+  FreeBSDX86_32TargetInfo(const std::string& triple) : X86_32TargetInfo(triple) {
+  }
+  virtual void getTargetDefines(std::vector<char> &Defines) const {
+    X86_32TargetInfo::getTargetDefines(Defines);
+    getFreeBSDDefines(Defines, 0, getTargetTriple());
+  }
+};
+} // end anonymous namespace
+
+namespace {
 // x86-32 DragonFly target
 class DragonFlyX86_32TargetInfo : public X86_32TargetInfo {
 public:
@@ -583,6 +616,19 @@ public:
   }
   virtual void getTargetDefines(std::vector<char> &Defines) const {
     getX86Defines(Defines, true);
+  }
+};
+} // end anonymous namespace
+
+namespace {
+// x86-64 FreeBSD target
+class FreeBSDX86_64TargetInfo : public X86_64TargetInfo {
+public:
+  FreeBSDX86_64TargetInfo(const std::string& triple) : X86_64TargetInfo(triple) {
+  }
+  virtual void getTargetDefines(std::vector<char> &Defines) const {
+    X86_64TargetInfo::getTargetDefines(Defines);
+    getFreeBSDDefines(Defines, 1, getTargetTriple());
   }
 };
 } // end anonymous namespace
@@ -798,6 +844,7 @@ TargetInfo* TargetInfo::CreateTargetInfo(const std::string &T) {
   // Additions and corrections are welcome.
   bool isDarwin = T.find("-darwin") != std::string::npos;
   bool isDragonFly = T.find("-dragonfly") != std::string::npos;
+  bool isFreeBSD = T.find("-freebsd") != std::string::npos;
   bool isSolaris = T.find("-solaris") != std::string::npos;
   bool isLinux = T.find("-linux") != std::string::npos;
   bool isWindows = T.find("-windows") != std::string::npos ||
@@ -833,6 +880,8 @@ TargetInfo* TargetInfo::CreateTargetInfo(const std::string &T) {
       return new DarwinX86_64TargetInfo(T);
     if (isLinux)
       return new LinuxX86_64TargetInfo(T);
+    if (isFreeBSD)
+      return new FreeBSDX86_64TargetInfo(T);
     return new X86_64TargetInfo(T);
   }
 
@@ -846,6 +895,8 @@ TargetInfo* TargetInfo::CreateTargetInfo(const std::string &T) {
       return new LinuxX86_32TargetInfo(T);
     if (isDragonFly)
       return new DragonFlyX86_32TargetInfo(T);
+    if (isFreeBSD)
+      return new FreeBSDX86_32TargetInfo(T);
     if (isWindows)
       return new WindowsX86_32TargetInfo(T);
     return new X86_32TargetInfo(T);
