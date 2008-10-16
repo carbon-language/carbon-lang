@@ -133,6 +133,12 @@ static Constant *FoldBitCast(Constant *V, const Type *DestTy) {
       if (ConstantVector *CV = dyn_cast<ConstantVector>(V))
         return BitCastConstantVector(CV, DestPTy);
     }
+
+    // Canonicalize scalar-to-vector bitcasts into vector-to-vector bitcasts
+    // This allows for other simplifications (although some of them
+    // can only be handled by Analysis/ConstantFolding.cpp).
+    if (isa<ConstantInt>(V) || isa<ConstantFP>(V))
+      return ConstantExpr::getBitCast(ConstantVector::get(&V, 1), DestPTy);
   }
   
   // Finally, implement bitcast folding now.   The code below doesn't handle
