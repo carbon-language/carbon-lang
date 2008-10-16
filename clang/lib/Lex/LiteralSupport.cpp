@@ -481,10 +481,9 @@ bool NumericLiteralParser::GetIntegerValue(llvm::APInt &Val) {
     Val *= RadixVal;
     OverflowOccurred |= Val.udiv(RadixVal) != OldVal;
 
-    OldVal = Val;
     // Add value, did overflow occur on the value?
+    //   (a + b) ult b  <=> overflow
     Val += CharVal;
-    OverflowOccurred |= Val.ult(OldVal);
     OverflowOccurred |= Val.ult(CharVal);
   }
   return OverflowOccurred;
