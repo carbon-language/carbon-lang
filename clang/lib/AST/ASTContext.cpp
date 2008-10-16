@@ -931,23 +931,23 @@ QualType ASTContext::getFunctionType(QualType ResultTy,const QualType *ArgArray,
 /// getTypeDeclType - Return the unique reference to the type for the
 /// specified type declaration.
 QualType ASTContext::getTypeDeclType(TypeDecl *Decl, TypeDecl* PrevDecl) {
+  assert(Decl && "Passed null for Decl param");
   if (Decl->TypeForDecl) return QualType(Decl->TypeForDecl, 0);
   
-  if (TypedefDecl *Typedef = dyn_cast_or_null<TypedefDecl>(Decl))
+  if (TypedefDecl *Typedef = dyn_cast<TypedefDecl>(Decl))
     return getTypedefType(Typedef);
-  else if (ObjCInterfaceDecl *ObjCInterface 
-             = dyn_cast_or_null<ObjCInterfaceDecl>(Decl))
+  else if (ObjCInterfaceDecl *ObjCInterface = dyn_cast<ObjCInterfaceDecl>(Decl))
     return getObjCInterfaceType(ObjCInterface);
 
-  if (CXXRecordDecl *CXXRecord = dyn_cast_or_null<CXXRecordDecl>(Decl)) {
+  if (CXXRecordDecl *CXXRecord = dyn_cast<CXXRecordDecl>(Decl)) {
     Decl->TypeForDecl = PrevDecl ? PrevDecl->TypeForDecl
                                  : new CXXRecordType(CXXRecord);
   }
-  else if (RecordDecl *Record = dyn_cast_or_null<RecordDecl>(Decl)) {
+  else if (RecordDecl *Record = dyn_cast<RecordDecl>(Decl)) {
     Decl->TypeForDecl = PrevDecl ? PrevDecl->TypeForDecl
                                  : new RecordType(Record);
   }
-  else if (EnumDecl *Enum = dyn_cast_or_null<EnumDecl>(Decl))
+  else if (EnumDecl *Enum = dyn_cast<EnumDecl>(Decl))
     Decl->TypeForDecl = new EnumType(Enum);
   else
     assert(false && "TypeDecl without a type?");
