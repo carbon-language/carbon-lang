@@ -1361,6 +1361,14 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
             "llvm.init_trampoline parameter #2 must resolve to a function.",
             &CI);
     break;
+  case Intrinsic::prefetch:
+    Assert1(isa<ConstantInt>(CI.getOperand(2)) &&
+            isa<ConstantInt>(CI.getOperand(3)) &&
+            cast<ConstantInt>(CI.getOperand(2))->getZExtValue() < 2 &&
+            cast<ConstantInt>(CI.getOperand(3))->getZExtValue() < 4,
+            "invalid arguments to llvm.prefetch",
+            &CI);
+    break;
   }
 }
 
