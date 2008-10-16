@@ -38,6 +38,7 @@
 #include "llvm/ADT/UniqueVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/StringMap.h"
+#include "llvm/CodeGen/MachineLocation.h"
 #include "llvm/GlobalValue.h"
 #include "llvm/Pass.h"
 
@@ -50,7 +51,6 @@ class DebugInfoDesc;
 class GlobalVariable;
 class MachineBasicBlock;
 class MachineFunction;
-class MachineMove;
 class Module;
 class PointerType;
 class StructType;
