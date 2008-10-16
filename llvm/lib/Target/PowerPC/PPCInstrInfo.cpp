@@ -657,7 +657,7 @@ void PPCInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
 /// copy instructions, turning them into load/store instructions.
 MachineInstr *PPCInstrInfo::foldMemoryOperand(MachineFunction &MF,
                                               MachineInstr *MI,
-                                              SmallVectorImpl<unsigned> &Ops,
+                                              const SmallVectorImpl<unsigned> &Ops,
                                               int FrameIndex) const {
   if (Ops.size() != 1) return NULL;
 
@@ -730,8 +730,8 @@ MachineInstr *PPCInstrInfo::foldMemoryOperand(MachineFunction &MF,
   return NewMI;
 }
 
-bool PPCInstrInfo::canFoldMemoryOperand(MachineInstr *MI,
-                                        SmallVectorImpl<unsigned> &Ops) const {
+bool PPCInstrInfo::canFoldMemoryOperand(const MachineInstr *MI,
+                                  const SmallVectorImpl<unsigned> &Ops) const {
   if (Ops.size() != 1) return false;
 
   // Make sure this is a reg-reg copy.  Note that we can't handle MCRF, because
@@ -751,7 +751,7 @@ bool PPCInstrInfo::canFoldMemoryOperand(MachineInstr *MI,
 }
 
 
-bool PPCInstrInfo::BlockHasNoFallThrough(MachineBasicBlock &MBB) const {
+bool PPCInstrInfo::BlockHasNoFallThrough(const MachineBasicBlock &MBB) const {
   if (MBB.empty()) return false;
   
   switch (MBB.back().getOpcode()) {

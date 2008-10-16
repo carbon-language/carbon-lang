@@ -196,17 +196,17 @@ public:
   
   virtual MachineInstr* foldMemoryOperand(MachineFunction &MF,
                                           MachineInstr* MI,
-                                          SmallVectorImpl<unsigned> &Ops,
+                                          const SmallVectorImpl<unsigned> &Ops,
                                           int FrameIndex) const;
 
   virtual MachineInstr* foldMemoryOperand(MachineFunction &MF,
                                           MachineInstr* MI,
-                                          SmallVectorImpl<unsigned> &Ops,
+                                          const SmallVectorImpl<unsigned> &Ops,
                                           MachineInstr* LoadMI) const {
     return 0;
   }
   
-  virtual bool BlockHasNoFallThrough(MachineBasicBlock &MBB) const;
+  virtual bool BlockHasNoFallThrough(const MachineBasicBlock &MBB) const;
   virtual
   bool ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const;
 

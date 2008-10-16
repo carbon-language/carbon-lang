@@ -255,7 +255,7 @@ void AlphaInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
 
 MachineInstr *AlphaInstrInfo::foldMemoryOperand(MachineFunction &MF,
                                                 MachineInstr *MI,
-                                                SmallVectorImpl<unsigned> &Ops,
+                                          const SmallVectorImpl<unsigned> &Ops,
                                                 int FrameIndex) const {
    if (Ops.size() != 1) return NULL;
 
@@ -408,7 +408,7 @@ void AlphaInstrInfo::insertNoop(MachineBasicBlock &MBB,
     .addReg(Alpha::R31);
 }
 
-bool AlphaInstrInfo::BlockHasNoFallThrough(MachineBasicBlock &MBB) const {
+bool AlphaInstrInfo::BlockHasNoFallThrough(const MachineBasicBlock &MBB) const {
   if (MBB.empty()) return false;
   
   switch (MBB.back().getOpcode()) {

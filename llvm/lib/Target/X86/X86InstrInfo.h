@@ -359,7 +359,7 @@ public:
   /// references has been changed.
   virtual MachineInstr* foldMemoryOperand(MachineFunction &MF,
                                           MachineInstr* MI,
-                                          SmallVectorImpl<unsigned> &Ops,
+                                          const SmallVectorImpl<unsigned> &Ops,
                                           int FrameIndex) const;
 
   /// foldMemoryOperand - Same as the previous version except it allows folding
@@ -367,12 +367,13 @@ public:
   /// stack slot.
   virtual MachineInstr* foldMemoryOperand(MachineFunction &MF,
                                           MachineInstr* MI,
-                                  SmallVectorImpl<unsigned> &Ops,
+                                  const SmallVectorImpl<unsigned> &Ops,
                                   MachineInstr* LoadMI) const;
 
   /// canFoldMemoryOperand - Returns true if the specified load / store is
   /// folding is possible.
-  virtual bool canFoldMemoryOperand(MachineInstr*, SmallVectorImpl<unsigned> &) const;
+  virtual bool canFoldMemoryOperand(const MachineInstr*,
+                                    const SmallVectorImpl<unsigned> &) const;
 
   /// unfoldMemoryOperand - Separate a single instruction which folded a load or
   /// a store or a load and a store into two or more instruction. If this is
@@ -391,7 +392,7 @@ public:
   virtual unsigned getOpcodeAfterMemoryUnfold(unsigned Opc,
                                       bool UnfoldLoad, bool UnfoldStore) const;
   
-  virtual bool BlockHasNoFallThrough(MachineBasicBlock &MBB) const;
+  virtual bool BlockHasNoFallThrough(const MachineBasicBlock &MBB) const;
   virtual
   bool ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const;
 
@@ -431,7 +432,7 @@ private:
   MachineInstr* foldMemoryOperand(MachineFunction &MF,
                                   MachineInstr* MI,
                                   unsigned OpNum,
-                                  SmallVector<MachineOperand,4> &MOs) const;
+                                const SmallVector<MachineOperand,4> &MOs) const;
 };
 
 } // End llvm namespace

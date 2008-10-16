@@ -102,6 +102,8 @@ public:
 
   MachineInstr& front() { return Insts.front(); }
   MachineInstr& back()  { return Insts.back(); }
+  const MachineInstr& front() const { return Insts.front(); }
+  const MachineInstr& back()  const { return Insts.back(); }
 
   iterator                begin()       { return Insts.begin();  }
   const_iterator          begin() const { return Insts.begin();  }

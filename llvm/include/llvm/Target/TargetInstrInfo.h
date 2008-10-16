@@ -288,7 +288,7 @@ public:
   /// stream.
   virtual MachineInstr* foldMemoryOperand(MachineFunction &MF,
                                           MachineInstr* MI,
-                                          SmallVectorImpl<unsigned> &Ops,
+                                          const SmallVectorImpl<unsigned> &Ops,
                                           int FrameIndex) const {
     return 0;
   }
@@ -298,7 +298,7 @@ public:
   /// stack slot.
   virtual MachineInstr* foldMemoryOperand(MachineFunction &MF,
                                           MachineInstr* MI,
-                                          SmallVectorImpl<unsigned> &Ops,
+                                          const SmallVectorImpl<unsigned> &Ops,
                                           MachineInstr* LoadMI) const {
     return 0;
   }
@@ -306,8 +306,8 @@ public:
   /// canFoldMemoryOperand - Returns true if the specified load / store is
   /// folding is possible.
   virtual
-  bool canFoldMemoryOperand(MachineInstr *MI,
-                            SmallVectorImpl<unsigned> &Ops) const{
+  bool canFoldMemoryOperand(const MachineInstr *MI,
+                            const SmallVectorImpl<unsigned> &Ops) const {
     return false;
   }
 
@@ -338,7 +338,7 @@ public:
   /// fall-through into its successor block.  This is primarily used when a
   /// branch is unanalyzable.  It is useful for things like unconditional
   /// indirect branches (jump tables).
-  virtual bool BlockHasNoFallThrough(MachineBasicBlock &MBB) const {
+  virtual bool BlockHasNoFallThrough(const MachineBasicBlock &MBB) const {
     return false;
   }
   

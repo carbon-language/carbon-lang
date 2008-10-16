@@ -69,12 +69,12 @@ public:
   
   virtual MachineInstr* foldMemoryOperand(MachineFunction &MF,
                                           MachineInstr* MI,
-                                          SmallVectorImpl<unsigned> &Ops,
+                                          const SmallVectorImpl<unsigned> &Ops,
                                           int FrameIndex) const;
 
   virtual MachineInstr* foldMemoryOperand(MachineFunction &MF,
                                           MachineInstr* MI,
-                                          SmallVectorImpl<unsigned> &Ops,
+                                          const SmallVectorImpl<unsigned> &Ops,
                                           MachineInstr* LoadMI) const {
     return 0;
   }
@@ -85,7 +85,7 @@ public:
   unsigned RemoveBranch(MachineBasicBlock &MBB) const;
   void insertNoop(MachineBasicBlock &MBB, 
                   MachineBasicBlock::iterator MI) const;
-  bool BlockHasNoFallThrough(MachineBasicBlock &MBB) const;
+  bool BlockHasNoFallThrough(const MachineBasicBlock &MBB) const;
   bool ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const;
 };
 

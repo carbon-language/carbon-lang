@@ -663,7 +663,7 @@ bool ARMInstrInfo::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
 
 MachineInstr *ARMInstrInfo::foldMemoryOperand(MachineFunction &MF,
                                               MachineInstr *MI,
-                                              SmallVectorImpl<unsigned> &Ops,
+                                        const SmallVectorImpl<unsigned> &Ops,
                                               int FI) const {
   if (Ops.size() != 1) return NULL;
 
@@ -747,8 +747,8 @@ MachineInstr *ARMInstrInfo::foldMemoryOperand(MachineFunction &MF,
   return NewMI;
 }
 
-bool ARMInstrInfo::canFoldMemoryOperand(MachineInstr *MI,
-                                        SmallVectorImpl<unsigned> &Ops) const {
+bool ARMInstrInfo::canFoldMemoryOperand(const MachineInstr *MI,
+                                  const SmallVectorImpl<unsigned> &Ops) const {
   if (Ops.size() != 1) return false;
 
   unsigned OpNum = Ops[0];
@@ -780,7 +780,7 @@ bool ARMInstrInfo::canFoldMemoryOperand(MachineInstr *MI,
   return false;
 }
 
-bool ARMInstrInfo::BlockHasNoFallThrough(MachineBasicBlock &MBB) const {
+bool ARMInstrInfo::BlockHasNoFallThrough(const MachineBasicBlock &MBB) const {
   if (MBB.empty()) return false;
   
   switch (MBB.back().getOpcode()) {

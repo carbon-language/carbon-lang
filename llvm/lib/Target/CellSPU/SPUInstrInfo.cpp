@@ -399,7 +399,7 @@ void SPUInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
 MachineInstr *
 SPUInstrInfo::foldMemoryOperand(MachineFunction &MF,
                                 MachineInstr *MI,
-                                SmallVectorImpl<unsigned> &Ops,
+                                const SmallVectorImpl<unsigned> &Ops,
                                 int FrameIndex) const
 {
 #if SOMEDAY_SCOTT_LOOKS_AT_ME_AGAIN

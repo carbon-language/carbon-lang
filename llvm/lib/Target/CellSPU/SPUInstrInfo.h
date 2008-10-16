@@ -79,13 +79,13 @@ namespace llvm {
     //! Fold spills into load/store instructions
     virtual MachineInstr* foldMemoryOperand(MachineFunction &MF,
                                             MachineInstr* MI,
-                                            SmallVectorImpl<unsigned> &Ops,
+                                            const SmallVectorImpl<unsigned> &Ops,
                                             int FrameIndex) const;
 
     //! Fold any load/store to an operand
     virtual MachineInstr* foldMemoryOperand(MachineFunction &MF,
                                             MachineInstr* MI,
-                                            SmallVectorImpl<unsigned> &Ops,
+                                            const SmallVectorImpl<unsigned> &Ops,
                                             MachineInstr* LoadMI) const {
       return 0;
     }

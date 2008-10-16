@@ -1543,7 +1543,7 @@ unsigned X86InstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
 }
 
 static const MachineInstrBuilder &X86InstrAddOperand(MachineInstrBuilder &MIB,
-                                                     MachineOperand &MO) {
+                                                     const MachineOperand &MO) {
   if (MO.isReg())
     MIB = MIB.addReg(MO.getReg(), MO.isDef(), MO.isImplicit(),
                      MO.isKill(), MO.isDead(), MO.getSubReg());
@@ -1872,7 +1872,7 @@ bool X86InstrInfo::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
 }
 
 static MachineInstr *FuseTwoAddrInst(MachineFunction &MF, unsigned Opcode,
-                                     SmallVector<MachineOperand,4> &MOs,
+                                     const SmallVector<MachineOperand,4> &MOs,
                                  MachineInstr *MI, const TargetInstrInfo &TII) {
   // Create the base instruction with the memory operand as the first part.
   MachineInstr *NewMI = MF.CreateMachineInstr(TII.get(Opcode), true);
@@ -1898,7 +1898,7 @@ static MachineInstr *FuseTwoAddrInst(MachineFunction &MF, unsigned Opcode,
 
 static MachineInstr *FuseInst(MachineFunction &MF,
                               unsigned Opcode, unsigned OpNo,
-                              SmallVector<MachineOperand,4> &MOs,
+                              const SmallVector<MachineOperand,4> &MOs,
                               MachineInstr *MI, const TargetInstrInfo &TII) {
   MachineInstr *NewMI = MF.CreateMachineInstr(TII.get(Opcode), true);
   MachineInstrBuilder MIB(NewMI);
@@ -1920,7 +1920,7 @@ static MachineInstr *FuseInst(MachineFunction &MF,
 }
 
 static MachineInstr *MakeM0Inst(const TargetInstrInfo &TII, unsigned Opcode,
-                                SmallVector<MachineOperand,4> &MOs,
+                                const SmallVector<MachineOperand,4> &MOs,
                                 MachineInstr *MI) {
   MachineFunction &MF = *MI->getParent()->getParent();
   MachineInstrBuilder MIB = BuildMI(MF, TII.get(Opcode));
@@ -1936,7 +1936,7 @@ static MachineInstr *MakeM0Inst(const TargetInstrInfo &TII, unsigned Opcode,
 MachineInstr*
 X86InstrInfo::foldMemoryOperand(MachineFunction &MF,
                                 MachineInstr *MI, unsigned i,
-                                SmallVector<MachineOperand,4> &MOs) const {
+                                const SmallVector<MachineOperand,4> &MOs) const{
   const DenseMap<unsigned*, unsigned> *OpcodeTablePtr = NULL;
   bool isTwoAddrFold = false;
   unsigned NumOps = MI->getDesc().getNumOperands();
@@ -1995,7 +1995,7 @@ X86InstrInfo::foldMemoryOperand(MachineFunction &MF,
 
 MachineInstr* X86InstrInfo::foldMemoryOperand(MachineFunction &MF,
                                               MachineInstr *MI,
-                                              SmallVectorImpl<unsigned> &Ops,
+                                        const SmallVectorImpl<unsigned> &Ops,
                                               int FrameIndex) const {
   // Check switch flag 
   if (NoFusing) return NULL;
@@ -2042,7 +2042,7 @@ MachineInstr* X86InstrInfo::foldMemoryOperand(MachineFunction &MF,
 
 MachineInstr* X86InstrInfo::foldMemoryOperand(MachineFunction &MF,
                                               MachineInstr *MI,
-                                              SmallVectorImpl<unsigned> &Ops,
+                                        const SmallVectorImpl<unsigned> &Ops,
                                               MachineInstr *LoadMI) const {
   // Check switch flag 
   if (NoFusing) return NULL;
@@ -2093,8 +2093,8 @@ MachineInstr* X86InstrInfo::foldMemoryOperand(MachineFunction &MF,
 }
 
 
-bool X86InstrInfo::canFoldMemoryOperand(MachineInstr *MI,
-                                        SmallVectorImpl<unsigned> &Ops) const {
+bool X86InstrInfo::canFoldMemoryOperand(const MachineInstr *MI,
+                                  const SmallVectorImpl<unsigned> &Ops) const {
   // Check switch flag 
   if (NoFusing) return 0;
 
@@ -2350,7 +2350,7 @@ unsigned X86InstrInfo::getOpcodeAfterMemoryUnfold(unsigned Opc,
   return I->second.first;
 }
 
-bool X86InstrInfo::BlockHasNoFallThrough(MachineBasicBlock &MBB) const {
+bool X86InstrInfo::BlockHasNoFallThrough(const MachineBasicBlock &MBB) const {
   if (MBB.empty()) return false;
   
   switch (MBB.back().getOpcode()) {
