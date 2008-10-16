@@ -586,6 +586,7 @@ public:
   bool VisitParenExpr(ParenExpr *E) { return Visit(E->getSubExpr()); }
   bool VisitCallExpr(const CallExpr *E);
 
+  bool VisitUnaryOperator(const UnaryOperator *E);
   bool VisitBinaryOperator(const BinaryOperator *E);
   bool VisitFloatingLiteral(const FloatingLiteral *E);
 };
@@ -625,14 +626,48 @@ bool FloatExprEvaluator::VisitCallExpr(const CallExpr *E) {
       }
     }
     return false;
+
+  case Builtin::BI__builtin_fabs:
+  case Builtin::BI__builtin_fabsf:
+  case Builtin::BI__builtin_fabsl:
+    if (!EvaluateFloat(E->getArg(0), Result, Info))
+      return false;
+    
+    if (Result.isNegative())
+      Result.changeSign();
+    return true;
+
+  case Builtin::BI__builtin_copysign: 
+  case Builtin::BI__builtin_copysignf: 
+  case Builtin::BI__builtin_copysignl: {
+    APFloat RHS(0.);
+    if (!EvaluateFloat(E->getArg(0), Result, Info) ||
+        !EvaluateFloat(E->getArg(1), RHS, Info))
+      return false;
+    Result.copySign(RHS);
+    return true;
+  }
   }
 }
 
+bool FloatExprEvaluator::VisitUnaryOperator(const UnaryOperator *E) {
+  if (!EvaluateFloat(E->getSubExpr(), Result, Info))
+    return false;
+
+  switch (E->getOpcode()) {
+  default: return false;
+  case UnaryOperator::Plus: 
+    return true;
+  case UnaryOperator::Minus:
+    Result.changeSign();
+    return true;
+  }
+}
 
 bool FloatExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
   // FIXME: Diagnostics?  I really don't understand how the warnings
   // and errors are supposed to work.
-  APFloat LHS(0.0), RHS(0.0);
+  APFloat RHS(0.0);
   if (!EvaluateFloat(E->getLHS(), Result, Info))
     return false;
   if (!EvaluateFloat(E->getRHS(), RHS, Info))
