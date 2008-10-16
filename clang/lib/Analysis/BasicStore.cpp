@@ -42,9 +42,12 @@ public:
 
   virtual MemRegionManager& getRegionManager() { return MRMgr; }
 
+  // FIXME: Investigate what is using this. This method should be removed.
   virtual LVal getLVal(const VarDecl* VD) {
     return lval::MemRegionVal(MRMgr.getVarRegion(VD));
   }
+
+  virtual RVal getLValue(const GRState* St, const Expr* Ex);
   
   virtual Store
   RemoveDeadBindings(Store store, Stmt* Loc, const LiveVariables& Live,
@@ -71,6 +74,35 @@ public:
 
 StoreManager* clang::CreateBasicStoreManager(GRStateManager& StMgr) {
   return new BasicStoreManager(StMgr);
+}
+
+// FIXME: replace ArrayOffset and FieldOffset with some region value.
+RVal BasicStoreManager::getLValue(const GRState* St, const Expr* Ex) {
+  if (const DeclRefExpr* DRE = dyn_cast<DeclRefExpr>(Ex)) {
+    const VarDecl* VD = cast<VarDecl>(DRE->getDecl());
+    QualType T = VD->getType();
+
+    // Array and struct variable have no lvalue.
+    assert(!T->isArrayType());
+
+    return lval::MemRegionVal(MRMgr.getVarRegion(VD));
+
+  } else if (const ArraySubscriptExpr* A = dyn_cast<ArraySubscriptExpr>(Ex)) {
+    const Expr* Base = A->getBase()->IgnoreParens();
+    const Expr* Idx  = A->getIdx()->IgnoreParens();
+    RVal BaseV = StateMgr.GetRVal(St, Base);
+    RVal IdxV = StateMgr.GetRVal(St, Idx);
+    return lval::ArrayOffset::Make(StateMgr.getBasicVals(), BaseV, IdxV);
+
+  } else if (const MemberExpr* M = dyn_cast<MemberExpr>(Ex)) {
+    Expr* Base = M->getBase()->IgnoreParens();
+    RVal BaseV = StateMgr.GetRVal(St, Base);
+    return lval::FieldOffset::Make(StateMgr.getBasicVals(), BaseV, 
+                                   M->getMemberDecl());
+  } else {
+    Ex->dump();
+    assert(0);
+  }
 }
 
 RVal BasicStoreManager::GetRVal(Store St, LVal LV, QualType T) {

@@ -234,7 +234,7 @@ class GRStateManager {
   
 private:
   EnvironmentManager                   EnvMgr;
-  llvm::OwningPtr<StoreManager>        StMgr;
+  llvm::OwningPtr<StoreManager>        StoreMgr;
   llvm::OwningPtr<ConstraintManager>   ConstraintMgr;
   GRState::IntSetTy::Factory           ISetFactory;
   
@@ -303,7 +303,7 @@ public:
     Alloc(alloc),
     cfg(c),
     Liveness(L) {
-      StMgr.reset((*CreateStoreManager)(*this));
+      StoreMgr.reset((*CreateStoreManager)(*this));
       ConstraintMgr.reset((*CreateConstraintManager)(*this));
   }
   
@@ -317,7 +317,7 @@ public:
   SymbolManager& getSymbolManager() { return SymMgr; }
   LiveVariables& getLiveVariables() { return Liveness; }
   llvm::BumpPtrAllocator& getAllocator() { return Alloc; }
-  MemRegionManager& getRegionManager() { return StMgr->getRegionManager(); }
+  MemRegionManager& getRegionManager() { return StoreMgr->getRegionManager(); }
 
   typedef StoreManager::DeadSymbolsTy DeadSymbolsTy;
 
@@ -342,12 +342,23 @@ public:
   }
   
   LVal getLVal(const VarDecl* D) {
-    return StMgr->getLVal(D);
+    return StoreMgr->getLVal(D);
   }
-  
+
+  // Get the lvalue of expression.
+  RVal GetLValue(const GRState* St, const Expr* Ex) {
+    // Forward to store manager. The lvalue of an expression is determined by
+    // the store manager.
+    return StoreMgr->getLValue(St, Ex);
+  }
+
   // Methods that query & manipulate the Environment.
   
   RVal GetRVal(const GRState* St, Expr* Ex) {
+    return St->getEnvironment().GetRVal(Ex, BasicVals);
+  }
+
+  RVal GetRVal(const GRState* St, const Expr* Ex) {
     return St->getEnvironment().GetRVal(Ex, BasicVals);
   }
   
@@ -397,22 +408,22 @@ public:
   // Methods that query & manipulate the Store.
 
   void iterBindings(const GRState* state, StoreManager::BindingsHandler& F) {
-    StMgr->iterBindings(state->getStore(), F);
+    StoreMgr->iterBindings(state->getStore(), F);
   }
     
   
   RVal GetRVal(const GRState* St, LVal LV, QualType T = QualType()) {
-    return StMgr->GetRVal(St->getStore(), LV, T);
+    return StoreMgr->GetRVal(St->getStore(), LV, T);
   }
   
   void SetRVal(GRState& St, LVal LV, RVal V) {
-    St.St = StMgr->SetRVal(St.St, LV, V);
+    St.St = StoreMgr->SetRVal(St.St, LV, V);
   }
   
   const GRState* SetRVal(const GRState* St, LVal LV, RVal V);  
 
   void Unbind(GRState& St, LVal LV) {
-    St.St = StMgr->Remove(St.St, LV);
+    St.St = StoreMgr->Remove(St.St, LV);
   }
   
   const GRState* Unbind(const GRState* St, LVal LV);

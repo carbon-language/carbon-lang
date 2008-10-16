@@ -270,6 +270,7 @@ LVal LVal::MakeVal(StringLiteral* S) {
 // Utility methods for constructing RVals (both NonLVals and LVals).
 //===----------------------------------------------------------------------===//
 
+// Remove this method?
 RVal RVal::MakeVal(GRStateManager& SMgr, DeclRefExpr* E) {
   
   ValueDecl* D = cast<DeclRefExpr>(E)->getDecl();

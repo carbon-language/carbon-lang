@@ -52,7 +52,7 @@ GRStateManager::RemoveDeadBindings(const GRState* St, Stmt* Loc,
 
   // Clean up the store.
   DSymbols.clear();
-  NewSt.St = StMgr->RemoveDeadBindings(St->getStore(), Loc, Liveness,
+  NewSt.St = StoreMgr->RemoveDeadBindings(St->getStore(), Loc, Liveness,
                                        RegionRoots, LSymbols, DSymbols);
 
   return ConstraintMgr->RemoveDeadBindings(getPersistentState(NewSt), 
@@ -63,7 +63,7 @@ const GRState* GRStateManager::SetRVal(const GRState* St, LVal LV,
                                              RVal V) {
   
   Store OldStore = St->getStore();
-  Store NewStore = StMgr->SetRVal(OldStore, LV, V);
+  Store NewStore = StoreMgr->SetRVal(OldStore, LV, V);
   
   if (NewStore == OldStore)
     return St;
@@ -79,10 +79,10 @@ const GRState* GRStateManager::AddDecl(const GRState* St, const VarDecl* VD,
   Store NewStore;
 
   if (Ex)
-    NewStore = StMgr->AddDecl(OldStore, VD, Ex, 
+    NewStore = StoreMgr->AddDecl(OldStore, VD, Ex, 
                               GetRVal(St, Ex), Count);
   else
-    NewStore = StMgr->AddDecl(OldStore, VD, Ex);
+    NewStore = StoreMgr->AddDecl(OldStore, VD, Ex);
                               
   if (NewStore == OldStore)
     return St;
@@ -94,7 +94,7 @@ const GRState* GRStateManager::AddDecl(const GRState* St, const VarDecl* VD,
 
 const GRState* GRStateManager::Unbind(const GRState* St, LVal LV) {
   Store OldStore = St->getStore();
-  Store NewStore = StMgr->Remove(OldStore, LV);
+  Store NewStore = StoreMgr->Remove(OldStore, LV);
   
   if (NewStore == OldStore)
     return St;
@@ -107,7 +107,7 @@ const GRState* GRStateManager::Unbind(const GRState* St, LVal LV) {
 const GRState* GRStateManager::getInitialState() {
 
   GRState StateImpl(EnvMgr.getInitialEnvironment(), 
-                    StMgr->getInitialStore(),
+                    StoreMgr->getInitialStore(),
                     GDMFactory.GetEmptyMap());
 
   return getPersistentState(StateImpl);
@@ -196,7 +196,7 @@ void GRStateRef::printStdErr() const {
 void GRStateRef::print(std::ostream& Out, const char* nl, const char* sep)const{
   GRState::Printer **beg = Mgr->Printers.empty() ? 0 : &Mgr->Printers[0];
   GRState::Printer **end = !beg ? 0 : beg + Mgr->Printers.size();  
-  St->print(Out, *Mgr->StMgr, *Mgr->ConstraintMgr, beg, end, nl, sep);
+  St->print(Out, *Mgr->StoreMgr, *Mgr->ConstraintMgr, beg, end, nl, sep);
 }
 
 //===----------------------------------------------------------------------===//

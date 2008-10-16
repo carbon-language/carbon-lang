@@ -439,6 +439,11 @@ protected:
   RVal GetRVal(const GRState* St, LVal LV, QualType T = QualType()) {    
     return StateMgr.GetRVal(St, LV, T);
   }
+
+  // Get the lvalue of an expression.
+  RVal GetLValue(const GRState* St, const Expr* Ex) {
+    return StateMgr.GetLValue(St, Ex);
+  }
   
   inline NonLVal MakeConstantVal(uint64_t X, Expr* Ex) {
     return NonLVal::MakeVal(getBasicVals(), X, Ex->getType());
@@ -466,16 +471,14 @@ protected:
   ///  other functions that handle specific kinds of statements.
   void Visit(Stmt* S, NodeTy* Pred, NodeSet& Dst);
   
-  /// VisitLVal - Similar to Visit, but the specified expression is assummed
-  ///  to be evaluated under the context where it evaluates to an LVal.  For
-  ///  example, if Ex is a DeclRefExpr, under Visit Ex would evaluate to the
-  ///  value bound to Ex in the symbolic state, while under VisitLVal it would
-  ///  evaluate to an LVal representing the location of the referred Decl.
-  void VisitLVal(Expr* Ex, NodeTy* Pred, NodeSet& Dst);
+  /// VisitLValue - Evaluate the lvalue of the expression. For example, if Ex is
+  /// a DeclRefExpr, it evaluates to the MemRegionVal which represents its
+  /// storage location. Note that not all kinds of expressions has lvalue.
+  void VisitLValue(Expr* Ex, NodeTy* Pred, NodeSet& Dst);
   
   /// VisitArraySubscriptExpr - Transfer function for array accesses.
   void VisitArraySubscriptExpr(ArraySubscriptExpr* Ex, NodeTy* Pred,
-                               NodeSet& Dst, bool asLVal);
+                               NodeSet& Dst, bool asLValue);
   
   /// VisitAsmStmt - Transfer function logic for inline asm.
   void VisitAsmStmt(AsmStmt* A, NodeTy* Pred, NodeSet& Dst);
@@ -500,11 +503,11 @@ protected:
                  NodeSet& Dst);
   
   /// VisitCast - Transfer function logic for all casts (implicit and explicit).
-  void VisitCast(Expr* CastE, Expr* Ex, NodeTy* Pred, NodeSet& Dst);  
+  void VisitCast(Expr* CastE, Expr* Ex, NodeTy* Pred, NodeSet& Dst);
   
   /// VisitDeclRefExpr - Transfer function logic for DeclRefExprs.
   void VisitDeclRefExpr(DeclRefExpr* DR, NodeTy* Pred, NodeSet& Dst,
-                        bool asLval); 
+                        bool asLValue); 
   
   /// VisitDeclStmt - Transfer function logic for DeclStmts.
   void VisitDeclStmt(DeclStmt* DS, NodeTy* Pred, NodeSet& Dst); 
@@ -516,7 +519,7 @@ protected:
   void VisitLogicalExpr(BinaryOperator* B, NodeTy* Pred, NodeSet& Dst);
   
   /// VisitMemberExpr - Transfer function for member expressions.
-  void VisitMemberExpr(MemberExpr* M, NodeTy* Pred, NodeSet& Dst, bool asLVal);
+  void VisitMemberExpr(MemberExpr* M, NodeTy* Pred, NodeSet& Dst,bool asLValue);
   
   /// VisitObjCMessageExpr - Transfer function for ObjC message expressions.
   void VisitObjCMessageExpr(ObjCMessageExpr* ME, NodeTy* Pred, NodeSet& Dst);
@@ -538,7 +541,7 @@ protected:
     
   /// VisitUnaryOperator - Transfer function logic for unary operators.
   void VisitUnaryOperator(UnaryOperator* B, NodeTy* Pred, NodeSet& Dst,
-                          bool asLVal);
+                          bool asLValue);
  
   bool CheckDivideZero(Expr* Ex, const GRState* St, NodeTy* Pred,
                        RVal Denom);  

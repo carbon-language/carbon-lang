@@ -395,7 +395,7 @@ void GRExprEngine::Visit(Stmt* S, NodeTy* Pred, NodeSet& Dst) {
   }
 }
 
-void GRExprEngine::VisitLVal(Expr* Ex, NodeTy* Pred, NodeSet& Dst) {
+void GRExprEngine::VisitLValue(Expr* Ex, NodeTy* Pred, NodeSet& Dst) {
   
   Ex = Ex->IgnoreParens();
   
@@ -406,8 +406,8 @@ void GRExprEngine::VisitLVal(Expr* Ex, NodeTy* Pred, NodeSet& Dst) {
   
   switch (Ex->getStmtClass()) {
     default:
-      Visit(Ex, Pred, Dst);
-      return;
+      Ex->dump();
+      assert(0 && "Other kinds of expressions do not have lvalue.");
       
     case Stmt::ArraySubscriptExprClass:
       VisitArraySubscriptExpr(cast<ArraySubscriptExpr>(Ex), Pred, Dst, true);
@@ -788,59 +788,79 @@ void GRExprEngine::VisitLogicalExpr(BinaryOperator* B, NodeTy* Pred,
 // Transfer functions: Loads and stores.
 //===----------------------------------------------------------------------===//
 
-void GRExprEngine::VisitDeclRefExpr(DeclRefExpr* D, NodeTy* Pred, NodeSet& Dst,
-                                    bool asLVal) {
+void GRExprEngine::VisitDeclRefExpr(DeclRefExpr* Ex, NodeTy* Pred, NodeSet& Dst,
+                                    bool asLValue) {
   
   const GRState* St = GetState(Pred);
-  RVal X = RVal::MakeVal(getStateManager(), D);
-  
-  if (asLVal)
-    MakeNode(Dst, D, Pred, SetRVal(St, D, cast<LVal>(X)));
-  else {
-    RVal V = isa<lval::MemRegionVal>(X) ? GetRVal(St, cast<LVal>(X)) : X;
-    MakeNode(Dst, D, Pred, SetRVal(St, D, V));
+
+  const ValueDecl* D = Ex->getDecl();
+
+  if (const VarDecl* VD = dyn_cast<VarDecl>(D)) {
+
+    QualType T = VD->getType();
+    if (T->isArrayType()) {
+      assert(!asLValue && "Array variable has no lvalue.");
+
+      // C++ standard says array value should be implicitly converted to pointer
+      // in some cases. We don't have such context information right now.  We
+      // use a MemRegionVal to represent this. May be changed in the future.
+
+      RVal V = lval::MemRegionVal(StateMgr.getRegion(VD));
+      MakeNode(Dst, Ex, Pred, SetRVal(St, Ex, V));
+      return;
+    }
+
+    RVal V = GetLValue(St, Ex);
+    if (asLValue)
+      MakeNode(Dst, Ex, Pred, SetRVal(St, Ex, V));
+    else
+      EvalLoad(Dst, Ex, Pred, St, V);
+    return;
+
+  } else if (const EnumConstantDecl* ED = dyn_cast<EnumConstantDecl>(D)) {
+    assert(!asLValue && "EnumConstantDecl does not have lvalue.");
+
+    BasicValueFactory& BasicVals = StateMgr.getBasicVals();
+    RVal V = nonlval::ConcreteInt(BasicVals.getValue(ED->getInitVal()));
+    MakeNode(Dst, Ex, Pred, SetRVal(St, Ex, V));
+    return;
+
+  } else if (const FunctionDecl* FD = dyn_cast<FunctionDecl>(D)) {
+    assert(!asLValue && "FunctionDecl does not have lvalue.");
+
+    RVal V = lval::FuncVal(FD);
+    MakeNode(Dst, Ex, Pred, SetRVal(St, Ex, V));
+    return;
   }
+  
+  assert (false &&
+          "ValueDecl support for this ValueDecl not implemented.");
 }
 
 /// VisitArraySubscriptExpr - Transfer function for array accesses
 void GRExprEngine::VisitArraySubscriptExpr(ArraySubscriptExpr* A, NodeTy* Pred,
-                                           NodeSet& Dst, bool asLVal) {
+                                           NodeSet& Dst, bool asLValue) {
   
   Expr* Base = A->getBase()->IgnoreParens();
   Expr* Idx  = A->getIdx()->IgnoreParens();
   
-  // Always visit the base as an LVal expression.  This computes the
-  // abstract address of the base object.
   NodeSet Tmp;
-  
-  if (LVal::IsLValType(Base->getType())) // Base always is an LVal.
-    Visit(Base, Pred, Tmp);
-  else  
-    VisitLVal(Base, Pred, Tmp);
+
+  // Get Base's rvalue, which should be an LocVal.
+  Visit(Base, Pred, Tmp);
   
   for (NodeSet::iterator I1=Tmp.begin(), E1=Tmp.end(); I1!=E1; ++I1) {
     
     // Evaluate the index.
-
     NodeSet Tmp2;
     Visit(Idx, *I1, Tmp2);
       
     for (NodeSet::iterator I2=Tmp2.begin(), E2=Tmp2.end(); I2!=E2; ++I2) {
 
       const GRState* St = GetState(*I2);
-      RVal BaseV = GetRVal(St, Base);
-      RVal IdxV  = GetRVal(St, Idx);      
-      
-      // If IdxV is 0, return just BaseV.
-      
-      bool useBase = false;
-      
-      if (nonlval::ConcreteInt* IdxInt = dyn_cast<nonlval::ConcreteInt>(&IdxV))        
-        useBase = IdxInt->getValue() == 0;
-      
-      RVal V = useBase ? BaseV : lval::ArrayOffset::Make(getBasicVals(), BaseV,IdxV);
+      RVal V = GetLValue(St, A);
 
-      if (asLVal)
+      if (asLValue)
         MakeNode(Dst, A, *I2, SetRVal(St, A, V));
       else
         EvalLoad(Dst, A, *I2, St, V);
@@ -850,65 +870,22 @@ void GRExprEngine::VisitArraySubscriptExpr(ArraySubscriptExpr* A, NodeTy* Pred,
 
 /// VisitMemberExpr - Transfer function for member expressions.
 void GRExprEngine::VisitMemberExpr(MemberExpr* M, NodeTy* Pred,
-                                   NodeSet& Dst, bool asLVal) {
+                                   NodeSet& Dst, bool asLValue) {
   
   Expr* Base = M->getBase()->IgnoreParens();
 
-  // Always visit the base as an LVal expression.  This computes the
-  // abstract address of the base object.
   NodeSet Tmp;
-  
-  if (asLVal) {
-      
-    if (LVal::IsLValType(Base->getType())) // Base always is an LVal.
-      Visit(Base, Pred, Tmp);
-    else  
-      VisitLVal(Base, Pred, Tmp);
-  
-    for (NodeSet::iterator I=Tmp.begin(), E=Tmp.end(); I!=E; ++I) {
-      const GRState* St = GetState(*I);
-      RVal BaseV = GetRVal(St, Base);      
-      
-      RVal V = lval::FieldOffset::Make(getBasicVals(), GetRVal(St, Base),
-                                       M->getMemberDecl());
-      
-      MakeNode(Dst, M, *I, SetRVal(St, M, V));
-    }
-    
-    return;
-  }
 
-  // Evaluate the base.  Can be an LVal or NonLVal (depends on whether
-  //  or not isArrow() is true).
+  // Get Base expr's rvalue.
   Visit(Base, Pred, Tmp);
-  
-  for (NodeSet::iterator I=Tmp.begin(), E=Tmp.end(); I!=E; ++I) {
 
+  for (NodeSet::iterator I = Tmp.begin(), E = Tmp.end(); I != E; ++I) {
     const GRState* St = GetState(*I);
-    RVal BaseV = GetRVal(St, Base);
-    
-    if (LVal::IsLValType(Base->getType())) {
-    
-      assert (M->isArrow());
-      
-      RVal V = lval::FieldOffset::Make(getBasicVals(), GetRVal(St, Base),
-                                       M->getMemberDecl());
-    
-      EvalLoad(Dst, M, *I, St, V);
-    }
-    else {
-      
-      assert (!M->isArrow());
-      
-      if (BaseV.isUnknownOrUndef()) {
-        MakeNode(Dst, M, *I, SetRVal(St, M, BaseV));
-        continue;
-      }
-
-      // FIXME: Implement nonlval objects representing struct temporaries.
-      assert (isa<NonLVal>(BaseV));
-      MakeNode(Dst, M, *I, SetRVal(St, M, UnknownVal()));
-    }
+    RVal L = GetLValue(St, M);
+    if (asLValue)
+      MakeNode(Dst, M, *I, SetRVal(St, M, L));
+    else
+      EvalLoad(Dst, M, *I, St, L);
   }
 }
 
@@ -1080,7 +1057,7 @@ void GRExprEngine::VisitCall(CallExpr* CE, NodeTy* Pred,
   NodeSet DstTmp;    
   Expr* Callee = CE->getCallee()->IgnoreParens();
 
-  VisitLVal(Callee, Pred, DstTmp);
+  Visit(Callee, Pred, DstTmp);
   
   // Finally, evaluate the function call.
   for (NodeSet::iterator DI = DstTmp.begin(), DE = DstTmp.end(); DI!=DE; ++DI) {
@@ -1412,12 +1389,11 @@ void GRExprEngine::VisitObjCMessageExprDispatchHelper(ObjCMessageExpr* ME,
 //===----------------------------------------------------------------------===//
 
 void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, NodeTy* Pred, NodeSet& Dst){
-  
   NodeSet S1;
   QualType T = CastE->getType();
   
   if (T->isReferenceType())
-    VisitLVal(Ex, Pred, S1);
+    VisitLValue(Ex, Pred, S1);
   else
     Visit(Ex, Pred, S1);
   
@@ -1562,7 +1538,7 @@ void GRExprEngine::VisitSizeOfAlignOfTypeExpr(SizeOfAlignOfTypeExpr* Ex,
 
 
 void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, NodeTy* Pred,
-                                      NodeSet& Dst, bool asLVal) {
+                                      NodeSet& Dst, bool asLValue) {
 
   switch (U->getOpcode()) {
       
@@ -1580,7 +1556,7 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, NodeTy* Pred,
         const GRState* St = GetState(*I);
         RVal location = GetRVal(St, Ex);
         
-        if (asLVal)
+        if (asLValue)
           MakeNode(Dst, U, *I, SetRVal(St, U, location));
         else
           EvalLoad(Dst, U, *I, St, location);
@@ -1642,7 +1618,7 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, NodeTy* Pred,
       Dst.Add(Pred);
       return;
       
-    case UnaryOperator::Plus: assert (!asLVal);  // FALL-THROUGH.
+    case UnaryOperator::Plus: assert (!asLValue);  // FALL-THROUGH.
     case UnaryOperator::Extension: {
       
       // Unary "+" is a no-op, similar to a parentheses.  We still have places
@@ -1664,10 +1640,10 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, NodeTy* Pred,
     
     case UnaryOperator::AddrOf: {
       
-      assert (!asLVal);
+      assert(!asLValue);
       Expr* Ex = U->getSubExpr()->IgnoreParens();
       NodeSet Tmp;
-      VisitLVal(Ex, Pred, Tmp);
+      VisitLValue(Ex, Pred, Tmp);
      
       for (NodeSet::iterator I=Tmp.begin(), E=Tmp.end(); I!=E; ++I) {        
         const GRState* St = GetState(*I);
@@ -1683,7 +1659,7 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, NodeTy* Pred,
     case UnaryOperator::Minus:
     case UnaryOperator::Not: {
       
-      assert (!asLVal);
+      assert (!asLValue);
       Expr* Ex = U->getSubExpr()->IgnoreParens();
       NodeSet Tmp;
       Visit(Ex, Pred, Tmp);
@@ -1774,7 +1750,7 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, NodeTy* Pred,
   assert (U->isIncrementDecrementOp());
   NodeSet Tmp;
   Expr* Ex = U->getSubExpr()->IgnoreParens();
-  VisitLVal(Ex, Pred, Tmp);
+  VisitLValue(Ex, Pred, Tmp);
   
   for (NodeSet::iterator I = Tmp.begin(), E = Tmp.end(); I!=E; ++I) {
     
@@ -1824,7 +1800,7 @@ void GRExprEngine::VisitAsmStmtHelperOutputs(AsmStmt* A,
   }
   
   NodeSet Tmp;
-  VisitLVal(*I, Pred, Tmp);
+  VisitLValue(*I, Pred, Tmp);
   
   ++I;
   
@@ -1994,7 +1970,7 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
   Expr* RHS = B->getRHS()->IgnoreParens();
   
   if (B->isAssignmentOp())
-    VisitLVal(LHS, Pred, Tmp1);
+    VisitLValue(LHS, Pred, Tmp1);
   else
     Visit(LHS, Pred, Tmp1);
 
@@ -2033,7 +2009,7 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
           // Simulate the effects of a "store":  bind the value of the RHS
           // to the L-Value represented by the LHS.
           
-          EvalStore(Dst, B, LHS, *I2, SetRVal(St, B, RightV), LeftV, RightV);          
+          EvalStore(Dst, B, LHS, *I2, SetRVal(St, B, RightV), LeftV, RightV);
           continue;
         }
           

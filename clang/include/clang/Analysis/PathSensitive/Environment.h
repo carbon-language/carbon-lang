@@ -73,6 +73,9 @@ public:
   }
   
   RVal GetRVal(Expr* Ex, BasicValueFactory& BasicVals) const;
+  RVal GetRVal(const Expr* Ex, BasicValueFactory& BasicVals) const {
+    return GetRVal(const_cast<Expr*>(Ex), BasicVals);
+  }
   RVal GetBlkExprRVal(Expr* Ex, BasicValueFactory& BasicVals) const; 
   
   /// Profile - Profile the contents of an Environment object for use

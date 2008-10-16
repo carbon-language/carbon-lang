@@ -24,10 +24,12 @@
 namespace clang {
   
 typedef const void* Store;
-  
+
+class GRState;  
 class GRStateManager;
 class LiveVariables;
 class Stmt;
+class Expr;
 class MemRegion;
 class MemRegionManager;
 
@@ -43,6 +45,10 @@ public:
   virtual Store getInitialStore() = 0;
   virtual MemRegionManager& getRegionManager() = 0;
   virtual LVal getLVal(const VarDecl* VD) = 0;  
+
+  // Get the lvalue of an expression.
+  virtual RVal getLValue(const GRState* St, const Expr* Ex) = 0;
+
   virtual Store
   RemoveDeadBindings(Store store, Stmt* Loc, const LiveVariables& Live,
                      llvm::SmallVectorImpl<const MemRegion*>& RegionRoots,
