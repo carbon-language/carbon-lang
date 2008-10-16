@@ -406,8 +406,14 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
       }
         
       if (FTI.NumArgs == 0) {
-        // Simple void foo(), where the incoming T is the result type.
-        T = Context.getFunctionTypeNoProto(T);
+        if (getLangOptions().CPlusPlus) {
+          // C++ 8.3.5p2: If the parameter-declaration-clause is empty, the
+          // function takes no arguments.
+          T = Context.getFunctionType(T, NULL, 0, FTI.isVariadic);
+        } else {
+          // Simple void foo(), where the incoming T is the result type.
+          T = Context.getFunctionTypeNoProto(T);
+        }
       } else if (FTI.ArgInfo[0].Param == 0) {
         // C99 6.7.5.3p3: Reject int(x,y,z) when it's not a function definition.
         Diag(FTI.ArgInfo[0].IdentLoc, diag::err_ident_list_in_fn_declaration);        
