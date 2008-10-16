@@ -27,8 +27,6 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
-#include <queue>
-#include <set>
 using namespace llvm;
 
 namespace {

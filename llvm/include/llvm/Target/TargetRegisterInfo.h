@@ -21,7 +21,6 @@
 #include "llvm/CodeGen/ValueTypes.h"
 #include <cassert>
 #include <functional>
-#include <set>
 
 namespace llvm {
 

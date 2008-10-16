@@ -19,7 +19,6 @@
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/System/Memory.h"
 #include "llvm/Support/Debug.h"
-#include <set>
 using namespace llvm;
 
 static TargetJITInfo::JITCompilerFn JITCompilerFunction;

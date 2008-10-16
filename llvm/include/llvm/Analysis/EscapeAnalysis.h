@@ -19,7 +19,6 @@
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Target/TargetData.h"
 #include <set>
-#include <vector>
 
 namespace llvm {
 

@@ -31,9 +31,6 @@
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/Support/Debug.h"
-#include <queue>
-#include <set>
-
 using namespace llvm;
 
 const char *MipsTargetLowering::

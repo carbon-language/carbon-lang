@@ -39,8 +39,6 @@
 #include "llvm/Support/Streams.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
-#include <queue>
-#include <set>
 using namespace llvm;
 
 STATISTIC(NumFPKill   , "Number of FP_REG_KILL instructions added");

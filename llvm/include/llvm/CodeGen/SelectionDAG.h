@@ -21,7 +21,6 @@
 #include "llvm/CodeGen/SelectionDAGNodes.h"
 
 #include <cassert>
-#include <list>
 #include <vector>
 #include <map>
 #include <string>

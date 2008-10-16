@@ -17,6 +17,7 @@
 #include "llvm/Module.h"
 #include "llvm/Support/InstIterator.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include <vector>
 using namespace llvm;
 
 char EscapeAnalysis::ID = 0;

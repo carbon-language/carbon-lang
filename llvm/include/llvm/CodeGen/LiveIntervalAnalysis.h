@@ -28,7 +28,6 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Allocator.h"
 #include <cmath>
-#include <map>
 
 namespace llvm {
 

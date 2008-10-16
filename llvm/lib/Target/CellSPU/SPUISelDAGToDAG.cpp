@@ -31,8 +31,6 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Compiler.h"
-#include <queue>
-#include <set>
 
 using namespace llvm;
 

@@ -31,9 +31,6 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Target/TargetMachine.h"
-#include <queue>
-#include <set>
-
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
