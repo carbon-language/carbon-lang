@@ -134,7 +134,7 @@ def memopv16i8 : PatFrag<(ops node:$ptr), (v16i8 (memop node:$ptr))>;
 // SSSE3 uses MMX registers for some instructions. They aren't aligned on a
 // 16-byte boundary.
 // FIXME: 8 byte alignment for mmx reads is not required
-def memop64 : PatFrag<(ops node:$ptr), (unindexedload node:$ptr), [{
+def memop64 : PatFrag<(ops node:$ptr), (load node:$ptr), [{
   return cast<LoadSDNode>(N)->getAlignment() >= 8;
 }]>;
 
