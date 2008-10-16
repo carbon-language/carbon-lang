@@ -60,9 +60,11 @@ class ASTRecordLayout {
 
   void SetAlignment(unsigned A) {  Alignment = A; }
 
-  /// LayoutField - Field layout.
+  /// LayoutField - Field layout. StructPacking is the specified
+  /// packing alignment (maximum alignment) in bits to use for the
+  /// structure, or 0 if no packing alignment is specified.
   void LayoutField(const FieldDecl *FD, unsigned FieldNo,
-                   bool IsUnion, bool StructIsPacked,
+                   bool IsUnion, unsigned StructPacking,
                    ASTContext &Context);
   
   ASTRecordLayout(const ASTRecordLayout&);   // DO NOT IMPLEMENT

@@ -1939,6 +1939,20 @@ Sema::DeclTy *Sema::ActOnTagStruct(Scope *S, TagDecl::TagKind Kind, TagKind TK,
     // Add it to the decl chain.
     PushOnScopeChains(New, S);
   }
+
+  // Handle #pragma pack: if the #pragma pack stack has non-default
+  // alignment, make up a packed attribute for this decl. These
+  // attributes are checked when the ASTContext lays out the
+  // structure.
+  //
+  // It is important for implementing the correct semantics that this
+  // happen here (in act on tag decl). The #pragma pack stack is
+  // maintained as a result of parser callbacks which can occur at
+  // many points during the parsing of a struct declaration (because
+  // the #pragma tokens are effectively skipped over during the
+  // parsing of the struct).
+  if (unsigned Alignment = PackContext.getAlignment())
+    New->addAttr(new PackedAttr(Alignment * 8));
   
   if (Attr)
     ProcessDeclAttributeList(New, Attr);

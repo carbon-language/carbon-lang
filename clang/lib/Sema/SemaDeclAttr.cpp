@@ -256,7 +256,7 @@ static void HandlePackedAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   }
   
   if (TagDecl *TD = dyn_cast<TagDecl>(d))
-    TD->addAttr(new PackedAttr());
+    TD->addAttr(new PackedAttr(1));
   else if (FieldDecl *FD = dyn_cast<FieldDecl>(d)) {
     // If the alignment is less than or equal to 8 bits, the packed attribute
     // has no effect.
@@ -266,7 +266,7 @@ static void HandlePackedAttr(Decl *d, const AttributeList &Attr, Sema &S) {
              diag::warn_attribute_ignored_for_field_of_type,
              Attr.getName()->getName(), FD->getType().getAsString());
     else
-      FD->addAttr(new PackedAttr());
+      FD->addAttr(new PackedAttr(1));
   } else
     S.Diag(Attr.getLoc(), diag::warn_attribute_ignored,
            Attr.getName()->getName());

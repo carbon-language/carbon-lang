@@ -371,12 +371,17 @@ ASTContext::getTypeInfo(QualType T) {
 
 /// LayoutField - Field layout.
 void ASTRecordLayout::LayoutField(const FieldDecl *FD, unsigned FieldNo,
-                                  bool IsUnion, bool StructIsPacked,
+                                  bool IsUnion, unsigned StructPacking,
                                   ASTContext &Context) {
-  bool FieldIsPacked = StructIsPacked || FD->getAttr<PackedAttr>();
+  unsigned FieldPacking = StructPacking;
   uint64_t FieldOffset = IsUnion ? 0 : Size;
   uint64_t FieldSize;
   unsigned FieldAlign;
+
+  // FIXME: Should this override struct packing? Probably we want to
+  // take the minimum?
+  if (const PackedAttr *PA = FD->getAttr<PackedAttr>())
+    FieldPacking = PA->getAlignment();
   
   if (const Expr *BitWidthExpr = FD->getBitWidth()) {
     // TODO: Need to check this algorithm on other targets!
@@ -388,9 +393,14 @@ void ASTRecordLayout::LayoutField(const FieldDecl *FD, unsigned FieldNo,
       Context.getTypeInfo(FD->getType());
     uint64_t TypeSize = FieldInfo.first;
     
+    // Determine the alignment of this bitfield. The packing
+    // attributes define a maximum and the alignment attribute defines
+    // a minimum.
+    // FIXME: What is the right behavior when the specified alignment
+    // is smaller than the specified packing?
     FieldAlign = FieldInfo.second;
-    if (FieldIsPacked)
-      FieldAlign = 1;
+    if (FieldPacking)
+      FieldAlign = std::min(FieldAlign, FieldPacking);
     if (const AlignedAttr *AA = FD->getAttr<AlignedAttr>())
       FieldAlign = std::max(FieldAlign, AA->getAlignment());
     
@@ -418,8 +428,15 @@ void ASTRecordLayout::LayoutField(const FieldDecl *FD, unsigned FieldNo,
       FieldAlign = FieldInfo.second;
     }
     
-    if (FieldIsPacked)
-      FieldAlign = 8;
+    // Determine the alignment of this bitfield. The packing
+    // attributes define a maximum and the alignment attribute defines
+    // a minimum. Additionally, the packing alignment must be at least
+    // a byte for non-bitfields.
+    //
+    // FIXME: What is the right behavior when the specified alignment
+    // is smaller than the specified packing?
+    if (FieldPacking)
+      FieldAlign = std::min(FieldAlign, std::max(8U, FieldPacking));
     if (const AlignedAttr *AA = FD->getAttr<AlignedAttr>())
       FieldAlign = std::max(FieldAlign, AA->getAlignment());
     
@@ -470,7 +487,9 @@ ASTContext::getASTObjCInterfaceLayout(const ObjCInterfaceDecl *D) {
   }
   Entry = NewEntry;
 
-  bool IsPacked = D->getAttr<PackedAttr>();
+  unsigned StructPacking = 0;
+  if (const PackedAttr *PA = D->getAttr<PackedAttr>())
+    StructPacking = PA->getAlignment();
 
   if (const AlignedAttr *AA = D->getAttr<AlignedAttr>())
     NewEntry->SetAlignment(std::max(NewEntry->getAlignment(), 
@@ -481,7 +500,7 @@ ASTContext::getASTObjCInterfaceLayout(const ObjCInterfaceDecl *D) {
   for (ObjCInterfaceDecl::ivar_iterator IVI = D->ivar_begin(), 
        IVE = D->ivar_end(); IVI != IVE; ++IVI) {
     const ObjCIvarDecl* Ivar = (*IVI);
-    NewEntry->LayoutField(Ivar, i++, false, IsPacked, *this);
+    NewEntry->LayoutField(Ivar, i++, false, StructPacking, *this);
   }
 
   // Finally, round the size of the total struct up to the alignment of the
@@ -507,8 +526,11 @@ const ASTRecordLayout &ASTContext::getASTRecordLayout(const RecordDecl *D) {
   Entry = NewEntry;
 
   NewEntry->InitializeLayout(D->getNumMembers());
-  bool StructIsPacked = D->getAttr<PackedAttr>();
   bool IsUnion = D->isUnion();
+
+  unsigned StructPacking = 0;
+  if (const PackedAttr *PA = D->getAttr<PackedAttr>())
+    StructPacking = PA->getAlignment();
 
   if (const AlignedAttr *AA = D->getAttr<AlignedAttr>())
     NewEntry->SetAlignment(std::max(NewEntry->getAlignment(), 
@@ -518,7 +540,7 @@ const ASTRecordLayout &ASTContext::getASTRecordLayout(const RecordDecl *D) {
   // the future, this will need to be tweakable by targets.
   for (unsigned i = 0, e = D->getNumMembers(); i != e; ++i) {
     const FieldDecl *FD = D->getMember(i);
-    NewEntry->LayoutField(FD, i, IsUnion, StructIsPacked, *this);
+    NewEntry->LayoutField(FD, i, IsUnion, StructPacking, *this);
   }
 
   // Finally, round the size of the total struct up to the alignment of the

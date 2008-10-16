@@ -82,9 +82,14 @@ public:
 };
 
 class PackedAttr : public Attr {
+  unsigned Alignment;
+
 public:
-  PackedAttr() : Attr(Packed) {}
-  
+  PackedAttr(unsigned alignment) : Attr(Packed), Alignment(alignment) {}
+
+  /// getAlignment - The specified alignment in bits.
+  unsigned getAlignment() const { return Alignment; }
+
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Attr *A) {
     return A->getKind() == Packed;
@@ -96,7 +101,8 @@ class AlignedAttr : public Attr {
   unsigned Alignment;
 public:
   AlignedAttr(unsigned alignment) : Attr(Aligned), Alignment(alignment) {}
-  
+
+  /// getAlignment - The specified alignment in bits.
   unsigned getAlignment() const { return Alignment; }
   
   // Implement isa/cast/dyncast/etc.
