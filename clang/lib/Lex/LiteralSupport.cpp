@@ -457,6 +457,26 @@ void NumericLiteralParser::ParseNumberStartingWithZero(SourceLocation TokLoc) {
 /// matches Val's input width.  If there is an overflow, set Val to the low bits
 /// of the result and return true.  Otherwise, return false.
 bool NumericLiteralParser::GetIntegerValue(llvm::APInt &Val) {
+  // Fast path: Compute a conservative bound on the maximum number of
+  // bits per digit in this radix. If we can't possibly overflow a
+  // uint64 based on that bound then do the simple conversion to
+  // integer. This avoids the expensive overflow checking below, and
+  // handles the common cases that matter (small decimal integers and
+  // hex/octal values which don't overflow).
+  unsigned MaxBitsPerDigit = 1;
+  while ((1U << MaxBitsPerDigit) < radix) 
+    MaxBitsPerDigit += 1;
+  if ((SuffixBegin - DigitsBegin) * MaxBitsPerDigit <= 64) {
+    uint64_t N = 0;
+    for (s = DigitsBegin; s != SuffixBegin; ++s)
+      N = N*radix + HexDigitValue(*s);
+
+    // This will truncate the value to Val's input width. Simply check
+    // for overflow by comparing.
+    Val = N;
+    return Val.getZExtValue() != N;
+  }
+
   Val = 0;
   s = DigitsBegin;
 
