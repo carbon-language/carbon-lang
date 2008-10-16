@@ -50,7 +50,7 @@ bool EscapeAnalysis::runOnFunction(Function& F) {
       for (Function::arg_iterator AI = F.arg_begin(), AE = F.arg_end();
            AI != AE; ++AI) {
         if (!isa<PointerType>(AI->getType())) continue;
-        AliasAnalysis::AliasResult R = AA.alias(Pointer, StoreSize, AI, ~0UL);
+        AliasAnalysis::AliasResult R = AA.alias(Pointer, StoreSize, AI, ~0U);
         if (R != AliasAnalysis::NoAlias) {
           EscapePoints.insert(S);
           inserted = true;
@@ -63,7 +63,7 @@ bool EscapeAnalysis::runOnFunction(Function& F) {
       
       for (Module::global_iterator GI = M->global_begin(), GE = M->global_end();
            GI != GE; ++GI) {
-        AliasAnalysis::AliasResult R = AA.alias(Pointer, StoreSize, GI, ~0UL);
+        AliasAnalysis::AliasResult R = AA.alias(Pointer, StoreSize, GI, ~0U);
         if (R != AliasAnalysis::NoAlias) {
           EscapePoints.insert(S);
           break;
