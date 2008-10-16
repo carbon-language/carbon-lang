@@ -73,6 +73,7 @@ public:
   typedef mapped_iterator<RootIt, UnaryFunc> _Self;
 
   inline const RootIt &getCurrent() const { return current; }
+  inline const UnaryFunc &getFunc() const { return Fn; }
 
   inline explicit mapped_iterator(const RootIt &I, UnaryFunc F)
     : current(I), Fn(F) {}
@@ -87,9 +88,13 @@ public:
   _Self& operator--() { --current; return *this; }
   _Self  operator++(int) { _Self __tmp = *this; ++current; return __tmp; }
   _Self  operator--(int) { _Self __tmp = *this; --current; return __tmp; }
-  _Self  operator+    (difference_type n) const { return _Self(current + n); }
+  _Self  operator+    (difference_type n) const {
+    return _Self(current + n, Fn);
+  }
   _Self& operator+=   (difference_type n) { current += n; return *this; }
-  _Self  operator-    (difference_type n) const { return _Self(current - n); }
+  _Self  operator-    (difference_type n) const {
+    return _Self(current - n, Fn);
+  }
   _Self& operator-=   (difference_type n) { current -= n; return *this; }
   reference operator[](difference_type n) const { return *(*this + n); }
 
@@ -106,7 +111,7 @@ template <class _Iterator, class Func>
 inline mapped_iterator<_Iterator, Func>
 operator+(typename mapped_iterator<_Iterator, Func>::difference_type N,
           const mapped_iterator<_Iterator, Func>& X) {
-  return mapped_iterator<_Iterator, Func>(X.getCurrent() - N);
+  return mapped_iterator<_Iterator, Func>(X.getCurrent() - N, X.getFunc());
 }
 
 
