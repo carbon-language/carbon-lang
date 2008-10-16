@@ -1274,9 +1274,7 @@ Sema::DeclTy *Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
     
     // Check that type of property and its ivar are type compatible.
     if (PropType != IvarType) {
-      // A readonly property is allowed to be a sub-class of the ivar type.
-      if (!property->isReadOnly() ||
-          CheckAssignmentConstraints(PropType, IvarType) != Compatible) {
+      if (CheckAssignmentConstraints(PropType, IvarType) != Compatible) {
         Diag(PropertyLoc, diag::error_property_ivar_type, property->getName(),
             Ivar->getName());
         return 0;
