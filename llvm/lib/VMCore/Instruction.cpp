@@ -172,13 +172,39 @@ bool Instruction::isIdenticalTo(Instruction *I) const {
 
   // Check special state that is a part of some instructions.
   if (const LoadInst *LI = dyn_cast<LoadInst>(this))
-    return LI->isVolatile() == cast<LoadInst>(I)->isVolatile();
+    return LI->isVolatile() == cast<LoadInst>(I)->isVolatile() &&
+           LI->getAlignment() == cast<LoadInst>(I)->getAlignment();
   if (const StoreInst *SI = dyn_cast<StoreInst>(this))
-    return SI->isVolatile() == cast<StoreInst>(I)->isVolatile();
+    return SI->isVolatile() == cast<StoreInst>(I)->isVolatile() &&
+           SI->getAlignment() == cast<StoreInst>(I)->getAlignment();
   if (const CmpInst *CI = dyn_cast<CmpInst>(this))
     return CI->getPredicate() == cast<CmpInst>(I)->getPredicate();
   if (const CallInst *CI = dyn_cast<CallInst>(this))
-    return CI->isTailCall() == cast<CallInst>(I)->isTailCall();
+    return CI->isTailCall() == cast<CallInst>(I)->isTailCall() &&
+           CI->getCallingConv() == cast<CallInst>(I)->getCallingConv() &&
+           CI->getAttributes().getRawPointer() ==
+             cast<CallInst>(I)->getAttributes().getRawPointer();
+  if (const InvokeInst *CI = dyn_cast<InvokeInst>(this))
+    return CI->getCallingConv() == cast<CallInst>(I)->getCallingConv() &&
+           CI->getAttributes().getRawPointer() ==
+             cast<CallInst>(I)->getAttributes().getRawPointer();
+  if (const InsertValueInst *IVI = dyn_cast<InsertValueInst>(this)) {
+    if (IVI->getNumIndices() != cast<InsertValueInst>(I)->getNumIndices())
+      return false;
+    for (unsigned i = 0, e = IVI->getNumIndices(); i != e; ++i)
+      if (IVI->idx_begin()[i] != cast<InsertValueInst>(I)->idx_begin()[i])
+        return false;
+    return true;
+  }
+  if (const ExtractValueInst *EVI = dyn_cast<ExtractValueInst>(this)) {
+    if (EVI->getNumIndices() != cast<ExtractValueInst>(I)->getNumIndices())
+      return false;
+    for (unsigned i = 0, e = EVI->getNumIndices(); i != e; ++i)
+      if (EVI->idx_begin()[i] != cast<ExtractValueInst>(I)->idx_begin()[i])
+        return false;
+    return true;
+  }
+
   return true;
 }
 
@@ -196,13 +222,38 @@ bool Instruction::isSameOperationAs(Instruction *I) const {
 
   // Check special state that is a part of some instructions.
   if (const LoadInst *LI = dyn_cast<LoadInst>(this))
-    return LI->isVolatile() == cast<LoadInst>(I)->isVolatile();
+    return LI->isVolatile() == cast<LoadInst>(I)->isVolatile() &&
+           LI->getAlignment() == cast<LoadInst>(I)->getAlignment();
   if (const StoreInst *SI = dyn_cast<StoreInst>(this))
-    return SI->isVolatile() == cast<StoreInst>(I)->isVolatile();
+    return SI->isVolatile() == cast<StoreInst>(I)->isVolatile() &&
+           SI->getAlignment() == cast<StoreInst>(I)->getAlignment();
   if (const CmpInst *CI = dyn_cast<CmpInst>(this))
     return CI->getPredicate() == cast<CmpInst>(I)->getPredicate();
   if (const CallInst *CI = dyn_cast<CallInst>(this))
-    return CI->isTailCall() == cast<CallInst>(I)->isTailCall();
+    return CI->isTailCall() == cast<CallInst>(I)->isTailCall() &&
+           CI->getCallingConv() == cast<CallInst>(I)->getCallingConv() &&
+           CI->getAttributes().getRawPointer() ==
+             cast<CallInst>(I)->getAttributes().getRawPointer();
+  if (const InvokeInst *CI = dyn_cast<InvokeInst>(this))
+    return CI->getCallingConv() == cast<CallInst>(I)->getCallingConv() &&
+           CI->getAttributes().getRawPointer() ==
+             cast<CallInst>(I)->getAttributes().getRawPointer();
+  if (const InsertValueInst *IVI = dyn_cast<InsertValueInst>(this)) {
+    if (IVI->getNumIndices() != cast<InsertValueInst>(I)->getNumIndices())
+      return false;
+    for (unsigned i = 0, e = IVI->getNumIndices(); i != e; ++i)
+      if (IVI->idx_begin()[i] != cast<InsertValueInst>(I)->idx_begin()[i])
+        return false;
+    return true;
+  }
+  if (const ExtractValueInst *EVI = dyn_cast<ExtractValueInst>(this)) {
+    if (EVI->getNumIndices() != cast<ExtractValueInst>(I)->getNumIndices())
+      return false;
+    for (unsigned i = 0, e = EVI->getNumIndices(); i != e; ++i)
+      if (EVI->idx_begin()[i] != cast<ExtractValueInst>(I)->idx_begin()[i])
+        return false;
+    return true;
+  }
 
   return true;
 }
