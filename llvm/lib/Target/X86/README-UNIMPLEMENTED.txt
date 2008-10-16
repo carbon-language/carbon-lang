@@ -9,6 +9,6 @@ which would be great.
 
 1) vector shifts
 2) vector comparisons
-3) vector fp<->int comparisons: PR2683, PR2684, PR2685, PR2686, PR2688
+3) vector fp<->int conversions: PR2683, PR2684, PR2685, PR2686, PR2688
 4) bitcasts from vectors to scalars: PR2804
 
