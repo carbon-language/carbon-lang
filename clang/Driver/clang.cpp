@@ -54,13 +54,17 @@ using namespace clang;
 // Global options.
 //===----------------------------------------------------------------------===//
 
-bool HadErrors = false;
+static bool HadErrors = false;
 
 static llvm::cl::opt<bool>
 Verbose("v", llvm::cl::desc("Enable verbose output"));
 static llvm::cl::opt<bool>
 Stats("print-stats", 
       llvm::cl::desc("Print performance metrics and statistics"));
+static llvm::cl::opt<bool>
+DisableFree("disable-free",
+           llvm::cl::desc("Disable freeing of memory on exit"),
+           llvm::cl::init(false));
 
 enum ProgActions {
   RewriteObjC,                  // ObjC->C Rewriter.
@@ -1187,7 +1191,7 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
     if (VerifyDiagnostics)
       exit(CheckASTConsumer(PP, Consumer.get()));
     
-    ParseAST(PP, Consumer.get(), Stats);
+    ParseAST(PP, Consumer.get(), Stats, !DisableFree);
   } else {
     if (VerifyDiagnostics)
       exit(CheckDiagnostics(PP));

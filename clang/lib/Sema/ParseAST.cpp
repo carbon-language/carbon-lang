@@ -26,26 +26,30 @@ using namespace clang;
 /// ParseAST - Parse the entire file specified, notifying the ASTConsumer as
 /// the file is parsed.  This takes ownership of the ASTConsumer and
 /// ultimately deletes it.
-void clang::ParseAST(Preprocessor &PP, ASTConsumer *Consumer, bool PrintStats) {
+///
+/// \param FreeMemory If false, the memory used for AST elements is
+/// not released.
+void clang::ParseAST(Preprocessor &PP, ASTConsumer *Consumer, 
+                     bool PrintStats, bool FreeMemory) {
   // Collect global stats on Decls/Stmts (until we have a module streamer).
   if (PrintStats) {
     Decl::CollectingStats(true);
     Stmt::CollectingStats(true);
   }
   
-  ASTContext Context(PP.getLangOptions(), PP.getSourceManager(),
-                     PP.getTargetInfo(),
-                     PP.getIdentifierTable(), PP.getSelectorTable());
-  
-  TranslationUnit TU(Context);
-  Sema S(PP, Context, *Consumer);
+  ASTContext *Context = 
+    new ASTContext(PP.getLangOptions(), PP.getSourceManager(),
+                   PP.getTargetInfo(),
+                   PP.getIdentifierTable(), PP.getSelectorTable());
+  TranslationUnit *TU = new TranslationUnit(*Context);
+  Sema S(PP, *Context, *Consumer);
   Parser P(PP, S);
   PP.EnterMainSourceFile();
     
   // Initialize the parser.
   P.Initialize();
   
-  Consumer->InitializeTU(TU);
+  Consumer->InitializeTU(*TU);
   
   Parser::DeclTy *ADecl;
   
@@ -55,22 +59,27 @@ void clang::ParseAST(Preprocessor &PP, ASTConsumer *Consumer, bool PrintStats) {
     // skipping something.
     if (ADecl) {
       Decl* D = static_cast<Decl*>(ADecl);      
-      TU.AddTopLevelDecl(D); // TranslationUnit now owns the Decl.
+      TU->AddTopLevelDecl(D); // TranslationUnit now owns the Decl.
       Consumer->HandleTopLevelDecl(D);
     }
   };
   
-  Consumer->HandleTranslationUnit(TU);
+  Consumer->HandleTranslationUnit(*TU);
 
   if (PrintStats) {
     fprintf(stderr, "\nSTATISTICS:\n");
     P.getActions().PrintStats();
-    Context.PrintStats();
+    Context->PrintStats();
     Decl::PrintStats();
     Stmt::PrintStats();
     Consumer->PrintStats();
     
     Decl::CollectingStats(false);
     Stmt::CollectingStats(false);
+  }
+
+  if (FreeMemory) {
+    delete TU;
+    delete Context;      
   }
 }
