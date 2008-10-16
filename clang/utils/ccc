@@ -274,7 +274,7 @@ def main(args):
                    '-e', '-install_name',
                    '-unexported_symbols_list', '-exported_symbols_list', 
                    '-compatibility_version', '-current_version', '-init',
-                   '-seg1addr', '-dylib_file'):
+                   '-seg1addr', '-dylib_file', '-Xlinker'):
             link_opts.append(arg)
             link_opts.append(args[i+1])
             i += 1
