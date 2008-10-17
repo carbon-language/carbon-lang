@@ -383,6 +383,10 @@ CGDebugInfo::getOrCreateRecordType(QualType type, llvm::CompileUnitDesc *Unit)
     return NULL;
 
   RecordDecl *RecDecl = type->getAsRecordType()->getDecl();
+  // We can not get the type for forward declarations. 
+  // FIXME: What *should* we be doing here?
+  if (!RecDecl->getDefinition(M->getContext()))
+    return NULL;
   const ASTRecordLayout &RL = M->getContext().getASTRecordLayout(RecDecl);
 
   SourceManager &SM = M->getContext().getSourceManager();
@@ -676,7 +680,7 @@ void CGDebugInfo::EmitRegionStart(llvm::Function *Fn,
                                   llvm::IRBuilder<> &Builder) 
 {
   llvm::BlockDesc *Block = new llvm::BlockDesc();
-  if (RegionStack.size() > 0)
+  if (!RegionStack.empty())
     Block->setContext(RegionStack.back());
   RegionStack.push_back(Block);
 
@@ -693,6 +697,8 @@ void CGDebugInfo::EmitRegionStart(llvm::Function *Fn,
 /// region - "llvm.dbg.region.end."
 void CGDebugInfo::EmitRegionEnd(llvm::Function *Fn, llvm::IRBuilder<> &Builder) 
 {
+  assert(!RegionStack.empty() && "Region stack mismatch, stack empty!");
+
   // Lazily construct llvm.dbg.region.end function.
   if (!RegionEndFn)
     RegionEndFn =llvm::Intrinsic::getDeclaration(&M->getModule(), 
@@ -712,6 +718,8 @@ void CGDebugInfo::EmitDeclare(const VarDecl *decl, unsigned Tag,
                               llvm::Value *AI,
                               llvm::IRBuilder<> &Builder)
 {
+  assert(!RegionStack.empty() && "Region stack mismatch, stack empty!");
+
   // FIXME: If it is a compiler generated temporary then return.
 
   // Construct llvm.dbg.declare function.
