@@ -7509,15 +7509,13 @@ X86TargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
     case 'r':   // GENERAL_REGS
     case 'R':   // LEGACY_REGS
     case 'l':   // INDEX_REGS
-      if (VT == MVT::i64 && Subtarget->is64Bit())
-        return std::make_pair(0U, X86::GR64RegisterClass);
-      if (VT == MVT::i32 || VT == MVT::i64)
-        return std::make_pair(0U, X86::GR32RegisterClass);
-      else if (VT == MVT::i16)
-        return std::make_pair(0U, X86::GR16RegisterClass);
-      else if (VT == MVT::i8)
+      if (VT == MVT::i8)
         return std::make_pair(0U, X86::GR8RegisterClass);
-      break;
+      if (VT == MVT::i16)
+        return std::make_pair(0U, X86::GR16RegisterClass);
+      if (VT == MVT::i32 || !Subtarget->is64Bit())
+        return std::make_pair(0U, X86::GR32RegisterClass);  
+      return std::make_pair(0U, X86::GR64RegisterClass);
     case 'f':  // FP Stack registers.
       // If SSE is enabled for this VT, use f80 to ensure the isel moves the
       // value to the correct fpstack register class.
@@ -7529,7 +7527,6 @@ X86TargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
     case 'y':   // MMX_REGS if MMX allowed.
       if (!Subtarget->hasMMX()) break;
       return std::make_pair(0U, X86::VR64RegisterClass);
-      break;
     case 'Y':   // SSE_REGS if SSE2 allowed
       if (!Subtarget->hasSSE2()) break;
       // FALL THROUGH.
