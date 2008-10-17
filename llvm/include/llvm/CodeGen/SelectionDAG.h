@@ -436,17 +436,32 @@ public:
   SDValue getVAArg(MVT VT, SDValue Chain, SDValue Ptr,
                      SDValue SV);
 
-  /// getAtomic - Gets a node for an atomic op, produces result and chain, takes
-  /// 3 operands
+  /// getAtomic - Gets a node for an atomic op, produces result and chain and 
+  /// takes 3 operands
   SDValue getAtomic(unsigned Opcode, SDValue Chain, SDValue Ptr, 
                       SDValue Cmp, SDValue Swp, const Value* PtrVal,
                       unsigned Alignment=0);
 
-  /// getAtomic - Gets a node for an atomic op, produces result and chain, takes
-  /// 2 operands
+  /// getAtomic - Gets a node for an atomic op, produces result and chain and
+  /// takes 2 operands.
   SDValue getAtomic(unsigned Opcode, SDValue Chain, SDValue Ptr, 
                       SDValue Val, const Value* PtrVal,
                       unsigned Alignment = 0);
+
+  /// getMemIntrinsicNode - Creates a MemIntrinsicNode that may produce a
+  /// result and takes a list of operands.
+  SDValue getMemIntrinsicNode(unsigned Opcode,
+                              const MVT *VTs, unsigned NumVTs,
+                              const SDValue *Ops, unsigned NumOps,
+                              MVT MemVT, const Value *srcValue, int SVOff,
+                              unsigned Align = 0, bool Vol = false,
+                              bool ReadMem = true, bool WriteMem = true);
+
+  SDValue getMemIntrinsicNode(unsigned Opcode, SDVTList VTList,
+                              const SDValue *Ops, unsigned NumOps,
+                              MVT MemVT, const Value *srcValue, int SVOff,
+                              unsigned Align = 0, bool Vol = false,
+                              bool ReadMem = true, bool WriteMem = true);
 
   /// getMergeValues - Create a MERGE_VALUES node from the given operands.
   /// Allowed to return something different (and simpler) if Simplify is true.

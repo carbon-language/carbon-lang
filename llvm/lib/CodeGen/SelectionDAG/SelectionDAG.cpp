@@ -3335,6 +3335,46 @@ SDValue SelectionDAG::getMergeValues(const SDValue *Ops, unsigned NumOps,
 }
 
 SDValue
+SelectionDAG::getMemIntrinsicNode(unsigned Opcode,
+                                  const MVT *VTs, unsigned NumVTs,
+                                  const SDValue *Ops, unsigned NumOps,
+                                  MVT MemVT, const Value *srcValue, int SVOff,
+                                  unsigned Align, bool Vol,
+                                  bool ReadMem, bool WriteMem) {
+  return getMemIntrinsicNode(Opcode, makeVTList(VTs, NumVTs), Ops, NumOps,
+                             MemVT, srcValue, SVOff, Align, Vol,
+                             ReadMem, WriteMem);
+}
+
+SDValue
+SelectionDAG::getMemIntrinsicNode(unsigned Opcode, SDVTList VTList,
+                                  const SDValue *Ops, unsigned NumOps,
+                                  MVT MemVT, const Value *srcValue, int SVOff,
+                                  unsigned Align, bool Vol,
+                                  bool ReadMem, bool WriteMem) {
+  // Memoize the node unless it returns a flag.
+  MemIntrinsicSDNode *N;
+  if (VTList.VTs[VTList.NumVTs-1] != MVT::Flag) {
+    FoldingSetNodeID ID;
+    AddNodeIDNode(ID, Opcode, VTList, Ops, NumOps);
+    void *IP = 0;
+    if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
+      return SDValue(E, 0);
+    
+    N = NodeAllocator.Allocate<MemIntrinsicSDNode>();
+    new (N) MemIntrinsicSDNode(Opcode, VTList, Ops, NumOps, MemVT,
+                               srcValue, SVOff, Align, Vol, ReadMem, WriteMem);
+    CSEMap.InsertNode(N, IP);
+  } else {
+    N = NodeAllocator.Allocate<MemIntrinsicSDNode>();
+    new (N) MemIntrinsicSDNode(Opcode, VTList, Ops, NumOps, MemVT,
+                               srcValue, SVOff, Align, Vol, ReadMem, WriteMem);
+  }
+  AllNodes.push_back(N);
+  return SDValue(N, 0);
+}
+
+SDValue
 SelectionDAG::getCall(unsigned CallingConv, bool IsVarArgs, bool IsTailCall,
                       bool IsInreg, SDVTList VTs,
                       const SDValue *Operands, unsigned NumOperands) {
@@ -4678,6 +4718,7 @@ void MemSDNode::ANCHOR() {}
 void LoadSDNode::ANCHOR() {}
 void StoreSDNode::ANCHOR() {}
 void AtomicSDNode::ANCHOR() {}
+void MemIntrinsicSDNode::ANCHOR() {}
 void CallSDNode::ANCHOR() {}
 
 HandleSDNode::~HandleSDNode() {
@@ -4707,6 +4748,17 @@ MemSDNode::MemSDNode(unsigned Opc, SDVTList VTs, MVT memvt,
   assert(isVolatile() == vol && "Volatile representation error!");
 }
 
+MemSDNode::MemSDNode(unsigned Opc, SDVTList VTs, const SDValue *Ops,
+                     unsigned NumOps, MVT memvt, const Value *srcValue,
+                     int SVO, unsigned alignment, bool vol)
+   : SDNode(Opc, VTs, Ops, NumOps),
+     MemoryVT(memvt), SrcValue(srcValue), SVOffset(SVO),
+     Flags(vol | ((Log2_32(alignment) + 1) << 1)) {
+  assert(isPowerOf2_32(alignment) && "Alignment is not a power of 2!");
+  assert(getAlignment() == alignment && "Alignment representation error!");
+  assert(isVolatile() == vol && "Volatile representation error!");
+}
+
 /// getMemOperand - Return a MachineMemOperand object describing the memory
 /// reference performed by this memory reference.
 MachineMemOperand MemSDNode::getMemOperand() const {
@@ -4715,9 +4767,14 @@ MachineMemOperand MemSDNode::getMemOperand() const {
     Flags = MachineMemOperand::MOLoad;
   else if (isa<StoreSDNode>(this))
     Flags = MachineMemOperand::MOStore;
-  else {
-    assert(isa<AtomicSDNode>(this) && "Unknown MemSDNode opcode!");
+  else if (isa<AtomicSDNode>(this)) {
     Flags = MachineMemOperand::MOLoad | MachineMemOperand::MOStore;
+  }
+  else {
+    const MemIntrinsicSDNode* MemIntrinNode = dyn_cast<MemIntrinsicSDNode>(this);
+    assert(MemIntrinNode && "Unknown MemSDNode opcode!");
+    if (MemIntrinNode->readMem()) Flags |= MachineMemOperand::MOLoad;
+    if (MemIntrinNode->writeMem()) Flags |= MachineMemOperand::MOStore;
   }
 
   int Size = (getMemoryVT().getSizeInBits() + 7) >> 3;

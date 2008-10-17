@@ -1524,6 +1524,10 @@ public:
             const Value *srcValue, int SVOff,
             unsigned alignment, bool isvolatile);
 
+  MemSDNode(unsigned Opc, SDVTList VTs, const SDValue *Ops, unsigned NumOps,
+            MVT MemoryVT, const Value *srcValue, int SVOff,
+            unsigned alignment, bool isvolatile);
+
   /// Returns alignment and volatility of the memory access
   unsigned getAlignment() const { return (1u << (Flags >> 1)) >> 1; }
   bool isVolatile() const { return Flags & 1; }
@@ -1551,6 +1555,8 @@ public:
   // Methods to support isa and dyn_cast
   static bool classof(const MemSDNode *) { return true; }
   static bool classof(const SDNode *N) {
+    // For some targets, we lower some target intrinsics to a MemIntrinsicNode
+    // with either an intrinsic or a target opcode.
     return N->getOpcode() == ISD::LOAD                ||
            N->getOpcode() == ISD::STORE               ||
            N->getOpcode() == ISD::ATOMIC_CMP_SWAP_8   ||
@@ -1603,11 +1609,16 @@ public:
            N->getOpcode() == ISD::ATOMIC_LOAD_MIN_64  ||
            N->getOpcode() == ISD::ATOMIC_LOAD_MAX_64  ||
            N->getOpcode() == ISD::ATOMIC_LOAD_UMIN_64 ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_UMAX_64;
+           N->getOpcode() == ISD::ATOMIC_LOAD_UMAX_64 ||
+           
+           N->getOpcode() == ISD::INTRINSIC_W_CHAIN   ||
+           N->getOpcode() == ISD::INTRINSIC_VOID      ||
+           N->isTargetOpcode();
   }  
 };
 
-/// Atomic operations node
+/// AtomicSDNode - A SDNode reprenting atomic operations.
+///
 class AtomicSDNode : public MemSDNode {
   virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
   SDUse Ops[4];
@@ -1704,6 +1715,36 @@ class AtomicSDNode : public MemSDNode {
            N->getOpcode() == ISD::ATOMIC_LOAD_MAX_64  ||
            N->getOpcode() == ISD::ATOMIC_LOAD_UMIN_64 ||
            N->getOpcode() == ISD::ATOMIC_LOAD_UMAX_64;
+  }
+};
+
+/// MemIntrinsicSDNode - This SDNode is used for target intrinsic that touches
+/// memory and need an associated memory operand.
+///
+class MemIntrinsicSDNode : public MemSDNode {
+  virtual void ANCHOR();  // Out-of-line virtual method to give class a home.  
+  bool ReadMem;  // Intrinsic reads memory
+  bool WriteMem; // Intrinsic writes memory
+  public:
+  MemIntrinsicSDNode(unsigned Opc, SDVTList VTs,
+                     const SDValue *Ops, unsigned NumOps,
+                     MVT MemoryVT, const Value *srcValue, int SVO,
+                     unsigned Align, bool Vol, bool ReadMem, bool WriteMem)
+    : MemSDNode(Opc, VTs, Ops, NumOps, MemoryVT, srcValue, SVO, Align, Vol),
+      ReadMem(ReadMem), WriteMem(WriteMem) {
+  }
+
+  bool readMem() const { return ReadMem; }
+  bool writeMem() const { return WriteMem; }
+
+  // Methods to support isa and dyn_cast
+  static bool classof(const MemIntrinsicSDNode *) { return true; }
+  static bool classof(const SDNode *N) {
+    // We lower some target intrinsics to their target opcode
+    // early a node with a target opcode can be of this class
+    return N->getOpcode() == ISD::INTRINSIC_W_CHAIN ||
+           N->getOpcode() == ISD::INTRINSIC_VOID ||
+           N->isTargetOpcode();
   }
 };
 
