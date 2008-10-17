@@ -369,16 +369,6 @@ There is also one case we do worse on PPC.
 
 //===---------------------------------------------------------------------===//
 
-If shorter, we should use things like:
-movzwl %ax, %eax
-instead of:
-andl $65535, %EAX
-
-The former can also be used when the two-addressy nature of the 'and' would
-require a copy to be inserted (in X86InstrInfo::convertToThreeAddress).
-
-//===---------------------------------------------------------------------===//
-
 For this:
 
 int test(int a)
