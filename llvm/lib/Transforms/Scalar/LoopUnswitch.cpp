@@ -163,7 +163,7 @@ LoopPass *llvm::createLoopUnswitchPass(bool Os) {
 /// Otherwise, return null.
 static Value *FindLIVLoopCondition(Value *Cond, Loop *L, bool &Changed) {
   // Constants should be folded, not unswitched on!
-  if (isa<Constant>(Cond)) return false;
+  if (isa<Constant>(Cond)) return 0;
 
   // TODO: Handle: br (VARIANT|INVARIANT).
   // TODO: Hoist simple expressions out of loops.
