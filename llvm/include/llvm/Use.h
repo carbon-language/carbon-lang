@@ -29,13 +29,20 @@ class User;
 //                          Generic Tagging Functions
 //===----------------------------------------------------------------------===//
 
+// We adhere to the following convention: The type of a tagged pointer
+// to T is T volatile*. This means that functions that superpose a tag
+// on a pointer will be supplied a T* (or T const*) and will return a
+// tagged one: T volatile*. Untagging functions do it the other way
+// 'round. While this scheme does not prevent dereferencing of tagged
+// pointers, proper type annotations do catch most inappropriate uses.
+
 /// Tag - generic tag type for (at least 32 bit) pointers
 enum Tag { noTag, tagOne, tagTwo, tagThree };
 
 /// addTag - insert tag bits into an (untagged) pointer
 template <typename T, typename TAG>
 inline volatile T *addTag(const T *P, TAG Tag) {
-    return reinterpret_cast<T*>(ptrdiff_t(P) | Tag);
+  return reinterpret_cast<T*>(ptrdiff_t(P) | Tag);
 }
 
 /// stripTag - remove tag bits from a pointer,
