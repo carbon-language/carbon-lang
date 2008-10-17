@@ -129,7 +129,26 @@ const GRState* BasicConstraintManager::AssumeAux(const GRState* St, Loc Cond,
       return AssumeSymEQ(St, cast<loc::SymbolVal>(Cond).getSymbol(),
                          BasicVals.getZeroWithPtrWidth(), isFeasible);
 
-  case loc::MemRegionKind:
+  case loc::MemRegionKind: {
+    // FIXME: Should this go into the storemanager?
+    
+    const MemRegion* R = cast<loc::MemRegionVal>(Cond).getRegion();
+    
+    while (R) {
+      if (const SubRegion* SubR = dyn_cast<SubRegion>(R)) {
+        R = SubR->getSuperRegion();
+        continue;
+      }
+      else if (const SymbolicRegion* SymR = dyn_cast<SymbolicRegion>(R))
+        return AssumeAux(St, loc::SymbolVal(SymR->getSymbol()), Assumption,
+                                            isFeasible);
+      
+      break;
+    }
+    
+    // FALL-THROUGH.
+  }
+      
   case loc::FuncValKind:
   case loc::GotoLabelKind:
   case loc::StringLiteralValKind:
