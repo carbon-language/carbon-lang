@@ -1129,11 +1129,21 @@ void CWriter::printConstant(Constant *CPV, bool Static) {
                        "long double")
           << "*)&FPConstant" << I->second << ')';
     } else {
-      assert(FPC->getType() == Type::FloatTy || 
-             FPC->getType() == Type::DoubleTy);
-      double V = FPC->getType() == Type::FloatTy ? 
-                 FPC->getValueAPF().convertToFloat() : 
-                 FPC->getValueAPF().convertToDouble();
+      double V;
+      if (FPC->getType() == Type::FloatTy)
+        V = FPC->getValueAPF().convertToFloat();
+      else if (FPC->getType() == Type::DoubleTy)
+        V = FPC->getValueAPF().convertToDouble();
+      else {
+        // Long double.  Convert the number to double, discarding precision.
+        // This is not awesome, but it at least makes the CBE output somewhat
+        // useful.
+        APFloat Tmp = FPC->getValueAPF();
+        bool LosesInfo;
+        Tmp.convert(APFloat::IEEEdouble, APFloat::rmTowardZero, &LosesInfo);
+        V = Tmp.convertToDouble();
+      }
+      
       if (IsNAN(V)) {
         // The value is NaN
 
