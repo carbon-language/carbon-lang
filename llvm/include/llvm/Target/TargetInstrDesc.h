@@ -19,6 +19,8 @@
 
 namespace llvm {
 
+class TargetRegisterClass;
+
 //===----------------------------------------------------------------------===//
 // Machine Operand Flags and Description
 //===----------------------------------------------------------------------===//
@@ -107,16 +109,17 @@ namespace TID {
 /// points to this struct directly to describe itself.
 class TargetInstrDesc {
 public:
-  unsigned short  Opcode;        // The opcode number.
+  unsigned short  Opcode;        // The opcode number
   unsigned short  NumOperands;   // Num of args (may be more if variable_ops)
-  unsigned short  NumDefs;       // Num of args that are definitions.
+  unsigned short  NumDefs;       // Num of args that are definitions
   unsigned short  SchedClass;    // enum identifying instr sched class
-  const char *    Name;          // Name of the instruction record in td file.
-  unsigned        Flags;         // flags identifying machine instr class
+  const char *    Name;          // Name of the instruction record in td file
+  unsigned        Flags;         // Flags identifying machine instr class
   unsigned        TSFlags;       // Target Specific Flag values
   const unsigned *ImplicitUses;  // Registers implicitly read by this instr
   const unsigned *ImplicitDefs;  // Registers implicitly defined by this instr
-  const TargetOperandInfo *OpInfo; // 'NumOperands' entries about operands.
+  const TargetRegisterClass **RCBarriers; // Reg classes completely "clobbered"
+  const TargetOperandInfo *OpInfo; // 'NumOperands' entries about operands
 
   /// getOperandConstraint - Returns the value of the specific constraint if
   /// it is set. Returns -1 if it is not set.
@@ -200,6 +203,17 @@ public:
   /// This method returns null if the instruction has no implicit defs.
   const unsigned *getImplicitDefs() const {
     return ImplicitDefs;
+  }
+
+  /// getRegClassBarriers - Return a list of register classes that are
+  /// completely clobbered by this machine instruction. For example, on X86
+  /// the call instructions will completely clobber all the registers in the
+  /// fp stack and XMM classes.
+  ///
+  /// This method returns null if the instruction doesn't completely clobber
+  /// any register class.
+  const TargetRegisterClass **getRegClassBarriers() const {
+    return RCBarriers;
   }
 
   /// getSchedClass - Return the scheduling class for this instruction.  The

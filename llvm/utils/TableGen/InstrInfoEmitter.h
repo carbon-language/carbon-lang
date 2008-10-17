@@ -44,6 +44,7 @@ private:
   void emitRecord(const CodeGenInstruction &Inst, unsigned Num,
                   Record *InstrInfo, 
                   std::map<std::vector<Record*>, unsigned> &EL,
+                  std::map<Record*, unsigned> &BM,
                   const OperandInfoMapTy &OpInfo,
                   std::ostream &OS);
   void emitShiftedValue(Record *R, StringInit *Val, IntInit *Shift,
@@ -56,6 +57,10 @@ private:
   // Operand information.
   void EmitOperandInfo(std::ostream &OS, OperandInfoMapTy &OperandInfoIDs);
   std::vector<std::string> GetOperandInfo(const CodeGenInstruction &Inst);
+
+  void DetectRegisterClassBarriers(std::vector<Record*> &Defs,
+                                   const std::vector<CodeGenRegisterClass> &RCs,
+                                   std::vector<Record*> &Barriers);
 };
 
 } // End llvm namespace
