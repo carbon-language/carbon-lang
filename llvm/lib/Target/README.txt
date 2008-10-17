@@ -799,7 +799,7 @@ unsigned long long f6(unsigned long long x, unsigned long long y, int z) {
   }
 }
 
-On X86-64, we only handle f3/f4 right.  On x86-32, several of these 
+On X86-64, we only handle f2/f3/f4 right.  On x86-32, a few of these 
 generate truly horrible code, instead of using shld and friends.  On
 ARM, we end up with calls to L___lshrdi3/L___ashldi3 in f, which is
 badness.  PPC64 misses f, f5 and f6.  CellSPU aborts in isel.
