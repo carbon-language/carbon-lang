@@ -219,6 +219,9 @@ public:
     return R;
   }
 
+  // FIXME: It is probably bad that we aren't emitting the target when
+  // we build the lvalue. However, this complicates the code a bit,
+  // and I haven't figured out how to make it go wrong yet.
   static LValue MakePropertyRef(const ObjCPropertyRefExpr *E,
                                 unsigned Qualifiers) {
     LValue R;
