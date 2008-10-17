@@ -79,9 +79,15 @@ public:
     /// read.  This is only ever set for an output operand.
     bool isEarlyClobber; 
     
-    /// hasMatchingInput - This is set to true for an output constraint iff
-    /// there is an input constraint that is required to match it (e.g. "0").
-    bool hasMatchingInput;
+    /// MatchingInput - If this is not -1, this is an output constraint where an
+    /// input constraint is required to match it (e.g. "0").  The value is the
+    /// constraint number that matches this one (for example, if this is
+    /// constraint #0 and constraint #4 has the value "0", this will be 4).
+    signed char MatchingInput;
+    
+    /// hasMatchingInput - Return true if this is an output constraint that has
+    /// a matching input constraint.
+    bool hasMatchingInput() const { return MatchingInput != -1; }
     
     /// isCommutative - This is set to true for a constraint that is commutative
     /// with the next operand.

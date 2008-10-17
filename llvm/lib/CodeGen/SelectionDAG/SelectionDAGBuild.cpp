@@ -4491,7 +4491,7 @@ GetRegistersForValue(SDISelAsmOperandInfo &OpInfo,
     
     // If there is an input constraint that matches this, we need to reserve 
     // the input register so no other inputs allocate to it.
-    isInReg = OpInfo.hasMatchingInput;
+    isInReg = OpInfo.hasMatchingInput();
     break;
   case InlineAsm::isInput:
     isInReg = true;
@@ -4562,7 +4562,7 @@ GetRegistersForValue(SDISelAsmOperandInfo &OpInfo,
     // the constraint, so we have to pick a register to pin the input/output to.
     // If it isn't a matched constraint, go ahead and create vreg and let the
     // regalloc do its thing.
-    if (!OpInfo.hasMatchingInput) {
+    if (!OpInfo.hasMatchingInput()) {
       RegVT = *PhysReg.second->vt_begin();
       if (OpInfo.ConstraintVT == MVT::Other)
         ValueVT = RegVT;
@@ -4863,7 +4863,7 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
     case InlineAsm::isInput: {
       SDValue InOperandVal = OpInfo.CallOperand;
       
-      if (OpInfo.isMatchingConstraint()) {   // Matching constraint?
+      if (OpInfo.isMatchingInputConstraint()) {   // Matching constraint?
         // If this is required to match an output register we have already set,
         // just use its register.
         unsigned OperandNo = OpInfo.getMatchedOperand();

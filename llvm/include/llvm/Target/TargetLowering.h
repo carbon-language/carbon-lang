@@ -1197,9 +1197,9 @@ public:
     /// ConstraintVT - The ValueType for the operand value.
     MVT ConstraintVT;
     
-    /// isMatchingConstraint - Return true of this is an input operand that is a
-    /// matching constraint like "4".
-    bool isMatchingConstraint() const;
+    /// isMatchingInputConstraint - Return true of this is an input operand that
+    /// is a matching constraint like "4".
+    bool isMatchingInputConstraint() const;
     
     /// getMatchedOperand - If this is an input matching constraint, this method
     /// returns the output operand it matches.
