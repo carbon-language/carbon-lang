@@ -806,11 +806,11 @@ void GRExprEngine::VisitDeclRefExpr(DeclRefExpr* Ex, NodeTy* Pred, NodeSet& Dst,
 
     QualType T = VD->getType();
     if (T->isArrayType()) {
-      assert(!asLValue && "Array variable has no lvalue.");
-
-      // C++ standard says array value should be implicitly converted to pointer
-      // in some cases. We don't have such context information right now.  We
-      // use a MemRegionVal to represent this. May be changed in the future.
+      // C++ standard says array of type T should be implicitly converted to
+      // pointer to type T in some cases. Currently we don't do this cast in
+      // VisitCast(), because BasicStore is not field sensitive. We shall do
+      // this in a transfer function in the future. We represent both lvalue and
+      // rvalue of array of type T as the corresponding MemRegionVal of it.
 
       RVal V = lval::MemRegionVal(StateMgr.getRegion(VD));
       MakeNode(Dst, Ex, Pred, SetRVal(St, Ex, V));
