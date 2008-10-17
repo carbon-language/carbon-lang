@@ -1342,6 +1342,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
     }
 
     // Process all of the spilled uses and all non spilled reg references.
+    SmallVector<int, 2> PotentialDeadStoreSlots;
     for (unsigned j = 0, e = VirtUseOps.size(); j != e; ++j) {
       unsigned i = VirtUseOps[j];
       MachineOperand &MO = MI.getOperand(i);
@@ -1446,17 +1447,14 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
 
           if (MI.getOperand(i).isKill() &&
               ReuseSlot <= VirtRegMap::MAX_STACK_SLOT) {
-            // This was the last use and the spilled value is still available
-            // for reuse. That means the spill was unnecessary!
-            MachineInstr* DeadStore = MaybeDeadStores[ReuseSlot];
-            if (DeadStore) {
-              DOUT << "Removed dead store:\t" << *DeadStore;
-              InvalidateKills(*DeadStore, RegKills, KillOps);
-              VRM.RemoveMachineInstrFromMaps(DeadStore);
-              MBB.erase(DeadStore);
-              MaybeDeadStores[ReuseSlot] = NULL;
-              ++NumDSE;
-            }
+
+            // The store of this spilled value is potentially dead, but we
+            // won't know for certain until we've confirmed that the re-use
+            // above is valid, which means waiting until the other operands
+            // are processed. For now we just track the spill slot, we'll
+            // remove it after the other operands are processed if valid.
+
+            PotentialDeadStoreSlots.push_back(ReuseSlot);
           }
           continue;
         }  // CanReuse
@@ -1559,6 +1557,23 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
       UpdateKills(*prior(MII), RegKills, KillOps, TRI);
       DOUT << '\t' << *prior(MII);
     }
+
+    // Ok - now we can remove stores that have been confirmed dead.
+    for (unsigned j = 0, e = PotentialDeadStoreSlots.size(); j != e; ++j) {
+      // This was the last use and the spilled value is still available
+      // for reuse. That means the spill was unnecessary!
+      int PDSSlot = PotentialDeadStoreSlots[j];
+      MachineInstr* DeadStore = MaybeDeadStores[PDSSlot];
+      if (DeadStore) {
+        DOUT << "Removed dead store:\t" << *DeadStore;
+        InvalidateKills(*DeadStore, RegKills, KillOps);
+        VRM.RemoveMachineInstrFromMaps(DeadStore);
+        MBB.erase(DeadStore);
+        MaybeDeadStores[PDSSlot] = NULL;
+        ++NumDSE;
+      }
+    }
+
 
     DOUT << '\t' << MI;
 
