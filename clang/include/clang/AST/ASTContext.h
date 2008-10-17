@@ -273,9 +273,12 @@ public:
   //// This gets the struct used to keep track of fast enumerations.
   QualType getObjCFastEnumerationStateType();
   
-  // Return the ObjC type encoding for a given type.
+  /// getObjCEncodingForType - Emit the ObjC type encoding for the
+  /// given type into \arg S. If \arg NameFields is specified then
+  /// record field names are also encoded.
   void getObjCEncodingForType(QualType t, std::string &S, 
-                              llvm::SmallVector<const RecordType*,8> &RT) const;
+                              llvm::SmallVector<const RecordType*,8> &RT,
+                              bool NameFields=false) const;
   
   // Put the string version of type qualifiers into S.
   void getObjCEncodingForTypeQualifier(Decl::ObjCDeclQualifier QT, 
@@ -478,7 +481,8 @@ private:
   void getObjCEncodingForTypeImpl(QualType t, std::string &S, 
                                   bool ExpandPointedToStructures,
                                   bool ExpandStructures,
-                              llvm::SmallVector<const RecordType*,8> &RT) const;
+                              llvm::SmallVector<const RecordType*,8> &RT,
+                                  bool NameFields) const;
   
 };
   

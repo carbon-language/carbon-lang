@@ -1594,26 +1594,20 @@ void ASTContext::getObjCEncodingForPropertyDecl(const ObjCPropertyDecl *PD,
 }
 
 void ASTContext::getObjCEncodingForType(QualType T, std::string& S,
-                         llvm::SmallVector<const RecordType*,8> &ERType) const {
+                         llvm::SmallVector<const RecordType*,8> &ERType,
+                                        bool NameFields) const {
   // We follow the behavior of gcc, expanding structures which are
   // directly pointed to, and expanding embedded structures. Note that
   // these rules are sufficient to prevent recursive encoding of the
   // same type.
-  getObjCEncodingForTypeImpl(T, S, true, true, ERType);
+  getObjCEncodingForTypeImpl(T, S, true, true, ERType, NameFields);
 }
 
 void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
                                             bool ExpandPointedToStructures,
                                             bool ExpandStructures,
-                         llvm::SmallVector<const RecordType*,8> &ERType) const {
-  // FIXME: This currently doesn't encode:
-  // @ An object (whether statically typed or typed id)
-  // # A class object (Class)
-  // : A method selector (SEL)
-  // {name=type...} A structure
-  // (name=type...) A union
-  // bnum A bit field of num bits
-  
+                         llvm::SmallVector<const RecordType*,8> &ERType,
+                                            bool NameFields) const {
   if (const BuiltinType *BT = T->getAsBuiltinType()) {
     char encoding;
     switch (BT->getKind()) {
@@ -1643,7 +1637,7 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
     // Treat id<P...> same as 'id' for encoding purposes.
     return getObjCEncodingForTypeImpl(getObjCIdType(), S, 
                                       ExpandPointedToStructures,
-                                      ExpandStructures, ERType);    
+                                      ExpandStructures, ERType, NameFields);    
   }
   else if (const PointerType *PT = T->getAsPointerType()) {
     QualType PointeeTy = PT->getPointeeType();
@@ -1669,7 +1663,8 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
     
     S += '^';
     getObjCEncodingForTypeImpl(PT->getPointeeType(), S, 
-                               false, ExpandPointedToStructures, ERType);
+                               false, ExpandPointedToStructures, 
+                               ERType, NameFields);
   } else if (const ArrayType *AT =
                // Ignore type qualifiers etc.
                dyn_cast<ArrayType>(T->getCanonicalTypeInternal())) {
@@ -1681,13 +1676,13 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
       assert(0 && "Unhandled array type!");
     
     getObjCEncodingForTypeImpl(AT->getElementType(), S, 
-                               false, ExpandStructures, ERType);
+                               false, ExpandStructures, ERType, NameFields);
     S += ']';
   } else if (T->getAsFunctionType()) {
     S += '?';
   } else if (const RecordType *RTy = T->getAsRecordType()) {
     RecordDecl *RDecl = RTy->getDecl();
-    S += '{';
+    S += RDecl->isUnion() ? '(' : '{';
     // Anonymous structures print as '?'
     if (const IdentifierInfo *II = RDecl->getIdentifier()) {
       S += II->getName();
@@ -1704,13 +1699,31 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
       ERType.push_back(RTy);
       S += '=';
       for (int i = 0; i < RDecl->getNumMembers(); i++) {
-        FieldDecl *field = RDecl->getMember(i);
-        getObjCEncodingForTypeImpl(field->getType(), S, false, true, ERType);
+        FieldDecl *FD = RDecl->getMember(i);
+        if (NameFields) {
+          S += '"';
+          S += FD->getName();
+          S += '"';
+        }
+        
+        // Special case bit-fields.
+        if (const Expr *E = FD->getBitWidth()) {
+          // FIXME: Fix constness.
+          ASTContext *Ctx = const_cast<ASTContext*>(this);
+          unsigned N = E->getIntegerConstantExprValue(*Ctx).getZExtValue();
+          // FIXME: Obj-C is losing information about the type size
+          // here. Investigate if this is a problem.
+          S += 'b';
+          S += llvm::utostr(N);
+        } else {
+          getObjCEncodingForTypeImpl(FD->getType(), S, false, true,
+                                     ERType, NameFields);
+        }
       }
       assert(ERType.back() == RTy && "Record Type stack mismatch.");
       ERType.pop_back();
     }
-    S += '}';
+    S += RDecl->isUnion() ? ')' : '}';
   } else if (T->isEnumeralType()) {
     S += 'i';
   } else if (T->isBlockPointerType()) {
