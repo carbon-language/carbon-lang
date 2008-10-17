@@ -4721,6 +4721,7 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
         OpInfo.CallOperandVal = CS.getArgument(ArgNo++);
         break;
       }
+        
       // The return value of the call is this value.  As such, there is no
       // corresponding argument.
       assert(CS.getType() != Type::VoidTy && "Bad inline asm!");
@@ -4753,6 +4754,30 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
     }
     
     OpInfo.ConstraintVT = OpVT;
+  }
+  
+  // Second pass over the constraints: compute which constraint option to use
+  // and assign registers to constraints that want a specific physreg.
+  for (unsigned i = 0, e = ConstraintInfos.size(); i != e; ++i) {
+    SDISelAsmOperandInfo &OpInfo = ConstraintOperands[i];
+    
+    // If this is an output operand with a matching input operand, look up the
+    // matching input.  It might have a different type (e.g. the output might be
+    // i32 and the input i64) and we need to pick the larger width to ensure we
+    // reserve the right number of registers.  
+    if (OpInfo.hasMatchingInput()) {
+      SDISelAsmOperandInfo &Input = ConstraintOperands[OpInfo.MatchingInput];
+      if (OpInfo.ConstraintVT != Input.ConstraintVT) {
+        assert(OpInfo.ConstraintVT.isInteger() &&
+               Input.ConstraintVT.isInteger() &&
+               "Asm constraints must be the same or different sized integers");
+        if (OpInfo.ConstraintVT.getSizeInBits() < 
+            Input.ConstraintVT.getSizeInBits())
+          OpInfo.ConstraintVT = Input.ConstraintVT;
+        else
+          Input.ConstraintVT = OpInfo.ConstraintVT;
+      }
+    }
     
     // Compute the constraint code and ConstraintType to use.
     TLI.ComputeConstraintToUse(OpInfo, OpInfo.CallOperand, hasMemory, &DAG);
@@ -5002,24 +5027,26 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
   // and set it as the value of the call.
   if (!RetValRegs.Regs.empty()) {
     SDValue Val = RetValRegs.getCopyFromRegs(DAG, Chain, &Flag);
-
+    MVT ResultType = TLI.getValueType(CS.getType());
+    
     // If any of the results of the inline asm is a vector, it may have the
     // wrong width/num elts.  This can happen for register classes that can
     // contain multiple different value types.  The preg or vreg allocated may
-    // not have the same VT as was expected.  Convert it to the right type with
-    // bit_convert.
-    if (const StructType *ResSTy = dyn_cast<StructType>(CS.getType())) {
-      for (unsigned i = 0, e = ResSTy->getNumElements(); i != e; ++i) {
-        if (Val.getNode()->getValueType(i).isVector())
-          Val = DAG.getNode(ISD::BIT_CONVERT,
-                            TLI.getValueType(ResSTy->getElementType(i)), Val);
-      }
-    } else {
-      if (Val.getValueType().isVector())
-        Val = DAG.getNode(ISD::BIT_CONVERT, TLI.getValueType(CS.getType()),
-                          Val);
-    }
+    // not have the same VT as was expected.  Convert it to the right type
+    // with bit_convert.
+    // FIXME: Is this sufficient for inline asms with MRVs?
+    if (ResultType != Val.getValueType() && Val.getValueType().isVector()) {
+      Val = DAG.getNode(ISD::BIT_CONVERT, ResultType, Val);
 
+    } else if (ResultType != Val.getValueType() && 
+               ResultType.isInteger() && Val.getValueType().isInteger()) {
+      // If a result value was tied to an input value, the computed result may
+      // have a wider width than the expected result.  Extract the relevant
+      // portion.
+      Val = DAG.getNode(ISD::TRUNCATE, ResultType, Val);
+    }
+    
+    assert(ResultType == Val.getValueType() && "Asm result value mismatch!");
     setValue(CS.getInstruction(), Val);
   }
   
@@ -5273,7 +5300,8 @@ TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
          Value != NumValues; ++Value) {
       MVT VT = ValueVTs[Value];
       const Type *ArgTy = VT.getTypeForMVT();
-      SDValue Op = SDValue(Args[i].Node.getNode(), Args[i].Node.getResNo() + Value);
+      SDValue Op = SDValue(Args[i].Node.getNode(),
+                           Args[i].Node.getResNo() + Value);
       ISD::ArgFlagsTy Flags;
       unsigned OriginalAlignment =
         getTargetData()->getABITypeAlignment(ArgTy);
