@@ -414,7 +414,6 @@ public:
   }
   
   static unsigned sizeOfImm(const TargetInstrDesc *Desc);
-  static unsigned getX86RegNum(unsigned RegNo);
   static bool isX86_64ExtendedReg(const MachineOperand &MO);
   static unsigned determineREX(const MachineInstr &MI);
 
