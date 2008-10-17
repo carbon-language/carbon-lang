@@ -30,7 +30,11 @@
   [super fm0];
 }
 -(void) im0 {
+  char *s0 = __func__;
+  char *s1 = __FUNCTION__;
+  char *s2 = __PRETTY_FUNCTION__;
   [super im0];
+  int x = super.p0;
 }
 -(void) im1: (int) x, ... {
 }

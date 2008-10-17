@@ -137,3 +137,9 @@ void f5() {
   float4 t1 = t0;
   t0.lo.e = t1.hi.x;
 }
+
+void f6() {
+  char *s0 = __func__;
+  char *s1 = __FUNCTION__;
+  char *s2 = __PRETTY_FUNCTION__;
+}
