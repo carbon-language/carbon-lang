@@ -615,8 +615,7 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
   // Emit global variable debug information.
   CGDebugInfo *DI = getDebugInfo();
   if(DI) {
-    if(D->getLocation().isValid())
-      DI->setLocation(D->getLocation());
+    DI->setLocation(D->getLocation());
     DI->EmitGlobalVariable(GV, D);
   }
 }

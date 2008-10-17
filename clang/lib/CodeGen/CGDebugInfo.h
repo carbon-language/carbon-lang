@@ -101,6 +101,8 @@ public:
   CGDebugInfo(CodeGenModule *m);
   ~CGDebugInfo();
 
+  /// setLocation - Update the current source location. If \arg loc is
+  /// invalid it is ignored.
   void setLocation(SourceLocation loc);
 
   /// EmitStopPoint - Emit a call to llvm.dbg.stoppoint to indicate a change of

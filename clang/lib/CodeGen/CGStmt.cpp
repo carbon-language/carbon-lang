@@ -33,10 +33,7 @@ void CodeGenFunction::EmitStmt(const Stmt *S) {
   // executable code. So do not generate a stoppoint for that.
   CGDebugInfo *DI = CGM.getDebugInfo();
   if (DI && S->getStmtClass() != Stmt::CompoundStmtClass) {
-    if (S->getLocStart().isValid()) {
-        DI->setLocation(S->getLocStart());
-    }
-
+    DI->setLocation(S->getLocStart());
     DI->EmitStopPoint(CurFn, Builder);
   }
 
@@ -122,8 +119,7 @@ RValue CodeGenFunction::EmitCompoundStmt(const CompoundStmt &S, bool GetLast,
   // FIXME: handle vla's etc.
   CGDebugInfo *DI = CGM.getDebugInfo();
   if (DI) {
-    if (S.getLBracLoc().isValid())
-      DI->setLocation(S.getLBracLoc());
+    DI->setLocation(S.getLBracLoc());
     DI->EmitRegionStart(CurFn, Builder);
   }
 
@@ -132,8 +128,7 @@ RValue CodeGenFunction::EmitCompoundStmt(const CompoundStmt &S, bool GetLast,
     EmitStmt(*I);
 
   if (DI) {
-    if (S.getRBracLoc().isValid())
-      DI->setLocation(S.getRBracLoc());
+    DI->setLocation(S.getRBracLoc());
     DI->EmitRegionEnd(CurFn, Builder);
   }
 

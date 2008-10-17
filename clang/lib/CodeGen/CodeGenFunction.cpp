@@ -73,9 +73,7 @@ void CodeGenFunction::FinishFunction(SourceLocation EndLoc) {
 
   // Emit debug descriptor for function end.
   if (CGDebugInfo *DI = CGM.getDebugInfo()) {
-    if (EndLoc.isValid()) {
-      DI->setLocation(EndLoc);
-    }
+    DI->setLocation(EndLoc);
     DI->EmitRegionEnd(CurFn, Builder);
   }
  
@@ -126,10 +124,8 @@ void CodeGenFunction::StartFunction(const Decl *D, QualType RetTy,
   // FIXME: The cast here is a huge hack.
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
     if (CGDebugInfo *DI = CGM.getDebugInfo()) {
-      CompoundStmt* body = dyn_cast<CompoundStmt>(FD->getBody());
-      if (body && body->getLBracLoc().isValid()) {
+      if (CompoundStmt* body = dyn_cast<CompoundStmt>(FD->getBody()))
         DI->setLocation(body->getLBracLoc());
-      }
       DI->EmitFunctionStart(FD, CurFn, Builder);
     }
   }

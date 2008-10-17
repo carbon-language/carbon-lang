@@ -59,6 +59,8 @@ CGDebugInfo::CGDebugInfo(CodeGenModule *m)
 
 CGDebugInfo::~CGDebugInfo()
 {
+  assert(RegionStack.empty() && "Region stack mismatch, stack not empty!");
+
   delete SR;
 
   // Free CompileUnitCache.
@@ -111,7 +113,8 @@ CGDebugInfo::~CGDebugInfo()
 }
 
 void CGDebugInfo::setLocation(SourceLocation loc) {
-  CurLoc = M->getContext().getSourceManager().getLogicalLoc(loc);
+  if (loc.isValid())
+    CurLoc = M->getContext().getSourceManager().getLogicalLoc(loc);
 }
 
 /// getCastValueFor - Return a llvm representation for a given debug information
@@ -711,6 +714,7 @@ void CGDebugInfo::EmitRegionEnd(llvm::Function *Fn, llvm::IRBuilder<> &Builder)
   llvm::DebugInfoDesc *DID = RegionStack.back();
   Builder.CreateCall(RegionEndFn, getCastValueFor(DID), "");
   RegionStack.pop_back();
+  // FIXME: Should be freeing here?
 }
 
 /// EmitDeclare - Emit local variable declaration debug info.
