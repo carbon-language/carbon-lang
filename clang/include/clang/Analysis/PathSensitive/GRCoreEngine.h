@@ -235,8 +235,12 @@ public:
   }
   
   NodeTy* MakeNode(ExplodedNodeSet<StateTy>& Dst, Stmt* S,
-                   NodeTy* Pred, const StateTy* St,
-                   ProgramPoint::Kind K = ProgramPoint::PostStmtKind) {    
+                   NodeTy* Pred, const StateTy* St) {
+    return MakeNode(Dst, S, Pred, St, PointKind);
+  }
+  
+  NodeTy* MakeNode(ExplodedNodeSet<StateTy>& Dst, Stmt* S,
+                   NodeTy* Pred, const StateTy* St, ProgramPoint::Kind K) {    
     
     const StateTy* PredState = GetState(Pred);
         

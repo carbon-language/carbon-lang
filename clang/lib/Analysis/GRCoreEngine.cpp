@@ -318,6 +318,9 @@ static inline ProgramPoint GetPostLoc(Stmt* S, ProgramPoint::Kind K) {
     case ProgramPoint::PostLoadKind:
       return PostLoad(S);
       
+    case ProgramPoint::PostStoreKind:
+      return PostStore(S);
+      
     case ProgramPoint::PostPurgeDeadSymbolsKind:
       return PostPurgeDeadSymbols(S);
   }
