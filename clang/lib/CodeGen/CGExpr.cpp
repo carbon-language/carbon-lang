@@ -571,6 +571,8 @@ LValue CodeGenFunction::EmitPredefinedLValue(const PredefinedExpr *E) {
   case PredefinedExpr::Function:
   case PredefinedExpr::PrettyFunction:
     return EmitPredefinedFunctionName(E->getIdentType());
+  case PredefinedExpr::ObjCSuper:
+    return EmitUnsupportedLValue(E, "use of super");
   }
 }
 
