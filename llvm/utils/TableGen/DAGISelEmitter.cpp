@@ -444,7 +444,8 @@ public:
     if (N->isLeaf()) {
       if (IntInit *II = dynamic_cast<IntInit*>(N->getLeafValue())) {
         emitCheck("cast<ConstantSDNode>(" + RootName +
-                  ")->getSExtValue() == " + itostr(II->getValue()));
+                  ")->getSExtValue() == INT64_C(" +
+                  itostr(II->getValue()) + ")");
         return;
       } else if (!NodeIsComplexPattern(N)) {
         assert(0 && "Cannot match this as a leaf value!");
@@ -578,7 +579,7 @@ public:
           const char *MaskPredicate = N->getOperator()->getName() == "or"
             ? "CheckOrMask(" : "CheckAndMask(";
           emitCheck(MaskPredicate + RootName + "0, cast<ConstantSDNode>(" +
-                    RootName + "1), " + itostr(II->getValue()) + ")");
+                    RootName + "1), INT64_C(" + itostr(II->getValue()) + "))");
           
           EmitChildMatchCode(N->getChild(0), N, RootName + utostr(0), RootName,
                              ChainSuffix + utostr(0), FoundChain);
