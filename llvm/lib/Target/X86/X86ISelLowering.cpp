@@ -7511,7 +7511,7 @@ X86TargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
     case 'l':   // INDEX_REGS
       if (VT == MVT::i64 && Subtarget->is64Bit())
         return std::make_pair(0U, X86::GR64RegisterClass);
-      if (VT == MVT::i32)
+      if (VT == MVT::i32 || VT == MVT::i64)
         return std::make_pair(0U, X86::GR32RegisterClass);
       else if (VT == MVT::i16)
         return std::make_pair(0U, X86::GR16RegisterClass);
