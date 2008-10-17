@@ -1297,7 +1297,7 @@ public:
   virtual void EvalCall(ExplodedNodeSet<GRState>& Dst,
                         GRExprEngine& Eng,
                         GRStmtNodeBuilder<GRState>& Builder,
-                        CallExpr* CE, RVal L,
+                        CallExpr* CE, SVal L,
                         ExplodedNode<GRState>* Pred);  
   
   
@@ -1319,7 +1319,7 @@ public:
                          GRExprEngine& Engine,
                          GRStmtNodeBuilder<GRState>& Builder,
                          Expr* E, ExplodedNode<GRState>* Pred,
-                         const GRState* St, RVal TargetLV, RVal Val);
+                         const GRState* St, SVal TargetLV, SVal Val);
   // End-of-path.
   
   virtual void EvalEndPath(GRExprEngine& Engine,
@@ -1343,7 +1343,7 @@ public:
   // Assumptions.
 
   virtual const GRState* EvalAssume(GRStateManager& VMgr,
-                                       const GRState* St, RVal Cond,
+                                       const GRState* St, SVal Cond,
                                        bool Assumption, bool& isFeasible);
 
   // Error iterators.
@@ -1473,10 +1473,10 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
   SymbolID ErrorSym = 0;                                        
   
   for (ExprIterator I = arg_beg; I != arg_end; ++I, ++idx) {    
-    RVal V = state.GetRVal(*I);
+    SVal V = state.GetSVal(*I);
     
-    if (isa<lval::SymbolVal>(V)) {
-      SymbolID Sym = cast<lval::SymbolVal>(V).getSymbol();
+    if (isa<loc::SymbolVal>(V)) {
+      SymbolID Sym = cast<loc::SymbolVal>(V).getSymbol();
       if (RefBindings::data_type* T = state.get<RefBindings>(Sym))
         if (Update(state, Sym, *T, GetArgE(Summ, idx), hasErr)) {
           ErrorExpr = *I;
@@ -1484,12 +1484,12 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
           break;
         }
     }  
-    else if (isa<LVal>(V)) {
+    else if (isa<Loc>(V)) {
 #if 0
       // Nuke all arguments passed by reference.
-      StateMgr.Unbind(StVals, cast<LVal>(V));
+      StateMgr.Unbind(StVals, cast<Loc>(V));
 #else
-      if (lval::MemRegionVal* MR = dyn_cast<lval::MemRegionVal>(&V)) {
+      if (loc::MemRegionVal* MR = dyn_cast<loc::MemRegionVal>(&V)) {
 
         if (GetArgE(Summ, idx) == DoNothingByRef)
           continue;
@@ -1506,10 +1506,10 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
         //  disambiguate conjured symbols. 
 
         // Is the invalidated variable something that we were tracking?
-        RVal X = state.GetRVal(*MR);
+        SVal X = state.GetSVal(*MR);
         
-        if (isa<lval::SymbolVal>(X)) {
-          SymbolID Sym = cast<lval::SymbolVal>(X).getSymbol();
+        if (isa<loc::SymbolVal>(X)) {
+          SymbolID Sym = cast<loc::SymbolVal>(X).getSymbol();
           state = state.remove<RefBindings>(Sym);
         }
         
@@ -1521,29 +1521,29 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
           SymbolID NewSym =
             Eng.getSymbolManager().getConjuredSymbol(*I, T, Count);
           
-          state = state.SetRVal(*MR,
-                                LVal::IsLValType(T)
-                                ? cast<RVal>(lval::SymbolVal(NewSym))
-                                : cast<RVal>(nonlval::SymbolVal(NewSym)));
+          state = state.SetSVal(*MR,
+                                Loc::IsLocType(T)
+                                ? cast<SVal>(loc::SymbolVal(NewSym))
+                                : cast<SVal>(nonloc::SymbolVal(NewSym)));
         }
         else
-          state = state.SetRVal(*MR, UnknownVal());
+          state = state.SetSVal(*MR, UnknownVal());
       }
       else {
         // Nuke all other arguments passed by reference.
-        state = state.Unbind(cast<LVal>(V));
+        state = state.Unbind(cast<Loc>(V));
       }
 #endif
     }
-    else if (isa<nonlval::LValAsInteger>(V))
-      state = state.Unbind(cast<nonlval::LValAsInteger>(V).getLVal());
+    else if (isa<nonloc::LocAsInteger>(V))
+      state = state.Unbind(cast<nonloc::LocAsInteger>(V).getLoc());
   } 
   
   // Evaluate the effect on the message receiver.  
   if (!ErrorExpr && Receiver) {
-    RVal V = state.GetRVal(Receiver);
-    if (isa<lval::SymbolVal>(V)) {
-      SymbolID Sym = cast<lval::SymbolVal>(V).getSymbol();
+    SVal V = state.GetSVal(Receiver);
+    if (isa<loc::SymbolVal>(V)) {
+      SymbolID Sym = cast<loc::SymbolVal>(V).getSymbol();
       if (const RefVal* T = state.get<RefBindings>(Sym))
         if (Update(state, Sym, *T, GetReceiverE(Summ), hasErr)) {
           ErrorExpr = Receiver;
@@ -1576,11 +1576,11 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
         unsigned Count = Builder.getCurrentBlockCount();
         SymbolID Sym = Eng.getSymbolManager().getConjuredSymbol(Ex, Count);
         
-        RVal X = LVal::IsLValType(Ex->getType())
-               ? cast<RVal>(lval::SymbolVal(Sym)) 
-               : cast<RVal>(nonlval::SymbolVal(Sym));
+        SVal X = Loc::IsLocType(Ex->getType())
+               ? cast<SVal>(loc::SymbolVal(Sym)) 
+               : cast<SVal>(nonloc::SymbolVal(Sym));
         
-        state = state.SetRVal(Ex, X, false);
+        state = state.SetSVal(Ex, X, false);
       }      
       
       break;
@@ -1589,15 +1589,15 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
       unsigned idx = RE.getIndex();
       assert (arg_end >= arg_beg);
       assert (idx < (unsigned) (arg_end - arg_beg));
-      RVal V = state.GetRVal(*(arg_beg+idx));
-      state = state.SetRVal(Ex, V, false);
+      SVal V = state.GetSVal(*(arg_beg+idx));
+      state = state.SetSVal(Ex, V, false);
       break;
     }
       
     case RetEffect::ReceiverAlias: {
       assert (Receiver);
-      RVal V = state.GetRVal(Receiver);
-      state = state.SetRVal(Ex, V, false);
+      SVal V = state.GetSVal(Receiver);
+      state = state.SetSVal(Ex, V, false);
       break;
     }
       
@@ -1608,7 +1608,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
       QualType RetT = GetReturnType(Ex, Eng.getContext());
       
       state = state.set<RefBindings>(Sym, RefVal::makeOwned(RetT));
-      state = state.SetRVal(Ex, lval::SymbolVal(Sym), false);
+      state = state.SetSVal(Ex, loc::SymbolVal(Sym), false);
 
 #if 0
       RefBindings B = GetRefBindings(StImpl);
@@ -1628,7 +1628,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
       QualType RetT = GetReturnType(Ex, Eng.getContext());
       
       state = state.set<RefBindings>(Sym, RefVal::makeNotOwned(RetT));
-      state = state.SetRVal(Ex, lval::SymbolVal(Sym), false);
+      state = state.SetSVal(Ex, loc::SymbolVal(Sym), false);
       break;
     }
   }
@@ -1644,11 +1644,11 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
 void CFRefCount::EvalCall(ExplodedNodeSet<GRState>& Dst,
                           GRExprEngine& Eng,
                           GRStmtNodeBuilder<GRState>& Builder,
-                          CallExpr* CE, RVal L,
+                          CallExpr* CE, SVal L,
                           ExplodedNode<GRState>* Pred) {
 
-  RetainSummary* Summ = !isa<lval::FuncVal>(L) ? 0
-                      : Summaries.getSummary(cast<lval::FuncVal>(L).getDecl());
+  RetainSummary* Summ = !isa<loc::FuncVal>(L) ? 0
+                      : Summaries.getSummary(cast<loc::FuncVal>(L).getDecl());
   
   EvalSummary(Dst, Eng, Builder, CE, 0, Summ,
               CE->arg_begin(), CE->arg_end(), Pred);
@@ -1669,10 +1669,10 @@ void CFRefCount::EvalObjCMessageExpr(ExplodedNodeSet<GRState>& Dst,
     // FIXME: Wouldn't it be great if this code could be reduced?  It's just
     // a chain of lookups.
     const GRState* St = Builder.GetState(Pred);
-    RVal V = Eng.getStateManager().GetRVal(St, Receiver );
+    SVal V = Eng.getStateManager().GetSVal(St, Receiver );
 
-    if (isa<lval::SymbolVal>(V)) {
-      SymbolID Sym = cast<lval::SymbolVal>(V).getSymbol();
+    if (isa<loc::SymbolVal>(V)) {
+      SymbolID Sym = cast<loc::SymbolVal>(V).getSymbol();
       
       if (const RefVal* T  = St->get<RefBindings>(Sym)) {
         QualType Ty = T->getType();
@@ -1702,29 +1702,29 @@ void CFRefCount::EvalStore(ExplodedNodeSet<GRState>& Dst,
                            GRExprEngine& Eng,
                            GRStmtNodeBuilder<GRState>& Builder,
                            Expr* E, ExplodedNode<GRState>* Pred,
-                           const GRState* St, RVal TargetLV, RVal Val) {
+                           const GRState* St, SVal TargetLV, SVal Val) {
   
   // Check if we have a binding for "Val" and if we are storing it to something
   // we don't understand or otherwise the value "escapes" the function.
   
-  if (!isa<lval::SymbolVal>(Val))
+  if (!isa<loc::SymbolVal>(Val))
     return;
   
   // Are we storing to something that causes the value to "escape"?
   
   bool escapes = false;
   
-  if (!isa<lval::MemRegionVal>(TargetLV))
+  if (!isa<loc::MemRegionVal>(TargetLV))
     escapes = true;
   else {
-    MemRegion* R = cast<lval::MemRegionVal>(TargetLV).getRegion();
+    MemRegion* R = cast<loc::MemRegionVal>(TargetLV).getRegion();
     escapes = !Eng.getStateManager().hasStackStorage(R);
   }
   
   if (!escapes)
     return;
   
-  SymbolID Sym = cast<lval::SymbolVal>(Val).getSymbol();
+  SymbolID Sym = cast<loc::SymbolVal>(Val).getSymbol();
   
   GRStateRef state(St, Eng.getStateManager());
   
@@ -1849,13 +1849,13 @@ void CFRefCount::EvalReturn(ExplodedNodeSet<GRState>& Dst,
   if (!RetE) return;
   
   GRStateRef state(Builder.GetState(Pred), Eng.getStateManager());
-  RVal V = state.GetRVal(RetE);
+  SVal V = state.GetSVal(RetE);
   
-  if (!isa<lval::SymbolVal>(V))
+  if (!isa<loc::SymbolVal>(V))
     return;
   
   // Get the reference count binding (if any).
-  SymbolID Sym = cast<lval::SymbolVal>(V).getSymbol();
+  SymbolID Sym = cast<loc::SymbolVal>(V).getSymbol();
   const RefVal* T = state.get<RefBindings>(Sym);
   
   if (!T)
@@ -1892,7 +1892,7 @@ void CFRefCount::EvalReturn(ExplodedNodeSet<GRState>& Dst,
 
 const GRState* CFRefCount::EvalAssume(GRStateManager& VMgr,
                                          const GRState* St,
-                                         RVal Cond, bool Assumption,
+                                         SVal Cond, bool Assumption,
                                          bool& isFeasible) {
 
   // FIXME: We may add to the interface of EvalAssume the list of symbols
@@ -2303,9 +2303,9 @@ PathDiagnosticPiece* CFRefReport::VisitNode(ExplodedNode<GRState>* N,
   
   for (Stmt::child_iterator I = S->child_begin(), E = S->child_end(); I!=E; ++I)
     if (Expr* Exp = dyn_cast_or_null<Expr>(*I)) {
-      RVal X = VSM.GetRVal(CurrSt, Exp);
+      SVal X = VSM.GetSVal(CurrSt, Exp);
       
-      if (lval::SymbolVal* SV = dyn_cast<lval::SymbolVal>(&X))
+      if (loc::SymbolVal* SV = dyn_cast<loc::SymbolVal>(&X))
         if (SV->getSymbol() == Sym) {
           P->addRange(Exp->getSourceRange()); break;
         }
@@ -2324,12 +2324,12 @@ class VISIBILITY_HIDDEN FindUniqueBinding :
   public:
     FindUniqueBinding(SymbolID sym) : Sym(sym), Binding(0), First(true) {}
     
-  bool HandleBinding(StoreManager& SMgr, Store store, MemRegion* R, RVal val) {
-    if (const lval::SymbolVal* SV = dyn_cast<lval::SymbolVal>(&val)) {
+  bool HandleBinding(StoreManager& SMgr, Store store, MemRegion* R, SVal val) {
+    if (const loc::SymbolVal* SV = dyn_cast<loc::SymbolVal>(&val)) {
       if (SV->getSymbol() != Sym) 
         return true;
     }
-    else if (const nonlval::SymbolVal* SV=dyn_cast<nonlval::SymbolVal>(&val)) {
+    else if (const nonloc::SymbolVal* SV=dyn_cast<nonloc::SymbolVal>(&val)) {
       if (SV->getSymbol() != Sym)
         return true;
     }

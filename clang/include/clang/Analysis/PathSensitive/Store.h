@@ -40,21 +40,22 @@ public:
   typedef llvm::DenseSet<SymbolID>          DeadSymbolsTy;
   
   virtual ~StoreManager() {}
-  virtual RVal GetRVal(Store St, LVal LV, QualType T = QualType()) = 0;
-  virtual Store SetRVal(Store St, LVal LV, RVal V) = 0;
-  virtual Store Remove(Store St, LVal LV) = 0;
+  virtual SVal GetSVal(Store St, Loc LV, QualType T = QualType()) = 0;
+  virtual Store SetSVal(Store St, Loc LV, SVal V) = 0;
+  virtual Store Remove(Store St, Loc LV) = 0;
   virtual Store getInitialStore() = 0;
   virtual MemRegionManager& getRegionManager() = 0;
 
-  virtual RVal getLValueVar(const GRState* St, const VarDecl* VD) = 0;  
+  virtual SVal getLValueVar(const GRState* St, const VarDecl* VD) = 0;  
   
-  virtual RVal getLValueIvar(const GRState* St, const ObjCIvarDecl* D,
-                             RVal Base)=0;
+  virtual SVal getLValueIvar(const GRState* St, const ObjCIvarDecl* D,
+                                SVal Base)=0;
   
-  virtual RVal getLValueField(const GRState* St, const FieldDecl* D,
-                              RVal Base) = 0;
+  virtual SVal getLValueField(const GRState* St, const FieldDecl* D,
+                                 SVal Base) = 0;
   
-  virtual RVal getLValueElement(const GRState* St, RVal Base, RVal Offset) = 0;
+  virtual SVal getLValueElement(const GRState* St, 
+                                   SVal Base, SVal Offset) = 0;
   
 
   virtual Store
@@ -64,7 +65,8 @@ public:
 
   virtual Store AddDecl(Store store,
                         const VarDecl* VD, Expr* Ex, 
-                        RVal InitVal = UndefinedVal(), unsigned Count = 0) = 0;
+                        SVal InitVal = UndefinedVal(), 
+                        unsigned Count = 0) = 0;
 
   virtual void print(Store store, std::ostream& Out,
                      const char* nl, const char *sep) = 0;
@@ -73,7 +75,7 @@ public:
   public:    
     virtual ~BindingsHandler();
     virtual bool HandleBinding(StoreManager& SMgr, Store store,
-                               MemRegion* R, RVal val) = 0;
+                               MemRegion* R, SVal val) = 0;
   };
   
   /// iterBindings - Iterate over the bindings in the Store.

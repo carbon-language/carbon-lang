@@ -25,14 +25,14 @@ namespace clang {
 
 class GRState;
 class GRStateManager;
-class RVal;
+class SVal;
 class SymbolID;
 
 class ConstraintManager {
 public:
   virtual ~ConstraintManager();
-  virtual const GRState* Assume(const GRState* St, RVal Cond, bool Assumption,
-                                bool& isFeasible) = 0;
+  virtual const GRState* Assume(const GRState* St, SVal Cond, 
+                                bool Assumption, bool& isFeasible) = 0;
 
   virtual const GRState* AddNE(const GRState* St, SymbolID sym, 
                                const llvm::APSInt& V) = 0;

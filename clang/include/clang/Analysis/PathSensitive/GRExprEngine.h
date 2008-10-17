@@ -252,11 +252,11 @@ public:
   }
   
   bool isImplicitBadDivide(const NodeTy* N) const {
-    return N->isSink() && ImplicitBadDivides.count(const_cast<NodeTy*>(N)) != 0; 
+    return N->isSink() && ImplicitBadDivides.count(const_cast<NodeTy*>(N)) != 0;
   }
   
   bool isExplicitBadDivide(const NodeTy* N) const {
-    return N->isSink() && ExplicitBadDivides.count(const_cast<NodeTy*>(N)) != 0; 
+    return N->isSink() && ExplicitBadDivides.count(const_cast<NodeTy*>(N)) != 0;
   }
   
   bool isNoReturnCall(const NodeTy* N) const {
@@ -402,52 +402,52 @@ protected:
   
 public:
   
-  const GRState* SetRVal(const GRState* St, Expr* Ex, RVal V) {
-    return StateMgr.SetRVal(St, Ex, V);
+  const GRState* SetSVal(const GRState* St, Expr* Ex, SVal V) {
+    return StateMgr.SetSVal(St, Ex, V);
   }
   
-  const GRState* SetRVal(const GRState* St, const Expr* Ex, RVal V) {
-    return SetRVal(St, const_cast<Expr*>(Ex), V);
+  const GRState* SetSVal(const GRState* St, const Expr* Ex, SVal V) {
+    return SetSVal(St, const_cast<Expr*>(Ex), V);
   }
     
 protected:
  
-  const GRState* SetBlkExprRVal(const GRState* St, Expr* Ex, RVal V) {
-    return StateMgr.SetRVal(St, Ex, V, true, false);
+  const GRState* SetBlkExprSVal(const GRState* St, Expr* Ex, SVal V) {
+    return StateMgr.SetSVal(St, Ex, V, true, false);
   }
   
-  const GRState* SetRVal(const GRState* St, LVal LV, RVal V) {
-    return StateMgr.SetRVal(St, LV, V);
+  const GRState* SetSVal(const GRState* St, Loc LV, SVal V) {
+    return StateMgr.SetSVal(St, LV, V);
   }
   
-  RVal GetRVal(const GRState* St, Expr* Ex) {
-    return StateMgr.GetRVal(St, Ex);
+  SVal GetSVal(const GRState* St, Expr* Ex) {
+    return StateMgr.GetSVal(St, Ex);
   }
     
-  RVal GetRVal(const GRState* St, const Expr* Ex) {
-    return GetRVal(St, const_cast<Expr*>(Ex));
+  SVal GetSVal(const GRState* St, const Expr* Ex) {
+    return GetSVal(St, const_cast<Expr*>(Ex));
   }
   
-  RVal GetBlkExprRVal(const GRState* St, Expr* Ex) {
-    return StateMgr.GetBlkExprRVal(St, Ex);
+  SVal GetBlkExprSVal(const GRState* St, Expr* Ex) {
+    return StateMgr.GetBlkExprSVal(St, Ex);
   }  
     
-  RVal GetRVal(const GRState* St, LVal LV, QualType T = QualType()) {    
-    return StateMgr.GetRVal(St, LV, T);
+  SVal GetSVal(const GRState* St, Loc LV, QualType T = QualType()) {    
+    return StateMgr.GetSVal(St, LV, T);
   }
   
-  inline NonLVal MakeConstantVal(uint64_t X, Expr* Ex) {
-    return NonLVal::MakeVal(getBasicVals(), X, Ex->getType());
+  inline NonLoc MakeConstantVal(uint64_t X, Expr* Ex) {
+    return NonLoc::MakeVal(getBasicVals(), X, Ex->getType());
   }
   
   /// Assume - Create new state by assuming that a given expression
   ///  is true or false.
-  const GRState* Assume(const GRState* St, RVal Cond, bool Assumption,
+  const GRState* Assume(const GRState* St, SVal Cond, bool Assumption,
                            bool& isFeasible) {
     return StateMgr.Assume(St, Cond, Assumption, isFeasible);
   }
   
-  const GRState* Assume(const GRState* St, LVal Cond, bool Assumption,
+  const GRState* Assume(const GRState* St, Loc Cond, bool Assumption,
                            bool& isFeasible) {
     return StateMgr.Assume(St, Cond, Assumption, isFeasible);
   }
@@ -539,44 +539,44 @@ protected:
                           bool asLValue);
  
   bool CheckDivideZero(Expr* Ex, const GRState* St, NodeTy* Pred,
-                       RVal Denom);  
+                       SVal Denom);  
   
-  RVal EvalCast(RVal X, QualType CastT) {
+  SVal EvalCast(SVal X, QualType CastT) {
     if (X.isUnknownOrUndef())
       return X;
     
-    if (isa<LVal>(X))
-      return getTF().EvalCast(*this, cast<LVal>(X), CastT);
+    if (isa<Loc>(X))
+      return getTF().EvalCast(*this, cast<Loc>(X), CastT);
     else
-      return getTF().EvalCast(*this, cast<NonLVal>(X), CastT);
+      return getTF().EvalCast(*this, cast<NonLoc>(X), CastT);
   }
   
-  RVal EvalMinus(UnaryOperator* U, RVal X) {
-    return X.isValid() ? getTF().EvalMinus(*this, U, cast<NonLVal>(X)) : X;
+  SVal EvalMinus(UnaryOperator* U, SVal X) {
+    return X.isValid() ? getTF().EvalMinus(*this, U, cast<NonLoc>(X)) : X;
   }
   
-  RVal EvalComplement(RVal X) {
-    return X.isValid() ? getTF().EvalComplement(*this, cast<NonLVal>(X)) : X;
+  SVal EvalComplement(SVal X) {
+    return X.isValid() ? getTF().EvalComplement(*this, cast<NonLoc>(X)) : X;
   }
   
-  RVal EvalBinOp(BinaryOperator::Opcode Op, NonLVal L, NonLVal R) {
+  SVal EvalBinOp(BinaryOperator::Opcode Op, NonLoc L, NonLoc R) {
     return R.isValid() ? getTF().DetermEvalBinOpNN(getStateManager(), Op, L, R)
                        : R;
   }
 
-  RVal EvalBinOp(BinaryOperator::Opcode Op, NonLVal L, RVal R) {
+  SVal EvalBinOp(BinaryOperator::Opcode Op, NonLoc L, SVal R) {
     return R.isValid() ? getTF().DetermEvalBinOpNN(getStateManager(), Op, L,
-                                                   cast<NonLVal>(R)) : R;
+                                                   cast<NonLoc>(R)) : R;
   }
   
   void EvalBinOp(ExplodedNodeSet<GRState>& Dst, Expr* Ex,
-                 BinaryOperator::Opcode Op, NonLVal L, NonLVal R,
+                 BinaryOperator::Opcode Op, NonLoc L, NonLoc R,
                  ExplodedNode<GRState>* Pred);
   
   void EvalBinOp(GRStateSet& OStates, const GRState* St, Expr* Ex,
-                 BinaryOperator::Opcode Op, NonLVal L, NonLVal R);  
+                 BinaryOperator::Opcode Op, NonLoc L, NonLoc R);  
   
-  RVal EvalBinOp(BinaryOperator::Opcode Op, RVal L, RVal R) {
+  SVal EvalBinOp(BinaryOperator::Opcode Op, SVal L, SVal R) {
 
     if (L.isUndef() || R.isUndef())
       return UndefinedVal();
@@ -584,30 +584,30 @@ protected:
     if (L.isUnknown() || R.isUnknown())
       return UnknownVal();
 
-    if (isa<LVal>(L)) {
-      if (isa<LVal>(R))
-        return getTF().EvalBinOp(*this, Op, cast<LVal>(L), cast<LVal>(R));
+    if (isa<Loc>(L)) {
+      if (isa<Loc>(R))
+        return getTF().EvalBinOp(*this, Op, cast<Loc>(L), cast<Loc>(R));
       else
-        return getTF().EvalBinOp(*this, Op, cast<LVal>(L), cast<NonLVal>(R));
+        return getTF().EvalBinOp(*this, Op, cast<Loc>(L), cast<NonLoc>(R));
     }
 
-    if (isa<LVal>(R)) {
+    if (isa<Loc>(R)) {
       // Support pointer arithmetic where the increment/decrement operand
       // is on the left and the pointer on the right.
 
       assert (Op == BinaryOperator::Add || Op == BinaryOperator::Sub);
 
       // Commute the operands.
-      return getTF().EvalBinOp(*this, Op, cast<LVal>(R),
-                               cast<NonLVal>(L));
+      return getTF().EvalBinOp(*this, Op, cast<Loc>(R),
+                               cast<NonLoc>(L));
     }
     else
-      return getTF().DetermEvalBinOpNN(getStateManager(), Op, cast<NonLVal>(L),
-                                       cast<NonLVal>(R));
+      return getTF().DetermEvalBinOpNN(getStateManager(), Op, cast<NonLoc>(L),
+                                       cast<NonLoc>(R));
   }
   
   
-  void EvalCall(NodeSet& Dst, CallExpr* CE, RVal L, NodeTy* Pred) {
+  void EvalCall(NodeSet& Dst, CallExpr* CE, SVal L, NodeTy* Pred) {
     assert (Builder && "GRStmtNodeBuilder must be defined.");
     getTF().EvalCall(Dst, *this, *Builder, CE, L, Pred);
   }
@@ -618,24 +618,25 @@ protected:
   }
   
   void EvalStore(NodeSet& Dst, Expr* E, NodeTy* Pred, const GRState* St,
-                 RVal TargetLV, RVal Val);
+                 SVal TargetLV, SVal Val);
   
   void EvalStore(NodeSet& Dst, Expr* E, Expr* StoreE, NodeTy* Pred,
-                 const GRState* St, RVal TargetLV, RVal Val);
+                 const GRState* St, SVal TargetLV, SVal Val);
   
   // FIXME: The "CheckOnly" option exists only because Array and Field
   //  loads aren't fully implemented.  Eventually this option will go away.
   
   void EvalLoad(NodeSet& Dst, Expr* Ex, NodeTy* Pred,
-                const GRState* St, RVal location, bool CheckOnly = false);
+                const GRState* St, SVal location, bool CheckOnly = false);
   
   const GRState* EvalLocation(Expr* Ex, NodeTy* Pred,
-                                 const GRState* St, RVal location,
-                                 bool isLoad = false);
+                              const GRState* St, SVal location,
+                              bool isLoad = false);
   
   void EvalReturn(NodeSet& Dst, ReturnStmt* s, NodeTy* Pred);
   
-  const GRState* MarkBranch(const GRState* St, Stmt* Terminator, bool branchTaken);
+  const GRState* MarkBranch(const GRState* St, Stmt* Terminator, 
+                            bool branchTaken);
 };
   
 } // end clang namespace

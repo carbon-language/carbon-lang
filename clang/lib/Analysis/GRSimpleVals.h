@@ -27,9 +27,9 @@ class ASTContext;
 class GRSimpleVals : public GRTransferFuncs {
 protected:
   
-  virtual RVal DetermEvalBinOpNN(GRStateManager& StateMgr,
+  virtual SVal DetermEvalBinOpNN(GRStateManager& StateMgr,
                                  BinaryOperator::Opcode Op,
-                                 NonLVal L, NonLVal R);
+                                 NonLoc L, NonLoc R);
   
 public:
   GRSimpleVals() {}
@@ -37,31 +37,31 @@ public:
   
   // Casts.
   
-  virtual RVal EvalCast(GRExprEngine& Engine, NonLVal V, QualType CastT);
-  virtual RVal EvalCast(GRExprEngine& Engine, LVal V, QualType CastT);
+  virtual SVal EvalCast(GRExprEngine& Engine, NonLoc V, QualType CastT);
+  virtual SVal EvalCast(GRExprEngine& Engine, Loc V, QualType CastT);
   
   // Unary Operators.
   
-  virtual RVal EvalMinus(GRExprEngine& Engine, UnaryOperator* U, NonLVal X);
+  virtual SVal EvalMinus(GRExprEngine& Engine, UnaryOperator* U, NonLoc X);
 
-  virtual RVal EvalComplement(GRExprEngine& Engine, NonLVal X);
+  virtual SVal EvalComplement(GRExprEngine& Engine, NonLoc X);
   
   // Binary Operators.
   
-  virtual RVal EvalBinOp(GRExprEngine& Engine, BinaryOperator::Opcode Op,
-                         LVal L, LVal R);
+  virtual SVal EvalBinOp(GRExprEngine& Engine, BinaryOperator::Opcode Op,
+                         Loc L, Loc R);
   
   // Pointer arithmetic.
   
-  virtual RVal EvalBinOp(GRExprEngine& Engine, BinaryOperator::Opcode Op,
-                         LVal L, NonLVal R);  
+  virtual SVal EvalBinOp(GRExprEngine& Engine, BinaryOperator::Opcode Op,
+                         Loc L, NonLoc R);  
   
   // Calls.
   
   virtual void EvalCall(ExplodedNodeSet<GRState>& Dst,
                         GRExprEngine& Engine,
                         GRStmtNodeBuilder<GRState>& Builder,
-                        CallExpr* CE, RVal L,
+                        CallExpr* CE, SVal L,
                         ExplodedNode<GRState>* Pred);
   
   virtual void EvalObjCMessageExpr(ExplodedNodeSet<GRState>& Dst,
@@ -77,10 +77,10 @@ public:
   
 protected:
   
-  // Equality operators for LVals.
+  // Equality operators for Locs.
   
-  RVal EvalEQ(GRExprEngine& Engine, LVal L, LVal R);
-  RVal EvalNE(GRExprEngine& Engine, LVal L, LVal R);
+  SVal EvalEQ(GRExprEngine& Engine, Loc L, Loc R);
+  SVal EvalNE(GRExprEngine& Engine, Loc L, Loc R);
 };
   
 } // end clang namespace

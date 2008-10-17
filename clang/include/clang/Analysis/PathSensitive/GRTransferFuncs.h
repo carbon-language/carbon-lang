@@ -32,9 +32,9 @@ class GRTransferFuncs {
 protected:
   
   
-  virtual RVal DetermEvalBinOpNN(GRStateManager& StateMgr,
+  virtual SVal DetermEvalBinOpNN(GRStateManager& StateMgr,
                                  BinaryOperator::Opcode Op,
-                                 NonLVal L, NonLVal R) {
+                                 NonLoc L, NonLoc R) {
     return UnknownVal();
   }
   
@@ -48,34 +48,34 @@ public:
   
   // Casts.
   
-  virtual RVal EvalCast(GRExprEngine& Engine, NonLVal V, QualType CastT) =0;  
-  virtual RVal EvalCast(GRExprEngine& Engine, LVal V, QualType CastT) = 0;
+  virtual SVal EvalCast(GRExprEngine& Engine, NonLoc V, QualType CastT) =0;  
+  virtual SVal EvalCast(GRExprEngine& Engine, Loc V, QualType CastT) = 0;
 
   // Unary Operators.
   
-  virtual RVal EvalMinus(GRExprEngine& Engine, UnaryOperator* U, NonLVal X) = 0;
+  virtual SVal EvalMinus(GRExprEngine& Engine, UnaryOperator* U, NonLoc X) = 0;
 
-  virtual RVal EvalComplement(GRExprEngine& Engine, NonLVal X) = 0;
+  virtual SVal EvalComplement(GRExprEngine& Engine, NonLoc X) = 0;
 
   // Binary Operators.
   virtual void EvalBinOpNN(GRStateSet& OStates, GRStateManager& StateMgr,
                            const GRState* St, Expr* Ex,
-                           BinaryOperator::Opcode Op, NonLVal L, NonLVal R);
+                           BinaryOperator::Opcode Op, NonLoc L, NonLoc R);
   
-  virtual RVal EvalBinOp(GRExprEngine& Engine, BinaryOperator::Opcode Op,
-                         LVal L, LVal R) = 0;
+  virtual SVal EvalBinOp(GRExprEngine& Engine, BinaryOperator::Opcode Op,
+                         Loc L, Loc R) = 0;
   
   // Pointer arithmetic.
   
-  virtual RVal EvalBinOp(GRExprEngine& Engine, BinaryOperator::Opcode Op,
-                         LVal L, NonLVal R) = 0;
+  virtual SVal EvalBinOp(GRExprEngine& Engine, BinaryOperator::Opcode Op,
+                         Loc L, NonLoc R) = 0;
   
   // Calls.
   
   virtual void EvalCall(ExplodedNodeSet<GRState>& Dst,
                         GRExprEngine& Engine,
                         GRStmtNodeBuilder<GRState>& Builder,
-                        CallExpr* CE, RVal L,
+                        CallExpr* CE, SVal L,
                         ExplodedNode<GRState>* Pred) {}
   
   virtual void EvalObjCMessageExpr(ExplodedNodeSet<GRState>& Dst,
@@ -88,12 +88,12 @@ public:
   
   /// EvalStore - Evaluate the effects of a store, creating a new node
   ///  the represents the effect of binding 'Val' to the location 'TargetLV'.
-  //   TargetLV is guaranteed to either be an UnknownVal or an LVal.
+  //   TargetLV is guaranteed to either be an UnknownVal or an Loc.
   virtual void EvalStore(ExplodedNodeSet<GRState>& Dst,
                          GRExprEngine& Engine,
                          GRStmtNodeBuilder<GRState>& Builder,
                          Expr* E, ExplodedNode<GRState>* Pred,
-                         const GRState* St, RVal TargetLV, RVal Val);
+                         const GRState* St, SVal TargetLV, SVal Val);
                          
   
   // End-of-path and dead symbol notification.
@@ -121,7 +121,7 @@ public:
   
   virtual const GRState* EvalAssume(GRStateManager& VMgr,
                                        const GRState* St,
-                                       RVal Cond, bool Assumption,
+                                       SVal Cond, bool Assumption,
                                        bool& isFeasible) {
     return St;
   }

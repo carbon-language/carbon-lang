@@ -1,4 +1,4 @@
-//== RValues.h - Abstract RValues for Path-Sens. Value Tracking -*- C++ -*--==//
+//== SValues.h - Abstract Values for Static Analysis ---------*- C++ -*--==//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file defines RVal, LVal, and NonLVal, classes that represent
+//  This file defines SVal, Loc, and NonLoc, classes that represent
 //  abstract r-values for use with path-sensitive value tracking.
 //
 //===----------------------------------------------------------------------===//
@@ -19,17 +19,17 @@
 #include "llvm/Support/Casting.h"
   
 //==------------------------------------------------------------------------==//
-//  Base RVal types.
-//==------------------------------------------------------------------------==// 
+//  Base SVal types.
+//==------------------------------------------------------------------------==//
 
 namespace clang {
   
 class MemRegion;
 class GRStateManager;
   
-class RVal {
+class SVal {
 public:
-  enum BaseKind { UndefinedKind, UnknownKind, LValKind, NonLValKind };
+  enum BaseKind { UndefinedKind, UnknownKind, LocKind, NonLocKind };
   enum { BaseBits = 2, BaseMask = 0x3 };
   
 protected:
@@ -37,18 +37,18 @@ protected:
   unsigned Kind;
   
 protected:
-  RVal(const void* d, bool isLVal, unsigned ValKind)
+  SVal(const void* d, bool isLoc, unsigned ValKind)
   : Data(const_cast<void*>(d)),
-    Kind((isLVal ? LValKind : NonLValKind) | (ValKind << BaseBits)) {}
+    Kind((isLoc ? LocKind : NonLocKind) | (ValKind << BaseBits)) {}
   
-  explicit RVal(BaseKind k, void* D = NULL)
+  explicit SVal(BaseKind k, void* D = NULL)
     : Data(D), Kind(k) {}
   
 public:
-  ~RVal() {};
+  ~SVal() {};
   
-  /// BufferTy - A temporary buffer to hold a set of RVals.
-  typedef llvm::SmallVector<RVal,5> BufferTy;
+  /// BufferTy - A temporary buffer to hold a set of SVals.
+  typedef llvm::SmallVector<SVal,5> BufferTy;
   
   inline unsigned getRawKind() const { return Kind; }
   inline BaseKind getBaseKind() const { return (BaseKind) (Kind & BaseMask); }
@@ -59,16 +59,16 @@ public:
     ID.AddPointer(reinterpret_cast<void*>(Data));
   }
   
-  inline bool operator==(const RVal& R) const {
+  inline bool operator==(const SVal& R) const {
     return getRawKind() == R.getRawKind() && Data == R.Data;
   }
   
   
-  inline bool operator!=(const RVal& R) const {
+  inline bool operator!=(const SVal& R) const {
     return !(*this == R);
   }
   
-  static RVal GetSymbolValue(SymbolManager& SymMgr, VarDecl *D);
+  static SVal GetSymbolValue(SymbolManager& SymMgr, VarDecl *D);
   
   inline bool isUnknown() const {
     return getRawKind() == UnknownKind;
@@ -96,134 +96,134 @@ public:
   symbol_iterator symbol_end() const;  
   
   // Implement isa<T> support.
-  static inline bool classof(const RVal*) { return true; }
+  static inline bool classof(const SVal*) { return true; }
 };
 
-class UnknownVal : public RVal {
+class UnknownVal : public SVal {
 public:
-  UnknownVal() : RVal(UnknownKind) {}
+  UnknownVal() : SVal(UnknownKind) {}
   
-  static inline bool classof(const RVal* V) {
+  static inline bool classof(const SVal* V) {
     return V->getBaseKind() == UnknownKind;
   }  
 };
 
-class UndefinedVal : public RVal {
+class UndefinedVal : public SVal {
 public:
-  UndefinedVal() : RVal(UndefinedKind) {}
-  UndefinedVal(void* D) : RVal(UndefinedKind, D) {}
+  UndefinedVal() : SVal(UndefinedKind) {}
+  UndefinedVal(void* D) : SVal(UndefinedKind, D) {}
   
-  static inline bool classof(const RVal* V) {
+  static inline bool classof(const SVal* V) {
     return V->getBaseKind() == UndefinedKind;
   }
   
   void* getData() const { return Data; }  
 };
 
-class NonLVal : public RVal {
+class NonLoc : public SVal {
 protected:
-  NonLVal(unsigned SubKind, const void* d) : RVal(d, false, SubKind) {}
+  NonLoc(unsigned SubKind, const void* d) : SVal(d, false, SubKind) {}
   
 public:
   void print(std::ostream& Out) const;
   
-  // Utility methods to create NonLVals.
-  static NonLVal MakeVal(BasicValueFactory& BasicVals, uint64_t X, QualType T);
+  // Utility methods to create NonLocs.
+  static NonLoc MakeVal(BasicValueFactory& BasicVals, uint64_t X, QualType T);
   
-  static NonLVal MakeVal(BasicValueFactory& BasicVals, IntegerLiteral* I);
+  static NonLoc MakeVal(BasicValueFactory& BasicVals, IntegerLiteral* I);
     
-  static NonLVal MakeIntTruthVal(BasicValueFactory& BasicVals, bool b);
+  static NonLoc MakeIntTruthVal(BasicValueFactory& BasicVals, bool b);
     
   // Implement isa<T> support.
-  static inline bool classof(const RVal* V) {
-    return V->getBaseKind() == NonLValKind;
+  static inline bool classof(const SVal* V) {
+    return V->getBaseKind() == NonLocKind;
   }
 };
 
-class LVal : public RVal {
+class Loc : public SVal {
 protected:
-  LVal(unsigned SubKind, const void* D)
-    : RVal(const_cast<void*>(D), true, SubKind) {}
+  Loc(unsigned SubKind, const void* D)
+    : SVal(const_cast<void*>(D), true, SubKind) {}
   
   // Equality operators.
-  NonLVal EQ(BasicValueFactory& BasicVals, const LVal& R) const;
-  NonLVal NE(BasicValueFactory& BasicVals, const LVal& R) const;
+  NonLoc EQ(BasicValueFactory& BasicVals, const Loc& R) const;
+  NonLoc NE(BasicValueFactory& BasicVals, const Loc& R) const;
   
 public:
   void print(std::ostream& Out) const;
     
-  static LVal MakeVal(AddrLabelExpr* E);
+  static Loc MakeVal(AddrLabelExpr* E);
   
-  static LVal MakeVal(StringLiteral* S);
+  static Loc MakeVal(StringLiteral* S);
   
   // Implement isa<T> support.
-  static inline bool classof(const RVal* V) {
-    return V->getBaseKind() == LValKind;
+  static inline bool classof(const SVal* V) {
+    return V->getBaseKind() == LocKind;
   }
   
-  static inline bool IsLValType(QualType T) {
+  static inline bool IsLocType(QualType T) {
     return T->isPointerType() || T->isObjCQualifiedIdType() 
       || T->isBlockPointerType();
   }
 };
   
 //==------------------------------------------------------------------------==//
-//  Subclasses of NonLVal.
-//==------------------------------------------------------------------------==// 
+//  Subclasses of NonLoc.
+//==------------------------------------------------------------------------==//
 
-namespace nonlval {
+namespace nonloc {
   
 enum Kind { ConcreteIntKind, SymbolValKind, SymIntConstraintValKind,
-            LValAsIntegerKind };
+            LocAsIntegerKind };
 
-class SymbolVal : public NonLVal {
+class SymbolVal : public NonLoc {
 public:
   SymbolVal(unsigned SymID)
-    : NonLVal(SymbolValKind, reinterpret_cast<void*>((uintptr_t) SymID)) {}
+    : NonLoc(SymbolValKind, reinterpret_cast<void*>((uintptr_t) SymID)) {}
   
   SymbolID getSymbol() const {
     return (SymbolID) reinterpret_cast<uintptr_t>(Data);
   }
   
-  static inline bool classof(const RVal* V) {
-    return V->getBaseKind() == NonLValKind && 
+  static inline bool classof(const SVal* V) {
+    return V->getBaseKind() == NonLocKind && 
            V->getSubKind() == SymbolValKind;
   }
   
-  static inline bool classof(const NonLVal* V) {
+  static inline bool classof(const NonLoc* V) {
     return V->getSubKind() == SymbolValKind;
   }
 };
 
-class SymIntConstraintVal : public NonLVal {    
+class SymIntConstraintVal : public NonLoc {    
 public:
   SymIntConstraintVal(const SymIntConstraint& C)
-    : NonLVal(SymIntConstraintValKind, reinterpret_cast<const void*>(&C)) {}
+    : NonLoc(SymIntConstraintValKind, reinterpret_cast<const void*>(&C)) {}
 
   const SymIntConstraint& getConstraint() const {
     return *reinterpret_cast<SymIntConstraint*>(Data);
   }
   
-  static inline bool classof(const RVal* V) {
-    return V->getBaseKind() == NonLValKind &&
+  static inline bool classof(const SVal* V) {
+    return V->getBaseKind() == NonLocKind &&
            V->getSubKind() == SymIntConstraintValKind;
   }
   
-  static inline bool classof(const NonLVal* V) {
+  static inline bool classof(const NonLoc* V) {
     return V->getSubKind() == SymIntConstraintValKind;
   }
 };
 
-class ConcreteInt : public NonLVal {
+class ConcreteInt : public NonLoc {
 public:
-  ConcreteInt(const llvm::APSInt& V) : NonLVal(ConcreteIntKind, &V) {}
+  ConcreteInt(const llvm::APSInt& V) : NonLoc(ConcreteIntKind, &V) {}
   
   const llvm::APSInt& getValue() const {
     return *static_cast<llvm::APSInt*>(Data);
   }
   
   // Transfer functions for binary/unary operations on ConcreteInts.
-  RVal EvalBinOp(BasicValueFactory& BasicVals, BinaryOperator::Opcode Op,
+  SVal EvalBinOp(BasicValueFactory& BasicVals, BinaryOperator::Opcode Op,
                  const ConcreteInt& R) const;
   
   ConcreteInt EvalComplement(BasicValueFactory& BasicVals) const;
@@ -231,105 +231,105 @@ public:
   ConcreteInt EvalMinus(BasicValueFactory& BasicVals, UnaryOperator* U) const;
   
   // Implement isa<T> support.
-  static inline bool classof(const RVal* V) {
-    return V->getBaseKind() == NonLValKind &&
+  static inline bool classof(const SVal* V) {
+    return V->getBaseKind() == NonLocKind &&
            V->getSubKind() == ConcreteIntKind;
   }
   
-  static inline bool classof(const NonLVal* V) {
+  static inline bool classof(const NonLoc* V) {
     return V->getSubKind() == ConcreteIntKind;
   }
 };
   
-class LValAsInteger : public NonLVal {
-  LValAsInteger(const std::pair<RVal, uintptr_t>& data) :
-    NonLVal(LValAsIntegerKind, &data) {
-      assert (isa<LVal>(data.first));
+class LocAsInteger : public NonLoc {
+  LocAsInteger(const std::pair<SVal, uintptr_t>& data) :
+    NonLoc(LocAsIntegerKind, &data) {
+      assert (isa<Loc>(data.first));
     }
   
 public:
     
-  LVal getLVal() const {
-    return cast<LVal>(((std::pair<RVal, uintptr_t>*) Data)->first);
+  Loc getLoc() const {
+    return cast<Loc>(((std::pair<SVal, uintptr_t>*) Data)->first);
   }
   
-  const LVal& getPersistentLVal() const {
-    const RVal& V = ((std::pair<RVal, uintptr_t>*) Data)->first;
-    return cast<LVal>(V);
+  const Loc& getPersistentLoc() const {
+    const SVal& V = ((std::pair<SVal, uintptr_t>*) Data)->first;
+    return cast<Loc>(V);
   }    
   
   unsigned getNumBits() const {
-    return ((std::pair<RVal, unsigned>*) Data)->second;
+    return ((std::pair<SVal, unsigned>*) Data)->second;
   }
   
   // Implement isa<T> support.
-  static inline bool classof(const RVal* V) {
-    return V->getBaseKind() == NonLValKind &&
-           V->getSubKind() == LValAsIntegerKind;
+  static inline bool classof(const SVal* V) {
+    return V->getBaseKind() == NonLocKind &&
+           V->getSubKind() == LocAsIntegerKind;
   }
   
-  static inline bool classof(const NonLVal* V) {
-    return V->getSubKind() == LValAsIntegerKind;
+  static inline bool classof(const NonLoc* V) {
+    return V->getSubKind() == LocAsIntegerKind;
   }
   
-  static inline LValAsInteger Make(BasicValueFactory& Vals, LVal V,
+  static inline LocAsInteger Make(BasicValueFactory& Vals, Loc V,
                                    unsigned Bits) {    
-    return LValAsInteger(Vals.getPersistentRValWithData(V, Bits));
+    return LocAsInteger(Vals.getPersistentSValWithData(V, Bits));
   }
 };
   
-} // end namespace clang::nonlval
+} // end namespace clang::nonloc
 
 //==------------------------------------------------------------------------==//
-//  Subclasses of LVal.
-//==------------------------------------------------------------------------==// 
+//  Subclasses of Loc.
+//==------------------------------------------------------------------------==//
 
-namespace lval {
+namespace loc {
   
 enum Kind { SymbolValKind, GotoLabelKind, MemRegionKind, FuncValKind,
             ConcreteIntKind, StringLiteralValKind };
 
-class SymbolVal : public LVal {
+class SymbolVal : public Loc {
 public:
   SymbolVal(unsigned SymID)
-  : LVal(SymbolValKind, reinterpret_cast<void*>((uintptr_t) SymID)) {}
+  : Loc(SymbolValKind, reinterpret_cast<void*>((uintptr_t) SymID)) {}
   
   SymbolID getSymbol() const {
     return (SymbolID) reinterpret_cast<uintptr_t>(Data);
   }
   
-  static inline bool classof(const RVal* V) {
-    return V->getBaseKind() == LValKind &&
+  static inline bool classof(const SVal* V) {
+    return V->getBaseKind() == LocKind &&
            V->getSubKind() == SymbolValKind;
   }
   
-  static inline bool classof(const LVal* V) {
+  static inline bool classof(const Loc* V) {
     return V->getSubKind() == SymbolValKind;
   }
 };
 
-class GotoLabel : public LVal {
+class GotoLabel : public Loc {
 public:
-  GotoLabel(LabelStmt* Label) : LVal(GotoLabelKind, Label) {}
+  GotoLabel(LabelStmt* Label) : Loc(GotoLabelKind, Label) {}
   
   LabelStmt* getLabel() const {
     return static_cast<LabelStmt*>(Data);
   }
   
-  static inline bool classof(const RVal* V) {
-    return V->getBaseKind() == LValKind &&
+  static inline bool classof(const SVal* V) {
+    return V->getBaseKind() == LocKind &&
            V->getSubKind() == GotoLabelKind;
   }
   
-  static inline bool classof(const LVal* V) {
+  static inline bool classof(const Loc* V) {
     return V->getSubKind() == GotoLabelKind;
   } 
 };
   
 
-class MemRegionVal : public LVal {
+class MemRegionVal : public Loc {
 public:
-  MemRegionVal(const MemRegion* r) : LVal(MemRegionKind, r) {}
+  MemRegionVal(const MemRegion* r) : Loc(MemRegionKind, r) {}
 
   MemRegion* getRegion() const {
     return static_cast<MemRegion*>(Data);
@@ -344,19 +344,19 @@ public:
   }
   
   // Implement isa<T> support.
-  static inline bool classof(const RVal* V) {
-    return V->getBaseKind() == LValKind &&
+  static inline bool classof(const SVal* V) {
+    return V->getBaseKind() == LocKind &&
            V->getSubKind() == MemRegionKind;
   }
   
-  static inline bool classof(const LVal* V) {
+  static inline bool classof(const Loc* V) {
     return V->getSubKind() == MemRegionKind;
   }    
 };
 
-class FuncVal : public LVal {
+class FuncVal : public Loc {
 public:
-  FuncVal(const FunctionDecl* fd) : LVal(FuncValKind, fd) {}
+  FuncVal(const FunctionDecl* fd) : Loc(FuncValKind, fd) {}
   
   FunctionDecl* getDecl() const {
     return static_cast<FunctionDecl*>(Data);
@@ -371,57 +371,57 @@ public:
   }
   
   // Implement isa<T> support.
-  static inline bool classof(const RVal* V) {
-    return V->getBaseKind() == LValKind &&
+  static inline bool classof(const SVal* V) {
+    return V->getBaseKind() == LocKind &&
            V->getSubKind() == FuncValKind;
   }
   
-  static inline bool classof(const LVal* V) {
+  static inline bool classof(const Loc* V) {
     return V->getSubKind() == FuncValKind;
   }
 };
 
-class ConcreteInt : public LVal {
+class ConcreteInt : public Loc {
 public:
-  ConcreteInt(const llvm::APSInt& V) : LVal(ConcreteIntKind, &V) {}
+  ConcreteInt(const llvm::APSInt& V) : Loc(ConcreteIntKind, &V) {}
   
   const llvm::APSInt& getValue() const {
     return *static_cast<llvm::APSInt*>(Data);
   }
 
   // Transfer functions for binary/unary operations on ConcreteInts.
-  RVal EvalBinOp(BasicValueFactory& BasicVals, BinaryOperator::Opcode Op,
+  SVal EvalBinOp(BasicValueFactory& BasicVals, BinaryOperator::Opcode Op,
                  const ConcreteInt& R) const;
       
   // Implement isa<T> support.
-  static inline bool classof(const RVal* V) {
-    return V->getBaseKind() == LValKind &&
+  static inline bool classof(const SVal* V) {
+    return V->getBaseKind() == LocKind &&
            V->getSubKind() == ConcreteIntKind;
   }
   
-  static inline bool classof(const LVal* V) {
+  static inline bool classof(const Loc* V) {
     return V->getSubKind() == ConcreteIntKind;
   }
 };
   
-class StringLiteralVal : public LVal {
+class StringLiteralVal : public Loc {
 public:
-  StringLiteralVal(StringLiteral* L) : LVal(StringLiteralValKind, L) {}
+  StringLiteralVal(StringLiteral* L) : Loc(StringLiteralValKind, L) {}
   
   StringLiteral* getLiteral() const { return (StringLiteral*) Data; }
   
   // Implement isa<T> support.
-  static inline bool classof(const RVal* V) {
-    return V->getBaseKind() == LValKind &&
+  static inline bool classof(const SVal* V) {
+    return V->getBaseKind() == LocKind &&
            V->getSubKind() == StringLiteralValKind;
   }
   
-  static inline bool classof(const LVal* V) {
+  static inline bool classof(const Loc* V) {
     return V->getSubKind() == StringLiteralValKind;
   }
 };  
   
-} // end clang::lval namespace
+} // end clang::loc namespace
 } // end clang namespace  
 
 #endif

@@ -19,7 +19,7 @@
 
 using namespace clang;
 
-typedef llvm::ImmutableMap<const VarDecl*,RVal> VarBindingsTy;  
+typedef llvm::ImmutableMap<const VarDecl*,SVal> VarBindingsTy;  
 
 namespace {
   
@@ -34,23 +34,23 @@ public:
   
   virtual ~BasicStoreManager() {}
 
-  virtual RVal GetRVal(Store St, LVal LV, QualType T);  
-  virtual Store SetRVal(Store St, LVal LV, RVal V);  
-  virtual Store Remove(Store St, LVal LV);
+  virtual SVal GetSVal(Store St, Loc LV, QualType T);  
+  virtual Store SetSVal(Store St, Loc LV, SVal V);  
+  virtual Store Remove(Store St, Loc LV);
 
   virtual Store getInitialStore();
 
   virtual MemRegionManager& getRegionManager() { return MRMgr; }
 
   // FIXME: Investigate what is using this. This method should be removed.
-  virtual LVal getLVal(const VarDecl* VD) {
-    return lval::MemRegionVal(MRMgr.getVarRegion(VD));
+  virtual Loc getLoc(const VarDecl* VD) {
+    return loc::MemRegionVal(MRMgr.getVarRegion(VD));
   }
   
-  RVal getLValueVar(const GRState* St, const VarDecl* VD);
-  RVal getLValueIvar(const GRState* St, const ObjCIvarDecl* D, RVal Base);  
-  RVal getLValueField(const GRState* St, const FieldDecl* D, RVal Base);  
-  RVal getLValueElement(const GRState* St, RVal Base, RVal Offset);
+  SVal getLValueVar(const GRState* St, const VarDecl* VD);
+  SVal getLValueIvar(const GRState* St, const ObjCIvarDecl* D, SVal Base);
+  SVal getLValueField(const GRState* St, const FieldDecl* D, SVal Base);  
+  SVal getLValueElement(const GRState* St, SVal Base, SVal Offset);
   
   virtual Store
   RemoveDeadBindings(Store store, Stmt* Loc, const LiveVariables& Live,
@@ -61,7 +61,7 @@ public:
 
   virtual Store AddDecl(Store store,
                         const VarDecl* VD, Expr* Ex, 
-                        RVal InitVal = UndefinedVal(), unsigned Count = 0);
+                        SVal InitVal = UndefinedVal(), unsigned Count = 0);
 
   static inline VarBindingsTy GetVarBindings(Store store) {
     return VarBindingsTy(static_cast<const VarBindingsTy::TreeTy*>(store));
@@ -78,27 +78,27 @@ public:
 StoreManager* clang::CreateBasicStoreManager(GRStateManager& StMgr) {
   return new BasicStoreManager(StMgr);
 }
-RVal BasicStoreManager::getLValueVar(const GRState* St, const VarDecl* VD) {
-  return lval::MemRegionVal(MRMgr.getVarRegion(VD));
+SVal BasicStoreManager::getLValueVar(const GRState* St, const VarDecl* VD) {
+  return loc::MemRegionVal(MRMgr.getVarRegion(VD));
 }
   
-RVal BasicStoreManager::getLValueIvar(const GRState* St, const ObjCIvarDecl* D,
-                                      RVal Base) {
+SVal BasicStoreManager::getLValueIvar(const GRState* St, const ObjCIvarDecl* D,
+                                      SVal Base) {
   return UnknownVal();
 }
   
   
-RVal BasicStoreManager::getLValueField(const GRState* St, const FieldDecl* D,
-                                       RVal Base) {
-  return UnknownVal();
-}
-
-RVal BasicStoreManager::getLValueElement(const GRState* St, RVal Base,
-                                         RVal Offset) {
+SVal BasicStoreManager::getLValueField(const GRState* St, const FieldDecl* D,
+                                       SVal Base) {
   return UnknownVal();
 }
 
-RVal BasicStoreManager::GetRVal(Store St, LVal LV, QualType T) {
+SVal BasicStoreManager::getLValueElement(const GRState* St, SVal Base,
+                                         SVal Offset) {
+  return UnknownVal();
+}
+
+SVal BasicStoreManager::GetSVal(Store St, Loc LV, QualType T) {
   
   if (isa<UnknownVal>(LV))
     return UnknownVal();
@@ -107,9 +107,9 @@ RVal BasicStoreManager::GetRVal(Store St, LVal LV, QualType T) {
   
   switch (LV.getSubKind()) {
 
-    case lval::MemRegionKind: {
+    case loc::MemRegionKind: {
       VarRegion* R =
-        dyn_cast<VarRegion>(cast<lval::MemRegionVal>(LV).getRegion());
+        dyn_cast<VarRegion>(cast<loc::MemRegionVal>(LV).getRegion());
       
       if (!R)
         return UnknownVal();
@@ -119,34 +119,34 @@ RVal BasicStoreManager::GetRVal(Store St, LVal LV, QualType T) {
       return T ? *T : UnknownVal();
     }
       
-    case lval::SymbolValKind:
+    case loc::SymbolValKind:
       return UnknownVal();
       
-    case lval::ConcreteIntKind:
-      // Some clients may call GetRVal with such an option simply because
-      // they are doing a quick scan through their LVals (potentially to
+    case loc::ConcreteIntKind:
+      // Some clients may call GetSVal with such an option simply because
+      // they are doing a quick scan through their Locs (potentially to
       // invalidate their bindings).  Just return Undefined.
       return UndefinedVal();            
-    case lval::FuncValKind:
+    case loc::FuncValKind:
       return LV;
       
-    case lval::StringLiteralValKind:
+    case loc::StringLiteralValKind:
       // FIXME: Implement better support for fetching characters from strings.
       return UnknownVal();
       
     default:
-      assert (false && "Invalid LVal.");
+      assert (false && "Invalid Loc.");
       break;
   }
   
   return UnknownVal();
 }
   
-Store BasicStoreManager::SetRVal(Store store, LVal LV, RVal V) {    
+Store BasicStoreManager::SetSVal(Store store, Loc LV, SVal V) {    
   switch (LV.getSubKind()) {      
-    case lval::MemRegionKind: {
+    case loc::MemRegionKind: {
       VarRegion* R =
-        dyn_cast<VarRegion>(cast<lval::MemRegionVal>(LV).getRegion());
+        dyn_cast<VarRegion>(cast<loc::MemRegionVal>(LV).getRegion());
       
       if (!R)
         return store;
@@ -157,16 +157,16 @@ Store BasicStoreManager::SetRVal(Store store, LVal LV, RVal V) {
         : VBFactory.Add(B, R->getDecl(), V).getRoot();
     }
     default:
-      assert ("SetRVal for given LVal type not yet implemented.");
+      assert ("SetSVal for given Loc type not yet implemented.");
       return store;
   }
 }
 
-Store BasicStoreManager::Remove(Store store, LVal LV) {
+Store BasicStoreManager::Remove(Store store, Loc LV) {
   switch (LV.getSubKind()) {
-    case lval::MemRegionKind: {
+    case loc::MemRegionKind: {
       VarRegion* R =
-      dyn_cast<VarRegion>(cast<lval::MemRegionVal>(LV).getRegion());
+      dyn_cast<VarRegion>(cast<loc::MemRegionVal>(LV).getRegion());
       
       if (!R)
         return store;
@@ -175,7 +175,7 @@ Store BasicStoreManager::Remove(Store store, LVal LV) {
       return VBFactory.Remove(B,R->getDecl()).getRoot();
     }
     default:
-      assert ("Remove for given LVal type not yet implemented.");
+      assert ("Remove for given Loc type not yet implemented.");
       return store;
   }
 }
@@ -187,13 +187,13 @@ BasicStoreManager::RemoveDeadBindings(Store store, Stmt* Loc,
                           LiveSymbolsTy& LSymbols, DeadSymbolsTy& DSymbols) {
   
   VarBindingsTy B = GetVarBindings(store);
-  typedef RVal::symbol_iterator symbol_iterator;
+  typedef SVal::symbol_iterator symbol_iterator;
   
   // Iterate over the variable bindings.
   for (VarBindingsTy::iterator I=B.begin(), E=B.end(); I!=E ; ++I)
     if (Liveness.isLive(Loc, I.getKey())) {
       RegionRoots.push_back(MRMgr.getVarRegion(I.getKey()));      
-      RVal X = I.getData();
+      SVal X = I.getData();
       
       for (symbol_iterator SI=X.symbol_begin(), SE=X.symbol_end(); SI!=SE; ++SI)
         LSymbols.insert(*SI);
@@ -212,15 +212,15 @@ BasicStoreManager::RemoveDeadBindings(Store store, Stmt* Loc,
     Marked.insert(R);    
     // FIXME: Do we need the QualType here, since regions are partially
     // typed?
-    RVal X = GetRVal(store, lval::MemRegionVal(R), QualType());      
+    SVal X = GetSVal(store, loc::MemRegionVal(R), QualType());      
     
     for (symbol_iterator SI=X.symbol_begin(), SE=X.symbol_end(); SI!=SE; ++SI)
       LSymbols.insert(*SI);
     
-    if (!isa<lval::MemRegionVal>(X))
+    if (!isa<loc::MemRegionVal>(X))
       continue;
     
-    const lval::MemRegionVal& LVD = cast<lval::MemRegionVal>(X);
+    const loc::MemRegionVal& LVD = cast<loc::MemRegionVal>(X);
     RegionRoots.push_back(cast<VarRegion>(LVD.getRegion()));
   }
   
@@ -229,8 +229,8 @@ BasicStoreManager::RemoveDeadBindings(Store store, Stmt* Loc,
     const VarRegion* R = cast<VarRegion>(MRMgr.getVarRegion(I.getKey()));
     
     if (!Marked.count(R)) {
-      store = Remove(store, lval::MemRegionVal(R));
-      RVal X = I.getData();
+      store = Remove(store, loc::MemRegionVal(R));
+      SVal X = I.getData();
       
       for (symbol_iterator SI=X.symbol_begin(), SE=X.symbol_end(); SI!=SE; ++SI)
         if (!LSymbols.count(*SI)) DSymbols.insert(*SI);
@@ -260,15 +260,15 @@ Store BasicStoreManager::getInitialStore() {
 
       // Only handle pointers and integers for now.
       QualType T = VD->getType();
-      if (LVal::IsLValType(T) || T->isIntegerType()) {
+      if (Loc::IsLocType(T) || T->isIntegerType()) {
         // Initialize globals and parameters to symbolic values.
         // Initialize local variables to undefined.
-        RVal X = (VD->hasGlobalStorage() || isa<ParmVarDecl>(VD) ||
+        SVal X = (VD->hasGlobalStorage() || isa<ParmVarDecl>(VD) ||
                   isa<ImplicitParamDecl>(VD))
-                 ? RVal::GetSymbolValue(StateMgr.getSymbolManager(), VD)
+                 ? SVal::GetSymbolValue(StateMgr.getSymbolManager(), VD)
                  : UndefinedVal();
 
-        St = SetRVal(St, lval::MemRegionVal(MRMgr.getVarRegion(VD)), X);
+        St = SetSVal(St, loc::MemRegionVal(MRMgr.getVarRegion(VD)), X);
       }
     }
   }
@@ -277,7 +277,7 @@ Store BasicStoreManager::getInitialStore() {
 
 Store BasicStoreManager::AddDecl(Store store,
                                  const VarDecl* VD, Expr* Ex,
-                                 RVal InitVal, unsigned Count) {
+                                 SVal InitVal, unsigned Count) {
   
   BasicValueFactory& BasicVals = StateMgr.getBasicVals();
   SymbolManager& SymMgr = StateMgr.getSymbolManager();
@@ -307,35 +307,35 @@ Store BasicStoreManager::AddDecl(Store store,
       //     unsigned) zero;
       if (!Ex) {
         QualType T = VD->getType();
-        if (LVal::IsLValType(T))
-          store = SetRVal(store, getLVal(VD),
-                          lval::ConcreteInt(BasicVals.getValue(0, T)));
+        if (Loc::IsLocType(T))
+          store = SetSVal(store, getLoc(VD),
+                          loc::ConcreteInt(BasicVals.getValue(0, T)));
         else if (T->isIntegerType())
-          store = SetRVal(store, getLVal(VD),
-                          nonlval::ConcreteInt(BasicVals.getValue(0, T)));
+          store = SetSVal(store, getLoc(VD),
+                          nonloc::ConcreteInt(BasicVals.getValue(0, T)));
         else {
           // assert(0 && "ignore other types of variables");
         }
       } else {
-        store = SetRVal(store, getLVal(VD), InitVal);
+        store = SetSVal(store, getLoc(VD), InitVal);
       }
     }
   } else {
     // Process local scalar variables.
     QualType T = VD->getType();
-    if (LVal::IsLValType(T) || T->isIntegerType()) {
-      RVal V = Ex ? InitVal : UndefinedVal();
+    if (Loc::IsLocType(T) || T->isIntegerType()) {
+      SVal V = Ex ? InitVal : UndefinedVal();
 
       if (Ex && InitVal.isUnknown()) {
         // EXPERIMENTAL: "Conjured" symbols.
         SymbolID Sym = SymMgr.getConjuredSymbol(Ex, Count);
 
-        V = LVal::IsLValType(Ex->getType())
-          ? cast<RVal>(lval::SymbolVal(Sym))
-          : cast<RVal>(nonlval::SymbolVal(Sym));
+        V = Loc::IsLocType(Ex->getType())
+          ? cast<SVal>(loc::SymbolVal(Sym))
+          : cast<SVal>(nonloc::SymbolVal(Sym));
       }
 
-      store = SetRVal(store, getLVal(VD), V);
+      store = SetSVal(store, getLoc(VD), V);
     }
   }
 

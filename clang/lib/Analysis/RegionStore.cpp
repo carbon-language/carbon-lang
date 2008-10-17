@@ -23,7 +23,7 @@
 
 using namespace clang;
 
-typedef llvm::ImmutableMap<const MemRegion*, RVal> RegionBindingsTy;
+typedef llvm::ImmutableMap<const MemRegion*, SVal> RegionBindingsTy;
 
 namespace {
 
@@ -38,7 +38,7 @@ public:
 
   virtual ~RegionStoreManager() {}
 
-  Store SetRVal(Store St, LVal LV, RVal V);
+  Store SetSVal(Store St, Loc LV, SVal V);
 
   Store getInitialStore();
 
@@ -49,10 +49,10 @@ public:
 
 } // end anonymous namespace
 
-Store RegionStoreManager::SetRVal(Store store, LVal LV, RVal V) {
-  assert(LV.getSubKind() == lval::MemRegionKind);
+Store RegionStoreManager::SetSVal(Store store, Loc LV, SVal V) {
+  assert(LV.getSubKind() == loc::MemRegionKind);
 
-  MemRegion* R = cast<lval::MemRegionVal>(LV).getRegion();
+  MemRegion* R = cast<loc::MemRegionVal>(LV).getRegion();
   
   if (!R)
     return store;
@@ -79,16 +79,16 @@ Store RegionStoreManager::getInitialStore() {
 
       QualType T = VD->getType();
       // Only handle pointers and integers for now.
-      if (LVal::IsLValType(T) || T->isIntegerType()) {
+      if (Loc::IsLocType(T) || T->isIntegerType()) {
         MemRegion* R = MRMgr.getVarRegion(VD);
         // Initialize globals and parameters to symbolic values.
         // Initialize local variables to undefined.
-        RVal X = (VD->hasGlobalStorage() || isa<ParmVarDecl>(VD) ||
+        SVal X = (VD->hasGlobalStorage() || isa<ParmVarDecl>(VD) ||
                   isa<ImplicitParamDecl>(VD))
-                 ? RVal::GetSymbolValue(StateMgr.getSymbolManager(), VD)
+                 ? SVal::GetSymbolValue(StateMgr.getSymbolManager(), VD)
                  : UndefinedVal();
 
-        St = SetRVal(St, lval::MemRegionVal(R), X);
+        St = SetSVal(St, loc::MemRegionVal(R), X);
       }
     }
   }

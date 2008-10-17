@@ -194,8 +194,8 @@ public:
       assert (E && "Return expression cannot be NULL");
       
       // Get the value associated with E.
-      lval::MemRegionVal V =
-        cast<lval::MemRegionVal>(Eng.getStateManager().GetRVal(N->getState(),
+      loc::MemRegionVal V =
+        cast<loc::MemRegionVal>(Eng.getStateManager().GetSVal(N->getState(),
                                                                E));
       
       // Generate a report for this bug.
@@ -235,7 +235,7 @@ class VISIBILITY_HIDDEN UndefBranch : public BuiltinBug {
       return Ex;
     }
     
-    bool MatchesCriteria(Expr* Ex) { return VM.GetRVal(St, Ex).isUndef(); }
+    bool MatchesCriteria(Expr* Ex) { return VM.GetSVal(St, Ex).isUndef(); }
   };
   
 public:
@@ -303,12 +303,12 @@ public:
     CallExpr* CE = cast<CallExpr>(cast<PostStmt>(N->getLocation()).getStmt());
     const GRState* state = N->getState();
     
-    RVal X = VMgr.GetRVal(state, CE->getCallee());
+    SVal X = VMgr.GetSVal(state, CE->getCallee());
     
-    if (!isa<lval::FuncVal>(X))
+    if (!isa<loc::FuncVal>(X))
       return false;
     
-    FunctionDecl* FD = dyn_cast<FunctionDecl>(cast<lval::FuncVal>(X).getDecl());
+    FunctionDecl* FD = dyn_cast<FunctionDecl>(cast<loc::FuncVal>(X).getDecl());
     const NonNullAttr* Att = FD->getAttr<NonNullAttr>();
     
     if (!Att)

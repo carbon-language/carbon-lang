@@ -59,11 +59,11 @@ GRStateManager::RemoveDeadBindings(const GRState* St, Stmt* Loc,
                                            LSymbols, DSymbols);
 }
 
-const GRState* GRStateManager::SetRVal(const GRState* St, LVal LV,
-                                             RVal V) {
+const GRState* GRStateManager::SetSVal(const GRState* St, Loc LV,
+                                             SVal V) {
   
   Store OldStore = St->getStore();
-  Store NewStore = StoreMgr->SetRVal(OldStore, LV, V);
+  Store NewStore = StoreMgr->SetSVal(OldStore, LV, V);
   
   if (NewStore == OldStore)
     return St;
@@ -80,7 +80,7 @@ const GRState* GRStateManager::AddDecl(const GRState* St, const VarDecl* VD,
 
   if (Ex)
     NewStore = StoreMgr->AddDecl(OldStore, VD, Ex, 
-                              GetRVal(St, Ex), Count);
+                              GetSVal(St, Ex), Count);
   else
     NewStore = StoreMgr->AddDecl(OldStore, VD, Ex);
                               
@@ -92,7 +92,7 @@ const GRState* GRStateManager::AddDecl(const GRState* St, const VarDecl* VD,
   return getPersistentState(NewSt);
 }
 
-const GRState* GRStateManager::Unbind(const GRState* St, LVal LV) {
+const GRState* GRStateManager::Unbind(const GRState* St, Loc LV) {
   Store OldStore = St->getStore();
   Store NewStore = StoreMgr->Remove(OldStore, LV);
   
@@ -240,18 +240,18 @@ const GRState* GRStateManager::addGDM(const GRState* St, void* Key, void* Data){
 bool GRStateManager::isEqual(const GRState* state, Expr* Ex,
                              const llvm::APSInt& Y) {
   
-  RVal V = GetRVal(state, Ex);
+  SVal V = GetSVal(state, Ex);
   
-  if (lval::ConcreteInt* X = dyn_cast<lval::ConcreteInt>(&V))
+  if (loc::ConcreteInt* X = dyn_cast<loc::ConcreteInt>(&V))
     return X->getValue() == Y;
 
-  if (nonlval::ConcreteInt* X = dyn_cast<nonlval::ConcreteInt>(&V))
+  if (nonloc::ConcreteInt* X = dyn_cast<nonloc::ConcreteInt>(&V))
     return X->getValue() == Y;
     
-  if (nonlval::SymbolVal* X = dyn_cast<nonlval::SymbolVal>(&V))
+  if (nonloc::SymbolVal* X = dyn_cast<nonloc::SymbolVal>(&V))
     return ConstraintMgr->isEqual(state, X->getSymbol(), Y);
   
-  if (lval::SymbolVal* X = dyn_cast<lval::SymbolVal>(&V))
+  if (loc::SymbolVal* X = dyn_cast<loc::SymbolVal>(&V))
     return ConstraintMgr->isEqual(state, X->getSymbol(), Y);
   
   return false;

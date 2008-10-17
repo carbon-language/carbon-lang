@@ -27,7 +27,7 @@ namespace llvm {
 
 namespace clang {
   
-class RVal;
+class SVal;
   
 class BasicValueFactory {
   typedef llvm::FoldingSet<llvm::FoldingSetNodeWrapper<llvm::APSInt> >
@@ -42,12 +42,12 @@ class BasicValueFactory {
 
   APSIntSetTy   APSIntSet;
   SymIntCSetTy  SymIntCSet;
-  void*         PersistentRVals;
-  void*         PersistentRValPairs;
+  void*         PersistentSVals;
+  void*         PersistentSValPairs;
 
 public:
   BasicValueFactory(ASTContext& ctx, llvm::BumpPtrAllocator& Alloc) 
-  : Ctx(ctx), BPAlloc(Alloc), PersistentRVals(0), PersistentRValPairs(0) {}
+  : Ctx(ctx), BPAlloc(Alloc), PersistentSVals(0), PersistentSValPairs(0) {}
 
   ~BasicValueFactory();
 
@@ -72,13 +72,13 @@ public:
                                      const llvm::APSInt& V1,
                                      const llvm::APSInt& V2);
   
-  const std::pair<RVal, uintptr_t>&
-  getPersistentRValWithData(const RVal& V, uintptr_t Data);
+  const std::pair<SVal, uintptr_t>&
+  getPersistentSValWithData(const SVal& V, uintptr_t Data);
   
-  const std::pair<RVal, RVal>&
-  getPersistentRValPair(const RVal& V1, const RVal& V2);  
+  const std::pair<SVal, SVal>&
+  getPersistentSValPair(const SVal& V1, const SVal& V2);  
   
-  const RVal* getPersistentRVal(RVal X);
+  const SVal* getPersistentSVal(SVal X);
 };
 
 } // end clang namespace

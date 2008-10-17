@@ -61,7 +61,7 @@ template <typename T> struct GRStateTrait {
 };
 
 //===----------------------------------------------------------------------===//
-// GRState- An ImmutableMap type Stmt*/Decl*/Symbols to RVals.
+// GRState- An ImmutableMap type Stmt*/Decl*/Symbols to SVals.
 //===----------------------------------------------------------------------===//
   
 /// GRState - This class encapsulates the actual data values for
@@ -129,7 +129,7 @@ public:
     Profile(ID, this);
   }
   
-  RVal LookupExpr(Expr* E) const {
+  SVal LookupExpr(Expr* E) const {
     return Env.LookupExpr(E);
   }
   
@@ -174,7 +174,7 @@ public:
   // Tags used for the Generic Data Map.
   struct NullDerefTag {
     static int TagInt;
-    typedef const RVal* data_type;
+    typedef const SVal* data_type;
   };
 };
   
@@ -251,7 +251,7 @@ private:
   ///  a particular function.  This is used to unique states.
   llvm::FoldingSet<GRState> StateSet;
 
-  /// ValueMgr - Object that manages the data for all created RVals.
+  /// ValueMgr - Object that manages the data for all created SVals.
   BasicValueFactory BasicVals;
 
   /// SymMgr - Object that manages the symbol information.
@@ -268,7 +268,7 @@ private:
   CFG& cfg;
     
   /// TF - Object that represents a bundle of transfer functions
-  ///  for manipulating and creating RVals.
+  ///  for manipulating and creating SVals.
   GRTransferFuncs* TF;
 
   /// Liveness - live-variables information of the ValueDecl* and block-level
@@ -282,8 +282,8 @@ private:
   }
   
   // FIXME: Remove when we do lazy initializaton of variable bindings.
-//   const GRState* BindVar(const GRState* St, VarDecl* D, RVal V) {
-//     return SetRVal(St, getLVal(D), V);
+//   const GRState* BindVar(const GRState* St, VarDecl* D, SVal V) {
+//     return SetSVal(St, getLoc(D), V);
 //   }
     
 public:
@@ -342,44 +342,44 @@ public:
   }
   
   // Get the lvalue for a variable reference.
-  RVal GetLValue(const GRState* St, const VarDecl* D) {
+  SVal GetLValue(const GRState* St, const VarDecl* D) {
     return StoreMgr->getLValueVar(St, D);
   }
   
   // Get the lvalue for an ivar reference.
-  RVal GetLValue(const GRState* St, const ObjCIvarDecl* D, RVal Base) {
+  SVal GetLValue(const GRState* St, const ObjCIvarDecl* D, SVal Base) {
     return StoreMgr->getLValueIvar(St, D, Base);
   }
   
   // Get the lvalue for a field reference.
-  RVal GetLValue(const GRState* St, const FieldDecl* D, RVal Base) {
+  SVal GetLValue(const GRState* St, const FieldDecl* D, SVal Base) {
     return StoreMgr->getLValueField(St, D, Base);
   }
   
   // Get the lvalue for an array index.
-  RVal GetLValue(const GRState* St, RVal Base, RVal Idx) {
+  SVal GetLValue(const GRState* St, SVal Base, SVal Idx) {
     return StoreMgr->getLValueElement(St, Base, Idx);
   }  
 
   // Methods that query & manipulate the Environment.
   
-  RVal GetRVal(const GRState* St, Expr* Ex) {
-    return St->getEnvironment().GetRVal(Ex, BasicVals);
+  SVal GetSVal(const GRState* St, Expr* Ex) {
+    return St->getEnvironment().GetSVal(Ex, BasicVals);
   }
 
-  RVal GetRVal(const GRState* St, const Expr* Ex) {
-    return St->getEnvironment().GetRVal(Ex, BasicVals);
+  SVal GetSVal(const GRState* St, const Expr* Ex) {
+    return St->getEnvironment().GetSVal(Ex, BasicVals);
   }
   
-  RVal GetBlkExprRVal(const GRState* St, Expr* Ex) {
-    return St->getEnvironment().GetBlkExprRVal(Ex, BasicVals);
+  SVal GetBlkExprSVal(const GRState* St, Expr* Ex) {
+    return St->getEnvironment().GetBlkExprSVal(Ex, BasicVals);
   }
   
-  const GRState* SetRVal(const GRState* St, Expr* Ex, RVal V,
+  const GRState* SetSVal(const GRState* St, Expr* Ex, SVal V,
                             bool isBlkExpr, bool Invalidate) {
     
     const Environment& OldEnv = St->getEnvironment();
-    Environment NewEnv = EnvMgr.SetRVal(OldEnv, Ex, V, isBlkExpr, Invalidate);
+    Environment NewEnv = EnvMgr.SetSVal(OldEnv, Ex, V, isBlkExpr, Invalidate);
     
     if (NewEnv == OldEnv)
       return St;
@@ -389,7 +389,7 @@ public:
     return getPersistentState(NewSt);
   }
   
-  const GRState* SetRVal(const GRState* St, Expr* Ex, RVal V,
+  const GRState* SetSVal(const GRState* St, Expr* Ex, SVal V,
                          bool Invalidate = true) {
     
     bool isBlkExpr = false;
@@ -403,7 +403,7 @@ public:
         return St;
     }
     
-    return SetRVal(St, Ex, V, isBlkExpr, Invalidate);
+    return SetSVal(St, Ex, V, isBlkExpr, Invalidate);
   }
   
   // Methods that manipulate the GDM.
@@ -421,21 +421,21 @@ public:
   }
     
   
-  RVal GetRVal(const GRState* St, LVal LV, QualType T = QualType()) {
-    return StoreMgr->GetRVal(St->getStore(), LV, T);
+  SVal GetSVal(const GRState* St, Loc LV, QualType T = QualType()) {
+    return StoreMgr->GetSVal(St->getStore(), LV, T);
   }
   
-  void SetRVal(GRState& St, LVal LV, RVal V) {
-    St.St = StoreMgr->SetRVal(St.St, LV, V);
+  void SetSVal(GRState& St, Loc LV, SVal V) {
+    St.St = StoreMgr->SetSVal(St.St, LV, V);
   }
   
-  const GRState* SetRVal(const GRState* St, LVal LV, RVal V);  
+  const GRState* SetSVal(const GRState* St, Loc LV, SVal V);  
 
-  void Unbind(GRState& St, LVal LV) {
+  void Unbind(GRState& St, Loc LV) {
     St.St = StoreMgr->Remove(St.St, LV);
   }
   
-  const GRState* Unbind(const GRState* St, LVal LV);
+  const GRState* Unbind(const GRState* St, Loc LV);
   
   const GRState* getPersistentState(GRState& Impl);
   
@@ -482,7 +482,7 @@ public:
     return GRStateTrait<T>::MakeContext(p);
   }
 
-  const GRState* Assume(const GRState* St, RVal Cond, bool Assumption,
+  const GRState* Assume(const GRState* St, SVal Cond, bool Assumption,
                            bool& isFeasible) {
     return ConstraintMgr->Assume(St, Cond, Assumption, isFeasible);
   }
@@ -510,33 +510,33 @@ public:
   operator const GRState*() const { return St; }
   GRStateManager& getManager() const { return *Mgr; }
     
-  RVal GetRVal(Expr* Ex) {
-    return Mgr->GetRVal(St, Ex);
+  SVal GetSVal(Expr* Ex) {
+    return Mgr->GetSVal(St, Ex);
   }
   
-  RVal GetBlkExprRVal(Expr* Ex) {  
-    return Mgr->GetBlkExprRVal(St, Ex);
+  SVal GetBlkExprSVal(Expr* Ex) {  
+    return Mgr->GetBlkExprSVal(St, Ex);
   }
   
-  RVal GetRVal(LVal LV, QualType T = QualType()) {
-    return Mgr->GetRVal(St, LV, T);
+  SVal GetSVal(Loc LV, QualType T = QualType()) {
+    return Mgr->GetSVal(St, LV, T);
   }
   
-  GRStateRef SetRVal(Expr* Ex, RVal V, bool isBlkExpr, bool Invalidate) {
-    return GRStateRef(Mgr->SetRVal(St, Ex, V, isBlkExpr, Invalidate), *Mgr);
+  GRStateRef SetSVal(Expr* Ex, SVal V, bool isBlkExpr, bool Invalidate) {
+    return GRStateRef(Mgr->SetSVal(St, Ex, V, isBlkExpr, Invalidate), *Mgr);
   }
   
-  GRStateRef SetRVal(Expr* Ex, RVal V, bool Invalidate = true) {
-    return GRStateRef(Mgr->SetRVal(St, Ex, V, Invalidate), *Mgr);
+  GRStateRef SetSVal(Expr* Ex, SVal V, bool Invalidate = true) {
+    return GRStateRef(Mgr->SetSVal(St, Ex, V, Invalidate), *Mgr);
   }
   
-  GRStateRef SetRVal(LVal LV, RVal V) {
+  GRStateRef SetSVal(Loc LV, SVal V) {
     GRState StImpl = *St;
-    Mgr->SetRVal(StImpl, LV, V);    
+    Mgr->SetSVal(StImpl, LV, V);    
     return GRStateRef(Mgr->getPersistentState(StImpl), *Mgr);
   }
   
-  GRStateRef Unbind(LVal LV) {
+  GRStateRef Unbind(Loc LV) {
     return GRStateRef(Mgr->Unbind(St, LV), *Mgr);
   }
   
@@ -591,7 +591,7 @@ public:
   }
   
   // Lvalue methods.
-  RVal GetLValue(const VarDecl* VD) {
+  SVal GetLValue(const VarDecl* VD) {
     return Mgr->GetLValue(St, VD);
   }
   

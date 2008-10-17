@@ -36,32 +36,32 @@ GRTransferFuncs* clang::MakeGRSimpleValsTF() { return new GRSimpleVals(); }
 // Transfer function for Casts.
 //===----------------------------------------------------------------------===//
 
-RVal GRSimpleVals::EvalCast(GRExprEngine& Eng, NonLVal X, QualType T) {
+SVal GRSimpleVals::EvalCast(GRExprEngine& Eng, NonLoc X, QualType T) {
   
-  if (!isa<nonlval::ConcreteInt>(X))
+  if (!isa<nonloc::ConcreteInt>(X))
     return UnknownVal();
 
-  bool isLValType = LVal::IsLValType(T);
+  bool isLocType = Loc::IsLocType(T);
   
   // Only handle casts from integers to integers.
-  if (!isLValType && !T->isIntegerType())
+  if (!isLocType && !T->isIntegerType())
     return UnknownVal();
   
   BasicValueFactory& BasicVals = Eng.getBasicVals();
   
-  llvm::APSInt V = cast<nonlval::ConcreteInt>(X).getValue();
-  V.setIsUnsigned(T->isUnsignedIntegerType() || LVal::IsLValType(T));
+  llvm::APSInt V = cast<nonloc::ConcreteInt>(X).getValue();
+  V.setIsUnsigned(T->isUnsignedIntegerType() || Loc::IsLocType(T));
   V.extOrTrunc(Eng.getContext().getTypeSize(T));
   
-  if (isLValType)
-    return lval::ConcreteInt(BasicVals.getValue(V));
+  if (isLocType)
+    return loc::ConcreteInt(BasicVals.getValue(V));
   else
-    return nonlval::ConcreteInt(BasicVals.getValue(V));
+    return nonloc::ConcreteInt(BasicVals.getValue(V));
 }
 
 // Casts.
 
-RVal GRSimpleVals::EvalCast(GRExprEngine& Eng, LVal X, QualType T) {
+SVal GRSimpleVals::EvalCast(GRExprEngine& Eng, Loc X, QualType T) {
   
   // Casts from pointers -> pointers, just return the lval.
   //
@@ -69,43 +69,43 @@ RVal GRSimpleVals::EvalCast(GRExprEngine& Eng, LVal X, QualType T) {
   //   can be introduced by the frontend for corner cases, e.g
   //   casting from va_list* to __builtin_va_list&.
   //
-  if (LVal::IsLValType(T) || T->isReferenceType())
+  if (Loc::IsLocType(T) || T->isReferenceType())
     return X;
   
   assert (T->isIntegerType());
   
-  if (!isa<lval::ConcreteInt>(X))
+  if (!isa<loc::ConcreteInt>(X))
     return UnknownVal();
   
   BasicValueFactory& BasicVals = Eng.getBasicVals();
   
-  llvm::APSInt V = cast<lval::ConcreteInt>(X).getValue();
-  V.setIsUnsigned(T->isUnsignedIntegerType() || LVal::IsLValType(T));
+  llvm::APSInt V = cast<loc::ConcreteInt>(X).getValue();
+  V.setIsUnsigned(T->isUnsignedIntegerType() || Loc::IsLocType(T));
   V.extOrTrunc(Eng.getContext().getTypeSize(T));
 
-  return nonlval::ConcreteInt(BasicVals.getValue(V));
+  return nonloc::ConcreteInt(BasicVals.getValue(V));
 }
 
 // Unary operators.
 
-RVal GRSimpleVals::EvalMinus(GRExprEngine& Eng, UnaryOperator* U, NonLVal X){
+SVal GRSimpleVals::EvalMinus(GRExprEngine& Eng, UnaryOperator* U, NonLoc X){
   
   switch (X.getSubKind()) {
       
-    case nonlval::ConcreteIntKind:
-      return cast<nonlval::ConcreteInt>(X).EvalMinus(Eng.getBasicVals(), U);
+    case nonloc::ConcreteIntKind:
+      return cast<nonloc::ConcreteInt>(X).EvalMinus(Eng.getBasicVals(), U);
       
     default:
       return UnknownVal();
   }
 }
 
-RVal GRSimpleVals::EvalComplement(GRExprEngine& Eng, NonLVal X) {
+SVal GRSimpleVals::EvalComplement(GRExprEngine& Eng, NonLoc X) {
 
   switch (X.getSubKind()) {
       
-    case nonlval::ConcreteIntKind:
-      return cast<nonlval::ConcreteInt>(X).EvalComplement(Eng.getBasicVals());
+    case nonloc::ConcreteIntKind:
+      return cast<nonloc::ConcreteInt>(X).EvalComplement(Eng.getBasicVals());
       
     default:
       return UnknownVal();
@@ -123,9 +123,9 @@ static unsigned char LNotOpMap[] = {
   (unsigned char) BinaryOperator::EQ   /* NE => EQ */
 };
 
-RVal GRSimpleVals::DetermEvalBinOpNN(GRStateManager& StateMgr,
+SVal GRSimpleVals::DetermEvalBinOpNN(GRStateManager& StateMgr,
                                      BinaryOperator::Opcode Op,
-                                     NonLVal L, NonLVal R)  {
+                                     NonLoc L, NonLoc R)  {
 
   BasicValueFactory& BasicVals = StateMgr.getBasicVals();
   unsigned subkind = L.getSubKind();
@@ -136,14 +136,14 @@ RVal GRSimpleVals::DetermEvalBinOpNN(GRStateManager& StateMgr,
       default:
         return UnknownVal();
         
-      case nonlval::SymIntConstraintValKind: {
+      case nonloc::SymIntConstraintValKind: {
         
         // Logical not?        
         if (!(Op == BinaryOperator::EQ && R.isZeroConstant()))
           return UnknownVal();
         
         const SymIntConstraint& C =
-          cast<nonlval::SymIntConstraintVal>(L).getConstraint();
+          cast<nonloc::SymIntConstraintVal>(L).getConstraint();
         
         BinaryOperator::Opcode Opc = C.getOpcode();
         
@@ -163,19 +163,19 @@ RVal GRSimpleVals::DetermEvalBinOpNN(GRStateManager& StateMgr,
         const SymIntConstraint& CNew =
           BasicVals.getConstraint(C.getSymbol(), Opc, C.getInt());
         
-        return nonlval::SymIntConstraintVal(CNew);
+        return nonloc::SymIntConstraintVal(CNew);
       }
         
-      case nonlval::ConcreteIntKind:
+      case nonloc::ConcreteIntKind:
         
-        if (isa<nonlval::ConcreteInt>(R)) {          
-          const nonlval::ConcreteInt& L_CI = cast<nonlval::ConcreteInt>(L);
-          const nonlval::ConcreteInt& R_CI = cast<nonlval::ConcreteInt>(R);
+        if (isa<nonloc::ConcreteInt>(R)) {          
+          const nonloc::ConcreteInt& L_CI = cast<nonloc::ConcreteInt>(L);
+          const nonloc::ConcreteInt& R_CI = cast<nonloc::ConcreteInt>(R);
           return L_CI.EvalBinOp(BasicVals, Op, R_CI);          
         }
         else {
           subkind = R.getSubKind();
-          NonLVal tmp = R;
+          NonLoc tmp = R;
           R = L;
           L = tmp;
           
@@ -191,13 +191,13 @@ RVal GRSimpleVals::DetermEvalBinOpNN(GRStateManager& StateMgr,
           continue;
         }
         
-      case nonlval::SymbolValKind:
-        if (isa<nonlval::ConcreteInt>(R)) {
+      case nonloc::SymbolValKind:
+        if (isa<nonloc::ConcreteInt>(R)) {
           const SymIntConstraint& C =
-            BasicVals.getConstraint(cast<nonlval::SymbolVal>(L).getSymbol(), Op,
-                                    cast<nonlval::ConcreteInt>(R).getValue());
+            BasicVals.getConstraint(cast<nonloc::SymbolVal>(L).getSymbol(), Op,
+                                    cast<nonloc::ConcreteInt>(R).getValue());
           
-          return nonlval::SymIntConstraintVal(C);
+          return nonloc::SymIntConstraintVal(C);
         }
         else
           return UnknownVal();
@@ -208,8 +208,8 @@ RVal GRSimpleVals::DetermEvalBinOpNN(GRStateManager& StateMgr,
 
 // Binary Operators (except assignments and comma).
 
-RVal GRSimpleVals::EvalBinOp(GRExprEngine& Eng, BinaryOperator::Opcode Op,
-                             LVal L, LVal R) {
+SVal GRSimpleVals::EvalBinOp(GRExprEngine& Eng, BinaryOperator::Opcode Op,
+                             Loc L, Loc R) {
   
   switch (Op) {
 
@@ -226,52 +226,52 @@ RVal GRSimpleVals::EvalBinOp(GRExprEngine& Eng, BinaryOperator::Opcode Op,
 
 // Pointer arithmetic.
 
-RVal GRSimpleVals::EvalBinOp(GRExprEngine& Eng, BinaryOperator::Opcode Op,
-                             LVal L, NonLVal R) {  
+SVal GRSimpleVals::EvalBinOp(GRExprEngine& Eng, BinaryOperator::Opcode Op,
+                             Loc L, NonLoc R) {  
   return UnknownVal();
 }
 
-// Equality operators for LVals.
+// Equality operators for Locs.
 
-RVal GRSimpleVals::EvalEQ(GRExprEngine& Eng, LVal L, LVal R) {
+SVal GRSimpleVals::EvalEQ(GRExprEngine& Eng, Loc L, Loc R) {
   
   BasicValueFactory& BasicVals = Eng.getBasicVals();
   
   switch (L.getSubKind()) {
 
     default:
-      assert(false && "EQ not implemented for this LVal.");
+      assert(false && "EQ not implemented for this Loc.");
       return UnknownVal();
       
-    case lval::ConcreteIntKind:
+    case loc::ConcreteIntKind:
 
-      if (isa<lval::ConcreteInt>(R)) {
-        bool b = cast<lval::ConcreteInt>(L).getValue() ==
-                 cast<lval::ConcreteInt>(R).getValue();
+      if (isa<loc::ConcreteInt>(R)) {
+        bool b = cast<loc::ConcreteInt>(L).getValue() ==
+                 cast<loc::ConcreteInt>(R).getValue();
         
-        return NonLVal::MakeIntTruthVal(BasicVals, b);
+        return NonLoc::MakeIntTruthVal(BasicVals, b);
       }
-      else if (isa<lval::SymbolVal>(R)) {
+      else if (isa<loc::SymbolVal>(R)) {
         
         const SymIntConstraint& C =
-          BasicVals.getConstraint(cast<lval::SymbolVal>(R).getSymbol(),
+          BasicVals.getConstraint(cast<loc::SymbolVal>(R).getSymbol(),
                                BinaryOperator::EQ,
-                               cast<lval::ConcreteInt>(L).getValue());
+                               cast<loc::ConcreteInt>(L).getValue());
         
-        return nonlval::SymIntConstraintVal(C);
+        return nonloc::SymIntConstraintVal(C);
       }
       
       break;
       
-    case lval::SymbolValKind: {
+    case loc::SymbolValKind: {
 
-      if (isa<lval::ConcreteInt>(R)) {          
+      if (isa<loc::ConcreteInt>(R)) {          
         const SymIntConstraint& C =
-          BasicVals.getConstraint(cast<lval::SymbolVal>(L).getSymbol(),
+          BasicVals.getConstraint(cast<loc::SymbolVal>(L).getSymbol(),
                                BinaryOperator::EQ,
-                               cast<lval::ConcreteInt>(R).getValue());
+                               cast<loc::ConcreteInt>(R).getValue());
         
-        return nonlval::SymIntConstraintVal(C);
+        return nonloc::SymIntConstraintVal(C);
       }
       
       // FIXME: Implement == for lval Symbols.  This is mainly useful
@@ -282,53 +282,53 @@ RVal GRSimpleVals::EvalEQ(GRExprEngine& Eng, LVal L, LVal R) {
       return UnknownVal();      
     }
       
-    case lval::MemRegionKind:
-    case lval::FuncValKind:
-    case lval::GotoLabelKind:
-    case lval::StringLiteralValKind:
-      return NonLVal::MakeIntTruthVal(BasicVals, L == R);
+    case loc::MemRegionKind:
+    case loc::FuncValKind:
+    case loc::GotoLabelKind:
+    case loc::StringLiteralValKind:
+      return NonLoc::MakeIntTruthVal(BasicVals, L == R);
   }
   
-  return NonLVal::MakeIntTruthVal(BasicVals, false);
+  return NonLoc::MakeIntTruthVal(BasicVals, false);
 }
 
-RVal GRSimpleVals::EvalNE(GRExprEngine& Eng, LVal L, LVal R) {
+SVal GRSimpleVals::EvalNE(GRExprEngine& Eng, Loc L, Loc R) {
   
   BasicValueFactory& BasicVals = Eng.getBasicVals();
 
   switch (L.getSubKind()) {
 
     default:
-      assert(false && "NE not implemented for this LVal.");
+      assert(false && "NE not implemented for this Loc.");
       return UnknownVal();
       
-    case lval::ConcreteIntKind:
+    case loc::ConcreteIntKind:
       
-      if (isa<lval::ConcreteInt>(R)) {
-        bool b = cast<lval::ConcreteInt>(L).getValue() !=
-                 cast<lval::ConcreteInt>(R).getValue();
+      if (isa<loc::ConcreteInt>(R)) {
+        bool b = cast<loc::ConcreteInt>(L).getValue() !=
+                 cast<loc::ConcreteInt>(R).getValue();
         
-        return NonLVal::MakeIntTruthVal(BasicVals, b);
+        return NonLoc::MakeIntTruthVal(BasicVals, b);
       }
-      else if (isa<lval::SymbolVal>(R)) {        
+      else if (isa<loc::SymbolVal>(R)) {        
         const SymIntConstraint& C =
-          BasicVals.getConstraint(cast<lval::SymbolVal>(R).getSymbol(),
+          BasicVals.getConstraint(cast<loc::SymbolVal>(R).getSymbol(),
                                   BinaryOperator::NE,
-                                  cast<lval::ConcreteInt>(L).getValue());
+                                  cast<loc::ConcreteInt>(L).getValue());
         
-        return nonlval::SymIntConstraintVal(C);
+        return nonloc::SymIntConstraintVal(C);
       }
       
       break;
       
-    case lval::SymbolValKind: {
-      if (isa<lval::ConcreteInt>(R)) {          
+    case loc::SymbolValKind: {
+      if (isa<loc::ConcreteInt>(R)) {          
         const SymIntConstraint& C =
-          BasicVals.getConstraint(cast<lval::SymbolVal>(L).getSymbol(),
+          BasicVals.getConstraint(cast<loc::SymbolVal>(L).getSymbol(),
                                   BinaryOperator::NE,
-                                  cast<lval::ConcreteInt>(R).getValue());
+                                  cast<loc::ConcreteInt>(R).getValue());
         
-        return nonlval::SymIntConstraintVal(C);
+        return nonloc::SymIntConstraintVal(C);
       }
       
       // FIXME: Implement != for lval Symbols.  This is mainly useful
@@ -341,14 +341,14 @@ RVal GRSimpleVals::EvalNE(GRExprEngine& Eng, LVal L, LVal R) {
       break;
     }
       
-    case lval::MemRegionKind:
-    case lval::FuncValKind:
-    case lval::GotoLabelKind:
-    case lval::StringLiteralValKind:
-      return NonLVal::MakeIntTruthVal(BasicVals, L != R);
+    case loc::MemRegionKind:
+    case loc::FuncValKind:
+    case loc::GotoLabelKind:
+    case loc::StringLiteralValKind:
+      return NonLoc::MakeIntTruthVal(BasicVals, L != R);
   }
   
-  return NonLVal::MakeIntTruthVal(BasicVals, true);
+  return NonLoc::MakeIntTruthVal(BasicVals, true);
 }
 
 //===----------------------------------------------------------------------===//
@@ -358,23 +358,23 @@ RVal GRSimpleVals::EvalNE(GRExprEngine& Eng, LVal L, LVal R) {
 void GRSimpleVals::EvalCall(ExplodedNodeSet<GRState>& Dst,
                             GRExprEngine& Eng,
                             GRStmtNodeBuilder<GRState>& Builder,
-                            CallExpr* CE, RVal L,
+                            CallExpr* CE, SVal L,
                             ExplodedNode<GRState>* Pred) {
   
   GRStateManager& StateMgr = Eng.getStateManager();
   const GRState* St = Builder.GetState(Pred);
   
-  // Invalidate all arguments passed in by reference (LVals).
+  // Invalidate all arguments passed in by reference (Locs).
 
   for (CallExpr::arg_iterator I = CE->arg_begin(), E = CE->arg_end();
         I != E; ++I) {
 
-    RVal V = StateMgr.GetRVal(St, *I);
+    SVal V = StateMgr.GetSVal(St, *I);
     
-    if (isa<LVal>(V))
-      St = StateMgr.SetRVal(St, cast<LVal>(V), UnknownVal());
-    else if (isa<nonlval::LValAsInteger>(V))
-      St = StateMgr.SetRVal(St, cast<nonlval::LValAsInteger>(V).getLVal(),
+    if (isa<Loc>(V))
+      St = StateMgr.SetSVal(St, cast<Loc>(V), UnknownVal());
+    else if (isa<nonloc::LocAsInteger>(V))
+      St = StateMgr.SetSVal(St, cast<nonloc::LocAsInteger>(V).getLoc(),
                             UnknownVal());
     
   }
@@ -385,11 +385,11 @@ void GRSimpleVals::EvalCall(ExplodedNodeSet<GRState>& Dst,
     unsigned Count = Builder.getCurrentBlockCount();
     SymbolID Sym = Eng.getSymbolManager().getConjuredSymbol(CE, Count);
         
-    RVal X = LVal::IsLValType(CE->getType())
-             ? cast<RVal>(lval::SymbolVal(Sym)) 
-             : cast<RVal>(nonlval::SymbolVal(Sym));
+    SVal X = Loc::IsLocType(CE->getType())
+             ? cast<SVal>(loc::SymbolVal(Sym)) 
+             : cast<SVal>(nonloc::SymbolVal(Sym));
     
-    St = StateMgr.SetRVal(St, CE, X, Eng.getCFG().isBlkExpr(CE), false);
+    St = StateMgr.SetSVal(St, CE, X, Eng.getCFG().isBlkExpr(CE), false);
   }  
     
   Builder.MakeNode(Dst, CE, Pred, St);
@@ -415,10 +415,10 @@ void GRSimpleVals::EvalObjCMessageExpr(ExplodedNodeSet<GRState>& Dst,
   for (ObjCMessageExpr::arg_iterator I = ME->arg_begin(), E = ME->arg_end();
        I != E; ++I) {
     
-    RVal V = StateMgr.GetRVal(St, *I);
+    SVal V = StateMgr.GetSVal(St, *I);
     
-    if (isa<LVal>(V))
-      St = StateMgr.SetRVal(St, cast<LVal>(V), UnknownVal());
+    if (isa<Loc>(V))
+      St = StateMgr.SetSVal(St, cast<Loc>(V), UnknownVal());
   }
   
   Builder.MakeNode(Dst, ME, Pred, St);

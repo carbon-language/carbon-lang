@@ -18,14 +18,14 @@
 
 using namespace clang;
 
-RVal Environment::GetRVal(Expr* E, BasicValueFactory& BasicVals) const {
+SVal Environment::GetSVal(Expr* E, BasicValueFactory& BasicVals) const {
   
   for (;;) {
     
     switch (E->getStmtClass()) {
         
       case Stmt::AddrLabelExprClass:        
-        return LVal::MakeVal(cast<AddrLabelExpr>(E));
+        return Loc::MakeVal(cast<AddrLabelExpr>(E));
         
         // ParenExprs are no-ops.
         
@@ -35,15 +35,15 @@ RVal Environment::GetRVal(Expr* E, BasicValueFactory& BasicVals) const {
         
       case Stmt::CharacterLiteralClass: {
         CharacterLiteral* C = cast<CharacterLiteral>(E);
-        return NonLVal::MakeVal(BasicVals, C->getValue(), C->getType());
+        return NonLoc::MakeVal(BasicVals, C->getValue(), C->getType());
       }
         
       case Stmt::IntegerLiteralClass: {
-        return NonLVal::MakeVal(BasicVals, cast<IntegerLiteral>(E));
+        return NonLoc::MakeVal(BasicVals, cast<IntegerLiteral>(E));
       }
         
       case Stmt::StringLiteralClass:
-        return LVal::MakeVal(cast<StringLiteral>(E));
+        return Loc::MakeVal(cast<StringLiteral>(E));
         
         // Casts where the source and target type are the same
         // are no-ops.  We blast through these to get the descendant
@@ -73,18 +73,18 @@ RVal Environment::GetRVal(Expr* E, BasicValueFactory& BasicVals) const {
   return LookupExpr(E);
 }
 
-RVal Environment::GetBlkExprRVal(Expr* E, BasicValueFactory& BasicVals) const {
+SVal Environment::GetBlkExprSVal(Expr* E, BasicValueFactory& BasicVals) const {
   
   E = E->IgnoreParens();
   
   switch (E->getStmtClass()) {
     case Stmt::CharacterLiteralClass: {
       CharacterLiteral* C = cast<CharacterLiteral>(E);
-      return NonLVal::MakeVal(BasicVals, C->getValue(), C->getType());
+      return NonLoc::MakeVal(BasicVals, C->getValue(), C->getType());
     }
       
     case Stmt::IntegerLiteralClass: {
-      return NonLVal::MakeVal(BasicVals, cast<IntegerLiteral>(E));
+      return NonLoc::MakeVal(BasicVals, cast<IntegerLiteral>(E));
     }
       
     default:
@@ -92,7 +92,7 @@ RVal Environment::GetBlkExprRVal(Expr* E, BasicValueFactory& BasicVals) const {
   }
 }
 
-Environment EnvironmentManager::SetRVal(const Environment& Env, Expr* E, RVal V,
+Environment EnvironmentManager::SetSVal(const Environment& Env, Expr* E, SVal V,
                                         bool isBlkExpr, bool Invalidate) {  
   assert (E);
   
@@ -121,25 +121,25 @@ EnvironmentManager::RemoveDeadBindings(Environment Env, Stmt* Loc,
     Expr* BlkExpr = I.getKey();
 
     if (Liveness.isLive(Loc, BlkExpr)) {
-      RVal X = I.getData();
+      SVal X = I.getData();
 
       // If the block expr's value is a memory region, then mark that region.
-      if (isa<lval::MemRegionVal>(X))
-        DRoots.push_back(cast<lval::MemRegionVal>(X).getRegion());
+      if (isa<loc::MemRegionVal>(X))
+        DRoots.push_back(cast<loc::MemRegionVal>(X).getRegion());
 
 
       // Mark all symbols in the block expr's value.
-      for (RVal::symbol_iterator SI = X.symbol_begin(), SE = X.symbol_end();
+      for (SVal::symbol_iterator SI = X.symbol_begin(), SE = X.symbol_end();
            SI != SE; ++SI) {
         LSymbols.insert(*SI);
       }
     } else {
       // The block expr is dead.
-      RVal X = I.getData();
+      SVal X = I.getData();
 
       // Do not misclean LogicalExpr or ConditionalOperator.  It is dead at the
       // beginning of itself, but we need its UndefinedVal to determine its
-      // RVal.
+      // SVal.
 
       if (X.isUndef() && cast<UndefinedVal>(X).getData())
         continue;

@@ -36,7 +36,7 @@ private:
   friend class EnvironmentManager;
   
   // Type definitions.
-  typedef llvm::ImmutableMap<Expr*,RVal> BindingsTy;
+  typedef llvm::ImmutableMap<Expr*,SVal> BindingsTy;
 
   // Data.
   BindingsTy SubExprBindings;
@@ -55,28 +55,28 @@ public:
   beb_iterator beb_begin() const { return BlkExprBindings.begin(); }
   beb_iterator beb_end() const { return BlkExprBindings.end(); }      
   
-  RVal LookupSubExpr(Expr* E) const {
-    const RVal* X = SubExprBindings.lookup(E);
+  SVal LookupSubExpr(Expr* E) const {
+    const SVal* X = SubExprBindings.lookup(E);
     return X ? *X : UnknownVal();
   }
   
-  RVal LookupBlkExpr(Expr* E) const {
-    const RVal* X = BlkExprBindings.lookup(E);
+  SVal LookupBlkExpr(Expr* E) const {
+    const SVal* X = BlkExprBindings.lookup(E);
     return X ? *X : UnknownVal();
   }
   
-  RVal LookupExpr(Expr* E) const {
-    const RVal* X = SubExprBindings.lookup(E);
+  SVal LookupExpr(Expr* E) const {
+    const SVal* X = SubExprBindings.lookup(E);
     if (X) return *X;
     X = BlkExprBindings.lookup(E);
     return X ? *X : UnknownVal();
   }
   
-  RVal GetRVal(Expr* Ex, BasicValueFactory& BasicVals) const;
-  RVal GetRVal(const Expr* Ex, BasicValueFactory& BasicVals) const {
-    return GetRVal(const_cast<Expr*>(Ex), BasicVals);
+  SVal GetSVal(Expr* Ex, BasicValueFactory& BasicVals) const;
+  SVal GetSVal(const Expr* Ex, BasicValueFactory& BasicVals) const {
+    return GetSVal(const_cast<Expr*>(Ex), BasicVals);
   }
-  RVal GetBlkExprRVal(Expr* Ex, BasicValueFactory& BasicVals) const; 
+  SVal GetBlkExprSVal(Expr* Ex, BasicValueFactory& BasicVals) const; 
   
   /// Profile - Profile the contents of an Environment object for use
   ///  in a FoldingSet.
@@ -120,11 +120,11 @@ public:
     return Environment(F.Remove(Env.SubExprBindings, E), Env.BlkExprBindings);
   }
   
-  Environment AddBlkExpr(const Environment& Env, Expr* E, RVal V) {
-    return Environment(Env.SubExprBindings, F.Add(Env.BlkExprBindings, E, V));    
+  Environment AddBlkExpr(const Environment& Env, Expr* E, SVal V) {
+    return Environment(Env.SubExprBindings, F.Add(Env.BlkExprBindings, E, V));
   }
   
-  Environment AddSubExpr(const Environment& Env, Expr* E, RVal V) {
+  Environment AddSubExpr(const Environment& Env, Expr* E, SVal V) {
     return Environment(F.Add(Env.SubExprBindings, E, V), Env.BlkExprBindings);
   }
   
@@ -139,7 +139,7 @@ public:
     return Environment(F.GetEmptyMap(), F.GetEmptyMap());
   }
   
-  Environment SetRVal(const Environment& Env, Expr* E, RVal V,
+  Environment SetSVal(const Environment& Env, Expr* E, SVal V,
                       bool isBlkExpr, bool Invalidate);
 
   Environment RemoveDeadBindings(Environment Env, Stmt* Loc,

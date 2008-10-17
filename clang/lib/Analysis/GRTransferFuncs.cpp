@@ -23,7 +23,7 @@ void GRTransferFuncs::EvalStore(ExplodedNodeSet<GRState>& Dst,
                                 GRExprEngine& Eng,
                                 GRStmtNodeBuilder<GRState>& Builder,
                                 Expr* E, ExplodedNode<GRState>* Pred,
-                                const GRState* St, RVal TargetLV, RVal Val) {
+                                const GRState* St, SVal TargetLV, SVal Val) {
   
   // This code basically matches the "safety-net" logic of GRExprEngine:
   //  bind Val to TargetLV, and create a new node.  We replicate it here
@@ -35,14 +35,14 @@ void GRTransferFuncs::EvalStore(ExplodedNodeSet<GRState>& Dst,
     Builder.MakeNode(Dst, E, Pred, St);
   else
     Builder.MakeNode(Dst, E, Pred,
-                Eng.getStateManager().SetRVal(St, cast<LVal>(TargetLV), Val));    
+                Eng.getStateManager().SetSVal(St, cast<Loc>(TargetLV), Val));    
 }
 
 void GRTransferFuncs::EvalBinOpNN(GRStateSet& OStates,
                                   GRStateManager& StateMgr,
                                   const GRState *St, Expr* Ex,
                                   BinaryOperator::Opcode Op,
-                                  NonLVal L, NonLVal R) {
+                                  NonLoc L, NonLoc R) {
   
-  OStates.Add(StateMgr.SetRVal(St, Ex, DetermEvalBinOpNN(StateMgr, Op, L, R)));
+  OStates.Add(StateMgr.SetSVal(St, Ex, DetermEvalBinOpNN(StateMgr, Op, L, R)));
 }

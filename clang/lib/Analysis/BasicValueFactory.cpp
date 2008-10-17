@@ -18,31 +18,31 @@
 
 using namespace clang;
 
-typedef std::pair<RVal, uintptr_t> RValData;
-typedef std::pair<RVal, RVal> RValPair;
+typedef std::pair<SVal, uintptr_t> SValData;
+typedef std::pair<SVal, SVal> SValPair;
 
 
 namespace llvm {
-template<> struct FoldingSetTrait<RValData> {
-  static inline void Profile(const RValData& X, llvm::FoldingSetNodeID& ID) {
+template<> struct FoldingSetTrait<SValData> {
+  static inline void Profile(const SValData& X, llvm::FoldingSetNodeID& ID) {
     X.first.Profile(ID);
     ID.AddPointer( (void*) X.second);
   }
 };
   
-template<> struct FoldingSetTrait<RValPair> {
-  static inline void Profile(const RValPair& X, llvm::FoldingSetNodeID& ID) {
+template<> struct FoldingSetTrait<SValPair> {
+  static inline void Profile(const SValPair& X, llvm::FoldingSetNodeID& ID) {
     X.first.Profile(ID);
     X.second.Profile(ID);
   }
 };
 }
 
-typedef llvm::FoldingSet<llvm::FoldingSetNodeWrapper<RValData> >
-  PersistentRValsTy;
+typedef llvm::FoldingSet<llvm::FoldingSetNodeWrapper<SValData> >
+  PersistentSValsTy;
 
-typedef llvm::FoldingSet<llvm::FoldingSetNodeWrapper<RValPair> >
-  PersistentRValPairsTy;
+typedef llvm::FoldingSet<llvm::FoldingSetNodeWrapper<SValPair> >
+  PersistentSValPairsTy;
 
 BasicValueFactory::~BasicValueFactory() {
   // Note that the dstor for the contents of APSIntSet will never be called,
@@ -51,8 +51,8 @@ BasicValueFactory::~BasicValueFactory() {
   for (APSIntSetTy::iterator I=APSIntSet.begin(), E=APSIntSet.end(); I!=E; ++I)
     I->getValue().~APSInt();
   
-  delete (PersistentRValsTy*) PersistentRVals;  
-  delete (PersistentRValPairsTy*) PersistentRValPairs;
+  delete (PersistentSValsTy*) PersistentSVals;  
+  delete (PersistentSValPairsTy*) PersistentSValPairs;
 }
 
 const llvm::APSInt& BasicValueFactory::getValue(const llvm::APSInt& X) {
@@ -197,20 +197,20 @@ BasicValueFactory::EvaluateAPSInt(BinaryOperator::Opcode Op,
 }
 
 
-const std::pair<RVal, uintptr_t>&
-BasicValueFactory::getPersistentRValWithData(const RVal& V, uintptr_t Data) {
+const std::pair<SVal, uintptr_t>&
+BasicValueFactory::getPersistentSValWithData(const SVal& V, uintptr_t Data) {
   
   // Lazily create the folding set.
-  if (!PersistentRVals) PersistentRVals = new PersistentRValsTy();
+  if (!PersistentSVals) PersistentSVals = new PersistentSValsTy();
     
   llvm::FoldingSetNodeID ID;
   void* InsertPos;
   V.Profile(ID);
   ID.AddPointer((void*) Data);
   
-  PersistentRValsTy& Map = *((PersistentRValsTy*) PersistentRVals);
+  PersistentSValsTy& Map = *((PersistentSValsTy*) PersistentSVals);
   
-  typedef llvm::FoldingSetNodeWrapper<RValData> FoldNodeTy;
+  typedef llvm::FoldingSetNodeWrapper<SValData> FoldNodeTy;
   FoldNodeTy* P = Map.FindNodeOrInsertPos(ID, InsertPos);
   
   if (!P) {  
@@ -222,20 +222,20 @@ BasicValueFactory::getPersistentRValWithData(const RVal& V, uintptr_t Data) {
   return P->getValue();
 }
 
-const std::pair<RVal, RVal>&
-BasicValueFactory::getPersistentRValPair(const RVal& V1, const RVal& V2) {
+const std::pair<SVal, SVal>&
+BasicValueFactory::getPersistentSValPair(const SVal& V1, const SVal& V2) {
   
   // Lazily create the folding set.
-  if (!PersistentRValPairs) PersistentRValPairs = new PersistentRValPairsTy();
+  if (!PersistentSValPairs) PersistentSValPairs = new PersistentSValPairsTy();
   
   llvm::FoldingSetNodeID ID;
   void* InsertPos;
   V1.Profile(ID);
   V2.Profile(ID);
   
-  PersistentRValPairsTy& Map = *((PersistentRValPairsTy*) PersistentRValPairs);
+  PersistentSValPairsTy& Map = *((PersistentSValPairsTy*) PersistentSValPairs);
   
-  typedef llvm::FoldingSetNodeWrapper<RValPair> FoldNodeTy;
+  typedef llvm::FoldingSetNodeWrapper<SValPair> FoldNodeTy;
   FoldNodeTy* P = Map.FindNodeOrInsertPos(ID, InsertPos);
   
   if (!P) {  
@@ -247,8 +247,8 @@ BasicValueFactory::getPersistentRValPair(const RVal& V1, const RVal& V2) {
   return P->getValue();
 }
 
-const RVal* BasicValueFactory::getPersistentRVal(RVal X) {
-  return &getPersistentRValWithData(X, 0).first;
+const SVal* BasicValueFactory::getPersistentSVal(SVal X) {
+  return &getPersistentSValWithData(X, 0).first;
 }  
 
 

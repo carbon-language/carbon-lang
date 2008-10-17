@@ -33,19 +33,19 @@ class VISIBILITY_HIDDEN BasicConstraintManager : public ConstraintManager {
 public:
   BasicConstraintManager(GRStateManager& statemgr) : StateMgr(statemgr) {}
 
-  virtual const GRState* Assume(const GRState* St, RVal Cond,
+  virtual const GRState* Assume(const GRState* St, SVal Cond,
                                 bool Assumption, bool& isFeasible);
 
-  const GRState* Assume(const GRState* St, LVal Cond, bool Assumption,
+  const GRState* Assume(const GRState* St, Loc Cond, bool Assumption,
                         bool& isFeasible);
 
-  const GRState* AssumeAux(const GRState* St, LVal Cond,bool Assumption,
+  const GRState* AssumeAux(const GRState* St, Loc Cond,bool Assumption,
                            bool& isFeasible);
 
-  const GRState* Assume(const GRState* St, NonLVal Cond, bool Assumption,
+  const GRState* Assume(const GRState* St, NonLoc Cond, bool Assumption,
                         bool& isFeasible);
 
-  const GRState* AssumeAux(const GRState* St, NonLVal Cond, bool Assumption,
+  const GRState* AssumeAux(const GRState* St, NonLoc Cond, bool Assumption,
                            bool& isFeasible);
 
   const GRState* AssumeSymInt(const GRState* St, bool Assumption,
@@ -92,52 +92,52 @@ ConstraintManager* clang::CreateBasicConstraintManager(GRStateManager& StateMgr)
   return new BasicConstraintManager(StateMgr);
 }
 
-const GRState* BasicConstraintManager::Assume(const GRState* St, RVal Cond,
+const GRState* BasicConstraintManager::Assume(const GRState* St, SVal Cond,
                                             bool Assumption, bool& isFeasible) {
   if (Cond.isUnknown()) {
     isFeasible = true;
     return St;
   }
 
-  if (isa<NonLVal>(Cond))
-    return Assume(St, cast<NonLVal>(Cond), Assumption, isFeasible);
+  if (isa<NonLoc>(Cond))
+    return Assume(St, cast<NonLoc>(Cond), Assumption, isFeasible);
   else
-    return Assume(St, cast<LVal>(Cond), Assumption, isFeasible);
+    return Assume(St, cast<Loc>(Cond), Assumption, isFeasible);
 }
 
-const GRState* BasicConstraintManager::Assume(const GRState* St, LVal Cond,
+const GRState* BasicConstraintManager::Assume(const GRState* St, Loc Cond,
                                             bool Assumption, bool& isFeasible) {
   St = AssumeAux(St, Cond, Assumption, isFeasible);
   // TF->EvalAssume(*this, St, Cond, Assumption, isFeasible)
   return St;
 }
 
-const GRState* BasicConstraintManager::AssumeAux(const GRState* St, LVal Cond,
+const GRState* BasicConstraintManager::AssumeAux(const GRState* St, Loc Cond,
                                             bool Assumption, bool& isFeasible) {
   BasicValueFactory& BasicVals = StateMgr.getBasicVals();
 
   switch (Cond.getSubKind()) {
   default:
-    assert (false && "'Assume' not implemented for this LVal.");
+    assert (false && "'Assume' not implemented for this Loc.");
     return St;
 
-  case lval::SymbolValKind:
+  case loc::SymbolValKind:
     if (Assumption)
-      return AssumeSymNE(St, cast<lval::SymbolVal>(Cond).getSymbol(),
+      return AssumeSymNE(St, cast<loc::SymbolVal>(Cond).getSymbol(),
                          BasicVals.getZeroWithPtrWidth(), isFeasible);
     else
-      return AssumeSymEQ(St, cast<lval::SymbolVal>(Cond).getSymbol(),
+      return AssumeSymEQ(St, cast<loc::SymbolVal>(Cond).getSymbol(),
                          BasicVals.getZeroWithPtrWidth(), isFeasible);
 
-  case lval::MemRegionKind:
-  case lval::FuncValKind:
-  case lval::GotoLabelKind:
-  case lval::StringLiteralValKind:
+  case loc::MemRegionKind:
+  case loc::FuncValKind:
+  case loc::GotoLabelKind:
+  case loc::StringLiteralValKind:
     isFeasible = Assumption;
     return St;
 
-  case lval::ConcreteIntKind: {
-    bool b = cast<lval::ConcreteInt>(Cond).getValue() != 0;
+  case loc::ConcreteIntKind: {
+    bool b = cast<loc::ConcreteInt>(Cond).getValue() != 0;
     isFeasible = b ? Assumption : !Assumption;
     return St;
   }
@@ -145,7 +145,7 @@ const GRState* BasicConstraintManager::AssumeAux(const GRState* St, LVal Cond,
 }
 
 const GRState*
-BasicConstraintManager::Assume(const GRState* St, NonLVal Cond, bool Assumption,
+BasicConstraintManager::Assume(const GRState* St, NonLoc Cond, bool Assumption,
                                bool& isFeasible) {
   St = AssumeAux(St, Cond, Assumption, isFeasible);
   // TF->EvalAssume() does nothing now.
@@ -153,17 +153,17 @@ BasicConstraintManager::Assume(const GRState* St, NonLVal Cond, bool Assumption,
 }
 
 const GRState*
-BasicConstraintManager::AssumeAux(const GRState* St,NonLVal Cond,
+BasicConstraintManager::AssumeAux(const GRState* St,NonLoc Cond,
                                   bool Assumption, bool& isFeasible) {
   BasicValueFactory& BasicVals = StateMgr.getBasicVals();
   SymbolManager& SymMgr = StateMgr.getSymbolManager();
 
   switch (Cond.getSubKind()) {
   default:
-    assert(false && "'Assume' not implemented for this NonLVal");
+    assert(false && "'Assume' not implemented for this NonLoc");
 
-  case nonlval::SymbolValKind: {
-    nonlval::SymbolVal& SV = cast<nonlval::SymbolVal>(Cond);
+  case nonloc::SymbolValKind: {
+    nonloc::SymbolVal& SV = cast<nonloc::SymbolVal>(Cond);
     SymbolID sym = SV.getSymbol();
 
     if (Assumption)
@@ -174,20 +174,20 @@ BasicConstraintManager::AssumeAux(const GRState* St,NonLVal Cond,
                          isFeasible);
   }
 
-  case nonlval::SymIntConstraintValKind:
+  case nonloc::SymIntConstraintValKind:
     return
       AssumeSymInt(St, Assumption,
-                   cast<nonlval::SymIntConstraintVal>(Cond).getConstraint(),
+                   cast<nonloc::SymIntConstraintVal>(Cond).getConstraint(),
                    isFeasible);
 
-  case nonlval::ConcreteIntKind: {
-    bool b = cast<nonlval::ConcreteInt>(Cond).getValue() != 0;
+  case nonloc::ConcreteIntKind: {
+    bool b = cast<nonloc::ConcreteInt>(Cond).getValue() != 0;
     isFeasible = b ? Assumption : !Assumption;
     return St;
   }
 
-  case nonlval::LValAsIntegerKind:
-    return AssumeAux(St, cast<nonlval::LValAsInteger>(Cond).getLVal(),
+  case nonloc::LocAsIntegerKind:
+    return AssumeAux(St, cast<nonloc::LocAsInteger>(Cond).getLoc(),
                      Assumption, isFeasible);
   } // end switch
 }

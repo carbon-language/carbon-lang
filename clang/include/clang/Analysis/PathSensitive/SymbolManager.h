@@ -198,7 +198,7 @@ public:
   }  
 };
 
-// Constraints on symbols.  Usually wrapped by RValues.
+// Constraints on symbols.  Usually wrapped by SValues.
 
 class SymIntConstraint : public llvm::FoldingSetNode {
   SymbolID Symbol;

@@ -118,7 +118,7 @@ class VISIBILITY_HIDDEN BasicObjCFoundationChecks : public GRSimpleAPICheck {
   typedef std::vector<BugReport*> ErrorsTy;
   ErrorsTy Errors;
       
-  RVal GetRVal(const GRState* St, Expr* E) { return VMgr->GetRVal(St, E); }
+  SVal GetSVal(const GRState* St, Expr* E) { return VMgr->GetSVal(St, E); }
       
   bool isNSString(ObjCInterfaceType* T, const char* suffix);
   bool AuditNSString(NodeTy* N, ObjCMessageExpr* ME);
@@ -193,8 +193,8 @@ bool BasicObjCFoundationChecks::Audit(ExplodedNode<GRState>* N,
   return false;
 }
 
-static inline bool isNil(RVal X) {
-  return isa<lval::ConcreteInt>(X);  
+static inline bool isNil(SVal X) {
+  return isa<loc::ConcreteInt>(X);  
 }
 
 //===----------------------------------------------------------------------===//
@@ -214,7 +214,7 @@ bool BasicObjCFoundationChecks::CheckNilArg(NodeTy* N, unsigned Arg) {
   
   Expr * E = ME->getArg(Arg);
   
-  if (isNil(GetRVal(N->getState(), E))) {
+  if (isNil(GetSVal(N->getState(), E))) {
     WarnNilArg(N, ME, Arg);
     return true;
   }
@@ -350,7 +350,7 @@ class VISIBILITY_HIDDEN AuditCFNumberCreate : public GRSimpleAPICheck {
   IdentifierInfo* II;
   GRStateManager* VMgr;
     
-  RVal GetRVal(const GRState* St, Expr* E) { return VMgr->GetRVal(St, E); }
+  SVal GetSVal(const GRState* St, Expr* E) { return VMgr->GetSVal(St, E); }
   
 public:
 
@@ -468,18 +468,18 @@ static const char* GetCFNumberTypeStr(uint64_t i) {
 bool AuditCFNumberCreate::Audit(ExplodedNode<GRState>* N,GRStateManager&){  
   CallExpr* CE = cast<CallExpr>(cast<PostStmt>(N->getLocation()).getStmt());
   Expr* Callee = CE->getCallee();  
-  RVal CallV = GetRVal(N->getState(), Callee);  
-  lval::FuncVal* FuncV = dyn_cast<lval::FuncVal>(&CallV);
+  SVal CallV = GetSVal(N->getState(), Callee);  
+  loc::FuncVal* FuncV = dyn_cast<loc::FuncVal>(&CallV);
 
   if (!FuncV || FuncV->getDecl()->getIdentifier() != II || CE->getNumArgs()!=3)
     return false;
   
   // Get the value of the "theType" argument.
-  RVal  TheTypeVal = GetRVal(N->getState(), CE->getArg(1));
+  SVal  TheTypeVal = GetSVal(N->getState(), CE->getArg(1));
   
     // FIXME: We really should allow ranges of valid theType values, and
     //   bifurcate the state appropriately.
-  nonlval::ConcreteInt* V = dyn_cast<nonlval::ConcreteInt>(&TheTypeVal);
+  nonloc::ConcreteInt* V = dyn_cast<nonloc::ConcreteInt>(&TheTypeVal);
   
   if (!V)
     return false;
@@ -494,11 +494,11 @@ bool AuditCFNumberCreate::Audit(ExplodedNode<GRState>* N,GRStateManager&){
   // Look at the value of the integer being passed by reference.  Essentially
   // we want to catch cases where the value passed in is not equal to the
   // size of the type being created.
-  RVal TheValueExpr = GetRVal(N->getState(), CE->getArg(2));
+  SVal TheValueExpr = GetSVal(N->getState(), CE->getArg(2));
   
   // FIXME: Eventually we should handle arbitrary locations.  We can do this
   //  by having an enhanced memory model that does low-level typing.
-  lval::MemRegionVal* LV = dyn_cast<lval::MemRegionVal>(&TheValueExpr);
+  loc::MemRegionVal* LV = dyn_cast<loc::MemRegionVal>(&TheValueExpr);
 
   if (!LV)
     return false;

@@ -292,7 +292,7 @@ MakeReportGraph(ExplodedGraph<GRState>* G, ExplodedNode<GRState>* N) {
 
 static VarDecl* GetMostRecentVarDeclBinding(ExplodedNode<GRState>* N,
                                             GRStateManager& VMgr,
-                                            RVal X) {
+                                            SVal X) {
   
   for ( ; N ; N = N->pred_empty() ? 0 : *N->pred_begin()) {
     
@@ -306,7 +306,7 @@ static VarDecl* GetMostRecentVarDeclBinding(ExplodedNode<GRState>* N,
     if (!DR)
       continue;
     
-    RVal Y = VMgr.GetRVal(N->getState(), DR);
+    SVal Y = VMgr.GetSVal(N->getState(), DR);
     
     if (X != Y)
       continue;
@@ -341,13 +341,13 @@ public:
                        PathDiagnostic& pd, BugReporter& br)
     : Sym(sym), PrevSt(prevst), S(s), VMgr(vmgr), Pred(pred), PD(pd), BR(br) {}
                         
-  bool HandleBinding(StoreManager& SMgr, Store store, MemRegion* R, RVal V) {
+  bool HandleBinding(StoreManager& SMgr, Store store, MemRegion* R, SVal V) {
 
     SymbolID ScanSym;
     
-    if (lval::SymbolVal* SV = dyn_cast<lval::SymbolVal>(&V))
+    if (loc::SymbolVal* SV = dyn_cast<loc::SymbolVal>(&V))
       ScanSym = SV->getSymbol();
-    else if (nonlval::SymbolVal* SV = dyn_cast<nonlval::SymbolVal>(&V))
+    else if (nonloc::SymbolVal* SV = dyn_cast<nonloc::SymbolVal>(&V))
       ScanSym = SV->getSymbol();
     else
       return true;
@@ -356,7 +356,7 @@ public:
       return true;
     
     // Check if the previous state has this binding.    
-    RVal X = VMgr.GetRVal(PrevSt, lval::MemRegionVal(R));
+    SVal X = VMgr.GetSVal(PrevSt, loc::MemRegionVal(R));
     
     if (X == V) // Same binding?
       return true;
@@ -443,12 +443,12 @@ public:
                      PathDiagnostic& pd)
     : N(n), S(s), BR(br), PD(pd) {}
   
-  bool HandleBinding(StoreManager& SMgr, Store store, MemRegion* R, RVal V) {
+  bool HandleBinding(StoreManager& SMgr, Store store, MemRegion* R, SVal V) {
     SymbolID ScanSym;
   
-    if (lval::SymbolVal* SV = dyn_cast<lval::SymbolVal>(&V))
+    if (loc::SymbolVal* SV = dyn_cast<loc::SymbolVal>(&V))
       ScanSym = SV->getSymbol();
-    else if (nonlval::SymbolVal* SV = dyn_cast<nonlval::SymbolVal>(&V))
+    else if (nonloc::SymbolVal* SV = dyn_cast<nonloc::SymbolVal>(&V))
       ScanSym = SV->getSymbol();
     else
       return true;

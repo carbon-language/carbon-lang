@@ -216,11 +216,11 @@ void NSErrorCheck::CheckParamDeref(VarDecl* Param, GRStateRef rootState,
                                    GRExprEngine& Eng, GRBugReporter& BR,
                                    bool isNSErrorWarning) {
   
-  RVal ParamRVal = rootState.GetLValue(Param);
+  SVal ParamSVal = rootState.GetLValue(Param);
 
-  // FIXME: For now assume that ParamRVal is symbolic.  We need to generalize
+  // FIXME: For now assume that ParamSVal is symbolic.  We need to generalize
   // this later.
-  lval::SymbolVal* SV = dyn_cast<lval::SymbolVal>(&ParamRVal);
+  loc::SymbolVal* SV = dyn_cast<loc::SymbolVal>(&ParamSVal);
   if (!SV) return;
   
   // Iterate over the implicit-null dereferences.
@@ -228,8 +228,8 @@ void NSErrorCheck::CheckParamDeref(VarDecl* Param, GRStateRef rootState,
        E=Eng.implicit_null_derefs_end(); I!=E; ++I) {
     
     GRStateRef state = GRStateRef((*I)->getState(), Eng.getStateManager());
-    const RVal* X = state.get<GRState::NullDerefTag>();    
-    const lval::SymbolVal* SVX = dyn_cast_or_null<lval::SymbolVal>(X);
+    const SVal* X = state.get<GRState::NullDerefTag>();    
+    const loc::SymbolVal* SVX = dyn_cast_or_null<loc::SymbolVal>(X);
     if (!SVX || SVX->getSymbol() != SV->getSymbol()) continue;
 
     // Emit an error.
