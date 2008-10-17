@@ -996,6 +996,61 @@ static bool InBlock(const Value *V, const BasicBlock *BB) {
   return true;
 }
 
+/// getFCmpCondCode - Return the ISD condition code corresponding to
+/// the given LLVM IR floating-point condition code.  This includes
+/// consideration of global floating-point math flags.
+///
+static ISD::CondCode getFCmpCondCode(FCmpInst::Predicate Pred) {
+  ISD::CondCode FPC, FOC;
+  switch (Pred) {
+  case FCmpInst::FCMP_FALSE: FOC = FPC = ISD::SETFALSE; break;
+  case FCmpInst::FCMP_OEQ:   FOC = ISD::SETEQ; FPC = ISD::SETOEQ; break;
+  case FCmpInst::FCMP_OGT:   FOC = ISD::SETGT; FPC = ISD::SETOGT; break;
+  case FCmpInst::FCMP_OGE:   FOC = ISD::SETGE; FPC = ISD::SETOGE; break;
+  case FCmpInst::FCMP_OLT:   FOC = ISD::SETLT; FPC = ISD::SETOLT; break;
+  case FCmpInst::FCMP_OLE:   FOC = ISD::SETLE; FPC = ISD::SETOLE; break;
+  case FCmpInst::FCMP_ONE:   FOC = ISD::SETNE; FPC = ISD::SETONE; break;
+  case FCmpInst::FCMP_ORD:   FOC = FPC = ISD::SETO;   break;
+  case FCmpInst::FCMP_UNO:   FOC = FPC = ISD::SETUO;  break;
+  case FCmpInst::FCMP_UEQ:   FOC = ISD::SETEQ; FPC = ISD::SETUEQ; break;
+  case FCmpInst::FCMP_UGT:   FOC = ISD::SETGT; FPC = ISD::SETUGT; break;
+  case FCmpInst::FCMP_UGE:   FOC = ISD::SETGE; FPC = ISD::SETUGE; break;
+  case FCmpInst::FCMP_ULT:   FOC = ISD::SETLT; FPC = ISD::SETULT; break;
+  case FCmpInst::FCMP_ULE:   FOC = ISD::SETLE; FPC = ISD::SETULE; break;
+  case FCmpInst::FCMP_UNE:   FOC = ISD::SETNE; FPC = ISD::SETUNE; break;
+  case FCmpInst::FCMP_TRUE:  FOC = FPC = ISD::SETTRUE; break;
+  default:
+    assert(0 && "Invalid FCmp predicate opcode!");
+    FOC = FPC = ISD::SETFALSE;
+    break;
+  }
+  if (FiniteOnlyFPMath())
+    return FOC;
+  else 
+    return FPC;
+}
+
+/// getICmpCondCode - Return the ISD condition code corresponding to
+/// the given LLVM IR integer condition code.
+///
+static ISD::CondCode getICmpCondCode(ICmpInst::Predicate Pred) {
+  switch (Pred) {
+  case ICmpInst::ICMP_EQ:  return ISD::SETEQ;
+  case ICmpInst::ICMP_NE:  return ISD::SETNE;
+  case ICmpInst::ICMP_SLE: return ISD::SETLE;
+  case ICmpInst::ICMP_ULE: return ISD::SETULE;
+  case ICmpInst::ICMP_SGE: return ISD::SETGE;
+  case ICmpInst::ICMP_UGE: return ISD::SETUGE;
+  case ICmpInst::ICMP_SLT: return ISD::SETLT;
+  case ICmpInst::ICMP_ULT: return ISD::SETULT;
+  case ICmpInst::ICMP_SGT: return ISD::SETGT;
+  case ICmpInst::ICMP_UGT: return ISD::SETUGT;
+  default:
+    assert(0 && "Invalid ICmp predicate opcode!");
+    return ISD::SETNE;
+  }
+}
+
 /// FindMergedConditions - If Cond is an expression like 
 void SelectionDAGLowering::FindMergedConditions(Value *Cond,
                                                 MachineBasicBlock *TBB,
@@ -1024,44 +1079,9 @@ void SelectionDAGLowering::FindMergedConditions(Value *Cond,
       BOp = cast<Instruction>(Cond);
       ISD::CondCode Condition;
       if (ICmpInst *IC = dyn_cast<ICmpInst>(Cond)) {
-        switch (IC->getPredicate()) {
-        default: assert(0 && "Unknown icmp predicate opcode!");
-        case ICmpInst::ICMP_EQ:  Condition = ISD::SETEQ;  break;
-        case ICmpInst::ICMP_NE:  Condition = ISD::SETNE;  break;
-        case ICmpInst::ICMP_SLE: Condition = ISD::SETLE;  break;
-        case ICmpInst::ICMP_ULE: Condition = ISD::SETULE; break;
-        case ICmpInst::ICMP_SGE: Condition = ISD::SETGE;  break;
-        case ICmpInst::ICMP_UGE: Condition = ISD::SETUGE; break;
-        case ICmpInst::ICMP_SLT: Condition = ISD::SETLT;  break;
-        case ICmpInst::ICMP_ULT: Condition = ISD::SETULT; break;
-        case ICmpInst::ICMP_SGT: Condition = ISD::SETGT;  break;
-        case ICmpInst::ICMP_UGT: Condition = ISD::SETUGT; break;
-        }
+        Condition = getICmpCondCode(IC->getPredicate());
       } else if (FCmpInst *FC = dyn_cast<FCmpInst>(Cond)) {
-        ISD::CondCode FPC, FOC;
-        switch (FC->getPredicate()) {
-        default: assert(0 && "Unknown fcmp predicate opcode!");
-        case FCmpInst::FCMP_FALSE: FOC = FPC = ISD::SETFALSE; break;
-        case FCmpInst::FCMP_OEQ:   FOC = ISD::SETEQ; FPC = ISD::SETOEQ; break;
-        case FCmpInst::FCMP_OGT:   FOC = ISD::SETGT; FPC = ISD::SETOGT; break;
-        case FCmpInst::FCMP_OGE:   FOC = ISD::SETGE; FPC = ISD::SETOGE; break;
-        case FCmpInst::FCMP_OLT:   FOC = ISD::SETLT; FPC = ISD::SETOLT; break;
-        case FCmpInst::FCMP_OLE:   FOC = ISD::SETLE; FPC = ISD::SETOLE; break;
-        case FCmpInst::FCMP_ONE:   FOC = ISD::SETNE; FPC = ISD::SETONE; break;
-        case FCmpInst::FCMP_ORD:   FOC = FPC = ISD::SETO;   break;
-        case FCmpInst::FCMP_UNO:   FOC = FPC = ISD::SETUO;  break;
-        case FCmpInst::FCMP_UEQ:   FOC = ISD::SETEQ; FPC = ISD::SETUEQ; break;
-        case FCmpInst::FCMP_UGT:   FOC = ISD::SETGT; FPC = ISD::SETUGT; break;
-        case FCmpInst::FCMP_UGE:   FOC = ISD::SETGE; FPC = ISD::SETUGE; break;
-        case FCmpInst::FCMP_ULT:   FOC = ISD::SETLT; FPC = ISD::SETULT; break;
-        case FCmpInst::FCMP_ULE:   FOC = ISD::SETLE; FPC = ISD::SETULE; break;
-        case FCmpInst::FCMP_UNE:   FOC = ISD::SETNE; FPC = ISD::SETUNE; break;
-        case FCmpInst::FCMP_TRUE:  FOC = FPC = ISD::SETTRUE; break;
-        }
-        if (FiniteOnlyFPMath())
-          Condition = FOC;
-        else 
-          Condition = FPC;
+        Condition = getFCmpCondCode(FC->getPredicate());
       } else {
         Condition = ISD::SETEQ; // silence warning.
         assert(0 && "Unknown compare instruction");
@@ -2067,23 +2087,7 @@ void SelectionDAGLowering::visitICmp(User &I) {
     predicate = ICmpInst::Predicate(IC->getPredicate());
   SDValue Op1 = getValue(I.getOperand(0));
   SDValue Op2 = getValue(I.getOperand(1));
-  ISD::CondCode Opcode;
-  switch (predicate) {
-    case ICmpInst::ICMP_EQ  : Opcode = ISD::SETEQ; break;
-    case ICmpInst::ICMP_NE  : Opcode = ISD::SETNE; break;
-    case ICmpInst::ICMP_UGT : Opcode = ISD::SETUGT; break;
-    case ICmpInst::ICMP_UGE : Opcode = ISD::SETUGE; break;
-    case ICmpInst::ICMP_ULT : Opcode = ISD::SETULT; break;
-    case ICmpInst::ICMP_ULE : Opcode = ISD::SETULE; break;
-    case ICmpInst::ICMP_SGT : Opcode = ISD::SETGT; break;
-    case ICmpInst::ICMP_SGE : Opcode = ISD::SETGE; break;
-    case ICmpInst::ICMP_SLT : Opcode = ISD::SETLT; break;
-    case ICmpInst::ICMP_SLE : Opcode = ISD::SETLE; break;
-    default:
-      assert(!"Invalid ICmp predicate value");
-      Opcode = ISD::SETEQ;
-      break;
-  }
+  ISD::CondCode Opcode = getICmpCondCode(predicate);
   setValue(&I, DAG.getSetCC(MVT::i1, Op1, Op2, Opcode));
 }
 
@@ -2095,33 +2099,7 @@ void SelectionDAGLowering::visitFCmp(User &I) {
     predicate = FCmpInst::Predicate(FC->getPredicate());
   SDValue Op1 = getValue(I.getOperand(0));
   SDValue Op2 = getValue(I.getOperand(1));
-  ISD::CondCode Condition, FOC, FPC;
-  switch (predicate) {
-    case FCmpInst::FCMP_FALSE: FOC = FPC = ISD::SETFALSE; break;
-    case FCmpInst::FCMP_OEQ:   FOC = ISD::SETEQ; FPC = ISD::SETOEQ; break;
-    case FCmpInst::FCMP_OGT:   FOC = ISD::SETGT; FPC = ISD::SETOGT; break;
-    case FCmpInst::FCMP_OGE:   FOC = ISD::SETGE; FPC = ISD::SETOGE; break;
-    case FCmpInst::FCMP_OLT:   FOC = ISD::SETLT; FPC = ISD::SETOLT; break;
-    case FCmpInst::FCMP_OLE:   FOC = ISD::SETLE; FPC = ISD::SETOLE; break;
-    case FCmpInst::FCMP_ONE:   FOC = ISD::SETNE; FPC = ISD::SETONE; break;
-    case FCmpInst::FCMP_ORD:   FOC = FPC = ISD::SETO;   break;
-    case FCmpInst::FCMP_UNO:   FOC = FPC = ISD::SETUO;  break;
-    case FCmpInst::FCMP_UEQ:   FOC = ISD::SETEQ; FPC = ISD::SETUEQ; break;
-    case FCmpInst::FCMP_UGT:   FOC = ISD::SETGT; FPC = ISD::SETUGT; break;
-    case FCmpInst::FCMP_UGE:   FOC = ISD::SETGE; FPC = ISD::SETUGE; break;
-    case FCmpInst::FCMP_ULT:   FOC = ISD::SETLT; FPC = ISD::SETULT; break;
-    case FCmpInst::FCMP_ULE:   FOC = ISD::SETLE; FPC = ISD::SETULE; break;
-    case FCmpInst::FCMP_UNE:   FOC = ISD::SETNE; FPC = ISD::SETUNE; break;
-    case FCmpInst::FCMP_TRUE:  FOC = FPC = ISD::SETTRUE; break;
-    default:
-      assert(!"Invalid FCmp predicate value");
-      FOC = FPC = ISD::SETFALSE;
-      break;
-  }
-  if (FiniteOnlyFPMath())
-    Condition = FOC;
-  else 
-    Condition = FPC;
+  ISD::CondCode Condition = getFCmpCondCode(predicate);
   setValue(&I, DAG.getSetCC(MVT::i1, Op1, Op2, Condition));
 }
 
@@ -2133,23 +2111,7 @@ void SelectionDAGLowering::visitVICmp(User &I) {
     predicate = ICmpInst::Predicate(IC->getPredicate());
   SDValue Op1 = getValue(I.getOperand(0));
   SDValue Op2 = getValue(I.getOperand(1));
-  ISD::CondCode Opcode;
-  switch (predicate) {
-    case ICmpInst::ICMP_EQ  : Opcode = ISD::SETEQ; break;
-    case ICmpInst::ICMP_NE  : Opcode = ISD::SETNE; break;
-    case ICmpInst::ICMP_UGT : Opcode = ISD::SETUGT; break;
-    case ICmpInst::ICMP_UGE : Opcode = ISD::SETUGE; break;
-    case ICmpInst::ICMP_ULT : Opcode = ISD::SETULT; break;
-    case ICmpInst::ICMP_ULE : Opcode = ISD::SETULE; break;
-    case ICmpInst::ICMP_SGT : Opcode = ISD::SETGT; break;
-    case ICmpInst::ICMP_SGE : Opcode = ISD::SETGE; break;
-    case ICmpInst::ICMP_SLT : Opcode = ISD::SETLT; break;
-    case ICmpInst::ICMP_SLE : Opcode = ISD::SETLE; break;
-    default:
-      assert(!"Invalid ICmp predicate value");
-      Opcode = ISD::SETEQ;
-      break;
-  }
+  ISD::CondCode Opcode = getICmpCondCode(predicate);
   setValue(&I, DAG.getVSetCC(Op1.getValueType(), Op1, Op2, Opcode));
 }
 
@@ -2161,34 +2123,7 @@ void SelectionDAGLowering::visitVFCmp(User &I) {
     predicate = FCmpInst::Predicate(FC->getPredicate());
   SDValue Op1 = getValue(I.getOperand(0));
   SDValue Op2 = getValue(I.getOperand(1));
-  ISD::CondCode Condition, FOC, FPC;
-  switch (predicate) {
-    case FCmpInst::FCMP_FALSE: FOC = FPC = ISD::SETFALSE; break;
-    case FCmpInst::FCMP_OEQ:   FOC = ISD::SETEQ; FPC = ISD::SETOEQ; break;
-    case FCmpInst::FCMP_OGT:   FOC = ISD::SETGT; FPC = ISD::SETOGT; break;
-    case FCmpInst::FCMP_OGE:   FOC = ISD::SETGE; FPC = ISD::SETOGE; break;
-    case FCmpInst::FCMP_OLT:   FOC = ISD::SETLT; FPC = ISD::SETOLT; break;
-    case FCmpInst::FCMP_OLE:   FOC = ISD::SETLE; FPC = ISD::SETOLE; break;
-    case FCmpInst::FCMP_ONE:   FOC = ISD::SETNE; FPC = ISD::SETONE; break;
-    case FCmpInst::FCMP_ORD:   FOC = FPC = ISD::SETO;   break;
-    case FCmpInst::FCMP_UNO:   FOC = FPC = ISD::SETUO;  break;
-    case FCmpInst::FCMP_UEQ:   FOC = ISD::SETEQ; FPC = ISD::SETUEQ; break;
-    case FCmpInst::FCMP_UGT:   FOC = ISD::SETGT; FPC = ISD::SETUGT; break;
-    case FCmpInst::FCMP_UGE:   FOC = ISD::SETGE; FPC = ISD::SETUGE; break;
-    case FCmpInst::FCMP_ULT:   FOC = ISD::SETLT; FPC = ISD::SETULT; break;
-    case FCmpInst::FCMP_ULE:   FOC = ISD::SETLE; FPC = ISD::SETULE; break;
-    case FCmpInst::FCMP_UNE:   FOC = ISD::SETNE; FPC = ISD::SETUNE; break;
-    case FCmpInst::FCMP_TRUE:  FOC = FPC = ISD::SETTRUE; break;
-    default:
-      assert(!"Invalid VFCmp predicate value");
-      FOC = FPC = ISD::SETFALSE;
-      break;
-  }
-  if (FiniteOnlyFPMath())
-    Condition = FOC;
-  else 
-    Condition = FPC;
-    
+  ISD::CondCode Condition = getFCmpCondCode(predicate);
   MVT DestVT = TLI.getValueType(I.getType());
     
   setValue(&I, DAG.getVSetCC(DestVT, Op1, Op2, Condition));
