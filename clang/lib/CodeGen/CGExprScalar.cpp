@@ -1148,9 +1148,7 @@ Value *ScalarExprEmitter::VisitVAArgExpr(VAArgExpr *VE) {
 
 Value *ScalarExprEmitter::VisitObjCEncodeExpr(const ObjCEncodeExpr *E) {
   std::string str;
-  llvm::SmallVector<const RecordType *, 8> EncodingRecordTypes; 
-  CGF.getContext().getObjCEncodingForType(E->getEncodedType(), str,
-                                          EncodingRecordTypes);
+  CGF.getContext().getObjCEncodingForType(E->getEncodedType(), str);
   
   llvm::Constant *C = llvm::ConstantArray::get(str);
   C = new llvm::GlobalVariable(C->getType(), true, 

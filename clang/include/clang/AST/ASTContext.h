@@ -68,8 +68,6 @@ class ASTContext {
   llvm::DenseMap<const ObjCInterfaceDecl*, 
                  const ASTRecordLayout*> ASTObjCInterfaces;
   
-  llvm::SmallVector<const RecordType *, 8> EncodingRecordTypes;
-    
   /// BuiltinVaListType - built-in va list type.
   /// This is initially null and set by Sema::LazilyCreateBuiltin when
   /// a builtin that takes a valist is encountered.
@@ -277,7 +275,6 @@ public:
   /// given type into \arg S. If \arg NameFields is specified then
   /// record field names are also encoded.
   void getObjCEncodingForType(QualType t, std::string &S, 
-                              llvm::SmallVector<const RecordType*,8> &RT,
                               bool NameFields=false) const;
   
   // Put the string version of type qualifiers into S.
@@ -481,7 +478,6 @@ private:
   void getObjCEncodingForTypeImpl(QualType t, std::string &S, 
                                   bool ExpandPointedToStructures,
                                   bool ExpandStructures,
-                              llvm::SmallVector<const RecordType*,8> &RT,
                                   bool NameFields) const;
   
 };

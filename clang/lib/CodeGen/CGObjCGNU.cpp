@@ -707,9 +707,7 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
       IvarNames.push_back(CGM.GetAddrOfConstantCString((*iter)->getName()));
       // Get the type encoding for this ivar
       std::string TypeStr;
-      llvm::SmallVector<const RecordType *, 8> EncodingRecordTypes;
-      Context.getObjCEncodingForType((*iter)->getType(), TypeStr,
-                                     EncodingRecordTypes);
+      Context.getObjCEncodingForType((*iter)->getType(), TypeStr);
       IvarTypes.push_back(CGM.GetAddrOfConstantCString(TypeStr));
       // Get the offset
       int offset =

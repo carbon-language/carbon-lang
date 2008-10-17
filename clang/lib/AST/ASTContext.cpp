@@ -1474,7 +1474,7 @@ void ASTContext::getObjCEncodingForMethodDecl(const ObjCMethodDecl *Decl,
   // Encode type qualifer, 'in', 'inout', etc. for the return type.
   getObjCEncodingForTypeQualifier(Decl->getObjCDeclQualifier(), S);
   // Encode result type.
-  getObjCEncodingForType(Decl->getResultType(), S, EncodingRecordTypes);
+  getObjCEncodingForType(Decl->getResultType(), S);
   // Compute size of all parameters.
   // Start with computing size of a pointer in number of bytes.
   // FIXME: There might(should) be a better way of doing this computation!
@@ -1502,7 +1502,7 @@ void ASTContext::getObjCEncodingForMethodDecl(const ObjCMethodDecl *Decl,
     // 'in', 'inout', etc.
     getObjCEncodingForTypeQualifier(
       Decl->getParamDecl(i)->getObjCDeclQualifier(), S);
-    getObjCEncodingForType(PType, S, EncodingRecordTypes);
+    getObjCEncodingForType(PType, S);
     S += llvm::utostr(ParmOffset);
     ParmOffset += getObjCEncodingTypeSize(PType);
   }
@@ -1557,7 +1557,7 @@ void ASTContext::getObjCEncodingForPropertyDecl(const ObjCPropertyDecl *PD,
   // Encode result type.
   // FIXME: GCC uses a generating_property_type_encoding mode during
   // this part. Investigate.
-  getObjCEncodingForType(PD->getType(), S, EncodingRecordTypes);
+  getObjCEncodingForType(PD->getType(), S);
 
   if (PD->isReadOnly()) {
     S += ",R";
@@ -1594,19 +1594,17 @@ void ASTContext::getObjCEncodingForPropertyDecl(const ObjCPropertyDecl *PD,
 }
 
 void ASTContext::getObjCEncodingForType(QualType T, std::string& S,
-                         llvm::SmallVector<const RecordType*,8> &ERType,
                                         bool NameFields) const {
   // We follow the behavior of gcc, expanding structures which are
   // directly pointed to, and expanding embedded structures. Note that
   // these rules are sufficient to prevent recursive encoding of the
   // same type.
-  getObjCEncodingForTypeImpl(T, S, true, true, ERType, NameFields);
+  getObjCEncodingForTypeImpl(T, S, true, true, NameFields);
 }
 
 void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
                                             bool ExpandPointedToStructures,
                                             bool ExpandStructures,
-                         llvm::SmallVector<const RecordType*,8> &ERType,
                                             bool NameFields) const {
   if (const BuiltinType *BT = T->getAsBuiltinType()) {
     char encoding;
@@ -1637,7 +1635,7 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
     // Treat id<P...> same as 'id' for encoding purposes.
     return getObjCEncodingForTypeImpl(getObjCIdType(), S, 
                                       ExpandPointedToStructures,
-                                      ExpandStructures, ERType, NameFields);    
+                                      ExpandStructures, NameFields);    
   }
   else if (const PointerType *PT = T->getAsPointerType()) {
     QualType PointeeTy = PT->getPointeeType();
@@ -1664,7 +1662,7 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
     S += '^';
     getObjCEncodingForTypeImpl(PT->getPointeeType(), S, 
                                false, ExpandPointedToStructures, 
-                               ERType, NameFields);
+                               NameFields);
   } else if (const ArrayType *AT =
                // Ignore type qualifiers etc.
                dyn_cast<ArrayType>(T->getCanonicalTypeInternal())) {
@@ -1676,7 +1674,7 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
       assert(0 && "Unhandled array type!");
     
     getObjCEncodingForTypeImpl(AT->getElementType(), S, 
-                               false, ExpandStructures, ERType, NameFields);
+                               false, ExpandStructures, NameFields);
     S += ']';
   } else if (T->getAsFunctionType()) {
     S += '?';
@@ -1689,14 +1687,7 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
     } else {
       S += '?';
     }
-    bool found = false;
-    for (unsigned i = 0, e = ERType.size(); i != e; ++i)
-      if (ERType[i] == RTy) {
-        found = true;
-        break;
-      }
-    if (!found && ExpandStructures) {
-      ERType.push_back(RTy);
+    if (ExpandStructures) {
       S += '=';
       for (int i = 0; i < RDecl->getNumMembers(); i++) {
         FieldDecl *FD = RDecl->getMember(i);
@@ -1716,12 +1707,9 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
           S += 'b';
           S += llvm::utostr(N);
         } else {
-          getObjCEncodingForTypeImpl(FD->getType(), S, false, true,
-                                     ERType, NameFields);
+          getObjCEncodingForTypeImpl(FD->getType(), S, false, true, NameFields);
         }
       }
-      assert(ERType.back() == RTy && "Record Type stack mismatch.");
-      ERType.pop_back();
     }
     S += RDecl->isUnion() ? ')' : '}';
   } else if (T->isEnumeralType()) {

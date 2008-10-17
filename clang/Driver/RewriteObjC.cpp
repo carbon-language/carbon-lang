@@ -57,7 +57,6 @@ namespace {
     llvm::DenseMap<ObjCMethodDecl*, std::string> MethodInternalNames;
     llvm::SmallVector<Stmt *, 32> Stmts;
     llvm::SmallVector<int, 8> ObjCBcLabelNo;
-    llvm::SmallVector<const RecordType *, 8> EncodingRecordTypes;
     
     unsigned NumObjCStringLiterals;
     
@@ -1564,8 +1563,7 @@ Stmt *RewriteObjC::RewriteAtEncode(ObjCEncodeExpr *Exp) {
   // Create a new string expression.
   QualType StrType = Context->getPointerType(Context->CharTy);
   std::string StrEncoding;
-  Context->getObjCEncodingForType(Exp->getEncodedType(), StrEncoding, 
-                                  EncodingRecordTypes);
+  Context->getObjCEncodingForType(Exp->getEncodedType(), StrEncoding);
   Expr *Replacement = new StringLiteral(StrEncoding.c_str(),
                                         StrEncoding.length(), false, StrType, 
                                         SourceLocation(), SourceLocation());
@@ -2962,8 +2960,7 @@ void RewriteObjC::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
     Result += (*IVI)->getName();
     Result += "\", \"";
     std::string StrEncoding;
-    Context->getObjCEncodingForType((*IVI)->getType(), StrEncoding,
-                                    EncodingRecordTypes);
+    Context->getObjCEncodingForType((*IVI)->getType(), StrEncoding);
     Result += StrEncoding;
     Result += "\", ";
     SynthesizeIvarOffsetComputation(IDecl, *IVI, Result);
@@ -2973,8 +2970,7 @@ void RewriteObjC::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
       Result += (*IVI)->getName();
       Result += "\", \"";
       std::string StrEncoding;
-      Context->getObjCEncodingForType((*IVI)->getType(), StrEncoding,
-                                      EncodingRecordTypes);
+      Context->getObjCEncodingForType((*IVI)->getType(), StrEncoding);
       Result += StrEncoding;
       Result += "\", ";
       SynthesizeIvarOffsetComputation(IDecl, (*IVI), Result);
