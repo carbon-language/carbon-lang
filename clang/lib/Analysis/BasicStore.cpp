@@ -129,7 +129,8 @@ SVal BasicStoreManager::getLValueField(const GRState* St, const FieldDecl* D,
 
 SVal BasicStoreManager::getLValueElement(const GRState* St, SVal Base,
                                          SVal Offset) {
-  return UnknownVal();
+  // Total hack: Just return "Base" for now.
+  return Base;
 }
 
 SVal BasicStoreManager::GetSVal(Store St, Loc LV, QualType T) {
@@ -237,25 +238,37 @@ BasicStoreManager::RemoveDeadBindings(Store store, Stmt* Loc,
   llvm::SmallPtrSet<const VarRegion*, 10> Marked;
   
   while (!RegionRoots.empty()) {
-    const VarRegion* R = cast<VarRegion>(RegionRoots.back());
+    const MemRegion* MR = RegionRoots.back();
     RegionRoots.pop_back();
     
-    if (Marked.count(R))
-      continue;
+    while (MR) {
+      if (const SymbolicRegion* SymR = dyn_cast<SymbolicRegion>(MR)) {
+        LSymbols.insert(SymR->getSymbol());
+        break;
+      }
+      else if (const VarRegion* R = dyn_cast<VarRegion>(MR)) {
+        if (Marked.count(R))
+          break;
+        
+        Marked.insert(R);
+        SVal X = GetRegionSVal(store, R);      
     
-    Marked.insert(R);    
-    // FIXME: Do we need the QualType here, since regions are partially
-    // typed?
-    SVal X = GetSVal(store, loc::MemRegionVal(R), QualType());      
+        // FIXME: We need to handle symbols nested in region definitions.
+        for (symbol_iterator SI=X.symbol_begin(), SE=X.symbol_end(); SI!=SE; ++SI)
+          LSymbols.insert(*SI);
     
-    for (symbol_iterator SI=X.symbol_begin(), SE=X.symbol_end(); SI!=SE; ++SI)
-      LSymbols.insert(*SI);
+        if (!isa<loc::MemRegionVal>(X))
+          break;
     
-    if (!isa<loc::MemRegionVal>(X))
-      continue;
-    
-    const loc::MemRegionVal& LVD = cast<loc::MemRegionVal>(X);
-    RegionRoots.push_back(cast<VarRegion>(LVD.getRegion()));
+        const loc::MemRegionVal& LVD = cast<loc::MemRegionVal>(X);
+        RegionRoots.push_back(LVD.getRegion());
+        break;
+      }
+      else if (const SubRegion* R = dyn_cast<SubRegion>(MR))
+        MR = R->getSuperRegion();
+      else
+        break;
+    }
   }
   
   // Remove dead variable bindings.  
