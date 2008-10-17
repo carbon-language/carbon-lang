@@ -1518,13 +1518,20 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
           // Set the value of the variable to be a conjured symbol.
           unsigned Count = Builder.getCurrentBlockCount();
           QualType T = R->getType();
-          SymbolID NewSym =
-            Eng.getSymbolManager().getConjuredSymbol(*I, T, Count);
           
-          state = state.SetSVal(*MR,
-                                Loc::IsLocType(T)
-                                ? cast<SVal>(loc::SymbolVal(NewSym))
-                                : cast<SVal>(nonloc::SymbolVal(NewSym)));
+          // FIXME: handle structs.
+          if (T->isIntegerType() || Loc::IsLocType(T)) {
+            SymbolID NewSym =
+              Eng.getSymbolManager().getConjuredSymbol(*I, T, Count);
+            
+            state = state.SetSVal(*MR,
+                                  Loc::IsLocType(T)
+                                  ? cast<SVal>(loc::SymbolVal(NewSym))
+                                  : cast<SVal>(nonloc::SymbolVal(NewSym)));
+          }
+          else {
+            state = state.SetSVal(*MR, UnknownVal());
+          }
         }
         else
           state = state.SetSVal(*MR, UnknownVal());
@@ -1566,13 +1573,18 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
     default:
       assert (false && "Unhandled RetEffect."); break;
       
-    case RetEffect::NoRet:
+    case RetEffect::NoRet: {
       
       // Make up a symbol for the return value (not reference counted).
       // FIXME: This is basically copy-and-paste from GRSimpleVals.  We 
       //  should compose behavior, not copy it.
       
-      if (Ex->getType() != Eng.getContext().VoidTy) {    
+      // FIXME: We eventually should handle structs and other compound types
+      // that are returned by value.
+      
+      QualType T = Ex->getType();
+      
+      if (T->isIntegerType() || Loc::IsLocType(T)) {
         unsigned Count = Builder.getCurrentBlockCount();
         SymbolID Sym = Eng.getSymbolManager().getConjuredSymbol(Ex, Count);
         
@@ -1584,6 +1596,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
       }      
       
       break;
+    }
       
     case RetEffect::Alias: {
       unsigned idx = RE.getIndex();

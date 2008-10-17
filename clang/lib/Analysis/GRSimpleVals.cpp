@@ -379,9 +379,11 @@ void GRSimpleVals::EvalCall(ExplodedNodeSet<GRState>& Dst,
     
   }
   
-  // Make up a symbol for the return value of this function.
-  
-  if (CE->getType() != Eng.getContext().VoidTy) {    
+  // Make up a symbol for the return value of this function.  
+  // FIXME: We eventually should handle structs and other compound types
+  // that are returned by value.
+  QualType T = CE->getType();  
+  if (T->isIntegerType() || Loc::IsLocType(T)) {    
     unsigned Count = Builder.getCurrentBlockCount();
     SymbolID Sym = Eng.getSymbolManager().getConjuredSymbol(CE, Count);
         

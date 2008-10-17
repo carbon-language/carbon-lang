@@ -2038,8 +2038,10 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
         case BinaryOperator::Assign: {
           
           // EXPERIMENTAL: "Conjured" symbols.
+          // FIXME: Handle structs.
+          QualType T = RHS->getType();
           
-          if (RightV.isUnknown()) {            
+          if (RightV.isUnknown() && (T->isIntegerType() || Loc::IsLocType(T))) {            
             unsigned Count = Builder->getCurrentBlockCount();
             SymbolID Sym = SymMgr.getConjuredSymbol(B->getRHS(), Count);
             
