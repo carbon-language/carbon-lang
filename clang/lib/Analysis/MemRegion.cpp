@@ -88,6 +88,11 @@ void SymbolicRegion::print(llvm::raw_ostream& os) const {
   os << "$" << sym.getNumber();
 }
 
+void FieldRegion::print(llvm::raw_ostream& os) const {
+  superRegion->print(os);
+  os << "->" << getDecl()->getName();
+}
+
 //===----------------------------------------------------------------------===//
 // MemRegionManager methods.
 //===----------------------------------------------------------------------===//

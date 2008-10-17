@@ -220,14 +220,17 @@ class FieldRegion : public DeclRegion {
   FieldRegion(const FieldDecl* fd, const MemRegion* sReg)
     : DeclRegion(fd, sReg, FieldRegionKind) {}
 
+public:
+  
+  void print(llvm::raw_ostream& os) const;
+  
+  const FieldDecl* getDecl() const { return cast<FieldDecl>(D); }
+  QualType getType() const { return getDecl()->getType(); }
+
   static void ProfileRegion(llvm::FoldingSetNodeID& ID, FieldDecl* FD,
                       const MemRegion* superRegion) {
     DeclRegion::ProfileRegion(ID, FD, superRegion, FieldRegionKind);
   }
-  
-public:
-  const FieldDecl* getDecl() const { return cast<FieldDecl>(D); }
-  QualType getType() const { return getDecl()->getType(); }
     
   static bool classof(const MemRegion* R) {
     return R->getKind() == FieldRegionKind;
