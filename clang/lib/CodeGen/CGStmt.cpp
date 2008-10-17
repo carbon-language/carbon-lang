@@ -624,7 +624,9 @@ void CodeGenFunction::EmitSwitchStmt(const SwitchStmt &S) {
 }
 
 static std::string ConvertAsmString(const char *Start, unsigned NumOperands,
-                                    bool IsSimple) {
+                                    bool IsSimple, bool &Failed) {
+  Failed = false;
+
   static unsigned AsmCounter = 0;
   AsmCounter++;
   std::string Result;
@@ -696,7 +698,8 @@ static std::string ConvertAsmString(const char *Start, unsigned NumOperands,
         Result += "${" + llvm::utostr(n) + ':' + EscapedChar + '}';
         Start = End - 1;
       } else {
-        assert(0 && "Unhandled asm escaped character!");
+        Failed = true;
+        return "";
       }
     }
     Start++;
@@ -731,10 +734,17 @@ static std::string SimplifyConstraint(const char* Constraint,
 }
 
 void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
+  bool Failed;
   std::string AsmString = 
     ConvertAsmString(std::string(S.getAsmString()->getStrData(),
                                  S.getAsmString()->getByteLength()).c_str(),
-                     S.getNumOutputs() + S.getNumInputs(), S.isSimple());
+                     S.getNumOutputs() + S.getNumInputs(), S.isSimple(),
+                     Failed);
+
+  if (Failed) {
+    ErrorUnsupported(&S, "asm string");
+    return;
+  }
   
   std::string Constraints;
   
