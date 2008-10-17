@@ -79,8 +79,6 @@ StoreManager* clang::CreateBasicStoreManager(GRStateManager& StMgr) {
   return new BasicStoreManager(StMgr);
 }
 RVal BasicStoreManager::getLValueVar(const GRState* St, const VarDecl* VD) {
-  QualType T = VD->getType();
-  assert(!T->isArrayType() && "Array and struct variable have no lvalue.");
   return lval::MemRegionVal(MRMgr.getVarRegion(VD));
 }
   
