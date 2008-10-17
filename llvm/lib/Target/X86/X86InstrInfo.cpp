@@ -1248,26 +1248,14 @@ X86InstrInfo::commuteInstruction(MachineInstr *MI, bool NewMI) const {
     case X86::SHLD64rri8: Size = 64; Opc = X86::SHRD64rri8; break;
     }
     unsigned Amt = MI->getOperand(3).getImm();
-    unsigned A = MI->getOperand(0).getReg();
-    unsigned B = MI->getOperand(1).getReg();
-    unsigned C = MI->getOperand(2).getReg();
-    bool AisDead = MI->getOperand(0).isDead();
-    bool BisKill = MI->getOperand(1).isKill();
-    bool CisKill = MI->getOperand(2).isKill();
-    // If machine instrs are no longer in two-address forms, update
-    // destination register as well.
-    if (A == B) {
-      // Must be two address instruction!
-      assert(MI->getDesc().getOperandConstraint(0, TOI::TIED_TO) &&
-             "Expecting a two-address instruction!");
-      A = C;
-      CisKill = false;
+    if (NewMI) {
+      MachineFunction &MF = *MI->getParent()->getParent();
+      MI = MF.CloneMachineInstr(MI);
+      NewMI = false;
     }
-    MachineFunction &MF = *MI->getParent()->getParent();
-    return BuildMI(MF, get(Opc))
-      .addReg(A, true, false, false, AisDead)
-      .addReg(C, false, false, CisKill)
-      .addReg(B, false, false, BisKill).addImm(Size-Amt);
+    MI->setDesc(get(Opc));
+    MI->getOperand(3).setImm(Size-Amt);
+    return TargetInstrInfoImpl::commuteInstruction(MI, NewMI);
   }
   case X86::CMOVB16rr:
   case X86::CMOVB32rr:
@@ -1357,7 +1345,11 @@ X86InstrInfo::commuteInstruction(MachineInstr *MI, bool NewMI) const {
     case X86::CMOVNP32rr: Opc = X86::CMOVP32rr; break;
     case X86::CMOVNP64rr: Opc = X86::CMOVP64rr; break;
     }
-
+    if (NewMI) {
+      MachineFunction &MF = *MI->getParent()->getParent();
+      MI = MF.CloneMachineInstr(MI);
+      NewMI = false;
+    }
     MI->setDesc(get(Opc));
     // Fallthrough intended.
   }

@@ -2053,13 +2053,15 @@ SDNode *DAGCombiner::MatchRotate(SDValue LHS, SDValue RHS) {
     }
   }
 
-  // Look for sign/zext/any-extended cases:
+  // Look for sign/zext/any-extended or truncate cases:
   if ((LHSShiftAmt.getOpcode() == ISD::SIGN_EXTEND
        || LHSShiftAmt.getOpcode() == ISD::ZERO_EXTEND
-       || LHSShiftAmt.getOpcode() == ISD::ANY_EXTEND) &&
+       || LHSShiftAmt.getOpcode() == ISD::ANY_EXTEND
+       || LHSShiftAmt.getOpcode() == ISD::TRUNCATE) &&
       (RHSShiftAmt.getOpcode() == ISD::SIGN_EXTEND
        || RHSShiftAmt.getOpcode() == ISD::ZERO_EXTEND
-       || RHSShiftAmt.getOpcode() == ISD::ANY_EXTEND)) {
+       || RHSShiftAmt.getOpcode() == ISD::ANY_EXTEND
+       || RHSShiftAmt.getOpcode() == ISD::TRUNCATE)) {
     SDValue LExtOp0 = LHSShiftAmt.getOperand(0);
     SDValue RExtOp0 = RHSShiftAmt.getOperand(0);
     if (RExtOp0.getOpcode() == ISD::SUB &&
@@ -2068,7 +2070,8 @@ SDNode *DAGCombiner::MatchRotate(SDValue LHS, SDValue RHS) {
       //   (rotl x, y)
       // fold (or (shl x, (*ext y)), (srl x, (*ext (sub 32, y)))) ->
       //   (rotr x, (sub 32, y))
-      if (ConstantSDNode *SUBC = cast<ConstantSDNode>(RExtOp0.getOperand(0))) {
+      if (ConstantSDNode *SUBC =
+            dyn_cast<ConstantSDNode>(RExtOp0.getOperand(0))) {
         if (SUBC->getAPIntValue() == OpSizeInBits) {
           return DAG.getNode(HasROTL ? ISD::ROTL : ISD::ROTR, VT, LHSShiftArg,
                              HasROTL ? LHSShiftAmt : RHSShiftAmt).getNode();
@@ -2080,7 +2083,8 @@ SDNode *DAGCombiner::MatchRotate(SDValue LHS, SDValue RHS) {
       //   (rotr x, y)
       // fold (or (shl x, (*ext (sub 32, y))), (srl x, (*ext y))) ->
       //   (rotl x, (sub 32, y))
-      if (ConstantSDNode *SUBC = cast<ConstantSDNode>(LExtOp0.getOperand(0))) {
+      if (ConstantSDNode *SUBC =
+            dyn_cast<ConstantSDNode>(LExtOp0.getOperand(0))) {
         if (SUBC->getAPIntValue() == OpSizeInBits) {
           return DAG.getNode(HasROTR ? ISD::ROTR : ISD::ROTL, VT, LHSShiftArg,
                              HasROTR ? RHSShiftAmt : LHSShiftAmt).getNode();

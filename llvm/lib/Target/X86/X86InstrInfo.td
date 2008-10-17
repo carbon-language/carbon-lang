@@ -325,6 +325,34 @@ def and_su : PatFrag<(ops node:$lhs, node:$rhs), (and node:$lhs, node:$rhs), [{
   return N->hasOneUse();
 }]>;
 
+// 'shld' and 'shrd' instruction patterns. Note that even though these have
+// the srl and shl in their patterns, the C++ code must still check for them,
+// because predicates are tested before children nodes are explored.
+
+def shrd : PatFrag<(ops node:$src1, node:$amt1, node:$src2, node:$amt2),
+                   (or (srl node:$src1, node:$amt1),
+                       (shl node:$src2, node:$amt2)), [{
+  assert(N->getOpcode() == ISD::OR);
+  return N->getOperand(0).getOpcode() == ISD::SRL &&
+         N->getOperand(1).getOpcode() == ISD::SHL &&
+         isa<ConstantSDNode>(N->getOperand(0).getOperand(1)) &&
+         isa<ConstantSDNode>(N->getOperand(1).getOperand(1)) &&
+         N->getOperand(0).getConstantOperandVal(1) ==
+         N->getValueSizeInBits(0) - N->getOperand(1).getConstantOperandVal(1);
+}]>;
+
+def shld : PatFrag<(ops node:$src1, node:$amt1, node:$src2, node:$amt2),
+                   (or (shl node:$src1, node:$amt1),
+                       (srl node:$src2, node:$amt2)), [{
+  assert(N->getOpcode() == ISD::OR);
+  return N->getOperand(0).getOpcode() == ISD::SHL &&
+         N->getOperand(1).getOpcode() == ISD::SRL &&
+         isa<ConstantSDNode>(N->getOperand(0).getOperand(1)) &&
+         isa<ConstantSDNode>(N->getOperand(1).getOperand(1)) &&
+         N->getOperand(0).getConstantOperandVal(1) ==
+         N->getValueSizeInBits(0) - N->getOperand(1).getConstantOperandVal(1);
+}]>;
+
 //===----------------------------------------------------------------------===//
 // Instruction list...
 //
@@ -2973,6 +3001,22 @@ def : Pat<(store (or (srl (loadi32 addr:$dst), CL:$amt),
                      (shl GR32:$src2, (sub 32, CL:$amt))), addr:$dst),
           (SHRD32mrCL addr:$dst, GR32:$src2)>;
 
+def : Pat<(or (srl GR32:$src1, (i8 (trunc ECX:$amt))),
+              (shl GR32:$src2, (i8 (trunc (sub 32, ECX:$amt))))),
+          (SHRD32rrCL GR32:$src1, GR32:$src2)>;
+
+def : Pat<(store (or (srl (loadi32 addr:$dst), (i8 (trunc ECX:$amt))),
+                     (shl GR32:$src2, (i8 (trunc (sub 32, ECX:$amt))))),
+                 addr:$dst),
+          (SHRD32mrCL addr:$dst, GR32:$src2)>;
+
+def : Pat<(shrd GR32:$src1, (i8 imm:$amt1), GR32:$src2, (i8 imm:$amt2)),
+          (SHRD32rri8 GR32:$src1, GR32:$src2, (i8 imm:$amt1))>;
+
+def : Pat<(store (shrd (loadi32 addr:$dst), (i8 imm:$amt1),
+                       GR32:$src2, (i8 imm:$amt2)), addr:$dst),
+          (SHRD32mri8 addr:$dst, GR32:$src2, (i8 imm:$amt1))>;
+
 // (or (x << c) | (y >> (32 - c))) ==> (shld32 x, y, c)
 def : Pat<(or (shl GR32:$src1, CL:$amt),
               (srl GR32:$src2, (sub 32, CL:$amt))),
@@ -2981,6 +3025,22 @@ def : Pat<(or (shl GR32:$src1, CL:$amt),
 def : Pat<(store (or (shl (loadi32 addr:$dst), CL:$amt),
                      (srl GR32:$src2, (sub 32, CL:$amt))), addr:$dst),
           (SHLD32mrCL addr:$dst, GR32:$src2)>;
+
+def : Pat<(or (shl GR32:$src1, (i8 (trunc ECX:$amt))),
+              (srl GR32:$src2, (i8 (trunc (sub 32, ECX:$amt))))),
+          (SHLD32rrCL GR32:$src1, GR32:$src2)>;
+
+def : Pat<(store (or (shl (loadi32 addr:$dst), (i8 (trunc ECX:$amt))),
+                     (srl GR32:$src2, (i8 (trunc (sub 32, ECX:$amt))))),
+                 addr:$dst),
+          (SHLD32mrCL addr:$dst, GR32:$src2)>;
+
+def : Pat<(shld GR32:$src1, (i8 imm:$amt1), GR32:$src2, (i8 imm:$amt2)),
+          (SHLD32rri8 GR32:$src1, GR32:$src2, (i8 imm:$amt1))>;
+
+def : Pat<(store (shld (loadi32 addr:$dst), (i8 imm:$amt1),
+                       GR32:$src2, (i8 imm:$amt2)), addr:$dst),
+          (SHLD32mri8 addr:$dst, GR32:$src2, (i8 imm:$amt1))>;
 
 // (or (x >> c) | (y << (16 - c))) ==> (shrd16 x, y, c)
 def : Pat<(or (srl GR16:$src1, CL:$amt),
@@ -2991,6 +3051,22 @@ def : Pat<(store (or (srl (loadi16 addr:$dst), CL:$amt),
                      (shl GR16:$src2, (sub 16, CL:$amt))), addr:$dst),
           (SHRD16mrCL addr:$dst, GR16:$src2)>;
 
+def : Pat<(or (srl GR16:$src1, (i8 (trunc CX:$amt))),
+              (shl GR16:$src2, (i8 (trunc (sub 16, CX:$amt))))),
+          (SHRD16rrCL GR16:$src1, GR16:$src2)>;
+
+def : Pat<(store (or (srl (loadi16 addr:$dst), (i8 (trunc CX:$amt))),
+                     (shl GR16:$src2, (i8 (trunc (sub 16, CX:$amt))))),
+                 addr:$dst),
+          (SHRD16mrCL addr:$dst, GR16:$src2)>;
+
+def : Pat<(shrd GR16:$src1, (i8 imm:$amt1), GR16:$src2, (i8 imm:$amt2)),
+          (SHRD16rri8 GR16:$src1, GR16:$src2, (i8 imm:$amt1))>;
+
+def : Pat<(store (shrd (loadi16 addr:$dst), (i8 imm:$amt1),
+                       GR16:$src2, (i8 imm:$amt2)), addr:$dst),
+          (SHRD16mri8 addr:$dst, GR16:$src2, (i8 imm:$amt1))>;
+
 // (or (x << c) | (y >> (16 - c))) ==> (shld16 x, y, c)
 def : Pat<(or (shl GR16:$src1, CL:$amt),
               (srl GR16:$src2, (sub 16, CL:$amt))),
@@ -2999,6 +3075,22 @@ def : Pat<(or (shl GR16:$src1, CL:$amt),
 def : Pat<(store (or (shl (loadi16 addr:$dst), CL:$amt),
                      (srl GR16:$src2, (sub 16, CL:$amt))), addr:$dst),
           (SHLD16mrCL addr:$dst, GR16:$src2)>;
+
+def : Pat<(or (shl GR16:$src1, (i8 (trunc CX:$amt))),
+              (srl GR16:$src2, (i8 (trunc (sub 16, CX:$amt))))),
+          (SHLD16rrCL GR16:$src1, GR16:$src2)>;
+
+def : Pat<(store (or (shl (loadi16 addr:$dst), (i8 (trunc CX:$amt))),
+                     (srl GR16:$src2, (i8 (trunc (sub 16, CX:$amt))))),
+                 addr:$dst),
+          (SHLD16mrCL addr:$dst, GR16:$src2)>;
+
+def : Pat<(shld GR16:$src1, (i8 imm:$amt1), GR16:$src2, (i8 imm:$amt2)),
+          (SHLD16rri8 GR16:$src1, GR16:$src2, (i8 imm:$amt1))>;
+
+def : Pat<(store (shld (loadi16 addr:$dst), (i8 imm:$amt1),
+                       GR16:$src2, (i8 imm:$amt2)), addr:$dst),
+          (SHLD16mri8 addr:$dst, GR16:$src2, (i8 imm:$amt1))>;
 
 //===----------------------------------------------------------------------===//
 // Floating Point Stack Support
