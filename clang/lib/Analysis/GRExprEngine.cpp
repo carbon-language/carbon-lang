@@ -834,8 +834,10 @@ void GRExprEngine::VisitDeclRefExpr(DeclRefExpr* Ex, NodeTy* Pred, NodeSet& Dst,
     return;
 
   } else if (const FunctionDecl* FD = dyn_cast<FunctionDecl>(D)) {
-    assert(!asLValue && "FunctionDecl does not have lvalue.");
-
+    // We return the lval::FuncVal for an FunctionDecl in both rvalue
+    // and lvalue contexts.
+    // FIXME: Does this need to be revised?  We were getting cases in
+    //  real code that did this.
     RVal V = lval::FuncVal(FD);
     MakeNode(Dst, Ex, Pred, SetRVal(St, Ex, V));
     return;
