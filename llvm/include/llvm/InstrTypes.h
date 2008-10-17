@@ -73,7 +73,7 @@ public:
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const TerminatorInst *) { return true; }
   static inline bool classof(const Instruction *I) {
-    return I->getOpcode() >= TermOpsBegin && I->getOpcode() < TermOpsEnd;
+    return I->isTerminator();
   }
   static inline bool classof(const Value *V) {
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
@@ -237,7 +237,7 @@ public:
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const BinaryOperator *) { return true; }
   static inline bool classof(const Instruction *I) {
-    return I->getOpcode() >= BinaryOpsBegin && I->getOpcode() < BinaryOpsEnd;
+    return I->isBinaryOp();
   }
   static inline bool classof(const Value *V) {
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
@@ -483,7 +483,7 @@ public:
   /// @brief Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const CastInst *) { return true; }
   static inline bool classof(const Instruction *I) {
-    return I->getOpcode() >= CastOpsBegin && I->getOpcode() < CastOpsEnd;
+    return I->isCast();
   }
   static inline bool classof(const Value *V) {
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
