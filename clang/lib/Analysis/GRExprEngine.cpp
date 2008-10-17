@@ -804,20 +804,18 @@ void GRExprEngine::VisitDeclRefExpr(DeclRefExpr* Ex, NodeTy* Pred, NodeSet& Dst,
 
   if (const VarDecl* VD = dyn_cast<VarDecl>(D)) {
 
-    QualType T = VD->getType();
-    if (T->isArrayType()) {
+    RVal V = StateMgr.GetLValue(St, VD);
+
+    if (VD->getType()->isArrayType()) {
       // C++ standard says array of type T should be implicitly converted to
       // pointer to type T in some cases. Currently we don't do this cast in
       // VisitCast(), because BasicStore is not field sensitive. We shall do
       // this in a transfer function in the future. We represent both lvalue and
       // rvalue of array of type T as the corresponding MemRegionVal of it.
 
-      RVal V = lval::MemRegionVal(StateMgr.getRegion(VD));
       MakeNode(Dst, Ex, Pred, SetRVal(St, Ex, V));
       return;
     }
-
-    RVal V = StateMgr.GetLValue(St, VD);
     
     if (asLValue)
       MakeNode(Dst, Ex, Pred, SetRVal(St, Ex, V));
