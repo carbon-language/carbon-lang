@@ -4416,6 +4416,7 @@ struct VISIBILITY_HIDDEN SDISelAsmOperandInfo :
       case 16:
       case 32:
       case 64:
+      case 128:
         OpTy = IntegerType::get(BitSize);
         break;
       }
