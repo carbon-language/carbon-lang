@@ -85,7 +85,8 @@ namespace clang {
         return DiagInfo[DiagID-diag::NUM_BUILTIN_DIAGNOSTICS].first;
       }
       
-      unsigned getOrCreateDiagID(Diagnostic::Level L, const char *Message) {
+      unsigned getOrCreateDiagID(Diagnostic::Level L, const char *Message,
+                                 Diagnostic &Diags) {
         DiagDesc D(L, Message);
         // Check to see if it already exists.
         std::map<DiagDesc, unsigned>::iterator I = DiagIDs.lower_bound(D);
@@ -96,6 +97,11 @@ namespace clang {
         unsigned ID = DiagInfo.size()+diag::NUM_BUILTIN_DIAGNOSTICS;
         DiagIDs.insert(std::make_pair(D, ID));
         DiagInfo.push_back(D);
+
+        // If this is a warning, and all warnings are supposed to map to errors,
+        // insert the mapping now.
+        if (L == Diagnostic::Warning && Diags.getWarningsAsErrors())
+          Diags.setDiagnosticMapping((diag::kind)ID, diag::MAP_ERROR);
         return ID;
       }
     };
@@ -133,7 +139,7 @@ Diagnostic::~Diagnostic() {
 unsigned Diagnostic::getCustomDiagID(Level L, const char *Message) {
   if (CustomDiagInfo == 0) 
     CustomDiagInfo = new diag::CustomDiagInfo();
-  return CustomDiagInfo->getOrCreateDiagID(L, Message);
+  return CustomDiagInfo->getOrCreateDiagID(L, Message, *this);
 }
 
 
