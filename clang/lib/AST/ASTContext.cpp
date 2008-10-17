@@ -1594,7 +1594,18 @@ void ASTContext::getObjCEncodingForPropertyDecl(const ObjCPropertyDecl *PD,
 }
 
 void ASTContext::getObjCEncodingForType(QualType T, std::string& S,
-       llvm::SmallVector<const RecordType *, 8> &ERType) const {
+                         llvm::SmallVector<const RecordType*,8> &ERType) const {
+  // We follow the behavior of gcc, expanding structures which are
+  // directly pointed to, and expanding embedded structures. Note that
+  // these rules are sufficient to prevent recursive encoding of the
+  // same type.
+  getObjCEncodingForTypeImpl(T, S, true, true, ERType);
+}
+
+void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
+                                            bool ExpandPointedToStructures,
+                                            bool ExpandStructures,
+                         llvm::SmallVector<const RecordType*,8> &ERType) const {
   // FIXME: This currently doesn't encode:
   // @ An object (whether statically typed or typed id)
   // # A class object (Class)
@@ -1630,8 +1641,9 @@ void ASTContext::getObjCEncodingForType(QualType T, std::string& S,
   }
   else if (T->isObjCQualifiedIdType()) {
     // Treat id<P...> same as 'id' for encoding purposes.
-    return getObjCEncodingForType(getObjCIdType(), S, ERType);
-    
+    return getObjCEncodingForTypeImpl(getObjCIdType(), S, 
+                                      ExpandPointedToStructures,
+                                      ExpandStructures, ERType);    
   }
   else if (const PointerType *PT = T->getAsPointerType()) {
     QualType PointeeTy = PT->getPointeeType();
@@ -1656,7 +1668,8 @@ void ASTContext::getObjCEncodingForType(QualType T, std::string& S,
     }
     
     S += '^';
-    getObjCEncodingForType(PT->getPointeeType(), S, ERType);
+    getObjCEncodingForTypeImpl(PT->getPointeeType(), S, 
+                               false, ExpandPointedToStructures, ERType);
   } else if (const ArrayType *AT =
                // Ignore type qualifiers etc.
                dyn_cast<ArrayType>(T->getCanonicalTypeInternal())) {
@@ -1667,17 +1680,13 @@ void ASTContext::getObjCEncodingForType(QualType T, std::string& S,
     else
       assert(0 && "Unhandled array type!");
     
-    getObjCEncodingForType(AT->getElementType(), S, ERType);
+    getObjCEncodingForTypeImpl(AT->getElementType(), S, 
+                               false, ExpandStructures, ERType);
     S += ']';
   } else if (T->getAsFunctionType()) {
     S += '?';
   } else if (const RecordType *RTy = T->getAsRecordType()) {
-    RecordDecl *RDecl= RTy->getDecl();
-    // This mimics the behavior in gcc's encode_aggregate_within().
-    // The idea is to only inline structure definitions for top level pointers
-    // to structures and embedded structures.
-    bool inlining = (S.size() == 1 && S[0] == '^' ||
-                     S.size() > 1 && S[S.size()-1] != '^');
+    RecordDecl *RDecl = RTy->getDecl();
     S += '{';
     // Anonymous structures print as '?'
     if (const IdentifierInfo *II = RDecl->getIdentifier()) {
@@ -1691,12 +1700,12 @@ void ASTContext::getObjCEncodingForType(QualType T, std::string& S,
         found = true;
         break;
       }
-    if (!found && inlining) {
+    if (!found && ExpandStructures) {
       ERType.push_back(RTy);
       S += '=';
       for (int i = 0; i < RDecl->getNumMembers(); i++) {
         FieldDecl *field = RDecl->getMember(i);
-        getObjCEncodingForType(field->getType(), S, ERType);
+        getObjCEncodingForTypeImpl(field->getType(), S, false, true, ERType);
       }
       assert(ERType.back() == RTy && "Record Type stack mismatch.");
       ERType.pop_back();

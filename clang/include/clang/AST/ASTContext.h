@@ -473,6 +473,13 @@ private:
   ///  struct/union/class.  This will eventually be used by enums as well.
   void setTagDefinition(TagDecl* R);
   friend class RecordDecl;
+
+  // Return the ObjC type encoding for a given type.
+  void getObjCEncodingForTypeImpl(QualType t, std::string &S, 
+                                  bool ExpandPointedToStructures,
+                                  bool ExpandStructures,
+                              llvm::SmallVector<const RecordType*,8> &RT) const;
+  
 };
   
 }  // end namespace clang
