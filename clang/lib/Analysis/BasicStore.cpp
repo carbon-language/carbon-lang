@@ -48,6 +48,7 @@ public:
   }
 
   virtual RVal getLValue(const GRState* St, const Expr* Ex);
+  virtual RVal getLValue(const GRState* St, const ObjCIvarDecl* D, RVal Base);
   
   virtual Store
   RemoveDeadBindings(Store store, Stmt* Loc, const LiveVariables& Live,
@@ -154,6 +155,11 @@ RVal BasicStoreManager::GetRVal(Store St, LVal LV, QualType T) {
   return UnknownVal();
 }
 
+RVal BasicStoreManager::getLValue(const GRState* St, const ObjCIvarDecl* D,
+                                  RVal Base) {
+  return UnknownVal();  
+}
+  
 Store BasicStoreManager::SetRVal(Store store, LVal LV, RVal V) {    
   switch (LV.getSubKind()) {      
     case lval::MemRegionKind: {

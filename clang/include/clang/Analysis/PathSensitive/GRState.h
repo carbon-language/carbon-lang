@@ -346,10 +346,16 @@ public:
   }
 
   // Get the lvalue of expression.
+  // FIXME: Remove this method, and implement specialized versions for
+  //  specific Decls.
   RVal GetLValue(const GRState* St, const Expr* Ex) {
     // Forward to store manager. The lvalue of an expression is determined by
     // the store manager.
     return StoreMgr->getLValue(St, Ex);
+  }
+  
+  RVal GetLValue(const GRState* St, ObjCIvarDecl* D, RVal Base) {
+    return StoreMgr->getLValue(St, D, Base);
   }
 
   // Methods that query & manipulate the Environment.

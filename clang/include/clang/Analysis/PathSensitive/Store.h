@@ -30,6 +30,7 @@ class GRStateManager;
 class LiveVariables;
 class Stmt;
 class Expr;
+class ObjCIvarDecl;
 class MemRegion;
 class MemRegionManager;
 
@@ -47,7 +48,12 @@ public:
   virtual LVal getLVal(const VarDecl* VD) = 0;  
 
   // Get the lvalue of an expression.
+  // FIXME: Remove this method, and implement specialized versions for
+  //  specific Decls.
   virtual RVal getLValue(const GRState* St, const Expr* Ex) = 0;
+  
+  virtual RVal getLValue(const GRState* St, const ObjCIvarDecl* D, RVal Base)=0;
+  
 
   virtual Store
   RemoveDeadBindings(Store store, Stmt* Loc, const LiveVariables& Live,

@@ -441,6 +441,8 @@ protected:
   }
 
   // Get the lvalue of an expression.
+  // FIXME: Remove this method, and used specialized versions of GetLValue
+  // in GRStateManager.
   RVal GetLValue(const GRState* St, const Expr* Ex) {
     return StateMgr.GetLValue(St, Ex);
   }
@@ -520,6 +522,10 @@ protected:
   
   /// VisitMemberExpr - Transfer function for member expressions.
   void VisitMemberExpr(MemberExpr* M, NodeTy* Pred, NodeSet& Dst,bool asLValue);
+  
+  /// VisitObjCIvarRefExpr - Transfer function logic for ObjCIvarRefExprs.
+  void VisitObjCIvarRefExpr(ObjCIvarRefExpr* DR, NodeTy* Pred, NodeSet& Dst,
+                            bool asLValue); 
   
   /// VisitObjCMessageExpr - Transfer function for ObjC message expressions.
   void VisitObjCMessageExpr(ObjCMessageExpr* ME, NodeTy* Pred, NodeSet& Dst);

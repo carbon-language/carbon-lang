@@ -350,10 +350,13 @@ void GRExprEngine::Visit(Stmt* S, NodeTy* Pred, NodeSet& Dst) {
       break;
     }
       
-    case Stmt::MemberExprClass: {
+    case Stmt::MemberExprClass:
       VisitMemberExpr(cast<MemberExpr>(S), Pred, Dst, false);
       break;
-    }
+      
+    case Stmt::ObjCIvarRefExprClass:
+      VisitObjCIvarRefExpr(cast<ObjCIvarRefExpr>(S), Pred, Dst, false);
+      break;
       
     case Stmt::ObjCMessageExprClass: {
       VisitObjCMessageExpr(cast<ObjCMessageExpr>(S), Pred, Dst);
@@ -415,6 +418,10 @@ void GRExprEngine::VisitLValue(Expr* Ex, NodeTy* Pred, NodeSet& Dst) {
       
     case Stmt::DeclRefExprClass:
       VisitDeclRefExpr(cast<DeclRefExpr>(Ex), Pred, Dst, true);
+      return;
+      
+    case Stmt::ObjCIvarRefExprClass:
+      VisitObjCIvarRefExpr(cast<ObjCIvarRefExpr>(Ex), Pred, Dst, true);
       return;
       
     case Stmt::UnaryOperatorClass:
@@ -1219,6 +1226,30 @@ void GRExprEngine::VisitCall(CallExpr* CE, NodeTy* Pred,
     if (!Builder->BuildSinks && Dst.size() == size &&
         !Builder->HasGeneratedNode)
       MakeNode(Dst, CE, *DI, St);
+  }
+}
+
+//===----------------------------------------------------------------------===//
+// Transfer function: Objective-C ivar references.
+//===----------------------------------------------------------------------===//
+
+void GRExprEngine::VisitObjCIvarRefExpr(ObjCIvarRefExpr* Ex,
+                                            NodeTy* Pred, NodeSet& Dst,
+                                            bool asLValue) {
+  
+  Expr* Base = cast<Expr>(Ex->getBase());
+  NodeSet Tmp;
+  Visit(Base, Pred, Tmp);
+  
+  for (NodeSet::iterator I=Tmp.begin(), E=Tmp.end(); I!=E; ++I) {
+    const GRState* St = GetState(*I);
+    RVal BaseVal = GetRVal(St, Base);
+    RVal location = StateMgr.GetLValue(St, Ex->getDecl(), BaseVal);
+    
+    if (asLValue)
+      MakeNode(Dst, Ex, *I, SetRVal(St, Ex, location));
+    else
+      EvalLoad(Dst, Ex, *I, St, location);
   }
 }
 
