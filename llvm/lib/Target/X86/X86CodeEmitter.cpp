@@ -84,6 +84,7 @@ namespace {
                                intptr_t PCAdj = 0);
 
     void emitRegModRMByte(unsigned ModRMReg, unsigned RegOpcodeField);
+    void emitRegModRMByte(unsigned RegOpcodeField);
     void emitSIBByte(unsigned SS, unsigned Index, unsigned Base);
     void emitConstant(uint64_t Val, unsigned Size);
 
@@ -229,6 +230,10 @@ inline static unsigned char ModRMByte(unsigned Mod, unsigned RegOpcode,
 
 void Emitter::emitRegModRMByte(unsigned ModRMReg, unsigned RegOpcodeFld){
   MCE.emitByte(ModRMByte(3, RegOpcodeFld, getX86RegNum(ModRMReg)));
+}
+
+void Emitter::emitRegModRMByte(unsigned RegOpcodeFld) {
+  MCE.emitByte(ModRMByte(3, RegOpcodeFld, 0));
 }
 
 void Emitter::emitSIBByte(unsigned SS, unsigned Index, unsigned Base) {
@@ -631,10 +636,16 @@ void Emitter::emitInstruction(const MachineInstr &MI,
   case X86II::MRM0r: case X86II::MRM1r:
   case X86II::MRM2r: case X86II::MRM3r:
   case X86II::MRM4r: case X86II::MRM5r:
-  case X86II::MRM6r: case X86II::MRM7r:
+  case X86II::MRM6r: case X86II::MRM7r: {
     MCE.emitByte(BaseOpcode);
-    emitRegModRMByte(MI.getOperand(CurOp++).getReg(),
-                     (Desc->TSFlags & X86II::FormMask)-X86II::MRM0r);
+
+    // Special handling of lfence and mfence. 
+    if (Desc->getOpcode() == X86::LFENCE ||
+        Desc->getOpcode() == X86::MFENCE)
+      emitRegModRMByte((Desc->TSFlags & X86II::FormMask)-X86II::MRM0r);
+    else
+      emitRegModRMByte(MI.getOperand(CurOp++).getReg(),
+                       (Desc->TSFlags & X86II::FormMask)-X86II::MRM0r);
 
     if (CurOp != NumOps) {
       const MachineOperand &MO1 = MI.getOperand(CurOp++);
@@ -660,6 +671,7 @@ void Emitter::emitInstruction(const MachineInstr &MI,
       }
     }
     break;
+  }
 
   case X86II::MRM0m: case X86II::MRM1m:
   case X86II::MRM2m: case X86II::MRM3m:

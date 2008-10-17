@@ -2239,9 +2239,9 @@ def CLFLUSH : I<0xAE, MRM7m, (outs), (ins i8mem:$src),
               TB, Requires<[HasSSE2]>;
 
 // Load, store, and memory fence
-def LFENCE : I<0xAE, MRM5m, (outs), (ins),
+def LFENCE : I<0xAE, MRM5r, (outs), (ins),
                "lfence", [(int_x86_sse2_lfence)]>, TB, Requires<[HasSSE2]>;
-def MFENCE : I<0xAE, MRM6m, (outs), (ins),
+def MFENCE : I<0xAE, MRM6r, (outs), (ins),
                "mfence", [(int_x86_sse2_mfence)]>, TB, Requires<[HasSSE2]>;
 
 //TODO: custom lower this so as to never even generate the noop
