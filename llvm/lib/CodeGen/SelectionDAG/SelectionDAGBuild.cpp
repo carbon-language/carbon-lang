@@ -1051,32 +1051,26 @@ static ISD::CondCode getICmpCondCode(ICmpInst::Predicate Pred) {
   }
 }
 
-/// FindMergedConditions - If Cond is an expression like 
-void SelectionDAGLowering::FindMergedConditions(Value *Cond,
-                                                MachineBasicBlock *TBB,
-                                                MachineBasicBlock *FBB,
-                                                MachineBasicBlock *CurBB,
-                                                unsigned Opc) {
-  // If this node is not part of the or/and tree, emit it as a branch.
-  Instruction *BOp = dyn_cast<Instruction>(Cond);
+/// EmitBranchForMergedCondition - Helper method for FindMergedConditions.
+/// This function emits a branch and is used at the leaves of an OR or an
+/// AND operator tree.
+///
+void
+SelectionDAGLowering::EmitBranchForMergedCondition(Value *Cond,
+                                                   MachineBasicBlock *TBB,
+                                                   MachineBasicBlock *FBB,
+                                                   MachineBasicBlock *CurBB) {
+  const BasicBlock *BB = CurBB->getBasicBlock();
 
-  if (!BOp || !(isa<BinaryOperator>(BOp) || isa<CmpInst>(BOp)) || 
-      (unsigned)BOp->getOpcode() != Opc || !BOp->hasOneUse() ||
-      BOp->getParent() != CurBB->getBasicBlock() ||
-      !InBlock(BOp->getOperand(0), CurBB->getBasicBlock()) ||
-      !InBlock(BOp->getOperand(1), CurBB->getBasicBlock())) {
-    const BasicBlock *BB = CurBB->getBasicBlock();
-    
-    // If the leaf of the tree is a comparison, merge the condition into 
-    // the caseblock.
-    if (isa<CmpInst>(Cond) &&
-        // The operands of the cmp have to be in this block.  We don't know
-        // how to export them from some other block.  If this is the first block
-        // of the sequence, no exporting is needed.
-        (CurBB == CurMBB ||
-         (isExportableFromCurrentBlock(BOp->getOperand(0), BB) &&
-          isExportableFromCurrentBlock(BOp->getOperand(1), BB)))) {
-      BOp = cast<Instruction>(Cond);
+  // If the leaf of the tree is a comparison, merge the condition into
+  // the caseblock.
+  if (CmpInst *BOp = dyn_cast<CmpInst>(Cond)) {
+    // The operands of the cmp have to be in this block.  We don't know
+    // how to export them from some other block.  If this is the first block
+    // of the sequence, no exporting is needed.
+    if (CurBB == CurMBB ||
+        (isExportableFromCurrentBlock(BOp->getOperand(0), BB) &&
+         isExportableFromCurrentBlock(BOp->getOperand(1), BB))) {
       ISD::CondCode Condition;
       if (ICmpInst *IC = dyn_cast<ICmpInst>(Cond)) {
         Condition = getICmpCondCode(IC->getPredicate());
@@ -1086,20 +1080,36 @@ void SelectionDAGLowering::FindMergedConditions(Value *Cond,
         Condition = ISD::SETEQ; // silence warning.
         assert(0 && "Unknown compare instruction");
       }
-      
-      CaseBlock CB(Condition, BOp->getOperand(0), 
+
+      CaseBlock CB(Condition, BOp->getOperand(0),
                    BOp->getOperand(1), NULL, TBB, FBB, CurBB);
       SwitchCases.push_back(CB);
       return;
     }
-    
-    // Create a CaseBlock record representing this branch.
-    CaseBlock CB(ISD::SETEQ, Cond, ConstantInt::getTrue(),
-                 NULL, TBB, FBB, CurBB);
-    SwitchCases.push_back(CB);
+  }
+
+  // Create a CaseBlock record representing this branch.
+  CaseBlock CB(ISD::SETEQ, Cond, ConstantInt::getTrue(),
+               NULL, TBB, FBB, CurBB);
+  SwitchCases.push_back(CB);
+}
+
+/// FindMergedConditions - If Cond is an expression like 
+void SelectionDAGLowering::FindMergedConditions(Value *Cond,
+                                                MachineBasicBlock *TBB,
+                                                MachineBasicBlock *FBB,
+                                                MachineBasicBlock *CurBB,
+                                                unsigned Opc) {
+  // If this node is not part of the or/and tree, emit it as a branch.
+  Instruction *BOp = dyn_cast<Instruction>(Cond);
+  if (!BOp || !(isa<BinaryOperator>(BOp) || isa<CmpInst>(BOp)) || 
+      (unsigned)BOp->getOpcode() != Opc || !BOp->hasOneUse() ||
+      BOp->getParent() != CurBB->getBasicBlock() ||
+      !InBlock(BOp->getOperand(0), CurBB->getBasicBlock()) ||
+      !InBlock(BOp->getOperand(1), CurBB->getBasicBlock())) {
+    EmitBranchForMergedCondition(Cond, TBB, FBB, CurBB);
     return;
   }
-  
   
   //  Create TmpBB after CurBB.
   MachineFunction::iterator BBI = CurBB;
