@@ -1679,7 +1679,12 @@ void ASTContext::getObjCEncodingForType(QualType T, std::string& S,
     bool inlining = (S.size() == 1 && S[0] == '^' ||
                      S.size() > 1 && S[S.size()-1] != '^');
     S += '{';
-    S += RDecl->getName();
+    // Anonymous structures print as '?'
+    if (const IdentifierInfo *II = RDecl->getIdentifier()) {
+      S += II->getName();
+    } else {
+      S += '?';
+    }
     bool found = false;
     for (unsigned i = 0, e = ERType.size(); i != e; ++i)
       if (ERType[i] == RTy) {
