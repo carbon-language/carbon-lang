@@ -282,11 +282,6 @@ RVal GRSimpleVals::EvalEQ(GRExprEngine& Eng, LVal L, LVal R) {
       return UnknownVal();      
     }
       
-      // FIXME: Different offsets can map to the same memory cell.
-    case lval::ArrayOffsetKind:
-    case lval::FieldOffsetKind:
-      // Fall-through.
-      
     case lval::MemRegionKind:
     case lval::FuncValKind:
     case lval::GotoLabelKind:
@@ -345,11 +340,6 @@ RVal GRSimpleVals::EvalNE(GRExprEngine& Eng, LVal L, LVal R) {
       
       break;
     }
-      
-      // FIXME: Different offsets can map to the same memory cell.
-    case lval::ArrayOffsetKind:
-    case lval::FieldOffsetKind:
-      // Fall-through.
       
     case lval::MemRegionKind:
     case lval::FuncValKind:

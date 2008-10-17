@@ -817,7 +817,8 @@ void GRExprEngine::VisitDeclRefExpr(DeclRefExpr* Ex, NodeTy* Pred, NodeSet& Dst,
       return;
     }
 
-    RVal V = GetLValue(St, Ex);
+    RVal V = StateMgr.GetLValue(St, VD);
+    
     if (asLValue)
       MakeNode(Dst, Ex, Pred, SetRVal(St, Ex, V));
     else
@@ -850,22 +851,16 @@ void GRExprEngine::VisitArraySubscriptExpr(ArraySubscriptExpr* A, NodeTy* Pred,
   
   Expr* Base = A->getBase()->IgnoreParens();
   Expr* Idx  = A->getIdx()->IgnoreParens();
-  
   NodeSet Tmp;
-
-  // Get Base's rvalue, which should be an LocVal.
-  Visit(Base, Pred, Tmp);
+  Visit(Base, Pred, Tmp);   // Get Base's rvalue, which should be an LocVal.
   
-  for (NodeSet::iterator I1=Tmp.begin(), E1=Tmp.end(); I1!=E1; ++I1) {
-    
-    // Evaluate the index.
+  for (NodeSet::iterator I1=Tmp.begin(), E1=Tmp.end(); I1!=E1; ++I1) {    
     NodeSet Tmp2;
-    Visit(Idx, *I1, Tmp2);
+    Visit(Idx, *I1, Tmp2);     // Evaluate the index.
       
     for (NodeSet::iterator I2=Tmp2.begin(), E2=Tmp2.end(); I2!=E2; ++I2) {
-
       const GRState* St = GetState(*I2);
-      RVal V = GetLValue(St, A);
+      RVal V = StateMgr.GetLValue(St, GetRVal(St, Base), GetRVal(St, Idx));
 
       if (asLValue)
         MakeNode(Dst, A, *I2, SetRVal(St, A, V));
@@ -880,15 +875,16 @@ void GRExprEngine::VisitMemberExpr(MemberExpr* M, NodeTy* Pred,
                                    NodeSet& Dst, bool asLValue) {
   
   Expr* Base = M->getBase()->IgnoreParens();
-
   NodeSet Tmp;
-
-  // Get Base expr's rvalue.
   Visit(Base, Pred, Tmp);
 
   for (NodeSet::iterator I = Tmp.begin(), E = Tmp.end(); I != E; ++I) {
     const GRState* St = GetState(*I);
-    RVal L = GetLValue(St, M);
+    // FIXME: Should we insert some assumption logic in here to determine
+    // if "Base" is a valid piece of memory?  Before we put this assumption
+    // later when using FieldOffset lvals (which we no longer have).    
+    RVal L = StateMgr.GetLValue(St, M->getMemberDecl(), GetRVal(St, Base));
+
     if (asLValue)
       MakeNode(Dst, M, *I, SetRVal(St, M, L));
     else

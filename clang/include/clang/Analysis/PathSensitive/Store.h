@@ -45,14 +45,16 @@ public:
   virtual Store Remove(Store St, LVal LV) = 0;
   virtual Store getInitialStore() = 0;
   virtual MemRegionManager& getRegionManager() = 0;
-  virtual LVal getLVal(const VarDecl* VD) = 0;  
 
-  // Get the lvalue of an expression.
-  // FIXME: Remove this method, and implement specialized versions for
-  //  specific Decls.
-  virtual RVal getLValue(const GRState* St, const Expr* Ex) = 0;
+  virtual RVal getLValueVar(const GRState* St, const VarDecl* VD) = 0;  
   
-  virtual RVal getLValue(const GRState* St, const ObjCIvarDecl* D, RVal Base)=0;
+  virtual RVal getLValueIvar(const GRState* St, const ObjCIvarDecl* D,
+                             RVal Base)=0;
+  
+  virtual RVal getLValueField(const GRState* St, const FieldDecl* D,
+                              RVal Base) = 0;
+  
+  virtual RVal getLValueElement(const GRState* St, RVal Base, RVal Offset) = 0;
   
 
   virtual Store

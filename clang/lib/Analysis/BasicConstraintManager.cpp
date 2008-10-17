@@ -136,14 +136,6 @@ const GRState* BasicConstraintManager::AssumeAux(const GRState* St, LVal Cond,
     isFeasible = Assumption;
     return St;
 
-  case lval::FieldOffsetKind:
-    return AssumeAux(St, cast<lval::FieldOffset>(Cond).getBase(),
-                     Assumption, isFeasible);
-
-  case lval::ArrayOffsetKind:
-    return AssumeAux(St, cast<lval::ArrayOffset>(Cond).getBase(),
-                     Assumption, isFeasible);
-
   case lval::ConcreteIntKind: {
     bool b = cast<lval::ConcreteInt>(Cond).getValue() != 0;
     isFeasible = b ? Assumption : !Assumption;

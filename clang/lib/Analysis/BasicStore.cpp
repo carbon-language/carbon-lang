@@ -46,9 +46,11 @@ public:
   virtual LVal getLVal(const VarDecl* VD) {
     return lval::MemRegionVal(MRMgr.getVarRegion(VD));
   }
-
-  virtual RVal getLValue(const GRState* St, const Expr* Ex);
-  virtual RVal getLValue(const GRState* St, const ObjCIvarDecl* D, RVal Base);
+  
+  RVal getLValueVar(const GRState* St, const VarDecl* VD);
+  RVal getLValueIvar(const GRState* St, const ObjCIvarDecl* D, RVal Base);  
+  RVal getLValueField(const GRState* St, const FieldDecl* D, RVal Base);  
+  RVal getLValueElement(const GRState* St, RVal Base, RVal Offset);
   
   virtual Store
   RemoveDeadBindings(Store store, Stmt* Loc, const LiveVariables& Live,
@@ -76,34 +78,26 @@ public:
 StoreManager* clang::CreateBasicStoreManager(GRStateManager& StMgr) {
   return new BasicStoreManager(StMgr);
 }
+RVal BasicStoreManager::getLValueVar(const GRState* St, const VarDecl* VD) {
+  QualType T = VD->getType();
+  assert(!T->isArrayType() && "Array and struct variable have no lvalue.");
+  return lval::MemRegionVal(MRMgr.getVarRegion(VD));
+}
+  
+RVal BasicStoreManager::getLValueIvar(const GRState* St, const ObjCIvarDecl* D,
+                                      RVal Base) {
+  return UnknownVal();
+}
+  
+  
+RVal BasicStoreManager::getLValueField(const GRState* St, const FieldDecl* D,
+                                       RVal Base) {
+  return UnknownVal();
+}
 
-// FIXME: replace ArrayOffset and FieldOffset with some region value.
-RVal BasicStoreManager::getLValue(const GRState* St, const Expr* Ex) {
-  if (const DeclRefExpr* DRE = dyn_cast<DeclRefExpr>(Ex)) {
-    const VarDecl* VD = cast<VarDecl>(DRE->getDecl());
-    QualType T = VD->getType();
-
-    // Array and struct variable have no lvalue.
-    assert(!T->isArrayType());
-
-    return lval::MemRegionVal(MRMgr.getVarRegion(VD));
-
-  } else if (const ArraySubscriptExpr* A = dyn_cast<ArraySubscriptExpr>(Ex)) {
-    const Expr* Base = A->getBase()->IgnoreParens();
-    const Expr* Idx  = A->getIdx()->IgnoreParens();
-    RVal BaseV = StateMgr.GetRVal(St, Base);
-    RVal IdxV = StateMgr.GetRVal(St, Idx);
-    return lval::ArrayOffset::Make(StateMgr.getBasicVals(), BaseV, IdxV);
-
-  } else if (const MemberExpr* M = dyn_cast<MemberExpr>(Ex)) {
-    Expr* Base = M->getBase()->IgnoreParens();
-    RVal BaseV = StateMgr.GetRVal(St, Base);
-    return lval::FieldOffset::Make(StateMgr.getBasicVals(), BaseV, 
-                                   M->getMemberDecl());
-  } else {
-    Ex->dump();
-    assert(0);
-  }
+RVal BasicStoreManager::getLValueElement(const GRState* St, RVal Base,
+                                         RVal Offset) {
+  return UnknownVal();
 }
 
 RVal BasicStoreManager::GetRVal(Store St, LVal LV, QualType T) {
@@ -134,12 +128,7 @@ RVal BasicStoreManager::GetRVal(Store St, LVal LV, QualType T) {
       // Some clients may call GetRVal with such an option simply because
       // they are doing a quick scan through their LVals (potentially to
       // invalidate their bindings).  Just return Undefined.
-      return UndefinedVal();
-      
-    case lval::ArrayOffsetKind:
-    case lval::FieldOffsetKind:
-      return UnknownVal();
-      
+      return UndefinedVal();            
     case lval::FuncValKind:
       return LV;
       
@@ -153,11 +142,6 @@ RVal BasicStoreManager::GetRVal(Store St, LVal LV, QualType T) {
   }
   
   return UnknownVal();
-}
-
-RVal BasicStoreManager::getLValue(const GRState* St, const ObjCIvarDecl* D,
-                                  RVal Base) {
-  return UnknownVal();  
 }
   
 Store BasicStoreManager::SetRVal(Store store, LVal LV, RVal V) {    

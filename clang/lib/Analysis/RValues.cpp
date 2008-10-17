@@ -43,10 +43,9 @@ RVal::symbol_iterator RVal::symbol_begin() const {
     const nonlval::LValAsInteger& V = cast<nonlval::LValAsInteger>(*this);
     return  V.getPersistentLVal().symbol_begin();
   }
-  else if (isa<lval::FieldOffset>(this)) {
-    const lval::FieldOffset& V = cast<lval::FieldOffset>(*this);
-    return V.getPersistentBase().symbol_begin();
-  }
+  
+  // FIXME: We need to iterate over the symbols of regions.
+
   return NULL;
 }
 
@@ -267,37 +266,6 @@ LVal LVal::MakeVal(StringLiteral* S) {
 }
 
 //===----------------------------------------------------------------------===//
-// Utility methods for constructing RVals (both NonLVals and LVals).
-//===----------------------------------------------------------------------===//
-
-// Remove this method?
-RVal RVal::MakeVal(GRStateManager& SMgr, DeclRefExpr* E) {
-  
-  ValueDecl* D = cast<DeclRefExpr>(E)->getDecl();
-  
-  if (VarDecl* VD = dyn_cast<VarDecl>(D)) {
-    return SMgr.getLVal(VD);
-  }
-  else if (EnumConstantDecl* ED = dyn_cast<EnumConstantDecl>(D)) {
-    
-    // FIXME: Do we need to cache a copy of this enum, since it
-    // already has persistent storage?  We do this because we
-    // are comparing states using pointer equality.  Perhaps there is
-    // a better way, since APInts are fairly lightweight.
-    BasicValueFactory& BasicVals = SMgr.getBasicVals();
-    return nonlval::ConcreteInt(BasicVals.getValue(ED->getInitVal()));          
-  }
-  else if (FunctionDecl* FD = dyn_cast<FunctionDecl>(D)) {
-    return lval::FuncVal(FD);
-  }
-  
-  assert (false &&
-          "ValueDecl support for this ValueDecl not implemented.");
-  
-  return UnknownVal();
-}
-
-//===----------------------------------------------------------------------===//
 // Pretty-Printing.
 //===----------------------------------------------------------------------===//
 
@@ -423,22 +391,6 @@ void LVal::print(std::ostream& Out) const {
           << cast<lval::StringLiteralVal>(this)->getLiteral()->getStrData()
           << "\"";
       break;
-      
-    case lval::FieldOffsetKind: {
-      const lval::FieldOffset& C = *cast<lval::FieldOffset>(this);
-      C.getBase().print(Out);
-      Out << "." << C.getFieldDecl()->getName() << " (field LVal)";
-      break;
-    }
-      
-    case lval::ArrayOffsetKind: {
-      const lval::ArrayOffset& C = *cast<lval::ArrayOffset>(this);
-      C.getBase().print(Out);
-      Out << "[";
-      C.getOffset().print(Out);
-      Out << "] (lval array entry)";
-      break;
-    }
       
     default:
       assert (false && "Pretty-printing not implemented for this LVal.");

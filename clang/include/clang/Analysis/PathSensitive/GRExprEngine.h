@@ -409,11 +409,7 @@ public:
   const GRState* SetRVal(const GRState* St, const Expr* Ex, RVal V) {
     return SetRVal(St, const_cast<Expr*>(Ex), V);
   }
-  
-  LVal getLVal(VarDecl* V) {
-    return getStateManager().getLVal(V);
-  }    
-  
+    
 protected:
  
   const GRState* SetBlkExprRVal(const GRState* St, Expr* Ex, RVal V) {
@@ -438,13 +434,6 @@ protected:
     
   RVal GetRVal(const GRState* St, LVal LV, QualType T = QualType()) {    
     return StateMgr.GetRVal(St, LV, T);
-  }
-
-  // Get the lvalue of an expression.
-  // FIXME: Remove this method, and used specialized versions of GetLValue
-  // in GRStateManager.
-  RVal GetLValue(const GRState* St, const Expr* Ex) {
-    return StateMgr.GetLValue(St, Ex);
   }
   
   inline NonLVal MakeConstantVal(uint64_t X, Expr* Ex) {

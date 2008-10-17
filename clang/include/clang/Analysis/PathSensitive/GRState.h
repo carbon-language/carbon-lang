@@ -341,22 +341,25 @@ public:
     return getRegionManager().getVarRegion(D);
   }
   
-  LVal getLVal(const VarDecl* D) {
-    return StoreMgr->getLVal(D);
-  }
-
-  // Get the lvalue of expression.
-  // FIXME: Remove this method, and implement specialized versions for
-  //  specific Decls.
-  RVal GetLValue(const GRState* St, const Expr* Ex) {
-    // Forward to store manager. The lvalue of an expression is determined by
-    // the store manager.
-    return StoreMgr->getLValue(St, Ex);
+  // Get the lvalue for a variable reference.
+  RVal GetLValue(const GRState* St, const VarDecl* D) {
+    return StoreMgr->getLValueVar(St, D);
   }
   
-  RVal GetLValue(const GRState* St, ObjCIvarDecl* D, RVal Base) {
-    return StoreMgr->getLValue(St, D, Base);
+  // Get the lvalue for an ivar reference.
+  RVal GetLValue(const GRState* St, const ObjCIvarDecl* D, RVal Base) {
+    return StoreMgr->getLValueIvar(St, D, Base);
   }
+  
+  // Get the lvalue for a field reference.
+  RVal GetLValue(const GRState* St, const FieldDecl* D, RVal Base) {
+    return StoreMgr->getLValueField(St, D, Base);
+  }
+  
+  // Get the lvalue for an array index.
+  RVal GetLValue(const GRState* St, RVal Base, RVal Idx) {
+    return StoreMgr->getLValueElement(St, Base, Idx);
+  }  
 
   // Methods that query & manipulate the Environment.
   
@@ -585,6 +588,11 @@ public:
   template<typename T>
   GRStateRef remove(typename GRStateTrait<T>::key_type K) {
     return GRStateRef(Mgr->remove<T>(St, K, get_context<T>()), *Mgr);
+  }
+  
+  // Lvalue methods.
+  RVal GetLValue(const VarDecl* VD) {
+    return Mgr->GetLValue(St, VD);
   }
   
   // Pretty-printing.
