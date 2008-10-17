@@ -531,21 +531,12 @@ LValue CodeGenFunction::EmitStringLiteralLValue(const StringLiteral *E) {
   return LValue::MakeAddr(CGM.GetAddrOfConstantStringFromLiteral(E), 0);
 }
 
-LValue CodeGenFunction::EmitPredefinedLValue(const PredefinedExpr *E) {
-  std::string FunctionName;
-  if(const FunctionDecl *FD = dyn_cast<FunctionDecl>(CurFuncDecl)) {
-    FunctionName = FD->getName();
-  } else if (isa<ObjCMethodDecl>(CurFuncDecl)) {
-    // Just get the mangled name.
-    FunctionName  = CurFn->getName();
-  } else {
-    return EmitUnsupportedLValue(E, "predefined expression");
-  }
+LValue CodeGenFunction::EmitPredefinedFunctionName(unsigned Type) {
   std::string GlobalVarName;
-  
-  switch (E->getIdentType()) {
+
+  switch (Type) {
     default:
-      return EmitUnsupportedLValue(E, "predefined expression");
+      assert(0 && "Invalid type");
     case PredefinedExpr::Func:
       GlobalVarName = "__func__.";
       break;
@@ -557,17 +548,30 @@ LValue CodeGenFunction::EmitPredefinedLValue(const PredefinedExpr *E) {
       GlobalVarName = "__PRETTY_FUNCTION__.";
       break;
   }
-  
+
+  std::string FunctionName;
+  if(const FunctionDecl *FD = dyn_cast<FunctionDecl>(CurFuncDecl)) {
+    FunctionName = FD->getName();
+  } else {
+    // Just get the mangled name.
+    FunctionName = CurFn->getName();
+  }
+
   GlobalVarName += FunctionName;
-  
-  // FIXME: Can cache/reuse these within the module.
-  llvm::Constant *C = llvm::ConstantArray::get(FunctionName);
-  
-  // Create a global variable for this.
-  C = new llvm::GlobalVariable(C->getType(), true, 
-                               llvm::GlobalValue::InternalLinkage,
-                               C, GlobalVarName, CurFn->getParent());
-  return LValue::MakeAddr(C,0);
+  llvm::Constant *C = 
+    CGM.GetAddrOfConstantCString(FunctionName, GlobalVarName.c_str());
+  return LValue::MakeAddr(C, 0);
+}
+
+LValue CodeGenFunction::EmitPredefinedLValue(const PredefinedExpr *E) {  
+  switch (E->getIdentType()) {
+  default:
+    return EmitUnsupportedLValue(E, "predefined expression");
+  case PredefinedExpr::Func:
+  case PredefinedExpr::Function:
+  case PredefinedExpr::PrettyFunction:
+    return EmitPredefinedFunctionName(E->getIdentType());
+  }
 }
 
 LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {

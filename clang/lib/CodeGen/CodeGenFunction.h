@@ -375,6 +375,7 @@ public:
   
   LValue EmitDeclRefLValue(const DeclRefExpr *E);
   LValue EmitStringLiteralLValue(const StringLiteral *E);
+  LValue EmitPredefinedFunctionName(unsigned Type);
   LValue EmitPredefinedLValue(const PredefinedExpr *E);
   LValue EmitUnaryOpLValue(const UnaryOperator *E);
   LValue EmitArraySubscriptExpr(const ArraySubscriptExpr *E);
