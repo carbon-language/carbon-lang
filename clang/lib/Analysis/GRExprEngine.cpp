@@ -431,6 +431,21 @@ void GRExprEngine::VisitLValue(Expr* Ex, NodeTy* Pred, NodeSet& Dst) {
     case Stmt::MemberExprClass:
       VisitMemberExpr(cast<MemberExpr>(Ex), Pred, Dst, true);
       return;
+      
+    case Stmt::ObjCPropertyRefExprClass:
+      // FIXME: Property assignments are lvalues, but not really "locations".
+      //  e.g.:  self.x = something;
+      //  Here the "self.x" really can translate to a method call (setter) when
+      //  the assignment is made.  Moreover, the entire assignment expression
+      //  evaluate to whatever "something" is, not calling the "getter" for
+      //  the property (which would make sense since it can have side effects).
+      //  We'll probably treat this as a location, but not one that we can
+      //  take the address of.  Perhaps we need a new SVal class for cases
+      //  like thsis?
+      //  Note that we have a similar problem for bitfields, since they don't
+      //  have "locations" in the sense that we can take their address.
+      Dst.Add(Pred);
+      return;      
   }
 }
 
