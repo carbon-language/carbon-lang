@@ -19,4 +19,9 @@
 /* expected-warning {{value of #pragma pack(show) == 1}} */ #pragma pack(show)
 #pragma pack(pop, eek)
 /* expected-warning {{value of #pragma pack(show) == 2}} */ #pragma pack(show)
-/* expected-warning {{#pragma pack(pop, ...) failed: stack empty}} */ #pragma pack(pop)
+/* expected-warning {{pack(pop, ...) failed: stack empty}} */ #pragma pack(pop)
+
+#pragma pack(push)
+#pragma pack(pop, 16)
+/* expected-warning {{value of #pragma pack(show) == 16}} */ #pragma pack(show)
+
