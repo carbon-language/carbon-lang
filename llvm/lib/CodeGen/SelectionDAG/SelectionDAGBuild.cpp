@@ -4452,6 +4452,42 @@ struct VISIBILITY_HIDDEN SDISelAsmOperandInfo :
         MarkRegAndAliases(AssignedRegs.Regs[i], InputRegs, TRI);
     }
   }
+      
+  /// getCallOperandValMVT - Return the MVT of the Value* that this operand
+  /// corresponds to.  If there is no Value* for this operand, it returns
+  /// MVT::Other.
+  MVT getCallOperandValMVT(const TargetLowering &TLI,
+                           const TargetData *TD) const {
+    if (CallOperandVal == 0) return MVT::Other;
+    
+    if (isa<BasicBlock>(CallOperandVal))
+      return TLI.getPointerTy();
+    
+    const llvm::Type *OpTy = CallOperandVal->getType();
+    
+    // If this is an indirect operand, the operand is a pointer to the
+    // accessed type.
+    if (isIndirect)
+      OpTy = cast<PointerType>(OpTy)->getElementType();
+    
+    // If OpTy is not a single value, it may be a struct/union that we
+    // can tile with integers.
+    if (!OpTy->isSingleValueType() && OpTy->isSized()) {
+      unsigned BitSize = TD->getTypeSizeInBits(OpTy);
+      switch (BitSize) {
+      default: break;
+      case 1:
+      case 8:
+      case 16:
+      case 32:
+      case 64:
+        OpTy = IntegerType::get(BitSize);
+        break;
+      }
+    }
+    
+    return TLI.getValueType(OpTy, true);
+  }
   
 private:
   /// MarkRegAndAliases - Mark the specified register and all aliases in the
@@ -4707,34 +4743,13 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
     // If this is an input or an indirect output, process the call argument.
     // BasicBlocks are labels, currently appearing only in asm's.
     if (OpInfo.CallOperandVal) {
-      if (BasicBlock *BB = dyn_cast<BasicBlock>(OpInfo.CallOperandVal))
+      if (BasicBlock *BB = dyn_cast<BasicBlock>(OpInfo.CallOperandVal)) {
         OpInfo.CallOperand = DAG.getBasicBlock(FuncInfo.MBBMap[BB]);
-      else {
+      } else {
         OpInfo.CallOperand = getValue(OpInfo.CallOperandVal);
-        const Type *OpTy = OpInfo.CallOperandVal->getType();
-        // If this is an indirect operand, the operand is a pointer to the
-        // accessed type.
-        if (OpInfo.isIndirect)
-          OpTy = cast<PointerType>(OpTy)->getElementType();
-
-        // If OpTy is not a single value, it may be a struct/union that we
-        // can tile with integers.
-        if (!OpTy->isSingleValueType() && OpTy->isSized()) {
-          unsigned BitSize = TD->getTypeSizeInBits(OpTy);
-          switch (BitSize) {
-          default: break;
-          case 1:
-          case 8:
-          case 16:
-          case 32:
-          case 64:
-            OpTy = IntegerType::get(BitSize);
-            break;
-          }
-        }
-
-        OpVT = TLI.getValueType(OpTy, true);
       }
+      
+      OpVT = OpInfo.getCallOperandValMVT(TLI, TD);
     }
     
     OpInfo.ConstraintVT = OpVT;
