@@ -80,6 +80,7 @@ set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${LLVM_BINARY_DIR}/lib )
 # set(CMAKE_VERBOSE_MAKEFILE true)
 
 add_definitions( -D__STDC_LIMIT_MACROS )
+add_definitions( -D__STDC_CONSTANT_MACROS )
 
 if( LLVM_ON_UNIX )
   add_definitions( -DLLVM_ON_UNIX )

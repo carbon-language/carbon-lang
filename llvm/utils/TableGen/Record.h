@@ -565,11 +565,11 @@ public:
 /// IntInit - 7 - Represent an initalization by a literal integer value.
 ///
 class IntInit : public Init {
-  int Value;
+  int64_t Value;
 public:
-  explicit IntInit(int V) : Value(V) {}
+  explicit IntInit(int64_t V) : Value(V) {}
 
-  int getValue() const { return Value; }
+  int64_t getValue() const { return Value; }
 
   virtual Init *convertInitializerTo(RecTy *Ty) {
     return Ty->convertValue(this);
@@ -1082,7 +1082,7 @@ public:
   /// its value as a vector of integers, throwing an exception if the field does
   /// not exist or if the value is not the right type.
   ///
-  std::vector<int> getValueAsListOfInts(const std::string &FieldName) const;
+  std::vector<int64_t> getValueAsListOfInts(const std::string &FieldName) const;
   
   /// getValueAsDef - This method looks up the specified field and returns its
   /// value as a Record, throwing an exception if the field does not exist or if
@@ -1097,10 +1097,10 @@ public:
   bool getValueAsBit(const std::string &FieldName) const;
 
   /// getValueAsInt - This method looks up the specified field and returns its
-  /// value as an int, throwing an exception if the field does not exist or if
-  /// the value is not the right type.
+  /// value as an int64_t, throwing an exception if the field does not exist or
+  /// if the value is not the right type.
   ///
-  int getValueAsInt(const std::string &FieldName) const;
+  int64_t getValueAsInt(const std::string &FieldName) const;
 
   /// getValueAsDag - This method looks up the specified field and returns its
   /// value as an Dag, throwing an exception if the field does not exist or if

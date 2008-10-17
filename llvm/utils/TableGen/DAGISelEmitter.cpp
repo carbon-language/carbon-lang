@@ -734,7 +734,8 @@ public:
         emitCode("int64_t CN"+utostr(CTmp)+" = cast<ConstantSDNode>("+
                  RootName + ")->getSExtValue();");
         
-        emitCheck("CN" + utostr(CTmp) + " == " +itostr(II->getValue()));
+        emitCheck("CN" + utostr(CTmp) + " == "
+                  "INT64_C(" +itostr(II->getValue()) + ")");
       } else {
 #ifndef NDEBUG
         Child->dump();

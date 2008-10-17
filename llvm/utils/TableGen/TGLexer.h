@@ -62,7 +62,7 @@ class TGLexer {
   const char *TokStart;
   tgtok::TokKind CurCode;
   std::string CurStrVal;  // This is valid for ID, STRVAL, VARNAME, CODEFRAGMENT
-  int CurIntVal;          // This is valid for INTVAL.
+  int64_t CurIntVal;      // This is valid for INTVAL.
   
   /// IncludeRec / IncludeStack - This captures the current set of include
   /// directives we are nested within.
@@ -98,7 +98,7 @@ public:
            "This token doesn't have a string value");
     return CurStrVal;
   }
-  int getCurIntVal() const {
+  int64_t getCurIntVal() const {
     assert(CurCode == tgtok::IntVal && "This token isn't an integer");
     return CurIntVal;
   }

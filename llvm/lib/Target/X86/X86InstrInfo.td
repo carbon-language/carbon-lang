@@ -2911,6 +2911,17 @@ def : Pat<(i32 (and (nvloadi32 addr:$src), (i32 65535))),
 // Some peepholes
 //===----------------------------------------------------------------------===//
 
+// Odd encoding trick: -128 fits into an 8-bit immediate field while
+// +128 doesn't, so in this special case use a sub instead of an add.
+def : Pat<(add GR16:$src1, 128),
+          (SUB16ri8 GR16:$src1, -128)>;
+def : Pat<(store (add (loadi16 addr:$dst), 128), addr:$dst),
+          (SUB16mi8 addr:$dst, -128)>;
+def : Pat<(add GR32:$src1, 128),
+          (SUB32ri8 GR32:$src1, -128)>;
+def : Pat<(store (add (loadi32 addr:$dst), 128), addr:$dst),
+          (SUB32mi8 addr:$dst, -128)>;
+
 // r & (2^16-1) ==> movz
 def : Pat<(and GR32:$src1, 0xffff),
           (MOVZX32rr16 (i16 (EXTRACT_SUBREG GR32:$src1, x86_subreg_16bit)))>;

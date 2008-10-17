@@ -422,7 +422,7 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
   std::map<Record*, std::set<Record*>, LessRecord> RegisterSuperRegs;
   std::map<Record*, std::set<Record*>, LessRecord> RegisterAliases;
   std::map<Record*, std::vector<std::pair<int, Record*> > > SubRegVectors;
-  typedef std::map<Record*, std::vector<int>, LessRecord> DwarfRegNumsMapTy;
+  typedef std::map<Record*, std::vector<int64_t>, LessRecord> DwarfRegNumsMapTy;
   DwarfRegNumsMapTy DwarfRegNums;
   
   const std::vector<CodeGenRegister> &Regs = Target.getRegisters();
@@ -685,7 +685,7 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
   unsigned maxLength = 0;
   for (unsigned i = 0, e = Registers.size(); i != e; ++i) {
     Record *Reg = Registers[i].TheDef;
-    std::vector<int> RegNums = Reg->getValueAsListOfInts("DwarfNumbers");
+    std::vector<int64_t> RegNums = Reg->getValueAsListOfInts("DwarfNumbers");
     maxLength = std::max((size_t)maxLength, RegNums.size());
     if (DwarfRegNums.count(Reg))
       cerr << "Warning: DWARF numbers for register " << getQualifiedName(Reg)

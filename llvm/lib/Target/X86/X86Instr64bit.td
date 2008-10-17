@@ -61,13 +61,6 @@ def i64immSExt8  : PatLeaf<(i64 imm), [{
   return (int64_t)N->getZExtValue() == (int8_t)N->getZExtValue();
 }]>;
 
-def i64immFFFFFFFF  : PatLeaf<(i64 imm), [{
-  // i64immFFFFFFFF - True if this is a specific constant we can't write in
-  // tblgen files.
-  return N->getZExtValue() == 0x00000000FFFFFFFFULL;
-}]>;
-
-
 def sextloadi64i8  : PatFrag<(ops node:$ptr), (i64 (sextloadi8 node:$ptr))>;
 def sextloadi64i16 : PatFrag<(ops node:$ptr), (i64 (sextloadi16 node:$ptr))>;
 def sextloadi64i32 : PatFrag<(ops node:$ptr), (i64 (sextloadi32 node:$ptr))>;
@@ -1323,8 +1316,22 @@ def : Pat<(i32 (anyext GR8:$src)),
 // Some peepholes
 //===----------------------------------------------------------------------===//
 
+// Odd encoding trick: -128 fits into an 8-bit immediate field while
+// +128 doesn't, so in this special case use a sub instead of an add.
+def : Pat<(add GR64:$src1, 128),
+          (SUB64ri8 GR64:$src1, -128)>;
+def : Pat<(store (add (loadi64 addr:$dst), 128), addr:$dst),
+          (SUB64mi8 addr:$dst, -128)>;
+
+// The same trick applies for 32-bit immediate fields in 64-bit
+// instructions.
+def : Pat<(add GR64:$src1, 0x0000000080000000),
+          (SUB64ri32 GR64:$src1, 0xffffffff80000000)>;
+def : Pat<(store (add (loadi64 addr:$dst), 0x00000000800000000), addr:$dst),
+          (SUB64mi32 addr:$dst, 0xffffffff80000000)>;
+
 // r & (2^32-1) ==> movz
-def : Pat<(and GR64:$src, i64immFFFFFFFF),
+def : Pat<(and GR64:$src, 0x00000000FFFFFFFF),
           (MOVZX64rr32 (i32 (EXTRACT_SUBREG GR64:$src, x86_subreg_32bit)))>;
 // r & (2^16-1) ==> movz
 def : Pat<(and GR64:$src, 0xffff),

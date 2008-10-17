@@ -35,7 +35,7 @@ bool BitRecTy::baseClassOf(const BitsRecTy *RHS) const {
 }
 
 Init *BitRecTy::convertValue(IntInit *II) {
-  int Val = II->getValue();
+  int64_t Val = II->getValue();
   if (Val != 0 && Val != 1) return 0;  // Only accept 0 or 1 for a bit!
 
   return new BitInit(Val != 0);
@@ -116,7 +116,7 @@ Init *IntRecTy::convertValue(BitInit *BI) {
 }
 
 Init *IntRecTy::convertValue(BitsInit *BI) {
-  int Result = 0;
+  int64_t Result = 0;
   for (unsigned i = 0, e = BI->getNumBits(); i != e; ++i)
     if (BitInit *Bit = dynamic_cast<BitInit*>(BI->getBit(i))) {
       Result |= Bit->getValue() << i;
@@ -262,7 +262,7 @@ std::string BitsInit::getAsString() const {
 
 bool BitsInit::printInHex(std::ostream &OS) const {
   // First, attempt to convert the value into an integer value...
-  int Result = 0;
+  int64_t Result = 0;
   for (unsigned i = 0, e = getNumBits(); i != e; ++i)
     if (BitInit *Bit = dynamic_cast<BitInit*>(getBit(i))) {
       Result |= Bit->getValue() << i;
@@ -338,11 +338,11 @@ Init *IntInit::convertInitializerBitRange(const std::vector<unsigned> &Bits) {
   BitsInit *BI = new BitsInit(Bits.size());
 
   for (unsigned i = 0, e = Bits.size(); i != e; ++i) {
-    if (Bits[i] >= 32) {
+    if (Bits[i] >= 64) {
       delete BI;
       return 0;
     }
-    BI->setBit(i, new BitInit(Value & (1 << Bits[i])));
+    BI->setBit(i, new BitInit(Value & (INT64_C(1) << Bits[i])));
   }
   return BI;
 }
@@ -443,13 +443,13 @@ Init *BinOpInit::Fold() {
     IntInit *LHSi = dynamic_cast<IntInit*>(LHS);
     IntInit *RHSi = dynamic_cast<IntInit*>(RHS);
     if (LHSi && RHSi) {
-      int LHSv = LHSi->getValue(), RHSv = RHSi->getValue();
-      int Result;
+      int64_t LHSv = LHSi->getValue(), RHSv = RHSi->getValue();
+      int64_t Result;
       switch (getOpcode()) {
       default: assert(0 && "Bad opcode!");
       case SHL: Result = LHSv << RHSv; break;
       case SRA: Result = LHSv >> RHSv; break;
-      case SRL: Result = (unsigned)LHSv >> (unsigned)RHSv; break;
+      case SRL: Result = (uint64_t)LHSv >> (uint64_t)RHSv; break;
       }
       return new IntInit(Result);
     }
@@ -861,10 +861,10 @@ Record::getValueAsListOfDefs(const std::string &FieldName) const {
 }
 
 /// getValueAsInt - This method looks up the specified field and returns its
-/// value as an int, throwing an exception if the field does not exist or if
+/// value as an int64_t, throwing an exception if the field does not exist or if
 /// the value is not the right type.
 ///
-int Record::getValueAsInt(const std::string &FieldName) const {
+int64_t Record::getValueAsInt(const std::string &FieldName) const {
   const RecordVal *R = getValue(FieldName);
   if (R == 0 || R->getValue() == 0)
     throw "Record `" + getName() + "' does not have a field named `" +
@@ -880,10 +880,10 @@ int Record::getValueAsInt(const std::string &FieldName) const {
 /// its value as a vector of integers, throwing an exception if the field does
 /// not exist or if the value is not the right type.
 ///
-std::vector<int> 
+std::vector<int64_t> 
 Record::getValueAsListOfInts(const std::string &FieldName) const {
   ListInit *List = getValueAsListInit(FieldName);
-  std::vector<int> Ints;
+  std::vector<int64_t> Ints;
   for (unsigned i = 0; i < List->getSize(); i++) {
     if (IntInit *II = dynamic_cast<IntInit*>(List->getElement(i))) {
       Ints.push_back(II->getValue());

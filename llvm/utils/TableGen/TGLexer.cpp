@@ -20,6 +20,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <cerrno>
 using namespace llvm;
 
 TGLexer::TGLexer(MemoryBuffer *StartBuf) : CurLineNo(1), CurBuf(StartBuf) {
@@ -343,7 +344,18 @@ tgtok::TokKind TGLexer::LexNumber() {
       if (CurPtr == NumStart)
         return ReturnError(CurPtr-2, "Invalid hexadecimal number");
 
+      errno = 0;
       CurIntVal = strtoll(NumStart, 0, 16);
+      if (errno == EINVAL)
+        return ReturnError(CurPtr-2, "Invalid hexadecimal number");
+      if (errno == ERANGE) {
+        errno = 0;
+        CurIntVal = (int64_t)strtoull(NumStart, 0, 16);
+        if (errno == EINVAL)
+          return ReturnError(CurPtr-2, "Invalid hexadecimal number");
+        if (errno == ERANGE)
+          return ReturnError(CurPtr-2, "Hexadecimal number out of range");
+      }
       return tgtok::IntVal;
     } else if (CurPtr[0] == 'b') {
       ++CurPtr;
