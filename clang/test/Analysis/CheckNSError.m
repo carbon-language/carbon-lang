@@ -1,4 +1,5 @@
 // RUN: clang -checker-cfref -verify %s
+// XFAIL
 
 typedef signed char BOOL;
 typedef int NSInteger;

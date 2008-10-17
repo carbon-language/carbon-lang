@@ -1,4 +1,5 @@
 // RUN: clang -std=gnu99 -checker-simple -verify %s
+// XFAIL
 
 #include<stdint.h>
 #include <assert.h>
