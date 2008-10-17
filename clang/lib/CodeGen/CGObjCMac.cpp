@@ -41,8 +41,9 @@ class ObjCTypesHelper {
 private:
   CodeGen::CodeGenModule &CGM;  
   
-  llvm::Function *MessageSendFn, *MessageSendStretFn;
-  llvm::Function *MessageSendSuperFn, *MessageSendSuperStretFn;
+  llvm::Function *MessageSendFn, *MessageSendStretFn, *MessageSendFpretFn;
+  llvm::Function *MessageSendSuperFn, *MessageSendSuperStretFn, 
+    *MessageSendSuperFpretFn;
 
 public:
   const llvm::Type *ShortTy, *IntTy, *LongTy;
@@ -158,8 +159,19 @@ public:
 public:
   ObjCTypesHelper(CodeGen::CodeGenModule &cgm);
   ~ObjCTypesHelper();
-  
-  llvm::Constant *getMessageSendFn(bool IsSuper, bool isStret);
+
+
+  llvm::Function *getSendFn(bool IsSuper) {
+    return IsSuper ? MessageSendSuperFn : MessageSendFn;
+  }
+
+  llvm::Function *getSendStretFn(bool IsSuper) {
+    return IsSuper ? MessageSendSuperStretFn : MessageSendStretFn;
+  }
+
+  llvm::Function *getSendFpretFn(bool IsSuper) {
+    return IsSuper ? MessageSendSuperFpretFn : MessageSendFpretFn;
+  }
 };
 
 class CGObjCMac : public CodeGen::CGObjCRuntime {
@@ -534,8 +546,17 @@ CodeGen::RValue CGObjCMac::EmitMessageSend(CodeGen::CodeGenFunction &CGF,
   const llvm::FunctionType *FTy = 
     CGM.getTypes().GetFunctionType(CGCallInfo(ResultType, ActualArgs),
                                    false);
-  llvm::Constant *Fn = 
-    ObjCTypes.getMessageSendFn(IsSuper, CGM.ReturnTypeUsesSret(ResultType));
+
+  llvm::Constant *Fn;
+  if (CGM.ReturnTypeUsesSret(ResultType)) {
+    Fn = ObjCTypes.getSendStretFn(IsSuper);
+  } else if (ResultType->isFloatingType()) {
+    // FIXME: Sadly, this is wrong. This actually depends on the
+    // architecture. This happens to be right for x86-32 though.
+    Fn = ObjCTypes.getSendFpretFn(IsSuper);
+  } else {
+    Fn = ObjCTypes.getSendFn(IsSuper);
+  }
   Fn = llvm::ConstantExpr::getBitCast(Fn, llvm::PointerType::getUnqual(FTy));
   return CGF.EmitCall(Fn, ResultType, ActualArgs);
 }
@@ -2223,6 +2244,16 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
                                                       Params,
                                                       true),
                               "objc_msgSend_stret");
+
+  Params.clear();
+  Params.push_back(ObjectPtrTy);
+  Params.push_back(SelectorPtrTy);
+  // FIXME: This should be long double on x86_64?
+  MessageSendFpretFn = 
+    CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::DoubleTy,
+                                                      Params,
+                                                      true),
+                              "objc_msgSend_fpret");
   
   Params.clear();
   Params.push_back(SuperPtrTy);
@@ -2242,6 +2273,9 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
                                                       Params,
                                                       true),
                               "objc_msgSendSuper_stret");
+
+  // There is no objc_msgSendSuper_fpret? How can that work?
+  MessageSendSuperFpretFn = MessageSendSuperFn;
   
   // Property manipulation functions.
 
@@ -2339,14 +2373,6 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
 }
 
 ObjCTypesHelper::~ObjCTypesHelper() {
-}
-
-llvm::Constant *ObjCTypesHelper::getMessageSendFn(bool IsSuper, bool IsStret) {
-  if (IsStret) {
-    return IsSuper ? MessageSendSuperStretFn : MessageSendStretFn;
-  } else { // FIXME: floating point?
-    return IsSuper ? MessageSendSuperFn : MessageSendFn;
-  }
 }
 
 /* *** */
