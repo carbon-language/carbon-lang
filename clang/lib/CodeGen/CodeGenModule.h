@@ -179,12 +179,20 @@ public:
   /// Feature.WriteableStrings.
   ///
   /// The result has pointer to array type.
-  llvm::Constant *GetAddrOfConstantString(const std::string& str);
+  ///
+  /// \param GlobalName If provided, the name to use for the global
+  /// (if one is created).
+  llvm::Constant *GetAddrOfConstantString(const std::string& str,
+                                          const char *GlobalName=0);
 
   /// GetAddrOfConstantCString - Returns a pointer to a character
-  /// array containing the literal and a terminating '\-'
+  /// array containing the literal and a terminating '\0'
   /// character. The result has pointer to array type.
-  llvm::Constant *GetAddrOfConstantCString(const std::string &str);
+  ///
+  /// \param GlobalName If provided, the name to use for the global
+  /// (if one is created).
+  llvm::Constant *GetAddrOfConstantCString(const std::string &str,
+                                           const char *GlobalName=0);
   
   /// getBuiltinLibFunction - Given a builtin id for a function like
   /// "__builtin_fabsf", return a Function* for "fabsf".

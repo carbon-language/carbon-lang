@@ -885,14 +885,17 @@ CodeGenModule::GetAddrOfConstantStringFromLiteral(const StringLiteral *S) {
 /// GenerateWritableString -- Creates storage for a string literal.
 static llvm::Constant *GenerateStringLiteral(const std::string &str, 
                                              bool constant,
-                                             CodeGenModule &CGM) {
+                                             CodeGenModule &CGM,
+                                             const char *GlobalName) {
   // Create Constant for this string literal. Don't add a '\0'.
   llvm::Constant *C = llvm::ConstantArray::get(str, false);
   
   // Create a global variable for this string
   C = new llvm::GlobalVariable(C->getType(), constant, 
                                llvm::GlobalValue::InternalLinkage,
-                               C, ".str", &CGM.getModule());
+                               C, 
+                               GlobalName ? GlobalName : ".str", 
+                               &CGM.getModule());
 
   return C;
 }
@@ -905,10 +908,11 @@ static llvm::Constant *GenerateStringLiteral(const std::string &str,
 /// Feature.WriteableStrings.
 ///
 /// The result has pointer to array type.
-llvm::Constant *CodeGenModule::GetAddrOfConstantString(const std::string &str) {
+llvm::Constant *CodeGenModule::GetAddrOfConstantString(const std::string &str,
+                                                       const char *GlobalName) {
   // Don't share any string literals if writable-strings is turned on.
   if (Features.WritableStrings)
-    return GenerateStringLiteral(str, false, *this);
+    return GenerateStringLiteral(str, false, *this, GlobalName);
   
   llvm::StringMapEntry<llvm::Constant *> &Entry = 
   ConstantStringMap.GetOrCreateValue(&str[0], &str[str.length()]);
@@ -917,7 +921,7 @@ llvm::Constant *CodeGenModule::GetAddrOfConstantString(const std::string &str) {
       return Entry.getValue();
 
   // Create a global variable for this.
-  llvm::Constant *C = GenerateStringLiteral(str, true, *this);
+  llvm::Constant *C = GenerateStringLiteral(str, true, *this, GlobalName);
   Entry.setValue(C);
   return C;
 }
@@ -925,8 +929,9 @@ llvm::Constant *CodeGenModule::GetAddrOfConstantString(const std::string &str) {
 /// GetAddrOfConstantCString - Returns a pointer to a character
 /// array containing the literal and a terminating '\-'
 /// character. The result has pointer to array type.
-llvm::Constant *CodeGenModule::GetAddrOfConstantCString(const std::string &str) {
-  return GetAddrOfConstantString(str + "\0");
+llvm::Constant *CodeGenModule::GetAddrOfConstantCString(const std::string &str,
+                                                        const char *GlobalName){
+  return GetAddrOfConstantString(str + "\0", GlobalName);
 }
 
 /// EmitObjCPropertyImplementations - Emit information for synthesized
