@@ -52,7 +52,7 @@ public:
 Store RegionStoreManager::SetSVal(Store store, Loc LV, SVal V) {
   assert(LV.getSubKind() == loc::MemRegionKind);
 
-  MemRegion* R = cast<loc::MemRegionVal>(LV).getRegion();
+  const MemRegion* R = cast<loc::MemRegionVal>(LV).getRegion();
   
   if (!R)
     return store;

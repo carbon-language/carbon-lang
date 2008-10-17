@@ -1513,7 +1513,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
           state = state.remove<RefBindings>(Sym);
         }
         
-        TypedRegion* R = dyn_cast<TypedRegion>(MR->getRegion());
+        const TypedRegion* R = dyn_cast<TypedRegion>(MR->getRegion());
         if (R) {
           // Set the value of the variable to be a conjured symbol.
           unsigned Count = Builder.getCurrentBlockCount();
@@ -1717,7 +1717,7 @@ void CFRefCount::EvalStore(ExplodedNodeSet<GRState>& Dst,
   if (!isa<loc::MemRegionVal>(TargetLV))
     escapes = true;
   else {
-    MemRegion* R = cast<loc::MemRegionVal>(TargetLV).getRegion();
+    const MemRegion* R = cast<loc::MemRegionVal>(TargetLV).getRegion();
     escapes = !Eng.getStateManager().hasStackStorage(R);
   }
   

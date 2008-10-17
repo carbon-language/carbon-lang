@@ -56,6 +56,15 @@ void DeclRegion::Profile(llvm::FoldingSetNodeID& ID) const {
   DeclRegion::ProfileRegion(ID, D, superRegion, getKind());
 }
 
+void SymbolicRegion::ProfileRegion(llvm::FoldingSetNodeID& ID, SymbolID sym) {
+  ID.AddInteger((unsigned) MemRegion::SymbolicRegionKind);
+  ID.AddInteger(sym.getNumber());
+}
+
+void SymbolicRegion::Profile(llvm::FoldingSetNodeID& ID) const {
+  SymbolicRegion::ProfileRegion(ID, sym);
+}
+
 //===----------------------------------------------------------------------===//
 // Region pretty-printing.
 //===----------------------------------------------------------------------===//
@@ -73,6 +82,10 @@ void MemRegion::print(llvm::raw_ostream& os) const {
 
 void VarRegion::print(llvm::raw_ostream& os) const {
   os << cast<VarDecl>(D)->getName();
+}
+
+void SymbolicRegion::print(llvm::raw_ostream& os) const {
+  os << "$" << sym.getNumber();
 }
 
 //===----------------------------------------------------------------------===//
@@ -106,7 +119,7 @@ MemSpaceRegion* MemRegionManager::getUnknownRegion() {
 }
 
 VarRegion* MemRegionManager::getVarRegion(const VarDecl* d,
-                                          MemRegion* superRegion) {
+                                          const MemRegion* superRegion) {
   llvm::FoldingSetNodeID ID;
   DeclRegion::ProfileRegion(ID, d, superRegion, MemRegion::VarRegionKind);
   
@@ -123,8 +136,27 @@ VarRegion* MemRegionManager::getVarRegion(const VarDecl* d,
   return R;
 }
 
+/// getSymbolicRegion - Retrieve or create a "symbolic" memory region.
+SymbolicRegion* MemRegionManager::getSymbolicRegion(const SymbolID sym) {
+  
+  llvm::FoldingSetNodeID ID;
+  SymbolicRegion::ProfileRegion(ID, sym);
+  
+  void* InsertPos;
+  MemRegion* data = Regions.FindNodeOrInsertPos(ID, InsertPos);
+  SymbolicRegion* R = cast_or_null<SymbolicRegion>(data);
+  
+  if (!R) {
+    R = (SymbolicRegion*) A.Allocate<SymbolicRegion>();
+    new (R) SymbolicRegion(sym);
+    Regions.InsertNode(R, InsertPos);
+  }
+  
+  return R;  
+}
+
 FieldRegion* MemRegionManager::getFieldRegion(const FieldDecl* d,
-                                              MemRegion* superRegion) {
+                                              const MemRegion* superRegion) {
   llvm::FoldingSetNodeID ID;
   DeclRegion::ProfileRegion(ID, d, superRegion, MemRegion::FieldRegionKind);
   
@@ -141,8 +173,9 @@ FieldRegion* MemRegionManager::getFieldRegion(const FieldDecl* d,
   return R;
 }
 
-ObjCIvarRegion* MemRegionManager::getObjCIvarRegion(const ObjCIvarDecl* d,
-                                                    MemRegion* superRegion) {
+ObjCIvarRegion*
+MemRegionManager::getObjCIvarRegion(const ObjCIvarDecl* d,
+                                    const MemRegion* superRegion) {
   llvm::FoldingSetNodeID ID;
   DeclRegion::ProfileRegion(ID, d, superRegion, MemRegion::ObjCIvarRegionKind);
   
@@ -181,11 +214,20 @@ AnonPointeeRegion* MemRegionManager::getAnonPointeeRegion(const VarDecl* d) {
 }
 
 bool MemRegionManager::hasStackStorage(const MemRegion* R) {
+  const SubRegion* SR = dyn_cast<SubRegion>(R);
+
+  // Only subregions can have stack storage.
+  if (!SR)
+    return false;
+  
   MemSpaceRegion* S = getStackRegion();
   
-  while (R) {
-    if (R == S) return true;
-    R = R->getSuperRegion();
+  while (SR) {
+    R = SR->getSuperRegion();
+    if (R == S)
+      return true;
+    
+    SR = dyn_cast<SubRegion>(R);    
   }
   
   return false;

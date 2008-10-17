@@ -331,9 +331,14 @@ class MemRegionVal : public Loc {
 public:
   MemRegionVal(const MemRegion* r) : Loc(MemRegionKind, r) {}
 
-  MemRegion* getRegion() const {
+  const MemRegion* getRegion() const {
     return static_cast<MemRegion*>(Data);
   }
+  
+  template <typename REGION>
+  const REGION* getRegionAs() const {
+    return llvm::dyn_cast<REGION>(getRegion());
+  }  
   
   inline bool operator==(const MemRegionVal& R) const {
     return getRegion() == R.getRegion();

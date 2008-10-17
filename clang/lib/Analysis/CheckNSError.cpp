@@ -216,7 +216,11 @@ void NSErrorCheck::CheckParamDeref(VarDecl* Param, GRStateRef rootState,
                                    GRExprEngine& Eng, GRBugReporter& BR,
                                    bool isNSErrorWarning) {
   
-  SVal ParamSVal = rootState.GetLValue(Param);
+  SVal ParamL = rootState.GetLValue(Param);
+  const MemRegion* ParamR = cast<loc::MemRegionVal>(ParamL).getRegionAs<VarRegion>();
+  assert (ParamR && "Parameters always have VarRegions.");
+  SVal ParamSVal = rootState.GetSVal(ParamR);
+  
 
   // FIXME: For now assume that ParamSVal is symbolic.  We need to generalize
   // this later.

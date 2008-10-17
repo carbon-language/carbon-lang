@@ -15,6 +15,7 @@
 #define LLVM_CLANG_ANALYSIS_STORE_H
 
 #include "clang/Analysis/PathSensitive/RValues.h"
+#include "clang/Analysis/PathSensitive/MemRegion.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/DenseSet.h"
@@ -31,8 +32,6 @@ class LiveVariables;
 class Stmt;
 class Expr;
 class ObjCIvarDecl;
-class MemRegion;
-class MemRegionManager;
 
 class StoreManager {
 public:
@@ -40,7 +39,12 @@ public:
   typedef llvm::DenseSet<SymbolID>          DeadSymbolsTy;
   
   virtual ~StoreManager() {}
-  virtual SVal GetSVal(Store St, Loc LV, QualType T = QualType()) = 0;
+  virtual SVal GetSVal(Store St, Loc LV, QualType T = QualType()) = 0;  
+
+  virtual SVal GetRegionSVal(Store St, const MemRegion* R) {
+    return GetSVal(St, loc::MemRegionVal(R));
+  }
+  
   virtual Store SetSVal(Store St, Loc LV, SVal V) = 0;
   virtual Store Remove(Store St, Loc LV) = 0;
   virtual Store getInitialStore() = 0;

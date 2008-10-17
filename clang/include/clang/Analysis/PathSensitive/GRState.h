@@ -425,6 +425,10 @@ public:
     return StoreMgr->GetSVal(St->getStore(), LV, T);
   }
   
+  SVal GetSVal(const GRState* St, const MemRegion* R) {
+    return StoreMgr->GetRegionSVal(St->getStore(), R);
+  }  
+  
   void SetSVal(GRState& St, Loc LV, SVal V) {
     St.St = StoreMgr->SetSVal(St.St, LV, V);
   }
@@ -520,6 +524,10 @@ public:
   
   SVal GetSVal(Loc LV, QualType T = QualType()) {
     return Mgr->GetSVal(St, LV, T);
+  }
+  
+  SVal GetSVal(const MemRegion* R) {
+    return Mgr->GetSVal(St, R);
   }
   
   GRStateRef SetSVal(Expr* Ex, SVal V, bool isBlkExpr, bool Invalidate) {

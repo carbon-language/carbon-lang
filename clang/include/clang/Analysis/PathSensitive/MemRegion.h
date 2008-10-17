@@ -16,11 +16,12 @@
 #ifndef LLVM_CLANG_ANALYSIS_MEMREGION_H
 #define LLVM_CLANG_ANALYSIS_MEMREGION_H
 
+#include "clang/AST/Decl.h"
+#include "clang/AST/DeclObjC.h"
+#include "clang/Analysis/PathSensitive/SymbolManager.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/Support/Allocator.h"
-#include "clang/AST/Decl.h"
-#include "clang/AST/DeclObjC.h"
 #include <string>
 
 namespace llvm { class raw_ostream; }
@@ -33,7 +34,7 @@ class MemRegionManager;
 /// MemRegion - The root abstract class for all memory regions.
 class MemRegion : public llvm::FoldingSetNode {
 public:
-  enum Kind { MemSpaceRegionKind,
+  enum Kind { MemSpaceRegionKind, SymbolicRegionKind,
               // Typed regions.
               BEG_TYPED_REGIONS,
               VarRegionKind, FieldRegionKind, ObjCIvarRegionKind,
@@ -48,7 +49,6 @@ protected:
 
 public:
   // virtual MemExtent getExtent(MemRegionManager& mrm) const = 0;
-  virtual const MemRegion* getSuperRegion() const = 0;
   virtual void Profile(llvm::FoldingSetNodeID& ID) const = 0;
   
   std::string getString() const;
@@ -67,11 +67,6 @@ class MemSpaceRegion : public MemRegion {
 public:
   //RegionExtent getExtent() const { return UndefinedExtent(); }
 
-  const MemRegion* getSuperRegion() const {
-    return 0;
-  }
-    
-  //static void ProfileRegion(llvm::FoldingSetNodeID& ID);
   void Profile(llvm::FoldingSetNodeID& ID) const;
 
   static bool classof(const MemRegion* R) {
@@ -79,22 +74,57 @@ public:
   }
 };
 
-/// TypedRegion - An abstract class representing regions that are typed.
-class TypedRegion : public MemRegion {
+/// SubRegion - A region that subsets another larger region.  Most regions
+///  are subclasses of SubRegion.
+class SubRegion : public MemRegion {
 protected:
-  const MemRegion* superRegion;
-
-  TypedRegion(const MemRegion* sReg, Kind k)
-    : MemRegion(k), superRegion(sReg) {};
+  const MemRegion* superRegion;  
+  SubRegion(const MemRegion* sReg, Kind k) : MemRegion(k), superRegion(sReg) {}
   
 public:
-  virtual QualType getType() const = 0;
-  
-  // MemExtent getExtent(MemRegionManager& mrm) const;
   const MemRegion* getSuperRegion() const {
     return superRegion;
   }
   
+  static bool classof(const MemRegion* R) {
+    return R->getKind() > SymbolicRegionKind;
+  }
+};
+  
+/// SymbolicRegion - A special, "non-concrete" region. Unlike other region
+///  clases, SymbolicRegion represents a region that serves as an alias for
+///  either a real region, a NULL pointer, etc.  It essentially is used to
+///  map the concept of symbolic values into the domain of regions.  Symbolic
+///  regions do not need to be typed.
+class SymbolicRegion : public MemRegion {
+protected:
+  const SymbolID sym;
+
+public:
+  SymbolicRegion(const SymbolID s) : MemRegion(SymbolicRegionKind), sym(s) {}
+    
+  SymbolID getSymbol() const {
+    return sym;
+  }
+    
+  void Profile(llvm::FoldingSetNodeID& ID) const;
+  static void ProfileRegion(llvm::FoldingSetNodeID& ID, SymbolID sym);
+  
+  void print(llvm::raw_ostream& os) const;
+  
+  static bool classof(const MemRegion* R) {
+    return R->getKind() == SymbolicRegionKind;
+  }
+};  
+
+/// TypedRegion - An abstract class representing regions that are typed.
+class TypedRegion : public SubRegion {
+protected:
+  TypedRegion(const MemRegion* sReg, Kind k) : SubRegion(sReg, k) {}
+  
+public:
+  virtual QualType getType() const = 0;
+    
   static bool classof(const MemRegion* R) {
     unsigned k = R->getKind();
     return k > BEG_TYPED_REGIONS && k < END_TYPED_REGIONS;
@@ -152,7 +182,7 @@ class DeclRegion : public TypedRegion {
 protected:
   const Decl* D;
 
-  DeclRegion(const Decl* d, MemRegion* sReg, Kind k)
+  DeclRegion(const Decl* d, const MemRegion* sReg, Kind k)
     : TypedRegion(sReg, k), D(d) {}
 
   static void ProfileRegion(llvm::FoldingSetNodeID& ID, const Decl* D,
@@ -165,7 +195,7 @@ public:
 class VarRegion : public DeclRegion {
   friend class MemRegionManager;
   
-  VarRegion(const VarDecl* vd, MemRegion* sReg)
+  VarRegion(const VarDecl* vd, const MemRegion* sReg)
     : DeclRegion(vd, sReg, VarRegionKind) {}
 
   static void ProfileRegion(llvm::FoldingSetNodeID& ID, VarDecl* VD,
@@ -187,7 +217,7 @@ public:
 class FieldRegion : public DeclRegion {
   friend class MemRegionManager;
 
-  FieldRegion(const FieldDecl* fd, MemRegion* sReg)
+  FieldRegion(const FieldDecl* fd, const MemRegion* sReg)
     : DeclRegion(fd, sReg, FieldRegionKind) {}
 
   static void ProfileRegion(llvm::FoldingSetNodeID& ID, FieldDecl* FD,
@@ -208,7 +238,7 @@ class ObjCIvarRegion : public DeclRegion {
   
   friend class MemRegionManager;
   
-  ObjCIvarRegion(const ObjCIvarDecl* ivd, MemRegion* sReg)
+  ObjCIvarRegion(const ObjCIvarDecl* ivd, const MemRegion* sReg)
     : DeclRegion(ivd, sReg, ObjCIvarRegionKind) {}
 
   static void ProfileRegion(llvm::FoldingSetNodeID& ID, ObjCIvarDecl* ivd,
@@ -260,10 +290,13 @@ public:
   /// memory space.
   MemSpaceRegion* getUnknownRegion();
   
+  /// getSymbolicRegion - Retrieve or create a "symbolic" memory region.
+  SymbolicRegion* getSymbolicRegion(const SymbolID sym);
+  
   /// getVarRegion - Retrieve or create the memory region associated with
   ///  a specified VarDecl.  'superRegion' corresponds to the containing
   ///  memory region, and 'off' is the offset within the containing region.
-  VarRegion* getVarRegion(const VarDecl* vd, MemRegion* superRegion);
+  VarRegion* getVarRegion(const VarDecl* vd, const MemRegion* superRegion);
   
   VarRegion* getVarRegion(const VarDecl* vd) {
     return getVarRegion(vd, vd->hasLocalStorage() ? getStackRegion() 
@@ -274,14 +307,14 @@ public:
   ///  a specified FieldDecl.  'superRegion' corresponds to the containing
   ///  memory region (which typically represents the memory representing
   ///  a structure or class).
-  FieldRegion* getFieldRegion(const FieldDecl* fd, MemRegion* superRegion);
+  FieldRegion* getFieldRegion(const FieldDecl* fd, const MemRegion* superRegion);
   
   /// getObjCIvarRegion - Retrieve or create the memory region associated with
   ///   a specified Objective-c instance variable.  'superRegion' corresponds
   ///   to the containing region (which typically represents the Objective-C
   ///   object).
   ObjCIvarRegion* getObjCIvarRegion(const ObjCIvarDecl* ivd,
-                                    MemRegion* superRegion);
+                                    const MemRegion* superRegion);
 
   AnonPointeeRegion* getAnonPointeeRegion(const VarDecl* d);
 

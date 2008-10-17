@@ -367,7 +367,7 @@ public:
   
 private:
   
-  void AddError(TypedRegion* R, Expr* Ex, ExplodedNode<GRState> *N,
+  void AddError(const TypedRegion* R, Expr* Ex, ExplodedNode<GRState> *N,
                 uint64_t SourceSize, uint64_t TargetSize, uint64_t NumberKind);  
 };
 } // end anonymous namespace
@@ -503,7 +503,7 @@ bool AuditCFNumberCreate::Audit(ExplodedNode<GRState>* N,GRStateManager&){
   if (!LV)
     return false;
   
-  TypedRegion* R = dyn_cast<TypedRegion>(LV->getRegion());
+  const TypedRegion* R = dyn_cast<TypedRegion>(LV->getRegion());
   if (!R)
     return false;
   
@@ -530,7 +530,7 @@ bool AuditCFNumberCreate::Audit(ExplodedNode<GRState>* N,GRStateManager&){
   return SourceSize < TargetSize;
 }
 
-void AuditCFNumberCreate::AddError(TypedRegion* R, Expr* Ex,
+void AuditCFNumberCreate::AddError(const TypedRegion* R, Expr* Ex,
                                    ExplodedNode<GRState> *N,
                                    uint64_t SourceSize, uint64_t TargetSize,
                                    uint64_t NumberKind) {
