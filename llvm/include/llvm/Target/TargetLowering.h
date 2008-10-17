@@ -1181,6 +1181,8 @@ public:
   /// lowering.
   struct AsmOperandInfo : public InlineAsm::ConstraintInfo {
     /// ConstraintCode - This contains the actual string for the code, like "m".
+    /// TargetLowering picks the 'best' code from ConstraintInfo::Codes that
+    /// most closely matches the operand.
     std::string ConstraintCode;
 
     /// ConstraintType - Information about the constraint code, e.g. Register,
@@ -1194,6 +1196,14 @@ public:
   
     /// ConstraintVT - The ValueType for the operand value.
     MVT ConstraintVT;
+    
+    /// isMatchingConstraint - Return true of this is an input operand that is a
+    /// matching constraint like "4".
+    bool isMatchingConstraint() const;
+    
+    /// getMatchedOperand - If this is an input matching constraint, this method
+    /// returns the output operand it matches.
+    unsigned getMatchedOperand() const;
   
     AsmOperandInfo(const InlineAsm::ConstraintInfo &info)
       : InlineAsm::ConstraintInfo(info), 

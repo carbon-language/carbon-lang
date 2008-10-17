@@ -4363,8 +4363,10 @@ void RegsForValue::AddInlineAsmOperands(unsigned Code, SelectionDAG &DAG,
   for (unsigned Value = 0, Reg = 0, e = ValueVTs.size(); Value != e; ++Value) {
     unsigned NumRegs = TLI->getNumRegisters(ValueVTs[Value]);
     MVT RegisterVT = RegVTs[Value];
-    for (unsigned i = 0; i != NumRegs; ++i)
+    for (unsigned i = 0; i != NumRegs; ++i) {
+      assert(Reg < Regs.size() && "Mismatch in # registers expected");
       Ops.push_back(DAG.getRegister(Regs[Reg++], RegisterVT));
+    }
   }
 }
 
@@ -4557,8 +4559,9 @@ GetRegistersForValue(SDISelAsmOperandInfo &OpInfo,
   const TargetRegisterClass *RC = PhysReg.second;
   if (RC) {
     // If this is a tied register, our regalloc doesn't know how to maintain 
-    // the constraint.  If it isn't, go ahead and create vreg
-    // and let the regalloc do the right thing.
+    // the constraint, so we have to pick a register to pin the input/output to.
+    // If it isn't a matched constraint, go ahead and create vreg and let the
+    // regalloc do its thing.
     if (!OpInfo.hasMatchingInput) {
       RegVT = *PhysReg.second->vt_begin();
       if (OpInfo.ConstraintVT == MVT::Other)
@@ -4785,7 +4788,7 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
   
   
   // Second pass - Loop over all of the operands, assigning virtual or physregs
-  // to registerclass operands.
+  // to register class operands.
   for (unsigned i = 0, e = ConstraintOperands.size(); i != e; ++i) {
     SDISelAsmOperandInfo &OpInfo = ConstraintOperands[i];
     
@@ -4860,10 +4863,10 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
     case InlineAsm::isInput: {
       SDValue InOperandVal = OpInfo.CallOperand;
       
-      if (isdigit(OpInfo.ConstraintCode[0])) {    // Matching constraint?
+      if (OpInfo.isMatchingConstraint()) {   // Matching constraint?
         // If this is required to match an output register we have already set,
         // just use its register.
-        unsigned OperandNo = atoi(OpInfo.ConstraintCode.c_str());
+        unsigned OperandNo = OpInfo.getMatchedOperand();
         
         // Scan until we find the definition we already emitted of this operand.
         // When we find it, create a RegsForValue operand.
