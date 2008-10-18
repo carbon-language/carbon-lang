@@ -891,8 +891,12 @@ void GRExprEngine::VisitMemberExpr(MemberExpr* M, NodeTy* Pred,
   
   Expr* Base = M->getBase()->IgnoreParens();
   NodeSet Tmp;
-  Visit(Base, Pred, Tmp);
-
+  
+  if (M->isArrow()) 
+    Visit(Base, Pred, Tmp);        // p->f = ...  or   ... = p->f
+  else
+    VisitLValue(Base, Pred, Tmp);  // x.f = ...   or   ... = x.f
+    
   for (NodeSet::iterator I = Tmp.begin(), E = Tmp.end(); I != E; ++I) {
     const GRState* St = GetState(*I);
     // FIXME: Should we insert some assumption logic in here to determine
