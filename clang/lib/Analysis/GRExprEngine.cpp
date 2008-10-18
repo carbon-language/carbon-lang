@@ -408,9 +408,6 @@ void GRExprEngine::VisitLValue(Expr* Ex, NodeTy* Pred, NodeSet& Dst) {
   }
   
   switch (Ex->getStmtClass()) {
-    default:
-      Ex->dump();
-      assert(0 && "Other kinds of expressions do not have lvalue.");
       
     case Stmt::ArraySubscriptExprClass:
       VisitArraySubscriptExpr(cast<ArraySubscriptExpr>(Ex), Pred, Dst, true);
@@ -447,16 +444,16 @@ void GRExprEngine::VisitLValue(Expr* Ex, NodeTy* Pred, NodeSet& Dst) {
       Dst.Add(Pred);
       return;
       
-    case Stmt::CallExprClass:
-    case Stmt::ObjCMessageExprClass:
-      // Function calls and message expressions that return temporaries
-      // that are objects can be called in this context.  We need to
-      // enhance our support of struct return values, so right now just
-      // do a regular visit.
-      assert (!Ex->getType()->isIntegerType());
-      assert (!Ex->getType()->isPointerType());
-      Visit(Ex, Pred, Dst);
+    default:
+      // Arbitrary subexpressions can return aggregate temporaries that
+      // can be used in a lvalue context.  We need to enhance our support
+      // of such temporaries in both the environment and the store, so right
+      // now we just do a regular visit.
+      assert (Ex->getType()->isAggregateType() && 
+              "Other kinds of expressions with non-aggregate types do not "
+              "have lvalues.");
       
+      Visit(Ex, Pred, Dst);
   }
 }
 
