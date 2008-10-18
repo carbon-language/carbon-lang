@@ -24,6 +24,7 @@
 // The second value provided to the macro specifies the type of the function
 // (result value, then each argument) as follows:
 //  v -> void
+//  b -> boolean
 //  c -> char
 //  s -> short
 //  i -> int
@@ -164,5 +165,8 @@ BUILTIN(__sync_fetch_and_or,"ii*i", "n")
 BUILTIN(__sync_fetch_and_xor,"ii*i", "n")
 BUILTIN(__sync_lock_test_and_set,"ii*i", "n")
 BUILTIN(__sync_val_compare_and_swap,"ii*ii", "n")
+
+// LLVM instruction builtin
+BUILTIN(__builtin_llvm_memory_barrier,"vbbbbb", "n")
 
 #undef BUILTIN

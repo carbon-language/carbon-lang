@@ -127,6 +127,10 @@ static QualType DecodeTypeFromStr(const char *&Str, ASTContext &Context,
     else
       Type = Context.CharTy;
     break;
+  case 'b': // boolean
+    assert(!Long && !Signed && !Unsigned && "Bad modifiers for 'b'!");
+    Type = Context.BoolTy;
+    break;
   case 'z':  // size_t.
     assert(!Long && !Signed && !Unsigned && "Bad modifiers for 'z'!");
     Type = Context.getSizeType();
