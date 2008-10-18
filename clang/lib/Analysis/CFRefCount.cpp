@@ -1727,20 +1727,36 @@ void CFRefCount::EvalStore(ExplodedNodeSet<GRState>& Dst,
   
   bool escapes = false;
   
+  // A value escapes in three possible cases (this may change):
+  //
+  // (1) we are binding to something that is not a memory region.
+  // (2) we are binding to a memregion that does not have stack storage
+  // (3) we are binding to a memregion with stack storage that the store
+  //     does not understand.
+  
+  SymbolID Sym = cast<loc::SymbolVal>(Val).getSymbol();
+  GRStateRef state(St, Eng.getStateManager());
+
   if (!isa<loc::MemRegionVal>(TargetLV))
     escapes = true;
   else {
     const MemRegion* R = cast<loc::MemRegionVal>(TargetLV).getRegion();
     escapes = !Eng.getStateManager().hasStackStorage(R);
+    
+    if (!escapes) {
+      // To test (3), generate a new state with the binding removed.  If it is
+      // the same state, then it escapes (since the store cannot represent
+      // the binding).
+      GRStateRef stateNew = state.SetSVal(cast<Loc>(TargetLV), Val);
+      escapes = (stateNew == state);
+    }
   }
   
   if (!escapes)
     return;
-  
-  SymbolID Sym = cast<loc::SymbolVal>(Val).getSymbol();
-  
-  GRStateRef state(St, Eng.getStateManager());
-  
+
+  // Do we have a reference count binding?
+  // FIXME: Is this step even needed?  We do blow away the binding anyway.
   if (!state.get<RefBindings>(Sym))
     return;
   
