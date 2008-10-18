@@ -9,3 +9,7 @@
 }
 @end
 
+// Reduced test case from crash in PR 2796;
+//  http://llvm.org/bugs/show_bug.cgi?id=2796
+
+unsigned foo(unsigned x) { return __alignof__((x)) + sizeof(x); }

@@ -1780,6 +1780,23 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, NodeTy* Pred,
       
       return;
     }
+     
+    case UnaryOperator::AlignOf: {
+      
+      QualType T = U->getSubExpr()->getType();
+      
+      // FIXME: Add support for VLAs.
+      
+      if (!T.getTypePtr()->isConstantSizeType())
+        return;
+      
+      uint64_t size = getContext().getTypeAlign(T) / 8;                
+      const GRState* St = GetState(Pred);
+      St = SetSVal(St, U, NonLoc::MakeVal(getBasicVals(), size, U->getType()));
+      
+      MakeNode(Dst, U, Pred, St);
+      return;
+    }
       
     case UnaryOperator::SizeOf: {
             
