@@ -54,7 +54,7 @@ DeclGroup::DeclGroup(unsigned numdecls, Decl** decls) : NumDecls(numdecls) {
 }
 
 void DeclGroup::Destroy(ASTContext& C) {
-  Decl** Decls = (Decl**) this + 1;
+  Decl** Decls = (Decl**) (this + 1);
   
   for (unsigned i = 0; i < NumDecls; ++i)
     Decls[i]->Destroy(C);
