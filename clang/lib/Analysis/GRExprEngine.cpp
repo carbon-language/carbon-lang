@@ -445,7 +445,18 @@ void GRExprEngine::VisitLValue(Expr* Ex, NodeTy* Pred, NodeSet& Dst) {
       //  Note that we have a similar problem for bitfields, since they don't
       //  have "locations" in the sense that we can take their address.
       Dst.Add(Pred);
-      return;      
+      return;
+      
+    case Stmt::CallExprClass:
+    case Stmt::ObjCMessageExprClass:
+      // Function calls and message expressions that return temporaries
+      // that are objects can be called in this context.  We need to
+      // enhance our support of struct return values, so right now just
+      // do a regular visit.
+      assert (!Ex->getType()->isIntegerType());
+      assert (!Ex->getType()->isPointerType());
+      Visit(Ex, Pred, Dst);
+      
   }
 }
 
