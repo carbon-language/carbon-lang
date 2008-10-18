@@ -130,9 +130,13 @@ void LiveIntervals::computeNumbering() {
       MIIndex += InstrSlots::NUM;
       FunctionSize++;
       
-      // Insert an empty slot after every instruction.
-      MIIndex += InstrSlots::NUM;
-      i2miMap_.push_back(0);
+      // Insert min(1, numdefs) empty slots after every instruction.
+      unsigned Slots = I->getDesc().getNumDefs();
+      if (Slots == 0)
+        Slots = 1;
+      MIIndex += InstrSlots::NUM * Slots;
+      while (Slots--)
+        i2miMap_.push_back(0);
     }
     
     // Set the MBB2IdxMap entry for this MBB.
@@ -732,8 +736,12 @@ void LiveIntervals::computeIntervals() {
           handleRegisterDef(MBB, MI, MIIndex, MO, i);
         }
       }
-      
-      MIIndex += InstrSlots::NUM;
+
+      // Skip over the empty slots after each instruction.
+      unsigned Slots = MI->getDesc().getNumDefs();
+      if (Slots == 0)
+        Slots = 1;
+      MIIndex += InstrSlots::NUM * Slots;
       
       // Skip over empty indices.
       while (MIIndex / InstrSlots::NUM < i2miMap_.size() &&
