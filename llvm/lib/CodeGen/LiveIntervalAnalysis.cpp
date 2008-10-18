@@ -130,7 +130,7 @@ void LiveIntervals::computeNumbering() {
       MIIndex += InstrSlots::NUM;
       FunctionSize++;
       
-      // Insert min(1, numdefs) empty slots after every instruction.
+      // Insert max(1, numdefs) empty slots after every instruction.
       unsigned Slots = I->getDesc().getNumDefs();
       if (Slots == 0)
         Slots = 1;
