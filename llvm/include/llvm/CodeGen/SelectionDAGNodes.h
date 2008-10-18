@@ -1819,15 +1819,16 @@ public:
 
 class GlobalAddressSDNode : public SDNode {
   GlobalValue *TheGlobal;
-  int Offset;
+  int64_t Offset;
   virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
 protected:
   friend class SelectionDAG;
-  GlobalAddressSDNode(bool isTarget, const GlobalValue *GA, MVT VT, int o = 0);
+  GlobalAddressSDNode(bool isTarget, const GlobalValue *GA, MVT VT,
+                      int64_t o = 0);
 public:
 
   GlobalValue *getGlobal() const { return TheGlobal; }
-  int getOffset() const { return Offset; }
+  int64_t getOffset() const { return Offset; }
 
   static bool classof(const GlobalAddressSDNode *) { return true; }
   static bool classof(const SDNode *N) {

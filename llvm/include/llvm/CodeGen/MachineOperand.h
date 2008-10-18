@@ -101,7 +101,7 @@ private:
         const char *SymbolName;   // For MO_ExternalSymbol.
         GlobalValue *GV;          // For MO_GlobalAddress.
       } Val;
-      int Offset;   // An offset from the object.
+      int64_t Offset;   // An offset from the object.
     } OffsetedInfo;
   } Contents;
   
@@ -273,7 +273,7 @@ public:
     return Contents.OffsetedInfo.Val.GV;
   }
   
-  int getOffset() const {
+  int64_t getOffset() const {
     assert((isGlobal() || isSymbol() || isCPI()) &&
            "Wrong MachineOperand accessor");
     return Contents.OffsetedInfo.Offset;
@@ -293,7 +293,7 @@ public:
     Contents.ImmVal = immVal;
   }
 
-  void setOffset(int Offset) {
+  void setOffset(int64_t Offset) {
     assert((isGlobal() || isSymbol() || isCPI()) &&
         "Wrong MachineOperand accessor");
     Contents.OffsetedInfo.Offset = Offset;
@@ -382,13 +382,13 @@ public:
     Op.setIndex(Idx);
     return Op;
   }
-  static MachineOperand CreateGA(GlobalValue *GV, int Offset) {
+  static MachineOperand CreateGA(GlobalValue *GV, int64_t Offset) {
     MachineOperand Op(MachineOperand::MO_GlobalAddress);
     Op.Contents.OffsetedInfo.Val.GV = GV;
     Op.setOffset(Offset);
     return Op;
   }
-  static MachineOperand CreateES(const char *SymName, int Offset = 0) {
+  static MachineOperand CreateES(const char *SymName, int64_t Offset = 0) {
     MachineOperand Op(MachineOperand::MO_ExternalSymbol);
     Op.Contents.OffsetedInfo.Val.SymbolName = SymName;
     Op.setOffset(Offset);

@@ -255,9 +255,9 @@ public:
     return getConstantFP(Val, VT, true);
   }
   SDValue getGlobalAddress(const GlobalValue *GV, MVT VT,
-                             int offset = 0, bool isTargetGA = false);
+                           int64_t offset = 0, bool isTargetGA = false);
   SDValue getTargetGlobalAddress(const GlobalValue *GV, MVT VT,
-                                   int offset = 0) {
+                                 int64_t offset = 0) {
     return getGlobalAddress(GV, VT, offset, true);
   }
   SDValue getFrameIndex(int FI, MVT VT, bool isTarget = false);

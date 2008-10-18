@@ -1705,7 +1705,8 @@ SDValue X86TargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
     // non-JIT mode.
     if (!Subtarget->GVRequiresExtraLoad(G->getGlobal(),
                                         getTargetMachine(), true))
-      Callee = DAG.getTargetGlobalAddress(G->getGlobal(), getPointerTy());
+      Callee = DAG.getTargetGlobalAddress(G->getGlobal(), getPointerTy(),
+                                          G->getOffset());
   } else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee)) {
     Callee = DAG.getTargetExternalSymbol(S->getSymbol(), getPointerTy());
   } else if (IsTailCall) {
@@ -4390,12 +4391,24 @@ X86TargetLowering::LowerConstantPool(SDValue Op, SelectionDAG &DAG) {
 
 SDValue
 X86TargetLowering::LowerGlobalAddress(const GlobalValue *GV,
+                                      int64_t Offset,
                                       SelectionDAG &DAG) const {
-  SDValue Result = DAG.getTargetGlobalAddress(GV, getPointerTy());
+  bool IsPic = getTargetMachine().getRelocationModel() == Reloc::PIC_;
+  bool ExtraLoadRequired =
+    Subtarget->GVRequiresExtraLoad(GV, getTargetMachine(), false);
+
+  // Create the TargetGlobalAddress node, folding in the constant
+  // offset if it is legal.
+  SDValue Result;
+  if (!IsPic && !ExtraLoadRequired) {
+    Result = DAG.getTargetGlobalAddress(GV, getPointerTy(), Offset);
+    Offset = 0;
+  } else
+    Result = DAG.getTargetGlobalAddress(GV, getPointerTy(), 0);
   Result = DAG.getNode(X86ISD::Wrapper, getPointerTy(), Result);
+
   // With PIC, the address is actually $g + Offset.
-  if (getTargetMachine().getRelocationModel() == Reloc::PIC_ &&
-      !Subtarget->isPICStyleRIPRel()) {
+  if (IsPic && !Subtarget->isPICStyleRIPRel()) {
     Result = DAG.getNode(ISD::ADD, getPointerTy(),
                          DAG.getNode(X86ISD::GlobalBaseReg, getPointerTy()),
                          Result);
@@ -4406,9 +4419,15 @@ X86TargetLowering::LowerGlobalAddress(const GlobalValue *GV,
   // the GlobalAddress must be in the base or index register of the address, not
   // the GV offset field. Platform check is inside GVRequiresExtraLoad() call
   // The same applies for external symbols during PIC codegen
-  if (Subtarget->GVRequiresExtraLoad(GV, getTargetMachine(), false))
+  if (ExtraLoadRequired)
     Result = DAG.getLoad(getPointerTy(), DAG.getEntryNode(), Result,
                          PseudoSourceValue::getGOT(), 0);
+
+  // If there was a non-zero offset that we didn't fold, create an explicit
+  // addition for it.
+  if (Offset != 0)
+    Result = DAG.getNode(ISD::ADD, getPointerTy(), Result,
+                         DAG.getConstant(Offset, getPointerTy()));
 
   return Result;
 }
@@ -4416,7 +4435,8 @@ X86TargetLowering::LowerGlobalAddress(const GlobalValue *GV,
 SDValue
 X86TargetLowering::LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) {
   const GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
-  return LowerGlobalAddress(GV, DAG);
+  int64_t Offset = cast<GlobalAddressSDNode>(Op)->getOffset();
+  return LowerGlobalAddress(GV, Offset, DAG);
 }
 
 // Lower ISD::GlobalTLSAddress using the "general dynamic" model, 32 bit
@@ -7006,6 +7026,7 @@ bool X86TargetLowering::isGAPlusOffset(SDNode *N,
   if (N->getOpcode() == X86ISD::Wrapper) {
     if (isa<GlobalAddressSDNode>(N->getOperand(0))) {
       GA = cast<GlobalAddressSDNode>(N->getOperand(0))->getGlobal();
+      Offset = cast<GlobalAddressSDNode>(N->getOperand(0))->getOffset();
       return true;
     }
   }
@@ -7448,7 +7469,7 @@ void X86TargetLowering::LowerAsmOperandForConstraint(SDValue Op,
     
     if (GA) {
       if (hasMemory) 
-        Op = LowerGlobalAddress(GA->getGlobal(), DAG);
+        Op = LowerGlobalAddress(GA->getGlobal(), Offset, DAG);
       else
         Op = DAG.getTargetGlobalAddress(GA->getGlobal(), GA->getValueType(0),
                                         Offset);

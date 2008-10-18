@@ -118,6 +118,8 @@ namespace llvm {
     std::vector<unsigned>
     getRegClassForInlineAsmConstraint(const std::string &Constraint,
               MVT VT) const;
+
+    virtual bool isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const;
   };
 }
 

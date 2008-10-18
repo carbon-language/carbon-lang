@@ -3058,3 +3058,9 @@ bool SPUTargetLowering::isLegalAddressImmediate(int64_t V,
 bool SPUTargetLowering::isLegalAddressImmediate(llvm::GlobalValue* GV) const {
   return false;
 }
+
+bool
+SPUTargetLowering::isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const {
+  // The SPU target isn't yet aware of offsets.
+  return false;
+}

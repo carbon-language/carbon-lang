@@ -139,6 +139,8 @@ namespace llvm {
     /// as the offset of the target addressing mode.
     virtual bool isLegalAddressImmediate(int64_t V, const Type *Ty) const;
     virtual bool isLegalAddressImmediate(GlobalValue *) const;
+
+    virtual bool isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const;
   };
 }
 

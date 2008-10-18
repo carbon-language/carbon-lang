@@ -959,9 +959,14 @@ SDValue SelectionDAG::getConstantFP(double Val, MVT VT, bool isTarget) {
 }
 
 SDValue SelectionDAG::getGlobalAddress(const GlobalValue *GV,
-                                       MVT VT, int Offset,
+                                       MVT VT, int64_t Offset,
                                        bool isTargetGA) {
   unsigned Opc;
+
+  // Truncate (with sign-extension) the offset value to the pointer size.
+  unsigned BitWidth = VT.getSizeInBits();
+  if (BitWidth < 64)
+    Offset = (Offset << (64 - BitWidth) >> (64 - BitWidth));
 
   const GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV);
   if (!GVar) {
@@ -2017,6 +2022,7 @@ unsigned SelectionDAG::ComputeNumSignBits(SDValue Op, unsigned Depth) const{
 bool SelectionDAG::isVerifiedDebugInfoDesc(SDValue Op) const {
   GlobalAddressSDNode *GA = dyn_cast<GlobalAddressSDNode>(Op);
   if (!GA) return false;
+  if (GA->getOffset() != 0) return false;
   GlobalVariable *GV = dyn_cast<GlobalVariable>(GA->getGlobal());
   if (!GV) return false;
   MachineModuleInfo *MMI = getMachineModuleInfo();
@@ -4726,7 +4732,7 @@ HandleSDNode::~HandleSDNode() {
 }
 
 GlobalAddressSDNode::GlobalAddressSDNode(bool isTarget, const GlobalValue *GA,
-                                         MVT VT, int o)
+                                         MVT VT, int64_t o)
   : SDNode(isa<GlobalVariable>(GA) &&
            cast<GlobalVariable>(GA)->isThreadLocal() ?
            // Thread Local

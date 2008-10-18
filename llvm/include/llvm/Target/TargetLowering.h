@@ -653,6 +653,11 @@ public:
   virtual SDValue getPICJumpTableRelocBase(SDValue Table,
                                              SelectionDAG &DAG) const;
 
+  /// isOffsetFoldingLegal - Return true if folding a constant offset
+  /// with the given GlobalAddress is legal.  It is frequently not legal in
+  /// PIC relocation models.
+  virtual bool isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const;
+
   //===--------------------------------------------------------------------===//
   // TargetLowering Optimization Methods
   //

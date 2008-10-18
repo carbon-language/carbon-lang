@@ -967,6 +967,13 @@ SDValue DAGCombiner::visitADD(SDNode *N) {
   // fold (add x, 0) -> x
   if (N1C && N1C->isNullValue())
     return N0;
+  // fold (add Sym, c) -> Sym+c
+  if (GlobalAddressSDNode *GA = dyn_cast<GlobalAddressSDNode>(N0))
+    if (!AfterLegalize && TLI.isOffsetFoldingLegal(GA) && N1C &&
+        GA->getOpcode() == ISD::GlobalAddress)
+      return DAG.getGlobalAddress(GA->getGlobal(), VT,
+                                  GA->getOffset() +
+                                    (uint64_t)N1C->getSExtValue());
   // fold ((c1-A)+c2) -> (c1+c2)-A
   if (N1C && N0.getOpcode() == ISD::SUB)
     if (ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0.getOperand(0)))
@@ -1132,6 +1139,21 @@ SDValue DAGCombiner::visitSUB(SDNode *N) {
     return N0;
   if (N1.getOpcode() == ISD::UNDEF)
     return N1;
+
+  // If the relocation model supports it, consider symbol offsets.
+  if (GlobalAddressSDNode *GA = dyn_cast<GlobalAddressSDNode>(N0))
+    if (!AfterLegalize && TLI.isOffsetFoldingLegal(GA)) {
+      // fold (sub Sym, c) -> Sym-c
+      if (N1C && GA->getOpcode() == ISD::GlobalAddress)
+        return DAG.getGlobalAddress(GA->getGlobal(), VT,
+                                    GA->getOffset() -
+                                      (uint64_t)N1C->getSExtValue());
+      // fold (sub Sym+c1, Sym+c2) -> c1-c2
+      if (GlobalAddressSDNode *GB = dyn_cast<GlobalAddressSDNode>(N1))
+        if (GA->getGlobal() == GB->getGlobal())
+          return DAG.getConstant((uint64_t)GA->getOffset() - GB->getOffset(),
+                                 VT);
+    }
 
   return SDValue();
 }

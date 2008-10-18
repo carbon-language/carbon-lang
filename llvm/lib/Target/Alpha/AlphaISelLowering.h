@@ -95,6 +95,8 @@ namespace llvm {
     MachineBasicBlock *EmitInstrWithCustomInserter(MachineInstr *MI,
                                                    MachineBasicBlock *BB);
 
+    virtual bool isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const;
+
   private:
     // Helpers for custom lowering.
     void LowerVAARG(SDNode *N, SDValue &Chain, SDValue &DataPtr,

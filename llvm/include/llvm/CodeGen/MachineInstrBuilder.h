@@ -79,13 +79,14 @@ public:
   }
 
   const MachineInstrBuilder &addGlobalAddress(GlobalValue *GV,
-                                              int Offset = 0) const {
+                                              int64_t Offset = 0) const {
     MI->addOperand(MachineOperand::CreateGA(GV, Offset));
     return *this;
   }
 
-  const MachineInstrBuilder &addExternalSymbol(const char *FnName) const{
-    MI->addOperand(MachineOperand::CreateES(FnName, 0));
+  const MachineInstrBuilder &addExternalSymbol(const char *FnName,
+                                               int64_t Offset = 0) const {
+    MI->addOperand(MachineOperand::CreateES(FnName, Offset));
     return *this;
   }
 };

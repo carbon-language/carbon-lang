@@ -143,6 +143,15 @@ X86TargetMachine::X86TargetMachine(const Module &M, const std::string &FS,
     else
       setRelocationModel(Reloc::Static);
   }
+
+  // ELF doesn't have a distinct dynamic-no-PIC model. Dynamic-no-PIC
+  // is defined as a model for code which may be used in static or
+  // dynamic executables but not necessarily a shared library. On ELF
+  // implement this by using the Static model.
+  if (Subtarget.isTargetELF() &&
+      getRelocationModel() == Reloc::DynamicNoPIC)
+    setRelocationModel(Reloc::Static);
+
   if (Subtarget.is64Bit()) {
     // No DynamicNoPIC support under X86-64.
     if (getRelocationModel() == Reloc::DynamicNoPIC)

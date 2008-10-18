@@ -656,6 +656,23 @@ SDValue TargetLowering::getPICJumpTableRelocBase(SDValue Table,
   return Table;
 }
 
+bool
+TargetLowering::isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const {
+  // Assume that everything is safe in static mode.
+  if (getTargetMachine().getRelocationModel() == Reloc::Static)
+    return true;
+
+  // In dynamic-no-pic mode, assume that known defined values are safe.
+  if (getTargetMachine().getRelocationModel() == Reloc::DynamicNoPIC &&
+      GA &&
+      !GA->getGlobal()->isDeclaration() &&
+      !GA->getGlobal()->mayBeOverridden())
+    return true;
+
+  // Otherwise assume nothing is safe.
+  return false;
+}
+
 //===----------------------------------------------------------------------===//
 //  Optimization Methods
 //===----------------------------------------------------------------------===//

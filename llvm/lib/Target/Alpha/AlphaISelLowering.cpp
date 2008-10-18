@@ -764,3 +764,9 @@ AlphaTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
 
   return sinkMBB;
 }
+
+bool
+AlphaTargetLowering::isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const {
+  // The Alpha target isn't yet aware of offsets.
+  return false;
+}

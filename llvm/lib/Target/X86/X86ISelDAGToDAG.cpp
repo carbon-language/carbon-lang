@@ -759,6 +759,7 @@ void X86DAGToDAGISel::EmitFunctionEntryCode(Function &Fn, MachineFunction &MF) {
 /// addressing mode.
 bool X86DAGToDAGISel::MatchAddress(SDValue N, X86ISelAddressMode &AM,
                                    bool isRoot, unsigned Depth) {
+  bool is64Bit = Subtarget->is64Bit();
   DOUT << "MatchAddress: "; DEBUG(AM.dump());
   // Limit recursion.
   if (Depth > 5)
@@ -768,7 +769,7 @@ bool X86DAGToDAGISel::MatchAddress(SDValue N, X86ISelAddressMode &AM,
   if (AM.isRIPRel) {
     if (!AM.ES && AM.JT != -1 && N.getOpcode() == ISD::Constant) {
       int64_t Val = cast<ConstantSDNode>(N)->getSExtValue();
-      if (isInt32(AM.Disp + Val)) {
+      if (!is64Bit || isInt32(AM.Disp + Val)) {
         AM.Disp += Val;
         return false;
       }
@@ -783,7 +784,7 @@ bool X86DAGToDAGISel::MatchAddress(SDValue N, X86ISelAddressMode &AM,
   default: break;
   case ISD::Constant: {
     int64_t Val = cast<ConstantSDNode>(N)->getSExtValue();
-    if (isInt32(AM.Disp + Val)) {
+    if (!is64Bit || isInt32(AM.Disp + Val)) {
       AM.Disp += Val;
       return false;
     }
@@ -791,10 +792,9 @@ bool X86DAGToDAGISel::MatchAddress(SDValue N, X86ISelAddressMode &AM,
   }
 
   case X86ISD::Wrapper: {
-DOUT << "Wrapper: 64bit " << Subtarget->is64Bit();
-DOUT << " AM "; DEBUG(AM.dump()); DOUT << "\n";
-DOUT << "AlreadySelected " << AlreadySelected << "\n";
-    bool is64Bit = Subtarget->is64Bit();
+    DOUT << "Wrapper: 64bit " << is64Bit;
+    DOUT << " AM "; DEBUG(AM.dump()); DOUT << "\n";
+    DOUT << "AlreadySelected " << AlreadySelected << "\n";
     // Under X86-64 non-small code model, GV (and friends) are 64-bits.
     // Also, base and index reg must be 0 in order to use rip as base.
     if (is64Bit && (TM.getCodeModel() != CodeModel::Small ||
@@ -808,17 +808,21 @@ DOUT << "AlreadySelected " << AlreadySelected << "\n";
     if (!AlreadySelected || (AM.Base.Reg.getNode() && AM.IndexReg.getNode())) {
       SDValue N0 = N.getOperand(0);
       if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(N0)) {
-        GlobalValue *GV = G->getGlobal();
-        AM.GV = GV;
-        AM.Disp += G->getOffset();
-        AM.isRIPRel = TM.symbolicAddressesAreRIPRel();
-        return false;
+        if (!is64Bit || isInt32(AM.Disp + G->getOffset())) {
+          GlobalValue *GV = G->getGlobal();
+          AM.GV = GV;
+          AM.Disp += G->getOffset();
+          AM.isRIPRel = TM.symbolicAddressesAreRIPRel();
+          return false;
+        }
       } else if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(N0)) {
-        AM.CP = CP->getConstVal();
-        AM.Align = CP->getAlignment();
-        AM.Disp += CP->getOffset();
-        AM.isRIPRel = TM.symbolicAddressesAreRIPRel();
-        return false;
+        if (!is64Bit || isInt32(AM.Disp + CP->getOffset())) {
+          AM.CP = CP->getConstVal();
+          AM.Align = CP->getAlignment();
+          AM.Disp += CP->getOffset();
+          AM.isRIPRel = TM.symbolicAddressesAreRIPRel();
+          return false;
+        }
       } else if (ExternalSymbolSDNode *S =dyn_cast<ExternalSymbolSDNode>(N0)) {
         AM.ES = S->getSymbol();
         AM.isRIPRel = TM.symbolicAddressesAreRIPRel();
@@ -862,7 +866,7 @@ DOUT << "AlreadySelected " << AlreadySelected << "\n";
           ConstantSDNode *AddVal =
             cast<ConstantSDNode>(ShVal.getNode()->getOperand(1));
           uint64_t Disp = AM.Disp + (AddVal->getZExtValue() << Val);
-          if (isInt32(Disp))
+          if (!is64Bit || isInt32(Disp))
             AM.Disp = Disp;
           else
             AM.IndexReg = ShVal;
@@ -905,7 +909,7 @@ DOUT << "AlreadySelected " << AlreadySelected << "\n";
               cast<ConstantSDNode>(MulVal.getNode()->getOperand(1));
             uint64_t Disp = AM.Disp + AddVal->getZExtValue() *
                                       CN->getZExtValue();
-            if (isInt32(Disp))
+            if (!is64Bit || isInt32(Disp))
               AM.Disp = Disp;
             else
               Reg = N.getNode()->getOperand(0);
@@ -944,7 +948,7 @@ DOUT << "AlreadySelected " << AlreadySelected << "\n";
           // Address could not have picked a GV address for the displacement.
           AM.GV == NULL &&
           // On x86-64, the resultant disp must fit in 32-bits.
-          isInt32(AM.Disp + CN->getSExtValue()) &&
+          (!is64Bit || isInt32(AM.Disp + CN->getSExtValue())) &&
           // Check to see if the LHS & C is zero.
           CurDAG->MaskedValueIsZero(N.getOperand(0), CN->getAPIntValue())) {
         AM.Disp += CN->getZExtValue();
@@ -1247,49 +1251,6 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
     default: break;
     case X86ISD::GlobalBaseReg: 
       return getGlobalBaseReg();
-
-    case ISD::ADD: {
-      // Turn ADD X, c to MOV32ri X+c. This cannot be done with tblgen'd
-      // code and is matched first so to prevent it from being turned into
-      // LEA32r X+c.
-      // In 64-bit small code size mode, use LEA to take advantage of
-      // RIP-relative addressing.
-      if (TM.getCodeModel() != CodeModel::Small)
-        break;
-      MVT PtrVT = TLI.getPointerTy();
-      SDValue N0 = N.getOperand(0);
-      SDValue N1 = N.getOperand(1);
-      if (N.getNode()->getValueType(0) == PtrVT &&
-          N0.getOpcode() == X86ISD::Wrapper &&
-          N1.getOpcode() == ISD::Constant) {
-        unsigned Offset = (unsigned)cast<ConstantSDNode>(N1)->getZExtValue();
-        SDValue C(0, 0);
-        // TODO: handle ExternalSymbolSDNode.
-        if (GlobalAddressSDNode *G =
-            dyn_cast<GlobalAddressSDNode>(N0.getOperand(0))) {
-          C = CurDAG->getTargetGlobalAddress(G->getGlobal(), PtrVT,
-                                             G->getOffset() + Offset);
-        } else if (ConstantPoolSDNode *CP =
-                   dyn_cast<ConstantPoolSDNode>(N0.getOperand(0))) {
-          C = CurDAG->getTargetConstantPool(CP->getConstVal(), PtrVT,
-                                            CP->getAlignment(),
-                                            CP->getOffset()+Offset);
-        }
-
-        if (C.getNode()) {
-          if (Subtarget->is64Bit()) {
-            SDValue Ops[] = { CurDAG->getRegister(0, PtrVT), getI8Imm(1),
-                                CurDAG->getRegister(0, PtrVT), C };
-            return CurDAG->SelectNodeTo(N.getNode(), X86::LEA64r,
-                                        MVT::i64, Ops, 4);
-          } else
-            return CurDAG->SelectNodeTo(N.getNode(), X86::MOV32ri, PtrVT, C);
-        }
-      }
-
-      // Other cases are handled by auto-generated code.
-      break;
-    }
 
     case X86ISD::ATOMOR64_DAG:
       return SelectAtomic64(Node, X86::ATOMOR6432);

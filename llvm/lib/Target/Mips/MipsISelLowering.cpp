@@ -1094,3 +1094,9 @@ getRegClassForInlineAsmConstraint(const std::string &Constraint,
   }
   return std::vector<unsigned>();
 }
+
+bool
+MipsTargetLowering::isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const {
+  // The Mips target isn't yet aware of offsets.
+  return false;
+}

@@ -996,3 +996,9 @@ getRegClassForInlineAsmConstraint(const std::string &Constraint,
 
   return std::vector<unsigned>();
 }
+
+bool
+SparcTargetLowering::isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const {
+  // The Sparc target isn't yet aware of offsets.
+  return false;
+}
