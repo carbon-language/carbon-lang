@@ -282,7 +282,8 @@ def int_init_trampoline : Intrinsic<[llvm_ptr_ty, llvm_ptr_ty, llvm_ptr_ty,
 //===------------------------- Atomic Intrinsics --------------------------===//
 //
 def int_memory_barrier : Intrinsic<[llvm_void_ty, llvm_i1_ty, llvm_i1_ty, 
-                                    llvm_i1_ty, llvm_i1_ty, llvm_i1_ty], []>;
+                                    llvm_i1_ty, llvm_i1_ty, llvm_i1_ty], []>,
+                                    GCCBuiltin<"__builtin_llvm_memory_barrier">;
 
 def int_atomic_cmp_swap : Intrinsic<[llvm_anyint_ty,
                                   LLVMAnyPointerType<LLVMMatchType<0>>,
