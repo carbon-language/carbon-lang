@@ -5318,7 +5318,7 @@ void SDNode::print(raw_ostream &OS, const SelectionDAG *G) const {
     }
   } else if (const GlobalAddressSDNode *GADN =
              dyn_cast<GlobalAddressSDNode>(this)) {
-    int offset = GADN->getOffset();
+    int64_t offset = GADN->getOffset();
     OS << '<';
     WriteAsOperand(OS, GADN->getGlobal());
     OS << '>';

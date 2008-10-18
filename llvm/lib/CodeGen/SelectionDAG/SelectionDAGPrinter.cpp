@@ -127,7 +127,7 @@ std::string DOTGraphTraits<SelectionDAG*>::getNodeLabel(const SDNode *Node,
   } else if (const GlobalAddressSDNode *GADN =
              dyn_cast<GlobalAddressSDNode>(Node)) {
     Op += ": " + GADN->getGlobal()->getName();
-    if (int Offset = GADN->getOffset()) {
+    if (int64_t Offset = GADN->getOffset()) {
       if (Offset > 0)
         Op += "+" + itostr(Offset);
       else
