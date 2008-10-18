@@ -110,9 +110,9 @@ public:
   void EmitStopPoint(llvm::Function *Fn, BuilderType &Builder);
 
   /// EmitFunctionStart - Emit a call to llvm.dbg.function.start to indicate
-  /// start of a new function
-  void EmitFunctionStart(const FunctionDecl *FnDecl, llvm::Function *Fn,
-                         BuilderType &Builder);
+  /// start of a new function.
+  void EmitFunctionStart(const char *Name, QualType ReturnType,
+                         llvm::Function *Fn, BuilderType &Builder);
   
   /// EmitRegionStart - Emit a call to llvm.dbg.region.start to indicate start
   /// of a new block.  

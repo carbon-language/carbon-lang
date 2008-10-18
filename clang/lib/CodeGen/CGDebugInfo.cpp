@@ -598,7 +598,8 @@ CGDebugInfo::getOrCreateType(QualType type, llvm::CompileUnitDesc *Unit)
 
 /// EmitFunctionStart - Constructs the debug code for entering a function -
 /// "llvm.dbg.func.start.".
-void CGDebugInfo::EmitFunctionStart(const FunctionDecl *FnDecl,
+void CGDebugInfo::EmitFunctionStart(const char *Name,
+                                    QualType ReturnType,
                                     llvm::Function *Fn,
                                     llvm::IRBuilder<> &Builder)
 {
@@ -611,8 +612,8 @@ void CGDebugInfo::EmitFunctionStart(const FunctionDecl *FnDecl,
   }
 
   // Get name information.
-  Subprogram->setName(FnDecl->getName());
-  Subprogram->setFullName(FnDecl->getName());
+  Subprogram->setName(Name);
+  Subprogram->setFullName(Name);
 
   // Gather location information.
   llvm::CompileUnitDesc *Unit = getOrCreateCompileUnit(CurLoc);
@@ -620,8 +621,7 @@ void CGDebugInfo::EmitFunctionStart(const FunctionDecl *FnDecl,
   uint64_t Loc = SM.getLogicalLineNumber(CurLoc);
 
   // Get Function Type.
-  QualType type = FnDecl->getResultType();
-  llvm::TypeDesc *SPTy = getOrCreateType(type, Unit);
+  llvm::TypeDesc *SPTy = getOrCreateType(ReturnType, Unit);
 
   Subprogram->setAnchor(SubprogramAnchor);
   Subprogram->setContext(Unit);

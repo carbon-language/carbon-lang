@@ -119,7 +119,7 @@ void CodeGenFunction::StartObjCMethod(const ObjCMethodDecl *OMD) {
     Args.push_back(std::make_pair(IPD, IPD->getType()));
   }
 
-  StartFunction(OMD, OMD->getResultType(), Fn, Args);
+  StartFunction(OMD, OMD->getResultType(), Fn, Args, OMD->getLocEnd());
 }
 
 /// Generate an Objective-C method.  An Objective-C method is a C function with
@@ -127,13 +127,7 @@ void CodeGenFunction::StartObjCMethod(const ObjCMethodDecl *OMD) {
 void CodeGenFunction::GenerateObjCMethod(const ObjCMethodDecl *OMD) {
   StartObjCMethod(OMD);
   EmitStmt(OMD->getBody());
-
-  const CompoundStmt *S = dyn_cast<CompoundStmt>(OMD->getBody());
-  if (S) {
-    FinishFunction(S->getRBracLoc());
-  } else {
-    FinishFunction();
-  }
+  FinishFunction(cast<CompoundStmt>(OMD->getBody())->getRBracLoc());
 }
 
 // FIXME: I wasn't sure about the synthesis approach. If we end up

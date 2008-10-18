@@ -184,7 +184,8 @@ public:
                     llvm::Function *Fn);
   void StartFunction(const Decl *D, QualType RetTy, 
                      llvm::Function *Fn,
-                     const FunctionArgList &Args);
+                     const FunctionArgList &Args,
+                     SourceLocation StartLoc);
   void FinishFunction(SourceLocation EndLoc=SourceLocation());
 
   /// EmitFunctionProlog - Emit the target specific LLVM code to load

@@ -98,7 +98,8 @@ void CodeGenFunction::FinishFunction(SourceLocation EndLoc) {
 
 void CodeGenFunction::StartFunction(const Decl *D, QualType RetTy, 
                                     llvm::Function *Fn,
-                                    const FunctionArgList &Args) {
+                                    const FunctionArgList &Args,
+                                    SourceLocation StartLoc) {
   CurFuncDecl = D;
   FnRetTy = RetTy;
   CurFn = Fn;
@@ -122,11 +123,14 @@ void CodeGenFunction::StartFunction(const Decl *D, QualType RetTy,
   
   // Emit subprogram debug descriptor.
   // FIXME: The cast here is a huge hack.
-  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
-    if (CGDebugInfo *DI = CGM.getDebugInfo()) {
-      if (CompoundStmt* body = dyn_cast<CompoundStmt>(FD->getBody()))
-        DI->setLocation(body->getLBracLoc());
-      DI->EmitFunctionStart(FD, CurFn, Builder);
+  if (CGDebugInfo *DI = CGM.getDebugInfo()) {
+    DI->setLocation(StartLoc);
+    if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+      DI->EmitFunctionStart(FD->getName(), RetTy, CurFn, Builder);
+    } else {
+      // Just use LLVM function name.
+      DI->EmitFunctionStart(Fn->getName().c_str(), 
+                            RetTy, CurFn, Builder);
     }
   }
 
@@ -145,7 +149,8 @@ void CodeGenFunction::GenerateCode(const FunctionDecl *FD,
                                     FProto->getArgType(i)));
   }
 
-  StartFunction(FD, FD->getResultType(), Fn, Args);
+  StartFunction(FD, FD->getResultType(), Fn, Args,
+                cast<CompoundStmt>(FD->getBody())->getLBracLoc());
 
   EmitStmt(FD->getBody());
   
