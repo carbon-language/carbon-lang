@@ -5134,24 +5134,24 @@ SDValue DAGCombiner::XformToShuffleWithZero(SDNode *N) {
       std::vector<SDValue> IdxOps;
       unsigned NumOps = RHS.getNumOperands();
       unsigned NumElts = NumOps;
-      MVT EVT = RHS.getValueType().getVectorElementType();
       for (unsigned i = 0; i != NumElts; ++i) {
         SDValue Elt = RHS.getOperand(i);
         if (!isa<ConstantSDNode>(Elt))
           return SDValue();
         else if (cast<ConstantSDNode>(Elt)->isAllOnesValue())
-          IdxOps.push_back(DAG.getConstant(i, EVT));
+          IdxOps.push_back(DAG.getIntPtrConstant(i));
         else if (cast<ConstantSDNode>(Elt)->isNullValue())
-          IdxOps.push_back(DAG.getConstant(NumElts, EVT));
+          IdxOps.push_back(DAG.getIntPtrConstant(NumElts));
         else
           return SDValue();
       }
 
       // Let's see if the target supports this vector_shuffle.
-      if (!TLI.isVectorClearMaskLegal(IdxOps, EVT, DAG))
+      if (!TLI.isVectorClearMaskLegal(IdxOps, TLI.getPointerTy(), DAG))
         return SDValue();
 
       // Return the new VECTOR_SHUFFLE node.
+      MVT EVT = RHS.getValueType().getVectorElementType();
       MVT VT = MVT::getVectorVT(EVT, NumElts);
       std::vector<SDValue> Ops;
       LHS = DAG.getNode(ISD::BIT_CONVERT, VT, LHS);
