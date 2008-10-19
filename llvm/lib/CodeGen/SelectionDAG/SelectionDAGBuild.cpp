@@ -2207,7 +2207,7 @@ void SelectionDAGLowering::visitUIToFP(User &I) {
 }
 
 void SelectionDAGLowering::visitSIToFP(User &I){ 
-  // UIToFP is never a no-op cast, no need to check
+  // SIToFP is never a no-op cast, no need to check
   SDValue N = getValue(I.getOperand(0));
   MVT DestVT = TLI.getValueType(I.getType());
   setValue(&I, DAG.getNode(ISD::SINT_TO_FP, DestVT, N));
@@ -3079,6 +3079,7 @@ SelectionDAGLowering::visitLog2(CallInst &I) {
 void
 SelectionDAGLowering::visitLog10(CallInst &I) {
   SDValue result;
+
   if (getValue(I.getOperand(1)).getValueType() == MVT::f32 &&
       LimitFloatPrecision > 0 && LimitFloatPrecision <= 18) {
     SDValue Op = getValue(I.getOperand(1));
@@ -4221,13 +4222,13 @@ SDValue RegsForValue::getCopyFromRegs(SelectionDAG &DAG,
           else if (NumZeroBits >= RegSize-9)
             isSExt = false, FromVT = MVT::i8;  // ASSERT ZEXT 8
           else if (NumSignBits > RegSize-16)
-            isSExt = true, FromVT = MVT::i16;   // ASSERT SEXT 16
+            isSExt = true, FromVT = MVT::i16;  // ASSERT SEXT 16
           else if (NumZeroBits >= RegSize-17)
-            isSExt = false, FromVT = MVT::i16;  // ASSERT ZEXT 16
+            isSExt = false, FromVT = MVT::i16; // ASSERT ZEXT 16
           else if (NumSignBits > RegSize-32)
-            isSExt = true, FromVT = MVT::i32;   // ASSERT SEXT 32
+            isSExt = true, FromVT = MVT::i32;  // ASSERT SEXT 32
           else if (NumZeroBits >= RegSize-33)
-            isSExt = false, FromVT = MVT::i32;  // ASSERT ZEXT 32
+            isSExt = false, FromVT = MVT::i32; // ASSERT ZEXT 32
           
           if (FromVT != MVT::Other) {
             P = DAG.getNode(isSExt ? ISD::AssertSext : ISD::AssertZext,
