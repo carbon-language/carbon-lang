@@ -255,6 +255,12 @@ def main(args):
         if argkey in ('-std', '-mmacosx-version-min'):
             compile_opts.append(arg)
 
+        # Special case debug options to only pass -g to clang. This is
+        # wrong.
+        if arg in ('-g', '-gdwarf-2'):
+            compile_opts.append('-g')
+            link_opts.append(arg)
+
         # Options with one argument that should pass through to compiler
         if arg in [ '-include', '-idirafter', '-iprefix',
                        '-iquote', '-isystem', '-iwithprefix',
@@ -271,6 +277,7 @@ def main(args):
 
         # Options with one argument that should pass through
         if arg in ('-framework', '-multiply_defined', '-bundle_loader',
+                   '-weak_framework',
                    '-e', '-install_name',
                    '-unexported_symbols_list', '-exported_symbols_list', 
                    '-compatibility_version', '-current_version', '-init',
