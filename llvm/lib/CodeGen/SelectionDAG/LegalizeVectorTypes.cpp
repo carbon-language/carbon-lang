@@ -156,8 +156,10 @@ SDValue DAGTypeLegalizer::ScalarizeVecRes_SELECT(SDNode *N) {
 
 SDValue DAGTypeLegalizer::ScalarizeVecRes_VECTOR_SHUFFLE(SDNode *N) {
   // Figure out if the scalar is the LHS or RHS and return it.
-  SDValue EltNum = N->getOperand(2).getOperand(0);
-  unsigned Op = cast<ConstantSDNode>(EltNum)->getZExtValue() != 0;
+  SDValue Arg = N->getOperand(2).getOperand(0);
+  if (Arg.getOpcode() == ISD::UNDEF)
+    return DAG.getNode(ISD::UNDEF, N->getValueType(0).getVectorElementType());
+  unsigned Op = !cast<ConstantSDNode>(Arg)->isNullValue();
   return GetScalarizedVector(N->getOperand(Op));
 }
 
@@ -562,14 +564,19 @@ void DAGTypeLegalizer::SplitVecRes_VECTOR_SHUFFLE(SDNode *N, SDValue &Lo,
   // buildvector of extractelement here because the input vectors will have
   // to be legalized, so this makes the code simpler.
   for (unsigned i = 0; i != LoNumElts; ++i) {
-    unsigned Idx = cast<ConstantSDNode>(Mask.getOperand(i))->getZExtValue();
-    SDValue InVec = N->getOperand(0);
-    if (Idx >= NumElements) {
-      InVec = N->getOperand(1);
-      Idx -= NumElements;
+    SDValue Arg = Mask.getOperand(i);
+    if (Arg.getOpcode() == ISD::UNDEF) {
+      Ops.push_back(DAG.getNode(ISD::UNDEF, EltVT));
+    } else {
+      unsigned Idx = cast<ConstantSDNode>(Mask.getOperand(i))->getZExtValue();
+      SDValue InVec = N->getOperand(0);
+      if (Idx >= NumElements) {
+        InVec = N->getOperand(1);
+        Idx -= NumElements;
+      }
+      Ops.push_back(DAG.getNode(ISD::EXTRACT_VECTOR_ELT, EltVT, InVec,
+                                DAG.getIntPtrConstant(Idx)));
     }
-    Ops.push_back(DAG.getNode(ISD::EXTRACT_VECTOR_ELT, EltVT, InVec,
-                              DAG.getIntPtrConstant(Idx)));
   }
   Lo = DAG.getNode(ISD::BUILD_VECTOR, LoVT, &Ops[0], Ops.size());
   Ops.clear();
@@ -763,7 +770,7 @@ SDValue DAGTypeLegalizer::SplitVecOp_STORE(StoreSDNode *N, unsigned OpNo) {
   return DAG.getNode(ISD::TokenFactor, MVT::Other, Lo, Hi);
 }
 
-SDValue DAGTypeLegalizer::SplitVecOp_VECTOR_SHUFFLE(SDNode *N, unsigned OpNo){
+SDValue DAGTypeLegalizer::SplitVecOp_VECTOR_SHUFFLE(SDNode *N, unsigned OpNo) {
   assert(OpNo == 2 && "Shuffle source type differs from result type?");
   SDValue Mask = N->getOperand(2);
   unsigned MaskLength = Mask.getValueType().getVectorNumElements();
@@ -802,9 +809,13 @@ SDValue DAGTypeLegalizer::SplitVecOp_VECTOR_SHUFFLE(SDNode *N, unsigned OpNo){
       // Success!  Rebuild the vector using the legal types.
       SmallVector<SDValue, 16> Ops(MaskLength);
       for (unsigned i = 0; i < MaskLength; ++i) {
-        uint64_t Idx =
-          cast<ConstantSDNode>(Mask.getOperand(i))->getZExtValue();
-        Ops[i] = DAG.getConstant(Idx, OpVT);
+        SDValue Arg = Mask.getOperand(i);
+        if (Arg.getOpcode() == ISD::UNDEF) {
+          Ops[i] = DAG.getNode(ISD::UNDEF, OpVT);
+        } else {
+          uint64_t Idx = cast<ConstantSDNode>(Arg)->getZExtValue();
+          Ops[i] = DAG.getConstant(Idx, OpVT);
+        }
       }
       return DAG.UpdateNodeOperands(SDValue(N,0),
                                     N->getOperand(0), N->getOperand(1),
