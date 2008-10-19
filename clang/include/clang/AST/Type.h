@@ -1104,7 +1104,8 @@ protected:
 /// to detect TagType objects of structs/unions/classes.
 class RecordType : public TagType {
 protected:
-  explicit RecordType(RecordDecl *D) : TagType(cast<TagDecl>(D), QualType()) { }
+  explicit RecordType(RecordDecl *D)
+    : TagType(reinterpret_cast<TagDecl*>(D), QualType()) { }
   friend class ASTContext;   // ASTContext creates these.
 public:
     
@@ -1150,7 +1151,8 @@ public:
 /// EnumType - This is a helper class that allows the use of isa/cast/dyncast
 /// to detect TagType objects of enums.
 class EnumType : public TagType {
-  explicit EnumType(EnumDecl *D) : TagType(cast<TagDecl>(D), QualType()) { }
+  explicit EnumType(EnumDecl *D)
+    : TagType(reinterpret_cast<TagDecl*>(D), QualType()) { }
   friend class ASTContext;   // ASTContext creates these.
 public:
     
