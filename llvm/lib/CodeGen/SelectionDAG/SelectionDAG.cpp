@@ -216,7 +216,7 @@ ISD::CondCode ISD::getSetCCSwappedOperands(ISD::CondCode Operation) {
   unsigned OldG = (Operation >> 1) & 1;
   return ISD::CondCode((Operation & ~6) |  // Keep the N, U, E bits
                        (OldL << 1) |       // New G bit
-                       (OldG << 2));        // New L bit.
+                       (OldG << 2));       // New L bit.
 }
 
 /// getSetCCInverse - Return the operation corresponding to !(X op Y), where
@@ -227,8 +227,10 @@ ISD::CondCode ISD::getSetCCInverse(ISD::CondCode Op, bool isInteger) {
     Operation ^= 7;   // Flip L, G, E bits, but not U.
   else
     Operation ^= 15;  // Flip all of the condition bits.
+
   if (Operation > ISD::SETTRUE2)
-    Operation &= ~8;     // Don't let N and U bits get set.
+    Operation &= ~8;  // Don't let N and U bits get set.
+
   return ISD::CondCode(Operation);
 }
 
@@ -506,7 +508,8 @@ static void AddNodeIDNode(FoldingSetNodeID &ID, const SDNode *N) {
 /// encodeMemSDNodeFlags - Generic routine for computing a value for use in
 /// the CSE map that carries both alignment and volatility information.
 ///
-static unsigned encodeMemSDNodeFlags(bool isVolatile, unsigned Alignment) {
+static inline unsigned
+encodeMemSDNodeFlags(bool isVolatile, unsigned Alignment) {
   return isVolatile | ((Log2_32(Alignment) + 1) << 1);
 }
 
@@ -561,9 +564,10 @@ void SelectionDAG::RemoveDeadNodes(SmallVectorImpl<SDNode *> &DeadNodes,
       if (Operand->use_empty())
         DeadNodes.push_back(Operand);
     }
-    if (N->OperandsNeedDelete) {
+
+    if (N->OperandsNeedDelete)
       delete[] N->OperandList;
-    }
+
     N->OperandList = 0;
     N->NumOperands = 0;
     
@@ -589,12 +593,14 @@ void SelectionDAG::DeleteNode(SDNode *N) {
 }
 
 void SelectionDAG::DeleteNodeNotInCSEMaps(SDNode *N) {
-
   // Drop all of the operands and decrement used node's use counts.
   for (SDNode::op_iterator I = N->op_begin(), E = N->op_end(); I != E; ++I)
     I->getVal()->removeUser(std::distance(N->op_begin(), I), N);
-  if (N->OperandsNeedDelete)
+
+  if (N->OperandsNeedDelete) {
     delete[] N->OperandList;
+    N->OperandList = 0;
+  }
   
   assert(N != AllNodes.begin());
   NodeAllocator.Deallocate(AllNodes.remove(N));
@@ -675,13 +681,13 @@ SDNode *SelectionDAG::AddNonLeafNodeToCSEMaps(SDNode *N) {
   case ISD::DBG_STOPPOINT:
   case ISD::EH_LABEL:
   case ISD::DECLARE:
-    return 0;    // Never add these nodes.
+    return 0;   // Never add these nodes.
   }
   
   // Check that remaining values produced are not flags.
   for (unsigned i = 1, e = N->getNumValues(); i != e; ++i)
     if (N->getValueType(i) == MVT::Flag)
-      return 0;   // Never CSE anything that produces a flag.
+      return 0; // Never CSE anything that produces a flag.
   
   SDNode *New = CSEMap.GetOrInsertNode(N);
   if (New != N) return New;  // Node already existed.
@@ -703,13 +709,13 @@ SDNode *SelectionDAG::FindModifiedNodeSlot(SDNode *N, SDValue Op,
   case ISD::DBG_LABEL:
   case ISD::DBG_STOPPOINT:
   case ISD::EH_LABEL:
-    return 0;    // Never add these nodes.
+    return 0;   // Never add these nodes.
   }
   
   // Check that remaining values produced are not flags.
   for (unsigned i = 1, e = N->getNumValues(); i != e; ++i)
     if (N->getValueType(i) == MVT::Flag)
-      return 0;   // Never CSE anything that produces a flag.
+      return 0; // Never CSE anything that produces a flag.
   
   SDValue Ops[] = { Op };
   FoldingSetNodeID ID;
@@ -729,7 +735,7 @@ SDNode *SelectionDAG::FindModifiedNodeSlot(SDNode *N,
   // Check that remaining values produced are not flags.
   for (unsigned i = 1, e = N->getNumValues(); i != e; ++i)
     if (N->getValueType(i) == MVT::Flag)
-      return 0;   // Never CSE anything that produces a flag.
+      return 0; // Never CSE anything that produces a flag.
                                               
   SDValue Ops[] = { Op1, Op2 };
   FoldingSetNodeID ID;
@@ -755,13 +761,13 @@ SDNode *SelectionDAG::FindModifiedNodeSlot(SDNode *N,
   case ISD::DBG_STOPPOINT:
   case ISD::EH_LABEL:
   case ISD::DECLARE:
-    return 0;    // Never add these nodes.
+    return 0;   // Never add these nodes.
   }
   
   // Check that remaining values produced are not flags.
   for (unsigned i = 1, e = N->getNumValues(); i != e; ++i)
     if (N->getValueType(i) == MVT::Flag)
-      return 0;   // Never CSE anything that produces a flag.
+      return 0; // Never CSE anything that produces a flag.
   
   FoldingSetNodeID ID;
   AddNodeIDNode(ID, N->getOpcode(), N->getVTList(), Ops, NumOps);
@@ -833,8 +839,12 @@ void SelectionDAG::allnodes_clear() {
   while (!AllNodes.empty()) {
     SDNode *N = AllNodes.remove(AllNodes.begin());
     N->SetNextInBucket(0);
-    if (N->OperandsNeedDelete)
+
+    if (N->OperandsNeedDelete) {
       delete [] N->OperandList;
+      N->OperandList = 0;
+    }
+
     NodeAllocator.Deallocate(N);
   }
 }
@@ -4208,6 +4218,7 @@ SDNode *SelectionDAG::MorphNodeTo(SDNode *N, unsigned Opc,
   if (NumOps > N->NumOperands) {
     if (N->OperandsNeedDelete)
       delete[] N->OperandList;
+
     if (N->isMachineOpcode()) {
       // We're creating a final node that will live unmorphed for the
       // remainder of the current SelectionDAG iteration, so we can allocate
