@@ -25,7 +25,7 @@ using namespace clang;
 //  Helper functions
 //===----------------------------------------------------------------------===//
 
-static const FunctionTypeProto *getFunctionProto(Decl *d) {
+static const FunctionType *getFunctionType(Decl *d) {
   QualType Ty;
   if (ValueDecl *decl = dyn_cast<ValueDecl>(d))
     Ty = decl->getType();
@@ -38,25 +38,38 @@ static const FunctionTypeProto *getFunctionProto(Decl *d) {
   
   if (Ty->isFunctionPointerType())
     Ty = Ty->getAsPointerType()->getPointeeType();
-  
-  if (const FunctionType *FnTy = Ty->getAsFunctionType())
-    return dyn_cast<FunctionTypeProto>(FnTy->getAsFunctionType());
-  
-  return 0;
+
+  return Ty->getAsFunctionType();
 }
 
 // FIXME: We should provide an abstraction around a method or function
 // to provide the following bits of information.
 
-/// isFunctionOrMethod - Return true if the given decl is a (non-K&R)
-/// function or an Objective-C method.
+/// isFunctionOrMethod - Return true if the given decl has function
+/// type (function or function-typed variable) or an Objective-C
+/// method.
 static bool isFunctionOrMethod(Decl *d) {
-  return getFunctionProto(d) || isa<ObjCMethodDecl>(d);
-
+  return getFunctionType(d) || isa<ObjCMethodDecl>(d);
 }
 
+/// hasFunctionProto - Return true if the given decl has a argument
+/// information. This decl should have already passed
+/// isFunctionOrMethod.
+static bool hasFunctionProto(Decl *d) {
+  if (const FunctionType *FnTy = getFunctionType(d)) {
+    return isa<FunctionTypeProto>(FnTy);
+  } else {
+    assert(isa<ObjCMethodDecl>(d));
+    return true;
+  }
+}
+
+/// getFunctionOrMethodNumArgs - Return number of function or method
+/// arguments. It is an error to call this on a K&R function (use
+/// hasFunctionProto first).
 static unsigned getFunctionOrMethodNumArgs(Decl *d) {
-  if (const FunctionTypeProto *proto = getFunctionProto(d)) {
+  if (const FunctionType *FnTy = getFunctionType(d)) {
+    const FunctionTypeProto *proto = cast<FunctionTypeProto>(FnTy);
     return proto->getNumArgs();
   } else {
     return cast<ObjCMethodDecl>(d)->getNumParams();
@@ -64,7 +77,8 @@ static unsigned getFunctionOrMethodNumArgs(Decl *d) {
 }
 
 static QualType getFunctionOrMethodArgType(Decl *d, unsigned Idx) {
-  if (const FunctionTypeProto *proto = getFunctionProto(d)) {
+  if (const FunctionType *FnTy = getFunctionType(d)) {
+    const FunctionTypeProto *proto = cast<FunctionTypeProto>(FnTy);
     return proto->getArgType(Idx);
   } else {
     return cast<ObjCMethodDecl>(d)->getParamDecl(Idx)->getType();
@@ -72,7 +86,8 @@ static QualType getFunctionOrMethodArgType(Decl *d, unsigned Idx) {
 }
 
 static bool isFunctionOrMethodVariadic(Decl *d) {
-  if (const FunctionTypeProto *proto = getFunctionProto(d)) {
+  if (const FunctionType *FnTy = getFunctionType(d)) {
+    const FunctionTypeProto *proto = cast<FunctionTypeProto>(FnTy);
     return proto->isVariadic();
   } else {
     return cast<ObjCMethodDecl>(d)->isVariadic();
@@ -289,17 +304,15 @@ static void HandleIBOutletAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 }
 
 static void HandleNonNullAttr(Decl *d, const AttributeList &Attr, Sema &S) {
-
   // GCC ignores the nonnull attribute on K&R style function
   // prototypes, so we ignore it as well
-  const FunctionTypeProto *proto = getFunctionProto(d);
-  if (!proto) {
+  if (!isFunctionOrMethod(d) || !hasFunctionProto(d)) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type,
            "nonnull", "function");
     return;
   }
   
-  unsigned NumArgs = proto->getNumArgs();
+  unsigned NumArgs = getFunctionOrMethodNumArgs(d);
 
   // The nonnull attribute only applies to pointers.
   llvm::SmallVector<unsigned, 10> NonNullArgs;
@@ -328,7 +341,7 @@ static void HandleNonNullAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     --x;
 
     // Is the function argument a pointer type?
-    if (!proto->getArgType(x)->isPointerType()) {
+    if (!getFunctionOrMethodArgType(d, x)->isPointerType()) {
       // FIXME: Should also highlight argument in decl.
       S.Diag(Attr.getLoc(), diag::err_nonnull_pointers_only,
              "nonnull", Ex->getSourceRange());
@@ -341,12 +354,9 @@ static void HandleNonNullAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // If no arguments were specified to __attribute__((nonnull)) then all
   // pointer arguments have a nonnull attribute.
   if (NonNullArgs.empty()) {
-    unsigned idx = 0;
-    
-    for (FunctionTypeProto::arg_type_iterator
-         I=proto->arg_type_begin(), E=proto->arg_type_end(); I!=E; ++I, ++idx)
-      if ((*I)->isPointerType())
-        NonNullArgs.push_back(idx);
+    for (unsigned I = 0, E = getFunctionOrMethodNumArgs(d); I != E; ++I)
+      if (getFunctionOrMethodArgType(d, I)->isPointerType())
+        NonNullArgs.push_back(I);
     
     if (NonNullArgs.empty()) {
       S.Diag(Attr.getLoc(), diag::warn_attribute_nonnull_no_pointers);
@@ -393,8 +403,8 @@ static void HandleNoReturnAttr(Decl *d, const AttributeList &Attr, Sema &S) {
            std::string("0"));
     return;
   }
-  
-  if (!isa<FunctionDecl>(d) && !isa<ObjCMethodDecl>(d)) {
+
+  if (!isFunctionOrMethod(d)) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type,
            "noreturn", "function");
     return;
@@ -411,7 +421,7 @@ static void HandleUnusedAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }
   
-  if (!isa<VarDecl>(d) && !getFunctionProto(d)) {
+  if (!isa<VarDecl>(d) && !isFunctionOrMethod(d)) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type,
            "unused", "variable and function");
     return;
@@ -755,9 +765,7 @@ static void HandleFormatAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }
 
-  // GCC ignores the format attribute on K&R style function
-  // prototypes, so we ignore it as well
-  if (!isFunctionOrMethod(d)) {
+  if (!isFunctionOrMethod(d) || !hasFunctionProto(d)) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type,
            "format", "function");
     return;
