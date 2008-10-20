@@ -321,6 +321,17 @@ ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
     
     // Parse the next declarator.
     D.clear();
+    
+    // Accept attributes in an init-declarator.  In the first declarator in a
+    // declaration, these would be part of the declspec.  In subsequent
+    // declarators, they become part of the declarator itself, so that they
+    // don't apply to declarators after *this* one.  Examples:
+    //    short __attribute__((common)) var;    -> declspec
+    //    short var __attribute__((common));    -> declarator
+    //    short x, __attribute__((common)) var;    -> declarator
+    if (Tok.is(tok::kw___attribute))
+      D.AddAttributes(ParseAttributes());
+    
     ParseDeclarator(D);
   }
   

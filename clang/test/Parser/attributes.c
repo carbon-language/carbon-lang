@@ -43,3 +43,15 @@ void (*h2)(int (*f2)(y, attribute(()) x));    // expected-error {{expected ident
 
 void (*h3)(void (*f3)(attribute(()) x));   // expected-warning {{defaults to 'int'}}
 void (*h4)(void (*f4)(attribute(())));  // expected-error {{expected parameter declarator}}
+
+
+
+// rdar://6131260
+int foo42(void) {
+  int x, attribute((unused)) y, z;
+  return 0;
+}
+
+// rdar://6096491
+void attribute((noreturn)) d0(void), attribute((noreturn)) d1(void);
+

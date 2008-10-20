@@ -718,17 +718,20 @@ public:
   }
   
   /// AddAttributes - simply adds the attribute list to the Declarator.
-  /// Unlike AddAttributes on DeclSpec, this routine should never have to
-  /// concatenate two lists. The following syntax adds 3 attributes to "var":
-  ///
-  /// short int var __attribute__((aligned(16),common,deprecated));
+  /// These examples both add 3 attributes to "var":
+  ///  short int var __attribute__((aligned(16),common,deprecated));
+  ///  short int x, __attribute__((aligned(16)) var
+  ///                                 __attribute__((common,deprecated));
   ///
   void AddAttributes(AttributeList *alist) { 
     if (!alist)
       return; // we parsed __attribute__(()) or had a syntax error
-    assert((AttrList == 0) && "Declarator already has an attribute list");
+    
+    if (AttrList) 
+      alist->addAttributeList(AttrList); 
     AttrList = alist;
   }
+  
   const AttributeList *getAttributes() const { return AttrList; }
   AttributeList *getAttributes() { return AttrList; }
 
