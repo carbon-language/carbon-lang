@@ -61,6 +61,8 @@ namespace llvm {
   ///  This pass is still in development
   extern const PassInfo *const StrongPHIEliminationID;
 
+  extern const PassInfo *const PreAllocSplittingID;
+
   /// SimpleRegisterCoalescing pass.  Aggressively coalesces every register
   /// copy it can.
   ///
