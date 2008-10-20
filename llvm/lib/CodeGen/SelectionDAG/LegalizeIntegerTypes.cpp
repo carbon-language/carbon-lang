@@ -364,14 +364,18 @@ SDValue DAGTypeLegalizer::PromoteIntRes_SELECT_CC(SDNode *N) {
 }
 
 SDValue DAGTypeLegalizer::PromoteIntRes_SETCC(SDNode *N) {
-  MVT NVT = TLI.getTypeToTransformTo(N->getValueType(0));
   MVT SVT = TLI.getSetCCResultType(N->getOperand(0));
-  assert(isTypeLegal(SVT) && "SetCC type not legal??");
+  assert(isTypeLegal(SVT) && "Illegal SetCC type!");
+
+  // Get the SETCC result using the canonical SETCC type.
+  SDValue SetCC = DAG.getNode(ISD::SETCC, SVT, N->getOperand(0),
+                              N->getOperand(1), N->getOperand(2));
+
+  // Convert to the expected type.
+  MVT NVT = TLI.getTypeToTransformTo(N->getValueType(0));
   assert(NVT.getSizeInBits() <= SVT.getSizeInBits() &&
          "Integer type overpromoted?");
-  return DAG.getNode(ISD::TRUNCATE, NVT,
-                     DAG.getNode(ISD::SETCC, SVT, N->getOperand(0),
-                                 N->getOperand(1), N->getOperand(2)));
+  return DAG.getNode(ISD::TRUNCATE, NVT, SetCC);
 }
 
 SDValue DAGTypeLegalizer::PromoteIntRes_SHL(SDNode *N) {
@@ -731,18 +735,50 @@ SDValue DAGTypeLegalizer::PromoteIntOp_MEMBARRIER(SDNode *N) {
 
 SDValue DAGTypeLegalizer::PromoteIntOp_SELECT(SDNode *N, unsigned OpNo) {
   assert(OpNo == 0 && "Only know how to promote condition");
-  SDValue Cond = GetPromotedInteger(N->getOperand(0));  // Promote condition.
+  assert(N->getOperand(0).getValueType() == MVT::i1 &&
+         "SetCC type is not legal??");
+  SDValue Cond = GetPromotedInteger(N->getOperand(0));
 
-  // The top bits of the promoted condition are not necessarily zero, ensure
-  // that the value is properly zero extended.
-  unsigned BitWidth = Cond.getValueSizeInBits();
-  if (!DAG.MaskedValueIsZero(Cond,
-                             APInt::getHighBitsSet(BitWidth, BitWidth-1)))
-    Cond = DAG.getZeroExtendInReg(Cond, MVT::i1);
+  // Promote all the way up to SVT, the canonical SetCC type.
+  MVT SVT = TLI.getSetCCResultType(Cond);
+  assert(isTypeLegal(SVT) && "Illegal SetCC type!");
+  assert(Cond.getValueSizeInBits() <= SVT.getSizeInBits() &&
+         "Integer type overpromoted?");
 
-  // The chain (Op#0) and basic block destination (Op#2) are always legal types.
-  return DAG.UpdateNodeOperands(SDValue(N, 0), Cond, N->getOperand(1),
-                                N->getOperand(2));
+  // Make sure the extra bits conform to getSetCCResultContents.  There are
+  // two sets of extra bits: those in Cond, which come from type promotion,
+  // and those we need to add to have the final type be SVT (for most targets
+  // this last set of bits is empty).
+  unsigned CondBits = Cond.getValueSizeInBits();
+  ISD::NodeType ExtendCode;
+  switch (TLI.getSetCCResultContents()) {
+  default:
+    assert(false && "Unknown SetCCResultValue!");
+  case TargetLowering::UndefinedSetCCResult:
+    // Extend to SVT by adding rubbish.
+    ExtendCode = ISD::ANY_EXTEND;
+    break;
+  case TargetLowering::ZeroOrOneSetCCResult:
+    ExtendCode = ISD::ZERO_EXTEND;
+    if (!DAG.MaskedValueIsZero(Cond,APInt::getHighBitsSet(CondBits,CondBits-1)))
+      // All extra bits need to be cleared.  Do this by zero extending the
+      // original MVT::i1 condition value all the way to SVT.
+      Cond = N->getOperand(0);
+    break;
+  case TargetLowering::ZeroOrNegativeOneSetCCResult: {
+    ExtendCode = ISD::SIGN_EXTEND;
+    unsigned SignBits = DAG.ComputeNumSignBits(Cond);
+    if (SignBits != CondBits)
+      // All extra bits need to be sign extended.  Do this by sign extending the
+      // original MVT::i1 condition value all the way to SVT.
+      Cond = N->getOperand(0);
+    break;
+  }
+  }
+  Cond = DAG.getNode(ExtendCode, SVT, Cond);
+
+  return DAG.UpdateNodeOperands(SDValue(N, 0), Cond,
+                                N->getOperand(1), N->getOperand(2));
 }
 
 SDValue DAGTypeLegalizer::PromoteIntOp_SELECT_CC(SDNode *N, unsigned OpNo) {
