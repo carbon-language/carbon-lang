@@ -36,3 +36,15 @@ typedef signed char BOOL;
 @implementation MyClass
 @synthesize myIvar = _myIvar;
 @end
+
+
+@interface BadPropClass
+{
+}
+
+@property (readonly) int; // expected-warning {{declaration does not declare anything}}
+@property (readonly) ; // expected-error {{type name requires a specifier or qualifier}} \
+                          expected-warning {{declaration does not declare anything}}
+@property (readonly) int : 4; // expected-error {{property requires fields to be named}}
+
+@end

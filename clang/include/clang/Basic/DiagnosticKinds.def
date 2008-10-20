@@ -418,6 +418,8 @@ DIAG(err_objc_illegal_interface_qual, ERROR,
      "illegal interface qualifier")
 DIAG(err_objc_expected_equal, ERROR,
      "setter/getter expects '=' followed by name")
+DIAG(err_objc_property_requires_field_name, ERROR,
+     "@property requires fields to be named")
 DIAG(err_objc_expected_property_attr, ERROR,
      "unknown property attribute detected")
 DIAG(err_objc_unexpected_attr, ERROR,

@@ -316,21 +316,27 @@ void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl,
       // Convert them all to property declarations.
       for (unsigned i = 0, e = FieldDeclarators.size(); i != e; ++i) {
         FieldDeclarator &FD = FieldDeclarators[i];
+        if (FD.D.getIdentifier() == 0) {
+          Diag(AtLoc, diag::err_objc_property_requires_field_name,
+               FD.D.getSourceRange());
+          continue;
+        }
+        
         // Install the property declarator into interfaceDecl.
+        IdentifierInfo *SelName =
+          OCDS.getGetterName() ? OCDS.getGetterName() : FD.D.getIdentifier();
+        
         Selector GetterSel = 
-          PP.getSelectorTable().getNullarySelector(OCDS.getGetterName() 
-                                                   ? OCDS.getGetterName() 
-                                                   : FD.D.getIdentifier());
+          PP.getSelectorTable().getNullarySelector(SelName);
         IdentifierInfo *SetterName = OCDS.getSetterName();
         if (!SetterName)
           SetterName = constructSetterName(PP.getIdentifierTable(),
                                            FD.D.getIdentifier());
         Selector SetterSel = 
           PP.getSelectorTable().getUnarySelector(SetterName);
-        DeclTy *Property = Actions.ActOnProperty(CurScope,
-                             AtLoc, FD, OCDS,
-                             GetterSel, SetterSel,
-                             MethodImplKind);
+        DeclTy *Property = Actions.ActOnProperty(CurScope, AtLoc, FD, OCDS,
+                                                 GetterSel, SetterSel,
+                                                 MethodImplKind);
         allProperties.push_back(Property);
       }
       break;
