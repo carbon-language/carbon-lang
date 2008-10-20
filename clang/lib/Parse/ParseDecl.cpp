@@ -277,7 +277,6 @@ ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
       D.AddAttributes(ParseAttributes());
 
     // Inform the current actions module that we just parsed this declarator.
-    // FIXME: pass asm & attributes.
     LastDeclInGroup = Actions.ActOnDeclarator(CurScope, D, LastDeclInGroup);
         
     // Parse declarator '=' initializer.
@@ -952,8 +951,6 @@ bool Parser::isTypeSpecifierQualifier() const {
   case tok::kw___attribute:
     // GNU typeof support.
   case tok::kw_typeof:
-    // GNU bizarre protocol extension. FIXME: make an extension?
-  case tok::less:
   
     // type-specifiers
   case tok::kw_short:
@@ -986,6 +983,10 @@ bool Parser::isTypeSpecifierQualifier() const {
   case tok::kw_volatile:
   case tok::kw_restrict:
     return true;
+      
+    // GNU ObjC bizarre protocol extension: <proto1,proto2> with implicit 'id'.
+  case tok::less:
+    return getLang().ObjC1;
     
     // typedef-name
   case tok::identifier:
