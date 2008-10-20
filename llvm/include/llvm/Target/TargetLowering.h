@@ -209,10 +209,11 @@ public:
       return NVT;
     }
 
-    if (VT.isVector())
-      return MVT::getVectorVT(VT.getVectorElementType(),
-                              VT.getVectorNumElements() / 2);
-    if (VT.isInteger()) {
+    if (VT.isVector()) {
+      unsigned NumElts = VT.getVectorNumElements();
+      MVT EltVT = VT.getVectorElementType();
+      return (NumElts == 1) ? EltVT : MVT::getVectorVT(EltVT, NumElts / 2);
+    } else if (VT.isInteger()) {
       MVT NVT = VT.getRoundIntegerType();
       if (NVT == VT)
         // Size is a power of two - expand to half the size.
