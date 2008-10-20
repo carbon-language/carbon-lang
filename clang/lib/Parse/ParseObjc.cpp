@@ -163,14 +163,7 @@ Parser::DeclTy *Parser::ParseObjCAtInterfaceDeclaration(
                                      EndProtoLoc);
     
     ParseObjCInterfaceDeclList(CategoryType, tok::objc_not_keyword);
-
-    // The @ sign was already consumed by ParseObjCInterfaceDeclList().
-    if (Tok.isObjCAtKeyword(tok::objc_end)) {
-      ConsumeToken(); // the "end" identifier
-      return CategoryType;
-    }
-    Diag(Tok, diag::err_objc_missing_end);
-    return 0;
+    return CategoryType;
   }
   // Parse a class interface.
   IdentifierInfo *superClassId = 0;
@@ -202,14 +195,7 @@ Parser::DeclTy *Parser::ParseObjCAtInterfaceDeclaration(
     ParseObjCClassInstanceVariables(ClsType, atLoc);
 
   ParseObjCInterfaceDeclList(ClsType, tok::objc_interface);
-
-  // The @ sign was already consumed by ParseObjCInterfaceDeclList().
-  if (Tok.isObjCAtKeyword(tok::objc_end)) {
-    ConsumeToken(); // the "end" identifier
-    return ClsType;
-  }
-  Diag(Tok, diag::err_objc_missing_end);
-  return 0;
+  return ClsType;
 }
 
 /// constructSetterName - Return the setter name for the given
@@ -246,8 +232,9 @@ void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl,
   llvm::SmallVector<DeclTy*, 32> allMethods;
   llvm::SmallVector<DeclTy*, 16> allProperties;
   tok::ObjCKeywordKind MethodImplKind = tok::objc_not_keyword;
-  SourceLocation AtEndLoc;
   
+  SourceLocation AtEndLoc;
+
   while (1) {
     // If this is a method prototype, parse it.
     if (Tok.is(tok::minus) || Tok.is(tok::plus)) {
@@ -266,8 +253,7 @@ void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl,
       continue;
     }
     
-    // If we got to the end of the file, pretend that we saw an @end.
-    // FIXME: Should this be a warning?
+    // If we got to the end of the file, exit the loop.
     if (Tok.is(tok::eof))
       break;
     
@@ -286,37 +272,34 @@ void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl,
     if (DirectiveKind == tok::objc_end) { // @end -> terminate list
       AtEndLoc = AtLoc;
       break;
-    } 
+    }
     
+    // Eat the identifier.
+    ConsumeToken();
+
     switch (DirectiveKind) {
     default:
+      // FIXME: If someone forgets an @end on a protocol, this loop will
+      // continue to eat up tons of stuff and spew lots of nonsense errors.  It
+      // would probably be better to bail out if we saw an @class or @interface
+      // or something like that.
       Diag(Tok, diag::err_objc_illegal_interface_qual);
-      ConsumeToken();
-      // Skip until we see an @ or } or ;
+      // Skip until we see an '@' or '}' or ';'.
       SkipUntil(tok::r_brace, tok::at);
       break;
       
     case tok::objc_required:
-      ConsumeToken();
-      // This is only valid on protocols.
-      if (contextKey != tok::objc_protocol)
-        Diag(AtLoc, diag::err_objc_protocol_required);
-      else
-        MethodImplKind = tok::objc_required;
-      break;
-        
     case tok::objc_optional:
-      ConsumeToken();
       // This is only valid on protocols.
+      // FIXME: Should this check for ObjC2 being enabled?
       if (contextKey != tok::objc_protocol)
-        Diag(AtLoc, diag::err_objc_protocol_optional);
+        Diag(AtLoc, diag::err_objc_directive_only_in_protocol);
       else
-        MethodImplKind = tok::objc_optional;
+        MethodImplKind = DirectiveKind;
       break;
         
     case tok::objc_property:
       ObjCDeclSpec OCDS;
-      ConsumeToken(); // the "property" identifier
       // Parse property attribute list, if any. 
       if (Tok.is(tok::l_paren)) {
         // property has attribute list.
@@ -356,9 +339,16 @@ void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl,
       break;
     }
   }
+
+  // We break out of the big loop in two cases: when we see @end or when we see
+  // EOF.  In the former case, eat the @end.  In the later case, emit an error.
+  if (Tok.isObjCAtKeyword(tok::objc_end))
+    ConsumeToken(); // the "end" identifier
+  else
+    Diag(Tok, diag::err_objc_missing_end);
+  
   // Insert collected methods declarations into the @interface object.
-  // FIXME: This passes in an invalid SourceLocation for AtEndLoc when EOF is
-  // hit.
+  // This passes in an invalid SourceLocation for AtEndLoc when EOF is hit.
   Actions.ActOnAtEnd(AtEndLoc, interfaceDecl,
                      allMethods.empty() ? 0 : &allMethods[0],
                      allMethods.size(), 
@@ -1006,14 +996,7 @@ Parser::DeclTy *Parser::ParseObjCAtProtocolDeclaration(SourceLocation AtLoc,
                                         &ProtocolRefs[0], ProtocolRefs.size(),
                                         EndProtoLoc, attrList);
   ParseObjCInterfaceDeclList(ProtoType, tok::objc_protocol);
-
-  // The @ sign was already consumed by ParseObjCInterfaceDeclList().
-  if (Tok.isObjCAtKeyword(tok::objc_end)) {
-    ConsumeToken(); // the "end" identifier
-    return ProtoType;
-  }
-  Diag(Tok, diag::err_objc_missing_end);
-  return 0;
+  return ProtoType;
 }
 
 ///   objc-implementation:

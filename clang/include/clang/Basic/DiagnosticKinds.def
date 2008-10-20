@@ -430,10 +430,8 @@ DIAG(warn_objc_property_default_assign_on_object, WARNING,
      "default property attribute 'assign' not appropriate for non-gc object")
 DIAG(err_objc_property_requires_object, ERROR,
      "property with '%0' attribute must be of object type")
-DIAG(err_objc_protocol_required, ERROR,
-     "@required may be specified in protocols only")
-DIAG(err_objc_protocol_optional, ERROR,
-     "@optional may be specified in protocols only")
+DIAG(err_objc_directive_only_in_protocol, ERROR,
+     "directive may only be specified in protocols only")
 DIAG(err_missing_catch_finally, ERROR,
      "@try statement without a @catch and @finally clause")
 DIAG(err_objc_concat_string, ERROR,

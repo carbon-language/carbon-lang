@@ -9,11 +9,11 @@
 @end
 
 @interface INTF1
-@required  // expected-error {{@required may be specified in protocols only}}
+@required  // expected-error {{directive may only be specified in protocols only}}
 - (int) FooBar;
 - (int) FooBar1;
 - (int) FooBar2;
-@optional  // expected-error {{@optional may be specified in protocols only}}
+@optional  // expected-error {{directive may only be specified in protocols only}}
 + (int) C;
 
 - (int)I;
