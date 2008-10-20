@@ -310,20 +310,17 @@ void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl,
       llvm::SmallVector<FieldDeclarator, 8> FieldDeclarators;
       ParseStructDeclaration(DS, FieldDeclarators);
       
-      if (Tok.is(tok::semi)) 
-        ConsumeToken();
-      else {
-        Diag(Tok, diag::err_expected_semi_decl_list);
-        SkipUntil(tok::r_brace, true, true);
-      }
+      ExpectAndConsume(tok::semi, diag::err_expected_semi_decl_list, "",
+                       tok::at);
+      
       // Convert them all to property declarations.
       for (unsigned i = 0, e = FieldDeclarators.size(); i != e; ++i) {
         FieldDeclarator &FD = FieldDeclarators[i];
         // Install the property declarator into interfaceDecl.
         Selector GetterSel = 
-        PP.getSelectorTable().getNullarySelector(OCDS.getGetterName() 
-                                                 ? OCDS.getGetterName() 
-                                                 : FD.D.getIdentifier());
+          PP.getSelectorTable().getNullarySelector(OCDS.getGetterName() 
+                                                   ? OCDS.getGetterName() 
+                                                   : FD.D.getIdentifier());
         IdentifierInfo *SetterName = OCDS.getSetterName();
         if (!SetterName)
           SetterName = constructSetterName(PP.getIdentifierTable(),
