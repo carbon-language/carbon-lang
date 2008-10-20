@@ -214,6 +214,8 @@ private:
   void PromoteIntegerResult(SDNode *N, unsigned ResNo);
   SDValue PromoteIntRes_AssertSext(SDNode *N);
   SDValue PromoteIntRes_AssertZext(SDNode *N);
+  SDValue PromoteIntRes_Atomic1(AtomicSDNode *N);
+  SDValue PromoteIntRes_Atomic2(AtomicSDNode *N);
   SDValue PromoteIntRes_BIT_CONVERT(SDNode *N);
   SDValue PromoteIntRes_BSWAP(SDNode *N);
   SDValue PromoteIntRes_BUILD_PAIR(SDNode *N);

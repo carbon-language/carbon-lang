@@ -89,13 +89,65 @@ void DAGTypeLegalizer::PromoteIntegerResult(SDNode *N, unsigned ResNo) {
   case ISD::XOR:
   case ISD::ADD:
   case ISD::SUB:
-  case ISD::MUL:      Result = PromoteIntRes_SimpleIntBinOp(N); break;
+  case ISD::MUL: Result = PromoteIntRes_SimpleIntBinOp(N); break;
 
   case ISD::SDIV:
-  case ISD::SREM:     Result = PromoteIntRes_SDIV(N); break;
+  case ISD::SREM: Result = PromoteIntRes_SDIV(N); break;
 
   case ISD::UDIV:
-  case ISD::UREM:     Result = PromoteIntRes_UDIV(N); break;
+  case ISD::UREM: Result = PromoteIntRes_UDIV(N); break;
+
+  case ISD::ATOMIC_LOAD_ADD_8:
+  case ISD::ATOMIC_LOAD_SUB_8:
+  case ISD::ATOMIC_LOAD_AND_8:
+  case ISD::ATOMIC_LOAD_OR_8:
+  case ISD::ATOMIC_LOAD_XOR_8:
+  case ISD::ATOMIC_LOAD_NAND_8:
+  case ISD::ATOMIC_LOAD_MIN_8:
+  case ISD::ATOMIC_LOAD_MAX_8:
+  case ISD::ATOMIC_LOAD_UMIN_8:
+  case ISD::ATOMIC_LOAD_UMAX_8:
+  case ISD::ATOMIC_SWAP_8:
+  case ISD::ATOMIC_LOAD_ADD_16:
+  case ISD::ATOMIC_LOAD_SUB_16:
+  case ISD::ATOMIC_LOAD_AND_16:
+  case ISD::ATOMIC_LOAD_OR_16:
+  case ISD::ATOMIC_LOAD_XOR_16:
+  case ISD::ATOMIC_LOAD_NAND_16:
+  case ISD::ATOMIC_LOAD_MIN_16:
+  case ISD::ATOMIC_LOAD_MAX_16:
+  case ISD::ATOMIC_LOAD_UMIN_16:
+  case ISD::ATOMIC_LOAD_UMAX_16:
+  case ISD::ATOMIC_SWAP_16:
+  case ISD::ATOMIC_LOAD_ADD_32:
+  case ISD::ATOMIC_LOAD_SUB_32:
+  case ISD::ATOMIC_LOAD_AND_32:
+  case ISD::ATOMIC_LOAD_OR_32:
+  case ISD::ATOMIC_LOAD_XOR_32:
+  case ISD::ATOMIC_LOAD_NAND_32:
+  case ISD::ATOMIC_LOAD_MIN_32:
+  case ISD::ATOMIC_LOAD_MAX_32:
+  case ISD::ATOMIC_LOAD_UMIN_32:
+  case ISD::ATOMIC_LOAD_UMAX_32:
+  case ISD::ATOMIC_SWAP_32:
+  case ISD::ATOMIC_LOAD_ADD_64:
+  case ISD::ATOMIC_LOAD_SUB_64:
+  case ISD::ATOMIC_LOAD_AND_64:
+  case ISD::ATOMIC_LOAD_OR_64:
+  case ISD::ATOMIC_LOAD_XOR_64:
+  case ISD::ATOMIC_LOAD_NAND_64:
+  case ISD::ATOMIC_LOAD_MIN_64:
+  case ISD::ATOMIC_LOAD_MAX_64:
+  case ISD::ATOMIC_LOAD_UMIN_64:
+  case ISD::ATOMIC_LOAD_UMAX_64:
+  case ISD::ATOMIC_SWAP_64:
+    Result = PromoteIntRes_Atomic1(cast<AtomicSDNode>(N)); break;
+
+  case ISD::ATOMIC_CMP_SWAP_8:
+  case ISD::ATOMIC_CMP_SWAP_16:
+  case ISD::ATOMIC_CMP_SWAP_32:
+  case ISD::ATOMIC_CMP_SWAP_64:
+    Result = PromoteIntRes_Atomic2(cast<AtomicSDNode>(N)); break;
   }
 
   // If Result is null, the sub-method took care of registering the result.
@@ -118,6 +170,27 @@ SDValue DAGTypeLegalizer::PromoteIntRes_AssertZext(SDNode *N) {
   SDValue Op = GetPromotedInteger(N->getOperand(0));
   return DAG.getNode(ISD::AssertZext, Op.getValueType(),
                      DAG.getZeroExtendInReg(Op, OldVT), N->getOperand(1));
+}
+
+SDValue DAGTypeLegalizer::PromoteIntRes_Atomic1(AtomicSDNode *N) {
+  SDValue Op2 = GetPromotedInteger(N->getOperand(2));
+  SDValue Res = DAG.getAtomic(N->getOpcode(), N->getChain(), N->getBasePtr(),
+                              Op2, N->getSrcValue(), N->getAlignment());
+  // Legalized the chain result - switch anything that used the old chain to
+  // use the new one.
+  ReplaceValueWith(SDValue(N, 1), Res.getValue(1));
+  return Res;
+}
+
+SDValue DAGTypeLegalizer::PromoteIntRes_Atomic2(AtomicSDNode *N) {
+  SDValue Op2 = GetPromotedInteger(N->getOperand(2));
+  SDValue Op3 = GetPromotedInteger(N->getOperand(3));
+  SDValue Res = DAG.getAtomic(N->getOpcode(), N->getChain(), N->getBasePtr(),
+                              Op2, Op3, N->getSrcValue(), N->getAlignment());
+  // Legalized the chain result - switch anything that used the old chain to
+  // use the new one.
+  ReplaceValueWith(SDValue(N, 1), Res.getValue(1));
+  return Res;
 }
 
 SDValue DAGTypeLegalizer::PromoteIntRes_BIT_CONVERT(SDNode *N) {
