@@ -390,20 +390,18 @@ void Parser::ParseObjCPropertyAttribute(ObjCDeclSpec &DS) {
       return;
     }
     
+    SourceLocation AttrName = ConsumeToken(); // consume last attribute name
+    
     // getter/setter require extra treatment.
     if (II == ObjCPropertyAttrs[objc_getter] || 
         II == ObjCPropertyAttrs[objc_setter]) {
-      // skip getter/setter part.
-      SourceLocation loc = ConsumeToken();
-      if (Tok.isNot(tok::equal)) {
-        Diag(loc, diag::err_objc_expected_equal);    
-        SkipUntil(tok::r_paren);
+      
+      if (ExpectAndConsume(tok::equal, diag::err_objc_expected_equal, "",
+                           tok::r_paren))
         return;
-      }
-
-      loc = ConsumeToken();
+      
       if (Tok.isNot(tok::identifier)) {
-        Diag(loc, diag::err_expected_ident);
+        Diag(Tok.getLocation(), diag::err_expected_ident);
         SkipUntil(tok::r_paren);
         return;
       }
@@ -411,15 +409,15 @@ void Parser::ParseObjCPropertyAttribute(ObjCDeclSpec &DS) {
       if (II == ObjCPropertyAttrs[objc_setter]) {
         DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_setter);
         DS.setSetterName(Tok.getIdentifierInfo());
-        loc = ConsumeToken();  // consume method name
-        if (Tok.isNot(tok::colon)) {
-          Diag(loc, diag::err_expected_colon);
-          SkipUntil(tok::r_paren);
+        ConsumeToken();  // consume method name
+        
+        if (ExpectAndConsume(tok::colon, diag::err_expected_colon, "",
+                             tok::r_paren))
           return;
-        }
       } else {
         DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_getter);
         DS.setGetterName(Tok.getIdentifierInfo());
+        ConsumeToken();  // consume method name
       }
     } else if (II == ObjCPropertyAttrs[objc_readonly])
       DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_readonly);
@@ -434,26 +432,18 @@ void Parser::ParseObjCPropertyAttribute(ObjCDeclSpec &DS) {
     else if (II == ObjCPropertyAttrs[objc_nonatomic])
       DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_nonatomic);
     else {
-      Diag(Tok.getLocation(), diag::err_objc_expected_property_attr,
-           II->getName());
+      Diag(AttrName, diag::err_objc_expected_property_attr, II->getName());
       SkipUntil(tok::r_paren);
       return;
     }
     
-    ConsumeToken(); // consume last attribute token
-    if (Tok.is(tok::comma)) {
-      ConsumeToken();
-      continue;
-    }
+    if (Tok.isNot(tok::comma))
+      break;
     
-    if (Tok.is(tok::r_paren)) {
-      ConsumeParen();
-      return;
-    }
-    
-    MatchRHSPunctuation(tok::r_paren, LHSLoc);
-    return;
+    ConsumeToken();
   }
+  
+  MatchRHSPunctuation(tok::r_paren, LHSLoc);
 }
 
 ///   objc-method-proto:
