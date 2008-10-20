@@ -697,11 +697,10 @@ Parser::ExprResult Parser::ParseSimpleAsm() {
 
   ExprResult Result = ParseAsmStringLiteral();
 
-  if (Result.isInvalid) {
+  if (Result.isInvalid)
     SkipUntil(tok::r_paren);
-  } else {
+  else
     MatchRHSPunctuation(tok::r_paren, Loc);
-  }
 
   return Result;
 }
