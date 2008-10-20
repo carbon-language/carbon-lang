@@ -62,3 +62,23 @@ typedef signed char BOOL;
 
 @end
 
+@protocol PVImageViewProtocol
+@property int inEyeDropperMode;
+@end
+
+@interface Cls
+@property int inEyeDropperMode;
+@end
+
+@interface PVAdjustColor @end
+
+@implementation PVAdjustColor
+
+- xx {
+  id <PVImageViewProtocol> view;
+  Cls *c;
+
+  c.inEyeDropperMode = 1;
+  view.inEyeDropperMode = 1;
+}
+@end

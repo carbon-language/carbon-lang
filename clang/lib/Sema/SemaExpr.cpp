@@ -999,7 +999,15 @@ ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
                                      MemberLoc, BaseExpr);
     }
   }
-  
+  // Handle properties on qualified "id" protocols.
+  const ObjCQualifiedIdType *QIdTy;
+  if (OpKind == tok::period && (QIdTy = BaseType->getAsObjCQualifiedIdType())) {
+    // Check protocols on qualified interfaces.
+    for (ObjCQualifiedIdType::qual_iterator I = QIdTy->qual_begin(),
+         E = QIdTy->qual_end(); I != E; ++I)
+      if (ObjCPropertyDecl *PD = (*I)->FindPropertyDeclaration(&Member))
+        return new ObjCPropertyRefExpr(PD, PD->getType(), MemberLoc, BaseExpr);
+  }  
   // Handle 'field access' to vectors, such as 'V.xx'.
   if (BaseType->isExtVectorType() && OpKind == tok::period) {
     // Component access limited to variables (reject vec4.rg.g).
