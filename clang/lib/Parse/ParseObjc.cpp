@@ -249,68 +249,7 @@ void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl,
   SourceLocation AtEndLoc;
   
   while (1) {
-    if (Tok.is(tok::at)) {
-      SourceLocation AtLoc = ConsumeToken(); // the "@"
-      tok::ObjCKeywordKind ocKind = Tok.getObjCKeywordID();
-      
-      if (ocKind == tok::objc_end) { // terminate list
-        AtEndLoc = AtLoc;
-        break;
-      } else if (ocKind == tok::objc_required) { // protocols only
-        ConsumeToken();
-        MethodImplKind = ocKind;
-        if (contextKey != tok::objc_protocol)
-          Diag(AtLoc, diag::err_objc_protocol_required);
-      } else if (ocKind == tok::objc_optional) { // protocols only
-        ConsumeToken();
-        MethodImplKind = ocKind;
-        if (contextKey != tok::objc_protocol)
-          Diag(AtLoc, diag::err_objc_protocol_optional);
-      } else if (ocKind == tok::objc_property) {
-        ObjCDeclSpec OCDS;
-        ConsumeToken(); // the "property" identifier
-        // Parse property attribute list, if any. 
-        if (Tok.is(tok::l_paren)) {
-          // property has attribute list.
-          ParseObjCPropertyAttribute(OCDS);
-        }
-        // Parse all the comma separated declarators.
-        DeclSpec DS;
-        llvm::SmallVector<FieldDeclarator, 8> FieldDeclarators;
-        ParseStructDeclaration(DS, FieldDeclarators);
-        
-        if (Tok.is(tok::semi)) 
-          ConsumeToken();
-        else {
-          Diag(Tok, diag::err_expected_semi_decl_list);
-          SkipUntil(tok::r_brace, true, true);
-        }
-        // Convert them all to property declarations.
-        for (unsigned i = 0, e = FieldDeclarators.size(); i != e; ++i) {
-          FieldDeclarator &FD = FieldDeclarators[i];
-          // Install the property declarator into interfaceDecl.
-          Selector GetterSel = 
-          PP.getSelectorTable().getNullarySelector(OCDS.getGetterName() 
-                                                   ? OCDS.getGetterName() 
-                                                   : FD.D.getIdentifier());
-          IdentifierInfo *SetterName = OCDS.getSetterName();
-          if (!SetterName)
-            SetterName = constructSetterName(PP.getIdentifierTable(),
-                                             FD.D.getIdentifier());
-          Selector SetterSel = 
-            PP.getSelectorTable().getUnarySelector(SetterName);
-          DeclTy *Property = Actions.ActOnProperty(CurScope,
-                               AtLoc, FD, OCDS,
-                               GetterSel, SetterSel,
-                               MethodImplKind);
-          allProperties.push_back(Property);
-        }
-        continue;
-      } else {
-        Diag(Tok, diag::err_objc_illegal_interface_qual);
-        ConsumeToken();
-      }
-    }
+    // If this is a method prototype, parse it.
     if (Tok.is(tok::minus) || Tok.is(tok::plus)) {
       DeclTy *methodPrototype = 
         ParseObjCMethodPrototype(interfaceDecl, MethodImplKind);
@@ -320,17 +259,88 @@ void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl,
       ExpectAndConsume(tok::semi, diag::err_expected_semi_after,"method proto");
       continue;
     }
-    else if (Tok.is(tok::at))
-      continue;
     
-    if (Tok.is(tok::semi))
+    // Ignore excess semicolons.
+    if (Tok.is(tok::semi)) {
       ConsumeToken();
-    else if (Tok.is(tok::eof))
+      continue;
+    }
+    
+    // If we got to the end of the file, pretend that we saw an @end.
+    // FIXME: Should this be a warning?
+    if (Tok.is(tok::eof))
       break;
-    else {
+    
+    // If we don't have an @ directive, parse it as a function definition.
+    if (Tok.isNot(tok::at)) {
       // FIXME: as the name implies, this rule allows function definitions.
       // We could pass a flag or check for functions during semantic analysis.
       ParseDeclarationOrFunctionDefinition();
+      continue;
+    }
+    
+    // Otherwise, we have an @ directive, eat the @.
+    SourceLocation AtLoc = ConsumeToken(); // the "@"
+    tok::ObjCKeywordKind ocKind = Tok.getObjCKeywordID();
+    
+    if (ocKind == tok::objc_end) { // @end -> terminate list
+      AtEndLoc = AtLoc;
+      break;
+    } 
+    
+    if (ocKind == tok::objc_required) { // protocols only
+      ConsumeToken();
+      MethodImplKind = ocKind;
+      if (contextKey != tok::objc_protocol)
+        Diag(AtLoc, diag::err_objc_protocol_required);
+    } else if (ocKind == tok::objc_optional) { // protocols only
+      ConsumeToken();
+      MethodImplKind = ocKind;
+      if (contextKey != tok::objc_protocol)
+        Diag(AtLoc, diag::err_objc_protocol_optional);
+    } else if (ocKind == tok::objc_property) {
+      ObjCDeclSpec OCDS;
+      ConsumeToken(); // the "property" identifier
+      // Parse property attribute list, if any. 
+      if (Tok.is(tok::l_paren)) {
+        // property has attribute list.
+        ParseObjCPropertyAttribute(OCDS);
+      }
+      // Parse all the comma separated declarators.
+      DeclSpec DS;
+      llvm::SmallVector<FieldDeclarator, 8> FieldDeclarators;
+      ParseStructDeclaration(DS, FieldDeclarators);
+      
+      if (Tok.is(tok::semi)) 
+        ConsumeToken();
+      else {
+        Diag(Tok, diag::err_expected_semi_decl_list);
+        SkipUntil(tok::r_brace, true, true);
+      }
+      // Convert them all to property declarations.
+      for (unsigned i = 0, e = FieldDeclarators.size(); i != e; ++i) {
+        FieldDeclarator &FD = FieldDeclarators[i];
+        // Install the property declarator into interfaceDecl.
+        Selector GetterSel = 
+        PP.getSelectorTable().getNullarySelector(OCDS.getGetterName() 
+                                                 ? OCDS.getGetterName() 
+                                                 : FD.D.getIdentifier());
+        IdentifierInfo *SetterName = OCDS.getSetterName();
+        if (!SetterName)
+          SetterName = constructSetterName(PP.getIdentifierTable(),
+                                           FD.D.getIdentifier());
+        Selector SetterSel = 
+          PP.getSelectorTable().getUnarySelector(SetterName);
+        DeclTy *Property = Actions.ActOnProperty(CurScope,
+                             AtLoc, FD, OCDS,
+                             GetterSel, SetterSel,
+                             MethodImplKind);
+        allProperties.push_back(Property);
+      }
+      continue;
+    } else {
+      Diag(Tok, diag::err_objc_illegal_interface_qual);
+      ConsumeToken();
     }
   }
   /// Insert collected methods declarations into the @interface object.
