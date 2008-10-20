@@ -304,9 +304,8 @@ void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl,
 
       ObjCDeclSpec OCDS;
       // Parse property attribute list, if any. 
-      if (Tok.is(tok::l_paren)) {
+      if (Tok.is(tok::l_paren))
         ParseObjCPropertyAttribute(OCDS);
-      }
         
       // Parse all the comma separated declarators.
       DeclSpec DS;
@@ -379,6 +378,7 @@ void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl,
 ///     nonatomic
 ///
 void Parser::ParseObjCPropertyAttribute(ObjCDeclSpec &DS) {
+  assert(Tok.getKind() == tok::l_paren);
   SourceLocation LHSLoc = ConsumeParen(); // consume '('
   
   while (1) {
@@ -395,32 +395,31 @@ void Parser::ParseObjCPropertyAttribute(ObjCDeclSpec &DS) {
         II == ObjCPropertyAttrs[objc_setter]) {
       // skip getter/setter part.
       SourceLocation loc = ConsumeToken();
-      if (Tok.is(tok::equal)) {
-        loc = ConsumeToken();
-        if (Tok.is(tok::identifier)) {
-          if (II == ObjCPropertyAttrs[objc_setter]) {
-            DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_setter);
-            DS.setSetterName(Tok.getIdentifierInfo());
-            loc = ConsumeToken();  // consume method name
-            if (Tok.isNot(tok::colon)) {
-              Diag(loc, diag::err_expected_colon);
-              SkipUntil(tok::r_paren);
-              return;
-            }
-          } else {
-            DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_getter);
-            DS.setGetterName(Tok.getIdentifierInfo());
-          }
-        } else {
-          Diag(loc, diag::err_expected_ident);
-          SkipUntil(tok::r_paren);
-          return;
-        }
-      }
-      else {
+      if (Tok.isNot(tok::equal)) {
         Diag(loc, diag::err_objc_expected_equal);    
         SkipUntil(tok::r_paren);
         return;
+      }
+
+      loc = ConsumeToken();
+      if (Tok.isNot(tok::identifier)) {
+        Diag(loc, diag::err_expected_ident);
+        SkipUntil(tok::r_paren);
+        return;
+      }
+      
+      if (II == ObjCPropertyAttrs[objc_setter]) {
+        DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_setter);
+        DS.setSetterName(Tok.getIdentifierInfo());
+        loc = ConsumeToken();  // consume method name
+        if (Tok.isNot(tok::colon)) {
+          Diag(loc, diag::err_expected_colon);
+          SkipUntil(tok::r_paren);
+          return;
+        }
+      } else {
+        DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_getter);
+        DS.setGetterName(Tok.getIdentifierInfo());
       }
     } else if (II == ObjCPropertyAttrs[objc_readonly])
       DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_readonly);
