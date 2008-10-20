@@ -272,8 +272,7 @@ SDValue DAGTypeLegalizer::PromoteIntRes_EXTRACT_VECTOR_ELT(SDNode *N) {
   if (TLI.isBigEndian())
     std::swap(Lo, Hi);
 
-  SDValue Odd = DAG.getNode(ISD::AND, OldIdx.getValueType(), OldIdx,
-                              DAG.getConstant(1, TLI.getShiftAmountTy()));
+  SDValue Odd = DAG.getNode(ISD::TRUNCATE, MVT::i1, OldIdx);
   return DAG.getNode(ISD::SELECT, NewVT, Odd, Hi, Lo);
 }
 
