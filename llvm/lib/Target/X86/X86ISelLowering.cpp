@@ -5980,7 +5980,7 @@ SDValue X86TargetLowering::LowerCMP_SWAP(SDValue Op, SelectionDAG &DAG) {
   case MVT::i64: 
     if (Subtarget->is64Bit()) {
       Reg = X86::RAX; size = 8;
-    } else //Should go away when LowerType stuff lands
+    } else //Should go away when LegalizeType stuff lands
       return SDValue(ExpandATOMIC_CMP_SWAP(Op.getNode(), DAG), 0);
     break;
   };
@@ -6044,9 +6044,10 @@ SDValue X86TargetLowering::LowerATOMIC_BINARY_64(SDValue Op,
   
   SDValue Chain = Node->getOperand(0);
   SDValue In1 = Node->getOperand(1);
-  assert(Node->getOperand(2).getNode()->getOpcode()==ISD::BUILD_PAIR);
-  SDValue In2L = Node->getOperand(2).getNode()->getOperand(0);
-  SDValue In2H = Node->getOperand(2).getNode()->getOperand(1);
+  SDValue In2L = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32,
+                             Node->getOperand(2), DAG.getIntPtrConstant(0));
+  SDValue In2H = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32,
+                             Node->getOperand(2), DAG.getIntPtrConstant(1));
   // This is a generalized SDNode, not an AtomicSDNode, so it doesn't
   // have a MemOperand.  Pass the info through as a normal operand.
   SDValue LSI = DAG.getMemOperand(cast<MemSDNode>(Node)->getMemOperand());
@@ -6082,12 +6083,12 @@ SDValue X86TargetLowering::LowerLOAD_SUB(SDValue Op, SelectionDAG &DAG) {
 SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   switch (Op.getOpcode()) {
   default: assert(0 && "Should not custom lower this!");
-  case ISD::ATOMIC_CMP_SWAP_8:  
-  case ISD::ATOMIC_CMP_SWAP_16: 
-  case ISD::ATOMIC_CMP_SWAP_32: 
+  case ISD::ATOMIC_CMP_SWAP_8:
+  case ISD::ATOMIC_CMP_SWAP_16:
+  case ISD::ATOMIC_CMP_SWAP_32:
   case ISD::ATOMIC_CMP_SWAP_64: return LowerCMP_SWAP(Op,DAG);
-  case ISD::ATOMIC_LOAD_SUB_8:  
-  case ISD::ATOMIC_LOAD_SUB_16: 
+  case ISD::ATOMIC_LOAD_SUB_8:
+  case ISD::ATOMIC_LOAD_SUB_16:
   case ISD::ATOMIC_LOAD_SUB_32: return LowerLOAD_SUB(Op,DAG);
   case ISD::ATOMIC_LOAD_SUB_64: return (Subtarget->is64Bit()) ?
                                         LowerLOAD_SUB(Op,DAG) :
@@ -6155,7 +6156,8 @@ SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
 /// with a new node built out of custom code.
 SDNode *X86TargetLowering::ReplaceNodeResults(SDNode *N, SelectionDAG &DAG) {
   switch (N->getOpcode()) {
-  default: assert(0 && "Should not custom lower this!");
+  default:
+    return X86TargetLowering::LowerOperation(SDValue (N, 0), DAG).getNode();
   case ISD::FP_TO_SINT:         return ExpandFP_TO_SINT(N, DAG);
   case ISD::READCYCLECOUNTER:   return ExpandREADCYCLECOUNTER(N, DAG);
   case ISD::ATOMIC_CMP_SWAP_64: return ExpandATOMIC_CMP_SWAP(N, DAG);
