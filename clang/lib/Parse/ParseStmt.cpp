@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Parse/Parser.h"
+#include "ExtensionRAIIObject.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Parse/DeclSpec.h"
@@ -364,9 +365,8 @@ Parser::StmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
         ConsumeToken();
       
       // __extension__ silences extension warnings in the subexpression.
-      bool SavedExtWarn = Diags.getWarnOnExtensions();
-      Diags.setWarnOnExtensions(false);
-      
+      ExtensionRAIIObject O(Diags);  // Use RAII to do this.
+
       // If this is the start of a declaration, parse it as such.
       if (isDeclarationStatement()) {
         // FIXME: Save the __extension__ on the decl as a node somehow.
@@ -374,13 +374,10 @@ Parser::StmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
         DeclTy *Res = ParseDeclaration(Declarator::BlockContext);
         // FIXME: Pass in the right location for the end of the declstmt.
         R = Actions.ActOnDeclStmt(Res, DeclStart, DeclStart);
-        
-        Diags.setWarnOnExtensions(SavedExtWarn);
       } else {
         // Otherwise this was a unary __extension__ marker.  Parse the
         // subexpression and add the __extension__ unary op. 
         ExprResult Res = ParseCastExpression(false);
-        Diags.setWarnOnExtensions(SavedExtWarn);
 
         if (Res.isInvalid) {
           SkipUntil(tok::semi);
@@ -392,7 +389,8 @@ Parser::StmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
         if (Res.isInvalid)
           continue;
         
-        // Eat the semicolon at the end of stmt and convert the expr into a stmt.
+        // Eat the semicolon at the end of stmt and convert the expr into a
+        // statement.
         ExpectAndConsume(tok::semi, diag::err_expected_semi_after_expr);
         R = Actions.ActOnExprStmt(Res.Val);
       }

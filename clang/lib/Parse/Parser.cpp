@@ -344,6 +344,7 @@ Parser::DeclTy *Parser::ParseExternalDeclaration() {
   case tok::kw___extension__: {
     // __extension__ silences extension warnings in the subexpression.
     ExtensionRAIIObject O(Diags);  // Use RAII to do this.
+    ConsumeToken();
     return ParseExternalDeclaration();
   }
   case tok::kw_asm: {
