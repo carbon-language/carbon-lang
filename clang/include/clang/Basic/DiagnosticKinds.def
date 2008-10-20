@@ -246,8 +246,7 @@ DIAG(err_pp_I_dash_not_supported, ERROR,
 //===----------------------------------------------------------------------===//
 // Parser Diagnostics
 //===----------------------------------------------------------------------===//
-DIAG(w_type_defaults_to_int, WARNING,
-     "type defaults to 'int'")
+
 DIAG(w_no_declarators, WARNING,
      "declaration does not declare anything")
 DIAG(w_asm_qualifier_ignored, WARNING,
@@ -757,6 +756,8 @@ DIAG(err_attribute_iboutlet_non_ivar, ERROR,
      "'iboutlet' attribute can only be applied to instance variables")
 
 // Function Parameter Semantic Analysis.
+DIAG(err_argument_required_after_attribute, ERROR,
+     "argument required after attribute")
 DIAG(err_param_with_void_type, ERROR,
      "argument may not have 'void' type")
 DIAG(err_void_only_param, ERROR,

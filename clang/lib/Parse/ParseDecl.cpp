@@ -1227,15 +1227,16 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
   
   while (1) {
     if (Tok.is(tok::l_paren)) {
-      // When not in file scope, warn for ambiguous function declarators, just
-      // in case the author intended it as a variable definition.
-      bool warnIfAmbiguous = D.getContext() != Declarator::FileContext;
       // The paren may be part of a C++ direct initializer, eg. "int x(1);".
       // In such a case, check if we actually have a function declarator; if it
       // is not, the declarator has been fully parsed.
-      if (getLang().CPlusPlus && D.mayBeFollowedByCXXDirectInit() &&
-          !isCXXFunctionDeclarator(warnIfAmbiguous))
-        break;
+      if (getLang().CPlusPlus && D.mayBeFollowedByCXXDirectInit()) {
+        // When not in file scope, warn for ambiguous function declarators, just
+        // in case the author intended it as a variable definition.
+        bool warnIfAmbiguous = D.getContext() != Declarator::FileContext;
+        if (!isCXXFunctionDeclarator(warnIfAmbiguous))
+          break;
+      }
       ParseFunctionDeclarator(ConsumeParen(), D);
     } else if (Tok.is(tok::l_square)) {
       ParseBracketDeclarator(D);
@@ -1253,10 +1254,34 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
 ///       direct-declarator:
 ///         '(' declarator ')'
 /// [GNU]   '(' attributes declarator ')'
+///         direct-declarator '(' parameter-type-list ')'
+///         direct-declarator '(' identifier-list[opt] ')'
+/// [GNU]   direct-declarator '(' parameter-forward-declarations
+///                    parameter-type-list[opt] ')'
 ///
 void Parser::ParseParenDeclarator(Declarator &D) {
   SourceLocation StartLoc = ConsumeParen();
   assert(!D.isPastIdentifier() && "Should be called before passing identifier");
+  
+  // Eat any attributes before we look at whether this is a grouping or function
+  // declarator paren.  If this is a grouping paren, the attribute applies to
+  // the type being built up, for example:
+  //     int (__attribute__(()) *x)(long y)
+  // If this ends up not being a grouping paren, the attribute applies to the
+  // first argument, for example:
+  //     int (__attribute__(()) int x)
+  // In either case, we need to eat any attributes to be able to determine what
+  // sort of paren this is.
+  //
+  AttributeList *AttrList = 0;
+  bool RequiresArg = false;
+  if (Tok.is(tok::kw___attribute)) {
+    AttrList = ParseAttributes();
+    
+    // We require that the argument list (if this is a non-grouping paren) be
+    // present even if the attribute list was empty.
+    RequiresArg = true;
+  }
   
   // If we haven't past the identifier yet (or where the identifier would be
   // stored, if this is an abstract declarator), then this is probably just
@@ -1285,10 +1310,9 @@ void Parser::ParseParenDeclarator(Declarator &D) {
   if (isGrouping) {
     bool hadGroupingParens = D.hasGroupingParens();
     D.setGroupingParens(true);
+    if (AttrList)
+      D.AddAttributes(AttrList);
 
-    if (Tok.is(tok::kw___attribute))
-      D.AddAttributes(ParseAttributes());
-    
     ParseDeclaratorInternal(D);
     // Match the ')'.
     MatchRHSPunctuation(tok::r_paren, StartLoc);
@@ -1299,16 +1323,22 @@ void Parser::ParseParenDeclarator(Declarator &D) {
   
   // Okay, if this wasn't a grouping paren, it must be the start of a function
   // argument list.  Recognize that this declarator will never have an
-  // identifier (and remember where it would have been), then fall through to
-  // the handling of argument lists.
+  // identifier (and remember where it would have been), then call into
+  // ParseFunctionDeclarator to handle of argument list.
   D.SetIdentifier(0, Tok.getLocation());
 
-  ParseFunctionDeclarator(StartLoc, D); 
+  ParseFunctionDeclarator(StartLoc, D, AttrList, RequiresArg);
 }
 
 /// ParseFunctionDeclarator - We are after the identifier and have parsed the
 /// declarator D up to a paren, which indicates that we are parsing function
 /// arguments.
+///
+/// If AttrList is non-null, then the caller parsed those arguments immediately
+/// after the open paren - they should be considered to be the first argument of
+/// a parameter.  If RequiresArg is true, then the first argument of the
+/// function is required to be present and required to not be an identifier
+/// list.
 ///
 /// This method also handles this portion of the grammar:
 ///       parameter-type-list: [C99 6.7.5]
@@ -1328,14 +1358,19 @@ void Parser::ParseParenDeclarator(Declarator &D) {
 ///           '=' assignment-expression
 /// [GNU]   declaration-specifiers abstract-declarator[opt] attributes
 ///
-void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D) {
+void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
+                                     AttributeList *AttrList,
+                                     bool RequiresArg) {
   // lparen is already consumed!
   assert(D.isPastIdentifier() && "Should not call before identifier!");
   
-  // Okay, this is the parameter list of a function definition, or it is an
-  // identifier list of a K&R-style function.
-  
+  // This parameter list may be empty.
   if (Tok.is(tok::r_paren)) {
+    if (RequiresArg) {
+      Diag(Tok.getLocation(), diag::err_argument_required_after_attribute);
+      delete AttrList;
+    }
+    
     // Remember that we parsed a function type, and remember the attributes.
     // int() -> no prototype, no '...'.
     D.AddTypeInfo(DeclaratorChunk::getFunction(/*prototype*/ false,
@@ -1344,10 +1379,19 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D) {
     
     ConsumeParen();  // Eat the closing ')'.
     return;
-  } else if (Tok.is(tok::identifier) &&
-             // K&R identifier lists can't have typedefs as identifiers, per
-             // C99 6.7.5.3p11.
-             !Actions.isTypeName(*Tok.getIdentifierInfo(), CurScope)) {
+  } 
+  
+  // Alternatively, this parameter list may be an identifier list form for a
+  // K&R-style function:  void foo(a,b,c)
+  if (Tok.is(tok::identifier) &&
+      // K&R identifier lists can't have typedefs as identifiers, per
+      // C99 6.7.5.3p11.
+      !Actions.isTypeName(*Tok.getIdentifierInfo(), CurScope)) {
+    if (RequiresArg) {
+      Diag(Tok.getLocation(), diag::err_argument_required_after_attribute);
+      delete AttrList;
+    }
+    
     // Identifier list.  Note that '(' identifier-list ')' is only allowed for
     // normal declarators, not for abstract-declarators.
     return ParseFunctionDeclaratorIdentifierList(LParenLoc, D);
@@ -1383,6 +1427,12 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D) {
     
     // Parse the declaration-specifiers.
     DeclSpec DS;
+
+    // If the caller parsed attributes for the first argument, add them now.
+    if (AttrList) {
+      DS.AddAttributes(AttrList);
+      AttrList = 0;  // Only apply the attributes to the first parameter.
+    }
     ParseDeclarationSpecifiers(DS);
 
     // Parse the declarator.  This is "PrototypeContext", because we must
