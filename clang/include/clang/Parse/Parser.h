@@ -390,12 +390,6 @@ private:
     objc_NumQuals
   };
   IdentifierInfo *ObjCTypeQuals[objc_NumQuals];
-  // Definitions for ObjC2's @property attributes.
-  enum ObjCPropertyAttr {
-    objc_readonly=0, objc_getter, objc_setter, objc_assign, 
-    objc_readwrite, objc_retain, objc_copy, objc_nonatomic, objc_NumAttrs
-  };
-  IdentifierInfo *ObjCPropertyAttrs[objc_NumAttrs];
   
   bool isTokIdentifier_in() const;
 

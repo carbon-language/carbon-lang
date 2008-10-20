@@ -273,18 +273,6 @@ void Parser::Initialize() {
     ObjCTypeQuals[objc_bycopy] = &PP.getIdentifierTable().get("bycopy");
     ObjCTypeQuals[objc_byref] = &PP.getIdentifierTable().get("byref");
   }
-  if (getLang().ObjC2) {
-    ObjCPropertyAttrs[objc_readonly] = &PP.getIdentifierTable().get("readonly");
-    ObjCPropertyAttrs[objc_getter] = &PP.getIdentifierTable().get("getter");
-    ObjCPropertyAttrs[objc_setter] = &PP.getIdentifierTable().get("setter");
-    ObjCPropertyAttrs[objc_assign] = &PP.getIdentifierTable().get("assign");
-    ObjCPropertyAttrs[objc_readwrite] =
-                                  &PP.getIdentifierTable().get("readwrite");
-    ObjCPropertyAttrs[objc_retain] = &PP.getIdentifierTable().get("retain");
-    ObjCPropertyAttrs[objc_copy] = &PP.getIdentifierTable().get("copy");
-    ObjCPropertyAttrs[objc_nonatomic] =
-                                  &PP.getIdentifierTable().get("nonatomic");
-  }
 
   Ident_super = &PP.getIdentifierTable().get("super");
 }

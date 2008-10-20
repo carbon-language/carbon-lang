@@ -392,20 +392,20 @@ void Parser::ParseObjCPropertyAttribute(ObjCDeclSpec &DS) {
     
     SourceLocation AttrName = ConsumeToken(); // consume last attribute name
     
-    if (II == ObjCPropertyAttrs[objc_readonly])
+    if (!strcmp(II->getName(), "readonly"))
       DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_readonly);
-    else if (II == ObjCPropertyAttrs[objc_assign])
+    else if (!strcmp(II->getName(), "assign"))
       DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_assign);
-    else if (II == ObjCPropertyAttrs[objc_readwrite])
+    else if (!strcmp(II->getName(), "readwrite"))
       DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_readwrite);
-    else if (II == ObjCPropertyAttrs[objc_retain])
+    else if (!strcmp(II->getName(), "retain"))
       DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_retain);
-    else if (II == ObjCPropertyAttrs[objc_copy])
+    else if (!strcmp(II->getName(), "copy"))
       DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_copy);
-    else if (II == ObjCPropertyAttrs[objc_nonatomic])
+    else if (!strcmp(II->getName(), "nonatomic"))
       DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_nonatomic);
-    else if (II == ObjCPropertyAttrs[objc_getter] || 
-             II == ObjCPropertyAttrs[objc_setter]) {
+    else if (!strcmp(II->getName(), "getter") || 
+             !strcmp(II->getName(), "setter")) {
       // getter/setter require extra treatment.
       if (ExpectAndConsume(tok::equal, diag::err_objc_expected_equal, "",
                            tok::r_paren))
@@ -417,7 +417,7 @@ void Parser::ParseObjCPropertyAttribute(ObjCDeclSpec &DS) {
         return;
       }
       
-      if (II == ObjCPropertyAttrs[objc_setter]) {
+      if (II->getName()[0] == 's') {
         DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_setter);
         DS.setSetterName(Tok.getIdentifierInfo());
         ConsumeToken();  // consume method name
