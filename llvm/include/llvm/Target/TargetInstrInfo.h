@@ -200,7 +200,7 @@ public:
   }
   
   /// RemoveBranch - Remove the branching code at the end of the specific MBB.
-  /// this is only invoked in cases where AnalyzeBranch returns success. It
+  /// This is only invoked in cases where AnalyzeBranch returns success. It
   /// returns the number of instructions that were removed.
   virtual unsigned RemoveBranch(MachineBasicBlock &MBB) const {
     assert(0 && "Target didn't implement TargetInstrInfo::RemoveBranch!"); 
