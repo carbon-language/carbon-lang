@@ -563,7 +563,7 @@ public:
   /// getDwarfRegNum - Map a target register to an equivalent dwarf register
   /// number.  Returns -1 if there is no equivalent value.  The second
   /// parameter allows targets to use different numberings for EH info and
-  /// deubgging info.
+  /// debugging info.
   virtual int getDwarfRegNum(unsigned RegNum, bool isEH) const = 0;
 
   /// getFrameRegister - This method should return the register used as a base
