@@ -554,9 +554,7 @@ public:
                                    int SPAdj, RegScavenger *RS=NULL) const = 0;
 
   /// emitProlog/emitEpilog - These methods insert prolog and epilog code into
-  /// the function. The return value is the number of instructions
-  /// added to (negative if removed from) the basic block (entry for prologue).
-  ///
+  /// the function.
   virtual void emitPrologue(MachineFunction &MF) const = 0;
   virtual void emitEpilogue(MachineFunction &MF,
                             MachineBasicBlock &MBB) const = 0;
