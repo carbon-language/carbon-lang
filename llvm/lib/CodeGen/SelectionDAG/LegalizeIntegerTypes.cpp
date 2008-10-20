@@ -1198,7 +1198,7 @@ void DAGTypeLegalizer::ExpandIntRes_CTLZ(SDNode *N,
   MVT NVT = Lo.getValueType();
 
   SDValue HiNotZero = DAG.getSetCC(TLI.getSetCCResultType(Hi), Hi,
-                                     DAG.getConstant(0, NVT), ISD::SETNE);
+                                   DAG.getConstant(0, NVT), ISD::SETNE);
 
   SDValue LoLZ = DAG.getNode(ISD::CTLZ, NVT, Lo);
   SDValue HiLZ = DAG.getNode(ISD::CTLZ, NVT, Hi);
@@ -1226,7 +1226,7 @@ void DAGTypeLegalizer::ExpandIntRes_CTTZ(SDNode *N,
   MVT NVT = Lo.getValueType();
 
   SDValue LoNotZero = DAG.getSetCC(TLI.getSetCCResultType(Lo), Lo,
-                                     DAG.getConstant(0, NVT), ISD::SETNE);
+                                   DAG.getConstant(0, NVT), ISD::SETNE);
 
   SDValue LoLZ = DAG.getNode(ISD::CTTZ, NVT, Lo);
   SDValue HiLZ = DAG.getNode(ISD::CTTZ, NVT, Hi);
@@ -2032,8 +2032,8 @@ SDValue DAGTypeLegalizer::ExpandIntOp_UINT_TO_FP(SDNode *N) {
     SDValue Lo, Hi;
     GetExpandedInteger(Op, Lo, Hi);
     SDValue SignSet = DAG.getSetCC(TLI.getSetCCResultType(Hi), Hi,
-                                     DAG.getConstant(0, Hi.getValueType()),
-                                     ISD::SETLT);
+                                   DAG.getConstant(0, Hi.getValueType()),
+                                   ISD::SETLT);
 
     // Build a 64 bit pair (0, FF) in the constant pool, with FF in the lo bits.
     SDValue FudgePtr = DAG.getConstantPool(ConstantInt::get(FF.zext(64)),
@@ -2044,7 +2044,7 @@ SDValue DAGTypeLegalizer::ExpandIntOp_UINT_TO_FP(SDNode *N) {
     SDValue Four = DAG.getIntPtrConstant(4);
     if (TLI.isBigEndian()) std::swap(Zero, Four);
     SDValue Offset = DAG.getNode(ISD::SELECT, Zero.getValueType(), SignSet,
-                                   Zero, Four);
+                                 Zero, Four);
     unsigned Alignment =
       1 << cast<ConstantPoolSDNode>(FudgePtr)->getAlignment();
     FudgePtr = DAG.getNode(ISD::ADD, TLI.getPointerTy(), FudgePtr, Offset);

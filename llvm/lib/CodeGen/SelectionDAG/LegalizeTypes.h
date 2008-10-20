@@ -188,8 +188,7 @@ private:
   void SplitInteger(SDValue Op, MVT LoVT, MVT HiVT,
                     SDValue &Lo, SDValue &Hi);
 
-  SDValue GetVectorElementPointer(SDValue VecPtr, MVT EltVT,
-                                    SDValue Index);
+  SDValue GetVectorElementPointer(SDValue VecPtr, MVT EltVT, SDValue Index);
 
   //===--------------------------------------------------------------------===//
   // Integer Promotion Support: LegalizeIntegerTypes.cpp
