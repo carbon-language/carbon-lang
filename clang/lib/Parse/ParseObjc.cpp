@@ -281,24 +281,40 @@ void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl,
     
     // Otherwise, we have an @ directive, eat the @.
     SourceLocation AtLoc = ConsumeToken(); // the "@"
-    tok::ObjCKeywordKind ocKind = Tok.getObjCKeywordID();
+    tok::ObjCKeywordKind DirectiveKind = Tok.getObjCKeywordID();
     
-    if (ocKind == tok::objc_end) { // @end -> terminate list
+    if (DirectiveKind == tok::objc_end) { // @end -> terminate list
       AtEndLoc = AtLoc;
       break;
     } 
     
-    if (ocKind == tok::objc_required) { // protocols only
+    switch (DirectiveKind) {
+    default:
+      Diag(Tok, diag::err_objc_illegal_interface_qual);
       ConsumeToken();
-      MethodImplKind = ocKind;
+      // Skip until we see an @ or } or ;
+      SkipUntil(tok::r_brace, tok::at);
+      break;
+      
+    case tok::objc_required:
+      ConsumeToken();
+      // This is only valid on protocols.
       if (contextKey != tok::objc_protocol)
         Diag(AtLoc, diag::err_objc_protocol_required);
-    } else if (ocKind == tok::objc_optional) { // protocols only
+      else
+        MethodImplKind = tok::objc_required;
+      break;
+        
+    case tok::objc_optional:
       ConsumeToken();
-      MethodImplKind = ocKind;
+      // This is only valid on protocols.
       if (contextKey != tok::objc_protocol)
         Diag(AtLoc, diag::err_objc_protocol_optional);
-    } else if (ocKind == tok::objc_property) {
+      else
+        MethodImplKind = tok::objc_optional;
+      break;
+        
+    case tok::objc_property:
       ObjCDeclSpec OCDS;
       ConsumeToken(); // the "property" identifier
       // Parse property attribute list, if any. 
@@ -337,13 +353,12 @@ void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl,
                              MethodImplKind);
         allProperties.push_back(Property);
       }
-      continue;
-    } else {
-      Diag(Tok, diag::err_objc_illegal_interface_qual);
-      ConsumeToken();
+      break;
     }
   }
-  /// Insert collected methods declarations into the @interface object.
+  // Insert collected methods declarations into the @interface object.
+  // FIXME: This passes in an invalid SourceLocation for AtEndLoc when EOF is
+  // hit.
   Actions.ActOnAtEnd(AtEndLoc, interfaceDecl,
                      allMethods.empty() ? 0 : &allMethods[0],
                      allMethods.size(), 
