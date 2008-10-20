@@ -301,10 +301,9 @@ void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl,
     case tok::objc_property:
       ObjCDeclSpec OCDS;
       // Parse property attribute list, if any. 
-      if (Tok.is(tok::l_paren)) {
-        // property has attribute list.
+      if (Tok.is(tok::l_paren))
         ParseObjCPropertyAttribute(OCDS);
-      }
+        
       // Parse all the comma separated declarators.
       DeclSpec DS;
       llvm::SmallVector<FieldDeclarator, 8> FieldDeclarators;
@@ -376,7 +375,8 @@ void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl,
 ///     nonatomic
 ///
 void Parser::ParseObjCPropertyAttribute(ObjCDeclSpec &DS) {
-  SourceLocation loc = ConsumeParen(); // consume '('
+  SourceLocation LHSLoc = ConsumeParen(); // consume '('
+  
   while (isObjCPropertyAttribute()) {
     const IdentifierInfo *II = Tok.getIdentifierInfo();
     // getter/setter require extra treatment.
@@ -394,28 +394,24 @@ void Parser::ParseObjCPropertyAttribute(ObjCDeclSpec &DS) {
             if (Tok.isNot(tok::colon)) {
               Diag(loc, diag::err_expected_colon);
               SkipUntil(tok::r_paren,true,true);
-              break;
+              return;
             }
-          }
-          else {
+          } else {
             DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_getter);
             DS.setGetterName(Tok.getIdentifierInfo());
           }
-        }
-        else {
+        } else {
           Diag(loc, diag::err_expected_ident);
           SkipUntil(tok::r_paren,true,true);
-          break;
+          return;
         }
       }
       else {
         Diag(loc, diag::err_objc_expected_equal);    
         SkipUntil(tok::r_paren,true,true);
-        break;
+        return;
       }
-    }
-    
-    else if (II == ObjCPropertyAttrs[objc_readonly])
+    } else if (II == ObjCPropertyAttrs[objc_readonly])
       DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_readonly);
     else if (II == ObjCPropertyAttrs[objc_assign])
       DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_assign);
@@ -430,20 +426,17 @@ void Parser::ParseObjCPropertyAttribute(ObjCDeclSpec &DS) {
     
     ConsumeToken(); // consume last attribute token
     if (Tok.is(tok::comma)) {
-      loc = ConsumeToken();
+      ConsumeToken();
       continue;
     }
-    if (Tok.is(tok::r_paren))
-      break;
-    Diag(loc, diag::err_expected_rparen);
-    SkipUntil(tok::semi);
+    
+    if (Tok.is(tok::r_paren)) {
+      ConsumeParen();
+      return;
+    }
+    
+    MatchRHSPunctuation(tok::r_paren, LHSLoc);
     return;
-  }
-  if (Tok.is(tok::r_paren))
-    ConsumeParen();
-  else {
-    Diag(loc, diag::err_objc_expected_property_attr);
-    SkipUntil(tok::r_paren); // recover from error inside attribute list
   }
 }
 
