@@ -57,7 +57,7 @@ static cl::opt<bool>
 EnableLegalizeTypes("enable-legalize-types", cl::Hidden);
 static cl::opt<bool>
 EnableFastISelVerbose("fast-isel-verbose", cl::Hidden,
-          cl::desc("Enable verbose messages in the experimental \"fast\" "
+          cl::desc("Enable verbose messages in the \"fast\" "
                    "instruction selector"));
 static cl::opt<bool>
 EnableFastISelAbort("fast-isel-abort", cl::Hidden,
