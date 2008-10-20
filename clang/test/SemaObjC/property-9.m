@@ -40,6 +40,7 @@ typedef signed char BOOL;
 
 @interface BadPropClass
 {
+ int _awesome;
 }
 
 @property (readonly) int; // expected-warning {{declaration does not declare anything}}
@@ -47,4 +48,11 @@ typedef signed char BOOL;
                           expected-warning {{declaration does not declare anything}}
 @property (readonly) int : 4; // expected-error {{property requires fields to be named}}
 
+
+// test parser recovery: rdar://6254579
+@property (readonly getter=isAwesome) // expected-error {{error: expected ')'}}  \
+                                      // expected-error {{to match this '('}}
+  int _awesome;
+
 @end
+
