@@ -31,7 +31,6 @@ class MachineMove;
 class RegScavenger;
 class SDNode;
 class SelectionDAG;
-class TargetRegisterClass;
 class Type;
 
 /// TargetRegisterDesc - This record contains all of the information known about
