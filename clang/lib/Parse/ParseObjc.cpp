@@ -283,7 +283,7 @@ void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl,
       // continue to eat up tons of stuff and spew lots of nonsense errors.  It
       // would probably be better to bail out if we saw an @class or @interface
       // or something like that.
-      Diag(Tok, diag::err_objc_illegal_interface_qual);
+      Diag(AtLoc, diag::err_objc_illegal_interface_qual);
       // Skip until we see an '@' or '}' or ';'.
       SkipUntil(tok::r_brace, tok::at);
       break;
@@ -299,10 +299,14 @@ void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl,
       break;
         
     case tok::objc_property:
+      if (!getLang().ObjC2)
+        Diag(AtLoc, diag::err_objc_propertoes_require_objc2);
+
       ObjCDeclSpec OCDS;
       // Parse property attribute list, if any. 
-      if (Tok.is(tok::l_paren))
+      if (Tok.is(tok::l_paren)) {
         ParseObjCPropertyAttribute(OCDS);
+      }
         
       // Parse all the comma separated declarators.
       DeclSpec DS;
@@ -379,6 +383,13 @@ void Parser::ParseObjCPropertyAttribute(ObjCDeclSpec &DS) {
   
   while (1) {
     const IdentifierInfo *II = Tok.getIdentifierInfo();
+    
+    // If this is not an identifier at all, bail out early.
+    if (II == 0) {
+      MatchRHSPunctuation(tok::r_paren, LHSLoc);
+      return;
+    }
+    
     // getter/setter require extra treatment.
     if (II == ObjCPropertyAttrs[objc_getter] || 
         II == ObjCPropertyAttrs[objc_setter]) {
@@ -416,20 +427,17 @@ void Parser::ParseObjCPropertyAttribute(ObjCDeclSpec &DS) {
     else if (II == ObjCPropertyAttrs[objc_assign])
       DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_assign);
     else if (II == ObjCPropertyAttrs[objc_readwrite])
-        DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_readwrite);
+      DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_readwrite);
     else if (II == ObjCPropertyAttrs[objc_retain])
       DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_retain);
     else if (II == ObjCPropertyAttrs[objc_copy])
       DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_copy);
     else if (II == ObjCPropertyAttrs[objc_nonatomic])
       DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_nonatomic);
-    else if (II) {
+    else {
       Diag(Tok.getLocation(), diag::err_objc_expected_property_attr,
            II->getName());
       SkipUntil(tok::r_paren);
-      return;
-    } else {
-      MatchRHSPunctuation(tok::r_paren, LHSLoc);
       return;
     }
     

@@ -422,6 +422,8 @@ DIAG(err_objc_property_requires_field_name, ERROR,
      "property requires fields to be named")
 DIAG(err_objc_expected_property_attr, ERROR,
      "unknown property attribute '%0'")
+DIAG(err_objc_propertoes_require_objc2, ERROR,
+     "properties are an Objective-C 2 feature")
 DIAG(err_objc_unexpected_attr, ERROR,
      "prefix attribute must be followed by an interface or protocol")
 DIAG(err_objc_property_attr_mutually_exclusive, ERROR,
