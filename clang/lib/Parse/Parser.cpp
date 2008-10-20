@@ -505,8 +505,9 @@ Parser::DeclTy *Parser::ParseFunctionDefinition(Declarator &D) {
   // declaration-specifiers are completely optional in the grammar.
   if (getLang().ImplicitInt && D.getDeclSpec().getParsedSpecifiers() == 0) {
     const char *PrevSpec;
-    D.getMutableDeclSpec().SetTypeSpecType(DeclSpec::TST_int, D.getIdentifierLoc(),
-                                    PrevSpec);
+    D.getMutableDeclSpec().SetTypeSpecType(DeclSpec::TST_int,
+                                           D.getIdentifierLoc(),
+                                           PrevSpec);
   }
 
   // If this declaration was formed with a K&R-style identifier list for the
