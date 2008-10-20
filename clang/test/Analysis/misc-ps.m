@@ -13,3 +13,19 @@
 //  http://llvm.org/bugs/show_bug.cgi?id=2796
 
 unsigned foo(unsigned x) { return __alignof__((x)) + sizeof(x); }
+
+// Improvement to path-sensitivity involving compound assignments.
+//  Addresses false positive in <rdar://problem/6268365>
+//
+
+unsigned r6268365Aux();
+
+void r6268365() {
+  unsigned x = 0;
+  x &= r6268365Aux();
+  unsigned j = 0;
+    
+  if (x == 0) ++j;
+  if (x == 0) x = x / j; // no-warning
+}
+
