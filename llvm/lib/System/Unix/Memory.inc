@@ -127,3 +127,24 @@ bool llvm::sys::Memory::setExecutable (MemoryBlock &M, std::string *ErrMsg) {
 #endif
 }
 
+bool llvm::sys::Memory::setRangeWritable(const void *Addr, size_t Size) {
+#if defined(__APPLE__) && defined(__arm__)
+  kern_return_t kr = vm_protect(mach_task_self(), (vm_address_t)Addr,
+                                (vm_size_t)Size, 0,
+                                VM_PROT_READ | VM_PROT_WRITE);
+  return KERN_SUCCESS == kr;
+#else
+  return true;
+#endif
+}
+
+bool llvm::sys::Memory::setRangeExecutable(const void *Addr, size_t Size) {
+#if defined(__APPLE__) && defined(__arm__)
+  kern_return_t kr = vm_protect(mach_task_self(), (vm_address_t)Addr,
+                                (vm_size_t)Size, 0,
+                                VM_PROT_READ | VM_PROT_EXECUTE | VM_PROT_COPY);
+  return KERN_SUCCESS == kr;
+#else
+  return true;
+#endif
+}

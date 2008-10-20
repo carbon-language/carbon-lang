@@ -79,6 +79,14 @@ namespace sys {
     /// to mark a block of code as RW since the protections are on page
     /// boundaries, and the JIT internal allocations are not page aligned.
     static bool setWritable (MemoryBlock &M, std::string *ErrMsg = 0);
+
+    /// setRangeExecutable - Mark the page containing a range of addresses 
+    /// as executable.
+    static bool setRangeExecutable(const void *Addr, size_t Size);
+
+    /// setRangeWritable - Mark the page containing a range of addresses 
+    /// as writable.
+    static bool setRangeWritable(const void *Addr, size_t Size);
   };
 }
 }

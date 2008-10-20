@@ -18,6 +18,8 @@
 #include "llvm/Function.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/Config/alloca.h"
+#include "llvm/Support/Streams.h"
+#include "llvm/System/Memory.h"
 #include <cstdlib>
 using namespace llvm;
 
@@ -38,9 +40,10 @@ static TargetJITInfo::JITCompilerFn JITCompilerFunction;
 #define ASMPREFIX GETASMPREFIX(__USER_LABEL_PREFIX__)
 
 // CompilationCallback stub - We can't use a C function with inline assembly in
-// it, because we the prolog/epilog inserted by GCC won't work for us.  Instead,
-// write our own wrapper, which does things our way, so we have complete control
-// over register saving and restoring.
+// it, because we the prolog/epilog inserted by GCC won't work for us (we need
+// to preserve more context and manipulate the stack directly).  Instead,
+// write our own wrapper, which does things our way, so we have complete 
+// control over register saving and restoring.
 extern "C" {
 #if defined(__arm__)
   void ARMCompilationCallback(void);
@@ -49,33 +52,42 @@ extern "C" {
     ".align 2\n"
     ".globl " ASMPREFIX "ARMCompilationCallback\n"
     ASMPREFIX "ARMCompilationCallback:\n"
-    // save main registers
-#if defined(__APPLE__)
-    "stmfd  sp!, {r4, r5, r6, r7, lr}\n"
-    "mov    r0, r7\n"  // stub's frame
-    "stmfd  sp!, {r8, r10, r11}\n"
-#else
-    "mov    ip, sp\n"
-    "stmfd  sp!, {fp, ip, lr, pc}\n"
-    "sub    fp, ip, #4\n"
-#endif // __APPLE__
-    // arguments to Compilation Callback
-    // r0 - our lr (address of the call instruction in stub plus 4)
-    // r1 - stub's lr (address of instruction that called the stub plus 4)
-#if defined(__APPLE__)
-    "mov    r0, r7\n"  // stub's frame
-#else
-    "mov    r0, fp\n"  // stub's frame
-#endif // __APPLE__
-    "mov    r1, lr\n"  // stub's lr
-    "bl     " ASMPREFIX "ARMCompilationCallbackC\n"
-    // restore main registers
-#if defined(__APPLE__)
-    "ldmfd  sp!, {r8, r10, r11}\n"
-    "ldmfd  sp!, {r4, r5, r6, r7, pc}\n"
-#else
-    "ldmfd  sp, {fp, sp, pc}\n"
-#endif // __APPLE__
+    // Save caller saved registers since they may contain stuff
+    // for the real target function right now. We have to act as if this
+    // whole compilation callback doesn't exist as far as the caller is
+    // concerned, so we can't just preserve the callee saved regs.
+    "push {r0, r1, r2, r3, lr}\n"
+    // The LR contains the address of the stub function on entry.
+    // pass it as the argument to the C part of the callback
+    "mov  r0, lr\n"
+    "sub  sp, sp, #4\n"
+    // Call the C portion of the callback
+    "bl   " ASMPREFIX "ARMCompilationCallbackC\n"
+    "add  sp, sp, #4\n"
+    // Restoring the LR to the return address of the function that invoked
+    // the stub and de-allocating the stack space for it requires us to
+    // swap the two saved LR values on the stack, as they're backwards
+    // for what we need since the pop instruction has a pre-determined
+    // order for the registers.
+    //      +--------+
+    //   0  | LR     | Original return address
+    //      +--------+    
+    //   1  | LR     | Stub address (start of stub)
+    // 2-5  | R3..R0 | Saved registers (we need to preserve all regs)
+    //      +--------+    
+    //
+    //      We need to exchange the values in slots 0 and 1 so we can
+    //      return to the address in slot 1 with the address in slot 0
+    //      restored to the LR.
+    "ldr  r0, [sp,#20]\n"
+    "ldr  r1, [sp,#16]\n"
+    "str  r1, [sp,#20]\n"
+    "str  r0, [sp,#16]\n"
+    // Return to the (newly modified) stub to invoke the real function.
+    // The above twiddling of the saved return addresses allows us to
+    // deallocate everything, including the LR the stub saved, all in one
+    // pop instruction.
+    "pop  {r0, r1, r2, r3, lr, pc}\n"
       );
 #else  // Not an ARM host
   void ARMCompilationCallback() {
@@ -85,31 +97,37 @@ extern "C" {
 #endif
 }
 
-/// ARMCompilationCallbackC - This is the target-specific function invoked by the
-/// function stub when we did not know the real target of a call.  This function
-/// must locate the start of the stub or call site and pass it into the JIT
-/// compiler function.
-extern "C" void ARMCompilationCallbackC(intptr_t *StackPtr, intptr_t RetAddr) {
-  intptr_t *RetAddrLoc = &StackPtr[-1];
-
-  assert(*RetAddrLoc == RetAddr &&
-         "Could not find return address on the stack!");
-#if 0
-  DOUT << "In callback! Addr=" << (void*)RetAddr
-       << " FP=" << (void*)StackPtr
-       << ": Resolving call to function: "
-       << TheVM->getFunctionReferencedName((void*)RetAddr) << "\n";
-#endif
-  intptr_t Addr = RetAddr - 4;
-
-  intptr_t NewVal = (intptr_t)JITCompilerFunction((void*)Addr);
+/// ARMCompilationCallbackC - This is the target-specific function invoked 
+/// by the function stub when we did not know the real target of a call.  
+/// This function must locate the start of the stub or call site and pass 
+/// it into the JIT compiler function.
+extern "C" void ARMCompilationCallbackC(intptr_t StubAddr) {
+  // Get the address of the compiled code for this function.
+  intptr_t NewVal = (intptr_t)JITCompilerFunction((void*)StubAddr);
 
   // Rewrite the call target... so that we don't end up here every time we
-  // execute the call.
-  *(intptr_t *)Addr = NewVal;
-
-  // Change the return address to reexecute the branch and link instruction...
-  *RetAddrLoc -= 12;
+  // execute the call. We're replacing the first two instructions of the
+  // stub with:
+  //   ldr pc, [pc,#-4]
+  //   <addr>
+#if defined(__APPLE__)
+  bool ok = sys::Memory::setRangeWritable ((void*)StubAddr, 8);
+  if (!ok)
+    {
+      cerr << "ERROR: Unable to mark stub writable\n";
+      abort();
+    }
+#endif
+  *(intptr_t *)StubAddr = 0xe51ff004;
+  *(intptr_t *)(StubAddr+4) = NewVal;
+#if defined(__APPLE__)
+  ok = sys::Memory::setRangeExecutable ((void*)StubAddr, 8);
+  if (!ok)
+    {
+      cerr << "ERROR: Unable to mark stub executable\n";
+      abort();
+    }
+#endif
 }
 
 TargetJITInfo::LazyResolverFn
@@ -127,17 +145,27 @@ void *ARMJITInfo::emitFunctionStub(const Function* F, void *Fn,
     // branch to the corresponding function addr
     // the stub is 8-byte size and 4-aligned
     MCE.startFunctionStub(F, 8, 4);
-    MCE.emitWordLE(0xE51FF004); // LDR PC, [PC,#-4]
+    MCE.emitWordLE(0xe51ff004); // LDR PC, [PC,#-4]
     MCE.emitWordLE(addr);       // addr of function
   } else {
-    // branch and link to the corresponding function addr
-    // the stub is 20-byte size and 4-aligned
-    MCE.startFunctionStub(F, 20, 4);
-    MCE.emitWordLE(0xE92D4800); // STMFD SP!, [R11, LR]
-    MCE.emitWordLE(0xE28FE004); // ADD LR, PC, #4
-    MCE.emitWordLE(0xE51FF004); // LDR PC, [PC,#-4]
-    MCE.emitWordLE(addr);       // addr of function
-    MCE.emitWordLE(0xE8BD8800); // LDMFD SP!, [R11, PC]
+    // The compilation callback will overwrite the first two words of this
+    // stub with indirect branch instructions targeting the compiled code. 
+    // This stub sets the return address to restart the stub, so that
+    // the new branch will be invoked when we come back.
+    //
+    // branch and link to the compilation callback.
+    // the stub is 16-byte size and 4-byte aligned.
+    MCE.startFunctionStub(F, 16, 4);
+    // Save LR so the callback can determine which stub called it.
+    // The compilation callback is responsible for popping this prior
+    // to returning.
+    MCE.emitWordLE(0xe92d4000); // PUSH {lr}
+    // Set the return address to go back to the start of this stub
+    MCE.emitWordLE(0xe24fe00c); // SUB LR, PC, #12
+    // Invoke the compilation callback
+    MCE.emitWordLE(0xe51ff004); // LDR PC, [PC,#-4]
+    // The address of the compilation callback
+    MCE.emitWordLE((intptr_t)ARMCompilationCallback);
   }
 
   return MCE.finishFunctionStub(F);

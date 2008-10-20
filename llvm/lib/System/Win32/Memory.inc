@@ -53,13 +53,20 @@ bool Memory::ReleaseRWX(MemoryBlock &M, std::string *ErrMsg) {
   return false;
 }
 
-bool Memory::setWritable (MemoryBlock &M, std::string *ErrMsg) {
+bool Memory::setWritable(MemoryBlock &M, std::string *ErrMsg) {
   return true;
 }
 
-bool Memory::setExecutable (MemoryBlock &M, std::string *ErrMsg) {
+bool Memory::setExecutable(MemoryBlock &M, std::string *ErrMsg) {
+  return false;
+}
+
+bool Memory::setRangeWritable(const void *Addr, size_t Size) {
+  return true;
+}
+
+bool Memory::setRangeExecutable(const void *Addr, size_t Size) {
   return false;
 }
 
 }
-
