@@ -22,7 +22,7 @@
 #include "clang/Parse/Parser.h"
 #include "clang/Parse/DeclSpec.h"
 #include "clang/Parse/Scope.h"
-#include "clang/Basic/Diagnostic.h"
+#include "ExtensionRAIIObject.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/SmallString.h"
 using namespace clang;
@@ -521,13 +521,11 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
       
   case tok::kw___extension__:{//unary-expression:'__extension__' cast-expr [GNU]
     // __extension__ silences extension warnings in the subexpression.
-    bool SavedExtWarn = Diags.getWarnOnExtensions();
-    Diags.setWarnOnExtensions(false);
+    ExtensionRAIIObject O(Diags);  // Use RAII to do this.
     SourceLocation SavedLoc = ConsumeToken();
     Res = ParseCastExpression(false);
     if (!Res.isInvalid)
       Res = Actions.ActOnUnaryOp(SavedLoc, SavedKind, Res.Val);
-    Diags.setWarnOnExtensions(SavedExtWarn);
     return Res;
   }
   case tok::kw_sizeof:     // unary-expression: 'sizeof' unary-expression

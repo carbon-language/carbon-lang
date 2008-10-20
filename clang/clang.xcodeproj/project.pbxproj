@@ -423,6 +423,7 @@
 		DE39857A0CB8ADCB00223765 /* ASTConsumers.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = ASTConsumers.cpp; path = Driver/ASTConsumers.cpp; sourceTree = "<group>"; };
 		DE3986EF0CB8D4B300223765 /* IdentifierTable.h */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.c.h; path = IdentifierTable.h; sourceTree = "<group>"; tabWidth = 2; };
 		DE3986F30CB8D50C00223765 /* IdentifierTable.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = IdentifierTable.cpp; sourceTree = "<group>"; };
+		DE3B90DE0EAC5EF200D01046 /* ExtensionRAIIObject.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ExtensionRAIIObject.h; path = lib/Parse/ExtensionRAIIObject.h; sourceTree = "<group>"; };
 		DE41211B0D7F1BBE0080F80A /* RValues.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RValues.h; path = clang/Analysis/PathSensitive/RValues.h; sourceTree = "<group>"; };
 		DE41211D0D7F1BBE0080F80A /* GRWorkList.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GRWorkList.h; path = clang/Analysis/PathSensitive/GRWorkList.h; sourceTree = "<group>"; };
 		DE41211E0D7F1BBE0080F80A /* SymbolManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SymbolManager.h; path = clang/Analysis/PathSensitive/SymbolManager.h; sourceTree = "<group>"; };
@@ -755,6 +756,7 @@
 		DE1F22600A7D8C9B00FBF588 /* Parse */ = {
 			isa = PBXGroup;
 			children = (
+				DE3B90DE0EAC5EF200D01046 /* ExtensionRAIIObject.h */,
 				3551068F0E9A857C006A4E44 /* ParsePragma.h */,
 				3551068A0E9A8546006A4E44 /* ParsePragma.cpp */,
 				3551068B0E9A8546006A4E44 /* ParseTentative.cpp */,

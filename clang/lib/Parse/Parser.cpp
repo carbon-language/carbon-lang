@@ -15,6 +15,7 @@
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Parse/DeclSpec.h"
 #include "clang/Parse/Scope.h"
+#include "ExtensionRAIIObject.h"
 #include "ParsePragma.h"
 using namespace clang;
 
@@ -341,11 +342,9 @@ Parser::DeclTy *Parser::ParseExternalDeclaration() {
     // TODO: Invoke action for top-level semicolon.
     return 0;
   case tok::kw___extension__: {
-    ConsumeToken();
-    // FIXME: Disable extension warnings.
-    DeclTy *RV = ParseExternalDeclaration();
-    // FIXME: Restore extension warnings.
-    return RV;
+    // __extension__ silences extension warnings in the subexpression.
+    ExtensionRAIIObject O(Diags);  // Use RAII to do this.
+    return ParseExternalDeclaration();
   }
   case tok::kw_asm: {
     ExprResult Result = ParseSimpleAsm();

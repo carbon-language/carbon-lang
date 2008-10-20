@@ -15,6 +15,7 @@
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Parse/DeclSpec.h"
 #include "clang/Parse/Scope.h"
+#include "ExtensionRAIIObject.h"
 #include "llvm/ADT/SmallSet.h"
 using namespace clang;
 
@@ -659,15 +660,16 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
 void Parser::
 ParseStructDeclaration(DeclSpec &DS,
                        llvm::SmallVectorImpl<FieldDeclarator> &Fields) {
-  // FIXME: When __extension__ is specified, disable extension diagnostics.
-  while (Tok.is(tok::kw___extension__))
+  if (Tok.is(tok::kw___extension__)) {
+    // __extension__ silences extension warnings in the subexpression.
+    ExtensionRAIIObject O(Diags);  // Use RAII to do this.
     ConsumeToken();
+    return ParseStructDeclaration(DS, Fields);
+  }
   
   // Parse the common specifier-qualifiers-list piece.
   SourceLocation DSStart = Tok.getLocation();
   ParseSpecifierQualifierList(DS);
-  // TODO: Does specifier-qualifier list correctly check that *something* is
-  // specified?
   
   // If there are no declarators, issue a warning.
   if (Tok.is(tok::semi)) {
