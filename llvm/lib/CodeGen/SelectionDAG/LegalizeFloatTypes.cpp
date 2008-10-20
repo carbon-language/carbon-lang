@@ -767,10 +767,8 @@ void DAGTypeLegalizer::ExpandFloatRes_XINT_TO_FP(SDNode *N, SDValue &Lo,
                                      MVT::ppcf128));
   Lo = DAG.getNode(ISD::SELECT_CC, VT, Src, DAG.getConstant(0, SrcVT), Lo, Hi,
                    DAG.getCondCode(ISD::SETLT));
-  Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, NVT, Lo,
-                   DAG.getConstant(1, TLI.getPointerTy()));
-  Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, NVT, Lo,
-                   DAG.getConstant(0, TLI.getPointerTy()));
+  Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, NVT, Lo, DAG.getIntPtrConstant(1));
+  Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, NVT, Lo, DAG.getIntPtrConstant(0));
 }
 
 

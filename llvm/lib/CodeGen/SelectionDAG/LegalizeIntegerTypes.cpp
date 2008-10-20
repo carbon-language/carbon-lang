@@ -469,7 +469,7 @@ SDValue DAGTypeLegalizer::PromoteIntRes_VAARG(SDNode *N) {
   // of zero here!).
   unsigned Increment = VT.getSizeInBits() / 8;
   SDValue Tmp = DAG.getNode(ISD::ADD, TLI.getPointerTy(), VAList,
-                              DAG.getConstant(Increment, TLI.getPointerTy()));
+                            DAG.getIntPtrConstant(Increment));
 
   // Store the incremented VAList to the pointer.
   Tmp = DAG.getStore(VAList.getValue(1), Tmp, Ptr, V, 0);
@@ -2073,7 +2073,7 @@ SDValue DAGTypeLegalizer::ExpandIntOp_UINT_TO_FP(SDNode *N) {
 
     // Build a 64 bit pair (0, FF) in the constant pool, with FF in the lo bits.
     SDValue FudgePtr = DAG.getConstantPool(ConstantInt::get(FF.zext(64)),
-                                             TLI.getPointerTy());
+                                           TLI.getPointerTy());
 
     // Get a pointer to FF if the sign bit was set, or to 0 otherwise.
     SDValue Zero = DAG.getIntPtrConstant(0);
