@@ -59,7 +59,7 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS) {
     break;
   case DeclSpec::TST_unspecified:
     // "<proto1,proto2>" is an objc qualified ID with a missing id.
-      if (DeclSpec::ProtocolQualifierListTy PQ = DS.getProtocolQualifiers()) {
+    if (DeclSpec::ProtocolQualifierListTy PQ = DS.getProtocolQualifiers()) {
       Result = Context.getObjCQualifiedIdType((ObjCProtocolDecl**)PQ,
                                               DS.getNumProtocolQualifiers());
       break;
