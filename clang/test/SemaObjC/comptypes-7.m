@@ -58,8 +58,8 @@ int main()
 
   if (obj_p == i) foo() ; // expected-warning {{comparison between pointer and integer ('id<MyProtocol>' and 'int')}}
   if (i == obj_p) foo() ; // expected-warning {{comparison between pointer and integer ('int' and 'id<MyProtocol>')}}
-  if (obj_p == j) foo() ; // expected-error {{invalid operands to binary expression ('id<MyProtocol>' and 'int *')}}
-  if (j == obj_p) foo() ; // expected-error {{invalid operands to binary expression ('int *' and 'id<MyProtocol>')}}
+  if (obj_p == j) foo() ; // expected-warning {{comparison of distinct pointer types ('id<MyProtocol>' and 'int *')}}
+  if (j == obj_p) foo() ; // expected-warning {{comparison of distinct pointer types ('int *' and 'id<MyProtocol>')}}
 
   if (obj_C == i) foo() ; // expected-warning {{comparison between pointer and integer ('Class' and 'int')}}
   if (i == obj_C) foo() ; // expected-warning {{comparison between pointer and integer ('int' and 'Class')}}

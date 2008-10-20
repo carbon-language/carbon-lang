@@ -66,6 +66,8 @@ int main()
 
   /* Any comparison between 'MyClass *' and anything which is not an 'id'
      must generate a warning.  */
+  /* FIXME: GCC considers this a warning ("comparison of distinct pointer types"). */
+  /* There is a corresponding FIXME in ASTContext::mergeTypes() */
   if (obj_p == obj_c) foo() ; // expected-error {{invalid operands to binary expression ('id<MyProtocol>' and 'MyClass *')}}
 
   if (obj_c == obj_cp) foo() ; // expected-warning {{comparison of distinct pointer types ('MyClass *' and 'MyOtherClass *')}} 
@@ -80,8 +82,8 @@ int main()
   if (obj_p == obj_cp) foo() ; /* Ok */
 
 
-  if (obj_p == obj_C) foo() ; // expected-error {{invalid operands to binary expression ('id<MyProtocol>' and 'Class')}} 
-  if (obj_C == obj_p) foo() ; // expected-error {{invalid operands to binary expression ('Class' and 'id<MyProtocol>')}} 
+  if (obj_p == obj_C) foo() ; // expected-warning {{comparison of distinct pointer types ('id<MyProtocol>' and 'Class')}} 
+  if (obj_C == obj_p) foo() ; // expected-warning {{comparison of distinct pointer types ('Class' and 'id<MyProtocol>')}} 
   if (obj_cp == obj_C) foo() ; // expected-warning {{comparison of distinct pointer types ('MyOtherClass *' and 'Class')}} 
   if (obj_C == obj_cp) foo() ; // expected-warning {{comparison of distinct pointer types ('Class' and 'MyOtherClass *')}}
 

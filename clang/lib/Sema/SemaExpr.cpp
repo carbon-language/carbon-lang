@@ -2061,6 +2061,13 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation loc,
   }
 
   if ((lType->isObjCQualifiedIdType() || rType->isObjCQualifiedIdType())) {
+    if ((lType->isPointerType() || rType->isPointerType()) &&
+        !Context.typesAreCompatible(lType, rType)) {
+      Diag(loc, diag::ext_typecheck_comparison_of_distinct_pointers,
+           lType.getAsString(), rType.getAsString(),
+           lex->getSourceRange(), rex->getSourceRange());
+      return QualType();
+    }
     if (ObjCQualifiedIdTypesAreCompatible(lType, rType, true)) {
       ImpCastExprToType(rex, lType);
       return Context.IntTy;
