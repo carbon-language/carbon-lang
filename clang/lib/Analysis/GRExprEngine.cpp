@@ -1989,8 +1989,8 @@ void GRExprEngine::VisitReturnStmt(ReturnStmt* S, NodeTy* Pred, NodeSet& Dst) {
 // Transfer functions: Binary operators.
 //===----------------------------------------------------------------------===//
 
-bool GRExprEngine::CheckDivideZero(Expr* Ex, const GRState* St,
-                                   NodeTy* Pred, SVal Denom) {
+const GRState* GRExprEngine::CheckDivideZero(Expr* Ex, const GRState* St,
+                                             NodeTy* Pred, SVal Denom) {
   
   // Divide by undefined? (potentially zero)
   
@@ -2002,7 +2002,7 @@ bool GRExprEngine::CheckDivideZero(Expr* Ex, const GRState* St,
       ExplicitBadDivides.insert(DivUndef);
     }
     
-    return true;
+    return 0;
   }
   
   // Check for divide/remainder-by-zero.
@@ -2029,7 +2029,7 @@ bool GRExprEngine::CheckDivideZero(Expr* Ex, const GRState* St,
       
     }
   
-  return !isFeasibleNotZero;
+  return isFeasibleNotZero ? St : 0;
 }
 
 void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
@@ -2059,6 +2059,8 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
     for (NodeSet::iterator I2=Tmp2.begin(), E2=Tmp2.end(); I2 != E2; ++I2) {
 
       const GRState* St = GetState(*I2);
+      const GRState* OldSt = St;
+
       SVal RightV = GetSVal(St, RHS);
       BinaryOperator::Opcode Op = B->getOpcode();
       
@@ -2089,11 +2091,11 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
         case BinaryOperator::Div:
         case BinaryOperator::Rem:
           
-          // Special checking for integer denominators.
-          
-          if (RHS->getType()->isIntegerType()
-              && CheckDivideZero(B, St, *I2, RightV))
-            continue;
+          // Special checking for integer denominators.          
+          if (RHS->getType()->isIntegerType()) {
+            St = CheckDivideZero(B, St, *I2, RightV);
+            if (!St) continue;
+          }
           
           // FALL-THROUGH.
 
@@ -2108,7 +2110,13 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
           SVal Result = EvalBinOp(Op, LeftV, RightV);
           
           if (Result.isUnknown()) {
-            Dst.Add(*I2);
+            if (OldSt != St) {
+              // Generate a new node if we have already created a new state.
+              MakeNode(Dst, B, *I2, St);
+            }
+            else
+              Dst.Add(*I2);
+            
             continue;
           }
           
@@ -2150,6 +2158,18 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
         St = GetState(*I3);
         SVal V = GetSVal(St, LHS);
 
+        // Check for divide-by-zero.
+        if ((Op == BinaryOperator::Div || Op == BinaryOperator::Rem)
+            && RHS->getType()->isIntegerType()) {
+          
+          // CheckDivideZero returns a new state where the denominator
+          // is assumed to be non-zero.
+          St = CheckDivideZero(B, St, *I3, RightV);
+          
+          if (!St)
+            continue;
+        }
+        
         // Propagate undefined values (left-side).          
         if (V.isUndef()) {
           EvalStore(Dst, B, LHS, *I3, SetSVal(St, B, V), location, V);
@@ -2176,14 +2196,7 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
         RightV = EvalCast(RightV, CTy);
           
         // Evaluate operands and promote to result type.                    
-
-        if ((Op == BinaryOperator::Div || Op == BinaryOperator::Rem)
-             && RHS->getType()->isIntegerType()) {
-          
-          if (CheckDivideZero(B, St, *I3, RightV))
-            continue;
-        }
-        else if (RightV.isUndef()) {            
+        if (RightV.isUndef()) {            
           // Propagate undefined values (right-side).          
           EvalStore(Dst, B, LHS, *I3, SetSVal(St, B, RightV), location, RightV);
           continue;

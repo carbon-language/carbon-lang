@@ -29,3 +29,17 @@ void r6268365() {
   if (x == 0) x = x / j; // no-warning
 }
 
+void divzeroassume(unsigned x, unsigned j) {  
+  x /= j;  
+  if (j == 0) x /= 0;     // no-warning
+  if (j == 0) x /= j;     // no-warning
+  if (j == 0) x = x / 0;  // no-warning
+}
+
+void divzeroassumeB(unsigned x, unsigned j) {  
+  x = x / j;  
+  if (j == 0) x /= 0;     // no-warning
+  if (j == 0) x /= j;     // no-warning
+  if (j == 0) x = x / 0;  // no-warning
+}
+
