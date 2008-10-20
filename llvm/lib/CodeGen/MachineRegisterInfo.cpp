@@ -16,6 +16,7 @@ using namespace llvm;
 
 MachineRegisterInfo::MachineRegisterInfo(const TargetRegisterInfo &TRI) {
   VRegInfo.reserve(256);
+  RegClass2VRegMap.resize(TRI.getNumRegClasses()+1); // RC ID starts at 1.
   UsedPhysRegs.resize(TRI.getNumRegs());
   
   // Create the physreg use/def lists.

@@ -32,6 +32,11 @@ class MachineRegisterInfo {
   /// Each element in this list contains the register class of the vreg and the
   /// start of the use/def list for the register.
   std::vector<std::pair<const TargetRegisterClass*, MachineOperand*> > VRegInfo;
+
+  /// RegClassVRegMap - This vector acts as a map from TargetRegisterClass to
+  /// virtual registers. For each target register class, it keeps a list of
+  /// virtual registers belonging to the class.
+  std::vector<std::vector<unsigned> > RegClass2VRegMap;
   
   /// PhysRegUseDefLists - This is an array of the head of the use/def list for
   /// physical registers.
@@ -130,6 +135,7 @@ public:
   //===--------------------------------------------------------------------===//
   
   /// getRegClass - Return the register class of the specified virtual register.
+  ///
   const TargetRegisterClass *getRegClass(unsigned Reg) const {
     Reg -= TargetRegisterInfo::FirstVirtualRegister;
     assert(Reg < VRegInfo.size() && "Invalid vreg!");
@@ -137,10 +143,22 @@ public:
   }
 
   /// setRegClass - Set the register class of the specified virtual register.
+  ///
   void setRegClass(unsigned Reg, const TargetRegisterClass *RC) {
+    unsigned VR = Reg;
     Reg -= TargetRegisterInfo::FirstVirtualRegister;
     assert(Reg < VRegInfo.size() && "Invalid vreg!");
+    const TargetRegisterClass *OldRC = VRegInfo[Reg].first;
     VRegInfo[Reg].first = RC;
+
+    // Remove from old register class's vregs list. This may be slow but
+    // fortunately this operation is rarely needed.
+    std::vector<unsigned> &VRegs = RegClass2VRegMap[OldRC->getID()];
+    std::vector<unsigned>::iterator I=std::find(VRegs.begin(), VRegs.end(), VR);
+    VRegs.erase(I);
+
+    // Add to new register class's vregs list.
+    RegClass2VRegMap[RC->getID()].push_back(VR);
   }
   
   /// createVirtualRegister - Create and return a new virtual register in the
@@ -151,13 +169,13 @@ public:
     // Add a reg, but keep track of whether the vector reallocated or not.
     void *ArrayBase = VRegInfo.empty() ? 0 : &VRegInfo[0];
     VRegInfo.push_back(std::make_pair(RegClass, (MachineOperand*)0));
-    
-    if (&VRegInfo[0] == ArrayBase || VRegInfo.size() == 1)
-      return getLastVirtReg();
 
-    // Otherwise, the vector reallocated, handle this now.
-    HandleVRegListReallocation();
-    return getLastVirtReg();
+    if (!((&VRegInfo[0] == ArrayBase || VRegInfo.size() == 1)))
+      // The vector reallocated, handle this now.
+      HandleVRegListReallocation();
+    unsigned VR = getLastVirtReg();
+    RegClass2VRegMap[RegClass->getID()].push_back(VR);
+    return VR;
   }
 
   /// getLastVirtReg - Return the highest currently assigned virtual register.
@@ -165,7 +183,12 @@ public:
   unsigned getLastVirtReg() const {
     return (unsigned)VRegInfo.size()+TargetRegisterInfo::FirstVirtualRegister-1;
   }
-  
+
+  /// getRegClassVirtRegs - Return the list of virtual registers of the given
+  /// target register class.
+  std::vector<unsigned> &getRegClassVirtRegs(const TargetRegisterClass *RC) {
+    return RegClass2VRegMap[RC->getID()];
+  }
   
   //===--------------------------------------------------------------------===//
   // Physical Register Use Info
