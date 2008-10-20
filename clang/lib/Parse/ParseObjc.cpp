@@ -392,10 +392,21 @@ void Parser::ParseObjCPropertyAttribute(ObjCDeclSpec &DS) {
     
     SourceLocation AttrName = ConsumeToken(); // consume last attribute name
     
-    // getter/setter require extra treatment.
-    if (II == ObjCPropertyAttrs[objc_getter] || 
-        II == ObjCPropertyAttrs[objc_setter]) {
-      
+    if (II == ObjCPropertyAttrs[objc_readonly])
+      DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_readonly);
+    else if (II == ObjCPropertyAttrs[objc_assign])
+      DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_assign);
+    else if (II == ObjCPropertyAttrs[objc_readwrite])
+      DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_readwrite);
+    else if (II == ObjCPropertyAttrs[objc_retain])
+      DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_retain);
+    else if (II == ObjCPropertyAttrs[objc_copy])
+      DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_copy);
+    else if (II == ObjCPropertyAttrs[objc_nonatomic])
+      DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_nonatomic);
+    else if (II == ObjCPropertyAttrs[objc_getter] || 
+             II == ObjCPropertyAttrs[objc_setter]) {
+      // getter/setter require extra treatment.
       if (ExpectAndConsume(tok::equal, diag::err_objc_expected_equal, "",
                            tok::r_paren))
         return;
@@ -419,19 +430,7 @@ void Parser::ParseObjCPropertyAttribute(ObjCDeclSpec &DS) {
         DS.setGetterName(Tok.getIdentifierInfo());
         ConsumeToken();  // consume method name
       }
-    } else if (II == ObjCPropertyAttrs[objc_readonly])
-      DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_readonly);
-    else if (II == ObjCPropertyAttrs[objc_assign])
-      DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_assign);
-    else if (II == ObjCPropertyAttrs[objc_readwrite])
-      DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_readwrite);
-    else if (II == ObjCPropertyAttrs[objc_retain])
-      DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_retain);
-    else if (II == ObjCPropertyAttrs[objc_copy])
-      DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_copy);
-    else if (II == ObjCPropertyAttrs[objc_nonatomic])
-      DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_nonatomic);
-    else {
+    } else {
       Diag(AttrName, diag::err_objc_expected_property_attr, II->getName());
       SkipUntil(tok::r_paren);
       return;
