@@ -396,7 +396,6 @@ private:
     objc_readwrite, objc_retain, objc_copy, objc_nonatomic, objc_NumAttrs
   };
   IdentifierInfo *ObjCPropertyAttrs[objc_NumAttrs];
-  bool isObjCPropertyAttribute();
   
   bool isTokIdentifier_in() const;
 

@@ -53,6 +53,12 @@ typedef signed char BOOL;
 @property (readonly getter=isAwesome) // expected-error {{error: expected ')'}}  \
                                       // expected-error {{to match this '('}}
   int _awesome;
+@property (readonlyx) // expected-error {{unknown property attribute 'readonlyx'}}
+  int _awesome2;
+
+@property (+)  // expected-error {{error: expected ')'}}  \
+               // expected-error {{to match this '('}}
+  int _awesome3;
 
 @end
 

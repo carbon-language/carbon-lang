@@ -377,7 +377,7 @@ void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl,
 void Parser::ParseObjCPropertyAttribute(ObjCDeclSpec &DS) {
   SourceLocation LHSLoc = ConsumeParen(); // consume '('
   
-  while (isObjCPropertyAttribute()) {
+  while (1) {
     const IdentifierInfo *II = Tok.getIdentifierInfo();
     // getter/setter require extra treatment.
     if (II == ObjCPropertyAttrs[objc_getter] || 
@@ -393,7 +393,7 @@ void Parser::ParseObjCPropertyAttribute(ObjCDeclSpec &DS) {
             loc = ConsumeToken();  // consume method name
             if (Tok.isNot(tok::colon)) {
               Diag(loc, diag::err_expected_colon);
-              SkipUntil(tok::r_paren,true,true);
+              SkipUntil(tok::r_paren);
               return;
             }
           } else {
@@ -402,13 +402,13 @@ void Parser::ParseObjCPropertyAttribute(ObjCDeclSpec &DS) {
           }
         } else {
           Diag(loc, diag::err_expected_ident);
-          SkipUntil(tok::r_paren,true,true);
+          SkipUntil(tok::r_paren);
           return;
         }
       }
       else {
         Diag(loc, diag::err_objc_expected_equal);    
-        SkipUntil(tok::r_paren,true,true);
+        SkipUntil(tok::r_paren);
         return;
       }
     } else if (II == ObjCPropertyAttrs[objc_readonly])
@@ -423,6 +423,15 @@ void Parser::ParseObjCPropertyAttribute(ObjCDeclSpec &DS) {
       DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_copy);
     else if (II == ObjCPropertyAttrs[objc_nonatomic])
       DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_nonatomic);
+    else if (II) {
+      Diag(Tok.getLocation(), diag::err_objc_expected_property_attr,
+           II->getName());
+      SkipUntil(tok::r_paren);
+      return;
+    } else {
+      MatchRHSPunctuation(tok::r_paren, LHSLoc);
+      return;
+    }
     
     ConsumeToken(); // consume last attribute token
     if (Tok.is(tok::comma)) {
@@ -549,18 +558,6 @@ IdentifierInfo *Parser::ParseObjCSelector(SourceLocation &SelectorLoc) {
     return II;
   }
 }
-
-///  property-attrlist: one of
-///    readonly getter setter assign retain copy nonatomic
-///
-bool Parser::isObjCPropertyAttribute() {
-  if (Tok.is(tok::identifier)) {
-    const IdentifierInfo *II = Tok.getIdentifierInfo();
-    for (unsigned i = 0; i < objc_NumAttrs; ++i)
-      if (II == ObjCPropertyAttrs[i]) return true;
-  }
-  return false;
-} 
 
 ///  objc-for-collection-in: 'in'
 ///
