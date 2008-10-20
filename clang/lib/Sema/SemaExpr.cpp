@@ -309,6 +309,36 @@ Sema::ActOnStringLiteral(const Token *StringToks, unsigned NumStringToks) {
                            StringToks[NumStringToks-1].getLocation());
 }
 
+/// ShouldSnapshotBlockValueReference - Return true if a reference inside of
+/// CurBlock to VD should cause it to be snapshotted (as we do for auto
+/// variables defined outside the block) or false if this is not needed (e.g.
+/// for values inside the block or for globals).
+///
+/// FIXME: This will create BlockDeclRefExprs for global variables,
+/// function references, etc which is suboptimal :) and breaks
+/// things like "integer constant expression" tests.
+static bool ShouldSnapshotBlockValueReference(BlockSemaInfo *CurBlock,
+                                              ValueDecl *VD) {
+  // If the value is defined inside the block, we couldn't snapshot it even if
+  // we wanted to.
+  if (CurBlock->TheDecl == VD->getDeclContext())
+    return false;
+  
+  // If this is an enum constant or function, it is constant, don't snapshot.
+  if (isa<EnumConstantDecl>(VD) || isa<FunctionDecl>(VD))
+    return false;
+
+  // If this is a reference to an extern, static, or global variable, no need to
+  // snapshot it.
+  // FIXME: What about 'const' variables in C++?
+  if (const VarDecl *Var = dyn_cast<VarDecl>(VD))
+    return Var->hasLocalStorage();
+  
+  return true;
+}  
+    
+
+
 /// ActOnIdentifierExpr - The parser read an identifier in expression context,
 /// validate it per-C99 6.5.1.  HasTrailingLParen indicates whether this
 /// identifier is used in a function call context.
@@ -397,16 +427,16 @@ Sema::ExprResult Sema::ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
   // Only create DeclRefExpr's for valid Decl's.
   if (VD->isInvalidDecl())
     return true;
-    
-  // FIXME: This will create BlockDeclRefExprs for global variables,
-  // function references, etc which is suboptimal :) and breaks
-  // things like "integer constant expression" tests.
+  
+  // If the identifier reference is inside a block, and it refers to a value
+  // that is outside the block, create a BlockDeclRefExpr instead of a
+  // DeclRefExpr.  This ensures the value is treated as a copy-in snapshot when
+  // the block is formed.
   //
-  if (CurBlock && (CurBlock->TheDecl != VD->getDeclContext()) &&
-      !isa<EnumConstantDecl>(VD)) {
-    // If we are in a block and the variable is outside the current block,
-    // bind the variable reference with a BlockDeclRefExpr.
-    
+  // We do not do this for things like enum constants, global variables, etc,
+  // as they do not get snapshotted.
+  //
+  if (CurBlock && ShouldSnapshotBlockValueReference(CurBlock, VD)) {
     // The BlocksAttr indicates the variable is bound by-reference.
     if (VD->getAttr<BlocksAttr>())
       return new BlockDeclRefExpr(VD, VD->getType(), Loc, true);

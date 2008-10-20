@@ -62,3 +62,11 @@ int test4(int argc) {  // rdar://6251437
   }();
   return 0;
 }
+
+
+// rdar://6257721 - reference to static/global is byref by default.
+static int test5g;
+void test5() {
+  bar(^{ test5g = 1; });
+}
+
