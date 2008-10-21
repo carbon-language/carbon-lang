@@ -450,7 +450,7 @@ Sema::ExprResult Sema::ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
   }
   // If this reference is not in a block or if the referenced variable is
   // within the block, create a normal DeclRefExpr.
-  return new DeclRefExpr(VD, VD->getType(), Loc);
+  return new DeclRefExpr(VD, GetNonReferenceType(VD->getType()), Loc);
 }
 
 Sema::ExprResult Sema::ActOnPredefinedExpr(SourceLocation Loc,
@@ -1565,8 +1565,7 @@ Sema::CheckPointerTypesForAssignment(QualType lhsType, QualType rhsType) {
   // 3 & 4 (below). ...and the type *pointed to* by the left has all the 
   // qualifiers of the type *pointed to* by the right; 
   // FIXME: Handle ASQualType
-  if ((lhptee.getCVRQualifiers() & rhptee.getCVRQualifiers()) != 
-       rhptee.getCVRQualifiers())
+  if (!lhptee.isAtLeastAsQualifiedAs(rhptee))
     ConvTy = CompatiblePointerDiscardsQualifiers;
 
   // C99 6.5.16.1p1 (constraint 4): If one operand is a pointer to an object or 
@@ -1766,6 +1765,28 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
 
 Sema::AssignConvertType
 Sema::CheckSingleAssignmentConstraints(QualType lhsType, Expr *&rExpr) {
+  if (getLangOptions().CPlusPlus) {
+    if (!lhsType->isRecordType()) {
+      // C++ 5.17p3: If the left operand is not of class type, the
+      // expression is implicitly converted (C++ 4) to the
+      // cv-unqualified type of the left operand.
+      ImplicitConversionSequence ICS 
+        = TryCopyInitialization(rExpr, lhsType.getUnqualifiedType());
+      if (ICS.ConversionKind == ImplicitConversionSequence::BadConversion) {
+        // No implicit conversion available; we cannot perform this
+        // assignment.
+        return Incompatible;
+      } else {
+        // Perform the appropriate cast to the right-handle side.
+        ImpCastExprToType(rExpr, lhsType.getUnqualifiedType());
+        return Compatible;
+      }
+    }
+
+    // FIXME: Currently, we fall through and treat C++ classes like C
+    // structures.
+  }
+
   // C99 6.5.16.1p1: the left operand is a pointer and the right is
   // a null pointer constant.
   if ((lhsType->isPointerType() || lhsType->isObjCQualifiedIdType() ||

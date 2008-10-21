@@ -259,7 +259,7 @@ public:
   QualType ConvertDeclSpecToType(const DeclSpec &DS);
   void ProcessTypeAttributeList(QualType &Result, const AttributeList *AL);
   QualType GetTypeForDeclarator(Declarator &D, Scope *S);
-
+  QualType GetNonReferenceType(QualType Type);
   
   QualType ObjCGetTypeForMethodDefinition(DeclTy *D);
 
@@ -371,6 +371,7 @@ private:
   bool IsFloatingPointPromotion(QualType FromType, QualType ToType);
   bool IsPointerConversion(Expr *From, QualType FromType, QualType ToType,
                            QualType& ConvertedType);
+  bool IsQualificationConversion(QualType FromType, QualType ToType);
 
   ImplicitConversionSequence::CompareKind 
   CompareImplicitConversionSequences(const ImplicitConversionSequence& ICS1,

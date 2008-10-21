@@ -318,6 +318,32 @@ Sema::TryCopyInitialization(Expr* From, QualType ToType)
   ICS.Standard.Deprecated = false;
   ICS.Standard.FromTypePtr = FromType.getAsOpaquePtr();
 
+  if (const ReferenceType *ToTypeRef = ToType->getAsReferenceType()) {
+    // FIXME: This is a hack to deal with the initialization of
+    // references the way that the C-centric code elsewhere deals with
+    // references, by only allowing them if the referred-to type is
+    // exactly the same. This means that we're only handling the
+    // direct-binding case. The code will be replaced by an
+    // implementation of C++ 13.3.3.1.4 once we have the
+    // initialization of references implemented.
+    QualType ToPointee = Context.getCanonicalType(ToTypeRef->getPointeeType());
+
+    // Get down to the canonical type that we're converting from.
+    if (const ReferenceType *FromTypeRef = FromType->getAsReferenceType())
+      FromType = FromTypeRef->getPointeeType();
+    FromType = Context.getCanonicalType(FromType);
+
+    ICS.Standard.First = ICK_Identity;
+    ICS.Standard.Second = ICK_Identity;
+    ICS.Standard.Third = ICK_Identity;
+    ICS.Standard.ToTypePtr = ToType.getAsOpaquePtr();
+
+    if (FromType != ToPointee)
+      ICS.ConversionKind = ImplicitConversionSequence::BadConversion;
+
+    return ICS;
+  }
+
   // The first conversion can be an lvalue-to-rvalue conversion,
   // array-to-pointer conversion, or function-to-pointer conversion
   // (C++ 4p1).
@@ -432,10 +458,7 @@ Sema::TryCopyInitialization(Expr* From, QualType ToType)
   }
 
   // The third conversion can be a qualification conversion (C++ 4p1).
-  // FIXME: CheckPointerTypesForAssignment isn't the right way to
-  // determine whether we have a qualification conversion.
-  if (Context.getCanonicalType(FromType) != Context.getCanonicalType(ToType)
-      && CheckPointerTypesForAssignment(ToType, FromType) == Compatible) {
+  if (IsQualificationConversion(FromType, ToType)) {
     ICS.Standard.Third = ICK_Qualification;
     FromType = ToType;
   } else {
@@ -616,6 +639,74 @@ bool Sema::IsPointerConversion(Expr *From, QualType FromType, QualType ToType,
   // type, can be converted to an rvalue of type "pointer to cv B,"
   // where B is a base class (clause 10) of D (C++ 4.10p3).
   return false;
+}
+
+/// IsQualificationConversion - Determines whether the conversion from
+/// an rvalue of type FromType to ToType is a qualification conversion
+/// (C++ 4.4).
+bool 
+Sema::IsQualificationConversion(QualType FromType, QualType ToType)
+{
+  FromType = Context.getCanonicalType(FromType);
+  ToType = Context.getCanonicalType(ToType);
+
+  // If FromType and ToType are the same type, this is not a
+  // qualification conversion.
+  if (FromType == ToType)
+    return false;
+    
+  // (C++ 4.4p4):
+  //   A conversion can add cv-qualifiers at levels other than the first
+  //   in multi-level pointers, subject to the following rules: [...]
+  bool PreviousToQualsIncludeConst = true;
+  bool UnwrappedPointer;
+  bool UnwrappedAnyPointer = false;
+  do {
+    // Within each iteration of the loop, we check the qualifiers to
+    // determine if this still looks like a qualification
+    // conversion. Then, if all is well, we unwrap one more level of
+    // pointers (FIXME: or pointers-to-members) and do it all again
+    // until there are no more pointers or pointers-to-members left to
+    // unwrap.
+    UnwrappedPointer = false;
+
+    //   -- the pointer types are similar.
+    const PointerType *FromPtrType = FromType->getAsPointerType(),
+                      *ToPtrType   = ToType->getAsPointerType();
+    if (FromPtrType && ToPtrType) {
+      // The pointer types appear similar. Look at their pointee types.
+      FromType = FromPtrType->getPointeeType();
+      ToType = ToPtrType->getPointeeType();
+      UnwrappedPointer = true;
+      UnwrappedAnyPointer = true;
+    } 
+
+    // FIXME: Cope with pointer-to-member types.
+
+    //   -- for every j > 0, if const is in cv 1,j then const is in cv
+    //      2,j, and similarly for volatile.
+    if (FromType.isMoreQualifiedThan(ToType))
+      return false;
+
+    //   -- if the cv 1,j and cv 2,j are different, then const is in
+    //      every cv for 0 < k < j.
+    if (FromType.getCVRQualifiers() != ToType.getCVRQualifiers()
+	&& !PreviousToQualsIncludeConst)
+      return false;
+
+    // Keep track of whether all prior cv-qualifiers in the "to" type
+    // include const.
+    PreviousToQualsIncludeConst 
+      = PreviousToQualsIncludeConst && ToType.isConstQualified();
+  } while (UnwrappedPointer);
+
+  // We are left with FromType and ToType being the pointee types
+  // after unwrapping the original FromType and ToType the same number
+  // of types. If we unwrapped any pointers, and if FromType and
+  // ToType have the same unqualified type (since we checked
+  // qualifiers above), then this is a qualification conversion.
+  return UnwrappedAnyPointer &&
+    FromType.getUnqualifiedType() == ToType.getUnqualifiedType();
 }
 
 /// CompareImplicitConversionSequences - Compare two implicit

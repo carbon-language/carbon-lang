@@ -38,6 +38,6 @@ void fn(int(C)) { } // void fn(int(*fp)(C c)) { }
 int g(C);
 
 void foo() {
-  fn(1); // expected-error {{incompatible integer to pointer conversion passing 'int', expected 'int (*)(class C)'}}
+  fn(1); // expected-error {{incompatible type passing 'int', expected 'int (*)(class C)'}}
   fn(g); // OK
 }

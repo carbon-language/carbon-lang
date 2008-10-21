@@ -15,6 +15,7 @@
 #include "clang/AST/APValue.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
+#include "clang/AST/DeclCXX.h"
 #include "clang/AST/RecordLayout.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/Basic/TargetInfo.h"
@@ -334,14 +335,17 @@ bool Expr::hasLocalSideEffect() const {
 ///  - reference type [C++ [expr]]
 ///
 Expr::isLvalueResult Expr::isLvalue(ASTContext &Ctx) const {
-  // first, check the type (C99 6.3.2.1)
-  if (TR->isFunctionType()) // from isObjectType()
+  // first, check the type (C99 6.3.2.1). Expressions with function
+  // type in C are not lvalues, but they can be lvalues in C++.
+  if (!Ctx.getLangOptions().CPlusPlus && TR->isFunctionType())
     return LV_NotObjectType;
 
   // Allow qualified void which is an incomplete type other than void (yuck).
   if (TR->isVoidType() && !Ctx.getCanonicalType(TR).getCVRQualifiers())
     return LV_IncompleteVoidType;
 
+  /// FIXME: Expressions can't have reference type, so the following
+  /// isn't needed.
   if (TR->isReferenceType()) // C++ [expr]
     return LV_Valid;
 
@@ -356,7 +360,11 @@ Expr::isLvalueResult Expr::isLvalue(ASTContext &Ctx) const {
     return LV_Valid;
   case DeclRefExprClass: { // C99 6.5.1p2
     const Decl *RefdDecl = cast<DeclRefExpr>(this)->getDecl();
-    if (isa<VarDecl>(RefdDecl) || isa<ImplicitParamDecl>(RefdDecl))
+    if (isa<VarDecl>(RefdDecl) || 
+        isa<ImplicitParamDecl>(RefdDecl) ||
+        // C++ 3.10p2: An lvalue refers to an object or function.
+        isa<FunctionDecl>(RefdDecl) || 
+        isa<OverloadedFunctionDecl>(RefdDecl))
       return LV_Valid;
     break;
   }

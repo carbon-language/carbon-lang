@@ -160,6 +160,27 @@ public:
   
   inline QualType getUnqualifiedType() const;
   
+  /// isMoreQualifiedThan - Determine whether this type is more
+  /// qualified than the Other type. For example, "const volatile int"
+  /// is more qualified than "const int", "volatile int", and
+  /// "int". However, it is not more qualified than "const volatile
+  /// int".
+  bool isMoreQualifiedThan(QualType Other) const {
+    unsigned MyQuals = this->getCVRQualifiers();
+    unsigned OtherQuals = Other.getCVRQualifiers();
+    return MyQuals != OtherQuals && (MyQuals | OtherQuals) == MyQuals;
+  }
+
+  /// isAtLeastAsQualifiedAs - Determine whether this type is at last
+  /// as qualified as the Other type. For example, "const volatile
+  /// int" is at least as qualified as "const int", "volatile int",
+  /// "int", and "const volatile int".
+  bool isAtLeastAsQualifiedAs(QualType Other) const {
+    unsigned MyQuals = this->getCVRQualifiers();
+    unsigned OtherQuals = Other.getCVRQualifiers();
+    return MyQuals | OtherQuals == MyQuals;
+  }
+
   /// operator==/!= - Indicate whether the specified types and qualifiers are
   /// identical.
   bool operator==(const QualType &RHS) const {
