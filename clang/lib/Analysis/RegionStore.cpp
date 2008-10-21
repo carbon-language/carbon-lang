@@ -38,9 +38,19 @@ public:
 
   virtual ~RegionStoreManager() {}
 
+  SVal GetSVal(Store S, Loc L, QualType T);
   Store SetSVal(Store St, Loc LV, SVal V);
 
   Store getInitialStore();
+
+  Store AddDecl(Store store, const VarDecl* VD, Expr* Ex, SVal InitVal, 
+                unsigned Count);
+
+  Loc getVarLoc(const VarDecl* VD) {
+    return loc::MemRegionVal(MRMgr.getVarRegion(VD));
+  }
+
+  Loc getElementLoc(const VarDecl* VD, SVal Idx);
 
   static inline RegionBindingsTy GetRegionBindings(Store store) {
    return RegionBindingsTy(static_cast<const RegionBindingsTy::TreeTy*>(store));
@@ -48,6 +58,44 @@ public:
 };
 
 } // end anonymous namespace
+
+Loc RegionStoreManager::getElementLoc(const VarDecl* VD, SVal Idx) {
+  MemRegion* R = MRMgr.getVarRegion(VD);
+  ElementRegion* ER = MRMgr.getElementRegion(Idx, R);
+  return loc::MemRegionVal(ER);
+}
+
+SVal RegionStoreManager::GetSVal(Store S, Loc L, QualType T) {
+  assert(!isa<UnknownVal>(L) && "location unknown");
+  assert(!isa<UndefinedVal>(L) && "location undefined");
+
+  switch (L.getSubKind()) {
+  case loc::MemRegionKind: {
+    const MemRegion* R = cast<loc::MemRegionVal>(L).getRegion();
+    assert(R && "bad region");
+
+    RegionBindingsTy B(static_cast<const RegionBindingsTy::TreeTy*>(S));
+    RegionBindingsTy::data_type* V = B.lookup(R);
+    return V ? *V : UnknownVal();
+  }
+
+  case loc::SymbolValKind:
+    return UnknownVal();
+
+  case loc::ConcreteIntKind:
+    return UndefinedVal(); // As in BasicStoreManager.
+
+  case loc::FuncValKind:
+    return L;
+
+  case loc::StringLiteralValKind:
+    return UnknownVal();
+
+  default:
+    assert(false && "Invalid Location");
+    break;
+  }
+}
 
 Store RegionStoreManager::SetSVal(Store store, Loc LV, SVal V) {
   assert(LV.getSubKind() == loc::MemRegionKind);
@@ -80,7 +128,6 @@ Store RegionStoreManager::getInitialStore() {
       QualType T = VD->getType();
       // Only handle pointers and integers for now.
       if (Loc::IsLocType(T) || T->isIntegerType()) {
-        MemRegion* R = MRMgr.getVarRegion(VD);
         // Initialize globals and parameters to symbolic values.
         // Initialize local variables to undefined.
         SVal X = (VD->hasGlobalStorage() || isa<ParmVarDecl>(VD) ||
@@ -88,9 +135,75 @@ Store RegionStoreManager::getInitialStore() {
                  ? SVal::GetSymbolValue(StateMgr.getSymbolManager(), VD)
                  : UndefinedVal();
 
-        St = SetSVal(St, loc::MemRegionVal(R), X);
+        St = SetSVal(St, getVarLoc(VD), X);
       }
     }
   }
   return St;
 }
+
+Store RegionStoreManager::AddDecl(Store store,
+                                  const VarDecl* VD, Expr* Ex,
+                                  SVal InitVal, unsigned Count) {
+  BasicValueFactory& BasicVals = StateMgr.getBasicVals();
+  SymbolManager& SymMgr = StateMgr.getSymbolManager();
+
+  if (VD->hasGlobalStorage()) {
+    // Static global variables should not be visited here.
+    assert(!(VD->getStorageClass() == VarDecl::Static &&
+             VD->isFileVarDecl()));
+    // Process static variables.
+    if (VD->getStorageClass() == VarDecl::Static) {
+      if (!Ex) {
+        // Only handle pointer and integer static variables.
+
+        QualType T = VD->getType();
+
+        if (Loc::IsLocType(T))
+          store = SetSVal(store, getVarLoc(VD),
+                          loc::ConcreteInt(BasicVals.getValue(0, T)));
+
+        else if (T->isIntegerType())
+          store = SetSVal(store, getVarLoc(VD),
+                          loc::ConcreteInt(BasicVals.getValue(0, T)));
+        else
+          assert("ignore other types of variables");
+      } else {
+        store = SetSVal(store, getVarLoc(VD), InitVal);
+      }
+    }
+  } else {
+    // Process local variables.
+
+    QualType T = VD->getType();
+
+    if (Loc::IsLocType(T) || T->isIntegerType()) {
+      SVal V = Ex ? InitVal : UndefinedVal();
+      if (Ex && InitVal.isUnknown()) {
+        // "Conjured" symbols.
+        SymbolID Sym = SymMgr.getConjuredSymbol(Ex, Count);
+        V = Loc::IsLocType(Ex->getType())
+          ? cast<SVal>(loc::SymbolVal(Sym))
+          : cast<SVal>(nonloc::SymbolVal(Sym));
+      }
+      store = SetSVal(store, getVarLoc(VD), V);
+
+    } else if (T->isArrayType()) {
+      // Only handle constant size array.
+      if (ConstantArrayType* CAT=dyn_cast<ConstantArrayType>(T.getTypePtr())) {
+
+        llvm::APInt Size = CAT->getSize();
+
+        for (llvm::APInt i = llvm::APInt::getNullValue(Size.getBitWidth());
+             i != Size; ++i) {
+          nonloc::ConcreteInt Idx(BasicVals.getValue(llvm::APSInt(i)));
+          store = SetSVal(store, getElementLoc(VD, Idx), UndefinedVal());
+        }
+      }
+    } else if (T->isStructureType()) {
+      // FIXME: Implement struct initialization.
+    }
+  }
+  return store;
+}
+
