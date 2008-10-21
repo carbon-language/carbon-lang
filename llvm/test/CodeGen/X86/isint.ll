@@ -1,4 +1,4 @@
-; llvm-as < %s | llc -march=x86 > %t
+; RUN: llvm-as < %s | llc -march=x86 > %t
 ; not grep cmp %t
 ; not grep xor %t
 ; grep jne %t | count 1
