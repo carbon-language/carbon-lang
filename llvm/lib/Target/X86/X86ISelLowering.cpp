@@ -4696,6 +4696,41 @@ SDValue X86TargetLowering::LowerUINT_TO_FP(SDValue Op, SelectionDAG &DAG) {
   if (Op.getValueType() != MVT::f64 || !X86ScalarSSEf64)
     return SDValue();
   
+  // This algorithm is not obvious.  Here it is in C code, more or less:
+/*
+ double uint64_to_double( uint32_t hi, uint32_t lo )
+  {
+    static const __m128i exp = { 0x4330000045300000ULL, 0 };
+    static const __m128d bias = { 0x1.0p84, 0x1.0p52 };
+
+    //copy ints to xmm registers
+    __m128i xh = _mm_cvtsi32_si128( hi );
+    __m128i xl = _mm_cvtsi32_si128( lo );
+
+    //combine into low half of a single xmm register
+    __m128i x = _mm_unpacklo_epi32( xh, xl );
+    __m128d d;
+    double sd;
+
+    //merge in appropriate exponents to give the integer bits the 
+    // right magnitude
+    x = _mm_unpacklo_epi32( x, exp );
+
+    //subtract away the biases to deal with the IEEE-754 double precision
+    //implicit 1
+    d = _mm_sub_pd( (__m128d) x, bias );
+
+    //All conversions up to here are exact. The correctly rounded result is 
+    // calculated using the
+    //current rounding mode using the following horizontal add.
+    d = _mm_add_sd( d, _mm_unpackhi_pd( d, d ) );
+    _mm_store_sd( &sd, d );   //since we are returning doubles in XMM, this
+    //store doesn't really need to be here (except maybe to zero the other
+    //double)
+    return sd;
+  }
+*/
+
   // Get a XMM-vector-sized stack slot.
   unsigned Size = 128/8;
   MachineFunction &MF = DAG.getMachineFunction();
