@@ -15,4 +15,8 @@
 @property(assign, copy, retain) id p3_3; // expected-error {{property attributes 'assign' and 'copy' are mutually exclusive}}, expected-error {{property attributes 'assign' and 'retain' are mutually exclusive}} 
 
 @property id p4; // expected-warning {{no 'assign', 'retain', or 'copy' attribute is specified - 'assign' is assumed}}, expected-warning {{default property attribute 'assign' not appropriate for non-gc object}}
+
+@property(nonatomic,copy) int (^includeMailboxCondition)(); 
+@property(nonatomic,copy) int (*includeMailboxCondition2)(); // expected-error {{property with 'copy' attribute must be of object type}}
+
 @end
