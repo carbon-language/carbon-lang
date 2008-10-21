@@ -5473,6 +5473,22 @@ ExpandIntToFP(bool isSigned, MVT DestTy, SDValue Source) {
       Hi = Source;
     }
 
+    // Check to see if the target has a custom way to lower this.  If so, use it.
+    // (Note we've already expanded the operand in this case.)
+    switch (TLI.getOperationAction(ISD::UINT_TO_FP, SourceVT)) {
+    default: assert(0 && "This action not implemented for this operation!");
+    case TargetLowering::Legal:
+    case TargetLowering::Expand:
+      break;   // This case is handled below.
+    case TargetLowering::Custom: {
+      SDValue NV = TLI.LowerOperation(DAG.getNode(ISD::UINT_TO_FP, DestTy,
+                                                    Source), DAG);
+      if (NV.getNode())
+        return LegalizeOp(NV);
+      break;   // The target decided this was legal after all
+    }
+    }
+
     // If this is unsigned, and not supported, first perform the conversion to
     // signed, then adjust the result if the sign bit is set.
     SDValue SignedConv = ExpandIntToFP(true, DestTy, Source);

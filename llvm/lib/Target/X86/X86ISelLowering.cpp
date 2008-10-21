@@ -112,10 +112,12 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::UINT_TO_FP     , MVT::i64  , Expand);
     setOperationAction(ISD::UINT_TO_FP     , MVT::i32  , Promote);
   } else {
-    if (X86ScalarSSEf64)
+    if (X86ScalarSSEf64) {
+      // We have an impenetrably clever algorithm for ui64->double only.
+      setOperationAction(ISD::UINT_TO_FP   , MVT::i64  , Custom);
       // If SSE i64 SINT_TO_FP is not available, expand i32 UINT_TO_FP.
       setOperationAction(ISD::UINT_TO_FP   , MVT::i32  , Expand);
-    else
+    } else
       setOperationAction(ISD::UINT_TO_FP   , MVT::i32  , Promote);
   }
 
@@ -4686,6 +4688,70 @@ SDValue X86TargetLowering::LowerSINT_TO_FP(SDValue Op, SelectionDAG &DAG) {
   return Result;
 }
 
+SDValue X86TargetLowering::LowerUINT_TO_FP(SDValue Op, SelectionDAG &DAG) {
+  MVT SrcVT = Op.getOperand(0).getValueType();
+  assert(SrcVT.getSimpleVT() == MVT::i64 && "Unknown UINT_TO_FP to lower!");
+  
+  // We only handle SSE2 f64 target here; caller can handle the rest.
+  if (Op.getValueType() != MVT::f64 || !X86ScalarSSEf64)
+    return SDValue();
+  
+  // Get a XMM-vector-sized stack slot.
+  unsigned Size = 128/8;
+  MachineFunction &MF = DAG.getMachineFunction();
+  int SSFI = MF.getFrameInfo()->CreateStackObject(Size, Size);
+  SDValue StackSlot = DAG.getFrameIndex(SSFI, getPointerTy());
+
+  // Build some magic constants.
+  std::vector<Constant*>CV0;
+  CV0.push_back(ConstantInt::get(APInt(32, 0x45300000)));
+  CV0.push_back(ConstantInt::get(APInt(32, 0x43300000)));
+  CV0.push_back(ConstantInt::get(APInt(32, 0)));
+  CV0.push_back(ConstantInt::get(APInt(32, 0)));
+  Constant *C0 = ConstantVector::get(CV0);
+  SDValue CPIdx0 = DAG.getConstantPool(C0, getPointerTy(), 4);
+
+  std::vector<Constant*>CV1;
+  CV1.push_back(ConstantFP::get(APFloat(APInt(64, 0x4530000000000000ULL))));
+  CV1.push_back(ConstantFP::get(APFloat(APInt(64, 0x4330000000000000ULL))));
+  Constant *C1 = ConstantVector::get(CV1);
+  SDValue CPIdx1 = DAG.getConstantPool(C1, getPointerTy(), 4);
+
+  SmallVector<SDValue, 4> MaskVec;
+  MaskVec.push_back(DAG.getConstant(0, MVT::i32));
+  MaskVec.push_back(DAG.getConstant(4, MVT::i32));
+  MaskVec.push_back(DAG.getConstant(1, MVT::i32));
+  MaskVec.push_back(DAG.getConstant(5, MVT::i32));
+  SDValue UnpcklMask = DAG.getNode(ISD::BUILD_VECTOR, MVT::v4i32, &MaskVec[0],
+                                   MaskVec.size());
+  SmallVector<SDValue, 4> MaskVec2;
+  MaskVec2.push_back(DAG.getConstant(1, MVT::i64));
+  MaskVec2.push_back(DAG.getConstant(0, MVT::i64));
+  SDValue ShufMask = DAG.getNode(ISD::BUILD_VECTOR, MVT::v2i64, &MaskVec2[0],
+                                 MaskVec2.size());
+
+  SDValue XR1 = DAG.getNode(ISD::SCALAR_TO_VECTOR, MVT::v4i32,
+                            Op.getOperand(0).getOperand(1));
+  SDValue XR2 = DAG.getNode(ISD::SCALAR_TO_VECTOR, MVT::v4i32,
+                            Op.getOperand(0).getOperand(0));
+  SDValue Unpck1 = DAG.getNode(ISD::VECTOR_SHUFFLE, MVT::v4i32,
+                                XR1, XR2, UnpcklMask);
+  SDValue CLod0 = DAG.getLoad(MVT::v4i32, DAG.getEntryNode(), CPIdx0,
+                         PseudoSourceValue::getConstantPool(), 0, false, 16);
+  SDValue Unpck2 = DAG.getNode(ISD::VECTOR_SHUFFLE, MVT::v4i32,
+                                Unpck1, CLod0, UnpcklMask);
+  SDValue XR2F = DAG.getNode(ISD::BIT_CONVERT, MVT::v2f64, Unpck2);
+  SDValue CLod1 = DAG.getLoad(MVT::v2f64, CLod0.getValue(1), CPIdx1,
+                         PseudoSourceValue::getConstantPool(), 0, false, 16);
+  SDValue Sub = DAG.getNode(ISD::FSUB, MVT::v2f64, XR2F, CLod1);
+  // Add the halves; easiest way is to swap them into another reg first.
+  SDValue Shuf = DAG.getNode(ISD::VECTOR_SHUFFLE, MVT::v2f64,
+                             Sub, Sub, ShufMask);
+  SDValue Add = DAG.getNode(ISD::FADD, MVT::v2f64, Shuf, Sub);
+  return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, MVT::f64, Add,
+                     DAG.getIntPtrConstant(0));
+}
+
 std::pair<SDValue,SDValue> X86TargetLowering::
 FP_TO_SINTHelper(SDValue Op, SelectionDAG &DAG) {
   assert(Op.getValueType().getSimpleVT() <= MVT::i64 &&
@@ -6184,6 +6250,7 @@ SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   case ISD::SRA_PARTS:
   case ISD::SRL_PARTS:          return LowerShift(Op, DAG);
   case ISD::SINT_TO_FP:         return LowerSINT_TO_FP(Op, DAG);
+  case ISD::UINT_TO_FP:         return LowerUINT_TO_FP(Op, DAG);
   case ISD::FP_TO_SINT:         return LowerFP_TO_SINT(Op, DAG);
   case ISD::FABS:               return LowerFABS(Op, DAG);
   case ISD::FNEG:               return LowerFNEG(Op, DAG);

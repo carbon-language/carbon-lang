@@ -558,6 +558,7 @@ namespace llvm {
     SDValue LowerExternalSymbol(SDValue Op, SelectionDAG &DAG);
     SDValue LowerShift(SDValue Op, SelectionDAG &DAG);
     SDValue LowerSINT_TO_FP(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerUINT_TO_FP(SDValue Op, SelectionDAG &DAG);
     SDValue LowerFP_TO_SINT(SDValue Op, SelectionDAG &DAG);
     SDValue LowerFABS(SDValue Op, SelectionDAG &DAG);
     SDValue LowerFNEG(SDValue Op, SelectionDAG &DAG);
