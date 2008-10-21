@@ -19,6 +19,7 @@
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/Analysis/PathSensitive/SymbolManager.h"
+#include "clang/Analysis/PathSensitive/RValues.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/Support/Allocator.h"
@@ -37,7 +38,8 @@ public:
   enum Kind { MemSpaceRegionKind, SymbolicRegionKind,
               // Typed regions.
               BEG_TYPED_REGIONS,
-              VarRegionKind, FieldRegionKind, ObjCIvarRegionKind,
+              VarRegionKind, FieldRegionKind, ElementRegionKind,
+              ObjCIvarRegionKind,
               AnonTypedRegionKind, AnonPointeeRegionKind,
               END_TYPED_REGIONS };  
 private:
@@ -257,7 +259,27 @@ public:
     return R->getKind() == ObjCIvarRegionKind;
   }
 };
-  
+
+class ElementRegion : public SubRegion {
+  friend class MemRegionManager;
+
+  SVal Index;
+
+  ElementRegion(SVal Idx, const MemRegion* sReg)
+    : SubRegion(sReg, ElementRegionKind), Index(Idx) {}
+
+  static void ProfileRegion(llvm::FoldingSetNodeID& ID, SVal Idx, 
+                            const MemRegion* superRegion);
+
+public:
+
+  void Profile(llvm::FoldingSetNodeID& ID) const;
+
+  static bool classof(const MemRegion* R) {
+    return R->getKind() == ElementRegionKind;
+  }
+};
+
 //===----------------------------------------------------------------------===//
 // MemRegionManager - Factory object for creating regions.
 //===----------------------------------------------------------------------===//
@@ -305,7 +327,9 @@ public:
     return getVarRegion(vd, vd->hasLocalStorage() ? getStackRegion() 
                         : getGlobalsRegion());
   }
-  
+
+  ElementRegion* getElementRegion(SVal Idx, const MemRegion* superRegion);
+
   /// getFieldRegion - Retrieve or create the memory region associated with
   ///  a specified FieldDecl.  'superRegion' corresponds to the containing
   ///  memory region (which typically represents the memory representing

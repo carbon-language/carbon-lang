@@ -65,6 +65,16 @@ void SymbolicRegion::Profile(llvm::FoldingSetNodeID& ID) const {
   SymbolicRegion::ProfileRegion(ID, sym);
 }
 
+void ElementRegion::ProfileRegion(llvm::FoldingSetNodeID& ID, SVal Idx, 
+                                  const MemRegion* superRegion) {
+  ID.AddInteger(MemRegion::ElementRegionKind);
+  ID.AddPointer(superRegion);
+  Idx.Profile(ID);
+}
+
+void ElementRegion::Profile(llvm::FoldingSetNodeID& ID) const {
+  ElementRegion::ProfileRegion(ID, Index, superRegion);
+}
 //===----------------------------------------------------------------------===//
 // Region pretty-printing.
 //===----------------------------------------------------------------------===//
@@ -138,6 +148,24 @@ VarRegion* MemRegionManager::getVarRegion(const VarDecl* d,
     Regions.InsertNode(R, InsertPos);
   }
   
+  return R;
+}
+
+ElementRegion* MemRegionManager::getElementRegion(SVal Idx,
+                                                  const MemRegion* superRegion){
+  llvm::FoldingSetNodeID ID;
+  ElementRegion::ProfileRegion(ID, Idx, superRegion);
+
+  void* InsertPos;
+  MemRegion* data = Regions.FindNodeOrInsertPos(ID, InsertPos);
+  ElementRegion* R = cast_or_null<ElementRegion>(data);
+
+  if (!R) {
+    R = (ElementRegion*) A.Allocate<ElementRegion>();
+    new (R) ElementRegion(Idx, superRegion);
+    Regions.InsertNode(R, InsertPos);
+  }
+
   return R;
 }
 
