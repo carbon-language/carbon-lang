@@ -543,7 +543,7 @@ int main(int argc, char **argv) {
       }
       
       if (PrintEachXForm)
-        Passes.add(new PrintModulePass(&cerr));
+        Passes.add(createPrintModulePass(&cerr));
     }
     
     // If -std-compile-opts was specified at the end of the pass list, add them.

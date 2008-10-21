@@ -151,7 +151,7 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM, bool Fast) {
   if (!Fast) {
     PM.add(createLoopStrengthReducePass(getTargetLowering()));
     if (PrintLSR)
-      PM.add(new PrintFunctionPass("\n\n*** Code after LSR ***\n", &cerr));
+      PM.add(createPrintFunctionPass("\n\n*** Code after LSR ***\n", &cerr));
   }
 
   PM.add(createGCLoweringPass());
@@ -166,8 +166,9 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM, bool Fast) {
     PM.add(createCodeGenPreparePass(getTargetLowering()));
 
   if (PrintISelInput)
-    PM.add(new PrintFunctionPass("\n\n*** Final LLVM Code input to ISel ***\n",
-                                 &cerr));
+    PM.add(createPrintFunctionPass("\n\n"
+                                   "*** Final LLVM Code input to ISel ***\n",
+                                   &cerr));
 
   // Standard Lower-Level Passes.
 

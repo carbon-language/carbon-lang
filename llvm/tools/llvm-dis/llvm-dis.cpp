@@ -118,7 +118,7 @@ int main(int argc, char **argv) {
     if (!DontPrint) {
       PassManager Passes;
       OStream L(*Out);
-      Passes.add(new PrintModulePass(&L));
+      Passes.add(createPrintModulePass(&L));
       Passes.run(*M.get());
     }
 

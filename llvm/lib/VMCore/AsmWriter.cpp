@@ -39,14 +39,6 @@ using namespace llvm;
 // Make virtual table appear in this compilation unit.
 AssemblyAnnotationWriter::~AssemblyAnnotationWriter() {}
 
-char PrintModulePass::ID = 0;
-static RegisterPass<PrintModulePass>
-X("print-module", "Print module to stderr");
-char PrintFunctionPass::ID = 0;
-static RegisterPass<PrintFunctionPass>
-Y("print-function","Print function to stderr");
-
-
 //===----------------------------------------------------------------------===//
 // Helper Functions
 //===----------------------------------------------------------------------===//

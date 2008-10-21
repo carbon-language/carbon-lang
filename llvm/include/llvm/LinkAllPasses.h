@@ -23,6 +23,7 @@
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Analysis/PostDominators.h"
 #include "llvm/Analysis/ScalarEvolution.h"
+#include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Function.h"
 #include "llvm/Transforms/Instrumentation.h"
@@ -120,6 +121,8 @@ namespace {
       (void) llvm::createInstructionNamerPass();
       (void) llvm::createPartialSpecializationPass();
       (void) llvm::createAddReadAttrsPass();
+      (void) llvm::createPrintModulePass(0);
+      (void) llvm::createPrintFunctionPass("", 0);
 
       (void)new llvm::IntervalPartition();
       (void)new llvm::FindUsedTypes();
