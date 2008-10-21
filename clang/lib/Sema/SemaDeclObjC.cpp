@@ -796,7 +796,7 @@ void Sema::AddInstanceMethodToGlobalPool(ObjCMethodDecl *Method) {
   }
 }
 
-// FIXME: Finish implementing -Wno-struct-selector-match.
+// FIXME: Finish implementing -Wno-strict-selector-match.
 ObjCMethodDecl *Sema::LookupInstanceMethodInGlobalPool(Selector Sel, 
                                                        SourceRange R) {
   ObjCMethodList &MethList = InstanceMethodPool[Sel];
