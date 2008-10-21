@@ -4400,7 +4400,7 @@ X86TargetLowering::LowerGlobalAddress(const GlobalValue *GV,
   // Create the TargetGlobalAddress node, folding in the constant
   // offset if it is legal.
   SDValue Result;
-  if (!IsPic && !ExtraLoadRequired) {
+  if (!IsPic && !ExtraLoadRequired && isInt32(Offset)) {
     Result = DAG.getTargetGlobalAddress(GV, getPointerTy(), Offset);
     Offset = 0;
   } else

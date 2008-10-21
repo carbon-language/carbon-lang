@@ -974,7 +974,7 @@ SDValue SelectionDAG::getGlobalAddress(const GlobalValue *GV,
   unsigned Opc;
 
   // Truncate (with sign-extension) the offset value to the pointer size.
-  unsigned BitWidth = VT.getSizeInBits();
+  unsigned BitWidth = TLI.getPointerTy().getSizeInBits();
   if (BitWidth < 64)
     Offset = (Offset << (64 - BitWidth) >> (64 - BitWidth));
 
