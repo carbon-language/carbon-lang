@@ -538,8 +538,8 @@ protected:
   void VisitUnaryOperator(UnaryOperator* B, NodeTy* Pred, NodeSet& Dst,
                           bool asLValue);
  
-  bool CheckDivideZero(Expr* Ex, const GRState* St, NodeTy* Pred,
-                       SVal Denom);  
+  const GRState* CheckDivideZero(Expr* Ex, const GRState* St, NodeTy* Pred,
+                                 SVal Denom);  
   
   SVal EvalCast(SVal X, QualType CastT) {
     if (X.isUnknownOrUndef())
