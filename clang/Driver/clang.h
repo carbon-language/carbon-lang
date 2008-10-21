@@ -50,6 +50,8 @@ bool CheckASTConsumer(Preprocessor &PP, ASTConsumer* C);
 /// CheckDiagnostics - Gather the expected diagnostics and check them.
 bool CheckDiagnostics(Preprocessor &PP);
 
+/// CacheTokens - Cache tokens for use with PCH.
+void CacheTokens(Preprocessor& PP, const std::string& OutFile);
 
 }  // end namespace clang
 

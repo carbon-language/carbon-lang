@@ -87,7 +87,8 @@ enum ProgActions {
   PrintPreprocessedInput,       // -E mode.
   DumpTokens,                   // Dump out preprocessed tokens.
   DumpRawTokens,                // Dump out raw tokens.
-  RunAnalysis                   // Run one or more source code analyses. 
+  RunAnalysis,                  // Run one or more source code analyses. 
+  GeneratePCH                   // Generate precompiled header.
 };
 
 static llvm::cl::opt<ProgActions> 
@@ -203,10 +204,12 @@ enum LangKind {
   langkind_unspecified,
   langkind_c,
   langkind_c_cpp,
+  langkind_c_pch,
   langkind_cxx,
   langkind_cxx_cpp,
   langkind_objc,
   langkind_objc_cpp,
+  langkind_objc_pch,
   langkind_objcxx,
   langkind_objcxx_cpp
 };
@@ -226,11 +229,15 @@ BaseLang("x", llvm::cl::desc("Base language to compile"),
                     clEnumValN(langkind_c_cpp,     "c-cpp-output",
                                "Preprocessed C"),
                     clEnumValN(langkind_cxx_cpp,   "c++-cpp-output",
-                               "Preprocessed C++"),
+                               "Preprocessed C++"),                    
                     clEnumValN(langkind_objc_cpp,  "objective-c-cpp-output",
                                "Preprocessed Objective C"),
                     clEnumValN(langkind_objcxx_cpp,"objective-c++-cpp-output",
                                "Preprocessed Objective C++"),
+                    clEnumValN(langkind_c_pch,"c-header",
+                               "Precompiled C header"),
+                    clEnumValN(langkind_objc_pch, "objective-c-header",
+                               "Precompiled Objective C header"),
                     clEnumValEnd));
 
 static llvm::cl::opt<bool>
@@ -286,16 +293,31 @@ static LangKind GetLanguage(const std::string &Filename) {
 }
 
 
-static void InitializeLangOptions(LangOptions &Options, LangKind LK) {
+static void InitializeCOptions(LangOptions &Options) {
+    // Do nothing.
+}
+
+static void InitializeObjCOptions(LangOptions &Options) {
+  Options.ObjC1 = Options.ObjC2 = 1;
+}
+  
+
+static bool InitializeLangOptions(LangOptions &Options, LangKind LK){
   // FIXME: implement -fpreprocessed mode.
   bool NoPreprocess = false;
+  bool PCH = false;
   
   switch (LK) {
   default: assert(0 && "Unknown language kind!");
+  case langkind_c_pch:
+    InitializeCOptions(Options);
+    PCH = true;
+    break;
   case langkind_c_cpp:
     NoPreprocess = true;
     // FALLTHROUGH
   case langkind_c:
+    InitializeCOptions(Options);
     break;
   case langkind_cxx_cpp:
     NoPreprocess = true;
@@ -303,11 +325,15 @@ static void InitializeLangOptions(LangOptions &Options, LangKind LK) {
   case langkind_cxx:
     Options.CPlusPlus = 1;
     break;
+  case langkind_objc_pch:
+    InitializeObjCOptions(Options);
+    PCH = true;
+    break;
   case langkind_objc_cpp:
     NoPreprocess = true;
     // FALLTHROUGH
   case langkind_objc:
-    Options.ObjC1 = Options.ObjC2 = 1;      
+    InitializeObjCOptions(Options);
     break;
   case langkind_objcxx_cpp:
     NoPreprocess = true;
@@ -317,6 +343,8 @@ static void InitializeLangOptions(LangOptions &Options, LangKind LK) {
     Options.CPlusPlus = 1;
     break;
   }
+  
+  return PCH;
 }
 
 /// LangStds - Language standards we support.
@@ -397,11 +425,13 @@ Exceptions("fexceptions",
 
 static llvm::cl::opt<bool>
 GNURuntime("fgnu-runtime",
-            llvm::cl::desc("Generate output compatible with the standard GNU Objective-C runtime."));
+            llvm::cl::desc("Generate output compatible with the standard GNU "
+                           "Objective-C runtime."));
 
 static llvm::cl::opt<bool>
 NeXTRuntime("fnext-runtime",
-            llvm::cl::desc("Generate output compatible with the NeXT runtime."));
+            llvm::cl::desc("Generate output compatible with the NeXT "
+                           "runtime."));
 
 
 
@@ -426,8 +456,10 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
     default: assert(0 && "Unknown base language");
     case langkind_c:
     case langkind_c_cpp:
+    case langkind_c_pch:
     case langkind_objc:
     case langkind_objc_cpp:
+    case langkind_objc_pch:
       LangStd = lang_gnu99;
       break;
     case langkind_cxx:
@@ -1095,12 +1127,12 @@ static ASTConsumer* CreateASTConsumer(const std::string& InFile,
 /// ProcessInputFile - Process a single input file with the specified state.
 ///
 static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
-                             const std::string &InFile) {
+                             const std::string &InFile, ProgActions PA) {
 
   llvm::OwningPtr<ASTConsumer> Consumer;
   bool ClearSourceMgr = false;
   
-  switch (ProgAction) {
+  switch (PA) {
   default:
     Consumer.reset(CreateASTConsumer(InFile, PP.getDiagnostics(),
                                      PP.getFileManager(), PP.getLangOptions(),
@@ -1156,6 +1188,12 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
     ClearSourceMgr = true;
     break;
   }
+      
+  case GeneratePCH: {
+    CacheTokens(PP, OutputFile);
+    ClearSourceMgr = true;
+    break;
+  }      
     
   case PrintPreprocessedInput:       // -E mode.
     DoPrintPreprocessedInput(PP, OutputFile);
@@ -1352,10 +1390,10 @@ int main(int argc, char **argv) {
       LangOptions LangInfo;
       InitializeBaseLanguage();
       LangKind LK = GetLanguage(InFile);
-      InitializeLangOptions(LangInfo, LK);
+      bool PCH = InitializeLangOptions(LangInfo, LK);
       InitializeLanguageStandard(LangInfo, LK, Target.get());
       InitializeGCMode(LangInfo);
-      
+            
       // Process the -I options and set them in the HeaderInfo.
       HeaderSearch HeaderInfo(FileMgr);
       
@@ -1383,7 +1421,8 @@ int main(int argc, char **argv) {
         Diags.setClient(TextDiagClient);
 
       // Process the source file.
-      ProcessInputFile(*PP, PPFactory, InFile);
+      ProcessInputFile(*PP, PPFactory, InFile, PCH ? GeneratePCH : ProgAction);
+      
       HeaderInfo.ClearFileInfo();      
       
       if (Stats)
