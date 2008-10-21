@@ -1,12 +1,12 @@
 ; RUN: llvm-as < %s | llc -march=x86 > %t
-; not grep cmp %t
-; not grep xor %t
-; grep jne %t | count 1
-; grep jp %t | count 1
-; grep setnp %t | count 1
-; grep sete %t | count 1
-; grep and %t | count 1
-; grep cvt %t | count 4
+; RUN: not grep cmp %t
+; RUN: not grep xor %t
+; RUN: grep jne %t | count 1
+; RUN: grep jp %t | count 1
+; RUN: grep setnp %t | count 1
+; RUN: grep sete %t | count 1
+; RUN: grep and %t | count 1
+; RUN: grep cvt %t | count 4
 
 define i32 @isint_return(double %d) nounwind {
   %i = fptosi double %d to i32
