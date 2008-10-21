@@ -48,6 +48,10 @@ namespace {
     
     virtual ~CodeGeneratorImpl() {}
     
+    virtual llvm::Module* GetModule() {
+      return M.get();
+    }
+    
     virtual llvm::Module* ReleaseModule() {
       return M.take();
     }

@@ -26,8 +26,9 @@ namespace clang {
   struct LangOptions;
   
   class CodeGenerator : public ASTConsumer {
-    public:
-      virtual llvm::Module* ReleaseModule() = 0;    
+  public:
+    virtual llvm::Module* GetModule() = 0;
+    virtual llvm::Module* ReleaseModule() = 0;    
   };
   
   CodeGenerator *CreateLLVMCodeGen(Diagnostic &Diags,
