@@ -692,6 +692,11 @@ bool X86FastISel::X86SelectBranch(Instruction *I) {
       unsigned BranchOpc; // Opcode to jump on, e.g. "X86::JA"
 
       switch (Predicate) {
+      case CmpInst::FCMP_OEQ:
+        std::swap(TrueMBB, FalseMBB);
+        Predicate = CmpInst::FCMP_UNE;
+        // FALL THROUGH
+      case CmpInst::FCMP_UNE: SwapArgs = false; BranchOpc = X86::JNE; break;
       case CmpInst::FCMP_OGT: SwapArgs = false; BranchOpc = X86::JA;  break;
       case CmpInst::FCMP_OGE: SwapArgs = false; BranchOpc = X86::JAE; break;
       case CmpInst::FCMP_OLT: SwapArgs = true;  BranchOpc = X86::JA;  break;
@@ -728,6 +733,13 @@ bool X86FastISel::X86SelectBranch(Instruction *I) {
         return false;
       
       BuildMI(MBB, TII.get(BranchOpc)).addMBB(TrueMBB);
+
+      if (Predicate == CmpInst::FCMP_UNE) {
+        // X86 requires a second branch to handle UNE (and OEQ,
+        // which is mapped to UNE above).
+        BuildMI(MBB, TII.get(X86::JP)).addMBB(TrueMBB);
+      }
+
       FastEmitBranch(FalseMBB);
       MBB->addSuccessor(TrueMBB);
       return true;
