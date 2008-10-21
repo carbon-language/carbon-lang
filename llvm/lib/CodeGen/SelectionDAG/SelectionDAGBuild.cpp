@@ -512,11 +512,8 @@ static SDValue getCopyFromParts(SelectionDAG &DAG,
 /// getCopyToParts - Create a series of nodes that contain the specified value
 /// split into legal parts.  If the parts contain more bits than Val, then, for
 /// integers, ExtendKind can be used to specify how to generate the extra bits.
-static void getCopyToParts(SelectionDAG &DAG,
-                           SDValue Val,
-                           SDValue *Parts,
-                           unsigned NumParts,
-                           MVT PartVT,
+static void getCopyToParts(SelectionDAG &DAG, SDValue Val,
+                           SDValue *Parts, unsigned NumParts, MVT PartVT,
                            ISD::NodeType ExtendKind = ISD::ANY_EXTEND) {
   TargetLowering &TLI = DAG.getTargetLoweringInfo();
   MVT PtrVT = TLI.getPointerTy();
@@ -4497,11 +4494,37 @@ GetRegistersForValue(SDISelAsmOperandInfo &OpInfo,
                                      OpInfo.ConstraintVT);
 
   unsigned NumRegs = 1;
-  if (OpInfo.ConstraintVT != MVT::Other)
+  if (OpInfo.ConstraintVT != MVT::Other) {
+    // If this is a FP input in an integer register (or visa versa) insert a bit
+    // cast of the input value.  More generally, handle any case where the input
+    // value disagrees with the register class we plan to stick this in.
+    if (OpInfo.Type == InlineAsm::isInput &&
+        PhysReg.second && !PhysReg.second->hasType(OpInfo.ConstraintVT)) {
+      // Try to convert to the first MVT that the reg class contains.  If the
+      // types are identical size, use a bitcast to convert (e.g. two differing
+      // vector types).
+      MVT RegVT = *PhysReg.second->vt_begin();
+      if (RegVT.getSizeInBits() == OpInfo.ConstraintVT.getSizeInBits()) {
+        OpInfo.CallOperand = DAG.getNode(ISD::BIT_CONVERT, RegVT,
+                                         OpInfo.CallOperand);
+        OpInfo.ConstraintVT = RegVT;
+      } else if (RegVT.isInteger() && OpInfo.ConstraintVT.isFloatingPoint()) {
+        // If the input is a FP value and we want it in FP registers, do a
+        // bitcast to the corresponding integer type.  This turns an f64 value
+        // into i64, which can be passed with two i32 values on a 32-bit
+        // machine.
+        RegVT = MVT::getIntegerVT(OpInfo.ConstraintVT.getSizeInBits());
+        OpInfo.CallOperand = DAG.getNode(ISD::BIT_CONVERT, RegVT,
+                                         OpInfo.CallOperand);
+        OpInfo.ConstraintVT = RegVT;
+      }
+    }
+    
     NumRegs = TLI.getNumRegisters(OpInfo.ConstraintVT);
+  }
+  
   MVT RegVT;
   MVT ValueVT = OpInfo.ConstraintVT;
-  
 
   // If this is a constraint for a specific physical register, like {r17},
   // assign it now.
