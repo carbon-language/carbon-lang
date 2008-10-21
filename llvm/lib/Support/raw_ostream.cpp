@@ -196,10 +196,13 @@ void format_object_base::home() {
 //  raw_fd_ostream
 //===----------------------------------------------------------------------===//
 
-/// raw_fd_ostream - Open the specified file for writing.  If an error occurs,
-/// information about the error is put into ErrorInfo, and the stream should
-/// be immediately destroyed.
+/// raw_fd_ostream - Open the specified file for writing. If an error
+/// occurs, information about the error is put into ErrorInfo, and the
+/// stream should be immediately destroyed; the string will be empty
+/// if no error occurred.
 raw_fd_ostream::raw_fd_ostream(const char *Filename, std::string &ErrorInfo) {
+  ErrorInfo.clear();
+
   // Handle "-" as stdout.
   if (Filename[0] == '-' && Filename[1] == 0) {
     FD = STDOUT_FILENO;
