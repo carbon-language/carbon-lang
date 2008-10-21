@@ -2406,7 +2406,7 @@ static NamedDecl *getPrimaryDecl(Expr *E) {
     // &X[4] and &4[X] refers to X if X is not a pointer.
   
     NamedDecl *D = getPrimaryDecl(cast<ArraySubscriptExpr>(E)->getBase());
-    ValueDecl *VD = dyn_cast<ValueDecl>(D);
+    ValueDecl *VD = dyn_cast_or_null<ValueDecl>(D);
     if (!VD || VD->getType()->isPointerType())
       return 0;
     else
