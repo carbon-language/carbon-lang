@@ -2208,13 +2208,13 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
 
         // EXPERIMENTAL: "Conjured" symbols.
         // FIXME: Handle structs.
-        QualType T = RHS->getType();
-        
-        if (Result.isUnknown() && (T->isIntegerType() || Loc::IsLocType(T))) {            
+        if (Result.isUnknown() &&
+            (CTy->isIntegerType() || Loc::IsLocType(CTy))) {
+          
           unsigned Count = Builder->getCurrentBlockCount();
           SymbolID Sym = SymMgr.getConjuredSymbol(B->getRHS(), Count);
           
-          Result = Loc::IsLocType(B->getRHS()->getType()) 
+          Result = Loc::IsLocType(CTy) 
                  ? cast<SVal>(loc::SymbolVal(Sym)) 
                  : cast<SVal>(nonloc::SymbolVal(Sym));            
         }
