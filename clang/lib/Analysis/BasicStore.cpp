@@ -78,6 +78,7 @@ public:
 StoreManager* clang::CreateBasicStoreManager(GRStateManager& StMgr) {
   return new BasicStoreManager(StMgr);
 }
+
 SVal BasicStoreManager::getLValueVar(const GRState* St, const VarDecl* VD) {
   return loc::MemRegionVal(MRMgr.getVarRegion(VD));
 }

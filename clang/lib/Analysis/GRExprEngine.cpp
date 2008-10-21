@@ -829,17 +829,6 @@ void GRExprEngine::VisitDeclRefExpr(DeclRefExpr* Ex, NodeTy* Pred, NodeSet& Dst,
 
     SVal V = StateMgr.GetLValue(St, VD);
 
-    if (VD->getType()->isArrayType()) {
-      // C++ standard says array of type T should be implicitly converted to
-      // pointer to type T in some cases. Currently we don't do this cast in
-      // VisitCast(), because BasicStore is not field sensitive. We shall do
-      // this in a transfer function in the future. We represent both lvalue and
-      // rvalue of array of type T as the corresponding MemRegionVal of it.
-
-      MakeNode(Dst, Ex, Pred, SetSVal(St, Ex, V));
-      return;
-    }
-    
     if (asLValue)
       MakeNode(Dst, Ex, Pred, SetSVal(St, Ex, V));
     else
@@ -1445,8 +1434,9 @@ void GRExprEngine::VisitObjCMessageExprDispatchHelper(ObjCMessageExpr* ME,
 void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, NodeTy* Pred, NodeSet& Dst){
   NodeSet S1;
   QualType T = CastE->getType();
+  QualType ExTy = Ex->getType();
   
-  if (T->isReferenceType())
+  if (ExTy->isArrayType() || T->isReferenceType())
     VisitLValue(Ex, Pred, S1);
   else
     Visit(Ex, Pred, S1);
@@ -1463,8 +1453,6 @@ void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, NodeTy* Pred, NodeSet& Dst){
   // FIXME: The rest of this should probably just go into EvalCall, and
   //   let the transfer function object be responsible for constructing
   //   nodes.
-  
-  QualType ExTy = Ex->getType();
   
   for (NodeSet::iterator I1 = S1.begin(), E1 = S1.end(); I1 != E1; ++I1) {
     NodeTy* N = *I1;
