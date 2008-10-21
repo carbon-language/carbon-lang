@@ -63,7 +63,7 @@ const GRState* GRStateManager::SetSVal(const GRState* St, Loc LV,
                                              SVal V) {
   
   Store OldStore = St->getStore();
-  Store NewStore = StoreMgr->SetSVal(OldStore, LV, V);
+  Store NewStore = StoreMgr->Bind(OldStore, LV, V);
   
   if (NewStore == OldStore)
     return St;

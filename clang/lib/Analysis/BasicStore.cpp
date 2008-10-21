@@ -34,8 +34,8 @@ public:
   
   virtual ~BasicStoreManager() {}
 
-  virtual SVal GetSVal(Store St, Loc LV, QualType T);  
-  virtual Store SetSVal(Store St, Loc LV, SVal V);  
+  virtual SVal Retrieve(Store St, Loc LV, QualType T);  
+  virtual Store Bind(Store St, Loc LV, SVal V);  
   virtual Store Remove(Store St, Loc LV);
 
   virtual Store getInitialStore();
@@ -133,7 +133,7 @@ SVal BasicStoreManager::getLValueElement(const GRState* St, SVal Base,
   return Base;
 }
 
-SVal BasicStoreManager::GetSVal(Store St, Loc LV, QualType T) {
+SVal BasicStoreManager::Retrieve(Store St, Loc LV, QualType T) {
   
   if (isa<UnknownVal>(LV))
     return UnknownVal();
@@ -177,7 +177,7 @@ SVal BasicStoreManager::GetSVal(Store St, Loc LV, QualType T) {
   return UnknownVal();
 }
   
-Store BasicStoreManager::SetSVal(Store store, Loc LV, SVal V) {    
+Store BasicStoreManager::Bind(Store store, Loc LV, SVal V) {    
   switch (LV.getSubKind()) {      
     case loc::MemRegionKind: {
       const VarRegion* R =
@@ -315,7 +315,7 @@ Store BasicStoreManager::getInitialStore() {
                  ? SVal::GetSymbolValue(StateMgr.getSymbolManager(), VD)
                  : UndefinedVal();
 
-        St = SetSVal(St, loc::MemRegionVal(MRMgr.getVarRegion(VD)), X);
+        St = Bind(St, loc::MemRegionVal(MRMgr.getVarRegion(VD)), X);
       }
     }
   }
@@ -355,16 +355,16 @@ Store BasicStoreManager::AddDecl(Store store,
       if (!Ex) {
         QualType T = VD->getType();
         if (Loc::IsLocType(T))
-          store = SetSVal(store, getLoc(VD),
-                          loc::ConcreteInt(BasicVals.getValue(0, T)));
+          store = Bind(store, getLoc(VD),
+                       loc::ConcreteInt(BasicVals.getValue(0, T)));
         else if (T->isIntegerType())
-          store = SetSVal(store, getLoc(VD),
-                          nonloc::ConcreteInt(BasicVals.getValue(0, T)));
+          store = Bind(store, getLoc(VD),
+                       nonloc::ConcreteInt(BasicVals.getValue(0, T)));
         else {
           // assert(0 && "ignore other types of variables");
         }
       } else {
-        store = SetSVal(store, getLoc(VD), InitVal);
+        store = Bind(store, getLoc(VD), InitVal);
       }
     }
   } else {
@@ -382,7 +382,7 @@ Store BasicStoreManager::AddDecl(Store store,
           : cast<SVal>(nonloc::SymbolVal(Sym));
       }
 
-      store = SetSVal(store, getLoc(VD), V);
+      store = Bind(store, getLoc(VD), V);
     }
   }
 

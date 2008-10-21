@@ -39,13 +39,13 @@ public:
   typedef llvm::DenseSet<SymbolID>          DeadSymbolsTy;
   
   virtual ~StoreManager() {}
-  virtual SVal GetSVal(Store St, Loc LV, QualType T = QualType()) = 0;  
+  virtual SVal Retrieve(Store St, Loc LV, QualType T = QualType()) = 0;  
 
   virtual SVal GetRegionSVal(Store St, const MemRegion* R) {
-    return GetSVal(St, loc::MemRegionVal(R));
+    return Retrieve(St, loc::MemRegionVal(R));
   }
   
-  virtual Store SetSVal(Store St, Loc LV, SVal V) = 0;
+  virtual Store Bind(Store St, Loc LV, SVal V) = 0;
   virtual Store Remove(Store St, Loc LV) = 0;
   virtual Store getInitialStore() = 0;
   virtual MemRegionManager& getRegionManager() = 0;

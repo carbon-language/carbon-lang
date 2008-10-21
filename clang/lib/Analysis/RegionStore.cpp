@@ -38,8 +38,8 @@ public:
 
   virtual ~RegionStoreManager() {}
 
-  SVal GetSVal(Store S, Loc L, QualType T);
-  Store SetSVal(Store St, Loc LV, SVal V);
+  SVal Retrieve(Store S, Loc L, QualType T);
+  Store Bind(Store St, Loc LV, SVal V);
 
   Store getInitialStore();
 
@@ -65,7 +65,7 @@ Loc RegionStoreManager::getElementLoc(const VarDecl* VD, SVal Idx) {
   return loc::MemRegionVal(ER);
 }
 
-SVal RegionStoreManager::GetSVal(Store S, Loc L, QualType T) {
+SVal RegionStoreManager::Retrieve(Store S, Loc L, QualType T) {
   assert(!isa<UnknownVal>(L) && "location unknown");
   assert(!isa<UndefinedVal>(L) && "location undefined");
 
@@ -97,7 +97,7 @@ SVal RegionStoreManager::GetSVal(Store S, Loc L, QualType T) {
   }
 }
 
-Store RegionStoreManager::SetSVal(Store store, Loc LV, SVal V) {
+Store RegionStoreManager::Bind(Store store, Loc LV, SVal V) {
   assert(LV.getSubKind() == loc::MemRegionKind);
 
   const MemRegion* R = cast<loc::MemRegionVal>(LV).getRegion();
@@ -135,7 +135,7 @@ Store RegionStoreManager::getInitialStore() {
                  ? SVal::GetSymbolValue(StateMgr.getSymbolManager(), VD)
                  : UndefinedVal();
 
-        St = SetSVal(St, getVarLoc(VD), X);
+        St = Bind(St, getVarLoc(VD), X);
       }
     }
   }
@@ -160,16 +160,16 @@ Store RegionStoreManager::AddDecl(Store store,
         QualType T = VD->getType();
 
         if (Loc::IsLocType(T))
-          store = SetSVal(store, getVarLoc(VD),
-                          loc::ConcreteInt(BasicVals.getValue(0, T)));
+          store = Bind(store, getVarLoc(VD),
+                       loc::ConcreteInt(BasicVals.getValue(0, T)));
 
         else if (T->isIntegerType())
-          store = SetSVal(store, getVarLoc(VD),
-                          loc::ConcreteInt(BasicVals.getValue(0, T)));
+          store = Bind(store, getVarLoc(VD),
+                       loc::ConcreteInt(BasicVals.getValue(0, T)));
         else
           assert("ignore other types of variables");
       } else {
-        store = SetSVal(store, getVarLoc(VD), InitVal);
+        store = Bind(store, getVarLoc(VD), InitVal);
       }
     }
   } else {
@@ -186,7 +186,7 @@ Store RegionStoreManager::AddDecl(Store store,
           ? cast<SVal>(loc::SymbolVal(Sym))
           : cast<SVal>(nonloc::SymbolVal(Sym));
       }
-      store = SetSVal(store, getVarLoc(VD), V);
+      store = Bind(store, getVarLoc(VD), V);
 
     } else if (T->isArrayType()) {
       // Only handle constant size array.
@@ -197,7 +197,7 @@ Store RegionStoreManager::AddDecl(Store store,
         for (llvm::APInt i = llvm::APInt::getNullValue(Size.getBitWidth());
              i != Size; ++i) {
           nonloc::ConcreteInt Idx(BasicVals.getValue(llvm::APSInt(i)));
-          store = SetSVal(store, getElementLoc(VD, Idx), UndefinedVal());
+          store = Bind(store, getElementLoc(VD, Idx), UndefinedVal());
         }
       }
     } else if (T->isStructureType()) {

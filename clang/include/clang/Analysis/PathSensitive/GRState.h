@@ -422,7 +422,7 @@ public:
     
   
   SVal GetSVal(const GRState* St, Loc LV, QualType T = QualType()) {
-    return StoreMgr->GetSVal(St->getStore(), LV, T);
+    return StoreMgr->Retrieve(St->getStore(), LV, T);
   }
   
   SVal GetSVal(const GRState* St, const MemRegion* R) {
@@ -430,7 +430,7 @@ public:
   }  
   
   void SetSVal(GRState& St, Loc LV, SVal V) {
-    St.St = StoreMgr->SetSVal(St.St, LV, V);
+    St.St = StoreMgr->Bind(St.St, LV, V);
   }
   
   const GRState* SetSVal(const GRState* St, Loc LV, SVal V);  
