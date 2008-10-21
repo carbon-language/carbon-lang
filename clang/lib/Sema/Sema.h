@@ -411,7 +411,8 @@ private:
   /// MatchTwoMethodDeclarations - Checks if two methods' type match and returns
   /// true, or false, accordingly.
   bool MatchTwoMethodDeclarations(const ObjCMethodDecl *Method, 
-                                  const ObjCMethodDecl *PrevMethod); 
+                                  const ObjCMethodDecl *PrevMethod,
+                                  bool matchBasedOnSizeAndAlignment = false); 
 
   /// AddInstanceMethodToGlobalPool - All instance methods in a translation
   /// unit are added to a global pool. This allows us to efficiently associate

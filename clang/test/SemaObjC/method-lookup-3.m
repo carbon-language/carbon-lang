@@ -22,9 +22,9 @@ typedef struct { int x; } Alternate;
 -(void) x; // expected-warning{{also found}}
 -(void) y; // expected-warning{{also found}}
 -(void) z; // expected-warning{{also found}}
--(void) setX: (INTERFERE_TYPE) arg; // expected-warning{{also found}}
--(void) setY: (INTERFERE_TYPE) arg; // expected-warning{{also found}}
--(void) setZ: (INTERFERE_TYPE) arg; // expected-warning{{also found}}
+-(void) setX: (INTERFERE_TYPE) arg; 
+-(void) setY: (INTERFERE_TYPE) arg;
+-(void) setZ: (INTERFERE_TYPE) arg;
 @end
 
 void f0(id a0) {
@@ -40,13 +40,13 @@ void f2(id a0) {
 }
 
 void f3(id a0, Abstract *a1) { 
-  [ a0 setX: a1]; // expected-warning {{multiple methods named 'setX:' found}}
+  [ a0 setX: a1];
 }
 
 void f4(id a0, Abstract *a1) { 
-  [ a0 setY: a1]; // expected-warning {{multiple methods named 'setY:' found}}
+  [ a0 setY: a1];
 }
 
 void f5(id a0, Abstract *a1) { 
-  [ a0 setZ: a1]; // expected-warning {{multiple methods named 'setZ:' found}}
+  [ a0 setZ: a1];
 }

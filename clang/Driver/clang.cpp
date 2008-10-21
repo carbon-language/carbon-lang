@@ -595,6 +595,11 @@ static llvm::cl::opt<bool>
 WarnImplicitFunctionDeclaration("Wimplicit-function-declaration",
    llvm::cl::desc("Warn about uses of implicitly defined functions"));
 
+static llvm::cl::opt<bool>
+WarnNoStrictSelectorMatch("Wno-strict-selector-match",
+   llvm::cl::desc("Do not warn about duplicate methods that have the same size and alignment"),
+   llvm::cl::init(true));
+
 /// InitializeDiagnostics - Initialize the diagnostic object, based on the
 /// current command line option settings.
 static void InitializeDiagnostics(Diagnostic &Diags) {

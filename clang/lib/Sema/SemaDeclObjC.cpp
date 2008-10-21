@@ -739,16 +739,36 @@ Sema::ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
 /// returns true, or false, accordingly.
 /// TODO: Handle protocol list; such as id<p1,p2> in type comparisons
 bool Sema::MatchTwoMethodDeclarations(const ObjCMethodDecl *Method, 
-                                      const ObjCMethodDecl *PrevMethod) {
-  if (Context.getCanonicalType(Method->getResultType()) !=
-      Context.getCanonicalType(PrevMethod->getResultType()))
-    return false;
-  for (unsigned i = 0, e = Method->getNumParams(); i != e; ++i) {
-    ParmVarDecl *ParamDecl = Method->getParamDecl(i);
-    ParmVarDecl *PrevParamDecl = PrevMethod->getParamDecl(i);
-    if (Context.getCanonicalType(ParamDecl->getType()) !=
-        Context.getCanonicalType(PrevParamDecl->getType()))
+                                      const ObjCMethodDecl *PrevMethod,
+                                      bool matchBasedOnSizeAndAlignment) {
+  QualType T1 = Context.getCanonicalType(Method->getResultType());
+  QualType T2 = Context.getCanonicalType(PrevMethod->getResultType());
+  
+  if (T1 != T2) {
+    // The result types are different.
+    if (!matchBasedOnSizeAndAlignment)
       return false;
+    // Incomplete types don't have a size and alignment.
+    if (T1->isIncompleteType() || T2->isIncompleteType())
+      return false;
+    // Check is based on size and alignment.
+    if (Context.getTypeInfo(T1) != Context.getTypeInfo(T2))
+      return false;
+  }
+  for (unsigned i = 0, e = Method->getNumParams(); i != e; ++i) {
+    T1 = Context.getCanonicalType(Method->getParamDecl(i)->getType());
+    T2 = Context.getCanonicalType(PrevMethod->getParamDecl(i)->getType());
+    if (T1 != T2) {
+      // The result types are different.
+      if (!matchBasedOnSizeAndAlignment)
+        return false;
+      // Incomplete types don't have a size and alignment.
+      if (T1->isIncompleteType() || T2->isIncompleteType())
+        return false;
+      // Check is based on size and alignment.
+      if (Context.getTypeInfo(T1) != Context.getTypeInfo(T2))
+        return false;
+    }
   }
   return true;
 }
@@ -776,11 +796,19 @@ void Sema::AddInstanceMethodToGlobalPool(ObjCMethodDecl *Method) {
   }
 }
 
+// FIXME: Finish implementing -Wno-struct-selector-match.
 ObjCMethodDecl *Sema::LookupInstanceMethodInGlobalPool(Selector Sel, 
                                                        SourceRange R) {
   ObjCMethodList &MethList = InstanceMethodPool[Sel];
+  bool issueWarning = false;
   
   if (MethList.Method && MethList.Next) {
+    for (ObjCMethodList *Next = MethList.Next; Next; Next = Next->Next)
+      // This checks if the methods differ by size & alignment.
+      if (!MatchTwoMethodDeclarations(MethList.Method, Next->Method, true))
+        issueWarning = true;
+  }
+  if (issueWarning && (MethList.Method && MethList.Next)) {
     Diag(R.getBegin(), diag::warn_multiple_method_decl, Sel.getName(), R);
     Diag(MethList.Method->getLocStart(), diag::warn_using_decl, 
          MethList.Method->getSourceRange());
