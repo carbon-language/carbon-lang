@@ -94,6 +94,13 @@ public:
   void clearFlag(TokenFlags Flag) {
     Flags &= ~Flag;
   }
+  
+  /// getFlags - Return the internal represtation of the flags.
+  ///  Only intended for low-level operations such as writing tokens to
+  //   disk.
+  unsigned getFlags() const {
+    return Flags;
+  }
 
   /// setFlagValue - Set a flag to either true or false.
   void setFlagValue(TokenFlags Flag, bool Val) {
