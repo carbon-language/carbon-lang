@@ -30,6 +30,7 @@ add_llvm_library(LLVMCodeGen
   PHIElimination.cpp
   Passes.cpp
   PostRASchedulerList.cpp
+  PreAllocSplitting.cpp
   PrologEpilogInserter.cpp
   PseudoSourceValue.cpp
   RegAllocBigBlock.cpp
