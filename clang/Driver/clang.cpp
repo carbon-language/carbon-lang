@@ -72,6 +72,7 @@ enum ProgActions {
   RewriteMacros,                // Expand macros but not #includes.
   RewriteTest,                  // Rewriter playground
   HTMLTest,                     // HTML displayer testing stuff.
+  EmitAssembly,                 // Emit a .s file.
   EmitLLVM,                     // Emit a .ll file.
   EmitBC,                       // Emit a .bc file.
   SerializeAST,                 // Emit a .ast file.
@@ -119,6 +120,8 @@ ProgAction(llvm::cl::desc("Choose output type:"), llvm::cl::ZeroOrMore,
                         "Build ASTs and view them with GraphViz"),
              clEnumValN(TestSerialization, "test-pickling",
                         "Run prototype serialization code"),
+             clEnumValN(EmitAssembly, "S",
+                        "Emit native assembly code"),
              clEnumValN(EmitLLVM, "emit-llvm",
                         "Build ASTs then convert to LLVM, emit .ll file"),
              clEnumValN(EmitBC, "emit-llvm-bc",
@@ -1103,10 +1106,15 @@ static ASTConsumer* CreateASTConsumer(const std::string& InFile,
     case TestSerialization:
       return CreateSerializationTest(Diag, FileMgr);
       
+    case EmitAssembly:
+      return CreateBackendConsumer(Backend_EmitAssembly, Diag, LangOpts, 
+                                   InFile, OutputFile, GenerateDebugInfo);
     case EmitLLVM:
+      return CreateBackendConsumer(Backend_EmitLL, Diag, LangOpts, 
+                                   InFile, OutputFile, GenerateDebugInfo);
     case EmitBC:
-      return CreateLLVMCodeGenWriter(ProgAction == EmitBC, Diag, LangOpts,
-                                     InFile, OutputFile, GenerateDebugInfo);
+      return CreateBackendConsumer(Backend_EmitBC, Diag, LangOpts, 
+                                   InFile, OutputFile, GenerateDebugInfo);
 
     case SerializeAST:
       // FIXME: Allow user to tailor where the file is written.
