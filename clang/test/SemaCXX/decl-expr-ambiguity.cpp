@@ -19,7 +19,7 @@ void f() {
   (int(1)); // expected-warning {{expression result unused}}
 
   // type-id
-  (int())1; // expected-error {{used type 'int ()' where arithmetic or pointer type is required}}
+  (int())1; // expected-error {{used type 'int (void)' where arithmetic or pointer type is required}}
 
   // Declarations.
   int fd(T(a)); // expected-warning {{parentheses were disambiguated as a function declarator}}
