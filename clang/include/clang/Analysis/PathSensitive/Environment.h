@@ -20,7 +20,7 @@
 
 #include "llvm/ADT/ImmutableMap.h"
 #include "llvm/ADT/SmallVector.h"
-#include "clang/Analysis/PathSensitive/RValues.h"
+#include "clang/Analysis/PathSensitive/SVals.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/ADT/FoldingSet.h"
 

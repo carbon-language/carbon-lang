@@ -14,7 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Analysis/PathSensitive/BasicValueFactory.h"
-#include "clang/Analysis/PathSensitive/RValues.h"
+#include "clang/Analysis/PathSensitive/SVals.h"
 
 using namespace clang;
 

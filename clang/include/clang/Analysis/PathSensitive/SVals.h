@@ -1,4 +1,4 @@
-//== SValues.h - Abstract Values for Static Analysis ---------*- C++ -*--==//
+//== SVals.h - Abstract Values for Static Analysis ---------*- C++ -*--==//
 //
 //                     The LLVM Compiler Infrastructure
 //

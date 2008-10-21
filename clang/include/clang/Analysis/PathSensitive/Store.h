@@ -14,7 +14,7 @@
 #ifndef LLVM_CLANG_ANALYSIS_STORE_H
 #define LLVM_CLANG_ANALYSIS_STORE_H
 
-#include "clang/Analysis/PathSensitive/RValues.h"
+#include "clang/Analysis/PathSensitive/SVals.h"
 #include "clang/Analysis/PathSensitive/MemRegion.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallSet.h"

@@ -15,7 +15,7 @@
 #ifndef LLVM_CLANG_ANALYSIS_GRTF
 #define LLVM_CLANG_ANALYSIS_GRTF
 
-#include "clang/Analysis/PathSensitive/RValues.h"
+#include "clang/Analysis/PathSensitive/SVals.h"
 #include "clang/Analysis/PathSensitive/GRCoreEngine.h"
 #include "clang/Analysis/PathSensitive/GRState.h"
 #include <vector>

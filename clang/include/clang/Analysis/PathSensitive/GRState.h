@@ -20,7 +20,7 @@
 #include "clang/Analysis/PathSensitive/Store.h"
 #include "clang/Analysis/PathSensitive/ConstraintManager.h"
 #include "clang/Analysis/PathSensitive/MemRegion.h"
-#include "clang/Analysis/PathSensitive/RValues.h"
+#include "clang/Analysis/PathSensitive/SVals.h"
 #include "clang/Analysis/PathSensitive/GRCoreEngine.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/Decl.h"
