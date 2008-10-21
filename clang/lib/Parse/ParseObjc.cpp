@@ -635,7 +635,8 @@ Parser::TypeTy *Parser::ParseObjCTypeName(ObjCDeclSpec &DS) {
       MatchRHSPunctuation(tok::r_paren, LParenLoc);
     }
   }
-  RParenLoc = ConsumeParen();
+  if (Tok.is(tok::r_paren))
+    RParenLoc = ConsumeParen();
   return Ty;
 }
 
