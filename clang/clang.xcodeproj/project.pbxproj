@@ -50,6 +50,9 @@
 		359763260E633C7500B68AB7 /* HTMLDiagnostics.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 359763250E633C7500B68AB7 /* HTMLDiagnostics.cpp */; };
 		3599299B0DE2425300A8A33E /* SemaInit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3599299A0DE2425300A8A33E /* SemaInit.cpp */; };
 		359DBBD40E1AC9CC00F43FA0 /* AnalysisConsumer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 359DBBD30E1AC9CC00F43FA0 /* AnalysisConsumer.cpp */; };
+		35A057E20EAE2D950069249F /* RegionStore.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35A057E00EAE2D950069249F /* RegionStore.cpp */; };
+		35A057E30EAE2D950069249F /* SVals.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35A057E10EAE2D950069249F /* SVals.cpp */; };
+		35A057E70EAE2DDD0069249F /* CacheTokens.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35A057E60EAE2DDD0069249F /* CacheTokens.cpp */; };
 		35A3E7020DD3874400757F74 /* CGDebugInfo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35A3E7000DD3874400757F74 /* CGDebugInfo.cpp */; };
 		35A8FCF90D9B4B2A001C2F97 /* PathDiagnostic.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35A8FCF80D9B4B29001C2F97 /* PathDiagnostic.cpp */; };
 		35BAC1E80E82C5B7003FB76F /* CheckNSError.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35BAC1E70E82C5B7003FB76F /* CheckNSError.cpp */; };
@@ -113,7 +116,6 @@
 		DE4121360D7F1C1C0080F80A /* ExplodedGraph.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE4121280D7F1C1C0080F80A /* ExplodedGraph.cpp */; };
 		DE4121370D7F1C1C0080F80A /* UninitializedValues.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE4121290D7F1C1C0080F80A /* UninitializedValues.cpp */; };
 		DE4121380D7F1C1C0080F80A /* GRCoreEngine.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE41212A0D7F1C1C0080F80A /* GRCoreEngine.cpp */; };
-		DE41213B0D7F1C1C0080F80A /* RValues.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE41212E0D7F1C1C0080F80A /* RValues.cpp */; };
 		DE41213C0D7F1C1C0080F80A /* GRSimpleVals.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE41212F0D7F1C1C0080F80A /* GRSimpleVals.cpp */; };
 		DE41213D0D7F1C1C0080F80A /* GRBlockCounter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE4121300D7F1C1C0080F80A /* GRBlockCounter.cpp */; };
 		DE41213E0D7F1C1C0080F80A /* GRExprEngine.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE4121310D7F1C1C0080F80A /* GRExprEngine.cpp */; };
@@ -342,6 +344,10 @@
 		3599299A0DE2425300A8A33E /* SemaInit.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = SemaInit.cpp; path = lib/Sema/SemaInit.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		359DBBD30E1AC9CC00F43FA0 /* AnalysisConsumer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = AnalysisConsumer.cpp; path = Driver/AnalysisConsumer.cpp; sourceTree = "<group>"; };
 		359DBBE20E1ACD4700F43FA0 /* AnalysisConsumer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AnalysisConsumer.h; path = Driver/AnalysisConsumer.h; sourceTree = "<group>"; };
+		35A057D20EAE2D2B0069249F /* SVals.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SVals.h; path = clang/Analysis/PathSensitive/SVals.h; sourceTree = "<group>"; };
+		35A057E00EAE2D950069249F /* RegionStore.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RegionStore.cpp; path = lib/Analysis/RegionStore.cpp; sourceTree = "<group>"; };
+		35A057E10EAE2D950069249F /* SVals.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SVals.cpp; path = lib/Analysis/SVals.cpp; sourceTree = "<group>"; };
+		35A057E60EAE2DDD0069249F /* CacheTokens.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CacheTokens.cpp; path = Driver/CacheTokens.cpp; sourceTree = "<group>"; };
 		35A2B8610CF8FFA300E6C317 /* SemaUtil.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = SemaUtil.h; path = lib/Sema/SemaUtil.h; sourceTree = "<group>"; tabWidth = 2; };
 		35A3E7000DD3874400757F74 /* CGDebugInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CGDebugInfo.cpp; path = lib/CodeGen/CGDebugInfo.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		35A3E7010DD3874400757F74 /* CGDebugInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = CGDebugInfo.h; path = lib/CodeGen/CGDebugInfo.h; sourceTree = "<group>"; tabWidth = 2; };
@@ -424,7 +430,6 @@
 		DE3986EF0CB8D4B300223765 /* IdentifierTable.h */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.c.h; path = IdentifierTable.h; sourceTree = "<group>"; tabWidth = 2; };
 		DE3986F30CB8D50C00223765 /* IdentifierTable.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = IdentifierTable.cpp; sourceTree = "<group>"; };
 		DE3B90DE0EAC5EF200D01046 /* ExtensionRAIIObject.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ExtensionRAIIObject.h; path = lib/Parse/ExtensionRAIIObject.h; sourceTree = "<group>"; };
-		DE41211B0D7F1BBE0080F80A /* RValues.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RValues.h; path = clang/Analysis/PathSensitive/RValues.h; sourceTree = "<group>"; };
 		DE41211D0D7F1BBE0080F80A /* GRWorkList.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GRWorkList.h; path = clang/Analysis/PathSensitive/GRWorkList.h; sourceTree = "<group>"; };
 		DE41211E0D7F1BBE0080F80A /* SymbolManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SymbolManager.h; path = clang/Analysis/PathSensitive/SymbolManager.h; sourceTree = "<group>"; };
 		DE41211F0D7F1BBE0080F80A /* GRBlockCounter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GRBlockCounter.h; path = clang/Analysis/PathSensitive/GRBlockCounter.h; sourceTree = "<group>"; };
@@ -437,7 +442,6 @@
 		DE4121290D7F1C1C0080F80A /* UninitializedValues.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = UninitializedValues.cpp; path = lib/Analysis/UninitializedValues.cpp; sourceTree = "<group>"; };
 		DE41212A0D7F1C1C0080F80A /* GRCoreEngine.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GRCoreEngine.cpp; path = lib/Analysis/GRCoreEngine.cpp; sourceTree = "<group>"; };
 		DE41212C0D7F1C1C0080F80A /* GRSimpleVals.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GRSimpleVals.h; path = lib/Analysis/GRSimpleVals.h; sourceTree = "<group>"; };
-		DE41212E0D7F1C1C0080F80A /* RValues.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RValues.cpp; path = lib/Analysis/RValues.cpp; sourceTree = "<group>"; };
 		DE41212F0D7F1C1C0080F80A /* GRSimpleVals.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GRSimpleVals.cpp; path = lib/Analysis/GRSimpleVals.cpp; sourceTree = "<group>"; };
 		DE4121300D7F1C1C0080F80A /* GRBlockCounter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GRBlockCounter.cpp; path = lib/Analysis/GRBlockCounter.cpp; sourceTree = "<group>"; };
 		DE4121310D7F1C1C0080F80A /* GRExprEngine.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GRExprEngine.cpp; path = lib/Analysis/GRExprEngine.cpp; sourceTree = "<group>"; };
@@ -598,6 +602,8 @@
 		3507E4C60E27FE5500FB7B57 /* Path-Sensitive Core */ = {
 			isa = PBXGroup;
 			children = (
+				35A057E00EAE2D950069249F /* RegionStore.cpp */,
+				35A057E10EAE2D950069249F /* SVals.cpp */,
 				355106850E9A8507006A4E44 /* MemRegion.cpp */,
 				358CFBB70E65AB04002A8E19 /* BasicConstraintManager.cpp */,
 				3558F76C0E267C8300A5B0DF /* BasicStore.cpp */,
@@ -610,7 +616,6 @@
 				35862B110E3629850009F542 /* GRExprEngineInternalChecks.cpp */,
 				358F51510E529AA4007F2102 /* GRState.cpp */,
 				35EFEFB50DB67ED60020783D /* GRTransferFuncs.cpp */,
-				DE41212E0D7F1C1C0080F80A /* RValues.cpp */,
 				DE4121270D7F1C1C0080F80A /* SymbolManager.cpp */,
 			);
 			name = "Path-Sensitive Core";
@@ -779,24 +784,24 @@
 		DE4121130D7F1B980080F80A /* PathSensitive */ = {
 			isa = PBXGroup;
 			children = (
-				355106880E9A851B006A4E44 /* MemRegion.h */,
-				35F1ACE60E66166C001F4532 /* ConstraintManager.h */,
-				3553EB9A0E5F7089007D7359 /* GRStateTrait.h */,
-				3558F76F0E267C9A00A5B0DF /* Store.h */,
+				35D55B290D81D8E50092E734 /* BasicValueFactory.h */,
+				359378FF0DA486490043B19C /* BugReporter.h */,
 				3536457C0E2406B0009C6509 /* Environment.h */,
+				DE4121200D7F1BBE0080F80A /* ExplodedGraph.h */,
+				35F1ACE60E66166C001F4532 /* ConstraintManager.h */,
+				35F8D0CB0D9B7E8200D91C5E /* GRAuditor.h */,
+				DE41211F0D7F1BBE0080F80A /* GRBlockCounter.h */,
 				DE4121230D7F1BBE0080F80A /* GRCoreEngine.h */,
 				DE4121210D7F1BBE0080F80A /* GRExprEngine.h */,
-				DE4121220D7F1BBE0080F80A /* GRTransferFuncs.h */,
 				358F514F0E529A87007F2102 /* GRState.h */,
-				359378FF0DA486490043B19C /* BugReporter.h */,
+				3553EB9A0E5F7089007D7359 /* GRStateTrait.h */,
 				35F8D0CA0D9B7E8200D91C5E /* GRSimpleAPICheck.h */,
-				35F8D0CB0D9B7E8200D91C5E /* GRAuditor.h */,
-				35D55B290D81D8E50092E734 /* BasicValueFactory.h */,
-				DE41211B0D7F1BBE0080F80A /* RValues.h */,
+				DE4121220D7F1BBE0080F80A /* GRTransferFuncs.h */,
 				DE41211D0D7F1BBE0080F80A /* GRWorkList.h */,
+				355106880E9A851B006A4E44 /* MemRegion.h */,
+				3558F76F0E267C9A00A5B0DF /* Store.h */,
+				35A057D20EAE2D2B0069249F /* SVals.h */,
 				DE41211E0D7F1BBE0080F80A /* SymbolManager.h */,
-				DE41211F0D7F1BBE0080F80A /* GRBlockCounter.h */,
-				DE4121200D7F1BBE0080F80A /* ExplodedGraph.h */,
 			);
 			name = PathSensitive;
 			sourceTree = "<group>";
@@ -876,6 +881,7 @@
 		DEAEECAE0A5AF0FA0045101B /* Driver */ = {
 			isa = PBXGroup;
 			children = (
+				35A057E60EAE2DDD0069249F /* CacheTokens.cpp */,
 				DE5932CD0AD60FF400BC794C /* clang.cpp */,
 				DE5932CE0AD60FF400BC794C /* clang.h */,
 				359DBBE20E1ACD4700F43FA0 /* AnalysisConsumer.h */,
@@ -1206,7 +1212,6 @@
 				DE4121360D7F1C1C0080F80A /* ExplodedGraph.cpp in Sources */,
 				DE4121370D7F1C1C0080F80A /* UninitializedValues.cpp in Sources */,
 				DE4121380D7F1C1C0080F80A /* GRCoreEngine.cpp in Sources */,
-				DE41213B0D7F1C1C0080F80A /* RValues.cpp in Sources */,
 				DE41213C0D7F1C1C0080F80A /* GRSimpleVals.cpp in Sources */,
 				DE41213D0D7F1C1C0080F80A /* GRBlockCounter.cpp in Sources */,
 				DE41213E0D7F1C1C0080F80A /* GRExprEngine.cpp in Sources */,
@@ -1265,6 +1270,9 @@
 				3551068D0E9A8546006A4E44 /* ParseTentative.cpp in Sources */,
 				DE4DC79E0EA1C09E00069E5A /* RewriteTest.cpp in Sources */,
 				DE4DC7A30EA1C33E00069E5A /* TokenRewriter.cpp in Sources */,
+				35A057E20EAE2D950069249F /* RegionStore.cpp in Sources */,
+				35A057E30EAE2D950069249F /* SVals.cpp in Sources */,
+				35A057E70EAE2DDD0069249F /* CacheTokens.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
