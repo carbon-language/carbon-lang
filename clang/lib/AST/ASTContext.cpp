@@ -1807,6 +1807,11 @@ bool ASTContext::isObjCObjectPointerType(QualType Ty) const {
   if (Ty->isObjCQualifiedIdType())
     return true;
   
+  // Blocks are objects.
+  if (Ty->isBlockPointerType())
+    return true;
+    
+  // All other object types are pointers.
   if (!Ty->isPointerType())
     return false;
   
