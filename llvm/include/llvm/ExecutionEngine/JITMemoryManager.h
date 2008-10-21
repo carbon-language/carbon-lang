@@ -101,6 +101,9 @@ public:
   /// and remember where it is in case the client wants to deallocate it.
   virtual void endFunctionBody(const Function *F, unsigned char *FunctionStart,
                                unsigned char *FunctionEnd) = 0;
+
+  /// allocateSpace - Allocate a memory block of the given size.
+  virtual unsigned char *allocateSpace(intptr_t Size, unsigned Alignment) = 0;
   
   /// deallocateMemForFunction - Free JIT memory for the specified function.
   /// This is never called when the JIT is currently emitting a function.

@@ -518,6 +518,10 @@ namespace {
                                    unsigned Alignment = 1);
     virtual void* finishFunctionStub(const GlobalValue *F);
 
+    /// allocateSpace - Reserves space in the current block if any, or
+    /// allocate a new one of the given size.
+    virtual void *allocateSpace(intptr_t Size, unsigned Alignment);
+
     virtual void addRelocation(const MachineRelocation &MR) {
       Relocations.push_back(MR);
     }
@@ -915,11 +919,6 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
                                   Relocations.size(), MemMgr->getGOTBase());
   }
 
-  unsigned char *FnEnd   = CurBufferPtr;
-  
-  MemMgr->endFunctionBody(F.getFunction(), BufferBegin, FnEnd);
-  NumBytes += FnEnd-FnStart;
-
   // Update the GOT entry for F to point to the new code.
   if (MemMgr->isManagingGOT()) {
     unsigned idx = Resolver.getGOTIndexForAddr((void*)BufferBegin);
@@ -929,6 +928,12 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
       ((void**)MemMgr->getGOTBase())[idx] = (void*)BufferBegin;
     }
   }
+
+  unsigned char *FnEnd = CurBufferPtr;
+
+  MemMgr->endFunctionBody(F.getFunction(), BufferBegin, FnEnd);
+  BufferBegin = CurBufferPtr = 0;
+  NumBytes += FnEnd-FnStart;
 
   // Invalidate the icache if necessary.
   sys::Memory::InvalidateInstructionCache(FnStart, FnEnd-FnStart);
@@ -991,6 +996,18 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
     MMI->EndFunction();
  
   return false;
+}
+
+void* JITEmitter::allocateSpace(intptr_t Size, unsigned Alignment) {
+  if (BufferBegin)
+    return MachineCodeEmitter::allocateSpace(Size, Alignment);
+
+  // create a new memory block if there is no active one.
+  // care must be taken so that BufferBegin is invalidated when a
+  // block is trimmed
+  BufferBegin = CurBufferPtr = MemMgr->allocateSpace(Size, Alignment);
+  BufferEnd = BufferBegin+Size;
+  return CurBufferPtr;
 }
 
 void JITEmitter::emitConstantPool(MachineConstantPool *MCP) {

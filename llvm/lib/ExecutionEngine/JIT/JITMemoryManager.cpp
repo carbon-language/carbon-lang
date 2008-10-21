@@ -298,7 +298,24 @@ namespace {
       // Release the memory at the end of this block that isn't needed.
       FreeMemoryList =CurBlock->TrimAllocationToSize(FreeMemoryList, BlockSize);
     }
-    
+
+    /// allocateSpace - Allocate a memory block of the given size.
+    unsigned char *allocateSpace(intptr_t Size, unsigned Alignment) {
+      CurBlock = FreeMemoryList;
+      FreeMemoryList = FreeMemoryList->AllocateBlock();
+
+      unsigned char *result = (unsigned char *)CurBlock+1;
+
+      if (Alignment == 0) Alignment = 1;
+      result = (unsigned char*)(((intptr_t)result+Alignment-1) &
+               ~(intptr_t)(Alignment-1));
+
+      uintptr_t BlockSize = result + Size - (unsigned char *)CurBlock;
+      FreeMemoryList =CurBlock->TrimAllocationToSize(FreeMemoryList, BlockSize);
+
+      return result;
+    }
+
     /// startExceptionTable - Use startFunctionBody to allocate memory for the 
     /// function's exception table.
     unsigned char* startExceptionTable(const Function* F, 

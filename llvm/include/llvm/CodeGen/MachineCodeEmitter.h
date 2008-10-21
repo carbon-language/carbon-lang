@@ -207,7 +207,7 @@ public:
   /// allocateSpace - Allocate a block of space in the current output buffer,
   /// returning null (and setting conditions to indicate buffer overflow) on
   /// failure.  Alignment is the alignment in bytes of the buffer desired.
-  void *allocateSpace(intptr_t Size, unsigned Alignment) {
+  virtual void *allocateSpace(intptr_t Size, unsigned Alignment) {
     emitAlignment(Alignment);
     void *Result = CurBufferPtr;
     
