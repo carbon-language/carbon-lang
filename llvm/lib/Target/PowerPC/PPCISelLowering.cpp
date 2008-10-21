@@ -4912,3 +4912,9 @@ SDValue PPCTargetLowering::LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG) {
     return DAG.getCopyFromReg(DAG.getEntryNode(), is31 ? PPC::R31 : PPC::R1,
       MVT::i32);
 }
+
+bool
+PPCTargetLowering::isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const {
+  // The PowerPC target isn't yet aware of offsets.
+  return false;
+}

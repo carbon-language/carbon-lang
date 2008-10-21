@@ -329,6 +329,8 @@ namespace llvm {
                                                    SDValue Ret,
                                                    SelectionDAG &DAG) const;
 
+    virtual bool isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const;
+
   private:
     SDValue getFramePointerFrameIndex(SelectionDAG & DAG) const;
     SDValue getReturnAddrFrameIndex(SelectionDAG & DAG) const;
