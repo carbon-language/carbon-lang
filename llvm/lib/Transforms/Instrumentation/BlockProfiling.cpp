@@ -72,7 +72,7 @@ bool FunctionProfiler::runOnModule(Module &M) {
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
     if (!I->isDeclaration())
       // Insert counter at the start of the function
-      IncrementCounterInBlock(I->begin(), i++, Counters);
+      IncrementCounterInBlock(&I->getEntryBlock(), i++, Counters);
 
   // Add the initialization call to main.
   InsertProfilingInitCall(Main, "llvm_start_func_profiling", Counters);
