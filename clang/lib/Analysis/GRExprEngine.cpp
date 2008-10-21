@@ -823,7 +823,7 @@ void GRExprEngine::VisitDeclRefExpr(DeclRefExpr* Ex, NodeTy* Pred, NodeSet& Dst,
   
   const GRState* St = GetState(Pred);
 
-  const ValueDecl* D = Ex->getDecl();
+  const NamedDecl* D = Ex->getDecl();
 
   if (const VarDecl* VD = dyn_cast<VarDecl>(D)) {
 

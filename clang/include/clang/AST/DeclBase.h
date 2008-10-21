@@ -48,6 +48,7 @@ public:
              CXXField,
              ObjCIvar,
              ObjCAtDefsField,
+           OverloadedFunction,
            ObjCCategory,
            ObjCCategoryImpl,
            ObjCImplementation,
@@ -178,6 +179,7 @@ public:
     case EnumConstant:
     case ObjCInterface:
     case ObjCCompatibleAlias:
+    case OverloadedFunction:
     case CXXField:
     case CXXMethod:
     case CXXClassVar:

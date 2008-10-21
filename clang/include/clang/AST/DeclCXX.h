@@ -1,4 +1,4 @@
-//===-- DeclCXX.h - Classes for representing C++ declarations *- C++ -*-======//
+//===-- DeclCXX.h - Classes for representing C++ declarations -*- C++ -*-=====//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -15,6 +15,7 @@
 #define LLVM_CLANG_AST_DECLCXX_H
 
 #include "clang/AST/Decl.h"
+#include "llvm/ADT/SmallVector.h"
 
 namespace clang {
 class CXXRecordDecl;
@@ -189,6 +190,85 @@ public:
     }
     return isa<CXXFieldDecl>(D);
   }
+};
+
+/// OverloadedFunctionDecl - An instance of this class represents a
+/// set of overloaded functions. All of the functions have the same
+/// name and occur within the same scope.
+///
+/// An OverloadedFunctionDecl has no ownership over the FunctionDecl
+/// nodes it contains. Rather, the FunctionDecls are owned by the
+/// enclosing scope (which also owns the OverloadedFunctionDecl
+/// node). OverloadedFunctionDecl is used primarily to store a set of
+/// overloaded functions for name lookup.
+class OverloadedFunctionDecl : public NamedDecl {
+protected:
+  OverloadedFunctionDecl(DeclContext *DC, IdentifierInfo *Id)
+    : NamedDecl(OverloadedFunction, SourceLocation(), Id) { }
+
+  /// Functions - the set of overloaded functions contained in this
+  /// overload set.
+  llvm::SmallVector<FunctionDecl *, 4> Functions;
+  
+public:
+  typedef llvm::SmallVector<FunctionDecl *, 4>::iterator function_iterator;
+  typedef llvm::SmallVector<FunctionDecl *, 4>::const_iterator
+    function_const_iterator;
+
+  static OverloadedFunctionDecl *Create(ASTContext &C, DeclContext *DC,
+                                        IdentifierInfo *Id);
+
+  /// addOverload - Add an overloaded function FD to this set of
+  /// overloaded functions.
+  void addOverload(FunctionDecl *FD) {
+    assert((!getNumFunctions() || (FD->getDeclContext() == getDeclContext())) &&
+           "Overloaded functions must all be in the same context");
+    assert(FD->getIdentifier() == getIdentifier() &&
+           "Overloaded functions must have the same name.");
+    Functions.push_back(FD);
+  }
+
+  function_iterator function_begin() { return Functions.begin(); }
+  function_iterator function_end() { return Functions.end(); }
+  function_const_iterator function_begin() const { return Functions.begin(); }
+  function_const_iterator function_end() const { return Functions.end(); }
+
+  /// getNumFunctions - the number of overloaded functions stored in
+  /// this set.
+  unsigned getNumFunctions() const { return Functions.size(); }
+
+  /// getFunction - retrieve the ith function in the overload set.
+  const FunctionDecl *getFunction(unsigned i) const {
+    assert(i < getNumFunctions() && "Illegal function #");
+    return Functions[i];
+  }
+  FunctionDecl *getFunction(unsigned i) {
+    assert(i < getNumFunctions() && "Illegal function #");
+    return Functions[i];
+  }
+
+  // getDeclContext - Get the context of these overloaded functions.
+  DeclContext *getDeclContext() {
+    assert(getNumFunctions() > 0 && "Context of an empty overload set");
+    return getFunction(0)->getDeclContext();
+  }
+
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Decl *D) { 
+    return D->getKind() == OverloadedFunction; 
+  }
+  static bool classof(const OverloadedFunctionDecl *D) { return true; }
+
+protected:
+  /// EmitImpl - Serialize this FunctionDecl.  Called by Decl::Emit.
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  
+  /// CreateImpl - Deserialize an OverloadedFunctionDecl.  Called by
+  /// Decl::Create.
+  static OverloadedFunctionDecl* CreateImpl(llvm::Deserializer& D, 
+                                            ASTContext& C);
+  
+  friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);
 };
 
 } // end namespace clang

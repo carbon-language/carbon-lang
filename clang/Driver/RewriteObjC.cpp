@@ -1178,7 +1178,8 @@ Stmt *RewriteObjC::RewriteObjCForCollectionStmt(ObjCForCollectionStmt *S,
   else {
     DeclRefExpr *DR = cast<DeclRefExpr>(S->getElement());
     elementName = DR->getDecl()->getName();
-    elementTypeAsString = DR->getDecl()->getType().getAsString();
+    elementTypeAsString 
+      = cast<ValueDecl>(DR->getDecl())->getType().getAsString();
   }
   
   // struct __objcFastEnumerationState enumState = { 0 };

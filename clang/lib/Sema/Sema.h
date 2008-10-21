@@ -17,6 +17,7 @@
 
 #include "IdentifierResolver.h"
 #include "CXXFieldCollector.h"
+#include "SemaOverload.h"
 #include "clang/Parse/Action.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/DenseSet.h"
@@ -361,7 +362,46 @@ private:
   VarDecl *MergeVarDecl(VarDecl *New, Decl *Old);
   FunctionDecl *MergeCXXFunctionDecl(FunctionDecl *New, FunctionDecl *Old);
   void CheckForFileScopedRedefinitions(Scope *S, VarDecl *VD);
-  
+
+  /// C++ Overloading.
+  bool IsOverload(FunctionDecl *New, Decl* OldD, 
+                  OverloadedFunctionDecl::function_iterator &MatchedDecl);
+  ImplicitConversionSequence TryCopyInitialization(Expr* From, QualType ToType);
+  bool IsIntegralPromotion(Expr *From, QualType FromType, QualType ToType);
+  bool IsFloatingPointPromotion(QualType FromType, QualType ToType);
+  bool IsPointerConversion(Expr *From, QualType FromType, QualType ToType,
+                           QualType& ConvertedType);
+
+  ImplicitConversionSequence::CompareKind 
+  CompareImplicitConversionSequences(const ImplicitConversionSequence& ICS1,
+                                     const ImplicitConversionSequence& ICS2);
+
+  ImplicitConversionSequence::CompareKind 
+  CompareStandardConversionSequences(const StandardConversionSequence& SCS1,
+                                     const StandardConversionSequence& SCS2);
+
+  /// OverloadingResult - Capture the result of performing overload
+  /// resolution.
+  enum OverloadingResult {
+    OR_Success,             ///< Overload resolution succeeded.
+    OR_No_Viable_Function,  ///< No viable function found.
+    OR_Ambiguous            ///< Ambiguous candidates found.
+  };
+
+  void AddOverloadCandidate(FunctionDecl *Function, 
+                            Expr **Args, unsigned NumArgs,
+                            OverloadCandidateSet& CandidateSet);
+  void AddOverloadCandidates(OverloadedFunctionDecl *Ovl, 
+                             Expr **Args, unsigned NumArgs,
+                             OverloadCandidateSet& CandidateSet);
+  bool isBetterOverloadCandidate(const OverloadCandidate& Cand1,
+                                 const OverloadCandidate& Cand2);
+  OverloadingResult BestViableFunction(OverloadCandidateSet& CandidateSet,
+                                       OverloadCandidateSet::iterator& Best);
+  void PrintOverloadCandidates(OverloadCandidateSet& CandidateSet,
+                               bool OnlyViable);
+                               
+
   /// Helpers for dealing with function parameters
   bool CheckParmsForFunctionDef(FunctionDecl *FD);
   void CheckCXXDefaultArguments(FunctionDecl *FD);

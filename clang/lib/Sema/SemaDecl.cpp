@@ -95,7 +95,41 @@ void Sema::PushOnScopeChains(NamedDecl *D, Scope *S) {
       IdResolver.AddShadowedDecl(TD, *I);
       return;
     }
+  } else if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+    // We are pushing the name of a function, which might be an
+    // overloaded name.
+    IdentifierResolver::iterator
+        I = IdResolver.begin(FD->getIdentifier(),
+                             FD->getDeclContext(), false/*LookInParentCtx*/);
+    if (I != IdResolver.end() &&
+        IdResolver.isDeclInScope(*I, FD->getDeclContext(), S) &&
+        (isa<OverloadedFunctionDecl>(*I) || isa<FunctionDecl>(*I))) {
+      // There is already a declaration with the same name in the same
+      // scope. It must be a function or an overloaded function.
+      OverloadedFunctionDecl* Ovl = dyn_cast<OverloadedFunctionDecl>(*I);
+      if (!Ovl) {
+        // We haven't yet overloaded this function. Take the existing
+        // FunctionDecl and put it into an OverloadedFunctionDecl.
+        Ovl = OverloadedFunctionDecl::Create(Context, 
+                                             FD->getDeclContext(),
+                                             FD->getIdentifier());
+        Ovl->addOverload(dyn_cast<FunctionDecl>(*I));
+        
+        // Remove the name binding to the existing FunctionDecl...
+        IdResolver.RemoveDecl(*I);
+
+        // ... and put the OverloadedFunctionDecl in its place.
+        IdResolver.AddDecl(Ovl);
+      }
+
+      // We have an OverloadedFunctionDecl. Add the new FunctionDecl
+      // to its list of overloads.
+      Ovl->addOverload(FD);
+
+      return;
+    }
   }
+
   IdResolver.AddDecl(D);
 }
 
@@ -320,9 +354,17 @@ static void MergeAttributes(Decl *New, Decl *Old) {
 /// declarator D which has the same name and scope as a previous
 /// declaration 'Old'.  Figure out how to resolve this situation,
 /// merging decls or emitting diagnostics as appropriate.
-/// Redeclaration will be set true if thisNew is a redeclaration OldD.
+/// Redeclaration will be set true if this New is a redeclaration OldD.
+///
+/// In C++, New and Old must be declarations that are not
+/// overloaded. Use IsOverload to determine whether New and Old are
+/// overloaded, and to select the Old declaration that New should be
+/// merged with.
 FunctionDecl *
 Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD, bool &Redeclaration) {
+  assert(!isa<OverloadedFunctionDecl>(OldD) && 
+         "Cannot merge with an overloaded function declaration");
+
   Redeclaration = false;
   // Verify the old decl was also a function.
   FunctionDecl *Old = dyn_cast<FunctionDecl>(OldD);
@@ -332,17 +374,59 @@ Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD, bool &Redeclaration) {
     Diag(OldD->getLocation(), diag::err_previous_definition);
     return New;
   }
+
+  // Determine whether the previous declaration was a definition,
+  // implicit declaration, or a declaration.
+  diag::kind PrevDiag;
+  if (Old->isThisDeclarationADefinition())
+    PrevDiag = diag::err_previous_definition;
+  else if (Old->isImplicit())
+    PrevDiag = diag::err_previous_implicit_declaration;
+  else 
+    PrevDiag = diag::err_previous_declaration;
   
   QualType OldQType = Context.getCanonicalType(Old->getType());
   QualType NewQType = Context.getCanonicalType(New->getType());
   
-  // C++ [dcl.fct]p3:
-  //   All declarations for a function shall agree exactly in both the
-  //   return type and the parameter-type-list.
-  if (getLangOptions().CPlusPlus && OldQType == NewQType) {
-    MergeAttributes(New, Old);
-    Redeclaration = true;
-    return MergeCXXFunctionDecl(New, Old);
+  if (getLangOptions().CPlusPlus) {
+    // (C++98 13.1p2):
+    //   Certain function declarations cannot be overloaded:
+    //     -- Function declarations that differ only in the return type 
+    //        cannot be overloaded.
+    QualType OldReturnType 
+      = cast<FunctionType>(OldQType.getTypePtr())->getResultType();
+    QualType NewReturnType 
+      = cast<FunctionType>(NewQType.getTypePtr())->getResultType();
+    if (OldReturnType != NewReturnType) {
+      Diag(New->getLocation(), diag::err_ovl_diff_return_type);
+      Diag(Old->getLocation(), PrevDiag);
+      return New;
+    }
+
+    const CXXMethodDecl* OldMethod = dyn_cast<CXXMethodDecl>(Old);
+    const CXXMethodDecl* NewMethod = dyn_cast<CXXMethodDecl>(New);
+    if (OldMethod && NewMethod) {
+      //    -- Member function declarations with the same name and the 
+      //       same parameter types cannot be overloaded if any of them 
+      //       is a static member function declaration.
+      if (OldMethod->isStatic() || NewMethod->isStatic()) {
+        Diag(New->getLocation(), diag::err_ovl_static_nonstatic_member);
+        Diag(Old->getLocation(), PrevDiag);
+        return New;
+      }
+    }
+
+    // (C++98 8.3.5p3):
+    //   All declarations for a function shall agree exactly in both the
+    //   return type and the parameter-type-list.
+    if (OldQType == NewQType) {
+      // We have a redeclaration.
+      MergeAttributes(New, Old);
+      Redeclaration = true;
+      return MergeCXXFunctionDecl(New, Old);
+    } 
+
+    // Fall through for conflicting redeclarations and redefinitions.
   }
 
   // C: Function types need to be compatible, not identical. This handles
@@ -356,13 +440,6 @@ Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD, bool &Redeclaration) {
 
   // A function that has already been declared has been redeclared or defined
   // with a different type- show appropriate diagnostic
-  diag::kind PrevDiag;
-  if (Old->isThisDeclarationADefinition())
-    PrevDiag = diag::err_previous_definition;
-  else if (Old->isImplicit())
-    PrevDiag = diag::err_previous_implicit_declaration;
-  else 
-    PrevDiag = diag::err_previous_declaration;
 
   // TODO: CHECK FOR CONFLICTS, multiple decls with same name in one scope.
   // TODO: This is totally simplistic.  It should handle merging functions
@@ -717,10 +794,49 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
     if (PrevDecl &&
         (!getLangOptions().CPlusPlus||isDeclInScope(PrevDecl, CurContext, S))) {
       bool Redeclaration = false;
-      NewFD = MergeFunctionDecl(NewFD, PrevDecl, Redeclaration);
-      if (NewFD == 0) return 0;
-      if (Redeclaration) {
-        NewFD->setPreviousDeclaration(cast<FunctionDecl>(PrevDecl));
+
+      // If C++, determine whether NewFD is an overload of PrevDecl or
+      // a declaration that requires merging. If it's an overload,
+      // there's no more work to do here; we'll just add the new
+      // function to the scope.
+      OverloadedFunctionDecl::function_iterator MatchedDecl;
+      if (!getLangOptions().CPlusPlus ||
+          !IsOverload(NewFD, PrevDecl, MatchedDecl)) {
+        Decl *OldDecl = PrevDecl;
+
+        // If PrevDecl was an overloaded function, extract the
+        // FunctionDecl that matched.
+        if (isa<OverloadedFunctionDecl>(PrevDecl))
+          OldDecl = *MatchedDecl;
+
+        // NewFD and PrevDecl represent declarations that need to be
+        // merged. 
+        NewFD = MergeFunctionDecl(NewFD, OldDecl, Redeclaration);
+
+        if (NewFD == 0) return 0;
+        if (Redeclaration) {
+          NewFD->setPreviousDeclaration(cast<FunctionDecl>(OldDecl));
+
+          if (OldDecl == PrevDecl) {
+            // Remove the name binding for the previous
+            // declaration. We'll add the binding back later, but then
+            // it will refer to the new declaration (which will
+            // contain more information).
+            IdResolver.RemoveDecl(cast<NamedDecl>(PrevDecl));
+          } else {
+            // We need to update the OverloadedFunctionDecl with the
+            // latest declaration of this function, so that name
+            // lookup will always refer to the latest declaration of
+            // this function.
+            *MatchedDecl = NewFD;
+           
+            // Add the redeclaration to the current scope, since we'll
+            // be skipping PushOnScopeChains.
+            S->AddDecl(NewFD);
+
+            return NewFD;
+          }
+        }
       }
     }
     New = NewFD;

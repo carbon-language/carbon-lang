@@ -137,7 +137,8 @@ public:
   QualType FloatTy, DoubleTy, LongDoubleTy;
   QualType FloatComplexTy, DoubleComplexTy, LongDoubleComplexTy;
   QualType VoidPtrTy;
-  
+  QualType OverloadTy;
+
   ASTContext(const LangOptions& LOpts, SourceManager &SM, TargetInfo &t,
              IdentifierTable &idents, SelectorTable &sels,
              unsigned size_reserve=0);

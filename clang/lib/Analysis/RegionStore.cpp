@@ -118,9 +118,9 @@ Store RegionStoreManager::getInitialStore() {
   Store St = RBFactory.GetEmptyMap().getRoot();
 
   for (LVDataTy::decl_iterator I=D.begin_decl(), E=D.end_decl(); I != E; ++I) {
-    ScopedDecl* SD = const_cast<ScopedDecl*>(I->first);
+    NamedDecl* ND = const_cast<NamedDecl*>(I->first);
 
-    if (VarDecl* VD = dyn_cast<VarDecl>(SD)) {
+    if (VarDecl* VD = dyn_cast<VarDecl>(ND)) {
       // Punt on static variables for now.
       if (VD->getStorageClass() == VarDecl::Static)
         continue;

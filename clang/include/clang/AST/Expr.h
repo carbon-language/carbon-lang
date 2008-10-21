@@ -27,6 +27,7 @@ namespace clang {
   class Decl;
   class IdentifierInfo;
   class ParmVarDecl;
+  class NamedDecl;
   class ValueDecl;
   class BlockDecl;
     
@@ -214,19 +215,19 @@ public:
 /// DeclRefExpr - [C99 6.5.1p2] - A reference to a declared variable, function,
 /// enum, etc.
 class DeclRefExpr : public Expr {
-  ValueDecl *D; 
+  NamedDecl *D; 
   SourceLocation Loc;
 
 protected:
-  DeclRefExpr(StmtClass SC, ValueDecl *d, QualType t, SourceLocation l) :
+  DeclRefExpr(StmtClass SC, NamedDecl *d, QualType t, SourceLocation l) :
     Expr(SC, t), D(d), Loc(l) {}
 
 public:
-  DeclRefExpr(ValueDecl *d, QualType t, SourceLocation l) : 
+  DeclRefExpr(NamedDecl *d, QualType t, SourceLocation l) : 
     Expr(DeclRefExprClass, t), D(d), Loc(l) {}
   
-  ValueDecl *getDecl() { return D; }
-  const ValueDecl *getDecl() const { return D; }
+  NamedDecl *getDecl() { return D; }
+  const NamedDecl *getDecl() const { return D; }
   SourceLocation getLocation() const { return Loc; }
   virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
   

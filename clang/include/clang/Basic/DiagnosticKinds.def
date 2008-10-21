@@ -800,6 +800,20 @@ DIAG(err_previous_use, ERROR,
 DIAG(err_first_label, ERROR,
     "first label is here")
 
+// C++ Overloading Semantic Analysis.
+DIAG(err_ovl_diff_return_type, ERROR,
+     "functions that differ only in their return type cannot be overloaded")
+DIAG(err_ovl_static_nonstatic_member, ERROR,
+     "static and non-static member functions with the same parameter types cannot be overloaded")
+DIAG(err_ovl_no_viable_function_in_call, ERROR,
+     "no matching function for call to '%0'.")
+DIAG(err_ovl_no_viable_function_in_call_with_cands, ERROR,
+     "no matching function for call to '%0'; candidates are:")
+DIAG(err_ovl_ambiguous_call, ERROR,
+     "call to '%0' is ambiguous; candidates are:")
+DIAG(err_ovl_candidate, NOTE,
+     "candidate function")
+
 DIAG(err_unexpected_typedef, ERROR,
      "unexpected type name '%0': expected expression")
 DIAG(err_unexpected_namespace, ERROR,

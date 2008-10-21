@@ -31,6 +31,7 @@ static unsigned nCXXSUC = 0;
 static unsigned nEnumConst = 0;
 static unsigned nEnumDecls = 0;
 static unsigned nNamespaces = 0;
+static unsigned nOverFuncs = 0;
 static unsigned nTypedef = 0;
 static unsigned nFieldDecls = 0;
 static unsigned nCXXFieldDecls = 0;
@@ -63,6 +64,7 @@ const char *Decl::getDeclKindName() const {
   switch (DeclKind) {
   default: assert(0 && "Unknown decl kind!");
   case Namespace:           return "Namespace";
+  case OverloadedFunction:  return "OverloadedFunction";
   case Typedef:             return "Typedef";
   case Function:            return "Function";
   case Var:                 return "Var";
@@ -93,10 +95,13 @@ void Decl::PrintStats() {
           int(nFuncs+nVars+nParmVars+nFieldDecls+nSUC+nCXXFieldDecls+nCXXSUC+
               nEnumDecls+nEnumConst+nTypedef+nInterfaceDecls+nClassDecls+
               nMethodDecls+nProtocolDecls+nCategoryDecls+nIvarDecls+
-              nAtDefsFieldDecls+nNamespaces));
+              nAtDefsFieldDecls+nNamespaces+nOverFuncs));
   fprintf(stderr, "    %d namespace decls, %d each (%d bytes)\n", 
           nNamespaces, (int)sizeof(NamespaceDecl), 
           int(nNamespaces*sizeof(NamespaceDecl)));
+  fprintf(stderr, "    %d overloaded function decls, %d each (%d bytes)\n", 
+          nOverFuncs, (int)sizeof(OverloadedFunctionDecl), 
+          int(nOverFuncs*sizeof(OverloadedFunctionDecl)));
   fprintf(stderr, "    %d function decls, %d each (%d bytes)\n", 
           nFuncs, (int)sizeof(FunctionDecl), int(nFuncs*sizeof(FunctionDecl)));
   fprintf(stderr, "    %d variable decls, %d each (%d bytes)\n", 
@@ -192,13 +197,15 @@ void Decl::PrintStats() {
               nObjCPropertyImplDecl*sizeof(ObjCPropertyImplDecl)+
               nLinkageSpecDecl*sizeof(LinkageSpecDecl)+
               nFileScopeAsmDecl*sizeof(FileScopeAsmDecl)+
-              nNamespaces*sizeof(NamespaceDecl)));
+              nNamespaces*sizeof(NamespaceDecl)+
+              nOverFuncs*sizeof(OverloadedFunctionDecl)));
     
 }
 
 void Decl::addDeclKind(Kind k) {
   switch (k) {
   case Namespace:           nNamespaces++; break;
+  case OverloadedFunction:  nOverFuncs++; break;
   case Typedef:             nTypedef++; break;
   case Function:            nFuncs++; break;
   case Var:                 nVars++; break;

@@ -18,14 +18,14 @@
 #define LLVM_CLANG_EXPRDECLBVDVAL_H
 
 #include "clang/AST/CFG.h"
+#include "clang/AST/Decl.h" // for ScopedDecl* -> NamedDecl* conversion
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/DenseMap.h"
 
 namespace clang {
   
   class Expr;
-  class ScopedDecl;
-  
+
 struct DeclBitVector_Types {
   
   class Idx {
@@ -49,7 +49,7 @@ struct DeclBitVector_Types {
   
   class AnalysisDataTy {
   public:
-    typedef llvm::DenseMap<const ScopedDecl*, unsigned > DMapTy;
+    typedef llvm::DenseMap<const NamedDecl*, unsigned > DMapTy;
     typedef DMapTy::const_iterator decl_iterator;
     
   protected:
@@ -61,16 +61,16 @@ struct DeclBitVector_Types {
     AnalysisDataTy() : NDecls(0) {}
     virtual ~AnalysisDataTy() {}
     
-    bool isTracked(const ScopedDecl* SD) { return DMap.find(SD) != DMap.end(); }
+    bool isTracked(const NamedDecl* SD) { return DMap.find(SD) != DMap.end(); }
     
-    Idx getIdx(const ScopedDecl* SD) const {
+    Idx getIdx(const NamedDecl* SD) const {
       DMapTy::const_iterator I = DMap.find(SD);
       return I == DMap.end() ? Idx() : Idx(I->second);
     }
 
     unsigned getNumDecls() const { return NDecls; }
     
-    void Register(const ScopedDecl* SD) {
+    void Register(const NamedDecl* SD) {
       if (!isTracked(SD)) DMap[SD] = NDecls++;
     }
 

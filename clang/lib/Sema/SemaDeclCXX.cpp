@@ -19,6 +19,7 @@
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Parse/DeclSpec.h"
 #include "llvm/Support/Compiler.h"
+#include <algorithm> // for std::equal
 
 using namespace clang;
 
@@ -58,7 +59,7 @@ namespace {
   /// determine whether this declaration can be used in the default
   /// argument expression.
   bool CheckDefaultArgumentVisitor::VisitDeclRefExpr(DeclRefExpr *DRE) {
-    ValueDecl *Decl = DRE->getDecl();
+    NamedDecl *Decl = DRE->getDecl();
     if (ParmVarDecl *Param = dyn_cast<ParmVarDecl>(Decl)) {
       // C++ [dcl.fct.default]p9
       //   Default arguments are evaluated each time the function is

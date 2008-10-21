@@ -57,7 +57,9 @@ DeclContext *IdentifierResolver::LookupContext::getContext(Decl *D) {
   if (EnumConstantDecl *EnumD = dyn_cast<EnumConstantDecl>(D)) {
     Ctx = EnumD->getDeclContext()->getParent();
   } else if (ScopedDecl *SD = dyn_cast<ScopedDecl>(D))
-    Ctx = SD->getDeclContext();
+    Ctx = SD->getDeclContext(); 
+  else if (OverloadedFunctionDecl *Ovl = dyn_cast<OverloadedFunctionDecl>(D))
+    Ctx = Ovl->getDeclContext();
   else
     return TUCtx();
 

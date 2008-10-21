@@ -522,12 +522,12 @@ DeclRefExpr* DeclRefExpr::CreateImpl(Deserializer& D, ASTContext& C) {
   SourceLocation Loc = SourceLocation::ReadVal(D);
   QualType T = QualType::ReadVal(D);  
   bool OwnsDecl = D.ReadBool();
-  ValueDecl* decl;
+  NamedDecl* decl;
   
   if (!OwnsDecl)
     D.ReadPtr(decl,false); // No backpatching.
   else
-    decl = cast<ValueDecl>(D.ReadOwnedPtr<Decl>(C));
+    decl = cast<NamedDecl>(D.ReadOwnedPtr<Decl>(C));
   
   return new DeclRefExpr(decl,T,Loc);
 }

@@ -494,7 +494,9 @@ public:
     Long,
     LongLong,
     
-    Float, Double, LongDouble
+    Float, Double, LongDouble,
+
+    Overload  // This represents the type of an overloaded function declaration.
   };
 private:
   Kind TypeKind;

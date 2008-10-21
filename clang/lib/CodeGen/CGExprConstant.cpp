@@ -371,7 +371,7 @@ public:
   }
 
   llvm::Constant *VisitDeclRefExpr(DeclRefExpr *E) {
-    const ValueDecl *Decl = E->getDecl();
+    const NamedDecl *Decl = E->getDecl();
     if (const EnumConstantDecl *EC = dyn_cast<EnumConstantDecl>(Decl))
       return llvm::ConstantInt::get(EC->getInitVal());
     assert(0 && "Unsupported decl ref type!");
@@ -769,7 +769,7 @@ public:
       return C;
     }
     case Expr::DeclRefExprClass: {
-      ValueDecl *Decl = cast<DeclRefExpr>(E)->getDecl();
+      NamedDecl *Decl = cast<DeclRefExpr>(E)->getDecl();
       if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(Decl))
         return CGM.GetAddrOfFunction(FD);
       if (const VarDecl* VD = dyn_cast<VarDecl>(Decl)) {

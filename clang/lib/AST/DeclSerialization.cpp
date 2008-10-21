@@ -13,6 +13,7 @@
 
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
+#include "clang/AST/DeclCXX.h"
 #include "clang/AST/Expr.h"
 #include "llvm/Bitcode/Serialize.h"
 #include "llvm/Bitcode/Deserialize.h"
@@ -74,7 +75,11 @@ Decl* Decl::Create(Deserializer& D, ASTContext& C) {
     case Function:
       Dcl = FunctionDecl::CreateImpl(D, C);
       break;
-    
+
+    case OverloadedFunction:
+      Dcl = OverloadedFunctionDecl::CreateImpl(D, C);
+      break;
+
     case Record:
       Dcl = RecordDecl::CreateImpl(D, C);
       break;
@@ -452,6 +457,34 @@ BlockDecl* BlockDecl::CreateImpl(Deserializer& D, ASTContext& C) {
   // FIXME: need to handle parameters.
   //return new BlockBlockExpr(L, Q, BodyStmt);
   return 0;
+}
+
+//===----------------------------------------------------------------------===//
+//      OverloadedFunctionDecl Serialization.
+//===----------------------------------------------------------------------===//
+
+void OverloadedFunctionDecl::EmitImpl(Serializer& S) const {
+  NamedDecl::EmitInRec(S);
+
+  S.EmitInt(getNumFunctions());
+  for (unsigned func = 0; func < getNumFunctions(); ++func)
+    S.EmitPtr(Functions[func]);
+}
+
+OverloadedFunctionDecl * 
+OverloadedFunctionDecl::CreateImpl(Deserializer& D, ASTContext& C) {
+  void *Mem = C.getAllocator().Allocate<OverloadedFunctionDecl>();
+  OverloadedFunctionDecl* decl = new (Mem)
+    OverloadedFunctionDecl(0, NULL);
+  
+  decl->NamedDecl::ReadInRec(D, C);
+
+  unsigned numFunctions = D.ReadInt();
+  decl->Functions.reserve(numFunctions);
+  for (unsigned func = 0; func < numFunctions; ++func)
+    D.ReadPtr(decl->Functions[func]);
+  
+  return decl;
 }
 
 //===----------------------------------------------------------------------===//

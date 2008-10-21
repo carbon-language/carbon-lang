@@ -450,6 +450,7 @@ bool Type::isIntegerType() const {
            BT->getKind() <= BuiltinType::LongLong;
   if (const TagType *TT = dyn_cast<TagType>(CanonicalType))
     // Incomplete enum types are not treated as integer types.
+    // FIXME: In C++, enum types are never integer types.
     if (TT->getDecl()->isEnum() && TT->getDecl()->isDefinition())
       return true;
   if (const VectorType *VT = dyn_cast<VectorType>(CanonicalType))
@@ -466,6 +467,7 @@ bool Type::isIntegralType() const {
   if (const TagType *TT = dyn_cast<TagType>(CanonicalType))
     if (TT->getDecl()->isEnum() && TT->getDecl()->isDefinition())
       return true;  // Complete enum types are integral.
+                    // FIXME: In C++, enum types are never integral.
   if (const ASQualType *ASQT = dyn_cast<ASQualType>(CanonicalType))
     return ASQT->getBaseType()->isIntegralType();
   return false;
@@ -697,6 +699,7 @@ const char *BuiltinType::getName() const {
   case Double:            return "double";
   case LongDouble:        return "long double";
   case WChar:             return "wchar_t";
+  case Overload:          return "<overloaded function type>";
   }
 }
 

@@ -182,11 +182,14 @@ void ASTContext::InitBuiltinTypes() {
   // C++ 3.9.1p5
   InitBuiltinType(WCharTy,             BuiltinType::WChar);
 
+  // Placeholder type for functions.
+  InitBuiltinType(OverloadTy,         BuiltinType::Overload);
+
   // C99 6.2.5p11.
   FloatComplexTy      = getComplexType(FloatTy);
   DoubleComplexTy     = getComplexType(DoubleTy);
   LongDoubleComplexTy = getComplexType(LongDoubleTy);
-  
+
   BuiltinVaListType = QualType();
   ObjCIdType = QualType();
   IdStructType = 0;

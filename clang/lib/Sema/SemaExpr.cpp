@@ -418,6 +418,9 @@ Sema::ExprResult Sema::ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
     return Diag(Loc, diag::err_unexpected_namespace, II.getName());
 
   // Make the DeclRefExpr or BlockDeclRefExpr for the decl.
+  if (OverloadedFunctionDecl *Ovl = dyn_cast<OverloadedFunctionDecl>(D))
+    return new DeclRefExpr(Ovl, Context.OverloadTy, Loc);
+
   ValueDecl *VD = cast<ValueDecl>(D);
   
   // check if referencing an identifier with __attribute__((deprecated)).
@@ -1036,15 +1039,66 @@ ActOnCallExpr(ExprTy *fn, SourceLocation LParenLoc,
   Expr **Args = reinterpret_cast<Expr**>(args);
   assert(Fn && "no function call expression");
   FunctionDecl *FDecl = NULL;
+  OverloadedFunctionDecl *Ovl = NULL;
+
+  // If we're directly calling a function or a set of overloaded
+  // functions, get the appropriate declaration.
+  {
+    DeclRefExpr *DRExpr = NULL;
+    if (ImplicitCastExpr *IcExpr = dyn_cast<ImplicitCastExpr>(Fn))
+      DRExpr = dyn_cast<DeclRefExpr>(IcExpr->getSubExpr());
+    else 
+      DRExpr = dyn_cast<DeclRefExpr>(Fn);
+
+    if (DRExpr) {
+      FDecl = dyn_cast<FunctionDecl>(DRExpr->getDecl());
+      Ovl = dyn_cast<OverloadedFunctionDecl>(DRExpr->getDecl());
+    }
+  }
+
+  // If we have a set of overloaded functions, perform overload
+  // resolution to pick the function.
+  if (Ovl) {
+    OverloadCandidateSet CandidateSet;
+    OverloadCandidateSet::iterator Best;
+    AddOverloadCandidates(Ovl, Args, NumArgs, CandidateSet);
+    switch (BestViableFunction(CandidateSet, Best)) {
+    case OR_Success: 
+      {
+        // Success! Let the remainder of this function build a call to
+        // the function selected by overload resolution.
+        FDecl = Best->Function;
+        Expr *NewFn = new DeclRefExpr(FDecl, FDecl->getType(), 
+                                      Fn->getSourceRange().getBegin());
+        delete Fn;
+        Fn = NewFn;
+      }
+      break;
+
+    case OR_No_Viable_Function:
+      if (CandidateSet.empty())
+        Diag(Fn->getSourceRange().getBegin(), 
+             diag::err_ovl_no_viable_function_in_call, Ovl->getName(),
+             Fn->getSourceRange());
+      else {
+        Diag(Fn->getSourceRange().getBegin(), 
+             diag::err_ovl_no_viable_function_in_call_with_cands, 
+             Ovl->getName(), Fn->getSourceRange());
+        PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/false);
+      }
+      return true;
+
+    case OR_Ambiguous:
+      Diag(Fn->getSourceRange().getBegin(), 
+           diag::err_ovl_ambiguous_call, Ovl->getName(), 
+           Fn->getSourceRange());
+      PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true);
+      return true;
+    }
+  }
 
   // Promote the function operand.
   UsualUnaryConversions(Fn);
-
-  // If we're directly calling a function, get the declaration for
-  // that function.
-  if (ImplicitCastExpr *IcExpr = dyn_cast<ImplicitCastExpr>(Fn))
-    if (DeclRefExpr *DRExpr = dyn_cast<DeclRefExpr>(IcExpr->getSubExpr()))
-      FDecl = dyn_cast<FunctionDecl>(DRExpr->getDecl());
 
   // Make the call expr early, before semantic checks.  This guarantees cleanup
   // of arguments and function on error.
@@ -2338,7 +2392,7 @@ QualType Sema::CheckIncrementDecrementOperand(Expr *op, SourceLocation OpLoc) {
 ///  - *(x + 1) -> x, if x is an array
 ///  - &"123"[2] -> 0
 ///  - & __real__ x -> x
-static ValueDecl *getPrimaryDecl(Expr *E) {
+static NamedDecl *getPrimaryDecl(Expr *E) {
   switch (E->getStmtClass()) {
   case Stmt::DeclRefExprClass:
     return cast<DeclRefExpr>(E)->getDecl();
@@ -2351,7 +2405,8 @@ static ValueDecl *getPrimaryDecl(Expr *E) {
   case Stmt::ArraySubscriptExprClass: {
     // &X[4] and &4[X] refers to X if X is not a pointer.
   
-    ValueDecl *VD = getPrimaryDecl(cast<ArraySubscriptExpr>(E)->getBase());
+    NamedDecl *D = getPrimaryDecl(cast<ArraySubscriptExpr>(E)->getBase());
+    ValueDecl *VD = dyn_cast<ValueDecl>(D);
     if (!VD || VD->getType()->isPointerType())
       return 0;
     else
@@ -2363,10 +2418,13 @@ static ValueDecl *getPrimaryDecl(Expr *E) {
     switch(UO->getOpcode()) {
     case UnaryOperator::Deref: {
       // *(X + 1) refers to X if X is not a pointer.
-      ValueDecl *VD = getPrimaryDecl(UO->getSubExpr());
-      if (!VD || VD->getType()->isPointerType())
-        return 0;
-      return VD;
+      if (NamedDecl *D = getPrimaryDecl(UO->getSubExpr())) {
+        ValueDecl *VD = dyn_cast<ValueDecl>(D);
+        if (!VD || VD->getType()->isPointerType())
+          return 0;
+        return VD;
+      }
+      return 0;
     }
     case UnaryOperator::Real:
     case UnaryOperator::Imag:
@@ -2420,7 +2478,7 @@ QualType Sema::CheckAddressOfOperand(Expr *op, SourceLocation OpLoc) {
     // Technically, there should be a check for array subscript
     // expressions here, but the result of one is always an lvalue anyway.
   }
-  ValueDecl *dcl = getPrimaryDecl(op);
+  NamedDecl *dcl = getPrimaryDecl(op);
   Expr::isLvalueResult lval = op->isLvalue(Context);
   
   if (lval != Expr::LV_Valid) { // C99 6.5.3.2p1

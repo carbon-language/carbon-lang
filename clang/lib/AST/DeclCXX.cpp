@@ -59,3 +59,10 @@ CXXClassVarDecl *CXXClassVarDecl::Create(ASTContext &C, CXXRecordDecl *RD,
   void *Mem = C.getAllocator().Allocate<CXXClassVarDecl>();
   return new (Mem) CXXClassVarDecl(RD, L, Id, T, PrevDecl);
 }
+
+OverloadedFunctionDecl *
+OverloadedFunctionDecl::Create(ASTContext &C, DeclContext *DC,
+                               IdentifierInfo *Id) {
+  void *Mem = C.getAllocator().Allocate<OverloadedFunctionDecl>();
+  return new (Mem) OverloadedFunctionDecl(DC, Id);
+}
