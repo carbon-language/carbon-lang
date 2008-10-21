@@ -848,12 +848,13 @@ X86InstrInfo::isReallyTriviallyReMaterializable(const MachineInstr *MI) const {
 /// two instructions it assumes it's not safe.
 static bool isSafeToClobberEFLAGS(MachineBasicBlock &MBB,
                                   MachineBasicBlock::iterator I) {
+  // It's always safe to clobber EFLAGS at the end of a block.
+  if (I == MBB.end())
+    return true;
+
   // For compile time consideration, if we are not able to determine the
   // safety after visiting 2 instructions, we will assume it's not safe.
   for (unsigned i = 0; i < 2; ++i) {
-    if (I == MBB.end())
-      // Reached end of block, it's safe.
-      return true;
     bool SeenDef = false;
     for (unsigned j = 0, e = I->getNumOperands(); j != e; ++j) {
       MachineOperand &MO = I->getOperand(j);
@@ -870,6 +871,10 @@ static bool isSafeToClobberEFLAGS(MachineBasicBlock &MBB,
       // This instruction defines EFLAGS, no need to look any further.
       return true;
     ++I;
+
+    // If we make it to the end of the block, it's safe to clobber EFLAGS.
+    if (I == MBB.end())
+      return true;
   }
 
   // Conservative answer.

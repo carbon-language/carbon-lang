@@ -471,8 +471,9 @@ bool SimpleRegisterCoalescing::ReMaterializeTrivialDef(LiveInterval &SrcInt,
     }
   }
 
-  MachineBasicBlock::iterator MII = CopyMI;
   MachineBasicBlock *MBB = CopyMI->getParent();
+  MachineBasicBlock::iterator MII = next(MachineBasicBlock::iterator(CopyMI));
+  CopyMI->removeFromParent();
   tii_->reMaterialize(*MBB, MII, DstReg, DefMI);
   MachineInstr *NewMI = prior(MII);
   // CopyMI may have implicit operands, transfer them over to the newly
@@ -491,7 +492,7 @@ bool SimpleRegisterCoalescing::ReMaterializeTrivialDef(LiveInterval &SrcInt,
   }
 
   li_->ReplaceMachineInstrInMaps(CopyMI, NewMI);
-  CopyMI->eraseFromParent();
+  MBB->getParent()->DeleteMachineInstr(CopyMI);
   ReMatCopies.insert(CopyMI);
   ReMatDefs.insert(DefMI);
   ++NumReMats;
