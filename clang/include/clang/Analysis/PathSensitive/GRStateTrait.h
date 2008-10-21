@@ -20,10 +20,14 @@
 namespace llvm {
   class BumpPtrAllocator;
   template <typename K, typename D, typename I> class ImmutableMap;
+  template <typename T> class ImmutableList;
+  template <typename T> class ImmutableListImpl;
 }
 
 namespace clang {
   template <typename T> struct GRStatePartialTrait;
+  
+  // Partial-specialization for ImmutableMap.
   
   template <typename Key, typename Data, typename Info>
   struct GRStatePartialTrait< llvm::ImmutableMap<Key,Data,Info> > {
@@ -49,6 +53,34 @@ namespace clang {
     static data_type Remove(data_type B, key_type K, context_type F) {
       return F.Remove(B, K);
     }
+    
+    static inline context_type MakeContext(void* p) {
+      return *((typename data_type::Factory*) p);
+    }
+    
+    static void* CreateContext(llvm::BumpPtrAllocator& Alloc) {
+      return new typename data_type::Factory(Alloc);      
+    }
+    
+    static void DeleteContext(void* Ctx) {
+      delete (typename data_type::Factory*) Ctx;
+    }      
+  };
+  
+  // Partial-specialization for ImmutableList.
+  
+  template <typename T>
+  struct GRStatePartialTrait< llvm::ImmutableList<T> > {
+    typedef llvm::ImmutableList<T>            data_type;
+    typedef typename data_type::Factory&      context_type;  
+    
+    static inline data_type MakeData(void* const* p) {
+      return p ? data_type((const llvm::ImmutableListImpl<T>*) *p) : data_type(0);
+    }  
+    
+    static inline void* MakeVoidPtr(data_type D) {
+      return D.getInternalPointer();
+    }  
     
     static inline context_type MakeContext(void* p) {
       return *((typename data_type::Factory*) p);
