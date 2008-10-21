@@ -849,7 +849,8 @@ bool IfConverter::IfConvertSimple(BBInfo &BBI, IfcvtKind Kind) {
   }
 
   if (Kind == ICSimpleFalse)
-    TII->ReverseBranchCondition(Cond);
+    if (TII->ReverseBranchCondition(Cond))
+      assert(false && "Unable to reverse branch condition!");
 
   if (CvtBBI->BB->pred_size() > 1) {
     BBI.NonPredSize -= TII->RemoveBranch(*BBI.BB);
@@ -914,21 +915,23 @@ bool IfConverter::IfConvertTriangle(BBInfo &BBI, IfcvtKind Kind) {
   }
 
   if (Kind == ICTriangleFalse || Kind == ICTriangleFRev)
-    TII->ReverseBranchCondition(Cond);
+    if (TII->ReverseBranchCondition(Cond))
+      assert(false && "Unable to reverse branch condition!");
 
   if (Kind == ICTriangleRev || Kind == ICTriangleFRev) {
-    ReverseBranchCondition(*CvtBBI);
-    // BB has been changed, modify its predecessors (except for this
-    // one) so they don't get ifcvt'ed based on bad intel.
-    for (MachineBasicBlock::pred_iterator PI = CvtBBI->BB->pred_begin(),
-           E = CvtBBI->BB->pred_end(); PI != E; ++PI) {
-      MachineBasicBlock *PBB = *PI;
-      if (PBB == BBI.BB)
-        continue;
-      BBInfo &PBBI = BBAnalysis[PBB->getNumber()];
-      if (PBBI.IsEnqueued) {
-        PBBI.IsAnalyzed = false;
-        PBBI.IsEnqueued = false;
+    if (ReverseBranchCondition(*CvtBBI)) {
+      // BB has been changed, modify its predecessors (except for this
+      // one) so they don't get ifcvt'ed based on bad intel.
+      for (MachineBasicBlock::pred_iterator PI = CvtBBI->BB->pred_begin(),
+             E = CvtBBI->BB->pred_end(); PI != E; ++PI) {
+        MachineBasicBlock *PBB = *PI;
+        if (PBB == BBI.BB)
+          continue;
+        BBInfo &PBBI = BBAnalysis[PBB->getNumber()];
+        if (PBBI.IsEnqueued) {
+          PBBI.IsAnalyzed = false;
+          PBBI.IsEnqueued = false;
+        }
       }
     }
   }
@@ -1028,7 +1031,8 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI, IfcvtKind Kind,
   BBInfo *BBI1 = &TrueBBI;
   BBInfo *BBI2 = &FalseBBI;
   SmallVector<MachineOperand, 4> RevCond(BBI.BrCond.begin(), BBI.BrCond.end());
-  TII->ReverseBranchCondition(RevCond);
+  if (TII->ReverseBranchCondition(RevCond))
+    assert(false && "Unable to reverse branch condition!");
   SmallVector<MachineOperand, 4> *Cond1 = &BBI.BrCond;
   SmallVector<MachineOperand, 4> *Cond2 = &RevCond;
 

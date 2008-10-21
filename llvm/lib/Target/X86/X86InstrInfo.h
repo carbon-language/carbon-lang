@@ -44,6 +44,15 @@ namespace X86 {
     COND_O  = 13,
     COND_P  = 14,
     COND_S  = 15,
+
+    // Artificial condition codes. These are used by AnalyzeBranch
+    // to indicate a block terminated with two conditional branches to
+    // the same location. This occurs in code using FCMP_OEQ or FCMP_UNE,
+    // which can't be represented on x86 with a single condition. These
+    // are never used in MachineInstrs.
+    COND_NE_OR_P,
+    COND_NP_OR_E,
+
     COND_INVALID
   };
     

@@ -1455,88 +1455,101 @@ bool X86InstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
                                  MachineBasicBlock *&TBB,
                                  MachineBasicBlock *&FBB,
                                  SmallVectorImpl<MachineOperand> &Cond) const {
-  // If the block has no terminators, it just falls into the block after it.
+  // Start from the bottom of the block and work up, examining the
+  // terminator instructions.
   MachineBasicBlock::iterator I = MBB.end();
-  if (I == MBB.begin() || !isBrAnalysisUnpredicatedTerminator(--I, *this))
-    return false;
-
-  // Get the last instruction in the block.
-  MachineInstr *LastInst = I;
-  
-  // If there is only one terminator instruction, process it.
-  if (I == MBB.begin() || !isBrAnalysisUnpredicatedTerminator(--I, *this)) {
-    if (!LastInst->getDesc().isBranch())
+  while (I != MBB.begin()) {
+    --I;
+    // Working from the bottom, when we see a non-terminator
+    // instruction, we're done.
+    if (!isBrAnalysisUnpredicatedTerminator(I, *this))
+      break;
+    // A terminator that isn't a branch can't easily be handled
+    // by this analysis.
+    if (!I->getDesc().isBranch())
       return true;
-    
-    // If the block ends with a branch there are 3 possibilities:
-    // it's an unconditional, conditional, or indirect branch.
-    
-    if (LastInst->getOpcode() == X86::JMP) {
-      TBB = LastInst->getOperand(0).getMBB();
-      return false;
+    // Handle unconditional branches.
+    if (I->getOpcode() == X86::JMP) {
+      // If the block has any instructions after a JMP, delete them.
+      while (next(I) != MBB.end())
+        next(I)->eraseFromParent();
+      Cond.clear();
+      FBB = 0;
+      // Delete the JMP if it's equivalent to a fall-through.
+      if (MBB.isLayoutSuccessor(I->getOperand(0).getMBB())) {
+        TBB = 0;
+        I->eraseFromParent();
+        I = MBB.end();
+        continue;
+      }
+      // TBB is used to indicate the unconditinal destination.
+      TBB = I->getOperand(0).getMBB();
+      continue;
     }
-    X86::CondCode BranchCode = GetCondFromBranchOpc(LastInst->getOpcode());
+    // Handle conditional branches.
+    X86::CondCode BranchCode = GetCondFromBranchOpc(I->getOpcode());
     if (BranchCode == X86::COND_INVALID)
       return true;  // Can't handle indirect branch.
-
-    // Otherwise, block ends with fall-through condbranch.
-    TBB = LastInst->getOperand(0).getMBB();
-    Cond.push_back(MachineOperand::CreateImm(BranchCode));
-    return false;
+    // Working from the bottom, handle the first conditional branch.
+    if (Cond.empty()) {
+      FBB = TBB;
+      TBB = I->getOperand(0).getMBB();
+      Cond.push_back(MachineOperand::CreateImm(BranchCode));
+      continue;
+    }
+    // Handle subsequent conditional branches. Only handle the case
+    // where all conditional branches branch to the same destination
+    // and their condition opcodes fit one of the special
+    // multi-branch idioms.
+    assert(Cond.size() == 1);
+    assert(TBB);
+    // Only handle the case where all conditional branches branch to
+    // the same destination.
+    if (TBB != I->getOperand(0).getMBB())
+      return true;
+    X86::CondCode OldBranchCode = (X86::CondCode)Cond[0].getImm();
+    // If the conditions are the same, we can leave them alone.
+    if (OldBranchCode == BranchCode)
+      continue;
+    // If they differ, see if they fit one of the known patterns.
+    // Theoretically we could handle more patterns here, but
+    // we shouldn't expect to see them if instruction selection
+    // has done a reasonable job.
+    if ((OldBranchCode == X86::COND_NP &&
+         BranchCode == X86::COND_E) ||
+        (OldBranchCode == X86::COND_E &&
+         BranchCode == X86::COND_NP))
+      BranchCode = X86::COND_NP_OR_E;
+    else if ((OldBranchCode == X86::COND_P &&
+              BranchCode == X86::COND_NE) ||
+             (OldBranchCode == X86::COND_NE &&
+              BranchCode == X86::COND_P))
+      BranchCode = X86::COND_NE_OR_P;
+    else
+      return true;
+    // Update the MachineOperand.
+    Cond[0].setImm(BranchCode);
   }
-  
-  // Get the instruction before it if it's a terminator.
-  MachineInstr *SecondLastInst = I;
-  
-  // If there are three terminators, we don't know what sort of block this is.
-  if (SecondLastInst && I != MBB.begin() &&
-      isBrAnalysisUnpredicatedTerminator(--I, *this))
-    return true;
 
-  // If the block ends with X86::JMP and a conditional branch, handle it.
-  X86::CondCode BranchCode = GetCondFromBranchOpc(SecondLastInst->getOpcode());
-  if (BranchCode != X86::COND_INVALID && LastInst->getOpcode() == X86::JMP) {
-    TBB = SecondLastInst->getOperand(0).getMBB();
-    Cond.push_back(MachineOperand::CreateImm(BranchCode));
-    FBB = LastInst->getOperand(0).getMBB();
-    return false;
-  }
-
-  // If the block ends with two X86::JMPs, handle it.  The second one is not
-  // executed, so remove it.
-  if (SecondLastInst->getOpcode() == X86::JMP && 
-      LastInst->getOpcode() == X86::JMP) {
-    TBB = SecondLastInst->getOperand(0).getMBB();
-    I = LastInst;
-    I->eraseFromParent();
-    return false;
-  }
-
-  // Otherwise, can't handle this.
-  return true;
+  return false;
 }
 
 unsigned X86InstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
   MachineBasicBlock::iterator I = MBB.end();
-  if (I == MBB.begin()) return 0;
-  --I;
-  if (I->getOpcode() != X86::JMP && 
-      GetCondFromBranchOpc(I->getOpcode()) == X86::COND_INVALID)
-    return 0;
+  unsigned Count = 0;
+
+  while (I != MBB.begin()) {
+    --I;
+    if (I->getOpcode() != X86::JMP &&
+        GetCondFromBranchOpc(I->getOpcode()) == X86::COND_INVALID)
+      break;
+    // Remove the branch.
+    I->eraseFromParent();
+    I = MBB.end();
+    ++Count;
+  }
   
-  // Remove the branch.
-  I->eraseFromParent();
-  
-  I = MBB.end();
-  
-  if (I == MBB.begin()) return 1;
-  --I;
-  if (GetCondFromBranchOpc(I->getOpcode()) == X86::COND_INVALID)
-    return 1;
-  
-  // Remove the branch.
-  I->eraseFromParent();
-  return 2;
+  return Count;
 }
 
 static const MachineInstrBuilder &X86InstrAddOperand(MachineInstrBuilder &MIB,
@@ -1571,23 +1584,43 @@ X86InstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
   assert((Cond.size() == 1 || Cond.size() == 0) &&
          "X86 branch conditions have one component!");
 
-  if (FBB == 0) { // One way branch.
-    if (Cond.empty()) {
-      // Unconditional branch?
-      BuildMI(&MBB, get(X86::JMP)).addMBB(TBB);
-    } else {
-      // Conditional branch.
-      unsigned Opc = GetCondBranchFromCond((X86::CondCode)Cond[0].getImm());
-      BuildMI(&MBB, get(Opc)).addMBB(TBB);
-    }
+  if (Cond.empty()) {
+    // Unconditional branch?
+    assert(!FBB && "Unconditional branch with multiple successors!");
+    BuildMI(&MBB, get(X86::JMP)).addMBB(TBB);
     return 1;
   }
-  
-  // Two-way Conditional branch.
-  unsigned Opc = GetCondBranchFromCond((X86::CondCode)Cond[0].getImm());
-  BuildMI(&MBB, get(Opc)).addMBB(TBB);
-  BuildMI(&MBB, get(X86::JMP)).addMBB(FBB);
-  return 2;
+
+  // Conditional branch.
+  unsigned Count = 0;
+  X86::CondCode CC = (X86::CondCode)Cond[0].getImm();
+  switch (CC) {
+  case X86::COND_NP_OR_E:
+    // Synthesize NP_OR_E with two branches.
+    BuildMI(&MBB, get(X86::JNP)).addMBB(TBB);
+    ++Count;
+    BuildMI(&MBB, get(X86::JE)).addMBB(TBB);
+    ++Count;
+    break;
+  case X86::COND_NE_OR_P:
+    // Synthesize NE_OR_P with two branches.
+    BuildMI(&MBB, get(X86::JNE)).addMBB(TBB);
+    ++Count;
+    BuildMI(&MBB, get(X86::JP)).addMBB(TBB);
+    ++Count;
+    break;
+  default: {
+    unsigned Opc = GetCondBranchFromCond(CC);
+    BuildMI(&MBB, get(Opc)).addMBB(TBB);
+    ++Count;
+  }
+  }
+  if (FBB) {
+    // Two-way Conditional branch. Insert the second branch.
+    BuildMI(&MBB, get(X86::JMP)).addMBB(FBB);
+    ++Count;
+  }
+  return Count;
 }
 
 bool X86InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
@@ -2372,6 +2405,8 @@ bool X86InstrInfo::
 ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const {
   assert(Cond.size() == 1 && "Invalid X86 branch condition!");
   X86::CondCode CC = static_cast<X86::CondCode>(Cond[0].getImm());
+  if (CC == X86::COND_NE_OR_P || CC == X86::COND_NP_OR_E)
+    return true;
   Cond[0].setImm(GetOppositeBranchCondition(CC));
   return false;
 }
