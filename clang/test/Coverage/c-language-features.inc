@@ -126,6 +126,7 @@ void f4(int a0, int a1, int a2, va_list ap) {
   
   struct { char f0[10]; } *t28;
   int t29 = t28 - t28;
+  char *t30 = &t28->f0[1];
 }
 
 // Extended vectors
@@ -139,7 +140,7 @@ void f5() {
 }
 
 void f6() {
-  char *s0 = __func__;
-  char *s1 = __FUNCTION__;
-  char *s2 = __PRETTY_FUNCTION__;
+  const char *s0 = __func__;
+  const char *s1 = __FUNCTION__;
+  const char *s2 = __PRETTY_FUNCTION__;
 }
