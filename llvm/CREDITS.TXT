@@ -102,7 +102,7 @@ E: foldr@codedgers.com
 D: Author of llvmc2
 
 N: Dan Gohman
-E: djg@cray.com
+E: gohman@apple.com
 D: Miscellaneous bug fixes
 
 N: David Greene
