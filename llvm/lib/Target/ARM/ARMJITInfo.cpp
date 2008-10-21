@@ -56,7 +56,7 @@ extern "C" {
     // for the real target function right now. We have to act as if this
     // whole compilation callback doesn't exist as far as the caller is
     // concerned, so we can't just preserve the callee saved regs.
-    "push {r0, r1, r2, r3, lr}\n"
+    "stmdb sp!, {r0, r1, r2, r3, lr}\n"
     // The LR contains the address of the stub function on entry.
     // pass it as the argument to the C part of the callback
     "mov  r0, lr\n"
@@ -87,7 +87,7 @@ extern "C" {
     // The above twiddling of the saved return addresses allows us to
     // deallocate everything, including the LR the stub saved, all in one
     // pop instruction.
-    "pop  {r0, r1, r2, r3, lr, pc}\n"
+    "ldmia  sp!, {r0, r1, r2, r3, lr, pc}\n"
       );
 #else  // Not an ARM host
   void ARMCompilationCallback() {
