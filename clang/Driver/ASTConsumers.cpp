@@ -21,6 +21,7 @@
 #include "clang/AST/ASTConsumer.h"
 #include "clang/CodeGen/ModuleBuilder.h"
 #include "llvm/Module.h"
+#include "llvm/Support/Streams.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/Support/raw_ostream.h"
 
