@@ -25,6 +25,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/ImmutableMap.h"
+#include "llvm/ADT/ImmutableList.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/ADT/STLExtras.h"
@@ -965,7 +966,16 @@ void RetainSummaryManager::InitializeClassMethodSummaries() {
   // Create the [NSAssertionHandler currentHander] summary.  
   addClsMethSummary(&Ctx.Idents.get("NSAssertionHandler"),
                     GetNullarySelector("currentHandler", Ctx),
-                    getPersistentSummary(RetEffect::MakeNotOwned()));  
+                    getPersistentSummary(RetEffect::MakeNotOwned()));
+  
+  // Create the [NSAutoreleasePool addObject:] summary.
+  if (!isGCEnabled()) {    
+    ScratchArgs.push_back(std::make_pair(0, Autorelease));
+    addClsMethSummary(&Ctx.Idents.get("NSAutoreleasePool"),
+                      GetUnarySelector("addObject", Ctx),
+                      getPersistentSummary(RetEffect::MakeNoRet(),
+                                           DoNothing, DoNothing));
+  }
 }
 
 void RetainSummaryManager::InitializeMethodSummaries() {
@@ -1208,7 +1218,22 @@ namespace clang {
     static inline void* GDMIndex() { return &RefBIndex; }  
   };
 }
-  
+
+//===----------------------------------------------------------------------===//
+// ARBindings - State used to track objects in autorelease pools.
+//===----------------------------------------------------------------------===//
+
+typedef llvm::ImmutableSet<SymbolID> ARPoolContents;
+typedef llvm::ImmutableList< std::pair<SymbolID, ARPoolContents*> > ARBindings;
+static int AutoRBIndex = 0;
+
+namespace clang {
+  template<>
+  struct GRStateTrait<ARBindings> : public GRStatePartialTrait<ARBindings> {
+    static inline void* GDMIndex() { return &AutoRBIndex; }  
+  };
+}
+
 //===----------------------------------------------------------------------===//
 // Transfer functions.
 //===----------------------------------------------------------------------===//
