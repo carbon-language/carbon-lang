@@ -4901,18 +4901,18 @@ void SelectionDAGLegalize::LegalizeSetCCCondCode(MVT VT,
     unsigned Opc = 0;
     switch (CCCode) {
     default: assert(0 && "Don't know how to expand this condition!"); abort();
-    case ISD::SETOEQ: CC1 = ISD::SETO;  CC2 = ISD::SETEQ; Opc = ISD::AND; break;
-    case ISD::SETOGT: CC1 = ISD::SETO;  CC2 = ISD::SETGT; Opc = ISD::AND; break;
-    case ISD::SETOGE: CC1 = ISD::SETO;  CC2 = ISD::SETGE; Opc = ISD::AND; break;
-    case ISD::SETOLT: CC1 = ISD::SETO;  CC2 = ISD::SETLT; Opc = ISD::AND; break;
-    case ISD::SETOLE: CC1 = ISD::SETO;  CC2 = ISD::SETLE; Opc = ISD::AND; break;
-    case ISD::SETONE: CC1 = ISD::SETO;  CC2 = ISD::SETNE; Opc = ISD::AND; break;
-    case ISD::SETUEQ: CC1 = ISD::SETUO; CC2 = ISD::SETEQ; Opc = ISD::OR;  break;
-    case ISD::SETUGT: CC1 = ISD::SETUO; CC2 = ISD::SETGT; Opc = ISD::OR;  break;
-    case ISD::SETUGE: CC1 = ISD::SETUO; CC2 = ISD::SETGE; Opc = ISD::OR;  break;
-    case ISD::SETULT: CC1 = ISD::SETUO; CC2 = ISD::SETLT; Opc = ISD::OR;  break;
-    case ISD::SETULE: CC1 = ISD::SETUO; CC2 = ISD::SETLE; Opc = ISD::OR;  break;
-    case ISD::SETUNE: CC1 = ISD::SETUO; CC2 = ISD::SETNE; Opc = ISD::OR;  break;
+    case ISD::SETOEQ: CC1 = ISD::SETEQ; CC2 = ISD::SETO;  Opc = ISD::AND; break;
+    case ISD::SETOGT: CC1 = ISD::SETGT; CC2 = ISD::SETO;  Opc = ISD::AND; break;
+    case ISD::SETOGE: CC1 = ISD::SETGE; CC2 = ISD::SETO;  Opc = ISD::AND; break;
+    case ISD::SETOLT: CC1 = ISD::SETLT; CC2 = ISD::SETO;  Opc = ISD::AND; break;
+    case ISD::SETOLE: CC1 = ISD::SETLE; CC2 = ISD::SETO;  Opc = ISD::AND; break;
+    case ISD::SETONE: CC1 = ISD::SETNE; CC2 = ISD::SETO;  Opc = ISD::AND; break;
+    case ISD::SETUEQ: CC1 = ISD::SETEQ; CC2 = ISD::SETUO; Opc = ISD::OR;  break;
+    case ISD::SETUGT: CC1 = ISD::SETGT; CC2 = ISD::SETUO; Opc = ISD::OR;  break;
+    case ISD::SETUGE: CC1 = ISD::SETGE; CC2 = ISD::SETUO; Opc = ISD::OR;  break;
+    case ISD::SETULT: CC1 = ISD::SETLT; CC2 = ISD::SETUO; Opc = ISD::OR;  break;
+    case ISD::SETULE: CC1 = ISD::SETLE; CC2 = ISD::SETUO; Opc = ISD::OR;  break;
+    case ISD::SETUNE: CC1 = ISD::SETNE; CC2 = ISD::SETUO; Opc = ISD::OR;  break;
     // FIXME: Implement more expansions.
     }
 
