@@ -20,6 +20,7 @@ add_llvm_library(LLVMVMCore
   ModuleProvider.cpp
   Pass.cpp
   PassManager.cpp
+  PrintModulePass.cpp
   Type.cpp
   TypeSymbolTable.cpp
   Use.cpp
