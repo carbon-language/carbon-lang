@@ -614,6 +614,7 @@ AC_PATH_PROGS(OCAMLC, [ocamlc.opt ocamlc])
 AC_PATH_PROGS(OCAMLOPT, [ocamlopt.opt ocamlopt])
 AC_PATH_PROGS(OCAMLDEP, [ocamldep.opt ocamldep])
 AC_PATH_PROGS(OCAMLDOC, [ocamldoc.opt ocamldoc])
+AC_PATH_PROGS(GAS, [gas as])
 
 dnl Determine if the linker supports the -R option.
 AC_LINK_USE_R

@@ -49,7 +49,7 @@ proc substitute { line test tmpFile } {
   global srcroot objroot srcdir objdir subdir target_triplet prcontext 
   global llvmgcc llvmgxx llvmgcc_version llvmgccmajvers ocamlc
   global gccpath gxxpath compile_c compile_cxx link shlibext llvmlibsdir
-  global valgrind
+  global valgrind grep gas
   set path [file join $srcdir $subdir]
 
   # Substitute all Tcl variables.
@@ -83,6 +83,11 @@ proc substitute { line test tmpFile } {
   regsub -all {%t} $new_line $tmpFile new_line
   #replace _#MARKER#_ with %
   regsub -all {_#MARKER#_} $new_line % new_line
+
+  #replace grep with GNU grep
+  regsub -all { grep } $new_line " $grep " new_line
+  #replace as with GNU as
+  regsub -all {\| as } $new_line "| $gas " new_line
 
   #valgind related stuff
 # regsub -all {bugpoint } $new_line "$valgrind bugpoint " new_line
