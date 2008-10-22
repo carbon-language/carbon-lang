@@ -66,6 +66,7 @@ void DAGTypeLegalizer::SoftenFloatResult(SDNode *N, unsigned ResNo) {
     case ISD::FMUL:        R = SoftenFloatRes_FMUL(N); break;
     case ISD::FP_EXTEND:   R = SoftenFloatRes_FP_EXTEND(N); break;
     case ISD::FP_ROUND:    R = SoftenFloatRes_FP_ROUND(N); break;
+    case ISD::FPOW:        R = SoftenFloatRes_FPOW(N); break;
     case ISD::FPOWI:       R = SoftenFloatRes_FPOWI(N); break;
     case ISD::FSUB:        R = SoftenFloatRes_FSUB(N); break;
     case ISD::LOAD:        R = SoftenFloatRes_LOAD(N); break;
@@ -162,7 +163,7 @@ SDValue DAGTypeLegalizer::SoftenFloatRes_FCOPYSIGN(SDNode *N) {
 SDValue DAGTypeLegalizer::SoftenFloatRes_FDIV(SDNode *N) {
   MVT NVT = TLI.getTypeToTransformTo(N->getValueType(0));
   SDValue Ops[2] = { GetSoftenedFloat(N->getOperand(0)),
-                       GetSoftenedFloat(N->getOperand(1)) };
+                     GetSoftenedFloat(N->getOperand(1)) };
   return MakeLibCall(GetFPLibCall(N->getValueType(0),
                                   RTLIB::DIV_F32,
                                   RTLIB::DIV_F64,
@@ -197,6 +198,18 @@ SDValue DAGTypeLegalizer::SoftenFloatRes_FP_ROUND(SDNode *N) {
   RTLIB::Libcall LC = RTLIB::getFPROUND(Op.getValueType(), N->getValueType(0));
   assert(LC != RTLIB::UNKNOWN_LIBCALL && "Unsupported FP_ROUND!");
   return MakeLibCall(LC, NVT, &Op, 1, false);
+}
+
+SDValue DAGTypeLegalizer::SoftenFloatRes_FPOW(SDNode *N) {
+  MVT NVT = TLI.getTypeToTransformTo(N->getValueType(0));
+  SDValue Ops[2] = { GetSoftenedFloat(N->getOperand(0)),
+                     GetSoftenedFloat(N->getOperand(1)) };
+  return MakeLibCall(GetFPLibCall(N->getValueType(0),
+                                  RTLIB::POW_F32,
+                                  RTLIB::POW_F64,
+                                  RTLIB::POW_F80,
+                                  RTLIB::POW_PPCF128),
+                     NVT, Ops, 2, false);
 }
 
 SDValue DAGTypeLegalizer::SoftenFloatRes_FPOWI(SDNode *N) {
