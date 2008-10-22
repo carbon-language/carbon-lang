@@ -811,10 +811,16 @@ SDValue DAGTypeLegalizer::PromoteIntOp_SELECT(SDNode *N, unsigned OpNo) {
   SDValue Cond = GetPromotedInteger(N->getOperand(0));
 
   // Promote all the way up to SVT, the canonical SetCC type.
-  MVT SVT = TLI.getSetCCResultType(Cond);
+  // FIXME: Not clear what value to pass to getSetCCResultType.
+  // [This only matters for CellSPU since all other targets
+  // ignore the argument.]  We used to pass Cond, resulting in
+  // SVT = MVT::i8, but CellSPU has no select patterns for i8,
+  // causing an abort later.  Passing the result type works
+  // around the problem.
+  MVT SVT = TLI.getSetCCResultType(N->getOperand(1));
   assert(isTypeLegal(SVT) && "Illegal SetCC type!");
   assert(Cond.getValueSizeInBits() <= SVT.getSizeInBits() &&
-         "Integer type overpromoted?");
+         "Unexpected SetCC type!");
 
   // Make sure the extra bits conform to getSetCCResultContents.  There are
   // two sets of extra bits: those in Cond, which come from type promotion,
