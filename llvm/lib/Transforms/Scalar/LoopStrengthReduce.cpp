@@ -213,7 +213,7 @@ char LoopStrengthReduce::ID = 0;
 static RegisterPass<LoopStrengthReduce>
 X("loop-reduce", "Loop Strength Reduction");
 
-LoopPass *llvm::createLoopStrengthReducePass(const TargetLowering *TLI) {
+Pass *llvm::createLoopStrengthReducePass(const TargetLowering *TLI) {
   return new LoopStrengthReduce(TLI);
 }
 

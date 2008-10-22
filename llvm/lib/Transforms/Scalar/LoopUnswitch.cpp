@@ -154,7 +154,7 @@ namespace {
 char LoopUnswitch::ID = 0;
 static RegisterPass<LoopUnswitch> X("loop-unswitch", "Unswitch loops");
 
-LoopPass *llvm::createLoopUnswitchPass(bool Os) { 
+Pass *llvm::createLoopUnswitchPass(bool Os) { 
   return new LoopUnswitch(Os); 
 }
 

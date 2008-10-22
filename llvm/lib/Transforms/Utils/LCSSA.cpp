@@ -99,7 +99,7 @@ namespace {
 char LCSSA::ID = 0;
 static RegisterPass<LCSSA> X("lcssa", "Loop-Closed SSA Form Pass");
 
-LoopPass *llvm::createLCSSAPass() { return new LCSSA(); }
+Pass *llvm::createLCSSAPass() { return new LCSSA(); }
 const PassInfo *const llvm::LCSSAID = &X;
 
 /// runOnFunction - Process all loops in the function, inner-most out.

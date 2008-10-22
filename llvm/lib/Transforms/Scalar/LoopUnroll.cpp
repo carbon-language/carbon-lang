@@ -73,7 +73,7 @@ namespace {
 char LoopUnroll::ID = 0;
 static RegisterPass<LoopUnroll> X("loop-unroll", "Unroll loops");
 
-LoopPass *llvm::createLoopUnrollPass() { return new LoopUnroll(); }
+Pass *llvm::createLoopUnrollPass() { return new LoopUnroll(); }
 
 /// ApproximateLoopSize - Approximate the size of the loop.
 static unsigned ApproximateLoopSize(const Loop *L) {

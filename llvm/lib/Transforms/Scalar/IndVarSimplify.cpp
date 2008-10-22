@@ -102,7 +102,7 @@ char IndVarSimplify::ID = 0;
 static RegisterPass<IndVarSimplify>
 X("indvars", "Canonicalize Induction Variables");
 
-LoopPass *llvm::createIndVarSimplifyPass() {
+Pass *llvm::createIndVarSimplifyPass() {
   return new IndVarSimplify();
 }
 

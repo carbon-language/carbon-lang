@@ -205,7 +205,7 @@ char LoopIndexSplit::ID = 0;
 static RegisterPass<LoopIndexSplit>
 X("loop-index-split", "Index Split Loops");
 
-LoopPass *llvm::createLoopIndexSplitPass() {
+Pass *llvm::createLoopIndexSplitPass() {
   return new LoopIndexSplit();
 }
 

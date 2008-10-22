@@ -230,7 +230,7 @@ namespace {
 char LICM::ID = 0;
 static RegisterPass<LICM> X("licm", "Loop Invariant Code Motion");
 
-LoopPass *llvm::createLICMPass() { return new LICM(); }
+Pass *llvm::createLICMPass() { return new LICM(); }
 
 /// Hoist expressions out of the specified loop. Note, alias info for inner
 /// loop is not preserved so it is not a good idea to run LICM multiple 

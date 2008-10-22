@@ -107,7 +107,7 @@ namespace {
 char LoopRotate::ID = 0;
 static RegisterPass<LoopRotate> X("loop-rotate", "Rotate Loops");
 
-LoopPass *llvm::createLoopRotatePass() { return new LoopRotate(); }
+Pass *llvm::createLoopRotatePass() { return new LoopRotate(); }
 
 /// Rotate Loop L as many times as possible. Return true if
 /// loop is rotated at least once.
