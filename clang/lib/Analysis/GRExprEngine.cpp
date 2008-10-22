@@ -1435,8 +1435,8 @@ void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, NodeTy* Pred, NodeSet& Dst){
   NodeSet S1;
   QualType T = CastE->getType();
   QualType ExTy = Ex->getType();
-  
-  if (ExTy->isArrayType() || T->isReferenceType())
+
+  if (ExTy->isArrayType() || ExTy->isFunctionType() || T->isReferenceType())
     VisitLValue(Ex, Pred, S1);
   else
     Visit(Ex, Pred, S1);
