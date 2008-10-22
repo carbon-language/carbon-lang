@@ -15,6 +15,7 @@
 #ifndef RECORD_H
 #define RECORD_H
 
+#include "llvm/Support/DataTypes.h"
 #include <string>
 #include <vector>
 #include <map>
