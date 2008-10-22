@@ -402,10 +402,7 @@ Sema::ExprResult Sema::ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
       if (FD->isInvalidDecl())
         return true;
 
-      // FIXME: Use DeclRefExpr or a new Expr for a direct CXXField reference.
-      ExprResult ThisExpr = ActOnCXXThis(SourceLocation());
-      return new MemberExpr(static_cast<Expr*>(ThisExpr.Val),
-                            true, FD, Loc, FD->getType());
+      return new DeclRefExpr(FD, FD->getType(), Loc);
     }
 
     return Diag(Loc, diag::err_invalid_non_static_member_use, FD->getName());

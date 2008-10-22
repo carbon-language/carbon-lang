@@ -325,7 +325,7 @@ bool Expr::hasLocalSideEffect() const {
 /// DeclCanBeLvalue - Determine whether the given declaration can be
 /// an lvalue. This is a helper routine for isLvalue.
 static bool DeclCanBeLvalue(const NamedDecl *Decl, ASTContext &Ctx) {
-  return isa<VarDecl>(Decl) || 
+  return isa<VarDecl>(Decl) || isa<CXXFieldDecl>(Decl) ||
     // C++ 3.10p2: An lvalue refers to an object or function.
     (Ctx.getLangOptions().CPlusPlus &&
      (isa<FunctionDecl>(Decl) || isa<OverloadedFunctionDecl>(Decl)));
