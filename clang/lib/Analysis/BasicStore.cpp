@@ -49,7 +49,7 @@ public:
   
   SVal getLValueVar(const GRState* St, const VarDecl* VD);
   SVal getLValueIvar(const GRState* St, const ObjCIvarDecl* D, SVal Base);
-  SVal getLValueField(const GRState* St, const FieldDecl* D, SVal Base);  
+  SVal getLValueField(const GRState* St, SVal Base, const FieldDecl* D);  
   SVal getLValueElement(const GRState* St, SVal Base, SVal Offset);
   
   virtual Store
@@ -89,8 +89,8 @@ SVal BasicStoreManager::getLValueIvar(const GRState* St, const ObjCIvarDecl* D,
 }
   
   
-SVal BasicStoreManager::getLValueField(const GRState* St, const FieldDecl* D,
-                                       SVal Base) {
+SVal BasicStoreManager::getLValueField(const GRState* St, SVal Base,
+                                       const FieldDecl* D) {
 
   if (Base.isUnknownOrUndef())
     return Base;

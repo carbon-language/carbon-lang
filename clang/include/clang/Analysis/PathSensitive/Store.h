@@ -53,10 +53,10 @@ public:
   virtual SVal getLValueVar(const GRState* St, const VarDecl* VD) = 0;  
   
   virtual SVal getLValueIvar(const GRState* St, const ObjCIvarDecl* D,
-                                SVal Base)=0;
+                             SVal Base) = 0;
   
-  virtual SVal getLValueField(const GRState* St, const FieldDecl* D,
-                                 SVal Base) = 0;
+  virtual SVal getLValueField(const GRState* St, SVal Base, 
+                              const FieldDecl* D) = 0;
   
   virtual SVal getLValueElement(const GRState* St, 
                                    SVal Base, SVal Offset) = 0;

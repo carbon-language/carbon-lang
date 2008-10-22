@@ -899,7 +899,7 @@ void GRExprEngine::VisitMemberExpr(MemberExpr* M, NodeTy* Pred,
     // FIXME: Should we insert some assumption logic in here to determine
     // if "Base" is a valid piece of memory?  Before we put this assumption
     // later when using FieldOffset lvals (which we no longer have).    
-    SVal L = StateMgr.GetLValue(St, M->getMemberDecl(), GetSVal(St, Base));
+    SVal L = StateMgr.GetLValue(St, GetSVal(St, Base), M->getMemberDecl());
 
     if (asLValue)
       MakeNode(Dst, M, *I, SetSVal(St, M, L));

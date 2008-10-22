@@ -352,8 +352,8 @@ public:
   }
   
   // Get the lvalue for a field reference.
-  SVal GetLValue(const GRState* St, const FieldDecl* D, SVal Base) {
-    return StoreMgr->getLValueField(St, D, Base);
+  SVal GetLValue(const GRState* St, SVal Base, const FieldDecl* D) {
+    return StoreMgr->getLValueField(St, Base, D);
   }
   
   // Get the lvalue for an array index.
