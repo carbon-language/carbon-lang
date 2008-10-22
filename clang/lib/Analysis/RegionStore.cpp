@@ -38,7 +38,14 @@ public:
 
   virtual ~RegionStoreManager() {}
 
+  SVal getLValueVar(const GRState* St, const VarDecl* VD);
+  
+  SVal getLValueIvar(const GRState* St, const ObjCIvarDecl* D, SVal Base);
+
+  SVal getLValueField(const GRState* St, SVal Base, const FieldDecl* D);
+
   SVal Retrieve(Store S, Loc L, QualType T);
+
   Store Bind(Store St, Loc LV, SVal V);
 
   Store getInitialStore();
@@ -63,6 +70,53 @@ Loc RegionStoreManager::getElementLoc(const VarDecl* VD, SVal Idx) {
   MemRegion* R = MRMgr.getVarRegion(VD);
   ElementRegion* ER = MRMgr.getElementRegion(Idx, R);
   return loc::MemRegionVal(ER);
+}
+
+SVal RegionStoreManager::getLValueVar(const GRState* St, const VarDecl* VD) {
+  return loc::MemRegionVal(MRMgr.getVarRegion(VD));
+}
+  
+SVal RegionStoreManager::getLValueIvar(const GRState* St, const ObjCIvarDecl* D,
+                                       SVal Base) {
+  return UnknownVal();
+}
+
+SVal RegionStoreManager::getLValueField(const GRState* St, SVal Base,
+                                        const FieldDecl* D) {
+  if (Base.isUnknownOrUndef())
+    return Base;
+
+  Loc BaseL = cast<Loc>(Base);
+  const MemRegion* BaseR = 0;
+
+  switch (BaseL.getSubKind()) {
+  case loc::MemRegionKind:
+    BaseR = cast<loc::MemRegionVal>(BaseL).getRegion();
+    break;
+
+  case loc::SymbolValKind:
+    BaseR = MRMgr.getSymbolicRegion(cast<loc::SymbolVal>(&BaseL)->getSymbol());
+    break;
+  
+  case loc::GotoLabelKind:
+  case loc::FuncValKind:
+    // These are anormal cases. Flag an undefined value.
+    return UndefinedVal();
+
+  case loc::ConcreteIntKind:
+  case loc::StringLiteralValKind:
+    // While these seem funny, this can happen through casts.
+    // FIXME: What we should return is the field offset.  For example,
+    //  add the field offset to the integer value.  That way funny things
+    //  like this work properly:  &(((struct foo *) 0xa)->f)
+    return Base;
+
+  default:
+    assert("Unhandled Base.");
+    return Base;
+  }
+
+  return loc::MemRegionVal(MRMgr.getFieldRegion(D, BaseR));
 }
 
 SVal RegionStoreManager::Retrieve(Store S, Loc L, QualType T) {
