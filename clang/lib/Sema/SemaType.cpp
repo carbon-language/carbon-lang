@@ -535,6 +535,29 @@ QualType Sema::ObjCGetTypeForMethodDefinition(DeclTy *D) {
   return T;
 }
 
+/// UnwrapSimilarPointerTypes - If T1 and T2 are pointer types (FIXME:
+/// or pointer-to-member types) that may be similar (C++ 4.4),
+/// replaces T1 and T2 with the type that they point to and return
+/// true. If T1 and T2 aren't pointer types or pointer-to-member
+/// types, or if they are not similar at this level, returns false and
+/// leaves T1 and T2 unchanged. Top-level qualifiers on T1 and T2 are
+/// ignord. This function will typically be called in a loop that
+/// successively "unwraps" pointer and pointer-to-member types to
+/// compare them at each level.
+bool Sema::UnwrapSimilarPointerTypes(QualType& T1, QualType& T2)
+{
+  const PointerType *T1PtrType = T1->getAsPointerType(),
+                    *T2PtrType = T2->getAsPointerType();
+  if (T1PtrType && T2PtrType) {
+    T1 = T1PtrType->getPointeeType();
+    T2 = T2PtrType->getPointeeType();
+    return true;
+  }
+
+  // FIXME: pointer-to-member types
+  return false;
+}
+
 Sema::TypeResult Sema::ActOnTypeName(Scope *S, Declarator &D) {
   // C99 6.7.6: Type names have no identifier.  This is already validated by
   // the parser.

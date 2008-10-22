@@ -262,7 +262,8 @@ public:
   
   QualType ObjCGetTypeForMethodDefinition(DeclTy *D);
 
-  
+  bool UnwrapSimilarPointerTypes(QualType& T1, QualType& T2);
+
   virtual TypeResult ActOnTypeName(Scope *S, Declarator &D);
 private:
   //===--------------------------------------------------------------------===//
@@ -379,6 +380,10 @@ private:
   ImplicitConversionSequence::CompareKind 
   CompareStandardConversionSequences(const StandardConversionSequence& SCS1,
                                      const StandardConversionSequence& SCS2);
+
+  ImplicitConversionSequence::CompareKind 
+  CompareQualificationConversions(const StandardConversionSequence& SCS1,
+                                  const StandardConversionSequence& SCS2);
 
   /// OverloadingResult - Capture the result of performing overload
   /// resolution.

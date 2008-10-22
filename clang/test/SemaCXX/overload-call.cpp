@@ -156,11 +156,32 @@ void test_quals(int * p, int * * pp, int * * * ppp) {
 // Test overloading based on qualification ranking (C++ 13.3.2)p3.
 int* quals_rank1(int const * p);
 float* quals_rank1(int const volatile *p);
+char* quals_rank1(char*);
+double* quals_rank1(const char*);
 
 int* quals_rank2(int const * const * pp);
 float* quals_rank2(int * const * pp);
 
+void quals_rank3(int const * const * const volatile * p); // expected-note{{candidate function}}
+void quals_rank3(int const * const volatile * const * p); // expected-note{{candidate function}}
+
+void quals_rank3(int const *); // expected-note{{candidate function}}
+void quals_rank3(int volatile *); // expected-note{{candidate function}}
+
 void test_quals_ranking(int * p, int volatile *pq, int * * pp, int * * * ppp) {
-  //  int* q1 = quals_rank1(p);
+  int* q1 = quals_rank1(p);
   float* q2 = quals_rank1(pq); 
+  double* q3 = quals_rank1("string literal");
+  char a[17];
+  const char* ap = a;
+  char* q4 = quals_rank1(a);
+  double* q5 = quals_rank1(ap);
+
+  float* q6 = quals_rank2(pp);
+
+  quals_rank3(ppp); // expected-error {{call to 'quals_rank3' is ambiguous; candidates are:}}
+
+  quals_rank3(p); // expected-error {{call to 'quals_rank3' is ambiguous; candidates are:}}
+  quals_rank3(pq);
 }
+

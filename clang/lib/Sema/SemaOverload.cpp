@@ -659,46 +659,32 @@ Sema::IsQualificationConversion(QualType FromType, QualType ToType)
   //   A conversion can add cv-qualifiers at levels other than the first
   //   in multi-level pointers, subject to the following rules: [...]
   bool PreviousToQualsIncludeConst = true;
-  bool UnwrappedPointer;
   bool UnwrappedAnyPointer = false;
-  do {
+  while (UnwrapSimilarPointerTypes(FromType, ToType)) {
     // Within each iteration of the loop, we check the qualifiers to
     // determine if this still looks like a qualification
     // conversion. Then, if all is well, we unwrap one more level of
     // pointers (FIXME: or pointers-to-members) and do it all again
     // until there are no more pointers or pointers-to-members left to
     // unwrap.
-    UnwrappedPointer = false;
-
-    //   -- the pointer types are similar.
-    const PointerType *FromPtrType = FromType->getAsPointerType(),
-                      *ToPtrType   = ToType->getAsPointerType();
-    if (FromPtrType && ToPtrType) {
-      // The pointer types appear similar. Look at their pointee types.
-      FromType = FromPtrType->getPointeeType();
-      ToType = ToPtrType->getPointeeType();
-      UnwrappedPointer = true;
-      UnwrappedAnyPointer = true;
-    } 
-
-    // FIXME: Cope with pointer-to-member types.
+    UnwrappedAnyPointer = true;
 
     //   -- for every j > 0, if const is in cv 1,j then const is in cv
     //      2,j, and similarly for volatile.
     if (!ToType.isAtLeastAsQualifiedAs(FromType))
       return false;
-
+    
     //   -- if the cv 1,j and cv 2,j are different, then const is in
     //      every cv for 0 < k < j.
     if (FromType.getCVRQualifiers() != ToType.getCVRQualifiers()
-	&& !PreviousToQualsIncludeConst)
+        && !PreviousToQualsIncludeConst)
       return false;
-
+    
     // Keep track of whether all prior cv-qualifiers in the "to" type
     // include const.
     PreviousToQualsIncludeConst 
       = PreviousToQualsIncludeConst && ToType.isConstQualified();
-  } while (UnwrappedPointer);
+  }
 
   // We are left with FromType and ToType being the pointee types
   // after unwrapping the original FromType and ToType the same number
@@ -791,26 +777,120 @@ Sema::CompareStandardConversionSequences(const StandardConversionSequence& SCS1,
     return ImplicitConversionSequence::Better;
   else if (Rank2 < Rank1)
     return ImplicitConversionSequence::Worse;
-  else {
-    // (C++ 13.3.3.2p4): Two conversion sequences with the same rank
-    // are indistinguishable unless one of the following rules
-    // applies:
-    
-    //   A conversion that is not a conversion of a pointer, or
-    //   pointer to member, to bool is better than another conversion
-    //   that is such a conversion.
-    if (SCS1.isPointerConversionToBool() != SCS2.isPointerConversionToBool())
-      return SCS2.isPointerConversionToBool()
-               ? ImplicitConversionSequence::Better
-               : ImplicitConversionSequence::Worse;
 
-    // FIXME: The other bullets in (C++ 13.3.3.2p4) require support
-    // for derived classes.
+  // (C++ 13.3.3.2p4): Two conversion sequences with the same rank
+  // are indistinguishable unless one of the following rules
+  // applies:
+  
+  //   A conversion that is not a conversion of a pointer, or
+  //   pointer to member, to bool is better than another conversion
+  //   that is such a conversion.
+  if (SCS1.isPointerConversionToBool() != SCS2.isPointerConversionToBool())
+    return SCS2.isPointerConversionToBool()
+             ? ImplicitConversionSequence::Better
+             : ImplicitConversionSequence::Worse;
+
+  // FIXME: The other bullets in (C++ 13.3.3.2p4) require support
+  // for derived classes.
+
+  // Compare based on qualification conversions (C++ 13.3.3.2p3,
+  // bullet 3).
+  if (ImplicitConversionSequence::CompareKind CK 
+        = CompareQualificationConversions(SCS1, SCS2))
+    return CK;
+
+  // FIXME: Handle comparison of reference bindings.
+
+  return ImplicitConversionSequence::Indistinguishable;
+}
+
+/// CompareQualificationConversions - Compares two standard conversion
+/// sequences to determine whether they can be ranked based on their
+/// qualification conversions (C++ 13.3.3.2p3 bullet 3). 
+ImplicitConversionSequence::CompareKind 
+Sema::CompareQualificationConversions(const StandardConversionSequence& SCS1,
+                                      const StandardConversionSequence& SCS2)
+{
+  //  -- S1 and S2 differ only in their qualification conversion and
+  //     yield similar types T1 and T2 (C++ 4.4), respectively, and the
+  //     cv-qualification signature of type T1 is a proper subset of
+  //     the cv-qualification signature of type T2, and S1 is not the
+  //     deprecated string literal array-to-pointer conversion (4.2).
+  if (SCS1.First != SCS2.First || SCS1.Second != SCS2.Second ||
+      SCS1.Third != SCS2.Third || SCS1.Third != ICK_Qualification)
+    return ImplicitConversionSequence::Indistinguishable;
+
+  // FIXME: the example in the standard doesn't use a qualification
+  // conversion (!)
+  QualType T1 = QualType::getFromOpaquePtr(SCS1.ToTypePtr);
+  QualType T2 = QualType::getFromOpaquePtr(SCS2.ToTypePtr);
+  T1 = Context.getCanonicalType(T1);
+  T2 = Context.getCanonicalType(T2);
+
+  // If the types are the same, we won't learn anything by unwrapped
+  // them.
+  if (T1.getUnqualifiedType() == T2.getUnqualifiedType())
+    return ImplicitConversionSequence::Indistinguishable;
+
+  ImplicitConversionSequence::CompareKind Result 
+    = ImplicitConversionSequence::Indistinguishable;
+  while (UnwrapSimilarPointerTypes(T1, T2)) {
+    // Within each iteration of the loop, we check the qualifiers to
+    // determine if this still looks like a qualification
+    // conversion. Then, if all is well, we unwrap one more level of
+    // pointers (FIXME: or pointers-to-members) and do it all again
+    // until there are no more pointers or pointers-to-members left
+    // to unwrap. This essentially mimics what
+    // IsQualificationConversion does, but here we're checking for a
+    // strict subset of qualifiers.
+    if (T1.getCVRQualifiers() == T2.getCVRQualifiers())
+      // The qualifiers are the same, so this doesn't tell us anything
+      // about how the sequences rank.
+      ;
+    else if (T2.isMoreQualifiedThan(T1)) {
+      // T1 has fewer qualifiers, so it could be the better sequence.
+      if (Result == ImplicitConversionSequence::Worse)
+        // Neither has qualifiers that are a subset of the other's
+        // qualifiers.
+        return ImplicitConversionSequence::Indistinguishable;
+      
+      Result = ImplicitConversionSequence::Better;
+    } else if (T1.isMoreQualifiedThan(T2)) {
+      // T2 has fewer qualifiers, so it could be the better sequence.
+      if (Result == ImplicitConversionSequence::Better)
+        // Neither has qualifiers that are a subset of the other's
+        // qualifiers.
+        return ImplicitConversionSequence::Indistinguishable;
+      
+      Result = ImplicitConversionSequence::Worse;
+    } else {
+      // Qualifiers are disjoint.
+      return ImplicitConversionSequence::Indistinguishable;
+    }
+
+    // If the types after this point are equivalent, we're done.
+    if (T1.getUnqualifiedType() == T2.getUnqualifiedType())
+      break;
   }
 
-  // FIXME: Handle comparison by qualifications.
-  // FIXME: Handle comparison of reference bindings.
-  return ImplicitConversionSequence::Indistinguishable;
+  // Check that the winning standard conversion sequence isn't using
+  // the deprecated string literal array to pointer conversion.
+  switch (Result) {
+  case ImplicitConversionSequence::Better:
+    if (SCS1.Deprecated)
+      Result = ImplicitConversionSequence::Indistinguishable;
+    break;
+
+  case ImplicitConversionSequence::Indistinguishable:
+    break;
+
+  case ImplicitConversionSequence::Worse:
+    if (SCS2.Deprecated)
+      Result = ImplicitConversionSequence::Indistinguishable;
+    break;
+  }
+
+  return Result;
 }
 
 /// AddOverloadCandidate - Adds the given function to the set of

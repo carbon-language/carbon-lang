@@ -170,9 +170,9 @@ namespace clang {
     // sequences. Use Sema::CompareImplicitConversionSequences to
     // actually perform the comparison.
     enum CompareKind {
-      Better,
-      Indistinguishable,
-      Worse
+      Better = -1,
+      Indistinguishable = 0,
+      Worse = 1
     };
 
     void DebugPrint() const;
