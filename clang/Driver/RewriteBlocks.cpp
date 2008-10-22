@@ -804,7 +804,6 @@ bool RewriteBlocks::PointerTypeTakesAnyBlockArguments(QualType QT) {
   const PointerType *PT = QT->getAsPointerType();
   if (PT) {
     FTP = PT->getPointeeType()->getAsFunctionTypeProto();
-    assert(FTP && "BlockPointerTypeTakeAnyBlockArguments(): not a function pointer type");
   } else {
     const BlockPointerType *BPT = QT->getAsBlockPointerType();
     assert(BPT && "BlockPointerTypeTakeAnyBlockArguments(): not a block pointer type");
