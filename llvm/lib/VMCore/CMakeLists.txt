@@ -1,4 +1,4 @@
-add_llvm_library(LLVMVMCore
+add_llvm_library(LLVMCore
   AsmWriter.cpp
   Attributes.cpp
   AutoUpgrade.cpp
