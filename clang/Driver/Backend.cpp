@@ -46,6 +46,7 @@ namespace {
     llvm::Module *TheModule;
     llvm::TargetData *TheTargetData;
     llvm::raw_ostream *AsmOutStream;
+    std::ostream *AsmStdOutStream;
 
     mutable FunctionPassManager *CodeGenPasses;
     mutable PassManager *PerModulePasses;
@@ -78,13 +79,16 @@ namespace {
       InputFile(infile), 
       OutputFile(outfile), 
       Gen(CreateLLVMCodeGen(Diags, Features, InputFile, GenerateDebugInfo)),
-      TheModule(0), TheTargetData(0), AsmOutStream(0),
+      TheModule(0), TheTargetData(0), 
+      AsmOutStream(0), AsmStdOutStream(0),
       CodeGenPasses(0), PerModulePasses(0), PerFunctionPasses(0) {}
 
     ~BackendConsumer() {
       // FIXME: Move out of destructor.
       EmitAssembly();
 
+      if (AsmStdOutStream != llvm::cout.stream())
+        delete AsmStdOutStream;
       delete AsmOutStream;
       delete TheTargetData;
       delete TheModule;
@@ -165,11 +169,8 @@ bool BackendConsumer::AddEmitPasses(bool Fast, std::string &Error) {
   // This is ridiculous.
   // FIXME: These aren't being release for now. I'm just going to fix
   // things to use raw_ostream instead.
-  std::ostream *AsmStdOutStream = 0;
-  OStream *AsmLLVMOutStream = 0;
   if (OutputFile == "-" || (InputFile == "-" && OutputFile.empty())) {
     AsmStdOutStream = llvm::cout.stream();
-    AsmLLVMOutStream = &llvm::cout;
     AsmOutStream = new raw_stdout_ostream();
     sys::Program::ChangeStdoutToBinary();
   } else {
@@ -192,7 +193,6 @@ bool BackendConsumer::AddEmitPasses(bool Fast, std::string &Error) {
     AsmStdOutStream = new std::ofstream(OutputFile.c_str(),
                                         (std::ios_base::binary | 
                                          std::ios_base::out));
-    AsmLLVMOutStream = new OStream(AsmStdOutStream);
     AsmOutStream = new raw_os_ostream(*AsmStdOutStream);
     if (!Error.empty())
       return false;
@@ -201,7 +201,7 @@ bool BackendConsumer::AddEmitPasses(bool Fast, std::string &Error) {
   if (Action == Backend_EmitBC) {
     getPerModulePasses()->add(CreateBitcodeWriterPass(*AsmStdOutStream));
   } else if (Action == Backend_EmitLL) {
-    getPerModulePasses()->add(createPrintModulePass(AsmLLVMOutStream));
+    getPerModulePasses()->add(createPrintModulePass(AsmOutStream));
   } else {
     // From llvm-gcc:
     // If there are passes we have to run on the entire module, we do codegen
