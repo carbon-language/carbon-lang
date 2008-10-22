@@ -1163,12 +1163,14 @@ DIAG(err_overload_multiple_match, ERROR,
      "more than one matching function found in __builtin_overload")
 
 // Classes.
-DIAG(err_dup_virtual, ERROR,
-     "duplicate 'virtual' in base specifier")
 DIAG(err_expected_class_name, ERROR,
      "expected class name")
 DIAG(err_anon_type_definition, ERROR,
      "declaration of anonymous %0 must be a definition")
+
+// Derived classes.
+DIAG(err_dup_virtual, ERROR,
+     "duplicate 'virtual' in base specifier")
 DIAG(err_base_clause_on_union, ERROR,
      "unions cannot have base classes")
 DIAG(err_base_must_be_class, ERROR,
@@ -1177,6 +1179,8 @@ DIAG(err_union_as_base_class, ERROR,
      "unions cannot be base classes")
 DIAG(err_incomplete_base_class, ERROR,
      "base class has incomplete type")
+DIAG(err_duplicate_base_class, ERROR,
+     "base class '%0' specified more than once as a direct base class")
 
 DIAG(warn_not_compound_assign, WARNING,
      "use of unary operator that may be intended as compound assignment (%0=)")

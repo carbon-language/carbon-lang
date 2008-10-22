@@ -40,17 +40,113 @@ public:
   static bool classof(const CXXFieldDecl *D) { return true; }
 };
 
+/// BaseSpecifier - A base class of a C++ class.
+class CXXBaseSpecifier {
+  SourceRange Range;
+
+  bool Virtual : 1;
+
+  /// BaseOfClass - Whether this is the base of a class (true) or of a
+  /// struct (false). This determines the mapping from the access
+  /// specifier as written in the source code to the access specifier
+  /// used for semantic analysis.
+  bool BaseOfClass : 1; 
+
+  /// Access specifier as written in the source code (which may be
+  /// AS_none). The actual type of data stored here is an
+  /// AccessSpecifier, but we use "unsigned" here to work around a
+  /// VC++ bug.
+  unsigned Access : 2;
+
+  QualType BaseType;
+  
+  CXXBaseSpecifier(SourceRange R, bool V, bool BC, AccessSpecifier A, QualType T)
+    : Range(R), Virtual(V), BaseOfClass(BC), Access(A), BaseType(T) { }
+
+public:
+  static CXXBaseSpecifier *Create(ASTContext &C, SourceRange R, bool V, bool BC, 
+                                  AccessSpecifier A, QualType T);
+
+  /// getSourceRange - Retrieves the source range that contains the
+  /// entire base specifier.
+  SourceRange getSourceRange() const { return Range; }
+  
+  /// isVirtual - Determines whether the base class is a virtual base
+  /// class (or not).
+  bool isVirtual() const { return Virtual; }
+
+  /// getAccessSpecifier - Returns the access specifier for this base
+  /// specifier. This is the actual base specifier as used for
+  /// semantic analysis, so the result can never be AS_none. To
+  /// retrieve the access specifier as written in the source code, use
+  /// getAccessSpecifierAsWritten().
+  AccessSpecifier getAccessSpecifier() const { 
+    if ((AccessSpecifier)Access == AS_none)
+      return BaseOfClass? AS_private : AS_public;
+    else
+      return (AccessSpecifier)Access; 
+  }
+
+  /// getAccessSpecifierAsWritten - Retrieves the access specifier as
+  /// written in the source code (which may mean that no access
+  /// specifier was explicitly written). Use getAccessSpecifier() to
+  /// retrieve the access specifier for use in semantic analysis.
+  AccessSpecifier getAccessSpecifierAsWritten() const {
+    return (AccessSpecifier)Access;
+  }
+
+  /// getType - Retrieves the type of the base class. This type will
+  /// always be an unqualified class type.
+  QualType getType() const { return BaseType; }
+};
+
 /// CXXRecordDecl - Represents a C++ struct/union/class.
-/// The only difference with RecordDecl is that CXXRecordDecl is a DeclContext.
+/// CXXRecordDecl differs from RecordDecl in several ways. First, it
+/// is a DeclContext, because it can contain other
+/// declarations. Second, it provides additional C++ fields, including
+/// storage for base classes.
 class CXXRecordDecl : public RecordDecl, public DeclContext {
+  /// Bases - Base classes of this class.
+  /// FIXME: This is wasted space for a union.
+  CXXBaseSpecifier **Bases;
+
+  /// NumBases - The number of base class specifiers in Bases.
+  unsigned NumBases;
+
   CXXRecordDecl(TagKind TK, DeclContext *DC,
                 SourceLocation L, IdentifierInfo *Id) 
-    : RecordDecl(CXXRecord, TK, DC, L, Id), DeclContext(CXXRecord) {}
+    : RecordDecl(CXXRecord, TK, DC, L, Id), DeclContext(CXXRecord),
+      Bases(0), NumBases(0) {}
+
+  ~CXXRecordDecl();
+
 public:
   static CXXRecordDecl *Create(ASTContext &C, TagKind TK, DeclContext *DC,
                                SourceLocation L, IdentifierInfo *Id,
                                CXXRecordDecl* PrevDecl=0);
   
+  /// setBases - Sets the base classes of this struct or class.
+  void setBases(CXXBaseSpecifier **Bases, unsigned NumBases) {
+    this->Bases = Bases;
+    this->NumBases = NumBases;
+  }
+
+  /// getNumBases - Retrieves the number of base classes of this
+  /// class.
+  unsigned getNumBases() const { return NumBases; }
+
+  /// getBase - Retrieve the ith base class.
+  CXXBaseSpecifier *getBase(unsigned i) { 
+    assert(i < NumBases && "Base index out of range");
+    return Bases[i];
+  }
+
+  /// getBase - Retrieve the ith base class.
+  const CXXBaseSpecifier *getBase(unsigned i) const { 
+    assert(i < NumBases && "Base index out of range");
+    return Bases[i];
+  }
+
   const CXXFieldDecl *getMember(unsigned i) const {
     return cast<const CXXFieldDecl>(RecordDecl::getMember(i));
   }

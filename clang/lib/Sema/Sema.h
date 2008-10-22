@@ -753,10 +753,14 @@ public:
   // C++ Classes
   //
   /// ActOnBaseSpecifier - Parsed a base specifier
-  virtual void ActOnBaseSpecifier(DeclTy *classdecl, SourceRange SpecifierRange,
-                                  bool Virtual, AccessSpecifier Access,
-                                  TypeTy *basetype, SourceLocation BaseLoc);
+  virtual BaseResult ActOnBaseSpecifier(DeclTy *classdecl, 
+                                        SourceRange SpecifierRange,
+                                        bool Virtual, AccessSpecifier Access,
+                                        TypeTy *basetype, SourceLocation BaseLoc);
   
+  virtual void ActOnBaseSpecifiers(DeclTy *ClassDecl, BaseTy **Bases, 
+                                   unsigned NumBases);
+
   virtual void ActOnStartCXXClassDef(Scope *S, DeclTy *TagDecl,
                                      SourceLocation LBrace);
 

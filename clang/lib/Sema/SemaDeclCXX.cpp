@@ -20,6 +20,8 @@
 #include "clang/Parse/DeclSpec.h"
 #include "llvm/Support/Compiler.h"
 #include <algorithm> // for std::equal
+#include <functional>
+#include <map>
 
 using namespace clang;
 
@@ -260,23 +262,24 @@ void Sema::CheckCXXDefaultArguments(FunctionDecl *FD) {
 /// example: 
 ///    class foo : public bar, virtual private baz { 
 /// 'public bar' and 'virtual private baz' are each base-specifiers.
-void Sema::ActOnBaseSpecifier(DeclTy *classdecl, SourceRange SpecifierRange,
-                              bool Virtual, AccessSpecifier Access,
-                              TypeTy *basetype, SourceLocation BaseLoc) {
+Sema::BaseResult 
+Sema::ActOnBaseSpecifier(DeclTy *classdecl, SourceRange SpecifierRange,
+                         bool Virtual, AccessSpecifier Access,
+                         TypeTy *basetype, SourceLocation BaseLoc) {
   RecordDecl *Decl = (RecordDecl*)classdecl;
   QualType BaseType = Context.getTypeDeclType((TypeDecl*)basetype);
 
   // Base specifiers must be record types.
   if (!BaseType->isRecordType()) {
     Diag(BaseLoc, diag::err_base_must_be_class, SpecifierRange);
-    return;
+    return true;
   }
 
   // C++ [class.union]p1:
   //   A union shall not be used as a base class.
   if (BaseType->isUnionType()) {
     Diag(BaseLoc, diag::err_union_as_base_class, SpecifierRange);
-    return;
+    return true;
   }
 
   // C++ [class.union]p1:
@@ -284,8 +287,7 @@ void Sema::ActOnBaseSpecifier(DeclTy *classdecl, SourceRange SpecifierRange,
   if (Decl->isUnion()) {
     Diag(Decl->getLocation(), diag::err_base_clause_on_union,
          SpecifierRange);
-    Decl->setInvalidDecl();
-    return;
+    return true;
   }
 
   // C++ [class.derived]p2:
@@ -293,14 +295,63 @@ void Sema::ActOnBaseSpecifier(DeclTy *classdecl, SourceRange SpecifierRange,
   //   defined class.
   if (BaseType->isIncompleteType()) {
     Diag(BaseLoc, diag::err_incomplete_base_class, SpecifierRange);
-    return;
+    return true;
   }
 
-  // FIXME: C++ [class.mi]p3:
-  //   A class shall not be specified as a direct base class of a
-  //   derived class more than once.
+  // Create the base specifier.
+  CXXBaseSpecifier *BS = CXXBaseSpecifier::Create(Context, SpecifierRange, 
+                                                  Virtual, 
+                                                  BaseType->isClassType(),
+                                                  Access, BaseType);
+  return BS;
+}
 
-  // FIXME: Attach base class to the record.
+/// QualTypeOrder - Function object that provides a total ordering on
+/// QualType values.
+struct QualTypeOrdering : std::binary_function<QualType, QualType, bool> {
+  bool operator()(QualType T1, QualType T2) {
+    return std::less<void*>()(T1.getAsOpaquePtr(), T2.getAsOpaquePtr());
+  }
+};
+
+/// ActOnBaseSpecifiers - Attach the given base specifiers to the
+/// class, after checking whether there are any duplicate base
+/// classes.
+void Sema::ActOnBaseSpecifiers(DeclTy *ClassDecl, BaseTy **Bases, 
+                               unsigned NumBases) {
+  if (NumBases == 0)
+    return;
+
+  // Used to keep track of which base types we have already seen, so
+  // that we can properly diagnose redundant direct base types. Note
+  // that the key is always the canonical type.
+  std::map<QualType, CXXBaseSpecifier*, QualTypeOrdering> KnownBaseTypes;
+
+  // Copy non-redundant base specifiers into permanent storage.
+  CXXBaseSpecifier **InBaseSpecs = (CXXBaseSpecifier **)Bases;
+  CXXBaseSpecifier **StoredBaseSpecs = new CXXBaseSpecifier* [NumBases];
+  unsigned outIdx = 0;
+  for (unsigned inIdx = 0; inIdx < NumBases; ++inIdx) {
+    QualType NewBaseType 
+      = Context.getCanonicalType(InBaseSpecs[inIdx]->getType());
+    if (KnownBaseTypes[NewBaseType]) {
+      // C++ [class.mi]p3:
+      //   A class shall not be specified as a direct base class of a
+      //   derived class more than once.
+      Diag(InBaseSpecs[inIdx]->getSourceRange().getBegin(),
+           diag::err_duplicate_base_class, 
+           KnownBaseTypes[NewBaseType]->getType().getAsString(),
+           InBaseSpecs[inIdx]->getSourceRange());
+    } else {
+      // Okay, add this new base class.
+      KnownBaseTypes[NewBaseType] = InBaseSpecs[inIdx];
+      StoredBaseSpecs[outIdx++] = InBaseSpecs[inIdx];
+    }
+  }
+
+  // Attach the remaining base class specifiers to the derived class.
+  CXXRecordDecl *Decl = (CXXRecordDecl*)ClassDecl;
+  Decl->setBases(StoredBaseSpecs, outIdx);
 }
 
 //===----------------------------------------------------------------------===//

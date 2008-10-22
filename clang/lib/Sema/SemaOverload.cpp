@@ -664,7 +664,7 @@ Sema::IsQualificationConversion(QualType FromType, QualType ToType)
     // Within each iteration of the loop, we check the qualifiers to
     // determine if this still looks like a qualification
     // conversion. Then, if all is well, we unwrap one more level of
-    // pointers (FIXME: or pointers-to-members) and do it all again
+    // pointers or pointers-to-members and do it all again
     // until there are no more pointers or pointers-to-members left to
     // unwrap.
     UnwrappedAnyPointer = true;
@@ -839,7 +839,7 @@ Sema::CompareQualificationConversions(const StandardConversionSequence& SCS1,
     // Within each iteration of the loop, we check the qualifiers to
     // determine if this still looks like a qualification
     // conversion. Then, if all is well, we unwrap one more level of
-    // pointers (FIXME: or pointers-to-members) and do it all again
+    // pointers or pointers-to-members and do it all again
     // until there are no more pointers or pointers-to-members left
     // to unwrap. This essentially mimics what
     // IsQualificationConversion does, but here we're checking for a

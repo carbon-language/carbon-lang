@@ -256,12 +256,19 @@ void Parser::ParseBaseClause(DeclTy *ClassDecl)
   assert(Tok.is(tok::colon) && "Not a base clause");
   ConsumeToken();
 
+  // Build up an array of parsed base specifiers.
+  llvm::SmallVector<BaseTy *, 8> BaseInfo;
+
   while (true) {
     // Parse a base-specifier.
-    if (ParseBaseSpecifier(ClassDecl)) {
+    BaseResult Result = ParseBaseSpecifier(ClassDecl);
+    if (Result.isInvalid) {
       // Skip the rest of this base specifier, up until the comma or
       // opening brace.
-      SkipUntil(tok::comma, tok::l_brace);
+      SkipUntil(tok::comma, tok::l_brace, true, true);
+    } else {
+      // Add this to our array of base specifiers.
+      BaseInfo.push_back(Result.Val);
     }
 
     // If the next token is a comma, consume it and keep reading
@@ -271,6 +278,9 @@ void Parser::ParseBaseClause(DeclTy *ClassDecl)
     // Consume the comma.
     ConsumeToken();
   }
+
+  // Attach the base specifiers
+  Actions.ActOnBaseSpecifiers(ClassDecl, &BaseInfo[0], BaseInfo.size());
 }
 
 /// ParseBaseSpecifier - Parse a C++ base-specifier. A base-specifier is
@@ -284,7 +294,7 @@ void Parser::ParseBaseClause(DeclTy *ClassDecl)
 ///                        class-name
 ///         access-specifier 'virtual'[opt] ::[opt] nested-name-specifier[opt]
 ///                        class-name
-bool Parser::ParseBaseSpecifier(DeclTy *ClassDecl)
+Parser::BaseResult Parser::ParseBaseSpecifier(DeclTy *ClassDecl)
 {
   bool IsVirtual = false;
   SourceLocation StartLoc = Tok.getLocation();
@@ -306,7 +316,8 @@ bool Parser::ParseBaseSpecifier(DeclTy *ClassDecl)
     SourceLocation VirtualLoc = ConsumeToken();
     if (IsVirtual) {
       // Complain about duplicate 'virtual'
-      Diag(VirtualLoc, diag::err_dup_virtual);
+      Diag(VirtualLoc, diag::err_dup_virtual, 
+           SourceRange(VirtualLoc, VirtualLoc));
     }
 
     IsVirtual = true;
@@ -339,9 +350,8 @@ bool Parser::ParseBaseSpecifier(DeclTy *ClassDecl)
   
   // Notify semantic analysis that we have parsed a complete
   // base-specifier.
-  Actions.ActOnBaseSpecifier(ClassDecl, Range, IsVirtual, Access, BaseType,
-                             BaseLoc);
-  return false;
+  return Actions.ActOnBaseSpecifier(ClassDecl, Range, IsVirtual, Access, BaseType,
+                                    BaseLoc);
 }
 
 /// getAccessSpecifierIfPresent - Determine whether the next token is

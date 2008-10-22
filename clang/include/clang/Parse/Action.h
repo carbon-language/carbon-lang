@@ -55,7 +55,8 @@ public:
   typedef void DeclTy;
   typedef void TypeTy;
   typedef void AttrTy;
-  
+  typedef void BaseTy;
+
   /// ActionResult - This structure is used while parsing/acting on expressions,
   /// stmts, etc.  It encapsulates both the object returned by the action, plus
   /// a sense of whether or not it is valid.
@@ -75,12 +76,14 @@ public:
     }
   };
 
-  /// Expr/Stmt/TypeResult - Provide a unique type to wrap ExprTy/StmtTy/TypeTy,
-  /// providing strong typing and allowing for failure.
+  /// Expr/Stmt/Type/BaseResult - Provide a unique type to wrap
+  /// ExprTy/StmtTy/TypeTy/BaseTy, providing strong typing and
+  /// allowing for failure.
   typedef ActionResult<0> ExprResult;
   typedef ActionResult<1> StmtResult;
   typedef ActionResult<2> TypeResult;
-  
+  typedef ActionResult<3> BaseResult;
+
   /// Deletion callbacks - Since the parser doesn't know the concrete types of
   /// the AST nodes being generated, it must do callbacks to delete objects when
   /// recovering from errors.
@@ -641,11 +644,18 @@ public:
 
   //===---------------------------- C++ Classes ---------------------------===//
   /// ActOnBaseSpecifier - Parsed a base specifier
-  virtual void ActOnBaseSpecifier(DeclTy *classdecl, SourceRange SpecifierRange,
-                                  bool Virtual, AccessSpecifier Access,
-                                  TypeTy *basetype, SourceLocation BaseLoc) {
+  virtual BaseResult ActOnBaseSpecifier(DeclTy *classdecl, 
+                                        SourceRange SpecifierRange,
+                                        bool Virtual, AccessSpecifier Access,
+                                        TypeTy *basetype, 
+                                        SourceLocation BaseLoc) {
+    return 0;
   }
 
+  virtual void ActOnBaseSpecifiers(DeclTy *ClassDecl, BaseTy **Bases, 
+                                   unsigned NumBases) {
+  }
+                                   
   /// ActOnStartCXXClassDef - This is called at the start of a class/struct/union
   /// definition, when on C++.
   virtual void ActOnStartCXXClassDef(Scope *S, DeclTy *TagDecl,

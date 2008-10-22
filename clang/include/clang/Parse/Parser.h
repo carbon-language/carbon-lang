@@ -73,6 +73,7 @@ public:
   typedef Action::StmtTy StmtTy;
   typedef Action::DeclTy DeclTy;
   typedef Action::TypeTy TypeTy;
+  typedef Action::BaseTy BaseTy;
   
   // Parsing methods.
   
@@ -315,6 +316,7 @@ private:
  
   typedef Action::ExprResult ExprResult;
   typedef Action::StmtResult StmtResult;
+  typedef Action::BaseResult BaseResult;
     
   //===--------------------------------------------------------------------===//
   // Lexing and parsing of C++ inline methods.
@@ -708,7 +710,7 @@ private:
   //===--------------------------------------------------------------------===//
   // C++ 10: Derived classes [class.derived]
   void ParseBaseClause(DeclTy *ClassDecl);
-  bool ParseBaseSpecifier(DeclTy *ClassDecl);
+  BaseResult ParseBaseSpecifier(DeclTy *ClassDecl);
   AccessSpecifier getAccessSpecifierIfPresent() const;
 };
 
