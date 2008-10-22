@@ -17,98 +17,11 @@
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/TypeOrdering.h"
-#include "llvm/ADT/GraphTraits.h"
-#include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/Support/GraphWriter.h"
 #include <fstream>
-#include <iterator>
 #include <map>
-#include <sstream>
 
 using namespace llvm;
-
-namespace clang {
-  /// InheritanceGraphOutEdgeIterator - Enumerates the base classes
-  /// based on base specifiers.
-  class InheritanceGraphOutEdgeIterator {
-    const CXXBaseSpecifier *Base;
-
-  public:
-    typedef const RecordType      *value_type;
-    typedef const RecordType      *reference;
-    typedef const RecordType     **pointer;
-    typedef ptrdiff_t              difference_type;
-    typedef std::forward_iterator_tag iterator_category;
-
-    InheritanceGraphOutEdgeIterator(const CXXBaseSpecifier* Base = 0) 
-      : Base(Base) { }
-
-    reference operator*() const {
-      assert(Base->getType()->getAsRecordType());
-      return Base->getType()->getAsRecordType();
-    }
-
-    pointer operator->() const { return 0; }
-
-    InheritanceGraphOutEdgeIterator& operator++() {
-      ++Base;
-      return *this;
-    }
-
-    InheritanceGraphOutEdgeIterator operator++(int) {
-      return InheritanceGraphOutEdgeIterator(Base++);
-    }
-    
-    friend bool operator==(InheritanceGraphOutEdgeIterator const& x,
-                           InheritanceGraphOutEdgeIterator const& y) {
-      return x.Base == y.Base;
-    }
-
-    friend bool operator!=(InheritanceGraphOutEdgeIterator const& x,
-                           InheritanceGraphOutEdgeIterator const& y) {
-      return x.Base != y.Base;
-    }
-  };
-
-} // end namespace clang
-
-namespace llvm {
-  template<> struct GraphTraits<const clang::RecordType *> {
-    typedef const clang::RecordType                      NodeType;
-    typedef clang::InheritanceGraphOutEdgeIterator       ChildIteratorType;
-    typedef llvm::df_iterator<const clang::RecordType *> nodes_iterator;
-
-    static const NodeType *getEntryNode(const clang::RecordType *Type) {
-      return Type;
-    }
-
-    static ChildIteratorType child_begin(const clang::RecordType *Type) {
-      const clang::CXXRecordDecl *Decl 
-        = dyn_cast_or_null<clang::CXXRecordDecl>(Type->getDecl());
-      if (Decl->getNumBases() == 0)
-        return clang::InheritanceGraphOutEdgeIterator(0);
-      else
-        return clang::InheritanceGraphOutEdgeIterator(Decl->getBase(0));
-    }
-    static ChildIteratorType child_end(const clang::RecordType *Type) {
-      const clang::CXXRecordDecl *Decl 
-        = dyn_cast_or_null<clang::CXXRecordDecl>(Type->getDecl());
-      if (Decl->getNumBases() == 0)
-        return clang::InheritanceGraphOutEdgeIterator(0);
-      else
-        return clang::InheritanceGraphOutEdgeIterator(Decl->getBase(0) + 
-                                                      Decl->getNumBases());
-    }
-
-    static nodes_iterator nodes_begin(const clang::RecordType *Type) {
-      return df_begin(Type);
-    }
-    
-    static nodes_iterator nodes_end(const clang::RecordType *Type) {
-      return df_end(Type);
-    }
-  };
-}
 
 namespace clang {
 
@@ -223,10 +136,9 @@ InheritanceHierarchyWriter::WriteNodeReference(QualType Type,
 void QualType::viewInheritance(ASTContext& Context) {
   if (!(*this)->getAsRecordType()) {
     cerr << "Type " << getAsString() << " is not a C++ class type.\n";
+    return;
   }
 #ifndef NDEBUG
-  //  std::string Title = "Inheritance graph for " + getAsString();
-  //  llvm::ViewGraph((*this)->getAsRecordType(), Title.c_str());
   std::string ErrMsg;
   sys::Path Filename = sys::Path::GetTemporaryDirectory(&ErrMsg);
   if (Filename.isEmpty()) {
