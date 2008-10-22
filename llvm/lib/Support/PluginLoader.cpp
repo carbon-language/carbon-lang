@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #define DONT_GET_PLUGIN_LOADER_OPTION
+#include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/PluginLoader.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/System/DynamicLibrary.h"
@@ -19,12 +20,9 @@
 #include <vector>
 using namespace llvm;
 
-static std::vector<std::string> *Plugins;
+static ManagedStatic<std::vector<std::string> > Plugins;
 
 void PluginLoader::operator=(const std::string &Filename) {
-  if (!Plugins)
-    Plugins = new std::vector<std::string>();
-
   std::string Error;
   if (sys::DynamicLibrary::LoadLibraryPermanently(Filename.c_str(), &Error)) {
     cerr << "Error opening '" << Filename << "': " << Error
@@ -35,10 +33,11 @@ void PluginLoader::operator=(const std::string &Filename) {
 }
 
 unsigned PluginLoader::getNumPlugins() {
-  return Plugins ? Plugins->size() : 0;
+  return Plugins.isConstructed() ? Plugins->size() : 0;
 }
 
 std::string &PluginLoader::getPlugin(unsigned num) {
-  assert(Plugins && num < Plugins->size() && "Asking for an out of bounds plugin");
+  assert(Plugins.isConstructed() && num < Plugins->size() &&
+         "Asking for an out of bounds plugin");
   return (*Plugins)[num];
 }
