@@ -422,7 +422,13 @@ Expr::isModifiableLvalueResult Expr::isModifiableLvalue(ASTContext &Ctx) const {
   isLvalueResult lvalResult = isLvalue(Ctx);
     
   switch (lvalResult) {
-  case LV_Valid: break;
+  case LV_Valid: 
+    // C++ 3.10p11: Functions cannot be modified, but pointers to
+    // functions can be modifiable.
+    if (Ctx.getLangOptions().CPlusPlus && TR->isFunctionType())
+      return MLV_NotObjectType;
+    break;
+
   case LV_NotObjectType: return MLV_NotObjectType;
   case LV_IncompleteVoidType: return MLV_IncompleteVoidType;
   case LV_DuplicateVectorComponents: return MLV_DuplicateVectorComponents;
