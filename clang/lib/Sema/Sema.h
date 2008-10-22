@@ -259,7 +259,6 @@ public:
   QualType ConvertDeclSpecToType(const DeclSpec &DS);
   void ProcessTypeAttributeList(QualType &Result, const AttributeList *AL);
   QualType GetTypeForDeclarator(Declarator &D, Scope *S);
-  QualType GetNonReferenceType(QualType Type);
   
   QualType ObjCGetTypeForMethodDefinition(DeclTy *D);
 

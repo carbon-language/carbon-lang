@@ -158,28 +158,11 @@ public:
     return QualType(getTypePtr(), TQs|getCVRQualifiers());
   }
   
-  inline QualType getUnqualifiedType() const;
+  QualType getUnqualifiedType() const;
+  bool isMoreQualifiedThan(QualType Other) const;
+  bool isAtLeastAsQualifiedAs(QualType Other) const;
+  QualType getNonReferenceType() const;
   
-  /// isMoreQualifiedThan - Determine whether this type is more
-  /// qualified than the Other type. For example, "const volatile int"
-  /// is more qualified than "const int", "volatile int", and
-  /// "int". However, it is not more qualified than "const volatile
-  /// int".
-  bool isMoreQualifiedThan(QualType Other) const {
-    unsigned MyQuals = this->getCVRQualifiers();
-    unsigned OtherQuals = Other.getCVRQualifiers();
-    return MyQuals != OtherQuals && (MyQuals | OtherQuals) == MyQuals;
-  }
-
-  /// isAtLeastAsQualifiedAs - Determine whether this type is at last
-  /// as qualified as the Other type. For example, "const volatile
-  /// int" is at least as qualified as "const int", "volatile int",
-  /// "int", and "const volatile int".
-  bool isAtLeastAsQualifiedAs(QualType Other) const {
-    unsigned MyQuals = this->getCVRQualifiers();
-    unsigned OtherQuals = Other.getCVRQualifiers();
-    return (MyQuals | OtherQuals) == MyQuals;
-  }
 
   /// operator==/!= - Indicate whether the specified types and qualifiers are
   /// identical.
@@ -1368,6 +1351,45 @@ inline unsigned QualType::getAddressSpace() const {
   if (const ASQualType *ASQT = dyn_cast<ASQualType>(CT))
     return ASQT->getAddressSpace();
   return 0;
+}
+
+/// isMoreQualifiedThan - Determine whether this type is more
+/// qualified than the Other type. For example, "const volatile int"
+/// is more qualified than "const int", "volatile int", and
+/// "int". However, it is not more qualified than "const volatile
+/// int".
+inline bool QualType::isMoreQualifiedThan(QualType Other) const {
+  // FIXME: Handle address spaces
+  unsigned MyQuals = this->getCVRQualifiers();
+  unsigned OtherQuals = Other.getCVRQualifiers();
+  return MyQuals != OtherQuals && (MyQuals | OtherQuals) == MyQuals;
+}
+
+/// isAtLeastAsQualifiedAs - Determine whether this type is at last
+/// as qualified as the Other type. For example, "const volatile
+/// int" is at least as qualified as "const int", "volatile int",
+/// "int", and "const volatile int".
+inline bool QualType::isAtLeastAsQualifiedAs(QualType Other) const {
+  // FIXME: Handle address spaces
+  unsigned MyQuals = this->getCVRQualifiers();
+  unsigned OtherQuals = Other.getCVRQualifiers();
+  return (MyQuals | OtherQuals) == MyQuals;
+}
+
+/// getNonReferenceType - If Type is a reference type (e.g., const
+/// int&), returns the type that the reference refers to ("const
+/// int"). Otherwise, returns the type itself. This routine is used
+/// throughout Sema to implement C++ 5p6:
+///
+///   If an expression initially has the type "reference to T" (8.3.2,
+///   8.5.3), the type is adjusted to "T" prior to any further
+///   analysis, the expression designates the object or function
+///   denoted by the reference, and the expression is an lvalue.
+inline QualType QualType::getNonReferenceType() const {
+  if (const ReferenceType *RefType = (*this)->getAsReferenceType())
+    return RefType->getPointeeType();
+  else
+    return *this;
 }
 
 inline const TypedefType* Type::getAsTypedefType() const {

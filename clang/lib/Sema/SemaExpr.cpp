@@ -450,7 +450,7 @@ Sema::ExprResult Sema::ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
   }
   // If this reference is not in a block or if the referenced variable is
   // within the block, create a normal DeclRefExpr.
-  return new DeclRefExpr(VD, GetNonReferenceType(VD->getType()), Loc);
+  return new DeclRefExpr(VD, VD->getType().getNonReferenceType(), Loc);
 }
 
 Sema::ExprResult Sema::ActOnPredefinedExpr(SourceLocation Loc,

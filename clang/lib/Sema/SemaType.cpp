@@ -500,23 +500,6 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
   return T;
 }
 
-/// GetNonReferenceType - If Type is a reference type (e.g., const
-/// int&), returns the type that the reference refers to ("const
-/// int"). Otherwise, returns the type itself. This routine is used
-/// throughout to implement C++ 5p6:
-///
-///   If an expression initially has the type "reference to T" (8.3.2,
-///   8.5.3), the type is adjusted to "T" prior to any further
-///   analysis, the expression designates the object or function
-///   denoted by the reference, and the expression is an lvalue.
-QualType Sema::GetNonReferenceType(QualType Type)
-{
-  if (const ReferenceType *RefType = Type->getAsReferenceType())
-    return RefType->getPointeeType();
-  else
-    return Type;
-}
-
 /// ObjCGetTypeForMethodDefinition - Builds the type for a method definition
 /// declarator
 QualType Sema::ObjCGetTypeForMethodDefinition(DeclTy *D) {
