@@ -1165,18 +1165,54 @@ void DAGTypeLegalizer::ExpandIntRes_ADDSUB(SDNode *N,
   SDValue LHSL, LHSH, RHSL, RHSH;
   GetExpandedInteger(N->getOperand(0), LHSL, LHSH);
   GetExpandedInteger(N->getOperand(1), RHSL, RHSH);
-  SDVTList VTList = DAG.getVTList(LHSL.getValueType(), MVT::Flag);
+
+  MVT NVT = LHSL.getValueType();
+  SDVTList VTList = DAG.getVTList(NVT, MVT::Flag);
   SDValue LoOps[2] = { LHSL, RHSL };
   SDValue HiOps[3] = { LHSH, RHSH };
 
-  if (N->getOpcode() == ISD::ADD) {
-    Lo = DAG.getNode(ISD::ADDC, VTList, LoOps, 2);
-    HiOps[2] = Lo.getValue(1);
-    Hi = DAG.getNode(ISD::ADDE, VTList, HiOps, 3);
+  // Do not generate ADDC/ADDE or SUBC/SUBE if the target does not support
+  // them.  TODO: Teach operation legalization how to expand unsupported
+  // ADDC/ADDE/SUBC/SUBE.  The problem is that these operations generate
+  // a carry of type MVT::Flag, but there doesn't seem to be any way to
+  // generate a value of this type in the expanded code sequence.
+  bool hasCarry =
+    TLI.isOperationLegal(N->getOpcode() == ISD::ADD ? ISD::ADDC : ISD::SUBC,
+                         TLI.getTypeToExpandTo(NVT));
+
+  if (hasCarry) {
+    if (N->getOpcode() == ISD::ADD) {
+      Lo = DAG.getNode(ISD::ADDC, VTList, LoOps, 2);
+      HiOps[2] = Lo.getValue(1);
+      Hi = DAG.getNode(ISD::ADDE, VTList, HiOps, 3);
+    } else {
+      Lo = DAG.getNode(ISD::SUBC, VTList, LoOps, 2);
+      HiOps[2] = Lo.getValue(1);
+      Hi = DAG.getNode(ISD::SUBE, VTList, HiOps, 3);
+    }
   } else {
-    Lo = DAG.getNode(ISD::SUBC, VTList, LoOps, 2);
-    HiOps[2] = Lo.getValue(1);
-    Hi = DAG.getNode(ISD::SUBE, VTList, HiOps, 3);
+    if (N->getOpcode() == ISD::ADD) {
+      Lo = DAG.getNode(ISD::ADD, VTList, LoOps, 2);
+      Hi = DAG.getNode(ISD::ADD, VTList, HiOps, 2);
+      SDValue Cmp1 = DAG.getSetCC(TLI.getSetCCResultType(Lo), Lo, LoOps[0],
+                                  ISD::SETULT);
+      SDValue Carry1 = DAG.getNode(ISD::SELECT, NVT, Cmp1,
+                                   DAG.getConstant(1, NVT),
+                                   DAG.getConstant(0, NVT));
+      SDValue Cmp2 = DAG.getSetCC(TLI.getSetCCResultType(Lo), Lo, LoOps[1],
+                                  ISD::SETULT);
+      SDValue Carry2 = DAG.getNode(ISD::SELECT, NVT, Cmp2,
+                                   DAG.getConstant(1, NVT), Carry1);
+      Hi = DAG.getNode(ISD::ADD, NVT, Hi, Carry2);
+    } else {
+      Lo = DAG.getNode(ISD::SUB, VTList, LoOps, 2);
+      Hi = DAG.getNode(ISD::SUB, VTList, HiOps, 2);
+      SDValue Cmp = DAG.getSetCC(NVT, LoOps[0], LoOps[1], ISD::SETULT);
+      SDValue Borrow = DAG.getNode(ISD::SELECT, NVT, Cmp,
+                                   DAG.getConstant(1, NVT),
+                                   DAG.getConstant(0, NVT));
+      Hi = DAG.getNode(ISD::SUB, NVT, Hi, Borrow);
+    }
   }
 }
 
