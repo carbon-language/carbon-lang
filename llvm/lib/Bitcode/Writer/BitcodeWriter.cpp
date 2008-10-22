@@ -24,6 +24,7 @@
 #include "llvm/ValueSymbolTable.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Streams.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Program.h"
 using namespace llvm;
 
@@ -1330,6 +1331,13 @@ static void EmitDarwinBCTrailer(BitstreamWriter &Stream, unsigned BufferSize) {
 /// WriteBitcodeToFile - Write the specified module to the specified output
 /// stream.
 void llvm::WriteBitcodeToFile(const Module *M, std::ostream &Out) {
+  raw_os_ostream RawOut(Out);
+  WriteBitcodeToFile(M, RawOut);
+}
+
+/// WriteBitcodeToFile - Write the specified module to the specified output
+/// stream.
+void llvm::WriteBitcodeToFile(const Module *M, raw_ostream &Out) {
   std::vector<unsigned char> Buffer;
   BitstreamWriter Stream(Buffer);
   
@@ -1356,7 +1364,7 @@ void llvm::WriteBitcodeToFile(const Module *M, std::ostream &Out) {
 
   
   // If writing to stdout, set binary mode.
-  if (llvm::cout == Out)
+  if (&llvm::outs() == &Out)
     sys::Program::ChangeStdoutToBinary();
 
   // Write the generated bitstream to "Out".
