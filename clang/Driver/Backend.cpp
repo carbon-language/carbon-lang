@@ -144,23 +144,6 @@ FunctionPassManager *BackendConsumer::getPerFunctionPasses() const {
 }
 
 bool BackendConsumer::AddEmitPasses(bool Fast, std::string &Error) {
-  // Create the TargetMachine for generating code.
-  const TargetMachineRegistry::entry *TME = 
-    TargetMachineRegistry::getClosestStaticTargetForModule(*TheModule, Error);
-  if (!TME) {
-    Error = std::string("Unable to get target machine: ") + Error;
-    return false;
-  }
-      
-  // FIXME: Support features?
-  std::string FeatureStr;
-  TargetMachine *TM = TME->CtorFn(*TheModule, FeatureStr);
-  
-  // Set register scheduler & allocation policy.
-  RegisterScheduler::setDefault(createDefaultScheduler);
-  RegisterRegAlloc::setDefault(Fast ? createLocalRegisterAllocator : 
-                               createLinearScanRegisterAllocator);  
-
   if (OutputFile == "-" || (InputFile == "-" && OutputFile.empty())) {
     AsmOutStream = new raw_stdout_ostream();
     sys::Program::ChangeStdoutToBinary();
@@ -189,6 +172,23 @@ bool BackendConsumer::AddEmitPasses(bool Fast, std::string &Error) {
   } else if (Action == Backend_EmitLL) {
     getPerModulePasses()->add(createPrintModulePass(AsmOutStream));
   } else {
+    // Create the TargetMachine for generating code.
+    const TargetMachineRegistry::entry *TME = 
+      TargetMachineRegistry::getClosestStaticTargetForModule(*TheModule, Error);
+    if (!TME) {
+      Error = std::string("Unable to get target machine: ") + Error;
+      return false;
+    }
+      
+    // FIXME: Support features?
+    std::string FeatureStr;
+    TargetMachine *TM = TME->CtorFn(*TheModule, FeatureStr);
+    
+    // Set register scheduler & allocation policy.
+    RegisterScheduler::setDefault(createDefaultScheduler);
+    RegisterRegAlloc::setDefault(Fast ? createLocalRegisterAllocator : 
+                                 createLinearScanRegisterAllocator);  
+
     // From llvm-gcc:
     // If there are passes we have to run on the entire module, we do codegen
     // as a separate "pass" after that happens.
