@@ -611,32 +611,27 @@ void Parser::ParseObjCTypeQualifierList(ObjCDeclSpec &DS) {
 Parser::TypeTy *Parser::ParseObjCTypeName(ObjCDeclSpec &DS) {
   assert(Tok.is(tok::l_paren) && "expected (");
   
-  SourceLocation LParenLoc = ConsumeParen(), RParenLoc;
+  SourceLocation LParenLoc = ConsumeParen();
   SourceLocation TypeStartLoc = Tok.getLocation();
-  TypeTy *Ty = 0;
   
   // Parse type qualifiers, in, inout, etc.
   ParseObjCTypeQualifierList(DS);
 
-  if (isTypeSpecifierQualifier()) {
+  TypeTy *Ty = 0;
+  if (isTypeSpecifierQualifier())
     Ty = ParseTypeName();
-    // FIXME: back when Sema support is in place...
-    // assert(Ty && "Parser::ParseObjCTypeName(): missing type");
-  }
   
-  if (Tok.isNot(tok::r_paren)) {
-    // If we didn't eat any tokens, then this isn't a type.
-    if (Tok.getLocation() == TypeStartLoc) {
-      Diag(Tok.getLocation(), diag::err_expected_type);
-      SkipUntil(tok::r_brace);
-    } else {
-      // Otherwise, we found *something*, but didn't get a ')' in the right
-      // place.  Emit an error then return what we have as the type.
-      MatchRHSPunctuation(tok::r_paren, LParenLoc);
-    }
-  }
   if (Tok.is(tok::r_paren))
-    RParenLoc = ConsumeParen();
+    ConsumeParen();
+  else if (Tok.getLocation() == TypeStartLoc) {
+    // If we didn't eat any tokens, then this isn't a type.
+    Diag(Tok.getLocation(), diag::err_expected_type);
+    SkipUntil(tok::r_paren);
+  } else {
+    // Otherwise, we found *something*, but didn't get a ')' in the right
+    // place.  Emit an error then return what we have as the type.
+    MatchRHSPunctuation(tok::r_paren, LParenLoc);
+  }
   return Ty;
 }
 
