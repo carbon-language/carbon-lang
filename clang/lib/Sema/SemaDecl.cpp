@@ -95,7 +95,8 @@ void Sema::PushOnScopeChains(NamedDecl *D, Scope *S) {
       IdResolver.AddShadowedDecl(TD, *I);
       return;
     }
-  } else if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+  } else if (getLangOptions().CPlusPlus && isa<FunctionDecl>(D)) {
+    FunctionDecl *FD = cast<FunctionDecl>(D);
     // We are pushing the name of a function, which might be an
     // overloaded name.
     IdentifierResolver::iterator
