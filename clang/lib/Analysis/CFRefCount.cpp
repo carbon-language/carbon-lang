@@ -1067,7 +1067,9 @@ public:
     ReturnedNotOwned, // Return object does not pass ownership to caller.
     ErrorUseAfterRelease, // Object used after released.    
     ErrorReleaseNotOwned, // Release of an object that was not owned.
-    ErrorLeak  // A memory leak due to excessive reference counts.
+    ErrorLeak,  // A memory leak due to excessive reference counts.
+    ErrorLeakReturned // A memory leak due to the returning method not having
+                      // the correct naming conventions.            
   };
   
 private:
@@ -1201,6 +1203,10 @@ void RefVal::print(std::ostream& Out) const {
       Out << "Leaked";
       break;            
       
+    case ErrorLeakReturned:
+      Out << "Leaked (Bad naming)";
+      break;
+      
     case ErrorUseAfterRelease:
       Out << "Use-After-Release [ERROR]";
       break;
@@ -1292,9 +1298,9 @@ private:
                            const GRState* St,
                            RefVal::Kind hasErr, SymbolID Sym);
   
-  const GRState* HandleSymbolDeath(GRStateManager& VMgr,
-                                      const GRState* St,
-                                      SymbolID sid, RefVal V, bool& hasLeak);
+  const GRState* HandleSymbolDeath(GRStateManager& VMgr, const GRState* St,
+                                   const Decl* CD, SymbolID sid, RefVal V,
+                                   bool& hasLeak);
   
 public:
   
@@ -1802,14 +1808,45 @@ void CFRefCount::EvalStore(ExplodedNodeSet<GRState>& Dst,
 
 // End-of-path.
 
+// The "fundamental rule" for naming conventions of methods:
+//  (url broken into two lines)
+//  http://developer.apple.com/documentation/Cocoa/Conceptual/
+//     MemoryMgmt/Tasks/MemoryManagementRules.html
+//
+// "You take ownership of an object if you create it using a method whose name
+//  begins with “alloc” or “new” or contains “copy” (for example, alloc, 
+//  newObject, or mutableCopy), or if you send it a retain message. You are
+//  responsible for relinquishing ownership of objects you own using release
+//  or autorelease. Any other time you receive an object, you must
+//  not release it."
+//
+static bool followsFundamentalRule(const char* s) {
+  return CStrInCStrNoCase(s, "create") || CStrInCStrNoCase(s, "copy")  || 
+         CStrInCStrNoCase(s, "new");
+}  
+
 const GRState* CFRefCount::HandleSymbolDeath(GRStateManager& VMgr,
-                                          const GRState* St, SymbolID sid,
-                                          RefVal V, bool& hasLeak) {
-    
-  hasLeak = V.isOwned() || 
-            ((V.isNotOwned() || V.isReturnedOwned()) && V.getCount() > 0);
+                                             const GRState* St, const Decl* CD,
+                                             SymbolID sid,
+                                             RefVal V, bool& hasLeak) {
 
   GRStateRef state(St, VMgr);
+  assert (!V.isReturnedOwned() || CD &&
+          "CodeDecl must be available for reporting ReturnOwned errors.");
+  
+  if (V.isReturnedOwned() && V.getCount() == 0)
+    if (const ObjCMethodDecl* MD = dyn_cast<ObjCMethodDecl>(CD)) {
+      std::string s = MD->getSelector().getName();
+      if (!followsFundamentalRule(s.c_str())) {
+        hasLeak = true;
+        return state.set<RefBindings>(sid, V ^ RefVal::ErrorLeakReturned);
+      }
+    }
+
+  // All other cases.
+  
+  hasLeak = V.isOwned() || 
+            ((V.isNotOwned() || V.isReturnedOwned()) && V.getCount() > 0);
 
   if (!hasLeak)
     return state.remove<RefBindings>(sid);
@@ -1824,11 +1861,12 @@ void CFRefCount::EvalEndPath(GRExprEngine& Eng,
   RefBindings B = St->get<RefBindings>();
   
   llvm::SmallVector<SymbolID, 10> Leaked;
+  const Decl* CodeDecl = &Eng.getGraph().getCodeDecl();
   
   for (RefBindings::iterator I = B.begin(), E = B.end(); I != E; ++I) {
     bool hasLeak = false;
     
-    St = HandleSymbolDeath(Eng.getStateManager(), St,
+    St = HandleSymbolDeath(Eng.getStateManager(), St, CodeDecl,
                            (*I).first, (*I).second, hasLeak);
     
     if (hasLeak) Leaked.push_back((*I).first);
@@ -1876,7 +1914,7 @@ void CFRefCount::EvalDeadSymbols(ExplodedNodeSet<GRState>& Dst,
     
     bool hasLeak = false;
     
-    St = HandleSymbolDeath(Eng.getStateManager(), St, *I, *T, hasLeak);
+    St = HandleSymbolDeath(Eng.getStateManager(), St, 0, *I, *T, hasLeak);
     
     if (hasLeak)
       Leaked.push_back(*I);    
@@ -2453,9 +2491,6 @@ PathDiagnosticPiece* CFRefReport::getEndPath(BugReporter& br,
   
   if (!getBugType().isLeak())
     return RangedBugReport::getEndPath(BR, EndN);
-
-  // Get the retain count.
-  unsigned long RetCount = EndN->getState()->get<RefBindings>(Sym)->getCount();
   
   // We are a leak.  Walk up the graph to get to the first node where the
   // symbol appeared, and also get the first VarDecl that tracked object
@@ -2518,9 +2553,22 @@ PathDiagnosticPiece* CFRefReport::getEndPath(BugReporter& br,
   
   if (FirstBinding)
     os << " and stored into '" << FirstBinding->getString() << '\'';  
+
   
-  os << " is no longer referenced after this point and has a retain count of +"
-     << RetCount << " (object leaked).";
+  // Get the retain count.
+  const RefVal* RV = EndN->getState()->get<RefBindings>(Sym);
+  
+  if (RV->getKind() == RefVal::ErrorLeakReturned) {
+    ObjCMethodDecl& MD = cast<ObjCMethodDecl>(BR.getGraph().getCodeDecl());
+    os << " is returned from a method whose name ('"
+       << MD.getSelector().getName()
+       << "') does not contain 'create', "
+          "'copy', or 'new'.  This violates the naming convention rules given"
+          " in the Memory Management Guide for Cocoa (object leaked).";
+  }
+  else
+    os << " is no longer referenced after this point and has a retain count of +"
+       << RV->getCount() << " (object leaked).";
   
   return new PathDiagnosticPiece(L, os.str(), Hint);
 }
