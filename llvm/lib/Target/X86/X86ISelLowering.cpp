@@ -4760,15 +4760,19 @@ SDValue X86TargetLowering::LowerUINT_TO_FP(SDValue Op, SelectionDAG &DAG) {
   SDValue UnpcklMask = DAG.getNode(ISD::BUILD_VECTOR, MVT::v4i32, &MaskVec[0],
                                    MaskVec.size());
   SmallVector<SDValue, 4> MaskVec2;
-  MaskVec2.push_back(DAG.getConstant(1, MVT::i64));
-  MaskVec2.push_back(DAG.getConstant(0, MVT::i64));
-  SDValue ShufMask = DAG.getNode(ISD::BUILD_VECTOR, MVT::v2i64, &MaskVec2[0],
+  MaskVec2.push_back(DAG.getConstant(1, MVT::i32));
+  MaskVec2.push_back(DAG.getConstant(0, MVT::i32));
+  SDValue ShufMask = DAG.getNode(ISD::BUILD_VECTOR, MVT::v2i32, &MaskVec2[0],
                                  MaskVec2.size());
 
   SDValue XR1 = DAG.getNode(ISD::SCALAR_TO_VECTOR, MVT::v4i32,
-                            Op.getOperand(0).getOperand(1));
+                            DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32,
+                                        Op.getOperand(0),
+                                        DAG.getIntPtrConstant(1)));
   SDValue XR2 = DAG.getNode(ISD::SCALAR_TO_VECTOR, MVT::v4i32,
-                            Op.getOperand(0).getOperand(0));
+                            DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32,
+                                        Op.getOperand(0),
+                                        DAG.getIntPtrConstant(0)));
   SDValue Unpck1 = DAG.getNode(ISD::VECTOR_SHUFFLE, MVT::v4i32,
                                 XR1, XR2, UnpcklMask);
   SDValue CLod0 = DAG.getLoad(MVT::v4i32, DAG.getEntryNode(), CPIdx0,
