@@ -704,8 +704,12 @@ RetainSummary* RetainSummaryManager::getSummary(FunctionDecl* FD) {
       }
     }
 
-    if (FName[0] == 'C' && FName[1] == 'F')
-      S = getCFSummary(FD, FName);  
+    if (FName[0] == 'C') {
+      if (FName[1] == 'F')
+        S = getCFSummary(FD, FName);  
+      else if (FName[1] == 'G')
+        S = getCGSummary(FD, FName);
+    }
     else if (FName[0] == 'N' && FName[1] == 'S')
       S = getNSSummary(FD, FName);
   }
@@ -834,10 +838,14 @@ RetainSummary* RetainSummaryManager::getCFSummaryCreateRule(FunctionDecl* FD) {
  
   FunctionType* FT =
     dyn_cast<FunctionType>(FD->getType().getTypePtr());
-  
-  if (FT && !isCFRefType(FT->getResultType()))
-    return getPersistentSummary(RetEffect::MakeNoRet());
 
+  if (FT) {
+    QualType ResTy = FT->getResultType();
+    
+    if (!isCFRefType(ResTy) && !isCGRefType(ResTy))
+      return getPersistentSummary(RetEffect::MakeNoRet());
+  }
+  
   assert (ScratchArgs.empty());
   
   if (FD->getIdentifier() == CFDictionaryCreateII) {
