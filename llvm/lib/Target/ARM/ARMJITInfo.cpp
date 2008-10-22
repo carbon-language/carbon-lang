@@ -110,24 +110,20 @@ extern "C" void ARMCompilationCallbackC(intptr_t StubAddr) {
   // stub with:
   //   ldr pc, [pc,#-4]
   //   <addr>
-#if defined(__APPLE__)
   bool ok = sys::Memory::setRangeWritable ((void*)StubAddr, 8);
   if (!ok)
     {
       cerr << "ERROR: Unable to mark stub writable\n";
       abort();
     }
-#endif
   *(intptr_t *)StubAddr = 0xe51ff004;
   *(intptr_t *)(StubAddr+4) = NewVal;
-#if defined(__APPLE__)
   ok = sys::Memory::setRangeExecutable ((void*)StubAddr, 8);
   if (!ok)
     {
       cerr << "ERROR: Unable to mark stub executable\n";
       abort();
     }
-#endif
 }
 
 TargetJITInfo::LazyResolverFn
