@@ -135,3 +135,32 @@ void test_multiparm(long lv, short sv, int iv) {
   double* dp2 = multiparm(iv, sv, sv);
   multiparm(sv, sv, lv); // expected-error {{ call to 'multiparm' is ambiguous; candidates are: }}
 }
+
+// Test overloading based on qualification vs. no qualification
+// conversion.
+int* quals1(int const * p);
+char* quals1(int * p);
+
+int* quals2(int const * const * pp);
+char* quals2(int * * pp);
+
+int* quals3(int const * * const * ppp);
+char* quals3(int *** ppp);
+
+void test_quals(int * p, int * * pp, int * * * ppp) {
+  char* q1 = quals1(p);
+  char* q2 = quals2(pp);
+  char* q3 = quals3(ppp);
+}
+
+// Test overloading based on qualification ranking (C++ 13.3.2)p3.
+int* quals_rank1(int const * p);
+float* quals_rank1(int const volatile *p);
+
+int* quals_rank2(int const * const * pp);
+float* quals_rank2(int * const * pp);
+
+void test_quals_ranking(int * p, int volatile *pq, int * * pp, int * * * ppp) {
+  //  int* q1 = quals_rank1(p);
+  float* q2 = quals_rank1(pq); 
+}

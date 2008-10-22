@@ -178,7 +178,7 @@ public:
   bool isAtLeastAsQualifiedAs(QualType Other) const {
     unsigned MyQuals = this->getCVRQualifiers();
     unsigned OtherQuals = Other.getCVRQualifiers();
-    return MyQuals | OtherQuals == MyQuals;
+    return (MyQuals | OtherQuals) == MyQuals;
   }
 
   /// operator==/!= - Indicate whether the specified types and qualifiers are
