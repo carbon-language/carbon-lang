@@ -207,6 +207,7 @@ enum LangKind {
   langkind_unspecified,
   langkind_c,
   langkind_c_cpp,
+  langkind_asm_cpp,
   langkind_c_pch,
   langkind_cxx,
   langkind_cxx_cpp,
@@ -219,7 +220,7 @@ enum LangKind {
 
 /* TODO: GCC also accepts:
    c-header c++-header objective-c-header objective-c++-header
-   assembler  assembler-with-cpp
+   assembler
    ada, f77*, ratfor (!), f95, java, treelang
  */
 static llvm::cl::opt<LangKind>
@@ -231,6 +232,8 @@ BaseLang("x", llvm::cl::desc("Base language to compile"),
                     clEnumValN(langkind_objcxx,"objective-c++","Objective C++"),
                     clEnumValN(langkind_c_cpp,     "c-cpp-output",
                                "Preprocessed C"),
+                    clEnumValN(langkind_asm_cpp,     "assembler-with-cpp",
+                               "Preprocessed asm"),
                     clEnumValN(langkind_cxx_cpp,   "c++-cpp-output",
                                "Preprocessed C++"),                    
                     clEnumValN(langkind_objc_cpp,  "objective-c-cpp-output",
@@ -276,6 +279,8 @@ static LangKind GetLanguage(const std::string &Filename) {
   // assembler: .S
   if (Ext == "c")
     return langkind_c;
+  else if (Ext == "S" || Ext == "s")
+    return langkind_asm_cpp;
   else if (Ext == "i")
     return langkind_c_cpp;
   else if (Ext == "ii")
@@ -316,6 +321,8 @@ static bool InitializeLangOptions(LangOptions &Options, LangKind LK){
     InitializeCOptions(Options);
     PCH = true;
     break;
+  case langkind_asm_cpp:
+    // FALLTHROUGH
   case langkind_c_cpp:
     NoPreprocess = true;
     // FALLTHROUGH
@@ -458,6 +465,7 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
     switch (LK) {
     default: assert(0 && "Unknown base language");
     case langkind_c:
+    case langkind_asm_cpp:
     case langkind_c_cpp:
     case langkind_c_pch:
     case langkind_objc:
