@@ -32,4 +32,6 @@ macro(add_partially_linked_object lib)
     set( llvm_libs ${llvm_libs} ${pll} PARENT_SCOPE)
     set( llvm_lib_targets ${llvm_lib_targets} ${tnplo} PARENT_SCOPE )
   endif( MSVC )
+  install(FILES ${pll}
+    DESTINATION lib)
 endmacro(add_partially_linked_object lib)

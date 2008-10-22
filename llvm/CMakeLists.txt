@@ -157,3 +157,16 @@ add_subdirectory(lib/Archive)
 add_subdirectory(tools)
 
 add_subdirectory(examples)
+
+install(DIRECTORY include
+  DESTINATION .
+  PATTERN ".svn" EXCLUDE
+  PATTERN "*.cmake" EXCLUDE
+  PATTERN "*.in" EXCLUDE
+  )
+
+install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/include
+  DESTINATION .
+  )
+
+# TODO: make and install documentation.

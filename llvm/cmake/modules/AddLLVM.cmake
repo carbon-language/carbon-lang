@@ -7,6 +7,9 @@ macro(add_llvm_library name)
   if( LLVM_COMMON_DEPENDS )
     add_dependencies( ${name} ${LLVM_COMMON_DEPENDS} )
   endif( LLVM_COMMON_DEPENDS )
+  install(TARGETS ${name}
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib)
 endmacro(add_llvm_library name)
 
 
@@ -34,12 +37,16 @@ endmacro(add_llvm_executable name)
 macro(add_llvm_tool name)
   set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${LLVM_TOOLS_BINARY_DIR})
   add_llvm_executable(${name} ${ARGN})
+  install(TARGETS ${name}
+    RUNTIME DESTINATION bin)
 endmacro(add_llvm_tool name)
 
 
 macro(add_llvm_example name)
 #  set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${LLVM_EXAMPLES_BINARY_DIR})
   add_llvm_executable(${name} ${ARGN})
+  install(TARGETS ${name}
+    RUNTIME DESTINATION examples)
 endmacro(add_llvm_example name)
 
 
