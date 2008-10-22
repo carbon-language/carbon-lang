@@ -1362,6 +1362,8 @@ inline bool QualType::isMoreQualifiedThan(QualType Other) const {
   // FIXME: Handle address spaces
   unsigned MyQuals = this->getCVRQualifiers();
   unsigned OtherQuals = Other.getCVRQualifiers();
+  assert(this->getAddressSpace() == 0 && "Address space not checked");
+  assert(Other.getAddressSpace() == 0 && "Address space not checked");
   return MyQuals != OtherQuals && (MyQuals | OtherQuals) == MyQuals;
 }
 
@@ -1373,6 +1375,8 @@ inline bool QualType::isAtLeastAsQualifiedAs(QualType Other) const {
   // FIXME: Handle address spaces
   unsigned MyQuals = this->getCVRQualifiers();
   unsigned OtherQuals = Other.getCVRQualifiers();
+  assert(this->getAddressSpace() == 0 && "Address space not checked");
+  assert(Other.getAddressSpace() == 0 && "Address space not checked");
   return (MyQuals | OtherQuals) == MyQuals;
 }
 

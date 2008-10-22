@@ -811,6 +811,7 @@ ImplicitConversionSequence::CompareKind
 Sema::CompareQualificationConversions(const StandardConversionSequence& SCS1,
                                       const StandardConversionSequence& SCS2)
 {
+  // C++ 13.3.3.2p3:
   //  -- S1 and S2 differ only in their qualification conversion and
   //     yield similar types T1 and T2 (C++ 4.4), respectively, and the
   //     cv-qualification signature of type T1 is a proper subset of

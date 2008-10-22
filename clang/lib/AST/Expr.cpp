@@ -322,6 +322,15 @@ bool Expr::hasLocalSideEffect() const {
   }     
 }
 
+/// DeclCanBeLvalue - Determine whether the given declaration can be
+/// an lvalue. This is a helper routine for isLvalue.
+static bool DeclCanBeLvalue(const NamedDecl *Decl, ASTContext &Ctx) {
+  return isa<VarDecl>(Decl) || 
+    // C++ 3.10p2: An lvalue refers to an object or function.
+    (Ctx.getLangOptions().CPlusPlus &&
+     (isa<FunctionDecl>(Decl) || isa<OverloadedFunctionDecl>(Decl)));
+}
+
 /// isLvalue - C99 6.3.2.1: an lvalue is an expression with an object type or an
 /// incomplete type other than void. Nonarray expressions that can be lvalues:
 ///  - name, where name must be a variable
@@ -359,12 +368,8 @@ Expr::isLvalueResult Expr::isLvalue(ASTContext &Ctx) const {
       return cast<ArraySubscriptExpr>(this)->getBase()->isLvalue(Ctx);
     return LV_Valid;
   case DeclRefExprClass: { // C99 6.5.1p2
-    const Decl *RefdDecl = cast<DeclRefExpr>(this)->getDecl();
-    if (isa<VarDecl>(RefdDecl) || 
-        isa<ImplicitParamDecl>(RefdDecl) ||
-        // C++ 3.10p2: An lvalue refers to an object or function.
-        isa<FunctionDecl>(RefdDecl) || 
-        isa<OverloadedFunctionDecl>(RefdDecl))
+    const NamedDecl *RefdDecl = cast<DeclRefExpr>(this)->getDecl();
+    if (DeclCanBeLvalue(RefdDecl, Ctx))
       return LV_Valid;
     break;
   }
