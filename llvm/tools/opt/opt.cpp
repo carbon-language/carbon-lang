@@ -30,6 +30,7 @@
 #include "llvm/Support/PluginLoader.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/Support/SystemUtils.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/LinkAllPasses.h"
 #include "llvm/LinkAllVMCore.h"
 #include <iostream>
@@ -543,7 +544,7 @@ int main(int argc, char **argv) {
       }
       
       if (PrintEachXForm)
-        Passes.add(createPrintModulePass(&cerr));
+        Passes.add(createPrintModulePass(&errs()));
     }
     
     // If -std-compile-opts was specified at the end of the pass list, add them.

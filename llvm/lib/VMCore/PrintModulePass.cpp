@@ -17,18 +17,19 @@
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
 namespace {
 
   class VISIBILITY_HIDDEN PrintModulePass : public ModulePass {
-    OStream *Out;           // ostream to print on
+    raw_ostream *Out;       // raw_ostream to print on
     bool DeleteStream;      // Delete the ostream in our dtor?
   public:
     static char ID;
-    PrintModulePass() : ModulePass(intptr_t(&ID)), Out(&cerr), 
+    PrintModulePass() : ModulePass(intptr_t(&ID)), Out(&errs()), 
       DeleteStream(false) {}
-    PrintModulePass(OStream *o, bool DS)
+    PrintModulePass(raw_ostream *o, bool DS)
       : ModulePass(intptr_t(&ID)), Out(o), DeleteStream(DS) {}
     
     ~PrintModulePass() {
@@ -36,7 +37,8 @@ namespace {
     }
     
     bool runOnModule(Module &M) {
-      (*Out) << M << std::flush;
+      (*Out) << M;
+      Out->flush();
       return false;
     }
     
@@ -47,13 +49,13 @@ namespace {
   
   class PrintFunctionPass : public FunctionPass {
     std::string Banner;     // String to print before each function
-    OStream *Out;           // ostream to print on
+    raw_ostream *Out;       // raw_ostream to print on
     bool DeleteStream;      // Delete the ostream in our dtor?
   public:
     static char ID;
-    PrintFunctionPass() : FunctionPass(intptr_t(&ID)), Banner(""), Out(&cerr), 
+    PrintFunctionPass() : FunctionPass(intptr_t(&ID)), Banner(""), Out(&errs()), 
                           DeleteStream(false) {}
-    PrintFunctionPass(const std::string &B, OStream *o, bool DS)
+    PrintFunctionPass(const std::string &B, raw_ostream *o, bool DS)
       : FunctionPass(intptr_t(&ID)), Banner(B), Out(o), DeleteStream(DS) {}
     
     inline ~PrintFunctionPass() {
@@ -65,6 +67,7 @@ namespace {
     //
     bool runOnFunction(Function &F) {
       (*Out) << Banner << static_cast<Value&>(F);
+      Out->flush();
       return false;
     }
     
@@ -82,15 +85,17 @@ static RegisterPass<PrintFunctionPass>
 Y("print-function","Print function to stderr");
 
 /// createPrintModulePass - Create and return a pass that writes the
-/// module to the specified OStream.
-ModulePass *llvm::createPrintModulePass(llvm::OStream *OS, bool DeleteStream) {
+/// module to the specified raw_ostream.
+ModulePass *llvm::createPrintModulePass(llvm::raw_ostream *OS, 
+                                        bool DeleteStream) {
   return new PrintModulePass(OS, DeleteStream);
 }
 
 /// createPrintFunctionPass - Create and return a pass that prints
-/// functions to the specified OStream as they are processed.
+/// functions to the specified raw_ostream as they are processed.
 FunctionPass *llvm::createPrintFunctionPass(const std::string &Banner,
-                                      OStream *OS, bool DeleteStream) {
+                                            llvm::raw_ostream *OS, 
+                                            bool DeleteStream) {
   return new PrintFunctionPass(Banner, OS, DeleteStream);
 }
 
