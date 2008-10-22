@@ -977,6 +977,13 @@ ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
               ObjCImplementations[ClassDecl->getIdentifier()])
             Getter = ImpDecl->getInstanceMethod(Sel);
 
+    // Look through local category implementations associated with the class.
+    if (!Getter) {
+      for (unsigned i = 0; i < ObjCCategoryImpls.size() && !Getter; i++) {
+        if (ObjCCategoryImpls[i]->getClassInterface() == IFace)
+          Getter = ObjCCategoryImpls[i]->getInstanceMethod(Sel);
+      }
+    }
     if (Getter) {
       // If we found a getter then this may be a valid dot-reference, we
       // need to also look for the matching setter.
