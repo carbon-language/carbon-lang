@@ -808,8 +808,6 @@ SDValue DAGTypeLegalizer::PromoteIntOp_MEMBARRIER(SDNode *N) {
 
 SDValue DAGTypeLegalizer::PromoteIntOp_SELECT(SDNode *N, unsigned OpNo) {
   assert(OpNo == 0 && "Only know how to promote condition");
-  assert(N->getOperand(0).getValueType() == MVT::i1 &&
-         "SetCC type is not legal??");
   SDValue Cond = GetPromotedInteger(N->getOperand(0));
 
   // Promote all the way up to SVT, the canonical SetCC type.
@@ -835,7 +833,7 @@ SDValue DAGTypeLegalizer::PromoteIntOp_SELECT(SDNode *N, unsigned OpNo) {
     ExtendCode = ISD::ZERO_EXTEND;
     if (!DAG.MaskedValueIsZero(Cond,APInt::getHighBitsSet(CondBits,CondBits-1)))
       // All extra bits need to be cleared.  Do this by zero extending the
-      // original MVT::i1 condition value all the way to SVT.
+      // original condition value all the way to SVT.
       Cond = N->getOperand(0);
     break;
   case TargetLowering::ZeroOrNegativeOneSetCCResult: {
@@ -843,7 +841,7 @@ SDValue DAGTypeLegalizer::PromoteIntOp_SELECT(SDNode *N, unsigned OpNo) {
     unsigned SignBits = DAG.ComputeNumSignBits(Cond);
     if (SignBits != CondBits)
       // All extra bits need to be sign extended.  Do this by sign extending the
-      // original MVT::i1 condition value all the way to SVT.
+      // original condition value all the way to SVT.
       Cond = N->getOperand(0);
     break;
   }
