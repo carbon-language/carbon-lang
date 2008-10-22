@@ -24,7 +24,6 @@
 #include "llvm/CodeGen/SchedulerRegistry.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/Streams.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/System/Path.h"
 #include "llvm/System/Program.h"
@@ -46,7 +45,6 @@ namespace {
     llvm::Module *TheModule;
     llvm::TargetData *TheTargetData;
     llvm::raw_ostream *AsmOutStream;
-    std::ostream *AsmStdOutStream;
 
     mutable FunctionPassManager *CodeGenPasses;
     mutable PassManager *PerModulePasses;
@@ -79,16 +77,13 @@ namespace {
       InputFile(infile), 
       OutputFile(outfile), 
       Gen(CreateLLVMCodeGen(Diags, Features, InputFile, GenerateDebugInfo)),
-      TheModule(0), TheTargetData(0), 
-      AsmOutStream(0), AsmStdOutStream(0),
+      TheModule(0), TheTargetData(0), AsmOutStream(0),
       CodeGenPasses(0), PerModulePasses(0), PerFunctionPasses(0) {}
 
     ~BackendConsumer() {
       // FIXME: Move out of destructor.
       EmitAssembly();
 
-      if (AsmStdOutStream != llvm::cout.stream())
-        delete AsmStdOutStream;
       delete AsmOutStream;
       delete TheTargetData;
       delete TheModule;
@@ -166,11 +161,7 @@ bool BackendConsumer::AddEmitPasses(bool Fast, std::string &Error) {
   RegisterRegAlloc::setDefault(Fast ? createLocalRegisterAllocator : 
                                createLinearScanRegisterAllocator);  
 
-  // This is ridiculous.
-  // FIXME: These aren't being release for now. I'm just going to fix
-  // things to use raw_ostream instead.
   if (OutputFile == "-" || (InputFile == "-" && OutputFile.empty())) {
-    AsmStdOutStream = llvm::cout.stream();
     AsmOutStream = new raw_stdout_ostream();
     sys::Program::ChangeStdoutToBinary();
   } else {
@@ -187,19 +178,14 @@ bool BackendConsumer::AddEmitPasses(bool Fast, std::string &Error) {
       OutputFile = Path.toString();
     }
 
-    // FIXME: raw_fd_ostream should specify its non-error condition
-    // better.
-    Error = "";
-    AsmStdOutStream = new std::ofstream(OutputFile.c_str(),
-                                        (std::ios_base::binary | 
-                                         std::ios_base::out));
-    AsmOutStream = new raw_os_ostream(*AsmStdOutStream);
+    // FIXME: Should be binary.
+    AsmOutStream = new raw_fd_ostream(OutputFile.c_str(), Error);
     if (!Error.empty())
       return false;
   }
 
   if (Action == Backend_EmitBC) {
-    getPerModulePasses()->add(CreateBitcodeWriterPass(*AsmStdOutStream));
+    getPerModulePasses()->add(createBitcodeWriterPass(*AsmOutStream));
   } else if (Action == Backend_EmitLL) {
     getPerModulePasses()->add(createPrintModulePass(AsmOutStream));
   } else {
