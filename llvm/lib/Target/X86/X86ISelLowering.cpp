@@ -4731,12 +4731,6 @@ SDValue X86TargetLowering::LowerUINT_TO_FP(SDValue Op, SelectionDAG &DAG) {
   }
 */
 
-  // Get a XMM-vector-sized stack slot.
-  unsigned Size = 128/8;
-  MachineFunction &MF = DAG.getMachineFunction();
-  int SSFI = MF.getFrameInfo()->CreateStackObject(Size, Size);
-  SDValue StackSlot = DAG.getFrameIndex(SSFI, getPointerTy());
-
   // Build some magic constants.
   std::vector<Constant*>CV0;
   CV0.push_back(ConstantInt::get(APInt(32, 0x45300000)));
