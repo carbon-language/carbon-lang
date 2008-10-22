@@ -14,13 +14,13 @@
 #include "Sema.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/TypeOrdering.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Parse/DeclSpec.h"
 #include "llvm/Support/Compiler.h"
 #include <algorithm> // for std::equal
-#include <functional>
 #include <map>
 
 using namespace clang;
@@ -305,14 +305,6 @@ Sema::ActOnBaseSpecifier(DeclTy *classdecl, SourceRange SpecifierRange,
                                                   Access, BaseType);
   return BS;
 }
-
-/// QualTypeOrder - Function object that provides a total ordering on
-/// QualType values.
-struct QualTypeOrdering : std::binary_function<QualType, QualType, bool> {
-  bool operator()(QualType T1, QualType T2) {
-    return std::less<void*>()(T1.getAsOpaquePtr(), T2.getAsOpaquePtr());
-  }
-};
 
 /// ActOnBaseSpecifiers - Attach the given base specifiers to the
 /// class, after checking whether there are any duplicate base
