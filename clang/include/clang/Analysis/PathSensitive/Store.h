@@ -61,6 +61,7 @@ public:
   virtual SVal getLValueElement(const GRState* St, 
                                    SVal Base, SVal Offset) = 0;
   
+  virtual SVal ArrayToPointer(SVal Array) = 0;
 
   virtual Store
   RemoveDeadBindings(Store store, Stmt* Loc, const LiveVariables& Live,

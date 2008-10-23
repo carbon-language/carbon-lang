@@ -1503,9 +1503,15 @@ void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, NodeTy* Pred, NodeSet& Dst){
         MakeNode(Dst, CastE, N, SetSVal(St, CastE, V));
         continue;
       }
-    
+
+    // StoreManager casts array to different values.
+    if (ExTy->isArrayType()) {
+      V = StateMgr.ArrayToPointer(V);
+      MakeNode(Dst, CastE, N, SetSVal(St, CastE, V));
+      continue;
+    }
+
     // All other cases.
-    
     MakeNode(Dst, CastE, N, SetSVal(St, CastE, EvalCast(V, CastE->getType())));
   }
 }

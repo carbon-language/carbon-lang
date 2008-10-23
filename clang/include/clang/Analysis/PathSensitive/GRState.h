@@ -405,6 +405,10 @@ public:
     
     return SetSVal(St, Ex, V, isBlkExpr, Invalidate);
   }
+
+  SVal ArrayToPointer(SVal Array) {
+    return StoreMgr->ArrayToPointer(Array);
+  }
   
   // Methods that manipulate the GDM.
   const GRState* addGDM(const GRState* St, void* Key, void* Data);

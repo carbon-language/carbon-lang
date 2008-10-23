@@ -51,6 +51,8 @@ public:
   SVal getLValueIvar(const GRState* St, const ObjCIvarDecl* D, SVal Base);
   SVal getLValueField(const GRState* St, SVal Base, const FieldDecl* D);  
   SVal getLValueElement(const GRState* St, SVal Base, SVal Offset);
+
+  SVal ArrayToPointer(SVal Array) { return Array; }
   
   virtual Store
   RemoveDeadBindings(Store store, Stmt* Loc, const LiveVariables& Live,
