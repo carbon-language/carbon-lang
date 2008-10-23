@@ -220,15 +220,26 @@ raw_fd_ostream::raw_fd_ostream(const char *Filename, std::string &ErrorInfo) {
 }
 
 raw_fd_ostream::~raw_fd_ostream() {
-  flush();
-  if (ShouldClose)
-    close(FD);
+  if (FD >= 0) {
+    flush();
+    if (ShouldClose)
+      ::close(FD);
+  }
 }
 
 void raw_fd_ostream::flush_impl() {
+  assert (FD >= 0 && "File already closed.");
   if (OutBufCur-OutBufStart)
     ::write(FD, OutBufStart, OutBufCur-OutBufStart);
   HandleFlush();
+}
+
+void raw_fd_ostream::close() {
+  assert (ShouldClose);
+  ShouldClose = false;
+  flush();
+  ::close(FD);
+  FD = -1;
 }
 
 //===----------------------------------------------------------------------===//

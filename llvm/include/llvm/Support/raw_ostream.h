@@ -168,6 +168,9 @@ public:
   /// subclasses.  This outputs the currently buffered data and resets the
   /// buffer to empty.
   virtual void flush_impl();
+  
+  /// close - Manually flush the stream and close the file.
+  void close();  
 };
   
 /// raw_stdout_ostream - This is a stream that always prints to stdout.
