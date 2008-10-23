@@ -1332,6 +1332,9 @@ static void EmitDarwinBCTrailer(BitstreamWriter &Stream, unsigned BufferSize) {
 /// stream.
 void llvm::WriteBitcodeToFile(const Module *M, std::ostream &Out) {
   raw_os_ostream RawOut(Out);
+  // If writing to stdout, set binary mode.
+  if (llvm::cout == Out)
+    sys::Program::ChangeStdoutToBinary();
   WriteBitcodeToFile(M, RawOut);
 }
 
