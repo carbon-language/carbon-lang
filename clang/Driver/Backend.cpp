@@ -65,12 +65,9 @@ namespace {
     /// AddEmitPasses - Add passes necessary to emit assembly or LLVM
     /// IR.
     ///
-    /// \arg Fast - Whether "fast" native compilation should be
-    /// used. This implies local register allocation and fast
-    /// instruction selection.
     /// \return True on success. On failure \arg Error will be set to
     /// a user readable error message.
-    bool AddEmitPasses(bool Fast, std::string &Error);
+    bool AddEmitPasses(std::string &Error);
 
     void EmitAssembly();
     
@@ -150,7 +147,7 @@ FunctionPassManager *BackendConsumer::getPerFunctionPasses() const {
   return PerFunctionPasses;
 }
 
-bool BackendConsumer::AddEmitPasses(bool Fast, std::string &Error) {
+bool BackendConsumer::AddEmitPasses(std::string &Error) {
   if (OutputFile == "-" || (InputFile == "-" && OutputFile.empty())) {
     AsmOutStream = new raw_stdout_ostream();
     sys::Program::ChangeStdoutToBinary();
@@ -179,6 +176,8 @@ bool BackendConsumer::AddEmitPasses(bool Fast, std::string &Error) {
   } else if (Action == Backend_EmitLL) {
     getPerModulePasses()->add(createPrintModulePass(AsmOutStream));
   } else {
+    bool Fast = CompileOpts.OptimizationLevel == 0;
+
     // Create the TargetMachine for generating code.
     const TargetMachineRegistry::entry *TME = 
       TargetMachineRegistry::getClosestStaticTargetForModule(*TheModule, Error);
@@ -316,8 +315,6 @@ void BackendConsumer::EmitAssembly() {
   if (!TheModule || !TheTargetData)
     return;
 
-  bool Optimize = false; // FIXME
-
   // Make sure IR generation is happy with the module.
   // FIXME: Release this.
   Module *M = Gen->ReleaseModule();
@@ -331,7 +328,7 @@ void BackendConsumer::EmitAssembly() {
   CreatePasses();
 
   std::string Error;
-  if (!AddEmitPasses(!Optimize, Error)) {
+  if (!AddEmitPasses(Error)) {
     // FIXME: Don't fail this way.
     llvm::cerr << "ERROR: " << Error << "\n";
     ::exit(1);
