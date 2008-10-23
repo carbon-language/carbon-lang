@@ -18,7 +18,7 @@
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/TypeOrdering.h"
 #include "llvm/Support/GraphWriter.h"
-#include <fstream>
+#include "llvm/Support/raw_ostream.h"
 #include <map>
 
 using namespace llvm;
@@ -34,12 +34,12 @@ namespace clang {
 /// vs. non-virtual bases.
 class InheritanceHierarchyWriter {
   ASTContext& Context;
-  std::ostream &Out;
+  llvm::raw_ostream &Out;
   std::map<QualType, int, QualTypeOrdering> DirectBaseCount;
   std::set<QualType, QualTypeOrdering> KnownVirtualBases;
 
 public:
-  InheritanceHierarchyWriter(ASTContext& Context, std::ostream& Out)
+  InheritanceHierarchyWriter(ASTContext& Context, llvm::raw_ostream& Out)
     : Context(Context), Out(Out) { }
 
   void WriteGraph(QualType Type) {
@@ -56,7 +56,7 @@ protected:
   /// WriteNodeReference - Write out a reference to the given node,
   /// using a unique identifier for each direct base and for the
   /// (only) virtual base.
-  std::ostream& WriteNodeReference(QualType Type, bool FromVirtual);
+  llvm::raw_ostream& WriteNodeReference(QualType Type, bool FromVirtual);
 };
 
 void InheritanceHierarchyWriter::WriteNode(QualType Type, bool FromVirtual) {
@@ -121,7 +121,7 @@ void InheritanceHierarchyWriter::WriteNode(QualType Type, bool FromVirtual) {
 /// WriteNodeReference - Write out a reference to the given node,
 /// using a unique identifier for each direct base and for the
 /// (only) virtual base.
-std::ostream& 
+llvm::raw_ostream& 
 InheritanceHierarchyWriter::WriteNodeReference(QualType Type, 
                                                bool FromVirtual) {
   QualType CanonType = Context.getCanonicalType(Type);
@@ -155,9 +155,9 @@ void QualType::viewInheritance(ASTContext& Context) {
 
   cerr << "Writing '" << Filename << "'... ";
 
-  std::ofstream O(Filename.c_str());
+  llvm::raw_fd_ostream O(Filename.c_str(), ErrMsg);
 
-  if (O.good()) {
+  if (ErrMsg.empty()) {
     InheritanceHierarchyWriter Writer(Context, O);
     Writer.WriteGraph(*this);
     cerr << " done. \n";
@@ -167,12 +167,11 @@ void QualType::viewInheritance(ASTContext& Context) {
     // Display the graph
     DisplayGraph(Filename);
   } else {
-    cerr << "error opening file for writing!\n";
-    Filename.clear();
+    llvm::errs() << "error opening file for writing!\n";
   }
 #else
-  cerr << "QualType::viewInheritance is only available in debug "
-       << "builds on systems with Graphviz or gv!\n";
+  llvm::errs() << "QualType::viewInheritance is only available in debug "
+               << "builds on systems with Graphviz or gv!\n";
 #endif
 }
 
