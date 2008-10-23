@@ -137,30 +137,30 @@ InheritanceHierarchyWriter::WriteNodeReference(QualType Type,
 /// class using GraphViz.
 void QualType::viewInheritance(ASTContext& Context) {
   if (!(*this)->getAsRecordType()) {
-    cerr << "Type " << getAsString() << " is not a C++ class type.\n";
+    llvm::errs() << "Type " << getAsString() << " is not a C++ class type.\n";
     return;
   }
 #ifndef NDEBUG
   std::string ErrMsg;
   sys::Path Filename = sys::Path::GetTemporaryDirectory(&ErrMsg);
   if (Filename.isEmpty()) {
-    cerr << "Error: " << ErrMsg << "\n";
+    llvm::errs() << "Error: " << ErrMsg << "\n";
     return;
   }
   Filename.appendComponent(getAsString() + ".dot");
   if (Filename.makeUnique(true,&ErrMsg)) {
-    cerr << "Error: " << ErrMsg << "\n";
+    llvm::errs() << "Error: " << ErrMsg << "\n";
     return;
   }
 
-  cerr << "Writing '" << Filename << "'... ";
+  llvm::errs() << "Writing '" << Filename.c_str() << "'... ";
 
   llvm::raw_fd_ostream O(Filename.c_str(), ErrMsg);
 
   if (ErrMsg.empty()) {
     InheritanceHierarchyWriter Writer(Context, O);
     Writer.WriteGraph(*this);
-    cerr << " done. \n";
+    llvm::errs() << " done. \n";
 
     O.close();
 
