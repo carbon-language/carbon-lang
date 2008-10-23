@@ -31,6 +31,8 @@
 		3551068D0E9A8546006A4E44 /* ParseTentative.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3551068B0E9A8546006A4E44 /* ParseTentative.cpp */; };
 		3552E7550E520D80003A8CA5 /* PPCaching.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3552E7540E520D80003A8CA5 /* PPCaching.cpp */; };
 		3552E7590E520DD7003A8CA5 /* CGObjCMac.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3552E7580E520DD7003A8CA5 /* CGObjCMac.cpp */; };
+		3557D1A90EB136B100C59739 /* InheritViz.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3557D1A80EB136B100C59739 /* InheritViz.cpp */; };
+		3557D1F00EB13BB700C59739 /* SemaInherit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3557D1EF0EB13BB700C59739 /* SemaInherit.cpp */; };
 		35585DC00EAFBC4500D0A97A /* SemaOverload.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35585DBE0EAFBC4500D0A97A /* SemaOverload.cpp */; };
 		35585DC30EAFBC5F00D0A97A /* Backend.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35585DC20EAFBC5F00D0A97A /* Backend.cpp */; };
 		3558F76D0E267C8300A5B0DF /* BasicStore.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3558F76C0E267C8300A5B0DF /* BasicStore.cpp */; };
@@ -316,6 +318,8 @@
 		3552E7540E520D80003A8CA5 /* PPCaching.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PPCaching.cpp; sourceTree = "<group>"; };
 		3552E7580E520DD7003A8CA5 /* CGObjCMac.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CGObjCMac.cpp; path = lib/CodeGen/CGObjCMac.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		3553EB9A0E5F7089007D7359 /* GRStateTrait.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GRStateTrait.h; path = clang/Analysis/PathSensitive/GRStateTrait.h; sourceTree = "<group>"; };
+		3557D1A80EB136B100C59739 /* InheritViz.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = InheritViz.cpp; path = lib/AST/InheritViz.cpp; sourceTree = "<group>"; };
+		3557D1EF0EB13BB700C59739 /* SemaInherit.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SemaInherit.cpp; path = lib/Sema/SemaInherit.cpp; sourceTree = "<group>"; };
 		35585DBD0EAFBC4500D0A97A /* CXXFieldCollector.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CXXFieldCollector.h; path = lib/Sema/CXXFieldCollector.h; sourceTree = "<group>"; };
 		35585DBE0EAFBC4500D0A97A /* SemaOverload.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SemaOverload.cpp; path = lib/Sema/SemaOverload.cpp; sourceTree = "<group>"; };
 		35585DBF0EAFBC4500D0A97A /* SemaOverload.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SemaOverload.h; path = lib/Sema/SemaOverload.h; sourceTree = "<group>"; };
@@ -816,6 +820,7 @@
 		DE67E7070C020EAB00F66BC5 /* Sema */ = {
 			isa = PBXGroup;
 			children = (
+				3557D1EF0EB13BB700C59739 /* SemaInherit.cpp */,
 				35585DBD0EAFBC4500D0A97A /* CXXFieldCollector.h */,
 				35585DBE0EAFBC4500D0A97A /* SemaOverload.cpp */,
 				35585DBF0EAFBC4500D0A97A /* SemaOverload.h */,
@@ -951,6 +956,7 @@
 		DEC8D9920A9433F400353FCA /* AST */ = {
 			isa = PBXGroup;
 			children = (
+				3557D1A80EB136B100C59739 /* InheritViz.cpp */,
 				358D230A0E8BEB9D0003DDCC /* DeclGroup.cpp */,
 				35BB2D7E0D19954000944DB5 /* ASTConsumer.cpp */,
 				DE1732FF0B068B700080B521 /* ASTContext.cpp */,
@@ -1285,6 +1291,8 @@
 				35A057E70EAE2DDD0069249F /* CacheTokens.cpp in Sources */,
 				35585DC00EAFBC4500D0A97A /* SemaOverload.cpp in Sources */,
 				35585DC30EAFBC5F00D0A97A /* Backend.cpp in Sources */,
+				3557D1A90EB136B100C59739 /* InheritViz.cpp in Sources */,
+				3557D1F00EB13BB700C59739 /* SemaInherit.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1310,14 +1318,20 @@
 				GCC_USE_GCC3_PFE_SUPPORT = NO;
 				INSTALL_PATH = "$(HOME)/bin";
 				OTHER_LDFLAGS = (
+					"-lLLVMBitWriter",
+					"-lLLVMBitReader",
+					"-lLLVMAsmPrinter",
+					"-lLLVMSelectionDAG",
+					"-lLLVMCodeGen",
+					"-lLLVMipo",
+					"-lLLVMScalarOpts",
+					"-lLLVMTransformUtils",
+					"-lLLVMipa",
+					"-lLLVMAnalysis",
+					"-lLLVMTarget",
 					"-lLLVMCore",
 					"-lLLVMSupport",
 					"-lLLVMSystem",
-					"-lLLVMBitWriter",
-					"-lLLVMBitReader",
-					"-lLLVMCodeGen",
-					"-lLLVMAnalysis",
-					"-lLLVMTarget",
 				);
 				PRECOMPS_INCLUDE_HEADERS_FROM_BUILT_PRODUCTS_DIR = NO;
 				PRODUCT_NAME = clang;
@@ -1340,14 +1354,20 @@
 				GCC_USE_GCC3_PFE_SUPPORT = NO;
 				INSTALL_PATH = "$(HOME)/bin";
 				OTHER_LDFLAGS = (
+					"-lLLVMBitWriter",
+					"-lLLVMBitReader",
+					"-lLLVMAsmPrinter",
+					"-lLLVMSelectionDAG",
+					"-lLLVMCodeGen",
+					"-lLLVMipo",
+					"-lLLVMScalarOpts",
+					"-lLLVMTransformUtils",
+					"-lLLVMipa",
+					"-lLLVMAnalysis",
+					"-lLLVMTarget",
 					"-lLLVMCore",
 					"-lLLVMSupport",
 					"-lLLVMSystem",
-					"-lLLVMBitWriter",
-					"-lLLVMBitReader",
-					"-lLLVMCodeGen",
-					"-lLLVMAnalysis",
-					"-lLLVMTarget",
 				);
 				PRECOMPS_INCLUDE_HEADERS_FROM_BUILT_PRODUCTS_DIR = NO;
 				PRODUCT_NAME = clang;
