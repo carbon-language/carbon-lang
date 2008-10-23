@@ -49,6 +49,11 @@ NewHeuristic("new-spilling-heuristic",
              cl::desc("Use new spilling heuristic"),
              cl::init(false), cl::Hidden);
 
+static cl::opt<bool>
+PreSplitIntervals("pre-alloc-split",
+                  cl::desc("Pre-register allocation live interval splitting"),
+                  cl::init(false), cl::Hidden);
+
 static RegisterRegAlloc
 linearscanRegAlloc("linearscan", "linear scan register allocator",
                    createLinearScanRegisterAllocator);
@@ -113,6 +118,8 @@ namespace {
       // Make sure PassManager knows which analyses to make available
       // to coalescing and which analyses coalescing invalidates.
       AU.addRequiredTransitive<RegisterCoalescer>();
+      if (PreSplitIntervals)
+        AU.addRequiredID(PreAllocSplittingID);
       AU.addRequired<LiveStacks>();
       AU.addPreserved<LiveStacks>();
       AU.addRequired<MachineLoopInfo>();

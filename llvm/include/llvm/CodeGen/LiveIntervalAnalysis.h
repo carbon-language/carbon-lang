@@ -219,6 +219,39 @@ namespace llvm {
       return i2miMap_[index];
     }
 
+    /// hasGapBeforeInstr - Return true if the previous instruction slot,
+    /// i.e. Index - InstrSlots::NUM, is not occupied.
+    bool hasGapBeforeInstr(unsigned Index) {
+      Index = getBaseIndex(Index - InstrSlots::NUM);
+      return getInstructionFromIndex(Index) == 0;
+    }
+
+    /// findGapBeforeInstr - Find an empty instruction slot before the
+    /// specified index. If "Furthest" is true, find one that's furthest
+    /// away from the index (but before any index that's occupied).
+    unsigned findGapBeforeInstr(unsigned Index, bool Furthest = false) {
+      Index = getBaseIndex(Index - InstrSlots::NUM);
+      if (getInstructionFromIndex(Index))
+        return 0;  // No gap!
+      if (!Furthest)
+        return Index;
+      unsigned PrevIndex = getBaseIndex(Index - InstrSlots::NUM);
+      while (getInstructionFromIndex(Index)) {
+        Index = PrevIndex;
+        PrevIndex = getBaseIndex(Index - InstrSlots::NUM);
+      }
+      return Index;
+    }
+
+    /// InsertMachineInstrInMaps - Insert the specified machine instruction
+    /// into the instruction index map at the given index.
+    void InsertMachineInstrInMaps(MachineInstr *MI, unsigned Index) {
+      i2miMap_[Index / InstrSlots::NUM] = MI;
+      Mi2IndexMap::iterator it = mi2iMap_.find(MI);
+      assert(it == mi2iMap_.end() && "Already in map!");
+      mi2iMap_[MI] = Index;
+    }
+
     /// conflictsWithPhysRegDef - Returns true if the specified register
     /// is defined during the duration of the specified interval.
     bool conflictsWithPhysRegDef(const LiveInterval &li, VirtRegMap &vrm,
