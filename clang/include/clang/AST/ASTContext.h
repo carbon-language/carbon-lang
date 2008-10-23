@@ -456,6 +456,18 @@ public:
   QualType getCorrespondingUnsignedType(QualType T);
 
   //===--------------------------------------------------------------------===//
+  //                    Type Iterators.
+  //===--------------------------------------------------------------------===//
+  
+  typedef std::vector<Type*>::iterator       type_iterator;
+  typedef std::vector<Type*>::const_iterator const_type_iterator;
+  
+  type_iterator types_begin() { return Types.begin(); }
+  type_iterator types_end() { return Types.end(); }
+  const_type_iterator types_begin() const { return Types.begin(); }
+  const_type_iterator types_end() const { return Types.end(); }  
+  
+  //===--------------------------------------------------------------------===//
   //                    Serialization
   //===--------------------------------------------------------------------===//
 
