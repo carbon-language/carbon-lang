@@ -40,10 +40,29 @@ public:
   static bool classof(const CXXFieldDecl *D) { return true; }
 };
 
-/// BaseSpecifier - A base class of a C++ class.
+/// CXXBaseSpecifier - A base class of a C++ class.
+///
+/// Each CXXBaseSpecifier represents a single, direct base class (or
+/// struct) of a C++ class (or struct). It specifies the type of that
+/// base class, whether it is a virtual or non-virtual base, and what
+/// level of access (public, protected, private) is used for the
+/// derivation. For example:
+///
+/// @code
+///   class A { };
+///   class B { };
+///   class C : public virtual A, protected B { };
+/// @endcode
+///
+/// In this code, C will have two CXXBaseSpecifiers, one for "public
+/// virtual A" and the other for "protected B".
 class CXXBaseSpecifier {
+  /// Range - The source code range that covers the full base
+  /// specifier, including the "virtual" (if present) and access
+  /// specifier (if present).
   SourceRange Range;
 
+  /// Virtual - Whether this is a virtual base class or not.
   bool Virtual : 1;
 
   /// BaseOfClass - Whether this is the base of a class (true) or of a
@@ -52,20 +71,21 @@ class CXXBaseSpecifier {
   /// used for semantic analysis.
   bool BaseOfClass : 1; 
 
-  /// Access specifier as written in the source code (which may be
-  /// AS_none). The actual type of data stored here is an
+  /// Access - Access specifier as written in the source code (which
+  /// may be AS_none). The actual type of data stored here is an
   /// AccessSpecifier, but we use "unsigned" here to work around a
   /// VC++ bug.
   unsigned Access : 2;
 
+  /// BaseType - The type of the base class. This will be a class or
+  /// struct (or a typedef of such).
   QualType BaseType;
   
+public:
+  CXXBaseSpecifier() { }
+
   CXXBaseSpecifier(SourceRange R, bool V, bool BC, AccessSpecifier A, QualType T)
     : Range(R), Virtual(V), BaseOfClass(BC), Access(A), BaseType(T) { }
-
-public:
-  static CXXBaseSpecifier *Create(ASTContext &C, SourceRange R, bool V, bool BC, 
-                                  AccessSpecifier A, QualType T);
 
   /// getSourceRange - Retrieves the source range that contains the
   /// entire base specifier.
@@ -108,7 +128,7 @@ public:
 class CXXRecordDecl : public RecordDecl, public DeclContext {
   /// Bases - Base classes of this class.
   /// FIXME: This is wasted space for a union.
-  CXXBaseSpecifier **Bases;
+  CXXBaseSpecifier *Bases;
 
   /// NumBases - The number of base class specifiers in Bases.
   unsigned NumBases;
@@ -121,31 +141,30 @@ class CXXRecordDecl : public RecordDecl, public DeclContext {
   ~CXXRecordDecl();
 
 public:
+  /// base_class_iterator - Iterator that traverses the base classes
+  /// of a clas.
+  typedef CXXBaseSpecifier*       base_class_iterator;
+
+  /// base_class_const_iterator - Iterator that traverses the base
+  /// classes of a clas.
+  typedef const CXXBaseSpecifier* base_class_const_iterator;
+
   static CXXRecordDecl *Create(ASTContext &C, TagKind TK, DeclContext *DC,
                                SourceLocation L, IdentifierInfo *Id,
                                CXXRecordDecl* PrevDecl=0);
   
   /// setBases - Sets the base classes of this struct or class.
-  void setBases(CXXBaseSpecifier **Bases, unsigned NumBases) {
-    this->Bases = Bases;
-    this->NumBases = NumBases;
-  }
+  void setBases(CXXBaseSpecifier const * const *Bases, unsigned NumBases);
 
   /// getNumBases - Retrieves the number of base classes of this
   /// class.
   unsigned getNumBases() const { return NumBases; }
 
-  /// getBase - Retrieve the ith base class.
-  CXXBaseSpecifier *getBase(unsigned i) { 
-    assert(i < NumBases && "Base index out of range");
-    return Bases[i];
-  }
+  base_class_iterator       bases_begin()       { return Bases; }
+  base_class_const_iterator bases_begin() const { return Bases; }
+  base_class_iterator       bases_end()         { return Bases + NumBases; }
+  base_class_const_iterator bases_end()   const { return Bases + NumBases; }
 
-  /// getBase - Retrieve the ith base class.
-  const CXXBaseSpecifier *getBase(unsigned i) const { 
-    assert(i < NumBases && "Base index out of range");
-    return Bases[i];
-  }
 
   const CXXFieldDecl *getMember(unsigned i) const {
     return cast<const CXXFieldDecl>(RecordDecl::getMember(i));

@@ -299,11 +299,8 @@ Sema::ActOnBaseSpecifier(DeclTy *classdecl, SourceRange SpecifierRange,
   }
 
   // Create the base specifier.
-  CXXBaseSpecifier *BS = CXXBaseSpecifier::Create(Context, SpecifierRange, 
-                                                  Virtual, 
-                                                  BaseType->isClassType(),
-                                                  Access, BaseType);
-  return BS;
+  return new CXXBaseSpecifier(SpecifierRange, Virtual, 
+                              BaseType->isClassType(), Access, BaseType);
 }
 
 /// ActOnBaseSpecifiers - Attach the given base specifiers to the
@@ -316,34 +313,45 @@ void Sema::ActOnBaseSpecifiers(DeclTy *ClassDecl, BaseTy **Bases,
 
   // Used to keep track of which base types we have already seen, so
   // that we can properly diagnose redundant direct base types. Note
-  // that the key is always the canonical type.
+  // that the key is always the unqualified canonical type of the base
+  // class.
   std::map<QualType, CXXBaseSpecifier*, QualTypeOrdering> KnownBaseTypes;
 
   // Copy non-redundant base specifiers into permanent storage.
-  CXXBaseSpecifier **InBaseSpecs = (CXXBaseSpecifier **)Bases;
-  CXXBaseSpecifier **StoredBaseSpecs = new CXXBaseSpecifier* [NumBases];
-  unsigned outIdx = 0;
-  for (unsigned inIdx = 0; inIdx < NumBases; ++inIdx) {
+  CXXBaseSpecifier **BaseSpecs = (CXXBaseSpecifier **)Bases;
+  unsigned NumGoodBases = 0;
+  for (unsigned idx = 0; idx < NumBases; ++idx) {
     QualType NewBaseType 
-      = Context.getCanonicalType(InBaseSpecs[inIdx]->getType());
+      = Context.getCanonicalType(BaseSpecs[idx]->getType());
+    NewBaseType = NewBaseType.getUnqualifiedType();
+
     if (KnownBaseTypes[NewBaseType]) {
       // C++ [class.mi]p3:
       //   A class shall not be specified as a direct base class of a
       //   derived class more than once.
-      Diag(InBaseSpecs[inIdx]->getSourceRange().getBegin(),
+      Diag(BaseSpecs[idx]->getSourceRange().getBegin(),
            diag::err_duplicate_base_class, 
            KnownBaseTypes[NewBaseType]->getType().getAsString(),
-           InBaseSpecs[inIdx]->getSourceRange());
+           BaseSpecs[idx]->getSourceRange());
+
+      // Delete the duplicate base class specifier; we're going to
+      // overwrite its pointer later.
+      delete BaseSpecs[idx];
     } else {
       // Okay, add this new base class.
-      KnownBaseTypes[NewBaseType] = InBaseSpecs[inIdx];
-      StoredBaseSpecs[outIdx++] = InBaseSpecs[inIdx];
+      KnownBaseTypes[NewBaseType] = BaseSpecs[idx];
+      BaseSpecs[NumGoodBases++] = BaseSpecs[idx];
     }
   }
 
   // Attach the remaining base class specifiers to the derived class.
   CXXRecordDecl *Decl = (CXXRecordDecl*)ClassDecl;
-  Decl->setBases(StoredBaseSpecs, outIdx);
+  Decl->setBases(BaseSpecs, NumGoodBases);
+
+  // Delete the remaining (good) base class specifiers, since their
+  // data has been copied into the CXXRecordDecl.
+  for (unsigned idx = 0; idx < NumGoodBases; ++idx)
+    delete BaseSpecs[idx];
 }
 
 //===----------------------------------------------------------------------===//

@@ -26,14 +26,6 @@ CXXFieldDecl *CXXFieldDecl::Create(ASTContext &C, CXXRecordDecl *RD,
   return new (Mem) CXXFieldDecl(RD, L, Id, T, BW);
 }
 
-CXXBaseSpecifier *CXXBaseSpecifier::Create(ASTContext &C, SourceRange R, bool V, 
-                                           bool BC, AccessSpecifier A, QualType T)
-{
-  void *Mem = C.getAllocator().Allocate<CXXBaseSpecifier>();
-  CXXBaseSpecifier* BS = new (Mem) CXXBaseSpecifier(R, V, BC, A, T);
-  return BS;
-}
-
 CXXRecordDecl *CXXRecordDecl::Create(ASTContext &C, TagKind TK, DeclContext *DC,
                                      SourceLocation L, IdentifierInfo *Id,
                                      CXXRecordDecl* PrevDecl) {
@@ -44,9 +36,19 @@ CXXRecordDecl *CXXRecordDecl::Create(ASTContext &C, TagKind TK, DeclContext *DC,
 }
 
 CXXRecordDecl::~CXXRecordDecl() {
-  for (unsigned i = 0; i < NumBases; ++i)
-    delete Bases[i];
   delete [] Bases;
+}
+
+void 
+CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases, 
+                        unsigned NumBases) {
+  if (this->Bases)
+    delete [] this->Bases;
+
+  this->Bases = new CXXBaseSpecifier[NumBases];
+  this->NumBases = NumBases;
+  for (unsigned i = 0; i < NumBases; ++i)
+    this->Bases[i] = *Bases[i];
 }
 
 CXXMethodDecl *

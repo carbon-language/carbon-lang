@@ -39,8 +39,8 @@ bool Sema::IsDerivedFrom(QualType Derived, QualType Base)
   if (const RecordType *DerivedType = Derived->getAsRecordType()) {
     const CXXRecordDecl *Decl 
       = static_cast<const CXXRecordDecl *>(DerivedType->getDecl());
-    for (unsigned idx = 0; idx < Decl->getNumBases(); ++idx) {
-      const CXXBaseSpecifier *BaseSpec = Decl->getBase(idx);
+    for (CXXRecordDecl::base_class_const_iterator BaseSpec = Decl->bases_begin();
+         BaseSpec != Decl->bases_end(); ++BaseSpec) {
       if (Context.getCanonicalType(BaseSpec->getType()) == Base
           || IsDerivedFrom(BaseSpec->getType(), Base))
         return true;
