@@ -1,4 +1,5 @@
 // RUN: clang -checker-cfref -verify %s
+// XFAIL
 
 typedef const struct __CFString * CFStringRef;
 typedef const struct __CFAllocator * CFAllocatorRef;
@@ -19,8 +20,8 @@ typedef signed char BOOL;
 
 - (NSURL *)myMethod:(NSString *)inString
 {
-	NSURL *url = (NSURL *)CFURLCreateWithString(0, (CFStringRef)inString, 0);
-	return url; // expected-warning{{leak}}
+  NSURL *url = (NSURL *)CFURLCreateWithString(0, (CFStringRef)inString, 0);
+  return url; // expected-warning{{leak}}
 }
 
 @end
