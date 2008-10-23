@@ -273,6 +273,8 @@ class ElementRegion : public SubRegion {
 
 public:
 
+  SVal getIndex() const { return Index; }
+
   void Profile(llvm::FoldingSetNodeID& ID) const;
 
   static bool classof(const MemRegion* R) {
