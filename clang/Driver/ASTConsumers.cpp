@@ -535,6 +535,35 @@ namespace {
 ASTConsumer *clang::CreateASTViewer() { return new ASTViewer(); }
 
 //===----------------------------------------------------------------------===//
+/// InheritanceViewer - C++ Inheritance Visualization
+
+namespace {
+class InheritanceViewer : public ASTConsumer {
+  const std::string clsname;
+public:
+  InheritanceViewer(const std::string& cname) : clsname(cname) {}
+  
+  void HandleTranslationUnit(TranslationUnit& TU) {
+    ASTContext& C = TU.getContext();
+    for (ASTContext::type_iterator I=C.types_begin(),E=C.types_end(); I!=E; ++I)
+      if (CXXRecordType *T = dyn_cast<CXXRecordType>(*I)) {
+        CXXRecordDecl* D = T->getDecl();
+        // FIXME: This lookup needs to be generalized to handle namespaces and
+        // (when we support them) templates.
+        if (D->getName() == clsname) {
+          QualType QT(T, 0);
+          QT.viewInheritance(C);      
+        }
+      }
+  }
+}; 
+}
+
+ASTConsumer *clang::CreateInheritanceViewer(const std::string& clsname) {
+  return new InheritanceViewer(clsname);
+}
+
+//===----------------------------------------------------------------------===//
 // AST Serializer
 
 namespace {

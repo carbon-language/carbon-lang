@@ -90,7 +90,8 @@ enum ProgActions {
   DumpTokens,                   // Dump out preprocessed tokens.
   DumpRawTokens,                // Dump out raw tokens.
   RunAnalysis,                  // Run one or more source code analyses. 
-  GeneratePCH                   // Generate precompiled header.
+  GeneratePCH,                  // Generate precompiled header.
+  InheritanceView               // View C++ inheritance for a specified class.
 };
 
 static llvm::cl::opt<ProgActions> 
@@ -176,7 +177,16 @@ NoCaretDiagnostics("fno-caret-diagnostics",
 
 
 //===----------------------------------------------------------------------===//
-// Analyzer Options
+// C++ Visualization.
+//===----------------------------------------------------------------------===//
+
+static llvm::cl::opt<std::string>
+InheritanceViewCls("cxx-inheritance-view",
+                   llvm::cl::value_desc("class name"),
+                   llvm::cl::desc("View C++ inhertance for a specified class"));
+
+//===----------------------------------------------------------------------===//
+// Analyzer Options.
 //===----------------------------------------------------------------------===//
 
 static llvm::cl::opt<bool>
@@ -1143,6 +1153,9 @@ static ASTConsumer* CreateASTConsumer(const std::string& InFile,
     case EmitHTML:
       return CreateHTMLPrinter(OutputFile, Diag, PP, PPF);
 
+    case InheritanceView:
+      return CreateInheritanceViewer(InheritanceViewCls);
+      
     case TestSerialization:
       return CreateSerializationTest(Diag, FileMgr);
       
@@ -1428,6 +1441,8 @@ int main(int argc, char **argv) {
   // Are we invoking one or more source analyses?
   if (!AnalysisList.empty() && ProgAction == ParseSyntaxOnly)
     ProgAction = RunAnalysis;  
+  else if (!InheritanceViewCls.empty())  // C++ visualization?
+    ProgAction = InheritanceView;
     
   llvm::OwningPtr<SourceManager> SourceMgr;
   
