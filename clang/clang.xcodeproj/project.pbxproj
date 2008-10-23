@@ -31,6 +31,8 @@
 		3551068D0E9A8546006A4E44 /* ParseTentative.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3551068B0E9A8546006A4E44 /* ParseTentative.cpp */; };
 		3552E7550E520D80003A8CA5 /* PPCaching.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3552E7540E520D80003A8CA5 /* PPCaching.cpp */; };
 		3552E7590E520DD7003A8CA5 /* CGObjCMac.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3552E7580E520DD7003A8CA5 /* CGObjCMac.cpp */; };
+		35585DC00EAFBC4500D0A97A /* SemaOverload.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35585DBE0EAFBC4500D0A97A /* SemaOverload.cpp */; };
+		35585DC30EAFBC5F00D0A97A /* Backend.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35585DC20EAFBC5F00D0A97A /* Backend.cpp */; };
 		3558F76D0E267C8300A5B0DF /* BasicStore.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3558F76C0E267C8300A5B0DF /* BasicStore.cpp */; };
 		356EF9B50C8F7DDF006650F5 /* LiveVariables.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 356EF9B40C8F7DDF006650F5 /* LiveVariables.cpp */; };
 		35707EFE0CD0F5CC000B2204 /* SourceLocation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35707EFD0CD0F5CC000B2204 /* SourceLocation.cpp */; };
@@ -314,6 +316,10 @@
 		3552E7540E520D80003A8CA5 /* PPCaching.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PPCaching.cpp; sourceTree = "<group>"; };
 		3552E7580E520DD7003A8CA5 /* CGObjCMac.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CGObjCMac.cpp; path = lib/CodeGen/CGObjCMac.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		3553EB9A0E5F7089007D7359 /* GRStateTrait.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GRStateTrait.h; path = clang/Analysis/PathSensitive/GRStateTrait.h; sourceTree = "<group>"; };
+		35585DBD0EAFBC4500D0A97A /* CXXFieldCollector.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CXXFieldCollector.h; path = lib/Sema/CXXFieldCollector.h; sourceTree = "<group>"; };
+		35585DBE0EAFBC4500D0A97A /* SemaOverload.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SemaOverload.cpp; path = lib/Sema/SemaOverload.cpp; sourceTree = "<group>"; };
+		35585DBF0EAFBC4500D0A97A /* SemaOverload.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SemaOverload.h; path = lib/Sema/SemaOverload.h; sourceTree = "<group>"; };
+		35585DC20EAFBC5F00D0A97A /* Backend.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Backend.cpp; path = Driver/Backend.cpp; sourceTree = "<group>"; };
 		3558F76C0E267C8300A5B0DF /* BasicStore.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = BasicStore.cpp; path = lib/Analysis/BasicStore.cpp; sourceTree = "<group>"; };
 		3558F76F0E267C9A00A5B0DF /* Store.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Store.h; path = clang/Analysis/PathSensitive/Store.h; sourceTree = "<group>"; };
 		355CF6820C90A8B600A08AA3 /* LocalCheckers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LocalCheckers.h; path = clang/Analysis/LocalCheckers.h; sourceTree = "<group>"; };
@@ -700,6 +706,7 @@
 		359603420E49495900C6282B /* Driver */ = {
 			isa = PBXGroup;
 			children = (
+				35585DC20EAFBC5F00D0A97A /* Backend.cpp */,
 				359763250E633C7500B68AB7 /* HTMLDiagnostics.cpp */,
 				350F4B460E5F32E100A21EA9 /* InitHeaderSearch.cpp */,
 				359603430E49496E00C6282B /* TextDiagnosticBuffer.cpp */,
@@ -809,6 +816,9 @@
 		DE67E7070C020EAB00F66BC5 /* Sema */ = {
 			isa = PBXGroup;
 			children = (
+				35585DBD0EAFBC4500D0A97A /* CXXFieldCollector.h */,
+				35585DBE0EAFBC4500D0A97A /* SemaOverload.cpp */,
+				35585DBF0EAFBC4500D0A97A /* SemaOverload.h */,
 				3527124F0DAFE54700C76352 /* IdentifierResolver.h */,
 				352712500DAFE54700C76352 /* IdentifierResolver.cpp */,
 				DE67E7190C020F4F00F66BC5 /* ParseAST.cpp */,
@@ -1273,6 +1283,8 @@
 				35A057E20EAE2D950069249F /* RegionStore.cpp in Sources */,
 				35A057E30EAE2D950069249F /* SVals.cpp in Sources */,
 				35A057E70EAE2DDD0069249F /* CacheTokens.cpp in Sources */,
+				35585DC00EAFBC4500D0A97A /* SemaOverload.cpp in Sources */,
+				35585DC30EAFBC5F00D0A97A /* Backend.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
