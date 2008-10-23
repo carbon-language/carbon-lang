@@ -24,6 +24,7 @@
 
 #include "clang.h"
 #include "ASTConsumers.h"
+#include "clang/Driver/CompileOptions.h"
 #include "clang/Driver/HTMLDiagnostics.h"
 #include "clang/Driver/InitHeaderSearch.h"
 #include "clang/Driver/TextDiagnosticBuffer.h"
@@ -1084,6 +1085,37 @@ static void ParseFile(Preprocessor &PP, MinimalAction *PA) {
 }
 
 //===----------------------------------------------------------------------===//
+// Code generation options
+//===----------------------------------------------------------------------===//
+
+static llvm::cl::opt<bool>
+OptSize("Os", 
+       llvm::cl::desc("Optimize for size"));
+
+// It might be nice to add bounds to the CommandLine library directly.
+struct OptLevelParser : public llvm::cl::parser<unsigned> {
+  bool parse(llvm::cl::Option &O, const char *ArgName,
+             const std::string &Arg, unsigned &Val) {
+    if (llvm::cl::parser<unsigned>::parse(O, ArgName, Arg, Val))
+      return true;
+    // FIXME: Support -O4.
+    if (Val > 3)
+      return O.error(": '" + Arg + "' invalid optimization level!");
+    return false;
+  }
+};
+static llvm::cl::opt<unsigned, false, OptLevelParser>
+OptLevel("O", llvm::cl::Prefix,
+         llvm::cl::desc("Optimization level"),
+         llvm::cl::init(0));
+
+static void InitializeCompileOptions(CompileOptions &Opts) {
+  Opts.OptimizationLevel = OptLevel;
+  Opts.OptimizeSize = OptSize;
+  // FIXME: Wire other options.
+}
+
+//===----------------------------------------------------------------------===//
 // Main driver
 //===----------------------------------------------------------------------===//
 
@@ -1115,14 +1147,21 @@ static ASTConsumer* CreateASTConsumer(const std::string& InFile,
       return CreateSerializationTest(Diag, FileMgr);
       
     case EmitAssembly:
-      return CreateBackendConsumer(Backend_EmitAssembly, Diag, LangOpts, 
-                                   InFile, OutputFile, GenerateDebugInfo);
     case EmitLLVM:
-      return CreateBackendConsumer(Backend_EmitLL, Diag, LangOpts, 
+    case EmitBC: {
+      BackendAction Act;
+      if (ProgAction == EmitAssembly) {
+        Act = Backend_EmitAssembly;
+      } else if (ProgAction == EmitLLVM) {
+        Act = Backend_EmitLL;
+      } else {
+        Act = Backend_EmitBC;        
+      }
+      CompileOptions Opts;
+      InitializeCompileOptions(Opts);
+      return CreateBackendConsumer(Act, Diag, LangOpts, Opts, 
                                    InFile, OutputFile, GenerateDebugInfo);
-    case EmitBC:
-      return CreateBackendConsumer(Backend_EmitBC, Diag, LangOpts, 
-                                   InFile, OutputFile, GenerateDebugInfo);
+    }
 
     case SerializeAST:
       // FIXME: Allow user to tailor where the file is written.

@@ -27,9 +27,10 @@ namespace clang {
 class ASTConsumer;
 class Diagnostic;
 class FileManager;
-struct LangOptions;
 class Preprocessor;
 class PreprocessorFactory;
+struct CompileOptions;
+struct LangOptions;
 
 ASTConsumer *CreateASTPrinter(llvm::raw_ostream* OS = NULL);
 
@@ -50,6 +51,7 @@ enum BackendAction {
 ASTConsumer *CreateBackendConsumer(BackendAction Action,
                                    Diagnostic &Diags,
                                    const LangOptions &Features,
+                                   const CompileOptions &CompileOpts,
                                    const std::string& InFile,
                                    const std::string& OutFile,
                                    bool GenerateDebugInfo);
