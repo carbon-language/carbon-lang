@@ -25,6 +25,7 @@ using namespace llvm;
 
 namespace clang {
 
+#ifndef NDEBUG
 /// InheritanceHierarchyWriter - Helper class that writes out a
 /// GraphViz file that diagrams the inheritance hierarchy starting at
 /// a given C++ class type. Note that we do not use LLVM's
@@ -130,6 +131,7 @@ InheritanceHierarchyWriter::WriteNodeReference(QualType Type,
     Out << "_" << DirectBaseCount[CanonType];
   return Out;
 }
+#endif
 
 /// viewInheritance - Display the inheritance hierarchy of this C++
 /// class using GraphViz.
