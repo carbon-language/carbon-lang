@@ -2153,6 +2153,7 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation loc,
       Diag(loc, diag::ext_typecheck_comparison_of_distinct_pointers,
            lType.getAsString(), rType.getAsString(),
            lex->getSourceRange(), rex->getSourceRange());
+      ImpCastExprToType(rex, lType);
       return Context.IntTy;
     }
     if (ObjCQualifiedIdTypesAreCompatible(lType, rType, true)) {
@@ -2161,8 +2162,9 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation loc,
     } else {
       if ((lType->isObjCQualifiedIdType() && rType->isObjCQualifiedIdType())) {
         Diag(loc, diag::warn_incompatible_qualified_id_operands, 
-             lex->getType().getAsString(), rex->getType().getAsString(),
+             lType.getAsString(), rType.getAsString(),
              lex->getSourceRange(), rex->getSourceRange());
+        ImpCastExprToType(rex, lType);
         return Context.IntTy;
       }
     }
