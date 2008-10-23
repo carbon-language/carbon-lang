@@ -572,7 +572,7 @@ bool DAGTypeLegalizer::PromoteIntegerOperand(SDNode *N, unsigned OpNo) {
 
   if (TLI.getOperationAction(N->getOpcode(), N->getOperand(OpNo).getValueType())
       == TargetLowering::Custom)
-    Res = TLI.LowerOperation(SDValue(N, OpNo), DAG);
+    Res = TLI.LowerOperation(SDValue(N, 0), DAG);
 
   if (Res.getNode() == 0) {
     switch (N->getOpcode()) {
@@ -1856,7 +1856,7 @@ bool DAGTypeLegalizer::ExpandIntegerOperand(SDNode *N, unsigned OpNo) {
 
   if (TLI.getOperationAction(N->getOpcode(), N->getOperand(OpNo).getValueType())
       == TargetLowering::Custom)
-    Res = TLI.LowerOperation(SDValue(N, OpNo), DAG);
+    Res = TLI.LowerOperation(SDValue(N, 0), DAG);
 
   if (Res.getNode() == 0) {
     switch (N->getOpcode()) {
