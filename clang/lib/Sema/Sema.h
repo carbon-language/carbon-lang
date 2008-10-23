@@ -385,6 +385,10 @@ private:
   CompareQualificationConversions(const StandardConversionSequence& SCS1,
                                   const StandardConversionSequence& SCS2);
 
+  ImplicitConversionSequence::CompareKind
+  CompareDerivedToBaseConversions(const StandardConversionSequence& SCS1,
+                                  const StandardConversionSequence& SCS2);
+
   /// OverloadingResult - Capture the result of performing overload
   /// resolution.
   enum OverloadingResult {
@@ -752,14 +756,6 @@ public:
   //===--------------------------------------------------------------------===//
   // C++ Classes
   //
-  /// ActOnBaseSpecifier - Parsed a base specifier
-  virtual BaseResult ActOnBaseSpecifier(DeclTy *classdecl, 
-                                        SourceRange SpecifierRange,
-                                        bool Virtual, AccessSpecifier Access,
-                                        TypeTy *basetype, SourceLocation BaseLoc);
-  
-  virtual void ActOnBaseSpecifiers(DeclTy *ClassDecl, BaseTy **Bases, 
-                                   unsigned NumBases);
 
   virtual void ActOnStartCXXClassDef(Scope *S, DeclTy *TagDecl,
                                      SourceLocation LBrace);
@@ -775,6 +771,20 @@ public:
 
   virtual void ActOnFinishCXXClassDef(DeclTy *TagDecl);
   
+  //===--------------------------------------------------------------------===//
+  // C++ Derived Classes
+  //
+
+  /// ActOnBaseSpecifier - Parsed a base specifier
+  virtual BaseResult ActOnBaseSpecifier(DeclTy *classdecl, 
+                                        SourceRange SpecifierRange,
+                                        bool Virtual, AccessSpecifier Access,
+                                        TypeTy *basetype, SourceLocation BaseLoc);
+
+  virtual void ActOnBaseSpecifiers(DeclTy *ClassDecl, BaseTy **Bases, 
+                                   unsigned NumBases);
+
+  bool IsDerivedFrom(QualType Derived, QualType Base);
 
   // Objective-C declarations.
   virtual DeclTy *ActOnStartClassInterface(SourceLocation AtInterfaceLoc,

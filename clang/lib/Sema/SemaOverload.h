@@ -97,17 +97,17 @@ namespace clang {
     bool Deprecated : 1;
 
     /// FromType - The type that this conversion is converting
-    /// from. This is an opaque pointer for that can be translated
-    /// into a QualType.
+    /// from. This is an opaque pointer that can be translated into a
+    /// QualType.
     void *FromTypePtr;
 
     /// ToType - The type that this conversion is converting to. This
-    /// is an opaque pointer for that can be translated into a
-    /// QualType.
+    /// is an opaque pointer that can be translated into a QualType.
     void *ToTypePtr;
 
     ImplicitConversionRank getRank() const;
     bool isPointerConversionToBool() const;
+    bool isPointerConversionToVoidPointer(ASTContext& Context) const;
     void DebugPrint() const;
   };
 

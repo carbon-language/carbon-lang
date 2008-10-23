@@ -185,3 +185,32 @@ void test_quals_ranking(int * p, int volatile *pq, int * * pp, int * * * ppp) {
   quals_rank3(pq);
 }
 
+// Test overloading based on derived-to-base conversions
+class A { };
+class B : public A { };
+class C : public B { };
+class D : public C { };
+
+int* derived1(A*);
+char* derived1(const A*);
+float* derived1(void*);
+
+int* derived2(A*);
+float* derived2(B*);
+
+int* derived3(A*);
+float* derived3(const B*);
+char* derived3(C*);
+
+void test_derived(B* b, B const* bc, C* c, const C* cc, void* v, D* d) {
+  int* d1 = derived1(b);
+  char* d2 = derived1(bc);
+  int* d3 = derived1(c);
+  char* d4 = derived1(cc);
+  float* d5 = derived1(v);
+
+  float* d6 = derived2(b);
+  float* d7 = derived2(c);
+
+  char* d8 = derived3(d);
+}

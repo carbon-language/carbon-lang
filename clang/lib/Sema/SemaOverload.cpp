@@ -121,6 +121,30 @@ bool StandardConversionSequence::isPointerConversionToBool() const
   return false;
 }
 
+/// isPointerConversionToVoidPointer - Determines whether this
+/// conversion is a conversion of a pointer to a void pointer. This is
+/// used as part of the ranking of standard conversion sequences (C++
+/// 13.3.3.2p4).
+bool 
+StandardConversionSequence::
+isPointerConversionToVoidPointer(ASTContext& Context) const
+{
+  QualType FromType = QualType::getFromOpaquePtr(FromTypePtr);
+  QualType ToType = QualType::getFromOpaquePtr(ToTypePtr);
+
+  // Note that FromType has not necessarily been transformed by the
+  // array-to-pointer implicit conversion, so check for its presence
+  // and redo the conversion to get a pointer.
+  if (First == ICK_Array_To_Pointer)
+    FromType = Context.getArrayDecayedType(FromType);
+
+  if (Second == ICK_Pointer_Conversion)
+    if (const PointerType* ToPtrType = ToType->getAsPointerType())
+      return ToPtrType->getPointeeType()->isVoidType();
+
+  return false;
+}
+
 /// DebugPrint - Print this standard conversion sequence to standard
 /// error. Useful for debugging overloading issues.
 void StandardConversionSequence::DebugPrint() const {
@@ -635,9 +659,45 @@ bool Sema::IsPointerConversion(Expr *From, QualType FromType, QualType ToType,
     return true;
   }
 
-  // FIXME: An rvalue of type "pointer to cv D," where D is a class
-  // type, can be converted to an rvalue of type "pointer to cv B,"
-  // where B is a base class (clause 10) of D (C++ 4.10p3).
+  // C++ [conv.ptr]p3:
+  // 
+  //   An rvalue of type "pointer to cv D," where D is a class type,
+  //   can be converted to an rvalue of type "pointer to cv B," where
+  //   B is a base class (clause 10) of D. If B is an inaccessible
+  //   (clause 11) or ambiguous (10.2) base class of D, a program that
+  //   necessitates this conversion is ill-formed. The result of the
+  //   conversion is a pointer to the base class sub-object of the
+  //   derived class object. The null pointer value is converted to
+  //   the null pointer value of the destination type.
+  //
+  // Note that we do not check for ambiguity or inaccessibility here.
+  if (const PointerType *FromPtrType = FromType->getAsPointerType())
+    if (const PointerType *ToPtrType = ToType->getAsPointerType()) {
+      if (FromPtrType->getPointeeType()->isRecordType() &&
+          ToPtrType->getPointeeType()->isRecordType() &&
+          IsDerivedFrom(FromPtrType->getPointeeType(), 
+                        ToPtrType->getPointeeType())) {
+        // The conversion is okay. Now, we need to produce the type
+        // that results from this conversion, which will have the same
+        // qualifiers as the incoming type.
+        QualType CanonFromPointee 
+          = Context.getCanonicalType(FromPtrType->getPointeeType());
+        QualType ToPointee = ToPtrType->getPointeeType();
+        QualType CanonToPointee = Context.getCanonicalType(ToPointee);
+        unsigned Quals = CanonFromPointee.getCVRQualifiers();
+
+        if (CanonToPointee.getCVRQualifiers() == Quals) {
+          // ToType is exactly the type we want. Use it.
+          ConvertedType = ToType;
+        } else {
+          // Build a new type with the right qualifiers.
+          ConvertedType
+            = Context.getPointerType(CanonToPointee.getQualifiedType(Quals));
+        }
+        return true;
+      }
+    }
+
   return false;
 }
 
@@ -790,14 +850,30 @@ Sema::CompareStandardConversionSequences(const StandardConversionSequence& SCS1,
              ? ImplicitConversionSequence::Better
              : ImplicitConversionSequence::Worse;
 
-  // FIXME: The other bullets in (C++ 13.3.3.2p4) require support
-  // for derived classes.
+  // C++ [over.ics.rank]p4b2:
+  //
+  //   If class B is derived directly or indirectly from class A,
+  //   conversion of B* to A* is better than conversion of B* to void*,
+  //   and (FIXME) conversion of A* to void* is better than conversion of B*
+  //   to void*.
+  bool SCS1ConvertsToVoid 
+    = SCS1.isPointerConversionToVoidPointer(Context);
+  bool SCS2ConvertsToVoid 
+    = SCS2.isPointerConversionToVoidPointer(Context);
+  if (SCS1ConvertsToVoid != SCS2ConvertsToVoid)
+    return SCS2ConvertsToVoid ? ImplicitConversionSequence::Better
+                              : ImplicitConversionSequence::Worse;
+
+  if (!SCS1ConvertsToVoid && !SCS2ConvertsToVoid)
+    if (ImplicitConversionSequence::CompareKind DerivedCK
+          = CompareDerivedToBaseConversions(SCS1, SCS2))
+      return DerivedCK;
 
   // Compare based on qualification conversions (C++ 13.3.3.2p3,
   // bullet 3).
-  if (ImplicitConversionSequence::CompareKind CK 
+  if (ImplicitConversionSequence::CompareKind QualCK 
         = CompareQualificationConversions(SCS1, SCS2))
-    return CK;
+    return QualCK;
 
   // FIXME: Handle comparison of reference bindings.
 
@@ -892,6 +968,61 @@ Sema::CompareQualificationConversions(const StandardConversionSequence& SCS1,
   }
 
   return Result;
+}
+
+/// CompareDerivedToBaseConversions - Compares two standard conversion
+/// sequences to determine whether they can be ranked based on their
+/// various kinds of derived-to-base conversions (C++ [over.ics.rank]p4b3).
+ImplicitConversionSequence::CompareKind
+Sema::CompareDerivedToBaseConversions(const StandardConversionSequence& SCS1,
+                                      const StandardConversionSequence& SCS2) {
+  QualType FromType1 = QualType::getFromOpaquePtr(SCS1.FromTypePtr);
+  QualType ToType1 = QualType::getFromOpaquePtr(SCS1.ToTypePtr);
+  QualType FromType2 = QualType::getFromOpaquePtr(SCS2.FromTypePtr);
+  QualType ToType2 = QualType::getFromOpaquePtr(SCS2.ToTypePtr);
+
+  // Adjust the types we're converting from via the array-to-pointer
+  // conversion, if we need to.
+  if (SCS1.First == ICK_Array_To_Pointer)
+    FromType1 = Context.getArrayDecayedType(FromType1);
+  if (SCS2.First == ICK_Array_To_Pointer)
+    FromType2 = Context.getArrayDecayedType(FromType2);
+
+  // Canonicalize all of the types.
+  FromType1 = Context.getCanonicalType(FromType1);
+  ToType1 = Context.getCanonicalType(ToType1);
+  FromType2 = Context.getCanonicalType(FromType2);
+  ToType2 = Context.getCanonicalType(ToType2);
+
+  // C++ [over.ics.rank]p4b4:
+  //
+  //   If class B is derived directly or indirectly from class A and
+  //   class C is derived directly or indirectly from B,
+  //
+  // FIXME: Verify that in this section we're talking about the
+  // unqualified forms of C, B, and A.
+  if (SCS1.Second == ICK_Pointer_Conversion && 
+      SCS2.Second == ICK_Pointer_Conversion) {
+    //   -- conversion of C* to B* is better than conversion of C* to A*,
+    QualType FromPointee1 
+      = FromType1->getAsPointerType()->getPointeeType().getUnqualifiedType();
+    QualType ToPointee1 
+      = ToType1->getAsPointerType()->getPointeeType().getUnqualifiedType();
+    QualType FromPointee2
+      = FromType2->getAsPointerType()->getPointeeType().getUnqualifiedType();
+    QualType ToPointee2
+      = ToType2->getAsPointerType()->getPointeeType().getUnqualifiedType();
+    if (FromPointee1 == FromPointee2 && ToPointee1 != ToPointee2) {
+      if (IsDerivedFrom(ToPointee1, ToPointee2))
+        return ImplicitConversionSequence::Better;
+      else if (IsDerivedFrom(ToPointee2, ToPointee1))
+        return ImplicitConversionSequence::Worse;
+    }
+  }
+
+  // FIXME: many more sub-bullets of C++ [over.ics.rank]p4b4 to
+  // implement.
+  return ImplicitConversionSequence::Indistinguishable;
 }
 
 /// AddOverloadCandidate - Adds the given function to the set of
