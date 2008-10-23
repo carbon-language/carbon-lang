@@ -495,6 +495,8 @@ class VISIBILITY_HIDDEN RetainSummaryManager {
   ArgEffects*   getArgEffects();
 
   enum UnaryFuncKind { cfretain, cfrelease, cfmakecollectable };  
+  
+public:
   RetainSummary* getUnarySummary(FunctionDecl* FD, UnaryFuncKind func);
   
   RetainSummary* getNSSummary(FunctionDecl* FD, const char* FName);
@@ -530,7 +532,9 @@ class VISIBILITY_HIDDEN RetainSummaryManager {
 
   void InitializeClassMethodSummaries();
   void InitializeMethodSummaries();
-      
+  
+private:
+  
   void addClsMethSummary(IdentifierInfo* ClsII, Selector S,
                          RetainSummary* Summ) {
     ObjCClassMethodSummaries[ObjCSummaryKey(ClsII, S)] = Summ;
@@ -1739,6 +1743,28 @@ void CFRefCount::EvalObjCMessageExpr(ExplodedNodeSet<GRState>& Dst,
     }
     
     Summ = Summaries.getMethodSummary(ME, ID);
+#if 0    
+    // Special-case: are we sending a mesage to "self"?
+    //  This is a hack.  When we have full-IP this should be removed.
+    if (!Summ) {
+      ObjCMethodDecl* MD = 
+        dyn_cast<ObjCMethodDecl>(&Eng.getGraph().getCodeDecl());
+      
+      if (MD) {
+        if (Expr* Receiver = ME->getReceiver()) {
+          SVal X = Eng.getStateManager().GetSVal(St, Receiver);
+          if (loc::MemRegionVal* L = dyn_cast<loc::MemRegionVal>(&X))
+            if (const VarRegion* R = dyn_cast<VarRegion>(L->getRegion()))
+              if (R->getDecl() == MD->getSelfDecl()) {
+                // Create a summmary where all of the arguments "StopTracking".
+                Summ = Summaries.getPersistentSummary(RetEffect::MakeNoRet(),
+                                                      DoNothing,
+                                                      StopTracking);
+              }
+        }
+      }
+    }
+#endif
   }
   else
     Summ = Summaries.getClassMethodSummary(ME->getClassName(),
@@ -1820,10 +1846,12 @@ void CFRefCount::EvalStore(ExplodedNodeSet<GRState>& Dst,
 //  or autorelease. Any other time you receive an object, you must
 //  not release it."
 //
+#if 0
 static bool followsFundamentalRule(const char* s) {
   return CStrInCStrNoCase(s, "create") || CStrInCStrNoCase(s, "copy")  || 
          CStrInCStrNoCase(s, "new");
 }  
+#endif
 
 const GRState* CFRefCount::HandleSymbolDeath(GRStateManager& VMgr,
                                              const GRState* St, const Decl* CD,
@@ -1833,7 +1861,8 @@ const GRState* CFRefCount::HandleSymbolDeath(GRStateManager& VMgr,
   GRStateRef state(St, VMgr);
   assert (!V.isReturnedOwned() || CD &&
           "CodeDecl must be available for reporting ReturnOwned errors.");
-  
+
+#if 0
   if (V.isReturnedOwned() && V.getCount() == 0)
     if (const ObjCMethodDecl* MD = dyn_cast<ObjCMethodDecl>(CD)) {
       std::string s = MD->getSelector().getName();
@@ -1842,7 +1871,8 @@ const GRState* CFRefCount::HandleSymbolDeath(GRStateManager& VMgr,
         return state.set<RefBindings>(sid, V ^ RefVal::ErrorLeakReturned);
       }
     }
-
+#endif
+  
   // All other cases.
   
   hasLeak = V.isOwned() || 
