@@ -76,10 +76,12 @@ let isCall = 1, PPC970_Unit = 7,
   def BLA8_Macho : IForm<18, 1, 1,
                          (outs), (ins aaddr:$func, variable_ops),
                          "bla $func", BrB, [(PPCcall_Macho (i64 imm:$func))]>;
-  def BCTRL8_Macho : XLForm_2_ext<19, 528, 20, 0, 1, 
+  let Uses = [CTR8] in {
+    def BCTRL8_Macho : XLForm_2_ext<19, 528, 20, 0, 1, 
                                  (outs), (ins variable_ops),
                                  "bctrl", BrB,
                                  [(PPCbctrl_Macho)]>, Requires<[In64BitMode]>;
+  }
 }
 
 // ELF 64 ABI Calls = Macho ABI Calls
@@ -98,10 +100,12 @@ let isCall = 1, PPC970_Unit = 7,
   def BLA8_ELF : IForm<18, 1, 1,
                        (outs), (ins aaddr:$func, variable_ops),
                        "bla $func", BrB, [(PPCcall_ELF (i64 imm:$func))]>;
-  def BCTRL8_ELF : XLForm_2_ext<19, 528, 20, 0, 1,
+  let Uses = [CTR8] in {
+    def BCTRL8_ELF : XLForm_2_ext<19, 528, 20, 0, 1,
                                (outs), (ins variable_ops),
                                "bctrl", BrB,
                                [(PPCbctrl_ELF)]>, Requires<[In64BitMode]>;
+  }
 }
 
 
@@ -186,7 +190,7 @@ def TCRETURNri8 : Pseudo<(outs), (ins CTRRC8:$dst, i32imm:$offset, variable_ops)
 
 
 let isTerminator = 1, isBarrier = 1, PPC970_Unit = 7, isBranch = 1,
-    isIndirectBranch = 1, isCall = 1, isReturn = 1  in
+    isIndirectBranch = 1, isCall = 1, isReturn = 1, Uses = [CTR] in
 def TAILBCTR8 : XLForm_2_ext<19, 528, 20, 0, 0, (outs), (ins), "bctr", BrB, []>,
     Requires<[In64BitMode]>;
 
@@ -218,10 +222,12 @@ def : Pat<(PPCtc_return CTRRC8:$dst, imm:$imm),
 //===----------------------------------------------------------------------===//
 // 64-bit SPR manipulation instrs.
 
+let Uses = [CTR8] in {
 def MFCTR8 : XFXForm_1_ext<31, 339, 9, (outs G8RC:$rT), (ins),
                            "mfctr $rT", SprMFSPR>,
              PPC970_DGroup_First, PPC970_Unit_FXU;
-let Pattern = [(PPCmtctr G8RC:$rS)] in {
+}
+let Pattern = [(PPCmtctr G8RC:$rS)], Defs = [CTR8] in {
 def MTCTR8 : XFXForm_7_ext<31, 467, 9, (outs), (ins G8RC:$rS),
                            "mtctr $rS", SprMTSPR>,
              PPC970_DGroup_First, PPC970_Unit_FXU;
@@ -233,13 +239,16 @@ def DYNALLOC8 : Pseudo<(outs G8RC:$result), (ins G8RC:$negsize, memri:$fpsi),
                        [(set G8RC:$result,
                              (PPCdynalloc G8RC:$negsize, iaddr:$fpsi))]>;
 
+let Defs = [LR8] in {
 def MTLR8  : XFXForm_7_ext<31, 467, 8, (outs), (ins G8RC:$rS),
                            "mtlr $rS", SprMTSPR>,
              PPC970_DGroup_First, PPC970_Unit_FXU;
+}
+let Uses = [LR8] in {
 def MFLR8  : XFXForm_1_ext<31, 339, 8, (outs G8RC:$rT), (ins),
                            "mflr $rT", SprMFSPR>,
              PPC970_DGroup_First, PPC970_Unit_FXU;
-
+}
 
 //===----------------------------------------------------------------------===//
 // Fixed point instructions.

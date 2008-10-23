@@ -385,11 +385,11 @@ def SPILL_CR : Pseudo<(outs), (ins GPRC:$cond, memri:$F),
                      "${:comment} SPILL_CR $cond $F", []>;
 
 let isTerminator = 1, isBarrier = 1, PPC970_Unit = 7 in {
-  let isReturn = 1 in
+  let isReturn = 1, Uses = [LR] in
     def BLR : XLForm_2_br<19, 16, 0, (outs), (ins pred:$p),
                           "b${p:cc}lr ${p:reg}", BrB, 
                           [(retflag)]>;
-  let isBranch = 1, isIndirectBranch = 1 in
+  let isBranch = 1, isIndirectBranch = 1, Uses = [CTR] in
     def BCTR : XLForm_2_ext<19, 528, 20, 0, 0, (outs), (ins), "bctr", BrB, []>;
 }
 
@@ -429,10 +429,12 @@ let isCall = 1, PPC970_Unit = 7,
   def BLA_Macho : IForm<18, 1, 1, 
                         (outs), (ins aaddr:$func, variable_ops),
                         "bla $func", BrB, [(PPCcall_Macho (i32 imm:$func))]>;
-  def BCTRL_Macho : XLForm_2_ext<19, 528, 20, 0, 1, 
+  let Uses = [CTR] in {
+    def BCTRL_Macho : XLForm_2_ext<19, 528, 20, 0, 1, 
                                  (outs), (ins variable_ops),
                                  "bctrl", BrB,
                                  [(PPCbctrl_Macho)]>, Requires<[In32BitMode]>;
+  }
 }
 
 // ELF ABI Calls.
@@ -453,10 +455,12 @@ let isCall = 1, PPC970_Unit = 7,
                       (outs), (ins aaddr:$func, variable_ops),
                       "bla $func", BrB,
                       [(PPCcall_ELF (i32 imm:$func))]>;
-  def BCTRL_ELF : XLForm_2_ext<19, 528, 20, 0, 1,
+  let Uses = [CTR] in {
+    def BCTRL_ELF : XLForm_2_ext<19, 528, 20, 0, 1,
                                (outs), (ins variable_ops),
                                "bctrl", BrB,
                                [(PPCbctrl_ELF)]>, Requires<[In32BitMode]>;
+  }
 }
 
 
@@ -479,7 +483,7 @@ def TCRETURNri : Pseudo<(outs), (ins CTRRC:$dst, i32imm:$offset, variable_ops),
 
 
 let isTerminator = 1, isBarrier = 1, PPC970_Unit = 7, isBranch = 1,
-    isIndirectBranch = 1, isCall = 1, isReturn = 1  in
+    isIndirectBranch = 1, isCall = 1, isReturn = 1, Uses = [CTR]  in
 def TAILBCTR : XLForm_2_ext<19, 528, 20, 0, 0, (outs), (ins), "bctr", BrB, []>,
      Requires<[In32BitMode]>;
 
@@ -1056,21 +1060,27 @@ def CRSET  : XLForm_1_ext<19, 289, (outs CRBITRC:$dst), (ins),
 
 // XFX-Form instructions.  Instructions that deal with SPRs.
 //
+let Uses = [CTR] in {
 def MFCTR : XFXForm_1_ext<31, 339, 9, (outs GPRC:$rT), (ins),
                           "mfctr $rT", SprMFSPR>,
             PPC970_DGroup_First, PPC970_Unit_FXU;
-let Pattern = [(PPCmtctr GPRC:$rS)] in {
+}
+let Defs = [CTR], Pattern = [(PPCmtctr GPRC:$rS)] in {
 def MTCTR : XFXForm_7_ext<31, 467, 9, (outs), (ins GPRC:$rS),
                           "mtctr $rS", SprMTSPR>,
             PPC970_DGroup_First, PPC970_Unit_FXU;
 }
 
+let Defs = [LR] in {
 def MTLR  : XFXForm_7_ext<31, 467, 8, (outs), (ins GPRC:$rS),
                           "mtlr $rS", SprMTSPR>,
             PPC970_DGroup_First, PPC970_Unit_FXU;
+}
+let Uses = [LR] in {
 def MFLR  : XFXForm_1_ext<31, 339, 8, (outs GPRC:$rT), (ins),
                           "mflr $rT", SprMFSPR>,
             PPC970_DGroup_First, PPC970_Unit_FXU;
+}
 
 // Move to/from VRSAVE: despite being a SPR, the VRSAVE register is renamed like
 // a GPR on the PPC970.  As such, copies in and out have the same performance
