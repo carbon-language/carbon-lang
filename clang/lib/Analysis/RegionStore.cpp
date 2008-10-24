@@ -38,6 +38,13 @@ public:
 
   virtual ~RegionStoreManager() {}
 
+  MemRegionManager& getRegionManager() { return MRMgr; }
+
+  // FIXME: Is this function necessary?
+  SVal GetRegionSVal(Store St, const MemRegion* R) {
+    return Retrieve(St, loc::MemRegionVal(R));
+  }
+
   SVal getLValueVar(const GRState* St, const VarDecl* VD);
   
   SVal getLValueIvar(const GRState* St, const ObjCIvarDecl* D, SVal Base);
@@ -48,11 +55,23 @@ public:
 
   SVal ArrayToPointer(SVal Array);
 
-  SVal Retrieve(Store S, Loc L, QualType T);
+  SVal Retrieve(Store S, Loc L, QualType T = QualType());
 
   Store Bind(Store St, Loc LV, SVal V);
 
+  Store Remove(Store store, Loc LV) {
+    // FIXME: Implement.
+    return store;
+  }
+
   Store getInitialStore();
+
+  Store RemoveDeadBindings(Store store, Stmt* Loc, const LiveVariables& Live,
+                           llvm::SmallVectorImpl<const MemRegion*>& RegionRoots,
+                           LiveSymbolsTy& LSymbols, DeadSymbolsTy& DSymbols) {
+    // FIXME: Implement this.
+    return store;
+  }
 
   Store AddDecl(Store store, const VarDecl* VD, Expr* Ex, SVal InitVal, 
                 unsigned Count);
@@ -66,13 +85,20 @@ public:
   static inline RegionBindingsTy GetRegionBindings(Store store) {
    return RegionBindingsTy(static_cast<const RegionBindingsTy::TreeTy*>(store));
   }
+
+  void print(Store store, std::ostream& Out, const char* nl, const char *sep) {
+    // FIXME: Implement.
+  }
+
+  void iterBindings(Store store, BindingsHandler& f) {
+    // FIXME: Implement.
+  }
 };
 
 } // end anonymous namespace
 
 StoreManager* clang::CreateRegionStoreManager(GRStateManager& StMgr) {
-  // return new RegionStoreManager(StMgr);
-  return 0; // Uncomment the above line when RegionStoreManager is not abstract.
+  return new RegionStoreManager(StMgr);
 }
 
 Loc RegionStoreManager::getElementLoc(const VarDecl* VD, SVal Idx) {
