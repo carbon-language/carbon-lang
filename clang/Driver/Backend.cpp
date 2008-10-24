@@ -91,7 +91,6 @@ namespace {
 
       delete AsmOutStream;
       delete TheTargetData;
-      delete TheModule;
       delete ModuleProvider;
       delete CodeGenPasses;
       delete PerModulePasses;
@@ -102,6 +101,7 @@ namespace {
       Gen->InitializeTU(TU);
 
       TheModule = Gen->GetModule();
+      ModuleProvider = new ExistingModuleProvider(TheModule);
       TheTargetData = 
         new llvm::TargetData(TU.getContext().Target.getTargetDescription());
     }
@@ -122,7 +122,6 @@ namespace {
 
 FunctionPassManager *BackendConsumer::getCodeGenPasses() const {
   if (!CodeGenPasses) {
-    ModuleProvider = new ExistingModuleProvider(TheModule);
     CodeGenPasses = new FunctionPassManager(ModuleProvider);
     CodeGenPasses->add(new TargetData(*TheTargetData));
   }
@@ -141,8 +140,7 @@ PassManager *BackendConsumer::getPerModulePasses() const {
 
 FunctionPassManager *BackendConsumer::getPerFunctionPasses() const {
   if (!PerFunctionPasses) {
-    PerFunctionPasses = 
-      new FunctionPassManager(new ExistingModuleProvider(TheModule));
+    PerFunctionPasses = new FunctionPassManager(ModuleProvider);
     PerFunctionPasses->add(new TargetData(*TheTargetData));
   }
 
