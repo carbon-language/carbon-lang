@@ -4783,7 +4783,7 @@ MemSDNode::MemSDNode(unsigned Opc, SDVTList VTs, const SDValue *Ops,
 /// getMemOperand - Return a MachineMemOperand object describing the memory
 /// reference performed by this memory reference.
 MachineMemOperand MemSDNode::getMemOperand() const {
-  int Flags;
+  int Flags = 0;
   if (isa<LoadSDNode>(this))
     Flags = MachineMemOperand::MOLoad;
   else if (isa<StoreSDNode>(this))
