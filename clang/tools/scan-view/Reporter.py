@@ -162,7 +162,7 @@ class RadarClassificationParameter(SelectionParameter):
     return False
     
   def getValue(self,r,bugtype,getConfigOption):
-    if bugtype.startswith("leak"):
+    if bugtype.find("leak") != -1:
       return '3'
     elif bugtype.find("dereference") != -1:
       return '2'
