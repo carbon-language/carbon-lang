@@ -196,4 +196,3 @@ Semantic Analysis:
 
 LLVM Code Gen:
  * Most of the easy stuff is done, probably 65.42% done so far.
-
