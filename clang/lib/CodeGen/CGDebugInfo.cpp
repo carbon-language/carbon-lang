@@ -131,9 +131,12 @@ llvm::Value *CGDebugInfo::getValueFor(llvm::DebugInfoDesc *DD) {
 }
 
 /// getOrCreateCompileUnit - Get the compile unit from the cache or create a new
-/// one if necessary.
-llvm::CompileUnitDesc 
-*CGDebugInfo::getOrCreateCompileUnit(const SourceLocation Loc) {
+/// one if necessary. This returns null for invalid source locations.
+llvm::CompileUnitDesc*
+CGDebugInfo::getOrCreateCompileUnit(const SourceLocation Loc) {
+  if (Loc.isInvalid())
+    return NULL;
+
   SourceManager &SM = M->getContext().getSourceManager();
   const FileEntry *FE = SM.getFileEntryForLoc(Loc);
 
