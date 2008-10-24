@@ -34,7 +34,29 @@
 #include <stdarg.h>
 
 using namespace clang;
+
+//===----------------------------------------------------------------------===//
+// Utility functions.
+//===----------------------------------------------------------------------===//
+
 using llvm::CStrInCStrNoCase;
+
+// The "fundamental rule" for naming conventions of methods:
+//  (url broken into two lines)
+//  http://developer.apple.com/documentation/Cocoa/Conceptual/
+//     MemoryMgmt/Tasks/MemoryManagementRules.html
+//
+// "You take ownership of an object if you create it using a method whose name
+//  begins with “alloc” or “new” or contains “copy” (for example, alloc, 
+//  newObject, or mutableCopy), or if you send it a retain message. You are
+//  responsible for relinquishing ownership of objects you own using release
+//  or autorelease. Any other time you receive an object, you must
+//  not release it."
+//
+static bool followsFundamentalRule(const char* s) {
+  return CStrInCStrNoCase(s, "create") || CStrInCStrNoCase(s, "copy")  || 
+  CStrInCStrNoCase(s, "new") == s || CStrInCStrNoCase(s, "alloc") == s;
+}  
 
 //===----------------------------------------------------------------------===//
 // Selector creation functions.
@@ -1834,22 +1856,6 @@ void CFRefCount::EvalStore(ExplodedNodeSet<GRState>& Dst,
 
 // End-of-path.
 
-// The "fundamental rule" for naming conventions of methods:
-//  (url broken into two lines)
-//  http://developer.apple.com/documentation/Cocoa/Conceptual/
-//     MemoryMgmt/Tasks/MemoryManagementRules.html
-//
-// "You take ownership of an object if you create it using a method whose name
-//  begins with “alloc” or “new” or contains “copy” (for example, alloc, 
-//  newObject, or mutableCopy), or if you send it a retain message. You are
-//  responsible for relinquishing ownership of objects you own using release
-//  or autorelease. Any other time you receive an object, you must
-//  not release it."
-//
-static bool followsFundamentalRule(const char* s) {
-  return CStrInCStrNoCase(s, "create") || CStrInCStrNoCase(s, "copy")  || 
-         CStrInCStrNoCase(s, "new");
-}  
 
 std::pair<GRStateRef,bool>
 CFRefCount::HandleSymbolDeath(GRStateManager& VMgr,
