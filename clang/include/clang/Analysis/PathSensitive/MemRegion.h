@@ -192,7 +192,8 @@ protected:
   static void ProfileRegion(llvm::FoldingSetNodeID& ID, const Decl* D,
                       const MemRegion* superRegion, Kind k);
   
-public:  
+public:
+  const Decl* getDecl() const { return D; }
   void Profile(llvm::FoldingSetNodeID& ID) const;
 };
   

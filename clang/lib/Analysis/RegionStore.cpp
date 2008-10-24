@@ -181,10 +181,18 @@ SVal RegionStoreManager::getLValueElement(const GRState* St,
 SVal RegionStoreManager::ArrayToPointer(SVal Array) {
   const MemRegion* ArrayR = cast<loc::MemRegionVal>(&Array)->getRegion();
 
-  const VarDecl* D = cast<VarRegion>(ArrayR)->getDecl();
+  const Decl* D = cast<DeclRegion>(ArrayR)->getDecl();
+
+  QualType ArrayTy;
+  if (const VarDecl* VD = dyn_cast<VarDecl>(D))
+    ArrayTy = VD->getType();
+  else if (const FieldDecl* FD = dyn_cast<FieldDecl>(D))
+    ArrayTy = FD->getType(); 
+  else
+    assert(0 && "unknown decl");
 
   if (const ConstantArrayType* CAT = 
-      dyn_cast<ConstantArrayType>(D->getType().getTypePtr())) {
+      dyn_cast<ConstantArrayType>(ArrayTy.getTypePtr())) {
 
     BasicValueFactory& BasicVals = StateMgr.getBasicVals();
     
