@@ -19,6 +19,7 @@
 #include "clang/Analysis/Analyses/LiveVariables.h"
 
 #include "llvm/ADT/ImmutableMap.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Compiler.h"
 
 using namespace clang;
@@ -344,7 +345,14 @@ Store RegionStoreManager::AddDecl(Store store,
   return store;
 }
 
-void RegionStoreManager::print(Store store, std::ostream& Out, const char* nl, 
-                               const char *sep) {
-  
+void RegionStoreManager::print(Store store, std::ostream& Out, 
+                               const char* nl, const char *sep) {
+  llvm::raw_os_ostream OS(Out);
+  RegionBindingsTy B = GetRegionBindings(store);
+  OS << "Store:" << nl;
+
+  for (RegionBindingsTy::iterator I = B.begin(), E = B.end(); I != E; ++I) {
+    OS << ' '; I.getKey()->print(OS); OS << " : ";
+    I.getData().print(OS); OS << nl;
+  }
 }
