@@ -255,6 +255,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\lib\Analysis\RegionStore.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\Analysis\SVals.cpp"
 				>
 			</File>
