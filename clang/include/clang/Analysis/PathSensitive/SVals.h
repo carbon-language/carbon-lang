@@ -89,6 +89,7 @@ public:
   bool isZeroConstant() const;
   
   void print(std::ostream& OS) const;
+  void print(llvm::raw_ostream& OS) const;
   void printStdErr() const;
   
   typedef const SymbolID* symbol_iterator;
@@ -126,6 +127,7 @@ protected:
   
 public:
   void print(std::ostream& Out) const;
+  void print(llvm::raw_ostream& Out) const;
   
   // Utility methods to create NonLocs.
   static NonLoc MakeVal(BasicValueFactory& BasicVals, uint64_t X, QualType T);
@@ -151,6 +153,7 @@ protected:
   
 public:
   void print(std::ostream& Out) const;
+  void print(llvm::raw_ostream& Out) const;
     
   static Loc MakeVal(AddrLabelExpr* E);
   
