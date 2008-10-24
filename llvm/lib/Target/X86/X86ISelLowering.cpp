@@ -1970,27 +1970,24 @@ static bool translateX86CC(ISD::CondCode SetCCOpcode, bool isFP,
     case ISD::SETUGE: X86CC = X86::COND_AE; break;
     }
   } else {
-    // First determine if it requires or is profitable to flip the operands.
-    bool Flip = false;
+    // First determine if it is required or is profitable to flip the operands.
+
+    // If LHS is a foldable load, but RHS is not, flip the condition.
+    if ((ISD::isNON_EXTLoad(LHS.getNode()) && LHS.hasOneUse()) &&
+        !(ISD::isNON_EXTLoad(RHS.getNode()) && RHS.hasOneUse())) {
+      SetCCOpcode = getSetCCSwappedOperands(SetCCOpcode);
+      std::swap(LHS, RHS);
+    }
+
     switch (SetCCOpcode) {
     default: break;
     case ISD::SETOLT:
     case ISD::SETOLE:
     case ISD::SETUGT:
     case ISD::SETUGE:
-      Flip = true;
+      std::swap(LHS, RHS);
       break;
     }
-
-    // If LHS is a foldable load, but RHS is not, flip the condition.
-    if (!Flip &&
-        (ISD::isNON_EXTLoad(LHS.getNode()) && LHS.hasOneUse()) &&
-        !(ISD::isNON_EXTLoad(RHS.getNode()) && RHS.hasOneUse())) {
-      SetCCOpcode = getSetCCSwappedOperands(SetCCOpcode);
-      Flip = true;
-    }
-    if (Flip)
-      std::swap(LHS, RHS);
 
     // On a floating point condition, the flags are set as follows:
     // ZF  PF  CF   op
