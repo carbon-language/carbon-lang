@@ -951,8 +951,7 @@ RetainSummaryManager::getMethodSummary(ObjCMessageExpr* ME,
   if (!isNSType(ME->getReceiver()->getType()))
     return 0;
   
-  if (CStrInCStrNoCase(s, "create") || CStrInCStrNoCase(s, "copy")  || 
-      CStrInCStrNoCase(s, "new")) {
+  if (followsFundamentalRule(s)) {
     
     RetEffect E = isGCEnabled() ? RetEffect::MakeNoRet()
                                 : RetEffect::MakeOwned(true);  
@@ -2226,13 +2225,14 @@ namespace {
       }
       else {
         if (getTF().isGCEnabled())
-          return "leak of returned object (GC)";
+          return "[naming convention] leak of returned object (GC)";
         
         if (getTF().getLangOptions().getGCMode() == LangOptions::HybridGC)
-          return "leak of returned object (hybrid MM, non-GC)";
+          return "[naming convention] leak of returned object (hybrid MM, "
+                 "non-GC)";
         
         assert (getTF().getLangOptions().getGCMode() == LangOptions::NonGC);
-        return "leak of returned object";        
+        return "[naming convention] leak of returned object";        
       }
     }
     
@@ -2617,12 +2617,13 @@ PathDiagnosticPiece* CFRefReport::getEndPath(BugReporter& br,
     ObjCMethodDecl& MD = cast<ObjCMethodDecl>(BR.getGraph().getCodeDecl());
     os << " is returned from a method whose name ('"
        << MD.getSelector().getName()
-       << "') does not contain 'create', "
-          "'copy', or 'new'.  This violates the naming convention rules given"
+       << "') does not contain 'create' or 'copy' or otherwise starts with"
+          " 'new' or 'alloc'.  This violates the naming convention rules given"
           " in the Memory Management Guide for Cocoa (object leaked).";
   }
   else
-    os << " is no longer referenced after this point and has a retain count of +"
+    os << " is no longer referenced after this point and has a retain count of"
+          " +"
        << RV->getCount() << " (object leaked).";
   
   return new PathDiagnosticPiece(L, os.str(), Hint);
