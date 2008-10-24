@@ -781,13 +781,42 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
             Param->getType().getUnqualifiedType() != Context.VoidTy) {
           Diag(Param->getLocation(), diag::ext_param_typedef_of_void);
         }
-
       } else if (FTI.NumArgs > 0 && FTI.ArgInfo[0].Param != 0) {
         for (unsigned i = 0, e = FTI.NumArgs; i != e; ++i)
           Params.push_back((ParmVarDecl *)FTI.ArgInfo[i].Param);
       }
   
       NewFD->setParams(&Params[0], Params.size());
+    } else if (R->getAsTypedefType()) {
+      // When we're declaring a function with a typedef, as in the
+      // following example, we'll need to synthesize (unnamed)
+      // parameters for use in the declaration.
+      //
+      // @code
+      // typedef void fn(int);
+      // fn f;
+      // @endcode
+      const FunctionTypeProto *FT = R->getAsFunctionTypeProto();
+      if (!FT) {
+        // This is a typedef of a function with no prototype, so we
+        // don't need to do anything.
+      } else if ((FT->getNumArgs() == 0) ||
+          (FT->getNumArgs() == 1 && !FT->isVariadic() &&
+           FT->getArgType(0)->isVoidType())) {
+        // This is a zero-argument function. We don't need to do anything.
+      } else {
+        // Synthesize a parameter for each argument type.
+        llvm::SmallVector<ParmVarDecl*, 16> Params;
+        for (FunctionTypeProto::arg_type_iterator ArgType = FT->arg_type_begin();
+             ArgType != FT->arg_type_end(); ++ArgType) {
+          Params.push_back(ParmVarDecl::Create(Context, CurContext,
+                                               SourceLocation(), 0,
+                                               *ArgType, VarDecl::None,
+                                               0, 0));
+        }
+
+        NewFD->setParams(&Params[0], Params.size());
+      }
     }
 
     // Merge the decl with the existing one if appropriate. Since C functions
