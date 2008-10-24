@@ -230,6 +230,27 @@ MemRegionManager::getObjCIvarRegion(const ObjCIvarDecl* d,
   return R;
 }
 
+ObjCObjectRegion*
+MemRegionManager::getObjCObjectRegion(const ObjCInterfaceDecl* d,
+                                    const MemRegion* superRegion) {
+  llvm::FoldingSetNodeID ID;
+  DeclRegion::ProfileRegion(ID, d, superRegion,
+                            MemRegion::ObjCObjectRegionKind);
+  
+  void* InsertPos;
+  MemRegion* data = Regions.FindNodeOrInsertPos(ID, InsertPos);
+  ObjCObjectRegion* R = cast_or_null<ObjCObjectRegion>(data);
+  
+  if (!R) {
+    R = (ObjCObjectRegion*) A.Allocate<ObjCObjectRegion>();
+    new (R) ObjCObjectRegion(d, superRegion);
+    Regions.InsertNode(R, InsertPos);
+  }
+  
+  return R;
+}
+
+
 AnonPointeeRegion* MemRegionManager::getAnonPointeeRegion(const VarDecl* d) {
   llvm::FoldingSetNodeID ID;
   QualType T = d->getType();

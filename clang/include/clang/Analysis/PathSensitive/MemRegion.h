@@ -39,7 +39,7 @@ public:
               // Typed regions.
               BEG_TYPED_REGIONS,
               VarRegionKind, FieldRegionKind, ElementRegionKind,
-              ObjCIvarRegionKind,
+              ObjCIvarRegionKind, ObjCObjectRegionKind,
               AnonTypedRegionKind, AnonPointeeRegionKind,
               END_TYPED_REGIONS };  
 private:
@@ -127,7 +127,7 @@ protected:
   TypedRegion(const MemRegion* sReg, Kind k) : SubRegion(sReg, k) {}
   
 public:
-  virtual QualType getType() const = 0;
+  virtual QualType getType(ASTContext&) const = 0;
     
   static bool classof(const MemRegion* R) {
     unsigned k = R->getKind();
@@ -150,7 +150,7 @@ protected:
                             const MemRegion* superRegion);
 
 public:
-  QualType getType() const { return T; }
+  QualType getType(ASTContext&) const { return T; }
   
 
   void Profile(llvm::FoldingSetNodeID& ID) const;
@@ -210,7 +210,7 @@ class VarRegion : public DeclRegion {
   
 public:  
   const VarDecl* getDecl() const { return cast<VarDecl>(D); }
-  QualType getType() const { return getDecl()->getType(); }
+  QualType getType(ASTContext&) const { return getDecl()->getType(); }
   
   void print(llvm::raw_ostream& os) const;
   
@@ -230,7 +230,7 @@ public:
   void print(llvm::raw_ostream& os) const;
   
   const FieldDecl* getDecl() const { return cast<FieldDecl>(D); }
-  QualType getType() const { return getDecl()->getType(); }
+  QualType getType(ASTContext&) const { return getDecl()->getType(); }
 
   static void ProfileRegion(llvm::FoldingSetNodeID& ID, FieldDecl* FD,
                       const MemRegion* superRegion) {
@@ -241,6 +241,33 @@ public:
     return R->getKind() == FieldRegionKind;
   }
 };
+  
+class ObjCObjectRegion : public DeclRegion {
+  
+  friend class MemRegionManager;
+  
+  ObjCObjectRegion(const ObjCInterfaceDecl* ivd, const MemRegion* sReg)
+  : DeclRegion(ivd, sReg, ObjCObjectRegionKind) {}
+  
+  static void ProfileRegion(llvm::FoldingSetNodeID& ID, ObjCInterfaceDecl* ivd,
+                            const MemRegion* superRegion) {
+    DeclRegion::ProfileRegion(ID, ivd, superRegion, ObjCObjectRegionKind);
+  }
+  
+public:
+  const ObjCInterfaceDecl* getInterface() const {
+    return cast<ObjCInterfaceDecl>(D);
+  }
+  
+  QualType getType(ASTContext& C) const {
+    ObjCInterfaceDecl* ID = const_cast<ObjCInterfaceDecl*>(getInterface());
+    return C.getObjCInterfaceType(ID);
+  }
+  
+  static bool classof(const MemRegion* R) {
+    return R->getKind() == ObjCObjectRegionKind;
+  }
+};  
   
 class ObjCIvarRegion : public DeclRegion {
   
@@ -256,7 +283,7 @@ class ObjCIvarRegion : public DeclRegion {
   
 public:
   const ObjCIvarDecl* getDecl() const { return cast<ObjCIvarDecl>(D); }
-  QualType getType() const { return getDecl()->getType(); }
+  QualType getType(ASTContext&) const { return getDecl()->getType(); }
   
   static bool classof(const MemRegion* R) {
     return R->getKind() == ObjCIvarRegionKind;
@@ -342,6 +369,11 @@ public:
   ///  memory region (which typically represents the memory representing
   ///  a structure or class).
   FieldRegion* getFieldRegion(const FieldDecl* fd, const MemRegion* superRegion);
+  
+  /// getObjCObjectRegion - Retrieve or create the memory region associated with
+  ///  the instance of a specified Objective-C class.
+  ObjCObjectRegion* getObjCObjectRegion(const ObjCInterfaceDecl* ID,
+                                  const MemRegion* superRegion);
   
   /// getObjCIvarRegion - Retrieve or create the memory region associated with
   ///   a specified Objective-c instance variable.  'superRegion' corresponds
