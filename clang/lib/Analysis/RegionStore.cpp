@@ -86,9 +86,7 @@ public:
    return RegionBindingsTy(static_cast<const RegionBindingsTy::TreeTy*>(store));
   }
 
-  void print(Store store, std::ostream& Out, const char* nl, const char *sep) {
-    // FIXME: Implement.
-  }
+  void print(Store store, std::ostream& Out, const char* nl, const char *sep);
 
   void iterBindings(Store store, BindingsHandler& f) {
     // FIXME: Implement.
@@ -346,3 +344,7 @@ Store RegionStoreManager::AddDecl(Store store,
   return store;
 }
 
+void RegionStoreManager::print(Store store, std::ostream& Out, const char* nl, 
+                               const char *sep) {
+  
+}

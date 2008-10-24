@@ -2322,7 +2322,7 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRExprEngine::NodeTy*> :
         if (SLoc.isFileID()) {        
           Out << "\\lline="
             << GraphPrintSourceManager->getLineNumber(SLoc) << " col="
-            << GraphPrintSourceManager->getColumnNumber(SLoc) << "\\l";          
+            << GraphPrintSourceManager->getColumnNumber(SLoc) << "\\l";
         }
         
         if (GraphPrintCheckerState->isImplicitNullDeref(N))
