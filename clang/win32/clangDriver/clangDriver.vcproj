@@ -208,6 +208,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\Driver\DependencyFile.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\Driver\DiagChecker.cpp"
 				>
 			</File>

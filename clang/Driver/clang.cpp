@@ -1084,6 +1084,16 @@ public:
       return NULL;
     }
     
+    /// FIXME: PP can only handle one callback
+    if (ProgAction != PrintPreprocessedInput) {    
+      const char* ErrStr;
+      bool DFG = CreateDependencyFileGen(PP, OutputFile, InFile, ErrStr);
+       if (!DFG && ErrStr) {
+        fprintf(stderr, ErrStr);
+        return NULL;
+      }
+    }
+
     InitializeSourceMgr = false;
     return PP;
   }

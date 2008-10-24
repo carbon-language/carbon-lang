@@ -50,6 +50,13 @@ bool CheckASTConsumer(Preprocessor &PP, ASTConsumer* C);
 /// CheckDiagnostics - Gather the expected diagnostics and check them.
 bool CheckDiagnostics(Preprocessor &PP);
 
+/// CreateDependencyFileGen - Create dependency file generator.
+/// This is only done if either -MD or -MMD has been specified.
+bool CreateDependencyFileGen(Preprocessor *PP,
+                             std::string &OutputFile,
+                             const std::string &InputFile,
+                             const char  *&ErrStr);
+
 /// CacheTokens - Cache tokens for use with PCH.
 void CacheTokens(Preprocessor& PP, const std::string& OutFile);
 
