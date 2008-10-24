@@ -541,7 +541,7 @@ QualType Sema::ObjCGetTypeForMethodDefinition(DeclTy *D) {
 /// true. If T1 and T2 aren't pointer types or pointer-to-member
 /// types, or if they are not similar at this level, returns false and
 /// leaves T1 and T2 unchanged. Top-level qualifiers on T1 and T2 are
-/// ignord. This function will typically be called in a loop that
+/// ignored. This function will typically be called in a loop that
 /// successively "unwraps" pointer and pointer-to-member types to
 /// compare them at each level.
 bool Sema::UnwrapSimilarPointerTypes(QualType& T1, QualType& T2)

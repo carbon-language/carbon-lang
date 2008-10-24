@@ -231,6 +231,8 @@ public:
   bool Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg);
   bool Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg1,
             const std::string &Msg2);
+  bool Diag(SourceLocation Loc, unsigned DiagId, const std::string &Msg1,
+            const std::string &Msg2, const std::string &Msg3);
 
   /// More expressive diagnostic helpers for expressions (say that 6 times:-)
   bool Diag(SourceLocation Loc, unsigned DiagID, const SourceRange& R1);
@@ -698,6 +700,13 @@ public:
                                    SourceLocation RAngleBracketLoc,
                                    SourceLocation LParenLoc, ExprTy *E,
                                    SourceLocation RParenLoc);
+
+  // Helpers for ActOnCXXCasts
+  bool CastsAwayConstness(QualType SrcType, QualType DestType);
+  void CheckConstCast(SourceLocation OpLoc, Expr *&SrcExpr, QualType DestType);
+  void CheckReinterpretCast(SourceLocation OpLoc, Expr *&SrcExpr,
+                            QualType DestType);
+  void CheckStaticCast(SourceLocation OpLoc, Expr *&SrcExpr, QualType DestType);
 
   //// ActOnCXXThis -  Parse 'this' pointer.
   virtual ExprResult ActOnCXXThis(SourceLocation ThisLoc);

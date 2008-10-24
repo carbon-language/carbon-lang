@@ -1802,7 +1802,7 @@ Sema::CheckSingleAssignmentConstraints(QualType lhsType, Expr *&rExpr) {
   // DeclExpr's (created by ActOnIdentifierExpr), it would mess up the unary
   // expressions that surpress this implicit conversion (&, sizeof).
   //
-  // Suppress this for references: C99 8.5.3p5.  FIXME: revisit when references
+  // Suppress this for references: C++ 8.5.3p5.  FIXME: revisit when references
   // are better understood.
   if (!lhsType->isReferenceType())
     DefaultFunctionArrayConversion(rExpr);

@@ -17,6 +17,8 @@
 #include "clang/Parse/DeclSpec.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/Diagnostic.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/Support/Debug.h"
 using namespace clang;
 
 /// ActOnCXXCasts - Parse {dynamic,static,reinterpret,const}_cast's.
@@ -27,22 +29,347 @@ Sema::ActOnCXXCasts(SourceLocation OpLoc, tok::TokenKind Kind,
                     SourceLocation LParenLoc, ExprTy *E,
                     SourceLocation RParenLoc) {
   CXXCastExpr::Opcode Op;
+  Expr *Ex = (Expr*)E;
+  QualType DestType = QualType::getFromOpaquePtr(Ty);
 
   switch (Kind) {
   default: assert(0 && "Unknown C++ cast!");
-  case tok::kw_const_cast:       Op = CXXCastExpr::ConstCast;       break;
-  case tok::kw_dynamic_cast:     Op = CXXCastExpr::DynamicCast;     break;
-  case tok::kw_reinterpret_cast: Op = CXXCastExpr::ReinterpretCast; break;
-  case tok::kw_static_cast:      Op = CXXCastExpr::StaticCast;      break;
+  case tok::kw_const_cast:
+    Op = CXXCastExpr::ConstCast;
+    CheckConstCast(OpLoc, Ex, DestType);
+    break;
+  case tok::kw_dynamic_cast:
+    Op = CXXCastExpr::DynamicCast;
+    break;
+  case tok::kw_reinterpret_cast:
+    Op = CXXCastExpr::ReinterpretCast;
+    CheckReinterpretCast(OpLoc, Ex, DestType);
+    break;
+  case tok::kw_static_cast:
+    Op = CXXCastExpr::StaticCast;
+    break;
   }
   
-  return new CXXCastExpr(Op, QualType::getFromOpaquePtr(Ty), (Expr*)E, OpLoc);
+  return new CXXCastExpr(Op, DestType, Ex, OpLoc);
+}
+
+/// CheckConstCast - Check that a const_cast\<DestType\>(SrcExpr) is valid.
+/// Refer to C++ 5.2.11 for details. const_cast is typically used in code
+/// like this:
+/// const char *str = "literal";
+/// legacy_function(const_cast\<char*\>(str));
+void
+Sema::CheckConstCast(SourceLocation OpLoc, Expr *&SrcExpr, QualType DestType)
+{
+  QualType OrigDestType = DestType, OrigSrcType = SrcExpr->getType();
+
+  DestType = Context.getCanonicalType(DestType);
+  QualType SrcType = SrcExpr->getType();
+  if (const ReferenceType *DestTypeTmp = DestType->getAsReferenceType()) {
+    if (SrcExpr->isLvalue(Context) != Expr::LV_Valid) {
+      // Cannot cast non-lvalue to reference type.
+      Diag(OpLoc, diag::err_bad_cxx_cast_rvalue,
+        "const_cast", OrigDestType.getAsString());
+      return;
+    }
+
+    // C++ 5.2.11p4: An lvalue of type T1 can be [cast] to an lvalue of type T2
+    //   [...] if a pointer to T1 can be [cast] to the type pointer to T2.
+    DestType = Context.getPointerType(DestTypeTmp->getPointeeType());
+    if (const ReferenceType *SrcTypeTmp = SrcType->getAsReferenceType()) {
+      // FIXME: This shouldn't actually be possible, but right now it is.
+      SrcType = SrcTypeTmp->getPointeeType();
+    }
+    SrcType = Context.getPointerType(SrcType);
+  } else {
+    // C++ 5.2.11p1: Otherwise, the result is an rvalue and the
+    //   lvalue-to-rvalue, array-to-pointer, and function-to-pointer standard
+    //   conversions are performed on the expression.
+    DefaultFunctionArrayConversion(SrcExpr);
+    SrcType = SrcExpr->getType();
+  }
+
+  if (!DestType->isPointerType()) {
+    // Cannot cast to non-pointer, non-reference type. Note that, if DestType
+    // was a reference type, we converted it to a pointer above.
+    // C++ 5.2.11p3: For two pointer types [...]
+    Diag(OpLoc, diag::err_bad_const_cast_dest, OrigDestType.getAsString());
+    return;
+  }
+  if (DestType->isFunctionPointerType()) {
+    // Cannot cast direct function pointers.
+    // C++ 5.2.11p2: [...] where T is any object type or the void type [...]
+    // T is the ultimate pointee of source and target type.
+    Diag(OpLoc, diag::err_bad_const_cast_dest, OrigDestType.getAsString());
+    return;
+  }
+  SrcType = Context.getCanonicalType(SrcType);
+
+  // Unwrap the pointers. Ignore qualifiers. Terminate early if the types are
+  // completely equal.
+  // FIXME: const_cast should probably not be able to convert between pointers
+  // to different address spaces.
+  // C++ 5.2.11p3 describes the core semantics of const_cast. All cv specifiers
+  // in multi-level pointers may change, but the level count must be the same,
+  // as must be the final pointee type.
+  while (SrcType != DestType && UnwrapSimilarPointerTypes(SrcType, DestType)) {
+    SrcType = SrcType.getUnqualifiedType();
+    DestType = DestType.getUnqualifiedType();
+  }
+
+  // Doug Gregor said to disallow this until users complain.
+#if 0
+  // If we end up with constant arrays of equal size, unwrap those too. A cast
+  // from const int [N] to int (&)[N] is invalid by my reading of the
+  // standard, but g++ accepts it even with -ansi -pedantic.
+  // No more than one level, though, so don't embed this in the unwrap loop
+  // above.
+  const ConstantArrayType *SrcTypeArr, *DestTypeArr;
+  if ((SrcTypeArr = Context.getAsConstantArrayType(SrcType)) &&
+     (DestTypeArr = Context.getAsConstantArrayType(DestType)))
+  {
+    if (SrcTypeArr->getSize() != DestTypeArr->getSize()) {
+      // Different array sizes.
+      Diag(OpLoc, diag::err_bad_cxx_cast_generic, "const_cast",
+        OrigDestType.getAsString(), OrigSrcType.getAsString());
+      return;
+    }
+    SrcType = SrcTypeArr->getElementType().getUnqualifiedType();
+    DestType = DestTypeArr->getElementType().getUnqualifiedType();
+  }
+#endif
+
+  // Since we're dealing in canonical types, the remainder must be the same.
+  if (SrcType != DestType) {
+    // Cast between unrelated types.
+    Diag(OpLoc, diag::err_bad_cxx_cast_generic, "const_cast",
+      OrigDestType.getAsString(), OrigSrcType.getAsString());
+    return;
+  }
+}
+
+/// CheckReinterpretCast - Check that a reinterpret_cast\<DestType\>(SrcExpr) is
+/// valid.
+/// Refer to C++ 5.2.10 for details. reinterpret_cast is typically used in code
+/// like this:
+/// char *bytes = reinterpret_cast\<char*\>(int_ptr);
+void
+Sema::CheckReinterpretCast(SourceLocation OpLoc, Expr *&SrcExpr,
+                           QualType DestType)
+{
+  QualType OrigDestType = DestType, OrigSrcType = SrcExpr->getType();
+
+  DestType = Context.getCanonicalType(DestType);
+  QualType SrcType = SrcExpr->getType();
+  if (const ReferenceType *DestTypeTmp = DestType->getAsReferenceType()) {
+    if (SrcExpr->isLvalue(Context) != Expr::LV_Valid) {
+      // Cannot cast non-lvalue to reference type.
+      Diag(OpLoc, diag::err_bad_cxx_cast_rvalue,
+        "reinterpret_cast", OrigDestType.getAsString());
+      return;
+    }
+
+    // C++ 5.2.10p10: [...] a reference cast reinterpret_cast<T&>(x) has the
+    //   same effect as the conversion *reinterpret_cast<T*>(&x) with the
+    //   built-in & and * operators.
+    // This code does this transformation for the checked types.
+    DestType = Context.getPointerType(DestTypeTmp->getPointeeType());
+    if (const ReferenceType *SrcTypeTmp = SrcType->getAsReferenceType()) {
+      // FIXME: This shouldn't actually be possible, but right now it is.
+      SrcType = SrcTypeTmp->getPointeeType();
+    }
+    SrcType = Context.getPointerType(SrcType);
+  } else {
+    // C++ 5.2.10p1: [...] the lvalue-to-rvalue, array-to-pointer, and
+    //   function-to-pointer standard conversions are performed on the
+    //   expression v.
+    DefaultFunctionArrayConversion(SrcExpr);
+    SrcType = SrcExpr->getType();
+  }
+
+  // Canonicalize source for comparison.
+  SrcType = Context.getCanonicalType(SrcType);
+
+  bool destIsPtr = DestType->isPointerType();
+  bool srcIsPtr = SrcType->isPointerType();
+  if (!destIsPtr && !srcIsPtr) {
+    // Except for std::nullptr_t->integer, which is not supported yet, and
+    // lvalue->reference, which is handled above, at least one of the two
+    // arguments must be a pointer.
+    Diag(OpLoc, diag::err_bad_cxx_cast_generic, "reinterpret_cast",
+      OrigDestType.getAsString(), OrigSrcType.getAsString());
+    return;
+  }
+
+  if (SrcType == DestType) {
+    // C++ 5.2.10p2 has a note that mentions that, subject to all other
+    // restrictions, a cast to the same type is allowed. The intent is not
+    // entirely clear here, since all other paragraphs explicitly forbid casts
+    // to the same type. However, the behavior of compilers is pretty consistent
+    // on this point: allow same-type conversion if the involved are pointers,
+    // disallow otherwise.
+    return;
+  }
+
+  // Note: Clang treats enumeration types as integral types. If this is ever
+  // changed for C++, the additional check here will be redundant.
+  if (DestType->isIntegralType() && !DestType->isEnumeralType()) {
+    assert(srcIsPtr);
+    // C++ 5.2.10p4: A pointer can be explicitly converted to any integral
+    //   type large enough to hold it.
+    if (Context.getTypeSize(SrcType) > Context.getTypeSize(DestType)) {
+      Diag(OpLoc, diag::err_bad_reinterpret_cast_small_int,
+        OrigDestType.getAsString());
+    }
+    return;
+  }
+
+  if (SrcType->isIntegralType() || SrcType->isEnumeralType()) {
+    assert(destIsPtr);
+    // C++ 5.2.10p5: A value of integral or enumeration type can be explicitly
+    //   converted to a pointer.
+    return;
+  }
+
+  if (!destIsPtr || !srcIsPtr) {
+    // With the valid non-pointer conversions out of the way, we can be even
+    // more stringent.
+    Diag(OpLoc, diag::err_bad_cxx_cast_generic, "reinterpret_cast",
+      OrigDestType.getAsString(), OrigSrcType.getAsString());
+    return;
+  }
+
+  // C++ 5.2.10p2: The reinterpret_cast operator shall not cast away constness.
+  if (CastsAwayConstness(SrcType, DestType)) {
+    Diag(OpLoc, diag::err_bad_cxx_cast_const_away, "reinterpret_cast",
+      OrigDestType.getAsString(), OrigSrcType.getAsString());
+    return;
+  }
+
+  // Not casting away constness, so the only remaining check is for compatible
+  // pointer categories.
+
+  if (SrcType->isFunctionPointerType()) {
+    if (DestType->isFunctionPointerType()) {
+      // C++ 5.2.10p6: A pointer to a function can be explicitly converted to
+      // a pointer to a function of a different type.
+      return;
+    }
+
+    // FIXME: Handle member pointers.
+
+    // C++0x 5.2.10p8: Converting a pointer to a function into a pointer to
+    //   an object type or vice versa is conditionally-supported.
+    // Compilers support it in C++03 too, though, because it's necessary for
+    // casting the return value of dlsym() and GetProcAddress().
+    // FIXME: Conditionally-supported behavior should be configurable in the
+    // TargetInfo or similar.
+    if (!getLangOptions().CPlusPlus0x) {
+      Diag(OpLoc, diag::ext_reinterpret_cast_fn_obj);
+    }
+    return;
+  }
+
+  // FIXME: Handle member pointers.
+
+  if (DestType->isFunctionPointerType()) {
+    // See above.
+    if (!getLangOptions().CPlusPlus0x) {
+      Diag(OpLoc, diag::ext_reinterpret_cast_fn_obj);
+    }
+    return;
+  }
+
+  // C++ 5.2.10p7: A pointer to an object can be explicitly converted to
+  //   a pointer to an object of different type.
+  // Void pointers are not specified, but supported by every compiler out there.
+  // So we finish by allowing everything that remains - it's got to be two
+  // object pointers.
+}
+
+/// Check if the pointer conversion from SrcType to DestType casts away
+/// constness as defined in C++ 5.2.11p8ff. This is used by the cast checkers.
+/// Both arguments must denote pointer types.
+bool
+Sema::CastsAwayConstness(QualType SrcType, QualType DestType)
+{
+ // Casting away constness is defined in C++ 5.2.11p8 with reference to
+  // C++ 4.4.
+  // We piggyback on Sema::IsQualificationConversion for this, since the rules
+  // are non-trivial. So first we construct Tcv *...cv* as described in
+  // C++ 5.2.11p8.
+  SrcType  = Context.getCanonicalType(SrcType);
+  DestType = Context.getCanonicalType(DestType);
+
+  QualType UnwrappedSrcType = SrcType, UnwrappedDestType = DestType;
+  llvm::SmallVector<unsigned, 8> cv1, cv2;
+
+  // Find the qualifications.
+  while (UnwrapSimilarPointerTypes(UnwrappedSrcType, UnwrappedDestType)) {
+    cv1.push_back(UnwrappedSrcType.getCVRQualifiers());
+    cv2.push_back(UnwrappedDestType.getCVRQualifiers());
+  }
+  assert(cv1.size() > 0 && "Must have at least one pointer level.");
+
+  // Construct void pointers with those qualifiers (in reverse order of
+  // unwrapping, of course).
+  QualType SrcConstruct = Context.VoidTy;
+  QualType DestConstruct = Context.VoidTy;
+  for (llvm::SmallVector<unsigned, 8>::reverse_iterator i1 = cv1.rbegin(),
+                                                        i2 = cv2.rbegin();
+       i1 != cv1.rend(); ++i1, ++i2)
+  {
+    SrcConstruct = Context.getPointerType(SrcConstruct.getQualifiedType(*i1));
+    DestConstruct = Context.getPointerType(DestConstruct.getQualifiedType(*i2));
+  }
+
+  // Test if they're compatible.
+  return SrcConstruct != DestConstruct &&
+    !IsQualificationConversion(SrcConstruct, DestConstruct);
+}
+
+/// CheckStaticCast - Check that a static_cast\<DestType\>(SrcExpr) is valid.
+void
+Sema::CheckStaticCast(SourceLocation OpLoc, Expr *&SrcExpr, QualType DestType)
+{
+#if 0
+  // 5.2.9/1 sets the ground rule of disallowing casting away constness.
+  // 5.2.9/2 permits everything allowed for direct-init, deferring to 8.5.
+  //   Note: for class destination, that's overload resolution over dest's
+  //   constructors. Src's conversions are only considered in overload choice.
+  //   For any other destination, that's just the clause 4 standards convs.
+  // 5.2.9/4 permits static_cast&lt;cv void>(anything), which is a no-op.
+  // 5.2.9/5 permits explicit non-dynamic downcasts for lvalue-to-reference.
+  // 5.2.9/6 permits reversing all implicit conversions except lvalue-to-rvalue,
+  //   function-to-pointer, array decay and to-bool, with some further
+  //   restrictions. Defers to 4.
+  // 5.2.9/7 permits integer-to-enum conversion. Interesting note: if the
+  //   integer does not correspond to an enum value, the result is unspecified -
+  //   but it still has to be some value of the enum. I don't think any compiler
+  //   complies with that.
+  // 5.2.9/8 is 5.2.9/5 for pointers.
+  // 5.2.9/9 messes with member pointers. TODO. No need to think about that yet.
+  // 5.2.9/10 permits void* to T*.
+
+  QualType OrigDestType = DestType, OrigSrcType = SrcExpr->getType();
+  DestType = Context.getCanonicalType(DestType);
+  // Tests are ordered by simplicity and a wild guess at commonness.
+
+  if (const BuiltinType *BuiltinDest = DestType->getAsBuiltinType()) {
+    // 5.2.9/4
+    if (BuiltinDest->getKind() == BuiltinType::Void) {
+      return;
+    }
+
+    // Primitive conversions for 5.2.9/2 and 6.
+  }
+#endif
 }
 
 /// ActOnCXXBoolLiteral - Parse {true,false} literals.
 Action::ExprResult
 Sema::ActOnCXXBoolLiteral(SourceLocation OpLoc, tok::TokenKind Kind) {
-  assert((Kind != tok::kw_true || Kind != tok::kw_false) &&
+  assert((Kind == tok::kw_true || Kind == tok::kw_false) &&
          "Unknown C++ Boolean value!");
   return new CXXBoolLiteralExpr(Kind == tok::kw_true, Context.BoolTy, OpLoc);
 }
