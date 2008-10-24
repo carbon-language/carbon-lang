@@ -30,11 +30,13 @@
   [super fm0];
 }
 -(void) im0 {
-  char *s0 = __func__;
-  char *s1 = __FUNCTION__;
-  char *s2 = __PRETTY_FUNCTION__;
+  const char *s0 = __func__;
+  const char *s1 = __FUNCTION__;
+  const char *s2 = __PRETTY_FUNCTION__;
   [super im0];
+#ifndef IRGENABLE
   int x = super.p0;
+#endif
 }
 -(void) im1: (int) x, ... {
 }
@@ -50,8 +52,10 @@
 @end
 
 int f0(id x) {
+#ifndef IRGENABLE
   @synchronized(x) {
   }
+#endif
 
   @try {
     @throw x;
