@@ -167,7 +167,10 @@ protected:
   UndefArgsTy MsgExprUndefArgs;
   
 public:
-  GRExprEngine(CFG& cfg, Decl& CD, ASTContext& Ctx, LiveVariables& L);
+  GRExprEngine(CFG& cfg, Decl& CD, ASTContext& Ctx, LiveVariables& L,
+               GRStateManager::StoreManagerCreator SMC =
+                CreateBasicStoreManager);
+  
   ~GRExprEngine();
   
   void ExecuteWorkList(unsigned Steps = 150000) {

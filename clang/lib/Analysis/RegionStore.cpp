@@ -66,6 +66,11 @@ public:
 
 } // end anonymous namespace
 
+StoreManager* clang::CreateRegionStoreManager(GRStateManager& StMgr) {
+  // return new RegionStoreManager(StMgr);
+  return 0; // Uncomment the above line when RegionStoreManager is not abstract.
+}
+
 Loc RegionStoreManager::getElementLoc(const VarDecl* VD, SVal Idx) {
   MemRegion* R = MRMgr.getVarRegion(VD);
   ElementRegion* ER = MRMgr.getElementRegion(Idx, R);

@@ -65,7 +65,7 @@ namespace {
     const bool VisGraphviz;
     const bool VisUbigraph;
     const bool TrimGraph;
-    const LangOptions& LOpts;
+    const LangOptions& LOpts;    
     Diagnostic &Diags;
     ASTContext* Ctx;
     Preprocessor* PP;
@@ -74,19 +74,21 @@ namespace {
     const std::string FName;
     llvm::OwningPtr<PathDiagnosticClient> PD;
     bool AnalyzeAll;  
+    AnalysisStores SM;
 
     AnalysisConsumer(Diagnostic &diags, Preprocessor* pp,
                      PreprocessorFactory* ppf,
                      const LangOptions& lopts,
                      const std::string& fname,
                      const std::string& htmldir,
+                     AnalysisStores sm,
                      bool visgraphviz, bool visubi, bool trim, bool analyzeAll) 
       : VisGraphviz(visgraphviz), VisUbigraph(visubi), TrimGraph(trim),
         LOpts(lopts), Diags(diags),
         Ctx(0), PP(pp), PPF(ppf),
         HTMLDir(htmldir),
         FName(fname),
-        AnalyzeAll(analyzeAll) {}
+        AnalyzeAll(analyzeAll), SM(sm) {}
     
     void addCodeAction(CodeAction action) {
       FunctionActions.push_back(action);
@@ -125,6 +127,15 @@ namespace {
     
     Decl* getCodeDecl() const { return D; }
     Stmt* getBody() const { return Body; }
+    
+    GRStateManager::StoreManagerCreator getStoreManagerCreator() {
+      switch (C.SM) {
+        default:
+#define ANALYSIS_STORE(NAME, CMDFLAG, DESC)\
+case NAME##Model: return Create##NAME##Manager;
+#include "Analyses.def"
+      }
+    };
     
     virtual CFG* getCFG() {
       if (!cfg) cfg.reset(CFG::buildCFG(getBody()));
@@ -324,7 +335,9 @@ static void ActionGRExprEngine(AnalysisManager& mgr, GRTransferFuncs* tf,
   // Display progress.
   mgr.DisplayFunction();
   
-  GRExprEngine Eng(*mgr.getCFG(), *mgr.getCodeDecl(), mgr.getContext(), *L);
+  GRExprEngine Eng(*mgr.getCFG(), *mgr.getCodeDecl(), mgr.getContext(), *L,
+                   mgr.getStoreManagerCreator());
+
   Eng.setTransferFunctions(tf);
   
   if (StandardWarnings) {
@@ -436,6 +449,7 @@ static void ActionWarnObjCMethSigs(AnalysisManager& mgr) {
 //===----------------------------------------------------------------------===//
 
 ASTConsumer* clang::CreateAnalysisConsumer(Analyses* Beg, Analyses* End,
+                                           AnalysisStores SM,
                                            Diagnostic &diags, Preprocessor* pp,
                                            PreprocessorFactory* ppf,
                                            const LangOptions& lopts,
@@ -446,7 +460,7 @@ ASTConsumer* clang::CreateAnalysisConsumer(Analyses* Beg, Analyses* End,
                                            bool analyzeAll) {
   
   llvm::OwningPtr<AnalysisConsumer>
-  C(new AnalysisConsumer(diags, pp, ppf, lopts, fname, htmldir,
+  C(new AnalysisConsumer(diags, pp, ppf, lopts, fname, htmldir, SM,
                          VisGraphviz, VisUbi, trim, analyzeAll));
   
   for ( ; Beg != End ; ++Beg)

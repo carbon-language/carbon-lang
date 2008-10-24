@@ -203,10 +203,19 @@ AnalyzeAll("analyzer-opt-analyze-headers",
                    "functions defined in header files"));
 
 static llvm::cl::list<Analyses>
-AnalysisList(llvm::cl::desc("Available Source Code Analyses:"),
+AnalysisList(llvm::cl::desc("SCA Checks/Analyses:"),
 llvm::cl::values(
 #define ANALYSIS(NAME, CMDFLAG, DESC, SCOPE)\
 clEnumValN(NAME, CMDFLAG, DESC),
+#include "Analyses.def"
+clEnumValEnd));
+
+static llvm::cl::opt<AnalysisStores> 
+AnalysisStoreOpt(llvm::cl::desc("SCA Low-Level Options (Store):"),
+                  llvm::cl::init(BasicStoreModel),
+                  llvm::cl::values(
+#define ANALYSIS_STORE(NAME, CMDFLAG, DESC)\
+clEnumValN(NAME##Model, "analyzer-store-" CMDFLAG, DESC),
 #include "Analyses.def"
 clEnumValEnd));
 
@@ -1190,6 +1199,7 @@ static ASTConsumer* CreateASTConsumer(const std::string& InFile,
       assert (!AnalysisList.empty());
       return CreateAnalysisConsumer(&AnalysisList[0],
                                     &AnalysisList[0]+AnalysisList.size(),
+                                    AnalysisStoreOpt,
                                     Diag, PP, PPF, LangOpts,
                                     AnalyzeSpecificFunction,
                                     OutputFile, VisualizeEGDot, VisualizeEGUbi,

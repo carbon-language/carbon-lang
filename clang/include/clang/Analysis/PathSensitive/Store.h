@@ -88,6 +88,7 @@ public:
 };
   
 StoreManager* CreateBasicStoreManager(GRStateManager& StMgr);
+StoreManager* CreateRegionStoreManager(GRStateManager& StMgr);
   
 } // end clang namespace
 

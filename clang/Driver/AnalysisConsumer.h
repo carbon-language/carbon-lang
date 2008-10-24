@@ -21,8 +21,15 @@ enum Analyses {
 #include "Analyses.def"
 NumAnalyses
 };
+  
+enum AnalysisStores {
+#define ANALYSIS_STORE(NAME, CMDFLAG, DESC) NAME##Model,
+#include "Analyses.def"
+NumStores
+};
 
 ASTConsumer* CreateAnalysisConsumer(Analyses* Beg, Analyses* End,
+                                    AnalysisStores SM,
                                     Diagnostic &diags, Preprocessor* pp,
                                     PreprocessorFactory* ppf,
                                     const LangOptions& lopts,
@@ -30,7 +37,7 @@ ASTConsumer* CreateAnalysisConsumer(Analyses* Beg, Analyses* End,
                                     const std::string& htmldir,
                                     bool VisualizeGraphViz,
                                     bool VisualizeUbi,
-                                    bool VizTrimGraph,
+                                    bool VizTrimGraph,                                    
                                     bool AnalyzeAll);
 } // end clang namespace
 
