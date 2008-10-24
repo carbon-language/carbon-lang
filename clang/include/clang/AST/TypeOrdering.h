@@ -24,7 +24,7 @@ namespace clang {
 /// QualTypeOrdering - Function object that provides a total ordering
 /// on QualType values.
 struct QualTypeOrdering : std::binary_function<QualType, QualType, bool> {
-  bool operator()(QualType T1, QualType T2) {
+  bool operator()(QualType T1, QualType T2) const {
     return std::less<void*>()(T1.getAsOpaquePtr(), T2.getAsOpaquePtr());
   }
 };
