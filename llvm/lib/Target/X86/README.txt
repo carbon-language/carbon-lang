@@ -1676,3 +1676,100 @@ _test:
 	ret
 
 it would be better to codegen as: x+~y  (notl+addl)
+
+//===---------------------------------------------------------------------===//
+
+This code:
+
+int foo(const char *str,...)
+{
+ __builtin_va_list a; int x;
+ __builtin_va_start(a,str); x = __builtin_va_arg(a,int); __builtin_va_end(a);
+ return x;
+}
+
+gets compiled into this on x86-64:
+	subq    $200, %rsp
+        movaps  %xmm7, 160(%rsp)
+        movaps  %xmm6, 144(%rsp)
+        movaps  %xmm5, 128(%rsp)
+        movaps  %xmm4, 112(%rsp)
+        movaps  %xmm3, 96(%rsp)
+        movaps  %xmm2, 80(%rsp)
+        movaps  %xmm1, 64(%rsp)
+        movaps  %xmm0, 48(%rsp)
+        movq    %r9, 40(%rsp)
+        movq    %r8, 32(%rsp)
+        movq    %rcx, 24(%rsp)
+        movq    %rdx, 16(%rsp)
+        movq    %rsi, 8(%rsp)
+        leaq    (%rsp), %rax
+        movq    %rax, 192(%rsp)
+        leaq    208(%rsp), %rax
+        movq    %rax, 184(%rsp)
+        movl    $48, 180(%rsp)
+        movl    $8, 176(%rsp)
+        movl    176(%rsp), %eax
+        cmpl    $47, %eax
+        jbe     .LBB1_3 # bb
+.LBB1_1:        # bb3
+        movq    184(%rsp), %rcx
+        leaq    8(%rcx), %rax
+        movq    %rax, 184(%rsp)
+.LBB1_2:        # bb4
+        movl    (%rcx), %eax
+        addq    $200, %rsp
+        ret
+.LBB1_3:        # bb
+        movl    %eax, %ecx
+        addl    $8, %eax
+        addq    192(%rsp), %rcx
+        movl    %eax, 176(%rsp)
+        jmp     .LBB1_2 # bb4
+
+gcc 4.3 generates:
+	subq    $96, %rsp
+.LCFI0:
+        leaq    104(%rsp), %rax
+        movq    %rsi, -80(%rsp)
+        movl    $8, -120(%rsp)
+        movq    %rax, -112(%rsp)
+        leaq    -88(%rsp), %rax
+        movq    %rax, -104(%rsp)
+        movl    $8, %eax
+        cmpl    $48, %eax
+        jb      .L6
+        movq    -112(%rsp), %rdx
+        movl    (%rdx), %eax
+        addq    $96, %rsp
+        ret
+        .p2align 4,,10
+        .p2align 3
+.L6:
+        mov     %eax, %edx
+        addq    -104(%rsp), %rdx
+        addl    $8, %eax
+        movl    %eax, -120(%rsp)
+        movl    (%rdx), %eax
+        addq    $96, %rsp
+        ret
+
+and it gets compiled into this on x86:
+	pushl   %ebp
+        movl    %esp, %ebp
+        subl    $4, %esp
+        leal    12(%ebp), %eax
+        movl    %eax, -4(%ebp)
+        leal    16(%ebp), %eax
+        movl    %eax, -4(%ebp)
+        movl    12(%ebp), %eax
+        addl    $4, %esp
+        popl    %ebp
+        ret
+
+gcc 4.3 generates:
+	pushl   %ebp
+        movl    %esp, %ebp
+        movl    12(%ebp), %eax
+        popl    %ebp
+        ret
