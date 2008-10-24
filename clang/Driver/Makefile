@@ -14,6 +14,6 @@ USEDLIBS = clangCodeGen.a clangAnalysis.a clangRewrite.a clangSema.a	\
            clangBasic.a LLVMCore.a LLVMSupport.a LLVMSystem.a		\
            LLVMBitWriter.a LLVMBitReader.a LLVMSelectionDAG.a		\
            LLVMCodeGen.a LLVMTransformUtils.a LLVMScalarOpts.a		\
-           LLVMAnalysis.a LLVMTarget.a
+           LLVMAnalysis.a LLVMTarget.a LLVMipo.a
 
 include $(LLVM_SRC_ROOT)/Makefile.rules
