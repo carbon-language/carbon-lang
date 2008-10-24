@@ -52,6 +52,7 @@ namespace {
     llvm::TargetData *TheTargetData;
     llvm::raw_ostream *AsmOutStream;
 
+    mutable llvm::ModuleProvider *ModuleProvider;
     mutable FunctionPassManager *CodeGenPasses;
     mutable PassManager *PerModulePasses;
     mutable FunctionPassManager *PerFunctionPasses;
@@ -81,7 +82,7 @@ namespace {
       InputFile(infile), 
       OutputFile(outfile), 
       Gen(CreateLLVMCodeGen(Diags, Features, InputFile, GenerateDebugInfo)),
-      TheModule(0), TheTargetData(0), AsmOutStream(0),
+      TheModule(0), TheTargetData(0), AsmOutStream(0), ModuleProvider(0),
       CodeGenPasses(0), PerModulePasses(0), PerFunctionPasses(0) {}
 
     ~BackendConsumer() {
@@ -91,6 +92,7 @@ namespace {
       delete AsmOutStream;
       delete TheTargetData;
       delete TheModule;
+      delete ModuleProvider;
       delete CodeGenPasses;
       delete PerModulePasses;
       delete PerFunctionPasses;
@@ -120,8 +122,8 @@ namespace {
 
 FunctionPassManager *BackendConsumer::getCodeGenPasses() const {
   if (!CodeGenPasses) {
-    CodeGenPasses = 
-      new FunctionPassManager(new ExistingModuleProvider(TheModule));
+    ModuleProvider = new ExistingModuleProvider(TheModule);
+    CodeGenPasses = new FunctionPassManager(ModuleProvider);
     CodeGenPasses->add(new TargetData(*TheTargetData));
   }
 
