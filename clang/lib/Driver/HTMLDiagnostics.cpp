@@ -403,7 +403,7 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R, unsigned BugFileID,
     
     // Next, determine the approximate size of the message bubble in em.
     unsigned em;
-    const unsigned max_line = 80;
+    const unsigned max_line = 120;
     
     if (max_token >= max_line)
       em = max_token / 2;
