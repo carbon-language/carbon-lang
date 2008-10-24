@@ -77,12 +77,6 @@ public:
   Store AddDecl(Store store, const VarDecl* VD, Expr* Ex, SVal InitVal, 
                 unsigned Count);
 
-  Loc getVarLoc(const VarDecl* VD) {
-    return loc::MemRegionVal(MRMgr.getVarRegion(VD));
-  }
-
-  Loc getElementLoc(const VarDecl* VD, SVal Idx);
-
   static inline RegionBindingsTy GetRegionBindings(Store store) {
    return RegionBindingsTy(static_cast<const RegionBindingsTy::TreeTy*>(store));
   }
@@ -92,18 +86,20 @@ public:
   void iterBindings(Store store, BindingsHandler& f) {
     // FIXME: Implement.
   }
+
+private:
+  Loc getVarLoc(const VarDecl* VD) {
+    return loc::MemRegionVal(MRMgr.getVarRegion(VD));
+  }
+
+  Store InitializeArrayToUndefined(Store store, QualType T, MemRegion* BaseR);
+  Store InitializeStructToUndefined(Store store, QualType T, MemRegion* BaseR);
 };
 
 } // end anonymous namespace
 
 StoreManager* clang::CreateRegionStoreManager(GRStateManager& StMgr) {
   return new RegionStoreManager(StMgr);
-}
-
-Loc RegionStoreManager::getElementLoc(const VarDecl* VD, SVal Idx) {
-  MemRegion* R = MRMgr.getVarRegion(VD);
-  ElementRegion* ER = MRMgr.getElementRegion(Idx, R);
-  return loc::MemRegionVal(ER);
 }
 
 SVal RegionStoreManager::getLValueVar(const GRState* St, const VarDecl* VD) {
@@ -315,6 +311,8 @@ Store RegionStoreManager::AddDecl(Store store,
 
     QualType T = VD->getType();
 
+    VarRegion* VR = MRMgr.getVarRegion(VD);
+
     if (Loc::IsLocType(T) || T->isIntegerType()) {
       SVal V = Ex ? InitVal : UndefinedVal();
       if (Ex && InitVal.isUnknown()) {
@@ -324,22 +322,13 @@ Store RegionStoreManager::AddDecl(Store store,
           ? cast<SVal>(loc::SymbolVal(Sym))
           : cast<SVal>(nonloc::SymbolVal(Sym));
       }
-      store = Bind(store, getVarLoc(VD), V);
+      store = Bind(store, loc::MemRegionVal(VR), V);
 
     } else if (T->isArrayType()) {
-      // Only handle constant size array.
-      if (ConstantArrayType* CAT=dyn_cast<ConstantArrayType>(T.getTypePtr())) {
+      store = InitializeArrayToUndefined(store, T, VR);
 
-        llvm::APInt Size = CAT->getSize();
-
-        for (llvm::APInt i = llvm::APInt::getNullValue(Size.getBitWidth());
-             i != Size; ++i) {
-          nonloc::ConcreteInt Idx(BasicVals.getValue(llvm::APSInt(i)));
-          store = Bind(store, getElementLoc(VD, Idx), UndefinedVal());
-        }
-      }
     } else if (T->isStructureType()) {
-      // FIXME: Implement struct initialization.
+      store = InitializeStructToUndefined(store, T, VR);
     }
   }
   return store;
@@ -355,4 +344,54 @@ void RegionStoreManager::print(Store store, std::ostream& Out,
     OS << ' '; I.getKey()->print(OS); OS << " : ";
     I.getData().print(OS); OS << nl;
   }
+}
+
+Store RegionStoreManager::InitializeArrayToUndefined(Store store, QualType T, 
+                                                     MemRegion* BaseR) {
+  assert(T->isArrayType());
+
+  BasicValueFactory& BasicVals = StateMgr.getBasicVals();
+
+  // Only handle constant size array for now.
+  if (ConstantArrayType* CAT=dyn_cast<ConstantArrayType>(T.getTypePtr())) {
+
+    llvm::APInt Size = CAT->getSize();
+    
+    for (llvm::APInt i = llvm::APInt::getNullValue(Size.getBitWidth());
+         i != Size; ++i) {
+      nonloc::ConcreteInt Idx(BasicVals.getValue(llvm::APSInt(i)));
+
+      ElementRegion* ER = MRMgr.getElementRegion(Idx, BaseR);
+
+      store = Bind(store, loc::MemRegionVal(ER), UndefinedVal());
+    }
+  }
+
+  return store;
+}
+
+Store RegionStoreManager::InitializeStructToUndefined(Store store, QualType T,
+                                                      MemRegion* BaseR) {
+  const RecordType* RT = cast<RecordType>(T.getTypePtr());
+  RecordDecl* RD = RT->getDecl();
+  assert(RD->isDefinition());
+  
+  for (RecordDecl::field_iterator I = RD->field_begin(), E = RD->field_end();
+       I != E; ++I) {
+    
+    QualType FTy = (*I)->getType();
+    FieldRegion* FR = MRMgr.getFieldRegion(*I, BaseR);
+    
+    if (Loc::IsLocType(FTy) || FTy->isIntegerType()) {
+      store = Bind(store, loc::MemRegionVal(FR), UndefinedVal());
+
+    } else if (FTy->isArrayType()) {
+      store = InitializeArrayToUndefined(store, FTy, FR);
+
+    } else if (FTy->isStructureType()) {
+      store = InitializeStructToUndefined(store, FTy, FR);
+    }
+  }
+
+  return store;
 }
