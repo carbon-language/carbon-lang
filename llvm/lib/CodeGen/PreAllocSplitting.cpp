@@ -214,7 +214,7 @@ PreAllocSplitting::findRestorePoint(MachineBasicBlock *MBB, MachineInstr *MI,
     do {
       --MII;
       unsigned Index = LIs->getInstructionIndex(MII);
-      unsigned Gap = LIs->hasGapBeforeInstr(Index);
+      unsigned Gap = LIs->findGapBeforeInstr(Index);
       if (Gap) {
         Pt = MII;
         RestoreIndex = Gap;
