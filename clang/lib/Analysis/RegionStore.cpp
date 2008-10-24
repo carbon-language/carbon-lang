@@ -44,6 +44,10 @@ public:
 
   SVal getLValueField(const GRState* St, SVal Base, const FieldDecl* D);
 
+  SVal getLValueElement(const GRState* St, SVal Base, SVal Offset);
+
+  SVal ArrayToPointer(SVal Array);
+
   SVal Retrieve(Store S, Loc L, QualType T);
 
   Store Bind(Store St, Loc LV, SVal V);
@@ -122,6 +126,56 @@ SVal RegionStoreManager::getLValueField(const GRState* St, SVal Base,
   }
 
   return loc::MemRegionVal(MRMgr.getFieldRegion(D, BaseR));
+}
+
+SVal RegionStoreManager::getLValueElement(const GRState* St, 
+                                          SVal Base, SVal Offset) {
+  if (Base.isUnknownOrUndef())
+    return Base;
+
+  loc::MemRegionVal& BaseL = cast<loc::MemRegionVal>(Base);
+
+  // We expect BaseR is an ElementRegion, not a base VarRegion.
+
+  const ElementRegion* ElemR = cast<ElementRegion>(BaseL.getRegion());
+
+  SVal Idx = ElemR->getIndex();
+
+  nonloc::ConcreteInt *CI1, *CI2;
+
+  // Only handle integer indices for now.
+  if ((CI1 = dyn_cast<nonloc::ConcreteInt>(&Idx)) &&
+      (CI2 = dyn_cast<nonloc::ConcreteInt>(&Offset))) {
+    SVal NewIdx = CI1->EvalBinOp(StateMgr.getBasicVals(), BinaryOperator::Add,
+                                 *CI2);
+    return loc::MemRegionVal(MRMgr.getElementRegion(NewIdx, 
+                                                    ElemR->getSuperRegion()));
+  }
+
+  return UnknownVal();
+}
+
+// Cast 'pointer to array' to 'pointer to the first element of array'.
+
+SVal RegionStoreManager::ArrayToPointer(SVal Array) {
+  const MemRegion* ArrayR = cast<loc::MemRegionVal>(&Array)->getRegion();
+
+  const VarDecl* D = cast<VarRegion>(ArrayR)->getDecl();
+
+  if (const ConstantArrayType* CAT = 
+      dyn_cast<ConstantArrayType>(D->getType().getTypePtr())) {
+
+    BasicValueFactory& BasicVals = StateMgr.getBasicVals();
+    
+    nonloc::ConcreteInt Idx(BasicVals.getValue(0, CAT->getSize().getBitWidth(),
+                                               false));
+
+    ElementRegion* ER = MRMgr.getElementRegion(Idx, ArrayR);
+    
+    return loc::MemRegionVal(ER);
+  }
+
+  return Array;
 }
 
 SVal RegionStoreManager::Retrieve(Store S, Loc L, QualType T) {
