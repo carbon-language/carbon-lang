@@ -230,6 +230,10 @@ public:
   /// Should only be called for instance methods.
   QualType getThisType(ASTContext &C) const;
 
+  unsigned getTypeQualifiers() const {
+    return getType()->getAsFunctionTypeProto()->getTypeQuals();
+  }
+
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == CXXMethod; }
   static bool classof(const CXXMethodDecl *D) { return true; }

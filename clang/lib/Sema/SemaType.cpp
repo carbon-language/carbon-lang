@@ -409,7 +409,7 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
         if (getLangOptions().CPlusPlus) {
           // C++ 8.3.5p2: If the parameter-declaration-clause is empty, the
           // function takes no arguments.
-          T = Context.getFunctionType(T, NULL, 0, FTI.isVariadic);
+          T = Context.getFunctionType(T, NULL, 0, FTI.isVariadic,FTI.TypeQuals);
         } else {
           // Simple void foo(), where the incoming T is the result type.
           T = Context.getFunctionTypeNoProto(T);
@@ -482,7 +482,7 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
           ArgTys.push_back(ArgTy);
         }
         T = Context.getFunctionType(T, &ArgTys[0], ArgTys.size(),
-                                    FTI.isVariadic);
+                                    FTI.isVariadic, FTI.TypeQuals);
       }
       break;
     }
@@ -490,6 +490,31 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
     // See if there are any attributes on this declarator chunk.
     if (const AttributeList *AL = DeclType.getAttrs())
       ProcessTypeAttributeList(T, AL);
+  }
+
+  if (getLangOptions().CPlusPlus && T->isFunctionType()) {
+    const FunctionTypeProto *FnTy = T->getAsFunctionTypeProto();
+    assert(FnTy && "Why oh why is there not a FunctionTypeProto here ?");
+
+    // C++ 8.3.5p4: A cv-qualifier-seq shall only be part of the function type
+    // for a nonstatic member function, the function type to which a pointer
+    // to member refers, or the top-level function type of a function typedef
+    // declaration.
+    if (FnTy->getTypeQuals() != 0 &&
+        D.getDeclSpec().getStorageClassSpec() != DeclSpec::SCS_typedef &&
+        (D.getContext() != Declarator::MemberContext ||
+         D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_static)) {
+
+      if (D.isFunctionDeclarator())
+        Diag(D.getIdentifierLoc(), diag::err_invalid_qualified_function_type);
+      else
+        Diag(D.getIdentifierLoc(),
+             diag::err_invalid_qualified_typedef_function_type_use);
+
+      // Strip the cv-quals from the type.
+      T = Context.getFunctionType(FnTy->getResultType(), FnTy->arg_type_begin(),
+                                  FnTy->getNumArgs(), FnTy->isVariadic());
+    }
   }
   
   // If there were any type attributes applied to the decl itself (not the

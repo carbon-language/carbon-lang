@@ -884,11 +884,13 @@ QualType ASTContext::getFunctionTypeNoProto(QualType ResultTy) {
 /// getFunctionType - Return a normal function type with a typed argument
 /// list.  isVariadic indicates whether the argument list includes '...'.
 QualType ASTContext::getFunctionType(QualType ResultTy,const QualType *ArgArray,
-                                     unsigned NumArgs, bool isVariadic) {
+                                     unsigned NumArgs, bool isVariadic,
+                                     unsigned TypeQuals) {
   // Unique functions, to guarantee there is only one function of a particular
   // structure.
   llvm::FoldingSetNodeID ID;
-  FunctionTypeProto::Profile(ID, ResultTy, ArgArray, NumArgs, isVariadic);
+  FunctionTypeProto::Profile(ID, ResultTy, ArgArray, NumArgs, isVariadic,
+                             TypeQuals);
 
   void *InsertPos = 0;
   if (FunctionTypeProto *FTP = 
@@ -925,7 +927,7 @@ QualType ASTContext::getFunctionType(QualType ResultTy,const QualType *ArgArray,
     (FunctionTypeProto*)malloc(sizeof(FunctionTypeProto) + 
                                NumArgs*sizeof(QualType));
   new (FTP) FunctionTypeProto(ResultTy, ArgArray, NumArgs, isVariadic,
-                              Canonical);
+                              TypeQuals, Canonical);
   Types.push_back(FTP);
   FunctionTypeProtos.InsertNode(FTP, InsertPos);
   return QualType(FTP, 0);

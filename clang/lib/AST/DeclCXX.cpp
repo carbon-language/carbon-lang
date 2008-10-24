@@ -64,9 +64,8 @@ QualType CXXMethodDecl::getThisType(ASTContext &C) const {
   assert(isInstance() && "No 'this' for static methods!");
   QualType ClassTy = C.getTagDeclType(const_cast<CXXRecordDecl*>(
                                             cast<CXXRecordDecl>(getParent())));
-  QualType ThisTy = C.getPointerType(ClassTy);
-  ThisTy.addConst();
-  return ThisTy;
+  ClassTy = ClassTy.getWithAdditionalQualifiers(getTypeQualifiers());
+  return C.getPointerType(ClassTy).withConst();
 }
 
 CXXClassVarDecl *CXXClassVarDecl::Create(ASTContext &C, CXXRecordDecl *RD,

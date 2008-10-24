@@ -402,7 +402,9 @@ Sema::ExprResult Sema::ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
       if (FD->isInvalidDecl())
         return true;
 
-      return new DeclRefExpr(FD, FD->getType(), Loc);
+      // FIXME: Handle 'mutable'.
+      return new DeclRefExpr(FD,
+        FD->getType().getWithAdditionalQualifiers(MD->getTypeQualifiers()),Loc);
     }
 
     return Diag(Loc, diag::err_invalid_non_static_member_use, FD->getName());

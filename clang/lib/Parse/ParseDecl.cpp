@@ -1213,6 +1213,8 @@ void Parser::ParseDeclaratorInternal(Declarator &D) {
 ///         direct-declarator '(' identifier-list[opt] ')'
 /// [GNU]   direct-declarator '(' parameter-forward-declarations
 ///                    parameter-type-list[opt] ')'
+/// [C++]   direct-declarator '(' parameter-declaration-clause ')'
+///                    cv-qualifier-seq[opt] exception-specification[opt]
 ///
 void Parser::ParseDirectDeclarator(Declarator &D) {
   // Parse the first direct-declarator seen.
@@ -1371,6 +1373,9 @@ void Parser::ParseParenDeclarator(Declarator &D) {
 ///           '=' assignment-expression
 /// [GNU]   declaration-specifiers abstract-declarator[opt] attributes
 ///
+/// For C++, after the parameter-list, it also parses "cv-qualifier-seq[opt]"
+/// and "exception-specification[opt]"(TODO).
+///
 void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
                                      AttributeList *AttrList,
                                      bool RequiresArg) {
@@ -1383,20 +1388,29 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
       Diag(Tok.getLocation(), diag::err_argument_required_after_attribute);
       delete AttrList;
     }
-    
+
+    ConsumeParen();  // Eat the closing ')'.
+
+    // cv-qualifier-seq[opt].
+    DeclSpec DS;
+    if (getLang().CPlusPlus) {
+      ParseTypeQualifierListOpt(DS);
+      // FIXME: Parse exception-specification[opt].
+    }
+
     // Remember that we parsed a function type, and remember the attributes.
     // int() -> no prototype, no '...'.
-    D.AddTypeInfo(DeclaratorChunk::getFunction(/*prototype*/ false,
+    D.AddTypeInfo(DeclaratorChunk::getFunction(/*prototype*/getLang().CPlusPlus,
                                                /*variadic*/ false,
-                                               /*arglist*/ 0, 0, LParenLoc));
-    
-    ConsumeParen();  // Eat the closing ')'.
+                                               /*arglist*/ 0, 0,
+                                               DS.getTypeQualifiers(),
+                                               LParenLoc));
     return;
   } 
   
   // Alternatively, this parameter list may be an identifier list form for a
   // K&R-style function:  void foo(a,b,c)
-  if (Tok.is(tok::identifier) &&
+  if (!getLang().CPlusPlus && Tok.is(tok::identifier) &&
       // K&R identifier lists can't have typedefs as identifiers, per
       // C99 6.7.5.3p11.
       !Actions.isTypeName(*Tok.getIdentifierInfo(), CurScope)) {
@@ -1508,13 +1522,21 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
   // Leave prototype scope.
   ExitScope();
   
+  // If we have the closing ')', eat it.
+  MatchRHSPunctuation(tok::r_paren, LParenLoc);
+
+  // cv-qualifier-seq[opt].
+  DeclSpec DS;
+  if (getLang().CPlusPlus) {
+    ParseTypeQualifierListOpt(DS);
+    // FIXME: Parse exception-specification[opt].
+  }
+
   // Remember that we parsed a function type, and remember the attributes.
   D.AddTypeInfo(DeclaratorChunk::getFunction(/*proto*/true, IsVariadic,
                                              &ParamInfo[0], ParamInfo.size(),
+                                             DS.getTypeQualifiers(),
                                              LParenLoc));
-  
-  // If we have the closing ')', eat it and we're done.
-  MatchRHSPunctuation(tok::r_paren, LParenLoc);
 }
 
 /// ParseFunctionDeclaratorIdentifierList - While parsing a function declarator
@@ -1581,7 +1603,7 @@ void Parser::ParseFunctionDeclaratorIdentifierList(SourceLocation LParenLoc,
   // has no prototype.
   D.AddTypeInfo(DeclaratorChunk::getFunction(/*proto*/false, /*varargs*/false,
                                              &ParamInfo[0], ParamInfo.size(),
-                                             LParenLoc));
+                                             /*TypeQuals*/0, LParenLoc));
   
   // If we have the closing ')', eat it and we're done.
   MatchRHSPunctuation(tok::r_paren, LParenLoc);

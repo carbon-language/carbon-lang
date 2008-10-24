@@ -442,6 +442,10 @@ struct DeclaratorChunk {
     /// with ',...)', this is true.
     bool isVariadic : 1;
 
+    /// The type qualifiers: const/volatile/restrict.
+    /// The qualifier bitmask values are the same as in QualType. 
+    unsigned TypeQuals : 3;
+
     /// NumArgs - This is the number of formal arguments provided for the
     /// declarator.
     unsigned NumArgs;
@@ -528,12 +532,13 @@ struct DeclaratorChunk {
   /// getFunction - Return a DeclaratorChunk for a function.
   static DeclaratorChunk getFunction(bool hasProto, bool isVariadic,
                                      ParamInfo *ArgInfo, unsigned NumArgs,
-                                     SourceLocation Loc) {
+                                     unsigned TypeQuals, SourceLocation Loc) {
     DeclaratorChunk I;
     I.Kind             = Function;
     I.Loc              = Loc;
     I.Fun.hasPrototype = hasProto;
     I.Fun.isVariadic   = isVariadic;
+    I.Fun.TypeQuals    = TypeQuals;
     I.Fun.NumArgs      = NumArgs;
     I.Fun.ArgInfo      = 0;
     

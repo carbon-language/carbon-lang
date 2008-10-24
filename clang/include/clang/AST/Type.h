@@ -157,6 +157,10 @@ public:
   QualType getWithAdditionalQualifiers(unsigned TQs) const {
     return QualType(getTypePtr(), TQs|getCVRQualifiers());
   }
+
+  QualType withConst() const { return getWithAdditionalQualifiers(Const); }
+  QualType withVolatile() const { return getWithAdditionalQualifiers(Volatile);}
+  QualType withRestrict() const { return getWithAdditionalQualifiers(Restrict);}
   
   QualType getUnqualifiedType() const;
   bool isMoreQualifiedThan(QualType Other) const;
@@ -917,13 +921,25 @@ class FunctionType : public Type {
   /// SubClassData - This field is owned by the subclass, put here to pack
   /// tightly with the ivars in Type.
   bool SubClassData : 1;
+
+  /// TypeQuals - Used only by FunctionTypeProto, put here to pack with the
+  /// other bitfields.
+  /// The qualifiers are part of FunctionTypeProto because...
+  ///
+  /// C++ 8.3.5p4: The return type, the parameter type list and the
+  /// cv-qualifier-seq, [...], are part of the function type.
+  ///
+  unsigned TypeQuals : 3;
   
   // The type returned by the function.
   QualType ResultType;
 protected:
-  FunctionType(TypeClass tc, QualType res, bool SubclassInfo,QualType Canonical)
-    : Type(tc, Canonical), SubClassData(SubclassInfo), ResultType(res) {}
+  FunctionType(TypeClass tc, QualType res, bool SubclassInfo,
+               unsigned typeQuals, QualType Canonical)
+    : Type(tc, Canonical),
+      SubClassData(SubclassInfo), TypeQuals(typeQuals), ResultType(res) {}
   bool getSubClassData() const { return SubClassData; }
+  unsigned getTypeQuals() const { return TypeQuals; }
 public:
   
   QualType getResultType() const { return ResultType; }
@@ -940,7 +956,7 @@ public:
 /// no information available about its arguments.
 class FunctionTypeNoProto : public FunctionType, public llvm::FoldingSetNode {
   FunctionTypeNoProto(QualType Result, QualType Canonical)
-    : FunctionType(FunctionNoProto, Result, false, Canonical) {}
+    : FunctionType(FunctionNoProto, Result, false, 0, Canonical) {}
   friend class ASTContext;  // ASTContext creates these.
 public:
   // No additional state past what FunctionType provides.
@@ -970,8 +986,8 @@ protected:
 /// arguments, not as having a single void argument.
 class FunctionTypeProto : public FunctionType, public llvm::FoldingSetNode {
   FunctionTypeProto(QualType Result, const QualType *ArgArray, unsigned numArgs,
-                    bool isVariadic, QualType Canonical)
-    : FunctionType(FunctionProto, Result, isVariadic, Canonical),
+                    bool isVariadic, unsigned typeQuals, QualType Canonical)
+    : FunctionType(FunctionProto, Result, isVariadic, typeQuals, Canonical),
       NumArgs(numArgs) {
     // Fill in the trailing argument array.
     QualType *ArgInfo = reinterpret_cast<QualType *>(this+1);;
@@ -996,6 +1012,7 @@ public:
   }
     
   bool isVariadic() const { return getSubClassData(); }
+  unsigned getTypeQuals() const { return FunctionType::getTypeQuals(); }
   
   typedef const QualType *arg_type_iterator;
   arg_type_iterator arg_type_begin() const {
@@ -1013,7 +1030,7 @@ public:
   void Profile(llvm::FoldingSetNodeID &ID);
   static void Profile(llvm::FoldingSetNodeID &ID, QualType Result,
                       arg_type_iterator ArgTys, unsigned NumArgs,
-                      bool isVariadic);
+                      bool isVariadic, unsigned TypeQuals);
 
 protected:  
   virtual void EmitImpl(llvm::Serializer& S) const;

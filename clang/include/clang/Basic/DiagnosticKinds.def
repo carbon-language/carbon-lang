@@ -1041,6 +1041,11 @@ DIAG(err_invalid_this_use, ERROR,
      "invalid use of 'this' outside of a nonstatic member function")
 DIAG(err_invalid_member_use_in_static_method, ERROR,
      "invalid use of member '%0' in static member function")
+DIAG(err_invalid_qualified_function_type, ERROR,
+     "type qualifier is not allowed on this function")
+DIAG(err_invalid_qualified_typedef_function_type_use, ERROR,
+     "a qualified function type cannot be used to declare a nonmember function "
+     "or a static member function")
 DIAG(err_invalid_non_static_member_use, ERROR,
      "invalid use of nonstatic data member '%0'")
 DIAG(err_invalid_incomplete_type_use, ERROR,

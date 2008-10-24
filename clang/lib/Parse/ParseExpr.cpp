@@ -1116,7 +1116,7 @@ Parser::ExprResult Parser::ParseBlockLiteralExpression() {
   } else {
     // Otherwise, pretend we saw (void).
     ParamInfo.AddTypeInfo(DeclaratorChunk::getFunction(true, false,
-                                                       0, 0, CaretLoc));
+                                                       0, 0, 0, CaretLoc));
   }
 
   // Inform sema that we are starting a block.

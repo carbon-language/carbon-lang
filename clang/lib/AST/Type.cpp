@@ -705,15 +705,18 @@ const char *BuiltinType::getName() const {
 
 void FunctionTypeProto::Profile(llvm::FoldingSetNodeID &ID, QualType Result,
                                 arg_type_iterator ArgTys,
-                                unsigned NumArgs, bool isVariadic) {
+                                unsigned NumArgs, bool isVariadic,
+                                unsigned TypeQuals) {
   ID.AddPointer(Result.getAsOpaquePtr());
   for (unsigned i = 0; i != NumArgs; ++i)
     ID.AddPointer(ArgTys[i].getAsOpaquePtr());
   ID.AddInteger(isVariadic);
+  ID.AddInteger(TypeQuals);
 }
 
 void FunctionTypeProto::Profile(llvm::FoldingSetNodeID &ID) {
-  Profile(ID, getResultType(), arg_type_begin(), NumArgs, isVariadic());
+  Profile(ID, getResultType(), arg_type_begin(), NumArgs, isVariadic(),
+          getTypeQuals());
 }
 
 void ObjCQualifiedInterfaceType::Profile(llvm::FoldingSetNodeID &ID,
