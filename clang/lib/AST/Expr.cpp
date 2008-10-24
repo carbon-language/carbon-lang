@@ -717,7 +717,13 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
   case TypesCompatibleExprClass: {
     const TypesCompatibleExpr *TCE = cast<TypesCompatibleExpr>(this);
     Result.zextOrTrunc(static_cast<uint32_t>(Ctx.getTypeSize(getType())));
-    Result = Ctx.typesAreCompatible(TCE->getArgType1(), TCE->getArgType2());
+    // Per gcc docs "this built-in function ignores top level
+    // qualifiers".  We need to use the canonical version to properly
+    // be able to strip CRV qualifiers from the type.
+    QualType T0 = Ctx.getCanonicalType(TCE->getArgType1());
+    QualType T1 = Ctx.getCanonicalType(TCE->getArgType2());
+    Result = Ctx.typesAreCompatible(T0.getUnqualifiedType(), 
+                                    T1.getUnqualifiedType());
     break;
   }
   case CallExprClass: {

@@ -205,7 +205,13 @@ public:
   }
   bool VisitTypesCompatibleExpr(const TypesCompatibleExpr *E) {
     Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
-    Result = Info.Ctx.typesAreCompatible(E->getArgType1(), E->getArgType2());
+    // Per gcc docs "this built-in function ignores top level
+    // qualifiers".  We need to use the canonical version to properly
+    // be able to strip CRV qualifiers from the type.
+    QualType T0 = Info.Ctx.getCanonicalType(E->getArgType1());
+    QualType T1 = Info.Ctx.getCanonicalType(E->getArgType2());
+    Result = Info.Ctx.typesAreCompatible(T0.getUnqualifiedType(), 
+                                         T1.getUnqualifiedType());
     return true;
   }
   bool VisitDeclRefExpr(const DeclRefExpr *E);
