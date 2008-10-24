@@ -328,6 +328,10 @@
 				RelativePath="..\..\include\clang\AST\Type.h"
 				>
 			</File>
+			<File
+				RelativePath="..\..\include\clang\AST\TypeOrdering.h"
+				>
+			</File>
 		</Filter>
 	</Files>
 	<Globals>
