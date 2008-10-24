@@ -368,10 +368,12 @@ Constant *llvm::ConstantFoldInstOperands(unsigned Opcode, const Type *DestTy,
       if (TD && CE->getOpcode() == Instruction::IntToPtr) {
         Constant *Input = CE->getOperand(0);
         unsigned InWidth = Input->getType()->getPrimitiveSizeInBits();
-        Constant *Mask = 
-          ConstantInt::get(APInt::getLowBitsSet(InWidth,
-                                                TD->getPointerSizeInBits()));
-        Input = ConstantExpr::getAnd(Input, Mask);
+        if (TD->getPointerSizeInBits() < InWidth) {
+          Constant *Mask = 
+            ConstantInt::get(APInt::getLowBitsSet(InWidth,
+                                                  TD->getPointerSizeInBits()));
+          Input = ConstantExpr::getAnd(Input, Mask);
+        }
         // Do a zext or trunc to get to the dest size.
         return ConstantExpr::getIntegerCast(Input, DestTy, false);
       }
