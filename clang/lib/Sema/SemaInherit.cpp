@@ -24,13 +24,15 @@
 #include <set>
 #include <string>
 
-namespace clang {
+using namespace clang;
 
 /// isAmbiguous - Determines whether the set of paths provided is
 /// ambiguous, i.e., there are two or more paths that refer to
 /// different base class subobjects of the same type. BaseType must be
 /// an unqualified, canonical class type.
 bool BasePaths::isAmbiguous(QualType BaseType) {
+  assert(BaseType->isCanonical() && "Base type must be the canonical type");
+  assert(BaseType.getCVRQualifiers() == 0 && "Base type must be unqualified");
   std::pair<bool, unsigned>& Subobjects = ClassSubobjects[BaseType];
   return Subobjects.second + (Subobjects.first? 1 : 0) > 1;
 }
@@ -141,8 +143,8 @@ bool Sema::IsDerivedFrom(QualType Derived, QualType Base, BasePaths &Paths) {
 /// if there is an error, and Range is the source range to highlight
 /// if there is an error.
 bool 
-Sema::CheckDerivedToBaseConversion(SourceLocation Loc, SourceRange Range,
-                                   QualType Derived, QualType Base) {
+Sema::CheckDerivedToBaseConversion(QualType Derived, QualType Base,
+                                   SourceLocation Loc, SourceRange Range) {
   // First, determine whether the path from Derived to Base is
   // ambiguous. This is slightly more expensive than checking whether
   // the Derived to Base conversion exists, because here we need to
@@ -153,47 +155,43 @@ Sema::CheckDerivedToBaseConversion(SourceLocation Loc, SourceRange Range,
   if (!DerivationOkay)
     return true;
 
-  if (Paths.isAmbiguous(Context.getCanonicalType(Base).getUnqualifiedType())) {
-    // We know that the derived-to-base conversion is
-    // ambiguous. Perform the derived-to-base search just one more
-    // time to compute all of the possible paths so that we can print
-    // them out. This is more expensive than any of the previous
-    // derived-to-base checks we've done, but at this point we know
-    // we'll be issuing a diagnostic so performance isn't as much of
-    // an issue.
-    Paths.clear();
-    Paths.setRecordingPaths(true);
-    bool StillOkay = IsDerivedFrom(Derived, Base, Paths);
-    assert(StillOkay && "Can only be used with a derived-to-base conversion");
-    if (!StillOkay)
-      return true;
+  if (!Paths.isAmbiguous(Context.getCanonicalType(Base).getUnqualifiedType()))
+    return false;
 
-    // Build up a textual representation of the ambiguous paths, e.g.,
-    // D -> B -> A, that will be used to illustrate the ambiguous
-    // conversions in the diagnostic. We only print one of the paths
-    // to each base class subobject.
-    std::string PathDisplayStr;
-    std::set<unsigned> DisplayedPaths;
-    for (BasePaths::paths_iterator Path = Paths.begin(); 
-         Path != Paths.end(); ++Path) {
-      if (DisplayedPaths.insert(Path->back().SubobjectNumber).second) {
-        // We haven't displayed a path to this particular base
-        // class subobject yet.
-        PathDisplayStr += "\n    ";
-        PathDisplayStr += Derived.getAsString();
-        for (BasePath::const_iterator Element = Path->begin(); 
-             Element != Path->end(); ++Element)
-          PathDisplayStr += " -> " + Element->Base->getType().getAsString(); 
-      }
-    }
-
-    Diag(Loc, diag::err_ambiguous_derived_to_base_conv,
-         Derived.getAsString(), Base.getAsString(), PathDisplayStr, Range);
+  // We know that the derived-to-base conversion is ambiguous, and
+  // we're going to produce a diagnostic. Perform the derived-to-base
+  // search just one more time to compute all of the possible paths so
+  // that we can print them out. This is more expensive than any of
+  // the previous derived-to-base checks we've done, but at this point
+  // performance isn't as much of an issue.
+  Paths.clear();
+  Paths.setRecordingPaths(true);
+  bool StillOkay = IsDerivedFrom(Derived, Base, Paths);
+  assert(StillOkay && "Can only be used with a derived-to-base conversion");
+  if (!StillOkay)
     return true;
+  
+  // Build up a textual representation of the ambiguous paths, e.g.,
+  // D -> B -> A, that will be used to illustrate the ambiguous
+  // conversions in the diagnostic. We only print one of the paths
+  // to each base class subobject.
+  std::string PathDisplayStr;
+  std::set<unsigned> DisplayedPaths;
+  for (BasePaths::paths_iterator Path = Paths.begin(); 
+       Path != Paths.end(); ++Path) {
+    if (DisplayedPaths.insert(Path->back().SubobjectNumber).second) {
+      // We haven't displayed a path to this particular base
+      // class subobject yet.
+      PathDisplayStr += "\n    ";
+      PathDisplayStr += Derived.getAsString();
+      for (BasePath::const_iterator Element = Path->begin(); 
+           Element != Path->end(); ++Element)
+        PathDisplayStr += " -> " + Element->Base->getType().getAsString(); 
+    }
   }
-
-  return false;
+  
+  Diag(Loc, diag::err_ambiguous_derived_to_base_conv,
+       Derived.getAsString(), Base.getAsString(), PathDisplayStr, Range);
+  return true;
 }
-
-} // end namespace clang
 

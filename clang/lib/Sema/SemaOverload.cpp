@@ -721,9 +721,9 @@ bool Sema::CheckPointerConversion(Expr *From, QualType ToType) {
           ToPointeeType->isRecordType()) {
         // We must have a derived-to-base conversion. Check an
         // ambiguous or inaccessible conversion.
-        return CheckDerivedToBaseConversion(From->getExprLoc(),
-                                            From->getSourceRange(),
-                                            FromPointeeType, ToPointeeType);
+        return CheckDerivedToBaseConversion(FromPointeeType, ToPointeeType,
+                                            From->getExprLoc(),
+                                            From->getSourceRange());
       }
     }
 

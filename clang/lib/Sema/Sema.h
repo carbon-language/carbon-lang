@@ -798,8 +798,8 @@ public:
   bool IsDerivedFrom(QualType Derived, QualType Base);
   bool IsDerivedFrom(QualType Derived, QualType Base, BasePaths &Paths);
 
-  bool CheckDerivedToBaseConversion(SourceLocation Loc, SourceRange Range,
-                                    QualType Derived, QualType Base);
+  bool CheckDerivedToBaseConversion(QualType Derived, QualType Base,
+                                    SourceLocation Loc, SourceRange Range);
 
   // Objective-C declarations.
   virtual DeclTy *ActOnStartClassInterface(SourceLocation AtInterfaceLoc,

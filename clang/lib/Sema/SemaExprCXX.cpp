@@ -287,9 +287,10 @@ Sema::CheckReinterpretCast(SourceLocation OpLoc, Expr *&SrcExpr,
   // object pointers.
 }
 
-/// Check if the pointer conversion from SrcType to DestType casts away
-/// constness as defined in C++ 5.2.11p8ff. This is used by the cast checkers.
-/// Both arguments must denote pointer types.
+/// CastsAwayConstness - Check if the pointer conversion from SrcType
+/// to DestType casts away constness as defined in C++
+/// 5.2.11p8ff. This is used by the cast checkers.  Both arguments
+/// must denote pointer types.
 bool
 Sema::CastsAwayConstness(QualType SrcType, QualType DestType)
 {
