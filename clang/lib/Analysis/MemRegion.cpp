@@ -103,6 +103,11 @@ void FieldRegion::print(llvm::raw_ostream& os) const {
   os << "->" << getDecl()->getName();
 }
 
+void ElementRegion::print(llvm::raw_ostream& os) const {
+  superRegion->print(os);
+  os << '['; Index.print(os); os << ']';
+}
+
 //===----------------------------------------------------------------------===//
 // MemRegionManager methods.
 //===----------------------------------------------------------------------===//

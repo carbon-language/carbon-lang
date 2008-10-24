@@ -54,9 +54,11 @@ public:
   virtual void Profile(llvm::FoldingSetNodeID& ID) const = 0;
   
   std::string getString() const;
+
   virtual void print(llvm::raw_ostream& os) const;  
   
   Kind getKind() const { return kind; }  
+
   static bool classof(const MemRegion*) { return true; }
 };
   
@@ -274,6 +276,8 @@ class ElementRegion : public SubRegion {
 public:
 
   SVal getIndex() const { return Index; }
+
+  void print(llvm::raw_ostream& os) const;
 
   void Profile(llvm::FoldingSetNodeID& ID) const;
 
