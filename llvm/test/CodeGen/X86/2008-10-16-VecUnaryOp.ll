@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -enable-legalize-types
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 -enable-legalize-types
 ; PR2762
 define void @foo(<4 x i32>* %p, <4 x double>* %q) {
   %n = load <4 x i32>* %p

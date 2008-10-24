@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 > %t
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 > %t
 ; RUN: not grep cmp %t
 ; RUN: not grep xor %t
 ; RUN: grep jne %t | count 1
