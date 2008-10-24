@@ -1938,6 +1938,7 @@ namespace {
         assert(!Ty->isFPOrFPVector() && "Float in work queue!");
 
         Constant *Zero = Constant::getNullValue(Ty);
+        Constant *One = ConstantInt::get(Ty, 1);
         ConstantInt *AllOnes = ConstantInt::getAllOnesValue(Ty);
 
         switch (Opcode) {
@@ -1945,19 +1946,73 @@ namespace {
           case Instruction::LShr:
           case Instruction::AShr:
           case Instruction::Shl:
+            if (Op1 == Zero) {
+              add(BO, Op0, ICmpInst::ICMP_EQ, NewContext);
+              return;
+            }
+            break;
           case Instruction::Sub:
             if (Op1 == Zero) {
               add(BO, Op0, ICmpInst::ICMP_EQ, NewContext);
               return;
+            }
+            if (ConstantInt *CI0 = dyn_cast<ConstantInt>(Op0)) {
+              unsigned n_ci0 = VN.getOrInsertVN(Op1, Top);
+              ConstantRange CR = VR.range(n_ci0, Top);
+              if (!CR.isFullSet()) {
+                CR.subtract(CI0->getValue());
+                unsigned n_bo = VN.getOrInsertVN(BO, Top);
+                VR.applyRange(n_bo, CR, Top, this);
+                return;
+              }
+            }
+            if (ConstantInt *CI1 = dyn_cast<ConstantInt>(Op1)) {
+              unsigned n_ci1 = VN.getOrInsertVN(Op0, Top);
+              ConstantRange CR = VR.range(n_ci1, Top);
+              if (!CR.isFullSet()) {
+                CR.subtract(CI1->getValue());
+                unsigned n_bo = VN.getOrInsertVN(BO, Top);
+                VR.applyRange(n_bo, CR, Top, this);
+                return;
+              }
             }
             break;
           case Instruction::Or:
             if (Op0 == AllOnes || Op1 == AllOnes) {
               add(BO, AllOnes, ICmpInst::ICMP_EQ, NewContext);
               return;
-            } // fall-through
-          case Instruction::Xor:
+            }
+            if (Op0 == Zero) {
+              add(BO, Op1, ICmpInst::ICMP_EQ, NewContext);
+              return;
+            } else if (Op1 == Zero) {
+              add(BO, Op0, ICmpInst::ICMP_EQ, NewContext);
+              return;
+            }
+            break;
           case Instruction::Add:
+            if (ConstantInt *CI0 = dyn_cast<ConstantInt>(Op0)) {
+              unsigned n_ci0 = VN.getOrInsertVN(Op1, Top);
+              ConstantRange CR = VR.range(n_ci0, Top);
+              if (!CR.isFullSet()) {
+                CR.subtract(-CI0->getValue());
+                unsigned n_bo = VN.getOrInsertVN(BO, Top);
+                VR.applyRange(n_bo, CR, Top, this);
+                return;
+              }
+            }
+            if (ConstantInt *CI1 = dyn_cast<ConstantInt>(Op1)) {
+              unsigned n_ci1 = VN.getOrInsertVN(Op0, Top);
+              ConstantRange CR = VR.range(n_ci1, Top);
+              if (!CR.isFullSet()) {
+                CR.subtract(-CI1->getValue());
+                unsigned n_bo = VN.getOrInsertVN(BO, Top);
+                VR.applyRange(n_bo, CR, Top, this);
+                return;
+              }
+            }
+            // fall-through
+          case Instruction::Xor:
             if (Op0 == Zero) {
               add(BO, Op1, ICmpInst::ICMP_EQ, NewContext);
               return;
@@ -1974,10 +2029,21 @@ namespace {
               add(BO, Op0, ICmpInst::ICMP_EQ, NewContext);
               return;
             }
-            // fall-through
+            if (Op0 == Zero || Op1 == Zero) {
+              add(BO, Zero, ICmpInst::ICMP_EQ, NewContext);
+              return;
+            }
+            break;
           case Instruction::Mul:
             if (Op0 == Zero || Op1 == Zero) {
               add(BO, Zero, ICmpInst::ICMP_EQ, NewContext);
+              return;
+            }
+            if (Op0 == One) {
+              add(BO, Op1, ICmpInst::ICMP_EQ, NewContext);
+              return;
+            } else if (Op1 == One) {
+              add(BO, Op0, ICmpInst::ICMP_EQ, NewContext);
               return;
             }
             break;
@@ -1986,7 +2052,7 @@ namespace {
         // "%x = add i32 %y, %z" and %x EQ %y then %z EQ 0
         // "%x = add i32 %y, %z" and %x EQ %z then %y EQ 0
         // "%x = shl i32 %y, %z" and %x EQ %y and %y NE 0 then %z EQ 0
-        // "%x = udiv i32 %y, %z" and %x EQ %y then %z EQ 1
+        // "%x = udiv i32 %y, %z" and %x EQ %y and %y NE 0 then %z EQ 1
 
         Value *Known = Op0, *Unknown = Op1,
               *TheBO = VN.canonicalize(BO, Top);
@@ -2009,10 +2075,8 @@ namespace {
             case Instruction::UDiv:
             case Instruction::SDiv:
               if (Unknown == Op1) break;
-              if (isRelatedBy(Known, Zero, ICmpInst::ICMP_NE)) {
-                Constant *One = ConstantInt::get(Ty, 1);
+              if (isRelatedBy(Known, Zero, ICmpInst::ICMP_NE))
                 add(Unknown, One, ICmpInst::ICMP_EQ, NewContext);
-              }
               break;
           }
         }
@@ -2488,7 +2552,7 @@ namespace {
 
   void PredicateSimplifier::Forwards::visitLoadInst(LoadInst &LI) {
     Value *Ptr = LI.getPointerOperand();
-    // avoid "load uint* null" -> null NE null.
+    // avoid "load i8* null" -> null NE null.
     if (isa<Constant>(Ptr)) return;
 
     VRPSolver VRP(VN, IG, UB, VR, PS->DTDFS, PS->modified, &LI);
@@ -2624,8 +2688,8 @@ namespace {
           if (!Op1->getValue().isAllOnesValue())
             NextVal = ConstantInt::get(Op1->getValue()+1);
          break;
-
       }
+
       if (NextVal) {
         VRPSolver VRP(VN, IG, UB, VR, PS->DTDFS, PS->modified, &IC);
         if (VRP.isRelatedBy(IC.getOperand(0), NextVal,
