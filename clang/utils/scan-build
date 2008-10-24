@@ -98,7 +98,7 @@ my $FoundAnalysis = 0;
 
 while(<PIPE>) {
   if ($FoundAnalysis == 0) {
-    if (/Available Source Code Analyses/) {
+    if (/SCA Checks\/Analyses/) {
       $FoundAnalysis = 1;
     }
 
