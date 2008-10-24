@@ -179,6 +179,11 @@ public:
     return cast_or_null<CXXFieldDecl>(RecordDecl::getMember(name));
   }
 
+  /// viewInheritance - Renders and displays an inheritance diagram
+  /// for this C++ class and all of its base classes (transitively) using
+  /// GraphViz.
+  void viewInheritance(ASTContext& Context) const;
+
   static bool classof(const Decl *D) { return D->getKind() == CXXRecord; }
   static bool classof(const CXXRecordDecl *D) { return true; }
   static DeclContext *castToDeclContext(const CXXRecordDecl *D) {

@@ -182,11 +182,6 @@ public:
   void dump(const char *s) const;
   void dump() const;
   
-  /// viewInheritance - Renders and displays an inheritance diagram
-  /// for a C++ class and all of its base classes (transitively) using
-  /// GraphViz. Only available in debug builds.
-  void viewInheritance(ASTContext& Context);
-
   void Profile(llvm::FoldingSetNodeID &ID) const {
     ID.AddPointer(getAsOpaquePtr());
   }

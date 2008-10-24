@@ -25,7 +25,6 @@ using namespace llvm;
 
 namespace clang {
 
-#ifndef NDEBUG
 /// InheritanceHierarchyWriter - Helper class that writes out a
 /// GraphViz file that diagrams the inheritance hierarchy starting at
 /// a given C++ class type. Note that we do not use LLVM's
@@ -131,23 +130,18 @@ InheritanceHierarchyWriter::WriteNodeReference(QualType Type,
     Out << "_" << DirectBaseCount[CanonType];
   return Out;
 }
-#endif
 
 /// viewInheritance - Display the inheritance hierarchy of this C++
 /// class using GraphViz.
-void QualType::viewInheritance(ASTContext& Context) {
-  if (!(*this)->getAsRecordType()) {
-    llvm::errs() << "Type " << getAsString() << " is not a C++ class type.\n";
-    return;
-  }
-#ifndef NDEBUG
+void CXXRecordDecl::viewInheritance(ASTContext& Context) const {
+  QualType Self = Context.getTypeDeclType(const_cast<CXXRecordDecl *>(this));
   std::string ErrMsg;
   sys::Path Filename = sys::Path::GetTemporaryDirectory(&ErrMsg);
   if (Filename.isEmpty()) {
     llvm::errs() << "Error: " << ErrMsg << "\n";
     return;
   }
-  Filename.appendComponent(getAsString() + ".dot");
+  Filename.appendComponent(Self.getAsString() + ".dot");
   if (Filename.makeUnique(true,&ErrMsg)) {
     llvm::errs() << "Error: " << ErrMsg << "\n";
     return;
@@ -159,7 +153,7 @@ void QualType::viewInheritance(ASTContext& Context) {
 
   if (ErrMsg.empty()) {
     InheritanceHierarchyWriter Writer(Context, O);
-    Writer.WriteGraph(*this);
+    Writer.WriteGraph(Self);
     llvm::errs() << " done. \n";
 
     O.close();
@@ -169,10 +163,6 @@ void QualType::viewInheritance(ASTContext& Context) {
   } else {
     llvm::errs() << "error opening file for writing!\n";
   }
-#else
-  llvm::errs() << "QualType::viewInheritance is only available in debug "
-               << "builds on systems with Graphviz or gv!\n";
-#endif
 }
 
 }

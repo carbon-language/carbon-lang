@@ -551,8 +551,7 @@ public:
         // FIXME: This lookup needs to be generalized to handle namespaces and
         // (when we support them) templates.
         if (D->getName() == clsname) {
-          QualType QT(T, 0);
-          QT.viewInheritance(C);      
+          D->viewInheritance(C);      
         }
       }
   }
