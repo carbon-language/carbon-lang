@@ -1096,7 +1096,7 @@ public:
   
   static bool isError(Kind k) { return k >= ErrorUseAfterRelease; }
   
-  static bool isLeak(Kind k) { return k == ErrorLeak; }
+  static bool isLeak(Kind k) { return k >= ErrorLeak; }
   
   bool isOwned() const {
     return getKind() == Owned;
@@ -1266,7 +1266,8 @@ public:
 
   typedef ReleasesNotOwnedTy UseAfterReleasesTy;
     
-  typedef llvm::DenseMap<GRExprEngine::NodeTy*, std::vector<SymbolID>*>
+  typedef llvm::DenseMap<GRExprEngine::NodeTy*,
+                         std::vector<std::pair<SymbolID,bool> >*>
           LeaksTy;
 
   class BindingsPrinter : public GRState::Printer {
@@ -1302,9 +1303,9 @@ private:
                            const GRState* St,
                            RefVal::Kind hasErr, SymbolID Sym);
   
-  const GRState* HandleSymbolDeath(GRStateManager& VMgr, const GRState* St,
-                                   const Decl* CD, SymbolID sid, RefVal V,
-                                   bool& hasLeak);
+  std::pair<GRStateRef, bool>
+  HandleSymbolDeath(GRStateManager& VMgr, const GRState* St,
+                    const Decl* CD, SymbolID sid, RefVal V, bool& hasLeak);
   
 public:
   
@@ -1508,6 +1509,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
   
   // Get the state.
   GRStateRef state(Builder.GetState(Pred), Eng.getStateManager());
+  ASTContext& Ctx = Eng.getStateManager().getContext();
 
   // Evaluate the effect of the arguments.
   RefVal::Kind hasErr = (RefVal::Kind) 0;
@@ -1560,7 +1562,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
         if (R) {
           // Set the value of the variable to be a conjured symbol.
           unsigned Count = Builder.getCurrentBlockCount();
-          QualType T = R->getType();
+          QualType T = R->getType(Ctx);
           
           // FIXME: handle structs.
           if (T->isIntegerType() || Loc::IsLocType(T)) {
@@ -1743,7 +1745,7 @@ void CFRefCount::EvalObjCMessageExpr(ExplodedNodeSet<GRState>& Dst,
     }
     
     Summ = Summaries.getMethodSummary(ME, ID);
-#if 0    
+
     // Special-case: are we sending a mesage to "self"?
     //  This is a hack.  When we have full-IP this should be removed.
     if (!Summ) {
@@ -1754,17 +1756,15 @@ void CFRefCount::EvalObjCMessageExpr(ExplodedNodeSet<GRState>& Dst,
         if (Expr* Receiver = ME->getReceiver()) {
           SVal X = Eng.getStateManager().GetSVal(St, Receiver);
           if (loc::MemRegionVal* L = dyn_cast<loc::MemRegionVal>(&X))
-            if (const VarRegion* R = dyn_cast<VarRegion>(L->getRegion()))
-              if (R->getDecl() == MD->getSelfDecl()) {
-                // Create a summmary where all of the arguments "StopTracking".
-                Summ = Summaries.getPersistentSummary(RetEffect::MakeNoRet(),
-                                                      DoNothing,
-                                                      StopTracking);
-              }
+            if (L->getRegion() == Eng.getStateManager().getSelfRegion(St)) {
+              // Create a summmary where all of the arguments "StopTracking".
+              Summ = Summaries.getPersistentSummary(RetEffect::MakeNoRet(),
+                                                    DoNothing,
+                                                    StopTracking);
+            }
         }
       }
     }
-#endif
   }
   else
     Summ = Summaries.getClassMethodSummary(ME->getClassName(),
@@ -1846,32 +1846,30 @@ void CFRefCount::EvalStore(ExplodedNodeSet<GRState>& Dst,
 //  or autorelease. Any other time you receive an object, you must
 //  not release it."
 //
-#if 0
 static bool followsFundamentalRule(const char* s) {
   return CStrInCStrNoCase(s, "create") || CStrInCStrNoCase(s, "copy")  || 
          CStrInCStrNoCase(s, "new");
 }  
-#endif
 
-const GRState* CFRefCount::HandleSymbolDeath(GRStateManager& VMgr,
-                                             const GRState* St, const Decl* CD,
-                                             SymbolID sid,
-                                             RefVal V, bool& hasLeak) {
+std::pair<GRStateRef,bool>
+CFRefCount::HandleSymbolDeath(GRStateManager& VMgr,
+                              const GRState* St, const Decl* CD,
+                              SymbolID sid,
+                              RefVal V, bool& hasLeak) {
 
   GRStateRef state(St, VMgr);
   assert (!V.isReturnedOwned() || CD &&
           "CodeDecl must be available for reporting ReturnOwned errors.");
 
-#if 0
   if (V.isReturnedOwned() && V.getCount() == 0)
     if (const ObjCMethodDecl* MD = dyn_cast<ObjCMethodDecl>(CD)) {
       std::string s = MD->getSelector().getName();
       if (!followsFundamentalRule(s.c_str())) {
         hasLeak = true;
-        return state.set<RefBindings>(sid, V ^ RefVal::ErrorLeakReturned);
+        state = state.set<RefBindings>(sid, V ^ RefVal::ErrorLeakReturned);
+        return std::make_pair(state, true);
       }
     }
-#endif
   
   // All other cases.
   
@@ -1879,9 +1877,10 @@ const GRState* CFRefCount::HandleSymbolDeath(GRStateManager& VMgr,
             ((V.isNotOwned() || V.isReturnedOwned()) && V.getCount() > 0);
 
   if (!hasLeak)
-    return state.remove<RefBindings>(sid);
+    return std::make_pair(state.remove<RefBindings>(sid), false);
   
-  return state.set<RefBindings>(sid, V ^ RefVal::ErrorLeak);
+  return std::make_pair(state.set<RefBindings>(sid, V ^ RefVal::ErrorLeak),
+                        false);
 }
 
 void CFRefCount::EvalEndPath(GRExprEngine& Eng,
@@ -1890,16 +1889,18 @@ void CFRefCount::EvalEndPath(GRExprEngine& Eng,
   const GRState* St = Builder.getState();
   RefBindings B = St->get<RefBindings>();
   
-  llvm::SmallVector<SymbolID, 10> Leaked;
+  llvm::SmallVector<std::pair<SymbolID, bool>, 10> Leaked;
   const Decl* CodeDecl = &Eng.getGraph().getCodeDecl();
   
   for (RefBindings::iterator I = B.begin(), E = B.end(); I != E; ++I) {
     bool hasLeak = false;
     
-    St = HandleSymbolDeath(Eng.getStateManager(), St, CodeDecl,
-                           (*I).first, (*I).second, hasLeak);
+    std::pair<GRStateRef, bool> X =
+      HandleSymbolDeath(Eng.getStateManager(), St, CodeDecl,
+                        (*I).first, (*I).second, hasLeak);
     
-    if (hasLeak) Leaked.push_back((*I).first);
+    St = X.first;
+    if (hasLeak) Leaked.push_back(std::make_pair((*I).first, X.second));
   }
 
   if (Leaked.empty())
@@ -1910,12 +1911,12 @@ void CFRefCount::EvalEndPath(GRExprEngine& Eng,
   if (!N)
     return;
     
-  std::vector<SymbolID>*& LeaksAtNode = Leaks[N];
+  std::vector<std::pair<SymbolID,bool> >*& LeaksAtNode = Leaks[N];
   assert (!LeaksAtNode);
-  LeaksAtNode = new std::vector<SymbolID>();
+  LeaksAtNode = new std::vector<std::pair<SymbolID,bool> >();
   
-  for (llvm::SmallVector<SymbolID, 10>::iterator I=Leaked.begin(),
-       E = Leaked.end(); I != E; ++I)
+  for (llvm::SmallVector<std::pair<SymbolID,bool>, 10>::iterator
+       I = Leaked.begin(), E = Leaked.end(); I != E; ++I)
     (*LeaksAtNode).push_back(*I);
 }
 
@@ -1932,7 +1933,7 @@ void CFRefCount::EvalDeadSymbols(ExplodedNodeSet<GRState>& Dst,
   // FIXME: a lot of copy-and-paste from EvalEndPath.  Refactor.
   
   RefBindings B = St->get<RefBindings>();
-  llvm::SmallVector<SymbolID, 10> Leaked;
+  llvm::SmallVector<std::pair<SymbolID,bool>, 10> Leaked;
   
   for (GRStateManager::DeadSymbolsTy::const_iterator
        I=Dead.begin(), E=Dead.end(); I!=E; ++I) {
@@ -1944,10 +1945,13 @@ void CFRefCount::EvalDeadSymbols(ExplodedNodeSet<GRState>& Dst,
     
     bool hasLeak = false;
     
-    St = HandleSymbolDeath(Eng.getStateManager(), St, 0, *I, *T, hasLeak);
+    std::pair<GRStateRef, bool> X
+      = HandleSymbolDeath(Eng.getStateManager(), St, 0, *I, *T, hasLeak);
+    
+    St = X.first;
     
     if (hasLeak)
-      Leaked.push_back(*I);    
+      Leaked.push_back(std::make_pair(*I,X.second));    
   }
   
   if (Leaked.empty())
@@ -1958,12 +1962,12 @@ void CFRefCount::EvalDeadSymbols(ExplodedNodeSet<GRState>& Dst,
   if (!N)
     return;
   
-  std::vector<SymbolID>*& LeaksAtNode = Leaks[N];
+  std::vector<std::pair<SymbolID,bool> >*& LeaksAtNode = Leaks[N];
   assert (!LeaksAtNode);
-  LeaksAtNode = new std::vector<SymbolID>();
+  LeaksAtNode = new std::vector<std::pair<SymbolID,bool> >();
   
-  for (llvm::SmallVector<SymbolID, 10>::iterator I=Leaked.begin(),
-       E = Leaked.end(); I != E; ++I)
+  for (llvm::SmallVector<std::pair<SymbolID,bool>, 10>::iterator
+       I = Leaked.begin(), E = Leaked.end(); I != E; ++I)
     (*LeaksAtNode).push_back(*I);    
 }
 
@@ -2196,19 +2200,34 @@ namespace {
   };
   
   class VISIBILITY_HIDDEN Leak : public CFRefBug {
+    bool isReturn;
   public:
     Leak(CFRefCount& tf) : CFRefBug(tf) {}
     
+    void setIsReturn(bool x) { isReturn = x; }
+    
     virtual const char* getName() const {
       
-      if (getTF().isGCEnabled())
-        return "leak (GC)";
-      
-      if (getTF().getLangOptions().getGCMode() == LangOptions::HybridGC)
-        return "leak (hybrid MM, non-GC)";
-      
-      assert (getTF().getLangOptions().getGCMode() == LangOptions::NonGC);
-      return "leak";
+      if (!isReturn) {
+        if (getTF().isGCEnabled())
+          return "leak (GC)";
+        
+        if (getTF().getLangOptions().getGCMode() == LangOptions::HybridGC)
+          return "leak (hybrid MM, non-GC)";
+        
+        assert (getTF().getLangOptions().getGCMode() == LangOptions::NonGC);
+        return "leak";
+      }
+      else {
+        if (getTF().isGCEnabled())
+          return "leak of returned object (GC)";
+        
+        if (getTF().getLangOptions().getGCMode() == LangOptions::HybridGC)
+          return "leak of returned object (hybrid MM, non-GC)";
+        
+        assert (getTF().getLangOptions().getGCMode() == LangOptions::NonGC);
+        return "leak of returned object";        
+      }
     }
     
     virtual const char* getDescription() const {
@@ -2410,8 +2429,8 @@ PathDiagnosticPiece* CFRefReport::VisitNode(ExplodedNode<GRState>* N,
       break;
       
     case RefVal::ReturnedOwned:
-      Msg = "Object returned to caller as owning reference (single retain count"
-            " transferred to caller).";
+      Msg = "Object returned to caller as an owning reference (single retain "
+            "count transferred to caller).";
       break;
       
     case RefVal::ReturnedNotOwned:
@@ -2630,11 +2649,12 @@ void Leak::EmitWarnings(BugReporter& BR) {
   for (CFRefCount::leaks_iterator I = TF.leaks_begin(),
        E = TF.leaks_end(); I != E; ++I) {
     
-    std::vector<SymbolID>& SymV = *(I->second);
+    std::vector<std::pair<SymbolID, bool> >& SymV = *(I->second);
     unsigned n = SymV.size();
     
     for (unsigned i = 0; i < n; ++i) {
-      CFRefReport report(*this, I->first, SymV[i]);
+      setIsReturn(SymV[i].second);
+      CFRefReport report(*this, I->first, SymV[i].first);
       BR.EmitWarning(report);
     }
   }  
@@ -2650,7 +2670,7 @@ bool Leak::isCached(BugReport& R) {
   
   // Most bug reports are cached at the location where they occured.
   // With leaks, we want to unique them by the location where they were
-  // allocated, and only report only a single path.
+  // allocated, and only report a single path.
   
   SymbolID Sym = static_cast<CFRefReport&>(R).getSymbol();
 
