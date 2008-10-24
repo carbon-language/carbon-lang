@@ -363,6 +363,11 @@ namespace llvm {
                             SmallVectorImpl<LiveInterval*> &SpillIs,
                             bool &isLoad);
 
+    /// isReMaterializable - Returns true if the definition MI of the specified
+    /// val# of the specified interval is re-materializable.
+    bool isReMaterializable(const LiveInterval &li, const VNInfo *ValNo,
+                            MachineInstr *MI);
+
     /// getRepresentativeReg - Find the largest super register of the specified
     /// physical register.
     unsigned getRepresentativeReg(unsigned Reg) const;

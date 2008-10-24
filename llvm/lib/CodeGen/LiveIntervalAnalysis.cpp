@@ -948,6 +948,15 @@ bool LiveIntervals::isReMaterializable(const LiveInterval &li,
   return true;
 }
 
+/// isReMaterializable - Returns true if the definition MI of the specified
+/// val# of the specified interval is re-materializable.
+bool LiveIntervals::isReMaterializable(const LiveInterval &li,
+                                       const VNInfo *ValNo, MachineInstr *MI) {
+  SmallVector<LiveInterval*, 4> Dummy1;
+  bool Dummy2;
+  return isReMaterializable(li, ValNo, MI, Dummy1, Dummy2);
+}
+
 /// isReMaterializable - Returns true if every definition of MI of every
 /// val# of the specified interval is re-materializable.
 bool LiveIntervals::isReMaterializable(const LiveInterval &li,

@@ -61,6 +61,9 @@ namespace {
     // slot was used.
     std::map<std::pair<unsigned, unsigned>, int> LIValNoSSMap;
 
+    // RestoreMIs - All the restores inserted due to live interval splitting.
+    SmallPtrSet<MachineInstr*, 8> RestoreMIs;
+
   public:
     static char ID;
     PreAllocSplitting() : MachineFunctionPass(&ID) {}
@@ -80,6 +83,7 @@ namespace {
     
     virtual void releaseMemory() {
       LIValNoSSMap.clear();
+      RestoreMIs.clear();
     }
 
     virtual const char *getPassName() const {
@@ -115,11 +119,14 @@ namespace {
     void UpdateIntervalForSplit(VNInfo*, unsigned, unsigned);
 
     bool ShrinkWrapToLastUse(MachineBasicBlock*,
-                             std::vector<MachineOperand*>&);
+                             SmallVector<MachineOperand*, 4>&,
+                             SmallPtrSet<MachineInstr*, 4>&);
 
     void ShrinkWrapLiveInterval(VNInfo*, MachineBasicBlock*,
                         MachineBasicBlock*, SmallPtrSet<MachineBasicBlock*, 8>&,
-                            DenseMap<unsigned, std::vector<MachineOperand*> >&);
+                DenseMap<MachineBasicBlock*, SmallVector<MachineOperand*, 4> >&,
+                  DenseMap<MachineBasicBlock*, SmallPtrSet<MachineInstr*, 4> >&,
+                                SmallVector<MachineBasicBlock*, 4>&);
 
     bool SplitRegLiveInterval(LiveInterval*);
 
@@ -237,13 +244,15 @@ PreAllocSplitting::findRestorePoint(MachineBasicBlock *MBB, MachineInstr *MI,
 /// slot where the val#s are in.
 void PreAllocSplitting::RecordSplit(unsigned Reg, unsigned SpillIndex,
                                     unsigned RestoreIndex, int SS) {
-  LiveInterval::iterator LR =
-    CurrLI->FindLiveRangeContaining(LIs->getUseIndex(SpillIndex));
-  LIValNoSSMap.insert(std::make_pair(std::make_pair(CurrLI->reg, LR->valno->id),
-                                     SS));
-  LR = CurrLI->FindLiveRangeContaining(LIs->getDefIndex(RestoreIndex));
-  LIValNoSSMap.insert(std::make_pair(std::make_pair(CurrLI->reg, LR->valno->id),
-                                     SS));
+  const LiveRange *LR = NULL;
+  if (SpillIndex) {
+    LR = CurrLI->getLiveRangeContaining(LIs->getUseIndex(SpillIndex));
+    LIValNoSSMap.insert(std::make_pair(std::make_pair(CurrLI->reg,
+                                                      LR->valno->id), SS));
+  }
+  LR = CurrLI->getLiveRangeContaining(LIs->getDefIndex(RestoreIndex));
+  LIValNoSSMap.insert(std::make_pair(std::make_pair(CurrLI->reg,
+                                                    LR->valno->id), SS));
 }
 
 /// isAlreadySplit - Return if a given val# of a register live interval is already
@@ -273,9 +282,14 @@ PreAllocSplitting::UpdateIntervalForSplit(VNInfo *ValNo, unsigned SplitIndex,
   // by the restore, which are defined by the original definition.
   const LiveRange *LR = CurrLI->getLiveRangeContaining(JoinIndex);
   After.push_back(std::make_pair(JoinIndex, LR->end));
+  if (CurrLI->isKill(ValNo, LR->end))
+    AfterKills.push_back(LR->end);
+
   assert(LR->contains(SplitIndex));
-  Before.push_back(std::make_pair(LR->start, SplitIndex));
-  BeforeKills.push_back(SplitIndex);
+  if (SplitIndex > LR->start) {
+    Before.push_back(std::make_pair(LR->start, SplitIndex));
+    BeforeKills.push_back(SplitIndex);
+  }
   Processed.insert(LR);
 
   SmallVector<MachineBasicBlock*, 4> WorkList;
@@ -325,12 +339,19 @@ PreAllocSplitting::UpdateIntervalForSplit(VNInfo *ValNo, unsigned SplitIndex,
   MachineInstr *AfterCopy = ValNo->copy;
   bool HasPHIKill = ValNo->hasPHIKill;
   CurrLI->removeValNo(ValNo);
-  VNInfo *BValNo = CurrLI->getNextValue(AfterDef, AfterCopy,
-                                        LIs->getVNInfoAllocator());
-  VNInfo *AValNo = CurrLI->getNextValue(JoinIndex,0, LIs->getVNInfoAllocator());
-  AValNo->hasPHIKill = HasPHIKill;
-  CurrLI->addKills(AValNo, AfterKills);
-  CurrLI->addKills(BValNo, BeforeKills);
+  VNInfo *BValNo = (Before.empty())
+    ? NULL
+    : CurrLI->getNextValue(AfterDef, AfterCopy, LIs->getVNInfoAllocator());
+  if (BValNo)
+    CurrLI->addKills(BValNo, BeforeKills);
+
+  VNInfo *AValNo = (After.empty())
+    ? NULL
+    : CurrLI->getNextValue(JoinIndex,0, LIs->getVNInfoAllocator());
+  if (AValNo) {
+    AValNo->hasPHIKill = HasPHIKill;
+    CurrLI->addKills(AValNo, AfterKills);
+  }
 
   for (unsigned i = 0, e = Before.size(); i != e; ++i) {
     unsigned Start = Before[i].first;
@@ -350,7 +371,8 @@ PreAllocSplitting::UpdateIntervalForSplit(VNInfo *ValNo, unsigned SplitIndex,
 /// is, remove from the last use to the barrier.
 bool
 PreAllocSplitting::ShrinkWrapToLastUse(MachineBasicBlock *MBB,
-                                       std::vector<MachineOperand*> &Uses) {
+                                       SmallVector<MachineOperand*, 4> &Uses,
+                                       SmallPtrSet<MachineInstr*, 4> &UseMIs) {
   MachineOperand *LastMO = 0;
   MachineInstr *LastMI = 0;
   if (MBB != BarrierMBB && Uses.size() == 1) {
@@ -359,9 +381,6 @@ PreAllocSplitting::ShrinkWrapToLastUse(MachineBasicBlock *MBB,
     LastMO = Uses[0];
     LastMI = LastMO->getParent();
   } else {
-    SmallPtrSet<MachineInstr*, 4> UseMIs;
-    for (unsigned i = 0, e = Uses.size(); i != e; ++i)
-      UseMIs.insert(Uses[i]->getParent());
     MachineBasicBlock::iterator MII;
     if (MBB == BarrierMBB) {
       MII = Barrier;
@@ -396,7 +415,7 @@ PreAllocSplitting::ShrinkWrapToLastUse(MachineBasicBlock *MBB,
     RangeStart = LIs->getMBBStartIdx(MBB);
   }
   if (MBB == BarrierMBB)
-    RangeEnd = LIs->getUseIndex(BarrierIdx);
+    RangeEnd = LIs->getUseIndex(BarrierIdx)+1;
   CurrLI->removeRange(RangeStart, RangeEnd);
 
   // Return true if the last use becomes a new kill.
@@ -408,22 +427,39 @@ PreAllocSplitting::ShrinkWrapToLastUse(MachineBasicBlock *MBB,
 /// new kill indices.
 void
 PreAllocSplitting::ShrinkWrapLiveInterval(VNInfo *ValNo,
-                      MachineBasicBlock *MBB, MachineBasicBlock *DefMBB,
-                      SmallPtrSet<MachineBasicBlock*, 8> &Visited,
-                      DenseMap<unsigned, std::vector<MachineOperand*> > &Uses) {
+                              MachineBasicBlock *MBB, MachineBasicBlock *DefMBB,
+                                    SmallPtrSet<MachineBasicBlock*, 8> &Visited,
+           DenseMap<MachineBasicBlock*, SmallVector<MachineOperand*, 4> > &Uses,
+           DenseMap<MachineBasicBlock*, SmallPtrSet<MachineInstr*, 4> > &UseMIs,
+                                  SmallVector<MachineBasicBlock*, 4> &UseMBBs) {
   if (!Visited.insert(MBB))
     return;
 
-  DenseMap<unsigned, std::vector<MachineOperand*> >::iterator UMII =
-    Uses.find(MBB->getNumber());
+  DenseMap<MachineBasicBlock*, SmallVector<MachineOperand*, 4> >::iterator
+    UMII = Uses.find(MBB);
   if (UMII != Uses.end()) {
     // At least one use in this mbb, lets look for the kill.
-    if (ShrinkWrapToLastUse(MBB, UMII->second))
+    DenseMap<MachineBasicBlock*, SmallPtrSet<MachineInstr*, 4> >::iterator
+      UMII2 = UseMIs.find(MBB);
+    if (ShrinkWrapToLastUse(MBB, UMII->second, UMII2->second))
       // Found a kill, shrink wrapping of this path ends here.
       return;
+  } else if (MBB == DefMBB) {
+    assert(LIValNoSSMap.find(std::make_pair(CurrLI->reg, ValNo->id)) !=
+           LIValNoSSMap.end() && "Why wasn't def spilled?");
+    // There are no uses after the def.
+    MachineInstr *DefMI = LIs->getInstructionFromIndex(ValNo->def);
+    assert(RestoreMIs.count(DefMI) && "Not defined by a join?");
+    if (UseMBBs.empty()) {
+      // The only use must be below barrier in the barrier block. It's safe to
+      // remove the def.
+      LIs->RemoveMachineInstrFromMaps(DefMI);
+      DefMI->eraseFromParent();
+      CurrLI->removeRange(ValNo->def, LIs->getMBBEndIdx(MBB)+1);
+    }
   } else {
     // Remove entire live range of the bb out of the live interval.
-    CurrLI->removeRange(LIs->getMBBStartIdx(MBB), LIs->getMBBEndIdx(MBB));
+    CurrLI->removeRange(LIs->getMBBStartIdx(MBB), LIs->getMBBEndIdx(MBB)+1);
     abort(); // FIXME
   }
 
@@ -441,7 +477,7 @@ PreAllocSplitting::ShrinkWrapLiveInterval(VNInfo *ValNo,
       // Pred is the def bb and the def reaches other val#s, we must
       // allow the value to be live out of the bb.
       continue;
-    ShrinkWrapLiveInterval(ValNo, Pred, DefMBB, Visited, Uses);
+    ShrinkWrapLiveInterval(ValNo, Pred, DefMBB, Visited, Uses, UseMIs, UseMBBs);
   }
 
   return;
@@ -464,6 +500,12 @@ bool PreAllocSplitting::SplitRegLiveInterval(LiveInterval *LI) {
     abort();
   }
 
+  // FIXME: For now, if definition is rematerializable, do not split.
+  MachineInstr *DefMI = (ValNo->def != ~0U)
+    ? LIs->getInstructionFromIndex(ValNo->def) : NULL;
+  if (DefMI && LIs->isReMaterializable(*LI, ValNo, DefMI))
+    return false;
+
   // Find all references in the barrier mbb.
   SmallPtrSet<MachineInstr*, 4> RefsInMBB;
   for (MachineRegisterInfo::reg_iterator I = MRI->reg_begin(CurrLI->reg),
@@ -481,14 +523,14 @@ bool PreAllocSplitting::SplitRegLiveInterval(LiveInterval *LI) {
     return false;
 
   // Add a spill either before the barrier or after the definition.
-  MachineBasicBlock *DefMBB = NULL;
+  MachineBasicBlock *DefMBB = DefMI ? DefMI->getParent() : NULL;
   const TargetRegisterClass *RC = MRI->getRegClass(CurrLI->reg);
   int SS;
   unsigned SpillIndex = 0;
+  MachineInstr *SpillMI = NULL;
   if (isAlreadySplit(CurrLI->reg, ValNo->id, SS)) {
     // If it's already split, just restore the value. There is no need to spill
     // the def again.
-    abort(); // FIXME
   } else if (ValNo->def == ~0U) {
     // If it's defined by a phi, we must split just before the barrier.
     MachineBasicBlock::iterator SpillPt = 
@@ -498,22 +540,22 @@ bool PreAllocSplitting::SplitRegLiveInterval(LiveInterval *LI) {
     // Add spill.
     SS = MFI->CreateStackObject(RC->getSize(), RC->getAlignment());
     TII->storeRegToStackSlot(*BarrierMBB, SpillPt, CurrLI->reg, true, SS, RC);
-    MachineInstr *StoreMI = prior(SpillPt);
-    LIs->InsertMachineInstrInMaps(StoreMI, SpillIndex);
+    SpillMI = prior(SpillPt);
+    LIs->InsertMachineInstrInMaps(SpillMI, SpillIndex);
   } else {
     // Check if it's possible to insert a spill after the def MI.
-    MachineInstr *DefMI = LIs->getInstructionFromIndex(ValNo->def);
-    DefMBB = DefMI->getParent();
     MachineBasicBlock::iterator SpillPt =
       findNextEmptySlot(DefMBB, DefMI, SpillIndex);
     if (SpillPt == DefMBB->end())
       return false; // No gap to insert spill.
     SS = MFI->CreateStackObject(RC->getSize(), RC->getAlignment());
 
-    // Add spill. The store instruction does *not* kill the register.
-    TII->storeRegToStackSlot(*DefMBB, SpillPt, CurrLI->reg, false, SS, RC);
-    MachineInstr *StoreMI = prior(SpillPt);
-    LIs->InsertMachineInstrInMaps(StoreMI, SpillIndex);
+    // Add spill. The store instruction kills the register if def is before the
+    // barrier in the barrier block.
+    TII->storeRegToStackSlot(*DefMBB, SpillPt, CurrLI->reg,
+                             DefMBB == BarrierMBB, SS, RC);
+    SpillMI = prior(SpillPt);
+    LIs->InsertMachineInstrInMaps(SpillMI, SpillIndex);
   }
 
   // Add restore.
@@ -521,11 +563,12 @@ bool PreAllocSplitting::SplitRegLiveInterval(LiveInterval *LI) {
   TII->loadRegFromStackSlot(*BarrierMBB, RestorePt, CurrLI->reg, SS, RC);
   MachineInstr *LoadMI = prior(RestorePt);
   LIs->InsertMachineInstrInMaps(LoadMI, RestoreIndex);
+  RestoreMIs.insert(LoadMI);
 
   // If live interval is spilled in the same block as the barrier, just
   // create a hole in the interval.
   if (!DefMBB ||
-      LIs->getInstructionFromIndex(SpillIndex)->getParent() == BarrierMBB) {
+      (SpillIndex && SpillMI->getParent() == BarrierMBB)) {
     UpdateIntervalForSplit(ValNo, LIs->getUseIndex(SpillIndex)+1,
                            LIs->getDefIndex(RestoreIndex));
 
@@ -539,7 +582,10 @@ bool PreAllocSplitting::SplitRegLiveInterval(LiveInterval *LI) {
   // Shrink wrap the live interval by walking up the CFG and find the
   // new kills.
   // Now let's find all the uses of the val#.
-  DenseMap<unsigned, std::vector<MachineOperand*> > Uses;
+  DenseMap<MachineBasicBlock*, SmallVector<MachineOperand*, 4> > Uses;
+  DenseMap<MachineBasicBlock*, SmallPtrSet<MachineInstr*, 4> > UseMIs;
+  SmallPtrSet<MachineBasicBlock*, 4> Seen;
+  SmallVector<MachineBasicBlock*, 4> UseMBBs;
   for (MachineRegisterInfo::use_iterator UI = MRI->use_begin(CurrLI->reg),
          UE = MRI->use_end(); UI != UE; ++UI) {
     MachineOperand &UseMO = UI.getOperand();
@@ -549,28 +595,37 @@ bool PreAllocSplitting::SplitRegLiveInterval(LiveInterval *LI) {
     if (ULR->valno != ValNo)
       continue;
     MachineBasicBlock *UseMBB = UseMI->getParent();
-    unsigned MBBId = UseMBB->getNumber();
-    DenseMap<unsigned, std::vector<MachineOperand*> >::iterator UMII =
-      Uses.find(MBBId);
-    if (UMII != Uses.end())
+    // Remember which other mbb's use this val#.
+    if (Seen.insert(UseMBB) && UseMBB != BarrierMBB)
+      UseMBBs.push_back(UseMBB);
+    DenseMap<MachineBasicBlock*, SmallVector<MachineOperand*, 4> >::iterator
+      UMII = Uses.find(UseMBB);
+    if (UMII != Uses.end()) {
+      DenseMap<MachineBasicBlock*, SmallPtrSet<MachineInstr*, 4> >::iterator
+        UMII2 = UseMIs.find(UseMBB);
       UMII->second.push_back(&UseMO);
-    else {
-      std::vector<MachineOperand*> Ops;
+      UMII2->second.insert(UseMI);
+    } else {
+      SmallVector<MachineOperand*, 4> Ops;
       Ops.push_back(&UseMO);
-      Uses.insert(std::make_pair(MBBId, Ops));
+      Uses.insert(std::make_pair(UseMBB, Ops));
+      SmallPtrSet<MachineInstr*, 4> MIs;
+      MIs.insert(UseMI);
+      UseMIs.insert(std::make_pair(UseMBB, MIs));
     }
   }
 
   // Walk up the predecessor chains.
   SmallPtrSet<MachineBasicBlock*, 8> Visited;
-  ShrinkWrapLiveInterval(ValNo, BarrierMBB, DefMBB, Visited, Uses);
+  ShrinkWrapLiveInterval(ValNo, BarrierMBB, DefMBB, Visited,
+                         Uses, UseMIs, UseMBBs);
 
   // Remove live range from barrier to the restore. FIXME: Find a better
   // point to re-start the live interval.
   UpdateIntervalForSplit(ValNo, LIs->getUseIndex(BarrierIdx)+1,
                          LIs->getDefIndex(RestoreIndex));
   // Record val# values are in the specific spill slot.
-  RecordSplit(CurrLI->reg, BarrierIdx, RestoreIndex, SS);
+  RecordSplit(CurrLI->reg, SpillIndex, RestoreIndex, SS);
 
   ++NumSplit;
   return true;
