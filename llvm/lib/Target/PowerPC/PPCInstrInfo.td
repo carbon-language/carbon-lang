@@ -1095,8 +1095,10 @@ def MFVRSAVE : XFXForm_1_ext<31, 339, 256, (outs GPRC:$rT), (ins),
 def MTCRF : XFXForm_5<31, 144, (outs), (ins crbitm:$FXM, GPRC:$rS),
                       "mtcrf $FXM, $rS", BrMCRX>,
             PPC970_MicroCode, PPC970_Unit_CRU;
+let Uses = [CR0, CR1, CR2, CR3, CR4, CR5, CR6, CR7] in {
 def MFCR  : XFXForm_3<31, 19, (outs GPRC:$rT), (ins), "mfcr $rT", SprMFCR>,
             PPC970_MicroCode, PPC970_Unit_CRU;
+}
 def MFOCRF: XFXForm_5a<31, 19, (outs GPRC:$rT), (ins crbitm:$FXM),
                        "mfcr $rT, $FXM", SprMFCR>,
             PPC970_DGroup_First, PPC970_Unit_CRU;
