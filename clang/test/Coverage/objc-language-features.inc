@@ -52,11 +52,14 @@
 @end
 
 int f0(id x) {
+#ifndef IRGENABLE_GNU
 #ifndef IRGENABLE
   @synchronized(x) {
   }
 #endif
+#endif
 
+#ifndef IRGENABLE_GNU
   @try {
     @throw x;
   } @catch(A *e) {
@@ -68,6 +71,7 @@ int f0(id x) {
   for (id y in x) {
     break;
   }
+#endif
 }
 
 struct s0 {
