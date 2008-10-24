@@ -207,6 +207,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\lib\AST\InheritViz.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\AST\ParentMap.cpp"
 				>
 			</File>
