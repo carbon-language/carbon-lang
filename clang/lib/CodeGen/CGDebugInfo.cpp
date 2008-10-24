@@ -64,7 +64,7 @@ CGDebugInfo::~CGDebugInfo()
   delete SR;
 
   // Free CompileUnitCache.
-  for (std::map<unsigned, llvm::CompileUnitDesc *>::iterator I 
+  for (std::map<const FileEntry*, llvm::CompileUnitDesc *>::iterator I 
        = CompileUnitCache.begin(); I != CompileUnitCache.end(); ++I) {
     delete I->second;
   }
@@ -134,15 +134,17 @@ llvm::Value *CGDebugInfo::getValueFor(llvm::DebugInfoDesc *DD) {
 /// one if necessary.
 llvm::CompileUnitDesc 
 *CGDebugInfo::getOrCreateCompileUnit(const SourceLocation Loc) {
+  SourceManager &SM = M->getContext().getSourceManager();
+  const FileEntry *FE = SM.getFileEntryForLoc(Loc);
 
   // See if this compile unit has been used before.
-  llvm::CompileUnitDesc *&Slot = CompileUnitCache[Loc.getFileID()];
-  if (Slot) return Slot;
-
+  llvm::CompileUnitDesc *&Unit = CompileUnitCache[FE];
+  if (Unit) return Unit;
+  
   // Create new compile unit.
   // FIXME: Where to free these?
   // One way is to iterate over the CompileUnitCache in ~CGDebugInfo.
-  llvm::CompileUnitDesc *Unit = new llvm::CompileUnitDesc();
+  Unit = new llvm::CompileUnitDesc();
 
   // Make sure we have an anchor.
   if (!CompileUnitAnchor) {
@@ -150,8 +152,6 @@ llvm::CompileUnitDesc
   }
 
   // Get source file information.
-  SourceManager &SM = M->getContext().getSourceManager();
-  const FileEntry *FE = SM.getFileEntryForLoc(Loc);
   const char *FileName, *DirName;
   if (FE) {
     FileName = FE->getName();
@@ -172,9 +172,6 @@ llvm::CompileUnitDesc
   // Set up Language number.
   // FIXME: Handle other languages as well.
   Unit->setLanguage(llvm::dwarf::DW_LANG_C89);
-
-  // Update cache.
-  Slot = Unit;
 
   return Unit;
 }

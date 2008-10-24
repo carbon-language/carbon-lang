@@ -57,7 +57,7 @@ private:
   typedef llvm::IRBuilder<> BuilderType;
 
   /// CompileUnitCache - Cache of previously constructed CompileUnits.
-  std::map<unsigned, llvm::CompileUnitDesc *> CompileUnitCache;
+  std::map<const FileEntry*, llvm::CompileUnitDesc *> CompileUnitCache;
 
   /// TypeCache - Cache of previously constructed Types.
   std::map<void *, llvm::TypeDesc *> TypeCache;
