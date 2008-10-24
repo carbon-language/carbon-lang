@@ -381,13 +381,13 @@ PreAllocSplitting::ShrinkWrapToLastUse(MachineBasicBlock *MBB,
     LastMO = Uses[0];
     LastMI = LastMO->getParent();
   } else {
+    MachineBasicBlock::iterator MEE = MBB->begin();
     MachineBasicBlock::iterator MII;
-    if (MBB == BarrierMBB) {
+    if (MBB == BarrierMBB)
       MII = Barrier;
-      --MII;
-    } else
+    else
       MII = MBB->end();
-    for (MachineBasicBlock::iterator MEE = MBB->begin(); MII != MEE; --MII) {
+    while (--MII != MEE) {
       MachineInstr *UseMI = &*MII;
       if (!UseMIs.count(UseMI))
         continue;
@@ -460,7 +460,6 @@ PreAllocSplitting::ShrinkWrapLiveInterval(VNInfo *ValNo,
   } else {
     // Remove entire live range of the bb out of the live interval.
     CurrLI->removeRange(LIs->getMBBStartIdx(MBB), LIs->getMBBEndIdx(MBB)+1);
-    abort(); // FIXME
   }
 
   if (MBB == DefMBB)
