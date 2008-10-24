@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only -verify %s 
+// RUN: clang -fsyntax-only -verify %s
 
 void f() const; // expected-error {{type qualifier is not allowed on this function}}
 
