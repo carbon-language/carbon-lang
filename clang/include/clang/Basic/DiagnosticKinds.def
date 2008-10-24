@@ -1181,6 +1181,8 @@ DIAG(err_incomplete_base_class, ERROR,
      "base class has incomplete type")
 DIAG(err_duplicate_base_class, ERROR,
      "base class '%0' specified more than once as a direct base class")
+DIAG(err_ambiguous_derived_to_base_conv, ERROR,
+     "ambiguous conversion from derived class '%0' to base class '%1':%2")
 
 DIAG(warn_not_compound_assign, WARNING,
      "use of unary operator that may be intended as compound assignment (%0=)")

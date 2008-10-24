@@ -14,7 +14,8 @@
 #include "clang/Driver/TextDiagnosticBuffer.h"
 using namespace clang;
 
-/// HandleDiagnostic - Store the errors & warnings that are reported.
+/// HandleDiagnostic - Store the errors, warnings, and notes that are
+/// reported.
 /// 
 void TextDiagnosticBuffer::HandleDiagnostic(Diagnostic &Diags,
                                             Diagnostic::Level Level,

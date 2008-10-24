@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Sema.h"
+#include "SemaInherit.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Expr.h"
@@ -670,7 +671,8 @@ bool Sema::IsPointerConversion(Expr *From, QualType FromType, QualType ToType,
   //   derived class object. The null pointer value is converted to
   //   the null pointer value of the destination type.
   //
-  // Note that we do not check for ambiguity or inaccessibility here.
+  // Note that we do not check for ambiguity or inaccessibility
+  // here. That is handled by CheckPointerConversion.
   if (const PointerType *FromPtrType = FromType->getAsPointerType())
     if (const PointerType *ToPtrType = ToType->getAsPointerType()) {
       if (FromPtrType->getPointeeType()->isRecordType() &&
@@ -695,6 +697,33 @@ bool Sema::IsPointerConversion(Expr *From, QualType FromType, QualType ToType,
             = Context.getPointerType(CanonToPointee.getQualifiedType(Quals));
         }
         return true;
+      }
+    }
+
+  return false;
+}
+
+/// CheckPointerConversion - Check the pointer conversion from the
+/// expression From to the type ToType. This routine checks for
+/// ambiguous (FIXME: or inaccessible) derived-to-base pointer
+/// conversions for which IsPointerConversion has already returned
+/// true. It returns true and produces a diagnostic if there was an
+/// error, or returns false otherwise.
+bool Sema::CheckPointerConversion(Expr *From, QualType ToType) {
+  QualType FromType = From->getType();
+
+  if (const PointerType *FromPtrType = FromType->getAsPointerType())
+    if (const PointerType *ToPtrType = ToType->getAsPointerType()) {
+      BasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/false);
+      QualType FromPointeeType = FromPtrType->getPointeeType(),
+               ToPointeeType   = ToPtrType->getPointeeType();
+      if (FromPointeeType->isRecordType() &&
+          ToPointeeType->isRecordType()) {
+        // We must have a derived-to-base conversion. Check an
+        // ambiguous or inaccessible conversion.
+        return CheckDerivedToBaseConversion(From->getExprLoc(),
+                                            From->getSourceRange(),
+                                            FromPointeeType, ToPointeeType);
       }
     }
 

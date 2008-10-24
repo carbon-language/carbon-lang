@@ -23,8 +23,8 @@
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/OwningPtr.h"
-#include <vector>
 #include <string>
+#include <vector>
 
 namespace llvm {
   class APSInt;
@@ -66,6 +66,7 @@ namespace clang {
   class ObjCMethodDecl;
   class ObjCPropertyDecl;
   struct BlockSemaInfo;
+  class BasePaths;
 
 /// PragmaPackStack - Simple class to wrap the stack used by #pragma
 /// pack.
@@ -371,6 +372,7 @@ private:
   bool IsFloatingPointPromotion(QualType FromType, QualType ToType);
   bool IsPointerConversion(Expr *From, QualType FromType, QualType ToType,
                            QualType& ConvertedType);
+  bool CheckPointerConversion(Expr *From, QualType ToType);
   bool IsQualificationConversion(QualType FromType, QualType ToType);
 
   ImplicitConversionSequence::CompareKind 
@@ -785,6 +787,10 @@ public:
                                    unsigned NumBases);
 
   bool IsDerivedFrom(QualType Derived, QualType Base);
+  bool IsDerivedFrom(QualType Derived, QualType Base, BasePaths &Paths);
+
+  bool CheckDerivedToBaseConversion(SourceLocation Loc, SourceRange Range,
+                                    QualType Derived, QualType Base);
 
   // Objective-C declarations.
   virtual DeclTy *ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
@@ -1028,6 +1034,10 @@ private:
                                                         QualType rhsType);
 
   bool IsStringLiteralToNonConstPointerConversion(Expr *From, QualType ToType);
+
+  bool PerformImplicitConversion(Expr *&From, QualType ToType);
+  bool PerformImplicitConversion(Expr *&From, QualType ToType,
+                                 const StandardConversionSequence& SCS);
   
   /// the following "Check" methods will return a valid/converted QualType
   /// or a null QualType (indicating an error diagnostic was issued).

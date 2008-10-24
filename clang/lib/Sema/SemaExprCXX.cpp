@@ -235,3 +235,128 @@ Sema::IsStringLiteralToNonConstPointerConversion(Expr *From, QualType ToType) {
 
   return false;
 }
+
+/// PerformImplicitConversion - Perform an implicit conversion of the
+/// expression From to the type ToType. Returns true if there was an
+/// error, false otherwise. The expression From is replaced with the
+/// converted expression.
+bool 
+Sema::PerformImplicitConversion(Expr *&From, QualType ToType)
+{
+  ImplicitConversionSequence ICS = TryCopyInitialization(From, ToType);
+  switch (ICS.ConversionKind) {
+  case ImplicitConversionSequence::StandardConversion:
+    if (PerformImplicitConversion(From, ToType, ICS.Standard))
+      return true;
+    break;
+
+  case ImplicitConversionSequence::UserDefinedConversion:
+    // FIXME: This is, of course, wrong. We'll need to actually call
+    // the constructor or conversion operator, and then cope with the
+    // standard conversions.
+    ImpCastExprToType(From, ToType);
+    break;
+
+  case ImplicitConversionSequence::EllipsisConversion:
+    assert(false && "Cannot perform an ellipsis conversion");
+    break;
+
+  case ImplicitConversionSequence::BadConversion:
+    return true;
+  }
+
+  // Everything went well.
+  return false;
+}
+
+/// PerformImplicitConversion - Perform an implicit conversion of the
+/// expression From to the type ToType by following the standard
+/// conversion sequence SCS. Returns true if there was an error, false
+/// otherwise. The expression From is replaced with the converted
+/// expression.
+bool 
+Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
+                                const StandardConversionSequence& SCS)
+{
+  // Overall FIXME: we are recomputing too many types here and doing
+  // far too much extra work. What this means is that we need to keep
+  // track of more information that is computed when we try the
+  // implicit conversion initially, so that we don't need to recompute
+  // anything here.
+  QualType FromType = From->getType();
+
+  // Perform the first implicit conversion.
+  switch (SCS.First) {
+  case ICK_Identity:
+  case ICK_Lvalue_To_Rvalue:
+    // Nothing to do.
+    break;
+
+  case ICK_Array_To_Pointer:
+    FromType = Context.getArrayDecayedType(FromType);
+    ImpCastExprToType(From, FromType);
+    break;
+
+  case ICK_Function_To_Pointer:
+    FromType = Context.getPointerType(FromType);
+    ImpCastExprToType(From, FromType);
+    break;
+
+  default:
+    assert(false && "Improper first standard conversion");
+    break;
+  }
+
+  // Perform the second implicit conversion
+  switch (SCS.Second) {
+  case ICK_Identity:
+    // Nothing to do.
+    break;
+
+  case ICK_Integral_Promotion:
+  case ICK_Floating_Promotion:
+  case ICK_Integral_Conversion:
+  case ICK_Floating_Conversion:
+  case ICK_Floating_Integral:
+    FromType = ToType.getUnqualifiedType();
+    ImpCastExprToType(From, FromType);
+    break;
+
+  case ICK_Pointer_Conversion:
+    if (CheckPointerConversion(From, ToType))
+      return true;
+    ImpCastExprToType(From, ToType);
+    break;
+
+  case ICK_Pointer_Member:
+    // FIXME: Implement pointer-to-member conversions.
+    assert(false && "Pointer-to-member conversions are unsupported");
+    break;
+
+  case ICK_Boolean_Conversion:
+    FromType = Context.BoolTy;
+    ImpCastExprToType(From, FromType);
+    break;
+
+  default:
+    assert(false && "Improper second standard conversion");
+    break;
+  }
+
+  switch (SCS.Third) {
+  case ICK_Identity:
+    // Nothing to do.
+    break;
+
+  case ICK_Qualification:
+    ImpCastExprToType(From, ToType);
+    break;
+
+  default:
+    assert(false && "Improper second standard conversion");
+    break;
+  }
+
+  return false;
+}
+
