@@ -27,20 +27,19 @@ class VISIBILITY_HIDDEN BasicStoreManager : public StoreManager {
   VarBindingsTy::Factory VBFactory;
   GRStateManager& StateMgr;
   MemRegionManager MRMgr;
+  const MemRegion* SelfRegion;
   
 public:
   BasicStoreManager(GRStateManager& mgr)
-    : StateMgr(mgr), MRMgr(StateMgr.getAllocator()) {}
+    : StateMgr(mgr), MRMgr(StateMgr.getAllocator()), SelfRegion(0) {}
   
-  virtual ~BasicStoreManager() {}
+  ~BasicStoreManager() {}
 
-  virtual SVal Retrieve(Store St, Loc LV, QualType T);  
-  virtual Store Bind(Store St, Loc LV, SVal V);  
-  virtual Store Remove(Store St, Loc LV);
-
-  virtual Store getInitialStore();
-
-  virtual MemRegionManager& getRegionManager() { return MRMgr; }
+  SVal Retrieve(Store St, Loc LV, QualType T);  
+  Store Bind(Store St, Loc LV, SVal V);  
+  Store Remove(Store St, Loc LV);
+  Store getInitialStore();
+  MemRegionManager& getRegionManager() { return MRMgr; }
 
   // FIXME: Investigate what is using this. This method should be removed.
   virtual Loc getLoc(const VarDecl* VD) {
@@ -52,26 +51,31 @@ public:
   SVal getLValueField(const GRState* St, SVal Base, const FieldDecl* D);  
   SVal getLValueElement(const GRState* St, SVal Base, SVal Offset);
 
+  /// ArrayToPointer - Used by GRExprEngine::VistCast to handle implicit
+  ///  conversions between arrays and pointers.
   SVal ArrayToPointer(SVal Array) { return Array; }
   
-  virtual Store
-  RemoveDeadBindings(Store store, Stmt* Loc, const LiveVariables& Live,
-                     llvm::SmallVectorImpl<const MemRegion*>& RegionRoots,
-                     LiveSymbolsTy& LSymbols, DeadSymbolsTy& DSymbols);
+  /// getSelfRegion - Returns the region for the 'self' (Objective-C) or
+  ///  'this' object (C++).  When used when analyzing a normal function this
+  ///  method returns NULL.
+  const MemRegion* getSelfRegion(Store) { 
+    return SelfRegion;  
+  }
+    
+  Store RemoveDeadBindings(Store store, Stmt* Loc, const LiveVariables& Live,
+                           llvm::SmallVectorImpl<const MemRegion*>& RegionRoots,
+                           LiveSymbolsTy& LSymbols, DeadSymbolsTy& DSymbols);
 
-  virtual void iterBindings(Store store, BindingsHandler& f);
+  void iterBindings(Store store, BindingsHandler& f);
 
-  virtual Store AddDecl(Store store,
-                        const VarDecl* VD, Expr* Ex, 
-                        SVal InitVal = UndefinedVal(), unsigned Count = 0);
+  Store AddDecl(Store store, const VarDecl* VD, Expr* Ex,
+                SVal InitVal = UndefinedVal(), unsigned Count = 0);
 
   static inline VarBindingsTy GetVarBindings(Store store) {
     return VarBindingsTy(static_cast<const VarBindingsTy::TreeTy*>(store));
   }
 
-  virtual void print(Store store, std::ostream& Out,
-                     const char* nl, const char *sep);
-
+  void print(Store store, std::ostream& Out, const char* nl, const char *sep);
 };
     
 } // end anonymous namespace
@@ -291,6 +295,7 @@ BasicStoreManager::RemoveDeadBindings(Store store, Stmt* Loc,
 }
 
 Store BasicStoreManager::getInitialStore() {
+  
   // The LiveVariables information already has a compilation of all VarDecls
   // used in the function.  Iterate through this set, and "symbolicate"
   // any VarDecl whose value originally comes from outside the function.
@@ -303,7 +308,22 @@ Store BasicStoreManager::getInitialStore() {
   for (LVDataTy::decl_iterator I=D.begin_decl(), E=D.end_decl(); I != E; ++I) {
     NamedDecl* ND = const_cast<NamedDecl*>(I->first);
 
-    if (VarDecl* VD = dyn_cast<VarDecl>(ND)) {
+    // Handle implicit parameters.
+    if (ImplicitParamDecl* PD = dyn_cast<ImplicitParamDecl>(ND)) {
+      const Decl& CD = StateMgr.getCodeDecl();      
+      if (const ObjCMethodDecl* MD = dyn_cast<ObjCMethodDecl>(&CD)) {
+        if (MD->getSelfDecl() == PD) {
+          // Create a region for "self".
+          assert (SelfRegion == 0);
+          SelfRegion = MRMgr.getObjCObjectRegion(MD->getClassInterface(),
+                                                 MRMgr.getHeapRegion());
+          
+          St = Bind(St, loc::MemRegionVal(MRMgr.getVarRegion(PD)),
+                        loc::MemRegionVal(SelfRegion));
+        }
+      }
+    }
+    else if (VarDecl* VD = dyn_cast<VarDecl>(ND)) {
       // Punt on static variables for now.
       if (VD->getStorageClass() == VarDecl::Static)
         continue;

@@ -61,7 +61,15 @@ public:
   virtual SVal getLValueElement(const GRState* St, 
                                    SVal Base, SVal Offset) = 0;
   
+  
+  /// ArrayToPointer - Used by GRExprEngine::VistCast to handle implicit
+  ///  conversions between arrays and pointers.
   virtual SVal ArrayToPointer(SVal Array) = 0;
+  
+  /// getSelfRegion - Returns the region for the 'self' (Objective-C) or
+  ///  'this' object (C++).  When used when analyzing a normal function this
+  ///  method returns NULL.
+  virtual const MemRegion* getSelfRegion(Store store) = 0;
 
   virtual Store
   RemoveDeadBindings(Store store, Stmt* Loc, const LiveVariables& Live,

@@ -66,6 +66,14 @@ public:
   }
 
   Store getInitialStore();
+  
+  /// getSelfRegion - Returns the region for the 'self' (Objective-C) or
+  ///  'this' object (C++).  When used when analyzing a normal function this
+  ///  method returns NULL.
+  const MemRegion* getSelfRegion(Store) {
+    assert (false && "Not implemented.");
+    return 0;
+  }
 
   Store RemoveDeadBindings(Store store, Stmt* Loc, const LiveVariables& Live,
                            llvm::SmallVectorImpl<const MemRegion*>& RegionRoots,

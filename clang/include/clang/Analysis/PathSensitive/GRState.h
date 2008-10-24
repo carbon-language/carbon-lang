@@ -266,6 +266,9 @@ private:
   
   /// cfg - The CFG for the analyzed function/method.
   CFG& cfg;
+  
+  /// codedecl - The Decl representing the function/method being analyzed.
+  const Decl& codedecl;
     
   /// TF - Object that represents a bundle of transfer functions
   ///  for manipulating and creating SVals.
@@ -294,7 +297,8 @@ public:
   GRStateManager(ASTContext& Ctx,
                  StoreManagerCreator CreateStoreManager,
                  ConstraintManagerCreator CreateConstraintManager,
-                 llvm::BumpPtrAllocator& alloc, CFG& c, LiveVariables& L) 
+                 llvm::BumpPtrAllocator& alloc, CFG& c,
+                 const Decl& cd, LiveVariables& L) 
   : EnvMgr(alloc),
     ISetFactory(alloc),
     GDMFactory(alloc),
@@ -302,6 +306,7 @@ public:
     SymMgr(alloc),
     Alloc(alloc),
     cfg(c),
+    codedecl(cd),
     Liveness(L) {
       StoreMgr.reset((*CreateStoreManager)(*this));
       ConstraintMgr.reset((*CreateConstraintManager)(*this));
@@ -312,6 +317,7 @@ public:
   const GRState* getInitialState();
         
   ASTContext& getContext() { return BasicVals.getContext(); }
+  const Decl& getCodeDecl() { return codedecl; }
   BasicValueFactory& getBasicVals() { return BasicVals; }
   const BasicValueFactory& getBasicVals() const { return BasicVals; }
   SymbolManager& getSymbolManager() { return SymMgr; }
@@ -339,6 +345,10 @@ public:
   
   VarRegion* getRegion(const VarDecl* D) {
     return getRegionManager().getVarRegion(D);
+  }
+  
+  const MemRegion* getSelfRegion(const GRState* state) {
+    return StoreMgr->getSelfRegion(state->getStore());
   }
   
   // Get the lvalue for a variable reference.
