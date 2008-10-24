@@ -31,9 +31,10 @@ private:
   ///
   int ReturnAddrSaveIndex;
 
-  /// UsesLR - Indicates whether LR is used in the current function.  This is
-  /// only valid after the initial scan of the function by PEI.
-  bool UsesLR;
+  /// MustSaveLR - Indicates whether LR is defined (or clobbered) in the current
+  /// function.  This is only valid after the initial scan of the function by
+  /// PEI.
+  bool MustSaveLR;
 
   /// SpillsCR - Indicates whether CR is spilled in the current function.
   bool SpillsCR;
@@ -79,12 +80,13 @@ public:
   int getTailCallSPDelta() const { return TailCallSPDelta; }
   void setTailCallSPDelta(int size) { TailCallSPDelta = size; }
 
-  /// UsesLR - This is set when the prolog/epilog inserter does its initial scan
-  /// of the function, it is true if the LR/LR8 register is ever explicitly
-  /// accessed/clobbered in the machine function (e.g. by calls and movpctolr,
-  /// which is used in PIC generation).
-  void setUsesLR(bool U) { UsesLR = U; }
-  bool usesLR() const    { return UsesLR; }
+  /// MustSaveLR - This is set when the prolog/epilog inserter does its initial
+  /// scan of the function. It is true if the LR/LR8 register is ever explicitly
+  /// defined/clobbered in the machine function (e.g. by calls and movpctolr,
+  /// which is used in PIC generation), or if the LR stack slot is explicitly
+  /// referenced by builtin_return_address.
+  void setMustSaveLR(bool U) { MustSaveLR = U; }
+  bool mustSaveLR() const    { return MustSaveLR; }
 
   void setSpillsCR()       { SpillsCR = true; }
   bool isCRSpilled() const { return SpillsCR; }

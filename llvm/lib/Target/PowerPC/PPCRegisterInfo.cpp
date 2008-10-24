@@ -389,15 +389,15 @@ bool PPCRegisterInfo::hasFP(const MachineFunction &MF) const {
 /// MustSaveLR - Return true if this function requires that we save the LR
 /// register onto the stack in the prolog and restore it in the epilog of the
 /// function.
-static bool MustSaveLR(const MachineFunction &MF) {
+static bool MustSaveLR(const MachineFunction &MF, unsigned LR) {
   const PPCFunctionInfo *MFI = MF.getInfo<PPCFunctionInfo>();
   
-  // We need an save/restore of LR if there is any use/def of LR explicitly, or
-  // if there is some use of the LR stack slot (e.g. for builtin_return_address.
-  return MFI->usesLR() || MFI->isLRStoreRequired() ||
-         // FIXME: Anything that has a call should clobber the LR register,
-         // isn't this redundant??
-         MF.getFrameInfo()->hasCalls();
+  // We need a save/restore of LR if there is any def of LR (which is
+  // defined by calls, including the PIC setup sequence), or if there is
+  // some use of the LR stack slot (e.g. for builtin_return_address).
+  // (LR comes in 32 and 64 bit versions.)
+  MachineRegisterInfo::def_iterator RI = MF.getRegInfo().def_begin(LR);
+  return RI !=MF.getRegInfo().def_end() || MFI->isLRStoreRequired();
 }
 
 
@@ -406,7 +406,7 @@ void PPCRegisterInfo::
 eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
                               MachineBasicBlock::iterator I) const {
   if (PerformTailCallOpt && I->getOpcode() == PPC::ADJCALLSTACKUP) {
-    // Add (actually substract) back the amount the callee popped on return.
+    // Add (actually subtract) back the amount the callee popped on return.
     if (int CalleeAmt =  I->getOperand(1).getImm()) {
       bool is64Bit = Subtarget.isPPC64();
       CalleeAmt *= -1;
@@ -934,7 +934,7 @@ PPCRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   //  Save and clear the LR state.
   PPCFunctionInfo *FI = MF.getInfo<PPCFunctionInfo>();
   unsigned LR = getRARegister();
-  FI->setUsesLR(MF.getRegInfo().isPhysRegUsed(LR));
+  FI->setMustSaveLR(MustSaveLR(MF, LR));
   MF.getRegInfo().setPhysRegUnused(LR);
 
   //  Save R31 if necessary
@@ -1015,8 +1015,9 @@ PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   bool IsPPC64 = Subtarget.isPPC64();
   // Get operating system
   bool IsMachoABI = Subtarget.isMachoABI();
-  // Check if the link register (LR) has been used.
-  bool UsesLR = MustSaveLR(MF);
+  // Check if the link register (LR) must be saved.
+  PPCFunctionInfo *FI = MF.getInfo<PPCFunctionInfo>();
+  bool MustSaveLR = FI->mustSaveLR();
   // Do we have a frame pointer for this function?
   bool HasFP = hasFP(MF) && FrameSize;
   
@@ -1024,7 +1025,7 @@ PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   int FPOffset = PPCFrameInfo::getFramePointerSaveOffset(IsPPC64, IsMachoABI);
 
   if (IsPPC64) {
-    if (UsesLR)
+    if (MustSaveLR)
       BuildMI(MBB, MBBI, TII.get(PPC::MFLR8), PPC::X0);
       
     if (HasFP)
@@ -1033,13 +1034,13 @@ PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
         .addImm(FPOffset/4)
         .addReg(PPC::X1);
     
-    if (UsesLR)
+    if (MustSaveLR)
       BuildMI(MBB, MBBI, TII.get(PPC::STD))
         .addReg(PPC::X0)
         .addImm(LROffset / 4)
         .addReg(PPC::X1);
   } else {
-    if (UsesLR)
+    if (MustSaveLR)
       BuildMI(MBB, MBBI, TII.get(PPC::MFLR), PPC::R0);
       
     if (HasFP)
@@ -1048,7 +1049,7 @@ PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
         .addImm(FPOffset)
         .addReg(PPC::R1);
 
-    if (UsesLR)
+    if (MustSaveLR)
       BuildMI(MBB, MBBI, TII.get(PPC::STW))
         .addReg(PPC::R0)
         .addImm(LROffset)
@@ -1222,8 +1223,9 @@ void PPCRegisterInfo::emitEpilogue(MachineFunction &MF,
   bool IsPPC64 = Subtarget.isPPC64();
   // Get operating system
   bool IsMachoABI = Subtarget.isMachoABI();
-  // Check if the link register (LR) has been used.
-  bool UsesLR = MustSaveLR(MF);
+  // Check if the link register (LR) has been saved.
+  PPCFunctionInfo *FI = MF.getInfo<PPCFunctionInfo>();
+  bool MustSaveLR = FI->mustSaveLR();
   // Do we have a frame pointer for this function?
   bool HasFP = hasFP(MF) && FrameSize;
   
@@ -1236,8 +1238,6 @@ void PPCRegisterInfo::emitEpilogue(MachineFunction &MF,
     RetOpcode == PPC::TCRETURNri8 ||
     RetOpcode == PPC::TCRETURNdi8 ||
     RetOpcode == PPC::TCRETURNai8;
-
-  PPCFunctionInfo *FI = MF.getInfo<PPCFunctionInfo>();
 
   if (UsesTCRet) {
     int MaxTCRetDelta = FI->getTailCallSPDelta();
@@ -1309,7 +1309,7 @@ void PPCRegisterInfo::emitEpilogue(MachineFunction &MF,
   }
 
   if (IsPPC64) {
-    if (UsesLR)
+    if (MustSaveLR)
       BuildMI(MBB, MBBI, TII.get(PPC::LD), PPC::X0)
         .addImm(LROffset/4).addReg(PPC::X1);
         
@@ -1317,10 +1317,10 @@ void PPCRegisterInfo::emitEpilogue(MachineFunction &MF,
       BuildMI(MBB, MBBI, TII.get(PPC::LD), PPC::X31)
         .addImm(FPOffset/4).addReg(PPC::X1);
         
-    if (UsesLR)
+    if (MustSaveLR)
       BuildMI(MBB, MBBI, TII.get(PPC::MTLR8)).addReg(PPC::X0);
   } else {
-    if (UsesLR)
+    if (MustSaveLR)
       BuildMI(MBB, MBBI, TII.get(PPC::LWZ), PPC::R0)
           .addImm(LROffset).addReg(PPC::R1);
         
@@ -1328,7 +1328,7 @@ void PPCRegisterInfo::emitEpilogue(MachineFunction &MF,
       BuildMI(MBB, MBBI, TII.get(PPC::LWZ), PPC::R31)
           .addImm(FPOffset).addReg(PPC::R1);
           
-    if (UsesLR)
+    if (MustSaveLR)
       BuildMI(MBB, MBBI, TII.get(PPC::MTLR)).addReg(PPC::R0);
   }
 
