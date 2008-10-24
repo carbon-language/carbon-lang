@@ -72,10 +72,10 @@ namespace {
   private:
     void emitPCRelativeBlockAddress(MachineBasicBlock *MBB);
     void emitGlobalAddress(GlobalValue *GV, unsigned Reloc,
-                           int Disp = 0, intptr_t PCAdj = 0,
+                           intptr_t Disp = 0, intptr_t PCAdj = 0,
                            bool NeedStub = false, bool IsLazy = false);
     void emitExternalSymbolAddress(const char *ES, unsigned Reloc);
-    void emitConstPoolAddress(unsigned CPI, unsigned Reloc, int Disp = 0,
+    void emitConstPoolAddress(unsigned CPI, unsigned Reloc, intptr_t Disp = 0,
                               intptr_t PCAdj = 0);
     void emitJumpTableAddress(unsigned JTI, unsigned Reloc,
                               intptr_t PCAdj = 0);
@@ -152,7 +152,8 @@ void Emitter::emitPCRelativeBlockAddress(MachineBasicBlock *MBB) {
 /// this is part of a "take the address of a global" instruction.
 ///
 void Emitter::emitGlobalAddress(GlobalValue *GV, unsigned Reloc,
-                                int Disp /* = 0 */, intptr_t PCAdj /* = 0 */,
+                                intptr_t Disp /* = 0 */,
+                                intptr_t PCAdj /* = 0 */,
                                 bool NeedStub /* = false */,
                                 bool isLazy /* = false */) {
   intptr_t RelocCST = 0;
@@ -166,9 +167,11 @@ void Emitter::emitGlobalAddress(GlobalValue *GV, unsigned Reloc,
     : MachineRelocation::getGV(MCE.getCurrentPCOffset(), Reloc,
                                GV, RelocCST, NeedStub);
   MCE.addRelocation(MR);
+  // The relocated value will be added to the displacement
   if (Reloc == X86::reloc_absolute_dword)
-    MCE.emitWordLE(0);
-  MCE.emitWordLE(Disp); // The relocated value will be added to the displacement
+    MCE.emitDWordLE(Disp);
+  else
+    MCE.emitWordLE((int32_t)Disp);
 }
 
 /// emitExternalSymbolAddress - Arrange for the address of an external symbol to
@@ -179,15 +182,16 @@ void Emitter::emitExternalSymbolAddress(const char *ES, unsigned Reloc) {
   MCE.addRelocation(MachineRelocation::getExtSym(MCE.getCurrentPCOffset(),
                                                  Reloc, ES, RelocCST));
   if (Reloc == X86::reloc_absolute_dword)
+    MCE.emitDWordLE(0);
+  else
     MCE.emitWordLE(0);
-  MCE.emitWordLE(0);
 }
 
 /// emitConstPoolAddress - Arrange for the address of an constant pool
 /// to be emitted to the current location in the function, and allow it to be PC
 /// relative.
 void Emitter::emitConstPoolAddress(unsigned CPI, unsigned Reloc,
-                                   int Disp /* = 0 */,
+                                   intptr_t Disp /* = 0 */,
                                    intptr_t PCAdj /* = 0 */) {
   intptr_t RelocCST = 0;
   if (Reloc == X86::reloc_picrel_word)
@@ -196,9 +200,11 @@ void Emitter::emitConstPoolAddress(unsigned CPI, unsigned Reloc,
     RelocCST = PCAdj;
   MCE.addRelocation(MachineRelocation::getConstPool(MCE.getCurrentPCOffset(),
                                                     Reloc, CPI, RelocCST));
+  // The relocated value will be added to the displacement
   if (Reloc == X86::reloc_absolute_dword)
-    MCE.emitWordLE(0);
-  MCE.emitWordLE(Disp); // The relocated value will be added to the displacement
+    MCE.emitDWordLE(Disp);
+  else
+    MCE.emitWordLE((int32_t)Disp);
 }
 
 /// emitJumpTableAddress - Arrange for the address of a jump table to
@@ -213,9 +219,11 @@ void Emitter::emitJumpTableAddress(unsigned JTI, unsigned Reloc,
     RelocCST = PCAdj;
   MCE.addRelocation(MachineRelocation::getJumpTable(MCE.getCurrentPCOffset(),
                                                     Reloc, JTI, RelocCST));
+  // The relocated value will be added to the displacement
   if (Reloc == X86::reloc_absolute_dword)
+    MCE.emitDWordLE(0);
+  else
     MCE.emitWordLE(0);
-  MCE.emitWordLE(0); // The relocated value will be added to the displacement
 }
 
 unsigned Emitter::getX86RegNum(unsigned RegNo) const {
@@ -554,7 +562,7 @@ void Emitter::emitInstruction(const MachineInstr &MI,
                TM.getSubtarget<X86Subtarget>().isTargetDarwin())) ||
           Opcode == X86::TAILJMPd;
         emitGlobalAddress(MO.getGlobal(), X86::reloc_pcrel_word,
-                          0, 0, NeedStub);
+                          MO.getOffset(), 0, NeedStub);
       } else if (MO.isSymbol()) {
         emitExternalSymbolAddress(MO.getSymbolName(), X86::reloc_pcrel_word);
       } else if (MO.isImm()) {

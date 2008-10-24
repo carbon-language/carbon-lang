@@ -125,6 +125,42 @@ public:
     }
   }
 
+  /// emitDWordLE - This callback is invoked when a 64-bit word needs to be
+  /// written to the output stream in little-endian format.
+  ///
+  void emitDWordLE(uint64_t W) {
+    if (CurBufferPtr+8 <= BufferEnd) {
+      *CurBufferPtr++ = (unsigned char)(W >>  0);
+      *CurBufferPtr++ = (unsigned char)(W >>  8);
+      *CurBufferPtr++ = (unsigned char)(W >> 16);
+      *CurBufferPtr++ = (unsigned char)(W >> 24);
+      *CurBufferPtr++ = (unsigned char)(W >> 32);
+      *CurBufferPtr++ = (unsigned char)(W >> 40);
+      *CurBufferPtr++ = (unsigned char)(W >> 48);
+      *CurBufferPtr++ = (unsigned char)(W >> 56);
+    } else {
+      CurBufferPtr = BufferEnd;
+    }
+  }
+  
+  /// emitDWordBE - This callback is invoked when a 64-bit word needs to be
+  /// written to the output stream in big-endian format.
+  ///
+  void emitDWordBE(uint64_t W) {
+    if (CurBufferPtr+8 <= BufferEnd) {
+      *CurBufferPtr++ = (unsigned char)(W >> 56);
+      *CurBufferPtr++ = (unsigned char)(W >> 48);
+      *CurBufferPtr++ = (unsigned char)(W >> 40);
+      *CurBufferPtr++ = (unsigned char)(W >> 32);
+      *CurBufferPtr++ = (unsigned char)(W >> 24);
+      *CurBufferPtr++ = (unsigned char)(W >> 16);
+      *CurBufferPtr++ = (unsigned char)(W >>  8);
+      *CurBufferPtr++ = (unsigned char)(W >>  0);
+    } else {
+      CurBufferPtr = BufferEnd;
+    }
+  }
+
   /// emitAlignment - Move the CurBufferPtr pointer up the the specified
   /// alignment (saturated to BufferEnd of course).
   void emitAlignment(unsigned Alignment) {

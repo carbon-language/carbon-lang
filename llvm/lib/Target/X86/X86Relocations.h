@@ -18,6 +18,9 @@
 
 namespace llvm {
   namespace X86 {
+    /// RelocationType - An enum for the x86 relocation codes. Note that
+    /// the terminology here doesn't follow x86 convention - word means
+    /// 32-bit and dword means 64-bit.
     enum RelocationType {
       // reloc_pcrel_word - PC relative relocation, add the relocated value to
       // the value already in memory, after we adjust it for where the PC is.
