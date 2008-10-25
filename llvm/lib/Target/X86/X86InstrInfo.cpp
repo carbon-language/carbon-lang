@@ -2798,6 +2798,11 @@ static unsigned GetInstSizeWithDesc(const MachineInstr &MI,
       FinalSize += sizeConstant(X86InstrInfo::sizeOfImm(Desc));
       break;
     }
+    case X86::TLS_tp:
+    case X86::TLS_gs_ri:
+      FinalSize += 2;
+      FinalSize += sizeGlobalAddress(false);
+      break;
     }
     CurOp = NumOps;
     break;

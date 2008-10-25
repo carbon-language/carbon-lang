@@ -2618,14 +2618,15 @@ def TLS_gs_rr  : I<0, Pseudo, (outs GR32:$dst), (ins GR32:$src),
                   [(set GR32:$dst, (load (add X86TLStp, GR32:$src)))]>;
 
 let AddedComplexity = 15 in
-def TLS_gs_ri : I<0, Pseudo, (outs GR32:$dst), (ins i32imm:$src),
+def TLS_gs_ri : I<0x8B, Pseudo, (outs GR32:$dst), (ins i32imm:$src),
                   "movl\t%gs:${src:mem}, $dst",
                   [(set GR32:$dst,
-                    (load (add X86TLStp, (X86Wrapper tglobaltlsaddr:$src))))]>;
+                    (load (add X86TLStp, (X86Wrapper tglobaltlsaddr:$src))))]>,
+                  SegGS;
 
-def TLS_tp : I<0, Pseudo, (outs GR32:$dst), (ins),
+def TLS_tp : I<0x8B, Pseudo, (outs GR32:$dst), (ins),
                "movl\t%gs:0, $dst",
-               [(set GR32:$dst, X86TLStp)]>;
+               [(set GR32:$dst, X86TLStp)]>, SegGS;
 
 //===----------------------------------------------------------------------===//
 // DWARF Pseudo Instructions

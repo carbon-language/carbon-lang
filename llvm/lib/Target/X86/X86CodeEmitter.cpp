@@ -527,6 +527,23 @@ void Emitter::emitInstruction(const MachineInstr &MI,
     case X86::DWARF_LOC:
     case X86::FP_REG_KILL:
       break;
+    case X86::TLS_tp: {
+      MCE.emitByte(BaseOpcode);
+      unsigned RegOpcodeField = getX86RegNum(MI.getOperand(0).getReg());
+      MCE.emitByte(ModRMByte(0, RegOpcodeField, 5));
+      emitConstant(0, 4);
+      break;
+    }
+    case X86::TLS_gs_ri: {
+      MCE.emitByte(BaseOpcode);
+      unsigned RegOpcodeField = getX86RegNum(MI.getOperand(0).getReg());
+      MCE.emitByte(ModRMByte(0, RegOpcodeField, 5));
+      GlobalValue* GV = MI.getOperand(1).getGlobal();
+      unsigned rt = Is64BitMode ? X86::reloc_pcrel_word
+        : (IsPIC ? X86::reloc_picrel_word : X86::reloc_absolute_word);
+      emitGlobalAddress(GV, rt);
+      break;
+    }
     case X86::MOVPC32r: {
       // This emits the "call" portion of this pseudo instruction.
       MCE.emitByte(BaseOpcode);
