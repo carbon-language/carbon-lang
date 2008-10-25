@@ -46,6 +46,8 @@ public:
     return Retrieve(St, loc::MemRegionVal(R));
   }
 
+  SVal getLValueString(const GRState* St, const StringLiteral* S);
+
   SVal getLValueVar(const GRState* St, const VarDecl* VD);
   
   SVal getLValueIvar(const GRState* St, const ObjCIvarDecl* D, SVal Base);
@@ -108,6 +110,11 @@ private:
 
 StoreManager* clang::CreateRegionStoreManager(GRStateManager& StMgr) {
   return new RegionStoreManager(StMgr);
+}
+
+SVal RegionStoreManager::getLValueString(const GRState* St, 
+                                         const StringLiteral* S) {
+  return loc::MemRegionVal(MRMgr.getStringRegion(S));
 }
 
 SVal RegionStoreManager::getLValueVar(const GRState* St, const VarDecl* VD) {
@@ -188,6 +195,15 @@ SVal RegionStoreManager::getLValueElement(const GRState* St,
 
 SVal RegionStoreManager::ArrayToPointer(SVal Array) {
   const MemRegion* ArrayR = cast<loc::MemRegionVal>(&Array)->getRegion();
+  BasicValueFactory& BasicVals = StateMgr.getBasicVals();
+
+  if (const StringRegion* StringR = dyn_cast<StringRegion>(ArrayR)) {
+    // FIXME: Find a better way to get bit width.
+    nonloc::ConcreteInt Idx(BasicVals.getValue(0, 32, false));
+    ElementRegion* ER = MRMgr.getElementRegion(Idx, ArrayR);
+    
+    return loc::MemRegionVal(ER);                    
+  }
 
   const Decl* D = cast<DeclRegion>(ArrayR)->getDecl();
 
@@ -201,12 +217,9 @@ SVal RegionStoreManager::ArrayToPointer(SVal Array) {
 
   if (const ConstantArrayType* CAT = 
       dyn_cast<ConstantArrayType>(ArrayTy.getTypePtr())) {
-
-    BasicValueFactory& BasicVals = StateMgr.getBasicVals();
     
     nonloc::ConcreteInt Idx(BasicVals.getValue(0, CAT->getSize().getBitWidth(),
                                                false));
-
     ElementRegion* ER = MRMgr.getElementRegion(Idx, ArrayR);
     
     return loc::MemRegionVal(ER);

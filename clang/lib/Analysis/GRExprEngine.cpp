@@ -444,6 +444,13 @@ void GRExprEngine::VisitLValue(Expr* Ex, NodeTy* Pred, NodeSet& Dst) {
       //  have "locations" in the sense that we can take their address.
       Dst.Add(Pred);
       return;
+
+    case Stmt::StringLiteralClass: {
+      const GRState* St = GetState(Pred);
+      SVal V = StateMgr.GetLValue(St, cast<StringLiteral>(Ex));
+      MakeNode(Dst, Ex, Pred, SetSVal(St, Ex, V));
+      return;
+    }
       
     default:
       // Arbitrary subexpressions can return aggregate temporaries that

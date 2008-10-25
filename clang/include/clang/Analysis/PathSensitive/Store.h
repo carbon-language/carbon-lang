@@ -50,7 +50,9 @@ public:
   virtual Store getInitialStore() = 0;
   virtual MemRegionManager& getRegionManager() = 0;
 
-  virtual SVal getLValueVar(const GRState* St, const VarDecl* VD) = 0;  
+  virtual SVal getLValueVar(const GRState* St, const VarDecl* VD) = 0;
+
+  virtual SVal getLValueString(const GRState* St, const StringLiteral* S) = 0;
   
   virtual SVal getLValueIvar(const GRState* St, const ObjCIvarDecl* D,
                              SVal Base) = 0;

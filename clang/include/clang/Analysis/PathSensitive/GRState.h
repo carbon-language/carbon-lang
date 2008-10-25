@@ -355,6 +355,11 @@ public:
   SVal GetLValue(const GRState* St, const VarDecl* D) {
     return StoreMgr->getLValueVar(St, D);
   }
+
+  // Get the lvalue for a StringLiteral.
+  SVal GetLValue(const GRState* St, const StringLiteral* E) {
+    return StoreMgr->getLValueString(St, E);
+  }
   
   // Get the lvalue for an ivar reference.
   SVal GetLValue(const GRState* St, const ObjCIvarDecl* D, SVal Base) {

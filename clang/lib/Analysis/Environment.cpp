@@ -42,13 +42,10 @@ SVal Environment::GetSVal(Expr* E, BasicValueFactory& BasicVals) const {
         return NonLoc::MakeVal(BasicVals, cast<IntegerLiteral>(E));
       }
         
-      case Stmt::StringLiteralClass:
-        return Loc::MakeVal(cast<StringLiteral>(E));
-        
-        // Casts where the source and target type are the same
-        // are no-ops.  We blast through these to get the descendant
-        // subexpression that has a value.
-        
+      // Casts where the source and target type are the same
+      // are no-ops.  We blast through these to get the descendant
+      // subexpression that has a value.
+       
       case Stmt::ImplicitCastExprClass:
       case Stmt::ExplicitCastExprClass: {
         CastExpr* C = cast<CastExpr>(E);

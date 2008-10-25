@@ -47,6 +47,7 @@ public:
   }
   
   SVal getLValueVar(const GRState* St, const VarDecl* VD);
+  SVal getLValueString(const GRState* St, const StringLiteral* S);
   SVal getLValueIvar(const GRState* St, const ObjCIvarDecl* D, SVal Base);
   SVal getLValueField(const GRState* St, SVal Base, const FieldDecl* D);  
   SVal getLValueElement(const GRState* St, SVal Base, SVal Offset);
@@ -87,6 +88,11 @@ StoreManager* clang::CreateBasicStoreManager(GRStateManager& StMgr) {
 
 SVal BasicStoreManager::getLValueVar(const GRState* St, const VarDecl* VD) {
   return loc::MemRegionVal(MRMgr.getVarRegion(VD));
+}
+
+SVal BasicStoreManager::getLValueString(const GRState* St, 
+                                        const StringLiteral* S) {
+  return loc::MemRegionVal(MRMgr.getStringRegion(S));
 }
   
 SVal BasicStoreManager::getLValueIvar(const GRState* St, const ObjCIvarDecl* D,
