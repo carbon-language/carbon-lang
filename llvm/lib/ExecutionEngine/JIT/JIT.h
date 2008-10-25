@@ -134,6 +134,12 @@ public:
 private:
   static MachineCodeEmitter *createEmitter(JIT &J, JITMemoryManager *JMM);
   void runJITOnFunction (Function *F);
+  
+protected:
+
+  /// getMemoryforGV - Allocate memory for a global variable.
+  virtual char* getMemoryForGV(const GlobalVariable* GV);
+
 };
 
 } // End llvm namespace

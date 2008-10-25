@@ -518,3 +518,13 @@ void X86JITInfo::relocate(void *Function, MachineRelocation *MR,
     }
   }
 }
+
+char* X86JITInfo::allocateThreadLocalMemory(size_t size) {
+#if defined(X86_32_JIT) && !defined(__APPLE__) && !defined(_MSC_VER)
+  TLSOffset -= size;
+  return TLSOffset;
+#else
+  assert(0 && "Cannot allocate thread local storage on this arch!\n");
+  return 0;
+#endif
+}

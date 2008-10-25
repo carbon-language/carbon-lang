@@ -52,6 +52,12 @@ ExecutionEngine::~ExecutionEngine() {
     delete Modules[i];
 }
 
+char* ExecutionEngine::getMemoryForGV(const GlobalVariable* GV) {
+  const Type *ElTy = GV->getType()->getElementType();
+  size_t GVSize = (size_t)getTargetData()->getABITypeSize(ElTy);
+  return new char[GVSize];
+}
+
 /// removeModuleProvider - Remove a ModuleProvider from the list of modules.
 /// Release module from ModuleProvider.
 Module* ExecutionEngine::removeModuleProvider(ModuleProvider *P, 
@@ -873,7 +879,6 @@ void ExecutionEngine::InitializeMemory(const Constant *Init, void *Addr) {
 /// their initializers into the memory.
 ///
 void ExecutionEngine::emitGlobals() {
-  const TargetData *TD = getTargetData();
 
   // Loop over all of the global variables in the program, allocating the memory
   // to hold them.  If there is more than one module, do a prepass over globals
@@ -934,12 +939,7 @@ void ExecutionEngine::emitGlobals() {
       }
       
       if (!I->isDeclaration()) {
-        // Get the type of the global.
-        const Type *Ty = I->getType()->getElementType();
-
-        // Allocate some memory for it!
-        unsigned Size = TD->getABITypeSize(Ty);
-        addGlobalMapping(I, new char[Size]);
+        addGlobalMapping(I, getMemoryForGV(I));
       } else {
         // External variable reference. Try to use the dynamic loader to
         // get a pointer to it.
@@ -991,15 +991,18 @@ void ExecutionEngine::EmitGlobalVariable(const GlobalVariable *GV) {
   void *GA = getPointerToGlobalIfAvailable(GV);
   DOUT << "Global '" << GV->getName() << "' -> " << GA << "\n";
 
-  const Type *ElTy = GV->getType()->getElementType();
-  size_t GVSize = (size_t)getTargetData()->getABITypeSize(ElTy);
   if (GA == 0) {
     // If it's not already specified, allocate memory for the global.
-    GA = new char[GVSize];
+    GA = getMemoryForGV(GV);
     addGlobalMapping(GV, GA);
   }
-
-  InitializeMemory(GV->getInitializer(), GA);
+  
+  // Don't initialize if it's thread local, let the client do it.
+  if (!GV->isThreadLocal())
+    InitializeMemory(GV->getInitializer(), GA);
+  
+  const Type *ElTy = GV->getType()->getElementType();
+  size_t GVSize = (size_t)getTargetData()->getABITypeSize(ElTy);
   NumInitBytes += (unsigned)GVSize;
   ++NumGlobals;
 }

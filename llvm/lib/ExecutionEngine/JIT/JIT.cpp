@@ -562,7 +562,12 @@ void *JIT::getOrEmitGlobalVariable(const GlobalVariable *GV) {
     const Type *GlobalType = GV->getType()->getElementType();
     size_t S = getTargetData()->getABITypeSize(GlobalType);
     size_t A = getTargetData()->getPreferredAlignment(GV);
-    Ptr = MCE->allocateSpace(S, A);
+    if (GV->isThreadLocal()) {
+      MutexGuard locked(lock);
+      Ptr = TJI.allocateThreadLocalMemory(S);
+    } else {
+      Ptr = MCE->allocateSpace(S, A);
+    }
     addGlobalMapping(GV, Ptr);
     EmitGlobalVariable(GV);
   }
@@ -594,3 +599,17 @@ void *JIT::recompileAndRelinkFunction(Function *F) {
   return Addr;
 }
 
+/// getMemoryForGV - This method abstracts memory allocation of global
+/// variable so that the JIT can allocate thread local variables depending
+/// on the target.
+///
+char* JIT::getMemoryForGV(const GlobalVariable* GV) {
+  const Type *ElTy = GV->getType()->getElementType();
+  size_t GVSize = (size_t)getTargetData()->getABITypeSize(ElTy);
+  if (GV->isThreadLocal()) {
+    MutexGuard locked(lock);
+    return TJI.allocateThreadLocalMemory(GVSize);
+  } else {
+    return new char[GVSize];
+  }
+}

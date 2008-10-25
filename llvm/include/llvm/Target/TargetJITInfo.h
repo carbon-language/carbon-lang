@@ -93,6 +93,14 @@ namespace llvm {
                           unsigned NumRelocs, unsigned char* GOTBase) {
       assert(NumRelocs == 0 && "This target does not have relocations!");
     }
+    
+
+    /// allocateThreadLocalMemory - Each target has its own way of
+    /// handling thread local variables. This method returns a value only
+    /// meaningful to the target.
+    virtual char* allocateThreadLocalMemory(size_t size) {
+      assert(0 && "This target does not implement thread local storage!");
+    }
 
     /// needsGOT - Allows a target to specify that it would like the
     // JIT to manage a GOT for it.
