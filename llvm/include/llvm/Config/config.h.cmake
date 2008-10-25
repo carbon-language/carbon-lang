@@ -61,7 +61,7 @@
 #undef HAVE_BI_ITERATOR
 
 /* Define to 1 if you have the `ceilf' function. */
-#undef HAVE_CEILF
+#cmakedefine HAVE_CEILF ${HAVE_CEILF}
 
 /* Define to 1 if you have the `closedir' function. */
 #undef HAVE_CLOSEDIR
@@ -116,7 +116,7 @@
 #undef HAVE_FINITE_IN_IEEEFP_H
 
 /* Define to 1 if you have the `floorf' function. */
-#undef HAVE_FLOORF
+#cmakedefine HAVE_FLOORF ${HAVE_FLOORF}
 
 /* Does not have forward iterator */
 #undef HAVE_FWD_ITERATOR
@@ -367,13 +367,13 @@
 #undef HAVE_STRINGS_H
 
 /* Define to 1 if you have the <string.h> header file. */
-#undef HAVE_STRING_H
+#cmakedefine HAVE_STRING_H ${HAVE_STRING_H}
 
 /* Define to 1 if you have the `strrchr' function. */
 #undef HAVE_STRRCHR
 
 /* Define to 1 if you have the `strtoll' function. */
-#undef HAVE_STRTOLL
+#cmakedefine HAVE_STRTOLL ${HAVE_STRTOLL}
 
 /* Define to 1 if you have the `strtoq' function. */
 #undef HAVE_STRTOQ
@@ -426,7 +426,7 @@
 #undef HAVE_U_INT64_T
 
 /* Define to 1 if you have the <windows.h> header file. */
-#undef HAVE_WINDOWS_H
+#cmakedefine HAVE_WINDOWS_H ${HAVE_WINDOWS_H}
 
 /* Installation directory for binary executables */
 #undef LLVM_BINDIR
@@ -477,7 +477,7 @@
 #undef LLVM_PREFIX
 
 /* Define if the OS needs help to load dependent libraries for dlopen(). */
-#undef LTDL_DLOPEN_DEPLIBS
+#cmakedefine LTDL_DLOPEN_DEPLIBS ${LTDL_DLOPEN_DEPLIBS}
 
 /* Define to the sub-directory in which libtool stores uninstalled libraries.
    */
@@ -485,13 +485,13 @@
 
 /* Define to the name of the environment variable that determines the dynamic
    library search path. */
-#undef LTDL_SHLIBPATH_VAR
+#cmakedefine LTDL_SHLIBPATH_VAR "${LTDL_SHLIBPATH_VAR}"
 
 /* Define to the extension used for shared libraries, say, ".so". */
 #cmakedefine LTDL_SHLIB_EXT "${LTDL_SHLIB_EXT}"
 
 /* Define to the system default library search path. */
-#undef LTDL_SYSSEARCHPATH
+#cmakedefine LTDL_SYSSEARCHPATH "${LTDL_SYSSEARCHPATH}"
 
 /* Define if /dev/zero should be used when mapping RWX memory, or undefine if
    its not necessary */
@@ -549,10 +549,22 @@
 #undef const
 
 /* Define to a type to use for `error_t' if it is not otherwise available. */
-#undef error_t
+#cmakedefine error_t ${error_t}
 
 /* Define to `int' if <sys/types.h> does not define. */
 #undef pid_t
 
 /* Define to `unsigned int' if <sys/types.h> does not define. */
 #undef size_t
+
+/* Define to a function replacing strtoll */
+#cmakedefine strtoll ${strtoll}
+
+/* Define to a function implementing strtoull */
+#cmakedefine strtoull ${strtoull}
+
+/* Define to a function implementing stricmp */
+#cmakedefine stricmp ${stricmp}
+
+/* Define to a function implementing strdup */
+#cmakedefine strdup ${strdup}
