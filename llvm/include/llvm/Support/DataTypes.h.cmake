@@ -40,6 +40,11 @@
 # error "Must #define __STDC_LIMIT_MACROS before #including Support/DataTypes.h"
 #endif
 
+#if !defined(__STDC_CONSTANT_MACROS)
+# error "Must #define __STDC_CONSTANT_MACROS before " \
+        "#including Support/DataTypes.h"
+#endif
+
 // Note that <inttypes.h> includes <stdint.h>, if this is a C99 system.
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
@@ -108,6 +113,14 @@ typedef signed int ssize_t;
 #define INT32_MAX 2147483647
 #define INT32_MIN -2147483648
 #define UINT32_MAX 4294967295U
+#define INT8_C(C)   C
+#define UINT8_C(C)  C
+#define INT16_C(C)  C
+#define UINT16_C(C) C
+#define INT32_C(C)  C
+#define UINT32_C(C) C ## U
+#define INT64_C(C)  ((int64_t) C ## LL)
+#define UINT64_C(C) ((uint64_t) C ## ULL)
 #endif /* _MSC_VER */
 
 /* Set defaults for constants which we cannot find. */
