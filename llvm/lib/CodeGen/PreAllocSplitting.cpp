@@ -527,21 +527,23 @@ bool PreAllocSplitting::SplitRegLiveInterval(LiveInterval *LI) {
   int SS;
   unsigned SpillIndex = 0;
   MachineInstr *SpillMI = NULL;
-  if (isAlreadySplit(CurrLI->reg, ValNo->id, SS)) {
-    // If it's already split, just restore the value. There is no need to spill
-    // the def again.
-  } else if (ValNo->def == ~0U) {
+  bool PrevSpilled = isAlreadySplit(CurrLI->reg, ValNo->id, SS);
+  if (ValNo->def == ~0U) {
     // If it's defined by a phi, we must split just before the barrier.
     MachineBasicBlock::iterator SpillPt = 
       findSpillPoint(BarrierMBB, Barrier, RefsInMBB, SpillIndex);
     if (SpillPt == BarrierMBB->begin())
       return false; // No gap to insert spill.
     // Add spill.
-    SS = MFI->CreateStackObject(RC->getSize(), RC->getAlignment());
+    if (!PrevSpilled)
+      // If previously split, reuse the spill slot.
+      SS = MFI->CreateStackObject(RC->getSize(), RC->getAlignment());
     TII->storeRegToStackSlot(*BarrierMBB, SpillPt, CurrLI->reg, true, SS, RC);
     SpillMI = prior(SpillPt);
     LIs->InsertMachineInstrInMaps(SpillMI, SpillIndex);
-  } else {
+  } else if (!PrevSpilled) {
+    // If it's already split, just restore the value. There is no need to spill
+    // the def again.
     // Check if it's possible to insert a spill after the def MI.
     MachineBasicBlock::iterator SpillPt =
       findNextEmptySlot(DefMBB, DefMI, SpillIndex);
@@ -549,8 +551,8 @@ bool PreAllocSplitting::SplitRegLiveInterval(LiveInterval *LI) {
       return false; // No gap to insert spill.
     SS = MFI->CreateStackObject(RC->getSize(), RC->getAlignment());
 
-    // Add spill. The store instruction kills the register if def is before the
-    // barrier in the barrier block.
+    // Add spill. The store instruction kills the register if def is before
+    // the barrier in the barrier block.
     TII->storeRegToStackSlot(*DefMBB, SpillPt, CurrLI->reg,
                              DefMBB == BarrierMBB, SS, RC);
     SpillMI = prior(SpillPt);
@@ -567,7 +569,7 @@ bool PreAllocSplitting::SplitRegLiveInterval(LiveInterval *LI) {
   // If live interval is spilled in the same block as the barrier, just
   // create a hole in the interval.
   if (!DefMBB ||
-      (SpillIndex && SpillMI->getParent() == BarrierMBB)) {
+      (SpillMI && SpillMI->getParent() == BarrierMBB)) {
     UpdateIntervalForSplit(ValNo, LIs->getUseIndex(SpillIndex)+1,
                            LIs->getDefIndex(RestoreIndex));
 
