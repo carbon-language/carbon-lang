@@ -447,7 +447,12 @@ faster:</p>
 <li>Position Independent Code (PIC) is now supported on Linux/x86-64.</li>
 <li>@llvm.frameaddress now supports getting the frame address of stack frames
     &gt; 0 on x86/x86-64.</li>
-<li>MIPS floating point support? [BRUNO]</li>
+<li>MIPS has improved a lot since last release, the most important changes
+    are: Little endian support, floating point support, allegrex core and
+    intrinsics support. O32 ABI is improved but isn't complete. The EABI 
+    was implemented and is fully supported. We also have support for small
+    sections and gp_rel relocation for its access, a threshold in bytes can be 
+    specified through command line.</li>
 <li>The PowerPC backend now supports trampolines.</li>
 </ul>
 
@@ -694,6 +699,20 @@ programs compiled with LLVM.  Please use more recent versions of QEMU.</li>
 <ul>
 <li>The SPARC backend only supports the 32-bit SPARC ABI (-m32), it does not
     support the 64-bit SPARC ABI (-m64).</li>
+</ul>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="mips-be">Known problems with the MIPS back-end</a>
+</div>
+
+<div class="doc_text">
+
+<ul>
+<li>The O32 ABI is not fully supported.</li>
+<li>64-bit MIPS targets are not supported yet.</li>
 </ul>
 
 </div>
