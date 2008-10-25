@@ -1529,11 +1529,6 @@ void GRExprEngine::VisitDeclStmt(DeclStmt* DS, NodeTy* Pred, NodeSet& Dst) {
   
   const VarDecl* VD = dyn_cast<VarDecl>(D);
   
-  // FIXME: Add support for local arrays.
-  if (VD->getType()->isArrayType()) {
-    return;
-  }
-  
   Expr* Ex = const_cast<Expr*>(VD->getInit());
 
   // FIXME: static variables may have an initializer, but the second
