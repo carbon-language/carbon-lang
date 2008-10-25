@@ -1347,8 +1347,10 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
   case Intrinsic::gcwrite:
   case Intrinsic::gcread:
     if (ID == Intrinsic::gcroot) {
-      Assert1(isa<AllocaInst>(CI.getOperand(1)->stripPointerCasts()),
-              "llvm.gcroot parameter #1 must be an alloca.", &CI);
+      AllocaInst *AI =
+        dyn_cast<AllocaInst>(CI.getOperand(1)->stripPointerCasts());
+      Assert1(AI && isa<PointerType>(AI->getType()->getElementType()),
+              "llvm.gcroot parameter #1 must be a pointer alloca.", &CI);
       Assert1(isa<Constant>(CI.getOperand(2)),
               "llvm.gcroot parameter #2 must be a constant.", &CI);
     }
