@@ -351,8 +351,8 @@ unsigned ScheduleDAG::CountResults(SDNode *Node) {
 
 /// CountOperands - The inputs to target nodes have any actual inputs first,
 /// followed by special operands that describe memory references, then an
-/// optional chain operand, then flag operands.  Compute the number of
-/// actual operands that will go into the resulting MachineInstr.
+/// optional chain operand, then an optional flag operand.  Compute the number
+/// of actual operands that will go into the resulting MachineInstr.
 unsigned ScheduleDAG::CountOperands(SDNode *Node) {
   unsigned N = ComputeMemOperandsEnd(Node);
   while (N && isa<MemOperandSDNode>(Node->getOperand(N - 1).getNode()))
