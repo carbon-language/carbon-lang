@@ -457,8 +457,12 @@ PreAllocSplitting::ShrinkWrapLiveInterval(VNInfo *ValNo,
       DefMI->eraseFromParent();
       CurrLI->removeRange(ValNo->def, LIs->getMBBEndIdx(MBB)+1);
     }
+  } else if (MBB == BarrierMBB) {
+    // Remove entire live range from start of mbb to barrier.
+    CurrLI->removeRange(LIs->getMBBStartIdx(MBB),
+                        LIs->getUseIndex(BarrierIdx)+1);
   } else {
-    // Remove entire live range of the bb out of the live interval.
+    // Remove entire live range of the mbb out of the live interval.
     CurrLI->removeRange(LIs->getMBBStartIdx(MBB), LIs->getMBBEndIdx(MBB)+1);
   }
 
