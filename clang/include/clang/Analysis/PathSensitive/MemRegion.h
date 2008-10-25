@@ -38,8 +38,11 @@ public:
   enum Kind { MemSpaceRegionKind, SymbolicRegionKind,
               // Typed regions.
               BEG_TYPED_REGIONS,
-              VarRegionKind, FieldRegionKind, ElementRegionKind,
+              StringRegionKind, ElementRegionKind,
+              BEG_DECL_REGIONS,
+              VarRegionKind, FieldRegionKind,
               ObjCIvarRegionKind, ObjCObjectRegionKind,
+              END_DECL_REGIONS,
               AnonTypedRegionKind, AnonPointeeRegionKind,
               END_TYPED_REGIONS };  
 private:
@@ -135,6 +138,35 @@ public:
   }
 };
 
+/// StringRegion - Region associated with a StringLiteral.
+class StringRegion : public TypedRegion {
+  friend class MemRegionManager;
+
+  const StringLiteral* Str;
+
+protected:
+
+  StringRegion(const StringLiteral* str, MemRegion* sreg)
+    : TypedRegion(sreg, StringRegionKind), Str(str) {}
+
+  static void ProfileRegion(llvm::FoldingSetNodeID& ID,
+                            const StringLiteral* Str,
+                            const MemRegion* superRegion);
+
+public:
+  QualType getType(ASTContext&) const {
+    return Str->getType();
+  }
+
+  void Profile(llvm::FoldingSetNodeID& ID) const {
+    ProfileRegion(ID, Str, superRegion);
+  }
+
+  static bool classof(const MemRegion* R) {
+    return R->getKind() == StringRegionKind;
+  }
+};
+
 /// AnonTypedRegion - An "anonymous" region that simply types a chunk
 ///  of memory.
 class AnonTypedRegion : public TypedRegion {
@@ -195,6 +227,11 @@ protected:
 public:
   const Decl* getDecl() const { return D; }
   void Profile(llvm::FoldingSetNodeID& ID) const;
+
+  static bool classof(const MemRegion* R) {
+    unsigned k = R->getKind();
+    return k > BEG_DECL_REGIONS && k < END_DECL_REGIONS;
+  }
 };
   
 class VarRegion : public DeclRegion {
@@ -351,7 +388,9 @@ public:
   
   /// getSymbolicRegion - Retrieve or create a "symbolic" memory region.
   SymbolicRegion* getSymbolicRegion(const SymbolID sym);
-  
+
+  StringRegion* getStringRegion(const StringLiteral* Str);
+
   /// getVarRegion - Retrieve or create the memory region associated with
   ///  a specified VarDecl.  'superRegion' corresponds to the containing
   ///  memory region, and 'off' is the offset within the containing region.

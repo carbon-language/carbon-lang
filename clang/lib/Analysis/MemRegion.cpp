@@ -25,6 +25,14 @@ void MemSpaceRegion::Profile(llvm::FoldingSetNodeID& ID) const {
   ID.AddInteger((unsigned)getKind());
 }
 
+void StringRegion::ProfileRegion(llvm::FoldingSetNodeID& ID, 
+                                 const StringLiteral* Str, 
+                                 const MemRegion* superRegion) {
+  ID.AddInteger((unsigned) StringRegionKind);
+  ID.AddPointer(Str);
+  ID.AddPointer(superRegion);
+}
+
 void AnonTypedRegion::ProfileRegion(llvm::FoldingSetNodeID& ID, QualType T,
                                     const MemRegion* superRegion) {
   ID.AddInteger((unsigned) AnonTypedRegionKind);
@@ -136,6 +144,25 @@ MemSpaceRegion* MemRegionManager::getHeapRegion() {
 
 MemSpaceRegion* MemRegionManager::getUnknownRegion() {
   return LazyAllocate(unknown);
+}
+
+StringRegion* MemRegionManager::getStringRegion(const StringLiteral* Str) {
+  llvm::FoldingSetNodeID ID;
+  MemSpaceRegion* GlobalsR = getGlobalsRegion();
+
+  StringRegion::ProfileRegion(ID, Str, GlobalsR);
+
+  void* InsertPos;
+  MemRegion* data = Regions.FindNodeOrInsertPos(ID, InsertPos);
+  StringRegion* R = cast_or_null<StringRegion>(data);
+
+  if (!R) {
+    R = (StringRegion*) A.Allocate<StringRegion>();
+    new (R) StringRegion(Str, GlobalsR);
+    Regions.InsertNode(R, InsertPos);
+  }
+
+  return R;
 }
 
 VarRegion* MemRegionManager::getVarRegion(const VarDecl* d,
