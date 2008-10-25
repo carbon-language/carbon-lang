@@ -457,9 +457,10 @@ void GRExprEngine::VisitLValue(Expr* Ex, NodeTy* Pred, NodeSet& Dst) {
       // can be used in a lvalue context.  We need to enhance our support
       // of such temporaries in both the environment and the store, so right
       // now we just do a regular visit.
-      assert (Ex->getType()->isAggregateType() && 
-              "Other kinds of expressions with non-aggregate types do not "
-              "have lvalues.");
+      assert ((Ex->getType()->isAggregateType() || 
+              Ex->getType()->isUnionType()) &&
+              "Other kinds of expressions with non-aggregate/union types do"
+              " not have lvalues.");
       
       Visit(Ex, Pred, Dst);
   }

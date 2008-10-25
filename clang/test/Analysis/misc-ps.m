@@ -43,3 +43,16 @@ void divzeroassumeB(unsigned x, unsigned j) {
   if (j == 0) x = x / 0;  // no-warning
 }
 
+// PR 2948 (testcase; crash on VisitLValue for union types)
+// http://llvm.org/bugs/show_bug.cgi?id=2948
+
+void checkaccess_union() {
+  int ret = 0, status;
+  if (((((__extension__ (((union {
+    __typeof (status) __in; int __i;}
+    )
+    {
+      .__in = (status)}
+      ).__i))) & 0xff00) >> 8) == 1)
+        ret = 1;
+}
