@@ -2,8 +2,7 @@ cmake_minimum_required(VERSION 2.6.1)
 
 set(PACKAGE_NAME llvm)
 set(PACKAGE_VERSION svn)
-set(PACKAGE_BUGREPORT "ofv@wanadoo.es")
-#set(PACKAGE_BUGREPORT "llvmbugs@cs.uiuc.edu")
+set(PACKAGE_BUGREPORT "llvmbugs@cs.uiuc.edu")
 
 include(FindPerl)
 
