@@ -1089,7 +1089,7 @@ public:
       const char* ErrStr;
       bool DFG = CreateDependencyFileGen(PP, OutputFile, InFile, ErrStr);
        if (!DFG && ErrStr) {
-        fprintf(stderr, ErrStr);
+        fprintf(stderr, "%s", ErrStr);
         return NULL;
       }
     }
