@@ -151,7 +151,6 @@ const GRState* BasicConstraintManager::AssumeAux(const GRState* St, Loc Cond,
       
   case loc::FuncValKind:
   case loc::GotoLabelKind:
-  case loc::StringLiteralValKind:
     isFeasible = Assumption;
     return St;
 

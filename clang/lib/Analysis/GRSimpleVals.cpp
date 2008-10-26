@@ -285,7 +285,6 @@ SVal GRSimpleVals::EvalEQ(GRExprEngine& Eng, Loc L, Loc R) {
     case loc::MemRegionKind:
     case loc::FuncValKind:
     case loc::GotoLabelKind:
-    case loc::StringLiteralValKind:
       return NonLoc::MakeIntTruthVal(BasicVals, L == R);
   }
   
@@ -344,7 +343,6 @@ SVal GRSimpleVals::EvalNE(GRExprEngine& Eng, Loc L, Loc R) {
     case loc::MemRegionKind:
     case loc::FuncValKind:
     case loc::GotoLabelKind:
-    case loc::StringLiteralValKind:
       return NonLoc::MakeIntTruthVal(BasicVals, L != R);
   }
   

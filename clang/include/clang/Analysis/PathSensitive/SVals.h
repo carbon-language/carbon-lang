@@ -290,7 +290,7 @@ public:
 namespace loc {
   
 enum Kind { SymbolValKind, GotoLabelKind, MemRegionKind, FuncValKind,
-            ConcreteIntKind, StringLiteralValKind };
+            ConcreteIntKind };
 
 class SymbolVal : public Loc {
 public:
@@ -411,23 +411,6 @@ public:
     return V->getSubKind() == ConcreteIntKind;
   }
 };
-  
-class StringLiteralVal : public Loc {
-public:
-  StringLiteralVal(StringLiteral* L) : Loc(StringLiteralValKind, L) {}
-  
-  StringLiteral* getLiteral() const { return (StringLiteral*) Data; }
-  
-  // Implement isa<T> support.
-  static inline bool classof(const SVal* V) {
-    return V->getBaseKind() == LocKind &&
-           V->getSubKind() == StringLiteralValKind;
-  }
-  
-  static inline bool classof(const Loc* V) {
-    return V->getSubKind() == StringLiteralValKind;
-  }
-};  
   
 } // end clang::loc namespace
 } // end clang namespace  

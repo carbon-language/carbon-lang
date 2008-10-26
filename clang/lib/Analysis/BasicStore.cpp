@@ -125,7 +125,6 @@ SVal BasicStoreManager::getLValueField(const GRState* St, SVal Base,
       break;
       
     case loc::ConcreteIntKind:
-    case loc::StringLiteralValKind:
       // While these seem funny, this can happen through casts.
       // FIXME: What we should return is the field offset.  For example,
       //  add the field offset to the integer value.  That way funny things
@@ -177,10 +176,6 @@ SVal BasicStoreManager::Retrieve(Store St, Loc LV, QualType T) {
       return UndefinedVal();            
     case loc::FuncValKind:
       return LV;
-      
-    case loc::StringLiteralValKind:
-      // FIXME: Implement better support for fetching characters from strings.
-      return UnknownVal();
       
     default:
       assert (false && "Invalid Loc.");

@@ -261,10 +261,6 @@ SVal SVal::GetSymbolValue(SymbolManager& SymMgr, VarDecl* D) {
 
 Loc Loc::MakeVal(AddrLabelExpr* E) { return loc::GotoLabel(E->getLabel()); }
 
-Loc Loc::MakeVal(StringLiteral* S) {
-  return loc::StringLiteralVal(S);
-}
-
 //===----------------------------------------------------------------------===//
 // Pretty-Printing.
 //===----------------------------------------------------------------------===//
@@ -384,12 +380,6 @@ void Loc::print(std::ostream& Out) const {
     case loc::FuncValKind:
       Out << "function " 
           << cast<loc::FuncVal>(this)->getDecl()->getIdentifier()->getName();
-      break;
-      
-    case loc::StringLiteralValKind:
-      Out << "literal \""
-          << cast<loc::StringLiteralVal>(this)->getLiteral()->getStrData()
-          << "\"";
       break;
       
     default:
@@ -515,12 +505,6 @@ void Loc::print(llvm::raw_ostream& Out) const {
     case loc::FuncValKind:
       Out << "function " 
           << cast<loc::FuncVal>(this)->getDecl()->getIdentifier()->getName();
-      break;
-      
-    case loc::StringLiteralValKind:
-      Out << "literal \""
-          << cast<loc::StringLiteralVal>(this)->getLiteral()->getStrData()
-          << "\"";
       break;
       
     default:
