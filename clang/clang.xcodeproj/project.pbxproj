@@ -441,6 +441,7 @@
 		DE3986F30CB8D50C00223765 /* IdentifierTable.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = IdentifierTable.cpp; sourceTree = "<group>"; };
 		DE3B90DE0EAC5EF200D01046 /* ExtensionRAIIObject.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ExtensionRAIIObject.h; path = lib/Parse/ExtensionRAIIObject.h; sourceTree = "<group>"; };
 		DE3B921C0EB1A81400D01046 /* SemaInherit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SemaInherit.h; path = lib/Sema/SemaInherit.h; sourceTree = "<group>"; };
+		DE3B92230EB5152000D01046 /* Designator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Designator.h; path = clang/Parse/Designator.h; sourceTree = "<group>"; };
 		DE41211D0D7F1BBE0080F80A /* GRWorkList.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GRWorkList.h; path = clang/Analysis/PathSensitive/GRWorkList.h; sourceTree = "<group>"; };
 		DE41211E0D7F1BBE0080F80A /* SymbolManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SymbolManager.h; path = clang/Analysis/PathSensitive/SymbolManager.h; sourceTree = "<group>"; };
 		DE41211F0D7F1BBE0080F80A /* GRBlockCounter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GRBlockCounter.h; path = clang/Analysis/PathSensitive/GRBlockCounter.h; sourceTree = "<group>"; };
@@ -764,6 +765,7 @@
 				84D9A88B0C1A581300AC7ABC /* AttributeList.h */,
 				DE06E8130A8FF9330050E87E /* Action.h */,
 				DE17336F0B068DC60080B521 /* DeclSpec.h */,
+				DE3B92230EB5152000D01046 /* Designator.h */,
 				DE1F22020A7D852A00FBF588 /* Parser.h */,
 				DE06BECA0A854E4B0050E87E /* Scope.h */,
 			);

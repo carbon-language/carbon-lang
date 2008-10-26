@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/Parse/Designator.h"
 #include "clang/Parse/Parser.h"
 #include "clang/Basic/Diagnostic.h"
 #include "llvm/ADT/SmallString.h"
@@ -54,7 +55,32 @@ static bool MayBeDesignationStart(tok::TokenKind K) {
 /// initializer (because it is an expression).  We need to consider this case
 /// when parsing array designators.
 ///
-Parser::ExprResult Parser::ParseInitializerWithPotentialDesignator() {
+Parser::ExprResult Parser::
+ParseInitializerWithPotentialDesignator(InitListDesignations &Designations,
+                                        unsigned InitNum) {
+  
+  // If this is the old-style GNU extension:
+  //   designation ::= identifier ':'
+  // Handle it as a field designator.  Otherwise, this must be the start of a
+  // normal expression.
+  if (Tok.is(tok::identifier)) {
+    if (NextToken().is(tok::colon)) {
+      Diag(Tok, diag::ext_gnu_old_style_field_designator);
+
+      Designation &D = Designations.CreateDesignation(InitNum);
+      D.AddDesignator(Designator::getField(Tok.getIdentifierInfo()));
+      ConsumeToken(); // Eat the identifier.
+      
+      assert(Tok.is(tok::colon) && "NextToken() not working properly!");
+      ConsumeToken();
+      return ParseInitializer();
+    }
+    
+    // Otherwise, parse the assignment-expression.
+    return ParseAssignmentExpression();
+  }
+  
+  
   // Parse each designator in the designator list until we find an initializer.
   while (1) {
     switch (Tok.getKind()) {
@@ -138,25 +164,6 @@ Parser::ExprResult Parser::ParseInitializerWithPotentialDesignator() {
       MatchRHSPunctuation(tok::r_square, StartLoc);
       break;
     }
-    case tok::identifier: {
-      // Due to the GNU "designation: identifier ':'" extension, we don't know
-      // whether something starting with an identifier is an
-      // assignment-expression or if it is an old-style structure field
-      // designator.
-      // TODO: Check that this is the first designator.
-      
-      // If this is the gross GNU extension, handle it now.
-      if (NextToken().is(tok::colon)) {
-        Diag(Tok, diag::ext_gnu_old_style_field_designator);
-        ConsumeToken(); // The identifier.
-        assert(Tok.is(tok::colon) && "NextToken() not working properly!");
-        ConsumeToken();
-        return ParseInitializer();
-      }
-      
-      // Otherwise, parse the assignment-expression.
-      return ParseAssignmentExpression();
-    }
     }
   }
 }
@@ -174,6 +181,8 @@ Parser::ExprResult Parser::ParseInitializerWithPotentialDesignator() {
 ///         initializer-list ',' designation[opt] initializer
 ///
 Parser::ExprResult Parser::ParseInitializer() {
+  // TODO: Split this up into ParseInitializer + ParseBraceInitializer, make
+  // ParseInitializer inline so that the non-brace case is short-cut.
   if (Tok.isNot(tok::l_brace))
     return ParseAssignmentExpression();
 
@@ -186,7 +195,15 @@ Parser::ExprResult Parser::ParseInitializer() {
     // Match the '}'.
     return Actions.ActOnInitList(LBraceLoc, 0, 0, ConsumeBrace());
   }
+  
+  /// InitExprs - This is the actual list of expressions contained in the
+  /// initializer.
   llvm::SmallVector<ExprTy*, 8> InitExprs;
+  
+  /// ExprDesignators - For each initializer, keep track of the designator that
+  /// was specified for it, if any.
+  InitListDesignations InitExprDesignations(Actions);
+
   bool InitExprsOk = true;
   
   while (1) {
@@ -198,7 +215,8 @@ Parser::ExprResult Parser::ParseInitializer() {
     if (!MayBeDesignationStart(Tok.getKind()))
       SubElt = ParseInitializer();
     else
-      SubElt = ParseInitializerWithPotentialDesignator();
+      SubElt = ParseInitializerWithPotentialDesignator(InitExprDesignations,
+                                                       InitExprs.size());
 
     // If we couldn't parse the subelement, bail out.
     if (!SubElt.isInvalid) {
@@ -220,7 +238,7 @@ Parser::ExprResult Parser::ParseInitializer() {
     // If we don't have a comma continued list, we're done.
     if (Tok.isNot(tok::comma)) break;
     
-    // FIXME: save comma locations.
+    // TODO: save comma locations if some client cares.
     ConsumeToken();
     
     // Handle trailing comma.
@@ -230,7 +248,7 @@ Parser::ExprResult Parser::ParseInitializer() {
     return Actions.ActOnInitList(LBraceLoc, &InitExprs[0], InitExprs.size(), 
                                  ConsumeBrace());
   
-  // Delete any parsed subexpressions.
+  // On error, delete any parsed subexpressions.
   for (unsigned i = 0, e = InitExprs.size(); i != e; ++i)
     Actions.DeleteExpr(InitExprs[i]);
   

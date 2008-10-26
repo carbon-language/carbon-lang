@@ -480,7 +480,8 @@ private:
   //===--------------------------------------------------------------------===//
   // C99 6.7.8: Initialization.
   ExprResult ParseInitializer();
-  ExprResult ParseInitializerWithPotentialDesignator();
+  ExprResult ParseInitializerWithPotentialDesignator(InitListDesignations &D,
+                                                     unsigned InitNum);
   
   //===--------------------------------------------------------------------===//
   // clang Expressions

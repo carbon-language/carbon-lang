@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_PARSE_SEMADECLSPEC_H
-#define LLVM_CLANG_PARSE_SEMADECLSPEC_H
+#ifndef LLVM_CLANG_PARSE_DECLSPEC_H
+#define LLVM_CLANG_PARSE_DECLSPEC_H
 
 #include "clang/Parse/Action.h"
 #include "clang/Parse/AttributeList.h"

@@ -29,6 +29,7 @@ namespace clang {
   class Scope;
   class Action;
   class Selector;
+  class InitListDesignations;
   // Lex.
   class Token;
 
