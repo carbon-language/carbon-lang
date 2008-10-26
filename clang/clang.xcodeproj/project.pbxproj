@@ -900,7 +900,6 @@
 		DEAEECAE0A5AF0FA0045101B /* Driver */ = {
 			isa = PBXGroup;
 			children = (
-				35A057E60EAE2DDD0069249F /* CacheTokens.cpp */,
 				DE5932CD0AD60FF400BC794C /* clang.cpp */,
 				DE5932CE0AD60FF400BC794C /* clang.h */,
 				359DBBE20E1ACD4700F43FA0 /* AnalysisConsumer.h */,
@@ -908,6 +907,7 @@
 				352028460E2C16820096ADE0 /* Analyses.def */,
 				DE3985780CB8ADC800223765 /* ASTConsumers.h */,
 				DE39857A0CB8ADCB00223765 /* ASTConsumers.cpp */,
+				35A057E60EAE2DDD0069249F /* CacheTokens.cpp */,
 				DE38CF150D8C9DE000A273B6 /* DiagChecker.cpp */,
 				72D16C210D9975EA00E6DA4A /* HTMLPrint.cpp */,
 				DE5932CF0AD60FF400BC794C /* PrintParserCallbacks.cpp */,

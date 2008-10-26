@@ -2123,8 +2123,9 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
         // (struct objc_super) { <exprs from above> }
         InitListExpr *ILE = new InitListExpr(SourceLocation(), 
                                              &InitExprs[0], InitExprs.size(), 
-                                             SourceLocation());
-        SuperRep = new CompoundLiteralExpr(SourceLocation(), superType, ILE, false);
+                                             SourceLocation(), false);
+        SuperRep = new CompoundLiteralExpr(SourceLocation(), superType, ILE,
+                                           false);
       }
       // struct objc_super *
       Expr *Unop = new UnaryOperator(SuperRep, UnaryOperator::AddrOf,
@@ -2189,7 +2190,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
         // (struct objc_super) { <exprs from above> }
         InitListExpr *ILE = new InitListExpr(SourceLocation(), 
                                              &InitExprs[0], InitExprs.size(), 
-                                             SourceLocation());
+                                             SourceLocation(), false);
         SuperRep = new CompoundLiteralExpr(SourceLocation(), superType, ILE, false);
       }
       // struct objc_super *

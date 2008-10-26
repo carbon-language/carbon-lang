@@ -204,13 +204,12 @@ const char *BinaryOperator::getOpcodeStr(Opcode Op) {
 }
 
 InitListExpr::InitListExpr(SourceLocation lbraceloc, 
-                           Expr **initexprs, unsigned numinits,
-                           SourceLocation rbraceloc)
+                           Expr **initExprs, unsigned numInits,
+                           SourceLocation rbraceloc, bool hadDesignators)
   : Expr(InitListExprClass, QualType()),
-    LBraceLoc(lbraceloc), RBraceLoc(rbraceloc)
-{
-  for (unsigned i = 0; i != numinits; i++)
-    InitExprs.push_back(initexprs[i]);
+    LBraceLoc(lbraceloc), RBraceLoc(rbraceloc), HadDesignators(hadDesignators) {
+
+  InitExprs.insert(InitExprs.end(), initExprs, initExprs+numInits);
 }
 
 /// getFunctionType - Return the underlying function type for this block.

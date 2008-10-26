@@ -1410,11 +1410,17 @@ public:
 class InitListExpr : public Expr {
   std::vector<Stmt *> InitExprs;
   SourceLocation LBraceLoc, RBraceLoc;
+  
+  /// HadDesignators - Return true if there were any designators in this
+  /// init list expr.  FIXME: this should be replaced by storing the designators
+  /// somehow and updating codegen.
+  bool HadDesignators;
 public:
   InitListExpr(SourceLocation lbraceloc, Expr **initexprs, unsigned numinits,
-               SourceLocation rbraceloc);
+               SourceLocation rbraceloc, bool HadDesignators);
   
   unsigned getNumInits() const { return InitExprs.size(); }
+  bool hadDesignators() const { return HadDesignators; }
   
   const Expr* getInit(unsigned Init) const { 
     assert(Init < getNumInits() && "Initializer access out of range!");

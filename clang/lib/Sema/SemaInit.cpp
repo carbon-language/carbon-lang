@@ -87,7 +87,8 @@ void InitListChecker::CheckImplicitInitList(InitListExpr *ParentIList,
   // Synthesize an "implicit" InitListExpr (marked by the invalid source locs).
   InitListExpr *ILE = new InitListExpr(SourceLocation(), 
                                        &InitExprs[0], InitExprs.size(), 
-                                       SourceLocation());
+                                       SourceLocation(),
+                                       ParentIList->hadDesignators());
   ILE->setType(T);
 
   // Modify the parent InitListExpr to point to the implicit InitListExpr.

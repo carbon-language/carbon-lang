@@ -22,6 +22,7 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Parse/DeclSpec.h"
+#include "clang/Parse/Designator.h"
 #include "clang/Parse/Scope.h"
 using namespace clang;
 
@@ -1260,7 +1261,8 @@ ActOnInitList(SourceLocation LBraceLoc, ExprTy **initlist, unsigned NumInit,
   // Semantic analysis for initializers is done by ActOnDeclarator() and
   // CheckInitializer() - it requires knowledge of the object being intialized. 
   
-  InitListExpr *E = new InitListExpr(LBraceLoc, InitList, NumInit, RBraceLoc);
+  InitListExpr *E = new InitListExpr(LBraceLoc, InitList, NumInit, RBraceLoc,
+                                     Designators.hasAnyDesignators());
   E->setType(Context.VoidTy); // FIXME: just a place holder for now.
   return E;
 }
