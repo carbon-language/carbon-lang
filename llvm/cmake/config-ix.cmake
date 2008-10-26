@@ -52,6 +52,10 @@ check_symbol_exists(mallinfo malloc.h HAVE_MALLINFO)
 check_symbol_exists(pthread_mutex_lock pthread.h HAVE_PTHREAD_MUTEX_LOCK)
 check_symbol_exists(strtoll stdlib.h HAVE_STRTOLL)
 
+include(GetTargetTriple)
+get_target_triple(LLVM_HOSTTRIPLE)
+message(STATUS "LLVM_HOSTTRIPLE: ${LLVM_HOSTTRIPLE}")
+
 if( MINGW )
   # tbi: Comprobar que existen las librerias:
   set(HAVE_LIBIMAGEHLP 1)

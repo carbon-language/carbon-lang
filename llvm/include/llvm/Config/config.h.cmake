@@ -440,6 +440,9 @@
 /* Installation directory for config files */
 #undef LLVM_ETCDIR
 
+/* Host triple we were built on */
+#cmakedefine LLVM_HOSTTRIPLE "${LLVM_HOSTTRIPLE}"
+
 /* Installation directory for include files */
 #undef LLVM_INCLUDEDIR
 

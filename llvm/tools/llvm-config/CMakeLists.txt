@@ -29,17 +29,10 @@ set(SHLIBEXT ${LTDL_SHLIB_EXT})
 #EXEEXT already set.
 set(OS "${CMAKE_SYSTEM}")
 set(ARCH "X86") # TODO: This gives "i686" in Linux: "${CMAKE_SYSTEM_PROCESSOR}")
-# TODO: avoid using autoconf:
-set(config_guess ${LLVM_MAIN_SRC_DIR}/autoconf/config.guess)
-execute_process(COMMAND sh ${config_guess}
-  RESULT_VARIABLE TT_RV
-  OUTPUT_VARIABLE LLVM_TARGET_TRIPLET
-  OUTPUT_STRIP_TRAILING_WHITESPACE)
-message(STATUS "Target triplet: ${LLVM_TARGET_TRIPLET}")
-if( NOT TT_RV EQUAL 0 )
-  message(FATAL_ERROR "Failed to execute ${config_guess}")
-endif( NOT TT_RV EQUAL 0 )
-set(target ${LLVM_TARGET_TRIPLET})
+
+include(GetTargetTriple)
+get_target_triple(target)
+
 foreach(c ${LLVM_TARGETS_TO_BUILD})
   set(TARGETS_BUILT "${TARGETS_BUILT} ${c}")
 endforeach(c)
