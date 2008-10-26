@@ -75,12 +75,6 @@ set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${LLVM_BINARY_DIR}/lib )
 add_definitions( -D__STDC_LIMIT_MACROS )
 add_definitions( -D__STDC_CONSTANT_MACROS )
 
-if( LLVM_ON_UNIX )
-  add_definitions( -DLLVM_ON_UNIX )
-else( LLVM_ON_UNIX )
-  add_definitions( -DLLVM_ON_WIN32 )
-endif( LLVM_ON_UNIX )
-
 if( MSVC )
   add_definitions( -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS )
   add_definitions( -D_SCL_SECURE_NO_WARNINGS -DCRT_NONSTDC_NO_WARNINGS )
