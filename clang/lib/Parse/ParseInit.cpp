@@ -104,11 +104,18 @@ ParseInitializerWithPotentialDesignator(InitListDesignations &Designations,
     // We must have either an array designator now or an objc message send.
     assert(Tok.is(tok::l_square) && "Unexpected token!");
     
-    // array-designator: '[' constant-expression ']'
-    // array-designator: '[' constant-expression '...' constant-expression ']'
-    // When designation is empty, this can be '[' objc-message-expr ']'.  Note
-    // that we also have the case of [4][foo bar], which is the gnu designator
-    // extension + objc message send.
+    // Handle the two forms of array designator:
+    //   array-designator: '[' constant-expression ']'
+    //   array-designator: '[' constant-expression '...' constant-expression ']'
+    //
+    // Also, we have to handle the case where the expression after the
+    // designator an an objc message send: '[' objc-message-expr ']'.
+    // Interesting cases are:
+    //   [foo bar]         -> objc message send
+    //   [foo]             -> array designator
+    //   [foo ... bar]     -> array designator
+    //   [4][foo bar]      -> obsolete GNU designation with objc message send.
+    //
     SourceLocation StartLoc = ConsumeBracket();
     
     // If Objective-C is enabled and this is a typename or other identifier
@@ -140,17 +147,26 @@ ParseInitializerWithPotentialDesignator(InitListDesignations &Designations,
       // [4][foo bar].
       return ParseAssignmentExprWithObjCMessageExprStart(StartLoc, 0,Idx.Val);
     }
+
+    // Create designation if we haven't already.
+    if (Desig == 0)
+      Desig = &Designations.CreateDesignation(InitNum);
     
-    // Handle the gnu array range extension.
-    if (Tok.is(tok::ellipsis)) {
+    // If this is a normal array designator, remember it.
+    if (Tok.isNot(tok::ellipsis)) {
+      Desig->AddDesignator(Designator::getArray(Idx.Val));
+    } else {
+      // Handle the gnu array range extension.
       Diag(Tok, diag::ext_gnu_array_range);
       ConsumeToken();
       
       ExprResult RHS = ParseConstantExpression();
       if (RHS.isInvalid) {
+        Actions.DeleteExpr(Idx.Val);
         SkipUntil(tok::r_square);
         return RHS;
       }
+      Desig->AddDesignator(Designator::getArrayRange(Idx.Val, RHS.Val));
     }
     
     MatchRHSPunctuation(tok::r_square, StartLoc);
