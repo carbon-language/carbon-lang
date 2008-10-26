@@ -21,13 +21,14 @@ using namespace clang;
 /// MayBeDesignationStart - Return true if this token might be the start of a
 /// designator.  If we can tell it is impossible that it is a designator, return
 /// false. 
-static bool MayBeDesignationStart(tok::TokenKind K) {
+static bool MayBeDesignationStart(tok::TokenKind K, Preprocessor &PP) {
   switch (K) {
   default: return false;
   case tok::period:      // designator: '.' identifier
   case tok::l_square:    // designator: array-designator
+      return true;
   case tok::identifier:  // designation: identifier ':'
-    return true;
+    return PP.LookAhead(0).is(tok::colon);
   }
 }
 
@@ -64,22 +65,16 @@ ParseInitializerWithPotentialDesignator(InitListDesignations &Designations,
   // Handle it as a field designator.  Otherwise, this must be the start of a
   // normal expression.
   if (Tok.is(tok::identifier)) {
-    if (NextToken().is(tok::colon)) {
-      Diag(Tok, diag::ext_gnu_old_style_field_designator);
-
-      Designation &D = Designations.CreateDesignation(InitNum);
-      D.AddDesignator(Designator::getField(Tok.getIdentifierInfo()));
-      ConsumeToken(); // Eat the identifier.
-      
-      assert(Tok.is(tok::colon) && "NextToken() not working properly!");
-      ConsumeToken();
-      return ParseInitializer();
-    }
+    Diag(Tok, diag::ext_gnu_old_style_field_designator);
     
-    // Otherwise, parse the assignment-expression.
-    return ParseAssignmentExpression();
+    Designation &D = Designations.CreateDesignation(InitNum);
+    D.AddDesignator(Designator::getField(Tok.getIdentifierInfo()));
+    ConsumeToken(); // Eat the identifier.
+    
+    assert(Tok.is(tok::colon) && "NextToken() not working properly!");
+    ConsumeToken();
+    return ParseInitializer();
   }
-  
   
   // Parse each designator in the designator list until we find an initializer.
   while (1) {
@@ -208,7 +203,7 @@ Parser::ExprResult Parser::ParseBraceInitializer() {
     // If we know that this cannot be a designation, just parse the nested
     // initializer directly.
     ExprResult SubElt;
-    if (!MayBeDesignationStart(Tok.getKind()))
+    if (!MayBeDesignationStart(Tok.getKind(), PP))
       SubElt = ParseInitializer();
     else
       SubElt = ParseInitializerWithPotentialDesignator(InitExprDesignations,
