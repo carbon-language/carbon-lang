@@ -71,96 +71,95 @@ ParseInitializerWithPotentialDesignator(InitListDesignations &Designations,
     D.AddDesignator(Designator::getField(Tok.getIdentifierInfo()));
     ConsumeToken(); // Eat the identifier.
     
-    assert(Tok.is(tok::colon) && "NextToken() not working properly!");
+    assert(Tok.is(tok::colon) && "MayBeDesignationStart not working properly!");
     ConsumeToken();
     return ParseInitializer();
   }
   
   // Parse each designator in the designator list until we find an initializer.
-  while (1) {
-    switch (Tok.getKind()) {
-    case tok::equal:
-      // We read some number (at least one due to the grammar we implemented)
-      // of designators and found an '=' sign.  The following tokens must be
-      // the initializer.
-      ConsumeToken();
-      return ParseInitializer();
-      
-    default: {
-      // We read some number (at least one due to the grammar we implemented)
-      // of designators and found something that isn't an = or an initializer.
-      // If we have exactly one array designator [TODO CHECK], this is the GNU
-      // 'designation: array-designator' extension.  Otherwise, it is a parse
-      // error.
-      SourceLocation Loc = Tok.getLocation();
-      ExprResult Init = ParseInitializer();
-      if (Init.isInvalid) return Init;
-      
-      Diag(Tok, diag::ext_gnu_missing_equal_designator);
-      return Init;
-    }
-    case tok::period:
+  while (Tok.is(tok::period) || Tok.is(tok::l_square)) {
+    if (Tok.is(tok::period)) {
       // designator: '.' identifier
       ConsumeToken();
       if (ExpectAndConsume(tok::identifier, diag::err_expected_ident))
         return ExprResult(true);
-      break;
-                         
-    case tok::l_square: {
-      // array-designator: '[' constant-expression ']'
-      // array-designator: '[' constant-expression '...' constant-expression ']'
-      // When designation is empty, this can be '[' objc-message-expr ']'.  Note
-      // that we also have the case of [4][foo bar], which is the gnu designator
-      // extension + objc message send.
-      SourceLocation StartLoc = ConsumeBracket();
+      continue;
+    }
+    
+    // We must have either an array designator now or an objc message send.
+    assert(Tok.is(tok::l_square) && "Unexpected token!");
+    
+    // array-designator: '[' constant-expression ']'
+    // array-designator: '[' constant-expression '...' constant-expression ']'
+    // When designation is empty, this can be '[' objc-message-expr ']'.  Note
+    // that we also have the case of [4][foo bar], which is the gnu designator
+    // extension + objc message send.
+    SourceLocation StartLoc = ConsumeBracket();
+    
+    // If Objective-C is enabled and this is a typename or other identifier
+    // receiver, parse this as a message send expression.
+    if (getLang().ObjC1 && isTokObjCMessageIdentifierReceiver()) {
+      // FIXME: Emit ext_gnu_missing_equal_designator for inits like
+      // [4][foo bar].
+      IdentifierInfo *Name = Tok.getIdentifierInfo();
+      ConsumeToken();
+      return ParseAssignmentExprWithObjCMessageExprStart(StartLoc, Name, 0);
+    }
+    
+    // Note that we parse this as an assignment expression, not a constant
+    // expression (allowing *=, =, etc) to handle the objc case.  Sema needs
+    // to validate that the expression is a constant.
+    ExprResult Idx = ParseAssignmentExpression();
+    if (Idx.isInvalid) {
+      SkipUntil(tok::r_square);
+      return Idx;
+    }
+    
+    // Given an expression, we could either have a designator (if the next
+    // tokens are '...' or ']' or an objc message send.  If this is an objc
+    // message send, handle it now.  An objc-message send is the start of 
+    // an assignment-expression production.
+    if (getLang().ObjC1 && Tok.isNot(tok::ellipsis) && 
+        Tok.isNot(tok::r_square)) {
+      // FIXME: Emit ext_gnu_missing_equal_designator for inits like
+      // [4][foo bar].
+      return ParseAssignmentExprWithObjCMessageExprStart(StartLoc, 0,Idx.Val);
+    }
+    
+    // Handle the gnu array range extension.
+    if (Tok.is(tok::ellipsis)) {
+      Diag(Tok, diag::ext_gnu_array_range);
+      ConsumeToken();
       
-      // If Objective-C is enabled and this is a typename or other identifier
-      // receiver, parse this as a message send expression.
-      if (getLang().ObjC1 && isTokObjCMessageIdentifierReceiver()) {
-        // FIXME: Emit ext_gnu_missing_equal_designator for inits like
-        // [4][foo bar].
-        IdentifierInfo *Name = Tok.getIdentifierInfo();
-        ConsumeToken();
-        return ParseAssignmentExprWithObjCMessageExprStart(StartLoc, Name, 0);
-      }
-      
-      // Note that we parse this as an assignment expression, not a constant
-      // expression (allowing *=, =, etc) to handle the objc case.  Sema needs
-      // to validate that the expression is a constant.
-      ExprResult Idx = ParseAssignmentExpression();
-      if (Idx.isInvalid) {
+      ExprResult RHS = ParseConstantExpression();
+      if (RHS.isInvalid) {
         SkipUntil(tok::r_square);
-        return Idx;
+        return RHS;
       }
-      
-      // Given an expression, we could either have a designator (if the next
-      // tokens are '...' or ']' or an objc message send.  If this is an objc
-      // message send, handle it now.  An objc-message send is the start of 
-      // an assignment-expression production.
-      if (getLang().ObjC1 && Tok.isNot(tok::ellipsis) && 
-          Tok.isNot(tok::r_square)) {
-        // FIXME: Emit ext_gnu_missing_equal_designator for inits like
-        // [4][foo bar].
-        return ParseAssignmentExprWithObjCMessageExprStart(StartLoc, 0,Idx.Val);
-      }
-      
-      // Handle the gnu array range extension.
-      if (Tok.is(tok::ellipsis)) {
-        Diag(Tok, diag::ext_gnu_array_range);
-        ConsumeToken();
-        
-        ExprResult RHS = ParseConstantExpression();
-        if (RHS.isInvalid) {
-          SkipUntil(tok::r_square);
-          return RHS;
-        }
-      }
-      
-      MatchRHSPunctuation(tok::r_square, StartLoc);
-      break;
     }
-    }
+    
+    MatchRHSPunctuation(tok::r_square, StartLoc);
   }
+
+  if (Tok.is(tok::equal)) {
+    // We read some number (at least one due to the grammar we implemented)
+    // of designators and found an '=' sign.  The following tokens must be
+    // the initializer.
+    ConsumeToken();
+    return ParseInitializer();
+  }
+  
+  // We read some number (at least one due to the grammar we implemented)
+  // of designators and found something that isn't an = or an initializer.
+  // If we have exactly one array designator [TODO CHECK], this is the GNU
+  // 'designation: array-designator' extension.  Otherwise, it is a parse
+  // error.
+  SourceLocation Loc = Tok.getLocation();
+  ExprResult Init = ParseInitializer();
+  if (Init.isInvalid) return Init;
+  
+  Diag(Tok, diag::ext_gnu_missing_equal_designator);
+  return Init;
 }
 
 
