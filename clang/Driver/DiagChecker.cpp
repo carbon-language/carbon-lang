@@ -78,6 +78,10 @@ static void FindDiagnostics(const std::string &Comment,
     }
 
     std::string Msg(Comment.substr(OpenDiag, CloseDiag - OpenDiag));
+    size_type FindPos;
+    while((FindPos = Msg.find("\\n")) != std::string::npos) {
+      Msg.replace(FindPos, 2, "\n");
+    }
     ExpectedDiags.push_back(std::make_pair(Pos, Msg));
     ColNo = CloseDiag + 2;
   }
