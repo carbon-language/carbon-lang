@@ -151,7 +151,13 @@ public:
   /// AddDesignator - Add a designator to the end of this list.
   void AddDesignator(Designator D) {
     Designators.push_back(D);
-  }  
+  }
+  
+  unsigned getNumDesignators() const { return Designators.size(); }
+  const Designator &getDesignator(unsigned Idx) const {
+    assert(Idx < Designators.size());
+    return Designators[Idx];
+  }
   
   /// ClearExprs - Null out any expression references, which prevents them from
   /// being 'delete'd later.

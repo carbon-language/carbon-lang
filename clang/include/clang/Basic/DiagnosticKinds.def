@@ -311,6 +311,8 @@ DIAG(ext_gnu_array_range, EXTENSION,
      "use of GNU array range extension")
 DIAG(ext_gnu_missing_equal_designator, EXTENSION,
      "use of GNU 'missing =' extension in designator")
+DIAG(err_expected_equal_designator, ERROR,
+     "expected '=' or another designator")
 DIAG(ext_gnu_old_style_field_designator, EXTENSION,
      "use of GNU old-style field designator extension")
 DIAG(ext_gnu_case_range, EXTENSION,

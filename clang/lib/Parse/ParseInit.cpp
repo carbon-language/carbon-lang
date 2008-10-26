@@ -176,6 +176,7 @@ ParseInitializerWithPotentialDesignator(InitListDesignations &Designations,
   // at least one designator, because the only case we can get into this method
   // without a designator is when we have an objc message send.  That case is
   // handled and returned from above.
+  assert(Desig && "Designator didn't get created?");
   
   // Handle a normal designator sequence end, which is an equal.
   if (Tok.is(tok::equal)) {
@@ -184,15 +185,18 @@ ParseInitializerWithPotentialDesignator(InitListDesignations &Designations,
   }
   
   // We read some number of designators and found something that isn't an = or
-  // an initializer.  If we have exactly one array designator [TODO CHECK], this
+  // an initializer.  If we have exactly one array designator, this
   // is the GNU 'designation: array-designator' extension.  Otherwise, it is a
   // parse error.
-  SourceLocation Loc = Tok.getLocation();
-  ExprResult Init = ParseInitializer();
-  if (Init.isInvalid) return Init;
+  if (Desig->getNumDesignators() == 1 && 
+      (Desig->getDesignator(0).isArrayDesignator() ||
+       Desig->getDesignator(0).isArrayRangeDesignator())) {
+    Diag(Tok, diag::ext_gnu_missing_equal_designator);
+    return ParseInitializer();
+  }
   
-  Diag(Tok, diag::ext_gnu_missing_equal_designator);
-  return Init;
+  Diag(Tok, diag::err_expected_equal_designator);
+  return true;
 }
 
 
