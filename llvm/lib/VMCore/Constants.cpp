@@ -1658,7 +1658,7 @@ struct ExprMapKeyType {
   bool operator==(const ExprMapKeyType& that) const {
     return this->opcode == that.opcode &&
            this->predicate == that.predicate &&
-           this->operands == that.operands;
+           this->operands == that.operands &&
            this->indices == that.indices;
   }
   bool operator<(const ExprMapKeyType & that) const {
