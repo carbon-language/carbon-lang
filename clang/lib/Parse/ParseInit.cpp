@@ -18,7 +18,8 @@ using namespace clang;
 
 
 /// MayBeDesignationStart - Return true if this token might be the start of a
-/// designator.
+/// designator.  If we can tell it is impossible that it is a designator, return
+/// false. 
 static bool MayBeDesignationStart(tok::TokenKind K) {
   switch (K) {
   default: return false;
@@ -50,7 +51,8 @@ static bool MayBeDesignationStart(tok::TokenKind K) {
 /// [GNU]   '[' constant-expression '...' constant-expression ']'
 ///
 /// NOTE: [OBC] allows '[ objc-receiver objc-message-args ]' as an
-/// initializer.  We need to consider this case when parsing array designators.
+/// initializer (because it is an expression).  We need to consider this case
+/// when parsing array designators.
 ///
 Parser::ExprResult Parser::ParseInitializerWithPotentialDesignator() {
   // Parse each designator in the designator list until we find an initializer.
@@ -205,7 +207,7 @@ Parser::ExprResult Parser::ParseInitializer() {
       InitExprsOk = false;
       
       // We have two ways to try to recover from this error: if the code looks
-      // gramatically ok (i.e. we have a comma comming up) try to continue
+      // gramatically ok (i.e. we have a comma coming up) try to continue
       // parsing the rest of the initializer.  This allows us to emit
       // diagnostics for later elements that we find.  If we don't see a comma,
       // assume there is a parse error, and just skip to recover.
