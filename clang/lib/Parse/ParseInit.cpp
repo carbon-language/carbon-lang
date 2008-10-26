@@ -169,9 +169,10 @@ ParseInitializerWithPotentialDesignator(InitListDesignations &Designations,
 }
 
 
-/// ParseInitializer
+/// ParseBraceInitializer - Called when parsing an initializer that has a
+/// leading open brace.
+///
 ///       initializer: [C99 6.7.8]
-///         assignment-expression
 ///         '{' initializer-list '}'
 ///         '{' initializer-list ',' '}'
 /// [GNU]   '{' '}'
@@ -180,12 +181,7 @@ ParseInitializerWithPotentialDesignator(InitListDesignations &Designations,
 ///         designation[opt] initializer
 ///         initializer-list ',' designation[opt] initializer
 ///
-Parser::ExprResult Parser::ParseInitializer() {
-  // TODO: Split this up into ParseInitializer + ParseBraceInitializer, make
-  // ParseInitializer inline so that the non-brace case is short-cut.
-  if (Tok.isNot(tok::l_brace))
-    return ParseAssignmentExpression();
-
+Parser::ExprResult Parser::ParseBraceInitializer() {
   SourceLocation LBraceLoc = ConsumeBrace();
   
   // We support empty initializers, but tell the user that they aren't using

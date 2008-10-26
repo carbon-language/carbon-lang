@@ -479,7 +479,17 @@ private:
 
   //===--------------------------------------------------------------------===//
   // C99 6.7.8: Initialization.
-  ExprResult ParseInitializer();
+  
+  /// ParseInitializer
+  ///       initializer: [C99 6.7.8]
+  ///         assignment-expression
+  ///         '{' ...
+  ExprResult ParseInitializer() {
+    if (Tok.isNot(tok::l_brace))
+      return ParseAssignmentExpression();
+    return ParseBraceInitializer();
+  }
+  ExprResult ParseBraceInitializer();
   ExprResult ParseInitializerWithPotentialDesignator(InitListDesignations &D,
                                                      unsigned InitNum);
   
