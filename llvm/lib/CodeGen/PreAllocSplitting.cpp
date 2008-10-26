@@ -122,7 +122,7 @@ namespace {
                              SmallVector<MachineOperand*, 4>&,
                              SmallPtrSet<MachineInstr*, 4>&);
 
-    void ShrinkWrapLiveInterval(VNInfo*, MachineBasicBlock*,
+    void ShrinkWrapLiveInterval(VNInfo*, MachineBasicBlock*, MachineBasicBlock*,
                         MachineBasicBlock*, SmallPtrSet<MachineBasicBlock*, 8>&,
                 DenseMap<MachineBasicBlock*, SmallVector<MachineOperand*, 4> >&,
                   DenseMap<MachineBasicBlock*, SmallPtrSet<MachineInstr*, 4> >&,
@@ -426,14 +426,28 @@ PreAllocSplitting::ShrinkWrapToLastUse(MachineBasicBlock *MBB,
 /// chain to find the new 'kills' and shrink wrap the live interval to the
 /// new kill indices.
 void
-PreAllocSplitting::ShrinkWrapLiveInterval(VNInfo *ValNo,
-                              MachineBasicBlock *MBB, MachineBasicBlock *DefMBB,
+PreAllocSplitting::ShrinkWrapLiveInterval(VNInfo *ValNo, MachineBasicBlock *MBB,
+                          MachineBasicBlock *SuccMBB, MachineBasicBlock *DefMBB,
                                     SmallPtrSet<MachineBasicBlock*, 8> &Visited,
            DenseMap<MachineBasicBlock*, SmallVector<MachineOperand*, 4> > &Uses,
            DenseMap<MachineBasicBlock*, SmallPtrSet<MachineInstr*, 4> > &UseMIs,
                                   SmallVector<MachineBasicBlock*, 4> &UseMBBs) {
-  if (!Visited.insert(MBB))
+  if (Visited.count(MBB))
     return;
+
+  // If live interval is live in another successor path, then we can't process
+  // this block. But we may able to do so after all the successors have been
+  // processed.
+  for (MachineBasicBlock::succ_iterator SI = MBB->succ_begin(),
+         SE = MBB->succ_end(); SI != SE; ++SI) {
+    MachineBasicBlock *SMBB = *SI;
+    if (SMBB == SuccMBB)
+      continue;
+    if (CurrLI->liveAt(LIs->getMBBStartIdx(SMBB)))
+      return;
+  }
+
+  Visited.insert(MBB);
 
   DenseMap<MachineBasicBlock*, SmallVector<MachineOperand*, 4> >::iterator
     UMII = Uses.find(MBB);
@@ -480,7 +494,8 @@ PreAllocSplitting::ShrinkWrapLiveInterval(VNInfo *ValNo,
       // Pred is the def bb and the def reaches other val#s, we must
       // allow the value to be live out of the bb.
       continue;
-    ShrinkWrapLiveInterval(ValNo, Pred, DefMBB, Visited, Uses, UseMIs, UseMBBs);
+    ShrinkWrapLiveInterval(ValNo, Pred, MBB, DefMBB, Visited,
+                           Uses, UseMIs, UseMBBs);
   }
 
   return;
@@ -622,7 +637,7 @@ bool PreAllocSplitting::SplitRegLiveInterval(LiveInterval *LI) {
 
   // Walk up the predecessor chains.
   SmallPtrSet<MachineBasicBlock*, 8> Visited;
-  ShrinkWrapLiveInterval(ValNo, BarrierMBB, DefMBB, Visited,
+  ShrinkWrapLiveInterval(ValNo, BarrierMBB, NULL, DefMBB, Visited,
                          Uses, UseMIs, UseMBBs);
 
   // Remove live range from barrier to the restore. FIXME: Find a better
