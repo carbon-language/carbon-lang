@@ -100,6 +100,7 @@ namespace llvm {
     /// meaningful to the target.
     virtual char* allocateThreadLocalMemory(size_t size) {
       assert(0 && "This target does not implement thread local storage!");
+      return 0;
     }
 
     /// needsGOT - Allows a target to specify that it would like the
