@@ -29,6 +29,11 @@ Load the dynamic shared object F<library> into the test program whenever it is
 run.  This is useful if you are debugging programs which depend on non-LLVM
 libraries (such as the X or curses libraries) to run.
 
+=item B<--append-exit-code>=I<{true,false}>
+
+Append the test programs exit code to the output file so that a change in exit
+code is considered a test failure. Defaults to false.
+
 =item B<--args> I<program args>
 
 Pass all arguments specified after -args to the test program whenever it runs.
@@ -51,11 +56,6 @@ following way:
 The "--" right after the B<--tool-args> option tells B<bugpoint> to consider any
 options starting with C<-> to be part of the B<--tool-args> option, not as
 options to B<bugpoint> itself. (See B<--args>, above.)
-
-=item B<--check-exit-code>=I<{true,false}>
-
-Assume a non-zero exit code or core dump from the test program is a failure.
-Defaults to true.
 
 =item B<--disable-{dce,simplifycfg}>
 
