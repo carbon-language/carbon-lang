@@ -459,6 +459,7 @@ public:
   }
   virtual ExprResult ActOnInitList(SourceLocation LParenLoc,
                                    ExprTy **InitList, unsigned NumInit,
+                                   InitListDesignations &Designators,
                                    SourceLocation RParenLoc) {
     return 0;
   }

@@ -236,14 +236,6 @@ ParseInitializerWithPotentialDesignator(InitListDesignations &Designations,
 Parser::ExprResult Parser::ParseBraceInitializer() {
   SourceLocation LBraceLoc = ConsumeBrace();
   
-  // We support empty initializers, but tell the user that they aren't using
-  // C99-clean code.
-  if (Tok.is(tok::r_brace)) {
-    Diag(LBraceLoc, diag::ext_gnu_empty_initializer);
-    // Match the '}'.
-    return Actions.ActOnInitList(LBraceLoc, 0, 0, ConsumeBrace());
-  }
-  
   /// InitExprs - This is the actual list of expressions contained in the
   /// initializer.
   llvm::SmallVector<ExprTy*, 8> InitExprs;
@@ -252,6 +244,15 @@ Parser::ExprResult Parser::ParseBraceInitializer() {
   /// was specified for it, if any.
   InitListDesignations InitExprDesignations(Actions);
 
+  // We support empty initializers, but tell the user that they aren't using
+  // C99-clean code.
+  if (Tok.is(tok::r_brace)) {
+    Diag(LBraceLoc, diag::ext_gnu_empty_initializer);
+    // Match the '}'.
+    return Actions.ActOnInitList(LBraceLoc, 0, 0, InitExprDesignations,
+                                 ConsumeBrace());
+  }
+  
   bool InitExprsOk = true;
   
   while (1) {
@@ -293,8 +294,8 @@ Parser::ExprResult Parser::ParseBraceInitializer() {
     if (Tok.is(tok::r_brace)) break;
   }
   if (InitExprsOk && Tok.is(tok::r_brace))
-    return Actions.ActOnInitList(LBraceLoc, &InitExprs[0], InitExprs.size(), 
-                                 ConsumeBrace());
+    return Actions.ActOnInitList(LBraceLoc, &InitExprs[0], InitExprs.size(),
+                                 InitExprDesignations, ConsumeBrace());
   
   // On error, delete any parsed subexpressions.
   for (unsigned i = 0, e = InitExprs.size(); i != e; ++i)

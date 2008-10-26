@@ -1247,11 +1247,13 @@ ActOnCompoundLiteral(SourceLocation LParenLoc, TypeTy *Ty,
     if (CheckForConstantInitializer(literalExpr, literalType))
       return true;
   }
-  return new CompoundLiteralExpr(LParenLoc, literalType, literalExpr, isFileScope);
+  return new CompoundLiteralExpr(LParenLoc, literalType, literalExpr,
+                                 isFileScope);
 }
 
 Action::ExprResult Sema::
 ActOnInitList(SourceLocation LBraceLoc, ExprTy **initlist, unsigned NumInit,
+              InitListDesignations &Designators,
               SourceLocation RBraceLoc) {
   Expr **InitList = reinterpret_cast<Expr**>(initlist);
 

@@ -614,6 +614,7 @@ public:
   
   virtual ExprResult ActOnInitList(SourceLocation LParenLoc, 
                                    ExprTy **InitList, unsigned NumInit,
+                                   InitListDesignations &Designators,
                                    SourceLocation RParenLoc);
                                    
   virtual ExprResult ActOnBinOp(SourceLocation TokLoc, tok::TokenKind Kind,

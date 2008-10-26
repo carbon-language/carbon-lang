@@ -485,6 +485,7 @@ namespace {
     }
     virtual ExprResult ActOnInitList(SourceLocation LParenLoc,
                                      ExprTy **InitList, unsigned NumInit,
+                                     InitListDesignations &Designators,
                                      SourceLocation RParenLoc) {
       llvm::cout << __FUNCTION__ << "\n";
       return 0;

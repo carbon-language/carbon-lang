@@ -208,6 +208,19 @@ public:
     return Designations.back();
   }
   
+  /// getDesignationForInitializer - If there is a designator for the specified
+  /// initializer, return it, otherwise return null.
+  const Designation *getDesignationForInitializer(unsigned Idx) const {
+    // The common case is no designators.
+    if (!hasAnyDesignators()) return 0;
+    
+    // FIXME: This should do a binary search, not a linear one.
+    for (unsigned i = 0, e = Designations.size(); i != e; ++i)
+      if (Designations[i].InitIndex == Idx)
+        return &Designations[i];
+    return 0;
+  }
+  
 };
 
 } // end namespace clang
