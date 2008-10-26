@@ -203,5 +203,5 @@ QualType Builtin::Context::GetBuiltinType(unsigned id,
   if (ArgTypes.size() == 0 && TypeStr[0] == '.')
     return Context.getFunctionTypeNoProto(ResType);
   return Context.getFunctionType(ResType, &ArgTypes[0], ArgTypes.size(),
-                                 TypeStr[0] == '.');
+                                 TypeStr[0] == '.', 0);
 }

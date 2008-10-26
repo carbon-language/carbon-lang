@@ -3033,7 +3033,7 @@ Sema::ExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc, StmtTy *body,
     BlockTy = Context.getFunctionTypeNoProto(RetTy);
   else
     BlockTy = Context.getFunctionType(RetTy, &ArgTypes[0], ArgTypes.size(),
-                                      BSI->isVariadic);
+                                      BSI->isVariadic, 0);
   
   BlockTy = Context.getBlockPointerType(BlockTy);
   

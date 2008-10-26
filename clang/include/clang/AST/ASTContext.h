@@ -209,7 +209,7 @@ public:
   /// list.  isVariadic indicates whether the argument list includes '...'.
   QualType getFunctionType(QualType ResultTy, const QualType *ArgArray,
                            unsigned NumArgs, bool isVariadic,
-                           unsigned TypeQuals = 0);
+                           unsigned TypeQuals);
 
   /// getTypeDeclType - Return the unique reference to the type for
   /// the specified type declaration.

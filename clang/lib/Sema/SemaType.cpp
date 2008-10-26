@@ -513,7 +513,7 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
 
       // Strip the cv-quals from the type.
       T = Context.getFunctionType(FnTy->getResultType(), FnTy->arg_type_begin(),
-                                  FnTy->getNumArgs(), FnTy->isVariadic());
+                                  FnTy->getNumArgs(), FnTy->isVariadic(), 0);
     }
   }
   
@@ -556,7 +556,7 @@ QualType Sema::ObjCGetTypeForMethodDefinition(DeclTy *D) {
     ArgTys.push_back(ArgTy);
   }
   T = Context.getFunctionType(T, &ArgTys[0], ArgTys.size(),
-                              MDecl->isVariadic());
+                              MDecl->isVariadic(), 0);
   return T;
 }
 

@@ -194,6 +194,7 @@ Type* FunctionTypeNoProto::CreateImpl(ASTContext& Context, Deserializer& D) {
 void FunctionTypeProto::EmitImpl(Serializer& S) const {
   S.Emit(getResultType());
   S.EmitBool(isVariadic());
+  S.EmitInt(getTypeQuals());
   S.EmitInt(getNumArgs());
   
   for (arg_type_iterator I=arg_type_begin(), E=arg_type_end(); I!=E; ++I)
@@ -203,6 +204,7 @@ void FunctionTypeProto::EmitImpl(Serializer& S) const {
 Type* FunctionTypeProto::CreateImpl(ASTContext& Context, Deserializer& D) {
   QualType ResultType = QualType::ReadVal(D);
   bool isVariadic = D.ReadBool();
+  unsigned TypeQuals = D.ReadInt();
   unsigned NumArgs = D.ReadInt();
   
   llvm::SmallVector<QualType,15> Args;
@@ -211,7 +213,7 @@ Type* FunctionTypeProto::CreateImpl(ASTContext& Context, Deserializer& D) {
     Args.push_back(QualType::ReadVal(D));
   
   return Context.getFunctionType(ResultType,&*Args.begin(), 
-                                 NumArgs,isVariadic).getTypePtr();
+                                 NumArgs,isVariadic,TypeQuals).getTypePtr();
 }
 
 //===----------------------------------------------------------------------===//

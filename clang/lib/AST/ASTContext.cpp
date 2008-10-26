@@ -913,7 +913,7 @@ QualType ASTContext::getFunctionType(QualType ResultTy,const QualType *ArgArray,
     
     Canonical = getFunctionType(getCanonicalType(ResultTy),
                                 &CanonicalArgs[0], NumArgs,
-                                isVariadic);
+                                isVariadic, TypeQuals);
     
     // Get the new insert position for the node we care about.
     FunctionTypeProto *NewIP =
@@ -1947,6 +1947,9 @@ QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs) {
     if (lproto->isVariadic() != rproto->isVariadic())
       return QualType();
 
+    if (lproto->getTypeQuals() != rproto->getTypeQuals())
+      return QualType();
+
     // Check argument compatibility
     llvm::SmallVector<QualType, 10> types;
     for (unsigned i = 0; i < lproto_nargs; i++) {
@@ -1963,7 +1966,7 @@ QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs) {
     if (allLTypes) return lhs;
     if (allRTypes) return rhs;
     return getFunctionType(retType, types.begin(), types.size(),
-                           lproto->isVariadic());
+                           lproto->isVariadic(), lproto->getTypeQuals());
   }
 
   if (lproto) allRTypes = false;
@@ -1988,7 +1991,8 @@ QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs) {
     if (allLTypes) return lhs;
     if (allRTypes) return rhs;
     return getFunctionType(retType, proto->arg_type_begin(),
-                           proto->getNumArgs(), lproto->isVariadic());
+                           proto->getNumArgs(), lproto->isVariadic(),
+                           lproto->getTypeQuals());
   }
 
   if (allLTypes) return lhs;
