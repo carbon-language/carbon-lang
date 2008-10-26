@@ -121,8 +121,18 @@ ParseInitializerWithPotentialDesignator(InitListDesignations &Designations,
     // If Objective-C is enabled and this is a typename or other identifier
     // receiver, parse this as a message send expression.
     if (getLang().ObjC1 && isTokObjCMessageIdentifierReceiver()) {
-      // FIXME: Emit ext_gnu_missing_equal_designator for inits like
-      // [4][foo bar].
+      // If we have exactly one array designator, this used the GNU
+      // 'designation: array-designator' extension, otherwise there should be no
+      // designators at all!
+      if (Desig) {
+        if (Desig->getNumDesignators() == 1 && 
+            (Desig->getDesignator(0).isArrayDesignator() ||
+             Desig->getDesignator(0).isArrayRangeDesignator()))
+          Diag(StartLoc, diag::ext_gnu_missing_equal_designator);
+        else
+          Diag(Tok, diag::err_expected_equal_designator);
+      }
+      
       IdentifierInfo *Name = Tok.getIdentifierInfo();
       ConsumeToken();
       return ParseAssignmentExprWithObjCMessageExprStart(StartLoc, Name, 0);
@@ -143,8 +153,19 @@ ParseInitializerWithPotentialDesignator(InitListDesignations &Designations,
     // an assignment-expression production.
     if (getLang().ObjC1 && Tok.isNot(tok::ellipsis) && 
         Tok.isNot(tok::r_square)) {
-      // FIXME: Emit ext_gnu_missing_equal_designator for inits like
-      // [4][foo bar].
+      
+      // If we have exactly one array designator, this used the GNU
+      // 'designation: array-designator' extension, otherwise there should be no
+      // designators at all!
+      if (Desig) {
+        if (Desig->getNumDesignators() == 1 && 
+            (Desig->getDesignator(0).isArrayDesignator() ||
+             Desig->getDesignator(0).isArrayRangeDesignator()))
+          Diag(StartLoc, diag::ext_gnu_missing_equal_designator);
+        else
+          Diag(Tok, diag::err_expected_equal_designator);
+      }
+      
       return ParseAssignmentExprWithObjCMessageExprStart(StartLoc, 0,Idx.Val);
     }
 
