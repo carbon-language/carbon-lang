@@ -961,6 +961,8 @@ DIAG(err_offsetof_array_type, ERROR,
      "offsetof requires array type, '%0' invalid")
 DIAG(ext_offsetof_extended_field_designator, EXTENSION,
      "using extended field designator is an extension")
+DIAG(err_expected_field_designator, ERROR,
+     "expected a field designator, such as '.field = 4'")
      
 DIAG(err_invalid_suffix_integer_constant, ERROR,
      "invalid suffix '%0' on integer constant")

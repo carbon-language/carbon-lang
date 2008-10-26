@@ -76,13 +76,28 @@ ParseInitializerWithPotentialDesignator(InitListDesignations &Designations,
     return ParseInitializer();
   }
   
+  // Desig - This is initialized when we see our first designator.  We may have
+  // an objc message send with no designator, so we don't want to create this
+  // eagerly.
+  Designation *Desig = 0;
+  
   // Parse each designator in the designator list until we find an initializer.
   while (Tok.is(tok::period) || Tok.is(tok::l_square)) {
     if (Tok.is(tok::period)) {
       // designator: '.' identifier
       ConsumeToken();
-      if (ExpectAndConsume(tok::identifier, diag::err_expected_ident))
+      
+      // Create designation if we haven't already.
+      if (Desig == 0)
+        Desig = &Designations.CreateDesignation(InitNum);
+      
+      if (Tok.isNot(tok::identifier)) {
+        Diag(Tok.getLocation(), diag::err_expected_field_designator);
         return ExprResult(true);
+      }
+      
+      Desig->AddDesignator(Designator::getField(Tok.getIdentifierInfo()));
+      ConsumeToken(); // Eat the identifier.
       continue;
     }
     
@@ -141,19 +156,21 @@ ParseInitializerWithPotentialDesignator(InitListDesignations &Designations,
     MatchRHSPunctuation(tok::r_square, StartLoc);
   }
 
+  // Okay, we're done with the designator sequence.  We know that there must be
+  // at least one designator, because the only case we can get into this method
+  // without a designator is when we have an objc message send.  That case is
+  // handled and returned from above.
+  
+  // Handle a normal designator sequence end, which is an equal.
   if (Tok.is(tok::equal)) {
-    // We read some number (at least one due to the grammar we implemented)
-    // of designators and found an '=' sign.  The following tokens must be
-    // the initializer.
     ConsumeToken();
     return ParseInitializer();
   }
   
-  // We read some number (at least one due to the grammar we implemented)
-  // of designators and found something that isn't an = or an initializer.
-  // If we have exactly one array designator [TODO CHECK], this is the GNU
-  // 'designation: array-designator' extension.  Otherwise, it is a parse
-  // error.
+  // We read some number of designators and found something that isn't an = or
+  // an initializer.  If we have exactly one array designator [TODO CHECK], this
+  // is the GNU 'designation: array-designator' extension.  Otherwise, it is a
+  // parse error.
   SourceLocation Loc = Tok.getLocation();
   ExprResult Init = ParseInitializer();
   if (Init.isInvalid) return Init;
