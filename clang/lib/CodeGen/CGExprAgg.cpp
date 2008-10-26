@@ -263,7 +263,11 @@ void AggExprEmitter::VisitVAArgExpr(VAArgExpr *VE) {
 }
 
 void AggExprEmitter::EmitNonConstInit(InitListExpr *E) {
-
+  if (E->hadDesignators()) {
+    CGF.ErrorUnsupported(E, "initializer list with designators");
+    return;
+  }
+  
   const llvm::PointerType *APType =
     cast<llvm::PointerType>(DestPtr->getType());
   const llvm::Type *DestType = APType->getElementType();
@@ -334,6 +338,11 @@ void AggExprEmitter::EmitNullInitializationToLValue(LValue LV, QualType T) {
 }
 
 void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
+  if (E->hadDesignators()) {
+    CGF.ErrorUnsupported(E, "initializer list with designators");
+    return;
+  }
+  
   // FIXME: For constant expressions, call into const expr emitter so
   // that we can emit a memcpy instead of storing the individual
   // members.  This is purely for perf; both codepaths lead to

@@ -154,7 +154,9 @@ public:
   Value *VisitShuffleVectorExpr(ShuffleVectorExpr *E);
   Value *VisitMemberExpr(Expr *E)           { return EmitLoadOfLValue(E); }
   Value *VisitExtVectorElementExpr(Expr *E) { return EmitLoadOfLValue(E); }
-  Value *VisitCompoundLiteralExpr(CompoundLiteralExpr *E) { return EmitLoadOfLValue(E); }
+  Value *VisitCompoundLiteralExpr(CompoundLiteralExpr *E) {
+    return EmitLoadOfLValue(E);
+  }
   Value *VisitStringLiteral(Expr *E)  { return EmitLValue(E).getAddress(); }
   Value *VisitPredefinedExpr(Expr *E) { return EmitLValue(E).getAddress(); }
 
@@ -167,6 +169,11 @@ public:
     // We have a scalar in braces. Just use the first element.
     if (!VType) 
       return Visit(E->getInit(0));
+    
+    if (E->hadDesignators()) {
+      CGF.ErrorUnsupported(E, "initializer list with designators");
+      return llvm::UndefValue::get(CGF.ConvertType(E->getType()));
+    }
     
     unsigned NumVectorElements = VType->getNumElements();
     const llvm::Type *ElementType = VType->getElementType();

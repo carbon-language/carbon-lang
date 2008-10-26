@@ -198,7 +198,7 @@ public:
   }
   
   bool hasAnyDesignators() const {
-    return Designations.empty();
+    return !Designations.empty();
   }
   
   Designation &CreateDesignation(unsigned Idx) {
