@@ -197,35 +197,11 @@ SVal RegionStoreManager::ArrayToPointer(SVal Array) {
   const MemRegion* ArrayR = cast<loc::MemRegionVal>(&Array)->getRegion();
   BasicValueFactory& BasicVals = StateMgr.getBasicVals();
 
-  if (const StringRegion* StringR = dyn_cast<StringRegion>(ArrayR)) {
-    // FIXME: Find a better way to get bit width.
-    nonloc::ConcreteInt Idx(BasicVals.getValue(0, 32, false));
-    ElementRegion* ER = MRMgr.getElementRegion(Idx, ArrayR);
-    
-    return loc::MemRegionVal(ER);                    
-  }
-
-  const Decl* D = cast<DeclRegion>(ArrayR)->getDecl();
-
-  QualType ArrayTy;
-  if (const VarDecl* VD = dyn_cast<VarDecl>(D))
-    ArrayTy = VD->getType();
-  else if (const FieldDecl* FD = dyn_cast<FieldDecl>(D))
-    ArrayTy = FD->getType(); 
-  else
-    assert(0 && "unknown decl");
-
-  if (const ConstantArrayType* CAT = 
-      dyn_cast<ConstantArrayType>(ArrayTy.getTypePtr())) {
-    
-    nonloc::ConcreteInt Idx(BasicVals.getValue(0, CAT->getSize().getBitWidth(),
-                                               false));
-    ElementRegion* ER = MRMgr.getElementRegion(Idx, ArrayR);
-    
-    return loc::MemRegionVal(ER);
-  }
-
-  return Array;
+  // FIXME: Find a better way to get bit width.
+  nonloc::ConcreteInt Idx(BasicVals.getValue(0, 32, false));
+  ElementRegion* ER = MRMgr.getElementRegion(Idx, ArrayR);
+  
+  return loc::MemRegionVal(ER);                    
 }
 
 SVal RegionStoreManager::Retrieve(Store S, Loc L, QualType T) {
