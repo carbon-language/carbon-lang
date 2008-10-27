@@ -369,10 +369,10 @@ void SelectionDAG::setSubgraphColor(SDNode *N, const char *Color) {
   bool printed = false;
   if (setSubgraphColorHelper(N, Color, visited, 0, printed)) {
     // Visually mark that we hit the limit
-    if (Color == "red" ) {
+    if (strcmp(Color, "red") == 0) {
       setSubgraphColorHelper(N, "blue", visited, 0, printed);
     }
-    else if (Color == "yellow" ) {
+    else if (strcmp(Color, "yellow") == 0) {
       setSubgraphColorHelper(N, "green", visited, 0, printed);
     }
   }
