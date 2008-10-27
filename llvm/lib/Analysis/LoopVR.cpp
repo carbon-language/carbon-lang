@@ -247,11 +247,12 @@ ConstantRange LoopVR::compute(Value *V) {
     return ConstantRange(cast<IntegerType>(V->getType())->getBitWidth(), false);
 
   LoopInfo &LI = getAnalysis<LoopInfo>();
-  ScalarEvolution &SE = getAnalysis<ScalarEvolution>();
 
   Loop *L = LI.getLoopFor(I->getParent());
-  if (L->isLoopInvariant(I))
+  if (!L || L->isLoopInvariant(I))
     return ConstantRange(cast<IntegerType>(V->getType())->getBitWidth(), false);
+
+  ScalarEvolution &SE = getAnalysis<ScalarEvolution>();
 
   SCEVHandle S = SE.getSCEV(I);
   if (isa<SCEVUnknown>(S) || isa<SCEVCouldNotCompute>(S))
