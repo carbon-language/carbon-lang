@@ -2147,11 +2147,14 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation loc,
   }
 
   if ((lType->isObjCQualifiedIdType() || rType->isObjCQualifiedIdType())) {
-    if ((lType->isPointerType() || rType->isPointerType()) &&
-        !Context.typesAreCompatible(lType, rType)) {
-      Diag(loc, diag::ext_typecheck_comparison_of_distinct_pointers,
-           lType.getAsString(), rType.getAsString(),
-           lex->getSourceRange(), rex->getSourceRange());
+    if (lType->isPointerType() || rType->isPointerType()) {
+      if (!Context.typesAreCompatible(lType, rType)) {
+        Diag(loc, diag::ext_typecheck_comparison_of_distinct_pointers,
+             lType.getAsString(), rType.getAsString(),
+             lex->getSourceRange(), rex->getSourceRange());
+        ImpCastExprToType(rex, lType);
+        return Context.IntTy;
+      }
       ImpCastExprToType(rex, lType);
       return Context.IntTy;
     }
