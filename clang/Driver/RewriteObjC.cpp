@@ -80,7 +80,7 @@ namespace {
     int BcLabelCount;
     
     // Needed for super.
-    ObjCMethodDecl *CurMethodDecl;
+    ObjCMethodDecl *CurMethodDef;
     RecordDecl *SuperStructDecl;
     RecordDecl *ConstantStringDecl;
     
@@ -91,7 +91,21 @@ namespace {
     std::string OutFileName;
      
     std::string Preamble;
+
+    // Block expressions.
+    llvm::SmallVector<BlockExpr *, 32> Blocks;
+    llvm::SmallVector<BlockDeclRefExpr *, 32> BlockDeclRefs;
+    llvm::DenseMap<BlockDeclRefExpr *, CallExpr *> BlockCallExprs;
     
+    // Block related declarations.
+    llvm::SmallPtrSet<ValueDecl *, 8> BlockByCopyDecls;
+    llvm::SmallPtrSet<ValueDecl *, 8> BlockByRefDecls;
+    llvm::SmallPtrSet<ValueDecl *, 8> ImportedBlockDecls;
+
+    llvm::DenseMap<BlockExpr *, std::string> RewrittenBlockExprs;
+
+    FunctionDecl *CurFunctionDef;
+
     static const int OBJC_ABI_VERSION =7 ;
   public:
     virtual void Initialize(ASTContext &context);
@@ -231,7 +245,81 @@ namespace {
                                          ObjCIvarDecl *ivar, 
                                          std::string &Result);
     void RewriteImplementations(std::string &Result);
+    
+    // Block rewriting.
+    void RewriteBlocksInFunctionTypeProto(QualType funcType, NamedDecl *D);  
+    void CheckFunctionPointerDecl(QualType dType, NamedDecl *ND);
+    
+    void InsertBlockLiteralsWithinFunction(FunctionDecl *FD);
+    void InsertBlockLiteralsWithinMethod(ObjCMethodDecl *MD);
+    
+    // Block specific rewrite rules.
+    std::string SynthesizeBlockInitExpr(BlockExpr *Exp, VarDecl *VD=0);
+    
+    void RewriteBlockCall(CallExpr *Exp);
+    void RewriteBlockPointerDecl(NamedDecl *VD);
+    void RewriteBlockDeclRefExpr(BlockDeclRefExpr *VD);
+    void RewriteBlockPointerFunctionArgs(FunctionDecl *FD);
+    
+    std::string SynthesizeBlockHelperFuncs(BlockExpr *CE, int i, 
+                                      const char *funcName, std::string Tag);
+    std::string SynthesizeBlockFunc(BlockExpr *CE, int i, 
+                                      const char *funcName, std::string Tag);
+    std::string SynthesizeBlockImpl(BlockExpr *CE, std::string Tag, 
+                                    bool hasCopyDisposeHelpers);
+    std::string SynthesizeBlockCall(CallExpr *Exp);
+    void SynthesizeBlockLiterals(SourceLocation FunLocStart,
+                                   const char *FunName);
+    
+    void CollectBlockDeclRefInfo(BlockExpr *Exp);
+    void GetBlockCallExprs(Stmt *S);
+    void GetBlockDeclRefExprs(Stmt *S);
+    
+    // We avoid calling Type::isBlockPointerType(), since it operates on the
+    // canonical type. We only care if the top-level type is a closure pointer.
+    bool isBlockPointerType(QualType T) { return isa<BlockPointerType>(T); }
+    
+    // FIXME: This predicate seems like it would be useful to add to ASTContext.
+    bool isObjCType(QualType T) {
+      if (!LangOpts.ObjC1 && !LangOpts.ObjC2)
+        return false;
+        
+      QualType OCT = Context->getCanonicalType(T).getUnqualifiedType();
+      
+      if (OCT == Context->getCanonicalType(Context->getObjCIdType()) ||
+          OCT == Context->getCanonicalType(Context->getObjCClassType()))
+        return true;
+        
+      if (const PointerType *PT = OCT->getAsPointerType()) {
+        if (isa<ObjCInterfaceType>(PT->getPointeeType()) || 
+            isa<ObjCQualifiedIdType>(PT->getPointeeType()))
+          return true;
+      }
+      return false;
+    }
+    bool PointerTypeTakesAnyBlockArguments(QualType QT);
+    void GetExtentOfArgList(const char *Name, const char *&LParen, const char *&RParen);
+    void RewriteCastExpr(CastExpr *CE);
   };
+}
+
+void RewriteObjC::RewriteBlocksInFunctionTypeProto(QualType funcType, 
+                                                   NamedDecl *D) {    
+  if (FunctionTypeProto *fproto = dyn_cast<FunctionTypeProto>(funcType)) {
+    for (FunctionTypeProto::arg_type_iterator I = fproto->arg_type_begin(), 
+         E = fproto->arg_type_end(); I && (I != E); ++I)
+      if (isBlockPointerType(*I)) {
+        // All the args are checked/rewritten. Don't call twice!
+        RewriteBlockPointerDecl(D);
+        break;
+      }
+  }
+}
+
+void RewriteObjC::CheckFunctionPointerDecl(QualType funcType, NamedDecl *ND) {
+  const PointerType *PT = funcType->getAsPointerType();
+  if (PT && PointerTypeTakesAnyBlockArguments(funcType))
+    RewriteBlocksInFunctionTypeProto(PT->getPointeeType(), ND);
 }
 
 static bool IsHeaderFile(const std::string &Filename) {
@@ -281,7 +369,8 @@ void RewriteObjC::Initialize(ASTContext &context) {
   GetProtocolFunctionDecl = 0;
   ConstantStringClassReference = 0;
   NSStringRecord = 0;
-  CurMethodDecl = 0;
+  CurMethodDef = 0;
+  CurFunctionDef = 0;
   SuperStructDecl = 0;
   ConstantStringDecl = 0;
   BcLabelCount = 0;
@@ -371,6 +460,31 @@ void RewriteObjC::Initialize(ASTContext &context) {
     Preamble += "#undef __OBJC_RW_EXTERN\n";
     Preamble += "#define __attribute__(X)\n";
   }
+  // Blocks preamble.
+  Preamble += "#ifndef BLOCK_IMPL\n";
+  Preamble += "#define BLOCK_IMPL\n";
+  Preamble += "struct __block_impl {\n";
+  Preamble += "  void *isa;\n";
+  Preamble += "  int Flags;\n";
+  Preamble += "  int Size;\n";
+  Preamble += "  void *FuncPtr;\n";
+  Preamble += "};\n";
+  Preamble += "enum {\n";
+  Preamble += "  BLOCK_HAS_COPY_DISPOSE = (1<<25),\n";
+  Preamble += "  BLOCK_IS_GLOBAL = (1<<28)\n";
+  Preamble += "};\n";
+  if (LangOpts.Microsoft) 
+    Preamble += "#define __OBJC_RW_EXTERN extern \"C\" __declspec(dllimport)\n";
+  else
+    Preamble += "#define __OBJC_RW_EXTERN extern\n";
+  Preamble += "// Runtime copy/destroy helper functions\n";
+  Preamble += "__OBJC_RW_EXTERN void _Block_copy_assign(void *, void *);\n";
+  Preamble += "__OBJC_RW_EXTERN void _Block_byref_assign_copy(void *, void *);\n";
+  Preamble += "__OBJC_RW_EXTERN void _Block_destroy(void *);\n";
+  Preamble += "__OBJC_RW_EXTERN void _Block_byref_release(void *);\n";
+  Preamble += "__OBJC_RW_EXTERN void *_NSConcreteGlobalBlock;\n";
+  Preamble += "__OBJC_RW_EXTERN void *_NSConcreteStackBlock;\n";
+  Preamble += "#endif\n";
 }
 
 
@@ -415,16 +529,29 @@ void RewriteObjC::HandleTopLevelDecl(Decl *D) {
 /// HandleDeclInMainFile - This is called for each top-level decl defined in the
 /// main file of the input.
 void RewriteObjC::HandleDeclInMainFile(Decl *D) {
-  if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
-    if (Stmt *Body = FD->getBody())
+  if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+    // Since function prototypes don't have ParmDecl's, we check the function
+    // prototype. This enables us to rewrite function declarations and
+    // definitions using the same code.
+    RewriteBlocksInFunctionTypeProto(FD->getType(), FD);
+
+    if (Stmt *Body = FD->getBody()) {
+      CurFunctionDef = FD;
       FD->setBody(RewriteFunctionBodyOrGlobalInitializer(Body));
-      
+      // This synthesizes and inserts the block "impl" struct, invoke function,
+      // and any copy/dispose helper functions.
+      InsertBlockLiteralsWithinFunction(FD);
+      CurFunctionDef = 0;
+    } 
+    return;
+  }
   if (ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D)) {
     if (Stmt *Body = MD->getBody()) {
       //Body->dump();
-      CurMethodDecl = MD;
+      CurMethodDef = MD;
       MD->setBody(RewriteFunctionBodyOrGlobalInitializer(Body));
-      CurMethodDecl = 0;
+      InsertBlockLiteralsWithinMethod(MD);
+      CurMethodDef = 0;
     }
   }
   if (ObjCImplementationDecl *CI = dyn_cast<ObjCImplementationDecl>(D))
@@ -437,6 +564,54 @@ void RewriteObjC::HandleDeclInMainFile(Decl *D) {
     RewriteObjCQualifiedInterfaceTypes(VD);
     if (VD->getInit())
       RewriteFunctionBodyOrGlobalInitializer(VD->getInit());
+  }
+  // Rewrite rules for blocks.
+  if (VarDecl *VD = dyn_cast<VarDecl>(D)) {
+    if (isBlockPointerType(VD->getType())) {
+      RewriteBlockPointerDecl(VD);
+      if (VD->getInit()) {
+        if (BlockExpr *CBE = dyn_cast<BlockExpr>(VD->getInit())) {
+          RewriteFunctionBodyOrGlobalInitializer(CBE->getBody());
+
+          // We've just rewritten the block body in place.
+          // Now we snarf the rewritten text and stash it away for later use.
+          std::string S = Rewrite.getRewritenText(CBE->getSourceRange());
+          RewrittenBlockExprs[CBE] = S;
+          std::string Init = SynthesizeBlockInitExpr(CBE, VD);
+          // Do the rewrite, using S.size() which contains the rewritten size.
+          ReplaceText(CBE->getLocStart(), S.size(), Init.c_str(), Init.size());
+          SynthesizeBlockLiterals(VD->getTypeSpecStartLoc(), VD->getName());
+        } else if (CastExpr *CE = dyn_cast<CastExpr>(VD->getInit())) {
+          RewriteCastExpr(CE);
+        }
+      }
+    } else if (VD->getType()->isFunctionPointerType()) {
+      CheckFunctionPointerDecl(VD->getType(), VD);
+      if (VD->getInit()) {
+        if (CastExpr *CE = dyn_cast<CastExpr>(VD->getInit())) {
+          RewriteCastExpr(CE);
+        }
+      }
+    }
+    return;
+  }
+  if (TypedefDecl *TD = dyn_cast<TypedefDecl>(D)) {
+    if (isBlockPointerType(TD->getUnderlyingType()))
+      RewriteBlockPointerDecl(TD);
+    else if (TD->getUnderlyingType()->isFunctionPointerType()) 
+      CheckFunctionPointerDecl(TD->getUnderlyingType(), TD);
+    return;
+  }
+  if (RecordDecl *RD = dyn_cast<RecordDecl>(D)) {
+    if (RD->isDefinition()) {
+      for (RecordDecl::field_const_iterator i = RD->field_begin(), 
+             e = RD->field_end(); i != e; ++i) {
+        FieldDecl *FD = *i;
+        if (isBlockPointerType(FD->getType()))
+          RewriteBlockPointerDecl(FD);
+      }
+    }
+    return;
   }
   // Nothing yet.
 }
@@ -870,7 +1045,7 @@ void RewriteObjC::RewriteInterfaceDecl(ObjCInterfaceDecl *ClassDecl) {
 Stmt *RewriteObjC::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV, 
                                           SourceLocation OrigStart) {
   ObjCIvarDecl *D = IV->getDecl();
-  if (CurMethodDecl) {
+  if (CurMethodDef) {
     if (const PointerType *pType = IV->getBase()->getType()->getAsPointerType()) {
       ObjCInterfaceType *iFaceDecl = dyn_cast<ObjCInterfaceType>(pType->getPointeeType());
       // lookup which class implements the instance variable.
@@ -893,7 +1068,7 @@ Stmt *RewriteObjC::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV,
                                     IV->getBase()->getLocEnd(),
                                     castExpr);
       if (IV->isFreeIvar() && 
-          CurMethodDecl->getClassInterface() == iFaceDecl->getDecl()) {
+          CurMethodDef->getClassInterface() == iFaceDecl->getDecl()) {
         MemberExpr *ME = new MemberExpr(PE, true, D, IV->getLocation(),
                                         D->getType());
         ReplaceStmt(IV, ME);
@@ -1032,6 +1207,25 @@ Stmt *RewriteObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
     // precedes the first Decl.  In the future the DeclGroup should have
     // a separate type-specifier that we can rewrite.    
     RewriteObjCQualifiedInterfaceTypes(*DS->decl_begin());
+    
+    // Blocks rewrite rules.
+    for (DeclStmt::decl_iterator DI = DS->decl_begin(), DE = DS->decl_end();
+         DI != DE; ++DI) {
+      
+      ScopedDecl *SD = *DI;
+      if (ValueDecl *ND = dyn_cast<ValueDecl>(SD)) {
+        if (isBlockPointerType(ND->getType()))
+          RewriteBlockPointerDecl(ND);
+        else if (ND->getType()->isFunctionPointerType()) 
+          CheckFunctionPointerDecl(ND->getType(), ND);
+      }
+      if (TypedefDecl *TD = dyn_cast<TypedefDecl>(SD)) {
+        if (isBlockPointerType(TD->getUnderlyingType()))
+          RewriteBlockPointerDecl(TD);
+        else if (TD->getUnderlyingType()->isFunctionPointerType()) 
+          CheckFunctionPointerDecl(TD->getUnderlyingType(), TD);
+      }
+    }
   }
   
   if (ExplicitCastExpr *CE = dyn_cast<ExplicitCastExpr>(S))
@@ -1044,6 +1238,18 @@ Stmt *RewriteObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
              isa<DoStmt>(Stmts.back()) || isa<ForStmt>(Stmts.back())) 
             && "Statement stack mismatch");
     Stmts.pop_back();
+  }
+  // Handle blocks rewriting.
+  if (BlockDeclRefExpr *BDRE = dyn_cast<BlockDeclRefExpr>(S)) {
+    if (BDRE->isByRef())
+      RewriteBlockDeclRefExpr(BDRE);
+  }
+  if (CallExpr *CE = dyn_cast<CallExpr>(S)) {
+    if (CE->getCallee()->getType()->isBlockPointerType())
+      RewriteBlockCall(CE);
+  }
+  if (CastExpr *CE = dyn_cast<CastExpr>(S)) {
+    RewriteCastExpr(CE);
   }
 #if 0
   if (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(S)) {
@@ -1978,7 +2184,7 @@ Stmt *RewriteObjC::RewriteObjCStringLiteral(ObjCStringLiteral *Exp) {
 
 ObjCInterfaceDecl *RewriteObjC::isSuperReceiver(Expr *recExpr) {
   // check if we are sending a message to 'super'
-  if (!CurMethodDecl || !CurMethodDecl->isInstance()) return 0;
+  if (!CurMethodDef || !CurMethodDef->isInstance()) return 0;
   
   if (PredefinedExpr *PDE = dyn_cast<PredefinedExpr>(recExpr))
     if (PDE->getIdentType() == PredefinedExpr::ObjCSuper) {
@@ -2086,13 +2292,13 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
       assert(MsgSendFlavor && "MsgSendFlavor is NULL!");
       
       ObjCInterfaceDecl *SuperDecl = 
-        CurMethodDecl->getClassInterface()->getSuperClass();
+        CurMethodDef->getClassInterface()->getSuperClass();
 
       llvm::SmallVector<Expr*, 4> InitExprs;
       
       // set the receiver to self, the first argument to all methods.
       InitExprs.push_back(new DeclRefExpr(
-            CurMethodDecl->getSelfDecl(), 
+            CurMethodDef->getSelfDecl(), 
             Context->getObjCIdType(),
             SourceLocation())); 
       llvm::SmallVector<Expr*, 8> ClsExprs;
@@ -2157,7 +2363,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
       
       InitExprs.push_back(
         new ExplicitCastExpr(Context->getObjCIdType(), 
-                     new DeclRefExpr(CurMethodDecl->getSelfDecl(), 
+                     new DeclRefExpr(CurMethodDef->getSelfDecl(), 
                                      Context->getObjCIdType(),
                                      SourceLocation()), 
                      SourceLocation())); // set the 'receiver'.
@@ -3229,6 +3435,627 @@ void RewriteObjC::RewriteImplementations(std::string &Result) {
   }
 }
 
+std::string RewriteObjC::SynthesizeBlockFunc(BlockExpr *CE, int i,
+                                                   const char *funcName,
+                                                   std::string Tag) {
+  const FunctionType *AFT = CE->getFunctionType();
+  QualType RT = AFT->getResultType();
+  std::string StructRef = "struct " + Tag;
+  std::string S = "static " + RT.getAsString() + " __" +
+                  funcName + "_" + "block_func_" + utostr(i);
 
+  BlockDecl *BD = CE->getBlockDecl();
+  
+  if (isa<FunctionTypeNoProto>(AFT)) {
+    S += "()";
+  } else if (BD->param_empty()) {
+    S += "(" + StructRef + " *__cself)";
+  } else {
+    const FunctionTypeProto *FT = cast<FunctionTypeProto>(AFT);
+    assert(FT && "SynthesizeBlockFunc: No function proto");
+    S += '(';
+    // first add the implicit argument.
+    S += StructRef + " *__cself, ";
+    std::string ParamStr;
+    for (BlockDecl::param_iterator AI = BD->param_begin(),
+         E = BD->param_end(); AI != E; ++AI) {
+      if (AI != BD->param_begin()) S += ", ";
+      ParamStr = (*AI)->getName();
+      (*AI)->getType().getAsStringInternal(ParamStr);
+      S += ParamStr;
+    }
+    if (FT->isVariadic()) {
+      if (!BD->param_empty()) S += ", ";
+      S += "...";
+    }
+    S += ')';
+  }
+  S += " {\n";
+  
+  // Create local declarations to avoid rewriting all closure decl ref exprs.
+  // First, emit a declaration for all "by ref" decls.
+  for (llvm::SmallPtrSet<ValueDecl*,8>::iterator I = BlockByRefDecls.begin(), 
+       E = BlockByRefDecls.end(); I != E; ++I) {
+    S += "  ";
+    std::string Name = (*I)->getName();
+    Context->getPointerType((*I)->getType()).getAsStringInternal(Name);
+    S += Name + " = __cself->" + (*I)->getName() + "; // bound by ref\n";
+  }    
+  // Next, emit a declaration for all "by copy" declarations.
+  for (llvm::SmallPtrSet<ValueDecl*,8>::iterator I = BlockByCopyDecls.begin(), 
+       E = BlockByCopyDecls.end(); I != E; ++I) {
+    S += "  ";
+    std::string Name = (*I)->getName();
+    // Handle nested closure invocation. For example:
+    //
+    //   void (^myImportedClosure)(void);
+    //   myImportedClosure  = ^(void) { setGlobalInt(x + y); };
+    // 
+    //   void (^anotherClosure)(void);
+    //   anotherClosure = ^(void) {
+    //     myImportedClosure(); // import and invoke the closure
+    //   };
+    //
+    if (isBlockPointerType((*I)->getType()))
+      S += "struct __block_impl *";
+    else
+      (*I)->getType().getAsStringInternal(Name);
+    S += Name + " = __cself->" + (*I)->getName() + "; // bound by copy\n";
+  }
+  std::string RewrittenStr = RewrittenBlockExprs[CE];
+  const char *cstr = RewrittenStr.c_str();
+  while (*cstr++ != '{') ;
+  S += cstr;
+  S += "\n";
+  return S;
+}
 
+std::string RewriteObjC::SynthesizeBlockHelperFuncs(BlockExpr *CE, int i,
+                                                   const char *funcName,
+                                                   std::string Tag) {
+  std::string StructRef = "struct " + Tag;
+  std::string S = "static void __";
+  
+  S += funcName;
+  S += "_block_copy_" + utostr(i);
+  S += "(" + StructRef;
+  S += "*dst, " + StructRef;
+  S += "*src) {";
+  for (llvm::SmallPtrSet<ValueDecl*,8>::iterator I = ImportedBlockDecls.begin(), 
+      E = ImportedBlockDecls.end(); I != E; ++I) {
+    S += "_Block_copy_assign(&dst->";
+    S += (*I)->getName();
+    S += ", src->";
+    S += (*I)->getName();
+    S += ");}";
+  }
+  S += "\nstatic void __";
+  S += funcName;
+  S += "_block_dispose_" + utostr(i);
+  S += "(" + StructRef;
+  S += "*src) {";
+  for (llvm::SmallPtrSet<ValueDecl*,8>::iterator I = ImportedBlockDecls.begin(), 
+      E = ImportedBlockDecls.end(); I != E; ++I) {
+    S += "_Block_destroy(src->";
+    S += (*I)->getName();
+    S += ");";
+  }
+  S += "}\n";  
+  return S;
+}
+
+std::string RewriteObjC::SynthesizeBlockImpl(BlockExpr *CE, std::string Tag,
+                                               bool hasCopyDisposeHelpers) {
+  std::string S = "struct " + Tag;
+  std::string Constructor = "  " + Tag;
+  
+  S += " {\n  struct __block_impl impl;\n";
+  
+  if (hasCopyDisposeHelpers)
+    S += "  void *copy;\n  void *dispose;\n";
+    
+  Constructor += "(void *fp";
+  
+  if (hasCopyDisposeHelpers)
+    Constructor += ", void *copyHelp, void *disposeHelp";
+    
+  if (BlockDeclRefs.size()) {
+    // Output all "by copy" declarations.
+    for (llvm::SmallPtrSet<ValueDecl*,8>::iterator I = BlockByCopyDecls.begin(), 
+         E = BlockByCopyDecls.end(); I != E; ++I) {
+      S += "  ";
+      std::string FieldName = (*I)->getName();
+      std::string ArgName = "_" + FieldName;
+      // Handle nested closure invocation. For example:
+      //
+      //   void (^myImportedBlock)(void);
+      //   myImportedBlock  = ^(void) { setGlobalInt(x + y); };
+      // 
+      //   void (^anotherBlock)(void);
+      //   anotherBlock = ^(void) {
+      //     myImportedBlock(); // import and invoke the closure
+      //   };
+      //
+      if (isBlockPointerType((*I)->getType())) {
+        S += "struct __block_impl *";
+        Constructor += ", void *" + ArgName;
+      } else {
+        (*I)->getType().getAsStringInternal(FieldName);
+        (*I)->getType().getAsStringInternal(ArgName);
+        Constructor += ", " + ArgName;
+      }
+      S += FieldName + ";\n";
+    }
+    // Output all "by ref" declarations.
+    for (llvm::SmallPtrSet<ValueDecl*,8>::iterator I = BlockByRefDecls.begin(), 
+         E = BlockByRefDecls.end(); I != E; ++I) {
+      S += "  ";
+      std::string FieldName = (*I)->getName();
+      std::string ArgName = "_" + FieldName;
+      // Handle nested closure invocation. For example:
+      //
+      //   void (^myImportedBlock)(void);
+      //   myImportedBlock  = ^(void) { setGlobalInt(x + y); };
+      // 
+      //   void (^anotherBlock)(void);
+      //   anotherBlock = ^(void) {
+      //     myImportedBlock(); // import and invoke the closure
+      //   };
+      //
+      if (isBlockPointerType((*I)->getType())) {
+        S += "struct __block_impl *";
+        Constructor += ", void *" + ArgName;
+      } else {
+        Context->getPointerType((*I)->getType()).getAsStringInternal(FieldName);
+        Context->getPointerType((*I)->getType()).getAsStringInternal(ArgName);
+        Constructor += ", " + ArgName;
+      }
+      S += FieldName + "; // by ref\n";
+    }
+    // Finish writing the constructor.
+    // FIXME: handle NSConcreteGlobalBlock.
+    Constructor += ", int flags=0) {\n";
+    Constructor += "    impl.isa = 0/*&_NSConcreteStackBlock*/;\n    impl.Size = sizeof(";
+    Constructor += Tag + ");\n    impl.Flags = flags;\n    impl.FuncPtr = fp;\n";
+    
+    if (hasCopyDisposeHelpers)
+      Constructor += "    copy = copyHelp;\n    dispose = disposeHelp;\n";
+      
+    // Initialize all "by copy" arguments.
+    for (llvm::SmallPtrSet<ValueDecl*,8>::iterator I = BlockByCopyDecls.begin(), 
+         E = BlockByCopyDecls.end(); I != E; ++I) {
+      std::string Name = (*I)->getName();
+      Constructor += "    ";
+      if (isBlockPointerType((*I)->getType()))
+        Constructor += Name + " = (struct __block_impl *)_";
+      else
+        Constructor += Name + " = _";
+      Constructor += Name + ";\n";
+    }
+    // Initialize all "by ref" arguments.
+    for (llvm::SmallPtrSet<ValueDecl*,8>::iterator I = BlockByRefDecls.begin(), 
+         E = BlockByRefDecls.end(); I != E; ++I) {
+      std::string Name = (*I)->getName();
+      Constructor += "    ";
+      if (isBlockPointerType((*I)->getType()))
+        Constructor += Name + " = (struct __block_impl *)_";
+      else
+        Constructor += Name + " = _";
+      Constructor += Name + ";\n";
+    }
+  } else {
+    // Finish writing the constructor.
+    // FIXME: handle NSConcreteGlobalBlock.
+    Constructor += ", int flags=0) {\n";
+    Constructor += "    impl.isa = 0/*&_NSConcreteStackBlock*/;\n    impl.Size = sizeof(";
+    Constructor += Tag + ");\n    impl.Flags = flags;\n    impl.FuncPtr = fp;\n";
+    if (hasCopyDisposeHelpers)
+      Constructor += "    copy = copyHelp;\n    dispose = disposeHelp;\n";
+  }
+  Constructor += "  ";
+  Constructor += "}\n";
+  S += Constructor;
+  S += "};\n";
+  return S;
+}
+
+void RewriteObjC::SynthesizeBlockLiterals(SourceLocation FunLocStart,
+                                                const char *FunName) {
+  // Insert closures that were part of the function.
+  for (unsigned i = 0; i < Blocks.size(); i++) {
+
+    CollectBlockDeclRefInfo(Blocks[i]);
+
+    std::string Tag = "__" + std::string(FunName) + "_block_impl_" + utostr(i);
+                      
+    std::string CI = SynthesizeBlockImpl(Blocks[i], Tag, 
+                                         ImportedBlockDecls.size() > 0);
+
+    InsertText(FunLocStart, CI.c_str(), CI.size());
+
+    std::string CF = SynthesizeBlockFunc(Blocks[i], i, FunName, Tag);
+    
+    InsertText(FunLocStart, CF.c_str(), CF.size());
+
+    if (ImportedBlockDecls.size()) {
+      std::string HF = SynthesizeBlockHelperFuncs(Blocks[i], i, FunName, Tag);
+      InsertText(FunLocStart, HF.c_str(), HF.size());
+    }
+    
+    BlockDeclRefs.clear();
+    BlockByRefDecls.clear();
+    BlockByCopyDecls.clear();
+    BlockCallExprs.clear();
+    ImportedBlockDecls.clear();
+  }
+  Blocks.clear();
+  RewrittenBlockExprs.clear();
+}
+
+void RewriteObjC::InsertBlockLiteralsWithinFunction(FunctionDecl *FD) {
+  SourceLocation FunLocStart = FD->getTypeSpecStartLoc();
+  const char *FuncName = FD->getName();
+  
+  SynthesizeBlockLiterals(FunLocStart, FuncName);
+}
+
+void RewriteObjC::InsertBlockLiteralsWithinMethod(ObjCMethodDecl *MD) {
+  SourceLocation FunLocStart = MD->getLocStart();
+  std::string FuncName = std::string(MD->getSelector().getName());
+  // Convert colons to underscores.
+  std::string::size_type loc = 0;
+  while ((loc = FuncName.find(":", loc)) != std::string::npos)
+    FuncName.replace(loc, 1, "_");
+  
+  SynthesizeBlockLiterals(FunLocStart, FuncName.c_str());
+}
+
+void RewriteObjC::GetBlockDeclRefExprs(Stmt *S) {
+  for (Stmt::child_iterator CI = S->child_begin(), E = S->child_end();
+       CI != E; ++CI)
+    if (*CI) {
+      if (BlockExpr *CBE = dyn_cast<BlockExpr>(*CI))
+        GetBlockDeclRefExprs(CBE->getBody());
+      else
+        GetBlockDeclRefExprs(*CI);
+    }
+  // Handle specific things.
+  if (BlockDeclRefExpr *CDRE = dyn_cast<BlockDeclRefExpr>(S))
+    // FIXME: Handle enums.
+    if (!isa<FunctionDecl>(CDRE->getDecl()))
+      BlockDeclRefs.push_back(CDRE);
+  return;
+}
+
+void RewriteObjC::GetBlockCallExprs(Stmt *S) {
+  for (Stmt::child_iterator CI = S->child_begin(), E = S->child_end();
+       CI != E; ++CI)
+    if (*CI) {
+      if (BlockExpr *CBE = dyn_cast<BlockExpr>(*CI))
+        GetBlockCallExprs(CBE->getBody());
+      else
+        GetBlockCallExprs(*CI);
+    }
+      
+  if (CallExpr *CE = dyn_cast<CallExpr>(S)) {
+    if (CE->getCallee()->getType()->isBlockPointerType()) {
+      BlockCallExprs[dyn_cast<BlockDeclRefExpr>(CE->getCallee())] = CE;
+    }
+  }
+  return;
+}
+
+std::string RewriteObjC::SynthesizeBlockCall(CallExpr *Exp) {
+  // Navigate to relevant type information.
+  const char *closureName = 0;
+  const BlockPointerType *CPT = 0;
+  
+  if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(Exp->getCallee())) {
+    closureName = DRE->getDecl()->getName();
+    CPT = DRE->getType()->getAsBlockPointerType();
+  } else if (BlockDeclRefExpr *CDRE = dyn_cast<BlockDeclRefExpr>(Exp->getCallee())) {
+    closureName = CDRE->getDecl()->getName();
+    CPT = CDRE->getType()->getAsBlockPointerType();
+  } else if (MemberExpr *MExpr = dyn_cast<MemberExpr>(Exp->getCallee())) {
+    closureName = MExpr->getMemberDecl()->getName();
+    CPT = MExpr->getType()->getAsBlockPointerType();
+  } else {
+    assert(1 && "RewriteBlockClass: Bad type");
+  }
+  assert(CPT && "RewriteBlockClass: Bad type");
+  const FunctionType *FT = CPT->getPointeeType()->getAsFunctionType();
+  assert(FT && "RewriteBlockClass: Bad type");
+  const FunctionTypeProto *FTP = dyn_cast<FunctionTypeProto>(FT);
+  // FTP will be null for closures that don't take arguments.
+  
+  // Build a closure call - start with a paren expr to enforce precedence.
+  std::string BlockCall = "(";
+
+  // Synthesize the cast.  
+  BlockCall += "(" + Exp->getType().getAsString() + "(*)";
+  BlockCall += "(struct __block_impl *";
+  if (FTP) {
+    for (FunctionTypeProto::arg_type_iterator I = FTP->arg_type_begin(), 
+         E = FTP->arg_type_end(); I && (I != E); ++I)
+      BlockCall += ", " + (*I).getAsString();
+  }
+  BlockCall += "))"; // close the argument list and paren expression.
+  
+  // Invoke the closure. We need to cast it since the declaration type is
+  // bogus (it's a function pointer type)
+  BlockCall += "((struct __block_impl *)";
+  std::string closureExprBufStr;
+  llvm::raw_string_ostream closureExprBuf(closureExprBufStr);
+  Exp->getCallee()->printPretty(closureExprBuf);
+  BlockCall += closureExprBuf.str();
+  BlockCall += ")->FuncPtr)";
+  
+  // Add the arguments.
+  BlockCall += "((struct __block_impl *)";
+  BlockCall += closureExprBuf.str();
+  for (CallExpr::arg_iterator I = Exp->arg_begin(), 
+       E = Exp->arg_end(); I != E; ++I) {
+    std::string syncExprBufS;
+    llvm::raw_string_ostream Buf(syncExprBufS);
+    (*I)->printPretty(Buf);
+    BlockCall += ", " + Buf.str();
+  }
+  return BlockCall;
+}
+
+void RewriteObjC::RewriteBlockCall(CallExpr *Exp) {
+  std::string BlockCall = SynthesizeBlockCall(Exp);
+  
+  const char *startBuf = SM->getCharacterData(Exp->getLocStart());
+  const char *endBuf = SM->getCharacterData(Exp->getLocEnd());
+
+  ReplaceText(Exp->getLocStart(), endBuf-startBuf, 
+              BlockCall.c_str(), BlockCall.size());
+}
+
+void RewriteObjC::RewriteBlockDeclRefExpr(BlockDeclRefExpr *BDRE) {
+  // FIXME: Add more elaborate code generation required by the ABI.
+  InsertText(BDRE->getLocStart(), "*", 1);
+}
+
+void RewriteObjC::RewriteCastExpr(CastExpr *CE) {
+  SourceLocation LocStart = CE->getLocStart();
+  SourceLocation LocEnd = CE->getLocEnd();
+  
+  const char *startBuf = SM->getCharacterData(LocStart);
+  const char *endBuf = SM->getCharacterData(LocEnd);
+  
+  // advance the location to startArgList.
+  const char *argPtr = startBuf;
+  
+  while (*argPtr++ && (argPtr < endBuf)) {
+    switch (*argPtr) {
+      case '^': 
+        // Replace the '^' with '*'.
+        LocStart = LocStart.getFileLocWithOffset(argPtr-startBuf);
+        ReplaceText(LocStart, 1, "*", 1);
+        break;
+    }
+  }
+  return;
+}
+
+void RewriteObjC::RewriteBlockPointerFunctionArgs(FunctionDecl *FD) {
+  SourceLocation DeclLoc = FD->getLocation();
+  unsigned parenCount = 0;
+  
+  // We have 1 or more arguments that have closure pointers.
+  const char *startBuf = SM->getCharacterData(DeclLoc);
+  const char *startArgList = strchr(startBuf, '(');
+  
+  assert((*startArgList == '(') && "Rewriter fuzzy parser confused");
+  
+  parenCount++;
+  // advance the location to startArgList.
+  DeclLoc = DeclLoc.getFileLocWithOffset(startArgList-startBuf);
+  assert((DeclLoc.isValid()) && "Invalid DeclLoc");
+  
+  const char *argPtr = startArgList;
+  
+  while (*argPtr++ && parenCount) {
+    switch (*argPtr) {
+      case '^': 
+        // Replace the '^' with '*'.
+        DeclLoc = DeclLoc.getFileLocWithOffset(argPtr-startArgList);
+        ReplaceText(DeclLoc, 1, "*", 1);
+        break;
+      case '(': 
+        parenCount++; 
+        break;
+      case ')': 
+        parenCount--;
+        break;
+    }
+  }
+  return;
+}
+
+bool RewriteObjC::PointerTypeTakesAnyBlockArguments(QualType QT) {
+  const FunctionTypeProto *FTP;
+  const PointerType *PT = QT->getAsPointerType();
+  if (PT) {
+    FTP = PT->getPointeeType()->getAsFunctionTypeProto();
+  } else {
+    const BlockPointerType *BPT = QT->getAsBlockPointerType();
+    assert(BPT && "BlockPointerTypeTakeAnyBlockArguments(): not a block pointer type");
+    FTP = BPT->getPointeeType()->getAsFunctionTypeProto();
+  }
+  if (FTP) {
+    for (FunctionTypeProto::arg_type_iterator I = FTP->arg_type_begin(), 
+         E = FTP->arg_type_end(); I != E; ++I)
+      if (isBlockPointerType(*I))
+        return true;
+  }
+  return false;
+}
+
+void RewriteObjC::GetExtentOfArgList(const char *Name, 
+                                       const char *&LParen, const char *&RParen) {
+  const char *argPtr = strchr(Name, '(');
+  assert((*argPtr == '(') && "Rewriter fuzzy parser confused");
+  
+  LParen = argPtr; // output the start.
+  argPtr++; // skip past the left paren.
+  unsigned parenCount = 1;
+  
+  while (*argPtr && parenCount) {
+    switch (*argPtr) {
+      case '(': parenCount++; break;
+      case ')': parenCount--; break;
+      default: break;
+    }
+    if (parenCount) argPtr++;
+  }
+  assert((*argPtr == ')') && "Rewriter fuzzy parser confused");
+  RParen = argPtr; // output the end
+}
+
+void RewriteObjC::RewriteBlockPointerDecl(NamedDecl *ND) {
+  if (FunctionDecl *FD = dyn_cast<FunctionDecl>(ND)) {
+    RewriteBlockPointerFunctionArgs(FD);
+    return;
+  } 
+  // Handle Variables and Typedefs.
+  SourceLocation DeclLoc = ND->getLocation();
+  QualType DeclT;
+  if (VarDecl *VD = dyn_cast<VarDecl>(ND))
+    DeclT = VD->getType();
+  else if (TypedefDecl *TDD = dyn_cast<TypedefDecl>(ND))
+    DeclT = TDD->getUnderlyingType();
+  else if (FieldDecl *FD = dyn_cast<FieldDecl>(ND))
+    DeclT = FD->getType();
+  else 
+    assert(0 && "RewriteBlockPointerDecl(): Decl type not yet handled");
+    
+  const char *startBuf = SM->getCharacterData(DeclLoc);
+  const char *endBuf = startBuf;
+  // scan backward (from the decl location) for the end of the previous decl.
+  while (*startBuf != '^' && *startBuf != ';' && startBuf != MainFileStart)
+    startBuf--;
+    
+  // *startBuf != '^' if we are dealing with a pointer to function that
+  // may take block argument types (which will be handled below).
+  if (*startBuf == '^') {
+    // Replace the '^' with '*', computing a negative offset.
+    DeclLoc = DeclLoc.getFileLocWithOffset(startBuf-endBuf);
+    ReplaceText(DeclLoc, 1, "*", 1);
+  }
+  if (PointerTypeTakesAnyBlockArguments(DeclT)) {
+    // Replace the '^' with '*' for arguments.
+    DeclLoc = ND->getLocation();
+    startBuf = SM->getCharacterData(DeclLoc);
+    const char *argListBegin, *argListEnd;
+    GetExtentOfArgList(startBuf, argListBegin, argListEnd);
+    while (argListBegin < argListEnd) {
+      if (*argListBegin == '^') {
+        SourceLocation CaretLoc = DeclLoc.getFileLocWithOffset(argListBegin-startBuf);
+        ReplaceText(CaretLoc, 1, "*", 1);
+      }
+      argListBegin++;
+    }
+  }
+  return;
+}
+
+void RewriteObjC::CollectBlockDeclRefInfo(BlockExpr *Exp) {  
+  // Add initializers for any closure decl refs.
+  GetBlockDeclRefExprs(Exp->getBody());
+  if (BlockDeclRefs.size()) {
+    // Unique all "by copy" declarations.
+    for (unsigned i = 0; i < BlockDeclRefs.size(); i++)
+      if (!BlockDeclRefs[i]->isByRef())
+        BlockByCopyDecls.insert(BlockDeclRefs[i]->getDecl());
+    // Unique all "by ref" declarations.
+    for (unsigned i = 0; i < BlockDeclRefs.size(); i++)
+      if (BlockDeclRefs[i]->isByRef()) {
+        BlockByRefDecls.insert(BlockDeclRefs[i]->getDecl());
+      }
+    // Find any imported blocks...they will need special attention.
+    for (unsigned i = 0; i < BlockDeclRefs.size(); i++)
+      if (isBlockPointerType(BlockDeclRefs[i]->getType())) {
+        GetBlockCallExprs(Blocks[i]);
+        ImportedBlockDecls.insert(BlockDeclRefs[i]->getDecl());
+      }
+  }
+}
+
+std::string RewriteObjC::SynthesizeBlockInitExpr(BlockExpr *Exp, VarDecl *VD) {
+  Blocks.push_back(Exp);
+
+  CollectBlockDeclRefInfo(Exp);
+  std::string FuncName;
+  
+  if (CurFunctionDef)
+    FuncName = std::string(CurFunctionDef->getName());
+  else if (CurMethodDef) {
+    FuncName = std::string(CurMethodDef->getSelector().getName());
+    // Convert colons to underscores.
+    std::string::size_type loc = 0;
+    while ((loc = FuncName.find(":", loc)) != std::string::npos)
+      FuncName.replace(loc, 1, "_");
+  } else if (VD)
+    FuncName = std::string(VD->getName());
+    
+  std::string BlockNumber = utostr(Blocks.size()-1);
+  
+  std::string Tag = "__" + FuncName + "_block_impl_" + BlockNumber;
+  std::string Func = "__" + FuncName + "_block_func_" + BlockNumber;
+  
+  std::string FunkTypeStr;
+  
+  // Get a pointer to the function type so we can cast appropriately.
+  Context->getPointerType(QualType(Exp->getFunctionType(),0)).getAsStringInternal(FunkTypeStr);
+  
+  // Rewrite the closure block with a compound literal. The first cast is
+  // to prevent warnings from the C compiler.
+  std::string Init = "(" + FunkTypeStr;
+  
+  Init += ")&" + Tag;
+  
+  // Initialize the block function.
+  Init += "((void*)" + Func;
+  
+  if (ImportedBlockDecls.size()) {
+    std::string Buf = "__" + FuncName + "_block_copy_" + BlockNumber;
+    Init += ",(void*)" + Buf;
+    Buf = "__" + FuncName + "_block_dispose_" + BlockNumber;
+    Init += ",(void*)" + Buf;
+  }
+  // Add initializers for any closure decl refs.
+  if (BlockDeclRefs.size()) {
+    // Output all "by copy" declarations.
+    for (llvm::SmallPtrSet<ValueDecl*,8>::iterator I = BlockByCopyDecls.begin(), 
+         E = BlockByCopyDecls.end(); I != E; ++I) {
+      Init += ",";
+      if (isObjCType((*I)->getType())) {
+        Init += "[[";
+        Init += (*I)->getName();
+        Init += " retain] autorelease]";
+      } else if (isBlockPointerType((*I)->getType())) {
+        Init += "(void *)";
+        Init += (*I)->getName();
+      } else {
+        Init += (*I)->getName();
+      }
+    }
+    // Output all "by ref" declarations.
+    for (llvm::SmallPtrSet<ValueDecl*,8>::iterator I = BlockByRefDecls.begin(), 
+         E = BlockByRefDecls.end(); I != E; ++I) {
+      Init += ",&";
+      Init += (*I)->getName();
+    }
+  }
+  Init += ")";
+  BlockDeclRefs.clear();
+  BlockByRefDecls.clear();
+  BlockByCopyDecls.clear();
+  ImportedBlockDecls.clear();
+
+  return Init;
+}
 
