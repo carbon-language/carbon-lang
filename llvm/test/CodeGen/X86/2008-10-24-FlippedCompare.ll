@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -enable-legalize-types -march=x86 -mattr=+sse2 -o - | not grep {ucomiss\[^,\]*esp}
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 -o - | not grep {ucomiss\[^,\]*esp}
 
 define void @f(float %wt) {
 entry:

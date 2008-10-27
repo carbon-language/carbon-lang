@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -enable-legalize-types -march=mips -f -o %t
+; RUN: llvm-as < %s | llc -march=mips -f -o %t
 ; RUN: grep mtc1 %t | count 1
 ; RUN: grep mfc1 %t | count 1
 

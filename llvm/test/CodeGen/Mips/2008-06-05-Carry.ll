@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -enable-legalize-types -march=mips -f -o %t
+; RUN: llvm-as < %s | llc -march=mips -f -o %t
 ; RUN: grep subu %t | count 2
 ; RUN: grep addu %t | count 4
 

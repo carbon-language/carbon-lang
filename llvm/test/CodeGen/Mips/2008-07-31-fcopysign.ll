@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -enable-legalize-types -march=mips -f -o %t
+; RUN: llvm-as < %s | llc -march=mips -f -o %t
 ; RUN: grep abs.s  %t | count 1
 ; RUN: grep neg.s %t | count 1
 

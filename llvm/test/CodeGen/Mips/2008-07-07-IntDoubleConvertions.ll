@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -enable-legalize-types -march=mips -f -o %t
+; RUN: llvm-as < %s | llc -march=mips -f -o %t
 ; RUN: grep __floatsidf   %t | count 1
 ; RUN: grep __floatunsidf %t | count 1
 ; RUN: grep __fixdfsi %t | count 1

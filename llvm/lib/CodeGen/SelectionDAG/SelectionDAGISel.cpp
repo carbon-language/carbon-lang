@@ -54,7 +54,7 @@ using namespace llvm;
 static cl::opt<bool>
 EnableValueProp("enable-value-prop", cl::Hidden);
 static cl::opt<bool>
-EnableLegalizeTypes("enable-legalize-types", cl::Hidden);
+DisableLegalizeTypes("disable-legalize-types", cl::Hidden);
 static cl::opt<bool>
 EnableFastISelVerbose("fast-isel-verbose", cl::Hidden,
           cl::desc("Enable verbose messages in the \"fast\" "
@@ -572,7 +572,7 @@ void SelectionDAGISel::CodeGenAndEmitDAG() {
   
   // Second step, hack on the DAG until it only uses operations and types that
   // the target supports.
-  if (EnableLegalizeTypes) {// Enable this some day.
+  if (!DisableLegalizeTypes) {
     if (ViewLegalizeTypesDAGs) CurDAG->viewGraph("legalize-types input for " +
                                                  BlockName);
 
