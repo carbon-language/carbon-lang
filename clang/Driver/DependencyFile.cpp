@@ -21,6 +21,7 @@
 #include "llvm/System/Path.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/raw_ostream.h"
 #include <fstream>
 #include <string>
 
@@ -28,7 +29,8 @@ using namespace clang;
 
 namespace {
 class VISIBILITY_HIDDEN DependencyFileCallback : public PPCallbacks {
-  llvm::StringSet<> Files;
+  std::vector<std::string> Files;
+  llvm::StringSet<> FilesSet;
   const Preprocessor *PP;
   std::ofstream OS;
   const std::string &InputFile;
@@ -171,28 +173,49 @@ void DependencyFileCallback::FileChanged(SourceLocation Loc,
     return;
 
   // Remove leading "./"
-  if(Filename[0] == '.' && Filename[1] == '/')
+  if (Filename[0] == '.' && Filename[1] == '/')
     Filename = &Filename[2];
 
-  Files.insert(Filename);
+  if (FilesSet.insert(Filename))
+    Files.push_back(Filename);
 }
 
 void DependencyFileCallback::OutputDependencyFile() {
-  std::string Output;
-  // Add "target: mainfile"
-  Output += Target;
-  Output += ": ";
-  Output += InputFile;
-
-  // Now add each dependency
-  for (llvm::StringSet<>::iterator I = Files.begin(),
-       E = Files.end(); I != E; ++I) {
-      // FIXME: Wrap lines
-      Output += " ";
-      Output += I->getKeyData();
+  // Write out the dependency targets, trying to avoid overly long
+  // lines when possible. We try our best to emit exactly the same
+  // dependency file as GCC (4.2), assuming the included files are the
+  // same.
+  const unsigned MaxColumns = 75;
+  
+  OS << Target << ":";
+  unsigned Columns = Target.length() + 1;
+  
+  // Now add each dependency in the order it was seen, but avoiding
+  // duplicates.
+  for (std::vector<std::string>::iterator I = Files.begin(),
+         E = Files.end(); I != E; ++I) {
+    // Start a new line if this would exceed the column limit. Make
+    // sure to leave space for a trailing " \" in case we need to
+    // break the line on the next iteration.
+    unsigned N = I->length();
+    if (Columns + (N + 1) + 2 > MaxColumns) {
+      OS << " \\\n ";
+      Columns = 2;
+    }
+    OS << " " << *I;
+    Columns += N + 1;
   }
+  OS << "\n";
 
-  OS << Output << "\n";
+  // Create phony targets if requested.
+  if (PhonyDependencyTarget) {
+    // Skip the first entry, this is always the input file itself.
+    for (std::vector<std::string>::iterator I = Files.begin() + 1,
+           E = Files.end(); I != E; ++I) {
+      OS << "\n";
+      OS << *I << ":\n";
+    }
+  }
 }
 
 DependencyFileCallback::DependencyFileCallback(const Preprocessor *PP,
@@ -207,6 +230,8 @@ DependencyFileCallback::DependencyFileCallback(const Preprocessor *PP,
     ErrStr = "Could not open dependency output file\n";
   else
     ErrStr = NULL;
+
+  Files.push_back(InputFile);
 }
 
 DependencyFileCallback::~DependencyFileCallback() {
