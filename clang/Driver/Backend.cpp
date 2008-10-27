@@ -315,10 +315,13 @@ void BackendConsumer::EmitAssembly() {
   if (!TheModule || !TheTargetData)
     return;
 
-  // Make sure IR generation is happy with the module.
-  // FIXME: Release this.
+  // Make sure IR generation is happy with the module. This is
+  // released by the module provider.
   Module *M = Gen->ReleaseModule();
   if (!M) {
+    // The module has been released by IR gen on failures, do not
+    // double free.
+    ModuleProvider->releaseModule();
     TheModule = 0;
     return;
   }
