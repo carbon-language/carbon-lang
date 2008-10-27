@@ -543,9 +543,9 @@ bool PreAllocSplitting::SplitRegLiveInterval(LiveInterval *LI) {
   // Add a spill either before the barrier or after the definition.
   MachineBasicBlock *DefMBB = DefMI ? DefMI->getParent() : NULL;
   const TargetRegisterClass *RC = MRI->getRegClass(CurrLI->reg);
-  int SS;
   unsigned SpillIndex = 0;
   MachineInstr *SpillMI = NULL;
+  int SS = -1;
   bool PrevSpilled = isAlreadySplit(CurrLI->reg, ValNo->id, SS);
   if (ValNo->def == ~0U) {
     // If it's defined by a phi, we must split just before the barrier.
