@@ -163,7 +163,6 @@ namespace {
     /// Allocas - The alloca instructions being promoted.
     ///
     std::vector<AllocaInst*> Allocas;
-    SmallVector<AllocaInst*, 16> &RetryList;
     DominatorTree &DT;
     DominanceFrontier &DF;
 
@@ -200,10 +199,9 @@ namespace {
     /// BBNumPreds - Lazily compute the number of predecessors a block has.
     DenseMap<const BasicBlock*, unsigned> BBNumPreds;
   public:
-    PromoteMem2Reg(const std::vector<AllocaInst*> &A,
-                   SmallVector<AllocaInst*, 16> &Retry, DominatorTree &dt,
+    PromoteMem2Reg(const std::vector<AllocaInst*> &A, DominatorTree &dt,
                    DominanceFrontier &df, AliasSetTracker *ast)
-      : Allocas(A), RetryList(Retry), DT(dt), DF(df), AST(ast) {}
+      : Allocas(A), DT(dt), DF(df), AST(ast) {}
 
     void run();
 
@@ -243,13 +241,10 @@ namespace {
     
     void RewriteSingleStoreAlloca(AllocaInst *AI, AllocaInfo &Info,
                                   LargeBlockInfo &LBI);
-
-    bool PromoteLocallyUsedAlloca(BasicBlock *BB, AllocaInst *AI,
+    void PromoteSingleBlockAlloca(AllocaInst *AI, AllocaInfo &Info,
                                   LargeBlockInfo &LBI);
-    void PromoteLocallyUsedAllocas(BasicBlock *BB,
-                                   const std::vector<AllocaInst*> &AIs,
-                                   LargeBlockInfo &LBI);
 
+    
     void RenamePass(BasicBlock *BB, BasicBlock *Pred,
                     RenamePassData::ValVector &IncVals,
                     std::vector<RenamePassData> &Worklist);
@@ -315,13 +310,6 @@ namespace {
 void PromoteMem2Reg::run() {
   Function &F = *DF.getRoot()->getParent();
 
-  // LocallyUsedAllocas - Keep track of all of the alloca instructions which are
-  // only used in a single basic block.  These instructions can be efficiently
-  // promoted by performing a single linear scan over that one block.  Since
-  // individual basic blocks are sometimes large, we group together all allocas
-  // that are live in a single basic block by the basic block they are live in.
-  std::map<BasicBlock*, std::vector<AllocaInst*> > LocallyUsedAllocas;
-
   if (AST) PointerAllocaValues.resize(Allocas.size());
 
   AllocaInfo Info;
@@ -376,11 +364,29 @@ void PromoteMem2Reg::run() {
     // If the alloca is only read and written in one basic block, just perform a
     // linear sweep over the block to eliminate it.
     if (Info.OnlyUsedInOneBlock) {
-      LocallyUsedAllocas[Info.OnlyBlock].push_back(AI);
+      PromoteSingleBlockAlloca(AI, Info, LBI);
       
-      // Remove the alloca from the Allocas list, since it will be processed.
-      RemoveFromAllocasList(AllocaNum);
-      continue;
+      // Finally, after the scan, check to see if the stores are all that is
+      // left.
+      if (Info.UsingBlocks.empty()) {
+        
+        // Remove the (now dead) stores and alloca.
+        while (!AI->use_empty()) {
+          StoreInst *SI = cast<StoreInst>(AI->use_back());
+          SI->eraseFromParent();
+          LBI.deleteValue(SI);
+        }
+        
+        if (AST) AST->deleteValue(AI);
+        AI->eraseFromParent();
+        LBI.deleteValue(AI);
+        
+        // The alloca has been processed, move on.
+        RemoveFromAllocasList(AllocaNum);
+        
+        ++NumLocalPromoted;
+        continue;
+      }
     }
     
     // If we haven't computed a numbering for the BB's in the function, do so
@@ -404,26 +410,6 @@ void PromoteMem2Reg::run() {
     // nodes and see if we can optimize out some work by avoiding insertion of
     // dead phi nodes.
     DetermineInsertionPoint(AI, AllocaNum, Info);
-  }
-
-  // Process all allocas which are only used in a single basic block.
-  for (std::map<BasicBlock*, std::vector<AllocaInst*> >::iterator I =
-         LocallyUsedAllocas.begin(), E = LocallyUsedAllocas.end(); I != E; ++I){
-    const std::vector<AllocaInst*> &LocAllocas = I->second;
-    assert(!LocAllocas.empty() && "empty alloca list??");
-
-    // It's common for there to only be one alloca in the list.  Handle it
-    // efficiently.
-    if (LocAllocas.size() == 1) {
-      // If we can do the quick promotion pass, do so now.
-      if (PromoteLocallyUsedAlloca(I->first, LocAllocas[0], LBI))
-        RetryList.push_back(LocAllocas[0]);  // Failed, retry later.
-    } else {
-      // Locally promote anything possible.  Note that if this is unable to
-      // promote a particular alloca, it puts the alloca onto the Allocas vector
-      // for global processing.
-      PromoteLocallyUsedAllocas(I->first, LocAllocas, LBI);
-    }
   }
 
   if (Allocas.empty())
@@ -752,7 +738,16 @@ void PromoteMem2Reg::RewriteSingleStoreAlloca(AllocaInst *AI,
 }
 
 
-/// PromoteLocallyUsedAlloca - Many allocas are only used within a single basic
+/// StoreIndexSearchPredicate - This is a helper predicate used to search by the
+/// first element of a pair.
+struct StoreIndexSearchPredicate {
+  bool operator()(const std::pair<unsigned, StoreInst*> &LHS,
+                  const std::pair<unsigned, StoreInst*> &RHS) {
+    return LHS.first < RHS.first;
+  }
+};
+
+/// PromoteSingleBlockAlloca - Many allocas are only used within a single basic
 /// block.  If this is the case, avoid traversing the CFG and inserting a lot of
 /// potentially useless PHI nodes by just performing a single linear pass over
 /// the basic block using the Alloca.
@@ -766,124 +761,72 @@ void PromoteMem2Reg::RewriteSingleStoreAlloca(AllocaInst *AI,
 ///
 /// ... so long as A is not used before undef is set.
 ///
-bool PromoteMem2Reg::PromoteLocallyUsedAlloca(BasicBlock *BB, AllocaInst *AI,
+void PromoteMem2Reg::PromoteSingleBlockAlloca(AllocaInst *AI, AllocaInfo &Info,
                                               LargeBlockInfo &LBI) {
-  assert(!AI->use_empty() && "There are no uses of the alloca!");
+  // The trickiest case to handle is when we have large blocks. Because of this,
+  // this code is optimized assuming that large blocks happen.  This does not
+  // significantly pessimize the small block case.  This uses LargeBlockInfo to
+  // make it efficient to get the index of various operations in the block.
+  
+  // Clear out UsingBlocks.  We will reconstruct it here if needed.
+  Info.UsingBlocks.clear();
+  
+  // Walk the use-def list of the alloca, getting the locations of all stores.
+  typedef SmallVector<std::pair<unsigned, StoreInst*>, 64> StoresByIndexTy;
+  StoresByIndexTy StoresByIndex;
+  
+  for (Value::use_iterator UI = AI->use_begin(), E = AI->use_end();
+       UI != E; ++UI) 
+    if (StoreInst *SI = dyn_cast<StoreInst>(*UI))
+      StoresByIndex.push_back(std::make_pair(LBI.getInstructionIndex(SI), SI));
 
-  // Handle degenerate cases quickly.
-  if (AI->hasOneUse()) {
-    Instruction *U = cast<Instruction>(AI->use_back());
-    if (LoadInst *LI = dyn_cast<LoadInst>(U)) {
-      // Must be a load of uninitialized value.
-      LI->replaceAllUsesWith(UndefValue::get(AI->getAllocatedType()));
-      if (AST && isa<PointerType>(LI->getType()))
-        AST->deleteValue(LI);
-    } else {
-      // Otherwise it must be a store which is never read.
-      assert(isa<StoreInst>(U));
-    }
-    LBI.deleteValue(U);
-    BB->getInstList().erase(U);
-  } else {
-    // Uses of the uninitialized memory location shall get undef.
-    Value *CurVal = 0;
-
-    for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ) {
-      Instruction *Inst = I++;
-      if (LoadInst *LI = dyn_cast<LoadInst>(Inst)) {
-        if (LI->getOperand(0) == AI) {
-          if (!CurVal) return true;  // Could not locally promote!
-
-          // Loads just returns the "current value"...
-          LI->replaceAllUsesWith(CurVal);
-          if (AST && isa<PointerType>(LI->getType()))
-            AST->deleteValue(LI);
-          BB->getInstList().erase(LI);
-          LBI.deleteValue(LI);
-        }
-      } else if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
-        if (SI->getOperand(1) == AI) {
-          // Store updates the "current value"...
-          CurVal = SI->getOperand(0);
-          BB->getInstList().erase(SI);
-          LBI.deleteValue(SI);
-        }
+  // If there are no stores to the alloca, just replace any loads with undef.
+  if (StoresByIndex.empty()) {
+    for (Value::use_iterator UI = AI->use_begin(), E = AI->use_end(); UI != E;) 
+      if (LoadInst *LI = dyn_cast<LoadInst>(*UI++)) {
+        LI->replaceAllUsesWith(UndefValue::get(LI->getType()));
+        if (AST && isa<PointerType>(LI->getType()))
+          AST->deleteValue(LI);
+        LBI.deleteValue(LI);
+        LI->eraseFromParent();
       }
-    }
-  }
-
-  // After traversing the basic block, there should be no more uses of the
-  // alloca: remove it now.
-  assert(AI->use_empty() && "Uses of alloca from more than one BB??");
-  if (AST) AST->deleteValue(AI);
-  AI->eraseFromParent();
-  LBI.deleteValue(AI);
-
-  ++NumLocalPromoted;
-  return false;
-}
-
-/// PromoteLocallyUsedAllocas - This method is just like
-/// PromoteLocallyUsedAlloca, except that it processes multiple alloca
-/// instructions in parallel.  This is important in cases where we have large
-/// basic blocks, as we don't want to rescan the entire basic block for each
-/// alloca which is locally used in it (which might be a lot).
-void PromoteMem2Reg::
-PromoteLocallyUsedAllocas(BasicBlock *BB, const std::vector<AllocaInst*> &AIs,
-                          LargeBlockInfo &LBI) {
-  DenseMap<AllocaInst*, Value*> CurValues;
-  for (unsigned i = 0, e = AIs.size(); i != e; ++i)
-    CurValues[AIs[i]] = 0; // Insert with null value
-
-  for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ) {
-    Instruction *Inst = I++;
-    if (LoadInst *LI = dyn_cast<LoadInst>(Inst)) {
-      // Is this a load of an alloca we are tracking?
-      if (AllocaInst *AI = dyn_cast<AllocaInst>(LI->getOperand(0))) {
-        DenseMap<AllocaInst*, Value*>::iterator AIt = CurValues.find(AI);
-        if (AIt != CurValues.end()) {
-          // If loading an uninitialized value, allow the inter-block case to
-          // handle it.  Due to control flow, this might actually be ok.
-          if (AIt->second == 0) {  // Use of locally uninitialized value??
-            RetryList.push_back(AI);   // Retry elsewhere.
-            CurValues.erase(AIt);   // Stop tracking this here.
-            if (CurValues.empty()) return;
-          } else {
-            // Loads just returns the "current value"...
-            LI->replaceAllUsesWith(AIt->second);
-            if (AST && isa<PointerType>(LI->getType()))
-              AST->deleteValue(LI);
-            BB->getInstList().erase(LI);
-            LBI.deleteValue(LI);
-          }
-        }
-      }
-    } else if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
-      if (AllocaInst *AI = dyn_cast<AllocaInst>(SI->getOperand(1))) {
-        DenseMap<AllocaInst*, Value*>::iterator AIt = CurValues.find(AI);
-        if (AIt != CurValues.end()) {
-          // Store updates the "current value"...
-          AIt->second = SI->getOperand(0);
-          SI->eraseFromParent();
-          LBI.deleteValue(SI);
-        }
-      }
-    }
+    return;
   }
   
-  // At the end of the block scan, all allocas in CurValues are dead.
-  for (DenseMap<AllocaInst*, Value*>::iterator I = CurValues.begin(),
-       E = CurValues.end(); I != E; ++I) {
-    AllocaInst *AI = I->first;
-    assert(AI->use_empty() && "Uses of alloca from more than one BB??");
-    if (AST) AST->deleteValue(AI);
-    AI->eraseFromParent();
-    LBI.deleteValue(AI);
+  // Sort the stores by their index, making it efficient to do a lookup with a
+  // binary search.
+  std::sort(StoresByIndex.begin(), StoresByIndex.end());
+  
+  // Walk all of the loads from this alloca, replacing them with the nearest
+  // store above them, if any.
+  for (Value::use_iterator UI = AI->use_begin(), E = AI->use_end(); UI != E;) {
+    LoadInst *LI = dyn_cast<LoadInst>(*UI++);
+    if (!LI) continue;
+    
+    unsigned LoadIdx = LBI.getInstructionIndex(LI);
+    
+    // Find the nearest store that has a lower than this load. 
+    StoresByIndexTy::iterator I = 
+      std::lower_bound(StoresByIndex.begin(), StoresByIndex.end(),
+                       std::pair<unsigned, StoreInst*>(LoadIdx, 0),
+                       StoreIndexSearchPredicate());
+    
+    // If there is no store before this load, then we can't promote this load.
+    if (I == StoresByIndex.begin()) {
+      // Can't handle this load, bail out.
+      Info.UsingBlocks.push_back(LI->getParent());
+      continue;
+    }
+      
+    // Otherwise, there was a store before this load, the load takes its value.
+    --I;
+    LI->replaceAllUsesWith(I->second->getOperand(0));
+    if (AST && isa<PointerType>(LI->getType()))
+      AST->deleteValue(LI);
+    LI->eraseFromParent();
+    LBI.deleteValue(LI);
   }
-
-  NumLocalPromoted += CurValues.size();
 }
-
 
 
 // QueuePhiNode - queues a phi-node to be added to a basic-block for a specific
@@ -1044,26 +987,5 @@ void llvm::PromoteMemToReg(const std::vector<AllocaInst*> &Allocas,
   // If there is nothing to do, bail out...
   if (Allocas.empty()) return;
 
-  SmallVector<AllocaInst*, 16> RetryList;
-  PromoteMem2Reg(Allocas, RetryList, DT, DF, AST).run();
-
-  // PromoteMem2Reg may not have been able to promote all of the allocas in one
-  // pass, run it again if needed.
-  std::vector<AllocaInst*> NewAllocas;
-  while (!RetryList.empty()) {
-    // If we need to retry some allocas, this is due to there being no store
-    // before a read in a local block.  To counteract this, insert a store of
-    // undef into the alloca right after the alloca itself.
-    for (unsigned i = 0, e = RetryList.size(); i != e; ++i) {
-      BasicBlock::iterator BBI = RetryList[i];
-
-      new StoreInst(UndefValue::get(RetryList[i]->getAllocatedType()),
-                    RetryList[i], ++BBI);
-    }
-
-    NewAllocas.assign(RetryList.begin(), RetryList.end());
-    RetryList.clear();
-    PromoteMem2Reg(NewAllocas, RetryList, DT, DF, AST).run();
-    NewAllocas.clear();
-  }
+  PromoteMem2Reg(Allocas, DT, DF, AST).run();
 }
