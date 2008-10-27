@@ -185,9 +185,9 @@ bool Instruction::isIdenticalTo(Instruction *I) const {
            CI->getAttributes().getRawPointer() ==
              cast<CallInst>(I)->getAttributes().getRawPointer();
   if (const InvokeInst *CI = dyn_cast<InvokeInst>(this))
-    return CI->getCallingConv() == cast<CallInst>(I)->getCallingConv() &&
+    return CI->getCallingConv() == cast<InvokeInst>(I)->getCallingConv() &&
            CI->getAttributes().getRawPointer() ==
-             cast<CallInst>(I)->getAttributes().getRawPointer();
+             cast<InvokeInst>(I)->getAttributes().getRawPointer();
   if (const InsertValueInst *IVI = dyn_cast<InsertValueInst>(this)) {
     if (IVI->getNumIndices() != cast<InsertValueInst>(I)->getNumIndices())
       return false;
@@ -235,9 +235,9 @@ bool Instruction::isSameOperationAs(Instruction *I) const {
            CI->getAttributes().getRawPointer() ==
              cast<CallInst>(I)->getAttributes().getRawPointer();
   if (const InvokeInst *CI = dyn_cast<InvokeInst>(this))
-    return CI->getCallingConv() == cast<CallInst>(I)->getCallingConv() &&
+    return CI->getCallingConv() == cast<InvokeInst>(I)->getCallingConv() &&
            CI->getAttributes().getRawPointer() ==
-             cast<CallInst>(I)->getAttributes().getRawPointer();
+             cast<InvokeInst>(I)->getAttributes().getRawPointer();
   if (const InsertValueInst *IVI = dyn_cast<InsertValueInst>(this)) {
     if (IVI->getNumIndices() != cast<InsertValueInst>(I)->getNumIndices())
       return false;
