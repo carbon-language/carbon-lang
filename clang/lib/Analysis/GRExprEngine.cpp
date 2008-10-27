@@ -430,6 +430,10 @@ void GRExprEngine::VisitLValue(Expr* Ex, NodeTy* Pred, NodeSet& Dst) {
       VisitMemberExpr(cast<MemberExpr>(Ex), Pred, Dst, true);
       return;
       
+    case Stmt::CompoundLiteralExprClass:
+      VisitCompoundLiteralExpr(cast<CompoundLiteralExpr>(Ex), Pred, Dst);
+      return;
+      
     case Stmt::ObjCPropertyRefExprClass:
       // FIXME: Property assignments are lvalues, but not really "locations".
       //  e.g.:  self.x = something;
@@ -1527,6 +1531,35 @@ void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, NodeTy* Pred, NodeSet& Dst){
 
     // All other cases.
     MakeNode(Dst, CastE, N, SetSVal(St, CastE, EvalCast(V, CastE->getType())));
+  }
+}
+
+void GRExprEngine::VisitCompoundLiteralExpr(CompoundLiteralExpr* CL,
+                                            NodeTy* Pred, NodeSet& Dst) {
+
+  // FIXME: Can getInitializer() be NULL?
+  InitListExpr* ILE = cast<InitListExpr>(CL->getInitializer()->IgnoreParens());
+  NodeSet Tmp;
+  Visit(ILE, Pred, Tmp);
+  
+  for (NodeSet::iterator I = Tmp.begin(), EI = Tmp.end(); I!=EI; ++I) {
+    // Retrieve the initializer values from the environment and store them
+    // into a vector that will then be handed off to the Store.    
+    const GRState* St = GetState(*I);    
+    llvm::SmallVector<SVal, 10> IVals;
+    IVals.reserve(ILE->getNumInits());
+    
+    for (Stmt::child_iterator J=ILE->child_begin(), EJ=ILE->child_end();
+          J!=EJ; ++J)
+      IVals.push_back(GetSVal(St, cast<Expr>(*J)));
+
+    const CompoundLiteralRegion* R = 
+      StateMgr.getRegionManager().getCompoundLiteralRegion(CL);
+    
+    assert (!IVals.empty() && "Initializer cannot be empty.");
+
+    St = StateMgr.BindCompoundLiteral(St, R, &IVals[0], &IVals[0]+IVals.size());
+    MakeNode(Dst, CL, *I, SetSVal(St, CL, loc::MemRegionVal(R)));
   }
 }
 

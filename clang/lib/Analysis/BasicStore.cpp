@@ -46,6 +46,11 @@ public:
     return loc::MemRegionVal(MRMgr.getVarRegion(VD));
   }
   
+  Store BindCompoundLiteral(Store store, const CompoundLiteralRegion* R,
+                            const SVal* BegInit, const SVal* EndInit) {
+    return store;
+  }
+  
   SVal getLValueVar(const GRState* St, const VarDecl* VD);
   SVal getLValueString(const GRState* St, const StringLiteral* S);
   SVal getLValueIvar(const GRState* St, const ObjCIvarDecl* D, SVal Base);

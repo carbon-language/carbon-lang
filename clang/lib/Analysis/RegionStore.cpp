@@ -45,6 +45,15 @@ public:
   SVal GetRegionSVal(Store St, const MemRegion* R) {
     return Retrieve(St, loc::MemRegionVal(R));
   }
+  
+  Store BindCompoundLiteral(Store store, const CompoundLiteralRegion* R,
+                            const SVal* BegInit, const SVal* EndInit) {
+    
+    // FIXME: Let's discuss how we want to do the mapping in RegionStore
+    //  from CompoundLiteralRegion to values.
+    assert (false && "Not yet implemented.");
+    return store;
+  }
 
   SVal getLValueString(const GRState* St, const StringLiteral* S);
 

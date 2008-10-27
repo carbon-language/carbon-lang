@@ -329,6 +329,14 @@ public:
 
   const GRState* AddDecl(const GRState* St, const VarDecl* VD, Expr* Ex, 
                          unsigned Count);
+  
+  /// BindCompoundLiteral - Return the state that has the bindings currently
+  ///  in 'state' plus the bindings for the CompoundLiteral.  'R' is the region
+  ///  for the compound literal and 'BegInit' and 'EndInit' represent an
+  ///  array of initializer values.
+  const GRState* BindCompoundLiteral(const GRState* state,
+                                     const CompoundLiteralRegion* R,
+                                     const SVal* BegInit, const SVal* EndInit);
 
   const GRState* RemoveDeadBindings(const GRState* St, Stmt* Loc, 
                                        const LiveVariables& Liveness,

@@ -47,6 +47,15 @@ public:
   
   virtual Store Bind(Store St, Loc LV, SVal V) = 0;
   virtual Store Remove(Store St, Loc LV) = 0;
+  
+  /// BindCompoundLiteral - Return the store that has the bindings currently
+  ///  in 'store' plus the bindings for the CompoundLiteral.  'R' is the region
+  ///  for the compound literal and 'BegInit' and 'EndInit' represent an
+  ///  array of initializer values.
+  virtual Store BindCompoundLiteral(Store store, const CompoundLiteralRegion* R,
+                                    const SVal* BegInit,
+                                    const SVal* EndInit) = 0;
+  
   virtual Store getInitialStore() = 0;
   virtual MemRegionManager& getRegionManager() = 0;
 

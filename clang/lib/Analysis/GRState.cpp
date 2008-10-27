@@ -92,6 +92,26 @@ const GRState* GRStateManager::AddDecl(const GRState* St, const VarDecl* VD,
   return getPersistentState(NewSt);
 }
 
+/// BindCompoundLiteral - Return the store that has the bindings currently
+///  in 'store' plus the bindings for the CompoundLiteral.  'R' is the region
+///  for the compound literal and 'BegInit' and 'EndInit' represent an
+///  array of initializer values.
+const GRState*
+GRStateManager::BindCompoundLiteral(const GRState* state,
+                                    const CompoundLiteralRegion* R,                                    
+                                    const SVal* BegInit, const SVal* EndInit) {
+
+  Store oldStore = state->getStore();
+  Store newStore = StoreMgr->BindCompoundLiteral(oldStore, R, BegInit, EndInit);
+  
+  if (newStore == oldStore)
+    return state;
+  
+  GRState newState = *state;
+  newState.St = newStore;
+  return getPersistentState(newState);
+}
+
 const GRState* GRStateManager::Unbind(const GRState* St, Loc LV) {
   Store OldStore = St->getStore();
   Store NewStore = StoreMgr->Remove(OldStore, LV);
