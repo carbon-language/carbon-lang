@@ -7,3 +7,9 @@ void f(void) {
   p();
   (*p)();
 }
+
+void g(void (*fp)(void));
+
+void f2() {
+  g(f);
+}
