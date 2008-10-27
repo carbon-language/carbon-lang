@@ -430,14 +430,8 @@ public:
   StringRegion* getStringRegion(const StringLiteral* Str);
 
   /// getVarRegion - Retrieve or create the memory region associated with
-  ///  a specified VarDecl.  'superRegion' corresponds to the containing
-  ///  memory region, and 'off' is the offset within the containing region.
-  VarRegion* getVarRegion(const VarDecl* vd, const MemRegion* superRegion);
-  
-  VarRegion* getVarRegion(const VarDecl* vd) {
-    return getVarRegion(vd, vd->hasLocalStorage() ? getStackRegion() 
-                        : getGlobalsRegion());
-  }
+  ///  a specified VarDecl.
+  VarRegion* getVarRegion(const VarDecl* vd);
   
   ElementRegion* getElementRegion(SVal Idx, const MemRegion* superRegion);
 

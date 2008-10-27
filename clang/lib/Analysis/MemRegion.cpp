@@ -189,8 +189,11 @@ StringRegion* MemRegionManager::getStringRegion(const StringLiteral* Str) {
   return R;
 }
 
-VarRegion* MemRegionManager::getVarRegion(const VarDecl* d,
-                                          const MemRegion* superRegion) {
+VarRegion* MemRegionManager::getVarRegion(const VarDecl* d) {
+  
+  const MemRegion* superRegion = d->hasLocalStorage() ? getStackRegion() 
+                                 : getGlobalsRegion();
+  
   llvm::FoldingSetNodeID ID;
   DeclRegion::ProfileRegion(ID, d, superRegion, MemRegion::VarRegionKind);
   
