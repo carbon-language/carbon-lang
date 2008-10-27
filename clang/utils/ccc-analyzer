@@ -241,6 +241,9 @@ if ($Status) { exit($Status >> 8); }
 my $Analyses = $ENV{'CCC_ANALYZER_ANALYSIS'};
 if (!defined($Analyses)) { $Analyses = '-checker-cfref'; }
 
+# Get the store model.
+my $StoreModel = $ENV{'CCC_ANALYZER_STORE_MODEL'};
+
 # Determine the level of verbosity.
 my $Verbose = 0;
 if (defined $ENV{CCC_ANALYZER_VERBOSE}) { $Verbose = 1; }
@@ -416,9 +419,13 @@ if ($Action eq 'compile' or $Action eq 'link') {
       push @AnalyzeArgs,$FileLang;
     }
 
+    if (defined $StoreModel) {
+      push @AnalyzeArgs, $StoreModel;
+    }
+
     push @AnalyzeArgs,@CompileOpts;
     push @AnalyzeArgs,$file;
-    
+
     my @Archs = keys %ArchsSeen;
     if (scalar @Archs) {
       foreach my $arch (@Archs) {
