@@ -407,6 +407,13 @@ public:
     return false;
   }
 
+  /// IgnoreRegisterClassBarriers - Returns true if pre-register allocation
+  /// live interval splitting pass should ignore barriers of the specified
+  /// register class.
+  virtual bool IgnoreRegisterClassBarriers(const TargetRegisterClass *RC) const{
+    return true;
+  }
+
   /// getPointerRegClass - Returns a TargetRegisterClass used for pointer
   /// values.
   virtual const TargetRegisterClass *getPointerRegClass() const {
@@ -425,7 +432,6 @@ public:
   /// GetFunctionSizeInBytes - Returns the size of the specified MachineFunction.
   /// 
   virtual unsigned GetFunctionSizeInBytes(const MachineFunction &MF) const = 0;
-
 };
 
 /// TargetInstrInfoImpl - This is the default implementation of

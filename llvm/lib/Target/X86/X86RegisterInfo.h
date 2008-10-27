@@ -94,6 +94,10 @@ public:
 
   /// Code Generation virtual methods...
   /// 
+
+  /// getCrossCopyRegClass - Returns a legal register class to copy a register
+  /// in the specified class to or from. Returns NULL if it is possible to copy
+  /// between a two registers of the specified class.
   const TargetRegisterClass *
   getCrossCopyRegClass(const TargetRegisterClass *RC) const;
 

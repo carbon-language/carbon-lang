@@ -2411,6 +2411,14 @@ ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const {
   return false;
 }
 
+bool X86InstrInfo::
+IgnoreRegisterClassBarriers(const TargetRegisterClass *RC) const {
+  // FIXME: Ignore bariers of x87 stack registers for now. We can't
+  // allow any loads of these registers before FpGet_ST0_80.
+  return RC == &X86::CCRRegClass || RC == &X86::RFP32RegClass ||
+    RC == &X86::RFP64RegClass || RC == &X86::RFP80RegClass;
+}
+
 const TargetRegisterClass *X86InstrInfo::getPointerRegClass() const {
   const X86Subtarget *Subtarget = &TM.getSubtarget<X86Subtarget>();
   if (Subtarget->is64Bit())

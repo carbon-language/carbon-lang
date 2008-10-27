@@ -659,6 +659,8 @@ PreAllocSplitting::SplitRegLiveIntervals(const TargetRegisterClass **RCs) {
   // by the current barrier.
   SmallVector<LiveInterval*, 8> Intervals;
   for (const TargetRegisterClass **RC = RCs; *RC; ++RC) {
+    if (TII->IgnoreRegisterClassBarriers(*RC))
+      continue;
     std::vector<unsigned> &VRs = MRI->getRegClassVirtRegs(*RC);
     for (unsigned i = 0, e = VRs.size(); i != e; ++i) {
       unsigned Reg = VRs[i];

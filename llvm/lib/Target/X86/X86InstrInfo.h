@@ -405,6 +405,11 @@ public:
   virtual
   bool ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const;
 
+  /// IgnoreRegisterClassBarriers - Returns true if pre-register allocation
+  /// live interval splitting pass should ignore barriers of the specified
+  /// register class.
+  bool IgnoreRegisterClassBarriers(const TargetRegisterClass *RC) const;
+
   const TargetRegisterClass *getPointerRegClass() const;
 
   // getBaseOpcodeFor - This function returns the "base" X86 opcode for the
