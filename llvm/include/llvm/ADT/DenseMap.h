@@ -105,6 +105,8 @@ class DenseMap {
   unsigned NumEntries;
   unsigned NumTombstones;
 public:
+  typedef KeyT key_type;
+  typedef ValueT mapped_type;
   typedef BucketT value_type;
   
   DenseMap(const DenseMap& other) {
@@ -452,6 +454,8 @@ class DenseMapIterator {
 protected:
   const BucketT *Ptr, *End;
 public:
+  DenseMapIterator(void) : Ptr(0), End(0) {}
+
   DenseMapIterator(const BucketT *Pos, const BucketT *E) : Ptr(Pos), End(E) {
     AdvancePastEmptyBuckets();
   }
@@ -494,6 +498,7 @@ private:
 template<typename KeyT, typename ValueT, typename KeyInfoT, typename ValueInfoT>
 class DenseMapConstIterator : public DenseMapIterator<KeyT, ValueT, KeyInfoT> {
 public:
+  DenseMapConstIterator(void) : DenseMapIterator<KeyT, ValueT, KeyInfoT>() {}
   DenseMapConstIterator(const std::pair<KeyT, ValueT> *Pos,
                         const std::pair<KeyT, ValueT> *E)
     : DenseMapIterator<KeyT, ValueT, KeyInfoT>(Pos, E) {
