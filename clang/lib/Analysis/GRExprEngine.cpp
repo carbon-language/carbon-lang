@@ -2178,10 +2178,13 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
     
       assert (B->isCompoundAssignmentOp());
 
-      if (Op >= BinaryOperator::AndAssign)
-        ((int&) Op) -= (BinaryOperator::AndAssign - BinaryOperator::And);
-      else
-        ((int&) Op) -= BinaryOperator::MulAssign;  
+      if (Op >= BinaryOperator::AndAssign) {
+        Op = (BinaryOperator::Opcode) (Op - (BinaryOperator::AndAssign - 
+                                             BinaryOperator::And));
+      }
+      else {
+        Op = (BinaryOperator::Opcode) (Op - BinaryOperator::MulAssign);
+      }
           
       // Perform a load (the LHS).  This performs the checks for
       // null dereferences, and so on.
