@@ -92,9 +92,42 @@ public:
   void print(llvm::raw_ostream& OS) const;
   void printStdErr() const;
   
-  typedef const SymbolID* symbol_iterator;
+  class symbol_iterator {
+    const enum { One, Many } HowMany;
+    union { uintptr_t sym; const SymbolID* sptr; };
+  public:
+    
+    bool operator==(const symbol_iterator& X) {
+      return X.sym == sym;
+    }
+    
+    bool operator!=(const symbol_iterator& X) {
+      return X.sym != sym;
+    }
+    
+    symbol_iterator& operator++() {
+      if (HowMany == Many)
+        ++sptr;
+      else
+        sym = ~0x0;
+      
+      return *this;
+    }
+    
+    SymbolID operator*() const {
+      if (HowMany)
+        return *sptr;
+      
+      return SymbolID(sym);
+    }
+    
+    symbol_iterator(SymbolID x) : HowMany(One), sym(x.getNumber()) {}
+    symbol_iterator() : HowMany(One), sym(~0x0) {}
+    symbol_iterator(const SymbolID* x) : HowMany(Many), sptr(x) {}
+  };
+  
   symbol_iterator symbol_begin() const;
-  symbol_iterator symbol_end() const;  
+  symbol_iterator symbol_end() const;
   
   // Implement isa<T> support.
   static inline bool classof(const SVal*) { return true; }

@@ -26,32 +26,32 @@ using llvm::APSInt;
 //===----------------------------------------------------------------------===//
 
 SVal::symbol_iterator SVal::symbol_begin() const {
-  
   // FIXME: This is a rat's nest.  Cleanup.
 
   if (isa<loc::SymbolVal>(this))
-    return (symbol_iterator) (&Data);
+    return symbol_iterator(SymbolID((uintptr_t)Data));
   else if (isa<nonloc::SymbolVal>(this))
-    return (symbol_iterator) (&Data);
+    return symbol_iterator(SymbolID((uintptr_t)Data));
   else if (isa<nonloc::SymIntConstraintVal>(this)) {
     const SymIntConstraint& C =
-      cast<nonloc::SymIntConstraintVal>(this)->getConstraint();
-    
-    return (symbol_iterator) &C.getSymbol();
+      cast<nonloc::SymIntConstraintVal>(this)->getConstraint();    
+    return symbol_iterator(C.getSymbol());
   }
   else if (isa<nonloc::LocAsInteger>(this)) {
     const nonloc::LocAsInteger& V = cast<nonloc::LocAsInteger>(*this);
     return V.getPersistentLoc().symbol_begin();
   }
+  else if (isa<loc::MemRegionVal>(this)) {
+    const MemRegion* R = cast<loc::MemRegionVal>(this)->getRegion();
+    if (const SymbolicRegion* S = dyn_cast<SymbolicRegion>(R))
+      return symbol_iterator(S->getSymbol());
+  }
   
-  // FIXME: We need to iterate over the symbols of regions.
-
-  return NULL;
+  return symbol_iterator();
 }
 
 SVal::symbol_iterator SVal::symbol_end() const {
-  symbol_iterator X = symbol_begin();
-  return X ? X+1 : NULL;
+  return symbol_iterator();
 }
 
 //===----------------------------------------------------------------------===//
