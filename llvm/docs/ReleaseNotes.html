@@ -545,6 +545,10 @@ converted to strings using <tt>llvm::GetConstantStringInfo</tt> defined via
 <li>Various header files like "<tt>llvm/ADT/iterator</tt>" were given a ".h" suffix.
     Change your code to #include "<tt>llvm/ADT/iterator.h</tt>" instead.</li>
 
+<li>The <tt>getresult</tt> instruction has been removed and replaced with the 
+    <tt>extractvalue</tt> instruction.  This is part of support for first class 
+    aggregates.</li>
+
 <li>In the code generator, many <tt>MachineOperand</tt> predicates were renamed to be
     shorter (e.g. <tt>isFrameIndex()</tt> -&gt; <tt>isFI()</tt>),
     <tt>SDOperand</tt> was renamed to <tt>SDValue</tt> (and the "<tt>Val</tt>"
