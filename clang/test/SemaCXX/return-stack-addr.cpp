@@ -93,15 +93,15 @@ int* ret_parameter(int x) {
 }
 
 
-int* ret_cpp_static_cast(short x) {
-  return static_cast<int*>(&x); // expected-warning {{address of stack memory}}
+void* ret_cpp_static_cast(short x) {
+  return static_cast<void*>(&x); // expected-warning {{address of stack memory}}
 }
 
 int* ret_cpp_reinterpret_cast(double x) {
   return reinterpret_cast<int*>(&x); // expected-warning {{address of stack me}}
 }
 
-int* ret_cpp_reinterpret_cast_no_warning(double x) {
+int* ret_cpp_reinterpret_cast_no_warning(long x) {
   return reinterpret_cast<int*>(x); // no-warning
 }
 
