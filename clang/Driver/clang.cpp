@@ -1221,7 +1221,6 @@ static ASTConsumer* CreateASTConsumer(const std::string& InFile,
 ///
 static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
                              const std::string &InFile, ProgActions PA) {
-
   llvm::OwningPtr<ASTConsumer> Consumer;
   bool ClearSourceMgr = false;
   
@@ -1318,15 +1317,11 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
     break;
   }
   
-  if (Consumer) {
-    if (VerifyDiagnostics)
-      exit(CheckASTConsumer(PP, Consumer.get()));
-    
+  if (Consumer)
     ParseAST(PP, Consumer.get(), Stats, !DisableFree);
-  } else {
-    if (VerifyDiagnostics)
-      exit(CheckDiagnostics(PP));
-  }
+
+  if (VerifyDiagnostics)
+    exit(CheckDiagnostics(PP));
 
   if (Stats) {
     fprintf(stderr, "\nSTATISTICS FOR '%s':\n", InFile.c_str());

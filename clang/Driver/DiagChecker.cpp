@@ -252,14 +252,6 @@ static bool CheckResults(Preprocessor &PP,
 }
 
 
-/// CheckASTConsumer - Implement diagnostic checking for AST consumers.
-bool clang::CheckASTConsumer(Preprocessor &PP, ASTConsumer* C) {
-  
-  // Parse the AST and run the consumer, ultimately deleting C.
-  ParseAST(PP, C);
-  return CheckDiagnostics(PP);
-}
-
 /// CheckDiagnostics - Gather the expected diagnostics and check them.
 bool clang::CheckDiagnostics(Preprocessor &PP) {
   // Gather the set of expected diagnostics.
