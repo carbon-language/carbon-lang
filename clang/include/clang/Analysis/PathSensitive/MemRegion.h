@@ -36,14 +36,17 @@ class MemRegionManager;
 class MemRegion : public llvm::FoldingSetNode {
 public:
   enum Kind { MemSpaceRegionKind, SymbolicRegionKind,
+              // Subregions.
+              CompoundLiteralRegionKind,
               // Typed regions.
               BEG_TYPED_REGIONS,
-              StringRegionKind, ElementRegionKind,
-              BEG_DECL_REGIONS,
-              VarRegionKind, FieldRegionKind,
-              ObjCIvarRegionKind, ObjCObjectRegionKind,
-              END_DECL_REGIONS,
-              AnonTypedRegionKind, AnonPointeeRegionKind,
+               StringRegionKind, ElementRegionKind,
+               // Decl Regions.
+                 BEG_DECL_REGIONS,
+                  VarRegionKind, FieldRegionKind,
+                  ObjCIvarRegionKind, ObjCObjectRegionKind,
+                 END_DECL_REGIONS,
+               AnonTypedRegionKind, AnonPointeeRegionKind,
               END_TYPED_REGIONS };  
 private:
   const Kind kind;
@@ -212,6 +215,30 @@ public:
 
 /// AnonHeapRegion - anonymous region created by malloc().
 class AnonHeapRegion : public AnonTypedRegion {
+};
+  
+/// CompoundLiteralRegion - A memory region representing a compound literal.
+///   Compound literals are essentially temporaries that are stack allocated
+///   or in the global constant pool.
+class CompoundLiteralRegion : public SubRegion {
+private:
+  friend class MemRegionManager;
+  const CompoundLiteralExpr* CL;
+
+  CompoundLiteralRegion(const CompoundLiteralExpr* cl, const MemRegion* sReg)
+    : SubRegion(sReg,CompoundLiteralRegionKind), CL(cl) {}
+  
+  static void ProfileRegion(llvm::FoldingSetNodeID& ID,
+                            const CompoundLiteralExpr* CL,
+                            const MemRegion* superRegion);
+public:
+  void Profile(llvm::FoldingSetNodeID& ID) const;
+  
+  void print(llvm::raw_ostream& os) const;
+
+  static bool classof(const MemRegion* R) {
+    return R->getKind() == CompoundLiteralRegionKind;
+  }
 };
 
 class DeclRegion : public TypedRegion {
@@ -392,6 +419,11 @@ public:
   /// memory space.
   MemSpaceRegion* getUnknownRegion();
   
+  /// getCompoundLiteralRegion - Retrieve the region associated with a
+  ///  given CompoundLiteral.
+  CompoundLiteralRegion*
+  getCompoundLiteralRegion(const CompoundLiteralExpr* CL);  
+  
   /// getSymbolicRegion - Retrieve or create a "symbolic" memory region.
   SymbolicRegion* getSymbolicRegion(const SymbolID sym);
 
@@ -406,7 +438,7 @@ public:
     return getVarRegion(vd, vd->hasLocalStorage() ? getStackRegion() 
                         : getGlobalsRegion());
   }
-
+  
   ElementRegion* getElementRegion(SVal Idx, const MemRegion* superRegion);
 
   /// getFieldRegion - Retrieve or create the memory region associated with

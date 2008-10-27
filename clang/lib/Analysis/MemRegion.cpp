@@ -53,6 +53,18 @@ void AnonTypedRegion::Profile(llvm::FoldingSetNodeID& ID) const {
   AnonTypedRegion::ProfileRegion(ID, T, superRegion);
 }
 
+void CompoundLiteralRegion::Profile(llvm::FoldingSetNodeID& ID) const {
+  CompoundLiteralRegion::ProfileRegion(ID, CL, superRegion);
+}
+
+void CompoundLiteralRegion::ProfileRegion(llvm::FoldingSetNodeID& ID,
+                                          const CompoundLiteralExpr* CL,
+                                          const MemRegion* superRegion) {
+  ID.AddInteger((unsigned) CompoundLiteralRegionKind);
+  ID.AddPointer(CL);
+  ID.AddPointer(superRegion);
+}
+
 void DeclRegion::ProfileRegion(llvm::FoldingSetNodeID& ID, const Decl* D,
                                const MemRegion* superRegion, Kind k) {
   ID.AddInteger((unsigned) k);
@@ -123,6 +135,11 @@ void ElementRegion::print(llvm::raw_ostream& os) const {
   os << '['; Index.print(os); os << ']';
 }
 
+void CompoundLiteralRegion::print(llvm::raw_ostream& os) const {
+  // FIXME: More elaborate pretty-printing.
+  os << "{ " << (void*) CL <<  " }";
+}
+
 //===----------------------------------------------------------------------===//
 // MemRegionManager methods.
 //===----------------------------------------------------------------------===//
@@ -184,6 +201,30 @@ VarRegion* MemRegionManager::getVarRegion(const VarDecl* d,
   if (!R) {
     R = (VarRegion*) A.Allocate<VarRegion>();
     new (R) VarRegion(d, superRegion);
+    Regions.InsertNode(R, InsertPos);
+  }
+  
+  return R;
+}
+
+CompoundLiteralRegion*
+MemRegionManager::getCompoundLiteralRegion(const CompoundLiteralExpr* CL) {
+  // Is this compound literal allocated on the stack or is part of the
+  //  global constant pool?
+  const MemRegion* superRegion = CL->isFileScope() ?
+                                 getGlobalsRegion() : getStackRegion();
+
+  // Profile the compound literal.
+  llvm::FoldingSetNodeID ID;  
+  CompoundLiteralRegion::ProfileRegion(ID, CL, superRegion);  
+  
+  void* InsertPos;
+  MemRegion* data = Regions.FindNodeOrInsertPos(ID, InsertPos);
+  CompoundLiteralRegion* R = cast_or_null<CompoundLiteralRegion>(data);
+  
+  if (!R) {
+    R = (CompoundLiteralRegion*) A.Allocate<CompoundLiteralRegion>();
+    new (R) CompoundLiteralRegion(CL, superRegion);
     Regions.InsertNode(R, InsertPos);
   }
   
