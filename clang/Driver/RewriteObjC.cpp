@@ -456,10 +456,6 @@ void RewriteObjC::Initialize(ASTContext &context) {
   Preamble += "#endif\n";
   Preamble += "#define __NSCONSTANTSTRINGIMPL\n";
   Preamble += "#endif\n";
-  if (LangOpts.Microsoft) {
-    Preamble += "#undef __OBJC_RW_EXTERN\n";
-    Preamble += "#define __attribute__(X)\n";
-  }
   // Blocks preamble.
   Preamble += "#ifndef BLOCK_IMPL\n";
   Preamble += "#define BLOCK_IMPL\n";
@@ -473,10 +469,6 @@ void RewriteObjC::Initialize(ASTContext &context) {
   Preamble += "  BLOCK_HAS_COPY_DISPOSE = (1<<25),\n";
   Preamble += "  BLOCK_IS_GLOBAL = (1<<28)\n";
   Preamble += "};\n";
-  if (LangOpts.Microsoft) 
-    Preamble += "#define __OBJC_RW_EXTERN extern \"C\" __declspec(dllimport)\n";
-  else
-    Preamble += "#define __OBJC_RW_EXTERN extern\n";
   Preamble += "// Runtime copy/destroy helper functions\n";
   Preamble += "__OBJC_RW_EXTERN void _Block_copy_assign(void *, void *);\n";
   Preamble += "__OBJC_RW_EXTERN void _Block_byref_assign_copy(void *, void *);\n";
@@ -485,6 +477,10 @@ void RewriteObjC::Initialize(ASTContext &context) {
   Preamble += "__OBJC_RW_EXTERN void *_NSConcreteGlobalBlock;\n";
   Preamble += "__OBJC_RW_EXTERN void *_NSConcreteStackBlock;\n";
   Preamble += "#endif\n";
+  if (LangOpts.Microsoft) {
+    Preamble += "#undef __OBJC_RW_EXTERN\n";
+    Preamble += "#define __attribute__(X)\n";
+  }
 }
 
 
@@ -1138,9 +1134,23 @@ Stmt *RewriteObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
   for (Stmt::child_iterator CI = S->child_begin(), E = S->child_end();
        CI != E; ++CI)
     if (*CI) {
-      Stmt *newStmt = RewriteFunctionBodyOrGlobalInitializer(*CI);
-      if (newStmt) 
-        *CI = newStmt;
+      if (BlockExpr *CBE = dyn_cast<BlockExpr>(*CI)) {
+        Stmt *newStmt = RewriteFunctionBodyOrGlobalInitializer(CBE->getBody());
+        if (newStmt) 
+          *CI = newStmt;
+          
+        // We've just rewritten the block body in place.
+        // Now we snarf the rewritten text and stash it away for later use.
+        std::string S = Rewrite.getRewritenText(CBE->getSourceRange());
+        RewrittenBlockExprs[CBE] = S;
+        std::string Init = SynthesizeBlockInitExpr(CBE);
+        // Do the rewrite, using S.size() which contains the rewritten size.
+        ReplaceText(CBE->getLocStart(), S.size(), Init.c_str(), Init.size());
+      } else {
+        Stmt *newStmt = RewriteFunctionBodyOrGlobalInitializer(*CI);
+        if (newStmt) 
+          *CI = newStmt;
+      }
     }
       
   // Handle specific things.
