@@ -327,13 +327,13 @@ public:
   }
 };
 
-class ElementRegion : public SubRegion {
+class ElementRegion : public TypedRegion {
   friend class MemRegionManager;
 
   SVal Index;
 
   ElementRegion(SVal Idx, const MemRegion* sReg)
-    : SubRegion(sReg, ElementRegionKind), Index(Idx) {}
+    : TypedRegion(sReg, ElementRegionKind), Index(Idx) {}
 
   static void ProfileRegion(llvm::FoldingSetNodeID& ID, SVal Idx, 
                             const MemRegion* superRegion);
@@ -341,6 +341,8 @@ class ElementRegion : public SubRegion {
 public:
 
   SVal getIndex() const { return Index; }
+
+  QualType getType(ASTContext&) const;
 
   void print(llvm::raw_ostream& os) const;
 

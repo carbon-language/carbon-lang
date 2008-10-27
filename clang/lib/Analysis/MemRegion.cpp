@@ -83,6 +83,13 @@ void ElementRegion::ProfileRegion(llvm::FoldingSetNodeID& ID, SVal Idx,
 void ElementRegion::Profile(llvm::FoldingSetNodeID& ID) const {
   ElementRegion::ProfileRegion(ID, Index, superRegion);
 }
+
+QualType ElementRegion::getType(ASTContext& C) const {
+  QualType T = cast<TypedRegion>(superRegion)->getType(C);
+  ArrayType* AT = cast<ArrayType>(T.getTypePtr());
+  return AT->getElementType();
+}
+
 //===----------------------------------------------------------------------===//
 // Region pretty-printing.
 //===----------------------------------------------------------------------===//
