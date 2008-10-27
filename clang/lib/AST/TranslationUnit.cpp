@@ -33,7 +33,9 @@ enum { BasicMetadataBlock = 1,
 TranslationUnit::~TranslationUnit() {
   if (OwnsDecls) {
     llvm::DenseSet<Decl*> Killed;
-    for (iterator I=begin(), E=end(); I!=E; ++I) {
+    for (std::vector<Decl*>::reverse_iterator I=TopLevelDecls.rbegin(), 
+                                              E=TopLevelDecls.rend(); 
+         I!=E; ++I) {
       if (Killed.count(*I)) continue;
 
       Killed.insert(*I);
