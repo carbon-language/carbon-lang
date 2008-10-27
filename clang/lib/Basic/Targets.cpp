@@ -220,13 +220,15 @@ public:
     NumRecords = clang::PPC::LastTSBuiltin-Builtin::FirstTSBuiltin;
   }
   virtual const char *getVAListDeclaration() const {
-    return "typedef struct __va_list_tag {"
+    return "typedef char* __builtin_va_list;";
+    // This is the right definition for ABI/V4: System V.4/eabi.
+    /*return "typedef struct __va_list_tag {"
            "  unsigned char gpr;"
            "  unsigned char fpr;"
            "  unsigned short reserved;"
            "  void* overflow_arg_area;"
            "  void* reg_save_area;"
-           "} __builtin_va_list[1];";
+           "} __builtin_va_list[1];";*/
   }
   virtual const char *getTargetPrefix() const {
     return "ppc";
