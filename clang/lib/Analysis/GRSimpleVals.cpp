@@ -369,7 +369,7 @@ void GRSimpleVals::EvalCall(ExplodedNodeSet<GRState>& Dst,
 
     SVal V = StateMgr.GetSVal(St, *I);
     
-    if (isa<Loc>(V))
+    if (isa<loc::MemRegionVal>(V))
       St = StateMgr.SetSVal(St, cast<Loc>(V), UnknownVal());
     else if (isa<nonloc::LocAsInteger>(V))
       St = StateMgr.SetSVal(St, cast<nonloc::LocAsInteger>(V).getLoc(),
