@@ -655,7 +655,7 @@ void X86DAGToDAGISel::InstructionSelect() {
   DOUT << "===== Instruction selection begins:\n";
   Indent = 0;
 #endif
-  SelectRoot();
+  SelectRoot(*CurDAG);
 #ifndef NDEBUG
   DOUT << "===== Instruction selection ends:\n";
 #endif

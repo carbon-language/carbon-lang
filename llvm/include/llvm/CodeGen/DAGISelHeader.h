@@ -153,7 +153,7 @@ void ReplaceUses(SDNode *F, SDNode *T) DISABLE_INLINE {
 
 /// SelectRoot - Top level entry to DAG instruction selector.
 /// Selects instructions starting at the root of the current DAG.
-void SelectRoot() {
+void SelectRoot(SelectionDAG &DAG) {
   SelectRootInit();
   unsigned NumBytes = (DAGSize + 7) / 8;
   ISelQueued   = new unsigned char[NumBytes];
@@ -176,14 +176,18 @@ void SelectRoot() {
     // Skip already selected nodes.
     if (isSelected(Node->getNodeId()))
       continue;
+    DAG.setSubgraphColor(Node, "red");
     SDNode *ResNode = Select(SDValue(Node, 0));
     // If node should not be replaced, 
     // continue with the next one.
     if (ResNode == Node)
       continue;
     // Replace node.
-    if (ResNode)
+    if (ResNode) {
+      DAG.setSubgraphColor(ResNode, "yellow");
+      DAG.setSubgraphColor(ResNode, "black");
       ReplaceUses(Node, ResNode);
+    }
     // If after the replacement this node is not used any more,
     // remove this dead node.
     if (Node->use_empty()) { // Don't delete EntryToken, etc.
@@ -191,6 +195,7 @@ void SelectRoot() {
       CurDAG->RemoveDeadNode(Node, &ISQU);
       UpdateQueue(ISQU);
     }
+    //DAG.setSubgraphColor(Node, "black");
   }
 
   delete[] ISelQueued;

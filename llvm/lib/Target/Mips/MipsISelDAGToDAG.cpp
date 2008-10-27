@@ -105,7 +105,7 @@ InstructionSelect()
   #endif
 
   // Select target instructions for the DAG.
-  SelectRoot();
+  SelectRoot(*CurDAG);
 
   #ifndef NDEBUG
   DOUT << "===== Instruction selection ends:\n";

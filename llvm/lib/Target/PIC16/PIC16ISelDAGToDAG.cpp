@@ -102,7 +102,7 @@ void PIC16DAGToDAGISel::InstructionSelect()
 #endif
 
   // Select target instructions for the DAG.
-  SelectRoot();
+  SelectRoot(*CurDAG);
 
   DOUT << "===== Instruction selection ends:\n";
 

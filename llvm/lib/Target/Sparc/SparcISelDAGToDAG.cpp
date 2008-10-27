@@ -70,7 +70,7 @@ void SparcDAGToDAGISel::InstructionSelect() {
   DEBUG(BB->dump());
 
   // Select target instructions for the DAG.
-  SelectRoot();
+  SelectRoot(*CurDAG);
   CurDAG->RemoveDeadNodes();
 }
 

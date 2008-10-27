@@ -94,7 +94,7 @@ public:
 void ARMDAGToDAGISel::InstructionSelect() {
   DEBUG(BB->dump());
 
-  SelectRoot();
+  SelectRoot(*CurDAG);
   CurDAG->RemoveDeadNodes();
 }
 

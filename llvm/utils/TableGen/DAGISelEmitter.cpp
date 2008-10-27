@@ -14,12 +14,20 @@
 #include "DAGISelEmitter.h"
 #include "Record.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/Streams.h"
 #include <algorithm>
 #include <deque>
 using namespace llvm;
+
+namespace {
+  cl::opt<bool>
+  GenDebug("gen-debug", cl::desc("Generate debug code"),
+              cl::init(false));
+}
 
 //===----------------------------------------------------------------------===//
 // DAGISelEmitter Helper methods
@@ -969,6 +977,10 @@ public:
         emitCode("InChains.push_back(" + ChainName + ");");
         emitCode(ChainName + " = CurDAG->getNode(ISD::TokenFactor, MVT::Other, "
                  "&InChains[0], InChains.size());");
+        if (GenDebug) {
+          emitCode("CurDAG->setSubgraphColor(" + ChainName +".getNode(), \"yellow\");");
+          emitCode("CurDAG->setSubgraphColor(" + ChainName +".getNode(), \"black\");");
+        }
       }
 
       // Loop over all of the operands of the instruction pattern, emitting code
@@ -1096,13 +1108,18 @@ public:
       if (II.isSimpleLoad | II.mayLoad | II.mayStore) {
         std::vector<std::string>::const_iterator mi, mie;
         for (mi = LSI.begin(), mie = LSI.end(); mi != mie; ++mi) {
-          emitCode("SDValue LSI_" + *mi + " = "
+          std::string LSIName = "LSI_" + *mi;
+          emitCode("SDValue " + LSIName + " = "
                    "CurDAG->getMemOperand(cast<MemSDNode>(" +
                    *mi + ")->getMemOperand());");
+          if (GenDebug) {
+            emitCode("CurDAG->setSubgraphColor(" + LSIName +".getNode(), \"yellow\");");
+            emitCode("CurDAG->setSubgraphColor(" + LSIName +".getNode(), \"black\");");
+          }
           if (IsVariadic)
-            emitCode("Ops" + utostr(OpsNo) + ".push_back(LSI_" + *mi + ");");
+            emitCode("Ops" + utostr(OpsNo) + ".push_back(" + LSIName + ");");
           else
-            AllOps.push_back("LSI_" + *mi);
+            AllOps.push_back(LSIName);
         }
       }
 
@@ -1269,6 +1286,18 @@ public:
       }
 
       emitCode(CodePrefix + Code + ");");
+
+      if (GenDebug) {
+        if (!isRoot) {
+          emitCode("CurDAG->setSubgraphColor(" + NodeName +".getNode(), \"yellow\");");
+          emitCode("CurDAG->setSubgraphColor(" + NodeName +".getNode(), \"black\");");
+        }
+        else {
+          emitCode("CurDAG->setSubgraphColor(" + NodeName +", \"yellow\");");
+          emitCode("CurDAG->setSubgraphColor(" + NodeName +", \"black\");");
+        }
+      }
+
       for (unsigned i = 0, e = After.size(); i != e; ++i)
         emitCode(After[i]);
 
@@ -1766,8 +1795,19 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
 
         // Replace the emission code within selection routines with calls to the
         // emission functions.
-        CallerCode = "return Emit_" + utostr(EmitFuncNum) + CallerCode;
-        GeneratedCode.push_back(std::make_pair(false, CallerCode));
+        if (GenDebug) {
+          GeneratedCode.push_back(std::make_pair(0, "CurDAG->setSubgraphColor(N.getNode(), \"red\");"));
+        }
+        CallerCode = "SDNode *Result = Emit_" + utostr(EmitFuncNum) + CallerCode;
+        GeneratedCode.push_back(std::make_pair(3, CallerCode));
+        if (GenDebug) {
+          GeneratedCode.push_back(std::make_pair(0, "if(Result) {"));
+          GeneratedCode.push_back(std::make_pair(0, "  CurDAG->setSubgraphColor(Result, \"yellow\");"));
+          GeneratedCode.push_back(std::make_pair(0, "  CurDAG->setSubgraphColor(Result, \"black\");"));
+          GeneratedCode.push_back(std::make_pair(0, "}"));
+          //GeneratedCode.push_back(std::make_pair(0, "CurDAG->setSubgraphColor(N.getNode(), \"black\");"));
+        }
+        GeneratedCode.push_back(std::make_pair(0, "return Result;"));
       }
 
       // Print function.
