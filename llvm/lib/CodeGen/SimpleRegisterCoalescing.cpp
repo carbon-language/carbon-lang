@@ -707,6 +707,18 @@ bool SimpleRegisterCoalescing::ShortenDeadCopyLiveRange(LiveInterval &li,
   return false;
 }
 
+/// RemoveDeadDef - If a def of a live interval is now determined dead, remove
+/// the val# it defines. If the live interval becomes empty, remove it as well.
+bool SimpleRegisterCoalescing::RemoveDeadDef(LiveInterval &li,
+                                             MachineInstr *DefMI) {
+  unsigned DefIdx = li_->getDefIndex(li_->getInstructionIndex(DefMI));
+  LiveInterval::iterator MLR = li.FindLiveRangeContaining(DefIdx);
+  if (DefIdx != MLR->valno->def)
+    return false;
+  li.removeValNo(MLR->valno);
+  return removeIntervalIfEmpty(li, li_, tri_);
+}
+
 /// PropagateDeadness - Propagate the dead marker to the instruction which
 /// defines the val#.
 static void PropagateDeadness(LiveInterval &li, MachineInstr *CopyMI,
@@ -2280,6 +2292,7 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
 
   // Perform a final pass over the instructions and compute spill weights
   // and remove identity moves.
+  SmallVector<unsigned, 4> DeadDefs;
   for (MachineFunction::iterator mbbi = mf_->begin(), mbbe = mf_->end();
        mbbi != mbbe; ++mbbi) {
     MachineBasicBlock* mbb = mbbi;
@@ -2313,9 +2326,13 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
         bool isDead = true;
         for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
           const MachineOperand &MO = MI->getOperand(i);
-          if (!MO.isReg() || MO.isDead())
+          if (!MO.isReg())
             continue;
           unsigned Reg = MO.getReg();
+          if (TargetRegisterInfo::isVirtualRegister(Reg))
+            DeadDefs.push_back(Reg);
+          if (MO.isDead())
+            continue;
           if (TargetRegisterInfo::isPhysicalRegister(Reg) ||
               !mri_->use_empty(Reg)) {
             isDead = false;
@@ -2323,10 +2340,16 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
           }
         }
         if (isDead) {
+          while (!DeadDefs.empty()) {
+            unsigned DeadDef = DeadDefs.back();
+            DeadDefs.pop_back();
+            RemoveDeadDef(li_->getInterval(DeadDef), MI);
+          }
           li_->RemoveMachineInstrFromMaps(mii);
           mii = mbbi->erase(mii);
           continue;
-        }
+        } else
+          DeadDefs.clear();
       }
 
       // If the move will be an identity move delete it

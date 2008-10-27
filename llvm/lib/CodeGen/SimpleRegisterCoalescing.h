@@ -269,6 +269,11 @@ namespace llvm {
     /// live range is dead. Return true if live interval is removed.
     bool ShortenDeadCopySrcLiveRange(LiveInterval &li, MachineInstr *CopyMI);
 
+    /// RemoveDeadDef - If a def of a live interval is now determined dead,
+    /// remove the val# it defines. If the live interval becomes empty, remove
+    /// it as well.
+    bool RemoveDeadDef(LiveInterval &li, MachineInstr *DefMI);
+
     /// lastRegisterUse - Returns the last use of the specific register between
     /// cycles Start and End or NULL if there are no uses.
     MachineOperand *lastRegisterUse(unsigned Start, unsigned End, unsigned Reg,

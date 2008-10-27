@@ -561,6 +561,9 @@ bool PreAllocSplitting::SplitRegLiveInterval(LiveInterval *LI) {
     SpillMI = prior(SpillPt);
     LIs->InsertMachineInstrInMaps(SpillMI, SpillIndex);
   } else if (!PrevSpilled) {
+    if (!DefMI)
+      // Def is dead. Do nothing.
+      return false;
     // If it's already split, just restore the value. There is no need to spill
     // the def again.
     // Check if it's possible to insert a spill after the def MI.
