@@ -36,7 +36,57 @@ namespace clang {
   class StringLiteral;
   class SwitchStmt;
   class PrinterHelper;
-    
+  
+  //===----------------------------------------------------------------------===//
+  // ExprIterator - Iterators for iterating over Stmt* arrays that contain
+  //  only Expr*.  This is needed because AST nodes use Stmt* arrays to store
+  //  references to children (to be compatible with StmtIterator).
+  //===----------------------------------------------------------------------===//
+  
+  class Stmt;
+  class Expr;
+  
+  class ExprIterator {
+    Stmt** I;
+  public:
+    ExprIterator(Stmt** i) : I(i) {}
+    ExprIterator() : I(0) {}    
+    ExprIterator& operator++() { ++I; return *this; }
+    ExprIterator operator-(size_t i) { return I-i; }
+    ExprIterator operator+(size_t i) { return I+i; }
+    Expr* operator[](size_t idx);
+    // FIXME: Verify that this will correctly return a signed distance.
+    signed operator-(const ExprIterator& R) const { return I - R.I; }
+    Expr* operator*() const;
+    Expr* operator->() const;
+    bool operator==(const ExprIterator& R) const { return I == R.I; }
+    bool operator!=(const ExprIterator& R) const { return I != R.I; }
+    bool operator>(const ExprIterator& R) const { return I > R.I; }
+    bool operator>=(const ExprIterator& R) const { return I >= R.I; }
+  };
+  
+  class ConstExprIterator {
+    Stmt* const * I;
+  public:
+    ConstExprIterator(Stmt* const* i) : I(i) {}
+    ConstExprIterator() : I(0) {}    
+    ConstExprIterator& operator++() { ++I; return *this; }
+    ConstExprIterator operator+(size_t i) { return I+i; }
+    ConstExprIterator operator-(size_t i) { return I-i; }
+    const Expr * operator[](size_t idx) const;
+    signed operator-(const ConstExprIterator& R) const { return I - R.I; }
+    const Expr * operator*() const;
+    const Expr * operator->() const;
+    bool operator==(const ConstExprIterator& R) const { return I == R.I; }
+    bool operator!=(const ConstExprIterator& R) const { return I != R.I; }
+    bool operator>(const ConstExprIterator& R) const { return I > R.I; }
+    bool operator>=(const ConstExprIterator& R) const { return I >= R.I; }
+  }; 
+  
+//===----------------------------------------------------------------------===//
+// AST classes for statements.
+//===----------------------------------------------------------------------===//
+  
 /// Stmt - This represents one statement.
 ///
 class Stmt {
@@ -803,7 +853,7 @@ class AsmStmt : public Stmt {
   
   llvm::SmallVector<std::string, 4> Names;
   llvm::SmallVector<StringLiteral*, 4> Constraints;
-  llvm::SmallVector<Expr*, 4> Exprs;
+  llvm::SmallVector<Stmt*, 4> Exprs;
 
   llvm::SmallVector<StringLiteral*, 4> Clobbers;
 public:
@@ -817,24 +867,35 @@ public:
   bool isSimple() const { return IsSimple; }
 
   unsigned getNumOutputs() const { return NumOutputs; }
-  const std::string &getOutputName(unsigned i) const
-    { return Names[i]; }
-  const StringLiteral *getOutputConstraint(unsigned i) const
-  { return Constraints[i]; }
+
+  const std::string &getOutputName(unsigned i) const {
+    return Names[i];
+  }
+
+  const StringLiteral *getOutputConstraint(unsigned i) const {
+    return Constraints[i];
+  }
+
   StringLiteral *getOutputConstraint(unsigned i)
     { return Constraints[i]; }
-  const Expr *getOutputExpr(unsigned i) const { return Exprs[i]; }
-  Expr *getOutputExpr(unsigned i) { return Exprs[i]; }
+
+  const Expr *getOutputExpr(unsigned i) const;
+  Expr *getOutputExpr(unsigned i);
   
   unsigned getNumInputs() const { return NumInputs; }  
-  const std::string &getInputName(unsigned i) const
-    { return Names[i + NumOutputs]; }
-  StringLiteral *getInputConstraint(unsigned i) 
-    { return Constraints[i + NumOutputs]; }
-  const StringLiteral *getInputConstraint(unsigned i) const
-    { return Constraints[i + NumOutputs]; }
-  Expr *getInputExpr(unsigned i) { return Exprs[i + NumOutputs]; }
-  const Expr *getInputExpr(unsigned i) const { return Exprs[i + NumOutputs]; }
+  
+  const std::string &getInputName(unsigned i) const {
+    return Names[i + NumOutputs];
+  }
+  StringLiteral *getInputConstraint(unsigned i) {
+    return Constraints[i + NumOutputs];
+  }
+  const StringLiteral *getInputConstraint(unsigned i) const {
+    return Constraints[i + NumOutputs];
+  }
+
+  Expr *getInputExpr(unsigned i);
+  const Expr *getInputExpr(unsigned i) const;
 
   const StringLiteral *getAsmString() const { return AsmStr; }
   StringLiteral *getAsmString() { return AsmStr; }
@@ -852,27 +913,34 @@ public:
   
   // Input expr iterators.
   
-  typedef Expr* const * inputs_iterator;
-  typedef const Expr* const* const_inputs_iterator;
+  typedef ExprIterator inputs_iterator;
+  typedef ConstExprIterator const_inputs_iterator;
   
-  inputs_iterator begin_inputs() { return &Exprs[0] + NumOutputs; }
-  inputs_iterator end_inputs() { return begin_inputs() + NumInputs; }
+  inputs_iterator begin_inputs() {
+    return &Exprs[0] + NumOutputs;
+  }
   
-  const_inputs_iterator begin_inputs() const { return &Exprs[0] + NumOutputs; }
-  const_inputs_iterator end_inputs() const { return begin_inputs() + NumInputs;}
+  inputs_iterator end_inputs() {
+    return  &Exprs[0] + NumOutputs + NumInputs;
+  }
+  
+  const_inputs_iterator begin_inputs() const {
+    return &Exprs[0] + NumOutputs;
+  }
+  
+  const_inputs_iterator end_inputs() const {
+    return  &Exprs[0] + NumOutputs + NumInputs;}
   
   // Output expr iterators.
   
-  typedef Expr* const * outputs_iterator;
-  typedef const Expr* const* const_outputs_iterator;
+  typedef ExprIterator outputs_iterator;
+  typedef ConstExprIterator const_outputs_iterator;
   
   outputs_iterator begin_outputs() { return &Exprs[0]; }
-  outputs_iterator end_outputs() { return begin_outputs() + NumOutputs; }
+  outputs_iterator end_outputs() { return &Exprs[0] + NumOutputs; }
   
   const_outputs_iterator begin_outputs() const { return &Exprs[0]; }
-  const_outputs_iterator end_outputs() const {
-    return begin_outputs() + NumOutputs;
-  }
+  const_outputs_iterator end_outputs() const { return &Exprs[0] + NumOutputs; }
   
   // Child iterators  
   

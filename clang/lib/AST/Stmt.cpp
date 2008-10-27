@@ -128,6 +128,19 @@ bool Stmt::hasImplicitControlFlow() const {
   }
 }
 
+const Expr* AsmStmt::getOutputExpr(unsigned i) const {
+  return cast<Expr>(Exprs[i]);
+}
+Expr* AsmStmt::getOutputExpr(unsigned i) {
+  return cast<Expr>(Exprs[i]);
+}
+Expr* AsmStmt::getInputExpr(unsigned i) {
+  return cast<Expr>(Exprs[i + NumOutputs]);
+}
+const Expr* AsmStmt::getInputExpr(unsigned i) const {
+  return cast<Expr>(Exprs[i + NumOutputs]);
+}
+
 //===----------------------------------------------------------------------===//
 // Constructors
 //===----------------------------------------------------------------------===//
@@ -279,8 +292,12 @@ Stmt::child_iterator ReturnStmt::child_end() {
 }
 
 // AsmStmt
-Stmt::child_iterator AsmStmt::child_begin() { return child_iterator(); }
-Stmt::child_iterator AsmStmt::child_end() { return child_iterator(); }
+Stmt::child_iterator AsmStmt::child_begin() { 
+  return Exprs.empty() ? 0 : &Exprs[0];
+}
+Stmt::child_iterator AsmStmt::child_end() {
+  return Exprs.empty() ? 0 : &Exprs[0] + Exprs.size();
+}
 
 // ObjCAtCatchStmt
 Stmt::child_iterator ObjCAtCatchStmt::child_begin() { return &SubExprs[0]; }

@@ -164,49 +164,6 @@ public:
   }
 };
 
-//===----------------------------------------------------------------------===//
-// ExprIterator - Iterators for iterating over Stmt* arrays that contain
-//  only Expr*.  This is needed because AST nodes use Stmt* arrays to store
-//  references to children (to be compatible with StmtIterator).
-//===----------------------------------------------------------------------===//
-  
-class ExprIterator {
-  Stmt** I;
-public:
-  ExprIterator(Stmt** i) : I(i) {}
-  ExprIterator() : I(0) {}    
-  ExprIterator& operator++() { ++I; return *this; }
-  ExprIterator operator-(size_t i) { return I-i; }
-  ExprIterator operator+(size_t i) { return I+i; }
-  Expr* operator[](size_t idx) { return cast<Expr>(I[idx]); }
-  // FIXME: Verify that this will correctly return a signed distance.
-  signed operator-(const ExprIterator& R) const { return I - R.I; }
-  Expr* operator*() const { return cast<Expr>(*I); }
-  Expr* operator->() const { return cast<Expr>(*I); }
-  bool operator==(const ExprIterator& R) const { return I == R.I; }
-  bool operator!=(const ExprIterator& R) const { return I != R.I; }
-  bool operator>(const ExprIterator& R) const { return I > R.I; }
-  bool operator>=(const ExprIterator& R) const { return I >= R.I; }
-};
-
-class ConstExprIterator {
-  Stmt* const * I;
-public:
-  ConstExprIterator(Stmt* const* i) : I(i) {}
-  ConstExprIterator() : I(0) {}    
-  ConstExprIterator& operator++() { ++I; return *this; }
-  ConstExprIterator operator+(size_t i) { return I+i; }
-  ConstExprIterator operator-(size_t i) { return I-i; }
-  Expr * operator[](size_t idx) const { return cast<Expr>(I[idx]); }
-  signed operator-(const ConstExprIterator& R) const { return I - R.I; }
-  Expr * operator*() const { return cast<Expr>(*I); }
-  Expr * operator->() const { return cast<Expr>(*I); }
-  bool operator==(const ConstExprIterator& R) const { return I == R.I; }
-  bool operator!=(const ConstExprIterator& R) const { return I != R.I; }
-  bool operator>(const ConstExprIterator& R) const { return I > R.I; }
-  bool operator>=(const ConstExprIterator& R) const { return I >= R.I; }
-}; 
-  
   
 //===----------------------------------------------------------------------===//
 // Primary Expressions.
