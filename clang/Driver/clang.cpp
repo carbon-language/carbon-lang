@@ -1321,7 +1321,8 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
     ParseAST(PP, Consumer.get(), Stats, !DisableFree);
 
   if (VerifyDiagnostics)
-    exit(CheckDiagnostics(PP));
+    if (CheckDiagnostics(PP))
+      exit(1);
 
   if (Stats) {
     fprintf(stderr, "\nSTATISTICS FOR '%s':\n", InFile.c_str());
@@ -1529,5 +1530,9 @@ int main(int argc, char **argv) {
     fprintf(stderr, "\n");
   }
   
+  // If verifying diagnostics and we reached here, all is well.
+  if (VerifyDiagnostics)
+    return 0;
+
   return HadErrors || (Diags.getNumErrors() != 0);
 }
