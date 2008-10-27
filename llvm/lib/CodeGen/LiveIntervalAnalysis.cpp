@@ -1231,6 +1231,17 @@ rewriteInstructionForSpills(const LiveInterval &li, const VNInfo *VNI,
       if (!TrySplit)
       SSWeight += Weight;
 
+    // Create a new virtual register for the spill interval.
+    // Create the new register now so we can map the fold instruction
+    // to the new register so when it is unfolded we get the correct
+    // answer.
+    bool CreatedNewVReg = false;
+    if (NewVReg == 0) {
+      NewVReg = mri_->createVirtualRegister(rc);
+      vrm.grow();
+      CreatedNewVReg = true;
+    }
+
     if (!TryFold)
       CanFold = false;
     else {
@@ -1238,9 +1249,16 @@ rewriteInstructionForSpills(const LiveInterval &li, const VNInfo *VNI,
       // optimal point to insert a load / store later.
       if (!TrySplit) {
         if (tryFoldMemoryOperand(MI, vrm, ReMatDefMI, index,
-                                 Ops, FoldSS, FoldSlot, Reg)) {
+                                 Ops, FoldSS, FoldSlot, NewVReg)) {
           // Folding the load/store can completely change the instruction in
           // unpredictable ways, rescan it from the beginning.
+
+          if (FoldSS) {
+            // We need to give the new vreg the same stack slot as the
+            // spilled interval.
+            vrm.assignVirt2StackSlot(NewVReg, FoldSlot);
+          }
+
           HasUse = false;
           HasDef = false;
           CanFold = false;
@@ -1256,13 +1274,6 @@ rewriteInstructionForSpills(const LiveInterval &li, const VNInfo *VNI,
       }
     }
 
-    // Create a new virtual register for the spill interval.
-    bool CreatedNewVReg = false;
-    if (NewVReg == 0) {
-      NewVReg = mri_->createVirtualRegister(rc);
-      vrm.grow();
-      CreatedNewVReg = true;
-    }
     mop.setReg(NewVReg);
     if (mop.isImplicit())
       rewriteImplicitOps(li, MI, NewVReg, vrm);
