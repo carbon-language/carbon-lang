@@ -166,7 +166,7 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
     } else if (!Rec->isSubClassOf("RegisterClass") && 
                Rec->getName() != "ptr_rc" && Rec->getName() != "unknown")
       throw "Unknown operand class '" + Rec->getName() +
-            "' in instruction '" + R->getName() + "' instruction!";
+            "' in '" + R->getName() + "' instruction!";
 
     // Check that the operand has a name and that it's unique.
     if (DI->getArgName(i).empty())
