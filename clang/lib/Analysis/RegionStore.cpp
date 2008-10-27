@@ -168,6 +168,9 @@ SVal RegionStoreManager::getLValueElement(const GRState* St,
   if (Base.isUnknownOrUndef())
     return Base;
 
+  if (isa<loc::SymbolVal>(Base))
+    return Base;
+
   loc::MemRegionVal& BaseL = cast<loc::MemRegionVal>(Base);
 
   // We expect BaseR is an ElementRegion, not a base VarRegion.
