@@ -19,8 +19,7 @@ namespace clang {
   class ASTConsumer;
   
   /// ParseAST - Parse the entire file specified, notifying the ASTConsumer as
-  /// the file is parsed.  This takes ownership of the ASTConsumer and
-  /// ultimately deletes it.
+  /// the file is parsed.
   ///
   /// \param FreeMemory If false, the memory used for AST elements is
   /// not released.
