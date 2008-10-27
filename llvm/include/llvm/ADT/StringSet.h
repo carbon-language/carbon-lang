@@ -27,12 +27,12 @@ namespace llvm {
   class StringSet : public llvm::StringMap<char, AllocatorTy> {
     typedef llvm::StringMap<char, AllocatorTy> base;
   public:
-    void insert (const std::string& InLang) {
+    bool insert (const std::string& InLang) {
       assert(!InLang.empty());
       const char* KeyStart = &InLang[0];
       const char* KeyEnd = KeyStart + InLang.size();
-      base::insert(llvm::StringMapEntry<char>::
-                   Create(KeyStart, KeyEnd, base::getAllocator(), '+'));
+      return base::insert(llvm::StringMapEntry<char>::
+                          Create(KeyStart, KeyEnd, base::getAllocator(), '+'));
     }
   };
 }
