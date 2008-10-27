@@ -233,6 +233,9 @@ SVal RegionStoreManager::Retrieve(Store S, Loc L, QualType T) {
 }
 
 Store RegionStoreManager::Bind(Store store, Loc LV, SVal V) {
+  if (LV.getSubKind() == loc::SymbolValKind)
+    return store;
+
   assert(LV.getSubKind() == loc::MemRegionKind);
 
   const MemRegion* R = cast<loc::MemRegionVal>(LV).getRegion();
@@ -373,7 +376,8 @@ Store RegionStoreManager::InitializeArrayToUndefined(Store store, QualType T,
 
 Store RegionStoreManager::InitializeStructToUndefined(Store store, QualType T,
                                                       MemRegion* BaseR) {
-  const RecordType* RT = cast<RecordType>(T.getTypePtr());
+  QualType CT = T->getCanonicalTypeInternal();
+  const RecordType* RT = cast<RecordType>(CT.getTypePtr());
   RecordDecl* RD = RT->getDecl();
   assert(RD->isDefinition());
   
