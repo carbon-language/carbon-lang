@@ -40,6 +40,7 @@ namespace {
 }
 
 
+const PassInfo *const llvm::InstructionNamerID = &X;
 //===----------------------------------------------------------------------===//
 //
 // InstructionNamer - Give any unnamed non-void instructions "tmp" names.
