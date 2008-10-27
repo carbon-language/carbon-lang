@@ -1259,7 +1259,8 @@ Stmt *RewriteObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
       RewriteBlockCall(CE);
   }
   if (CastExpr *CE = dyn_cast<CastExpr>(S)) {
-    RewriteCastExpr(CE);
+    if (CE->getLocStart().isValid())
+      RewriteCastExpr(CE);
   }
 #if 0
   if (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(S)) {
@@ -2576,6 +2577,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
 
 Stmt *RewriteObjC::RewriteMessageExpr(ObjCMessageExpr *Exp) {
   Stmt *ReplacingStmt = SynthMessageExpr(Exp);
+  
   // Now do the actual rewrite.
   ReplaceStmt(Exp, ReplacingStmt);
   
