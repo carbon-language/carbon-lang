@@ -42,7 +42,7 @@ static cl::opt<cl::boolOrDefault> FlagEnableTailMerge("enable-tail-merge",
 static cl::opt<unsigned>
 TailMergeThreshold("tail-merge-threshold", 
           cl::desc("Max number of predecessors to consider tail merging"),
-          cl::init(100), cl::Hidden);
+          cl::init(150), cl::Hidden);
 
 namespace {
   struct VISIBILITY_HIDDEN BranchFolder : public MachineFunctionPass {
