@@ -1106,6 +1106,7 @@ private:
   bool CheckArithmeticConstantExpression(const Expr* e);
   bool CheckAddressConstantExpression(const Expr* e);
   bool CheckAddressConstantExpressionLValue(const Expr* e);
+  void InitializerElementNotConstant(const Expr *e);
   
   StringLiteral *IsStringLiteralInit(Expr *Init, QualType DeclType);
   bool CheckStringLiteralInit(StringLiteral *strLiteral, QualType &DeclT);

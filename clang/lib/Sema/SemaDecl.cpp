@@ -957,11 +957,15 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
   return New;
 }
 
+void Sema::InitializerElementNotConstant(const Expr *Init) {
+  Diag(Init->getExprLoc(),
+       diag::err_init_element_not_constant, Init->getSourceRange());
+}
+
 bool Sema::CheckAddressConstantExpressionLValue(const Expr* Init) {
   switch (Init->getStmtClass()) {
   default:
-    Diag(Init->getExprLoc(),
-         diag::err_init_element_not_constant, Init->getSourceRange());
+    InitializerElementNotConstant(Init);
     return true;
   case Expr::ParenExprClass: {
     const ParenExpr* PE = cast<ParenExpr>(Init);
@@ -974,14 +978,12 @@ bool Sema::CheckAddressConstantExpressionLValue(const Expr* Init) {
     if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
       if (VD->hasGlobalStorage())
         return false;
-      Diag(Init->getExprLoc(),
-           diag::err_init_element_not_constant, Init->getSourceRange());
+      InitializerElementNotConstant(Init);
       return true;
     }
     if (isa<FunctionDecl>(D))
       return false;
-    Diag(Init->getExprLoc(),
-         diag::err_init_element_not_constant, Init->getSourceRange());
+    InitializerElementNotConstant(Init);
     return true;
   }
   case Expr::MemberExprClass: {
@@ -1006,8 +1008,7 @@ bool Sema::CheckAddressConstantExpressionLValue(const Expr* Init) {
     if (Exp->getOpcode() == UnaryOperator::Deref)
       return CheckAddressConstantExpression(Exp->getSubExpr());
 
-    Diag(Init->getExprLoc(),
-         diag::err_init_element_not_constant, Init->getSourceRange());
+    InitializerElementNotConstant(Init);
     return true;
   }
   }
@@ -1016,8 +1017,7 @@ bool Sema::CheckAddressConstantExpressionLValue(const Expr* Init) {
 bool Sema::CheckAddressConstantExpression(const Expr* Init) {
   switch (Init->getStmtClass()) {
   default:
-    Diag(Init->getExprLoc(),
-         diag::err_init_element_not_constant, Init->getSourceRange());
+    InitializerElementNotConstant(Init);
     return true;
   case Expr::ParenExprClass:
     return CheckAddressConstantExpression(cast<ParenExpr>(Init)->getSubExpr());
@@ -1030,8 +1030,7 @@ bool Sema::CheckAddressConstantExpression(const Expr* Init) {
            Builtin::BI__builtin___CFStringMakeConstantString)
       return false;
       
-    Diag(Init->getExprLoc(),
-         diag::err_init_element_not_constant, Init->getSourceRange());
+    InitializerElementNotConstant(Init);
     return true;
       
   case Expr::UnaryOperatorClass: {
@@ -1044,8 +1043,7 @@ bool Sema::CheckAddressConstantExpression(const Expr* Init) {
     if (Exp->getOpcode() == UnaryOperator::Extension)
       return CheckAddressConstantExpression(Exp->getSubExpr());
   
-    Diag(Init->getExprLoc(),
-         diag::err_init_element_not_constant, Init->getSourceRange());
+    InitializerElementNotConstant(Init);
     return true;
   }
   case Expr::BinaryOperatorClass: {
@@ -1093,16 +1091,14 @@ bool Sema::CheckAddressConstantExpression(const Expr* Init) {
       return CheckArithmeticConstantExpression(SubExpr);
     }
 
-    Diag(Init->getExprLoc(),
-         diag::err_init_element_not_constant, Init->getSourceRange());
+    InitializerElementNotConstant(Init);
     return true;
   }
   case Expr::ConditionalOperatorClass: {
     // FIXME: Should we pedwarn here?
     const ConditionalOperator *Exp = cast<ConditionalOperator>(Init);
     if (!Exp->getCond()->getType()->isArithmeticType()) {
-      Diag(Init->getExprLoc(),
-           diag::err_init_element_not_constant, Init->getSourceRange());
+      InitializerElementNotConstant(Init);
       return true;
     }
     if (CheckArithmeticConstantExpression(Exp->getCond()))
@@ -1211,8 +1207,7 @@ static const Expr* FindExpressionBaseAddress(const Expr* E) {
 bool Sema::CheckArithmeticConstantExpression(const Expr* Init) {
   switch (Init->getStmtClass()) {
   default:
-    Diag(Init->getExprLoc(),
-         diag::err_init_element_not_constant, Init->getSourceRange());
+    InitializerElementNotConstant(Init);
     return true;
   case Expr::ParenExprClass: {
     const ParenExpr* PE = cast<ParenExpr>(Init);
@@ -1232,16 +1227,14 @@ bool Sema::CheckArithmeticConstantExpression(const Expr* Init) {
     if (CE->isBuiltinCall() && CE->isEvaluatable(Context))
       return false;
     
-    Diag(Init->getExprLoc(),
-         diag::err_init_element_not_constant, Init->getSourceRange());
+    InitializerElementNotConstant(Init);
     return true;
   }
   case Expr::DeclRefExprClass: {
     const Decl *D = cast<DeclRefExpr>(Init)->getDecl();
     if (isa<EnumConstantDecl>(D))
       return false;
-    Diag(Init->getExprLoc(),
-         diag::err_init_element_not_constant, Init->getSourceRange());
+    InitializerElementNotConstant(Init);
     return true;
   }
   case Expr::CompoundLiteralExprClass:
@@ -1249,8 +1242,7 @@ bool Sema::CheckArithmeticConstantExpression(const Expr* Init) {
     // but vectors are allowed to be magic.
     if (Init->getType()->isVectorType())
       return false;
-    Diag(Init->getExprLoc(),
-         diag::err_init_element_not_constant, Init->getSourceRange());
+    InitializerElementNotConstant(Init);
     return true;
   case Expr::UnaryOperatorClass: {
     const UnaryOperator *Exp = cast<UnaryOperator>(Init);
@@ -1259,8 +1251,7 @@ bool Sema::CheckArithmeticConstantExpression(const Expr* Init) {
     // Address, indirect, pre/post inc/dec, etc are not valid constant exprs.
     // See C99 6.6p3.
     default:
-      Diag(Init->getExprLoc(),
-           diag::err_init_element_not_constant, Init->getSourceRange());
+      InitializerElementNotConstant(Init);
       return true;
     case UnaryOperator::SizeOf:
     case UnaryOperator::AlignOf:
@@ -1269,8 +1260,7 @@ bool Sema::CheckArithmeticConstantExpression(const Expr* Init) {
       // See C99 6.5.3.4p2 and 6.6p3.
       if (Exp->getSubExpr()->getType()->isConstantSizeType())
         return false;
-      Diag(Init->getExprLoc(),
-           diag::err_init_element_not_constant, Init->getSourceRange());
+      InitializerElementNotConstant(Init);
       return true;
     case UnaryOperator::Extension:
     case UnaryOperator::LNot:
@@ -1288,8 +1278,7 @@ bool Sema::CheckArithmeticConstantExpression(const Expr* Init) {
     // alignof always evaluates to a constant.
     // FIXME: is sizeof(int[3.0]) a constant expression?
     if (Exp->isSizeOf() && !Exp->getArgumentType()->isConstantSizeType()) {
-      Diag(Init->getExprLoc(),
-           diag::err_init_element_not_constant, Init->getSourceRange());
+      InitializerElementNotConstant(Init);
       return true;
     }
     return false;
@@ -1317,8 +1306,7 @@ bool Sema::CheckArithmeticConstantExpression(const Expr* Init) {
       }
     }
 
-    Diag(Init->getExprLoc(),
-         diag::err_init_element_not_constant, Init->getSourceRange());
+    InitializerElementNotConstant(Init);
     return true;
   }
   case Expr::ImplicitCastExprClass:
@@ -1334,8 +1322,7 @@ bool Sema::CheckArithmeticConstantExpression(const Expr* Init) {
         return CheckAddressConstantExpression(SubExpr);
     }
 
-    Diag(Init->getExprLoc(),
-         diag::err_init_element_not_constant, Init->getSourceRange());
+    InitializerElementNotConstant(Init);
     return true;
   }
   case Expr::ConditionalOperatorClass: {
@@ -1466,8 +1453,7 @@ bool Sema::CheckForConstantInitializer(Expr *Init, QualType DclT) {
   if (Init->getType()->isBlockPointerType())
     return false;
     
-  Diag(Init->getExprLoc(), diag::err_init_element_not_constant,
-       Init->getSourceRange());
+  InitializerElementNotConstant(Init);
   return true;
 }
 
