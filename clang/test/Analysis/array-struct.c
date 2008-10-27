@@ -6,6 +6,10 @@ struct s {
   int data_array[10];
 };
 
+typedef struct {
+  int data;
+} STYPE;
+
 void f(void) {
   int a[10];
   int (*p)[10];
@@ -23,4 +27,8 @@ void f2() {
   char *p = "/usr/local";
   char (*q)[4];
   q = &"abc";
+}
+
+void f3() {
+  STYPE s;
 }
