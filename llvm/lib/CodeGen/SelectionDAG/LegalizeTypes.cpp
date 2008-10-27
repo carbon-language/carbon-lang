@@ -272,9 +272,14 @@ SDNode *DAGTypeLegalizer::AnalyzeNewNode(SDNode *N) {
                                &NewOps[0],
                                NewOps.size()).getNode();
 
-  N->setNodeId(N->getNumOperands()-NumProcessed);
-  if (N->getNodeId() == ReadyToProcess)
-    Worklist.push_back(N);
+  // Calculate the NodeId if we haven't morphed into an existing node for
+  // which it is already known.
+  if (N->getNodeId() == NewNode) {
+    N->setNodeId(N->getNumOperands()-NumProcessed);
+    if (N->getNodeId() == ReadyToProcess)
+      Worklist.push_back(N);
+  }
+
   return N;
 }
 
