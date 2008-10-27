@@ -354,17 +354,9 @@ static void AddNodeIDNode(FoldingSetNodeID &ID,
   AddNodeIDOperands(ID, OpList, N);
 }
 
-
-/// AddNodeIDNode - Generic routine for adding a nodes info to the NodeID
-/// data.
-static void AddNodeIDNode(FoldingSetNodeID &ID, const SDNode *N) {
-  AddNodeIDOpcode(ID, N->getOpcode());
-  // Add the return value info.
-  AddNodeIDValueTypes(ID, N->getVTList());
-  // Add the operand info.
-  AddNodeIDOperands(ID, N->op_begin(), N->getNumOperands());
-
-  // Handle SDNode leafs with special info.
+/// AddNodeIDCustom - If this is an SDNode with special info, add this info to
+/// the NodeID data.
+static void AddNodeIDCustom(FoldingSetNodeID &ID, const SDNode *N) {
   switch (N->getOpcode()) {
   default: break;  // Normal nodes don't need extra info.
   case ISD::ARG_FLAGS:
@@ -505,6 +497,19 @@ static void AddNodeIDNode(FoldingSetNodeID &ID, const SDNode *N) {
   } // end switch (N->getOpcode())
 }
 
+/// AddNodeIDNode - Generic routine for adding a nodes info to the NodeID
+/// data.
+static void AddNodeIDNode(FoldingSetNodeID &ID, const SDNode *N) {
+  AddNodeIDOpcode(ID, N->getOpcode());
+  // Add the return value info.
+  AddNodeIDValueTypes(ID, N->getVTList());
+  // Add the operand info.
+  AddNodeIDOperands(ID, N->op_begin(), N->getNumOperands());
+
+  // Handle SDNode leafs with special info.
+  AddNodeIDCustom(ID, N);
+}
+
 /// encodeMemSDNodeFlags - Generic routine for computing a value for use in
 /// the CSE map that carries both alignment and volatility information.
 ///
@@ -516,6 +521,29 @@ encodeMemSDNodeFlags(bool isVolatile, unsigned Alignment) {
 //===----------------------------------------------------------------------===//
 //                              SelectionDAG Class
 //===----------------------------------------------------------------------===//
+
+/// doNotCSE - Return true if CSE should not be performed for this node.
+static bool doNotCSE(SDNode *N) {
+  if (N->getValueType(0) == MVT::Flag)
+    return true; // Never CSE anything that produces a flag.
+
+  switch (N->getOpcode()) {
+  default: break;
+  case ISD::HANDLENODE:
+  case ISD::DBG_LABEL:
+  case ISD::DBG_STOPPOINT:
+  case ISD::EH_LABEL:
+  case ISD::DECLARE:
+    return true;   // Never CSE these nodes.
+  }
+
+  // Check that remaining values produced are not flags.
+  for (unsigned i = 1, e = N->getNumValues(); i != e; ++i)
+    if (N->getValueType(i) == MVT::Flag)
+      return true; // Never CSE anything that produces a flag.
+
+  return false;
+}
 
 /// RemoveDeadNodes - This method deletes all unreachable nodes in the
 /// SelectionDAG.
@@ -650,11 +678,7 @@ bool SelectionDAG::RemoveNodeFromCSEMaps(SDNode *N) {
   // flag result (which cannot be CSE'd) or is one of the special cases that are
   // not subject to CSE.
   if (!Erased && N->getValueType(N->getNumValues()-1) != MVT::Flag &&
-      !N->isMachineOpcode() &&
-      N->getOpcode() != ISD::DBG_LABEL &&
-      N->getOpcode() != ISD::DBG_STOPPOINT &&
-      N->getOpcode() != ISD::EH_LABEL &&
-      N->getOpcode() != ISD::DECLARE) {
+      !N->isMachineOpcode() && !doNotCSE(N)) {
     N->dump(this);
     cerr << "\n";
     assert(0 && "Node is not in map!");
@@ -671,24 +695,9 @@ bool SelectionDAG::RemoveNodeFromCSEMaps(SDNode *N) {
 SDNode *SelectionDAG::AddNonLeafNodeToCSEMaps(SDNode *N) {
   assert(N->getNumOperands() && "This is a leaf node!");
 
-  if (N->getValueType(0) == MVT::Flag)
-    return 0;   // Never CSE anything that produces a flag.
+  if (doNotCSE(N))
+    return 0;
 
-  switch (N->getOpcode()) {
-  default: break;
-  case ISD::HANDLENODE:
-  case ISD::DBG_LABEL:
-  case ISD::DBG_STOPPOINT:
-  case ISD::EH_LABEL:
-  case ISD::DECLARE:
-    return 0;   // Never add these nodes.
-  }
-  
-  // Check that remaining values produced are not flags.
-  for (unsigned i = 1, e = N->getNumValues(); i != e; ++i)
-    if (N->getValueType(i) == MVT::Flag)
-      return 0; // Never CSE anything that produces a flag.
-  
   SDNode *New = CSEMap.GetOrInsertNode(N);
   if (New != N) return New;  // Node already existed.
   return 0;
@@ -700,26 +709,13 @@ SDNode *SelectionDAG::AddNonLeafNodeToCSEMaps(SDNode *N) {
 /// node already exists with these operands, the slot will be non-null.
 SDNode *SelectionDAG::FindModifiedNodeSlot(SDNode *N, SDValue Op,
                                            void *&InsertPos) {
-  if (N->getValueType(0) == MVT::Flag)
-    return 0;   // Never CSE anything that produces a flag.
+  if (doNotCSE(N))
+    return 0;
 
-  switch (N->getOpcode()) {
-  default: break;
-  case ISD::HANDLENODE:
-  case ISD::DBG_LABEL:
-  case ISD::DBG_STOPPOINT:
-  case ISD::EH_LABEL:
-    return 0;   // Never add these nodes.
-  }
-  
-  // Check that remaining values produced are not flags.
-  for (unsigned i = 1, e = N->getNumValues(); i != e; ++i)
-    if (N->getValueType(i) == MVT::Flag)
-      return 0; // Never CSE anything that produces a flag.
-  
   SDValue Ops[] = { Op };
   FoldingSetNodeID ID;
   AddNodeIDNode(ID, N->getOpcode(), N->getVTList(), Ops, 1);
+  AddNodeIDCustom(ID, N);
   return CSEMap.FindNodeOrInsertPos(ID, InsertPos);
 }
 
@@ -730,16 +726,13 @@ SDNode *SelectionDAG::FindModifiedNodeSlot(SDNode *N, SDValue Op,
 SDNode *SelectionDAG::FindModifiedNodeSlot(SDNode *N, 
                                            SDValue Op1, SDValue Op2,
                                            void *&InsertPos) {
-  if (N->getOpcode() == ISD::HANDLENODE || N->getValueType(0) == MVT::Flag)
-  
-  // Check that remaining values produced are not flags.
-  for (unsigned i = 1, e = N->getNumValues(); i != e; ++i)
-    if (N->getValueType(i) == MVT::Flag)
-      return 0; // Never CSE anything that produces a flag.
-                                              
+  if (doNotCSE(N))
+    return 0;
+
   SDValue Ops[] = { Op1, Op2 };
   FoldingSetNodeID ID;
   AddNodeIDNode(ID, N->getOpcode(), N->getVTList(), Ops, 2);
+  AddNodeIDCustom(ID, N);
   return CSEMap.FindNodeOrInsertPos(ID, InsertPos);
 }
 
@@ -751,39 +744,12 @@ SDNode *SelectionDAG::FindModifiedNodeSlot(SDNode *N,
 SDNode *SelectionDAG::FindModifiedNodeSlot(SDNode *N, 
                                            const SDValue *Ops,unsigned NumOps,
                                            void *&InsertPos) {
-  if (N->getValueType(0) == MVT::Flag)
-    return 0;   // Never CSE anything that produces a flag.
+  if (doNotCSE(N))
+    return 0;
 
-  switch (N->getOpcode()) {
-  default: break;
-  case ISD::HANDLENODE:
-  case ISD::DBG_LABEL:
-  case ISD::DBG_STOPPOINT:
-  case ISD::EH_LABEL:
-  case ISD::DECLARE:
-    return 0;   // Never add these nodes.
-  }
-  
-  // Check that remaining values produced are not flags.
-  for (unsigned i = 1, e = N->getNumValues(); i != e; ++i)
-    if (N->getValueType(i) == MVT::Flag)
-      return 0; // Never CSE anything that produces a flag.
-  
   FoldingSetNodeID ID;
   AddNodeIDNode(ID, N->getOpcode(), N->getVTList(), Ops, NumOps);
-  
-  if (const LoadSDNode *LD = dyn_cast<LoadSDNode>(N)) {
-    ID.AddInteger(LD->getAddressingMode());
-    ID.AddInteger(LD->getExtensionType());
-    ID.AddInteger(LD->getMemoryVT().getRawBits());
-    ID.AddInteger(LD->getRawFlags());
-  } else if (const StoreSDNode *ST = dyn_cast<StoreSDNode>(N)) {
-    ID.AddInteger(ST->getAddressingMode());
-    ID.AddInteger(ST->isTruncatingStore());
-    ID.AddInteger(ST->getMemoryVT().getRawBits());
-    ID.AddInteger(ST->getRawFlags());
-  }
-  
+  AddNodeIDCustom(ID, N);
   return CSEMap.FindNodeOrInsertPos(ID, InsertPos);
 }
 
