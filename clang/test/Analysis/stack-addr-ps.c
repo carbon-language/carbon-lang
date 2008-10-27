@@ -19,6 +19,6 @@ int* f3(int x, int *y) {
 }
 
 unsigned short* compound_literal() {
-  return &(unsigned short){((unsigned short)0x22EF)}; // expected-warning{{Address of stack memory}}
+  return &(unsigned short){((unsigned short)0x22EF)}; // expected-warning{{Address of stack memory}} expected-warning{{braces around scalar initializer}}
 }
 
