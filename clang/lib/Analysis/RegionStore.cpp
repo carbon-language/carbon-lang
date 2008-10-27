@@ -379,7 +379,7 @@ Store RegionStoreManager::InitializeArrayToUndefined(Store store, QualType T,
 
 Store RegionStoreManager::InitializeStructToUndefined(Store store, QualType T,
                                                       MemRegion* BaseR) {
-  QualType CT = T->getCanonicalTypeInternal();
+  QualType CT = StateMgr.getContext().getCanonicalType(T);
   const RecordType* RT = cast<RecordType>(CT.getTypePtr());
   RecordDecl* RD = RT->getDecl();
   assert(RD->isDefinition());

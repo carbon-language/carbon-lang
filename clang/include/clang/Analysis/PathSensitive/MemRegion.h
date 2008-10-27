@@ -154,8 +154,8 @@ protected:
                             const MemRegion* superRegion);
 
 public:
-  QualType getType(ASTContext&) const {
-    return Str->getType();
+  QualType getType(ASTContext& C) const {
+    return C.getCanonicalType(Str->getType());
   }
 
   void Profile(llvm::FoldingSetNodeID& ID) const {
@@ -182,7 +182,7 @@ protected:
                             const MemRegion* superRegion);
 
 public:
-  QualType getType(ASTContext&) const { return T; }
+  QualType getType(ASTContext& C) const { return C.getCanonicalType(T); }
   
 
   void Profile(llvm::FoldingSetNodeID& ID) const;
@@ -247,7 +247,9 @@ class VarRegion : public DeclRegion {
   
 public:  
   const VarDecl* getDecl() const { return cast<VarDecl>(D); }
-  QualType getType(ASTContext&) const { return getDecl()->getType(); }
+  QualType getType(ASTContext& C) const { 
+    return C.getCanonicalType(getDecl()->getType());
+  }
   
   void print(llvm::raw_ostream& os) const;
   
@@ -267,7 +269,9 @@ public:
   void print(llvm::raw_ostream& os) const;
   
   const FieldDecl* getDecl() const { return cast<FieldDecl>(D); }
-  QualType getType(ASTContext&) const { return getDecl()->getType(); }
+  QualType getType(ASTContext& C) const {
+    return C.getCanonicalType(getDecl()->getType());
+  }
 
   static void ProfileRegion(llvm::FoldingSetNodeID& ID, FieldDecl* FD,
                       const MemRegion* superRegion) {
