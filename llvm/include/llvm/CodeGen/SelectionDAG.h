@@ -16,6 +16,7 @@
 #define LLVM_CODEGEN_SELECTIONDAG_H
 
 #include "llvm/ADT/ilist.h"
+#include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
@@ -102,6 +103,12 @@ class SelectionDAG {
   /// VerifyNode - Sanity check the given node.  Aborts if it is invalid.
   void VerifyNode(SDNode *N);
 
+  /// setGraphColorHelper - Implementation of setSubgraphColor.
+  /// Return whether we had to truncate the search.
+  ///
+  bool setSubgraphColorHelper(SDNode *N, const char *Color, DenseSet<SDNode *> &visited,
+                              int level, bool &printed);
+
 public:
   SelectionDAG(TargetLowering &tli, FunctionLoweringInfo &fli);
   ~SelectionDAG();
@@ -146,6 +153,10 @@ public:
   /// setGraphColor - Convenience for setting node color attribute.
   ///
   void setGraphColor(const SDNode *N, const char *Color);
+
+  /// setGraphColor - Convenience for setting subgraph color attribute.
+  ///
+  void setSubgraphColor(SDNode *N, const char *Color);
 
   typedef ilist<SDNode>::const_iterator allnodes_const_iterator;
   allnodes_const_iterator allnodes_begin() const { return AllNodes.begin(); }

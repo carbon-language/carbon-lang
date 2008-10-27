@@ -22,8 +22,10 @@
 #include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/GraphWriter.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Config/config.h"
 #include <fstream>
@@ -322,6 +324,61 @@ void SelectionDAG::setGraphColor(const SDNode *N, const char *Color) {
   NodeGraphAttrs[N] = std::string("color=") + Color;
 #else
   cerr << "SelectionDAG::setGraphColor is only available in debug builds"
+       << " on systems with Graphviz or gv!\n";
+#endif
+}
+
+/// setSubgraphColorHelper - Implement setSubgraphColor.  Return
+/// whether we truncated the search.
+///
+bool SelectionDAG::setSubgraphColorHelper(SDNode *N, const char *Color, DenseSet<SDNode *> &visited,
+                                          int level, bool &printed) {
+  bool hit_limit = false;
+
+#ifndef NDEBUG
+  if (level >= 20) {
+    if (!printed) {
+      printed = true;
+      DOUT << "setSubgraphColor hit max level\n";
+    }
+    return true;
+  }
+
+  unsigned oldSize = visited.size();
+  visited.insert(N);
+  if (visited.size() != oldSize) {
+    setGraphColor(N, Color);
+    for(SDNodeIterator i = SDNodeIterator::begin(N), iend = SDNodeIterator::end(N);
+        i != iend;
+        ++i) {
+      hit_limit = setSubgraphColorHelper(*i, Color, visited, level+1, printed) || hit_limit;
+    }
+  }
+#else
+  cerr << "SelectionDAG::setSubgraphColor is only available in debug builds"
+       << " on systems with Graphviz or gv!\n";
+#endif
+  return hit_limit;
+}
+
+/// setSubgraphColor - Convenience for setting subgraph color attribute.
+///
+void SelectionDAG::setSubgraphColor(SDNode *N, const char *Color) {
+#ifndef NDEBUG
+  DenseSet<SDNode *> visited;
+  bool printed = false;
+  if (setSubgraphColorHelper(N, Color, visited, 0, printed)) {
+    // Visually mark that we hit the limit
+    if (Color == "red" ) {
+      setSubgraphColorHelper(N, "blue", visited, 0, printed);
+    }
+    else if (Color == "yellow" ) {
+      setSubgraphColorHelper(N, "green", visited, 0, printed);
+    }
+  }
+
+#else
+  cerr << "SelectionDAG::setSubgraphColor is only available in debug builds"
        << " on systems with Graphviz or gv!\n";
 #endif
 }
