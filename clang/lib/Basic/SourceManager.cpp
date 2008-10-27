@@ -76,7 +76,7 @@ SourceManager::createMemBufferContentCache(const MemoryBuffer *Buffer) {
 /// corresponds to a file or some other input source.
 unsigned SourceManager::createFileID(const ContentCache *File,
                                      SourceLocation IncludePos,
-                                     SrcMgr::Characteristic_t FileCharacter) {
+                                     SrcMgr::CharacteristicKind FileCharacter) {
   // If FileEnt is really large (e.g. it's a large .i file), we may not be able
   // to fit an arbitrary position in the file in the FilePos field.  To handle
   // this, we create one FileID for each chunk of the file that fits in a

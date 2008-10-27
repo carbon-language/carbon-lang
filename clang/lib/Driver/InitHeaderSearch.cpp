@@ -43,7 +43,7 @@ void InitHeaderSearch::AddPath(const std::string &Path, IncludeDirGroup Group,
   MappedPath.append(Path.begin(), Path.end());
 
   // Compute the DirectoryLookup type.
-  SrcMgr::Characteristic_t Type;
+  SrcMgr::CharacteristicKind Type;
   if (Group == Quoted || Group == Angled)
     Type = SrcMgr::C_User;
   else if (isCXXAware)

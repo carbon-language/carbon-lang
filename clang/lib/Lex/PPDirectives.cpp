@@ -675,7 +675,7 @@ void Preprocessor::HandleIncludeDirective(Token &IncludeTok,
   // The #included file will be considered to be a system header if either it is
   // in a system include directory, or if the #includer is a system include
   // header.
-  SrcMgr::Characteristic_t FileCharacter = 
+  SrcMgr::CharacteristicKind FileCharacter = 
     std::max(HeaderInfo.getFileDirFlavor(File),
           SourceMgr.getFileCharacteristic(getCurrentFileLexer()->getFileLoc()));
   

@@ -36,7 +36,7 @@ class VISIBILITY_HIDDEN DependencyFileCallback : public PPCallbacks {
 
 private:
   bool FileMatchesDepCriteria(const char *Filename,
-                              SrcMgr::Characteristic_t FileType);
+                              SrcMgr::CharacteristicKind FileType);
   void OutputDependencyFile();
 
 public:
@@ -47,7 +47,7 @@ public:
                          const char  *&ErrStr);
   ~DependencyFileCallback();
   virtual void FileChanged(SourceLocation Loc, FileChangeReason Reason,
-                           SrcMgr::Characteristic_t FileType);
+                           SrcMgr::CharacteristicKind FileType);
 };
 }
 
@@ -148,7 +148,7 @@ bool clang::CreateDependencyFileGen(Preprocessor *PP,
 /// FileMatchesDepCriteria - Determine whether the given Filename should be
 /// considered as a dependency.
 bool DependencyFileCallback::FileMatchesDepCriteria(const char *Filename,
-                                            SrcMgr::Characteristic_t FileType) {
+                                          SrcMgr::CharacteristicKind FileType) {
   if (strcmp(InputFile.c_str(), Filename) != 0 &&
       strcmp("<predefines>", Filename) != 0) {
       if (GenerateDependencyFileNoSysHeaders)
@@ -162,7 +162,7 @@ bool DependencyFileCallback::FileMatchesDepCriteria(const char *Filename,
 
 void DependencyFileCallback::FileChanged(SourceLocation Loc,
                                          FileChangeReason Reason,
-                                         SrcMgr::Characteristic_t FileType) {
+                                         SrcMgr::CharacteristicKind FileType) {
   if (Reason != PPCallbacks::EnterFile)
     return;
 

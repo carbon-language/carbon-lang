@@ -95,7 +95,7 @@ void Preprocessor::EnterSourceFileWithLexer(Lexer *TheLexer,
   
   // Notify the client, if desired, that we are in a new source file.
   if (Callbacks && !CurLexer->Is_PragmaLexer) {
-    SrcMgr::Characteristic_t FileType =
+    SrcMgr::CharacteristicKind FileType =
        SourceMgr.getFileCharacteristic(CurLexer->getFileLoc());
     
     Callbacks->FileChanged(CurLexer->getFileLoc(),
@@ -178,7 +178,7 @@ bool Preprocessor::HandleEndOfFile(Token &Result, bool isEndOfMacro) {
 
     // Notify the client, if desired, that we are in a new source file.
     if (Callbacks && !isEndOfMacro && CurLexer) {
-      SrcMgr::Characteristic_t FileType =
+      SrcMgr::CharacteristicKind FileType =
         SourceMgr.getFileCharacteristic(CurLexer->getFileLoc());
       
       Callbacks->FileChanged(CurLexer->getSourceLocation(CurLexer->BufferPtr),

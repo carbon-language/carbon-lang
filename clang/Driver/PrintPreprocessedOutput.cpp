@@ -48,7 +48,7 @@ public:
 private:
   unsigned CurLine;
   bool EmittedTokensOnThisLine;
-  SrcMgr::Characteristic_t FileType;
+  SrcMgr::CharacteristicKind FileType;
   llvm::SmallString<512> CurFilename;
   bool Initialized;
 public:
@@ -65,7 +65,7 @@ public:
   bool hasEmittedTokensOnThisLine() const { return EmittedTokensOnThisLine; }
   
   virtual void FileChanged(SourceLocation Loc, FileChangeReason Reason,
-                           SrcMgr::Characteristic_t FileType);
+                           SrcMgr::CharacteristicKind FileType);
   virtual void Ident(SourceLocation Loc, const std::string &str);
   
 
@@ -143,7 +143,7 @@ bool PrintPPOutputPPCallbacks::MoveToLine(SourceLocation Loc) {
 /// position.
 void PrintPPOutputPPCallbacks::FileChanged(SourceLocation Loc,
                                            FileChangeReason Reason,
-                                         SrcMgr::Characteristic_t NewFileType) {
+                                       SrcMgr::CharacteristicKind NewFileType) {
   // Unless we are exiting a #include, make sure to skip ahead to the line the
   // #include directive was at.
   SourceManager &SourceMgr = PP.getSourceManager();

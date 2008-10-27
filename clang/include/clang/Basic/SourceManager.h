@@ -36,13 +36,13 @@ class IdentifierTokenInfo;
 /// SourceManager implementation.
 ///
 namespace SrcMgr {
-  /// Characteristic_t - This is used to represent whether a file or directory
+  /// CharacteristicKind - This is used to represent whether a file or directory
   /// holds normal user code, system code, or system code which is implicitly
   /// 'extern "C"' in C++ mode.  Entire directories can be tagged with this
   /// (this is maintained by DirectoryLookup and friends) as can specific
   /// FileIDInfos when a #pragma system_header is seen or various other cases.
   ///
-  enum Characteristic_t {
+  enum CharacteristicKind {
     C_User, C_System, C_ExternCSystem
   };
   
@@ -125,7 +125,7 @@ namespace SrcMgr {
     /// chunk number of this FileID.
     unsigned ChunkNo : 30;
     
-    /// FileCharacteristic - This is an instance of Characteristic_t,
+    /// FileCharacteristic - This is an instance of CharacteristicKind,
     /// indicating whether this is a system header dir or not.
     unsigned FileCharacteristic : 2;
     
@@ -136,7 +136,7 @@ namespace SrcMgr {
     /// get - Return a FileIDInfo object.
     static FileIDInfo get(SourceLocation IL, unsigned CN, 
                           const ContentCache *Con,
-                          Characteristic_t FileCharacter) {
+                          CharacteristicKind FileCharacter) {
       FileIDInfo X;
       X.IncludeLoc = IL;
       X.ChunkNo = CN;
@@ -150,8 +150,8 @@ namespace SrcMgr {
     const ContentCache* getContentCache() const { return Content; }
 
     /// getCharacteristic - Return whether this is a system header or not.
-    Characteristic_t getFileCharacteristic() const { 
-      return (Characteristic_t)FileCharacteristic;
+    CharacteristicKind getFileCharacteristic() const { 
+      return (CharacteristicKind)FileCharacteristic;
     }
     
     /// Emit - Emit this FileIDInfo to Bitcode.
@@ -267,7 +267,7 @@ public:
   /// being #included from the specified IncludePosition.  This returns 0 on
   /// error and translates NULL into standard input.
   unsigned createFileID(const FileEntry *SourceFile, SourceLocation IncludePos,
-                        SrcMgr::Characteristic_t FileCharacter) {
+                        SrcMgr::CharacteristicKind FileCharacter) {
     const SrcMgr::ContentCache *IR = getContentCache(SourceFile);
     if (IR == 0) return 0;    // Error opening file?
     return createFileID(IR, IncludePos, FileCharacter);
@@ -450,7 +450,7 @@ public:
   bool isInSystemHeader(SourceLocation Loc) const {
     return getFileCharacteristic(Loc) != SrcMgr::C_User;
   }
-  SrcMgr::Characteristic_t getFileCharacteristic(SourceLocation Loc) const {
+  SrcMgr::CharacteristicKind getFileCharacteristic(SourceLocation Loc) const {
     return getFIDInfo(getPhysicalLoc(Loc).getFileID())->getFileCharacteristic();
   }
 
@@ -498,7 +498,7 @@ private:
   ///  corresponds to a file or some other input source.
   unsigned createFileID(const SrcMgr::ContentCache* File,
                         SourceLocation IncludePos,
-                        SrcMgr::Characteristic_t DirCharacter);
+                        SrcMgr::CharacteristicKind DirCharacter);
     
   /// getContentCache - Create or return a cached ContentCache for the specified
   ///  file.  This returns null on failure.

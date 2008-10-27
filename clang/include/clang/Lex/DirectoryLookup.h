@@ -45,7 +45,7 @@ private:
   } u;
   
   /// DirCharacteristic - The type of directory this is: this is an instance of
-  /// SrcMgr::Characteristic_t.
+  /// SrcMgr::CharacteristicKind.
   unsigned DirCharacteristic : 2;
   
   /// UserSupplied - True if this is a user-supplied directory.
@@ -58,7 +58,7 @@ private:
 public:
   /// DirectoryLookup ctor - Note that this ctor *does not take ownership* of
   /// 'dir'.
-  DirectoryLookup(const DirectoryEntry *dir, SrcMgr::Characteristic_t DT,
+  DirectoryLookup(const DirectoryEntry *dir, SrcMgr::CharacteristicKind DT,
                   bool isUser, bool isFramework)
     : DirCharacteristic(DT), UserSupplied(isUser),
      LookupType(isFramework ? LT_Framework : LT_NormalDir) {
@@ -67,7 +67,7 @@ public:
   
   /// DirectoryLookup ctor - Note that this ctor *does not take ownership* of
   /// 'map'.
-  DirectoryLookup(const HeaderMap *map, SrcMgr::Characteristic_t DT,
+  DirectoryLookup(const HeaderMap *map, SrcMgr::CharacteristicKind DT,
                   bool isUser)
     : DirCharacteristic(DT), UserSupplied(isUser), LookupType(LT_HeaderMap) {
     u.Map = map; 
@@ -107,8 +107,8 @@ public:
   
   /// DirCharacteristic - The type of directory this is, one of the DirType enum
   /// values.
-  SrcMgr::Characteristic_t getDirCharacteristic() const {
-    return (SrcMgr::Characteristic_t)DirCharacteristic;
+  SrcMgr::CharacteristicKind getDirCharacteristic() const {
+    return (SrcMgr::CharacteristicKind)DirCharacteristic;
   }
   
   /// isUserSupplied - True if this is a user-supplied directory.

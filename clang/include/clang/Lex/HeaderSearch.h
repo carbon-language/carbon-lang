@@ -48,7 +48,7 @@ class HeaderSearch {
     /// DirInfo - Keep track of whether this is a system header, and if so,
     /// whether it is C++ clean or not.  This can be set by the include paths or
     /// by #pragma gcc system_header.  This is an instance of
-    /// SrcMgr::Characteristic_t.
+    /// SrcMgr::CharacteristicKind.
     unsigned DirInfo : 2;
     
     /// NumIncludes - This is the number of times the file has been included
@@ -155,8 +155,8 @@ public:
   
   /// getFileDirFlavor - Return whether the specified file is a normal header,
   /// a system header, or a C++ friendly system header.
-  SrcMgr::Characteristic_t getFileDirFlavor(const FileEntry *File) {
-    return (SrcMgr::Characteristic_t)getFileInfo(File).DirInfo;
+  SrcMgr::CharacteristicKind getFileDirFlavor(const FileEntry *File) {
+    return (SrcMgr::CharacteristicKind)getFileInfo(File).DirInfo;
   }
     
   /// MarkFileIncludeOnce - Mark the specified file as a "once only" file, e.g.
