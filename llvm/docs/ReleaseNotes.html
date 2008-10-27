@@ -98,28 +98,31 @@ generation support is far enough along to build many C applications.  While not
 yet production quality, it is progressing very nicely.  In addition, C++
 front-end work has started to make significant progress.</p>
 
-Clang, in conjunction with the <tt>ccc</tt> driver, is now usable as a 
-replacement for gcc for building some small- to medium-sized  C applications. 
+<p>Clang, in conjunction with the <tt>ccc</tt> driver, is now usable as a
+replacement for gcc for building some small- to medium-sized C applications.
 Additionally, Clang now has code generation support for Objective-C on Mac OS X
-platform. Major highlights include:
+platform. Major highlights include:</p>
+
 <ul>
 	<li> Clang/ccc pass almost all of the LLVM test suite on Mac OS X and Linux 
 on the 32-bit x86 architecture. This includes significant C 
 applications such as <a href="http://www.sqlite.org">sqlite3</a>, 
 <a href="http://www.lua.org">lua</a>, and 
-<a href="http://www.clamav.net">Clam AntiVirus</a>. 
+<a href="http://www.clamav.net">Clam AntiVirus</a>. </li>
 
 	<li> Clang can build the majority of Objective-C examples shipped with the 
-Mac OS X Developer Tools.
+Mac OS X Developer Tools. </li>
 </ul>
 
-Clang code generation still needs considerable testing and development, however. 
-Some areas under active development include:
+<p>Clang code generation still needs considerable testing and development,
+however.  Some areas under active development include:</p>
+
 <ul>
-	<li> Improved support for C and Objective-C features, for example 
-	variable-length arrays, va_arg, exception handling (Obj-C), and garbage 
-	collection (Obj-C).
-	<li> ABI compatibility, especially for platforms other than 32-bit x86.
+	<li> Improved support for C and Objective-C features, for example
+	variable-length arrays, va_arg, exception handling (Obj-C), and garbage
+	collection (Obj-C). </li>
+	<li> ABI compatibility, especially for platforms other than 32-bit
+	x86. </li>
 </ul>
 
 </div>
@@ -145,15 +148,14 @@ has found in industrial-quality software on the order of thousands.</p>
 the tool.  While still early in development, the GUI illustrates some of the key
 features of Clang: accurate source location information, which is used by the
 GUI to highlight specific code expressions that relate to a bug (including those
-that span multiple lines) and built-in knowledge of macros, which is used to
+that span multiple lines); and built-in knowledge of macros, which is used to
 perform inline expansion of macros within the GUI itself.</p>
 
 <p>The set of checks performed by the static analyzer is gradually expanding,
-and
-future plans for the tool include full source-level inter-procedural analysis
-and deeper checks such as buffer overrun detection. There are many opportunities
-to extend and enhance the static analyzer, and anyone interested in working on
-this project is encouraged to get involved!</p>
+and future plans for the tool include full source-level inter-procedural
+analysis and deeper checks such as buffer overrun detection. There are many
+opportunities to extend and enhance the static analyzer, and anyone interested
+in working on this project is encouraged to get involved!</p>
 
 </div>
 
@@ -174,15 +176,15 @@ bug fixes, cleanup and new features. The major changes are:</p>
 
 <ul>
 
-<li> Support for generics in the .Net virtual machine.
-<li> Initial support for the Mono class libraries.
+<li> Support for generics in the .Net virtual machine.</li>
+<li> Initial support for the Mono class libraries. </li>
 <li> Support for MacOSX/x86, following LLVM's support for exceptions in
-JIT on MacOSX/x86.
-<li> A new vmkit driver: a program to run java or .net applications. The
-driver supports llvm command line arguments including the new "-fast" option.
+JIT on MacOSX/x86. </li>
+<li> A new vmkit driver: a program to run java or .net applications. The driver
+supports llvm command line arguments including the new "-fast" option. </li>
 <li> A new memory allocation scheme in the JVM that makes unloading a
-class loader very fast.
-<li> VMKit now follows the LLVM Makefile machinery.
+class loader very fast. </li>
+<li> VMKit now follows the LLVM Makefile machinery. </li>
 
 </ul>
 </div>
@@ -196,7 +198,7 @@ class loader very fast.
 
 <div class="doc_text">
 
-<p>This release includes a huge number of bug fixes, performance tweaks and
+<p>This release includes a huge number of bug fixes, performance tweaks, and
 minor improvements.  Some of the major improvements and new features are listed
 in this section.
 </p>
@@ -214,24 +216,24 @@ in this section.
 <ul>
 <li><p>The most visible end-user change in LLVM 2.4 is that it includes many
 optimizations and changes to make -O0 compile times much faster.  You should see
-improvements on the order of 30% (or more) faster than LLVM 2.3.  There are many
-pieces to this change, described in more detail below.  The speedups and new
-components can also be used for JIT compilers that want fast compilation as
-well.</p></li>
+improvements in speed on the order of 30% (or more) than in LLVM 2.3.  There are
+many pieces to this change described in more detail below.  The speedups and new
+components can also be used for JIT compilers that want fast
+compilation.</p></li>
 
 <li><p>The biggest change to the LLVM IR is that Multiple Return Values (which
 were introduced in LLVM 2.3) have been generalized to full support for "First
 Class Aggregate" values in LLVM 2.4.  This means that LLVM IR supports using
 structs and arrays as values in a function.  This capability is mostly useful
 for front-end authors, who prefer to treat things like complex numbers, simple
-tuples, dope vectors, etc as Value*'s instead of as a tuple of Value*'s or as
+tuples, dope vectors, etc., as Value*'s instead of as a tuple of Value*'s or as
 memory values.  Bitcode files from LLVM 2.3 will automatically migrate to the
 general representation.</p></li>
 
 <li><p>LLVM 2.4 also includes an initial port for the PIC16 microprocessor. This
-is the LLVM target that only has support for 8 bit registers, and a number of
-other crazy constraints.  While the port is still in early development stages,
-it shows some interesting things you can do with LLVM.</p></li>
+target only has support for 8 bit registers, and a number of other crazy
+constraints.  While the port is still in early development stages, it shows some
+interesting things you can do with LLVM.</p></li>
 
 </ul>
 
@@ -251,20 +253,20 @@ includes support for the C, C++, Objective-C, Ada, and Fortran front-ends.</p>
 
 <ul>
 <li>LLVM 2.4 supports the full set of atomic <tt>__sync_*</tt> builtins.  LLVM
-2.3 only supported those used by OpenMP, but 2.4 supports them all.  While
-llvm-gcc supports all of these builtins, note that not all targets do.  X86 
-support them all in both 32-bit and 64-bit mode and PowerPC supports them all
-except for the 64-bit operations when in 32-bit mode.</li>
+2.3 only supported those used by OpenMP, but 2.4 supports them all.  Note that
+while llvm-gcc supports all of these builtins, not all targets do.  X86 support
+them all in both 32-bit and 64-bit mode and PowerPC supports them all except for
+the 64-bit operations when in 32-bit mode.</li>
 
 <li>llvm-gcc now supports an <tt>-flimited-precision</tt> option, which tells
-the compiler that it is ok to use low-precision approximations of certain libm
-functions (like tan, log, etc).  This allows you to get high performance if you
-only need (say) 14-bits of precision.</li>
+the compiler that it is okay to use low-precision approximations of certain libm
+functions (like <tt>exp</tt>, <tt>log</tt>, etc).  This allows you to get high
+performance if you only need (say) 12-bits of precision.</li>
 
 <li>llvm-gcc now supports a C language extension known as "<a 
 href="http://lists.cs.uiuc.edu/pipermail/cfe-dev/2008-August/002670.html">Blocks</a>".
 This feature is similar to nested functions and closures, but does not
-require stack trampolines (with most ABIs) and supports returning closures 
+require stack trampolines (with most ABIs), and supports returning closures 
 from functions that define them.  Note that actually <em>using</em> Blocks
 requires a small runtime that is not included with llvm-gcc.</li>
 
@@ -284,8 +286,7 @@ Previously, LTO could only be used with -O4, which implied optimizations in
 </div>
 
 <div class="doc_text">
-<p>New features include:
-</p>
+<p>New features include:</p>
 
 <ul>
 <li>A major change to the <tt>Use</tt> class landed, which shrank it by 25%.  Since
@@ -298,14 +299,14 @@ nicely.  They now print as "<tt>%3 = add i32 %A, 4</tt>" instead of
 </li>
 
 <li>LLVM 2.4 includes some changes for better vector support.  First, the shift
-operations (<tt>shl</tt>, <tt>ashr</tt>, <tt>lshr</tt>) now all support vectors
-and do an element-by-element shift (shifts of the whole vector can be
-accomplished by bitcasting the vector to &lt;1 x i128&gt; for example).  Second,
-there is initial support in development for vector comparisons with the 
-<a href="LangRef.html#i_fcmp">fcmp</a>/<a href="LangRef.html#i_icmp">icmp</a>
+operations (<tt>shl</tt>, <tt>ashr</tt>, and <tt>lshr</tt>) now all support
+vectors and do an element-by-element shift (shifts of the whole vector can be
+accomplished by bitcasting the vector to &lt;1 x i128&gt;, for example). Second,
+there is initial support in development for vector comparisons with the
+<tt><a href="LangRef.html#i_fcmp">fcmp</a>/<a href="LangRef.html#i_icmp">icmp</a></tt>
 instructions.  These instructions compare two vectors and return a vector of
-i1's for each result.  Note that there is very little codegen support available
-for any of these IR features though.</li>
+<tt>i1</tt>'s for each result.  Note that there is very little codegen support
+available for any of these IR features though.</li>
 
 <li>A new <tt>DebugInfoBuilder</tt> class is available, which makes it much
 easier for front-ends to create debug info descriptors, similar to the way that
@@ -317,11 +318,11 @@ constant folding.  The <tt>NoFolder</tt> class does no constant folding at all, 
 useful when learning how LLVM works.  The <tt>TargetFolder</tt> class folds the most,
 doing target dependent constant folding.</li>
 
-<li>LLVM now supports "function attributes", which allows us to separate return
+<li>LLVM now supports "function attributes", which allow us to separate return
 value attributes from function attributes.  LLVM now supports attributes on a
 function itself, a return value, and its parameters.  New supported function
-attributes include noinline/alwaysinline and the "opt-size" flag which says the
-function should be optimized for code size.</li>
+attributes include <tt>noinline/alwaysinline</tt> and the <tt>opt-size</tt> flag,
+which says the function should be optimized for code size.</li>
 
 <li>LLVM IR now directly represents "common" linkage, instead of
     representing it as a form of weak linkage.</li>
