@@ -106,8 +106,8 @@ Stmt* Stmt::Create(Deserializer& D, ASTContext& C) {
     case ImplicitCastExprClass:
       return ImplicitCastExpr::CreateImpl(D, C);
 
-    case ExplicitCastExprClass:
-      return ExplicitCastExpr::CreateImpl(D, C);
+    case ExplicitCCastExprClass:
+      return ExplicitCCastExpr::CreateImpl(D, C);
       
     case IndirectGotoStmtClass:
       return IndirectGotoStmt::CreateImpl(D, C);
@@ -201,6 +201,18 @@ Stmt* Stmt::Create(Deserializer& D, ASTContext& C) {
     case CXXFunctionalCastExprClass:
       return CXXFunctionalCastExpr::CreateImpl(D, C);
 
+    case CXXStaticCastExprClass:
+      return CXXStaticCastExpr::CreateImpl(D, C, SC);
+
+    case CXXDynamicCastExprClass:
+      return CXXDynamicCastExpr::CreateImpl(D, C, SC);
+
+    case CXXReinterpretCastExprClass:
+      return CXXReinterpretCastExpr::CreateImpl(D, C, SC);
+
+    case CXXConstCastExprClass:
+      return CXXConstCastExpr::CreateImpl(D, C, SC);
+      
     case CXXZeroInitValueExprClass:
       return CXXZeroInitValueExpr::CreateImpl(D, C);
   }
@@ -364,19 +376,20 @@ CaseStmt* CaseStmt::CreateImpl(Deserializer& D, ASTContext& C) {
   return stmt;
 }
 
-void ExplicitCastExpr::EmitImpl(Serializer& S) const {
+void ExplicitCCastExpr::EmitImpl(Serializer& S) const {
   S.Emit(getType());
+  S.Emit(getTypeAsWritten());
   S.Emit(Loc);
   S.EmitOwnedPtr(getSubExpr());
 }
 
-ExplicitCastExpr* ExplicitCastExpr::CreateImpl(Deserializer& D, ASTContext& C) {
+ExplicitCCastExpr* ExplicitCCastExpr::CreateImpl(Deserializer& D, ASTContext& C) {
   QualType t = QualType::ReadVal(D);
+  QualType writtenTy = QualType::ReadVal(D);
   SourceLocation Loc = SourceLocation::ReadVal(D);
   Expr* Op = D.ReadOwnedPtr<Expr>(C);
-  return new ExplicitCastExpr(t,Op,Loc);
+  return new ExplicitCCastExpr(t,Op,writtenTy,Loc);
 }
-  
 
 void CharacterLiteral::EmitImpl(Serializer& S) const {
   S.Emit(Value);
@@ -1270,6 +1283,7 @@ CXXDefaultArgExpr *CXXDefaultArgExpr::CreateImpl(Deserializer& D, ASTContext& C)
 
 void CXXFunctionalCastExpr::EmitImpl(Serializer& S) const {
   S.Emit(getType());
+  S.Emit(getTypeAsWritten());
   S.Emit(TyBeginLoc);
   S.Emit(RParenLoc);
   S.EmitOwnedPtr(getSubExpr());
@@ -1278,10 +1292,39 @@ void CXXFunctionalCastExpr::EmitImpl(Serializer& S) const {
 CXXFunctionalCastExpr *
 CXXFunctionalCastExpr::CreateImpl(Deserializer& D, ASTContext& C) {
   QualType Ty = QualType::ReadVal(D);
+  QualType WrittenTy = QualType::ReadVal(D);
   SourceLocation TyBeginLoc = SourceLocation::ReadVal(D);
   SourceLocation RParenLoc = SourceLocation::ReadVal(D);
   Expr* SubExpr = D.ReadOwnedPtr<Expr>(C);
-  return new CXXFunctionalCastExpr(Ty, TyBeginLoc, SubExpr, RParenLoc);
+  return new CXXFunctionalCastExpr(Ty, WrittenTy, TyBeginLoc, SubExpr, RParenLoc);
+}
+
+void CXXNamedCastExpr::EmitImpl(Serializer& S) const {
+  S.Emit(getType());
+  S.Emit(getTypeAsWritten());
+  S.Emit(Loc);
+  S.EmitOwnedPtr(getSubExpr());
+}
+
+CXXNamedCastExpr *
+CXXNamedCastExpr::CreateImpl(Deserializer& D, ASTContext& C, StmtClass SC) {
+  QualType Ty = QualType::ReadVal(D);
+  QualType WrittenTy = QualType::ReadVal(D);
+  SourceLocation Loc = SourceLocation::ReadVal(D);
+  Expr* SubExpr = D.ReadOwnedPtr<Expr>(C);
+  switch (SC) {
+  case CXXStaticCastExprClass: 
+    return new CXXStaticCastExpr(Ty, SubExpr, WrittenTy, Loc);
+  case CXXDynamicCastExprClass: 
+    return new CXXDynamicCastExpr(Ty, SubExpr, WrittenTy, Loc);
+  case CXXReinterpretCastExprClass: 
+    return new CXXReinterpretCastExpr(Ty, SubExpr, WrittenTy, Loc);
+  case CXXConstCastExprClass: 
+    return new CXXConstCastExpr(Ty, SubExpr, WrittenTy, Loc);
+  default:
+    assert(false && "Unknown cast type!");
+    return 0;
+  }
 }
 
 void CXXZeroInitValueExpr::EmitImpl(Serializer& S) const {

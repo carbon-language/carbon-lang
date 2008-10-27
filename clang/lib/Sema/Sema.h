@@ -695,12 +695,12 @@ public:
                                              SourceLocation *CommaLocs,
                                              SourceLocation RParenLoc);
 
-  /// ActOnCXXCasts - Parse {dynamic,static,reinterpret,const}_cast's.
-  virtual ExprResult ActOnCXXCasts(SourceLocation OpLoc, tok::TokenKind Kind,
-                                   SourceLocation LAngleBracketLoc, TypeTy *Ty,
-                                   SourceLocation RAngleBracketLoc,
-                                   SourceLocation LParenLoc, ExprTy *E,
-                                   SourceLocation RParenLoc);
+  /// ActOnCXXNamedCast - Parse {dynamic,static,reinterpret,const}_cast's.
+  virtual ExprResult ActOnCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
+                                       SourceLocation LAngleBracketLoc, TypeTy *Ty,
+                                       SourceLocation RAngleBracketLoc,
+                                       SourceLocation LParenLoc, ExprTy *E,
+                                       SourceLocation RParenLoc);
 
   // Helpers for ActOnCXXCasts
   bool CastsAwayConstness(QualType SrcType, QualType DestType);

@@ -771,12 +771,10 @@ public:
   static CompoundLiteralExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
-/// CastExpr - Base class for Cast Operators (explicit, implicit, etc.).
-/// Classes that derive from CastExpr are:
-///
-///   ImplicitCastExpr
-///   ExplicitCastExpr
-///
+/// CastExpr - Base class for type casts, including both implicit
+/// casts (ImplicitCastExpr) and explicit casts that have some
+/// representation in the source code (ExplicitCastExpr's derived
+/// classes).
 class CastExpr : public Expr {
   Stmt *Op;
 protected:
@@ -791,6 +789,12 @@ public:
     switch (T->getStmtClass()) {
     case ImplicitCastExprClass:
     case ExplicitCastExprClass:
+    case ExplicitCCastExprClass:
+    case CXXNamedCastExprClass:
+    case CXXStaticCastExprClass:
+    case CXXDynamicCastExprClass:
+    case CXXReinterpretCastExprClass:
+    case CXXConstCastExprClass:
     case CXXFunctionalCastExprClass:
       return true;
     default:
@@ -804,9 +808,10 @@ public:
   virtual child_iterator child_end();
 };
 
-/// ImplicitCastExpr - Allows us to explicitly represent implicit type 
-/// conversions. For example: converting T[]->T*, void f()->void (*f)(), 
-/// float->double, short->int, etc.
+/// ImplicitCastExpr - Allows us to explicitly represent implicit type
+/// conversions, which have no direct representation in the original
+/// source code. For example: converting T[]->T*, void f()->void
+/// (*f)(), float->double, short->int, etc.
 ///
 class ImplicitCastExpr : public CastExpr {
 public:
@@ -826,13 +831,62 @@ public:
   static ImplicitCastExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
-/// ExplicitCastExpr - [C99 6.5.4] Cast Operators.
+/// ExplicitCastExpr - An explicit cast written in the source
+/// code. 
 ///
+/// This class is effectively an abstract class, because it provides
+/// the basic representation of an explicitly-written cast without
+/// specifying which kind of cast (C cast, functional cast, static
+/// cast, etc.) was written; specific derived classes represent the
+/// particular style of cast and its location information.
+///
+/// Unlike implicit casts, explicit cast nodes have two different
+/// types: the type that was written into the source code, and the
+/// actual type of the expression as determined by semantic
+/// analysis. These types may differ slightly. For example, in C++ one
+/// can cast to a reference type, which indicates that the resulting
+/// expression will be an lvalue. The reference type, however, will
+/// not be used as the type of the expression.
 class ExplicitCastExpr : public CastExpr {
+  /// TypeAsWritten - The type that this expression is casting to, as
+  /// written in the source code.
+  QualType TypeAsWritten;
+
+protected:
+  ExplicitCastExpr(StmtClass SC, QualType exprTy, Expr *op, QualType writtenTy) : 
+    CastExpr(SC, exprTy, op), TypeAsWritten(writtenTy) {}
+
+public:
+  /// getTypeAsWritten - Returns the type that this expression is
+  /// casting to, as written in the source code.
+  QualType getTypeAsWritten() const { return TypeAsWritten; }
+
+  static bool classof(const Stmt *T) { 
+    switch (T->getStmtClass()) {
+    case ExplicitCastExprClass:
+    case ExplicitCCastExprClass:
+    case CXXFunctionalCastExprClass:
+    case CXXStaticCastExprClass:
+    case CXXDynamicCastExprClass:
+    case CXXReinterpretCastExprClass:
+    case CXXConstCastExprClass:
+      return true;
+    default:
+      return false;
+    }
+  }
+  static bool classof(const ExplicitCastExpr *) { return true; }
+};
+
+/// ExplicitCCastExpr - An explicit cast in C (C99 6.5.4) or a C-style
+/// cast in C++ (C++ [expr.cast]), which uses the syntax
+/// (Type)expr. For example: @c (int)f.
+class ExplicitCCastExpr : public ExplicitCastExpr {
   SourceLocation Loc; // the location of the left paren
 public:
-  ExplicitCastExpr(QualType ty, Expr *op, SourceLocation l) : 
-    CastExpr(ExplicitCastExprClass, ty, op), Loc(l) {}
+  ExplicitCCastExpr(QualType exprTy, Expr *op, QualType writtenTy, 
+                    SourceLocation l) : 
+    ExplicitCastExpr(ExplicitCCastExprClass, exprTy, op, writtenTy), Loc(l) {}
 
   SourceLocation getLParenLoc() const { return Loc; }
   
@@ -840,12 +894,12 @@ public:
     return SourceRange(Loc, getSubExpr()->getSourceRange().getEnd());
   }
   static bool classof(const Stmt *T) { 
-    return T->getStmtClass() == ExplicitCastExprClass; 
+    return T->getStmtClass() == ExplicitCCastExprClass; 
   }
-  static bool classof(const ExplicitCastExpr *) { return true; }
+  static bool classof(const ExplicitCCastExpr *) { return true; }
   
   virtual void EmitImpl(llvm::Serializer& S) const;
-  static ExplicitCastExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
+  static ExplicitCCastExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 class BinaryOperator : public Expr {

@@ -736,12 +736,11 @@ Sema::CheckReturnStackAddr(Expr *RetValExp, QualType lhsType,
   }
   // Perform checking for stack values returned by reference.
   else if (lhsType->isReferenceType()) {
-    // Check for an implicit cast to a reference.
-    if (ImplicitCastExpr *I = dyn_cast<ImplicitCastExpr>(RetValExp))
-      if (DeclRefExpr *DR = EvalVal(I->getSubExpr()))
-        Diag(DR->getLocStart(), diag::warn_ret_stack_ref,
-             DR->getDecl()->getIdentifier()->getName(),
-             RetValExp->getSourceRange());
+    // Check for a reference to the stack
+    if (DeclRefExpr *DR = EvalVal(RetValExp))
+      Diag(DR->getLocStart(), diag::warn_ret_stack_ref,
+           DR->getDecl()->getIdentifier()->getName(),
+           RetValExp->getSourceRange());
   }
 }
 
@@ -826,9 +825,9 @@ static DeclRefExpr* EvalAddr(Expr *E) {
     
   // For casts, we need to handle conversions from arrays to
   // pointer values, and pointer-to-pointer conversions.
-  case Stmt::ExplicitCastExprClass:
-  case Stmt::ImplicitCastExprClass: {
-    
+  case Stmt::ImplicitCastExprClass:
+  case Stmt::ExplicitCCastExprClass:
+  case Stmt::CXXFunctionalCastExprClass: {
     Expr* SubExpr = cast<CastExpr>(E)->getSubExpr();
     QualType T = SubExpr->getType();
     
@@ -844,21 +843,21 @@ static DeclRefExpr* EvalAddr(Expr *E) {
     
   // C++ casts.  For dynamic casts, static casts, and const casts, we
   // are always converting from a pointer-to-pointer, so we just blow
-  // through the cast.  In the case the dynamic cast doesn't fail
-  // (and return NULL), we take the conservative route and report cases
+  // through the cast.  In the case the dynamic cast doesn't fail (and
+  // return NULL), we take the conservative route and report cases
   // where we return the address of a stack variable.  For Reinterpre
-  case Stmt::CXXCastExprClass: {
-    CXXCastExpr *C = cast<CXXCastExpr>(E);
-    
-    if (C->getOpcode() == CXXCastExpr::ReinterpretCast) {
-      Expr *S = C->getSubExpr();
+  // FIXME: The comment about is wrong; we're not always converting
+  // from pointer to pointer. I'm guessing that this code should also
+  // handle references to objects.  
+  case Stmt::CXXStaticCastExprClass: 
+  case Stmt::CXXDynamicCastExprClass: 
+  case Stmt::CXXConstCastExprClass:
+  case Stmt::CXXReinterpretCastExprClass: {
+      Expr *S = cast<CXXNamedCastExpr>(E)->getSubExpr();
       if (S->getType()->isPointerType() || S->getType()->isBlockPointerType())
         return EvalAddr(S);
       else
         return NULL;
-    }
-    else
-      return EvalAddr(C->getSubExpr());
   }
     
   // Everything else: we simply don't reason about them.

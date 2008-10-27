@@ -304,7 +304,7 @@ bool Expr::hasLocalSideEffect() const {
         return E->hasLocalSideEffect();
     return false;
   }
-  case ExplicitCastExprClass:
+  case ExplicitCCastExprClass:
   case CXXFunctionalCastExprClass:
     // If this is a cast to void, check the operand.  Otherwise, the result of
     // the cast is unused.
@@ -628,7 +628,7 @@ bool Expr::isConstantExpr(ASTContext &Ctx, SourceLocation *Loc) const {
     return true;
   }
   case ImplicitCastExprClass:
-  case ExplicitCastExprClass:
+  case ExplicitCCastExprClass:
   case CXXFunctionalCastExprClass: {
     const Expr *SubExpr = cast<CastExpr>(this)->getSubExpr();
     SourceLocation CastLoc = getLocStart();
@@ -946,7 +946,7 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
     break;
   }
   case ImplicitCastExprClass:
-  case ExplicitCastExprClass:
+  case ExplicitCCastExprClass:
   case CXXFunctionalCastExprClass: {
     const Expr *SubExpr = cast<CastExpr>(this)->getSubExpr();
     SourceLocation CastLoc = getLocStart();

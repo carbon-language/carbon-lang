@@ -25,10 +25,6 @@ void CXXConditionDeclExpr::Destroy(ASTContext& C) {
 //===----------------------------------------------------------------------===//
 
 
-// CXXCastExpr
-Stmt::child_iterator CXXCastExpr::child_begin() { return &Op; }
-Stmt::child_iterator CXXCastExpr::child_end() { return &Op+1; }
-
 // CXXBoolLiteralExpr
 Stmt::child_iterator CXXBoolLiteralExpr::child_begin() { 
   return child_iterator();
@@ -66,4 +62,21 @@ Stmt::child_iterator CXXConditionDeclExpr::child_begin() {
 }
 Stmt::child_iterator CXXConditionDeclExpr::child_end() {
   return child_iterator();
+}
+
+//===----------------------------------------------------------------------===//
+//  Named casts
+//===----------------------------------------------------------------------===//
+
+/// getCastName - Get the name of the C++ cast being used, e.g.,
+/// "static_cast", "dynamic_cast", "reinterpret_cast", or
+/// "const_cast". The returned pointer must not be freed.
+const char *CXXNamedCastExpr::getCastName() const {
+  switch (getStmtClass()) {
+  case CXXStaticCastExprClass:      return "static_cast";
+  case CXXDynamicCastExprClass:     return "dynamic_cast";
+  case CXXReinterpretCastExprClass: return "reinterpret_cast";
+  case CXXConstCastExprClass:       return "const_cast";
+  default:                          return "<invalid cast>";
+  }
 }

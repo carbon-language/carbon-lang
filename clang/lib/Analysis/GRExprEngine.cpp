@@ -345,7 +345,7 @@ void GRExprEngine::Visit(Stmt* S, NodeTy* Pred, NodeSet& Dst) {
       break;
       
     case Stmt::ImplicitCastExprClass:
-    case Stmt::ExplicitCastExprClass: {
+    case Stmt::ExplicitCCastExprClass: {
       CastExpr* C = cast<CastExpr>(S);
       VisitCast(C, C->getSubExpr(), Pred, Dst);
       break;
@@ -1444,6 +1444,9 @@ void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, NodeTy* Pred, NodeSet& Dst){
   NodeSet S1;
   QualType T = CastE->getType();
   QualType ExTy = Ex->getType();
+
+  if (const ExplicitCastExpr *ExCast = dyn_cast_or_null<ExplicitCastExpr>(CastE))
+    T = ExCast->getTypeAsWritten();
 
   if (ExTy->isArrayType() || ExTy->isFunctionType() || T->isReferenceType())
     VisitLValue(Ex, Pred, S1);

@@ -1,6 +1,5 @@
 // RUN: clang -fsyntax-only -verify %s
 
-
 int* ret_local() {
   int x = 1;
   return &x; // expected-warning {{address of stack memory}}

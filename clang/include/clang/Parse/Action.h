@@ -593,12 +593,12 @@ public:
   
   //===------------------------- C++ Expressions --------------------------===//
   
-  /// ActOnCXXCasts - Parse {dynamic,static,reinterpret,const}_cast's.
-  virtual ExprResult ActOnCXXCasts(SourceLocation OpLoc, tok::TokenKind Kind,
-                                   SourceLocation LAngleBracketLoc, TypeTy *Ty,
-                                   SourceLocation RAngleBracketLoc,
-                                   SourceLocation LParenLoc, ExprTy *Op,
-                                   SourceLocation RParenLoc) {
+  /// ActOnCXXNamedCast - Parse {dynamic,static,reinterpret,const}_cast's.
+  virtual ExprResult ActOnCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
+                                       SourceLocation LAngleBracketLoc, TypeTy *Ty,
+                                       SourceLocation RAngleBracketLoc,
+                                       SourceLocation LParenLoc, ExprTy *Op,
+                                       SourceLocation RParenLoc) {
     return 0;
   }
 

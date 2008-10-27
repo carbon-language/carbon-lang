@@ -707,7 +707,10 @@ void StmtPrinter::VisitExtVectorElementExpr(ExtVectorElementExpr *Node) {
 void StmtPrinter::VisitCastExpr(CastExpr *) {
   assert(0 && "CastExpr is an abstract class");
 }
-void StmtPrinter::VisitExplicitCastExpr(ExplicitCastExpr *Node) {
+void StmtPrinter::VisitExplicitCastExpr(ExplicitCastExpr *) {
+  assert(0 && "ExplicitCastExpr is an abstract class");
+}
+void StmtPrinter::VisitExplicitCCastExpr(ExplicitCCastExpr *Node) {
   OS << "(" << Node->getType().getAsString() << ")";
   PrintExpr(Node->getSubExpr());
 }
@@ -809,11 +812,27 @@ void StmtPrinter::VisitVAArgExpr(VAArgExpr *Node) {
 
 // C++
 
-void StmtPrinter::VisitCXXCastExpr(CXXCastExpr *Node) {
-  OS << CXXCastExpr::getOpcodeStr(Node->getOpcode()) << '<';
-  OS << Node->getDestType().getAsString() << ">(";
+void StmtPrinter::VisitCXXNamedCastExpr(CXXNamedCastExpr *Node) {
+  OS << Node->getCastName() << '<';
+  OS << Node->getTypeAsWritten().getAsString() << ">(";
   PrintExpr(Node->getSubExpr());
   OS << ")";
+}
+
+void StmtPrinter::VisitCXXStaticCastExpr(CXXStaticCastExpr *Node) {
+  VisitCXXNamedCastExpr(Node);
+}
+
+void StmtPrinter::VisitCXXDynamicCastExpr(CXXDynamicCastExpr *Node) {
+  VisitCXXNamedCastExpr(Node);
+}
+
+void StmtPrinter::VisitCXXReinterpretCastExpr(CXXReinterpretCastExpr *Node) {
+  VisitCXXNamedCastExpr(Node);
+}
+
+void StmtPrinter::VisitCXXConstCastExpr(CXXConstCastExpr *Node) {
+  VisitCXXNamedCastExpr(Node);
 }
 
 void StmtPrinter::VisitCXXBoolLiteralExpr(CXXBoolLiteralExpr *Node) {

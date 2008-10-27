@@ -128,8 +128,9 @@ namespace  {
     void VisitTypesCompatibleExpr(TypesCompatibleExpr *Node);
 
     // C++
-    void VisitCXXCastExpr(CXXCastExpr *Node);
+    void VisitCXXNamedCastExpr(CXXNamedCastExpr *Node);
     void VisitCXXBoolLiteralExpr(CXXBoolLiteralExpr *Node);
+    void VisitCXXFunctionalCastExpr(CXXFunctionalCastExpr *Node);
 
     // ObjC
     void VisitObjCEncodeExpr(ObjCEncodeExpr *Node);
@@ -406,14 +407,21 @@ void StmtDumper::VisitTypesCompatibleExpr(TypesCompatibleExpr *Node) {
 // C++ Expressions
 //===----------------------------------------------------------------------===//
 
-void StmtDumper::VisitCXXCastExpr(CXXCastExpr *Node) {
+void StmtDumper::VisitCXXNamedCastExpr(CXXNamedCastExpr *Node) {
   DumpExpr(Node);
-  fprintf(F, " %s", CXXCastExpr::getOpcodeStr(Node->getOpcode()));
+  fprintf(F, " %s<%s>", Node->getCastName(),
+          Node->getTypeAsWritten().getAsString().c_str());
 }
 
 void StmtDumper::VisitCXXBoolLiteralExpr(CXXBoolLiteralExpr *Node) {
   DumpExpr(Node);
   fprintf(F, " %s", Node->getValue() ? "true" : "false");
+}
+
+void StmtDumper::VisitCXXFunctionalCastExpr(CXXFunctionalCastExpr *Node) {
+  DumpExpr(Node);
+  fprintf(F, " functional cast to %s", 
+          Node->getTypeAsWritten().getAsString().c_str());
 }
 
 //===----------------------------------------------------------------------===//

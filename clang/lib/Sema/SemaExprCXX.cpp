@@ -21,36 +21,39 @@
 #include "llvm/Support/Debug.h"
 using namespace clang;
 
-/// ActOnCXXCasts - Parse {dynamic,static,reinterpret,const}_cast's.
+/// ActOnCXXNamedCast - Parse {dynamic,static,reinterpret,const}_cast's.
 Action::ExprResult
-Sema::ActOnCXXCasts(SourceLocation OpLoc, tok::TokenKind Kind,
-                    SourceLocation LAngleBracketLoc, TypeTy *Ty,
-                    SourceLocation RAngleBracketLoc,
-                    SourceLocation LParenLoc, ExprTy *E,
-                    SourceLocation RParenLoc) {
-  CXXCastExpr::Opcode Op;
+Sema::ActOnCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
+                        SourceLocation LAngleBracketLoc, TypeTy *Ty,
+                        SourceLocation RAngleBracketLoc,
+                        SourceLocation LParenLoc, ExprTy *E,
+                        SourceLocation RParenLoc) {
   Expr *Ex = (Expr*)E;
   QualType DestType = QualType::getFromOpaquePtr(Ty);
 
   switch (Kind) {
   default: assert(0 && "Unknown C++ cast!");
+
   case tok::kw_const_cast:
-    Op = CXXCastExpr::ConstCast;
     CheckConstCast(OpLoc, Ex, DestType);
-    break;
+    return new CXXConstCastExpr(DestType.getNonReferenceType(), Ex, 
+                                DestType, OpLoc);
+
   case tok::kw_dynamic_cast:
-    Op = CXXCastExpr::DynamicCast;
-    break;
+    return new CXXDynamicCastExpr(DestType.getNonReferenceType(), Ex, 
+                                  DestType, OpLoc);
+
   case tok::kw_reinterpret_cast:
-    Op = CXXCastExpr::ReinterpretCast;
     CheckReinterpretCast(OpLoc, Ex, DestType);
-    break;
+    return new CXXReinterpretCastExpr(DestType.getNonReferenceType(), Ex, 
+                                      DestType, OpLoc);
+
   case tok::kw_static_cast:
-    Op = CXXCastExpr::StaticCast;
-    break;
+    return new CXXStaticCastExpr(DestType.getNonReferenceType(), Ex, 
+                                 DestType, OpLoc);
   }
   
-  return new CXXCastExpr(Op, DestType, Ex, OpLoc);
+  return true;
 }
 
 /// CheckConstCast - Check that a const_cast\<DestType\>(SrcExpr) is valid.
@@ -437,7 +440,8 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
   if (NumExprs == 1) {
     if (CheckCastTypes(TypeRange, Ty, Exprs[0]))
       return true;
-    return new CXXFunctionalCastExpr(Ty, TyBeginLoc, Exprs[0], RParenLoc);
+    return new CXXFunctionalCastExpr(Ty.getNonReferenceType(), Ty, TyBeginLoc, 
+                                     Exprs[0], RParenLoc);
   }
 
   // C++ 5.2.3p1:

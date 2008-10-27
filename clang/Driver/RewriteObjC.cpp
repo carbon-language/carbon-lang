@@ -1057,8 +1057,8 @@ Stmt *RewriteObjC::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV,
                                           SourceLocation(), II);
       assert(RD && "RewriteObjCIvarRefExpr(): Can't find RecordDecl");
       QualType castT = Context->getPointerType(Context->getTagDeclType(RD));
-      CastExpr *castExpr = new ExplicitCastExpr(castT, IV->getBase(),
-                                                SourceLocation());
+      CastExpr *castExpr = new ExplicitCCastExpr(castT, IV->getBase(), castT,
+                                                 SourceLocation());
       // Don't forget the parens to enforce the proper binding.
       ParenExpr *PE = new ParenExpr(IV->getBase()->getLocStart(),
                                     IV->getBase()->getLocEnd(),
@@ -1099,8 +1099,8 @@ Stmt *RewriteObjC::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV,
                                           SourceLocation(), II);
       assert(RD && "RewriteObjCIvarRefExpr(): Can't find RecordDecl");
       QualType castT = Context->getPointerType(Context->getTagDeclType(RD));
-      CastExpr *castExpr = new ExplicitCastExpr(castT, IV->getBase(),
-                                                SourceLocation());
+      CastExpr *castExpr = new ExplicitCCastExpr(castT, IV->getBase(), castT,
+                                                 SourceLocation());
       // Don't forget the parens to enforce the proper binding.
       ParenExpr *PE = new ParenExpr(IV->getBase()->getLocStart(),
                                     IV->getBase()->getLocEnd(), castExpr);
@@ -1238,7 +1238,7 @@ Stmt *RewriteObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
     }
   }
   
-  if (ExplicitCastExpr *CE = dyn_cast<ExplicitCastExpr>(S))
+  if (ExplicitCCastExpr *CE = dyn_cast<ExplicitCCastExpr>(S))
     RewriteObjCQualifiedInterfaceTypes(CE);
   
   if (isa<SwitchStmt>(S) || isa<WhileStmt>(S) || 
@@ -1559,8 +1559,10 @@ Stmt *RewriteObjC::RewriteObjCSynchronizedStmt(ObjCAtSynchronizedStmt *S) {
   buf += "  _rethrow = objc_exception_extract(&_stack);\n";
   buf += "  if (!_rethrow) objc_exception_try_exit(&_stack);\n";
   buf += "  objc_sync_exit(";
-  Expr *syncExpr = new ExplicitCastExpr(Context->getObjCIdType(), 
-                                        S->getSynchExpr(), SourceLocation());
+  Expr *syncExpr = new ExplicitCCastExpr(Context->getObjCIdType(), 
+                                         S->getSynchExpr(), 
+                                         Context->getObjCIdType(),
+                                         SourceLocation());
   std::string syncExprBufS;
   llvm::raw_string_ostream syncExprBuf(syncExprBufS);
   syncExpr->printPretty(syncExprBuf);
@@ -2186,7 +2188,8 @@ Stmt *RewriteObjC::RewriteObjCStringLiteral(ObjCStringLiteral *Exp) {
                                  Context->getPointerType(DRE->getType()), 
                                  SourceLocation());
   // cast to NSConstantString *
-  CastExpr *cast = new ExplicitCastExpr(Exp->getType(), Unop, SourceLocation());
+  CastExpr *cast = new ExplicitCCastExpr(Exp->getType(), Unop, 
+                                         Exp->getType(), SourceLocation());
   ReplaceStmt(Exp, cast);
   delete Exp;
   return cast;
@@ -2321,9 +2324,10 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
                                                    &ClsExprs[0], 
                                                    ClsExprs.size());
       // To turn off a warning, type-cast to 'id'
-      InitExprs.push_back(
-        new ExplicitCastExpr(Context->getObjCIdType(), 
-        Cls, SourceLocation())); // set 'super class', using objc_getClass().
+      InitExprs.push_back( // set 'super class', using objc_getClass().
+        new ExplicitCCastExpr(Context->getObjCIdType(), 
+                              Cls, Context->getObjCIdType(),
+                              SourceLocation())); 
       // struct objc_super
       QualType superType = getSuperStructType();
       Expr *SuperRep;
@@ -2372,10 +2376,11 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
       llvm::SmallVector<Expr*, 4> InitExprs;
       
       InitExprs.push_back(
-        new ExplicitCastExpr(Context->getObjCIdType(), 
+        new ExplicitCCastExpr(Context->getObjCIdType(), 
                      new DeclRefExpr(CurMethodDef->getSelfDecl(), 
                                      Context->getObjCIdType(),
-                                     SourceLocation()), 
+                                     SourceLocation()),
+                     Context->getObjCIdType(),
                      SourceLocation())); // set the 'receiver'.
       
       llvm::SmallVector<Expr*, 8> ClsExprs;
@@ -2389,8 +2394,9 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
                                                    ClsExprs.size());
       // To turn off a warning, type-cast to 'id'
       InitExprs.push_back(
-        new ExplicitCastExpr(Context->getObjCIdType(), 
-        Cls, SourceLocation())); // set 'super class', using objc_getClass().
+        // set 'super class', using objc_getClass().
+        new ExplicitCCastExpr(Context->getObjCIdType(), 
+        Cls, Context->getObjCIdType(), SourceLocation())); 
       // struct objc_super
       QualType superType = getSuperStructType();
       Expr *SuperRep;
@@ -2417,10 +2423,11 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
     } else {
       // Remove all type-casts because it may contain objc-style types; e.g.
       // Foo<Proto> *.
-      while (ExplicitCastExpr *CE = dyn_cast<ExplicitCastExpr>(recExpr))
+      while (ExplicitCCastExpr *CE = dyn_cast<ExplicitCCastExpr>(recExpr))
         recExpr = CE->getSubExpr();
-      recExpr = new ExplicitCastExpr(Context->getObjCIdType(), recExpr,
-                                     SourceLocation());
+      recExpr = new ExplicitCCastExpr(Context->getObjCIdType(), recExpr,
+                                      Context->getObjCIdType(), 
+                                      SourceLocation());
       MsgExprs.push_back(recExpr);
     }
   }
@@ -2441,17 +2448,19 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
     // Make all implicit casts explicit...ICE comes in handy:-)
     if (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(userExpr)) {
       // Reuse the ICE type, it is exactly what the doctor ordered.
-      userExpr = new ExplicitCastExpr(ICE->getType()->isObjCQualifiedIdType()
+      QualType type = ICE->getType()->isObjCQualifiedIdType()
                                 ? Context->getObjCIdType()
-                                : ICE->getType(), userExpr, SourceLocation());
+                                : ICE->getType();
+      userExpr = new ExplicitCCastExpr(type, userExpr, type, SourceLocation());
     }
     // Make id<P...> cast into an 'id' cast.
-    else if (ExplicitCastExpr *CE = dyn_cast<ExplicitCastExpr>(userExpr)) {
+    else if (ExplicitCCastExpr *CE = dyn_cast<ExplicitCCastExpr>(userExpr)) {
       if (CE->getType()->isObjCQualifiedIdType()) {
-        while ((CE = dyn_cast<ExplicitCastExpr>(userExpr)))
+        while ((CE = dyn_cast<ExplicitCCastExpr>(userExpr)))
           userExpr = CE->getSubExpr();
-        userExpr = new ExplicitCastExpr(Context->getObjCIdType(), 
-                                userExpr, SourceLocation());
+        userExpr = new ExplicitCCastExpr(Context->getObjCIdType(), 
+                                userExpr, Context->getObjCIdType(), 
+                                SourceLocation());
       }
     } 
     MsgExprs.push_back(userExpr);
@@ -2494,8 +2503,9 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
   // If we don't do this cast, we get the following bizarre warning/note:
   // xx.m:13: warning: function called through a non-compatible type
   // xx.m:13: note: if this code is reached, the program will abort
-  cast = new ExplicitCastExpr(Context->getPointerType(Context->VoidTy), DRE, 
-                      SourceLocation());
+  cast = new ExplicitCCastExpr(Context->getPointerType(Context->VoidTy), DRE, 
+                               Context->getPointerType(Context->VoidTy),
+                               SourceLocation());
     
   // Now do the "normal" pointer to function cast.
   QualType castType = Context->getFunctionType(returnType, 
@@ -2503,7 +2513,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
     // If we don't have a method decl, force a variadic cast.
     Exp->getMethodDecl() ? Exp->getMethodDecl()->isVariadic() : true, 0);
   castType = Context->getPointerType(castType);
-  cast = new ExplicitCastExpr(castType, cast, SourceLocation());
+  cast = new ExplicitCCastExpr(castType, cast, castType, SourceLocation());
 
   // Don't forget the parens to enforce the proper binding.
   ParenExpr *PE = new ParenExpr(SourceLocation(), SourceLocation(), cast);
@@ -2522,14 +2532,15 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
     DeclRefExpr *STDRE = new DeclRefExpr(MsgSendStretFlavor, msgSendType, 
                                          SourceLocation());
     // Need to cast objc_msgSend_stret to "void *" (see above comment).
-    cast = new ExplicitCastExpr(Context->getPointerType(Context->VoidTy), STDRE, 
-                        SourceLocation());
+    cast = new ExplicitCCastExpr(Context->getPointerType(Context->VoidTy), STDRE, 
+                                 Context->getPointerType(Context->VoidTy),
+                                 SourceLocation());
     // Now do the "normal" pointer to function cast.
     castType = Context->getFunctionType(returnType, 
       &ArgTypes[0], ArgTypes.size(),
       Exp->getMethodDecl() ? Exp->getMethodDecl()->isVariadic() : false, 0);
     castType = Context->getPointerType(castType);
-    cast = new ExplicitCastExpr(castType, cast, SourceLocation());
+    cast = new ExplicitCCastExpr(castType, cast, castType, SourceLocation());
     
     // Don't forget the parens to enforce the proper binding.
     PE = new ParenExpr(SourceLocation(), SourceLocation(), cast);

@@ -23,54 +23,112 @@ namespace clang {
 // C++ Expressions.
 //===--------------------------------------------------------------------===//
 
-/// CXXCastExpr - [C++ 5.2.7, 5.2.9, 5.2.10, 5.2.11] C++ Cast Operators.
-/// 
-class CXXCastExpr : public Expr {
-public:
-  enum Opcode {
-    DynamicCast,
-    StaticCast,
-    ReinterpretCast,
-    ConstCast
-  };
+/// CXXNamedCastExpr - Abstract class common to all of the C++ "named"
+/// casts, @c static_cast, @c dynamic_cast, @c reinterpret_cast, or @c
+/// const_cast.
+///
+/// This abstract class is inherited by all of the classes
+/// representing "named" casts, e.g., CXXStaticCastExpr,
+/// CXXDynamicCastExpr, CXXReinterpretCastExpr, and CXXConstCastExpr.
+class CXXNamedCastExpr : public ExplicitCastExpr {
 private:
-  QualType Ty;
-  Opcode Opc;
-  Stmt *Op;
   SourceLocation Loc; // the location of the casting op
+
+protected:
+  CXXNamedCastExpr(StmtClass SC, QualType ty, Expr *op, QualType writtenTy, 
+                   SourceLocation l)
+    : ExplicitCastExpr(SC, ty, op, writtenTy), Loc(l) {}
+
 public:
-  CXXCastExpr(Opcode op, QualType ty, Expr *expr, SourceLocation l)
-    : Expr(CXXCastExprClass, ty), Ty(ty), Opc(op), Op(expr), Loc(l) {}
+  const char *getCastName() const;
 
-  QualType getDestType() const { return Ty; }
-  Expr *getSubExpr() const { return cast<Expr>(Op); }
-
-  Opcode getOpcode() const { return Opc; }
-
-  /// getOpcodeStr - Turn an Opcode enum value into the string it represents,
-  /// e.g. "reinterpret_cast".
-  static const char *getOpcodeStr(Opcode Op) {
-    // FIXME: move out of line.
-    switch (Op) {
-    default: assert(0 && "Not a C++ cast expression");
-    case CXXCastExpr::ConstCast:       return "const_cast";
-    case CXXCastExpr::DynamicCast:     return "dynamic_cast";
-    case CXXCastExpr::ReinterpretCast: return "reinterpret_cast";
-    case CXXCastExpr::StaticCast:      return "static_cast";
-    }
-  }
-  
   virtual SourceRange getSourceRange() const {
     return SourceRange(Loc, getSubExpr()->getSourceRange().getEnd());
   }
   static bool classof(const Stmt *T) { 
-    return T->getStmtClass() == CXXCastExprClass;
+    switch (T->getStmtClass()) {
+    case CXXNamedCastExprClass:
+    case CXXStaticCastExprClass:
+    case CXXDynamicCastExprClass:
+    case CXXReinterpretCastExprClass:
+    case CXXConstCastExprClass:
+      return true;
+    default:
+      return false;
+    }
   }
-  static bool classof(const CXXCastExpr *) { return true; }
+  static bool classof(const CXXNamedCastExpr *) { return true; }
       
-  // Iterators
-  virtual child_iterator child_begin();
-  virtual child_iterator child_end();
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static CXXNamedCastExpr *CreateImpl(llvm::Deserializer& D, ASTContext& C,
+                                      StmtClass SC);
+};
+
+/// CXXStaticCastExpr - A C++ @c static_cast expression (C++ [expr.static.cast]).
+/// 
+/// This expression node represents a C++ static cast, e.g.,
+/// @c static_cast<int>(1.0).
+class CXXStaticCastExpr : public CXXNamedCastExpr {
+public:
+  CXXStaticCastExpr(QualType ty, Expr *op, QualType writtenTy, SourceLocation l)
+    : CXXNamedCastExpr(CXXStaticCastExprClass, ty, op, writtenTy, l) {}
+
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == CXXStaticCastExprClass;
+  }
+  static bool classof(const CXXStaticCastExpr *) { return true; }
+};
+
+/// CXXDynamicCastExpr - A C++ @c dynamic_cast expression
+/// (C++ [expr.dynamic.cast]), which may perform a run-time check to 
+/// determine how to perform the type cast.
+/// 
+/// This expression node represents a dynamic cast, e.g.,
+/// @c dynamic_cast<Derived*>(BasePtr).
+class CXXDynamicCastExpr : public CXXNamedCastExpr {
+public:
+  CXXDynamicCastExpr(QualType ty, Expr *op, QualType writtenTy, SourceLocation l)
+    : CXXNamedCastExpr(CXXDynamicCastExprClass, ty, op, writtenTy, l) {}
+
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == CXXDynamicCastExprClass;
+  }
+  static bool classof(const CXXDynamicCastExpr *) { return true; }
+};
+
+/// CXXReinterpretCastExpr - A C++ @c reinterpret_cast expression (C++
+/// [expr.reinterpret.cast]), which provides a differently-typed view
+/// of a value but performs no actual work at run time.
+/// 
+/// This expression node represents a reinterpret cast, e.g.,
+/// @c reinterpret_cast<int>(VoidPtr).
+class CXXReinterpretCastExpr : public CXXNamedCastExpr {
+public:
+  CXXReinterpretCastExpr(QualType ty, Expr *op, QualType writtenTy, 
+                         SourceLocation l)
+    : CXXNamedCastExpr(CXXReinterpretCastExprClass, ty, op, writtenTy, l) {}
+
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == CXXReinterpretCastExprClass;
+  }
+  static bool classof(const CXXReinterpretCastExpr *) { return true; }
+};
+
+/// CXXConstCastExpr - A C++ @c const_cast expression (C++ [expr.const.cast]),
+/// which can remove type qualifiers but does not change the underlying value.
+/// 
+/// This expression node represents a const cast, e.g.,
+/// @c const_cast<char*>(PtrToConstChar).
+class CXXConstCastExpr : public CXXNamedCastExpr {
+public:
+  CXXConstCastExpr(QualType ty, Expr *op, QualType writtenTy, 
+                   SourceLocation l)
+    : CXXNamedCastExpr(CXXConstCastExprClass, ty, op, writtenTy, l) {}
+
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == CXXConstCastExprClass;
+  }
+  static bool classof(const CXXConstCastExpr *) { return true; }
 };
 
 /// CXXBoolLiteralExpr - [C++ 2.13.5] C++ Boolean Literal.
@@ -170,17 +228,17 @@ public:
                                        ASTContext& C);
 };
 
-/// CXXFunctionalCastExpr - [C++ 5.2.3p1] Explicit type conversion
-///                                       (functional notation).
-/// Example: "x = int(0.5);"
-///
-class CXXFunctionalCastExpr : public CastExpr {
+/// CXXFunctionalCastExpr - Represents an explicit C++ type conversion
+/// that uses "functional" notion (C++ [expr.type.conv]). Example: @c
+/// x = int(0.5);
+class CXXFunctionalCastExpr : public ExplicitCastExpr {
   SourceLocation TyBeginLoc;
   SourceLocation RParenLoc;
 public:
-  CXXFunctionalCastExpr(QualType ty, SourceLocation tyBeginLoc, Expr *castExpr,
+  CXXFunctionalCastExpr(QualType ty, QualType writtenTy, 
+                        SourceLocation tyBeginLoc, Expr *castExpr,
                         SourceLocation rParenLoc) : 
-    CastExpr(CXXFunctionalCastExprClass, ty, castExpr),
+    ExplicitCastExpr(CXXFunctionalCastExprClass, ty, castExpr, writtenTy),
     TyBeginLoc(tyBeginLoc), RParenLoc(rParenLoc) {}
 
   SourceLocation getTypeBeginLoc() const { return TyBeginLoc; }

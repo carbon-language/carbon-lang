@@ -61,9 +61,9 @@ Parser::ExprResult Parser::ParseCXXCasts() {
   ExprResult Result = ParseSimpleParenExpression(RParenLoc);
 
   if (!Result.isInvalid)
-    Result = Actions.ActOnCXXCasts(OpLoc, Kind,
-                                   LAngleBracketLoc, CastTy, RAngleBracketLoc,
-                                   LParenLoc, Result.Val, RParenLoc);
+    Result = Actions.ActOnCXXNamedCast(OpLoc, Kind,
+                                       LAngleBracketLoc, CastTy, RAngleBracketLoc,
+                                       LParenLoc, Result.Val, RParenLoc);
 
   return Result;
 }
