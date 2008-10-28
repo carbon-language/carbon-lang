@@ -201,11 +201,11 @@ public:
   bool isFrameAddressTaken() const { return FrameAddressTaken; }
   void setFrameAddressIsTaken(bool T) { FrameAddressTaken = T; }
 
-  /// getObjectIndexBegin - Return the minimum frame object index...
+  /// getObjectIndexBegin - Return the minimum frame object index.
   ///
   int getObjectIndexBegin() const { return -NumFixedObjects; }
 
-  /// getObjectIndexEnd - Return one past the maximum frame object index...
+  /// getObjectIndexEnd - Return one past the maximum frame object index.
   ///
   int getObjectIndexEnd() const { return (int)Objects.size()-NumFixedObjects; }
 
@@ -216,7 +216,7 @@ public:
   ///
   unsigned getNumObjects() const { return Objects.size(); }
 
-  /// getObjectSize - Return the size of the specified object
+  /// getObjectSize - Return the size of the specified object.
   ///
   int64_t getObjectSize(int ObjectIdx) const {
     assert(unsigned(ObjectIdx+NumFixedObjects) < Objects.size() &&
