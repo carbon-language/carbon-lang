@@ -27,6 +27,7 @@ public:
   enum Kind {
     Alias,
     Aligned,
+    AlwaysInline,
     Annotate,
     AsmLabel, // Represent GCC asm label extension.
     Constructor,
@@ -138,6 +139,16 @@ public:
     return A->getKind() == AsmLabel;
   }
   static bool classof(const AsmLabelAttr *A) { return true; }
+};
+
+class AlwaysInlineAttr : public Attr {
+public:
+  AlwaysInlineAttr() : Attr(AlwaysInline) {}
+
+  // Implement isa/cast/dyncast/etc.
+
+  static bool classof(const Attr *A) { return A->getKind() == AlwaysInline; }
+  static bool classof(const AlwaysInlineAttr *A) { return true; }
 };
 
 class AliasAttr : public Attr {

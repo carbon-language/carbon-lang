@@ -45,6 +45,7 @@ public:
     AT_address_space,
     AT_alias,
     AT_aligned,
+    AT_always_inline,
     AT_annotate,
     AT_constructor,
     AT_deprecated,

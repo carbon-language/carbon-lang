@@ -396,6 +396,18 @@ static void HandleAliasAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   d->addAttr(new AliasAttr(std::string(Alias, AliasLen)));
 }
 
+static void HandleAlwaysInlineAttr(Decl *d, const AttributeList &Attr, 
+                                   Sema &S) {
+  // check the attribute arguments.
+  if (Attr.getNumArgs() != 0) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
+           std::string("0"));
+    return;
+  }
+  
+  d->addAttr(new AlwaysInlineAttr());
+}
+
 static void HandleNoReturnAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() != 0) {
@@ -1121,6 +1133,8 @@ static void ProcessDeclAttribute(Decl *D, const AttributeList &Attr, Sema &S) {
     break;
   case AttributeList::AT_alias:       HandleAliasAttr     (D, Attr, S); break;
   case AttributeList::AT_aligned:     HandleAlignedAttr   (D, Attr, S); break;
+  case AttributeList::AT_always_inline: 
+    HandleAlwaysInlineAttr  (D, Attr, S); break;
   case AttributeList::AT_annotate:    HandleAnnotateAttr  (D, Attr, S); break;
   case AttributeList::AT_constructor: HandleConstructorAttr(D, Attr, S); break;
   case AttributeList::AT_deprecated:  HandleDeprecatedAttr(D, Attr, S); break;

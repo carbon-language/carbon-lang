@@ -97,6 +97,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
     break;
   case 13:
     if (!memcmp(Str, "address_space", 13)) return AT_address_space;
+    if (!memcmp(Str, "always_inline", 13)) return AT_always_inline;
     break;
   case 15:
     if (!memcmp(Str, "ext_vector_type", 15)) return AT_ext_vector_type;

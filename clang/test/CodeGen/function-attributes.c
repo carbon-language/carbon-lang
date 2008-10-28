@@ -6,7 +6,8 @@
 // RUN: grep 'define signext i16 @f4(i32 %x) nounwind' %t &&
 // RUN: grep 'define zeroext i16 @f5(i32 %x) nounwind' %t &&
 // RUN: grep 'define void @f6(i16 signext %x) nounwind' %t &&
-// RUN: grep 'define void @f7(i16 zeroext %x) nounwind' %t
+// RUN: grep 'define void @f7(i16 zeroext %x) nounwind' %t &&
+// RUN: grep 'define void @f8() nounwind alwaysinline' %t
 
 signed char f0(int x) { return x; }
 
@@ -24,3 +25,4 @@ void f6(signed short x) { }
 
 void f7(unsigned short x) { }
 
+void __attribute__((always_inline)) f8(void) { }
