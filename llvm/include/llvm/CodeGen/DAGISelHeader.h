@@ -176,7 +176,9 @@ void SelectRoot(SelectionDAG &DAG) {
     // Skip already selected nodes.
     if (isSelected(Node->getNodeId()))
       continue;
+#ifndef NDEBUG
     DAG.setSubgraphColor(Node, "red");
+#endif
     SDNode *ResNode = Select(SDValue(Node, 0));
     // If node should not be replaced, 
     // continue with the next one.
@@ -184,8 +186,10 @@ void SelectRoot(SelectionDAG &DAG) {
       continue;
     // Replace node.
     if (ResNode) {
+#ifndef NDEBUG
       DAG.setSubgraphColor(ResNode, "yellow");
       DAG.setSubgraphColor(ResNode, "black");
+#endif
       ReplaceUses(Node, ResNode);
     }
     // If after the replacement this node is not used any more,
@@ -195,7 +199,6 @@ void SelectRoot(SelectionDAG &DAG) {
       CurDAG->RemoveDeadNode(Node, &ISQU);
       UpdateQueue(ISQU);
     }
-    //DAG.setSubgraphColor(Node, "black");
   }
 
   delete[] ISelQueued;
