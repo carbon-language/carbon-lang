@@ -393,6 +393,20 @@ Expr::isLvalueResult Expr::isLvalue(ASTContext &Ctx) const {
     break;
   case ParenExprClass: // C99 6.5.1p5
     return cast<ParenExpr>(this)->getSubExpr()->isLvalue(Ctx);
+  case CallExprClass: {
+    // C++ [expr.call]p10:
+    //   A function call is an lvalue if and only if the result type
+    //   is a reference.
+    QualType CalleeType 
+      = dyn_cast<CallExpr>(this)->getCallee()->IgnoreParens()->getType();
+    if (const PointerType *FnTypePtr = CalleeType->getAsPointerType())
+      if (const FunctionType *FnType
+            = FnTypePtr->getPointeeType()->getAsFunctionType())
+        if (FnType->getResultType()->isReferenceType())
+          return LV_Valid;
+    
+    break;
+  }
   case CompoundLiteralExprClass: // C99 6.5.2.5p5
     return LV_Valid;
   case ExtVectorElementExprClass:
@@ -407,10 +421,25 @@ Expr::isLvalueResult Expr::isLvalue(ASTContext &Ctx) const {
     return (cast<PredefinedExpr>(this)->getIdentType()
                == PredefinedExpr::CXXThis
             ? LV_InvalidExpression : LV_Valid);
+  case VAArgExprClass:
+    return LV_Valid;
   case CXXDefaultArgExprClass:
     return cast<CXXDefaultArgExpr>(this)->getExpr()->isLvalue(Ctx);
   case CXXConditionDeclExprClass:
     return LV_Valid;
+  case ExplicitCCastExprClass:
+  case CXXFunctionalCastExprClass:
+  case CXXStaticCastExprClass:
+  case CXXDynamicCastExprClass:
+  case CXXReinterpretCastExprClass:
+  case CXXConstCastExprClass:
+    // The result of an explicit cast is an lvalue if the type we are
+    // casting to is a reference type. See C++ [expr.cast]p1, 
+    // C++ [expr.static.cast]p2, C++ [expr.dynamic.cast]p2,
+    // C++ [expr.reinterpret.cast]p1, C++ [expr.const.cast]p1.
+    if (cast<ExplicitCastExpr>(this)->getTypeAsWritten()->isReferenceType())
+      return LV_Valid;
+    break;
   default:
     break;
   }

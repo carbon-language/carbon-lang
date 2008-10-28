@@ -1382,11 +1382,6 @@ bool Sema::CheckForConstantInitializer(Expr *Init, QualType DclT) {
   if (CompoundLiteralExpr *e = dyn_cast<CompoundLiteralExpr>(Init))
     return CheckForConstantInitializer(e->getInitializer(), DclT);
 
-  if (Init->getType()->isReferenceType()) {
-    // FIXME: Work out how the heck references work.
-    return false;
-  }
-
   if (InitListExpr *Exp = dyn_cast<InitListExpr>(Init)) {
     unsigned numInits = Exp->getNumInits();
     for (unsigned i = 0; i < numInits; i++) {

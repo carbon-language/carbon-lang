@@ -301,7 +301,8 @@ class CXXConditionDeclExpr : public DeclRefExpr {
 public:
   CXXConditionDeclExpr(SourceLocation startLoc,
                        SourceLocation eqLoc, VarDecl *var)
-    : DeclRefExpr(CXXConditionDeclExprClass, var, var->getType(), startLoc) {}
+    : DeclRefExpr(CXXConditionDeclExprClass, var, 
+                  var->getType().getNonReferenceType(), startLoc) {}
 
   virtual void Destroy(ASTContext& Ctx);
 

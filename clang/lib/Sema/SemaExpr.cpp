@@ -35,10 +35,6 @@ void Sema::DefaultFunctionArrayConversion(Expr *&E) {
   QualType Ty = E->getType();
   assert(!Ty.isNull() && "DefaultFunctionArrayConversion - missing type");
 
-  if (const ReferenceType *ref = Ty->getAsReferenceType()) {
-    ImpCastExprToType(E, ref->getPointeeType()); // C++ [expr]
-    Ty = E->getType();
-  }
   if (Ty->isFunctionType())
     ImpCastExprToType(E, Context.getPointerType(Ty));
   else if (Ty->isArrayType()) {
@@ -68,10 +64,6 @@ Expr *Sema::UsualUnaryConversions(Expr *&Expr) {
   QualType Ty = Expr->getType();
   assert(!Ty.isNull() && "UsualUnaryConversions - missing type");
   
-  if (const ReferenceType *Ref = Ty->getAsReferenceType()) {
-    ImpCastExprToType(Expr, Ref->getPointeeType()); // C++ [expr]
-    Ty = Expr->getType();
-  }
   if (Ty->isPromotableIntegerType()) // C99 6.3.1.1p2
     ImpCastExprToType(Expr, Context.IntTy);
   else
@@ -442,11 +434,13 @@ Sema::ExprResult Sema::ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
   if (CurBlock && ShouldSnapshotBlockValueReference(CurBlock, VD)) {
     // The BlocksAttr indicates the variable is bound by-reference.
     if (VD->getAttr<BlocksAttr>())
-      return new BlockDeclRefExpr(VD, VD->getType(), Loc, true);
+      return new BlockDeclRefExpr(VD, VD->getType().getNonReferenceType(), 
+                                  Loc, true);
       
     // Variable will be bound by-copy, make it const within the closure.
     VD->getType().addConst();
-    return new BlockDeclRefExpr(VD, VD->getType(), Loc, false);
+    return new BlockDeclRefExpr(VD, VD->getType().getNonReferenceType(), 
+                                Loc, false);
   }
   // If this reference is not in a block or if the referenced variable is
   // within the block, create a normal DeclRefExpr.
@@ -1674,8 +1668,15 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
   if (lhsType == rhsType)
     return Compatible; // Common case: fast path an exact match.
 
-  if (lhsType->isReferenceType() || rhsType->isReferenceType()) {
-    if (Context.typesAreCompatible(lhsType, rhsType))
+  // If the left-hand side is a reference type, then we are in a
+  // (rare!) case where we've allowed the use of references in C,
+  // e.g., as a parameter type in a built-in function. In this case,
+  // just make sure that the type referenced is compatible with the
+  // right-hand side type. The caller is responsible for adjusting
+  // lhsType so that the resulting expression does not have reference
+  // type.
+  if (const ReferenceType *lhsTypeRef = lhsType->getAsReferenceType()) {
+    if (Context.typesAreCompatible(lhsTypeRef->getPointeeType(), rhsType))
       return Compatible;
     return Incompatible;
   }
@@ -1808,8 +1809,7 @@ Sema::CheckSingleAssignmentConstraints(QualType lhsType, Expr *&rExpr) {
   // DeclExpr's (created by ActOnIdentifierExpr), it would mess up the unary
   // expressions that surpress this implicit conversion (&, sizeof).
   //
-  // Suppress this for references: C++ 8.5.3p5.  FIXME: revisit when references
-  // are better understood.
+  // Suppress this for references: C++ 8.5.3p5.  
   if (!lhsType->isReferenceType())
     DefaultFunctionArrayConversion(rExpr);
 
@@ -1818,8 +1818,12 @@ Sema::CheckSingleAssignmentConstraints(QualType lhsType, Expr *&rExpr) {
   
   // C99 6.5.16.1p2: The value of the right operand is converted to the
   // type of the assignment expression.
+  // CheckAssignmentConstraints allows the left-hand side to be a reference,
+  // so that we can use references in built-in functions even in C.
+  // The getNonReferenceType() call makes sure that the resulting expression
+  // does not have reference type.
   if (rExpr->getType() != lhsType)
-    ImpCastExprToType(rExpr, lhsType);
+    ImpCastExprToType(rExpr, lhsType.getNonReferenceType());
   return result;
 }
 
@@ -2909,7 +2913,8 @@ Sema::ExprResult Sema::ActOnBuiltinOffsetOf(SourceLocation BuiltinLoc,
     // FIXME: Verify that MemberDecl isn't a bitfield.
     // MemberDecl->getType() doesn't get the right qualifiers, but it doesn't
     // matter here.
-    Res = new MemberExpr(Res, false, MemberDecl, OC.LocEnd, MemberDecl->getType());
+    Res = new MemberExpr(Res, false, MemberDecl, OC.LocEnd, 
+                         MemberDecl->getType().getNonReferenceType());
   }
   
   return new UnaryOperator(Res, UnaryOperator::OffsetOf, Context.getSizeType(),
@@ -3121,7 +3126,8 @@ Sema::ExprResult Sema::ActOnOverloadExpr(ExprTy **args, unsigned NumArgs,
                     OE->getFn()->getSourceRange());
       // Remember our match, and continue processing the remaining arguments
       // to catch any errors.
-      OE = new OverloadExpr(Args, NumArgs, i, FnType->getResultType(),
+      OE = new OverloadExpr(Args, NumArgs, i, 
+                            FnType->getResultType().getNonReferenceType(),
                             BuiltinLoc, RParenLoc);
     }
   }
@@ -3168,7 +3174,7 @@ Sema::ExprResult Sema::ActOnVAArg(SourceLocation BuiltinLoc,
   
   // FIXME: Warn if a non-POD type is passed in.
   
-  return new VAArgExpr(BuiltinLoc, E, T, RPLoc);
+  return new VAArgExpr(BuiltinLoc, E, T.getNonReferenceType(), RPLoc);
 }
 
 bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,

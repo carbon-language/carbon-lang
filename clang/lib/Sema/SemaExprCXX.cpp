@@ -79,10 +79,6 @@ Sema::CheckConstCast(SourceLocation OpLoc, Expr *&SrcExpr, QualType DestType)
     // C++ 5.2.11p4: An lvalue of type T1 can be [cast] to an lvalue of type T2
     //   [...] if a pointer to T1 can be [cast] to the type pointer to T2.
     DestType = Context.getPointerType(DestTypeTmp->getPointeeType());
-    if (const ReferenceType *SrcTypeTmp = SrcType->getAsReferenceType()) {
-      // FIXME: This shouldn't actually be possible, but right now it is.
-      SrcType = SrcTypeTmp->getPointeeType();
-    }
     SrcType = Context.getPointerType(SrcType);
   } else {
     // C++ 5.2.11p1: Otherwise, the result is an rvalue and the
@@ -177,10 +173,6 @@ Sema::CheckReinterpretCast(SourceLocation OpLoc, Expr *&SrcExpr,
     //   built-in & and * operators.
     // This code does this transformation for the checked types.
     DestType = Context.getPointerType(DestTypeTmp->getPointeeType());
-    if (const ReferenceType *SrcTypeTmp = SrcType->getAsReferenceType()) {
-      // FIXME: This shouldn't actually be possible, but right now it is.
-      SrcType = SrcTypeTmp->getPointeeType();
-    }
     SrcType = Context.getPointerType(SrcType);
   } else {
     // C++ 5.2.10p1: [...] the lvalue-to-rvalue, array-to-pointer, and

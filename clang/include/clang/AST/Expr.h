@@ -38,7 +38,16 @@ namespace clang {
 class Expr : public Stmt {
   QualType TR;
 protected:
-  Expr(StmtClass SC, QualType T) : Stmt(SC), TR(T) {}
+  Expr(StmtClass SC, QualType T) : Stmt(SC), TR(T) {
+    // In C++, the type of an expression is always adjusted so that it
+    // will not have reference type an expression will never have
+    // reference type (C++ [expr]p6). Use
+    // QualType::getNonReferenceType() to retrieve the non-reference
+    // type. Additionally, inspect Expr::isLvalue to determine whether
+    // an expression that is adjusted in this manner should be
+    // considered an lvalue.
+    assert((T.isNull() || !T->isReferenceType()) && "Expressions can't have reference type");
+  }
 public:  
   QualType getType() const { return TR; }
   void setType(QualType t) { TR = t; }
@@ -786,20 +795,14 @@ public:
   const Expr *getSubExpr() const { return cast<Expr>(Op); }
   
   static bool classof(const Stmt *T) { 
-    switch (T->getStmtClass()) {
-    case ImplicitCastExprClass:
-    case ExplicitCastExprClass:
-    case ExplicitCCastExprClass:
-    case CXXNamedCastExprClass:
-    case CXXStaticCastExprClass:
-    case CXXDynamicCastExprClass:
-    case CXXReinterpretCastExprClass:
-    case CXXConstCastExprClass:
-    case CXXFunctionalCastExprClass:
+    StmtClass SC = T->getStmtClass();
+    if (SC >= CXXNamedCastExprClass && SC <= CXXFunctionalCastExprClass)
       return true;
-    default:
-      return false;
-    }
+
+    if (SC >= ImplicitCastExprClass && SC <= ExplicitCCastExprClass)
+      return true;
+
+    return false;
   }
   static bool classof(const CastExpr *) { return true; }
   
@@ -862,18 +865,13 @@ public:
   QualType getTypeAsWritten() const { return TypeAsWritten; }
 
   static bool classof(const Stmt *T) { 
-    switch (T->getStmtClass()) {
-    case ExplicitCastExprClass:
-    case ExplicitCCastExprClass:
-    case CXXFunctionalCastExprClass:
-    case CXXStaticCastExprClass:
-    case CXXDynamicCastExprClass:
-    case CXXReinterpretCastExprClass:
-    case CXXConstCastExprClass:
+    StmtClass SC = T->getStmtClass();
+    if (SC >= ExplicitCastExprClass && SC <= ExplicitCCastExprClass)
       return true;
-    default:
-      return false;
-    }
+    if (SC >= CXXNamedCastExprClass && SC <= CXXFunctionalCastExprClass)
+      return true;
+
+    return false;
   }
   static bool classof(const ExplicitCastExpr *) { return true; }
 };

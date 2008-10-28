@@ -1063,22 +1063,43 @@ const GRState* GRExprEngine::EvalLocation(Expr* Ex, NodeTy* Pred,
 //===----------------------------------------------------------------------===//
 // Transfer function: Function calls.
 //===----------------------------------------------------------------------===//
-
 void GRExprEngine::VisitCall(CallExpr* CE, NodeTy* Pred,
                              CallExpr::arg_iterator AI,
                              CallExpr::arg_iterator AE,
-                             NodeSet& Dst) {
+                             NodeSet& Dst)
+{
+  // Determine the type of function we're calling (if available).
+  const FunctionTypeProto *Proto = NULL;
+  QualType FnType = CE->getCallee()->IgnoreParens()->getType();
+  if (const PointerType *FnTypePtr = FnType->getAsPointerType())
+    Proto = FnTypePtr->getPointeeType()->getAsFunctionTypeProto();
+
+  VisitCallRec(CE, Pred, AI, AE, Dst, Proto, /*ParamIdx=*/0);
+}
+
+void GRExprEngine::VisitCallRec(CallExpr* CE, NodeTy* Pred,
+                                CallExpr::arg_iterator AI,
+                                CallExpr::arg_iterator AE,
+                                NodeSet& Dst, const FunctionTypeProto *Proto,
+                                unsigned ParamIdx) {
   
   // Process the arguments.
-  
   if (AI != AE) {
-    
-    NodeSet DstTmp;      
-    Visit(*AI, Pred, DstTmp);    
+    // If the call argument is being bound to a reference parameter,
+    // visit it as an lvalue, not an rvalue.
+    bool VisitAsLvalue = false;
+    if (Proto && ParamIdx < Proto->getNumArgs())
+      VisitAsLvalue = Proto->getArgType(ParamIdx)->isReferenceType();
+
+    NodeSet DstTmp;  
+    if (VisitAsLvalue)
+      VisitLValue(*AI, Pred, DstTmp);    
+    else
+      Visit(*AI, Pred, DstTmp);    
     ++AI;
     
     for (NodeSet::iterator DI=DstTmp.begin(), DE=DstTmp.end(); DI != DE; ++DI)
-      VisitCall(CE, *DI, AI, AE, Dst);
+      VisitCallRec(CE, *DI, AI, AE, Dst, Proto, ParamIdx + 1);
     
     return;
   }
