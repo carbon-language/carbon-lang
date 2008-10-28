@@ -418,6 +418,11 @@ public:
   /// getUnknownRegion - Retrieve the memory region associated with unknown
   /// memory space.
   MemSpaceRegion* getUnknownRegion();
+
+  bool isGlobalsRegion(const MemRegion* R) { 
+    assert(R && globals);
+    return R == globals; 
+  }
   
   /// getCompoundLiteralRegion - Retrieve the region associated with a
   ///  given CompoundLiteral.
