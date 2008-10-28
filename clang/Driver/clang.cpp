@@ -45,6 +45,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Config/config.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/System/Host.h"
 #include "llvm/System/Path.h"
@@ -1533,6 +1534,10 @@ int main(int argc, char **argv) {
   // If verifying diagnostics and we reached here, all is well.
   if (VerifyDiagnostics)
     return 0;
+
+  // Managed static deconstruction. Useful for making things like
+  // -time-passes usable.
+  llvm::llvm_shutdown();
 
   return HadErrors || (Diags.getNumErrors() != 0);
 }
