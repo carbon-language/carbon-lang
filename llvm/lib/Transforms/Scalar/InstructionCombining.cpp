@@ -4337,6 +4337,25 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
         return BinaryOperator::CreateAnd(V1, Or);
       }
     }
+
+    // (A & sext(C0)) | (B & ~sext(C0) ->  C0 ? A : B
+    if (isa<SExtInst>(C) &&
+        cast<User>(C)->getOperand(0)->getType() == Type::Int1Ty) {
+      if (match(D, m_Not(m_Value(C))))
+        return SelectInst::Create(cast<User>(C)->getOperand(0), A, B);
+      // And commutes, try both ways.
+      if (match(B, m_Not(m_Value(C))))
+        return SelectInst::Create(cast<User>(C)->getOperand(0), A, D);
+    }
+    // Or commutes, try both ways.
+    if (isa<SExtInst>(D) &&
+        cast<User>(D)->getOperand(0)->getType() == Type::Int1Ty) {
+      if (match(C, m_Not(m_Value(D))))
+        return SelectInst::Create(cast<User>(D)->getOperand(0), A, B);
+      // And commutes, try both ways.
+      if (match(A, m_Not(m_Value(D))))
+        return SelectInst::Create(cast<User>(D)->getOperand(0), C, B);
+    }
   }
   
   // (X >> Z) | (Y >> Z)  -> (X|Y) >> Z  for all shifts.
