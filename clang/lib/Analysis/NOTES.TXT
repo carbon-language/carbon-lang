@@ -12,3 +12,9 @@ execv(p[0], argv);
 This is because BasicStore "collapses" all elements of an array into their base
 region. BasicStore should return UnknownVal() when getLValueElement. But that
 way will break current test in null-deref-ps.c.
+
+//===----------------------------------------------------------------------===//
+
+Investigate what classes of exprs are passed silently in GRExprEngine::Visit().
+
+One is PredefinedExpr.
