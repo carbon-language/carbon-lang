@@ -46,7 +46,8 @@ protected:
     // type. Additionally, inspect Expr::isLvalue to determine whether
     // an expression that is adjusted in this manner should be
     // considered an lvalue.
-    assert((T.isNull() || !T->isReferenceType()) && "Expressions can't have reference type");
+    assert((T.isNull() || !T->isReferenceType()) && 
+           "Expressions can't have reference type");
   }
 public:  
   QualType getType() const { return TR; }
@@ -856,8 +857,8 @@ class ExplicitCastExpr : public CastExpr {
   QualType TypeAsWritten;
 
 protected:
-  ExplicitCastExpr(StmtClass SC, QualType exprTy, Expr *op, QualType writtenTy) : 
-    CastExpr(SC, exprTy, op), TypeAsWritten(writtenTy) {}
+  ExplicitCastExpr(StmtClass SC, QualType exprTy, Expr *op, QualType writtenTy) 
+    : CastExpr(SC, exprTy, op), TypeAsWritten(writtenTy) {}
 
 public:
   /// getTypeAsWritten - Returns the type that this expression is
