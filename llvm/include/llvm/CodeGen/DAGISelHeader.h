@@ -11,7 +11,11 @@
 // data, which is used by SelectionDAG-based instruction selectors.
 //
 // *** NOTE: This file is #included into the middle of the target
-// *** instruction selector class.  These functions are really methods.
+// instruction selector class.  These functions are really methods.
+// This is a little awkward, but it allows this code to be shared
+// by all the targets while still being able to call into
+// target-specific code without using a virtual function call.
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_CODEGEN_DAGISEL_HEADER_H
