@@ -107,7 +107,7 @@ namespace {
                         unsigned&);
 
     MachineBasicBlock::iterator
-      findSpillPoint(MachineBasicBlock*, MachineInstr*,
+      findSpillPoint(MachineBasicBlock*, MachineInstr*, MachineInstr*,
                      SmallPtrSet<MachineInstr*, 4>&, unsigned&);
 
     MachineBasicBlock::iterator
@@ -166,12 +166,13 @@ PreAllocSplitting::findNextEmptySlot(MachineBasicBlock *MBB, MachineInstr *MI,
 /// none is found.
 MachineBasicBlock::iterator
 PreAllocSplitting::findSpillPoint(MachineBasicBlock *MBB, MachineInstr *MI,
+                                  MachineInstr *DefMI,
                                   SmallPtrSet<MachineInstr*, 4> &RefsInMBB,
                                   unsigned &SpillIndex) {
   MachineBasicBlock::iterator Pt = MBB->begin();
 
   // Go top down if RefsInMBB is empty.
-  if (RefsInMBB.empty()) {
+  if (RefsInMBB.empty() && !DefMI) {
     MachineBasicBlock::iterator MII = MBB->begin();
     MachineBasicBlock::iterator EndPt = MI;
     do {
@@ -186,7 +187,9 @@ PreAllocSplitting::findSpillPoint(MachineBasicBlock *MBB, MachineInstr *MI,
     } while (MII != EndPt);
   } else {
     MachineBasicBlock::iterator MII = MI;
-    while (MII != MBB->begin() && !RefsInMBB.count(MII)) {
+    MachineBasicBlock::iterator EndPt = DefMI
+      ? MachineBasicBlock::iterator(DefMI) : MBB->begin();
+    while (MII != EndPt && !RefsInMBB.count(MII)) {
       unsigned Index = LIs->getInstructionIndex(MII);
       if (LIs->hasGapBeforeInstr(Index)) {
         Pt = MII;
@@ -561,7 +564,7 @@ bool PreAllocSplitting::SplitRegLiveInterval(LiveInterval *LI) {
   if (ValNo->def == ~0U) {
     // If it's defined by a phi, we must split just before the barrier.
     MachineBasicBlock::iterator SpillPt = 
-      findSpillPoint(BarrierMBB, Barrier, RefsInMBB, SpillIndex);
+      findSpillPoint(BarrierMBB, Barrier, NULL, RefsInMBB, SpillIndex);
     if (SpillPt == BarrierMBB->begin())
       return false; // No gap to insert spill.
     // Add spill.
@@ -578,10 +581,17 @@ bool PreAllocSplitting::SplitRegLiveInterval(LiveInterval *LI) {
     // If it's already split, just restore the value. There is no need to spill
     // the def again.
     // Check if it's possible to insert a spill after the def MI.
-    MachineBasicBlock::iterator SpillPt =
-      findNextEmptySlot(DefMBB, DefMI, SpillIndex);
-    if (SpillPt == DefMBB->end())
-      return false; // No gap to insert spill.
+    MachineBasicBlock::iterator SpillPt;
+    if (DefMBB == BarrierMBB) {
+      // Add spill after the def and the last use before the barrier.
+      SpillPt = findSpillPoint(BarrierMBB, Barrier, DefMI, RefsInMBB, SpillIndex);
+      if (SpillPt == DefMBB->begin())
+        return false; // No gap to insert spill.
+    } else {
+      SpillPt = findNextEmptySlot(DefMBB, DefMI, SpillIndex);
+      if (SpillPt == DefMBB->end())
+        return false; // No gap to insert spill.
+    }
     SS = MFI->CreateStackObject(RC->getSize(), RC->getAlignment());
 
     // Add spill. The store instruction kills the register if def is before
