@@ -2834,7 +2834,7 @@ bool MeetsMaxMemopRequirement(std::vector<MVT> &MemOps,
   isSrcStr = isMemSrcFromString(Src, Str);
   bool isSrcConst = isa<ConstantSDNode>(Src);
   bool AllowUnalign = TLI.allowsUnalignedMemoryAccesses();
-  MVT VT= TLI.getOptimalMemOpType(Size, Align, isSrcConst, isSrcStr);
+  MVT VT = TLI.getOptimalMemOpType(Size, Align, isSrcConst, isSrcStr);
   if (VT != MVT::iAny) {
     unsigned NewAlign = (unsigned)
       TLI.getTargetData()->getABITypeAlignment(VT.getTypeForMVT());
@@ -3048,8 +3048,8 @@ static SDValue getMemsetStores(SelectionDAG &DAG,
     unsigned VTSize = VT.getSizeInBits() / 8;
     SDValue Value = getMemsetValue(Src, VT, DAG);
     SDValue Store = DAG.getStore(Chain, Value,
-                                   getMemBasePlusOffset(Dst, DstOff, DAG),
-                                   DstSV, DstSVOff + DstOff);
+                                 getMemBasePlusOffset(Dst, DstOff, DAG),
+                                 DstSV, DstSVOff + DstOff);
     OutChains.push_back(Store);
     DstOff += VTSize;
   }
