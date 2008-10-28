@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef INLINECOST_H
-#define INLINECOST_H
+#ifndef LLVM_TRANSFORMS_UTILS_INLINECOST_H
+#define LLVM_TRANSFORMS_UTILS_INLINECOST_H
 
 #include "llvm/ADT/SmallPtrSet.h"
 #include <map>
@@ -46,7 +46,7 @@ namespace llvm {
       /// is used to estimate the code size cost of inlining it.
       unsigned NumInsts, NumBlocks;
 
-      /// NumVectorInsts - Keep track how many instrctions produce vector
+      /// NumVectorInsts - Keep track of how many instructions produce vector
       /// values.  The inliner is being more aggressive with inlining vector
       /// kernels.
       unsigned NumVectorInsts;

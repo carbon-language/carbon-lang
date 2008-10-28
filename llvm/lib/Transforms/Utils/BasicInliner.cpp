@@ -28,7 +28,7 @@ using namespace llvm;
 
 static cl::opt<unsigned>     
 BasicInlineThreshold("inline-threshold", cl::Hidden, cl::init(200),
-                     cl::desc("Control the amount of basic inlining to perform (default = 200)"));
+   cl::desc("Control the amount of basic inlining to perform (default = 200)"));
 
 namespace llvm {
 
@@ -95,22 +95,23 @@ void BasicInlinerImpl::inlineFunctions() {
   bool Changed = false;
   do {
     Changed = false;
-    for (unsigned index = 0; index != CallSites.size() && !CallSites.empty(); ++index) {
+    for (unsigned index = 0; index != CallSites.size() && !CallSites.empty(); 
+         ++index) {
       CallSite CS = CallSites[index];
       if (Function *Callee = CS.getCalledFunction()) {
         
-        // Eliminate calls taht are never inlinable.
+        // Eliminate calls that are never inlinable.
         if (Callee->isDeclaration() ||
             CS.getInstruction()->getParent()->getParent() == Callee) {
           CallSites.erase(CallSites.begin() + index);
-              --index;
-              continue;
+          --index;
+          continue;
         }
         int InlineCost = CA.getInlineCost(CS, NeverInline);
         if (InlineCost >= (int) BasicInlineThreshold) {
-              DOUT << "  NOT Inlining: cost = " << InlineCost
-                   << ", call: " <<  *CS.getInstruction();
-              continue;
+          DOUT << "  NOT Inlining: cost = " << InlineCost
+               << ", call: " <<  *CS.getInstruction();
+          continue;
         }
         
         DOUT << "  Inlining: cost=" << InlineCost
@@ -119,7 +120,7 @@ void BasicInlinerImpl::inlineFunctions() {
         // Inline
         if (InlineFunction(CS, NULL, TD)) {
           if (Callee->use_empty() && Callee->hasInternalLinkage())
-                DeadFunctions.insert(Callee);
+            DeadFunctions.insert(Callee);
           Changed = true;
           CallSites.erase(CallSites.begin() + index);
           --index;

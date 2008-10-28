@@ -51,14 +51,13 @@ namespace {
 
 char AlwaysInliner::ID = 0;
 static RegisterPass<AlwaysInliner>
-X("always-inline", "Inliner that handles always_inline functions");
+X("always-inline", "Inliner for always_inline functions");
 
 Pass *llvm::createAlwaysInlinerPass() { return new AlwaysInliner(); }
 
 // doInitialization - Initializes the vector of functions that have not 
 // been annotated with the "always inline" attribute.
 bool AlwaysInliner::doInitialization(CallGraph &CG) {
-  
   Module &M = CG.getModule();
   
   for (Module::iterator I = M.begin(), E = M.end();
@@ -68,4 +67,3 @@ bool AlwaysInliner::doInitialization(CallGraph &CG) {
 
   return false;
 }
-
