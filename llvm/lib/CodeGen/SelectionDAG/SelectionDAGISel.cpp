@@ -55,6 +55,7 @@ static cl::opt<bool>
 EnableValueProp("enable-value-prop", cl::Hidden);
 static cl::opt<bool>
 DisableLegalizeTypes("disable-legalize-types", cl::Hidden);
+#ifndef NDEBUG
 static cl::opt<bool>
 EnableFastISelVerbose("fast-isel-verbose", cl::Hidden,
           cl::desc("Enable verbose messages in the \"fast\" "
@@ -62,6 +63,7 @@ EnableFastISelVerbose("fast-isel-verbose", cl::Hidden,
 static cl::opt<bool>
 EnableFastISelAbort("fast-isel-abort", cl::Hidden,
           cl::desc("Enable abort calls when \"fast\" instruction fails"));
+#endif
 static cl::opt<bool>
 SchedLiveInCopies("schedule-livein-copies",
                   cl::desc("Schedule copies of livein registers"),
@@ -701,8 +703,10 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn, MachineFunction &MF,
         for (Function::arg_iterator I = Fn.arg_begin(), E = Fn.arg_end();
              I != E; ++I, ++j)
           if (Fn.paramHasAttr(j, Attribute::ByVal)) {
+#ifndef NDEBUG
             if (EnableFastISelVerbose || EnableFastISelAbort)
               cerr << "FastISel skips entry block due to byval argument\n";
+#endif
             SuppressFastISel = true;
             break;
           }
@@ -766,12 +770,14 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn, MachineFunction &MF,
         // feed PHI nodes in successor blocks.
         if (isa<TerminatorInst>(BI))
           if (!HandlePHINodesInSuccessorBlocksFast(LLVMBB, FastIS)) {
+#ifndef NDEBUG
             if (EnableFastISelVerbose || EnableFastISelAbort) {
               cerr << "FastISel miss: ";
               BI->dump();
             }
             if (EnableFastISelAbort)
               assert(0 && "FastISel didn't handle a PHI in a successor");
+#endif
             break;
           }
 
@@ -785,10 +791,12 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn, MachineFunction &MF,
 
         // Then handle certain instructions as single-LLVM-Instruction blocks.
         if (isa<CallInst>(BI)) {
+#ifndef NDEBUG
           if (EnableFastISelVerbose || EnableFastISelAbort) {
             cerr << "FastISel missed call: ";
             BI->dump();
           }
+#endif
 
           if (BI->getType() != Type::VoidTy) {
             unsigned &R = FuncInfo->ValueMap[BI];
@@ -803,6 +811,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn, MachineFunction &MF,
           continue;
         }
 
+#ifndef NDEBUG
         // Otherwise, give up on FastISel for the rest of the block.
         // For now, be a little lenient about non-branch terminators.
         if (!isa<TerminatorInst>(BI) || isa<BranchInst>(BI)) {
@@ -815,6 +824,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn, MachineFunction &MF,
             // For the purpose of debugging, just abort.
             assert(0 && "FastISel didn't select the entire block");
         }
+#endif
         break;
       }
     }
