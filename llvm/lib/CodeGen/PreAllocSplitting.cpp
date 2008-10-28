@@ -33,7 +33,9 @@
 #include <map>
 using namespace llvm;
 
-STATISTIC(NumSplit     , "Number of intervals split");
+static cl::opt<int> PreSplitLimit("pre-split-limit", cl::init(-1), cl::Hidden);
+
+STATISTIC(NumSplits, "Number of intervals split");
 
 namespace {
   class VISIBILITY_HIDDEN PreAllocSplitting : public MachineFunctionPass {
@@ -607,7 +609,7 @@ bool PreAllocSplitting::SplitRegLiveInterval(LiveInterval *LI) {
     // Record val# values are in the specific spill slot.
     RecordSplit(CurrLI->reg, SpillIndex, RestoreIndex, SS);
 
-    ++NumSplit;
+    ++NumSplits;
     return true;
   }
 
@@ -659,7 +661,7 @@ bool PreAllocSplitting::SplitRegLiveInterval(LiveInterval *LI) {
   // Record val# values are in the specific spill slot.
   RecordSplit(CurrLI->reg, SpillIndex, RestoreIndex, SS);
 
-  ++NumSplit;
+  ++NumSplits;
   return true;
 }
 
@@ -689,6 +691,8 @@ PreAllocSplitting::SplitRegLiveIntervals(const TargetRegisterClass **RCs) {
   // Process the affected live intervals.
   bool Change = false;
   while (!Intervals.empty()) {
+    if (PreSplitLimit != -1 && (int)NumSplits == PreSplitLimit)
+      break;
     LiveInterval *LI = Intervals.back();
     Intervals.pop_back();
     Change |= SplitRegLiveInterval(LI);
