@@ -60,6 +60,25 @@ static const Module *getModuleFromVal(const Value *V) {
   return 0;
 }
 
+// PrintEscapedString - Print each character of the specified string, escaping
+// it if it is not printable or if it is an escape char.
+static void PrintEscapedString(const char *Str, unsigned Length,
+                               raw_ostream &Out) {
+  for (unsigned i = 0; i != Length; ++i) {
+    unsigned char C = Str[i];
+    if (isprint(C) && C != '\\' && C != '"' && isprint(C))
+      Out << C;
+    else
+      Out << '\\' << hexdigit(C >> 4) << hexdigit(C & 0x0F);
+  }
+}
+
+// PrintEscapedString - Print each character of the specified string, escaping
+// it if it is not printable or if it is an escape char.
+static void PrintEscapedString(const std::string &Str, raw_ostream &Out) {
+  PrintEscapedString(Str.c_str(), Str.size(), Out);
+}
+
 enum PrefixType {
   GlobalPrefix,
   LabelPrefix,
@@ -82,7 +101,7 @@ static void PrintLLVMName(raw_ostream &OS, const char *NameStr,
   }      
   
   // Scan the name to see if it needs quotes first.
-  bool NeedsQuotes = NameStr[0] >= '0' && NameStr[0] <= '9';
+  bool NeedsQuotes = isdigit(NameStr[0]);
   if (!NeedsQuotes) {
     for (unsigned i = 0; i != NameLen; ++i) {
       char C = NameStr[i];
@@ -102,18 +121,7 @@ static void PrintLLVMName(raw_ostream &OS, const char *NameStr,
   // Okay, we need quotes.  Output the quotes and escape any scary characters as
   // needed.
   OS << '"';
-  for (unsigned i = 0; i != NameLen; ++i) {
-    char C = NameStr[i];
-    if (C == '\\') {
-      OS << "\\\\";
-    } else if (C != '"' && isprint(C)) {
-      OS << C;
-    } else {
-      OS << '\\';
-      OS << hexdigit((C >> 4) & 0x0F);
-      OS << hexdigit((C >> 0) & 0x0F);
-    }
-  }
+  PrintEscapedString(NameStr, NameLen, OS);
   OS << '"';
 }
 
@@ -576,21 +584,6 @@ void llvm::WriteTypeSymbolic(raw_ostream &Out, const Type *Ty, const Module *M){
     std::map<const Type *, std::string> TypeNames;
     fillTypeNameTable(M, TypeNames);
     printTypeInt(Out, Ty, TypeNames);
-  }
-}
-
-// PrintEscapedString - Print each character of the specified string, escaping
-// it if it is not printable or if it is an escape char.
-static void PrintEscapedString(const std::string &Str, raw_ostream &Out) {
-  for (unsigned i = 0, e = Str.size(); i != e; ++i) {
-    unsigned char C = Str[i];
-    if (isprint(C) && C != '"' && C != '\\') {
-      Out << C;
-    } else {
-      Out << '\\'
-          << (char) ((C/16  < 10) ? ( C/16 +'0') : ( C/16 -10+'A'))
-          << (char)(((C&15) < 10) ? ((C&15)+'0') : ((C&15)-10+'A'));
-    }
   }
 }
 
