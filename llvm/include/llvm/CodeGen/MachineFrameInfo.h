@@ -224,21 +224,21 @@ public:
     return Objects[ObjectIdx+NumFixedObjects].Size;
   }
 
-  // setObjectSize - Change the size of the specified stack object...
+  /// setObjectSize - Change the size of the specified stack object.
   void setObjectSize(int ObjectIdx, int64_t Size) {
     assert(unsigned(ObjectIdx+NumFixedObjects) < Objects.size() &&
            "Invalid Object Idx!");
     Objects[ObjectIdx+NumFixedObjects].Size = Size;
   }
 
-  /// getObjectAlignment - Return the alignment of the specified stack object...
+  /// getObjectAlignment - Return the alignment of the specified stack object.
   unsigned getObjectAlignment(int ObjectIdx) const {
     assert(unsigned(ObjectIdx+NumFixedObjects) < Objects.size() &&
            "Invalid Object Idx!");
     return Objects[ObjectIdx+NumFixedObjects].Alignment;
   }
 
-  /// setObjectAlignment - Change the alignment of the specified stack object...
+  /// setObjectAlignment - Change the alignment of the specified stack object.
   void setObjectAlignment(int ObjectIdx, unsigned Align) {
     assert(unsigned(ObjectIdx+NumFixedObjects) < Objects.size() &&
            "Invalid Object Idx!");
