@@ -142,8 +142,11 @@ HMapBucket HeaderMap::getBucket(unsigned BucketNo) const {
                                         sizeof(HMapHeader));
   
   const HMapBucket *BucketPtr = BucketArray+BucketNo;
-  if ((char*)(BucketPtr+1) > FileBuffer->getBufferEnd())
+  if ((char*)(BucketPtr+1) > FileBuffer->getBufferEnd()) {
+    Result.Prefix = 0;
+    Result.Suffix = 0;
     return Result;  // Invalid buffer, corrupt hmap.
+  }
 
   // Otherwise, the bucket is valid.  Load the values, bswapping as needed.
   Result.Key    = getEndianAdjustedWord(BucketPtr->Key);
