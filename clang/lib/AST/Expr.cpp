@@ -398,7 +398,7 @@ Expr::isLvalueResult Expr::isLvalue(ASTContext &Ctx) const {
     //   A function call is an lvalue if and only if the result type
     //   is a reference.
     QualType CalleeType 
-      = dyn_cast<CallExpr>(this)->getCallee()->IgnoreParens()->getType();
+      = cast<CallExpr>(this)->getCallee()->IgnoreParens()->getType();
     if (const PointerType *FnTypePtr = CalleeType->getAsPointerType())
       if (const FunctionType *FnType
             = FnTypePtr->getPointeeType()->getAsFunctionType())
