@@ -1720,7 +1720,8 @@ SDValue DAGCombiner::visitAND(SDNode *N) {
     if (LL == RL && LR == RR) {
       bool isInteger = LL.getValueType().isInteger();
       ISD::CondCode Result = ISD::getSetCCAndOperation(Op0, Op1, isInteger);
-      if (Result != ISD::SETCC_INVALID)
+      if (Result != ISD::SETCC_INVALID &&
+          (!AfterLegalize || TLI.isCondCodeLegal(Result, LL.getValueType())))
         return DAG.getSetCC(N0.getValueType(), LL, LR, Result);
     }
   }
@@ -1904,7 +1905,8 @@ SDValue DAGCombiner::visitOR(SDNode *N) {
     if (LL == RL && LR == RR) {
       bool isInteger = LL.getValueType().isInteger();
       ISD::CondCode Result = ISD::getSetCCOrOperation(Op0, Op1, isInteger);
-      if (Result != ISD::SETCC_INVALID)
+      if (Result != ISD::SETCC_INVALID &&
+          (!AfterLegalize || TLI.isCondCodeLegal(Result, LL.getValueType())))
         return DAG.getSetCC(N0.getValueType(), LL, LR, Result);
     }
   }
