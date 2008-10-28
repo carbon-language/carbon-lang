@@ -1060,7 +1060,7 @@ bool Sema::CheckAddressConstantExpression(const Expr* Init) {
            CheckArithmeticConstantExpression(IExp);
   }
   case Expr::ImplicitCastExprClass:
-  case Expr::ExplicitCCastExprClass: {
+  case Expr::CStyleCastExprClass: {
     const Expr* SubExpr = cast<CastExpr>(Init)->getSubExpr();
     if (Init->getStmtClass() == Expr::ImplicitCastExprClass) {
       // Check for implicit promotion
@@ -1190,7 +1190,7 @@ static const Expr* FindExpressionBaseAddress(const Expr* E) {
     // if we don't, we'll figure it out later
     return 0;
   }
-  case Expr::ExplicitCCastExprClass: {
+  case Expr::CStyleCastExprClass: {
     const Expr* SubExpr = cast<CastExpr>(E)->getSubExpr();
 
     // Check for pointer->pointer cast
@@ -1310,7 +1310,7 @@ bool Sema::CheckArithmeticConstantExpression(const Expr* Init) {
     return true;
   }
   case Expr::ImplicitCastExprClass:
-  case Expr::ExplicitCCastExprClass: {
+  case Expr::CStyleCastExprClass: {
     const Expr *SubExpr = cast<CastExpr>(Init)->getSubExpr();
     if (SubExpr->getType()->isArithmeticType())
       return CheckArithmeticConstantExpression(SubExpr);

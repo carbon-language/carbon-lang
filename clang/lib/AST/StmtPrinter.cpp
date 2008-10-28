@@ -710,7 +710,7 @@ void StmtPrinter::VisitCastExpr(CastExpr *) {
 void StmtPrinter::VisitExplicitCastExpr(ExplicitCastExpr *) {
   assert(0 && "ExplicitCastExpr is an abstract class");
 }
-void StmtPrinter::VisitExplicitCCastExpr(ExplicitCCastExpr *Node) {
+void StmtPrinter::VisitCStyleCastExpr(CStyleCastExpr *Node) {
   OS << "(" << Node->getType().getAsString() << ")";
   PrintExpr(Node->getSubExpr());
 }

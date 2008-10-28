@@ -826,7 +826,7 @@ static DeclRefExpr* EvalAddr(Expr *E) {
   // For casts, we need to handle conversions from arrays to
   // pointer values, and pointer-to-pointer conversions.
   case Stmt::ImplicitCastExprClass:
-  case Stmt::ExplicitCCastExprClass:
+  case Stmt::CStyleCastExprClass:
   case Stmt::CXXFunctionalCastExprClass: {
     Expr* SubExpr = cast<CastExpr>(E)->getSubExpr();
     QualType T = SubExpr->getType();

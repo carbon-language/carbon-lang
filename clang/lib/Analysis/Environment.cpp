@@ -47,7 +47,7 @@ SVal Environment::GetSVal(Expr* E, BasicValueFactory& BasicVals) const {
       // subexpression that has a value.
        
       case Stmt::ImplicitCastExprClass:
-      case Stmt::ExplicitCCastExprClass: {
+      case Stmt::CStyleCastExprClass: {
         CastExpr* C = cast<CastExpr>(E);
         QualType CT = C->getType();
         QualType ST = C->getSubExpr()->getType();

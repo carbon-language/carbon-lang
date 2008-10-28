@@ -345,7 +345,7 @@ void GRExprEngine::Visit(Stmt* S, NodeTy* Pred, NodeSet& Dst) {
       break;
       
     case Stmt::ImplicitCastExprClass:
-    case Stmt::ExplicitCCastExprClass: {
+    case Stmt::CStyleCastExprClass: {
       CastExpr* C = cast<CastExpr>(S);
       VisitCast(C, C->getSubExpr(), Pred, Dst);
       break;

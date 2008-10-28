@@ -799,7 +799,7 @@ public:
     if (SC >= CXXNamedCastExprClass && SC <= CXXFunctionalCastExprClass)
       return true;
 
-    if (SC >= ImplicitCastExprClass && SC <= ExplicitCCastExprClass)
+    if (SC >= ImplicitCastExprClass && SC <= CStyleCastExprClass)
       return true;
 
     return false;
@@ -866,7 +866,7 @@ public:
 
   static bool classof(const Stmt *T) { 
     StmtClass SC = T->getStmtClass();
-    if (SC >= ExplicitCastExprClass && SC <= ExplicitCCastExprClass)
+    if (SC >= ExplicitCastExprClass && SC <= CStyleCastExprClass)
       return true;
     if (SC >= CXXNamedCastExprClass && SC <= CXXFunctionalCastExprClass)
       return true;
@@ -876,15 +876,15 @@ public:
   static bool classof(const ExplicitCastExpr *) { return true; }
 };
 
-/// ExplicitCCastExpr - An explicit cast in C (C99 6.5.4) or a C-style
+/// CStyleCastExpr - An explicit cast in C (C99 6.5.4) or a C-style
 /// cast in C++ (C++ [expr.cast]), which uses the syntax
 /// (Type)expr. For example: @c (int)f.
-class ExplicitCCastExpr : public ExplicitCastExpr {
+class CStyleCastExpr : public ExplicitCastExpr {
   SourceLocation Loc; // the location of the left paren
 public:
-  ExplicitCCastExpr(QualType exprTy, Expr *op, QualType writtenTy, 
+  CStyleCastExpr(QualType exprTy, Expr *op, QualType writtenTy, 
                     SourceLocation l) : 
-    ExplicitCastExpr(ExplicitCCastExprClass, exprTy, op, writtenTy), Loc(l) {}
+    ExplicitCastExpr(CStyleCastExprClass, exprTy, op, writtenTy), Loc(l) {}
 
   SourceLocation getLParenLoc() const { return Loc; }
   
@@ -892,12 +892,12 @@ public:
     return SourceRange(Loc, getSubExpr()->getSourceRange().getEnd());
   }
   static bool classof(const Stmt *T) { 
-    return T->getStmtClass() == ExplicitCCastExprClass; 
+    return T->getStmtClass() == CStyleCastExprClass; 
   }
-  static bool classof(const ExplicitCCastExpr *) { return true; }
+  static bool classof(const CStyleCastExpr *) { return true; }
   
   virtual void EmitImpl(llvm::Serializer& S) const;
-  static ExplicitCCastExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
+  static CStyleCastExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 class BinaryOperator : public Expr {
