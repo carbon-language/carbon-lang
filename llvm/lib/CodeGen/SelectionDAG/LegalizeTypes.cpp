@@ -222,10 +222,12 @@ NodeDone:
 /// new nodes.  Correct any processed operands (this may change the node) and
 /// calculate the NodeId.
 /// Returns the potentially changed node.
-SDNode *DAGTypeLegalizer::AnalyzeNewNode(SDNode *N) {
+void DAGTypeLegalizer::AnalyzeNewNode(SDValue &Val) {
+  SDNode *N = Val.getNode();
+
   // If this was an existing node that is already done, we're done.
   if (N->getNodeId() != NewNode)
-    return N;
+    return;
 
   // Remove any stale map entries.
   ExpungeNode(N);
@@ -249,10 +251,10 @@ SDNode *DAGTypeLegalizer::AnalyzeNewNode(SDNode *N) {
 
     if (Op.getNode()->getNodeId() == Processed)
       RemapNode(Op);
-
-    if (Op.getNode()->getNodeId() == NewNode)
+    else if (Op.getNode()->getNodeId() == NewNode)
       AnalyzeNewNode(Op);
-    else if (Op.getNode()->getNodeId() == Processed)
+
+    if (Op.getNode()->getNodeId() == Processed)
       ++NumProcessed;
 
     if (!NewOps.empty()) {
@@ -267,29 +269,30 @@ SDNode *DAGTypeLegalizer::AnalyzeNewNode(SDNode *N) {
   }
 
   // Some operands changed - update the node.
-  if (!NewOps.empty())
-    N = DAG.UpdateNodeOperands(SDValue(N, 0),
-                               &NewOps[0],
-                               NewOps.size()).getNode();
+  if (!NewOps.empty()) {
+    Val = DAG.UpdateNodeOperands(Val, &NewOps[0], NewOps.size());
+    if (Val.getNode() != N) {
+      // The node morphed, work with the new node.
+      N = Val.getNode();
 
-  // Calculate the NodeId if we haven't morphed into an existing node for
-  // which it is already known.
-  if (N->getNodeId() == NewNode) {
-    N->setNodeId(N->getNumOperands()-NumProcessed);
-    if (N->getNodeId() == ReadyToProcess)
-      Worklist.push_back(N);
+      // Maybe it morphed into a previously analyzed node?
+      if (N->getNodeId() != NewNode) {
+        if (N->getNodeId() == Processed)
+          // An already processed node may need to be remapped.
+          RemapNode(Val);
+        return;
+      }
+
+      // It morphed into a different new node.  Do the equivalent of passing
+      // it to AnalyzeNewNode: expunge it and calculate the NodeId.
+      ExpungeNode(N);
+    }
   }
 
-  return N;
-}
-
-/// AnalyzeNewNode - call AnalyzeNewNode(SDNode *N)
-/// and update the node in SDValue if necessary.
-void DAGTypeLegalizer::AnalyzeNewNode(SDValue &Val) {
-  SDNode *N(Val.getNode());
-  SDNode *M(AnalyzeNewNode(N));
-  if (N != M)
-    Val.setNode(M);
+  // Calculate the NodeId.
+  N->setNodeId(N->getNumOperands()-NumProcessed);
+  if (N->getNodeId() == ReadyToProcess)
+    Worklist.push_back(N);
 }
 
 
@@ -353,7 +356,9 @@ void DAGTypeLegalizer::ReplaceNodeWith(SDNode *From, SDNode *To) {
   // If expansion produced new nodes, make sure they are properly marked.
   ExpungeNode(From);
 
-  To = AnalyzeNewNode(To); // Expunges To.
+  SDValue Val(To, 0);
+  AnalyzeNewNode(Val); // Expunges To.  FIXME: All results mapped the same?
+  To = Val.getNode();
 
   assert(From->getNumValues() == To->getNumValues() &&
          "Node results don't match");
@@ -382,6 +387,7 @@ void DAGTypeLegalizer::RemapNode(SDValue &N) {
     RemapNode(I->second);
     N = I->second;
   }
+  assert(N.getNode()->getNodeId() != NewNode && "Mapped to unanalyzed node!");
 }
 
 /// ExpungeNode - If N has a bogus mapping in ReplacedNodes, eliminate it.

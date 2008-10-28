@@ -155,9 +155,11 @@ public:
 
   /// ReanalyzeNode - Recompute the NodeID and correct processed operands
   /// for the specified node, adding it to the worklist if ready.
-  SDNode *ReanalyzeNode(SDNode *N) {
+  void ReanalyzeNode(SDNode *N) {
     N->setNodeId(NewNode);
-    return AnalyzeNewNode(N);
+    SDValue Val(N, 0);
+    AnalyzeNewNode(Val);
+    // The node may have changed but we don't care.
   }
 
   void NoteDeletion(SDNode *Old, SDNode *New) {
@@ -169,7 +171,6 @@ public:
 
 private:
   void AnalyzeNewNode(SDValue &Val);
-  SDNode *AnalyzeNewNode(SDNode *N);
 
   void ReplaceValueWith(SDValue From, SDValue To);
   void ReplaceNodeWith(SDNode *From, SDNode *To);
