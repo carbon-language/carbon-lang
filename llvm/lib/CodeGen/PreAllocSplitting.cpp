@@ -109,7 +109,7 @@ namespace {
                      SmallPtrSet<MachineInstr*, 4>&, unsigned&);
 
     MachineBasicBlock::iterator
-      findRestorePoint(MachineBasicBlock*, MachineInstr*,
+      findRestorePoint(MachineBasicBlock*, MachineInstr*, unsigned,
                      SmallPtrSet<MachineInstr*, 4>&, unsigned&);
 
     void RecordSplit(unsigned, unsigned, unsigned, int);
@@ -203,12 +203,15 @@ PreAllocSplitting::findSpillPoint(MachineBasicBlock *MBB, MachineInstr *MI,
 /// found.
 MachineBasicBlock::iterator
 PreAllocSplitting::findRestorePoint(MachineBasicBlock *MBB, MachineInstr *MI,
+                                    unsigned LastIdx,
                                     SmallPtrSet<MachineInstr*, 4> &RefsInMBB,
                                     unsigned &RestoreIndex) {
   MachineBasicBlock::iterator Pt = MBB->end();
+  unsigned EndIdx = LIs->getMBBEndIdx(MBB);
 
-  // Go bottom up if RefsInMBB is empty.
-  if (RefsInMBB.empty()) {
+  // Go bottom up if RefsInMBB is empty and the end of the mbb isn't beyond
+  // the last index in the live range.
+  if (RefsInMBB.empty() && LastIdx >= EndIdx) {
     MachineBasicBlock::iterator MII = MBB->end();
     MachineBasicBlock::iterator EndPt = MI;
     do {
@@ -224,8 +227,12 @@ PreAllocSplitting::findRestorePoint(MachineBasicBlock *MBB, MachineInstr *MI,
   } else {
     MachineBasicBlock::iterator MII = MI;
     MII = ++MII;
+    // FIXME: Limit the number of instructions to examine to reduce
+    // compile time?
     while (MII != MBB->end()) {
       unsigned Index = LIs->getInstructionIndex(MII);
+      if (Index > LastIdx)
+        break;
       unsigned Gap = LIs->findGapBeforeInstr(Index);
       if (Gap) {
         Pt = MII;
@@ -438,13 +445,15 @@ PreAllocSplitting::ShrinkWrapLiveInterval(VNInfo *ValNo, MachineBasicBlock *MBB,
   // If live interval is live in another successor path, then we can't process
   // this block. But we may able to do so after all the successors have been
   // processed.
-  for (MachineBasicBlock::succ_iterator SI = MBB->succ_begin(),
-         SE = MBB->succ_end(); SI != SE; ++SI) {
-    MachineBasicBlock *SMBB = *SI;
-    if (SMBB == SuccMBB)
-      continue;
-    if (CurrLI->liveAt(LIs->getMBBStartIdx(SMBB)))
-      return;
+  if (MBB != BarrierMBB) {
+    for (MachineBasicBlock::succ_iterator SI = MBB->succ_begin(),
+           SE = MBB->succ_end(); SI != SE; ++SI) {
+      MachineBasicBlock *SMBB = *SI;
+      if (SMBB == SuccMBB)
+        continue;
+      if (CurrLI->liveAt(LIs->getMBBStartIdx(SMBB)))
+        return;
+    }
   }
 
   Visited.insert(MBB);
@@ -536,7 +545,7 @@ bool PreAllocSplitting::SplitRegLiveInterval(LiveInterval *LI) {
   // Find a point to restore the value after the barrier.
   unsigned RestoreIndex;
   MachineBasicBlock::iterator RestorePt =
-    findRestorePoint(BarrierMBB, Barrier, RefsInMBB, RestoreIndex);
+    findRestorePoint(BarrierMBB, Barrier, LR->end, RefsInMBB, RestoreIndex);
   if (RestorePt == BarrierMBB->end())
     return false;
 
