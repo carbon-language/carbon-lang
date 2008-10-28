@@ -2865,9 +2865,10 @@ SDValue PPCTargetLowering::LowerFP_ROUND_INREG(SDValue Op,
   assert(Op.getValueType() == MVT::ppcf128);
   SDNode *Node = Op.getNode();
   assert(Node->getOperand(0).getValueType() == MVT::ppcf128);
-  assert(Node->getOperand(0).getNode()->getOpcode() == ISD::BUILD_PAIR);
-  SDValue Lo = Node->getOperand(0).getNode()->getOperand(0);
-  SDValue Hi = Node->getOperand(0).getNode()->getOperand(1);
+  SDValue Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::f64, Node->getOperand(0),
+                           DAG.getIntPtrConstant(0));
+  SDValue Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::f64, Node->getOperand(0),
+                           DAG.getIntPtrConstant(1));
 
   // This sequence changes FPSCR to do round-to-zero, adds the two halves
   // of the long double, and puts FPSCR back the way it was.  We do not
@@ -2916,7 +2917,7 @@ SDValue PPCTargetLowering::LowerFP_ROUND_INREG(SDValue Op,
 
   // We know the low half is about to be thrown away, so just use something
   // convenient.
-  return DAG.getNode(ISD::BUILD_PAIR, Lo.getValueType(), FPreg, FPreg);
+  return DAG.getNode(ISD::BUILD_PAIR, MVT::ppcf128, FPreg, FPreg);
 }
 
 SDValue PPCTargetLowering::LowerSINT_TO_FP(SDValue Op, SelectionDAG &DAG) {
@@ -3883,7 +3884,8 @@ SDValue PPCTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
 
 SDNode *PPCTargetLowering::ReplaceNodeResults(SDNode *N, SelectionDAG &DAG) {
   switch (N->getOpcode()) {
-  default: assert(0 && "Wasn't expecting to be able to lower this!");
+  default:
+    return PPCTargetLowering::LowerOperation(SDValue (N, 0), DAG).getNode();
   case ISD::FP_TO_SINT: {
     SDValue Res = LowerFP_TO_SINT(SDValue(N, 0), DAG);
     // Use MERGE_VALUES to drop the chain result value and get a node with one
