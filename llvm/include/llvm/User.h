@@ -95,6 +95,9 @@ public:
   }
   void setOperand(unsigned i, Value *Val) {
     assert(i < NumOperands && "setOperand() out of range!");
+    assert((!isa<Constant>((const Value*)this) ||
+            isa<GlobalValue>((const Value*)this)) &&
+           "Cannot mutate a constant with setOperand!");
     OperandList[i] = Val;
   }
   unsigned getNumOperands() const { return NumOperands; }
