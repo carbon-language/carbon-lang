@@ -20,8 +20,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SUPPORT_NULLFOLDER_H
-#define LLVM_SUPPORT_NULLFOLDER_H
+#ifndef LLVM_SUPPORT_NOFOLDER_H
+#define LLVM_SUPPORT_NOFOLDER_H
 
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
