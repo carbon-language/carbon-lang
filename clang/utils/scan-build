@@ -489,6 +489,18 @@ function SetDisplay(RowClass, DisplayVal)
   }
 }
 
+function CopyCheckedStateToCheckButtons(SummaryCheckButton) {
+  var Inputs = document.getElementsByTagName("input");
+  for ( var i = 0 ; i < Inputs.length; ++i ) {
+    if (Inputs[i].type == "checkbox") {
+      if(Inputs[i] != SummaryCheckButton) {
+        Inputs[i].checked = SummaryCheckButton.checked;
+        Inputs[i].onclick();
+	  }
+    }
+  }
+}
+
 function ToggleDisplay(CheckButton, ClassName) {
   if (CheckButton.checked) {
     SetDisplay(ClassName, "");
@@ -536,9 +548,12 @@ ENDTEXT
       print OUT "\n<p>Results in this analysis run are based on analyzer build <b>$BuildName</b>.</p>\n"
     }
   
+  
+  my $TotalBugs = scalar(@Index);
 print OUT <<ENDTEXT;
 <table>
 <thead><tr><td>Bug Type</td><td>Quantity</td><td class="sorttable_nosort">Display?</td></tr></thead>
+<tr style="font-weight:bold"><td class="SUMM_DESC">All Bugs</td><td class="Q">$TotalBugs</td><td><center><input type="checkbox" onClick="CopyCheckedStateToCheckButtons(this);" checked/></center></td></tr>
 ENDTEXT
   
     my $last_category;
@@ -562,7 +577,7 @@ ENDTEXT
       $x =~ s/[ ,'":\/()]+/_/g;
       print OUT "<tr><td class=\"SUMM_DESC\">";
       print OUT $val->[2];
-      print OUT "</td><td>";
+      print OUT "</td><td class=\"Q\">";
       print OUT $val->[0];
       print OUT "</td><td><center><input type=\"checkbox\" onClick=\"ToggleDisplay(this,'bt_$x');\" checked/></center></td></tr>\n";
     }
