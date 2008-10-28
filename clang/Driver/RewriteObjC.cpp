@@ -300,6 +300,9 @@ namespace {
     bool PointerTypeTakesAnyBlockArguments(QualType QT);
     void GetExtentOfArgList(const char *Name, const char *&LParen, const char *&RParen);
     void RewriteCastExpr(CastExpr *CE);
+    
+    FunctionDecl *SynthBlockInitFunctionDecl(const char *name);
+    Stmt *SynthBlockInitExpr(BlockExpr *Exp, VarDecl *VD=0);
   };
 }
 
@@ -520,149 +523,6 @@ void RewriteObjC::HandleTopLevelDecl(Decl *D) {
   // If we have a decl in the main file, see if we should rewrite it.
   if (SM->isFromMainFile(Loc))
     return HandleDeclInMainFile(D);
-}
-
-/// HandleDeclInMainFile - This is called for each top-level decl defined in the
-/// main file of the input.
-void RewriteObjC::HandleDeclInMainFile(Decl *D) {
-  if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
-    // Since function prototypes don't have ParmDecl's, we check the function
-    // prototype. This enables us to rewrite function declarations and
-    // definitions using the same code.
-    RewriteBlocksInFunctionTypeProto(FD->getType(), FD);
-
-    if (Stmt *Body = FD->getBody()) {
-      CurFunctionDef = FD;
-      FD->setBody(RewriteFunctionBodyOrGlobalInitializer(Body));
-      // This synthesizes and inserts the block "impl" struct, invoke function,
-      // and any copy/dispose helper functions.
-      InsertBlockLiteralsWithinFunction(FD);
-      CurFunctionDef = 0;
-    } 
-    return;
-  }
-  if (ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D)) {
-    if (Stmt *Body = MD->getBody()) {
-      //Body->dump();
-      CurMethodDef = MD;
-      MD->setBody(RewriteFunctionBodyOrGlobalInitializer(Body));
-      InsertBlockLiteralsWithinMethod(MD);
-      CurMethodDef = 0;
-    }
-  }
-  if (ObjCImplementationDecl *CI = dyn_cast<ObjCImplementationDecl>(D))
-    ClassImplementation.push_back(CI);
-  else if (ObjCCategoryImplDecl *CI = dyn_cast<ObjCCategoryImplDecl>(D))
-    CategoryImplementation.push_back(CI);
-  else if (ObjCClassDecl *CD = dyn_cast<ObjCClassDecl>(D))
-    RewriteForwardClassDecl(CD);
-  else if (VarDecl *VD = dyn_cast<VarDecl>(D)) {
-    RewriteObjCQualifiedInterfaceTypes(VD);
-    if (VD->getInit())
-      RewriteFunctionBodyOrGlobalInitializer(VD->getInit());
-  }
-  // Rewrite rules for blocks.
-  if (VarDecl *VD = dyn_cast<VarDecl>(D)) {
-    if (isBlockPointerType(VD->getType())) {
-      RewriteBlockPointerDecl(VD);
-      if (VD->getInit()) {
-        if (BlockExpr *CBE = dyn_cast<BlockExpr>(VD->getInit())) {
-          RewriteFunctionBodyOrGlobalInitializer(CBE->getBody());
-
-          // We've just rewritten the block body in place.
-          // Now we snarf the rewritten text and stash it away for later use.
-          std::string S = Rewrite.getRewritenText(CBE->getSourceRange());
-          RewrittenBlockExprs[CBE] = S;
-          std::string Init = SynthesizeBlockInitExpr(CBE, VD);
-          // Do the rewrite, using S.size() which contains the rewritten size.
-          ReplaceText(CBE->getLocStart(), S.size(), Init.c_str(), Init.size());
-          SynthesizeBlockLiterals(VD->getTypeSpecStartLoc(), VD->getName());
-        } else if (CastExpr *CE = dyn_cast<CastExpr>(VD->getInit())) {
-          RewriteCastExpr(CE);
-        }
-      }
-    } else if (VD->getType()->isFunctionPointerType()) {
-      CheckFunctionPointerDecl(VD->getType(), VD);
-      if (VD->getInit()) {
-        if (CastExpr *CE = dyn_cast<CastExpr>(VD->getInit())) {
-          RewriteCastExpr(CE);
-        }
-      }
-    }
-    return;
-  }
-  if (TypedefDecl *TD = dyn_cast<TypedefDecl>(D)) {
-    if (isBlockPointerType(TD->getUnderlyingType()))
-      RewriteBlockPointerDecl(TD);
-    else if (TD->getUnderlyingType()->isFunctionPointerType()) 
-      CheckFunctionPointerDecl(TD->getUnderlyingType(), TD);
-    return;
-  }
-  if (RecordDecl *RD = dyn_cast<RecordDecl>(D)) {
-    if (RD->isDefinition()) {
-      for (RecordDecl::field_const_iterator i = RD->field_begin(), 
-             e = RD->field_end(); i != e; ++i) {
-        FieldDecl *FD = *i;
-        if (isBlockPointerType(FD->getType()))
-          RewriteBlockPointerDecl(FD);
-      }
-    }
-    return;
-  }
-  // Nothing yet.
-}
-
-void RewriteObjC::HandleTranslationUnit(TranslationUnit& TU) {
-  // Get the top-level buffer that this corresponds to.
-  
-  // Rewrite tabs if we care.
-  //RewriteTabs();
-  
-  if (Diags.hasErrorOccurred())
-    return;
-
-  // Create the output file.
-  
-  llvm::OwningPtr<llvm::raw_ostream> OwnedStream;
-  llvm::raw_ostream *OutFile;
-  if (OutFileName == "-") {
-    OutFile = &llvm::outs();
-  } else if (!OutFileName.empty()) {
-    std::string Err;
-    OutFile = new llvm::raw_fd_ostream(OutFileName.c_str(), Err);
-    OwnedStream.reset(OutFile);
-  } else if (InFileName == "-") {
-    OutFile = &llvm::outs();
-  } else {
-    llvm::sys::Path Path(InFileName);
-    Path.eraseSuffix();
-    Path.appendSuffix("cpp");
-    std::string Err;
-    OutFile = new llvm::raw_fd_ostream(Path.toString().c_str(), Err);
-    OwnedStream.reset(OutFile);
-  }
-  
-  RewriteInclude();
-  
-  InsertText(SourceLocation::getFileLoc(MainFileID, 0), 
-             Preamble.c_str(), Preamble.size(), false);
-  
-  // Rewrite Objective-c meta data*
-  std::string ResultStr;
-  RewriteImplementations(ResultStr);
-  
-  // Get the buffer corresponding to MainFileID.  If we haven't changed it, then
-  // we are done.
-  if (const RewriteBuffer *RewriteBuf = 
-      Rewrite.getRewriteBufferFor(MainFileID)) {
-    //printf("Changed:\n");
-    *OutFile << std::string(RewriteBuf->begin(), RewriteBuf->end());
-  } else {
-    fprintf(stderr, "No changes\n");
-  }
-  // Emit metadata.
-  *OutFile << ResultStr;
-  OutFile->flush();
 }
 
 //===----------------------------------------------------------------------===//
@@ -1113,172 +973,6 @@ Stmt *RewriteObjC::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV,
     }
   }
   return IV;
-}
-
-//===----------------------------------------------------------------------===//
-// Function Body / Expression rewriting
-//===----------------------------------------------------------------------===//
-
-Stmt *RewriteObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
-  if (isa<SwitchStmt>(S) || isa<WhileStmt>(S) || 
-      isa<DoStmt>(S) || isa<ForStmt>(S))
-    Stmts.push_back(S);
-  else if (isa<ObjCForCollectionStmt>(S)) {
-    Stmts.push_back(S);
-    ObjCBcLabelNo.push_back(++BcLabelCount);
-  }
-  
-  SourceRange OrigStmtRange = S->getSourceRange();
-  
-  // Start by rewriting all children.
-  for (Stmt::child_iterator CI = S->child_begin(), E = S->child_end();
-       CI != E; ++CI)
-    if (*CI) {
-      if (BlockExpr *CBE = dyn_cast<BlockExpr>(*CI)) {
-        Stmt *newStmt = RewriteFunctionBodyOrGlobalInitializer(CBE->getBody());
-        if (newStmt) 
-          *CI = newStmt;
-          
-        // We've just rewritten the block body in place.
-        // Now we snarf the rewritten text and stash it away for later use.
-        std::string S = Rewrite.getRewritenText(CBE->getSourceRange());
-        RewrittenBlockExprs[CBE] = S;
-        std::string Init = SynthesizeBlockInitExpr(CBE);
-        // Do the rewrite, using S.size() which contains the rewritten size.
-        ReplaceText(CBE->getLocStart(), S.size(), Init.c_str(), Init.size());
-      } else {
-        Stmt *newStmt = RewriteFunctionBodyOrGlobalInitializer(*CI);
-        if (newStmt) 
-          *CI = newStmt;
-      }
-    }
-      
-  // Handle specific things.
-  if (ObjCEncodeExpr *AtEncode = dyn_cast<ObjCEncodeExpr>(S))
-    return RewriteAtEncode(AtEncode);
-  
-  if (ObjCIvarRefExpr *IvarRefExpr = dyn_cast<ObjCIvarRefExpr>(S))
-    return RewriteObjCIvarRefExpr(IvarRefExpr, OrigStmtRange.getBegin());
-
-  if (ObjCSelectorExpr *AtSelector = dyn_cast<ObjCSelectorExpr>(S))
-    return RewriteAtSelector(AtSelector);
-    
-  if (ObjCStringLiteral *AtString = dyn_cast<ObjCStringLiteral>(S))
-    return RewriteObjCStringLiteral(AtString);
-    
-  if (ObjCMessageExpr *MessExpr = dyn_cast<ObjCMessageExpr>(S)) {
-    // Before we rewrite it, put the original message expression in a comment.
-    SourceLocation startLoc = MessExpr->getLocStart();
-    SourceLocation endLoc = MessExpr->getLocEnd();
-    
-    const char *startBuf = SM->getCharacterData(startLoc);
-    const char *endBuf = SM->getCharacterData(endLoc);
-    
-    std::string messString;
-    messString += "// ";
-    messString.append(startBuf, endBuf-startBuf+1);
-    messString += "\n";
-        
-    // FIXME: Missing definition of 
-    // InsertText(clang::SourceLocation, char const*, unsigned int).
-    // InsertText(startLoc, messString.c_str(), messString.size());
-    // Tried this, but it didn't work either...
-    // ReplaceText(startLoc, 0, messString.c_str(), messString.size());
-    return RewriteMessageExpr(MessExpr);
-  }
-  
-  if (ObjCAtTryStmt *StmtTry = dyn_cast<ObjCAtTryStmt>(S))
-    return RewriteObjCTryStmt(StmtTry);
-
-  if (ObjCAtSynchronizedStmt *StmtTry = dyn_cast<ObjCAtSynchronizedStmt>(S))
-    return RewriteObjCSynchronizedStmt(StmtTry);
-
-  if (ObjCAtThrowStmt *StmtThrow = dyn_cast<ObjCAtThrowStmt>(S))
-    return RewriteObjCThrowStmt(StmtThrow);
-  
-  if (ObjCProtocolExpr *ProtocolExp = dyn_cast<ObjCProtocolExpr>(S))
-    return RewriteObjCProtocolExpr(ProtocolExp);
-  
-  if (ObjCForCollectionStmt *StmtForCollection = 
-        dyn_cast<ObjCForCollectionStmt>(S))
-    return RewriteObjCForCollectionStmt(StmtForCollection, 
-                                        OrigStmtRange.getEnd());
-  if (BreakStmt *StmtBreakStmt =
-      dyn_cast<BreakStmt>(S))
-    return RewriteBreakStmt(StmtBreakStmt);
-  if (ContinueStmt *StmtContinueStmt =
-      dyn_cast<ContinueStmt>(S))
-    return RewriteContinueStmt(StmtContinueStmt);
-	
-  // Need to check for protocol refs (id <P>, Foo <P> *) in variable decls 
-  // and cast exprs.
-  if (DeclStmt *DS = dyn_cast<DeclStmt>(S)) {
-    // FIXME: What we're doing here is modifying the type-specifier that
-    // precedes the first Decl.  In the future the DeclGroup should have
-    // a separate type-specifier that we can rewrite.    
-    RewriteObjCQualifiedInterfaceTypes(*DS->decl_begin());
-    
-    // Blocks rewrite rules.
-    for (DeclStmt::decl_iterator DI = DS->decl_begin(), DE = DS->decl_end();
-         DI != DE; ++DI) {
-      
-      ScopedDecl *SD = *DI;
-      if (ValueDecl *ND = dyn_cast<ValueDecl>(SD)) {
-        if (isBlockPointerType(ND->getType()))
-          RewriteBlockPointerDecl(ND);
-        else if (ND->getType()->isFunctionPointerType()) 
-          CheckFunctionPointerDecl(ND->getType(), ND);
-      }
-      if (TypedefDecl *TD = dyn_cast<TypedefDecl>(SD)) {
-        if (isBlockPointerType(TD->getUnderlyingType()))
-          RewriteBlockPointerDecl(TD);
-        else if (TD->getUnderlyingType()->isFunctionPointerType()) 
-          CheckFunctionPointerDecl(TD->getUnderlyingType(), TD);
-      }
-    }
-  }
-  
-  if (CStyleCastExpr *CE = dyn_cast<CStyleCastExpr>(S))
-    RewriteObjCQualifiedInterfaceTypes(CE);
-  
-  if (isa<SwitchStmt>(S) || isa<WhileStmt>(S) || 
-      isa<DoStmt>(S) || isa<ForStmt>(S)) {
-    assert(!Stmts.empty() && "Statement stack is empty");
-    assert ((isa<SwitchStmt>(Stmts.back()) || isa<WhileStmt>(Stmts.back()) || 
-             isa<DoStmt>(Stmts.back()) || isa<ForStmt>(Stmts.back())) 
-            && "Statement stack mismatch");
-    Stmts.pop_back();
-  }
-  // Handle blocks rewriting.
-  if (BlockDeclRefExpr *BDRE = dyn_cast<BlockDeclRefExpr>(S)) {
-    if (BDRE->isByRef())
-      RewriteBlockDeclRefExpr(BDRE);
-  }
-  if (CallExpr *CE = dyn_cast<CallExpr>(S)) {
-    if (CE->getCallee()->getType()->isBlockPointerType())
-      RewriteBlockCall(CE);
-  }
-  if (CastExpr *CE = dyn_cast<CastExpr>(S)) {
-    if (CE->getLocStart().isValid())
-      RewriteCastExpr(CE);
-  }
-#if 0
-  if (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(S)) {
-    CastExpr *Replacement = new CastExpr(ICE->getType(), ICE->getSubExpr(), SourceLocation());
-    // Get the new text.
-    std::string SStr;
-    llvm::raw_string_ostream Buf(SStr);
-    Replacement->printPretty(Buf);
-    const std::string &Str = Buf.str();
-
-    printf("CAST = %s\n", &Str[0]);
-    InsertText(ICE->getSubExpr()->getLocStart(), &Str[0], Str.size());
-    delete S;
-    return Replacement;
-  }
-#endif
-  // Return this stmt unmodified.
-  return S;
 }
 
 /// SynthCountByEnumWithState - To print:
@@ -3844,7 +3538,11 @@ void RewriteObjC::RewriteBlockDeclRefExpr(BlockDeclRefExpr *BDRE) {
 void RewriteObjC::RewriteCastExpr(CastExpr *CE) {
   SourceLocation LocStart = CE->getLocStart();
   SourceLocation LocEnd = CE->getLocEnd();
-  
+
+  // Need to avoid trying to rewrite synthesized casts.
+  if (LocStart.isInvalid())
+    return;
+    
   const char *startBuf = SM->getCharacterData(LocStart);
   const char *endBuf = SM->getCharacterData(LocEnd);
   
@@ -4080,5 +3778,406 @@ std::string RewriteObjC::SynthesizeBlockInitExpr(BlockExpr *Exp, VarDecl *VD) {
   ImportedBlockDecls.clear();
 
   return Init;
+}
+
+FunctionDecl *RewriteObjC::SynthBlockInitFunctionDecl(const char *name) {
+  IdentifierInfo *ID = &Context->Idents.get(name);
+  QualType FType = Context->getFunctionTypeNoProto(Context->VoidPtrTy);
+  return FunctionDecl::Create(*Context, TUDecl,SourceLocation(), 
+                              ID, FType, FunctionDecl::Extern, false, 0);
+}
+
+Stmt *RewriteObjC::SynthBlockInitExpr(BlockExpr *Exp, VarDecl *VD) {
+  Blocks.push_back(Exp);
+
+  CollectBlockDeclRefInfo(Exp);
+  std::string FuncName;
+  
+  if (CurFunctionDef)
+    FuncName = std::string(CurFunctionDef->getName());
+  else if (CurMethodDef) {
+    FuncName = std::string(CurMethodDef->getSelector().getName());
+    // Convert colons to underscores.
+    std::string::size_type loc = 0;
+    while ((loc = FuncName.find(":", loc)) != std::string::npos)
+      FuncName.replace(loc, 1, "_");
+  } else if (VD)
+    FuncName = std::string(VD->getName());
+    
+  std::string BlockNumber = utostr(Blocks.size()-1);
+  
+  std::string Tag = "__" + FuncName + "_block_impl_" + BlockNumber;
+  std::string Func = "__" + FuncName + "_block_func_" + BlockNumber;
+  
+  // Get a pointer to the function type so we can cast appropriately.
+  QualType FType = Context->getPointerType(QualType(Exp->getFunctionType(),0));
+
+  FunctionDecl *FD;
+  Expr *NewRep;
+  
+  // Simulate a contructor call...
+  FD = SynthBlockInitFunctionDecl(Tag.c_str());
+  DeclRefExpr *DRE = new DeclRefExpr(FD, FType, SourceLocation());
+  
+  llvm::SmallVector<Expr*, 4> InitExprs;
+  
+  FD = SynthBlockInitFunctionDecl(Func.c_str());
+  DeclRefExpr *Arg = new DeclRefExpr(FD, FD->getType(), SourceLocation());
+  CastExpr *castExpr = new CStyleCastExpr(Context->VoidPtrTy, Arg, 
+                                          Context->VoidPtrTy, SourceLocation());
+  InitExprs.push_back(castExpr); 
+#if 0
+  // Initialize the block function.
+  Init += "((void*)" + Func;
+  
+  if (ImportedBlockDecls.size()) {
+    std::string Buf = "__" + FuncName + "_block_copy_" + BlockNumber;
+    Init += ",(void*)" + Buf;
+    Buf = "__" + FuncName + "_block_dispose_" + BlockNumber;
+    Init += ",(void*)" + Buf;
+  }
+  // Add initializers for any closure decl refs.
+  if (BlockDeclRefs.size()) {
+    // Output all "by copy" declarations.
+    for (llvm::SmallPtrSet<ValueDecl*,8>::iterator I = BlockByCopyDecls.begin(), 
+         E = BlockByCopyDecls.end(); I != E; ++I) {
+      Init += ",";
+      if (isObjCType((*I)->getType())) {
+        Init += "[[";
+        Init += (*I)->getName();
+        Init += " retain] autorelease]";
+      } else if (isBlockPointerType((*I)->getType())) {
+        Init += "(void *)";
+        Init += (*I)->getName();
+      } else {
+        Init += (*I)->getName();
+      }
+    }
+    // Output all "by ref" declarations.
+    for (llvm::SmallPtrSet<ValueDecl*,8>::iterator I = BlockByRefDecls.begin(), 
+         E = BlockByRefDecls.end(); I != E; ++I) {
+      Init += ",&";
+      Init += (*I)->getName();
+    }
+  }
+  Init += ")";
+#endif
+  NewRep = new CallExpr(DRE, &InitExprs[0], InitExprs.size(),
+                        FType, SourceLocation());
+  NewRep = new UnaryOperator(NewRep, UnaryOperator::AddrOf,
+                             Context->getPointerType(NewRep->getType()), 
+                             SourceLocation());
+  NewRep = new CStyleCastExpr(FType, NewRep, FType, SourceLocation());
+  BlockDeclRefs.clear();
+  BlockByRefDecls.clear();
+  BlockByCopyDecls.clear();
+  ImportedBlockDecls.clear();
+  return NewRep;
+}
+
+//===----------------------------------------------------------------------===//
+// Function Body / Expression rewriting
+//===----------------------------------------------------------------------===//
+
+Stmt *RewriteObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
+  if (isa<SwitchStmt>(S) || isa<WhileStmt>(S) || 
+      isa<DoStmt>(S) || isa<ForStmt>(S))
+    Stmts.push_back(S);
+  else if (isa<ObjCForCollectionStmt>(S)) {
+    Stmts.push_back(S);
+    ObjCBcLabelNo.push_back(++BcLabelCount);
+  }
+  
+  SourceRange OrigStmtRange = S->getSourceRange();
+  
+  // Perform a bottom up rewrite of all children.
+  for (Stmt::child_iterator CI = S->child_begin(), E = S->child_end();
+       CI != E; ++CI)
+    if (*CI) {
+      Stmt *newStmt = RewriteFunctionBodyOrGlobalInitializer(*CI);
+      if (newStmt) 
+        *CI = newStmt;
+    }
+  
+  if (BlockExpr *BE = dyn_cast<BlockExpr>(S)) {
+    // Rewrite the block body in place.
+    RewriteFunctionBodyOrGlobalInitializer(BE->getBody());
+      
+    // Now we snarf the rewritten text and stash it away for later use.
+    std::string S = Rewrite.getRewritenText(BE->getSourceRange());
+    RewrittenBlockExprs[BE] = S;
+    
+    Stmt *blockTranscribed = SynthBlockInitExpr(BE);
+    //blockTranscribed->dump();
+    return blockTranscribed;
+  }
+  // Handle specific things.
+  if (ObjCEncodeExpr *AtEncode = dyn_cast<ObjCEncodeExpr>(S))
+    return RewriteAtEncode(AtEncode);
+  
+  if (ObjCIvarRefExpr *IvarRefExpr = dyn_cast<ObjCIvarRefExpr>(S))
+    return RewriteObjCIvarRefExpr(IvarRefExpr, OrigStmtRange.getBegin());
+
+  if (ObjCSelectorExpr *AtSelector = dyn_cast<ObjCSelectorExpr>(S))
+    return RewriteAtSelector(AtSelector);
+    
+  if (ObjCStringLiteral *AtString = dyn_cast<ObjCStringLiteral>(S))
+    return RewriteObjCStringLiteral(AtString);
+    
+  if (ObjCMessageExpr *MessExpr = dyn_cast<ObjCMessageExpr>(S)) {
+    // Before we rewrite it, put the original message expression in a comment.
+    SourceLocation startLoc = MessExpr->getLocStart();
+    SourceLocation endLoc = MessExpr->getLocEnd();
+    
+    const char *startBuf = SM->getCharacterData(startLoc);
+    const char *endBuf = SM->getCharacterData(endLoc);
+    
+    std::string messString;
+    messString += "// ";
+    messString.append(startBuf, endBuf-startBuf+1);
+    messString += "\n";
+        
+    // FIXME: Missing definition of 
+    // InsertText(clang::SourceLocation, char const*, unsigned int).
+    // InsertText(startLoc, messString.c_str(), messString.size());
+    // Tried this, but it didn't work either...
+    // ReplaceText(startLoc, 0, messString.c_str(), messString.size());
+    return RewriteMessageExpr(MessExpr);
+  }
+  
+  if (ObjCAtTryStmt *StmtTry = dyn_cast<ObjCAtTryStmt>(S))
+    return RewriteObjCTryStmt(StmtTry);
+
+  if (ObjCAtSynchronizedStmt *StmtTry = dyn_cast<ObjCAtSynchronizedStmt>(S))
+    return RewriteObjCSynchronizedStmt(StmtTry);
+
+  if (ObjCAtThrowStmt *StmtThrow = dyn_cast<ObjCAtThrowStmt>(S))
+    return RewriteObjCThrowStmt(StmtThrow);
+  
+  if (ObjCProtocolExpr *ProtocolExp = dyn_cast<ObjCProtocolExpr>(S))
+    return RewriteObjCProtocolExpr(ProtocolExp);
+  
+  if (ObjCForCollectionStmt *StmtForCollection = 
+        dyn_cast<ObjCForCollectionStmt>(S))
+    return RewriteObjCForCollectionStmt(StmtForCollection, 
+                                        OrigStmtRange.getEnd());
+  if (BreakStmt *StmtBreakStmt =
+      dyn_cast<BreakStmt>(S))
+    return RewriteBreakStmt(StmtBreakStmt);
+  if (ContinueStmt *StmtContinueStmt =
+      dyn_cast<ContinueStmt>(S))
+    return RewriteContinueStmt(StmtContinueStmt);
+	
+  // Need to check for protocol refs (id <P>, Foo <P> *) in variable decls 
+  // and cast exprs.
+  if (DeclStmt *DS = dyn_cast<DeclStmt>(S)) {
+    // FIXME: What we're doing here is modifying the type-specifier that
+    // precedes the first Decl.  In the future the DeclGroup should have
+    // a separate type-specifier that we can rewrite.    
+    RewriteObjCQualifiedInterfaceTypes(*DS->decl_begin());
+    
+    // Blocks rewrite rules.
+    for (DeclStmt::decl_iterator DI = DS->decl_begin(), DE = DS->decl_end();
+         DI != DE; ++DI) {
+      
+      ScopedDecl *SD = *DI;
+      if (ValueDecl *ND = dyn_cast<ValueDecl>(SD)) {
+        if (isBlockPointerType(ND->getType()))
+          RewriteBlockPointerDecl(ND);
+        else if (ND->getType()->isFunctionPointerType()) 
+          CheckFunctionPointerDecl(ND->getType(), ND);
+      }
+      if (TypedefDecl *TD = dyn_cast<TypedefDecl>(SD)) {
+        if (isBlockPointerType(TD->getUnderlyingType()))
+          RewriteBlockPointerDecl(TD);
+        else if (TD->getUnderlyingType()->isFunctionPointerType()) 
+          CheckFunctionPointerDecl(TD->getUnderlyingType(), TD);
+      }
+    }
+  }
+  
+  if (CStyleCastExpr *CE = dyn_cast<CStyleCastExpr>(S))
+    RewriteObjCQualifiedInterfaceTypes(CE);
+  
+  if (isa<SwitchStmt>(S) || isa<WhileStmt>(S) || 
+      isa<DoStmt>(S) || isa<ForStmt>(S)) {
+    assert(!Stmts.empty() && "Statement stack is empty");
+    assert ((isa<SwitchStmt>(Stmts.back()) || isa<WhileStmt>(Stmts.back()) || 
+             isa<DoStmt>(Stmts.back()) || isa<ForStmt>(Stmts.back())) 
+            && "Statement stack mismatch");
+    Stmts.pop_back();
+  }
+  // Handle blocks rewriting.
+  if (BlockDeclRefExpr *BDRE = dyn_cast<BlockDeclRefExpr>(S)) {
+    if (BDRE->isByRef())
+      RewriteBlockDeclRefExpr(BDRE);
+  }
+  if (CallExpr *CE = dyn_cast<CallExpr>(S)) {
+    if (CE->getCallee()->getType()->isBlockPointerType())
+      RewriteBlockCall(CE);
+  }
+  if (CastExpr *CE = dyn_cast<CastExpr>(S)) {
+    RewriteCastExpr(CE);
+  }
+#if 0
+  if (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(S)) {
+    CastExpr *Replacement = new CastExpr(ICE->getType(), ICE->getSubExpr(), SourceLocation());
+    // Get the new text.
+    std::string SStr;
+    llvm::raw_string_ostream Buf(SStr);
+    Replacement->printPretty(Buf);
+    const std::string &Str = Buf.str();
+
+    printf("CAST = %s\n", &Str[0]);
+    InsertText(ICE->getSubExpr()->getLocStart(), &Str[0], Str.size());
+    delete S;
+    return Replacement;
+  }
+#endif
+  // Return this stmt unmodified.
+  return S;
+}
+
+/// HandleDeclInMainFile - This is called for each top-level decl defined in the
+/// main file of the input.
+void RewriteObjC::HandleDeclInMainFile(Decl *D) {
+  if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+    // Since function prototypes don't have ParmDecl's, we check the function
+    // prototype. This enables us to rewrite function declarations and
+    // definitions using the same code.
+    RewriteBlocksInFunctionTypeProto(FD->getType(), FD);
+
+    if (Stmt *Body = FD->getBody()) {
+      CurFunctionDef = FD;
+      FD->setBody(RewriteFunctionBodyOrGlobalInitializer(Body));
+      // This synthesizes and inserts the block "impl" struct, invoke function,
+      // and any copy/dispose helper functions.
+      InsertBlockLiteralsWithinFunction(FD);
+      CurFunctionDef = 0;
+    } 
+    return;
+  }
+  if (ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D)) {
+    if (Stmt *Body = MD->getBody()) {
+      //Body->dump();
+      CurMethodDef = MD;
+      MD->setBody(RewriteFunctionBodyOrGlobalInitializer(Body));
+      InsertBlockLiteralsWithinMethod(MD);
+      CurMethodDef = 0;
+    }
+  }
+  if (ObjCImplementationDecl *CI = dyn_cast<ObjCImplementationDecl>(D))
+    ClassImplementation.push_back(CI);
+  else if (ObjCCategoryImplDecl *CI = dyn_cast<ObjCCategoryImplDecl>(D))
+    CategoryImplementation.push_back(CI);
+  else if (ObjCClassDecl *CD = dyn_cast<ObjCClassDecl>(D))
+    RewriteForwardClassDecl(CD);
+  else if (VarDecl *VD = dyn_cast<VarDecl>(D)) {
+    RewriteObjCQualifiedInterfaceTypes(VD);
+    if (VD->getInit())
+      RewriteFunctionBodyOrGlobalInitializer(VD->getInit());
+  }
+  // Rewrite rules for blocks.
+  if (VarDecl *VD = dyn_cast<VarDecl>(D)) {
+    if (isBlockPointerType(VD->getType())) {
+      RewriteBlockPointerDecl(VD);
+      if (VD->getInit()) {
+        if (BlockExpr *CBE = dyn_cast<BlockExpr>(VD->getInit())) {
+          RewriteFunctionBodyOrGlobalInitializer(CBE->getBody());
+
+          // We've just rewritten the block body in place.
+          // Now we snarf the rewritten text and stash it away for later use.
+          std::string S = Rewrite.getRewritenText(CBE->getSourceRange());
+          RewrittenBlockExprs[CBE] = S;
+          std::string Init = SynthesizeBlockInitExpr(CBE, VD);
+          // Do the rewrite, using S.size() which contains the rewritten size.
+          ReplaceText(CBE->getLocStart(), S.size(), Init.c_str(), Init.size());
+          SynthesizeBlockLiterals(VD->getTypeSpecStartLoc(), VD->getName());
+        } else if (CastExpr *CE = dyn_cast<CastExpr>(VD->getInit())) {
+          RewriteCastExpr(CE);
+        }
+      }
+    } else if (VD->getType()->isFunctionPointerType()) {
+      CheckFunctionPointerDecl(VD->getType(), VD);
+      if (VD->getInit()) {
+        if (CastExpr *CE = dyn_cast<CastExpr>(VD->getInit())) {
+          RewriteCastExpr(CE);
+        }
+      }
+    }
+    return;
+  }
+  if (TypedefDecl *TD = dyn_cast<TypedefDecl>(D)) {
+    if (isBlockPointerType(TD->getUnderlyingType()))
+      RewriteBlockPointerDecl(TD);
+    else if (TD->getUnderlyingType()->isFunctionPointerType()) 
+      CheckFunctionPointerDecl(TD->getUnderlyingType(), TD);
+    return;
+  }
+  if (RecordDecl *RD = dyn_cast<RecordDecl>(D)) {
+    if (RD->isDefinition()) {
+      for (RecordDecl::field_const_iterator i = RD->field_begin(), 
+             e = RD->field_end(); i != e; ++i) {
+        FieldDecl *FD = *i;
+        if (isBlockPointerType(FD->getType()))
+          RewriteBlockPointerDecl(FD);
+      }
+    }
+    return;
+  }
+  // Nothing yet.
+}
+
+void RewriteObjC::HandleTranslationUnit(TranslationUnit& TU) {
+  // Get the top-level buffer that this corresponds to.
+  
+  // Rewrite tabs if we care.
+  //RewriteTabs();
+  
+  if (Diags.hasErrorOccurred())
+    return;
+
+  // Create the output file.
+  
+  llvm::OwningPtr<llvm::raw_ostream> OwnedStream;
+  llvm::raw_ostream *OutFile;
+  if (OutFileName == "-") {
+    OutFile = &llvm::outs();
+  } else if (!OutFileName.empty()) {
+    std::string Err;
+    OutFile = new llvm::raw_fd_ostream(OutFileName.c_str(), Err);
+    OwnedStream.reset(OutFile);
+  } else if (InFileName == "-") {
+    OutFile = &llvm::outs();
+  } else {
+    llvm::sys::Path Path(InFileName);
+    Path.eraseSuffix();
+    Path.appendSuffix("cpp");
+    std::string Err;
+    OutFile = new llvm::raw_fd_ostream(Path.toString().c_str(), Err);
+    OwnedStream.reset(OutFile);
+  }
+  
+  RewriteInclude();
+  
+  InsertText(SourceLocation::getFileLoc(MainFileID, 0), 
+             Preamble.c_str(), Preamble.size(), false);
+  
+  // Rewrite Objective-c meta data*
+  std::string ResultStr;
+  RewriteImplementations(ResultStr);
+  
+  // Get the buffer corresponding to MainFileID.  If we haven't changed it, then
+  // we are done.
+  if (const RewriteBuffer *RewriteBuf = 
+      Rewrite.getRewriteBufferFor(MainFileID)) {
+    //printf("Changed:\n");
+    *OutFile << std::string(RewriteBuf->begin(), RewriteBuf->end());
+  } else {
+    fprintf(stderr, "No changes\n");
+  }
+  // Emit metadata.
+  *OutFile << ResultStr;
+  OutFile->flush();
 }
 
