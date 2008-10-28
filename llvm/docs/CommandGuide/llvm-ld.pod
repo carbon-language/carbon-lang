@@ -128,10 +128,6 @@ undefined symbols will be permitted.
 
 An alias for -link-as-library.
 
-=item B<-march=>C<target>
-
-Specifies the kind of machine for which code or assembly should be generated.
-
 =item B<-native>
 
 Generate a native machine code executable.
