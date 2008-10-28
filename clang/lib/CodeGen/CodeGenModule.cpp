@@ -25,7 +25,6 @@
 #include "llvm/Module.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/Target/TargetData.h"
-#include "llvm/Analysis/Verifier.h"
 using namespace clang;
 using namespace CodeGen;
 
@@ -64,11 +63,6 @@ void CodeGenModule::Release() {
   EmitCtorList(GlobalDtors, "llvm.global_dtors");
   EmitAnnotations();
   BindRuntimeFunctions();
-  // Run the verifier to check that the generated code is consistent.
-  if (verifyModule(TheModule, llvm::PrintMessageAction)) {
-    TheModule.dump();
-    assert(0 && "Module failed verification!");
-  }
 }
 
 void CodeGenModule::BindRuntimeFunctions() {

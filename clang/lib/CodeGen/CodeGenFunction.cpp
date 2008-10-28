@@ -17,7 +17,6 @@
 #include "clang/Basic/TargetInfo.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
-#include "llvm/Analysis/Verifier.h"
 #include "llvm/Support/CFG.h"
 using namespace clang;
 using namespace CodeGen;
@@ -88,12 +87,6 @@ void CodeGenFunction::FinishFunction(SourceLocation EndLoc) {
   // Remove the AllocaInsertPt instruction, which is just a convenience for us.
   AllocaInsertPt->eraseFromParent();
   AllocaInsertPt = 0;
-  
-  // Verify that the function is well formed.
-  if (verifyFunction(*CurFn, llvm::PrintMessageAction)) {
-    CurFn->dump();
-    assert(0 && "Function failed verification!");
-  }
 }
 
 void CodeGenFunction::StartFunction(const Decl *D, QualType RetTy, 
