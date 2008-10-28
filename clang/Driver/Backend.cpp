@@ -304,7 +304,7 @@ void BackendConsumer::CreatePasses() {
     if (CompileOpts.OptimizationLevel > 1 && CompileOpts.UnitAtATime)
       PM->add(createConstantMergePass());         // Merge dup global constants 
   } else {
-    PerModulePasses->add(createAlwaysInlinerPass());  
+    PM->add(createAlwaysInlinerPass());  
   }
 }
 
