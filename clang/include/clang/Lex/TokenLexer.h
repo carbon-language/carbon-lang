@@ -87,12 +87,13 @@ public:
   /// ownership of the ActualArgs pointer.
   void Init(Token &Tok, MacroArgs *ActualArgs);
   
-  /// Create a TokenLexer for the specified token stream.  This does not
-  /// take ownership of the specified token vector.
+  /// Create a TokenLexer for the specified token stream.  If 'OwnsTokens' is
+  /// specified, this takes ownership of the tokens and delete[]'s them when
+  /// the token lexer is empty.
   TokenLexer(const Token *TokArray, unsigned NumToks, bool DisableExpansion,
-             bool OwnsTokens, Preprocessor &pp)
+             bool ownsTokens, Preprocessor &pp)
     : Macro(0), ActualArgs(0), PP(pp), OwnsTokens(false) {
-    Init(TokArray, NumToks, DisableExpansion, OwnsTokens);
+    Init(TokArray, NumToks, DisableExpansion, ownsTokens);
   }
   
   /// Init - Initialize this TokenLexer with the specified token stream.
