@@ -19,6 +19,8 @@
 #include "ARMRelocations.h"
 #include "ARMSubtarget.h"
 #include "ARMTargetMachine.h"
+#include "llvm/Constants.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/PassManager.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
@@ -358,7 +360,29 @@ unsigned ARMCodeEmitter::getAddrMode1SBit(const MachineInstr &MI,
 }
 
 void ARMCodeEmitter::emitConstPoolInstruction(const MachineInstr &MI) {
-  // FIXME
+  unsigned CPID = MI.getOperand(0).getImm();
+  unsigned CPIndex = MI.getOperand(1).getIndex();
+  const MachineConstantPoolEntry &MCPE = MCP->getConstants()[CPIndex];
+  
+  //FIXME: Can we get these here?
+  assert (!MCPE.isMachineConstantPoolEntry());
+
+  const Constant *CV = MCPE.Val.ConstVal;  
+  // FIXME: We can get other types here. Need to handle them.
+  // According to the constant island pass, everything is multiples,
+  // of 4-bytes in size, though, so that helps.
+  assert (CV->getType()->isInteger());
+  assert (cast<IntegerType>(CV->getType())->getBitWidth() == 32);
+
+  const ConstantInt *CI = dyn_cast<ConstantInt>(CV);
+  uint32_t Val = *(uint32_t*)CI->getValue().getRawData();
+
+  DOUT << "Constant pool #" << CPID << ", value '" << Val << "' @ " << 
+    (void*)MCE.getCurrentPCValue() << "\n";
+
+  if (JTI)
+    JTI->mapCPIDtoAddress(CPID, MCE.getCurrentPCValue());
+  MCE.emitWordLE(Val);
 }
 
 void ARMCodeEmitter::emitPseudoInstruction(const MachineInstr &MI) {

@@ -107,6 +107,15 @@ namespace llvm {
     // JIT to manage a GOT for it.
     bool needsGOT() const { return useGOT; }
 
+    /// hasCustomConstantPool - Allows a target to specify that constant
+    /// pool address resolution is handled by the target.
+    virtual bool hasCustomConstantPool() const { return false; }
+
+    /// getCustomConstantPoolEntryAddress - When using a custom constant
+    /// pool, resolve a constant pool index to the address of where the
+    /// entry is stored.
+    virtual intptr_t getCustomConstantPoolEntryAddress(unsigned CPI) const 
+      {return 0;}
   protected:
     bool useGOT;
   };

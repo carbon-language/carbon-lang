@@ -15,14 +15,16 @@
 #define ARMJITINFO_H
 
 #include "llvm/Target/TargetJITInfo.h"
+#include <map>
 
 namespace llvm {
   class ARMTargetMachine;
 
   class ARMJITInfo : public TargetJITInfo {
     ARMTargetMachine &TM;
+    std::map<unsigned, intptr_t> CPIDtoAddressMap;
   public:
-    explicit ARMJITInfo(ARMTargetMachine &tm) : TM(tm) {useGOT = 0;}
+    explicit ARMJITInfo(ARMTargetMachine &tm) : TM(tm) { useGOT = false; }
 
     /// replaceMachineCodeForFunction - Make it so that calling the function
     /// whose machine code is at OLD turns into a call to NEW, perhaps by
@@ -45,6 +47,27 @@ namespace llvm {
     /// referenced global symbols.
     virtual void relocate(void *Function, MachineRelocation *MR,
                           unsigned NumRelocs, unsigned char* GOTBase);
+  
+    /// hasCustomConstantPool - Allows a target to specify that constant
+    /// pool address resolution is handled by the target.
+    virtual bool hasCustomConstantPool() const { return true; }
+
+    /// getCustomConstantPoolEntryAddress - The ARM target puts all constant
+    /// pool entries into constant islands. Resolve the constant pool index
+    /// into the address where the constant is stored.
+    virtual intptr_t getCustomConstantPoolEntryAddress(unsigned CPID) const
+      {
+        std::map<unsigned, intptr_t>::const_iterator elem;
+        elem = CPIDtoAddressMap.find(CPID);
+        assert (elem != CPIDtoAddressMap.end());
+        return elem->second;
+      }
+
+    /// mapCPIDtoAddress - Map a Constant Pool Index (CPID) to the address
+    /// where its associated value is stored. When relocations are processed,
+    /// this value will be used to resolve references to the constant.
+    void mapCPIDtoAddress(unsigned CPID, intptr_t address)
+      { CPIDtoAddressMap[CPID] = address; }
   };
 }
 
