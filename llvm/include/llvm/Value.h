@@ -289,7 +289,8 @@ template <> inline bool isa_impl<GlobalAlias, Value>(const Value &Val) {
   return Val.getValueID() == Value::GlobalAliasVal;
 }
 template <> inline bool isa_impl<GlobalValue, Value>(const Value &Val) {
-  return isa<GlobalVariable>(Val) || isa<Function>(Val) || isa<GlobalAlias>(Val);
+  return isa<GlobalVariable>(Val) || isa<Function>(Val) ||
+         isa<GlobalAlias>(Val);
 }
 
 } // End llvm namespace
