@@ -34,8 +34,8 @@ public:
   CompileOptions() {
     OptimizationLevel = 0;
     OptimizeSize = 0;
-    UnitAtATime = InlineFunctions = SimplifyLibCalls = 1;
-    UnrollLoops = 1;
+    UnitAtATime = 1;
+    InlineFunctions = SimplifyLibCalls = UnrollLoops = 0;
     VerifyModule = 1;
   }
 };
