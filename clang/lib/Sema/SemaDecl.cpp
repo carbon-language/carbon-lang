@@ -1540,6 +1540,12 @@ void Sema::ActOnUninitializedDecl(DeclTy *dcl) {
            Var->getName(), 
            SourceRange(Var->getLocation(), Var->getLocation()));
 
+#if 0
+    // FIXME: Temporarily disabled because we are not properly parsing
+    // linkage specifications on declarations, e.g., 
+    //
+    //   extern "C" const CGPoint CGPointerZero;
+    //
     // C++ [dcl.init]p9:
     //
     //     If no initializer is specified for an object, and the
@@ -1558,11 +1564,13 @@ void Sema::ActOnUninitializedDecl(DeclTy *dcl) {
     // FIXME: Actually perform the POD/user-defined default
     // constructor check.
     if (getLangOptions().CPlusPlus &&
-             Context.getCanonicalType(Type).isConstQualified())
+        Context.getCanonicalType(Type).isConstQualified() &&
+        Var->getStorageClass() != VarDecl::Extern)
       Diag(Var->getLocation(), 
            diag::err_const_var_requires_init, 
            Var->getName(), 
            SourceRange(Var->getLocation(), Var->getLocation()));
+#endif
   }
 }
 

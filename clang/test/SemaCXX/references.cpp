@@ -61,9 +61,6 @@ void test5() {
 int& test6(int& x) {
   int& yo; // expected-error{{declaration of reference variable 'yo' requires an initializer}}
 
-
-  const int val; // expected-error{{declaration of const variable 'val' requires an initializer}}
-
   return x;
 }
 int& not_initialized_error; // expected-error{{declaration of reference variable 'not_initialized_error' requires an initializer}}
