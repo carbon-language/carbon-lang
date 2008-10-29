@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only -verify
+// RUN: clang -fsyntax-only -verify %s
 
 // Test for absence of crash reported in PR 2923:
 //
