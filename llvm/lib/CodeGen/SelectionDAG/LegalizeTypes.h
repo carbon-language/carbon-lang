@@ -516,6 +516,7 @@ private:
   void ExpandRes_EXTRACT_ELEMENT   (SDNode *N, SDValue &Lo, SDValue &Hi);
   void ExpandRes_EXTRACT_VECTOR_ELT(SDNode *N, SDValue &Lo, SDValue &Hi);
   void ExpandRes_NormalLoad        (SDNode *N, SDValue &Lo, SDValue &Hi);
+  void ExpandRes_VAARG             (SDNode *N, SDValue &Lo, SDValue &Hi);
 
   // Generic Operand Expansion.
   SDValue ExpandOp_BIT_CONVERT    (SDNode *N);

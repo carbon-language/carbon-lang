@@ -171,6 +171,23 @@ void DAGTypeLegalizer::ExpandRes_NormalLoad(SDNode *N, SDValue &Lo,
   ReplaceValueWith(SDValue(N, 1), Chain);
 }
 
+void DAGTypeLegalizer::ExpandRes_VAARG(SDNode *N, SDValue &Lo, SDValue &Hi) {
+  MVT NVT = TLI.getTypeToTransformTo(N->getValueType(0));
+  SDValue Chain = N->getOperand(0);
+  SDValue Ptr = N->getOperand(1);
+
+  Lo = DAG.getVAArg(NVT, Chain, Ptr, N->getOperand(2));
+  Hi = DAG.getVAArg(NVT, Lo.getValue(1), Ptr, N->getOperand(2));
+
+  // Handle endianness of the load.
+  if (TLI.isBigEndian())
+    std::swap(Lo, Hi);
+
+  // Modified the chain - switch anything that used the old chain to use
+  // the new one.
+  ReplaceValueWith(SDValue(N, 1), Hi.getValue(1));
+}
+
 
 //===--------------------------------------------------------------------===//
 // Generic Operand Expansion.
