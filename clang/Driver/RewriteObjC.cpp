@@ -2180,6 +2180,11 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
       QualType t = mDecl->getParamDecl(i)->getType()->isObjCQualifiedIdType()
                      ? Context->getObjCIdType() 
                      : mDecl->getParamDecl(i)->getType();
+      // Make sure we convert "t (^)(...)" to "t (*)(...)".
+      if (isBlockPointerType(t)) {
+        const BlockPointerType *BPT = t->getAsBlockPointerType();
+        t = Context->getPointerType(BPT->getPointeeType());
+      }
       ArgTypes.push_back(t);
     }
     returnType = mDecl->getResultType()->isObjCQualifiedIdType()
