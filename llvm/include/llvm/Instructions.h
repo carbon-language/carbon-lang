@@ -420,7 +420,7 @@ class GetElementPtrInst : public Instruction {
 
     if (NumIdx > 0)
       // This requires that the iterator points to contiguous memory.
-      return getIndexedType(Ptr, (Value *const *)&*IdxBegin, NumIdx);
+      return getIndexedType(Ptr, &*IdxBegin, NumIdx);
     else
       return getIndexedType(Ptr, (Value *const*)0, NumIdx);
   }
