@@ -4,7 +4,7 @@
 
 macro(tablegen ofn)
   add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${ofn}
-    COMMAND tblgen ${ARGN} -I ${CMAKE_CURRENT_SOURCE_DIR} -I ${CMAKE_SOURCE_DIR}/lib/Target -I ${llvm_include_path} ${CMAKE_CURRENT_SOURCE_DIR}/${LLVM_TARGET_DEFINITIONS} -o ${ofn}
+    COMMAND tblgen ${ARGN} -I ${CMAKE_CURRENT_SOURCE_DIR} -I ${CMAKE_SOURCE_DIR}/lib/Target -I ${LLVM_MAIN_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/${LLVM_TARGET_DEFINITIONS} -o ${ofn}
     DEPENDS tblgen ${CMAKE_CURRENT_SOURCE_DIR}/${LLVM_TARGET_DEFINITIONS}
     COMMENT "Building ${ofn}..."
     )

@@ -7,7 +7,7 @@ set(PACKAGE_BUGREPORT "llvmbugs@cs.uiuc.edu")
 include(FindPerl)
 
 set(LLVM_MAIN_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR})
-set(LLVM_MAIN_INCLUDE_DIR ${LLVM_MAIN_SRC_DIR}/include/llvm)
+set(LLVM_MAIN_INCLUDE_DIR ${LLVM_MAIN_SRC_DIR}/include)
 set(LLVM_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 set(LLVM_TOOLS_BINARY_DIR ${LLVM_BINARY_DIR}/bin)
 set(LLVM_EXAMPLES_BINARY_DIR ${LLVM_BINARY_DIR}/examples)
@@ -21,14 +21,6 @@ else( MSVC )
     CACHE STRING "Semicolon-separated list of targets to build")
 endif( MSVC )
 
-if( NOT MSVC )
-  set(CMAKE_CXX_LINK_EXECUTABLE "sh -c \"${CMAKE_CXX_LINK_EXECUTABLE}\"")
-endif( NOT MSVC )
-
-# TODO: Eliminate?
-get_filename_component(llvm_include_path ${LLVM_MAIN_SRC_DIR}/include ABSOLUTE)
-
-#get_filename_component(llvm_builded_incs_dir ${LLVM_BINARY_DIR}/include/llvm ABSOLUTE)
 set(llvm_builded_incs_dir ${LLVM_BINARY_DIR}/include/llvm)
 
 # Add path for custom modules
@@ -83,7 +75,7 @@ if( MSVC )
   add_definitions( -wd4355 -wd4715 )
 endif( MSVC )
 
-include_directories( ${LLVM_BINARY_DIR}/include ${llvm_include_path})
+include_directories( ${LLVM_BINARY_DIR}/include ${LLVM_MAIN_INCLUDE_DIR})
 #link_directories( d:/dev/lib )
 
 #add_subdirectory(lib)
@@ -101,7 +93,7 @@ set(LLVM_COMMON_DEPENDS ${LLVM_COMMON_DEPENDS} ${LLVM_LIBS} )
 add_subdirectory(utils/TableGen)
 
 add_custom_command(OUTPUT ${llvm_builded_incs_dir}/Intrinsics.gen
-  COMMAND tblgen -gen-intrinsic -I ${llvm_include_path} ${llvm_include_path}/llvm/Intrinsics.td -o ${llvm_builded_incs_dir}/Intrinsics.gen
+  COMMAND tblgen -gen-intrinsic -I ${LLVM_MAIN_INCLUDE_DIR} ${LLVM_MAIN_INCLUDE_DIR}/llvm/Intrinsics.td -o ${llvm_builded_incs_dir}/Intrinsics.gen
   DEPENDS tblgen
   COMMENT "Building intrinsics.gen...")
 

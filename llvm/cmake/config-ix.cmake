@@ -57,9 +57,9 @@ get_target_triple(LLVM_HOSTTRIPLE)
 message(STATUS "LLVM_HOSTTRIPLE: ${LLVM_HOSTTRIPLE}")
 
 if( MINGW )
-  # tbi: Comprobar que existen las librerias:
   set(HAVE_LIBIMAGEHLP 1)
   set(HAVE_LIBPSAPI 1)
+  # TODO: Check existence of libraries.
   #   include(CheckLibraryExists)
   #   CHECK_LIBRARY_EXISTS(imagehlp ??? . HAVE_LIBIMAGEHLP)
 endif( MINGW )
@@ -97,26 +97,26 @@ set(RETSIGTYPE void)
 set(ENABLE_THREADS 0)
 
 configure_file(
-  ${LLVM_MAIN_INCLUDE_DIR}/Config/config.h.cmake
+  ${LLVM_MAIN_INCLUDE_DIR}/llvm/Config/config.h.cmake
   ${LLVM_BINARY_DIR}/include/llvm/Config/config.h
   )
 
 configure_file(
-  ${LLVM_MAIN_INCLUDE_DIR}/ADT/iterator.cmake
+  ${LLVM_MAIN_INCLUDE_DIR}/llvm/ADT/iterator.cmake
   ${LLVM_BINARY_DIR}/include/llvm/ADT/iterator.h
   )
 
 configure_file(
-  ${LLVM_MAIN_INCLUDE_DIR}/Support/DataTypes.h.cmake
+  ${LLVM_MAIN_INCLUDE_DIR}/llvm/Support/DataTypes.h.cmake
   ${LLVM_BINARY_DIR}/include/llvm/Support/DataTypes.h
   )
 
 configure_file(
-  ${LLVM_MAIN_INCLUDE_DIR}/ADT/hash_map.cmake
+  ${LLVM_MAIN_INCLUDE_DIR}/llvm/ADT/hash_map.cmake
   ${LLVM_BINARY_DIR}/include/llvm/ADT/hash_map.h
   )
 
 configure_file(
-  ${LLVM_MAIN_INCLUDE_DIR}/ADT/hash_set.cmake
+  ${LLVM_MAIN_INCLUDE_DIR}/llvm/ADT/hash_set.cmake
   ${LLVM_BINARY_DIR}/include/llvm/ADT/hash_set.h
   )
