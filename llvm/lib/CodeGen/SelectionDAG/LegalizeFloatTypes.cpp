@@ -616,7 +616,8 @@ void DAGTypeLegalizer::ExpandFloatRes_FADD(SDNode *N, SDValue &Lo,
                                             RTLIB::ADD_PPCF128),
                                N->getValueType(0), Ops, 2,
                                false);
-  assert(Call.getNode()->getOpcode() == ISD::BUILD_PAIR && "Call lowered wrongly!");
+  assert(Call.getNode()->getOpcode() == ISD::BUILD_PAIR &&
+         "Call lowered wrongly!");
   Lo = Call.getOperand(0); Hi = Call.getOperand(1);
 }
 
@@ -643,7 +644,8 @@ void DAGTypeLegalizer::ExpandFloatRes_FDIV(SDNode *N, SDValue &Lo,
                                             RTLIB::DIV_PPCF128),
                                N->getValueType(0), Ops, 2,
                                false);
-  assert(Call.getNode()->getOpcode() == ISD::BUILD_PAIR && "Call lowered wrongly!");
+  assert(Call.getNode()->getOpcode() == ISD::BUILD_PAIR &&
+         "Call lowered wrongly!");
   Lo = Call.getOperand(0); Hi = Call.getOperand(1);
 }
 
@@ -657,7 +659,8 @@ void DAGTypeLegalizer::ExpandFloatRes_FMUL(SDNode *N, SDValue &Lo,
                                             RTLIB::MUL_PPCF128),
                                N->getValueType(0), Ops, 2,
                                false);
-  assert(Call.getNode()->getOpcode() == ISD::BUILD_PAIR && "Call lowered wrongly!");
+  assert(Call.getNode()->getOpcode() == ISD::BUILD_PAIR &&
+         "Call lowered wrongly!");
   Lo = Call.getOperand(0); Hi = Call.getOperand(1);
 }
 
@@ -685,7 +688,8 @@ void DAGTypeLegalizer::ExpandFloatRes_FSUB(SDNode *N, SDValue &Lo,
                                             RTLIB::SUB_PPCF128),
                                N->getValueType(0), Ops, 2,
                                false);
-  assert(Call.getNode()->getOpcode() == ISD::BUILD_PAIR && "Call lowered wrongly!");
+  assert(Call.getNode()->getOpcode() == ISD::BUILD_PAIR &&
+         "Call lowered wrongly!");
   Lo = Call.getOperand(0); Hi = Call.getOperand(1);
 }
 
@@ -747,7 +751,8 @@ void DAGTypeLegalizer::ExpandFloatRes_XINT_TO_FP(SDNode *N, SDValue &Lo,
     assert(LC != RTLIB::UNKNOWN_LIBCALL && "Unsupported XINT_TO_FP!");
 
     Hi = MakeLibCall(LC, VT, &Src, 1, true);
-    assert(Hi.getNode()->getOpcode() == ISD::BUILD_PAIR && "Call lowered wrongly!");
+    assert(Hi.getNode()->getOpcode() == ISD::BUILD_PAIR &&
+           "Call lowered wrongly!");
     Lo = Hi.getOperand(0); Hi = Hi.getOperand(1);
   }
 
