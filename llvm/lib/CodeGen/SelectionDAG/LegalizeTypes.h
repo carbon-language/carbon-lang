@@ -35,9 +35,9 @@ class VISIBILITY_HIDDEN DAGTypeLegalizer {
   TargetLowering &TLI;
   SelectionDAG &DAG;
 public:
-  // NodeIDFlags - This pass uses the NodeID on the SDNodes to hold information
+  // NodeIdFlags - This pass uses the NodeId on the SDNodes to hold information
   // about the state of the node.  The enum has all the values.
-  enum NodeIDFlags {
+  enum NodeIdFlags {
     /// ReadyToProcess - All operands have been processed, so this node is ready
     /// to be handled.
     ReadyToProcess = 0,
@@ -153,7 +153,7 @@ public:
 
   void run();
 
-  /// ReanalyzeNode - Recompute the NodeID and correct processed operands
+  /// ReanalyzeNode - Recompute the NodeId and correct processed operands
   /// for the specified node, adding it to the worklist if ready.
   void ReanalyzeNode(SDNode *N) {
     N->setNodeId(NewNode);

@@ -31,7 +31,7 @@ void DAGTypeLegalizer::run() {
   // done.  Set it to null to avoid confusion.
   DAG.setRoot(SDValue());
 
-  // Walk all nodes in the graph, assigning them a NodeID of 'ReadyToProcess'
+  // Walk all nodes in the graph, assigning them a NodeId of 'ReadyToProcess'
   // (and remembering them) if they are leaves and assigning 'NewNode' if
   // non-leaves.
   for (SelectionDAG::allnodes_iterator I = DAG.allnodes_begin(),
@@ -140,25 +140,25 @@ NodeDone:
     for (SDNode::use_iterator UI = N->use_begin(), E = N->use_end();
          UI != E; ++UI) {
       SDNode *User = *UI;
-      int NodeID = User->getNodeId();
-      assert(NodeID != ReadyToProcess && NodeID != Processed &&
+      int NodeId = User->getNodeId();
+      assert(NodeId != ReadyToProcess && NodeId != Processed &&
              "Invalid node id for user of unprocessed node!");
 
       // This node has two options: it can either be a new node or its Node ID
       // may be a count of the number of operands it has that are not ready.
-      if (NodeID > 0) {
-        User->setNodeId(NodeID-1);
+      if (NodeId > 0) {
+        User->setNodeId(NodeId-1);
 
         // If this was the last use it was waiting on, add it to the ready list.
-        if (NodeID-1 == ReadyToProcess)
+        if (NodeId-1 == ReadyToProcess)
           Worklist.push_back(User);
         continue;
       }
 
       // Otherwise, this node is new: this is the first operand of it that
-      // became ready.  Its new NodeID is the number of operands it has minus 1
+      // became ready.  Its new NodeId is the number of operands it has minus 1
       // (as this node is now processed).
-      assert(NodeID == NewNode && "Unknown node ID!");
+      assert(NodeId == NewNode && "Unknown node ID!");
       User->setNodeId(User->getNumOperands()-1);
 
       // If the node only has a single operand, it is now ready.
@@ -340,7 +340,7 @@ namespace {
 
 
 /// ReplaceValueWith - The specified value was legalized to the specified other
-/// value.  If they are different, update the DAG and NodeIDs replacing any uses
+/// value.  If they are different, update the DAG and NodeIds replacing any uses
 /// of From to use To instead.
 void DAGTypeLegalizer::ReplaceValueWith(SDValue From, SDValue To) {
   if (From == To) return;
