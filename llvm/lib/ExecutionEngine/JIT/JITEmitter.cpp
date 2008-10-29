@@ -876,30 +876,32 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
     for (unsigned i = 0, e = Relocations.size(); i != e; ++i) {
       MachineRelocation &MR = Relocations[i];
       void *ResultPtr;
-      if (MR.isString()) {
-        ResultPtr = TheJIT->getPointerToNamedFunction(MR.getString());
+      if (!MR.letTargetResolve()) {
+        if (MR.isString()) {
+          ResultPtr = TheJIT->getPointerToNamedFunction(MR.getString());
 
-        // If the target REALLY wants a stub for this function, emit it now.
-        if (!MR.doesntNeedStub())
-          ResultPtr = Resolver.getExternalFunctionStub(ResultPtr);
-      } else if (MR.isGlobalValue()) {
-        ResultPtr = getPointerToGlobal(MR.getGlobalValue(),
-                                       BufferBegin+MR.getMachineCodeOffset(),
-                                       MR.doesntNeedStub());
-      } else if (MR.isGlobalValueLazyPtr()) {
-        ResultPtr = getPointerToGVLazyPtr(MR.getGlobalValue(),
+          // If the target REALLY wants a stub for this function, emit it now.
+          if (!MR.doesntNeedStub())
+            ResultPtr = Resolver.getExternalFunctionStub(ResultPtr);
+        } else if (MR.isGlobalValue()) {
+          ResultPtr = getPointerToGlobal(MR.getGlobalValue(),
+                                         BufferBegin+MR.getMachineCodeOffset(),
+                                         MR.doesntNeedStub());
+        } else if (MR.isGlobalValueLazyPtr()) {
+          ResultPtr = getPointerToGVLazyPtr(MR.getGlobalValue(),
                                           BufferBegin+MR.getMachineCodeOffset(),
                                           MR.doesntNeedStub());
-      } else if (MR.isBasicBlock()) {
-        ResultPtr = (void*)getMachineBasicBlockAddress(MR.getBasicBlock());
-      } else if (MR.isConstantPoolIndex()) {
-        ResultPtr=(void*)getConstantPoolEntryAddress(MR.getConstantPoolIndex());
-      } else {
-        assert(MR.isJumpTableIndex());
-        ResultPtr=(void*)getJumpTableEntryAddress(MR.getJumpTableIndex());
-      }
+        } else if (MR.isBasicBlock()) {
+          ResultPtr = (void*)getMachineBasicBlockAddress(MR.getBasicBlock());
+        } else if (MR.isConstantPoolIndex()) {
+          ResultPtr = (void*)getConstantPoolEntryAddress(MR.getConstantPoolIndex());
+        } else {
+          assert(MR.isJumpTableIndex());
+          ResultPtr=(void*)getJumpTableEntryAddress(MR.getJumpTableIndex());
+        }
 
-      MR.setResultPointer(ResultPtr);
+        MR.setResultPointer(ResultPtr);
+      }
 
       // if we are managing the GOT and the relocation wants an index,
       // give it one
@@ -1011,11 +1013,6 @@ void* JITEmitter::allocateSpace(intptr_t Size, unsigned Alignment) {
 }
 
 void JITEmitter::emitConstantPool(MachineConstantPool *MCP) {
-  if (TheJIT->getJITInfo().hasCustomConstantPool()) {
-    DOUT << "JIT: Target has custom constant pool handling. Omitting standard "
-            "constant pool\n";
-    return;
-  }
   const std::vector<MachineConstantPoolEntry> &Constants = MCP->getConstants();
   if (Constants.empty()) return;
 
@@ -1129,10 +1126,6 @@ void *JITEmitter::finishFunctionStub(const GlobalValue* F) {
 // method.
 //
 intptr_t JITEmitter::getConstantPoolEntryAddress(unsigned ConstantNum) const {
-  if (TheJIT->getJITInfo().hasCustomConstantPool()) {
-    return TheJIT->getJITInfo().getCustomConstantPoolEntryAddress(ConstantNum);
-  }
-
   assert(ConstantNum < ConstantPool->getConstants().size() &&
          "Invalid ConstantPoolIndex!");
   return (intptr_t)ConstantPoolBase +
