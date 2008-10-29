@@ -1123,7 +1123,7 @@ ActOnCallExpr(ExprTy *fn, SourceLocation LParenLoc,
                 Fn->getSourceRange());
   
   // We know the result type of the call, set it.
-  TheCall->setType(FuncT->getResultType());
+  TheCall->setType(FuncT->getResultType().getNonReferenceType());
     
   if (const FunctionTypeProto *Proto = dyn_cast<FunctionTypeProto>(FuncT)) {
     // C99 6.5.2.2p7 - the arguments are implicitly converted, as if by 

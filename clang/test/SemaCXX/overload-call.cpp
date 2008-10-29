@@ -225,3 +225,31 @@ void intref_test() {
   float* ir1 = intref(5);
   float* ir2 = intref(5.5);
 }
+
+// Test reference binding vs. standard conversions.
+int& bind_vs_conv(const double&);
+float& bind_vs_conv(int);
+
+void bind_vs_conv_test()
+{
+  int& i1 = bind_vs_conv(1.0f);
+  float& f1 = bind_vs_conv((short)1);
+}
+
+// Test that cv-qualifiers get subsumed in the reference binding.
+struct X { };
+struct Y { };
+struct Z : X, Y { };
+
+int& cvqual_subsume(X&); // expected-note{{candidate function}}
+float& cvqual_subsume(const Y&); // expected-note{{candidate function}}
+
+int& cvqual_subsume2(const X&);
+float& cvqual_subsume2(const volatile Y&);
+
+Z get_Z();
+
+void cvqual_subsume_test(Z z) {
+  cvqual_subsume(z); // expected-error{{call to 'cvqual_subsume' is ambiguous; candidates are:}}
+  int& x = cvqual_subsume2(get_Z()); // okay: only binds to the first one
+}

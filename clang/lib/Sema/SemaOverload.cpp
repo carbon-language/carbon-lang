@@ -39,6 +39,7 @@ GetConversionCategory(ImplicitConversionKind Kind) {
     ICC_Conversion,
     ICC_Conversion,
     ICC_Conversion,
+    ICC_Conversion,
     ICC_Conversion
   };
   return Category[(int)Kind];
@@ -56,6 +57,7 @@ ImplicitConversionRank GetConversionRank(ImplicitConversionKind Kind) {
     ICR_Exact_Match,
     ICR_Promotion,
     ICR_Promotion,
+    ICR_Conversion,
     ICR_Conversion,
     ICR_Conversion,
     ICR_Conversion,
@@ -82,7 +84,8 @@ const char* GetImplicitConversionName(ImplicitConversionKind Kind) {
     "Floating-integral conversion",
     "Pointer conversion",
     "Pointer-to-member conversion",
-    "Boolean conversion"
+    "Boolean conversion",
+    "Derived-to-base conversion"
   };
   return Name[Kind];
 }
@@ -1066,10 +1069,7 @@ Sema::TryCopyInitialization(Expr *From, QualType ToType) {
     return ICS;
   } else if (ToType->isReferenceType()) {
     ImplicitConversionSequence ICS;
-    if (CheckReferenceInit(From, ToType, /*Complain=*/false))
-      ICS.ConversionKind = ImplicitConversionSequence::BadConversion;
-    else
-      ICS.ConversionKind = ImplicitConversionSequence::StandardConversion;
+    CheckReferenceInit(From, ToType, &ICS);
     return ICS;
   } else {
     return TryImplicitConversion(From, ToType);

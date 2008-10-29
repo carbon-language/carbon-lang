@@ -688,7 +688,8 @@ void Sema::AddCXXDirectInitializerToDecl(DeclTy *Dcl, SourceLocation LParenLoc,
 /// type, and the first type (T1) is the pointee type of the reference
 /// type being initialized.
 Sema::ReferenceCompareResult 
-Sema::CompareReferenceRelationship(QualType T1, QualType T2) {
+Sema::CompareReferenceRelationship(QualType T1, QualType T2, 
+                                   bool& DerivedToBase) {
   assert(!T1->isReferenceType() && "T1 must be the pointee type of the reference type");
   assert(!T2->isReferenceType() && "T2 cannot be a reference type");
 
@@ -701,10 +702,11 @@ Sema::CompareReferenceRelationship(QualType T1, QualType T2) {
   //   Given types “cv1 T1” and “cv2 T2,” “cv1 T1” is
   //   reference-related to “cv2 T2” if T1 is the same type as T2, or 
   //   T1 is a base class of T2.
-  //
-  // If neither of these conditions is met, the two types are not
-  // reference related at all.
-  if (UnqualT1 != UnqualT2 && !IsDerivedFrom(UnqualT2, UnqualT1))
+  if (UnqualT1 == UnqualT2)
+    DerivedToBase = false;
+  else if (IsDerivedFrom(UnqualT2, UnqualT1))
+    DerivedToBase = true;
+  else
     return Ref_Incompatible;
 
   // At this point, we know that T1 and T2 are reference-related (at
@@ -731,17 +733,27 @@ Sema::CompareReferenceRelationship(QualType T1, QualType T2) {
 /// list), and DeclType is the type of the declaration. When Complain
 /// is true, this routine will produce diagnostics (and return true)
 /// when the declaration cannot be initialized with the given
-/// initializer. When Complain is false, this routine will return true
-/// when the initialization cannot be performed, but will not produce
-/// any diagnostics or alter Init.
-bool Sema::CheckReferenceInit(Expr *&Init, QualType &DeclType, bool Complain) {
+/// initializer. When ICS is non-null, this routine will compute the
+/// implicit conversion sequence according to C++ [over.ics.ref] and
+/// will not produce any diagnostics; when ICS is null, it will emit
+/// diagnostics when any errors are found.
+bool 
+Sema::CheckReferenceInit(Expr *&Init, QualType &DeclType, 
+                         ImplicitConversionSequence *ICS) {
   assert(DeclType->isReferenceType() && "Reference init needs a reference");
 
   QualType T1 = DeclType->getAsReferenceType()->getPointeeType();
   QualType T2 = Init->getType();
 
+  // Compute some basic properties of the types and the initializer.
+  bool DerivedToBase = false;
   Expr::isLvalueResult InitLvalue = Init->isLvalue(Context);
-  ReferenceCompareResult RefRelationship = CompareReferenceRelationship(T1, T2);
+  ReferenceCompareResult RefRelationship 
+    = CompareReferenceRelationship(T1, T2, DerivedToBase);
+
+  // Most paths end in a failed conversion.
+  if (ICS)
+    ICS->ConversionKind = ImplicitConversionSequence::BadConversion;
 
   // C++ [dcl.init.ref]p5:
   //   A reference to type “cv1 T1” is initialized by an expression
@@ -752,11 +764,37 @@ bool Sema::CheckReferenceInit(Expr *&Init, QualType &DeclType, bool Complain) {
   bool BindsDirectly = false;
   //       -- is an lvalue (but is not a bit-field), and “cv1 T1” is
   //          reference-compatible with “cv2 T2,” or
-  if (InitLvalue == Expr::LV_Valid && !Init->isBitField() &&
-      RefRelationship >= Ref_Compatible) {
+  //
+  // Note that the bit-field check is skipped if we are just computing
+  // the implicit conversion sequence (C++ [over.best.ics]p2).
+  if (InitLvalue == Expr::LV_Valid && (ICS || !Init->isBitField()) &&
+      RefRelationship >= Ref_Compatible_With_Added_Qualification) {
     BindsDirectly = true;
 
-    if (!Complain) {
+    if (ICS) {
+      // C++ [over.ics.ref]p1:
+      //   When a parameter of reference type binds directly (8.5.3)
+      //   to an argument expression, the implicit conversion sequence
+      //   is the identity conversion, unless the argument expression
+      //   has a type that is a derived class of the parameter type,
+      //   in which case the implicit conversion sequence is a
+      //   derived-to-base Conversion (13.3.3.1).
+      ICS->ConversionKind = ImplicitConversionSequence::StandardConversion;
+      ICS->Standard.First = ICK_Identity;
+      ICS->Standard.Second = DerivedToBase? ICK_Derived_To_Base : ICK_Identity;
+      ICS->Standard.Third = ICK_Identity;
+      ICS->Standard.FromTypePtr = T2.getAsOpaquePtr();
+      ICS->Standard.ToTypePtr = T1.getAsOpaquePtr();
+      ICS->ReferenceBinding = true;
+      ICS->DirectBinding = true;
+
+      // Nothing more to do: the inaccessibility/ambiguity check for
+      // derived-to-base conversions is suppressed when we're
+      // computing the implicit conversion sequence (C++
+      // [over.best.ics]p2).
+      return false;
+    } else {
+      // Perform the conversion.
       // FIXME: Binding to a subobject of the lvalue is going to require
       // more AST annotation than this.
       ImpCastExprToType(Init, T1);    
@@ -770,7 +808,7 @@ bool Sema::CheckReferenceInit(Expr *&Init, QualType &DeclType, bool Complain) {
   //          applicable conversion functions (13.3.1.6) and choosing
   //          the best one through overload resolution (13.3)),
   // FIXME: Implement this second bullet, once we have conversion
-  //        functions.
+  //        functions. Also remember C++ [over.ics.ref]p1, second part.
 
   if (BindsDirectly) {
     // C++ [dcl.init.ref]p4:
@@ -785,20 +823,18 @@ bool Sema::CheckReferenceInit(Expr *&Init, QualType &DeclType, bool Complain) {
     // complain about errors, because we should not be checking for
     // ambiguity (or inaccessibility) unless the reference binding
     // actually happens.
-    if (Complain && 
-        (Context.getCanonicalType(T1).getUnqualifiedType() 
-           != Context.getCanonicalType(T2).getUnqualifiedType()) && 
-        CheckDerivedToBaseConversion(T2, T1, Init->getSourceRange().getBegin(),
-                                     Init->getSourceRange()))
-      return true;
-          
-    return false;
+    if (DerivedToBase) 
+      return CheckDerivedToBaseConversion(T2, T1, 
+                                          Init->getSourceRange().getBegin(),
+                                          Init->getSourceRange());
+    else
+      return false;
   }
 
   //     -- Otherwise, the reference shall be to a non-volatile const
   //        type (i.e., cv1 shall be const).
   if (T1.getCVRQualifiers() != QualType::Const) {
-    if (Complain)
+    if (!ICS)
       Diag(Init->getSourceRange().getBegin(),
            diag::err_not_reference_to_const_init,
            T1.getAsString(), 
@@ -832,8 +868,17 @@ bool Sema::CheckReferenceInit(Expr *&Init, QualType &DeclType, bool Complain) {
   // a temporary in this case. FIXME: We will, however, have to check
   // for the presence of a copy constructor in C++98/03 mode.
   if (InitLvalue != Expr::LV_Valid && T2->isRecordType() &&
-      RefRelationship >= Ref_Compatible) {
-    if (!Complain) {
+      RefRelationship >= Ref_Compatible_With_Added_Qualification) {
+    if (ICS) {
+      ICS->ConversionKind = ImplicitConversionSequence::StandardConversion;
+      ICS->Standard.First = ICK_Identity;
+      ICS->Standard.Second = DerivedToBase? ICK_Derived_To_Base : ICK_Identity;
+      ICS->Standard.Third = ICK_Identity;
+      ICS->Standard.FromTypePtr = T2.getAsOpaquePtr();
+      ICS->Standard.ToTypePtr = T1.getAsOpaquePtr();
+      ICS->ReferenceBinding = true;
+      ICS->DirectBinding = false;      
+    } else {
       // FIXME: Binding to a subobject of the rvalue is going to require
       // more AST annotation than this.
       ImpCastExprToType(Init, T1);
@@ -853,7 +898,7 @@ bool Sema::CheckReferenceInit(Expr *&Init, QualType &DeclType, bool Complain) {
     // we would be reference-compatible or reference-compatible with
     // added qualification. But that wasn't the case, so the reference
     // initialization fails.
-    if (Complain)
+    if (!ICS)
       Diag(Init->getSourceRange().getBegin(),
            diag::err_reference_init_drops_quals,
            T1.getAsString(), 
@@ -863,9 +908,21 @@ bool Sema::CheckReferenceInit(Expr *&Init, QualType &DeclType, bool Complain) {
   }
 
   // Actually try to convert the initializer to T1.
-  if (Complain)
+  if (ICS) {
+    /// C++ [over.ics.ref]p2:
+    /// 
+    ///   When a parameter of reference type is not bound directly to
+    ///   an argument expression, the conversion sequence is the one
+    ///   required to convert the argument expression to the
+    ///   underlying type of the reference according to
+    ///   13.3.3.1. Conceptually, this conversion sequence corresponds
+    ///   to copy-initializing a temporary of the underlying type with
+    ///   the argument expression. Any difference in top-level
+    ///   cv-qualification is subsumed by the initialization itself
+    ///   and does not constitute a conversion.
+    *ICS = TryImplicitConversion(Init, T1);
+    return ICS->ConversionKind == ImplicitConversionSequence::BadConversion;
+  } else {
     return PerformImplicitConversion(Init, T1);
-  else
-    return (TryImplicitConversion(Init, T1).ConversionKind
-              == ImplicitConversionSequence::BadConversion);
+  }
 }

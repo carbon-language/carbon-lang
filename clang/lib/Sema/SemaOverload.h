@@ -38,6 +38,7 @@ namespace clang {
     ICK_Pointer_Conversion,  ///< Pointer conversions (C++ 4.10)
     ICK_Pointer_Member,      ///< Pointer-to-member conversions (C++ 4.11)
     ICK_Boolean_Conversion,  ///< Boolean conversions (C++ 4.12)
+    ICK_Derived_To_Base,     ///< Derived-to-base (C++ [over.best.ics][)
     ICK_Num_Conversion_Kinds ///< The number of conversion kinds
   };
 
@@ -91,9 +92,9 @@ namespace clang {
     /// Third - The third conversion can be a qualification conversion.
     ImplicitConversionKind Third : 8;
 
-    /// Deprecated - Whether this is a deprecated conversion, such as
-    /// converting a string literal to a pointer to non-const
-    /// character data (C++ 4.2p2).
+    /// Deprecated - Whether this the deprecated conversion of a
+    /// string literal to a pointer to non-const character data 
+    /// (C++ 4.2p2).
     bool Deprecated : 1;
 
     /// FromType - The type that this conversion is converting
@@ -154,7 +155,17 @@ namespace clang {
     };
 
     /// ConversionKind - The kind of implicit conversion sequence.
-    Kind ConversionKind;
+    /// As usual, we use "unsigned" here because VC++ makes enum bitfields
+    /// signed.
+    unsigned ConversionKind : 2;
+
+    /// ReferenceBinding - True when this is a reference binding 
+    /// (C++ [over.ics.ref]).
+    bool ReferenceBinding : 1;
+
+    /// DirectBinding - True when this is a reference binding that is a 
+    /// direct binding (C++ [dcl.init.ref]).
+    bool DirectBinding : 1;
 
     union {
       /// When ConversionKind == StandardConversion, provides the

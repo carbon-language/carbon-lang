@@ -1139,10 +1139,11 @@ private:
     Ref_Compatible
   };
 
-  ReferenceCompareResult CompareReferenceRelationship(QualType T1, QualType T2);
+  ReferenceCompareResult CompareReferenceRelationship(QualType T1, QualType T2,
+                                                      bool& DerivedToBase);
 
   bool CheckReferenceInit(Expr *&simpleInit_or_initList, QualType &declType,
-                          bool Complain = true);
+                          ImplicitConversionSequence *ICS = 0);
 
   /// CheckCastTypes - Check type constraints for casting between types.
   bool CheckCastTypes(SourceRange TyRange, QualType CastTy, Expr *&CastExpr);
