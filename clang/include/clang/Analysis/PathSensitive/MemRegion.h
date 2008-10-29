@@ -420,7 +420,7 @@ public:
   MemSpaceRegion* getUnknownRegion();
 
   bool isGlobalsRegion(const MemRegion* R) { 
-    assert(R && globals);
+    assert(R);
     return R == globals; 
   }
   
