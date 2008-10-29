@@ -1140,8 +1140,14 @@ OptLevel("O", llvm::cl::Prefix,
          llvm::cl::init(0));
 
 static void InitializeCompileOptions(CompileOptions &Opts) {
-  Opts.OptimizationLevel = OptLevel;
   Opts.OptimizeSize = OptSize;
+  if (OptSize) {
+    // -Os implies -O2
+    // FIXME: Diagnose conflicting options.
+    Opts.OptimizationLevel = 2;
+  } else {
+    Opts.OptimizationLevel = OptLevel;
+  }
 
   // FIXME: There are llvm-gcc options to control these selectively.
   Opts.InlineFunctions = (Opts.OptimizationLevel > 1);
