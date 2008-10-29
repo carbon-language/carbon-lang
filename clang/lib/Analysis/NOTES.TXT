@@ -18,3 +18,7 @@ way will break current test in null-deref-ps.c.
 Investigate what classes of exprs are passed silently in GRExprEngine::Visit().
 
 One is PredefinedExpr.
+
+//===----------------------------------------------------------------------===//
+
+Remove PersistentSValPairs and PersistentSVals?
