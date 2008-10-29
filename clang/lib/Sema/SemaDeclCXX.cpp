@@ -730,13 +730,13 @@ Sema::CompareReferenceRelationship(QualType T1, QualType T2,
 /// CheckReferenceInit - Check the initialization of a reference
 /// variable with the given initializer (C++ [dcl.init.ref]). Init is
 /// the initializer (either a simple initializer or an initializer
-/// list), and DeclType is the type of the declaration. When Complain
-/// is true, this routine will produce diagnostics (and return true)
-/// when the declaration cannot be initialized with the given
-/// initializer. When ICS is non-null, this routine will compute the
-/// implicit conversion sequence according to C++ [over.ics.ref] and
-/// will not produce any diagnostics; when ICS is null, it will emit
-/// diagnostics when any errors are found.
+/// list), and DeclType is the type of the declaration. When ICS is
+/// non-null, this routine will compute the implicit conversion
+/// sequence according to C++ [over.ics.ref] and will not produce any
+/// diagnostics; when ICS is null, it will emit diagnostics when any
+/// errors are found. Either way, a return value of true indicates
+/// that there was a failure, a return value of false indicates that
+/// the reference initialization succeeded.
 bool 
 Sema::CheckReferenceInit(Expr *&Init, QualType &DeclType, 
                          ImplicitConversionSequence *ICS) {
