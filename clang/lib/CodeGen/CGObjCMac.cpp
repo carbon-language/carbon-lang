@@ -21,6 +21,7 @@
 #include "clang/Basic/LangOptions.h"
 
 #include "llvm/Module.h"
+#include "llvm/ADT/DenseSet.h"
 #include "llvm/Support/IRBuilder.h"
 #include "llvm/Target/TargetData.h"
 #include <sstream>
@@ -219,6 +220,10 @@ private:
   /// empty structure whose initializer is filled in when/if defined.
   llvm::DenseMap<IdentifierInfo*, llvm::GlobalVariable*> Protocols;
 
+  /// DefinedProtocols - Protocols which have actually been
+  /// defined. We should not need this, see FIXME in GenerateProtocol.
+  llvm::DenseSet<IdentifierInfo*> DefinedProtocols;
+
   /// DefinedClasses - List of defined classes.
   std::vector<llvm::GlobalValue*> DefinedClasses;
 
@@ -316,6 +321,17 @@ private:
                                    ObjCPropertyDecl * const *begin,
                                    ObjCPropertyDecl * const *end);
 
+  /// GetOrEmitProtocol - Get the protocol object for the given
+  /// declaration, emitting it if necessary. The return value has type
+  /// ProtocolPtrTy.
+  llvm::Constant *GetOrEmitProtocol(const ObjCProtocolDecl *PD);
+
+  /// GetOrEmitProtocolRef - Get a forward reference to the protocol
+  /// object for the given declaration, emitting it if needed. These
+  /// forward references will be filled in with empty bodies if no
+  /// definition is seen. The return value has type ProtocolPtrTy.
+  llvm::Constant *GetOrEmitProtocolRef(const ObjCProtocolDecl *PD);
+
   /// EmitProtocolExtension - Generate the protocol extension
   /// structure used to store optional instance and class methods, and
   /// protocol properties. The return value has type
@@ -337,8 +353,8 @@ private:
 
   /// GetProtocolRef - Return a reference to the internal protocol
   /// description, creating an empty one if it has not been
-  /// defined. The return value has type pointer-to ProtocolTy.
-  llvm::GlobalVariable *GetProtocolRef(const ObjCProtocolDecl *PD);
+  /// defined. The return value has type ProtocolPtrTy.
+  llvm::Constant *GetProtocolRef(const ObjCProtocolDecl *PD);
 
   /// GetClassName - Return a unique constant for the given selector's
   /// name. The return value has type char *.
@@ -506,7 +522,7 @@ CGObjCMac::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
   // and ObjCTypes types.
   const llvm::Type *ClassTy = 
     CGM.getTypes().ConvertType(CGF.getContext().getObjCClassType());
-  Target = CGF.Builder.CreateBitCast(Target, ClassTy);                                     
+  Target = CGF.Builder.CreateBitCast(Target, ClassTy);
   CGF.Builder.CreateStore(Target, 
                           CGF.Builder.CreateStructGEP(ObjCSuper, 1));
     
@@ -572,6 +588,25 @@ llvm::Value *CGObjCMac::GenerateProtocolRef(llvm::IRBuilder<> &Builder,
                                         ObjCTypes.ExternalProtocolPtrTy);
 }
 
+void CGObjCMac::GenerateProtocol(const ObjCProtocolDecl *PD) {
+  // FIXME: We shouldn't need this, the protocol decl should contain
+  // enough information to tell us whether this was a declaration or a
+  // definition.
+  DefinedProtocols.insert(PD->getIdentifier());
+
+  // If we have generated a forward reference to this protocol, emit
+  // it now. Otherwise do nothing, the protocol objects are lazily
+  // emitted.
+  if (Protocols.count(PD->getIdentifier())) 
+    GetOrEmitProtocol(PD);
+}
+
+llvm::Constant *CGObjCMac::GetProtocolRef(const ObjCProtocolDecl *PD) {
+  if (DefinedProtocols.count(PD->getIdentifier()))
+    return GetOrEmitProtocol(PD);
+  return GetOrEmitProtocolRef(PD);
+}
+
 /*
      // APPLE LOCAL radar 4585769 - Objective-C 1.0 extensions
   struct _objc_protocol {
@@ -584,7 +619,13 @@ llvm::Value *CGObjCMac::GenerateProtocolRef(llvm::IRBuilder<> &Builder,
 
   See EmitProtocolExtension().
 */
-void CGObjCMac::GenerateProtocol(const ObjCProtocolDecl *PD) { 
+llvm::Constant *CGObjCMac::GetOrEmitProtocol(const ObjCProtocolDecl *PD) {
+  llvm::GlobalVariable *&Entry = Protocols[PD->getIdentifier()];
+
+  // Early exit if a defining object has already been generated.
+  if (Entry && Entry->hasInitializer())
+    return Entry;
+
   // FIXME: I don't understand why gcc generates this, or where it is
   // resolved. Investigate. Its also wasteful to look this up over and
   // over.
@@ -637,9 +678,9 @@ void CGObjCMac::GenerateProtocol(const ObjCProtocolDecl *PD) {
   llvm::Constant *Init = llvm::ConstantStruct::get(ObjCTypes.ProtocolTy,
                                                    Values);
   
-  llvm::GlobalVariable *&Entry = Protocols[PD->getIdentifier()];  
   if (Entry) {
-    // Already created, just update the initializer
+    // Already created, fix the linkage and update the initializer.
+    Entry->setLinkage(llvm::GlobalValue::InternalLinkage);
     Entry->setInitializer(Init);
   } else {
     Entry = 
@@ -653,25 +694,21 @@ void CGObjCMac::GenerateProtocol(const ObjCProtocolDecl *PD) {
     // FIXME: Is this necessary? Why only for protocol?
     Entry->setAlignment(4);
   }
+
+  return Entry;
 }
 
-llvm::GlobalVariable *CGObjCMac::GetProtocolRef(const ObjCProtocolDecl *PD) {
+llvm::Constant *CGObjCMac::GetOrEmitProtocolRef(const ObjCProtocolDecl *PD) {
   llvm::GlobalVariable *&Entry = Protocols[PD->getIdentifier()];
 
   if (!Entry) {
-    std::vector<llvm::Constant*> Values(5);
-    Values[0] = llvm::Constant::getNullValue(ObjCTypes.ProtocolExtensionPtrTy);
-    Values[1] = GetClassName(PD->getIdentifier());
-    Values[2] = llvm::Constant::getNullValue(ObjCTypes.ProtocolListPtrTy);
-    Values[3] = Values[4] =
-      llvm::Constant::getNullValue(ObjCTypes.MethodDescriptionListPtrTy);
-    llvm::Constant *Init = llvm::ConstantStruct::get(ObjCTypes.ProtocolTy,
-                                                     Values);
-
+    // We use the initializer as a marker of whether this is a forward
+    // reference or not. At module finalization we add the empty
+    // contents for protocols which were referenced but never defined.
     Entry = 
       new llvm::GlobalVariable(ObjCTypes.ProtocolTy, false,
-                               llvm::GlobalValue::InternalLinkage,
-                               Init,
+                               llvm::GlobalValue::ExternalLinkage,
+                               0,
                                std::string("\01L_OBJC_PROTOCOL_")+PD->getName(),
                                &CGM.getModule());
     Entry->setSection("__OBJC,__protocol,regular,no_dead_strip");
@@ -1510,7 +1547,8 @@ void CGObjCMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
   // Allocate memory for the exception data and rethrow pointer.
   llvm::Value *ExceptionData = CGF.CreateTempAlloca(ObjCTypes.ExceptionDataTy,
                                                     "exceptiondata.ptr");
-  llvm::Value *RethrowPtr = CGF.CreateTempAlloca(ObjCTypes.ObjectPtrTy, "_rethrow");
+  llvm::Value *RethrowPtr = CGF.CreateTempAlloca(ObjCTypes.ObjectPtrTy, 
+                                                 "_rethrow");
   
   // Enter a new try block and call setjmp.
   CGF.Builder.CreateCall(ObjCTypes.ExceptionTryEnterFn, ExceptionData);
@@ -1988,8 +2026,25 @@ void CGObjCMac::GetNameForMethod(const ObjCMethodDecl *D,
 void CGObjCMac::FinishModule() {
   EmitModuleInfo();
 
-  std::vector<llvm::Constant*> Used;
+  // Emit the dummy bodies for any protocols which were referenced but
+  // never defined.
+  for (llvm::DenseMap<IdentifierInfo*, llvm::GlobalVariable*>::iterator 
+         i = Protocols.begin(), e = Protocols.end(); i != e; ++i) {
+    if (i->second->hasInitializer())
+      continue;
 
+    std::vector<llvm::Constant*> Values(5);
+    Values[0] = llvm::Constant::getNullValue(ObjCTypes.ProtocolExtensionPtrTy);
+    Values[1] = GetClassName(i->first);
+    Values[2] = llvm::Constant::getNullValue(ObjCTypes.ProtocolListPtrTy);
+    Values[3] = Values[4] =
+      llvm::Constant::getNullValue(ObjCTypes.MethodDescriptionListPtrTy);
+    i->second->setLinkage(llvm::GlobalValue::InternalLinkage);
+    i->second->setInitializer(llvm::ConstantStruct::get(ObjCTypes.ProtocolTy,
+                                                        Values));
+  }
+
+  std::vector<llvm::Constant*> Used;
   for (std::vector<llvm::GlobalVariable*>::iterator i = UsedGlobals.begin(), 
          e = UsedGlobals.end(); i != e; ++i) {
     Used.push_back(llvm::ConstantExpr::getBitCast(*i, ObjCTypes.Int8PtrTy));
@@ -2086,7 +2141,7 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
                               ProtocolExtensionTy);
   ProtocolExtensionPtrTy = llvm::PointerType::getUnqual(ProtocolExtensionTy);
 
-  // Handle recursive construction of Protocl and ProtocolList types
+  // Handle recursive construction of Protocol and ProtocolList types
 
   llvm::PATypeHolder ProtocolTyHolder = llvm::OpaqueType::get();
   llvm::PATypeHolder ProtocolListTyHolder = llvm::OpaqueType::get();
