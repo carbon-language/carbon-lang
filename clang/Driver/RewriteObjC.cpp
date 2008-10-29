@@ -3750,47 +3750,59 @@ Stmt *RewriteObjC::SynthBlockInitExpr(BlockExpr *Exp) {
   
   llvm::SmallVector<Expr*, 4> InitExprs;
   
+  // Initialize the block function.
   FD = SynthBlockInitFunctionDecl(Func.c_str());
   DeclRefExpr *Arg = new DeclRefExpr(FD, FD->getType(), SourceLocation());
   CastExpr *castExpr = new CStyleCastExpr(Context->VoidPtrTy, Arg, 
                                           Context->VoidPtrTy, SourceLocation());
   InitExprs.push_back(castExpr); 
-#if 0
-  // Initialize the block function.
-  Init += "((void*)" + Func;
   
   if (ImportedBlockDecls.size()) {
     std::string Buf = "__" + FuncName + "_block_copy_" + BlockNumber;
-    Init += ",(void*)" + Buf;
+    FD = SynthBlockInitFunctionDecl(Buf.c_str());
+    Arg = new DeclRefExpr(FD, FD->getType(), SourceLocation());
+    castExpr = new CStyleCastExpr(Context->VoidPtrTy, Arg, 
+                                  Context->VoidPtrTy, SourceLocation());
+    InitExprs.push_back(castExpr); 
+    
     Buf = "__" + FuncName + "_block_dispose_" + BlockNumber;
-    Init += ",(void*)" + Buf;
+    FD = SynthBlockInitFunctionDecl(Buf.c_str());
+    Arg = new DeclRefExpr(FD, FD->getType(), SourceLocation());
+    castExpr = new CStyleCastExpr(Context->VoidPtrTy, Arg, 
+                                  Context->VoidPtrTy, SourceLocation());
+    InitExprs.push_back(castExpr); 
   }
   // Add initializers for any closure decl refs.
   if (BlockDeclRefs.size()) {
+    Expr *Exp;
     // Output all "by copy" declarations.
     for (llvm::SmallPtrSet<ValueDecl*,8>::iterator I = BlockByCopyDecls.begin(), 
          E = BlockByCopyDecls.end(); I != E; ++I) {
-      Init += ",";
       if (isObjCType((*I)->getType())) {
-        Init += "[[";
-        Init += (*I)->getName();
-        Init += " retain] autorelease]";
+        // FIXME: Conform to ABI ([[obj retain] autorelease]).
+        FD = SynthBlockInitFunctionDecl((*I)->getName());
+        Exp = new DeclRefExpr(FD, FD->getType(), SourceLocation());
       } else if (isBlockPointerType((*I)->getType())) {
-        Init += "(void *)";
-        Init += (*I)->getName();
+        FD = SynthBlockInitFunctionDecl((*I)->getName());
+        Arg = new DeclRefExpr(FD, FD->getType(), SourceLocation());
+        Exp = new CStyleCastExpr(Context->VoidPtrTy, Arg, 
+                                 Context->VoidPtrTy, SourceLocation());
       } else {
-        Init += (*I)->getName();
+        FD = SynthBlockInitFunctionDecl((*I)->getName());
+        Exp = new DeclRefExpr(FD, FD->getType(), SourceLocation());
       }
+      InitExprs.push_back(Exp); 
     }
     // Output all "by ref" declarations.
     for (llvm::SmallPtrSet<ValueDecl*,8>::iterator I = BlockByRefDecls.begin(), 
          E = BlockByRefDecls.end(); I != E; ++I) {
-      Init += ",&";
-      Init += (*I)->getName();
+      FD = SynthBlockInitFunctionDecl((*I)->getName());
+      Exp = new DeclRefExpr(FD, FD->getType(), SourceLocation());
+      Exp = new UnaryOperator(Exp, UnaryOperator::AddrOf,
+                              Context->getPointerType(Exp->getType()), 
+                              SourceLocation());
     }
   }
-  Init += ")";
-#endif
   NewRep = new CallExpr(DRE, &InitExprs[0], InitExprs.size(),
                         FType, SourceLocation());
   NewRep = new UnaryOperator(NewRep, UnaryOperator::AddrOf,
