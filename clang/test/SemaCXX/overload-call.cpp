@@ -1,6 +1,6 @@
 // RUN: clang -fsyntax-only -pedantic -verify %s 
-int* f(int);
-float* f(float);
+int* f(int) { return 0; }
+float* f(float) { return 0; }
 void f();
 
 void test_f(int iv, float fv) {

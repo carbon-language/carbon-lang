@@ -1761,20 +1761,6 @@ Sema::DeclTy *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Declarator &D) {
   
   Scope *GlobalScope = FnBodyScope->getParent();
 
-  // See if this is a redefinition.
-  Decl *PrevDcl = LookupDecl(D.getIdentifier(), Decl::IDNS_Ordinary,
-                             GlobalScope);
-  if (PrevDcl && isDeclInScope(PrevDcl, CurContext)) {
-    if (FunctionDecl *FD = dyn_cast<FunctionDecl>(PrevDcl)) {
-      const FunctionDecl *Definition;
-      if (FD->getBody(Definition)) {
-        Diag(D.getIdentifierLoc(), diag::err_redefinition, 
-             D.getIdentifier()->getName());
-        Diag(Definition->getLocation(), diag::err_previous_definition);
-      }
-    }
-  }
-
   return ActOnStartOfFunctionDef(FnBodyScope,
                                  ActOnDeclarator(GlobalScope, D, 0));
 }
@@ -1782,6 +1768,15 @@ Sema::DeclTy *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Declarator &D) {
 Sema::DeclTy *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, DeclTy *D) {
   Decl *decl = static_cast<Decl*>(D);
   FunctionDecl *FD = cast<FunctionDecl>(decl);
+
+  // See if this is a redefinition.
+  const FunctionDecl *Definition;
+  if (FD->getBody(Definition)) {
+    Diag(FD->getLocation(), diag::err_redefinition, 
+         FD->getName());
+    Diag(Definition->getLocation(), diag::err_previous_definition);
+  }
+
   PushDeclContext(FD);
     
   // Check the validity of our function parameters
