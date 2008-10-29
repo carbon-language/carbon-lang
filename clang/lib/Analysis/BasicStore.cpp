@@ -74,8 +74,8 @@ public:
 
   void iterBindings(Store store, BindingsHandler& f);
 
-  Store AddDecl(Store store, const VarDecl* VD, Expr* Ex,
-                SVal InitVal = UndefinedVal(), unsigned Count = 0);
+  Store BindDecl(Store store, const VarDecl* VD, Expr* Ex,
+                 SVal InitVal = UndefinedVal(), unsigned Count = 0);
 
   static inline VarBindingsTy GetVarBindings(Store store) {
     return VarBindingsTy(static_cast<const VarBindingsTy::TreeTy*>(store));
@@ -351,10 +351,8 @@ Store BasicStoreManager::getInitialStore() {
   return St;
 }
 
-Store BasicStoreManager::AddDecl(Store store,
-                                 const VarDecl* VD, Expr* Ex,
-                                 SVal InitVal, unsigned Count) {
-  
+Store BasicStoreManager::BindDecl(Store store, const VarDecl* VD, Expr* Ex,
+                                  SVal InitVal, unsigned Count) {
   BasicValueFactory& BasicVals = StateMgr.getBasicVals();
   SymbolManager& SymMgr = StateMgr.getSymbolManager();
   

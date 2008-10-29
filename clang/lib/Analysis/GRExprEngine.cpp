@@ -1608,7 +1608,7 @@ void GRExprEngine::VisitDeclStmt(DeclStmt* DS, NodeTy* Pred, NodeSet& Dst) {
   
   for (NodeSet::iterator I=Tmp.begin(), E=Tmp.end(); I!=E; ++I) {
     const GRState* St = GetState(*I);
-    St = StateMgr.AddDecl(St, VD, Ex, Builder->getCurrentBlockCount());
+    St = StateMgr.BindDecl(St, VD, Ex, Builder->getCurrentBlockCount());
     MakeNode(Dst, DS, *I, St);
   }
 }

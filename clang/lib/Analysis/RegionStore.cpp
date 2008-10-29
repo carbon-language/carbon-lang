@@ -93,8 +93,8 @@ public:
     return store;
   }
 
-  Store AddDecl(Store store, const VarDecl* VD, Expr* Ex, SVal InitVal, 
-                unsigned Count);
+  Store BindDecl(Store store, const VarDecl* VD, Expr* Ex, SVal InitVal, 
+                 unsigned Count);
 
   static inline RegionBindingsTy GetRegionBindings(Store store) {
    return RegionBindingsTy(static_cast<const RegionBindingsTy::TreeTy*>(store));
@@ -292,9 +292,8 @@ Store RegionStoreManager::getInitialStore() {
   return St;
 }
 
-Store RegionStoreManager::AddDecl(Store store,
-                                  const VarDecl* VD, Expr* Ex,
-                                  SVal InitVal, unsigned Count) {
+Store RegionStoreManager::BindDecl(Store store, const VarDecl* VD, Expr* Ex,
+                                   SVal InitVal, unsigned Count) {
   BasicValueFactory& BasicVals = StateMgr.getBasicVals();
   SymbolManager& SymMgr = StateMgr.getSymbolManager();
 

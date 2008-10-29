@@ -73,16 +73,15 @@ const GRState* GRStateManager::SetSVal(const GRState* St, Loc LV,
   return getPersistentState(NewSt);    
 }
 
-const GRState* GRStateManager::AddDecl(const GRState* St, const VarDecl* VD, 
-                                       Expr* Ex, unsigned Count) {
+const GRState* GRStateManager::BindDecl(const GRState* St, const VarDecl* VD, 
+                                        Expr* Ex, unsigned Count) {
   Store OldStore = St->getStore();
   Store NewStore;
 
   if (Ex)
-    NewStore = StoreMgr->AddDecl(OldStore, VD, Ex, 
-                              GetSVal(St, Ex), Count);
+    NewStore = StoreMgr->BindDecl(OldStore, VD, Ex, GetSVal(St, Ex), Count);
   else
-    NewStore = StoreMgr->AddDecl(OldStore, VD, Ex);
+    NewStore = StoreMgr->BindDecl(OldStore, VD, Ex);
                               
   if (NewStore == OldStore)
     return St;

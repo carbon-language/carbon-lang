@@ -327,8 +327,8 @@ public:
 
   typedef StoreManager::DeadSymbolsTy DeadSymbolsTy;
 
-  const GRState* AddDecl(const GRState* St, const VarDecl* VD, Expr* Ex, 
-                         unsigned Count);
+  const GRState* BindDecl(const GRState* St, const VarDecl* VD, Expr* Ex, 
+                          unsigned Count);
   
   /// BindCompoundLiteral - Return the state that has the bindings currently
   ///  in 'state' plus the bindings for the CompoundLiteral.  'R' is the region
