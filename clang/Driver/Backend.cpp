@@ -46,6 +46,8 @@ namespace {
     CompileOptions CompileOpts;
     const std::string &InputFile;
     std::string OutputFile;
+    bool GenerateDebugInfo;
+
     llvm::OwningPtr<CodeGenerator> Gen;
     
     llvm::Module *TheModule;
@@ -76,11 +78,12 @@ namespace {
     BackendConsumer(BackendAction action, Diagnostic &Diags, 
                     const LangOptions &Features, const CompileOptions &compopts,
                     const std::string& infile, const std::string& outfile,
-                    bool GenerateDebugInfo)  :
+                    bool debug)  :
       Action(action), 
       CompileOpts(compopts),
       InputFile(infile), 
       OutputFile(outfile), 
+      GenerateDebugInfo(debug),
       Gen(CreateLLVMCodeGen(Diags, Features, InputFile, GenerateDebugInfo)),
       TheModule(0), TheTargetData(0), AsmOutStream(0), ModuleProvider(0),
       CodeGenPasses(0), PerModulePasses(0), PerFunctionPasses(0) {}
@@ -304,7 +307,10 @@ void BackendConsumer::CreatePasses() {
     if (CompileOpts.OptimizationLevel > 1 && CompileOpts.UnitAtATime)
       PM->add(createConstantMergePass());         // Merge dup global constants 
   } else {
-    PM->add(createAlwaysInlinerPass());  
+    // FIXME: Remove this once LLVM doesn't break when inlining
+    // functions with debug info.
+    if (!GenerateDebugInfo)
+      PM->add(createAlwaysInlinerPass());  
   }
 }
 
