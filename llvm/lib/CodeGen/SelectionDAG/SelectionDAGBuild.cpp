@@ -390,14 +390,17 @@ static SDValue getCopyFromParts(SelectionDAG &DAG,
         ValueVT : MVT::getIntegerVT(RoundBits);
       SDValue Lo, Hi;
 
+      MVT HalfVT = ValueVT.isInteger() ?
+        MVT::getIntegerVT(RoundBits/2) :
+        MVT::getFloatingPointVT(RoundBits/2);
+
       if (RoundParts > 2) {
-        MVT HalfVT = MVT::getIntegerVT(RoundBits/2);
         Lo = getCopyFromParts(DAG, Parts, RoundParts/2, PartVT, HalfVT);
         Hi = getCopyFromParts(DAG, Parts+RoundParts/2, RoundParts/2,
                               PartVT, HalfVT);
       } else {
-        Lo = Parts[0];
-        Hi = Parts[1];
+        Lo = DAG.getNode(ISD::BIT_CONVERT, HalfVT, Parts[0]);
+        Hi = DAG.getNode(ISD::BIT_CONVERT, HalfVT, Parts[1]);
       }
       if (TLI.isBigEndian())
         std::swap(Lo, Hi);

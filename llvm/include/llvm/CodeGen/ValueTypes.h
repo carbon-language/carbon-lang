@@ -142,6 +142,24 @@ namespace llvm {
     inline bool operator== (const MVT VT) const { return V == VT.V; }
     inline bool operator!= (const MVT VT) const { return V != VT.V; }
 
+    /// getFloatingPointVT - Returns the MVT that represents a floating point
+    /// type with the given number of bits.  There are two floating point types
+    /// with 128 bits - this returns f128 rather than ppcf128.
+    static inline MVT getFloatingPointVT(unsigned BitWidth) {
+      switch (BitWidth) {
+      default:
+        assert(false && "Bad bit width!");
+      case 32:
+        return f32;
+      case 64:
+        return f64;
+      case 80:
+        return f80;
+      case 128:
+        return f128;
+      }
+    }
+
     /// getIntegerVT - Returns the MVT that represents an integer with the given
     /// number of bits.
     static inline MVT getIntegerVT(unsigned BitWidth) {

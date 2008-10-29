@@ -758,11 +758,25 @@ void SelectionDAG::VerifyNode(SDNode *N) {
   switch (N->getOpcode()) {
   default:
     break;
+  case ISD::BUILD_PAIR: {
+    MVT VT = N->getValueType(0);
+    assert(N->getNumValues() == 1 && "Too many results!");
+    assert(!VT.isVector() && (VT.isInteger() || VT.isFloatingPoint()) &&
+           "Wrong return type!");
+    assert(N->getNumOperands() == 2 && "Wrong number of operands!");
+    assert(N->getOperand(0).getValueType() == N->getOperand(1).getValueType() &&
+           "Mismatched operand types!");
+    assert(N->getOperand(0).getValueType().isInteger() == VT.isInteger() &&
+           "Wrong operand type!");
+    assert(VT.getSizeInBits() == 2 * N->getOperand(0).getValueSizeInBits() &&
+           "Wrong return type size");
+    break;
+  }
   case ISD::BUILD_VECTOR: {
-    assert(N->getNumValues() == 1 && "Too many results for BUILD_VECTOR!");
-    assert(N->getValueType(0).isVector() && "Wrong BUILD_VECTOR return type!");
+    assert(N->getNumValues() == 1 && "Too many results!");
+    assert(N->getValueType(0).isVector() && "Wrong return type!");
     assert(N->getNumOperands() == N->getValueType(0).getVectorNumElements() &&
-           "Wrong number of BUILD_VECTOR operands!");
+           "Wrong number of operands!");
     // FIXME: Change vector_shuffle to a variadic node with mask elements being
     // operands of the node.  Currently the mask is a BUILD_VECTOR passed as an
     // operand, and it is not always possible to legalize it.  Turning off the
@@ -770,7 +784,7 @@ void SelectionDAG::VerifyNode(SDNode *N) {
 //    MVT EltVT = N->getValueType(0).getVectorElementType();
 //    for (SDNode::op_iterator I = N->op_begin(), E = N->op_end(); I != E; ++I)
 //      assert(I->getSDValue().getValueType() == EltVT &&
-//             "Wrong BUILD_VECTOR operand type!");
+//             "Wrong operand type!");
     break;
   }
   }
