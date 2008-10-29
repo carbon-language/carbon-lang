@@ -134,9 +134,9 @@ private:
   /// which operands are the expanded version of the input.
   DenseMap<SDValue, std::pair<SDValue, SDValue> > SplitVectors;
 
-  /// ReplacedNodes - For nodes that have been replaced with another,
-  /// indicates the replacement node to use.
-  DenseMap<SDValue, SDValue> ReplacedNodes;
+  /// ReplacedValues - For values that have been replaced with another,
+  /// indicates the replacement value to use.
+  DenseMap<SDValue, SDValue> ReplacedValues;
 
   /// Worklist - This defines a worklist of nodes to process.  In order to be
   /// pushed onto this worklist, all operands of a node must have already been
@@ -157,8 +157,7 @@ public:
   /// for the specified node, adding it to the worklist if ready.
   void ReanalyzeNode(SDNode *N) {
     N->setNodeId(NewNode);
-    SDValue Val(N, 0);
-    AnalyzeNewNode(Val);
+    AnalyzeNewNode(N);
     // The node may have changed but we don't care.
   }
 
@@ -166,16 +165,17 @@ public:
     ExpungeNode(Old);
     ExpungeNode(New);
     for (unsigned i = 0, e = Old->getNumValues(); i != e; ++i)
-      ReplacedNodes[SDValue(Old, i)] = SDValue(New, i);
+      ReplacedValues[SDValue(Old, i)] = SDValue(New, i);
   }
 
 private:
-  void AnalyzeNewNode(SDValue &Val);
+  SDNode *AnalyzeNewNode(SDNode *N);
+  void AnalyzeNewValue(SDValue &Val);
 
   void ReplaceValueWith(SDValue From, SDValue To);
   void ReplaceNodeWith(SDNode *From, SDNode *To);
 
-  void RemapNode(SDValue &N);
+  void RemapValue(SDValue &N);
   void ExpungeNode(SDNode *N);
 
   // Common routines.
@@ -197,7 +197,7 @@ private:
 
   SDValue GetPromotedInteger(SDValue Op) {
     SDValue &PromotedOp = PromotedIntegers[Op];
-    RemapNode(PromotedOp);
+    RemapValue(PromotedOp);
     assert(PromotedOp.getNode() && "Operand wasn't promoted?");
     return PromotedOp;
   }
@@ -326,7 +326,7 @@ private:
 
   SDValue GetSoftenedFloat(SDValue Op) {
     SDValue &SoftenedOp = SoftenedFloats[Op];
-    RemapNode(SoftenedOp);
+    RemapValue(SoftenedOp);
     assert(SoftenedOp.getNode() && "Operand wasn't converted to integer?");
     return SoftenedOp;
   }
@@ -406,7 +406,7 @@ private:
 
   SDValue GetScalarizedVector(SDValue Op) {
     SDValue &ScalarizedOp = ScalarizedVectors[Op];
-    RemapNode(ScalarizedOp);
+    RemapValue(ScalarizedOp);
     assert(ScalarizedOp.getNode() && "Operand wasn't scalarized?");
     return ScalarizedOp;
   }
