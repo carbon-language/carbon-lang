@@ -20,7 +20,7 @@
 #include "clang/AST/Expr.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/Basic/LangOptions.h"
-#include <sstream>
+#include "llvm/Support/raw_ostream.h"
 
 using namespace clang;
 
@@ -39,6 +39,22 @@ static bool scan_dealloc(Stmt* S, Selector Dealloc) {
     if (*I && scan_dealloc(*I, Dealloc))
       return true;
   
+  return false;
+}
+
+static bool scan_ivar_release(Stmt* S, ObjCIvarDecl* ID, Selector Release ) {  
+  if (ObjCMessageExpr* ME = dyn_cast<ObjCMessageExpr>(S))
+    if (ME->getSelector() == Release)
+      if (Expr* Receiver = ME->getReceiver()->IgnoreParenCasts())
+        if (ObjCIvarRefExpr* E = dyn_cast<ObjCIvarRefExpr>(Receiver))
+          if (E->getDecl() == ID)
+            return true;
+
+  // Recurse to children.
+  for (Stmt::child_iterator I = S->child_begin(), E= S->child_end(); I!=E; ++I)
+    if (*I && scan_ivar_release(*I, ID, Release))
+      return true;
+
   return false;
 }
 
@@ -105,7 +121,8 @@ void clang::CheckObjCDealloc(ObjCImplementationDecl* D,
                        ? "missing -dealloc" 
                        : "missing -dealloc (Hybrid MM, non-GC)";
     
-    std::ostringstream os;
+    std::string buf;
+    llvm::raw_string_ostream os(buf);
     os << "Objective-C class '" << D->getName()
        << "' lacks a 'dealloc' instance method";
     
@@ -120,7 +137,8 @@ void clang::CheckObjCDealloc(ObjCImplementationDecl* D,
                        ? "missing [super dealloc]"
                        : "missing [super dealloc] (Hybrid MM, non-GC)";
     
-    std::ostringstream os;
+    std::string buf;
+    llvm::raw_string_ostream os(buf);
     os << "The 'dealloc' instance method in Objective-C class '" << D->getName()
        << "' does not send a 'dealloc' message to its super class"
            " (missing [super dealloc])";
@@ -128,5 +146,66 @@ void clang::CheckObjCDealloc(ObjCImplementationDecl* D,
     BR.EmitBasicReport(name, os.str().c_str(), D->getLocStart());
     return;
   }   
+  
+  // Get the "release" selector.
+  IdentifierInfo* RII = &Ctx.Idents.get("release");
+  Selector RS = Ctx.Selectors.getSelector(0, &RII);  
+  
+  // Scan for missing and extra releases of ivars used by implementations
+  // of synthesized properties
+  for (ObjCImplementationDecl::propimpl_iterator I = D->propimpl_begin(),
+       E = D->propimpl_end(); I!=E; ++I) {
+
+    // We can only check the synthesized properties
+    if((*I)->getPropertyImplementation() != ObjCPropertyImplDecl::Synthesize)
+      continue;
+    
+    ObjCIvarDecl* ID = (*I)->getPropertyIvarDecl();
+    if (!ID)
+      continue;
+    
+    QualType T = ID->getType();
+    if (!Ctx.isObjCObjectPointerType(T)) // Skip non-pointer ivars
+      continue;
+
+    const ObjCPropertyDecl* PD = (*I)->getPropertyDecl();
+    if(!PD)
+      continue;
+    
+    // ivars cannot be set via read-only properties, so we'll skip them
+    if(PD->isReadOnly())
+       continue;
+              
+    // ivar must be released if and only if the kind of setter was not 'assign'
+    bool requiresRelease = PD->getSetterKind() != ObjCPropertyDecl::Assign;
+    if(scan_ivar_release(MD->getBody(), ID, RS) != requiresRelease) {
+      const char *name;
+      const char* category = "Memory (Core Foundation/Objective-C)";
+      
+      std::string buf;
+      llvm::raw_string_ostream os(buf);
+
+      if(requiresRelease) {
+        name = LOpts.getGCMode() == LangOptions::NonGC
+               ? "missing ivar release (leak)"
+               : "missing ivar release (Hybrid MM, non-GC)";
+        
+        os << "The '" << ID->getName()
+           << "' instance variable was retained by a synthesized property but "
+              "wasn't released in 'dealloc'";        
+      } else {
+        name = LOpts.getGCMode() == LangOptions::NonGC
+               ? "extra ivar release (use-after-release)"
+               : "extra ivar release (Hybrid MM, non-GC)";
+        
+        os << "The '" << ID->getName()
+           << "' instance variable was not retained by a synthesized property "
+              "but was released in 'dealloc'";
+      }
+      
+      BR.EmitBasicReport(name, category,
+                         os.str().c_str(), (*I)->getLocation());
+    }
+  }
 }
 
