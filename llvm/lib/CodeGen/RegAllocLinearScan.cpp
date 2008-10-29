@@ -550,7 +550,7 @@ static void addStackInterval(LiveInterval *cur, LiveStacks *ls_,
   SI.weight += Weight;
 
   VNInfo *VNI;
-  if (SI.getNumValNums())
+  if (SI.hasAtLeastOneValue())
     VNI = SI.getValNumInfo(0);
   else
     VNI = SI.getNextValue(~0U, 0, ls_->getVNInfoAllocator());

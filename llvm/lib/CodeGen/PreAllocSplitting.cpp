@@ -30,6 +30,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
@@ -69,8 +70,8 @@ namespace {
     // IntervalSSMap - A map from live interval to spill slots.
     DenseMap<unsigned, int> IntervalSSMap;
 
-    // RestoreMIs - All the restores inserted due to live interval splitting.
-    SmallPtrSet<MachineInstr*, 8> RestoreMIs;
+    // Def2SpillMap - A map from a def instruction index to spill index.
+    DenseMap<unsigned, unsigned> Def2SpillMap;
 
   public:
     static char ID;
@@ -93,7 +94,7 @@ namespace {
     
     virtual void releaseMemory() {
       IntervalSSMap.clear();
-      RestoreMIs.clear();
+      Def2SpillMap.clear();
     }
 
     virtual const char *getPassName() const {
@@ -124,7 +125,8 @@ namespace {
 
     int CreateSpillStackSlot(unsigned, const TargetRegisterClass *);
 
-    bool IsAvailableInStack(unsigned, unsigned, int&) const;
+    bool IsAvailableInStack(MachineBasicBlock*, unsigned, unsigned, unsigned,
+                            unsigned&, int&) const;
 
     void UpdateSpillSlotInterval(VNInfo*, unsigned, unsigned);
 
@@ -221,6 +223,8 @@ PreAllocSplitting::findRestorePoint(MachineBasicBlock *MBB, MachineInstr *MI,
                                     unsigned LastIdx,
                                     SmallPtrSet<MachineInstr*, 4> &RefsInMBB,
                                     unsigned &RestoreIndex) {
+  // FIXME: Allow spill to be inserted to the beginning of the mbb. Update mbb
+  // begin index accordingly.
   MachineBasicBlock::iterator Pt = MBB->end();
   unsigned EndIdx = LIs->getMBBEndIdx(MBB);
 
@@ -229,8 +233,8 @@ PreAllocSplitting::findRestorePoint(MachineBasicBlock *MBB, MachineInstr *MI,
   if (RefsInMBB.empty() && LastIdx >= EndIdx) {
     MachineBasicBlock::iterator MII = MBB->end();
     MachineBasicBlock::iterator EndPt = MI;
+    --MII;
     do {
-      --MII;
       unsigned Index = LIs->getInstructionIndex(MII);
       unsigned Gap = LIs->findGapBeforeInstr(Index);
       if (Gap) {
@@ -238,6 +242,7 @@ PreAllocSplitting::findRestorePoint(MachineBasicBlock *MBB, MachineInstr *MI,
         RestoreIndex = Gap;
         break;
       }
+      --MII;
     } while (MII != EndPt);
   } else {
     MachineBasicBlock::iterator MII = MI;
@@ -278,7 +283,7 @@ int PreAllocSplitting::CreateSpillStackSlot(unsigned Reg,
 
   // Create live interval for stack slot.
   CurrSLI = &LSs->getOrCreateInterval(SS);
-  if (CurrSLI->getNumValNums())
+  if (CurrSLI->hasAtLeastOneValue())
     CurrSValNo = CurrSLI->getValNumInfo(0);
   else
     CurrSValNo = CurrSLI->getNextValue(~0U, 0, LSs->getVNInfoAllocator());
@@ -288,15 +293,30 @@ int PreAllocSplitting::CreateSpillStackSlot(unsigned Reg,
 /// IsAvailableInStack - Return true if register is available in a split stack
 /// slot at the specified index.
 bool
-PreAllocSplitting::IsAvailableInStack(unsigned Reg, unsigned Index, int &SS) const {
+PreAllocSplitting::IsAvailableInStack(MachineBasicBlock *DefMBB,
+                                    unsigned Reg, unsigned DefIndex,
+                                    unsigned RestoreIndex, unsigned &SpillIndex,
+                                    int& SS) const {
+  if (!DefMBB)
+    return false;
+
   DenseMap<unsigned, int>::iterator I = IntervalSSMap.find(Reg);
   if (I == IntervalSSMap.end())
     return false;
-  if (LSs->getInterval(I->second).liveAt(Index)) {
-    SS = I->second;
-    return true;
-  }
-  return false;
+  DenseMap<unsigned, unsigned>::iterator II = Def2SpillMap.find(DefIndex);
+  if (II == Def2SpillMap.end())
+    return false;
+
+  // If last spill of def is in the same mbb as barrier mbb (where restore will
+  // be), make sure it's not below the intended restore index.
+  // FIXME: Undo the previous spill?
+  assert(LIs->getMBBFromIndex(II->second) == DefMBB);
+  if (DefMBB == BarrierMBB && II->second >= RestoreIndex)
+    return false;
+
+  SS = I->second;
+  SpillIndex = II->second;
+  return true;
 }
 
 /// UpdateSpillSlotInterval - Given the specified val# of the register live
@@ -305,48 +325,58 @@ PreAllocSplitting::IsAvailableInStack(unsigned Reg, unsigned Index, int &SS) con
 void
 PreAllocSplitting::UpdateSpillSlotInterval(VNInfo *ValNo, unsigned SpillIndex,
                                            unsigned RestoreIndex) {
-  const LiveRange *LR = CurrLI->getLiveRangeContaining(SpillIndex);
-  if (LR->contains(RestoreIndex)) {
+  assert(LIs->getMBBFromIndex(RestoreIndex) == BarrierMBB &&
+         "Expect restore in the barrier mbb");
+
+  MachineBasicBlock *MBB = LIs->getMBBFromIndex(SpillIndex);
+  if (MBB == BarrierMBB) {
+    // Intra-block spill + restore. We are done.
     LiveRange SLR(SpillIndex, RestoreIndex, CurrSValNo);
     CurrSLI->addRange(SLR);
     return;
   }
 
-  SmallPtrSet<const LiveRange*, 4> Processed;
-  LiveRange SLR(SpillIndex, LR->end, CurrSValNo);
+  SmallPtrSet<MachineBasicBlock*, 4> Processed;
+  unsigned EndIdx = LIs->getMBBEndIdx(MBB);
+  LiveRange SLR(SpillIndex, EndIdx+1, CurrSValNo);
   CurrSLI->addRange(SLR);
-  Processed.insert(LR);
+  Processed.insert(MBB);
 
   // Start from the spill mbb, figure out the extend of the spill slot's
   // live interval.
   SmallVector<MachineBasicBlock*, 4> WorkList;
-  MachineBasicBlock *MBB = LIs->getMBBFromIndex(SpillIndex);
-  if (LR->end > LIs->getMBBEndIdx(MBB))
+  const LiveRange *LR = CurrLI->getLiveRangeContaining(SpillIndex);
+  if (LR->end > EndIdx)
     // If live range extend beyond end of mbb, add successors to work list.
     for (MachineBasicBlock::succ_iterator SI = MBB->succ_begin(),
            SE = MBB->succ_end(); SI != SE; ++SI)
       WorkList.push_back(*SI);
-  // Live range may cross multiple basic blocks, add all reachable mbbs to
-  // the work list.
-  LIs->findReachableMBBs(LR->start, LR->end, WorkList);
 
   while (!WorkList.empty()) {
     MachineBasicBlock *MBB = WorkList.back();
     WorkList.pop_back();
+    if (Processed.count(MBB))
+      continue;
     unsigned Idx = LIs->getMBBStartIdx(MBB);
     LR = CurrLI->getLiveRangeContaining(Idx);
-    if (LR && LR->valno == ValNo && !Processed.count(LR)) {
-      if (LR->contains(RestoreIndex)) {
+    if (LR && LR->valno == ValNo) {
+      EndIdx = LIs->getMBBEndIdx(MBB);
+      if (Idx <= RestoreIndex && RestoreIndex < EndIdx) {
         // Spill slot live interval stops at the restore.
-        LiveRange SLR(LR->start, RestoreIndex, CurrSValNo);
+        LiveRange SLR(Idx, RestoreIndex, CurrSValNo);
         CurrSLI->addRange(SLR);
-        LIs->findReachableMBBs(LR->start, RestoreIndex, WorkList);
+      } else if (LR->end > EndIdx) {
+        // Live range extends beyond end of mbb, process successors.
+        LiveRange SLR(Idx, EndIdx+1, CurrSValNo);
+        CurrSLI->addRange(SLR);
+        for (MachineBasicBlock::succ_iterator SI = MBB->succ_begin(),
+               SE = MBB->succ_end(); SI != SE; ++SI)
+          WorkList.push_back(*SI);
       } else {
-        LiveRange SLR(LR->start, LR->end, CurrSValNo);
+        LiveRange SLR(Idx, LR->end, CurrSValNo);
         CurrSLI->addRange(SLR);
-        LIs->findReachableMBBs(LR->start, LR->end, WorkList);
       }
-      Processed.insert(LR);
+      Processed.insert(MBB);
     }
   }
 }
@@ -357,6 +387,9 @@ PreAllocSplitting::UpdateSpillSlotInterval(VNInfo *ValNo, unsigned SpillIndex,
 void
 PreAllocSplitting::UpdateRegisterInterval(VNInfo *ValNo, unsigned SpillIndex,
                                           unsigned RestoreIndex) {
+  assert(LIs->getMBBFromIndex(RestoreIndex) == BarrierMBB &&
+         "Expect restore in the barrier mbb");
+
   SmallVector<std::pair<unsigned,unsigned>, 4> Before;
   SmallVector<std::pair<unsigned,unsigned>, 4> After;
   SmallVector<unsigned, 4> BeforeKills;
@@ -380,7 +413,7 @@ PreAllocSplitting::UpdateRegisterInterval(VNInfo *ValNo, unsigned SpillIndex,
   // Start from the restore mbb, figure out what part of the live interval
   // are defined by the restore.
   SmallVector<MachineBasicBlock*, 4> WorkList;
-  MachineBasicBlock *MBB = LIs->getMBBFromIndex(RestoreIndex);
+  MachineBasicBlock *MBB = BarrierMBB;
   for (MachineBasicBlock::succ_iterator SI = MBB->succ_begin(),
          SE = MBB->succ_end(); SI != SE; ++SI)
     WorkList.push_back(*SI);
@@ -547,7 +580,6 @@ PreAllocSplitting::ShrinkWrapLiveInterval(VNInfo *ValNo, MachineBasicBlock *MBB,
   } else if (MBB == DefMBB) {
     // There are no uses after the def.
     MachineInstr *DefMI = LIs->getInstructionFromIndex(ValNo->def);
-    assert(RestoreMIs.count(DefMI) && "Not defined by a join?");
     if (UseMBBs.empty()) {
       // The only use must be below barrier in the barrier block. It's safe to
       // remove the def.
@@ -641,7 +673,8 @@ bool PreAllocSplitting::SplitRegLiveInterval(LiveInterval *LI) {
     TII->storeRegToStackSlot(*BarrierMBB, SpillPt, CurrLI->reg, true, SS, RC);
     SpillMI = prior(SpillPt);
     LIs->InsertMachineInstrInMaps(SpillMI, SpillIndex);
-  } else if (!IsAvailableInStack(CurrLI->reg, RestoreIndex, SS)) {
+  } else if (!IsAvailableInStack(DefMBB, CurrLI->reg, ValNo->def,
+                                 RestoreIndex, SpillIndex, SS)) {
     // If it's already split, just restore the value. There is no need to spill
     // the def again.
     if (!DefMI)
@@ -667,11 +700,14 @@ bool PreAllocSplitting::SplitRegLiveInterval(LiveInterval *LI) {
     LIs->InsertMachineInstrInMaps(SpillMI, SpillIndex);
   }
 
+  // Remember def instruction index to spill index mapping.
+  if (DefMI && SpillMI)
+    Def2SpillMap[ValNo->def] = SpillIndex;
+
   // Add restore.
   TII->loadRegFromStackSlot(*BarrierMBB, RestorePt, CurrLI->reg, SS, RC);
   MachineInstr *LoadMI = prior(RestorePt);
   LIs->InsertMachineInstrInMaps(LoadMI, RestoreIndex);
-  RestoreMIs.insert(LoadMI);
 
   // If live interval is spilled in the same block as the barrier, just
   // create a hole in the interval.
@@ -689,11 +725,8 @@ bool PreAllocSplitting::SplitRegLiveInterval(LiveInterval *LI) {
   }
 
   // Update spill stack slot live interval.
-  if (SpillIndex)
-    // If value is already in stack at the restore point, there is
-    // no need to update the live interval.
-    UpdateSpillSlotInterval(ValNo, LIs->getUseIndex(SpillIndex)+1,
-                            LIs->getDefIndex(RestoreIndex));
+  UpdateSpillSlotInterval(ValNo, LIs->getUseIndex(SpillIndex)+1,
+                          LIs->getDefIndex(RestoreIndex));
 
   // Shrink wrap the live interval by walking up the CFG and find the
   // new kills.
@@ -795,6 +828,27 @@ bool PreAllocSplitting::runOnMachineFunction(MachineFunction &MF) {
   // Make sure blocks are numbered in order.
   MF.RenumberBlocks();
 
+#if 0
+  // FIXME: Go top down.
+  MachineBasicBlock *Entry = MF.begin();
+  SmallPtrSet<MachineBasicBlock*,16> Visited;
+
+  for (df_ext_iterator<MachineBasicBlock*, SmallPtrSet<MachineBasicBlock*,16> >
+         DFI = df_ext_begin(Entry, Visited), E = df_ext_end(Entry, Visited);
+       DFI != E; ++DFI) {
+    BarrierMBB = *DFI;
+    for (MachineBasicBlock::iterator I = BarrierMBB->begin(),
+           E = BarrierMBB->end(); I != E; ++I) {
+      Barrier = &*I;
+      const TargetRegisterClass **BarrierRCs =
+        Barrier->getDesc().getRegClassBarriers();
+      if (!BarrierRCs)
+        continue;
+      BarrierIdx = LIs->getInstructionIndex(Barrier);
+      MadeChange |= SplitRegLiveIntervals(BarrierRCs);
+    }
+  }
+#else
   for (MachineFunction::reverse_iterator I = MF.rbegin(), E = MF.rend();
        I != E; ++I) {
     BarrierMBB = &*I;
@@ -809,6 +863,7 @@ bool PreAllocSplitting::runOnMachineFunction(MachineFunction &MF) {
       MadeChange |= SplitRegLiveIntervals(BarrierRCs);
     }
   }
+#endif
 
   return MadeChange;
 }

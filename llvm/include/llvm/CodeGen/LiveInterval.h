@@ -156,6 +156,8 @@ namespace llvm {
       return reg & ~(1U << (sizeof(unsigned)*8-1));
     }
 
+    bool hasAtLeastOneValue() const { return !valnos.empty(); }
+
     bool containsOneValue() const { return valnos.size() == 1; }
 
     unsigned getNumValNums() const { return (unsigned)valnos.size(); }
