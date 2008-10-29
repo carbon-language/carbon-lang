@@ -21,7 +21,7 @@ char ***good_const_cast_test(ccvpcvpp var)
 {
   // Cast away deep consts and volatiles.
   char ***var2 = const_cast<cppp>(var);
-  char ***const &var3 = static_cast<cpppcr>(var2); // Different bug.
+  char ***const &var3 = var2;
   // Const reference to reference.
   char ***&var4 = const_cast<cpppr>(var3);
   // Drop reference. Intentionally without qualifier change.
