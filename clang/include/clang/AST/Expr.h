@@ -38,7 +38,10 @@ namespace clang {
 class Expr : public Stmt {
   QualType TR;
 protected:
-  Expr(StmtClass SC, QualType T) : Stmt(SC), TR(T) {
+  Expr(StmtClass SC, QualType T) : Stmt(SC) { setType(T); }
+public:  
+  QualType getType() const { return TR; }
+  void setType(QualType t) { 
     // In C++, the type of an expression is always adjusted so that it
     // will not have reference type an expression will never have
     // reference type (C++ [expr]p6). Use
@@ -46,12 +49,11 @@ protected:
     // type. Additionally, inspect Expr::isLvalue to determine whether
     // an expression that is adjusted in this manner should be
     // considered an lvalue.
-    assert((T.isNull() || !T->isReferenceType()) && 
+    assert((TR.isNull() || !TR->isReferenceType()) && 
            "Expressions can't have reference type");
+
+    TR = t; 
   }
-public:  
-  QualType getType() const { return TR; }
-  void setType(QualType t) { TR = t; }
 
   /// SourceLocation tokens are not useful in isolation - they are low level
   /// value objects created/interpreted by SourceManager. We assume AST
