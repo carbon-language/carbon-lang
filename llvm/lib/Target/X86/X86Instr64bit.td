@@ -1500,7 +1500,7 @@ def MOVSDto64mr  : RPDI<0x7E, MRMDestMem, (outs), (ins i64mem:$dst, FR64:$src),
 
 /// SS41I_extract32 - SSE 4.1 extract 32 bits to int reg or memory destination
 multiclass SS41I_extract64<bits<8> opc, string OpcodeStr> {
-  def rr : SS4AIi8<opc, MRMSrcReg, (outs GR64:$dst),
+  def rr : SS4AIi8<opc, MRMDestReg, (outs GR64:$dst),
                  (ins VR128:$src1, i32i8imm:$src2),
                  !strconcat(OpcodeStr, 
                   "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
