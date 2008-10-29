@@ -1,6 +1,10 @@
 ; RUN: llvm-as < %s | llc -march=ppc32  | grep or | count 3
 ; This should produce one 'or' or 'cror' instruction per function.
 
+
+; RUN: llvm-as < %s | llc -march=ppc32  | grep mfcr | count 3
+; PR2964
+
 define i32 @test(double %x, double %y) nounwind  {
 entry:
 	%tmp3 = fcmp ole double %x, %y		; <i1> [#uses=1]
