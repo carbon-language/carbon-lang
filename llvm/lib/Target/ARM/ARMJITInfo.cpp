@@ -174,8 +174,14 @@ void ARMJITInfo::relocate(void *Function, MachineRelocation *MR,
                           unsigned NumRelocs, unsigned char* GOTBase) {
   for (unsigned i = 0; i != NumRelocs; ++i, ++MR) {
     void *RelocPos = (char*)Function + MR->getMachineCodeOffset();
-    intptr_t ResultPtr = (intptr_t)MR->getResultPointer();
+    ARM::RelocationType RT = (ARM::RelocationType)MR->getRelocationType();
+    // If this is a constpool relocation, get the address of the
+    // constpool_entry instruction.
+    intptr_t ResultPtr = (RT == ARM::reloc_arm_cp_entry)
+      ? getConstantPoolEntryAddr(MR->getConstantPoolIndex())
+      : (intptr_t)MR->getResultPointer();
     switch ((ARM::RelocationType)MR->getRelocationType()) {
+    case ARM::reloc_arm_cp_entry:
     case ARM::reloc_arm_relative: {
       // It is necessary to calculate the correct PC relative value. We
       // subtract the base addr from the target addr to form a byte offset.
@@ -193,6 +199,10 @@ void ARMJITInfo::relocate(void *Function, MachineRelocation *MR,
       *((unsigned*)RelocPos) |= (unsigned)ResultPtr;
       // set register Rn to PC
       *((unsigned*)RelocPos) |= 0xF << 16;
+      break;
+    }
+    case ARM::reloc_arm_absolute: {
+      *((unsigned*)RelocPos) += (unsigned)ResultPtr;
       break;
     }
     case ARM::reloc_arm_branch: {

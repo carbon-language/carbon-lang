@@ -12,9 +12,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "arm-emitter"
+#define DEBUG_TYPE "jit"
 #include "ARM.h"
 #include "ARMAddressingModes.h"
+#include "ARMConstantPoolValue.h"
 #include "ARMInstrInfo.h"
 #include "ARMRelocations.h"
 #include "ARMSubtarget.h"
@@ -192,7 +193,7 @@ unsigned ARMCodeEmitter::getMachineOpValue(const MachineInstr &MI,
   else if (MO.isSymbol())
     emitExternalSymbolAddress(MO.getSymbolName(), ARM::reloc_arm_relative);
   else if (MO.isCPI())
-    emitConstPoolAddress(MO.getIndex(), ARM::reloc_arm_relative);
+    emitConstPoolAddress(MO.getIndex(), ARM::reloc_arm_cp_entry);
   else if (MO.isJTI())
     emitJumpTableAddress(MO.getIndex(), ARM::reloc_arm_relative);
   else if (MO.isMBB())
@@ -226,8 +227,9 @@ void ARMCodeEmitter::emitExternalSymbolAddress(const char *ES, unsigned Reloc) {
 void ARMCodeEmitter::emitConstPoolAddress(unsigned CPI, unsigned Reloc,
                                           int Disp /* = 0 */,
                                           unsigned PCAdj /* = 0 */) {
+  // Tell JIT emitter we'll resolve the address.
   MCE.addRelocation(MachineRelocation::getConstPool(MCE.getCurrentPCOffset(),
-                                                    Reloc, CPI, PCAdj));
+                                                    Reloc, CPI, PCAdj, true));
 }
 
 /// emitJumpTableAddress - Arrange for the address of a jump table to
@@ -246,7 +248,7 @@ void ARMCodeEmitter::emitMachineBasicBlock(MachineBasicBlock *BB) {
 }
 
 void ARMCodeEmitter::emitInstruction(const MachineInstr &MI) {
-  DOUT << MI;
+  DOUT << "JIT: " << "0x" << MCE.getCurrentPCValue() << ":\t" << MI;
 
   NumEmitted++;  // Keep track of the # of mi's emitted
   if ((MI.getDesc().TSFlags & ARMII::FormMask) == ARMII::Pseudo)
@@ -360,29 +362,47 @@ unsigned ARMCodeEmitter::getAddrMode1SBit(const MachineInstr &MI,
 }
 
 void ARMCodeEmitter::emitConstPoolInstruction(const MachineInstr &MI) {
-  unsigned CPID = MI.getOperand(0).getImm();
+  unsigned CPI = MI.getOperand(0).getImm();
   unsigned CPIndex = MI.getOperand(1).getIndex();
   const MachineConstantPoolEntry &MCPE = MCP->getConstants()[CPIndex];
   
-  //FIXME: Can we get these here?
-  assert (!MCPE.isMachineConstantPoolEntry());
+  // Remember the CONSTPOOL_ENTRY address for later relocation.
+  JTI->addConstantPoolEntryAddr(CPI, MCE.getCurrentPCValue());
 
-  const Constant *CV = MCPE.Val.ConstVal;  
-  // FIXME: We can get other types here. Need to handle them.
-  // According to the constant island pass, everything is multiples,
-  // of 4-bytes in size, though, so that helps.
-  assert (CV->getType()->isInteger());
-  assert (cast<IntegerType>(CV->getType())->getBitWidth() == 32);
+  // Emit constpool island entry. In most cases, the actual values will be
+  // resolved and relocated after code emission.
+  if (MCPE.isMachineConstantPoolEntry()) {
+    ARMConstantPoolValue *ACPV =
+      static_cast<ARMConstantPoolValue*>(MCPE.Val.MachineCPVal);
 
-  const ConstantInt *CI = dyn_cast<ConstantInt>(CV);
-  uint32_t Val = *(uint32_t*)CI->getValue().getRawData();
+    DOUT << "\t** ARM constant pool #" << CPI << ", ' @ "
+         << (void*)MCE.getCurrentPCValue() << *ACPV << '\n';
 
-  DOUT << "Constant pool #" << CPID << ", value '" << Val << "' @ " << 
-    (void*)MCE.getCurrentPCValue() << "\n";
+    GlobalValue *GV = ACPV->getGV();
+    if (GV) {
+      assert(!ACPV->isStub() && "Don't know how to deal this yet!");
+      emitGlobalAddress(GV, ARM::reloc_arm_absolute, false);
+    } else  {
+      assert(!ACPV->isNonLazyPointer() && "Don't know how to deal this yet!");
+      emitExternalSymbolAddress(ACPV->getSymbol(), ARM::reloc_arm_absolute);
+    }
+    MCE.emitWordLE(0);
+  } else {
+    Constant *CV = MCPE.Val.ConstVal;
 
-  if (JTI)
-    JTI->mapCPIDtoAddress(CPID, MCE.getCurrentPCValue());
-  MCE.emitWordLE(Val);
+    DOUT << "\t** Constant pool #" << CPI << ", ' @ "
+         << (void*)MCE.getCurrentPCValue() << *CV << '\n';
+
+    if (GlobalValue *GV = dyn_cast<GlobalValue>(CV)) {
+      emitGlobalAddress(GV, ARM::reloc_arm_absolute, false);
+      MCE.emitWordLE(0);
+    } else {
+      abort(); // FIXME: Is this right?
+      const ConstantInt *CI = dyn_cast<ConstantInt>(CV);
+      uint32_t Val = *(uint32_t*)CI->getValue().getRawData();
+      MCE.emitWordLE(Val);
+    }
+  }
 }
 
 void ARMCodeEmitter::emitPseudoInstruction(const MachineInstr &MI) {
