@@ -176,16 +176,26 @@ Stmt *FunctionDecl::getBody(const FunctionDecl *&Definition) const {
   return 0;
 }
 
-unsigned FunctionDecl::getNumParams() const {
-  const FunctionType *FT = getType()->getAsFunctionType();
+// Helper function for FunctionDecl::getNumParams and FunctionDecl::setParams()
+static unsigned getNumTypeParams(QualType T) {
+  const FunctionType *FT = T->getAsFunctionType();
   if (isa<FunctionTypeNoProto>(FT))
     return 0;
   return cast<FunctionTypeProto>(FT)->getNumArgs();
 }
 
+unsigned FunctionDecl::getNumParams() const {
+  // Can happen if a FunctionDecl is declared using typeof(some_other_func) bar;
+  if (!ParamInfo)
+    return 0;
+  
+  return getNumTypeParams(getType());
+}
+
 void FunctionDecl::setParams(ParmVarDecl **NewParamInfo, unsigned NumParams) {
   assert(ParamInfo == 0 && "Already has param info!");
-  assert(NumParams == getNumParams() && "Parameter count mismatch!");
+  assert(NumParams == getNumTypeParams(getType()) &&
+         "Parameter count mismatch!");
   
   // Zero params -> null pointer.
   if (NumParams) {
