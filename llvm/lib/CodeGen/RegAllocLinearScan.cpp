@@ -410,7 +410,7 @@ void RALinScan::linearScan()
     for (LiveInterval::Ranges::const_iterator I = cur.begin(), E = cur.end();
          I != E; ++I) {
       const LiveRange &LR = *I;
-      if (li_->findLiveInMBBs(LR, LiveInMBBs)) {
+      if (li_->findLiveInMBBs(LR.start, LR.end, LiveInMBBs)) {
         for (unsigned i = 0, e = LiveInMBBs.size(); i != e; ++i)
           if (LiveInMBBs[i] != EntryMBB)
             LiveInMBBs[i]->addLiveIn(Reg);

@@ -751,16 +751,37 @@ void LiveIntervals::computeIntervals() {
   }
 }
 
-bool LiveIntervals::findLiveInMBBs(const LiveRange &LR,
+bool LiveIntervals::findLiveInMBBs(unsigned Start, unsigned End,
                               SmallVectorImpl<MachineBasicBlock*> &MBBs) const {
   std::vector<IdxMBBPair>::const_iterator I =
-    std::lower_bound(Idx2MBBMap.begin(), Idx2MBBMap.end(), LR.start);
+    std::lower_bound(Idx2MBBMap.begin(), Idx2MBBMap.end(), Start);
 
   bool ResVal = false;
   while (I != Idx2MBBMap.end()) {
-    if (LR.end <= I->first)
+    if (I->first > End)
       break;
     MBBs.push_back(I->second);
+    ResVal = true;
+    ++I;
+  }
+  return ResVal;
+}
+
+bool LiveIntervals::findReachableMBBs(unsigned Start, unsigned End,
+                              SmallVectorImpl<MachineBasicBlock*> &MBBs) const {
+  std::vector<IdxMBBPair>::const_iterator I =
+    std::lower_bound(Idx2MBBMap.begin(), Idx2MBBMap.end(), Start);
+
+  bool ResVal = false;
+  while (I != Idx2MBBMap.end()) {
+    if (I->first > End)
+      break;
+    MachineBasicBlock *MBB = I->second;
+    if (getMBBEndIdx(MBB) > End)
+      break;
+    for (MachineBasicBlock::succ_iterator SI = MBB->succ_begin(),
+           SE = MBB->succ_end(); SI != SE; ++SI)
+      MBBs.push_back(*SI);
     ResVal = true;
     ++I;
   }

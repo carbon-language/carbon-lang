@@ -260,7 +260,12 @@ namespace llvm {
     /// findLiveInMBBs - Given a live range, if the value of the range
     /// is live in any MBB returns true as well as the list of basic blocks
     /// in which the value is live.
-    bool findLiveInMBBs(const LiveRange &LR,
+    bool findLiveInMBBs(unsigned Start, unsigned End,
+                        SmallVectorImpl<MachineBasicBlock*> &MBBs) const;
+
+    /// findReachableMBBs - Return a list MBB that can be reached via any
+    /// branch or fallthroughs. Return true if the list is not empty.
+    bool findReachableMBBs(unsigned Start, unsigned End,
                         SmallVectorImpl<MachineBasicBlock*> &MBBs) const;
 
     // Interval creation

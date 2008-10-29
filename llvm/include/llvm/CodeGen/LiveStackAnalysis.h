@@ -52,6 +52,22 @@ namespace llvm {
       return I->second;
     }
 
+    LiveInterval &getInterval(int Slot) {
+      SS2IntervalMap::iterator I = s2iMap.find(Slot);
+      assert(I != s2iMap.end() && "Interval does not exist for stack slot");
+      return I->second;
+    }
+
+    const LiveInterval &getInterval(int Slot) const {
+      SS2IntervalMap::const_iterator I = s2iMap.find(Slot);
+      assert(I != s2iMap.end() && "Interval does not exist for stack slot");
+      return I->second;
+    }
+
+    bool hasInterval(unsigned reg) const {
+      return s2iMap.count(reg);
+    }
+
     BumpPtrAllocator& getVNInfoAllocator() { return VNInfoAllocator; }
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;
