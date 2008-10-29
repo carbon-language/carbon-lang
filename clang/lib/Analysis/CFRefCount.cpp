@@ -533,7 +533,7 @@ public:
                                       ArgEffect ReceiverEff = DoNothing,
                                       ArgEffect DefaultEff = MayEscape,
                                       bool isEndPath = false);
-                 
+
   RetainSummary* getPersistentSummary(RetEffect RE,
                                       ArgEffect ReceiverEff = DoNothing,
                                       ArgEffect DefaultEff = MayEscape) {
@@ -546,7 +546,7 @@ public:
     
     StopSummary = getPersistentSummary(RetEffect::MakeNoRet(),
                                        StopTracking, StopTracking);
-    
+
     return StopSummary;
   }  
 
@@ -726,6 +726,18 @@ RetainSummary* RetainSummaryManager::getSummary(FunctionDecl* FD) {
       
       if (isCGRefType(T)) {
         S = getCGSummary(FD, FName );
+        break;
+      }
+      
+      // FIXME: This should all be refactored into a chain of "summary lookup"
+      //  filters.
+      if (strcmp(FName, "IOServiceGetMatchingServices") == 0) {
+        // FIXES: <rdar://problem/6326900>
+        // This should be addressed using a API table.  This strcmp is also
+        // a little gross, but there is no need to super optimize here.
+        assert (ScratchArgs.empty());
+        ScratchArgs.push_back(std::make_pair(1, DecRef));
+        S = getPersistentSummary(RetEffect::MakeNoRet(), DoNothing, DoNothing);
         break;
       }
     }
