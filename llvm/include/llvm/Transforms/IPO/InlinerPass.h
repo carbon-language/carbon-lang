@@ -23,7 +23,7 @@ namespace llvm {
   class CallSite;
 
 /// Inliner - This class contains all of the helper code which is used to
-/// perform the inlining operations that does not depend on the policy.
+/// perform the inlining operations that do not depend on the policy.
 ///
 struct Inliner : public CallGraphSCCPass {
   explicit Inliner(void *ID);
@@ -63,6 +63,10 @@ struct Inliner : public CallGraphSCCPass {
 private:
   // InlineThreshold - Cache the value here for easy access.
   unsigned InlineThreshold;
+
+  /// shouldInline - Return true if the inliner should attempt to
+  /// inline at the given CallSite.
+  bool shouldInline(CallSite CS);
 };
 
 } // End llvm namespace

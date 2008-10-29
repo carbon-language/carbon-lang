@@ -72,6 +72,31 @@ static bool InlineCallIfPossible(CallSite CS, CallGraph &CG,
   }
   return true;
 }
+        
+/// shouldInline - Return true if the inliner should attempt to inline
+/// at the given CallSite.
+bool Inliner::shouldInline(CallSite CS) {
+  int Cost = getInlineCost(CS);
+  float FudgeFactor = getInlineFudgeFactor(CS);
+  
+  int CurrentThreshold = InlineThreshold;
+  Function *Fn = CS.getCaller();
+  if (Fn && !Fn->isDeclaration() 
+      && Fn->hasFnAttr(Attribute::OptimizeForSize)
+      && InlineThreshold != 50) {
+    CurrentThreshold = 50;
+  }
+  
+  if (Cost >= (int)(CurrentThreshold * FudgeFactor)) {
+    DOUT << "    NOT Inlining: cost=" << Cost
+         << ", Call: " << *CS.getInstruction();
+    return false;
+  } else {
+    DOUT << "    Inlining: cost=" << Cost
+         << ", Call: " << *CS.getInstruction();
+    return true;
+  }
+}
 
 bool Inliner::runOnSCC(const std::vector<CallGraphNode*> &SCC) {
   CallGraph &CG = getAnalysis<CallGraph>();
@@ -136,24 +161,7 @@ bool Inliner::runOnSCC(const std::vector<CallGraphNode*> &SCC) {
         // If the policy determines that we should inline this function,
         // try to do so.
         CallSite CS = CallSites[CSi];
-        int InlineCost = getInlineCost(CS);
-        float FudgeFactor = getInlineFudgeFactor(CS);
-        
-        int CurrentThreshold = InlineThreshold;
-        Function *Fn = CS.getCaller();
-        if (Fn && !Fn->isDeclaration() 
-            && Fn->hasFnAttr(Attribute::OptimizeForSize)
-            && InlineThreshold != 50) {
-          CurrentThreshold = 50;
-        }
-        
-        if (InlineCost >= (int)(CurrentThreshold * FudgeFactor)) {
-          DOUT << "    NOT Inlining: cost=" << InlineCost
-               << ", Call: " << *CS.getInstruction();
-        } else {
-          DOUT << "    Inlining: cost=" << InlineCost
-               << ", Call: " << *CS.getInstruction();
-
+        if (shouldInline(CS)) {
           // Attempt to inline the function...
           if (InlineCallIfPossible(CS, CG, SCCFunctions, 
                                    getAnalysis<TargetData>())) {
