@@ -1708,7 +1708,7 @@ void DAGTypeLegalizer::ExpandIntRes_SIGN_EXTEND(SDNode *N,
   MVT NVT = TLI.getTypeToTransformTo(N->getValueType(0));
   SDValue Op = N->getOperand(0);
   if (Op.getValueType().bitsLE(NVT)) {
-    // The low part is sign extension of the input (which degenerates to a copy).
+    // The low part is sign extension of the input (degenerates to a copy).
     Lo = DAG.getNode(ISD::SIGN_EXTEND, NVT, N->getOperand(0));
     // The high part is obtained by SRA'ing all but one of the bits of low part.
     unsigned LoSize = NVT.getSizeInBits();
@@ -1822,7 +1822,7 @@ void DAGTypeLegalizer::ExpandIntRes_ZERO_EXTEND(SDNode *N,
   MVT NVT = TLI.getTypeToTransformTo(N->getValueType(0));
   SDValue Op = N->getOperand(0);
   if (Op.getValueType().bitsLE(NVT)) {
-    // The low part is zero extension of the input (which degenerates to a copy).
+    // The low part is zero extension of the input (degenerates to a copy).
     Lo = DAG.getNode(ISD::ZERO_EXTEND, NVT, N->getOperand(0));
     Hi = DAG.getConstant(0, NVT);   // The high part is just a zero.
   } else {
