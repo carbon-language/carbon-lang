@@ -63,10 +63,11 @@ class MachineRelocation {
     unsigned GOTIndex;      // Index in the GOT of this symbol/global
   } Target;
 
-  unsigned TargetReloType : 6; // The target relocation ID.
-  AddressType AddrType    : 4; // The field of Target to use.
-  bool NeedStub           : 1; // True if this relocation requires a stub.
+  unsigned TargetReloType : 6; // The target relocation ID
+  AddressType AddrType    : 4; // The field of Target to use
+  bool NeedStub           : 1; // True if this relocation requires a stub
   bool GOTRelative        : 1; // Should this relocation be relative to the GOT?
+  bool TargetResolve      : 1; // True if target should resolve the address
 
 public:
  // Relocation types used in a generic implementation.  Currently, relocation
@@ -90,6 +91,7 @@ public:
     Result.AddrType = isGV;
     Result.NeedStub = NeedStub;
     Result.GOTRelative = GOTrelative;
+    Result.TargetResolve = false;
     Result.Target.GV = GV;
     return Result;
   }
@@ -109,6 +111,7 @@ public:
     Result.AddrType = isGVLazyPtr;
     Result.NeedStub = NeedStub;
     Result.GOTRelative = GOTrelative;
+    Result.TargetResolve = false;
     Result.Target.GV = GV;
     return Result;
   }
@@ -125,6 +128,7 @@ public:
     Result.AddrType = isBB;
     Result.NeedStub = false;
     Result.GOTRelative = false;
+    Result.TargetResolve = false;
     Result.Target.MBB = MBB;
     return Result;
   }
@@ -143,6 +147,7 @@ public:
     Result.AddrType = isExtSym;
     Result.NeedStub = true;
     Result.GOTRelative = GOTrelative;
+    Result.TargetResolve = false;
     Result.Target.ExtSym = ES;
     return Result;
   }
@@ -151,7 +156,8 @@ public:
   /// pool entry.
   ///
   static MachineRelocation getConstPool(intptr_t offset,unsigned RelocationType,
-                                        unsigned CPI, intptr_t cst = 0) {
+                                        unsigned CPI, intptr_t cst = 0,
+                                        bool letTargetResolve = false) {
     assert((RelocationType & ~63) == 0 && "Relocation type too large!");
     MachineRelocation Result;
     Result.Offset = offset;
@@ -160,6 +166,7 @@ public:
     Result.AddrType = isConstPool;
     Result.NeedStub = false;
     Result.GOTRelative = false;
+    Result.TargetResolve = letTargetResolve;
     Result.Target.Index = CPI;
     return Result;
   }
@@ -177,6 +184,7 @@ public:
     Result.AddrType = isJumpTable;
     Result.NeedStub = false;
     Result.GOTRelative = false;
+    Result.TargetResolve = false;
     Result.Target.Index = JTI;
     return Result;
   }
@@ -255,6 +263,12 @@ public:
   /// GV address.
   bool doesntNeedStub() const {
     return !NeedStub;
+  }
+
+  /// letTargetResolve - Return true if the target JITInfo is usually
+  /// responsible for resolving the address of this relocation.
+  bool letTargetResolve() const {
+    return TargetResolve;
   }
 
   /// getGlobalValue - If this is a global value reference, return the
