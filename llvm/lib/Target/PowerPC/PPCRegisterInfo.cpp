@@ -347,6 +347,7 @@ BitVector PPCRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   Reserved.set(PPC::R1);
   Reserved.set(PPC::LR);
   Reserved.set(PPC::LR8);
+  Reserved.set(PPC::RM);
 
   // In Linux, r2 is reserved for the OS.
   if (!Subtarget.isDarwin())
@@ -1163,7 +1164,7 @@ PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
     for (unsigned I = 0, E = CSI.size(); I != E; ++I) {
       int Offset = MFI->getObjectOffset(CSI[I].getFrameIdx());
       unsigned Reg = CSI[I].getReg();
-      if (Reg == PPC::LR || Reg == PPC::LR8) continue;
+      if (Reg == PPC::LR || Reg == PPC::LR8 || Reg == PPC::RM) continue;
       MachineLocation CSDst(MachineLocation::VirtualFP, Offset);
       MachineLocation CSSrc(Reg);
       Moves.push_back(MachineMove(FrameLabelId, CSDst, CSSrc));

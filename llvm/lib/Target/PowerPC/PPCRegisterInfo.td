@@ -254,6 +254,16 @@ def CTR8 : SPR<9, "ctr">, DwarfRegNum<[66]>;
 // VRsave register
 def VRSAVE: SPR<256, "VRsave">, DwarfRegNum<[107]>;
 
+// FP rounding mode:  bits 30 and 31 of the FP status and control register
+// This is not allocated as a normal register; it appears only in
+// Uses and Defs.  The ABI says it needs to be preserved by a function,
+// but this is not achieved by saving and restoring it as with
+// most registers, it has to be done in code; to make this work all the
+// return and call instructions are described as Uses of RM, so instructions
+// that do nothing but change RM will not get deleted.
+// Also, in the architecture it is not really a SPR; 512 is arbitrary.
+def RM: SPR<512, "**ROUNDING MODE**">, DwarfRegNum<[0]>;
+
 /// Register classes
 // Allocate volatiles first
 // then nonvolatiles in reverse order since stmw/lmw save from rN to r31
