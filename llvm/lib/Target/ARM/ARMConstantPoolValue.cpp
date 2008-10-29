@@ -15,7 +15,9 @@
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/GlobalValue.h"
 #include "llvm/Type.h"
+#include "llvm/Support/Streams.h"
 #include "llvm/Support/raw_ostream.h"
+#include <ostream>
 using namespace llvm;
 
 ARMConstantPoolValue::ARMConstantPoolValue(GlobalValue *gv, unsigned id,
@@ -71,6 +73,15 @@ ARMConstantPoolValue::AddSelectionDAGCSEId(FoldingSetNodeID &ID) {
   ID.AddInteger(LabelId);
   ID.AddInteger((unsigned)Kind);
   ID.AddInteger(PCAdjust);
+}
+
+void ARMConstantPoolValue::dump() const {
+  cerr << "  " << *this;
+}
+
+void ARMConstantPoolValue::print(std::ostream &O) const {
+  raw_os_ostream RawOS(O);
+  print(RawOS);
 }
 
 void ARMConstantPoolValue::print(raw_ostream &O) const {
