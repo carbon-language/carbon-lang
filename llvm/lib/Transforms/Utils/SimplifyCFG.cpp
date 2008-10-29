@@ -1932,7 +1932,18 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
     while (Unreachable != BB->begin()) {
       BasicBlock::iterator BBI = Unreachable;
       --BBI;
+      // Do not delete instructions that can have side effects, like calls
+      // (which may never return) and volatile loads and stores.
       if (isa<CallInst>(BBI)) break;
+
+      if (StoreInst *SI = dyn_cast<StoreInst>(BBI))
+        if (SI->isVolatile())
+          break;
+
+      if (LoadInst *LI = dyn_cast<LoadInst>(BBI))
+        if (LI->isVolatile())
+          break;
+
       // Delete this instruction
       BB->getInstList().erase(BBI);
       Changed = true;
