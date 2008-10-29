@@ -471,7 +471,7 @@ Sema::TryImplicitConversion(Expr* From, QualType ToType)
     ICS.Standard.Third = ICK_Identity;
 
     // C++ [dcl.init]p14 last bullet:
-    //   Note: an expression of type "cv1 T" can initialize an object
+    //   [ Note: an expression of type "cv1 T" can initialize an object
     //   of type “cv2 T” independently of the cv-qualifiers cv1 and
     //   cv2. -- end note]
     //
@@ -877,21 +877,48 @@ Sema::CompareStandardConversionSequences(const StandardConversionSequence& SCS1,
   // C++ [over.ics.rank]p4b2:
   //
   //   If class B is derived directly or indirectly from class A,
-  //   conversion of B* to A* is better than conversion of B* to void*,
-  //   and (FIXME) conversion of A* to void* is better than conversion of B*
-  //   to void*.
+  //   conversion of B* to A* is better than conversion of B* to
+  //   void*, and conversion of A* to void* is better than conversion
+  //   of B* to void*.
   bool SCS1ConvertsToVoid 
     = SCS1.isPointerConversionToVoidPointer(Context);
   bool SCS2ConvertsToVoid 
     = SCS2.isPointerConversionToVoidPointer(Context);
-  if (SCS1ConvertsToVoid != SCS2ConvertsToVoid)
+  if (SCS1ConvertsToVoid != SCS2ConvertsToVoid) {
+    // Exactly one of the conversion sequences is a conversion to
+    // a void pointer; it's the worse conversion.
     return SCS2ConvertsToVoid ? ImplicitConversionSequence::Better
                               : ImplicitConversionSequence::Worse;
-
-  if (!SCS1ConvertsToVoid && !SCS2ConvertsToVoid)
+  } else if (!SCS1ConvertsToVoid && !SCS2ConvertsToVoid) {
+    // Neither conversion sequence converts to a void pointer; compare
+    // their derived-to-base conversions.
     if (ImplicitConversionSequence::CompareKind DerivedCK
           = CompareDerivedToBaseConversions(SCS1, SCS2))
       return DerivedCK;
+  } else if (SCS1ConvertsToVoid && SCS2ConvertsToVoid) {
+    // Both conversion sequences are conversions to void
+    // pointers. Compare the source types to determine if there's an
+    // inheritance relationship in their sources.
+    QualType FromType1 = QualType::getFromOpaquePtr(SCS1.FromTypePtr);
+    QualType FromType2 = QualType::getFromOpaquePtr(SCS2.FromTypePtr);
+
+    // Adjust the types we're converting from via the array-to-pointer
+    // conversion, if we need to.
+    if (SCS1.First == ICK_Array_To_Pointer)
+      FromType1 = Context.getArrayDecayedType(FromType1);
+    if (SCS2.First == ICK_Array_To_Pointer)
+      FromType2 = Context.getArrayDecayedType(FromType2);
+
+    QualType FromPointee1 
+      = FromType1->getAsPointerType()->getPointeeType().getUnqualifiedType();
+    QualType FromPointee2
+      = FromType2->getAsPointerType()->getPointeeType().getUnqualifiedType();
+
+    if (IsDerivedFrom(FromPointee2, FromPointee1))
+      return ImplicitConversionSequence::Better;
+    else if (IsDerivedFrom(FromPointee1, FromPointee2))
+      return ImplicitConversionSequence::Worse;
+  }
 
   // Compare based on qualification conversions (C++ 13.3.3.2p3,
   // bullet 3).
@@ -899,7 +926,24 @@ Sema::CompareStandardConversionSequences(const StandardConversionSequence& SCS1,
         = CompareQualificationConversions(SCS1, SCS2))
     return QualCK;
 
-  // FIXME: Handle comparison of reference bindings.
+  // C++ [over.ics.rank]p3b4:
+  //   -- S1 and S2 are reference bindings (8.5.3), and the types to
+  //      which the references refer are the same type except for
+  //      top-level cv-qualifiers, and the type to which the reference
+  //      initialized by S2 refers is more cv-qualified than the type
+  //      to which the reference initialized by S1 refers.
+  if (SCS1.ReferenceBinding && SCS2.ReferenceBinding) {
+    QualType T1 = QualType::getFromOpaquePtr(SCS1.ToTypePtr);
+    QualType T2 = QualType::getFromOpaquePtr(SCS2.ToTypePtr);
+    T1 = Context.getCanonicalType(T1);
+    T2 = Context.getCanonicalType(T2);
+    if (T1.getUnqualifiedType() == T2.getUnqualifiedType()) {
+      if (T2.isMoreQualifiedThan(T1))
+        return ImplicitConversionSequence::Better;
+      else if (T1.isMoreQualifiedThan(T2))
+        return ImplicitConversionSequence::Worse;
+    }
+  }
 
   return ImplicitConversionSequence::Indistinguishable;
 }
@@ -1018,16 +1062,14 @@ Sema::CompareDerivedToBaseConversions(const StandardConversionSequence& SCS1,
   FromType2 = Context.getCanonicalType(FromType2);
   ToType2 = Context.getCanonicalType(ToType2);
 
-  // C++ [over.ics.rank]p4b4:
+  // C++ [over.ics.rank]p4b3:
   //
   //   If class B is derived directly or indirectly from class A and
   //   class C is derived directly or indirectly from B,
-  //
-  // FIXME: Verify that in this section we're talking about the
-  // unqualified forms of C, B, and A.
+
+  // Compare based on pointer conversions.
   if (SCS1.Second == ICK_Pointer_Conversion && 
       SCS2.Second == ICK_Pointer_Conversion) {
-    //   -- conversion of C* to B* is better than conversion of C* to A*,
     QualType FromPointee1 
       = FromType1->getAsPointerType()->getPointeeType().getUnqualifiedType();
     QualType ToPointee1 
@@ -1036,16 +1078,60 @@ Sema::CompareDerivedToBaseConversions(const StandardConversionSequence& SCS1,
       = FromType2->getAsPointerType()->getPointeeType().getUnqualifiedType();
     QualType ToPointee2
       = ToType2->getAsPointerType()->getPointeeType().getUnqualifiedType();
+    //   -- conversion of C* to B* is better than conversion of C* to A*,
     if (FromPointee1 == FromPointee2 && ToPointee1 != ToPointee2) {
       if (IsDerivedFrom(ToPointee1, ToPointee2))
         return ImplicitConversionSequence::Better;
       else if (IsDerivedFrom(ToPointee2, ToPointee1))
         return ImplicitConversionSequence::Worse;
     }
+
+    //   -- conversion of B* to A* is better than conversion of C* to A*,
+    if (FromPointee1 != FromPointee2 && ToPointee1 == ToPointee2) {
+      if (IsDerivedFrom(FromPointee2, FromPointee1))
+        return ImplicitConversionSequence::Better;
+      else if (IsDerivedFrom(FromPointee1, FromPointee2))
+        return ImplicitConversionSequence::Worse;
+    }
   }
 
-  // FIXME: many more sub-bullets of C++ [over.ics.rank]p4b4 to
-  // implement.
+  // Compare based on reference bindings.
+  if (SCS1.ReferenceBinding && SCS2.ReferenceBinding &&
+      SCS1.Second == ICK_Derived_To_Base) {
+    //   -- binding of an expression of type C to a reference of type
+    //      B& is better than binding an expression of type C to a
+    //      reference of type A&,
+    if (FromType1.getUnqualifiedType() == FromType2.getUnqualifiedType() &&
+        ToType1.getUnqualifiedType() != ToType2.getUnqualifiedType()) {
+      if (IsDerivedFrom(ToType1, ToType2))
+        return ImplicitConversionSequence::Better;
+      else if (IsDerivedFrom(ToType2, ToType1))
+        return ImplicitConversionSequence::Worse;
+    }
+
+    //     -- binding of an expression of type B to a reference of type
+    //        A& is better than binding an expression of type C to a
+    //        reference of type A&,
+    if (FromType1.getUnqualifiedType() != FromType2.getUnqualifiedType() &&
+        ToType1.getUnqualifiedType() == ToType2.getUnqualifiedType()) {
+      if (IsDerivedFrom(FromType2, FromType1))
+        return ImplicitConversionSequence::Better;
+      else if (IsDerivedFrom(FromType1, FromType2))
+        return ImplicitConversionSequence::Worse;
+    }
+  }
+
+
+  // FIXME: conversion of A::* to B::* is better than conversion of
+  // A::* to C::*,
+
+  // FIXME: conversion of B::* to C::* is better than conversion of
+  // A::* to C::*, and
+
+  // FIXME: conversion of C to B is better than conversion of C to A,
+
+  // FIXME: conversion of B to A is better than conversion of C to A.
+
   return ImplicitConversionSequence::Indistinguishable;
 }
 

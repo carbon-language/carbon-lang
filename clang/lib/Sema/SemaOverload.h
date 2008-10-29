@@ -97,6 +97,14 @@ namespace clang {
     /// (C++ 4.2p2).
     bool Deprecated : 1;
 
+    /// ReferenceBinding - True when this is a reference binding 
+    /// (C++ [over.ics.ref]).
+    bool ReferenceBinding : 1;
+
+    /// DirectBinding - True when this is a reference binding that is a 
+    /// direct binding (C++ [dcl.init.ref]).
+    bool DirectBinding : 1;
+
     /// FromType - The type that this conversion is converting
     /// from. This is an opaque pointer that can be translated into a
     /// QualType.
@@ -155,17 +163,7 @@ namespace clang {
     };
 
     /// ConversionKind - The kind of implicit conversion sequence.
-    /// As usual, we use "unsigned" here because VC++ makes enum bitfields
-    /// signed.
-    unsigned ConversionKind : 2;
-
-    /// ReferenceBinding - True when this is a reference binding 
-    /// (C++ [over.ics.ref]).
-    bool ReferenceBinding : 1;
-
-    /// DirectBinding - True when this is a reference binding that is a 
-    /// direct binding (C++ [dcl.init.ref]).
-    bool DirectBinding : 1;
+    Kind ConversionKind;
 
     union {
       /// When ConversionKind == StandardConversion, provides the

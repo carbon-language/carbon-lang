@@ -785,8 +785,8 @@ Sema::CheckReferenceInit(Expr *&Init, QualType &DeclType,
       ICS->Standard.Third = ICK_Identity;
       ICS->Standard.FromTypePtr = T2.getAsOpaquePtr();
       ICS->Standard.ToTypePtr = T1.getAsOpaquePtr();
-      ICS->ReferenceBinding = true;
-      ICS->DirectBinding = true;
+      ICS->Standard.ReferenceBinding = true;
+      ICS->Standard.DirectBinding = true;
 
       // Nothing more to do: the inaccessibility/ambiguity check for
       // derived-to-base conversions is suppressed when we're
@@ -876,8 +876,8 @@ Sema::CheckReferenceInit(Expr *&Init, QualType &DeclType,
       ICS->Standard.Third = ICK_Identity;
       ICS->Standard.FromTypePtr = T2.getAsOpaquePtr();
       ICS->Standard.ToTypePtr = T1.getAsOpaquePtr();
-      ICS->ReferenceBinding = true;
-      ICS->DirectBinding = false;      
+      ICS->Standard.ReferenceBinding = true;
+      ICS->Standard.DirectBinding = false;      
     } else {
       // FIXME: Binding to a subobject of the rvalue is going to require
       // more AST annotation than this.

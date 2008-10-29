@@ -253,3 +253,25 @@ void cvqual_subsume_test(Z z) {
   cvqual_subsume(z); // expected-error{{call to 'cvqual_subsume' is ambiguous; candidates are:}}
   int& x = cvqual_subsume2(get_Z()); // okay: only binds to the first one
 }
+
+// Test overloading with cv-qualification differences in reference
+// binding.
+int& cvqual_diff(X&);
+float& cvqual_diff(const X&);
+
+void cvqual_diff_test(X x, Z z) {
+  int& i1 = cvqual_diff(x);
+  int& i2 = cvqual_diff(z);
+}
+
+// Test overloading with derived-to-base differences in reference
+// binding.
+struct Z2 : Z { };
+
+int& db_rebind(X&);
+long& db_rebind(Y&);
+float& db_rebind(Z&);
+
+void db_rebind_test(Z2 z2) {
+  float& f1 = db_rebind(z2);
+}
