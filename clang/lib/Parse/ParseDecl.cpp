@@ -310,6 +310,8 @@ ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
                                               &Exprs[0], Exprs.size(),
                                               &CommaLocs[0], RParenLoc);
       }
+    } else {
+      Actions.ActOnUninitializedDecl(LastDeclInGroup);
     }
     
     // If we don't have a comma, it is either the end of the list (a ';') or an

@@ -1174,14 +1174,11 @@ ActOnCallExpr(ExprTy *fn, SourceLocation LParenLoc,
         Arg = new CXXDefaultArgExpr(FDecl->getParamDecl(i));
       QualType ArgType = Arg->getType();
 
-      // Compute implicit casts from the operand to the formal argument type.
-      AssignConvertType ConvTy =
-        CheckSingleAssignmentConstraints(ProtoArgType, Arg);
-      TheCall->setArg(i, Arg);
-
-      if (DiagnoseAssignmentResult(ConvTy, Arg->getLocStart(), ProtoArgType,
-                                   ArgType, Arg, "passing"))
+      // Pass the argument.
+      if (PerformCopyInitialization(Arg, ProtoArgType, "passing"))
         return true;
+
+      TheCall->setArg(i, Arg);
     }
     
     // If this is a variadic call, handle args passed through "...".

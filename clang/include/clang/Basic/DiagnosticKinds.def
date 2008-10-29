@@ -676,6 +676,16 @@ DIAG(err_not_integral_type_bitfield, ERROR,
 DIAG(err_member_initialization, ERROR,
     "'%0' can only be initialized if it is a static const integral data member")
 
+// C++ initialization
+DIAG(err_not_reference_to_const_init, ERROR,
+     "non-const reference to type '%0' cannot be initialized with a %1 of type '%2'")
+DIAG(err_reference_init_drops_quals, ERROR,
+     "initialization of reference to type '%0' with a %1 of type '%2' drops qualifiers")
+DIAG(err_reference_var_requires_init, ERROR,
+     "declaration of reference variable '%0' requires an initializer")
+DIAG(err_const_var_requires_init, ERROR,
+     "declaration of const variable '%0' requires an initializer")
+
 // Attributes
 DIAG(err_attribute_wrong_number_arguments, ERROR,
      "attribute requires %0 argument(s)")

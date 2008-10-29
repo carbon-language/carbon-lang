@@ -130,6 +130,13 @@ public:
   virtual void AddInitializerToDecl(DeclTy *Dcl, ExprTy *Init) {
     return;
   }
+
+  /// ActOnUninitializedDecl - This action is called immediately after
+  /// ActOnDeclarator (when an initializer is *not* present).
+  virtual void ActOnUninitializedDecl(DeclTy *Dcl) {
+    return;
+  }
+
   /// FinalizeDeclaratorGroup - After a sequence of declarators are parsed, this
   /// gives the actions implementation a chance to process the group as a whole.
   virtual DeclTy *FinalizeDeclaratorGroup(Scope *S, DeclTy *Group) {

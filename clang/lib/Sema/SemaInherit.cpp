@@ -44,33 +44,32 @@ void BasePaths::clear() {
   ScratchPath.clear();
 }
 
-/// IsDerivedFrom - Determine whether the class type Derived is
-/// derived from the class type Base, ignoring qualifiers on Base and
-/// Derived. This routine does not assess whether an actual conversion
-/// from a Derived* to a Base* is legal, because it does not account
-/// for ambiguous conversions or conversions to private/protected bases.
+/// IsDerivedFrom - Determine whether the type Derived is derived from
+/// the type Base, ignoring qualifiers on Base and Derived. This
+/// routine does not assess whether an actual conversion from a
+/// Derived* to a Base* is legal, because it does not account for
+/// ambiguous conversions or conversions to private/protected bases.
 bool Sema::IsDerivedFrom(QualType Derived, QualType Base) {
   BasePaths Paths(/*FindAmbiguities=*/false, /*RecordPaths=*/false);
   return IsDerivedFrom(Derived, Base, Paths);
 }
 
-/// IsDerivedFrom - Determine whether the class type Derived is
-/// derived from the class type Base, ignoring qualifiers on Base and
-/// Derived. This routine does not assess whether an actual conversion
-/// from a Derived* to a Base* is legal, because it does not account
-/// for ambiguous conversions or conversions to private/protected
+/// IsDerivedFrom - Determine whether the type Derived is derived from
+/// the type Base, ignoring qualifiers on Base and Derived. This
+/// routine does not assess whether an actual conversion from a
+/// Derived* to a Base* is legal, because it does not account for
+/// ambiguous conversions or conversions to private/protected
 /// bases. This routine will use Paths to determine if there are
 /// ambiguous paths (if @c Paths.isFindingAmbiguities()) and record
-/// information about all of the paths (if
-/// @c Paths.isRecordingPaths()).
+/// information about all of the paths (if @c Paths.isRecordingPaths()).
 bool Sema::IsDerivedFrom(QualType Derived, QualType Base, BasePaths &Paths) {
   bool FoundPath = false;
   
   Derived = Context.getCanonicalType(Derived).getUnqualifiedType();
   Base = Context.getCanonicalType(Base).getUnqualifiedType();
   
-  assert(Derived->isRecordType() && "IsDerivedFrom requires a class type");
-  assert(Base->isRecordType() && "IsDerivedFrom requires a class type");
+  if (!Derived->isRecordType() || !Base->isRecordType())
+    return false;
 
   if (Derived == Base)
     return false;

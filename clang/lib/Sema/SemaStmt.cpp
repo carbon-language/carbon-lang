@@ -693,7 +693,7 @@ Sema::ActOnBreakStmt(SourceLocation BreakLoc, Scope *CurScope) {
   return new BreakStmt(BreakLoc);
 }
 
-/// ActOnBlockReturnStmt - Utilty routine to figure out block's return type.
+/// ActOnBlockReturnStmt - Utility routine to figure out block's return type.
 ///
 Action::StmtResult
 Sema::ActOnBlockReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
@@ -782,10 +782,11 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, ExprTy *rex) {
   // C99 6.8.6.4p3(136): The return statement is not an assignment. The 
   // overlap restriction of subclause 6.5.16.1 does not apply to the case of 
   // function return.  
-  AssignConvertType ConvTy = CheckSingleAssignmentConstraints(FnRetType, 
-                                                              RetValExp);
-  if (DiagnoseAssignmentResult(ConvTy, ReturnLoc, FnRetType,
-                               RetValType, RetValExp, "returning"))
+
+  // In C++ the return statement is handled via a copy initialization.
+  // the C version of which boils down to
+  // CheckSingleAssignmentConstraints.
+  if (PerformCopyInitialization(RetValExp, FnRetType, "returning"))
     return true;
   
   if (RetValExp) CheckReturnStackAddr(RetValExp, FnRetType, ReturnLoc);

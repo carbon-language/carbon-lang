@@ -679,3 +679,193 @@ void Sema::AddCXXDirectInitializerToDecl(DeclTy *Dcl, SourceLocation LParenLoc,
   // Set the init expression, handles conversions.
   AddInitializerToDecl(Dcl, ExprTys[0]);
 }
+
+/// CompareReferenceRelationship - Compare the two types T1 and T2 to
+/// determine whether they are reference-related,
+/// reference-compatible, reference-compatible with added
+/// qualification, or incompatible, for use in C++ initialization by
+/// reference (C++ [dcl.ref.init]p4). Neither type can be a reference
+/// type, and the first type (T1) is the pointee type of the reference
+/// type being initialized.
+Sema::ReferenceCompareResult 
+Sema::CompareReferenceRelationship(QualType T1, QualType T2) {
+  assert(!T1->isReferenceType() && "T1 must be the pointee type of the reference type");
+  assert(!T2->isReferenceType() && "T2 cannot be a reference type");
+
+  T1 = Context.getCanonicalType(T1);
+  T2 = Context.getCanonicalType(T2);
+  QualType UnqualT1 = T1.getUnqualifiedType();
+  QualType UnqualT2 = T2.getUnqualifiedType();
+
+  // C++ [dcl.init.ref]p4:
+  //   Given types “cv1 T1” and “cv2 T2,” “cv1 T1” is
+  //   reference-related to “cv2 T2” if T1 is the same type as T2, or 
+  //   T1 is a base class of T2.
+  //
+  // If neither of these conditions is met, the two types are not
+  // reference related at all.
+  if (UnqualT1 != UnqualT2 && !IsDerivedFrom(UnqualT2, UnqualT1))
+    return Ref_Incompatible;
+
+  // At this point, we know that T1 and T2 are reference-related (at
+  // least).
+
+  // C++ [dcl.init.ref]p4:
+  //   "cv1 T1” is reference-compatible with “cv2 T2” if T1 is
+  //   reference-related to T2 and cv1 is the same cv-qualification
+  //   as, or greater cv-qualification than, cv2. For purposes of
+  //   overload resolution, cases for which cv1 is greater
+  //   cv-qualification than cv2 are identified as
+  //   reference-compatible with added qualification (see 13.3.3.2).
+  if (T1.getCVRQualifiers() == T2.getCVRQualifiers())
+    return Ref_Compatible;
+  else if (T1.isMoreQualifiedThan(T2))
+    return Ref_Compatible_With_Added_Qualification;
+  else
+    return Ref_Related;
+}
+
+/// CheckReferenceInit - Check the initialization of a reference
+/// variable with the given initializer (C++ [dcl.init.ref]). Init is
+/// the initializer (either a simple initializer or an initializer
+/// list), and DeclType is the type of the declaration. When Complain
+/// is true, this routine will produce diagnostics (and return true)
+/// when the declaration cannot be initialized with the given
+/// initializer. When Complain is false, this routine will return true
+/// when the initialization cannot be performed, but will not produce
+/// any diagnostics or alter Init.
+bool Sema::CheckReferenceInit(Expr *&Init, QualType &DeclType, bool Complain) {
+  assert(DeclType->isReferenceType() && "Reference init needs a reference");
+
+  QualType T1 = DeclType->getAsReferenceType()->getPointeeType();
+  QualType T2 = Init->getType();
+
+  Expr::isLvalueResult InitLvalue = Init->isLvalue(Context);
+  ReferenceCompareResult RefRelationship = CompareReferenceRelationship(T1, T2);
+
+  // C++ [dcl.init.ref]p5:
+  //   A reference to type “cv1 T1” is initialized by an expression
+  //   of type “cv2 T2” as follows:
+
+  //     -- If the initializer expression
+
+  bool BindsDirectly = false;
+  //       -- is an lvalue (but is not a bit-field), and “cv1 T1” is
+  //          reference-compatible with “cv2 T2,” or
+  if (InitLvalue == Expr::LV_Valid && !Init->isBitField() &&
+      RefRelationship >= Ref_Compatible) {
+    BindsDirectly = true;
+
+    if (!Complain) {
+      // FIXME: Binding to a subobject of the lvalue is going to require
+      // more AST annotation than this.
+      ImpCastExprToType(Init, T1);    
+    }
+  }
+
+  //       -- has a class type (i.e., T2 is a class type) and can be
+  //          implicitly converted to an lvalue of type “cv3 T3,”
+  //          where “cv1 T1” is reference-compatible with “cv3 T3”
+  //          92) (this conversion is selected by enumerating the
+  //          applicable conversion functions (13.3.1.6) and choosing
+  //          the best one through overload resolution (13.3)),
+  // FIXME: Implement this second bullet, once we have conversion
+  //        functions.
+
+  if (BindsDirectly) {
+    // C++ [dcl.init.ref]p4:
+    //   [...] In all cases where the reference-related or
+    //   reference-compatible relationship of two types is used to
+    //   establish the validity of a reference binding, and T1 is a
+    //   base class of T2, a program that necessitates such a binding
+    //   is ill-formed if T1 is an inaccessible (clause 11) or
+    //   ambiguous (10.2) base class of T2.
+    //
+    // Note that we only check this condition when we're allowed to
+    // complain about errors, because we should not be checking for
+    // ambiguity (or inaccessibility) unless the reference binding
+    // actually happens.
+    if (Complain && 
+        (Context.getCanonicalType(T1).getUnqualifiedType() 
+           != Context.getCanonicalType(T2).getUnqualifiedType()) && 
+        CheckDerivedToBaseConversion(T2, T1, Init->getSourceRange().getBegin(),
+                                     Init->getSourceRange()))
+      return true;
+          
+    return false;
+  }
+
+  //     -- Otherwise, the reference shall be to a non-volatile const
+  //        type (i.e., cv1 shall be const).
+  if (T1.getCVRQualifiers() != QualType::Const) {
+    if (Complain)
+      Diag(Init->getSourceRange().getBegin(),
+           diag::err_not_reference_to_const_init,
+           T1.getAsString(), 
+           InitLvalue != Expr::LV_Valid? "temporary" : "value",
+           T2.getAsString(), Init->getSourceRange());
+    return true;
+  }
+
+  //       -- If the initializer expression is an rvalue, with T2 a
+  //          class type, and “cv1 T1” is reference-compatible with
+  //          “cv2 T2,” the reference is bound in one of the
+  //          following ways (the choice is implementation-defined):
+  //
+  //          -- The reference is bound to the object represented by
+  //             the rvalue (see 3.10) or to a sub-object within that
+  //             object.
+  //
+  //          -- A temporary of type “cv1 T2” [sic] is created, and
+  //             a constructor is called to copy the entire rvalue
+  //             object into the temporary. The reference is bound to
+  //             the temporary or to a sub-object within the
+  //             temporary.
+  //
+  //
+  //          The constructor that would be used to make the copy
+  //          shall be callable whether or not the copy is actually
+  //          done.
+  //
+  // Note that C++0x [dcl.ref.init]p5 takes away this implementation
+  // freedom, so we will always take the first option and never build
+  // a temporary in this case. FIXME: We will, however, have to check
+  // for the presence of a copy constructor in C++98/03 mode.
+  if (InitLvalue != Expr::LV_Valid && T2->isRecordType() &&
+      RefRelationship >= Ref_Compatible) {
+    if (!Complain) {
+      // FIXME: Binding to a subobject of the rvalue is going to require
+      // more AST annotation than this.
+      ImpCastExprToType(Init, T1);
+    }
+    return false;
+  }
+
+  //       -- Otherwise, a temporary of type “cv1 T1” is created and
+  //          initialized from the initializer expression using the
+  //          rules for a non-reference copy initialization (8.5). The
+  //          reference is then bound to the temporary. If T1 is
+  //          reference-related to T2, cv1 must be the same
+  //          cv-qualification as, or greater cv-qualification than,
+  //          cv2; otherwise, the program is ill-formed.
+  if (RefRelationship == Ref_Related) {
+    // If cv1 == cv2 or cv1 is a greater cv-qualified than cv2, then
+    // we would be reference-compatible or reference-compatible with
+    // added qualification. But that wasn't the case, so the reference
+    // initialization fails.
+    if (Complain)
+      Diag(Init->getSourceRange().getBegin(),
+           diag::err_reference_init_drops_quals,
+           T1.getAsString(), 
+           InitLvalue != Expr::LV_Valid? "temporary" : "value",
+           T2.getAsString(), Init->getSourceRange());
+    return true;
+  }
+
+  // Actually try to convert the initializer to T1.
+  if (Complain)
+    return PerformImplicitConversion(Init, T1);
+  else
+    return (TryImplicitConversion(Init, T1).ConversionKind
+              == ImplicitConversionSequence::BadConversion);
+}

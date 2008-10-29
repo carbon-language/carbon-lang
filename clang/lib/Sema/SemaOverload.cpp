@@ -312,11 +312,10 @@ Sema::IsOverload(FunctionDecl *New, Decl* OldD,
   }
 }
 
-/// TryCopyInitialization - Attempt to copy-initialize a value of the
-/// given type (ToType) from the given expression (Expr), as one would
-/// do when copy-initializing a function parameter. This function
-/// returns an implicit conversion sequence that can be used to
-/// perform the initialization. Given
+/// TryImplicitConversion - Attempt to perform an implicit conversion
+/// from the given expression (Expr) to the given type (ToType). This
+/// function returns an implicit conversion sequence that can be used
+/// to perform the initialization. Given
 ///
 ///   void f(float f);
 ///   void g(int i) { f(i); }
@@ -332,7 +331,7 @@ Sema::IsOverload(FunctionDecl *New, Decl* OldD,
 /// but will instead return an implicit conversion sequence of kind
 /// "BadConversion".
 ImplicitConversionSequence
-Sema::TryCopyInitialization(Expr* From, QualType ToType)
+Sema::TryImplicitConversion(Expr* From, QualType ToType)
 {
   ImplicitConversionSequence ICS;
 
@@ -342,32 +341,6 @@ Sema::TryCopyInitialization(Expr* From, QualType ToType)
   ICS.ConversionKind = ImplicitConversionSequence::StandardConversion;
   ICS.Standard.Deprecated = false;
   ICS.Standard.FromTypePtr = FromType.getAsOpaquePtr();
-
-  if (const ReferenceType *ToTypeRef = ToType->getAsReferenceType()) {
-    // FIXME: This is a hack to deal with the initialization of
-    // references the way that the C-centric code elsewhere deals with
-    // references, by only allowing them if the referred-to type is
-    // exactly the same. This means that we're only handling the
-    // direct-binding case. The code will be replaced by an
-    // implementation of C++ 13.3.3.1.4 once we have the
-    // initialization of references implemented.
-    QualType ToPointee = Context.getCanonicalType(ToTypeRef->getPointeeType());
-
-    // Get down to the canonical type that we're converting from.
-    if (const ReferenceType *FromTypeRef = FromType->getAsReferenceType())
-      FromType = FromTypeRef->getPointeeType();
-    FromType = Context.getCanonicalType(FromType);
-
-    ICS.Standard.First = ICK_Identity;
-    ICS.Standard.Second = ICK_Identity;
-    ICS.Standard.Third = ICK_Identity;
-    ICS.Standard.ToTypePtr = ToType.getAsOpaquePtr();
-
-    if (FromType != ToPointee)
-      ICS.ConversionKind = ImplicitConversionSequence::BadConversion;
-
-    return ICS;
-  }
 
   // The first conversion can be an lvalue-to-rvalue conversion,
   // array-to-pointer conversion, or function-to-pointer conversion
@@ -482,18 +455,37 @@ Sema::TryCopyInitialization(Expr* From, QualType ToType)
     ICS.Standard.Second = ICK_Identity;
   }
 
+  QualType CanonFrom;
+  QualType CanonTo;
   // The third conversion can be a qualification conversion (C++ 4p1).
   if (IsQualificationConversion(FromType, ToType)) {
     ICS.Standard.Third = ICK_Qualification;
     FromType = ToType;
+    CanonFrom = Context.getCanonicalType(FromType);
+    CanonTo = Context.getCanonicalType(ToType);
   } else {
     // No conversion required
     ICS.Standard.Third = ICK_Identity;
+
+    // C++ [dcl.init]p14 last bullet:
+    //   Note: an expression of type "cv1 T" can initialize an object
+    //   of type “cv2 T” independently of the cv-qualifiers cv1 and
+    //   cv2. -- end note]
+    //
+    // FIXME: Where is the normative text?
+    CanonFrom = Context.getCanonicalType(FromType);
+    CanonTo = Context.getCanonicalType(ToType);    
+    if (!FromType->isRecordType() &&
+        CanonFrom.getUnqualifiedType() == CanonTo.getUnqualifiedType() &&
+        CanonFrom.getCVRQualifiers() != CanonTo.getCVRQualifiers()) {
+      FromType = ToType;
+      CanonFrom = CanonTo;
+    }
   }
 
   // If we have not converted the argument type to the parameter type,
   // this is a bad conversion sequence.
-  if (Context.getCanonicalType(FromType) != Context.getCanonicalType(ToType))
+  if (CanonFrom != CanonTo)
     ICS.ConversionKind = ImplicitConversionSequence::BadConversion;
 
   ICS.Standard.ToTypePtr = FromType.getAsOpaquePtr();
@@ -1052,6 +1044,63 @@ Sema::CompareDerivedToBaseConversions(const StandardConversionSequence& SCS1,
   // FIXME: many more sub-bullets of C++ [over.ics.rank]p4b4 to
   // implement.
   return ImplicitConversionSequence::Indistinguishable;
+}
+
+/// TryCopyInitialization - Try to copy-initialize a value of type
+/// ToType from the expression From. Return the implicit conversion
+/// sequence required to pass this argument, which may be a bad
+/// conversion sequence (meaning that the argument cannot be passed to
+/// a parameter of this type). This is user for argument passing, 
+ImplicitConversionSequence 
+Sema::TryCopyInitialization(Expr *From, QualType ToType) {
+  if (!getLangOptions().CPlusPlus) {
+    // In C, argument passing is the same as performing an assignment.
+    AssignConvertType ConvTy =
+      CheckSingleAssignmentConstraints(ToType, From);
+    ImplicitConversionSequence ICS;
+    if (getLangOptions().NoExtensions? ConvTy != Compatible
+                                     : ConvTy == Incompatible)
+      ICS.ConversionKind = ImplicitConversionSequence::BadConversion;
+    else
+      ICS.ConversionKind = ImplicitConversionSequence::StandardConversion;
+    return ICS;
+  } else if (ToType->isReferenceType()) {
+    ImplicitConversionSequence ICS;
+    if (CheckReferenceInit(From, ToType, /*Complain=*/false))
+      ICS.ConversionKind = ImplicitConversionSequence::BadConversion;
+    else
+      ICS.ConversionKind = ImplicitConversionSequence::StandardConversion;
+    return ICS;
+  } else {
+    return TryImplicitConversion(From, ToType);
+  }
+}
+
+/// PerformArgumentPassing - Pass the argument Arg into a parameter of
+/// type ToType. Returns true (and emits a diagnostic) if there was
+/// an error, returns false if the initialization succeeded.
+bool Sema::PerformCopyInitialization(Expr *&From, QualType ToType, 
+                                     const char* Flavor) {
+  if (!getLangOptions().CPlusPlus) {
+    // In C, argument passing is the same as performing an assignment.
+    QualType FromType = From->getType();
+    AssignConvertType ConvTy =
+      CheckSingleAssignmentConstraints(ToType, From);
+
+    return DiagnoseAssignmentResult(ConvTy, From->getLocStart(), ToType,
+                                    FromType, From, Flavor);
+  } else if (ToType->isReferenceType()) {
+    return CheckReferenceInit(From, ToType);
+  } else {
+    if (PerformImplicitConversion(From, ToType))
+      return Diag(From->getSourceRange().getBegin(),
+                  diag::err_typecheck_convert_incompatible,
+                  ToType.getAsString(), From->getType().getAsString(),
+                  Flavor,
+                  From->getSourceRange());
+    else
+      return false;
+  }
 }
 
 /// AddOverloadCandidate - Adds the given function to the set of

@@ -886,7 +886,7 @@ static DeclRefExpr* EvalVal(Expr *E) {
     DeclRefExpr *DR = cast<DeclRefExpr>(E);
       
     if (VarDecl *V = dyn_cast<VarDecl>(DR->getDecl()))
-      if(V->hasLocalStorage()) return DR;
+      if(V->hasLocalStorage() && !V->getType()->isReferenceType()) return DR;
       
     return NULL;
   }

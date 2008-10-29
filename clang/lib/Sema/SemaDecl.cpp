@@ -628,6 +628,13 @@ StringLiteral *Sema::IsStringLiteralInit(Expr *Init, QualType DeclType) {
 }
 
 bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType) {  
+  // C++ [dcl.init.ref]p1:
+  //   A variable declared to be a T&, that is “reference to type T”
+  //   (8.3.2), shall be initialized by an object, or function, of
+  //   type T or by an object that can be converted into a T.
+  if (DeclType->isReferenceType())
+    return CheckReferenceInit(Init, DeclType);
+
   // C99 6.7.8p3: The type of the entity to be initialized shall be an array
   // of unknown size ("[]") or an object type that is not a variable array type.
   if (const VariableArrayType *VAT = Context.getAsVariableArrayType(DeclType))
@@ -1514,6 +1521,49 @@ void Sema::AddInitializerToDecl(DeclTy *dcl, ExprTy *init) {
   // Attach the initializer to the decl.
   VDecl->setInit(Init);
   return;
+}
+
+void Sema::ActOnUninitializedDecl(DeclTy *dcl) {
+  Decl *RealDecl = static_cast<Decl *>(dcl);
+
+  if (VarDecl *Var = dyn_cast<VarDecl>(RealDecl)) {
+    QualType Type = Var->getType();
+    // C++ [dcl.init.ref]p3:
+    //   The initializer can be omitted for a reference only in a
+    //   parameter declaration (8.3.5), in the declaration of a
+    //   function return type, in the declaration of a class member
+    //   within its class declaration (9.2), and where the extern
+    //   specifier is explicitly used.
+    if (Type->isReferenceType() && Var->getStorageClass() != VarDecl::Extern)
+      Diag(Var->getLocation(),
+           diag::err_reference_var_requires_init,
+           Var->getName(), 
+           SourceRange(Var->getLocation(), Var->getLocation()));
+
+    // C++ [dcl.init]p9:
+    //
+    //     If no initializer is specified for an object, and the
+    //     object is of (possibly cv-qualified) non-POD class type (or
+    //     array thereof), the object shall be default-initialized; if
+    //     the object is of const-qualified type, the underlying class
+    //     type shall have a user-declared default
+    //     constructor. Otherwise, if no initializer is specified for
+    //     an object, the object and its subobjects, if any, have an
+    //     indeterminate initial value; if the object or any of its
+    //     subobjects are of const-qualified type, the program is
+    //     ill-formed.
+    //
+    // This isn't technically an error in C, so we don't diagnose it.
+    //
+    // FIXME: Actually perform the POD/user-defined default
+    // constructor check.
+    if (getLangOptions().CPlusPlus &&
+             Context.getCanonicalType(Type).isConstQualified())
+      Diag(Var->getLocation(), 
+           diag::err_const_var_requires_init, 
+           Var->getName(), 
+           SourceRange(Var->getLocation(), Var->getLocation()));
+  }
 }
 
 /// The declarators are chained together backwards, reverse the list.

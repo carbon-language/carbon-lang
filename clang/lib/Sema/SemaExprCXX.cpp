@@ -567,7 +567,7 @@ Sema::IsStringLiteralToNonConstPointerConversion(Expr *From, QualType ToType) {
 bool 
 Sema::PerformImplicitConversion(Expr *&From, QualType ToType)
 {
-  ImplicitConversionSequence ICS = TryCopyInitialization(From, ToType);
+  ImplicitConversionSequence ICS = TryImplicitConversion(From, ToType);
   switch (ICS.ConversionKind) {
   case ImplicitConversionSequence::StandardConversion:
     if (PerformImplicitConversion(From, ToType, ICS.Standard))

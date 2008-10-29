@@ -105,6 +105,7 @@ public:
   isModifiableLvalueResult isModifiableLvalue(ASTContext &Ctx) const;
   
   bool isNullPointerConstant(ASTContext &Ctx) const;
+  bool isBitField();
 
   /// getIntegerConstantExprValue() - Return the value of an integer
   /// constant expression. The expression must be a valid integer
@@ -153,7 +154,7 @@ public:
   Expr* IgnoreParens();
 
   /// IgnoreParenCasts - Ignore parentheses and casts.  Strip off any ParenExpr
-  /// or CastExprs or ImplicitCastExprs, returning their operand.
+  /// or CastExprs, returning their operand.
   Expr *IgnoreParenCasts();
   
   const Expr* IgnoreParens() const {

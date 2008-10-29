@@ -214,3 +214,14 @@ void test_derived(B* b, B const* bc, C* c, const C* cc, void* v, D* d) {
 
   char* d8 = derived3(d);
 }
+
+// Test overloading of references. 
+// (FIXME: tests binding to determine candidate sets, not overload 
+//  resolution per se).
+int* intref(int&);
+float* intref(const int&);
+
+void intref_test() {
+  float* ir1 = intref(5);
+  float* ir2 = intref(5.5);
+}

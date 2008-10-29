@@ -279,6 +279,7 @@ private:
                                          SourceLocation EqualLoc,
                                          ExprTy *defarg);
   void AddInitializerToDecl(DeclTy *dcl, ExprTy *init);
+  void ActOnUninitializedDecl(DeclTy *dcl);
   virtual DeclTy *FinalizeDeclaratorGroup(Scope *S, DeclTy *Group);
 
   virtual DeclTy *ActOnStartOfFunctionDef(Scope *S, Declarator &D);
@@ -369,7 +370,7 @@ private:
   /// C++ Overloading.
   bool IsOverload(FunctionDecl *New, Decl* OldD, 
                   OverloadedFunctionDecl::function_iterator &MatchedDecl);
-  ImplicitConversionSequence TryCopyInitialization(Expr* From, QualType ToType);
+  ImplicitConversionSequence TryImplicitConversion(Expr* From, QualType ToType);
   bool IsIntegralPromotion(Expr *From, QualType FromType, QualType ToType);
   bool IsFloatingPointPromotion(QualType FromType, QualType ToType);
   bool IsPointerConversion(Expr *From, QualType FromType, QualType ToType,
@@ -392,6 +393,10 @@ private:
   ImplicitConversionSequence::CompareKind
   CompareDerivedToBaseConversions(const StandardConversionSequence& SCS1,
                                   const StandardConversionSequence& SCS2);
+
+  ImplicitConversionSequence TryCopyInitialization(Expr* From, QualType ToType);
+  bool PerformCopyInitialization(Expr *&From, QualType ToType, 
+                                 const char *Flavor);
 
   /// OverloadingResult - Capture the result of performing overload
   /// resolution.
@@ -1110,6 +1115,34 @@ private:
   
   StringLiteral *IsStringLiteralInit(Expr *Init, QualType DeclType);
   bool CheckStringLiteralInit(StringLiteral *strLiteral, QualType &DeclT);
+
+  // type checking C++ declaration initializers (C++ [dcl.init]).
+
+  /// ReferenceCompareResult - Expresses the result of comparing two
+  /// types (cv1 T1 and cv2 T2) to determine their compatibility for the
+  /// purposes of initialization by reference (C++ [dcl.init.ref]p4).
+  enum ReferenceCompareResult {
+    /// Ref_Incompatible - The two types are incompatible, so direct
+    /// reference binding is not possible.
+    Ref_Incompatible = 0,
+    /// Ref_Related - The two types are reference-related, which means
+    /// that their unqualified forms (T1 and T2) are either the same
+    /// or T1 is a base class of T2.
+    Ref_Related,
+    /// Ref_Compatible_With_Added_Qualification - The two types are
+    /// reference-compatible with added qualification, meaning that
+    /// they are reference-compatible and the qualifiers on T1 (cv1)
+    /// are greater than the qualifiers on T2 (cv2).
+    Ref_Compatible_With_Added_Qualification,
+    /// Ref_Compatible - The two types are reference-compatible and
+    /// have equivalent qualifiers (cv1 == cv2).
+    Ref_Compatible
+  };
+
+  ReferenceCompareResult CompareReferenceRelationship(QualType T1, QualType T2);
+
+  bool CheckReferenceInit(Expr *&simpleInit_or_initList, QualType &declType,
+                          bool Complain = true);
 
   /// CheckCastTypes - Check type constraints for casting between types.
   bool CheckCastTypes(SourceRange TyRange, QualType CastTy, Expr *&CastExpr);

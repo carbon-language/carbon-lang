@@ -397,8 +397,7 @@ Expr::isLvalueResult Expr::isLvalue(ASTContext &Ctx) const {
     // C++ [expr.call]p10:
     //   A function call is an lvalue if and only if the result type
     //   is a reference.
-    QualType CalleeType 
-      = cast<CallExpr>(this)->getCallee()->IgnoreParens()->getType();
+    QualType CalleeType = cast<CallExpr>(this)->getCallee()->getType();
     if (const PointerType *FnTypePtr = CalleeType->getAsPointerType())
       if (const FunctionType *FnType
             = FnTypePtr->getPointeeType()->getAsFunctionType())
@@ -1104,6 +1103,14 @@ bool Expr::isNullPointerConstant(ASTContext &Ctx) const {
   // test for the value 0.
   llvm::APSInt Val(32);
   return isIntegerConstantExpr(Val, Ctx, 0, true) && Val == 0;
+}
+
+/// isBitField - Return true if this expression is a bit-field.
+bool Expr::isBitField() {
+  Expr *E = this->IgnoreParenCasts();
+  if (MemberExpr *MemRef = dyn_cast<MemberExpr>(E))
+    return MemRef->getMemberDecl()->isBitField();
+  return false;
 }
 
 unsigned ExtVectorElementExpr::getNumElements() const {
