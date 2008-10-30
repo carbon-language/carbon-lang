@@ -18,6 +18,26 @@
 
 using namespace clang;
 
+CompoundValData::CompoundValData(QualType t, const SVal* vals, unsigned n,
+                                 llvm::BumpPtrAllocator& A)
+  : T(t), NumVals(n) {
+
+  Vals = (SVal*) A.Allocate<SVal>(n);
+
+  new (Vals) SVal[n];
+
+  for (unsigned i = 0; i < n; ++i)
+    Vals[i] = vals[i];
+}
+
+void CompoundValData::Profile(llvm::FoldingSetNodeID& ID, QualType T, 
+                              unsigned N, const SVal* Vals) {
+  T.Profile(ID);
+  ID.AddInteger(N);
+  for (unsigned i = 0; i < N; ++i)
+    Vals[i].Profile(ID);
+}
+
 typedef std::pair<SVal, uintptr_t> SValData;
 typedef std::pair<SVal, SVal> SValPair;
 
@@ -104,6 +124,24 @@ BasicValueFactory::getConstraint(SymbolID sym, BinaryOperator::Opcode Op,
   }
   
   return *C;
+}
+
+const CompoundValData* 
+BasicValueFactory::getCompoundValData(QualType T, const SVal* Vals,
+                                      unsigned NumVals) {
+  llvm::FoldingSetNodeID ID;
+  CompoundValData::Profile(ID, T, NumVals, Vals);
+  void* InsertPos;
+
+  CompoundValData* D = CompoundValDataSet.FindNodeOrInsertPos(ID, InsertPos);
+
+  if (!D) {
+    D = (CompoundValData*) BPAlloc.Allocate<CompoundValData>();
+    new (D) CompoundValData(T, Vals, NumVals, BPAlloc);
+    CompoundValDataSet.InsertNode(D, InsertPos);
+  }
+
+  return D;
 }
 
 const llvm::APSInt*

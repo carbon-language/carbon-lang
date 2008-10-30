@@ -28,7 +28,24 @@ namespace llvm {
 namespace clang {
   
 class SVal;
-  
+
+class CompoundValData : public llvm::FoldingSetNode {
+  QualType T;
+  unsigned NumVals;
+  SVal* Vals;
+
+public:
+  CompoundValData(QualType t, const SVal* vals, unsigned n,
+                  llvm::BumpPtrAllocator& A);
+
+  static void Profile(llvm::FoldingSetNodeID& ID, QualType T, unsigned N, 
+                      const SVal* Vals);
+
+  void Profile(llvm::FoldingSetNodeID& ID) {
+    Profile(ID, T, NumVals, Vals);
+  }
+};
+
 class BasicValueFactory {
   typedef llvm::FoldingSet<llvm::FoldingSetNodeWrapper<llvm::APSInt> >
           APSIntSetTy;
@@ -44,6 +61,8 @@ class BasicValueFactory {
   SymIntCSetTy  SymIntCSet;
   void*         PersistentSVals;
   void*         PersistentSValPairs;
+
+  llvm::FoldingSet<CompoundValData> CompoundValDataSet;
 
 public:
   BasicValueFactory(ASTContext& ctx, llvm::BumpPtrAllocator& Alloc) 
@@ -67,6 +86,9 @@ public:
 
   const SymIntConstraint& getConstraint(SymbolID sym, BinaryOperator::Opcode Op,
                                         const llvm::APSInt& V);
+
+  const CompoundValData* getCompoundValData(QualType T, const SVal* Vals,
+                                            unsigned NumVals);
 
   const llvm::APSInt* EvaluateAPSInt(BinaryOperator::Opcode Op,
                                      const llvm::APSInt& V1,

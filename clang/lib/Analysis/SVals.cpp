@@ -245,6 +245,11 @@ NonLoc NonLoc::MakeIntTruthVal(BasicValueFactory& BasicVals, bool b) {
   return nonloc::ConcreteInt(BasicVals.getTruthValue(b));
 }
 
+NonLoc NonLoc::MakeCompoundVal(QualType T, SVal* Vals, unsigned NumSVals,
+                               BasicValueFactory& BasicVals) {
+  return nonloc::CompoundVal(BasicVals.getCompoundValData(T, Vals, NumSVals));
+}
+
 SVal SVal::GetSymbolValue(SymbolManager& SymMgr, VarDecl* D) {
 
   QualType T = D->getType();

@@ -45,6 +45,7 @@ protected:
     : Data(D), Kind(k) {}
   
 public:
+  SVal() : Data(0), Kind(0) {}
   ~SVal() {};
   
   /// BufferTy - A temporary buffer to hold a set of SVals.
@@ -58,7 +59,7 @@ public:
     ID.AddInteger((unsigned) getRawKind());
     ID.AddPointer(reinterpret_cast<void*>(Data));
   }
-  
+
   inline bool operator==(const SVal& R) const {
     return getRawKind() == R.getRawKind() && Data == R.Data;
   }
@@ -168,7 +169,10 @@ public:
   static NonLoc MakeVal(BasicValueFactory& BasicVals, IntegerLiteral* I);
     
   static NonLoc MakeIntTruthVal(BasicValueFactory& BasicVals, bool b);
-    
+
+  static NonLoc MakeCompoundVal(QualType T, SVal* Vals, unsigned NumSVals,
+                                BasicValueFactory& BasicVals);
+
   // Implement isa<T> support.
   static inline bool classof(const SVal* V) {
     return V->getBaseKind() == NonLocKind;
@@ -210,7 +214,7 @@ public:
 namespace nonloc {
   
 enum Kind { ConcreteIntKind, SymbolValKind, SymIntConstraintValKind,
-            LocAsIntegerKind };
+            LocAsIntegerKind, CompoundValKind };
 
 class SymbolVal : public NonLoc {
 public:
@@ -311,6 +315,25 @@ public:
   static inline LocAsInteger Make(BasicValueFactory& Vals, Loc V,
                                    unsigned Bits) {    
     return LocAsInteger(Vals.getPersistentSValWithData(V, Bits));
+  }
+};
+
+class CompoundVal : public NonLoc {
+  friend class NonLoc;
+
+  CompoundVal(const CompoundValData* D) : NonLoc(CompoundValKind, D) {}
+
+public:
+  const CompoundValData* getValue() {
+    return static_cast<CompoundValData*>(Data);
+  }
+
+  static bool classof(const SVal* V) {
+    return V->getBaseKind() == NonLocKind && V->getSubKind() == CompoundValKind;
+  }
+
+  static bool classof(const NonLoc* V) {
+    return V->getSubKind() == CompoundValKind;
   }
 };
   
