@@ -1686,6 +1686,8 @@ void GRExprEngine::VisitInitListExpr(InitListExpr* E, NodeTy* Pred,
         }
       }
     }
+    
+    return;
   }
 
   if (Loc::IsLocType(T) || T->isIntegerType()) {
