@@ -1619,44 +1619,73 @@ void GRExprEngine::VisitDeclStmt(DeclStmt* DS, NodeTy* Pred, NodeSet& Dst) {
   }
 }
 
+namespace {
+  // This class is used by VisitInitListExpr as an item in a worklist
+  // for processing the values contained in an InitListExpr.
+class VISIBILITY_HIDDEN InitListWLItem {
+public:
+  llvm::ImmutableList<SVal> Vals;
+  GRExprEngine::NodeTy* N;
+  InitListExpr::reverse_iterator Itr;
+  
+  InitListWLItem(GRExprEngine::NodeTy* n, llvm::ImmutableList<SVal> vals,
+         InitListExpr::reverse_iterator itr)
+  : Vals(vals), N(n), Itr(itr) {}
+};
+}
+
+
 void GRExprEngine::VisitInitListExpr(InitListExpr* E, NodeTy* Pred, 
                                      NodeSet& Dst) {
   const GRState* state = GetState(Pred);
 
   QualType T = E->getType();
 
-  unsigned NumInitElements = E->getNumInits();
-
-  llvm::SmallVector<SVal, 10> InitVals;
-  InitVals.reserve(NumInitElements);
-  
+  unsigned NumInitElements = E->getNumInits();  
 
   if (T->isArrayType() || T->isStructureType()) {
-    for (unsigned i = 0; i < NumInitElements; ++i) {
-      Expr* Init = E->getInit(i);
+
+
+    llvm::SmallVector<InitListWLItem, 10> WorkList;
+    WorkList.reserve(NumInitElements);
+  
+    WorkList.push_back(InitListWLItem(Pred, getBasicVals().getEmptySValList(),
+                              E->rbegin()));
+    
+    InitListExpr::reverse_iterator ItrEnd = E->rend();
+    
+    while (!WorkList.empty()) {
+      InitListWLItem X = WorkList.back();
+      WorkList.pop_back();
+      
       NodeSet Tmp;
-      Visit(Init, Pred, Tmp);
+      Visit(*X.Itr, X.N, Tmp);
+      
+      InitListExpr::reverse_iterator NewItr = X.Itr + 1;
 
-      // FIXME: Use worklist to allow state splitting.
-      assert(Tmp.size() == 1);
+      for (NodeSet::iterator NI=Tmp.begin(), NE=Tmp.end(); NI!=NE; ++NI) {
+        // Get the last initializer value.
+        state = GetState(*NI);
+        SVal InitV = GetSVal(state, cast<Expr>(*X.Itr));
+        
+        // Construct the new list of values by prepending the new value to
+        // the already constructed list.
+        llvm::ImmutableList<SVal> NewVals =
+          getBasicVals().consVals(InitV, X.Vals);
+        
+        if (NewItr == ItrEnd) {
+          // Now we have a list holding all init values. Make CompoundSValData.
+          SVal V = NonLoc::MakeCompoundVal(T, NewVals, getBasicVals());
 
-      // Get the new intermediate node and its state.
-      Pred = *Tmp.begin();
-      state = GetState(Pred);
-
-      SVal InitV = GetSVal(state, Init);
-      InitVals.push_back(InitV);
+          // Make final state and node.
+          MakeNode(Dst, E, Pred,  BindExpr(state, E, V));
+        }
+        else {
+          // Still some initializer values to go.  Push them onto the worklist.
+          WorkList.push_back(InitListWLItem(*NI, NewVals, NewItr));
+        }
+      }
     }
-
-    // Now we have a vector holding all init values. Make CompoundSValData.
-    SVal V = NonLoc::MakeCompoundVal(T, &InitVals[0], NumInitElements,
-                                     StateMgr.getBasicVals());
-
-    // Make final state and node.
-    state = BindExpr(state, E, V);
-
-    MakeNode(Dst, E, Pred, state);
-    return;
   }
 
   if (Loc::IsLocType(T) || T->isIntegerType()) {
