@@ -523,8 +523,9 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   setOperationAction(ISD::FEXP, MVT::f80, Expand);
   setOperationAction(ISD::FEXP2, MVT::f80, Expand);
 
-  // First set operation action for all vector types to expand. Then we
-  // will selectively turn on ones that can be effectively codegen'd.
+  // First set operation action for all vector types to either to promote
+  // (for widening) or expand (for scalarization). Then we will selectively
+  // turn on ones that can be effectively codegen'd.
   for (unsigned VT = (unsigned)MVT::FIRST_VECTOR_VALUETYPE;
        VT <= (unsigned)MVT::LAST_VECTOR_VALUETYPE; ++VT) {
     setOperationAction(ISD::ADD , (MVT::SimpleValueType)VT, Expand);
@@ -543,6 +544,8 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::VECTOR_SHUFFLE, (MVT::SimpleValueType)VT, Expand);
     setOperationAction(ISD::EXTRACT_VECTOR_ELT,(MVT::SimpleValueType)VT,Expand);
     setOperationAction(ISD::INSERT_VECTOR_ELT,(MVT::SimpleValueType)VT, Expand);
+    setOperationAction(ISD::EXTRACT_SUBVECTOR,(MVT::SimpleValueType)VT, Expand);
+    setOperationAction(ISD::CONCAT_VECTORS,(MVT::SimpleValueType)VT, Expand);
     setOperationAction(ISD::FABS, (MVT::SimpleValueType)VT, Expand);
     setOperationAction(ISD::FSIN, (MVT::SimpleValueType)VT, Expand);
     setOperationAction(ISD::FCOS, (MVT::SimpleValueType)VT, Expand);
@@ -7836,4 +7839,42 @@ X86TargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
   }
 
   return Res;
+}
+
+//===----------------------------------------------------------------------===//
+//                           X86 Widen vector type
+//===----------------------------------------------------------------------===//
+
+/// getWidenVectorType: given a vector type, returns the type to widen
+/// to (e.g., v7i8 to v8i8). If the vector type is legal, it returns itself.
+/// If there is no vector type that we want to widen to, returns MVT::Other
+/// When and were to widen is target dependent based on the cost of
+/// scalarizing vs using the wider vector type.
+
+MVT X86TargetLowering::getWidenVectorType(MVT VT) {
+  assert(VT.isVector());
+  if (isTypeLegal(VT))
+    return VT;
+  
+  // TODO: In computeRegisterProperty, we can compute the list of legal vector
+  //       type based on element type.  This would speed up our search (though
+  //       it may not be worth it since the size of the list is relatively
+  //       small).
+  MVT EltVT = VT.getVectorElementType();
+  unsigned NElts = VT.getVectorNumElements();
+  
+  // On X86, it make sense to widen any vector wider than 1
+  if (NElts <= 1)
+    return MVT::Other;
+  
+  for (unsigned nVT = MVT::FIRST_VECTOR_VALUETYPE; 
+       nVT <= MVT::LAST_VECTOR_VALUETYPE; ++nVT) {
+    MVT SVT = (MVT::SimpleValueType)nVT;
+    
+    if (isTypeLegal(SVT) && 
+        SVT.getVectorElementType() == EltVT && 
+        SVT.getVectorNumElements() > NElts)
+      return SVT;
+  }
+  return MVT::Other;
 }

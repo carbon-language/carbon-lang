@@ -486,6 +486,13 @@ namespace llvm {
       (VT == MVT::f32 && X86ScalarSSEf32);   // f32 is when SSE1
     }
 
+    /// getWidenVectorType: given a vector type, returns the type to widen
+    /// to (e.g., v7i8 to v8i8). If the vector type is legal, it returns itself.
+    /// If there is no vector type that we want to widen to, returns MVT::Other
+    /// When and were to widen is target dependent based on the cost of
+    /// scalarizing vs using the wider vector type.
+    virtual MVT getWidenVectorType(MVT VT);
+
     /// createFastISel - This method returns a target specific FastISel object,
     /// or null if the target does not support "fast" ISel.
     virtual FastISel *

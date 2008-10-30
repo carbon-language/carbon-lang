@@ -164,7 +164,10 @@ public:
     
     LegalizeAction getTypeAction(MVT VT) const {
       if (VT.isExtended()) {
-        if (VT.isVector()) return Expand;
+        if (VT.isVector()) {
+          // First try vector widening
+          return Promote;
+        }
         if (VT.isInteger())
           // First promote to a power-of-two size, then expand if necessary.
           return VT == VT.getRoundIntegerType() ? Expand : Promote;
@@ -261,6 +264,13 @@ public:
                                   unsigned &NumIntermediates,
                                   MVT &RegisterVT) const;
   
+  /// getWidenVectorType: given a vector type, returns the type to widen to
+  /// (e.g., v7i8 to v8i8). If the vector type is legal, it returns itself.
+  /// If there is no vector type that we want to widen to, returns MVT::Other
+  /// When and were to widen is target dependent based on the cost of
+  /// scalarizing vs using the wider vector type.
+  virtual MVT getWidenVectorType(MVT VT);
+
   typedef std::vector<APFloat>::const_iterator legal_fpimm_iterator;
   legal_fpimm_iterator legal_fpimm_begin() const {
     return LegalFPImmediates.begin();
@@ -1455,7 +1465,7 @@ private:
   MVT TransformToType[MVT::LAST_VALUETYPE];
 
   // Defines the capacity of the TargetLowering::OpActions table
-  static const int OpActionsCapacity = 212;
+  static const int OpActionsCapacity = 218;
 
   /// OpActions - For each operation and each value type, keep a LegalizeAction
   /// that indicates how instruction selection should deal with the operation.

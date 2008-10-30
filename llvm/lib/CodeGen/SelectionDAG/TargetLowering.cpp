@@ -573,7 +573,7 @@ void TargetLowering::computeRegisterProperties() {
                                RegisterVT);
       RegisterTypeForVT[i] = RegisterVT;
       TransformToType[i] = MVT::Other; // this isn't actually used
-      ValueTypeActions.setTypeAction(VT, Expand);
+      ValueTypeActions.setTypeAction(VT, Promote);
     }
   }
 }
@@ -640,6 +640,20 @@ unsigned TargetLowering::getVectorTypeBreakdown(MVT VT,
   }
   
   return 1;
+}
+
+/// getWidenVectorType: given a vector type, returns the type to widen to
+/// (e.g., v7i8 to v8i8). If the vector type is legal, it returns itself.
+/// If there is no vector type that we want to widen to, returns MVT::Other
+/// When and were to widen is target dependent based on the cost of
+/// scalarizing vs using the wider vector type.
+MVT TargetLowering::getWidenVectorType(MVT VT) {
+  assert(VT.isVector());
+  if (isTypeLegal(VT))
+    return VT;
+ 
+  // Default is not to widen until moved to LegalizeTypes
+  return MVT::Other;
 }
 
 /// getByValTypeAlignment - Return the desired alignment for ByVal aggregate
