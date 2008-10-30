@@ -1631,7 +1631,7 @@ void GRExprEngine::VisitInitListExpr(InitListExpr* E, NodeTy* Pred,
   InitVals.reserve(NumInitElements);
   
 
-  if (T->isArrayType()) {
+  if (T->isArrayType() || T->isStructureType()) {
     for (unsigned i = 0; i < NumInitElements; ++i) {
       Expr* Init = E->getInit(i);
       NodeSet Tmp;
@@ -1655,12 +1655,6 @@ void GRExprEngine::VisitInitListExpr(InitListExpr* E, NodeTy* Pred,
     // Make final state and node.
     state = BindExpr(state, E, V);
 
-    MakeNode(Dst, E, Pred, state);
-    return;
-  }
-
-  if (T->isStructureType()) {
-    // FIXME: to be implemented.
     MakeNode(Dst, E, Pred, state);
     return;
   }
