@@ -54,6 +54,7 @@ using llvm::CStrInCStrNoCase;
 //  not release it."
 //
 static bool followsFundamentalRule(const char* s) {
+  while (*s == '_') ++s;  
   return CStrInCStrNoCase(s, "create") || CStrInCStrNoCase(s, "copy")  || 
   CStrInCStrNoCase(s, "new") == s || CStrInCStrNoCase(s, "alloc") == s;
 }  
@@ -709,9 +710,8 @@ RetainSummary* RetainSummaryManager::getSummary(FunctionDecl* FD) {
 
   // No summary.  Generate one.
   const char* FName = FD->getIdentifier()->getName();
-    
-  RetainSummary *S = 0;
   
+  RetainSummary *S = 0;  
   FunctionType* FT = dyn_cast<FunctionType>(FD->getType());
 
   do {
