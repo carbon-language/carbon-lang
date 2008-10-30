@@ -74,7 +74,8 @@ static bool scan_ivar_release(Stmt* S, ObjCIvarDecl* ID,
     if (BO->isAssignmentOp())
       if(ObjCPropertyRefExpr* PRE = 
          dyn_cast<ObjCPropertyRefExpr>(BO->getLHS()->IgnoreParenCasts()))
-          if(PRE->getProperty() == PD)
+          if(PRE->getKind() == ObjCPropertyRefExpr::PropertyRef &&
+             PRE->getProperty() == PD)
             if(BO->getRHS()->isNullPointerConstant(Ctx))
               return true;
   
