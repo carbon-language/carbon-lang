@@ -2175,17 +2175,17 @@ static SDValue LowerI8Math(SDValue Op, SelectionDAG &DAG, unsigned Opc)
           ? DAG.getNode(ISD::ZERO_EXTEND, MVT::i16, N0)
           : DAG.getConstant(cast<ConstantSDNode>(N0)->getZExtValue(),
                             MVT::i16));
-    N1Opc = N1.getValueType().bitsLT(MVT::i16)
+    N1Opc = N1.getValueType().bitsLT(MVT::i32)
             ? ISD::ZERO_EXTEND
             : ISD::TRUNCATE;
     N1 = (N1.getOpcode() != ISD::Constant
-          ? DAG.getNode(N1Opc, MVT::i16, N1)
+          ? DAG.getNode(N1Opc, MVT::i32, N1)
           : DAG.getConstant(cast<ConstantSDNode>(N1)->getZExtValue(),
-                            MVT::i16));
+                            MVT::i32));
     SDValue ExpandArg =
       DAG.getNode(ISD::OR, MVT::i16, N0,
                   DAG.getNode(ISD::SHL, MVT::i16,
-                              N0, DAG.getConstant(8, MVT::i16)));
+                              N0, DAG.getConstant(8, MVT::i32)));
     return DAG.getNode(ISD::TRUNCATE, MVT::i8,
                        DAG.getNode(Opc, MVT::i16, ExpandArg, N1));
   }
@@ -2526,7 +2526,7 @@ static SDValue LowerCTPOP(SDValue Op, SelectionDAG &DAG) {
     SDValue N = Op.getOperand(0);
     SDValue Elt0 = DAG.getConstant(0, MVT::i16);
     SDValue Mask0 = DAG.getConstant(0x0f, MVT::i16);
-    SDValue Shift1 = DAG.getConstant(8, MVT::i16);
+    SDValue Shift1 = DAG.getConstant(8, MVT::i32);
 
     SDValue Promote = DAG.getNode(SPUISD::PROMOTE_SCALAR, vecVT, N, N);
     SDValue CNTB = DAG.getNode(SPUISD::CNTB, vecVT, Promote);
