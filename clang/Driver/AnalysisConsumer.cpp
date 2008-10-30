@@ -300,8 +300,7 @@ void AnalysisConsumer::HandleCode(Decl* D, Stmt* Body, Actions actions) {
   AnalysisManager mgr(*this, D, Body);
   
   // Dispatch on the actions.  
-  for (Actions::iterator I = actions.begin(),
-                         E = actions.end(); I != E; ++I)
+  for (Actions::iterator I = actions.begin(), E = actions.end(); I != E; ++I)
     (*I)(mgr);  
 }
 
