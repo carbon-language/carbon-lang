@@ -1176,7 +1176,7 @@ SDValue PPCTargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) {
       unsigned Log2b = Log2_32(VT.getSizeInBits());
       SDValue Clz = DAG.getNode(ISD::CTLZ, VT, Zext);
       SDValue Scc = DAG.getNode(ISD::SRL, VT, Clz,
-                                  DAG.getConstant(Log2b, MVT::i32));
+                                DAG.getConstant(Log2b, MVT::i32));
       return DAG.getNode(ISD::TRUNCATE, MVT::i32, Scc);
     }
     // Leave comparisons against 0 and -1 alone for now, since they're usually 
@@ -3015,7 +3015,7 @@ SDValue PPCTargetLowering::LowerFLT_ROUNDS_(SDValue Op, SelectionDAG &DAG) {
                             DAG.getNode(ISD::XOR, MVT::i32,
                                         CWD, DAG.getConstant(3, MVT::i32)),
                             DAG.getConstant(3, MVT::i32)),
-                DAG.getConstant(1, MVT::i8));
+                DAG.getConstant(1, MVT::i32));
 
   SDValue RetVal =
     DAG.getNode(ISD::XOR, MVT::i32, CWD1, CWD2);
@@ -3039,12 +3039,12 @@ SDValue PPCTargetLowering::LowerSHL_PARTS(SDValue Op, SelectionDAG &DAG) {
   MVT AmtVT = Amt.getValueType();
   
   SDValue Tmp1 = DAG.getNode(ISD::SUB, AmtVT,
-                               DAG.getConstant(BitWidth, AmtVT), Amt);
+                             DAG.getConstant(BitWidth, AmtVT), Amt);
   SDValue Tmp2 = DAG.getNode(PPCISD::SHL, VT, Hi, Amt);
   SDValue Tmp3 = DAG.getNode(PPCISD::SRL, VT, Lo, Tmp1);
   SDValue Tmp4 = DAG.getNode(ISD::OR , VT, Tmp2, Tmp3);
   SDValue Tmp5 = DAG.getNode(ISD::ADD, AmtVT, Amt,
-                               DAG.getConstant(-BitWidth, AmtVT));
+                             DAG.getConstant(-BitWidth, AmtVT));
   SDValue Tmp6 = DAG.getNode(PPCISD::SHL, VT, Lo, Tmp5);
   SDValue OutHi = DAG.getNode(ISD::OR, VT, Tmp4, Tmp6);
   SDValue OutLo = DAG.getNode(PPCISD::SHL, VT, Lo, Amt);
@@ -3067,12 +3067,12 @@ SDValue PPCTargetLowering::LowerSRL_PARTS(SDValue Op, SelectionDAG &DAG) {
   MVT AmtVT = Amt.getValueType();
   
   SDValue Tmp1 = DAG.getNode(ISD::SUB, AmtVT,
-                               DAG.getConstant(BitWidth, AmtVT), Amt);
+                             DAG.getConstant(BitWidth, AmtVT), Amt);
   SDValue Tmp2 = DAG.getNode(PPCISD::SRL, VT, Lo, Amt);
   SDValue Tmp3 = DAG.getNode(PPCISD::SHL, VT, Hi, Tmp1);
   SDValue Tmp4 = DAG.getNode(ISD::OR , VT, Tmp2, Tmp3);
   SDValue Tmp5 = DAG.getNode(ISD::ADD, AmtVT, Amt,
-                               DAG.getConstant(-BitWidth, AmtVT));
+                             DAG.getConstant(-BitWidth, AmtVT));
   SDValue Tmp6 = DAG.getNode(PPCISD::SRL, VT, Hi, Tmp5);
   SDValue OutLo = DAG.getNode(ISD::OR, VT, Tmp4, Tmp6);
   SDValue OutHi = DAG.getNode(PPCISD::SRL, VT, Hi, Amt);
@@ -3094,16 +3094,16 @@ SDValue PPCTargetLowering::LowerSRA_PARTS(SDValue Op, SelectionDAG &DAG) {
   MVT AmtVT = Amt.getValueType();
   
   SDValue Tmp1 = DAG.getNode(ISD::SUB, AmtVT,
-                               DAG.getConstant(BitWidth, AmtVT), Amt);
+                             DAG.getConstant(BitWidth, AmtVT), Amt);
   SDValue Tmp2 = DAG.getNode(PPCISD::SRL, VT, Lo, Amt);
   SDValue Tmp3 = DAG.getNode(PPCISD::SHL, VT, Hi, Tmp1);
   SDValue Tmp4 = DAG.getNode(ISD::OR , VT, Tmp2, Tmp3);
   SDValue Tmp5 = DAG.getNode(ISD::ADD, AmtVT, Amt,
-                               DAG.getConstant(-BitWidth, AmtVT));
+                             DAG.getConstant(-BitWidth, AmtVT));
   SDValue Tmp6 = DAG.getNode(PPCISD::SRA, VT, Hi, Tmp5);
   SDValue OutHi = DAG.getNode(PPCISD::SRA, VT, Hi, Amt);
   SDValue OutLo = DAG.getSelectCC(Tmp5, DAG.getConstant(0, AmtVT),
-                                    Tmp4, Tmp6, ISD::SETLE);
+                                  Tmp4, Tmp6, ISD::SETLE);
   SDValue OutOps[] = { OutLo, OutHi };
   return DAG.getMergeValues(OutOps, 2);
 }
