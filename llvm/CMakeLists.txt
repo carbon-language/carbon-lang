@@ -31,8 +31,13 @@ set(CMAKE_MODULE_PATH
   )
 
 if(WIN32)
-  set(LLVM_ON_WIN32 1)
-  set(LLVM_ON_UNIX 0)
+  if(CYGWIN)
+    set(LLVM_ON_WIN32 0)
+    set(LLVM_ON_UNIX 1)
+  else(CYGWIN)
+    set(LLVM_ON_WIN32 1)
+    set(LLVM_ON_UNIX 0)
+  endif(CYGWIN)
   set(LTDL_SHLIB_EXT ".dll")
   set(EXEEXT ".exe")
   # Maximum path length is 160 for non-unicode paths
@@ -65,7 +70,10 @@ set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${LLVM_BINARY_DIR}/lib )
 # set(CMAKE_VERBOSE_MAKEFILE true)
 
 add_definitions( -D__STDC_LIMIT_MACROS )
-add_definitions( -D__STDC_CONSTANT_MACROS )
+add_definitions( -D__STDC_CONSTANT_MACROS -m32 )
+
+set( CMAKE_EXE_LINKER_FLAGS "-m32 ${CMAKE_EXE_LINKER_FLAGS}" )
+set( CMAKE_LINK_LIBRARY_FLAG "-m32 ${CMAKE_LINK_LIBRARY_FLAG}" )
 
 if( MSVC )
   add_definitions( -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS )
