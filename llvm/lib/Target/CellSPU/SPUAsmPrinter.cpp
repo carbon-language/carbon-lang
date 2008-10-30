@@ -188,8 +188,10 @@ namespace {
       const MachineOperand &MO = MI->getOperand(OpNo);
       assert(MO.isImm() &&
              "printMemRegImmS10 first operand is not immedate");
-      printS10ImmOperand(MI, OpNo);
-      O << "(";
+      int64_t value = int64_t(MI->getOperand(OpNo).getImm());
+      assert((value >= -(1 << (9+4)) && value <= (1 << (9+4)) - 1)
+             && "Invalid dform s10 offset argument");
+      O << value << "(";
       printOperand(MI, OpNo+1);
       O << ")";
     }

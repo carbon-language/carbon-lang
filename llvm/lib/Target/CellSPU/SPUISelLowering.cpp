@@ -460,10 +460,7 @@ SPUTargetLowering::getTargetNodeName(unsigned Opcode) const
 
 MVT SPUTargetLowering::getSetCCResultType(const SDValue &Op) const {
   MVT VT = Op.getValueType();
-  if (VT.isInteger())
-    return VT;
-  else
-    return MVT::i32;
+  return (VT.isInteger() ? VT : MVT(MVT::i32));
 }
 
 //===----------------------------------------------------------------------===//
@@ -926,7 +923,7 @@ LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG, int &VarArgsFrameIndex)
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MachineRegisterInfo &RegInfo = MF.getRegInfo();
-  SmallVector<SDValue, 8> ArgValues;
+  SmallVector<SDValue, 48> ArgValues;
   SDValue Root = Op.getOperand(0);
   bool isVarArg = cast<ConstantSDNode>(Op.getOperand(2))->getZExtValue() != 0;
 
@@ -942,98 +939,57 @@ LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG, int &VarArgsFrameIndex)
   // Add DAG nodes to load the arguments or copy them out of registers.
   for (unsigned ArgNo = 0, e = Op.getNode()->getNumValues() - 1;
        ArgNo != e; ++ArgNo) {
-    SDValue ArgVal;
-    bool needsLoad = false;
     MVT ObjectVT = Op.getValue(ArgNo).getValueType();
     unsigned ObjSize = ObjectVT.getSizeInBits()/8;
+    SDValue ArgVal;
 
-    switch (ObjectVT.getSimpleVT()) {
-    default: {
-      cerr << "LowerFORMAL_ARGUMENTS Unhandled argument type: "
-           << ObjectVT.getMVTString()
-           << "\n";
-      abort();
-    }
-    case MVT::i8:
-      if (!isVarArg && ArgRegIdx < NumArgRegs) {
-        unsigned VReg = RegInfo.createVirtualRegister(&SPU::R8CRegClass);
-        RegInfo.addLiveIn(ArgRegs[ArgRegIdx], VReg);
-        ArgVal = DAG.getCopyFromReg(Root, VReg, MVT::i8);
-        ++ArgRegIdx;
-      } else {
-        needsLoad = true;
-      }
-      break;
-    case MVT::i16:
-      if (!isVarArg && ArgRegIdx < NumArgRegs) {
-        unsigned VReg = RegInfo.createVirtualRegister(&SPU::R16CRegClass);
-        RegInfo.addLiveIn(ArgRegs[ArgRegIdx], VReg);
-        ArgVal = DAG.getCopyFromReg(Root, VReg, MVT::i16);
-        ++ArgRegIdx;
-      } else {
-        needsLoad = true;
-      }
-      break;
-    case MVT::i32:
-      if (!isVarArg && ArgRegIdx < NumArgRegs) {
-        unsigned VReg = RegInfo.createVirtualRegister(&SPU::R32CRegClass);
-        RegInfo.addLiveIn(ArgRegs[ArgRegIdx], VReg);
-        ArgVal = DAG.getCopyFromReg(Root, VReg, MVT::i32);
-        ++ArgRegIdx;
-      } else {
-        needsLoad = true;
-      }
-      break;
-    case MVT::i64:
-      if (!isVarArg && ArgRegIdx < NumArgRegs) {
-        unsigned VReg = RegInfo.createVirtualRegister(&SPU::R64CRegClass);
-        RegInfo.addLiveIn(ArgRegs[ArgRegIdx], VReg);
-        ArgVal = DAG.getCopyFromReg(Root, VReg, MVT::i64);
-        ++ArgRegIdx;
-      } else {
-        needsLoad = true;
-      }
-      break;
-    case MVT::f32:
-      if (!isVarArg && ArgRegIdx < NumArgRegs) {
-        unsigned VReg = RegInfo.createVirtualRegister(&SPU::R32FPRegClass);
-        RegInfo.addLiveIn(ArgRegs[ArgRegIdx], VReg);
-        ArgVal = DAG.getCopyFromReg(Root, VReg, MVT::f32);
-        ++ArgRegIdx;
-      } else {
-        needsLoad = true;
-      }
-      break;
-    case MVT::f64:
-      if (!isVarArg && ArgRegIdx < NumArgRegs) {
-        unsigned VReg = RegInfo.createVirtualRegister(&SPU::R64FPRegClass);
-        RegInfo.addLiveIn(ArgRegs[ArgRegIdx], VReg);
-        ArgVal = DAG.getCopyFromReg(Root, VReg, MVT::f64);
-        ++ArgRegIdx;
-      } else {
-        needsLoad = true;
-      }
-      break;
-    case MVT::v2f64:
-    case MVT::v4f32:
-    case MVT::v2i64:
-    case MVT::v4i32:
-    case MVT::v8i16:
-    case MVT::v16i8:
-      if (!isVarArg && ArgRegIdx < NumArgRegs) {
-        unsigned VReg = RegInfo.createVirtualRegister(&SPU::VECREGRegClass);
-        RegInfo.addLiveIn(ArgRegs[ArgRegIdx], VReg);
-        ArgVal = DAG.getCopyFromReg(Root, VReg, ObjectVT);
-        ++ArgRegIdx;
-      } else {
-        needsLoad = true;
-      }
-      break;
-    }
+    if (ArgRegIdx < NumArgRegs) {
+      const TargetRegisterClass *ArgRegClass;
 
-    // We need to load the argument to a virtual register if we determined above
-    // that we ran out of physical registers of the appropriate type
-    if (needsLoad) {
+      switch (ObjectVT.getSimpleVT()) {
+      default: {
+	cerr << "LowerFORMAL_ARGUMENTS Unhandled argument type: "
+	     << ObjectVT.getMVTString()
+	     << "\n";
+	abort();
+      }
+      case MVT::i8:
+	ArgRegClass = &SPU::R8CRegClass;
+	break;
+      case MVT::i16:
+	ArgRegClass = &SPU::R16CRegClass;
+	break;
+      case MVT::i32:
+	ArgRegClass = &SPU::R32CRegClass;
+	break;
+      case MVT::i64:
+	ArgRegClass = &SPU::R64CRegClass;
+	break;
+      case MVT::f32:
+	ArgRegClass = &SPU::R32FPRegClass;
+	break;
+      case MVT::f64:
+	ArgRegClass = &SPU::R64FPRegClass;
+	break;
+      case MVT::v2f64:
+      case MVT::v4f32:
+      case MVT::v2i64:
+      case MVT::v4i32:
+      case MVT::v8i16:
+      case MVT::v16i8:
+	ArgRegClass = &SPU::VECREGRegClass;
+	++ArgRegIdx;
+	break;
+      }
+
+      unsigned VReg = RegInfo.createVirtualRegister(ArgRegClass);
+      RegInfo.addLiveIn(ArgRegs[ArgRegIdx], VReg);
+      ArgVal = DAG.getCopyFromReg(Root, VReg, ObjectVT);
+      ++ArgRegIdx;
+    } else {
+      // We need to load the argument to a virtual register if we determined
+      // above that we ran out of physical registers of the appropriate type
+      // or we're forced to do vararg
       int FI = MFI->CreateFixedObject(ObjSize, ArgOffset);
       SDValue FIN = DAG.getFrameIndex(FI, PtrVT);
       ArgVal = DAG.getLoad(ObjectVT, Root, FIN, NULL, 0);
@@ -1041,30 +997,31 @@ LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG, int &VarArgsFrameIndex)
     }
 
     ArgValues.push_back(ArgVal);
+    // Update the chain
+    Root = ArgVal.getOperand(0);
   }
 
-  // If the function takes variable number of arguments, make a frame index for
-  // the start of the first vararg value... for expansion of llvm.va_start.
+  // vararg handling:
   if (isVarArg) {
-    VarArgsFrameIndex = MFI->CreateFixedObject(PtrVT.getSizeInBits()/8,
-                                               ArgOffset);
-    SDValue FIN = DAG.getFrameIndex(VarArgsFrameIndex, PtrVT);
-    // If this function is vararg, store any remaining integer argument regs to
-    // their spots on the stack so that they may be loaded by deferencing the
-    // result of va_next.
-    SmallVector<SDValue, 8> MemOps;
+    // unsigned int ptr_size = PtrVT.getSizeInBits() / 8;
+    // We will spill (79-3)+1 registers to the stack
+    SmallVector<SDValue, 79-3+1> MemOps;
+
+    // Create the frame slot
+
     for (; ArgRegIdx != NumArgRegs; ++ArgRegIdx) {
-      unsigned VReg = RegInfo.createVirtualRegister(&SPU::GPRCRegClass);
-      RegInfo.addLiveIn(ArgRegs[ArgRegIdx], VReg);
-      SDValue Val = DAG.getCopyFromReg(Root, VReg, PtrVT);
-      SDValue Store = DAG.getStore(Val.getValue(1), Val, FIN, NULL, 0);
+      VarArgsFrameIndex = MFI->CreateFixedObject(StackSlotSize, ArgOffset);
+      SDValue FIN = DAG.getFrameIndex(VarArgsFrameIndex, PtrVT);
+      SDValue ArgVal = DAG.getRegister(ArgRegs[ArgRegIdx], MVT::v16i8);
+      SDValue Store = DAG.getStore(Root, ArgVal, FIN, NULL, 0);
+      Root = Store.getOperand(0);
       MemOps.push_back(Store);
-      // Increment the address by four for the next argument to store
-      SDValue PtrOff = DAG.getConstant(PtrVT.getSizeInBits()/8, PtrVT);
-      FIN = DAG.getNode(ISD::ADD, PtrOff.getValueType(), FIN, PtrOff);
+
+      // Increment address by stack slot size for the next stored argument
+      ArgOffset += StackSlotSize;
     }
     if (!MemOps.empty())
-      Root = DAG.getNode(ISD::TokenFactor, MVT::Other,&MemOps[0],MemOps.size());
+      Root = DAG.getNode(ISD::TokenFactor,MVT::Other,&MemOps[0],MemOps.size());
   }
 
   ArgValues.push_back(Root);
@@ -1093,10 +1050,6 @@ SDValue
 LowerCALL(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   CallSDNode *TheCall = cast<CallSDNode>(Op.getNode());
   SDValue Chain = TheCall->getChain();
-#if 0
-  bool isVarArg   = TheCall->isVarArg();
-  bool isTailCall = TheCall->isTailCall();
-#endif
   SDValue Callee    = TheCall->getCallee();
   unsigned NumOps     = TheCall->getNumArgs();
   unsigned StackSlotSize = SPUFrameInfo::stackSlotSize();
