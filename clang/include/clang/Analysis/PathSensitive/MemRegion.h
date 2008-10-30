@@ -20,6 +20,7 @@
 #include "clang/AST/DeclObjC.h"
 #include "clang/Analysis/PathSensitive/SymbolManager.h"
 #include "clang/Analysis/PathSensitive/SVals.h"
+#include "clang/AST/ASTContext.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/Support/Allocator.h"
