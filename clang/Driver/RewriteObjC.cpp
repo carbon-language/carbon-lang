@@ -794,7 +794,12 @@ void RewriteObjC::RewriteObjCMethodDecl(ObjCMethodDecl *OMD,
       ResultStr += PDecl->getName();
     } else {
       std::string Name = PDecl->getName();
-      PDecl->getType().getAsStringInternal(Name);
+      if (isBlockPointerType(PDecl->getType())) {
+        // Make sure we convert "t (^)(...)" to "t (*)(...)".
+        const BlockPointerType *BPT = PDecl->getType()->getAsBlockPointerType();
+        Context->getPointerType(BPT->getPointeeType()).getAsStringInternal(Name);
+      } else
+        PDecl->getType().getAsStringInternal(Name);
       ResultStr += Name;
     }
   }
