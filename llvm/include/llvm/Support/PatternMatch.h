@@ -51,6 +51,22 @@ inline leaf_ty<Value> m_Value() { return leaf_ty<Value>(); }
 /// m_ConstantInt() - Match an arbitrary ConstantInt and ignore it.
 inline leaf_ty<ConstantInt> m_ConstantInt() { return leaf_ty<ConstantInt>(); }
 
+struct constantint_ty {
+  int64_t Val;
+  explicit constantint_ty(int64_t val) : Val(val) {}
+
+  template<typename ITy>
+  bool match(ITy *V) {
+    return isa<ConstantInt>(V) && cast<ConstantInt>(V)->getSExtValue() == Val;
+  }
+};
+
+/// m_ConstantInt(int64_t) - Match a ConstantInt with a specific value
+/// and ignore it.
+inline constantint_ty m_ConstantInt(int64_t Val) {
+  return constantint_ty(Val);
+}
+
 struct zero_ty {
   template<typename ITy>
   bool match(ITy *V) {
@@ -319,6 +335,36 @@ inline CmpClass_match<LHS, RHS, FCmpInst, FCmpInst::Predicate>
 m_FCmp(FCmpInst::Predicate &Pred, const LHS &L, const RHS &R) {
   return CmpClass_match<LHS, RHS,
                         FCmpInst, FCmpInst::Predicate>(Pred, L, R);
+}
+
+//===----------------------------------------------------------------------===//
+// Matchers for SelectInst classes
+//
+
+template<typename Cond_t, typename LHS_t, typename RHS_t>
+struct SelectClass_match {
+  Cond_t C;
+  LHS_t L;
+  RHS_t R;
+
+  SelectClass_match(const Cond_t &Cond, const LHS_t &LHS,
+                    const RHS_t &RHS)
+    : C(Cond), L(LHS), R(RHS) {}
+
+  template<typename OpTy>
+  bool match(OpTy *V) {
+    if (SelectInst *I = dyn_cast<SelectInst>(V))
+      return C.match(I->getOperand(0)) &&
+             L.match(I->getOperand(1)) &&
+             R.match(I->getOperand(2));
+    return false;
+  }
+};
+
+template<typename Cond, typename LHS, typename RHS>
+inline SelectClass_match<Cond, RHS, LHS>
+m_Select(const Cond &C, const LHS &L, const RHS &R) {
+  return SelectClass_match<Cond, LHS, RHS>(C, L, R);
 }
 
 //===----------------------------------------------------------------------===//

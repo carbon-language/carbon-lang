@@ -2012,6 +2012,14 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
                                  KnownZero, KnownOne))
           return &I;
       }
+
+      // zext(i1) - 1  ->  select i1, 0, -1
+      if (ZExtInst *ZI = dyn_cast<ZExtInst>(LHS))
+        if (CI->isAllOnesValue() &&
+            ZI->getOperand(0)->getType() == Type::Int1Ty)
+          return SelectInst::Create(ZI->getOperand(0),
+                                    Constant::getNullValue(I.getType()),
+                                    ConstantInt::getAllOnesValue(I.getType()));
     }
 
     if (isa<PHINode>(LHS))
@@ -4338,23 +4346,54 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
       }
     }
 
-    // (A & sext(C0)) | (B & ~sext(C0) ->  C0 ? A : B
-    if (isa<SExtInst>(C) &&
-        cast<User>(C)->getOperand(0)->getType() == Type::Int1Ty) {
+    // (A & (C0?-1:0)) | (B & ~(C0?-1:0)) ->  C0 ? A : B, and commuted variants
+    if (match(A, m_Select(m_Value(), m_ConstantInt(-1), m_ConstantInt(0)))) {
+      if (match(D, m_Not(m_Value(A))))
+        return SelectInst::Create(cast<User>(A)->getOperand(0), C, B);
+      if (match(B, m_Not(m_Value(A))))
+        return SelectInst::Create(cast<User>(A)->getOperand(0), C, D);
+    }
+    if (match(B, m_Select(m_Value(), m_ConstantInt(-1), m_ConstantInt(0)))) {
+      if (match(C, m_Not(m_Value(B))))
+        return SelectInst::Create(cast<User>(B)->getOperand(0), A, D);
+      if (match(A, m_Not(m_Value(B))))
+        return SelectInst::Create(cast<User>(B)->getOperand(0), C, D);
+    }
+    if (match(C, m_Select(m_Value(), m_ConstantInt(-1), m_ConstantInt(0)))) {
       if (match(D, m_Not(m_Value(C))))
         return SelectInst::Create(cast<User>(C)->getOperand(0), A, B);
-      // And commutes, try both ways.
       if (match(B, m_Not(m_Value(C))))
         return SelectInst::Create(cast<User>(C)->getOperand(0), A, D);
     }
-    // Or commutes, try both ways.
-    if (isa<SExtInst>(D) &&
-        cast<User>(D)->getOperand(0)->getType() == Type::Int1Ty) {
+    if (match(D, m_Select(m_Value(), m_ConstantInt(-1), m_ConstantInt(0)))) {
       if (match(C, m_Not(m_Value(D))))
         return SelectInst::Create(cast<User>(D)->getOperand(0), A, B);
-      // And commutes, try both ways.
       if (match(A, m_Not(m_Value(D))))
         return SelectInst::Create(cast<User>(D)->getOperand(0), C, B);
+    }
+    if (match(A, m_Select(m_Value(), m_ConstantInt(0), m_ConstantInt(-1)))) {
+      if (match(D, m_Not(m_Value(A))))
+        return SelectInst::Create(cast<User>(A)->getOperand(0), B, C);
+      if (match(B, m_Not(m_Value(A))))
+        return SelectInst::Create(cast<User>(A)->getOperand(0), D, C);
+    }
+    if (match(B, m_Select(m_Value(), m_ConstantInt(0), m_ConstantInt(-1)))) {
+      if (match(C, m_Not(m_Value(B))))
+        return SelectInst::Create(cast<User>(B)->getOperand(0), D, A);
+      if (match(A, m_Not(m_Value(B))))
+        return SelectInst::Create(cast<User>(B)->getOperand(0), D, C);
+    }
+    if (match(C, m_Select(m_Value(), m_ConstantInt(0), m_ConstantInt(-1)))) {
+      if (match(D, m_Not(m_Value(C))))
+        return SelectInst::Create(cast<User>(C)->getOperand(0), B, A);
+      if (match(B, m_Not(m_Value(C))))
+        return SelectInst::Create(cast<User>(C)->getOperand(0), D, A);
+    }
+    if (match(D, m_Select(m_Value(), m_ConstantInt(0), m_ConstantInt(-1)))) {
+      if (match(C, m_Not(m_Value(D))))
+        return SelectInst::Create(cast<User>(D)->getOperand(0), B, A);
+      if (match(A, m_Not(m_Value(D))))
+        return SelectInst::Create(cast<User>(D)->getOperand(0), B, C);
     }
   }
   
@@ -7965,37 +8004,11 @@ Instruction *InstCombiner::visitSExt(SExtInst &CI) {
   
   Value *Src = CI.getOperand(0);
   
-  // sext (x <s 0) -> ashr x, 31   -> all ones if signed
-  // sext (x >s -1) -> ashr x, 31  -> all ones if not signed
-  if (ICmpInst *ICI = dyn_cast<ICmpInst>(Src)) {
-    // If we are just checking for a icmp eq of a single bit and zext'ing it
-    // to an integer, then shift the bit to the appropriate place and then
-    // cast to integer to avoid the comparison.
-    if (ConstantInt *Op1C = dyn_cast<ConstantInt>(ICI->getOperand(1))) {
-      const APInt &Op1CV = Op1C->getValue();
-      
-      // sext (x <s  0) to i32 --> x>>s31      true if signbit set.
-      // sext (x >s -1) to i32 --> (x>>s31)^-1  true if signbit clear.
-      if ((ICI->getPredicate() == ICmpInst::ICMP_SLT && Op1CV == 0) ||
-          (ICI->getPredicate() == ICmpInst::ICMP_SGT &&Op1CV.isAllOnesValue())){
-        Value *In = ICI->getOperand(0);
-        Value *Sh = ConstantInt::get(In->getType(),
-                                     In->getType()->getPrimitiveSizeInBits()-1);
-        In = InsertNewInstBefore(BinaryOperator::CreateAShr(In, Sh,
-                                                        In->getName()+".lobit"),
-                                 CI);
-        if (In->getType() != CI.getType())
-          In = CastInst::CreateIntegerCast(In, CI.getType(),
-                                           true/*SExt*/, "tmp", &CI);
-        
-        if (ICI->getPredicate() == ICmpInst::ICMP_SGT)
-          In = InsertNewInstBefore(BinaryOperator::CreateNot(In,
-                                     In->getName()+".not"), CI);
-        
-        return ReplaceInstUsesWith(CI, In);
-      }
-    }
-  }
+  // Canonicalize sign-extend from i1 to a select.
+  if (Src->getType() == Type::Int1Ty)
+    return SelectInst::Create(Src,
+                              ConstantInt::getAllOnesValue(CI.getType()),
+                              Constant::getNullValue(CI.getType()));
 
   // See if the value being truncated is already sign extended.  If so, just
   // eliminate the trunc/sext pair.
@@ -8468,7 +8481,7 @@ Instruction *InstCombiner::visitSelectInstWithICmp(SelectInst &SI,
   // can be adjusted to fit the min/max idiom. We may edit ICI in
   // place here, so make sure the select is the only user.
   if (ICI->hasOneUse())
-    if (ConstantInt *CI = dyn_cast<ConstantInt>(CmpRHS))
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(CmpRHS)) {
       switch (Pred) {
       default: break;
       case ICmpInst::ICMP_ULT:
@@ -8512,6 +8525,44 @@ Instruction *InstCombiner::visitSelectInstWithICmp(SelectInst &SI,
         break;
       }
       }
+
+      // (x <s 0) ? -1 : 0 -> ashr x, 31   -> all ones if signed
+      // (x >s -1) ? -1 : 0 -> ashr x, 31  -> all ones if not signed
+      CmpInst::Predicate Pred = ICI->getPredicate();
+      if (match(TrueVal, m_ConstantInt(0)) &&
+          match(FalseVal, m_ConstantInt(-1)))
+        Pred = CmpInst::getInversePredicate(Pred);
+      else if (!match(TrueVal, m_ConstantInt(-1)) ||
+               !match(FalseVal, m_ConstantInt(0)))
+        Pred = CmpInst::BAD_ICMP_PREDICATE;
+      if (Pred != CmpInst::BAD_ICMP_PREDICATE) {
+        // If we are just checking for a icmp eq of a single bit and zext'ing it
+        // to an integer, then shift the bit to the appropriate place and then
+        // cast to integer to avoid the comparison.
+        const APInt &Op1CV = CI->getValue();
+    
+        // sext (x <s  0) to i32 --> x>>s31      true if signbit set.
+        // sext (x >s -1) to i32 --> (x>>s31)^-1  true if signbit clear.
+        if ((Pred == ICmpInst::ICMP_SLT && Op1CV == 0) ||
+            (Pred == ICmpInst::ICMP_SGT &&Op1CV.isAllOnesValue())) {
+          Value *In = ICI->getOperand(0);
+          Value *Sh = ConstantInt::get(In->getType(),
+                                       In->getType()->getPrimitiveSizeInBits()-1);
+          In = InsertNewInstBefore(BinaryOperator::CreateAShr(In, Sh,
+                                                          In->getName()+".lobit"),
+                                   *ICI);
+          if (In->getType() != CI->getType())
+            In = CastInst::CreateIntegerCast(In, CI->getType(),
+                                             true/*SExt*/, "tmp", ICI);
+    
+          if (Pred == ICmpInst::ICMP_SGT)
+            In = InsertNewInstBefore(BinaryOperator::CreateNot(In,
+                                       In->getName()+".not"), *ICI);
+    
+          return ReplaceInstUsesWith(SI, In);
+        }
+      }
+    }
 
   if (CmpLHS == TrueVal && CmpRHS == FalseVal) {
     // Transform (X == Y) ? X : Y  -> Y
