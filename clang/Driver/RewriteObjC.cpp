@@ -711,6 +711,7 @@ void RewriteObjC::RewriteForwardProtocolDecl(ObjCForwardProtocolDecl *PDecl) {
 
 void RewriteObjC::RewriteObjCMethodDecl(ObjCMethodDecl *OMD, 
                                         std::string &ResultStr) {
+  //fprintf(stderr,"In RewriteObjCMethodDecl\n");
   const FunctionType *FPRetType = 0;
   ResultStr += "\nstatic ";
   if (OMD->getResultType()->isObjCQualifiedIdType())
@@ -2439,6 +2440,9 @@ void RewriteObjC::SynthesizeObjCInternalStruct(ObjCInterfaceDecl *CDecl,
         cursor++;
         atLoc = LocStart.getFileLocWithOffset(cursor-startBuf);
         InsertText(atLoc, " */", 3);
+      } else if (*cursor == '^') { // rewrite block specifier.
+        SourceLocation caretLoc = LocStart.getFileLocWithOffset(cursor-startBuf);
+        ReplaceText(caretLoc, 1, "*", 1);
       }
       cursor++;
     }
@@ -3267,7 +3271,7 @@ std::string RewriteObjC::SynthesizeBlockHelperFuncs(BlockExpr *CE, int i,
 
 std::string RewriteObjC::SynthesizeBlockImpl(BlockExpr *CE, std::string Tag,
                                                bool hasCopyDisposeHelpers) {
-  std::string S = "struct " + Tag;
+  std::string S = "\nstruct " + Tag;
   std::string Constructor = "  " + Tag;
   
   S += " {\n  struct __block_impl impl;\n";
@@ -3421,7 +3425,10 @@ void RewriteObjC::InsertBlockLiteralsWithinFunction(FunctionDecl *FD) {
 }
 
 void RewriteObjC::InsertBlockLiteralsWithinMethod(ObjCMethodDecl *MD) {
-  SourceLocation FunLocStart = MD->getLocStart();
+  //fprintf(stderr,"In InsertBlockLiteralsWitinMethod\n");
+  //SourceLocation FunLocStart = MD->getLocStart();
+  // FIXME: This hack works around a bug in Rewrite.InsertText().
+  SourceLocation FunLocStart = MD->getLocStart().getFileLocWithOffset(-1);
   std::string FuncName = std::string(MD->getSelector().getName());
   // Convert colons to underscores.
   std::string::size_type loc = 0;
