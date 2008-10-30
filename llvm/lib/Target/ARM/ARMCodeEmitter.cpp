@@ -397,7 +397,8 @@ void ARMCodeEmitter::emitConstPoolInstruction(const MachineInstr &MI) {
       emitGlobalAddress(GV, ARM::reloc_arm_absolute, false);
       MCE.emitWordLE(0);
     } else {
-      abort(); // FIXME: Is this right?
+      assert(CV->getType()->isInteger() &&
+             "Not expecting non-integer constpool entries yet!");
       const ConstantInt *CI = dyn_cast<ConstantInt>(CV);
       uint32_t Val = *(uint32_t*)CI->getValue().getRawData();
       MCE.emitWordLE(Val);
