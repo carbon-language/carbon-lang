@@ -1476,6 +1476,15 @@ public:
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
   
+  typedef std::vector<Stmt *>::iterator iterator;
+  typedef std::vector<Stmt *>::reverse_iterator reverse_iterator;
+  
+  iterator begin() { return InitExprs.begin(); }
+  iterator end() { return InitExprs.end(); }
+  reverse_iterator rbegin() { return InitExprs.rbegin(); }
+  reverse_iterator rend() { return InitExprs.rend(); }
+  
+  // Serailization.
   virtual void EmitImpl(llvm::Serializer& S) const;
   static InitListExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 
