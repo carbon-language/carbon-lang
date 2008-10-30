@@ -324,9 +324,13 @@ class CompoundVal : public NonLoc {
   CompoundVal(const CompoundValData* D) : NonLoc(CompoundValKind, D) {}
 
 public:
-  const CompoundValData* getValue() {
+  const CompoundValData* getValue() const {
     return static_cast<CompoundValData*>(Data);
   }
+  
+  typedef llvm::ImmutableList<SVal>::iterator iterator;
+  iterator begin() const;
+  iterator end() const;  
 
   static bool classof(const SVal* V) {
     return V->getBaseKind() == NonLocKind && V->getSubKind() == CompoundValKind;

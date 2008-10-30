@@ -55,6 +55,18 @@ SVal::symbol_iterator SVal::symbol_end() const {
 }
 
 //===----------------------------------------------------------------------===//
+// Other Iterators.
+//===----------------------------------------------------------------------===//
+
+nonloc::CompoundVal::iterator nonloc::CompoundVal::begin() const {
+  return getValue()->begin();
+}
+
+nonloc::CompoundVal::iterator nonloc::CompoundVal::end() const {
+  return getValue()->end();
+}
+
+//===----------------------------------------------------------------------===//
 // Useful predicates.
 //===----------------------------------------------------------------------===//
 
@@ -481,6 +493,15 @@ void NonLoc::print(llvm::raw_ostream& Out) const {
       const nonloc::LocAsInteger& C = *cast<nonloc::LocAsInteger>(this);
       C.getLoc().print(Out);
       Out << " [as " << C.getNumBits() << " bit integer]";
+      break;
+    }
+      
+    case nonloc::CompoundValKind: {
+      const nonloc::CompoundVal& C = *cast<nonloc::CompoundVal>(this);
+      Out << " { ";
+      for (nonloc::CompoundVal::iterator I=C.begin(), E=C.end(); I!=E; ++I)
+        (*I).print(Out);
+      Out << " }";
       break;
     }
       

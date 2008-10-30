@@ -33,6 +33,10 @@ public:
   CompoundValData(QualType t, llvm::ImmutableList<SVal> l) 
     : T(t), L(l) {}
 
+  typedef llvm::ImmutableList<SVal>::iterator iterator;
+  iterator begin() const { return L.begin(); }
+  iterator end() const { return L.end(); }  
+  
   static void Profile(llvm::FoldingSetNodeID& ID, QualType T,
                       llvm::ImmutableList<SVal> L);
 
