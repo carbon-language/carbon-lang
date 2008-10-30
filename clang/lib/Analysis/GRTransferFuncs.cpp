@@ -35,7 +35,7 @@ void GRTransferFuncs::EvalStore(ExplodedNodeSet<GRState>& Dst,
     Builder.MakeNode(Dst, E, Pred, St);
   else
     Builder.MakeNode(Dst, E, Pred,
-                Eng.getStateManager().SetSVal(St, cast<Loc>(TargetLV), Val));    
+                Eng.getStateManager().SetSVal(St, cast<Loc>(TargetLV), Val));
 }
 
 void GRTransferFuncs::EvalBinOpNN(GRStateSet& OStates,
