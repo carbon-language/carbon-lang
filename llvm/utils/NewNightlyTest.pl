@@ -144,7 +144,7 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
   if (/^-release$/)        { $MAKEOPTS = "$MAKEOPTS ENABLE_OPTIMIZED=1 ".
                              "OPTIMIZE_OPTION=-O2"; $BUILDTYPE="release"; next;}
   if (/^-release-asserts$/){ $MAKEOPTS = "$MAKEOPTS ENABLE_OPTIMIZED=1 ".
-                             "DISABLE-ASSERTIONS=1 ".
+                             "DISABLE_ASSERTIONS=1 ".
                              "OPTIMIZE_OPTION=-O2"; 
                              $BUILDTYPE="release-asserts"; next;}
   if (/^-enable-llcbeta$/) { $PROGTESTOPTS .= " ENABLE_LLCBETA=1"; next; }
