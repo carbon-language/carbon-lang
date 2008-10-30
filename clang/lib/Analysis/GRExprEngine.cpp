@@ -350,6 +350,10 @@ void GRExprEngine::Visit(Stmt* S, NodeTy* Pred, NodeSet& Dst) {
       VisitCast(C, C->getSubExpr(), Pred, Dst);
       break;
     }
+
+    case Stmt::InitListExprClass:
+      VisitInitListExpr(cast<InitListExpr>(S), Pred, Dst);
+      break;
       
     case Stmt::MemberExprClass:
       VisitMemberExpr(cast<MemberExpr>(S), Pred, Dst, false);
@@ -1615,6 +1619,73 @@ void GRExprEngine::VisitDeclStmt(DeclStmt* DS, NodeTy* Pred, NodeSet& Dst) {
   }
 }
 
+void GRExprEngine::VisitInitListExpr(InitListExpr* E, NodeTy* Pred, 
+                                     NodeSet& Dst) {
+  const GRState* state = GetState(Pred);
+
+  QualType T = E->getType();
+
+  unsigned NumInitElements = E->getNumInits();
+
+  llvm::SmallVector<SVal, 10> InitVals;
+  InitVals.reserve(NumInitElements);
+  
+
+  if (T->isArrayType()) {
+    for (unsigned i = 0; i < NumInitElements; ++i) {
+      Expr* Init = E->getInit(i);
+      NodeSet Tmp;
+      Visit(Init, Pred, Tmp);
+
+      // FIXME: Use worklist to allow state splitting.
+      assert(Tmp.size() == 1);
+
+      // Get the new intermediate node and its state.
+      Pred = *Tmp.begin();
+      state = GetState(Pred);
+
+      SVal InitV = GetSVal(state, Init);
+      InitVals.push_back(InitV);
+    }
+
+    // Now we have a vector holding all init values. Make CompoundSValData.
+    SVal V = NonLoc::MakeCompoundVal(T, &InitVals[0], NumInitElements,
+                                     StateMgr.getBasicVals());
+
+    // Make final state and node.
+    state = SetSVal(state, E, V);
+
+    MakeNode(Dst, E, Pred, state);
+    return;
+  }
+
+  if (T->isStructureType()) {
+    // FIXME: to be implemented.
+    MakeNode(Dst, E, Pred, state);
+    return;
+  }
+
+  if (Loc::IsLocType(T) || T->isIntegerType()) {
+    assert (E->getNumInits() == 1);
+    NodeSet Tmp;
+    Expr* Init = E->getInit(0);
+    Visit(Init, Pred, Tmp);
+    for (NodeSet::iterator I = Tmp.begin(), EI = Tmp.end(); I != EI; ++I) {
+      state = GetState(*I);
+      MakeNode(Dst, E, *I, SetSVal(state, E, GetSVal(state, Init)));
+    }
+    return;
+  }
+
+  if (T->isUnionType()) {
+    // FIXME: to be implemented.
+    MakeNode(Dst, E, Pred, state);
+    return;
+  }
+
+  printf("InitListExpr type = %s\n", T.getAsString().c_str());
+  assert(0 && "unprocessed InitListExpr type");
+}
 
 /// VisitSizeOfAlignOfTypeExpr - Transfer function for sizeof(type).
 void GRExprEngine::VisitSizeOfAlignOfTypeExpr(SizeOfAlignOfTypeExpr* Ex,

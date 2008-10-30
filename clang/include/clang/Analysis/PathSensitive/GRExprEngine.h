@@ -516,7 +516,9 @@ protected:
   
   /// VisitGuardedExpr - Transfer function logic for ?, __builtin_choose
   void VisitGuardedExpr(Expr* Ex, Expr* L, Expr* R, NodeTy* Pred, NodeSet& Dst);
-  
+
+  void VisitInitListExpr(InitListExpr* E, NodeTy* Pred, NodeSet& Dst);
+
   /// VisitLogicalExpr - Transfer function logic for '&&', '||'
   void VisitLogicalExpr(BinaryOperator* B, NodeTy* Pred, NodeSet& Dst);
   
