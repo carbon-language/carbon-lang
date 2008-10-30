@@ -266,7 +266,7 @@ namespace {
                                       const char *funcName, std::string Tag);
     std::string SynthesizeBlockImpl(BlockExpr *CE, std::string Tag, 
                                     bool hasCopyDisposeHelpers);
-    std::string SynthesizeBlockCall(CallExpr *Exp);
+    Stmt *SynthesizeBlockCall(CallExpr *Exp);
     void SynthesizeBlockLiterals(SourceLocation FunLocStart,
                                    const char *FunName);
     
@@ -3466,7 +3466,7 @@ void RewriteObjC::GetBlockCallExprs(Stmt *S) {
   return;
 }
 
-std::string RewriteObjC::SynthesizeBlockCall(CallExpr *Exp) {
+Stmt *RewriteObjC::SynthesizeBlockCall(CallExpr *Exp) {
   // Navigate to relevant type information.
   const char *closureName = 0;
   const BlockPointerType *CPT = 0;
@@ -3489,49 +3489,61 @@ std::string RewriteObjC::SynthesizeBlockCall(CallExpr *Exp) {
   const FunctionTypeProto *FTP = dyn_cast<FunctionTypeProto>(FT);
   // FTP will be null for closures that don't take arguments.
   
-  // Build a closure call - start with a paren expr to enforce precedence.
-  std::string BlockCall = "(";
+  RecordDecl *RD = RecordDecl::Create(*Context, TagDecl::TK_struct, TUDecl,
+                                      SourceLocation(),
+                                      &Context->Idents.get("__block_impl"));
+  QualType PtrBlock = Context->getPointerType(Context->getTagDeclType(RD));
 
-  // Synthesize the cast.  
-  BlockCall += "(" + Exp->getType().getAsString() + "(*)";
-  BlockCall += "(struct __block_impl *";
+  // Generate a funky cast.
+  llvm::SmallVector<QualType, 8> ArgTypes;
+    
+  // Push the block argument type.
+  ArgTypes.push_back(PtrBlock);
   if (FTP) {
     for (FunctionTypeProto::arg_type_iterator I = FTP->arg_type_begin(), 
-         E = FTP->arg_type_end(); I && (I != E); ++I)
-      BlockCall += ", " + (*I).getAsString();
+         E = FTP->arg_type_end(); I && (I != E); ++I) {
+      QualType t = *I;
+      // Make sure we convert "t (^)(...)" to "t (*)(...)".
+      if (isBlockPointerType(t)) {
+        const BlockPointerType *BPT = t->getAsBlockPointerType();
+        t = Context->getPointerType(BPT->getPointeeType());
+      }
+      ArgTypes.push_back(t);
+    }
   }
-  BlockCall += "))"; // close the argument list and paren expression.
+  // Now do the pointer to function cast.
+  QualType PtrToFuncCastType = Context->getFunctionType(Exp->getType(), 
+    &ArgTypes[0], ArgTypes.size(), false/*no variadic*/, 0);
+    
+  PtrToFuncCastType = Context->getPointerType(PtrToFuncCastType);
   
-  // Invoke the closure. We need to cast it since the declaration type is
-  // bogus (it's a function pointer type)
-  BlockCall += "((struct __block_impl *)";
-  std::string closureExprBufStr;
-  llvm::raw_string_ostream closureExprBuf(closureExprBufStr);
-  Exp->getCallee()->printPretty(closureExprBuf);
-  BlockCall += closureExprBuf.str();
-  BlockCall += ")->FuncPtr)";
+  CastExpr *BlkCast = new CStyleCastExpr(PtrBlock, Exp->getCallee(), PtrBlock, SourceLocation());
+  // Don't forget the parens to enforce the proper binding.
+  ParenExpr *PE = new ParenExpr(SourceLocation(), SourceLocation(), BlkCast);
+  //PE->dump();
   
-  // Add the arguments.
-  BlockCall += "((struct __block_impl *)";
-  BlockCall += closureExprBuf.str();
+  FieldDecl *FD = FieldDecl::Create(*Context, SourceLocation(),
+                     &Context->Idents.get("FuncPtr"), Context->VoidPtrTy);
+  MemberExpr *ME = new MemberExpr(PE, true, FD, SourceLocation(), FD->getType());
+  
+  CastExpr *FunkCast = new CStyleCastExpr(PtrToFuncCastType, ME, PtrToFuncCastType, SourceLocation());
+  PE = new ParenExpr(SourceLocation(), SourceLocation(), FunkCast);
+  
+  llvm::SmallVector<Expr*, 8> BlkExprs;
+  // Add the implicit argument.
+  BlkExprs.push_back(BlkCast);
+  // Add the user arguments.
   for (CallExpr::arg_iterator I = Exp->arg_begin(), 
        E = Exp->arg_end(); I != E; ++I) {
-    std::string syncExprBufS;
-    llvm::raw_string_ostream Buf(syncExprBufS);
-    (*I)->printPretty(Buf);
-    BlockCall += ", " + Buf.str();
+    BlkExprs.push_back(*I);
   }
-  return BlockCall;
+  CallExpr *CE = new CallExpr(PE, &BlkExprs[0], BlkExprs.size(), Exp->getType(), SourceLocation());
+  return CE;
 }
 
 void RewriteObjC::RewriteBlockCall(CallExpr *Exp) {
-  std::string BlockCall = SynthesizeBlockCall(Exp);
-  
-  const char *startBuf = SM->getCharacterData(Exp->getLocStart());
-  const char *endBuf = SM->getCharacterData(Exp->getLocEnd());
-
-  ReplaceText(Exp->getLocStart(), endBuf-startBuf, 
-              BlockCall.c_str(), BlockCall.size());
+  Stmt *BlockCall = SynthesizeBlockCall(Exp);
+  ReplaceStmt(Exp, BlockCall);
 }
 
 void RewriteObjC::RewriteBlockDeclRefExpr(BlockDeclRefExpr *BDRE) {
@@ -3954,8 +3966,11 @@ Stmt *RewriteObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
       RewriteBlockDeclRefExpr(BDRE);
   }
   if (CallExpr *CE = dyn_cast<CallExpr>(S)) {
-    if (CE->getCallee()->getType()->isBlockPointerType())
-      RewriteBlockCall(CE);
+    if (CE->getCallee()->getType()->isBlockPointerType()) {
+      Stmt *BlockCall = SynthesizeBlockCall(CE);
+      ReplaceStmt(S, BlockCall);
+      return BlockCall;
+    }
   }
   if (CastExpr *CE = dyn_cast<CastExpr>(S)) {
     RewriteCastExpr(CE);
