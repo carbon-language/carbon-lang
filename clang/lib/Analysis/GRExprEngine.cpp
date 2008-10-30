@@ -1637,23 +1637,30 @@ public:
 
 void GRExprEngine::VisitInitListExpr(InitListExpr* E, NodeTy* Pred, 
                                      NodeSet& Dst) {
+
   const GRState* state = GetState(Pred);
-
   QualType T = E->getType();
-
   unsigned NumInitElements = E->getNumInits();  
 
   if (T->isArrayType() || T->isStructureType()) {
 
-
-    llvm::SmallVector<InitListWLItem, 10> WorkList;
-    WorkList.reserve(NumInitElements);
-  
-    WorkList.push_back(InitListWLItem(Pred, getBasicVals().getEmptySValList(),
-                              E->rbegin()));
+    llvm::ImmutableList<SVal> StartVals = getBasicVals().getEmptySValList();
     
+    // Handle base case where the initializer has no elements.
+    // e.g: static int* myArray[] = {};
+    if (NumInitElements == 0) {
+      SVal V = NonLoc::MakeCompoundVal(T, StartVals, getBasicVals());
+      MakeNode(Dst, E, Pred, BindExpr(state, E, V));
+      return;
+    }      
+    
+    // Create a worklist to process the initializers.
+    llvm::SmallVector<InitListWLItem, 10> WorkList;
+    WorkList.reserve(NumInitElements);  
+    WorkList.push_back(InitListWLItem(Pred, StartVals, E->rbegin()));    
     InitListExpr::reverse_iterator ItrEnd = E->rend();
     
+    // Process the worklist until it is empty.
     while (!WorkList.empty()) {
       InitListWLItem X = WorkList.back();
       WorkList.pop_back();
