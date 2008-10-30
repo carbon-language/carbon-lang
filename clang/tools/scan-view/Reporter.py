@@ -166,6 +166,8 @@ class RadarClassificationParameter(SelectionParameter):
       return '3'
     elif bugtype.find("dereference") != -1:
       return '2'
+    elif bugtype.find("missing ivar release") != -1:
+      return '3'
     else:
       return '7'
 
