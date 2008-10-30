@@ -2390,6 +2390,8 @@ SDValue SelectionDAG::getNode(unsigned Opcode, MVT VT,
            "Shift operators return type must be the same as their first arg");
     assert(VT.isInteger() && N2.getValueType().isInteger() &&
            "Shifts only work on integers");
+    assert(N2.getValueType() == TLI.getShiftAmountTy() &&
+           "Wrong type for shift amount");
 
     // Always fold shifts of i1 values so the code generator doesn't need to
     // handle them.  Since we know the size of the shift has to be less than the
@@ -2763,12 +2765,15 @@ static SDValue getMemsetValue(SDValue Value, MVT VT, SelectionDAG &DAG) {
     return DAG.getConstantFP(APFloat(Val), VT);
   }
 
+  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
   Value = DAG.getNode(ISD::ZERO_EXTEND, VT, Value);
   unsigned Shift = 8;
   for (unsigned i = NumBits; i > 8; i >>= 1) {
     Value = DAG.getNode(ISD::OR, VT,
                         DAG.getNode(ISD::SHL, VT, Value,
-                                    DAG.getConstant(Shift, MVT::i8)), Value);
+                                    DAG.getConstant(Shift,
+                                                    TLI.getShiftAmountTy())),
+                        Value);
     Shift <<= 1;
   }
 
