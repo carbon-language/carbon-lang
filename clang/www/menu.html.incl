@@ -27,8 +27,8 @@
     <a href="http://llvm.org/svn/llvm-project/cfe/trunk/">Browse SVN</a>
     <a href="http://llvm.org/viewvc/llvm-project/cfe/trunk/">Browse ViewVC</a>
     <a href="http://clang.llvm.org/doxygen/">doxygen</a>
-    <a href="http://keeda.stanford.edu/~ddunbar/clang/references.html">Spec. References</a>
-    <a href="http://keeda.stanford.edu/~ddunbar/clang/coverage/">Testing Coverage</a>
+    <a href="http://t1.minormatter.com/~ddunbar/references.html">Spec. References</a>
+<!--    <a href="http://keeda.stanford.edu/~ddunbar/clang/coverage/">Testing Coverage</a> -->
   </div>
   
   <div class="submenu">
