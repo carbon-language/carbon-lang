@@ -35,7 +35,7 @@ void GRTransferFuncs::EvalStore(ExplodedNodeSet<GRState>& Dst,
     Builder.MakeNode(Dst, E, Pred, St);
   else
     Builder.MakeNode(Dst, E, Pred,
-                Eng.getStateManager().SetSVal(St, cast<Loc>(TargetLV), Val));
+                   Eng.getStateManager().BindLoc(St, cast<Loc>(TargetLV), Val));
 }
 
 void GRTransferFuncs::EvalBinOpNN(GRStateSet& OStates,
@@ -44,5 +44,5 @@ void GRTransferFuncs::EvalBinOpNN(GRStateSet& OStates,
                                   BinaryOperator::Opcode Op,
                                   NonLoc L, NonLoc R) {
   
-  OStates.Add(StateMgr.SetSVal(St, Ex, DetermEvalBinOpNN(StateMgr, Op, L, R)));
+  OStates.Add(StateMgr.BindExpr(St, Ex, DetermEvalBinOpNN(StateMgr, Op, L, R)));
 }

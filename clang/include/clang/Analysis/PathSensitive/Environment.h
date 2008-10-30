@@ -139,8 +139,8 @@ public:
     return Environment(F.GetEmptyMap(), F.GetEmptyMap());
   }
   
-  Environment SetSVal(const Environment& Env, Expr* E, SVal V,
-                      bool isBlkExpr, bool Invalidate);
+  Environment BindExpr(const Environment& Env, Expr* E, SVal V,
+                       bool isBlkExpr, bool Invalidate);
 
   Environment RemoveDeadBindings(Environment Env, Stmt* Loc,
                               const LiveVariables& Liveness,

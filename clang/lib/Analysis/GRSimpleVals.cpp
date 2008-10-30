@@ -370,9 +370,9 @@ void GRSimpleVals::EvalCall(ExplodedNodeSet<GRState>& Dst,
     SVal V = StateMgr.GetSVal(St, *I);
     
     if (isa<loc::MemRegionVal>(V))
-      St = StateMgr.SetSVal(St, cast<Loc>(V), UnknownVal());
+      St = StateMgr.BindLoc(St, cast<Loc>(V), UnknownVal());
     else if (isa<nonloc::LocAsInteger>(V))
-      St = StateMgr.SetSVal(St, cast<nonloc::LocAsInteger>(V).getLoc(),
+      St = StateMgr.BindLoc(St, cast<nonloc::LocAsInteger>(V).getLoc(),
                             UnknownVal());
     
   }
@@ -389,7 +389,7 @@ void GRSimpleVals::EvalCall(ExplodedNodeSet<GRState>& Dst,
              ? cast<SVal>(loc::SymbolVal(Sym)) 
              : cast<SVal>(nonloc::SymbolVal(Sym));
     
-    St = StateMgr.SetSVal(St, CE, X, Eng.getCFG().isBlkExpr(CE), false);
+    St = StateMgr.BindExpr(St, CE, X, Eng.getCFG().isBlkExpr(CE), false);
   }  
     
   Builder.MakeNode(Dst, CE, Pred, St);
@@ -418,7 +418,7 @@ void GRSimpleVals::EvalObjCMessageExpr(ExplodedNodeSet<GRState>& Dst,
     SVal V = StateMgr.GetSVal(St, *I);
     
     if (isa<Loc>(V))
-      St = StateMgr.SetSVal(St, cast<Loc>(V), UnknownVal());
+      St = StateMgr.BindLoc(St, cast<Loc>(V), UnknownVal());
   }
   
   Builder.MakeNode(Dst, ME, Pred, St);

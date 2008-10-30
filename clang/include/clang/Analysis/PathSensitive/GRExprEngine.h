@@ -405,22 +405,22 @@ protected:
   
 public:
   
-  const GRState* SetSVal(const GRState* St, Expr* Ex, SVal V) {
-    return StateMgr.SetSVal(St, Ex, V);
+  const GRState* BindExpr(const GRState* St, Expr* Ex, SVal V) {
+    return StateMgr.BindExpr(St, Ex, V);
   }
   
-  const GRState* SetSVal(const GRState* St, const Expr* Ex, SVal V) {
-    return SetSVal(St, const_cast<Expr*>(Ex), V);
+  const GRState* BindExpr(const GRState* St, const Expr* Ex, SVal V) {
+    return BindExpr(St, const_cast<Expr*>(Ex), V);
   }
     
 protected:
  
-  const GRState* SetBlkExprSVal(const GRState* St, Expr* Ex, SVal V) {
-    return StateMgr.SetSVal(St, Ex, V, true, false);
+  const GRState* BindBlkExpr(const GRState* St, Expr* Ex, SVal V) {
+    return StateMgr.BindExpr(St, Ex, V, true, false);
   }
   
-  const GRState* SetSVal(const GRState* St, Loc LV, SVal V) {
-    return StateMgr.SetSVal(St, LV, V);
+  const GRState* BindLoc(const GRState* St, Loc LV, SVal V) {
+    return StateMgr.BindLoc(St, LV, V);
   }
   
   SVal GetSVal(const GRState* St, Expr* Ex) {

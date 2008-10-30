@@ -59,8 +59,7 @@ GRStateManager::RemoveDeadBindings(const GRState* St, Stmt* Loc,
                                            LSymbols, DSymbols);
 }
 
-const GRState* GRStateManager::SetSVal(const GRState* St, Loc LV,
-                                             SVal V) {
+const GRState* GRStateManager::BindLoc(const GRState* St, Loc LV, SVal V) {
   
   Store OldStore = St->getStore();
   Store NewStore = StoreMgr->Bind(OldStore, LV, V);

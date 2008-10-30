@@ -89,8 +89,8 @@ SVal Environment::GetBlkExprSVal(Expr* E, BasicValueFactory& BasicVals) const {
   }
 }
 
-Environment EnvironmentManager::SetSVal(const Environment& Env, Expr* E, SVal V,
-                                        bool isBlkExpr, bool Invalidate) {  
+Environment EnvironmentManager::BindExpr(const Environment& Env, Expr* E,SVal V,
+                                         bool isBlkExpr, bool Invalidate) {  
   assert (E);
   
   if (V.isUnknown()) {    

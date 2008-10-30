@@ -398,11 +398,11 @@ public:
     return St->getEnvironment().GetBlkExprSVal(Ex, BasicVals);
   }
   
-  const GRState* SetSVal(const GRState* St, Expr* Ex, SVal V,
-                            bool isBlkExpr, bool Invalidate) {
+  const GRState* BindExpr(const GRState* St, Expr* Ex, SVal V,
+                          bool isBlkExpr, bool Invalidate) {
     
     const Environment& OldEnv = St->getEnvironment();
-    Environment NewEnv = EnvMgr.SetSVal(OldEnv, Ex, V, isBlkExpr, Invalidate);
+    Environment NewEnv = EnvMgr.BindExpr(OldEnv, Ex, V, isBlkExpr, Invalidate);
     
     if (NewEnv == OldEnv)
       return St;
@@ -412,8 +412,8 @@ public:
     return getPersistentState(NewSt);
   }
   
-  const GRState* SetSVal(const GRState* St, Expr* Ex, SVal V,
-                         bool Invalidate = true) {
+  const GRState* BindExpr(const GRState* St, Expr* Ex, SVal V,
+                          bool Invalidate = true) {
     
     bool isBlkExpr = false;
     
@@ -426,7 +426,7 @@ public:
         return St;
     }
     
-    return SetSVal(St, Ex, V, isBlkExpr, Invalidate);
+    return BindExpr(St, Ex, V, isBlkExpr, Invalidate);
   }
 
   SVal ArrayToPointer(SVal Array) {
@@ -456,11 +456,11 @@ public:
     return StoreMgr->GetRegionSVal(St->getStore(), R);
   }  
   
-  void SetSVal(GRState& St, Loc LV, SVal V) {
+  void BindLoc(GRState& St, Loc LV, SVal V) {
     St.St = StoreMgr->Bind(St.St, LV, V);
   }
   
-  const GRState* SetSVal(const GRState* St, Loc LV, SVal V);  
+  const GRState* BindLoc(const GRState* St, Loc LV, SVal V);  
 
   void Unbind(GRState& St, Loc LV) {
     St.St = StoreMgr->Remove(St.St, LV);
@@ -558,16 +558,16 @@ public:
   }
   
   GRStateRef SetSVal(Expr* Ex, SVal V, bool isBlkExpr, bool Invalidate) {
-    return GRStateRef(Mgr->SetSVal(St, Ex, V, isBlkExpr, Invalidate), *Mgr);
+    return GRStateRef(Mgr->BindExpr(St, Ex, V, isBlkExpr, Invalidate), *Mgr);
   }
   
   GRStateRef SetSVal(Expr* Ex, SVal V, bool Invalidate = true) {
-    return GRStateRef(Mgr->SetSVal(St, Ex, V, Invalidate), *Mgr);
+    return GRStateRef(Mgr->BindExpr(St, Ex, V, Invalidate), *Mgr);
   }
   
   GRStateRef SetSVal(Loc LV, SVal V) {
     GRState StImpl = *St;
-    Mgr->SetSVal(StImpl, LV, V);    
+    Mgr->BindLoc(StImpl, LV, V);    
     return GRStateRef(Mgr->getPersistentState(StImpl), *Mgr);
   }
   
