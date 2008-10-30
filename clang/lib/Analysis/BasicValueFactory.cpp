@@ -14,33 +14,17 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Analysis/PathSensitive/BasicValueFactory.h"
-#include "clang/Analysis/PathSensitive/SVals.h"
 
 using namespace clang;
 
-CompoundValData::CompoundValData(QualType t, const SVal* vals, unsigned n,
-                                 llvm::BumpPtrAllocator& A)
-  : T(t), NumVals(n) {
-
-  Vals = (SVal*) A.Allocate<SVal>(n);
-
-  new (Vals) SVal[n];
-
-  for (unsigned i = 0; i < n; ++i)
-    Vals[i] = vals[i];
-}
-
 void CompoundValData::Profile(llvm::FoldingSetNodeID& ID, QualType T, 
-                              unsigned N, const SVal* Vals) {
+                              llvm::ImmutableList<SVal> L) {
   T.Profile(ID);
-  ID.AddInteger(N);
-  for (unsigned i = 0; i < N; ++i)
-    Vals[i].Profile(ID);
+  ID.AddPointer(L.getInternalPointer());
 }
 
 typedef std::pair<SVal, uintptr_t> SValData;
 typedef std::pair<SVal, SVal> SValPair;
-
 
 namespace llvm {
 template<> struct FoldingSetTrait<SValData> {
@@ -127,17 +111,18 @@ BasicValueFactory::getConstraint(SymbolID sym, BinaryOperator::Opcode Op,
 }
 
 const CompoundValData* 
-BasicValueFactory::getCompoundValData(QualType T, const SVal* Vals,
-                                      unsigned NumVals) {
+BasicValueFactory::getCompoundValData(QualType T,
+                                      llvm::ImmutableList<SVal> Vals) {
+  
   llvm::FoldingSetNodeID ID;
-  CompoundValData::Profile(ID, T, NumVals, Vals);
+  CompoundValData::Profile(ID, T, Vals);
   void* InsertPos;
 
   CompoundValData* D = CompoundValDataSet.FindNodeOrInsertPos(ID, InsertPos);
 
   if (!D) {
     D = (CompoundValData*) BPAlloc.Allocate<CompoundValData>();
-    new (D) CompoundValData(T, Vals, NumVals, BPAlloc);
+    new (D) CompoundValData(T, Vals);
     CompoundValDataSet.InsertNode(D, InsertPos);
   }
 

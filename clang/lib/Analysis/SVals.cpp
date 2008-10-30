@@ -245,9 +245,9 @@ NonLoc NonLoc::MakeIntTruthVal(BasicValueFactory& BasicVals, bool b) {
   return nonloc::ConcreteInt(BasicVals.getTruthValue(b));
 }
 
-NonLoc NonLoc::MakeCompoundVal(QualType T, SVal* Vals, unsigned NumSVals,
+NonLoc NonLoc::MakeCompoundVal(QualType T, llvm::ImmutableList<SVal> Vals,
                                BasicValueFactory& BasicVals) {
-  return nonloc::CompoundVal(BasicVals.getCompoundValData(T, Vals, NumSVals));
+  return nonloc::CompoundVal(BasicVals.getCompoundValData(T, Vals));
 }
 
 SVal SVal::GetSymbolValue(SymbolManager& SymMgr, VarDecl* D) {
@@ -258,6 +258,11 @@ SVal SVal::GetSymbolValue(SymbolManager& SymMgr, VarDecl* D) {
     return loc::SymbolVal(SymMgr.getSymbol(D));
   
   return nonloc::SymbolVal(SymMgr.getSymbol(D));
+}
+
+nonloc::LocAsInteger nonloc::LocAsInteger::Make(BasicValueFactory& Vals, Loc V,
+                                                unsigned Bits) {
+  return LocAsInteger(Vals.getPersistentSValWithData(V, Bits));
 }
 
 //===----------------------------------------------------------------------===//
@@ -353,7 +358,7 @@ void NonLoc::print(std::ostream& Out) const {
       Out << " [as " << C.getNumBits() << " bit integer]";
       break;
     }
-      
+            
     default:
       assert (false && "Pretty-printed not implemented for this NonLoc.");
       break;

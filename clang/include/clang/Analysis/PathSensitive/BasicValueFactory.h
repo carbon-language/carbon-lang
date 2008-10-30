@@ -17,33 +17,26 @@
 #define LLVM_CLANG_ANALYSIS_BASICVALUEFACTORY_H
 
 #include "clang/Analysis/PathSensitive/SymbolManager.h"
+#include "clang/Analysis/PathSensitive/SVals.h"
 #include "clang/AST/ASTContext.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/APSInt.h"
-
-namespace llvm {
-  class BumpPtrAllocator;
-}
+#include "llvm/ADT/ImmutableList.h"
 
 namespace clang {
   
-class SVal;
-
 class CompoundValData : public llvm::FoldingSetNode {
   QualType T;
-  unsigned NumVals;
-  SVal* Vals;
+  llvm::ImmutableList<SVal> L;
 
 public:
-  CompoundValData(QualType t, const SVal* vals, unsigned n,
-                  llvm::BumpPtrAllocator& A);
+  CompoundValData(QualType t, llvm::ImmutableList<SVal> l) 
+    : T(t), L(l) {}
 
-  static void Profile(llvm::FoldingSetNodeID& ID, QualType T, unsigned N, 
-                      const SVal* Vals);
+  static void Profile(llvm::FoldingSetNodeID& ID, QualType T,
+                      llvm::ImmutableList<SVal> L);
 
-  void Profile(llvm::FoldingSetNodeID& ID) {
-    Profile(ID, T, NumVals, Vals);
-  }
+  void Profile(llvm::FoldingSetNodeID& ID) { Profile(ID, T, L); }
 };
 
 class BasicValueFactory {
@@ -62,11 +55,13 @@ class BasicValueFactory {
   void*         PersistentSVals;
   void*         PersistentSValPairs;
 
-  llvm::FoldingSet<CompoundValData> CompoundValDataSet;
+  llvm::ImmutableList<SVal>::Factory SValListFactory;
+  llvm::FoldingSet<CompoundValData>  CompoundValDataSet;
 
 public:
   BasicValueFactory(ASTContext& ctx, llvm::BumpPtrAllocator& Alloc) 
-  : Ctx(ctx), BPAlloc(Alloc), PersistentSVals(0), PersistentSValPairs(0) {}
+  : Ctx(ctx), BPAlloc(Alloc), PersistentSVals(0), PersistentSValPairs(0),
+    SValListFactory(Alloc) {}
 
   ~BasicValueFactory();
 
@@ -87,8 +82,16 @@ public:
   const SymIntConstraint& getConstraint(SymbolID sym, BinaryOperator::Opcode Op,
                                         const llvm::APSInt& V);
 
-  const CompoundValData* getCompoundValData(QualType T, const SVal* Vals,
-                                            unsigned NumVals);
+  const CompoundValData* getCompoundValData(QualType T, 
+                                            llvm::ImmutableList<SVal> Vals);
+  
+  llvm::ImmutableList<SVal> getEmptySValList() {
+    return SValListFactory.GetEmptyList();
+  }
+  
+  llvm::ImmutableList<SVal> consVals(SVal X, llvm::ImmutableList<SVal> L) {
+    return SValListFactory.Add(X, L);
+  }
 
   const llvm::APSInt* EvaluateAPSInt(BinaryOperator::Opcode Op,
                                      const llvm::APSInt& V1,

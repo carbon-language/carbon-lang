@@ -15,15 +15,18 @@
 #ifndef LLVM_CLANG_ANALYSIS_RVALUE_H
 #define LLVM_CLANG_ANALYSIS_RVALUE_H
 
-#include "clang/Analysis/PathSensitive/BasicValueFactory.h"
+#include "clang/Analysis/PathSensitive/SymbolManager.h"
 #include "llvm/Support/Casting.h"
+#include "llvm/ADT/ImmutableList.h"
   
 //==------------------------------------------------------------------------==//
 //  Base SVal types.
 //==------------------------------------------------------------------------==//
 
 namespace clang {
-  
+
+class CompoundValData;
+class BasicValueFactory;
 class MemRegion;
 class GRStateManager;
   
@@ -170,7 +173,7 @@ public:
     
   static NonLoc MakeIntTruthVal(BasicValueFactory& BasicVals, bool b);
 
-  static NonLoc MakeCompoundVal(QualType T, SVal* Vals, unsigned NumSVals,
+  static NonLoc MakeCompoundVal(QualType T, llvm::ImmutableList<SVal> Vals,
                                 BasicValueFactory& BasicVals);
 
   // Implement isa<T> support.
@@ -312,10 +315,7 @@ public:
     return V->getSubKind() == LocAsIntegerKind;
   }
   
-  static inline LocAsInteger Make(BasicValueFactory& Vals, Loc V,
-                                   unsigned Bits) {    
-    return LocAsInteger(Vals.getPersistentSValWithData(V, Bits));
-  }
+  static LocAsInteger Make(BasicValueFactory& Vals, Loc V, unsigned Bits);
 };
 
 class CompoundVal : public NonLoc {
