@@ -37,11 +37,6 @@
 # error "Must #define __STDC_LIMIT_MACROS before #including Support/DataTypes.h"
 #endif
 
-#if !defined(__STDC_CONSTANT_MACROS)
-# error "Must #define __STDC_CONSTANT_MACROS before " \
-        "#including Support/DataTypes.h"
-#endif
-
 // Note that <inttypes.h> includes <stdint.h>, if this is a C99 system.
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
