@@ -7941,9 +7941,20 @@ SDValue SelectionDAGLegalize::WidenVectorOp(SDValue Op, MVT WidenVT) {
       break;
     }  
     break;
+  }
+  case ISD::VSETCC: {
+    // Determine widen for the operand
+    SDValue Tmp1 = Node->getOperand(0);
+    MVT TmpVT = Tmp1.getValueType();
+    assert(TmpVT.isVector() && "can not widen non vector type");
+    MVT TmpEVT = TmpVT.getVectorElementType();
+    MVT TmpWidenVT =  MVT::getVectorVT(TmpEVT, NewNumElts);
+    Tmp1 = WidenVectorOp(Tmp1, TmpWidenVT);
+    SDValue Tmp2 = WidenVectorOp(Node->getOperand(1), TmpWidenVT);
+    Result = DAG.getNode(Node->getOpcode(), WidenVT, Tmp1, Tmp2, 
+                         Node->getOperand(2));
     break;
   }
-
   case ISD::ATOMIC_CMP_SWAP_8:
   case ISD::ATOMIC_CMP_SWAP_16:
   case ISD::ATOMIC_CMP_SWAP_32:
