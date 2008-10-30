@@ -105,9 +105,9 @@ nonloc::ConcreteInt::EvalMinus(BasicValueFactory& BasicVals, UnaryOperator* U) c
 // Transfer function dispatch for Locs.
 //===----------------------------------------------------------------------===//
 
-SVal
-loc::ConcreteInt::EvalBinOp(BasicValueFactory& BasicVals, BinaryOperator::Opcode Op,
-                             const loc::ConcreteInt& R) const {
+SVal loc::ConcreteInt::EvalBinOp(BasicValueFactory& BasicVals,
+                                 BinaryOperator::Opcode Op,
+                                 const loc::ConcreteInt& R) const {
   
   assert (Op == BinaryOperator::Add || Op == BinaryOperator::Sub ||
           (Op >= BinaryOperator::LT && Op <= BinaryOperator::NE));
