@@ -1202,7 +1202,9 @@ void GRExprEngine::VisitCallRec(CallExpr* CE, NodeTy* Pred,
             break;
             
           case 14:
-            if (!memcmp(s, "dtrace_assfail", 14)) Builder->BuildSinks = true;
+            if (!memcmp(s, "dtrace_assfail", 14) ||
+                !memcmp(s, "yy_fatal_error", 14))
+              Builder->BuildSinks = true;
             break;
             
           case 26:
