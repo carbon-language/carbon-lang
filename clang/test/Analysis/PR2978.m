@@ -26,6 +26,8 @@
 @property(retain) id M;
 @property(retain) id V;
 @property(retain) id W;
+-(id) O;
+-(void) setO: (id) arg;
 @end
 
 @implementation MyClass
@@ -38,6 +40,9 @@
 @synthesize V = _V;
 @synthesize W = _W; // expected-warning{{The '_W' instance variable was retained by a synthesized property but wasn't released in 'dealloc'}}
 
+-(id) O{ return 0; }
+-(void) setO:(id)arg { }
+
 - (void)dealloc
 {
   [_X release];
@@ -47,7 +52,7 @@
   self.M = 0; // This will release '_M'
   [self setV:0]; // This will release '_V'
   [self setW:@"newW"]; // This will release '_W', but retain the new value
-  
+  self.O = 0; // no-warning  
   [super dealloc];
 }
 
