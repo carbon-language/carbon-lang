@@ -28,10 +28,11 @@ static bool scan_dealloc(Stmt* S, Selector Dealloc) {
   
   if (ObjCMessageExpr* ME = dyn_cast<ObjCMessageExpr>(S))
     if (ME->getSelector() == Dealloc)
-      if (Expr* Receiver = ME->getReceiver()->IgnoreParenCasts())
-        if (PredefinedExpr* E = dyn_cast<PredefinedExpr>(Receiver))
-          if (E->getIdentType() == PredefinedExpr::ObjCSuper)
-            return true;
+      if(ME->getReceiver())
+        if (Expr* Receiver = ME->getReceiver()->IgnoreParenCasts())
+          if (PredefinedExpr* E = dyn_cast<PredefinedExpr>(Receiver))
+            if (E->getIdentType() == PredefinedExpr::ObjCSuper)
+              return true;
 
   // Recurse to children.
 
@@ -42,17 +43,44 @@ static bool scan_dealloc(Stmt* S, Selector Dealloc) {
   return false;
 }
 
-static bool scan_ivar_release(Stmt* S, ObjCIvarDecl* ID, Selector Release ) {  
+static bool scan_ivar_release(Stmt* S, ObjCIvarDecl* ID, 
+                              const ObjCPropertyDecl* PD, 
+                              Selector Release, 
+                              IdentifierInfo* SelfII,
+                              ASTContext& Ctx) {  
+  
+  // [mMyIvar release]
   if (ObjCMessageExpr* ME = dyn_cast<ObjCMessageExpr>(S))
     if (ME->getSelector() == Release)
-      if (Expr* Receiver = ME->getReceiver()->IgnoreParenCasts())
-        if (ObjCIvarRefExpr* E = dyn_cast<ObjCIvarRefExpr>(Receiver))
-          if (E->getDecl() == ID)
-            return true;
+      if(ME->getReceiver())
+        if (Expr* Receiver = ME->getReceiver()->IgnoreParenCasts())
+          if (ObjCIvarRefExpr* E = dyn_cast<ObjCIvarRefExpr>(Receiver))
+            if (E->getDecl() == ID)
+              return true;
 
+  // [self setMyIvar:nil];
+  if (ObjCMessageExpr* ME = dyn_cast<ObjCMessageExpr>(S))
+    if(ME->getReceiver())
+      if (Expr* Receiver = ME->getReceiver()->IgnoreParenCasts())
+        if (DeclRefExpr* E = dyn_cast<DeclRefExpr>(Receiver))
+          if (E->getDecl()->getIdentifier() == SelfII)
+            if (ME->getMethodDecl() == PD->getSetterMethodDecl() &&
+                ME->getNumArgs() == 1 &&
+                ME->getArg(0)->isNullPointerConstant(Ctx))
+              return true;
+  
+  // self.myIvar = nil;
+  if (BinaryOperator* BO = dyn_cast<BinaryOperator>(S))
+    if (BO->isAssignmentOp())
+      if(ObjCPropertyRefExpr* PRE = 
+         dyn_cast<ObjCPropertyRefExpr>(BO->getLHS()->IgnoreParenCasts()))
+          if(PRE->getProperty() == PD)
+            if(BO->getRHS()->isNullPointerConstant(Ctx))
+              return true;
+  
   // Recurse to children.
   for (Stmt::child_iterator I = S->child_begin(), E= S->child_end(); I!=E; ++I)
-    if (*I && scan_ivar_release(*I, ID, Release))
+    if (*I && scan_ivar_release(*I, ID, PD, Release, SelfII, Ctx))
       return true;
 
   return false;
@@ -151,6 +179,9 @@ void clang::CheckObjCDealloc(ObjCImplementationDecl* D,
   IdentifierInfo* RII = &Ctx.Idents.get("release");
   Selector RS = Ctx.Selectors.getSelector(0, &RII);  
   
+  // Get the "self" identifier
+  IdentifierInfo* SelfII = &Ctx.Idents.get("self");
+  
   // Scan for missing and extra releases of ivars used by implementations
   // of synthesized properties
   for (ObjCImplementationDecl::propimpl_iterator I = D->propimpl_begin(),
@@ -178,7 +209,8 @@ void clang::CheckObjCDealloc(ObjCImplementationDecl* D,
               
     // ivar must be released if and only if the kind of setter was not 'assign'
     bool requiresRelease = PD->getSetterKind() != ObjCPropertyDecl::Assign;
-    if(scan_ivar_release(MD->getBody(), ID, RS) != requiresRelease) {
+    if(scan_ivar_release(MD->getBody(), ID, PD, RS, SelfII, Ctx) 
+       != requiresRelease) {
       const char *name;
       const char* category = "Memory (Core Foundation/Objective-C)";
       
