@@ -1678,7 +1678,7 @@ void GRExprEngine::VisitInitListExpr(InitListExpr* E, NodeTy* Pred,
           SVal V = NonLoc::MakeCompoundVal(T, NewVals, getBasicVals());
 
           // Make final state and node.
-          MakeNode(Dst, E, Pred,  BindExpr(state, E, V));
+          MakeNode(Dst, E, *NI, BindExpr(state, E, V));
         }
         else {
           // Still some initializer values to go.  Push them onto the worklist.
