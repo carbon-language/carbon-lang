@@ -85,7 +85,9 @@ ARMTargetMachine::ARMTargetMachine(const Module &M, const std::string &FS,
     InstrInfo(Subtarget),
     FrameInfo(Subtarget),
     JITInfo(*this),
-    TLInfo(*this) {}
+    TLInfo(*this) {
+  DefRelocModel = getRelocationModel();
+}
 
 unsigned ARMTargetMachine::getJITMatchQuality() {
 #if defined(__arm__)
@@ -157,7 +159,8 @@ bool ARMTargetMachine::addAssemblyEmitter(PassManagerBase &PM, bool Fast,
 bool ARMTargetMachine::addCodeEmitter(PassManagerBase &PM, bool Fast,
                                       bool DumpAsm, MachineCodeEmitter &MCE) {
   // FIXME: Move this to TargetJITInfo!
-  setRelocationModel(Reloc::Static);
+  if (DefRelocModel == Reloc::Default)
+    setRelocationModel(Reloc::Static);
 
   // Machine code emitter pass for ARM.
   PM.add(createARMCodeEmitterPass(*this, MCE));

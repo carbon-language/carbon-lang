@@ -34,6 +34,7 @@ class ARMTargetMachine : public LLVMTargetMachine {
   ARMFrameInfo      FrameInfo;
   ARMJITInfo        JITInfo;
   ARMTargetLowering TLInfo;
+  Reloc::Model      DefRelocModel;    // Reloc model before it's overridden.
 
 protected:
   // To avoid having target depend on the asmprinter stuff libraries, asmprinter
