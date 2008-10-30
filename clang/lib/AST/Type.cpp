@@ -587,7 +587,8 @@ bool Type::isRealType() const {
 
 bool Type::isArithmeticType() const {
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
-    return BT->getKind() != BuiltinType::Void;
+    return BT->getKind() >= BuiltinType::Bool &&
+           BT->getKind() <= BuiltinType::LongDouble;
   if (const EnumType *ET = dyn_cast<EnumType>(CanonicalType))
     // GCC allows forward declaration of enum types (forbid by C99 6.7.2.3p2).
     // If a body isn't seen by the time we get here, return false.
