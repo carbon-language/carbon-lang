@@ -163,7 +163,6 @@ protected:
   NonLoc(unsigned SubKind, const void* d) : SVal(d, false, SubKind) {}
   
 public:
-  void print(std::ostream& Out) const;
   void print(llvm::raw_ostream& Out) const;
   
   // Utility methods to create NonLocs.
@@ -192,7 +191,6 @@ protected:
   NonLoc NE(BasicValueFactory& BasicVals, const Loc& R) const;
   
 public:
-  void print(std::ostream& Out) const;
   void print(llvm::raw_ostream& Out) const;
     
   static Loc MakeVal(AddrLabelExpr* E);
