@@ -18,6 +18,7 @@
 #define INLINER_H
 
 #include "llvm/CallGraphSCCPass.h"
+#include "llvm/Transforms/Utils/InlineCost.h"
 
 namespace llvm {
   class CallSite;
@@ -53,7 +54,7 @@ struct Inliner : public CallGraphSCCPass {
   /// returned is greater than the current inline threshold, the call site is
   /// not inlined.
   ///
-  virtual int getInlineCost(CallSite CS) = 0;
+  virtual InlineCost getInlineCost(CallSite CS) = 0;
 
   // getInlineFudgeFactor - Return a > 1.0 factor if the inliner should use a
   // higher threshold to determine if the function call should be inlined.

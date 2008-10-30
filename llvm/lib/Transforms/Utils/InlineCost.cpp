@@ -169,7 +169,7 @@ void InlineCostAnalyzer::FunctionInfo::analyzeFunction(Function *F) {
 // getInlineCost - The heuristic used to determine if we should inline the
 // function call or not.
 //
-int InlineCostAnalyzer::getInlineCost(CallSite CS,
+InlineCost InlineCostAnalyzer::getInlineCost(CallSite CS,
                                SmallPtrSet<const Function *, 16> &NeverInline) {
   Instruction *TheCall = CS.getInstruction();
   Function *Callee = CS.getCalledFunction();
@@ -187,7 +187,7 @@ int InlineCostAnalyzer::getInlineCost(CallSite CS,
 
       // Don't inline functions marked noinline.
       NeverInline.count(Callee))
-    return 2000000000;
+    return llvm::InlineCost::getNever();
 
   // InlineCost - This value measures how good of an inline candidate this call
   // site is to inline.  A lower inline cost make is more likely for the call to
@@ -224,10 +224,14 @@ int InlineCostAnalyzer::getInlineCost(CallSite CS,
   
   // If we should never inline this, return a huge cost.
   if (CalleeFI.NeverInline)
-    return 2000000000;
+    return InlineCost::getNever();
 
+  // FIXME: It would be nice to kill off CalleeFI.NeverInline. Then we
+  // could move this up and avoid computing the FunctionInfo for
+  // things we are going to just return always inline for. This
+  // requires handling setjmp somewhere else, however.
   if (!Callee->isDeclaration() && Callee->hasFnAttr(Attribute::AlwaysInline))
-    return -2000000000;
+    return InlineCost::getAlways();
     
   // Add to the inline quality for properties that make the call valuable to
   // inline.  This includes factors that indicate that the result of inlining
@@ -274,7 +278,7 @@ int InlineCostAnalyzer::getInlineCost(CallSite CS,
   // Look at the size of the callee. Each instruction counts as 5.
   InlineCost += CalleeFI.NumInsts*5;
 
-  return InlineCost;
+  return llvm::InlineCost::get(InlineCost);
 }
 
 // getInlineFudgeFactor - Return a > 1.0 factor if the inliner should use a

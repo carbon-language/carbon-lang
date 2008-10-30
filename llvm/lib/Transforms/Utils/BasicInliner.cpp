@@ -107,15 +107,26 @@ void BasicInlinerImpl::inlineFunctions() {
           --index;
           continue;
         }
-        int InlineCost = CA.getInlineCost(CS, NeverInline);
-        if (InlineCost >= (int) BasicInlineThreshold) {
-          DOUT << "  NOT Inlining: cost = " << InlineCost
-               << ", call: " <<  *CS.getInstruction();
+        InlineCost IC = CA.getInlineCost(CS, NeverInline);
+        if (IC.isAlways()) {        
+          DOUT << "  Inlining: cost=always"
+               <<", call: " << *CS.getInstruction();
+        } else if (IC.isNever()) {
+          DOUT << "  NOT Inlining: cost=never"
+               <<", call: " << *CS.getInstruction();
           continue;
+        } else {
+          int Cost = IC.getValue();
+          
+          if (Cost >= BasicInlineThreshold) {
+            DOUT << "  NOT Inlining: cost = " << Cost
+                 << ", call: " <<  *CS.getInstruction();
+            continue;
+          } else {
+            DOUT << "  Inlining: cost = " << Cost
+                 << ", call: " <<  *CS.getInstruction();
+          }
         }
-        
-        DOUT << "  Inlining: cost=" << InlineCost
-             <<", call: " << *CS.getInstruction();
         
         // Inline
         if (InlineFunction(CS, NULL, TD)) {

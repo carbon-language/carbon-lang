@@ -76,9 +76,22 @@ static bool InlineCallIfPossible(CallSite CS, CallGraph &CG,
 /// shouldInline - Return true if the inliner should attempt to inline
 /// at the given CallSite.
 bool Inliner::shouldInline(CallSite CS) {
-  int Cost = getInlineCost(CS);
+  InlineCost IC = getInlineCost(CS);
   float FudgeFactor = getInlineFudgeFactor(CS);
   
+  if (IC.isAlways()) {
+    DOUT << "    Inlining: cost=always"
+         << ", Call: " << *CS.getInstruction();
+    return true;
+  }
+  
+  if (IC.isNever()) {
+    DOUT << "    NOT Inlining: cost=never"
+         << ", Call: " << *CS.getInstruction();
+    return false;
+  }
+  
+  int Cost = IC.getValue();
   int CurrentThreshold = InlineThreshold;
   Function *Fn = CS.getCaller();
   if (Fn && !Fn->isDeclaration() 

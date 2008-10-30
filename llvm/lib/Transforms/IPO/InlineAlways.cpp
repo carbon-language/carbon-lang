@@ -39,7 +39,7 @@ namespace {
     // Use extremely low threshold. 
     AlwaysInliner() : Inliner(&ID, -2000000000) {}
     static char ID; // Pass identification, replacement for typeid
-    int getInlineCost(CallSite CS) {
+    InlineCost getInlineCost(CallSite CS) {
       return CA.getInlineCost(CS, NeverInline);
     }
     float getInlineFudgeFactor(CallSite CS) {
