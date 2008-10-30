@@ -1013,6 +1013,11 @@ void* JITEmitter::allocateSpace(intptr_t Size, unsigned Alignment) {
 }
 
 void JITEmitter::emitConstantPool(MachineConstantPool *MCP) {
+  if (TheJIT->getJITInfo().hasCustomConstantPool()) {
+    DOUT << "JIT: Target has custom constant pool handling. Omitting standard "
+            "constant pool\n";
+    return;
+  }
   const std::vector<MachineConstantPoolEntry> &Constants = MCP->getConstants();
   if (Constants.empty()) return;
 
