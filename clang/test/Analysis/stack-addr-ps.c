@@ -18,7 +18,11 @@ int* f3(int x, int *y) {
   return y; // expected-warning{{Address of stack memory associated with local variable 'w' returned.}}
 }
 
-unsigned short* compound_literal() {
-  return &(unsigned short){((unsigned short)0x22EF)}; // expected-warning{{Address of stack memory}} expected-warning{{braces around scalar initializer}}
+void* compound_literal(int x) {
+  if (x)
+    return &(unsigned short){((unsigned short)0x22EF)}; // expected-warning{{Address of stack memory}} expected-warning{{braces around scalar initializer}}
+  
+  struct s { int z; double y; int w; };
+  return &((struct s){ 2, 0.4, 5 * 8 });
 }
 
