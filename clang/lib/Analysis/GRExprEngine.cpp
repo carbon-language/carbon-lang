@@ -1318,9 +1318,9 @@ void GRExprEngine::VisitObjCMessageExpr(ObjCMessageExpr* ME, NodeTy* Pred,
 }  
 
 void GRExprEngine::VisitObjCMessageExprArgHelper(ObjCMessageExpr* ME,
-                                                 ObjCMessageExpr::arg_iterator AI,
-                                                 ObjCMessageExpr::arg_iterator AE,
-                                                 NodeTy* Pred, NodeSet& Dst) {
+                                              ObjCMessageExpr::arg_iterator AI,
+                                              ObjCMessageExpr::arg_iterator AE,
+                                              NodeTy* Pred, NodeSet& Dst) {
   if (AI == AE) {
     
     // Process the receiver.
@@ -1477,7 +1477,7 @@ void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, NodeTy* Pred, NodeSet& Dst){
   QualType T = CastE->getType();
   QualType ExTy = Ex->getType();
 
-  if (const ExplicitCastExpr *ExCast = dyn_cast_or_null<ExplicitCastExpr>(CastE))
+  if (const ExplicitCastExpr *ExCast=dyn_cast_or_null<ExplicitCastExpr>(CastE))
     T = ExCast->getTypeAsWritten();
 
   if (ExTy->isArrayType() || ExTy->isFunctionType() || T->isReferenceType())
@@ -2235,7 +2235,7 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
           // FIXME: Handle structs.
           QualType T = RHS->getType();
           
-          if (RightV.isUnknown() && (T->isIntegerType() || Loc::IsLocType(T))) {            
+          if (RightV.isUnknown() && (T->isIntegerType() || Loc::IsLocType(T))) {
             unsigned Count = Builder->getCurrentBlockCount();
             SymbolID Sym = SymMgr.getConjuredSymbol(B->getRHS(), Count);
             
