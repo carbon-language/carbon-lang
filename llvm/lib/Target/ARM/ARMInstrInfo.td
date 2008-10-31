@@ -466,7 +466,7 @@ PseudoInst<(outs), (ins i32imm:$line, i32imm:$col, i32imm:$file),
            [(dwarf_loc (i32 imm:$line), (i32 imm:$col), (i32 imm:$file))]>;
 
 let isNotDuplicable = 1 in {
-def PICADD : AXI1<0x0, (outs GPR:$dst), (ins GPR:$a, pclabel:$cp, pred:$p),
+def PICADD : AXI1<0b0100, (outs GPR:$dst), (ins GPR:$a, pclabel:$cp, pred:$p),
                   Pseudo, "$cp:\n\tadd$p $dst, pc, $a",
                    [(set GPR:$dst, (ARMpic_add GPR:$a, imm:$cp))]>;
 
