@@ -74,7 +74,12 @@ namespace {
 
     unsigned getMachineSoRegOpValue(const MachineInstr &MI,
                                     const TargetInstrDesc &TID,
+                                    const MachineOperand &MO,
                                     unsigned OpIdx);
+
+    unsigned getMachineSoImmOpValue(const MachineInstr &MI,
+                                    const TargetInstrDesc &TID,
+                                    const MachineOperand &MO);
 
     unsigned getAddrMode1SBit(const MachineInstr &MI,
                               const TargetInstrDesc &TID) const;
@@ -104,11 +109,10 @@ namespace {
 
     /// getMachineOpValue - Return binary encoding of operand. If the machine
     /// operand requires relocation, record the relocation and return zero.
+    unsigned getMachineOpValue(const MachineInstr &MI,const MachineOperand &MO);
     unsigned getMachineOpValue(const MachineInstr &MI, unsigned OpIdx) {
       return getMachineOpValue(MI, MI.getOperand(OpIdx));
     }
-    unsigned getMachineOpValue(const MachineInstr &MI,
-                               const MachineOperand &MO);
 
     /// getBaseOpcodeFor - Return the opcode value.
     ///
@@ -257,6 +261,70 @@ void ARMCodeEmitter::emitInstruction(const MachineInstr &MI) {
     MCE.emitWordLE(getInstrBinary(MI));
 }
 
+void ARMCodeEmitter::emitConstPoolInstruction(const MachineInstr &MI) {
+  unsigned CPI = MI.getOperand(0).getImm();
+  unsigned CPIndex = MI.getOperand(1).getIndex();
+  const MachineConstantPoolEntry &MCPE = MCP->getConstants()[CPIndex];
+  
+  // Remember the CONSTPOOL_ENTRY address for later relocation.
+  JTI->addConstantPoolEntryAddr(CPI, MCE.getCurrentPCValue());
+
+  // Emit constpool island entry. In most cases, the actual values will be
+  // resolved and relocated after code emission.
+  if (MCPE.isMachineConstantPoolEntry()) {
+    ARMConstantPoolValue *ACPV =
+      static_cast<ARMConstantPoolValue*>(MCPE.Val.MachineCPVal);
+
+    DOUT << "\t** ARM constant pool #" << CPI << ", ' @ "
+         << (void*)MCE.getCurrentPCValue() << *ACPV << '\n';
+
+    GlobalValue *GV = ACPV->getGV();
+    if (GV) {
+      assert(!ACPV->isStub() && "Don't know how to deal this yet!");
+      emitGlobalAddress(GV, ARM::reloc_arm_absolute, false);
+    } else  {
+      assert(!ACPV->isNonLazyPointer() && "Don't know how to deal this yet!");
+      emitExternalSymbolAddress(ACPV->getSymbol(), ARM::reloc_arm_absolute);
+    }
+    MCE.emitWordLE(0);
+  } else {
+    Constant *CV = MCPE.Val.ConstVal;
+
+    DOUT << "\t** Constant pool #" << CPI << ", ' @ "
+         << (void*)MCE.getCurrentPCValue() << *CV << '\n';
+
+    if (GlobalValue *GV = dyn_cast<GlobalValue>(CV)) {
+      emitGlobalAddress(GV, ARM::reloc_arm_absolute, false);
+      MCE.emitWordLE(0);
+    } else {
+      assert(CV->getType()->isInteger() &&
+             "Not expecting non-integer constpool entries yet!");
+      const ConstantInt *CI = dyn_cast<ConstantInt>(CV);
+      uint32_t Val = *(uint32_t*)CI->getValue().getRawData();
+      MCE.emitWordLE(Val);
+    }
+  }
+}
+
+void ARMCodeEmitter::emitPseudoInstruction(const MachineInstr &MI) {
+  unsigned Opcode = MI.getDesc().Opcode;
+  switch (Opcode) {
+  default:
+    abort(); // FIXME:
+  case ARM::CONSTPOOL_ENTRY:
+    emitConstPoolInstruction(MI);
+    break;
+  case ARM::PICADD: {
+    // PICADD is just an add instruction that implicitly read pc.
+    unsigned Binary = getBinaryCodeForInstr(MI);
+    const TargetInstrDesc &TID = MI.getDesc();
+    MCE.emitWordLE(getAddrMode1InstrBinary(MI, TID, Binary));
+    break;
+  }
+  }
+}
+
+
 unsigned ARMCodeEmitter::getAddrModeNoneInstrBinary(const MachineInstr &MI,
                                                     const TargetInstrDesc &TID,
                                                     unsigned Binary) {
@@ -295,9 +363,9 @@ unsigned ARMCodeEmitter::getAddrModeNoneInstrBinary(const MachineInstr &MI,
 
 unsigned ARMCodeEmitter::getMachineSoRegOpValue(const MachineInstr &MI,
                                                 const TargetInstrDesc &TID,
+                                                const MachineOperand &MO,
                                                 unsigned OpIdx) {
-  // Set last operand (register Rm)
-  unsigned Binary = getMachineOpValue(MI, OpIdx);
+  unsigned Binary = getMachineOpValue(MI, MO);
 
   const MachineOperand &MO1 = MI.getOperand(OpIdx + 1);
   const MachineOperand &MO2 = MI.getOperand(OpIdx + 2);
@@ -351,6 +419,17 @@ unsigned ARMCodeEmitter::getMachineSoRegOpValue(const MachineInstr &MI,
   return Binary | ARM_AM::getSORegOffset(MO2.getImm()) << 7;
 }
 
+unsigned ARMCodeEmitter::getMachineSoImmOpValue(const MachineInstr &MI,
+                                                const TargetInstrDesc &TID,
+                                                const MachineOperand &MO) {
+  unsigned SoImm = MO.getImm();
+  // Encode rotate_imm.
+  unsigned Binary = ARM_AM::getSOImmValRot(SoImm) << ARMII::RotImmShift;
+  // Encode immed_8.
+  Binary |= ARM_AM::getSOImmVal(SoImm);
+  return Binary;
+}
+
 unsigned ARMCodeEmitter::getAddrMode1SBit(const MachineInstr &MI,
                                           const TargetInstrDesc &TID) const {
   for (unsigned i = MI.getNumOperands(), e = TID.getNumOperands(); i != e; --i){
@@ -359,63 +438,6 @@ unsigned ARMCodeEmitter::getAddrMode1SBit(const MachineInstr &MI,
       return 1 << ARMII::S_BitShift;
   }
   return 0;
-}
-
-void ARMCodeEmitter::emitConstPoolInstruction(const MachineInstr &MI) {
-  unsigned CPI = MI.getOperand(0).getImm();
-  unsigned CPIndex = MI.getOperand(1).getIndex();
-  const MachineConstantPoolEntry &MCPE = MCP->getConstants()[CPIndex];
-  
-  // Remember the CONSTPOOL_ENTRY address for later relocation.
-  JTI->addConstantPoolEntryAddr(CPI, MCE.getCurrentPCValue());
-
-  // Emit constpool island entry. In most cases, the actual values will be
-  // resolved and relocated after code emission.
-  if (MCPE.isMachineConstantPoolEntry()) {
-    ARMConstantPoolValue *ACPV =
-      static_cast<ARMConstantPoolValue*>(MCPE.Val.MachineCPVal);
-
-    DOUT << "\t** ARM constant pool #" << CPI << ", ' @ "
-         << (void*)MCE.getCurrentPCValue() << *ACPV << '\n';
-
-    GlobalValue *GV = ACPV->getGV();
-    if (GV) {
-      assert(!ACPV->isStub() && "Don't know how to deal this yet!");
-      emitGlobalAddress(GV, ARM::reloc_arm_absolute, false);
-    } else  {
-      assert(!ACPV->isNonLazyPointer() && "Don't know how to deal this yet!");
-      emitExternalSymbolAddress(ACPV->getSymbol(), ARM::reloc_arm_absolute);
-    }
-    MCE.emitWordLE(0);
-  } else {
-    Constant *CV = MCPE.Val.ConstVal;
-
-    DOUT << "\t** Constant pool #" << CPI << ", ' @ "
-         << (void*)MCE.getCurrentPCValue() << *CV << '\n';
-
-    if (GlobalValue *GV = dyn_cast<GlobalValue>(CV)) {
-      emitGlobalAddress(GV, ARM::reloc_arm_absolute, false);
-      MCE.emitWordLE(0);
-    } else {
-      assert(CV->getType()->isInteger() &&
-             "Not expecting non-integer constpool entries yet!");
-      const ConstantInt *CI = dyn_cast<ConstantInt>(CV);
-      uint32_t Val = *(uint32_t*)CI->getValue().getRawData();
-      MCE.emitWordLE(Val);
-    }
-  }
-}
-
-void ARMCodeEmitter::emitPseudoInstruction(const MachineInstr &MI) {
-  unsigned Opcode = MI.getDesc().Opcode;
-  switch (Opcode) {
-  default:
-    abort(); // FIXME:
-  case ARM::CONSTPOOL_ENTRY: {
-    emitConstPoolInstruction(MI);
-    break;
-  }
-  }
 }
 
 unsigned ARMCodeEmitter::getAddrMode1InstrBinary(const MachineInstr &MI,
@@ -437,13 +459,19 @@ unsigned ARMCodeEmitter::getAddrMode1InstrBinary(const MachineInstr &MI,
 
   // Encode first non-shifter register operand if there is one.
   unsigned Format = TID.TSFlags & ARMII::FormMask;
-  bool hasRnOperand= !(Format == ARMII::DPRdMisc  ||
-                       Format == ARMII::DPRdIm    ||
-                       Format == ARMII::DPRdReg   ||
-                       Format == ARMII::DPRdSoReg);
-  if (hasRnOperand) {
-    Binary |= getMachineOpValue(MI, OpIdx) << ARMII::RegRnShift;
-    ++OpIdx;
+  bool HasRnReg = !(Format == ARMII::DPRdMisc  ||
+                    Format == ARMII::DPRdIm    ||
+                    Format == ARMII::DPRdReg   ||
+                    Format == ARMII::DPRdSoReg);
+  if (HasRnReg) {
+    if (TID.getOpcode() == ARM::PICADD)
+      // Special handling for PICADD. It implicitly use add.
+      Binary |=
+        ARMRegisterInfo::getRegisterNumbering(ARM::PC) << ARMII::RegRnShift;
+    else {
+      Binary |= getMachineOpValue(MI, OpIdx) << ARMII::RegRnShift;
+      ++OpIdx;
+    }
   }
 
   // Encode shifter operand.
@@ -451,23 +479,20 @@ unsigned ARMCodeEmitter::getAddrMode1InstrBinary(const MachineInstr &MI,
                    Format == ARMII::DPRnSoReg ||
                    Format == ARMII::DPRSoReg  ||
                    Format == ARMII::DPRSoRegS);
-  if (HasSoReg)
-    // Encode SoReg.
-    return Binary | getMachineSoRegOpValue(MI, TID, OpIdx);
 
   const MachineOperand &MO = MI.getOperand(OpIdx);
+  if (HasSoReg)
+    // Encode SoReg.
+    return Binary | getMachineSoRegOpValue(MI, TID, MO, OpIdx);
+
   if (MO.isReg())
     // Encode register Rm.
-    return Binary | getMachineOpValue(MI, NumDefs);
+    return Binary | ARMRegisterInfo::getRegisterNumbering(MO.getReg());
 
   // Encode so_imm.
   // Set bit I(25) to identify this is the immediate form of <shifter_op>
   Binary |= 1 << ARMII::I_BitShift;
-  unsigned SoImm = MO.getImm();
-  // Encode rotate_imm.
-  Binary |= ARM_AM::getSOImmValRot(SoImm) << ARMII::RotImmShift;
-  // Encode immed_8.
-  Binary |= ARM_AM::getSOImmVal(SoImm);
+  Binary |= getMachineSoImmOpValue(MI, TID, MO);
   return Binary;
 }
 
