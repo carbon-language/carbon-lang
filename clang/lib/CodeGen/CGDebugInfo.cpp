@@ -356,7 +356,7 @@ CGDebugInfo::getOrCreateFunctionType(QualType type, llvm::CompileUnitDesc *Unit)
   // Get result type.
   const FunctionType *FT = type->getAsFunctionType();
   llvm::TypeDesc *ArgTy = getOrCreateType(FT->getResultType(), Unit);
-  if (ArgTy) Elements.push_back(ArgTy);
+  Elements.push_back(ArgTy);
 
   // Set up remainder of arguments.
   if (type->getTypeClass() == Type::FunctionProto) {
