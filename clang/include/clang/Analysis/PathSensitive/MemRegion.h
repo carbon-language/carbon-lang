@@ -37,10 +37,9 @@ class MemRegionManager;
 class MemRegion : public llvm::FoldingSetNode {
 public:
   enum Kind { MemSpaceRegionKind, SymbolicRegionKind,
-              // Subregions.
-              CompoundLiteralRegionKind,
               // Typed regions.
               BEG_TYPED_REGIONS,
+               CompoundLiteralRegionKind,
                StringRegionKind, ElementRegionKind,
                // Decl Regions.
                  BEG_DECL_REGIONS,
@@ -221,18 +220,22 @@ class AnonHeapRegion : public AnonTypedRegion {
 /// CompoundLiteralRegion - A memory region representing a compound literal.
 ///   Compound literals are essentially temporaries that are stack allocated
 ///   or in the global constant pool.
-class CompoundLiteralRegion : public SubRegion {
+class CompoundLiteralRegion : public TypedRegion {
 private:
   friend class MemRegionManager;
   const CompoundLiteralExpr* CL;
 
   CompoundLiteralRegion(const CompoundLiteralExpr* cl, const MemRegion* sReg)
-    : SubRegion(sReg,CompoundLiteralRegionKind), CL(cl) {}
+    : TypedRegion(sReg, CompoundLiteralRegionKind), CL(cl) {}
   
   static void ProfileRegion(llvm::FoldingSetNodeID& ID,
                             const CompoundLiteralExpr* CL,
                             const MemRegion* superRegion);
 public:
+  QualType getType(ASTContext& C) const {
+    return C.getCanonicalType(CL->getType());
+  }
+
   void Profile(llvm::FoldingSetNodeID& ID) const;
   
   void print(llvm::raw_ostream& os) const;
