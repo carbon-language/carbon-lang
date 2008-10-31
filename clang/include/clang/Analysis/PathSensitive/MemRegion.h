@@ -237,6 +237,8 @@ public:
   
   void print(llvm::raw_ostream& os) const;
 
+  const CompoundLiteralExpr* getLiteralExpr() const { return CL; }
+  
   static bool classof(const MemRegion* R) {
     return R->getKind() == CompoundLiteralRegionKind;
   }
