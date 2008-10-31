@@ -180,7 +180,7 @@ void SelectRoot(SelectionDAG &DAG) {
     // Skip already selected nodes.
     if (isSelected(Node->getNodeId()))
       continue;
-#ifndef NDEBUG
+#if 0
     DAG.setSubgraphColor(Node, "red");
 #endif
     SDNode *ResNode = Select(SDValue(Node, 0));
@@ -190,7 +190,7 @@ void SelectRoot(SelectionDAG &DAG) {
       continue;
     // Replace node.
     if (ResNode) {
-#ifndef NDEBUG
+#if 0
       DAG.setSubgraphColor(ResNode, "yellow");
       DAG.setSubgraphColor(ResNode, "black");
 #endif
