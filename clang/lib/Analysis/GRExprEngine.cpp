@@ -1681,7 +1681,7 @@ void GRExprEngine::VisitInitListExpr(InitListExpr* E, NodeTy* Pred,
           getBasicVals().consVals(InitV, X.Vals);
         
         if (NewItr == ItrEnd) {
-          // Now we have a list holding all init values. Make CompoundSValData.
+          // Now we have a list holding all init values. Make CompoundValData.
           SVal V = NonLoc::MakeCompoundVal(T, NewVals, getBasicVals());
 
           // Make final state and node.
