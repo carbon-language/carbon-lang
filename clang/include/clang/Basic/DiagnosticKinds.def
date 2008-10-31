@@ -683,6 +683,10 @@ DIAG(err_invalid_qualified_constructor, ERROR,
      "'%0' qualifier is not allowed on a constructor")
 DIAG(err_constructor_return_type, ERROR,
      "constructor cannot have a return type")
+DIAG(err_constructor_redeclared, ERROR,
+     "constructor cannot be redeclared")
+DIAG(err_constructor_byvalue_arg, ERROR,
+     "copy constructor must pass its first argument by reference")
 
 // C++ initialization
 DIAG(err_not_reference_to_const_init, ERROR,

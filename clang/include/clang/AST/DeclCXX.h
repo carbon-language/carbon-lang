@@ -207,6 +207,14 @@ public:
 /// declarations. Second, it provides additional C++ fields, including
 /// storage for base classes and constructors.
 class CXXRecordDecl : public RecordDecl, public DeclContext {
+  /// UserDeclaredConstructor - True when this class has a
+  /// user-declared constructor. 
+  bool UserDeclaredConstructor : 1;
+
+  /// UserDeclaredCopyConstructor - True when this class has a
+  /// user-defined copy constructor.
+  bool UserDeclaredCopyConstructor : 1;
+
   /// Bases - Base classes of this class.
   /// FIXME: This is wasted space for a union.
   CXXBaseSpecifier *Bases;
@@ -222,7 +230,8 @@ class CXXRecordDecl : public RecordDecl, public DeclContext {
   CXXRecordDecl(TagKind TK, DeclContext *DC,
                 SourceLocation L, IdentifierInfo *Id) 
     : RecordDecl(CXXRecord, TK, DC, L, Id), DeclContext(CXXRecord),
-      Bases(0), NumBases(0), Constructors(DC, Id) {}
+      UserDeclaredConstructor(false), UserDeclaredCopyConstructor(false), 
+      Bases(0), NumBases(0), Constructors(DC, Id) { }
 
   ~CXXRecordDecl();
 
@@ -273,7 +282,19 @@ public:
   const OverloadedFunctionDecl *getConstructors() const { return &Constructors; }
 
   /// addConstructor - Add another constructor to the list of constructors.
-  void addConstructor(CXXConstructorDecl *ConDecl);
+  void addConstructor(ASTContext &Context, CXXConstructorDecl *ConDecl);
+
+  /// hasUserDeclaredConstructor - Whether this class has any
+  /// user-declared constructors. When true, a default constructor
+  /// will not be implicitly declared.
+  bool hasUserDeclaredConstructor() const { return UserDeclaredConstructor; }
+
+  /// hasUserDeclaredCopyConstructor - Whether this class has a
+  /// user-declared copy constructor. When false, a copy constructor
+  /// will be implicitly declared.
+  bool hasUserDeclaredCopyConstructor() const {
+    return UserDeclaredCopyConstructor;
+  }
 
   /// viewInheritance - Renders and displays an inheritance diagram
   /// for this C++ class and all of its base classes (transitively) using
@@ -331,6 +352,19 @@ public:
   void setAccess(AccessSpecifier AS) { Access = AS; }
   AccessSpecifier getAccess() const { return AccessSpecifier(Access); }
 
+  /// getParent - Returns the parent of this method declaration, which
+  /// is the class in which this method is defined.
+  const CXXRecordDecl *getParent() const { 
+    return cast<CXXRecordDecl>(FunctionDecl::getParent()); 
+  }
+  
+  /// getParent - Returns the parent of this method declaration, which
+  /// is the class in which this method is defined.
+  CXXRecordDecl *getParent() { 
+    return const_cast<CXXRecordDecl *>(
+             cast<CXXRecordDecl>(FunctionDecl::getParent()));
+  }
+
   /// getThisType - Returns the type of 'this' pointer.
   /// Should only be called for instance methods.
   QualType getThisType(ASTContext &C) const;
@@ -357,7 +391,8 @@ protected:
   friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);
 };
 
-/// CXXConstructorDecl - Represents a C++ constructor within a class. For example:
+/// CXXConstructorDecl - Represents a C++ constructor within a
+/// class. For example:
 /// 
 /// @code
 /// class X {
@@ -422,9 +457,36 @@ public:
     ImplicitlyDefined = ID; 
   }
 
+  /// isDefaultConstructor - Whether this constructor is a default
+  /// constructor (C++ [class.ctor]p5), which can be used to
+  /// default-initialize a class of this type.
+  bool isDefaultConstructor() const;
+
+  /// isCopyConstructor - Whether this constructor is a copy
+  /// constructor (C++ [class.copy]p2, which can be used to copy the
+  /// class. @p TypeQuals will be set to the qualifiers on the
+  /// argument type. For example, @p TypeQuals would be set to @c
+  /// QualType::Const for the following copy constructor:
+  ///
+  /// @code
+  /// class X {
+  /// public:
+  ///   X(const X&);
+  /// };
+  /// @endcode
+  bool isCopyConstructor(ASTContext &Context, unsigned &TypeQuals) const;
+
+  /// isCopyConstructor - Whether this constructor is a copy
+  /// constructor (C++ [class.copy]p2, which can be used to copy the
+  /// class.
+  bool isCopyConstructor(ASTContext &Context) const {
+    unsigned TypeQuals = 0;
+    return isCopyConstructor(Context, TypeQuals);
+  }
+
   /// isConvertingConstructor - Whether this constructor is a
   /// converting constructor (C++ [class.conv.ctor]), which can be
-  /// used for (of course) user-defined conversions.
+  /// used for user-defined conversions.
   bool isConvertingConstructor() const;
 
   // Implement isa/cast/dyncast/etc.
@@ -507,10 +569,6 @@ public:
     return isa<CXXFieldDecl>(D);
   }
 };
-
-inline void CXXRecordDecl::addConstructor(CXXConstructorDecl *ConDecl) {
-  Constructors.addOverload(ConDecl);
-}
 
 } // end namespace clang
 

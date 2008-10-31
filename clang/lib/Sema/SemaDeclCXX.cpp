@@ -579,19 +579,50 @@ Sema::DeclTy *Sema::ActOnConstructorDeclarator(CXXConstructorDecl *ConDecl) {
   // Check default arguments on the constructor
   CheckCXXDefaultArguments(ConDecl);
 
-  // FIXME: Make sure this constructor is an overload of the existing
-  // constructors and update the class to reflect the addition of this
-  // constructor (e.g., it now has a user-defined constructor, might
-  // have a user-declared copy constructor, etc.).
-
-  // Add this constructor to the set of constructors of the current
-  // class.
-  if (CXXRecordDecl *ClassDecl = dyn_cast_or_null<CXXRecordDecl>(CurContext)) {
-    ClassDecl->addConstructor(ConDecl);
-  } else {
-    assert(false && "Cannot add a constructor if we're not in the class!");
+  CXXRecordDecl *ClassDecl = dyn_cast_or_null<CXXRecordDecl>(CurContext);
+  if (!ClassDecl) {
+    ConDecl->setInvalidDecl();
+    return ConDecl;
   }
 
+  // Make sure this constructor is an overload of the existing
+  // constructors.
+  OverloadedFunctionDecl::function_iterator MatchedDecl;
+  if (!IsOverload(ConDecl, ClassDecl->getConstructors(), MatchedDecl)) {
+    Diag(ConDecl->getLocation(),
+         diag::err_constructor_redeclared,
+         SourceRange(ConDecl->getLocation()));
+    Diag((*MatchedDecl)->getLocation(),
+         diag::err_previous_declaration,
+         SourceRange((*MatchedDecl)->getLocation()));
+    ConDecl->setInvalidDecl();
+    return ConDecl;
+  }
+
+
+  // C++ [class.copy]p3:
+  //   A declaration of a constructor for a class X is ill-formed if
+  //   its first parameter is of type (optionally cv-qualified) X and
+  //   either there are no other parameters or else all other
+  //   parameters have default arguments.
+  if ((ConDecl->getNumParams() == 1) || 
+      (ConDecl->getNumParams() > 1 && 
+       ConDecl->getParamDecl(1)->getDefaultArg() != 0)) {
+    QualType ParamType = ConDecl->getParamDecl(0)->getType();
+    QualType ClassTy = Context.getTagDeclType(
+                         const_cast<CXXRecordDecl*>(ConDecl->getParent()));
+    if (Context.getCanonicalType(ParamType).getUnqualifiedType() == ClassTy) {
+      Diag(ConDecl->getLocation(),
+           diag::err_constructor_byvalue_arg,
+           SourceRange(ConDecl->getParamDecl(0)->getLocation()));
+      ConDecl->setInvalidDecl();
+      return 0;
+    }
+  }
+      
+  // Add this constructor to the set of constructors of the current
+  // class.
+  ClassDecl->addConstructor(Context, ConDecl);
 
   return (DeclTy *)ConDecl;
 }

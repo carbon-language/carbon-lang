@@ -59,6 +59,22 @@ CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases,
     this->Bases[i] = *Bases[i];
 }
 
+void 
+CXXRecordDecl::addConstructor(ASTContext &Context, 
+                              CXXConstructorDecl *ConDecl) {
+  if (!ConDecl->isImplicitlyDeclared()) {
+    // Note that we have a user-declared constructor.
+    UserDeclaredConstructor = true;
+
+    // Note when we have a user-declared copy constructor, which will
+    // suppress the implicit declaration of a copy constructor.
+    if (ConDecl->isCopyConstructor(Context))
+      UserDeclaredCopyConstructor = true;
+  }
+
+  Constructors.addOverload(ConDecl);
+}
+
 CXXMethodDecl *
 CXXMethodDecl::Create(ASTContext &C, CXXRecordDecl *RD,
                       SourceLocation L, IdentifierInfo *Id,
@@ -76,8 +92,7 @@ QualType CXXMethodDecl::getThisType(ASTContext &C) const {
   // the type of this is const volatile X*.
 
   assert(isInstance() && "No 'this' for static methods!");
-  QualType ClassTy = C.getTagDeclType(const_cast<CXXRecordDecl*>(
-                                            cast<CXXRecordDecl>(getParent())));
+  QualType ClassTy = C.getTagDeclType(const_cast<CXXRecordDecl*>(getParent()));
   ClassTy = ClassTy.getWithAdditionalQualifiers(getTypeQualifiers());
   return C.getPointerType(ClassTy).withConst();
 }
@@ -90,6 +105,47 @@ CXXConstructorDecl::Create(ASTContext &C, CXXRecordDecl *RD,
   void *Mem = C.getAllocator().Allocate<CXXConstructorDecl>();
   return new (Mem) CXXConstructorDecl(RD, L, Id, T, isExplicit, isInline,
                                       isImplicitlyDeclared);
+}
+
+bool CXXConstructorDecl::isDefaultConstructor() const {
+  // C++ [class.ctor]p5:
+  //
+  //     A default constructor for a class X is a constructor of class
+  //     X that can be called without an argument.
+  return (getNumParams() == 0) ||
+         (getNumParams() > 0 & getParamDecl(1)->getDefaultArg() != 0);
+}
+
+bool 
+CXXConstructorDecl::isCopyConstructor(ASTContext &Context, 
+                                      unsigned &TypeQuals) const {
+  // C++ [class.copy]p2:
+  //     A non-template constructor for class X is a copy constructor
+  //     if its first parameter is of type X&, const X&, volatile X& or
+  //     const volatile X&, and either there are no other parameters
+  //     or else all other parameters have default arguments (8.3.6).
+  if ((getNumParams() < 1) ||
+      (getNumParams() > 1 && getParamDecl(1)->getDefaultArg() == 0))
+    return false;
+
+  const ParmVarDecl *Param = getParamDecl(0);
+
+  // Do we have a reference type?
+  const ReferenceType *ParamRefType = Param->getType()->getAsReferenceType();
+  if (!ParamRefType)
+    return false;
+
+  // Is it a reference to our class type?
+  QualType PointeeType 
+    = Context.getCanonicalType(ParamRefType->getPointeeType());
+  QualType ClassTy 
+    = Context.getTagDeclType(const_cast<CXXRecordDecl*>(getParent()));
+  if (PointeeType.getUnqualifiedType() != ClassTy)
+    return false;
+
+  // We have a copy constructor.
+  TypeQuals = PointeeType.getCVRQualifiers();
+  return true;
 }
 
 bool CXXConstructorDecl::isConvertingConstructor() const {
