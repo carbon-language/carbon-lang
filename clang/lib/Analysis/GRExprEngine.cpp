@@ -864,7 +864,9 @@ void GRExprEngine::VisitDeclRefExpr(DeclRefExpr* Ex, NodeTy* Pred, NodeSet& Dst,
     // FIXME: Does this need to be revised?  We were getting cases in
     //  real code that did this.
 
-    assert(asLValue); // Can we assume this?
+    // FIXME: This is not a valid assertion.  Produce a test case that
+    // refutes it.
+    // assert(asLValue); // Can we assume this?
 
     SVal V = loc::FuncVal(FD);
     MakeNode(Dst, Ex, Pred, BindExpr(St, Ex, V));
