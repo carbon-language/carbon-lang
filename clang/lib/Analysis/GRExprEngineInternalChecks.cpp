@@ -16,7 +16,7 @@
 #include "clang/Analysis/PathSensitive/GRExprEngine.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/Support/Compiler.h"
-#include <sstream>
+#include "llvm/Support/raw_ostream.h"
 
 using namespace clang;
 
@@ -200,7 +200,8 @@ public:
                                                                E));
       
       // Generate a report for this bug.
-      std::ostringstream os;
+      std::string buf;
+      llvm::raw_string_ostream os(buf);
       SourceRange R;
       
       // Check if the region is a compound literal.
@@ -220,8 +221,7 @@ public:
            << V.getRegion()->getString() << "' returned.";
       }
       
-      std::string s = os.str();      
-      RangedBugReport report(*this, N, s.c_str());
+      RangedBugReport report(*this, N, os.str().c_str());
       report.addRange(E->getSourceRange());
       if (R.isValid()) report.addRange(R);
       
