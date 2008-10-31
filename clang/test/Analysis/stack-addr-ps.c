@@ -30,6 +30,6 @@ void* compound_literal(int x, int y) {
     
   
   void* p = &((struct s){ 42, 0.4, x ? 42 : 0 });
-  return p;
+  return p; // expected-warning{{Address of stack memory}}
 }
 
