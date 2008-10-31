@@ -25,6 +25,7 @@
 namespace clang {
   class Sema;
   class CXXBaseSpecifier;
+  class CXXRecordType;
 
   /// BasePathElement - An element in a path from a derived class to a
   /// base class. Each step in the path references the link from a
@@ -97,19 +98,27 @@ namespace clang {
     std::map<QualType, std::pair<bool, unsigned>, QualTypeOrdering> 
       ClassSubobjects;
 
-    /// FindAmbiguities - Whether Sema::IsDirectedFrom should try find
+    /// FindAmbiguities - Whether Sema::IsDerivedFrom should try find
     /// ambiguous paths while it is looking for a path from a derived
     /// type to a base type.
     bool FindAmbiguities;
 
-    /// RecordPaths - Whether Sema::IsDirectedFrom should record paths
+    /// RecordPaths - Whether Sema::IsDerivedFrom should record paths
     /// while it is determining whether there are paths from a derived
     /// type to a base type.
     bool RecordPaths;
 
+    /// DetectVirtual - Whether Sema::IsDerivedFrom should abort the search
+    /// if it finds a path that goes across a virtual base. The virtual class
+    /// is also recorded.
+    bool DetectVirtual;
+
     /// ScratchPath - A BasePath that is used by Sema::IsDerivedFrom
     /// to help build the set of paths.
     BasePath ScratchPath;
+
+    /// DetectedVirtual - The base class that is virtual.
+    const CXXRecordType *DetectedVirtual;
 
     friend class Sema;
 
@@ -118,8 +127,12 @@ namespace clang {
     
     /// BasePaths - Construct a new BasePaths structure to record the
     /// paths for a derived-to-base search.
-    explicit BasePaths(bool FindAmbiguities = true, bool RecordPaths = true) 
-      : FindAmbiguities(FindAmbiguities), RecordPaths(RecordPaths) { }
+    explicit BasePaths(bool FindAmbiguities = true,
+                       bool RecordPaths = true,
+                       bool DetectVirtual = true)
+      : FindAmbiguities(FindAmbiguities), RecordPaths(RecordPaths),
+        DetectVirtual(DetectVirtual), DetectedVirtual(0)
+    {}
 
     paths_iterator begin() const { return Paths.begin(); }
     paths_iterator end()   const { return Paths.end(); }
@@ -136,6 +149,14 @@ namespace clang {
     /// setRecordingPaths - Specify whether we should be recording
     /// paths or not.
     void setRecordingPaths(bool RP) { RecordPaths = RP; }
+
+    /// isDetectingVirtual - Whether we are detecting virtual bases.
+    bool isDetectingVirtual() const { return DetectVirtual; }
+
+    /// getDetectedVirtual - The virtual base discovered on the path.
+    const CXXRecordType* getDetectedVirtual() const {
+      return DetectedVirtual;
+    }
 
     void clear();
   };

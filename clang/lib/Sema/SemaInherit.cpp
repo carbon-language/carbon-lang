@@ -42,6 +42,7 @@ void BasePaths::clear() {
   Paths.clear();
   ClassSubobjects.clear();
   ScratchPath.clear();
+  DetectedVirtual = 0;
 }
 
 /// IsDerivedFrom - Determine whether the type Derived is derived from
@@ -50,7 +51,8 @@ void BasePaths::clear() {
 /// Derived* to a Base* is legal, because it does not account for
 /// ambiguous conversions or conversions to private/protected bases.
 bool Sema::IsDerivedFrom(QualType Derived, QualType Base) {
-  BasePaths Paths(/*FindAmbiguities=*/false, /*RecordPaths=*/false);
+  BasePaths Paths(/*FindAmbiguities=*/false, /*RecordPaths=*/false,
+                  /*DetectVirtual=*/false);
   return IsDerivedFrom(Derived, Base, Paths);
 }
 
@@ -64,10 +66,10 @@ bool Sema::IsDerivedFrom(QualType Derived, QualType Base) {
 /// information about all of the paths (if @c Paths.isRecordingPaths()).
 bool Sema::IsDerivedFrom(QualType Derived, QualType Base, BasePaths &Paths) {
   bool FoundPath = false;
-  
+
   Derived = Context.getCanonicalType(Derived).getUnqualifiedType();
   Base = Context.getCanonicalType(Base).getUnqualifiedType();
-  
+
   if (!Derived->isRecordType() || !Base->isRecordType())
     return false;
 
@@ -87,9 +89,17 @@ bool Sema::IsDerivedFrom(QualType Derived, QualType Base, BasePaths &Paths) {
       // updating the count of subobjects appropriately.
       std::pair<bool, unsigned>& Subobjects = Paths.ClassSubobjects[BaseType];
       bool VisitBase = true;
+      bool SetVirtual = false;
       if (BaseSpec->isVirtual()) {
         VisitBase = !Subobjects.first;
         Subobjects.first = true;
+        if (Paths.isDetectingVirtual() && Paths.DetectedVirtual == 0) {
+          // If this is the first virtual we find, remember it. If it turns out
+          // there is no base path here, we'll reset it later.
+          Paths.DetectedVirtual = static_cast<const CXXRecordType*>(
+            BaseType->getAsRecordType());
+          SetVirtual = true;
+        }
       } else
         ++Subobjects.second;
 
@@ -127,6 +137,10 @@ bool Sema::IsDerivedFrom(QualType Derived, QualType Base, BasePaths &Paths) {
       // collecting paths).
       if (Paths.isRecordingPaths())
         Paths.ScratchPath.pop_back();
+      // If we set a virtual earlier, and this isn't a path, forget it again.
+      if (SetVirtual && !FoundPath) {
+        Paths.DetectedVirtual = 0;
+      }
     }
   }
 
@@ -148,7 +162,8 @@ Sema::CheckDerivedToBaseConversion(QualType Derived, QualType Base,
   // ambiguous. This is slightly more expensive than checking whether
   // the Derived to Base conversion exists, because here we need to
   // explore multiple paths to determine if there is an ambiguity.
-  BasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/false);
+  BasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/false,
+                  /*DetectVirtual=*/false);
   bool DerivationOkay = IsDerivedFrom(Derived, Base, Paths);
   assert(DerivationOkay && "Can only be used with a derived-to-base conversion");
   if (!DerivationOkay)

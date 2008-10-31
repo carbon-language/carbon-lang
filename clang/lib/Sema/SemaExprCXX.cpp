@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Sema.h"
+#include "SemaInherit.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/Parse/DeclSpec.h"
@@ -40,6 +41,8 @@ Sema::ActOnCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
                                 DestType, OpLoc);
 
   case tok::kw_dynamic_cast:
+    CheckDynamicCast(OpLoc, Ex, DestType,
+      SourceRange(LAngleBracketLoc, RAngleBracketLoc));
     return new CXXDynamicCastExpr(DestType.getNonReferenceType(), Ex, 
                                   DestType, OpLoc);
 
@@ -49,10 +52,11 @@ Sema::ActOnCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
                                       DestType, OpLoc);
 
   case tok::kw_static_cast:
+    CheckStaticCast(OpLoc, Ex, DestType);
     return new CXXStaticCastExpr(DestType.getNonReferenceType(), Ex, 
                                  DestType, OpLoc);
   }
-  
+
   return true;
 }
 
@@ -325,41 +329,347 @@ Sema::CastsAwayConstness(QualType SrcType, QualType DestType)
 }
 
 /// CheckStaticCast - Check that a static_cast\<DestType\>(SrcExpr) is valid.
+/// Refer to C++ 5.2.9 for details. Static casts are mostly used for making
+/// implicit conversions explicit and getting rid of data loss warnings.
 void
 Sema::CheckStaticCast(SourceLocation OpLoc, Expr *&SrcExpr, QualType DestType)
 {
-#if 0
-  // 5.2.9/1 sets the ground rule of disallowing casting away constness.
-  // 5.2.9/2 permits everything allowed for direct-init, deferring to 8.5.
-  //   Note: for class destination, that's overload resolution over dest's
-  //   constructors. Src's conversions are only considered in overload choice.
-  //   For any other destination, that's just the clause 4 standards convs.
-  // 5.2.9/4 permits static_cast&lt;cv void>(anything), which is a no-op.
-  // 5.2.9/5 permits explicit non-dynamic downcasts for lvalue-to-reference.
-  // 5.2.9/6 permits reversing all implicit conversions except lvalue-to-rvalue,
-  //   function-to-pointer, array decay and to-bool, with some further
-  //   restrictions. Defers to 4.
-  // 5.2.9/7 permits integer-to-enum conversion. Interesting note: if the
-  //   integer does not correspond to an enum value, the result is unspecified -
-  //   but it still has to be some value of the enum. I don't think any compiler
-  //   complies with that.
-  // 5.2.9/8 is 5.2.9/5 for pointers.
-  // 5.2.9/9 messes with member pointers. TODO. No need to think about that yet.
-  // 5.2.9/10 permits void* to T*.
-
   QualType OrigDestType = DestType, OrigSrcType = SrcExpr->getType();
-  DestType = Context.getCanonicalType(DestType);
-  // Tests are ordered by simplicity and a wild guess at commonness.
 
-  if (const BuiltinType *BuiltinDest = DestType->getAsBuiltinType()) {
-    // 5.2.9/4
-    if (BuiltinDest->getKind() == BuiltinType::Void) {
+  // Conversions are tried roughly in the order the standard specifies them.
+  // This is necessary because there are some conversions that can be
+  // interpreted in more than one way, and the order disambiguates.
+  // DR 427 specifies that paragraph 5 is to be applied before paragraph 2.
+
+  // This option is unambiguous and simple, so put it here.
+  // C++ 5.2.9p4: Any expression can be explicitly converted to type "cv void".
+  if (DestType->isVoidType()) {
+    return;
+  }
+
+  DestType = Context.getCanonicalType(DestType);
+
+  // C++ 5.2.9p5, reference downcast.
+  // See the function for details.
+  if (IsStaticReferenceDowncast(SrcExpr, DestType)) {
+    return;
+  }
+
+  // C++ 5.2.9p2: An expression e can be explicitly converted to a type T
+  //   [...] if the declaration "T t(e);" is well-formed, [...].
+  ImplicitConversionSequence ICS = TryDirectInitialization(SrcExpr, DestType);
+  if (ICS.ConversionKind != ImplicitConversionSequence::BadConversion) {
+    if (ICS.ConversionKind == ImplicitConversionSequence::StandardConversion &&
+        ICS.Standard.First != ICK_Identity)
+    {
+      DefaultFunctionArrayConversion(SrcExpr);
+    }
+    return;
+  }
+  // FIXME: Missing the validation of the conversion, e.g. for an accessible
+  // base.
+
+  // C++ 5.2.9p6: May apply the reverse of any standard conversion, except
+  // lvalue-to-rvalue, array-to-pointer, function-to-pointer, and boolean
+  // conversions, subject to further restrictions.
+  // Also, C++ 5.2.9p1 forbids casting away constness, which makes reversal
+  // of qualification conversions impossible.
+
+  // The lvalue-to-rvalue, array-to-pointer and function-to-pointer conversions
+  // are applied to the expression.
+  DefaultFunctionArrayConversion(SrcExpr);
+
+  QualType SrcType = Context.getCanonicalType(SrcExpr->getType());
+
+  // Reverse integral promotion/conversion. All such conversions are themselves
+  // again integral promotions or conversions and are thus already handled by
+  // p2 (TryDirectInitialization above).
+  // (Note: any data loss warnings should be suppressed.)
+  // The exception is the reverse of enum->integer, i.e. integer->enum (and
+  // enum->enum). See also C++ 5.2.9p7.
+  // The same goes for reverse floating point promotion/conversion and
+  // floating-integral conversions. Again, only floating->enum is relevant.
+  if (DestType->isEnumeralType()) {
+    if (SrcType->isComplexType() || SrcType->isVectorType()) {
+      // Fall through - these cannot be converted.
+    } else if (SrcType->isArithmeticType() || SrcType->isEnumeralType()) {
       return;
     }
-
-    // Primitive conversions for 5.2.9/2 and 6.
   }
-#endif
+
+  // Reverse pointer upcast. C++ 4.10p3 specifies pointer upcast.
+  // C++ 5.2.9p8 additionally disallows a cast path through virtual inheritance.
+  if (IsStaticPointerDowncast(SrcType, DestType)) {
+    return;
+  }
+
+  // Reverse member pointer conversion. C++ 5.11 specifies member pointer
+  // conversion. C++ 5.2.9p9 has additional information.
+  // DR54's access restrictions apply here also.
+  // FIXME: Don't have member pointers yet.
+
+  // Reverse pointer conversion to void*. C++ 4.10.p2 specifies conversion to
+  // void*. C++ 5.2.9p10 specifies additional restrictions, which really is
+  // just the usual constness stuff.
+  if (const PointerType *SrcPointer = SrcType->getAsPointerType()) {
+    QualType SrcPointee = SrcPointer->getPointeeType();
+    if (SrcPointee->isVoidType()) {
+      if (const PointerType *DestPointer = DestType->getAsPointerType()) {
+        QualType DestPointee = DestPointer->getPointeeType();
+        if (DestPointee->isObjectType() &&
+            DestPointee.isAtLeastAsQualifiedAs(SrcPointee))
+        {
+          return;
+        }
+      }
+    }
+  }
+
+  // We tried everything. Everything! Nothing works! :-(
+  // FIXME: Error reporting could be a lot better. Should store the reason
+  // why every substep failed and, at the end, select the most specific and
+  // report that.
+  Diag(OpLoc, diag::err_bad_cxx_cast_generic, "static_cast",
+    OrigDestType.getAsString(), OrigSrcType.getAsString());
+}
+
+/// Tests whether a conversion according to C++ 5.2.9p5 is valid.
+bool
+Sema::IsStaticReferenceDowncast(Expr *SrcExpr, QualType DestType)
+{
+  // C++ 5.2.9p5: An lvalue of type "cv1 B", where B is a class type, can be
+  //   cast to type "reference to cv2 D", where D is a class derived from B,
+  //   if a valid standard conversion from "pointer to D" to "pointer to B"
+  //   exists, cv2 >= cv1, and B is not a virtual base class of D.
+  // In addition, DR54 clarifies that the base must be accessible in the
+  // current context. Although the wording of DR54 only applies to the pointer
+  // variant of this rule, the intent is clearly for it to apply to the this
+  // conversion as well.
+
+  if (SrcExpr->isLvalue(Context) != Expr::LV_Valid) {
+    return false;
+  }
+
+  DestType = Context.getCanonicalType(DestType);
+  const ReferenceType *DestReference = DestType->getAsReferenceType();
+  if (!DestReference) {
+    return false;
+  }
+  QualType DestPointee = DestReference->getPointeeType();
+
+  QualType SrcType = Context.getCanonicalType(SrcExpr->getType());
+
+  return IsStaticDowncast(SrcType, DestPointee);
+}
+
+/// Tests whether a conversion according to C++ 5.2.9p8 is valid.
+bool
+Sema::IsStaticPointerDowncast(QualType SrcType, QualType DestType)
+{
+  // C++ 5.2.9p8: An rvalue of type "pointer to cv1 B", where B is a class
+  //   type, can be converted to an rvalue of type "pointer to cv2 D", where D
+  //   is a class derived from B, if a valid standard conversion from "pointer
+  //   to D" to "pointer to B" exists, cv2 >= cv1, and B is not a virtual base
+  //   class of D.
+  // In addition, DR54 clarifies that the base must be accessible in the
+  // current context.
+
+  SrcType = Context.getCanonicalType(SrcType);
+  const PointerType *SrcPointer = SrcType->getAsPointerType();
+  if (!SrcPointer) {
+    return false;
+  }
+
+  DestType = Context.getCanonicalType(DestType);
+  const PointerType *DestPointer = DestType->getAsPointerType();
+  if (!DestPointer) {
+    return false;
+  }
+
+  return IsStaticDowncast(SrcPointer->getPointeeType(),
+                          DestPointer->getPointeeType());
+}
+
+/// IsStaticDowncast - Common functionality of IsStaticReferenceDowncast and
+/// IsStaticPointerDowncast. Tests whether a static downcast from SrcType to
+/// DestType, both of which must be canonical, is possible and allowed.
+bool
+Sema::IsStaticDowncast(QualType SrcType, QualType DestType)
+{
+  assert(SrcType->isCanonical());
+  assert(DestType->isCanonical());
+
+  if (!DestType->isRecordType()) {
+    return false;
+  }
+
+  if (!SrcType->isRecordType()) {
+    return false;
+  }
+
+  // Comparing cv is cheaper, so do it first.
+  if (!DestType.isAtLeastAsQualifiedAs(SrcType)) {
+    return false;
+  }
+
+  BasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/false,
+                  /*DetectVirtual=*/true);
+  if (!IsDerivedFrom(DestType, SrcType, Paths)) {
+    return false;
+  }
+
+  if (Paths.isAmbiguous(SrcType.getUnqualifiedType())) {
+    return false;
+  }
+
+  if (Paths.getDetectedVirtual() != 0) {
+    return false;
+  }
+
+  // FIXME: Test accessibility.
+
+  return true;
+}
+
+/// TryDirectInitialization - Attempt to direct-initialize a value of the
+/// given type (DestType) from the given expression (SrcExpr), as one would
+/// do when creating an object with new with parameters. This function returns
+/// an implicit conversion sequence that can be used to perform the
+/// initialization.
+/// This routine is very similar to TryCopyInitialization; the differences
+/// between the two (C++ 8.5p12 and C++ 8.5p14) are:
+/// 1) In direct-initialization, all constructors of the target type are
+///    considered, including those marked as explicit.
+/// 2) In direct-initialization, overload resolution is performed over the
+///    constructors of the target type. In copy-initialization, overload
+///    resolution is performed over all conversion functions that result in
+///    the target type. This can lead to different functions used.
+ImplicitConversionSequence
+Sema::TryDirectInitialization(Expr *SrcExpr, QualType DestType)
+{
+  if (!DestType->isRecordType()) {
+    // For non-class types, copy and direct initialization are identical.
+    // C++ 8.5p11
+    // FIXME: Those parts should be in a common function, actually.
+    return TryCopyInitialization(SrcExpr, DestType);
+  }
+
+  // Not enough support for the rest yet, actually.
+  ImplicitConversionSequence ICS;
+  ICS.ConversionKind = ImplicitConversionSequence::BadConversion;
+  return ICS;
+}
+
+/// CheckDynamicCast - Check that a dynamic_cast\<DestType\>(SrcExpr) is valid.
+/// Refer to C++ 5.2.7 for details. Dynamic casts are used mostly for runtime-
+/// checked downcasts in class hierarchies.
+void
+Sema::CheckDynamicCast(SourceLocation OpLoc, Expr *&SrcExpr, QualType DestType,
+  const SourceRange &DestRange)
+{
+  QualType OrigDestType = DestType, OrigSrcType = SrcExpr->getType();
+  DestType = Context.getCanonicalType(DestType);
+
+  // C++ 5.2.7p1: T shall be a pointer or reference to a complete class type,
+  //   or "pointer to cv void".
+
+  QualType DestPointee;
+  const PointerType *DestPointer = DestType->getAsPointerType();
+  const ReferenceType *DestReference = DestType->getAsReferenceType();
+  if (DestPointer) {
+    DestPointee = DestPointer->getPointeeType();
+  } else if (DestReference) {
+    DestPointee = DestReference->getPointeeType();
+  } else {
+    Diag(OpLoc, diag::err_bad_dynamic_cast_operand,
+      OrigDestType.getAsString(), "not a reference or pointer", DestRange);
+    return;
+  }
+
+  const RecordType *DestRecord = DestPointee->getAsRecordType();
+  if (DestPointee->isVoidType()) {
+    assert(DestPointer && "Reference to void is not possible");
+  } else if (DestRecord) {
+    if (!DestRecord->getDecl()->isDefinition()) {
+      Diag(OpLoc, diag::err_bad_dynamic_cast_operand,
+        DestPointee.getUnqualifiedType().getAsString(),
+        "incomplete", DestRange);
+      return;
+    }
+  } else {
+    Diag(OpLoc, diag::err_bad_dynamic_cast_operand,
+      DestPointee.getUnqualifiedType().getAsString(),
+      "not a class", DestRange);
+    return;
+  }
+
+  // C++ 5.2.7p2: If T is a pointer type, v shall be an rvalue of a pointer to
+  //   complete class type, [...]. If T is a reference type, v shall be an
+  //   lvalue of a complete class type, [...].
+
+  QualType SrcType = Context.getCanonicalType(OrigSrcType);
+  QualType SrcPointee;
+  if (DestPointer) {
+    if (const PointerType *SrcPointer = SrcType->getAsPointerType()) {
+      SrcPointee = SrcPointer->getPointeeType();
+    } else {
+      Diag(OpLoc, diag::err_bad_dynamic_cast_operand,
+        OrigSrcType.getAsString(), "not a pointer", SrcExpr->getSourceRange());
+      return;
+    }
+  } else {
+    if (SrcExpr->isLvalue(Context) != Expr::LV_Valid) {
+      Diag(OpLoc, diag::err_bad_dynamic_cast_operand,
+        OrigDestType.getAsString(), "not an lvalue", SrcExpr->getSourceRange());
+    }
+    SrcPointee = SrcType;
+  }
+
+  const RecordType *SrcRecord = SrcPointee->getAsRecordType();
+  if (SrcRecord) {
+    if (!SrcRecord->getDecl()->isDefinition()) {
+      Diag(OpLoc, diag::err_bad_dynamic_cast_operand,
+        SrcPointee.getUnqualifiedType().getAsString(), "incomplete",
+        SrcExpr->getSourceRange());
+      return;
+    }
+  } else {
+    Diag(OpLoc, diag::err_bad_dynamic_cast_operand,
+      SrcPointee.getUnqualifiedType().getAsString(), "not a class",
+      SrcExpr->getSourceRange());
+    return;
+  }
+
+  // Assumptions to this point.
+  assert(DestPointer || DestReference);
+  assert(DestRecord || DestPointee->isVoidType());
+  assert(SrcRecord);
+
+  // C++ 5.2.7p1: The dynamic_cast operator shall not cast away constness.
+  if (!DestPointee.isAtLeastAsQualifiedAs(SrcPointee)) {
+    Diag(OpLoc, diag::err_bad_cxx_cast_const_away, "dynamic_cast",
+      OrigDestType.getAsString(), OrigSrcType.getAsString());
+    return;
+  }
+
+  // C++ 5.2.7p3: If the type of v is the same as the required result type,
+  //   [except for cv].
+  if (DestRecord == SrcRecord) {
+    return;
+  }
+
+  // C++ 5.2.7p5
+  // Upcasts are resolved statically.
+  if (DestRecord && IsDerivedFrom(SrcPointee, DestPointee)) {
+    CheckDerivedToBaseConversion(SrcPointee, DestPointee, OpLoc, SourceRange());
+    // Diagnostic already emitted on error.
+    return;
+  }
+
+  // C++ 5.2.7p6: Otherwise, v shall be [polymorphic].
+  // FIXME: Information not yet available.
+
+  // Done. Everything else is run-time checks.
 }
 
 /// ActOnCXXBoolLiteral - Parse {true,false} literals.

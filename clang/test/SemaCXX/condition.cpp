@@ -18,7 +18,7 @@ void test() {
 
   while (struct S {} x=0) ; // expected-error: {{types may not be defined in conditions}} expected-error: {{incompatible type}} expected-error: {{expression must have bool type}}
   while (struct {} x=0) ; // expected-error: {{types may not be defined in conditions}} expected-error: {{incompatible type}} expected-error: {{expression must have bool type}}
-  switch (enum {E} x=0) ; // expected-error: {{types may not be defined in conditions}}
+  switch (enum {E} x=0) ; // expected-error: {{types may not be defined in conditions}} expected-error: {{incompatible type}}
 
   if (int x=0) { // expected-error: {{previous definition is here}}
     int x;  // expected-error: {{redefinition of 'x'}}

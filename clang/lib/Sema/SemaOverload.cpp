@@ -423,8 +423,9 @@ Sema::TryImplicitConversion(Expr* From, QualType ToType)
     FromType = ToType.getUnqualifiedType();
   } 
   // Integral conversions (C++ 4.7).
+  // FIXME: isIntegralType shouldn't be true for enums in C++.
   else if ((FromType->isIntegralType() || FromType->isEnumeralType()) &&
-           (ToType->isIntegralType() || ToType->isEnumeralType())) {
+           (ToType->isIntegralType() && !ToType->isEnumeralType())) {
     ICS.Standard.Second = ICK_Integral_Conversion;
     FromType = ToType.getUnqualifiedType();
   }
@@ -434,16 +435,19 @@ Sema::TryImplicitConversion(Expr* From, QualType ToType)
     FromType = ToType.getUnqualifiedType();
   }
   // Floating-integral conversions (C++ 4.9).
+  // FIXME: isIntegralType shouldn't be true for enums in C++.
   else if ((FromType->isFloatingType() &&
-            ToType->isIntegralType() && !ToType->isBooleanType()) ||
+            ToType->isIntegralType() && !ToType->isBooleanType() &&
+                                        !ToType->isEnumeralType()) ||
            ((FromType->isIntegralType() || FromType->isEnumeralType()) && 
             ToType->isFloatingType())) {
     ICS.Standard.Second = ICK_Floating_Integral;
     FromType = ToType.getUnqualifiedType();
   }
   // Pointer conversions (C++ 4.10).
-  else if (IsPointerConversion(From, FromType, ToType, FromType))
+  else if (IsPointerConversion(From, FromType, ToType, FromType)) {
     ICS.Standard.Second = ICK_Pointer_Conversion;
+  }
   // FIXME: Pointer to member conversions (4.11).
   // Boolean conversions (C++ 4.12).
   // FIXME: pointer-to-member type
@@ -502,21 +506,25 @@ Sema::TryImplicitConversion(Expr* From, QualType ToType)
 bool Sema::IsIntegralPromotion(Expr *From, QualType FromType, QualType ToType)
 {
   const BuiltinType *To = ToType->getAsBuiltinType();
+  if (!To) {
+    return false;
+  }
 
   // An rvalue of type char, signed char, unsigned char, short int, or
   // unsigned short int can be converted to an rvalue of type int if
   // int can represent all the values of the source type; otherwise,
   // the source rvalue can be converted to an rvalue of type unsigned
   // int (C++ 4.5p1).
-  if (FromType->isPromotableIntegerType() && !FromType->isBooleanType() && To) {
+  if (FromType->isPromotableIntegerType() && !FromType->isBooleanType()) {
     if (// We can promote any signed, promotable integer type to an int
         (FromType->isSignedIntegerType() ||
          // We can promote any unsigned integer type whose size is
          // less than int to an int.
          (!FromType->isSignedIntegerType() && 
-          Context.getTypeSize(FromType) < Context.getTypeSize(ToType))))
+          Context.getTypeSize(FromType) < Context.getTypeSize(ToType)))) {
       return To->getKind() == BuiltinType::Int;
-        
+    }
+
     return To->getKind() == BuiltinType::UInt;
   }
 
@@ -552,7 +560,7 @@ bool Sema::IsIntegralPromotion(Expr *From, QualType FromType, QualType ToType)
         // We found the type that we can promote to. If this is the
         // type we wanted, we have a promotion. Otherwise, no
         // promotion.
-        return Context.getCanonicalType(FromType).getUnqualifiedType()
+        return Context.getCanonicalType(ToType).getUnqualifiedType()
           == Context.getCanonicalType(PromoteTypes[Idx]).getUnqualifiedType();
       }
     }
@@ -576,13 +584,15 @@ bool Sema::IsIntegralPromotion(Expr *From, QualType FromType, QualType ToType)
 
       // Are we promoting to an int from a bitfield that fits in an int?
       if (BitWidth < ToSize ||
-          (FromType->isSignedIntegerType() && BitWidth <= ToSize))
+          (FromType->isSignedIntegerType() && BitWidth <= ToSize)) {
         return To->getKind() == BuiltinType::Int;
-        
+      }
+
       // Are we promoting to an unsigned int from an unsigned bitfield
       // that fits into an unsigned int?
-      if (FromType->isUnsignedIntegerType() && BitWidth <= ToSize)
+      if (FromType->isUnsignedIntegerType() && BitWidth <= ToSize) {
         return To->getKind() == BuiltinType::UInt;
+      }
 
       return false;
     }
@@ -590,8 +600,9 @@ bool Sema::IsIntegralPromotion(Expr *From, QualType FromType, QualType ToType)
 
   // An rvalue of type bool can be converted to an rvalue of type int,
   // with false becoming zero and true becoming one (C++ 4.5p4).
-  if (FromType->isBooleanType() && To && To->getKind() == BuiltinType::Int)
+  if (FromType->isBooleanType() && To->getKind() == BuiltinType::Int) {
     return true;
+  }
 
   return false;
 }
@@ -630,7 +641,7 @@ bool Sema::IsPointerConversion(Expr *From, QualType FromType, QualType ToType,
     ConvertedType = ToType;
     return true;
   }
-  
+
   // An rvalue of type "pointer to cv T," where T is an object type,
   // can be converted to an rvalue of type "pointer to cv void" (C++
   // 4.10p2).
@@ -709,7 +720,8 @@ bool Sema::CheckPointerConversion(Expr *From, QualType ToType) {
 
   if (const PointerType *FromPtrType = FromType->getAsPointerType())
     if (const PointerType *ToPtrType = ToType->getAsPointerType()) {
-      BasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/false);
+      BasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/false,
+                      /*DetectVirtual=*/false);
       QualType FromPointeeType = FromPtrType->getPointeeType(),
                ToPointeeType   = ToPtrType->getPointeeType();
       if (FromPointeeType->isRecordType() &&

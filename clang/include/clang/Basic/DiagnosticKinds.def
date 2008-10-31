@@ -1096,6 +1096,8 @@ DIAG(ext_reinterpret_cast_fn_obj, EXTENSION,
      "an extension")
 DIAG(err_bad_reinterpret_cast_small_int, ERROR,
      "cast from pointer to smaller type '%0' loses information")
+DIAG(err_bad_dynamic_cast_operand, ERROR,
+     "'%0' is %1")
 
 DIAG(err_invalid_use_of_function_type, ERROR,
      "a function type is not allowed here")

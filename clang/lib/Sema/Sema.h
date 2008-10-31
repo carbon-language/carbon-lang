@@ -707,13 +707,22 @@ public:
                                        SourceLocation LParenLoc, ExprTy *E,
                                        SourceLocation RParenLoc);
 
+private:
   // Helpers for ActOnCXXCasts
-  bool CastsAwayConstness(QualType SrcType, QualType DestType);
   void CheckConstCast(SourceLocation OpLoc, Expr *&SrcExpr, QualType DestType);
   void CheckReinterpretCast(SourceLocation OpLoc, Expr *&SrcExpr,
                             QualType DestType);
   void CheckStaticCast(SourceLocation OpLoc, Expr *&SrcExpr, QualType DestType);
+  void CheckDynamicCast(SourceLocation OpLoc, Expr *&SrcExpr,
+                        QualType DestType, const SourceRange &DestRange);
+  bool CastsAwayConstness(QualType SrcType, QualType DestType);
+  bool IsStaticReferenceDowncast(Expr *SrcExpr, QualType DestType);
+  bool IsStaticPointerDowncast(QualType SrcType, QualType DestType);
+  bool IsStaticDowncast(QualType SrcType, QualType DestType);
+  ImplicitConversionSequence TryDirectInitialization(Expr *SrcExpr,
+                                                     QualType DestType);
 
+public:
   //// ActOnCXXThis -  Parse 'this' pointer.
   virtual ExprResult ActOnCXXThis(SourceLocation ThisLoc);
 

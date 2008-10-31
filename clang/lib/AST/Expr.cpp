@@ -1072,15 +1072,17 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
 /// integer constant expression with the value zero, or if this is one that is
 /// cast to void*.
 bool Expr::isNullPointerConstant(ASTContext &Ctx) const {
-  // Strip off a cast to void*, if it exists.
+  // Strip off a cast to void*, if it exists. Except in C++.
   if (const ExplicitCastExpr *CE = dyn_cast<ExplicitCastExpr>(this)) {
-    // Check that it is a cast to void*.
-    if (const PointerType *PT = CE->getType()->getAsPointerType()) {
-      QualType Pointee = PT->getPointeeType();
-      if (Pointee.getCVRQualifiers() == 0 && 
-          Pointee->isVoidType() &&                                 // to void*
-          CE->getSubExpr()->getType()->isIntegerType())            // from int.
-        return CE->getSubExpr()->isNullPointerConstant(Ctx);
+    if(!Ctx.getLangOptions().CPlusPlus) {
+      // Check that it is a cast to void*.
+      if (const PointerType *PT = CE->getType()->getAsPointerType()) {
+        QualType Pointee = PT->getPointeeType();
+        if (Pointee.getCVRQualifiers() == 0 && 
+            Pointee->isVoidType() &&                              // to void*
+            CE->getSubExpr()->getType()->isIntegerType())         // from int.
+          return CE->getSubExpr()->isNullPointerConstant(Ctx);
+      }
     }
   } else if (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(this)) {
     // Ignore the ImplicitCastExpr type entirely.
