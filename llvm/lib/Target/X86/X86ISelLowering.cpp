@@ -4194,11 +4194,15 @@ X86TargetLowering::LowerEXTRACT_VECTOR_ELT_SSE4(SDValue Op,
   } else if (VT == MVT::f32) {
     // EXTRACTPS outputs to a GPR32 register which will require a movd to copy
     // the result back to FR32 register. It's only worth matching if the
-    // result has a single use which is a store or a bitcast to i32.
+    // result has a single use which is a store or a bitcast to i32.  And in
+    // the case of a store, it's not worth it if the index is a constant 0,
+    // because a MOVSSmr can be used instead, which is smaller and faster.
     if (!Op.hasOneUse())
       return SDValue();
     SDNode *User = *Op.getNode()->use_begin();
-    if (User->getOpcode() != ISD::STORE &&
+    if ((User->getOpcode() != ISD::STORE ||
+         (isa<ConstantSDNode>(Op.getOperand(1)) &&
+          cast<ConstantSDNode>(Op.getOperand(1))->isNullValue())) &&
         (User->getOpcode() != ISD::BIT_CONVERT ||
          User->getValueType(0) != MVT::i32))
       return SDValue();
