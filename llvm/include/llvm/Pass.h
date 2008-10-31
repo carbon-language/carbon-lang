@@ -81,8 +81,12 @@ class Pass {
   void operator=(const Pass&);  // DO NOT IMPLEMENT
   Pass(const Pass &);           // DO NOT IMPLEMENT
 public:
-  explicit Pass(intptr_t pid) : Resolver(0), PassID(pid) {}
-  explicit Pass(const void *pid) : Resolver(0), PassID((intptr_t)pid) {}
+  explicit Pass(intptr_t pid) : Resolver(0), PassID(pid) {
+    assert(pid && "pid cannot be 0");
+  }
+  explicit Pass(const void *pid) : Resolver(0), PassID((intptr_t)pid) {
+    assert(pid && "pid cannot be 0"); 
+  }
   virtual ~Pass();
 
   /// getPassName - Return a nice clean name for a pass.  This usually
