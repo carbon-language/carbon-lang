@@ -801,11 +801,17 @@ namespace {
   class PIC16TargetInfo : public TargetInfo{
   public:
     PIC16TargetInfo(const std::string& triple) : TargetInfo(triple) {
-      // FIXME: Is IntAlign really supposed to be 16?  There seems
-      // little point on a platform with 8-bit loads.
-      IntWidth = IntAlign = LongAlign = LongLongAlign = PointerWidth = 16;
-      LongWidth = 16;
+      IntWidth = 16;
+      LongWidth = LongLongWidth = 32;
+      PointerWidth = 16;
+      IntAlign = 8;
+      LongAlign = LongLongAlign = 8;
       PointerAlign = 8;
+      SizeType = UnsignedInt;
+      IntMaxType = SignedLong;
+      UIntMaxType = UnsignedLong;
+      PtrDiffType = SignedShort;
+      WCharType = UnsignedInt;
       DescriptionString = "e-p:16:8:8-i8:8:8-i16:8:8-i32:8:8";
     }
     virtual uint64_t getPointerWidthV(unsigned AddrSpace) const { return 16; }

@@ -453,7 +453,7 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
 
   if (!Member) return LastInGroup;
 
-  assert(II || isInstField && "No identifier for non-field ?");
+  assert((II || isInstField) && "No identifier for non-field ?");
 
   // set/getAccess is not part of Decl's interface to avoid bloating it with C++
   // specific methods. Use a wrapper class that can be used with all C++ class

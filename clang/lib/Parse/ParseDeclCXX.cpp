@@ -551,9 +551,9 @@ Parser::DeclTy *Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS) {
 ///
 void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
                                          unsigned TagType, DeclTy *TagDecl) {
-  assert(TagType == DeclSpec::TST_struct ||
+  assert((TagType == DeclSpec::TST_struct ||
          TagType == DeclSpec::TST_union  ||
-         TagType == DeclSpec::TST_class && "Invalid TagType!");
+         TagType == DeclSpec::TST_class) && "Invalid TagType!");
 
   SourceLocation LBraceLoc = ConsumeBrace();
 
@@ -626,8 +626,8 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
     // For a local class of inline method, pop the LexedMethodsForTopClass that
     // was previously pushed.
 
-    assert(CurScope->isInCXXInlineMethodScope() ||
-           TopClassStacks.size() == 1    &&
+    assert((CurScope->isInCXXInlineMethodScope() ||
+           TopClassStacks.size() == 1) &&
            "MethodLexers not getting popped properly!");
     if (CurScope->isInCXXInlineMethodScope())
       PopTopClassStack();

@@ -1875,7 +1875,7 @@ CFRefCount::HandleSymbolDeath(GRStateManager& VMgr,
                               RefVal V, bool& hasLeak) {
 
   GRStateRef state(St, VMgr);
-  assert (!V.isReturnedOwned() || CD &&
+  assert ((!V.isReturnedOwned() || CD) &&
           "CodeDecl must be available for reporting ReturnOwned errors.");
 
   if (V.isReturnedOwned() && V.getCount() == 0)

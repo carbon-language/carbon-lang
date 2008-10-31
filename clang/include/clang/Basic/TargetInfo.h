@@ -58,6 +58,24 @@ public:
   virtual ~TargetInfo();
 
   ///===---- Target Data Type Query Methods -------------------------------===//
+  enum IntType {
+    NoInt = 0x0,
+    SignedShort,
+    UnsignedShort,
+    SignedInt,
+    UnsignedInt,
+    SignedLong,
+    UnsignedLong,
+    SignedLongLong,
+    UnsignedLongLong
+  } SizeType, IntMaxType, UIntMaxType, PtrDiffType, WCharType;  
+  enum IntType getSizeType() const {return SizeType;}
+  enum IntType getIntMaxType() const {return IntMaxType;}
+  enum IntType getUIntMaxType() const {return UIntMaxType;}
+  enum IntType getPtrDiffType(unsigned AddrSpace) const {
+    return AddrSpace == 0 ? PtrDiffType : getPtrDiffTypeV(AddrSpace);
+  }
+  enum IntType getWCharType() const {return WCharType;}
 
   /// isCharSigned - Return true if 'char' is 'signed char' or false if it is
   /// treated as 'unsigned char'.  This is implementation defined according to
@@ -219,7 +237,9 @@ protected:
   virtual uint64_t getPointerAlignV(unsigned AddrSpace) const {
     return PointerAlign;
   }
-  
+  virtual enum IntType getPtrDiffTypeV(unsigned AddrSpace) const {
+    return PtrDiffType;
+  }
   virtual void getGCCRegNames(const char * const *&Names, 
                               unsigned &NumNames) const = 0;
   virtual void getGCCRegAliases(const GCCRegAlias *&Aliases, 

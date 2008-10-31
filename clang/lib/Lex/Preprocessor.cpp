@@ -553,9 +553,11 @@ static void InitializePredefinedMacros(Preprocessor &PP,
     DefineBuiltinMacro(Buf, "__INT_MAX__=32767");
   else
     assert(0 && "Unknown integer size");
-  
-  assert(TI.getLongLongWidth() == 64 && "Only support 64-bit long long so far");
-  DefineBuiltinMacro(Buf, "__LONG_LONG_MAX__=9223372036854775807LL");
+
+  if (TI.getLongLongWidth() == 64)
+    DefineBuiltinMacro(Buf, "__LONG_LONG_MAX__=9223372036854775807LL");
+  else if (TI.getLongLongWidth() == 32)
+    DefineBuiltinMacro(Buf, "__LONG_LONG_MAX__=2147483647L");
 
   if (TI.getLongWidth() == 32)
     DefineBuiltinMacro(Buf, "__LONG_MAX__=2147483647L");
@@ -565,41 +567,67 @@ static void InitializePredefinedMacros(Preprocessor &PP,
     DefineBuiltinMacro(Buf, "__LONG_MAX__=32767L");
   else
     assert(0 && "Unknown long size");
+  char MacroBuf[60];
+  sprintf(MacroBuf, "__INTMAX_MAX__=%lld",
+          (TI.getIntMaxType() == TargetInfo::UnsignedLongLong?
+           (1LL<<(TI.getLongLongWidth() -1)) : 
+           (1LL<<(TI.getLongLongWidth() -2) -1)));
+  DefineBuiltinMacro(Buf, MacroBuf);
   
-  // For "32-bit" targets, GCC generally defines intmax to be 'long long' and
-  // ptrdiff_t to be 'int'.  On "64-bit" targets, it defines intmax to be long,
-  // and ptrdiff_t to be 'long int'.  This sort of stuff shouldn't matter in
-  // theory, but can affect C++ overloading, stringizing, etc.
-  if (TI.getPointerWidth(0) == TI.getLongLongWidth()) {
-    // If sizeof(void*) == sizeof(long long) assume we have an LP64 target,
-    // because we assume sizeof(long) always is sizeof(void*) currently.
-    assert(TI.getPointerWidth(0) == TI.getLongWidth() && 
-           TI.getLongWidth() == 64 && 
-           TI.getIntWidth() == 32 && "Not I32 LP64?");
-    assert(TI.getIntMaxTWidth() == 64);
-    DefineBuiltinMacro(Buf, "__INTMAX_MAX__=9223372036854775807L");
-    DefineBuiltinMacro(Buf, "__INTMAX_TYPE__=long int");
-    DefineBuiltinMacro(Buf, "__PTRDIFF_TYPE__=long int");
-    DefineBuiltinMacro(Buf, "__UINTMAX_TYPE__=long unsigned int");
-  } else {
-    // Otherwise we know that the pointer is smaller than long long. We continue
-    // to assume that sizeof(void*) == sizeof(long).
-    assert(TI.getPointerWidth(0) < TI.getLongLongWidth() &&
-           TI.getPointerWidth(0) == TI.getLongWidth() &&
-           "Unexpected target sizes");
-    // We currently only support targets where long is 32-bit.  This can be
-    // easily generalized in the future.
-    assert(TI.getIntMaxTWidth() == 64);
-    DefineBuiltinMacro(Buf, "__INTMAX_MAX__=9223372036854775807LL");
+  if (TI.getIntMaxType() == TargetInfo::UnsignedLongLong)
+    DefineBuiltinMacro(Buf, "__INTMAX_TYPE__=unsigned long long int");
+  else if (TI.getIntMaxType() == TargetInfo::SignedLongLong)
     DefineBuiltinMacro(Buf, "__INTMAX_TYPE__=long long int");
-    DefineBuiltinMacro(Buf, "__PTRDIFF_TYPE__=int");
-    DefineBuiltinMacro(Buf, "__UINTMAX_TYPE__=long long unsigned int");
-  }
+  else if (TI.getIntMaxType() == TargetInfo::UnsignedLong)
+    DefineBuiltinMacro(Buf, "__INTMAX_TYPE__=unsigned long int");
+  else if (TI.getIntMaxType() == TargetInfo::SignedLong)
+    DefineBuiltinMacro(Buf, "__INTMAX_TYPE__=long int");
+  else if (TI.getIntMaxType() == TargetInfo::UnsignedInt)
+    DefineBuiltinMacro(Buf, "__INTMAX_TYPE__=unsigned int");
+  else
+    DefineBuiltinMacro(Buf, "__INTMAX_TYPE__=int");
   
-  // All of our current targets have sizeof(long) == sizeof(void*).
-  assert(TI.getPointerWidth(0) == TI.getLongWidth());
-  DefineBuiltinMacro(Buf, "__SIZE_TYPE__=long unsigned int");
-
+  if (TI.getUIntMaxType() == TargetInfo::UnsignedLongLong)
+    DefineBuiltinMacro(Buf, "__UINTMAX_TYPE__=unsigned long long int");
+  else if (TI.getUIntMaxType() == TargetInfo::SignedLongLong)
+    DefineBuiltinMacro(Buf, "__UINTMAX_TYPE__=long long int");
+  else if (TI.getUIntMaxType() == TargetInfo::UnsignedLong)
+    DefineBuiltinMacro(Buf, "__UINTMAX_TYPE__=unsigned long int");
+  else if (TI.getUIntMaxType() == TargetInfo::SignedLong)
+    DefineBuiltinMacro(Buf, "__UINTMAX_TYPE__=long int");
+  else if (TI.getUIntMaxType() == TargetInfo::UnsignedInt)
+    DefineBuiltinMacro(Buf, "__UINTMAX_TYPE__=unsigned int");
+  else
+    DefineBuiltinMacro(Buf, "__UINTMAX_TYPE__=int");
+  
+  if (TI.getPtrDiffType(0) == TargetInfo::UnsignedLongLong)
+    DefineBuiltinMacro(Buf, "__PTRDIFF_TYPE__=unsigned long long int");
+  else if (TI.getPtrDiffType(0) == TargetInfo::SignedLongLong)
+    DefineBuiltinMacro(Buf, "__PTRDIFF_TYPE__=long long int");
+  else if (TI.getPtrDiffType(0) == TargetInfo::UnsignedLong)
+    DefineBuiltinMacro(Buf, "__PTRDIFF_TYPE__=unsigned long int");
+  else if (TI.getPtrDiffType(0) == TargetInfo::SignedLong)
+    DefineBuiltinMacro(Buf, "__PTRDIFF_TYPE__=long int");
+  else if (TI.getPtrDiffType(0) == TargetInfo::UnsignedInt)
+    DefineBuiltinMacro(Buf, "__PTRDIFF_TYPE__=unsigned int");
+  else
+    DefineBuiltinMacro(Buf, "__PTRDIFF_TYPE__=int");
+  
+  if (TI.getSizeType() == TargetInfo::UnsignedLongLong)
+    DefineBuiltinMacro(Buf, "__SIZE_TYPE__=unsigned long long int");
+  else if (TI.getSizeType() == TargetInfo::SignedLongLong)
+    DefineBuiltinMacro(Buf, "__SIZE_TYPE__=long long int");
+  else if (TI.getSizeType() == TargetInfo::UnsignedLong)
+    DefineBuiltinMacro(Buf, "__SIZE_TYPE__=unsigned long int");
+  else if (TI.getSizeType() == TargetInfo::SignedLong)
+    DefineBuiltinMacro(Buf, "__SIZE_TYPE__=long int");
+  else if (TI.getSizeType() == TargetInfo::UnsignedInt)
+    DefineBuiltinMacro(Buf, "__SIZE_TYPE__=unsigned int");
+  else if (TI.getSizeType() == TargetInfo::SignedInt)
+    DefineBuiltinMacro(Buf, "__SIZE_TYPE__=int");
+  else
+    DefineBuiltinMacro(Buf, "__SIZE_TYPE__=unsigned short");
+  
   DefineFloatMacros(Buf, "FLT", &TI.getFloatFormat());
   DefineFloatMacros(Buf, "DBL", &TI.getDoubleFormat());
   DefineFloatMacros(Buf, "LDBL", &TI.getLongDoubleFormat());
@@ -612,7 +640,6 @@ static void InitializePredefinedMacros(Preprocessor &PP,
     Buf.push_back('\n');
   }
   
-  char MacroBuf[60];
   if (const char *Prefix = TI.getUserLabelPrefix()) {
     sprintf(MacroBuf, "__USER_LABEL_PREFIX__=%s", Prefix);
     DefineBuiltinMacro(Buf, MacroBuf);
