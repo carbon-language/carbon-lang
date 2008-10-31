@@ -1349,17 +1349,15 @@ namespace {
     RegReductionPriorityQueue() :
     Queue(SF(this)), currentQueueId(0) {}
     
-    virtual void initNodes(std::vector<SUnit> &sunits) {}
+    virtual void initNodes(std::vector<SUnit> &sunits) = 0;
 
-    virtual void addNode(const SUnit *SU) {}
+    virtual void addNode(const SUnit *SU) = 0;
 
-    virtual void updateNode(const SUnit *SU) {}
+    virtual void updateNode(const SUnit *SU) = 0;
 
-    virtual void releaseState() {}
+    virtual void releaseState() = 0;
     
-    virtual unsigned getNodePriority(const SUnit *SU) const {
-      return 0;
-    }
+    virtual unsigned getNodePriority(const SUnit *SU) const = 0;
     
     unsigned size() const { return Queue.size(); }
 
