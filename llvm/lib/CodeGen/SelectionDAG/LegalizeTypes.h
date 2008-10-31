@@ -194,7 +194,8 @@ private:
   // Common routines.
   SDValue CreateStackStoreLoad(SDValue Op, MVT DestVT);
   SDValue MakeLibCall(RTLIB::Libcall LC, MVT RetVT,
-                        const SDValue *Ops, unsigned NumOps, bool isSigned);
+                      const SDValue *Ops, unsigned NumOps, bool isSigned);
+  SDValue LibCallify(RTLIB::Libcall LC, SDNode *N, bool isSigned);
 
   SDValue BitConvertToInteger(SDValue Op);
   SDValue JoinIntegers(SDValue Lo, SDValue Hi);
@@ -392,11 +393,26 @@ private:
   void ExpandFloatRes_ConstantFP(SDNode *N, SDValue &Lo, SDValue &Hi);
   void ExpandFloatRes_FABS      (SDNode *N, SDValue &Lo, SDValue &Hi);
   void ExpandFloatRes_FADD      (SDNode *N, SDValue &Lo, SDValue &Hi);
+  void ExpandFloatRes_FCEIL     (SDNode *N, SDValue &Lo, SDValue &Hi);
+  void ExpandFloatRes_FCOS      (SDNode *N, SDValue &Lo, SDValue &Hi);
   void ExpandFloatRes_FDIV      (SDNode *N, SDValue &Lo, SDValue &Hi);
+  void ExpandFloatRes_FEXP      (SDNode *N, SDValue &Lo, SDValue &Hi);
+  void ExpandFloatRes_FEXP2     (SDNode *N, SDValue &Lo, SDValue &Hi);
+  void ExpandFloatRes_FFLOOR    (SDNode *N, SDValue &Lo, SDValue &Hi);
+  void ExpandFloatRes_FLOG      (SDNode *N, SDValue &Lo, SDValue &Hi);
+  void ExpandFloatRes_FLOG2     (SDNode *N, SDValue &Lo, SDValue &Hi);
+  void ExpandFloatRes_FLOG10    (SDNode *N, SDValue &Lo, SDValue &Hi);
   void ExpandFloatRes_FMUL      (SDNode *N, SDValue &Lo, SDValue &Hi);
+  void ExpandFloatRes_FNEARBYINT(SDNode *N, SDValue &Lo, SDValue &Hi);
   void ExpandFloatRes_FNEG      (SDNode *N, SDValue &Lo, SDValue &Hi);
   void ExpandFloatRes_FP_EXTEND (SDNode *N, SDValue &Lo, SDValue &Hi);
+  void ExpandFloatRes_FPOW      (SDNode *N, SDValue &Lo, SDValue &Hi);
+  void ExpandFloatRes_FPOWI     (SDNode *N, SDValue &Lo, SDValue &Hi);
+  void ExpandFloatRes_FRINT     (SDNode *N, SDValue &Lo, SDValue &Hi);
+  void ExpandFloatRes_FSIN      (SDNode *N, SDValue &Lo, SDValue &Hi);
+  void ExpandFloatRes_FSQRT     (SDNode *N, SDValue &Lo, SDValue &Hi);
   void ExpandFloatRes_FSUB      (SDNode *N, SDValue &Lo, SDValue &Hi);
+  void ExpandFloatRes_FTRUNC    (SDNode *N, SDValue &Lo, SDValue &Hi);
   void ExpandFloatRes_LOAD      (SDNode *N, SDValue &Lo, SDValue &Hi);
   void ExpandFloatRes_XINT_TO_FP(SDNode *N, SDValue &Lo, SDValue &Hi);
 

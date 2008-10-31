@@ -656,13 +656,33 @@ SDValue DAGTypeLegalizer::MakeLibCall(RTLIB::Libcall LC, MVT RetVT,
     Args.push_back(Entry);
   }
   SDValue Callee = DAG.getExternalSymbol(TLI.getLibcallName(LC),
-                                           TLI.getPointerTy());
+                                         TLI.getPointerTy());
 
   const Type *RetTy = RetVT.getTypeForMVT();
   std::pair<SDValue,SDValue> CallInfo =
     TLI.LowerCallTo(DAG.getEntryNode(), RetTy, isSigned, !isSigned, false,
                     false, CallingConv::C, false, Callee, Args, DAG);
   return CallInfo.first;
+}
+
+/// LibCallify - Convert the node into a libcall with the same prototype.
+SDValue DAGTypeLegalizer::LibCallify(RTLIB::Libcall LC, SDNode *N,
+                                     bool isSigned) {
+  unsigned NumOps = N->getNumOperands();
+  if (NumOps == 0) {
+    return MakeLibCall(LC, N->getValueType(0), 0, 0, isSigned);
+  } else if (NumOps == 1) {
+    SDValue Op = N->getOperand(0);
+    return MakeLibCall(LC, N->getValueType(0), &Op, 1, isSigned);
+  } else if (NumOps == 2) {
+    SDValue Ops[2] = { N->getOperand(0), N->getOperand(1) };
+    return MakeLibCall(LC, N->getValueType(0), Ops, 2, isSigned);
+  }
+  SmallVector<SDValue, 8> Ops(NumOps);
+  for (unsigned i = 0; i < NumOps; ++i)
+    Ops[i] = N->getOperand(i);
+
+  return MakeLibCall(LC, N->getValueType(0), &Ops[0], NumOps, isSigned);
 }
 
 SDValue DAGTypeLegalizer::GetVectorElementPointer(SDValue VecPtr, MVT EltVT,
