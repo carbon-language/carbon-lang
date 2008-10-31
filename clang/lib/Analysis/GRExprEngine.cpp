@@ -861,10 +861,11 @@ void GRExprEngine::VisitDeclRefExpr(DeclRefExpr* Ex, NodeTy* Pred, NodeSet& Dst,
     return;
 
   } else if (const FunctionDecl* FD = dyn_cast<FunctionDecl>(D)) {
-    // We return the loc::FuncVal for an FunctionDecl in both rvalue
-    // and lvalue contexts.
     // FIXME: Does this need to be revised?  We were getting cases in
     //  real code that did this.
+
+    assert(asLValue); // Can we assume this?
+
     SVal V = loc::FuncVal(FD);
     MakeNode(Dst, Ex, Pred, BindExpr(St, Ex, V));
     return;
