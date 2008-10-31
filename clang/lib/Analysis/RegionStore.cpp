@@ -112,9 +112,9 @@ private:
   }
 
   Store InitializeArray(Store store, TypedRegion* R, SVal Init);
-  Store InitializeArrayToUndefined(Store store, QualType T, MemRegion* BaseR);
+  Store InitializeArrayToUndefined(Store store, TypedRegion* BaseR);
   Store InitializeStruct(Store store, TypedRegion* R, SVal Init);
-  Store InitializeStructToUndefined(Store store, QualType T, MemRegion* BaseR);
+  Store InitializeStructToUndefined(Store store, TypedRegion* BaseR);
 
   SVal RetrieveStruct(Store store, const TypedRegion* R);
   Store BindStruct(Store store, const TypedRegion* R, SVal V);
@@ -405,13 +405,13 @@ Store RegionStoreManager::BindDecl(Store store, const VarDecl* VD, Expr* Ex,
 
     } else if (T->isArrayType()) {
       if (!Ex)
-        store = InitializeArrayToUndefined(store, T, VR);
+        store = InitializeArrayToUndefined(store, VR);
       else
         store = InitializeArray(store, VR, InitVal);
 
     } else if (T->isStructureType()) {
       if (!Ex)
-        store = InitializeStructToUndefined(store, T, VR);
+        store = InitializeStructToUndefined(store, VR);
       else
         store = InitializeStruct(store, VR, InitVal);
     }
@@ -461,11 +461,10 @@ Store RegionStoreManager::InitializeArray(Store store, TypedRegion* R,
   return store;
 }
 
-Store RegionStoreManager::InitializeArrayToUndefined(Store store, QualType T, 
-                                                     MemRegion* BaseR) {
+Store RegionStoreManager::InitializeArrayToUndefined(Store store, 
+                                                     TypedRegion* BaseR) {
+  QualType T = BaseR->getType(getContext());
   assert(T->isArrayType());
-
-  BasicValueFactory& BasicVals = StateMgr.getBasicVals();
 
   // Only handle constant size array for now.
   if (ConstantArrayType* CAT=dyn_cast<ConstantArrayType>(T.getTypePtr())) {
@@ -473,7 +472,7 @@ Store RegionStoreManager::InitializeArrayToUndefined(Store store, QualType T,
     llvm::APInt Size = CAT->getSize();
     llvm::APInt i = llvm::APInt::getNullValue(Size.getBitWidth());
     for (; i != Size; ++i) {
-      nonloc::ConcreteInt Idx(BasicVals.getValue(llvm::APSInt(i)));
+      nonloc::ConcreteInt Idx(getBasicVals().getValue(llvm::APSInt(i)));
 
       ElementRegion* ER = MRMgr.getElementRegion(Idx, BaseR);
 
@@ -485,7 +484,7 @@ Store RegionStoreManager::InitializeArrayToUndefined(Store store, QualType T,
 }
 
 Store RegionStoreManager::InitializeStruct(Store store, TypedRegion* R, 
-                                          SVal Init) {
+                                           SVal Init) {
   QualType T = R->getType(getContext());
   assert(T->isStructureType());
 
@@ -513,28 +512,31 @@ Store RegionStoreManager::InitializeStruct(Store store, TypedRegion* R,
         store = InitializeArray(store, FR, *VI);
         ++VI;
       } else
-        store = InitializeArrayToUndefined(store, FTy, FR);
+        store = InitializeArrayToUndefined(store, FR);
     }
     else if (FTy->isStructureType()) {
       if (VI != VE) {
         store = InitializeStruct(store, FR, *VI);
         ++VI;
       } else
-        store = InitializeStructToUndefined(store, FTy, FR);
+        store = InitializeStructToUndefined(store, FR);
     }
   }
   return store;
 }
 
-Store RegionStoreManager::InitializeStructToUndefined(Store store, QualType T,
-                                                      MemRegion* BaseR) {
-  QualType CT = StateMgr.getContext().getCanonicalType(T);
-  const RecordType* RT = cast<RecordType>(CT.getTypePtr());
+Store RegionStoreManager::InitializeStructToUndefined(Store store,
+                                                      TypedRegion* BaseR) {
+  QualType T = BaseR->getType(getContext());
+  assert(T->isStructureType());
+
+  const RecordType* RT = cast<RecordType>(T.getTypePtr());
   RecordDecl* RD = RT->getDecl();
   assert(RD->isDefinition());
-  
-  for (RecordDecl::field_iterator I = RD->field_begin(), E = RD->field_end();
-       I != E; ++I) {
+
+  RecordDecl::field_iterator I = RD->field_begin(), E = RD->field_end();
+
+  for (; I != E; ++I) {
     
     QualType FTy = (*I)->getType();
     FieldRegion* FR = MRMgr.getFieldRegion(*I, BaseR);
@@ -543,10 +545,10 @@ Store RegionStoreManager::InitializeStructToUndefined(Store store, QualType T,
       store = Bind(store, loc::MemRegionVal(FR), UndefinedVal());
 
     } else if (FTy->isArrayType()) {
-      store = InitializeArrayToUndefined(store, FTy, FR);
+      store = InitializeArrayToUndefined(store, FR);
 
     } else if (FTy->isStructureType()) {
-      store = InitializeStructToUndefined(store, FTy, FR);
+      store = InitializeStructToUndefined(store, FR);
     }
   }
 
