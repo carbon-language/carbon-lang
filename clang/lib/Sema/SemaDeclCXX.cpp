@@ -575,6 +575,24 @@ void Sema::ActOnFinishCXXClassDef(DeclTy *D) {
 /// @endcode
 Sema::DeclTy *Sema::ActOnConstructorDeclarator(CXXConstructorDecl *ConDecl) {
   assert(ConDecl && "Expected to receive a constructor declaration");
+
+  // Check default arguments on the constructor
+  CheckCXXDefaultArguments(ConDecl);
+
+  // FIXME: Make sure this constructor is an overload of the existing
+  // constructors and update the class to reflect the addition of this
+  // constructor (e.g., it now has a user-defined constructor, might
+  // have a user-declared copy constructor, etc.).
+
+  // Add this constructor to the set of constructors of the current
+  // class.
+  if (CXXRecordDecl *ClassDecl = dyn_cast_or_null<CXXRecordDecl>(CurContext)) {
+    ClassDecl->addConstructor(ConDecl);
+  } else {
+    assert(false && "Cannot add a constructor if we're not in the class!");
+  }
+
+
   return (DeclTy *)ConDecl;
 }
 

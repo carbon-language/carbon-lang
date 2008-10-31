@@ -92,6 +92,21 @@ CXXConstructorDecl::Create(ASTContext &C, CXXRecordDecl *RD,
                                       isImplicitlyDeclared);
 }
 
+bool CXXConstructorDecl::isConvertingConstructor() const {
+  // C++ [class.conv.ctor]p1:
+  //   A constructor declared without the function-specifier explicit
+  //   that can be called with a single parameter specifies a
+  //   conversion from the type of its first parameter to the type of
+  //   its class. Such a constructor is called a converting
+  //   constructor.
+  if (isExplicit())
+    return false;
+
+  return (getNumParams() == 0 && 
+          getType()->getAsFunctionTypeProto()->isVariadic()) ||
+         (getNumParams() == 1) ||
+         (getNumParams() > 1 && getParamDecl(1)->getDefaultArg() != 0);
+}
 
 CXXClassVarDecl *CXXClassVarDecl::Create(ASTContext &C, CXXRecordDecl *RD,
                                    SourceLocation L, IdentifierInfo *Id,

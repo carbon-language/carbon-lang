@@ -90,6 +90,17 @@ const char* GetImplicitConversionName(ImplicitConversionKind Kind) {
   return Name[Kind];
 }
 
+/// StandardConversionSequence - Set the standard conversion
+/// sequence to the identity conversion.
+void StandardConversionSequence::setAsIdentityConversion() {
+  First = ICK_Identity;
+  Second = ICK_Identity;
+  Third = ICK_Identity;
+  Deprecated = false;
+  ReferenceBinding = false;
+  DirectBinding = false;
+}
+
 /// getRank - Retrieve the rank of this standard conversion sequence
 /// (C++ 13.3.3.1.1p3). The rank is the largest rank of each of the
 /// implicit conversions.
@@ -337,13 +348,51 @@ ImplicitConversionSequence
 Sema::TryImplicitConversion(Expr* From, QualType ToType)
 {
   ImplicitConversionSequence ICS;
+  if (IsStandardConversion(From, ToType, ICS.Standard))
+    ICS.ConversionKind = ImplicitConversionSequence::StandardConversion;
+  else if (IsUserDefinedConversion(From, ToType, ICS.UserDefined))
+    ICS.ConversionKind = ImplicitConversionSequence::UserDefinedConversion;
+  else {
+    // FIXME: This is a hack to allow a class type S to implicitly
+    // convert to another class type S, at least until we have proper
+    // support for implicitly-declared copy constructors.
+    QualType FromType = Context.getCanonicalType(From->getType());
+    ToType = Context.getCanonicalType(ToType);
+    if (FromType.getUnqualifiedType() == ToType.getUnqualifiedType()) {
+      ICS.Standard.setAsIdentityConversion();
+      ICS.Standard.FromTypePtr = From->getType().getAsOpaquePtr();
+      ICS.Standard.ToTypePtr = ToType.getAsOpaquePtr();
+      ICS.ConversionKind = ImplicitConversionSequence::StandardConversion;
+      return ICS;
+    }
 
+    ICS.ConversionKind = ImplicitConversionSequence::BadConversion;
+  }
+
+  return ICS;
+}
+
+/// IsStandardConversion - Determines whether there is a standard
+/// conversion sequence (C++ [conv], C++ [over.ics.scs]) from the
+/// expression From to the type ToType. Standard conversion sequences
+/// only consider non-class types; for conversions that involve class
+/// types, use TryImplicitConversion. If a conversion exists, SCS will
+/// contain the standard conversion sequence required to perform this
+/// conversion and this routine will return true. Otherwise, this
+/// routine will return false and the value of SCS is unspecified.
+bool 
+Sema::IsStandardConversion(Expr* From, QualType ToType, 
+                           StandardConversionSequence &SCS)
+{
   QualType FromType = From->getType();
 
-  // Standard conversions (C++ 4)
-  ICS.ConversionKind = ImplicitConversionSequence::StandardConversion;
-  ICS.Standard.Deprecated = false;
-  ICS.Standard.FromTypePtr = FromType.getAsOpaquePtr();
+  // There are no standard conversions for class types, so abort early.
+  if (FromType->isRecordType() || ToType->isRecordType())
+    return false;
+
+  // Standard conversions (C++ [conv])
+  SCS.Deprecated = false;
+  SCS.FromTypePtr = FromType.getAsOpaquePtr();
 
   // The first conversion can be an lvalue-to-rvalue conversion,
   // array-to-pointer conversion, or function-to-pointer conversion
@@ -355,17 +404,16 @@ Sema::TryImplicitConversion(Expr* From, QualType ToType)
   Expr::isLvalueResult argIsLvalue = From->isLvalue(Context);
   if (argIsLvalue == Expr::LV_Valid && 
       !FromType->isFunctionType() && !FromType->isArrayType()) {
-    ICS.Standard.First = ICK_Lvalue_To_Rvalue;
+    SCS.First = ICK_Lvalue_To_Rvalue;
 
     // If T is a non-class type, the type of the rvalue is the
     // cv-unqualified version of T. Otherwise, the type of the rvalue
     // is T (C++ 4.1p1).
-    if (!FromType->isRecordType())
-      FromType = FromType.getUnqualifiedType();
+    FromType = FromType.getUnqualifiedType();
   }
   // Array-to-pointer conversion (C++ 4.2)
   else if (FromType->isArrayType()) {
-    ICS.Standard.First = ICK_Array_To_Pointer;
+    SCS.First = ICK_Array_To_Pointer;
 
     // An lvalue or rvalue of type "array of N T" or "array of unknown
     // bound of T" can be converted to an rvalue of type "pointer to
@@ -374,21 +422,21 @@ Sema::TryImplicitConversion(Expr* From, QualType ToType)
 
     if (IsStringLiteralToNonConstPointerConversion(From, ToType)) {
       // This conversion is deprecated. (C++ D.4).
-      ICS.Standard.Deprecated = true;
+      SCS.Deprecated = true;
 
       // For the purpose of ranking in overload resolution
       // (13.3.3.1.1), this conversion is considered an
       // array-to-pointer conversion followed by a qualification
       // conversion (4.4). (C++ 4.2p2)
-      ICS.Standard.Second = ICK_Identity;
-      ICS.Standard.Third = ICK_Qualification;
-      ICS.Standard.ToTypePtr = ToType.getAsOpaquePtr();
-      return ICS;
+      SCS.Second = ICK_Identity;
+      SCS.Third = ICK_Qualification;
+      SCS.ToTypePtr = ToType.getAsOpaquePtr();
+      return true;
     }
   }
   // Function-to-pointer conversion (C++ 4.3).
   else if (FromType->isFunctionType() && argIsLvalue == Expr::LV_Valid) {
-    ICS.Standard.First = ICK_Function_To_Pointer;
+    SCS.First = ICK_Function_To_Pointer;
 
     // An lvalue of function type T can be converted to an rvalue of
     // type "pointer to T." The result is a pointer to the
@@ -399,7 +447,7 @@ Sema::TryImplicitConversion(Expr* From, QualType ToType)
   } 
   // We don't require any conversions for the first step.
   else {
-    ICS.Standard.First = ICK_Identity;
+    SCS.First = ICK_Identity;
   }
 
   // The second conversion can be an integral promotion, floating
@@ -410,28 +458,28 @@ Sema::TryImplicitConversion(Expr* From, QualType ToType)
       Context.getCanonicalType(ToType).getUnqualifiedType()) {
     // The unqualified versions of the types are the same: there's no
     // conversion to do.
-    ICS.Standard.Second = ICK_Identity;
+    SCS.Second = ICK_Identity;
   }
   // Integral promotion (C++ 4.5).  
   else if (IsIntegralPromotion(From, FromType, ToType)) {
-    ICS.Standard.Second = ICK_Integral_Promotion;
+    SCS.Second = ICK_Integral_Promotion;
     FromType = ToType.getUnqualifiedType();
   } 
   // Floating point promotion (C++ 4.6).
   else if (IsFloatingPointPromotion(FromType, ToType)) {
-    ICS.Standard.Second = ICK_Floating_Promotion;
+    SCS.Second = ICK_Floating_Promotion;
     FromType = ToType.getUnqualifiedType();
   } 
   // Integral conversions (C++ 4.7).
   // FIXME: isIntegralType shouldn't be true for enums in C++.
   else if ((FromType->isIntegralType() || FromType->isEnumeralType()) &&
            (ToType->isIntegralType() && !ToType->isEnumeralType())) {
-    ICS.Standard.Second = ICK_Integral_Conversion;
+    SCS.Second = ICK_Integral_Conversion;
     FromType = ToType.getUnqualifiedType();
   }
   // Floating point conversions (C++ 4.8).
   else if (FromType->isFloatingType() && ToType->isFloatingType()) {
-    ICS.Standard.Second = ICK_Floating_Conversion;
+    SCS.Second = ICK_Floating_Conversion;
     FromType = ToType.getUnqualifiedType();
   }
   // Floating-integral conversions (C++ 4.9).
@@ -441,12 +489,12 @@ Sema::TryImplicitConversion(Expr* From, QualType ToType)
                                         !ToType->isEnumeralType()) ||
            ((FromType->isIntegralType() || FromType->isEnumeralType()) && 
             ToType->isFloatingType())) {
-    ICS.Standard.Second = ICK_Floating_Integral;
+    SCS.Second = ICK_Floating_Integral;
     FromType = ToType.getUnqualifiedType();
   }
   // Pointer conversions (C++ 4.10).
   else if (IsPointerConversion(From, FromType, ToType, FromType)) {
-    ICS.Standard.Second = ICK_Pointer_Conversion;
+    SCS.Second = ICK_Pointer_Conversion;
   }
   // FIXME: Pointer to member conversions (4.11).
   // Boolean conversions (C++ 4.12).
@@ -455,24 +503,29 @@ Sema::TryImplicitConversion(Expr* From, QualType ToType)
            (FromType->isArithmeticType() ||
             FromType->isEnumeralType() ||
             FromType->isPointerType())) {
-    ICS.Standard.Second = ICK_Boolean_Conversion;
+    SCS.Second = ICK_Boolean_Conversion;
     FromType = Context.BoolTy;
   } else {
     // No second conversion required.
-    ICS.Standard.Second = ICK_Identity;
+    SCS.Second = ICK_Identity;
   }
 
   QualType CanonFrom;
   QualType CanonTo;
   // The third conversion can be a qualification conversion (C++ 4p1).
   if (IsQualificationConversion(FromType, ToType)) {
-    ICS.Standard.Third = ICK_Qualification;
+    SCS.Third = ICK_Qualification;
     FromType = ToType;
     CanonFrom = Context.getCanonicalType(FromType);
     CanonTo = Context.getCanonicalType(ToType);
   } else {
     // No conversion required
-    ICS.Standard.Third = ICK_Identity;
+    SCS.Third = ICK_Identity;
+
+    // C++ [over.best.ics]p6: 
+    //   [...] Any difference in top-level cv-qualification is
+    //   subsumed by the initialization itself and does not constitute
+    //   a conversion. [...]
 
     // C++ [dcl.init]p14 last bullet:
     //   [ Note: an expression of type "cv1 T" can initialize an object
@@ -482,8 +535,7 @@ Sema::TryImplicitConversion(Expr* From, QualType ToType)
     // FIXME: Where is the normative text?
     CanonFrom = Context.getCanonicalType(FromType);
     CanonTo = Context.getCanonicalType(ToType);    
-    if (!FromType->isRecordType() &&
-        CanonFrom.getUnqualifiedType() == CanonTo.getUnqualifiedType() &&
+    if (CanonFrom.getUnqualifiedType() == CanonTo.getUnqualifiedType() &&
         CanonFrom.getCVRQualifiers() != CanonTo.getCVRQualifiers()) {
       FromType = ToType;
       CanonFrom = CanonTo;
@@ -493,10 +545,10 @@ Sema::TryImplicitConversion(Expr* From, QualType ToType)
   // If we have not converted the argument type to the parameter type,
   // this is a bad conversion sequence.
   if (CanonFrom != CanonTo)
-    ICS.ConversionKind = ImplicitConversionSequence::BadConversion;
+    return false;
 
-  ICS.Standard.ToTypePtr = FromType.getAsOpaquePtr();
-  return ICS;
+  SCS.ToTypePtr = FromType.getAsOpaquePtr();
+  return true;
 }
 
 /// IsIntegralPromotion - Determines whether the conversion from the
@@ -789,6 +841,82 @@ Sema::IsQualificationConversion(QualType FromType, QualType ToType)
   // qualifiers above), then this is a qualification conversion.
   return UnwrappedAnyPointer &&
     FromType.getUnqualifiedType() == ToType.getUnqualifiedType();
+}
+
+/// IsUserDefinedConversion - Determines whether there is a
+/// user-defined conversion sequence (C++ [over.ics.user]) that
+/// converts expression From to the type ToType. If such a conversion
+/// exists, User will contain the user-defined conversion sequence
+/// that performs such a conversion and this routine will return
+/// true. Otherwise, this routine returns false and User is
+/// unspecified.
+bool Sema::IsUserDefinedConversion(Expr *From, QualType ToType, 
+                                   UserDefinedConversionSequence& User)
+{
+  OverloadCandidateSet CandidateSet;
+  if (const CXXRecordType *ToRecordType 
+        = dyn_cast_or_null<CXXRecordType>(ToType->getAsRecordType())) {
+    // C++ [over.match.ctor]p1:
+    //   When objects of class type are direct-initialized (8.5), or
+    //   copy-initialized from an expression of the same or a
+    //   derived class type (8.5), overload resolution selects the
+    //   constructor. [...] For copy-initialization, the candidate
+    //   functions are all the converting constructors (12.3.1) of
+    //   that class. The argument list is the expression-list within
+    //   the parentheses of the initializer.
+    CXXRecordDecl *ToRecordDecl = ToRecordType->getDecl();
+    const OverloadedFunctionDecl *Constructors = ToRecordDecl->getConstructors();
+    for (OverloadedFunctionDecl::function_const_iterator func 
+           = Constructors->function_begin();
+         func != Constructors->function_end(); ++func) {
+      CXXConstructorDecl *Constructor = cast<CXXConstructorDecl>(*func);
+      if (Constructor->isConvertingConstructor())
+        // FIXME: Suppress user-defined conversions in here!
+        AddOverloadCandidate(Constructor, &From, 1, CandidateSet);
+    }
+  }
+
+  // FIXME: Implement support for user-defined conversion operators.
+
+  OverloadCandidateSet::iterator Best;
+  switch (BestViableFunction(CandidateSet, Best)) {
+    case OR_Success:
+      // Record the standard conversion we used and the conversion function.
+      // FIXME: Handle user-defined conversion operators.
+      if (CXXConstructorDecl *Constructor 
+            = dyn_cast<CXXConstructorDecl>(Best->Function)) {
+        // C++ [over.ics.user]p1:
+        //   If the user-defined conversion is specified by a
+        //   constructor (12.3.1), the initial standard conversion
+        //   sequence converts the source type to the type required by
+        //   the argument of the constructor.
+        //
+        // FIXME: What about ellipsis conversions?
+        QualType ThisType = Constructor->getThisType(Context);
+        User.Before = Best->Conversions[0].Standard;
+        User.ConversionFunction = Constructor;
+        User.After.setAsIdentityConversion();
+        User.After.FromTypePtr 
+          = ThisType->getAsPointerType()->getPointeeType().getAsOpaquePtr();
+        User.After.ToTypePtr = ToType.getAsOpaquePtr();
+        return true;
+      } else {
+        assert(false && 
+               "Cannot perform user-defined conversion via a conversion operator");
+        return false;
+      }
+      
+    case OR_No_Viable_Function:
+      // No conversion here! We're done.
+      return false;
+
+    case OR_Ambiguous:
+      // FIXME: See C++ [over.best.ics]p10 for the handling of
+      // ambiguous conversion sequences.
+      return false;
+    }
+
+  return false;
 }
 
 /// CompareImplicitConversionSequences - Compare two implicit
@@ -1155,7 +1283,7 @@ Sema::CompareDerivedToBaseConversions(const StandardConversionSequence& SCS1,
 ImplicitConversionSequence 
 Sema::TryCopyInitialization(Expr *From, QualType ToType) {
   if (!getLangOptions().CPlusPlus) {
-    // In C, argument passing is the same as performing an assignment.
+    // In C, copy initialization is the same as performing an assignment.
     AssignConvertType ConvTy =
       CheckSingleAssignmentConstraints(ToType, From);
     ImplicitConversionSequence ICS;

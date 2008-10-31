@@ -371,12 +371,16 @@ private:
   bool IsOverload(FunctionDecl *New, Decl* OldD, 
                   OverloadedFunctionDecl::function_iterator &MatchedDecl);
   ImplicitConversionSequence TryImplicitConversion(Expr* From, QualType ToType);
+  bool IsStandardConversion(Expr *From, QualType ToType, 
+                            StandardConversionSequence& SCS);
   bool IsIntegralPromotion(Expr *From, QualType FromType, QualType ToType);
   bool IsFloatingPointPromotion(QualType FromType, QualType ToType);
   bool IsPointerConversion(Expr *From, QualType FromType, QualType ToType,
                            QualType& ConvertedType);
   bool CheckPointerConversion(Expr *From, QualType ToType);
   bool IsQualificationConversion(QualType FromType, QualType ToType);
+  bool IsUserDefinedConversion(Expr *From, QualType ToType, 
+                               UserDefinedConversionSequence& User);
 
   ImplicitConversionSequence::CompareKind 
   CompareImplicitConversionSequences(const ImplicitConversionSequence& ICS1,

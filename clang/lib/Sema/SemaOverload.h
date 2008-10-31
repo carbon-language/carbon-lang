@@ -114,6 +114,7 @@ namespace clang {
     /// is an opaque pointer that can be translated into a QualType.
     void *ToTypePtr;
 
+    void setAsIdentityConversion();        
     ImplicitConversionRank getRank() const;
     bool isPointerConversionToBool() const;
     bool isPointerConversionToVoidPointer(ASTContext& Context) const;

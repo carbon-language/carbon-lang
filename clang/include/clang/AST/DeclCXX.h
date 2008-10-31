@@ -414,12 +414,18 @@ public:
     return ImplicitlyDefined; 
   }
 
-  /// setImplicitlyDefined
+  /// setImplicitlyDefined - Set whether this constructor was
+  /// implicitly defined or not.
   void setImplicitlyDefined(bool ID) { 
     assert(getBody() != 0 && 
            "Can only set the implicit-definition flag once the constructor has been defined");
     ImplicitlyDefined = ID; 
   }
+
+  /// isConvertingConstructor - Whether this constructor is a
+  /// converting constructor (C++ [class.conv.ctor]), which can be
+  /// used for (of course) user-defined conversions.
+  bool isConvertingConstructor() const;
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { 

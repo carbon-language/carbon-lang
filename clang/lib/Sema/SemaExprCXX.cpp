@@ -889,11 +889,11 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType)
     // the constructor or conversion operator, and then cope with the
     // standard conversions.
     ImpCastExprToType(From, ToType);
-    break;
+    return false;
 
   case ImplicitConversionSequence::EllipsisConversion:
     assert(false && "Cannot perform an ellipsis conversion");
-    break;
+    return false;
 
   case ImplicitConversionSequence::BadConversion:
     return true;
