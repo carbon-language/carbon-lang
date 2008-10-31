@@ -1153,6 +1153,10 @@ static void InitializeCompileOptions(CompileOptions &Opts) {
   Opts.InlineFunctions = (Opts.OptimizationLevel > 1);
   Opts.UnrollLoops = (Opts.OptimizationLevel > 1 && !OptSize);
   Opts.SimplifyLibCalls = 1;
+
+#ifdef NDEBUG
+  Opts.VerifyModule = 0;
+#endif
 }
 
 //===----------------------------------------------------------------------===//
