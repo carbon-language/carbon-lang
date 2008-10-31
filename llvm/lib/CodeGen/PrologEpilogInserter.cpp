@@ -273,10 +273,10 @@ void PEI::saveCalleeSavedRegisters(MachineFunction &Fn) {
       MBB = FI;
       I = MBB->end(); --I;
 
-      // Skip over all "return" instructions, which are part of the return
+      // Skip over all terminator instructions, which are part of the return
       // sequence.
       MachineBasicBlock::iterator I2 = I;
-      while (I2 != MBB->begin() && (--I2)->getDesc().isReturn())
+      while (I2 != MBB->begin() && (--I2)->getDesc().isTerminator())
         I = I2;
 
       bool AtStart = I == MBB->begin();
