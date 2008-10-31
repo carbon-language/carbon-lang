@@ -17,7 +17,7 @@
 
 // The VISIBILITY_HIDDEN macro, used for marking classes with the GCC-specific
 // visibility("hidden") attribute.
-#if (__GNUC__ >= 4) && !defined(__MINGW32__)
+#if (__GNUC__ >= 4) && !defined(__MINGW32__) && !defined(__CYGWIN__)
 #define VISIBILITY_HIDDEN __attribute__ ((visibility("hidden")))
 #else
 #define VISIBILITY_HIDDEN
