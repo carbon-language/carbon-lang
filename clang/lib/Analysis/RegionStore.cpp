@@ -115,7 +115,7 @@ private:
   Store InitializeStructToUndefined(Store store, QualType T, MemRegion* BaseR);
 
   SVal RetrieveStruct(Store store, const TypedRegion* R);
-
+  Store BindStruct(Store store, const TypedRegion* R, SVal V);
   // Utility methods.
   BasicValueFactory& getBasicVals() { return StateMgr.getBasicVals(); }
   ASTContext& getContext() { return StateMgr.getContext(); }
@@ -267,7 +267,7 @@ SVal RegionStoreManager::RetrieveStruct(Store store, const TypedRegion* R) {
   for (int i = RD->getNumMembers() - 1; i >= 0; --i) {
     FieldRegion* FR = MRMgr.getFieldRegion(RD->getMember(i), R);
     RegionBindingsTy B(static_cast<const RegionBindingsTy::TreeTy*>(store));
-    RegionBindingsTy::data_type* data = B.lookup(R);
+    RegionBindingsTy::data_type* data = B.lookup(FR);
 
     SVal FieldValue = data ? *data : UnknownVal();
 
@@ -285,13 +285,42 @@ Store RegionStoreManager::Bind(Store store, Loc LV, SVal V) {
 
   const MemRegion* R = cast<loc::MemRegionVal>(LV).getRegion();
   
-  if (!R)
-    return store;
+  assert(R);
+
+  if (const TypedRegion* TR = dyn_cast<TypedRegion>(R))
+    if (TR->getType(getContext())->isStructureType())
+      return BindStruct(store, TR, V);
 
   RegionBindingsTy B = GetRegionBindings(store);
   return V.isUnknown()
          ? RBFactory.Remove(B, R).getRoot()
          : RBFactory.Add(B, R, V).getRoot();
+}
+
+Store RegionStoreManager::BindStruct(Store store, const TypedRegion* R, SVal V){
+  QualType T = R->getType(getContext());
+  assert(T->isStructureType());
+
+  const RecordType* RT = cast<RecordType>(T.getTypePtr());
+  RecordDecl* RD = RT->getDecl();
+  assert(RD->isDefinition());
+
+  RegionBindingsTy B = GetRegionBindings(store);
+
+  nonloc::CompoundVal& CV = cast<nonloc::CompoundVal>(V);
+
+  nonloc::CompoundVal::iterator VI = CV.begin(), VE = CV.end();
+  RecordDecl::field_iterator FI = RD->field_begin(), FE = RD->field_end();
+
+  for (; FI != FE; ++FI, ++VI) {
+    assert(VI != VE);
+
+    FieldRegion* FR = MRMgr.getFieldRegion(*FI, R);
+
+    B = RBFactory.Add(B, FR, *VI);
+  }
+
+  return B.getRoot();
 }
 
 Store RegionStoreManager::getInitialStore() {
