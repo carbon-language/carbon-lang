@@ -338,7 +338,7 @@ void Emitter::emitMemModRMByte(const MachineInstr &MI,
   unsigned BaseReg = Base.getReg();
 
   // Is a SIB byte needed?
-  if (IndexReg.getReg() == 0 &&
+  if ((!Is64BitMode || DispForReloc) && IndexReg.getReg() == 0 &&
       (BaseReg == 0 || getX86RegNum(BaseReg) != N86::ESP)) {
     if (BaseReg == 0) {  // Just a displacement?
       // Emit special case [disp32] encoding
@@ -395,9 +395,13 @@ void Emitter::emitMemModRMByte(const MachineInstr &MI,
     if (BaseReg == 0) {
       // Handle the SIB byte for the case where there is no base.  The
       // displacement has already been output.
-      assert(IndexReg.getReg() && "Index register must be specified!");
-      emitSIBByte(SS, getX86RegNum(IndexReg.getReg()), 5);
-    } else {
+      unsigned IndexRegNo;
+      if (IndexReg.getReg())
+        IndexRegNo = getX86RegNum(IndexReg.getReg());
+      else
+        IndexRegNo = 4;   // For example [ESP+1*<noreg>+4]
+      emitSIBByte(SS, IndexRegNo, 5);
+      } else {
       unsigned BaseRegNo = getX86RegNum(BaseReg);
       unsigned IndexRegNo;
       if (IndexReg.getReg())
