@@ -88,12 +88,14 @@ private:
                                          llvm::CompileUnitDesc *unit);
   llvm::TypeDesc *getOrCreateFunctionType(QualType type, 
                                           llvm::CompileUnitDesc *unit);
-  llvm::TypeDesc *getOrCreateRecordType(QualType type,
-                                        llvm::CompileUnitDesc *unit);
+  void getOrCreateRecordType(QualType type,
+                             llvm::CompileUnitDesc *unit,
+                             llvm::TypeDesc *&Slot);
   llvm::TypeDesc *getOrCreateEnumType(QualType type,
                                       llvm::CompileUnitDesc *unit);
-  llvm::TypeDesc *getOrCreateTaggedType(QualType type,
-                                        llvm::CompileUnitDesc *unit);
+  void getOrCreateTaggedType(QualType type,
+                             llvm::CompileUnitDesc *unit,
+                             llvm::TypeDesc *&Slot);
   llvm::TypeDesc *getOrCreateArrayType(QualType type,
                                        llvm::CompileUnitDesc *unit);
 

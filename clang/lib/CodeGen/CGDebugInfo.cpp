@@ -375,22 +375,27 @@ CGDebugInfo::getOrCreateFunctionType(QualType type, llvm::CompileUnitDesc *Unit)
 }
 
 /// getOrCreateRecordType - get structure or union type.
-llvm::TypeDesc *
-CGDebugInfo::getOrCreateRecordType(QualType type, llvm::CompileUnitDesc *Unit)
+void CGDebugInfo::getOrCreateRecordType(QualType type,
+                                        llvm::CompileUnitDesc *Unit,
+                                        llvm::TypeDesc *&Slot)
 {
+  // Prevent recursing in type generation by initializing the slot
+  // here.
   llvm::CompositeTypeDesc *RecType;
   if (type->isStructureType())
-    RecType = new llvm::CompositeTypeDesc(llvm::dwarf::DW_TAG_structure_type);
+    Slot = RecType = 
+      new llvm::CompositeTypeDesc(llvm::dwarf::DW_TAG_structure_type);
   else if (type->isUnionType())
-    RecType = new llvm::CompositeTypeDesc(llvm::dwarf::DW_TAG_union_type);
+    Slot = RecType = 
+      new llvm::CompositeTypeDesc(llvm::dwarf::DW_TAG_union_type);
   else
-    return NULL;
+    return;
 
   RecordDecl *RecDecl = type->getAsRecordType()->getDecl();
   // We can not get the type for forward declarations. 
   // FIXME: What *should* we be doing here?
   if (!RecDecl->getDefinition(M->getContext()))
-    return NULL;
+    return;
   const ASTRecordLayout &RL = M->getContext().getASTRecordLayout(RecDecl);
 
   SourceManager &SM = M->getContext().getSourceManager();
@@ -417,7 +422,6 @@ CGDebugInfo::getOrCreateRecordType(QualType type, llvm::CompileUnitDesc *Unit)
     RecType->setAlign(RL.getAlignment());
     RecType->setOffset(0);
   }
-  return RecType;
 }
 
 /// getOrCreateEnumType - get Enum type.
@@ -428,7 +432,7 @@ CGDebugInfo::getOrCreateEnumType(QualType type, llvm::CompileUnitDesc *Unit)
     = new llvm::CompositeTypeDesc(llvm::dwarf::DW_TAG_enumeration_type);
 
   EnumType *EType = dyn_cast<EnumType>(type);
-  if (!EType) return NULL;
+  if (!EType) return(NULL);
 
   EnumDecl *EDecl = EType->getDecl();
   SourceManager &SM = M->getContext().getSourceManager();
@@ -520,15 +524,14 @@ CGDebugInfo::getOrCreateArrayType(QualType type, llvm::CompileUnitDesc *Unit)
 
 
 /// getOrCreateTaggedType - get or create structure/union/Enum type.
-llvm::TypeDesc *
-CGDebugInfo::getOrCreateTaggedType(QualType type, llvm::CompileUnitDesc *Unit)
+void CGDebugInfo::getOrCreateTaggedType(QualType type, 
+                                        llvm::CompileUnitDesc *Unit,
+                                        llvm::TypeDesc *&Slot)
 {
   if (type->isStructureType() || type->isUnionType())
-    return getOrCreateRecordType(type, Unit);
+    getOrCreateRecordType(type, Unit, Slot);
   else if (type->isEnumeralType())
-    return getOrCreateEnumType(type, Unit);
-  else
-    return NULL;
+    Slot = getOrCreateEnumType(type, Unit);
 }
   
 /// getOrCreateType - Get the type from the cache or create a new
@@ -545,7 +548,7 @@ CGDebugInfo::getOrCreateType(QualType type, llvm::CompileUnitDesc *Unit)
 
   // We need to check for the CVR qualifiers as the first thing.
   if (type.getCVRQualifiers()) {
-    Slot = getOrCreateCVRType (type, Unit);
+    Slot = getOrCreateCVRType(type, Unit);
     return Slot;
   }
 
@@ -582,7 +585,7 @@ CGDebugInfo::getOrCreateType(QualType type, llvm::CompileUnitDesc *Unit)
       break;
 
     case Type::Tagged:
-      Slot = getOrCreateTaggedType(type, Unit);
+      getOrCreateTaggedType(type, Unit, Slot);
       break;
 
     case Type::ConstantArray:
