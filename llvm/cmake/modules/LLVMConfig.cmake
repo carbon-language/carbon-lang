@@ -106,31 +106,26 @@ endmacro(nix_llvm_config executable link_components)
 # dependencies.  Comes from the llvm-config script, which is built and
 # installed on the bin directory for MinGW or Linux. At the end of the
 # script, you'll see lines like this:
-# 
-# LLVMARMAsmPrinter.o: LLVMARMCodeGen.o libLLVMAsmPrinter.a
-# libLLVMCodeGen.a libLLVMCore.a libLLVMSupport.a libLLVMTarget.a
-# 
+
+# LLVMARMAsmPrinter.o: LLVMARMCodeGen.o libLLVMAsmPrinter.a libLLVMCodeGen.a libLLVMCore.a libLLVMSupport.a libLLVMTarget.a
+
 # This is translated to:
-# 
-# set(MSVC_LIB_DEPS_LLVMARMAsmPrinter LLVMARMCodeGen LLVMAsmPrinter
-# LLVMCodeGen LLVMCore LLVMSupport LLVMTarget)
-# 
+
+# set(MSVC_LIB_DEPS_LLVMARMAsmPrinter LLVMARMCodeGen LLVMAsmPrinter LLVMCodeGen LLVMCore LLVMSupport LLVMTarget)
+
 # It is necessary to remove the `lib' prefix, the `.a' and `.o'
 # suffixes.  Watch out for this line:
-# 
-# LLVMExecutionEngine.o LLVMJIT.o: libLLVMCodeGen.a libLLVMCore.a
-# libLLVMSupport.a libLLVMSystem.a libLLVMTarget.a
-# 
+
+# LLVMExecutionEngine.o LLVMJIT.o: libLLVMCodeGen.a libLLVMCore.a libLLVMSupport.a libLLVMSystem.a libLLVMTarget.a
+
 # See how there are two elements before the colon. This must be
 # translated as if it were:
-# 
-# LLVMExecutionEngine.o: libLLVMCodeGen.a libLLVMCore.a
-# libLLVMSupport.a libLLVMSystem.a libLLVMTarget.a LLVMJIT.o:
-# libLLVMCodeGen.a libLLVMCore.a libLLVMSupport.a libLLVMSystem.a
-# libLLVMTarget.a
-# 
+
+# LLVMExecutionEngine.o: libLLVMCodeGen.a libLLVMCore.a libLLVMSupport.a libLLVMSystem.a libLLVMTarget.a
+# LLVMJIT.o: libLLVMCodeGen.a libLLVMCore.a libLLVMSupport.a libLLVMSystem.a libLLVMTarget.a
+
 # TODO: do this transformations on cmake.
-# 
+
 # It is very important that the LLVM built for extracting this data
 # must contain all targets, not just X86.
 
