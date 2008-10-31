@@ -275,8 +275,8 @@ void ARMCodeEmitter::emitConstPoolInstruction(const MachineInstr &MI) {
     ARMConstantPoolValue *ACPV =
       static_cast<ARMConstantPoolValue*>(MCPE.Val.MachineCPVal);
 
-    DOUT << "\t** ARM constant pool #" << CPI << ", ' @ "
-         << (void*)MCE.getCurrentPCValue() << *ACPV << '\n';
+    DOUT << "\t** ARM constant pool #" << CPI << " @ "
+         << (void*)MCE.getCurrentPCValue() << " '" << *ACPV << "'\n";
 
     GlobalValue *GV = ACPV->getGV();
     if (GV) {
@@ -290,8 +290,8 @@ void ARMCodeEmitter::emitConstPoolInstruction(const MachineInstr &MI) {
   } else {
     Constant *CV = MCPE.Val.ConstVal;
 
-    DOUT << "\t** Constant pool #" << CPI << ", ' @ "
-         << (void*)MCE.getCurrentPCValue() << *CV << '\n';
+    DOUT << "\t** Constant pool #" << CPI << " @ "
+         << (void*)MCE.getCurrentPCValue() << " '" << *CV << "'\n";
 
     if (GlobalValue *GV = dyn_cast<GlobalValue>(CV)) {
       emitGlobalAddress(GV, ARM::reloc_arm_absolute, false);
