@@ -14,6 +14,7 @@
 
 #include "clang/Analysis/PathSensitive/BugReporter.h"
 #include "clang/Analysis/PathSensitive/GRExprEngine.h"
+#include "clang/Basic/SourceManager.h"
 #include "llvm/Support/Compiler.h"
 #include <sstream>
 
@@ -200,13 +201,29 @@ public:
       
       // Generate a report for this bug.
       std::ostringstream os;
-      os << "Address of stack memory associated with local variable '"
-         << V.getRegion()->getString() << "' returned.";
+      SourceRange R;
       
-      std::string s = os.str();
+      // Check if the region is a compound literal.
+      if (const CompoundLiteralRegion* CR = 
+            dyn_cast<CompoundLiteralRegion>(V.getRegion())) {
+        
+        const CompoundLiteralExpr* CL = CR->getLiteralExpr();
+        os << "Address of stack memory associated with a compound literal "
+              "declared on line "
+            << BR.getSourceManager().getLogicalLineNumber(CL->getLocStart())
+            << " returned.";
+        
+        R = CL->getSourceRange();
+      }
+      else {        
+        os << "Address of stack memory associated with local variable '"
+           << V.getRegion()->getString() << "' returned.";
+      }
       
+      std::string s = os.str();      
       RangedBugReport report(*this, N, s.c_str());
       report.addRange(E->getSourceRange());
+      if (R.isValid()) report.addRange(R);
       
       // Emit the warning.
       BR.EmitWarning(report);
