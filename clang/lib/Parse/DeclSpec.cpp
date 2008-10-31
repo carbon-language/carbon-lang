@@ -30,7 +30,7 @@ unsigned DeclSpec::getParsedSpecifiers() const {
   if (hasTypeSpecifier())
     Res |= PQ_TypeSpecifier;
   
-  if (FS_inline_specified)
+  if (FS_inline_specified || FS_virtual_specified || FS_explicit_specified)
     Res |= PQ_FunctionSpecifier;
   return Res;
 }
@@ -203,6 +203,20 @@ bool DeclSpec::SetFunctionSpecInline(SourceLocation Loc, const char *&PrevSpec){
   // 'inline inline' is ok.
   FS_inline_specified = true;
   FS_inlineLoc = Loc;
+  return false;
+}
+
+bool DeclSpec::SetFunctionSpecVirtual(SourceLocation Loc, const char *&PrevSpec){
+  // 'virtual virtual' is ok.
+  FS_virtual_specified = true;
+  FS_virtualLoc = Loc;
+  return false;
+}
+
+bool DeclSpec::SetFunctionSpecExplicit(SourceLocation Loc, const char *&PrevSpec){
+  // 'explicit explicit' is ok.
+  FS_explicit_specified = true;
+  FS_explicitLoc = Loc;
   return false;
 }
 

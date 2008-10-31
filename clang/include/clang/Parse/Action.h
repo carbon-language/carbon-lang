@@ -101,7 +101,11 @@ public:
   /// isTypeName - Return non-null if the specified identifier is a typedef name
   /// in the current scope.
   virtual TypeTy *isTypeName(const IdentifierInfo &II, Scope *S) = 0;
-  
+
+  /// isCurrentClassName - Return true if the specified name is the
+  /// name of the innermost C++ class type currently being defined.
+  virtual bool isCurrentClassName(const IdentifierInfo &II, Scope *S) = 0;
+
   /// ActOnDeclarator - This callback is invoked when a declarator is parsed and
   /// 'Init' specifies the initializer if any.  This is for things like:
   /// "int X = 4" or "typedef int foo".
@@ -931,7 +935,11 @@ public:
   /// isTypeName - This looks at the IdentifierInfo::FETokenInfo field to
   /// determine whether the name is a typedef or not in this scope.
   virtual TypeTy *isTypeName(const IdentifierInfo &II, Scope *S);
-  
+
+  /// isCurrentClassName - Always returns false, because MinimalAction
+  /// does not support C++ classes with constructors.
+  virtual bool isCurrentClassName(const IdentifierInfo& II, Scope *S);
+
   /// ActOnDeclarator - If this is a typedef declarator, we modify the
   /// IdentifierInfo::FETokenInfo field to keep track of this fact, until S is
   /// popped.

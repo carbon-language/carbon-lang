@@ -773,7 +773,8 @@ public:
   //===--------------------------------------------------------------------===//
   // C++ Classes
   //
-
+  virtual bool isCurrentClassName(const IdentifierInfo &II, Scope *S);
+  
   virtual void ActOnStartCXXClassDef(Scope *S, DeclTy *TagDecl,
                                      SourceLocation LBrace);
 
@@ -788,6 +789,8 @@ public:
 
   virtual void ActOnFinishCXXClassDef(DeclTy *TagDecl);
   
+  virtual DeclTy *ActOnConstructorDeclarator(CXXConstructorDecl *ConDecl);
+
   //===--------------------------------------------------------------------===//
   // C++ Derived Classes
   //

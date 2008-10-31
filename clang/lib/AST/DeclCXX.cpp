@@ -39,6 +39,14 @@ CXXRecordDecl::~CXXRecordDecl() {
   delete [] Bases;
 }
 
+void CXXRecordDecl::Destroy(ASTContext &C) {
+  for (OverloadedFunctionDecl::function_iterator func 
+         = Constructors.function_begin();
+       func != Constructors.function_end(); ++func)
+    (*func)->Destroy(C);
+  RecordDecl::Destroy(C);
+}
+
 void 
 CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases, 
                         unsigned NumBases) {
@@ -73,6 +81,17 @@ QualType CXXMethodDecl::getThisType(ASTContext &C) const {
   ClassTy = ClassTy.getWithAdditionalQualifiers(getTypeQualifiers());
   return C.getPointerType(ClassTy).withConst();
 }
+
+CXXConstructorDecl *
+CXXConstructorDecl::Create(ASTContext &C, CXXRecordDecl *RD,
+                           SourceLocation L, IdentifierInfo *Id,
+                           QualType T, bool isExplicit,
+                           bool isInline, bool isImplicitlyDeclared) {
+  void *Mem = C.getAllocator().Allocate<CXXConstructorDecl>();
+  return new (Mem) CXXConstructorDecl(RD, L, Id, T, isExplicit, isInline,
+                                      isImplicitlyDeclared);
+}
+
 
 CXXClassVarDecl *CXXClassVarDecl::Create(ASTContext &C, CXXRecordDecl *RD,
                                    SourceLocation L, IdentifierInfo *Id,

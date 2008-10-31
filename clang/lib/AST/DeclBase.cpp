@@ -237,6 +237,7 @@ void Decl::addDeclKind(Kind k) {
   case CXXRecord:           nCXXSUC++; break;
   // FIXME: Statistics for C++ decls.
   case CXXMethod:
+  case CXXConstructor:
   case CXXClassVar:
     break;
   }

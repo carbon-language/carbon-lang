@@ -63,6 +63,12 @@ MinimalAction::isTypeName(const IdentifierInfo &II, Scope *S) {
   return 0;
 }
 
+/// isCurrentClassName - Always returns false, because MinimalAction
+/// does not support C++ classes with constructors.
+bool MinimalAction::isCurrentClassName(const IdentifierInfo &, Scope *) {
+  return false;
+}
+
 /// ActOnDeclarator - If this is a typedef declarator, we modify the
 /// IdentifierInfo::FETokenInfo field to keep track of this fact, until S is
 /// popped.

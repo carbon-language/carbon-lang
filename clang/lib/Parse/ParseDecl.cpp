@@ -383,7 +383,12 @@ void Parser::ParseSpecifierQualifierList(DeclSpec &DS) {
   
   // Issue diagnostic and remove function specfier if present.
   if (Specs & DeclSpec::PQ_FunctionSpecifier) {
-    Diag(DS.getInlineSpecLoc(), diag::err_typename_invalid_functionspec);
+    if (DS.isInlineSpecified())
+      Diag(DS.getInlineSpecLoc(), diag::err_typename_invalid_functionspec);
+    if (DS.isVirtualSpecified())
+      Diag(DS.getVirtualSpecLoc(), diag::err_typename_invalid_functionspec);
+    if (DS.isExplicitSpecified())
+      Diag(DS.getExplicitSpecLoc(), diag::err_typename_invalid_functionspec);
     DS.ClearFunctionSpecs();
   }
 }
@@ -433,6 +438,8 @@ void Parser::ParseSpecifierQualifierList(DeclSpec &DS) {
 /// [C99]   'restrict'
 ///       function-specifier: [C99 6.7.4]
 /// [C99]   'inline'
+/// [C++]   'virtual'
+/// [C++]   'explicit'
 ///
 void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
   DS.SetRangeStart(Tok.getLocation());
@@ -462,6 +469,16 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
       if (TypeRep == 0)
         goto DoneWithDeclSpec;
       
+      // C++: If the identifier is actually the name of the class type
+      // being defined and the next token is a '(', then this is a
+      // constructor declaration. We're done with the decl-specifiers
+      // and will treat this token as an identifier.
+      if (getLang().CPlusPlus && 
+          CurScope->isCXXClassScope() &&
+          Actions.isCurrentClassName(*Tok.getIdentifierInfo(), CurScope) && 
+          NextToken().getKind() == tok::l_paren)
+        goto DoneWithDeclSpec;
+
       isInvalid = DS.SetTypeSpecType(DeclSpec::TST_typedef, Loc, PrevSpec,
                                      TypeRep);
       if (isInvalid)
@@ -606,6 +623,14 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
     // function-specifier
     case tok::kw_inline:
       isInvalid = DS.SetFunctionSpecInline(Loc, PrevSpec);
+      break;
+
+    case tok::kw_virtual:
+      isInvalid = DS.SetFunctionSpecVirtual(Loc, PrevSpec);
+      break;
+
+    case tok::kw_explicit:
+      isInvalid = DS.SetFunctionSpecExplicit(Loc, PrevSpec);
       break;
       
     case tok::less:
@@ -1056,6 +1081,8 @@ bool Parser::isDeclarationSpecifier() const {
 
     // function-specifier
   case tok::kw_inline:
+  case tok::kw_virtual:
+  case tok::kw_explicit:
 
     // GNU typeof support.
   case tok::kw_typeof:
@@ -1217,7 +1244,11 @@ void Parser::ParseDeclaratorInternal(Declarator &D) {
 ///                    parameter-type-list[opt] ')'
 /// [C++]   direct-declarator '(' parameter-declaration-clause ')'
 ///                    cv-qualifier-seq[opt] exception-specification[opt]
-///
+/// [C++]   declarator-id
+//
+//        declarator-id: [C++ 8]
+//          id-expression
+//          '::'[opt] nested-name-specifier[opt] type-name
 void Parser::ParseDirectDeclarator(Declarator &D) {
   // Parse the first direct-declarator seen.
   if (Tok.is(tok::identifier) && D.mayHaveIdentifier()) {

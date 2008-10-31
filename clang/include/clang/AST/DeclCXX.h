@@ -19,6 +19,87 @@
 
 namespace clang {
 class CXXRecordDecl;
+class CXXConstructorDecl;
+
+/// OverloadedFunctionDecl - An instance of this class represents a
+/// set of overloaded functions. All of the functions have the same
+/// name and occur within the same scope.
+///
+/// An OverloadedFunctionDecl has no ownership over the FunctionDecl
+/// nodes it contains. Rather, the FunctionDecls are owned by the
+/// enclosing scope (which also owns the OverloadedFunctionDecl
+/// node). OverloadedFunctionDecl is used primarily to store a set of
+/// overloaded functions for name lookup.
+class OverloadedFunctionDecl : public NamedDecl {
+protected:
+  OverloadedFunctionDecl(DeclContext *DC, IdentifierInfo *Id)
+    : NamedDecl(OverloadedFunction, SourceLocation(), Id) { }
+
+  /// Functions - the set of overloaded functions contained in this
+  /// overload set.
+  llvm::SmallVector<FunctionDecl *, 4> Functions;
+  
+public:
+  typedef llvm::SmallVector<FunctionDecl *, 4>::iterator function_iterator;
+  typedef llvm::SmallVector<FunctionDecl *, 4>::const_iterator
+    function_const_iterator;
+
+  static OverloadedFunctionDecl *Create(ASTContext &C, DeclContext *DC,
+                                        IdentifierInfo *Id);
+
+  /// addOverload - Add an overloaded function FD to this set of
+  /// overloaded functions.
+  void addOverload(FunctionDecl *FD) {
+    assert((!getNumFunctions() || (FD->getDeclContext() == getDeclContext())) &&
+           "Overloaded functions must all be in the same context");
+    assert(FD->getIdentifier() == getIdentifier() &&
+           "Overloaded functions must have the same name.");
+    Functions.push_back(FD);
+  }
+
+  function_iterator function_begin() { return Functions.begin(); }
+  function_iterator function_end() { return Functions.end(); }
+  function_const_iterator function_begin() const { return Functions.begin(); }
+  function_const_iterator function_end() const { return Functions.end(); }
+
+  /// getNumFunctions - the number of overloaded functions stored in
+  /// this set.
+  unsigned getNumFunctions() const { return Functions.size(); }
+
+  /// getFunction - retrieve the ith function in the overload set.
+  const FunctionDecl *getFunction(unsigned i) const {
+    assert(i < getNumFunctions() && "Illegal function #");
+    return Functions[i];
+  }
+  FunctionDecl *getFunction(unsigned i) {
+    assert(i < getNumFunctions() && "Illegal function #");
+    return Functions[i];
+  }
+
+  // getDeclContext - Get the context of these overloaded functions.
+  DeclContext *getDeclContext() {
+    assert(getNumFunctions() > 0 && "Context of an empty overload set");
+    return getFunction(0)->getDeclContext();
+  }
+
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Decl *D) { 
+    return D->getKind() == OverloadedFunction; 
+  }
+  static bool classof(const OverloadedFunctionDecl *D) { return true; }
+
+protected:
+  /// EmitImpl - Serialize this FunctionDecl.  Called by Decl::Emit.
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  
+  /// CreateImpl - Deserialize an OverloadedFunctionDecl.  Called by
+  /// Decl::Create.
+  static OverloadedFunctionDecl* CreateImpl(llvm::Deserializer& D, 
+                                            ASTContext& C);
+  
+  friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);
+  friend class CXXRecordDecl;
+};
 
 /// CXXFieldDecl - Represents an instance field of a C++ struct/union/class.
 class CXXFieldDecl : public FieldDecl {
@@ -124,7 +205,7 @@ public:
 /// CXXRecordDecl differs from RecordDecl in several ways. First, it
 /// is a DeclContext, because it can contain other
 /// declarations. Second, it provides additional C++ fields, including
-/// storage for base classes.
+/// storage for base classes and constructors.
 class CXXRecordDecl : public RecordDecl, public DeclContext {
   /// Bases - Base classes of this class.
   /// FIXME: This is wasted space for a union.
@@ -133,10 +214,15 @@ class CXXRecordDecl : public RecordDecl, public DeclContext {
   /// NumBases - The number of base class specifiers in Bases.
   unsigned NumBases;
 
+  /// Constructors - Overload set containing the constructors of this
+  /// C++ class. Each of the entries in this overload set is a
+  /// CXXConstructorDecl.
+  OverloadedFunctionDecl Constructors;
+
   CXXRecordDecl(TagKind TK, DeclContext *DC,
                 SourceLocation L, IdentifierInfo *Id) 
     : RecordDecl(CXXRecord, TK, DC, L, Id), DeclContext(CXXRecord),
-      Bases(0), NumBases(0) {}
+      Bases(0), NumBases(0), Constructors(DC, Id) {}
 
   ~CXXRecordDecl();
 
@@ -165,7 +251,6 @@ public:
   base_class_iterator       bases_end()         { return Bases + NumBases; }
   base_class_const_iterator bases_end()   const { return Bases + NumBases; }
 
-
   const CXXFieldDecl *getMember(unsigned i) const {
     return cast<const CXXFieldDecl>(RecordDecl::getMember(i));
   }
@@ -178,6 +263,17 @@ public:
   CXXFieldDecl *getMember(IdentifierInfo *name) {
     return cast_or_null<CXXFieldDecl>(RecordDecl::getMember(name));
   }
+
+  /// getConstructors - Retrieve the overload set containing all of
+  /// the constructors of this class.
+  OverloadedFunctionDecl       *getConstructors()       { return &Constructors; }
+
+  /// getConstructors - Retrieve the overload set containing all of
+  /// the constructors of this class.
+  const OverloadedFunctionDecl *getConstructors() const { return &Constructors; }
+
+  /// addConstructor - Add another constructor to the list of constructors.
+  void addConstructor(CXXConstructorDecl *ConDecl);
 
   /// viewInheritance - Renders and displays an inheritance diagram
   /// for this C++ class and all of its base classes (transitively) using
@@ -192,6 +288,8 @@ public:
   static CXXRecordDecl *castFromDeclContext(const DeclContext *DC) {
     return static_cast<CXXRecordDecl *>(const_cast<DeclContext*>(DC));
   }
+
+  virtual void Destroy(ASTContext& C);
 
 protected:
   /// EmitImpl - Serialize this CXXRecordDecl.  Called by Decl::Emit.
@@ -208,12 +306,19 @@ protected:
 /// CXXMethodDecl - Represents a static or instance method of a
 /// struct/union/class.
 class CXXMethodDecl : public FunctionDecl {
-
   CXXMethodDecl(CXXRecordDecl *RD, SourceLocation L,
                IdentifierInfo *Id, QualType T,
                bool isStatic, bool isInline, ScopedDecl *PrevDecl)
     : FunctionDecl(CXXMethod, RD, L, Id, T, (isStatic ? Static : None),
                    isInline, PrevDecl) {}
+
+protected:
+  CXXMethodDecl(Kind DK, CXXRecordDecl *RD, SourceLocation L,
+                IdentifierInfo *Id, QualType T,
+                bool isStatic, bool isInline, ScopedDecl *PrevDecl)
+    : FunctionDecl(DK, RD, L, Id, T, (isStatic ? Static : None),
+                   isInline, PrevDecl) {}
+
 public:
   static CXXMethodDecl *Create(ASTContext &C, CXXRecordDecl *RD,
                               SourceLocation L, IdentifierInfo *Id,
@@ -235,7 +340,9 @@ public:
   }
 
   // Implement isa/cast/dyncast/etc.
-  static bool classof(const Decl *D) { return D->getKind() == CXXMethod; }
+  static bool classof(const Decl *D) { 
+    return D->getKind() >= CXXMethod && D->getKind() <= CXXConstructor;
+  }
   static bool classof(const CXXMethodDecl *D) { return true; }
 
 protected:
@@ -248,6 +355,85 @@ protected:
   static CXXMethodDecl* CreateImpl(llvm::Deserializer& D, ASTContext& C);
   
   friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);
+};
+
+/// CXXConstructorDecl - Represents a C++ constructor within a class. For example:
+/// 
+/// @code
+/// class X {
+/// public:
+///   explicit X(int); // represented by a CXXConstructorDecl.
+/// };
+/// @endcode
+class CXXConstructorDecl : public CXXMethodDecl {
+  /// Explicit - Whether this constructor is explicit.
+  bool Explicit : 1;
+
+  /// ImplicitlyDeclared - Whether this constructor was implicitly
+  /// declared. When false, the constructor was declared by the user.
+  bool ImplicitlyDeclared : 1;
+
+  /// ImplicitlyDefined - Whether this constructor was implicitly
+  /// defined by the compiler. When false, the constructor was defined
+  /// by the user. In C++03, this flag will have the same value as
+  /// ImplicitlyDeclared. In C++0x, however, a constructor that is
+  /// explicitly defaulted (i.e., defined with " = default") will have
+  /// @c !ImplicitlyDeclared && ImplicitlyDefined.
+  bool ImplicitlyDefined : 1;
+
+  /// FIXME: Add support for base and member initializers.
+
+  CXXConstructorDecl(CXXRecordDecl *RD, SourceLocation L,
+                     IdentifierInfo *Id, QualType T,
+                     bool isExplicit, bool isInline, bool isImplicitlyDeclared)
+    : CXXMethodDecl(CXXConstructor, RD, L, Id, T, false, isInline, /*PrevDecl=*/0),
+      Explicit(isExplicit), ImplicitlyDeclared(isImplicitlyDeclared),
+      ImplicitlyDefined(false) { }
+
+public:
+  static CXXConstructorDecl *Create(ASTContext &C, CXXRecordDecl *RD,
+                                    SourceLocation L, IdentifierInfo *Id,
+                                    QualType T, bool isExplicit,
+                                    bool isInline, bool isImplicitlyDeclared);
+
+  /// isExplicit - Whether this constructor was marked "explicit" or not.  
+  bool isExplicit() const { return Explicit; }
+
+  /// isImplicitlyDeclared - Whether this constructor was implicitly
+  /// declared. If false, then this constructor was explicitly
+  /// declared by the user.
+  bool isImplicitlyDeclared() const { return ImplicitlyDeclared; }
+
+  /// isImplicitlyDefined - Whether this constructor was implicitly
+  /// defined. If false, then this constructor was defined by the
+  /// user. This operation can only be invoked if the constructor has
+  /// already been defined.
+  bool isImplicitlyDefined() const { 
+    assert(getBody() != 0 && 
+           "Can only get the implicit-definition flag once the constructor has been defined");
+    return ImplicitlyDefined; 
+  }
+
+  /// setImplicitlyDefined
+  void setImplicitlyDefined(bool ID) { 
+    assert(getBody() != 0 && 
+           "Can only set the implicit-definition flag once the constructor has been defined");
+    ImplicitlyDefined = ID; 
+  }
+
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Decl *D) { 
+    return D->getKind() == CXXConstructor;
+  }
+  static bool classof(const CXXConstructorDecl *D) { return true; }
+
+  /// EmitImpl - Serialize this CXXConstructorDecl.  Called by Decl::Emit.
+  // FIXME: Implement this.
+  //virtual void EmitImpl(llvm::Serializer& S) const;
+  
+  /// CreateImpl - Deserialize a CXXConstructorDecl.  Called by Decl::Create.
+  // FIXME: Implement this.
+  static CXXConstructorDecl* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// CXXClassVarDecl - Represents a static data member of a struct/union/class.
@@ -316,84 +502,9 @@ public:
   }
 };
 
-/// OverloadedFunctionDecl - An instance of this class represents a
-/// set of overloaded functions. All of the functions have the same
-/// name and occur within the same scope.
-///
-/// An OverloadedFunctionDecl has no ownership over the FunctionDecl
-/// nodes it contains. Rather, the FunctionDecls are owned by the
-/// enclosing scope (which also owns the OverloadedFunctionDecl
-/// node). OverloadedFunctionDecl is used primarily to store a set of
-/// overloaded functions for name lookup.
-class OverloadedFunctionDecl : public NamedDecl {
-protected:
-  OverloadedFunctionDecl(DeclContext *DC, IdentifierInfo *Id)
-    : NamedDecl(OverloadedFunction, SourceLocation(), Id) { }
-
-  /// Functions - the set of overloaded functions contained in this
-  /// overload set.
-  llvm::SmallVector<FunctionDecl *, 4> Functions;
-  
-public:
-  typedef llvm::SmallVector<FunctionDecl *, 4>::iterator function_iterator;
-  typedef llvm::SmallVector<FunctionDecl *, 4>::const_iterator
-    function_const_iterator;
-
-  static OverloadedFunctionDecl *Create(ASTContext &C, DeclContext *DC,
-                                        IdentifierInfo *Id);
-
-  /// addOverload - Add an overloaded function FD to this set of
-  /// overloaded functions.
-  void addOverload(FunctionDecl *FD) {
-    assert((!getNumFunctions() || (FD->getDeclContext() == getDeclContext())) &&
-           "Overloaded functions must all be in the same context");
-    assert(FD->getIdentifier() == getIdentifier() &&
-           "Overloaded functions must have the same name.");
-    Functions.push_back(FD);
-  }
-
-  function_iterator function_begin() { return Functions.begin(); }
-  function_iterator function_end() { return Functions.end(); }
-  function_const_iterator function_begin() const { return Functions.begin(); }
-  function_const_iterator function_end() const { return Functions.end(); }
-
-  /// getNumFunctions - the number of overloaded functions stored in
-  /// this set.
-  unsigned getNumFunctions() const { return Functions.size(); }
-
-  /// getFunction - retrieve the ith function in the overload set.
-  const FunctionDecl *getFunction(unsigned i) const {
-    assert(i < getNumFunctions() && "Illegal function #");
-    return Functions[i];
-  }
-  FunctionDecl *getFunction(unsigned i) {
-    assert(i < getNumFunctions() && "Illegal function #");
-    return Functions[i];
-  }
-
-  // getDeclContext - Get the context of these overloaded functions.
-  DeclContext *getDeclContext() {
-    assert(getNumFunctions() > 0 && "Context of an empty overload set");
-    return getFunction(0)->getDeclContext();
-  }
-
-  // Implement isa/cast/dyncast/etc.
-  static bool classof(const Decl *D) { 
-    return D->getKind() == OverloadedFunction; 
-  }
-  static bool classof(const OverloadedFunctionDecl *D) { return true; }
-
-protected:
-  /// EmitImpl - Serialize this FunctionDecl.  Called by Decl::Emit.
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  
-  /// CreateImpl - Deserialize an OverloadedFunctionDecl.  Called by
-  /// Decl::Create.
-  static OverloadedFunctionDecl* CreateImpl(llvm::Deserializer& D, 
-                                            ASTContext& C);
-  
-  friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);
-};
+inline void CXXRecordDecl::addConstructor(CXXConstructorDecl *ConDecl) {
+  Constructors.addOverload(ConDecl);
+}
 
 } // end namespace clang
 

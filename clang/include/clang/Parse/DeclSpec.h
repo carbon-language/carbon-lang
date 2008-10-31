@@ -115,6 +115,8 @@ private:
   
   // function-specifier
   bool FS_inline_specified : 1;
+  bool FS_virtual_specified : 1;
+  bool FS_explicit_specified : 1;
   
   /// TypeRep - This contains action-specific information about a specific TST.
   /// For example, for a typedef or struct, it might contain the declaration for
@@ -137,7 +139,7 @@ private:
   SourceLocation StorageClassSpecLoc, SCS_threadLoc;
   SourceLocation TSWLoc, TSCLoc, TSSLoc, TSTLoc;
   SourceLocation TQ_constLoc, TQ_restrictLoc, TQ_volatileLoc;
-  SourceLocation FS_inlineLoc;
+  SourceLocation FS_inlineLoc, FS_virtualLoc, FS_explicitLoc;
   
   bool BadSpecifier(TST T, const char *&PrevSpec);
   bool BadSpecifier(TQ T, const char *&PrevSpec);
@@ -159,6 +161,8 @@ public:
       TypeSpecType(TST_unspecified),
       TypeQualifiers(TSS_unspecified),
       FS_inline_specified(false),
+      FS_virtual_specified(false),
+      FS_explicit_specified(false),
       TypeRep(0),
       AttrList(0),
       ProtocolQualifiers(0),
@@ -207,14 +211,24 @@ public:
   SourceLocation getConstSpecLoc() const { return TQ_constLoc; }
   SourceLocation getRestrictSpecLoc() const { return TQ_restrictLoc; }
   SourceLocation getVolatileSpecLoc() const { return TQ_volatileLoc; }
-
   
   // function-specifier
   bool isInlineSpecified() const { return FS_inline_specified; }
   SourceLocation getInlineSpecLoc() const { return FS_inlineLoc; }
+
+  bool isVirtualSpecified() const { return FS_virtual_specified; }
+  SourceLocation getVirtualSpecLoc() const { return FS_virtualLoc; }
+
+  bool isExplicitSpecified() const { return FS_explicit_specified; }
+  SourceLocation getExplicitSpecLoc() const { return FS_explicitLoc; }
+
   void ClearFunctionSpecs() {
     FS_inline_specified = false;
     FS_inlineLoc = SourceLocation();
+    FS_virtual_specified = false;
+    FS_virtualLoc = SourceLocation();
+    FS_explicit_specified = false;
+    FS_explicitLoc = SourceLocation();
   }
   
   /// hasTypeSpecifier - Return true if any type-specifier has been found.
@@ -249,6 +263,8 @@ public:
                    const LangOptions &Lang);
   
   bool SetFunctionSpecInline(SourceLocation Loc, const char *&PrevSpec);
+  bool SetFunctionSpecVirtual(SourceLocation Loc, const char *&PrevSpec);
+  bool SetFunctionSpecExplicit(SourceLocation Loc, const char *&PrevSpec);
   
   /// AddAttributes - contatenates two attribute lists. 
   /// The GCC attribute syntax allows for the following:

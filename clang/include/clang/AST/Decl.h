@@ -562,6 +562,7 @@ protected:
   static FunctionDecl* CreateImpl(llvm::Deserializer& D, ASTContext& C);
   
   friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);
+  friend class CXXRecordDecl;
 };
 
 

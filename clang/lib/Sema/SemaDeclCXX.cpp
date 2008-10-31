@@ -257,6 +257,17 @@ void Sema::CheckCXXDefaultArguments(FunctionDecl *FD) {
   }
 }
 
+/// isCurrentClassName - Determine whether the identifier II is the
+/// name of the class type currently being defined. In the case of
+/// nested classes, this will only return true if II is the name of
+/// the innermost class.
+bool Sema::isCurrentClassName(const IdentifierInfo &II, Scope *) {
+  if (CXXRecordDecl *CurDecl = dyn_cast_or_null<CXXRecordDecl>(CurContext))
+    return &II == CurDecl->getIdentifier();
+  else
+    return false;
+}
+
 /// ActOnBaseSpecifier - Parsed a base specifier. A base specifier is
 /// one entry in the base class list of a class specifier, for
 /// example: 
@@ -361,9 +372,21 @@ void Sema::ActOnBaseSpecifiers(DeclTy *ClassDecl, BaseTy **Bases,
 /// ActOnStartCXXClassDef - This is called at the start of a class/struct/union
 /// definition, when on C++.
 void Sema::ActOnStartCXXClassDef(Scope *S, DeclTy *D, SourceLocation LBrace) {
-  Decl *Dcl = static_cast<Decl *>(D);
-  PushDeclContext(cast<CXXRecordDecl>(Dcl));
+  CXXRecordDecl *Dcl = cast<CXXRecordDecl>(static_cast<Decl *>(D));
+  PushDeclContext(Dcl);
   FieldCollector->StartClass();
+
+  if (Dcl->getIdentifier()) {
+    // C++ [class]p2: 
+    //   [...] The class-name is also inserted into the scope of the
+    //   class itself; this is known as the injected-class-name. For
+    //   purposes of access checking, the injected-class-name is treated
+    //   as if it were a public member name.
+    TypedefDecl *InjectedClassName 
+      = TypedefDecl::Create(Context, Dcl, LBrace, Dcl->getIdentifier(),
+                            Context.getTypeDeclType(Dcl), /*PrevDecl=*/0);
+    PushOnScopeChains(InjectedClassName, S);
+  }
 }
 
 /// ActOnCXXMemberDeclarator - This is invoked when a C++ class member
@@ -537,6 +560,22 @@ void Sema::ActOnFinishCXXClassDef(DeclTy *D) {
   // Everything, including inline method definitions, have been parsed.
   // Let the consumer know of the new TagDecl definition.
   Consumer.HandleTagDeclDefinition(Rec);
+}
+
+/// ActOnConstructorDeclarator - Called by ActOnDeclarator to complete
+/// the declaration of the given C++ constructor ConDecl that was
+/// built from declarator D. This routine is responsible for checking
+/// that the newly-created constructor declaration is well-formed and
+/// for recording it in the C++ class. Example:
+///
+/// @code 
+/// class X {
+///   X(); // X::X() will be the ConDecl.
+/// };
+/// @endcode
+Sema::DeclTy *Sema::ActOnConstructorDeclarator(CXXConstructorDecl *ConDecl) {
+  assert(ConDecl && "Expected to receive a constructor declaration");
+  return (DeclTy *)ConDecl;
 }
 
 //===----------------------------------------------------------------------===//

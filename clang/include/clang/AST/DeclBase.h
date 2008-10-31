@@ -66,6 +66,7 @@ public:
                EnumConstant,
                Function,  // [DeclContext]
                  CXXMethod,
+                   CXXConstructor,
                Var,
                  ImplicitParam,
                  CXXClassVar,
@@ -89,7 +90,7 @@ public:
     TagFirst       = Enum         , TagLast       = CXXRecord,
     RecordFirst    = Record       , RecordLast    = CXXRecord,
     ValueFirst     = EnumConstant , ValueLast     = ParmVar,
-    FunctionFirst  = Function     , FunctionLast  = CXXMethod,
+    FunctionFirst  = Function     , FunctionLast  = CXXConstructor,
     VarFirst       = Var          , VarLast       = ParmVar
   };
 
