@@ -56,6 +56,8 @@ namespace llvm {
     /// pool address resolution is handled by the target.
     virtual bool hasCustomConstantPool() const { return true; }
 
+    /// ResizeConstPoolMap - Resize constant pool ids to CONSTPOOL_ENTRY
+    /// addresses map.
     void ResizeConstPoolMap(unsigned Size) {
       ConstPoolId2AddrMap.resize(Size);
     }
