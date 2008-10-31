@@ -27,6 +27,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Type.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Compiler.h"
@@ -84,10 +85,10 @@ bool UnreachableBlockElim::runOnFunction(Function &F) {
 
 
 namespace {
-  class VISIBILITY_HIDDEN UnreachableMachineBlockElim : 
+  class VISIBILITY_HIDDEN UnreachableMachineBlockElim :
         public MachineFunctionPass {
     virtual bool runOnMachineFunction(MachineFunction &F);
-    
+    MachineModuleInfo *MMI;
   public:
     static char ID; // Pass identification, replacement for typeid
     UnreachableMachineBlockElim() : MachineFunctionPass(&ID) {}
@@ -104,6 +105,8 @@ const PassInfo *const llvm::UnreachableMachineBlockElimID = &Y;
 bool UnreachableMachineBlockElim::runOnMachineFunction(MachineFunction &F) {
   SmallPtrSet<MachineBasicBlock*, 8> Reachable;
 
+  MMI = getAnalysisToUpdate<MachineModuleInfo>();
+
   // Mark all reachable blocks.
   for (df_ext_iterator<MachineFunction*, SmallPtrSet<MachineBasicBlock*, 8> >
        I = df_ext_begin(&F, Reachable), E = df_ext_end(&F, Reachable);
@@ -115,14 +118,14 @@ bool UnreachableMachineBlockElim::runOnMachineFunction(MachineFunction &F) {
   std::vector<MachineBasicBlock*> DeadBlocks;
   for (MachineFunction::iterator I = F.begin(), E = F.end(); I != E; ++I) {
     MachineBasicBlock *BB = I;
-    
+
     // Test for deadness.
     if (!Reachable.count(BB)) {
       DeadBlocks.push_back(BB);
-      
+
       while (BB->succ_begin() != BB->succ_end()) {
         MachineBasicBlock* succ = *BB->succ_begin();
-        
+
         MachineBasicBlock::iterator start = succ->begin();
         while (start != succ->end() &&
                start->getOpcode() == TargetInstrInfo::PHI) {
@@ -132,24 +135,36 @@ bool UnreachableMachineBlockElim::runOnMachineFunction(MachineFunction &F) {
               start->RemoveOperand(i);
               start->RemoveOperand(i-1);
             }
-          
+
           start++;
         }
-        
+
         BB->removeSuccessor(BB->succ_begin());
       }
     }
   }
 
   // Actually remove the blocks now.
-  for (unsigned i = 0, e = DeadBlocks.size(); i != e; ++i)
-    DeadBlocks[i]->eraseFromParent();
+  for (unsigned i = 0, e = DeadBlocks.size(); i != e; ++i) {
+    MachineBasicBlock *MBB = DeadBlocks[i];
+    // If there are any labels in the basic block, unregister them from
+    // MachineModuleInfo.
+    if (MMI && !MBB->empty()) {
+      for (MachineBasicBlock::iterator I = MBB->begin(),
+             E = MBB->end(); I != E; ++I) {
+        if (I->isLabel())
+          // The label ID # is always operand #0, an immediate.
+          MMI->InvalidateLabel(I->getOperand(0).getImm());
+      }
+    }
+    MBB->eraseFromParent();
+  }
 
   // Cleanup PHI nodes.
   for (MachineFunction::iterator I = F.begin(), E = F.end(); I != E; ++I) {
     MachineBasicBlock *BB = I;
     // Prune unneeded PHI entries.
-    SmallPtrSet<MachineBasicBlock*, 8> preds(BB->pred_begin(), 
+    SmallPtrSet<MachineBasicBlock*, 8> preds(BB->pred_begin(),
                                              BB->pred_end());
     MachineBasicBlock::iterator phi = BB->begin();
     while (phi != BB->end() &&
@@ -159,7 +174,7 @@ bool UnreachableMachineBlockElim::runOnMachineFunction(MachineFunction &F) {
           phi->RemoveOperand(i);
           phi->RemoveOperand(i-1);
         }
-      
+
       if (phi->getNumOperands() == 3) {
         unsigned Input = phi->getOperand(1).getReg();
         unsigned Output = phi->getOperand(0).getReg();
@@ -173,7 +188,7 @@ bool UnreachableMachineBlockElim::runOnMachineFunction(MachineFunction &F) {
 
         continue;
       }
-  
+
       ++phi;
     }
   }
@@ -182,4 +197,3 @@ bool UnreachableMachineBlockElim::runOnMachineFunction(MachineFunction &F) {
 
   return DeadBlocks.size();
 }
-
