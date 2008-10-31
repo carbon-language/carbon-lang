@@ -15,7 +15,7 @@
 #define ARMJITINFO_H
 
 #include "llvm/Target/TargetJITInfo.h"
-#include <map>
+#include "llvm/ADT/SmallVector.h"
 
 namespace llvm {
   class ARMTargetMachine;
@@ -25,7 +25,7 @@ namespace llvm {
 
     // ConstPoolId2AddrMap - A map from constant pool ids to the corresponding
     // CONSTPOOL_ENTRY addresses.
-    std::map<unsigned, intptr_t> ConstPoolId2AddrMap;
+    SmallVector<intptr_t, 32> ConstPoolId2AddrMap;
 
   public:
     explicit ARMJITInfo(ARMTargetMachine &tm) : TM(tm) { useGOT = false; }
@@ -56,21 +56,24 @@ namespace llvm {
     /// pool address resolution is handled by the target.
     virtual bool hasCustomConstantPool() const { return true; }
 
+    void ResizeConstPoolMap(unsigned Size) {
+      ConstPoolId2AddrMap.resize(Size);
+    }
+
     /// getConstantPoolEntryAddr - The ARM target puts all constant
     /// pool entries into constant islands. Resolve the constant pool index
     /// into the address where the constant is stored.
-    virtual intptr_t getConstantPoolEntryAddr(unsigned CPID) const {
-      std::map<unsigned, intptr_t>::const_iterator I
-        = ConstPoolId2AddrMap.find(CPID);
-      assert(I != ConstPoolId2AddrMap.end() && "Missing constpool_entry?");
-      return I->second;
+    intptr_t getConstantPoolEntryAddr(unsigned CPI) const {
+      assert(CPI < ConstPoolId2AddrMap.size());
+      return ConstPoolId2AddrMap[CPI];
     }
 
-    /// addConstantPoolEntryAddr - Map a Constant Pool Index (CPID) to the address
+    /// addConstantPoolEntryAddr - Map a Constant Pool Index (CPI) to the address
     /// where its associated value is stored. When relocations are processed,
     /// this value will be used to resolve references to the constant.
-    void addConstantPoolEntryAddr(unsigned CPID, intptr_t Addr) {
-      ConstPoolId2AddrMap[CPID] = Addr;
+    void addConstantPoolEntryAddr(unsigned CPI, intptr_t Addr) {
+      assert(CPI < ConstPoolId2AddrMap.size());
+      ConstPoolId2AddrMap[CPI] = Addr;
     }
   };
 }

@@ -43,16 +43,17 @@ namespace {
     const TargetData          *TD;
     TargetMachine             &TM;
     MachineCodeEmitter        &MCE;
-    const MachineConstantPool *MCP;
+    const std::vector<MachineConstantPoolEntry> *MCPEs;
+    
   public:
     static char ID;
     explicit ARMCodeEmitter(TargetMachine &tm, MachineCodeEmitter &mce)
       : MachineFunctionPass(&ID), JTI(0), II(0), TD(0), TM(tm),
-      MCE(mce), MCP(0) {}
+      MCE(mce), MCPEs(0) {}
     ARMCodeEmitter(TargetMachine &tm, MachineCodeEmitter &mce,
             const ARMInstrInfo &ii, const TargetData &td)
       : MachineFunctionPass(&ID), JTI(0), II(&ii), TD(&td), TM(tm),
-      MCE(mce), MCP(0) {}
+      MCE(mce), MCPEs(0) {}
 
     bool runOnMachineFunction(MachineFunction &MF);
 
@@ -153,7 +154,8 @@ bool ARMCodeEmitter::runOnMachineFunction(MachineFunction &MF) {
   II = ((ARMTargetMachine&)MF.getTarget()).getInstrInfo();
   TD = ((ARMTargetMachine&)MF.getTarget()).getTargetData();
   JTI = ((ARMTargetMachine&)MF.getTarget()).getJITInfo();
-  MCP = MF.getConstantPool();
+  MCPEs = &MF.getConstantPool()->getConstants();
+  JTI->ResizeConstPoolMap(MCPEs->size());
 
   do {
     DOUT << "JITTing function '" << MF.getFunction()->getName() << "'\n";
@@ -264,7 +266,7 @@ void ARMCodeEmitter::emitInstruction(const MachineInstr &MI) {
 void ARMCodeEmitter::emitConstPoolInstruction(const MachineInstr &MI) {
   unsigned CPI = MI.getOperand(0).getImm();
   unsigned CPIndex = MI.getOperand(1).getIndex();
-  const MachineConstantPoolEntry &MCPE = MCP->getConstants()[CPIndex];
+  const MachineConstantPoolEntry &MCPE = (*MCPEs)[CPIndex];
   
   // Remember the CONSTPOOL_ENTRY address for later relocation.
   JTI->addConstantPoolEntryAddr(CPI, MCE.getCurrentPCValue());
