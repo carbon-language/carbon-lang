@@ -85,14 +85,14 @@ class SDTypeProfile<int numresults, int numoperands,
 }
 
 // Builtin profiles.
-def SDTIntLeaf: SDTypeProfile<1, 0, [SDTCisInt<0>]>;      // for 'imm'.
-def SDTFPLeaf : SDTypeProfile<1, 0, [SDTCisFP<0>]>;       // for 'fpimm'.
-def SDTPtrLeaf: SDTypeProfile<1, 0, [SDTCisPtrTy<0>]>;      // for '&g'.
+def SDTIntLeaf: SDTypeProfile<1, 0, [SDTCisInt<0>]>;         // for 'imm'.
+def SDTFPLeaf : SDTypeProfile<1, 0, [SDTCisFP<0>]>;          // for 'fpimm'.
+def SDTPtrLeaf: SDTypeProfile<1, 0, [SDTCisPtrTy<0>]>;       // for '&g'.
 def SDTOther  : SDTypeProfile<1, 0, [SDTCisVT<0, OtherVT>]>; // for 'vt'.
-def SDTUNDEF  : SDTypeProfile<1, 0, []>; // for 'undef'.
-def SDTUnaryOp  : SDTypeProfile<1, 1, []>; // bitconvert
+def SDTUNDEF  : SDTypeProfile<1, 0, []>;                     // for 'undef'.
+def SDTUnaryOp  : SDTypeProfile<1, 1, []>;                   // for bitconvert.
 
-def SDTIntBinOp : SDTypeProfile<1, 2, [   // add, and, or, xor, udiv, etc.
+def SDTIntBinOp : SDTypeProfile<1, 2, [     // add, and, or, xor, udiv, etc.
   SDTCisSameAs<0, 1>, SDTCisSameAs<0, 2>, SDTCisInt<0>
 ]>;
 def SDTIntShiftOp : SDTypeProfile<1, 2, [   // shl, sra, srl
@@ -101,10 +101,10 @@ def SDTIntShiftOp : SDTypeProfile<1, 2, [   // shl, sra, srl
 def SDTFPBinOp : SDTypeProfile<1, 2, [      // fadd, fmul, etc.
   SDTCisSameAs<0, 1>, SDTCisSameAs<0, 2>, SDTCisFP<0>
 ]>;
-def SDTFPSignOp : SDTypeProfile<1, 2, [      // fcopysign.
+def SDTFPSignOp : SDTypeProfile<1, 2, [     // fcopysign.
   SDTCisSameAs<0, 1>, SDTCisFP<0>, SDTCisFP<2>
 ]>;
-def SDTFPTernaryOp : SDTypeProfile<1, 3, [      // fmadd, fnmsub, etc.
+def SDTFPTernaryOp : SDTypeProfile<1, 3, [  // fmadd, fnmsub, etc.
   SDTCisSameAs<0, 1>, SDTCisSameAs<0, 2>, SDTCisSameAs<0, 3>, SDTCisFP<0>
 ]>;
 def SDTIntUnaryOp : SDTypeProfile<1, 1, [   // ctlz
@@ -122,74 +122,74 @@ def SDTFPUnaryOp  : SDTypeProfile<1, 1, [   // fneg, fsqrt, etc
 def SDTFPRoundOp  : SDTypeProfile<1, 1, [   // fround
   SDTCisFP<0>, SDTCisFP<1>, SDTCisOpSmallerThanOp<0, 1>
 ]>;
-def SDTFPExtendOp  : SDTypeProfile<1, 1, [   // fextend
+def SDTFPExtendOp  : SDTypeProfile<1, 1, [  // fextend
   SDTCisFP<0>, SDTCisFP<1>, SDTCisOpSmallerThanOp<1, 0>
 ]>;
-def SDTIntToFPOp : SDTypeProfile<1, 1, [   // [su]int_to_fp 
+def SDTIntToFPOp : SDTypeProfile<1, 1, [    // [su]int_to_fp 
   SDTCisFP<0>, SDTCisInt<1>
 ]>;
-def SDTFPToIntOp : SDTypeProfile<1, 1, [   // fp_to_[su]int 
+def SDTFPToIntOp : SDTypeProfile<1, 1, [    // fp_to_[su]int 
   SDTCisInt<0>, SDTCisFP<1>
 ]>;
-def SDTExtInreg : SDTypeProfile<1, 2, [   // sext_inreg
+def SDTExtInreg : SDTypeProfile<1, 2, [     // sext_inreg
   SDTCisSameAs<0, 1>, SDTCisInt<0>, SDTCisVT<2, OtherVT>,
   SDTCisVTSmallerThanOp<2, 1>
 ]>;
 
-def SDTSetCC : SDTypeProfile<1, 3, [ // setcc
+def SDTSetCC : SDTypeProfile<1, 3, [        // setcc
   SDTCisInt<0>, SDTCisSameAs<1, 2>, SDTCisVT<3, OtherVT>
 ]>;
 
-def SDTSelect : SDTypeProfile<1, 3, [ // select 
+def SDTSelect : SDTypeProfile<1, 3, [       // select 
   SDTCisInt<1>, SDTCisSameAs<0, 2>, SDTCisSameAs<2, 3>
 ]>;
 
-def SDTSelectCC : SDTypeProfile<1, 5, [ // select_cc
+def SDTSelectCC : SDTypeProfile<1, 5, [     // select_cc
   SDTCisSameAs<1, 2>, SDTCisSameAs<3, 4>, SDTCisSameAs<0, 3>,
   SDTCisVT<5, OtherVT>
 ]>;
 
-def SDTBr : SDTypeProfile<0, 1, [ // br
+def SDTBr : SDTypeProfile<0, 1, [           // br
   SDTCisVT<0, OtherVT>
 ]>;
 
-def SDTBrcond : SDTypeProfile<0, 2, [ // brcond
+def SDTBrcond : SDTypeProfile<0, 2, [       // brcond
   SDTCisInt<0>, SDTCisVT<1, OtherVT>
 ]>;
 
-def SDTBrind : SDTypeProfile<0, 1, [ // brind
+def SDTBrind : SDTypeProfile<0, 1, [        // brind
   SDTCisPtrTy<0>
 ]>;
 
-def SDTNone : SDTypeProfile<0, 0, []>; // ret, trap
+def SDTNone : SDTypeProfile<0, 0, []>;      // ret, trap
 
-def SDTLoad : SDTypeProfile<1, 1, [ // load
+def SDTLoad : SDTypeProfile<1, 1, [         // load
   SDTCisPtrTy<1>  
 ]>;
 
-def SDTStore : SDTypeProfile<0, 2, [ // store
+def SDTStore : SDTypeProfile<0, 2, [        // store
   SDTCisPtrTy<1>  
 ]>;
 
-def SDTIStore : SDTypeProfile<1, 3, [ // indexed store
+def SDTIStore : SDTypeProfile<1, 3, [       // indexed store
   SDTCisSameAs<0, 2>, SDTCisPtrTy<0>, SDTCisPtrTy<3>
 ]>;
 
 def SDTVecShuffle : SDTypeProfile<1, 3, [
   SDTCisSameAs<0, 1>, SDTCisSameAs<1, 2>, SDTCisIntVectorOfSameSize<3, 0>
 ]>;
-def SDTVecExtract : SDTypeProfile<1, 2, [ // vector extract
+def SDTVecExtract : SDTypeProfile<1, 2, [   // vector extract
   SDTCisEltOfVec<0, 1>, SDTCisPtrTy<2>
 ]>;
-def SDTVecInsert : SDTypeProfile<1, 3, [  // vector insert
+def SDTVecInsert : SDTypeProfile<1, 3, [    // vector insert
   SDTCisEltOfVec<2, 1>, SDTCisSameAs<0, 1>, SDTCisPtrTy<3>
 ]>;
 
-def STDPrefetch : SDTypeProfile<0, 3, [  // prefetch
+def STDPrefetch : SDTypeProfile<0, 3, [     // prefetch
   SDTCisPtrTy<0>, SDTCisSameAs<1, 2>, SDTCisInt<1>
 ]>;
 
-def STDMemBarrier : SDTypeProfile<0, 5, [ // memory barier
+def STDMemBarrier : SDTypeProfile<0, 5, [   // memory barier
   SDTCisSameAs<0,1>,  SDTCisSameAs<0,2>,  SDTCisSameAs<0,3>, SDTCisSameAs<0,4>,
   SDTCisInt<0>
 ]>;
@@ -240,7 +240,7 @@ def node;
 def srcvalue;
 
 def imm        : SDNode<"ISD::Constant"  , SDTIntLeaf , [], "ConstantSDNode">;
-def timm   : SDNode<"ISD::TargetConstant", SDTIntLeaf , [], "ConstantSDNode">;
+def timm       : SDNode<"ISD::TargetConstant",SDTIntLeaf, [], "ConstantSDNode">;
 def fpimm      : SDNode<"ISD::ConstantFP", SDTFPLeaf  , [], "ConstantFPSDNode">;
 def vt         : SDNode<"ISD::VALUETYPE" , SDTOther   , [], "VTSDNode">;
 def bb         : SDNode<"ISD::BasicBlock", SDTOther   , [], "BasicBlockSDNode">;
