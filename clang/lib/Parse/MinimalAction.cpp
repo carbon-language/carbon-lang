@@ -28,12 +28,16 @@ struct TypeNameInfo {
   }
 };
 
-void MinimalAction:: ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
+MinimalAction::MinimalAction(Preprocessor &pp) 
+  : Idents(pp.getIdentifierTable()), PP(pp) {}
+
+void MinimalAction::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
   TUScope = S;
+  if (!PP.getLangOptions().ObjC1) return;
+
+  // recognize the ObjC built-in type identifiers. 
   IdentifierInfo *II;
   TypeNameInfo *TI;
-  
-  // recognize the ObjC built-in type identifiers.
   II = &Idents.get("id");
   TI = new TypeNameInfo(1, II->getFETokenInfo<TypeNameInfo>());
   II->setFETokenInfo(TI);

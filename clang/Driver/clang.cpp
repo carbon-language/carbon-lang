@@ -1304,12 +1304,12 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
     break;
       
   case ParseNoop:                    // -parse-noop
-    ParseFile(PP, new MinimalAction(PP.getIdentifierTable()));
+    ParseFile(PP, new MinimalAction(PP));
     ClearSourceMgr = true;
     break;
     
   case ParsePrintCallbacks:
-    ParseFile(PP, CreatePrintParserActionsAction(PP.getIdentifierTable()));
+    ParseFile(PP, CreatePrintParserActionsAction(PP));
     ClearSourceMgr = true;
     break;
       

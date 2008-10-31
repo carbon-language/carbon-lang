@@ -31,6 +31,7 @@ namespace clang {
   class Selector;
   class InitListDesignations;
   // Lex.
+  class Preprocessor;
   class Token;
 
 /// Action - As the parser reads the input file and recognizes the productions
@@ -923,8 +924,9 @@ class MinimalAction : public Action {
   /// For example, user-defined classes, built-in "id" type, etc.
   Scope *TUScope;
   IdentifierTable &Idents;
+  Preprocessor &PP;
 public:
-  MinimalAction(IdentifierTable &IT) : Idents(IT) {}
+  MinimalAction(Preprocessor &pp);
   
   /// isTypeName - This looks at the IdentifierInfo::FETokenInfo field to
   /// determine whether the name is a typedef or not in this scope.

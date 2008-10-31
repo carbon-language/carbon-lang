@@ -39,7 +39,7 @@ void DoRewriteTest(Preprocessor &PP, const std::string &InFileName,
   
 /// CreatePrintParserActionsAction - Return the actions implementation that
 /// implements the -parse-print-callbacks option.
-MinimalAction *CreatePrintParserActionsAction(IdentifierTable &);
+MinimalAction *CreatePrintParserActionsAction(Preprocessor &PP);
 
 /// EmitLLVMFromASTs - Implement -emit-llvm, which generates llvm IR from C.
 void EmitLLVMFromASTs(Preprocessor &PP, bool PrintStats);

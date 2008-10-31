@@ -22,7 +22,7 @@ namespace {
   class ParserPrintActions : public MinimalAction {
     
   public:
-    ParserPrintActions(IdentifierTable &IT) : MinimalAction(IT) {}
+    ParserPrintActions(Preprocessor &PP) : MinimalAction(PP) {}
 
     // Printing Functions which also must call MinimalAction
 
@@ -568,6 +568,6 @@ namespace {
   };
 }
 
-MinimalAction *clang::CreatePrintParserActionsAction(IdentifierTable &IT) {
-  return new ParserPrintActions(IT);
+MinimalAction *clang::CreatePrintParserActionsAction(Preprocessor &PP) {
+  return new ParserPrintActions(PP);
 }
