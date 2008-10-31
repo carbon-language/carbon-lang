@@ -238,14 +238,14 @@ def GR8 : RegisterClass<"X86", [i8],  8,
       // Does the function dedicate RBP / EBP to being a frame ptr?
       // If so, don't allocate SPL or BPL.
       static const unsigned X86_GR8_AO_64_fp[] =
-      {X86::AL, X86::CL, X86::DL, X86::SIL, X86::DIL,
-       X86::R8B, X86::R9B, X86::R10B, X86::R11B,
-       X86::BL, X86::R14B, X86::R15B, X86::R12B, X86::R13B};
+      {X86::AL,   X86::CL,   X86::DL,   X86::SIL, X86::DIL,
+       X86::R8B,  X86::R9B,  X86::R10B, X86::R11B,
+       X86::BL,   X86::R12B, X86::R13B, X86::R14B, X86::R15B};
       // If not, just don't allocate SPL.
       static const unsigned X86_GR8_AO_64[] =
-      {X86::AL, X86::CL, X86::DL, X86::SIL, X86::DIL,
-       X86::R8B, X86::R9B, X86::R10B, X86::R11B,
-       X86::BL, X86::R14B, X86::R15B, X86::R12B, X86::R13B, X86::BPL};
+      {X86::AL,   X86::CL,   X86::DL,   X86::SIL, X86::DIL,
+       X86::R8B,  X86::R9B,  X86::R10B, X86::R11B,
+       X86::BL,   X86::R12B, X86::R13B, X86::R14B, X86::R15B, X86::BPL};
       // In 32-mode, none of the 8-bit registers aliases EBP or ESP.
       static const unsigned X86_GR8_AO_32[] =
       {X86::AL, X86::CL, X86::DL, X86::AH, X86::CH, X86::DH, X86::BL, X86::BH};
@@ -291,16 +291,16 @@ def GR16 : RegisterClass<"X86", [i16], 16,
       // Does the function dedicate RBP / EBP to being a frame ptr?
       // If so, don't allocate SP or BP.
       static const unsigned X86_GR16_AO_64_fp[] =
-      {X86::AX, X86::CX, X86::DX, X86::SI, X86::DI,
-       X86::R8W, X86::R9W, X86::R10W, X86::R11W,
-       X86::BX, X86::R14W, X86::R15W, X86::R12W, X86::R13W};
+      {X86::AX,  X86::CX,   X86::DX,   X86::SI,   X86::DI,
+       X86::R8W, X86::R9W,  X86::R10W, X86::R11W,
+       X86::BX,  X86::R12W, X86::R13W, X86::R14W, X86::R15W};
       static const unsigned X86_GR16_AO_32_fp[] =
       {X86::AX, X86::CX, X86::DX, X86::SI, X86::DI, X86::BX};
       // If not, just don't allocate SPL.
       static const unsigned X86_GR16_AO_64[] =
-      {X86::AX, X86::CX, X86::DX, X86::SI, X86::DI,
-       X86::R8W, X86::R9W, X86::R10W, X86::R11W,
-       X86::BX, X86::R14W, X86::R15W, X86::R12W, X86::R13W, X86::BP};
+      {X86::AX,  X86::CX,   X86::DX,   X86::SI,   X86::DI,
+       X86::R8W, X86::R9W,  X86::R10W, X86::R11W,
+       X86::BX,  X86::R12W, X86::R13W, X86::R14W, X86::R15W, X86::BP};
       static const unsigned X86_GR16_AO_32[] =
       {X86::AX, X86::CX, X86::DX, X86::SI, X86::DI, X86::BX, X86::BP};
 
@@ -355,16 +355,16 @@ def GR32 : RegisterClass<"X86", [i32], 32,
       // Does the function dedicate RBP / EBP to being a frame ptr?
       // If so, don't allocate ESP or EBP.
       static const unsigned X86_GR32_AO_64_fp[] =
-      {X86::EAX, X86::ECX, X86::EDX, X86::ESI, X86::EDI,
-       X86::R8D, X86::R9D, X86::R10D, X86::R11D,
-       X86::EBX, X86::R14D, X86::R15D, X86::R12D, X86::R13D};
+      {X86::EAX, X86::ECX,  X86::EDX,  X86::ESI,  X86::EDI,
+       X86::R8D, X86::R9D,  X86::R10D, X86::R11D,
+       X86::EBX, X86::R12D, X86::R13D, X86::R14D, X86::R15D};
       static const unsigned X86_GR32_AO_32_fp[] =
       {X86::EAX, X86::ECX, X86::EDX, X86::ESI, X86::EDI, X86::EBX};
       // If not, just don't allocate SPL.
       static const unsigned X86_GR32_AO_64[] =
-      {X86::EAX, X86::ECX, X86::EDX, X86::ESI, X86::EDI,
-       X86::R8D, X86::R9D, X86::R10D, X86::R11D,
-       X86::EBX, X86::R14D, X86::R15D, X86::R12D, X86::R13D, X86::EBP};
+      {X86::EAX, X86::ECX,  X86::EDX,  X86::ESI,  X86::EDI,
+       X86::R8D, X86::R9D,  X86::R10D, X86::R11D,
+       X86::EBX, X86::R12D, X86::R13D, X86::R14D, X86::R15D, X86::EBP};
       static const unsigned X86_GR32_AO_32[] =
       {X86::EAX, X86::ECX, X86::EDX, X86::ESI, X86::EDI, X86::EBX, X86::EBP};
 
@@ -409,7 +409,7 @@ def GR32 : RegisterClass<"X86", [i32], 32,
 
 def GR64 : RegisterClass<"X86", [i64], 64, 
                          [RAX, RCX, RDX, RSI, RDI, R8, R9, R10, R11,
-                          RBX, R14, R15, R12, R13, RBP, RSP]> {
+                          RBX, R12, R13, R14, R15, RBP, RSP]> {
   let SubRegClassList = [GR8, GR16, GR32];
   let MethodProtos = [{
     iterator allocation_order_end(const MachineFunction &MF) const;
