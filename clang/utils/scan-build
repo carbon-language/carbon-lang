@@ -137,7 +137,14 @@ sub GetHTMLRunDir {
     
   my $TmpMode = 0;
   if (!defined $Dir) {
-    $Dir = "/tmp";
+    if (`uname` =~ /Darwin/) {
+      $Dir = $ENV{'TMPDIR'};
+      if (!defined $Dir) { $Dir = "/tmp"; }
+    }
+    else {
+      $Dir = "/tmp";
+    }
+    
     $TmpMode = 1;
   }
 
@@ -848,7 +855,7 @@ OPTIONS:
  -o             - Target directory for HTML report files.  Subdirectories
                   will be created as needed to represent separate "runs" of
                   the analyzer.  If this option is not specified, a directory
-                  is created in /tmp to store the reports.
+                  is created in /tmp (TMPDIR on Mac OS X) to store the reports.
 
  -h             - Display this message.
  --help
