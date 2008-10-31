@@ -1,4 +1,4 @@
-//===--- CGDebugInfo.h - DebugInfo for LLVM CodeGen -----------------------===//
+//===--- CGDebugInfo.h - DebugInfo for LLVM CodeGen -------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -81,21 +81,21 @@ private:
   llvm::TypeDesc *getOrCreateCVRType(QualType type, 
                                      llvm::CompileUnitDesc *unit);
   llvm::TypeDesc *getOrCreateBuiltinType(QualType type, 
-                                     llvm::CompileUnitDesc *unit);
+                                         llvm::CompileUnitDesc *unit);
   llvm::TypeDesc *getOrCreateTypedefType(QualType type, 
-                                     llvm::CompileUnitDesc *unit);
+                                         llvm::CompileUnitDesc *unit);
   llvm::TypeDesc *getOrCreatePointerType(QualType type, 
-                                     llvm::CompileUnitDesc *unit);
+                                         llvm::CompileUnitDesc *unit);
   llvm::TypeDesc *getOrCreateFunctionType(QualType type, 
-                                     llvm::CompileUnitDesc *unit);
+                                          llvm::CompileUnitDesc *unit);
   llvm::TypeDesc *getOrCreateRecordType(QualType type,
-                                     llvm::CompileUnitDesc *unit);
+                                        llvm::CompileUnitDesc *unit);
   llvm::TypeDesc *getOrCreateEnumType(QualType type,
-                                     llvm::CompileUnitDesc *unit);
+                                      llvm::CompileUnitDesc *unit);
   llvm::TypeDesc *getOrCreateTaggedType(QualType type,
-                                     llvm::CompileUnitDesc *unit);
+                                        llvm::CompileUnitDesc *unit);
   llvm::TypeDesc *getOrCreateArrayType(QualType type,
-                                     llvm::CompileUnitDesc *unit);
+                                       llvm::CompileUnitDesc *unit);
 
 public:
   CGDebugInfo(CodeGenModule *m);

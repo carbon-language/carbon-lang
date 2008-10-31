@@ -203,7 +203,8 @@ CGDebugInfo::getOrCreateCVRType(QualType type, llvm::CompileUnitDesc *Unit)
     FromTy = getOrCreateType(type, Unit);
   }
 
-  // No need to fill in the Name, Line, Size, Alignment, Offset in case of        // CVR derived types.
+  // No need to fill in the Name, Line, Size, Alignment, Offset in case of
+  // CVR derived types.
   DTy->setContext(Unit);
   DTy->setFromType(FromTy);
 
@@ -378,9 +379,9 @@ llvm::TypeDesc *
 CGDebugInfo::getOrCreateRecordType(QualType type, llvm::CompileUnitDesc *Unit)
 {
   llvm::CompositeTypeDesc *RecType;
-  if(type->isStructureType())
+  if (type->isStructureType())
     RecType = new llvm::CompositeTypeDesc(llvm::dwarf::DW_TAG_structure_type);
-  else if(type->isUnionType())
+  else if (type->isUnionType())
     RecType = new llvm::CompositeTypeDesc(llvm::dwarf::DW_TAG_union_type);
   else
     return NULL;
@@ -407,7 +408,7 @@ CGDebugInfo::getOrCreateRecordType(QualType type, llvm::CompileUnitDesc *Unit)
   }
 
   // Fill in the blanks.
-  if(RecType) {
+  if (RecType) {
     RecType->setContext(Unit);
     RecType->setName(RecDecl->getName());
     RecType->setFile(getOrCreateCompileUnit(RecDecl->getLocation()));
@@ -416,7 +417,7 @@ CGDebugInfo::getOrCreateRecordType(QualType type, llvm::CompileUnitDesc *Unit)
     RecType->setAlign(RL.getAlignment());
     RecType->setOffset(0);
   }
-  return(RecType);
+  return RecType;
 }
 
 /// getOrCreateEnumType - get Enum type.
@@ -427,7 +428,7 @@ CGDebugInfo::getOrCreateEnumType(QualType type, llvm::CompileUnitDesc *Unit)
     = new llvm::CompositeTypeDesc(llvm::dwarf::DW_TAG_enumeration_type);
 
   EnumType *EType = dyn_cast<EnumType>(type);
-  if (!EType) return(NULL);
+  if (!EType) return NULL;
 
   EnumDecl *EDecl = EType->getDecl();
   SourceManager &SM = M->getContext().getSourceManager();
@@ -549,7 +550,7 @@ CGDebugInfo::getOrCreateType(QualType type, llvm::CompileUnitDesc *Unit)
   }
 
   // Work out details of type.
-  switch(type->getTypeClass()) {
+  switch (type->getTypeClass()) {
     case Type::Complex:
     case Type::Reference:
     case Type::Vector:
@@ -561,9 +562,7 @@ CGDebugInfo::getOrCreateType(QualType type, llvm::CompileUnitDesc *Unit)
     case Type::TypeOfExp:
     case Type::TypeOfTyp:
     default:
-    {
       return NULL;
-    }
 
     case Type::TypeName:
       Slot = getOrCreateTypedefType(type, Unit);
