@@ -113,6 +113,7 @@ private:
 
   Store InitializeArray(Store store, TypedRegion* R, SVal Init);
   Store InitializeArrayToUndefined(Store store, QualType T, MemRegion* BaseR);
+  Store InitializeStruct(Store store, TypedRegion* R, SVal Init);
   Store InitializeStructToUndefined(Store store, QualType T, MemRegion* BaseR);
 
   SVal RetrieveStruct(Store store, const TypedRegion* R);
@@ -409,7 +410,10 @@ Store RegionStoreManager::BindDecl(Store store, const VarDecl* VD, Expr* Ex,
         store = InitializeArray(store, VR, InitVal);
 
     } else if (T->isStructureType()) {
-      store = InitializeStructToUndefined(store, T, VR);
+      if (!Ex)
+        store = InitializeStructToUndefined(store, T, VR);
+      else
+        store = InitializeStruct(store, VR, InitVal);
     }
 
     // Other types of local variables are not handled yet.
@@ -477,6 +481,48 @@ Store RegionStoreManager::InitializeArrayToUndefined(Store store, QualType T,
     }
   }
 
+  return store;
+}
+
+Store RegionStoreManager::InitializeStruct(Store store, TypedRegion* R, 
+                                          SVal Init) {
+  QualType T = R->getType(getContext());
+  assert(T->isStructureType());
+
+  RecordType* RT = cast<RecordType>(T.getTypePtr());
+  RecordDecl* RD = RT->getDecl();
+  assert(RD->isDefinition());
+
+  nonloc::CompoundVal& CV = cast<nonloc::CompoundVal>(Init);
+  nonloc::CompoundVal::iterator VI = CV.begin(), VE = CV.end();
+  RecordDecl::field_iterator FI = RD->field_begin(), FE = RD->field_end();
+
+  for (; FI != FE; ++FI) {
+    QualType FTy = (*FI)->getType();
+    FieldRegion* FR = MRMgr.getFieldRegion(*FI, R);
+
+    if (Loc::IsLocType(FTy) || FTy->isIntegerType()) {
+      if (VI != VE) {
+        store = Bind(store, loc::MemRegionVal(FR), *VI);
+        ++VI;
+      } else
+        store = Bind(store, loc::MemRegionVal(FR), UndefinedVal());
+    } 
+    else if (FTy->isArrayType()) {
+      if (VI != VE) {
+        store = InitializeArray(store, FR, *VI);
+        ++VI;
+      } else
+        store = InitializeArrayToUndefined(store, FTy, FR);
+    }
+    else if (FTy->isStructureType()) {
+      if (VI != VE) {
+        store = InitializeStruct(store, FR, *VI);
+        ++VI;
+      } else
+        store = InitializeStructToUndefined(store, FTy, FR);
+    }
+  }
   return store;
 }
 
