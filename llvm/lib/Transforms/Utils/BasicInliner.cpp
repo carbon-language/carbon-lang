@@ -118,7 +118,7 @@ void BasicInlinerImpl::inlineFunctions() {
         } else {
           int Cost = IC.getValue();
           
-          if (Cost >= BasicInlineThreshold) {
+          if (Cost >= (int) BasicInlineThreshold) {
             DOUT << "  NOT Inlining: cost = " << Cost
                  << ", call: " <<  *CS.getInstruction();
             continue;
