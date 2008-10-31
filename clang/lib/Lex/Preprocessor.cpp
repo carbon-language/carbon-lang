@@ -570,8 +570,8 @@ static void InitializePredefinedMacros(Preprocessor &PP,
   char MacroBuf[60];
   sprintf(MacroBuf, "__INTMAX_MAX__=%lld",
           (TI.getIntMaxType() == TargetInfo::UnsignedLongLong?
-           (1LL<<(TI.getLongLongWidth() -1)) : 
-           (1LL<<(TI.getLongLongWidth() -2) -1)));
+           (1LL << (TI.getLongLongWidth() - 1)) : 
+           ((1LL << (TI.getLongLongWidth() - 2)) - 1)));
   DefineBuiltinMacro(Buf, MacroBuf);
   
   if (TI.getIntMaxType() == TargetInfo::UnsignedLongLong)
