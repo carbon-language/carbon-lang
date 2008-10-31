@@ -769,6 +769,9 @@ bool PreAllocSplitting::SplitRegLiveInterval(LiveInterval *LI) {
   ShrinkWrapLiveInterval(ValNo, BarrierMBB, NULL, DefMBB, Visited,
                          Uses, UseMIs, UseMBBs);
 
+  // FIXME: If ValNo->hasPHIKill is false, then renumber the val# by
+  // the restore.
+
   // Remove live range from barrier to the restore. FIXME: Find a better
   // point to re-start the live interval.
   UpdateRegisterInterval(ValNo, LIs->getUseIndex(BarrierIdx)+1,
