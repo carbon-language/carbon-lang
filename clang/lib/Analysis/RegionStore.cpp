@@ -113,6 +113,12 @@ private:
 
   Store InitializeArrayToUndefined(Store store, QualType T, MemRegion* BaseR);
   Store InitializeStructToUndefined(Store store, QualType T, MemRegion* BaseR);
+
+  SVal RetrieveStruct(Store store, const TypedRegion* R);
+
+  // Utility methods.
+  BasicValueFactory& getBasicVals() { return StateMgr.getBasicVals(); }
+  ASTContext& getContext() { return StateMgr.getContext(); }
 };
 
 } // end anonymous namespace
@@ -224,6 +230,10 @@ SVal RegionStoreManager::Retrieve(Store S, Loc L, QualType T) {
     const MemRegion* R = cast<loc::MemRegionVal>(L).getRegion();
     assert(R && "bad region");
 
+    if (const TypedRegion* TR = dyn_cast<TypedRegion>(R))
+      if (TR->getType(getContext())->isStructureType())
+        return RetrieveStruct(S, TR);
+
     RegionBindingsTy B(static_cast<const RegionBindingsTy::TreeTy*>(S));
     RegionBindingsTy::data_type* V = B.lookup(R);
     return V ? *V : UnknownVal();
@@ -242,6 +252,29 @@ SVal RegionStoreManager::Retrieve(Store S, Loc L, QualType T) {
     assert(false && "Invalid Location");
     break;
   }
+}
+
+SVal RegionStoreManager::RetrieveStruct(Store store, const TypedRegion* R) {
+  QualType T = R->getType(getContext());
+  assert(T->isStructureType());
+
+  const RecordType* RT = cast<RecordType>(T.getTypePtr());
+  RecordDecl* RD = RT->getDecl();
+  assert(RD->isDefinition());
+
+  llvm::ImmutableList<SVal> StructVal = getBasicVals().getEmptySValList();
+
+  for (int i = RD->getNumMembers() - 1; i >= 0; --i) {
+    FieldRegion* FR = MRMgr.getFieldRegion(RD->getMember(i), R);
+    RegionBindingsTy B(static_cast<const RegionBindingsTy::TreeTy*>(store));
+    RegionBindingsTy::data_type* data = B.lookup(R);
+
+    SVal FieldValue = data ? *data : UnknownVal();
+
+    StructVal = getBasicVals().consVals(FieldValue, StructVal);
+  }
+
+  return NonLoc::MakeCompoundVal(T, StructVal, getBasicVals());
 }
 
 Store RegionStoreManager::Bind(Store store, Loc LV, SVal V) {
