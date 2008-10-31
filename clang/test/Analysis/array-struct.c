@@ -32,3 +32,8 @@ void f2() {
 void f3() {
   STYPE s;
 }
+
+void f4() {
+  int a[] = { 1, 2, 3};
+  int b[3] = { 1, 2 };
+}
