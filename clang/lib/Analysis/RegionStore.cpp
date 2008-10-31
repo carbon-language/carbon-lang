@@ -111,6 +111,7 @@ private:
     return loc::MemRegionVal(MRMgr.getVarRegion(VD));
   }
 
+  Store InitializeArray(Store store, TypedRegion* R, SVal Init);
   Store InitializeArrayToUndefined(Store store, QualType T, MemRegion* BaseR);
   Store InitializeStructToUndefined(Store store, QualType T, MemRegion* BaseR);
 
@@ -377,8 +378,8 @@ Store RegionStoreManager::BindDecl(Store store, const VarDecl* VD, Expr* Ex,
         else if (T->isIntegerType())
           store = Bind(store, getVarLoc(VD),
                        loc::ConcreteInt(BasicVals.getValue(0, T)));
-        else
-          assert("ignore other types of variables");
+
+        // Other types of static local variables are not handled yet.
       } else {
         store = Bind(store, getVarLoc(VD), InitVal);
       }
@@ -402,11 +403,16 @@ Store RegionStoreManager::BindDecl(Store store, const VarDecl* VD, Expr* Ex,
       store = Bind(store, loc::MemRegionVal(VR), V);
 
     } else if (T->isArrayType()) {
-      store = InitializeArrayToUndefined(store, T, VR);
+      if (!Ex)
+        store = InitializeArrayToUndefined(store, T, VR);
+      else
+        store = InitializeArray(store, VR, InitVal);
 
     } else if (T->isStructureType()) {
       store = InitializeStructToUndefined(store, T, VR);
     }
+
+    // Other types of local variables are not handled yet.
   }
   return store;
 }
@@ -423,6 +429,34 @@ void RegionStoreManager::print(Store store, std::ostream& Out,
   }
 }
 
+Store RegionStoreManager::InitializeArray(Store store, TypedRegion* R, 
+                                          SVal Init) {
+  QualType T = R->getType(getContext());
+  assert(T->isArrayType());
+
+  ConstantArrayType* CAT = cast<ConstantArrayType>(T.getTypePtr());
+
+  llvm::APInt Size = CAT->getSize();
+
+  llvm::APInt i = llvm::APInt::getNullValue(Size.getBitWidth());
+
+  nonloc::CompoundVal& CV = cast<nonloc::CompoundVal>(Init);
+
+  nonloc::CompoundVal::iterator VI = CV.begin(), VE = CV.end();
+
+  for (; i != Size; ++i) {
+    nonloc::ConcreteInt Idx(getBasicVals().getValue(llvm::APSInt(i)));
+
+    ElementRegion* ER = MRMgr.getElementRegion(Idx, R);
+    
+    store = Bind(store, loc::MemRegionVal(ER), (VI!=VE) ? *VI : UndefinedVal());
+    // The init list might be shorter than the array decl.
+    if (VI != VE) ++VI;
+  }
+
+  return store;
+}
+
 Store RegionStoreManager::InitializeArrayToUndefined(Store store, QualType T, 
                                                      MemRegion* BaseR) {
   assert(T->isArrayType());
@@ -433,9 +467,8 @@ Store RegionStoreManager::InitializeArrayToUndefined(Store store, QualType T,
   if (ConstantArrayType* CAT=dyn_cast<ConstantArrayType>(T.getTypePtr())) {
 
     llvm::APInt Size = CAT->getSize();
-    
-    for (llvm::APInt i = llvm::APInt::getNullValue(Size.getBitWidth());
-         i != Size; ++i) {
+    llvm::APInt i = llvm::APInt::getNullValue(Size.getBitWidth());
+    for (; i != Size; ++i) {
       nonloc::ConcreteInt Idx(BasicVals.getValue(llvm::APSInt(i)));
 
       ElementRegion* ER = MRMgr.getElementRegion(Idx, BaseR);
