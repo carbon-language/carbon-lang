@@ -2577,9 +2577,14 @@ void SelectionDAGLowering::visitTargetIntrinsic(CallInst &I,
       Ops.push_back(getRoot());
     }
   }
-  
-  // Add the intrinsic ID as an integer operand.
-  Ops.push_back(DAG.getConstant(Intrinsic, TLI.getPointerTy()));
+
+  // Info is set by getTgtMemInstrinsic
+  TargetLowering::IntrinsicInfo Info;
+  bool IsTgtIntrinsic = TLI.getTgtMemIntrinsic(Info, I, Intrinsic);
+
+  // Add the intrinsic ID as an integer operand if it's not a target intrinsic.  
+  if (!IsTgtIntrinsic)
+    Ops.push_back(DAG.getConstant(Intrinsic, TLI.getPointerTy()));
 
   // Add all operands of the call to the operand list.
   for (unsigned i = 1, e = I.getNumOperands(); i != e; ++i) {
@@ -2610,7 +2615,15 @@ void SelectionDAGLowering::visitTargetIntrinsic(CallInst &I,
 
   // Create the node.
   SDValue Result;
-  if (!HasChain)
+  if (IsTgtIntrinsic) {
+    // This is target intrinsic that touches memory
+    Result = DAG.getMemIntrinsicNode(Info.opc, VTList, VTs.size(),
+                                     &Ops[0], Ops.size(),
+                                     Info.memVT, Info.ptrVal, Info.offset,
+                                     Info.align, Info.vol,
+                                     Info.readMem, Info.writeMem);
+  }
+  else if (!HasChain)
     Result = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, VTList, VTs.size(),
                          &Ops[0], Ops.size());
   else if (I.getType() != Type::VoidTy)

@@ -24,6 +24,7 @@
 
 #include "llvm/Constants.h"
 #include "llvm/InlineAsm.h"
+#include "llvm/Instructions.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
 #include "llvm/CodeGen/RuntimeLibcalls.h"
 #include "llvm/ADT/APFloat.h"
@@ -263,7 +264,27 @@ public:
                                   MVT &IntermediateVT,
                                   unsigned &NumIntermediates,
                                   MVT &RegisterVT) const;
-  
+
+  /// getTgtMemIntrinsic: Given an intrinsic, checks if on the target the
+  /// intrinsic will need to map to a MemIntrinsicNode (touches memory). If
+  /// this is the case, it returns true and store the intrinsic
+  /// information into the IntrinsicInfo that was passed to the function.
+  typedef struct IntrinsicInfo { 
+    unsigned     opc;         // target opcode
+    MVT          memVT;       // memory VT
+    const Value* ptrVal;      // value representing memory location
+    int          offset;      // offset off of ptrVal 
+    unsigned     align;       // alignment
+    bool         vol;         // is volatile?
+    bool         readMem;     // reads memory?
+    bool         writeMem;    // writes memory?
+  } IntrinisicInfo;
+
+  virtual bool getTgtMemIntrinsic(IntrinsicInfo& Info,
+                                  CallInst &I, unsigned Intrinsic) {
+    return false;
+  }
+
   /// getWidenVectorType: given a vector type, returns the type to widen to
   /// (e.g., v7i8 to v8i8). If the vector type is legal, it returns itself.
   /// If there is no vector type that we want to widen to, returns MVT::Other
