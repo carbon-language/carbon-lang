@@ -71,7 +71,7 @@ been broken down into separate stages where possible:
 each subsequent stage simply adds some additional processing. The
 timings measure the delta of the given stage from the previous
 one. For example, the timings for <tt>-fsyntax-only</tt> below show
-the difference of running with <tt>-fsyntax-only</tt> verse running
+the difference of running with <tt>-fsyntax-only</tt> versus running
 with <tt>-parse-noop</tt> (for clang) or <tt>-MM</tt> with gcc and
 llvm-gcc. This amounts to a fairly accurate measure of only the time
 to perform semantic analysis (and parsing, in the case of gcc and llvm-gcc).</p>
@@ -110,12 +110,12 @@ working to address this.</p>
 involves a large amount of code generation. The time spent in Clang's
 LLVM IR generation and code generation is on par with gcc's code
 generation time but the improved parsing & semantic analysis
-performance means Clang still comes in at ~29% faster verse gcc
-on <tt>-S -O0 -g</tt> and ~20% faster verse llvm-gcc.</p>
+performance means Clang still comes in at ~29% faster versus gcc
+on <tt>-S -O0 -g</tt> and ~20% faster versus llvm-gcc.</p>
 
 <p>These numbers indicate that Clang still has room for improvement in
 several areas, notably our LLVM IR generation is significantly slower
-than that of llvm-gcc, and both Clang and llvm-gcc both incur a
+than that of llvm-gcc, and both Clang and llvm-gcc incur a
 significantly higher cost for adding debugging information compared to
 gcc.</p>
 
