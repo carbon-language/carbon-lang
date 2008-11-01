@@ -17,7 +17,6 @@
 #include "clang/AST/Type.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/Support/IRBuilder.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExprObjC.h"
@@ -25,6 +24,7 @@
 #include <vector>
 #include <map>
 
+#include "CGBuilder.h"
 #include "CGCall.h"
 #include "CGValue.h"
 
@@ -52,7 +52,7 @@ namespace CodeGen {
   class CodeGenModule;
   class CodeGenTypes;
   class CGRecordLayout;  
-
+  
 /// CodeGenFunction - This class organizes the per-function state that is used
 /// while generating LLVM code.
 class CodeGenFunction {
@@ -61,7 +61,7 @@ public:
   TargetInfo &Target;
   
   typedef std::pair<llvm::Value *, llvm::Value *> ComplexPairTy;
-  llvm::IRBuilder<> Builder;
+  CGBuilderTy Builder;
   
   // Holds the Decl for the current function or method
   const Decl *CurFuncDecl;

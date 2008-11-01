@@ -16,10 +16,10 @@
 
 #include "clang/AST/Type.h"
 #include "clang/Basic/SourceLocation.h"
-#include "llvm/Support/IRBuilder.h"
 #include <map>
 #include <vector>
 
+#include "CGBuilder.h"
 
 namespace llvm {
   class Function;
@@ -41,6 +41,7 @@ namespace llvm {
 namespace clang {
   class FunctionDecl;
   class VarDecl;
+
 namespace CodeGen {
   class CodeGenModule;
 
@@ -53,8 +54,6 @@ private:
   llvm::DISerializer *SR;
   SourceLocation CurLoc;
   SourceLocation PrevLoc;
-
-  typedef llvm::IRBuilder<> BuilderType;
 
   /// CompileUnitCache - Cache of previously constructed CompileUnits.
   std::map<const FileEntry*, llvm::CompileUnitDesc *> CompileUnitCache;
@@ -109,24 +108,24 @@ public:
 
   /// EmitStopPoint - Emit a call to llvm.dbg.stoppoint to indicate a change of
   /// source line.
-  void EmitStopPoint(llvm::Function *Fn, BuilderType &Builder);
+  void EmitStopPoint(llvm::Function *Fn, CGBuilderTy &Builder);
 
   /// EmitFunctionStart - Emit a call to llvm.dbg.function.start to indicate
   /// start of a new function.
   void EmitFunctionStart(const char *Name, QualType ReturnType,
-                         llvm::Function *Fn, BuilderType &Builder);
+                         llvm::Function *Fn, CGBuilderTy &Builder);
   
   /// EmitRegionStart - Emit a call to llvm.dbg.region.start to indicate start
   /// of a new block.  
-  void EmitRegionStart(llvm::Function *Fn, BuilderType &Builder);
+  void EmitRegionStart(llvm::Function *Fn, CGBuilderTy &Builder);
   
   /// EmitRegionEnd - Emit call to llvm.dbg.region.end to indicate end of a 
   /// block.
-  void EmitRegionEnd(llvm::Function *Fn, BuilderType &Builder);
+  void EmitRegionEnd(llvm::Function *Fn, CGBuilderTy &Builder);
 
   /// EmitDeclare - Emit call to llvm.dbg.declare for a variable declaration.
   void EmitDeclare(const VarDecl *decl, unsigned Tag, llvm::Value *AI,
-                   BuilderType &Builder);
+                   CGBuilderTy &Builder);
 
   /// EmitGlobalVariable - Emit information about a global variable.
   void EmitGlobalVariable(llvm::GlobalVariable *GV, const VarDecl *decl);

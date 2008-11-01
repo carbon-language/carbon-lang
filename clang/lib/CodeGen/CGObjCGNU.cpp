@@ -24,7 +24,6 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/Compiler.h"
-#include "llvm/Support/IRBuilder.h"
 #include "llvm/Target/TargetData.h"
 #include <map>
 using namespace clang;
@@ -110,14 +109,14 @@ public:
                            llvm::Value *Receiver,
                            bool IsClassMessage,
                            const CallArgList &CallArgs);
-  virtual llvm::Value *GetClass(llvm::IRBuilder<> &Builder,
+  virtual llvm::Value *GetClass(CGBuilderTy &Builder,
                                 const ObjCInterfaceDecl *OID);
-  virtual llvm::Value *GetSelector(llvm::IRBuilder<> &Builder, Selector Sel);
+  virtual llvm::Value *GetSelector(CGBuilderTy &Builder, Selector Sel);
   
   virtual llvm::Function *GenerateMethod(const ObjCMethodDecl *OMD);
   virtual void GenerateCategory(const ObjCCategoryImplDecl *CMD);
   virtual void GenerateClass(const ObjCImplementationDecl *ClassDecl);
-  virtual llvm::Value *GenerateProtocolRef(llvm::IRBuilder<> &Builder,
+  virtual llvm::Value *GenerateProtocolRef(CGBuilderTy &Builder,
                                            const ObjCProtocolDecl *PD);
   virtual void GenerateProtocol(const ObjCProtocolDecl *PD);
   virtual llvm::Function *ModuleInitFunction();
@@ -182,7 +181,7 @@ CGObjCGNU::CGObjCGNU(CodeGen::CodeGenModule &cgm)
 }
 // This has to perform the lookup every time, since posing and related
 // techniques can modify the name -> class mapping.
-llvm::Value *CGObjCGNU::GetClass(llvm::IRBuilder<> &Builder,
+llvm::Value *CGObjCGNU::GetClass(CGBuilderTy &Builder,
                                  const ObjCInterfaceDecl *OID) {
   llvm::Value *ClassName = CGM.GetAddrOfConstantCString(OID->getName());
   ClassName = Builder.CreateStructGEP(ClassName, 0);
@@ -194,7 +193,7 @@ llvm::Value *CGObjCGNU::GetClass(llvm::IRBuilder<> &Builder,
 }
 
 /// GetSelector - Return the pointer to the unique'd string for this selector.
-llvm::Value *CGObjCGNU::GetSelector(llvm::IRBuilder<> &Builder, Selector Sel) {
+llvm::Value *CGObjCGNU::GetSelector(CGBuilderTy &Builder, Selector Sel) {
   // FIXME: uniquing on the string is wasteful, unique on Sel instead!
   llvm::GlobalAlias *&US = UntypedSelectors[Sel.getName()];
   if (US == 0)
@@ -553,7 +552,7 @@ llvm::Constant *CGObjCGNU::GenerateProtocolList(
   return MakeGlobal(ProtocolListTy, Elements, ".objc_protocol_list");
 }
 
-llvm::Value *CGObjCGNU::GenerateProtocolRef(llvm::IRBuilder<> &Builder, 
+llvm::Value *CGObjCGNU::GenerateProtocolRef(CGBuilderTy &Builder, 
                                             const ObjCProtocolDecl *PD) {
   return ExistingProtocols[PD->getName()];
 }
@@ -911,7 +910,7 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
       llvm::GlobalValue::InternalLinkage, ".objc_load_function",
       &TheModule);
   llvm::BasicBlock *EntryBB = llvm::BasicBlock::Create("entry", LoadFunction);
-  llvm::IRBuilder<> Builder;
+  CGBuilderTy Builder;
   Builder.SetInsertPoint(EntryBB);
   llvm::Value *Register = TheModule.getOrInsertFunction("__objc_exec_class",
       llvm::Type::VoidTy, llvm::PointerType::getUnqual(ModuleTy), NULL);

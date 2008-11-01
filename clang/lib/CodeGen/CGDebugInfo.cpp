@@ -27,7 +27,6 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/Support/Dwarf.h"
-#include "llvm/Support/IRBuilder.h"
 #include "llvm/Target/TargetMachine.h"
 using namespace clang;
 using namespace clang::CodeGen;
@@ -603,7 +602,7 @@ CGDebugInfo::getOrCreateType(QualType type, llvm::CompileUnitDesc *Unit)
 void CGDebugInfo::EmitFunctionStart(const char *Name,
                                     QualType ReturnType,
                                     llvm::Function *Fn,
-                                    llvm::IRBuilder<> &Builder)
+                                    CGBuilderTy &Builder)
 {
   // Create subprogram descriptor.
   Subprogram = new llvm::SubprogramDesc();
@@ -647,7 +646,7 @@ void CGDebugInfo::EmitFunctionStart(const char *Name,
 
 
 void 
-CGDebugInfo::EmitStopPoint(llvm::Function *Fn, llvm::IRBuilder<> &Builder) 
+CGDebugInfo::EmitStopPoint(llvm::Function *Fn, CGBuilderTy &Builder) 
 {
   if (CurLoc.isInvalid() || CurLoc.isMacroID()) return;
   
@@ -682,7 +681,7 @@ CGDebugInfo::EmitStopPoint(llvm::Function *Fn, llvm::IRBuilder<> &Builder)
 /// EmitRegionStart- Constructs the debug code for entering a declarative
 /// region - "llvm.dbg.region.start.".
 void CGDebugInfo::EmitRegionStart(llvm::Function *Fn,
-                                  llvm::IRBuilder<> &Builder) 
+                                  CGBuilderTy &Builder) 
 {
   llvm::BlockDesc *Block = new llvm::BlockDesc();
   if (!RegionStack.empty())
@@ -700,7 +699,7 @@ void CGDebugInfo::EmitRegionStart(llvm::Function *Fn,
 
 /// EmitRegionEnd - Constructs the debug code for exiting a declarative
 /// region - "llvm.dbg.region.end."
-void CGDebugInfo::EmitRegionEnd(llvm::Function *Fn, llvm::IRBuilder<> &Builder) 
+void CGDebugInfo::EmitRegionEnd(llvm::Function *Fn, CGBuilderTy &Builder) 
 {
   assert(!RegionStack.empty() && "Region stack mismatch, stack empty!");
 
@@ -722,7 +721,7 @@ void CGDebugInfo::EmitRegionEnd(llvm::Function *Fn, llvm::IRBuilder<> &Builder)
 /// EmitDeclare - Emit local variable declaration debug info.
 void CGDebugInfo::EmitDeclare(const VarDecl *decl, unsigned Tag,
                               llvm::Value *AI,
-                              llvm::IRBuilder<> &Builder)
+                              CGBuilderTy &Builder)
 {
   assert(!RegionStack.empty() && "Region stack mismatch, stack empty!");
 

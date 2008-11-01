@@ -22,7 +22,6 @@
 
 #include "llvm/Module.h"
 #include "llvm/ADT/DenseSet.h"
-#include "llvm/Support/IRBuilder.h"
 #include "llvm/Target/TargetData.h"
 #include <sstream>
 
@@ -257,7 +256,7 @@ private:
 
   /// EmitClassRef - Return a Value*, of type ObjCTypes.ClassPtrTy,
   /// for the given class.
-  llvm::Value *EmitClassRef(llvm::IRBuilder<> &Builder, 
+  llvm::Value *EmitClassRef(CGBuilderTy &Builder, 
                             const ObjCInterfaceDecl *ID);
 
   CodeGen::RValue EmitMessageSend(CodeGen::CodeGenFunction &CGF,
@@ -349,7 +348,7 @@ private:
 
   /// EmitSelector - Return a Value*, of type ObjCTypes.SelectorPtrTy,
   /// for the given selector.
-  llvm::Value *EmitSelector(llvm::IRBuilder<> &Builder, Selector Sel);
+  llvm::Value *EmitSelector(CGBuilderTy &Builder, Selector Sel);
 
   /// GetProtocolRef - Return a reference to the internal protocol
   /// description, creating an empty one if it has not been
@@ -406,10 +405,10 @@ public:
                            bool IsClassMessage,
                            const CallArgList &CallArgs);
   
-  virtual llvm::Value *GetClass(llvm::IRBuilder<> &Builder,
+  virtual llvm::Value *GetClass(CGBuilderTy &Builder,
                                 const ObjCInterfaceDecl *ID);
 
-  virtual llvm::Value *GetSelector(llvm::IRBuilder<> &Builder, Selector Sel);
+  virtual llvm::Value *GetSelector(CGBuilderTy &Builder, Selector Sel);
   
   virtual llvm::Function *GenerateMethod(const ObjCMethodDecl *OMD);
 
@@ -417,7 +416,7 @@ public:
 
   virtual void GenerateClass(const ObjCImplementationDecl *ClassDecl);
 
-  virtual llvm::Value *GenerateProtocolRef(llvm::IRBuilder<> &Builder,
+  virtual llvm::Value *GenerateProtocolRef(CGBuilderTy &Builder,
                                            const ObjCProtocolDecl *PD);
 
   virtual void GenerateProtocol(const ObjCProtocolDecl *PD);
@@ -464,13 +463,13 @@ CGObjCMac::CGObjCMac(CodeGen::CodeGenModule &cgm)
 
 /// GetClass - Return a reference to the class for the given interface
 /// decl.
-llvm::Value *CGObjCMac::GetClass(llvm::IRBuilder<> &Builder,
+llvm::Value *CGObjCMac::GetClass(CGBuilderTy &Builder,
                                  const ObjCInterfaceDecl *ID) {
   return EmitClassRef(Builder, ID);
 }
 
 /// GetSelector - Return the pointer to the unique'd string for this selector.
-llvm::Value *CGObjCMac::GetSelector(llvm::IRBuilder<> &Builder, Selector Sel) {
+llvm::Value *CGObjCMac::GetSelector(CGBuilderTy &Builder, Selector Sel) {
   return EmitSelector(Builder, Sel);
 }
 
@@ -577,7 +576,7 @@ CodeGen::RValue CGObjCMac::EmitMessageSend(CodeGen::CodeGenFunction &CGF,
   return CGF.EmitCall(Fn, ResultType, ActualArgs);
 }
 
-llvm::Value *CGObjCMac::GenerateProtocolRef(llvm::IRBuilder<> &Builder, 
+llvm::Value *CGObjCMac::GenerateProtocolRef(CGBuilderTy &Builder, 
                                             const ObjCProtocolDecl *PD) {
   // FIXME: I don't understand why gcc generates this, or where it is
   // resolved. Investigate. Its also wasteful to look this up over and
@@ -1873,7 +1872,7 @@ llvm::Constant *CGObjCMac::EmitModuleSymbols() {
   return llvm::ConstantExpr::getBitCast(GV, ObjCTypes.SymtabPtrTy);
 }
 
-llvm::Value *CGObjCMac::EmitClassRef(llvm::IRBuilder<> &Builder, 
+llvm::Value *CGObjCMac::EmitClassRef(CGBuilderTy &Builder, 
                                      const ObjCInterfaceDecl *ID) {
   LazySymbols.insert(ID->getIdentifier());
 
@@ -1895,7 +1894,7 @@ llvm::Value *CGObjCMac::EmitClassRef(llvm::IRBuilder<> &Builder,
   return Builder.CreateLoad(Entry, false, "tmp");
 }
 
-llvm::Value *CGObjCMac::EmitSelector(llvm::IRBuilder<> &Builder, Selector Sel) {
+llvm::Value *CGObjCMac::EmitSelector(CGBuilderTy &Builder, Selector Sel) {
   llvm::GlobalVariable *&Entry = SelectorReferences[Sel];
   
   if (!Entry) {

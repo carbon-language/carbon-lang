@@ -17,11 +17,11 @@
 #define CLANG_CODEGEN_OBCJRUNTIME_H
 #include "clang/Basic/IdentifierTable.h" // Selector
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/Support/IRBuilder.h"
 #include <string>
 
-#include "CGValue.h"
+#include "CGBuilder.h"
 #include "CGCall.h"
+#include "CGValue.h"
 
 namespace llvm {
   class Constant;
@@ -54,7 +54,6 @@ namespace CodeGen {
 
 /// Implements runtime-specific code generation functions.
 class CGObjCRuntime {
-  typedef llvm::IRBuilder<> BuilderType;
 
 public:
   virtual ~CGObjCRuntime();
@@ -66,7 +65,7 @@ public:
   /// Get a selector for the specified name and type values. The
   /// return value should have the LLVM type for pointer-to
   /// ASTContext::getObjCSelType().
-  virtual llvm::Value *GetSelector(BuilderType &Builder,
+  virtual llvm::Value *GetSelector(CGBuilderTy &Builder,
                                    Selector Sel) = 0;
 
   /// Generate a constant string object.
@@ -102,7 +101,7 @@ public:
 
   /// Emit the code to return the named protocol as an object, as in a
   /// @protocol expression.
-  virtual llvm::Value *GenerateProtocolRef(llvm::IRBuilder<true> &Builder,
+  virtual llvm::Value *GenerateProtocolRef(CGBuilderTy &Builder,
                                            const ObjCProtocolDecl *OPD) = 0;
 
   /// Generate the named protocol.  Protocols contain method metadata but no 
@@ -126,7 +125,7 @@ public:
 
   /// GetClass - Return a reference to the class for the given
   /// interface decl.
-  virtual llvm::Value *GetClass(BuilderType &Builder, 
+  virtual llvm::Value *GetClass(CGBuilderTy &Builder, 
                                 const ObjCInterfaceDecl *OID) = 0;
 
   /// EnumerationMutationFunction - Return the function that's called by the
