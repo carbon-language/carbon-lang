@@ -111,10 +111,10 @@ private:
     return loc::MemRegionVal(MRMgr.getVarRegion(VD));
   }
 
-  Store InitializeArray(Store store, TypedRegion* R, SVal Init);
-  Store InitializeArrayToUndefined(Store store, TypedRegion* BaseR);
-  Store InitializeStruct(Store store, TypedRegion* R, SVal Init);
-  Store InitializeStructToUndefined(Store store, TypedRegion* BaseR);
+  Store InitializeArray(Store store, const TypedRegion* R, SVal Init);
+  Store BindArrayToVal(Store store, const TypedRegion* BaseR, SVal V);
+  Store InitializeStruct(Store store, const TypedRegion* R, SVal Init);
+  Store BindStructToVal(Store store, const TypedRegion* BaseR, SVal V);
 
   SVal RetrieveStruct(Store store, const TypedRegion* R);
   Store BindStruct(Store store, const TypedRegion* R, SVal V);
@@ -309,6 +309,9 @@ Store RegionStoreManager::BindStruct(Store store, const TypedRegion* R, SVal V){
 
   RegionBindingsTy B = GetRegionBindings(store);
 
+  if (isa<UnknownVal>(V))
+    return BindStructToVal(store, R, UnknownVal());
+
   nonloc::CompoundVal& CV = cast<nonloc::CompoundVal>(V);
 
   nonloc::CompoundVal::iterator VI = CV.begin(), VE = CV.end();
@@ -405,13 +408,13 @@ Store RegionStoreManager::BindDecl(Store store, const VarDecl* VD, Expr* Ex,
 
     } else if (T->isArrayType()) {
       if (!Ex)
-        store = InitializeArrayToUndefined(store, VR);
+        store = BindArrayToVal(store, VR, UndefinedVal());
       else
         store = InitializeArray(store, VR, InitVal);
 
     } else if (T->isStructureType()) {
       if (!Ex)
-        store = InitializeStructToUndefined(store, VR);
+        store = BindStructToVal(store, VR, UndefinedVal());
       else
         store = InitializeStruct(store, VR, InitVal);
     }
@@ -433,7 +436,7 @@ void RegionStoreManager::print(Store store, std::ostream& Out,
   }
 }
 
-Store RegionStoreManager::InitializeArray(Store store, TypedRegion* R, 
+Store RegionStoreManager::InitializeArray(Store store, const TypedRegion* R, 
                                           SVal Init) {
   QualType T = R->getType(getContext());
   assert(T->isArrayType());
@@ -461,8 +464,9 @@ Store RegionStoreManager::InitializeArray(Store store, TypedRegion* R,
   return store;
 }
 
-Store RegionStoreManager::InitializeArrayToUndefined(Store store, 
-                                                     TypedRegion* BaseR) {
+// Bind all elements of the array to some value.
+Store RegionStoreManager::BindArrayToVal(Store store, const TypedRegion* BaseR,
+                                         SVal V){
   QualType T = BaseR->getType(getContext());
   assert(T->isArrayType());
 
@@ -476,14 +480,14 @@ Store RegionStoreManager::InitializeArrayToUndefined(Store store,
 
       ElementRegion* ER = MRMgr.getElementRegion(Idx, BaseR);
 
-      store = Bind(store, loc::MemRegionVal(ER), UndefinedVal());
+      store = Bind(store, loc::MemRegionVal(ER), V);
     }
   }
 
   return store;
 }
 
-Store RegionStoreManager::InitializeStruct(Store store, TypedRegion* R, 
+Store RegionStoreManager::InitializeStruct(Store store, const TypedRegion* R, 
                                            SVal Init) {
   QualType T = R->getType(getContext());
   assert(T->isStructureType());
@@ -512,21 +516,22 @@ Store RegionStoreManager::InitializeStruct(Store store, TypedRegion* R,
         store = InitializeArray(store, FR, *VI);
         ++VI;
       } else
-        store = InitializeArrayToUndefined(store, FR);
+        store = BindArrayToVal(store, FR, UndefinedVal());
     }
     else if (FTy->isStructureType()) {
       if (VI != VE) {
         store = InitializeStruct(store, FR, *VI);
         ++VI;
       } else
-        store = InitializeStructToUndefined(store, FR);
+        store = BindStructToVal(store, FR, UndefinedVal());
     }
   }
   return store;
 }
 
-Store RegionStoreManager::InitializeStructToUndefined(Store store,
-                                                      TypedRegion* BaseR) {
+// Bind all fields of the struct to some value.
+Store RegionStoreManager::BindStructToVal(Store store, const TypedRegion* BaseR,
+                                          SVal V) {
   QualType T = BaseR->getType(getContext());
   assert(T->isStructureType());
 
@@ -542,13 +547,13 @@ Store RegionStoreManager::InitializeStructToUndefined(Store store,
     FieldRegion* FR = MRMgr.getFieldRegion(*I, BaseR);
     
     if (Loc::IsLocType(FTy) || FTy->isIntegerType()) {
-      store = Bind(store, loc::MemRegionVal(FR), UndefinedVal());
+      store = Bind(store, loc::MemRegionVal(FR), V);
 
     } else if (FTy->isArrayType()) {
-      store = InitializeArrayToUndefined(store, FR);
+      store = BindArrayToVal(store, FR, V);
 
     } else if (FTy->isStructureType()) {
-      store = InitializeStructToUndefined(store, FR);
+      store = BindStructToVal(store, FR, V);
     }
   }
 
