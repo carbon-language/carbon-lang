@@ -1,5 +1,7 @@
 // RUN: clang -checker-simple -verify %s
 
+#include <stdlib.h>
+
 int* f1() {
   int x = 0;
   return &x; // expected-warning{{Address of stack memory associated with local variable 'x' returned.}} expected-warning{{address of stack memory associated with local variable 'x' returned}}
@@ -30,6 +32,11 @@ void* compound_literal(int x, int y) {
     
   
   void* p = &((struct s){ 42, 0.4, x ? 42 : 0 });
+  return p; // expected-warning{{Address of stack memory}}
+}
+
+void* alloca_test() {
+  void* p = alloca(10);
   return p; // expected-warning{{Address of stack memory}}
 }
 
