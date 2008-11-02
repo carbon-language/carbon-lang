@@ -1241,6 +1241,16 @@ void GRExprEngine::VisitCallRec(CallExpr* CE, NodeTy* Pred,
             continue;            
           }
             
+          case Builtin::BI__builtin_alloca: {
+            // FIXME: Handle size.
+            // FIXME: Refactor into StoreManager itself?
+            MemRegionManager& RM = getStateManager().getRegionManager();
+            const MemRegion* R =
+              RM.getAllocaRegion(CE, Builder->getCurrentBlockCount());            
+            MakeNode(Dst, CE, *DI, BindExpr(St, CE, loc::MemRegionVal(R)));
+            continue;            
+          }
+            
           default:
             break;
         }
