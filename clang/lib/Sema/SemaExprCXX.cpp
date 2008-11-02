@@ -31,28 +31,29 @@ Sema::ActOnCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
                         SourceLocation RParenLoc) {
   Expr *Ex = (Expr*)E;
   QualType DestType = QualType::getFromOpaquePtr(Ty);
+  SourceRange OpRange(OpLoc, RParenLoc);
+  SourceRange DestRange(LAngleBracketLoc, RAngleBracketLoc);
 
   switch (Kind) {
   default: assert(0 && "Unknown C++ cast!");
 
   case tok::kw_const_cast:
-    CheckConstCast(OpLoc, Ex, DestType);
+    CheckConstCast(Ex, DestType, OpRange, DestRange);
     return new CXXConstCastExpr(DestType.getNonReferenceType(), Ex, 
                                 DestType, OpLoc);
 
   case tok::kw_dynamic_cast:
-    CheckDynamicCast(OpLoc, Ex, DestType,
-      SourceRange(LAngleBracketLoc, RAngleBracketLoc));
+    CheckDynamicCast(Ex, DestType, OpRange, DestRange);
     return new CXXDynamicCastExpr(DestType.getNonReferenceType(), Ex, 
                                   DestType, OpLoc);
 
   case tok::kw_reinterpret_cast:
-    CheckReinterpretCast(OpLoc, Ex, DestType);
+    CheckReinterpretCast(Ex, DestType, OpRange, DestRange);
     return new CXXReinterpretCastExpr(DestType.getNonReferenceType(), Ex, 
                                       DestType, OpLoc);
 
   case tok::kw_static_cast:
-    CheckStaticCast(OpLoc, Ex, DestType);
+    CheckStaticCast(Ex, DestType, OpRange);
     return new CXXStaticCastExpr(DestType.getNonReferenceType(), Ex, 
                                  DestType, OpLoc);
   }
@@ -66,7 +67,8 @@ Sema::ActOnCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
 /// const char *str = "literal";
 /// legacy_function(const_cast\<char*\>(str));
 void
-Sema::CheckConstCast(SourceLocation OpLoc, Expr *&SrcExpr, QualType DestType)
+Sema::CheckConstCast(Expr *&SrcExpr, QualType DestType,
+                     const SourceRange &OpRange, const SourceRange &DestRange)
 {
   QualType OrigDestType = DestType, OrigSrcType = SrcExpr->getType();
 
@@ -75,8 +77,8 @@ Sema::CheckConstCast(SourceLocation OpLoc, Expr *&SrcExpr, QualType DestType)
   if (const ReferenceType *DestTypeTmp = DestType->getAsReferenceType()) {
     if (SrcExpr->isLvalue(Context) != Expr::LV_Valid) {
       // Cannot cast non-lvalue to reference type.
-      Diag(OpLoc, diag::err_bad_cxx_cast_rvalue,
-        "const_cast", OrigDestType.getAsString());
+      Diag(OpRange.getBegin(), diag::err_bad_cxx_cast_rvalue,
+        "const_cast", OrigDestType.getAsString(), SrcExpr->getSourceRange());
       return;
     }
 
@@ -96,14 +98,16 @@ Sema::CheckConstCast(SourceLocation OpLoc, Expr *&SrcExpr, QualType DestType)
     // Cannot cast to non-pointer, non-reference type. Note that, if DestType
     // was a reference type, we converted it to a pointer above.
     // C++ 5.2.11p3: For two pointer types [...]
-    Diag(OpLoc, diag::err_bad_const_cast_dest, OrigDestType.getAsString());
+    Diag(OpRange.getBegin(), diag::err_bad_const_cast_dest, OrigDestType.getAsString(),
+      DestRange);
     return;
   }
   if (DestType->isFunctionPointerType()) {
     // Cannot cast direct function pointers.
     // C++ 5.2.11p2: [...] where T is any object type or the void type [...]
     // T is the ultimate pointee of source and target type.
-    Diag(OpLoc, diag::err_bad_const_cast_dest, OrigDestType.getAsString());
+    Diag(OpRange.getBegin(), diag::err_bad_const_cast_dest, OrigDestType.getAsString(),
+      DestRange);
     return;
   }
   SrcType = Context.getCanonicalType(SrcType);
@@ -133,8 +137,8 @@ Sema::CheckConstCast(SourceLocation OpLoc, Expr *&SrcExpr, QualType DestType)
   {
     if (SrcTypeArr->getSize() != DestTypeArr->getSize()) {
       // Different array sizes.
-      Diag(OpLoc, diag::err_bad_cxx_cast_generic, "const_cast",
-        OrigDestType.getAsString(), OrigSrcType.getAsString());
+      Diag(OpRange.getBegin(), diag::err_bad_cxx_cast_generic, "const_cast",
+        OrigDestType.getAsString(), OrigSrcType.getAsString(), OpRange);
       return;
     }
     SrcType = SrcTypeArr->getElementType().getUnqualifiedType();
@@ -145,8 +149,8 @@ Sema::CheckConstCast(SourceLocation OpLoc, Expr *&SrcExpr, QualType DestType)
   // Since we're dealing in canonical types, the remainder must be the same.
   if (SrcType != DestType) {
     // Cast between unrelated types.
-    Diag(OpLoc, diag::err_bad_cxx_cast_generic, "const_cast",
-      OrigDestType.getAsString(), OrigSrcType.getAsString());
+    Diag(OpRange.getBegin(), diag::err_bad_cxx_cast_generic, "const_cast",
+      OrigDestType.getAsString(), OrigSrcType.getAsString(), OpRange);
     return;
   }
 }
@@ -157,8 +161,9 @@ Sema::CheckConstCast(SourceLocation OpLoc, Expr *&SrcExpr, QualType DestType)
 /// like this:
 /// char *bytes = reinterpret_cast\<char*\>(int_ptr);
 void
-Sema::CheckReinterpretCast(SourceLocation OpLoc, Expr *&SrcExpr,
-                           QualType DestType)
+Sema::CheckReinterpretCast(Expr *&SrcExpr, QualType DestType,
+                           const SourceRange &OpRange,
+                           const SourceRange &DestRange)
 {
   QualType OrigDestType = DestType, OrigSrcType = SrcExpr->getType();
 
@@ -167,8 +172,9 @@ Sema::CheckReinterpretCast(SourceLocation OpLoc, Expr *&SrcExpr,
   if (const ReferenceType *DestTypeTmp = DestType->getAsReferenceType()) {
     if (SrcExpr->isLvalue(Context) != Expr::LV_Valid) {
       // Cannot cast non-lvalue to reference type.
-      Diag(OpLoc, diag::err_bad_cxx_cast_rvalue,
-        "reinterpret_cast", OrigDestType.getAsString());
+      Diag(OpRange.getBegin(), diag::err_bad_cxx_cast_rvalue,
+        "reinterpret_cast", OrigDestType.getAsString(),
+        SrcExpr->getSourceRange());
       return;
     }
 
@@ -195,8 +201,8 @@ Sema::CheckReinterpretCast(SourceLocation OpLoc, Expr *&SrcExpr,
     // Except for std::nullptr_t->integer, which is not supported yet, and
     // lvalue->reference, which is handled above, at least one of the two
     // arguments must be a pointer.
-    Diag(OpLoc, diag::err_bad_cxx_cast_generic, "reinterpret_cast",
-      OrigDestType.getAsString(), OrigSrcType.getAsString());
+    Diag(OpRange.getBegin(), diag::err_bad_cxx_cast_generic, "reinterpret_cast",
+      OrigDestType.getAsString(), OrigSrcType.getAsString(), OpRange);
     return;
   }
 
@@ -217,8 +223,8 @@ Sema::CheckReinterpretCast(SourceLocation OpLoc, Expr *&SrcExpr,
     // C++ 5.2.10p4: A pointer can be explicitly converted to any integral
     //   type large enough to hold it.
     if (Context.getTypeSize(SrcType) > Context.getTypeSize(DestType)) {
-      Diag(OpLoc, diag::err_bad_reinterpret_cast_small_int,
-        OrigDestType.getAsString());
+      Diag(OpRange.getBegin(), diag::err_bad_reinterpret_cast_small_int,
+        OrigDestType.getAsString(), DestRange);
     }
     return;
   }
@@ -233,15 +239,16 @@ Sema::CheckReinterpretCast(SourceLocation OpLoc, Expr *&SrcExpr,
   if (!destIsPtr || !srcIsPtr) {
     // With the valid non-pointer conversions out of the way, we can be even
     // more stringent.
-    Diag(OpLoc, diag::err_bad_cxx_cast_generic, "reinterpret_cast",
-      OrigDestType.getAsString(), OrigSrcType.getAsString());
+    Diag(OpRange.getBegin(), diag::err_bad_cxx_cast_generic, "reinterpret_cast",
+      OrigDestType.getAsString(), OrigSrcType.getAsString(), OpRange);
     return;
   }
 
   // C++ 5.2.10p2: The reinterpret_cast operator shall not cast away constness.
   if (CastsAwayConstness(SrcType, DestType)) {
-    Diag(OpLoc, diag::err_bad_cxx_cast_const_away, "reinterpret_cast",
-      OrigDestType.getAsString(), OrigSrcType.getAsString());
+    Diag(OpRange.getBegin(), diag::err_bad_cxx_cast_const_away,
+      "reinterpret_cast", OrigDestType.getAsString(), OrigSrcType.getAsString(),
+      OpRange);
     return;
   }
 
@@ -264,7 +271,7 @@ Sema::CheckReinterpretCast(SourceLocation OpLoc, Expr *&SrcExpr,
     // FIXME: Conditionally-supported behavior should be configurable in the
     // TargetInfo or similar.
     if (!getLangOptions().CPlusPlus0x) {
-      Diag(OpLoc, diag::ext_reinterpret_cast_fn_obj);
+      Diag(OpRange.getBegin(), diag::ext_reinterpret_cast_fn_obj, OpRange);
     }
     return;
   }
@@ -274,7 +281,7 @@ Sema::CheckReinterpretCast(SourceLocation OpLoc, Expr *&SrcExpr,
   if (DestType->isFunctionPointerType()) {
     // See above.
     if (!getLangOptions().CPlusPlus0x) {
-      Diag(OpLoc, diag::ext_reinterpret_cast_fn_obj);
+      Diag(OpRange.getBegin(), diag::ext_reinterpret_cast_fn_obj, OpRange);
     }
     return;
   }
@@ -332,7 +339,8 @@ Sema::CastsAwayConstness(QualType SrcType, QualType DestType)
 /// Refer to C++ 5.2.9 for details. Static casts are mostly used for making
 /// implicit conversions explicit and getting rid of data loss warnings.
 void
-Sema::CheckStaticCast(SourceLocation OpLoc, Expr *&SrcExpr, QualType DestType)
+Sema::CheckStaticCast(Expr *&SrcExpr, QualType DestType,
+                      const SourceRange &OpRange)
 {
   QualType OrigDestType = DestType, OrigSrcType = SrcExpr->getType();
 
@@ -429,8 +437,8 @@ Sema::CheckStaticCast(SourceLocation OpLoc, Expr *&SrcExpr, QualType DestType)
   // FIXME: Error reporting could be a lot better. Should store the reason
   // why every substep failed and, at the end, select the most specific and
   // report that.
-  Diag(OpLoc, diag::err_bad_cxx_cast_generic, "static_cast",
-    OrigDestType.getAsString(), OrigSrcType.getAsString());
+  Diag(OpRange.getBegin(), diag::err_bad_cxx_cast_generic, "static_cast",
+    OrigDestType.getAsString(), OrigSrcType.getAsString(), OpRange);
 }
 
 /// Tests whether a conversion according to C++ 5.2.9p5 is valid.
@@ -564,8 +572,9 @@ Sema::TryDirectInitialization(Expr *SrcExpr, QualType DestType)
 /// Refer to C++ 5.2.7 for details. Dynamic casts are used mostly for runtime-
 /// checked downcasts in class hierarchies.
 void
-Sema::CheckDynamicCast(SourceLocation OpLoc, Expr *&SrcExpr, QualType DestType,
-  const SourceRange &DestRange)
+Sema::CheckDynamicCast(Expr *&SrcExpr, QualType DestType,
+                       const SourceRange &OpRange,
+                       const SourceRange &DestRange)
 {
   QualType OrigDestType = DestType, OrigSrcType = SrcExpr->getType();
   DestType = Context.getCanonicalType(DestType);
@@ -581,7 +590,7 @@ Sema::CheckDynamicCast(SourceLocation OpLoc, Expr *&SrcExpr, QualType DestType,
   } else if (DestReference) {
     DestPointee = DestReference->getPointeeType();
   } else {
-    Diag(OpLoc, diag::err_bad_dynamic_cast_operand,
+    Diag(OpRange.getBegin(), diag::err_bad_dynamic_cast_operand,
       OrigDestType.getAsString(), "not a reference or pointer", DestRange);
     return;
   }
@@ -591,13 +600,13 @@ Sema::CheckDynamicCast(SourceLocation OpLoc, Expr *&SrcExpr, QualType DestType,
     assert(DestPointer && "Reference to void is not possible");
   } else if (DestRecord) {
     if (!DestRecord->getDecl()->isDefinition()) {
-      Diag(OpLoc, diag::err_bad_dynamic_cast_operand,
+      Diag(OpRange.getBegin(), diag::err_bad_dynamic_cast_operand,
         DestPointee.getUnqualifiedType().getAsString(),
         "incomplete", DestRange);
       return;
     }
   } else {
-    Diag(OpLoc, diag::err_bad_dynamic_cast_operand,
+    Diag(OpRange.getBegin(), diag::err_bad_dynamic_cast_operand,
       DestPointee.getUnqualifiedType().getAsString(),
       "not a class", DestRange);
     return;
@@ -613,13 +622,13 @@ Sema::CheckDynamicCast(SourceLocation OpLoc, Expr *&SrcExpr, QualType DestType,
     if (const PointerType *SrcPointer = SrcType->getAsPointerType()) {
       SrcPointee = SrcPointer->getPointeeType();
     } else {
-      Diag(OpLoc, diag::err_bad_dynamic_cast_operand,
+      Diag(OpRange.getBegin(), diag::err_bad_dynamic_cast_operand,
         OrigSrcType.getAsString(), "not a pointer", SrcExpr->getSourceRange());
       return;
     }
   } else {
     if (SrcExpr->isLvalue(Context) != Expr::LV_Valid) {
-      Diag(OpLoc, diag::err_bad_dynamic_cast_operand,
+      Diag(OpRange.getBegin(), diag::err_bad_dynamic_cast_operand,
         OrigDestType.getAsString(), "not an lvalue", SrcExpr->getSourceRange());
     }
     SrcPointee = SrcType;
@@ -628,13 +637,13 @@ Sema::CheckDynamicCast(SourceLocation OpLoc, Expr *&SrcExpr, QualType DestType,
   const RecordType *SrcRecord = SrcPointee->getAsRecordType();
   if (SrcRecord) {
     if (!SrcRecord->getDecl()->isDefinition()) {
-      Diag(OpLoc, diag::err_bad_dynamic_cast_operand,
+      Diag(OpRange.getBegin(), diag::err_bad_dynamic_cast_operand,
         SrcPointee.getUnqualifiedType().getAsString(), "incomplete",
         SrcExpr->getSourceRange());
       return;
     }
   } else {
-    Diag(OpLoc, diag::err_bad_dynamic_cast_operand,
+    Diag(OpRange.getBegin(), diag::err_bad_dynamic_cast_operand,
       SrcPointee.getUnqualifiedType().getAsString(), "not a class",
       SrcExpr->getSourceRange());
     return;
@@ -647,8 +656,8 @@ Sema::CheckDynamicCast(SourceLocation OpLoc, Expr *&SrcExpr, QualType DestType,
 
   // C++ 5.2.7p1: The dynamic_cast operator shall not cast away constness.
   if (!DestPointee.isAtLeastAsQualifiedAs(SrcPointee)) {
-    Diag(OpLoc, diag::err_bad_cxx_cast_const_away, "dynamic_cast",
-      OrigDestType.getAsString(), OrigSrcType.getAsString());
+    Diag(OpRange.getBegin(), diag::err_bad_cxx_cast_const_away, "dynamic_cast",
+      OrigDestType.getAsString(), OrigSrcType.getAsString(), OpRange);
     return;
   }
 
@@ -661,7 +670,8 @@ Sema::CheckDynamicCast(SourceLocation OpLoc, Expr *&SrcExpr, QualType DestType,
   // C++ 5.2.7p5
   // Upcasts are resolved statically.
   if (DestRecord && IsDerivedFrom(SrcPointee, DestPointee)) {
-    CheckDerivedToBaseConversion(SrcPointee, DestPointee, OpLoc, SourceRange());
+    CheckDerivedToBaseConversion(SrcPointee, DestPointee, OpRange.getBegin(),
+      OpRange);
     // Diagnostic already emitted on error.
     return;
   }

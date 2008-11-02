@@ -713,12 +713,16 @@ public:
 
 private:
   // Helpers for ActOnCXXCasts
-  void CheckConstCast(SourceLocation OpLoc, Expr *&SrcExpr, QualType DestType);
-  void CheckReinterpretCast(SourceLocation OpLoc, Expr *&SrcExpr,
-                            QualType DestType);
-  void CheckStaticCast(SourceLocation OpLoc, Expr *&SrcExpr, QualType DestType);
-  void CheckDynamicCast(SourceLocation OpLoc, Expr *&SrcExpr,
-                        QualType DestType, const SourceRange &DestRange);
+  void CheckConstCast(Expr *&SrcExpr, QualType DestType,
+                      const SourceRange &OpRange, const SourceRange &DestRange);
+  void CheckReinterpretCast(Expr *&SrcExpr, QualType DestType,
+                            const SourceRange &OpRange,
+                            const SourceRange &DestRange);
+  void CheckStaticCast(Expr *&SrcExpr, QualType DestType,
+                       const SourceRange &OpRange);
+  void CheckDynamicCast(Expr *&SrcExpr, QualType DestType,
+                        const SourceRange &OpRange,
+                        const SourceRange &DestRange);
   bool CastsAwayConstness(QualType SrcType, QualType DestType);
   bool IsStaticReferenceDowncast(Expr *SrcExpr, QualType DestType);
   bool IsStaticPointerDowncast(QualType SrcType, QualType DestType);
