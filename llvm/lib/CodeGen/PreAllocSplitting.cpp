@@ -89,6 +89,8 @@ namespace {
         AU.addPreservedID(StrongPHIEliminationID);
       else
         AU.addPreservedID(PHIEliminationID);
+      AU.addRequired<MachineLoopInfo>();
+      AU.addPreserved<MachineLoopInfo>();
       MachineFunctionPass::getAnalysisUsage(AU);
     }
     
@@ -633,6 +635,14 @@ bool PreAllocSplitting::SplitRegLiveInterval(LiveInterval *LI) {
     assert(0 && "Val# is defined by a dead def?");
     abort();
   }
+  
+  // Pre-splitting a vreg that does not have a PHI kill across a barrier
+  // that is within a loop can potentially create a join that was not
+  // present before, which would make updating the live intervals very
+  // difficult.  Bailout instead.
+  MachineLoopInfo& MLI = getAnalysis<MachineLoopInfo>();
+  if (!ValNo->hasPHIKill && MLI.getLoopFor(BarrierMBB))
+    return false;
 
   // FIXME: For now, if definition is rematerializable, do not split.
   MachineInstr *DefMI = (ValNo->def != ~0U)
