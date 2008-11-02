@@ -1274,12 +1274,12 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, APInt DemandedMask,
     break;
   case Instruction::SRem:
     if (ConstantInt *Rem = dyn_cast<ConstantInt>(I->getOperand(1))) {
-      APInt RA = Rem->getValue();
-      if (RA.isPowerOf2() || (-RA).isPowerOf2()) {
+      APInt RA = Rem->getValue().abs();
+      if (RA.isPowerOf2()) {
         if (DemandedMask.ule(RA))    // srem won't affect demanded bits
           return UpdateValueUsesWith(I, I->getOperand(0));
 
-        APInt LowBits = RA.isStrictlyPositive() ? (RA - 1) : ~RA;
+        APInt LowBits = RA - 1;
         APInt Mask2 = LowBits | APInt::getSignBit(BitWidth);
         if (SimplifyDemandedBits(I->getOperand(0), Mask2,
                                  LHSKnownZero, LHSKnownOne, Depth+1))
