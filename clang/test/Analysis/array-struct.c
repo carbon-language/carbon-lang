@@ -10,6 +10,8 @@ typedef struct {
   int data;
 } STYPE;
 
+void g1(struct s* p);
+
 void f(void) {
   int a[10];
   int (*p)[10];
@@ -36,4 +38,9 @@ void f3() {
 void f4() {
   int a[] = { 1, 2, 3};
   int b[3] = { 1, 2 };
+}
+
+void f5() {
+  struct s data;
+  g1(&data);
 }
