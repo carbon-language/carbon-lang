@@ -54,6 +54,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
+#include "llvm/Support/CallSite.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include <map>
@@ -265,6 +266,28 @@ static bool fold(std::vector<Function *> &FnVec, unsigned i, unsigned j) {
     }
   }
 
+  if (F->hasWeakLinkage() && G->hasWeakLinkage()) {
+    GlobalAlias *GA_F = new GlobalAlias(F->getType(), F->getLinkage(), "",
+                                        0, F->getParent());
+    GA_F->takeName(F);
+    GA_F->setVisibility(F->getVisibility());
+    F->setAlignment(std::max(F->getAlignment(), G->getAlignment()));
+    F->replaceAllUsesWith(GA_F);
+    F->setName("folded." + GA_F->getName());
+    F->setLinkage(GlobalValue::ExternalLinkage);
+    GA_F->setAliasee(F);
+
+    GlobalAlias *GA_G = new GlobalAlias(G->getType(), G->getLinkage(), "",
+                                        F, G->getParent());
+    GA_G->takeName(G);
+    GA_G->setVisibility(G->getVisibility());
+    G->replaceAllUsesWith(GA_G);
+    G->eraseFromParent();
+
+    ++NumFunctionsMerged;
+    return true;
+  }
+
   DOUT << "Failed on " << F->getName() << " and " << G->getName() << "\n";
 
   ++NumMergeFails;
@@ -289,13 +312,9 @@ static bool hasAddressTaken(User *U) {
       return true;
 
     // Make sure we aren't passing U as a parameter to call instead of the
-    // callee. getOperand(0) is the callee for both CallInst and InvokeInst.
-    // Check the other operands to see if any of them is F.
-    for (User::op_iterator OI = I->op_begin() + 1, OE = I->op_end(); OI != OE;
-         ++OI) {
-      if (*OI == U)
-        return true;
-    }
+    // callee.
+    if (CallSite(cast<Instruction>(Use)).hasArgument(U))
+      return true;
   }
 
   return false;
@@ -310,8 +329,8 @@ bool MergeFunctions::runOnModule(Module &M) {
     if (F->isDeclaration() || F->isIntrinsic())
       continue;
 
-    if (F->hasLinkOnceLinkage() || F->hasCommonLinkage() ||
-        F->hasDLLImportLinkage() || F->hasDLLExportLinkage())
+    if (!F->hasInternalLinkage() && !F->hasExternalLinkage() &&
+        !F->hasWeakLinkage())
       continue;
 
     if (hasAddressTaken(F))
