@@ -216,6 +216,15 @@ public:
         
         R = CL->getSourceRange();
       }
+      else if (const AllocaRegion* AR = dyn_cast<AllocaRegion>(V.getRegion())) {
+        const Expr* ARE = AR->getExpr();
+        SourceLocation L = ARE->getLocStart();
+        R = ARE->getSourceRange();
+        
+        os << "Address of stack memory allocated by call to alloca() on line "
+           << BR.getSourceManager().getLogicalLineNumber(L)
+           << " returned.";
+      }      
       else {        
         os << "Address of stack memory associated with local variable '"
            << V.getRegion()->getString() << "' returned.";
