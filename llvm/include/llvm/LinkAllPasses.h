@@ -121,6 +121,7 @@ namespace {
       (void) llvm::createInstructionNamerPass();
       (void) llvm::createPartialSpecializationPass();
       (void) llvm::createAddReadAttrsPass();
+      (void) llvm::createMergeFunctionsPass();
       (void) llvm::createPrintModulePass(0);
       (void) llvm::createPrintFunctionPass("", 0);
 

@@ -38,7 +38,7 @@ ModulePass *createStripSymbolsPass(bool OnlyDebugInfo = false);
 /// to invoke/unwind instructions.  This should really be part of the C/C++
 /// front-end, but it's so much easier to write transformations in LLVM proper.
 ///
-ModulePass* createLowerSetJmpPass();
+ModulePass *createLowerSetJmpPass();
 
 //===----------------------------------------------------------------------===//
 /// createConstantMergePass - This function returns a new pass that merges
@@ -186,13 +186,19 @@ ModulePass *createStripDeadPrototypesPass();
 /// createPartialSpecializationPass - This pass specializes functions for
 /// constant arguments.
 ///
-ModulePass* createPartialSpecializationPass();
+ModulePass *createPartialSpecializationPass();
 
 //===----------------------------------------------------------------------===//
 /// createAddReadAttrsPass - This pass discovers functions that do not access
 /// memory, or only read memory, and gives them the readnone/readonly attribute.
 ///
-Pass* createAddReadAttrsPass();
+Pass *createAddReadAttrsPass();
+
+//===----------------------------------------------------------------------===//
+/// createMergeFunctionsPass - This pass discovers identical functions and
+/// collapses them.
+///
+ModulePass *createMergeFunctionsPass();
 
 } // End llvm namespace
 
