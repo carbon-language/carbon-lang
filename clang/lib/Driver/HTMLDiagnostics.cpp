@@ -132,7 +132,7 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D) {
   // Verify that the entire path is from the same FileID.
   for (PathDiagnostic::const_iterator I=D.begin(), E=D.end(); I != E; ++I) {
     
-    FullSourceLoc L = I->getLocation();
+    FullSourceLoc L = I->getLocation().getLogicalLoc();
     
     if (!L.isFileID())
       return; // FIXME: Emit a warning?
@@ -148,7 +148,7 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D) {
     for (PathDiagnosticPiece::range_iterator RI=I->ranges_begin(),
                                              RE=I->ranges_end(); RI!=RE; ++RI) {
       
-      SourceLocation L = RI->getBegin();
+      SourceLocation L = SMgr.getLogicalLoc(RI->getBegin());
 
       if (!L.isFileID())
         return; // FIXME: Emit a warning?      
@@ -156,7 +156,7 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D) {
       if (SMgr.getCanonicalFileID(L) != FileID)
         return; // FIXME: Emit a warning?
       
-      L = RI->getEnd();
+      L = SMgr.getLogicalLoc(RI->getEnd());
       
       if (!L.isFileID())
         return; // FIXME: Emit a warning?      
