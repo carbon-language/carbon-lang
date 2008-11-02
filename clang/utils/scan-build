@@ -1145,7 +1145,7 @@ if ($AnalyzeHeaders) {
 
 $ENV{'CCC_ANALYZER_ANALYSIS'} = join ' ',@AnalysesToRun;
 
-if ($StoreModel) {
+if (defined $StoreModel) {
   $ENV{'CCC_ANALYZER_STORE_MODEL'} = $StoreModel;
 }
 
