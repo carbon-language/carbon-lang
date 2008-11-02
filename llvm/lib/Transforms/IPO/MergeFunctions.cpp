@@ -80,8 +80,8 @@ ModulePass *llvm::createMergeFunctionsPass() {
   return new MergeFunctions();
 }
 
-static unsigned hash(const Function *F) {
-  return F->size() ^ reinterpret_cast<unsigned>(F->getType());
+static unsigned long hash(const Function *F) {
+  return F->size() ^ reinterpret_cast<unsigned long>(F->getType());
   //return F->size() ^ F->arg_size() ^ F->getReturnType();
 }
 
@@ -304,7 +304,7 @@ static bool hasAddressTaken(User *U) {
 bool MergeFunctions::runOnModule(Module &M) {
   bool Changed = false;
 
-  std::map<unsigned, std::vector<Function *> > FnMap;
+  std::map<unsigned long, std::vector<Function *> > FnMap;
 
   for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F) {
     if (F->isDeclaration() || F->isIntrinsic())
@@ -326,8 +326,8 @@ bool MergeFunctions::runOnModule(Module &M) {
   bool LocalChanged;
   do {
     LocalChanged = false;
-    for (std::map<unsigned, std::vector<Function *> >::iterator I = FnMap.begin(),
-           E = FnMap.end(); I != E; ++I) {
+    for (std::map<unsigned long, std::vector<Function *> >::iterator
+         I = FnMap.begin(), E = FnMap.end(); I != E; ++I) {
       DOUT << "size: " << FnMap.size() << "\n";
       std::vector<Function *> &FnVec = I->second;
       DOUT << "hash (" << I->first << "): " << FnVec.size() << "\n";
