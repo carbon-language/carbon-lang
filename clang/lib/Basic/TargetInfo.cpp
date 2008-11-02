@@ -35,10 +35,10 @@ TargetInfo::TargetInfo(const std::string &T) : Triple(T) {
   LongDoubleWidth = 64;
   LongDoubleAlign = 64;
   SizeType = UnsignedLong;
+  PtrDiffType = SignedLong;
   IntMaxType = SignedLongLong;
   UIntMaxType = UnsignedLongLong;
-  PtrDiffType = SignedLongLong;
-  WCharType = UnsignedInt;
+  WCharType = SignedInt;
   FloatFormat = &llvm::APFloat::IEEEsingle;
   DoubleFormat = &llvm::APFloat::IEEEdouble;
   LongDoubleFormat = &llvm::APFloat::IEEEdouble;

@@ -534,7 +534,10 @@ namespace {
 // x86-32 FreeBSD target
 class FreeBSDX86_32TargetInfo : public X86_32TargetInfo {
 public:
-  FreeBSDX86_32TargetInfo(const std::string& triple) : X86_32TargetInfo(triple) {
+  FreeBSDX86_32TargetInfo(const std::string& triple) :
+      X86_32TargetInfo(triple) {
+    SizeType = UnsignedInt;
+    PtrDiffType = SignedInt;
   }
   virtual void getTargetDefines(std::vector<char> &Defines) const {
     X86_32TargetInfo::getTargetDefines(Defines);
@@ -547,7 +550,10 @@ namespace {
 // x86-32 DragonFly target
 class DragonFlyX86_32TargetInfo : public X86_32TargetInfo {
 public:
-  DragonFlyX86_32TargetInfo(const std::string& triple) : X86_32TargetInfo(triple) {
+  DragonFlyX86_32TargetInfo(const std::string& triple) :
+      X86_32TargetInfo(triple) {
+    SizeType = UnsignedInt;
+    PtrDiffType = SignedInt;
   }
   virtual void getTargetDefines(std::vector<char> &Defines) const {
     X86_32TargetInfo::getTargetDefines(Defines);
@@ -562,6 +568,8 @@ class LinuxX86_32TargetInfo : public X86_32TargetInfo {
 public:
   LinuxX86_32TargetInfo(const std::string& triple) : X86_32TargetInfo(triple) {
     UserLabelPrefix = "";
+    SizeType = UnsignedInt;
+    PtrDiffType = SignedInt;
   }
   virtual void getTargetDefines(std::vector<char> &Defines) const {
     X86_32TargetInfo::getTargetDefines(Defines);
@@ -579,6 +587,8 @@ public:
     // FIXME: Fix wchar_t.
     // FIXME: We should probably enable -fms-extensions by default for
     // this target.
+    SizeType = UnsignedInt;
+    PtrDiffType = SignedInt;
   }
   virtual void getTargetDefines(std::vector<char> &Defines) const {
     X86_32TargetInfo::getTargetDefines(Defines);
@@ -626,8 +636,7 @@ namespace {
 // x86-64 FreeBSD target
 class FreeBSDX86_64TargetInfo : public X86_64TargetInfo {
 public:
-  FreeBSDX86_64TargetInfo(const std::string& triple) : X86_64TargetInfo(triple) {
-  }
+  FreeBSDX86_64TargetInfo(const std::string& triple) : X86_64TargetInfo(triple) {}
   virtual void getTargetDefines(std::vector<char> &Defines) const {
     X86_64TargetInfo::getTargetDefines(Defines);
     getFreeBSDDefines(Defines, 1, getTargetTriple());
@@ -788,7 +797,10 @@ namespace {
 class SolarisSparcV8TargetInfo : public SparcV8TargetInfo {
 public:
   SolarisSparcV8TargetInfo(const std::string& triple) :
-    SparcV8TargetInfo(triple) {}
+      SparcV8TargetInfo(triple) {
+    SizeType = UnsignedInt;
+    PtrDiffType = SignedInt;
+  }
 
   virtual void getTargetDefines(std::vector<char> &Defines) const {
     SparcV8TargetInfo::getTargetDefines(Defines);
@@ -810,8 +822,7 @@ namespace {
       SizeType = UnsignedInt;
       IntMaxType = SignedLong;
       UIntMaxType = UnsignedLong;
-      PtrDiffType = SignedShort;
-      WCharType = UnsignedInt;
+      PtrDiffType = SignedInt;
       DescriptionString = "e-p:16:8:8-i8:8:8-i16:8:8-i32:8:8";
     }
     virtual uint64_t getPointerWidthV(unsigned AddrSpace) const { return 16; }
