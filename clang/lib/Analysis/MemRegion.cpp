@@ -33,6 +33,17 @@ void StringRegion::ProfileRegion(llvm::FoldingSetNodeID& ID,
   ID.AddPointer(superRegion);
 }
 
+void AllocaRegion::ProfileRegion(llvm::FoldingSetNodeID& ID,
+                                 const Expr* Ex, unsigned cnt) {
+  ID.AddInteger((unsigned) AllocaRegionKind);
+  ID.AddPointer(Ex);
+  ID.AddInteger(cnt);
+}
+
+void AllocaRegion::Profile(llvm::FoldingSetNodeID& ID) const {
+  ProfileRegion(ID, Ex, Cnt);
+}
+
 void AnonTypedRegion::ProfileRegion(llvm::FoldingSetNodeID& ID, QualType T,
                                     const MemRegion* superRegion) {
   ID.AddInteger((unsigned) AnonTypedRegionKind);
@@ -115,6 +126,10 @@ std::string MemRegion::getString() const {
 
 void MemRegion::print(llvm::raw_ostream& os) const {
   os << "<Unknown Region>";
+}
+
+void AllocaRegion::print(llvm::raw_ostream& os) const {
+  os << "alloca{" << (void*) Ex << ',' << Cnt << '}';
 }
 
 void VarRegion::print(llvm::raw_ostream& os) const {
@@ -350,13 +365,31 @@ AnonPointeeRegion* MemRegionManager::getAnonPointeeRegion(const VarDecl* d) {
   return R;
 }
 
+AllocaRegion* MemRegionManager::getAllocaRegion(const Expr* E, unsigned cnt) {
+  llvm::FoldingSetNodeID ID;
+  AllocaRegion::ProfileRegion(ID, E, cnt);
+  
+  void* InsertPos;
+  MemRegion* data = Regions.FindNodeOrInsertPos(ID, InsertPos);
+  AllocaRegion* R = cast_or_null<AllocaRegion>(data);
+  
+  if (!R) {
+    R = (AllocaRegion*) A.Allocate<AllocaRegion>();
+    new (R) AllocaRegion(E, cnt, getStackRegion());
+    Regions.InsertNode(R, InsertPos);
+  }
+  
+  return R;
+}
+
 bool MemRegionManager::hasStackStorage(const MemRegion* R) {
-  const SubRegion* SR = dyn_cast<SubRegion>(R);
 
   // Only subregions can have stack storage.
+  const SubRegion* SR = dyn_cast<SubRegion>(R);
+
   if (!SR)
     return false;
-  
+
   MemSpaceRegion* S = getStackRegion();
   
   while (SR) {

@@ -37,6 +37,7 @@ class MemRegionManager;
 class MemRegion : public llvm::FoldingSetNode {
 public:
   enum Kind { MemSpaceRegionKind, SymbolicRegionKind,
+              AllocaRegionKind,
               // Typed regions.
               BEG_TYPED_REGIONS,
                CompoundLiteralRegionKind,
@@ -100,6 +101,34 @@ public:
     return R->getKind() > SymbolicRegionKind;
   }
 };
+  
+/// AllocaRegion - A region that represents an untyped blob of bytes created
+///  by a call to 'alloca'.
+class AllocaRegion : public SubRegion {
+  friend class MemRegionManager;
+protected:
+  unsigned Cnt; // Block counter.  Used to distinguish different pieces of
+                // memory allocated by alloca at the same call site.
+  const Expr* Ex;
+
+  AllocaRegion(const Expr* ex, unsigned cnt, const MemRegion* superRegion)
+    : SubRegion(superRegion, AllocaRegionKind), Cnt(cnt), Ex(ex) {}
+  
+public:
+  
+  const Expr* getExpr() const { return Ex; }
+  
+  void Profile(llvm::FoldingSetNodeID& ID) const;
+
+  static void ProfileRegion(llvm::FoldingSetNodeID& ID, const Expr* Ex,
+                            unsigned Cnt);
+  
+  void print(llvm::raw_ostream& os) const;
+  
+  static bool classof(const MemRegion* R) {
+    return R->getKind() == AllocaRegionKind;
+  }
+};    
   
 /// SymbolicRegion - A special, "non-concrete" region. Unlike other region
 ///  clases, SymbolicRegion represents a region that serves as an alias for
@@ -429,6 +458,9 @@ public:
     assert(R);
     return R == globals; 
   }
+  
+  /// getAllocaRegion - Retrieve a region associated with a call to alloca().
+  AllocaRegion* getAllocaRegion(const Expr* Ex, unsigned Cnt);
   
   /// getCompoundLiteralRegion - Retrieve the region associated with a
   ///  given CompoundLiteral.
