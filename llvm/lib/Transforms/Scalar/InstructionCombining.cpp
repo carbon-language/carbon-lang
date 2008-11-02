@@ -8551,8 +8551,8 @@ Instruction *InstCombiner::visitSelectInstWithICmp(SelectInst &SI,
           In = InsertNewInstBefore(BinaryOperator::CreateAShr(In, Sh,
                                                           In->getName()+".lobit"),
                                    *ICI);
-          if (In->getType() != CI->getType())
-            In = CastInst::CreateIntegerCast(In, CI->getType(),
+          if (In->getType() != SI.getType())
+            In = CastInst::CreateIntegerCast(In, SI.getType(),
                                              true/*SExt*/, "tmp", ICI);
     
           if (Pred == ICmpInst::ICMP_SGT)
