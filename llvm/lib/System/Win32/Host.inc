@@ -22,14 +22,16 @@ std::string sys::osName() {
 }
 
 std::string sys::osVersion() {
-  OSVERSIONINFO osvi = { 0 };
+  OSVERSIONINFO osvi;
+
+  memset(&osvi, 0, sizeof(osvi));
   osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
 
   if (!GetVersionEx(&osvi))
     return "";
-  
-  char buf[64];
-  sprintf(buf, "%d.%d", osvi.dwMajorVersion, osvi.dwMinorVersion);
 
-  return buf;  
+  char buf[64];
+  sprintf(buf, "%d.%d", (int)osvi.dwMajorVersion, (int)osvi.dwMinorVersion);
+
+  return buf;
 }
