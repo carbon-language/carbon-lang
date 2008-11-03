@@ -165,7 +165,7 @@ void PartSpec::scanForInterest(Function& F, SmallVector<int, 6>& args) {
   }
 }
 
-/// scanDistribution - Construct a histogram of constants for arg of F at arg
+/// scanDistribution - Construct a histogram of constants for arg of F at arg.
 int PartSpec::scanDistribution(Function& F, int arg, 
                                std::map<Constant*, int>& dist) {
   bool hasIndirect = false;
