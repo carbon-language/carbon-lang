@@ -47,7 +47,7 @@ public:
                   VarRegionKind, FieldRegionKind,
                   ObjCIvarRegionKind, ObjCObjectRegionKind,
                  END_DECL_REGIONS,
-               AnonTypedRegionKind, AnonPointeeRegionKind,
+               AnonPointeeRegionKind,
               END_TYPED_REGIONS };  
 private:
   const Kind kind;
@@ -199,53 +199,35 @@ public:
   }
 };
 
-/// AnonTypedRegion - An "anonymous" region that simply types a chunk
-///  of memory.
-class AnonTypedRegion : public TypedRegion {
-protected:
-  QualType T;
+/// AnonPointeeRegion - anonymous regions pointed-to by pointer function
+///  parameters or pointer globals. In RegionStoreManager, we assume pointer
+///  parameters or globals point at some anonymous region. Such regions are not
+///  the regions associated with the pointer variables themselves.  They are
+///  identified with the VarDecl of the pointer variable. We create them lazily.
 
+class AnonPointeeRegion : public TypedRegion {
   friend class MemRegionManager;
-  
-  AnonTypedRegion(QualType t, MemRegion* sreg)
-    : TypedRegion(sreg, AnonTypedRegionKind), T(t) {}
+  // VD - the pointer variable that points at this region.
+  const VarDecl* Pointer;
 
-  static void ProfileRegion(llvm::FoldingSetNodeID& ID, QualType T,
-                            const MemRegion* superRegion);
+  AnonPointeeRegion(const VarDecl* d, MemRegion* sreg)
+    : TypedRegion(sreg, AnonPointeeRegionKind), Pointer(d) {}
 
 public:
-  QualType getType(ASTContext& C) const { return C.getCanonicalType(T); }
-  
+  QualType getType(ASTContext& C) const;
 
-  void Profile(llvm::FoldingSetNodeID& ID) const;
-  
+  static void ProfileRegion(llvm::FoldingSetNodeID& ID, const VarDecl* PVD,
+                            const MemRegion* superRegion);
+
+  void Profile(llvm::FoldingSetNodeID& ID) const {
+    ProfileRegion(ID, Pointer, superRegion);
+  }
+
   static bool classof(const MemRegion* R) {
-    return R->getKind() == AnonTypedRegionKind;
+    return R->getKind() == AnonPointeeRegionKind;
   }
 };
 
-/// AnonPointeeRegion - anonymous regions pointed-at by pointer function
-///  parameters or pointer globals. In RegionStoreManager, we assume pointer
-///  parameters or globals point at some anonymous region initially. Such
-///  regions are not the regions associated with the pointers themselves, but
-///  are identified with the VarDecl of the parameters or globals.
-class AnonPointeeRegion : public AnonTypedRegion {
-  friend class MemRegionManager;
-  // VD - the pointer variable that points at this region.
-  const VarDecl* VD;
-
-  AnonPointeeRegion(const VarDecl* d, QualType t, MemRegion* sreg)
-    : AnonTypedRegion(t, sreg), VD(d) {}
-
-public:
-  static void ProfileRegion(llvm::FoldingSetNodeID& ID, const VarDecl* PVD,
-                            QualType T, const MemRegion* superRegion);
-};
-
-/// AnonHeapRegion - anonymous region created by malloc().
-class AnonHeapRegion : public AnonTypedRegion {
-};
-  
 /// CompoundLiteralRegion - A memory region representing a compound literal.
 ///   Compound literals are essentially temporaries that are stack allocated
 ///   or in the global constant pool.

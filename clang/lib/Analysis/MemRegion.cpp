@@ -44,24 +44,20 @@ void AllocaRegion::Profile(llvm::FoldingSetNodeID& ID) const {
   ProfileRegion(ID, Ex, Cnt);
 }
 
-void AnonTypedRegion::ProfileRegion(llvm::FoldingSetNodeID& ID, QualType T,
-                                    const MemRegion* superRegion) {
-  ID.AddInteger((unsigned) AnonTypedRegionKind);
-  ID.Add(T);
-  ID.AddPointer(superRegion);
+QualType AnonPointeeRegion::getType(ASTContext& C) const {
+  QualType T = C.getCanonicalType(Pointer->getType());
+  PointerType* PTy = cast<PointerType>(T.getTypePtr());
+
+  QualType PointeeTy = C.getCanonicalType(PTy->getPointeeType());
+  return PointeeTy;
 }
 
 void AnonPointeeRegion::ProfileRegion(llvm::FoldingSetNodeID& ID, 
-                                      const VarDecl* VD, QualType T,
+                                      const VarDecl* VD,
                                       const MemRegion* superRegion) {
   ID.AddInteger((unsigned) AnonPointeeRegionKind);
-  ID.Add(T);
   ID.AddPointer(VD);
   ID.AddPointer(superRegion);
-}
-
-void AnonTypedRegion::Profile(llvm::FoldingSetNodeID& ID) const {
-  AnonTypedRegion::ProfileRegion(ID, T, superRegion);
 }
 
 void CompoundLiteralRegion::Profile(llvm::FoldingSetNodeID& ID) const {
@@ -346,11 +342,9 @@ MemRegionManager::getObjCObjectRegion(const ObjCInterfaceDecl* d,
 
 AnonPointeeRegion* MemRegionManager::getAnonPointeeRegion(const VarDecl* d) {
   llvm::FoldingSetNodeID ID;
-  QualType T = d->getType();
-  QualType PointeeType = cast<PointerType>(T.getTypePtr())->getPointeeType();
   MemRegion* superRegion = getUnknownRegion();
 
-  AnonPointeeRegion::ProfileRegion(ID, d, PointeeType, superRegion);
+  AnonPointeeRegion::ProfileRegion(ID, d, superRegion);
 
   void* InsertPos;
   MemRegion* data = Regions.FindNodeOrInsertPos(ID, InsertPos);
@@ -358,7 +352,7 @@ AnonPointeeRegion* MemRegionManager::getAnonPointeeRegion(const VarDecl* d) {
 
   if (!R) {
     R = (AnonPointeeRegion*) A.Allocate<AnonPointeeRegion>();
-    new (R) AnonPointeeRegion(d, PointeeType, superRegion);
+    new (R) AnonPointeeRegion(d, superRegion);
     Regions.InsertNode(R, InsertPos);
   }
 
