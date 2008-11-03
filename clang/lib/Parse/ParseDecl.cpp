@@ -1222,6 +1222,19 @@ void Parser::ParseDeclaratorInternal(Declarator &D) {
     // Recursively parse the declarator.
     ParseDeclaratorInternal(D);
 
+    if (D.getNumTypeObjects() > 0) {
+      // C++ [dcl.ref]p4: There shall be no references to references.
+      DeclaratorChunk& InnerChunk = D.getTypeObject(D.getNumTypeObjects() - 1);
+      if (InnerChunk.Kind == DeclaratorChunk::Reference) {
+        Diag(InnerChunk.Loc, diag::err_illegal_decl_reference_to_reference,
+             D.getIdentifier() ? D.getIdentifier()->getName() : "type name");
+
+        // Once we've complained about the reference-to-referwnce, we
+        // can go ahead and build the (technically ill-formed)
+        // declarator: reference collapsing will take care of it.
+      }
+    }
+
     // Remember that we parsed a reference type. It doesn't have type-quals.
     D.AddTypeInfo(DeclaratorChunk::getReference(DS.getTypeQualifiers(), Loc,
                                                 DS.TakeAttributes()));

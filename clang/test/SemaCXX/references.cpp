@@ -75,3 +75,15 @@ struct C : B, A { };
 void test7(C& c) {
   A& a1 = c; // expected-error {{ambiguous conversion from derived class 'struct C' to base class 'struct A':}}
 }
+
+// C++ [dcl.ref]p1, C++ [dcl.ref]p4
+void test8(int& const,// expected-error{{'const' qualifier may not be applied to a reference}}
+           
+           void&,     // expected-error{{cannot form a reference to 'void'}}
+           int& &)    // expected-error{{'type name' declared as a reference to a reference}}
+{
+  typedef int& intref;
+  typedef intref& intrefref; // C++ DR 106: reference collapsing
+
+  typedef intref const intref_c; // okay. FIXME: how do we verify that this is the same type as intref?
+}

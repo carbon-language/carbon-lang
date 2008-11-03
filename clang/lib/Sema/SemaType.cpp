@@ -232,6 +232,17 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS) {
            Result.getAsString(), DS.getSourceRange());
     }
     
+    // C++ [dcl.ref]p1:
+    //   Cv-qualified references are ill-formed except when the
+    //   cv-qualifiers are introduced through the use of a typedef
+    //   (7.1.3) or of a template type argument (14.3), in which
+    //   case the cv-qualifiers are ignored.
+    if (DS.getTypeSpecType() == DeclSpec::TST_typedef &&
+        TypeQuals && Result->isReferenceType()) {
+      TypeQuals &= ~QualType::Const;
+      TypeQuals &= ~QualType::Volatile;
+    }      
+    
     Result = Result.getQualifiedType(TypeQuals);
   }
   return Result;
@@ -283,13 +294,33 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
       // Apply the pointer typequals to the pointer object.
       T = Context.getPointerType(T).getQualifiedType(DeclType.Ptr.TypeQuals);
       break;
-    case DeclaratorChunk::Reference:
-      if (const ReferenceType *RT = T->getAsReferenceType()) {
-        // C++ 8.3.2p4: There shall be no references to references.
-        Diag(DeclType.Loc, diag::err_illegal_decl_reference_to_reference,
-             D.getIdentifier() ? D.getIdentifier()->getName() : "type name");
+    case DeclaratorChunk::Reference: {
+      // Whether we should suppress the creation of the reference.
+      bool SuppressReference = false;
+      if (T->isReferenceType()) {
+        // C++ [dcl.ref]p4: There shall be no references to references.
+        // 
+        // According to C++ DR 106, references to references are only
+        // diagnosed when they are written directly (e.g., "int & &"),
+        // but not when they happen via a typedef:
+        //
+        //   typedef int& intref;
+        //   typedef intref& intref2;
+        //
+        // Parser::ParserDeclaratorInternal diagnoses the case where
+        // references are written directly; here, we handle the
+        // collapsing of references-to-references as described in C++
+        // DR 106 and amended by C++ DR 540.
+        SuppressReference = true;
+      }
+
+      // C++ [dcl.ref]p1:
+      //   A declarator that specifies the type “reference to cv void”
+      //   is ill-formed.
+      if (T->isVoidType()) {
+        Diag(DeclType.Loc, diag::err_reference_to_void);
         D.setInvalidType(true);
-        T = RT->getPointeeType();
+        T = Context.IntTy;
       }
 
       // Enforce C99 6.7.3p2: "Types other than pointer types derived from
@@ -302,12 +333,14 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
         DeclType.Ref.HasRestrict = false;
       }        
 
-      T = Context.getReferenceType(T);
+      if (!SuppressReference)
+        T = Context.getReferenceType(T);
 
       // Handle restrict on references.
       if (DeclType.Ref.HasRestrict)
         T.addRestrict();
       break;
+    }
     case DeclaratorChunk::Array: {
       DeclaratorChunk::ArrayTypeInfo &ATI = DeclType.Arr;
       Expr *ArraySize = static_cast<Expr*>(ATI.NumElts);
