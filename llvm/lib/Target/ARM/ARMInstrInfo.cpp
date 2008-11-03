@@ -296,13 +296,13 @@ ARMInstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
   }
   
   // Transfer LiveVariables states, kill / dead info.
-  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-    MachineOperand &MO = MI->getOperand(i);
-    if (MO.isReg() && MO.getReg() &&
-        TargetRegisterInfo::isVirtualRegister(MO.getReg())) {
-      unsigned Reg = MO.getReg();
+  if (LV) {
+    for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+      MachineOperand &MO = MI->getOperand(i);
+      if (MO.isReg() && MO.getReg() &&
+          TargetRegisterInfo::isVirtualRegister(MO.getReg())) {
+        unsigned Reg = MO.getReg();
       
-      if (LV) {
         LiveVariables::VarInfo &VI = LV->getVarInfo(Reg);
         if (MO.isDef()) {
           MachineInstr *NewMI = (Reg == WBReg) ? UpdateMI : MemMI;
