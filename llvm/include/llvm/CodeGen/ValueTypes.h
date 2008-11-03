@@ -139,13 +139,13 @@ namespace llvm {
     MVT() {}
     MVT(SimpleValueType S) : V(S) {}
 
-    inline bool operator== (const MVT VT) const { return V == VT.V; }
-    inline bool operator!= (const MVT VT) const { return V != VT.V; }
+    bool operator== (const MVT VT) const { return V == VT.V; }
+    bool operator!= (const MVT VT) const { return V != VT.V; }
 
     /// getFloatingPointVT - Returns the MVT that represents a floating point
     /// type with the given number of bits.  There are two floating point types
     /// with 128 bits - this returns f128 rather than ppcf128.
-    static inline MVT getFloatingPointVT(unsigned BitWidth) {
+    static MVT getFloatingPointVT(unsigned BitWidth) {
       switch (BitWidth) {
       default:
         assert(false && "Bad bit width!");
@@ -162,7 +162,7 @@ namespace llvm {
 
     /// getIntegerVT - Returns the MVT that represents an integer with the given
     /// number of bits.
-    static inline MVT getIntegerVT(unsigned BitWidth) {
+    static MVT getIntegerVT(unsigned BitWidth) {
       switch (BitWidth) {
       default:
         break;
@@ -187,7 +187,7 @@ namespace llvm {
 
     /// getVectorVT - Returns the MVT that represents a vector NumElements in
     /// length, where each element is of type VT.
-    static inline MVT getVectorVT(MVT VT, unsigned NumElements) {
+    static MVT getVectorVT(MVT VT, unsigned NumElements) {
       switch (VT.V) {
       default:
         break;
@@ -228,7 +228,7 @@ namespace llvm {
 
     /// getIntVectorWithNumElements - Return any integer vector type that has
     /// the specified number of elements.
-    static inline MVT getIntVectorWithNumElements(unsigned NumElts) {
+    static MVT getIntVectorWithNumElements(unsigned NumElts) {
       switch (NumElts) {
       default: return getVectorVT(i8, NumElts);
       case  1: return v1i64;
@@ -243,90 +243,90 @@ namespace llvm {
 
     /// isSimple - Test if the given MVT is simple (as opposed to being
     /// extended).
-    inline bool isSimple() const {
+    bool isSimple() const {
       return V <= SimpleTypeMask;
     }
 
     /// isExtended - Test if the given MVT is extended (as opposed to
     /// being simple).
-    inline bool isExtended() const {
+    bool isExtended() const {
       return !isSimple();
     }
 
     /// isFloatingPoint - Return true if this is a FP, or a vector FP type.
-    inline bool isFloatingPoint() const {
+    bool isFloatingPoint() const {
       uint32_t SVT = V & SimpleTypeMask;
       return (SVT >= f32 && SVT <= ppcf128) || (SVT >= v2f32 && SVT <= v2f64);
     }
 
     /// isInteger - Return true if this is an integer, or a vector integer type.
-    inline bool isInteger() const {
+    bool isInteger() const {
       uint32_t SVT = V & SimpleTypeMask;
       return (SVT >= FIRST_INTEGER_VALUETYPE && SVT <= LAST_INTEGER_VALUETYPE) ||
         (SVT >= v8i8 && SVT <= v2i64) || (SVT == iAny && (V & PrecisionMask));
     }
 
     /// isVector - Return true if this is a vector value type.
-    inline bool isVector() const {
+    bool isVector() const {
       return (V >= FIRST_VECTOR_VALUETYPE && V <= LAST_VECTOR_VALUETYPE) ||
              (V & VectorMask);
     }
 
     /// is64BitVector - Return true if this is a 64-bit vector type.
-    inline bool is64BitVector() const {
+    bool is64BitVector() const {
       return (V==v8i8 || V==v4i16 || V==v2i32 || V==v1i64 || V==v2f32 ||
               (isExtended() && isVector() && getSizeInBits()==64));
     }
 
     /// is128BitVector - Return true if this is a 128-bit vector type.
-    inline bool is128BitVector() const {
+    bool is128BitVector() const {
       return (V==v16i8 || V==v8i16 || V==v4i32 || V==v2i64 ||
               V==v4f32 || V==v2f64 ||
               (isExtended() && isVector() && getSizeInBits()==128));
     }
 
     /// isByteSized - Return true if the bit size is a multiple of 8.
-    inline bool isByteSized() const {
+    bool isByteSized() const {
       return (getSizeInBits() & 7) == 0;
     }
 
     /// isRound - Return true if the size is a power-of-two number of bytes.
-    inline bool isRound() const {
+    bool isRound() const {
       unsigned BitSize = getSizeInBits();
       return BitSize >= 8 && !(BitSize & (BitSize - 1));
     }
 
     /// bitsGT - Return true if this has more bits than VT.
-    inline bool bitsGT(MVT VT) const {
+    bool bitsGT(MVT VT) const {
       return getSizeInBits() > VT.getSizeInBits();
     }
 
     /// bitsGE - Return true if this has no less bits than VT.
-    inline bool bitsGE(MVT VT) const {
+    bool bitsGE(MVT VT) const {
       return getSizeInBits() >= VT.getSizeInBits();
     }
 
     /// bitsLT - Return true if this has less bits than VT.
-    inline bool bitsLT(MVT VT) const {
+    bool bitsLT(MVT VT) const {
       return getSizeInBits() < VT.getSizeInBits();
     }
 
     /// bitsLE - Return true if this has no more bits than VT.
-    inline bool bitsLE(MVT VT) const {
+    bool bitsLE(MVT VT) const {
       return getSizeInBits() <= VT.getSizeInBits();
     }
 
 
     /// getSimpleVT - Return the SimpleValueType held in the specified
     /// simple MVT.
-    inline SimpleValueType getSimpleVT() const {
+    SimpleValueType getSimpleVT() const {
       assert(isSimple() && "Expected a SimpleValueType!");
       return (SimpleValueType)V;
     }
 
     /// getVectorElementType - Given a vector type, return the type of
     /// each element.
-    inline MVT getVectorElementType() const {
+    MVT getVectorElementType() const {
       assert(isVector() && "Invalid vector type!");
       switch (V) {
       default: {
@@ -353,7 +353,7 @@ namespace llvm {
 
     /// getVectorNumElements - Given a vector type, return the number of
     /// elements it contains.
-    inline unsigned getVectorNumElements() const {
+    unsigned getVectorNumElements() const {
       assert(isVector() && "Invalid vector type!");
       switch (V) {
       default:
@@ -376,7 +376,7 @@ namespace llvm {
     }
 
     /// getSizeInBits - Return the size of the specified value type in bits.
-    inline unsigned getSizeInBits() const {
+    unsigned getSizeInBits() const {
       switch (V) {
       default:
         assert(isExtended() && "MVT has no known size!");
@@ -415,14 +415,14 @@ namespace llvm {
 
     /// getStoreSizeInBits - Return the number of bits overwritten by a store
     /// of the specified value type.
-    inline unsigned getStoreSizeInBits() const {
+    unsigned getStoreSizeInBits() const {
       return (getSizeInBits() + 7)/8*8;
     }
 
     /// getRoundIntegerType - Rounds the bit-width of the given integer MVT up
     /// to the nearest power of two (and at least to eight), and returns the
     /// integer MVT with that number of bits.
-    inline MVT getRoundIntegerType() const {
+    MVT getRoundIntegerType() const {
       assert(isInteger() && !isVector() && "Invalid integer type!");
       unsigned BitWidth = getSizeInBits();
       if (BitWidth <= 8)
@@ -433,7 +433,7 @@ namespace llvm {
 
     /// getIntegerVTBitMask - Return an integer with 1's every place there are
     /// bits in the specified integer value type. FIXME: Should return an apint.
-    inline uint64_t getIntegerVTBitMask() const {
+    uint64_t getIntegerVTBitMask() const {
       assert(isInteger() && !isVector() && "Only applies to int scalars!");
       return ~uint64_t(0UL) >> (64-getSizeInBits());
     }
@@ -441,7 +441,7 @@ namespace llvm {
     /// getIntegerVTSignBit - Return an integer with a 1 in the position of the
     /// sign bit for the specified integer value type. FIXME: Should return an
     /// apint.
-    inline uint64_t getIntegerVTSignBit() const {
+    uint64_t getIntegerVTSignBit() const {
       assert(isInteger() && !isVector() && "Only applies to int scalars!");
       return uint64_t(1UL) << (getSizeInBits()-1);
     }
