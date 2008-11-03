@@ -205,7 +205,10 @@ void llvm::RemoveSuccessor(TerminatorInst *TI, unsigned SuccNum) {
 BasicBlock *llvm::SplitEdge(BasicBlock *BB, BasicBlock *Succ, Pass *P) {
   TerminatorInst *LatchTerm = BB->getTerminator();
   unsigned SuccNum = 0;
-  for (unsigned i = 0, e = LatchTerm->getNumSuccessors(); ; ++i) {
+#ifndef NDEBUG
+  unsigned e = LatchTerm->getNumSuccessors();
+#endif
+  for (unsigned i = 0; ; ++i) {
     assert(i != e && "Didn't find edge?");
     if (LatchTerm->getSuccessor(i) == Succ) {
       SuccNum = i;
@@ -224,6 +227,7 @@ BasicBlock *llvm::SplitEdge(BasicBlock *BB, BasicBlock *Succ, Pass *P) {
     // If the successor only has a single pred, split the top of the successor
     // block.
     assert(SP == BB && "CFG broken");
+    SP = NULL;
     return SplitBlock(Succ, Succ->begin(), P);
   } else {
     // Otherwise, if BB has a single successor, split it at the bottom of the
